@@ -9,7 +9,7 @@ Install the ESP8266 Arduino development environment from [esp8266 Arduino](https
 - Follow the procedure to install the ESP8266 Arduino development environment
 - Copy the ```sonoff``` directory to your sketchfolder
 
-Download and copy the [pubsubclient](https://github.com/knolleary/pubsubclient) MQTT library into directory ```portable\sketchbook\libraries``` and update default values in file ```pubsubclient-master\src\PubSubClient.h```
+Download and unzip the [pubsubclient](https://github.com/knolleary/pubsubclient) MQTT library into directory ```portable\sketchbook\libraries```. Rename to pubsubclient and update default values in file ```pubsubclient\src\PubSubClient.h```
 - Change MQTT_MAX_PACKET_SIZE from 128 to 1024
 - Change MQTT_KEEPALIVE from 15 to 120
 
