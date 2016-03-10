@@ -8,6 +8,7 @@ Install the ESP8266 Arduino development environment from [esp8266 Arduino](https
 - I prefer a standalone version of the IDE allowing easy ESP8266 file manipulation. This can be achieved by downloading the Arduino IDE ZIP file for non admin install. After unzipping and before executing ```arduino.exe``` add an empty directory called ```portable```
 - Follow the procedure to install the ESP8266 Arduino development environment
 - Copy the ```sonoff``` directory to your sketchfolder
+- Download and copy the [pubsubclient](https://github.com/knolleary/pubsubclient) library in ```libraries```
 
 Install php and a local web server (ie apache) for OTA and copy directory ```api``` in webroot.
 
