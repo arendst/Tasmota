@@ -80,6 +80,7 @@ void WIFI_Connect()
   WiFi.hostname(hostname);
   DEBUG_MSG("APP: Connecting to %s as %s\n", sysCfg.sta_ssid, hostname);
   WiFi.setAutoConnect(true);
+  WiFi.mode(WIFI_STA);
   WiFi.begin(sysCfg.sta_ssid, sysCfg.sta_pwd);
   wificounter = 4;
 }

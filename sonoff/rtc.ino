@@ -76,8 +76,8 @@ void rtc_second()
   // NTP Sync every hour at x:0:10
   if (rtcTime.Minute == 0) {
     if ((rtcTime.Second == 10) && !ntpsync) {
-      ntpsync = 1;
-      myrtc = sntp_get_current_timestamp() -1;
+      myrtc = sntp_get_current_timestamp();
+      ntpsync = (myrtc) ? 1 : 0;
       DEBUG_MSG("RTC: sntp %d, %s \n", myrtc, sntp_get_real_time(myrtc));
     }
     if (rtcTime.Second == 40) ntpsync = 0;

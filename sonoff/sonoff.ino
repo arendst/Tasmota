@@ -3,7 +3,7 @@
 */
 
 #define PROJECT             "sonoff"
-#define VERSION             "1.0.5"
+#define VERSION             "1.0.6"
 #define CFG_HOLDER          0x20160309   // Change this value to load default configurations
 
 // Wifi
@@ -12,7 +12,11 @@
 #define WIFI_HOSTNAME       "ESP-%06X-%s"
 
 // Ota
-#define OTA_URL             "http://sidnas2:80/api/arduino/"PROJECT".cpp.bin"
+#if (ARDUINO >= 168)
+  #define OTA_URL           "http://sidnas2:80/api/arduino/"PROJECT".ino.bin"
+#else
+  #define OTA_URL           "http://sidnas2:80/api/arduino/"PROJECT".cpp.bin"
+#endif
 
 // MQTT
 #define MQTT_HOST           "sidnas2"
