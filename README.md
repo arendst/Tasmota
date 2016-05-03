@@ -40,6 +40,8 @@ Update ```sonoff.ino``` with your specific Wifi and MQTT parameters.
 Verify source and upload once to sonoff using the serial connection as shown in [Peter Scargill's blog](http://tech.scargill.net/itead-slampher-and-sonoff). **Do not connect AC power during the flash cable connection**. 
 
 Verify and upload an OTA image to your web server with option ```Upload Using: OTA_upload```.
+
+Enable debug messages by selecting option Tools Debug Port: Serial.
 ## Usage
 The button on sonoff provides the following features:
 
@@ -79,8 +81,24 @@ light 1 | Turn power On
 light 0 | Turn power Off
 light 2 | Toggle power
 status | Show abbreviated status information
-status 1 | Show all status information
+status 1 | Show more status information
 status 2 | Show version information
+status 3 | Show syslog information
+status 4 | Show flash information
+status 5 | Show network information
+seriallog 0 | Disable serial logging
+seriallog 1 | Show only error messages
+seriallog 2 | Show error and info messages
+seriallog 3 | Show error, info and debug messages
+seriallog 4 | Show all messages
+syslog 0 | Disable syslog logging
+syslog 1 | Show only error messages
+syslog 2 | Show error and info messages
+syslog 3 | Show error, info and debug messages
+syslog 4 | Show all messages
+loghost | Show current syslog host
+loghost 1 | Reset syslog host to ```user_config.h``` value and restart
+loghost your-host | Set syslog host and restart
 grouptopic | Show current MQTT group topic
 grouptopic 1 | Reset MQTT group topic to ```user_config.h``` value and restart
 grouptopic your-grouptopic | Set MQTT group topic and restart
@@ -93,15 +111,16 @@ Command | Description
 ------- | -----------
 restart 1 | Restart sonoff
 reset 1 | Reset sonoff parameters to ```user_config.h``` values and restart
+reset 2 | Erase flash, reset sonoff parameters to ```user_config.h``` values and restart
 ssid | Show current Wifi SSId
 ssid 1 | Reset Wifi SSId to ```user_config.h``` value and restart
 ssid your-ssid | Set Wifi SSId and restart
 password | Show current Wifi password
 password 1 | Reset Wifi password to ```user_config.h``` value and restart
 password your-password | Set Wifi password and restart
-host | Show current MQTT host
-host 1 | Reset MQTT host to ```user_config.h``` value and restart
-host your-host | Set MQTT host and restart
+mqtthost | Show current MQTT host
+mqtthost 1 | Reset MQTT host to ```user_config.h``` value and restart
+mqtthost your-host | Set MQTT host and restart
 topic | Show current MQTT topic
 topic 1 | Reset MQTT topic to ```user_config.h``` value and restart
 topic your-topic | Set MQTT topic and restart
@@ -113,5 +132,5 @@ upgrade 1 | Download ota firmware from your web server and restart
 
 If the same topic has been defined to more than one sonoff an individual sonoff can still be addressed by the fall back topic MQTT_CLIENT_ID as defined in user_config.h. The fall back topic will be ```DVES_<last six characters of MAC address>```.
 ## Tips
-- To aid in finding the IP address of sonoff the network name will be ```ESP-<last six characters of MAC address>-<MQTT topic>```. So the default name is ```ESP-123456-sonoff```
+- To aid in finding the IP address of sonoff the network name will be ```ESP-<last six characters of MAC address>-<MQTT topic>```. So the default name is ```ESP-123456-sonoff```. Or use option status 5.
 - Use the group topic to address several sonoffs with one (restricted) MQTT command

@@ -1,38 +1,39 @@
-#define CHKSECS   20   // seconds
+#define WIFI_SMARTSEC  60   // seconds
+#define WIFI_CHECKSEC  20   // seconds
+#define WIFI_RETRY     16
 
-uint8_t wificounter = CHKSECS;
-uint8_t wifiretry = 4;
-uint8_t smrtcounter = 0;
+uint8_t wificounter;
+uint8_t wifiretry = WIFI_RETRY;
+uint8_t smartcounter = 0;
 
 void WIFI_smartconfig()
 {
-  smrtcounter = 100;   // Allow up to 100 seconds for phone to provide ssid/pswd
-  wificounter = smrtcounter +5;
-  Serial.printf("Smartconfig active for %d seconds", smrtcounter);
+  smartcounter = WIFI_SMARTSEC;   // Allow up to WIFI_SMARTSECS seconds for phone to provide ssid/pswd
+  wificounter = smartcounter +5;
+  addLog(LOG_LEVEL_INFO, "Smartconfig: Started and active for 1 minute");
   WiFi.beginSmartConfig();
 }
 
 void WIFI_check_ip()
 {
   if ((WiFi.status() == WL_CONNECTED) && (static_cast<uint32_t>(WiFi.localIP()) != 0)) {
-    wificounter = CHKSECS;
-    wifiretry = 4;
+    wificounter = WIFI_CHECKSEC;
+    wifiretry = WIFI_RETRY;
   } else {
     switch (WiFi.status()) {
       case WL_NO_SSID_AVAIL:
       case WL_CONNECT_FAILED:
-        DEBUG_MSG("WIFI: STATION_CONNECT_FAIL\n");
+        addLog(LOG_LEVEL_DEBUG, "Wifi: STATION_CONNECT_FAIL");
         WIFI_smartconfig();
         break;
       default:
-        DEBUG_MSG("WIFI: STATION_IDLE\n");
+        addLog(LOG_LEVEL_DEBUG, "Wifi: STATION_IDLE");
+        if (wifiretry == (WIFI_RETRY / 2)) WiFi.begin();
         wifiretry--;
-        if (wifiretry) {
-          WiFi.begin();
-          wificounter = 4;
-        } else {
+        if (wifiretry)
+          wificounter = 1;
+        else
           WIFI_smartconfig();
-        }
         break;
     }
   }
@@ -40,30 +41,31 @@ void WIFI_check_ip()
 
 void WIFI_Check(uint8_t param)
 {
+  char log[80];
+  
   wificounter--;
   switch (param) {
     case WIFI_SMARTCONFIG:
-      DEBUG_MSG("WIFI: WIFI_SMARTCONFIG\n");
       WIFI_smartconfig();
       break;
     default:
       if (wificounter <= 0) {
-        DEBUG_MSG("WIFI: WIFI_STATUS\n");
-        wificounter = CHKSECS;
+        addLog(LOG_LEVEL_DEBUG_MORE, "Wifi: Check connection");
+        wificounter = WIFI_CHECKSEC;
         WIFI_check_ip();
       }
-      if (smrtcounter) {
-        smrtcounter--;
-        if (smrtcounter) {
+      if (smartcounter) {
+        smartcounter--;
+        if (smartcounter) {
           if (WiFi.smartConfigDone()) {
-            smrtcounter = 0;
+            smartcounter = 0;
             memcpy(sysCfg.sta_ssid, WiFi.SSID().c_str(), strlen(WiFi.SSID().c_str())+1);
             memcpy(sysCfg.sta_pwd, WiFi.psk().c_str(), strlen(WiFi.psk().c_str())+1);
-            Serial.printf("\nSmartconfig SSID = %s and Password = %s\n", sysCfg.sta_ssid, sysCfg.sta_pwd);
-            restartflag = 3;
+            sprintf_P(log, PSTR("Smartconfig: SSID %s and Password %s"), sysCfg.sta_ssid, sysCfg.sta_pwd);
+            addLog(LOG_LEVEL_INFO, log);
           }
         }
-        if (smrtcounter == 0) {
+        if (smartcounter == 0) {
           WiFi.stopSmartConfig();
           restartflag = 2;     
         }
@@ -72,15 +74,16 @@ void WIFI_Check(uint8_t param)
   }
 }
 
-void WIFI_Connect()
+void WIFI_Connect(char *Hostname)
 {
-  char hostname[32];
+  char log[80];
 
-  sprintf_P(hostname, PSTR(WIFI_HOSTNAME), ESP.getChipId(), sysCfg.mqtt_topic);
-  WiFi.hostname(hostname);
-  DEBUG_MSG("APP: Connecting to %s as %s\n", sysCfg.sta_ssid, hostname);
+  WiFi.persistent(false);   // Solve possible wifi init errors
+  WiFi.hostname(Hostname);
+  sprintf_P(log, PSTR("Wifi: Connecting to %s as %s"), sysCfg.sta_ssid, Hostname);
+  addLog(LOG_LEVEL_DEBUG, log);
   WiFi.setAutoConnect(true);
-  WiFi.mode(WIFI_STA);
+  WiFi.mode(WIFI_STA);     // Disable AP mode
   WiFi.begin(sysCfg.sta_ssid, sysCfg.sta_pwd);
-  wificounter = 4;
+  wificounter = 1;
 }

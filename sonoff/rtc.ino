@@ -10,6 +10,8 @@ extern "C" {
 
 static const uint8_t monthDays[] = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 }; // API starts months from 1, this array starts from 0
 
+static const char monthNames[37] = { "JanFebMrtAprMayJunJulAugSepOctNovDec" };
+
 uint32_t myrtc = 0;
 uint8_t ntpsync = 0;
 
@@ -66,6 +68,7 @@ void convertTime()
       break;
     }
   }
+  strncpy(rtcTime.MonthName, monthNames +(month *3), 3);
   rtcTime.Month = month + 1;  // jan is month 1
   rtcTime.Day = time + 1;     // day of month
   rtcTime.Year = rtcTime.Year + 1970;
@@ -73,12 +76,15 @@ void convertTime()
 
 void rtc_second()
 {
+  char log[80];
+  
   // NTP Sync every hour at x:0:10
   if (rtcTime.Minute == 0) {
-    if ((rtcTime.Second == 10) && !ntpsync) {
+    if ((rtcTime.Second >= 10) && !ntpsync) {
       myrtc = sntp_get_current_timestamp();
       ntpsync = (myrtc) ? 1 : 0;
-      DEBUG_MSG("RTC: sntp %d, %s \n", myrtc, sntp_get_real_time(myrtc));
+      sprintf_P(log, PSTR("RTC: sntp %d, %s"), myrtc, sntp_get_real_time(myrtc));
+      addLog(LOG_LEVEL_DEBUG, log);
     }
     if (rtcTime.Second == 40) ntpsync = 0;
   }
@@ -93,6 +99,7 @@ void rtc_timezone(uint8_t timezone)
   sntp_set_timezone(timezone);
   sntp_init();
   myrtc = sntp_get_current_timestamp();
+  ntpsync = 0;
 }
 
 void rtc_init(uint8_t timezone)
