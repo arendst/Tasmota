@@ -139,6 +139,6 @@ If the same topic has been defined to more than one sonoff an individual sonoff 
 ## Modified KAKU power socket using ESP-12F
 Using parts from itead (5V power supply), aliexpress (ESP-12F and 5V to 3V3 step down) and ebay (5V relay) I modified broken 434MHz kaku power sockets to Wifi wkaku power sockets.
 
-![Exterior](https://github.com/arendst/arendst.github.io/blob/master/media/wkaku1a.jpg) 
-![Exterior](https://github.com/arendst/arendst.github.io/blob/master/media/kaku2a.jpg) 
-![Exterior](https://github.com/arendst/arendst.github.io/blob/master/media/wkaku2a.jpg)
+![Exterior](https://github.com/arendst/arendst.github.io/blob/master/media/wkaku1a.jpg =250x) 
+![Exterior](https://github.com/arendst/arendst.github.io/blob/master/media/kaku2a.jpg =250x) 
+![Exterior](https://github.com/arendst/arendst.github.io/blob/master/media/wkaku2a.jpg =250x)
