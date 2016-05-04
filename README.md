@@ -37,7 +37,7 @@ For sonoff select from ```Tools Board Generic ESP8266 Module``` and set the foll
 
 Update ```sonoff.ino``` with your specific Wifi and MQTT parameters.
 
-Verify source and upload once to sonoff using the serial connection as shown in [Peter Scargill's blog](http://tech.scargill.net/itead-slampher-and-sonoff) ![Connection diagram](/media/ProgramESP8266.jpg). **Do not connect AC power during the flash cable connection**. 
+Verify source and upload once to sonoff using the serial connection as shown in [Peter Scargill's blog](http://tech.scargill.net/itead-slampher-and-sonoff) ![Connection diagram](https://github.com/arendst/arendst.github.io/media/ProgramESP8266.jpg). **Do not connect AC power during the flash cable connection**. 
 
 Verify and upload an OTA image to your web server with option ```Upload Using: OTA_upload```.
 
