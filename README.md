@@ -37,8 +37,10 @@ For sonoff select from ```Tools Board Generic ESP8266 Module``` and set the foll
 
 Update ```sonoff.ino``` with your specific Wifi and MQTT parameters.
 
-Verify source and upload once to sonoff using the serial connection as shown in [Peter Scargill's blog](http://tech.scargill.net/itead-slampher-and-sonoff). ![Connection diagram](https://github.com/arendst/arendst.github.io/blob/master/media/ProgramESP8266.jpg)
-
+Verify source and upload once to sonoff using the serial connection as shown in [Peter Scargill's blog](http://tech.scargill.net/itead-slampher-and-sonoff). 
+<center>
+<img alt="Connection diagram" src="https://github.com/arendst/arendst.github.io/blob/master/media/ProgramESP8266.jpg" height="300" /> 
+</center>
 **Do not connect AC power during the flash cable connection**. 
 
 Verify and upload an OTA image to your web server with option ```Upload Using: OTA_upload```.
@@ -137,9 +139,11 @@ If the same topic has been defined to more than one sonoff an individual sonoff 
 - To aid in finding the IP address of sonoff the network name will be ```ESP-<last six characters of MAC address>-<MQTT topic>```. So the default name is ```ESP-123456-sonoff```. Or use option status 5.
 - Use the group topic to address several sonoffs with one (restricted) MQTT command.
 
-## Modified KAKU power socket using ESP-12F
-Using parts from itead (5V power supply), aliexpress (ESP-12F and 5V to 3V3 step down) and ebay (5V relay) I modified broken 434MHz kaku power sockets to Wifi wkaku power sockets.
+## Modified kaku power socket switch using ESP-12F
+Using parts from itead (5V power supply), aliexpress (ESP-12F and 5V to 3V3 step down) and ebay (5V relay) I modified broken 434MHz kaku power socket switches to Wifi wkaku power socket switches.
 
+<center>
 <img alt="Exterior" src="https://github.com/arendst/arendst.github.io/blob/master/media/wkaku1a.jpg" height="300" /> 
 <img alt="Kaku" src="https://github.com/arendst/arendst.github.io/blob/master/media/kaku2a.jpg" height="300" /> 
 <img alt="wKaku" src="https://github.com/arendst/arendst.github.io/blob/master/media/wkaku2a.jpg" height="300" /> 
+</center>
