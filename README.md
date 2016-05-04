@@ -135,10 +135,10 @@ upgrade 1 | Download ota firmware from your web server and restart
 If the same topic has been defined to more than one sonoff an individual sonoff can still be addressed by the fall back topic MQTT_CLIENT_ID as defined in user_config.h. The fall back topic will be ```DVES_<last six characters of MAC address>```.
 ## Tips
 - To aid in finding the IP address of sonoff the network name will be ```ESP-<last six characters of MAC address>-<MQTT topic>```. So the default name is ```ESP-123456-sonoff```. Or use option status 5.
-- Use the group topic to address several sonoffs with one (restricted) MQTT command
+- Use the group topic to address several sonoffs with one (restricted) MQTT command.
 ## Modified KAKU power socket using ESP-12F
 Using parts from itead (5V power supply), aliexpress (ESP-12F and 5V to 3V3 step down) and ebay (5V relay) I modified broken 434MHz kaku power sockets to Wifi wkaku power sockets.
 
-![Exterior](https://github.com/arendst/arendst.github.io/blob/master/media/wkaku1a.jpg =250x) 
-![Exterior](https://github.com/arendst/arendst.github.io/blob/master/media/kaku2a.jpg =250x) 
-![Exterior](https://github.com/arendst/arendst.github.io/blob/master/media/wkaku2a.jpg =250x)
+<img alt="Exterior" src="https://github.com/arendst/arendst.github.io/blob/master/media/wkaku1a.jpg" style="width: 250px;" /> 
+<img alt="Kaku" src="https://github.com/arendst/arendst.github.io/blob/master/media/kaku2a.jpg" style="width: 250px;" /> 
+<img alt="wKaku" src="https://github.com/arendst/arendst.github.io/blob/master/media/wkaku2a.jpg" style="width: 250px;" /> 
