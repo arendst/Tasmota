@@ -34,15 +34,17 @@ void CFG_Default()
   memset(&myCfg, 0x00, sizeof(SYSCFG));
   sysCfg.cfg_holder = CFG_HOLDER;
   sysCfg.saveFlag = 0;
+  sysCfg.version = VERSION;
   sysCfg.seriallog_level = SERIAL_LOG_LEVEL;
   sysCfg.syslog_level = SYS_LOG_LEVEL;
   strcpy(sysCfg.syslog_host, SYS_LOG_HOST);
   strcpy(sysCfg.sta_ssid, STA_SSID);
   strcpy(sysCfg.sta_pwd, STA_PASS);
+  strcpy(sysCfg.otaUrl, OTA_URL);
   strcpy(sysCfg.mqtt_host, MQTT_HOST);
   strcpy(sysCfg.mqtt_grptopic, MQTT_GRPTOPIC);
   strcpy(sysCfg.mqtt_topic, MQTT_TOPIC);
-  strcpy(sysCfg.otaUrl, OTA_URL);
+  strcpy(sysCfg.mqtt_topic2, MQTT_TOPIC);
   strcpy(sysCfg.mqtt_subtopic, MQTT_SUBTOPIC);
   sysCfg.timezone = APP_TIMEZONE;
   sysCfg.power = APP_POWER;

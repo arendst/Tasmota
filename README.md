@@ -50,8 +50,12 @@ Enable debug messages by selecting option Tools Debug Port: Serial.
 The button on sonoff provides the following features:
 
 - a short press toggles the relay. This will blink the LED twice and sends a MQTT status message like ```stat/sonoff/POWER on```
+
+- a short press toggles the relay either by sending a MQTT message like ```cmnd/sonoff/light 2``` or directly. This will blink the LED twice and sends a MQTT status message like ```stat/sonoff/LIGHT on```
+- two short presses toggles the relay. This will blink the LED twice and sends a MQTT status message like ```stat/sonoff/POWER on```
 - three short presses start Wifi smartconfig which allows for SSID and Password configuration using an Android mobile phone with the [ESP8266 SmartConfig](https://play.google.com/store/apps/details?id=com.cmmakerclub.iot.esptouch) app. The green LED will blink during the smartconfig period for 100 seconds. The MQTT server still needs to be configured using the ```user_config.h``` file
 - four short presses start OTA download of firmware. The green LED is lit during the update
+- five short presses will restart sonoff
 - pressing the button for over four seconds resets settings to defaults as defined in ```user_config.h``` and reboots  sonoff
 
 Sonoff responds to the following MQTT commands:
@@ -126,8 +130,11 @@ mqtthost | Show current MQTT host
 mqtthost 1 | Reset MQTT host to ```user_config.h``` value and restart
 mqtthost your-host | Set MQTT host and restart
 topic | Show current MQTT topic
-topic 1 | Reset MQTT topic to ```user_config.h``` value and restart
-topic your-topic | Set MQTT topic and restart
+topic 1 | Reset MQTT topic AND button topic to ```user_config.h``` value and restart
+topic your-topic | Set MQTT topic  AND button topic and restart
+buttontopic | Show current MQTT button topic
+buttontopic 1 | Reset MQTT button topic to ```user_config.h``` value
+buttontopic your-topic | Set MQTT button topic
 smartconfig 1 | Start smart config
 otaurl | Show current otaurl
 otaurl 1 | Reset otaurl to ```user_config.h``` value
@@ -136,7 +143,7 @@ upgrade 1 | Download ota firmware from your web server and restart
 
 If the same topic has been defined to more than one sonoff an individual sonoff can still be addressed by the fall back topic MQTT_CLIENT_ID as defined in user_config.h. The fall back topic will be ```DVES_<last six characters of MAC address>```.
 ## Tips
-- To aid in finding the IP address of sonoff the network name will be ```ESP-<last six characters of MAC address>-<MQTT topic>```. So the default name is ```ESP-123456-sonoff```. Or use option status 5.
+- To aid in finding the IP address of sonoff the network name will be ```esp-<last six characters of MAC address>-<MQTT topic>```. So the default name is ```esp-123456-sonoff```. Another option is MQTT command status 5.
 - Use the group topic to address several sonoffs with one (restricted) MQTT command.
 
 ## Modified kaku power socket switch using ESP-12F

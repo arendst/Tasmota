@@ -1,4 +1,12 @@
 /*
+ * 1.0.11 20160524
+ * Provide button response while MQTT connection lost
+ * 
+ * 1.0.10 20160520
+ * Add optional button topic to assist external MQTT clients
+ * Change version notation
+ * Reset default values
+ * 
  * 1.0.9  20160503
  * Add more blinks
  * Add reset 2 option erasing flash

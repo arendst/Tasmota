@@ -18,8 +18,8 @@
 */
 
 #define PROJECT                "sonoff"
-#define VERSION                "1.0.9"
-#define CFG_HOLDER             0x20160311   // Change this value to load default configurations
+#define VERSION                0x01000B00   // 1.0.11
+#define CFG_HOLDER             0x20160520   // Change this value to load default configurations
 
 // Wifi
 #define STA_SSID               "indebuurt3"
@@ -67,6 +67,7 @@
 
 #define SERIAL_IO                           // Enable serial command line
 #define STATES                 10           // loops per second
+#define MQTT_RETRY_SECS        10           // Seconds to retry MQTT connection
 
 //#define LED_PIN                2            // GPIO 2 = Blue Led (0 = On, 1 = Off) - ESP-12
 #define LED_PIN                13           // GPIO 13 = Green Led (0 = On, 1 = Off) - Sonoff
@@ -94,6 +95,7 @@ extern "C" uint32_t _SPIFFS_start;
 struct SYSCFG {
   unsigned long cfg_holder;
   unsigned long saveFlag;
+  unsigned long version;
   byte          seriallog_level;
   byte          syslog_level;
   char          syslog_host[32];
@@ -103,6 +105,7 @@ struct SYSCFG {
   char          mqtt_host[32];
   char          mqtt_grptopic[32];
   char          mqtt_topic[32];
+  char          mqtt_topic2[32];
   char          mqtt_subtopic[32];
   int8_t        timezone;
   uint8_t       power;
@@ -120,7 +123,9 @@ struct TIME_T {
   unsigned long Valid;
 } rtcTime;
 
+char Version[16];
 char Hostname[32];
+uint8_t mqttcounter = 0;
 unsigned long timerxs = 0, timersec = 0;
 int state = 0;
 int otaflag = 0;
@@ -183,42 +188,47 @@ void mqtt_publish(const char* topic, const char* data)
   blinks++;
 }
 
+void mqtt_connected()
+{
+  char stopic[40], svalue[40], log[80];
+
+  addLog(LOG_LEVEL_INFO, "MQTT: Connected");
+
+  sprintf_P(stopic, PSTR("%s/%s/#"), SUB_PREFIX, sysCfg.mqtt_topic);
+  mqttClient.subscribe(stopic);
+  mqttClient.loop();  // Solve LmacRxBlk:1 messages
+  sprintf_P(stopic, PSTR("%s/%s/#"), SUB_PREFIX, sysCfg.mqtt_grptopic);
+  mqttClient.subscribe(stopic);
+  mqttClient.loop();  // Solve LmacRxBlk:1 messages
+  sprintf_P(stopic, PSTR("%s/"MQTT_CLIENT_ID"/#"), SUB_PREFIX, ESP.getChipId());  // Fall back topic
+  mqttClient.subscribe(stopic);
+  mqttClient.loop();  // Solve LmacRxBlk:1 messages
+
+  sprintf_P(stopic, PSTR("%s/%s/NAME"), PUB_PREFIX, sysCfg.mqtt_topic);
+  sprintf_P(svalue, PSTR("Sonoff switch"));
+  mqtt_publish(stopic, svalue);
+  sprintf_P(stopic, PSTR("%s/%s/VERSION"), PUB_PREFIX, sysCfg.mqtt_topic);
+  sprintf_P(svalue, PSTR("%s"), Version);
+  mqtt_publish(stopic, svalue);
+  sprintf_P(stopic, PSTR("%s/%s/FALLBACKTOPIC"), PUB_PREFIX, sysCfg.mqtt_topic);
+  sprintf_P(svalue, PSTR(MQTT_CLIENT_ID), ESP.getChipId());
+  mqtt_publish(stopic, svalue);
+}
+
 void mqtt_reconnect()
 {
   char stopic[40], svalue[40], log[80];
 
-  // Loop until we're reconnected
-  while (!mqttClient.connected()) {
-    addLog(LOG_LEVEL_INFO, "MQTT: Attempting connection");
-    sprintf(svalue, MQTT_CLIENT_ID, ESP.getChipId());
-    sprintf_P(stopic, PSTR("%s/%s/lwt"), PUB_PREFIX, sysCfg.mqtt_topic);
-    if (mqttClient.connect(svalue, MQTT_USER, MQTT_PASS, stopic, 0, 0, "offline")) {
-      addLog(LOG_LEVEL_INFO, "MQTT: Connected");
-
-      sprintf_P(stopic, PSTR("%s/%s/#"), SUB_PREFIX, sysCfg.mqtt_topic);
-      mqttClient.subscribe(stopic);
-      mqttClient.loop();  // Solve LmacRxBlk:1 messages
-      sprintf_P(stopic, PSTR("%s/%s/#"), SUB_PREFIX, sysCfg.mqtt_grptopic);
-      mqttClient.subscribe(stopic);
-      mqttClient.loop();  // Solve LmacRxBlk:1 messages
-      sprintf_P(stopic, PSTR("%s/"MQTT_CLIENT_ID"/#"), SUB_PREFIX, ESP.getChipId());  // Fall back topic
-      mqttClient.subscribe(stopic);
-      mqttClient.loop();  // Solve LmacRxBlk:1 messages
-
-      sprintf_P(stopic, PSTR("%s/%s/NAME"), PUB_PREFIX, sysCfg.mqtt_topic);
-      sprintf_P(svalue, PSTR("Sonoff switch"));
-      mqtt_publish(stopic, svalue);
-      sprintf_P(stopic, PSTR("%s/%s/VERSION"), PUB_PREFIX, sysCfg.mqtt_topic);
-      sprintf_P(svalue, PSTR("%s"), VERSION);
-      mqtt_publish(stopic, svalue);
-      sprintf_P(stopic, PSTR("%s/%s/FALLBACKTOPIC"), PUB_PREFIX, sysCfg.mqtt_topic);
-      sprintf_P(svalue, PSTR(MQTT_CLIENT_ID), ESP.getChipId());
-      mqtt_publish(stopic, svalue);
-    } else {
-      sprintf_P(log, PSTR("MQTT: Connect failed, rc %d. Retry in 5 seconds"), mqttClient.state());
-      addLog(LOG_LEVEL_DEBUG, log);
-      delay(5000);
-    }
+  mqttcounter = MQTT_RETRY_SECS;
+  addLog(LOG_LEVEL_INFO, "MQTT: Attempting connection");
+  sprintf(svalue, MQTT_CLIENT_ID, ESP.getChipId());
+  sprintf_P(stopic, PSTR("%s/%s/lwt"), PUB_PREFIX, sysCfg.mqtt_topic);
+  if (mqttClient.connect(svalue, MQTT_USER, MQTT_PASS, stopic, 0, 0, "offline")) {
+    mqttcounter = 0;
+    mqtt_connected();
+  } else {
+    sprintf_P(log, PSTR("MQTT: Connect failed, rc %d. Retry in %d seconds"), mqttClient.state(), mqttcounter);
+    addLog(LOG_LEVEL_DEBUG, log);
   }
 }
 
@@ -280,7 +290,7 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
         break;  
       case 2:
         sprintf_P(svalue, PSTR("Version %s, Boot %d, SDK %s"),
-          VERSION, ESP.getBootVersion(), ESP.getSdkVersion());
+          Version, ESP.getBootVersion(), ESP.getSdkVersion());
         break;
       case 3:
         sprintf_P(svalue, PSTR("Seriallog %d, Syslog %d, LogHost %s, SSId %s, Password %s"),
@@ -300,14 +310,14 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
         break;
       }
       default:
-        sprintf_P(svalue, PSTR("%s, %s, %s, %d, %d"),
-          VERSION, sysCfg.mqtt_topic, sysCfg.mqtt_subtopic, sysCfg.power, sysCfg.timezone);
+        sprintf_P(svalue, PSTR("%s, %s, %s, %s, %d, %d"),
+          Version, sysCfg.mqtt_topic, sysCfg.mqtt_topic2, sysCfg.mqtt_subtopic, sysCfg.power, sysCfg.timezone);
       }
     }
     else if (!grpflg && !strcmp(type,"UPGRADE")) {
       if ((data_len > 0) && (payload == 1)) {
         otaflag = 3;
-        sprintf_P(svalue, PSTR("Upgrade %s"), VERSION);
+        sprintf_P(svalue, PSTR("Upgrade %s"), Version);
       }
       else
         sprintf_P(svalue, PSTR("1 to upgrade"));
@@ -375,9 +385,20 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
         sprintf_P(svalue, PSTR(MQTT_CLIENT_ID), ESP.getChipId());
         if (!strcmp(dataBuf, svalue)) payload = 1;
         strcpy(sysCfg.mqtt_topic, (payload == 1) ? MQTT_TOPIC : dataBuf);
+        strcpy(sysCfg.mqtt_topic2, (payload == 1) ? MQTT_TOPIC : dataBuf);
         restartflag = 2;
       }
       sprintf_P(svalue, PSTR("%s"), sysCfg.mqtt_topic);
+    }
+    else if (!grpflg && !strcmp(type,"BUTTONTOPIC")) {
+      if ((data_len > 0) && (data_len < 32)) {
+        for(i = 0; i <= data_len; i++)
+          if ((dataBuf[i] == '/') || (dataBuf[i] == '+') || (dataBuf[i] == '#')) dataBuf[i] = '_';
+        sprintf_P(svalue, PSTR(MQTT_CLIENT_ID), ESP.getChipId());
+        if (!strcmp(dataBuf, svalue)) payload = 1;
+        strcpy(sysCfg.mqtt_topic2, (payload == 1) ? MQTT_TOPIC : dataBuf);
+      }
+      sprintf_P(svalue, PSTR("%s"), sysCfg.mqtt_topic2);
     }
     else if (!grpflg && !strcmp(type,"SMARTCONFIG")) {
       if ((data_len > 0) && (payload == 1)) {
@@ -438,12 +459,24 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
       blinks = 1;
       sprintf_P(stopic, PSTR("%s/%s/SYNTAX"), PUB_PREFIX, sysCfg.mqtt_topic);
       if (!grpflg)
-        strcpy_P(svalue, PSTR("Status, Upgrade, Otaurl, Restart, Reset, Smartconfig, Seriallog, Syslog, LogHost, SSId, Password, MqttHost, GroupTopic, Topic, Timezone, Light, Power"));
+        strcpy_P(svalue, PSTR("Status, Upgrade, Otaurl, Restart, Reset, Smartconfig, Seriallog, Syslog, LogHost, SSId, Password, MqttHost, GroupTopic, Topic, ButtonTopic, Timezone, Light, Power"));
       else
         strcpy_P(svalue, PSTR("Status, GroupTopic, Timezone, Light, Power"));
     }
     mqtt_publish(stopic, svalue);
   }
+}
+
+void send_button(char *cmnd)
+{
+  char stopic[128], svalue[128];
+  char *token;
+
+  token = strtok(cmnd, " ");
+  sprintf_P(stopic, PSTR("%s/%s/%s"), SUB_PREFIX, sysCfg.mqtt_topic2, token);
+  token = strtok(NULL, "");
+  sprintf_P(svalue, PSTR("%s"), (token == NULL) ? "" : token);
+  mqtt_publish(stopic, svalue);
 }
 
 void do_cmnd(char *cmnd)
@@ -488,7 +521,13 @@ void every_second()
   }
 }
 
-const char commands[6][14] PROGMEM = {{"reset 1"},{"light 2"},{"light 2"},{"smartconfig 1"},{"upgrade 1"},{"restart 1"}};
+const char commands[6][14] PROGMEM = {
+  {"reset 1"},        // Hold button for more than 4 seconds
+  {"light 2"},        // Press button once
+  {"light 2"},        // Press button twice
+  {"smartconfig 1"},  // Press button three times
+  {"upgrade 1"},      // Press button four times
+  {"restart 1"}};     // Press button five times
 
 void stateloop()
 {
@@ -526,8 +565,11 @@ void stateloop()
   } else {
     if ((!holdcount) && (multipress >= 1) && (multipress <= 5)) {
       strcpy_P(scmnd, commands[multipress]);
+      if ((multipress == 1) && mqttClient.connected())
+        send_button(scmnd);          // Execute command via MQTT using ButtonTopic to sync external clients
+      else
+        do_cmnd(scmnd);              // Execute command internally 
       multipress = 0;
-      do_cmnd(scmnd);
     }
   }
 
@@ -573,6 +615,14 @@ void stateloop()
       WIFI_Check(WIFI_SMARTCONFIG);
     } else {
       WIFI_Check(WIFI_STATUS);
+    }
+    break;
+  case (STATES/10)*8:
+    if ((WiFi.status() == WL_CONNECTED) && (!mqttClient.connected())) {
+      if (!mqttcounter)
+        mqtt_reconnect();
+      else
+        mqttcounter--;
     }
     break;
   }
@@ -623,7 +673,17 @@ void setup()
   delay(10);
   Serial.println();
 
+  sprintf_P(Version, PSTR("%d.%d.%d"), VERSION >> 24 & 0xff, VERSION >> 16 & 0xff, VERSION >> 8 & 0xff);
+  if (VERSION & 0x1f) {
+    byte idx = strlen(Version);
+    Version[idx] = 96 + (VERSION & 0x1f);
+    Version[idx +1] = 0;
+  }
   CFG_Load();
+  if (sysCfg.version != VERSION) {  // Fix version dependent changes
+
+    sysCfg.version = VERSION;
+  }
 
   sprintf_P(Hostname, PSTR(WIFI_HOSTNAME), ESP.getChipId(), sysCfg.mqtt_topic);
   WIFI_Connect(Hostname);
@@ -642,7 +702,7 @@ void setup()
   rtc_init(sysCfg.timezone);
 
   sprintf_P(log, PSTR("App: Project %s (Topic %s, Fallback "MQTT_CLIENT_ID", GroupTopic %s) Version %s"),
-    PROJECT, sysCfg.mqtt_topic, ESP.getChipId(), sysCfg.mqtt_grptopic, VERSION);
+    PROJECT, sysCfg.mqtt_topic, ESP.getChipId(), sysCfg.mqtt_grptopic, Version);
   addLog(LOG_LEVEL_INFO, log);
 }
 
@@ -656,7 +716,6 @@ void loop()
 
   if (millis() >= timerxs) stateloop();
 
-  if ((WiFi.status() == WL_CONNECTED) && (!mqttClient.connected())) mqtt_reconnect();
   mqttClient.loop();
 
 #ifdef SERIAL_IO
