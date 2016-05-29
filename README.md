@@ -4,7 +4,7 @@ Provide ESP8266 based [itead Sonoff](https://www.itead.cc/sonoff-wifi-wireless-s
 
 See [Sonoff-MQTT-OTA](https://github.com/arendst/Sonoff-MQTT-OTA) for the ```esp-open-sdk``` version.
 ## Prerequisite
-Install the ESP8266 Arduino development environment from [esp8266 Arduino](https://github.com/esp8266/Arduino). The software is tested on a Windows PC with Arduino IDE versions 1.6.5r5 and 1.6.8 and esp8266 Arduino versions 2.1.0 and 2.2.0.
+Install the ESP8266 Arduino development environment from [esp8266 Arduino](https://github.com/esp8266/Arduino). The software is tested on a Windows PC with Arduino IDE versions 1.6.5r5, 1.6.8 and 1.6.9 and esp8266 Arduino versions 2.1.0 and 2.2.0.
 
 - I prefer a standalone version of the IDE allowing easy ESP8266 file manipulation. This can be achieved by downloading the Arduino IDE ZIP file for non admin install. After unzipping and before executing ```arduino.exe``` add an empty directory called ```portable```
 - Follow the procedure to install the ESP8266 Arduino development environment
@@ -130,10 +130,11 @@ mqtthost | Show current MQTT host
 mqtthost 1 | Reset MQTT host to ```user_config.h``` value and restart
 mqtthost your-host | Set MQTT host and restart
 topic | Show current MQTT topic
-topic 1 | Reset MQTT topic AND button topic to ```user_config.h``` value and restart
+topic 1 | Reset MQTT topic to ```user_config.h``` value and restart
 topic your-topic | Set MQTT topic  AND button topic and restart
 buttontopic | Show current MQTT button topic
-buttontopic 1 | Reset MQTT button topic to ```user_config.h``` value
+buttontopic 0 | Disable use of MQTT button topic
+buttontopic 1 | Set MQTT button topic to MQTT topic as defined in ```user_config.h```
 buttontopic your-topic | Set MQTT button topic
 smartconfig 1 | Start smart config
 otaurl | Show current otaurl

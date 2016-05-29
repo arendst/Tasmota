@@ -18,7 +18,7 @@
 */
 
 #define PROJECT                "sonoff"
-#define VERSION                0x01000B00   // 1.0.11
+#define VERSION                0x01000C00   // 1.0.12
 #define CFG_HOLDER             0x20160520   // Change this value to load default configurations
 
 // Wifi
@@ -190,9 +190,7 @@ void mqtt_publish(const char* topic, const char* data)
 
 void mqtt_connected()
 {
-  char stopic[40], svalue[40], log[80];
-
-  addLog(LOG_LEVEL_INFO, "MQTT: Connected");
+  char stopic[40], svalue[40];
 
   sprintf_P(stopic, PSTR("%s/%s/#"), SUB_PREFIX, sysCfg.mqtt_topic);
   mqttClient.subscribe(stopic);
@@ -224,6 +222,7 @@ void mqtt_reconnect()
   sprintf(svalue, MQTT_CLIENT_ID, ESP.getChipId());
   sprintf_P(stopic, PSTR("%s/%s/lwt"), PUB_PREFIX, sysCfg.mqtt_topic);
   if (mqttClient.connect(svalue, MQTT_USER, MQTT_PASS, stopic, 0, 0, "offline")) {
+    addLog(LOG_LEVEL_INFO, "MQTT: Connected");
     mqttcounter = 0;
     mqtt_connected();
   } else {
@@ -385,7 +384,6 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
         sprintf_P(svalue, PSTR(MQTT_CLIENT_ID), ESP.getChipId());
         if (!strcmp(dataBuf, svalue)) payload = 1;
         strcpy(sysCfg.mqtt_topic, (payload == 1) ? MQTT_TOPIC : dataBuf);
-        strcpy(sysCfg.mqtt_topic2, (payload == 1) ? MQTT_TOPIC : dataBuf);
         restartflag = 2;
       }
       sprintf_P(svalue, PSTR("%s"), sysCfg.mqtt_topic);
@@ -473,6 +471,7 @@ void send_button(char *cmnd)
   char *token;
 
   token = strtok(cmnd, " ");
+  if ((!strcmp(token,"light")) || (!strcmp(token,"power"))) strcpy(token, sysCfg.mqtt_subtopic);
   sprintf_P(stopic, PSTR("%s/%s/%s"), SUB_PREFIX, sysCfg.mqtt_topic2, token);
   token = strtok(NULL, "");
   sprintf_P(svalue, PSTR("%s"), (token == NULL) ? "" : token);
@@ -565,7 +564,7 @@ void stateloop()
   } else {
     if ((!holdcount) && (multipress >= 1) && (multipress <= 5)) {
       strcpy_P(scmnd, commands[multipress]);
-      if ((multipress == 1) && mqttClient.connected())
+      if (strcmp(sysCfg.mqtt_topic2,"0") && (multipress == 1) && mqttClient.connected())
         send_button(scmnd);          // Execute command via MQTT using ButtonTopic to sync external clients
       else
         do_cmnd(scmnd);              // Execute command internally 
