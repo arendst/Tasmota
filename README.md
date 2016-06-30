@@ -148,9 +148,9 @@ If the same topic has been defined to more than one sonoff an individual sonoff 
 - Use the group topic to address several sonoffs with one (restricted) MQTT command.
 
 ## Modified kaku power socket switch using ESP-12F
-Using parts from itead (5V power supply), aliexpress (Different 5V power supply, ESP-12F and 5V to 3V3 step down) and ebay (5V relay) I modified broken 434MHz kaku power socket switches to Wifi wkaku power socket switches.
+Using parts from itead (5V power supply), aliexpress (Different 5V power supply, ESP-12F and 5V to 3V3 step down) and ebay (5V relay) I modified broken 434MHz kaku power socket switches type PAR-1000 to Wifi wkaku power socket switches.
 
 <img alt="Exterior" src="https://github.com/arendst/arendst.github.io/blob/master/media/wkaku1a.jpg" height="300" /> 
 <img alt="Kaku" src="https://github.com/arendst/arendst.github.io/blob/master/media/kaku2a.jpg" height="300" /> 
-<img alt="wKaku" src="https://github.com/arendst/arendst.github.io/blob/master/media/wkaku2a.jpg" height="300" /> 
-<img alt="wKaku v1.2" src="https://github.com/arendst/arendst.github.io/blob/master/media/wkaku3a.jpg" height="300" /> 
+<img alt="wKaku prototype" src="https://github.com/arendst/arendst.github.io/blob/master/media/wkaku2a.jpg" height="300" /> 
+<img alt="wKaku v1.3" src="https://github.com/arendst/arendst.github.io/blob/master/media/wkaku4a.jpg" height="300" /> 
