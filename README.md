@@ -4,7 +4,7 @@ Provide ESP8266 based [itead Sonoff](https://www.itead.cc/sonoff-wifi-wireless-s
 
 See [Sonoff-MQTT-OTA](https://github.com/arendst/Sonoff-MQTT-OTA) for the ```esp-open-sdk``` version.
 ## Prerequisite
-Install the ESP8266 Arduino development environment from [esp8266 Arduino](https://github.com/esp8266/Arduino). The software is tested on a Windows PC with Arduino IDE versions 1.6.5r5, 1.6.8 and 1.6.9 and esp8266 Arduino versions 2.1.0 and 2.2.0.
+Install the ESP8266 Arduino development environment from [esp8266 Arduino](https://github.com/esp8266/Arduino). The software is tested on a Windows PC with Arduino IDE versions 1.6.5r5, 1.6.8 and 1.6.9 and esp8266 Arduino versions 2.1.0, 2.2.0 and 2.3.0.
 
 - I prefer a standalone version of the IDE allowing easy ESP8266 file manipulation. This can be achieved by downloading the Arduino IDE ZIP file for non admin install. After unzipping and before executing ```arduino.exe``` add an empty directory called ```portable```
 - Follow the procedure to install the ESP8266 Arduino development environment
@@ -18,8 +18,8 @@ Install php and a local web server (ie apache) for OTA and copy directory ```api
 
 If you want to be able to upload the OTA file from the IDE to your webserver perform the following changes to the Arduino IDE environment:
 
-- Copy file ```espupload.py``` to directory ```portable\packages\esp8266\hardware\esp8266\2.1.0\tools```
-- Replace files ```boards.txt``` and ```platform.txt``` in directory ```portable\packages\esp8266\hardware\esp8266\2.1.0```
+- Copy file ```espupload.py``` to directory ```portable\packages\esp8266\hardware\esp8266\2.3.0\tools```
+- Replace files ```boards.txt``` and ```platform.txt``` in directory ```portable\packages\esp8266\hardware\esp8266\2.3.0```
 
 This will provide an additional option ```Tools - Upload Using: OTA_upload```.
 ## Compile and upload
