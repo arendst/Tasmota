@@ -88,6 +88,11 @@ light toggle | Toggle power
 light 1 | Turn power On
 light 0 | Turn power Off
 light 2 | Toggle power
+ledstate | Show current led state as On or Off
+ledstate on | Show power state on led
+ledstate off | Do not show power state on led
+ledstate 1 | Show power state on led
+ledstate 0 | Do not show power state on led
 status | Show abbreviated status information
 status 1 | Show more status information
 status 2 | Show version information

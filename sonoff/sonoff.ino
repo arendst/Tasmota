@@ -18,7 +18,7 @@
 */
 
 #define PROJECT                "sonoff"
-#define VERSION                0x01000C00   // 1.0.12
+#define VERSION                0x01000D00   // 1.0.13
 #define CFG_HOLDER             0x20160520   // Change this value to load default configurations
 
 // Wifi
@@ -62,6 +62,7 @@
 #define MQTT_SUBTOPIC          "POWER"
 #define APP_TIMEZONE           1            // +1 hour (Amsterdam)
 #define APP_POWER              0            // Saved power state Off
+#define APP_LEDSTATE           0            // Do not show power state (1 = Show power state)
 
 // End of user defines **************************************************************************
 
@@ -109,6 +110,7 @@ struct SYSCFG {
   char          mqtt_subtopic[32];
   int8_t        timezone;
   uint8_t       power;
+  uint8_t       ledstate;
 } sysCfg;
 
 struct TIME_T {
@@ -450,6 +452,12 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
       }
       strcpy(svalue, (sysCfg.power) ? "On" : "Off");
     }
+    else if (!strcmp(type,"LEDSTATE")) {
+      if ((data_len > 0) && (payload >= 0) && (payload <= 1)) {
+        sysCfg.ledstate = payload;
+      }
+      strcpy(svalue, (sysCfg.ledstate) ? "On" : "Off");
+    }
     else {
       type = NULL;
     }
@@ -457,9 +465,9 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
       blinks = 1;
       sprintf_P(stopic, PSTR("%s/%s/SYNTAX"), PUB_PREFIX, sysCfg.mqtt_topic);
       if (!grpflg)
-        strcpy_P(svalue, PSTR("Status, Upgrade, Otaurl, Restart, Reset, Smartconfig, Seriallog, Syslog, LogHost, SSId, Password, MqttHost, GroupTopic, Topic, ButtonTopic, Timezone, Light, Power"));
+        strcpy_P(svalue, PSTR("Status, Upgrade, Otaurl, Restart, Reset, Smartconfig, Seriallog, Syslog, LogHost, SSId, Password, MqttHost, GroupTopic, Topic, ButtonTopic, Timezone, Light, Power, Ledstate"));
       else
-        strcpy_P(svalue, PSTR("Status, GroupTopic, Timezone, Light, Power"));
+        strcpy_P(svalue, PSTR("Status, GroupTopic, Timezone, Light, Power, Ledstate"));
     }
     mqtt_publish(stopic, svalue);
   }
@@ -572,13 +580,17 @@ void stateloop()
     }
   }
 
-  if ((blinks || restartflag || otaflag) && (!(state % ((STATES/10)*2)))) {
-    if (restartflag || otaflag)
-      blinkstate = 0;   // Stay lit
-    else
-      blinkstate ^= 1;  // Blink
-    digitalWrite(LED_PIN, blinkstate);
-    if (blinkstate) blinks--;
+  if (!(state % ((STATES/10)*2))) {
+    if (blinks || restartflag || otaflag) {
+      if (restartflag || otaflag)
+        blinkstate = 0;   // Stay lit
+      else
+        blinkstate ^= 1;  // Blink
+      digitalWrite(LED_PIN, blinkstate);
+      if (blinkstate) blinks--;
+    } else {
+      if (sysCfg.ledstate) digitalWrite(LED_PIN, !sysCfg.power);
+    }
   }
 
   switch (state) {
@@ -679,8 +691,11 @@ void setup()
     Version[idx +1] = 0;
   }
   CFG_Load();
-  if (sysCfg.version != VERSION) {  // Fix version dependent changes
-
+  if (sysCfg.version != VERSION) {      // Fix version dependent changes
+    if (sysCfg.version < 0x01000D00) {  // 1.0.13 - Add ledstate
+      sysCfg.ledstate = APP_LEDSTATE;
+    }
+    
     sysCfg.version = VERSION;
   }
 

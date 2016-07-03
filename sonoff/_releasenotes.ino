@@ -1,6 +1,12 @@
 /*
+ * 1.0.13 20160702
+ * Add Ledstate 1 option to show power state on led
+ *
+ * 1.0.12 20160529
+ * Allow disable of button topic using "0"
+ * 
  * 1.0.11 20160524
- * Provide button response while MQTT connection lost
+ * Provide button response if MQTT connection lost
  * 
  * 1.0.10 20160520
  * Add optional button topic to assist external MQTT clients

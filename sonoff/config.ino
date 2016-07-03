@@ -44,10 +44,11 @@ void CFG_Default()
   strcpy(sysCfg.mqtt_host, MQTT_HOST);
   strcpy(sysCfg.mqtt_grptopic, MQTT_GRPTOPIC);
   strcpy(sysCfg.mqtt_topic, MQTT_TOPIC);
-  strcpy(sysCfg.mqtt_topic2, MQTT_TOPIC);
+  strcpy(sysCfg.mqtt_topic2, "0");
   strcpy(sysCfg.mqtt_subtopic, MQTT_SUBTOPIC);
   sysCfg.timezone = APP_TIMEZONE;
   sysCfg.power = APP_POWER;
+  sysCfg.ledstate = APP_LEDSTATE;
   CFG_Save();
 }
 
