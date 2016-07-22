@@ -14,9 +14,9 @@ Download and unzip the [pubsubclient](https://github.com/knolleary/pubsubclient)
 
 Install php and a local web server (ie apache) for OTA and copy directory ```api``` in webroot.
 
-If you want to be able to upload the OTA file from the IDE to your webserver perform the following changes to the Arduino IDE environment:
+If you want to be able to upload the OTA file from the IDE to your web server perform the following changes to the Arduino IDE environment:
 
-- Copy file ```espupload.py``` to directory ```portable\packages\esp8266\hardware\esp8266\2.3.0\tools```
+- Copy file ```espupload.py``` to directory ```portable\packages\esp8266\hardware\esp8266\2.3.0\tools``` and change LOCALADDR to refer to your web server
 - Replace files ```boards.txt``` and ```platform.txt``` in directory ```portable\packages\esp8266\hardware\esp8266\2.3.0```
 
 This will provide an additional option ```Tools - Upload Using: OTA_upload```.
