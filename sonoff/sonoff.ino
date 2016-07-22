@@ -17,54 +17,15 @@
  *                        | | | | | |                     Gnd
 */
 
-#define PROJECT                "sonoff"
-#define VERSION                0x01000D00   // 1.0.13
-#define CFG_HOLDER             0x20160520   // Change this value to load default configurations
+#define VERSION                0x01000E00   // 1.0.14
 
-// Wifi
-#define STA_SSID               "indebuurt3"
-#define STA_PASS               "VnsqrtnrsddbrN"
-#define WIFI_HOSTNAME          "esp-%06x-%s"
-
-// Syslog
 #define LOG_LEVEL_NONE         0
 #define LOG_LEVEL_ERROR        1
 #define LOG_LEVEL_INFO         2
 #define LOG_LEVEL_DEBUG        3
 #define LOG_LEVEL_DEBUG_MORE   4
 
-#define SYS_LOG_HOST           "sidnas2"
-#define SYS_LOG_PORT           514
-#define SYS_LOG_LEVEL          LOG_LEVEL_NONE
-#define SERIAL_LOG_LEVEL       LOG_LEVEL_NONE
-
-// Ota
-#if (ARDUINO >= 168)
-  #define OTA_URL              "http://sidnas2:80/api/arduino/"PROJECT".ino.bin"
-#else
-  #define OTA_URL              "http://sidnas2:80/api/arduino/"PROJECT".cpp.bin"
-#endif
-
-// MQTT
-#define MQTT_HOST              "sidnas2"
-#define MQTT_PORT              1883
-
-#define MQTT_CLIENT_ID         "DVES_%06X"  // Also fall back topic using Chip Id = last 6 characters of MAC address
-#define MQTT_USER              "DVES_USER"
-#define MQTT_PASS              "DVES_PASS"
-
-#define SUB_PREFIX             "cmnd"
-#define PUB_PREFIX             "stat"
-#define MQTT_GRPTOPIC          PROJECT"s"   // Group topic
-#define MQTT_TOPIC             PROJECT
-
-// Application
-#define MQTT_SUBTOPIC          "POWER"
-#define APP_TIMEZONE           1            // +1 hour (Amsterdam)
-#define APP_POWER              0            // Saved power state Off
-#define APP_LEDSTATE           0            // Do not show power state (1 = Show power state)
-
-// End of user defines **************************************************************************
+#include "user_config.h"
 
 #define SERIAL_IO                           // Enable serial command line
 #define STATES                 10           // loops per second
@@ -90,7 +51,17 @@
 #include <ESP8266WiFi.h>
 #include <ESP8266HTTPClient.h>
 #include <ESP8266httpUpdate.h>
+
+#ifdef MQTT_MAX_PACKET_SIZE
+#undef MQTT_MAX_PACKET_SIZE
+#endif
+#define MQTT_MAX_PACKET_SIZE 1024
+#ifdef MQTT_KEEPALIVE
+#undef MQTT_KEEPALIVE
+#endif
+#define MQTT_KEEPALIVE 120
 #include <PubSubClient.h>
+
 extern "C" uint32_t _SPIFFS_start;
 
 struct SYSCFG {
@@ -286,19 +257,19 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
     if (!strcmp(type,"STATUS")) {
       switch (payload) {
       case 1:
-        sprintf_P(svalue, PSTR("%s, "MQTT_CLIENT_ID", %s, %s, %d, %d"),
+        sprintf_P(svalue, PSTR("PRM: %s, "MQTT_CLIENT_ID", %s, %s, %d, %d"),
           sysCfg.mqtt_grptopic, ESP.getChipId(), sysCfg.otaUrl, sysCfg.mqtt_host, heartbeat, sysCfg.saveFlag);
         break;  
       case 2:
-        sprintf_P(svalue, PSTR("Version %s, Boot %d, SDK %s"),
+        sprintf_P(svalue, PSTR("FMWR: Version %s, Boot %d, SDK %s"),
           Version, ESP.getBootVersion(), ESP.getSdkVersion());
         break;
       case 3:
-        sprintf_P(svalue, PSTR("Seriallog %d, Syslog %d, LogHost %s, SSId %s, Password %s"),
+        sprintf_P(svalue, PSTR("LOG: Seriallog %d, Syslog %d, LogHost %s, SSId %s, Password %s"),
           sysCfg.seriallog_level, sysCfg.syslog_level, sysCfg.syslog_host, sysCfg.sta_ssid, sysCfg.sta_pwd);
         break;
       case 4:
-        sprintf_P(svalue, PSTR("Sketch size %d, Free %d (Heap %d), Spiffs start %d, Flash size %d (%d)"),
+        sprintf_P(svalue, PSTR("MEM: Sketch size %d, Free %d (Heap %d), Spiffs start %d, Flash size %d (%d)"),
           ESP.getSketchSize(), ESP.getFreeSketchSpace(), ESP.getFreeHeap(), (uint32_t)&_SPIFFS_start - 0x40200000,
           ESP.getFlashChipRealSize(), ESP.getFlashChipSize());
         break;
@@ -306,10 +277,14 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
         IPAddress ip = WiFi.localIP();
         IPAddress gw = WiFi.gatewayIP();
         IPAddress nm = WiFi.subnetMask();
-        sprintf_P(svalue, PSTR("Hostname %s, IP %u.%u.%u.%u, Gateway %u.%u.%u.%u, Subnetmask %u.%u.%u.%u"),
+        sprintf_P(svalue, PSTR("NET: Hostname %s, IP %u.%u.%u.%u, Gateway %u.%u.%u.%u, Subnetmask %u.%u.%u.%u"),
           Hostname, ip[0], ip[1], ip[2], ip[3], gw[0], gw[1], gw[2], gw[3], nm[0], nm[1], nm[2], nm[3]);
         break;
       }
+      case 6:
+        sprintf_P(svalue, PSTR("MQTT: Host %s, MQTT-MAX-PACKET %d, MQTT-KEEPALIVE %d"),
+          sysCfg.mqtt_host, MQTT_MAX_PACKET_SIZE, MQTT_KEEPALIVE); 
+        break;
       default:
         sprintf_P(svalue, PSTR("%s, %s, %s, %s, %d, %d"),
           Version, sysCfg.mqtt_topic, sysCfg.mqtt_topic2, sysCfg.mqtt_subtopic, sysCfg.power, sysCfg.timezone);

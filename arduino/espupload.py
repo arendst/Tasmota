@@ -15,7 +15,7 @@ import optparse
 import logging
 import pycurl
 
-LOCALADDR = "sidnas2"
+LOCALADDR = "domus1"
 LOCALPORT = 80
 
 def upload(localAddr, localPort, filename):

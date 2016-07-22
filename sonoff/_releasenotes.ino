@@ -1,4 +1,11 @@
 /*
+ * 1.0.14 20160722
+ * Seperate user config from sonoff.ino to user_config.h (pucebaboon)
+ * Change defaults from sidnas2 to domus1
+ * Add MQTT status message as status 6 (pucebaboon)
+ * Add status type to message (pucebaboon)
+ * Add pubsubclient config changes to sonoff.ino (pucebaboon)
+ * 
  * 1.0.13 20160702
  * Add Ledstate 1 option to show power state on led
  *

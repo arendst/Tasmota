@@ -10,9 +10,7 @@ Install the ESP8266 Arduino development environment from [esp8266 Arduino](https
 - Follow the procedure to install the ESP8266 Arduino development environment
 - Copy the ```sonoff``` directory to your sketchfolder
 
-Download and unzip the [pubsubclient](https://github.com/knolleary/pubsubclient) MQTT library into directory ```portable\sketchbook\libraries```. Rename to pubsubclient and update default values in file ```pubsubclient\src\PubSubClient.h```
-- Change MQTT_MAX_PACKET_SIZE from 128 to 1024
-- Change MQTT_KEEPALIVE from 15 to 120
+Download and unzip the [pubsubclient](https://github.com/knolleary/pubsubclient) MQTT library into directory ```portable\sketchbook\libraries``` and rename to pubsubclient.
 
 Install php and a local web server (ie apache) for OTA and copy directory ```api``` in webroot.
 
@@ -36,7 +34,7 @@ For sonoff select from ```Tools Board Generic ESP8266 Module``` and set the foll
 - Upload Speed: 115200
 - Port: Your COM port connected to sonoff
 
-Update ```sonoff.ino``` with your specific Wifi and MQTT parameters.
+Update ```user_config.h``` with your specific Wifi and MQTT parameters.
 
 Verify source and upload once to sonoff using the serial connection as shown in [Peter Scargill's blog](http://tech.scargill.net/itead-slampher-and-sonoff). 
 <img alt="Connection diagram" src="https://github.com/arendst/arendst.github.io/blob/master/media/ProgramESP8266.jpg" height="260" /> 
@@ -51,10 +49,10 @@ The button on sonoff provides the following features:
 
 - a short press toggles the relay either by sending a MQTT message like ```cmnd/sonoff/light 2``` or directly. This will blink the LED twice and sends a MQTT status message like ```stat/sonoff/LIGHT on```
 - two short presses toggles the relay. This will blink the LED twice and sends a MQTT status message like ```stat/sonoff/POWER on```
-- three short presses start Wifi smartconfig which allows for SSID and Password configuration using an Android mobile phone with the [ESP8266 SmartConfig](https://play.google.com/store/apps/details?id=com.cmmakerclub.iot.esptouch) app. The green LED will blink during the smartconfig period for 100 seconds. The MQTT server still needs to be configured in the ```sonoff.ino``` file
+- three short presses start Wifi smartconfig which allows for SSID and Password configuration using an Android mobile phone with the [ESP8266 SmartConfig](https://play.google.com/store/apps/details?id=com.cmmakerclub.iot.esptouch) app. The green LED will blink during the smartconfig period for 100 seconds. The MQTT server still needs to be configured in the ```user_config.h``` file
 - four short presses start OTA download of firmware. The green LED is lit during the update
 - five short presses will restart sonoff
-- pressing the button for over four seconds resets settings to defaults as defined in ```sonoff.ino``` and reboots  sonoff
+- pressing the button for over four seconds resets settings to defaults as defined in ```user_config.h``` and reboots  sonoff
 
 Sonoff responds to the following MQTT commands:
 
@@ -93,10 +91,11 @@ ledstate 1 | Show power state on led
 ledstate 0 | Do not show power state on led
 status | Show abbreviated status information
 status 1 | Show more status information
-status 2 | Show version information
+status 2 | Show firmware information
 status 3 | Show syslog information
-status 4 | Show flash information
+status 4 | Show memory information
 status 5 | Show network information
+status 6 | Show MQTT information
 seriallog 0 | Disable serial logging
 seriallog 1 | Show only error messages
 seriallog 2 | Show error and info messages
@@ -108,10 +107,10 @@ syslog 2 | Show error and info messages
 syslog 3 | Show error, info and debug messages
 syslog 4 | Show all messages
 loghost | Show current syslog host
-loghost 1 | Reset syslog host to ```sonoff.ino``` value and restart
+loghost 1 | Reset syslog host to ```user_config.h``` value and restart
 loghost your-host | Set syslog host and restart
 grouptopic | Show current MQTT group topic
-grouptopic 1 | Reset MQTT group topic to ```sonoff.ino``` value and restart
+grouptopic 1 | Reset MQTT group topic to ```user_config.h``` value and restart
 grouptopic your-grouptopic | Set MQTT group topic and restart
 timezone | Show current timezone
 timezone -12 .. 12 | Set timezone
@@ -121,31 +120,31 @@ The following commands are recognised by topic only:
 Command | Description
 ------- | -----------
 restart 1 | Restart sonoff
-reset 1 | Reset sonoff parameters to ```sonoff.ino``` values and restart
-reset 2 | Erase flash, reset sonoff parameters to ```sonoff.ino``` values and restart
+reset 1 | Reset sonoff parameters to ```user_config.h``` values and restart
+reset 2 | Erase flash, reset sonoff parameters to ```user_config.h``` values and restart
 ssid | Show current Wifi SSId
-ssid 1 | Reset Wifi SSId to ```sonoff.ino``` value and restart
+ssid 1 | Reset Wifi SSId to ```user_config.h``` value and restart
 ssid your-ssid | Set Wifi SSId and restart
 password | Show current Wifi password
-password 1 | Reset Wifi password to ```sonoff.ino``` value and restart
+password 1 | Reset Wifi password to ```user_config.h``` value and restart
 password your-password | Set Wifi password and restart
 mqtthost | Show current MQTT host
-mqtthost 1 | Reset MQTT host to ```sonoff.ino``` value and restart
+mqtthost 1 | Reset MQTT host to ```user_config.h``` value and restart
 mqtthost your-host | Set MQTT host and restart
 topic | Show current MQTT topic
-topic 1 | Reset MQTT topic to ```sonoff.ino``` value and restart
+topic 1 | Reset MQTT topic to ```user_config.h``` value and restart
 topic your-topic | Set MQTT topic  AND button topic and restart
 buttontopic | Show current MQTT button topic
 buttontopic 0 | Disable use of MQTT button topic
-buttontopic 1 | Set MQTT button topic to MQTT topic as defined in ```sonoff.ino```
+buttontopic 1 | Set MQTT button topic to MQTT topic as defined in ```user_config.h```
 buttontopic your-topic | Set MQTT button topic
 smartconfig 1 | Start smart config
 otaurl | Show current otaurl
-otaurl 1 | Reset otaurl to ```sonoff.ino``` value
+otaurl 1 | Reset otaurl to ```user_config.h``` value
 otaurl your-otaurl | Set otaurl
 upgrade 1 | Download ota firmware from your web server and restart
 
-If the same topic has been defined to more than one sonoff an individual sonoff can still be addressed by the fall back topic MQTT_CLIENT_ID as defined in sonoff.ino. The fall back topic will be ```DVES_<last six characters of MAC address>```.
+If the same topic has been defined to more than one sonoff an individual sonoff can still be addressed by the fall back topic MQTT_CLIENT_ID as defined in user_config.h. The fall back topic will be ```DVES_<last six characters of MAC address>```.
 ## Tips
 - To aid in finding the IP address of sonoff the network name will be ```esp-<last six characters of MAC address>-<MQTT topic>```. So the default name is ```esp-123456-sonoff```. Another option is MQTT command status 5.
 - Use the group topic to address several sonoffs with one (restricted) MQTT command.
