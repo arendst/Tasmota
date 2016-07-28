@@ -2,15 +2,19 @@
 ## Sonoff-MQTT-OTA-Arduino
 Provide ESP8266 based [itead Sonoff](https://www.itead.cc/sonoff-wifi-wireless-switch.html) with MQTT and 'Over the Air' or OTA firmware using Arduino IDE.
 
+Current version is 1.0.15
+
 See [Sonoff-MQTT-OTA](https://github.com/arendst/Sonoff-MQTT-OTA) for the ```esp-open-sdk``` version.
 ## Prerequisite
-Install the ESP8266 Arduino development environment from [esp8266 Arduino](https://github.com/esp8266/Arduino). The software is tested on a Windows PC with Arduino IDE versions 1.6.5r5, 1.6.8 and 1.6.9 and esp8266 Arduino versions 2.1.0, 2.2.0 and 2.3.0.
+Install the ESP8266 Arduino development environment from [esp8266 Arduino](https://github.com/esp8266/Arduino). The software is tested on a Windows PC with Arduino IDE versions 1.6.5r5, 1.6.8, 1.6.9 and 1.6.10 and esp8266 Arduino versions 2.1.0, 2.2.0 and 2.3.0.
 
 - I prefer a standalone version of the IDE allowing easy ESP8266 file manipulation. This can be achieved by downloading the Arduino IDE ZIP file for non admin install. After unzipping and before executing ```arduino.exe``` add an empty directory called ```portable```
 - Follow the procedure to install the ESP8266 Arduino development environment
 - Copy the ```sonoff``` directory to your sketchfolder
 
-Download and unzip the [pubsubclient](https://github.com/knolleary/pubsubclient) MQTT library into directory ```portable\sketchbook\libraries``` and rename to pubsubclient.
+Download and unzip the [pubsubclient](https://github.com/knolleary/pubsubclient) MQTT library into directory ```portable\sketchbook\libraries``` and rename to pubsubclient. Update default values in file ```pubsubclient\src\PubSubClient.h```  
+- Change ```MQTT_MAX_PACKET_SIZE``` from 128 to at least 256  
+- Change ```MQTT_KEEPALIVE``` from 15 to 120  
 
 Install php and a local web server (ie apache) for OTA and copy directory ```api``` in webroot.
 
@@ -90,6 +94,7 @@ ledstate off | Do not show power state on led
 ledstate 1 | Show power state on led
 ledstate 0 | Do not show power state on led
 status | Show abbreviated status information
+status 0 | Show all following information
 status 1 | Show more status information
 status 2 | Show firmware information
 status 3 | Show syslog information

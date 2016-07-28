@@ -41,7 +41,7 @@ void WIFI_check_ip()
 
 void WIFI_Check(uint8_t param)
 {
-  char log[80];
+  char log[LOGSZ];
   
   wificounter--;
   switch (param) {
@@ -61,7 +61,7 @@ void WIFI_Check(uint8_t param)
             smartcounter = 0;
             memcpy(sysCfg.sta_ssid, WiFi.SSID().c_str(), strlen(WiFi.SSID().c_str())+1);
             memcpy(sysCfg.sta_pwd, WiFi.psk().c_str(), strlen(WiFi.psk().c_str())+1);
-            sprintf_P(log, PSTR("Smartconfig: SSID %s and Password %s"), sysCfg.sta_ssid, sysCfg.sta_pwd);
+            snprintf_P(log, LOGSZ, PSTR("Smartconfig: SSID %s and Password %s"), sysCfg.sta_ssid, sysCfg.sta_pwd);
             addLog(LOG_LEVEL_INFO, log);
           }
         }
@@ -76,11 +76,11 @@ void WIFI_Check(uint8_t param)
 
 void WIFI_Connect(char *Hostname)
 {
-  char log[80];
+  char log[LOGSZ];
 
   WiFi.persistent(false);   // Solve possible wifi init errors
   WiFi.hostname(Hostname);
-  sprintf_P(log, PSTR("Wifi: Connecting to %s as %s"), sysCfg.sta_ssid, Hostname);
+  snprintf_P(log, LOGSZ, PSTR("Wifi: Connecting to %s as %s"), sysCfg.sta_ssid, Hostname);
   addLog(LOG_LEVEL_DEBUG, log);
   WiFi.setAutoConnect(true);
   WiFi.mode(WIFI_STA);     // Disable AP mode

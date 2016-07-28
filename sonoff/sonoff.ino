@@ -1,5 +1,9 @@
 /*
  * Sonoff and Wkaku by Theo Arends
+ * 
+ * ---------------------------------------------
+ * >>>> Tools - Flash size: 1M (64K SPIFFS) <<<<
+ * ---------------------------------------------
  *
  * ESP-12F connections (Wkaku)
  * 3V3                                                     5V
@@ -17,7 +21,7 @@
  *                        | | | | | |                     Gnd
 */
 
-#define VERSION                0x01000E00   // 1.0.14
+#define VERSION                0x01000F00   // 1.0.15
 
 #define LOG_LEVEL_NONE         0
 #define LOG_LEVEL_ERROR        1
@@ -42,6 +46,10 @@
 #define WIFI_STATUS            0
 #define WIFI_SMARTCONFIG       1
 
+#define TOPSZ                  40           // Max number of characters in topic string
+#define MESSZ                  200          // Max number of characters in message string (Syntax string)
+#define LOGSZ                  80           // Max number of characters in log string
+
 #ifdef DEBUG_ESP_PORT
 #define DEBUG_MSG(...) DEBUG_ESP_PORT.printf( __VA_ARGS__ )
 #else
@@ -51,15 +59,6 @@
 #include <ESP8266WiFi.h>
 #include <ESP8266HTTPClient.h>
 #include <ESP8266httpUpdate.h>
-
-#ifdef MQTT_MAX_PACKET_SIZE
-#undef MQTT_MAX_PACKET_SIZE
-#endif
-#define MQTT_MAX_PACKET_SIZE 1024
-#ifdef MQTT_KEEPALIVE
-#undef MQTT_KEEPALIVE
-#endif
-#define MQTT_KEEPALIVE 120
 #include <PubSubClient.h>
 
 extern "C" uint32_t _SPIFFS_start;
@@ -124,12 +123,12 @@ uint8_t multipress = 0;
 \*********************************************************************************************/
 void syslog(const char *message)
 {
-  char mess[168], str[200];
+  char mess[MESSZ], str[TOPSZ+MESSZ];
 
   portUDP.beginPacket(sysCfg.syslog_host, SYS_LOG_PORT);
-  strncpy(mess, message, 167);
-  mess[168] = 0;
-  sprintf_P(str, PSTR("%s %s"), Hostname, mess);
+  strncpy(mess, message, MESSZ);
+  mess[MESSZ] = 0;
+  snprintf_P(str, TOPSZ+MESSZ, PSTR("%s %s"), Hostname, mess);
   portUDP.write(str);
   portUDP.endPacket();
 }
@@ -152,10 +151,10 @@ void addLog(byte loglevel, String& string)
 
 void mqtt_publish(const char* topic, const char* data)
 {
-  char log[300];
+  char log[TOPSZ+MESSZ];
   
   mqttClient.publish(topic, data);
-  sprintf_P(log, PSTR("MQTT: %s = %s"), strchr(topic,'/')+1, data);     // Skip topic prefix
+  snprintf_P(log, TOPSZ+MESSZ, PSTR("MQTT: %s = %s"), strchr(topic,'/')+1, data);     // Skip topic prefix
   addLog(LOG_LEVEL_INFO, log);
   mqttClient.loop();  // Solve LmacRxBlk:1 messages
   blinks++;
@@ -163,43 +162,43 @@ void mqtt_publish(const char* topic, const char* data)
 
 void mqtt_connected()
 {
-  char stopic[40], svalue[40];
+  char stopic[TOPSZ], svalue[TOPSZ];
 
-  sprintf_P(stopic, PSTR("%s/%s/#"), SUB_PREFIX, sysCfg.mqtt_topic);
+  snprintf_P(stopic, TOPSZ, PSTR("%s/%s/#"), SUB_PREFIX, sysCfg.mqtt_topic);
   mqttClient.subscribe(stopic);
   mqttClient.loop();  // Solve LmacRxBlk:1 messages
-  sprintf_P(stopic, PSTR("%s/%s/#"), SUB_PREFIX, sysCfg.mqtt_grptopic);
+  snprintf_P(stopic, TOPSZ, PSTR("%s/%s/#"), SUB_PREFIX, sysCfg.mqtt_grptopic);
   mqttClient.subscribe(stopic);
   mqttClient.loop();  // Solve LmacRxBlk:1 messages
-  sprintf_P(stopic, PSTR("%s/"MQTT_CLIENT_ID"/#"), SUB_PREFIX, ESP.getChipId());  // Fall back topic
+  snprintf_P(stopic, TOPSZ, PSTR("%s/"MQTT_CLIENT_ID"/#"), SUB_PREFIX, ESP.getChipId());  // Fall back topic
   mqttClient.subscribe(stopic);
   mqttClient.loop();  // Solve LmacRxBlk:1 messages
 
-  sprintf_P(stopic, PSTR("%s/%s/NAME"), PUB_PREFIX, sysCfg.mqtt_topic);
-  sprintf_P(svalue, PSTR("Sonoff switch"));
+  snprintf_P(stopic, TOPSZ, PSTR("%s/%s/NAME"), PUB_PREFIX, sysCfg.mqtt_topic);
+  snprintf_P(svalue, TOPSZ, PSTR("Sonoff switch"));
   mqtt_publish(stopic, svalue);
-  sprintf_P(stopic, PSTR("%s/%s/VERSION"), PUB_PREFIX, sysCfg.mqtt_topic);
-  sprintf_P(svalue, PSTR("%s"), Version);
+  snprintf_P(stopic, TOPSZ, PSTR("%s/%s/VERSION"), PUB_PREFIX, sysCfg.mqtt_topic);
+  snprintf_P(svalue, TOPSZ, PSTR("%s"), Version);
   mqtt_publish(stopic, svalue);
-  sprintf_P(stopic, PSTR("%s/%s/FALLBACKTOPIC"), PUB_PREFIX, sysCfg.mqtt_topic);
-  sprintf_P(svalue, PSTR(MQTT_CLIENT_ID), ESP.getChipId());
+  snprintf_P(stopic, TOPSZ, PSTR("%s/%s/FALLBACKTOPIC"), PUB_PREFIX, sysCfg.mqtt_topic);
+  snprintf_P(svalue, TOPSZ, PSTR(MQTT_CLIENT_ID), ESP.getChipId());
   mqtt_publish(stopic, svalue);
 }
 
 void mqtt_reconnect()
 {
-  char stopic[40], svalue[40], log[80];
+  char stopic[TOPSZ], svalue[TOPSZ], log[LOGSZ];
 
   mqttcounter = MQTT_RETRY_SECS;
   addLog(LOG_LEVEL_INFO, "MQTT: Attempting connection");
-  sprintf(svalue, MQTT_CLIENT_ID, ESP.getChipId());
-  sprintf_P(stopic, PSTR("%s/%s/lwt"), PUB_PREFIX, sysCfg.mqtt_topic);
+  snprintf(svalue, TOPSZ, MQTT_CLIENT_ID, ESP.getChipId());
+  snprintf_P(stopic, TOPSZ, PSTR("%s/%s/lwt"), PUB_PREFIX, sysCfg.mqtt_topic);
   if (mqttClient.connect(svalue, MQTT_USER, MQTT_PASS, stopic, 0, 0, "offline")) {
     addLog(LOG_LEVEL_INFO, "MQTT: Connected");
     mqttcounter = 0;
     mqtt_connected();
   } else {
-    sprintf_P(log, PSTR("MQTT: Connect failed, rc %d. Retry in %d seconds"), mqttClient.state(), mqttcounter);
+    snprintf_P(log, LOGSZ, PSTR("MQTT: Connect failed, rc %d. Retry in %d seconds"), mqttClient.state(), mqttcounter);
     addLog(LOG_LEVEL_DEBUG, log);
   }
 }
@@ -208,7 +207,7 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
 {
   int i, grpflg = 0;
   char *str, *p, *mtopic = NULL, *type = NULL;
-  char stopic[40], svalue[240];
+  char stopic[TOPSZ], svalue[MESSZ];
 
   int topic_len = strlen(topic);
   char topicBuf[topic_len +1]; 
@@ -221,7 +220,7 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
   memcpy(dataBuf, data, data_len);
   dataBuf[data_len] = 0;
 
-  sprintf_P(svalue, PSTR("MQTT: Receive topic %s, data %s"), topicBuf, dataBuf);
+  snprintf_P(svalue, MESSZ, PSTR("MQTT: Receive topic %s, data %s"), topicBuf, dataBuf);
   addLog(LOG_LEVEL_DEBUG, svalue);
 
   i = 0;
@@ -241,13 +240,13 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
 
   for(i = 0; i <= data_len; i++) dataBufUc[i] = toupper(dataBuf[i]);
 
-  sprintf_P(svalue, PSTR("MQTT: DataCb Topic %s, Group %d, Type %s, data %s (%s)"),
+  snprintf_P(svalue, MESSZ, PSTR("MQTT: DataCb Topic %s, Group %d, Type %s, data %s (%s)"),
     mtopic, grpflg, type, dataBuf, dataBufUc);
   addLog(LOG_LEVEL_DEBUG, svalue);
 
   if (type != NULL) {
-    sprintf_P(stopic, PSTR("%s/%s/%s"), PUB_PREFIX, sysCfg.mqtt_topic, type);
-    strcpy(svalue, "Error");
+    snprintf_P(stopic, TOPSZ, PSTR("%s/%s/%s"), PUB_PREFIX, sysCfg.mqtt_topic, type);
+    strncpy(svalue, "Error", MESSZ);
 
     uint16_t payload = atoi(dataBuf);
     if (!strcmp(dataBufUc,"OFF")) payload = 0;
@@ -255,153 +254,158 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
     if (!strcmp(dataBufUc,"TOGGLE")) payload = 2;
 
     if (!strcmp(type,"STATUS")) {
-      switch (payload) {
-      case 1:
-        sprintf_P(svalue, PSTR("PRM: %s, "MQTT_CLIENT_ID", %s, %s, %d, %d"),
+      if ((data_len == 0) || (payload < 0) || (payload > 6)) payload = 7;
+      if ((payload == 0) || (payload == 7)) {
+        snprintf_P(svalue, MESSZ, PSTR("%s, %s, %s, %s, %d, %d"),
+          Version, sysCfg.mqtt_topic, sysCfg.mqtt_topic2, sysCfg.mqtt_subtopic, sysCfg.power, sysCfg.timezone);
+        if (payload == 0) mqtt_publish(stopic, svalue);
+      }
+      if ((payload == 0) || (payload == 1)) {
+        snprintf_P(svalue, MESSZ, PSTR("PRM: %s, "MQTT_CLIENT_ID", %s, %s, %d, %d"),
           sysCfg.mqtt_grptopic, ESP.getChipId(), sysCfg.otaUrl, sysCfg.mqtt_host, heartbeat, sysCfg.saveFlag);
-        break;  
-      case 2:
-        sprintf_P(svalue, PSTR("FMWR: Version %s, Boot %d, SDK %s"),
+        if (payload == 0) mqtt_publish(stopic, svalue);
+      }          
+      if ((payload == 0) || (payload == 2)) {
+        snprintf_P(svalue, MESSZ, PSTR("FWR: Version %s, Boot %d, SDK %s"),
           Version, ESP.getBootVersion(), ESP.getSdkVersion());
-        break;
-      case 3:
-        sprintf_P(svalue, PSTR("LOG: Seriallog %d, Syslog %d, LogHost %s, SSId %s, Password %s"),
+        if (payload == 0) mqtt_publish(stopic, svalue);
+      }          
+      if ((payload == 0) || (payload == 3)) {
+        snprintf_P(svalue, MESSZ, PSTR("LOG: Seriallog %d, Syslog %d, LogHost %s, SSId %s, Password %s"),
           sysCfg.seriallog_level, sysCfg.syslog_level, sysCfg.syslog_host, sysCfg.sta_ssid, sysCfg.sta_pwd);
-        break;
-      case 4:
-        sprintf_P(svalue, PSTR("MEM: Sketch size %d, Free %d (Heap %d), Spiffs start %d, Flash size %d (%d)"),
+        if (payload == 0) mqtt_publish(stopic, svalue);
+      }          
+      if ((payload == 0) || (payload == 4)) {
+        snprintf_P(svalue, MESSZ, PSTR("MEM: Sketch size %d, Free %d (Heap %d), Spiffs start %d, Flash size %d (%d)"),
           ESP.getSketchSize(), ESP.getFreeSketchSpace(), ESP.getFreeHeap(), (uint32_t)&_SPIFFS_start - 0x40200000,
           ESP.getFlashChipRealSize(), ESP.getFlashChipSize());
-        break;
-      case 5: {
+        if (payload == 0) mqtt_publish(stopic, svalue);
+      }          
+      if ((payload == 0) || (payload == 5)) {
         IPAddress ip = WiFi.localIP();
         IPAddress gw = WiFi.gatewayIP();
         IPAddress nm = WiFi.subnetMask();
-        sprintf_P(svalue, PSTR("NET: Hostname %s, IP %u.%u.%u.%u, Gateway %u.%u.%u.%u, Subnetmask %u.%u.%u.%u"),
+        snprintf_P(svalue, MESSZ, PSTR("NET: Hostname %s, IP %u.%u.%u.%u, Gateway %u.%u.%u.%u, Subnetmask %u.%u.%u.%u"),
           Hostname, ip[0], ip[1], ip[2], ip[3], gw[0], gw[1], gw[2], gw[3], nm[0], nm[1], nm[2], nm[3]);
-        break;
-      }
-      case 6:
-        sprintf_P(svalue, PSTR("MQTT: Host %s, MQTT-MAX-PACKET %d, MQTT-KEEPALIVE %d"),
+        if (payload == 0) mqtt_publish(stopic, svalue);
+      }          
+      if ((payload == 0) || (payload == 6)) {
+        snprintf_P(svalue, MESSZ, PSTR("MQT: Host %s, MAX_PACKET_SIZE %d, KEEPALIVE %d"),
           sysCfg.mqtt_host, MQTT_MAX_PACKET_SIZE, MQTT_KEEPALIVE); 
-        break;
-      default:
-        sprintf_P(svalue, PSTR("%s, %s, %s, %s, %d, %d"),
-          Version, sysCfg.mqtt_topic, sysCfg.mqtt_topic2, sysCfg.mqtt_subtopic, sysCfg.power, sysCfg.timezone);
-      }
+      }      
     }
     else if (!grpflg && !strcmp(type,"UPGRADE")) {
       if ((data_len > 0) && (payload == 1)) {
         otaflag = 3;
-        sprintf_P(svalue, PSTR("Upgrade %s"), Version);
+        snprintf_P(svalue, MESSZ, PSTR("Upgrade %s"), Version);
       }
       else
-        sprintf_P(svalue, PSTR("1 to upgrade"));
+        snprintf_P(svalue, MESSZ, PSTR("1 to upgrade"));
     }
     else if (!grpflg && !strcmp(type,"OTAURL")) {
       if ((data_len > 0) && (data_len < 80))
-        strcpy(sysCfg.otaUrl, (payload == 1) ? OTA_URL : dataBuf);
-      sprintf_P(svalue, PSTR("%s"), sysCfg.otaUrl);
+        strncpy(sysCfg.otaUrl, (payload == 1) ? OTA_URL : dataBuf, 80);
+      snprintf_P(svalue, MESSZ, PSTR("%s"), sysCfg.otaUrl);
     }
     else if (!strcmp(type,"SERIALLOG")) {
       if ((data_len > 0) && (payload >= LOG_LEVEL_NONE) && (payload <= LOG_LEVEL_DEBUG_MORE)) {
         sysCfg.seriallog_level = payload;
       }
-      sprintf_P(svalue, PSTR("%d"), sysCfg.seriallog_level);
+      snprintf_P(svalue, MESSZ, PSTR("%d"), sysCfg.seriallog_level);
     }
     else if (!strcmp(type,"SYSLOG")) {
       if ((data_len > 0) && (payload >= LOG_LEVEL_NONE) && (payload <= LOG_LEVEL_DEBUG_MORE)) {
         sysCfg.syslog_level = payload;
       }
-      sprintf_P(svalue, PSTR("%d"), sysCfg.syslog_level);
+      snprintf_P(svalue, MESSZ, PSTR("%d"), sysCfg.syslog_level);
     }
     else if (!strcmp(type,"LOGHOST")) {
       if ((data_len > 0) && (data_len < 32)) {
-        strcpy(sysCfg.syslog_host, (payload == 1) ? SYS_LOG_HOST : dataBuf);
+        strncpy(sysCfg.syslog_host, (payload == 1) ? SYS_LOG_HOST : dataBuf, 32);
         restartflag = 2;
       }
-      sprintf_P(svalue, PSTR("%s"), sysCfg.syslog_host);
+      snprintf_P(svalue, MESSZ, PSTR("%s"), sysCfg.syslog_host);
     }
     else if (!grpflg && !strcmp(type,"SSID")) {
       if ((data_len > 0) && (data_len < 32)) {
-        strcpy(sysCfg.sta_ssid, (payload == 1) ? STA_SSID : dataBuf);
+        strncpy(sysCfg.sta_ssid, (payload == 1) ? STA_SSID : dataBuf, 32);
         restartflag = 2;
       }
-      sprintf_P(svalue, PSTR("%s"), sysCfg.sta_ssid);
+      snprintf_P(svalue, MESSZ, PSTR("%s"), sysCfg.sta_ssid);
     }
     else if (!grpflg && !strcmp(type,"PASSWORD")) {
       if ((data_len > 0) && (data_len < 64)) {
-        strcpy(sysCfg.sta_pwd, (payload == 1) ? STA_PASS : dataBuf);
+        strncpy(sysCfg.sta_pwd, (payload == 1) ? STA_PASS : dataBuf, 64);
         restartflag = 2;
       }
-      sprintf_P(svalue, PSTR("%s"), sysCfg.sta_pwd);
+      snprintf_P(svalue, MESSZ, PSTR("%s"), sysCfg.sta_pwd);
     }
     else if (!grpflg && !strcmp(type,"MQTTHOST")) {
       if ((data_len > 0) && (data_len < 32)) {
-        strcpy(sysCfg.mqtt_host, (payload == 1) ? MQTT_HOST : dataBuf);
+        strncpy(sysCfg.mqtt_host, (payload == 1) ? MQTT_HOST : dataBuf, 32);
         restartflag = 2;
       }
-      sprintf_P(svalue, PSTR("%s"), sysCfg.mqtt_host);
+      snprintf_P(svalue, MESSZ, PSTR("%s"), sysCfg.mqtt_host);
     }
     else if (!strcmp(type,"GROUPTOPIC")) {
       if ((data_len > 0) && (data_len < 32)) {
         for(i = 0; i <= data_len; i++)
           if ((dataBuf[i] == '/') || (dataBuf[i] == '+') || (dataBuf[i] == '#')) dataBuf[i] = '_';
-        sprintf_P(svalue, PSTR(MQTT_CLIENT_ID), ESP.getChipId());
+        snprintf_P(svalue, MESSZ, PSTR(MQTT_CLIENT_ID), ESP.getChipId());
         if (!strcmp(dataBuf, svalue)) payload = 1;
-        strcpy(sysCfg.mqtt_grptopic, (payload == 1) ? MQTT_GRPTOPIC : dataBuf);
+        strncpy(sysCfg.mqtt_grptopic, (payload == 1) ? MQTT_GRPTOPIC : dataBuf, 32);
         restartflag = 2;
       }
-      sprintf_P(svalue, PSTR("%s"), sysCfg.mqtt_grptopic);
+      snprintf_P(svalue, MESSZ, PSTR("%s"), sysCfg.mqtt_grptopic);
     }
     else if (!grpflg && !strcmp(type,"TOPIC")) {
       if ((data_len > 0) && (data_len < 32)) {
         for(i = 0; i <= data_len; i++)
           if ((dataBuf[i] == '/') || (dataBuf[i] == '+') || (dataBuf[i] == '#')) dataBuf[i] = '_';
-        sprintf_P(svalue, PSTR(MQTT_CLIENT_ID), ESP.getChipId());
+        snprintf_P(svalue, MESSZ, PSTR(MQTT_CLIENT_ID), ESP.getChipId());
         if (!strcmp(dataBuf, svalue)) payload = 1;
-        strcpy(sysCfg.mqtt_topic, (payload == 1) ? MQTT_TOPIC : dataBuf);
+        strncpy(sysCfg.mqtt_topic, (payload == 1) ? MQTT_TOPIC : dataBuf, 32);
         restartflag = 2;
       }
-      sprintf_P(svalue, PSTR("%s"), sysCfg.mqtt_topic);
+      snprintf_P(svalue, MESSZ, PSTR("%s"), sysCfg.mqtt_topic);
     }
     else if (!grpflg && !strcmp(type,"BUTTONTOPIC")) {
       if ((data_len > 0) && (data_len < 32)) {
         for(i = 0; i <= data_len; i++)
           if ((dataBuf[i] == '/') || (dataBuf[i] == '+') || (dataBuf[i] == '#')) dataBuf[i] = '_';
-        sprintf_P(svalue, PSTR(MQTT_CLIENT_ID), ESP.getChipId());
+        snprintf_P(svalue, MESSZ, PSTR(MQTT_CLIENT_ID), ESP.getChipId());
         if (!strcmp(dataBuf, svalue)) payload = 1;
-        strcpy(sysCfg.mqtt_topic2, (payload == 1) ? MQTT_TOPIC : dataBuf);
+        strncpy(sysCfg.mqtt_topic2, (payload == 1) ? MQTT_TOPIC : dataBuf, 32);
       }
-      sprintf_P(svalue, PSTR("%s"), sysCfg.mqtt_topic2);
+      snprintf_P(svalue, MESSZ, PSTR("%s"), sysCfg.mqtt_topic2);
     }
     else if (!grpflg && !strcmp(type,"SMARTCONFIG")) {
       if ((data_len > 0) && (payload == 1)) {
         blinks = 1999;
         smartconfigflag = 1;
-        sprintf_P(svalue, PSTR("Smartconfig started"));
+        snprintf_P(svalue, MESSZ, PSTR("Smartconfig started"));
       } else
-        sprintf_P(svalue, PSTR("1 to start smartconfig"));
+        snprintf_P(svalue, MESSZ, PSTR("1 to start smartconfig"));
     }
     else if (!grpflg && !strcmp(type,"RESTART")) {
       if ((data_len > 0) && (payload == 1)) {
         restartflag = 2;
-        sprintf_P(svalue, PSTR("Restarting"));
+        snprintf_P(svalue, MESSZ, PSTR("Restarting"));
       } else
-        sprintf_P(svalue, PSTR("1 to restart"));
+        snprintf_P(svalue, MESSZ, PSTR("1 to restart"));
     }
     else if (!grpflg && !strcmp(type,"RESET")) {
       switch (payload) {
       case 1: 
         restartflag = 11;
-        sprintf_P(svalue, PSTR("Reset and Restarting"));
+        snprintf_P(svalue, MESSZ, PSTR("Reset and Restarting"));
         break;
       case 2:
         restartflag = 12;
-        sprintf_P(svalue, PSTR("Erase, Reset and Restarting"));
+        snprintf_P(svalue, MESSZ, PSTR("Erase, Reset and Restarting"));
         break;
       default:
-        sprintf_P(svalue, PSTR("1 to reset"));
+        snprintf_P(svalue, MESSZ, PSTR("1 to reset"));
       }
     }
     else if (!strcmp(type,"TIMEZONE")) {
@@ -409,10 +413,10 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
         sysCfg.timezone = payload;
         rtc_timezone(sysCfg.timezone);
       }
-      sprintf_P(svalue, PSTR("%d"), sysCfg.timezone);
+      snprintf_P(svalue, MESSZ, PSTR("%d"), sysCfg.timezone);
     }
     else if ((!strcmp(type,"LIGHT")) || (!strcmp(type,"POWER"))) {
-      sprintf(sysCfg.mqtt_subtopic, "%s", type);
+      snprintf(sysCfg.mqtt_subtopic, 32, "%s", type);
       if ((data_len > 0) && (payload >= 0) && (payload <= 2)) {
         switch (payload) {
         case 0: // Off
@@ -425,24 +429,24 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
         }
         digitalWrite(REL_PIN, sysCfg.power);
       }
-      strcpy(svalue, (sysCfg.power) ? "On" : "Off");
+      strncpy(svalue, (sysCfg.power) ? "On" : "Off", MESSZ);
     }
     else if (!strcmp(type,"LEDSTATE")) {
       if ((data_len > 0) && (payload >= 0) && (payload <= 1)) {
         sysCfg.ledstate = payload;
       }
-      strcpy(svalue, (sysCfg.ledstate) ? "On" : "Off");
+      strncpy(svalue, (sysCfg.ledstate) ? "On" : "Off", MESSZ);
     }
     else {
       type = NULL;
     }
     if (type == NULL) {
       blinks = 1;
-      sprintf_P(stopic, PSTR("%s/%s/SYNTAX"), PUB_PREFIX, sysCfg.mqtt_topic);
+      snprintf_P(stopic, TOPSZ, PSTR("%s/%s/SYNTAX"), PUB_PREFIX, sysCfg.mqtt_topic);
       if (!grpflg)
-        strcpy_P(svalue, PSTR("Status, Upgrade, Otaurl, Restart, Reset, Smartconfig, Seriallog, Syslog, LogHost, SSId, Password, MqttHost, GroupTopic, Topic, ButtonTopic, Timezone, Light, Power, Ledstate"));
+        strncpy_P(svalue, PSTR("Status, Upgrade, Otaurl, Restart, Reset, Smartconfig, Seriallog, Syslog, LogHost, SSId, Password, MqttHost, GroupTopic, Topic, ButtonTopic, Timezone, Light, Power, Ledstate"), MESSZ);
       else
-        strcpy_P(svalue, PSTR("Status, GroupTopic, Timezone, Light, Power, Ledstate"));
+        strncpy_P(svalue, PSTR("Status, GroupTopic, Timezone, Light, Power, Ledstate"), MESSZ);
     }
     mqtt_publish(stopic, svalue);
   }
@@ -454,10 +458,10 @@ void send_button(char *cmnd)
   char *token;
 
   token = strtok(cmnd, " ");
-  if ((!strcmp(token,"light")) || (!strcmp(token,"power"))) strcpy(token, sysCfg.mqtt_subtopic);
-  sprintf_P(stopic, PSTR("%s/%s/%s"), SUB_PREFIX, sysCfg.mqtt_topic2, token);
+  if ((!strcmp(token,"light")) || (!strcmp(token,"power"))) strncpy(token, sysCfg.mqtt_subtopic, 32);
+  snprintf_P(stopic, 128, PSTR("%s/%s/%s"), SUB_PREFIX, sysCfg.mqtt_topic2, token);
   token = strtok(NULL, "");
-  sprintf_P(svalue, PSTR("%s"), (token == NULL) ? "" : token);
+  snprintf_P(svalue, 128, PSTR("%s"), (token == NULL) ? "" : token);
   mqtt_publish(stopic, svalue);
 }
 
@@ -467,38 +471,38 @@ void do_cmnd(char *cmnd)
   char *token;
 
   token = strtok(cmnd, " ");
-  sprintf_P(stopic, PSTR("%s/%s/%s"), SUB_PREFIX, sysCfg.mqtt_topic, token);
+  snprintf_P(stopic, 128, PSTR("%s/%s/%s"), SUB_PREFIX, sysCfg.mqtt_topic, token);
   token = strtok(NULL, "");
-  sprintf_P(svalue, PSTR("%s"), (token == NULL) ? "" : token);
+  snprintf_P(svalue, 128, PSTR("%s"), (token == NULL) ? "" : token);
   mqttDataCb(stopic, (byte*)svalue, strlen(svalue));
 }
 
 void send_power()
 {
-  char stopic[40], svalue[20];
+  char stopic[TOPSZ], svalue[TOPSZ];
 
-  sprintf_P(stopic, PSTR("%s/%s/%s"), PUB_PREFIX, sysCfg.mqtt_topic, sysCfg.mqtt_subtopic);
-  strcpy(svalue, (sysCfg.power == 0) ? "Off" : "On");
+  snprintf_P(stopic, TOPSZ, PSTR("%s/%s/%s"), PUB_PREFIX, sysCfg.mqtt_topic, sysCfg.mqtt_subtopic);
+  strncpy(svalue, (sysCfg.power == 0) ? "Off" : "On", TOPSZ);
   mqtt_publish(stopic, svalue);
 }
 
 void send_updateStatus(const char* svalue)
 {
-  char stopic[40];
+  char stopic[TOPSZ];
   
-  sprintf_P(stopic, PSTR("%s/%s/UPGRADE"), PUB_PREFIX, sysCfg.mqtt_topic);
+  snprintf_P(stopic, TOPSZ, PSTR("%s/%s/UPGRADE"), PUB_PREFIX, sysCfg.mqtt_topic);
   mqtt_publish(stopic, svalue);
 }
 
 void every_second()
 {
-  char stopic[40], svalue[20];
+  char stopic[TOPSZ], svalue[TOPSZ];
 
   if (heartbeatflag) {
     heartbeatflag = 0;
     heartbeat++;
-    sprintf_P(stopic, PSTR("%s/%s/HEARTBEAT"), PUB_PREFIX, sysCfg.mqtt_topic);
-    sprintf_P(svalue, PSTR("%d"), heartbeat);
+    snprintf_P(stopic, TOPSZ, PSTR("%s/%s/HEARTBEAT"), PUB_PREFIX, sysCfg.mqtt_topic);
+    snprintf_P(svalue, TOPSZ, PSTR("%d"), heartbeat);
     mqtt_publish(stopic, svalue);
   }
 }
@@ -514,7 +518,7 @@ const char commands[6][14] PROGMEM = {
 void stateloop()
 {
   uint8_t button;
-  char scmnd[20], log[30];
+  char scmnd[20], log[LOGSZ];
   
   timerxs = millis() + (1000 / STATES);
   state++;
@@ -526,7 +530,7 @@ void stateloop()
   button = digitalRead(KEY_PIN);
   if ((button == PRESSED) && (lastbutton == NOT_PRESSED)) {
     multipress = (multiwindow) ? multipress +1 : 1;
-    sprintf_P(log, PSTR("APP: Multipress %d"), multipress);
+    snprintf_P(log, LOGSZ, PSTR("APP: Multipress %d"), multipress);
     addLog(LOG_LEVEL_DEBUG, log);
     blinks = 1;
     multiwindow = STATES /2;         // 1/2 second multi press window
@@ -537,7 +541,7 @@ void stateloop()
   } else {
     holdcount++;
     if (holdcount == (STATES *4)) {  // 4 seconds button hold
-      strcpy_P(scmnd, commands[0]);
+      strncpy_P(scmnd, commands[0], 20);
       multipress = 0;
       do_cmnd(scmnd);
     }
@@ -546,7 +550,7 @@ void stateloop()
     multiwindow--;
   } else {
     if ((!holdcount) && (multipress >= 1) && (multipress <= 5)) {
-      strcpy_P(scmnd, commands[multipress]);
+      strncpy_P(scmnd, commands[multipress], 20);
       if (strcmp(sysCfg.mqtt_topic2,"0") && (multipress == 1) && mqttClient.connected())
         send_button(scmnd);          // Execute command via MQTT using ButtonTopic to sync external clients
       else
@@ -659,7 +663,7 @@ void setup()
   delay(10);
   Serial.println();
 
-  sprintf_P(Version, PSTR("%d.%d.%d"), VERSION >> 24 & 0xff, VERSION >> 16 & 0xff, VERSION >> 8 & 0xff);
+  snprintf_P(Version, 16, PSTR("%d.%d.%d"), VERSION >> 24 & 0xff, VERSION >> 16 & 0xff, VERSION >> 8 & 0xff);
   if (VERSION & 0x1f) {
     byte idx = strlen(Version);
     Version[idx] = 96 + (VERSION & 0x1f);
@@ -674,7 +678,7 @@ void setup()
     sysCfg.version = VERSION;
   }
 
-  sprintf_P(Hostname, PSTR(WIFI_HOSTNAME), ESP.getChipId(), sysCfg.mqtt_topic);
+  snprintf_P(Hostname, 32, PSTR(WIFI_HOSTNAME), ESP.getChipId(), sysCfg.mqtt_topic);
   WIFI_Connect(Hostname);
 
   mqttClient.setServer(sysCfg.mqtt_host, MQTT_PORT);
@@ -690,7 +694,7 @@ void setup()
 
   rtc_init(sysCfg.timezone);
 
-  sprintf_P(log, PSTR("App: Project %s (Topic %s, Fallback "MQTT_CLIENT_ID", GroupTopic %s) Version %s"),
+  snprintf_P(log, 128, PSTR("App: Project %s (Topic %s, Fallback "MQTT_CLIENT_ID", GroupTopic %s) Version %s"),
     PROJECT, sysCfg.mqtt_topic, ESP.getChipId(), sysCfg.mqtt_grptopic, Version);
   addLog(LOG_LEVEL_INFO, log);
 }

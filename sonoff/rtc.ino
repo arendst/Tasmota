@@ -76,14 +76,14 @@ void convertTime()
 
 void rtc_second()
 {
-  char log[80];
+  char log[LOGSZ];
   
   // NTP Sync every hour at x:0:10
   if (rtcTime.Minute == 0) {
     if ((rtcTime.Second >= 10) && !ntpsync) {
       myrtc = sntp_get_current_timestamp();
       ntpsync = (myrtc) ? 1 : 0;
-      sprintf_P(log, PSTR("RTC: sntp %d, %s"), myrtc, sntp_get_real_time(myrtc));
+      snprintf_P(log, LOGSZ, PSTR("RTC: sntp %d, %s"), myrtc, sntp_get_real_time(myrtc));
       addLog(LOG_LEVEL_DEBUG, log);
     }
     if (rtcTime.Second == 40) ntpsync = 0;
