@@ -1,4 +1,9 @@
 /*
+ * 1.0.16 20160729
+ * Moved wifi, rtc, syslog and config to support.ino
+ * Fixed button action when buttontopic is used. Introduced with 1.0.15
+ * Better buffer overflow checks (strlcpy)
+ * 
  * 1.0.15 20160728
  * Removed pubsubclient config changes from sonoff.ino as it doesn't work
  *   reapply MQTT_MAX_PACKET_SIZE 256 and MQTT_KEEPALIVE 120 to PubSubClient.h
