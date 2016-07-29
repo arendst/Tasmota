@@ -88,32 +88,32 @@ light toggle | | Toggle power
 light 1 | | Turn power On
 light 0 | | Turn power Off
 light 2 | | Toggle power
-ledstate | | Show current led state as On or Off
-ledstate on | | Show power state on led
-ledstate off | | Do not show power state on led
-ledstate 1 | | Show power state on led
-ledstate 0 | | Do not show power state on led
+ledstate | 1.0.13 | Show current led state as On or Off
+ledstate on | 1.0.13 | Show power state on led
+ledstate off | 1.0.13 | Do not show power state on led
+ledstate 1 | 1.0.13 | Show power state on led
+ledstate 0 | 1.0.13 | Do not show power state on led
 status | | Show abbreviated status information
 status 0 | 1.0.15 | Show all following information
 status 1 | | Show more status information
 status 2 | | Show firmware information
-status 3 | | Show syslog information
-status 4 | | Show memory information
-status 5 | | Show network information
-status 6 | | Show MQTT information
-seriallog 0 | | Disable serial logging
-seriallog 1 | | Show only error messages
-seriallog 2 | | Show error and info messages
-seriallog 3 | | Show error, info and debug messages
-seriallog 4 | | Show all messages
-syslog 0 | | Disable syslog logging
-syslog 1 | | Show only error messages
-syslog 2 | | Show error and info messages
-syslog 3 | | Show error, info and debug messages
-syslog 4 | | Show all messages
-loghost | | Show current syslog host
-loghost 1 | | Reset syslog host to ```user_config.h``` value and restart
-loghost your-host | | Set syslog host and restart
+status 3 | 1.0.8 | Show syslog information
+status 4 | 1.0.8 | Show memory information
+status 5 | 1.0.9 | Show network information
+status 6 | 1.0.14 | Show MQTT information
+seriallog 0 | 1.0.7 | Disable serial logging
+seriallog 1 | 1.0.7 | Show only error messages
+seriallog 2 | 1.0.7 | Show error and info messages
+seriallog 3 | 1.0.7 | Show error, info and debug messages
+seriallog 4 | 1.0.7 | Show all messages
+syslog 0 | 1.0.7 | Disable syslog logging
+syslog 1 | 1.0.7 | Show only error messages
+syslog 2 | 1.0.7 | Show error and info messages
+syslog 3 | 1.0.7 | Show error, info and debug messages
+syslog 4 | 1.0.7 | Show all messages
+loghost | 1.0.7 | Show current syslog host
+loghost 1 | 1.0.7 | Reset syslog host to ```user_config.h``` value and restart
+loghost your-host | 1.0.7 | Set syslog host and restart
 grouptopic | | Show current MQTT group topic
 grouptopic 1 | | Reset MQTT group topic to ```user_config.h``` value and restart
 grouptopic your-grouptopic | | Set MQTT group topic and restart
@@ -126,7 +126,7 @@ Command | Version | Description
 ------- | ------- | -----------
 restart 1 | | Restart sonoff
 reset 1 | | Reset sonoff parameters to ```user_config.h``` values and restart
-reset 2 | | Erase flash, reset sonoff parameters to ```user_config.h``` values and restart
+reset 2 | 1.0.9 | Erase flash, reset sonoff parameters to ```user_config.h``` values and restart
 ssid | | Show current Wifi SSId
 ssid 1 | | Reset Wifi SSId to ```user_config.h``` value and restart
 ssid your-ssid | | Set Wifi SSId and restart
@@ -139,10 +139,10 @@ mqtthost your-host | | Set MQTT host and restart
 topic | | Show current MQTT topic
 topic 1 | | Reset MQTT topic to ```user_config.h``` value and restart
 topic your-topic | | Set MQTT topic  AND button topic and restart
-buttontopic | | Show current MQTT button topic
-buttontopic 0 | | Disable use of MQTT button topic
-buttontopic 1 | | Set MQTT button topic to MQTT topic as defined in ```user_config.h```
-buttontopic your-topic | | Set MQTT button topic
+buttontopic | 1.0.10 | Show current MQTT button topic
+buttontopic 0 | 1.0.10 | Disable use of MQTT button topic
+buttontopic 1 | 1.0.10 | Set MQTT button topic to MQTT topic as defined in ```user_config.h```
+buttontopic your-topic | 1.0.10 | Set MQTT button topic
 smartconfig 1 | | Start smart config
 otaurl | | Show current otaurl
 otaurl 1 | | Reset otaurl to ```user_config.h``` value
