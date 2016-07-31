@@ -1,4 +1,9 @@
 /*
+ * 1.0.17 20160731
+ * Better variable range checking
+ * Change ambiguous connection messages
+ * Add timestamp to serial message
+ *
  * 1.0.16 20160729
  * Moved wifi, rtc, syslog and config to support.ino
  * Fixed button action when buttontopic is used. Introduced with 1.0.15

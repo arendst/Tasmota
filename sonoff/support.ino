@@ -123,6 +123,7 @@ void WIFI_check_ip()
   if ((WiFi.status() == WL_CONNECTED) && (static_cast<uint32_t>(WiFi.localIP()) != 0)) {
     wificounter = WIFI_CHECKSEC;
     wifiretry = WIFI_RETRY;
+    addLog(LOG_LEVEL_DEBUG_MORE, "Wifi: Connected");
   } else {
     switch (WiFi.status()) {
       case WL_NO_SSID_AVAIL:
@@ -154,7 +155,7 @@ void WIFI_Check(uint8_t param)
       break;
     default:
       if (wificounter <= 0) {
-        addLog(LOG_LEVEL_DEBUG_MORE, "Wifi: Check connection");
+        addLog(LOG_LEVEL_DEBUG_MORE, "Wifi: Checking connection...");
         wificounter = WIFI_CHECKSEC;
         WIFI_check_ip();
       }
@@ -330,11 +331,15 @@ void syslog(const char *message)
 
 void addLog(byte loglevel, const char *line)
 {
+  char mxtime[9];
+  
+  snprintf_P(mxtime, sizeof(mxtime), PSTR("%02d:%02d:%02d"), rtcTime.Hour, rtcTime.Minute, rtcTime.Second);
+  
 #ifdef DEBUG_ESP_PORT
-  DEBUG_ESP_PORT.printf("DebugMsg %s\n", line);  
+  DEBUG_ESP_PORT.printf("%s %s\n", mxtime, line);  
 #endif
 #ifdef SERIAL_IO
-  if (loglevel <= sysCfg.seriallog_level) Serial.println(line);
+  if (loglevel <= sysCfg.seriallog_level) Serial.printf("%s %s\n", mxtime, line);
 #endif
   if ((WiFi.status() == WL_CONNECTED) && (loglevel <= sysCfg.syslog_level)) syslog(line);
 }
