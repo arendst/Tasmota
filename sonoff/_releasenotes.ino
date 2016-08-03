@@ -1,4 +1,7 @@
 /*
+ * 1.0.19 20160803
+ * Fix possible MQTT_CLIENT_ID induced Exception(28) 
+ * 
  * 1.0.18 20160803
  * Moved Cfg_Default
  * Fix negative data handling

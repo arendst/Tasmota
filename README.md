@@ -2,7 +2,7 @@
 ## Sonoff-MQTT-OTA-Arduino
 Provide ESP8266 based [itead Sonoff](https://www.itead.cc/sonoff-wifi-wireless-switch.html) with MQTT and 'Over the Air' or OTA firmware using Arduino IDE.
 
-Current version is 1.0.18
+Current version is 1.0.19
 
 See [Sonoff-MQTT-OTA](https://github.com/arendst/Sonoff-MQTT-OTA) for the ```esp-open-sdk``` version.
 ## Prerequisite
@@ -53,7 +53,7 @@ The button on sonoff provides the following features:
 
 - a short press toggles the relay either by sending a MQTT message like ```cmnd/sonoff/light 2``` or directly. This will blink the LED twice and sends a MQTT status message like ```stat/sonoff/LIGHT on```
 - two short presses toggles the relay. This will blink the LED twice and sends a MQTT status message like ```stat/sonoff/POWER on```
-- three short presses start Wifi smartconfig which allows for SSID and Password configuration using an Android mobile phone with the [ESP8266 SmartConfig](https://play.google.com/store/apps/details?id=com.cmmakerclub.iot.esptouch) app. The green LED will blink during the smartconfig period for 100 seconds. The MQTT server still needs to be configured in the ```user_config.h``` file
+- three short presses start Wifi smartconfig which allows for SSID and Password configuration using an Android mobile phone with the [ESP8266 SmartConfig](https://play.google.com/store/apps/details?id=com.cmmakerclub.iot.esptouch) app. The green LED will blink during the smartconfig period for 1 minute. The MQTT server still needs to be configured in the ```user_config.h``` file
 - four short presses start OTA download of firmware. The green LED is lit during the update
 - five short presses will restart sonoff
 - pressing the button for over four seconds resets settings to defaults as defined in ```user_config.h``` and reboots  sonoff
@@ -153,6 +153,7 @@ If the same topic has been defined to more than one sonoff an individual sonoff 
 ## Tips
 - To aid in finding the IP address of sonoff the network name will be ```esp-<last six characters of MAC address>-<MQTT topic>```. So the default name is ```esp-123456-sonoff```. Another option is MQTT command status 5.
 - Use the group topic to address several sonoffs with one (restricted) MQTT command.
+- Using the Arduino IDE set to 115200 baud and both NL & CR maximum serial output is enabled by command ```seriallog 4```.
 
 ## Modified kaku power socket switch using ESP-12F
 Using parts from itead (5V power supply), aliexpress (Different 5V power supply, ESP-12F and 5V to 3V3 step down) and ebay (5V relay) I modified broken 434MHz kaku power socket switches type PAR-1000 to Wifi wkaku power socket switches.

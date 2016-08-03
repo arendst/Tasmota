@@ -26,7 +26,7 @@
 */
 
 #define APP_NAME               "Sonoff switch"
-#define VERSION                0x01001200   // 1.0.18
+#define VERSION                0x01001300   // 1.0.19
 
 #define LOG_LEVEL_NONE         0
 #define LOG_LEVEL_ERROR        1
@@ -96,6 +96,7 @@ struct TIME_T {
 
 char Version[16];
 char Hostname[32];
+char MQTTClient[32];
 uint8_t mqttcounter = 0;
 unsigned long timerxs = 0, timersec = 0;
 int state = 0;
@@ -167,7 +168,7 @@ void mqtt_connected()
   snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/#"), SUB_PREFIX, sysCfg.mqtt_grptopic);
   mqttClient.subscribe(stopic);
   mqttClient.loop();  // Solve LmacRxBlk:1 messages
-  snprintf_P(stopic, sizeof(stopic), PSTR("%s/"MQTT_CLIENT_ID"/#"), SUB_PREFIX, ESP.getChipId()); // Fall back topic
+  snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/#"), SUB_PREFIX, MQTTClient); // Fall back topic
   mqttClient.subscribe(stopic);
   mqttClient.loop();  // Solve LmacRxBlk:1 messages
 
@@ -178,19 +179,17 @@ void mqtt_connected()
   snprintf_P(svalue, sizeof(svalue), PSTR("%s"), Version);
   mqtt_publish(stopic, svalue);
   snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/FALLBACKTOPIC"), PUB_PREFIX, sysCfg.mqtt_topic);
-  snprintf_P(svalue, sizeof(svalue), PSTR(MQTT_CLIENT_ID), ESP.getChipId());
-  mqtt_publish(stopic, svalue);
+  mqtt_publish(stopic, MQTTClient);
 }
 
 void mqtt_reconnect()
 {
-  char stopic[TOPSZ], svalue[TOPSZ], log[LOGSZ];
+  char stopic[TOPSZ], log[LOGSZ];
 
   mqttcounter = MQTT_RETRY_SECS;
   addLog(LOG_LEVEL_INFO, "MQTT: Attempting connection...");
-  snprintf(svalue, sizeof(svalue), MQTT_CLIENT_ID, ESP.getChipId());
   snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/lwt"), PUB_PREFIX, sysCfg.mqtt_topic);
-  if (mqttClient.connect(svalue, MQTT_USER, MQTT_PASS, stopic, 0, 0, "offline")) {
+  if (mqttClient.connect(MQTTClient, MQTT_USER, MQTT_PASS, stopic, 0, 0, "offline")) {
     addLog(LOG_LEVEL_INFO, "MQTT: Connected");
     mqttcounter = 0;
     mqtt_connected();
@@ -287,8 +286,8 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
         if (payload == 0) mqtt_publish(stopic, svalue);
       }          
       if ((payload == 0) || (payload == 6)) {
-        snprintf_P(svalue, sizeof(svalue), PSTR("MQT: MqttHost %s, ClientId "MQTT_CLIENT_ID", UserId %s, Password %s, MAX_PACKET_SIZE %d, KEEPALIVE %d"),
-          sysCfg.mqtt_host, ESP.getChipId(), MQTT_USER, MQTT_PASS, MQTT_MAX_PACKET_SIZE, MQTT_KEEPALIVE); 
+        snprintf_P(svalue, sizeof(svalue), PSTR("MQT: MqttHost %s, ClientId %s, UserId %s, Password %s, MAX_PACKET_SIZE %d, KEEPALIVE %d"),
+          sysCfg.mqtt_host, MQTTClient, MQTT_USER, MQTT_PASS, MQTT_MAX_PACKET_SIZE, MQTT_KEEPALIVE); 
       }      
     }
     else if (!grpflg && !strcmp(type,"UPGRADE")) {
@@ -348,8 +347,7 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
       if ((data_len > 0) && (data_len < sizeof(sysCfg.mqtt_grptopic))) {
         for(i = 0; i <= data_len; i++)
           if ((dataBuf[i] == '/') || (dataBuf[i] == '+') || (dataBuf[i] == '#')) dataBuf[i] = '_';
-        snprintf_P(svalue, sizeof(svalue), PSTR(MQTT_CLIENT_ID), ESP.getChipId());
-        if (!strcmp(dataBuf, svalue)) payload = 1;
+        if (!strcmp(dataBuf, MQTTClient)) payload = 1;
         strlcpy(sysCfg.mqtt_grptopic, (payload == 1) ? MQTT_GRPTOPIC : dataBuf, sizeof(sysCfg.mqtt_grptopic));
         restartflag = 2;
       }
@@ -359,8 +357,7 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
       if ((data_len > 0) && (data_len < sizeof(sysCfg.mqtt_topic))) {
         for(i = 0; i <= data_len; i++)
           if ((dataBuf[i] == '/') || (dataBuf[i] == '+') || (dataBuf[i] == '#')) dataBuf[i] = '_';
-        snprintf_P(svalue, sizeof(svalue), PSTR(MQTT_CLIENT_ID), ESP.getChipId());
-        if (!strcmp(dataBuf, svalue)) payload = 1;
+        if (!strcmp(dataBuf, MQTTClient)) payload = 1;
         strlcpy(sysCfg.mqtt_topic, (payload == 1) ? MQTT_TOPIC : dataBuf, sizeof(sysCfg.mqtt_topic));
         restartflag = 2;
       }
@@ -370,8 +367,7 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
       if ((data_len > 0) && (data_len < sizeof(sysCfg.mqtt_topic2))) {
         for(i = 0; i <= data_len; i++)
           if ((dataBuf[i] == '/') || (dataBuf[i] == '+') || (dataBuf[i] == '#')) dataBuf[i] = '_';
-        snprintf_P(svalue, sizeof(svalue), PSTR(MQTT_CLIENT_ID), ESP.getChipId());
-        if (!strcmp(dataBuf, svalue)) payload = 1;
+        if (!strcmp(dataBuf, MQTTClient)) payload = 1;
         strlcpy(sysCfg.mqtt_topic2, (payload == 1) ? MQTT_TOPIC : dataBuf, sizeof(sysCfg.mqtt_topic2));
       }
       snprintf_P(svalue, sizeof(svalue), PSTR("%s"), sysCfg.mqtt_topic2);
@@ -684,6 +680,7 @@ void setup()
   snprintf_P(Hostname, sizeof(Hostname), PSTR(WIFI_HOSTNAME), ESP.getChipId(), sysCfg.mqtt_topic);
   WIFI_Connect(Hostname);
 
+  snprintf_P(MQTTClient, sizeof(MQTTClient), PSTR(MQTT_CLIENT_ID), ESP.getChipId());
   mqttClient.setServer(sysCfg.mqtt_host, MQTT_PORT);
   mqttClient.setCallback(mqttDataCb);
 
@@ -697,8 +694,8 @@ void setup()
 
   rtc_init(sysCfg.timezone);
 
-  snprintf_P(log, sizeof(log), PSTR("App: Project %s (Topic %s, Fallback "MQTT_CLIENT_ID", GroupTopic %s) Version %s"),
-    PROJECT, sysCfg.mqtt_topic, ESP.getChipId(), sysCfg.mqtt_grptopic, Version);
+  snprintf_P(log, sizeof(log), PSTR("App: Project %s (Topic %s, Fallback %s, GroupTopic %s) Version %s"),
+    PROJECT, sysCfg.mqtt_topic, MQTTClient, sysCfg.mqtt_grptopic, Version);
   addLog(LOG_LEVEL_INFO, log);
 }
 
