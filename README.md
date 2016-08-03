@@ -2,7 +2,7 @@
 ## Sonoff-MQTT-OTA-Arduino
 Provide ESP8266 based [itead Sonoff](https://www.itead.cc/sonoff-wifi-wireless-switch.html) with MQTT and 'Over the Air' or OTA firmware using Arduino IDE.
 
-Current version is 1.0.17
+Current version is 1.0.18
 
 See [Sonoff-MQTT-OTA](https://github.com/arendst/Sonoff-MQTT-OTA) for the ```esp-open-sdk``` version.
 ## Prerequisite
@@ -27,7 +27,7 @@ This will provide an additional option ```Tools - Upload Using: OTA_upload```.
 ## Compile and upload
 For sonoff select from ```Tools Board Generic ESP8266 Module``` and set the following options:
 
-- Flash Mode: QIO
+- Flash Mode: DIO
 - Flash Frequency: 40MHz
 - Upload Using: Serial
 - CPU Frequency: 80MHz
@@ -94,7 +94,7 @@ ledstate off | 1.0.13 | Do not show power state on led
 ledstate 1 | 1.0.13 | Show power state on led
 ledstate 0 | 1.0.13 | Do not show power state on led
 status | | Show abbreviated status information
-status 0 | 1.0.15 | Show all following information
+status 0 | 1.0.15 | Show all status information
 status 1 | | Show more status information
 status 2 | | Show firmware information
 status 3 | 1.0.8 | Show syslog information

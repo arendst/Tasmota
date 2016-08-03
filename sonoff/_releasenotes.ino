@@ -1,4 +1,11 @@
 /*
+ * 1.0.18 20160803
+ * Moved Cfg_Default
+ * Fix negative data handling
+ * Remove MQTT information from status 1 and add labels to status 1
+ * Add mac address to status 5
+ * Add MQTT ClientId, UserId and Password to status 6
+ * 
  * 1.0.17 20160731
  * Better variable range checking
  * Change ambiguous connection messages

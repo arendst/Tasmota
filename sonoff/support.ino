@@ -2,33 +2,6 @@
  * Config
 \*********************************************************************************************/
 
-SYSCFG myCfg;
-
-void CFG_Default()
-{
-  addLog(LOG_LEVEL_INFO, "Config: Use default configuration");
-  memset(&sysCfg, 0x00, sizeof(SYSCFG));
-  memset(&myCfg, 0x00, sizeof(SYSCFG));
-  sysCfg.cfg_holder = CFG_HOLDER;
-  sysCfg.saveFlag = 0;
-  sysCfg.version = VERSION;
-  sysCfg.seriallog_level = SERIAL_LOG_LEVEL;
-  sysCfg.syslog_level = SYS_LOG_LEVEL;
-  strlcpy(sysCfg.syslog_host, SYS_LOG_HOST, sizeof(sysCfg.syslog_host));
-  strlcpy(sysCfg.sta_ssid, STA_SSID, sizeof(sysCfg.sta_ssid));
-  strlcpy(sysCfg.sta_pwd, STA_PASS, sizeof(sysCfg.sta_pwd));
-  strlcpy(sysCfg.otaUrl, OTA_URL, sizeof(sysCfg.otaUrl));
-  strlcpy(sysCfg.mqtt_host, MQTT_HOST, sizeof(sysCfg.mqtt_host));
-  strlcpy(sysCfg.mqtt_grptopic, MQTT_GRPTOPIC, sizeof(sysCfg.mqtt_grptopic));
-  strlcpy(sysCfg.mqtt_topic, MQTT_TOPIC, sizeof(sysCfg.mqtt_topic));
-  strlcpy(sysCfg.mqtt_topic2, "0", sizeof(sysCfg.mqtt_topic2));
-  strlcpy(sysCfg.mqtt_subtopic, MQTT_SUBTOPIC, sizeof(sysCfg.mqtt_subtopic));
-  sysCfg.timezone = APP_TIMEZONE;
-  sysCfg.power = APP_POWER;
-  sysCfg.ledstate = APP_LEDSTATE;
-  CFG_Save();
-}
-
 extern "C" {
 #include "spi_flash.h"
 }

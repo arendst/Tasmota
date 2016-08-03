@@ -26,7 +26,7 @@
 */
 
 #define APP_NAME               "Sonoff switch"
-#define VERSION                0x01001100   // 1.0.17
+#define VERSION                0x01001200   // 1.0.18
 
 #define LOG_LEVEL_NONE         0
 #define LOG_LEVEL_ERROR        1
@@ -80,7 +80,7 @@ struct SYSCFG {
   int8_t        timezone;
   uint8_t       power;
   uint8_t       ledstate;
-} sysCfg;
+} sysCfg, myCfg;
 
 struct TIME_T {
   uint8_t       Second;
@@ -116,6 +116,33 @@ uint8_t lastbutton = NOT_PRESSED;
 uint8_t holdcount = 0;
 uint8_t multiwindow = 0;
 uint8_t multipress = 0;
+
+/********************************************************************************************/
+
+void CFG_Default()
+{
+  addLog(LOG_LEVEL_INFO, "Config: Use default configuration");
+  memset(&sysCfg, 0x00, sizeof(SYSCFG));
+  memset(&myCfg, 0x00, sizeof(SYSCFG));
+  sysCfg.cfg_holder = CFG_HOLDER;
+  sysCfg.saveFlag = 0;
+  sysCfg.version = VERSION;
+  sysCfg.seriallog_level = SERIAL_LOG_LEVEL;
+  sysCfg.syslog_level = SYS_LOG_LEVEL;
+  strlcpy(sysCfg.syslog_host, SYS_LOG_HOST, sizeof(sysCfg.syslog_host));
+  strlcpy(sysCfg.sta_ssid, STA_SSID, sizeof(sysCfg.sta_ssid));
+  strlcpy(sysCfg.sta_pwd, STA_PASS, sizeof(sysCfg.sta_pwd));
+  strlcpy(sysCfg.otaUrl, OTA_URL, sizeof(sysCfg.otaUrl));
+  strlcpy(sysCfg.mqtt_host, MQTT_HOST, sizeof(sysCfg.mqtt_host));
+  strlcpy(sysCfg.mqtt_grptopic, MQTT_GRPTOPIC, sizeof(sysCfg.mqtt_grptopic));
+  strlcpy(sysCfg.mqtt_topic, MQTT_TOPIC, sizeof(sysCfg.mqtt_topic));
+  strlcpy(sysCfg.mqtt_topic2, "0", sizeof(sysCfg.mqtt_topic2));
+  strlcpy(sysCfg.mqtt_subtopic, MQTT_SUBTOPIC, sizeof(sysCfg.mqtt_subtopic));
+  sysCfg.timezone = APP_TIMEZONE;
+  sysCfg.power = APP_POWER;
+  sysCfg.ledstate = APP_LEDSTATE;
+  CFG_Save();
+}
 
 /********************************************************************************************/
 
@@ -218,7 +245,7 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
     snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/%s"), PUB_PREFIX, sysCfg.mqtt_topic, type);
     strlcpy(svalue, "Error", sizeof(svalue));
 
-    uint16_t payload = atoi(dataBuf);
+    int16_t payload = atoi(dataBuf);
     if (!strcmp(dataBufUc,"OFF")) payload = 0;
     if (!strcmp(dataBufUc,"ON")) payload = 1;
     if (!strcmp(dataBufUc,"TOGGLE")) payload = 2;
@@ -231,8 +258,8 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
         if (payload == 0) mqtt_publish(stopic, svalue);
       }
       if ((payload == 0) || (payload == 1)) {
-        snprintf_P(svalue, sizeof(svalue), PSTR("PRM: %s, "MQTT_CLIENT_ID", %s, %s, %d, %d"),
-          sysCfg.mqtt_grptopic, ESP.getChipId(), sysCfg.otaUrl, sysCfg.mqtt_host, heartbeat, sysCfg.saveFlag);
+        snprintf_P(svalue, sizeof(svalue), PSTR("PRM: GroupTopic %s, OtaUrl %s, Heartbeats %d, SaveCount %d"),
+          sysCfg.mqtt_grptopic, sysCfg.otaUrl, heartbeat, sysCfg.saveFlag);
         if (payload == 0) mqtt_publish(stopic, svalue);
       }          
       if ((payload == 0) || (payload == 2)) {
@@ -255,13 +282,13 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
         IPAddress ip = WiFi.localIP();
         IPAddress gw = WiFi.gatewayIP();
         IPAddress nm = WiFi.subnetMask();
-        snprintf_P(svalue, sizeof(svalue), PSTR("NET: Hostname %s, IP %u.%u.%u.%u, Gateway %u.%u.%u.%u, Subnetmask %u.%u.%u.%u"),
-          Hostname, ip[0], ip[1], ip[2], ip[3], gw[0], gw[1], gw[2], gw[3], nm[0], nm[1], nm[2], nm[3]);
+        snprintf_P(svalue, sizeof(svalue), PSTR("NET: Hostname %s, IP %u.%u.%u.%u, Gateway %u.%u.%u.%u, Subnetmask %u.%u.%u.%u, Mac %s"),
+          Hostname, ip[0], ip[1], ip[2], ip[3], gw[0], gw[1], gw[2], gw[3], nm[0], nm[1], nm[2], nm[3], WiFi.macAddress().c_str());
         if (payload == 0) mqtt_publish(stopic, svalue);
       }          
       if ((payload == 0) || (payload == 6)) {
-        snprintf_P(svalue, sizeof(svalue), PSTR("MQT: Host %s, MAX_PACKET_SIZE %d, KEEPALIVE %d"),
-          sysCfg.mqtt_host, MQTT_MAX_PACKET_SIZE, MQTT_KEEPALIVE); 
+        snprintf_P(svalue, sizeof(svalue), PSTR("MQT: MqttHost %s, ClientId "MQTT_CLIENT_ID", UserId %s, Password %s, MAX_PACKET_SIZE %d, KEEPALIVE %d"),
+          sysCfg.mqtt_host, ESP.getChipId(), MQTT_USER, MQTT_PASS, MQTT_MAX_PACKET_SIZE, MQTT_KEEPALIVE); 
       }      
     }
     else if (!grpflg && !strcmp(type,"UPGRADE")) {
