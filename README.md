@@ -2,7 +2,7 @@
 ## Sonoff-MQTT-OTA-Arduino
 Provide ESP8266 based [itead Sonoff](https://www.itead.cc/sonoff-wifi-wireless-switch.html) with MQTT and 'Over the Air' or OTA firmware using Arduino IDE.
 
-Current version is 1.0.19
+Current version is 1.0.20 - See ```sonoff/_releasenotes``` for change information.
 
 See [Sonoff-MQTT-OTA](https://github.com/arendst/Sonoff-MQTT-OTA) for the ```esp-open-sdk``` version.
 ## Prerequisite
@@ -101,6 +101,7 @@ status 3 | 1.0.8 | Show syslog information
 status 4 | 1.0.8 | Show memory information
 status 5 | 1.0.9 | Show network information
 status 6 | 1.0.14 | Show MQTT information
+status 7 | 1.0.20 | Show Real Time Clock information
 seriallog 0 | 1.0.7 | Disable serial logging
 seriallog 1 | 1.0.7 | Show only error messages
 seriallog 2 | 1.0.7 | Show error and info messages
@@ -119,6 +120,7 @@ grouptopic 1 | | Reset MQTT group topic to ```user_config.h``` value and restart
 grouptopic your-grouptopic | | Set MQTT group topic and restart
 timezone | | Show current timezone
 timezone -12 .. 12 | | Set timezone
+timezone 99 | 1.0.20 | Use Daylight Saving parameters from ```user_config.h```
 
 The following commands are recognised by topic only:
 

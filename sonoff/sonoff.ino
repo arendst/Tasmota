@@ -26,19 +26,19 @@
 */
 
 #define APP_NAME               "Sonoff switch"
-#define VERSION                0x01001300   // 1.0.19
+#define VERSION                0x01001400   // 1.0.20
 
-#define LOG_LEVEL_NONE         0
-#define LOG_LEVEL_ERROR        1
-#define LOG_LEVEL_INFO         2
-#define LOG_LEVEL_DEBUG        3
-#define LOG_LEVEL_DEBUG_MORE   4
+enum log_t   {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG_MORE};
+enum week_t  {Last, First, Second, Third, Fourth}; 
+enum dow_t   {Sun=1, Mon, Tue, Wed, Thu, Fri, Sat};
+enum month_t {Jan=1, Feb, Mar, Apr, May, Jun, Jul, Aug, Sep, Oct, Nov, Dec};
 
 #include "user_config.h"
 
 #define SERIAL_IO                           // Enable serial command line
 #define STATES                 10           // loops per second
 #define MQTT_RETRY_SECS        10           // Seconds to retry MQTT connection
+#define MQTT_MAX_ACTIVE        3            // Number of max active callbacks before buffers run out causing exception()
 
 //#define LED_PIN                2            // GPIO 2 = Blue Led (0 = On, 1 = Off) - ESP-12
 #define LED_PIN                13           // GPIO 13 = Green Led (0 = On, 1 = Off) - Sonoff
@@ -94,10 +94,22 @@ struct TIME_T {
   unsigned long Valid;
 } rtcTime;
 
+struct TimeChangeRule
+{
+  uint8_t       week;      // 1=First, 2=Second, 3=Third, 4=Fourth, or 0=Last week of the month
+  uint8_t       dow;       // day of week, 1=Sun, 2=Mon, ... 7=Sat
+  uint8_t       month;     // 1=Jan, 2=Feb, ... 12=Dec
+  uint8_t       hour;      // 0-23
+  int           offset;    // offset from UTC in minutes
+};
+
+TimeChangeRule myDST = { TIME_DST };  // Daylight Saving Time
+TimeChangeRule mySTD = { TIME_STD };  // Standard Time
+
 char Version[16];
 char Hostname[32];
 char MQTTClient[32];
-uint8_t mqttcounter = 0;
+uint8_t mqttcounter = 0, mqttactive = 0;
 unsigned long timerxs = 0, timersec = 0;
 int state = 0;
 int otaflag = 0;
@@ -152,9 +164,9 @@ void mqtt_publish(const char* topic, const char* data)
   char log[TOPSZ+MESSZ];
   
   mqttClient.publish(topic, data);
+  mqttClient.loop();  // Solve LmacRxBlk:1 messages
   snprintf_P(log, sizeof(log), PSTR("MQTT: %s = %s"), strchr(topic,'/')+1, data); // Skip topic prefix
   addLog(LOG_LEVEL_INFO, log);
-  mqttClient.loop();  // Solve LmacRxBlk:1 messages
   blinks++;
 }
 
@@ -201,6 +213,9 @@ void mqtt_reconnect()
 
 void mqttDataCb(char* topic, byte* data, unsigned int data_len)
 {
+  if (mqttactive == MQTT_MAX_ACTIVE) return;
+  mqttactive++;
+
   int i, grpflg = 0;
   char *str, *p, *mtopic = NULL, *type = NULL;
   char stopic[TOPSZ], svalue[MESSZ];
@@ -216,7 +231,7 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
   memcpy(dataBuf, data, data_len);
   dataBuf[data_len] = 0;
 
-  snprintf_P(svalue, sizeof(svalue), PSTR("MQTT: Receive topic %s, data %s"), topicBuf, dataBuf);
+  snprintf_P(svalue, sizeof(svalue), PSTR("MQTT: Receive topic %s, data %s, active %d of %d"), topicBuf, dataBuf, mqttactive, MQTT_MAX_ACTIVE);
   addLog(LOG_LEVEL_DEBUG, svalue);
 
   i = 0;
@@ -250,10 +265,10 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
     if (!strcmp(dataBufUc,"TOGGLE")) payload = 2;
 
     if (!strcmp(type,"STATUS")) {
-      if ((data_len == 0) || (payload < 0) || (payload > 6)) payload = 7;
-      if ((payload == 0) || (payload == 7)) {
-        snprintf_P(svalue, sizeof(svalue), PSTR("%s, %s, %s, %s, %d, %d"),
-          Version, sysCfg.mqtt_topic, sysCfg.mqtt_topic2, sysCfg.mqtt_subtopic, sysCfg.power, sysCfg.timezone);
+      if ((data_len == 0) || (payload < 0) || (payload > 7)) payload = 8;
+      if ((payload == 0) || (payload == 8)) {
+        snprintf_P(svalue, sizeof(svalue), PSTR("%s, %s, %s, %s, %d, %d, %d"),
+          Version, sysCfg.mqtt_topic, sysCfg.mqtt_topic2, sysCfg.mqtt_subtopic, sysCfg.power, sysCfg.timezone, sysCfg.ledstate);
         if (payload == 0) mqtt_publish(stopic, svalue);
       }
       if ((payload == 0) || (payload == 1)) {
@@ -288,6 +303,11 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
       if ((payload == 0) || (payload == 6)) {
         snprintf_P(svalue, sizeof(svalue), PSTR("MQT: MqttHost %s, ClientId %s, UserId %s, Password %s, MAX_PACKET_SIZE %d, KEEPALIVE %d"),
           sysCfg.mqtt_host, MQTTClient, MQTT_USER, MQTT_PASS, MQTT_MAX_PACKET_SIZE, MQTT_KEEPALIVE); 
+        if (payload == 0) mqtt_publish(stopic, svalue);
+      }      
+      if ((payload == 0) || (payload == 7)) {
+        snprintf_P(svalue, sizeof(svalue), PSTR("TIM: UTC %s, Local %s, Start DST %s, End DST %s"),
+          rtc_time(0).c_str(), rtc_time(1).c_str(), rtc_time(2).c_str(), rtc_time(3).c_str()); 
       }      
     }
     else if (!grpflg && !strcmp(type,"UPGRADE")) {
@@ -402,9 +422,8 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
       }
     }
     else if (!strcmp(type,"TIMEZONE")) {
-      if ((data_len > 0) && (payload >= -12) && (payload <= 12)) {
+      if ((data_len > 0) && (((payload >= -12) && (payload <= 12)) || (payload == 99))) {
         sysCfg.timezone = payload;
-        rtc_timezone(sysCfg.timezone);
       }
       snprintf_P(svalue, sizeof(svalue), PSTR("%d"), sysCfg.timezone);
     }
@@ -445,6 +464,7 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
     }
     mqtt_publish(stopic, svalue);
   }
+  if (mqttactive) mqttactive--;
 }
 
 /********************************************************************************************/
@@ -692,7 +712,7 @@ void setup()
 
   pinMode(KEY_PIN, INPUT_PULLUP);
 
-  rtc_init(sysCfg.timezone);
+  rtc_init();
 
   snprintf_P(log, sizeof(log), PSTR("App: Project %s (Topic %s, Fallback %s, GroupTopic %s) Version %s"),
     PROJECT, sysCfg.mqtt_topic, MQTTClient, sysCfg.mqtt_grptopic, Version);

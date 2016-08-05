@@ -38,9 +38,20 @@
 #define MQTT_TOPIC             PROJECT
 #define MQTT_GRPTOPIC          PROJECT"s"   // Group topic
 
+// Time - Up to three NTP servers in your region
+#define NTP_SERVER1            "pool.ntp.org"
+#define NTP_SERVER2            "nl.pool.ntp.org"
+#define NTP_SERVER3            "0.nl.pool.ntp.org"
+
+// Time - Start Daylight Saving Time and timezone offset from UTC in minutes
+#define TIME_DST               Last, Sun, Mar, 2, +120  // Last sunday in march at 02:00 +120 minutes
+
+// Time - Start Standard Time and timezone offset from UTC in minutes
+#define TIME_STD               Last, Sun, Oct, 3, +60   // Last sunday in october 02:00 +60 minutes
+
 // Application
 #define MQTT_SUBTOPIC          "POWER"
-#define APP_TIMEZONE           1            // +1 hour (Amsterdam)
+#define APP_TIMEZONE           1            // +1 hour (Amsterdam) (-12 .. 12 = hours from UTC, 99 = TIME_DST/TIME_STD usage)
 #define APP_POWER              0            // Saved power state Off
 #define APP_LEDSTATE           0            // Do not show power state (1 = Show power state)
 

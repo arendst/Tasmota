@@ -1,4 +1,10 @@
 /*
+ * 1.0.20 20160805
+ * Add semaphore to handle out of memory when too many subscriptions requested
+ * Use Daylight Saving (DST) parameters from user_config.h when timezone = 99
+ * Add status 7 option displaying RTC information
+ * Add ledstate to status 0
+ * 
  * 1.0.19 20160803
  * Fix possible MQTT_CLIENT_ID induced Exception(28) 
  * 
