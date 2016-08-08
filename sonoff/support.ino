@@ -182,6 +182,10 @@ extern "C" {
 #define SECS_PER_DAY  ((uint32_t)(SECS_PER_HOUR * 24UL))
 #define LEAP_YEAR(Y)  (((1970+Y)>0) && !((1970+Y)%4) && (((1970+Y)%100) || !((1970+Y)%400)))
 
+#ifdef USE_TICKER
+  Ticker tickerRTC;
+#endif
+
 static const uint8_t monthDays[] = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 }; // API starts months from 1, this array starts from 0
 static const char monthNames[37] = { "JanFebMrtAprMayJunJulAugSepOctNovDec" };
 
@@ -305,8 +309,8 @@ uint32_t toTime_t(TimeChangeRule r, int yr)
 String rtc_time(int type)
 {
   char stime[25];   // Skip newline
-  uint32_t time = utctime;
 
+  uint32_t time = utctime;
   if (type == 1) time = loctime;
   if (type == 2) time = dsttime;
   if (type == 3) time = stdtime;
@@ -319,8 +323,7 @@ void rtc_second()
   char log[LOGSZ];
   uint32_t stdoffset, dstoffset;
   TIME_T tmpTime;
-  
-  utctime++;
+
   // NTP Sync every hour at x:0:10
   if (rtcTime.Minute == 0) {
     if ((rtcTime.Second >= 10) && !ntpsync) {
@@ -341,6 +344,7 @@ void rtc_second()
     }
     if (rtcTime.Second == 40) ntpsync = 0;
   }
+  utctime++;
   loctime = utctime;
   if (sysCfg.timezone == 99) {
     if (loctime > 1451602800) {  // 2016-01-01
@@ -355,7 +359,7 @@ void rtc_second()
     loctime += sysCfg.timezone * SECS_PER_HOUR;
   }
   breakTime(loctime, rtcTime);
-  rtcTime.Year = rtcTime.Year + 1970;
+  rtcTime.Year += 1970;
 }
 
 void rtc_init()
@@ -367,6 +371,9 @@ void rtc_init()
   sntp_set_timezone(0);      // UTC time
   sntp_init();
   utctime = 0;
+#ifdef USE_TICKER
+  tickerRTC.attach(1, rtc_second);
+#endif
 }
 
 /*********************************************************************************************\

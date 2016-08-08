@@ -26,7 +26,7 @@
 */
 
 #define APP_NAME               "Sonoff switch"
-#define VERSION                0x01001400   // 1.0.20
+#define VERSION                0x01001500   // 1.0.21
 
 enum log_t   {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG_MORE};
 enum week_t  {Last, First, Second, Third, Fourth}; 
@@ -36,29 +36,31 @@ enum month_t {Jan=1, Feb, Mar, Apr, May, Jun, Jul, Aug, Sep, Oct, Nov, Dec};
 #include "user_config.h"
 
 #define SERIAL_IO                           // Enable serial command line
+#define USE_TICKER                          // Enable interrupts to keep RTC synced during subscription flooding
+
 #define STATES                 10           // loops per second
 #define MQTT_RETRY_SECS        10           // Seconds to retry MQTT connection
-#define MQTT_MAX_ACTIVE        3            // Number of max active callbacks before buffers run out causing exception()
 
 //#define LED_PIN                2            // GPIO 2 = Blue Led (0 = On, 1 = Off) - ESP-12
 #define LED_PIN                13           // GPIO 13 = Green Led (0 = On, 1 = Off) - Sonoff
 //#define LED_PIN                16           // NodeMCU
 #define REL_PIN                12           // GPIO 12 = Red Led and Relay (0 = Off, 1 = On)
 #define KEY_PIN                0            // GPIO 00 = Button
-#define PRESSED                0
-#define NOT_PRESSED            1
-
-#define WIFI_STATUS            0
-#define WIFI_SMARTCONFIG       1
 
 #define TOPSZ                  40           // Max number of characters in topic string
 #define MESSZ                  200          // Max number of characters in message string (Syntax string)
 #define LOGSZ                  80           // Max number of characters in log string
 
+enum butt_t {PRESSED, NOT_PRESSED};
+enum wifi_t {WIFI_STATUS, WIFI_SMARTCONFIG};
+
 #include <ESP8266WiFi.h>
 #include <ESP8266HTTPClient.h>
 #include <ESP8266httpUpdate.h>
 #include <PubSubClient.h>
+#ifdef USE_TICKER
+  #include <Ticker.h>
+#endif
 
 extern "C" uint32_t _SPIFFS_start;
 
@@ -109,13 +111,15 @@ TimeChangeRule mySTD = { TIME_STD };  // Standard Time
 char Version[16];
 char Hostname[32];
 char MQTTClient[32];
-uint8_t mqttcounter = 0, mqttactive = 0;
-unsigned long timerxs = 0, timersec = 0;
+uint8_t mqttcounter = 0;
+unsigned long timerxs = 0;
+#ifndef USE_TICKER
+  unsigned long timersec = 0;
+#endif
 int state = 0;
 int otaflag = 0;
 int restartflag = 0;
 int smartconfigflag = 0;
-int heartbeatflag = 0;
 int heartbeat = 0;
 
 WiFiClient espClient;
@@ -164,7 +168,7 @@ void mqtt_publish(const char* topic, const char* data)
   char log[TOPSZ+MESSZ];
   
   mqttClient.publish(topic, data);
-  mqttClient.loop();  // Solve LmacRxBlk:1 messages
+//  mqttClient.loop();  // Do not use here! Will block previous publishes
   snprintf_P(log, sizeof(log), PSTR("MQTT: %s = %s"), strchr(topic,'/')+1, data); // Skip topic prefix
   addLog(LOG_LEVEL_INFO, log);
   blinks++;
@@ -213,9 +217,6 @@ void mqtt_reconnect()
 
 void mqttDataCb(char* topic, byte* data, unsigned int data_len)
 {
-  if (mqttactive == MQTT_MAX_ACTIVE) return;
-  mqttactive++;
-
   int i, grpflg = 0;
   char *str, *p, *mtopic = NULL, *type = NULL;
   char stopic[TOPSZ], svalue[MESSZ];
@@ -231,7 +232,7 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
   memcpy(dataBuf, data, data_len);
   dataBuf[data_len] = 0;
 
-  snprintf_P(svalue, sizeof(svalue), PSTR("MQTT: Receive topic %s, data %s, active %d of %d"), topicBuf, dataBuf, mqttactive, MQTT_MAX_ACTIVE);
+  snprintf_P(svalue, sizeof(svalue), PSTR("MQTT: Receive topic %s, data %s"), topicBuf, dataBuf);
   addLog(LOG_LEVEL_DEBUG, svalue);
 
   i = 0;
@@ -456,15 +457,12 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
       blinks = 1;
       snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/SYNTAX"), PUB_PREFIX, sysCfg.mqtt_topic);
       if (!grpflg)
-//        strlcpy(svalue, "Status, Upgrade, Otaurl, Restart, Reset, Smartconfig, Seriallog, Syslog, LogHost, SSId, Password, MqttHost, GroupTopic, Topic, ButtonTopic, Timezone, Light, Power, Ledstate", sizeof(svalue));  // Fails progmem access
         snprintf_P(svalue, sizeof(svalue), PSTR("Status, Upgrade, Otaurl, Restart, Reset, Smartconfig, Seriallog, Syslog, LogHost, SSId, Password, MqttHost, GroupTopic, Topic, ButtonTopic, Timezone, Light, Power, Ledstate"));
       else
-//        strlcpy(svalue, "Status, GroupTopic, Timezone, Light, Power, Ledstate", sizeof(svalue));  // Fails progmem access
         snprintf_P(svalue, sizeof(svalue), PSTR("Status, GroupTopic, Timezone, Light, Power, Ledstate"));
     }
     mqtt_publish(stopic, svalue);
   }
-  if (mqttactive) mqttactive--;
 }
 
 /********************************************************************************************/
@@ -499,7 +497,7 @@ void send_power()
   char stopic[TOPSZ], svalue[TOPSZ];
 
   snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/%s"), PUB_PREFIX, sysCfg.mqtt_topic, sysCfg.mqtt_subtopic);
-  strlcpy(svalue, (sysCfg.power == 0) ? "Off" : "On", sizeof(svalue));
+  strlcpy(svalue, (sysCfg.power) ? "On" : "Off", sizeof(svalue));
   mqtt_publish(stopic, svalue);
 }
 
@@ -515,8 +513,7 @@ void every_second()
 {
   char stopic[TOPSZ], svalue[TOPSZ];
 
-  if (heartbeatflag) {
-    heartbeatflag = 0;
+  if ((rtcTime.Minute == 2) && (rtcTime.Second == 30)) { 
     heartbeat++;
     snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/HEARTBEAT"), PUB_PREFIX, sysCfg.mqtt_topic);
     snprintf_P(svalue, sizeof(svalue), PSTR("%d"), heartbeat);
@@ -721,12 +718,13 @@ void setup()
 
 void loop()
 {
+#ifndef USE_TICKER
   if (millis() >= timersec) {
     timersec = millis() + 1000;
     rtc_second();
-    if ((rtcTime.Minute == 2) && (rtcTime.Second == 30)) heartbeatflag = 1;
   }
-
+#endif
+  
   if (millis() >= timerxs) stateloop();
 
   mqttClient.loop();

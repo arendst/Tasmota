@@ -10,7 +10,7 @@
 // Wifi
 #define STA_SSID               "indebuurt3"      // Wifi SSID
 #define STA_PASS               "VnsqrtnrsddbrN"  // Wifi password
-#define WIFI_HOSTNAME          "esp-%06x-%s"
+#define WIFI_HOSTNAME          "esp-%06x-%s"     // Expands to esp-<last 6 chars of MAC address>-<MQTT_TOPIC>
 
 // Syslog
 #define SYS_LOG_HOST           "domus1"

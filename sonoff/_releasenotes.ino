@@ -1,4 +1,9 @@
 /*
+ * 1.0.21 20160808
+ * Remove semaphore as subscription flooding (more than 15 subscriptions per second) is managed by PubSubClient
+ * Add optional RTC interrupt (define USE_TICKER) to keep RTC synced during subscription flooding
+ * Removed heartbeatflag
+ * 
  * 1.0.20 20160805
  * Add semaphore to handle out of memory when too many subscriptions requested
  * Use Daylight Saving (DST) parameters from user_config.h when timezone = 99
