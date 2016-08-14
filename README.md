@@ -2,7 +2,7 @@
 ## Sonoff-MQTT-OTA-Arduino
 Provide ESP8266 based [itead Sonoff](https://www.itead.cc/sonoff-wifi-wireless-switch.html) with MQTT and 'Over the Air' or OTA firmware using Arduino IDE.
 
-Current version is 1.0.21 - See ```sonoff/_releasenotes``` for change information.
+Current version is 1.0.22 - See ```sonoff/_releasenotes``` for change information.
 
 See [Sonoff-MQTT-OTA](https://github.com/arendst/Sonoff-MQTT-OTA) for the ```esp-open-sdk``` version.
 ## Prerequisite
@@ -53,7 +53,7 @@ The button on sonoff provides the following features:
 
 - a short press toggles the relay either by sending a MQTT message like ```cmnd/sonoff/light 2``` or directly. This will blink the LED twice and sends a MQTT status message like ```stat/sonoff/LIGHT on```
 - two short presses toggles the relay. This will blink the LED twice and sends a MQTT status message like ```stat/sonoff/POWER on```
-- three short presses start Wifi smartconfig which allows for SSID and Password configuration using an Android mobile phone with the [ESP8266 SmartConfig](https://play.google.com/store/apps/details?id=com.cmmakerclub.iot.esptouch) app. The green LED will blink during the smartconfig period for 1 minute. The MQTT server still needs to be configured in the ```user_config.h``` file
+- three short presses start Wifi smartconfig (if the relay is off) or Wifi manager (if the relay is on). Wifi smartconfig allows for SSID and Password configuration using an Android mobile phone with the [ESP8266 SmartConfig](https://play.google.com/store/apps/details?id=com.cmmakerclub.iot.esptouch) app. The MQTT server still needs to be configured in the ```user_config.h``` file. Wifi manager provides an Access Point with IP address 192.168.4.1 and a web server allowing the configuration of both Wifi and MQTT parameters. In both cases the LED will blink during the config period. 
 - four short presses start OTA download of firmware. The green LED is lit during the update
 - five short presses will restart sonoff
 - pressing the button for over four seconds resets settings to defaults as defined in ```user_config.h``` and reboots  sonoff
@@ -62,7 +62,7 @@ Sonoff responds to the following MQTT commands:
 
 - the relay can be controlled by ```cmnd/sonoff/power on```, ```cmnd/sonoff/power off``` or ```cmnd/sonoff/power toggle```. The LED will blink twice and sends a MQTT status message like ```stat/sonoff/POWER on```. The same function can be initiated with ```cmnd/sonoff/light on```
 - the MQTT topic can be changed with ```cmnd/sonoff/topic sonoff1``` which reboots sonoff and makes it available for MQTT commands like ```cmnd/sonoff1/power on```
-- the OTA firmware location can be made known to sonoff by ```cmnd/sonoff/otaurl http://sidnas2:80/api/sonoff/user1.bin``` where sidnas2 is your webserver hosting the firmware. Reset to default with ```cmnd/sonoff/otaurl 1```
+- the OTA firmware location can be made known to sonoff by ```cmnd/sonoff/otaurl http://domus1:80/api/sonoff/user1.bin``` where domus1 is your webserver hosting the firmware. Reset to default with ```cmnd/sonoff/otaurl 1```
 - upgrade OTA firmware by ```cmnd/sonoff/upgrade 1```
 - show status information by ```cmnd/sonoff/status 1```
 
@@ -138,6 +138,18 @@ password your-password | | Set Wifi password and restart
 mqtthost | | Show current MQTT host
 mqtthost 1 | | Reset MQTT host to ```user_config.h``` value and restart
 mqtthost your-host | | Set MQTT host and restart
+mqttport | 1.0.22 | Show current MQTT port
+mqttport 1 | 1.0.22 | Reset MQTT port to ```user_config.h``` value and restart
+mqttport your-port | 1.0.22 | Set MQTT port between 2 and 32766 and restart
+mqttclient | 1.0.22 | Show current MQTT client
+mqttclient 1 | 1.0.22 | Reset MQTT client to ```user_config.h``` value and restart
+mqttclient your-client | 1.0.22 | Set MQTT client and restart. May use wildcard %06X to be replaced by last six characters of MAC address
+mqttuser | 1.0.22 | Show current MQTT user name
+mqttuser 1 | 1.0.22 | Reset MQTT user name to ```user_config.h``` value and restart
+mqttuser your-user | 1.0.22 | Set MQTT user name and restart
+mqttpassword | 1.0.22 | Show current MQTT password
+mqttpassword 1 | 1.0.22 | Reset MQTT password to ```user_config.h``` value and restart
+mqttpassword your-password | 1.0.22 | Set MQTT password and restart
 topic | | Show current MQTT topic
 topic 1 | | Reset MQTT topic to ```user_config.h``` value and restart
 topic your-topic | | Set MQTT topic  AND button topic and restart
@@ -145,7 +157,8 @@ buttontopic | 1.0.10 | Show current MQTT button topic
 buttontopic 0 | 1.0.10 | Disable use of MQTT button topic
 buttontopic 1 | 1.0.10 | Set MQTT button topic to MQTT topic as defined in ```user_config.h```
 buttontopic your-topic | 1.0.10 | Set MQTT button topic
-smartconfig 1 | | Start smart config
+smartconfig 1 | | Start smart config for 1 minute
+smartconfig 2 | 1.0.22 | Start wifi manager (web server at 192.168.4.1) for 1 minute
 otaurl | | Show current otaurl
 otaurl 1 | | Reset otaurl to ```user_config.h``` value
 otaurl your-otaurl | | Set otaurl
@@ -156,6 +169,7 @@ If the same topic has been defined to more than one sonoff an individual sonoff 
 - To aid in finding the IP address of sonoff the network name will be ```esp-<last six characters of MAC address>-<MQTT topic>```. So the default name is ```esp-123456-sonoff```. Another option is MQTT command status 5.
 - Use the group topic to address several sonoffs with one (restricted) MQTT command.
 - Using the Arduino IDE set to 115200 baud and both NL & CR maximum serial output is enabled by command ```seriallog 4```.
+- Toggle between Wifi smartconfig and Wifi manager using the power button.
 
 ## Modified kaku power socket switch using ESP-12F
 Using parts from itead (5V power supply), aliexpress (Different 5V power supply, ESP-12F and 5V to 3V3 step down) and ebay (5V relay) I modified broken 434MHz kaku power socket switches type PAR-1000 to Wifi wkaku power socket switches.

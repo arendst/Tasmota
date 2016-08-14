@@ -16,13 +16,13 @@
 #define SYS_LOG_HOST           "domus1"
 #define SYS_LOG_PORT           514
 #define SYS_LOG_LEVEL          LOG_LEVEL_NONE
-#define SERIAL_LOG_LEVEL       LOG_LEVEL_NONE
+#define SERIAL_LOG_LEVEL       LOG_LEVEL_INFO
 
 // Ota
 #if (ARDUINO >= 168)
-  #define OTA_URL              "http://domus1:80/api/arduino/"PROJECT".ino.bin"
+  #define OTA_URL              "http://domus1:80/api/arduino/" PROJECT ".ino.bin"
 #else
-  #define OTA_URL              "http://domus1:80/api/arduino/"PROJECT".cpp.bin"
+  #define OTA_URL              "http://domus1:80/api/arduino/" PROJECT ".cpp.bin"
 #endif
 
 // MQTT
@@ -53,5 +53,5 @@
 #define MQTT_SUBTOPIC          "POWER"
 #define APP_TIMEZONE           1            // +1 hour (Amsterdam) (-12 .. 12 = hours from UTC, 99 = TIME_DST/TIME_STD usage)
 #define APP_POWER              0            // Saved power state Off
-#define APP_LEDSTATE           0            // Do not show power state (1 = Show power state)
+#define APP_LEDSTATE           1            // Do not show power state (1 = Show power state)
 

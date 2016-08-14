@@ -1,6 +1,13 @@
 /*
+ * 1.0.22 20160814
+ * Add all MQTT parameters for configuration
+ * Add wifimanager to configure Wifi and MQTT via web server
+ * Change NTP time handling
+ * Fix Smartconfig parameter buffer overflow
+ * Fix PlatformIO warnings
+ * 
  * 1.0.21 20160808
- * Remove semaphore as subscription flooding (more than 15 subscriptions per second) is managed by PubSubClient
+ * Remove semaphore as subscription flooding (more than 15 subscriptions per second) is managed by SDK (LmacRxBlk:1)
  * Add optional RTC interrupt (define USE_TICKER) to keep RTC synced during subscription flooding
  * Removed heartbeatflag
  * 

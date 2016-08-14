@@ -26,7 +26,7 @@
 */
 
 #define APP_NAME               "Sonoff switch"
-#define VERSION                0x01001500   // 1.0.21
+#define VERSION                0x01001600   // 1.0.22
 
 enum log_t   {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG_MORE};
 enum week_t  {Last, First, Second, Third, Fourth}; 
@@ -49,17 +49,19 @@ enum month_t {Jan=1, Feb, Mar, Apr, May, Jun, Jul, Aug, Sep, Oct, Nov, Dec};
 
 #define TOPSZ                  40           // Max number of characters in topic string
 #define MESSZ                  200          // Max number of characters in message string (Syntax string)
-#define LOGSZ                  80           // Max number of characters in log string
+#define LOGSZ                  128          // Max number of characters in log string
 
 enum butt_t {PRESSED, NOT_PRESSED};
-enum wifi_t {WIFI_STATUS, WIFI_SMARTCONFIG};
+enum wifi_t {WIFI_STATUS, WIFI_SMARTCONFIG, WIFI_MANAGER, WIFI_ABORT};
 
-#include <ESP8266WiFi.h>
-#include <ESP8266HTTPClient.h>
-#include <ESP8266httpUpdate.h>
-#include <PubSubClient.h>
+#include <ESP8266WiFi.h>        // MQTT, Ota, WifiManager
+#include <ESP8266HTTPClient.h>  // MQTT
+#include <ESP8266httpUpdate.h>  // Ota
+#include <ESP8266WebServer.h>   // WifiManager
+#include <DNSServer.h>          // WifiManager
+#include <PubSubClient.h>       // MQTT
 #ifdef USE_TICKER
-  #include <Ticker.h>
+  #include <Ticker.h>           // RTC
 #endif
 
 extern "C" uint32_t _SPIFFS_start;
@@ -82,6 +84,10 @@ struct SYSCFG {
   int8_t        timezone;
   uint8_t       power;
   uint8_t       ledstate;
+  uint16_t      mqtt_port;
+  char          mqtt_client[33];
+  char          mqtt_user[33];
+  char          mqtt_pwd[33];
 } sysCfg, myCfg;
 
 struct TIME_T {
@@ -119,7 +125,7 @@ unsigned long timerxs = 0;
 int state = 0;
 int otaflag = 0;
 int restartflag = 0;
-int smartconfigflag = 0;
+int wificheckflag = WIFI_STATUS;
 int heartbeat = 0;
 
 WiFiClient espClient;
@@ -138,7 +144,7 @@ uint8_t multipress = 0;
 
 void CFG_Default()
 {
-  addLog(LOG_LEVEL_INFO, "Config: Use default configuration");
+  addLog_P(LOG_LEVEL_INFO, PSTR("Config: Use default configuration"));
   memset(&sysCfg, 0x00, sizeof(SYSCFG));
   memset(&myCfg, 0x00, sizeof(SYSCFG));
   sysCfg.cfg_holder = CFG_HOLDER;
@@ -151,6 +157,10 @@ void CFG_Default()
   strlcpy(sysCfg.sta_pwd, STA_PASS, sizeof(sysCfg.sta_pwd));
   strlcpy(sysCfg.otaUrl, OTA_URL, sizeof(sysCfg.otaUrl));
   strlcpy(sysCfg.mqtt_host, MQTT_HOST, sizeof(sysCfg.mqtt_host));
+  sysCfg.mqtt_port = MQTT_PORT;
+  strlcpy(sysCfg.mqtt_client, MQTT_CLIENT_ID, sizeof(sysCfg.mqtt_client));
+  strlcpy(sysCfg.mqtt_user, MQTT_USER, sizeof(sysCfg.mqtt_user));
+  strlcpy(sysCfg.mqtt_pwd, MQTT_PASS, sizeof(sysCfg.mqtt_pwd));
   strlcpy(sysCfg.mqtt_grptopic, MQTT_GRPTOPIC, sizeof(sysCfg.mqtt_grptopic));
   strlcpy(sysCfg.mqtt_topic, MQTT_TOPIC, sizeof(sysCfg.mqtt_topic));
   strlcpy(sysCfg.mqtt_topic2, "0", sizeof(sysCfg.mqtt_topic2));
@@ -168,9 +178,9 @@ void mqtt_publish(const char* topic, const char* data)
   char log[TOPSZ+MESSZ];
   
   mqttClient.publish(topic, data);
-//  mqttClient.loop();  // Do not use here! Will block previous publishes
   snprintf_P(log, sizeof(log), PSTR("MQTT: %s = %s"), strchr(topic,'/')+1, data); // Skip topic prefix
   addLog(LOG_LEVEL_INFO, log);
+//  mqttClient.loop();  // Do not use here! Will block previous publishes
   blinks++;
 }
 
@@ -203,10 +213,10 @@ void mqtt_reconnect()
   char stopic[TOPSZ], log[LOGSZ];
 
   mqttcounter = MQTT_RETRY_SECS;
-  addLog(LOG_LEVEL_INFO, "MQTT: Attempting connection...");
+  addLog_P(LOG_LEVEL_INFO, PSTR("MQTT: Attempting connection..."));
   snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/lwt"), PUB_PREFIX, sysCfg.mqtt_topic);
-  if (mqttClient.connect(MQTTClient, MQTT_USER, MQTT_PASS, stopic, 0, 0, "offline")) {
-    addLog(LOG_LEVEL_INFO, "MQTT: Connected");
+  if (mqttClient.connect(MQTTClient, sysCfg.mqtt_user, sysCfg.mqtt_pwd, stopic, 0, 0, "offline")) {
+    addLog_P(LOG_LEVEL_INFO, PSTR("MQTT: Connected"));
     mqttcounter = 0;
     mqtt_connected();
   } else {
@@ -294,16 +304,13 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
         if (payload == 0) mqtt_publish(stopic, svalue);
       }          
       if ((payload == 0) || (payload == 5)) {
-        IPAddress ip = WiFi.localIP();
-        IPAddress gw = WiFi.gatewayIP();
-        IPAddress nm = WiFi.subnetMask();
-        snprintf_P(svalue, sizeof(svalue), PSTR("NET: Hostname %s, IP %u.%u.%u.%u, Gateway %u.%u.%u.%u, Subnetmask %u.%u.%u.%u, Mac %s"),
-          Hostname, ip[0], ip[1], ip[2], ip[3], gw[0], gw[1], gw[2], gw[3], nm[0], nm[1], nm[2], nm[3], WiFi.macAddress().c_str());
+        snprintf_P(svalue, sizeof(svalue), PSTR("NET: Host %s, IP %s, Gateway %s, Subnetmask %s, Mac %s"),
+          Hostname, WiFi.localIP().toString().c_str(), WiFi.gatewayIP().toString().c_str(), WiFi.subnetMask().toString().c_str(), WiFi.macAddress().c_str());
         if (payload == 0) mqtt_publish(stopic, svalue);
       }          
       if ((payload == 0) || (payload == 6)) {
-        snprintf_P(svalue, sizeof(svalue), PSTR("MQT: MqttHost %s, ClientId %s, UserId %s, Password %s, MAX_PACKET_SIZE %d, KEEPALIVE %d"),
-          sysCfg.mqtt_host, MQTTClient, MQTT_USER, MQTT_PASS, MQTT_MAX_PACKET_SIZE, MQTT_KEEPALIVE); 
+        snprintf_P(svalue, sizeof(svalue), PSTR("MQT: Host %s, Port %d, Client %s (%s), User %s, Password %s, MAX_PACKET_SIZE %d, KEEPALIVE %d"),
+          sysCfg.mqtt_host, sysCfg.mqtt_port, sysCfg.mqtt_client, MQTTClient, sysCfg.mqtt_user, sysCfg.mqtt_pwd, MQTT_MAX_PACKET_SIZE, MQTT_KEEPALIVE); 
         if (payload == 0) mqtt_publish(stopic, svalue);
       }      
       if ((payload == 0) || (payload == 7)) {
@@ -364,6 +371,36 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
       }
       snprintf_P(svalue, sizeof(svalue), PSTR("%s"), sysCfg.mqtt_host);
     }
+    else if (!grpflg && !strcmp(type,"MQTTPORT")) {
+      if ((data_len > 0) && (payload > 0) && (payload < 32766)) {
+        sysCfg.mqtt_port = (payload == 1) ? MQTT_PORT : payload;
+        restartflag = 2;
+      }
+      snprintf_P(svalue, sizeof(svalue), PSTR("%d"), sysCfg.mqtt_port);
+    }
+    else if (!grpflg && !strcmp(type,"MQTTCLIENT")) {
+      if ((data_len > 0) && (data_len < sizeof(sysCfg.mqtt_client))) {
+        strlcpy(sysCfg.mqtt_client, (payload == 1) ? MQTT_CLIENT_ID : dataBuf, sizeof(sysCfg.mqtt_client));
+        snprintf_P(svalue, sizeof(svalue), PSTR("%s"), sysCfg.mqtt_client);
+        snprintf_P(MQTTClient, sizeof(MQTTClient), svalue, ESP.getChipId());
+        restartflag = 2;
+      }
+      snprintf_P(svalue, sizeof(svalue), PSTR("%s (%s)"), sysCfg.mqtt_client, MQTTClient);
+    }
+    else if (!grpflg && !strcmp(type,"MQTTUSER")) {
+      if ((data_len > 0) && (data_len < sizeof(sysCfg.mqtt_user))) {
+        strlcpy(sysCfg.mqtt_user, (payload == 1) ? MQTT_USER : dataBuf, sizeof(sysCfg.mqtt_user));
+        restartflag = 2;
+      }
+      snprintf_P(svalue, sizeof(svalue), PSTR("%s"), sysCfg.mqtt_user);
+    }
+    else if (!grpflg && !strcmp(type,"MQTTPASSWORD")) {
+      if ((data_len > 0) && (data_len < sizeof(sysCfg.mqtt_pwd))) {
+        strlcpy(sysCfg.mqtt_pwd, (payload == 1) ? MQTT_PASS : dataBuf, sizeof(sysCfg.mqtt_pwd));
+        restartflag = 2;
+      }
+      snprintf_P(svalue, sizeof(svalue), PSTR("%s"), sysCfg.mqtt_pwd);
+    }
     else if (!strcmp(type,"GROUPTOPIC")) {
       if ((data_len > 0) && (data_len < sizeof(sysCfg.mqtt_grptopic))) {
         for(i = 0; i <= data_len; i++)
@@ -394,12 +431,20 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
       snprintf_P(svalue, sizeof(svalue), PSTR("%s"), sysCfg.mqtt_topic2);
     }
     else if (!grpflg && !strcmp(type,"SMARTCONFIG")) {
-      if ((data_len > 0) && (payload == 1)) {
-        blinks = 1999;
-        smartconfigflag = 1;
+      switch (payload) {
+      case 1: 
+        wificheckflag = WIFI_SMARTCONFIG;
         snprintf_P(svalue, sizeof(svalue), PSTR("Smartconfig started"));
-      } else
-        snprintf_P(svalue, sizeof(svalue), PSTR("1 to start smartconfig"));
+        break;
+      case 2:
+        wificheckflag = WIFI_MANAGER;
+        snprintf_P(svalue, sizeof(svalue), PSTR("Wifimanager started"));
+        break;
+      default:
+        wificheckflag = WIFI_STATUS;
+        snprintf_P(svalue, sizeof(svalue), PSTR("1 to start smartconfig, 2 to start wifimanager"));
+      }
+    
     }
     else if (!grpflg && !strcmp(type,"RESTART")) {
       if ((data_len > 0) && (payload == 1)) {
@@ -521,11 +566,11 @@ void every_second()
   }
 }
 
-const char commands[6][14] PROGMEM = {
+const char commands[6][12] PROGMEM = {
   {"reset 1"},        // Hold button for more than 4 seconds
   {"light 2"},        // Press button once
   {"light 2"},        // Press button twice
-  {"smartconfig 1"},  // Press button three times
+  {"smartconfig"},    // Press button three times
   {"upgrade 1"},      // Press button four times
   {"restart 1"}};     // Press button five times
 
@@ -546,6 +591,7 @@ void stateloop()
     multipress = (multiwindow) ? multipress +1 : 1;
     snprintf_P(log, sizeof(log), PSTR("APP: Multipress %d"), multipress);
     addLog(LOG_LEVEL_DEBUG, log);
+    wificheckflag = WIFI_ABORT;
     blinks = 1;
     multiwindow = STATES /2;         // 1/2 second multi press window
   }
@@ -565,10 +611,14 @@ void stateloop()
   } else {
     if ((!holdcount) && (multipress >= 1) && (multipress <= 5)) {
       snprintf_P(scmnd, sizeof(scmnd), commands[multipress]);
-      if (strcmp(sysCfg.mqtt_topic2,"0") && (multipress == 1) && mqttClient.connected())
+      if (strcmp(sysCfg.mqtt_topic2,"0") && (multipress == 1) && mqttClient.connected()) {
         send_button(scmnd);          // Execute command via MQTT using ButtonTopic to sync external clients
-      else
+      } else {
+        if (multipress == 3) {       // Execute command smartconfig 1 or 2
+          snprintf_P(scmnd, sizeof(scmnd), PSTR("%s %s"), scmnd, (sysCfg.power) ? "2" : "1");
+        }
         do_cmnd(scmnd);              // Execute command internally 
+      }  
       multipress = 0;
     }
   }
@@ -610,16 +660,15 @@ void stateloop()
         restartflag = 1;
       }
       restartflag--;
-      if (restartflag <= 0) ESP.restart();
+      if (restartflag <= 0) {
+        addLog_P(LOG_LEVEL_INFO, PSTR("APP: Restarting"));
+        ESP.restart();
+      }
     }
     break;
   case (STATES/10)*6:
-    if (smartconfigflag) {
-      smartconfigflag = 0;
-      WIFI_Check(WIFI_SMARTCONFIG);
-    } else {
-      WIFI_Check(WIFI_STATUS);
-    }
+    WIFI_Check(wificheckflag);
+    wificheckflag = WIFI_STATUS;
     break;
   case (STATES/10)*8:
     if ((WiFi.status() == WL_CONNECTED) && (!mqttClient.connected())) {
@@ -690,6 +739,12 @@ void setup()
     if (sysCfg.version < 0x01000D00) {  // 1.0.13 - Add ledstate
       sysCfg.ledstate = APP_LEDSTATE;
     }
+    if (sysCfg.version < 0x01001600) {  // 1.0.22 - Add MQTT parameters
+      sysCfg.mqtt_port = MQTT_PORT;
+      strlcpy(sysCfg.mqtt_client, MQTT_CLIENT_ID, sizeof(sysCfg.mqtt_client));
+      strlcpy(sysCfg.mqtt_user, MQTT_USER, sizeof(sysCfg.mqtt_user));
+      strlcpy(sysCfg.mqtt_pwd, MQTT_PASS, sizeof(sysCfg.mqtt_pwd));
+    }
     
     sysCfg.version = VERSION;
   }
@@ -697,8 +752,9 @@ void setup()
   snprintf_P(Hostname, sizeof(Hostname), PSTR(WIFI_HOSTNAME), ESP.getChipId(), sysCfg.mqtt_topic);
   WIFI_Connect(Hostname);
 
-  snprintf_P(MQTTClient, sizeof(MQTTClient), PSTR(MQTT_CLIENT_ID), ESP.getChipId());
-  mqttClient.setServer(sysCfg.mqtt_host, MQTT_PORT);
+  snprintf_P(log, sizeof(log), PSTR("%s"), sysCfg.mqtt_client);
+  snprintf_P(MQTTClient, sizeof(MQTTClient), log, ESP.getChipId());
+  mqttClient.setServer(sysCfg.mqtt_host, sysCfg.mqtt_port);
   mqttClient.setCallback(mqttDataCb);
 
   pinMode(LED_PIN, OUTPUT);
@@ -711,7 +767,7 @@ void setup()
 
   rtc_init();
 
-  snprintf_P(log, sizeof(log), PSTR("App: Project %s (Topic %s, Fallback %s, GroupTopic %s) Version %s"),
+  snprintf_P(log, sizeof(log), PSTR("APP: Project %s (Topic %s, Fallback %s, GroupTopic %s) Version %s"),
     PROJECT, sysCfg.mqtt_topic, MQTTClient, sysCfg.mqtt_grptopic, Version);
   addLog(LOG_LEVEL_INFO, log);
 }
@@ -724,7 +780,9 @@ void loop()
     rtc_second();
   }
 #endif
-  
+
+  wifiManagerDone();
+
   if (millis() >= timerxs) stateloop();
 
   mqttClient.loop();
