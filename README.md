@@ -2,7 +2,7 @@
 ## Sonoff-MQTT-OTA-Arduino
 Provide ESP8266 based [itead Sonoff](https://www.itead.cc/sonoff-wifi-wireless-switch.html) with MQTT and 'Over the Air' or OTA firmware using Arduino IDE.
 
-Current version is 1.0.22 - See ```sonoff/_releasenotes``` for change information.
+Current version is 1.0.23 - See ```sonoff/_releasenotes``` for change information.
 
 See [Sonoff-MQTT-OTA](https://github.com/arendst/Sonoff-MQTT-OTA) for the ```esp-open-sdk``` version.
 ## Prerequisite
@@ -51,7 +51,7 @@ Enable debug messages by selecting option Tools Debug Port: Serial.
 ## Usage
 The button on sonoff provides the following features:
 
-- a short press toggles the relay either by sending a MQTT message like ```cmnd/sonoff/light 2``` or directly. This will blink the LED twice and sends a MQTT status message like ```stat/sonoff/LIGHT on```
+- a short press toggles the relay either directly or by sending a MQTT message like ```cmnd/sonoff/light 2```. This will blink the LED twice and sends a MQTT status message like ```stat/sonoff/LIGHT on```
 - two short presses toggles the relay. This will blink the LED twice and sends a MQTT status message like ```stat/sonoff/POWER on```
 - three short presses start Wifi smartconfig (if the relay is off) or Wifi manager (if the relay is on). Wifi smartconfig allows for SSID and Password configuration using an Android mobile phone with the [ESP8266 SmartConfig](https://play.google.com/store/apps/details?id=com.cmmakerclub.iot.esptouch) app. The MQTT server still needs to be configured in the ```user_config.h``` file. Wifi manager provides an Access Point with IP address 192.168.4.1 and a web server allowing the configuration of both Wifi and MQTT parameters. In both cases the LED will blink during the config period. 
 - four short presses start OTA download of firmware. The green LED is lit during the update
@@ -127,6 +127,7 @@ The following commands are recognised by topic only:
 Command | Version | Description
 ------- | ------- | -----------
 restart 1 | | Restart sonoff
+restart 99 | 1.0.23 | Force restart sonoff without config save
 reset 1 | | Reset sonoff parameters to ```user_config.h``` values and restart
 reset 2 | 1.0.9 | Erase flash, reset sonoff parameters to ```user_config.h``` values and restart
 ssid | | Show current Wifi SSId
@@ -135,6 +136,10 @@ ssid your-ssid | | Set Wifi SSId and restart
 password | | Show current Wifi password
 password 1 | | Reset Wifi password to ```user_config.h``` value and restart
 password your-password | | Set Wifi password and restart
+webserver | 1.0.23 | Show current web server state
+webserver 0 | 1.0.23 | Stop web server
+webserver 1 | 1.0.23 | Start user web server
+webserver 2 | 1.0.23 | Start admin web server
 mqtthost | | Show current MQTT host
 mqtthost 1 | | Reset MQTT host to ```user_config.h``` value and restart
 mqtthost your-host | | Set MQTT host and restart
@@ -158,7 +163,7 @@ buttontopic 0 | 1.0.10 | Disable use of MQTT button topic
 buttontopic 1 | 1.0.10 | Set MQTT button topic to MQTT topic as defined in ```user_config.h```
 buttontopic your-topic | 1.0.10 | Set MQTT button topic
 smartconfig 1 | | Start smart config for 1 minute
-smartconfig 2 | 1.0.22 | Start wifi manager (web server at 192.168.4.1) for 1 minute
+smartconfig 2 | 1.0.22 | Start wifi manager (web server at 192.168.4.1)
 otaurl | | Show current otaurl
 otaurl 1 | | Reset otaurl to ```user_config.h``` value
 otaurl your-otaurl | | Set otaurl
@@ -166,7 +171,7 @@ upgrade 1 | | Download ota firmware from your web server and restart
 
 If the same topic has been defined to more than one sonoff an individual sonoff can still be addressed by the fall back topic MQTT_CLIENT_ID as defined in user_config.h. The fall back topic will be ```DVES_<last six characters of MAC address>```.
 ## Tips
-- To aid in finding the IP address of sonoff the network name will be ```esp-<last six characters of MAC address>-<MQTT topic>```. So the default name is ```esp-123456-sonoff```. Another option is MQTT command status 5.
+- To aid in finding the IP address of sonoff the network name will be ```<MQTT_TOPIC>-<last 4 decimal chars of MAC address>```. So the default name is ```sonoff-1234```. Another option is MQTT command ```status 5```.
 - Use the group topic to address several sonoffs with one (restricted) MQTT command.
 - Using the Arduino IDE set to 115200 baud and both NL & CR maximum serial output is enabled by command ```seriallog 4```.
 - Toggle between Wifi smartconfig and Wifi manager using the power button.

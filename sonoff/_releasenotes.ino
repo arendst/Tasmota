@@ -1,4 +1,19 @@
-/*
+/* 1.0.23 20160821
+ * Add option USE_SPIFFS to move config from flash to spiffs
+ * Add webserver with options 0 (off), 1 (user) and 2 (admin)
+ * Add HTTP command interface (http://sonoff-1234/c?cmnd=light 2)
+ * Add wifimanager countdown counter
+ * Add command line webpage
+ * Add relay control to wifimanager
+ * Add restart option 99 to force restart
+ * Fix wifi hostname
+ * Fix NETBIOS hostname problem by reducing default hostname length
+ * Fix possible exception if WIFI_HOSTNAME is changed
+ * Fix upgrade messages
+ * Reduce memory use by redesigning config routines
+ * Split syntax message
+ * Rename define SERIAL_IO to USE_SERIAL
+ * 
  * 1.0.22 20160814
  * Add all MQTT parameters for configuration
  * Add wifimanager to configure Wifi and MQTT via web server

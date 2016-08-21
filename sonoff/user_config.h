@@ -10,7 +10,7 @@
 // Wifi
 #define STA_SSID               "indebuurt3"      // Wifi SSID
 #define STA_PASS               "VnsqrtnrsddbrN"  // Wifi password
-#define WIFI_HOSTNAME          "esp-%06x-%s"     // Expands to esp-<last 6 chars of MAC address>-<MQTT_TOPIC>
+#define WIFI_HOSTNAME          "%s-%04d"         // Expands to <MQTT_TOPIC>-<last 4 decimal chars of MAC address>
 
 // Syslog
 #define SYS_LOG_HOST           "domus1"
@@ -37,6 +37,9 @@
 #define PUB_PREFIX             "stat"       // Sonoff devices publish to:- stat/MQTT_TOPIC
 #define MQTT_TOPIC             PROJECT
 #define MQTT_GRPTOPIC          PROJECT"s"   // Group topic
+
+// HTTP
+#define WEB_SERVER             0            // Start web server (1 = Start web server as User, 2 = Start web server as Admin)
 
 // Time - Up to three NTP servers in your region
 #define NTP_SERVER1            "pool.ntp.org"
