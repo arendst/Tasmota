@@ -1,4 +1,10 @@
-/* 1.0.23 20160821
+/* 1.0.24 20160821
+ * Add test for MQTT_SUBTOPIC
+ * Change log range to LOG_LEVEL_ALL
+ * Changed MQTT introduction messages
+ * Moved MQTT_MAX_PACKET_SIZE warning message to introduction messages
+ * 
+ * 1.0.23 20160821
  * Add option USE_SPIFFS to move config from flash to spiffs
  * Add webserver with options 0 (off), 1 (user) and 2 (admin)
  * Add HTTP command interface (http://sonoff-1234/c?cmnd=light 2)

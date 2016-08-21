@@ -304,7 +304,11 @@ void handleRoot()
   }
 
   if (strlen(webServer->arg("o").c_str())) {
+#ifdef MQTT_SUBTOPIC
     snprintf_P(svalue, sizeof(svalue), PSTR("%s 2"), sysCfg.mqtt_subtopic);
+#else
+    snprintf_P(svalue, sizeof(svalue), PSTR("light 2"));
+#endif
     do_cmnd(svalue);
   }
 

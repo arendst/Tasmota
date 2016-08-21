@@ -26,7 +26,7 @@
 */
 
 #define APP_NAME               "Sonoff switch"
-#define VERSION                0x01001700   // 1.0.23
+#define VERSION                0x01001800   // 1.0.24
 
 enum log_t   {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG_MORE, LOG_LEVEL_ALL};
 enum week_t  {Last, First, Second, Third, Fourth}; 
@@ -64,7 +64,7 @@ enum wifi_t {WIFI_STATUS, WIFI_SMARTCONFIG, WIFI_MANAGER};
 #include <ESP8266WiFi.h>        // MQTT, Ota, WifiManager
 #include <ESP8266HTTPClient.h>  // MQTT, Ota
 #include <ESP8266httpUpdate.h>  // Ota
-#include <ESP8266WebServer.h>   // WifiManager
+#include <ESP8266WebServer.h>   // WifiManager, Webserver
 #include <DNSServer.h>          // WifiManager
 #include <PubSubClient.h>       // MQTT
 #ifdef USE_TICKER
@@ -198,7 +198,7 @@ void mqtt_publish(const char* topic, const char* data)
 
 void mqtt_connected()
 {
-  char stopic[TOPSZ], svalue[TOPSZ];
+  char stopic[TOPSZ], svalue[MESSZ];
 
   snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/#"), SUB_PREFIX, sysCfg.mqtt_topic);
   mqttClient.subscribe(stopic);
@@ -211,14 +211,14 @@ void mqtt_connected()
   mqttClient.loop();  // Solve LmacRxBlk:1 messages
 
   if (mqttflag) {
-    snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/NAME"), PUB_PREFIX, sysCfg.mqtt_topic);
-    snprintf_P(svalue, sizeof(svalue), PSTR(APP_NAME));
+    snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/INFO"), PUB_PREFIX, sysCfg.mqtt_topic);
+    snprintf_P(svalue, sizeof(svalue), PSTR(APP_NAME " version %s, Fallback %s, GroupTopic %s"), Version, MQTTClient, sysCfg.mqtt_grptopic);
     mqtt_publish(stopic, svalue);
-    snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/VERSION"), PUB_PREFIX, sysCfg.mqtt_topic);
-    snprintf_P(svalue, sizeof(svalue), PSTR("%s"), Version);
-    mqtt_publish(stopic, svalue);
-    snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/FALLBACKTOPIC"), PUB_PREFIX, sysCfg.mqtt_topic);
-    mqtt_publish(stopic, MQTTClient);
+    if (MQTT_MAX_PACKET_SIZE < (TOPSZ+MESSZ)) {
+      snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/WARNING"), PUB_PREFIX, sysCfg.mqtt_topic);
+      snprintf_P(svalue, sizeof(svalue), PSTR("Change MQTT_MAX_PACKET_SIZE in libraries/PubSubClient.h to at least %d"), TOPSZ+MESSZ);
+      mqtt_publish(stopic, svalue);
+    }
   }
   mqttflag = 0;
 }
@@ -347,13 +347,13 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
       snprintf_P(svalue, sizeof(svalue), PSTR("%s"), sysCfg.otaUrl);
     }
     else if (!strcmp(type,"SERIALLOG")) {
-      if ((data_len > 0) && (payload >= LOG_LEVEL_NONE) && (payload <= LOG_LEVEL_DEBUG_MORE)) {
+      if ((data_len > 0) && (payload >= LOG_LEVEL_NONE) && (payload <= LOG_LEVEL_ALL)) {
         sysCfg.seriallog_level = payload;
       }
       snprintf_P(svalue, sizeof(svalue), PSTR("%d"), sysCfg.seriallog_level);
     }
     else if (!strcmp(type,"SYSLOG")) {
-      if ((data_len > 0) && (payload >= LOG_LEVEL_NONE) && (payload <= LOG_LEVEL_DEBUG_MORE)) {
+      if ((data_len > 0) && (payload >= LOG_LEVEL_NONE) && (payload <= LOG_LEVEL_ALL)) {
         sysCfg.syslog_level = payload;
       }
       snprintf_P(svalue, sizeof(svalue), PSTR("%d"), sysCfg.syslog_level);
@@ -384,6 +384,8 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
         sysCfg.webserver = payload;
       }
       strlcpy(svalue, (sysCfg.webserver) ? ((sysCfg.webserver == 2) ? "Admin" : "User") : "Off", sizeof(svalue));
+      if (sysCfg.webserver)
+        snprintf_P(svalue, sizeof(svalue), PSTR("%s on http://%s/ (http://%s/)"), svalue, Hostname, WiFi.localIP().toString().c_str());
     }
     else if (!grpflg && !strcmp(type,"MQTTHOST")) {
       if ((data_len > 0) && (data_len < sizeof(sysCfg.mqtt_host))) {
@@ -675,7 +677,7 @@ void stateloop()
         otaflag = 0;
         snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/UPGRADE"), PUB_PREFIX, sysCfg.mqtt_topic);
         if (otaok) {
-          snprintf_P(svalue, sizeof(svalue), PSTR("Succesfull"));
+          snprintf_P(svalue, sizeof(svalue), PSTR("Successful. Restarting"));
           restartflag = 2;
         } else {
           snprintf_P(svalue, sizeof(svalue), PSTR("Failed %s"), ESPhttpUpdate.getLastErrorString().c_str());
@@ -776,11 +778,6 @@ void setup()
     while (true) delay(1);  // Halt system
   }
 #endif
-  if (MQTT_MAX_PACKET_SIZE < (TOPSZ+MESSZ)) {
-    snprintf_P(log, sizeof(log), PSTR("APP: WARNING - Change MQTT_MAX_PACKET_SIZE in libraries/PubSubClient.h to at least %d"),
-      TOPSZ+MESSZ);
-    addLog(LOG_LEVEL_INFO, log);
-  }
 
   snprintf_P(Version, sizeof(Version), PSTR("%d.%d.%d"), VERSION >> 24 & 0xff, VERSION >> 16 & 0xff, VERSION >> 8 & 0xff);
   if (VERSION & 0x1f) {
