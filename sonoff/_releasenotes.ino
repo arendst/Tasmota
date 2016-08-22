@@ -1,7 +1,10 @@
-/* 1.0.24 20160821
+/* 1.0.25 20160822
+ * Remove config system halts to keep ota available
+ * 
+ * 1.0.24 20160821
  * Add test for MQTT_SUBTOPIC
  * Change log range to LOG_LEVEL_ALL
- * Changed MQTT introduction messages
+ * Change MQTT introduction messages
  * Moved MQTT_MAX_PACKET_SIZE warning message to introduction messages
  * 
  * 1.0.23 20160821
@@ -30,7 +33,7 @@
  * 1.0.21 20160808
  * Remove semaphore as subscription flooding (more than 15 subscriptions per second) is managed by SDK (LmacRxBlk:1)
  * Add optional RTC interrupt (define USE_TICKER) to keep RTC synced during subscription flooding
- * Removed heartbeatflag
+ * Remove heartbeatflag
  * 
  * 1.0.20 20160805
  * Add semaphore to handle out of memory when too many subscriptions requested

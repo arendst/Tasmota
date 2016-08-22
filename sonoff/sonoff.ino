@@ -26,7 +26,7 @@
 */
 
 #define APP_NAME               "Sonoff switch"
-#define VERSION                0x01001800   // 1.0.24
+#define VERSION                0x01001900   // 1.0.25
 
 enum log_t   {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG_MORE, LOG_LEVEL_ALL};
 enum week_t  {Last, First, Second, Third, Fourth}; 
@@ -217,6 +217,11 @@ void mqtt_connected()
     if (MQTT_MAX_PACKET_SIZE < (TOPSZ+MESSZ)) {
       snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/WARNING"), PUB_PREFIX, sysCfg.mqtt_topic);
       snprintf_P(svalue, sizeof(svalue), PSTR("Change MQTT_MAX_PACKET_SIZE in libraries/PubSubClient.h to at least %d"), TOPSZ+MESSZ);
+      mqtt_publish(stopic, svalue);
+    }
+    if (!spiffsPresent()) {
+      snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/WARNING"), PUB_PREFIX, sysCfg.mqtt_topic);
+      snprintf_P(svalue, sizeof(svalue), PSTR("No persistent config. Please reflash with at least 16K SPIFFS"));
       mqtt_publish(stopic, svalue);
     }
   }
@@ -768,23 +773,17 @@ void setup()
   Serial.println();
   sysCfg.seriallog_level = LOG_LEVEL_INFO;  // Allow specific serial messages until config loaded
 
-  if (spiffsNotPresent()) {
-    addLog_P(LOG_LEVEL_ERROR, PSTR("APP: ERROR - System Halted"));
-    while (true) delay(1);  // Halt system
-  }
-#ifdef USE_SPIFFS
-  if (spiffsCheck()) {
-    addLog_P(LOG_LEVEL_ERROR, PSTR("APP: ERROR - System Halted"));
-    while (true) delay(1);  // Halt system
-  }
-#endif
-
   snprintf_P(Version, sizeof(Version), PSTR("%d.%d.%d"), VERSION >> 24 & 0xff, VERSION >> 16 & 0xff, VERSION >> 8 & 0xff);
   if (VERSION & 0x1f) {
     byte idx = strlen(Version);
     Version[idx] = 96 + (VERSION & 0x1f);
     Version[idx +1] = 0;
   }
+  if (!spiffsPresent())
+    addLog_P(LOG_LEVEL_ERROR, PSTR("SPIFFS: ERROR - No spiffs present. Please reflash with at least 16K SPIFFS"));
+#ifdef USE_SPIFFS
+  initSpiffs();
+#endif
   CFG_Load();
   if (sysCfg.version != VERSION) {      // Fix version dependent changes
     if (sysCfg.version < 0x01000D00) {  // 1.0.13 - Add ledstate

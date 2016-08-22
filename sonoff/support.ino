@@ -1,5 +1,5 @@
 /*********************************************************************************************\
- * Config - Flash
+ * Config - Flash or Spiffs
 \*********************************************************************************************/
 
 extern "C" {
@@ -13,6 +13,7 @@ extern "C" uint32_t _SPIFFS_end;
 #define CFG_LOCATION        SPIFFS_END - 2
 
 uint32_t _cfgHash = 0;
+int spiffsflag = 0;
 
 uint32_t getHash()
 {
@@ -27,31 +28,33 @@ void CFG_Save()
 {
   char log[LOGSZ];
 
-  if (getHash() != _cfgHash) {
+  if ((getHash() != _cfgHash) && (spiffsPresent())) {
+    if (!spiffsflag) {
 #ifdef USE_SPIFFS
-    sysCfg.saveFlag++;
-    File f = SPIFFS.open(SPIFFS_CONFIG, "r+");
-    if (f) {
-      uint8_t *bytes = (uint8_t*)&sysCfg;
-      for (int i = 0; i < sizeof(SYSCFG); i++) f.write(bytes[i]);
-      f.close();
-      snprintf_P(log, sizeof(log), PSTR("Config: Saved configuration to spiffs count %d"), sysCfg.saveFlag);
-      addLog(LOG_LEVEL_DEBUG, log);
-    } else
-      addLog_P(LOG_LEVEL_ERROR, PSTR("Config: ERROR - Saving configuration failed"));
-#else
-    noInterrupts();
-    if (sysCfg.saveFlag == 0) {  // Handle default and rollover
-      spi_flash_erase_sector(CFG_LOCATION + (sysCfg.saveFlag &1));
-      spi_flash_write((CFG_LOCATION + (sysCfg.saveFlag &1)) * SPI_FLASH_SEC_SIZE, (uint32 *)&sysCfg, sizeof(SYSCFG));
-    }
-    sysCfg.saveFlag++;
-    spi_flash_erase_sector(CFG_LOCATION + (sysCfg.saveFlag &1));
-    spi_flash_write((CFG_LOCATION + (sysCfg.saveFlag &1)) * SPI_FLASH_SEC_SIZE, (uint32 *)&sysCfg, sizeof(SYSCFG));
-    interrupts();
-    snprintf_P(log, sizeof(log), PSTR("Config: Saved configuration to flash at %X and count %d"), CFG_LOCATION + (sysCfg.saveFlag &1), sysCfg.saveFlag);
-    addLog(LOG_LEVEL_DEBUG, log);
+      sysCfg.saveFlag++;
+      File f = SPIFFS.open(SPIFFS_CONFIG, "r+");
+      if (f) {
+        uint8_t *bytes = (uint8_t*)&sysCfg;
+        for (int i = 0; i < sizeof(SYSCFG); i++) f.write(bytes[i]);
+        f.close();
+        snprintf_P(log, sizeof(log), PSTR("Config: Saved configuration to spiffs count %d"), sysCfg.saveFlag);
+        addLog(LOG_LEVEL_DEBUG, log);
+      } else
+        addLog_P(LOG_LEVEL_ERROR, PSTR("Config: ERROR - Saving configuration failed"));
+    } else {
 #endif
+      noInterrupts();
+      if (sysCfg.saveFlag == 0) {  // Handle default and rollover
+        spi_flash_erase_sector(CFG_LOCATION + (sysCfg.saveFlag &1));
+        spi_flash_write((CFG_LOCATION + (sysCfg.saveFlag &1)) * SPI_FLASH_SEC_SIZE, (uint32*)&sysCfg, sizeof(SYSCFG));
+      }
+      sysCfg.saveFlag++;
+      spi_flash_erase_sector(CFG_LOCATION + (sysCfg.saveFlag &1));
+      spi_flash_write((CFG_LOCATION + (sysCfg.saveFlag &1)) * SPI_FLASH_SEC_SIZE, (uint32*)&sysCfg, sizeof(SYSCFG));
+      interrupts();
+      snprintf_P(log, sizeof(log), PSTR("Config: Saved configuration to flash at %X and count %d"), CFG_LOCATION + (sysCfg.saveFlag &1), sysCfg.saveFlag);
+      addLog(LOG_LEVEL_DEBUG, log);
+    }
     _cfgHash = getHash();
   }
 }
@@ -60,33 +63,35 @@ void CFG_Load()
 {
   char log[LOGSZ];
 
+  if (spiffsPresent()) {
+    if (!spiffsflag) {
 #ifdef USE_SPIFFS
-  File f = SPIFFS.open(SPIFFS_CONFIG, "r+");
-  if (f) {
-    uint8_t *bytes = (uint8_t*)&sysCfg;
-    for (int i = 0; i < sizeof(SYSCFG); i++) bytes[i] = f.read();
-    f.close();
-    snprintf_P(log, sizeof(log), PSTR("Config: Loaded configuration from spiffs count %d"), sysCfg.saveFlag);
-    addLog(LOG_LEVEL_DEBUG, log);
-  } else
-    addLog_P(LOG_LEVEL_ERROR, PSTR("Config: ERROR - Loading configuration failed"));
-  if (sysCfg.cfg_holder != CFG_HOLDER) CFG_Default();
-  _cfgHash = getHash();
-#else  
-  struct SYSCFGH {
-    unsigned long cfg_holder;
-    unsigned long saveFlag;
-  } _sysCfgH;
-
-  noInterrupts();
-  spi_flash_read((CFG_LOCATION) * SPI_FLASH_SEC_SIZE, (uint32 *)&sysCfg, sizeof(SYSCFG));
-  spi_flash_read((CFG_LOCATION + 1) * SPI_FLASH_SEC_SIZE, (uint32 *)&_sysCfgH, sizeof(SYSCFGH));
-  if (sysCfg.saveFlag < _sysCfgH.saveFlag)
-    spi_flash_read((CFG_LOCATION + 1) * SPI_FLASH_SEC_SIZE, (uint32 *)&sysCfg, sizeof(SYSCFG));
-  interrupts();
-  snprintf_P(log, sizeof(log), PSTR("Config: Loaded configuration from flash at %X and count %d"), CFG_LOCATION + (sysCfg.saveFlag &1), sysCfg.saveFlag);
-  addLog(LOG_LEVEL_DEBUG, log);
+      File f = SPIFFS.open(SPIFFS_CONFIG, "r+");
+      if (f) {
+        uint8_t *bytes = (uint8_t*)&sysCfg;
+        for (int i = 0; i < sizeof(SYSCFG); i++) bytes[i] = f.read();
+        f.close();
+        snprintf_P(log, sizeof(log), PSTR("Config: Loaded configuration from spiffs count %d"), sysCfg.saveFlag);
+        addLog(LOG_LEVEL_DEBUG, log);
+      } else
+        addLog_P(LOG_LEVEL_ERROR, PSTR("Config: ERROR - Loading configuration failed"));
+    } else {  
 #endif
+      struct SYSCFGH {
+        unsigned long cfg_holder;
+        unsigned long saveFlag;
+      } _sysCfgH;
+
+      noInterrupts();
+      spi_flash_read((CFG_LOCATION) * SPI_FLASH_SEC_SIZE, (uint32*)&sysCfg, sizeof(SYSCFG));
+      spi_flash_read((CFG_LOCATION + 1) * SPI_FLASH_SEC_SIZE, (uint32*)&_sysCfgH, sizeof(SYSCFGH));
+      if (sysCfg.saveFlag < _sysCfgH.saveFlag)
+        spi_flash_read((CFG_LOCATION + 1) * SPI_FLASH_SEC_SIZE, (uint32*)&sysCfg, sizeof(SYSCFG));
+      interrupts();
+      snprintf_P(log, sizeof(log), PSTR("Config: Loaded configuration from flash at %X and count %d"), CFG_LOCATION + (sysCfg.saveFlag &1), sysCfg.saveFlag);
+      addLog(LOG_LEVEL_DEBUG, log);
+    }
+  }
   if (sysCfg.cfg_holder != CFG_HOLDER) CFG_Default();
   _cfgHash = getHash();
 }
@@ -119,44 +124,39 @@ void CFG_Erase()
   }
 }
 
-int spiffsNotPresent()
+boolean spiffsPresent()
 {
-  char log[LOGSZ];
-
-  snprintf_P(log, sizeof(log), PSTR("SPIFFS: Size %d * %d bytes"), SPIFFS_END - SPIFFS_START, SPI_FLASH_SEC_SIZE);
-  addLog(LOG_LEVEL_DEBUG, log);
-  
-  if (!(SPIFFS_END - SPIFFS_START)) {
-    addLog_P(LOG_LEVEL_ERROR, PSTR("SPIFFS: ERROR - No spiffs found. Please reflash with at least 16K SPIFFS"));
-    return 1; 
-  }
-  return 0;
+  return (SPIFFS_END - SPIFFS_START);
 }
 
 #ifdef USE_SPIFFS
-int spiffsCheck()
+void initSpiffs()
 {
-  char log[LOGSZ];
-
-  if (!SPIFFS.begin()) {
-    addLog_P(LOG_LEVEL_ERROR, PSTR("SPIFFS: ERROR - Failed to mount file system"));
-    return 1;
-  }
-  addLog_P(LOG_LEVEL_DEBUG, PSTR("SPIFFS: Mount successful"));
-  File f = SPIFFS.open(SPIFFS_CONFIG, "r");
-  if (!f) {
-    addLog_P(LOG_LEVEL_DEBUG, PSTR("SPIFFS: Formatting..."));
-    SPIFFS.format();
-    addLog_P(LOG_LEVEL_DEBUG, PSTR("SPIFFS: Formatted"));
-    File f = SPIFFS.open(SPIFFS_CONFIG, "w");
-    if (!f) {
-      addLog_P(LOG_LEVEL_ERROR, PSTR("SPIFFS: ERROR - Failed to open config file"));
-      return 2;
+  spiffsflag = 0;
+  if (!spiffsPresent()) {
+    spiffsflag = 1;
+  } else {
+    if (!SPIFFS.begin()) {
+      addLog_P(LOG_LEVEL_ERROR, PSTR("SPIFFS: WARNING - Failed to mount file system. Will use flash"));
+      spiffsflag = 2;
+    } else {
+      addLog_P(LOG_LEVEL_DEBUG, PSTR("SPIFFS: Mount successful"));
+      File f = SPIFFS.open(SPIFFS_CONFIG, "r");
+      if (!f) {
+        addLog_P(LOG_LEVEL_DEBUG, PSTR("SPIFFS: Formatting..."));
+        SPIFFS.format();
+        addLog_P(LOG_LEVEL_DEBUG, PSTR("SPIFFS: Formatted"));
+        File f = SPIFFS.open(SPIFFS_CONFIG, "w");
+        if (f) {
+          for (int i = 0; i < sizeof(SYSCFG); i++) f.write(0);
+          f.close();
+        } else {
+          addLog_P(LOG_LEVEL_ERROR, PSTR("SPIFFS: WARNING - Failed to init config file. Will use flash"));
+          spiffsflag = 3;
+        }
+      }
     }
-    for (int i = 0; i < sizeof(SYSCFG); i++) f.write(0);
-    f.close();
-  }
-  return 0;
+  }  
 }
 #endif
 
