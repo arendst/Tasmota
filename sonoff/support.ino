@@ -42,7 +42,7 @@ void CFG_Save()
       } else
         addLog_P(LOG_LEVEL_ERROR, PSTR("Config: ERROR - Saving configuration failed"));
     } else {
-#endif
+#endif  // USE_SPIFFS
       noInterrupts();
       if (sysCfg.saveFlag == 0) {  // Handle default and rollover
         spi_flash_erase_sector(CFG_LOCATION + (sysCfg.saveFlag &1));
@@ -76,7 +76,7 @@ void CFG_Load()
       } else
         addLog_P(LOG_LEVEL_ERROR, PSTR("Config: ERROR - Loading configuration failed"));
     } else {  
-#endif
+#endif  // USE_SPIFFS
       struct SYSCFGH {
         unsigned long cfg_holder;
         unsigned long saveFlag;
@@ -103,7 +103,7 @@ void CFG_Erase()
 
   uint32_t _sectorStart = (ESP.getSketchSize() / SPI_FLASH_SEC_SIZE) + 1;
   uint32_t _sectorEnd = ESP.getFlashChipRealSize() / SPI_FLASH_SEC_SIZE;
-  byte seriallog_level = sysCfg.seriallog_level;
+  boolean _serialoutput = (LOG_LEVEL_DEBUG_MORE <= sysCfg.seriallog_level);
 
   snprintf_P(log, sizeof(log), PSTR("Config: Erasing %d flash sectors"), _sectorEnd - _sectorStart);
   addLog(LOG_LEVEL_DEBUG, log);
@@ -112,7 +112,7 @@ void CFG_Erase()
     noInterrupts();
     result = spi_flash_erase_sector(_sector);
     interrupts();
-    if (LOG_LEVEL_DEBUG_MORE <= seriallog_level) {
+    if (_serialoutput) {
       Serial.print(F("Flash: Erased sector "));
       Serial.print(_sector);
       if (result == SPI_FLASH_RESULT_OK)
@@ -158,92 +158,144 @@ void initSpiffs()
     }
   }  
 }
-#endif
+#endif  // USE_SPIFFS
 
+#ifdef USE_WEBSERVER
 /*********************************************************************************************\
- * WiFiManager 
+ * Web server and WiFi Manager 
  * 
  * Enables configuration and reconfiguration of WiFi credentials using a Captive Portal 
  * Source by AlexT (https://github.com/tzapu)
 \*********************************************************************************************/
 
 #define DNS_PORT      53
-#define MANAGER_SEC   120
 
-const char HTTP_HEAD[] PROGMEM       = "<!DOCTYPE html><html lang=\"en\"><head><meta name=\"viewport\" content=\"width=device-width, initial-scale=1, user-scalable=no\"/>"
-                                       "<title>{v}</title>";
-const char HTTP_STYLE[] PROGMEM      = "<style>"
-                                       "div,input{padding:5px;font-size:1em;} "
-                                       "input{width:95%;} "
-                                       "body{text-align:center;font-family:verdana;} "
-                                       "button{border:0;border-radius:0.3rem;background-color:#1fa3ec;color:#fff;line-height:2.4rem;font-size:1.2rem;width:100%;} "
-                                       ".q{float:right;width:64px;text-align:right;} "
-                                       ".l{background:url('data:image/png;base64,"
-                                       "iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAMAAABEpIrGAAAALVBMVEX///8EBwfBwsLw8PAzNjaCg4NTVVUjJiZDRUUUFxdiZGSho6OSk5Pg4eFydHTCjaf3AAAAZElEQVQ4je2NSw7AIAhE"
-                                       "BamKn97/uMXEGBvozkWb9C2Zx4xzWykBhFAeYp9gkLyZE0zIMno9n4g19hmdY39scwqVkOXaxph0ZCXQcqxSpgQpONa59wkRDOL93eAXvimwlbPbwwVAegLS1HGfZAAAAABJRU5ErkJggg=="
-                                       "') no-repeat left center;background-size:1em;}"
-                                       "</style>";
-const char HTTP_SCRIPT[] PROGMEM     = "<script>function c(l){document.getElementById('s').value=l.innerText||l.textContent;document.getElementById('p').focus();}"
-                                       "var cn=120;function u(){if(cn>=0){document.getElementById('t').innerHTML='Restart in '+cn+' seconds';cn--;setTimeout(u,1000);}}</script>";
-const char HTTP_HEAD_END[] PROGMEM   = "</head><body onload='u()'><div style='text-align:left;display:inline-block;min-width:260px;'>";
+const char HTTP_HEAD[] PROGMEM       = "<!DOCTYPE html><html lang=\"en\">"
+                                       "<head><meta name=\"viewport\" content=\"width=device-width, initial-scale=1, user-scalable=no\"/>"
+                                       "<title>{v}</title>"
+                                       "<script>"
+                                       "function c(l){document.getElementById('s').value=l.innerText||l.textContent;document.getElementById('p').focus();}"
+                                       "var cn=120;"
+                                       "function u(){if(cn>=0){document.getElementById('t').innerHTML='Restart in '+cn+' seconds';cn--;setTimeout(u,1000);}}"
+                                       "</script>"
+                                       "<style>"
+                                       "div,fieldset,input,select{padding:5px;font-size:1em;}"
+                                       "input{width:95%;}select{width:100%;}"
+                                       "body{text-align:center;font-family:verdana;}"
+                                       "td{padding:0px 5px;}"
+                                       "button{border:0;border-radius:0.3rem;background-color:#1fa3ec;color:#fff;line-height:2.4rem;font-size:1.2rem;width:100%;-webkit-transition-duration:0.4s;transition-duration:0.4s;}"
+                                       "button:hover{background-color:#006cba;}"
+                                       ".q{float:right;width:64px;text-align:right;}"
+                                       ".l{background:url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAMAAABEpIrGAAAALVBMVEX///8EBwfBwsLw8PAzNjaCg4NTVVUjJiZDRUUUFxdiZGSho6O"
+                                       "Sk5Pg4eFydHTCjaf3AAAAZElEQVQ4je2NSw7AIAhEBamKn97/uMXEGBvozkWb9C2Zx4xzWykBhFAeYp9gkLyZE0zIMno9n4g19hmdY39scwqVkOXaxph0ZCXQcqxSpgQpONa59wkRDOL93eA"
+                                       "XvimwlbPbwwVAegLS1HGfZAAAAABJRU5ErkJggg==') no-repeat left center;background-size:1em;}"
+                                       "</style>"
+                                       "</head>"
+                                       "<body>"
+                                       "<div style='text-align:left;display:inline-block;min-width:260px;'>"
+                                       "<div style='text-align:center;'><h2>" APP_NAME "</h2><h3>{h}</h3></div>";
 const char HTTP_MENU1[] PROGMEM      = "<div style='text-align:center;font-weight:bold;font-size:60px'>{r0}</div>"
-                                       "<br/><form action='/?o=1' method='post'><button>Toggle relay</button></form><br/>";
-const char HTTP_MENU2[] PROGMEM      = "<br/><form action='/0wifi' method='get'><button>Configure WiFi and MQTT</button></form>"
-                                       "<br/><form action='/u' method='post'><button>OTA upgrade</button></form>"
-                                       "<br/><form action='/c' method='post'><button>Command line</button></form>"
-                                       "<br/><form action='/r' method='post'><button>Restart</button></form>";
-const char HTTP_COUNTER[] PROGMEM    = "<br/><div id='t' name='t' style='text-align:center;'></div>";
+                                       "<br/><form action='/?o=1' method='post'><button>Toggle</button></form><br/>";
+const char HTTP_MENU2[] PROGMEM      = "<br/><form action='/cnf' method='get'><button>Configuration</button></form>"
+                                       "<br/><form action='/inf' method='post'><button>Information</button></form>"
+                                       "<br/><form action='/upg' method='post'><button>Firmware upgrade</button></form>"
+                                       "<br/><form action='/cmd' method='post'><button>Command line</button></form>"
+                                       "<br/><form action='/rbt' method='post'><button>Restart</button></form>";
+const char HTTP_MENU3[] PROGMEM      = "<br/><form action='/wi0' method='get'><button>Configure WiFi</button></form>"
+                                       "<br/><form action='/mqt' method='get'><button>Configure MQTT</button></form>"
+                                       "<br/><form action='/log' method='get'><button>Configure logging</button></form>"
+                                       "<br/><form action='/rst' method='post'><button>Reset Configuration</button></form>";
 const char HTTP_ITEM[] PROGMEM       = "<div><a href='#p' onclick='c(this)'>{v}</a>&nbsp;<span class='q {i}'>{r}%</span></div>";
-const char HTTP_SCAN_LINK[] PROGMEM  = "<div><a href='/wifi'>Scan for wifi networks</a></div><br/>";
-const char HTTP_FORM_START[] PROGMEM = "<form method='get' action='wifisave'>"
-                                       "<b>Wifi SSId</b> (" STA_SSID ")<br/><input id='s' name='s' length=32 placeholder='STA_SSID' value='{s1}'><br/>"
-                                       "<br/><b>Wifi password</b></br><input id='p' name='p' length=64 type='password' placeholder='STA_PASS' value='{p1}'><br/>"
-                                       "<br/><b>MQTT host</b> (" MQTT_HOST ")<br/><input id='mh' name='mh' length=32 placeholder='MQTT_HOST' value='{m1}'><br/>"
-                                       "<br/><b>MQTT port</b> ({ml})<br/><input id='ml' name='ml' length=5 placeholder='MQTT_PORT' value='{m2}'><br/>"
-                                       "<br/><b>MQTT client</b> (" MQTT_CLIENT_ID ")<br/><input id='mc' name='mc' length=32 placeholder='MQTT_CLIENT_ID' value='{m3}'><br/>"
-                                       "<br/><b>MQTT user</b> (" MQTT_USER ")<br/><input id='mu' name='mu' length=32 placeholder='MQTT_USER' value='{m4}'><br/>"
-                                       "<br/><b>MQTT password</b> (" MQTT_PASS ")<br/><input id='mp' name='mp' length=32 placeholder='MQTT_PASS' value='{m5}'><br/>"
-                                       "<br/><b>MQTT topic</b> (" MQTT_TOPIC ")<br/><input id='mt' name='mt' length=32 placeholder='MQTT_TOPIC' value='{m6}'><br/>";
-const char HTTP_FORM_END[] PROGMEM   = "<br/><button type='submit'>Save</button></form>"
-                                       "<br/><form action='wifidefs' method='get'><button>(Defaults)</button></form>";
-const char HTTP_SAVED[] PROGMEM      = "<div style='text-align:center;'><b>{p} saved</b><br/><br/>Trying to connect device to network.<br/><br/>If it fails reconnect to try again.</div>";
-const char HTTP_FORM_UPG[] PROGMEM   = "<form method='post' action='u2'>"
-                                       "<b>OTA Url</b> (" OTA_URL ")<br/><input id='o' name='o' length=80 placeholder='OTA_URL' value='{o1}'><br/>"
-                                       "<br/><button type='submit'>Start upgrade</button></form>";
-const char HTTP_FORM_CMND[] PROGMEM  = "<form method='post' action='c'>"
+const char HTTP_SCAN_LINK[] PROGMEM  = "<div><a href='/wi1'>Scan for wifi networks</a></div><br/>";
+const char HTTP_FORM_WIFI[] PROGMEM  = "<fieldset><legend><b>&nbsp;Wifi parameters&nbsp;</b></legend><form method='get' action='sav'>"
+                                       "<input id='w' name='w' value='1' hidden><input id='r' name='r' value='1' hidden>"
+                                       "<br/><b>SSId</b> (" STA_SSID ")<br/><input id='s' name='s' length=32 placeholder='" STA_SSID "' value='{s1}'><br/>"
+                                       "<br/><b>Password</b></br><input id='p' name='p' length=64 type='password' placeholder='" STA_PASS "' value='{p1}'><br/>"
+                                       "<br/><b>Hostname</b> (" WIFI_HOSTNAME "{h0})<br/><input id='h' name='h' length=32 placeholder='" WIFI_HOSTNAME" ' value='{h1}'><br/>";
+const char HTTP_FORM_MQTT[] PROGMEM  = "<fieldset><legend><b>&nbsp;MQTT parameters&nbsp;</b></legend><form method='get' action='sav'>"
+                                       "<input id='w' name='w' value='2' hidden><input id='r' name='r' value='1' hidden>"
+                                       "<br/><b>Host</b> (" MQTT_HOST ")<br/><input id='mh' name='mh' length=32 placeholder='" MQTT_HOST" ' value='{m1}'><br/>"
+                                       "<br/><b>Port</b> ({ml})<br/><input id='ml' name='ml' length=5 placeholder='{ml}' value='{m2}'><br/>"
+                                       "<br/><b>Client Id</b> (" MQTT_CLIENT_ID "{m0})<br/><input id='mc' name='mc' length=32 placeholder='" MQTT_CLIENT_ID "' value='{m3}'><br/>"
+                                       "<br/><b>User</b> (" MQTT_USER ")<br/><input id='mu' name='mu' length=32 placeholder='" MQTT_USER "' value='{m4}'><br/>"
+                                       "<br/><b>Password</b> (" MQTT_PASS ")<br/><input id='mp' name='mp' length=32 placeholder='" MQTT_PASS "' value='{m5}'><br/>"
+                                       "<br/><b>Topic</b> (" MQTT_TOPIC ")<br/><input id='mt' name='mt' length=32 placeholder='" MQTT_TOPIC" ' value='{m6}'><br/>";
+const char HTTP_FORM_LOG[] PROGMEM   = "<fieldset><legend><b>&nbsp;Logging parameters&nbsp;</b></legend><form method='get' action='sav'>"
+                                       "<input id='w' name='w' value='3' hidden><input id='r' name='r' value='0' hidden>"
+                                       "<br/><b>Serial log level</b> ({ls})<br/><select id='ls' name='ls'>"
+                                       "<option{a0value='0'>0 None</option>"
+                                       "<option{a1value='1'>1 Error</option>"
+                                       "<option{a2value='2'>2 Info</option>"
+                                       "<option{a3value='3'>3 Debug</option>"
+                                       "<option{a4value='4'>4 More debug</option>"
+                                       "</select></br>"
+                                       "<br/><b>Syslog level</b> ({ll})<br/><select id='ll' name='ll'>"
+                                       "<option{b0value='0'>0 None</option>"
+                                       "<option{b1value='1'>1 Error</option>"
+                                       "<option{b2value='2'>2 Info</option>"
+                                       "<option{b3value='3'>3 Debug</option>"
+                                       "<option{b4value='4'>4 More debug</option>"
+                                       "</select></br>"
+                                       "<br/><b>Syslog host</b> (" SYS_LOG_HOST ")<br/><input id='lh' name='lh' length=32 placeholder='" SYS_LOG_HOST "' value='{l2}'><br/>"
+                                       "<br/><b>Syslog port</b> ({lp})<br/><input id='lp' name='lp' length=5 placeholder='{lp}' value='{l3}'><br/>";
+const char HTTP_FORM_END[] PROGMEM   = "<br/><button type='submit'>Save</button></form></fieldset>";
+const char HTTP_FORM_UPG[] PROGMEM   = "<div id='f1' name='f1' style='display:block;'>"
+                                       "<fieldset><legend><b>&nbsp;Upgrade by web server&nbsp;</b></legend><form method='post' action='u1'>"
+                                       "<br/>OTA Url<br/><input id='o' name='o' length=80 placeholder='OTA_URL' value='{o1}'><br/>"
+                                       "<br/><button type='submit'>Start upgrade</button></form></fieldset><br/><br/>"
+                                       "<fieldset><legend><b>&nbsp;Upgrade by file upload&nbsp;</b></legend><form method='post' action='u2' enctype='multipart/form-data'>"
+                                       "<br/><input type='file' name='u2'><br/>"
+//                                       "<br/><button type='submit' onclick='this.disabled=true;this.form.submit();'>Start upgrade</button></form></fieldset>"
+                                       "<br/><button type='submit' onclick='document.getElementById(\"f1\").style.display=\"none\";document.getElementById(\"f2\").style.display=\"block\";this.form.submit();'>Start upgrade</button></form></fieldset>"
+                                       "</div>"
+                                       "<div id='f2' name='f2' style='display:none;text-align:center;'><b>Upload started ...</b></div>";
+const char HTTP_FORM_CMND[] PROGMEM  = "<form method='post' action='cmd'>"
                                        "<input id='" SUB_PREFIX "' name='" SUB_PREFIX "' length=80 placeholder='Enter command' autofocus><br/>"
 //                                       "<br/><button type='submit'>Send command</button>";
                                        "</form>";
-const char HTTP_MAIN_MENU[] PROGMEM  = "<br/><form action='/' method='post'><button>Main menu</button></form>";
-const char HTTP_END[] PROGMEM        = "</div></body></html>";
+const char HTTP_RESTART[] PROGMEM    = "<br/><div style='text-align:center;'>Device will restart in a few seconds</div><br/>";
+const char HTTP_MAIN_MENU[] PROGMEM  = "<br/><br/><form action='/' method='post'><button>Main menu</button></form>";
+const char HTTP_CONF_MENU[] PROGMEM  = "<br/><br/><form action='/cnf' method='post'><button>Configuration menu</button></form>";
+const char HTTP_COUNTER[] PROGMEM    = "<br/><div id='t' name='t' style='text-align:center;'></div>";
+const char HTTP_END[] PROGMEM        = "</div>"
+                                       "</body>"
+                                       "</html>";
 
 DNSServer *dnsServer;
 ESP8266WebServer *webServer;
 
 int _minimumQuality = -1;
 boolean _removeDuplicateAPs = true;
-int smartcounter = 0, smartconfigflag = 0, httpflag = 0;
+int httpflag = 0, _uploaderror = 0, _colcount;
 
-void startWebserver(int type)
+void startWebserver(int type, IPAddress ipweb)
 {
+  char log[LOGSZ];
+
   if (!httpflag) {
     if (!webServer) {
       webServer = new ESP8266WebServer(80);
       webServer->on("/", handleRoot);
-      webServer->on("/wifi", handleWifi1);
-      webServer->on("/0wifi", handleWifi0);
-      webServer->on("/wifisave", handleWifiSave);
-      webServer->on("/wifidefs", handleWifiDefaults);
-      webServer->on("/u", handleUpgrade);
-      webServer->on("/u2", handleUpgradeStart);
-      webServer->on("/c", handleConsole);
-      webServer->on("/r", handleReset);
+      webServer->on("/cnf", handleConfig);
+      webServer->on("/wi1", handleWifi1);
+      webServer->on("/wi0", handleWifi0);
+      webServer->on("/mqt", handleMqtt);
+      webServer->on("/log", handleLog);
+      webServer->on("/sav", handleSave);
+      webServer->on("/rst", handleReset);
+      webServer->on("/upg", handleUpgrade);
+      webServer->on("/u1", handleUpgradeStart);
+      webServer->on("/u2", HTTP_POST, handleUploadDone, handleUploadLoop);
+      webServer->on("/cmd", handleConsole);
+      webServer->on("/inf", handleInfo);
+      webServer->on("/rbt", handleRestart);
       webServer->on("/fwlink", handleRoot);  //Microsoft captive portal. Maybe not needed. Might be handled by notFound handler.
       webServer->onNotFound(handleNotFound);
     }
     webServer->begin(); // Web server start
-    addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Webserver started"));
   }
+  snprintf_P(log, sizeof(log), PSTR("HTTP: Webserver active on %s with IP address %s"), Hostname, ipweb.toString().c_str());
+  addLog(LOG_LEVEL_INFO, log);
   if (type) httpflag = type;
 }
 
@@ -253,14 +305,12 @@ void stopWebserver()
     webServer->close();
 //    free(webServer);
     httpflag = 0;
-    addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Webserver stopped"));
+    addLog_P(LOG_LEVEL_INFO, PSTR("HTTP: Webserver stopped"));
   }
 }
 
 void beginWifiManager()
 {
-  char log[LOGSZ];
-
   // setup AP
   if ((WiFi.waitForConnectResult() == WL_CONNECTED) && (static_cast<uint32_t>(WiFi.localIP()) != 0)) {
     WiFi.mode(WIFI_AP_STA);
@@ -279,11 +329,7 @@ void beginWifiManager()
   dnsServer->setErrorReplyCode(DNSReplyCode::NoError);
   dnsServer->start(DNS_PORT, "*", WiFi.softAPIP());
 
-  startWebserver(2);
-
-  snprintf_P(log, sizeof(log), PSTR("Wifimanager: Started web server on AccessPoint %s with IP address %s"),
-    Hostname, WiFi.softAPIP().toString().c_str());
-  addLog(LOG_LEVEL_INFO, log);
+  startWebserver(2, WiFi.softAPIP());
 }
 
 void pollDnsWeb()
@@ -292,12 +338,28 @@ void pollDnsWeb()
   if (webServer) webServer->handleClient();
 }
 
+void showPage(String &page, byte option)
+{
+  page.replace("{h}", Hostname);
+  if (option) {
+    if (WIFI_smartcounter()) {
+      page.replace("<body>", "<body onload='u()'>");
+      page += FPSTR(HTTP_COUNTER);
+    }
+  }
+  page += FPSTR(HTTP_END);
+  
+  webServer->sendHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+  webServer->sendHeader("Pragma", "no-cache");
+  webServer->sendHeader("Expires", "-1");
+  webServer->send(200, "text/html", page);
+}
+
 void handleRoot()
 {
   char svalue[MESSZ];
 
   addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Handle root"));
-  if (smartcounter) smartcounter = MANAGER_SEC;
 
   if (captivePortal()) { // If captive portal redirect instead of displaying the page.
     return;
@@ -314,27 +376,22 @@ void handleRoot()
 
   String page = FPSTR(HTTP_HEAD);
   page.replace("{v}", "Main menu");
-  page += FPSTR(HTTP_SCRIPT);
-  page += FPSTR(HTTP_STYLE);
-  page += FPSTR(HTTP_HEAD_END);
-  page += F("<div style='text-align:center;'><h1>");
-  page += Hostname;
-  page += F("</h1><h3>" PROJECT);
-  if (httpflag == 2)
-    page += F(" WiFiManager");
-  page += F("</h3></div>");
   page += FPSTR(HTTP_MENU1);
   page.replace("{r0}", (sysCfg.power) ? "ON" : "OFF");
   if (httpflag == 2)
     page += FPSTR(HTTP_MENU2);
-  if (smartcounter)     
-    page += FPSTR(HTTP_COUNTER);
-  page += FPSTR(HTTP_END);
+  showPage(page, 1);
+}
 
-  webServer->sendHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-  webServer->sendHeader("Pragma", "no-cache");
-  webServer->sendHeader("Expires", "-1");
-  webServer->send(200, "text/html", page);
+void handleConfig()
+{
+  addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Handle config"));
+
+  String page = FPSTR(HTTP_HEAD);
+  page.replace("{v}", "Configuration");
+  page += FPSTR(HTTP_MENU3);
+  page += FPSTR(HTTP_MAIN_MENU);
+  showPage(page, 1);
 }
 
 void handleWifi1()
@@ -351,14 +408,10 @@ void handleWifi(boolean scan)
 {
   char log[LOGSZ];
 
-  addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Handle config"));
-  if (smartcounter) smartcounter = MANAGER_SEC;
+  addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Handle Wifi config"));
 
   String page = FPSTR(HTTP_HEAD);
-  page.replace("{v}", "Config Wifi");
-  page += FPSTR(HTTP_SCRIPT);
-  page += FPSTR(HTTP_STYLE);
-  page += FPSTR(HTTP_HEAD_END);
+  page.replace("{v}", "Configure Wifi");
 
   if (scan) {
     int n = WiFi.scanNetworks();
@@ -434,123 +487,164 @@ void handleWifi(boolean scan)
     page += FPSTR(HTTP_SCAN_LINK);
   }
 
-  page += FPSTR(HTTP_FORM_START);
+  page += FPSTR(HTTP_FORM_WIFI);
+  
+  char str[33];
+  if (!strcmp(WIFI_HOSTNAME, DEF_WIFI_HOSTNAME))
+    snprintf_P(str, sizeof(str), PSTR(" = " DEF_WIFI_HOSTNAME), sysCfg.mqtt_topic, ESP.getChipId() & 0x1FFF);
+  else
+    str[0] = 0;
+  page.replace("{h0}", str);
+  page.replace("{h1}", String(sysCfg.hostname));
   page.replace("{s1}", String(sysCfg.sta_ssid));
   page.replace("{p1}", String(sysCfg.sta_pwd));
+  page += FPSTR(HTTP_FORM_END);
+  page += FPSTR(HTTP_CONF_MENU);
+  showPage(page, 1);
+}
+
+void handleMqtt()
+{
+  addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Handle MQTT config"));
+
+  String page = FPSTR(HTTP_HEAD);
+  page.replace("{v}", "Configure MQTT");
+  page += FPSTR(HTTP_FORM_MQTT);
+  char str[33];
+  if (!strcmp(MQTT_CLIENT_ID, DEF_MQTT_CLIENT_ID))
+    snprintf_P(str, sizeof(str), PSTR(" = "DEF_MQTT_CLIENT_ID), ESP.getChipId());
+  else
+    str[0] = 0;
+  page.replace("{m0}", str);
   page.replace("{m1}", String(sysCfg.mqtt_host));
-  int mp = MQTT_PORT;
-  String str;
-  str += mp;
-  page.replace("{ml}", str);
+  page.replace("{ml}", String((int)MQTT_PORT));
   page.replace("{m2}", String(sysCfg.mqtt_port));
   page.replace("{m3}", String(sysCfg.mqtt_client));
   page.replace("{m4}", String(sysCfg.mqtt_user));
   page.replace("{m5}", String(sysCfg.mqtt_pwd));
   page.replace("{m6}", String(sysCfg.mqtt_topic));
   page += FPSTR(HTTP_FORM_END);
-  page += FPSTR(HTTP_MAIN_MENU);
-  if (smartcounter)     
-    page += FPSTR(HTTP_COUNTER);
-  page += FPSTR(HTTP_END);
-
-  webServer->sendHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-  webServer->sendHeader("Pragma", "no-cache");
-  webServer->sendHeader("Expires", "-1");
-  webServer->send(200, "text/html", page);
+  page += FPSTR(HTTP_CONF_MENU);
+  showPage(page, 1);
 }
 
-void handleWifiSave()
+void handleLog()
 {
-  char log[LOGSZ];
-
-  addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: WiFi save"));
-
-  if (strlen(webServer->arg("s").c_str())) strlcpy(sysCfg.sta_ssid, webServer->arg("s").c_str(), sizeof(sysCfg.sta_ssid));
-  if (strlen(webServer->arg("p").c_str())) strlcpy(sysCfg.sta_pwd, webServer->arg("p").c_str(), sizeof(sysCfg.sta_pwd));
-  snprintf_P(log, sizeof(log), PSTR("Wifi: SSID %s and Password %s"), sysCfg.sta_ssid, sysCfg.sta_pwd);
-  addLog(LOG_LEVEL_INFO, log);
-  if (strlen(webServer->arg("mh").c_str())) strlcpy(sysCfg.mqtt_host, webServer->arg("mh").c_str(), sizeof(sysCfg.mqtt_host));
-  if (strlen(webServer->arg("ml").c_str())) sysCfg.mqtt_port = atoi(webServer->arg("ml").c_str());
-  if (strlen(webServer->arg("mc").c_str())) strlcpy(sysCfg.mqtt_client, webServer->arg("mc").c_str(), sizeof(sysCfg.mqtt_client));
-  if (strlen(webServer->arg("mu").c_str())) strlcpy(sysCfg.mqtt_user, webServer->arg("mu").c_str(), sizeof(sysCfg.mqtt_user));
-  if (strlen(webServer->arg("mp").c_str())) strlcpy(sysCfg.mqtt_pwd, webServer->arg("mp").c_str(), sizeof(sysCfg.mqtt_pwd));
-  if (strlen(webServer->arg("mt").c_str())) strlcpy(sysCfg.mqtt_topic, webServer->arg("mt").c_str(), sizeof(sysCfg.mqtt_topic));
-  snprintf_P(log, sizeof(log), PSTR("Wifi: Mqtt Host %s, Port %d, Client %s, User %s, Password %s, Topic %s"),
-    sysCfg.mqtt_host, sysCfg.mqtt_port, sysCfg.mqtt_client, sysCfg.mqtt_user, sysCfg.mqtt_pwd, sysCfg.mqtt_topic);
-  addLog(LOG_LEVEL_INFO, log);
+  addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Handle Log config"));
 
   String page = FPSTR(HTTP_HEAD);
-  page.replace("{v}", "Parameters");
-  page += FPSTR(HTTP_SCRIPT);
-  page += FPSTR(HTTP_STYLE);
-  page += FPSTR(HTTP_HEAD_END);
-  page += FPSTR(HTTP_SAVED);
-  page.replace("{p}", "Parameters");
-  page += FPSTR(HTTP_MAIN_MENU);
-  page += FPSTR(HTTP_END);
-
-  webServer->sendHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-  webServer->sendHeader("Pragma", "no-cache");
-  webServer->sendHeader("Expires", "-1");
-  webServer->send(200, "text/html", page);
-
-  smartcounter = 1;
+  page.replace("{v}", "Config logging");
+  page += FPSTR(HTTP_FORM_LOG);
+  page.replace("{ls}", String((int)SERIAL_LOG_LEVEL));
+  page.replace("{ll}", String((int)SYS_LOG_LEVEL));
+  for (byte i = LOG_LEVEL_NONE; i < LOG_LEVEL_ALL; i++) {
+    page.replace("{a" + String(i), (i == sysCfg.seriallog_level) ? " selected " : " ");
+    page.replace("{b" + String(i), (i == sysCfg.syslog_level) ? " selected " : " ");
+  }  
+  page.replace("{l2}", String(sysCfg.syslog_host));
+  page.replace("{lp}", String((int)SYS_LOG_PORT));
+  page.replace("{l3}", String(sysCfg.syslog_port));
+  page += FPSTR(HTTP_FORM_END);
+  page += FPSTR(HTTP_CONF_MENU);
+  showPage(page, 1);
 }
 
-void handleWifiDefaults()
+void handleSave()
 {
   char log[LOGSZ];
+  byte what = 0, restart;
+  String result = "";
 
-  addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: WiFi defaults"));
+  addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Parameter save"));
+
+  if (strlen(webServer->arg("w").c_str())) what = atoi(webServer->arg("w").c_str());
+  switch (what) {
+  case 1:
+    strlcpy(sysCfg.hostname, (!strlen(webServer->arg("h").c_str())) ? WIFI_HOSTNAME : webServer->arg("h").c_str(), sizeof(sysCfg.hostname));
+    if (strstr(sysCfg.hostname,"%")) strlcpy(sysCfg.hostname, DEF_WIFI_HOSTNAME, sizeof(sysCfg.hostname));
+    strlcpy(sysCfg.sta_ssid, (!strlen(webServer->arg("s").c_str())) ? STA_SSID : webServer->arg("s").c_str(), sizeof(sysCfg.sta_ssid));
+    strlcpy(sysCfg.sta_pwd, (!strlen(webServer->arg("p").c_str())) ? STA_PASS : webServer->arg("p").c_str(), sizeof(sysCfg.sta_pwd));
+    snprintf_P(log, sizeof(log), PSTR("HTTP: Wifi Hostname %s, SSID %s and Password %s"), sysCfg.hostname, sysCfg.sta_ssid, sysCfg.sta_pwd);
+    addLog(LOG_LEVEL_INFO, log);
+    result += F("<br/>Trying to connect device to network<br/>If it fails reconnect to try again");
+    break;
+  case 2:
+    strlcpy(sysCfg.mqtt_host, (!strlen(webServer->arg("mh").c_str())) ? MQTT_HOST : webServer->arg("mh").c_str(), sizeof(sysCfg.mqtt_host));
+    sysCfg.mqtt_port = (!strlen(webServer->arg("ml").c_str())) ? MQTT_PORT : atoi(webServer->arg("ml").c_str());
+    strlcpy(sysCfg.mqtt_client, (!strlen(webServer->arg("mc").c_str())) ? MQTT_CLIENT_ID : webServer->arg("mc").c_str(), sizeof(sysCfg.mqtt_client));
+    if (strstr(sysCfg.mqtt_client,"%")) strlcpy(sysCfg.mqtt_client, DEF_MQTT_CLIENT_ID, sizeof(sysCfg.mqtt_client));
+    strlcpy(sysCfg.mqtt_user, (!strlen(webServer->arg("mu").c_str())) ? MQTT_USER : webServer->arg("mu").c_str(), sizeof(sysCfg.mqtt_user));
+    strlcpy(sysCfg.mqtt_pwd, (!strlen(webServer->arg("mp").c_str())) ? MQTT_PASS : webServer->arg("mp").c_str(), sizeof(sysCfg.mqtt_pwd));
+    strlcpy(sysCfg.mqtt_topic, (!strlen(webServer->arg("mt").c_str())) ? MQTT_TOPIC : webServer->arg("mt").c_str(), sizeof(sysCfg.mqtt_topic));
+    snprintf_P(log, sizeof(log), PSTR("HTTP: MQTT Host %s, Port %d, Client %s, User %s, Password %s, Topic %s"),
+      sysCfg.mqtt_host, sysCfg.mqtt_port, sysCfg.mqtt_client, sysCfg.mqtt_user, sysCfg.mqtt_pwd, sysCfg.mqtt_topic);
+    addLog(LOG_LEVEL_INFO, log);
+    break;
+  case 3:
+    sysCfg.seriallog_level = (!strlen(webServer->arg("ls").c_str())) ? SERIAL_LOG_LEVEL : atoi(webServer->arg("ls").c_str());
+    sysCfg.syslog_level = (!strlen(webServer->arg("ll").c_str())) ? SYS_LOG_LEVEL : atoi(webServer->arg("ll").c_str());
+    strlcpy(sysCfg.syslog_host, (!strlen(webServer->arg("lh").c_str())) ? SYS_LOG_HOST : webServer->arg("lh").c_str(), sizeof(sysCfg.syslog_host));
+    sysCfg.syslog_port = (!strlen(webServer->arg("lp").c_str())) ? SYS_LOG_PORT : atoi(webServer->arg("lp").c_str());
+    snprintf_P(log, sizeof(log), PSTR("HTTP: Logging Seriallog %d, Syslog %d, Host %s, Port %d"),
+      sysCfg.seriallog_level, sysCfg.syslog_level, sysCfg.syslog_host, sysCfg.syslog_port);
+    addLog(LOG_LEVEL_INFO, log);
+    break;
+  }
+
+  restart = (!strlen(webServer->arg("r").c_str())) ? 1 : atoi(webServer->arg("r").c_str());
+  if (restart) {
+    String page = FPSTR(HTTP_HEAD);
+    page.replace("{v}", "Save parameters");
+    page += F("<div style='text-align:center;'><b>Parameters saved</b><br/>");
+    page += result;
+    page += F("</div>");
+    page += FPSTR(HTTP_RESTART);
+    page += FPSTR(HTTP_MAIN_MENU);
+    showPage(page, 0);
+
+    restartflag = 2;
+  } else {
+    handleConfig();
+  }
+}
+
+void handleReset()
+{
+  char svalue[MESSZ];
+
+  addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Reset parameters"));
 
   String page = FPSTR(HTTP_HEAD);
-  page.replace("{v}", "Parameters");
-  page += FPSTR(HTTP_SCRIPT);
-  page += FPSTR(HTTP_STYLE);
-  page += FPSTR(HTTP_HEAD_END);
-  page += FPSTR(HTTP_SAVED);
-  page.replace("{p}", "Default parameters");
+  page.replace("{v}", "Default parameters");
+  page += F("<div style='text-align:center;'>Parameters reset to default</div>");
+  page += FPSTR(HTTP_RESTART);
   page += FPSTR(HTTP_MAIN_MENU);
-  page += FPSTR(HTTP_END);
+  showPage(page, 0);
 
-  webServer->sendHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-  webServer->sendHeader("Pragma", "no-cache");
-  webServer->sendHeader("Expires", "-1");
-  webServer->send(200, "text/html", page);
-
-  CFG_Default();
-  smartcounter = 1;
+  snprintf_P(svalue, sizeof(svalue), PSTR("reset 1"));
+  do_cmnd(svalue);
 }
 
 void handleUpgrade()
 {
   addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Handle upgrade"));
-  if (smartcounter) smartcounter = MANAGER_SEC;
 
   String page = FPSTR(HTTP_HEAD);
-  page.replace("{v}", "OTA Upgrade");
-  page += FPSTR(HTTP_SCRIPT);
-  page += FPSTR(HTTP_STYLE);
-  page += FPSTR(HTTP_HEAD_END);
+  page.replace("{v}", "Firmware upgrade");
   page += FPSTR(HTTP_FORM_UPG);
   page.replace("{o1}", String(sysCfg.otaUrl));
   page += FPSTR(HTTP_MAIN_MENU);
-  if (smartcounter)     
-    page += FPSTR(HTTP_COUNTER);
-  page += FPSTR(HTTP_END);
+  showPage(page, 1);
 
-  webServer->sendHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-  webServer->sendHeader("Pragma", "no-cache");
-  webServer->sendHeader("Expires", "-1");
-  webServer->send(200, "text/html", page);
+  _uploaderror = 0;
 }
 
 void handleUpgradeStart()
 {
   char svalue[MESSZ];
 
-  addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: OTA Upgrade start"));
-  if (smartcounter) smartcounter = 0;
+  addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Firmware upgrade start"));
+  WIFI_smartcounter();
 
   if (strlen(webServer->arg("o").c_str())) {
     snprintf_P(svalue, sizeof(svalue), PSTR("otaurl %s"), webServer->arg("o").c_str());
@@ -559,20 +653,121 @@ void handleUpgradeStart()
   
   String page = FPSTR(HTTP_HEAD);
   page.replace("{v}", "Info");
-  page += FPSTR(HTTP_SCRIPT);
-  page += FPSTR(HTTP_STYLE);
-  page += FPSTR(HTTP_HEAD_END);
-  page += F("<div style='text-align:center;'><b>Upgrade started</b><br/><br/>Device will restart in a few seconds.</div><br/>");
+  page += F("<div style='text-align:center;'><b>Upgrade started ...</b></div>");
+  page += FPSTR(HTTP_RESTART);
   page += FPSTR(HTTP_MAIN_MENU);
-  page += FPSTR(HTTP_END);
-
-  webServer->sendHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-  webServer->sendHeader("Pragma", "no-cache");
-  webServer->sendHeader("Expires", "-1");
-  webServer->send(200, "text/html", page);
+  showPage(page, 0);
 
   snprintf_P(svalue, sizeof(svalue), PSTR("upgrade 1"));
   do_cmnd(svalue);
+}
+
+void handleUploadDone()
+{
+  char svalue[MESSZ];
+
+  addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Firmware upload done"));
+  WIFI_smartcounter();
+
+  String page = FPSTR(HTTP_HEAD);
+  page.replace("{v}", "Info");
+  page += F("<div style='text-align:center;'><b>Upload ");
+  if (_uploaderror) {
+    page += F("<font color='red'>failed</font></b>");
+    if (_uploaderror == 1)
+      page += F("<br/><br/>No file selected");
+    else if (_uploaderror == 3)
+      page += F("<br/><br/>File magic header does not start with 0xE9");
+    else if (_uploaderror == 4)
+      page += F("<br/><br/>File flash size is larger than device flash size");
+    else {
+      page += F("<br/><br/>Upload error code ");
+      page += String(_uploaderror);
+    }
+    if (Update.hasError()) {
+      page += F("<br/><br/>Update error code ");
+      page += String(Update.getError());
+    }
+  } else {
+    page += F("<font color='green'>successful</font></b><br/><br/>Device will restart in a few seconds");
+    restartflag = 2;
+  }
+  page += F("</div><br/>");
+  page += FPSTR(HTTP_MAIN_MENU);
+  showPage(page, 0);
+}
+
+void handleUploadLoop()
+{
+  // Based on ESP8266HTTPUpdateServer.cpp uses ESP8266WebServer Parsing.cpp and Cores Updater.cpp (Update)
+  char log[LOGSZ];
+  boolean _serialoutput = (LOG_LEVEL_DEBUG <= sysCfg.seriallog_level);
+
+  if (_uploaderror) {
+    Update.end();
+    return;
+  }
+  
+  HTTPUpload& upload = webServer->upload();
+  
+  if (upload.status == UPLOAD_FILE_START) {
+    if (upload.filename.c_str()[0] == 0)
+    {
+      _uploaderror = 1;
+      return;
+    }
+    WiFiUDP::stopAll();
+    snprintf_P(log, sizeof(log), PSTR("Upload: File %s ..."), upload.filename.c_str());
+    addLog(LOG_LEVEL_INFO, log);
+
+    uint32_t maxSketchSpace = (ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000;
+    if (!Update.begin(maxSketchSpace)) {         //start with max available size
+      if (_serialoutput) Update.printError(Serial);
+      _uploaderror = 2;
+      return;
+    }
+    _colcount = 0;
+  } else if (!_uploaderror && (upload.status == UPLOAD_FILE_WRITE)) {
+    if (upload.totalSize == 0)
+    {
+      if (upload.buf[0] != 0xE9) {
+        addLog_P(LOG_LEVEL_DEBUG, PSTR("Upload: File magic header does not start with 0xE9"));
+        _uploaderror = 3;
+        return;
+      }
+      uint32_t bin_flash_size = ESP.magicFlashChipSize((upload.buf[3] & 0xf0) >> 4);
+      if(bin_flash_size > ESP.getFlashChipRealSize()) {
+        addLog_P(LOG_LEVEL_DEBUG, PSTR("Upload: File flash size is larger than device flash size"));
+        _uploaderror = 4;
+        return;
+      }
+    }
+    if (!_uploaderror && (Update.write(upload.buf, upload.currentSize) != upload.currentSize)) {
+      if (_serialoutput) Update.printError(Serial);
+      _uploaderror = 5;
+      return;
+    }
+    if (_serialoutput) {
+      Serial.printf(".");
+      _colcount++;
+      if (!(_colcount % 80)) Serial.println();
+    }
+  } else if(!_uploaderror && (upload.status == UPLOAD_FILE_END)){
+    if (_serialoutput && (_colcount % 80)) Serial.println();
+    if (Update.end(true)) { // true to set the size to the current progress
+      snprintf_P(log, sizeof(log), PSTR("Upload: Successful %u bytes. Restarting"), upload.totalSize);
+      addLog(LOG_LEVEL_INFO, log);
+    } else {
+      if (_serialoutput) Update.printError(Serial);
+      _uploaderror = 6;
+      return;
+    }
+  } else if(upload.status == UPLOAD_FILE_ABORTED) {
+    addLog_P(LOG_LEVEL_DEBUG, PSTR("Upload: Update was aborted"));
+    _uploaderror = 7;
+    Update.end();
+  }
+  delay(0);
 }
 
 void handleConsole()
@@ -580,7 +775,6 @@ void handleConsole()
   char svalue[MESSZ];
 
   addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Handle command"));
-  if (smartcounter) smartcounter = MANAGER_SEC;
 
   if (strlen(webServer->arg(SUB_PREFIX).c_str())) {
     snprintf_P(svalue, sizeof(svalue), webServer->arg(SUB_PREFIX).c_str());
@@ -589,40 +783,65 @@ void handleConsole()
 
   String page = FPSTR(HTTP_HEAD);
   page.replace("{v}", "Command line");
-  page += FPSTR(HTTP_SCRIPT);
-  page += FPSTR(HTTP_STYLE);
-  page += FPSTR(HTTP_HEAD_END);
   page += FPSTR(HTTP_FORM_CMND);
   page += FPSTR(HTTP_MAIN_MENU);
-  if (smartcounter)     
-    page += FPSTR(HTTP_COUNTER);
-  page += FPSTR(HTTP_END);
-
-  webServer->sendHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-  webServer->sendHeader("Pragma", "no-cache");
-  webServer->sendHeader("Expires", "-1");
-  webServer->send(200, "text/html", page);
+  showPage(page, 1);
 }
 
-void handleReset()
+void handleInfo()
+{
+  addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Handle info"));
+
+  int freeMem = ESP.getFreeHeap();
+
+  String page = FPSTR(HTTP_HEAD);
+  page.replace("{v}", "Information");
+//  page += F("<fieldset><legend><b>&nbsp;Information&nbsp;</b></legend>");
+  page += F("<table style'width:100%'>");
+  page += F("<tr><td><b>Version</b></td><td>"); page += Version; page += F("</td></tr>");
+  page += F("<tr><td><b>Core version</b></td><td>"); page += ESP.getCoreVersion(); page += F("</td></tr>");
+  page += F("<tr><td><b>SDK version</b></td><td>"); page += String(ESP.getSdkVersion()); page += F("</td></tr>");
+//  page += F("<tr><td><b>Boot version</b></td><td>"); page += String(ESP.getBootVersion()); page += F("</td></tr>");
+  page += F("<tr><td><b>Uptime</b></td><td>"); page += String(heartbeat); page += F(" Hours</td></tr>");
+  page += F("<tr><td><b>Flash write count</b></td><td>"); page += String(sysCfg.saveFlag); page += F("</td></tr>");
+  page += F("<tr><td><b>Boot count</b></td><td>"); page += String(sysCfg.bootcount); page += F("</td></tr>");
+  page += F("<tr><td><b>Reset reason</b></td><td>"); page += ESP.getResetReason(); page += F("</td></tr>");
+  page += F("<tr><td>&nbsp;</td></tr>");
+  page += F("<tr><td><b>Hostname</b></td><td>"); page += Hostname; page += F("</td></tr>");
+  if (static_cast<uint32_t>(WiFi.localIP()) != 0) {
+    page += F("<tr><td><b>IP address</b></td><td>"); page += WiFi.localIP().toString(); page += F("</td></tr>");
+    page += F("<tr><td><b>Gateway</b></td><td>"); page += WiFi.gatewayIP().toString(); page += F("</td></tr>");
+    page += F("<tr><td><b>MAC address</b></td><td>"); page += WiFi.macAddress(); page += F("</td></tr>");
+  }
+  if (static_cast<uint32_t>(WiFi.softAPIP()) != 0) {
+    page += F("<tr><td><b>AP IP address</b></td><td>"); page += WiFi.softAPIP().toString(); page += F("</td></tr>");
+    page += F("<tr><td><b>AP Gateway</b></td><td>"); page += WiFi.softAPIP().toString(); page += F("</td></tr>");
+    page += F("<tr><td><b>AP MAC address</b></td><td>"); page += WiFi.softAPmacAddress(); page += F("</td></tr>");
+  }
+  page += F("<tr><td>&nbsp;</td></tr>");
+  page += F("<tr><td><b>ESP Chip id</b></td><td>"); page += String(ESP.getChipId()); page += F("</td></tr>");
+  page += F("<tr><td><b>Flash Chip id</b></td><td>"); page += String(ESP.getFlashChipId()); page += F("</td></tr>");
+  page += F("<tr><td><b>Flash size</b></td><td>"); page += String(ESP.getFlashChipRealSize() / 1024); page += F(" kB</td></tr>");
+  page += F("<tr><td><b>Sketch size</b></td><td>"); page += String(ESP.getSketchSize() / 1024); page += F(" kB</td></tr>");
+  page += F("<tr><td><b>Free sketch space</b></td><td>"); page += String(ESP.getFreeSketchSpace() / 1024); page += F(" kB</td></tr>");
+  page += F("<tr><td><b>Free memory</b></td><td>"); page += String(freeMem / 1024); page += F(" kB</td></tr>");
+  page += F("</table>");
+//  page += F("</fieldset>");
+  page += FPSTR(HTTP_MAIN_MENU);
+  showPage(page, 1);
+}
+
+void handleRestart()
 {
   addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Restarting"));
 
   String page = FPSTR(HTTP_HEAD);
   page.replace("{v}", "Info");
-  page += FPSTR(HTTP_SCRIPT);
-  page += FPSTR(HTTP_STYLE);
-  page += FPSTR(HTTP_HEAD_END);
-  page += F("<div style='text-align:center;'>Device will restart in a few seconds.</div><br/>");
+  page += FPSTR(HTTP_RESTART);
   page += FPSTR(HTTP_MAIN_MENU);
-  page += FPSTR(HTTP_END);
+  showPage(page, 0);
 
-  webServer->sendHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-  webServer->sendHeader("Pragma", "no-cache");
-  webServer->sendHeader("Expires", "-1");
-  webServer->send(200, "text/html", page);
-
-  smartcounter = 1;
+  restartflag = 2;
 }
 
 void handleNotFound()
@@ -645,7 +864,7 @@ void handleNotFound()
   webServer->sendHeader("Cache-Control", "no-cache, no-store, must-revalidate");
   webServer->sendHeader("Pragma", "no-cache");
   webServer->sendHeader("Expires", "-1");
-  webServer->send ( 404, "text/plain", message );
+  webServer->send(404, "text/plain", message);
 }
 
 /** Redirect to captive portal if we got a request for another domain. Return true in that case so the page handler do not try to handle the request again. */
@@ -688,15 +907,24 @@ boolean isIp(String str)
   return true;
 }
 
+#endif  // USE_WEBSERVER
+
 /*********************************************************************************************\
  * Wifi
 \*********************************************************************************************/
 
-#define WIFI_SMARTSEC     60   // seconds
+#define WIFI_SMARTSEC     60   // seconds before restart
+#define MANAGER_SEC       120  // seconds before restart
 #define WIFI_CHECKSEC     20   // seconds
 #define WIFI_RETRY        16
 
-uint8_t wificounter, wifiretry;
+uint8_t wificounter, wifiretry, smartconfigflag = 0, smartcounter = 0;
+
+boolean WIFI_smartcounter()
+{
+  if (smartcounter) smartcounter = MANAGER_SEC;
+  return (smartcounter);
+}
 
 void WIFI_smartconfig(int type)
 {
@@ -705,13 +933,17 @@ void WIFI_smartconfig(int type)
     smartcounter = WIFI_SMARTSEC;   // Allow up to WIFI_SMARTSECS seconds for phone to provide ssid/pswd
     wificounter = smartcounter +5;
     blinks = 1999;
+#ifdef USE_WEBSERVER
     if (smartconfigflag == WIFI_SMARTCONFIG) {
+#endif  // USE_WEBSERVER
       addLog_P(LOG_LEVEL_INFO, PSTR("Smartconfig: Started and active for 1 minute"));
       WiFi.beginSmartConfig();
+#ifdef USE_WEBSERVER
     } else {
-      addLog_P(LOG_LEVEL_INFO, PSTR("Wifimanager: Started and waiting up to 1 minute for initial request"));
+      addLog_P(LOG_LEVEL_INFO, PSTR("Wifimanager: Started and active for 1 minute for initial request"));
       beginWifiManager();
     }
+#endif  // USE_WEBSERVER
   }
 }
 
@@ -726,7 +958,7 @@ void WIFI_check_ip()
       case WL_NO_SSID_AVAIL:
       case WL_CONNECT_FAILED:
         addLog_P(LOG_LEVEL_DEBUG, PSTR("Wifi: STATION_CONNECT_FAIL"));
-        WIFI_smartconfig(sysCfg.power +1);
+        WIFI_smartconfig((sysCfg.bootcount &1) +1);
         break;
       default:
         addLog_P(LOG_LEVEL_DEBUG, PSTR("Wifi: STATION_IDLE"));
@@ -735,7 +967,7 @@ void WIFI_check_ip()
         if (wifiretry)
           wificounter = 1;
         else
-          WIFI_smartconfig(sysCfg.power +1);
+          WIFI_smartconfig((sysCfg.bootcount &1) +1);
         break;
     }
   }
@@ -752,12 +984,14 @@ void WIFI_Check(int param)
     WIFI_smartconfig(param);
     break;
   default:
+#ifdef USE_WEBSERVER
     if ((WiFi.status() == WL_CONNECTED) && (static_cast<uint32_t>(WiFi.localIP()) != 0)) {
       if (smartconfigflag != WIFI_MANAGER) {
-        if (sysCfg.webserver && (sysCfg.webserver != httpflag)) startWebserver(sysCfg.webserver);
+        if (sysCfg.webserver && (sysCfg.webserver != httpflag)) startWebserver(sysCfg.webserver, WiFi.localIP());
         if (!sysCfg.webserver && httpflag) stopWebserver();
       }
     }
+#endif  // USE_WEBSERVER
     if (wificounter <= 0) {
       addLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("Wifi: Checking connection..."));
       wificounter = WIFI_CHECKSEC;
@@ -825,7 +1059,7 @@ extern "C" {
 
 #ifdef USE_TICKER
   Ticker tickerRTC;
-#endif
+#endif  // USE_TICKER
 
 static const uint8_t monthDays[] = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 }; // API starts months from 1, this array starts from 0
 static const char monthNames[37] = { "JanFebMrtAprMayJunJulAugSepOctNovDec" };
@@ -1016,7 +1250,7 @@ void rtc_init()
   utctime = 0;
 #ifdef USE_TICKER
   tickerRTC.attach(1, rtc_second);
-#endif
+#endif  // USE_TICKER
 }
 
 /*********************************************************************************************\
@@ -1027,7 +1261,7 @@ void syslog(const char *message)
 {
   char mess[MESSZ], str[TOPSZ+MESSZ];
 
-  portUDP.beginPacket(sysCfg.syslog_host, SYS_LOG_PORT);
+  portUDP.beginPacket(sysCfg.syslog_host, sysCfg.syslog_port);
   strlcpy(mess, message, sizeof(mess));
   mess[sizeof(mess)-1] = 0;
   snprintf_P(str, sizeof(str), PSTR("%s %s"), Hostname, mess);
@@ -1043,10 +1277,10 @@ void addLog(byte loglevel, const char *line)
   
 #ifdef DEBUG_ESP_PORT
   DEBUG_ESP_PORT.printf("%s %s\n", mxtime, line);  
-#endif
+#endif  // DEBUG_ESP_PORT
 #ifdef USE_SERIAL
   if (loglevel <= sysCfg.seriallog_level) Serial.printf("%s %s\n", mxtime, line);
-#endif
+#endif  // USE_SERIAL
   if ((WiFi.status() == WL_CONNECTED) && (loglevel <= sysCfg.syslog_level)) syslog(line);
 }
 

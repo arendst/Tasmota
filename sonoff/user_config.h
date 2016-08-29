@@ -39,7 +39,7 @@
 #define MQTT_GRPTOPIC          PROJECT"s"   // Group topic
 
 // HTTP
-#define WEB_SERVER             0            // Start web server (1 = Start web server as User, 2 = Start web server as Admin)
+#define WEB_SERVER             2            // Web server (0 = Off, 1 = Start as User, 2 = Start as Admin)
 
 // Time - Up to three NTP servers in your region
 #define NTP_SERVER1            "pool.ntp.org"

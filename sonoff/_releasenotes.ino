@@ -1,4 +1,15 @@
-/* 1.0.25 20160822
+/* 1.0.26 20160829
+ * Add define USE_WEBSERVER to disable web server code in source
+ * Add file upload as alternative for ota upload to webserver
+ * Add information to webserver
+ * Add command hostname
+ * Add command logport
+ * Change HTTP command interface to http://sonoff-1234/cmd?cmnd=light 2
+ * Change button behaviour with regards to Smartconfig and OTA upload. See README.md
+ * Enforce default hostname to either "%s-%04d" or user defined without any %
+ * Enforce default mqtt client id to either "DVES_%06X" or user defined without any %
+ * 
+ * 1.0.25 20160822
  * Remove config system halts to keep ota available
  * 
  * 1.0.24 20160821

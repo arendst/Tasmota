@@ -2,7 +2,7 @@
 ## Sonoff-MQTT-OTA-Arduino
 Provide ESP8266 based [itead Sonoff](https://www.itead.cc/sonoff-wifi-wireless-switch.html) with MQTT and 'Over the Air' or OTA firmware using Arduino IDE.
 
-Current version is 1.0.25 - See ```sonoff/_releasenotes``` for change information.
+Current version is 1.0.26 - See ```sonoff/_releasenotes``` for change information.
 
 See [Sonoff-MQTT-OTA](https://github.com/arendst/Sonoff-MQTT-OTA) for the ```esp-open-sdk``` version.
 ## Prerequisite
@@ -53,9 +53,10 @@ The button on sonoff provides the following features:
 
 - a short press toggles the relay either directly or by sending a MQTT message like ```cmnd/sonoff/light 2```. This will blink the LED twice and sends a MQTT status message like ```stat/sonoff/LIGHT on```
 - two short presses toggles the relay. This will blink the LED twice and sends a MQTT status message like ```stat/sonoff/POWER on```
-- three short presses start Wifi smartconfig (if the relay is off) or Wifi manager (if the relay is on). Wifi smartconfig allows for SSID and Password configuration using an Android mobile phone with the [ESP8266 SmartConfig](https://play.google.com/store/apps/details?id=com.cmmakerclub.iot.esptouch) app. The MQTT server still needs to be configured in the ```user_config.h``` file. Wifi manager provides an Access Point with IP address 192.168.4.1 and a web server allowing the configuration of both Wifi and MQTT parameters. In both cases the LED will blink during the config period. 
-- four short presses start OTA download of firmware. The green LED is lit during the update
+- three short presses start Wifi smartconfig allowing for SSID and Password configuration using an Android mobile phone with the [ESP8266 SmartConfig](https://play.google.com/store/apps/details?id=com.cmmakerclub.iot.esptouch) app. The MQTT server still needs to be configured in the ```user_config.h``` file. The LED will blink during the config period. A single button press during this period will restart sonoff.
+- four short presses start Wifi manager providing an Access Point with IP address 192.168.4.1 and a web server allowing the configuration of both Wifi and MQTT parameters. The LED will blink during the config period. A single button press during this period will restart sonoff.
 - five short presses will restart sonoff
+- six short presses start OTA download of firmware. The green LED is lit during the update
 - pressing the button for over four seconds resets settings to defaults as defined in ```user_config.h``` and reboots  sonoff
 
 Sonoff responds to the following MQTT commands:
@@ -113,8 +114,11 @@ syslog 2 | 1.0.7 | Show error and info messages
 syslog 3 | 1.0.7 | Show error, info and debug messages
 syslog 4 | 1.0.7 | Show all messages
 loghost | 1.0.7 | Show current syslog host
-loghost 1 | 1.0.7 | Reset syslog host to ```user_config.h``` value and restart
-loghost your-host | 1.0.7 | Set syslog host and restart
+loghost 1 | 1.0.7 | Reset syslog host to ```user_config.h``` value
+loghost your-host | 1.0.7 | Set syslog host
+logport | 1.0.26 | Show current syslog port
+logport 1 | 1.0.26 | Reset syslog port to ```user_config.h``` value
+logport your-port | 1.0.26 | Set syslog port between 2 and 32766
 grouptopic | | Show current MQTT group topic
 grouptopic 1 | | Reset MQTT group topic to ```user_config.h``` value and restart
 grouptopic your-grouptopic | | Set MQTT group topic and restart
@@ -136,10 +140,13 @@ ssid your-ssid | | Set Wifi SSId and restart
 password | | Show current Wifi password
 password 1 | | Reset Wifi password to ```user_config.h``` value and restart
 password your-password | | Set Wifi password and restart
+hostname | 1.0.26 | Show current hostname
+hostname 1 | 1.0.26 | Reset hostname to ```user_config.h``` value and restart
+hostname your-host | 1.0.26 | Set hostname and restart
 webserver | 1.0.23 | Show current web server state
 webserver 0 | 1.0.23 | Stop web server
-webserver 1 | 1.0.23 | Start user web server
-webserver 2 | 1.0.23 | Start admin web server
+webserver 1 | 1.0.23 | Start web server in user mode
+webserver 2 | 1.0.23 | Start web server in admin mode
 mqtthost | | Show current MQTT host
 mqtthost 1 | | Reset MQTT host to ```user_config.h``` value and restart
 mqtthost your-host | | Set MQTT host and restart
@@ -174,7 +181,7 @@ If the same topic has been defined to more than one sonoff an individual sonoff 
 - To aid in finding the IP address of sonoff the network name will be ```<MQTT_TOPIC>-<last 4 decimal chars of MAC address>```. So the default name is ```sonoff-1234```. Another option is MQTT command ```status 5```.
 - Use the group topic to address several sonoffs with one (restricted) MQTT command.
 - Using the Arduino IDE set to 115200 baud and both NL & CR maximum serial output is enabled by command ```seriallog 4```.
-- Toggle between Wifi smartconfig and Wifi manager using the power button.
+- Toggle between Wifi smartconfig and Wifi manager by restarting sonoff.
 
 ## Modified kaku power socket switch using ESP-12F
 Using parts from itead (5V power supply), aliexpress (Different 5V power supply, ESP-12F and 5V to 3V3 step down) and ebay (5V relay) I modified broken 434MHz kaku power socket switches type PAR-1000 to Wifi wkaku power socket switches.
