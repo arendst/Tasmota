@@ -1,4 +1,7 @@
-/* 1.0.28 20160831
+/* 1.0.29 20160831
+ * Allow UPGRADE, OTAURL, RESTART, RESET, MQTTHOST, MQTTPORT, MQTTUSER, MQTTPASSWORD and WEBSERVER also in group mode
+ *  
+ * 1.0.28 20160831
  * Add webserver state to status 5
  * Add optional PUB_PREFIX2 (tele) for telemetry usage
  * Add command TELEPERIOD

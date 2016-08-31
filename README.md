@@ -2,7 +2,7 @@
 ## Sonoff-MQTT-OTA-Arduino
 Provide ESP8266 based [itead Sonoff](https://www.itead.cc/sonoff-wifi-wireless-switch.html) with Web, MQTT and 'Over the Air' or OTA firmware using Arduino IDE.
 
-Current version is 1.0.28 - See ```sonoff/_releasenotes``` for change information.
+Current version is 1.0.29 - See ```sonoff/_releasenotes``` for change information.
 
 See [Sonoff-MQTT-OTA](https://github.com/arendst/Sonoff-MQTT-OTA) for the ```esp-open-sdk``` version.
 ## Prerequisite
@@ -137,15 +137,36 @@ grouptopic your-grouptopic | | Set MQTT group topic and restart
 timezone | | Show current timezone
 timezone -12 .. 12 | | Set timezone
 timezone 99 | 1.0.20 | Use Daylight Saving parameters from ```user_config.h```
+restart 1 | | Restart sonoff
+restart 99 | 1.0.23 | Force restart sonoff without config save
+reset 1 | | Reset sonoff parameters to ```user_config.h``` values and restart
+reset 2 | 1.0.9 | Erase flash, reset sonoff parameters to ```user_config.h``` values and restart
+mqtthost | | Show current MQTT host
+mqtthost 1 | | Reset MQTT host to ```user_config.h``` value and restart
+mqtthost your-host | | Set MQTT host and restart
+mqttport | 1.0.22 | Show current MQTT port
+mqttport 1 | 1.0.22 | Reset MQTT port to ```user_config.h``` value and restart
+mqttport your-port | 1.0.22 | Set MQTT port between 2 and 32766 and restart
+mqttuser | 1.0.22 | Show current MQTT user name
+mqttuser 1 | 1.0.22 | Reset MQTT user name to ```user_config.h``` value and restart
+mqttuser your-user | 1.0.22 | Set MQTT user name and restart
+mqttpassword | 1.0.22 | Show current MQTT password
+mqttpassword 1 | 1.0.22 | Reset MQTT password to ```user_config.h``` value and restart
+mqttpassword your-password | 1.0.22 | Set MQTT password and restart
+webserver | 1.0.23 | Show current web server state
+webserver 0 | 1.0.23 | Stop web server
+webserver 1 | 1.0.23 | Start web server in user mode
+webserver 2 | 1.0.23 | Start web server in admin mode
+otaurl | | Show current otaurl
+otaurl 1 | | Reset otaurl to ```user_config.h``` value
+otaurl your-otaurl | | Set otaurl
+upgrade 1 | | Download ota firmware from your web server and restart
+upload 1 | 1.0.23 | Download ota firmware from your web server and restart
 
 The following commands are recognised by topic only:
 
 Command | Version | Description
 ------- | ------- | -----------
-restart 1 | | Restart sonoff
-restart 99 | 1.0.23 | Force restart sonoff without config save
-reset 1 | | Reset sonoff parameters to ```user_config.h``` values and restart
-reset 2 | 1.0.9 | Erase flash, reset sonoff parameters to ```user_config.h``` values and restart
 ssid | | Show current Wifi SSId
 ssid 1 | | Reset Wifi SSId to ```user_config.h``` value and restart
 ssid your-ssid | | Set Wifi SSId and restart
@@ -155,25 +176,9 @@ password your-password | | Set Wifi password and restart
 hostname | 1.0.26 | Show current hostname
 hostname 1 | 1.0.26 | Reset hostname to ```user_config.h``` value and restart
 hostname your-host | 1.0.26 | Set hostname and restart
-webserver | 1.0.23 | Show current web server state
-webserver 0 | 1.0.23 | Stop web server
-webserver 1 | 1.0.23 | Start web server in user mode
-webserver 2 | 1.0.23 | Start web server in admin mode
-mqtthost | | Show current MQTT host
-mqtthost 1 | | Reset MQTT host to ```user_config.h``` value and restart
-mqtthost your-host | | Set MQTT host and restart
-mqttport | 1.0.22 | Show current MQTT port
-mqttport 1 | 1.0.22 | Reset MQTT port to ```user_config.h``` value and restart
-mqttport your-port | 1.0.22 | Set MQTT port between 2 and 32766 and restart
 mqttclient | 1.0.22 | Show current MQTT client
 mqttclient 1 | 1.0.22 | Reset MQTT client to ```user_config.h``` value and restart
 mqttclient your-client | 1.0.22 | Set MQTT client and restart. May use wildcard %06X to be replaced by last six characters of MAC address
-mqttuser | 1.0.22 | Show current MQTT user name
-mqttuser 1 | 1.0.22 | Reset MQTT user name to ```user_config.h``` value and restart
-mqttuser your-user | 1.0.22 | Set MQTT user name and restart
-mqttpassword | 1.0.22 | Show current MQTT password
-mqttpassword 1 | 1.0.22 | Reset MQTT password to ```user_config.h``` value and restart
-mqttpassword your-password | 1.0.22 | Set MQTT password and restart
 topic | | Show current MQTT topic
 topic 1 | | Reset MQTT topic to ```user_config.h``` value and restart
 topic your-topic | | Set MQTT topic  AND button topic and restart
@@ -183,11 +188,6 @@ buttontopic 1 | 1.0.10 | Set MQTT button topic to MQTT topic as defined in ```us
 buttontopic your-topic | 1.0.10 | Set MQTT button topic
 smartconfig 1 | | Start smart config for 1 minute
 smartconfig 2 | 1.0.22 | Start wifi manager (web server at 192.168.4.1)
-otaurl | | Show current otaurl
-otaurl 1 | | Reset otaurl to ```user_config.h``` value
-otaurl your-otaurl | | Set otaurl
-upgrade 1 | | Download ota firmware from your web server and restart
-upload 1 | 1.0.23 | Download ota firmware from your web server and restart
 
 If the same topic has been defined to more than one sonoff an individual sonoff can still be addressed by the fall back topic MQTT_CLIENT_ID as defined in user_config.h. The fall back topic will be ```DVES_<last six characters of MAC address>```.
 ## Tips

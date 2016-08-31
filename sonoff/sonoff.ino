@@ -26,7 +26,7 @@
 */
 
 #define APP_NAME               "Sonoff switch"
-#define VERSION                0x01001C00   // 1.0.28
+#define VERSION                0x01001D00   // 1.0.29
 
 enum log_t   {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG_MORE, LOG_LEVEL_ALL};
 enum week_t  {Last, First, Second, Third, Fourth}; 
@@ -370,7 +370,7 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
           rtc_time(0).c_str(), rtc_time(1).c_str(), rtc_time(2).c_str(), rtc_time(3).c_str()); 
       }      
     }
-    else if (!grpflg && (!strcmp(type,"UPGRADE") || !strcmp(type,"UPLOAD"))) {
+    else if (!strcmp(type,"UPGRADE") || !strcmp(type,"UPLOAD")) {
       if ((data_len > 0) && (payload == 1)) {
         otaflag = 3;
         snprintf_P(svalue, sizeof(svalue), PSTR("Upgrade %s from %s"), Version, sysCfg.otaUrl);
@@ -378,7 +378,7 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
       else
         snprintf_P(svalue, sizeof(svalue), PSTR("1 to upgrade"));
     }
-    else if (!grpflg && !strcmp(type,"OTAURL")) {
+    else if (!strcmp(type,"OTAURL")) {
       if ((data_len > 0) && (data_len < sizeof(sysCfg.otaUrl)))
         strlcpy(sysCfg.otaUrl, (payload == 1) ? OTA_URL : dataBuf, sizeof(sysCfg.otaUrl));
       snprintf_P(svalue, sizeof(svalue), PSTR("%s"), sysCfg.otaUrl);
@@ -431,7 +431,7 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
       snprintf_P(svalue, sizeof(svalue), PSTR("%s"), sysCfg.hostname);
     }
 #ifdef USE_WEBSERVER
-    else if (!grpflg && !strcmp(type,"WEBSERVER")) {
+    else if (!strcmp(type,"WEBSERVER")) {
       if ((data_len > 0) && (payload >= 0) && (payload <= 2)) {
         sysCfg.webserver = payload;
       }
@@ -448,14 +448,14 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
       snprintf_P(svalue, sizeof(svalue), PSTR("%d"), sysCfg.weblog_level);
     }
 #endif  // USE_WEBSERVER
-    else if (!grpflg && !strcmp(type,"MQTTHOST")) {
+    else if (!strcmp(type,"MQTTHOST")) {
       if ((data_len > 0) && (data_len < sizeof(sysCfg.mqtt_host))) {
         strlcpy(sysCfg.mqtt_host, (payload == 1) ? MQTT_HOST : dataBuf, sizeof(sysCfg.mqtt_host));
         restartflag = 2;
       }
       snprintf_P(svalue, sizeof(svalue), PSTR("%s"), sysCfg.mqtt_host);
     }
-    else if (!grpflg && !strcmp(type,"MQTTPORT")) {
+    else if (!strcmp(type,"MQTTPORT")) {
       if ((data_len > 0) && (payload > 0) && (payload < 32766)) {
         sysCfg.mqtt_port = (payload == 1) ? MQTT_PORT : payload;
         restartflag = 2;
@@ -471,14 +471,14 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
       }
       snprintf_P(svalue, sizeof(svalue), PSTR("%s"), sysCfg.mqtt_client);
     }
-    else if (!grpflg && !strcmp(type,"MQTTUSER")) {
+    else if (!strcmp(type,"MQTTUSER")) {
       if ((data_len > 0) && (data_len < sizeof(sysCfg.mqtt_user))) {
         strlcpy(sysCfg.mqtt_user, (payload == 1) ? MQTT_USER : dataBuf, sizeof(sysCfg.mqtt_user));
         restartflag = 2;
       }
       snprintf_P(svalue, sizeof(svalue), PSTR("%s"), sysCfg.mqtt_user);
     }
-    else if (!grpflg && !strcmp(type,"MQTTPASSWORD")) {
+    else if (!strcmp(type,"MQTTPASSWORD")) {
       if ((data_len > 0) && (data_len < sizeof(sysCfg.mqtt_pwd))) {
         strlcpy(sysCfg.mqtt_pwd, (payload == 1) ? MQTT_PASS : dataBuf, sizeof(sysCfg.mqtt_pwd));
         restartflag = 2;
@@ -541,7 +541,7 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
         snprintf_P(svalue, sizeof(svalue), PSTR("1 to start smartconfig, 2 to start wifimanager"));
       }
     }
-    else if (!grpflg && !strcmp(type,"RESTART")) {
+    else if (!strcmp(type,"RESTART")) {
       switch (payload) {
       case 1: 
         restartflag = 2;
@@ -555,7 +555,7 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
         snprintf_P(svalue, sizeof(svalue), PSTR("1 to restart"));
       }
     }
-    else if (!grpflg && !strcmp(type,"RESET")) {
+    else if (!strcmp(type,"RESET")) {
       switch (payload) {
       case 1: 
         restartflag = 11;
@@ -613,10 +613,12 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
         snprintf_P(svalue, sizeof(svalue), PSTR("MqttHost, MqttPort, MqttClient, MqttUser, MqttPassword, GroupTopic, Topic, ButtonTopic, Timezone, Light, Power, Ledstate, TelePeriod"));
       } else
 #ifdef USE_WEBSERVER
-        snprintf_P(svalue, sizeof(svalue), PSTR("Status, Seriallog, Weblog, Syslog, LogHost, LogPort, GroupTopic, Timezone, Light, Power, Ledstate, TelePeriod"));
+        snprintf_P(svalue, sizeof(svalue), PSTR("Status, Upgrade, Otaurl, Restart, Reset, Seriallog, Weblog, Syslog, LogHost, LogPort, Webserver"));
 #else
-        snprintf_P(svalue, sizeof(svalue), PSTR("Status, Seriallog, Syslog, LogHost, LogPort, GroupTopic, Timezone, Light, Power, Ledstate, TelePeriod"));
+        snprintf_P(svalue, sizeof(svalue), PSTR("Status, Upgrade, Otaurl, Restart, Reset, Seriallog, Syslog, LogHost, LogPort"));
 #endif        
+        mqtt_publish(stopic, svalue);
+        snprintf_P(svalue, sizeof(svalue), PSTR("MqttHost, MqttPort, MqttUser, MqttPassword, GroupTopic, Timezone, Light, Power, Ledstate, TelePeriod"));
     }
     mqtt_publish(stopic, svalue);
   }
