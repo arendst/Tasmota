@@ -36,8 +36,16 @@
 
 #define SUB_PREFIX             "cmnd"       // Sonoff devices subscribe to:- cmnd/MQTT_TOPIC and cmnd/MQTT_GRPTOPIC
 #define PUB_PREFIX             "stat"       // Sonoff devices publish to:- stat/MQTT_TOPIC
+#define PUB_PREFIX2            "tele"       // Sonoff devices publish telemetry data to:- tele/MQTT_TOPIC/UPTIME, POWER/LIGHT and TIME
+                                            // May be named the same as PUB_PREFIX
 #define MQTT_TOPIC             PROJECT
 #define MQTT_GRPTOPIC          PROJECT"s"   // Group topic
+
+// MQTT - Telemetry
+#define TELE_PERIOD            300          // Send telemetry data every 300 seconds (0 = disable)
+// Disable below two defines by adding leading //
+#define SEND_TELEMETRY_UPTIME               // Enable sending uptime telemetry (if disabled will still send hourly message)
+#define SEND_TELEMETRY_POWER                // Enable sending power telemetry
 
 // HTTP
 #define WEB_SERVER             2            // Web server (0 = Off, 1 = Start as User, 2 = Start as Admin)

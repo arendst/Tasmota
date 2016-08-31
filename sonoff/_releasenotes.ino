@@ -1,4 +1,11 @@
-/* 1.0.27 20160831
+/* 1.0.28 20160831
+ * Add webserver state to status 5
+ * Add optional PUB_PREFIX2 (tele) for telemetry usage
+ * Add command TELEPERIOD
+ * Fix syntax message
+ * Change memory status display
+ * 
+ * 1.0.27 20160831
  * Add sketch flash size
  * Add console to webserver
  * Add command weblog

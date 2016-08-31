@@ -2,7 +2,7 @@
 ## Sonoff-MQTT-OTA-Arduino
 Provide ESP8266 based [itead Sonoff](https://www.itead.cc/sonoff-wifi-wireless-switch.html) with Web, MQTT and 'Over the Air' or OTA firmware using Arduino IDE.
 
-Current version is 1.0.27 - See ```sonoff/_releasenotes``` for change information.
+Current version is 1.0.28 - See ```sonoff/_releasenotes``` for change information.
 
 See [Sonoff-MQTT-OTA](https://github.com/arendst/Sonoff-MQTT-OTA) for the ```esp-open-sdk``` version.
 ## Prerequisite
@@ -96,6 +96,11 @@ ledstate on | 1.0.13 | Show power state on led
 ledstate off | 1.0.13 | Do not show power state on led
 ledstate 1 | 1.0.13 | Show power state on led
 ledstate 0 | 1.0.13 | Do not show power state on led
+teleperiod | 1.0.28 | Show current telemetry period in seconds
+teleperiod off | 1.0.28 | Disable telemetry messages
+teleperiod 0 | 1.0.28 | Disable telemetry messages
+teleperiod 1 | 1.0.28 | Reset telemetry period to ```user_config.h``` value
+teleperiod your-secs | 1.0.28 | Set telemetry period between 2 and 3600 seconds
 status | | Show abbreviated status information
 status 0 | 1.0.15 | Show all status information
 status 1 | | Show more status information

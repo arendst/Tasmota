@@ -5,7 +5,6 @@
 extern "C" {
 #include "spi_flash.h"
 }
-extern "C" uint32_t _SPIFFS_end;
 
 #define SPIFFS_CONFIG       "/config.ini"
 #define SPIFFS_START        ((uint32_t)&_SPIFFS_start - 0x40200000) / SPI_FLASH_SEC_SIZE
@@ -269,7 +268,8 @@ const char HTTP_FORM_LOG[] PROGMEM   = "<fieldset><legend><b>&nbsp;Logging param
                                        "<option{c4value='4'>4 More debug</option>"
                                        "</select></br>"
                                        "<br/><b>Syslog host</b> (" SYS_LOG_HOST ")<br/><input id='lh' name='lh' length=32 placeholder='" SYS_LOG_HOST "' value='{l2}'><br/>"
-                                       "<br/><b>Syslog port</b> ({lp})<br/><input id='lp' name='lp' length=5 placeholder='{lp}' value='{l3}'><br/>";
+                                       "<br/><b>Syslog port</b> ({lp})<br/><input id='lp' name='lp' length=5 placeholder='{lp}' value='{l3}'><br/>"
+                                       "<br/><b>Telemetric period</b> ({lt})<br/><input id='lt' name='lt' length=4 placeholder='{lt}' value='{l4}'><br/>";
 const char HTTP_FORM_END[] PROGMEM   = "<br/><button type='submit'>Save</button></form></fieldset>";
 const char HTTP_FORM_UPG[] PROGMEM   = "<div id='f1' name='f1' style='display:block;'>"
                                        "<fieldset><legend><b>&nbsp;Upgrade by web server&nbsp;</b></legend>"
@@ -586,6 +586,8 @@ void handleLog()
   page.replace("{l2}", String(sysCfg.syslog_host));
   page.replace("{lp}", String((int)SYS_LOG_PORT));
   page.replace("{l3}", String(sysCfg.syslog_port));
+  page.replace("{lt}", String((int)TELE_PERIOD));
+  page.replace("{l4}", String(sysCfg.tele_period));
   page += FPSTR(HTTP_FORM_END);
   page += FPSTR(HTTP_BTN_CONF);
   showPage(page);
@@ -628,8 +630,9 @@ void handleSave()
     sysCfg.syslog_level = (!strlen(webServer->arg("ll").c_str())) ? SYS_LOG_LEVEL : atoi(webServer->arg("ll").c_str());
     strlcpy(sysCfg.syslog_host, (!strlen(webServer->arg("lh").c_str())) ? SYS_LOG_HOST : webServer->arg("lh").c_str(), sizeof(sysCfg.syslog_host));
     sysCfg.syslog_port = (!strlen(webServer->arg("lp").c_str())) ? SYS_LOG_PORT : atoi(webServer->arg("lp").c_str());
-    snprintf_P(log, sizeof(log), PSTR("HTTP: Logging Seriallog %d, Weblog %d, Syslog %d, Host %s, Port %d"),
-      sysCfg.seriallog_level, sysCfg.weblog_level, sysCfg.syslog_level, sysCfg.syslog_host, sysCfg.syslog_port);
+    sysCfg.tele_period = (!strlen(webServer->arg("lt").c_str())) ? TELE_PERIOD : atoi(webServer->arg("lt").c_str());
+    snprintf_P(log, sizeof(log), PSTR("HTTP: Logging Seriallog %d, Weblog %d, Syslog %d, Host %s, Port %d, TelePeriod %d"),
+      sysCfg.seriallog_level, sysCfg.weblog_level, sysCfg.syslog_level, sysCfg.syslog_host, sysCfg.syslog_port, sysCfg.tele_period);
     addLog(LOG_LEVEL_INFO, log);
     break;
   }
@@ -885,11 +888,11 @@ void handleInfo()
   page += F("<tr><td>&nbsp;</td></tr>");
   page += F("<tr><td><b>ESP Chip id</b></td><td>"); page += String(ESP.getChipId()); page += F("</td></tr>");
   page += F("<tr><td><b>Flash Chip id</b></td><td>"); page += String(ESP.getFlashChipId()); page += F("</td></tr>");
-  page += F("<tr><td><b>Flash size</b></td><td>"); page += String(ESP.getFlashChipRealSize() / 1024); page += F(" kB</td></tr>");
-  page += F("<tr><td><b>Sketch flash size</b></td><td>"); page += String(ESP.getFlashChipSize() / 1024); page += F(" kB</td></tr>");
-  page += F("<tr><td><b>Sketch size</b></td><td>"); page += String(ESP.getSketchSize() / 1024); page += F(" kB</td></tr>");
-  page += F("<tr><td><b>Free sketch space</b></td><td>"); page += String(ESP.getFreeSketchSpace() / 1024); page += F(" kB</td></tr>");
-  page += F("<tr><td><b>Free memory</b></td><td>"); page += String(freeMem / 1024); page += F(" kB</td></tr>");
+  page += F("<tr><td><b>Flash size</b></td><td>"); page += String(ESP.getFlashChipRealSize() / 1024); page += F("kB</td></tr>");
+  page += F("<tr><td><b>Sketch flash size</b></td><td>"); page += String(ESP.getFlashChipSize() / 1024); page += F("kB</td></tr>");
+  page += F("<tr><td><b>Sketch size</b></td><td>"); page += String(ESP.getSketchSize() / 1024); page += F("kB</td></tr>");
+  page += F("<tr><td><b>Free sketch space</b></td><td>"); page += String(ESP.getFreeSketchSpace() / 1024); page += F("kB</td></tr>");
+  page += F("<tr><td><b>Free memory</b></td><td>"); page += String(freeMem / 1024); page += F("kB</td></tr>");
   page += F("</table>");
 //  page += F("</fieldset>");
   page += FPSTR(HTTP_BTN_MAIN);
