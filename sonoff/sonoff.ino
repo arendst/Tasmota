@@ -26,7 +26,7 @@
 */
 
 #define APP_NAME               "Sonoff switch"
-#define VERSION                0x01001A00   // 1.0.26
+#define VERSION                0x01001B00   // 1.0.27
 
 enum log_t   {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG_MORE, LOG_LEVEL_ALL};
 enum week_t  {Last, First, Second, Third, Fourth}; 
@@ -63,6 +63,8 @@ enum month_t {Jan=1, Feb, Mar, Apr, May, Jun, Jul, Aug, Sep, Oct, Nov, Dec};
 #define TOPSZ                  40           // Max number of characters in topic string
 #define MESSZ                  200          // Max number of characters in message string (Syntax string)
 #define LOGSZ                  128          // Max number of characters in log string
+
+#define MAX_LOG_LINES          16
 
 enum butt_t {PRESSED, NOT_PRESSED};
 enum wifi_t {WIFI_STATUS, WIFI_SMARTCONFIG, WIFI_MANAGER};
@@ -110,6 +112,7 @@ struct SYSCFG {
   unsigned long bootcount;
   char          hostname[33];
   uint16_t      syslog_port;
+  byte          weblog_level;
 } sysCfg;
 
 struct TIME_T {
@@ -149,7 +152,9 @@ int mqttflag = 1;
 int otaflag = 0, otaok;
 int restartflag = 0;
 int wificheckflag = WIFI_STATUS;
-int heartbeat = 0;
+int uptime = 0;
+String Log[MAX_LOG_LINES];
+byte logidx = 0;
 
 WiFiClient espClient;
 PubSubClient mqttClient(espClient);
@@ -173,6 +178,7 @@ void CFG_Default()
   sysCfg.saveFlag = 0;
   sysCfg.version = VERSION;
   sysCfg.bootcount = 0;
+  sysCfg.weblog_level = WEB_LOG_LEVEL;
   sysCfg.seriallog_level = SERIAL_LOG_LEVEL;
   sysCfg.syslog_level = SYS_LOG_LEVEL;
   strlcpy(sysCfg.syslog_host, SYS_LOG_HOST, sizeof(sysCfg.syslog_host));
@@ -325,8 +331,8 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
         if (payload == 0) mqtt_publish(stopic, svalue);
       }
       if ((payload == 0) || (payload == 1)) {
-        snprintf_P(svalue, sizeof(svalue), PSTR("PRM: GroupTopic %s, OtaUrl %s, Heartbeats %d, SaveCount %d"),
-          sysCfg.mqtt_grptopic, sysCfg.otaUrl, heartbeat, sysCfg.saveFlag);
+        snprintf_P(svalue, sizeof(svalue), PSTR("PRM: GroupTopic %s, OtaUrl %s, Uptime %d Hr, Bootcount %d, SaveCount %d"),
+          sysCfg.mqtt_grptopic, sysCfg.otaUrl, uptime, sysCfg.bootcount, sysCfg.saveFlag);
         if (payload == 0) mqtt_publish(stopic, svalue);
       }          
       if ((payload == 0) || (payload == 2)) {
@@ -335,14 +341,14 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
         if (payload == 0) mqtt_publish(stopic, svalue);
       }          
       if ((payload == 0) || (payload == 3)) {
-        snprintf_P(svalue, sizeof(svalue), PSTR("LOG: Seriallog %d, Syslog %d, LogHost %s, SSId %s, Password %s"),
-          sysCfg.seriallog_level, sysCfg.syslog_level, sysCfg.syslog_host, sysCfg.sta_ssid, sysCfg.sta_pwd);
+        snprintf_P(svalue, sizeof(svalue), PSTR("LOG: Seriallog %d, Weblog %d, Syslog %d, LogHost %s, SSId %s, Password %s"),
+          sysCfg.seriallog_level, sysCfg.weblog_level, sysCfg.syslog_level, sysCfg.syslog_host, sysCfg.sta_ssid, sysCfg.sta_pwd);
         if (payload == 0) mqtt_publish(stopic, svalue);
       }          
       if ((payload == 0) || (payload == 4)) {
-        snprintf_P(svalue, sizeof(svalue), PSTR("MEM: Sketch size %d, Free %d (Heap %d), Spiffs start %d, Flash size %d (%d)"),
-          ESP.getSketchSize(), ESP.getFreeSketchSpace(), ESP.getFreeHeap(), (uint32_t)&_SPIFFS_start - 0x40200000,
-          ESP.getFlashChipRealSize(), ESP.getFlashChipSize());
+        snprintf_P(svalue, sizeof(svalue), PSTR("MEM: Sketch size %d kB, Free %d kB (Heap %d kB), Spiffs start %d kB, Flash size %d kB (%d kB)"),
+          ESP.getSketchSize()/1024, ESP.getFreeSketchSpace()/1024, ESP.getFreeHeap()/1024, ((uint32_t)&_SPIFFS_start - 0x40200000)/1024,
+          ESP.getFlashChipRealSize()/1024, ESP.getFlashChipSize()/1024);
         if (payload == 0) mqtt_publish(stopic, svalue);
       }          
       if ((payload == 0) || (payload == 5)) {
@@ -430,6 +436,12 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
           (sysCfg.webserver == 2) ? "Admin" : "User", Hostname, WiFi.localIP().toString().c_str());
       else
         snprintf_P(svalue, sizeof(svalue), PSTR("Off"));
+    }
+    else if (!strcmp(type,"WEBLOG")) {
+      if ((data_len > 0) && (payload >= LOG_LEVEL_NONE) && (payload <= LOG_LEVEL_ALL)) {
+        sysCfg.weblog_level = payload;
+      }
+      snprintf_P(svalue, sizeof(svalue), PSTR("%d"), sysCfg.weblog_level);
     }
 #endif  // USE_WEBSERVER
     else if (!grpflg && !strcmp(type,"MQTTHOST")) {
@@ -583,12 +595,15 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
       if (!grpflg) {
         snprintf_P(svalue, sizeof(svalue), PSTR("Status, Upgrade, Otaurl, Restart, Reset, Smartconfig, Seriallog, Syslog, LogHost, LogPort, SSId, Password, Hostname"));
 #ifdef USE_WEBSERVER
-        snprintf_P(svalue, sizeof(svalue), PSTR("%s, Webserver"), svalue);        
+        snprintf_P(svalue, sizeof(svalue), PSTR("Status, Upgrade, Otaurl, Restart, Reset, Smartconfig, Seriallog, Weblog, Syslog, LogHost, LogPort, SSId, Password, Hostname, Webserver"));
 #endif        
         mqtt_publish(stopic, svalue);
         snprintf_P(svalue, sizeof(svalue), PSTR("MqttHost, MqttPort, MqttClient, MqttUser, MqttPassword, GroupTopic, Topic, ButtonTopic, Timezone, Light, Power, Ledstate"));
       } else
         snprintf_P(svalue, sizeof(svalue), PSTR("Status, Seriallog, Syslog, LogHost, LogPort, GroupTopic, Timezone, Light, Power, Ledstate"));
+#ifdef USE_WEBSERVER
+        snprintf_P(svalue, sizeof(svalue), PSTR("Status, Seriallog, Weblog, Syslog, LogHost, LogPort, GroupTopic, Timezone, Light, Power, Ledstate"));
+#endif        
     }
     mqtt_publish(stopic, svalue);
   }
@@ -635,9 +650,9 @@ void every_second()
   char stopic[TOPSZ], svalue[TOPSZ];
 
   if ((rtcTime.Minute == 2) && (rtcTime.Second == 30)) { 
-    heartbeat++;
-    snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/HEARTBEAT"), PUB_PREFIX, sysCfg.mqtt_topic);
-    snprintf_P(svalue, sizeof(svalue), PSTR("%d"), heartbeat);
+    uptime++;
+    snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/UPTIME"), PUB_PREFIX, sysCfg.mqtt_topic);
+    snprintf_P(svalue, sizeof(svalue), PSTR("%d"), uptime);
     mqtt_publish(stopic, svalue);
   }
 }
@@ -844,7 +859,9 @@ void setup()
       sysCfg.bootcount = 0;
       strlcpy(sysCfg.hostname, WIFI_HOSTNAME, sizeof(sysCfg.hostname));
       sysCfg.syslog_port = SYS_LOG_PORT;
-
+    }
+    if (sysCfg.version < 0x01001B00) {  // 1.0.27 - Add web log level
+      sysCfg.weblog_level = WEB_LOG_LEVEL;
     }
     
     sysCfg.version = VERSION;

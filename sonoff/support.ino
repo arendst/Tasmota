@@ -171,16 +171,38 @@ void initSpiffs()
 #define DNS_PORT      53
 
 const char HTTP_HEAD[] PROGMEM       = "<!DOCTYPE html><html lang=\"en\">"
-                                       "<head><meta name=\"viewport\" content=\"width=device-width, initial-scale=1, user-scalable=no\"/>"
+                                       "<head>"
+                                       "<meta name=\"viewport\" content=\"width=device-width,initial-scale=1,user-scalable=no\"/>"
                                        "<title>{v}</title>"
                                        "<script>"
-                                       "function c(l){document.getElementById('s').value=l.innerText||l.textContent;document.getElementById('p').focus();}"
                                        "var cn=120;"
-                                       "function u(){if(cn>=0){document.getElementById('t').innerHTML='Restart in '+cn+' seconds';cn--;setTimeout(u,1000);}}"
+                                       "function u(){"
+                                         "if(cn>=0){"
+                                           "document.getElementById('t').innerHTML='Restart in '+cn+' seconds';"
+                                           "cn--;"
+                                           "setTimeout(u,1000);"
+                                         "}"
+                                       "}"
+                                       "function c(l){"
+                                         "document.getElementById('s').value=l.innerText||l.textContent;"
+                                         "document.getElementById('p').focus();"
+                                       "}"
+                                       "function l(){"
+                                         "var xhttp=new XMLHttpRequest();"
+                                         "xhttp.onreadystatechange=function(){"
+                                           "if(xhttp.readyState==4&&xhttp.status==200){"
+                                             "document.getElementById('t1').value=xhttp.responseText;"
+                                           "}"
+                                         "};"
+                                         "xhttp.open('GET','ax',true);"
+                                         "xhttp.send();"
+                                         "setTimeout(l,2000);"
+                                       "}"
                                        "</script>"
                                        "<style>"
                                        "div,fieldset,input,select{padding:5px;font-size:1em;}"
                                        "input{width:95%;}select{width:100%;}"
+                                       "textarea{resize:none;width:98%;padding:5px;}"
                                        "body{text-align:center;font-family:verdana;}"
                                        "td{padding:0px 5px;}"
                                        "button{border:0;border-radius:0.3rem;background-color:#1fa3ec;color:#fff;line-height:2.4rem;font-size:1.2rem;width:100%;-webkit-transition-duration:0.4s;transition-duration:0.4s;}"
@@ -194,33 +216,36 @@ const char HTTP_HEAD[] PROGMEM       = "<!DOCTYPE html><html lang=\"en\">"
                                        "<body>"
                                        "<div style='text-align:left;display:inline-block;min-width:260px;'>"
                                        "<div style='text-align:center;'><h2>" APP_NAME "</h2><h3>{h}</h3></div>";
-const char HTTP_MENU1[] PROGMEM      = "<div style='text-align:center;font-weight:bold;font-size:60px'>{r0}</div>"
+const char HTTP_MSG_RSTRT[] PROGMEM  = "<br/><div style='text-align:center;'>Device will restart in a few seconds</div><br/>";
+const char HTTP_BTN_TOGGL[] PROGMEM  = "<div style='text-align:center;font-weight:bold;font-size:60px'>{r0}</div>"
                                        "<br/><form action='/?o=1' method='post'><button>Toggle</button></form><br/>";
-const char HTTP_MENU2[] PROGMEM      = "<br/><form action='/cnf' method='get'><button>Configuration</button></form>"
-                                       "<br/><form action='/inf' method='post'><button>Information</button></form>"
-                                       "<br/><form action='/upg' method='post'><button>Firmware upgrade</button></form>"
-                                       "<br/><form action='/cmd' method='post'><button>Command line</button></form>"
-                                       "<br/><form action='/rbt' method='post'><button>Restart</button></form>";
-const char HTTP_MENU3[] PROGMEM      = "<br/><form action='/wi0' method='get'><button>Configure WiFi</button></form>"
-                                       "<br/><form action='/mqt' method='get'><button>Configure MQTT</button></form>"
-                                       "<br/><form action='/log' method='get'><button>Configure logging</button></form>"
-                                       "<br/><form action='/rst' method='post'><button>Reset Configuration</button></form>";
-const char HTTP_ITEM[] PROGMEM       = "<div><a href='#p' onclick='c(this)'>{v}</a>&nbsp;<span class='q {i}'>{r}%</span></div>";
-const char HTTP_SCAN_LINK[] PROGMEM  = "<div><a href='/wi1'>Scan for wifi networks</a></div><br/>";
-const char HTTP_FORM_WIFI[] PROGMEM  = "<fieldset><legend><b>&nbsp;Wifi parameters&nbsp;</b></legend><form method='get' action='sav'>"
+const char HTTP_BTN_MENU1[] PROGMEM  = "<br/><form action='/cn' method='post'><button>Configuration</button></form>"
+                                       "<br/><form action='/in' method='post'><button>Information</button></form>"
+                                       "<br/><form action='/up' method='post'><button>Firmware upgrade</button></form>"
+                                       "<br/><form action='/cm' method='post'><button>Console</button></form>";
+const char HTTP_BTN_RSTRT[] PROGMEM  = "<br/><form action='/rb' method='post'><button>Restart</button></form>";
+const char HTTP_BTN_MENU2[] PROGMEM  = "<br/><form action='/w0' method='post'><button>Configure WiFi</button></form>"
+                                       "<br/><form action='/mq' method='post'><button>Configure MQTT</button></form>"
+                                       "<br/><form action='/lg' method='post'><button>Configure logging</button></form>"
+                                       "<br/><form action='/rt' method='post'><button>Reset Configuration</button></form>";
+const char HTTP_BTN_MAIN[] PROGMEM   = "<br/><br/><form action='/' method='post'><button>Main menu</button></form>";
+const char HTTP_BTN_CONF[] PROGMEM   = "<br/><br/><form action='/cn' method='post'><button>Configuration menu</button></form>";
+const char HTTP_LNK_ITEM[] PROGMEM   = "<div><a href='#p' onclick='c(this)'>{v}</a>&nbsp;<span class='q {i}'>{r}%</span></div>";
+const char HTTP_LNK_SCAN[] PROGMEM   = "<div><a href='/w1'>Scan for wifi networks</a></div><br/>";
+const char HTTP_FORM_WIFI[] PROGMEM  = "<fieldset><legend><b>&nbsp;Wifi parameters&nbsp;</b></legend><form method='post' action='sv'>"
                                        "<input id='w' name='w' value='1' hidden><input id='r' name='r' value='1' hidden>"
                                        "<br/><b>SSId</b> (" STA_SSID ")<br/><input id='s' name='s' length=32 placeholder='" STA_SSID "' value='{s1}'><br/>"
                                        "<br/><b>Password</b></br><input id='p' name='p' length=64 type='password' placeholder='" STA_PASS "' value='{p1}'><br/>"
-                                       "<br/><b>Hostname</b> (" WIFI_HOSTNAME "{h0})<br/><input id='h' name='h' length=32 placeholder='" WIFI_HOSTNAME" ' value='{h1}'><br/>";
-const char HTTP_FORM_MQTT[] PROGMEM  = "<fieldset><legend><b>&nbsp;MQTT parameters&nbsp;</b></legend><form method='get' action='sav'>"
+                                       "<br/><b>Hostname</b> ({h0})<br/><input id='h' name='h' length=32 placeholder='" WIFI_HOSTNAME" ' value='{h1}'><br/>";
+const char HTTP_FORM_MQTT[] PROGMEM  = "<fieldset><legend><b>&nbsp;MQTT parameters&nbsp;</b></legend><form method='post' action='sv'>"
                                        "<input id='w' name='w' value='2' hidden><input id='r' name='r' value='1' hidden>"
                                        "<br/><b>Host</b> (" MQTT_HOST ")<br/><input id='mh' name='mh' length=32 placeholder='" MQTT_HOST" ' value='{m1}'><br/>"
                                        "<br/><b>Port</b> ({ml})<br/><input id='ml' name='ml' length=5 placeholder='{ml}' value='{m2}'><br/>"
-                                       "<br/><b>Client Id</b> (" MQTT_CLIENT_ID "{m0})<br/><input id='mc' name='mc' length=32 placeholder='" MQTT_CLIENT_ID "' value='{m3}'><br/>"
+                                       "<br/><b>Client Id</b> ({m0})<br/><input id='mc' name='mc' length=32 placeholder='" MQTT_CLIENT_ID "' value='{m3}'><br/>"
                                        "<br/><b>User</b> (" MQTT_USER ")<br/><input id='mu' name='mu' length=32 placeholder='" MQTT_USER "' value='{m4}'><br/>"
                                        "<br/><b>Password</b> (" MQTT_PASS ")<br/><input id='mp' name='mp' length=32 placeholder='" MQTT_PASS "' value='{m5}'><br/>"
                                        "<br/><b>Topic</b> (" MQTT_TOPIC ")<br/><input id='mt' name='mt' length=32 placeholder='" MQTT_TOPIC" ' value='{m6}'><br/>";
-const char HTTP_FORM_LOG[] PROGMEM   = "<fieldset><legend><b>&nbsp;Logging parameters&nbsp;</b></legend><form method='get' action='sav'>"
+const char HTTP_FORM_LOG[] PROGMEM   = "<fieldset><legend><b>&nbsp;Logging parameters&nbsp;</b></legend><form method='post' action='sv'>"
                                        "<input id='w' name='w' value='3' hidden><input id='r' name='r' value='0' hidden>"
                                        "<br/><b>Serial log level</b> ({ls})<br/><select id='ls' name='ls'>"
                                        "<option{a0value='0'>0 None</option>"
@@ -229,33 +254,42 @@ const char HTTP_FORM_LOG[] PROGMEM   = "<fieldset><legend><b>&nbsp;Logging param
                                        "<option{a3value='3'>3 Debug</option>"
                                        "<option{a4value='4'>4 More debug</option>"
                                        "</select></br>"
-                                       "<br/><b>Syslog level</b> ({ll})<br/><select id='ll' name='ll'>"
+                                       "<br/><b>Web log level</b> ({lw})<br/><select id='lw' name='lw'>"
                                        "<option{b0value='0'>0 None</option>"
                                        "<option{b1value='1'>1 Error</option>"
                                        "<option{b2value='2'>2 Info</option>"
                                        "<option{b3value='3'>3 Debug</option>"
                                        "<option{b4value='4'>4 More debug</option>"
                                        "</select></br>"
+                                       "<br/><b>Syslog level</b> ({ll})<br/><select id='ll' name='ll'>"
+                                       "<option{c0value='0'>0 None</option>"
+                                       "<option{c1value='1'>1 Error</option>"
+                                       "<option{c2value='2'>2 Info</option>"
+                                       "<option{c3value='3'>3 Debug</option>"
+                                       "<option{c4value='4'>4 More debug</option>"
+                                       "</select></br>"
                                        "<br/><b>Syslog host</b> (" SYS_LOG_HOST ")<br/><input id='lh' name='lh' length=32 placeholder='" SYS_LOG_HOST "' value='{l2}'><br/>"
                                        "<br/><b>Syslog port</b> ({lp})<br/><input id='lp' name='lp' length=5 placeholder='{lp}' value='{l3}'><br/>";
 const char HTTP_FORM_END[] PROGMEM   = "<br/><button type='submit'>Save</button></form></fieldset>";
 const char HTTP_FORM_UPG[] PROGMEM   = "<div id='f1' name='f1' style='display:block;'>"
-                                       "<fieldset><legend><b>&nbsp;Upgrade by web server&nbsp;</b></legend><form method='post' action='u1'>"
+                                       "<fieldset><legend><b>&nbsp;Upgrade by web server&nbsp;</b></legend>"
+                                       "<form method='post' action='u1'>"
                                        "<br/>OTA Url<br/><input id='o' name='o' length=80 placeholder='OTA_URL' value='{o1}'><br/>"
-                                       "<br/><button type='submit'>Start upgrade</button></form></fieldset><br/><br/>"
-                                       "<fieldset><legend><b>&nbsp;Upgrade by file upload&nbsp;</b></legend><form method='post' action='u2' enctype='multipart/form-data'>"
+                                       "<br/><button type='submit'>Start upgrade</button></form>"
+                                       "</fieldset><br/><br/>"
+                                       "<fieldset><legend><b>&nbsp;Upgrade by file upload&nbsp;</b></legend>"
+                                       "<form method='post' action='u2' enctype='multipart/form-data'>"
                                        "<br/><input type='file' name='u2'><br/>"
 //                                       "<br/><button type='submit' onclick='this.disabled=true;this.form.submit();'>Start upgrade</button></form></fieldset>"
-                                       "<br/><button type='submit' onclick='document.getElementById(\"f1\").style.display=\"none\";document.getElementById(\"f2\").style.display=\"block\";this.form.submit();'>Start upgrade</button></form></fieldset>"
+                                       "<br/><button type='submit' onclick='document.getElementById(\"f1\").style.display=\"none\";document.getElementById(\"f2\").style.display=\"block\";this.form.submit();'>Start upgrade</button></form>"
+                                       "</fieldset>"
                                        "</div>"
                                        "<div id='f2' name='f2' style='display:none;text-align:center;'><b>Upload started ...</b></div>";
-const char HTTP_FORM_CMND[] PROGMEM  = "<form method='post' action='cmd'>"
-                                       "<input id='" SUB_PREFIX "' name='" SUB_PREFIX "' length=80 placeholder='Enter command' autofocus><br/>"
-//                                       "<br/><button type='submit'>Send command</button>";
+const char HTTP_FORM_CMND[] PROGMEM  = "<br/><textarea readonly id='t1' name='t1' cols='80' rows='16' wrap='off'></textarea><br/><br/>"
+                                       "<form method='post' action='cm'>"
+                                       "<input style='width:98%' id='" SUB_PREFIX "' name='" SUB_PREFIX "' length=80 placeholder='Enter command' autofocus><br/>"
+//                                       "<br/><button type='submit'>Send command</button>"
                                        "</form>";
-const char HTTP_RESTART[] PROGMEM    = "<br/><div style='text-align:center;'>Device will restart in a few seconds</div><br/>";
-const char HTTP_MAIN_MENU[] PROGMEM  = "<br/><br/><form action='/' method='post'><button>Main menu</button></form>";
-const char HTTP_CONF_MENU[] PROGMEM  = "<br/><br/><form action='/cnf' method='post'><button>Configuration menu</button></form>";
 const char HTTP_COUNTER[] PROGMEM    = "<br/><div id='t' name='t' style='text-align:center;'></div>";
 const char HTTP_END[] PROGMEM        = "</div>"
                                        "</body>"
@@ -266,7 +300,7 @@ ESP8266WebServer *webServer;
 
 int _minimumQuality = -1;
 boolean _removeDuplicateAPs = true;
-int httpflag = 0, _uploaderror = 0, _colcount;
+int httpflag = 0, _wifimanager = 0, _uploaderror = 0, _colcount;
 
 void startWebserver(int type, IPAddress ipweb)
 {
@@ -276,20 +310,21 @@ void startWebserver(int type, IPAddress ipweb)
     if (!webServer) {
       webServer = new ESP8266WebServer(80);
       webServer->on("/", handleRoot);
-      webServer->on("/cnf", handleConfig);
-      webServer->on("/wi1", handleWifi1);
-      webServer->on("/wi0", handleWifi0);
-      webServer->on("/mqt", handleMqtt);
-      webServer->on("/log", handleLog);
-      webServer->on("/sav", handleSave);
-      webServer->on("/rst", handleReset);
-      webServer->on("/upg", handleUpgrade);
+      webServer->on("/cn", handleConfig);
+      webServer->on("/w1", handleWifi1);
+      webServer->on("/w0", handleWifi0);
+      webServer->on("/mq", handleMqtt);
+      webServer->on("/lg", handleLog);
+      webServer->on("/sv", handleSave);
+      webServer->on("/rt", handleReset);
+      webServer->on("/up", handleUpgrade);
       webServer->on("/u1", handleUpgradeStart);
       webServer->on("/u2", HTTP_POST, handleUploadDone, handleUploadLoop);
-      webServer->on("/cmd", handleConsole);
-      webServer->on("/inf", handleInfo);
-      webServer->on("/rbt", handleRestart);
-      webServer->on("/fwlink", handleRoot);  //Microsoft captive portal. Maybe not needed. Might be handled by notFound handler.
+      webServer->on("/cm", handleConsole);
+      webServer->on("/ax", handleAjax);
+      webServer->on("/in", handleInfo);
+      webServer->on("/rb", handleRestart);
+      webServer->on("/fwlink", handleRoot);  // Microsoft captive portal. Maybe not needed. Might be handled by notFound handler.
       webServer->onNotFound(handleNotFound);
     }
     webServer->begin(); // Web server start
@@ -330,6 +365,7 @@ void beginWifiManager()
   dnsServer->start(DNS_PORT, "*", WiFi.softAPIP());
 
   startWebserver(2, WiFi.softAPIP());
+  _wifimanager = 1;
 }
 
 void pollDnsWeb()
@@ -338,17 +374,17 @@ void pollDnsWeb()
   if (webServer) webServer->handleClient();
 }
 
-void showPage(String &page, byte option)
+void showPage(String &page)
 {
   page.replace("{h}", Hostname);
-  if (option) {
+  if (_wifimanager) {
     if (WIFI_smartcounter()) {
       page.replace("<body>", "<body onload='u()'>");
       page += FPSTR(HTTP_COUNTER);
     }
   }
   page += FPSTR(HTTP_END);
-  
+
   webServer->sendHeader("Cache-Control", "no-cache, no-store, must-revalidate");
   webServer->sendHeader("Pragma", "no-cache");
   webServer->sendHeader("Expires", "-1");
@@ -365,22 +401,27 @@ void handleRoot()
     return;
   }
 
-  if (strlen(webServer->arg("o").c_str())) {
+  if (_wifimanager) {
+    handleWifi0();
+  } else {
+    if (strlen(webServer->arg("o").c_str())) {
 #ifdef MQTT_SUBTOPIC
-    snprintf_P(svalue, sizeof(svalue), PSTR("%s 2"), sysCfg.mqtt_subtopic);
+      snprintf_P(svalue, sizeof(svalue), PSTR("%s 2"), sysCfg.mqtt_subtopic);
 #else
-    snprintf_P(svalue, sizeof(svalue), PSTR("light 2"));
+      snprintf_P(svalue, sizeof(svalue), PSTR("light 2"));
 #endif
-    do_cmnd(svalue);
-  }
+      do_cmnd(svalue);
+    }
 
-  String page = FPSTR(HTTP_HEAD);
-  page.replace("{v}", "Main menu");
-  page += FPSTR(HTTP_MENU1);
-  page.replace("{r0}", (sysCfg.power) ? "ON" : "OFF");
-  if (httpflag == 2)
-    page += FPSTR(HTTP_MENU2);
-  showPage(page, 1);
+    String page = FPSTR(HTTP_HEAD);
+    page.replace("{v}", "Main menu");
+    page += FPSTR(HTTP_BTN_TOGGL);
+    page.replace("{r0}", (sysCfg.power) ? "ON" : "OFF");
+    if (httpflag == 2)
+      page += FPSTR(HTTP_BTN_MENU1);
+      page += FPSTR(HTTP_BTN_RSTRT);
+    showPage(page);
+  }
 }
 
 void handleConfig()
@@ -389,9 +430,9 @@ void handleConfig()
 
   String page = FPSTR(HTTP_HEAD);
   page.replace("{v}", "Configuration");
-  page += FPSTR(HTTP_MENU3);
-  page += FPSTR(HTTP_MAIN_MENU);
-  showPage(page, 1);
+  page += FPSTR(HTTP_BTN_MENU2);
+  page += FPSTR(HTTP_BTN_MAIN);
+  showPage(page);
 }
 
 void handleWifi1()
@@ -444,10 +485,8 @@ void handleWifi(boolean scan)
           cssid = WiFi.SSID(indices[i]);
           for (int j = i + 1; j < n; j++) {
             if (cssid == WiFi.SSID(indices[j])) {
-
               snprintf_P(log, sizeof(log), PSTR("Wifi: Duplicate AccessPoint %s"), WiFi.SSID(indices[j]).c_str());
               addLog(LOG_LEVEL_DEBUG, log);
-
               indices[j] = -1; // set dup aps to index -1
             }
           }
@@ -457,14 +496,12 @@ void handleWifi(boolean scan)
       //display networks in page
       for (int i = 0; i < n; i++) {
         if (indices[i] == -1) continue; // skip dups
-
         snprintf_P(log, sizeof(log), PSTR("Wifi: SSID %s, RSSI %d"), WiFi.SSID(indices[i]).c_str(), WiFi.RSSI(indices[i]));
         addLog(LOG_LEVEL_DEBUG, log);
-
         int quality = getRSSIasQuality(WiFi.RSSI(indices[i]));
 
         if (_minimumQuality == -1 || _minimumQuality < quality) {
-          String item = FPSTR(HTTP_ITEM);
+          String item = FPSTR(HTTP_LNK_ITEM);
           String rssiQ;
           rssiQ += quality;
           item.replace("{v}", WiFi.SSID(indices[i]));
@@ -484,23 +521,26 @@ void handleWifi(boolean scan)
       page += "<br/>";
     }
   } else {
-    page += FPSTR(HTTP_SCAN_LINK);
+    page += FPSTR(HTTP_LNK_SCAN);
   }
 
   page += FPSTR(HTTP_FORM_WIFI);
   
   char str[33];
   if (!strcmp(WIFI_HOSTNAME, DEF_WIFI_HOSTNAME))
-    snprintf_P(str, sizeof(str), PSTR(" = " DEF_WIFI_HOSTNAME), sysCfg.mqtt_topic, ESP.getChipId() & 0x1FFF);
+    snprintf_P(str, sizeof(str), PSTR(DEF_WIFI_HOSTNAME), sysCfg.mqtt_topic, ESP.getChipId() & 0x1FFF);
   else
-    str[0] = 0;
+    snprintf_P(str, sizeof(str), PSTR(WIFI_HOSTNAME));
   page.replace("{h0}", str);
   page.replace("{h1}", String(sysCfg.hostname));
   page.replace("{s1}", String(sysCfg.sta_ssid));
   page.replace("{p1}", String(sysCfg.sta_pwd));
   page += FPSTR(HTTP_FORM_END);
-  page += FPSTR(HTTP_CONF_MENU);
-  showPage(page, 1);
+  if (_wifimanager)
+    page += FPSTR(HTTP_BTN_RSTRT);
+  else
+    page += FPSTR(HTTP_BTN_CONF);
+  showPage(page);
 }
 
 void handleMqtt()
@@ -512,9 +552,9 @@ void handleMqtt()
   page += FPSTR(HTTP_FORM_MQTT);
   char str[33];
   if (!strcmp(MQTT_CLIENT_ID, DEF_MQTT_CLIENT_ID))
-    snprintf_P(str, sizeof(str), PSTR(" = "DEF_MQTT_CLIENT_ID), ESP.getChipId());
+    snprintf_P(str, sizeof(str), PSTR(DEF_MQTT_CLIENT_ID), ESP.getChipId());
   else
-    str[0] = 0;
+    snprintf_P(str, sizeof(str), PSTR(MQTT_CLIENT_ID));
   page.replace("{m0}", str);
   page.replace("{m1}", String(sysCfg.mqtt_host));
   page.replace("{ml}", String((int)MQTT_PORT));
@@ -524,8 +564,8 @@ void handleMqtt()
   page.replace("{m5}", String(sysCfg.mqtt_pwd));
   page.replace("{m6}", String(sysCfg.mqtt_topic));
   page += FPSTR(HTTP_FORM_END);
-  page += FPSTR(HTTP_CONF_MENU);
-  showPage(page, 1);
+  page += FPSTR(HTTP_BTN_CONF);
+  showPage(page);
 }
 
 void handleLog()
@@ -536,17 +576,19 @@ void handleLog()
   page.replace("{v}", "Config logging");
   page += FPSTR(HTTP_FORM_LOG);
   page.replace("{ls}", String((int)SERIAL_LOG_LEVEL));
+  page.replace("{lw}", String((int)WEB_LOG_LEVEL));
   page.replace("{ll}", String((int)SYS_LOG_LEVEL));
   for (byte i = LOG_LEVEL_NONE; i < LOG_LEVEL_ALL; i++) {
     page.replace("{a" + String(i), (i == sysCfg.seriallog_level) ? " selected " : " ");
-    page.replace("{b" + String(i), (i == sysCfg.syslog_level) ? " selected " : " ");
+    page.replace("{b" + String(i), (i == sysCfg.weblog_level) ? " selected " : " ");
+    page.replace("{c" + String(i), (i == sysCfg.syslog_level) ? " selected " : " ");
   }  
   page.replace("{l2}", String(sysCfg.syslog_host));
   page.replace("{lp}", String((int)SYS_LOG_PORT));
   page.replace("{l3}", String(sysCfg.syslog_port));
   page += FPSTR(HTTP_FORM_END);
-  page += FPSTR(HTTP_CONF_MENU);
-  showPage(page, 1);
+  page += FPSTR(HTTP_BTN_CONF);
+  showPage(page);
 }
 
 void handleSave()
@@ -582,11 +624,12 @@ void handleSave()
     break;
   case 3:
     sysCfg.seriallog_level = (!strlen(webServer->arg("ls").c_str())) ? SERIAL_LOG_LEVEL : atoi(webServer->arg("ls").c_str());
+    sysCfg.weblog_level = (!strlen(webServer->arg("lw").c_str())) ? WEB_LOG_LEVEL : atoi(webServer->arg("lw").c_str());
     sysCfg.syslog_level = (!strlen(webServer->arg("ll").c_str())) ? SYS_LOG_LEVEL : atoi(webServer->arg("ll").c_str());
     strlcpy(sysCfg.syslog_host, (!strlen(webServer->arg("lh").c_str())) ? SYS_LOG_HOST : webServer->arg("lh").c_str(), sizeof(sysCfg.syslog_host));
     sysCfg.syslog_port = (!strlen(webServer->arg("lp").c_str())) ? SYS_LOG_PORT : atoi(webServer->arg("lp").c_str());
-    snprintf_P(log, sizeof(log), PSTR("HTTP: Logging Seriallog %d, Syslog %d, Host %s, Port %d"),
-      sysCfg.seriallog_level, sysCfg.syslog_level, sysCfg.syslog_host, sysCfg.syslog_port);
+    snprintf_P(log, sizeof(log), PSTR("HTTP: Logging Seriallog %d, Weblog %d, Syslog %d, Host %s, Port %d"),
+      sysCfg.seriallog_level, sysCfg.weblog_level, sysCfg.syslog_level, sysCfg.syslog_host, sysCfg.syslog_port);
     addLog(LOG_LEVEL_INFO, log);
     break;
   }
@@ -598,9 +641,10 @@ void handleSave()
     page += F("<div style='text-align:center;'><b>Parameters saved</b><br/>");
     page += result;
     page += F("</div>");
-    page += FPSTR(HTTP_RESTART);
-    page += FPSTR(HTTP_MAIN_MENU);
-    showPage(page, 0);
+    page += FPSTR(HTTP_MSG_RSTRT);
+    if (!_wifimanager) page += FPSTR(HTTP_BTN_MAIN);
+    _wifimanager = 0;
+    showPage(page);
 
     restartflag = 2;
   } else {
@@ -617,9 +661,9 @@ void handleReset()
   String page = FPSTR(HTTP_HEAD);
   page.replace("{v}", "Default parameters");
   page += F("<div style='text-align:center;'>Parameters reset to default</div>");
-  page += FPSTR(HTTP_RESTART);
-  page += FPSTR(HTTP_MAIN_MENU);
-  showPage(page, 0);
+  page += FPSTR(HTTP_MSG_RSTRT);
+  page += FPSTR(HTTP_BTN_MAIN);
+  showPage(page);
 
   snprintf_P(svalue, sizeof(svalue), PSTR("reset 1"));
   do_cmnd(svalue);
@@ -633,8 +677,8 @@ void handleUpgrade()
   page.replace("{v}", "Firmware upgrade");
   page += FPSTR(HTTP_FORM_UPG);
   page.replace("{o1}", String(sysCfg.otaUrl));
-  page += FPSTR(HTTP_MAIN_MENU);
-  showPage(page, 1);
+  page += FPSTR(HTTP_BTN_MAIN);
+  showPage(page);
 
   _uploaderror = 0;
 }
@@ -654,9 +698,9 @@ void handleUpgradeStart()
   String page = FPSTR(HTTP_HEAD);
   page.replace("{v}", "Info");
   page += F("<div style='text-align:center;'><b>Upgrade started ...</b></div>");
-  page += FPSTR(HTTP_RESTART);
-  page += FPSTR(HTTP_MAIN_MENU);
-  showPage(page, 0);
+  page += FPSTR(HTTP_MSG_RSTRT);
+  page += FPSTR(HTTP_BTN_MAIN);
+  showPage(page);
 
   snprintf_P(svalue, sizeof(svalue), PSTR("upgrade 1"));
   do_cmnd(svalue);
@@ -693,8 +737,8 @@ void handleUploadDone()
     restartflag = 2;
   }
   page += F("</div><br/>");
-  page += FPSTR(HTTP_MAIN_MENU);
-  showPage(page, 0);
+  page += FPSTR(HTTP_BTN_MAIN);
+  showPage(page);
 }
 
 void handleUploadLoop()
@@ -774,7 +818,7 @@ void handleConsole()
 {
   char svalue[MESSZ];
 
-  addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Handle command"));
+  addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Handle console"));
 
   if (strlen(webServer->arg(SUB_PREFIX).c_str())) {
     snprintf_P(svalue, sizeof(svalue), webServer->arg(SUB_PREFIX).c_str());
@@ -782,10 +826,30 @@ void handleConsole()
   }
 
   String page = FPSTR(HTTP_HEAD);
-  page.replace("{v}", "Command line");
+  page.replace("{v}", "Console");
+  page.replace("<body>", "<body onload='l()'>");
   page += FPSTR(HTTP_FORM_CMND);
-  page += FPSTR(HTTP_MAIN_MENU);
-  showPage(page, 1);
+  page += FPSTR(HTTP_BTN_MAIN);
+  showPage(page);
+}
+
+void handleAjax()
+{
+  String message = "";
+
+  byte counter = logidx;  // Points to oldest entry
+  do {
+    if (Log[counter].length()) {
+      if (message.length()) message += F("\n");
+      message += Log[counter];
+    }
+    counter++;
+    if (counter > MAX_LOG_LINES -1) counter = 0;
+  } while (counter != logidx);
+  webServer->sendHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+  webServer->sendHeader("Pragma", "no-cache");
+  webServer->sendHeader("Expires", "-1");
+  webServer->send(200, "text/plain", message);
 }
 
 void handleInfo()
@@ -802,7 +866,7 @@ void handleInfo()
   page += F("<tr><td><b>Core version</b></td><td>"); page += ESP.getCoreVersion(); page += F("</td></tr>");
   page += F("<tr><td><b>SDK version</b></td><td>"); page += String(ESP.getSdkVersion()); page += F("</td></tr>");
 //  page += F("<tr><td><b>Boot version</b></td><td>"); page += String(ESP.getBootVersion()); page += F("</td></tr>");
-  page += F("<tr><td><b>Uptime</b></td><td>"); page += String(heartbeat); page += F(" Hours</td></tr>");
+  page += F("<tr><td><b>Uptime</b></td><td>"); page += String(uptime); page += F(" Hours</td></tr>");
   page += F("<tr><td><b>Flash write count</b></td><td>"); page += String(sysCfg.saveFlag); page += F("</td></tr>");
   page += F("<tr><td><b>Boot count</b></td><td>"); page += String(sysCfg.bootcount); page += F("</td></tr>");
   page += F("<tr><td><b>Reset reason</b></td><td>"); page += ESP.getResetReason(); page += F("</td></tr>");
@@ -822,13 +886,14 @@ void handleInfo()
   page += F("<tr><td><b>ESP Chip id</b></td><td>"); page += String(ESP.getChipId()); page += F("</td></tr>");
   page += F("<tr><td><b>Flash Chip id</b></td><td>"); page += String(ESP.getFlashChipId()); page += F("</td></tr>");
   page += F("<tr><td><b>Flash size</b></td><td>"); page += String(ESP.getFlashChipRealSize() / 1024); page += F(" kB</td></tr>");
+  page += F("<tr><td><b>Sketch flash size</b></td><td>"); page += String(ESP.getFlashChipSize() / 1024); page += F(" kB</td></tr>");
   page += F("<tr><td><b>Sketch size</b></td><td>"); page += String(ESP.getSketchSize() / 1024); page += F(" kB</td></tr>");
   page += F("<tr><td><b>Free sketch space</b></td><td>"); page += String(ESP.getFreeSketchSpace() / 1024); page += F(" kB</td></tr>");
   page += F("<tr><td><b>Free memory</b></td><td>"); page += String(freeMem / 1024); page += F(" kB</td></tr>");
   page += F("</table>");
 //  page += F("</fieldset>");
-  page += FPSTR(HTTP_MAIN_MENU);
-  showPage(page, 1);
+  page += FPSTR(HTTP_BTN_MAIN);
+  showPage(page);
 }
 
 void handleRestart()
@@ -837,9 +902,10 @@ void handleRestart()
 
   String page = FPSTR(HTTP_HEAD);
   page.replace("{v}", "Info");
-  page += FPSTR(HTTP_RESTART);
-  page += FPSTR(HTTP_MAIN_MENU);
-  showPage(page, 0);
+  page += FPSTR(HTTP_MSG_RSTRT);
+  if (!_wifimanager) page += FPSTR(HTTP_BTN_MAIN);
+  _wifimanager = 0;
+  showPage(page);
 
   restartflag = 2;
 }
@@ -867,14 +933,14 @@ void handleNotFound()
   webServer->send(404, "text/plain", message);
 }
 
-/** Redirect to captive portal if we got a request for another domain. Return true in that case so the page handler do not try to handle the request again. */
+/* Redirect to captive portal if we got a request for another domain. Return true in that case so the page handler do not try to handle the request again. */
 boolean captivePortal()
 {
-  if (!isIp(webServer->hostHeader()) ) {
+  if (!isIp(webServer->hostHeader())) {
     addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Request redirected to captive portal"));
 
     webServer->sendHeader("Location", String("http://") + webServer->client().localIP().toString(), true);
-    webServer->send ( 302, "text/plain", ""); // Empty content inhibits Content-length header so we have to close the socket ourselves.
+    webServer->send(302, "text/plain", ""); // Empty content inhibits Content-length header so we have to close the socket ourselves.
     webServer->client().stop(); // Stop is needed because we sent no content length
     return true;
   }
@@ -906,7 +972,6 @@ boolean isIp(String str)
   }
   return true;
 }
-
 #endif  // USE_WEBSERVER
 
 /*********************************************************************************************\
@@ -1281,6 +1346,15 @@ void addLog(byte loglevel, const char *line)
 #ifdef USE_SERIAL
   if (loglevel <= sysCfg.seriallog_level) Serial.printf("%s %s\n", mxtime, line);
 #endif  // USE_SERIAL
+#ifdef USE_WEBSERVER
+  if (loglevel <= sysCfg.weblog_level) {
+    Log[logidx] = String(mxtime);
+    Log[logidx] += " ";
+    Log[logidx] += String(line);
+    logidx++;
+    if (logidx > MAX_LOG_LINES -1) logidx = 0;
+  }
+#endif  // USE_WEBSERVER
   if ((WiFi.status() == WL_CONNECTED) && (loglevel <= sysCfg.syslog_level)) syslog(line);
 }
 

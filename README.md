@@ -1,8 +1,8 @@
 <img alt="Sonoff" src="https://github.com/arendst/arendst.github.io/blob/master/media/sonoff.jpg" height="200" align="right" /> 
 ## Sonoff-MQTT-OTA-Arduino
-Provide ESP8266 based [itead Sonoff](https://www.itead.cc/sonoff-wifi-wireless-switch.html) with MQTT and 'Over the Air' or OTA firmware using Arduino IDE.
+Provide ESP8266 based [itead Sonoff](https://www.itead.cc/sonoff-wifi-wireless-switch.html) with Web, MQTT and 'Over the Air' or OTA firmware using Arduino IDE.
 
-Current version is 1.0.26 - See ```sonoff/_releasenotes``` for change information.
+Current version is 1.0.27 - See ```sonoff/_releasenotes``` for change information.
 
 See [Sonoff-MQTT-OTA](https://github.com/arendst/Sonoff-MQTT-OTA) for the ```esp-open-sdk``` version.
 ## Prerequisite
@@ -46,6 +46,8 @@ Verify source and upload once to sonoff using the serial connection as shown in 
 **Do not connect AC power during the flash cable connection**. 
 
 Verify and upload an OTA image to your web server with option ```Upload Using: OTA_upload```.
+
+Since version 1.0.26 you also may use sonoffs web server and upload the file directly.
 
 Enable debug messages by selecting option Tools Debug Port: Serial.
 ## Usage
@@ -108,6 +110,11 @@ seriallog 1 | 1.0.7 | Show only error messages
 seriallog 2 | 1.0.7 | Show error and info messages
 seriallog 3 | 1.0.7 | Show error, info and debug messages
 seriallog 4 | 1.0.7 | Show all messages
+weblog 0 | 1.0.27 | Disable web logging
+weblog 1 | 1.0.27 | Show only error messages
+weblog 2 | 1.0.27 | Show error and info messages
+weblog 3 | 1.0.27 | Show error, info and debug messages
+weblog 4 | 1.0.27 | Show all messages
 syslog 0 | 1.0.7 | Disable syslog logging
 syslog 1 | 1.0.7 | Show only error messages
 syslog 2 | 1.0.7 | Show error and info messages
@@ -175,13 +182,14 @@ otaurl | | Show current otaurl
 otaurl 1 | | Reset otaurl to ```user_config.h``` value
 otaurl your-otaurl | | Set otaurl
 upgrade 1 | | Download ota firmware from your web server and restart
+upload 1 | 1.0.23 | Download ota firmware from your web server and restart
 
 If the same topic has been defined to more than one sonoff an individual sonoff can still be addressed by the fall back topic MQTT_CLIENT_ID as defined in user_config.h. The fall back topic will be ```DVES_<last six characters of MAC address>```.
 ## Tips
 - To aid in finding the IP address of sonoff the network name will be ```<MQTT_TOPIC>-<last 4 decimal chars of MAC address>```. So the default name is ```sonoff-1234```. Another option is MQTT command ```status 5```.
 - Use the group topic to address several sonoffs with one (restricted) MQTT command.
 - Using the Arduino IDE set to 115200 baud and both NL & CR maximum serial output is enabled by command ```seriallog 4```.
-- Toggle between Wifi smartconfig and Wifi manager by restarting sonoff.
+- Toggle between Wifi smartconfig and Wifi manager by pressing the button once to restart sonoff.
 
 ## Modified kaku power socket switch using ESP-12F
 Using parts from itead (5V power supply), aliexpress (Different 5V power supply, ESP-12F and 5V to 3V3 step down) and ebay (5V relay) I modified broken 434MHz kaku power socket switches type PAR-1000 to Wifi wkaku power socket switches.

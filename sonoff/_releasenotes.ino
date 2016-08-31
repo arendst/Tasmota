@@ -1,4 +1,13 @@
-/* 1.0.26 20160829
+/* 1.0.27 20160831
+ * Add sketch flash size
+ * Add console to webserver
+ * Add command weblog
+ * Change WifiManager web pages to minimal
+ * Change display default hostname and MQTT client id in webserver
+ * Change HTTP command interface to http://sonoff-1234/cm?cmnd=light 2
+ * Change HEARTBEAT to UPTIME
+ * 
+ * 1.0.26 20160829
  * Add define USE_WEBSERVER to disable web server code in source
  * Add file upload as alternative for ota upload to webserver
  * Add information to webserver

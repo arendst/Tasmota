@@ -17,6 +17,7 @@
 #define SYS_LOG_PORT           514
 #define SYS_LOG_LEVEL          LOG_LEVEL_NONE
 #define SERIAL_LOG_LEVEL       LOG_LEVEL_INFO
+#define WEB_LOG_LEVEL          LOG_LEVEL_INFO
 
 // Ota
 #if (ARDUINO >= 168)
