@@ -1,4 +1,13 @@
-/* 1.0.29 20160831
+/* 1.0.30
+ * Fix command TELEPERIOD 0
+ * Add ESP- tag to UDP log message for easy rsyslogd filtering
+ * Add ElectroDragon (Relay 2 only) functionality. Select with #define MODULE ELECTRO_DRAGON
+ * Add ? as null message alternative
+ * Add DHT temperature and humidity telemetry support. Enable with #define SEND_TELEMETRY_DHT
+ * Add DS18B20 temperature telemetry support. Enable with #define SEND_TELEMETRY_DS18B20
+ * Restrict HOSTNAME, MQTTCLIENT, TOPIC and BUTTONTOPIC in topic mode only
+ * 
+ * 1.0.29 20160831
  * Allow UPGRADE, OTAURL, RESTART, RESET, MQTTHOST, MQTTPORT, MQTTUSER, MQTTPASSWORD and WEBSERVER also in group mode
  *  
  * 1.0.28 20160831

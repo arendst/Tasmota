@@ -1,5 +1,5 @@
 /*
- * Sonoff and Wkaku by Theo Arends
+ * Sonoff, ElectroDragon and Wkaku by Theo Arends
  * 
  * ==================================================
  * Prerequisites:
@@ -25,8 +25,10 @@
  *                        | | | | | |                     Gnd
 */
 
-#define APP_NAME               "Sonoff switch"
-#define VERSION                0x01001D00   // 1.0.29
+#define VERSION                0x01001E00   // 1.0.30
+
+#define SONOFF                 1
+#define ELECTRO_DRAGON         2
 
 enum log_t   {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG_MORE, LOG_LEVEL_ALL};
 enum week_t  {Last, First, Second, Third, Fourth}; 
@@ -45,6 +47,43 @@ enum month_t {Jan=1, Feb, Mar, Apr, May, Jun, Jul, Aug, Sep, Oct, Nov, Dec};
 #define USE_WEBSERVER                       // Enable web server and wifi manager (+37k code, +2k mem)
 
 /*********************************************************************************************\
+ * Optional parameters for both SONOFF and ELECTRO_DRAGON module
+\*********************************************************************************************/
+
+#define DHT11                  11
+#define DHT21                  21
+#define DHT22                  22
+#define AM2301                 21
+#define AM2302                 22
+#define AM2321                 22
+
+#if MODULE == SONOFF                        // programming header 1:3.3V 2:rx 3:tx 4:gnd
+  #define APP_NAME             "Sonoff module"
+  #define LED_PIN              13           // GPIO 13 = Green Led (0 = On, 1 = Off) - Sonoff
+  #define LED_INVERTED         1            // 0 = (1 = On, 0 = Off), 1 = (0 = On, 1 = Off)
+  #define REL_PIN              12           // GPIO 12 = Red Led and Relay (0 = Off, 1 = On)
+  #define KEY_PIN              0            // GPIO 00 = Button
+  #define DHT_PIN              14           // GPIO 14 = TEM1 - DHT22
+  #define DHT_TYPE             DHT11        // DHT module type (DHT11, DHT21, DHT22, AM2301, AM2302 or AM2321)
+  #define DSB_PIN              4            // GPIO 04 = TEM2 - DS18B20
+  
+#elif MODULE == ELECTRO_DRAGON              // programming header 5V/3V/gnd/
+  #define APP_NAME             "ElectroDragon module"
+  #define LED_PIN              16           // GPIO 16 = Led (0 = Off, 1 = On)
+  #define LED_INVERTED         0            // 0 = (1 = On, 0 = Off), 1 = (0 = On, 1 = Off)
+  #define REL_PIN              12           // GPIO 12 = Red Led and Relay 2 (0 = Off, 1 = On)
+  #define KEY_PIN              0            // GPIO 00 = Button 2
+  #define REL1_PIN             13           // GPIO 13 = Red Led and Relay 1 (0 = Off, 1 = On)
+  #define KEY1_PIN             2            // GPIO 02 = Button 1
+  #define DHT_PIN              14           // GPIO 14 = DHT22
+  #define DHT_TYPE             DHT22        // DHT module type (DHT11, DHT21, DHT22, AM2301, AM2302 or AM2321)
+  #define DSB_PIN              4            // GPIO 04 = DS18B20
+  
+#else
+  #error "Select either module SONOFF or ELECTRO_DRAGON"
+#endif
+
+/*********************************************************************************************\
  * No more user configurable items below
 \*********************************************************************************************/
 
@@ -53,12 +92,6 @@ enum month_t {Jan=1, Feb, Mar, Apr, May, Jun, Jul, Aug, Sep, Oct, Nov, Dec};
 
 #define STATES                 10           // loops per second
 #define MQTT_RETRY_SECS        10           // Seconds to retry MQTT connection
-
-//#define LED_PIN                2            // GPIO 2 = Blue Led (0 = On, 1 = Off) - ESP-12
-#define LED_PIN                13           // GPIO 13 = Green Led (0 = On, 1 = Off) - Sonoff
-//#define LED_PIN                16           // NodeMCU
-#define REL_PIN                12           // GPIO 12 = Red Led and Relay (0 = Off, 1 = On)
-#define KEY_PIN                0            // GPIO 00 = Button
 
 #define TOPSZ                  40           // Max number of characters in topic string
 #define MESSZ                  200          // Max number of characters in message string (Syntax string)
@@ -164,7 +197,7 @@ PubSubClient mqttClient(espClient);
 WiFiUDP portUDP;   // syslog
 
 int blinks = 1;
-uint8_t blinkstate = 1;
+uint8_t blinkstate = 0;
 
 uint8_t lastbutton = NOT_PRESSED;
 uint8_t holdcount = 0;
@@ -322,11 +355,12 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
     snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/%s"), PUB_PREFIX, sysCfg.mqtt_topic, type);
     strlcpy(svalue, "Error", sizeof(svalue));
 
+    if (!strcmp(dataBufUc,"?")) data_len = 0;
     int16_t payload = atoi(dataBuf);
     if (!strcmp(dataBufUc,"OFF") || !strcmp(dataBufUc,"STOP")) payload = 0;
     if (!strcmp(dataBufUc,"ON") || !strcmp(dataBufUc,"START") || !strcmp(dataBufUc,"USER")) payload = 1;
     if (!strcmp(dataBufUc,"TOGGLE") || !strcmp(dataBufUc,"ADMIN")) payload = 2;
-
+    
     if (!strcmp(type,"STATUS")) {
       if ((data_len == 0) || (payload < 0) || (payload > 7)) payload = 8;
       if ((payload == 0) || (payload == 8)) {
@@ -407,14 +441,14 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
       }
       snprintf_P(svalue, sizeof(svalue), PSTR("%d"), sysCfg.syslog_port);
     }
-    else if (!grpflg && !strcmp(type,"SSID")) {
+    else if (!strcmp(type,"SSID")) {
       if ((data_len > 0) && (data_len < sizeof(sysCfg.sta_ssid))) {
         strlcpy(sysCfg.sta_ssid, (payload == 1) ? STA_SSID : dataBuf, sizeof(sysCfg.sta_ssid));
         restartflag = 2;
       }
       snprintf_P(svalue, sizeof(svalue), PSTR("%s"), sysCfg.sta_ssid);
     }
-    else if (!grpflg && !strcmp(type,"PASSWORD")) {
+    else if (!strcmp(type,"PASSWORD")) {
       if ((data_len > 0) && (data_len < sizeof(sysCfg.sta_pwd))) {
         strlcpy(sysCfg.sta_pwd, (payload == 1) ? STA_PASS : dataBuf, sizeof(sysCfg.sta_pwd));
         restartflag = 2;
@@ -486,7 +520,7 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
       snprintf_P(svalue, sizeof(svalue), PSTR("%s"), sysCfg.mqtt_pwd);
     }
     else if (!strcmp(type,"TELEPERIOD")) {
-      if ((data_len > 0) && (payload > 0) && (payload < 3601)) {
+      if ((data_len > 0) && (payload >= 0) && (payload < 3601)) {
         sysCfg.tele_period = (payload == 1) ? TELE_PERIOD : payload;
         tele_period = sysCfg.tele_period;
       }
@@ -521,7 +555,7 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
       }
       snprintf_P(svalue, sizeof(svalue), PSTR("%s"), sysCfg.mqtt_topic2);
     }
-    else if (!grpflg && !strcmp(type,"SMARTCONFIG")) {
+    else if (!strcmp(type,"SMARTCONFIG")) {
       switch (payload) {
       case 1:
         if (WIFI_State() == WIFI_STATUS) {
@@ -603,22 +637,13 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
     if (type == NULL) {
       blinks = 1;
       snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/SYNTAX"), PUB_PREFIX, sysCfg.mqtt_topic);
-      if (!grpflg) {
 #ifdef USE_WEBSERVER
-        snprintf_P(svalue, sizeof(svalue), PSTR("Status, Upgrade, Otaurl, Restart, Reset, Smartconfig, Seriallog, Weblog, Syslog, LogHost, LogPort, SSId, Password, Hostname, Webserver"));
-#else
-        snprintf_P(svalue, sizeof(svalue), PSTR("Status, Upgrade, Otaurl, Restart, Reset, Smartconfig, Seriallog, Syslog, LogHost, LogPort, SSId, Password, Hostname"));
-#endif        
-        mqtt_publish(stopic, svalue);
-        snprintf_P(svalue, sizeof(svalue), PSTR("MqttHost, MqttPort, MqttClient, MqttUser, MqttPassword, GroupTopic, Topic, ButtonTopic, Timezone, Light, Power, Ledstate, TelePeriod"));
-      } else
-#ifdef USE_WEBSERVER
-        snprintf_P(svalue, sizeof(svalue), PSTR("Status, Upgrade, Otaurl, Restart, Reset, Seriallog, Weblog, Syslog, LogHost, LogPort, Webserver"));
-#else
-        snprintf_P(svalue, sizeof(svalue), PSTR("Status, Upgrade, Otaurl, Restart, Reset, Seriallog, Syslog, LogHost, LogPort"));
-#endif        
-        mqtt_publish(stopic, svalue);
-        snprintf_P(svalue, sizeof(svalue), PSTR("MqttHost, MqttPort, MqttUser, MqttPassword, GroupTopic, Timezone, Light, Power, Ledstate, TelePeriod"));
+      snprintf_P(svalue, sizeof(svalue), PSTR("Status, Upgrade, Otaurl, Restart, Reset, Smartconfig, Seriallog, Weblog, Syslog, LogHost, LogPort, SSId, Password%s, Webserver"), (!grpflg) ? ", Hostname" : "");
+#else      
+      snprintf_P(svalue, sizeof(svalue), PSTR("Status, Upgrade, Otaurl, Restart, Reset, Smartconfig, Seriallog, Syslog, LogHost, LogPort, SSId, Password%s"), (!grpflg) ? ", Hostname" : "");
+#endif      
+      mqtt_publish(stopic, svalue);
+      snprintf_P(svalue, sizeof(svalue), PSTR("MqttHost, MqttPort, MqttUser, MqttPassword%s, GroupTopic, Timezone, Light, Power, Ledstate, TelePeriod"), (!grpflg) ? ", MqttClient, Topic, ButtonTopic" : "");
     }
     mqtt_publish(stopic, svalue);
   }
@@ -663,21 +688,52 @@ void send_power()
 void every_second()
 {
   char stopic[TOPSZ], svalue[TOPSZ];
-
+  float t, h;
+    
   if (sysCfg.tele_period) {
     tele_period++;
+
+#ifdef SEND_TELEMETRY_DS18B20
+    if (tele_period == sysCfg.tele_period -2) dsb_readTemperaturePrt1();
+#endif  // SEND_TELEMETRY_DS18B20
+
     if (tele_period >= sysCfg.tele_period) {
       tele_period = 0;
+
 #ifdef SEND_TELEMETRY_UPTIME
       snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/UPTIME"), PUB_PREFIX2, sysCfg.mqtt_topic);
       snprintf_P(svalue, sizeof(svalue), PSTR("%d"), uptime);
       mqtt_publish(stopic, svalue);
 #endif  // SEND_TELEMETRY_UPTIME
+
+#ifdef SEND_TELEMETRY_DS18B20
+      t = dsb_readTemperaturePrt2();   // Read temperature as Celsius (the default)
+      if (!isnan(t)) {                 // Check if read failed
+        snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/TEMP"), PUB_PREFIX2, sysCfg.mqtt_topic);
+        dtostrf(t, 1, 1, svalue);
+        mqtt_publish(stopic, svalue);
+      }
+#endif  // SEND_TELEMETRY_DS18B20
+
+#ifdef SEND_TELEMETRY_DHT
+      h = dht_readHumidity(false);
+      t = dht_readTemperature(false, false); // Read temperature as Celsius (the default)
+      if (!isnan(h) && !isnan(t)) {          // Check if any reads failed
+        snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/TEMP"), PUB_PREFIX2, sysCfg.mqtt_topic);
+        dtostrf(t, 1, 1, svalue);
+        mqtt_publish(stopic, svalue);
+        snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/HUM"), PUB_PREFIX2, sysCfg.mqtt_topic);
+        dtostrf(h, 1, 1, svalue);
+        mqtt_publish(stopic, svalue);
+      }
+#endif  // SEND_TELEMETRY_DHT
+
 #ifdef SEND_TELEMETRY_POWER
       snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/%s"), PUB_PREFIX2, sysCfg.mqtt_topic, sysCfg.mqtt_subtopic);
       strlcpy(svalue, (sysCfg.power) ? "On" : "Off", sizeof(svalue));
       mqtt_publish(stopic, svalue);
 #endif  // SEND_TELEMETRY_POWER
+
       snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/TIME"), PUB_PREFIX2, sysCfg.mqtt_topic);
       snprintf_P(svalue, sizeof(svalue), PSTR("%04d-%02d-%02dT%02d:%02d:%02d"),
         rtcTime.Year, rtcTime.Month, rtcTime.Day, rtcTime.Hour, rtcTime.Minute, rtcTime.Second);
@@ -751,13 +807,13 @@ void stateloop()
   if (!(state % ((STATES/10)*2))) {
     if (blinks || restartflag || otaflag) {
       if (restartflag || otaflag)
-        blinkstate = 0;   // Stay lit
+        blinkstate = 1;   // Stay lit
       else
         blinkstate ^= 1;  // Blink
-      digitalWrite(LED_PIN, blinkstate);
-      if (blinkstate) blinks--;
+      digitalWrite(LED_PIN, (LED_INVERTED) ? !blinkstate : blinkstate);
+      if (!blinkstate) blinks--;
     } else {
-      if (sysCfg.ledstate) digitalWrite(LED_PIN, !sysCfg.power);
+      if (sysCfg.ledstate) digitalWrite(LED_PIN, (LED_INVERTED) ? !sysCfg.power : sysCfg.power);
     }
   }
   
@@ -901,7 +957,6 @@ void setup()
     }
     if (sysCfg.version < 0x01001C00) {  // 1.0.28 - Add telemetry parameter
       sysCfg.tele_period = TELE_PERIOD;
-
     }
     
     sysCfg.version = VERSION;
@@ -926,12 +981,16 @@ void setup()
   mqttClient.setCallback(mqttDataCb);
 
   pinMode(LED_PIN, OUTPUT);
-  digitalWrite(LED_PIN, blinkstate);
+  digitalWrite(LED_PIN, (LED_INVERTED) ? !blinkstate : blinkstate);
 
   pinMode(REL_PIN, OUTPUT);
   digitalWrite(REL_PIN, sysCfg.power);
 
   pinMode(KEY_PIN, INPUT_PULLUP);
+
+#ifdef SEND_TELEMETRY_DHT
+  dht_init();
+#endif
 
   rtc_init();
 

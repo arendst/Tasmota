@@ -2,7 +2,7 @@
 ## Sonoff-MQTT-OTA-Arduino
 Provide ESP8266 based [itead Sonoff](https://www.itead.cc/sonoff-wifi-wireless-switch.html) with Web, MQTT and 'Over the Air' or OTA firmware using Arduino IDE.
 
-Current version is 1.0.29 - See ```sonoff/_releasenotes``` for change information.
+Current version is 1.0.30 - See ```sonoff/_releasenotes``` for change information.
 
 See [Sonoff-MQTT-OTA](https://github.com/arendst/Sonoff-MQTT-OTA) for the ```esp-open-sdk``` version.
 ## Prerequisite
@@ -71,7 +71,7 @@ Sonoff responds to the following MQTT commands:
 
 Most MQTT commands will result in a status feedback like ```stat/sonoff/POWER On```.
 ## Commands supported
-The firmware supports both a **serial** and a **MQTT** Man Machine interface. The serial interface is set to 115200 bps. The MQTT commands are constructed as ```cmnd/sonoff/<command>```. 
+The firmware supports **serial**, **MQTT** and **Web** Man Machine interface. The serial interface is set to 115200 bps. The MQTT commands are constructed as ```cmnd/sonoff/<command>```. 
 
 The following commands are recognised by both topic and grouptopic:
 
@@ -96,6 +96,12 @@ ledstate on | 1.0.13 | Show power state on led
 ledstate off | 1.0.13 | Do not show power state on led
 ledstate 1 | 1.0.13 | Show power state on led
 ledstate 0 | 1.0.13 | Do not show power state on led
+ssid | | Show current Wifi SSId
+ssid 1 | | Reset Wifi SSId to ```user_config.h``` value and restart
+ssid your-ssid | | Set Wifi SSId and restart
+password | | Show current Wifi password
+password 1 | | Reset Wifi password to ```user_config.h``` value and restart
+password your-password | | Set Wifi password and restart
 teleperiod | 1.0.28 | Show current telemetry period in seconds
 teleperiod off | 1.0.28 | Disable telemetry messages
 teleperiod 0 | 1.0.28 | Disable telemetry messages
@@ -162,17 +168,13 @@ otaurl 1 | | Reset otaurl to ```user_config.h``` value
 otaurl your-otaurl | | Set otaurl
 upgrade 1 | | Download ota firmware from your web server and restart
 upload 1 | 1.0.23 | Download ota firmware from your web server and restart
+smartconfig 1 | | Start smart config for 1 minute
+smartconfig 2 | 1.0.22 | Start wifi manager (web server at 192.168.4.1)
 
 The following commands are recognised by topic only:
 
 Command | Version | Description
 ------- | ------- | -----------
-ssid | | Show current Wifi SSId
-ssid 1 | | Reset Wifi SSId to ```user_config.h``` value and restart
-ssid your-ssid | | Set Wifi SSId and restart
-password | | Show current Wifi password
-password 1 | | Reset Wifi password to ```user_config.h``` value and restart
-password your-password | | Set Wifi password and restart
 hostname | 1.0.26 | Show current hostname
 hostname 1 | 1.0.26 | Reset hostname to ```user_config.h``` value and restart
 hostname your-host | 1.0.26 | Set hostname and restart
@@ -186,8 +188,6 @@ buttontopic | 1.0.10 | Show current MQTT button topic
 buttontopic 0 | 1.0.10 | Disable use of MQTT button topic
 buttontopic 1 | 1.0.10 | Set MQTT button topic to MQTT topic as defined in ```user_config.h```
 buttontopic your-topic | 1.0.10 | Set MQTT button topic
-smartconfig 1 | | Start smart config for 1 minute
-smartconfig 2 | 1.0.22 | Start wifi manager (web server at 192.168.4.1)
 
 If the same topic has been defined to more than one sonoff an individual sonoff can still be addressed by the fall back topic MQTT_CLIENT_ID as defined in user_config.h. The fall back topic will be ```DVES_<last six characters of MAC address>```.
 ## Tips

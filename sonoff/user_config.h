@@ -4,7 +4,14 @@
  * User specific configuration parameters
  */
 
+// Select hardware module:
+//   SONOFF         - Sonoff
+//   ELECTRO_DRAGON - Electro Dragon Relay 2 only
+#define MODULE                 SONOFF       // Either select SONOFF or ELECTRO_DRAGON
+
 #define PROJECT                "sonoff"     // PROJECT is used as the default topic delimiter and OTA file name
+                                            // As an IDE restriction it needs to be the same as the main .ino file
+                                            
 #define CFG_HOLDER             0x20160520   // Change this value to load default configurations
 
 // Wifi
@@ -42,9 +49,10 @@
 #define MQTT_GRPTOPIC          PROJECT"s"   // Group topic
 
 // MQTT - Telemetry
-#define TELE_PERIOD            300          // Send telemetry data every 300 seconds (0 = disable)
-// Disable below two defines by adding leading //
-#define SEND_TELEMETRY_UPTIME               // Enable sending uptime telemetry (if disabled will still send hourly message)
+#define TELE_PERIOD            300          // Telemetry (0 = disable, 2 - 3600 seconds)
+//#define SEND_TELEMETRY_UPTIME               // Enable sending uptime telemetry (if disabled will still send hourly message)
+//#define SEND_TELEMETRY_DS18B20              // Enable sending DS18B20 temperature telemetry
+//#define SEND_TELEMETRY_DHT                  // Enable sending DHT11, DHT21, DHT22, AM2301, AM2302 or AM2321 temperature and humidity telemetry
 #define SEND_TELEMETRY_POWER                // Enable sending power telemetry
 
 // HTTP
@@ -63,7 +71,7 @@
 
 // Application
 #define MQTT_SUBTOPIC          "POWER"
-#define APP_TIMEZONE           1            // +1 hour (Amsterdam) (-12 .. 12 = hours from UTC, 99 = TIME_DST/TIME_STD usage)
+#define APP_TIMEZONE           1            // +1 hour (Amsterdam) (-12 .. 12 = hours from UTC, 99 = use TIME_DST/TIME_STD)
 #define APP_POWER              0            // Saved power state Off
 #define APP_LEDSTATE           1            // Do not show power state (1 = Show power state)
 

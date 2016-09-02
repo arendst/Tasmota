@@ -1321,6 +1321,274 @@ void rtc_init()
 #endif  // USE_TICKER
 }
 
+#ifdef SEND_TELEMETRY_DS18B20
+/*********************************************************************************************\
+ * DS18B20
+ * 
+ * Source: Marinus vd Broek https://github.com/ESP8266nu/ESPEasy
+\*********************************************************************************************/
+
+uint8_t dsb_reset()
+{
+  uint8_t r;
+  uint8_t retries = 125;
+  
+  pinMode(DSB_PIN, INPUT);
+  do  {                                 // wait until the wire is high... just in case
+    if (--retries == 0) return 0;
+    delayMicroseconds(2);
+  } while (!digitalRead(DSB_PIN));
+  pinMode(DSB_PIN, OUTPUT);
+  digitalWrite(DSB_PIN, LOW);
+  delayMicroseconds(492);               // Dallas spec. = Min. 480uSec. Arduino 500uSec.
+  pinMode(DSB_PIN, INPUT);              //Float
+  delayMicroseconds(40);
+  r = !digitalRead(DSB_PIN);
+  delayMicroseconds(420);
+  return r;
+}
+
+uint8_t dsb_read_bit(void)
+{
+  uint8_t r;
+
+  pinMode(DSB_PIN, OUTPUT);
+  digitalWrite(DSB_PIN, LOW);
+  delayMicroseconds(3);
+  pinMode(DSB_PIN, INPUT);             // let pin float, pull up will raise
+  delayMicroseconds(10);
+  r = digitalRead(DSB_PIN);
+  delayMicroseconds(53);
+  return r;
+}
+
+uint8_t dsb_read(void)
+{
+  uint8_t bitMask;
+  uint8_t r = 0;
+
+  for (bitMask = 0x01; bitMask; bitMask <<= 1)
+    if (dsb_read_bit()) r |= bitMask;
+  return r;
+}
+
+void dsb_write_bit(uint8_t v)
+{
+  if (v & 1) {
+    digitalWrite(DSB_PIN, LOW);
+    pinMode(DSB_PIN, OUTPUT);
+    delayMicroseconds(10);
+    digitalWrite(DSB_PIN, HIGH);
+    delayMicroseconds(55);
+  } else {
+    digitalWrite(DSB_PIN, LOW);
+    pinMode(DSB_PIN, OUTPUT);
+    delayMicroseconds(65);
+    digitalWrite(DSB_PIN, HIGH);
+    delayMicroseconds(5);
+  }
+}
+
+void dsb_write(uint8_t ByteToWrite)
+{
+  uint8_t bitMask;
+  
+  for (bitMask = 0x01; bitMask; bitMask <<= 1)
+    dsb_write_bit((bitMask & ByteToWrite) ? 1 : 0);
+}
+
+void dsb_readTemperaturePrt1()
+{
+  dsb_reset();
+  dsb_write(0xCC);           // Skip ROM
+  dsb_write(0x44);           // Start conversion
+}
+
+float dsb_readTemperaturePrt2()
+{
+  int16_t DSTemp;
+  byte msb, lsb;
+  float f = NAN;
+
+/*
+  dsb_reset();
+  dsb_write(0xCC);           // Skip ROM
+  dsb_write(0x44);           // Start conversion
+  delay(800);
+*/
+  dsb_reset();
+  dsb_write(0xCC);           // Skip ROM
+  dsb_write(0xBE);           // Read scratchpad
+  lsb = dsb_read();
+  msb = dsb_read();
+  dsb_reset();
+  
+  DSTemp = (msb << 8) + lsb;
+  f = (float(DSTemp) * 0.0625);
+  return f;
+}
+#endif  // SEND_TELEMETRY_DS18B20
+
+#ifdef SEND_TELEMETRY_DHT
+/*********************************************************************************************\
+ * DHT11, DHT21 (AM2301), DHT22 (AM2302, AM2321)
+ * 
+ * Reading temperature or humidity takes about 250 milliseconds!
+ * Sensor readings may also be up to 2 seconds 'old' (its a very slow sensor)
+ * Source: Adafruit Industries https://github.com/adafruit/DHT-sensor-library
+\*********************************************************************************************/
+
+#define MIN_INTERVAL 2000
+
+uint8_t data[5];
+uint32_t _lastreadtime, _maxcycles;
+bool _lastresult;
+
+void dht_init()
+{
+  char log[LOGSZ];
+  _maxcycles = microsecondsToClockCycles(1000);  // 1 millisecond timeout for
+                                                 // reading pulses from DHT sensor.
+  pinMode(DHT_PIN, INPUT_PULLUP);
+  _lastreadtime = -MIN_INTERVAL;
+
+  snprintf_P(log, sizeof(log), PSTR("DHT: Max clock cycles %d"), _maxcycles);
+  addLog(LOG_LEVEL_DEBUG, log);
+}
+
+float dht_readTemperature(bool S, bool force)  // boolean S == Scale: true == Fahrenheit; false == Celcius
+{
+  float f = NAN;
+
+  if (dht_read(force)) {
+    switch (DHT_TYPE) {
+    case DHT11:
+      f = data[2];
+      if(S) f = dht_convertCtoF(f);
+      break;
+    case DHT22:
+    case DHT21:
+      f = data[2] & 0x7F;
+      f *= 256;
+      f += data[3];
+      f *= 0.1;
+      if (data[2] & 0x80) f *= -1;
+      if(S) f = dht_convertCtoF(f);
+      break;
+    }
+  }
+  return f;
+}
+
+float dht_convertCtoF(float c)
+{
+  return c * 1.8 + 32;
+}
+
+float dht_convertFtoC(float f)
+{
+  return (f - 32) * 0.55555;
+}
+
+float dht_readHumidity(bool force)
+{
+  float f = NAN;
+  
+  if (dht_read(force)) {
+    switch (DHT_TYPE) {
+    case DHT11:
+      f = data[0];
+      break;
+    case DHT22:
+    case DHT21:
+      f = data[0];
+      f *= 256;
+      f += data[1];
+      f *= 0.1;
+      break;
+    }
+  }
+  return f;
+}
+
+boolean dht_read(bool force)
+{
+  char log[LOGSZ];
+  uint32_t cycles[80];
+  uint32_t currenttime = millis();
+  
+  if (!force && ((currenttime - _lastreadtime) < 2000)) {
+    return _lastresult;
+  }
+  _lastreadtime = currenttime;
+
+  data[0] = data[1] = data[2] = data[3] = data[4] = 0;
+
+  digitalWrite(DHT_PIN, HIGH);
+  delay(250);
+
+  pinMode(DHT_PIN, OUTPUT);
+  digitalWrite(DHT_PIN, LOW);
+  delay(20);
+
+  noInterrupts();
+  digitalWrite(DHT_PIN, HIGH);
+  delayMicroseconds(40);
+  pinMode(DHT_PIN, INPUT_PULLUP);
+  delayMicroseconds(10);
+  if (dht_expectPulse(LOW) == 0) {
+    addLog_P(LOG_LEVEL_DEBUG, PSTR("DHT: Timeout waiting for start signal low pulse"));
+    _lastresult = false;
+    return _lastresult;
+  }
+  if (dht_expectPulse(HIGH) == 0) {
+    addLog_P(LOG_LEVEL_DEBUG, PSTR("DHT: Timeout waiting for start signal high pulse"));
+    _lastresult = false;
+    return _lastresult;
+  }
+  for (int i=0; i<80; i+=2) {
+    cycles[i]   = dht_expectPulse(LOW);
+    cycles[i+1] = dht_expectPulse(HIGH);
+  }
+  interrupts();
+
+  for (int i=0; i<40; ++i) {
+    uint32_t lowCycles  = cycles[2*i];
+    uint32_t highCycles = cycles[2*i+1];
+    if ((lowCycles == 0) || (highCycles == 0)) {
+      addLog_P(LOG_LEVEL_DEBUG, PSTR("DHT: Timeout waiting for pulse"));
+      _lastresult = false;
+      return _lastresult;
+    }
+    data[i/8] <<= 1;
+    if (highCycles > lowCycles) data[i/8] |= 1;
+  }
+
+  snprintf_P(log, sizeof(log), PSTR("DHT: Received %02X, %02X, %02X, %02X, %02X =? %02X"),
+    data[0], data[1], data[2], data[3], data[4], (data[0] + data[1] + data[2] + data[3]) & 0xFF);
+  addLog(LOG_LEVEL_DEBUG, log);
+
+  if (data[4] == ((data[0] + data[1] + data[2] + data[3]) & 0xFF)) {
+    _lastresult = true;
+    return _lastresult;
+  }
+  else {
+    addLog_P(LOG_LEVEL_DEBUG, PSTR("DHT: Checksum failure"));
+    _lastresult = false;
+    return _lastresult;
+  }
+}
+
+uint32_t dht_expectPulse(bool level)
+{
+  uint32_t count = 0;
+  
+  while (digitalRead(DHT_PIN) == level)
+    if (count++ >= _maxcycles) return 0;
+  return count;
+}
+#endif  // SEND_TELEMETRY_DHT
+
 /*********************************************************************************************\
  * Syslog
 \*********************************************************************************************/
@@ -1332,7 +1600,7 @@ void syslog(const char *message)
   portUDP.beginPacket(sysCfg.syslog_host, sysCfg.syslog_port);
   strlcpy(mess, message, sizeof(mess));
   mess[sizeof(mess)-1] = 0;
-  snprintf_P(str, sizeof(str), PSTR("%s %s"), Hostname, mess);
+  snprintf_P(str, sizeof(str), PSTR("%s ESP-%s"), Hostname, mess);
   portUDP.write(str);
   portUDP.endPacket();
 }
