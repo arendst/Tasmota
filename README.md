@@ -9,15 +9,15 @@ See [Sonoff-MQTT-OTA](https://github.com/arendst/Sonoff-MQTT-OTA) for the ```esp
 Since it's original conception the following features have evolved:
 - Control of Sonoff or [Electrodragon](http://www.electrodragon.com/product/wifi-iot-relay-board-based-esp8266/) relay by Serial, MQTT or HTTP commands
 - Multiple Sonoffs can be addressed by ```grouptopic```
-- Firmware can be upload via OTA or web upload
+- Firmware upload by OTA or via web page upload
 - Status messages have been expanded
-- UDP syslog messages can be filtered on program starting with ```ESP-```
+- UDP syslog messages can be filtered on program name starting with ```ESP-```
 - The button can send a different MQTT message defined with ```buttontopic```
 - In addition to Smartconfig a Wifi manager is also available
 - A web server provides control of Sonoff and contains a firmware upload facility
 - Support for Electrodragon controlling relay 2 by button 1 only
 - Support for DHTxx on GPIO14 or DS18B20 on GPIO04 temperature sensors
-- Telemetry data can be send using different prefix from status messages
+- Telemetry data can be send using optional different prefix from status messages
 
 ## Prerequisite
 Install the ESP8266 Arduino development environment from [esp8266 Arduino](https://github.com/esp8266/Arduino). The software is tested on a Windows PC with Arduino IDE versions 1.6.5r5, 1.6.8, 1.6.9 and 1.6.10 and esp8266 Arduino versions 2.1.0, 2.2.0 and 2.3.0.
