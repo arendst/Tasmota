@@ -5,6 +5,19 @@ Provide ESP8266 based [itead Sonoff](https://www.itead.cc/sonoff-wifi-wireless-s
 Current version is 1.0.30 - See ```sonoff/_releasenotes``` for change information.
 
 See [Sonoff-MQTT-OTA](https://github.com/arendst/Sonoff-MQTT-OTA) for the ```esp-open-sdk``` version.
+## Features
+Since it's original conception the following features have evolved:
+- Control of sonoff relay by Serial, MQTT or HTTP commands
+- Multiple sonoffs can be addressed by ```grouptopic```
+- Firmware can be upload via OTA or web upload
+- Status messages have been expanded
+- UDP syslog messages can be filtered on program starting with ```ESP-```
+- The button can send a different MQTT message defined with ```buttontopic```
+- In addition to smartconfig a Wifi manager is also available
+- A web server provides control of sonoff and contains a firmware upload facility
+- Support for ElectroDragon controlling relay 2 by button 1 only
+- Support for DHTxx on GPIO14 or DS18B20 on GPIO04 temperature sensors
+- Telemetry data can be send using different prefix from status messages
 ## Prerequisite
 Install the ESP8266 Arduino development environment from [esp8266 Arduino](https://github.com/esp8266/Arduino). The software is tested on a Windows PC with Arduino IDE versions 1.6.5r5, 1.6.8, 1.6.9 and 1.6.10 and esp8266 Arduino versions 2.1.0, 2.2.0 and 2.3.0.
 
@@ -70,6 +83,8 @@ Sonoff responds to the following MQTT commands:
 - show status information by ```cmnd/sonoff/status 1```
 
 Most MQTT commands will result in a status feedback like ```stat/sonoff/POWER On```.
+
+Telemetry data wil be send by prefix tele like ```tele/sonoff/TEMP 24.7```
 ## Commands supported
 The firmware supports **serial**, **MQTT** and **Web** Man Machine interface. The serial interface is set to 115200 bps. The MQTT commands are constructed as ```cmnd/sonoff/<command>```. 
 
