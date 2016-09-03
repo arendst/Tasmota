@@ -7,15 +7,15 @@ Current version is 1.0.30 - See ```sonoff/_releasenotes``` for change informatio
 See [Sonoff-MQTT-OTA](https://github.com/arendst/Sonoff-MQTT-OTA) for the ```esp-open-sdk``` version.
 ## Features
 Since it's original conception the following features have evolved:
-- Control of sonoff relay by Serial, MQTT or HTTP commands
-- Multiple sonoffs can be addressed by ```grouptopic```
+- Control of Sonoff or [Electrodragon](http://www.electrodragon.com/product/wifi-iot-relay-board-based-esp8266/) relay by Serial, MQTT or HTTP commands
+- Multiple Sonoffs can be addressed by ```grouptopic```
 - Firmware can be upload via OTA or web upload
 - Status messages have been expanded
 - UDP syslog messages can be filtered on program starting with ```ESP-```
 - The button can send a different MQTT message defined with ```buttontopic```
-- In addition to smartconfig a Wifi manager is also available
-- A web server provides control of sonoff and contains a firmware upload facility
-- Support for ElectroDragon controlling relay 2 by button 1 only
+- In addition to Smartconfig a Wifi manager is also available
+- A web server provides control of Sonoff and contains a firmware upload facility
+- Support for Electrodragon controlling relay 2 by button 1 only
 - Support for DHTxx on GPIO14 or DS18B20 on GPIO04 temperature sensors
 - Telemetry data can be send using different prefix from status messages
 
