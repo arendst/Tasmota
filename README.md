@@ -18,6 +18,7 @@ Since it's original conception the following features have evolved:
 - Support for ElectroDragon controlling relay 2 by button 1 only
 - Support for DHTxx on GPIO14 or DS18B20 on GPIO04 temperature sensors
 - Telemetry data can be send using different prefix from status messages
+
 ## Prerequisite
 Install the ESP8266 Arduino development environment from [esp8266 Arduino](https://github.com/esp8266/Arduino). The software is tested on a Windows PC with Arduino IDE versions 1.6.5r5, 1.6.8, 1.6.9 and 1.6.10 and esp8266 Arduino versions 2.1.0, 2.2.0 and 2.3.0.
 
