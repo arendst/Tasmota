@@ -19,4 +19,5 @@ Since it's original conception the following features have evolved:
 - Support for DHTxx on GPIO14 or DS18B20 on GPIO04 temperature sensors
 - Telemetry data can be send using optional different prefix from status messages
 
+## More Information
 See [Wiki](https://github.com/arendst/Sonoff-MQTT-OTA-Arduino/wiki) for more information.
