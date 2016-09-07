@@ -52,8 +52,8 @@
 // MQTT - Telemetry
 #define TELE_PERIOD            300          // Telemetry (0 = disable, 2 - 3600 seconds)
 //#define SEND_TELEMETRY_UPTIME               // Enable sending uptime telemetry (if disabled will still send hourly message)
-#define SEND_TELEMETRY_DS18B20              // Enable sending DS18B20 temperature telemetry
-#define SEND_TELEMETRY_DHT                  // Enable sending DHT11, DHT21, DHT22, AM2301, AM2302 or AM2321 temperature and humidity telemetry
+//#define SEND_TELEMETRY_DS18B20              // Enable sending DS18B20 temperature telemetry
+//#define SEND_TELEMETRY_DHT                  // Enable sending DHT11, DHT21, DHT22, AM2301, AM2302 or AM2321 temperature and humidity telemetry
 #define SEND_TELEMETRY_POWER                // Enable sending power telemetry
 
 // HTTP

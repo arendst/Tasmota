@@ -1,8 +1,8 @@
 /* 1.0.31 20160907
  * Fix DS18B20 misread if teleperiod = 2
  * Tuned sensor code
- * Updated ElectroDragon connections 
- * Moved SONOFF and ELECRO_DRAGON port config to user_config.h
+ * Updated prefered ElectroDragon connection to Relay 1 and Button 1 
+ * Moved SONOFF and ELECTRO_DRAGON port config to user_config.h
  * 
  * 1.0.30 20160902
  * Fix command TELEPERIOD 0
