@@ -1,4 +1,10 @@
-/* 1.0.30
+/* 1.0.31 20160907
+ * Fix DS18B20 misread if teleperiod = 2
+ * Tuned sensor code
+ * Updated ElectroDragon connections 
+ * Moved SONOFF and ELECRO_DRAGON port config to user_config.h
+ * 
+ * 1.0.30 20160902
  * Fix command TELEPERIOD 0
  * Add ESP- tag to UDP log message for easy rsyslogd filtering
  * Add ElectroDragon (Relay 2 only) functionality. Select with #define MODULE ELECTRO_DRAGON

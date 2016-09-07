@@ -25,10 +25,17 @@
  *                        | | | | | |                     Gnd
 */
 
-#define VERSION                0x01001E00   // 1.0.30
+#define VERSION                0x01001F00   // 1.0.31
 
 #define SONOFF                 1
 #define ELECTRO_DRAGON         2
+
+#define DHT11                  11
+#define DHT21                  21
+#define DHT22                  22
+#define AM2301                 21
+#define AM2302                 22
+#define AM2321                 22
 
 enum log_t   {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG_MORE, LOG_LEVEL_ALL};
 enum week_t  {Last, First, Second, Third, Fourth}; 
@@ -45,43 +52,6 @@ enum month_t {Jan=1, Feb, Mar, Apr, May, Jun, Jul, Aug, Sep, Oct, Nov, Dec};
 #define USE_TICKER                          // Enable interrupts to keep RTC synced during subscription flooding
 //#define USE_SPIFFS                          // Switch persistent configuration from flash to spiffs (+24k code, +0.6k mem)
 #define USE_WEBSERVER                       // Enable web server and wifi manager (+37k code, +2k mem)
-
-/*********************************************************************************************\
- * Optional parameters for both SONOFF and ELECTRO_DRAGON module
-\*********************************************************************************************/
-
-#define DHT11                  11
-#define DHT21                  21
-#define DHT22                  22
-#define AM2301                 21
-#define AM2302                 22
-#define AM2321                 22
-
-#if MODULE == SONOFF                        // programming header 1:3.3V 2:rx 3:tx 4:gnd
-  #define APP_NAME             "Sonoff module"
-  #define LED_PIN              13           // GPIO 13 = Green Led (0 = On, 1 = Off) - Sonoff
-  #define LED_INVERTED         1            // 0 = (1 = On, 0 = Off), 1 = (0 = On, 1 = Off)
-  #define REL_PIN              12           // GPIO 12 = Red Led and Relay (0 = Off, 1 = On)
-  #define KEY_PIN              0            // GPIO 00 = Button
-  #define DHT_PIN              14           // GPIO 14 = TEM1 - DHT22
-  #define DHT_TYPE             DHT11        // DHT module type (DHT11, DHT21, DHT22, AM2301, AM2302 or AM2321)
-  #define DSB_PIN              4            // GPIO 04 = TEM2 - DS18B20
-  
-#elif MODULE == ELECTRO_DRAGON              // programming header 5V/3V/gnd/
-  #define APP_NAME             "ElectroDragon module"
-  #define LED_PIN              16           // GPIO 16 = Led (0 = Off, 1 = On)
-  #define LED_INVERTED         0            // 0 = (1 = On, 0 = Off), 1 = (0 = On, 1 = Off)
-  #define REL_PIN              12           // GPIO 12 = Red Led and Relay 2 (0 = Off, 1 = On)
-  #define KEY_PIN              0            // GPIO 00 = Button 2
-  #define REL1_PIN             13           // GPIO 13 = Red Led and Relay 1 (0 = Off, 1 = On)
-  #define KEY1_PIN             2            // GPIO 02 = Button 1
-  #define DHT_PIN              14           // GPIO 14 = DHT22
-  #define DHT_TYPE             DHT22        // DHT module type (DHT11, DHT21, DHT22, AM2301, AM2302 or AM2321)
-  #define DSB_PIN              4            // GPIO 04 = DS18B20
-  
-#else
-  #error "Select either module SONOFF or ELECTRO_DRAGON"
-#endif
 
 /*********************************************************************************************\
  * No more user configurable items below
@@ -693,9 +663,14 @@ void every_second()
   if (sysCfg.tele_period) {
     tele_period++;
 
+    if (tele_period == sysCfg.tele_period -1) {
 #ifdef SEND_TELEMETRY_DS18B20
-    if (tele_period == sysCfg.tele_period -2) dsb_readTemperaturePrt1();
+      dsb_readTempPrep();
 #endif  // SEND_TELEMETRY_DS18B20
+#ifdef SEND_TELEMETRY_DHT
+      dht_readPrep();
+#endif  // SEND_TELEMETRY_DHT
+    }
 
     if (tele_period >= sysCfg.tele_period) {
       tele_period = 0;
@@ -707,8 +682,7 @@ void every_second()
 #endif  // SEND_TELEMETRY_UPTIME
 
 #ifdef SEND_TELEMETRY_DS18B20
-      t = dsb_readTemperaturePrt2();   // Read temperature as Celsius (the default)
-      if (!isnan(t)) {                 // Check if read failed
+      if (dsb_readTemp(t)) {                 // Check if read failed
         snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/TEMP"), PUB_PREFIX2, sysCfg.mqtt_topic);
         dtostrf(t, 1, 1, svalue);
         mqtt_publish(stopic, svalue);
@@ -716,9 +690,7 @@ void every_second()
 #endif  // SEND_TELEMETRY_DS18B20
 
 #ifdef SEND_TELEMETRY_DHT
-      h = dht_readHumidity(false);
-      t = dht_readTemperature(false, false); // Read temperature as Celsius (the default)
-      if (!isnan(h) && !isnan(t)) {          // Check if any reads failed
+      if (dht_readTempHum(false, t, h)) {     // Read temperature as Celsius (the default)
         snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/TEMP"), PUB_PREFIX2, sysCfg.mqtt_topic);
         dtostrf(t, 1, 1, svalue);
         mqtt_publish(stopic, svalue);

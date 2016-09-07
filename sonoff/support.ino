@@ -1397,18 +1397,19 @@ void dsb_write(uint8_t ByteToWrite)
     dsb_write_bit((bitMask & ByteToWrite) ? 1 : 0);
 }
 
-void dsb_readTemperaturePrt1()
+void dsb_readTempPrep()
 {
   dsb_reset();
   dsb_write(0xCC);           // Skip ROM
   dsb_write(0x44);           // Start conversion
 }
 
-float dsb_readTemperaturePrt2()
+boolean dsb_readTemp(float &t)
 {
   int16_t DSTemp;
   byte msb, lsb;
-  float f = NAN;
+
+  t = NAN;
 
 /*
   dsb_reset();
@@ -1424,8 +1425,8 @@ float dsb_readTemperaturePrt2()
   dsb_reset();
   
   DSTemp = (msb << 8) + lsb;
-  f = (float(DSTemp) * 0.0625);
-  return f;
+  t = (float(DSTemp) * 0.0625);
+  return (!isnan(t));
 }
 #endif  // SEND_TELEMETRY_DS18B20
 
@@ -1444,88 +1445,35 @@ uint8_t data[5];
 uint32_t _lastreadtime, _maxcycles;
 bool _lastresult;
 
-void dht_init()
+void dht_readPrep()
 {
-  char log[LOGSZ];
-  _maxcycles = microsecondsToClockCycles(1000);  // 1 millisecond timeout for
-                                                 // reading pulses from DHT sensor.
-  pinMode(DHT_PIN, INPUT_PULLUP);
-  _lastreadtime = -MIN_INTERVAL;
-
-  snprintf_P(log, sizeof(log), PSTR("DHT: Max clock cycles %d"), _maxcycles);
-  addLog(LOG_LEVEL_DEBUG, log);
+  digitalWrite(DHT_PIN, HIGH);
 }
 
-float dht_readTemperature(bool S, bool force)  // boolean S == Scale: true == Fahrenheit; false == Celcius
+uint32_t dht_expectPulse(bool level)
 {
-  float f = NAN;
-
-  if (dht_read(force)) {
-    switch (DHT_TYPE) {
-    case DHT11:
-      f = data[2];
-      if(S) f = dht_convertCtoF(f);
-      break;
-    case DHT22:
-    case DHT21:
-      f = data[2] & 0x7F;
-      f *= 256;
-      f += data[3];
-      f *= 0.1;
-      if (data[2] & 0x80) f *= -1;
-      if(S) f = dht_convertCtoF(f);
-      break;
-    }
-  }
-  return f;
-}
-
-float dht_convertCtoF(float c)
-{
-  return c * 1.8 + 32;
-}
-
-float dht_convertFtoC(float f)
-{
-  return (f - 32) * 0.55555;
-}
-
-float dht_readHumidity(bool force)
-{
-  float f = NAN;
+  uint32_t count = 0;
   
-  if (dht_read(force)) {
-    switch (DHT_TYPE) {
-    case DHT11:
-      f = data[0];
-      break;
-    case DHT22:
-    case DHT21:
-      f = data[0];
-      f *= 256;
-      f += data[1];
-      f *= 0.1;
-      break;
-    }
-  }
-  return f;
+  while (digitalRead(DHT_PIN) == level)
+    if (count++ >= _maxcycles) return 0;
+  return count;
 }
 
-boolean dht_read(bool force)
+boolean dht_read()
 {
   char log[LOGSZ];
   uint32_t cycles[80];
   uint32_t currenttime = millis();
   
-  if (!force && ((currenttime - _lastreadtime) < 2000)) {
+  if ((currenttime - _lastreadtime) < 2000) {
     return _lastresult;
   }
   _lastreadtime = currenttime;
 
   data[0] = data[1] = data[2] = data[3] = data[4] = 0;
 
-  digitalWrite(DHT_PIN, HIGH);
-  delay(250);
+//  digitalWrite(DHT_PIN, HIGH);
+//  delay(250);
 
   pinMode(DHT_PIN, OUTPUT);
   digitalWrite(DHT_PIN, LOW);
@@ -1579,13 +1527,51 @@ boolean dht_read(bool force)
   }
 }
 
-uint32_t dht_expectPulse(bool level)
+float dht_convertCtoF(float c)
 {
-  uint32_t count = 0;
-  
-  while (digitalRead(DHT_PIN) == level)
-    if (count++ >= _maxcycles) return 0;
-  return count;
+  return c * 1.8 + 32;
+}
+
+boolean dht_readTempHum(bool S, float &t, float &h)
+{
+  t = NAN;
+  h = NAN;
+
+  if (dht_read()) {
+    switch (DHT_TYPE) {
+    case DHT11:
+      h = data[0];
+      t = data[2];
+      if(S) t = dht_convertCtoF(t);
+      break;
+    case DHT22:
+    case DHT21:
+      h = data[0];
+      h *= 256;
+      h += data[1];
+      h *= 0.1;
+      t = data[2] & 0x7F;
+      t *= 256;
+      t += data[3];
+      t *= 0.1;
+      if (data[2] & 0x80) t *= -1;
+      if(S) t = dht_convertCtoF(t);
+      break;
+    }
+  }
+  return (!isnan(t) && !isnan(h)); 
+}
+
+void dht_init()
+{
+  char log[LOGSZ];
+  _maxcycles = microsecondsToClockCycles(1000);  // 1 millisecond timeout for
+                                                 // reading pulses from DHT sensor.
+  pinMode(DHT_PIN, INPUT_PULLUP);
+  _lastreadtime = -MIN_INTERVAL;
+
+  snprintf_P(log, sizeof(log), PSTR("DHT: Max clock cycles %d"), _maxcycles);
+  addLog(LOG_LEVEL_DEBUG, log);
 }
 #endif  // SEND_TELEMETRY_DHT
 
