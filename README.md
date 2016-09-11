@@ -5,7 +5,7 @@ Provide ESP8266 based [itead Sonoff](https://www.itead.cc/sonoff-wifi-wireless-s
 Current version is 1.0.31 - See ```sonoff/_releasenotes``` for change information.
 
 See [Sonoff-MQTT-OTA](https://github.com/arendst/Sonoff-MQTT-OTA) for the ```esp-open-sdk``` version.
-<img alt="Sonoff" src="https://github.com/arendst/arendst.github.io/blob/master/media/sonoff_th.jpg" height="360" align="right" /> 
+<img alt="Sonoff" src="https://github.com/arendst/arendst.github.io/blob/master/media/sonoff_th.jpg" height="320" align="right" /> 
 ## Features
 Since it's original conception the following features have evolved:
 - Control of Sonoff or [Electrodragon](http://www.electrodragon.com/product/wifi-iot-relay-board-based-esp8266/) relay by Serial, MQTT or HTTP commands
