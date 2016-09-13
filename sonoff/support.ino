@@ -378,7 +378,7 @@ void showPage(String &page)
 {
   page.replace("{h}", Hostname);
   if (_wifimanager) {
-    if (WIFI_smartcounter()) {
+    if (WIFI_configCounter()) {
       page.replace("<body>", "<body onload='u()'>");
       page += FPSTR(HTTP_COUNTER);
     }
@@ -691,7 +691,7 @@ void handleUpgradeStart()
   char svalue[MESSZ];
 
   addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Firmware upgrade start"));
-  WIFI_smartcounter();
+  WIFI_configCounter();
 
   if (strlen(webServer->arg("o").c_str())) {
     snprintf_P(svalue, sizeof(svalue), PSTR("otaurl %s"), webServer->arg("o").c_str());
@@ -714,7 +714,7 @@ void handleUploadDone()
   char svalue[MESSZ];
 
   addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Firmware upload done"));
-  WIFI_smartcounter();
+  WIFI_configCounter();
 
   String page = FPSTR(HTTP_HEAD);
   page.replace("{v}", "Info");
@@ -981,34 +981,79 @@ boolean isIp(String str)
  * Wifi
 \*********************************************************************************************/
 
-#define WIFI_SMARTSEC     60   // seconds before restart
-#define MANAGER_SEC       120  // seconds before restart
+#define WIFI_CONFIG_SEC   60   // seconds before restart
+#define WIFI_MANAGER_SEC  120  // seconds before restart
 #define WIFI_CHECKSEC     20   // seconds
 #define WIFI_RETRY        16
 
-uint8_t wificounter, wifiretry, smartconfigflag = 0, smartcounter = 0;
+uint8_t wificounter, wifiretry, _wpsresult, wificonfigflag = 0, _wifiConfigCounter = 0;
 
-boolean WIFI_smartcounter()
+boolean WIFI_configCounter()
 {
-  if (smartcounter) smartcounter = MANAGER_SEC;
-  return (smartcounter);
+  if (_wifiConfigCounter) _wifiConfigCounter = WIFI_MANAGER_SEC;
+  return (_wifiConfigCounter);
 }
 
-void WIFI_smartconfig(int type)
+extern "C" {
+#include "user_interface.h"
+}
+
+void WIFI_wps_status_cb(wps_cb_status status);
+
+void WIFI_wps_status_cb(wps_cb_status status)
 {
-  if (!smartconfigflag) {
-    smartconfigflag = type;
-    smartcounter = WIFI_SMARTSEC;   // Allow up to WIFI_SMARTSECS seconds for phone to provide ssid/pswd
-    wificounter = smartcounter +5;
+  char log[LOGSZ];
+
+/* from user_interface.h:
+  enum wps_cb_status {
+    WPS_CB_ST_SUCCESS = 0,
+    WPS_CB_ST_FAILED,
+    WPS_CB_ST_TIMEOUT,
+    WPS_CB_ST_WEP,      // WPS failed because that WEP is not supported
+    WPS_CB_ST_SCAN_ERR, // can not find the target WPS AP
+  };
+*/
+
+  _wpsresult = status;
+  snprintf_P(log, sizeof(log), PSTR("WPSconfig: Result %d"), _wpsresult);
+  addLog(LOG_LEVEL_DEBUG, log);
+  if (status == WPS_CB_ST_SUCCESS) wifi_wps_disable();
+  _wifiConfigCounter = 3;
+}
+
+boolean WIFI_beginWPSConfig(void)
+{
+  WiFi.disconnect();
+  if (!wifi_wps_disable()) return false;
+  if (!wifi_wps_enable(WPS_TYPE_PBC)) return false;  // so far only WPS_TYPE_PBC is supported (SDK 2.0.0)
+  if (!wifi_set_wps_cb((wps_st_cb_t) &WIFI_wps_status_cb)) return false;
+  if (!wifi_wps_start()) return false;
+  return true;
+}
+
+void WIFI_config(int type)
+{
+  if (!wificonfigflag) {
+    wificonfigflag = type;
+    _wifiConfigCounter = WIFI_CONFIG_SEC;   // Allow up to WIFI_CONFIG_SECS seconds for phone to provide ssid/pswd
+    wificounter = _wifiConfigCounter +5;
     blinks = 1999;
-#ifdef USE_WEBSERVER
-    if (smartconfigflag == WIFI_SMARTCONFIG) {
-#endif  // USE_WEBSERVER
-      addLog_P(LOG_LEVEL_INFO, PSTR("Smartconfig: Started and active for 1 minute"));
+    if (wificonfigflag == WIFI_SMARTCONFIG) {
+      addLog_P(LOG_LEVEL_INFO, PSTR("Smartconfig: Active for 1 minute"));
       WiFi.beginSmartConfig();
+    }
+    else if (wificonfigflag == WIFI_WPSCONFIG) {
+      _wpsresult = 99;
+      if (WIFI_beginWPSConfig()) 
+        addLog_P(LOG_LEVEL_INFO, PSTR("WPSconfig: Active for 1 minute"));
+      else {
+        addLog_P(LOG_LEVEL_INFO, PSTR("WPSconfig: Failed to start"));
+        _wifiConfigCounter = 3;
+      }
+    }
 #ifdef USE_WEBSERVER
-    } else {
-      addLog_P(LOG_LEVEL_INFO, PSTR("Wifimanager: Started and active for 1 minute for initial request"));
+    else {
+      addLog_P(LOG_LEVEL_INFO, PSTR("Wifimanager: Active for 1 minute for initial request"));
       beginWifiManager();
     }
 #endif  // USE_WEBSERVER
@@ -1026,7 +1071,7 @@ void WIFI_check_ip()
       case WL_NO_SSID_AVAIL:
       case WL_CONNECT_FAILED:
         addLog_P(LOG_LEVEL_DEBUG, PSTR("Wifi: STATION_CONNECT_FAIL"));
-        WIFI_smartconfig((sysCfg.bootcount &1) +1);
+        WIFI_config(sysCfg.sta_config);
         break;
       default:
         addLog_P(LOG_LEVEL_DEBUG, PSTR("Wifi: STATION_IDLE"));
@@ -1035,7 +1080,7 @@ void WIFI_check_ip()
         if (wifiretry)
           wificounter = 1;
         else
-          WIFI_smartconfig((sysCfg.bootcount &1) +1);
+          WIFI_config(sysCfg.sta_config);
         break;
     }
   }
@@ -1049,38 +1094,47 @@ void WIFI_Check(int param)
   switch (param) {
   case WIFI_SMARTCONFIG:
   case WIFI_MANAGER:
-    WIFI_smartconfig(param);
+  case WIFI_WPSCONFIG:
+    WIFI_config(param);
     break;
   default:
-#ifdef USE_WEBSERVER
-    if ((WiFi.status() == WL_CONNECTED) && (static_cast<uint32_t>(WiFi.localIP()) != 0)) {
-      if (smartconfigflag != WIFI_MANAGER) {
-        if (sysCfg.webserver && (sysCfg.webserver != httpflag)) startWebserver(sysCfg.webserver, WiFi.localIP());
-        if (!sysCfg.webserver && httpflag) stopWebserver();
-      }
-    }
-#endif  // USE_WEBSERVER
-    if (wificounter <= 0) {
-      addLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("Wifi: Checking connection..."));
-      wificounter = WIFI_CHECKSEC;
-      WIFI_check_ip();
-    }
-    if (smartcounter) {
-      smartcounter--;
-      wificounter = smartcounter +5;
-      if (smartcounter) {
-        if ((smartconfigflag == WIFI_SMARTCONFIG) && WiFi.smartConfigDone()) {
-          smartcounter = 0;
+    if (_wifiConfigCounter) {
+      _wifiConfigCounter--;
+      wificounter = _wifiConfigCounter +5;
+      if (_wifiConfigCounter) {
+        if ((wificonfigflag == WIFI_SMARTCONFIG) && WiFi.smartConfigDone()) {
+          _wifiConfigCounter = 0;
           if (strlen(WiFi.SSID().c_str())) strlcpy(sysCfg.sta_ssid, WiFi.SSID().c_str(), sizeof(sysCfg.sta_ssid));
           if (strlen(WiFi.psk().c_str())) strlcpy(sysCfg.sta_pwd, WiFi.psk().c_str(), sizeof(sysCfg.sta_pwd));
           snprintf_P(log, sizeof(log), PSTR("Smartconfig: SSID %s and Password %s"), sysCfg.sta_ssid, sysCfg.sta_pwd);
           addLog(LOG_LEVEL_INFO, log);
         }
+        if ((wificonfigflag == WIFI_WPSCONFIG) && (!_wpsresult)) {
+          _wifiConfigCounter = 0;
+          if (strlen(WiFi.SSID().c_str())) strlcpy(sysCfg.sta_ssid, WiFi.SSID().c_str(), sizeof(sysCfg.sta_ssid));
+          if (strlen(WiFi.psk().c_str())) strlcpy(sysCfg.sta_pwd, WiFi.psk().c_str(), sizeof(sysCfg.sta_pwd));
+          snprintf_P(log, sizeof(log), PSTR("WPSconfig: SSID %s and Password %s"), sysCfg.sta_ssid, sysCfg.sta_pwd);
+          addLog(LOG_LEVEL_INFO, log);
+        }
       }
-      if (smartcounter == 0) {
-        if (smartconfigflag == WIFI_SMARTCONFIG) WiFi.stopSmartConfig();
+      if (_wifiConfigCounter == 0) {
+        if (wificonfigflag == WIFI_SMARTCONFIG) WiFi.stopSmartConfig();
         restartflag = 2;     
       }
+    } else {
+      if (wificounter <= 0) {
+        addLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("Wifi: Checking connection..."));
+        wificounter = WIFI_CHECKSEC;
+        WIFI_check_ip();
+      }
+#ifdef USE_WEBSERVER
+      if ((WiFi.status() == WL_CONNECTED) && (static_cast<uint32_t>(WiFi.localIP()) != 0)) {
+        if (wificonfigflag != WIFI_MANAGER) {
+          if (sysCfg.webserver && (sysCfg.webserver != httpflag)) startWebserver(sysCfg.webserver, WiFi.localIP());
+          if (!sysCfg.webserver && httpflag) stopWebserver();
+        }
+      }
+#endif  // USE_WEBSERVER
     }
   }
 }
@@ -1090,7 +1144,7 @@ int WIFI_State()
   int state;
 
   if ((WiFi.status() == WL_CONNECTED) && (static_cast<uint32_t>(WiFi.localIP()) != 0)) state = WIFI_STATUS;
-  if (smartconfigflag) state = smartconfigflag;
+  if (wificonfigflag) state = wificonfigflag;
   return state;
 }
 
@@ -1102,7 +1156,7 @@ void WIFI_Connect(char *Hostname)
   WiFi.setAutoConnect(true);
   WiFi.mode(WIFI_STA);      // Disable AP mode
   WiFi.hostname(Hostname);
-  snprintf_P(log, sizeof(log), PSTR("Wifi: Connecting to %s as %s"), sysCfg.sta_ssid, Hostname);
+  snprintf_P(log, sizeof(log), PSTR("Wifi: Connecting to %s (%s) as %s"), sysCfg.sta_ssid, sysCfg.sta_pwd, Hostname);
   addLog(LOG_LEVEL_INFO, log);
   WiFi.begin(sysCfg.sta_ssid, sysCfg.sta_pwd);
   wifiretry = WIFI_RETRY;
@@ -1605,9 +1659,12 @@ void addLog(byte loglevel, const char *line)
 #endif  // USE_SERIAL
 #ifdef USE_WEBSERVER
   if (loglevel <= sysCfg.weblog_level) {
-    Log[logidx] = String(mxtime);
-    Log[logidx] += " ";
-    Log[logidx] += String(line);
+//    Log[logidx] = String(mxtime);
+//    Log[logidx] += " ";
+//    Log[logidx] += String(line);
+
+    Log[logidx] = String(mxtime) + " " + String(line);
+
     logidx++;
     if (logidx > MAX_LOG_LINES -1) logidx = 0;
   }

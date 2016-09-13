@@ -2,7 +2,7 @@
 ## Sonoff-MQTT-OTA-Arduino
 Provide ESP8266 based [itead Sonoff](https://www.itead.cc/sonoff-wifi-wireless-switch.html) and [itead Sonoff TH10/TH16](https://www.itead.cc/sonoff-th.html) with Web, MQTT and 'Over the Air' or OTA firmware using Arduino IDE.
 
-Current version is 1.0.31 - See ```sonoff/_releasenotes``` for change information.
+Current version is 1.0.32 - See ```sonoff/_releasenotes``` for change information.
 
 See [Sonoff-MQTT-OTA](https://github.com/arendst/Sonoff-MQTT-OTA) for the ```esp-open-sdk``` version.
 <img alt="Sonoff" src="https://github.com/arendst/arendst.github.io/blob/master/media/sonoff_th.jpg" height="320" align="right" /> 
@@ -14,7 +14,7 @@ Since it's original conception the following features have evolved:
 - Status messages have been expanded
 - UDP syslog messages can be filtered on program name starting with ```ESP-```
 - The button can send a different MQTT message defined with ```buttontopic```
-- In addition to Smartconfig a Wifi manager is also available
+- Initial Wifi setup by user_config.h, Serial, Smartconfig, Wifi manager or WPS config
 - A web server provides control of Sonoff and contains a firmware upload facility
 - Support for Electrodragon controlling relay 1 by button 1
 - Support for DHTxx on GPIO14 or DS18B20 on GPIO04 temperature sensors as used in Sonoff TH10/TH16

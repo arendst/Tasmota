@@ -1,4 +1,11 @@
-/* 1.0.31 20160907
+/* 1.0.32 20160913
+ * Add Wifi Protected Setup (WPS) as third option for initial config
+ * Add command WIFICONFIG replacing deprecated command SMARTCONFIG
+ * Add option WIFICONFIG 3 to start WPSconfig
+ * Add option WIFICONFIG 0 to start saved Wifi config tool (WPSconfig, Smartconfig or Wifimanager)
+ * Change button behaviour - See Wiki 
+ * 
+ * 1.0.31 20160907
  * Fix DS18B20 misread if teleperiod = 2
  * Tuned sensor code
  * Updated prefered ElectroDragon connection to Relay 1 and Button 1 
