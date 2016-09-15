@@ -1,12 +1,11 @@
-/* 
- * user_config.h
- * 
+/*********************************************************************************************\
  * User specific configuration parameters
- */
-
-// Select hardware module:
-//   SONOFF          - Sonoff, Sonoff_TH10A(16A)
-//   ELECTRO_DRAGON  - Electro Dragon (Relay 2 only)
+ * 
+ * Select hardware MODULE:
+ *  SONOFF          = Sonoff, Sonoff TH 10A and Sonoff TH 16A
+ *  ELECTRO_DRAGON  = Electro Dragon (Relay 2 only)
+ * 
+\*********************************************************************************************/
 
 #define MODULE                 SONOFF       // Hardware module type (SONOFF or ELECTRO_DRAGON)
 

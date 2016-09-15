@@ -1,4 +1,9 @@
-/* 1.0.32 20160913
+/* 1.0.33 20160915
+ * Better WPS error message
+ * Separate webserver code from support.ino into webserver.ino
+ * Fix webserver User by removing unwanted restart option
+ * 
+ * 1.0.32 20160913
  * Add Wifi Protected Setup (WPS) as third option for initial config
  * Add command WIFICONFIG replacing deprecated command SMARTCONFIG
  * Add option WIFICONFIG 3 to start WPSconfig

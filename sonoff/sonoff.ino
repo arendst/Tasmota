@@ -25,7 +25,7 @@
  *                        | | | | | |                     Gnd
 */
 
-#define VERSION                0x01002000   // 1.0.32
+#define VERSION                0x01002100   // 1.0.33
 
 #define SONOFF                 1            // Sonoff, Sonoff TH10/16
 #define ELECTRO_DRAGON         2            // Electro Dragon Wifi IoT Relay Board Based on ESP8266
@@ -384,9 +384,9 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
       if ((data_len > 0) && (payload == 1)) {
         otaflag = 3;
         snprintf_P(svalue, sizeof(svalue), PSTR("Upgrade %s from %s"), Version, sysCfg.otaUrl);
-      }
-      else
+      } else {
         snprintf_P(svalue, sizeof(svalue), PSTR("1 to upgrade"));
+      }
     }
     else if (!strcmp(type,"OTAURL")) {
       if ((data_len > 0) && (data_len < sizeof(sysCfg.otaUrl)))
@@ -444,12 +444,12 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
       if (data_len > 0) {
         if (payload == 0) payload = sysCfg.sta_config;
         if ((payload > 0) && (payload <= 3)) {
-          if (WIFI_State() == WIFI_STATUS) {
-            wificheckflag = payload;
-            sysCfg.sta_config = wificheckflag;
-            snprintf_P(svalue, sizeof(svalue), PSTR("%s started"), (payload == WIFI_SMARTCONFIG) ? "Smartconfig" : (payload == WIFI_MANAGER) ? "Wifimanager" : "WPSconfig");
-          } else {
-            snprintf_P(svalue, sizeof(svalue), PSTR("Smartconfig, Wifimanager or WPSconfig active"));
+          wificheckflag = payload;
+          sysCfg.sta_config = wificheckflag;
+          snprintf_P(svalue, sizeof(svalue), PSTR("%s selected"), (payload == WIFI_SMARTCONFIG) ? "Smartconfig" : (payload == WIFI_MANAGER) ? "Wifimanager" : "WPSconfig");
+          if (WIFI_State() != WIFI_STATUS) {
+            snprintf_P(svalue, sizeof(svalue), PSTR("%s on restart"), svalue);
+            restartflag = 2;
           }
         }
       } else {
@@ -461,11 +461,12 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
       if ((data_len > 0) && (payload >= 0) && (payload <= 2)) {
         sysCfg.webserver = payload;
       }
-      if (sysCfg.webserver)
+      if (sysCfg.webserver) {
         snprintf_P(svalue, sizeof(svalue), PSTR("Webserver active for %s on %s with IP address %s"),
           (sysCfg.webserver == 2) ? "Admin" : "User", Hostname, WiFi.localIP().toString().c_str());
-      else
+      } else {
         snprintf_P(svalue, sizeof(svalue), PSTR("Off"));
+      }
     }
     else if (!strcmp(type,"WEBLOG")) {
       if ((data_len > 0) && (payload >= LOG_LEVEL_NONE) && (payload <= LOG_LEVEL_ALL)) {
@@ -602,8 +603,7 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
         sysCfg.ledstate = payload;
       }
       strlcpy(svalue, (sysCfg.ledstate) ? "On" : "Off", sizeof(svalue));
-    }
-    else {
+    } else {
       type = NULL;
     }
     if (type == NULL) {
@@ -664,16 +664,17 @@ void every_second()
     
   if (sysCfg.tele_period) {
     tele_period++;
-
     if (tele_period == sysCfg.tele_period -1) {
+      
 #ifdef SEND_TELEMETRY_DS18B20
       dsb_readTempPrep();
 #endif  // SEND_TELEMETRY_DS18B20
+
 #ifdef SEND_TELEMETRY_DHT
       dht_readPrep();
 #endif  // SEND_TELEMETRY_DHT
-    }
 
+    }
     if (tele_period >= sysCfg.tele_period) {
       tele_period = 0;
 
@@ -781,10 +782,11 @@ void stateloop()
 
   if (!(state % ((STATES/10)*2))) {
     if (blinks || restartflag || otaflag) {
-      if (restartflag || otaflag)
+      if (restartflag || otaflag) {
         blinkstate = 1;   // Stay lit
-      else
+      } else {
         blinkstate ^= 1;  // Blink
+      }
       digitalWrite(LED_PIN, (LED_INVERTED) ? !blinkstate : blinkstate);
       if (!blinkstate) blinks--;
     } else {
@@ -839,10 +841,11 @@ void stateloop()
     break;
   case (STATES/10)*8:
     if ((WiFi.status() == WL_CONNECTED) && (!mqttClient.connected())) {
-      if (!mqttcounter)
+      if (!mqttcounter) {
         mqtt_reconnect();
-      else
+      } else {
         mqttcounter--;
+      }
     }
     break;
   }
@@ -869,10 +872,11 @@ void serial()
     }
     if (isprint(SerialInByte))
     {
-      if (SerialInByteCounter < INPUT_BUFFER_SIZE) // add char to string if it still fits
+      if (SerialInByteCounter < INPUT_BUFFER_SIZE) { // add char to string if it still fits
         serialInBuf[SerialInByteCounter++] = SerialInByte;
-      else
+      } else {
         SerialInByteCounter = 0;
+      }
     }
     if (SerialInByte == '\n')
     {
@@ -889,7 +893,7 @@ void serial()
 
 void setup()
 {
-  char log[128];
+  char log[LOGSZ];
   byte idx;
 
   Serial.begin(115200);
@@ -944,17 +948,19 @@ void setup()
   addLog(LOG_LEVEL_DEBUG, log);
 
   if (strstr(sysCfg.hostname, "%")) strlcpy(sysCfg.hostname, DEF_WIFI_HOSTNAME, sizeof(sysCfg.hostname));
-  if (!strcmp(sysCfg.hostname, DEF_WIFI_HOSTNAME))
+  if (!strcmp(sysCfg.hostname, DEF_WIFI_HOSTNAME)) {
     snprintf_P(Hostname, sizeof(Hostname)-1, sysCfg.hostname, sysCfg.mqtt_topic, ESP.getChipId() & 0x1FFF);
-  else
+  } else {
     snprintf_P(Hostname, sizeof(Hostname)-1, sysCfg.hostname);
+  }
   WIFI_Connect(Hostname);
 
   if (strstr(sysCfg.mqtt_client, "%")) strlcpy(sysCfg.mqtt_client, DEF_MQTT_CLIENT_ID, sizeof(sysCfg.mqtt_client));
-  if (!strcmp(sysCfg.mqtt_client, DEF_MQTT_CLIENT_ID))
+  if (!strcmp(sysCfg.mqtt_client, DEF_MQTT_CLIENT_ID)) {
     snprintf_P(MQTTClient, sizeof(MQTTClient), sysCfg.mqtt_client, ESP.getChipId());
-  else
+  } else {
     snprintf_P(MQTTClient, sizeof(MQTTClient), sysCfg.mqtt_client);
+  }
   mqttClient.setServer(sysCfg.mqtt_host, sysCfg.mqtt_port);
   mqttClient.setCallback(mqttDataCb);
 
