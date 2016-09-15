@@ -7,10 +7,3 @@ See [Wiki](https://github.com/arendst/Sonoff-MQTT-OTA-Arduino/wiki) for more inf
 
 <img alt="Sonoff" src="https://github.com/arendst/arendst.github.io/blob/master/media/sonoff.jpg" height="200" align="left" /> 
 <img alt="Sonoff" src="https://github.com/arendst/arendst.github.io/blob/master/media/sonoff_th.jpg" height="320" align="right" /> 
-
-
-
-
-
-
-See [Sonoff-MQTT-OTA](https://github.com/arendst/Sonoff-MQTT-OTA) for the ```esp-open-sdk``` version.
