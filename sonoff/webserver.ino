@@ -6,131 +6,149 @@
  * Source by AlexT (https://github.com/tzapu)
 \*********************************************************************************************/
 
-const char HTTP_HEAD[] PROGMEM       = "<!DOCTYPE html><html lang=\"en\">"
-                                       "<head>"
-                                       "<meta name=\"viewport\" content=\"width=device-width,initial-scale=1,user-scalable=no\"/>"
-                                       "<title>{v}</title>"
-                                       "<script>"
-                                       "var cn=120;"
-                                       "function u(){"
-                                         "if(cn>=0){"
-                                           "document.getElementById('t').innerHTML='Restart in '+cn+' seconds';"
-                                           "cn--;"
-                                           "setTimeout(u,1000);"
-                                         "}"
-                                       "}"
-                                       "function c(l){"
-                                         "document.getElementById('s').value=l.innerText||l.textContent;"
-                                         "document.getElementById('p').focus();"
-                                       "}"
-                                       "function l(){"
-                                         "var xhttp=new XMLHttpRequest();"
-                                         "xhttp.onreadystatechange=function(){"
-                                           "if(xhttp.readyState==4&&xhttp.status==200){"
-                                             "document.getElementById('t1').value=xhttp.responseText;"
-                                           "}"
-                                         "};"
-                                         "xhttp.open('GET','ax',true);"
-                                         "xhttp.send();"
-                                         "setTimeout(l,2000);"
-                                       "}"
-                                       "</script>"
-                                       "<style>"
-                                       "div,fieldset,input,select{padding:5px;font-size:1em;}"
-                                       "input{width:95%;}select{width:100%;}"
-                                       "textarea{resize:none;width:98%;padding:5px;}"
-                                       "body{text-align:center;font-family:verdana;}"
-                                       "td{padding:0px 5px;}"
-                                       "button{border:0;border-radius:0.3rem;background-color:#1fa3ec;color:#fff;line-height:2.4rem;font-size:1.2rem;width:100%;-webkit-transition-duration:0.4s;transition-duration:0.4s;}"
-                                       "button:hover{background-color:#006cba;}"
-                                       ".q{float:right;width:64px;text-align:right;}"
-                                       ".l{background:url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAMAAABEpIrGAAAALVBMVEX///8EBwfBwsLw8PAzNjaCg4NTVVUjJiZDRUUUFxdiZGSho6O"
-                                       "Sk5Pg4eFydHTCjaf3AAAAZElEQVQ4je2NSw7AIAhEBamKn97/uMXEGBvozkWb9C2Zx4xzWykBhFAeYp9gkLyZE0zIMno9n4g19hmdY39scwqVkOXaxph0ZCXQcqxSpgQpONa59wkRDOL93eA"
-                                       "XvimwlbPbwwVAegLS1HGfZAAAAABJRU5ErkJggg==') no-repeat left center;background-size:1em;}"
-                                       "</style>"
-                                       "</head>"
-                                       "<body>"
-                                       "<div style='text-align:left;display:inline-block;min-width:260px;'>"
-                                       "<div style='text-align:center;'><h2>" APP_NAME "</h2><h3>{h}</h3></div>";
-const char HTTP_MSG_RSTRT[] PROGMEM  = "<br/><div style='text-align:center;'>Device will restart in a few seconds</div><br/>";
-const char HTTP_BTN_TOGGL[] PROGMEM  = "<div style='text-align:center;font-weight:bold;font-size:60px'>{r0}</div>"
-                                       "<br/><form action='/?o=1' method='post'><button>Toggle</button></form><br/>";
-const char HTTP_BTN_MENU1[] PROGMEM  = "<br/><form action='/cn' method='post'><button>Configuration</button></form>"
-                                       "<br/><form action='/in' method='post'><button>Information</button></form>"
-                                       "<br/><form action='/up' method='post'><button>Firmware upgrade</button></form>"
-                                       "<br/><form action='/cm' method='post'><button>Console</button></form>";
-const char HTTP_BTN_RSTRT[] PROGMEM  = "<br/><form action='/rb' method='post'><button>Restart</button></form>";
-const char HTTP_BTN_MENU2[] PROGMEM  = "<br/><form action='/w0' method='post'><button>Configure WiFi</button></form>"
-                                       "<br/><form action='/mq' method='post'><button>Configure MQTT</button></form>"
-                                       "<br/><form action='/lg' method='post'><button>Configure logging</button></form>"
-                                       "<br/><form action='/rt' method='post'><button>Reset Configuration</button></form>";
-const char HTTP_BTN_MAIN[] PROGMEM   = "<br/><br/><form action='/' method='post'><button>Main menu</button></form>";
-const char HTTP_BTN_CONF[] PROGMEM   = "<br/><br/><form action='/cn' method='post'><button>Configuration menu</button></form>";
-const char HTTP_LNK_ITEM[] PROGMEM   = "<div><a href='#p' onclick='c(this)'>{v}</a>&nbsp;<span class='q {i}'>{r}%</span></div>";
-const char HTTP_LNK_SCAN[] PROGMEM   = "<div><a href='/w1'>Scan for wifi networks</a></div><br/>";
-const char HTTP_FORM_WIFI[] PROGMEM  = "<fieldset><legend><b>&nbsp;Wifi parameters&nbsp;</b></legend><form method='post' action='sv'>"
-                                       "<input id='w' name='w' value='1' hidden><input id='r' name='r' value='1' hidden>"
-                                       "<br/><b>SSId</b> (" STA_SSID ")<br/><input id='s' name='s' length=32 placeholder='" STA_SSID "' value='{s1}'><br/>"
-                                       "<br/><b>Password</b></br><input id='p' name='p' length=64 type='password' placeholder='" STA_PASS "' value='{p1}'><br/>"
-                                       "<br/><b>Hostname</b> ({h0})<br/><input id='h' name='h' length=32 placeholder='" WIFI_HOSTNAME" ' value='{h1}'><br/>";
-const char HTTP_FORM_MQTT[] PROGMEM  = "<fieldset><legend><b>&nbsp;MQTT parameters&nbsp;</b></legend><form method='post' action='sv'>"
-                                       "<input id='w' name='w' value='2' hidden><input id='r' name='r' value='1' hidden>"
-                                       "<br/><b>Host</b> (" MQTT_HOST ")<br/><input id='mh' name='mh' length=32 placeholder='" MQTT_HOST" ' value='{m1}'><br/>"
-                                       "<br/><b>Port</b> ({ml})<br/><input id='ml' name='ml' length=5 placeholder='{ml}' value='{m2}'><br/>"
-                                       "<br/><b>Client Id</b> ({m0})<br/><input id='mc' name='mc' length=32 placeholder='" MQTT_CLIENT_ID "' value='{m3}'><br/>"
-                                       "<br/><b>User</b> (" MQTT_USER ")<br/><input id='mu' name='mu' length=32 placeholder='" MQTT_USER "' value='{m4}'><br/>"
-                                       "<br/><b>Password</b> (" MQTT_PASS ")<br/><input id='mp' name='mp' length=32 placeholder='" MQTT_PASS "' value='{m5}'><br/>"
-                                       "<br/><b>Topic</b> (" MQTT_TOPIC ")<br/><input id='mt' name='mt' length=32 placeholder='" MQTT_TOPIC" ' value='{m6}'><br/>";
-const char HTTP_FORM_LOG[] PROGMEM   = "<fieldset><legend><b>&nbsp;Logging parameters&nbsp;</b></legend><form method='post' action='sv'>"
-                                       "<input id='w' name='w' value='3' hidden><input id='r' name='r' value='0' hidden>"
-                                       "<br/><b>Serial log level</b> ({ls})<br/><select id='ls' name='ls'>"
-                                       "<option{a0value='0'>0 None</option>"
-                                       "<option{a1value='1'>1 Error</option>"
-                                       "<option{a2value='2'>2 Info</option>"
-                                       "<option{a3value='3'>3 Debug</option>"
-                                       "<option{a4value='4'>4 More debug</option>"
-                                       "</select></br>"
-                                       "<br/><b>Web log level</b> ({lw})<br/><select id='lw' name='lw'>"
-                                       "<option{b0value='0'>0 None</option>"
-                                       "<option{b1value='1'>1 Error</option>"
-                                       "<option{b2value='2'>2 Info</option>"
-                                       "<option{b3value='3'>3 Debug</option>"
-                                       "<option{b4value='4'>4 More debug</option>"
-                                       "</select></br>"
-                                       "<br/><b>Syslog level</b> ({ll})<br/><select id='ll' name='ll'>"
-                                       "<option{c0value='0'>0 None</option>"
-                                       "<option{c1value='1'>1 Error</option>"
-                                       "<option{c2value='2'>2 Info</option>"
-                                       "<option{c3value='3'>3 Debug</option>"
-                                       "<option{c4value='4'>4 More debug</option>"
-                                       "</select></br>"
-                                       "<br/><b>Syslog host</b> (" SYS_LOG_HOST ")<br/><input id='lh' name='lh' length=32 placeholder='" SYS_LOG_HOST "' value='{l2}'><br/>"
-                                       "<br/><b>Syslog port</b> ({lp})<br/><input id='lp' name='lp' length=5 placeholder='{lp}' value='{l3}'><br/>"
-                                       "<br/><b>Telemetric period</b> ({lt})<br/><input id='lt' name='lt' length=4 placeholder='{lt}' value='{l4}'><br/>";
-const char HTTP_FORM_END[] PROGMEM   = "<br/><button type='submit'>Save</button></form></fieldset>";
-const char HTTP_FORM_UPG[] PROGMEM   = "<div id='f1' name='f1' style='display:block;'>"
-                                       "<fieldset><legend><b>&nbsp;Upgrade by web server&nbsp;</b></legend>"
-                                       "<form method='post' action='u1'>"
-                                       "<br/>OTA Url<br/><input id='o' name='o' length=80 placeholder='OTA_URL' value='{o1}'><br/>"
-                                       "<br/><button type='submit'>Start upgrade</button></form>"
-                                       "</fieldset><br/><br/>"
-                                       "<fieldset><legend><b>&nbsp;Upgrade by file upload&nbsp;</b></legend>"
-                                       "<form method='post' action='u2' enctype='multipart/form-data'>"
-                                       "<br/><input type='file' name='u2'><br/>"
-//                                       "<br/><button type='submit' onclick='this.disabled=true;this.form.submit();'>Start upgrade</button></form></fieldset>"
-                                       "<br/><button type='submit' onclick='document.getElementById(\"f1\").style.display=\"none\";document.getElementById(\"f2\").style.display=\"block\";this.form.submit();'>Start upgrade</button></form>"
-                                       "</fieldset>"
-                                       "</div>"
-                                       "<div id='f2' name='f2' style='display:none;text-align:center;'><b>Upload started ...</b></div>";
-const char HTTP_FORM_CMND[] PROGMEM  = "<br/><textarea readonly id='t1' name='t1' cols='80' rows='16' wrap='off'></textarea><br/><br/>"
-                                       "<form method='post' action='cm'>"
-                                       "<input style='width:98%' id='" SUB_PREFIX "' name='" SUB_PREFIX "' length=80 placeholder='Enter command' autofocus><br/>"
-//                                       "<br/><button type='submit'>Send command</button>"
-                                       "</form>";
-const char HTTP_COUNTER[] PROGMEM    = "<br/><div id='t' name='t' style='text-align:center;'></div>";
-const char HTTP_END[] PROGMEM        = "</div>"
-                                       "</body>"
-                                       "</html>";
+const char HTTP_HEAD[] PROGMEM =
+  "<!DOCTYPE html><html lang=\"en\">"
+  "<head>"
+  "<meta name=\"viewport\" content=\"width=device-width,initial-scale=1,user-scalable=no\"/>"
+  "<title>{v}</title>"
+  "<script>"
+  "var cn=120;"
+  "function u(){"
+    "if(cn>=0){"
+      "document.getElementById('t').innerHTML='Restart in '+cn+' seconds';"
+      "cn--;"
+      "setTimeout(u,1000);"
+    "}"
+  "}"
+  "function c(l){"
+    "document.getElementById('s').value=l.innerText||l.textContent;"
+    "document.getElementById('p').focus();"
+  "}"
+  "function l(){"
+    "var xhttp=new XMLHttpRequest();"
+    "xhttp.onreadystatechange=function(){"
+      "if(xhttp.readyState==4&&xhttp.status==200){"
+        "document.getElementById('t1').value=xhttp.responseText;"
+      "}"
+    "};"
+    "xhttp.open('GET','ax',true);"
+    "xhttp.send();"
+    "setTimeout(l,2000);"
+  "}"
+  "</script>"
+  "<style>"
+  "div,fieldset,input,select{padding:5px;font-size:1em;}"
+  "input{width:95%;}select{width:100%;}"
+  "textarea{resize:none;width:98%;padding:5px;}"
+  "body{text-align:center;font-family:verdana;}"
+  "td{padding:0px 5px;}"
+  "button{border:0;border-radius:0.3rem;background-color:#1fa3ec;color:#fff;line-height:2.4rem;font-size:1.2rem;width:100%;-webkit-transition-duration:0.4s;transition-duration:0.4s;}"
+  "button:hover{background-color:#006cba;}"
+  ".q{float:right;width:64px;text-align:right;}"
+  ".l{background:url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAMAAABEpIrGAAAALVBMVEX///8EBwfBwsLw8PAzNjaCg4NTVVUjJiZDRUUUFxdiZGSho6O"
+  "Sk5Pg4eFydHTCjaf3AAAAZElEQVQ4je2NSw7AIAhEBamKn97/uMXEGBvozkWb9C2Zx4xzWykBhFAeYp9gkLyZE0zIMno9n4g19hmdY39scwqVkOXaxph0ZCXQcqxSpgQpONa59wkRDOL93eA"
+  "XvimwlbPbwwVAegLS1HGfZAAAAABJRU5ErkJggg==') no-repeat left center;background-size:1em;}"
+  "</style>"
+  "</head>"
+  "<body>"
+  "<div style='text-align:left;display:inline-block;min-width:260px;'>"
+  "<div style='text-align:center;'><h2>" APP_NAME "</h2><h3>{h}</h3></div>";
+const char HTTP_MSG_RSTRT[] PROGMEM =
+  "<br/><div style='text-align:center;'>Device will restart in a few seconds</div><br/>";
+const char HTTP_BTN_TOGGL[] PROGMEM =
+  "<div style='text-align:center;font-weight:bold;font-size:60px'>{r0}</div>"
+  "<br/><form action='/?o=1' method='post'><button>Toggle</button></form><br/>";
+const char HTTP_BTN_MENU1[] PROGMEM =
+  "<br/><form action='/cn' method='post'><button>Configuration</button></form>"
+  "<br/><form action='/in' method='post'><button>Information</button></form>"
+  "<br/><form action='/up' method='post'><button>Firmware upgrade</button></form>"
+  "<br/><form action='/cm' method='post'><button>Console</button></form>";
+const char HTTP_BTN_RSTRT[] PROGMEM =
+  "<br/><form action='/rb' method='post'><button>Restart</button></form>";
+const char HTTP_BTN_MENU2[] PROGMEM =
+  "<br/><form action='/w0' method='post'><button>Configure WiFi</button></form>"
+  "<br/><form action='/mq' method='post'><button>Configure MQTT</button></form>"
+  "<br/><form action='/lg' method='post'><button>Configure logging</button></form>"
+  "<br/><form action='/rt' method='post'><button>Reset Configuration</button></form>";
+const char HTTP_BTN_MAIN[] PROGMEM =
+  "<br/><br/><form action='/' method='post'><button>Main menu</button></form>";
+const char HTTP_BTN_CONF[] PROGMEM =
+  "<br/><br/><form action='/cn' method='post'><button>Configuration menu</button></form>";
+const char HTTP_LNK_ITEM[] PROGMEM =
+  "<div><a href='#p' onclick='c(this)'>{v}</a>&nbsp;<span class='q {i}'>{r}%</span></div>";
+const char HTTP_LNK_SCAN[] PROGMEM =
+  "<div><a href='/w1'>Scan for wifi networks</a></div><br/>";
+const char HTTP_FORM_WIFI[] PROGMEM =
+  "<fieldset><legend><b>&nbsp;Wifi parameters&nbsp;</b></legend><form method='post' action='sv'>"
+  "<input id='w' name='w' value='1' hidden><input id='r' name='r' value='1' hidden>"
+  "<br/><b>SSId</b> (" STA_SSID ")<br/><input id='s' name='s' length=32 placeholder='" STA_SSID "' value='{s1}'><br/>"
+  "<br/><b>Password</b></br><input id='p' name='p' length=64 type='password' placeholder='" STA_PASS "' value='{p1}'><br/>"
+  "<br/><b>Hostname</b> ({h0})<br/><input id='h' name='h' length=32 placeholder='" WIFI_HOSTNAME" ' value='{h1}'><br/>";
+const char HTTP_FORM_MQTT[] PROGMEM =
+  "<fieldset><legend><b>&nbsp;MQTT parameters&nbsp;</b></legend><form method='post' action='sv'>"
+  "<input id='w' name='w' value='2' hidden><input id='r' name='r' value='1' hidden>"
+  "<br/><b>Host</b> (" MQTT_HOST ")<br/><input id='mh' name='mh' length=32 placeholder='" MQTT_HOST" ' value='{m1}'><br/>"
+  "<br/><b>Port</b> ({ml})<br/><input id='ml' name='ml' length=5 placeholder='{ml}' value='{m2}'><br/>"
+  "<br/><b>Client Id</b> ({m0})<br/><input id='mc' name='mc' length=32 placeholder='" MQTT_CLIENT_ID "' value='{m3}'><br/>"
+  "<br/><b>User</b> (" MQTT_USER ")<br/><input id='mu' name='mu' length=32 placeholder='" MQTT_USER "' value='{m4}'><br/>"
+  "<br/><b>Password</b> (" MQTT_PASS ")<br/><input id='mp' name='mp' length=32 placeholder='" MQTT_PASS "' value='{m5}'><br/>"
+  "<br/><b>Topic</b> (" MQTT_TOPIC ")<br/><input id='mt' name='mt' length=32 placeholder='" MQTT_TOPIC" ' value='{m6}'><br/>";
+const char HTTP_FORM_LOG[] PROGMEM =
+  "<fieldset><legend><b>&nbsp;Logging parameters&nbsp;</b></legend><form method='post' action='sv'>"
+  "<input id='w' name='w' value='3' hidden><input id='r' name='r' value='0' hidden>"
+  "<br/><b>Serial log level</b> ({ls})<br/><select id='ls' name='ls'>"
+  "<option{a0value='0'>0 None</option>"
+  "<option{a1value='1'>1 Error</option>"
+  "<option{a2value='2'>2 Info</option>"
+  "<option{a3value='3'>3 Debug</option>"
+  "<option{a4value='4'>4 More debug</option>"
+  "</select></br>"
+  "<br/><b>Web log level</b> ({lw})<br/><select id='lw' name='lw'>"
+  "<option{b0value='0'>0 None</option>"
+  "<option{b1value='1'>1 Error</option>"
+  "<option{b2value='2'>2 Info</option>"
+  "<option{b3value='3'>3 Debug</option>"
+  "<option{b4value='4'>4 More debug</option>"
+  "</select></br>"
+  "<br/><b>Syslog level</b> ({ll})<br/><select id='ll' name='ll'>"
+  "<option{c0value='0'>0 None</option>"
+  "<option{c1value='1'>1 Error</option>"
+  "<option{c2value='2'>2 Info</option>"
+  "<option{c3value='3'>3 Debug</option>"
+  "<option{c4value='4'>4 More debug</option>"
+  "</select></br>"
+  "<br/><b>Syslog host</b> (" SYS_LOG_HOST ")<br/><input id='lh' name='lh' length=32 placeholder='" SYS_LOG_HOST "' value='{l2}'><br/>"
+  "<br/><b>Syslog port</b> ({lp})<br/><input id='lp' name='lp' length=5 placeholder='{lp}' value='{l3}'><br/>"
+  "<br/><b>Telemetric period</b> ({lt})<br/><input id='lt' name='lt' length=4 placeholder='{lt}' value='{l4}'><br/>";
+const char HTTP_FORM_END[] PROGMEM =
+  "<br/><button type='submit'>Save</button></form></fieldset>";
+const char HTTP_FORM_UPG[] PROGMEM =
+  "<div id='f1' name='f1' style='display:block;'>"
+  "<fieldset><legend><b>&nbsp;Upgrade by web server&nbsp;</b></legend>"
+  "<form method='post' action='u1'>"
+  "<br/>OTA Url<br/><input id='o' name='o' length=80 placeholder='OTA_URL' value='{o1}'><br/>"
+  "<br/><button type='submit'>Start upgrade</button></form>"
+  "</fieldset><br/><br/>"
+  "<fieldset><legend><b>&nbsp;Upgrade by file upload&nbsp;</b></legend>"
+  "<form method='post' action='u2' enctype='multipart/form-data'>"
+  "<br/><input type='file' name='u2'><br/>"
+//  "<br/><button type='submit' onclick='this.disabled=true;this.form.submit();'>Start upgrade</button></form></fieldset>"
+  "<br/><button type='submit' onclick='document.getElementById(\"f1\").style.display=\"none\";document.getElementById(\"f2\").style.display=\"block\";this.form.submit();'>Start upgrade</button></form>"
+  "</fieldset>"
+  "</div>"
+  "<div id='f2' name='f2' style='display:none;text-align:center;'><b>Upload started ...</b></div>";
+const char HTTP_FORM_CMND[] PROGMEM =
+  "<br/><textarea readonly id='t1' name='t1' cols='80' rows='16' wrap='off'></textarea><br/><br/>"
+  "<form method='post' action='cm'>"
+  "<input style='width:98%' id='" SUB_PREFIX "' name='" SUB_PREFIX "' length=80 placeholder='Enter command' autofocus><br/>"
+//  "<br/><button type='submit'>Send command</button>"
+  "</form>";
+const char HTTP_COUNTER[] PROGMEM =
+  "<br/><div id='t' name='t' style='text-align:center;'></div>";
+const char HTTP_END[] PROGMEM =
+  "</div>"
+  "</body>"
+  "</html>";
 
 #define DNS_PORT 53
 enum http_t {HTTP_OFF, HTTP_USER, HTTP_ADMIN, HTTP_MANAGER};
@@ -720,6 +738,7 @@ void handleInfo()
   page += F("<tr><td><b>Boot count</b></td><td>"); page += String(sysCfg.bootcount); page += F("</td></tr>");
   page += F("<tr><td><b>Reset reason</b></td><td>"); page += ESP.getResetReason(); page += F("</td></tr>");
   page += F("<tr><td>&nbsp;</td></tr>");
+  page += F("<tr><td><b>SSId</b></td><td>"); page += sysCfg.sta_ssid; page += F("</td></tr>");
   page += F("<tr><td><b>Hostname</b></td><td>"); page += Hostname; page += F("</td></tr>");
   if (static_cast<uint32_t>(WiFi.localIP()) != 0) {
     page += F("<tr><td><b>IP address</b></td><td>"); page += WiFi.localIP().toString(); page += F("</td></tr>");
@@ -731,6 +750,14 @@ void handleInfo()
     page += F("<tr><td><b>AP Gateway</b></td><td>"); page += WiFi.softAPIP().toString(); page += F("</td></tr>");
     page += F("<tr><td><b>AP MAC address</b></td><td>"); page += WiFi.softAPmacAddress(); page += F("</td></tr>");
   }
+  page += F("<tr><td>&nbsp;</td></tr>");
+  page += F("<tr><td><b>MQTT Host</b></td><td>"); page += sysCfg.mqtt_host; page += F("</td></tr>");
+  page += F("<tr><td><b>MQTT Port</b></td><td>"); page += String(sysCfg.mqtt_port); page += F("</td></tr>");
+  page += F("<tr><td><b>MQTT Client and<br/>&nbsp;Fallback Topic</b></td><td>"); page += MQTTClient; page += F("</td></tr>");
+  page += F("<tr><td><b>MQTT User</b></td><td>"); page += sysCfg.mqtt_user; page += F("</td></tr>");
+  page += F("<tr><td><b>MQTT Password</b></td><td>"); page += sysCfg.mqtt_pwd; page += F("</td></tr>");
+  page += F("<tr><td><b>MQTT Topic</b></td><td>"); page += sysCfg.mqtt_topic; page += F("</td></tr>");
+  page += F("<tr><td><b>MQTT Group Topic</b></td><td>"); page += sysCfg.mqtt_grptopic; page += F("</td></tr>");
   page += F("<tr><td>&nbsp;</td></tr>");
   page += F("<tr><td><b>ESP Chip id</b></td><td>"); page += String(ESP.getChipId()); page += F("</td></tr>");
   page += F("<tr><td><b>Flash Chip id</b></td><td>"); page += String(ESP.getFlashChipId()); page += F("</td></tr>");

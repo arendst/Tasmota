@@ -1,4 +1,8 @@
-/* 1.0.33 20160915
+/* 1.0.34 20160926
+ * Fix button press six and seven
+ * Add more information to webserver
+ *
+ * 1.0.33 20160915
  * Better WPS error message
  * Separate webserver code from support.ino into webserver.ino
  * Fix webserver User by removing unwanted restart option

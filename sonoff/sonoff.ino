@@ -25,7 +25,7 @@
  *                        | | | | | |                     Gnd
 */
 
-#define VERSION                0x01002100   // 1.0.33
+#define VERSION                0x01002200   // 1.0.34
 
 #define SONOFF                 1            // Sonoff, Sonoff TH10/16
 #define ELECTRO_DRAGON         2            // Electro Dragon Wifi IoT Relay Board Based on ESP8266
@@ -769,7 +769,7 @@ void stateloop()
   if (multiwindow) {
     multiwindow--;
   } else {
-    if ((!restartflag) && (!holdcount) && (multipress >= 1) && (multipress <= 5)) {
+    if ((!restartflag) && (!holdcount) && (multipress >= 1) && (multipress <= 7)) {
       snprintf_P(scmnd, sizeof(scmnd), commands[multipress]);
       if (strcmp(sysCfg.mqtt_topic2,"0") && (multipress == 1) && mqttClient.connected()) {
         send_button(scmnd);          // Execute command via MQTT using ButtonTopic to sync external clients
