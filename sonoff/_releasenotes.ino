@@ -1,4 +1,9 @@
-/* 1.0.34 20160926
+/* 1.0.35 20160929
+ * Add more lines to console
+ * Add timeout and disable MQTT on web upload
+ * Add command SAVEDATA to control parameter save (for flash wear afficionados)
+ *
+ * 1.0.34 20160926
  * Fix button press six and seven
  * Add more information to webserver
  *

@@ -23,6 +23,9 @@ uint32_t getHash()
   return hash;  
 }
 
+/*********************************************************************************************\
+ * Config Save - Save parameters to Flash or Spiffs ONLY if any parameter has changed
+\*********************************************************************************************/
 void CFG_Save()
 {
   char log[LOGSZ];

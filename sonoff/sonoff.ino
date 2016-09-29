@@ -25,7 +25,7 @@
  *                        | | | | | |                     Gnd
 */
 
-#define VERSION                0x01002200   // 1.0.34
+#define VERSION                0x01002300   // 1.0.35
 
 #define SONOFF                 1            // Sonoff, Sonoff TH10/16
 #define ELECTRO_DRAGON         2            // Electro Dragon Wifi IoT Relay Board Based on ESP8266
@@ -71,7 +71,7 @@ enum wifi_t  {WIFI_STATUS, WIFI_SMARTCONFIG, WIFI_MANAGER, WIFI_WPSCONFIG};
 #define MESSZ                  200          // Max number of characters in message string (Syntax string)
 #define LOGSZ                  128          // Max number of characters in log string
 
-#define MAX_LOG_LINES          16
+#define MAX_LOG_LINES          80
 
 enum butt_t {PRESSED, NOT_PRESSED};
 
@@ -122,6 +122,7 @@ struct SYSCFG {
   byte          weblog_level;
   uint16_t      tele_period;
   uint8_t       sta_config;
+  int16_t      savedata;
 } sysCfg;
 
 struct TIME_T {
@@ -148,6 +149,7 @@ struct TimeChangeRule
 TimeChangeRule myDST = { TIME_DST };  // Daylight Saving Time
 TimeChangeRule mySTD = { TIME_STD };  // Standard Time
 
+int16_t savedatacounter;
 char Version[16];
 char Hostname[32];
 char MQTTClient[32];
@@ -188,6 +190,7 @@ void CFG_Default()
   sysCfg.saveFlag = 0;
   sysCfg.version = VERSION;
   sysCfg.bootcount = 0;
+  sysCfg.savedata = 1;
   sysCfg.weblog_level = WEB_LOG_LEVEL;
   sysCfg.seriallog_level = SERIAL_LOG_LEVEL;
   sysCfg.syslog_level = SYS_LOG_LEVEL;
@@ -339,8 +342,8 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
     if (!strcmp(type,"STATUS")) {
       if ((data_len == 0) || (payload < 0) || (payload > 7)) payload = 8;
       if ((payload == 0) || (payload == 8)) {
-        snprintf_P(svalue, sizeof(svalue), PSTR("%s, %s, %s, %s, %d, %d, %d"),
-          Version, sysCfg.mqtt_topic, sysCfg.mqtt_topic2, sysCfg.mqtt_subtopic, sysCfg.power, sysCfg.timezone, sysCfg.ledstate);
+        snprintf_P(svalue, sizeof(svalue), PSTR("%s, %s, %s, %s, %d, %d, %d, %d"),
+          Version, sysCfg.mqtt_topic, sysCfg.mqtt_topic2, sysCfg.mqtt_subtopic, sysCfg.power, sysCfg.timezone, sysCfg.ledstate, sysCfg.savedata);
         if (payload == 0) mqtt_publish(stopic, svalue);
       }
       if ((payload == 0) || (payload == 1)) {
@@ -379,6 +382,18 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
         snprintf_P(svalue, sizeof(svalue), PSTR("TIM: UTC %s, Local %s, Start DST %s, End DST %s"),
           rtc_time(0).c_str(), rtc_time(1).c_str(), rtc_time(2).c_str(), rtc_time(3).c_str()); 
       }      
+    }
+    else if (!strcmp(type,"SAVEDATA")) {
+      if ((data_len > 0) && (payload >= 0) && (payload <= 3600)) {
+        sysCfg.savedata = payload;
+        savedatacounter = sysCfg.savedata;
+      }
+      CFG_Save();
+      if (sysCfg.savedata > 1) {
+        snprintf_P(svalue, sizeof(svalue), PSTR("Every %d seconds"), sysCfg.savedata);
+      } else {
+        strlcpy(svalue, (sysCfg.savedata) ? "On" : "Manual", sizeof(svalue));
+      }
     }
     else if (!strcmp(type,"UPGRADE") || !strcmp(type,"UPLOAD")) {
       if ((data_len > 0) && (payload == 1)) {
@@ -565,11 +580,11 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
     else if (!strcmp(type,"RESET")) {
       switch (payload) {
       case 1: 
-        restartflag = 11;
+        restartflag = 211;
         snprintf_P(svalue, sizeof(svalue), PSTR("Reset and Restarting"));
         break;
       case 2:
-        restartflag = 12;
+        restartflag = 212;
         snprintf_P(svalue, sizeof(svalue), PSTR("Erase, Reset and Restarting"));
         break;
       default:
@@ -817,17 +832,24 @@ void stateloop()
     }
     break;
   case (STATES/10)*4:
-    CFG_Save();
+    if (savedatacounter) {
+      savedatacounter--;
+      if (savedatacounter <= 0) {
+        CFG_Save();
+        savedatacounter = sysCfg.savedata;
+      }
+    }
     if (restartflag) {
-      if (restartflag == 11) {
+      if (restartflag == 211) {
         CFG_Default();
         restartflag = 2;
       }
-      if (restartflag == 12) {
+      if (restartflag == 212) {
         CFG_Erase();
         CFG_Default();
         restartflag = 2;
       }
+      CFG_Save();
       restartflag--;
       if (restartflag <= 0) {
         addLog_P(LOG_LEVEL_INFO, PSTR("APP: Restarting"));
@@ -940,12 +962,16 @@ void setup()
     if (sysCfg.version < 0x01002000) {  // 1.0.32 - Add default Wifi config
       sysCfg.sta_config = WIFI_CONFIG_TOOL;
     }
+    if (sysCfg.version < 0x01002300) {  // 1.0.35 - Add default savedata flag
+      sysCfg.savedata = 1;
+    }
     
     sysCfg.version = VERSION;
   }
   sysCfg.bootcount++;
   snprintf_P(log, sizeof(log), PSTR("APP: Bootcount %d"), sysCfg.bootcount);
   addLog(LOG_LEVEL_DEBUG, log);
+  savedatacounter = sysCfg.savedata;
 
   if (strstr(sysCfg.hostname, "%")) strlcpy(sysCfg.hostname, DEF_WIFI_HOSTNAME, sizeof(sysCfg.hostname));
   if (!strcmp(sysCfg.hostname, DEF_WIFI_HOSTNAME)) {

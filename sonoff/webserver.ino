@@ -24,22 +24,28 @@ const char HTTP_HEAD[] PROGMEM =
     "document.getElementById('s').value=l.innerText||l.textContent;"
     "document.getElementById('p').focus();"
   "}"
+  "var sn=0;"
   "function l(){"
-    "var xhttp=new XMLHttpRequest();"
-    "xhttp.onreadystatechange=function(){"
-      "if(xhttp.readyState==4&&xhttp.status==200){"
-        "document.getElementById('t1').value=xhttp.responseText;"
-      "}"
-    "};"
-    "xhttp.open('GET','ax',true);"
-    "xhttp.send();"
+    "var e=document.getElementById('t1');"
+    "if(e.scrollTop>=sn){"
+      "var x=new XMLHttpRequest();"
+      "x.onreadystatechange=function(){"
+        "if(x.readyState==4&&x.status==200){"
+          "e.value=x.responseText;"
+          "e.scrollTop=100000;"
+          "sn=e.scrollTop;"
+        "}"
+      "};"
+      "x.open('GET','ax',true);"
+      "x.send();"
+    "}"
     "setTimeout(l,2000);"
   "}"
   "</script>"
   "<style>"
   "div,fieldset,input,select{padding:5px;font-size:1em;}"
   "input{width:95%;}select{width:100%;}"
-  "textarea{resize:none;width:98%;padding:5px;}"
+  "textarea{resize:none;width:98%;height:312px;padding:5px;overflow:auto;}"
   "body{text-align:center;font-family:verdana;}"
   "td{padding:0px 5px;}"
   "button{border:0;border-radius:0.3rem;background-color:#1fa3ec;color:#fff;line-height:2.4rem;font-size:1.2rem;width:100%;-webkit-transition-duration:0.4s;transition-duration:0.4s;}"
@@ -138,7 +144,7 @@ const char HTTP_FORM_UPG[] PROGMEM =
   "</div>"
   "<div id='f2' name='f2' style='display:none;text-align:center;'><b>Upload started ...</b></div>";
 const char HTTP_FORM_CMND[] PROGMEM =
-  "<br/><textarea readonly id='t1' name='t1' cols='80' rows='16' wrap='off'></textarea><br/><br/>"
+  "<br/><textarea readonly id='t1' name='t1' cols='80' wrap='off'></textarea><br/><br/>"
   "<form method='post' action='cm'>"
   "<input style='width:98%' id='" SUB_PREFIX "' name='" SUB_PREFIX "' length=80 placeholder='Enter command' autofocus><br/>"
 //  "<br/><button type='submit'>Send command</button>"
@@ -579,6 +585,8 @@ void handleUploadDone()
 
   addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Firmware upload done"));
   WIFI_configCounter();
+  restartflag = 0;
+  mqttcounter = 0;
 
   String page = FPSTR(HTTP_HEAD);
   page.replace("{v}", "Info");
@@ -622,12 +630,16 @@ void handleUploadLoop()
   HTTPUpload& upload = webServer->upload();
   
   if (upload.status == UPLOAD_FILE_START) {
+    restartflag = 60;
+    mqttcounter = 60;
     if (upload.filename.c_str()[0] == 0)
     {
       _uploaderror = 1;
       return;
     }
-    WiFiUDP::stopAll();
+//    WiFiUDP::stopAll();
+    mqttClient.disconnect();
+
     snprintf_P(log, sizeof(log), PSTR("Upload: File %s ..."), upload.filename.c_str());
     addLog(LOG_LEVEL_INFO, log);
 
@@ -675,6 +687,8 @@ void handleUploadLoop()
     }
   } else if(upload.status == UPLOAD_FILE_ABORTED) {
     addLog_P(LOG_LEVEL_DEBUG, PSTR("Upload: Update was aborted"));
+    restartflag = 0;
+    mqttcounter = 0;
     _uploaderror = 7;
     Update.end();
   }
