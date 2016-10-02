@@ -25,7 +25,7 @@
  *                        | | | | | |                     Gnd
 */
 
-#define VERSION                0x02000000   // 2.0.0
+#define VERSION                0x02000100   // 2.0.1
 
 #define SONOFF                 1            // Sonoff, Sonoff Dual, Sonoff TH10/16
 #define ELECTRO_DRAGON         3            // Electro Dragon Wifi IoT Relay Board Based on ESP8266
@@ -830,14 +830,18 @@ void stateloop()
       snprintf_P(log, sizeof(log), PSTR("APP: Button code %04X"), ButtonCode);
       addLog(LOG_LEVEL_DEBUG, log);
       button = PRESSED;
+/*
       if ((ButtonCode >> 8) == 0x04) {
         if ((ButtonCode & 0x02) != (sysCfg.power & 0x02)) {
           multiwindow = STATES /2;
           multipress = 1;
         }
       } else {
+*/
         if (ButtonCode == 0xF500) holdcount = (STATES *4) -1;
+/*
       }
+*/
       ButtonCode = 0;
     } else {
       button = NOT_PRESSED;

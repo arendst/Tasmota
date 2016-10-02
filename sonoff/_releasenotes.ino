@@ -1,4 +1,7 @@
-/* 2.0.0 20161002
+/* 2.0.1 20161002
+ * Fix button press
+ * 
+ * 2.0.0 20161002
  * Update Sonoff TH10/16 sensor pins (My TH10 only has GPIO14 connected)
  * Add full support for Sonoff dual
  * 
