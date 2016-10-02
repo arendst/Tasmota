@@ -2,7 +2,7 @@
  * User specific configuration parameters
  * 
  * Select hardware MODULE:
- *  SONOFF          = Sonoff, Sonoff TH 10A and Sonoff TH 16A
+ *  SONOFF          = Sonoff, Sonoff Dual, Sonoff TH 10A and Sonoff TH 16A
  *  ELECTRO_DRAGON  = Electro Dragon (Relay 2 only)
  * 
 \*********************************************************************************************/
@@ -52,8 +52,8 @@
 // MQTT - Telemetry
 #define TELE_PERIOD            300          // Telemetry (0 = disable, 2 - 3600 seconds)
 #define SEND_TELEMETRY_UPTIME               // Enable sending uptime telemetry (if disabled will still send hourly message)
-#define SEND_TELEMETRY_DS18B20              // Enable sending DS18B20 temperature telemetry
-#define SEND_TELEMETRY_DHT                  // Enable sending DHT11, DHT21, DHT22, AM2301, AM2302 or AM2321 temperature and humidity telemetry
+//#define SEND_TELEMETRY_DS18B20              // Enable sending DS18B20 temperature telemetry
+//#define SEND_TELEMETRY_DHT                  // Enable sending DHT11, DHT21, DHT22, AM2301, AM2302 or AM2321 temperature and humidity telemetry
 #define SEND_TELEMETRY_POWER                // Enable sending power telemetry
 
 // HTTP
@@ -76,13 +76,13 @@
 
 #if MODULE == SONOFF                        // programming header 1:3.3V 2:rx 3:tx 4:gnd
   #define APP_NAME             "Sonoff module"
-  #define LED_PIN              13           // GPIO 13 = Green Led (0 = On, 1 = Off) - Sonoff
+  #define LED_PIN              13           // GPIO 13 = Green/Blue Led (0 = On, 1 = Off) - Sonoff
   #define LED_INVERTED         1            // 0 = (1 = On, 0 = Off), 1 = (0 = On, 1 = Off)
   #define REL_PIN              12           // GPIO 12 = Red Led and Relay (0 = Off, 1 = On)
   #define KEY_PIN              0            // GPIO 00 = Button
-  #define DHT_PIN              14           // GPIO 14 = TEM1 - DHT22 (Sonoff_TH10A(16A))
+  #define DSB_PIN              14           // GPIO 14 = TEM1 - DS18B20 (Sonoff_TH10A(16A))
+  #define DHT_PIN              4            // GPIO 04 = TEM2 - DHT22 (Sonoff_TH10A(16A))
   #define DHT_TYPE             DHT11        // DHT module type (DHT11, DHT21, DHT22, AM2301, AM2302 or AM2321)
-  #define DSB_PIN              4            // GPIO 04 = TEM2 - DS18B20 (Sonoff_TH10A(16A))
   
 #elif MODULE == ELECTRO_DRAGON              // programming header 5V/3V/gnd/
   #define APP_NAME             "ElectroDragon module"
@@ -92,9 +92,9 @@
   #define KEY_PIN              2            // GPIO 02 = Button 1
   #define REL2_PIN             12           // GPIO 12 = Red Led and Relay 2 (0 = Off, 1 = On)
   #define KEY2_PIN             0            // GPIO 00 = Button 2
+  #define DSB_PIN              4            // GPIO 04 = DS18B20
   #define DHT_PIN              14           // GPIO 14 = DHT22
   #define DHT_TYPE             DHT22        // DHT module type (DHT11, DHT21, DHT22, AM2301, AM2302 or AM2321)
-  #define DSB_PIN              4            // GPIO 04 = DS18B20
   
 #else
   #error "Select either module SONOFF or ELECTRO_DRAGON"

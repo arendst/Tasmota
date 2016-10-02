@@ -1,4 +1,8 @@
-/* 1.0.35 20160929
+/* 2.0.0 20161002
+ * Update Sonoff TH10/16 sensor pins (My TH10 only has GPIO14 connected)
+ * Add full support for Sonoff dual
+ * 
+ * 1.0.35 20160929
  * Add more lines to console
  * Add timeout and disable MQTT on web upload
  * Add command SAVEDATA to control parameter save (for flash wear afficionados)

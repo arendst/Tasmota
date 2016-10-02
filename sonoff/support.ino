@@ -846,9 +846,7 @@ void addLog(byte loglevel, const char *line)
 #ifdef DEBUG_ESP_PORT
   DEBUG_ESP_PORT.printf("%s %s\n", mxtime, line);  
 #endif  // DEBUG_ESP_PORT
-#ifdef USE_SERIAL
   if (loglevel <= sysCfg.seriallog_level) Serial.printf("%s %s\n", mxtime, line);
-#endif  // USE_SERIAL
 #ifdef USE_WEBSERVER
   if (loglevel <= sysCfg.weblog_level) {
     Log[logidx] = String(mxtime) + " " + String(line);

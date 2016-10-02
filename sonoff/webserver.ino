@@ -44,10 +44,11 @@ const char HTTP_HEAD[] PROGMEM =
   "</script>"
   "<style>"
   "div,fieldset,input,select{padding:5px;font-size:1em;}"
-  "input{width:95%;}select{width:100%;}"
+  "input{width:95%;}"
+  "select{width:100%;}"
   "textarea{resize:none;width:98%;height:312px;padding:5px;overflow:auto;}"
   "body{text-align:center;font-family:verdana;}"
-  "td{padding:0px 5px;}"
+  "td{padding:0px;}"
   "button{border:0;border-radius:0.3rem;background-color:#1fa3ec;color:#fff;line-height:2.4rem;font-size:1.2rem;width:100%;-webkit-transition-duration:0.4s;transition-duration:0.4s;}"
   "button:hover{background-color:#006cba;}"
   ".q{float:right;width:64px;text-align:right;}"
@@ -61,9 +62,6 @@ const char HTTP_HEAD[] PROGMEM =
   "<div style='text-align:center;'><h2>" APP_NAME "</h2><h3>{h}</h3></div>";
 const char HTTP_MSG_RSTRT[] PROGMEM =
   "<br/><div style='text-align:center;'>Device will restart in a few seconds</div><br/>";
-const char HTTP_BTN_TOGGL[] PROGMEM =
-  "<div style='text-align:center;font-weight:bold;font-size:60px'>{r0}</div>"
-  "<br/><form action='/?o=1' method='post'><button>Toggle</button></form><br/>";
 const char HTTP_BTN_MENU1[] PROGMEM =
   "<br/><form action='/cn' method='post'><button>Configuration</button></form>"
   "<br/><form action='/in' method='post'><button>Information</button></form>"
@@ -267,19 +265,40 @@ void handleRoot()
   if (_httpflag == HTTP_MANAGER) {
     handleWifi0();
   } else {
-    if (strlen(webServer->arg("o").c_str())) {
-#ifdef MQTT_SUBTOPIC
-      snprintf_P(svalue, sizeof(svalue), PSTR("%s 2"), sysCfg.mqtt_subtopic);
-#else
-      snprintf_P(svalue, sizeof(svalue), PSTR("light 2"));
-#endif
-      do_cmnd(svalue);
-    }
-
+    
     String page = FPSTR(HTTP_HEAD);
     page.replace("{v}", "Main menu");
-    page += FPSTR(HTTP_BTN_TOGGL);
-    page.replace("{r0}", (sysCfg.power) ? "ON" : "OFF");
+
+    if (Maxdevice) {
+      if (strlen(webServer->arg("o").c_str())) {
+#ifdef MQTT_SUBTOPIC
+        snprintf_P(svalue, sizeof(svalue), PSTR("%d/%s 2"), atoi(webServer->arg("o").c_str()), sysCfg.mqtt_subtopic);
+#else
+        snprintf_P(svalue, sizeof(svalue), PSTR("%d/light 2"), atoi(webServer->arg("o").c_str()));
+#endif
+        do_cmnd(svalue);
+      }
+
+      page += F("<table style='width:100%'><tr>");
+      for (byte idx = 1; idx <= Maxdevice; idx++) {
+        page += F("<td style='width:");
+        page += String(100 / Maxdevice);
+        page += F("%'><form action='/?o=");
+        page += String(idx);
+        page += F("' method='post'><div style='text-align:center;font-weight:bold;font-size:");
+        page += String(70 - (Maxdevice * 10));
+        page += F("px'>");
+        page += (sysCfg.power & (0x01 << (idx -1))) ? "ON" : "OFF";
+        page += F("</div><br/><button>Toggle");
+        if (Maxdevice > 1) {
+          page += F(" ");
+          page += String(idx);
+        }
+        page += F("</button></form></td>");
+      }  
+      page += F("</tr></table><br/>");
+    }
+    
     if (_httpflag == HTTP_ADMIN) {
       page += FPSTR(HTTP_BTN_MENU1);
       page += FPSTR(HTTP_BTN_RSTRT);

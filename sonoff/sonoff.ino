@@ -25,10 +25,10 @@
  *                        | | | | | |                     Gnd
 */
 
-#define VERSION                0x01002300   // 1.0.35
+#define VERSION                0x02000000   // 2.0.0
 
-#define SONOFF                 1            // Sonoff, Sonoff TH10/16
-#define ELECTRO_DRAGON         2            // Electro Dragon Wifi IoT Relay Board Based on ESP8266
+#define SONOFF                 1            // Sonoff, Sonoff Dual, Sonoff TH10/16
+#define ELECTRO_DRAGON         3            // Electro Dragon Wifi IoT Relay Board Based on ESP8266
 
 #define DHT11                  11
 #define DHT21                  21
@@ -49,7 +49,6 @@ enum wifi_t  {WIFI_STATUS, WIFI_SMARTCONFIG, WIFI_MANAGER, WIFI_WPSCONFIG};
  * Enable feature by removing leading // or disable feature by adding leading //
 \*********************************************************************************************/
 
-#define USE_SERIAL                          // Enable serial command line (+0.2k code, +0.2k mem)
 #define USE_TICKER                          // Enable interrupts to keep RTC synced during subscription flooding
 //#define USE_SPIFFS                          // Switch persistent configuration from flash to spiffs (+24k code, +0.6k mem)
 #define USE_WEBSERVER                       // Enable web server and wifi manager (+37k code, +2k mem)
@@ -58,36 +57,44 @@ enum wifi_t  {WIFI_STATUS, WIFI_SMARTCONFIG, WIFI_MANAGER, WIFI_WPSCONFIG};
  * No more user configurable items below
 \*********************************************************************************************/
 
+#define SONOFF_DUAL            2
+#define MAX_MODEL              4
+
 #define MQTT_SUBTOPIC          "POWER"      // Default MQTT subtopic (POWER or LIGHT)
 #define APP_POWER              0            // Default saved power state Off
 
 #define DEF_WIFI_HOSTNAME      "%s-%04d"    // Expands to <MQTT_TOPIC>-<last 4 decimal chars of MAC address>
 #define DEF_MQTT_CLIENT_ID     "DVES_%06X"  // Also fall back topic using Chip Id = last 6 characters of MAC address
 
+#define MAX_DEVICE             1            // Max number of devices
+
 #define STATES                 10           // loops per second
 #define MQTT_RETRY_SECS        10           // Seconds to retry MQTT connection
 
+#define INPUT_BUFFER_SIZE      128          // Max number of characters in serial buffer
 #define TOPSZ                  40           // Max number of characters in topic string
 #define MESSZ                  200          // Max number of characters in message string (Syntax string)
 #define LOGSZ                  128          // Max number of characters in log string
 
-#define MAX_LOG_LINES          80
+#define MAX_LOG_LINES          80           // Max number of lines in weblog
+
+#define APP_BAUDRATE           115200       // Default serial baudrate
 
 enum butt_t {PRESSED, NOT_PRESSED};
 
-#include <ESP8266WiFi.h>        // MQTT, Ota, WifiManager
-#include <ESP8266HTTPClient.h>  // MQTT, Ota
-#include <ESP8266httpUpdate.h>  // Ota
-#include <PubSubClient.h>       // MQTT
+#include <ESP8266WiFi.h>                    // MQTT, Ota, WifiManager
+#include <ESP8266HTTPClient.h>              // MQTT, Ota
+#include <ESP8266httpUpdate.h>              // Ota
+#include <PubSubClient.h>                   // MQTT
 #ifdef USE_WEBSERVER
-  #include <ESP8266WebServer.h> // WifiManager, Webserver
-  #include <DNSServer.h>        // WifiManager
+  #include <ESP8266WebServer.h>             // WifiManager, Webserver
+  #include <DNSServer.h>                    // WifiManager
 #endif  // USE_WEBSERVER
 #ifdef USE_TICKER
-  #include <Ticker.h>           // RTC
+  #include <Ticker.h>                       // RTC
 #endif  // USE_TICKER
 #ifdef USE_SPIFFS
-  #include <FS.h>               // Config
+  #include <FS.h>                           // Config
 #endif
 
 extern "C" uint32_t _SPIFFS_start;
@@ -122,14 +129,15 @@ struct SYSCFG {
   byte          weblog_level;
   uint16_t      tele_period;
   uint8_t       sta_config;
-  int16_t      savedata;
+  int16_t       savedata;
+  byte          model;
 } sysCfg;
 
 struct TIME_T {
   uint8_t       Second;
   uint8_t       Minute;
   uint8_t       Hour;
-  uint8_t       Wday;   // day of week, sunday is day 1
+  uint8_t       Wday;      // day of week, sunday is day 1
   uint8_t       Day;
   uint8_t       Month;
   char          MonthName[4];
@@ -149,6 +157,12 @@ struct TimeChangeRule
 TimeChangeRule myDST = { TIME_DST };  // Daylight Saving Time
 TimeChangeRule mySTD = { TIME_STD };  // Standard Time
 
+int Baudrate = APP_BAUDRATE;
+byte SerialInByte;
+int SerialInByteCounter = 0;
+char serialInBuf[INPUT_BUFFER_SIZE + 2];
+byte Hexcode = 0;
+uint16_t ButtonCode = 0;
 int16_t savedatacounter;
 char Version[16];
 char Hostname[32];
@@ -160,13 +174,15 @@ unsigned long timerxs = 0;
 #endif  // USE_TICKER
 int state = 0;
 int mqttflag = 1;
-int otaflag = 0, otaok;
+int otaflag = 0;
+int otaok;
 int restartflag = 0;
 int wificheckflag = WIFI_STATUS;
 int uptime = 0;
 int tele_period = 0;
 String Log[MAX_LOG_LINES];
 byte logidx = 0;
+byte Maxdevice = MAX_DEVICE;
 
 WiFiClient espClient;
 PubSubClient mqttClient(espClient);
@@ -215,6 +231,7 @@ void CFG_Default()
   sysCfg.power = APP_POWER;
   sysCfg.ledstate = APP_LEDSTATE;
   sysCfg.webserver = WEB_SERVER;
+  sysCfg.model = 0;
   CFG_Save();
 }
 
@@ -290,8 +307,8 @@ void mqtt_reconnect()
 
 void mqttDataCb(char* topic, byte* data, unsigned int data_len)
 {
-  int i, grpflg = 0;
-  char *str, *p, *mtopic = NULL, *type = NULL;
+  int i, grpflg = 0, device;
+  char *str, *p, *mtopic = NULL, *type = NULL, *devc = NULL;
   char stopic[TOPSZ], svalue[MESSZ];
 
   int topic_len = strlen(topic);
@@ -309,7 +326,7 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
   addLog(LOG_LEVEL_DEBUG, svalue);
 
   i = 0;
-  for (str = strtok_r(topicBuf, "/", &p); str && i < 3; str = strtok_r(NULL, "/", &p)) {
+  for (str = strtok_r(topicBuf, "/", &p); str && i < 4; str = strtok_r(NULL, "/", &p)) {
     switch (i++) {
     case 0:  // cmnd
       break;
@@ -318,15 +335,29 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
       break;
     case 2:  // Text
       type = str;
+      break;
+    case 3:  // 
+      devc = str;
     }
   }
   if (!strcmp(mtopic, sysCfg.mqtt_grptopic)) grpflg = 1;
+
+  device = 1;
+  if (devc != NULL) {
+    if (Maxdevice) {
+      device = atoi(type);
+      if ((device < 1) || (device > Maxdevice)) device = 0;
+    }
+    type = devc;
+  }
+  if (!device) type = NULL;
+  
   if (type != NULL) for(i = 0; i < strlen(type); i++) type[i] = toupper(type[i]);
 
   for(i = 0; i <= data_len; i++) dataBufUc[i] = toupper(dataBuf[i]);
 
-  snprintf_P(svalue, sizeof(svalue), PSTR("MQTT: DataCb Topic %s, Group %d, Type %s, data %s (%s)"),
-    mtopic, grpflg, type, dataBuf, dataBufUc);
+  snprintf_P(svalue, sizeof(svalue), PSTR("MQTT: DataCb Topic %s, Group %d, Device %d, Type %s, data %s (%s)"),
+    mtopic, grpflg, device, type, dataBuf, dataBufUc);
   addLog(LOG_LEVEL_DEBUG, svalue);
 
   if (type != NULL) {
@@ -342,13 +373,13 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
     if (!strcmp(type,"STATUS")) {
       if ((data_len == 0) || (payload < 0) || (payload > 7)) payload = 8;
       if ((payload == 0) || (payload == 8)) {
-        snprintf_P(svalue, sizeof(svalue), PSTR("%s, %s, %s, %s, %d, %d, %d, %d"),
-          Version, sysCfg.mqtt_topic, sysCfg.mqtt_topic2, sysCfg.mqtt_subtopic, sysCfg.power, sysCfg.timezone, sysCfg.ledstate, sysCfg.savedata);
+        snprintf_P(svalue, sizeof(svalue), PSTR("%s, %d, %s, %s, %s, %d, %d, %d, %d"),
+          Version, sysCfg.model, sysCfg.mqtt_topic, sysCfg.mqtt_topic2, sysCfg.mqtt_subtopic, sysCfg.power, sysCfg.timezone, sysCfg.ledstate, sysCfg.savedata);
         if (payload == 0) mqtt_publish(stopic, svalue);
       }
       if ((payload == 0) || (payload == 1)) {
-        snprintf_P(svalue, sizeof(svalue), PSTR("PRM: GroupTopic %s, OtaUrl %s, Uptime %d Hr, Bootcount %d, SaveCount %d"),
-          sysCfg.mqtt_grptopic, sysCfg.otaUrl, uptime, sysCfg.bootcount, sysCfg.saveFlag);
+        snprintf_P(svalue, sizeof(svalue), PSTR("PRM: Baudrate %d, GroupTopic %s, OtaUrl %s, Uptime %d Hr, Bootcount %d, SaveCount %d"),
+          Baudrate, sysCfg.mqtt_grptopic, sysCfg.otaUrl, uptime, sysCfg.bootcount, sysCfg.saveFlag);
         if (payload == 0) mqtt_publish(stopic, svalue);
       }          
       if ((payload == 0) || (payload == 2)) {
@@ -394,6 +425,12 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
       } else {
         strlcpy(svalue, (sysCfg.savedata) ? "On" : "Manual", sizeof(svalue));
       }
+    }
+    else if (!strcmp(type,"MODEL")) {
+      if ((data_len > 0) && (payload >= 0) && (payload < ELECTRO_DRAGON)) {
+        sysCfg.model = payload;
+      }
+      snprintf_P(svalue, sizeof(svalue), PSTR("%d"), sysCfg.model);
     }
     else if (!strcmp(type,"UPGRADE") || !strcmp(type,"UPLOAD")) {
       if ((data_len > 0) && (payload == 1)) {
@@ -601,17 +638,32 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
       snprintf_P(sysCfg.mqtt_subtopic, sizeof(sysCfg.mqtt_subtopic), PSTR("%s"), type);
       if ((data_len > 0) && (payload >= 0) && (payload <= 2)) {
         switch (payload) {
-        case 0: // Off
+        case 0: { // Off
+          sysCfg.power &= (0xFF ^(0x01 << (device -1)));
+          break; }
         case 1: // On
-          sysCfg.power = payload;
+          sysCfg.power |= (0x01 << (device -1));
           break;
         case 2: // Toggle
-          sysCfg.power ^= 1;
+          sysCfg.power ^= (0x01 << (device -1));
           break;
         }
-        digitalWrite(REL_PIN, sysCfg.power);
+        if (sysCfg.model == SONOFF_DUAL) {
+          Serial.write(0xA0);
+          Serial.write(0x04);
+          Serial.write(sysCfg.power);
+          Serial.write(0xA1);
+          Serial.write('\n');
+          Serial.flush();
+        } else {
+          digitalWrite(REL_PIN, sysCfg.power);
+        }
       }
-      strlcpy(svalue, (sysCfg.power) ? "On" : "Off", sizeof(svalue));
+      if (sysCfg.model == SONOFF_DUAL) {
+        snprintf_P(svalue, sizeof(svalue), PSTR("%d"), sysCfg.power);
+      } else {
+        strlcpy(svalue, (sysCfg.power) ? "On" : "Off", sizeof(svalue));
+      }
     }
     else if (!strcmp(type,"LEDSTATE")) {
       if ((data_len > 0) && (payload >= 0) && (payload <= 1)) {
@@ -621,19 +673,19 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
     } else {
       type = NULL;
     }
-    if (type == NULL) {
-      blinks = 1;
-      snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/SYNTAX"), PUB_PREFIX, sysCfg.mqtt_topic);
-#ifdef USE_WEBSERVER
-      snprintf_P(svalue, sizeof(svalue), PSTR("Status, Upgrade, Otaurl, Restart, Reset, WifiConfig, Seriallog, Weblog, Syslog, LogHost, LogPort, SSId, Password%s, Webserver"), (!grpflg) ? ", Hostname" : "");
-#else      
-      snprintf_P(svalue, sizeof(svalue), PSTR("Status, Upgrade, Otaurl, Restart, Reset, WifiConfig, Seriallog, Syslog, LogHost, LogPort, SSId, Password%s"), (!grpflg) ? ", Hostname" : "");
-#endif      
-      mqtt_publish(stopic, svalue);
-      snprintf_P(svalue, sizeof(svalue), PSTR("MqttHost, MqttPort, MqttUser, MqttPassword%s, GroupTopic, Timezone, Light, Power, Ledstate, TelePeriod"), (!grpflg) ? ", MqttClient, Topic, ButtonTopic" : "");
-    }
-    mqtt_publish(stopic, svalue);
   }
+  if (type == NULL) {
+    blinks = 1;
+    snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/SYNTAX"), PUB_PREFIX, sysCfg.mqtt_topic);
+#ifdef USE_WEBSERVER
+    snprintf_P(svalue, sizeof(svalue), PSTR("Status, Savedata, Upgrade, Otaurl, Restart, Reset, WifiConfig, Seriallog, Weblog, Syslog, LogHost, LogPort, SSId, Password%s, Webserver"), (!grpflg) ? ", Hostname" : "");
+#else      
+    snprintf_P(svalue, sizeof(svalue), PSTR("Status, Savedata, Upgrade, Otaurl, Restart, Reset, WifiConfig, Seriallog, Syslog, LogHost, LogPort, SSId, Password%s"), (!grpflg) ? ", Hostname" : "");
+#endif      
+    mqtt_publish(stopic, svalue);
+    snprintf_P(svalue, sizeof(svalue), PSTR("MqttHost, MqttPort, MqttUser, MqttPassword%s, GroupTopic, Timezone, Light, Power, Ledstate, TelePeriod"), (!grpflg) ? ", MqttClient, Topic, ButtonTopic" : "");
+  }
+  mqtt_publish(stopic, svalue);
 }
 
 /********************************************************************************************/
@@ -739,10 +791,22 @@ void every_second()
   }
 }
 
-const char commands[8][14] PROGMEM = {
+#define MAX_BUTTON_COMMANDS 8
+
+const char commands[MAX_BUTTON_COMMANDS][14] PROGMEM = {
   {"reset 1"},        // Hold button for more than 4 seconds
-  {"light 2"},        // Press button once
-  {"light 2"},        // Press button twice
+  {"1/light 2"},      // Press button once
+  {"1/light 2"},      // Press button twice
+  {"wificonfig 1"},   // Press button three times
+  {"wificonfig 2"},   // Press button four times
+  {"wificonfig 3"},   // Press button five times
+  {"restart 1"},      // Press button six times
+  {"upgrade 1"}};     // Press button seven times
+
+const char commands1[MAX_BUTTON_COMMANDS][14] PROGMEM = {
+  {"reset 1"},        // Hold button for more than 4 seconds
+  {"1/light 2"},      // Press button once
+  {"2/light 2"},      // Press button twice
   {"wificonfig 1"},   // Press button three times
   {"wificonfig 2"},   // Press button four times
   {"wificonfig 3"},   // Press button five times
@@ -761,7 +825,26 @@ void stateloop()
     every_second();
   }
 
-  button = digitalRead(KEY_PIN);
+  if (sysCfg.model == SONOFF_DUAL) {
+    if (ButtonCode) {
+      snprintf_P(log, sizeof(log), PSTR("APP: Button code %04X"), ButtonCode);
+      addLog(LOG_LEVEL_DEBUG, log);
+      button = PRESSED;
+      if ((ButtonCode >> 8) == 0x04) {
+        if ((ButtonCode & 0x02) != (sysCfg.power & 0x02)) {
+          multiwindow = STATES /2;
+          multipress = 1;
+        }
+      } else {
+        if (ButtonCode == 0xF500) holdcount = (STATES *4) -1;
+      }
+      ButtonCode = 0;
+    } else {
+      button = NOT_PRESSED;
+    }
+  } else {
+    button = digitalRead(KEY_PIN);
+  }
   if ((button == PRESSED) && (lastbutton == NOT_PRESSED)) {
     multipress = (multiwindow) ? multipress +1 : 1;
     snprintf_P(log, sizeof(log), PSTR("APP: Multipress %d"), multipress);
@@ -784,8 +867,12 @@ void stateloop()
   if (multiwindow) {
     multiwindow--;
   } else {
-    if ((!restartflag) && (!holdcount) && (multipress >= 1) && (multipress <= 7)) {
-      snprintf_P(scmnd, sizeof(scmnd), commands[multipress]);
+    if ((!restartflag) && (!holdcount) && (multipress > 0) && (multipress < MAX_BUTTON_COMMANDS)) {
+      if (sysCfg.model == SONOFF_DUAL) {
+        snprintf_P(scmnd, sizeof(scmnd), commands1[multipress]);
+      } else {
+        snprintf_P(scmnd, sizeof(scmnd), commands[multipress]);
+      }
       if (strcmp(sysCfg.mqtt_topic2,"0") && (multipress == 1) && mqttClient.connected()) {
         send_button(scmnd);          // Execute command via MQTT using ButtonTopic to sync external clients
       } else {
@@ -873,19 +960,27 @@ void stateloop()
   }
 }
 
-#ifdef USE_SERIAL
-#define INPUT_BUFFER_SIZE          128
-
-byte SerialInByte;
-int SerialInByteCounter = 0;
-char serialInBuf[INPUT_BUFFER_SIZE + 2];
-
 void serial()
 {
   while (Serial.available())
   {
     yield();
     SerialInByte = Serial.read();
+
+    if (Hexcode) {
+      Hexcode--;
+      if (Hexcode) {
+        ButtonCode = (ButtonCode << 8) | SerialInByte;
+        SerialInByte = 0;
+      } else {
+        if (SerialInByte != 0xA1) ButtonCode = 0;  // 0xA1 - End of Sonoff dual button code
+      }
+    }
+    if (SerialInByte == 0xA0) {                    // 0xA0 - Start of Sonoff dual button code
+      SerialInByte = 0;
+      ButtonCode = 0;
+      Hexcode = 3;
+    }
     if (SerialInByte > 127) // binary data...
     {
       Serial.flush();
@@ -906,10 +1001,10 @@ void serial()
       addLog(LOG_LEVEL_NONE, serialInBuf);
       SerialInByteCounter = 0;
       do_cmnd(serialInBuf);
+      Serial.flush();
     }
   }
 }
-#endif  // USE_SERIAL
 
 /********************************************************************************************/
 
@@ -918,7 +1013,7 @@ void setup()
   char log[LOGSZ];
   byte idx;
 
-  Serial.begin(115200);
+  Serial.begin(Baudrate);
   delay(10);
   Serial.println();
   sysCfg.seriallog_level = LOG_LEVEL_INFO;  // Allow specific serial messages until config loaded
@@ -965,9 +1060,36 @@ void setup()
     if (sysCfg.version < 0x01002300) {  // 1.0.35 - Add default savedata flag
       sysCfg.savedata = 1;
     }
-    
+    if (sysCfg.version < 0x02000000) {  // 2.0.0 - Add default model
+      sysCfg.model = 0;
+    }
+
     sysCfg.version = VERSION;
   }
+
+  if (!sysCfg.model) {
+#if MODULE == SONOFF
+    pinMode(REL_PIN, INPUT_PULLUP);
+    sysCfg.model = digitalRead(REL_PIN) +1;
+#else
+    sysCfg.model = SONOFF;
+#endif
+  }
+  
+  if (sysCfg.model == SONOFF_DUAL) {
+    Baudrate = 19200;
+    Maxdevice = 2;
+  }
+  if (Serial.baudRate() != Baudrate) {
+    snprintf_P(log, sizeof(log), PSTR("APP: Need to change baudrate to %d"), Baudrate);
+    addLog(LOG_LEVEL_INFO, log);
+    delay(100);
+    Serial.flush();
+    Serial.begin(Baudrate);
+    delay(10);
+    Serial.println();
+  }
+  
   sysCfg.bootcount++;
   snprintf_P(log, sizeof(log), PSTR("APP: Bootcount %d"), sysCfg.bootcount);
   addLog(LOG_LEVEL_DEBUG, log);
@@ -993,9 +1115,18 @@ void setup()
   pinMode(LED_PIN, OUTPUT);
   digitalWrite(LED_PIN, (LED_INVERTED) ? !blinkstate : blinkstate);
 
-  pinMode(REL_PIN, OUTPUT);
-  digitalWrite(REL_PIN, sysCfg.power);
-
+  if (sysCfg.model == SONOFF_DUAL) {
+    Serial.write(0xA0);
+    Serial.write(0x04);
+    Serial.write(sysCfg.power);
+    Serial.write(0xA1);
+    Serial.write('\n');
+    Serial.flush();
+  } else {
+    sysCfg.power &= 0x01;
+    pinMode(REL_PIN, OUTPUT);
+    digitalWrite(REL_PIN, sysCfg.power);
+  }
   pinMode(KEY_PIN, INPUT_PULLUP);
 
 #ifdef SEND_TELEMETRY_DHT
@@ -1026,9 +1157,7 @@ void loop()
 
   mqttClient.loop();
 
-#ifdef USE_SERIAL
   if (Serial.available()) serial();
-#endif  // USE_SERIAL
   
   yield();
 }
