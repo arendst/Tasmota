@@ -4,9 +4,9 @@ Provide ESP8266 based itead Sonoff with Serial, Web and MQTT control allowing 'O
 Current version is 2.0.0 - See ```sonoff/_releasenotes``` for change information.
 
 Starting with version 2.0.0 the following hardware devices are supported:
-- Sonoff
-- Sonoff Dual controlling both relays
-- Sonoff TH10 / TH16 with temp sensors inclusive
+- itead Sonoff
+- itead Sonoff Dual controlling both relays
+- itead Sonoff TH10 / TH16 with temperature sensor
 - ElectroDragon IoT Relay Board but relay 1 only
 
 See [my Wiki](https://github.com/arendst/Sonoff-MQTT-OTA-Arduino/wiki) for more information.
