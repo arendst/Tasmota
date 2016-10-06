@@ -25,7 +25,7 @@
  *                        | | | | | |                     Gnd
 */
 
-#define VERSION                0x02000100   // 2.0.1
+#define VERSION                0x02000200   // 2.0.2
 
 #define SONOFF                 1            // Sonoff, Sonoff Dual, Sonoff TH10/16
 #define ELECTRO_DRAGON         3            // Electro Dragon Wifi IoT Relay Board Based on ESP8266
