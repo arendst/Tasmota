@@ -176,6 +176,20 @@ void initSpiffs()
 
 uint8_t _wificounter, _wifiretry, _wpsresult, _wificonfigflag = 0, _wifiConfigCounter = 0;
 
+int WIFI_getRSSIasQuality(int RSSI)
+{
+  int quality = 0;
+
+  if (RSSI <= -100) {
+    quality = 0;
+  } else if (RSSI >= -50) {
+    quality = 100;
+  } else {
+    quality = 2 * (RSSI + 100);
+  }
+  return quality;
+}
+
 boolean WIFI_configCounter()
 {
   if (_wifiConfigCounter) _wifiConfigCounter = WIFI_MANAGER_SEC;
@@ -343,20 +357,24 @@ int WIFI_State()
   return state;
 }
 
+const char PhyMode[] = " BGN";
+
 void WIFI_Connect(char *Hostname)
 {
   char log[LOGSZ];
 
   WiFi.persistent(false);   // Solve possible wifi init errors
-//  WiFi.setAutoConnect(true);
+//  WiFi.setPhyMode(WIFI_PHY_MODE_11N);
   if (!strncmp(ESP.getSdkVersion(),"1.5.3",5)) {
     addLog_P(LOG_LEVEL_DEBUG, "Wifi: Patch issue 2186");
     WiFi.mode(WIFI_OFF);    // See https://github.com/esp8266/Arduino/issues/2186
   }
   WiFi.mode(WIFI_STA);      // Disable AP mode
+  WiFi.disconnect();
+  WiFi.setAutoConnect(true);
   WiFi.hostname(Hostname);
   WiFi.begin(sysCfg.sta_ssid, sysCfg.sta_pwd);
-  snprintf_P(log, sizeof(log), PSTR("Wifi: Connecting to %s (%s) as %s"), sysCfg.sta_ssid, sysCfg.sta_pwd, Hostname);
+  snprintf_P(log, sizeof(log), PSTR("Wifi: Connecting to %s (%s) in mode 11%c as %s"), sysCfg.sta_ssid, sysCfg.sta_pwd, PhyMode[WiFi.getPhyMode() & 0x3], Hostname);
   addLog(LOG_LEVEL_INFO, log);
   _wifiretry = WIFI_RETRY;
   _wificounter = 1;

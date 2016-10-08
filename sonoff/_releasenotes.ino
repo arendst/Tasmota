@@ -1,4 +1,9 @@
-/* 2.0.2 20161006 
+/* 2.0.3 20161008
+ * Update wifi initialization
+ * Add command BUTTONRETAIN for optional MQTT retain on button press
+ * Add command SAVESTATE to disable power state save. May be used with MQTT retain
+ * 
+ * 2.0.2 20161006 
  * Fix wifi issue 2186 
  * 
  * 2.0.1 20161002

@@ -272,9 +272,13 @@ void handleRoot()
     if (Maxdevice) {
       if (strlen(webServer->arg("o").c_str())) {
 #ifdef MQTT_SUBTOPIC
-        snprintf_P(svalue, sizeof(svalue), PSTR("%d/%s 2"), atoi(webServer->arg("o").c_str()), sysCfg.mqtt_subtopic);
+        snprintf_P(svalue, sizeof(svalue), PSTR("%s/%s 2"), webServer->arg("o").c_str(), sysCfg.mqtt_subtopic);
 #else
-        snprintf_P(svalue, sizeof(svalue), PSTR("%d/light 2"), atoi(webServer->arg("o").c_str()));
+        if (atoi(webServer->arg("o").c_str()) == 1) {
+          snprintf_P(svalue, sizeof(svalue), PSTR("light 2"));
+        } else {
+          snprintf_P(svalue, sizeof(svalue), PSTR("%s/light 2"), webServer->arg("o").c_str());
+        }
 #endif
         do_cmnd(svalue);
       }
@@ -288,7 +292,7 @@ void handleRoot()
         page += F("' method='post'><div style='text-align:center;font-weight:bold;font-size:");
         page += String(70 - (Maxdevice * 10));
         page += F("px'>");
-        page += (sysCfg.power & (0x01 << (idx -1))) ? "ON" : "OFF";
+        page += (power & (0x01 << (idx -1))) ? "ON" : "OFF";
         page += F("</div><br/><button>Toggle");
         if (Maxdevice > 1) {
           page += F(" ");
@@ -381,7 +385,7 @@ void handleWifi(boolean scan)
         if (indices[i] == -1) continue; // skip dups
         snprintf_P(log, sizeof(log), PSTR("Wifi: SSID %s, RSSI %d"), WiFi.SSID(indices[i]).c_str(), WiFi.RSSI(indices[i]));
         addLog(LOG_LEVEL_DEBUG, log);
-        int quality = getRSSIasQuality(WiFi.RSSI(indices[i]));
+        int quality = WIFI_getRSSIasQuality(WiFi.RSSI(indices[i]));
 
         if (_minimumQuality == -1 || _minimumQuality < quality) {
           String item = FPSTR(HTTP_LNK_ITEM);
@@ -761,17 +765,17 @@ void handleInfo()
   String page = FPSTR(HTTP_HEAD);
   page.replace("{v}", "Information");
 //  page += F("<fieldset><legend><b>&nbsp;Information&nbsp;</b></legend>");
-  page += F("<table style'width:100%'>");
+  page += F("<style>td{padding:0px 5px;}</style>");
+  page += F("<table style'width:100%;'>");
   page += F("<tr><td><b>Version</b></td><td>"); page += Version; page += F("</td></tr>");
-  page += F("<tr><td><b>Core version</b></td><td>"); page += ESP.getCoreVersion(); page += F("</td></tr>");
-  page += F("<tr><td><b>SDK version</b></td><td>"); page += String(ESP.getSdkVersion()); page += F("</td></tr>");
+  page += F("<tr><td><b>Core/SDK version</b></td><td>"); page += ESP.getCoreVersion(); page += F("/"); page += String(ESP.getSdkVersion()); page += F("</td></tr>");
 //  page += F("<tr><td><b>Boot version</b></td><td>"); page += String(ESP.getBootVersion()); page += F("</td></tr>");
   page += F("<tr><td><b>Uptime</b></td><td>"); page += String(uptime); page += F(" Hours</td></tr>");
   page += F("<tr><td><b>Flash write count</b></td><td>"); page += String(sysCfg.saveFlag); page += F("</td></tr>");
   page += F("<tr><td><b>Boot count</b></td><td>"); page += String(sysCfg.bootcount); page += F("</td></tr>");
   page += F("<tr><td><b>Reset reason</b></td><td>"); page += ESP.getResetReason(); page += F("</td></tr>");
   page += F("<tr><td>&nbsp;</td></tr>");
-  page += F("<tr><td><b>SSId</b></td><td>"); page += sysCfg.sta_ssid; page += F("</td></tr>");
+  page += F("<tr><td><b>SSId (RSSI)</b></td><td>"); page += sysCfg.sta_ssid; page += F(" ("); page += WIFI_getRSSIasQuality(WiFi.RSSI()); page += F("%)</td></tr>");
   page += F("<tr><td><b>Hostname</b></td><td>"); page += Hostname; page += F("</td></tr>");
   if (static_cast<uint32_t>(WiFi.localIP()) != 0) {
     page += F("<tr><td><b>IP address</b></td><td>"); page += WiFi.localIP().toString(); page += F("</td></tr>");
@@ -857,20 +861,6 @@ boolean captivePortal()
     return true;
   }
   return false;
-}
-
-int getRSSIasQuality(int RSSI)
-{
-  int quality = 0;
-
-  if (RSSI <= -100) {
-    quality = 0;
-  } else if (RSSI >= -50) {
-    quality = 100;
-  } else {
-    quality = 2 * (RSSI + 100);
-  }
-  return quality;
 }
 
 /** Is this an IP? */
