@@ -2,7 +2,7 @@
  * User specific configuration parameters
  * 
  * Select hardware MODULE:
- *  SONOFF          = Sonoff, Sonoff Dual, Sonoff TH 10A and Sonoff TH 16A
+ *  SONOFF          = Sonoff, Sonoff SV, Sonoff Dual, Sonoff TH 10A/16A, S20 Smart Socket
  *  ELECTRO_DRAGON  = Electro Dragon (Relay 2 only)
  * 
 \*********************************************************************************************/
@@ -12,7 +12,9 @@
 #define PROJECT                "sonoff"     // PROJECT is used as the default topic delimiter and OTA file name
                                             // As an IDE restriction it needs to be the same as the main .ino file
                                             
-#define CFG_HOLDER             0x20160520   // Change this value to load default configurations
+#define CFG_HOLDER             0x20160520   // Change this value to load default configuration parameters
+#define SAVE_DATA              1            // Save changed parameters to Flash (0 = disable, 1 - 3600 seconds)
+#define SAVE_STATE             1            // Save changed power state to Flash (0 = disable, 1 = enable)
 
 // Wifi
 #define STA_SSID               "indebuurt3"      // Wifi SSID
@@ -48,6 +50,7 @@
                                             // May be named the same as PUB_PREFIX
 #define MQTT_TOPIC             PROJECT
 #define MQTT_GRPTOPIC          PROJECT"s"   // Group topic
+#define MQTT_BUTTON_RETAIN     0            // Button may send retain flag (0 = off, 1 = on)
 
 // MQTT - Telemetry
 #define TELE_PERIOD            300          // Telemetry (0 = disable, 2 - 3600 seconds)
@@ -81,8 +84,8 @@
   #define LED_INVERTED         1            // 0 = (1 = On, 0 = Off), 1 = (0 = On, 1 = Off)
   #define REL_PIN              12           // GPIO 12 = Red Led and Relay (0 = Off, 1 = On)
   #define KEY_PIN              0            // GPIO 00 = Button
-  #define DSB_PIN              14           // GPIO 14 = TEM1 - DS18B20 (Sonoff_TH10A(16A))
-  #define DHT_PIN              4            // GPIO 04 = TEM2 - DHT22 (Sonoff_TH10A(16A))
+  #define DSB_PIN              14           // GPIO 14 = TEM1 - DS18B20 (Sonoff_TH10A(16A), Sonoff SV)
+  #define DHT_PIN              4            // GPIO 04 = TEM2 - DHT22 (Sonoff_TH10A(16A), Sonoff SV)
   #define DHT_TYPE             DHT11        // DHT module type (DHT11, DHT21, DHT22, AM2301, AM2302 or AM2321)
   
 #elif MODULE == ELECTRO_DRAGON              // programming header 5V/3V/gnd/

@@ -25,9 +25,9 @@
  *                        | | | | | |                     Gnd
 */
 
-#define VERSION                0x02000300   // 2.0.3
+#define VERSION                0x02000400   // 2.0.4
 
-#define SONOFF                 1            // Sonoff, Sonoff Dual, Sonoff TH10/16
+#define SONOFF                 1            // Sonoff, Sonoff SV, Sonoff Dual, Sonoff TH 10A/16A, S20 Smart Socket
 #define ELECTRO_DRAGON         3            // Electro Dragon Wifi IoT Relay Board Based on ESP8266
 
 #define DHT11                  11
@@ -99,6 +99,18 @@ enum butt_t {PRESSED, NOT_PRESSED};
 extern "C" uint32_t _SPIFFS_start;
 extern "C" uint32_t _SPIFFS_end;
 
+#define MAX_BUTTON_COMMANDS    8
+
+const char commands[MAX_BUTTON_COMMANDS][14] PROGMEM = {
+  {"reset 1"},        // Hold button for more than 4 seconds
+  {"1/light 2"},      // Press button once
+  {"2/light 2"},      // Press button twice - will default to "1/light 2" if Maxdevice = 1
+  {"wificonfig 1"},   // Press button three times
+  {"wificonfig 2"},   // Press button four times
+  {"wificonfig 3"},   // Press button five times
+  {"restart 1"},      // Press button six times
+  {"upgrade 1"}};     // Press button seven times
+
 struct SYSCFG {
   unsigned long cfg_holder;
   unsigned long saveFlag;
@@ -130,7 +142,7 @@ struct SYSCFG {
   uint8_t       sta_config;
   int16_t       savedata;
   byte          model;
-  boolean       mqtt_retain;
+  byte          mqtt_retain;
   byte          savestate;
 } sysCfg;
 
@@ -166,8 +178,8 @@ byte Hexcode = 0;                     // Sonoff dual input flag
 uint16_t ButtonCode = 0;              // Sonoff dual received code
 int16_t savedatacounter;              // Counter and flag for config save to Flash or Spiffs
 char Version[16];                     // Version string from VERSION define
-char Hostname[32];                    // Composed Wifi hostname
-char MQTTClient[32];                  // Composed MQTT Clientname
+char Hostname[33];                    // Composed Wifi hostname
+char MQTTClient[33];                  // Composed MQTT Clientname
 uint8_t mqttcounter = 0;              // MQTT connection retry counter
 unsigned long timerxs = 0;            // State loop timer
 #ifndef USE_TICKER
@@ -209,8 +221,8 @@ void CFG_Default()
   sysCfg.saveFlag = 0;
   sysCfg.version = VERSION;
   sysCfg.bootcount = 0;
-  sysCfg.savedata = 1;
-  sysCfg.savestate = 1;
+  sysCfg.savedata = SAVE_DATA;
+  sysCfg.savestate = SAVE_STATE;
   sysCfg.weblog_level = WEB_LOG_LEVEL;
   sysCfg.seriallog_level = SERIAL_LOG_LEVEL;
   sysCfg.syslog_level = SYS_LOG_LEVEL;
@@ -230,7 +242,7 @@ void CFG_Default()
   strlcpy(sysCfg.mqtt_topic, MQTT_TOPIC, sizeof(sysCfg.mqtt_topic));
   strlcpy(sysCfg.mqtt_topic2, "0", sizeof(sysCfg.mqtt_topic2));
   strlcpy(sysCfg.mqtt_subtopic, MQTT_SUBTOPIC, sizeof(sysCfg.mqtt_subtopic));
-  sysCfg.mqtt_retain = false;
+  sysCfg.mqtt_retain = MQTT_BUTTON_RETAIN;
   sysCfg.tele_period = TELE_PERIOD;
   sysCfg.timezone = APP_TIMEZONE;
   sysCfg.power = APP_POWER;
@@ -238,6 +250,27 @@ void CFG_Default()
   sysCfg.webserver = WEB_SERVER;
   sysCfg.model = 0;
   CFG_Save();
+}
+
+/********************************************************************************************/
+
+void setRelay(uint8_t power)
+{
+  if (sysCfg.model == SONOFF_DUAL) {
+    Serial.write(0xA0);
+    Serial.write(0x04);
+    Serial.write(power);
+    Serial.write(0xA1);
+    Serial.write('\n');
+/*
+    Serial.print("\xA0\x04");
+    Serial.write(power);
+    Serial.println("\xA1");
+*/
+    Serial.flush();
+  } else {
+    digitalWrite(REL_PIN, power & 0x1);
+  }
 }
 
 /********************************************************************************************/
@@ -356,7 +389,8 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
   if (devc != NULL) {
     if (Maxdevice) {
       device = atoi(type);
-      if ((device < 1) || (device > Maxdevice)) device = 0;
+//      if ((device < 1) || (device > Maxdevice)) device = 0;
+      if ((device < 1) || (device > Maxdevice)) device = 1;
     }
     type = devc;
   }
@@ -371,7 +405,11 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
   addLog(LOG_LEVEL_DEBUG, svalue);
 
   if (type != NULL) {
-    snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/%s"), PUB_PREFIX, sysCfg.mqtt_topic, type);
+    if (devc == NULL) {
+      snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/%s"), PUB_PREFIX, sysCfg.mqtt_topic, type);
+    } else {
+      snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/%d/%s"), PUB_PREFIX, sysCfg.mqtt_topic, device, type);
+    }
     strlcpy(svalue, "Error", sizeof(svalue));
 
     if (!strcmp(dataBufUc,"?")) data_len = 0;
@@ -620,8 +658,15 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
     }
     else if (!strcmp(type,"BUTTONRETAIN")) {
       if ((data_len > 0) && (payload >= 0) && (payload <= 1)) {
-        sysCfg.mqtt_retain = (boolean)payload;
         strlcpy(sysCfg.mqtt_topic2, sysCfg.mqtt_topic, sizeof(sysCfg.mqtt_topic2));
+        if (!payload) {
+          for(i = 1; i <= Maxdevice; i++) {
+            snprintf_P(svalue, sizeof(svalue), commands[i]);
+            strtok(svalue, " ");
+            send_button(svalue);
+          }
+        }
+        sysCfg.mqtt_retain = payload;
       }
       strlcpy(svalue, (sysCfg.mqtt_retain) ? "On" : "Off", sizeof(svalue));
     }
@@ -661,34 +706,22 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
     }
     else if ((!strcmp(type,"LIGHT")) || (!strcmp(type,"POWER"))) {
       snprintf_P(sysCfg.mqtt_subtopic, sizeof(sysCfg.mqtt_subtopic), PSTR("%s"), type);
+      byte mask = 0x01 << (device -1);
       if ((data_len > 0) && (payload >= 0) && (payload <= 2)) {
         switch (payload) {
         case 0: { // Off
-          power &= (0xFF ^(0x01 << (device -1)));
+          power &= (0xFF ^ mask);
           break; }
         case 1: // On
-          power |= (0x01 << (device -1));
+          power |= mask;
           break;
         case 2: // Toggle
-          power ^= (0x01 << (device -1));
+          power ^= mask;
           break;
         }
-        if (sysCfg.model == SONOFF_DUAL) {
-          Serial.write(0xA0);
-          Serial.write(0x04);
-          Serial.write(power);
-          Serial.write(0xA1);
-          Serial.write('\n');
-          Serial.flush();
-        } else {
-          digitalWrite(REL_PIN, power & 0x1);
-        }
+        setRelay(power);
       }
-      if (sysCfg.model == SONOFF_DUAL) {
-        snprintf_P(svalue, sizeof(svalue), PSTR("%d"), power);
-      } else {
-        strlcpy(svalue, (power) ? "On" : "Off", sizeof(svalue));
-      }
+      strlcpy(svalue, (power & mask) ? "On" : "Off", sizeof(svalue));
     }
     else if (!strcmp(type,"LEDSTATE")) {
       if ((data_len > 0) && (payload >= 0) && (payload <= 1)) {
@@ -703,9 +736,9 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
     blinks = 1;
     snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/SYNTAX"), PUB_PREFIX, sysCfg.mqtt_topic);
 #ifdef USE_WEBSERVER
-    snprintf_P(svalue, sizeof(svalue), PSTR("Status, Savedata, Upgrade, Otaurl, Restart, Reset, WifiConfig, Seriallog, Weblog, Syslog, LogHost, LogPort, SSId, Password%s, Webserver"), (!grpflg) ? ", Hostname" : "");
+    snprintf_P(svalue, sizeof(svalue), PSTR("Status, SaveData, SaveSate, Upgrade, Otaurl, Restart, Reset, WifiConfig, Seriallog, Weblog, Syslog, LogHost, LogPort, SSId, Password%s, Webserver"), (!grpflg) ? ", Hostname" : "");
 #else      
-    snprintf_P(svalue, sizeof(svalue), PSTR("Status, Savedata, Upgrade, Otaurl, Restart, Reset, WifiConfig, Seriallog, Syslog, LogHost, LogPort, SSId, Password%s"), (!grpflg) ? ", Hostname" : "");
+    snprintf_P(svalue, sizeof(svalue), PSTR("Status, SaveData, SaveSate, Upgrade, Otaurl, Restart, Reset, WifiConfig, Seriallog, Syslog, LogHost, LogPort, SSId, Password%s"), (!grpflg) ? ", Hostname" : "");
 #endif      
     mqtt_publish(stopic, svalue);
     snprintf_P(svalue, sizeof(svalue), PSTR("MqttHost, MqttPort, MqttUser, MqttPassword%s, GroupTopic, Timezone, Light, Power, Ledstate, TelePeriod"), (!grpflg) ? ", MqttClient, Topic, ButtonTopic, ButtonRetain" : "");
@@ -719,16 +752,12 @@ void send_button(char *cmnd)
 {
   char stopic[128], svalue[128], log[LOGSZ];
   char *token;
-  byte state, device = 1;
+  byte state, mask, device = 1;
 
-  if (strchr(cmnd, '/')) {
+  if (strchr(cmnd, '/')) {   // 1/light 2
     token = strtok(cmnd, "/");
     device = atoi(token);
-    if (device > Maxdevice) {
-      snprintf_P(log, sizeof(log), PSTR("APP: Device %d not supported"), device);
-      addLog(LOG_LEVEL_DEBUG, log);
-      return;
-    }
+    if (device > Maxdevice) device = 1;
     token = strtok(NULL, " ");
     if ((!strcmp(token,"light")) || (!strcmp(token,"power"))) strcpy(token, sysCfg.mqtt_subtopic);
     snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/%d/%s"), SUB_PREFIX, sysCfg.mqtt_topic2, device, token);
@@ -740,7 +769,10 @@ void send_button(char *cmnd)
   token = strtok(NULL, "");
   if (token != NULL) {
     state = atoi(token);
-    if (state == 2) state = power ^ (0x01 << (device -1));
+    if (state == 2) {
+      mask = 0x01 << (device -1);
+      state = power & mask ^ mask;
+    }
     snprintf_P(svalue, sizeof(svalue), PSTR("%s"), (state) ? "On" : "Off");
   } else {
     snprintf_P(svalue, sizeof(svalue), "");
@@ -842,31 +874,9 @@ void every_second()
   }
 }
 
-#define MAX_BUTTON_COMMANDS    8
-
-const char commands[MAX_BUTTON_COMMANDS][14] PROGMEM = {    // SONOFF and ELECTRO_DRAGON
-  {"reset 1"},        // Hold button for more than 4 seconds
-  {"1/light 2"},      // Press button once
-  {"1/light 2"},      // Press button twice
-  {"wificonfig 1"},   // Press button three times
-  {"wificonfig 2"},   // Press button four times
-  {"wificonfig 3"},   // Press button five times
-  {"restart 1"},      // Press button six times
-  {"upgrade 1"}};     // Press button seven times
-
-const char commands1[MAX_BUTTON_COMMANDS][14] PROGMEM = {    // SONOFF_DUAL
-  {"reset 1"},        // Hold button for more than 4 seconds
-  {"1/light 2"},      // Press button once
-  {"2/light 2"},      // Press button twice
-  {"wificonfig 1"},   // Press button three times
-  {"wificonfig 2"},   // Press button four times
-  {"wificonfig 3"},   // Press button five times
-  {"restart 1"},      // Press button six times
-  {"upgrade 1"}};     // Press button seven times
-
 void stateloop()
 {
-  uint8_t button;
+  uint8_t button, flag;
   char scmnd[20], log[LOGSZ], stopic[TOPSZ], svalue[TOPSZ];
   
   timerxs = millis() + (1000 / STATES);
@@ -923,12 +933,13 @@ void stateloop()
     multiwindow--;
   } else {
     if ((!restartflag) && (!holdcount) && (multipress > 0) && (multipress < MAX_BUTTON_COMMANDS)) {
+      snprintf_P(scmnd, sizeof(scmnd), commands[multipress]);
       if (sysCfg.model == SONOFF_DUAL) {
-        snprintf_P(scmnd, sizeof(scmnd), commands1[multipress]);
-      } else {
-        snprintf_P(scmnd, sizeof(scmnd), commands[multipress]);
+        flag = ((multipress == 1) || (multipress == 2));
+      } else  {
+        flag = (multipress == 1);
       }
-      if (strcmp(sysCfg.mqtt_topic2,"0") && (multipress == 1) && mqttClient.connected()) {
+      if (strcmp(sysCfg.mqtt_topic2,"0") && mqttClient.connected() && flag) {
         send_button(scmnd);          // Execute command via MQTT using ButtonTopic to sync external clients
       } else {
         do_cmnd(scmnd);              // Execute command internally 
@@ -1117,14 +1128,14 @@ void setup()
       sysCfg.sta_config = WIFI_CONFIG_TOOL;
     }
     if (sysCfg.version < 0x01002300) {  // 1.0.35 - Add default savedata flag
-      sysCfg.savedata = 1;
+      sysCfg.savedata = SAVE_DATA;
     }
     if (sysCfg.version < 0x02000000) {  // 2.0.0 - Add default model
       sysCfg.model = 0;
     }
     if (sysCfg.version < 0x02000300) {  // 2.0.3 - Add button retain flag
-      sysCfg.mqtt_retain = false;
-      sysCfg.savestate = 1;
+      sysCfg.mqtt_retain = MQTT_BUTTON_RETAIN;
+      sysCfg.savestate = SAVE_STATE;
     }
 
     sysCfg.version = VERSION;
@@ -1179,22 +1190,11 @@ void setup()
   pinMode(LED_PIN, OUTPUT);
   digitalWrite(LED_PIN, (LED_INVERTED) ? !blinkstate : blinkstate);
 
-  if (sysCfg.model == SONOFF_DUAL) {
-    if (sysCfg.savestate) {
-      Serial.write(0xA0);
-      Serial.write(0x04);
-      Serial.write(power);
-      Serial.write(0xA1);
-      Serial.write('\n');
-      Serial.flush();
-    }
-  } else {
+  if (sysCfg.model != SONOFF_DUAL) {
+    pinMode(KEY_PIN, INPUT_PULLUP);
     pinMode(REL_PIN, OUTPUT);
-    if (sysCfg.savestate) {
-      digitalWrite(REL_PIN, power & 0x1);
-    }
   }
-  pinMode(KEY_PIN, INPUT_PULLUP);
+  if (sysCfg.savestate) setRelay(power);
 
 #ifdef SEND_TELEMETRY_DHT
   dht_init();

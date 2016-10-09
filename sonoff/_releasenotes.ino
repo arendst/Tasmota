@@ -1,4 +1,10 @@
-/* 2.0.3 20161008
+/* 2.0.4 20161009
+ * Add MQTT_BUTTON_RETAIN, SAVE_DATA and SAVE_STATE defines to user_config.h
+ * Update ButtonRetain to remove retained message(s) from broker when turned off
+ * Add Retain for second relay on Sonoff Dual
+ * Provide power status messages with device topic index if requested
+ * 
+ * 2.0.3 20161008
  * Update wifi initialization
  * Add command BUTTONRETAIN for optional MQTT retain on button press
  * Add command SAVESTATE to disable power state save. May be used with MQTT retain
