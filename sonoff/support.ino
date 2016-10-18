@@ -1,3 +1,30 @@
+/*
+These routines provide support to my various ESP8266 based projects.
+
+Copyright (c) 2016 Theo Arends.  All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+- Redistributions of source code must retain the above copyright notice,
+  this list of conditions and the following disclaimer.
+- Redistributions in binary form must reproduce the above copyright notice,
+  this list of conditions and the following disclaimer in the documentation
+  and/or other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+POSSIBILITY OF SUCH DAMAGE.
+*/
+
 /*********************************************************************************************\
  * Config - Flash or Spiffs
 \*********************************************************************************************/
@@ -403,7 +430,7 @@ extern "C" {
 static const uint8_t monthDays[] = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 }; // API starts months from 1, this array starts from 0
 static const char monthNames[37] = { "JanFebMrtAprMayJunJulAugSepOctNovDec" };
 
-uint32_t utctime = 0, loctime = 0, dsttime = 0, stdtime = 0, ntptime = 0;
+uint32_t utctime = 0, loctime = 0, dsttime = 0, stdtime = 0, ntptime = 0, midnight = 0;
 uint8_t ntpsync = 0;
 
 void breakTime(uint32_t timeInput, TIME_T &tm)
@@ -576,6 +603,12 @@ void rtc_second()
     }
   }
   breakTime(loctime, rtcTime);
+  if ((!midnight || (!rtcTime.Hour && !rtcTime.Minute && !rtcTime.Second)) && (loctime > 1451602800)) {
+    midnight = loctime;
+  }
+#ifdef SEND_TELEMETRY_ENERGY
+  hlw_second();
+#endif
   rtcTime.Year += 1970;
 }
 
@@ -593,9 +626,163 @@ void rtc_init()
 #endif  // USE_TICKER
 }
 
+#ifdef SEND_TELEMETRY_ENERGY
+/*********************************************************************************************\
+ * HLW8012 - Energy
+ * 
+ * Based on Source: Shenzhen Heli Technology Co., Ltd
+\*********************************************************************************************/
+
+#define HLW_PREF            10000    // 1000.0W
+#define HLW_UREF             2200    // 220.0V
+#define HLW_IREF             4545    // 4.545A
+
+#define HLW_PREF_PULSE       4975    // 4975us = 201Hz = 1000W
+#define HLW_UREF_PULSE       1666    // 1666us = 600Hz = 220V
+#define HLW_IREF_PULSE       1666    // 1666us = 600Hz = 4.545A
+
+byte hlw_SELflag;
+byte hlw_SELcounter;
+byte hlw_counter;
+unsigned long hlw_cf_plen = 0;
+unsigned long hlw_cf_last = 0;
+unsigned long hlw_cf1_plen = 0;
+unsigned long hlw_cf1_last = 0;
+unsigned long hlw_cf1u_plen = 0;
+unsigned long hlw_cf1i_plen = 0;
+unsigned long hlw_Ecntr;
+unsigned long hlw_EDcntr;
+unsigned long hlw_kWhtoday;
+uint32_t hlw_lasttime = 0;
+
+void hlw_cf_interrupt() ICACHE_RAM_ATTR;
+void hlw_cf1_interrupt() ICACHE_RAM_ATTR;
+
+void hlw_cf_interrupt()
+{
+  hlw_cf_plen = micros() - hlw_cf_last;
+  hlw_cf_last = micros();
+  hlw_EDcntr++;
+  hlw_Ecntr++;
+}
+
+void hlw_cf1_interrupt()
+{
+  hlw_cf1_plen = micros() - hlw_cf1_last;
+  hlw_cf1_last = micros();
+  hlw_SELcounter++;
+  if (hlw_SELcounter == 8) {
+    hlw_SELcounter = 0;
+    hlw_SELflag ^= 1;
+  }
+  if (hlw_SELflag) {
+    hlw_cf1u_plen = hlw_cf1_plen;
+  } else {
+    hlw_cf1i_plen = hlw_cf1_plen;
+  }
+}
+
+void hlw_second()
+{
+  unsigned long hlw_len;
+  unsigned long hlw_temp;
+
+/*
+  if (hlw_cf1u_plen && ((micros() - hlw_cf1_last) < 100000) && hlw_cf_plen) {
+    hlw_temp = (HLW_PREF * sysCfg.hlw_pcal) / hlw_cf_plen;
+    hlw_kWhtoday += (hlw_temp * 100) / 36;
+  }
+*/
+  if (hlw_EDcntr) {
+    hlw_len = 1000000 / hlw_EDcntr;
+    hlw_EDcntr = 0;
+    hlw_temp = (HLW_PREF * sysCfg.hlw_pcal) / hlw_len;
+    hlw_kWhtoday += (hlw_temp * 100) / 36;
+  }
+
+  if (loctime == midnight) {
+    sysCfg.hlw_esave = hlw_kWhtoday;
+    hlw_kWhtoday = 0;
+  }
+}
+
+boolean hlw_readEnergy(byte option, float &ed, float &e, float &w, float &u, float &i)
+{
+  unsigned long hlw_len;
+  unsigned long hlw_temp;
+  int hlw_period;
+  int hlw_interval;
+  uint32_t daytime = loctime - midnight;
+
+  if (hlw_kWhtoday) {
+    ed = (float)hlw_kWhtoday / 100000000;
+  } else {
+    ed = 0;
+  }
+  if (option) {
+    if (!hlw_lasttime) {
+      hlw_period = sysCfg.tele_period;
+    } else {
+      hlw_period = loctime - hlw_lasttime;
+    }
+    hlw_lasttime = loctime;
+    hlw_interval = 3600 / hlw_period;
+    if (hlw_Ecntr) {
+      hlw_len = hlw_period * 1000000 / hlw_Ecntr;
+      hlw_Ecntr = 0;
+      hlw_temp = ((HLW_PREF * sysCfg.hlw_pcal) / hlw_len) / hlw_interval;
+      e = (float)hlw_temp / 10;
+    } else {
+      e = 0;
+    }
+  }
+  if (hlw_cf1u_plen && ((micros() - hlw_cf1_last) < 100000)) {
+    hlw_temp = (HLW_UREF * sysCfg.hlw_ucal) / hlw_cf1u_plen;
+    u = (float)hlw_temp / 10;
+  } else {
+    u = 0;
+  }
+  if (hlw_cf1i_plen && (u > 0)) {
+    hlw_temp = (HLW_IREF * sysCfg.hlw_ical) / hlw_cf1i_plen;
+    i = (float)hlw_temp / 1000;
+  } else {
+    i = 0;
+  }
+  if (hlw_cf_plen && (u > 0)) {
+    hlw_temp = (HLW_PREF * sysCfg.hlw_pcal) / hlw_cf_plen;
+    w = (float)hlw_temp / 10;
+  } else {
+    w = 0;
+  }
+  return true; 
+}
+
+void hlw_init()
+{
+  if (!sysCfg.hlw_pcal) {
+    sysCfg.hlw_pcal = HLW_PREF_PULSE;
+    sysCfg.hlw_ucal = HLW_UREF_PULSE;
+    sysCfg.hlw_ical = HLW_IREF_PULSE;
+  }
+  hlw_SELcounter = 0;
+  hlw_SELflag = 1;  // Voltage;
+  
+  hlw_Ecntr = 0;
+  hlw_EDcntr = 0;
+  hlw_kWhtoday = 0;
+  
+  pinMode(HLW_CF, INPUT_PULLUP);
+  attachInterrupt(HLW_CF, hlw_cf_interrupt, FALLING);
+  pinMode(HLW_SEL, OUTPUT);
+  digitalWrite(HLW_SEL, hlw_SELflag);
+  pinMode(HLW_CF1, INPUT_PULLUP);
+  attachInterrupt(HLW_CF1, hlw_cf1_interrupt, FALLING);
+}
+#endif  // SEND_TELEMETRY_ENERGY
+
 #ifdef SEND_TELEMETRY_DS18B20
 /*********************************************************************************************\
- * DS18B20
+ * DS18B20 - Temperature
  * 
  * Source: Marinus vd Broek https://github.com/ESP8266nu/ESPEasy
 \*********************************************************************************************/
@@ -704,7 +891,7 @@ boolean dsb_readTemp(float &t)
 
 #ifdef SEND_TELEMETRY_DHT
 /*********************************************************************************************\
- * DHT11, DHT21 (AM2301), DHT22 (AM2302, AM2321)
+ * DHT11, DHT21 (AM2301), DHT22 (AM2302, AM2321) - Temperature and Humidy
  * 
  * Reading temperature or humidity takes about 250 milliseconds!
  * Sensor readings may also be up to 2 seconds 'old' (its a very slow sensor)

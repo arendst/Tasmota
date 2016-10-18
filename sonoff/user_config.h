@@ -3,11 +3,12 @@
  * 
  * Select hardware MODULE:
  *  SONOFF          = Sonoff, Sonoff SV, Sonoff Dual, Sonoff TH 10A/16A, S20 Smart Socket
+ *  SONOFF_POW      = Sonoff Pow (Experimental until tested)
  *  ELECTRO_DRAGON  = Electro Dragon (Relay 2 only)
  * 
 \*********************************************************************************************/
 
-#define MODULE                 SONOFF       // Hardware module type (SONOFF or ELECTRO_DRAGON)
+#define MODULE                 SONOFF       // Hardware module type (SONOFF, SONOFF_POW or ELECTRO_DRAGON)
 
 #define PROJECT                "sonoff"     // PROJECT is used as the default topic delimiter and OTA file name
                                             // As an IDE restriction it needs to be the same as the main .ino file
@@ -56,8 +57,6 @@
 #define TELE_PERIOD            300          // Telemetry (0 = disable, 2 - 3600 seconds)
 #define SEND_TELEMETRY_UPTIME               // Enable sending uptime telemetry (if disabled will still send hourly message)
 #define SEND_TELEMETRY_RSSI                 // Enable sending wifi RSSI telemetry
-//#define SEND_TELEMETRY_DS18B20              // Enable sending DS18B20 temperature telemetry
-//#define SEND_TELEMETRY_DHT                  // Enable sending DHT11, DHT21, DHT22, AM2301, AM2302 or AM2321 temperature and humidity telemetry
 #define SEND_TELEMETRY_POWER                // Enable sending power telemetry
 
 // HTTP
@@ -78,16 +77,44 @@
 #define APP_TIMEZONE           1            // +1 hour (Amsterdam) (-12 .. 12 = hours from UTC, 99 = use TIME_DST/TIME_STD)
 #define APP_LEDSTATE           1            // Do not show power state (1 = Show power state)
 
+/*********************************************************************************************\
+ * Sonoff specific paremeters
+\*********************************************************************************************/
+
 #if MODULE == SONOFF                        // programming header 1:3.3V 2:rx 3:tx 4:gnd
   #define APP_NAME             "Sonoff module"
   #define LED_PIN              13           // GPIO 13 = Green/Blue Led (0 = On, 1 = Off) - Sonoff
   #define LED_INVERTED         1            // 0 = (1 = On, 0 = Off), 1 = (0 = On, 1 = Off)
   #define REL_PIN              12           // GPIO 12 = Red Led and Relay (0 = Off, 1 = On)
   #define KEY_PIN              0            // GPIO 00 = Button
-  #define DSB_PIN              14           // GPIO 14 = TEM1 - DS18B20 (Sonoff_TH10A(16A), Sonoff SV)
-  #define DHT_PIN              4            // GPIO 04 = TEM2 - DHT22 (Sonoff_TH10A(16A), Sonoff SV)
-  #define DHT_TYPE             DHT11        // DHT module type (DHT11, DHT21, DHT22, AM2301, AM2302 or AM2321)
-  
+/*-------------------------------------------------------------------------------------------*/
+  #define DSB_PIN              14           // GPIO 14 = DS18B20 (Sonoff_TH10A(16A), Sonoff SV)
+ // #define SEND_TELEMETRY_DS18B20            // Enable sending temperature telemetry
+/*-------------------------------------------------------------------------------------------*/
+  #define DHT_PIN              14           // GPIO 14 = DHT22 (Sonoff_TH10A(16A), Sonoff SV)
+  #define DHT_TYPE             AM2301       // DHT module type (DHT11, DHT21, DHT22, AM2301, AM2302 or AM2321)
+ // #define SEND_TELEMETRY_DHT                // Enable sending temperature and humidity telemetry
+
+/*********************************************************************************************\
+ * Sonoff Pow specific parameters
+\*********************************************************************************************/
+
+#elif MODULE == SONOFF_POW                  // programming header 1:3.3V 2:rx 3:tx 4:gnd
+  #define APP_NAME             "Sonoff Pow module"
+  #define LED_PIN              15           // GPIO 15 = Green Led (0 = On, 1 = Off) - Sonoff
+  #define LED_INVERTED         0            // 0 = (1 = On, 0 = Off), 1 = (0 = On, 1 = Off)
+  #define REL_PIN              12           // GPIO 12 = Red Led and Relay (0 = Off, 1 = On)
+  #define KEY_PIN              0            // GPIO 00 = Button
+/*-------------------------------------------------------------------------------------------*/
+  #define HLW_SEL              5            // GPIO 05 = HLW8012 Sel input (Sonoff Pow)
+  #define HLW_CF1              13           // GPIO 13 = HLW8012 CF1 voltage / current (Sonoff Pow)
+  #define HLW_CF               14           // GPIO 14 = HLW8012 CF power (Sonoff Pow)
+  #define SEND_TELEMETRY_ENERGY             // Enable sending energy telemetry
+
+/*********************************************************************************************\
+ * Electrodragon specific paremeters
+\*********************************************************************************************/
+
 #elif MODULE == ELECTRO_DRAGON              // programming header 5V/3V/gnd/
   #define APP_NAME             "ElectroDragon module"
   #define LED_PIN              16           // GPIO 16 = Led (0 = Off, 1 = On)
@@ -96,11 +123,25 @@
   #define KEY_PIN              2            // GPIO 02 = Button 1
   #define REL2_PIN             12           // GPIO 12 = Red Led and Relay 2 (0 = Off, 1 = On)
   #define KEY2_PIN             0            // GPIO 00 = Button 2
+/*-------------------------------------------------------------------------------------------*/
   #define DSB_PIN              4            // GPIO 04 = DS18B20
+//  #define SEND_TELEMETRY_DS18B20            // Enable sending temperature telemetry
+/*-------------------------------------------------------------------------------------------*/
   #define DHT_PIN              14           // GPIO 14 = DHT22
   #define DHT_TYPE             DHT22        // DHT module type (DHT11, DHT21, DHT22, AM2301, AM2302 or AM2321)
-  
+//  #define SEND_TELEMETRY_DHT                // Enable sending temperature and humidity telemetry
+
+/*********************************************************************************************\
+ * No user configurable items below
+\*********************************************************************************************/
+ 
 #else
-  #error "Select either module SONOFF or ELECTRO_DRAGON"
+  #error "Select either module SONOFF, SONOFF_POW or ELECTRO_DRAGON"
+#endif
+
+#ifdef SEND_TELEMETRY_DS18B20 && SEND_TELEMETRY_DHT
+#if DSB_PIN == DHT_PIN
+  #error "Select either SEND_TELEMETRY_DS18B20 or SEND_TELEMETRY_DHT or use different GPIOs"
+#endif
 #endif
 

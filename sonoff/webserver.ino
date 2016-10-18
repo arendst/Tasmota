@@ -59,7 +59,7 @@ const char HTTP_HEAD[] PROGMEM =
   "</head>"
   "<body>"
   "<div style='text-align:left;display:inline-block;min-width:260px;'>"
-  "<div style='text-align:center;'><h2>" APP_NAME "</h2><h3>{h}</h3></div>";
+  "<div style='text-align:center;'><h3>" APP_NAME "</h3><h2>{h}</h2></div>";
 const char HTTP_MSG_RSTRT[] PROGMEM =
   "<br/><div style='text-align:center;'>Device will restart in a few seconds</div><br/>";
 const char HTTP_BTN_MENU1[] PROGMEM =

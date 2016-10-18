@@ -1,4 +1,12 @@
-/* 2.0.4 20161009
+/* 2.0.5 20161018
+ * Add updates to user_config.h - moved SEND_TELEMETRY_DS18B20 and SEND_TELEMETRY_DHT to module area. 
+ *   As Sonoff TH10/16 does not have the logic installed for GPIO04 You'll have to select ONE of both
+ * Add Sonoff Pow support (experimental until Pow tested)
+ * Add command Status 8 to display Sonoff Pow energy values
+ * Add command MqttUnits On|Off to add units to values
+ * Change web main page header character size
+ * 
+ * 2.0.4 20161009
  * Add MQTT_BUTTON_RETAIN, SAVE_DATA and SAVE_STATE defines to user_config.h
  * Update ButtonRetain to remove retained message(s) from broker when turned off
  * Add Retain for second relay on Sonoff Dual
