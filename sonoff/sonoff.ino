@@ -510,7 +510,7 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
       if ((data_len > 0) && (payload >= 0) && (payload <= 1)) {
         sysCfg.savestate = payload;
       }
-      strlcpy(svalue, (sysCfg.savestate) ? "On" : "Off", sizeof(svalue));
+      strlcpy(svalue, (sysCfg.savestate) ? "ON" : "OFF", sizeof(svalue));
     }
     else if (!strcmp(type,"MODEL")) {
       if ((data_len > 0) && (payload >= 0) && (payload < ELECTRO_DRAGON)) {
@@ -602,9 +602,9 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
       }
       if (sysCfg.webserver) {
         snprintf_P(svalue, sizeof(svalue), PSTR("Webserver active for %s on %s with IP address %s"),
-          (sysCfg.webserver == 2) ? "Admin" : "User", Hostname, WiFi.localIP().toString().c_str());
+          (sysCfg.webserver == 2) ? "ADMIN" : "USER", Hostname, WiFi.localIP().toString().c_str());
       } else {
-        snprintf_P(svalue, sizeof(svalue), PSTR("Off"));
+        snprintf_P(svalue, sizeof(svalue), PSTR("OFF"));
       }
     }
     else if (!strcmp(type,"WEBLOG")) {
@@ -655,7 +655,7 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
       if ((data_len > 0) && (payload >= 0) && (payload <= 1)) {
         sysCfg.mqtt_units = payload;
       }
-      strlcpy(svalue, (sysCfg.mqtt_units) ? "On" : "Off", sizeof(svalue));
+      strlcpy(svalue, (sysCfg.mqtt_units) ? "ON" : "OFF", sizeof(svalue));
     }
     else if (!strcmp(type,"TELEPERIOD")) {
       if ((data_len > 0) && (payload >= 0) && (payload < 3601)) {
@@ -705,7 +705,7 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
         }
         sysCfg.mqtt_retain = payload;
       }
-      strlcpy(svalue, (sysCfg.mqtt_retain) ? "On" : "Off", sizeof(svalue));
+      strlcpy(svalue, (sysCfg.mqtt_retain) ? "ON" : "OFF", sizeof(svalue));
     }
     else if (!strcmp(type,"RESTART")) {
       switch (payload) {
@@ -758,13 +758,13 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
         }
         setRelay(power);
       }
-      strlcpy(svalue, (power & mask) ? "On" : "Off", sizeof(svalue));
+      strlcpy(svalue, (power & mask) ? "ON" : "OFF", sizeof(svalue));
     }
     else if (!strcmp(type,"LEDSTATE")) {
       if ((data_len > 0) && (payload >= 0) && (payload <= 1)) {
         sysCfg.ledstate = payload;
       }
-      strlcpy(svalue, (sysCfg.ledstate) ? "On" : "Off", sizeof(svalue));
+      strlcpy(svalue, (sysCfg.ledstate) ? "ON" : "OFF", sizeof(svalue));
     } else {
       type = NULL;
     }
@@ -810,7 +810,7 @@ void send_button(char *cmnd)
       mask = 0x01 << (device -1);
       state = power & mask ^ mask;
     }
-    snprintf_P(svalue, sizeof(svalue), PSTR("%s"), (state) ? "On" : "Off");
+    snprintf_P(svalue, sizeof(svalue), PSTR("%s"), (state) ? "ON" : "OFF");
   } else {
     snprintf_P(svalue, sizeof(svalue), "");
   }
@@ -834,7 +834,7 @@ void send_power()
   char stopic[TOPSZ], svalue[TOPSZ];
 
   snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/%s"), PUB_PREFIX, sysCfg.mqtt_topic, sysCfg.mqtt_subtopic);
-  strlcpy(svalue, (power) ? "On" : "Off", sizeof(svalue));
+  strlcpy(svalue, (power) ? "ON" : "OFF", sizeof(svalue));
   mqtt_publish(stopic, svalue);
 }
 
@@ -920,7 +920,7 @@ void every_second()
 
 #ifdef SEND_TELEMETRY_POWER
       snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/%s"), PUB_PREFIX2, sysCfg.mqtt_topic, sysCfg.mqtt_subtopic);
-      strlcpy(svalue, (power) ? "On" : "Off", sizeof(svalue));
+      strlcpy(svalue, (power) ? "ON" : "OFF", sizeof(svalue));
       mqtt_publish(stopic, svalue);
 #endif  // SEND_TELEMETRY_POWER
 
