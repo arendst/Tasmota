@@ -6,6 +6,7 @@
  * Add command MqttUnits On|Off to add units to values
  * Change web main page header character size
  * Change On/Off to ON/OFF status messages to satisfy openHAB
+ * Change TEMP to TEMPERATURE and HUM to HUMIDITY
  * 
  * 2.0.4 20161009
  * Add MQTT_BUTTON_RETAIN, SAVE_DATA and SAVE_STATE defines to user_config.h
