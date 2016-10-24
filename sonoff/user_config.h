@@ -89,11 +89,11 @@
   #define KEY_PIN              0            // GPIO 00 = Button
 /*-------------------------------------------------------------------------------------------*/
   #define DSB_PIN              14           // GPIO 14 = DS18B20 (Sonoff_TH10A(16A), Sonoff SV)
- // #define SEND_TELEMETRY_DS18B20            // Enable sending temperature telemetry
+//  #define SEND_TELEMETRY_DS18B20            // Enable sending temperature telemetry
 /*-------------------------------------------------------------------------------------------*/
-  #define DHT_PIN              14           // GPIO 14 = DHT22 (Sonoff_TH10A(16A), Sonoff SV)
+  #define DHT_PIN              14           // GPIO 14 = AM2301 (Sonoff_TH10A(16A), Sonoff SV)
   #define DHT_TYPE             AM2301       // DHT module type (DHT11, DHT21, DHT22, AM2301, AM2302 or AM2321)
- // #define SEND_TELEMETRY_DHT                // Enable sending temperature and humidity telemetry
+//  #define SEND_TELEMETRY_DHT                // Enable sending temperature and humidity telemetry
 
 /*********************************************************************************************\
  * Sonoff Pow specific parameters

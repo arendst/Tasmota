@@ -66,7 +66,7 @@ void CFG_Save()
         uint8_t *bytes = (uint8_t*)&sysCfg;
         for (int i = 0; i < sizeof(SYSCFG); i++) f.write(bytes[i]);
         f.close();
-        snprintf_P(log, sizeof(log), PSTR("Config: Saved configuration to spiffs count %d"), sysCfg.saveFlag);
+        snprintf_P(log, sizeof(log), PSTR("Config: Saved configuration (%d bytes) to spiffs count %d"), sizeof(SYSCFG), sysCfg.saveFlag);
         addLog(LOG_LEVEL_DEBUG, log);
       } else {
         addLog_P(LOG_LEVEL_ERROR, PSTR("Config: ERROR - Saving configuration failed"));
@@ -82,7 +82,7 @@ void CFG_Save()
       spi_flash_erase_sector(CFG_LOCATION + (sysCfg.saveFlag &1));
       spi_flash_write((CFG_LOCATION + (sysCfg.saveFlag &1)) * SPI_FLASH_SEC_SIZE, (uint32*)&sysCfg, sizeof(SYSCFG));
       interrupts();
-      snprintf_P(log, sizeof(log), PSTR("Config: Saved configuration to flash at %X and count %d"), CFG_LOCATION + (sysCfg.saveFlag &1), sysCfg.saveFlag);
+      snprintf_P(log, sizeof(log), PSTR("Config: Saved configuration (%d bytes) to flash at %X and count %d"), sizeof(SYSCFG), CFG_LOCATION + (sysCfg.saveFlag &1), sysCfg.saveFlag);
       addLog(LOG_LEVEL_DEBUG, log);
     }
     _cfgHash = getHash();
@@ -559,6 +559,16 @@ String rtc_time(int type)
   return String(stime);
 }
 
+uint32_t rtc_loctime()
+{
+  return loctime;
+}
+
+uint32_t rtc_midnight()
+{
+  return midnight;
+}
+
 void rtc_second()
 {
   char log[LOGSZ];
@@ -606,7 +616,7 @@ void rtc_second()
   if ((!midnight || (!rtcTime.Hour && !rtcTime.Minute && !rtcTime.Second)) && (loctime > 1451602800)) {
     midnight = loctime;
   }
-#ifdef SEND_TELEMETRY_ENERGY
+#ifdef USE_POWERMONITOR
   hlw_second();
 #endif
   rtcTime.Year += 1970;
@@ -625,160 +635,6 @@ void rtc_init()
   tickerRTC.attach(1, rtc_second);
 #endif  // USE_TICKER
 }
-
-#ifdef SEND_TELEMETRY_ENERGY
-/*********************************************************************************************\
- * HLW8012 - Energy
- * 
- * Based on Source: Shenzhen Heli Technology Co., Ltd
-\*********************************************************************************************/
-
-#define HLW_PREF            10000    // 1000.0W
-#define HLW_UREF             2200    // 220.0V
-#define HLW_IREF             4545    // 4.545A
-
-#define HLW_PREF_PULSE       4975    // 4975us = 201Hz = 1000W
-#define HLW_UREF_PULSE       1666    // 1666us = 600Hz = 220V
-#define HLW_IREF_PULSE       1666    // 1666us = 600Hz = 4.545A
-
-byte hlw_SELflag;
-byte hlw_SELcounter;
-byte hlw_counter;
-unsigned long hlw_cf_plen = 0;
-unsigned long hlw_cf_last = 0;
-unsigned long hlw_cf1_plen = 0;
-unsigned long hlw_cf1_last = 0;
-unsigned long hlw_cf1u_plen = 0;
-unsigned long hlw_cf1i_plen = 0;
-unsigned long hlw_Ecntr;
-unsigned long hlw_EDcntr;
-unsigned long hlw_kWhtoday;
-uint32_t hlw_lasttime = 0;
-
-void hlw_cf_interrupt() ICACHE_RAM_ATTR;
-void hlw_cf1_interrupt() ICACHE_RAM_ATTR;
-
-void hlw_cf_interrupt()
-{
-  hlw_cf_plen = micros() - hlw_cf_last;
-  hlw_cf_last = micros();
-  hlw_EDcntr++;
-  hlw_Ecntr++;
-}
-
-void hlw_cf1_interrupt()
-{
-  hlw_cf1_plen = micros() - hlw_cf1_last;
-  hlw_cf1_last = micros();
-  hlw_SELcounter++;
-  if (hlw_SELcounter == 8) {
-    hlw_SELcounter = 0;
-    hlw_SELflag ^= 1;
-  }
-  if (hlw_SELflag) {
-    hlw_cf1u_plen = hlw_cf1_plen;
-  } else {
-    hlw_cf1i_plen = hlw_cf1_plen;
-  }
-}
-
-void hlw_second()
-{
-  unsigned long hlw_len;
-  unsigned long hlw_temp;
-
-/*
-  if (hlw_cf1u_plen && ((micros() - hlw_cf1_last) < 100000) && hlw_cf_plen) {
-    hlw_temp = (HLW_PREF * sysCfg.hlw_pcal) / hlw_cf_plen;
-    hlw_kWhtoday += (hlw_temp * 100) / 36;
-  }
-*/
-  if (hlw_EDcntr) {
-    hlw_len = 1000000 / hlw_EDcntr;
-    hlw_EDcntr = 0;
-    hlw_temp = (HLW_PREF * sysCfg.hlw_pcal) / hlw_len;
-    hlw_kWhtoday += (hlw_temp * 100) / 36;
-  }
-
-  if (loctime == midnight) {
-    sysCfg.hlw_esave = hlw_kWhtoday;
-    hlw_kWhtoday = 0;
-  }
-}
-
-boolean hlw_readEnergy(byte option, float &ed, float &e, float &w, float &u, float &i)
-{
-  unsigned long hlw_len;
-  unsigned long hlw_temp;
-  int hlw_period;
-  int hlw_interval;
-  uint32_t daytime = loctime - midnight;
-
-  if (hlw_kWhtoday) {
-    ed = (float)hlw_kWhtoday / 100000000;
-  } else {
-    ed = 0;
-  }
-  if (option) {
-    if (!hlw_lasttime) {
-      hlw_period = sysCfg.tele_period;
-    } else {
-      hlw_period = loctime - hlw_lasttime;
-    }
-    hlw_lasttime = loctime;
-    hlw_interval = 3600 / hlw_period;
-    if (hlw_Ecntr) {
-      hlw_len = hlw_period * 1000000 / hlw_Ecntr;
-      hlw_Ecntr = 0;
-      hlw_temp = ((HLW_PREF * sysCfg.hlw_pcal) / hlw_len) / hlw_interval;
-      e = (float)hlw_temp / 10;
-    } else {
-      e = 0;
-    }
-  }
-  if (hlw_cf1u_plen && ((micros() - hlw_cf1_last) < 100000)) {
-    hlw_temp = (HLW_UREF * sysCfg.hlw_ucal) / hlw_cf1u_plen;
-    u = (float)hlw_temp / 10;
-  } else {
-    u = 0;
-  }
-  if (hlw_cf1i_plen && (u > 0)) {
-    hlw_temp = (HLW_IREF * sysCfg.hlw_ical) / hlw_cf1i_plen;
-    i = (float)hlw_temp / 1000;
-  } else {
-    i = 0;
-  }
-  if (hlw_cf_plen && (u > 0)) {
-    hlw_temp = (HLW_PREF * sysCfg.hlw_pcal) / hlw_cf_plen;
-    w = (float)hlw_temp / 10;
-  } else {
-    w = 0;
-  }
-  return true; 
-}
-
-void hlw_init()
-{
-  if (!sysCfg.hlw_pcal) {
-    sysCfg.hlw_pcal = HLW_PREF_PULSE;
-    sysCfg.hlw_ucal = HLW_UREF_PULSE;
-    sysCfg.hlw_ical = HLW_IREF_PULSE;
-  }
-  hlw_SELcounter = 0;
-  hlw_SELflag = 1;  // Voltage;
-  
-  hlw_Ecntr = 0;
-  hlw_EDcntr = 0;
-  hlw_kWhtoday = 0;
-  
-  pinMode(HLW_CF, INPUT_PULLUP);
-  attachInterrupt(HLW_CF, hlw_cf_interrupt, FALLING);
-  pinMode(HLW_SEL, OUTPUT);
-  digitalWrite(HLW_SEL, hlw_SELflag);
-  pinMode(HLW_CF1, INPUT_PULLUP);
-  attachInterrupt(HLW_CF1, hlw_cf1_interrupt, FALLING);
-}
-#endif  // SEND_TELEMETRY_ENERGY
 
 #ifdef SEND_TELEMETRY_DS18B20
 /*********************************************************************************************\
