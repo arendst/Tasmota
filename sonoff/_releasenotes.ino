@@ -1,4 +1,9 @@
-/* 2.0.6 20161024
+/* 2.0.7 20161030
+ * Make Ticker mandatory
+ * Add Domoticz support (Increase MQTT_MAX_PACKET_SIZE to 400)
+ * Add command MessageFormat 0|1 to select either legacy or JSON output
+ * 
+ * 2.0.6 20161024
  * Add Sonoff Pow power factor
  * Initial support for up to four relays using iTEAD PSB (4Channel)
  *   - Currently only supports one button (All buttons behave the same)

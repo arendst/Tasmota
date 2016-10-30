@@ -53,6 +53,15 @@
 #define MQTT_GRPTOPIC          PROJECT"s"   // Group topic
 #define MQTT_BUTTON_RETAIN     0            // Button may send retain flag (0 = off, 1 = on)
 
+// Domoticz  
+#define DOMOTICZ_IN_TOPIC      "domoticz/in"
+#define DOMOTICZ_OUT_TOPIC     "domoticz/out"
+#define DOMOTICZ_RELAY_IDX1    0            // Sonoff Relay 1 (0 = disable domoticz)
+#define DOMOTICZ_RELAY_IDX2    0            // Sonoff Dual Relay 2
+#define DOMOTICZ_KEY_IDX1      0            // Button single press (0 = disable)
+#define DOMOTICZ_KEY_IDX2      0            // Button double press (0 = disable)
+#define DOMOTICZ_UPDATE_TIMER  0            // Send relay status (0 = disable, 1 - 3600 seconds) (Optional)
+
 // MQTT - Telemetry
 #define TELE_PERIOD            300          // Telemetry (0 = disable, 2 - 3600 seconds)
 #define SEND_TELEMETRY_UPTIME               // Enable sending uptime telemetry (if disabled will still send hourly message)
@@ -110,7 +119,7 @@
   #define HLW_CF1              13           // GPIO 13 = HLW8012 CF1 voltage / current (Sonoff Pow)
   #define HLW_CF               14           // GPIO 14 = HLW8012 CF power (Sonoff Pow)
   #define SEND_TELEMETRY_ENERGY             // Enable sending energy telemetry
-
+  
 /*********************************************************************************************\
  * Electrodragon specific paremeters
 \*********************************************************************************************/

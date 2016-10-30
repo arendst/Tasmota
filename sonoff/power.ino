@@ -157,19 +157,19 @@ boolean hlw_readEnergy(byte option, float &ed, uint16_t &e, uint16_t &w, uint16_
   } else {
     u = 0;
   }
-  if (hlw_cf1i_plen && (u > 0)) {
+  if (hlw_cf1i_plen && u) {
     hlw_i = (HLW_IREF * sysCfg.hlw_ical) / hlw_cf1i_plen;
     i = (float)hlw_i / 1000;
   } else {
     i = 0;
   }
-  if (hlw_cf_plen && (u > 0)) {
+  if (hlw_cf_plen && u) {
     hlw_w = (HLW_PREF * sysCfg.hlw_pcal) / hlw_cf_plen;
     w = hlw_w / 10;
   } else {
     w = 0;
   }
-  if (hlw_i && hlw_u && hlw_w && (u > 0)) {
+  if (hlw_i && hlw_u && hlw_w && u) {
     hlw_temp = (hlw_w * 100) / ((hlw_u * hlw_i) / 1000);
     if (hlw_temp > 100) {
       hlw_temp = 100;

@@ -423,15 +423,15 @@ extern "C" {
 #define SECS_PER_DAY  ((uint32_t)(SECS_PER_HOUR * 24UL))
 #define LEAP_YEAR(Y)  (((1970+Y)>0) && !((1970+Y)%4) && (((1970+Y)%100) || !((1970+Y)%400)))
 
-#ifdef USE_TICKER
-  Ticker tickerRTC;
-#endif  // USE_TICKER
+Ticker tickerRTC;
 
 static const uint8_t monthDays[] = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 }; // API starts months from 1, this array starts from 0
 static const char monthNames[37] = { "JanFebMrtAprMayJunJulAugSepOctNovDec" };
 
 uint32_t utctime = 0, loctime = 0, dsttime = 0, stdtime = 0, ntptime = 0, midnight = 0;
 uint8_t ntpsync = 0;
+
+rtcCallback rtcCb = NULL;
 
 void breakTime(uint32_t timeInput, TIME_T &tm)
 {
@@ -616,14 +616,16 @@ void rtc_second()
   if ((!midnight || (!rtcTime.Hour && !rtcTime.Minute && !rtcTime.Second)) && (loctime > 1451602800)) {
     midnight = loctime;
   }
+  rtcTime.Year += 1970;
 #ifdef USE_POWERMONITOR
   hlw_second();
 #endif
-  rtcTime.Year += 1970;
+  if (rtcCb) rtcCb();
 }
 
-void rtc_init()
+void rtc_init(rtcCallback cb)
 {
+  rtcCb = cb;
   sntp_setservername(0, (char*)NTP_SERVER1);
   sntp_setservername(1, (char*)NTP_SERVER2);
   sntp_setservername(2, (char*)NTP_SERVER3);
@@ -631,9 +633,7 @@ void rtc_init()
   sntp_set_timezone(0);      // UTC time
   sntp_init();
   utctime = 0;
-#ifdef USE_TICKER
   tickerRTC.attach(1, rtc_second);
-#endif  // USE_TICKER
 }
 
 #ifdef SEND_TELEMETRY_DS18B20
@@ -913,8 +913,10 @@ void addLog(byte loglevel, const char *line)
   
 #ifdef DEBUG_ESP_PORT
   DEBUG_ESP_PORT.printf("%s %s\n", mxtime, line);  
+//  yield();
 #endif  // DEBUG_ESP_PORT
   if (loglevel <= sysCfg.seriallog_level) Serial.printf("%s %s\n", mxtime, line);
+//  yield();
 #ifdef USE_WEBSERVER
   if (loglevel <= sysCfg.weblog_level) {
     Log[logidx] = String(mxtime) + " " + String(line);
@@ -923,6 +925,7 @@ void addLog(byte loglevel, const char *line)
   }
 #endif  // USE_WEBSERVER
   if ((WiFi.status() == WL_CONNECTED) && (loglevel <= sysCfg.syslog_level)) syslog(line);
+//  yield();
 }
 
 void addLog_P(byte loglevel, const char *formatP)

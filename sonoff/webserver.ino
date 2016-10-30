@@ -33,6 +33,9 @@ POSSIBILITY OF SUCH DAMAGE.
  * Source by AlexT (https://github.com/tzapu)
 \*********************************************************************************************/
 
+#define STR_HELPER(x) #x
+#define STR(x) STR_HELPER(x)
+
 const char HTTP_HEAD[] PROGMEM =
   "<!DOCTYPE html><html lang=\"en\">"
   "<head>"
@@ -99,6 +102,9 @@ const char HTTP_BTN_RSTRT[] PROGMEM =
 const char HTTP_BTN_MENU2[] PROGMEM =
   "<br/><form action='/w0' method='post'><button>Configure WiFi</button></form>"
   "<br/><form action='/mq' method='post'><button>Configure MQTT</button></form>"
+#ifdef USE_DOMOTICZ
+  "<br/><form action='/dm' method='post'><button>Configure Domoticz</button></form>"
+#endif  // USE_DOMOTICZ
   "<br/><form action='/lg' method='post'><button>Configure logging</button></form>"
   "<br/><form action='/rt' method='post'><button>Reset Configuration</button></form>";
 const char HTTP_BTN_MAIN[] PROGMEM =
@@ -119,29 +125,38 @@ const char HTTP_FORM_MQTT[] PROGMEM =
   "<fieldset><legend><b>&nbsp;MQTT parameters&nbsp;</b></legend><form method='post' action='sv'>"
   "<input id='w' name='w' value='2' hidden><input id='r' name='r' value='1' hidden>"
   "<br/><b>Host</b> (" MQTT_HOST ")<br/><input id='mh' name='mh' length=32 placeholder='" MQTT_HOST" ' value='{m1}'><br/>"
-  "<br/><b>Port</b> ({ml})<br/><input id='ml' name='ml' length=5 placeholder='{ml}' value='{m2}'><br/>"
+  "<br/><b>Port</b> (" STR(MQTT_PORT) ")<br/><input id='ml' name='ml' length=5 placeholder='" STR(MQTT_PORT) "' value='{m2}'><br/>"
   "<br/><b>Client Id</b> ({m0})<br/><input id='mc' name='mc' length=32 placeholder='" MQTT_CLIENT_ID "' value='{m3}'><br/>"
   "<br/><b>User</b> (" MQTT_USER ")<br/><input id='mu' name='mu' length=32 placeholder='" MQTT_USER "' value='{m4}'><br/>"
   "<br/><b>Password</b> (" MQTT_PASS ")<br/><input id='mp' name='mp' length=32 placeholder='" MQTT_PASS "' value='{m5}'><br/>"
   "<br/><b>Topic</b> (" MQTT_TOPIC ")<br/><input id='mt' name='mt' length=32 placeholder='" MQTT_TOPIC" ' value='{m6}'><br/>";
+#ifdef USE_DOMOTICZ
+const char HTTP_FORM_DOMOTICZ[] PROGMEM =
+  "<fieldset><legend><b>&nbsp;Domoticz parameters&nbsp;</b></legend><form method='post' action='sv'>"
+  "<input id='w' name='w' value='4' hidden><input id='r' name='r' value='1' hidden>"
+  "<br/><b>In topic</b> (" DOMOTICZ_IN_TOPIC ")<br/><input id='it' name='it' length=32 placeholder='" DOMOTICZ_IN_TOPIC "' value='{d1}'><br/>"
+  "<br/><b>Out topic</b> (" DOMOTICZ_OUT_TOPIC ")<br/><input id='ot' name='ot' length=32 placeholder='" DOMOTICZ_OUT_TOPIC "' value='{d2}'><br/>"
+  "<br/><b>Idx</b> (" STR(DOMOTICZ_RELAY_IDX1) ")<br/><input id='ix' name='ix' length=32 placeholder='" STR(DOMOTICZ_RELAY_IDX1) "' value='{d3}'><br/>"
+  "<br/><b>Update timer</b> (" STR(DOMOTICZ_UPDATE_TIMER) ")<br/><input id='ut' name='ut' length=32 placeholder='" STR(DOMOTICZ_UPDATE_TIMER) "' value='{d4}'><br/>";
+#endif  // USE_DOMOTICZ
 const char HTTP_FORM_LOG[] PROGMEM =
   "<fieldset><legend><b>&nbsp;Logging parameters&nbsp;</b></legend><form method='post' action='sv'>"
   "<input id='w' name='w' value='3' hidden><input id='r' name='r' value='0' hidden>"
-  "<br/><b>Serial log level</b> ({ls})<br/><select id='ls' name='ls'>"
+  "<br/><b>Serial log level</b> (" STR(SERIAL_LOG_LEVEL) ")<br/><select id='ls' name='ls'>"
   "<option{a0value='0'>0 None</option>"
   "<option{a1value='1'>1 Error</option>"
   "<option{a2value='2'>2 Info</option>"
   "<option{a3value='3'>3 Debug</option>"
   "<option{a4value='4'>4 More debug</option>"
   "</select></br>"
-  "<br/><b>Web log level</b> ({lw})<br/><select id='lw' name='lw'>"
+  "<br/><b>Web log level</b> (" STR(WEB_LOG_LEVEL) ")<br/><select id='lw' name='lw'>"
   "<option{b0value='0'>0 None</option>"
   "<option{b1value='1'>1 Error</option>"
   "<option{b2value='2'>2 Info</option>"
   "<option{b3value='3'>3 Debug</option>"
   "<option{b4value='4'>4 More debug</option>"
   "</select></br>"
-  "<br/><b>Syslog level</b> ({ll})<br/><select id='ll' name='ll'>"
+  "<br/><b>Syslog level</b> (" STR(SYS_LOG_LEVEL) ")<br/><select id='ll' name='ll'>"
   "<option{c0value='0'>0 None</option>"
   "<option{c1value='1'>1 Error</option>"
   "<option{c2value='2'>2 Info</option>"
@@ -149,8 +164,8 @@ const char HTTP_FORM_LOG[] PROGMEM =
   "<option{c4value='4'>4 More debug</option>"
   "</select></br>"
   "<br/><b>Syslog host</b> (" SYS_LOG_HOST ")<br/><input id='lh' name='lh' length=32 placeholder='" SYS_LOG_HOST "' value='{l2}'><br/>"
-  "<br/><b>Syslog port</b> ({lp})<br/><input id='lp' name='lp' length=5 placeholder='{lp}' value='{l3}'><br/>"
-  "<br/><b>Telemetric period</b> ({lt})<br/><input id='lt' name='lt' length=4 placeholder='{lt}' value='{l4}'><br/>";
+  "<br/><b>Syslog port</b> (" STR(SYS_LOG_PORT) ")<br/><input id='lp' name='lp' length=5 placeholder='" STR(SYS_LOG_PORT) "' value='{l3}'><br/>"
+  "<br/><b>Telemetric period</b> (" STR(TELE_PERIOD) ")<br/><input id='lt' name='lt' length=4 placeholder='" STR(TELE_PERIOD) "' value='{l4}'><br/>";
 const char HTTP_FORM_END[] PROGMEM =
   "<br/><button type='submit'>Save</button></form></fieldset>";
 const char HTTP_FORM_UPG[] PROGMEM =
@@ -202,6 +217,9 @@ void startWebserver(int type, IPAddress ipweb)
       webServer->on("/w1", handleWifi1);
       webServer->on("/w0", handleWifi0);
       webServer->on("/mq", handleMqtt);
+#ifdef USE_DOMOTICZ
+      webServer->on("/dm", handleDomoticz);
+#endif  // USE_DOMOTICZ
       webServer->on("/lg", handleLog);
       webServer->on("/sv", handleSave);
       webServer->on("/rt", handleReset);
@@ -474,7 +492,6 @@ void handleMqtt()
   }
   page.replace("{m0}", str);
   page.replace("{m1}", String(sysCfg.mqtt_host));
-  page.replace("{ml}", String((int)MQTT_PORT));
   page.replace("{m2}", String(sysCfg.mqtt_port));
   page.replace("{m3}", String(sysCfg.mqtt_client));
   page.replace("{m4}", String(sysCfg.mqtt_user));
@@ -485,6 +502,24 @@ void handleMqtt()
   showPage(page);
 }
 
+#ifdef USE_DOMOTICZ  
+void handleDomoticz()  
+{  
+  addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Handle Domoticz config"));  
+
+  String page = FPSTR(HTTP_HEAD);  
+  page.replace("{v}", "Configure Domoticz");  
+  page += FPSTR(HTTP_FORM_DOMOTICZ);  
+  page.replace("{d1}", String(sysCfg.domoticz_in_topic));  
+  page.replace("{d2}", String(sysCfg.domoticz_out_topic));  
+  page.replace("{d3}", String((int)sysCfg.domoticz_relay_idx[0]));  
+  page.replace("{d4}", String((int)sysCfg.domoticz_update_timer));  
+  page += FPSTR(HTTP_FORM_END);  
+  page += FPSTR(HTTP_BTN_CONF);  
+  showPage(page);  
+}  
+#endif  // USE_DOMOTICZ  
+
 void handleLog()
 {
   addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Handle Log config"));
@@ -492,18 +527,13 @@ void handleLog()
   String page = FPSTR(HTTP_HEAD);
   page.replace("{v}", "Config logging");
   page += FPSTR(HTTP_FORM_LOG);
-  page.replace("{ls}", String((int)SERIAL_LOG_LEVEL));
-  page.replace("{lw}", String((int)WEB_LOG_LEVEL));
-  page.replace("{ll}", String((int)SYS_LOG_LEVEL));
   for (byte i = LOG_LEVEL_NONE; i < LOG_LEVEL_ALL; i++) {
     page.replace("{a" + String(i), (i == sysCfg.seriallog_level) ? " selected " : " ");
     page.replace("{b" + String(i), (i == sysCfg.weblog_level) ? " selected " : " ");
     page.replace("{c" + String(i), (i == sysCfg.syslog_level) ? " selected " : " ");
   }  
   page.replace("{l2}", String(sysCfg.syslog_host));
-  page.replace("{lp}", String((int)SYS_LOG_PORT));
   page.replace("{l3}", String(sysCfg.syslog_port));
-  page.replace("{lt}", String((int)TELE_PERIOD));
   page.replace("{l4}", String(sysCfg.tele_period));
   page += FPSTR(HTTP_FORM_END);
   page += FPSTR(HTTP_BTN_CONF);
@@ -552,6 +582,17 @@ void handleSave()
       sysCfg.seriallog_level, sysCfg.weblog_level, sysCfg.syslog_level, sysCfg.syslog_host, sysCfg.syslog_port, sysCfg.tele_period);
     addLog(LOG_LEVEL_INFO, log);
     break;
+#ifdef USE_DOMOTICZ
+  case 4:
+    strlcpy(sysCfg.domoticz_in_topic, (!strlen(webServer->arg("it").c_str())) ? DOMOTICZ_IN_TOPIC : webServer->arg("it").c_str(), sizeof(sysCfg.domoticz_in_topic));
+    strlcpy(sysCfg.domoticz_out_topic, (!strlen(webServer->arg("ot").c_str())) ? DOMOTICZ_OUT_TOPIC : webServer->arg("ot").c_str(), sizeof(sysCfg.domoticz_out_topic));
+    sysCfg.domoticz_relay_idx[0] = (!strlen(webServer->arg("ix").c_str())) ? DOMOTICZ_RELAY_IDX1 : atoi(webServer->arg("ix").c_str());
+    sysCfg.domoticz_update_timer = (!strlen(webServer->arg("ut").c_str())) ? DOMOTICZ_UPDATE_TIMER : atoi(webServer->arg("ut").c_str());
+    snprintf_P(log, sizeof(log), PSTR("HTTP: Domoticz in_topic %s, out_topic %s, idx %d, update_timer %d"),
+      sysCfg.domoticz_in_topic, sysCfg.domoticz_out_topic, sysCfg.domoticz_relay_idx[0], sysCfg.domoticz_update_timer);
+    addLog(LOG_LEVEL_INFO, log);
+    break;
+#endif  // USE_DOMOTICZ
   }
 
   restart = (!strlen(webServer->arg("r").c_str())) ? 1 : atoi(webServer->arg("r").c_str());
@@ -794,7 +835,7 @@ void handleInfo()
 //  page += F("<fieldset><legend><b>&nbsp;Information&nbsp;</b></legend>");
   page += F("<style>td{padding:0px 5px;}</style>");
   page += F("<table style'width:100%;'>");
-  page += F("<tr><td><b>Version</b></td><td>"); page += Version; page += F("</td></tr>");
+  page += F("<tr><td><b>Program version</b></td><td>"); page += Version; page += F("</td></tr>");
   page += F("<tr><td><b>Core/SDK version</b></td><td>"); page += ESP.getCoreVersion(); page += F("/"); page += String(ESP.getSdkVersion()); page += F("</td></tr>");
 //  page += F("<tr><td><b>Boot version</b></td><td>"); page += String(ESP.getBootVersion()); page += F("</td></tr>");
   page += F("<tr><td><b>Uptime</b></td><td>"); page += String(uptime); page += F(" Hours</td></tr>");
@@ -826,9 +867,9 @@ void handleInfo()
   page += F("<tr><td><b>ESP Chip id</b></td><td>"); page += String(ESP.getChipId()); page += F("</td></tr>");
   page += F("<tr><td><b>Flash Chip id</b></td><td>"); page += String(ESP.getFlashChipId()); page += F("</td></tr>");
   page += F("<tr><td><b>Flash size</b></td><td>"); page += String(ESP.getFlashChipRealSize() / 1024); page += F("kB</td></tr>");
-  page += F("<tr><td><b>Sketch flash size</b></td><td>"); page += String(ESP.getFlashChipSize() / 1024); page += F("kB</td></tr>");
-  page += F("<tr><td><b>Sketch size</b></td><td>"); page += String(ESP.getSketchSize() / 1024); page += F("kB</td></tr>");
-  page += F("<tr><td><b>Free sketch space</b></td><td>"); page += String(ESP.getFreeSketchSpace() / 1024); page += F("kB</td></tr>");
+  page += F("<tr><td><b>Program flash size</b></td><td>"); page += String(ESP.getFlashChipSize() / 1024); page += F("kB</td></tr>");
+  page += F("<tr><td><b>Program size</b></td><td>"); page += String(ESP.getSketchSize() / 1024); page += F("kB</td></tr>");
+  page += F("<tr><td><b>Free program space</b></td><td>"); page += String(ESP.getFreeSketchSpace() / 1024); page += F("kB</td></tr>");
   page += F("<tr><td><b>Free memory</b></td><td>"); page += String(freeMem / 1024); page += F("kB</td></tr>");
   page += F("</table>");
 //  page += F("</fieldset>");
