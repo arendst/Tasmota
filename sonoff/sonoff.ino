@@ -541,7 +541,9 @@ void mqtt_connected()
       mqtt_publish(stopic, svalue);
     }
     status_update_timer = 2;
+#ifdef USE_DOMOTICZ
     domoticz_update_timer = 2;
+#endif  // USE_DOMOTICZ
   }
   mqttflag = 0;
 }
