@@ -1,14 +1,11 @@
 /*********************************************************************************************\
  * User specific configuration parameters
- * 
- * Select hardware MODULE:
- *  SONOFF          = Sonoff, Sonoff SV, Sonoff Dual, Sonoff TH 10A/16A, S20 Smart Socket
- *  SONOFF_POW      = Sonoff Pow (Experimental until tested)
- *  ELECTRO_DRAGON  = Electro Dragon (Relay 2 only)
- * 
 \*********************************************************************************************/
 
-#define MODULE                 SONOFF       // Hardware module type (SONOFF, SONOFF_POW or ELECTRO_DRAGON)
+// Enable only one out of three MODULE defines below
+#define MODULE                 SONOFF            // Sonoff, Sonoff SV, Sonoff Dual, Sonoff TH 10A/16A, S20 Smart Socket, 4 Channel
+//#define MODULE                 SONOFF_POW        // Sonoff Pow
+//#define MODULE                 ELECTRO_DRAGON    // Electro Dragon Wifi IoT Relay Board Based on ESP8266  
 
 #define PROJECT                "sonoff"     // PROJECT is used as the default topic delimiter and OTA file name
                                             // As an IDE restriction it needs to be the same as the main .ino file

@@ -1,4 +1,8 @@
-/* 2.0.8 20161108
+/* 2.0.9 20161108
+ * clarify MODULE in user_config.h
+ * Fix hlw false values
+ * 
+ * 2.0.8 20161108
  * Add initial status after power on
  * Seperate driver files
  * Fix hlw code and calibrate Pow

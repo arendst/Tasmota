@@ -163,7 +163,7 @@ boolean hlw_readEnergy(byte option, float &ed, uint16_t &e, uint16_t &w, uint16_
     }
   }
   
-  if (hlw_cf1i_plen && hlw_EDcntr) {
+  if (hlw_cf1i_plen < 200000) {
     hlw_i = (HLW_IREF * sysCfg.hlw_ical) / hlw_cf1i_plen;
     i = (float)hlw_i / 1000;
   } else {
