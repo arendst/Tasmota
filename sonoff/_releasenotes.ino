@@ -1,4 +1,10 @@
-/* 2.0.7 20161030
+/* 2.0.8 20161108
+ * Add initial status after power on
+ * Seperate driver files
+ * Fix hlw code and calibrate Pow
+ * Move user config defines to user_config.h
+ * 
+ * 2.0.7 20161030
  * Make Ticker mandatory
  * Add Domoticz support (Increase MQTT_MAX_PACKET_SIZE to 400)
  * Add command MessageFormat 0|1 to select either legacy or JSON output

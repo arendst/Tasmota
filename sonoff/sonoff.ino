@@ -25,7 +25,7 @@
  *                        | | | | | |                     Gnd
 */
 
-#define VERSION                0x02000700   // 2.0.7
+#define VERSION                0x02000800   // 2.0.8
 
 #define SONOFF                 1            // Sonoff, Sonoff SV, Sonoff Dual, Sonoff TH 10A/16A, S20 Smart Socket, 4 Channel
 #define SONOFF_POW             9            // Sonoff Pow
@@ -52,8 +52,6 @@ enum msgf_t  {LEGACY, JSON, MAX_FORMAT};
 \*********************************************************************************************/
 
 //#define USE_SPIFFS                          // Switch persistent configuration from flash to spiffs (+24k code, +0.6k mem)
-#define USE_WEBSERVER                       // Enable web server and wifi manager (+37k code, +2k mem)
-#define USE_DOMOTICZ                        // Enable Domoticz (+3k code, +0.2k mem)
 
 /*********************************************************************************************\
  * Not released yet
@@ -103,7 +101,6 @@ enum msgf_t  {LEGACY, JSON, MAX_FORMAT};
 #define TOPSZ                  60           // Max number of characters in topic string
 #define MESSZ                  300          // Max number of characters in message string (Domoticz string)
 #define LOGSZ                  128          // Max number of characters in log string
-
 #define MAX_LOG_LINES          80           // Max number of lines in weblog
 
 #define APP_BAUDRATE           115200       // Default serial baudrate
@@ -253,6 +250,7 @@ int tele_period = 0;                  // Tele period timer
 String Log[MAX_LOG_LINES];            // Web log buffer
 byte logidx = 0;                      // Index in Web log buffer
 byte Maxdevice = MAX_DEVICE;          // Max number of devices supported
+int status_update_timer = 0;          // Refresh initial status
 
 WiFiClient espClient;                 // Wifi Client
 PubSubClient mqttClient(espClient);   // MQTT Client
@@ -276,7 +274,7 @@ uint8_t multipress = 0;               // Number of button presses within multiwi
 #endif  // FEATURE_POWER_LIMIT
 
 #ifdef USE_DOMOTICZ  
-  int domoticz_update_timer = 12;
+  int domoticz_update_timer = 0;
   byte domoticz_update_flag;  
 #endif  // USE_DOMOTICZ 
 
@@ -451,38 +449,34 @@ void setRelay(uint8_t power)
   }
 }
 
-#ifdef USE_DOMOTICZ  
-unsigned long getKeyIntValue(const char *json, const char *key)  
-{  
-  char *p, *b;  
-  int i;  
+#ifdef USE_DOMOTICZ
+unsigned long getKeyIntValue(const char *json, const char *key)
+{
+  char *p, *b;
+  int i;
 
-  // search key  
-  p = strstr(json, key);  
-  if (!p) {  
-     return 0;  
-  }  
-  // search following separator :  
-  b = strchr(p + strlen(key), ':');  
-  if (!b) {  
-    return 0;  
-  }  
-  // Only the following chars are allowed between key and separator :  
-  for(i = b - json + strlen(key); i < p-json; i++) {  
-    switch (json[i]) {  
-    case ' ':  
-    case '\n':  
-    case '\t':  
-    case '\r':  
-      continue;  
-    default:  
-      return 0;  
-    }  
-  }  
-  // Convert to integer  
-  return atoi(b +1);  
+  // search key
+  p = strstr(json, key);
+  if (!p) return 0;
+  // search following separator :
+  b = strchr(p + strlen(key), ':');
+  if (!b) return 0;
+  // Only the following chars are allowed between key and separator :
+  for(i = b - json + strlen(key); i < p-json; i++) {
+    switch (json[i]) {
+    case ' ':
+    case '\n':
+    case '\t':
+    case '\r':
+      continue;
+    default:
+      return 0;
+    }
+  }
+  // Convert to integer
+  return atoi(b +1);
 }
-#endif  // USE_DOMOTICZ  
+#endif  // USE_DOMOTICZ
 
 /********************************************************************************************/
 
@@ -546,6 +540,8 @@ void mqtt_connected()
       snprintf_P(svalue, sizeof(svalue), PSTR("No persistent config. Please reflash with at least 16K SPIFFS"));
       mqtt_publish(stopic, svalue);
     }
+    status_update_timer = 2;
+    domoticz_update_timer = 2;
   }
   mqttflag = 0;
 }
@@ -1272,15 +1268,6 @@ void do_cmnd(char *cmnd)
   mqttDataCb(stopic, (byte*)svalue, strlen(svalue));
 }
 
-void send_power()
-{
-  char stopic[TOPSZ], svalue[TOPSZ];
-
-  snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/%s"), PUB_PREFIX, sysCfg.mqtt_topic, sysCfg.mqtt_subtopic);
-  strlcpy(svalue, (power) ? "ON" : "OFF", sizeof(svalue));
-  mqtt_publish(stopic, svalue);
-}
-
 void every_second_cb()
 {
   // 1 second rtc interrupt routine
@@ -1299,7 +1286,23 @@ void every_second()
   char log[LOGSZ], stopic[TOPSZ], svalue[MESSZ], stemp1[10], stemp2[10], stemp3[10];
   float t, h, ped, pi, pc;
   uint16_t piv, uped, pe, pw, pu;
-  byte flag;
+  byte flag, i;
+
+  if (status_update_timer) {
+    status_update_timer--;
+    if (!status_update_timer) {
+      for (i = 0; i < Maxdevice; i++) {
+        
+//        snprintf_P(svalue, sizeof(svalue), PSTR("%d/%s %d"),
+//          i +1, sysCfg.mqtt_subtopic, (power & (0x01 << i)) ? 1 : 0);
+//        do_cmnd(svalue);    // <--- Exception loop_task - need investigation
+
+        snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/%d/%s"), PUB_PREFIX, sysCfg.mqtt_topic, i +1, sysCfg.mqtt_subtopic);
+        strlcpy(svalue, (power & (0x01 << i)) ? "ON" : "OFF", sizeof(svalue));
+        mqtt_publish(stopic, svalue);
+      }
+    }
+  }
 
 #ifdef USE_DOMOTICZ
   if ((sysCfg.domoticz_update_timer || domoticz_update_timer) && sysCfg.domoticz_relay_idx[0] && (strlen(sysCfg.domoticz_in_topic) != 0)) {
@@ -1307,7 +1310,7 @@ void every_second()
     if (domoticz_update_timer <= 0) {
       domoticz_update_timer = sysCfg.domoticz_update_timer;
       strlcpy(stopic, sysCfg.domoticz_in_topic, sizeof(stopic));
-      for (int i = 0; i < Maxdevice; i++) {
+      for (i = 0; i < Maxdevice; i++) {
         if (sysCfg.domoticz_relay_idx[i]) {
           snprintf_P(svalue, sizeof(svalue), PSTR("{\"idx\":%d, \"nvalue\":%d, \"svalue\":\"\"}"),
             sysCfg.domoticz_relay_idx[i], (power & (0x01 << i)) ? 1 : 0);
@@ -1805,6 +1808,8 @@ void setup()
   }
   if (sysCfg.savestate) setRelay(power);
 
+  rtc_init(every_second_cb);
+
 #ifdef SEND_TELEMETRY_DHT
   dht_init();
 #endif
@@ -1812,8 +1817,6 @@ void setup()
 #ifdef USE_POWERMONITOR
   hlw_init();
 #endif  // USE_POWERMONITOR
-
-  rtc_init(every_second_cb);
 
   snprintf_P(log, sizeof(log), PSTR("APP: Project %s (Topic %s, Fallback %s, GroupTopic %s) Version %s"),
     PROJECT, sysCfg.mqtt_topic, MQTTClient, sysCfg.mqtt_grptopic, Version);

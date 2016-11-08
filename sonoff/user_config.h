@@ -53,7 +53,8 @@
 #define MQTT_GRPTOPIC          PROJECT"s"   // Group topic
 #define MQTT_BUTTON_RETAIN     0            // Button may send retain flag (0 = off, 1 = on)
 
-// Domoticz  
+// Domoticz
+#define USE_DOMOTICZ                        // Enable Domoticz (+3k code, +0.2k mem) - Disable by //
 #define DOMOTICZ_IN_TOPIC      "domoticz/in"
 #define DOMOTICZ_OUT_TOPIC     "domoticz/out"
 #define DOMOTICZ_RELAY_IDX1    0            // Sonoff Relay 1 (0 = disable domoticz)
@@ -69,6 +70,7 @@
 #define SEND_TELEMETRY_POWER                // Enable sending power telemetry
 
 // HTTP
+#define USE_WEBSERVER                       // Enable web server and wifi manager (+37k code, +2k mem) - Disable by //
 #define WEB_SERVER             2            // Web server (0 = Off, 1 = Start as User, 2 = Start as Admin)
 
 // Time - Up to three NTP servers in your region
@@ -115,7 +117,7 @@
   #define REL_PIN              12           // GPIO 12 = Red Led and Relay (0 = Off, 1 = On)
   #define KEY_PIN              0            // GPIO 00 = Button
 /*-------------------------------------------------------------------------------------------*/
-  #define HLW_SEL              5            // GPIO 05 = HLW8012 Sel input (Sonoff Pow)
+  #define HLW_SEL              5            // GPIO 05 = HLW8012 Sel output (Sonoff Pow)
   #define HLW_CF1              13           // GPIO 13 = HLW8012 CF1 voltage / current (Sonoff Pow)
   #define HLW_CF               14           // GPIO 14 = HLW8012 CF power (Sonoff Pow)
   #define SEND_TELEMETRY_ENERGY             // Enable sending energy telemetry

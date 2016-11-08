@@ -36,13 +36,15 @@ POSSIBILITY OF SUCH DAMAGE.
 #define HLW_UREF             2200    // 220.0V
 #define HLW_IREF             4545    // 4.545A
 
-#define HLW_PREF_PULSE       4975    // 4975us = 201Hz = 1000W
-#define HLW_UREF_PULSE       1666    // 1666us = 600Hz = 220V
-#define HLW_IREF_PULSE       1666    // 1666us = 600Hz = 4.545A
+// Calibration data
+#define HLW_PREF_PULSE      12345    // was 4975us = 201Hz = 1000W
+#define HLW_UREF_PULSE       1950    // was 1666us = 600Hz = 220V
+#define HLW_IREF_PULSE       3500    // was 1666us = 600Hz = 4.545A
 
 byte hlw_SELflag;
-byte hlw_SELcounter;
-byte hlw_counter;
+byte hlw_cf1_timer;
+byte hlw_seconds;
+
 unsigned long hlw_cf_plen = 0;
 unsigned long hlw_cf_last = 0;
 unsigned long hlw_cf1_plen = 0;
@@ -68,6 +70,8 @@ byte hlw_umaxflg = 0;
 byte hlw_iminflg = 0;
 byte hlw_imaxflg = 0;
 
+Ticker tickerHLW;
+
 void hlw_cf_interrupt() ICACHE_RAM_ATTR;
 void hlw_cf1_interrupt() ICACHE_RAM_ATTR;
 
@@ -83,39 +87,41 @@ void hlw_cf1_interrupt()
 {
   hlw_cf1_plen = micros() - hlw_cf1_last;
   hlw_cf1_last = micros();
-  hlw_SELcounter++;
-  if (hlw_SELcounter == 8) {
-    hlw_SELcounter = 0;
-    hlw_SELflag ^= 1;
-  }
-  if (hlw_SELflag) {
-    hlw_cf1u_plen = hlw_cf1_plen;
-  } else {
-    hlw_cf1i_plen = hlw_cf1_plen;
+  if ((hlw_cf1_timer > 2) && (hlw_cf1_timer < 8)) {
+    if (hlw_SELflag) {
+      hlw_cf1i_plen = hlw_cf1_plen;
+    } else {
+      hlw_cf1u_plen = hlw_cf1_plen;
+    }
   }
 }
 
-void hlw_second()
+void hlw_200mS()
 {
   unsigned long hlw_len;
   unsigned long hlw_temp;
 
-/*
-  if (hlw_cf1u_plen && ((micros() - hlw_cf1_last) < 100000) && hlw_cf_plen) {
-    hlw_temp = (HLW_PREF * sysCfg.hlw_pcal) / hlw_cf_plen;
-    hlw_kWhtoday += (hlw_temp * 100) / 36;
-  }
-*/
-  if (hlw_EDcntr) {
-    hlw_len = 1000000 / hlw_EDcntr;
-    hlw_EDcntr = 0;
-    hlw_temp = (HLW_PREF * sysCfg.hlw_pcal) / hlw_len;
-    hlw_kWhtoday += (hlw_temp * 100) / 36;
+  hlw_seconds++;
+  if (hlw_seconds == 5) {
+    hlw_seconds = 0;
+
+    if (hlw_EDcntr) {
+      hlw_len = 1000000 / hlw_EDcntr;
+      hlw_EDcntr = 0;
+      hlw_temp = (HLW_PREF * sysCfg.hlw_pcal) / hlw_len;
+      hlw_kWhtoday += (hlw_temp * 100) / 36;
+    }
+    if (rtc_loctime() == rtc_midnight()) {
+      sysCfg.hlw_esave = hlw_kWhtoday;
+      hlw_kWhtoday = 0;
+    }
   }
 
-  if (rtc_loctime() == rtc_midnight()) {
-    sysCfg.hlw_esave = hlw_kWhtoday;
-    hlw_kWhtoday = 0;
+  hlw_cf1_timer--;
+  if (!hlw_cf1_timer) {
+    hlw_cf1_timer = 10;
+    hlw_SELflag = (hlw_SELflag) ? 0 : 1;
+    digitalWrite(HLW_SEL, hlw_SELflag);
   }
 }
 
@@ -128,6 +134,11 @@ boolean hlw_readEnergy(byte option, float &ed, uint16_t &e, uint16_t &w, uint16_
   unsigned long hlw_i;
   int hlw_period;
   int hlw_interval;
+
+//  char log[LOGSZ];
+//  snprintf_P(log, sizeof(log), PSTR("HLW: CF Len %d, CF1U len %d, CF1I len %d, E Cntr %d, ED cntr %d"),
+//    hlw_cf_plen, hlw_cf1u_plen, hlw_cf1i_plen, hlw_Ecntr, hlw_EDcntr);
+//  addLog(LOG_LEVEL_DEBUG, log);
 
   if (hlw_kWhtoday) {
     ed = (float)hlw_kWhtoday / 100000000;
@@ -151,25 +162,26 @@ boolean hlw_readEnergy(byte option, float &ed, uint16_t &e, uint16_t &w, uint16_
       e = 0;
     }
   }
-  if (hlw_cf1u_plen && ((micros() - hlw_cf1_last) < 100000)) {
-    hlw_u = (HLW_UREF * sysCfg.hlw_ucal) / hlw_cf1u_plen;
-    u = hlw_u / 10;
-  } else {
-    u = 0;
-  }
-  if (hlw_cf1i_plen && u) {
+  
+  if (hlw_cf1i_plen && hlw_EDcntr) {
     hlw_i = (HLW_IREF * sysCfg.hlw_ical) / hlw_cf1i_plen;
     i = (float)hlw_i / 1000;
   } else {
     i = 0;
   }
-  if (hlw_cf_plen && u) {
+  if (hlw_cf1u_plen && i) {
+    hlw_u = (HLW_UREF * sysCfg.hlw_ucal) / hlw_cf1u_plen;
+    u = hlw_u / 10;
+  } else {
+    u = 0;
+  }
+  if (hlw_cf_plen && i) {
     hlw_w = (HLW_PREF * sysCfg.hlw_pcal) / hlw_cf_plen;
     w = hlw_w / 10;
   } else {
     w = 0;
   }
-  if (hlw_i && hlw_u && hlw_w && u) {
+  if (hlw_i && hlw_u && hlw_w && i) {
     hlw_temp = (hlw_w * 100) / ((hlw_u * hlw_i) / 1000);
     if (hlw_temp > 100) {
       hlw_temp = 100;
@@ -229,24 +241,28 @@ boolean hlw_imore(uint16_t margin, uint16_t value, byte &flag)
 
 void hlw_init()
 {
-  if (!sysCfg.hlw_pcal) {
+//  if (!sysCfg.hlw_pcal) {
     sysCfg.hlw_pcal = HLW_PREF_PULSE;
     sysCfg.hlw_ucal = HLW_UREF_PULSE;
     sysCfg.hlw_ical = HLW_IREF_PULSE;
-  }
-  hlw_SELcounter = 0;
-  hlw_SELflag = 1;  // Voltage;
-  
+//  }
+
   hlw_Ecntr = 0;
   hlw_EDcntr = 0;
   hlw_kWhtoday = 0;
   
-  pinMode(HLW_CF, INPUT_PULLUP);
-  attachInterrupt(HLW_CF, hlw_cf_interrupt, FALLING);
+  hlw_SELflag = 0;  // Voltage;
+  
   pinMode(HLW_SEL, OUTPUT);
   digitalWrite(HLW_SEL, hlw_SELflag);
   pinMode(HLW_CF1, INPUT_PULLUP);
-  attachInterrupt(HLW_CF1, hlw_cf1_interrupt, FALLING);
+  attachInterrupt(HLW_CF1, hlw_cf1_interrupt, RISING);
+  pinMode(HLW_CF, INPUT_PULLUP);
+  attachInterrupt(HLW_CF, hlw_cf_interrupt, FALLING);
+
+  hlw_seconds = 0;
+  hlw_cf1_timer = 1;
+  tickerHLW.attach_ms(200, hlw_200mS);
 }
 
 #endif  // USE_POWERMONITOR
