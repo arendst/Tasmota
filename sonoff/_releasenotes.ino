@@ -1,4 +1,11 @@
-/* 2.0.9 20161108
+/* 2.0.10 20161109
+ * Add additional Domoticz define
+ * Add defines MQTT_STATUS_ON and MQTT_STATUS_OFF in user_config.h to select status On/Off string
+ * Fix status response differences
+ * Fix divide by zero exception
+ * Fix syslog loop exception
+ * 
+ * 2.0.9 20161108
  * clarify MODULE in user_config.h
  * Fix hlw false values
  * 

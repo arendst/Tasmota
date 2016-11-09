@@ -50,6 +50,9 @@
 #define MQTT_GRPTOPIC          PROJECT"s"   // Group topic
 #define MQTT_BUTTON_RETAIN     0            // Button may send retain flag (0 = off, 1 = on)
 
+#define MQTT_STATUS_ON         "ON"         // Status result when turned on (needs to be a string like "1" or "On")
+#define MQTT_STATUS_OFF        "OFF"        // Status result when turned off (needs to be a string like "0" or "Off")
+
 // Domoticz
 #define USE_DOMOTICZ                        // Enable Domoticz (+3k code, +0.2k mem) - Disable by //
 #define DOMOTICZ_IN_TOPIC      "domoticz/in"

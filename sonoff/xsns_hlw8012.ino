@@ -145,6 +145,7 @@ boolean hlw_readEnergy(byte option, float &ed, uint16_t &e, uint16_t &w, uint16_
   } else {
     ed = 0;
   }
+  
   if (option) {
     if (!hlw_lasttime) {
       hlw_period = sysCfg.tele_period;
@@ -162,8 +163,8 @@ boolean hlw_readEnergy(byte option, float &ed, uint16_t &e, uint16_t &w, uint16_
       e = 0;
     }
   }
-  
-  if (hlw_cf1i_plen < 200000) {
+
+  if (hlw_cf1i_plen && hlw_cf1i_plen < 200000) {
     hlw_i = (HLW_IREF * sysCfg.hlw_ical) / hlw_cf1i_plen;
     i = (float)hlw_i / 1000;
   } else {

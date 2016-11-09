@@ -639,12 +639,10 @@ void rtc_init(rtcCallback cb)
 
 void syslog(const char *message)
 {
-  char mess[MESSZ], str[TOPSZ+MESSZ];
+  char str[TOPSZ+MESSZ];
 
   portUDP.beginPacket(sysCfg.syslog_host, sysCfg.syslog_port);
-  strlcpy(mess, message, sizeof(mess));
-  mess[sizeof(mess)-1] = 0;
-  snprintf_P(str, sizeof(str), PSTR("%s ESP-%s"), Hostname, mess);
+  snprintf_P(str, sizeof(str), PSTR("%s ESP-%s"), Hostname, message);
   portUDP.write(str);
   portUDP.endPacket();
 }
