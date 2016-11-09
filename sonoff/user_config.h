@@ -150,7 +150,7 @@
   #error "Select either module SONOFF, SONOFF_POW or ELECTRO_DRAGON"
 #endif
 
-#ifdef SEND_TELEMETRY_DS18B20 && SEND_TELEMETRY_DHT
+#if defined(SEND_TELEMETRY_DS18B20) && defined(SEND_TELEMETRY_DHT)
 #if DSB_PIN == DHT_PIN
   #error "Select either SEND_TELEMETRY_DS18B20 or SEND_TELEMETRY_DHT or use different GPIOs"
 #endif
