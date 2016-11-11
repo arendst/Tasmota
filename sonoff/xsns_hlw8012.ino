@@ -36,11 +36,6 @@ POSSIBILITY OF SUCH DAMAGE.
 #define HLW_UREF             2200    // 220.0V
 #define HLW_IREF             4545    // 4.545A
 
-// Calibration data
-#define HLW_PREF_PULSE      12345    // was 4975us = 201Hz = 1000W
-#define HLW_UREF_PULSE       1950    // was 1666us = 600Hz = 220V
-#define HLW_IREF_PULSE       3500    // was 1666us = 600Hz = 4.545A
-
 byte hlw_SELflag;
 byte hlw_cf1_timer;
 byte hlw_seconds;
@@ -54,21 +49,7 @@ unsigned long hlw_cf1i_plen = 0;
 unsigned long hlw_Ecntr;
 unsigned long hlw_EDcntr;
 unsigned long hlw_kWhtoday;
-uint32_t hlw_lasttime = 0;
-
-uint16_t hlw_pmin = 0;
-uint16_t hlw_pmax = 0;
-uint16_t hlw_umin = 0;
-uint16_t hlw_umax = 0;
-uint16_t hlw_imin = 0;
-uint16_t hlw_imax = 0;
-
-byte hlw_pminflg = 0;
-byte hlw_pmaxflg = 0;
-byte hlw_uminflg = 0;
-byte hlw_umaxflg = 0;
-byte hlw_iminflg = 0;
-byte hlw_imaxflg = 0;
+uint32_t hlw_lasttime;
 
 Ticker tickerHLW;
 
@@ -110,6 +91,8 @@ void hlw_200mS()
       hlw_EDcntr = 0;
       hlw_temp = (HLW_PREF * sysCfg.hlw_pcal) / hlw_len;
       hlw_kWhtoday += (hlw_temp * 100) / 36;
+    } else {
+      hlw_cf_plen = 0;
     }
     if (rtc_loctime() == rtc_midnight()) {
       sysCfg.hlw_esave = hlw_kWhtoday;
@@ -136,8 +119,7 @@ boolean hlw_readEnergy(byte option, float &ed, uint16_t &e, uint16_t &w, uint16_
   int hlw_interval;
 
 //  char log[LOGSZ];
-//  snprintf_P(log, sizeof(log), PSTR("HLW: CF Len %d, CF1U len %d, CF1I len %d, E Cntr %d, ED cntr %d"),
-//    hlw_cf_plen, hlw_cf1u_plen, hlw_cf1i_plen, hlw_Ecntr, hlw_EDcntr);
+//  snprintf_P(log, sizeof(log), PSTR("HLW: CF %d, CF1U %d, CF1I %d"), hlw_cf_plen, hlw_cf1u_plen, hlw_cf1i_plen);
 //  addLog(LOG_LEVEL_DEBUG, log);
 
   if (hlw_kWhtoday) {
@@ -164,25 +146,25 @@ boolean hlw_readEnergy(byte option, float &ed, uint16_t &e, uint16_t &w, uint16_
     }
   }
 
-  if (hlw_cf1i_plen && hlw_cf1i_plen < 200000) {
-    hlw_i = (HLW_IREF * sysCfg.hlw_ical) / hlw_cf1i_plen;
-    i = (float)hlw_i / 1000;
-  } else {
-    i = 0;
-  }
-  if (hlw_cf1u_plen && i) {
-    hlw_u = (HLW_UREF * sysCfg.hlw_ucal) / hlw_cf1u_plen;
-    u = hlw_u / 10;
-  } else {
-    u = 0;
-  }
-  if (hlw_cf_plen && i) {
+  if (hlw_cf_plen) {
     hlw_w = (HLW_PREF * sysCfg.hlw_pcal) / hlw_cf_plen;
     w = hlw_w / 10;
   } else {
     w = 0;
   }
-  if (hlw_i && hlw_u && hlw_w && i) {
+  if (hlw_cf1u_plen && w) {
+    hlw_u = (HLW_UREF * sysCfg.hlw_ucal) / hlw_cf1u_plen;
+    u = hlw_u / 10;
+  } else {
+    u = 0;
+  }
+  if (hlw_cf1i_plen && w) {
+    hlw_i = (HLW_IREF * sysCfg.hlw_ical) / hlw_cf1i_plen;
+    i = (float)hlw_i / 1000;
+  } else {
+    i = 0;
+  }
+  if (hlw_i && hlw_u && hlw_w && w) {
     hlw_temp = (hlw_w * 100) / ((hlw_u * hlw_i) / 1000);
     if (hlw_temp > 100) {
       hlw_temp = 100;
@@ -191,62 +173,17 @@ boolean hlw_readEnergy(byte option, float &ed, uint16_t &e, uint16_t &w, uint16_
   } else {
     c = 0;
   }
-  
+
   return true; 
-}
-
-boolean hlw_margin(byte bottom, uint16_t margin, uint16_t value, uint16_t &lastvalue, byte &lastflag, byte &flag)
-{
-  byte change;
-
-  if (!margin) return false;
-  if (!lastvalue) lastvalue = margin;
-  if (bottom) {
-    if ((value < margin) && (lastvalue < margin)) flag = 1;
-    if ((value >= margin) && (lastvalue >= margin)) flag = 0;
-  } else {
-    if ((value > margin) && (lastvalue > margin)) flag = 1;
-    if ((value <= margin) && (lastvalue <= margin)) flag = 0;
-  }
-  lastvalue = value;
-  change = lastflag;
-  if (flag && !lastflag) lastflag = 1;
-  else if (!flag && lastflag) lastflag = 0;
-  return (change != lastflag);
-}
-
-boolean hlw_pless(uint16_t margin, uint16_t value, byte &flag)
-{
-  return hlw_margin(1, margin, value, hlw_pmin, hlw_pminflg, flag);
-}
-boolean hlw_pmore(uint16_t margin, uint16_t value, byte &flag)
-{
-  return hlw_margin(0, margin, value, hlw_pmax, hlw_pmaxflg, flag);
-}
-boolean hlw_uless(uint16_t margin, uint16_t value, byte &flag)
-{
-  return hlw_margin(1, margin, value, hlw_umin, hlw_uminflg, flag);
-}
-boolean hlw_umore(uint16_t margin, uint16_t value, byte &flag)
-{
-  return hlw_margin(0, margin, value, hlw_umax, hlw_umaxflg, flag);
-}
-boolean hlw_iless(uint16_t margin, uint16_t value, byte &flag)
-{
-  return hlw_margin(1, margin, value, hlw_imin, hlw_iminflg, flag);
-}
-boolean hlw_imore(uint16_t margin, uint16_t value, byte &flag)
-{
-  return hlw_margin(0, margin, value, hlw_imax, hlw_imaxflg, flag);
 }
 
 void hlw_init()
 {
-//  if (!sysCfg.hlw_pcal) {
+  if (!sysCfg.hlw_pcal || (sysCfg.hlw_pcal == 4975)) {
     sysCfg.hlw_pcal = HLW_PREF_PULSE;
     sysCfg.hlw_ucal = HLW_UREF_PULSE;
     sysCfg.hlw_ical = HLW_IREF_PULSE;
-//  }
+  }
 
   hlw_Ecntr = 0;
   hlw_EDcntr = 0;
@@ -261,6 +198,7 @@ void hlw_init()
   pinMode(HLW_CF, INPUT_PULLUP);
   attachInterrupt(HLW_CF, hlw_cf_interrupt, FALLING);
 
+  hlw_lasttime = 0;
   hlw_seconds = 0;
   hlw_cf1_timer = 1;
   tickerHLW.attach_ms(200, hlw_200mS);

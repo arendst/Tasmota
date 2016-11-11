@@ -429,7 +429,6 @@ static const uint8_t monthDays[] = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30,
 static const char monthNames[37] = { "JanFebMrtAprMayJunJulAugSepOctNovDec" };
 
 uint32_t utctime = 0, loctime = 0, dsttime = 0, stdtime = 0, ntptime = 0, midnight = 0;
-uint8_t ntpsync = 0;
 
 rtcCallback rtcCb = NULL;
 
@@ -572,30 +571,35 @@ uint32_t rtc_midnight()
 void rtc_second()
 {
   char log[LOGSZ];
+  byte ntpsync;
   uint32_t stdoffset, dstoffset;
   TIME_T tmpTime;
 
-  // NTP Sync every hour at x:0:10
-  if (rtcTime.Minute == 0) {
-    if ((rtcTime.Second > 9) && !ntpsync) {
-      ntpsync = 1;
-      ntptime = sntp_get_current_timestamp();
-      if (ntptime) {
-        utctime = ntptime;
-        breakTime(utctime, tmpTime);
-        rtcTime.Year = tmpTime.Year + 1970;
-        dsttime = toTime_t(myDST, rtcTime.Year);
-        stdtime = toTime_t(mySTD, rtcTime.Year);
-        snprintf_P(log, sizeof(log), PSTR("RTC: (UTC) %s"), rtc_time(0).c_str());
-        addLog(LOG_LEVEL_DEBUG, log);
-        snprintf_P(log, sizeof(log), PSTR("RTC: (DST) %s"), rtc_time(2).c_str());
-        addLog(LOG_LEVEL_DEBUG, log);
-        snprintf_P(log, sizeof(log), PSTR("RTC: (STD) %s"), rtc_time(3).c_str());
-        addLog(LOG_LEVEL_DEBUG, log);
-      }
+  ntpsync = 0;
+  if (rtcTime.Year < 2016) {
+    if (WiFi.status() == WL_CONNECTED) {
+      ntpsync = 1;  // Initial NTP sync
     }
   } else {
-    ntpsync = 0;
+    if ((rtcTime.Minute == 1) && (rtcTime.Second == 1)) {
+      ntpsync = 1;  // Hourly NTP sync at xx:01:01
+    }
+  }
+  if (ntpsync) {
+    ntptime = sntp_get_current_timestamp();
+    if (ntptime) {
+      utctime = ntptime;
+      breakTime(utctime, tmpTime);
+      rtcTime.Year = tmpTime.Year + 1970;
+      dsttime = toTime_t(myDST, rtcTime.Year);
+      stdtime = toTime_t(mySTD, rtcTime.Year);
+      snprintf_P(log, sizeof(log), PSTR("RTC: (UTC) %s"), rtc_time(0).c_str());
+      addLog(LOG_LEVEL_DEBUG, log);
+      snprintf_P(log, sizeof(log), PSTR("RTC: (DST) %s"), rtc_time(2).c_str());
+      addLog(LOG_LEVEL_DEBUG, log);
+      snprintf_P(log, sizeof(log), PSTR("RTC: (STD) %s"), rtc_time(3).c_str());
+      addLog(LOG_LEVEL_DEBUG, log);
+    }
   }
   utctime++;
   loctime = utctime;
@@ -630,6 +634,7 @@ void rtc_init(rtcCallback cb)
   sntp_set_timezone(0);      // UTC time
   sntp_init();
   utctime = 0;
+  breakTime(utctime, rtcTime);
   tickerRTC.attach(1, rtc_second);
 }
 

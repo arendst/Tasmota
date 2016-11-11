@@ -316,16 +316,7 @@ void handleRoot()
 
     if (Maxdevice) {
       if (strlen(webServer->arg("o").c_str())) {
-#ifdef MQTT_SUBTOPIC
-        snprintf_P(svalue, sizeof(svalue), PSTR("%s/%s 2"), webServer->arg("o").c_str(), sysCfg.mqtt_subtopic);
-#else
-        if (atoi(webServer->arg("o").c_str()) == 1) {
-          snprintf_P(svalue, sizeof(svalue), PSTR("light 2"));
-        } else {
-          snprintf_P(svalue, sizeof(svalue), PSTR("%s/light 2"), webServer->arg("o").c_str());
-        }
-#endif
-        do_cmnd(svalue);
+        do_cmnd_power(atoi(webServer->arg("o").c_str()), 2);
       }
 
       page += F("<table style='width:100%'><tr>");

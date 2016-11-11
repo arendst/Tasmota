@@ -112,6 +112,9 @@
 
 #elif MODULE == SONOFF_POW                  // programming header 1:3.3V 2:rx 3:tx 4:gnd
   #define APP_NAME             "Sonoff Pow module"
+  #define USE_POWERMONITOR                  // Enable Power Monitoring
+//  #define USE_POWERCALIBRATION              // Enable setting Calibration parameters by user commands
+/*-------------------------------------------------------------------------------------------*/
   #define LED_PIN              15           // GPIO 15 = Green Led (0 = On, 1 = Off) - Sonoff
   #define LED_INVERTED         0            // 0 = (1 = On, 0 = Off), 1 = (0 = On, 1 = Off)
   #define REL_PIN              12           // GPIO 12 = Red Led and Relay (0 = Off, 1 = On)

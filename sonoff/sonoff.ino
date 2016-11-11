@@ -1,31 +1,16 @@
 /*
- * Sonoff, ElectroDragon and Wkaku by Theo Arends
+ * Sonoff and ElectroDragon by Theo Arends
  * 
- * ==================================================
+ * ====================================================
  * Prerequisites:
- *   Change libraries/PubSubClient/src/PubSubClient.h
- *     #define MQTT_MAX_PACKET_SIZE 400
- *     #define MQTT_KEEPALIVE 120
- *   Select IDE Tools - Flash size: "1M (64K SPIFFS)"
- * ==================================================
- *
- * ESP-12F connections (Wkaku)
- * 3V3                                                     5V
- *                   |-------------------|       |---------|
- *  |                |   -------------   |    |1N4001|  |Relay|
- *  |                | -|          Tx |- |       |---------|
- *  |                | -|          Rx |- |                /
- *  |-------------------| En          |- |---| 1k|------|<  BC547B
- *  |                | -|             |-                  \
- *  |                | -|        IO00 |------|Switch|------|
- *  |                ---| IO12   IO02 |--- LED (ESP-12E/F) |
- *  |---| 1k|---|LED|---| IO13   IO15 |------|10k|---------|
- *  |-------------------| Vcc     Gnd |--------------------|
- *                       -------------                     |
- *                        | | | | | |                     Gnd
+ *   - Change libraries/PubSubClient/src/PubSubClient.h
+ *       #define MQTT_MAX_PACKET_SIZE 400
+ *       
+ *   - Select IDE Tools - Flash size: "1M (64K SPIFFS)"
+ * ====================================================
 */
 
-#define VERSION                0x02000A00   // 2.0.10
+#define VERSION                0x02000B00   // 2.0.11
 
 #define SONOFF                 1            // Sonoff, Sonoff SV, Sonoff Dual, Sonoff TH 10A/16A, S20 Smart Socket, 4 Channel
 #define SONOFF_POW             9            // Sonoff Pow
@@ -58,10 +43,11 @@ enum msgf_t  {LEGACY, JSON, MAX_FORMAT};
 \*********************************************************************************************/
 
 #if MODULE == SONOFF_POW
-  #define USE_POWERMONITOR                  // Enable Power Monitoring
-/*-------------------------------------------------------------------------------------------*/
 //  #define FEATURE_POWER_LIMIT
 #endif
+#define HLW_PREF_PULSE         12345        // was 4975us = 201Hz = 1000W
+#define HLW_UREF_PULSE         1950         // was 1666us = 600Hz = 220V
+#define HLW_IREF_PULSE         3500         // was 1666us = 600Hz = 4.545A
 #define MAX_POWER_LIMIT_HOLD         10     // Time in SECONDS to allow max agreed power
 #define MAX_POWER_LIMIT_WINDOW       30     // Time in SECONDS to disable allow max agreed power
 #define MAX_SAFE_POWER_LIMIT_HOLD    10     // Time in SECONDS to allow max unit safe power
@@ -130,18 +116,6 @@ typedef void (*rtcCallback)();
 
 extern "C" uint32_t _SPIFFS_start;
 extern "C" uint32_t _SPIFFS_end;
-
-#define MAX_BUTTON_COMMANDS    8
-
-const char commands[MAX_BUTTON_COMMANDS][14] PROGMEM = {
-  {"reset 1"},        // Hold button for more than 4 seconds
-  {"1/light 2"},      // Press button once
-  {"2/light 2"},      // Press button twice - will default to "1/light 2" if Maxdevice = 1
-  {"wificonfig 1"},   // Press button three times
-  {"wificonfig 2"},   // Press button four times
-  {"wificonfig 3"},   // Press button five times
-  {"restart 1"},      // Press button six times
-  {"upgrade 1"}};     // Press button seven times
 
 struct SYSCFG {
   unsigned long cfg_holder;
@@ -1014,20 +988,7 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
         strlcpy(sysCfg.mqtt_topic2, sysCfg.mqtt_topic, sizeof(sysCfg.mqtt_topic2));
         if (!payload) {
           for(i = 1; i <= Maxdevice; i++) {
-            snprintf_P(stemp1, sizeof(stemp1), commands[1]);
-            if (strchr(stemp1, '/')) {    // 1/light 2
-              strtok(stemp1, "/");
-              str = strtok(NULL, " ");
-              snprintf_P(svalue, sizeof(svalue), PSTR("%d/%s"), i, str);
-            } else {
-              str = strtok(stemp1, " ");  // light 2
-              if (Maxdevice == 1) {
-                snprintf_P(svalue, sizeof(svalue), PSTR("%s"), str);
-              } else {
-                snprintf_P(svalue, sizeof(svalue), PSTR("%d/%s"), i, str);
-              }
-            }
-            send_button(svalue);
+            send_button_power(i, 3);  // Clear MQTT retain in broker
           }
         }
         sysCfg.mqtt_retain = payload;
@@ -1133,6 +1094,26 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
       }
       snprintf_P(svalue, sizeof(svalue), PSTR("%d%s"), sysCfg.hlw_imax, (sysCfg.mqtt_units) ? " mA" : "");
     }
+#ifdef USE_POWERCALIBRATION
+    else if (!strcmp(type,"HLWPCAL")) {
+      if ((data_len > 0) && (payload > 0) && (payload < 32001)) {
+        sysCfg.hlw_pcal = (payload == 1) ? HLW_PREF_PULSE : payload;
+      }
+      snprintf_P(svalue, sizeof(svalue), PSTR("%d%s"), sysCfg.hlw_pcal, (sysCfg.mqtt_units) ? " uS" : "");
+    }
+    else if (!strcmp(type,"HLWUCAL")) {
+      if ((data_len > 0) && (payload > 0) && (payload < 32001)) {
+        sysCfg.hlw_ucal = (payload == 1) ? HLW_UREF_PULSE : payload;
+      }
+      snprintf_P(svalue, sizeof(svalue), PSTR("%d%s"), sysCfg.hlw_ucal, (sysCfg.mqtt_units) ? " uS" : "");
+    }
+    else if (!strcmp(type,"HLWICAL")) {
+      if ((data_len > 0) && (payload > 0) && (payload < 32001)) {
+        sysCfg.hlw_ical = (payload == 1) ? HLW_IREF_PULSE : payload;
+      }
+      snprintf_P(svalue, sizeof(svalue), PSTR("%d%s"), sysCfg.hlw_ical, (sysCfg.mqtt_units) ? " uS" : "");
+    }
+#endif  // USE_POWERCALIBRATION
 #ifdef FEATURE_POWER_LIMIT
     else if (!strcmp(type,"MAXPL")) {         // MaxPowerLimit
       if ((data_len > 0) && (payload >= 0) && (payload < 3601)) {
@@ -1216,34 +1197,21 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
 
 /********************************************************************************************/
 
-void send_button(char *cmnd)
+void send_button_power(byte device, byte state)
 {
-  char stopic[128], svalue[128], log[LOGSZ];
-  char *token;
-  byte state, mask, device = 1;
+  char stopic[TOPSZ], svalue[TOPSZ], log[LOGSZ];
+  byte mask;
 
-  if (strchr(cmnd, '/')) {   // 1/light 2
-    token = strtok(cmnd, "/");
-    device = atoi(token);
-    if (device > Maxdevice) device = 1;
-    token = strtok(NULL, " ");
-    if ((!strcmp(token,"light")) || (!strcmp(token,"power"))) strcpy(token, sysCfg.mqtt_subtopic);
-    snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/%d/%s"), SUB_PREFIX, sysCfg.mqtt_topic2, device, token);
+  if (device > Maxdevice) device = 1;
+  snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/%d/%s"), SUB_PREFIX, sysCfg.mqtt_topic2, device, sysCfg.mqtt_subtopic);
+  if (state == 3) {
+    snprintf_P(svalue, sizeof(svalue), "");
   } else {
-    token = strtok(cmnd, " ");
-    if ((!strcmp(token,"light")) || (!strcmp(token,"power"))) strcpy(token, sysCfg.mqtt_subtopic);
-    snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/%s"), SUB_PREFIX, sysCfg.mqtt_topic2, token);
-  }
-  token = strtok(NULL, "");
-  if (token != NULL) {
-    state = atoi(token);
     if (state == 2) {
       mask = 0x01 << (device -1);
       state = power & mask ^ mask;
     }
     snprintf_P(svalue, sizeof(svalue), PSTR("%s"), (state) ? MQTT_STATUS_ON : MQTT_STATUS_OFF);
-  } else {
-    snprintf_P(svalue, sizeof(svalue), "");
   }
 #ifdef USE_DOMOTICZ
   if (sysCfg.domoticz_key_idx[device -1] && strlen(svalue)) {
@@ -1259,28 +1227,157 @@ void send_button(char *cmnd)
 #endif  // USE_DOMOTICZ    
 }
 
+void do_cmnd_power(byte device, byte state)
+{
+  char stopic[TOPSZ], svalue[TOPSZ];
+
+  if (device > Maxdevice) device = 1;
+  snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/%d/%s"), SUB_PREFIX, sysCfg.mqtt_topic2, device, sysCfg.mqtt_subtopic);
+  snprintf_P(svalue, sizeof(svalue), PSTR("%d"), state);
+  mqttDataCb(stopic, (byte*)svalue, strlen(svalue));
+}
+
 void do_cmnd(char *cmnd)
 {
-  char stopic[128], svalue[128];
+  char stopic[TOPSZ], svalue[128];
   char *token;
-  byte device = 1;
 
-  if (strchr(cmnd, '/')) {   // 1/light 2
-    token = strtok(cmnd, "/");
-    device = atoi(token);
-    if (device > Maxdevice) device = 1;
-    token = strtok(NULL, " ");
-    if ((!strcmp(token,"light")) || (!strcmp(token,"power"))) strcpy(token, sysCfg.mqtt_subtopic);
-    snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/%d/%s"), SUB_PREFIX, sysCfg.mqtt_topic2, device, token);
-  } else {
-    token = strtok(cmnd, " ");
-    if ((!strcmp(token,"light")) || (!strcmp(token,"power"))) strcpy(token, sysCfg.mqtt_subtopic);
-    snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/%s"), SUB_PREFIX, sysCfg.mqtt_topic2, token);
-  }
+  token = strtok(cmnd, " ");
+  snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/%s"), SUB_PREFIX, sysCfg.mqtt_topic, token);
   token = strtok(NULL, "");
   snprintf_P(svalue, sizeof(svalue), PSTR("%s"), (token == NULL) ? "" : token);
   mqttDataCb(stopic, (byte*)svalue, strlen(svalue));
 }
+
+#ifdef USE_POWERMONITOR
+byte hlw_pminflg = 0;
+byte hlw_pmaxflg = 0;
+byte hlw_uminflg = 0;
+byte hlw_umaxflg = 0;
+byte hlw_iminflg = 0;
+byte hlw_imaxflg = 0;
+
+boolean hlw_margin(byte type, uint16_t margin, uint16_t value, byte &flag, byte &saveflag)
+{
+  byte change;
+
+  if (!margin) return false;
+  change = saveflag;
+  if (type) {
+    flag = (value > margin);
+  } else {
+    flag = (value < margin);
+  }
+  saveflag = flag;
+  return (change != saveflag);
+}
+
+void hlw_margin_chk()
+{
+  char log[LOGSZ], stopic[TOPSZ], svalue[MESSZ];
+  float ped, pi, pc;
+  uint16_t uped, piv, pe, pw, pu;
+  byte flag;
+
+  hlw_readEnergy(0, ped, pe, pw, pu, pi, pc);
+  if (power && (sysCfg.hlw_pmin || sysCfg.hlw_pmax || sysCfg.hlw_umin || sysCfg.hlw_umax || sysCfg.hlw_imin || sysCfg.hlw_imax)) {
+    piv = (uint16_t)(pi * 1000);
+
+//    snprintf_P(log, sizeof(log), PSTR("HLW: W %d, U %d, I %d"), pw, pu, piv);
+//    addLog(LOG_LEVEL_DEBUG, log);
+    
+    if (hlw_margin(0, sysCfg.hlw_pmin, pw, flag, hlw_pminflg)) {
+      snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/POWER_LOW"), PUB_PREFIX2, sysCfg.mqtt_topic);
+      strlcpy(svalue, (flag) ? MQTT_STATUS_ON : MQTT_STATUS_OFF, sizeof(svalue));
+      mqtt_publish(stopic, svalue);
+    }
+    if (hlw_margin(1, sysCfg.hlw_pmax, pw, flag, hlw_pmaxflg)) {
+      snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/POWER_HIGH"), PUB_PREFIX2, sysCfg.mqtt_topic);
+      strlcpy(svalue, (flag) ? MQTT_STATUS_ON : MQTT_STATUS_OFF, sizeof(svalue));
+      mqtt_publish(stopic, svalue);
+    }
+    if (hlw_margin(0, sysCfg.hlw_umin, pu, flag, hlw_uminflg)) {
+      snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/VOLTAGE_LOW"), PUB_PREFIX2, sysCfg.mqtt_topic);
+      strlcpy(svalue, (flag) ? MQTT_STATUS_ON : MQTT_STATUS_OFF, sizeof(svalue));
+      mqtt_publish(stopic, svalue);
+    }
+    if (hlw_margin(1, sysCfg.hlw_umax, pw, flag, hlw_umaxflg)) {
+      snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/VOLTAGE_HIGH"), PUB_PREFIX2, sysCfg.mqtt_topic);
+      strlcpy(svalue, (flag) ? MQTT_STATUS_ON : MQTT_STATUS_OFF, sizeof(svalue));
+      mqtt_publish(stopic, svalue);
+    }
+    if (hlw_margin(0, sysCfg.hlw_imin, piv, flag, hlw_iminflg)) {
+      snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/CURRENT_LOW"), PUB_PREFIX2, sysCfg.mqtt_topic);
+      strlcpy(svalue, (flag) ? MQTT_STATUS_ON : MQTT_STATUS_OFF, sizeof(svalue));
+      mqtt_publish(stopic, svalue);
+    }
+    if (hlw_margin(1, sysCfg.hlw_imax, piv, flag, hlw_imaxflg)) {
+      snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/CURRENT_HIGH"), PUB_PREFIX2, sysCfg.mqtt_topic);
+      strlcpy(svalue, (flag) ? MQTT_STATUS_ON : MQTT_STATUS_OFF, sizeof(svalue));
+      mqtt_publish(stopic, svalue);
+    }
+  }
+
+#ifdef FEATURE_POWER_LIMIT
+  if (sysCfg.hlw_mpl) {
+    if (pw > sysCfg.hlw_mpl) {
+      if (!hlw_mplh_counter) {
+        hlw_mplh_counter = sysCfg.hlw_mplh;
+      } else {
+        hlw_mplh_counter--;
+        if (!hlw_mplh_counter) {
+          snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/MAX_POWER_REACHED"), PUB_PREFIX, sysCfg.mqtt_topic);
+          snprintf_P(svalue, sizeof(svalue), PSTR("%d%s"), pw, (sysCfg.mqtt_units) ? " W" : "");
+          mqtt_publish(stopic, svalue);
+          do_cmnd_power(1, 0);
+          if (!hlw_mplr_counter) hlw_mplr_counter = MAX_POWER_LIMIT_RETRY +1;
+          hlw_mplw_counter = sysCfg.hlw_mplw;
+        }
+      }
+    }
+    else if (power && (pw <= sysCfg.hlw_mpl)) {
+      hlw_mplh_counter = 0;
+      hlw_mplr_counter = 0;
+      hlw_mplw_counter = 0;
+    }
+    if (!power) {
+      if (hlw_mplw_counter) {
+        hlw_mplw_counter--;
+      } else {
+        if (hlw_mplr_counter) {
+          hlw_mplr_counter--;
+          if (hlw_mplr_counter) {
+            snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/MAX_POWER_MONITOR"), PUB_PREFIX, sysCfg.mqtt_topic);
+            mqtt_publish(stopic, MQTT_STATUS_ON);
+            do_cmnd_power(1, 1);
+          } else {
+            snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/MAX_POWER_REACHED_RETRY"), PUB_PREFIX, sysCfg.mqtt_topic);
+            mqtt_publish(stopic, MQTT_STATUS_OFF);
+          }
+        }
+      }
+    }
+  }
+
+  if (sysCfg.hlw_mdpl) {
+    uped = (uint16_t)(ped * 1000);
+    if (!hlw_mdpls_flag && (rtcTime.Hour == sysCfg.hlw_mdpls)) {
+      hlw_mdpls_flag = 1;
+      snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/MAX_DAILY_POWER_MONITOR"), PUB_PREFIX, sysCfg.mqtt_topic);
+      mqtt_publish(stopic, MQTT_STATUS_ON);
+      do_cmnd_power(1, 1);
+    }
+    else if (hlw_mdpls_flag && (uped > sysCfg.hlw_mdpl)) {
+      snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/MAX_DAILY_POWER_REACHED"), PUB_PREFIX, sysCfg.mqtt_topic);
+      dtostrf(ped, 1, 3, svalue);
+      snprintf_P(svalue, sizeof(svalue), PSTR("%s%s"), svalue, (sysCfg.mqtt_units) ? " kWh" : "");
+      mqtt_publish(stopic, svalue);
+      do_cmnd_power(1, 0);
+    }
+  }
+#endif  // FEATURE_POWER_LIMIT
+}
+#endif  // USE_POWERMONITOR
 
 void every_second_cb()
 {
@@ -1299,8 +1396,8 @@ void every_second()
 {
   char log[LOGSZ], stopic[TOPSZ], svalue[MESSZ], stemp1[10], stemp2[10], stemp3[10];
   float t, h, ped, pi, pc;
-  uint16_t piv, uped, pe, pw, pu;
-  byte flag, i;
+  uint16_t pe, pw, pu;
+  byte i;
 
   if (status_update_timer) {
     status_update_timer--;
@@ -1436,102 +1533,7 @@ void every_second()
   }
 
 #ifdef USE_POWERMONITOR
-  hlw_readEnergy(0, ped, pe, pw, pu, pi, pc);
-  if (sysCfg.hlw_pmin || sysCfg.hlw_pmax || sysCfg.hlw_umin || sysCfg.hlw_umax || sysCfg.hlw_imin || sysCfg.hlw_imax) {
-    piv = (uint16_t)(pi * 1000);
-    if (hlw_pless(sysCfg.hlw_pmin, pw, flag)) {
-      snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/POWER_LOW"), PUB_PREFIX2, sysCfg.mqtt_topic);
-      strlcpy(svalue, (flag) ? MQTT_STATUS_ON : MQTT_STATUS_OFF, sizeof(svalue));
-      mqtt_publish(stopic, svalue);
-    }
-    if (hlw_pmore(sysCfg.hlw_pmax, pw, flag)) {
-      snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/POWER_HIGH"), PUB_PREFIX2, sysCfg.mqtt_topic);
-      strlcpy(svalue, (flag) ? MQTT_STATUS_ON : MQTT_STATUS_OFF, sizeof(svalue));
-      mqtt_publish(stopic, svalue);
-    }
-    if (hlw_uless(sysCfg.hlw_umin, pu, flag)) {
-      snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/VOLTAGE_LOW"), PUB_PREFIX2, sysCfg.mqtt_topic);
-      strlcpy(svalue, (flag) ? MQTT_STATUS_ON : MQTT_STATUS_OFF, sizeof(svalue));
-      mqtt_publish(stopic, svalue);
-    }
-    if (hlw_umore(sysCfg.hlw_umax, pu, flag)) {
-      snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/VOLTAGE_HIGH"), PUB_PREFIX2, sysCfg.mqtt_topic);
-      strlcpy(svalue, (flag) ? MQTT_STATUS_ON : MQTT_STATUS_OFF, sizeof(svalue));
-      mqtt_publish(stopic, svalue);
-    }
-    if (hlw_iless(sysCfg.hlw_imin, piv, flag)) {
-      snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/CURRENT_LOW"), PUB_PREFIX2, sysCfg.mqtt_topic);
-      strlcpy(svalue, (flag) ? MQTT_STATUS_ON : MQTT_STATUS_OFF, sizeof(svalue));
-      mqtt_publish(stopic, svalue);
-    }
-    if (hlw_imore(sysCfg.hlw_imax, piv, flag)) {
-      snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/CURRENT_HIGH"), PUB_PREFIX2, sysCfg.mqtt_topic);
-      strlcpy(svalue, (flag) ? MQTT_STATUS_ON : MQTT_STATUS_OFF, sizeof(svalue));
-      mqtt_publish(stopic, svalue);
-    }
-  }
-#ifdef FEATURE_POWER_LIMIT
-  if (sysCfg.hlw_mpl) {
-    if (pw > sysCfg.hlw_mpl) {
-      if (!hlw_mplh_counter) {
-        hlw_mplh_counter = sysCfg.hlw_mplh;
-      } else {
-        hlw_mplh_counter--;
-        if (!hlw_mplh_counter) {
-          snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/MAX_POWER_REACHED"), PUB_PREFIX, sysCfg.mqtt_topic);
-          snprintf_P(svalue, sizeof(svalue), PSTR("%d%s"), pw, (sysCfg.mqtt_units) ? " W" : "");
-          mqtt_publish(stopic, svalue);
-          snprintf_P(svalue, sizeof(svalue), PSTR("light 0"));
-          do_cmnd(svalue);
-          if (!hlw_mplr_counter) hlw_mplr_counter = MAX_POWER_LIMIT_RETRY +1;
-          hlw_mplw_counter = sysCfg.hlw_mplw;
-        }
-      }
-    }
-    else if (power && (pw <= sysCfg.hlw_mpl)) {
-      hlw_mplh_counter = 0;
-      hlw_mplr_counter = 0;
-      hlw_mplw_counter = 0;
-    }
-    if (!power) {
-      if (hlw_mplw_counter) {
-        hlw_mplw_counter--;
-      } else {
-        if (hlw_mplr_counter) {
-          hlw_mplr_counter--;
-          if (hlw_mplr_counter) {
-            snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/MAX_POWER_MONITOR"), PUB_PREFIX, sysCfg.mqtt_topic);
-            mqtt_publish(stopic, MQTT_STATUS_ON);
-            snprintf_P(svalue, sizeof(svalue), PSTR("light 1"));
-            do_cmnd(svalue);
-          } else {
-            snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/MAX_POWER_REACHED_RETRY"), PUB_PREFIX, sysCfg.mqtt_topic);
-            mqtt_publish(stopic, MQTT_STATUS_OFF);
-          }
-        }
-      }
-    }
-  }
-
-  if (sysCfg.hlw_mdpl) {
-    uped = (uint16_t)(ped * 1000);
-    if (!hlw_mdpls_flag && (rtcTime.Hour == sysCfg.hlw_mdpls)) {
-      hlw_mdpls_flag = 1;
-      snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/MAX_DAILY_POWER_MONITOR"), PUB_PREFIX, sysCfg.mqtt_topic);
-      mqtt_publish(stopic, MQTT_STATUS_ON);
-      snprintf_P(svalue, sizeof(svalue), PSTR("light 1"));
-      do_cmnd(svalue);
-    }
-    else if (hlw_mdpls_flag && (uped > sysCfg.hlw_mdpl)) {
-      snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/MAX_DAILY_POWER_REACHED"), PUB_PREFIX, sysCfg.mqtt_topic);
-      dtostrf(ped, 1, 3, svalue);
-      snprintf_P(svalue, sizeof(svalue), PSTR("%s%s"), svalue, (sysCfg.mqtt_units) ? " kWh" : "");
-      mqtt_publish(stopic, svalue);
-      snprintf_P(svalue, sizeof(svalue), PSTR("light 0"));
-      do_cmnd(svalue);
-    }
-  }
-#endif  // FEATURE_POWER_LIMIT
+  hlw_margin_chk();
 #endif  // USE_POWERMONITOR
   
   if ((rtcTime.Minute == 2) && (rtcTime.Second == 30)) { 
@@ -1541,6 +1543,15 @@ void every_second()
     mqtt_publish(stopic, svalue);
   }
 }
+
+#define MAX_BUTTON_COMMANDS 5
+
+const char commands[MAX_BUTTON_COMMANDS][14] PROGMEM = {
+  {"wificonfig 1"},   // Press button three times
+  {"wificonfig 2"},   // Press button four times
+  {"wificonfig 3"},   // Press button five times
+  {"restart 1"},      // Press button six times
+  {"upgrade 1"}};     // Press button seven times
 
 void stateloop()
 {
@@ -1592,7 +1603,7 @@ void stateloop()
   } else {
     holdcount++;
     if (holdcount == (STATES *4)) {  // 4 seconds button hold
-      snprintf_P(scmnd, sizeof(scmnd), commands[0]);
+      snprintf_P(scmnd, sizeof(scmnd), PSTR("reset 1"));
       multipress = 0;
       do_cmnd(scmnd);
     }
@@ -1600,17 +1611,21 @@ void stateloop()
   if (multiwindow) {
     multiwindow--;
   } else {
-    if ((!restartflag) && (!holdcount) && (multipress > 0) && (multipress < MAX_BUTTON_COMMANDS)) {
-      snprintf_P(scmnd, sizeof(scmnd), commands[multipress]);
+    if ((!restartflag) && (!holdcount) && (multipress > 0) && (multipress < MAX_BUTTON_COMMANDS +3)) {
       if ((sysCfg.model >= SONOFF_DUAL) && (sysCfg.model <= CHANNEL_4)) {
         flag = ((multipress == 1) || (multipress == 2));
       } else  {
         flag = (multipress == 1);
       }
-      if (strcmp(sysCfg.mqtt_topic2,"0") && mqttClient.connected() && flag) {
-        send_button(scmnd);          // Execute command via MQTT using ButtonTopic to sync external clients
+      if (flag && mqttClient.connected() && strcmp(sysCfg.mqtt_topic2,"0")) {
+        send_button_power(multipress, 2);  // Execute command via MQTT using ButtonTopic to sync external clients
       } else {
-        do_cmnd(scmnd);              // Execute command internally 
+        if ((multipress == 1) || (multipress == 2)) {
+          do_cmnd_power(multipress, 2);    // Execute command internally
+        } else {
+          snprintf_P(scmnd, sizeof(scmnd), commands[multipress -3]);
+          do_cmnd(scmnd);             
+        }
       }  
       multipress = 0;
     }

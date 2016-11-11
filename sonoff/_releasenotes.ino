@@ -1,4 +1,10 @@
-/* 2.0.10 20161109
+/* 2.0.11 20161111
+ * Rewrite button and web toggle code
+ * Fix NTP sync
+ * Add HLW calibration commands HLWPCAL, HLWUCAL and HLWICAL (need define USE_POWERCALIBRATION)
+ * Fix power threshold tests
+ * 
+ * 2.0.10 20161109
  * Add additional Domoticz define
  * Add defines MQTT_STATUS_ON and MQTT_STATUS_OFF in user_config.h to select status On/Off string
  * Fix status response differences
