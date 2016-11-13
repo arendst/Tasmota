@@ -1432,7 +1432,7 @@ void every_second()
       }
     }
   }
-#endif  \\ USE_DOMOTICZ
+#endif  // USE_DOMOTICZ
 
   if (sysCfg.tele_period) {
     tele_period++;
