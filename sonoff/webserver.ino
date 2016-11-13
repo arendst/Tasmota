@@ -678,16 +678,24 @@ void handleUploadDone()
     page += F("<font color='red'>failed</font></b>");
     if (_uploaderror == 1) {
       page += F("<br/><br/>No file selected");
+    } else if (_uploaderror == 2) {
+      page += F("<br/><br/>File size is larger than available free space");
     } else if (_uploaderror == 3) {
       page += F("<br/><br/>File magic header does not start with 0xE9");
     } else if (_uploaderror == 4) {
       page += F("<br/><br/>File flash size is larger than device flash size");
+    } else if (_uploaderror == 5) {
+      page += F("<br/><br/>File upload buffer miscompare");
+    } else if (_uploaderror == 6) {
+      page += F("<br/><br/>Upload failed. Enable logging option 3 for more information");
+    } else if (_uploaderror == 7) {
+      page += F("<br/><br/>Upload aborted");
     } else {
       page += F("<br/><br/>Upload error code ");
       page += String(_uploaderror);
     }
     if (Update.hasError()) {
-      page += F("<br/><br/>Update error code ");
+      page += F("<br/><br/>Update error code (see Updater.cpp) ");
       page += String(Update.getError());
     }
   } else {

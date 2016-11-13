@@ -1,4 +1,8 @@
-/* 2.0.12 20161113
+/* 2.0.13 20161113
+ * Add additional upload error code descriptions
+ * Add PlatformIO support
+ * 
+ * 2.0.12 20161113
  * Fix Serial and Web response regression when no MQTT connection available
  * Fix Sonoff Dual power telemetric data for second relay
  * Removed MQTT password from Information web page

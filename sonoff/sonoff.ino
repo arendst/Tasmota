@@ -10,7 +10,7 @@
  * ====================================================
 */
 
-#define VERSION                0x02000C00   // 2.0.12
+#define VERSION                0x02000D00   // 2.0.13
 
 #define SONOFF                 1            // Sonoff, Sonoff SV, Sonoff Dual, Sonoff TH 10A/16A, S20 Smart Socket, 4 Channel
 #define SONOFF_POW             9            // Sonoff Pow
@@ -99,6 +99,7 @@ enum msgf_t  {LEGACY, JSON, MAX_FORMAT};
 
 enum butt_t {PRESSED, NOT_PRESSED};
 
+#include "support.h"                        // Global support
 #include <Ticker.h>                         // RTC
 #include <ESP8266WiFi.h>                    // MQTT, Ota, WifiManager
 #include <ESP8266HTTPClient.h>              // MQTT, Ota

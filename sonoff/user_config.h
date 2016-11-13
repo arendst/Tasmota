@@ -47,7 +47,6 @@
 #define PUB_PREFIX2            "tele"       // Sonoff devices publish telemetry data to:- tele/MQTT_TOPIC/UPTIME, POWER/LIGHT and TIME
                                             // May be named the same as PUB_PREFIX
 #define MQTT_TOPIC             PROJECT
-#define MQTT_GRPTOPIC          PROJECT"s"   // Group topic
 #define MQTT_BUTTON_RETAIN     0            // Button may send retain flag (0 = off, 1 = on)
 
 #define MQTT_STATUS_ON         "ON"         // Status result when turned on (needs to be a string like "1" or "On")
@@ -94,6 +93,8 @@
 
 #if MODULE == SONOFF                        // programming header 1:3.3V 2:rx 3:tx 4:gnd
   #define APP_NAME             "Sonoff module"
+  #define MQTT_GRPTOPIC        "sonoffs"    // Group topic
+/*-------------------------------------------------------------------------------------------*/
   #define LED_PIN              13           // GPIO 13 = Green/Blue Led (0 = On, 1 = Off) - Sonoff
   #define LED_INVERTED         1            // 0 = (1 = On, 0 = Off), 1 = (0 = On, 1 = Off)
   #define REL_PIN              12           // GPIO 12 = Red Led and Relay (0 = Off, 1 = On)
@@ -112,6 +113,7 @@
 
 #elif MODULE == SONOFF_POW                  // programming header 1:3.3V 2:rx 3:tx 4:gnd
   #define APP_NAME             "Sonoff Pow module"
+  #define MQTT_GRPTOPIC        "pows"       // Group topic
   #define USE_POWERMONITOR                  // Enable Power Monitoring
 //  #define USE_POWERCALIBRATION              // Enable setting Calibration parameters by user commands
 /*-------------------------------------------------------------------------------------------*/
@@ -131,6 +133,8 @@
 
 #elif MODULE == ELECTRO_DRAGON              // programming header 5V/3V/gnd/
   #define APP_NAME             "ElectroDragon module"
+  #define MQTT_GRPTOPIC        "dragons"    // Group topic
+/*-------------------------------------------------------------------------------------------*/
   #define LED_PIN              16           // GPIO 16 = Led (0 = Off, 1 = On)
   #define LED_INVERTED         0            // 0 = (1 = On, 0 = Off), 1 = (0 = On, 1 = Off)
   #define REL_PIN              13           // GPIO 13 = Red Led and Relay 1 (0 = Off, 1 = On)
