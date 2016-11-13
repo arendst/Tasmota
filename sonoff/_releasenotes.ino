@@ -1,4 +1,10 @@
-/* 2.0.11 20161111
+/* 2.0.12 20161113
+ * Fix Serial and Web response regression when no MQTT connection available
+ * Fix Sonoff Dual power telemetric data for second relay
+ * Removed MQTT password from Information web page
+ * Hide MQTT password from Configure MQTT web page
+ *  
+ * 2.0.11 20161111
  * Rewrite button and web toggle code
  * Fix NTP sync
  * Add HLW calibration commands HLWPCAL, HLWUCAL and HLWICAL (need define USE_POWERCALIBRATION)

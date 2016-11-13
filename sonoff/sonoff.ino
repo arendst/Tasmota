@@ -10,7 +10,7 @@
  * ====================================================
 */
 
-#define VERSION                0x02000B00   // 2.0.11
+#define VERSION                0x02000C00   // 2.0.12
 
 #define SONOFF                 1            // Sonoff, Sonoff SV, Sonoff Dual, Sonoff TH 10A/16A, S20 Smart Socket, 4 Channel
 #define SONOFF_POW             9            // Sonoff Pow
@@ -461,10 +461,12 @@ void mqtt_publish(const char* topic, const char* data, boolean retained)
   if (mqttClient.publish(topic, data, retained)) {
     snprintf_P(log, sizeof(log), PSTR("MQTT: %s = %s%s"), topic, data, (retained) ? " (retained)" : "");
 //    snprintf_P(log, sizeof(log), PSTR("MQTT: %s = %s%s"), strchr(topic,'/')+1, data, (retained) ? " (retained)" : ""); // Skip topic prefix
-    addLog(LOG_LEVEL_INFO, log);
 //    mqttClient.loop();  // Do not use here! Will block previous publishes
-    blinks++;
+  } else {
+    snprintf_P(log, sizeof(log), PSTR("RSLT: %s = %s"), topic, data);
   }
+  addLog(LOG_LEVEL_INFO, log);
+  blinks++;
 }
 
 void mqtt_publish(const char* topic, const char* data)
@@ -1520,9 +1522,15 @@ void every_second()
 #endif  // USE_POWERMONITOR
 
 #ifdef SEND_TELEMETRY_POWER
-      snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/%s"), PUB_PREFIX2, sysCfg.mqtt_topic, sysCfg.mqtt_subtopic);
-      strlcpy(svalue, (power) ? MQTT_STATUS_ON : MQTT_STATUS_OFF, sizeof(svalue));
-      mqtt_publish(stopic, svalue);
+      for (i = 0; i < Maxdevice; i++) {
+        if (Maxdevice == 1) {  // Legacy
+          snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/%s"), PUB_PREFIX2, sysCfg.mqtt_topic, sysCfg.mqtt_subtopic);
+        } else {
+          snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/%d/%s"), PUB_PREFIX2, sysCfg.mqtt_topic, i +1, sysCfg.mqtt_subtopic);
+        }
+        strlcpy(svalue, (power & (0x01 << i)) ? MQTT_STATUS_ON : MQTT_STATUS_OFF, sizeof(svalue));
+        mqtt_publish(stopic, svalue);
+      }
 #endif  // SEND_TELEMETRY_POWER
 
       snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/TIME"), PUB_PREFIX2, sysCfg.mqtt_topic);
