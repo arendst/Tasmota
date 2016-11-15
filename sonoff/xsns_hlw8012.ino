@@ -36,19 +36,11 @@ POSSIBILITY OF SUCH DAMAGE.
 #define HLW_UREF             2200    // 220.0V
 #define HLW_IREF             4545    // 4.545A
 
-byte hlw_SELflag;
-byte hlw_cf1_timer;
-byte hlw_seconds;
-
-unsigned long hlw_cf_plen = 0;
-unsigned long hlw_cf_last = 0;
-unsigned long hlw_cf1_plen = 0;
-unsigned long hlw_cf1_last = 0;
-unsigned long hlw_cf1u_plen = 0;
-unsigned long hlw_cf1i_plen = 0;
-unsigned long hlw_Ecntr;
-unsigned long hlw_EDcntr;
-unsigned long hlw_kWhtoday;
+byte hlw_SELflag, hlw_cf1_timer, hlw_seconds;
+unsigned long hlw_cf_plen, hlw_cf_last;
+unsigned long hlw_cf1_plen, hlw_cf1_last;
+unsigned long hlw_cf1u_plen, hlw_cf1i_plen;
+unsigned long hlw_Ecntr, hlw_EDcntr, hlw_kWhtoday;
 uint32_t hlw_lasttime;
 
 Ticker tickerHLW;
@@ -68,7 +60,7 @@ void hlw_cf1_interrupt()
 {
   hlw_cf1_plen = micros() - hlw_cf1_last;
   hlw_cf1_last = micros();
-  if ((hlw_cf1_timer > 2) && (hlw_cf1_timer < 8)) {
+  if ((hlw_cf1_timer > 2) && (hlw_cf1_timer < 7)) {
     if (hlw_SELflag) {
       hlw_cf1i_plen = hlw_cf1_plen;
     } else {
@@ -79,8 +71,7 @@ void hlw_cf1_interrupt()
 
 void hlw_200mS()
 {
-  unsigned long hlw_len;
-  unsigned long hlw_temp;
+  unsigned long hlw_len, hlw_temp;
 
   hlw_seconds++;
   if (hlw_seconds == 5) {
@@ -110,13 +101,8 @@ void hlw_200mS()
 
 boolean hlw_readEnergy(byte option, float &ed, uint16_t &e, uint16_t &w, uint16_t &u, float &i, float &c)
 {
-  unsigned long hlw_len;
-  unsigned long hlw_temp;
-  unsigned long hlw_w;
-  unsigned long hlw_u;
-  unsigned long hlw_i;
-  int hlw_period;
-  int hlw_interval;
+  unsigned long hlw_len, hlw_temp, hlw_w, hlw_u, hlw_i;
+  int hlw_period, hlw_interval;
 
 //  char log[LOGSZ];
 //  snprintf_P(log, sizeof(log), PSTR("HLW: CF %d, CF1U %d, CF1I %d"), hlw_cf_plen, hlw_cf1u_plen, hlw_cf1i_plen);
@@ -185,6 +171,13 @@ void hlw_init()
     sysCfg.hlw_ical = HLW_IREF_PULSE;
   }
 
+  hlw_cf_plen = 0;
+  hlw_cf_last = 0;
+  hlw_cf1_plen = 0;
+  hlw_cf1_last = 0;
+  hlw_cf1u_plen = 0;
+  hlw_cf1i_plen = 0;
+
   hlw_Ecntr = 0;
   hlw_EDcntr = 0;
   hlw_kWhtoday = 0;
@@ -194,7 +187,7 @@ void hlw_init()
   pinMode(HLW_SEL, OUTPUT);
   digitalWrite(HLW_SEL, hlw_SELflag);
   pinMode(HLW_CF1, INPUT_PULLUP);
-  attachInterrupt(HLW_CF1, hlw_cf1_interrupt, RISING);
+  attachInterrupt(HLW_CF1, hlw_cf1_interrupt, FALLING);
   pinMode(HLW_CF, INPUT_PULLUP);
   attachInterrupt(HLW_CF, hlw_cf_interrupt, FALLING);
 

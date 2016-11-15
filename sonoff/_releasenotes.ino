@@ -1,4 +1,10 @@
-/* 2.0.13 20161113
+/* 2.0.14 20161115
+ * Add HLW threshold delay
+ * Fix HLW intermittent current deviation
+ * Fix button functionality during wificonfig
+ * Add CRC check to DS18B20 sensor
+ *
+ * 2.0.13 20161113
  * Add additional upload error code descriptions
  * Add PlatformIO support
  * 

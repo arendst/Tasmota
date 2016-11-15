@@ -10,7 +10,7 @@
  * ====================================================
 */
 
-#define VERSION                0x02000D00   // 2.0.13
+#define VERSION                0x02000E00   // 2.0.14
 
 #define SONOFF                 1            // Sonoff, Sonoff SV, Sonoff Dual, Sonoff TH 10A/16A, S20 Smart Socket, 4 Channel
 #define SONOFF_POW             9            // Sonoff Pow
@@ -45,19 +45,11 @@ enum msgf_t  {LEGACY, JSON, MAX_FORMAT};
 #if MODULE == SONOFF_POW
 //  #define FEATURE_POWER_LIMIT
 #endif
-#define HLW_PREF_PULSE         12345        // was 4975us = 201Hz = 1000W
-#define HLW_UREF_PULSE         1950         // was 1666us = 600Hz = 220V
-#define HLW_IREF_PULSE         3500         // was 1666us = 600Hz = 4.545A
 #define MAX_POWER_LIMIT_HOLD         10     // Time in SECONDS to allow max agreed power
 #define MAX_POWER_LIMIT_WINDOW       30     // Time in SECONDS to disable allow max agreed power
 #define MAX_SAFE_POWER_LIMIT_HOLD    10     // Time in SECONDS to allow max unit safe power
 #define MAX_SAFE_POWER_LIMIT_WINDOW  30     // Time in MINUTES to disable allow max unit safe power
 #define MAX_POWER_LIMIT_RETRY        5      // Retry count allowing agreed power limit overflow
-
-#define DOMOTICZ_RELAY_IDX3    0            // Relay 3 (4 Channel)
-#define DOMOTICZ_RELAY_IDX4    0            // Relay 4 (4 Channel)
-#define DOMOTICZ_KEY_IDX3      0            // Button 3 (4 Channel)
-#define DOMOTICZ_KEY_IDX4      0            // Button 4 (4 Channel)
 
 /*********************************************************************************************\
  * No user configurable items below
@@ -73,6 +65,10 @@ enum msgf_t  {LEGACY, JSON, MAX_FORMAT};
 
 #define DEF_WIFI_HOSTNAME      "%s-%04d"    // Expands to <MQTT_TOPIC>-<last 4 decimal chars of MAC address>
 #define DEF_MQTT_CLIENT_ID     "DVES_%06X"  // Also fall back topic using Chip Id = last 6 characters of MAC address
+
+#define HLW_PREF_PULSE         12345        // was 4975us = 201Hz = 1000W
+#define HLW_UREF_PULSE         1950         // was 1666us = 600Hz = 220V
+#define HLW_IREF_PULSE         3500         // was 1666us = 600Hz = 4.545A
 
 #define MESSAGE_FORMAT         LEGACY       // LEGACY or JSON
 #define MQTT_UNITS             0            // Default do not show value units (Hr, Sec, V, A, W etc.)
@@ -97,6 +93,11 @@ enum msgf_t  {LEGACY, JSON, MAX_FORMAT};
   #define MAX_STATUS           7
 #endif
 
+#define DOMOTICZ_RELAY_IDX3    0            // Relay 3 (4 Channel)
+#define DOMOTICZ_RELAY_IDX4    0            // Relay 4 (4 Channel)
+#define DOMOTICZ_KEY_IDX3      0            // Button 3 (4 Channel)
+#define DOMOTICZ_KEY_IDX4      0            // Button 4 (4 Channel)
+
 enum butt_t {PRESSED, NOT_PRESSED};
 
 #include "support.h"                        // Global support
@@ -117,6 +118,15 @@ typedef void (*rtcCallback)();
 
 extern "C" uint32_t _SPIFFS_start;
 extern "C" uint32_t _SPIFFS_end;
+
+#define MAX_BUTTON_COMMANDS    5            // Max number of button commands supported
+
+const char commands[MAX_BUTTON_COMMANDS][14] PROGMEM = {
+  {"wificonfig 1"},   // Press button three times
+  {"wificonfig 2"},   // Press button four times
+  {"wificonfig 3"},   // Press button five times
+  {"restart 1"},      // Press button six times
+  {"upgrade 1"}};     // Press button seven times
 
 struct SYSCFG {
   unsigned long cfg_holder;
@@ -241,12 +251,21 @@ uint8_t holdcount = 0;                // Timer recording button hold
 uint8_t multiwindow = 0;              // Max time between button presses to record press count
 uint8_t multipress = 0;               // Number of button presses within multiwindow
 
+#ifdef USE_POWERMONITOR
+  byte hlw_pminflg = 0;
+  byte hlw_pmaxflg = 0;
+  byte hlw_uminflg = 0;
+  byte hlw_umaxflg = 0;
+  byte hlw_iminflg = 0;
+  byte hlw_imaxflg = 0;
+  byte power_steady_cntr;
 #ifdef FEATURE_POWER_LIMIT
   byte hlw_mdpls_flag = 0;
   byte hlw_mplr_counter = 0;
   uint16_t hlw_mplh_counter = 0;
   uint16_t hlw_mplw_counter = 0;
 #endif  // FEATURE_POWER_LIMIT
+#endif  // USE_POWERMONITOR
 
 #ifdef USE_DOMOTICZ
   int domoticz_update_timer = 0;
@@ -305,9 +324,9 @@ void CFG_Default()
   sysCfg.ledstate = APP_LEDSTATE;
   sysCfg.webserver = WEB_SERVER;
   sysCfg.model = 0;
-  sysCfg.hlw_pcal = 0;
-  sysCfg.hlw_ucal = 0;
-  sysCfg.hlw_ical = 0;
+  sysCfg.hlw_pcal = HLW_PREF_PULSE;
+  sysCfg.hlw_ucal = HLW_UREF_PULSE;
+  sysCfg.hlw_ical = HLW_IREF_PULSE;
   sysCfg.hlw_esave = 0;
   sysCfg.hlw_pmin = 0;
   sysCfg.hlw_pmax = 0;
@@ -367,9 +386,9 @@ void CFG_Delta()
       sysCfg.savestate = SAVE_STATE;
     }
     if (sysCfg.version < 0x02000500) {  // 2.0.5 - Add pow calibration
-      sysCfg.hlw_pcal = 0;
-      sysCfg.hlw_ucal = 0;
-      sysCfg.hlw_ical = 0;
+      sysCfg.hlw_pcal = HLW_PREF_PULSE;
+      sysCfg.hlw_ucal = HLW_UREF_PULSE;
+      sysCfg.hlw_ical = HLW_IREF_PULSE;
       sysCfg.hlw_esave = 0;
       sysCfg.mqtt_units = MQTT_UNITS;
     }
@@ -422,6 +441,9 @@ void setRelay(uint8_t power)
   } else {
     digitalWrite(REL_PIN, power & 0x1);
   }
+#ifdef USE_POWERMONITOR
+  power_steady_cntr = 2;
+#endif  
 }
 
 #ifdef USE_DOMOTICZ
@@ -1253,13 +1275,6 @@ void do_cmnd(char *cmnd)
 }
 
 #ifdef USE_POWERMONITOR
-byte hlw_pminflg = 0;
-byte hlw_pmaxflg = 0;
-byte hlw_uminflg = 0;
-byte hlw_umaxflg = 0;
-byte hlw_iminflg = 0;
-byte hlw_imaxflg = 0;
-
 boolean hlw_margin(byte type, uint16_t margin, uint16_t value, byte &flag, byte &saveflag)
 {
   byte change;
@@ -1281,6 +1296,11 @@ void hlw_margin_chk()
   float ped, pi, pc;
   uint16_t uped, piv, pe, pw, pu;
   byte flag;
+
+  if (power_steady_cntr) {
+    power_steady_cntr--;
+    return;
+  }
 
   hlw_readEnergy(0, ped, pe, pw, pu, pi, pc);
   if (power && (sysCfg.hlw_pmin || sysCfg.hlw_pmax || sysCfg.hlw_umin || sysCfg.hlw_umax || sysCfg.hlw_imin || sysCfg.hlw_imax)) {
@@ -1553,15 +1573,6 @@ void every_second()
   }
 }
 
-#define MAX_BUTTON_COMMANDS 5
-
-const char commands[MAX_BUTTON_COMMANDS][14] PROGMEM = {
-  {"wificonfig 1"},   // Press button three times
-  {"wificonfig 2"},   // Press button four times
-  {"wificonfig 3"},   // Press button five times
-  {"restart 1"},      // Press button six times
-  {"upgrade 1"}};     // Press button seven times
-
 void stateloop()
 {
   uint8_t button, flag;
@@ -1602,7 +1613,6 @@ void stateloop()
     multipress = (multiwindow) ? multipress +1 : 1;
     snprintf_P(log, sizeof(log), PSTR("APP: Multipress %d"), multipress);
     addLog(LOG_LEVEL_DEBUG, log);
-    if (WIFI_State()) restartflag = 1;
     blinks = 1;
     multiwindow = STATES /2;         // 1/2 second multi press window
   }
@@ -1630,7 +1640,11 @@ void stateloop()
         send_button_power(multipress, 2);  // Execute command via MQTT using ButtonTopic to sync external clients
       } else {
         if ((multipress == 1) || (multipress == 2)) {
-          do_cmnd_power(multipress, 2);    // Execute command internally
+          if (WIFI_State()) {  // WPSconfig, Smartconfig or Wifimanager active
+            restartflag = 1;
+          } else {
+            do_cmnd_power(multipress, 2);    // Execute command internally
+          }
         } else {
           snprintf_P(scmnd, sizeof(scmnd), commands[multipress -3]);
           do_cmnd(scmnd);             
