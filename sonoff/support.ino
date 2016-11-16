@@ -646,10 +646,16 @@ void syslog(const char *message)
 {
   char str[TOPSZ+MESSZ];
 
-  portUDP.beginPacket(sysCfg.syslog_host, sysCfg.syslog_port);
-  snprintf_P(str, sizeof(str), PSTR("%s ESP-%s"), Hostname, message);
-  portUDP.write(str);
-  portUDP.endPacket();
+  if (portUDP.beginPacket(sysCfg.syslog_host, sysCfg.syslog_port)) {
+    snprintf_P(str, sizeof(str), PSTR("%s ESP-%s"), Hostname, message);
+    portUDP.write(str);
+    portUDP.endPacket();
+  } else {
+    syslog_level = 0;
+    syslog_timer = SYSLOG_TIMER;
+    snprintf_P(str, sizeof(str), PSTR("SYSL: Syslog Host not found so logging disabled for %d seconds. Consider syslog 0"), SYSLOG_TIMER);
+    addLog(LOG_LEVEL_INFO, str);
+  }
 }
 
 void addLog(byte loglevel, const char *line)
@@ -669,7 +675,7 @@ void addLog(byte loglevel, const char *line)
     if (logidx > MAX_LOG_LINES -1) logidx = 0;
   }
 #endif  // USE_WEBSERVER
-  if ((WiFi.status() == WL_CONNECTED) && (loglevel <= sysCfg.syslog_level)) syslog(line);
+  if ((WiFi.status() == WL_CONNECTED) && (loglevel <= syslog_level)) syslog(line);
 }
 
 void addLog_P(byte loglevel, const char *formatP)

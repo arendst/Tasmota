@@ -10,7 +10,7 @@
  * ====================================================
 */
 
-#define VERSION                0x02000E00   // 2.0.14
+#define VERSION                0x02000F00   // 2.0.15
 
 #define SONOFF                 1            // Sonoff, Sonoff SV, Sonoff Dual, Sonoff TH 10A/16A, S20 Smart Socket, 4 Channel
 #define SONOFF_POW             9            // Sonoff Pow
@@ -78,6 +78,7 @@ enum msgf_t  {LEGACY, JSON, MAX_FORMAT};
 
 #define STATES                 10           // loops per second
 #define MQTT_RETRY_SECS        10           // Seconds to retry MQTT connection
+#define SYSLOG_TIMER           600          // Seconds to restore syslog_level
 
 #define INPUT_BUFFER_SIZE      128          // Max number of characters in serial buffer
 #define TOPSZ                  60           // Max number of characters in topic string
@@ -242,6 +243,8 @@ PubSubClient mqttClient(espClient);   // MQTT Client
 WiFiUDP portUDP;                      // UDP Syslog
 
 uint8_t power;                        // Current copy of sysCfg.power
+byte syslog_level;                    // Current copy of sysCfg.syslog_level
+uint16_t syslog_timer = 0;            // Timer to re-enable syslog_level
 
 int blinks = 1;                       // Number of LED blinks
 uint8_t blinkstate = 0;               // LED state
@@ -674,10 +677,10 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
         dtostrf(ped, 1, 3, stemp2);
         dtostrf(pc, 1, 2, stemp3);
         if (sysCfg.message_format == JSON) {
-          snprintf_P(svalue, sizeof(svalue), PSTR("{\"PWR\":{\"Voltage\":%d, \"Current\":\"%s\", \"Current Power\":%d, \"Total Power Today\":\"%s\", \"Power Factor\":\"%s\"}}"),
+          snprintf_P(svalue, sizeof(svalue), PSTR("{\"PWR\":{\"Voltage\":%d, \"Current\":\"%s\", \"Current Power\":%d, \"Total Energy Today\":\"%s\", \"Power Factor\":\"%s\"}}"),
             pu, stemp1, pw, stemp2, stemp3); 
         } else {
-          snprintf_P(svalue, sizeof(svalue), PSTR("PWR: Voltage %d V, Current %s A, Current Power %d W, Total Power Today %s kWh, Power Factor %s"),
+          snprintf_P(svalue, sizeof(svalue), PSTR("PWR: Voltage %d V, Current %s A, Current Power %d W, Total Energy Today %s kWh, Power Factor %s"),
             pu, stemp1, pw, stemp2, stemp3); 
         }
         if (payload == 0) mqtt_publish(stopic, svalue);
@@ -821,8 +824,12 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
     else if (!strcmp(type,"SYSLOG")) {
       if ((data_len > 0) && (payload >= LOG_LEVEL_NONE) && (payload <= LOG_LEVEL_ALL)) {
         sysCfg.syslog_level = payload;
+        syslog_level = payload;
+        syslog_timer = 0;
+        snprintf_P(svalue, sizeof(svalue), PSTR("%d"), sysCfg.syslog_level);
+      } else {
+        snprintf_P(svalue, sizeof(svalue), PSTR("%d (%d)"), syslog_level, sysCfg.syslog_level);
       }
-      snprintf_P(svalue, sizeof(svalue), PSTR("%d"), sysCfg.syslog_level);
     }
     else if (!strcmp(type,"LOGHOST")) {
       if ((data_len > 0) && (data_len < sizeof(sysCfg.syslog_host))) {
@@ -1386,12 +1393,12 @@ void hlw_margin_chk()
     uped = (uint16_t)(ped * 1000);
     if (!hlw_mdpls_flag && (rtcTime.Hour == sysCfg.hlw_mdpls)) {
       hlw_mdpls_flag = 1;
-      snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/MAX_DAILY_POWER_MONITOR"), PUB_PREFIX, sysCfg.mqtt_topic);
+      snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/MAX_DAILY_ENERGY_MONITOR"), PUB_PREFIX, sysCfg.mqtt_topic);
       mqtt_publish(stopic, MQTT_STATUS_ON);
       do_cmnd_power(1, 1);
     }
     else if (hlw_mdpls_flag && (uped > sysCfg.hlw_mdpl)) {
-      snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/MAX_DAILY_POWER_REACHED"), PUB_PREFIX, sysCfg.mqtt_topic);
+      snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/MAX_DAILY_ENERGY_REACHED"), PUB_PREFIX, sysCfg.mqtt_topic);
       dtostrf(ped, 1, 3, svalue);
       snprintf_P(svalue, sizeof(svalue), PSTR("%s%s"), svalue, (sysCfg.mqtt_units) ? " kWh" : "");
       mqtt_publish(stopic, svalue);
@@ -1422,15 +1429,21 @@ void every_second()
   uint16_t pe, pw, pu;
   byte i;
 
+
+  if (syslog_timer) {  // Restore syslog level
+    syslog_timer--;
+    if (!syslog_timer) {
+      syslog_level = sysCfg.syslog_level;
+      if (sysCfg.syslog_level) {
+        addLog(LOG_LEVEL_INFO, "SYSL: Syslog logging re-enabled");  // Might trigger disable again (on purpose)
+      }
+    }
+  }
+
   if (status_update_timer) {
     status_update_timer--;
     if (!status_update_timer) {
       for (i = 0; i < Maxdevice; i++) {
-        
-//        snprintf_P(svalue, sizeof(svalue), PSTR("%d/%s %d"),
-//          i +1, sysCfg.mqtt_subtopic, (power & (0x01 << i)) ? 1 : 0);
-//        do_cmnd(svalue);    // <--- Exception loop_task - need investigation
-
         snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/%d/%s"), PUB_PREFIX, sysCfg.mqtt_topic, i +1, sysCfg.mqtt_subtopic);
         strlcpy(svalue, (power & (0x01 << i)) ? MQTT_STATUS_ON : MQTT_STATUS_OFF, sizeof(svalue));
         mqtt_publish(stopic, svalue);
@@ -1518,13 +1531,13 @@ void every_second()
       dtostrf(pi, 1, 3, stemp3);
       if (sysCfg.message_format == JSON) {
         snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/ENERGY"), PUB_PREFIX2, sysCfg.mqtt_topic);
-        snprintf_P(svalue, sizeof(svalue), PSTR("{\"Total Power Today\":\"%s\", \"Period Power\":%d, \"Current Power\":%d, \"Power Factor\":\"%s\", \"Voltage\":%d, \"Current\":\"%s\"}"),
+        snprintf_P(svalue, sizeof(svalue), PSTR("{\"Total Energy Today\":\"%s\", \"Period Energy\":%d, \"Current Power\":%d, \"Power Factor\":\"%s\", \"Voltage\":%d, \"Current\":\"%s\"}"),
           stemp1, pe, pw, stemp2, pu, stemp3);
       } else {
-        snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/TODAY_POWER"), PUB_PREFIX2, sysCfg.mqtt_topic);
+        snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/TODAY_ENERGY"), PUB_PREFIX2, sysCfg.mqtt_topic);
         snprintf_P(svalue, sizeof(svalue), PSTR("%s%s"), stemp1, (sysCfg.mqtt_units) ? " kWh" : "");
         mqtt_publish(stopic, svalue);
-        snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/PERIOD_POWER"), PUB_PREFIX2, sysCfg.mqtt_topic);
+        snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/PERIOD_ENERGY"), PUB_PREFIX2, sysCfg.mqtt_topic);
         snprintf_P(svalue, sizeof(svalue), PSTR("%d%s"), pe, (sysCfg.mqtt_units) ? " Wh" : "");
         mqtt_publish(stopic, svalue);
         snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/CURRENT_POWER"), PUB_PREFIX2, sysCfg.mqtt_topic);
@@ -1738,6 +1751,8 @@ void stateloop()
 
 void serial()
 {
+  char log[LOGSZ];
+
   while (Serial.available()) {
     yield();
     SerialInByte = Serial.read();
@@ -1759,8 +1774,8 @@ void serial()
     }
 
     if (SerialInByte > 127) { // binary data...
-      Serial.flush();
       SerialInByteCounter = 0;
+      Serial.flush();
       return;
     }
     if (isprint(SerialInByte)) {
@@ -1772,10 +1787,13 @@ void serial()
     }
     if (SerialInByte == '\n') {
       serialInBuf[SerialInByteCounter] = 0;  // serial data completed
-      addLog(LOG_LEVEL_NONE, serialInBuf);
-      SerialInByteCounter = 0;
+      if (sysCfg.seriallog_level < LOG_LEVEL_INFO) sysCfg.seriallog_level = LOG_LEVEL_INFO;
+      snprintf_P(log, sizeof(log), PSTR("CMND: %s"), serialInBuf);
+      addLog(LOG_LEVEL_INFO, log);
       do_cmnd(serialInBuf);
+      SerialInByteCounter = 0;
       Serial.flush();
+      return;
     }
   }
 }
@@ -1834,6 +1852,7 @@ void setup()
   addLog(LOG_LEVEL_DEBUG, log);
   savedatacounter = sysCfg.savedata;
   power = ((0x00FF << Maxdevice) >> 8) & sysCfg.power;
+  syslog_level = sysCfg.syslog_level;
 
   if (strstr(sysCfg.hostname, "%")) strlcpy(sysCfg.hostname, DEF_WIFI_HOSTNAME, sizeof(sysCfg.hostname));
   if (!strcmp(sysCfg.hostname, DEF_WIFI_HOSTNAME)) {

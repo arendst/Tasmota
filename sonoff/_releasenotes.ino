@@ -1,4 +1,9 @@
-/* 2.0.14 20161115
+/* 2.0.15
+ * Change TODAY_POWER and PERIOD_POWER to TODAY_ENERGY and PERIOD_ENERGY
+ * Fix serial regression
+ * Fix syslog hangs when loghost is unavailable
+ * 
+ * 2.0.14 20161115
  * Add HLW threshold delay
  * Fix HLW intermittent current deviation
  * Fix button functionality during wificonfig
