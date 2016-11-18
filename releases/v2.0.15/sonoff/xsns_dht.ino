@@ -39,7 +39,6 @@ POSSIBILITY OF SUCH DAMAGE.
 uint8_t data[5];
 uint32_t _lastreadtime, _maxcycles;
 bool _lastresult;
-float mt, mh = 0;
 
 void dht_readPrep()
 {
@@ -129,13 +128,8 @@ float dht_convertCtoF(float c)
 
 boolean dht_readTempHum(bool S, float &t, float &h)
 {
-  if (!mh) {
-    t = NAN;
-    h = NAN;
-  } else {
-    t = mt;
-    h = mh;
-  }
+  t = NAN;
+  h = NAN;
 
   if (dht_read()) {
     switch (DHT_TYPE) {
@@ -158,8 +152,6 @@ boolean dht_readTempHum(bool S, float &t, float &h)
       if(S) t = dht_convertCtoF(t);
       break;
     }
-    if (!isnan(t)) mt = t;
-    if (!isnan(h)) mh = h;
   }
   return (!isnan(t) && !isnan(h)); 
 }

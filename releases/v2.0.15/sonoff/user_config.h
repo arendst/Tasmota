@@ -63,7 +63,7 @@
 #define DOMOTICZ_UPDATE_TIMER  0            // Send relay status (0 = disable, 1 - 3600 seconds) (Optional)
 
 // MQTT - Telemetry
-#define TELE_PERIOD            300          // Telemetry (0 = disable, 10 - 3600 seconds)
+#define TELE_PERIOD            300          // Telemetry (0 = disable, 2 - 3600 seconds)
 #define SEND_TELEMETRY_UPTIME               // Enable sending uptime telemetry (if disabled will still send hourly message)
 #define SEND_TELEMETRY_RSSI                 // Enable sending wifi RSSI telemetry
 #define SEND_TELEMETRY_POWER                // Enable sending power telemetry
@@ -100,16 +100,11 @@
   #define REL_PIN              12           // GPIO 12 = Red Led and Relay (0 = Off, 1 = On)
   #define KEY_PIN              0            // GPIO 00 = Button
 /*-------------------------------------------------------------------------------------------*/
-  #define DSB_PIN              14           // GPIO 14 = DS18x20 (Sonoff_TH10A(16A), Sonoff SV)
-  #define DSB_RESOLUTION       2            // Maximum number of decimals (0 - 3) showing Temperature
-  // *** Option 1 - Single DS18B20 - Select either Option 1 OR Option 2
-//  #define SEND_TELEMETRY_DS18B20            // Enable sending single temperature telemetry
-  // *** Option 2 - Multiple DS18B20 and/or DS18S20 (needs OneWire library!)
-//  #define SEND_TELEMETRY_DS18x20            // Enable sending multi temperature telemetry 
+  #define DSB_PIN              14           // GPIO 14 = DS18B20 (Sonoff_TH10A(16A), Sonoff SV)
+//  #define SEND_TELEMETRY_DS18B20            // Enable sending temperature telemetry
 /*-------------------------------------------------------------------------------------------*/
   #define DHT_PIN              14           // GPIO 14 = AM2301 (Sonoff_TH10A(16A), Sonoff SV)
   #define DHT_TYPE             AM2301       // DHT module type (DHT11, DHT21, DHT22, AM2301, AM2302 or AM2321)
-  #define DHT_RESOLUTION       1            // Maximum number of decimals (0 - 3) showing Temperature
 //  #define SEND_TELEMETRY_DHT                // Enable sending temperature and humidity telemetry
 
 /*********************************************************************************************\
@@ -147,16 +142,11 @@
   #define REL2_PIN             12           // GPIO 12 = Red Led and Relay 2 (0 = Off, 1 = On)
   #define KEY2_PIN             0            // GPIO 00 = Button 2
 /*-------------------------------------------------------------------------------------------*/
-  #define DSB_PIN              4            // GPIO 04 = DS18x20
-  #define DSB_RESOLUTION       1            // Maximum number of decimals (0 - 3) showing Temperature
-  // *** Option 1 - Single DS18B20 - Select either Option 1 OR Option 2
-//  #define SEND_TELEMETRY_DS18B20            // Enable sending single temperature telemetry
-  // *** Option 2 - Multiple DS18B20 and/or DS18S20 (needs OneWire library!)
-//  #define SEND_TELEMETRY_DS18x20            // Enable sending multi temperature telemetry 
+  #define DSB_PIN              4            // GPIO 04 = DS18B20
+//  #define SEND_TELEMETRY_DS18B20            // Enable sending temperature telemetry
 /*-------------------------------------------------------------------------------------------*/
   #define DHT_PIN              14           // GPIO 14 = DHT22
   #define DHT_TYPE             DHT22        // DHT module type (DHT11, DHT21, DHT22, AM2301, AM2302 or AM2321)
-  #define DHT_RESOLUTION       1            // Maximum number of decimals (0 - 3) showing Temperature
 //  #define SEND_TELEMETRY_DHT                // Enable sending temperature and humidity telemetry
 
 /*********************************************************************************************\
@@ -167,19 +157,9 @@
   #error "Select either module SONOFF, SONOFF_POW or ELECTRO_DRAGON"
 #endif
 
-#if defined(SEND_TELEMETRY_DS18B20) && defined(SEND_TELEMETRY_DS18x20)
-  #error "Select either SEND_TELEMETRY_DS18B20 or SEND_TELEMETRY_DS18x20"
-#endif
-
 #if defined(SEND_TELEMETRY_DS18B20) && defined(SEND_TELEMETRY_DHT)
 #if DSB_PIN == DHT_PIN
   #error "Select either SEND_TELEMETRY_DS18B20 or SEND_TELEMETRY_DHT or use different GPIOs"
-#endif
-#endif
-
-#if defined(SEND_TELEMETRY_DS18x20) && defined(SEND_TELEMETRY_DHT)
-#if DSB_PIN == DHT_PIN
-  #error "Select either SEND_TELEMETRY_DS18x20 or SEND_TELEMETRY_DHT or use different GPIOs"
 #endif
 #endif
 

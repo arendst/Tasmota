@@ -1,14 +1,4 @@
-/* 2.0.16
- * Add alternative sensor driver DS18x20 using OneWire library
- * Change sensor MQTT message from tele/sonoff/TEMPERATURE to tele/sonoff/DHT/TEMPERATURE or
- *   tele/sonoff/DS18B20/TEMPERATURE or tele/sonoff/DS18x20/1/TEMPERATURE
- * Add sensors to root webpage and auto refresh every 4 seconds
- * Add optional JSON messageformat to all telemetry data
- * Enforce minimum TelePeriod to be 10 seconds
- * Fix Energy Yesterday reset after restart
- * Add Energy Today restore after controlled restart
- * 
- * 2.0.15
+/* 2.0.15
  * Change TODAY_POWER and PERIOD_POWER to TODAY_ENERGY and PERIOD_ENERGY
  * Fix serial regression
  * Fix syslog hangs when loghost is unavailable

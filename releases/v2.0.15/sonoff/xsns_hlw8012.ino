@@ -36,7 +36,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #define HLW_UREF             2200    // 220.0V
 #define HLW_IREF             4545    // 4.545A
 
-byte hlw_SELflag, hlw_cf1_timer, hlw_seconds, hlw_startup;
+byte hlw_SELflag, hlw_cf1_timer, hlw_seconds;
 unsigned long hlw_cf_plen, hlw_cf_last;
 unsigned long hlw_cf1_plen, hlw_cf1_last;
 unsigned long hlw_cf1u_plen, hlw_cf1i_plen;
@@ -86,12 +86,8 @@ void hlw_200mS()
       hlw_cf_plen = 0;
     }
     if (rtc_loctime() == rtc_midnight()) {
-      sysCfg.hlw_kWhyesterday = hlw_kWhtoday;
+      sysCfg.hlw_esave = hlw_kWhtoday;
       hlw_kWhtoday = 0;
-    }
-    if (hlw_startup && rtcTime.Valid && (rtcTime.DayOfYear == sysCfg.hlw_kWhdoy)) {
-      hlw_kWhtoday = sysCfg.hlw_kWhtoday;
-      hlw_startup = 0;
     }
   }
 
@@ -101,12 +97,6 @@ void hlw_200mS()
     hlw_SELflag = (hlw_SELflag) ? 0 : 1;
     digitalWrite(HLW_SEL, hlw_SELflag);
   }
-}
-
-void hlw_savestate()
-{
-  sysCfg.hlw_kWhdoy = (rtcTime.Valid) ? rtcTime.DayOfYear : 0;
-  sysCfg.hlw_kWhtoday = hlw_kWhtoday;
 }
 
 boolean hlw_readEnergy(byte option, float &ed, uint16_t &e, uint16_t &w, uint16_t &u, float &i, float &c)
@@ -201,7 +191,6 @@ void hlw_init()
   pinMode(HLW_CF, INPUT_PULLUP);
   attachInterrupt(HLW_CF, hlw_cf_interrupt, FALLING);
 
-  hlw_startup = 1;
   hlw_lasttime = 0;
   hlw_seconds = 0;
   hlw_cf1_timer = 1;

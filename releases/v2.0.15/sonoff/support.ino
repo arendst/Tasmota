@@ -428,7 +428,7 @@ Ticker tickerRTC;
 static const uint8_t monthDays[] = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 }; // API starts months from 1, this array starts from 0
 static const char monthNames[37] = { "JanFebMrtAprMayJunJulAugSepOctNovDec" };
 
-uint32_t utctime = 0, loctime = 0, dsttime = 0, stdtime = 0, ntptime = 0, midnight = 1451602800;
+uint32_t utctime = 0, loctime = 0, dsttime = 0, stdtime = 0, ntptime = 0, midnight = 0;
 
 rtcCallback rtcCb = NULL;
 
@@ -460,8 +460,7 @@ void breakTime(uint32_t timeInput, TIME_T &tm)
   
   days -= LEAP_YEAR(year) ? 366 : 365;
   time -= days;              // now it is days in this year, starting at 0
-  tm.DayOfYear = time;
-
+  
   days = 0;
   month = 0;
   monthLength = 0;
@@ -485,7 +484,6 @@ void breakTime(uint32_t timeInput, TIME_T &tm)
   strlcpy(tm.MonthName, monthNames + (month *3), 4);
   tm.Month = month + 1;      // jan is month 1  
   tm.Day = time + 1;         // day of month
-  tm.Valid = (timeInput > 1451602800);  // 2016-01-01
 }
 
 uint32_t makeTime(TIME_T &tm)
@@ -619,7 +617,7 @@ void rtc_second()
     }
   }
   breakTime(loctime, rtcTime);
-  if (!rtcTime.Hour && !rtcTime.Minute && !rtcTime.Second && rtcTime.Valid) {
+  if ((!midnight || (!rtcTime.Hour && !rtcTime.Minute && !rtcTime.Second)) && (loctime > 1451602800)) {
     midnight = loctime;
   }
   rtcTime.Year += 1970;

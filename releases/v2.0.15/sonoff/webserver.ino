@@ -313,9 +313,6 @@ void handleRoot()
   } else {
     
     String page = FPSTR(HTTP_HEAD);
-//    page.replace("<meta", "<meta http-equiv=\"refresh\" content=\"4; URL=/\"><meta");                    // Fails Edge (asks for reload)
-//    page.replace("</script>", "setTimeout(function(){window.location.reload(1);},4000);</script>");     // Repeats POST on All
-    page.replace("</script>", "setTimeout(function(){window.location.replace(\"/\");},4000);</script>");  // OK on All
     page.replace("{v}", "Main menu");
 
     if (Maxdevice) {
@@ -342,78 +339,12 @@ void handleRoot()
       }  
       page += F("</tr></table><br/>");
     }
-
-#ifdef USE_POWERMONITOR
-    float ped, pi, pc;
-    uint16_t pe, pw, pu;
-    char ptemp[10];
-    hlw_readEnergy(0, ped, pe, pw, pu, pi, pc);
-    page += F("<table style='width:100%'>");
-    page += F("<tr><td>Voltage: </td><td>"); page += String(pu); page += F(" V</td></tr>");
-    dtostrf(pi, 1, 3, ptemp);
-    page += F("<tr><td>Current: </td><td>"); page += ptemp; page += F(" A</td></tr>");
-    page += F("<tr><td>Power: </td><td>"); page += String(pw); page += F(" W</td></tr>");
-    dtostrf(pc, 1, 2, ptemp);
-    page += F("<tr><td>Power Factor: </td><td>"); page += ptemp; page += F("</td></tr>");
-    dtostrf(ped, 1, 3, ptemp);
-    page += F("<tr><td>Energy Today: </td><td>"); page += ptemp; page += F(" kWh</td></tr>");
-    dtostrf((float)sysCfg.hlw_kWhyesterday / 100000000, 1, 3, ptemp);
-    page += F("<tr><td>Energy Yesterday: </td><td>"); page += ptemp; page += F(" kWh</td></tr>");
-    page += F("</table><br/>");
-#endif  // USE_POWERMONITOR
-
-#ifdef SEND_TELEMETRY_DS18B20
-    // Needs TelePeriod to refresh data (Do not do it here as it takes too much time) 
-    char stemp[10];
-    float st;
-    if (dsb_readTemp(st)) {        // Check if read failed
-      page += F("<table style='width:100%'>");
-      dtostrf(st, 1, DSB_RESOLUTION &3, stemp);
-      page += F("<tr><td>DSB Temperature: </td><td>"); page += stemp; page += F("&deg;C</td></tr>");
-      page += F("</table><br/>");
-    }
-#endif  // SEND_TELEMETRY_DS18B20
-
-#ifdef SEND_TELEMETRY_DS18x20
-    char xtemp[10];
-    float xt;
-    uint8_t xfl = 0, i;
-    for (i = 0; i < ds18x20_sensors(); i++) {
-      if (ds18x20_read(i, xt)) {   // Check if read failed
-        if (!xfl) {
-          page += F("<table style='width:100%'>");
-          xfl = 1;
-        }
-        dtostrf(xt, 1, DSB_RESOLUTION &3, xtemp);
-        page += F("<tr><td>DS"); page += String(i +1); page += F(" Temperature: </td><td>"); page += xtemp; page += F("&deg;C</td></tr>");
-      }
-    }
-    if (xfl) page += F("</table><br/>");
-#endif  // SEND_TELEMETRY_DS18x20
-
-#ifdef SEND_TELEMETRY_DHT
-    char dtemp[10];
-    float dt, dh;
-    if (dht_readTempHum(false, dt, dh)) {     // Read temperature as Celsius (the default)
-      page += F("<table style='width:100%'>");
-      dtostrf(dt, 1, DHT_RESOLUTION &3, dtemp);
-      page += F("<tr><td>DHT Temperature: </td><td>"); page += dtemp; page += F("&deg;C</td></tr>");
-      dtostrf(dh, 1, 1, dtemp);
-      page += F("<tr><td>DHT Humidity: </td><td>"); page += dtemp; page += F("%</td></tr>");
-      page += F("</table><br/>");
-    }
-#endif  // SEND_TELEMETRY_DHT
-
+    
     if (_httpflag == HTTP_ADMIN) {
       page += FPSTR(HTTP_BTN_MENU1);
       page += FPSTR(HTTP_BTN_RSTRT);
     }
     showPage(page);
-    
-#ifdef SEND_TELEMETRY_DS18x20
-    ds18x20_search();      // Check for changes in sensors number
-    ds18x20_convert();     // Start Conversion, takes up to one second
-#endif  // SEND_TELEMETRY_DS18x20
   }
 }
 
