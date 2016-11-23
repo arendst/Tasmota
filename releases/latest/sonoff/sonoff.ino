@@ -43,7 +43,7 @@ enum msgf_t  {LEGACY, JSON, MAX_FORMAT};
 \*********************************************************************************************/
 
 #if MODULE == SONOFF_POW
-  #define FEATURE_POWER_LIMIT
+//  #define FEATURE_POWER_LIMIT
 #endif
 #define MAX_POWER_HOLD         10           // Time in SECONDS to allow max agreed power
 #define MAX_POWER_WINDOW       30           // Time in SECONDS to disable allow max agreed power
