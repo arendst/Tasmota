@@ -1,4 +1,6 @@
 /*
+These routines provide support to my various ESP8266 based projects.
+
 Copyright (c) 2016 Theo Arends.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without

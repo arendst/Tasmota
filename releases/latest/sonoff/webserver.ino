@@ -391,7 +391,7 @@ void handleRoot()
     if (xfl) page += F("</table><br/>");
 #endif  // SEND_TELEMETRY_DS18x20
 
-#ifdef SEND_TELEMETRY_DHT
+#if defined(SEND_TELEMETRY_DHT) || defined(SEND_TELEMETRY_DHT2)
     char dtemp[10];
     float dt, dh;
     if (dht_readTempHum(false, dt, dh)) {     // Read temperature as Celsius (the default)
@@ -402,7 +402,7 @@ void handleRoot()
       page += F("<tr><td>DHT Humidity: </td><td>"); page += dtemp; page += F("%</td></tr>");
       page += F("</table><br/>");
     }
-#endif  // SEND_TELEMETRY_DHT
+#endif  // SEND_TELEMETRY_DHT/2
 
     if (_httpflag == HTTP_ADMIN) {
       page += FPSTR(HTTP_BTN_MENU1);
@@ -419,6 +419,10 @@ void handleRoot()
 
 void handleConfig()
 {
+  if (_httpflag == HTTP_USER) {
+    handleRoot();
+    return;
+  }
   addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Handle config"));
 
   String page = FPSTR(HTTP_HEAD);
@@ -440,6 +444,10 @@ void handleWifi0()
 
 void handleWifi(boolean scan)
 {
+  if (_httpflag == HTTP_USER) {
+    handleRoot();
+    return;
+  }
   char log[LOGSZ];
 
   addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Handle Wifi config"));
@@ -540,6 +548,10 @@ void handleWifi(boolean scan)
 
 void handleMqtt()
 {
+  if (_httpflag == HTTP_USER) {
+    handleRoot();
+    return;
+  }
   addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Handle MQTT config"));
 
   String page = FPSTR(HTTP_HEAD);
@@ -566,6 +578,10 @@ void handleMqtt()
 #ifdef USE_DOMOTICZ  
 void handleDomoticz()  
 {  
+  if (_httpflag == HTTP_USER) {
+    handleRoot();
+    return;
+  }
   addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Handle Domoticz config"));  
 
   String page = FPSTR(HTTP_HEAD);  
@@ -583,6 +599,10 @@ void handleDomoticz()
 
 void handleLog()
 {
+  if (_httpflag == HTTP_USER) {
+    handleRoot();
+    return;
+  }
   addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Handle Log config"));
 
   String page = FPSTR(HTTP_HEAD);
@@ -603,6 +623,10 @@ void handleLog()
 
 void handleSave()
 {
+  if (_httpflag == HTTP_USER) {
+    handleRoot();
+    return;
+  }
   char log[LOGSZ];
   byte what = 0, restart;
   String result = "";
@@ -679,6 +703,10 @@ void handleSave()
 
 void handleReset()
 {
+  if (_httpflag == HTTP_USER) {
+    handleRoot();
+    return;
+  }
   char svalue[MESSZ];
 
   addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Reset parameters"));
@@ -696,6 +724,10 @@ void handleReset()
 
 void handleUpgrade()
 {
+  if (_httpflag == HTTP_USER) {
+    handleRoot();
+    return;
+  }
   addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Handle upgrade"));
 
   String page = FPSTR(HTTP_HEAD);
@@ -710,6 +742,10 @@ void handleUpgrade()
 
 void handleUpgradeStart()
 {
+  if (_httpflag == HTTP_USER) {
+    handleRoot();
+    return;
+  }
   char svalue[MESSZ];
 
   addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Firmware upgrade start"));
@@ -733,6 +769,10 @@ void handleUpgradeStart()
 
 void handleUploadDone()
 {
+  if (_httpflag == HTTP_USER) {
+    handleRoot();
+    return;
+  }
   char svalue[MESSZ];
 
   addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Firmware upload done"));
@@ -782,6 +822,7 @@ void handleUploadLoop()
   char log[LOGSZ];
   boolean _serialoutput = (LOG_LEVEL_DEBUG <= sysCfg.seriallog_level);
 
+  if (_httpflag == HTTP_USER) return;
   if (_uploaderror) {
     Update.end();
     return;
@@ -857,6 +898,10 @@ void handleUploadLoop()
 
 void handleConsole()
 {
+  if (_httpflag == HTTP_USER) {
+    handleRoot();
+    return;
+  }
   char svalue[MESSZ];
 
   addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Handle console"));
@@ -876,9 +921,21 @@ void handleConsole()
 
 void handleAjax()
 {
+  if (_httpflag == HTTP_USER) {
+    handleRoot();
+    return;
+  }
   String message = "";
+  uint16_t size = 0;
 
-  byte counter = logidx;  // Points to oldest entry
+  int maxSize = ESP.getFreeHeap() - 6000;
+
+  byte counter = logidx;
+  do {
+    counter--;
+    if (counter == 255) counter = MAX_LOG_LINES -1;
+    size += Log[counter].length();
+  } while ((counter != logidx) && (size < maxSize));
   do {
     if (Log[counter].length()) {
       if (message.length()) message += F("\n");
@@ -895,6 +952,10 @@ void handleAjax()
 
 void handleInfo()
 {
+  if (_httpflag == HTTP_USER) {
+    handleRoot();
+    return;
+  }
   addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Handle info"));
 
   int freeMem = ESP.getFreeHeap();
@@ -948,6 +1009,10 @@ void handleInfo()
 
 void handleRestart()
 {
+  if (_httpflag == HTTP_USER) {
+    handleRoot();
+    return;
+  }
   addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Restarting"));
 
   String page = FPSTR(HTTP_HEAD);

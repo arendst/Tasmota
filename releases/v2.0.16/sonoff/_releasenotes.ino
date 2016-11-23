@@ -1,13 +1,4 @@
-/* 2.0.17
- * Calibrate HLWPCAL from 12345 to 12530
- * Add alternative sensor driver DHT2 using Adafruit DHT library
- * Add define MESSAGE_FORMAT to user_config.h
- * Throttle console messages
- * Shorten JSON messages
- * Fix possible Panic
- * Fix User mode webserver security
- * 
- * 2.0.16
+/* 2.0.16
  * Add alternative sensor driver DS18x20 using OneWire library
  * Change sensor MQTT message from tele/sonoff/TEMPERATURE to tele/sonoff/DHT/TEMPERATURE or
  *   tele/sonoff/DS18B20/TEMPERATURE or tele/sonoff/DS18x20/1/TEMPERATURE
