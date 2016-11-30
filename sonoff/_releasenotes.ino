@@ -1,10 +1,8 @@
-/* 2.0.20
+/* 2.0.20 20161130
+ * Relax MQTTClient naming but only allows hexadecimal uppercase numbers
  * Add I2C support with command I2CScan
  * Add I2C sensor driver for HTU21 as alternate sensor using TH10/16 connectors (Heiko Krupp)
  * Add I2C sensor driver for BMP085/BMP180/BMP280/BME280 as alternate sensor using TH10/16 connectors
- * 
- * 2.0.19b
- * Relax MQTTClient naming but only allows hexadecimal uppercase numbers
  * 
  * 2.0.19a 20161127
  * Add support for ButtonTopic and ButtonRetain to wall switch function
