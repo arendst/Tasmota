@@ -88,6 +88,10 @@
 #define APP_TIMEZONE           1            // +1 hour (Amsterdam) (-12 .. 12 = hours from UTC, 99 = use TIME_DST/TIME_STD)
 #define APP_LEDSTATE           1            // Do not show power state (1 = Show power state)
 
+#define TEMP_RESOLUTION        1            // Maximum number of decimals (0 - 3) showing sensor Temperature
+#define HUMIDITY_RESOLUTION    1            // Maximum number of decimals (0 - 3) showing sensor Humidity
+#define PRESSURE_RESOLUTION    1            // Maximum number of decimals (0 - 3) showing sensor Pressure
+
 /*********************************************************************************************\
  * Sonoff specific paremeters
 \*********************************************************************************************/
@@ -100,25 +104,35 @@
   #define LED_INVERTED         1            // 0 = (1 = On, 0 = Off), 1 = (0 = On, 1 = Off)
   #define REL_PIN              12           // GPIO 12 = Red Led and Relay (0 = Off, 1 = On)
   #define KEY_PIN              0            // GPIO 00 = Button
-/*-------------------------------------------------------------------------------------------*/
+/*-------------------------------------------------------------------------------------------*\
+ * Wall switch and HC-SR501
+\*-------------------------------------------------------------------------------------------*/
   #define SWITCH_PIN           14           // GPIO 14 = Standard wall switch to Gnd (Sonoff_TH10A(16A), Sonoff SV)
   #define SWITCH_MODE          TOGGLE       // TOGGLE, FOLLOW or FOLLOW_INV (the wall switch state)
 //  #define USE_WALL_SWITCH                   // Enable the use of a standard wall switch to control the relay
-/*-------------------------------------------------------------------------------------------*/
+/*-------------------------------------------------------------------------------------------*\
+ * Single wire devices DS18B20 and DS18S20
+\*-------------------------------------------------------------------------------------------*/
   #define DSB_PIN              14           // GPIO 14 = DS18x20 (Sonoff_TH10A(16A), Sonoff SV)
-  #define DSB_RESOLUTION       1            // Maximum number of decimals (0 - 3) showing Temperature
   // *** Option 1 - Single DS18B20 - Select either Option 1 OR Option 2
 //  #define SEND_TELEMETRY_DS18B20            // Enable sending single temperature telemetry
   // *** Option 2 - Multiple DS18B20 and/or DS18S20 (needs OneWire library!)
 //  #define SEND_TELEMETRY_DS18x20            // Enable sending multi temperature telemetry 
-/*-------------------------------------------------------------------------------------------*/
+/*-------------------------------------------------------------------------------------------*\
+ * DHT11, DHT21, DHT22, AM2301, AM2302 and AM2321
+\*-------------------------------------------------------------------------------------------*/
   #define DHT_PIN              14           // GPIO 14 = AM2301 (Sonoff_TH10A(16A), Sonoff SV)
   #define DHT_TYPE             AM2301       // DHT module type (DHT11, DHT21, DHT22, AM2301, AM2302 or AM2321)
-  #define DHT_RESOLUTION       1            // Maximum number of decimals (0 - 3) showing Temperature
   // *** Option 1 - No external library needed - Select either Option 1 OR Option 2
 //  #define SEND_TELEMETRY_DHT                // Enable sending temperature and humidity telemetry
   // *** Option 2 - Use Adafruit DHT library - Select either Option 1 OR Option 2
 //  #define SEND_TELEMETRY_DHT2               // Enable sending temperature and humidity telemetry
+/*-------------------------------------------------------------------------------------------*\
+ * I2C devices BMP085, BMP180, BMP280, BME280 and HTU21D
+\*-------------------------------------------------------------------------------------------*/
+  #define I2C_SDA_PIN          4            // GPIO 4 = I2C SDA (Sonoff_TH10A(16A)- Needs extra hardware)
+  #define I2C_SCL_PIN          14           // GPIO 14 = I2C SCL (Sonoff_TH10A(16A))
+//  #define SEND_TELEMETRY_I2C                // Enable sending I2C sensor telemetry
   
 /*********************************************************************************************\
  * Sonoff Pow specific parameters
@@ -154,25 +168,35 @@
   #define KEY_PIN              2            // GPIO 02 = Button 1
   #define REL2_PIN             12           // GPIO 12 = Red Led and Relay 2 (0 = Off, 1 = On)
   #define KEY2_PIN             0            // GPIO 00 = Button 2
-/*-------------------------------------------------------------------------------------------*/
+/*-------------------------------------------------------------------------------------------*\
+ * Wall switch and HC-SR501
+\*-------------------------------------------------------------------------------------------*/
   #define SWITCH_PIN           14           // GPIO 14 = Standard wall switch to Gnd
   #define SWITCH_MODE          TOGGLE       // TOGGLE, FOLLOW or FOLLOW_INV (the wall switch state)
 //  #define USE_WALL_SWITCH                   // Enable the use of a standard wall switch to control the relay
-/*-------------------------------------------------------------------------------------------*/
+/*-------------------------------------------------------------------------------------------*\
+ * Single wire devices DS18B20 and DS18S20
+\*-------------------------------------------------------------------------------------------*/
   #define DSB_PIN              4            // GPIO 04 = DS18x20
-  #define DSB_RESOLUTION       1            // Maximum number of decimals (0 - 3) showing Temperature
   // *** Option 1 - Single DS18B20 - Select either Option 1 OR Option 2
 //  #define SEND_TELEMETRY_DS18B20            // Enable sending single temperature telemetry
   // *** Option 2 - Multiple DS18B20 and/or DS18S20 (needs OneWire library!)
 //  #define SEND_TELEMETRY_DS18x20            // Enable sending multi temperature telemetry 
-/*-------------------------------------------------------------------------------------------*/
+/*-------------------------------------------------------------------------------------------*\
+ * DHT11, DHT21, DHT22, AM2301, AM2302 and AM2321
+\*-------------------------------------------------------------------------------------------*/
   #define DHT_PIN              14           // GPIO 14 = DHT22
   #define DHT_TYPE             DHT22        // DHT module type (DHT11, DHT21, DHT22, AM2301, AM2302 or AM2321)
-  #define DHT_RESOLUTION       1            // Maximum number of decimals (0 - 3) showing Temperature
   // *** Option 1 - No external library needed - Select either Option 1 OR Option 2
 //  #define SEND_TELEMETRY_DHT                // Enable sending temperature and humidity telemetry
   // *** Option 2 - Use Adafruit DHT library - Select either Option 1 OR Option 2
 //  #define SEND_TELEMETRY_DHT2               // Enable sending temperature and humidity telemetry
+/*-------------------------------------------------------------------------------------------*\
+ * I2C devices BMP085, BMP180, BMP280, BME280 and HTU21D
+\*-------------------------------------------------------------------------------------------*/
+  #define I2C_SDA_PIN          4            // GPIO 4 = I2C SDA (Sonoff_TH10A(16A)- Needs extra hardware)
+  #define I2C_SCL_PIN          14           // GPIO 14 = I2C SCL (Sonoff_TH10A(16A))
+//  #define SEND_TELEMETRY_I2C                // Enable sending I2C sensor telemetry
 
 /*********************************************************************************************\
  * No user configurable items below
@@ -196,9 +220,28 @@
 #if defined(SEND_TELEMETRY_DHT) || defined(SEND_TELEMETRY_DHT2)
   #define ST_DHT
 #endif
+
 #if ((defined(ST_DSB) && defined(ST_DHT)) || (defined(ST_DSB) && defined(USE_WALL_SWITCH)) || (defined(ST_DHT) && defined(USE_WALL_SWITCH)))
 #if ((DSB_PIN == DHT_PIN) || (DSB_PIN == SWITCH_PIN) || (DHT_PIN == SWITCH_PIN))
-  #error "Select either DS18B20 or DHT or WALL SWITCH or use different GPIOs"
+  #error "Select either SEND_TELEMETRY_DS18B20 or SEND_TELEMETRY_DHT or USE_WALL_SWITCH or use different GPIOs"
+#endif
+#endif
+
+#if defined(ST_DSB) && defined(SEND_TELEMETRY_I2C)
+#if ((DSB_PIN == I2C_SDA_PIN) || (DSB_PIN == I2C_SCL_PIN))
+  #error "Select either SEND_TELEMETRY_DS18B20 or SEND_TELEMETRY_I2C or use different GPIOs"
+#endif
+#endif
+
+#if defined(ST_DHT) && defined(SEND_TELEMETRY_I2C)
+#if ((DHT_PIN == I2C_SDA_PIN) || (DHT_PIN == I2C_SCL_PIN))
+  #error "Select either SEND_TELEMETRY_DHT or SEND_TELEMETRY_I2C or use different GPIOs"
+#endif
+#endif
+
+#if defined(USE_WALL_SWITCH) && defined(SEND_TELEMETRY_I2C)
+#if ((SWITCH_PIN == I2C_SDA_PIN) || (SWITCH_PIN == I2C_SCL_PIN))
+  #error "Select either USE_WALL_SWITCH or SEND_TELEMETRY_I2C or use different GPIOs"
 #endif
 #endif
 

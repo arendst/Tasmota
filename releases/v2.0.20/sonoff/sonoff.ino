@@ -10,7 +10,7 @@
  * ====================================================
 */
 
-#define VERSION                0x02001300   // 2.0.19
+#define VERSION                0x02001400   // 2.0.20
 
 #define SONOFF                 1            // Sonoff, Sonoff SV, Sonoff Dual, Sonoff TH 10A/16A, S20 Smart Socket, 4 Channel
 #define SONOFF_POW             9            // Sonoff Pow
@@ -64,18 +64,11 @@ enum swtch_t {TOGGLE, FOLLOW, FOLLOW_INV};
 #define CHANNEL_7              7            // Future use
 #define CHANNEL_8              8            // Future use
 
-#ifndef DSB_RESOLUTION
-#define DSB_RESOLUTION         1            // Maximum number of decimals (0 - 3)
-#endif
-#ifndef DHT_RESOLUTION
-#define DHT_RESOLUTION         1            // Maximum number of decimals (0 - 3)
-#endif
 #ifndef SWITCH_MODE
 #define SWITCH_MODE            TOGGLE       // TOGGLE, FOLLOW or FOLLOW_INV (the wall switch state)
 #endif
 
 #define DEF_WIFI_HOSTNAME      "%s-%04d"    // Expands to <MQTT_TOPIC>-<last 4 decimal chars of MAC address>
-#define DEF_MQTT_CLIENT_ID     "DVES_%06X"  // Also fall back topic using Chip Id = last 6 characters of MAC address
 
 #define HLW_PREF_PULSE         12530        // was 4975us = 201Hz = 1000W
 #define HLW_UREF_PULSE         1950         // was 1666us = 600Hz = 220V
@@ -90,9 +83,9 @@ enum swtch_t {TOGGLE, FOLLOW, FOLLOW_INV};
 #define MQTT_RETRY_SECS        10           // Seconds to retry MQTT connection
 #define SYSLOG_TIMER           600          // Seconds to restore syslog_level
 
-#define INPUT_BUFFER_SIZE      128          // Max number of characters in serial buffer
+#define INPUT_BUFFER_SIZE      100          // Max number of characters in serial buffer
 #define TOPSZ                  60           // Max number of characters in topic string
-#define MESSZ                  340          // Max number of characters in JSON message string
+#define MESSZ                  240          // Max number of characters in JSON message string
 #define LOGSZ                  128          // Max number of characters in log string
 #define MAX_LOG_LINES          70           // Max number of lines in weblog
 
@@ -124,6 +117,9 @@ enum butt_t {PRESSED, NOT_PRESSED};
 #ifdef USE_SPIFFS
   #include <FS.h>                           // Config
 #endif
+#ifdef SEND_TELEMETRY_I2C
+  #include <Wire.h>                         // I2C support library
+#endif // SEND_TELEMETRY_I2C
 
 typedef void (*rtcCallback)();
 
@@ -461,6 +457,26 @@ void CFG_Delta()
 
 /********************************************************************************************/
 
+void getClient(char* output, char* input, byte size)
+{
+  char *token;
+  uint8_t digits = 0;
+
+  if (strstr(input, "%")) {
+    strlcpy(output, input, size);
+    token = strtok(output, "%");
+    token = strtok(NULL, "");
+    if (token != NULL) {
+      digits = atoi(token);
+      if (digits) {
+        snprintf_P(output, size, PSTR("%s%c0%dX"), output, '%', digits);
+        snprintf_P(output, size, output, ESP.getChipId());
+      }
+    }
+  }
+  if (!digits) strlcpy(output, input, size);
+}
+
 void setRelay(uint8_t power)
 {
   if ((sysCfg.model >= SONOFF_DUAL) && (sysCfg.model <= CHANNEL_4)) {
@@ -609,32 +625,31 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
   int i, grpflg = 0, device;
   float ped, pi, pc;
   uint16_t pe, pw, pu;
-  char topicBuf[TOPSZ], dataBuf[MESSZ], dataBufUc[MESSZ];
+  char topicBuf[TOPSZ], dataBuf[data_len+1], dataBufUc[MESSZ];
   char *str, *p, *mtopic = NULL, *type = NULL, *devc = NULL;
   char stopic[TOPSZ], svalue[MESSZ], stemp1[TOPSZ], stemp2[10], stemp3[10];
-  
-  strncpy(topicBuf, topic, sizeof(topicBuf));
-  i = (data_len > sizeof(dataBuf)) ? sizeof(dataBuf) : data_len;
-  memcpy(dataBuf, data, i);
-  dataBuf[i] = 0;
 
-  snprintf_P(svalue, sizeof(svalue), PSTR("MQTT: Receive topic %s, data %s"), topicBuf, dataBuf);
+  strncpy(topicBuf, topic, sizeof(topicBuf));
+  memcpy(dataBuf, data, sizeof(dataBuf));
+  dataBuf[sizeof(dataBuf)] = 0;
+
+  snprintf_P(svalue, sizeof(svalue), PSTR("MQTT: Receive topic %s, data size %d, data %s"), topicBuf, i, dataBuf);
   addLog(LOG_LEVEL_DEBUG, svalue);
 
 #ifdef USE_DOMOTICZ
   domoticz_update_flag = 1;
   if (!strncmp(topicBuf, sysCfg.domoticz_out_topic, strlen(sysCfg.domoticz_out_topic)) != 0) {  
     unsigned long idx = 0;  
-    int16_t nvalue = 0;  
+    int16_t nvalue;  
 
-    for(i = 0; i <= strlen(dataBuf); i++) dataBufUc[i] = toupper(dataBuf[i]);
+    if (strlen(dataBuf) < 20) return;
+    idx = getKeyIntValue(dataBuf,"\"idx\"");  
+    nvalue = getKeyIntValue(dataBuf,"\"nvalue\"");  
     dataBuf[0] = '\0';
-    idx = getKeyIntValue(dataBufUc,"\"IDX\"");  
-    nvalue = getKeyIntValue(dataBufUc,"\"NVALUE\"");  
     if (nvalue == 0 || nvalue == 1) {  
       for (i = 0; i < Maxdevice; i++) {
         if (idx > 0 && idx == sysCfg.domoticz_relay_idx[i]) {
-          snprintf_P(dataBuf, sizeof(dataBuf), PSTR("%d"), nvalue);  
+          snprintf_P(dataBuf, sizeof(dataBuf), PSTR("%d"), nvalue);
           break;
         }
       }
@@ -673,7 +688,7 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
   
   if (type != NULL) for(i = 0; i < strlen(type); i++) type[i] = toupper(type[i]);
 
-  for(i = 0; i <= data_len; i++) dataBufUc[i] = toupper(dataBuf[i]);
+  for(i = 0; i <= sizeof(dataBufUc); i++) dataBufUc[i] = toupper(dataBuf[i]);
 
   snprintf_P(svalue, sizeof(svalue), PSTR("MQTT: DataCb Topic %s, Group %d, Device %d, Type %s, Data %s (%s)"),
     mtopic, grpflg, device, type, dataBuf, dataBufUc);
@@ -992,8 +1007,6 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
     else if (!grpflg && !strcmp(type,"MQTTCLIENT")) {
       if ((data_len > 0) && (data_len < sizeof(sysCfg.mqtt_client))) {
         strlcpy(sysCfg.mqtt_client, (payload == 1) ? MQTT_CLIENT_ID : dataBuf, sizeof(sysCfg.mqtt_client));
-        if (strstr(sysCfg.mqtt_client,"%"))
-          strlcpy(sysCfg.mqtt_client, DEF_MQTT_CLIENT_ID, sizeof(sysCfg.mqtt_client));
         restartflag = 2;
       }
       snprintf_P(svalue, sizeof(svalue), PSTR("%s"), sysCfg.mqtt_client);
@@ -1142,6 +1155,11 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
       }
       strlcpy(svalue, (sysCfg.ledstate) ? "On" : "Off", sizeof(svalue));
     }
+#ifdef SEND_TELEMETRY_I2C
+    else if (!strcmp(type,"I2CSCAN")) {
+      i2c_scan(svalue, sizeof(svalue));
+    }
+#endif //SEND_TELEMETRY_I2C
 #ifdef USE_POWERMONITOR
     else if (!strcmp(type,"POWERLOW")) {
       if ((data_len > 0) && (payload >= 0) && (payload < 3601)) {
@@ -1257,26 +1275,30 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
   }
   if (type == NULL) {
     blinks = 1;
-    snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/SYNTAX"), PUB_PREFIX, sysCfg.mqtt_topic);
-#ifdef USE_WEBSERVER
-    snprintf_P(svalue, sizeof(svalue), PSTR("Status, SaveData, SaveSate, Upgrade, Otaurl, Restart, Reset, WifiConfig, Seriallog, Weblog, Syslog, LogHost, LogPort, SSId, Password%s, Webserver"), (!grpflg) ? ", Hostname" : "");
-#else      
+    snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/COMMANDS"), PUB_PREFIX, sysCfg.mqtt_topic);
     snprintf_P(svalue, sizeof(svalue), PSTR("Status, SaveData, SaveSate, Upgrade, Otaurl, Restart, Reset, WifiConfig, Seriallog, Syslog, LogHost, LogPort, SSId, Password%s"), (!grpflg) ? ", Hostname" : "");
-#endif      
+#ifdef USE_WEBSERVER
+    snprintf_P(svalue, sizeof(svalue), PSTR("%s, Weblog, Webserver"), svalue);
+#endif
+#ifdef USE_WALL_SWITCH
+    snprintf_P(svalue, sizeof(svalue), PSTR("%s, SwitchMode"), svalue);
+#endif
+#ifdef SEND_TELEMETRY_I2C
+    snprintf_P(svalue, sizeof(svalue), PSTR("%s, I2CScan"), svalue);
+#endif
     mqtt_publish(stopic, svalue);
     snprintf_P(svalue, sizeof(svalue), PSTR("MqttHost, MqttPort, MqttUser, MqttPassword%s, MqttUnits, MessageFormat, GroupTopic, Timezone, Light, Power, Ledstate, TelePeriod"), (!grpflg) ? ", MqttClient, Topic, ButtonTopic, ButtonRetain" : "");
+#ifdef USE_POWERMONITOR
+    mqtt_publish(stopic, svalue);
+    snprintf_P(svalue, sizeof(svalue), PSTR("PowerLow, PowerHigh, VoltageLow, VoltageHigh, CurrentLow, CurrentHigh"));
+#ifdef FEATURE_POWER_LIMIT
+    snprintf_P(svalue, sizeof(svalue), PSTR("%s, SafePower, SafePowerHold, SafePowerWindow, MaxPower, MaxPowerHold, MaxPowerWindow, MaxEnergy, MaxEnergyStart"), svalue);
+#endif  // FEATURE_POWER_LIMIT
+#endif  // USE_POWERMONITOR
 #ifdef USE_DOMOTICZ 
     mqtt_publish(stopic, svalue);
     snprintf_P(svalue, sizeof(svalue), PSTR("DomoticzInTopic, DomoticzOutTopic, DomoticzIdx, DomoticzKeyIdx, DomoticzUpdateTimer"));
 #endif  // USE_DOMOTICZ
-#ifdef USE_POWERMONITOR
-    mqtt_publish(stopic, svalue);
-#ifdef FEATURE_POWER_LIMIT
-    snprintf_P(svalue, sizeof(svalue), PSTR("PowerLow, PowerHigh, VoltageLow, VoltageHigh, CurrentLow, CurrentHigh, MaxPower, MaxPowerHold, MaxPowerWindow, SafePower, SafePowerHold, SafePowerWindow, MaxEnergy, MaxEnergyStart"));
-#else
-    snprintf_P(svalue, sizeof(svalue), PSTR("PowerLow, PowerHigh, VoltageLow, VoltageHigh, CurrentLow, CurrentHigh"));
-#endif  // FEATURE_POWER_LIMIT
-#endif  // USE_POWERMONITOR
   }
   mqtt_publish(stopic, svalue);
 }
@@ -1606,6 +1628,17 @@ void every_second()
       dht_readPrep();
 #endif  // SEND_TELEMETRY_DHT
 
+#ifdef SEND_TELEMETRY_I2C
+      if (htu_detect()) {
+        snprintf_P(log, sizeof(log), PSTR("I2C: %s found at address 0x%x"), htu_type(), htu_address());
+        addLog(LOG_LEVEL_DEBUG, log);
+      }
+      if (bmp_detect()) {
+        snprintf_P(log, sizeof(log), PSTR("I2C: %s found at address 0x%x"), bmp_type(), bmp_address());
+        addLog(LOG_LEVEL_DEBUG, log);
+      }
+#endif // SEND_TELEMETRY_I2C
+
     }
     if (tele_period >= sysCfg.tele_period) {
       tele_period = 0;
@@ -1657,7 +1690,7 @@ void every_second()
 
 #ifdef SEND_TELEMETRY_DS18B20
       if (dsb_readTemp(t)) {                 // Check if read failed
-        dtostrf(t, 1, DSB_RESOLUTION &3, stemp1);
+        dtostrf(t, 1, TEMP_RESOLUTION &3, stemp1);
         if (sysCfg.message_format == JSON) {
           snprintf_P(svalue, sizeof(svalue), PSTR("%s, \"DS18B20\":{\"Temperature\":\"%s\"}"), svalue, stemp1);
         } else {
@@ -1677,7 +1710,7 @@ void every_second()
             strcpy(stemp1, "");
             dsxflg = 1;
           }
-          dtostrf(t, 1, DSB_RESOLUTION &3, stemp2);
+          dtostrf(t, 1, TEMP_RESOLUTION &3, stemp2);
           if (sysCfg.message_format == JSON) {
             snprintf_P(svalue, sizeof(svalue), PSTR("%s%s\"DS%d\":{\"Type\":\"%s\", \"Address\":\"%s\", \"Temperature\":\"%s\"}"),
               svalue, stemp1, i +1, ds18x20_type(i).c_str(), ds18x20_address(i).c_str(), stemp2);
@@ -1697,8 +1730,8 @@ void every_second()
 
 #if defined(SEND_TELEMETRY_DHT) || defined(SEND_TELEMETRY_DHT2)
       if (dht_readTempHum(false, t, h)) {     // Read temperature as Celsius (the default)
-        dtostrf(t, 1, DHT_RESOLUTION &3, stemp1);
-        dtostrf(h, 1, 1, stemp2);
+        dtostrf(t, 1, TEMP_RESOLUTION &3, stemp1);
+        dtostrf(h, 1, HUMIDITY_RESOLUTION &3, stemp2);
         if (sysCfg.message_format == JSON) {
           snprintf_P(svalue, sizeof(svalue), PSTR("%s, \"DHT\":{\"Temperature\":\"%s\", \"Humidity\":\"%s\"}"), svalue, stemp1, stemp2);
         } else {
@@ -1711,6 +1744,59 @@ void every_second()
         }
       }
 #endif  // SEND_TELEMETRY_DHT/2
+
+#ifdef SEND_TELEMETRY_I2C
+      if(htu_found())
+      {
+        t = htu21_readTemperature();
+        h = htu21_readHumidity();
+        h = htu21_compensatedHumidity(h, t);
+        dtostrf(t, 1, TEMP_RESOLUTION &3, stemp1);
+        dtostrf(h, 1, HUMIDITY_RESOLUTION &3, stemp2);
+        if (sysCfg.message_format == JSON) {
+          snprintf_P(svalue, sizeof(svalue), PSTR("%s, \"%s\":{\"Temperature\":\"%s\", \"Humidity\":\"%s\"}"),
+            svalue, htu_type(), stemp1, stemp2);
+        } else 
+        {
+          snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/%s/TEMPERATURE"), PUB_PREFIX2, sysCfg.mqtt_topic, htu_type());
+          snprintf_P(svalue, sizeof(svalue), PSTR("%s%s"), stemp1, (sysCfg.mqtt_units) ? " C" : "");
+          mqtt_publish(stopic, svalue);
+          snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/%s/HUMIDITY"), PUB_PREFIX2, sysCfg.mqtt_topic, htu_type());
+          snprintf_P(svalue, sizeof(svalue), PSTR("%s%s"), stemp2, (sysCfg.mqtt_units) ? " %" : "");
+          mqtt_publish(stopic, svalue);
+        }
+      }
+      if(bmp_found())
+      {
+        double t_bmp = bmp_readTemperature();
+        double p_bmp = bmp_readPressure();
+        double h_bmp = bmp_readHumidity();
+        dtostrf(t_bmp, 1, TEMP_RESOLUTION &3, stemp1);
+        dtostrf(p_bmp, 1, PRESSURE_RESOLUTION &3, stemp2);
+        dtostrf(h_bmp, 1, HUMIDITY_RESOLUTION &3, stemp3);
+        if (sysCfg.message_format == JSON) {
+          if (!strcmp(bmp_type(),"BME280")) {
+            snprintf_P(svalue, sizeof(svalue), PSTR("%s, \"%s\":{\"Temperature\":\"%s\", \"Humidity\":\"%s\", \"Pressure\":\"%s\"}"),
+              svalue, bmp_type(), stemp1, stemp3, stemp2);
+          } else {
+            snprintf_P(svalue, sizeof(svalue), PSTR("%s, \"%s\":{\"Temperature\":\"%s\", \"Pressure\":\"%s\"}"),
+              svalue, bmp_type(), stemp1, stemp2);
+          }
+        } else {
+          snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/%s/TEMPERATURE"), PUB_PREFIX2, sysCfg.mqtt_topic, bmp_type());
+          snprintf_P(svalue, sizeof(svalue), PSTR("%s%s"), stemp1, (sysCfg.mqtt_units) ? " C" : "");
+          mqtt_publish(stopic, svalue);
+          if (!strcmp(bmp_type(),"BME280")) {
+            snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/%s/HUMIDITY"), PUB_PREFIX2, sysCfg.mqtt_topic, bmp_type());
+            snprintf_P(svalue, sizeof(svalue), PSTR("%s%s"), stemp3, (sysCfg.mqtt_units) ? " %" : "");
+            mqtt_publish(stopic, svalue);
+          }
+          snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/%s/PRESSURE"), PUB_PREFIX2, sysCfg.mqtt_topic, bmp_type());
+          snprintf_P(svalue, sizeof(svalue), PSTR("%s%s"), stemp2, (sysCfg.mqtt_units) ? " mbar" : "");
+          mqtt_publish(stopic, svalue);
+        }
+      }
+#endif // SEND_TELEMETRY_I2C
 
 #ifdef USE_POWERMONITOR
 #ifdef SEND_TELEMETRY_ENERGY
@@ -2068,12 +2154,7 @@ void setup()
   }
   WIFI_Connect(Hostname);
 
-  if (strstr(sysCfg.mqtt_client, "%")) strlcpy(sysCfg.mqtt_client, DEF_MQTT_CLIENT_ID, sizeof(sysCfg.mqtt_client));
-  if (!strcmp(sysCfg.mqtt_client, DEF_MQTT_CLIENT_ID)) {
-    snprintf_P(MQTTClient, sizeof(MQTTClient), sysCfg.mqtt_client, ESP.getChipId());
-  } else {
-    snprintf_P(MQTTClient, sizeof(MQTTClient), sysCfg.mqtt_client);
-  }
+  getClient(MQTTClient, sysCfg.mqtt_client, sizeof(MQTTClient));
   mqttClient.setServer(sysCfg.mqtt_host, sysCfg.mqtt_port);
   mqttClient.setCallback(mqttDataCb);
 
@@ -2087,19 +2168,23 @@ void setup()
   if (sysCfg.savestate) setRelay(power);
 
 #ifdef USE_WALL_SWITCH
-  pinMode(SWITCH_PIN, INPUT);                   // set pin to input, fitted with external pull up on Sonoff TH10/16 board                        
+  pinMode(SWITCH_PIN, INPUT_PULLUP);            // set pin to input, fitted with external pull up on Sonoff TH10/16 board                        
   lastwallswitch = digitalRead(SWITCH_PIN);     // set global now so doesn't change the saved power state on first switch check
 #endif  // USE_WALL_SWITCH
-
-  rtc_init(every_second_cb);
 
 #if defined(SEND_TELEMETRY_DHT) || defined(SEND_TELEMETRY_DHT2)
   dht_init();
 #endif
 
+#ifdef SEND_TELEMETRY_I2C
+  Wire.begin(I2C_SDA_PIN,I2C_SCL_PIN);
+#endif // SEND_TELEMETRY_I2C
+
 #ifdef USE_POWERMONITOR
   hlw_init();
 #endif  // USE_POWERMONITOR
+
+  rtc_init(every_second_cb);
 
   snprintf_P(log, sizeof(log), PSTR("APP: Project %s (Topic %s, Fallback %s, GroupTopic %s) Version %s"),
     PROJECT, sysCfg.mqtt_topic, MQTTClient, sysCfg.mqtt_grptopic, Version);

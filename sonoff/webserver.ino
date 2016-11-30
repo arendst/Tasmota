@@ -1,6 +1,4 @@
 /*
-These routines provide support to my various ESP8266 based projects.
-
 Copyright (c) 2016 Theo Arends.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -368,7 +366,7 @@ void handleRoot()
     float st;
     if (dsb_readTemp(st)) {        // Check if read failed
       page += F("<table style='width:100%'>");
-      dtostrf(st, 1, DSB_RESOLUTION &3, stemp);
+      dtostrf(st, 1, TEMP_RESOLUTION &3, stemp);
       page += F("<tr><td>DSB Temperature: </td><td>"); page += stemp; page += F("&deg;C</td></tr>");
       page += F("</table><br/>");
     }
@@ -384,7 +382,7 @@ void handleRoot()
           page += F("<table style='width:100%'>");
           xfl = 1;
         }
-        dtostrf(xt, 1, DSB_RESOLUTION &3, xtemp);
+        dtostrf(xt, 1, TEMP_RESOLUTION &3, xtemp);
         page += F("<tr><td>DS"); page += String(i +1); page += F(" Temperature: </td><td>"); page += xtemp; page += F("&deg;C</td></tr>");
       }
     }
@@ -396,13 +394,43 @@ void handleRoot()
     float dt, dh;
     if (dht_readTempHum(false, dt, dh)) {     // Read temperature as Celsius (the default)
       page += F("<table style='width:100%'>");
-      dtostrf(dt, 1, DHT_RESOLUTION &3, dtemp);
+      dtostrf(dt, 1, TEMP_RESOLUTION &3, dtemp);
       page += F("<tr><td>DHT Temperature: </td><td>"); page += dtemp; page += F("&deg;C</td></tr>");
-      dtostrf(dh, 1, 1, dtemp);
+      dtostrf(dh, 1, HUMIDITY_RESOLUTION &3, dtemp);
       page += F("<tr><td>DHT Humidity: </td><td>"); page += dtemp; page += F("%</td></tr>");
       page += F("</table><br/>");
     }
 #endif  // SEND_TELEMETRY_DHT/2
+
+#if defined(SEND_TELEMETRY_I2C)
+    char itemp[10];      
+    if(htu_found()) {
+      float t_htu21 = htu21_readTemperature();
+      float h_htu21 = htu21_readHumidity();
+      h_htu21 = htu21_compensatedHumidity(h_htu21, t_htu21);
+      page += F("<table style='width:100%'>");
+      dtostrf(t_htu21, 1, TEMP_RESOLUTION &3, itemp);
+      page += F("<tr><td>HTU Temperature: </td><td>"); page += itemp; page += F("&deg;C</td></tr>");
+      dtostrf(h_htu21, 1, HUMIDITY_RESOLUTION &3, itemp);
+      page += F("<tr><td>HTU Humidity: </td><td>"); page += itemp; page += F("%</td></tr>");
+      page += F("</table><br/>");
+    }
+    if(bmp_found()) {
+      double t_bmp = bmp_readTemperature();
+      double p_bmp = bmp_readPressure();
+      double h_bmp = bmp_readHumidity();
+      page += F("<table style='width:100%'>");
+      dtostrf(t_bmp, 1, TEMP_RESOLUTION &3, itemp);
+      page += F("<tr><td>BMP Temperature: </td><td>"); page += itemp; page += F("&deg;C</td></tr>");
+      if (!strcmp(bmp_type(),"BME280")) {
+        dtostrf(h_bmp, 1, HUMIDITY_RESOLUTION &3, itemp);
+        page += F("<tr><td>BMP Humidity: </td><td>"); page += itemp; page += F("%</td></tr>");
+      }
+      dtostrf(p_bmp, 1, PRESSURE_RESOLUTION &3, itemp);
+      page += F("<tr><td>BMP Pressure: </td><td>"); page += itemp; page += F(" mbar</td></tr>");
+      page += F("</table><br/>");
+    }
+#endif  // SEND_TELEMETRY_I2C
 
     if (_httpflag == HTTP_ADMIN) {
       page += FPSTR(HTTP_BTN_MENU1);
@@ -557,12 +585,8 @@ void handleMqtt()
   String page = FPSTR(HTTP_HEAD);
   page.replace("{v}", "Configure MQTT");
   page += FPSTR(HTTP_FORM_MQTT);
-  char str[33];
-  if (!strcmp(MQTT_CLIENT_ID, DEF_MQTT_CLIENT_ID)) {
-    snprintf_P(str, sizeof(str), PSTR(DEF_MQTT_CLIENT_ID), ESP.getChipId());
-  } else {
-    snprintf_P(str, sizeof(str), PSTR(MQTT_CLIENT_ID));
-  }
+  char str[sizeof(sysCfg.mqtt_client)];
+  getClient(str, MQTT_CLIENT_ID, sizeof(sysCfg.mqtt_client));
   page.replace("{m0}", str);
   page.replace("{m1}", String(sysCfg.mqtt_host));
   page.replace("{m2}", String(sysCfg.mqtt_port));
@@ -648,7 +672,6 @@ void handleSave()
     strlcpy(sysCfg.mqtt_host, (!strlen(webServer->arg("mh").c_str())) ? MQTT_HOST : webServer->arg("mh").c_str(), sizeof(sysCfg.mqtt_host));
     sysCfg.mqtt_port = (!strlen(webServer->arg("ml").c_str())) ? MQTT_PORT : atoi(webServer->arg("ml").c_str());
     strlcpy(sysCfg.mqtt_client, (!strlen(webServer->arg("mc").c_str())) ? MQTT_CLIENT_ID : webServer->arg("mc").c_str(), sizeof(sysCfg.mqtt_client));
-    if (strstr(sysCfg.mqtt_client,"%")) strlcpy(sysCfg.mqtt_client, DEF_MQTT_CLIENT_ID, sizeof(sysCfg.mqtt_client));
     strlcpy(sysCfg.mqtt_user, (!strlen(webServer->arg("mu").c_str())) ? MQTT_USER : webServer->arg("mu").c_str(), sizeof(sysCfg.mqtt_user));
     strlcpy(sysCfg.mqtt_pwd, (!strlen(webServer->arg("mp").c_str())) ? MQTT_PASS : webServer->arg("mp").c_str(), sizeof(sysCfg.mqtt_pwd));
     strlcpy(sysCfg.mqtt_topic, (!strlen(webServer->arg("mt").c_str())) ? MQTT_TOPIC : webServer->arg("mt").c_str(), sizeof(sysCfg.mqtt_topic));
