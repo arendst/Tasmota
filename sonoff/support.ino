@@ -512,7 +512,8 @@ void pollUDP()
       if (len > 0) packetBuffer[len] = 0;
       String request = packetBuffer;
 //      addLog_P(LOG_LEVEL_DEBUG, packetBuffer);
-      if (request.indexOf("-SEARCH") > 0) {
+      if (request.indexOf("M-SEARCH") >= 0) {
+//        addLog_P(LOG_LEVEL_DEBUG, packetBuffer);
         if (request.indexOf("urn:Belkin:device:**") > 0) {
           addLog_P(LOG_LEVEL_DEBUG, PSTR("Responding to search request ..."));
           wemo_respondToMSearch();
