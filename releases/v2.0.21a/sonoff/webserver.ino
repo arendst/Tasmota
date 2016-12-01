@@ -233,7 +233,7 @@ const char WEMO_SETUP_XML[] PROGMEM =
       "<modelName>Sonoff Socket</modelName>"
       "<modelNumber>3.1415</modelNumber>"
       "<UDN>uuid:{x2}</UDN>"
-      "<serialNumber>221517K0101769</serialNumber>"
+      "<serialNumber>{x3}</serialNumber>"
       "<binaryState>0</binaryState>"
       "<serviceList>"
         "<service>"
@@ -248,11 +248,6 @@ const char WEMO_SETUP_XML[] PROGMEM =
   "</root>\r\n"
   "\r\n";
 #endif  // USE_WEMO_EMULATION
-
-
-
-
-  
 
 #define DNS_PORT 53
 enum http_t {HTTP_OFF, HTTP_USER, HTTP_ADMIN, HTTP_MANAGER};
@@ -1125,8 +1120,7 @@ void handleUPnPevent()
     Serial.println("Got Turn on request");
     do_cmnd_power(1, 1);
   }
-
-  if(request.indexOf("<BinaryState>0</BinaryState>") > 0) {
+  else if(request.indexOf("<BinaryState>0</BinaryState>") > 0) {
     Serial.println("Got Turn off request");
     do_cmnd_power(1, 0);
   }
@@ -1138,7 +1132,6 @@ void handleUPnPservice()
   addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Handle WeMo event service"));
 
   String eventservice_xml = FPSTR(WEMO_EVENTSERVICE_XML);
-            
   webServer->send(200, "text/plain", eventservice_xml); 
 }
 
@@ -1148,8 +1141,8 @@ void handleUPnPsetup()
 
   String setup_xml = FPSTR(WEMO_SETUP_XML);
   setup_xml.replace("{x1}", String(MQTTClient));
-  setup_xml.replace("{x2}", prepareUUID());
-            
+  setup_xml.replace("{x2}", wemo_UUID());
+  setup_xml.replace("{x3}", wemo_serial());
   webServer->send(200, "text/xml", setup_xml);
 }
 #endif  // USE_WEMO_EMULATION

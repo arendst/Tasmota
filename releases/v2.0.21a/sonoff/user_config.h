@@ -133,7 +133,7 @@
 \*-------------------------------------------------------------------------------------------*/
   #define I2C_SDA_PIN          4            // GPIO 4 = I2C SDA (Sonoff_TH10A(16A)- Needs extra hardware)
   #define I2C_SCL_PIN          14           // GPIO 14 = I2C SCL (Sonoff_TH10A(16A))
-//  #define SEND_TELEMETRY_I2C                // Enable sending I2C sensor telemetry
+  #define SEND_TELEMETRY_I2C                // Enable sending I2C sensor telemetry
   
 /*********************************************************************************************\
  * Sonoff Pow specific parameters

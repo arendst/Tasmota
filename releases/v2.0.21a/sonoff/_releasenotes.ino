@@ -1,4 +1,7 @@
-/* 2.0.21 20161130
+/* 2.0.21a 20161201
+ * Fix Belkin WeMo PowerPlug emulation
+ * 
+ * 2.0.21 20161130
  * Add Belkin WeMo PowerPlug emulation enabled with USE_WEMO_EMULATION in user_config.h (Heiko Krupp)
  * 
  * 2.0.20 20161130
