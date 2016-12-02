@@ -10,7 +10,7 @@ Starting with version 2.0.0 the following hardware devices are supported:
 - itead Sonoff TH10 / TH16 with temperature sensor
 - itead Sonoff Pow
 - itead S20 Smart Socket
-- ElectroDragon IoT Relay Board but relay 1 only
+- ElectroDragon IoT Relay Board
 
 See [my Wiki](https://github.com/arendst/Sonoff-MQTT-OTA-Arduino/wiki) for more information.
 
