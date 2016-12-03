@@ -543,6 +543,7 @@ void handleWifi(boolean scan)
   page.replace("{v}", "Configure Wifi");
 
   if (scan) {
+    if (udpConnected) WiFiUDP::stopAll();  // Needed when WeMo is enabled
     int n = WiFi.scanNetworks();
     addLog_P(LOG_LEVEL_DEBUG, PSTR("Wifi: Scan done"));
 
@@ -608,6 +609,7 @@ void handleWifi(boolean scan)
       }
       page += "<br/>";
     }
+    udpConnected = false;
   } else {
     page += FPSTR(HTTP_LNK_SCAN);
   }
@@ -742,6 +744,8 @@ void handleSave()
     sysCfg.seriallog_level = (!strlen(webServer->arg("ls").c_str())) ? SERIAL_LOG_LEVEL : atoi(webServer->arg("ls").c_str());
     sysCfg.weblog_level = (!strlen(webServer->arg("lw").c_str())) ? WEB_LOG_LEVEL : atoi(webServer->arg("lw").c_str());
     sysCfg.syslog_level = (!strlen(webServer->arg("ll").c_str())) ? SYS_LOG_LEVEL : atoi(webServer->arg("ll").c_str());
+    syslog_level = sysCfg.syslog_level;
+    syslog_timer = 0;
     strlcpy(sysCfg.syslog_host, (!strlen(webServer->arg("lh").c_str())) ? SYS_LOG_HOST : webServer->arg("lh").c_str(), sizeof(sysCfg.syslog_host));
     sysCfg.syslog_port = (!strlen(webServer->arg("lp").c_str())) ? SYS_LOG_PORT : atoi(webServer->arg("lp").c_str());
     sysCfg.tele_period = (!strlen(webServer->arg("lt").c_str())) ? TELE_PERIOD : atoi(webServer->arg("lt").c_str());

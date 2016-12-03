@@ -493,17 +493,20 @@ String wemo_UUID()
 
 void wemo_respondToMSearch()
 {
-  char log[LOGSZ];
+  char message[TOPSZ], log[LOGSZ];
 
-  String response = FPSTR(WEMO_MSEARCH);
-  response.replace("{r1}", WiFi.localIP().toString());
-  response.replace("{r2}", wemo_UUID());
-  portUDP.beginPacket(portUDP.remoteIP(), portUDP.remotePort());
-  portUDP.write(response.c_str());
-  portUDP.endPacket();                    
-
-  snprintf_P(log, sizeof(log), PSTR("UPnP: Response sent to %s:%d"),
-    portUDP.remoteIP().toString().c_str(), portUDP.remotePort());
+  if (portUDP.beginPacket(portUDP.remoteIP(), portUDP.remotePort())) {
+    String response = FPSTR(WEMO_MSEARCH);
+    response.replace("{r1}", WiFi.localIP().toString());
+    response.replace("{r2}", wemo_UUID());
+    portUDP.write(response.c_str());
+    portUDP.endPacket();                    
+    snprintf_P(message, sizeof(message), PSTR("Response sent"));
+  } else {
+    snprintf_P(message, sizeof(message), PSTR("Failed to send response"));
+  }
+  snprintf_P(log, sizeof(log), PSTR("UPnP: %s to %s:%d"),
+    message, portUDP.remoteIP().toString().c_str(), portUDP.remotePort());
   addLog(LOG_LEVEL_DEBUG, log);
 }
 

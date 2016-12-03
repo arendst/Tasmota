@@ -1,4 +1,8 @@
-/* 2.1.1 20161202
+/* 2.1.1a 20161203
+ * Fix scan for wifi networks if WeMo is enabled
+ * Fix syslog setting using web page
+ * 
+ * 2.1.1 20161202
  * Add support for ElectroDragon second relay and button (only toggle with optional ButtonTopic)
  * 
  * 2.1.0 20161202
