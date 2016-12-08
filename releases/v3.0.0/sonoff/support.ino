@@ -31,10 +31,16 @@ extern "C" {
 #include "spi_flash.h"
 }
 
-#define SPIFFS_CONFIG       "/config.ini"
 #define SPIFFS_START        ((uint32_t)&_SPIFFS_start - 0x40200000) / SPI_FLASH_SEC_SIZE
 #define SPIFFS_END          ((uint32_t)&_SPIFFS_end - 0x40200000) / SPI_FLASH_SEC_SIZE
-#define CFG_LOCATION        SPIFFS_END - 2
+
+// Version 2.x config
+#define SPIFFS_CONFIG2      "/config.ini"
+#define CFG_LOCATION2       SPIFFS_END - 2
+
+// Version 3.x config
+#define SPIFFS_CONFIG       "/cfg.ini"
+#define CFG_LOCATION        SPIFFS_END - 4
 
 uint32_t _cfgHash = 0;
 int spiffsflag = 0;
@@ -126,8 +132,52 @@ void CFG_Load()
       addLog(LOG_LEVEL_DEBUG, log);
     }
   }
-  if (sysCfg.cfg_holder != CFG_HOLDER) CFG_Default();
+  if (sysCfg.cfg_holder != CFG_HOLDER) {
+    if (sysCfg.migflag != CFG_MIGRATION_FLAG) {
+      CFG_Migrate();
+    } else {
+      CFG_Default();
+    }
+  }
   _cfgHash = getHash();
+}
+
+void CFG_Migrate()
+{
+  char log[LOGSZ];
+
+  if (spiffsPresent()) {
+    if (!spiffsflag) {
+#ifdef USE_SPIFFS
+      File f = SPIFFS.open(SPIFFS_CONFIG2, "r+");
+      if (f) {
+        uint8_t *bytes = (uint8_t*)&sysCfg2;
+        for (int i = 0; i < sizeof(SYSCFG2); i++) bytes[i] = f.read();
+        f.close();
+        snprintf_P(log, sizeof(log), PSTR("Config: Loaded previous configuration from spiffs count %d"), sysCfg2.saveFlag);
+        addLog(LOG_LEVEL_DEBUG, log);
+      } else {
+        addLog_P(LOG_LEVEL_ERROR, PSTR("Config: ERROR - Loading previous configuration failed"));
+      }
+    } else {  
+#endif  // USE_SPIFFS
+      struct SYSCFGH {
+        unsigned long cfg_holder;
+        unsigned long saveFlag;
+      } _sysCfgH;
+
+      noInterrupts();
+      spi_flash_read((CFG_LOCATION2) * SPI_FLASH_SEC_SIZE, (uint32*)&sysCfg2, sizeof(SYSCFG2));
+      spi_flash_read((CFG_LOCATION2 + 1) * SPI_FLASH_SEC_SIZE, (uint32*)&_sysCfgH, sizeof(SYSCFGH));
+      if (sysCfg2.saveFlag < _sysCfgH.saveFlag)
+        spi_flash_read((CFG_LOCATION2 + 1) * SPI_FLASH_SEC_SIZE, (uint32*)&sysCfg2, sizeof(SYSCFG2));
+      interrupts();
+      snprintf_P(log, sizeof(log), PSTR("Config: Loaded previous configuration from flash at %X and count %d"), CFG_LOCATION + (sysCfg2.saveFlag &1), sysCfg2.saveFlag);
+      addLog(LOG_LEVEL_DEBUG, log);
+    }
+  }
+  CFG_Migrate_Part2();
+  CFG_Save();
 }
 
 void CFG_Erase()
@@ -244,9 +294,9 @@ void initSpiffs()
 #define WIFI_CONFIG_SEC   60   // seconds before restart
 #define WIFI_MANAGER_SEC  120  // seconds before restart
 #define WIFI_CHECKSEC     20   // seconds
-#define WIFI_RETRY        16
+#define WIFI_RETRY        30
 
-uint8_t _wificounter, _wifiretry, _wpsresult, _wificonfigflag = 0, _wifiConfigCounter = 0;
+uint8_t _wificounter, _wifiretry, _wifistatus, _wpsresult, _wificonfigflag = 0, _wifiConfigCounter = 0;
 
 int WIFI_getRSSIasQuality(int RSSI)
 {
@@ -306,7 +356,6 @@ boolean WIFI_WPSConfigDone(void)
 boolean WIFI_beginWPSConfig(void)
 {
   _wpsresult = 99;
-  WiFi.disconnect();
   if (!wifi_wps_disable()) return false;
   if (!wifi_wps_enable(WPS_TYPE_PBC)) return false;  // so far only WPS_TYPE_PBC is supported (SDK 2.0.0)
   if (!wifi_set_wps_cb((wps_st_cb_t) &WIFI_wps_status_cb)) return false;
@@ -314,14 +363,19 @@ boolean WIFI_beginWPSConfig(void)
   return true;
 }
 
-void WIFI_config(int type)
+void WIFI_config(uint8_t type)
 {
   if (!_wificonfigflag) {
+    if (udpConnected) WiFiUDP::stopAll();
+    WiFi.disconnect();        // Solve possible Wifi hangs
     _wificonfigflag = type;
     _wifiConfigCounter = WIFI_CONFIG_SEC;   // Allow up to WIFI_CONFIG_SECS seconds for phone to provide ssid/pswd
     _wificounter = _wifiConfigCounter +5;
     blinks = 1999;
-    if (_wificonfigflag == WIFI_SMARTCONFIG) {
+    if (_wificonfigflag == WIFI_RESTART) {
+      restartflag = 2;
+    }
+    else if (_wificonfigflag == WIFI_SMARTCONFIG) {
       addLog_P(LOG_LEVEL_INFO, PSTR("Smartconfig: Active for 1 minute"));
       WiFi.beginSmartConfig();
     }
@@ -335,44 +389,87 @@ void WIFI_config(int type)
     }
 #ifdef USE_WEBSERVER
     else if (_wificonfigflag == WIFI_MANAGER) {
-      addLog_P(LOG_LEVEL_INFO, PSTR("Wifimanager: Active for 1 minute for initial request"));
+      addLog_P(LOG_LEVEL_INFO, PSTR("Wifimanager: Active for 1 minute"));
       beginWifiManager();
     }
 #endif  // USE_WEBSERVER
   }
 }
 
+void WIFI_begin(uint8_t flag)
+{
+  const char PhyMode[] = " BGN";
+  char log[LOGSZ];
+
+  if (udpConnected) WiFiUDP::stopAll();
+  if (!strncmp(ESP.getSdkVersion(),"1.5.3",5)) {
+    addLog_P(LOG_LEVEL_DEBUG, "Wifi: Patch issue 2186");
+    WiFi.mode(WIFI_OFF);    // See https://github.com/esp8266/Arduino/issues/2186
+  }
+  WiFi.disconnect();
+  WiFi.mode(WIFI_STA);      // Disable AP mode
+//  if (WiFi.getPhyMode() != WIFI_PHY_MODE_11N) WiFi.setPhyMode(WIFI_PHY_MODE_11N);
+  if (!WiFi.getAutoConnect()) WiFi.setAutoConnect(true);
+//  WiFi.setAutoReconnect(true);
+  switch (flag) {
+  case 0:  // AP1
+  case 1:  // AP2
+    sysCfg.sta_active = flag;
+    break;
+  case 2:  // Toggle
+    sysCfg.sta_active ^= 1;
+  }        // 3: Current AP
+  if (strlen(sysCfg.sta_ssid[1]) == 0) sysCfg.sta_active = 0;
+  WiFi.begin(sysCfg.sta_ssid[sysCfg.sta_active], sysCfg.sta_pwd[sysCfg.sta_active]);
+  snprintf_P(log, sizeof(log), PSTR("Wifi: Connecting to AP%d %s (%s) in mode 11%c as %s..."),
+    sysCfg.sta_active +1, sysCfg.sta_ssid[sysCfg.sta_active], sysCfg.sta_pwd[sysCfg.sta_active], PhyMode[WiFi.getPhyMode() & 0x3], Hostname);
+  addLog(LOG_LEVEL_INFO, log);
+}
+
 void WIFI_check_ip()
 {
   if ((WiFi.status() == WL_CONNECTED) && (static_cast<uint32_t>(WiFi.localIP()) != 0)) {
     _wificounter = WIFI_CHECKSEC;
-    _wifiretry = WIFI_RETRY;
-    addLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("Wifi: Connected"));
+    _wifiretry = WIFI_RETRY;    
+    addLog_P((_wifistatus != WL_CONNECTED) ? LOG_LEVEL_INFO : LOG_LEVEL_DEBUG_MORE, PSTR("Wifi: Connected"));
+    _wifistatus = WL_CONNECTED;
   } else {
-    switch (WiFi.status()) {
+    _wifistatus = WiFi.status();
+    switch (_wifistatus) {
+      case WL_CONNECTED:
+        addLog_P(LOG_LEVEL_INFO, PSTR("Wifi: Connect failed as no IP address received"));
+        _wifistatus = 0;
+        _wifiretry = WIFI_RETRY;    
+        break;
       case WL_NO_SSID_AVAIL:
+        addLog_P(LOG_LEVEL_INFO, PSTR("Wifi: Connect failed as AP cannot be reached"));
+        if (_wifiretry > (WIFI_RETRY / 2)) _wifiretry = WIFI_RETRY / 2;
+        else if (_wifiretry) _wifiretry = 0;
+        break;
       case WL_CONNECT_FAILED:
-        addLog_P(LOG_LEVEL_DEBUG, PSTR("Wifi: STATION_CONNECT_FAIL"));
-        WIFI_config(sysCfg.sta_config);
+        addLog_P(LOG_LEVEL_INFO, PSTR("Wifi: Connect failed with AP incorrect password"));
+        if (_wifiretry > (WIFI_RETRY / 2)) _wifiretry = WIFI_RETRY / 2;
+        else if (_wifiretry) _wifiretry = 0;
         break;
-      default:
-        addLog_P(LOG_LEVEL_DEBUG, PSTR("Wifi: STATION_IDLE"));
-        if ((_wifiretry == (WIFI_RETRY / 2)) && (WiFi.status() != WL_CONNECTED)) {
-//          WiFi.begin();
-          WiFi.begin(sysCfg.sta_ssid, sysCfg.sta_pwd);
-        }
-        _wifiretry--;
-        if (_wifiretry) {
-          _wificounter = 1;
+      default:  // WL_IDLE_STATUS and WL_DISCONNECTED
+        if (!_wifiretry || (_wifiretry == (WIFI_RETRY / 2))) {
+          addLog_P(LOG_LEVEL_INFO, PSTR("Wifi: Connect failed with AP timeout"));
         } else {
-          WIFI_config(sysCfg.sta_config);
+          addLog_P(LOG_LEVEL_DEBUG, PSTR("Wifi: Attempting connection..."));
         }
-        break;
+    }
+    if (_wifiretry) {
+      if (_wifiretry == WIFI_RETRY) WIFI_begin(3);        // Select default SSID
+      if (_wifiretry == (WIFI_RETRY / 2)) WIFI_begin(2);  // Select alternate SSID
+      _wificounter = 1;
+      _wifiretry--;
+    } else {
+      WIFI_config(sysCfg.sta_config);
     }
   }
 }
 
-void WIFI_Check(int param)
+void WIFI_Check(uint8_t param)
 {
   char log[LOGSZ];
   
@@ -391,9 +488,10 @@ void WIFI_Check(int param)
         if ((_wificonfigflag == WIFI_SMARTCONFIG) && WiFi.smartConfigDone()) _wifiConfigCounter = 0;
         if ((_wificonfigflag == WIFI_WPSCONFIG) && WIFI_WPSConfigDone()) _wifiConfigCounter = 0;
         if (!_wifiConfigCounter) {
-          if (strlen(WiFi.SSID().c_str())) strlcpy(sysCfg.sta_ssid, WiFi.SSID().c_str(), sizeof(sysCfg.sta_ssid));
-          if (strlen(WiFi.psk().c_str())) strlcpy(sysCfg.sta_pwd, WiFi.psk().c_str(), sizeof(sysCfg.sta_pwd));
-          snprintf_P(log, sizeof(log), PSTR("Wificonfig: SSID %s and Password %s"), sysCfg.sta_ssid, sysCfg.sta_pwd);
+          if (strlen(WiFi.SSID().c_str())) strlcpy(sysCfg.sta_ssid[0], WiFi.SSID().c_str(), sizeof(sysCfg.sta_ssid[0]));
+          if (strlen(WiFi.psk().c_str())) strlcpy(sysCfg.sta_pwd[0], WiFi.psk().c_str(), sizeof(sysCfg.sta_pwd[0]));
+          sysCfg.sta_active = 0;
+          snprintf_P(log, sizeof(log), PSTR("Wificonfig: SSID1 %s and Password1 %s"), sysCfg.sta_ssid[0], sysCfg.sta_pwd[0]);
           addLog(LOG_LEVEL_INFO, log);
         }
       }
@@ -414,14 +512,12 @@ void WIFI_Check(int param)
         } else {
           stopWebserver();
         }
-      }
 #ifdef USE_WEMO_EMULATION
-      if (WiFi.status() == WL_CONNECTED) {
         if (udpConnected == false) udpConnected = UDP_Connect();
+#endif  // USE_WEMO_EMULATION
       } else {
         udpConnected = false;
       }
-#endif  // USE_WEMO_EMULATION
 #endif  // USE_WEBSERVER
     }
   }
@@ -431,30 +527,16 @@ int WIFI_State()
 {
   int state;
 
-  if ((WiFi.status() == WL_CONNECTED) && (static_cast<uint32_t>(WiFi.localIP()) != 0)) state = WIFI_STATUS;
+  if ((WiFi.status() == WL_CONNECTED) && (static_cast<uint32_t>(WiFi.localIP()) != 0)) state = WIFI_RESTART;
   if (_wificonfigflag) state = _wificonfigflag;
   return state;
 }
 
-const char PhyMode[] = " BGN";
-
 void WIFI_Connect(char *Hostname)
 {
-  char log[LOGSZ];
-
   WiFi.persistent(false);   // Solve possible wifi init errors
-//  WiFi.setPhyMode(WIFI_PHY_MODE_11N);
-  if (!strncmp(ESP.getSdkVersion(),"1.5.3",5)) {
-    addLog_P(LOG_LEVEL_DEBUG, "Wifi: Patch issue 2186");
-    WiFi.mode(WIFI_OFF);    // See https://github.com/esp8266/Arduino/issues/2186
-  }
-  WiFi.mode(WIFI_STA);      // Disable AP mode
-  WiFi.disconnect();
-  WiFi.setAutoConnect(true);
   WiFi.hostname(Hostname);
-  WiFi.begin(sysCfg.sta_ssid, sysCfg.sta_pwd);
-  snprintf_P(log, sizeof(log), PSTR("Wifi: Connecting to %s (%s) in mode 11%c as %s"), sysCfg.sta_ssid, sysCfg.sta_pwd, PhyMode[WiFi.getPhyMode() & 0x3], Hostname);
-  addLog(LOG_LEVEL_INFO, log);
+  _wifistatus = 0;
   _wifiretry = WIFI_RETRY;
   _wificounter = 1;
 }
@@ -493,17 +575,20 @@ String wemo_UUID()
 
 void wemo_respondToMSearch()
 {
-  char log[LOGSZ];
+  char message[TOPSZ], log[LOGSZ];
 
-  String response = FPSTR(WEMO_MSEARCH);
-  response.replace("{r1}", WiFi.localIP().toString());
-  response.replace("{r2}", wemo_UUID());
-  portUDP.beginPacket(portUDP.remoteIP(), portUDP.remotePort());
-  portUDP.write(response.c_str());
-  portUDP.endPacket();                    
-
-  snprintf_P(log, sizeof(log), PSTR("UPnP: Response sent to %s:%d"),
-    portUDP.remoteIP().toString().c_str(), portUDP.remotePort());
+  if (portUDP.beginPacket(portUDP.remoteIP(), portUDP.remotePort())) {
+    String response = FPSTR(WEMO_MSEARCH);
+    response.replace("{r1}", WiFi.localIP().toString());
+    response.replace("{r2}", wemo_UUID());
+    portUDP.write(response.c_str());
+    portUDP.endPacket();                    
+    snprintf_P(message, sizeof(message), PSTR("Response sent"));
+  } else {
+    snprintf_P(message, sizeof(message), PSTR("Failed to send response"));
+  }
+  snprintf_P(log, sizeof(log), PSTR("UPnP: %s to %s:%d"),
+    message, portUDP.remoteIP().toString().c_str(), portUDP.remotePort());
   addLog(LOG_LEVEL_DEBUG, log);
 }
 
@@ -529,10 +614,10 @@ boolean UDP_Connect()
   boolean state = false;
   
   if (portUDP.beginMulticast(WiFi.localIP(), ipMulticast, portMulticast)) {
-    addLog_P(LOG_LEVEL_DEBUG, PSTR("UPnP: Multicast joined"));
+    addLog_P(LOG_LEVEL_INFO, PSTR("UPnP: Multicast (re)joined"));
     state = true;
   } else {
-    addLog_P(LOG_LEVEL_DEBUG, PSTR("UPnP: Multicast join failed"));
+    addLog_P(LOG_LEVEL_INFO, PSTR("UPnP: Multicast join failed"));
   }
   return state;
 }
@@ -619,7 +704,7 @@ void i2c_scan(char *devs, unsigned int devs_len)
   byte error, address, any = 0;
   char tstr[10];
   
-  snprintf_P(devs, devs_len, PSTR("Device(s) found at"));
+  snprintf_P(devs, devs_len, PSTR("{\"I2Cscan\":\"Device(s) found at"));
   for (address = 1; address <= 127; address++) {
     Wire.beginTransmission(address);
     error = Wire.endTransmission();
@@ -628,9 +713,13 @@ void i2c_scan(char *devs, unsigned int devs_len)
       strncat(devs, tstr, devs_len);
       any = 1;
     }
-    else if (error == 4) snprintf_P(devs, devs_len, PSTR("Unknow error at 0x%2x"), address);
+    else if (error == 4) snprintf_P(devs, devs_len, PSTR("{\"I2Cscan\":\"Unknow error at 0x%2x\"}"), address);
   }
-  if (!any) snprintf_P(devs, devs_len, PSTR("No devices found"));
+  if (any) {
+    strncat(devs, "\"}", devs_len);
+  } else {
+    snprintf_P(devs, devs_len, PSTR("{\"I2Cscan\":\"No devices found\"}"));
+  }
 }
 #endif //SEND_TELEMETRY_I2C
 

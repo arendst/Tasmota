@@ -13,14 +13,14 @@
 #define PROJECT                "sonoff"     // PROJECT is used as the default topic delimiter and OTA file name
                                             //   As an IDE restriction it needs to be the same as the main .ino file
                                             
-#define CFG_HOLDER             0x20160520   // [Reset 1] Change this value to load following default configuration parameters
+#define CFG_HOLDER             0x20161209   // [Reset 1] Change this value to load following default configuration parameters
 #define SAVE_DATA              1            // [SaveData] Save changed parameters to Flash (0 = disable, 1 - 3600 seconds)
 #define SAVE_STATE             1            // [SaveState] Save changed power state to Flash (0 = disable, 1 = enable)
 
 // -- Wifi -----------------------------------
-#define STA_SSID1              "indebuurt2"      // [Ssid] Wifi SSID
-#define STA_PASS1              "VnsqrtnrsddbrN"  // [Password] Wifi password
-#define STA_SSID2              "indebuurt3"      // [Ssid2] Optional alternate AP Wifi SSID
+#define STA_SSID1              "indebuurt1"      // [Ssid1] Wifi SSID
+#define STA_PASS1              "VnsqrtnrsddbrN"  // [Password1] Wifi password
+#define STA_SSID2              "indebuurt2"      // [Ssid2] Optional alternate AP Wifi SSID
 #define STA_PASS2              "VnsqrtnrsddbrN"  // [Password2] Optional alternate AP Wifi password 
 #define WIFI_HOSTNAME          "%s-%04d"         // [Hostname] Expands to <MQTT_TOPIC>-<last 4 decimal chars of MAC address>
 #define WIFI_CONFIG_TOOL       WIFI_WPSCONFIG    // [WifiConfig] Default tool if wifi fails to connect (WIFI_RESTART, WIFI_SMARTCONFIG, WIFI_MANAGER or WIFI_WPSCONFIG)
@@ -64,6 +64,7 @@
                                             //   May be named the same as PUB_PREFIX
 #define MQTT_TOPIC             PROJECT      // [Topic] (unique) MQTT device topic
 #define MQTT_BUTTON_RETAIN     0            // [ButtonRetain] Button may send retain flag (0 = off, 1 = on)
+#define MQTT_POWER_RETAIN      0            // [PowerRetain] Power status message may send retain flag (0 = off, 1 = on)
 
 #define MESSAGE_FORMAT         LEGACY       // [MessageFormat] MQTT Message Format (LEGACY or JSON)
 #define MQTT_STATUS_ON         "ON"         // Status result when turned on (needs to be a string like "1" or "On")
@@ -72,7 +73,7 @@
 // -- MQTT - Telemetry -----------------------
 #define TELE_PERIOD            300          // [TelePeriod] Telemetry (0 = disable, 10 - 3600 seconds)
 #define SEND_TELEMETRY_UPTIME               // Enable sending uptime telemetry (if disabled will still send hourly message)
-#define SEND_TELEMETRY_RSSI                 // Enable sending wifi RSSI telemetry
+#define SEND_TELEMETRY_WIFI                 // Enable sending wifi telemetry
 #define SEND_TELEMETRY_POWER                // Enable sending power telemetry
 
 // -- MQTT - Domoticz ------------------------

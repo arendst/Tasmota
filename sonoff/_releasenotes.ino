@@ -1,4 +1,16 @@
-/* 2.1.2 20161204
+/* 3.0.0 20161208
+ * Migrate and clean-up flash layout 
+ *   Settings from version 2.x are saved but settings from version 3.x can not be used with version 2.x
+ * Change SEND_TELEMETRY_RSSI to SEND_TELEMETRY_WIFI and add AP and SSID to telemetry
+ * Split long JSON messages
+ * Fix inconsistent status messages
+ * Fix all status messages to return JSON if enabled
+ * Remove relay index in cmnd/sonoff/<relay>/POWER now changed
+ *   to cmnd/sonoff/POWER for single relay units 
+ *   and cmnd/sonoff/POWER<relay> for multi relay units like Sonoff dual
+ * Add retain option to Power/Light status controlled by command PowerRetain On|Off
+ *  
+ * 2.1.2 20161204
  * Add support for second wifi AP
  * Update command WifiConfig
  * Fix possible WifiManager hang

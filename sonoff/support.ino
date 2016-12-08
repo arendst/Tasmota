@@ -31,10 +31,16 @@ extern "C" {
 #include "spi_flash.h"
 }
 
-#define SPIFFS_CONFIG       "/config.ini"
 #define SPIFFS_START        ((uint32_t)&_SPIFFS_start - 0x40200000) / SPI_FLASH_SEC_SIZE
 #define SPIFFS_END          ((uint32_t)&_SPIFFS_end - 0x40200000) / SPI_FLASH_SEC_SIZE
-#define CFG_LOCATION        SPIFFS_END - 2
+
+// Version 2.x config
+#define SPIFFS_CONFIG2      "/config.ini"
+#define CFG_LOCATION2       SPIFFS_END - 2
+
+// Version 3.x config
+#define SPIFFS_CONFIG       "/cfg.ini"
+#define CFG_LOCATION        SPIFFS_END - 4
 
 uint32_t _cfgHash = 0;
 int spiffsflag = 0;
@@ -126,8 +132,52 @@ void CFG_Load()
       addLog(LOG_LEVEL_DEBUG, log);
     }
   }
-  if (sysCfg.cfg_holder != CFG_HOLDER) CFG_Default();
+  if (sysCfg.cfg_holder != CFG_HOLDER) {
+    if (sysCfg.migflag != CFG_MIGRATION_FLAG) {
+      CFG_Migrate();
+    } else {
+      CFG_Default();
+    }
+  }
   _cfgHash = getHash();
+}
+
+void CFG_Migrate()
+{
+  char log[LOGSZ];
+
+  if (spiffsPresent()) {
+    if (!spiffsflag) {
+#ifdef USE_SPIFFS
+      File f = SPIFFS.open(SPIFFS_CONFIG2, "r+");
+      if (f) {
+        uint8_t *bytes = (uint8_t*)&sysCfg2;
+        for (int i = 0; i < sizeof(SYSCFG2); i++) bytes[i] = f.read();
+        f.close();
+        snprintf_P(log, sizeof(log), PSTR("Config: Loaded previous configuration from spiffs count %d"), sysCfg2.saveFlag);
+        addLog(LOG_LEVEL_DEBUG, log);
+      } else {
+        addLog_P(LOG_LEVEL_ERROR, PSTR("Config: ERROR - Loading previous configuration failed"));
+      }
+    } else {  
+#endif  // USE_SPIFFS
+      struct SYSCFGH {
+        unsigned long cfg_holder;
+        unsigned long saveFlag;
+      } _sysCfgH;
+
+      noInterrupts();
+      spi_flash_read((CFG_LOCATION2) * SPI_FLASH_SEC_SIZE, (uint32*)&sysCfg2, sizeof(SYSCFG2));
+      spi_flash_read((CFG_LOCATION2 + 1) * SPI_FLASH_SEC_SIZE, (uint32*)&_sysCfgH, sizeof(SYSCFGH));
+      if (sysCfg2.saveFlag < _sysCfgH.saveFlag)
+        spi_flash_read((CFG_LOCATION2 + 1) * SPI_FLASH_SEC_SIZE, (uint32*)&sysCfg2, sizeof(SYSCFG2));
+      interrupts();
+      snprintf_P(log, sizeof(log), PSTR("Config: Loaded previous configuration from flash at %X and count %d"), CFG_LOCATION + (sysCfg2.saveFlag &1), sysCfg2.saveFlag);
+      addLog(LOG_LEVEL_DEBUG, log);
+    }
+  }
+  CFG_Migrate_Part2();
+  CFG_Save();
 }
 
 void CFG_Erase()
@@ -369,10 +419,10 @@ void WIFI_begin(uint8_t flag)
   case 2:  // Toggle
     sysCfg.sta_active ^= 1;
   }        // 3: Current AP
-  if (strlen(sysCfg.sta_ssid2) == 0) sysCfg.sta_active = 0;
-  WiFi.begin((sysCfg.sta_active) ? sysCfg.sta_ssid2 : sysCfg.sta_ssid1, (sysCfg.sta_active) ? sysCfg.sta_pwd2 : sysCfg.sta_pwd1);
+  if (strlen(sysCfg.sta_ssid[1]) == 0) sysCfg.sta_active = 0;
+  WiFi.begin(sysCfg.sta_ssid[sysCfg.sta_active], sysCfg.sta_pwd[sysCfg.sta_active]);
   snprintf_P(log, sizeof(log), PSTR("Wifi: Connecting to AP%d %s (%s) in mode 11%c as %s..."),
-    sysCfg.sta_active +1, (sysCfg.sta_active) ? sysCfg.sta_ssid2 : sysCfg.sta_ssid1, (sysCfg.sta_active) ? sysCfg.sta_pwd2 : sysCfg.sta_pwd1, PhyMode[WiFi.getPhyMode() & 0x3], Hostname);
+    sysCfg.sta_active +1, sysCfg.sta_ssid[sysCfg.sta_active], sysCfg.sta_pwd[sysCfg.sta_active], PhyMode[WiFi.getPhyMode() & 0x3], Hostname);
   addLog(LOG_LEVEL_INFO, log);
 }
 
@@ -438,10 +488,10 @@ void WIFI_Check(uint8_t param)
         if ((_wificonfigflag == WIFI_SMARTCONFIG) && WiFi.smartConfigDone()) _wifiConfigCounter = 0;
         if ((_wificonfigflag == WIFI_WPSCONFIG) && WIFI_WPSConfigDone()) _wifiConfigCounter = 0;
         if (!_wifiConfigCounter) {
-          if (strlen(WiFi.SSID().c_str())) strlcpy(sysCfg.sta_ssid1, WiFi.SSID().c_str(), sizeof(sysCfg.sta_ssid1));
-          if (strlen(WiFi.psk().c_str())) strlcpy(sysCfg.sta_pwd1, WiFi.psk().c_str(), sizeof(sysCfg.sta_pwd1));
+          if (strlen(WiFi.SSID().c_str())) strlcpy(sysCfg.sta_ssid[0], WiFi.SSID().c_str(), sizeof(sysCfg.sta_ssid[0]));
+          if (strlen(WiFi.psk().c_str())) strlcpy(sysCfg.sta_pwd[0], WiFi.psk().c_str(), sizeof(sysCfg.sta_pwd[0]));
           sysCfg.sta_active = 0;
-          snprintf_P(log, sizeof(log), PSTR("Wificonfig: SSID1 %s and Password1 %s"), sysCfg.sta_ssid1, sysCfg.sta_pwd1);
+          snprintf_P(log, sizeof(log), PSTR("Wificonfig: SSID1 %s and Password1 %s"), sysCfg.sta_ssid[0], sysCfg.sta_pwd[0]);
           addLog(LOG_LEVEL_INFO, log);
         }
       }
@@ -654,7 +704,7 @@ void i2c_scan(char *devs, unsigned int devs_len)
   byte error, address, any = 0;
   char tstr[10];
   
-  snprintf_P(devs, devs_len, PSTR("Device(s) found at"));
+  snprintf_P(devs, devs_len, PSTR("{\"I2Cscan\":\"Device(s) found at"));
   for (address = 1; address <= 127; address++) {
     Wire.beginTransmission(address);
     error = Wire.endTransmission();
@@ -663,9 +713,13 @@ void i2c_scan(char *devs, unsigned int devs_len)
       strncat(devs, tstr, devs_len);
       any = 1;
     }
-    else if (error == 4) snprintf_P(devs, devs_len, PSTR("Unknow error at 0x%2x"), address);
+    else if (error == 4) snprintf_P(devs, devs_len, PSTR("{\"I2Cscan\":\"Unknow error at 0x%2x\"}"), address);
   }
-  if (!any) snprintf_P(devs, devs_len, PSTR("No devices found"));
+  if (any) {
+    strncat(devs, "\"}", devs_len);
+  } else {
+    snprintf_P(devs, devs_len, PSTR("{\"I2Cscan\":\"No devices found\"}"));
+  }
 }
 #endif //SEND_TELEMETRY_I2C
 

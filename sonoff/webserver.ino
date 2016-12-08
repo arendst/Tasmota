@@ -626,10 +626,10 @@ void handleWifi(boolean scan)
   }
   page.replace("{h0}", str);
   page.replace("{h1}", String(sysCfg.hostname));
-  page.replace("{s1}", String(sysCfg.sta_ssid1));
-  page.replace("{p1}", String(sysCfg.sta_pwd1));
-  page.replace("{s2}", String(sysCfg.sta_ssid2));
-  page.replace("{p2}", String(sysCfg.sta_pwd2));
+  page.replace("{s1}", String(sysCfg.sta_ssid[0]));
+  page.replace("{p1}", String(sysCfg.sta_pwd[0]));
+  page.replace("{s2}", String(sysCfg.sta_ssid[1]));
+  page.replace("{p2}", String(sysCfg.sta_pwd[1]));
   page += FPSTR(HTTP_FORM_END);
   if (_httpflag == HTTP_MANAGER) {
     page += FPSTR(HTTP_BTN_RSTRT);
@@ -727,12 +727,12 @@ void handleSave()
   case 1:
     strlcpy(sysCfg.hostname, (!strlen(webServer->arg("h").c_str())) ? WIFI_HOSTNAME : webServer->arg("h").c_str(), sizeof(sysCfg.hostname));
     if (strstr(sysCfg.hostname,"%")) strlcpy(sysCfg.hostname, DEF_WIFI_HOSTNAME, sizeof(sysCfg.hostname));
-    strlcpy(sysCfg.sta_ssid1, (!strlen(webServer->arg("s1").c_str())) ? STA_SSID1 : webServer->arg("s1").c_str(), sizeof(sysCfg.sta_ssid1));
-    strlcpy(sysCfg.sta_pwd1, (!strlen(webServer->arg("p1").c_str())) ? STA_PASS1 : webServer->arg("p1").c_str(), sizeof(sysCfg.sta_pwd1));
-    strlcpy(sysCfg.sta_ssid2, (!strlen(webServer->arg("s2").c_str())) ? STA_SSID2 : webServer->arg("s2").c_str(), sizeof(sysCfg.sta_ssid2));
-    strlcpy(sysCfg.sta_pwd2, (!strlen(webServer->arg("p2").c_str())) ? STA_PASS2 : webServer->arg("p2").c_str(), sizeof(sysCfg.sta_pwd2));
+    strlcpy(sysCfg.sta_ssid[0], (!strlen(webServer->arg("s1").c_str())) ? STA_SSID1 : webServer->arg("s1").c_str(), sizeof(sysCfg.sta_ssid[0]));
+    strlcpy(sysCfg.sta_pwd[0], (!strlen(webServer->arg("p1").c_str())) ? STA_PASS1 : webServer->arg("p1").c_str(), sizeof(sysCfg.sta_pwd[0]));
+    strlcpy(sysCfg.sta_ssid[1], (!strlen(webServer->arg("s2").c_str())) ? STA_SSID2 : webServer->arg("s2").c_str(), sizeof(sysCfg.sta_ssid[1]));
+    strlcpy(sysCfg.sta_pwd[1], (!strlen(webServer->arg("p2").c_str())) ? STA_PASS2 : webServer->arg("p2").c_str(), sizeof(sysCfg.sta_pwd[1]));
     snprintf_P(log, sizeof(log), PSTR("HTTP: Wifi Hostname %s, SSID1 %s, Password1 %s, SSID2 %s, Password2 %s"),
-      sysCfg.hostname, sysCfg.sta_ssid1, sysCfg.sta_pwd1, sysCfg.sta_ssid2, sysCfg.sta_pwd2);
+      sysCfg.hostname, sysCfg.sta_ssid[0], sysCfg.sta_pwd[0], sysCfg.sta_ssid[1], sysCfg.sta_pwd[1]);
     addLog(LOG_LEVEL_INFO, log);
     result += F("<br/>Trying to connect device to network<br/>If it fails reconnect to try again");
     break;
@@ -1067,7 +1067,7 @@ void handleInfo()
   page += F("<tr><td><b>Reset reason</b></td><td>"); page += ESP.getResetReason(); page += F("</td></tr>");
   page += F("<tr><td>&nbsp;</td></tr>");
 //  page += F("<tr><td><b>SSId (RSSI)</b></td><td>"); page += (sysCfg.sta_active)? sysCfg.sta_ssid2 : sysCfg.sta_ssid1; page += F(" ("); page += WIFI_getRSSIasQuality(WiFi.RSSI()); page += F("%)</td></tr>");
-  page += F("<tr><td><b>AP"); page += String(sysCfg.sta_active +1); page += F(" SSId (RSSI)</b></td><td>"); page += (sysCfg.sta_active)? sysCfg.sta_ssid2 : sysCfg.sta_ssid1; page += F(" ("); page += WIFI_getRSSIasQuality(WiFi.RSSI()); page += F("%)</td></tr>");
+  page += F("<tr><td><b>AP"); page += String(sysCfg.sta_active +1); page += F(" SSId (RSSI)</b></td><td>"); page += sysCfg.sta_ssid[sysCfg.sta_active]; page += F(" ("); page += WIFI_getRSSIasQuality(WiFi.RSSI()); page += F("%)</td></tr>");
   page += F("<tr><td><b>Hostname</b></td><td>"); page += Hostname; page += F("</td></tr>");
   if (static_cast<uint32_t>(WiFi.localIP()) != 0) {
     page += F("<tr><td><b>IP address</b></td><td>"); page += WiFi.localIP().toString(); page += F("</td></tr>");

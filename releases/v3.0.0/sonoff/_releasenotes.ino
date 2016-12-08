@@ -1,4 +1,72 @@
-/* 2.0.15
+/* 3.0.0 20161208
+ * Migrate and clean-up flash layout 
+ *   Settings from version 2.x are saved but settings from version 3.x can not be used with version 2.x
+ * Change SEND_TELEMETRY_RSSI to SEND_TELEMETRY_WIFI and add AP and SSID to telemetry
+ * Split long JSON messages
+ * Fix inconsistent status messages
+ * Fix all status messages to return JSON if enabled
+ * Remove relay index in cmnd/sonoff/<relay>/POWER now changed
+ *   to cmnd/sonoff/POWER for single relay units 
+ *   and cmnd/sonoff/POWER<relay> for multi relay units like Sonoff dual
+ * Add retain option to Power/Light status controlled by command PowerRetain On|Off
+ *  
+ * 2.1.2 20161204
+ * Add support for second wifi AP
+ * Update command WifiConfig
+ * Fix possible WifiManager hang
+ * 
+ * 2.1.1a 20161203
+ * Fix scan for wifi networks if WeMo is enabled
+ * Fix syslog setting using web page
+ *
+ * 2.1.1 20161202
+ * Add support for ElectroDragon second relay and button (only toggle with optional ButtonTopic)
+ * 
+ * 2.1.0 20161202
+ * Add optional EXPERIMENTAL TLS to MQTT
+ * Fix MQTT payload handling
+ * Optimzed WeMo code
+ *  
+ * 2.0.21a 20161201
+ * Fix WeMo PowerPlug emulation
+ * 
+ * 2.0.21 20161130
+ * Add Belkin WeMo PowerPlug emulation enabled with USE_WEMO_EMULATION in user_config.h (Heiko Krupp)
+ * 
+ * 2.0.20 20161130
+ * Relax MQTTClient naming but only allows hexadecimal uppercase numbers
+ * Add I2C support with command I2CScan
+ * Add I2C sensor driver for HTU21 as alternate sensor using TH10/16 connectors (Heiko Krupp)
+ * Add I2C sensor driver for BMP085/BMP180/BMP280/BME280 as alternate sensor using TH10/16 connectors
+ * 
+ * 2.0.19a 20161127
+ * Add support for ButtonTopic and ButtonRetain to wall switch function
+ * Add pullup to SWITCH_PIN and command SwitchMode to syntax
+ * 
+ * 2.0.18 20161126
+ * Add SUB_PREFIX multi level support allowing 'cmnd' or 'cmnd/level2/level3'
+ * Add wall switch function to GPIO14 and command SwitchMode (Alex Scott)
+ * 
+ * 2.0.17 20161123
+ * Calibrate HLWPCAL from 12345 to 12530
+ * Add alternative sensor driver DHT2 using Adafruit DHT library
+ * Add define MESSAGE_FORMAT to user_config.h
+ * Throttle console messages
+ * Shorten JSON messages
+ * Fix possible Panic
+ * Fix User mode webserver security
+ * 
+ * 2.0.16 20161118
+ * Add alternative sensor driver DS18x20 using OneWire library
+ * Change sensor MQTT message from tele/sonoff/TEMPERATURE to tele/sonoff/DHT/TEMPERATURE or
+ *   tele/sonoff/DS18B20/TEMPERATURE or tele/sonoff/DS18x20/1/TEMPERATURE
+ * Add sensors to root webpage and auto refresh every 4 seconds
+ * Add optional JSON messageformat to all telemetry data
+ * Enforce minimum TelePeriod to be 10 seconds
+ * Fix Energy Yesterday reset after restart
+ * Add Energy Today restore after controlled restart
+ * 
+ * 2.0.15 20161116
  * Change TODAY_POWER and PERIOD_POWER to TODAY_ENERGY and PERIOD_ENERGY
  * Fix serial regression
  * Fix syslog hangs when loghost is unavailable
