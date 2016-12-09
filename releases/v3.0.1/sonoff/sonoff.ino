@@ -1,16 +1,16 @@
 /*
  * Sonoff and ElectroDragon by Theo Arends
- * 
+ *
  * ====================================================
  * Prerequisites:
  *   - Change libraries/PubSubClient/src/PubSubClient.h
  *       #define MQTT_MAX_PACKET_SIZE 400
- *       
+ *
  *   - Select IDE Tools - Flash size: "1M (64K SPIFFS)"
  * ====================================================
 */
 
-#define VERSION                0x03000000   // 3.0.0
+#define VERSION                0x03000100   // 3.0.1
 
 #define SONOFF                 1            // Sonoff, Sonoff SV, Sonoff Dual, Sonoff TH 10A/16A, S20 Smart Socket, 4 Channel
 #define SONOFF_POW             9            // Sonoff Pow
@@ -24,7 +24,7 @@
 #define AM2321                 22
 
 enum log_t   {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG_MORE, LOG_LEVEL_ALL};
-enum week_t  {Last, First, Second, Third, Fourth}; 
+enum week_t  {Last, First, Second, Third, Fourth};
 enum dow_t   {Sun=1, Mon, Tue, Wed, Thu, Fri, Sat};
 enum month_t {Jan=1, Feb, Mar, Apr, May, Jun, Jul, Aug, Sep, Oct, Nov, Dec};
 enum wifi_t  {WIFI_RESTART, WIFI_SMARTCONFIG, WIFI_MANAGER, WIFI_WPSCONFIG};
@@ -55,8 +55,6 @@ enum swtch_t {TOGGLE, FOLLOW, FOLLOW_INV};
 /*********************************************************************************************\
  * No user configurable items below
 \*********************************************************************************************/
-
-#define CFG_MIGRATION_FLAG     0xA5         // Used to migrate from version 2.x to 3.x (DO NOT CHANGE)
 
 #define SONOFF_DUAL            2            // (iTEAD PSB)
 #define CHANNEL_3              3            // iTEAD PSB
@@ -199,9 +197,9 @@ struct SYSCFG2 {
   uint16_t      hlw_msplw;  // MaxSafePowerLimitWindow
   uint16_t      hlw_mkwh;   // MaxEnergy
   uint16_t      hlw_mkwhs;  // MaxEnergyStart
-  char          domoticz_in_topic[33];  
-  char          domoticz_out_topic[33];  
-  uint16_t      domoticz_update_timer;  
+  char          domoticz_in_topic[33];
+  char          domoticz_out_topic[33];
+  uint16_t      domoticz_update_timer;
   unsigned long domoticz_relay_idx[4];
   unsigned long domoticz_key_idx[4];
   byte          message_format;
@@ -256,17 +254,17 @@ struct SYSCFG {
   byte          mqtt_units;
   byte          message_format;
   uint16_t      tele_period;
-  
+
   uint8_t       power;
   uint8_t       ledstate;
   uint8_t       switchmode;
 
-  char          domoticz_in_topic[33];  
-  char          domoticz_out_topic[33];  
-  uint16_t      domoticz_update_timer;  
+  char          domoticz_in_topic[33];
+  char          domoticz_out_topic[33];
+  uint16_t      domoticz_update_timer;
   unsigned long domoticz_relay_idx[4];
   unsigned long domoticz_key_idx[4];
-  
+
   unsigned long hlw_pcal;
   unsigned long hlw_ucal;
   unsigned long hlw_ical;
@@ -366,7 +364,7 @@ boolean udpConnected = false;
   #define WEMO_BUFFER_SIZE 200        // Max UDP buffer size needed for M-SEARCH message
 
   char packetBuffer[WEMO_BUFFER_SIZE]; // buffer to hold incoming UDP packet
-  IPAddress ipMulticast(239, 255, 255, 250); // Simple Service Discovery Protocol (SSDP) 
+  IPAddress ipMulticast(239, 255, 255, 250); // Simple Service Discovery Protocol (SSDP)
   uint32_t portMulticast = 1900;      // Multicast address and port
 #endif  // USE_WEMO_EMULATION
 
@@ -392,21 +390,21 @@ boolean udpConnected = false;
 
 #ifdef USE_DOMOTICZ
   int domoticz_update_timer = 0;
-  byte domoticz_update_flag;  
-#endif  // USE_DOMOTICZ 
+  byte domoticz_update_flag;
+#endif  // USE_DOMOTICZ
 
 /********************************************************************************************/
 
 void CFG_Default()
 {
-  addLog_P(LOG_LEVEL_INFO, PSTR("Config: Use default configuration"));
+  addLog_P(LOG_LEVEL_NONE, PSTR("Config: Use default configuration"));
   memset(&sysCfg, 0x00, sizeof(SYSCFG));
-  
+
   sysCfg.cfg_holder = CFG_HOLDER;
   sysCfg.saveFlag = 0;
   sysCfg.version = VERSION;
   sysCfg.bootcount = 0;
-  sysCfg.migflag = CFG_MIGRATION_FLAG;
+  sysCfg.migflag = 0;
   sysCfg.savedata = SAVE_DATA;
   sysCfg.savestate = SAVE_STATE;
   sysCfg.model = 0;
@@ -447,10 +445,10 @@ void CFG_Default()
   sysCfg.power = APP_POWER;
   sysCfg.ledstate = APP_LEDSTATE;
   sysCfg.switchmode = SWITCH_MODE;
-  
-  strlcpy(sysCfg.domoticz_in_topic, DOMOTICZ_IN_TOPIC, sizeof(sysCfg.domoticz_in_topic));  
-  strlcpy(sysCfg.domoticz_out_topic, DOMOTICZ_OUT_TOPIC, sizeof(sysCfg.domoticz_out_topic));  
-  sysCfg.domoticz_update_timer = DOMOTICZ_UPDATE_TIMER;  
+
+  strlcpy(sysCfg.domoticz_in_topic, DOMOTICZ_IN_TOPIC, sizeof(sysCfg.domoticz_in_topic));
+  strlcpy(sysCfg.domoticz_out_topic, DOMOTICZ_OUT_TOPIC, sizeof(sysCfg.domoticz_out_topic));
+  sysCfg.domoticz_update_timer = DOMOTICZ_UPDATE_TIMER;
   sysCfg.domoticz_relay_idx[0] = DOMOTICZ_RELAY_IDX1;
   sysCfg.domoticz_relay_idx[1] = DOMOTICZ_RELAY_IDX2;
   sysCfg.domoticz_relay_idx[2] = DOMOTICZ_RELAY_IDX3;
@@ -480,20 +478,20 @@ void CFG_Default()
   sysCfg.hlw_msplw = SAFE_POWER_WINDOW;
   sysCfg.hlw_mkwh = 0;                             // MaxEnergy
   sysCfg.hlw_mkwhs = 0;                            // MaxEnergyStart
-  
+
   CFG_Save();
 }
 
 void CFG_Migrate_Part2()
 {
-  addLog_P(LOG_LEVEL_INFO, PSTR("Config: Migrating configuration"));
+  addLog_P(LOG_LEVEL_NONE, PSTR("Config: Migrating configuration"));
   memset(&sysCfg, 0x00, sizeof(SYSCFG));
-  
+
   sysCfg.cfg_holder = CFG_HOLDER;
   sysCfg.saveFlag = 0;
   sysCfg.version = VERSION;
   sysCfg.bootcount = sysCfg2.bootcount;
-  sysCfg.migflag = CFG_MIGRATION_FLAG;
+  sysCfg.migflag = 0;
   sysCfg.savedata = sysCfg2.savedata;
   sysCfg.savestate = sysCfg2.savestate;
   sysCfg.model = sysCfg2.model;
@@ -535,10 +533,10 @@ void CFG_Migrate_Part2()
   sysCfg.power = sysCfg2.power;
   sysCfg.ledstate = sysCfg2.ledstate;
   sysCfg.switchmode = sysCfg2.switchmode;
-  
-  strlcpy(sysCfg.domoticz_in_topic, sysCfg2.domoticz_in_topic, sizeof(sysCfg.domoticz_in_topic));  
-  strlcpy(sysCfg.domoticz_out_topic, sysCfg2.domoticz_out_topic, sizeof(sysCfg.domoticz_out_topic));  
-  sysCfg.domoticz_update_timer = sysCfg2.domoticz_update_timer;  
+
+  strlcpy(sysCfg.domoticz_in_topic, sysCfg2.domoticz_in_topic, sizeof(sysCfg.domoticz_in_topic));
+  strlcpy(sysCfg.domoticz_out_topic, sysCfg2.domoticz_out_topic, sizeof(sysCfg.domoticz_out_topic));
+  sysCfg.domoticz_update_timer = sysCfg2.domoticz_update_timer;
   sysCfg.domoticz_relay_idx[0] = sysCfg2.domoticz_relay_idx[0];
   sysCfg.domoticz_relay_idx[1] = sysCfg2.domoticz_relay_idx[1];
   sysCfg.domoticz_relay_idx[2] = sysCfg2.domoticz_relay_idx[2];
@@ -568,6 +566,8 @@ void CFG_Migrate_Part2()
   sysCfg.hlw_msplw = sysCfg2.hlw_msplw;
   sysCfg.hlw_mkwh = sysCfg.hlw_mkwh;                             // MaxEnergy
   sysCfg.hlw_mkwhs = sysCfg.hlw_mkwhs;                            // MaxEnergyStart
+
+  CFG_Save();
 }
 
 void CFG_Delta()
@@ -613,17 +613,17 @@ void setRelay(uint8_t power)
     digitalWrite(REL_PIN, power & 0x1);
 #ifdef REL2_PIN
     digitalWrite(REL2_PIN, (power & 0x2));
-#endif    
+#endif
   }
 #ifdef USE_POWERMONITOR
   power_steady_cntr = 2;
-#endif  
+#endif
 }
 
 void json2legacy(char* stopic, char* svalue)
 {
   char log[LOGSZ];
-  
+
   char *p, *token;
   int i, j;
 
@@ -743,13 +743,13 @@ void mqtt_connected()
   snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/#"), SUB_PREFIX, MQTTClient); // Fall back topic
   mqttClient.subscribe(stopic);
   mqttClient.loop();  // Solve LmacRxBlk:1 messages
-#ifdef USE_DOMOTICZ  
-  if (sysCfg.domoticz_relay_idx[0] && (strlen(sysCfg.domoticz_out_topic) != 0)) {  
-    snprintf_P(stopic, sizeof(stopic), PSTR("%s/#"), sysCfg.domoticz_out_topic); // domoticz topic  
-    mqttClient.subscribe(stopic);  
-    mqttClient.loop();  // Solve LmacRxBlk:1 messages  
-  }  
-#endif  // USE_DOMOTICZ  
+#ifdef USE_DOMOTICZ
+  if (sysCfg.domoticz_relay_idx[0] && (strlen(sysCfg.domoticz_out_topic) != 0)) {
+    snprintf_P(stopic, sizeof(stopic), PSTR("%s/#"), sysCfg.domoticz_out_topic); // domoticz topic
+    mqttClient.subscribe(stopic);
+    mqttClient.loop();  // Solve LmacRxBlk:1 messages
+  }
+#endif  // USE_DOMOTICZ
 
   if (mqttflag) {
     if (sysCfg.message_format == JSON) {
@@ -793,7 +793,7 @@ void mqtt_connected()
     status_update_timer = 2;
 #ifdef USE_DOMOTICZ
     domoticz_update_timer = 2;
-#endif  // USE_DOMOTICZ  
+#endif  // USE_DOMOTICZ
   }
   mqttflag = 0;
 }
@@ -826,7 +826,7 @@ void mqtt_reconnect()
     mqttcounter = 1;
     return;
   }
-  
+
   addLog_P(LOG_LEVEL_INFO, PSTR("MQTT: Attempting connection..."));
   if (sysCfg.message_format == JSON) {
     snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/TELEMETRY"), PUB_PREFIX2, sysCfg.mqtt_topic);
@@ -864,15 +864,15 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
 
 #ifdef USE_DOMOTICZ
   domoticz_update_flag = 1;
-  if (!strncmp(topicBuf, sysCfg.domoticz_out_topic, strlen(sysCfg.domoticz_out_topic)) != 0) {  
-    unsigned long idx = 0;  
-    int16_t nvalue;  
+  if (!strncmp(topicBuf, sysCfg.domoticz_out_topic, strlen(sysCfg.domoticz_out_topic)) != 0) {
+    unsigned long idx = 0;
+    int16_t nvalue;
 
     if (strlen(dataBuf) < 20) return;
-    idx = getKeyIntValue(dataBuf,"\"idx\"");  
-    nvalue = getKeyIntValue(dataBuf,"\"nvalue\"");  
+    idx = getKeyIntValue(dataBuf,"\"idx\"");
+    nvalue = getKeyIntValue(dataBuf,"\"nvalue\"");
     dataBuf[0] = '\0';
-    if (nvalue == 0 || nvalue == 1) {  
+    if (nvalue == 0 || nvalue == 1) {
       for (i = 0; i < Maxdevice; i++) {
         if (idx > 0 && idx == sysCfg.domoticz_relay_idx[i]) {
           snprintf_P(dataBuf, sizeof(dataBuf), PSTR("%d"), nvalue);
@@ -885,7 +885,7 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
     snprintf_P(topicBuf, sizeof(topicBuf), PSTR("%s/%s/POWER%d"), SUB_PREFIX, sysCfg.mqtt_topic, i +1);
     domoticz_update_flag = 0;
   }
-#endif //USE_DOMOTICZ  
+#endif //USE_DOMOTICZ
 
   memmove(topicBuf, topicBuf+sizeof(SUB_PREFIX), sizeof(topicBuf)-sizeof(SUB_PREFIX));  // Remove SUB_PREFIX
 /*
@@ -950,7 +950,7 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
     if (!strcmp(dataBufUc,"OFF") || !strcmp(dataBufUc,"STOP")) payload = 0;
     if (!strcmp(dataBufUc,"ON") || !strcmp(dataBufUc,"START") || !strcmp(dataBufUc,"USER")) payload = 1;
     if (!strcmp(dataBufUc,"TOGGLE") || !strcmp(dataBufUc,"ADMIN")) payload = 2;
-    
+
     if ((!strcmp(type,"POWER") || !strcmp(type,"LIGHT")) && (index <= Maxdevice)) {
       snprintf_P(sysCfg.mqtt_subtopic, sizeof(sysCfg.mqtt_subtopic), PSTR("%s"), type);
       byte mask = 0x01 << (index -1);
@@ -969,7 +969,7 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
         setRelay(power);
 #ifdef USE_DOMOTICZ
         if (domoticz_update_flag) domoticz_update_timer = 1;
-#endif  // USE_DOMOTICZ  
+#endif  // USE_DOMOTICZ
       }
       mqtt_publishPowerState(index);
       return;
@@ -994,10 +994,10 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
         dtostrf(pc, 1, 2, stemp3);
         if (sysCfg.message_format == JSON) {
           snprintf_P(svalue, sizeof(svalue), PSTR("{\"StatusPWR\":{\"Voltage\":%d, \"Current\":\"%s\", \"Power\":%d, \"Today\":\"%s\", \"Factor\":\"%s\"}}"),
-            pu, stemp1, pw, stemp2, stemp3); 
+            pu, stemp1, pw, stemp2, stemp3);
         } else {
           snprintf_P(svalue, sizeof(svalue), PSTR("PWR: Voltage %d V, Current %s A, Power %d W, Today %s kWh, Factor %s"),
-            pu, stemp1, pw, stemp2, stemp3); 
+            pu, stemp1, pw, stemp2, stemp3);
         }
         if (payload == 0) mqtt_publish(stopic, svalue);
       }
@@ -1011,7 +1011,7 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
         }
         if (payload == 0) mqtt_publish(stopic, svalue);
       }
-#endif  // USE_POWERMONITOR      
+#endif  // USE_POWERMONITOR
       if ((payload == 0) || (payload == 1)) {
         if (sysCfg.message_format == JSON) {
           snprintf_P(svalue, sizeof(svalue), PSTR("{\"StatusPRM\":{\"Baudrate\":%d, \"GroupTopic\":\"%s\", \"OtaUrl\":\"%s\", \"Uptime\":%d, \"BootCount\":%d, \"SaveCount\":%d}}"),
@@ -1021,7 +1021,7 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
             Baudrate, sysCfg.mqtt_grptopic, sysCfg.otaUrl, uptime, sysCfg.bootcount, sysCfg.saveFlag);
         }
         if (payload == 0) mqtt_publish(stopic, svalue);
-      }          
+      }
       if ((payload == 0) || (payload == 2)) {
         if (sysCfg.message_format == JSON) {
           snprintf_P(svalue, sizeof(svalue), PSTR("{\"StatusFWR\":{\"Program\":\"%s\", \"Boot\":%d, \"SDK\":\"%s\"}}"),
@@ -1031,7 +1031,7 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
             Version, ESP.getBootVersion(), ESP.getSdkVersion());
         }
         if (payload == 0) mqtt_publish(stopic, svalue);
-      }          
+      }
       if ((payload == 0) || (payload == 3)) {
         if (sysCfg.message_format == JSON) {
           snprintf_P(svalue, sizeof(svalue), PSTR("{\"StatusLOG\":{\"Seriallog\":%d, \"Weblog\":%d, \"Syslog\":%d, \"LogHost\":\"%s\", \"SSId1\":\"%s\", \"Password1\":\"%s\", \"SSId2\":\"%s\", \"Password2\":\"%s\", \"TelePeriod\":%d}}"),
@@ -1041,7 +1041,7 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
             sysCfg.seriallog_level, sysCfg.weblog_level, sysCfg.syslog_level, sysCfg.syslog_host, sysCfg.sta_ssid[0], sysCfg.sta_pwd[0], sysCfg.sta_ssid[1], sysCfg.sta_pwd[1], sysCfg.tele_period);
         }
         if (payload == 0) mqtt_publish(stopic, svalue);
-      }          
+      }
       if ((payload == 0) || (payload == 4)) {
         if (sysCfg.message_format == JSON) {
           snprintf_P(svalue, sizeof(svalue), PSTR("{\"StatusMEM\":{\"ProgramSize\":%d, \"Free\":%d, \"Heap\":%d, \"SpiffsStart\":%d, \"SpiffsSize\":%d, \"FlashSize\":%d, \"ProgramFlashSize\":%d}}"),
@@ -1053,7 +1053,7 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
             (((uint32_t)&_SPIFFS_end - 0x40200000) - ((uint32_t)&_SPIFFS_start - 0x40200000))/1024, ESP.getFlashChipRealSize()/1024, ESP.getFlashChipSize()/1024);
         }
         if (payload == 0) mqtt_publish(stopic, svalue);
-      }          
+      }
       if ((payload == 0) || (payload == 5)) {
         if (sysCfg.message_format == JSON) {
           snprintf_P(svalue, sizeof(svalue), PSTR("{\"StatusNET\":{\"Host\":\"%s\", \"IP\":\"%s\", \"Gateway\":\"%s\", \"Subnetmask\":\"%s\", \"Mac\":\"%s\", \"Webserver\":%d, \"WifiConfig\":%d}}"),
@@ -1065,26 +1065,26 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
             WiFi.macAddress().c_str(), sysCfg.webserver, sysCfg.sta_config);
         }
         if (payload == 0) mqtt_publish(stopic, svalue);
-      }          
+      }
       if ((payload == 0) || (payload == 6)) {
         if (sysCfg.message_format == JSON) {
           snprintf_P(svalue, sizeof(svalue), PSTR("{\"StatusMQT\":{\"Host\":\"%s\", \"Port\":%d, \"ClientMask\":\"%s\", \"Client\":\"%s\", \"User\":\"%s\", \"Password\":\"%s\", \"MAX_PACKET_SIZE\":%d, \"KEEPALIVE\":%d}}"),
-            sysCfg.mqtt_host, sysCfg.mqtt_port, sysCfg.mqtt_client, MQTTClient, sysCfg.mqtt_user, sysCfg.mqtt_pwd, MQTT_MAX_PACKET_SIZE, MQTT_KEEPALIVE); 
+            sysCfg.mqtt_host, sysCfg.mqtt_port, sysCfg.mqtt_client, MQTTClient, sysCfg.mqtt_user, sysCfg.mqtt_pwd, MQTT_MAX_PACKET_SIZE, MQTT_KEEPALIVE);
         } else {
           snprintf_P(svalue, sizeof(svalue), PSTR("MQT: Host %s, Port %d, Client %s (%s), User %s, Password %s, MAX_PACKET_SIZE %d, KEEPALIVE %d"),
-            sysCfg.mqtt_host, sysCfg.mqtt_port, sysCfg.mqtt_client, MQTTClient, sysCfg.mqtt_user, sysCfg.mqtt_pwd, MQTT_MAX_PACKET_SIZE, MQTT_KEEPALIVE); 
+            sysCfg.mqtt_host, sysCfg.mqtt_port, sysCfg.mqtt_client, MQTTClient, sysCfg.mqtt_user, sysCfg.mqtt_pwd, MQTT_MAX_PACKET_SIZE, MQTT_KEEPALIVE);
         }
         if (payload == 0) mqtt_publish(stopic, svalue);
-      }      
+      }
       if ((payload == 0) || (payload == 7)) {
         if (sysCfg.message_format == JSON) {
           snprintf_P(svalue, sizeof(svalue), PSTR("{\"StatusTIM\":{\"UTC\":\"%s\", \"Local\":\"%s\", \"StartDST\":\"%s\", \"EndDST\":\"%s\"}}"),
-            rtc_time(0).c_str(), rtc_time(1).c_str(), rtc_time(2).c_str(), rtc_time(3).c_str()); 
+            rtc_time(0).c_str(), rtc_time(1).c_str(), rtc_time(2).c_str(), rtc_time(3).c_str());
         } else {
           snprintf_P(svalue, sizeof(svalue), PSTR("TIM: UTC %s, Local %s, StartDST %s, EndDST %s"),
-            rtc_time(0).c_str(), rtc_time(1).c_str(), rtc_time(2).c_str(), rtc_time(3).c_str()); 
+            rtc_time(0).c_str(), rtc_time(1).c_str(), rtc_time(2).c_str(), rtc_time(3).c_str());
         }
-      }      
+      }
     }
     else if (!strcmp(type,"SAVEDATA")) {
       if ((data_len > 0) && (payload >= 0) && (payload <= 3600)) {
@@ -1321,7 +1321,7 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
       }
       snprintf_P(svalue, sizeof(svalue), PSTR("{\"DomoticzUpdateTimer\":%d}"), sysCfg.domoticz_update_timer);
     }
-#endif  // USE_DOMOTICZ  
+#endif  // USE_DOMOTICZ
     else if (!strcmp(type,"TELEPERIOD")) {
       if ((data_len > 0) && (payload >= 0) && (payload < 3601)) {
         sysCfg.tele_period = (payload == 1) ? TELE_PERIOD : payload;
@@ -1389,7 +1389,7 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
     }
     else if (!strcmp(type,"RESTART")) {
       switch (payload) {
-      case 1: 
+      case 1:
         restartflag = 2;
         snprintf_P(svalue, sizeof(svalue), PSTR("{\"Restart\":\"Restarting\"}"));
         break;
@@ -1403,7 +1403,7 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
     }
     else if (!strcmp(type,"RESET")) {
       switch (payload) {
-      case 1: 
+      case 1:
         restartflag = 211;
         snprintf_P(svalue, sizeof(svalue), PSTR("{\"Reset\":\"Reset and Restarting\"}"));
         break;
@@ -1558,12 +1558,12 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
     snprintf_P(svalue, sizeof(svalue), PSTR("{\"Commands2\":\"MqttHost, MqttPort, MqttUser, MqttPassword%s, MqttUnits, MessageFormat, GroupTopic, Timezone, Ledstate, TelePeriod\"}"), (!grpflg) ? ", MqttClient, Topic, ButtonTopic, ButtonRetain, PowerRetain" : "");
     if (sysCfg.message_format != JSON) json2legacy(stopic, svalue);
     mqtt_publish(stopic, svalue);
-    
+
     snprintf_P(svalue, sizeof(svalue), PSTR("{\"Commands3\":\"%s"), (sysCfg.model == SONOFF) ? "Power, Light" : "Power1, Power2, Light1 Light2");
 #ifdef USE_WEBSERVER
     snprintf_P(svalue, sizeof(svalue), PSTR("%s, Weblog, Webserver"), svalue);
 #endif
-#ifdef USE_DOMOTICZ 
+#ifdef USE_DOMOTICZ
     snprintf_P(svalue, sizeof(svalue), PSTR("%s, DomoticzInTopic, DomoticzOutTopic, DomoticzIdx, DomoticzKeyIdx, DomoticzUpdateTimer"), svalue);
 #endif  // USE_DOMOTICZ
 #ifdef USE_WALL_SWITCH
@@ -1618,7 +1618,7 @@ void send_button_power(byte device, byte state)
   }
 #else
   mqtt_publish(stopic, svalue, sysCfg.mqtt_button_retain);
-#endif  // USE_DOMOTICZ    
+#endif  // USE_DOMOTICZ
 }
 
 void do_cmnd_power(byte device, byte state)
@@ -1642,7 +1642,7 @@ void do_cmnd_power(byte device, byte state)
     setRelay(power);
 #ifdef USE_DOMOTICZ
     if (domoticz_update_flag) domoticz_update_timer = 1;
-#endif  // USE_DOMOTICZ  
+#endif  // USE_DOMOTICZ
   }
   mqtt_publishPowerState(device);
 }
@@ -1837,7 +1837,7 @@ void every_second_cb()
 {
   // 1 second rtc interrupt routine
   // Keep this code small (every_second is to large - it'll trip exception)
-  
+
 #ifdef FEATURE_POWER_LIMIT
   if (rtcTime.Valid) {
     if (rtc_loctime() == rtc_midnight()) {
@@ -1873,7 +1873,7 @@ void every_second()
   if (status_update_timer) {
     status_update_timer--;
     if (!status_update_timer) {
-      for (i = 1; i <= Maxdevice; i++) mqtt_publishPowerState(i);      
+      for (i = 1; i <= Maxdevice; i++) mqtt_publishPowerState(i);
     }
   }
 
@@ -1897,7 +1897,7 @@ void every_second()
   if (sysCfg.tele_period) {
     tele_period++;
     if (tele_period == sysCfg.tele_period -1) {
-      
+
 #ifdef SEND_TELEMETRY_DS18B20
       dsb_readTempPrep();
 #endif  // SEND_TELEMETRY_DS18B20
@@ -2046,7 +2046,7 @@ void every_second()
         if (sysCfg.message_format == JSON) {
           snprintf_P(svalue, sizeof(svalue), PSTR("%s, \"%s\":{\"Temperature\":\"%s\", \"Humidity\":\"%s\"}"), svalue, htu_type(), stemp1, stemp2);
           djson = 1;
-        } else 
+        } else
         {
           snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/%s/TEMPERATURE"), PUB_PREFIX2, sysCfg.mqtt_topic, htu_type());
           snprintf_P(svalue, sizeof(svalue), PSTR("%s%s"), stemp1, (sysCfg.mqtt_units) ? " C" : "");
@@ -2141,8 +2141,8 @@ void every_second()
 #ifdef USE_POWERMONITOR
   hlw_margin_chk();
 #endif  // USE_POWERMONITOR
-  
-  if ((rtcTime.Minute == 2) && (rtcTime.Second == 30)) { 
+
+  if ((rtcTime.Minute == 2) && (rtcTime.Second == 30)) {
     uptime++;
     if (sysCfg.message_format == JSON) {
       snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/TELEMETRY"), PUB_PREFIX2, sysCfg.mqtt_topic);
@@ -2159,7 +2159,7 @@ void stateloop()
 {
   uint8_t button, flag;
   char scmnd[20], log[LOGSZ], stopic[TOPSZ], svalue[TOPSZ];
-  
+
   timerxs = millis() + (1000 / STATES);
   state++;
   if (state == STATES) {             // Every second
@@ -2218,9 +2218,9 @@ void stateloop()
           }
         } else {
           snprintf_P(scmnd, sizeof(scmnd), commands[multipress -3]);
-          do_cmnd(scmnd);             
+          do_cmnd(scmnd);
         }
-      }  
+      }
       multipress = 0;
     }
   }
@@ -2229,7 +2229,7 @@ void stateloop()
   button = digitalRead(KEY2_PIN);
   if ((button == PRESSED) && (lastbutton2 == NOT_PRESSED)) {
     if (mqttClient.connected() && strcmp(sysCfg.mqtt_topic2,"0")) {
-      send_button_power(2, 2);   // Execute commend via MQTT   
+      send_button_power(2, 2);   // Execute commend via MQTT
     } else {
       do_cmnd_power(2, 2);       // Execute command internally
     }
@@ -2251,7 +2251,7 @@ void stateloop()
       flag = ~button & 0x01;   // Follow inverted wall switch state
     }
     if (mqttClient.connected() && strcmp(sysCfg.mqtt_topic2,"0")) {
-      send_button_power(1, flag);   // Execute commend via MQTT   
+      send_button_power(1, flag);   // Execute commend via MQTT
     } else {
       do_cmnd_power(1, flag);       // Execute command internally
     }
@@ -2274,7 +2274,7 @@ void stateloop()
       }
     }
   }
-  
+
   switch (state) {
   case (STATES/10)*2:
     if (otaflag) {
@@ -2420,7 +2420,7 @@ void setup()
 #endif
   CFG_Load();
   CFG_Delta();
-  
+
   if (!sysCfg.model) {
 #if MODULE == SONOFF
     pinMode(REL_PIN, INPUT_PULLUP);
@@ -2429,7 +2429,7 @@ void setup()
     sysCfg.model = SONOFF;
 #endif
   }
-  
+
   if ((sysCfg.model >= SONOFF_DUAL) && (sysCfg.model <= CHANNEL_4)) {
     Baudrate = 19200;
     Maxdevice = sysCfg.model;
@@ -2444,7 +2444,7 @@ void setup()
     delay(10);
     Serial.println();
   }
-  
+
   sysCfg.bootcount++;
   snprintf_P(log, sizeof(log), PSTR("APP: Bootcount %d"), sysCfg.bootcount);
   addLog(LOG_LEVEL_DEBUG, log);
@@ -2470,15 +2470,15 @@ void setup()
     pinMode(REL_PIN, OUTPUT);
 #ifdef KEY2_PIN
     pinMode(KEY2_PIN, INPUT_PULLUP);
-#endif  
+#endif
 #ifdef REL2_PIN
     pinMode(REL2_PIN, OUTPUT);
-#endif  
+#endif
   }
   if (sysCfg.savestate) setRelay(power);
 
 #ifdef USE_WALL_SWITCH
-  pinMode(SWITCH_PIN, INPUT_PULLUP);            // set pin to input, fitted with external pull up on Sonoff TH10/16 board                        
+  pinMode(SWITCH_PIN, INPUT_PULLUP);            // set pin to input, fitted with external pull up on Sonoff TH10/16 board
   lastwallswitch = digitalRead(SWITCH_PIN);     // set global now so doesn't change the saved power state on first switch check
 #endif  // USE_WALL_SWITCH
 
@@ -2515,7 +2515,6 @@ void loop()
   mqttClient.loop();
 
   if (Serial.available()) serial();
- 
+
   yield();
 }
-

@@ -26,7 +26,7 @@
 #ifdef SEND_TELEMETRY_I2C
 /*********************************************************************************************\
  * HTU21 - Temperature and Humidy
- * 
+ *
  * Source: Heiko Krupp
 \*********************************************************************************************/
 
@@ -107,13 +107,13 @@ void htu21_reset(void)
   Wire.beginTransmission(HTU21_ADDR);
   Wire.write(HTU21_RESET);
   Wire.endTransmission();
-  delay(15);			    // Reset takes 15ms
+  delay(15);                // Reset takes 15ms
 }
 
 void htu21_heater(uint8_t heater)
 {
   uint8_t current = i2c_read8(HTU21_ADDR, HTU21_READREG);
-  
+
   switch(heater)
   {
     case HTU21_HEATER_ON  : current |= heater;
@@ -139,17 +139,17 @@ float htu21_readHumidity(void)
   uint8_t  checksum=0;
   uint16_t sensorval=0;
   float    humidity=0.0;
-  
+
   Wire.beginTransmission(HTU21_ADDR);
   Wire.write(HTU21_READHUM);
   if(Wire.endTransmission() != 0) return 0.0; // In case of error
-  delay(HTU21_MAX_HUM);			                  // HTU21 time at max resolution
+  delay(HTU21_MAX_HUM);                       // HTU21 time at max resolution
 
   Wire.requestFrom(HTU21_ADDR, 3);
   if(3 <= Wire.available())
-  {  
-    sensorval = Wire.read() << 8;		            // MSB
-    sensorval |= Wire.read();		                // LSB
+  {
+    sensorval = Wire.read() << 8;             // MSB
+    sensorval |= Wire.read();                 // LSB
     checksum = Wire.read();
   }
   if(check_crc8(sensorval) != checksum) return 0.0; // Checksum mismatch
@@ -171,13 +171,13 @@ float htu21_readTemperature(void)
   Wire.beginTransmission(HTU21_ADDR);
   Wire.write(HTU21_READTEMP);
   if(Wire.endTransmission() != 0) return 0.0; // In case of error
-  delay(HTU21_MAX_TEMP);		      // HTU21 time at max resolution
-  
+  delay(HTU21_MAX_TEMP);              // HTU21 time at max resolution
+
   Wire.requestFrom(HTU21_ADDR, 3);
   if(3 == Wire.available())
-  {  
-    sensorval = Wire.read() << 8;		      // MSB
-    sensorval |= Wire.read();		      // LSB
+  {
+    sensorval = Wire.read() << 8;         // MSB
+    sensorval |= Wire.read();             // LSB
     checksum = Wire.read();
   }
   if(check_crc8(sensorval) != checksum) return 0.0; // Checksum mismatch

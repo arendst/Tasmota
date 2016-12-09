@@ -26,7 +26,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #ifdef SEND_TELEMETRY_DHT
 /*********************************************************************************************\
  * DHT11, DHT21 (AM2301), DHT22 (AM2302, AM2321) - Temperature and Humidy
- * 
+ *
  * Reading temperature or humidity takes about 250 milliseconds!
  * Sensor readings may also be up to 2 seconds 'old' (its a very slow sensor)
  * Source: Adafruit Industries https://github.com/adafruit/DHT-sensor-library
@@ -47,7 +47,7 @@ void dht_readPrep()
 uint32_t dht_expectPulse(bool level)
 {
   uint32_t count = 0;
-  
+
   while (digitalRead(DHT_PIN) == level)
     if (count++ >= _maxcycles) return 0;
   return count;
@@ -58,7 +58,7 @@ boolean dht_read()
   char log[LOGSZ];
   uint32_t cycles[80];
   uint32_t currenttime = millis();
-  
+
   if ((currenttime - _lastreadtime) < 2000) {
     return _lastresult;
   }
@@ -159,7 +159,7 @@ boolean dht_readTempHum(bool S, float &t, float &h)
     if (!isnan(t)) mt = t;
     if (!isnan(h)) mh = h;
   }
-  return (!isnan(t) && !isnan(h)); 
+  return (!isnan(t) && !isnan(h));
 }
 
 void dht_init()

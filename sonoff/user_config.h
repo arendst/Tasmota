@@ -1,18 +1,18 @@
 /*********************************************************************************************\
  * User specific configuration parameters
- * 
+ *
  * Corresponding MQTT/Serial/Console commands in [brackets]
 \*********************************************************************************************/
 
 // Enable only one out of three MODULE defines below
 #define MODULE                 SONOFF            // Sonoff, Sonoff SV, Sonoff Dual, Sonoff TH 10A/16A, S20 Smart Socket, 4 Channel
 //#define MODULE                 SONOFF_POW        // Sonoff Pow
-//#define MODULE                 ELECTRO_DRAGON    // Electro Dragon Wifi IoT Relay Board Based on ESP8266  
+//#define MODULE                 ELECTRO_DRAGON    // Electro Dragon Wifi IoT Relay Board Based on ESP8266
 
 // -- Project --------------------------------
 #define PROJECT                "sonoff"     // PROJECT is used as the default topic delimiter and OTA file name
                                             //   As an IDE restriction it needs to be the same as the main .ino file
-                                            
+
 #define CFG_HOLDER             0x20161209   // [Reset 1] Change this value to load following default configuration parameters
 #define SAVE_DATA              1            // [SaveData] Save changed parameters to Flash (0 = disable, 1 - 3600 seconds)
 #define SAVE_STATE             1            // [SaveState] Save changed power state to Flash (0 = disable, 1 = enable)
@@ -21,7 +21,7 @@
 #define STA_SSID1              "indebuurt1"      // [Ssid1] Wifi SSID
 #define STA_PASS1              "VnsqrtnrsddbrN"  // [Password1] Wifi password
 #define STA_SSID2              "indebuurt2"      // [Ssid2] Optional alternate AP Wifi SSID
-#define STA_PASS2              "VnsqrtnrsddbrN"  // [Password2] Optional alternate AP Wifi password 
+#define STA_PASS2              "VnsqrtnrsddbrN"  // [Password2] Optional alternate AP Wifi password
 #define WIFI_HOSTNAME          "%s-%04d"         // [Hostname] Expands to <MQTT_TOPIC>-<last 4 decimal chars of MAC address>
 #define WIFI_CONFIG_TOOL       WIFI_WPSCONFIG    // [WifiConfig] Default tool if wifi fails to connect (WIFI_RESTART, WIFI_SMARTCONFIG, WIFI_MANAGER or WIFI_WPSCONFIG)
 
@@ -135,7 +135,7 @@
   // *** Option 1 - Single DS18B20 - Select either Option 1 OR Option 2
 //  #define SEND_TELEMETRY_DS18B20            // Enable sending single temperature telemetry
   // *** Option 2 - Multiple DS18B20 and/or DS18S20 (needs OneWire library!)
-//  #define SEND_TELEMETRY_DS18x20            // Enable sending multi temperature telemetry 
+//  #define SEND_TELEMETRY_DS18x20            // Enable sending multi temperature telemetry
 /*-------------------------------------------------------------------------------------------*\
  * DHT11, DHT21, DHT22, AM2301, AM2302 and AM2321
 \*-------------------------------------------------------------------------------------------*/
@@ -151,7 +151,7 @@
   #define I2C_SDA_PIN          4            // GPIO 4 = I2C SDA (Sonoff_TH10A(16A)- Needs extra hardware)
   #define I2C_SCL_PIN          14           // GPIO 14 = I2C SCL (Sonoff_TH10A(16A))
 //  #define SEND_TELEMETRY_I2C                // Enable sending I2C sensor telemetry
-  
+
 /*********************************************************************************************\
  * Sonoff Pow specific parameters
 \*********************************************************************************************/
@@ -171,7 +171,7 @@
   #define HLW_CF1              13           // GPIO 13 = HLW8012 CF1 voltage / current (Sonoff Pow)
   #define HLW_CF               14           // GPIO 14 = HLW8012 CF power (Sonoff Pow)
   #define SEND_TELEMETRY_ENERGY             // Enable sending energy telemetry
-  
+
 /*********************************************************************************************\
  * Electrodragon specific paremeters
 \*********************************************************************************************/
@@ -199,7 +199,7 @@
   // *** Option 1 - Single DS18B20 - Select either Option 1 OR Option 2
 //  #define SEND_TELEMETRY_DS18B20            // Enable sending single temperature telemetry
   // *** Option 2 - Multiple DS18B20 and/or DS18S20 (needs OneWire library!)
-//  #define SEND_TELEMETRY_DS18x20            // Enable sending multi temperature telemetry 
+//  #define SEND_TELEMETRY_DS18x20            // Enable sending multi temperature telemetry
 /*-------------------------------------------------------------------------------------------*\
  * DHT11, DHT21, DHT22, AM2301, AM2302 and AM2321
 \*-------------------------------------------------------------------------------------------*/
@@ -219,7 +219,7 @@
 /*********************************************************************************************\
  * No user configurable items below
 \*********************************************************************************************/
- 
+
 #else
   #error "Select either module SONOFF, SONOFF_POW or ELECTRO_DRAGON"
 #endif
@@ -262,4 +262,3 @@
   #error "Select either USE_WALL_SWITCH or SEND_TELEMETRY_I2C or use different GPIOs"
 #endif
 #endif
-

@@ -26,7 +26,7 @@
 #ifdef SEND_TELEMETRY_I2C
 /*********************************************************************************************\
  * BMP085, BMP180, BMP280, BME280 - Pressure and Temperature and Humidy (BME280 only)
- * 
+ *
  * Source: Heiko Krupp and Adafruit Industries
 \*********************************************************************************************/
 
@@ -84,8 +84,8 @@ boolean bmp180_calibration()
   cal_md  = i2c_read16(bmpaddr, BMP180_MD);
 
   // Check for Errors in calibration data. Value never is 0x0000 or 0xFFFF
-  if(!cal_ac1 | !cal_ac2 | !cal_ac3 | !cal_ac4 | !cal_ac5 | 
-     !cal_ac6 | !cal_b1 | !cal_b2 | !cal_mc | !cal_md) 
+  if(!cal_ac1 | !cal_ac2 | !cal_ac3 | !cal_ac4 | !cal_ac5 |
+     !cal_ac6 | !cal_b1 | !cal_b2 | !cal_mc | !cal_md)
      return false;
 
   if((cal_ac1==0xFFFF)|
@@ -97,7 +97,7 @@ boolean bmp180_calibration()
      (cal_b1==0xFFFF)|
      (cal_b2==0xFFFF)|
      (cal_mc==0xFFFF)|
-     (cal_md==0xFFFF)) 
+     (cal_md==0xFFFF))
      return false;
 
   return true;
@@ -111,7 +111,7 @@ double bmp180_readTemperature()
   int32_t x1 = (ut - (int32_t)cal_ac6) * ((int32_t)cal_ac5) >> 15;
   int32_t x2 = ((int32_t)cal_mc << 11) / (x1+(int32_t)cal_md);
   bmp180_b5=x1+x2;
-  
+
   return ((bmp180_b5+8)>>4)/10.0;
 }
 
@@ -119,7 +119,7 @@ double bmp180_readPressure()
 {
   int32_t p;
   uint8_t msb,lsb,xlsb;
-  
+
   i2c_write8(bmpaddr, BMP180_REG_CONTROL, BMP180_PRESSURE3); // Highest resolution
   delay(2 + (4 << BMP180_OSS)); // 26ms conversion time at ultra high resolution
   uint32_t up = i2c_read24(bmpaddr, BMP180_REG_RESULT);
@@ -130,7 +130,7 @@ double bmp180_readPressure()
   int32_t x2 = ((int32_t)cal_ac2 * b6) >> 11;
   int32_t x3 = x1 + x2;
   int32_t b3 = ((((int32_t)cal_ac1*4 + x3) << BMP180_OSS) + 2)>>2;
-  
+
   x1 = ((int32_t)cal_ac3 * b6) >> 13;
   x2 = ((int32_t)cal_b1 * ((b6 * b6) >> 12)) >> 16;
   x3 = ((x1 + x2) + 2) >> 2;
@@ -142,13 +142,13 @@ double bmp180_readPressure()
   } else {
     p = (b7 / b4) * 2;
   }
-  
+
   x1 = (p >> 8) * (p >> 8);
   x1 = (x1 * 3038) >> 16;
   x2 = (-7357 * p) >> 16;
-  
+
   p += ((x1 + x2 + (int32_t)3791)>>4);
-  return p/100.0;  // convert to mbar  
+  return p/100.0;  // convert to mbar
 }
 
 double bmp180_calcSealevelPressure(float pAbs, float altitude_meters)

@@ -25,9 +25,9 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #ifdef USE_WEBSERVER
 /*********************************************************************************************\
- * Web server and WiFi Manager 
- * 
- * Enables configuration and reconfiguration of WiFi credentials using a Captive Portal 
+ * Web server and WiFi Manager
+ *
+ * Enables configuration and reconfiguration of WiFi credentials using a Captive Portal
  * Source by AlexT (https://github.com/tzapu)
 \*********************************************************************************************/
 
@@ -245,7 +245,7 @@ const char WEMO_SETUP_XML[] PROGMEM =
           "<eventSubURL>/upnp/event/basicevent1</eventSubURL>"
           "<SCPDURL>/eventservice.xml</SCPDURL>"
         "</service>"
-      "</serviceList>" 
+      "</serviceList>"
     "</device>"
   "</root>\r\n"
   "\r\n";
@@ -370,7 +370,7 @@ void handleRoot()
   if (_httpflag == HTTP_MANAGER) {
     handleWifi0();
   } else {
-    
+
     String page = FPSTR(HTTP_HEAD);
 //    page.replace("<meta", "<meta http-equiv=\"refresh\" content=\"4; URL=/\"><meta");                    // Fails Edge (asks for reload)
 //    page.replace("</script>", "setTimeout(function(){window.location.reload(1);},4000);</script>");     // Repeats POST on All
@@ -398,7 +398,7 @@ void handleRoot()
           page += String(idx);
         }
         page += F("</button></form></td>");
-      }  
+      }
       page += F("</tr></table><br/>");
     }
 
@@ -422,7 +422,7 @@ void handleRoot()
 #endif  // USE_POWERMONITOR
 
 #ifdef SEND_TELEMETRY_DS18B20
-    // Needs TelePeriod to refresh data (Do not do it here as it takes too much time) 
+    // Needs TelePeriod to refresh data (Do not do it here as it takes too much time)
     char stemp[10];
     float st;
     if (dsb_readTemp(st)) {        // Check if read failed
@@ -464,7 +464,7 @@ void handleRoot()
 #endif  // SEND_TELEMETRY_DHT/2
 
 #if defined(SEND_TELEMETRY_I2C)
-    char itemp[10];      
+    char itemp[10];
     if(htu_found()) {
       float t_htu21 = htu21_readTemperature();
       float h_htu21 = htu21_readHumidity();
@@ -498,7 +498,7 @@ void handleRoot()
       page += FPSTR(HTTP_BTN_RSTRT);
     }
     showPage(page);
-    
+
 #ifdef SEND_TELEMETRY_DS18x20
     ds18x20_search();      // Check for changes in sensors number
     ds18x20_convert();     // Start Conversion, takes up to one second
@@ -617,7 +617,7 @@ void handleWifi(boolean scan)
   }
 
   page += FPSTR(HTTP_FORM_WIFI);
-  
+
   char str[33];
   if (!strcmp(WIFI_HOSTNAME, DEF_WIFI_HOSTNAME)) {
     snprintf_P(str, sizeof(str), PSTR(DEF_WIFI_HOSTNAME), sysCfg.mqtt_topic, ESP.getChipId() & 0x1FFF);
@@ -664,27 +664,27 @@ void handleMqtt()
   showPage(page);
 }
 
-#ifdef USE_DOMOTICZ  
-void handleDomoticz()  
-{  
+#ifdef USE_DOMOTICZ
+void handleDomoticz()
+{
   if (_httpflag == HTTP_USER) {
     handleRoot();
     return;
   }
-  addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Handle Domoticz config"));  
+  addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Handle Domoticz config"));
 
-  String page = FPSTR(HTTP_HEAD);  
-  page.replace("{v}", "Configure Domoticz");  
-  page += FPSTR(HTTP_FORM_DOMOTICZ);  
-  page.replace("{d1}", String(sysCfg.domoticz_in_topic));  
-  page.replace("{d2}", String(sysCfg.domoticz_out_topic));  
-  page.replace("{d3}", String((int)sysCfg.domoticz_relay_idx[0]));  
-  page.replace("{d4}", String((int)sysCfg.domoticz_update_timer));  
-  page += FPSTR(HTTP_FORM_END);  
-  page += FPSTR(HTTP_BTN_CONF);  
-  showPage(page);  
-}  
-#endif  // USE_DOMOTICZ  
+  String page = FPSTR(HTTP_HEAD);
+  page.replace("{v}", "Configure Domoticz");
+  page += FPSTR(HTTP_FORM_DOMOTICZ);
+  page.replace("{d1}", String(sysCfg.domoticz_in_topic));
+  page.replace("{d2}", String(sysCfg.domoticz_out_topic));
+  page.replace("{d3}", String((int)sysCfg.domoticz_relay_idx[0]));
+  page.replace("{d4}", String((int)sysCfg.domoticz_update_timer));
+  page += FPSTR(HTTP_FORM_END);
+  page += FPSTR(HTTP_BTN_CONF);
+  showPage(page);
+}
+#endif  // USE_DOMOTICZ
 
 void handleLog()
 {
@@ -701,7 +701,7 @@ void handleLog()
     page.replace("{a" + String(i), (i == sysCfg.seriallog_level) ? " selected " : " ");
     page.replace("{b" + String(i), (i == sysCfg.weblog_level) ? " selected " : " ");
     page.replace("{c" + String(i), (i == sysCfg.syslog_level) ? " selected " : " ");
-  }  
+  }
   page.replace("{l2}", String(sysCfg.syslog_host));
   page.replace("{l3}", String(sysCfg.syslog_port));
   page.replace("{l4}", String(sysCfg.tele_period));
@@ -848,7 +848,7 @@ void handleUpgradeStart()
     snprintf_P(svalue, sizeof(svalue), PSTR("otaurl %s"), webServer->arg("o").c_str());
     do_cmnd(svalue);
   }
-  
+
   String page = FPSTR(HTTP_HEAD);
   page.replace("{v}", "Info");
   page += F("<div style='text-align:center;'><b>Upgrade started ...</b></div>");
@@ -920,9 +920,9 @@ void handleUploadLoop()
     Update.end();
     return;
   }
-  
+
   HTTPUpload& upload = webServer->upload();
-  
+
   if (upload.status == UPLOAD_FILE_START) {
     restartflag = 60;
     mqttcounter = 60;
@@ -1126,7 +1126,7 @@ void handleRestart()
 void handleUPnPevent()
 {
   addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Handle WeMo basic event"));
-  
+
   String request = webServer->arg(0);
   if(request.indexOf("State>1</Binary") > 0) do_cmnd_power(1, 1);
   if(request.indexOf("State>0</Binary") > 0) do_cmnd_power(1, 0);
@@ -1138,7 +1138,7 @@ void handleUPnPservice()
   addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Handle WeMo event service"));
 
   String eventservice_xml = FPSTR(WEMO_EVENTSERVICE_XML);
-  webServer->send(200, "text/plain", eventservice_xml); 
+  webServer->send(200, "text/plain", eventservice_xml);
 }
 
 void handleUPnPsetup()
@@ -1169,7 +1169,7 @@ void handleNotFound()
   for ( uint8_t i = 0; i < webServer->args(); i++ ) {
     message += " " + webServer->argName ( i ) + ": " + webServer->arg ( i ) + "\n";
   }
-  
+
   webServer->sendHeader("Cache-Control", "no-cache, no-store, must-revalidate");
   webServer->sendHeader("Pragma", "no-cache");
   webServer->sendHeader("Expires", "-1");
@@ -1203,4 +1203,3 @@ boolean isIp(String str)
 }
 
 #endif  // USE_WEBSERVER
-

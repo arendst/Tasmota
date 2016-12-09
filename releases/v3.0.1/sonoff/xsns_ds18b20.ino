@@ -26,7 +26,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #ifdef SEND_TELEMETRY_DS18B20
 /*********************************************************************************************\
  * DS18B20 - Temperature
- * 
+ *
  * Source: Marinus vd Broek https://github.com/ESP8266nu/ESPEasy and AlexTransit (CRC)
 \*********************************************************************************************/
 
@@ -34,7 +34,7 @@ uint8_t dsb_reset()
 {
   uint8_t r;
   uint8_t retries = 125;
-  
+
   pinMode(DSB_PIN, INPUT);
   do  {                                 // wait until the wire is high... just in case
     if (--retries == 0) return 0;
@@ -94,7 +94,7 @@ void dsb_write_bit(uint8_t v)
 void dsb_write(uint8_t ByteToWrite)
 {
   uint8_t bitMask;
-  
+
   for (bitMask = 0x01; bitMask; bitMask <<= 1)
     dsb_write_bit((bitMask & ByteToWrite) ? 1 : 0);
 }
@@ -127,7 +127,7 @@ boolean dsb_readTemp(float &t)
   byte msb, lsb, crc;
 
   t = NAN;
-  
+
   if (!dsb_read_bit()) {     //check measurement end
     addLog_P(LOG_LEVEL_DEBUG, PSTR("DSB: Sensor busy"));
     return false;

@@ -26,7 +26,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #ifdef USE_POWERMONITOR
 /*********************************************************************************************\
  * HLW8012 - Energy
- * 
+ *
  * Based on Source: Shenzhen Heli Technology Co., Ltd
 \*********************************************************************************************/
 
@@ -121,7 +121,7 @@ boolean hlw_readEnergy(byte option, float &ed, uint16_t &e, uint16_t &w, uint16_
   } else {
     ed = 0;
   }
-  
+
   if (option) {
     if (!hlw_lasttime) {
       hlw_period = sysCfg.tele_period;
@@ -168,7 +168,7 @@ boolean hlw_readEnergy(byte option, float &ed, uint16_t &e, uint16_t &w, uint16_
     c = 0;
   }
 
-  return true; 
+  return true;
 }
 
 void hlw_init()
@@ -189,9 +189,9 @@ void hlw_init()
   hlw_Ecntr = 0;
   hlw_EDcntr = 0;
   hlw_kWhtoday = 0;
-  
+
   hlw_SELflag = 0;  // Voltage;
-  
+
   pinMode(HLW_SEL, OUTPUT);
   digitalWrite(HLW_SEL, hlw_SELflag);
   pinMode(HLW_CF1, INPUT_PULLUP);
@@ -207,4 +207,3 @@ void hlw_init()
 }
 
 #endif  // USE_POWERMONITOR
-

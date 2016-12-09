@@ -26,7 +26,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #ifdef SEND_TELEMETRY_DHT2
 /*********************************************************************************************\
  * DHT11, DHT21 (AM2301), DHT22 (AM2302, AM2321) - Temperature and Humidy
- * 
+ *
  * Reading temperature or humidity takes about 250 milliseconds!
  * Sensor readings may also be up to 2 seconds 'old' (its a very slow sensor)
 \*********************************************************************************************/
@@ -45,7 +45,7 @@ boolean dht_readTempHum(bool S, float &t, float &h)
   t = dht2.readTemperature(S);
   if (!isnan(t)) dht2_t = t; else if (dht2_h) t = dht2_t;
   if (!isnan(h)) dht2_h = h; else if (dht2_h) h = dht2_h;
-  return (!isnan(t) && !isnan(h)); 
+  return (!isnan(t) && !isnan(h));
 }
 
 void dht_init()

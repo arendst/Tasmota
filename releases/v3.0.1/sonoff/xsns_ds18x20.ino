@@ -54,9 +54,9 @@ void ds18x20_search()
     if (!ds.search(ds18x20_addr[num_sensors])) {
       ds.reset_search();
       break;
-    }    
+    }
     // If CRC Ok and Type DS18S20 or DS18B20
-    if ((OneWire::crc8(ds18x20_addr[num_sensors], 7) == ds18x20_addr[num_sensors][7]) && 
+    if ((OneWire::crc8(ds18x20_addr[num_sensors], 7) == ds18x20_addr[num_sensors][7]) &&
        ((ds18x20_addr[num_sensors][0]==0x10) || (ds18x20_addr[num_sensors][0]==0x28)))
        num_sensors++;
   }
@@ -73,14 +73,14 @@ void ds18x20_search()
 
 uint8_t ds18x20_sensors()
 {
-  return ds18x20_snsrs;  
+  return ds18x20_snsrs;
 }
 
 String ds18x20_address(uint8_t sensor)
 {
   char addrStr[20];
   uint8_t i;
-  
+
   for (i = 0; i < 8; i++) sprintf(addrStr+2*i, "%02X", ds18x20_addr[ds18x20_idx[sensor]][i]);
   return String(addrStr);
 }
@@ -98,7 +98,7 @@ String ds18x20_type(uint8_t sensor)
     break;
   default:
     strcpy(typeStr, "DS18x20");
-  }         
+  }
   return String(typeStr);
 }
 
@@ -108,7 +108,7 @@ void ds18x20_convert()
   ds.write(W1_SKIP_ROM);        // Address all Sensors on Bus
   ds.write(W1_CONVERT_TEMP);    // start conversion, no parasite power on at the end
 //  delay(750);                   // 750ms should be enough for 12bit conv
-}                             
+}
 
 boolean ds18x20_read(uint8_t sensor, float &t)
 {
@@ -119,9 +119,9 @@ boolean ds18x20_read(uint8_t sensor, float &t)
   uint8_t present = 0;
 
   t = NAN;
-  
+
   ds.reset();
-  ds.select(ds18x20_addr[ds18x20_idx[sensor]]);    
+  ds.select(ds18x20_addr[ds18x20_idx[sensor]]);
   ds.write(W1_READ_SCRATCHPAD); // Read Scratchpad
 
   for (i = 0; i < 9; i++) data[i] = ds.read();
@@ -139,7 +139,7 @@ boolean ds18x20_read(uint8_t sensor, float &t)
     case 0x28:  // DS18B20
       t = ((data[1] << 8) + data[0]) * 0.0625;
       break;
-    }         
+    }
   }
   return (!isnan(t));
 }
