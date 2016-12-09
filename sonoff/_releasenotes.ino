@@ -1,4 +1,4 @@
-/* 3.0.2
+/* 3.0.2 20161209
  * Add pushbutton to SwitchMode
  *
  * 3.0.1 20161209
