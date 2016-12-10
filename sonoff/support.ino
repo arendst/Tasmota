@@ -55,7 +55,7 @@ uint32_t getHash()
   uint32_t hash = 0;
   uint8_t *bytes = (uint8_t*)&sysCfg;
 
-  for (int i = 0; i < sizeof(SYSCFG); i++) hash += bytes[i]*(i+1);
+  for (uint16_t i = 0; i < sizeof(SYSCFG); i++) hash += bytes[i]*(i+1);
   return hash;
 }
 

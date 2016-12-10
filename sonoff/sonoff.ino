@@ -10,7 +10,7 @@
  * ====================================================
 */
 
-#define VERSION                0x03000200   // 3.0.2
+#define VERSION                0x03000300   // 3.0.3
 
 #define SONOFF                 1            // Sonoff, Sonoff SV, Sonoff Dual, Sonoff TH 10A/16A, S20 Smart Socket, 4 Channel
 #define SONOFF_POW             9            // Sonoff Pow
@@ -44,7 +44,7 @@ enum swtch_t {TOGGLE, FOLLOW, FOLLOW_INV, PUSHBUTTON, PUSHBUTTON_INV, MAX_SWITCH
 \*********************************************************************************************/
 
 #if MODULE == SONOFF_POW
-  #define FEATURE_POWER_LIMIT
+//  #define FEATURE_POWER_LIMIT
 #endif
 #define MAX_POWER_HOLD         10           // Time in SECONDS to allow max agreed power
 #define MAX_POWER_WINDOW       30           // Time in SECONDS to disable allow max agreed power
@@ -580,7 +580,7 @@ void CFG_Delta()
 
 /********************************************************************************************/
 
-void getClient(char* output, char* input, byte size)
+void getClient(char* output, const char* input, byte size)
 {
   char *token;
   uint8_t digits = 0;
@@ -622,10 +622,8 @@ void setRelay(uint8_t power)
 
 void json2legacy(char* stopic, char* svalue)
 {
-  char log[LOGSZ];
-
   char *p, *token;
-  int i, j;
+  uint16_t i, j;
 
   if (!strstr(svalue, "{\"")) return;  // No JSON
 
@@ -717,18 +715,33 @@ void mqtt_publish(const char* topic, const char* data)
   mqtt_publish(topic, data, false);
 }
 
-void mqtt_publishPowerState(byte index)
+void mqtt_publishPowerState(byte device)
 {
-  char stopic[TOPSZ], svalue[MESSZ], sindex[10];
+  char stopic[TOPSZ], svalue[MESSZ], sdevice[10];
 
+  if ((device < 1) || (device > Maxdevice)) device = 1;
   snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/RESULT"), PUB_PREFIX, sysCfg.mqtt_topic);
-  snprintf_P(sindex, sizeof(sindex), PSTR("%d"), index);
+  snprintf_P(sdevice, sizeof(sdevice), PSTR("%d"), device);
   snprintf_P(svalue, sizeof(svalue), PSTR("{\"%s%s\":\"%s\"}"),
-    sysCfg.mqtt_subtopic, (Maxdevice > 1) ? sindex : "", (power & (0x01 << (index -1))) ? MQTT_STATUS_ON : MQTT_STATUS_OFF);
+    sysCfg.mqtt_subtopic, (Maxdevice > 1) ? sdevice : "", (power & (0x01 << (device -1))) ? MQTT_STATUS_ON : MQTT_STATUS_OFF);
   if (sysCfg.message_format == JSON) mqtt_publish(stopic, svalue);
   json2legacy(stopic, svalue);
   mqtt_publish(stopic, svalue, sysCfg.mqtt_power_retain);
 }
+
+#ifdef USE_DOMOTICZ
+void mqtt_publishDomoticzPowerState(byte device)
+{
+  char svalue[MESSZ];
+
+  if (sysCfg.domoticz_relay_idx[device -1] && (strlen(sysCfg.domoticz_in_topic) != 0)) {
+    if ((device < 1) || (device > Maxdevice)) device = 1;
+    snprintf_P(svalue, sizeof(svalue), PSTR("{\"idx\":%d, \"nvalue\":%d, \"svalue\":\"\"}"),
+      sysCfg.domoticz_relay_idx[device -1], (power & (0x01 << (device -1))) ? 1 : 0);
+    mqtt_publish(sysCfg.domoticz_in_topic, svalue);
+  }
+}
+#endif  // USE_DOMOTICZ
 
 void mqtt_connected()
 {
@@ -848,19 +861,19 @@ void mqtt_reconnect()
 
 void mqttDataCb(char* topic, byte* data, unsigned int data_len)
 {
-  int i, grpflg = 0, index;
-  float ped, pi, pc;
-  uint16_t pe, pw, pu;
+  uint16_t i = 0, grpflg = 0, index;
   char topicBuf[TOPSZ], dataBuf[data_len+1], dataBufUc[MESSZ];
   char *str, *p, *mtopic = NULL, *type = NULL, *devc = NULL;
   char stopic[TOPSZ], svalue[MESSZ], stemp1[TOPSZ], stemp2[10], stemp3[10];
+  float ped, pi, pc;
+  uint16_t pe, pw, pu;
 
   strncpy(topicBuf, topic, sizeof(topicBuf));
   memcpy(dataBuf, data, sizeof(dataBuf));
   dataBuf[sizeof(dataBuf)-1] = 0;
 
-  snprintf_P(svalue, sizeof(svalue), PSTR("MQTT: Receive topic %s, data size %d, data %s"), topicBuf, i, dataBuf);
-  addLog(LOG_LEVEL_DEBUG, svalue);
+  snprintf_P(svalue, sizeof(svalue), PSTR("MQTT: Receive topic %s, data size %d, data %s"), topicBuf, data_len, dataBuf);
+  addLog(LOG_LEVEL_DEBUG_MORE, svalue);
 
 #ifdef USE_DOMOTICZ
   domoticz_update_flag = 1;
@@ -881,8 +894,10 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
       }
     }
     if (!strlen(dataBuf)) return;
-//    snprintf_P(topicBuf, sizeof(topicBuf), PSTR("%s/%s/LIGHT%d"), SUB_PREFIX, sysCfg.mqtt_topic, i +1);
-    snprintf_P(topicBuf, sizeof(topicBuf), PSTR("%s/%s/POWER%d"), SUB_PREFIX, sysCfg.mqtt_topic, i +1);
+    if (((power >> i) &1) == nvalue) return;
+    snprintf_P(stemp1, sizeof(stemp1), PSTR("%d"), i +1);
+    snprintf_P(topicBuf, sizeof(topicBuf), PSTR("%s/%s/%s%s"),
+      SUB_PREFIX, sysCfg.mqtt_topic, sysCfg.mqtt_subtopic, (Maxdevice > 1) ? stemp1 : "");
     domoticz_update_flag = 0;
   }
 #endif //USE_DOMOTICZ
@@ -953,25 +968,8 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
 
     if ((!strcmp(type,"POWER") || !strcmp(type,"LIGHT")) && (index <= Maxdevice)) {
       snprintf_P(sysCfg.mqtt_subtopic, sizeof(sysCfg.mqtt_subtopic), PSTR("%s"), type);
-      byte mask = 0x01 << (index -1);
-      if ((data_len > 0) && (payload >= 0) && (payload <= 2)) {
-        switch (payload) {
-        case 0: { // Off
-          power &= (0xFF ^ mask);
-          break; }
-        case 1: // On
-          power |= mask;
-          break;
-        case 2: // Toggle
-          power ^= mask;
-          break;
-        }
-        setRelay(power);
-#ifdef USE_DOMOTICZ
-        if (domoticz_update_flag) domoticz_update_timer = 1;
-#endif  // USE_DOMOTICZ
-      }
-      mqtt_publishPowerState(index);
+      if ((data_len == 0) || (payload > 2)) payload = 3;
+      do_cmnd_power(index, payload);
       return;
     }
     else if (!strcmp(type,"STATUS")) {
@@ -1593,14 +1591,13 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
 void send_button_power(byte device, byte state)
 {
   char stopic[TOPSZ], svalue[TOPSZ], stemp1[10];
-  byte mask;
 
   if (device > Maxdevice) device = 1;
   snprintf_P(stemp1, sizeof(stemp1), PSTR("%d"), device);
   snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/%s%s"),
     SUB_PREFIX, sysCfg.mqtt_topic2, sysCfg.mqtt_subtopic, (Maxdevice > 1) ? stemp1 : "");
   if (state == 3) {
-    snprintf_P(svalue, sizeof(svalue), "");
+    svalue[0] = '\0';
   } else {
     if (state == 2) {
       state = ~(power >> (device -1)) & 0x01;
@@ -1623,11 +1620,15 @@ void send_button_power(byte device, byte state)
 
 void do_cmnd_power(byte device, byte state)
 {
-  char stopic[TOPSZ], svalue[TOPSZ], stemp1[10];
+// device  = Relay number 1 and up
+// state 0 = Relay Off
+// state 1 = Relay on
+// state 2 = Toggle relay
+// state 3 = Show power state
 
   if ((device < 1) || (device > Maxdevice)) device = 1;
   byte mask = 0x01 << (device -1);
-  if ((state >= 0) && (state <= 2)) {
+  if (state <= 2) {
     switch (state) {
     case 0: { // Off
       power &= (0xFF ^ mask);
@@ -1637,11 +1638,10 @@ void do_cmnd_power(byte device, byte state)
       break;
     case 2: // Toggle
       power ^= mask;
-      break;
     }
     setRelay(power);
 #ifdef USE_DOMOTICZ
-    if (domoticz_update_flag) domoticz_update_timer = 1;
+    if (domoticz_update_flag) mqtt_publishDomoticzPowerState(device);
 #endif  // USE_DOMOTICZ
   }
   mqtt_publishPowerState(device);
@@ -1853,9 +1853,9 @@ void every_second_cb()
 void every_second()
 {
   char log[LOGSZ], stopic[TOPSZ], svalue[MESSZ], stime[21], stemp0[10], stemp1[10], stemp2[10], stemp3[10];
+  uint8_t i, djson;
   float t, h, ped, pi, pc;
   uint16_t pe, pw, pu;
-  uint8_t i, djson;
 
   snprintf_P(stime, sizeof(stime), PSTR("%04d-%02d-%02dT%02d:%02d:%02d"),
     rtcTime.Year, rtcTime.Month, rtcTime.Day, rtcTime.Hour, rtcTime.Minute, rtcTime.Second);
@@ -1878,18 +1878,11 @@ void every_second()
   }
 
 #ifdef USE_DOMOTICZ
-  if ((sysCfg.domoticz_update_timer || domoticz_update_timer) && sysCfg.domoticz_relay_idx[0] && (strlen(sysCfg.domoticz_in_topic) != 0)) {
+  if ((sysCfg.domoticz_update_timer || domoticz_update_timer) && sysCfg.domoticz_relay_idx[0]) {
     domoticz_update_timer--;
     if (domoticz_update_timer <= 0) {
       domoticz_update_timer = sysCfg.domoticz_update_timer;
-      strlcpy(stopic, sysCfg.domoticz_in_topic, sizeof(stopic));
-      for (i = 0; i < Maxdevice; i++) {
-        if (sysCfg.domoticz_relay_idx[i]) {
-          snprintf_P(svalue, sizeof(svalue), PSTR("{\"idx\":%d, \"nvalue\":%d, \"svalue\":\"\"}"),
-            sysCfg.domoticz_relay_idx[i], (power & (0x01 << i)) ? 1 : 0);
-          mqtt_publish(stopic, svalue);
-        }
-      }
+      for (i = 1; i <= Maxdevice; i++) mqtt_publishDomoticzPowerState(i);
     }
   }
 #endif  // USE_DOMOTICZ
@@ -2157,7 +2150,7 @@ void every_second()
 
 void stateloop()
 {
-  uint8_t button, flag;
+  uint8_t button, flag, switchflag;
   char scmnd[20], log[LOGSZ], stopic[TOPSZ], svalue[TOPSZ];
 
   timerxs = millis() + (1000 / STATES);
@@ -2240,26 +2233,29 @@ void stateloop()
 #ifdef USE_WALL_SWITCH
   button = digitalRead(SWITCH_PIN);
   if (button != lastwallswitch) {
+    switchflag = 3;
     switch (sysCfg.switchmode) {
     case TOGGLE:
-      flag = 2;                // Toggle
+      switchflag = 2;                // Toggle
       break;
     case FOLLOW:
-      flag = button & 0x01;    // Follow wall switch state
+      switchflag = button & 0x01;    // Follow wall switch state
       break;
     case FOLLOW_INV:
-      flag = ~button & 0x01;   // Follow inverted wall switch state
+      switchflag = ~button & 0x01;   // Follow inverted wall switch state
       break;
     case PUSHBUTTON:
-      if ((button == PRESSED) && (lastwallswitch == NOT_PRESSED)) flag = 2;  // Toggle with pushbutton to Gnd
+      if ((button == PRESSED) && (lastwallswitch == NOT_PRESSED)) switchflag = 2;  // Toggle with pushbutton to Gnd
       break;
     case PUSHBUTTON_INV:
-      if ((button == NOT_PRESSED) && (lastwallswitch == PRESSED)) flag = 2;  // Toggle with releasing pushbutton from Gnd
+      if ((button == NOT_PRESSED) && (lastwallswitch == PRESSED)) switchflag = 2;  // Toggle with releasing pushbutton from Gnd
     }
-    if (mqttClient.connected() && strcmp(sysCfg.mqtt_topic2,"0")) {
-      send_button_power(1, flag);   // Execute commend via MQTT
-    } else {
-      do_cmnd_power(1, flag);       // Execute command internally
+    if (switchflag < 3) {
+      if (mqttClient.connected() && strcmp(sysCfg.mqtt_topic2,"0")) {
+        send_button_power(1, switchflag);   // Execute commend via MQTT
+      } else {
+        do_cmnd_power(1, switchflag);       // Execute command internally
+      }
     }
     lastwallswitch = button;
   }

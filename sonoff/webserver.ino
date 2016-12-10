@@ -359,8 +359,6 @@ void showPage(String &page)
 
 void handleRoot()
 {
-  char svalue[MESSZ];
-
   addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Handle root"));
 
   if (captivePortal()) { // If captive portal redirect instead of displaying the page.
@@ -866,7 +864,6 @@ void handleUploadDone()
     handleRoot();
     return;
   }
-  char svalue[MESSZ];
 
   addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Firmware upload done"));
   WIFI_configCounter();
@@ -1193,7 +1190,7 @@ boolean captivePortal()
 /** Is this an IP? */
 boolean isIp(String str)
 {
-  for (int i = 0; i < str.length(); i++) {
+  for (uint16_t i = 0; i < str.length(); i++) {
     int c = str.charAt(i);
     if (c != '.' && (c < '0' || c > '9')) {
       return false;
