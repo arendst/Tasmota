@@ -10,7 +10,7 @@
  * ====================================================
 */
 
-#define VERSION                0x03000300   // 3.0.3
+#define VERSION                0x03000400   // 3.0.3
 
 #define SONOFF                 1            // Sonoff, Sonoff SV, Sonoff Dual, Sonoff TH 10A/16A, S20 Smart Socket, 4 Channel
 #define SONOFF_POW             9            // Sonoff Pow
@@ -390,7 +390,7 @@ boolean udpConnected = false;
 
 #ifdef USE_DOMOTICZ
   int domoticz_update_timer = 0;
-  byte domoticz_update_flag;
+  byte domoticz_update_flag = 1;
 #endif  // USE_DOMOTICZ
 
 /********************************************************************************************/
@@ -1642,6 +1642,7 @@ void do_cmnd_power(byte device, byte state)
     setRelay(power);
 #ifdef USE_DOMOTICZ
     if (domoticz_update_flag) mqtt_publishDomoticzPowerState(device);
+    domoticz_update_flag = 1;
 #endif  // USE_DOMOTICZ
   }
   mqtt_publishPowerState(device);

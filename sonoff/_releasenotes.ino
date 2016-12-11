@@ -1,8 +1,11 @@
-/* 3.0.3 20161210
+/* 3.0.4 20161211
+ * Fix intermittent Domoticz update misses
+ *
+ * 3.0.3 20161210
  * Fix compiler warnings
  * Remove redundant code
  * Fix Domoticz pushbutton support
- * 
+ *
  * 3.0.2 20161209
  * Add pushbutton to SwitchMode
  *
