@@ -23,7 +23,7 @@
 #define STA_SSID2              "indebuurt2"      // [Ssid2] Optional alternate AP Wifi SSID
 #define STA_PASS2              "VnsqrtnrsddbrN"  // [Password2] Optional alternate AP Wifi password
 #define WIFI_HOSTNAME          "%s-%04d"         // [Hostname] Expands to <MQTT_TOPIC>-<last 4 decimal chars of MAC address>
-#define WIFI_CONFIG_TOOL       WIFI_WPSCONFIG    // [WifiConfig] Default tool if wifi fails to connect (WIFI_RESTART, WIFI_SMARTCONFIG, WIFI_MANAGER or WIFI_WPSCONFIG)
+#define WIFI_CONFIG_TOOL       WIFI_WPSCONFIG    // [WifiConfig] Default tool if wifi fails to connect (WIFI_RESTART, WIFI_SMARTCONFIG, WIFI_MANAGER, WIFI_WPSCONFIG, WIFI_RETRY)
 
 // -- Syslog ---------------------------------
 #define SYS_LOG_HOST           "domus1"        // [LogHost] (Linux) syslog host
@@ -88,7 +88,7 @@
 
 // -- HTTP -----------------------------------
 #define USE_WEBSERVER                       // Enable web server and wifi manager (+43k code, +2k mem) - Disable by //
-  #define USE_WEMO_EMULATION                // Enable Belkin WeMo PowerSwitch emulation for Alexa (+4k code, +2k mem)
+//  #define USE_WEMO_EMULATION                // Enable Belkin WeMo PowerSwitch emulation for Alexa (+4k code, +2k mem)
   #define WEB_SERVER           2            // [WebServer] Web server (0 = Off, 1 = Start as User, 2 = Start as Admin)
 
 // -- Time - Up to three NTP servers in your region
@@ -104,7 +104,7 @@
 
 // -- Application ----------------------------
 #define APP_TIMEZONE           1            // [Timezone] +1 hour (Amsterdam) (-12 .. 12 = hours from UTC, 99 = use TIME_DST/TIME_STD)
-#define APP_LEDSTATE           1            // [LedState] Do not show power state (1 = Show power state)
+#define APP_LEDSTATE           LED_POWER    // [LedState] Function of led (LED_OFF, LED_POWER, LED_MQTTSUB, LED_POWER_MQTTSUB, LED_MQTTPUB, LED_POWER_MQTTPUB, LED_MQTT, LED_POWER_MQTT)
 
 #define TEMP_RESOLUTION        1            // Maximum number of decimals (0 - 3) showing sensor Temperature
 #define HUMIDITY_RESOLUTION    1            // Maximum number of decimals (0 - 3) showing sensor Humidity

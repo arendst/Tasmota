@@ -10,7 +10,7 @@
  * ====================================================
 */
 
-#define VERSION                0x03000400   // 3.0.3
+#define VERSION                0x03000500   // 3.0.5
 
 #define SONOFF                 1            // Sonoff, Sonoff SV, Sonoff Dual, Sonoff TH 10A/16A, S20 Smart Socket, 4 Channel
 #define SONOFF_POW             9            // Sonoff Pow
@@ -27,9 +27,10 @@ enum log_t   {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, 
 enum week_t  {Last, First, Second, Third, Fourth};
 enum dow_t   {Sun=1, Mon, Tue, Wed, Thu, Fri, Sat};
 enum month_t {Jan=1, Feb, Mar, Apr, May, Jun, Jul, Aug, Sep, Oct, Nov, Dec};
-enum wifi_t  {WIFI_RESTART, WIFI_SMARTCONFIG, WIFI_MANAGER, WIFI_WPSCONFIG};
+enum wifi_t  {WIFI_RESTART, WIFI_SMARTCONFIG, WIFI_MANAGER, WIFI_WPSCONFIG, WIFI_RETRY, MAX_WIFI_OPTION};
 enum msgf_t  {LEGACY, JSON, MAX_FORMAT};
 enum swtch_t {TOGGLE, FOLLOW, FOLLOW_INV, PUSHBUTTON, PUSHBUTTON_INV, MAX_SWITCH_OPTION};
+enum led_t   {LED_OFF, LED_POWER, LED_MQTTSUB, LED_POWER_MQTTSUB, LED_MQTTPUB, LED_POWER_MQTTPUB, LED_MQTT, LED_POWER_MQTT, MAX_LED_OPTION};
 
 #include "user_config.h"
 
@@ -143,7 +144,7 @@ const char commands[MAX_BUTTON_COMMANDS][14] PROGMEM = {
   {"restart 1"},      // Press button six times
   {"upgrade 1"}};     // Press button seven times
 
-const char wificfg[4][12] PROGMEM = { "Restart", "Smartconfig", "Wifimanager", "WPSconfig" };
+const char wificfg[5][12] PROGMEM = { "Restart", "Smartconfig", "Wifimanager", "WPSconfig", "Retry" };
 
 struct SYSCFG2 {
   unsigned long cfg_holder;
@@ -350,7 +351,7 @@ uint8_t power;                        // Current copy of sysCfg.power
 byte syslog_level;                    // Current copy of sysCfg.syslog_level
 uint16_t syslog_timer = 0;            // Timer to re-enable syslog_level
 
-int blinks = 1;                       // Number of LED blinks
+int blinks = 201;                     // Number of LED blinks
 uint8_t blinkstate = 0;               // LED state
 
 uint8_t lastbutton = NOT_PRESSED;     // Last button state
@@ -707,7 +708,7 @@ void mqtt_publish(const char* topic, const char* data, boolean retained)
     snprintf_P(log, sizeof(log), PSTR("RSLT: %s = %s"), topic, data);
   }
   addLog(LOG_LEVEL_INFO, log);
-  blinks++;
+  if (sysCfg.ledstate &0x04) blinks++;
 }
 
 void mqtt_publish(const char* topic, const char* data)
@@ -959,6 +960,7 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
   if (type != NULL) {
     snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/RESULT"), PUB_PREFIX, sysCfg.mqtt_topic);
     snprintf_P(svalue, sizeof(svalue), PSTR("{\"Command\":\"Error\"}"));
+    if (sysCfg.ledstate &0x02) blinks++;
 
     if (!strcmp(dataBufUc,"?")) data_len = 0;
     int16_t payload = atoi(dataBuf);
@@ -1194,7 +1196,7 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
       snprintf_P(svalue, sizeof(svalue), PSTR("{\"Hostname\":\"%s\"}"), sysCfg.hostname);
     }
     else if (!strcmp(type,"WIFICONFIG") || !strcmp(type,"SMARTCONFIG")) {
-      if ((data_len > 0) && (payload >= WIFI_RESTART) && (payload <= WIFI_WPSCONFIG)) {
+      if ((data_len > 0) && (payload >= WIFI_RESTART) && (payload < MAX_WIFI_OPTION)) {
         sysCfg.sta_config = payload;
         wificheckflag = sysCfg.sta_config;
         snprintf_P(stemp1, sizeof(stemp1), wificfg[sysCfg.sta_config]);
@@ -1420,10 +1422,11 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
       snprintf_P(svalue, sizeof(svalue), PSTR("{\"Timezone\":\"%d%s\"}"), sysCfg.timezone, (sysCfg.mqtt_units) ? " Hr" : "");
     }
     else if (!strcmp(type,"LEDSTATE")) {
-      if ((data_len > 0) && (payload >= 0) && (payload <= 1)) {
+      if ((data_len > 0) && (payload >= 0) && (payload < MAX_LED_OPTION)) {
         sysCfg.ledstate = payload;
+        if (!sysCfg.ledstate) digitalWrite(LED_PIN, LED_INVERTED);
       }
-      snprintf_P(svalue, sizeof(svalue), PSTR("{\"LedState\":\"%s\"}"), (sysCfg.ledstate) ? MQTT_STATUS_ON : MQTT_STATUS_OFF);
+      snprintf_P(svalue, sizeof(svalue), PSTR("{\"LedState\":%d}"), sysCfg.ledstate);
     }
     else if (!strcmp(type,"CFGDUMP")) {
       CFG_Dump();
@@ -1548,7 +1551,7 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
     }
   }
   if (type == NULL) {
-    blinks = 1;
+    blinks = 201;
     snprintf_P(svalue, sizeof(svalue), PSTR("{\"Commands1\":\"Status, SaveData, SaveSate, Upgrade, Otaurl, Restart, Reset, WifiConfig, Seriallog, Syslog, LogHost, LogPort, SSId1, SSId2, Password1, Password2, AP%s\"}"), (!grpflg) ? ", Hostname" : "");
     if (sysCfg.message_format != JSON) json2legacy(stopic, svalue);
     mqtt_publish(stopic, svalue);
@@ -2178,7 +2181,7 @@ void stateloop()
     multipress = (multiwindow) ? multipress +1 : 1;
     snprintf_P(log, sizeof(log), PSTR("APP: Multipress %d"), multipress);
     addLog(LOG_LEVEL_DEBUG, log);
-    blinks = 1;
+    blinks = 201;
     multiwindow = STATES /2;         // 1/2 second multi press window
   }
   lastbutton = button;
@@ -2269,10 +2272,15 @@ void stateloop()
       } else {
         blinkstate ^= 1;  // Blink
       }
-      digitalWrite(LED_PIN, (LED_INVERTED) ? !blinkstate : blinkstate);
-      if (!blinkstate) blinks--;
+      if ((sysCfg.ledstate &0x06) || (blinks > 200) || (blinkstate)) {
+        digitalWrite(LED_PIN, (LED_INVERTED) ? !blinkstate : blinkstate);
+      }
+      if (!blinkstate) {
+        blinks--;
+        if (blinks == 200) blinks = 0;
+      }
     } else {
-      if (sysCfg.ledstate) {
+      if (sysCfg.ledstate &0x01) {
         digitalWrite(LED_PIN, (LED_INVERTED) ? !power : power);
       }
     }

@@ -301,8 +301,8 @@ void initSpiffs()
 
 #define WIFI_CONFIG_SEC   60   // seconds before restart
 #define WIFI_MANAGER_SEC  120  // seconds before restart
-#define WIFI_CHECKSEC     20   // seconds
-#define WIFI_RETRY        30
+#define WIFI_CHECK_SEC    20   // seconds
+#define WIFI_RETRY_SEC    30   // seconds
 
 uint8_t _wificounter, _wifiretry, _wifistatus, _wpsresult, _wificonfigflag = 0, _wifiConfigCounter = 0;
 
@@ -374,6 +374,7 @@ boolean WIFI_beginWPSConfig(void)
 void WIFI_config(uint8_t type)
 {
   if (!_wificonfigflag) {
+    if (type == WIFI_RETRY) return;
     if (udpConnected) WiFiUDP::stopAll();
     WiFi.disconnect();        // Solve possible Wifi hangs
     _wificonfigflag = type;
@@ -437,8 +438,8 @@ void WIFI_begin(uint8_t flag)
 void WIFI_check_ip()
 {
   if ((WiFi.status() == WL_CONNECTED) && (static_cast<uint32_t>(WiFi.localIP()) != 0)) {
-    _wificounter = WIFI_CHECKSEC;
-    _wifiretry = WIFI_RETRY;
+    _wificounter = WIFI_CHECK_SEC;
+    _wifiretry = WIFI_RETRY_SEC;
     addLog_P((_wifistatus != WL_CONNECTED) ? LOG_LEVEL_INFO : LOG_LEVEL_DEBUG_MORE, PSTR("Wifi: Connected"));
     _wifistatus = WL_CONNECTED;
   } else {
@@ -447,32 +448,34 @@ void WIFI_check_ip()
       case WL_CONNECTED:
         addLog_P(LOG_LEVEL_INFO, PSTR("Wifi: Connect failed as no IP address received"));
         _wifistatus = 0;
-        _wifiretry = WIFI_RETRY;
+        _wifiretry = WIFI_RETRY_SEC;
         break;
       case WL_NO_SSID_AVAIL:
         addLog_P(LOG_LEVEL_INFO, PSTR("Wifi: Connect failed as AP cannot be reached"));
-        if (_wifiretry > (WIFI_RETRY / 2)) _wifiretry = WIFI_RETRY / 2;
+        if (_wifiretry > (WIFI_RETRY_SEC / 2)) _wifiretry = WIFI_RETRY_SEC / 2;
         else if (_wifiretry) _wifiretry = 0;
         break;
       case WL_CONNECT_FAILED:
         addLog_P(LOG_LEVEL_INFO, PSTR("Wifi: Connect failed with AP incorrect password"));
-        if (_wifiretry > (WIFI_RETRY / 2)) _wifiretry = WIFI_RETRY / 2;
+        if (_wifiretry > (WIFI_RETRY_SEC / 2)) _wifiretry = WIFI_RETRY_SEC / 2;
         else if (_wifiretry) _wifiretry = 0;
         break;
       default:  // WL_IDLE_STATUS and WL_DISCONNECTED
-        if (!_wifiretry || (_wifiretry == (WIFI_RETRY / 2))) {
+        if (!_wifiretry || (_wifiretry == (WIFI_RETRY_SEC / 2))) {
           addLog_P(LOG_LEVEL_INFO, PSTR("Wifi: Connect failed with AP timeout"));
         } else {
           addLog_P(LOG_LEVEL_DEBUG, PSTR("Wifi: Attempting connection..."));
         }
     }
     if (_wifiretry) {
-      if (_wifiretry == WIFI_RETRY) WIFI_begin(3);        // Select default SSID
-      if (_wifiretry == (WIFI_RETRY / 2)) WIFI_begin(2);  // Select alternate SSID
+      if (_wifiretry == WIFI_RETRY_SEC) WIFI_begin(3);        // Select default SSID
+      if (_wifiretry == (WIFI_RETRY_SEC / 2)) WIFI_begin(2);  // Select alternate SSID
       _wificounter = 1;
       _wifiretry--;
     } else {
       WIFI_config(sysCfg.sta_config);
+      _wificounter = 1;
+      _wifiretry = WIFI_RETRY_SEC;
     }
   }
 }
@@ -510,7 +513,7 @@ void WIFI_Check(uint8_t param)
     } else {
       if (_wificounter <= 0) {
         addLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("Wifi: Checking connection..."));
-        _wificounter = WIFI_CHECKSEC;
+        _wificounter = WIFI_CHECK_SEC;
         WIFI_check_ip();
       }
 #ifdef USE_WEBSERVER
@@ -545,7 +548,7 @@ void WIFI_Connect(char *Hostname)
   WiFi.persistent(false);   // Solve possible wifi init errors
   WiFi.hostname(Hostname);
   _wifistatus = 0;
-  _wifiretry = WIFI_RETRY;
+  _wifiretry = WIFI_RETRY_SEC;
   _wificounter = 1;
 }
 
