@@ -1,4 +1,8 @@
-/* 3.0.5 20161215
+/* 3.0.6 20161217
+ * Fix MQTT_CLIENT_ID starting with % sign as in "%06X"
+ * Add auto power off after PulseTime * 0.1 Sec to relay 1
+ *
+ * 3.0.5 20161215
  * Add more control over LED with command LedState options
  *   LED_OFF (0), LED_POWER (1), LED_MQTTSUB (2), LED_POWER_MQTTSUB (3), LED_MQTTPUB (4), LED_POWER_MQTTPUB (5), LED_MQTT (6), LED_POWER_MQTT (7)
  * Add option WIFI_RETRY (4) to command WifiConfig to allow connection retry to other AP without restart
