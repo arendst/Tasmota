@@ -1,5 +1,9 @@
 /*********************************************************************************************\
  * User specific configuration parameters
+ * 
+ * ATTENTION: Changes to most PARAMETER defines will only override flash settings if you change
+ *            define CFG_HOLDER. 
+ *            Most parameters can be changed online using commands via MQTT, WebConsole or serial
  *
  * Corresponding MQTT/Serial/Console commands in [brackets]
 \*********************************************************************************************/

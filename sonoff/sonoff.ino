@@ -10,7 +10,7 @@
  * ====================================================
 */
 
-#define VERSION                0x03000600   // 3.0.6
+#define VERSION                0x03000700   // 3.0.7
 
 #define SONOFF                 1            // Sonoff, Sonoff SV, Sonoff Dual, Sonoff TH 10A/16A, S20 Smart Socket, 4 Channel
 #define SONOFF_POW             9            // Sonoff Pow
@@ -33,6 +33,7 @@ enum swtch_t {TOGGLE, FOLLOW, FOLLOW_INV, PUSHBUTTON, PUSHBUTTON_INV, MAX_SWITCH
 enum led_t   {LED_OFF, LED_POWER, LED_MQTTSUB, LED_POWER_MQTTSUB, LED_MQTTPUB, LED_POWER_MQTTPUB, LED_MQTT, LED_POWER_MQTT, MAX_LED_OPTION};
 
 #include "user_config.h"
+#include "user_config_override.h"
 
 /*********************************************************************************************\
  * Enable feature by removing leading // or disable feature by adding leading //

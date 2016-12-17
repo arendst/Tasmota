@@ -1,4 +1,8 @@
-/* 3.0.6 20161217
+/* 3.0.7 20161217
+ * Add user_config_override.h to be used by user to override some defaults in user_config.h
+ * Fix Sonoff Pow low power (down to 4W) intermittent measurements
+ *
+ * 3.0.6 20161217
  * Fix MQTT_CLIENT_ID starting with % sign as in "%06X"
  * Add auto power off after PulseTime * 0.1 Sec to relay 1
  *

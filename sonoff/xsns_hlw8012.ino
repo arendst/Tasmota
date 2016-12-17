@@ -34,8 +34,8 @@ POSSIBILITY OF SUCH DAMAGE.
 #define HLW_UREF             2200    // 220.0V
 #define HLW_IREF             4545    // 4.545A
 
-byte hlw_SELflag, hlw_cf1_timer, hlw_seconds, hlw_startup;
-unsigned long hlw_cf_plen, hlw_cf_last;
+byte hlw_SELflag, hlw_cf_timer, hlw_cf1_timer, hlw_fifth_second, hlw_startup;
+unsigned long hlw_cf_plen, hlw_cf_last, hlw_cf_active;
 unsigned long hlw_cf1_plen, hlw_cf1_last;
 unsigned long hlw_cf1u_plen, hlw_cf1i_plen;
 unsigned long hlw_Ecntr, hlw_EDcntr, hlw_kWhtoday;
@@ -50,6 +50,7 @@ void hlw_cf_interrupt()
 {
   hlw_cf_plen = micros() - hlw_cf_last;
   hlw_cf_last = micros();
+  hlw_cf_active = 1;
   hlw_EDcntr++;
   hlw_Ecntr++;
 }
@@ -71,17 +72,15 @@ void hlw_200mS()
 {
   unsigned long hlw_len, hlw_temp;
 
-  hlw_seconds++;
-  if (hlw_seconds == 5) {
-    hlw_seconds = 0;
+  hlw_fifth_second++;
+  if (hlw_fifth_second == 5) {
+    hlw_fifth_second = 0;
 
     if (hlw_EDcntr) {
       hlw_len = 1000000 / hlw_EDcntr;
       hlw_EDcntr = 0;
       hlw_temp = (HLW_PREF * sysCfg.hlw_pcal) / hlw_len;
       hlw_kWhtoday += (hlw_temp * 100) / 36;
-    } else {
-      hlw_cf_plen = 0;
     }
     if (rtc_loctime() == rtc_midnight()) {
       sysCfg.hlw_kWhyesterday = hlw_kWhtoday;
@@ -93,6 +92,13 @@ void hlw_200mS()
     }
   }
 
+  hlw_cf_timer--;
+  if (!hlw_cf_timer) {
+    hlw_cf_timer = 15;  // 4W = 3 Sec
+    if (!hlw_cf_active) hlw_cf_plen = 0;  // No load for over three seconds
+    hlw_cf_active = 0;
+  }
+  
   hlw_cf1_timer--;
   if (!hlw_cf1_timer) {
     hlw_cf1_timer = 10;
@@ -112,9 +118,9 @@ boolean hlw_readEnergy(byte option, float &ed, uint16_t &e, uint16_t &w, uint16_
   unsigned long hlw_len, hlw_temp, hlw_w, hlw_u, hlw_i;
   int hlw_period, hlw_interval;
 
-//  char log[LOGSZ];
-//  snprintf_P(log, sizeof(log), PSTR("HLW: CF %d, CF1U %d, CF1I %d"), hlw_cf_plen, hlw_cf1u_plen, hlw_cf1i_plen);
-//  addLog(LOG_LEVEL_DEBUG, log);
+//char log[LOGSZ];
+//snprintf_P(log, sizeof(log), PSTR("HLW: CF %d, CF1U %d, CF1I %d"), hlw_cf_plen, hlw_cf1u_plen, hlw_cf1i_plen);
+//addLog(LOG_LEVEL_DEBUG, log);
 
   if (hlw_kWhtoday) {
     ed = (float)hlw_kWhtoday / 100000000;
@@ -201,7 +207,9 @@ void hlw_init()
 
   hlw_startup = 1;
   hlw_lasttime = 0;
-  hlw_seconds = 0;
+  hlw_fifth_second = 0;
+  hlw_cf_timer = 1;
+  hlw_cf_active = 0;
   hlw_cf1_timer = 1;
   tickerHLW.attach_ms(200, hlw_200mS);
 }
