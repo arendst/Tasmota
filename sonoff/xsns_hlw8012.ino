@@ -152,7 +152,7 @@ boolean hlw_readEnergy(byte option, float &ed, uint16_t &e, uint16_t &w, uint16_
   } else {
     w = 0;
   }
-  if (hlw_cf1u_plen && w) {
+  if (hlw_cf1u_plen && (w || (power &1))) {
     hlw_u = (HLW_UREF * sysCfg.hlw_ucal) / hlw_cf1u_plen;
     u = hlw_u / 10;
   } else {
