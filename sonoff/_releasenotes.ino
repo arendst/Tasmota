@@ -1,4 +1,4 @@
-/* 3.0.9
+/* 3.0.9 20161218
  * Add Sonoff Pow voltage reading when relay is on but no load present
  * 
  * 3.0.8 20161218
