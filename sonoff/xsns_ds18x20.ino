@@ -110,7 +110,12 @@ void ds18x20_convert()
 //  delay(750);                   // 750ms should be enough for 12bit conv
 }
 
-boolean ds18x20_read(uint8_t sensor, float &t)
+float ds18x20_convertCtoF(float c)
+{
+  return c * 1.8 + 32;
+}
+
+boolean ds18x20_read(uint8_t sensor, bool S, float &t)
 {
   byte data[12];
   uint8_t sign = 1;
@@ -135,9 +140,11 @@ boolean ds18x20_read(uint8_t sensor, float &t)
         temp9 = (data[0] >> 1) * sign;
       }
       t = (temp9 - 0.25) + ((16.0 - data[6]) / 16.0);
+      if(S) t = ds18x20_convertCtoF(t);
       break;
     case 0x28:  // DS18B20
       t = ((data[1] << 8) + data[0]) * 0.0625;
+      if(S) t = ds18x20_convertCtoF(t);
       break;
     }
   }

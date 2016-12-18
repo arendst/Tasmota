@@ -121,7 +121,12 @@ void dsb_readTempPrep()
   dsb_write(0x44);           // Start conversion
 }
 
-boolean dsb_readTemp(float &t)
+float dsb_convertCtoF(float c)
+{
+  return c * 1.8 + 32;
+}
+
+boolean dsb_readTemp(bool S, float &t)
 {
   int16_t DSTemp;
   byte msb, lsb, crc;
@@ -158,6 +163,7 @@ boolean dsb_readTemp(float &t)
   } else {
     DSTemp = (msb << 8) + lsb;
     t = (float(DSTemp) * 0.0625);
+    if(S) t = dsb_convertCtoF(t);
   }
   return !isnan(t);
 }

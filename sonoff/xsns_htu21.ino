@@ -134,6 +134,11 @@ boolean htu21_init()
   return true;
 }
 
+float htu21_convertCtoF(float c)
+{
+  return c * 1.8 + 32;
+}
+
 float htu21_readHumidity(void)
 {
   uint8_t  checksum=0;
@@ -163,10 +168,11 @@ float htu21_readHumidity(void)
   return humidity;
 }
 
-float htu21_readTemperature(void)
+float htu21_readTemperature(bool S)
 {
   uint8_t  checksum=0;
   uint16_t sensorval=0;
+  float t;
 
   Wire.beginTransmission(HTU21_ADDR);
   Wire.write(HTU21_READTEMP);
@@ -182,7 +188,9 @@ float htu21_readTemperature(void)
   }
   if(check_crc8(sensorval) != checksum) return 0.0; // Checksum mismatch
 
-  return (0.002681 * (float)sensorval - 46.85);
+  t = (0.002681 * (float)sensorval - 46.85);
+  if(S) t = htu21_convertCtoF(t);
+  return t;
 }
 
 float htu21_compensatedHumidity(float humidity, float temperature)

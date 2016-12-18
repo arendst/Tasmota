@@ -335,14 +335,26 @@ double bme280_readHumidity(void)
  * BMP
 \*********************************************************************************************/
 
-double bmp_readTemperature(void)
+double bmp_convertCtoF(double c)
 {
+  return c * 1.8 + 32;
+}
+
+double bmp_readTemperature(bool S)
+{
+  double t = NAN;
+  
   switch (bmptype) {
   case BMP180_CHIPID:
-    return bmp180_readTemperature();
+    t = bmp180_readTemperature();
+    break;
   case BMP280_CHIPID:
   case BME280_CHIPID:
-    return bmp280_readTemperature();
+    t = bmp280_readTemperature();
+  }
+  if (!isnan(t)) {
+    if(S) t = bmp_convertCtoF(t);
+    return t;
   }
   return 0;
 }
