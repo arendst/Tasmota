@@ -174,7 +174,7 @@ void CFG_Migrate()
       if (sysCfg2.saveFlag < _sysCfgH.saveFlag)
         spi_flash_read((CFG_LOCATION2 + 1) * SPI_FLASH_SEC_SIZE, (uint32*)&sysCfg2, sizeof(SYSCFG2));
       interrupts();
-      snprintf_P(log, sizeof(log), PSTR("Config: Loaded previous configuration from flash at %X and count %d"), CFG_LOCATION + (sysCfg2.saveFlag &1), sysCfg2.saveFlag);
+      snprintf_P(log, sizeof(log), PSTR("Config: Loaded previous configuration from flash at %X and count %d"), CFG_LOCATION2 + (sysCfg2.saveFlag &1), sysCfg2.saveFlag);
       addLog(LOG_LEVEL_DEBUG, log);
     }
   }

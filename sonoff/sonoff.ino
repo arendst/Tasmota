@@ -10,7 +10,7 @@
  * ====================================================
 */
 
-#define VERSION                0x03000900   // 3.0.9
+#define VERSION                0x03010000   // 3.1.0
 
 #define SONOFF                 1            // Sonoff, Sonoff SV, Sonoff Dual, Sonoff TH 10A/16A, S20 Smart Socket, 4 Channel
 #define SONOFF_POW             9            // Sonoff Pow
@@ -400,9 +400,8 @@ boolean udpConnected = false;
 
 /********************************************************************************************/
 
-void CFG_Default()
+void CFG_DefaultSet()
 {
-  addLog_P(LOG_LEVEL_NONE, PSTR("Config: Use default configuration"));
   memset(&sysCfg, 0x00, sizeof(SYSCFG));
 
   sysCfg.cfg_holder = CFG_HOLDER;
@@ -484,96 +483,123 @@ void CFG_Default()
   sysCfg.hlw_msplw = SAFE_POWER_WINDOW;
   sysCfg.hlw_mkwh = 0;                             // MaxEnergy
   sysCfg.hlw_mkwhs = 0;                            // MaxEnergyStart
+}
 
+void CFG_Default()
+{
+  addLog_P(LOG_LEVEL_NONE, PSTR("Config: Use default configuration"));
+  CFG_DefaultSet();
   CFG_Save();
 }
 
 void CFG_Migrate_Part2()
 {
   addLog_P(LOG_LEVEL_NONE, PSTR("Config: Migrating configuration"));
-  memset(&sysCfg, 0x00, sizeof(SYSCFG));
-
-  sysCfg.cfg_holder = CFG_HOLDER;
-  sysCfg.saveFlag = 0;
-  sysCfg.version = VERSION;
-  sysCfg.bootcount = sysCfg2.bootcount;
-  sysCfg.migflag = 0;
-  sysCfg.savedata = sysCfg2.savedata;
-  sysCfg.savestate = sysCfg2.savestate;
-  sysCfg.model = sysCfg2.model;
-  sysCfg.timezone = sysCfg2.timezone;
-  strlcpy(sysCfg.otaUrl, sysCfg2.otaUrl, sizeof(sysCfg.otaUrl));
-  strlcpy(sysCfg.friendlyname, sysCfg2.mqtt_client, sizeof(sysCfg.friendlyname));
+  CFG_DefaultSet();
 
   sysCfg.seriallog_level = sysCfg2.seriallog_level;
-  sysCfg.sta_active = sysCfg2.sta_active;
+  sysCfg.syslog_level = sysCfg2.syslog_level;
+  strlcpy(sysCfg.syslog_host, sysCfg2.syslog_host, sizeof(sysCfg.syslog_host));
   strlcpy(sysCfg.sta_ssid[0], sysCfg2.sta_ssid1, sizeof(sysCfg.sta_ssid[0]));
   strlcpy(sysCfg.sta_pwd[0], sysCfg2.sta_pwd1, sizeof(sysCfg.sta_pwd[0]));
-  strlcpy(sysCfg.sta_ssid[1], sysCfg2.sta_ssid2, sizeof(sysCfg.sta_ssid[1]));
-  strlcpy(sysCfg.sta_pwd[1], sysCfg2.sta_pwd2, sizeof(sysCfg.sta_pwd[1]));
-  strlcpy(sysCfg.hostname, sysCfg2.hostname, sizeof(sysCfg.hostname));
-  sysCfg.sta_config = sysCfg2.sta_config;
-  strlcpy(sysCfg.syslog_host, sysCfg2.syslog_host, sizeof(sysCfg.syslog_host));
-  sysCfg.syslog_port = sysCfg2.syslog_port;
-  sysCfg.syslog_level = sysCfg2.syslog_level;
-  sysCfg.webserver = sysCfg2.webserver;
-  sysCfg.weblog_level = sysCfg2.weblog_level;
-
-  strlcpy(sysCfg.mqtt_fingerprint, sysCfg2.mqtt_fingerprint, sizeof(sysCfg.mqtt_fingerprint));
+  strlcpy(sysCfg.otaUrl, sysCfg2.otaUrl, sizeof(sysCfg.otaUrl));
   strlcpy(sysCfg.mqtt_host, sysCfg2.mqtt_host, sizeof(sysCfg.mqtt_host));
-  sysCfg.mqtt_port = sysCfg2.mqtt_port;
-  strlcpy(sysCfg.mqtt_client, sysCfg2.mqtt_client, sizeof(sysCfg.mqtt_client));
-  strlcpy(sysCfg.mqtt_user, sysCfg2.mqtt_user, sizeof(sysCfg.mqtt_user));
-  strlcpy(sysCfg.mqtt_pwd, sysCfg2.mqtt_pwd, sizeof(sysCfg.mqtt_pwd));
+  strlcpy(sysCfg.mqtt_grptopic, sysCfg2.mqtt_grptopic, sizeof(sysCfg.mqtt_grptopic));
   strlcpy(sysCfg.mqtt_topic, sysCfg2.mqtt_topic, sizeof(sysCfg.mqtt_topic));
   strlcpy(sysCfg.mqtt_topic2, sysCfg2.mqtt_topic2, sizeof(sysCfg.mqtt_topic2));
-  strlcpy(sysCfg.mqtt_grptopic, sysCfg2.mqtt_grptopic, sizeof(sysCfg.mqtt_grptopic));
   strlcpy(sysCfg.mqtt_subtopic, sysCfg2.mqtt_subtopic, sizeof(sysCfg.mqtt_subtopic));
-  sysCfg.mqtt_button_retain = sysCfg2.mqtt_retain;
-  sysCfg.mqtt_power_retain = MQTT_POWER_RETAIN;
-  sysCfg.mqtt_units = sysCfg2.mqtt_units;
-  sysCfg.message_format = sysCfg2.message_format;
-  sysCfg.tele_period = sysCfg2.tele_period;
-  if ((sysCfg.tele_period > 0) && (sysCfg.tele_period < 10)) sysCfg.tele_period = 10;   // Do not allow periods < 10 seconds
-
+  sysCfg.timezone = sysCfg2.timezone;
   sysCfg.power = sysCfg2.power;
-  sysCfg.pulsetime = APP_PULSETIME;
-  sysCfg.ledstate = sysCfg2.ledstate;
-  sysCfg.switchmode = sysCfg2.switchmode;
-
-  strlcpy(sysCfg.domoticz_in_topic, sysCfg2.domoticz_in_topic, sizeof(sysCfg.domoticz_in_topic));
-  strlcpy(sysCfg.domoticz_out_topic, sysCfg2.domoticz_out_topic, sizeof(sysCfg.domoticz_out_topic));
-  sysCfg.domoticz_update_timer = sysCfg2.domoticz_update_timer;
-  sysCfg.domoticz_relay_idx[0] = sysCfg2.domoticz_relay_idx[0];
-  sysCfg.domoticz_relay_idx[1] = sysCfg2.domoticz_relay_idx[1];
-  sysCfg.domoticz_relay_idx[2] = sysCfg2.domoticz_relay_idx[2];
-  sysCfg.domoticz_relay_idx[3] = sysCfg2.domoticz_relay_idx[3];
-  sysCfg.domoticz_key_idx[0] = sysCfg2.domoticz_key_idx[0];
-  sysCfg.domoticz_key_idx[1] = sysCfg2.domoticz_key_idx[1];
-  sysCfg.domoticz_key_idx[2] = sysCfg2.domoticz_key_idx[2];
-  sysCfg.domoticz_key_idx[3] = sysCfg2.domoticz_key_idx[3];
-
-  sysCfg.hlw_pcal = sysCfg2.hlw_pcal;
-  sysCfg.hlw_ucal = sysCfg2.hlw_ucal;
-  sysCfg.hlw_ical = sysCfg2.hlw_ical;
-  sysCfg.hlw_kWhtoday = sysCfg2.hlw_kWhtoday;
-  sysCfg.hlw_kWhyesterday = sysCfg2.hlw_kWhyesterday;
-  sysCfg.hlw_kWhdoy = sysCfg2.hlw_kWhdoy;
-  sysCfg.hlw_pmin = sysCfg2.hlw_pmin;
-  sysCfg.hlw_pmax = sysCfg2.hlw_pmax;
-  sysCfg.hlw_umin = sysCfg2.hlw_umin;
-  sysCfg.hlw_umax = sysCfg2.hlw_umax;
-  sysCfg.hlw_imin = sysCfg2.hlw_imin;
-  sysCfg.hlw_imax = sysCfg2.hlw_imax;
-  sysCfg.hlw_mpl = sysCfg2.hlw_mpl;                              // MaxPowerLimit
-  sysCfg.hlw_mplh = sysCfg2.hlw_mplh;
-  sysCfg.hlw_mplw = sysCfg2.hlw_mplw;
-  sysCfg.hlw_mspl = sysCfg2.hlw_mspl;                             // MaxSafePowerLimit
-  sysCfg.hlw_msplh = SAFE_POWER_HOLD;
-  sysCfg.hlw_msplw = sysCfg2.hlw_msplw;
-  sysCfg.hlw_mkwh = sysCfg.hlw_mkwh;                             // MaxEnergy
-  sysCfg.hlw_mkwhs = sysCfg.hlw_mkwhs;                            // MaxEnergyStart
-
+  if (sysCfg2.version >= 0x01000D00) {  // 1.0.13
+    sysCfg.ledstate = sysCfg2.ledstate;
+  }
+  if (sysCfg2.version >= 0x01001600) {  // 1.0.22
+    sysCfg.mqtt_port = sysCfg2.mqtt_port;
+    strlcpy(sysCfg.mqtt_client, sysCfg2.mqtt_client, sizeof(sysCfg.mqtt_client));
+    strlcpy(sysCfg.mqtt_user, sysCfg2.mqtt_user, sizeof(sysCfg.mqtt_user));
+    strlcpy(sysCfg.mqtt_pwd, sysCfg2.mqtt_pwd, sizeof(sysCfg.mqtt_pwd));
+    strlcpy(sysCfg.friendlyname, sysCfg2.mqtt_client, sizeof(sysCfg.friendlyname));
+  }
+  if (sysCfg2.version >= 0x01001700) {  // 1.0.23
+    sysCfg.webserver = sysCfg2.webserver;
+  }
+  if (sysCfg2.version >= 0x01001A00) {  // 1.0.26
+    sysCfg.bootcount = sysCfg2.bootcount;
+    strlcpy(sysCfg.hostname, sysCfg2.hostname, sizeof(sysCfg.hostname));
+    sysCfg.syslog_port = sysCfg2.syslog_port;
+  }
+  if (sysCfg2.version >= 0x01001B00) {  // 1.0.27
+    sysCfg.weblog_level = sysCfg2.weblog_level;
+  }
+  if (sysCfg2.version >= 0x01001C00) {  // 1.0.28
+    sysCfg.tele_period = sysCfg2.tele_period;
+    if ((sysCfg.tele_period > 0) && (sysCfg.tele_period < 10)) sysCfg.tele_period = 10;   // Do not allow periods < 10 seconds
+  }
+  if (sysCfg2.version >= 0x01002000) {  // 1.0.32
+    sysCfg.sta_config = sysCfg2.sta_config;
+  }
+  if (sysCfg2.version >= 0x01002300) {  // 1.0.35
+    sysCfg.savedata = sysCfg2.savedata;
+  }
+  if (sysCfg2.version >= 0x02000000) {  // 2.0.0
+    sysCfg.model = sysCfg2.model;
+  }
+  if (sysCfg2.version >= 0x02000300) {  // 2.0.3
+    sysCfg.mqtt_button_retain = sysCfg2.mqtt_retain;
+    sysCfg.savestate = sysCfg2.savestate;
+  }
+  if (sysCfg2.version >= 0x02000500) {  // 2.0.5
+    sysCfg.hlw_pcal = sysCfg2.hlw_pcal;
+    sysCfg.hlw_ucal = sysCfg2.hlw_ucal;
+    sysCfg.hlw_ical = sysCfg2.hlw_ical;
+    sysCfg.hlw_kWhyesterday = sysCfg2.hlw_kWhyesterday;
+    sysCfg.mqtt_units = sysCfg2.mqtt_units;
+  }
+  if (sysCfg2.version >= 0x02000600) {  // 2.0.6
+    sysCfg.hlw_pmin = sysCfg2.hlw_pmin;
+    sysCfg.hlw_pmax = sysCfg2.hlw_pmax;
+    sysCfg.hlw_umin = sysCfg2.hlw_umin;
+    sysCfg.hlw_umax = sysCfg2.hlw_umax;
+    sysCfg.hlw_imin = sysCfg2.hlw_imin;
+    sysCfg.hlw_imax = sysCfg2.hlw_imax;
+  }
+  if (sysCfg2.version >= 0x02000700) {  // 2.0.7
+    sysCfg.message_format = sysCfg2.message_format;
+    strlcpy(sysCfg.domoticz_in_topic, sysCfg2.domoticz_in_topic, sizeof(sysCfg.domoticz_in_topic));
+    strlcpy(sysCfg.domoticz_out_topic, sysCfg2.domoticz_out_topic, sizeof(sysCfg.domoticz_out_topic));
+    sysCfg.domoticz_update_timer = sysCfg2.domoticz_update_timer;
+    sysCfg.domoticz_relay_idx[0] = sysCfg2.domoticz_relay_idx[0];
+    sysCfg.domoticz_relay_idx[1] = sysCfg2.domoticz_relay_idx[1];
+    sysCfg.domoticz_relay_idx[2] = sysCfg2.domoticz_relay_idx[2];
+    sysCfg.domoticz_relay_idx[3] = sysCfg2.domoticz_relay_idx[3];
+    sysCfg.domoticz_key_idx[0] = sysCfg2.domoticz_key_idx[0];
+    sysCfg.domoticz_key_idx[1] = sysCfg2.domoticz_key_idx[1];
+    sysCfg.domoticz_key_idx[2] = sysCfg2.domoticz_key_idx[2];
+    sysCfg.domoticz_key_idx[3] = sysCfg2.domoticz_key_idx[3];
+    sysCfg.hlw_mpl = sysCfg2.hlw_mpl;              // MaxPowerLimit
+    sysCfg.hlw_mplh = sysCfg2.hlw_mplh;
+    sysCfg.hlw_mplw = sysCfg2.hlw_mplw;
+    sysCfg.hlw_mspl = sysCfg2.hlw_mspl;            // MaxSafePowerLimit
+    sysCfg.hlw_msplh = sysCfg2.hlw_msplh;
+    sysCfg.hlw_msplw = sysCfg2.hlw_msplw;
+    sysCfg.hlw_mkwh = sysCfg2.hlw_mkwh;            // MaxEnergy
+    sysCfg.hlw_mkwhs = sysCfg2.hlw_mkwhs;          // MaxEnergyStart
+  }
+  if (sysCfg2.version >= 0x02001000) {  // 2.0.16
+    sysCfg.hlw_kWhtoday = sysCfg2.hlw_kWhtoday;
+    sysCfg.hlw_kWhdoy = sysCfg2.hlw_kWhdoy;
+  }
+  if (sysCfg2.version >= 0x02001200) {  // 2.0.18
+    sysCfg.switchmode = sysCfg2.switchmode;
+  }
+  if (sysCfg2.version >= 0x02010000) {  // 2.1.0
+    strlcpy(sysCfg.mqtt_fingerprint, sysCfg2.mqtt_fingerprint, sizeof(sysCfg.mqtt_fingerprint));
+  }
+  if (sysCfg2.version >= 0x02010200) {  // 2.1.2
+    sysCfg.sta_active = sysCfg2.sta_active;
+    strlcpy(sysCfg.sta_ssid[1], sysCfg2.sta_ssid2, sizeof(sysCfg.sta_ssid[1]));
+    strlcpy(sysCfg.sta_pwd[1], sysCfg2.sta_pwd2, sizeof(sysCfg.sta_pwd[1]));
+  }    
   CFG_Save();
 }
 
@@ -1675,9 +1701,12 @@ void do_cmnd_power(byte device, byte state)
 void do_cmnd(char *cmnd)
 {
   char stopic[TOPSZ], svalue[128];
+  char *start;
   char *token;
 
   token = strtok(cmnd, " ");
+  start = strrchr(token, '/');   // Skip possible cmnd/sonoff/ preamble
+  if (start) token = start;
   snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/%s"), SUB_PREFIX, sysCfg.mqtt_topic, token);
   token = strtok(NULL, "");
   snprintf_P(svalue, sizeof(svalue), PSTR("%s"), (token == NULL) ? "" : token);

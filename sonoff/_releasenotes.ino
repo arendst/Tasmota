@@ -1,4 +1,9 @@
-/* 3.0.9 20161218
+/* 3.1.0 20161221
+ * Add Sonoff Pow measurement smoothing
+ * Fix serial command topic preamble error
+ * Fix 2.x to 3.x migration inconsistencies
+ * 
+ * 3.0.9 20161218
  * Add Sonoff Pow voltage reading when relay is on but no load present
  * 
  * 3.0.8 20161218
