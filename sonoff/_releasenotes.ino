@@ -1,4 +1,9 @@
-/* 3.1.0 20161221
+/* 3.1.1 20161223
+ * Add support for Sonoff Touch and Sonoff 4CH
+ * Update DomoticzIdx and DomoticzKeyIdx with relay/key index (DomoticzIdx1/DomoticzKeyIdx1)
+ * Add command PowerOnState to control relay(s) at power on
+ * 
+ * 3.1.0 20161221
  * Add Sonoff Pow measurement smoothing
  * Fix serial command topic preamble error
  * Fix 2.x to 3.x migration inconsistencies

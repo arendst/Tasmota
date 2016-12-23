@@ -8,8 +8,9 @@
  * Corresponding MQTT/Serial/Console commands in [brackets]
 \*********************************************************************************************/
 
-// Enable only one out of three MODULE defines below
-#define MODULE                 SONOFF            // Sonoff, Sonoff SV, Sonoff Dual, Sonoff TH 10A/16A, S20 Smart Socket, 4 Channel
+// Enable only one out of four MODULE defines below
+#define MODULE                 SONOFF            // Sonoff Basic, Sonoff RF, Sonoff SV, Sonoff Dual, Sonoff TH, S20 Smart Socket
+//#define MODULE                 SONOFF_2          // Sonoff Touch, Sonoff 4CH
 //#define MODULE                 SONOFF_POW        // Sonoff Pow
 //#define MODULE                 ELECTRO_DRAGON    // Electro Dragon Wifi IoT Relay Board Based on ESP8266
 
@@ -84,10 +85,14 @@
 #define USE_DOMOTICZ                        // Enable Domoticz (+3k code, +0.2k mem) - Disable by //
   #define DOMOTICZ_IN_TOPIC      "domoticz/in"  // [DomoticzInTopic]
   #define DOMOTICZ_OUT_TOPIC     "domoticz/out" // [DomoticzOutTopic]
-  #define DOMOTICZ_RELAY_IDX1    0          // [DomoticzIdx] Sonoff Relay 1 (0 = disable domoticz)
-  #define DOMOTICZ_RELAY_IDX2    0          // [2/DomoticzIdx] Sonoff Dual Relay 2
-  #define DOMOTICZ_KEY_IDX1      0          // [DomoticzKeyIdx] Button single press (0 = disable)
-  #define DOMOTICZ_KEY_IDX2      0          // [2/DomoticzKeyIdx] Button double press (0 = disable)
+  #define DOMOTICZ_RELAY_IDX1    0          // [DomoticzIdx1] Sonoff Relay 1 (0 = disable domoticz)
+  #define DOMOTICZ_RELAY_IDX2    0          // [DomoticzIdx2] Sonoff Dual and 4CH Relay 2
+  #define DOMOTICZ_RELAY_IDX3    0          // [DomoticzIdx3] Sonoff 4CH Relay 3
+  #define DOMOTICZ_RELAY_IDX4    0          // [DomoticzIdx4] Sonoff 4CH Relay 4
+  #define DOMOTICZ_KEY_IDX1      0          // [DomoticzKeyIdx1] Button single press (0 = disable)
+  #define DOMOTICZ_KEY_IDX2      0          // [DomoticzKeyIdx2] Button double press (0 = disable)
+  #define DOMOTICZ_KEY_IDX3      0          // [DomoticzKeyIdx3] Sonoff 4CH Button 3
+  #define DOMOTICZ_KEY_IDX4      0          // [DomoticzKeyIdx4] Sonoff 4CH Button 4
   #define DOMOTICZ_UPDATE_TIMER  0          // [DomoticzUpdateTimer] Send relay status (0 = disable, 1 - 3600 seconds) (Optional)
 
 // -- HTTP -----------------------------------
@@ -110,6 +115,7 @@
 #define APP_TIMEZONE           1            // [Timezone] +1 hour (Amsterdam) (-12 .. 12 = hours from UTC, 99 = use TIME_DST/TIME_STD)
 #define APP_LEDSTATE           LED_POWER    // [LedState] Function of led (LED_OFF, LED_POWER, LED_MQTTSUB, LED_POWER_MQTTSUB, LED_MQTTPUB, LED_POWER_MQTTPUB, LED_MQTT, LED_POWER_MQTT)
 #define APP_PULSETIME          0            // [PulseTime] Time in 0.1 Sec to turn off power for relay 1 (0 = disabled)
+#define APP_POWERON_STATE      2            // [PowerOnState] Power On Relay state (0 = Off, 1 = On, 2 = Saved state)
 
 #define TEMP_CONVERSION        0            // Convert temperature to (0 = Celsius or 1 = Fahrenheit)
 #define TEMP_RESOLUTION        1            // Maximum number of decimals (0 - 3) showing sensor Temperature
@@ -117,11 +123,13 @@
 #define PRESSURE_RESOLUTION    1            // Maximum number of decimals (0 - 3) showing sensor Pressure
 
 /*********************************************************************************************\
- * Sonoff specific paremeters
+ * Sonoff Basic, Sonoff RF, Sonoff SV, Sonoff Dual, Sonoff TH, S20 Smart Socket
+ * 
+ * >>> Select Board "Generic ESP8266 Module" and Flash Size "1M (64K SPIFFS)" <<<
 \*********************************************************************************************/
 
 #if MODULE == SONOFF                        // programming header 1:3.3V 2:rx 3:tx 4:gnd
-  #define APP_NAME             "Sonoff module"
+  #define APP_NAME             "Sonoff 8266 module"
   #define MQTT_GRPTOPIC        "sonoffs"    // [GroupTopic] MQTT Group topic
 /*-------------------------------------------------------------------------------------------*/
   #define LED_PIN              13           // GPIO 13 = Green/Blue Led (0 = On, 1 = Off) - Sonoff
@@ -154,12 +162,68 @@
 /*-------------------------------------------------------------------------------------------*\
  * I2C devices BMP085, BMP180, BMP280, BME280 and HTU21D
 \*-------------------------------------------------------------------------------------------*/
-  #define I2C_SDA_PIN          4            // GPIO 4 = I2C SDA (Sonoff_TH10A(16A)- Needs extra hardware)
+  #define I2C_SDA_PIN          4            // GPIO 04 = I2C SDA (Sonoff_TH10A(16A)- Needs extra hardware)
   #define I2C_SCL_PIN          14           // GPIO 14 = I2C SCL (Sonoff_TH10A(16A))
 //  #define SEND_TELEMETRY_I2C                // Enable sending I2C sensor telemetry
 
 /*********************************************************************************************\
- * Sonoff Pow specific parameters
+ * Sonoff Touch and Sonoff 4CH
+ * 
+ * >>> Select Board "Generic ESP8285 Module" (=Flash Mode "DOUT") and Flash Size "1M (64K SPIFFS)" <<<
+\*********************************************************************************************/
+
+#elif MODULE == SONOFF_2                    // programming header 1:3.3V 2:rx 3:tx 4:gnd
+  #define APP_NAME             "Sonoff 8285 module"
+  #define MQTT_GRPTOPIC        "sonoff2s"   // [GroupTopic] MQTT Group topic
+/*-------------------------------------------------------------------------------------------*/
+  #define LED_PIN              13           // GPIO 13 = Green/Blue Led (0 = On, 1 = Off) - Sonoff
+  #define LED_INVERTED         1            // 0 = (1 = On, 0 = Off), 1 = (0 = On, 1 = Off)
+  #define REL_PIN              12           // GPIO 12 = Red Led and Relay (0 = Off, 1 = On)
+  #define KEY_PIN              0            // GPIO 00 = Button
+  // Sonoff 4CH additions
+  #define REL2_PIN             5            // GPIO 05 = Red Led and Relay 2 (0 = Off, 1 = On)
+  #define KEY2_PIN             9            // GPIO 09 = Button 2
+  #define REL3_PIN             4            // GPIO 04 = Red Led and Relay 3 (0 = Off, 1 = On)
+  #define KEY3_PIN             10           // GPIO 10 = Button 3
+  #define REL4_PIN             15           // GPIO 15 = Red Led and Relay 4 (0 = Off, 1 = On)
+  #define KEY4_PIN             14           // GPIO 14 = Button 4
+  #define SDA_PIN              2            // GPIO 02 = SDA
+  #define SNS1_PIN             7            // GPIO 07 = Sensor 1 (not present)
+  #define SNS2_PIN             8            // GPIO 08 = Sensor 2 (not present)
+/*-------------------------------------------------------------------------------------------*\
+ * Wall switch and HC-SR501
+\*-------------------------------------------------------------------------------------------*/
+  #define SWITCH_PIN           7            // GPIO 07 = Standard wall switch to Gnd (Sonoff 4CH - Needs extra hardware)
+  #define SWITCH_MODE          TOGGLE       // [SwitchMode] TOGGLE, FOLLOW, FOLLOW_INV, PUSHBUTTON or PUSHBUTTON_INV (the wall switch state)
+//  #define USE_WALL_SWITCH                   // Enable the use of a standard wall switch to control the relay
+/*-------------------------------------------------------------------------------------------*\
+ * Single wire devices DS18B20 and DS18S20
+\*-------------------------------------------------------------------------------------------*/
+  #define DSB_PIN              7            // GPIO 07 = DS18x20 (Sonoff 4CH - Needs extra hardware)
+  // *** Option 1 - Single DS18B20 - Select either Option 1 OR Option 2
+//  #define SEND_TELEMETRY_DS18B20            // Enable sending single temperature telemetry
+  // *** Option 2 - Multiple DS18B20 and/or DS18S20 (needs OneWire library!)
+//  #define SEND_TELEMETRY_DS18x20            // Enable sending multi temperature telemetry
+/*-------------------------------------------------------------------------------------------*\
+ * DHT11, DHT21, DHT22, AM2301, AM2302 and AM2321
+\*-------------------------------------------------------------------------------------------*/
+  #define DHT_PIN              7            // GPIO 07 = AM2301 (Sonoff 4CH - Needs extra hardware)
+  #define DHT_TYPE             AM2301       // DHT module type (DHT11, DHT21, DHT22, AM2301, AM2302 or AM2321)
+  // *** Option 1 - No external library needed - Select either Option 1 OR Option 2
+//  #define SEND_TELEMETRY_DHT                // Enable sending temperature and humidity telemetry
+  // *** Option 2 - Use Adafruit DHT library - Select either Option 1 OR Option 2
+//  #define SEND_TELEMETRY_DHT2               // Enable sending temperature and humidity telemetry
+/*-------------------------------------------------------------------------------------------*\
+ * I2C devices BMP085, BMP180, BMP280, BME280 and HTU21D
+\*-------------------------------------------------------------------------------------------*/
+  #define I2C_SDA_PIN          8            // GPIO 08 = I2C SDA (Sonoff 4CH - Needs extra hardware)
+  #define I2C_SCL_PIN          7            // GPIO 07 = I2C SCL (Sonoff 4CH - Needs extra hardware)
+//  #define SEND_TELEMETRY_I2C                // Enable sending I2C sensor telemetry
+
+/*********************************************************************************************\
+ * Sonoff Pow
+ * 
+ * >>> Select Board "Generic ESP8266 Module" and Flash Size "1M (64K SPIFFS)" or "4M (1M SPIFFS)" <<<
 \*********************************************************************************************/
 
 #elif MODULE == SONOFF_POW                  // programming header 1:3.3V 2:rx 3:tx 4:gnd
@@ -179,7 +243,9 @@
   #define SEND_TELEMETRY_ENERGY             // Enable sending energy telemetry
 
 /*********************************************************************************************\
- * Electrodragon specific paremeters
+ * Electrodragon
+ * 
+ * >>> Select Board "Generic ESP8266 Module" and Flash Size "1M (64K SPIFFS)" or "4M (1M SPIFFS)" <<<
 \*********************************************************************************************/
 
 #elif MODULE == ELECTRO_DRAGON              // programming header 5V/3V/gnd/
@@ -227,7 +293,7 @@
 \*********************************************************************************************/
 
 #else
-  #error "Select either module SONOFF, SONOFF_POW or ELECTRO_DRAGON"
+  #error "Select either module SONOFF, SONOFF_85, SONOFF_POW or ELECTRO_DRAGON"
 #endif
 
 #if defined(SEND_TELEMETRY_DS18B20) && defined(SEND_TELEMETRY_DS18x20)

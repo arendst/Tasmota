@@ -10,11 +10,12 @@
  * ====================================================
 */
 
-#define VERSION                0x03010000   // 3.1.0
+#define VERSION                0x03010100   // 3.1.1
 
-#define SONOFF                 1            // Sonoff, Sonoff SV, Sonoff Dual, Sonoff TH 10A/16A, S20 Smart Socket, 4 Channel
+#define SONOFF                 1            // Sonoff, Sonoff RF, Sonoff SV, Sonoff Dual, Sonoff TH, S20 Smart Socket, 4 Channel
 #define SONOFF_POW             9            // Sonoff Pow
-#define ELECTRO_DRAGON         10           // Electro Dragon Wifi IoT Relay Board Based on ESP8266
+#define SONOFF_2               10           // Sonoff Touch, Sonoff 4CH
+#define ELECTRO_DRAGON         11           // Electro Dragon Wifi IoT Relay Board Based on ESP8266
 
 #define DHT11                  11
 #define DHT21                  21
@@ -59,12 +60,8 @@ enum led_t   {LED_OFF, LED_POWER, LED_MQTTSUB, LED_POWER_MQTTSUB, LED_MQTTPUB, L
 \*********************************************************************************************/
 
 #define SONOFF_DUAL            2            // (iTEAD PSB)
-#define CHANNEL_3              3            // iTEAD PSB
-#define CHANNEL_4              4            // iTEAD PSB
-#define CHANNEL_5              5            // Future use
-#define CHANNEL_6              6            // Future use
-#define CHANNEL_7              7            // Future use
-#define CHANNEL_8              8            // Future use
+#define CHANNEL_4              3            // iTEAD PSB (Stopped manufacturing)
+#define SONOFF_4CH             4            // ESP8285 with four buttons/relays on GPIOs
 
 #ifndef SWITCH_MODE
 #define SWITCH_MODE            TOGGLE       // TOGGLE, FOLLOW or FOLLOW_INV (the wall switch state)
@@ -107,11 +104,6 @@ enum led_t   {LED_OFF, LED_POWER, LED_MQTTSUB, LED_POWER_MQTTSUB, LED_MQTTPUB, L
   #define MAX_STATUS           7
 #endif
 
-#define DOMOTICZ_RELAY_IDX3    0            // Relay 3 (4 Channel)
-#define DOMOTICZ_RELAY_IDX4    0            // Relay 4 (4 Channel)
-#define DOMOTICZ_KEY_IDX3      0            // Button 3 (4 Channel)
-#define DOMOTICZ_KEY_IDX4      0            // Button 4 (4 Channel)
-
 enum butt_t {PRESSED, NOT_PRESSED};
 
 #include "support.h"                        // Global support
@@ -147,7 +139,7 @@ const char commands[MAX_BUTTON_COMMANDS][14] PROGMEM = {
 
 const char wificfg[5][12] PROGMEM = { "Restart", "Smartconfig", "Wifimanager", "WPSconfig", "Retry" };
 
-struct SYSCFG2 {
+struct SYSCFG2 {      // Version 2.x (old)
   unsigned long cfg_holder;
   unsigned long saveFlag;
   unsigned long version;
@@ -289,6 +281,7 @@ struct SYSCFG {
   uint16_t      hlw_mkwhs;  // MaxEnergyStart
 
   uint16_t      pulsetime;
+  uint8_t       poweronstate;
 
 } sysCfg;
 
@@ -363,6 +356,8 @@ uint8_t holdcount = 0;                // Timer recording button hold
 uint8_t multiwindow = 0;              // Max time between button presses to record press count
 uint8_t multipress = 0;               // Number of button presses within multiwindow
 uint8_t lastbutton2 = NOT_PRESSED;    // Last button 2 state
+uint8_t lastbutton3 = NOT_PRESSED;    // Last button 3 state
+uint8_t lastbutton4 = NOT_PRESSED;    // Last button 4 state
 
 boolean udpConnected = false;
 #ifdef USE_WEMO_EMULATION
@@ -447,6 +442,7 @@ void CFG_DefaultSet()
   sysCfg.tele_period = TELE_PERIOD;
 
   sysCfg.power = APP_POWER;
+  sysCfg.poweronstate = APP_POWERON_STATE;
   sysCfg.pulsetime = APP_PULSETIME;
   sysCfg.ledstate = APP_LEDSTATE;
   sysCfg.switchmode = SWITCH_MODE;
@@ -609,6 +605,9 @@ void CFG_Delta()
     if (sysCfg.version < 0x03000600) {  // 3.0.6 - Add parameter
       sysCfg.pulsetime = APP_PULSETIME;
     }
+    if (sysCfg.version < 0x03010100) {  // 3.1.1 - Add parameter
+      sysCfg.poweronstate = APP_POWERON_STATE;
+    }
 
     sysCfg.version = VERSION;
   }
@@ -652,7 +651,13 @@ void setRelay(uint8_t power)
   } else {
     digitalWrite(REL_PIN, power & 0x1);
 #ifdef REL2_PIN
-    digitalWrite(REL2_PIN, (power & 0x2));
+    if (Maxdevice > 1) digitalWrite(REL2_PIN, (power & 0x2));
+#endif
+#ifdef REL3_PIN
+    if (Maxdevice > 2) digitalWrite(REL3_PIN, (power & 0x4));
+#endif
+#ifdef REL4_PIN
+    if (Maxdevice > 3) digitalWrite(REL4_PIN, (power & 0x8));
 #endif
   }
 #ifdef USE_POWERMONITOR
@@ -1017,11 +1022,11 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
       if ((data_len == 0) || (payload < 0) || (payload > MAX_STATUS)) payload = 99;
       if ((payload == 0) || (payload == 99)) {
         if (sysCfg.message_format == JSON) {
-          snprintf_P(svalue, sizeof(svalue), PSTR("{\"Status\":{Version\":\"%s\", \"Model\":%d, \"Topic\":\"%s\", \"ButtonTopic\":\"%s\", \"Subtopic\":\"%s\", \"Power\":%d, \"Timezone\":%d, \"Ledstate\":%d, \"SaveData\":%d, \"SaveState\":%d, \"ButtonRetain\":%d, \"PowerRetain\":%d}}"),
-            Version, sysCfg.model, sysCfg.mqtt_topic, sysCfg.mqtt_topic2, sysCfg.mqtt_subtopic, power, sysCfg.timezone, sysCfg.ledstate, sysCfg.savedata, sysCfg.savestate, sysCfg.mqtt_button_retain, sysCfg.mqtt_power_retain);
+          snprintf_P(svalue, sizeof(svalue), PSTR("{\"Status\":{Version\":\"%s\", \"Model\":%d, \"Topic\":\"%s\", \"ButtonTopic\":\"%s\", \"Subtopic\":\"%s\", \"Power\":%d, \"PowerOnState\":%d, \"Timezone\":%d, \"LedState\":%d, \"SaveData\":%d, \"SaveState\":%d, \"ButtonRetain\":%d, \"PowerRetain\":%d}}"),
+            Version, sysCfg.model, sysCfg.mqtt_topic, sysCfg.mqtt_topic2, sysCfg.mqtt_subtopic, power, sysCfg.poweronstate, sysCfg.timezone, sysCfg.ledstate, sysCfg.savedata, sysCfg.savestate, sysCfg.mqtt_button_retain, sysCfg.mqtt_power_retain);
         } else {
-          snprintf_P(svalue, sizeof(svalue), PSTR("%s, %d, %s, %s, %s, %d, %d, %d, %d, %d, %d, %d"),
-            Version, sysCfg.model, sysCfg.mqtt_topic, sysCfg.mqtt_topic2, sysCfg.mqtt_subtopic, power, sysCfg.timezone, sysCfg.ledstate, sysCfg.savedata, sysCfg.savestate, sysCfg.mqtt_button_retain, sysCfg.mqtt_power_retain);
+          snprintf_P(svalue, sizeof(svalue), PSTR("%s, %d, %s, %s, %s, %d, %d, %d, %d, %d, %d, %d, %d"),
+            Version, sysCfg.model, sysCfg.mqtt_topic, sysCfg.mqtt_topic2, sysCfg.mqtt_subtopic, power, sysCfg.poweronstate, sysCfg.timezone, sysCfg.ledstate, sysCfg.savedata, sysCfg.savestate, sysCfg.mqtt_button_retain, sysCfg.mqtt_power_retain);
         }
         if (payload == 0) mqtt_publish(stopic, svalue);
       }
@@ -1125,6 +1130,12 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
         }
       }
     }
+    else if (!strcmp(type,"POWERONSTATE")) {
+      if ((data_len > 0) && (payload >= 0) && (payload <= 2)) {
+        sysCfg.poweronstate = payload;
+      }
+      snprintf_P(svalue, sizeof(svalue), PSTR("{\"PowerOnState\":%d}"), sysCfg.poweronstate);
+    }
     else if (!strcmp(type,"PULSETIME")) {
       if ((data_len > 0) && (payload >= 0) && (payload <= 3600)) {
         sysCfg.pulsetime = payload;
@@ -1155,7 +1166,7 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
       snprintf_P(svalue, sizeof(svalue), PSTR("{\"MessageFormat\":\"%s\"}"), (sysCfg.message_format) ? "JSON" : "Legacy");
     }
     else if (!strcmp(type,"MODEL")) {
-      if ((data_len > 0) && (payload >= 0) && (payload <= CHANNEL_4)) {
+      if ((data_len > 0) && (payload >= 0) && (payload <= SONOFF_4CH)) {
         sysCfg.model = payload;
         restartflag = 2;
       }
@@ -1353,13 +1364,13 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
         sysCfg.domoticz_relay_idx[index -1] = payload;
         restartflag = 2;
       }
-      snprintf_P(svalue, sizeof(svalue), PSTR("{\"DomoticzIdx\":%d}"), sysCfg.domoticz_relay_idx[index -1]);
+      snprintf_P(svalue, sizeof(svalue), PSTR("{\"DomoticzIdx%d\":%d}"), index, sysCfg.domoticz_relay_idx[index -1]);
     }
     else if (!strcmp(type,"DOMOTICZKEYIDX") && (index <= Maxdevice)) {
       if ((data_len > 0) && (payload >= 0)) {
         sysCfg.domoticz_key_idx[index -1] = payload;
       }
-      snprintf_P(svalue, sizeof(svalue), PSTR("{\"DomoticzKeyIdx\":%d}"), sysCfg.domoticz_key_idx[index -1]);
+      snprintf_P(svalue, sizeof(svalue), PSTR("{\"DomoticzKeyIdx%d\":%d}"), index, sysCfg.domoticz_key_idx[index -1]);
     }
     else if (!strcmp(type,"DOMOTICZUPDATETIMER")) {
       if ((data_len > 0) && (payload >= 0) && (payload < 3601)) {
@@ -1602,11 +1613,11 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
     if (sysCfg.message_format != JSON) json2legacy(stopic, svalue);
     mqtt_publish(stopic, svalue);
 
-    snprintf_P(svalue, sizeof(svalue), PSTR("{\"Commands2\":\"MqttHost, MqttPort, MqttUser, MqttPassword%s, MqttUnits, MessageFormat, GroupTopic, Timezone, Ledstate, TelePeriod\"}"), (!grpflg) ? ", MqttClient, Topic, ButtonTopic, ButtonRetain, PowerRetain" : "");
+    snprintf_P(svalue, sizeof(svalue), PSTR("{\"Commands2\":\"MqttHost, MqttPort, MqttUser, MqttPassword%s, MqttUnits, MessageFormat, GroupTopic, Timezone, LedState, TelePeriod\"}"), (!grpflg) ? ", MqttClient, Topic, ButtonTopic, ButtonRetain, PowerRetain" : "");
     if (sysCfg.message_format != JSON) json2legacy(stopic, svalue);
     mqtt_publish(stopic, svalue);
 
-    snprintf_P(svalue, sizeof(svalue), PSTR("{\"Commands3\":\"%s, PulseTime"), (sysCfg.model == SONOFF) ? "Power, Light" : "Power1, Power2, Light1 Light2");
+    snprintf_P(svalue, sizeof(svalue), PSTR("{\"Commands3\":\"%s, PowerOnState, PulseTime"), (sysCfg.model == SONOFF) ? "Power, Light" : "Power1, Power2, Light1 Light2");
 #ifdef USE_WEBSERVER
     snprintf_P(svalue, sizeof(svalue), PSTR("%s, Weblog, Webserver"), svalue);
 #endif
@@ -2259,7 +2270,7 @@ void stateloop()
       } else  {
         flag = (multipress == 1);
       }
-      if (flag && mqttClient.connected() && strcmp(sysCfg.mqtt_topic2,"0")) {
+      if (flag && mqttClient.connected() && strcmp(sysCfg.mqtt_topic2, "0")) {
         send_button_power(multipress, 2);  // Execute command via MQTT using ButtonTopic to sync external clients
       } else {
         if ((multipress == 1) || (multipress == 2)) {
@@ -2278,15 +2289,45 @@ void stateloop()
   }
 
 #ifdef KEY2_PIN
-  button = digitalRead(KEY2_PIN);
-  if ((button == PRESSED) && (lastbutton2 == NOT_PRESSED)) {
-    if (mqttClient.connected() && strcmp(sysCfg.mqtt_topic2,"0")) {
-      send_button_power(2, 2);   // Execute commend via MQTT
-    } else {
-      do_cmnd_power(2, 2);       // Execute command internally
+  if (Maxdevice > 1) {
+    button = digitalRead(KEY2_PIN);
+    if ((button == PRESSED) && (lastbutton2 == NOT_PRESSED)) {
+      if (mqttClient.connected() && strcmp(sysCfg.mqtt_topic2, "0")) {
+        send_button_power(2, 2);   // Execute commend via MQTT
+      } else {
+        do_cmnd_power(2, 2);       // Execute command internally
+      }
     }
+    lastbutton2 = button;
   }
-  lastbutton2 = button;
+#endif
+
+#ifdef KEY3_PIN
+  if (Maxdevice > 2) {
+    button = digitalRead(KEY3_PIN);
+     if ((button == PRESSED) && (lastbutton3 == NOT_PRESSED)) {
+      if (mqttClient.connected() && strcmp(sysCfg.mqtt_topic2, "0")) {
+        send_button_power(3, 2);   // Execute commend via MQTT
+      } else {
+        do_cmnd_power(3, 2);       // Execute command internally
+      }
+    }
+    lastbutton3 = button;
+  }
+#endif
+
+#ifdef KEY4_PIN
+  if (Maxdevice > 3) {
+    button = digitalRead(KEY4_PIN);
+    if ((button == PRESSED) && (lastbutton4 == NOT_PRESSED)) {
+      if (mqttClient.connected() && strcmp(sysCfg.mqtt_topic2, "0")) {
+        send_button_power(4, 2);   // Execute commend via MQTT
+      } else {
+        do_cmnd_power(4, 2);       // Execute command internally
+      }
+    }
+    lastbutton4 = button;
+  }
 #endif
 
 #ifdef USE_WALL_SWITCH
@@ -2490,19 +2531,26 @@ void setup()
   CFG_Delta();
 
   if (!sysCfg.model) {
-#if MODULE == SONOFF
-    pinMode(REL_PIN, INPUT_PULLUP);
-    sysCfg.model = digitalRead(REL_PIN) +1;  // SONOFF (1) or SONOFF_DUAL (2)
-#else
     sysCfg.model = SONOFF;
+#if (MODULE == SONOFF)
+    pinMode(REL_PIN, INPUT_PULLUP);
+    if (digitalRead(REL_PIN)) sysCfg.model = SONOFF_DUAL;
+#endif    
+#if (MODULE == SONOFF_2)
+#ifdef REL3_PIN
+    pinMode(REL3_PIN, INPUT_PULLUP);
+    if (!digitalRead(REL3_PIN)) sysCfg.model = SONOFF_4CH;
+#endif
 #endif
   }
-
+  Maxdevice = sysCfg.model;  // SONOFF(_2) (1), SONOFF_DUAL (2), CHANNEL_4 (3) or SONOFF_4CH (4)
   if ((sysCfg.model >= SONOFF_DUAL) && (sysCfg.model <= CHANNEL_4)) {
     Baudrate = 19200;
-    Maxdevice = sysCfg.model;
+    Maxdevice = 2;
+    if (sysCfg.model == CHANNEL_4) Maxdevice = 4;
   }
   if (MODULE == ELECTRO_DRAGON) Maxdevice = 2;
+  
   if (Serial.baudRate() != Baudrate) {
     snprintf_P(log, sizeof(log), PSTR("APP: Need to change baudrate to %d"), Baudrate);
     addLog(LOG_LEVEL_INFO, log);
@@ -2517,7 +2565,7 @@ void setup()
   snprintf_P(log, sizeof(log), PSTR("APP: Bootcount %d"), sysCfg.bootcount);
   addLog(LOG_LEVEL_DEBUG, log);
   savedatacounter = sysCfg.savedata;
-  power = ((0x00FF << Maxdevice) >> 8) & sysCfg.power;
+//  power = sysCfg.power & ((0x00FF << Maxdevice) >> 8);
   syslog_level = sysCfg.syslog_level;
 
   if (strstr(sysCfg.hostname, "%")) strlcpy(sysCfg.hostname, DEF_WIFI_HOSTNAME, sizeof(sysCfg.hostname));
@@ -2533,17 +2581,41 @@ void setup()
   pinMode(LED_PIN, OUTPUT);
   digitalWrite(LED_PIN, (LED_INVERTED) ? !blinkstate : blinkstate);
 
-  if ((sysCfg.model < SONOFF_DUAL) || (sysCfg.model > CHANNEL_8)) {
+  if ((sysCfg.model < SONOFF_DUAL) || (sysCfg.model > CHANNEL_4)) {
     pinMode(KEY_PIN, INPUT_PULLUP);
     pinMode(REL_PIN, OUTPUT);
 #ifdef KEY2_PIN
-    pinMode(KEY2_PIN, INPUT_PULLUP);
+    if (Maxdevice > 1) pinMode(KEY2_PIN, INPUT_PULLUP);
 #endif
 #ifdef REL2_PIN
-    pinMode(REL2_PIN, OUTPUT);
+    if (Maxdevice > 1) pinMode(REL2_PIN, OUTPUT);
+#endif
+#ifdef KEY3_PIN
+    if (Maxdevice > 2) pinMode(KEY3_PIN, INPUT_PULLUP);
+#endif
+#ifdef REL3_PIN
+    if (Maxdevice > 2) pinMode(REL3_PIN, OUTPUT);
+#endif
+#ifdef KEY4_PIN
+    if (Maxdevice > 3) pinMode(KEY4_PIN, INPUT_PULLUP);
+#endif
+#ifdef REL4_PIN
+    if (Maxdevice > 3) pinMode(REL4_PIN, OUTPUT);
 #endif
   }
-  if (sysCfg.savestate) setRelay(power);
+
+  if (sysCfg.poweronstate == 0) {
+    power = 0;
+    setRelay(power);
+  }
+  else if (sysCfg.poweronstate == 1) {
+    power = ((0x00FF << Maxdevice) >> 8);
+    setRelay(power);
+  }
+  else {
+    power = sysCfg.power & ((0x00FF << Maxdevice) >> 8);
+    if (sysCfg.savestate) setRelay(power);
+  }
 
 #ifdef USE_WALL_SWITCH
   pinMode(SWITCH_PIN, INPUT_PULLUP);            // set pin to input, fitted with external pull up on Sonoff TH10/16 board

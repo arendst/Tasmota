@@ -387,7 +387,7 @@ void handleRoot()
         page += F("%'><form action='/?o=");
         page += String(idx);
         page += F("' method='post'><div style='text-align:center;font-weight:bold;font-size:");
-        page += String(70 - (Maxdevice * 10));
+        page += String(70 - (Maxdevice * 8));
         page += F("px'>");
         page += (power & (0x01 << (idx -1))) ? "ON" : "OFF";
         page += F("</div><br/><button>Toggle");
