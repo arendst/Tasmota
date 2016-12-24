@@ -5,11 +5,11 @@ Current version is **3.1.2** - See ```sonoff/_releasenotes.ino``` for change inf
 
 Starting with version 2.0.0 the following devices are supported:
 <img alt="Sonoff" src="https://github.com/arendst/arendst.github.io/blob/master/media/sonoffbasic.jpg" width="250" align="right" /> 
-<img alt="Sonoff" src="https://github.com/arendst/arendst.github.io/blob/master/media/sonoff_th.jpg" width="250" align="right" /> 
 - iTead Sonoff Basic
 - iTead Sonoff RF
 - iTead Sonoff SV
 - iTead Sonoff Dual
+<img alt="Sonoff" src="https://github.com/arendst/arendst.github.io/blob/master/media/sonoff_th.jpg" width="250" align="right" /> 
 - iTead Sonoff TH10 / TH16 with temperature sensor
 - iTead Sonoff Pow
 - iTead Sonoff Touch
