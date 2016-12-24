@@ -1134,7 +1134,7 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
       }
     }
     else if (!strcmp(type,"POWERONSTATE")) {
-      if ((data_len > 0) && (payload >= 0) && (payload <= 2)) {
+      if ((data_len > 0) && (payload >= 0) && (payload <= 3)) {
         sysCfg.poweronstate = payload;
       }
       snprintf_P(svalue, sizeof(svalue), PSTR("{\"PowerOnState\":%d}"), sysCfg.poweronstate);
