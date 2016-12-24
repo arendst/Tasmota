@@ -20,4 +20,4 @@ Starting with version 2.0.0 the following devices are supported:
 See [my Wiki](https://github.com/arendst/Sonoff-MQTT-OTA-Arduino/wiki) for more information.
 
 <img alt="Sonoff" src="https://github.com/arendst/arendst.github.io/blob/master/media/sonofftoucheu.jpg" height="280" align="left" /> 
-<img alt="Sonoff" src="https://github.com/arendst/arendst.github.io/blob/master/media/sonoff4ch.jpg" height="260" align="right" /> 
+<img alt="Sonoff" src="https://github.com/arendst/arendst.github.io/blob/master/media/sonoff4ch.jpg" height="250" align="right" /> 
