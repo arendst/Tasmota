@@ -1,4 +1,7 @@
-/* 3.1.1 20161223
+/* 3.1.2 20161224
+ * Extent command PowerOnState with toggle at power on (option 2 is now option 3!)
+ * 
+ * 3.1.1 20161223
  * Add support for Sonoff Touch and Sonoff 4CH
  * Update DomoticzIdx and DomoticzKeyIdx with relay/key index (DomoticzIdx1/DomoticzKeyIdx1)
  * Add command PowerOnState to control relay(s) at power on

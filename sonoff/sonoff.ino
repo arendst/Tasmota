@@ -10,7 +10,7 @@
  * ====================================================
 */
 
-#define VERSION                0x03010100   // 3.1.1
+#define VERSION                0x03010200   // 3.1.2
 
 #define SONOFF                 1            // Sonoff, Sonoff RF, Sonoff SV, Sonoff Dual, Sonoff TH, S20 Smart Socket, 4 Channel
 #define SONOFF_POW             9            // Sonoff Pow
@@ -607,6 +607,9 @@ void CFG_Delta()
     }
     if (sysCfg.version < 0x03010100) {  // 3.1.1 - Add parameter
       sysCfg.poweronstate = APP_POWERON_STATE;
+    }
+    if (sysCfg.version < 0x03010200) {  // 3.1.2 - Add parameter
+      if (sysCfg.poweronstate == 2) sysCfg.poweronstate = 3;
     }
 
     sysCfg.version = VERSION;
@@ -2604,15 +2607,19 @@ void setup()
 #endif
   }
 
-  if (sysCfg.poweronstate == 0) {
+  if (sysCfg.poweronstate == 0) {       // All off
     power = 0;
     setRelay(power);
   }
-  else if (sysCfg.poweronstate == 1) {
+  else if (sysCfg.poweronstate == 1) {  // All on
     power = ((0x00FF << Maxdevice) >> 8);
     setRelay(power);
   }
-  else {
+  else if (sysCfg.poweronstate == 2) {  // All saved state toggle
+    power = (sysCfg.power & ((0x00FF << Maxdevice) >> 8)) ^ 0xFF;
+    if (sysCfg.savestate) setRelay(power);
+  }
+  else {                                // All saved state
     power = sysCfg.power & ((0x00FF << Maxdevice) >> 8);
     if (sysCfg.savestate) setRelay(power);
   }
