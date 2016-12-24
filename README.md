@@ -4,6 +4,7 @@ Provide ESP8266 based itead Sonoff with Serial, Web and MQTT control allowing 'O
 Current version is **3.1.2** - See ```sonoff/_releasenotes.ino``` for change information.
 
 Starting with version 2.0.0 the following devices are supported:
+<img alt="Sonoff" src="https://github.com/arendst/arendst.github.io/blob/master/media/sonoffbasic.jpg" width="250" align="right" /> 
 - iTead Sonoff Basic
 - iTead Sonoff RF
 - iTead Sonoff SV
@@ -17,5 +18,5 @@ Starting with version 2.0.0 the following devices are supported:
 
 See [my Wiki](https://github.com/arendst/Sonoff-MQTT-OTA-Arduino/wiki) for more information.
 
-<img alt="Sonoff" src="https://github.com/arendst/arendst.github.io/blob/master/media/sonoff.jpg" height="200" align="left" /> 
+<img alt="Sonoff" src="https://github.com/arendst/arendst.github.io/blob/master/media/sonoff4ch.jpg" height="320" align="left" /> 
 <img alt="Sonoff" src="https://github.com/arendst/arendst.github.io/blob/master/media/sonoff_th.jpg" height="320" align="right" /> 
