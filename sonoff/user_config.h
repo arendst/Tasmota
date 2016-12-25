@@ -8,10 +8,11 @@
  * Corresponding MQTT/Serial/Console commands in [brackets]
 \*********************************************************************************************/
 
-// Enable only one out of four MODULE defines below
+// Enable only one out of five MODULE defines below
 #define MODULE                 SONOFF            // Sonoff Basic, Sonoff RF, Sonoff SV, Sonoff Dual, Sonoff TH, S20 Smart Socket
 //#define MODULE                 SONOFF_2          // Sonoff Touch, Sonoff 4CH
 //#define MODULE                 SONOFF_POW        // Sonoff Pow
+//#define MODULE                 MOTOR_CAC         // iTead Motor Clockwise/Anticlockwise
 //#define MODULE                 ELECTRO_DRAGON    // Electro Dragon Wifi IoT Relay Board Based on ESP8266
 
 // -- Project --------------------------------
@@ -243,6 +244,21 @@
   #define SEND_TELEMETRY_ENERGY             // Enable sending energy telemetry
 
 /*********************************************************************************************\
+ * Motor Clockwise/Anticlockwise
+ * 
+ * >>> Select Board "Generic ESP8266 Module" and Flash Size "1M (64K SPIFFS)" <<<
+\*********************************************************************************************/
+
+#elif MODULE == MOTOR_CAC                   // programming pins 6:3.3V 7:rx 8:tx 9:gnd of PSA-B
+  #define APP_NAME             "Motor C/AC module"
+  #define MQTT_GRPTOPIC        "motors"     // [GroupTopic] MQTT Group topic
+/*-------------------------------------------------------------------------------------------*/
+  #define LED_PIN              13           // GPIO 13 = Green/Blue Led (0 = On, 1 = Off) - Sonoff
+  #define LED_INVERTED         1            // 0 = (1 = On, 0 = Off), 1 = (0 = On, 1 = Off)
+  #define REL_PIN              12           // GPIO 12 = Red Leds and Relays (0 = Off, 1 = On)
+  #define KEY_PIN              0            // GPIO 00 = Button
+
+/*********************************************************************************************\
  * Electrodragon
  * 
  * >>> Select Board "Generic ESP8266 Module" and Flash Size "1M (64K SPIFFS)" or "4M (1M SPIFFS)" <<<
@@ -293,7 +309,7 @@
 \*********************************************************************************************/
 
 #else
-  #error "Select either module SONOFF, SONOFF_85, SONOFF_POW or ELECTRO_DRAGON"
+  #error "Select either module SONOFF, SONOFF_85, SONOFF_POW, MOTOR_CAC or ELECTRO_DRAGON"
 #endif
 
 #if defined(SEND_TELEMETRY_DS18B20) && defined(SEND_TELEMETRY_DS18x20)

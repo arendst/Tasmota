@@ -137,8 +137,9 @@ const char HTTP_FORM_DOMOTICZ[] PROGMEM =
   "<input id='w' name='w' value='4' hidden><input id='r' name='r' value='1' hidden>"
   "<br/><b>In topic</b> (" DOMOTICZ_IN_TOPIC ")<br/><input id='it' name='it' length=32 placeholder='" DOMOTICZ_IN_TOPIC "' value='{d1}'><br/>"
   "<br/><b>Out topic</b> (" DOMOTICZ_OUT_TOPIC ")<br/><input id='ot' name='ot' length=32 placeholder='" DOMOTICZ_OUT_TOPIC "' value='{d2}'><br/>"
-  "<br/><b>Idx</b> (" STR(DOMOTICZ_RELAY_IDX1) ")<br/><input id='ix' name='ix' length=32 placeholder='" STR(DOMOTICZ_RELAY_IDX1) "' value='{d3}'><br/>"
-  "<br/><b>Update timer</b> (" STR(DOMOTICZ_UPDATE_TIMER) ")<br/><input id='ut' name='ut' length=32 placeholder='" STR(DOMOTICZ_UPDATE_TIMER) "' value='{d4}'><br/>";
+  "<br/><b>Idx 1</b> (" STR(DOMOTICZ_RELAY_IDX1) ")<br/><input id='ix' name='ix' length=8 placeholder='" STR(DOMOTICZ_RELAY_IDX1) "' value='{d3}'><br/>";
+const char HTTP_FORM_DOMOTICZ2[] PROGMEM =
+  "<br/><b>Update timer</b> (" STR(DOMOTICZ_UPDATE_TIMER) ")<br/><input id='ut' name='ut' length=32 placeholder='" STR(DOMOTICZ_UPDATE_TIMER) "' value='{d7}'><br/>";
 #endif  // USE_DOMOTICZ
 const char HTTP_FORM_LOG[] PROGMEM =
   "<fieldset><legend><b>&nbsp;Logging parameters&nbsp;</b></legend><form method='post' action='sv'>"
@@ -681,7 +682,20 @@ void handleDomoticz()
   page.replace("{d1}", String(sysCfg.domoticz_in_topic));
   page.replace("{d2}", String(sysCfg.domoticz_out_topic));
   page.replace("{d3}", String((int)sysCfg.domoticz_relay_idx[0]));
-  page.replace("{d4}", String((int)sysCfg.domoticz_update_timer));
+  if (Maxdevice > 1) {
+    page += F("<br/><b>Idx 2</b> (" STR(DOMOTICZ_RELAY_IDX2) ")<br/><input id='iy' name='iy' length=8 placeholder='" STR(DOMOTICZ_RELAY_IDX2) "' value='{d4}'><br/>");
+    page.replace("{d4}", String((int)sysCfg.domoticz_relay_idx[1]));
+  }
+  if (Maxdevice > 2) {
+    page += F("<br/><b>Idx 3</b> (" STR(DOMOTICZ_RELAY_IDX3) ")<br/><input id='iz' name='iz' length=8 placeholder='" STR(DOMOTICZ_RELAY_IDX3) "' value='{d5}'><br/>");
+    page.replace("{d5}", String((int)sysCfg.domoticz_relay_idx[2]));
+  }
+  if (Maxdevice > 3) {
+    page += F("<br/><b>Idx 4</b> (" STR(DOMOTICZ_RELAY_IDX4) ")<br/><input id='iw' name='iw' length=8 placeholder='" STR(DOMOTICZ_RELAY_IDX4) "' value='{d6}'><br/>");
+    page.replace("{d6}", String((int)sysCfg.domoticz_relay_idx[3]));
+  }
+  page += FPSTR(HTTP_FORM_DOMOTICZ2);
+  page.replace("{d7}", String((int)sysCfg.domoticz_update_timer));
   page += FPSTR(HTTP_FORM_END);
   page += FPSTR(HTTP_BTN_CONF);
   showPage(page);
@@ -767,9 +781,13 @@ void handleSave()
     strlcpy(sysCfg.domoticz_in_topic, (!strlen(webServer->arg("it").c_str())) ? DOMOTICZ_IN_TOPIC : webServer->arg("it").c_str(), sizeof(sysCfg.domoticz_in_topic));
     strlcpy(sysCfg.domoticz_out_topic, (!strlen(webServer->arg("ot").c_str())) ? DOMOTICZ_OUT_TOPIC : webServer->arg("ot").c_str(), sizeof(sysCfg.domoticz_out_topic));
     sysCfg.domoticz_relay_idx[0] = (!strlen(webServer->arg("ix").c_str())) ? DOMOTICZ_RELAY_IDX1 : atoi(webServer->arg("ix").c_str());
+    sysCfg.domoticz_relay_idx[1] = (!strlen(webServer->arg("iy").c_str())) ? DOMOTICZ_RELAY_IDX2 : atoi(webServer->arg("iy").c_str());
+    sysCfg.domoticz_relay_idx[2] = (!strlen(webServer->arg("iz").c_str())) ? DOMOTICZ_RELAY_IDX3 : atoi(webServer->arg("iz").c_str());
+    sysCfg.domoticz_relay_idx[3] = (!strlen(webServer->arg("iw").c_str())) ? DOMOTICZ_RELAY_IDX4 : atoi(webServer->arg("iw").c_str());
     sysCfg.domoticz_update_timer = (!strlen(webServer->arg("ut").c_str())) ? DOMOTICZ_UPDATE_TIMER : atoi(webServer->arg("ut").c_str());
-    snprintf_P(log, sizeof(log), PSTR("HTTP: Domoticz in_topic %s, out_topic %s, idx %d, update_timer %d"),
-      sysCfg.domoticz_in_topic, sysCfg.domoticz_out_topic, sysCfg.domoticz_relay_idx[0], sysCfg.domoticz_update_timer);
+    snprintf_P(log, sizeof(log), PSTR("HTTP: Domoticz in_topic %s, out_topic %s, idx1 %d, idx2 %d, idx3 %d, idx4 %d, update_timer %d"),
+      sysCfg.domoticz_in_topic, sysCfg.domoticz_out_topic, sysCfg.domoticz_relay_idx[0], sysCfg.domoticz_relay_idx[1],
+      sysCfg.domoticz_relay_idx[2], sysCfg.domoticz_relay_idx[3], sysCfg.domoticz_update_timer);
     addLog(LOG_LEVEL_INFO, log);
     break;
 #endif  // USE_DOMOTICZ

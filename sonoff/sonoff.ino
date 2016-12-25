@@ -10,12 +10,13 @@
  * ====================================================
 */
 
-#define VERSION                0x03010200   // 3.1.2
+#define VERSION                0x03010300   // 3.1.3
 
 #define SONOFF                 1            // Sonoff, Sonoff RF, Sonoff SV, Sonoff Dual, Sonoff TH, S20 Smart Socket, 4 Channel
 #define SONOFF_POW             9            // Sonoff Pow
 #define SONOFF_2               10           // Sonoff Touch, Sonoff 4CH
-#define ELECTRO_DRAGON         11           // Electro Dragon Wifi IoT Relay Board Based on ESP8266
+#define MOTOR_CAC              11           // iTead Motor Clockwise/Anticlockwise
+#define ELECTRO_DRAGON         12           // Electro Dragon Wifi IoT Relay Board Based on ESP8266
 
 #define DHT11                  11
 #define DHT21                  21
@@ -1133,12 +1134,14 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
         }
       }
     }
+#if (MODULE != MOTOR_CAC)
     else if (!strcmp(type,"POWERONSTATE")) {
       if ((data_len > 0) && (payload >= 0) && (payload <= 3)) {
         sysCfg.poweronstate = payload;
       }
       snprintf_P(svalue, sizeof(svalue), PSTR("{\"PowerOnState\":%d}"), sysCfg.poweronstate);
     }
+#endif
     else if (!strcmp(type,"PULSETIME")) {
       if ((data_len > 0) && (payload >= 0) && (payload <= 3600)) {
         sysCfg.pulsetime = payload;
@@ -1620,7 +1623,7 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
     if (sysCfg.message_format != JSON) json2legacy(stopic, svalue);
     mqtt_publish(stopic, svalue);
 
-    snprintf_P(svalue, sizeof(svalue), PSTR("{\"Commands3\":\"%s, PowerOnState, PulseTime"), (sysCfg.model == SONOFF) ? "Power, Light" : "Power1, Power2, Light1 Light2");
+    snprintf_P(svalue, sizeof(svalue), PSTR("{\"Commands3\":\"%s%s, PulseTime"), (sysCfg.model == SONOFF) ? "Power, Light" : "Power1, Power2, Light1 Light2", (MODULE != MOTOR_CAC) ? ", PowerOnState" : "");
 #ifdef USE_WEBSERVER
     snprintf_P(svalue, sizeof(svalue), PSTR("%s, Weblog, Webserver"), svalue);
 #endif
@@ -1938,13 +1941,6 @@ void every_second()
     }
   }
 
-  if (status_update_timer) {
-    status_update_timer--;
-    if (!status_update_timer) {
-      for (i = 1; i <= Maxdevice; i++) mqtt_publishPowerState(i);
-    }
-  }
-
 #ifdef USE_DOMOTICZ
   if ((sysCfg.domoticz_update_timer || domoticz_update_timer) && sysCfg.domoticz_relay_idx[0]) {
     domoticz_update_timer--;
@@ -1954,6 +1950,13 @@ void every_second()
     }
   }
 #endif  // USE_DOMOTICZ
+
+  if (status_update_timer) {
+    status_update_timer--;
+    if (!status_update_timer) {
+      for (i = 1; i <= Maxdevice; i++) mqtt_publishPowerState(i);
+    }
+  }
 
   if (sysCfg.tele_period) {
     tele_period++;
@@ -2007,7 +2010,7 @@ void every_second()
           if (Maxdevice == 1) {  // Legacy
             snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/%s"), PUB_PREFIX2, sysCfg.mqtt_topic, sysCfg.mqtt_subtopic);
           } else {
-            snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/%d/%s"), PUB_PREFIX2, sysCfg.mqtt_topic, i +1, sysCfg.mqtt_subtopic);
+            snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/%s%d"), PUB_PREFIX2, sysCfg.mqtt_topic, sysCfg.mqtt_subtopic, i +1);
           }
           strlcpy(svalue, (power & (0x01 << i)) ? MQTT_STATUS_ON : MQTT_STATUS_OFF, sizeof(svalue));
           mqtt_publish(stopic, svalue);
@@ -2546,7 +2549,7 @@ void setup()
 #endif
 #endif
   }
-  Maxdevice = sysCfg.model;  // SONOFF(_2) (1), SONOFF_DUAL (2), CHANNEL_4 (3) or SONOFF_4CH (4)
+  Maxdevice = sysCfg.model;  // SONOFF(_2)/MOTOR_CAC (1), SONOFF_DUAL (2), CHANNEL_4 (3) or SONOFF_4CH (4)
   if ((sysCfg.model >= SONOFF_DUAL) && (sysCfg.model <= CHANNEL_4)) {
     Baudrate = 19200;
     Maxdevice = 2;
@@ -2568,7 +2571,6 @@ void setup()
   snprintf_P(log, sizeof(log), PSTR("APP: Bootcount %d"), sysCfg.bootcount);
   addLog(LOG_LEVEL_DEBUG, log);
   savedatacounter = sysCfg.savedata;
-//  power = sysCfg.power & ((0x00FF << Maxdevice) >> 8);
   syslog_level = sysCfg.syslog_level;
 
   if (strstr(sysCfg.hostname, "%")) strlcpy(sysCfg.hostname, DEF_WIFI_HOSTNAME, sizeof(sysCfg.hostname));
@@ -2607,6 +2609,7 @@ void setup()
 #endif
   }
 
+  if (MODULE == MOTOR_CAC) sysCfg.poweronstate = 1;  // Needs always on else in limbo!
   if (sysCfg.poweronstate == 0) {       // All off
     power = 0;
     setRelay(power);
