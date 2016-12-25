@@ -1,7 +1,7 @@
 /* 3.1.3 20161225
  * Extent Domoticz configuration webpage with optional indices
  * Fix multi relay legacy tele message from tele/sonoff/2/POWER to tele/sonoff/POWER2
- * Add support for iTead Motor Clockwise/Anticlokwise
+ * Add support for iTead Motor Clockwise/Anticlockwise
  * 
  * 3.1.2 20161224
  * Extent command PowerOnState with toggle at power on (option 2 is now option 3!)
