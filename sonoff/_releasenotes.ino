@@ -1,4 +1,8 @@
-/* 3.1.3 20161225
+/* 3.1.4 20161227
+ * Fix MQTT subscribe regression exception (3)
+ * Fix serial empty command exception (28)
+ * 
+ * 3.1.3 20161225
  * Extent Domoticz configuration webpage with optional indices
  * Fix multi relay legacy tele message from tele/sonoff/2/POWER to tele/sonoff/POWER2
  * Add support for iTead Motor Clockwise/Anticlockwise

@@ -10,7 +10,7 @@
  * ====================================================
 */
 
-#define VERSION                0x03010300   // 3.1.3
+#define VERSION                0x03010400   // 3.1.4
 
 #define SONOFF                 1            // Sonoff, Sonoff RF, Sonoff SV, Sonoff Dual, Sonoff TH, S20 Smart Socket, 4 Channel
 #define SONOFF_POW             9            // Sonoff Pow
@@ -1005,8 +1005,8 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
     mtopic, grpflg, index, type, dataBuf, dataBufUc);
   addLog(LOG_LEVEL_DEBUG, svalue);
 
+  snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/RESULT"), PUB_PREFIX, sysCfg.mqtt_topic);
   if (type != NULL) {
-    snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/RESULT"), PUB_PREFIX, sysCfg.mqtt_topic);
     snprintf_P(svalue, sizeof(svalue), PSTR("{\"Command\":\"Error\"}"));
     if (sysCfg.ledstate &0x02) blinks++;
 
@@ -1717,13 +1717,18 @@ void do_cmnd_power(byte device, byte state)
 
 void do_cmnd(char *cmnd)
 {
-  char stopic[TOPSZ], svalue[128];
+  char sempty[2], stopic[TOPSZ], svalue[128];
   char *start;
   char *token;
 
-  token = strtok(cmnd, " ");
-  start = strrchr(token, '/');   // Skip possible cmnd/sonoff/ preamble
-  if (start) token = start;
+  if (strlen(cmnd)) {
+    token = strtok(cmnd, " ");
+    start = strrchr(token, '/');   // Skip possible cmnd/sonoff/ preamble
+    if (start) token = start;
+  } else {
+    snprintf_P(sempty, sizeof(sempty), PSTR("/"));
+    token = strtok(sempty, " ");
+  }
   snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/%s"), SUB_PREFIX, sysCfg.mqtt_topic, token);
   token = strtok(NULL, "");
   snprintf_P(svalue, sizeof(svalue), PSTR("%s"), (token == NULL) ? "" : token);
