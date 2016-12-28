@@ -10,7 +10,7 @@
  * ====================================================
 */
 
-#define VERSION                0x03010400   // 3.1.4
+#define VERSION                0x03010500   // 3.1.5
 
 #define SONOFF                 1            // Sonoff, Sonoff RF, Sonoff SV, Sonoff Dual, Sonoff TH, S20 Smart Socket, 4 Channel
 #define SONOFF_POW             9            // Sonoff Pow
@@ -1717,17 +1717,14 @@ void do_cmnd_power(byte device, byte state)
 
 void do_cmnd(char *cmnd)
 {
-  char sempty[2], stopic[TOPSZ], svalue[128];
+  char stopic[TOPSZ], svalue[128];
   char *start;
   char *token;
 
-  if (strlen(cmnd)) {
-    token = strtok(cmnd, " ");
+  token = strtok(cmnd, " ");
+  if (token != NULL) {
     start = strrchr(token, '/');   // Skip possible cmnd/sonoff/ preamble
     if (start) token = start;
-  } else {
-    snprintf_P(sempty, sizeof(sempty), PSTR("/"));
-    token = strtok(sempty, " ");
   }
   snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/%s"), SUB_PREFIX, sysCfg.mqtt_topic, token);
   token = strtok(NULL, "");

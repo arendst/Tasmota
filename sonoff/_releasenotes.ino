@@ -1,4 +1,7 @@
-/* 3.1.4 20161227
+/* 3.1.5 20161228
+ * Fix serial space command exception (28)
+ * 
+ * 3.1.4 20161227
  * Fix MQTT subscribe regression exception (3)
  * Fix serial empty command exception (28)
  * 
