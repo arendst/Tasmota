@@ -1,31 +1,34 @@
-/* 3.1.5 20161228
+/* 3.1.6 20161230
+ * Add blinking using commands BlinkTime, BlinkCount and Power Blink|3|BlinkOff|4
+ *
+ * 3.1.5 20161228
  * Fix serial space command exception (28)
- * 
+ *
  * 3.1.4 20161227
  * Fix MQTT subscribe regression exception (3)
  * Fix serial empty command exception (28)
- * 
+ *
  * 3.1.3 20161225
  * Extent Domoticz configuration webpage with optional indices
  * Fix multi relay legacy tele message from tele/sonoff/2/POWER to tele/sonoff/POWER2
  * Add support for iTead Motor Clockwise/Anticlockwise
- * 
+ *
  * 3.1.2 20161224
  * Extent command PowerOnState with toggle at power on (option 2 is now option 3!)
- * 
+ *
  * 3.1.1 20161223
  * Add support for Sonoff Touch and Sonoff 4CH
  * Update DomoticzIdx and DomoticzKeyIdx with relay/key index (DomoticzIdx1/DomoticzKeyIdx1)
  * Add command PowerOnState to control relay(s) at power on
- * 
+ *
  * 3.1.0 20161221
  * Add Sonoff Pow measurement smoothing
  * Fix serial command topic preamble error
  * Fix 2.x to 3.x migration inconsistencies
- * 
+ *
  * 3.0.9 20161218
  * Add Sonoff Pow voltage reading when relay is on but no load present
- * 
+ *
  * 3.0.8 20161218
  * Add temperature conversion to Fahrenheit as option in user_config.h (TEMP_CONVERSION)
  *
