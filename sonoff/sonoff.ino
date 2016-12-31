@@ -10,7 +10,7 @@
  * ====================================================
 */
 
-#define VERSION                0x03010600   // 3.1.6
+#define VERSION                0x03010700   // 3.1.7
 
 #define SONOFF                 1            // Sonoff, Sonoff RF, Sonoff SV, Sonoff Dual, Sonoff TH, S20 Smart Socket, 4 Channel
 #define SONOFF_POW             9            // Sonoff Pow
@@ -916,16 +916,15 @@ void mqtt_reconnect()
   }
 
   addLog_P(LOG_LEVEL_INFO, PSTR("MQTT: Attempting connection..."));
-  if (sysCfg.message_format == JSON) {
-    snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/TELEMETRY"), PUB_PREFIX2, sysCfg.mqtt_topic);
-    snprintf_P(svalue, sizeof(svalue), PSTR("{\"LWT\":\"Offline\"}"));
-  } else {
-    snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/LWT"), PUB_PREFIX2, sysCfg.mqtt_topic);
-    snprintf_P(svalue, sizeof(svalue), PSTR("Offline"));
-  }
+  snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/TELEMETRY"), PUB_PREFIX2, sysCfg.mqtt_topic);
+  snprintf_P(svalue, sizeof(svalue), PSTR("{\"LWT\":\"Offline\"}"));
+  if (sysCfg.message_format != JSON) json2legacy(stopic, svalue);
   if (mqttClient.connect(MQTTClient, sysCfg.mqtt_user, sysCfg.mqtt_pwd, stopic, 0, 0, svalue)) {
     addLog_P(LOG_LEVEL_INFO, PSTR("MQTT: Connected"));
     mqttcounter = 0;
+    snprintf_P(svalue, sizeof(svalue), PSTR("{\"LWT\":\"Online\"}"));
+    if (sysCfg.message_format != JSON) json2legacy(stopic, svalue);
+    mqtt_publish(stopic, svalue, true);
     udpConnected = false;
     mqtt_connected();
   } else {
