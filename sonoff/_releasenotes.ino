@@ -1,4 +1,8 @@
-/* 3.1.7 20161231
+/* 3.1.8 20170103
+ * Add retain flag to LWT offline and only send "tele/sonoff/LWT Offline" (#179)
+ * Change retained LWT Online message to only send "tele/sonoff/LWT Online"
+ *
+ * 3.1.7 20161231
  * Add retained message LWT Online when sonoff makes MQTT connection (#179)
  *
  * 3.1.6 20161230
