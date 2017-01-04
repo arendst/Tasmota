@@ -10,7 +10,7 @@
  * ====================================================
 */
 
-#define VERSION                0x03010800   // 3.1.8
+#define VERSION                0x03010900   // 3.1.9
 
 #define SONOFF                 1            // Sonoff, Sonoff RF, Sonoff SV, Sonoff Dual, Sonoff TH, S20 Smart Socket, 4 Channel
 #define SONOFF_POW             9            // Sonoff Pow
@@ -343,6 +343,7 @@ uint16_t blink_counter = 0;           // Number of blink cycles
 uint8_t blink_power;                  // Blink power state
 uint8_t blink_mask = 0;               // Blink relay active mask
 uint8_t blink_powersave;              // Blink start power save state
+uint8_t mqtt_cmnd_publish = 0;        // ignore flag for publish command
 
 #ifdef USE_MQTT_TLS
   WiFiClientSecure espClient;         // Wifi Secure Client
@@ -760,8 +761,14 @@ unsigned long getKeyIntValue(const char *json, const char *key)
 
 void mqtt_publish(const char* topic, const char* data, boolean retained)
 {
-  char log[TOPSZ+MESSZ];
+  char log[TOPSZ+MESSZ], myself[TOPSZ];
+  char *me;
 
+  if (!strcmp(SUB_PREFIX,PUB_PREFIX)) {
+    snprintf_P(myself, sizeof(myself), PSTR("%s/%s"), SUB_PREFIX, sysCfg.mqtt_topic);  // Rule out ButtonTopic
+    me = strstr(topic,myself);
+    if (me == topic) mqtt_cmnd_publish++;
+  }
   if (mqttClient.publish(topic, data, retained)) {
     snprintf_P(log, sizeof(log), PSTR("MQTT: %s = %s%s"), topic, data, (retained) ? " (retained)" : "");
 //    mqttClient.loop();  // Do not use here! Will block previous publishes
@@ -933,9 +940,19 @@ void mqtt_reconnect()
 
 void mqttDataCb(char* topic, byte* data, unsigned int data_len)
 {
+  char *str;
+  
+  if (!strcmp(SUB_PREFIX,PUB_PREFIX)) {
+    str = strstr(topic,SUB_PREFIX);
+    if ((str == topic) && mqtt_cmnd_publish) {
+      mqtt_cmnd_publish--;
+      return;
+    }
+  }
+  
   uint16_t i = 0, grpflg = 0, index;
   char topicBuf[TOPSZ], dataBuf[data_len+1], dataBufUc[MESSZ];
-  char *str, *p, *mtopic = NULL, *type = NULL, *devc = NULL;
+  char *p, *mtopic = NULL, *type = NULL, *devc = NULL;
   char stopic[TOPSZ], svalue[MESSZ], stemp1[TOPSZ], stemp2[10], stemp3[10];
   float ped, pi, pc;
   uint16_t pe, pw, pu;
@@ -1034,7 +1051,8 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
     if (sysCfg.ledstate &0x02) blinks++;
 
     if (!strcmp(dataBufUc,"?")) data_len = 0;
-    int16_t payload = atoi(dataBuf);
+    int16_t payload = atoi(dataBuf);     // -32766 - 32767
+    uint16_t payload16 = atoi(dataBuf);  // 0 - 65535
     if (!strcmp(dataBufUc,"OFF") || !strcmp(dataBufUc,"STOP")) payload = 0;
     if (!strcmp(dataBufUc,"ON") || !strcmp(dataBufUc,"START") || !strcmp(dataBufUc,"USER")) payload = 1;
     if (!strcmp(dataBufUc,"TOGGLE") || !strcmp(dataBufUc,"ADMIN")) payload = 2;
@@ -1168,8 +1186,8 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
     }
 #endif
     else if (!strcmp(type,"PULSETIME")) {
-      if ((data_len > 0) && (payload >= 0) && (payload <= 3600)) {
-        sysCfg.pulsetime = payload;
+      if (data_len > 0) {
+        sysCfg.pulsetime = payload16;  // 0 - 65535
         pulse_timer = 0;
       }
       snprintf_P(svalue, sizeof(svalue), PSTR("{\"PulseTime\":%d}"), sysCfg.pulsetime);
@@ -1182,8 +1200,8 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
       snprintf_P(svalue, sizeof(svalue), PSTR("{\"BlinkTime\":%d}"), sysCfg.blinktime);
     }
     else if (!strcmp(type,"BLINKCOUNT")) {
-      if ((data_len > 0) && (payload >= 0) && (payload <= 32000)) {
-        sysCfg.blinkcount = payload;
+      if (data_len > 0) {
+        sysCfg.blinkcount = payload16;  // 0 - 65535
         if (blink_counter) blink_counter = sysCfg.blinkcount *2;
       }
       snprintf_P(svalue, sizeof(svalue), PSTR("{\"BlinkCount\":%d}"), sysCfg.blinkcount);
@@ -1662,7 +1680,7 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
     if (sysCfg.message_format != JSON) json2legacy(stopic, svalue);
     mqtt_publish(stopic, svalue);
 
-    snprintf_P(svalue, sizeof(svalue), PSTR("{\"Commands3\":\"%s%s, PulseTime"), (sysCfg.model == SONOFF) ? "Power, Light" : "Power1, Power2, Light1 Light2", (MODULE != MOTOR_CAC) ? ", PowerOnState" : "");
+    snprintf_P(svalue, sizeof(svalue), PSTR("{\"Commands3\":\"%s%s, PulseTime, BlinkTime, BlinkCount"), (sysCfg.model == SONOFF) ? "Power, Light" : "Power1, Power2, Light1 Light2", (MODULE != MOTOR_CAC) ? ", PowerOnState" : "");
 #ifdef USE_WEBSERVER
     snprintf_P(svalue, sizeof(svalue), PSTR("%s, Weblog, Webserver"), svalue);
 #endif
@@ -1735,6 +1753,7 @@ void do_cmnd_power(byte device, byte state)
 
   if ((device < 1) || (device > Maxdevice)) device = 1;
   byte mask = 0x01 << (device -1);
+  pulse_timer = 0;
   if (state <= 2) {
     if ((blink_mask & mask)) {
       blink_mask &= (0xFF ^ mask);  // Clear device mask
@@ -1760,7 +1779,7 @@ void do_cmnd_power(byte device, byte state)
   else if (state == 3) { // Blink
     if (!(blink_mask & mask)) {
       blink_powersave = (blink_powersave & (0xFF ^ mask)) | (power & mask);  // Save state
-      blink_power = (power & mask) ? 0 : 1;  // Toggle
+      blink_power = (power >> (device -1))&1;  // Prep to Toggle
     }
     blink_timer = 1;
     blink_counter = ((!sysCfg.blinkcount) ? 64000 : (sysCfg.blinkcount *2)) +1;
@@ -2009,6 +2028,8 @@ void every_second()
 
   snprintf_P(stime, sizeof(stime), PSTR("%04d-%02d-%02dT%02d:%02d:%02d"),
     rtcTime.Year, rtcTime.Month, rtcTime.Day, rtcTime.Hour, rtcTime.Minute, rtcTime.Second);
+
+  if (pulse_timer > 111) pulse_timer--;
 
   if (syslog_timer) {  // Restore syslog level
     syslog_timer--;
@@ -2310,7 +2331,7 @@ void stateloop()
     every_second();
   }
 
-  if (pulse_timer) {
+  if ((pulse_timer > 0) && (pulse_timer < 112)) {
     pulse_timer--;
     if (!pulse_timer) do_cmnd_power(1, 0);
   }
@@ -2509,7 +2530,7 @@ void stateloop()
       savedatacounter--;
       if (savedatacounter <= 0) {
         if (sysCfg.savestate) {
-          if (!(sysCfg.pulsetime && ((sysCfg.power &0xFE) == (power &0xFE)))) sysCfg.power = power;
+          if (!((sysCfg.pulsetime < 30) && ((sysCfg.power &0xFE) == (power &0xFE)))) sysCfg.power = power;
         }
         CFG_Save();
         savedatacounter = sysCfg.savedata;

@@ -1,4 +1,9 @@
-/* 3.1.8 20170103
+/* 3.1.9 20170104
+ * Fix Power Blink start position (toggled)
+ * Change PulseTime increments: 1 .. 111 in 0.1 sec (max 11 seconds) and 112 .. 64900 in seconds (= 12 seconds until 18 hours)
+ * Add support for SUB_PREFIX = PUB_PREFIX
+ *
+ * 3.1.8 20170103
  * Add retain flag to LWT offline and only send "tele/sonoff/LWT Offline" (#179)
  * Change retained LWT Online message to only send "tele/sonoff/LWT Online"
  *
