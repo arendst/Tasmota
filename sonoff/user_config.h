@@ -31,8 +31,6 @@
 #define WIFI_HOSTNAME          "%s-%04d"         // [Hostname] Expands to <MQTT_TOPIC>-<last 4 decimal chars of MAC address>
 #define WIFI_CONFIG_TOOL       WIFI_WPSCONFIG    // [WifiConfig] Default tool if wifi fails to connect
                                                  //   (WIFI_RESTART, WIFI_SMARTCONFIG, WIFI_MANAGER, WIFI_WPSCONFIG, WIFI_RETRY)
-//#define USE_DISCOVERY                            // Enable mDNS for finding MQTT host (+8k code, +0.3k mem)
-                                                 
 // -- Syslog ---------------------------------
 #define SYS_LOG_HOST           "domus1"        // [LogHost] (Linux) syslog host
 #define SYS_LOG_PORT           514             // [LogPort] default syslog UDP port
@@ -102,6 +100,11 @@
 #define USE_WEBSERVER                       // Enable web server and wifi manager (+43k code, +2k mem) - Disable by //
 //  #define USE_WEMO_EMULATION                // Enable Belkin WeMo PowerSwitch emulation for Alexa (+4k code, +2k mem)
   #define WEB_SERVER           2            // [WebServer] Web server (0 = Off, 1 = Start as User, 2 = Start as Admin)
+
+// -- mDNS -----------------------------------
+#define USE_DISCOVERY                       // Enable mDNS for the following services (+8k code, +0.3k mem)
+  #define WEBSERVER_ADVERTISE               // Provide access to webserver by name <Hostname>.local/
+  #define MQTT_HOST_DISCOVERY               // Find MQTT host server (overrides MQTT_HOST if found)
 
 // -- Time - Up to three NTP servers in your region
 #define NTP_SERVER1            "pool.ntp.org"

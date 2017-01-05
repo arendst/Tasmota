@@ -1,7 +1,10 @@
-/* 3.1.10 20170105
+/* 3.1.11 20170105
+ * Add mDNS to advertise webserver as <hostname>.local/
+ *
+ * 3.1.10 20170105
  * Fix ButtonTopic when SUB_PREFIX = PUB_PREFIX
  * Add workaround for possible MQTT queueing when SUB_PREFIX = PUB_PREFIX
- * Add optional MQTT host discovery using define USE_DISCOVERY in user_config.h
+ * Add optional MQTT host discovery using define USE_DISCOVERY in user_config.h (#115)
  *
  * 3.1.9 20170104
  * Fix Power Blink start position (toggled)

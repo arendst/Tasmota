@@ -516,20 +516,33 @@ void WIFI_Check(uint8_t param)
         _wificounter = WIFI_CHECK_SEC;
         WIFI_check_ip();
       }
-#ifdef USE_WEBSERVER
       if ((WiFi.status() == WL_CONNECTED) && (static_cast<uint32_t>(WiFi.localIP()) != 0) && !_wificonfigflag) {
+#ifdef USE_DISCOVERY
+        if (!mDNSbegun) {
+          mDNSbegun = MDNS.begin(Hostname);
+          snprintf_P(log, sizeof(log), PSTR("mDNS: %s"), (mDNSbegun)?"Initialized":"Failed");
+          addLog(LOG_LEVEL_INFO, log);
+        }
+#endif  // USE_DISCOVERY
+#ifdef USE_WEBSERVER
         if (sysCfg.webserver) {
           startWebserver(sysCfg.webserver, WiFi.localIP());
+#ifdef USE_DISCOVERY
+#ifdef WEBSERVER_ADVERTISE
+          MDNS.addService("http", "tcp", 80);
+#endif  // WEBSERVER_ADVERTISE          
+#endif  // USE_DISCOVERY
         } else {
           stopWebserver();
         }
 #ifdef USE_WEMO_EMULATION
         if (udpConnected == false) udpConnected = UDP_Connect();
 #endif  // USE_WEMO_EMULATION
+#endif  // USE_WEBSERVER
       } else {
         udpConnected = false;
+        mDNSbegun = false;
       }
-#endif  // USE_WEBSERVER
     }
   }
 }
@@ -551,6 +564,53 @@ void WIFI_Connect(char *Hostname)
   _wifiretry = WIFI_RETRY_SEC;
   _wificounter = 1;
 }
+
+#ifdef USE_DISCOVERY
+/*********************************************************************************************\
+ * mDNS
+\*********************************************************************************************/
+
+#ifdef MQTT_HOST_DISCOVERY
+boolean mdns_discoverMQTTServer()
+{
+  char log[LOGSZ], ip_str[20];
+  int n;
+
+  if (!mDNSbegun) return false;
+
+  n = MDNS.queryService("mqtt", "tcp");  // Search for mqtt service
+
+  snprintf_P(log, sizeof(log), PSTR("mDNS: Query done with %d mqtt services found"), n);
+  addLog(LOG_LEVEL_INFO, log);
+
+  if (n > 0) {
+    // Note: current strategy is to get the first MQTT service (even when many are found)
+    IPtoCharArray(MDNS.IP(0), ip_str, 20);
+    
+    snprintf_P(log, sizeof(log), PSTR("mDNS: Service found on %s ip %s port %d"),
+      MDNS.hostname(0).c_str(), ip_str, MDNS.port(0));
+    addLog(LOG_LEVEL_INFO, log);
+
+    strlcpy(sysCfg.mqtt_host, ip_str, sizeof(sysCfg.mqtt_host));
+    sysCfg.mqtt_port = MDNS.port(0);
+  }
+
+  return n > 0;
+}
+#endif  // MQTT_HOST_DISCOVERY
+
+void IPtoCharArray(IPAddress address, char *ip_str, size_t size)
+{
+    String str = String(address[0]);
+    str += ".";
+    str += String(address[1]);
+    str += ".";
+    str += String(address[2]);
+    str += ".";
+    str += String(address[3]);
+    str.toCharArray(ip_str, size);
+}
+#endif  // USE_DISCOVERY
 
 #ifdef USE_WEMO_EMULATION
 /*********************************************************************************************\

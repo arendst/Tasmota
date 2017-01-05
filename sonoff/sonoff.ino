@@ -10,7 +10,7 @@
  * ====================================================
 */
 
-#define VERSION                0x03010A00   // 3.1.10
+#define VERSION                0x03010B00   // 3.1.11
 
 #define SONOFF                 1            // Sonoff, Sonoff RF, Sonoff SV, Sonoff Dual, Sonoff TH, S20 Smart Socket, 4 Channel
 #define SONOFF_POW             9            // Sonoff Pow
@@ -117,6 +117,9 @@ enum butt_t {PRESSED, NOT_PRESSED};
   #include <ESP8266WebServer.h>             // WifiManager, Webserver
   #include <DNSServer.h>                    // WifiManager
 #endif  // USE_WEBSERVER
+#ifdef USE_DISCOVERY
+  #include <ESP8266mDNS.h>                  // MQTT, Webserver
+#endif
 #ifdef USE_SPIFFS
   #include <FS.h>                           // Config
 #endif
@@ -368,6 +371,7 @@ uint8_t lastbutton2 = NOT_PRESSED;    // Last button 2 state
 uint8_t lastbutton3 = NOT_PRESSED;    // Last button 3 state
 uint8_t lastbutton4 = NOT_PRESSED;    // Last button 4 state
 
+boolean mDNSbegun = false;
 boolean udpConnected = false;
 #ifdef USE_WEMO_EMULATION
   #define WEMO_BUFFER_SIZE 200        // Max UDP buffer size needed for M-SEARCH message
@@ -921,7 +925,9 @@ void mqtt_reconnect()
     }
 #endif  // USE_MQTT_TLS
 #ifdef USE_DISCOVERY
-    discoverMQTTServer();
+#ifdef MQTT_HOST_DISCOVERY
+    mdns_discoverMQTTServer();
+#endif  // MQTT_HOST_DISCOVERY    
 #endif  // USE_DISCOVERY
     mqttClient.setServer(sysCfg.mqtt_host, sysCfg.mqtt_port);
     mqttClient.setCallback(mqttDataCb);
@@ -1849,11 +1855,11 @@ void publish_status(uint8_t payload)
 
   if ((payload == 0) || (payload == 7)) {
     if (sysCfg.message_format == JSON) {
-      snprintf_P(svalue, sizeof(svalue), PSTR("{\"StatusTIM\":{\"UTC\":\"%s\", \"Local\":\"%s\", \"StartDST\":\"%s\", \"EndDST\":\"%s\"}}"),
-        rtc_time(0).c_str(), rtc_time(1).c_str(), rtc_time(2).c_str(), rtc_time(3).c_str());
+      snprintf_P(svalue, sizeof(svalue), PSTR("{\"StatusTIM\":{\"UTC\":\"%s\", \"Local\":\"%s\", \"StartDST\":\"%s\", \"EndDST\":\"%s\", \"Timezone\":%d}}"),
+        rtc_time(0).c_str(), rtc_time(1).c_str(), rtc_time(2).c_str(), rtc_time(3).c_str(), sysCfg.timezone);
     } else {
-      snprintf_P(svalue, sizeof(svalue), PSTR("TIM: UTC %s, Local %s, StartDST %s, EndDST %s"),
-        rtc_time(0).c_str(), rtc_time(1).c_str(), rtc_time(2).c_str(), rtc_time(3).c_str());
+      snprintf_P(svalue, sizeof(svalue), PSTR("TIM: UTC %s, Local %s, StartDST %s, EndDST %s, Timezone %d"),
+        rtc_time(0).c_str(), rtc_time(1).c_str(), rtc_time(2).c_str(), rtc_time(3).c_str(), sysCfg.timezone);
     }
   }
   mqtt_publish(stopic, svalue);

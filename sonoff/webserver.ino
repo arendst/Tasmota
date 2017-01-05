@@ -297,7 +297,8 @@ void startWebserver(int type, IPAddress ipweb)
     webServer->begin(); // Web server start
   }
   if (_httpflag != type) {
-    snprintf_P(log, sizeof(log), PSTR("HTTP: Webserver active on %s with IP address %s"), Hostname, ipweb.toString().c_str());
+    snprintf_P(log, sizeof(log), PSTR("HTTP: Webserver active on %s%s with IP address %s"),
+      Hostname, (mDNSbegun)?".local":"", ipweb.toString().c_str());
     addLog(LOG_LEVEL_INFO, log);
   }
   if (type) _httpflag = type;
