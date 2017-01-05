@@ -1,4 +1,9 @@
-/* 3.1.9 20170104
+/* 3.1.10 20170105
+ * Fix ButtonTopic when SUB_PREFIX = PUB_PREFIX
+ * Add workaround for possible MQTT queueing when SUB_PREFIX = PUB_PREFIX
+ * Add optional MQTT host discovery using define USE_DISCOVERY in user_config.h
+ *
+ * 3.1.9 20170104
  * Fix Power Blink start position (toggled)
  * Change PulseTime increments: 1 .. 111 in 0.1 sec (max 11 seconds) and 112 .. 64900 in seconds (= 12 seconds until 18 hours) (#188)
  * Add support for SUB_PREFIX = PUB_PREFIX (#190)

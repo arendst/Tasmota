@@ -31,6 +31,8 @@
 #define WIFI_HOSTNAME          "%s-%04d"         // [Hostname] Expands to <MQTT_TOPIC>-<last 4 decimal chars of MAC address>
 #define WIFI_CONFIG_TOOL       WIFI_WPSCONFIG    // [WifiConfig] Default tool if wifi fails to connect
                                                  //   (WIFI_RESTART, WIFI_SMARTCONFIG, WIFI_MANAGER, WIFI_WPSCONFIG, WIFI_RETRY)
+//#define USE_DISCOVERY                            // Enable mDNS for finding MQTT host (+8k code, +0.3k mem)
+                                                 
 // -- Syslog ---------------------------------
 #define SYS_LOG_HOST           "domus1"        // [LogHost] (Linux) syslog host
 #define SYS_LOG_PORT           514             // [LogPort] default syslog UDP port
