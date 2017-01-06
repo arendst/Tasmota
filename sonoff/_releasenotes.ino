@@ -1,4 +1,8 @@
-/* 3.1.11 20170105
+/* 3.1.12 20170106
+ * Add OTA retry to solve possible HTTP transient errors (#204)
+ * Fix MQTT host discovery
+ *
+ * 3.1.11 20170105
  * Add mDNS to advertise webserver as <hostname>.local/
  *
  * 3.1.10 20170105

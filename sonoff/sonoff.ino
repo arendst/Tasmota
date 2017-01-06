@@ -10,7 +10,7 @@
  * ====================================================
 */
 
-#define VERSION                0x03010B00   // 3.1.11
+#define VERSION                0x03010C00   // 3.1.12
 
 #define SONOFF                 1            // Sonoff, Sonoff RF, Sonoff SV, Sonoff Dual, Sonoff TH, S20 Smart Socket, 4 Channel
 #define SONOFF_POW             9            // Sonoff Pow
@@ -86,6 +86,7 @@ enum led_t   {LED_OFF, LED_POWER, LED_MQTTSUB, LED_POWER_MQTTSUB, LED_MQTTPUB, L
 
 #define STATES                 10           // loops per second
 #define SYSLOG_TIMER           600          // Seconds to restore syslog_level
+#define OTA_ATTEMPTS           5            // Number of times to try fetching the new firmware
 
 #define INPUT_BUFFER_SIZE      100          // Max number of characters in serial buffer
 #define TOPSZ                  60           // Max number of characters in topic string
@@ -331,7 +332,7 @@ unsigned long timerxs = 0;            // State loop timer
 int state = 0;                        // State per second flag
 int mqttflag = 2;                     // MQTT connection messages flag
 int otaflag = 0;                      // OTA state flag
-int otaok;                            // OTA result
+int otaok = 0;                        // OTA result
 int restartflag = 0;                  // Sonoff restart flag
 int wificheckflag = WIFI_RESTART;     // Wifi state flag
 int uptime = 0;                       // Current uptime in hours
@@ -610,7 +611,7 @@ void CFG_Migrate_Part2()
     sysCfg.sta_active = sysCfg2.sta_active;
     strlcpy(sysCfg.sta_ssid[1], sysCfg2.sta_ssid2, sizeof(sysCfg.sta_ssid[1]));
     strlcpy(sysCfg.sta_pwd[1], sysCfg2.sta_pwd2, sizeof(sysCfg.sta_pwd[1]));
-  }    
+  }
   CFG_Save();
 }
 
@@ -924,12 +925,6 @@ void mqtt_reconnect()
       addLog_P(LOG_LEVEL_DEBUG, PSTR("MQTT: WARNING - Insecure connection due to invalid Fingerprint"));
     }
 #endif  // USE_MQTT_TLS
-#ifdef USE_DISCOVERY
-#ifdef MQTT_HOST_DISCOVERY
-    mdns_discoverMQTTServer();
-#endif  // MQTT_HOST_DISCOVERY    
-#endif  // USE_DISCOVERY
-    mqttClient.setServer(sysCfg.mqtt_host, sysCfg.mqtt_port);
     mqttClient.setCallback(mqttDataCb);
     mqttflag = 1;
     mqttcounter = 1;
@@ -937,6 +932,14 @@ void mqtt_reconnect()
   }
 
   addLog_P(LOG_LEVEL_INFO, PSTR("MQTT: Attempting connection..."));
+#ifndef USE_MQTT_TLS
+#ifdef USE_DISCOVERY
+#ifdef MQTT_HOST_DISCOVERY
+  mdns_discoverMQTTServer();
+#endif  // MQTT_HOST_DISCOVERY
+#endif  // USE_DISCOVERY
+#endif  // USE_MQTT_TLS
+  mqttClient.setServer(sysCfg.mqtt_host, sysCfg.mqtt_port);
   snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/LWT"), PUB_PREFIX2, sysCfg.mqtt_topic);
   snprintf_P(svalue, sizeof(svalue), PSTR("Offline"));
   if (mqttClient.connect(MQTTClient, sysCfg.mqtt_user, sysCfg.mqtt_pwd, stopic, 1, true, svalue)) {
@@ -956,7 +959,7 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
 {
   char *str;
   char svalue[MESSZ];
-  
+
   if (!strcmp(SUB_PREFIX,PUB_PREFIX)) {
     str = strstr(topic,SUB_PREFIX);
     if ((str == topic) && mqtt_cmnd_publish) {
@@ -964,7 +967,7 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
       return;
     }
   }
-  
+
   uint16_t i = 0, grpflg = 0, index;
   char topicBuf[TOPSZ], dataBuf[data_len+1], dataBufUc[MESSZ];
   char *p, *mtopic = NULL, *type = NULL, *devc = NULL;
@@ -1680,7 +1683,7 @@ void do_cmnd_power(byte device, byte state)
     if (domoticz_update_flag) mqtt_publishDomoticzPowerState(device);
     domoticz_update_flag = 1;
 #endif  // USE_DOMOTICZ
-    if (device == 1) pulse_timer = (power & mask) ? sysCfg.pulsetime : 0; 
+    if (device == 1) pulse_timer = (power & mask) ? sysCfg.pulsetime : 0;
   }
   else if (state == 3) { // Blink
     if (!(blink_mask & mask)) {
@@ -1713,7 +1716,7 @@ void stop_all_power_blink()
       blink_mask &= (0xFF ^ mask);  // Clear device mask
       mqtt_publishPowerBlinkState(i);
       do_cmnd_power(i, (blink_powersave >> (i -1))&1);  // Restore state
-    }      
+    }
   }
 }
 
@@ -2553,7 +2556,15 @@ void stateloop()
       if (otaflag <= 0) {
         otaflag = 12;
         ESPhttpUpdate.rebootOnUpdate(false);
-        otaok = (ESPhttpUpdate.update(sysCfg.otaUrl) == HTTP_UPDATE_OK);
+        // Try multiple times to get the update, in case we have a transient issue.
+        // e.g. Someone issued "cmnd/sonoffs/update 1" and all the devices
+        //      are hammering the OTAURL.
+        for (byte i = 0; i < OTA_ATTEMPTS && !otaok; i++) {
+          // Delay an increasing pseudo-random time for each interation.
+          // Starting at 0 (no delay) up to a maximum of OTA_ATTEMPTS-1 seconds.
+          delay((ESP.getChipId() % 1000) * i);
+          otaok = (ESPhttpUpdate.update(sysCfg.otaUrl) == HTTP_UPDATE_OK);
+        }
       }
       if (otaflag == 10) {  // Allow MQTT to reconnect
         otaflag = 0;
@@ -2699,7 +2710,7 @@ void setup()
 #if (MODULE == SONOFF)
     pinMode(REL_PIN, INPUT_PULLUP);
     if (digitalRead(REL_PIN)) sysCfg.model = SONOFF_DUAL;
-#endif    
+#endif
 #if (MODULE == SONOFF_2)
 #ifdef REL3_PIN
     pinMode(REL3_PIN, INPUT_PULLUP);
@@ -2714,7 +2725,7 @@ void setup()
     if (sysCfg.model == CHANNEL_4) Maxdevice = 4;
   }
   if (MODULE == ELECTRO_DRAGON) Maxdevice = 2;
-  
+
   if (Serial.baudRate() != Baudrate) {
     snprintf_P(log, sizeof(log), PSTR("APP: Need to change baudrate to %d"), Baudrate);
     addLog(LOG_LEVEL_INFO, log);
