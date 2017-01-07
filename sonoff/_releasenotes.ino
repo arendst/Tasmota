@@ -1,4 +1,7 @@
-/* 3.1.13 20170107
+/* 3.1.14 20170107
+ * Add support for command TOGGLE (define MQTT_CMND_TOGGLE) when ButtonTopic is in use and not equal to Topic (#207)
+ *
+ * 3.1.13 20170107
  * Fix web console command input when SUB_PREFIX contains '/' (#152)
  * Add command response to web command (#200)
  * Add option to disable MQTT as define USE_MQTT in user_config.h (#200)

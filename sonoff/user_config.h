@@ -75,8 +75,9 @@
 #define MQTT_POWER_RETAIN      0            // [PowerRetain] Power status message may send retain flag (0 = off, 1 = on)
 
 #define MESSAGE_FORMAT         LEGACY       // [MessageFormat] MQTT Message Format (LEGACY or JSON)
-#define MQTT_STATUS_ON         "ON"         // Status result when turned on (needs to be a string like "1" or "On")
-#define MQTT_STATUS_OFF        "OFF"        // Status result when turned off (needs to be a string like "0" or "Off")
+#define MQTT_STATUS_OFF        "OFF"        // Command or Status result when turned off (needs to be a string like "0" or "Off")
+#define MQTT_STATUS_ON         "ON"         // Command or Status result when turned on (needs to be a string like "1" or "On")
+#define MQTT_CMND_TOGGLE       "TOGGLE"     // Command to send when toggling (needs to be a string like "2" or "Toggle")
 
 // -- MQTT - Telemetry -----------------------
 #define TELE_PERIOD            300          // [TelePeriod] Telemetry (0 = disable, 10 - 3600 seconds)

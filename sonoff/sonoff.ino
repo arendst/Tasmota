@@ -10,7 +10,7 @@
  * ====================================================
 */
 
-#define VERSION                0x03010D00   // 3.1.13
+#define VERSION                0x03010E00   // 3.1.14
 
 #define SONOFF                 1            // Sonoff, Sonoff RF, Sonoff SV, Sonoff Dual, Sonoff TH, S20 Smart Socket, 4 Channel
 #define SONOFF_POW             9            // Sonoff Pow
@@ -1666,16 +1666,17 @@ void send_button_power(byte device, byte state)
   snprintf_P(stemp1, sizeof(stemp1), PSTR("%d"), device);
   snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/%s%s"),
     SUB_PREFIX, sysCfg.mqtt_topic2, sysCfg.mqtt_subtopic, (Maxdevice > 1) ? stemp1 : "");
+  
   if (state == 3) {
     svalue[0] = '\0';
   } else {
-    if (state == 2) {
+    if (!strcmp(sysCfg.mqtt_topic,sysCfg.mqtt_topic2) && (state == 2)) {
       state = ~(power >> (device -1)) & 0x01;
     }
-    snprintf_P(svalue, sizeof(svalue), PSTR("%s"), (state) ? MQTT_STATUS_ON : MQTT_STATUS_OFF);
+    snprintf_P(svalue, sizeof(svalue), PSTR("%s"), (state) ? (state == 2) ? MQTT_CMND_TOGGLE : MQTT_STATUS_ON : MQTT_STATUS_OFF);
   }
 #ifdef USE_DOMOTICZ
-  if (sysCfg.domoticz_key_idx[device -1] && strlen(svalue)) {
+  if (sysCfg.domoticz_key_idx[device -1] && strlen(svalue) && !strcmp(sysCfg.mqtt_topic,sysCfg.mqtt_topic2)) {
     strlcpy(stopic, sysCfg.domoticz_in_topic, sizeof(stopic));
     snprintf_P(svalue, sizeof(svalue), PSTR("{\"command\":\"switchlight\", \"idx\":%d, \"switchcmd\":\"%s\"}"),
       sysCfg.domoticz_key_idx[device -1], (state) ? "On" : "Off");
