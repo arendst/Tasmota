@@ -1,4 +1,9 @@
-/* 3.1.12 20170106
+/* 3.1.13 20170107
+ * Fix web console command input when SUB_PREFIX contains '/' (#152)
+ * Add command response to web command (#200)
+ * Add option to disable MQTT as define USE_MQTT in user_config.h (#200)
+ *
+ * 3.1.12 20170106
  * Add OTA retry to solve possible HTTP transient errors (#204)
  * Fix MQTT host discovery
  *

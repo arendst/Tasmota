@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2016 Theo Arends.  All rights reserved.
+Copyright (c) 2017 Theo Arends.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -94,15 +94,17 @@ const char HTTP_BTN_MENU1[] PROGMEM =
   "<br/><form action='/cn' method='post'><button>Configuration</button></form>"
   "<br/><form action='/in' method='post'><button>Information</button></form>"
   "<br/><form action='/up' method='post'><button>Firmware upgrade</button></form>"
-  "<br/><form action='/cm' method='post'><button>Console</button></form>";
+  "<br/><form action='/cs' method='post'><button>Console</button></form>";
 const char HTTP_BTN_RSTRT[] PROGMEM =
   "<br/><form action='/rb' method='post'><button>Restart</button></form>";
 const char HTTP_BTN_MENU2[] PROGMEM =
   "<br/><form action='/w0' method='post'><button>Configure WiFi</button></form>"
   "<br/><form action='/mq' method='post'><button>Configure MQTT</button></form>"
+#ifdef USE_MQTT
 #ifdef USE_DOMOTICZ
   "<br/><form action='/dm' method='post'><button>Configure Domoticz</button></form>"
 #endif  // USE_DOMOTICZ
+#endif  // USE_MQTT
   "<br/><form action='/lg' method='post'><button>Configure logging</button></form>"
   "<br/><form action='/rt' method='post'><button>Reset Configuration</button></form>";
 const char HTTP_BTN_MAIN[] PROGMEM =
@@ -131,6 +133,7 @@ const char HTTP_FORM_MQTT[] PROGMEM =
 //  "<br/><b>Password</b> (" MQTT_PASS ")<br/><input id='mp' name='mp' length=32 placeholder='" MQTT_PASS "' value='{m5}'><br/>"
   "<br/><b>Password</b><br/><input id='mp' name='mp' length=32 type='password' placeholder='" MQTT_PASS "' value='{m5}'><br/>"
   "<br/><b>Topic</b> (" MQTT_TOPIC ")<br/><input id='mt' name='mt' length=32 placeholder='" MQTT_TOPIC" ' value='{m6}'><br/>";
+#ifdef USE_MQTT
 #ifdef USE_DOMOTICZ
 const char HTTP_FORM_DOMOTICZ[] PROGMEM =
   "<fieldset><legend><b>&nbsp;Domoticz parameters&nbsp;</b></legend><form method='post' action='sv'>"
@@ -141,6 +144,7 @@ const char HTTP_FORM_DOMOTICZ[] PROGMEM =
 const char HTTP_FORM_DOMOTICZ2[] PROGMEM =
   "<br/><b>Update timer</b> (" STR(DOMOTICZ_UPDATE_TIMER) ")<br/><input id='ut' name='ut' length=32 placeholder='" STR(DOMOTICZ_UPDATE_TIMER) "' value='{d7}'><br/>";
 #endif  // USE_DOMOTICZ
+#endif  // USE_MQTT
 const char HTTP_FORM_LOG[] PROGMEM =
   "<fieldset><legend><b>&nbsp;Logging parameters&nbsp;</b></legend><form method='post' action='sv'>"
   "<input id='w' name='w' value='3' hidden><input id='r' name='r' value='0' hidden>"
@@ -187,8 +191,8 @@ const char HTTP_FORM_UPG[] PROGMEM =
   "<div id='f2' name='f2' style='display:none;text-align:center;'><b>Upload started ...</b></div>";
 const char HTTP_FORM_CMND[] PROGMEM =
   "<br/><textarea readonly id='t1' name='t1' cols='80' wrap='off'></textarea><br/><br/>"
-  "<form method='post' action='cm'>"
-  "<input style='width:98%' id='" SUB_PREFIX "' name='" SUB_PREFIX "' length=80 placeholder='Enter command' autofocus><br/>"
+  "<form method='post' action='cs'>"
+  "<input style='width:98%' id='c1' name='c1' length=80 placeholder='Enter command' autofocus><br/>"
 //  "<br/><button type='submit'>Send command</button>"
   "</form>";
 const char HTTP_COUNTER[] PROGMEM =
@@ -273,16 +277,19 @@ void startWebserver(int type, IPAddress ipweb)
       webServer->on("/w1", handleWifi1);
       webServer->on("/w0", handleWifi0);
       webServer->on("/mq", handleMqtt);
+#ifdef USE_MQTT
 #ifdef USE_DOMOTICZ
       webServer->on("/dm", handleDomoticz);
 #endif  // USE_DOMOTICZ
+#endif  // USE_MQTT
       webServer->on("/lg", handleLog);
       webServer->on("/sv", handleSave);
       webServer->on("/rt", handleReset);
       webServer->on("/up", handleUpgrade);
       webServer->on("/u1", handleUpgradeStart);
       webServer->on("/u2", HTTP_POST, handleUploadDone, handleUploadLoop);
-      webServer->on("/cm", handleConsole);
+      webServer->on("/cm", handleCmnd);
+      webServer->on("/cs", handleConsole);
       webServer->on("/ax", handleAjax);
       webServer->on("/in", handleInfo);
       webServer->on("/rb", handleRestart);
@@ -668,6 +675,7 @@ void handleMqtt()
   showPage(page);
 }
 
+#ifdef USE_MQTT
 #ifdef USE_DOMOTICZ
 void handleDomoticz()
 {
@@ -702,6 +710,7 @@ void handleDomoticz()
   showPage(page);
 }
 #endif  // USE_DOMOTICZ
+#endif  // USE_MQTT
 
 void handleLog()
 {
@@ -777,6 +786,7 @@ void handleSave()
       sysCfg.seriallog_level, sysCfg.weblog_level, sysCfg.syslog_level, sysCfg.syslog_host, sysCfg.syslog_port, sysCfg.tele_period);
     addLog(LOG_LEVEL_INFO, log);
     break;
+#ifdef USE_MQTT
 #ifdef USE_DOMOTICZ
   case 4:
     strlcpy(sysCfg.domoticz_in_topic, (!strlen(webServer->arg("it").c_str())) ? DOMOTICZ_IN_TOPIC : webServer->arg("it").c_str(), sizeof(sysCfg.domoticz_in_topic));
@@ -792,6 +802,7 @@ void handleSave()
     addLog(LOG_LEVEL_INFO, log);
     break;
 #endif  // USE_DOMOTICZ
+#endif  // USE_MQTT
   }
 
   restart = (!strlen(webServer->arg("r").c_str())) ? 1 : atoi(webServer->arg("r").c_str());
@@ -952,7 +963,9 @@ void handleUploadLoop()
       return;
     }
     WiFiUDP::stopAll();  // Needed when WeMo is enabled
+#ifdef USE_MQTT
     mqttClient.disconnect();
+#endif  // USE_MQTT
 
     snprintf_P(log, sizeof(log), PSTR("Upload: File %s ..."), upload.filename.c_str());
     addLog(LOG_LEVEL_INFO, log);
@@ -1009,6 +1022,50 @@ void handleUploadLoop()
   delay(0);
 }
 
+void handleCmnd()
+{
+  if (_httpflag == HTTP_USER) {
+    handleRoot();
+    return;
+  }
+  char svalue[MESSZ];
+
+  addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Handle cmnd"));
+
+  byte curridx = logidx;
+  if (strlen(webServer->arg(0).c_str())) {
+    snprintf_P(svalue, sizeof(svalue), webServer->arg(0).c_str());
+    do_cmnd(svalue);
+  }
+
+  String message = "";
+  if (logidx != curridx) {
+    byte counter = curridx;
+    do {
+      if (Log[counter].length()) {
+        if (message.length()) message += F("\n");
+#ifdef USE_MQTT
+        // [14:49:36 MQTT: stat/wemos5/RESULT = {"POWER":"OFF"}] > [RESULT = {"POWER":"OFF"}]
+//        message += Log[counter].substring(17 + strlen(PUB_PREFIX) + strlen(sysCfg.mqtt_topic));
+        message += Log[counter].substring(Log[counter].lastIndexOf("/",Log[counter].indexOf("="))+1);
+#else
+        // [14:49:36 RSLT: RESULT = {"POWER":"OFF"}] > [RESULT = {"POWER":"OFF"}]
+        message += Log[counter].substring(Log[counter].indexOf(": ")+2);
+#endif  // USE_MQTT
+      }
+      counter++;
+      if (counter > MAX_LOG_LINES -1) counter = 0;
+    } while (counter != logidx);
+  } else {
+    message = F("Enable weblog 2 if response expected\n");
+  }
+
+  webServer->sendHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+  webServer->sendHeader("Pragma", "no-cache");
+  webServer->sendHeader("Expires", "-1");
+  webServer->send(200, "text/plain", message);
+}
+
 void handleConsole()
 {
   if (_httpflag == HTTP_USER) {
@@ -1019,8 +1076,8 @@ void handleConsole()
 
   addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Handle console"));
 
-  if (strlen(webServer->arg(SUB_PREFIX).c_str())) {
-    snprintf_P(svalue, sizeof(svalue), webServer->arg(SUB_PREFIX).c_str());
+  if (strlen(webServer->arg("c1").c_str())) {
+    snprintf_P(svalue, sizeof(svalue), webServer->arg("c1").c_str());
     do_cmnd(svalue);
   }
 

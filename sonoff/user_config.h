@@ -46,6 +46,8 @@
 #endif
 
 // -- MQTT -----------------------------------
+#define USE_MQTT                            // Enable MQTT and Domoticz (+10k code, +1k mem)
+
 // !!! TLS uses a LOT OF MEMORY (20k) so be careful to enable other options at the same time !!!
 //#define USE_MQTT_TLS                        // EXPERIMENTAL Use TLS for MQTT connection (+53k code, +20k mem)
                                             //   Needs Fingerprint, TLS Port, UserId and Password
