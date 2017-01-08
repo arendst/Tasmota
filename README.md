@@ -1,7 +1,7 @@
 ## Sonoff-MQTT-OTA-Arduino
 Provide ESP8266 based itead Sonoff with Serial, Web and MQTT control allowing 'Over the Air' or OTA firmware updates using Arduino IDE.
 
-Current version is **3.1.14** - See ```sonoff/_releasenotes.ino``` for change information.
+Current version is **3.1.15** - See ```sonoff/_releasenotes.ino``` for change information.
 
 Starting with version 2.0.0 the following devices are supported:
 <img alt="Sonoff" src="https://github.com/arendst/arendst.github.io/blob/master/media/sonoffbasic.jpg" width="250" align="right" /> 

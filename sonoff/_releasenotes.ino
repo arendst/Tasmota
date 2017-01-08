@@ -1,4 +1,7 @@
-/* 3.1.14 20170107
+/* 3.1.15 20170108
+ * Fix Domoticz send key regression with Toggle command  
+ *
+ * 3.1.14 20170107
  * Add support for command TOGGLE (define MQTT_CMND_TOGGLE) when ButtonTopic is in use and not equal to Topic (#207)
  *
  * 3.1.13 20170107
