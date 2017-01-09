@@ -10,7 +10,7 @@
  * ====================================================
 */
 
-#define VERSION                0x03010F00   // 3.1.15
+#define VERSION                0x03011000   // 3.1.16
 
 #define SONOFF                 1            // Sonoff, Sonoff RF, Sonoff SV, Sonoff Dual, Sonoff TH, S20 Smart Socket, 4 Channel
 #define SONOFF_POW             9            // Sonoff Pow
@@ -429,7 +429,7 @@ void CFG_DefaultSet()
   sysCfg.model = 0;
   sysCfg.timezone = APP_TIMEZONE;
   strlcpy(sysCfg.otaUrl, OTA_URL, sizeof(sysCfg.otaUrl));
-  strlcpy(sysCfg.friendlyname, MQTT_TOPIC, sizeof(sysCfg.friendlyname));
+  strlcpy(sysCfg.friendlyname, FRIENDLY_NAME, sizeof(sysCfg.friendlyname));
 
   sysCfg.seriallog_level = SERIAL_LOG_LEVEL;
   sysCfg.sta_active = 0;
@@ -636,6 +636,9 @@ void CFG_Delta()
     if (sysCfg.version < 0x03010600) {  // 3.1.6 - Add parameter
       sysCfg.blinktime = APP_BLINKTIME;
       sysCfg.blinkcount = APP_BLINKCOUNT;
+    }
+    if (sysCfg.version < 0x03011000) {  // 3.1.16 - Add parameter
+      getClient(sysCfg.friendlyname, sysCfg.mqtt_client, sizeof(sysCfg.friendlyname));
     }
 
     sysCfg.version = VERSION;
@@ -1012,23 +1015,32 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
     unsigned long idx = 0;
     int16_t nvalue;
 
-    if (strlen(dataBuf) < 20) return;
+    if (data_len < 20) return;
     idx = getKeyIntValue(dataBuf,"\"idx\"");
     nvalue = getKeyIntValue(dataBuf,"\"nvalue\"");
-    dataBuf[0] = '\0';
+
+    snprintf_P(svalue, sizeof(svalue), PSTR("DMTZ: idx %d, nvalue %d"), idx, nvalue);
+    addLog(LOG_LEVEL_DEBUG_MORE, svalue);
+
+    data_len = 0;
     if (nvalue == 0 || nvalue == 1) {
       for (i = 0; i < Maxdevice; i++) {
-        if (idx > 0 && idx == sysCfg.domoticz_relay_idx[i]) {
+        if ((idx > 0) && (idx == sysCfg.domoticz_relay_idx[i])) {
           snprintf_P(dataBuf, sizeof(dataBuf), PSTR("%d"), nvalue);
+          data_len = strlen(dataBuf);
           break;
         }
       }
     }
-    if (!strlen(dataBuf)) return;
+    if (!data_len) return;
     if (((power >> i) &1) == nvalue) return;
     snprintf_P(stemp1, sizeof(stemp1), PSTR("%d"), i +1);
     snprintf_P(topicBuf, sizeof(topicBuf), PSTR("%s/%s/%s%s"),
       SUB_PREFIX, sysCfg.mqtt_topic, sysCfg.mqtt_subtopic, (Maxdevice > 1) ? stemp1 : "");
+
+    snprintf_P(svalue, sizeof(svalue), PSTR("DMTZ: Receive topic %s, data size %d, data %s"), topicBuf, data_len, dataBuf);
+    addLog(LOG_LEVEL_DEBUG_MORE, svalue);
+
     domoticz_update_flag = 0;
   }
 #endif  // USE_DOMOTICZ
@@ -1266,6 +1278,12 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
         snprintf_P(svalue, sizeof(svalue), PSTR("{\"WifiConfig\":\"%d (%s)\"}"), sysCfg.sta_config, stemp1);
       }
     }
+    else if (!strcmp(type,"FRIENDLYNAME")) {
+      if ((data_len > 0) && (data_len < sizeof(sysCfg.friendlyname))) {
+        strlcpy(sysCfg.friendlyname, (payload == 1) ? FRIENDLY_NAME : dataBuf, sizeof(sysCfg.friendlyname));
+      }
+      snprintf_P(svalue, sizeof(svalue), PSTR("{\"FriendlyName\":\"%s\"}"), sysCfg.friendlyname);
+    }
 #ifdef USE_WALL_SWITCH
     else if (!strcmp(type,"SWITCHMODE")) {
       if ((data_len > 0) && (payload >= 0) && (payload < MAX_SWITCH_OPTION)) {
@@ -1293,13 +1311,6 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
       snprintf_P(svalue, sizeof(svalue), PSTR("{\"WebLog\":%d}"), sysCfg.weblog_level);
     }
 #endif  // USE_WEBSERVER
-    else if (!grpflg && !strcmp(type,"MQTTCLIENT")) {  // Also Alexa friendlyname
-      if ((data_len > 0) && (data_len < sizeof(sysCfg.mqtt_client))) {
-        strlcpy(sysCfg.mqtt_client, (payload == 1) ? MQTT_CLIENT_ID : dataBuf, sizeof(sysCfg.mqtt_client));
-        restartflag = 2;
-      }
-      snprintf_P(svalue, sizeof(svalue), PSTR("{\"MqttClient\":\"%s\"}"), sysCfg.mqtt_client);
-    }
     else if (!strcmp(type,"MQTTUNITS")) {
       if ((data_len > 0) && (payload >= 0) && (payload <= 1)) {
         sysCfg.mqtt_units = payload;
@@ -1330,6 +1341,13 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
       snprintf_P(svalue, sizeof(svalue), PSTR("{\"MqttFingerprint\":\"%s\"}"), sysCfg.mqtt_fingerprint);
     }
 #endif
+    else if (!grpflg && !strcmp(type,"MQTTCLIENT")) {
+      if ((data_len > 0) && (data_len < sizeof(sysCfg.mqtt_client))) {
+        strlcpy(sysCfg.mqtt_client, (payload == 1) ? MQTT_CLIENT_ID : dataBuf, sizeof(sysCfg.mqtt_client));
+        restartflag = 2;
+      }
+      snprintf_P(svalue, sizeof(svalue), PSTR("{\"MqttClient\":\"%s\"}"), sysCfg.mqtt_client);
+    }
     else if (!strcmp(type,"MQTTUSER")) {
       if ((data_len > 0) && (data_len < sizeof(sysCfg.mqtt_user))) {
         strlcpy(sysCfg.mqtt_user, (payload == 1) ? MQTT_USER : dataBuf, sizeof(sysCfg.mqtt_user));

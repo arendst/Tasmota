@@ -1,4 +1,12 @@
-/* 3.1.15 20170108
+/* 3.1.16 20170109
+ * Fix Domoticz possible error condition
+ * Remove Wifi password from connection message (#216)
+ * Add Configure Other menu item to web page (#209)
+ * Add command FriendlyName, field Friendly Name and define FRIENDLY_NAME to be used by Alexa
+ *   eliminating current use of MQTT_CLIENT_ID (#209)
+ * Add friendlyname to webpage replacing former hostname
+ *
+ * 3.1.15 20170108
  * Fix Domoticz send key regression with Toggle command  
  *
  * 3.1.14 20170107

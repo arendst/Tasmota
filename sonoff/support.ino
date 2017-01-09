@@ -430,8 +430,8 @@ void WIFI_begin(uint8_t flag)
   }        // 3: Current AP
   if (strlen(sysCfg.sta_ssid[1]) == 0) sysCfg.sta_active = 0;
   WiFi.begin(sysCfg.sta_ssid[sysCfg.sta_active], sysCfg.sta_pwd[sysCfg.sta_active]);
-  snprintf_P(log, sizeof(log), PSTR("Wifi: Connecting to AP%d %s (%s) in mode 11%c as %s..."),
-    sysCfg.sta_active +1, sysCfg.sta_ssid[sysCfg.sta_active], sysCfg.sta_pwd[sysCfg.sta_active], PhyMode[WiFi.getPhyMode() & 0x3], Hostname);
+  snprintf_P(log, sizeof(log), PSTR("Wifi: Connecting to AP%d %s in mode 11%c as %s..."),
+    sysCfg.sta_active +1, sysCfg.sta_ssid[sysCfg.sta_active], PhyMode[WiFi.getPhyMode() & 0x3], Hostname);
   addLog(LOG_LEVEL_INFO, log);
 }
 
