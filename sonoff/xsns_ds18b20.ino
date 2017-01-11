@@ -167,4 +167,41 @@ boolean dsb_readTemp(bool S, float &t)
   }
   return !isnan(t);
 }
+
+/*********************************************************************************************\
+ * Presentation
+\*********************************************************************************************/
+
+void dsb_mqttPresent(char* stopic, uint16_t sstopic, char* svalue, uint16_t ssvalue, uint8_t* djson)
+{
+  char stemp1[10];
+  float t;
+
+  if (dsb_readTemp(TEMP_CONVERSION, t)) {                 // Check if read failed
+    dtostrf(t, 1, TEMP_RESOLUTION &3, stemp1);
+    if (sysCfg.message_format == JSON) {
+      snprintf_P(svalue, ssvalue, PSTR("%s, \"DS18B20\":{\"Temperature\":\"%s\"}"), svalue, stemp1);
+      *djson = 1;
+    } else {
+      snprintf_P(stopic, sstopic, PSTR("%s/%s/DS18B20/TEMPERATURE"), PUB_PREFIX2, sysCfg.mqtt_topic);
+      snprintf_P(svalue, ssvalue, PSTR("%s%s"), stemp1, (sysCfg.mqtt_units) ? (TEMP_CONVERSION) ? " F" : " C" : "");
+      mqtt_publish(stopic, svalue);
+    }
+  }
+}
+
+String dsb_webPresent()
+{
+  // Needs TelePeriod to refresh data (Do not do it here as it takes too much time)
+  char stemp[10], sconv[10];
+  float st;
+  String page = "";
+  
+  if (dsb_readTemp(TEMP_CONVERSION, st)) {        // Check if read failed
+    snprintf_P(sconv, sizeof(sconv), PSTR("&deg;%c"), (TEMP_CONVERSION) ? 'F' : 'C');
+    dtostrf(st, 1, TEMP_RESOLUTION &3, stemp);
+    page += F("<tr><td>DSB Temperature: </td><td>"); page += stemp; page += sconv; page += F("</td></tr>");
+  }
+  return page;
+}
 #endif  // SEND_TELEMETRY_DS18B20
