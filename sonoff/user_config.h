@@ -1,8 +1,8 @@
 /*********************************************************************************************\
  * User specific configuration parameters
- *
+ * 
  * ATTENTION: Changes to most PARAMETER defines will only override flash settings if you change
- *            define CFG_HOLDER.
+ *            define CFG_HOLDER. 
  *            Most parameters can be changed online using commands via MQTT, WebConsole or serial
  *
  * Corresponding MQTT/Serial/Console commands in [brackets]
@@ -136,12 +136,12 @@
 
 /*********************************************************************************************\
  * Sonoff Basic, Sonoff RF, Sonoff SV, Sonoff Dual, Sonoff TH, S20 Smart Socket
- *
+ * 
  * >>> Select Board "Generic ESP8266 Module" and Flash Size "1M (64K SPIFFS)" <<<
 \*********************************************************************************************/
 
 #if MODULE == SONOFF                        // programming header 1:3.3V 2:rx 3:tx 4:gnd
-  #define APP_NAME             "Sonoff 8266 Module"
+  #define APP_NAME             "Sonoff 8266 module"
   #define MQTT_GRPTOPIC        "sonoffs"    // [GroupTopic] MQTT Group topic
 /*-------------------------------------------------------------------------------------------*/
   #define LED_PIN              13           // GPIO 13 = Green/Blue Led (0 = On, 1 = Off) - Sonoff
@@ -172,7 +172,7 @@
   // *** Option 2 - Use Adafruit DHT library - Select either Option 1 OR Option 2
 //  #define SEND_TELEMETRY_DHT2               // Enable sending temperature and humidity telemetry
 /*-------------------------------------------------------------------------------------------*\
- * I2C devices BH1750, BMP085, BMP180, BMP280, BME280 and HTU21D
+ * I2C devices BMP085, BMP180, BMP280, BME280 and HTU21D
 \*-------------------------------------------------------------------------------------------*/
   #define I2C_SDA_PIN          4            // GPIO 04 = I2C SDA (Sonoff_TH10A(16A)- Needs extra hardware)
   #define I2C_SCL_PIN          14           // GPIO 14 = I2C SCL (Sonoff_TH10A(16A))
@@ -180,12 +180,12 @@
 
 /*********************************************************************************************\
  * Sonoff Touch and Sonoff 4CH
- *
+ * 
  * >>> Select Board "Generic ESP8285 Module" (=Flash Mode "DOUT") and Flash Size "1M (64K SPIFFS)" <<<
 \*********************************************************************************************/
 
 #elif MODULE == SONOFF_2                    // programming header 1:3.3V 2:rx 3:tx 4:gnd
-  #define APP_NAME             "Sonoff 8285 Module"
+  #define APP_NAME             "Sonoff 8285 module"
   #define MQTT_GRPTOPIC        "sonoff2s"   // [GroupTopic] MQTT Group topic
 /*-------------------------------------------------------------------------------------------*/
   #define LED_PIN              13           // GPIO 13 = Green/Blue Led (0 = On, 1 = Off) - Sonoff
@@ -226,7 +226,7 @@
   // *** Option 2 - Use Adafruit DHT library - Select either Option 1 OR Option 2
 //  #define SEND_TELEMETRY_DHT2               // Enable sending temperature and humidity telemetry
 /*-------------------------------------------------------------------------------------------*\
- * I2C devices BH1750, BMP085, BMP180, BMP280, BME280 and HTU21D
+ * I2C devices BMP085, BMP180, BMP280, BME280 and HTU21D
 \*-------------------------------------------------------------------------------------------*/
   #define I2C_SDA_PIN          8            // GPIO 08 = I2C SDA (Sonoff 4CH - Needs extra hardware)
   #define I2C_SCL_PIN          7            // GPIO 07 = I2C SCL (Sonoff 4CH - Needs extra hardware)
@@ -234,12 +234,12 @@
 
 /*********************************************************************************************\
  * Sonoff Pow
- *
+ * 
  * >>> Select Board "Generic ESP8266 Module" and Flash Size "1M (64K SPIFFS)" or "4M (1M SPIFFS)" <<<
 \*********************************************************************************************/
 
 #elif MODULE == SONOFF_POW                  // programming header 1:3.3V 2:rx 3:tx 4:gnd
-  #define APP_NAME             "Sonoff Pow Module"
+  #define APP_NAME             "Sonoff Pow module"
   #define MQTT_GRPTOPIC        "pows"       // [GroupTopic] MQTT Group topic
   #define USE_POWERMONITOR                  // Enable Power Monitoring
 //  #define USE_POWERCALIBRATION              // Enable setting Calibration parameters by user commands
@@ -256,12 +256,12 @@
 
 /*********************************************************************************************\
  * Motor Clockwise/Anticlockwise
- *
+ * 
  * >>> Select Board "Generic ESP8266 Module" and Flash Size "1M (64K SPIFFS)" <<<
 \*********************************************************************************************/
 
 #elif MODULE == MOTOR_CAC                   // programming pins 6:3.3V 7:rx 8:tx 9:gnd of PSA-B
-  #define APP_NAME             "Motor C/AC Module"
+  #define APP_NAME             "Motor C/AC module"
   #define MQTT_GRPTOPIC        "motors"     // [GroupTopic] MQTT Group topic
 /*-------------------------------------------------------------------------------------------*/
   #define LED_PIN              13           // GPIO 13 = Green/Blue Led (0 = On, 1 = Off) - Sonoff
@@ -271,12 +271,12 @@
 
 /*********************************************************************************************\
  * Electrodragon
- *
+ * 
  * >>> Select Board "Generic ESP8266 Module" and Flash Size "1M (64K SPIFFS)" or "4M (1M SPIFFS)" <<<
 \*********************************************************************************************/
 
 #elif MODULE == ELECTRO_DRAGON              // programming header 5V/3V/gnd/
-  #define APP_NAME             "ElectroDragon Module"
+  #define APP_NAME             "ElectroDragon module"
   #define MQTT_GRPTOPIC        "dragons"    // [GroupTopic] MQTT Group topic
 /*-------------------------------------------------------------------------------------------*/
   #define LED_PIN              16           // GPIO 16 = Led (0 = Off, 1 = On)
@@ -309,7 +309,7 @@
   // *** Option 2 - Use Adafruit DHT library - Select either Option 1 OR Option 2
 //  #define SEND_TELEMETRY_DHT2               // Enable sending temperature and humidity telemetry
 /*-------------------------------------------------------------------------------------------*\
- * I2C devices BH1750, BMP085, BMP180, BMP280, BME280 and HTU21D
+ * I2C devices BMP085, BMP180, BMP280, BME280 and HTU21D
 \*-------------------------------------------------------------------------------------------*/
   #define I2C_SDA_PIN          4            // GPIO 4 = I2C SDA (Sonoff_TH10A(16A)- Needs extra hardware)
   #define I2C_SCL_PIN          14           // GPIO 14 = I2C SCL (Sonoff_TH10A(16A))

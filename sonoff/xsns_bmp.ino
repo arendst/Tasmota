@@ -383,13 +383,26 @@ double bmp_readHumidity(void)
   return 0;
 }
 
+char* bmp_type()
+{
+  return bmpstype;
+}
+
+uint8_t bmp_address()
+{
+  return bmpaddr;
+}
+
+uint8_t bmp_found()
+{
+  return bmptype;
+}
+
 boolean bmp_detect()
 {
-  if (bmptype) return true;
-
-  char log[LOGSZ];
   boolean success = false;
 
+  if (bmptype) return true;
   bmpaddr = BMP_ADDR;
   bmptype = i2c_read8(bmpaddr, BMP_REGISTER_CHIPID);
   if (!bmptype) {
@@ -410,74 +423,7 @@ boolean bmp_detect()
     success = bme280_calibrate();
     snprintf_P(bmpstype, sizeof(bmpstype), PSTR("BME280"));
   }
-  if (success) {
-    snprintf_P(log, sizeof(log), PSTR("I2C: %s found at address 0x%x"), bmpstype, bmpaddr);
-    addLog(LOG_LEVEL_DEBUG, log);
-  } else {
-    bmptype = 0;
-  }
+  if (!success) bmptype = 0;
   return success;
-}
-
-/*********************************************************************************************\
- * Presentation
-\*********************************************************************************************/
-
-void bmp_mqttPresent(char* stopic, uint16_t sstopic, char* svalue, uint16_t ssvalue, uint8_t* djson)
-{
-  if (!bmptype) return;
-
-  char stemp1[10], stemp2[10], stemp3[10];
-
-  double t_bmp = bmp_readTemperature(TEMP_CONVERSION);
-  double p_bmp = bmp_readPressure();
-  double h_bmp = bmp_readHumidity();
-  dtostrf(t_bmp, 1, TEMP_RESOLUTION &3, stemp1);
-  dtostrf(p_bmp, 1, PRESSURE_RESOLUTION &3, stemp2);
-  dtostrf(h_bmp, 1, HUMIDITY_RESOLUTION &3, stemp3);
-  if (sysCfg.message_format == JSON) {
-    if (!strcmp(bmpstype,"BME280")) {
-      snprintf_P(svalue, ssvalue, PSTR("%s, \"%s\":{\"Temperature\":\"%s\", \"Humidity\":\"%s\", \"Pressure\":\"%s\"}"),
-        svalue, bmpstype, stemp1, stemp3, stemp2);
-    } else {
-      snprintf_P(svalue, ssvalue, PSTR("%s, \"%s\":{\"Temperature\":\"%s\", \"Pressure\":\"%s\"}"),
-        svalue, bmpstype, stemp1, stemp2);
-    }
-    *djson = 1;
-  } else {
-    snprintf_P(stopic, sstopic, PSTR("%s/%s/%s/TEMPERATURE"), PUB_PREFIX2, sysCfg.mqtt_topic, bmpstype);
-    snprintf_P(svalue, ssvalue, PSTR("%s%s"), stemp1, (sysCfg.mqtt_units) ? (TEMP_CONVERSION) ? " F" : " C" : "");
-    mqtt_publish(stopic, svalue);
-    if (!strcmp(bmpstype,"BME280")) {
-      snprintf_P(stopic, sstopic, PSTR("%s/%s/%s/HUMIDITY"), PUB_PREFIX2, sysCfg.mqtt_topic, bmpstype);
-      snprintf_P(svalue, ssvalue, PSTR("%s%s"), stemp3, (sysCfg.mqtt_units) ? " %" : "");
-      mqtt_publish(stopic, svalue);
-    }
-    snprintf_P(stopic, sstopic, PSTR("%s/%s/%s/PRESSURE"), PUB_PREFIX2, sysCfg.mqtt_topic, bmpstype);
-    snprintf_P(svalue, ssvalue, PSTR("%s%s"), stemp2, (sysCfg.mqtt_units) ? " hPa" : "");
-    mqtt_publish(stopic, svalue);
-  }
-}
-
-String bmp_webPresent()
-{
-  String page = "";
-  if (bmptype) {
-    char itemp[10], iconv[10];
-
-    snprintf_P(iconv, sizeof(iconv), PSTR("&deg;%c"), (TEMP_CONVERSION) ? 'F' : 'C');
-    double t_bmp = bmp_readTemperature(TEMP_CONVERSION);
-    double p_bmp = bmp_readPressure();
-    double h_bmp = bmp_readHumidity();
-    dtostrf(t_bmp, 1, TEMP_RESOLUTION &3, itemp);
-    page += F("<tr><td>BMP Temperature: </td><td>"); page += itemp; page += iconv; page += F("</td></tr>");
-    if (!strcmp(bmpstype,"BME280")) {
-      dtostrf(h_bmp, 1, HUMIDITY_RESOLUTION &3, itemp);
-      page += F("<tr><td>BMP Humidity: </td><td>"); page += itemp; page += F("%</td></tr>");
-    }
-    dtostrf(p_bmp, 1, PRESSURE_RESOLUTION &3, itemp);
-    page += F("<tr><td>BMP Pressure: </td><td>"); page += itemp; page += F(" hPa</td></tr>");
-  }
-  return page;
 }
 #endif //SEND_TELEMETRY_I2C
