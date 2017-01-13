@@ -10,7 +10,7 @@
  * ====================================================
 */
 
-#define VERSION                0x03020100   // 3.2.1
+#define VERSION                0x03020200   // 3.2.2
 
 #define SONOFF                 1            // Sonoff, Sonoff RF, Sonoff SV, Sonoff Dual, Sonoff TH, S20 Smart Socket, 4 Channel
 #define SONOFF_POW             9            // Sonoff Pow
@@ -2342,7 +2342,7 @@ void stateloop()
       savedatacounter--;
       if (savedatacounter <= 0) {
         if (sysCfg.savestate) {
-          if (!((sysCfg.pulsetime < 30) && ((sysCfg.power &0xFE) == (power &0xFE)))) sysCfg.power = power;
+          if (!((sysCfg.pulsetime > 0) && (sysCfg.pulsetime < 30) && ((sysCfg.power &0xFE) == (power &0xFE)))) sysCfg.power = power;
         }
         CFG_Save();
         savedatacounter = sysCfg.savedata;

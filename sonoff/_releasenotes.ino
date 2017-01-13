@@ -1,4 +1,7 @@
-/* 3.2.1 20170113
+/* 3.2.2 20170113
+ * Fix PowerOnState 2 functionality after re-applying power (#230)
+ *
+ * 3.2.1 20170113
  * Fix some failed command decoding (#228)
  * Removed passwords from status messages (#216)
  *
