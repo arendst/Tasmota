@@ -3,11 +3,11 @@ Provide ESP8266 based Sonoff by [iTead Studio](https://www.itead.cc/) and Electr
 
 Current version is **3.2.1** - See ```sonoff/_releasenotes.ino``` for change information.
 
-See [Wiki](https://github.com/arendst/Sonoff-MQTT-OTA-Arduino/wiki) for more information.
-See [Community](https://groups.google.com/d/forum/sonoffusers) for forum and more user experienkce.
+<img alt="Sonoff" src="https://github.com/arendst/arendst.github.io/blob/master/media/sonoffbasic.jpg" width="250" align="right" /> 
+See [Wiki](https://github.com/arendst/Sonoff-MQTT-OTA-Arduino/wiki) for more information.<br />
+See [Community](https://groups.google.com/d/forum/sonoffusers) for forum and more user experience.
 
 Starting with version 2.0.0 the following devices are supported:
-<img alt="Sonoff" src="https://github.com/arendst/arendst.github.io/blob/master/media/sonoffbasic.jpg" width="250" align="right" /> 
 - [iTead Sonoff Basic](http://sonoff.itead.cc/en/products/sonoff/sonoff-basic)
 - [iTead Sonoff RF](http://sonoff.itead.cc/en/products/sonoff/sonoff-rf)
 - [iTead Sonoff SV](https://www.itead.cc/sonoff-sv.html)
