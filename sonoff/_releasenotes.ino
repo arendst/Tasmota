@@ -1,4 +1,12 @@
-/* 3.1.16 20170109
+/* 3.2.1 20170113
+ * Fix some failed command decoding (#228)
+ * Removed passwords from status messages (#216)
+ *
+ * 3.2.0 20170111
+ * Add I2C BH1750 sensor (#222)
+ * Sensor rewrite preparing for online selection
+ *
+ * 3.1.16 20170109
  * Fix Domoticz possible error condition
  * Remove Wifi password from connection message (#216)
  * Add Configure Other menu item to web page (#209)

@@ -133,7 +133,6 @@ const char HTTP_FORM_MQTT[] PROGMEM =
   "<br/><b>Port</b> (" STR(MQTT_PORT) ")<br/><input id='ml' name='ml' length=5 placeholder='" STR(MQTT_PORT) "' value='{m2}'><br/>"
   "<br/><b>Client Id</b> ({m0})<br/><input id='mc' name='mc' length=32 placeholder='" MQTT_CLIENT_ID "' value='{m3}'><br/>"
   "<br/><b>User</b> (" MQTT_USER ")<br/><input id='mu' name='mu' length=32 placeholder='" MQTT_USER "' value='{m4}'><br/>"
-//  "<br/><b>Password</b> (" MQTT_PASS ")<br/><input id='mp' name='mp' length=32 placeholder='" MQTT_PASS "' value='{m5}'><br/>"
   "<br/><b>Password</b><br/><input id='mp' name='mp' length=32 type='password' placeholder='" MQTT_PASS "' value='{m5}'><br/>"
   "<br/><b>Topic</b> (" MQTT_TOPIC ")<br/><input id='mt' name='mt' length=32 placeholder='" MQTT_TOPIC" ' value='{m6}'><br/>";
 #ifdef USE_DOMOTICZ
@@ -405,100 +404,29 @@ void handleRoot()
       page += F("</tr></table><br/>");
     }
 
+    String tpage = "";
 #ifdef USE_POWERMONITOR
-    float ped, pi, pc;
-    uint16_t pe, pw, pu;
-    char ptemp[10];
-    hlw_readEnergy(0, ped, pe, pw, pu, pi, pc);
-    page += F("<table style='width:100%'>");
-    page += F("<tr><td>Voltage: </td><td>"); page += String(pu); page += F(" V</td></tr>");
-    dtostrf(pi, 1, 3, ptemp);
-    page += F("<tr><td>Current: </td><td>"); page += ptemp; page += F(" A</td></tr>");
-    page += F("<tr><td>Power: </td><td>"); page += String(pw); page += F(" W</td></tr>");
-    dtostrf(pc, 1, 2, ptemp);
-    page += F("<tr><td>Power Factor: </td><td>"); page += ptemp; page += F("</td></tr>");
-    dtostrf(ped, 1, 3, ptemp);
-    page += F("<tr><td>Energy Today: </td><td>"); page += ptemp; page += F(" kWh</td></tr>");
-    dtostrf((float)sysCfg.hlw_kWhyesterday / 100000000, 1, 3, ptemp);
-    page += F("<tr><td>Energy Yesterday: </td><td>"); page += ptemp; page += F(" kWh</td></tr>");
-    page += F("</table><br/>");
+    tpage += hlw_webPresent();
 #endif  // USE_POWERMONITOR
-
 #ifdef SEND_TELEMETRY_DS18B20
-    // Needs TelePeriod to refresh data (Do not do it here as it takes too much time)
-    char stemp[10], sconv[10];
-    float st;
-    if (dsb_readTemp(TEMP_CONVERSION, st)) {        // Check if read failed
-      snprintf_P(sconv, sizeof(sconv), PSTR("&deg;%c"), (TEMP_CONVERSION) ? 'F' : 'C');
-      page += F("<table style='width:100%'>");
-      dtostrf(st, 1, TEMP_RESOLUTION &3, stemp);
-      page += F("<tr><td>DSB Temperature: </td><td>"); page += stemp; page += sconv; page += F("</td></tr>");
-      page += F("</table><br/>");
-    }
+    tpage += dsb_webPresent();
 #endif  // SEND_TELEMETRY_DS18B20
-
 #ifdef SEND_TELEMETRY_DS18x20
-    char xtemp[10], xconv[10];
-    float xt;
-    uint8_t xfl = 0, i;
-    snprintf_P(xconv, sizeof(xconv), PSTR("&deg;%c"), (TEMP_CONVERSION) ? 'F' : 'C');
-    for (i = 0; i < ds18x20_sensors(); i++) {
-      if (ds18x20_read(i, TEMP_CONVERSION, xt)) {   // Check if read failed
-        if (!xfl) {
-          page += F("<table style='width:100%'>");
-          xfl = 1;
-        }
-        dtostrf(xt, 1, TEMP_RESOLUTION &3, xtemp);
-        page += F("<tr><td>DS"); page += String(i +1); page += F(" Temperature: </td><td>"); page += xtemp; page += xconv; page += F("</td></tr>");
-      }
-    }
-    if (xfl) page += F("</table><br/>");
+    tpage += ds18x20_webPresent();
 #endif  // SEND_TELEMETRY_DS18x20
-
 #if defined(SEND_TELEMETRY_DHT) || defined(SEND_TELEMETRY_DHT2)
-    char dtemp[10], dconv[10];
-    float dt, dh;
-    if (dht_readTempHum(TEMP_CONVERSION, dt, dh)) {     // Read temperature as Celsius (the default)
-      snprintf_P(dconv, sizeof(dconv), PSTR("&deg;%c"), (TEMP_CONVERSION) ? 'F' : 'C');
-      page += F("<table style='width:100%'>");
-      dtostrf(dt, 1, TEMP_RESOLUTION &3, dtemp);
-      page += F("<tr><td>DHT Temperature: </td><td>"); page += dtemp; page += dconv; page += F("</td></tr>");
-      dtostrf(dh, 1, HUMIDITY_RESOLUTION &3, dtemp);
-      page += F("<tr><td>DHT Humidity: </td><td>"); page += dtemp; page += F("%</td></tr>");
-      page += F("</table><br/>");
-    }
+    tpage += dht_webPresent();
 #endif  // SEND_TELEMETRY_DHT/2
-
 #if defined(SEND_TELEMETRY_I2C)
-    char itemp[10], iconv[10];
-    snprintf_P(iconv, sizeof(iconv), PSTR("&deg;%c"), (TEMP_CONVERSION) ? 'F' : 'C');
-    if(htu_found()) {
-      float t_htu21 = htu21_readTemperature(TEMP_CONVERSION);
-      float h_htu21 = htu21_readHumidity();
-      h_htu21 = htu21_compensatedHumidity(h_htu21, t_htu21);
-      page += F("<table style='width:100%'>");
-      dtostrf(t_htu21, 1, TEMP_RESOLUTION &3, itemp);
-      page += F("<tr><td>HTU Temperature: </td><td>"); page += itemp; page += iconv; page += F("</td></tr>");
-      dtostrf(h_htu21, 1, HUMIDITY_RESOLUTION &3, itemp);
-      page += F("<tr><td>HTU Humidity: </td><td>"); page += itemp; page += F("%</td></tr>");
-      page += F("</table><br/>");
-    }
-    if(bmp_found()) {
-      double t_bmp = bmp_readTemperature(TEMP_CONVERSION);
-      double p_bmp = bmp_readPressure();
-      double h_bmp = bmp_readHumidity();
-      page += F("<table style='width:100%'>");
-      dtostrf(t_bmp, 1, TEMP_RESOLUTION &3, itemp);
-      page += F("<tr><td>BMP Temperature: </td><td>"); page += itemp; page += iconv; page += F("</td></tr>");
-      if (!strcmp(bmp_type(),"BME280")) {
-        dtostrf(h_bmp, 1, HUMIDITY_RESOLUTION &3, itemp);
-        page += F("<tr><td>BMP Humidity: </td><td>"); page += itemp; page += F("%</td></tr>");
-      }
-      dtostrf(p_bmp, 1, PRESSURE_RESOLUTION &3, itemp);
-      page += F("<tr><td>BMP Pressure: </td><td>"); page += itemp; page += F(" hPa</td></tr>");
-      page += F("</table><br/>");
-    }
+    tpage += htu_webPresent();
+    tpage += bmp_webPresent();
+    tpage += bh1750_webPresent();
 #endif  // SEND_TELEMETRY_I2C
+    if (tpage.length() > 0) {
+      page += F("<table style='width:100%'>");
+      page += tpage;
+      page += F("</table><br/>");
+    }
 
     if (_httpflag == HTTP_ADMIN) {
       page += FPSTR(HTTP_BTN_MENU1);
