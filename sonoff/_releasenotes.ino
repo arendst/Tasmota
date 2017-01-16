@@ -1,4 +1,7 @@
-/* 3.2.2 20170113
+/* 3.2.3 20170116
+ * Fix Wemo when MQTT is disabled
+ *
+ * 3.2.2 20170113
  * Fix PowerOnState 2 functionality after re-applying power (#230)
  *
  * 3.2.1 20170113

@@ -10,7 +10,7 @@
  * ====================================================
 */
 
-#define VERSION                0x03020200   // 3.2.2
+#define VERSION                0x03020300   // 3.2.3
 
 #define SONOFF                 1            // Sonoff, Sonoff RF, Sonoff SV, Sonoff Dual, Sonoff TH, S20 Smart Socket, 4 Channel
 #define SONOFF_POW             9            // Sonoff Pow
@@ -934,7 +934,9 @@ void mqtt_reconnect()
   mqttcounter = MQTT_RETRY_SECS;
 
 #ifdef USE_MQTT
-  if (udpConnected) WiFiUDP::stopAll();
+#ifdef USE_WEMO_EMULATION
+  UDP_Disconnect();
+#endif  // USE_WEMO_EMULATION
   if (mqttflag > 1) {
 #ifdef USE_MQTT_TLS
     addLog_P(LOG_LEVEL_INFO, PSTR("MQTT: Verify TLS fingerprint..."));
@@ -972,7 +974,6 @@ void mqtt_reconnect()
     mqttcounter = 0;
     snprintf_P(svalue, sizeof(svalue), PSTR("Online"));
     mqtt_publish(stopic, svalue, true);
-    udpConnected = false;
     mqtt_connected();
   } else {
     snprintf_P(log, sizeof(log), PSTR("MQTT: CONNECT FAILED, rc %d. Retry in %d seconds"), mqttClient.state(), mqttcounter);

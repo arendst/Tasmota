@@ -375,7 +375,9 @@ void WIFI_config(uint8_t type)
 {
   if (!_wificonfigflag) {
     if (type == WIFI_RETRY) return;
-    if (udpConnected) WiFiUDP::stopAll();
+#ifdef USE_WEMO_EMULATION
+    UDP_Disconnect();
+#endif  // USE_WEMO_EMULATION
     WiFi.disconnect();        // Solve possible Wifi hangs
     _wificonfigflag = type;
     _wifiConfigCounter = WIFI_CONFIG_SEC;   // Allow up to WIFI_CONFIG_SECS seconds for phone to provide ssid/pswd
@@ -410,7 +412,9 @@ void WIFI_begin(uint8_t flag)
   const char PhyMode[] = " BGN";
   char log[LOGSZ];
 
-  if (udpConnected) WiFiUDP::stopAll();
+#ifdef USE_WEMO_EMULATION
+  UDP_Disconnect();
+#endif  // USE_WEMO_EMULATION
   if (!strncmp(ESP.getSdkVersion(),"1.5.3",5)) {
     addLog_P(LOG_LEVEL_DEBUG, "Wifi: Patch issue 2186");
     WiFi.mode(WIFI_OFF);    // See https://github.com/esp8266/Arduino/issues/2186
@@ -536,11 +540,13 @@ void WIFI_Check(uint8_t param)
           stopWebserver();
         }
 #ifdef USE_WEMO_EMULATION
-        if (udpConnected == false) udpConnected = UDP_Connect();
+        UDP_Connect();
 #endif  // USE_WEMO_EMULATION
 #endif  // USE_WEBSERVER
       } else {
-        udpConnected = false;
+#ifdef USE_WEMO_EMULATION
+        UDP_Disconnect();
+#endif  // USE_WEMO_EMULATION
         mDNSbegun = false;
       }
     }
@@ -680,17 +686,28 @@ void pollUDP()
   }
 }
 
+boolean UDP_Disconnect()
+{
+  if (udpConnected) {
+    WiFiUDP::stopAll();
+    addLog_P(LOG_LEVEL_DEBUG, PSTR("UPnP: Multicast disabled"));
+    udpConnected = false;
+  }
+  return udpConnected;
+}
+
 boolean UDP_Connect()
 {
-  boolean state = false;
-
-  if (portUDP.beginMulticast(WiFi.localIP(), ipMulticast, portMulticast)) {
-    addLog_P(LOG_LEVEL_INFO, PSTR("UPnP: Multicast (re)joined"));
-    state = true;
-  } else {
-    addLog_P(LOG_LEVEL_INFO, PSTR("UPnP: Multicast join failed"));
+  if (!udpConnected) {
+    if (portUDP.beginMulticast(WiFi.localIP(), ipMulticast, portMulticast)) {
+      addLog_P(LOG_LEVEL_INFO, PSTR("UPnP: Multicast (re)joined"));
+      udpConnected = true;
+    } else {
+      addLog_P(LOG_LEVEL_INFO, PSTR("UPnP: Multicast join failed"));
+      udpConnected = false;
+    }
   }
-  return state;
+  return udpConnected;
 }
 #endif  // USE_WEMO_EMULATION
 

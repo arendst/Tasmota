@@ -480,7 +480,9 @@ void handleWifi(boolean scan)
   page.replace("{v}", "Configure Wifi");
 
   if (scan) {
-    if (udpConnected) WiFiUDP::stopAll();  // Needed when WeMo is enabled
+#ifdef USE_WEMO_EMULATION
+    UDP_Disconnect();  // Needed when WeMo is enabled
+#endif  // USE_WEMO_EMULATION
     int n = WiFi.scanNetworks();
     addLog_P(LOG_LEVEL_DEBUG, PSTR("Wifi: Scan done"));
 
@@ -546,7 +548,6 @@ void handleWifi(boolean scan)
       }
       page += "<br/>";
     }
-    udpConnected = false;
   } else {
     page += FPSTR(HTTP_LNK_SCAN);
   }
@@ -934,7 +935,9 @@ void handleUploadLoop()
       _uploaderror = 1;
       return;
     }
-    WiFiUDP::stopAll();  // Needed when WeMo is enabled
+#ifdef USE_WEMO_EMULATION    
+    UDP_Disconnect();  // Needed when WeMo is enabled
+#endif  // USE_WEMO_EMULATION
 #ifdef USE_MQTT
     mqttClient.disconnect();
 #endif  // USE_MQTT
