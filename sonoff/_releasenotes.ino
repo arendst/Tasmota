@@ -1,4 +1,8 @@
-/* 3.2.3 20170116
+/* 3.2.4 20170118
+ * Add HUE emulation for Alexa (#229)
+ * Add basic WS2812 support (Needs external 5V power supply) (#229)
+ * 
+ * 3.2.3 20170116
  * Fix Wemo when MQTT is disabled
  *
  * 3.2.2 20170113

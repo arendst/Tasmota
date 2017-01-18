@@ -248,6 +248,45 @@ const char WEMO_SETUP_XML[] PROGMEM =
   "</root>\r\n"
   "\r\n";
 #endif  // USE_WEMO_EMULATION
+#ifdef USE_HUE_EMULATION
+const char HUE_DESCRIPTION_XML[] PROGMEM =
+  "<?xml version=\"1.0\"?>"
+  "<root xmlns=\"urn:schemas-upnp-org:device-1-0\">"
+  "<specVersion>"
+      "<major>1</major>"
+      "<minor>0</minor>"
+  "</specVersion>"
+  "<URLBase>http://{x1}/</URLBase>"
+  "<device>"
+      "<deviceType>urn:schemas-upnp-org:device:Basic:1</deviceType>"
+      "<friendlyName>Amazon-Echo-HA-Bridge ({x1})</friendlyName>"
+      "<manufacturer>Royal Philips Electronics</manufacturer>"
+      "<modelName>Philips hue bridge 2012</modelName>"
+      "<modelNumber>929000226503</modelNumber>"
+      "<UDN>uuid:{x2}</UDN>"
+  "</device>"
+  "</root>\r\n"
+  "\r\n";
+
+const char HUE_LIGHT_STATUS_JSON[] PROGMEM =
+  "{\"state\":"
+      "{\"on\":{state},"
+      "\"bri\":0,"
+      "\"hue\":0,"
+      "\"sat\":0,"
+      "\"effect\":\"none\","
+      "\"ct\":0,"
+      "\"alert\":\"none\","
+      "\"reachable\":true"
+  "},"
+  "\"type\":\"Dimmable light\","
+  "\"name\":\"{j1}{j2}\","
+  "\"modelid\":\"LWB004\","
+  "\"manufacturername\":\"Philips\","
+  "\"uniqueid\":\"{j3}\","
+  "\"swversion\":\"66012040\""
+  "}";
+#endif  // USE_HUE_EMULATION
 
 #define DNS_PORT 53
 enum http_t {HTTP_OFF, HTTP_USER, HTTP_ADMIN, HTTP_MANAGER};
@@ -293,6 +332,9 @@ void startWebserver(int type, IPAddress ipweb)
       webServer->on("/eventservice.xml", handleUPnPservice);
       webServer->on("/setup.xml", handleUPnPsetup);
 #endif  // USE_WEMO_EMULATION
+#ifdef USE_HUE_EMULATION
+      webServer->on("/description.xml", handleUPnPsetup);
+#endif  // USE_HUE_EMULATION
       webServer->onNotFound(handleNotFound);
     }
     webServer->begin(); // Web server start
@@ -374,7 +416,7 @@ void handleRoot()
   } else {
 
     String page = FPSTR(HTTP_HEAD);
-//    page.replace("<meta", "<meta http-equiv=\"refresh\" content=\"4; URL=/\"><meta");                    // Fails Edge (asks for reload)
+//    page.replace("<meta", "<meta http-equiv=\"refresh\" content=\"4; URL=/\"><meta");                   // Fails Edge (asks for reload)
 //    page.replace("</script>", "setTimeout(function(){window.location.reload(1);},4000);</script>");     // Repeats POST on All
     page.replace("</script>", "setTimeout(function(){window.location.replace(\"/\");},4000);</script>");  // OK on All
     page.replace("{v}", "Main menu");
@@ -1179,6 +1221,8 @@ void handleRestart()
   restartflag = 2;
 }
 
+/********************************************************************************************/
+
 #ifdef USE_WEMO_EMULATION
 void handleUPnPevent()
 {
@@ -1203,19 +1247,128 @@ void handleUPnPsetup()
   addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Handle WeMo setup"));
 
   String setup_xml = FPSTR(WEMO_SETUP_XML);
-//  setup_xml.replace("{x1}", String(MQTTClient));
   setup_xml.replace("{x1}", String(sysCfg.friendlyname));
   setup_xml.replace("{x2}", wemo_UUID());
   setup_xml.replace("{x3}", wemo_serial());
-  webServer->send(200, "text/xml", setup_xml);
+  webServer->send(200, "text/plain", setup_xml);
 }
 #endif  // USE_WEMO_EMULATION
+
+/********************************************************************************************/
+
+#ifdef USE_HUE_EMULATION
+String hue_deviceId(uint8_t id)
+{
+  char deviceid[16];
+  snprintf_P(deviceid, sizeof(deviceid), PSTR("5CCF7F%03X-%0d"), ESP.getChipId(), id);
+  return String(deviceid);
+}
+
+void handleUPnPsetup()
+{
+  addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Handle Hue Bridge setup"));
+
+  String description_xml = FPSTR(HUE_DESCRIPTION_XML);
+  description_xml.replace("{x1}", WiFi.localIP().toString());
+  description_xml.replace("{x2}", hue_UUID());
+  webServer->send(200, "text/xml", description_xml);
+}
+
+void handle_hue_api(String path)
+{
+  /* HUE API uses /api/<userid>/<command> syntax. The userid is created by the echo device and
+   * on original HUE the pressed button allows for creation of this user. We simply ignore the
+   * user part and allow every caller as with Web or WeMo. */
+   
+  char log[LOGSZ];
+  String response;
+  String command=path;
+  uint8_t device=1;
+  char id[4];
+
+  command.remove(0,command.indexOf("/lights")+7); // remove all including lights cmd
+  if (path.startsWith("/api/invalid")) {}         // Ignore /api/invalid
+  else if (command.length() == 0)                 // only /lights requested
+  {
+//    Serial.println("HUE: /lights");
+    response = "{\"";
+    for(uint8_t i=1; i<=Maxdevice; i++)
+    {
+      response += i;
+      response += "\":";
+      response += FPSTR(HUE_LIGHT_STATUS_JSON);
+      if(i<Maxdevice) response += ",\"";
+      response.replace("{state}", (power & (0x01 << (i-1))) ? "true" : "false");
+      response.replace("{j1}", sysCfg.friendlyname);
+      response.replace("{j2}", itoa(i,id,10));
+      response.replace("{j3}", hue_deviceId(i));  
+    }
+    response += "}";
+    webServer->send(200, "application/json", response);    
+  }
+  else if (command.length() <=3)                  // Only device ID (up to 63 on real Bridge)
+  {
+    device=atoi(command.c_str()+1);               // Skip leading '/'
+    response = FPSTR(HUE_LIGHT_STATUS_JSON);
+    response.replace("{state}", (power & (0x01 << (device-1))) ? "true" : "false");
+    response.replace("{j1}", sysCfg.friendlyname);
+    response.replace("{j2}", itoa(device,id,10));
+    response.replace("{j3}", hue_deviceId(device));
+//    Serial.print("HUE: Get state of device "); Serial.println(device);
+    webServer->send(200, "application/json", response);
+  }
+  else if (command.endsWith("/state"))            // Got ID/state
+  {
+//    Serial.println("HUE: Handle API /state");
+    command.remove(command.lastIndexOf("/state"));
+    device=atoi(command.c_str()+1);
+    response="{\"success\":{\"/lights/";
+    response +=device;
+    if (webServer->args() == 1)
+    {
+      String json=webServer->arg(0);
+      Serial.println(json.c_str());
+      if (json.startsWith("{\"on\": false"))
+      {
+        do_cmnd_power(device, 0);
+        response +="/state/on\": false}}";
+      } else
+      {
+        do_cmnd_power(device, 1);
+        response +="/state/on\": true}}";        
+      }
+      webServer->send(200, "application/json", response);
+    }
+    else 
+    {
+//      Serial.println("HUE: /state no POST args");
+      webServer->send(406, "application/json", "{}");
+    }
+  }
+  else
+  {
+    snprintf_P(log, sizeof(log), PSTR("HTTP: Handle Hue API (%s)"),path.c_str());
+    addLog(LOG_LEVEL_DEBUG_MORE, log);
+    webServer->send(406, "application/json", "{}");
+  }
+}
+#endif  // USE_HUE_EMULATION
+
+/********************************************************************************************/
 
 void handleNotFound()
 {
   if (captivePortal()) { // If captive portal redirect instead of displaying the error page.
     return;
   }
+
+#ifdef USE_HUE_EMULATION  
+  String path = webServer->uri();
+  if (path.startsWith("/api"))
+    handle_hue_api(path);
+  else {
+#endif // USE_HUE_EMULATION
+  
   String message = "File Not Found\n\n";
   message += "URI: ";
   message += webServer->uri();
@@ -1232,6 +1385,10 @@ void handleNotFound()
   webServer->sendHeader("Pragma", "no-cache");
   webServer->sendHeader("Expires", "-1");
   webServer->send(404, "text/plain", message);
+#ifdef USE_HUE_EMULATION
+  addLog_P(LOG_LEVEL_DEBUG_MORE, message.c_str());
+  }
+#endif // USE_HUE_EMULATION
 }
 
 /* Redirect to captive portal if we got a request for another domain. Return true in that case so the page handler do not try to handle the request again. */
