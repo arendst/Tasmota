@@ -1,4 +1,8 @@
-/* 3.2.5 20170119
+/* 3.2.6 20170119
+ * Fix Sonoff Pow compile error (#255)
+ * Move HLW interrupts back to ROM
+ *
+ * 3.2.5 20170119
  * Add more FriendlyNames for Hue (#254)
  * Add DMA support for WS2812 when using pin 3 while other pins work just as well in my case...
  *

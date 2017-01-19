@@ -44,8 +44,8 @@ unsigned long hlw_cf1u_pcntmax, hlw_cf1i_pcntmax;
 
 Ticker tickerHLW;
 
-void hlw_cf_interrupt() ICACHE_RAM_ATTR;
-void hlw_cf1_interrupt() ICACHE_RAM_ATTR;
+//void hlw_cf_interrupt() ICACHE_RAM_ATTR;
+//void hlw_cf1_interrupt() ICACHE_RAM_ATTR;
 
 void hlw_cf_interrupt()  // Service Power
 {

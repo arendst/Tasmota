@@ -185,7 +185,7 @@
  * WS2812 LED Support
 \*-------------------------------------------------------------------------------------------*/
   #define WS2812_PIN           3            // GPIO 03 Serial RX reused due to DMA controlling of LEDs (Fails Serial communication!)
-//  #define WS2812_PIN           14           // GPIO 14 works just as well for me
+//  #define WS2812_PIN           14           // GPIO 14 option
   #define WS2812_LEDS          30           // [Pixels] Number of LEDs
 //  #define USE_WS2812
 
@@ -246,7 +246,7 @@
  * WS2812 LED Support
 \*-------------------------------------------------------------------------------------------*/
   #define WS2812_PIN           3            // GPIO 03 Serial RX reused due to DMA controlling of LEDs (Fails Serial communication!)
-//  #define WS2812_PIN           7           // GPIO 07 works just as well for me
+//  #define WS2812_PIN           7           // GPIO 07 option
   #define WS2812_LEDS          30           // [Pixels] Number of LEDs
 //  #define USE_WS2812
 
@@ -336,7 +336,7 @@
  * WS2812 LED Support
 \*-------------------------------------------------------------------------------------------*/
   #define WS2812_PIN           3            // GPIO 03 Serial RX reused due to DMA controlling of LEDs (Fails Serial communication!)
-//  #define WS2812_PIN           14           // GPIO 14 works just as well for me
+//  #define WS2812_PIN           14           // GPIO 14 option
   #define WS2812_LEDS          30           // [Pixels] Number of LEDs
 //  #define USE_WS2812
 

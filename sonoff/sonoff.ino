@@ -10,7 +10,7 @@
  * ====================================================
 */
 
-#define VERSION                0x03020500   // 3.2.5
+#define VERSION                0x03020600   // 3.2.5
 
 #define SONOFF                 1            // Sonoff, Sonoff RF, Sonoff SV, Sonoff Dual, Sonoff TH, S20 Smart Socket, 4 Channel
 #define SONOFF_POW             9            // Sonoff Pow
@@ -70,6 +70,10 @@ enum led_t   {LED_OFF, LED_POWER, LED_MQTTSUB, LED_POWER_MQTTSUB, LED_MQTTPUB, L
 
 #ifndef MQTT_FINGERPRINT
 #define MQTT_FINGERPRINT       "A5 02 FF 13 99 9F 8B 39 8E F1 83 4F 11 23 65 0B 32 36 FC 07"
+#endif
+
+#ifndef WS2812_LEDS
+#define WS2812_LEDS            30           // [Pixels] Number of LEDs
 #endif
 
 #define DEF_WIFI_HOSTNAME      "%s-%04d"    // Expands to <MQTT_TOPIC>-<last 4 decimal chars of MAC address>
