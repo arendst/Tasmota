@@ -101,7 +101,10 @@
 
 // -- HTTP -----------------------------------
 #define USE_WEBSERVER                       // Enable web server and wifi manager (+43k code, +2k mem) - Disable by //
-  #define FRIENDLY_NAME        "Sonoff"     // [FriendlyName] Friendlyname up to 32 characters used by webpages and Alexa
+  #define FRIENDLY_NAME1       "Sonoff"     // [FriendlyName1] Friendlyname up to 32 characters used by webpages and Alexa
+  #define FRIENDLY_NAME2       "Sonoff2"    // [FriendlyName2] Friendlyname up to 32 characters used by Alexa
+  #define FRIENDLY_NAME3       "Sonoff3"    // [FriendlyName3] Friendlyname up to 32 characters used by Alexa
+  #define FRIENDLY_NAME4       "Sonoff4"    // [FriendlyName4] Friendlyname up to 32 characters used by Alexa
   #define WEB_SERVER           2            // [WebServer] Web server (0 = Off, 1 = Start as User, 2 = Start as Admin)
 //  #define USE_WEMO_EMULATION                // Enable Belkin WeMo PowerSwitch emulation for Alexa (+4k code, +2k mem)
 //  #define USE_HUE_EMULATION                 // Enable Hue Bridge emulation for Alexa
@@ -181,8 +184,9 @@
 /*-------------------------------------------------------------------------------------------*\
  * WS2812 LED Support
 \*-------------------------------------------------------------------------------------------*/
-  #define WS2812_PIN           14           // GPIO 3 Serial RX reused due to DMA controlling of LEDs
-  #define WS2812_LEDS          30           // Number of LEDs
+  #define WS2812_PIN           3            // GPIO 03 Serial RX reused due to DMA controlling of LEDs (Fails Serial communication!)
+//  #define WS2812_PIN           14           // GPIO 14 works just as well for me
+  #define WS2812_LEDS          30           // [Pixels] Number of LEDs
 //  #define USE_WS2812
 
 /*********************************************************************************************\
@@ -241,8 +245,9 @@
 /*-------------------------------------------------------------------------------------------*\
  * WS2812 LED Support
 \*-------------------------------------------------------------------------------------------*/
-  #define WS2812_PIN           14           // GPIO 3 Serial RX reused due to DMA controlling of LEDs
-  #define WS2812_LEDS          30           // Number of LEDs
+  #define WS2812_PIN           3            // GPIO 03 Serial RX reused due to DMA controlling of LEDs (Fails Serial communication!)
+//  #define WS2812_PIN           7           // GPIO 07 works just as well for me
+  #define WS2812_LEDS          30           // [Pixels] Number of LEDs
 //  #define USE_WS2812
 
 /*********************************************************************************************\
@@ -324,14 +329,15 @@
 /*-------------------------------------------------------------------------------------------*\
  * I2C devices BH1750, BMP085, BMP180, BMP280, BME280 and HTU21D
 \*-------------------------------------------------------------------------------------------*/
-  #define I2C_SDA_PIN          4            // GPIO 4 = I2C SDA (Sonoff_TH10A(16A)- Needs extra hardware)
+  #define I2C_SDA_PIN          4            // GPIO 04 = I2C SDA (Sonoff_TH10A(16A)- Needs extra hardware)
   #define I2C_SCL_PIN          14           // GPIO 14 = I2C SCL (Sonoff_TH10A(16A))
 //  #define SEND_TELEMETRY_I2C                // Enable sending I2C sensor telemetry
 /*-------------------------------------------------------------------------------------------*\
  * WS2812 LED Support
 \*-------------------------------------------------------------------------------------------*/
-  #define WS2812_PIN           14           // GPIO 3 Serial RX reused due to DMA controlling of LEDs
-  #define WS2812_LEDS          30           // Number of LEDs
+  #define WS2812_PIN           3            // GPIO 03 Serial RX reused due to DMA controlling of LEDs (Fails Serial communication!)
+//  #define WS2812_PIN           14           // GPIO 14 works just as well for me
+  #define WS2812_LEDS          30           // [Pixels] Number of LEDs
 //  #define USE_WS2812
 
 /*********************************************************************************************\

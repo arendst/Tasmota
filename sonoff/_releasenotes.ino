@@ -1,9 +1,13 @@
-/* 3.2.4 20170118
+/* 3.2.5 20170119
+ * Add more FriendlyNames for Hue (#254)
+ * Add DMA support for WS2812 when using pin 3 while other pins work just as well in my case...
+ *
+ * 3.2.4 20170118
  * Add HUE emulation for Alexa (#229)
- * Add basic WS2812 support (Needs external 5V power supply) (#229)
+ * Add basic WS2812 support (#229)
  * 
  * 3.2.3 20170116
- * Fix Wemo when MQTT is disabled
+ * Fix Wemo when MQTT is disabled (#245)
  *
  * 3.2.2 20170113
  * Fix PowerOnState 2 functionality after re-applying power (#230)

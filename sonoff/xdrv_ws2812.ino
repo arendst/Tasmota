@@ -30,8 +30,11 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include <NeoPixelBus.h>
 
-//NeoPixelBus<NeoGrbFeature, Neo800KbpsMethod> strip(WS2812_LEDS); // For Esp8266, the Pin is omitted and it uses GPIO3 due to DMA hardware use.
-NeoPixelBus<NeoGrbFeature, NeoEsp8266BitBang800KbpsMethod> strip(256, WS2812_PIN); // For Esp8266, the Pin is omitted and it uses GPIO3 due to DMA hardware use.
+#if WS2812_PIN == 3
+  NeoPixelBus<NeoGrbFeature, Neo800KbpsMethod> strip(WS2812_MAX_LEDS); // For Esp8266, the Pin is omitted and it uses GPIO3 due to DMA hardware use.
+#else  
+  NeoPixelBus<NeoGrbFeature, NeoEsp8266BitBang800KbpsMethod> strip(WS2812_MAX_LEDS, WS2812_PIN);
+#endif  
 
 uint8_t ledTable[] = {
     0,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,
@@ -227,7 +230,7 @@ void ws2812_animate()
     }
   }
 
-  if (sysCfg.ws_scheme < 1) {
+  if ((sysCfg.ws_scheme < 1) || (!(power &1))) {
     if ((lcolor != tcolor) || lany) {
       lany = 0;
       lcolor = tcolor;
