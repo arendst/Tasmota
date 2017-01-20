@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2017 and Theo Arends.  All rights reserved.
+Copyright (c) 2017 Theo Arends.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -82,20 +82,13 @@ boolean bh1750_detect()
  * Presentation
 \*********************************************************************************************/
 
-void bh1750_mqttPresent(char* stopic, uint16_t sstopic, char* svalue, uint16_t ssvalue, uint8_t* djson)
+void bh1750_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
 {
   if (!bh1750type) return;
   
   uint16_t l = bh1750_readLux();
-  if (sysCfg.message_format == JSON) {
-    snprintf_P(svalue, ssvalue, PSTR("%s, \"%s\":{\"Illuminance\":%d}"), svalue, bh1750stype, l);
-    *djson = 1;
-  }
-  else {
-    snprintf_P(stopic, sstopic, PSTR("%s/%s/ILLUMINANCE"), PUB_PREFIX2, sysCfg.mqtt_topic);
-    snprintf_P(svalue, ssvalue, PSTR("%d%s"), l, (sysCfg.mqtt_units) ? " lx" : "");
-    mqtt_publish(stopic, svalue);
-  }
+  snprintf_P(svalue, ssvalue, PSTR("%s, \"%s\":{\"Illuminance\":%d}"), svalue, bh1750stype, l);
+  *djson = 1;
 }
 
 #ifdef USE_WEBSERVER

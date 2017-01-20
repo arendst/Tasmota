@@ -424,7 +424,7 @@ boolean bmp_detect()
  * Presentation
 \*********************************************************************************************/
 
-void bmp_mqttPresent(char* stopic, uint16_t sstopic, char* svalue, uint16_t ssvalue, uint8_t* djson)
+void bmp_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
 {
   if (!bmptype) return;
 
@@ -436,28 +436,14 @@ void bmp_mqttPresent(char* stopic, uint16_t sstopic, char* svalue, uint16_t ssva
   dtostrf(t_bmp, 1, TEMP_RESOLUTION &3, stemp1);
   dtostrf(p_bmp, 1, PRESSURE_RESOLUTION &3, stemp2);
   dtostrf(h_bmp, 1, HUMIDITY_RESOLUTION &3, stemp3);
-  if (sysCfg.message_format == JSON) {
-    if (!strcmp(bmpstype,"BME280")) {
-      snprintf_P(svalue, ssvalue, PSTR("%s, \"%s\":{\"Temperature\":\"%s\", \"Humidity\":\"%s\", \"Pressure\":\"%s\"}"),
-        svalue, bmpstype, stemp1, stemp3, stemp2);
-    } else {
-      snprintf_P(svalue, ssvalue, PSTR("%s, \"%s\":{\"Temperature\":\"%s\", \"Pressure\":\"%s\"}"),
-        svalue, bmpstype, stemp1, stemp2);
-    }
-    *djson = 1;
+  if (!strcmp(bmpstype,"BME280")) {
+    snprintf_P(svalue, ssvalue, PSTR("%s, \"%s\":{\"Temperature\":\"%s\", \"Humidity\":\"%s\", \"Pressure\":\"%s\"}"),
+      svalue, bmpstype, stemp1, stemp3, stemp2);
   } else {
-    snprintf_P(stopic, sstopic, PSTR("%s/%s/%s/TEMPERATURE"), PUB_PREFIX2, sysCfg.mqtt_topic, bmpstype);
-    snprintf_P(svalue, ssvalue, PSTR("%s%s"), stemp1, (sysCfg.mqtt_units) ? (TEMP_CONVERSION) ? " F" : " C" : "");
-    mqtt_publish(stopic, svalue);
-    if (!strcmp(bmpstype,"BME280")) {
-      snprintf_P(stopic, sstopic, PSTR("%s/%s/%s/HUMIDITY"), PUB_PREFIX2, sysCfg.mqtt_topic, bmpstype);
-      snprintf_P(svalue, ssvalue, PSTR("%s%s"), stemp3, (sysCfg.mqtt_units) ? " %" : "");
-      mqtt_publish(stopic, svalue);
-    }
-    snprintf_P(stopic, sstopic, PSTR("%s/%s/%s/PRESSURE"), PUB_PREFIX2, sysCfg.mqtt_topic, bmpstype);
-    snprintf_P(svalue, ssvalue, PSTR("%s%s"), stemp2, (sysCfg.mqtt_units) ? " hPa" : "");
-    mqtt_publish(stopic, svalue);
+    snprintf_P(svalue, ssvalue, PSTR("%s, \"%s\":{\"Temperature\":\"%s\", \"Pressure\":\"%s\"}"),
+      svalue, bmpstype, stemp1, stemp2);
   }
+  *djson = 1;
 }
 
 #ifdef USE_WEBSERVER

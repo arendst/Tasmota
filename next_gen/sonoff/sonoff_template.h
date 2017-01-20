@@ -13,48 +13,49 @@
 #define GPIO_DSB           4    // Single wire DS18B20 or DS18S20
 #define GPIO_I2C_SCL       5    // I2C SCL
 #define GPIO_I2C_SDA       6    // I2C SDA
-#define GPIO_SWT1          7    // User connected external switches
-#define GPIO_SENSOR_END    8
-#define GPIO_SWT2          8
-#define GPIO_SWT3          9
-#define GPIO_SWT4          10
-#define GPIO_KEY1          11   // Button usually connected to GPIO0
-#define GPIO_KEY2          12
-#define GPIO_KEY3          13
-#define GPIO_KEY4          14
-#define GPIO_REL1          15   // Relays
-#define GPIO_REL2          16
-#define GPIO_REL3          17
-#define GPIO_REL4          18
-#define GPIO_REL1_INV      19
-#define GPIO_REL2_INV      20
-#define GPIO_REL3_INV      21
-#define GPIO_REL4_INV      22
-#define GPIO_LED1          23   // Leds
-#define GPIO_LED2          24
-#define GPIO_LED3          25
-#define GPIO_LED4          26
-#define GPIO_LED1_INV      27
-#define GPIO_LED2_INV      28
-#define GPIO_LED3_INV      29
-#define GPIO_LED4_INV      30
-#define GPIO_PWM0          31   // Cold
-#define GPIO_PWM1          32   // Warm
-#define GPIO_PWM2          33   // Red (swapped with Blue from original)
-#define GPIO_PWM3          34   // Green
-#define GPIO_PWM4          35   // Blue (swapped with Red from original)
-#define GPIO_RXD           36   // Serial interface
-#define GPIO_TXD           37   // Serial interface
-#define GPIO_HLW_SEL       38   // HLW8012 Sel output (Sonoff Pow)
-#define GPIO_HLW_CF1       39   // HLW8012 CF1 voltage / current (Sonoff Pow)
-#define GPIO_HLW_CF        40   // HLW8012 CF power (Sonoff Pow)
-#define GPIO_USER          41   // User configurable
-#define GPIO_MAX           42
+#define GPIO_WS2812        7    // WS2812 Led string
+#define GPIO_SWT1          8    // User connected external switches
+#define GPIO_SENSOR_END    9
+
+#define GPIO_SWT2          9
+#define GPIO_SWT3          10
+#define GPIO_SWT4          11
+#define GPIO_KEY1          12   // Button usually connected to GPIO0
+#define GPIO_KEY2          13
+#define GPIO_KEY3          14
+#define GPIO_KEY4          15
+#define GPIO_REL1          16   // Relays
+#define GPIO_REL2          17
+#define GPIO_REL3          18
+#define GPIO_REL4          19
+#define GPIO_REL1_INV      20
+#define GPIO_REL2_INV      21
+#define GPIO_REL3_INV      22
+#define GPIO_REL4_INV      23
+#define GPIO_LED1          24   // Leds
+#define GPIO_LED2          25
+#define GPIO_LED3          26
+#define GPIO_LED4          27
+#define GPIO_LED1_INV      28
+#define GPIO_LED2_INV      29
+#define GPIO_LED3_INV      30
+#define GPIO_LED4_INV      31
+#define GPIO_PWM0          32   // Cold
+#define GPIO_PWM1          33   // Warm
+#define GPIO_PWM2          34   // Red (swapped with Blue from original)
+#define GPIO_PWM3          35   // Green
+#define GPIO_PWM4          36   // Blue (swapped with Red from original)
+#define GPIO_RXD           37   // Serial interface
+#define GPIO_TXD           38   // Serial interface
+#define GPIO_HLW_SEL       39   // HLW8012 Sel output (Sonoff Pow)
+#define GPIO_HLW_CF1       40   // HLW8012 CF1 voltage / current (Sonoff Pow)
+#define GPIO_HLW_CF        41   // HLW8012 CF power (Sonoff Pow)
+#define GPIO_USER          42   // User configurable
+#define GPIO_MAX           43
 
 /********************************************************************************************/
 
-//enum module_t {SBASIC, SRF, SSV, STH, SDUAL, SPOW, S4CH, S20, SLAMPHER, STOUCH, CH1, CH4, MOTOR, DRAGON, MAXMODULE};
-enum module_t {SONOFF_BASIC, SONOFF_RF, SONOFF_SV, SONOFF_TH, SONOFF_DUAL, SONOFF_POW, SONOFF_4CH, S20, SLAMPHER, SONOFF_TOUCH, SONOFF_LED, CH1, CH4, MOTOR, ELECTRODRAGON, MAXMODULE};
+enum module_t {SONOFF_BASIC, SONOFF_RF, SONOFF_SV, SONOFF_TH, SONOFF_DUAL, SONOFF_POW, SONOFF_4CH, S20, SLAMPHER, SONOFF_TOUCH, SONOFF_LED, CH1, CH4, MOTOR, ELECTRODRAGON, USER_TEST, MAXMODULE};
 
 /********************************************************************************************/
 
@@ -76,14 +77,14 @@ typedef struct MYTMPLT {
   myio         gp;  
 } mytmplt;
 
-
 const char sensors[GPIO_SENSOR_END][8] PROGMEM =
-  { "None", "DHT11", "AM2301", "DHT22", "DS18x20", "I2C SCL", "I2C SDA", "Switch" };
+  { "None", "DHT11", "AM2301", "DHT22", "DS18x20", "I2C SCL", "I2C SDA", "WS2812", "Switch" };
 
 const mytmplt modules[MAXMODULE] PROGMEM = {
-  { "Sonoff Basic",    // Sonoff Basic, S20, Slampher, 1 Channel
+  { "Sonoff Basic",    // Sonoff Basic
      GPIO_KEY1,        // GPIO00 Button
-     0, 0, 0,
+     0, 0,
+     GPIO_USER,        // GPIO03 Serial TXD and Optional sensor
      GPIO_USER,        // GPIO04 Optional sensor
      0, 0, 0, 0, 0, 0, 0,
      GPIO_REL1,        // GPIO12 Red Led and Relay (0 = Off, 1 = On)
@@ -93,7 +94,8 @@ const mytmplt modules[MAXMODULE] PROGMEM = {
   },
   { "Sonoff RF",       // Sonoff RF
      GPIO_KEY1,        // GPIO00 Button
-     0, 0, 0,
+     0, 0,
+     GPIO_USER,        // GPIO03 Serial TXD and Optional sensor
      GPIO_USER,        // GPIO04 Optional sensor
      0, 0, 0, 0, 0, 0, 0,
      GPIO_REL1,        // GPIO12 Red Led and Relay (0 = Off, 1 = On)
@@ -103,7 +105,8 @@ const mytmplt modules[MAXMODULE] PROGMEM = {
   },
   { "Sonoff SV",       // Sonoff SV
      GPIO_KEY1,        // GPIO00 Button
-     0, 0, 0,
+     0, 0,
+     GPIO_USER,        // GPIO03 Serial TXD and Optional sensor
      GPIO_USER,        // GPIO04 Optional sensor
      0, 0, 0, 0, 0, 0, 0,
      GPIO_REL1,        // GPIO12 Red Led and Relay (0 = Off, 1 = On)
@@ -113,7 +116,8 @@ const mytmplt modules[MAXMODULE] PROGMEM = {
   },
   { "Sonoff TH",       // Sonoff TH10/16
      GPIO_KEY1,        // GPIO00 Button
-     0, 0, 0,
+     0, 0,
+     GPIO_USER,        // GPIO03 Serial TXD and Optional sensor
      GPIO_USER,        // GPIO04 Optional sensor
      0, 0, 0, 0, 0, 0, 0,
      GPIO_REL1,        // GPIO12 Red Led and Relay (0 = Off, 1 = On)
@@ -220,7 +224,7 @@ const mytmplt modules[MAXMODULE] PROGMEM = {
      GPIO_KEY2,        // GPIO00 Button 2
      0,
      GPIO_KEY1,        // GPIO02 Button 1
-     0,
+     GPIO_USER,        // GPIO03 Serial TXD and Optional sensor
      GPIO_USER,        // GPIO04 Optional sensor
      0, 0, 0, 0, 0, 0, 0,
      GPIO_REL2,        // GPIO12 Red Led and Relay 2 (0 = Off, 1 = On)
@@ -228,6 +232,17 @@ const mytmplt modules[MAXMODULE] PROGMEM = {
      GPIO_USER,        // GPIO14 Optional sensor
      0,
      GPIO_LED1         // GPIO16 Green/Blue Led (1 = On, 0 = Off)
+  },
+  { "User Test",       // Sonoff Basic User Test
+     GPIO_KEY1,        // GPIO00 Button
+     0, 0,
+     GPIO_USER,        // GPIO03 Serial TXD and Optional sensor
+     GPIO_USER,        // GPIO04 Optional sensor
+     0, 0, 0, 0, 0, 0, 0,
+     GPIO_REL1,        // GPIO12 Red Led and Relay (0 = Off, 1 = On)
+     GPIO_LED1_INV,    // GPIO13 Green Led (0 = On, 1 = Off)
+     GPIO_USER,        // GPIO14 Optional sensor
+     0, 0
   }
 };
 

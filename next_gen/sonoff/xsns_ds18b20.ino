@@ -172,21 +172,15 @@ boolean dsb_readTemp(bool S, float &t)
  * Presentation
 \*********************************************************************************************/
 
-void dsb_mqttPresent(char* stopic, uint16_t sstopic, char* svalue, uint16_t ssvalue, uint8_t* djson)
+void dsb_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
 {
   char stemp1[10];
   float t;
 
   if (dsb_readTemp(TEMP_CONVERSION, t)) {                 // Check if read failed
     dtostrf(t, 1, TEMP_RESOLUTION &3, stemp1);
-    if (sysCfg.message_format == JSON) {
-      snprintf_P(svalue, ssvalue, PSTR("%s, \"DS18B20\":{\"Temperature\":\"%s\"}"), svalue, stemp1);
-      *djson = 1;
-    } else {
-      snprintf_P(stopic, sstopic, PSTR("%s/%s/DS18B20/TEMPERATURE"), PUB_PREFIX2, sysCfg.mqtt_topic);
-      snprintf_P(svalue, ssvalue, PSTR("%s%s"), stemp1, (sysCfg.mqtt_units) ? (TEMP_CONVERSION) ? " F" : " C" : "");
-      mqtt_publish(stopic, svalue);
-    }
+    snprintf_P(svalue, ssvalue, PSTR("%s, \"DS18B20\":{\"Temperature\":\"%s\"}"), svalue, stemp1);
+    *djson = 1;
   }
 }
 

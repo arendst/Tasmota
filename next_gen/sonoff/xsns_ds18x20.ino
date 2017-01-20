@@ -155,7 +155,7 @@ boolean ds18x20_read(uint8_t sensor, bool S, float &t)
  * Presentation
 \*********************************************************************************************/
 
-void ds18x20_mqttPresent(char* stopic, uint16_t sstopic, char* svalue, uint16_t ssvalue, uint8_t* djson)
+void ds18x20_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
 {
   char stemp1[10], stemp2[10];
   float t;
@@ -164,24 +164,15 @@ void ds18x20_mqttPresent(char* stopic, uint16_t sstopic, char* svalue, uint16_t 
   for (byte i = 0; i < ds18x20_sensors(); i++) {
     if (ds18x20_read(i, TEMP_CONVERSION, t)) {           // Check if read failed
       dtostrf(t, 1, TEMP_RESOLUTION &3, stemp2);
-      if (sysCfg.message_format == JSON) {
-        if (!dsxflg) {
-          snprintf_P(svalue, ssvalue, PSTR("%s, \"DS18x20\":{"), svalue);
-          *djson = 1;
-          stemp1[0] = '\0';
-          dsxflg = 1;
-        }
-        snprintf_P(svalue, ssvalue, PSTR("%s%s\"DS%d\":{\"Type\":\"%s\", \"Address\":\"%s\", \"Temperature\":\"%s\"}"),
-          svalue, stemp1, i +1, ds18x20_type(i).c_str(), ds18x20_address(i).c_str(), stemp2);
-        strcpy(stemp1, ", ");
-      } else {
-        snprintf_P(stopic, sstopic, PSTR("%s/%s/%s/%d/ADDRESS"), PUB_PREFIX2, sysCfg.mqtt_topic, ds18x20_type(i).c_str(), i +1);
-        snprintf_P(svalue, ssvalue, PSTR("%s"), ds18x20_address(i).c_str());
-        mqtt_publish(stopic, svalue);
-        snprintf_P(stopic, sstopic, PSTR("%s/%s/%s/%d/TEMPERATURE"), PUB_PREFIX2, sysCfg.mqtt_topic, ds18x20_type(i).c_str(), i +1);
-        snprintf_P(svalue, ssvalue, PSTR("%s%s"), stemp2, (sysCfg.mqtt_units) ? (TEMP_CONVERSION) ? " F" : " C" : "");
-        mqtt_publish(stopic, svalue);
+      if (!dsxflg) {
+        snprintf_P(svalue, ssvalue, PSTR("%s, \"DS18x20\":{"), svalue);
+        *djson = 1;
+        stemp1[0] = '\0';
+        dsxflg = 1;
       }
+      snprintf_P(svalue, ssvalue, PSTR("%s%s\"DS%d\":{\"Type\":\"%s\", \"Address\":\"%s\", \"Temperature\":\"%s\"}"),
+        svalue, stemp1, i +1, ds18x20_type(i).c_str(), ds18x20_address(i).c_str(), stemp2);
+      strcpy(stemp1, ", ");
     }
   }
   if (dsxflg) snprintf_P(svalue, ssvalue, PSTR("%s}"), svalue);
