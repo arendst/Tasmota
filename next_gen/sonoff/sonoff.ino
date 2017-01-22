@@ -10,14 +10,13 @@
  * ====================================================
 */
 
-#define VERSION                0x03020601   // 3.2.6a
+#define VERSION                0x03020602   // 3.2.6b
 
 enum log_t   {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG_MORE, LOG_LEVEL_ALL};
 enum week_t  {Last, First, Second, Third, Fourth};
 enum dow_t   {Sun=1, Mon, Tue, Wed, Thu, Fri, Sat};
 enum month_t {Jan=1, Feb, Mar, Apr, May, Jun, Jul, Aug, Sep, Oct, Nov, Dec};
 enum wifi_t  {WIFI_RESTART, WIFI_SMARTCONFIG, WIFI_MANAGER, WIFI_WPSCONFIG, WIFI_RETRY, MAX_WIFI_OPTION};
-enum msgf_t  {LEGACY, JSON, MAX_FORMAT};
 enum swtch_t {TOGGLE, FOLLOW, FOLLOW_INV, PUSHBUTTON, PUSHBUTTON_INV, MAX_SWITCH_OPTION};
 enum led_t   {LED_OFF, LED_POWER, LED_MQTTSUB, LED_POWER_MQTTSUB, LED_MQTTPUB, LED_POWER_MQTTPUB, LED_MQTT, LED_POWER_MQTT, MAX_LED_OPTION};
 
@@ -1943,13 +1942,13 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
   }
   if (type == NULL) {
     blinks = 201;
-    snprintf_P(svalue, sizeof(svalue), PSTR("{\"Commands1\":\"Status, SaveData, SaveSate, Upgrade, Otaurl, Restart, Reset, WifiConfig, Seriallog, Syslog, LogHost, LogPort, SSId1, SSId2, Password1, Password2, AP%s\"}"), (!grpflg) ? ", Hostname" : "");
+    snprintf_P(svalue, sizeof(svalue), PSTR("{\"Commands1\":\"Status, SaveData, SaveSate, Upgrade, Otaurl, Restart, Reset, WifiConfig, Seriallog, Syslog, LogHost, LogPort, SSId1, SSId2, Password1, Password2, AP%s\"}"), (!grpflg) ? ", Hostname, Module, Modules, GPIO, GPIOs" : "");
     mqtt_publish(stopic, svalue);
 
     if (sysCfg.mqtt_enabled) {
-      snprintf_P(svalue, sizeof(svalue), PSTR("{\"Commands2\":\"Mqtt, MqttHost, MqttPort, MqttUser, MqttPassword%s, MqttUnits, MessageFormat, GroupTopic, Timezone, LedState, TelePeriod\"}"), (!grpflg) ? ", MqttClient, Topic, ButtonTopic, ButtonRetain, PowerRetain" : "");
+      snprintf_P(svalue, sizeof(svalue), PSTR("{\"Commands2\":\"Mqtt, MqttHost, MqttPort, MqttUser, MqttPassword%s, GroupTopic, Units, Timezone, LedState, LedPower, TelePeriod\"}"), (!grpflg) ? ", MqttClient, Topic, ButtonTopic, ButtonRetain, SwitchTopic, SwitchRetain, PowerRetain" : "");
     } else {
-      snprintf_P(svalue, sizeof(svalue), PSTR("{\"Commands2\":\"Mqtt, Units, MessageFormat, Timezone, LedState, TelePeriod\"}"), (!grpflg) ? ", MqttClient" : "");
+      snprintf_P(svalue, sizeof(svalue), PSTR("{\"Commands2\":\"Mqtt, Units, Timezone, LedState, LedPower, TelePeriod\"}"), (!grpflg) ? ", MqttClient" : "");
     }
     mqtt_publish(stopic, svalue);
 
@@ -2118,7 +2117,7 @@ void publish_status(uint8_t payload)
 
   if ((payload == 0) || (payload == 99)) {
     snprintf_P(svalue, sizeof(svalue), PSTR("{\"Status\":{\"Module\":%d, \"FriendlyName\":\"%s\", \"Topic\":\"%s\", \"ButtonTopic\":\"%s\", \"Subtopic\":\"%s\", \"Power\":%d, \"PowerOnState\":%d, \"LedState\":%d, \"SaveData\":%d, \"SaveState\":%d, \"ButtonRetain\":%d, \"PowerRetain\":%d}}"),
-      sysCfg.module, sysCfg.friendlyname[0], sysCfg.mqtt_topic, sysCfg.button_topic, sysCfg.mqtt_subtopic, power, sysCfg.poweronstate, sysCfg.ledstate, sysCfg.savedata, sysCfg.savestate, sysCfg.mqtt_button_retain, sysCfg.mqtt_power_retain);
+      sysCfg.module +1, sysCfg.friendlyname[0], sysCfg.mqtt_topic, sysCfg.button_topic, sysCfg.mqtt_subtopic, power, sysCfg.poweronstate, sysCfg.ledstate, sysCfg.savedata, sysCfg.savestate, sysCfg.mqtt_button_retain, sysCfg.mqtt_power_retain);
     if (payload == 0) mqtt_publish(stopic, svalue);
   }
 
@@ -2795,19 +2794,24 @@ void setup()
   getClient(MQTTClient, sysCfg.mqtt_client, sizeof(MQTTClient));
 
   if (sysCfg.module == MOTOR) sysCfg.poweronstate = 1;  // Needs always on else in limbo!
-  if (sysCfg.poweronstate == 0) {       // All off
-    power = 0;
-    setRelay(power);
-  }
-  else if (sysCfg.poweronstate == 1) {  // All on
-    power = ((0x00FF << Maxdevice) >> 8);
-    setRelay(power);
-  }
-  else if (sysCfg.poweronstate == 2) {  // All saved state toggle
-    power = (sysCfg.power & ((0x00FF << Maxdevice) >> 8)) ^ 0xFF;
-    if (sysCfg.savestate) setRelay(power);
-  }
-  else {                                // All saved state
+  if (ESP.getResetReason() == "Power on") {
+    if (sysCfg.poweronstate == 0) {       // All off
+      power = 0;
+      setRelay(power);
+    }
+    else if (sysCfg.poweronstate == 1) {  // All on
+      power = ((0x00FF << Maxdevice) >> 8);
+      setRelay(power);
+    }
+    else if (sysCfg.poweronstate == 2) {  // All saved state toggle
+      power = (sysCfg.power & ((0x00FF << Maxdevice) >> 8)) ^ 0xFF;
+      if (sysCfg.savestate) setRelay(power);
+    }
+    else if (sysCfg.poweronstate == 3) {  // All saved state
+      power = sysCfg.power & ((0x00FF << Maxdevice) >> 8);
+      if (sysCfg.savestate) setRelay(power);
+    }
+  } else {
     power = sysCfg.power & ((0x00FF << Maxdevice) >> 8);
     if (sysCfg.savestate) setRelay(power);
   }

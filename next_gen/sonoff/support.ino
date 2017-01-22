@@ -295,6 +295,26 @@ void initSpiffs()
 }
 #endif  // USE_SPIFFS
 
+/*
+void setFlashChipMode(byte mode)
+{
+  char log[LOGSZ];
+  uint32_t data;
+  
+  uint8_t * bytes = (uint8_t *) &data;
+  // read first 4 byte (magic byte + flash config)
+  if (spi_flash_read(0x0000, &data, 4) == SPI_FLASH_RESULT_OK) {
+
+    snprintf_P(log, sizeof(log), PSTR("FLSH: Magic byte and flash config %08X"), data);
+    addLog(LOG_LEVEL_DEBUG, log);
+    
+    if (bytes[2] != mode) {
+      bytes[2] = mode &3;
+//      spi_flash_write(0x0000, &data, 4);
+    }
+  }
+}
+*/
 /*********************************************************************************************\
  * Wifi
 \*********************************************************************************************/

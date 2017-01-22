@@ -141,6 +141,7 @@
 
 #define USE_WS2812                               // WS2812 Led string support (+8k code, +1k mem)
 //  #define USE_WS2812_DMA                         // Using DMA only GPIO03 (= Serial TXD) is supported (+1k mem)
+                                                 //   When USE_WS2812_DMA is enabled expect Exceptions on Pow
 
 /*********************************************************************************************\
  * No user configurable items below
@@ -148,5 +149,9 @@
 
 #if defined(USE_WEMO_EMULATION) && defined(USE_HUE_EMULATION)
   #error "Select either USE_WEMO_EMULATION or USE_HUE_EMULATION"
+#endif
+
+#if (ARDUINO < 10610)
+  #error "This software is supported with Arduino IDE starting from 1.6.10 and ESP8266 Release 2.3.0"
 #endif
 

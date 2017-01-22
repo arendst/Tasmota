@@ -43,8 +43,10 @@ unsigned long hlw_cf1u_pcntmax, hlw_cf1i_pcntmax;
 
 Ticker tickerHLW;
 
-//void hlw_cf_interrupt() ICACHE_RAM_ATTR;
-//void hlw_cf1_interrupt() ICACHE_RAM_ATTR;
+#ifndef USE_WS2812_DMA  // Collides with Neopixelbus but solves exception
+void hlw_cf_interrupt() ICACHE_RAM_ATTR;
+void hlw_cf1_interrupt() ICACHE_RAM_ATTR;
+#endif  // USE_WS2812_DMA
 
 void hlw_cf_interrupt()  // Service Power
 {

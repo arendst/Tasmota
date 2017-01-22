@@ -1,4 +1,10 @@
-/* 3.2.6a 20170120
+/* 3.2.6b 20170122
+ * Fix status module number
+ * Change PowerOnState function to only trigger when Power On (and not just restart) (#238)
+ * Fix possible ESP8285 flash problem by updating Flash Chip Mode to DOUT during web upload
+ * Move HLW interrupts back to RAM and make WS2812_DMA optional as it generates Exception on Pow (#264)
+ *
+ * 3.2.6a 20170120
  * Fix Sonoff Pow compile error (#255)
  * Move HLW interrupts back to ROM (Needed for WS2812 DMA interrupts)
  * Removed all IO config from user_config.h as this will be done by commands or webpage
