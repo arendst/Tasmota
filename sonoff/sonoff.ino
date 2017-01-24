@@ -10,7 +10,7 @@
  * ====================================================
 */
 
-#define VERSION                0x03020800   // 3.2.8
+#define VERSION                0x03020900   // 3.2.9
 
 #define SONOFF                 1            // Sonoff, Sonoff RF, Sonoff SV, Sonoff Dual, Sonoff TH, S20 Smart Socket, 4 Channel
 #define SONOFF_POW             9            // Sonoff Pow
@@ -2452,9 +2452,12 @@ void stateloop()
   if (Maxdevice > 1) {
     button = digitalRead(KEY2_PIN);
     if ((button == PRESSED) && (lastbutton2 == NOT_PRESSED)) {
+#ifdef USE_MQTT
       if (mqttClient.connected() && strcmp(sysCfg.button_topic, "0")) {
         send_button_power(0, 2, 2);   // Execute commend via MQTT
-      } else {
+      } else
+#endif  // USE_MQTT
+      {
         do_cmnd_power(2, 2);       // Execute command internally
       }
     }
@@ -2466,9 +2469,12 @@ void stateloop()
   if (Maxdevice > 2) {
     button = digitalRead(KEY3_PIN);
      if ((button == PRESSED) && (lastbutton3 == NOT_PRESSED)) {
+#ifdef USE_MQTT
       if (mqttClient.connected() && strcmp(sysCfg.button_topic, "0")) {
         send_button_power(0, 3, 2);   // Execute commend via MQTT
-      } else {
+      } else
+#endif  // USE_MQTT
+      {
         do_cmnd_power(3, 2);       // Execute command internally
       }
     }
@@ -2480,9 +2486,12 @@ void stateloop()
   if (Maxdevice > 3) {
     button = digitalRead(KEY4_PIN);
     if ((button == PRESSED) && (lastbutton4 == NOT_PRESSED)) {
+#ifdef USE_MQTT
       if (mqttClient.connected() && strcmp(sysCfg.button_topic, "0")) {
         send_button_power(0, 4, 2);   // Execute commend via MQTT
-      } else {
+      } else
+#endif  // USE_MQTT
+      {
         do_cmnd_power(4, 2);       // Execute command internally
       }
     }
@@ -2511,9 +2520,12 @@ void stateloop()
       if ((button == NOT_PRESSED) && (lastwallswitch == PRESSED)) switchflag = 2;  // Toggle with releasing pushbutton from Gnd
     }
     if (switchflag < 3) {
+#ifdef USE_MQTT
       if (mqttClient.connected() && strcmp(sysCfg.switch_topic,"0")) {
         send_button_power(1, 1, switchflag);   // Execute commend via MQTT
-      } else {
+      } else
+#endif  // USE_MQTT
+      {
         do_cmnd_power(1, switchflag);       // Execute command internally
       }
     }

@@ -1,4 +1,7 @@
-/* 3.2.8 20170124
+/* 3.2.9 20170124
+ * Fix compile error when MQTT is disabled (#269)
+ *
+ * 3.2.8 20170124
  * Change PowerOnState function to only trigger when Power On (and not on restart) (#238)
  * Add command LedPower On|Off to control main led (#247)
  * Add charset=utf-8 to webpages (#266)
