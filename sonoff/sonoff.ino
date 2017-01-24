@@ -10,7 +10,7 @@
  * ====================================================
 */
 
-#define VERSION                0x03020700   // 3.2.7
+#define VERSION                0x03020800   // 3.2.8
 
 #define SONOFF                 1            // Sonoff, Sonoff RF, Sonoff SV, Sonoff Dual, Sonoff TH, S20 Smart Socket, 4 Channel
 #define SONOFF_POW             9            // Sonoff Pow
@@ -55,6 +55,23 @@ enum led_t   {LED_OFF, LED_POWER, LED_MQTTSUB, LED_POWER_MQTTSUB, LED_MQTTPUB, L
 #define SAFE_POWER_HOLD        10           // Time in SECONDS to allow max unit safe power
 #define SAFE_POWER_WINDOW      30           // Time in MINUTES to disable allow max unit safe power
 #define MAX_POWER_RETRY        5            // Retry count allowing agreed power limit overflow
+
+/*********************************************************************************************\
+ * Prep for 4.0
+\*********************************************************************************************/
+
+#define MQTT_USE               1            // [Mqtt] Select default MQTT use (0 = Off, 1 = On)
+
+#ifndef WS2812_PIN
+#define WS2812_PIN             99
+#endif
+
+#if WS2812_PIN == 3
+#define USE_WS2812_DMA
+#endif
+
+#define GPIO_WS2812            0            // WS2812 Led string
+uint8_t pin[1] = { WS2812_PIN };
 
 /*********************************************************************************************\
  * No user configurable items below
@@ -252,7 +269,7 @@ struct SYSCFG {
   char          mqtt_user[33];
   char          mqtt_pwd[33];
   char          mqtt_topic[33];
-  char          mqtt_topic2[33];
+  char          button_topic[33];
   char          mqtt_grptopic[33];
   char          mqtt_subtopic[33];
   byte          mqtt_button_retain;
@@ -310,6 +327,9 @@ struct SYSCFG {
   uint16_t      ws_wakeup;
 
   char          friendlyname[4][33];
+  char          switch_topic[33];
+  byte          mqtt_switch_retain;
+  uint8_t       mqtt_enabled;
 } sysCfg;
 
 struct TIME_T {
@@ -455,6 +475,7 @@ void CFG_DefaultSet()
   sysCfg.webserver = WEB_SERVER;
   sysCfg.weblog_level = WEB_LOG_LEVEL;
 
+  sysCfg.mqtt_enabled = MQTT_USE;
   strlcpy(sysCfg.mqtt_fingerprint, MQTT_FINGERPRINT, sizeof(sysCfg.mqtt_fingerprint));
   strlcpy(sysCfg.mqtt_host, MQTT_HOST, sizeof(sysCfg.mqtt_host));
   sysCfg.mqtt_port = MQTT_PORT;
@@ -462,10 +483,12 @@ void CFG_DefaultSet()
   strlcpy(sysCfg.mqtt_user, MQTT_USER, sizeof(sysCfg.mqtt_user));
   strlcpy(sysCfg.mqtt_pwd, MQTT_PASS, sizeof(sysCfg.mqtt_pwd));
   strlcpy(sysCfg.mqtt_topic, MQTT_TOPIC, sizeof(sysCfg.mqtt_topic));
-  strlcpy(sysCfg.mqtt_topic2, "0", sizeof(sysCfg.mqtt_topic2));
+  strlcpy(sysCfg.button_topic, "0", sizeof(sysCfg.button_topic));
+  strlcpy(sysCfg.switch_topic, "0", sizeof(sysCfg.switch_topic));
   strlcpy(sysCfg.mqtt_grptopic, MQTT_GRPTOPIC, sizeof(sysCfg.mqtt_grptopic));
   strlcpy(sysCfg.mqtt_subtopic, MQTT_SUBTOPIC, sizeof(sysCfg.mqtt_subtopic));
   sysCfg.mqtt_button_retain = MQTT_BUTTON_RETAIN;
+  sysCfg.mqtt_switch_retain = MQTT_SWITCH_RETAIN;
   sysCfg.mqtt_power_retain = MQTT_POWER_RETAIN;
   sysCfg.mqtt_units = MQTT_UNITS;
   sysCfg.message_format = MESSAGE_FORMAT;
@@ -551,7 +574,7 @@ void CFG_Migrate_Part2()
   strlcpy(sysCfg.mqtt_host, sysCfg2.mqtt_host, sizeof(sysCfg.mqtt_host));
   strlcpy(sysCfg.mqtt_grptopic, sysCfg2.mqtt_grptopic, sizeof(sysCfg.mqtt_grptopic));
   strlcpy(sysCfg.mqtt_topic, sysCfg2.mqtt_topic, sizeof(sysCfg.mqtt_topic));
-  strlcpy(sysCfg.mqtt_topic2, sysCfg2.mqtt_topic2, sizeof(sysCfg.mqtt_topic2));
+  strlcpy(sysCfg.button_topic, sysCfg2.mqtt_topic2, sizeof(sysCfg.button_topic));
   strlcpy(sysCfg.mqtt_subtopic, sysCfg2.mqtt_subtopic, sizeof(sysCfg.mqtt_subtopic));
   sysCfg.timezone = sysCfg2.timezone;
   sysCfg.power = sysCfg2.power;
@@ -686,6 +709,11 @@ void CFG_Delta()
       strlcpy(sysCfg.friendlyname[2], FRIENDLY_NAME3, sizeof(sysCfg.friendlyname[2]));
       strlcpy(sysCfg.friendlyname[3], FRIENDLY_NAME4, sizeof(sysCfg.friendlyname[3]));
     }
+    if (sysCfg.version < 0x03020800) {  // 3.2.8 - Add parameter
+      strlcpy(sysCfg.switch_topic, sysCfg.button_topic, sizeof(sysCfg.switch_topic));
+      sysCfg.mqtt_switch_retain = MQTT_SWITCH_RETAIN;
+      sysCfg.mqtt_enabled = MQTT_USE;
+    }
 
     sysCfg.version = VERSION;
   }
@@ -813,8 +841,11 @@ unsigned long getKeyIntValue(const char *json, const char *key)
       return 0;
     }
   }
+  b++;
+  // Allow integers as string too (used in "svalue" : "9")
+  while ((b[0] == ' ') || (b[0] == '"')) b++;
   // Convert to integer
-  return atoi(b +1);
+  return atoi(b);
 }
 #endif  // USE_DOMOTICZ
 #endif  // USE_MQTT
@@ -891,6 +922,12 @@ void mqtt_publishDomoticzPowerState(byte device)
 
   if (sysCfg.domoticz_relay_idx[device -1] && (strlen(sysCfg.domoticz_in_topic) != 0)) {
     if ((device < 1) || (device > Maxdevice)) device = 1;
+
+    if ((device == 1) && (pin[GPIO_WS2812] < 99)) {
+      snprintf_P(svalue, sizeof(svalue), PSTR("{\"idx\":%d, \"nvalue\":2, \"svalue\":\"%d\"}"),
+        sysCfg.domoticz_relay_idx[device -1], sysCfg.ws_dimmer);
+      mqtt_publish(sysCfg.domoticz_in_topic, svalue);
+    }
     snprintf_P(svalue, sizeof(svalue), PSTR("{\"idx\":%d, \"nvalue\":%d, \"svalue\":\"\"}"),
       sysCfg.domoticz_relay_idx[device -1], (power & (0x01 << (device -1))) ? 1 : 0);
     mqtt_publish(sysCfg.domoticz_in_topic, svalue);
@@ -1070,20 +1107,29 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
     addLog(LOG_LEVEL_DEBUG_MORE, svalue);
 
     data_len = 0;
-    if (nvalue == 0 || nvalue == 1) {
+    if (nvalue >= 0 && nvalue <= 2) {
       for (i = 0; i < Maxdevice; i++) {
         if ((idx > 0) && (idx == sysCfg.domoticz_relay_idx[i])) {
-          snprintf_P(dataBuf, sizeof(dataBuf), PSTR("%d"), nvalue);
+          snprintf_P(stemp1, sizeof(stemp1), PSTR("%d"), i +1);
+          if (nvalue == 2) {
+            nvalue = getKeyIntValue(dataBuf,"\"svalue1\"");
+            if ((pin[GPIO_WS2812] < 99) && (sysCfg.ws_dimmer == nvalue)) return;
+//            if ((sysCfg.module == SONOFF_LED) && (sysCfg.led_dimmer[i] == nvalue)) return;
+            snprintf_P(topicBuf, sizeof(topicBuf), PSTR("%s/%s/DIMMER%s"),
+              SUB_PREFIX, sysCfg.mqtt_topic, (Maxdevice > 1) ? stemp1 : "");
+            snprintf_P(dataBuf, sizeof(dataBuf), PSTR("%d"), nvalue);
+          } else {
+            if (((power >> i) &1) == nvalue) return;
+            snprintf_P(topicBuf, sizeof(topicBuf), PSTR("%s/%s/%s%s"),
+              SUB_PREFIX, sysCfg.mqtt_topic, sysCfg.mqtt_subtopic, (Maxdevice > 1) ? stemp1 : "");
+            snprintf_P(dataBuf, sizeof(dataBuf), PSTR("%d"), nvalue);
+          }
           data_len = strlen(dataBuf);
           break;
         }
       }
     }
     if (!data_len) return;
-    if (((power >> i) &1) == nvalue) return;
-    snprintf_P(stemp1, sizeof(stemp1), PSTR("%d"), i +1);
-    snprintf_P(topicBuf, sizeof(topicBuf), PSTR("%s/%s/%s%s"),
-      SUB_PREFIX, sysCfg.mqtt_topic, sysCfg.mqtt_subtopic, (Maxdevice > 1) ? stemp1 : "");
 
     snprintf_P(svalue, sizeof(svalue), PSTR("DMTZ: Receive topic %s, data size %d, data %s"), topicBuf, data_len, dataBuf);
     addLog(LOG_LEVEL_DEBUG_MORE, svalue);
@@ -1484,25 +1530,46 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
       snprintf_P(svalue, sizeof(svalue), PSTR("{\"Topic\":\"%s\"}"), sysCfg.mqtt_topic);
     }
     else if (!grpflg && !strcmp(type,"BUTTONTOPIC")) {
-      if ((data_len > 0) && (data_len < sizeof(sysCfg.mqtt_topic2))) {
+      if ((data_len > 0) && (data_len < sizeof(sysCfg.button_topic))) {
         for(i = 0; i <= data_len; i++)
           if ((dataBuf[i] == '/') || (dataBuf[i] == '+') || (dataBuf[i] == '#')) dataBuf[i] = '_';
         if (!strcmp(dataBuf, MQTTClient)) payload = 1;
-        strlcpy(sysCfg.mqtt_topic2, (payload == 1) ? sysCfg.mqtt_topic : dataBuf, sizeof(sysCfg.mqtt_topic2));
+        strlcpy(sysCfg.button_topic, (payload == 1) ? sysCfg.mqtt_topic : dataBuf, sizeof(sysCfg.button_topic));
       }
-      snprintf_P(svalue, sizeof(svalue), PSTR("{\"ButtonTopic\":\"%s\"}"), sysCfg.mqtt_topic2);
+      snprintf_P(svalue, sizeof(svalue), PSTR("{\"ButtonTopic\":\"%s\"}"), sysCfg.button_topic);
+    }
+    else if (!grpflg && !strcmp(type,"SWITCHTOPIC")) {
+      if ((data_len > 0) && (data_len < sizeof(sysCfg.switch_topic))) {
+        for(i = 0; i <= data_len; i++)
+          if ((dataBuf[i] == '/') || (dataBuf[i] == '+') || (dataBuf[i] == '#')) dataBuf[i] = '_';
+        if (!strcmp(dataBuf, MQTTClient)) payload = 1;
+        strlcpy(sysCfg.switch_topic, (payload == 1) ? sysCfg.mqtt_topic : dataBuf, sizeof(sysCfg.switch_topic));
+      }
+      snprintf_P(svalue, sizeof(svalue), PSTR("{\"SwitchTopic\":\"%s\"}"), sysCfg.switch_topic);
     }
     else if (!strcmp(type,"BUTTONRETAIN")) {
       if ((data_len > 0) && (payload >= 0) && (payload <= 1)) {
-        strlcpy(sysCfg.mqtt_topic2, sysCfg.mqtt_topic, sizeof(sysCfg.mqtt_topic2));
+        strlcpy(sysCfg.button_topic, sysCfg.mqtt_topic, sizeof(sysCfg.button_topic));
         if (!payload) {
           for(i = 1; i <= Maxdevice; i++) {
-            send_button_power(i, 3);  // Clear MQTT retain in broker
+            send_button_power(0, i, 3);  // Clear MQTT retain in broker
           }
         }
         sysCfg.mqtt_button_retain = payload;
       }
       snprintf_P(svalue, sizeof(svalue), PSTR("{\"ButtonRetain\":\"%s\"}"), (sysCfg.mqtt_button_retain) ? MQTT_STATUS_ON : MQTT_STATUS_OFF);
+    }
+    else if (!strcmp(type,"SWITCHRETAIN")) {
+      if ((data_len > 0) && (payload >= 0) && (payload <= 1)) {
+//        strlcpy(sysCfg.button_topic, sysCfg.mqtt_topic, sizeof(sysCfg.button_topic));
+        if (!payload) {
+          for(i = 1; i <= Maxdevice; i++) {
+            send_button_power(1, i, 3);  // Clear MQTT retain in broker
+          }
+        }
+        sysCfg.mqtt_switch_retain = payload;
+      }
+      snprintf_P(svalue, sizeof(svalue), PSTR("{\"SwitchRetain\":\"%s\"}"), (sysCfg.mqtt_switch_retain) ? MQTT_STATUS_ON : MQTT_STATUS_OFF);
     }
     else if (!strcmp(type,"POWERRETAIN") || !strcmp(type,"LIGHTRETAIN")) {
       if ((data_len > 0) && (payload >= 0) && (payload <= 1)) {
@@ -1554,6 +1621,24 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
         sysCfg.timezone = payload;
       }
       snprintf_P(svalue, sizeof(svalue), PSTR("{\"Timezone\":\"%d%s\"}"), sysCfg.timezone, (sysCfg.mqtt_units) ? " Hr" : "");
+    }
+    else if (!strcmp(type,"LEDPOWER")) {
+      if ((data_len > 0) && (payload >= 0) && (payload <= 2)) {
+        sysCfg.ledstate &= 8;
+        switch (payload) {
+        case 0: // Off
+        case 1: // On
+          sysCfg.ledstate = payload << 3;
+          break;
+        case 2: // Toggle
+          sysCfg.ledstate ^= 8;
+          break;
+        }
+        uint8_t led = (sysCfg.ledstate >> 3) &1;
+//        digitalWrite(pin[GPIO_LED1], (led_inverted[0]) ? !led : led);
+        digitalWrite(LED_PIN, (LED_INVERTED) ? !led : led);
+      }
+      snprintf_P(svalue, sizeof(svalue), PSTR("{\"LedPower\":\"%s\"}"), (sysCfg.ledstate &8) ? MQTT_STATUS_ON : MQTT_STATUS_OFF);
     }
     else if (!strcmp(type,"LEDSTATE")) {
       if ((data_len > 0) && (payload >= 0) && (payload < MAX_LED_OPTION)) {
@@ -1681,29 +1766,39 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
 #endif  // FEATURE_POWER_LIMIT
 #endif  // USE_POWERMONITOR
 
+/*** WS2812 Commands *************************************************************************/
+
 #ifdef USE_WS2812
-    else if (!strcmp(type,"PIXELS")) {
+    else if ((pin[GPIO_WS2812] < 99) && !strcmp(type,"PIXELS")) {
       if ((data_len > 0) && (payload > 0) && (payload <= WS2812_MAX_LEDS)) {
         sysCfg.ws_pixels = payload;
         ws2812_pixels();
       }
       snprintf_P(svalue, sizeof(svalue), PSTR("{\"Pixels\":%d}"), sysCfg.ws_pixels);
     }
-
-    else if (!strcmp(type,"COLOR")) {
+    else if ((pin[GPIO_WS2812] < 99) && !strcmp(type,"LED") && (index > 0) && (index <= sysCfg.ws_pixels)) {
       if (data_len == 6) {
-        ws2812_setColor(dataBufUc);
+        ws2812_setColor(index, dataBufUc);
       }
-      ws2812_getColor(svalue, sizeof(svalue));
+      ws2812_getColor(index, svalue, sizeof(svalue));
     }
-    else if (!strcmp(type,"DIMMER")) {
+    else if ((pin[GPIO_WS2812] < 99) && !strcmp(type,"COLOR")) {
+      if (data_len == 6) {
+        ws2812_setColor(0, dataBufUc);
+      }
+      ws2812_getColor(0, svalue, sizeof(svalue));
+    }
+    else if ((pin[GPIO_WS2812] < 99) && !strcmp(type,"DIMMER")) {
       if ((data_len > 0) && (payload >= 0) && (payload <= 100)) {
         sysCfg.ws_dimmer = payload;
         power = 1;
+#ifdef USE_DOMOTICZ
+        mqtt_publishDomoticzPowerState(index);
+#endif  // USE_DOMOTICZ
       }
       snprintf_P(svalue, sizeof(svalue), PSTR("{\"Dimmer\":%d}"), sysCfg.ws_dimmer);
     }
-    else if (!strcmp(type,"LEDTABLE")) {
+    else if ((pin[GPIO_WS2812] < 99) && !strcmp(type,"LEDTABLE")) {
       if ((data_len > 0) && (payload >= 0) && (payload <= 2)) {
         switch (payload) {
         case 0: // Off
@@ -1718,7 +1813,7 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
       }
       snprintf_P(svalue, sizeof(svalue), PSTR("{\"LedTable\":\"%s\"}"), (sysCfg.ws_ledtable) ? MQTT_STATUS_ON : MQTT_STATUS_OFF);
     }
-    else if (!strcmp(type,"FADE")) {
+    else if ((pin[GPIO_WS2812] < 99) && !strcmp(type,"FADE")) {
       if ((data_len > 0) && (payload >= 0) && (payload <= 2)) {
         switch (payload) {
         case 0: // Off
@@ -1732,13 +1827,13 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
       }
       snprintf_P(svalue, sizeof(svalue), PSTR("{\"Fade\":\"%s\"}"), (sysCfg.ws_fade) ? MQTT_STATUS_ON : MQTT_STATUS_OFF);
     }
-    else if (!strcmp(type,"SPEED")) {  // 0 - none, 1 - slow, 4 - fast
-      if ((data_len > 0) && (payload >= 0) && (payload <= 4)) {
+    else if ((pin[GPIO_WS2812] < 99) && !strcmp(type,"SPEED")) {  // 1 - fast, 5 - slow
+      if ((data_len > 0) && (payload > 0) && (payload <= 5)) {
         sysCfg.ws_speed = payload;
       }
       snprintf_P(svalue, sizeof(svalue), PSTR("{\"Speed\":%d}"), sysCfg.ws_speed);
     }
-    else if (!strcmp(type,"SCHEME")) {
+    else if ((pin[GPIO_WS2812] < 99) && !strcmp(type,"SCHEME")) {
       if ((data_len > 0) && (payload >= 0) && (payload <= 1)) {
         sysCfg.ws_scheme = payload;
 /*
@@ -1752,12 +1847,10 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
       }
       snprintf_P(svalue, sizeof(svalue), PSTR("{\"Scheme\":%d}"), sysCfg.ws_scheme);
     }
-    
-    else if (!strcmp(type,"LED")) {
-      do_cmnd_led(index, data);
-      return;
-    }
 #endif  // USE_WS2812
+
+/*********************************************************************************************/
+
     else {
       type = NULL;
     }
@@ -1769,9 +1862,9 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
     mqtt_publish(stopic, svalue);
 
 #ifdef USE_MQTT
-    snprintf_P(svalue, sizeof(svalue), PSTR("{\"Commands2\":\"MqttHost, MqttPort, MqttUser, MqttPassword%s, MqttUnits, MessageFormat, GroupTopic, Timezone, LedState, TelePeriod\"}"), (!grpflg) ? ", MqttClient, Topic, ButtonTopic, ButtonRetain, PowerRetain" : "");
+    snprintf_P(svalue, sizeof(svalue), PSTR("{\"Commands2\":\"MqttHost, MqttPort, MqttUser, MqttPassword%s, MqttUnits, MessageFormat, GroupTopic, Timezone, LedState, LedPower, TelePeriod\"}"), (!grpflg) ? ", MqttClient, Topic, ButtonTopic, ButtonRetain, SwitchTopic, SwitchRetain, PowerRetain" : "");
 #else
-    snprintf_P(svalue, sizeof(svalue), PSTR("{\"Commands2\":\"MqttUnits, MessageFormat, Timezone, LedState, TelePeriod\"}"), (!grpflg) ? ", MqttClient" : "");
+    snprintf_P(svalue, sizeof(svalue), PSTR("{\"Commands2\":\"MqttUnits, MessageFormat, Timezone, LedState, LedPower, TelePeriod\"}"), (!grpflg) ? ", MqttClient" : "");
 #endif  // USE_MQTT
     if (sysCfg.message_format != JSON) json2legacy(stopic, svalue);
     mqtt_publish(stopic, svalue);
@@ -1792,7 +1885,7 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
     snprintf_P(svalue, sizeof(svalue), PSTR("%s, I2CScan"), svalue);
 #endif
 #ifdef USE_WS2812
-    snprintf_P(svalue, sizeof(svalue), PSTR("%s, Pixels, Color, Dimmer, Scheme, Fade, Speed, LedTable"), svalue);
+    if (pin[GPIO_WS2812] < 99) snprintf_P(svalue, sizeof(svalue), PSTR("%s, Pixels, Led, Color, Dimmer, Scheme, Fade, Speed, LedTable"), svalue);
 #endif
     snprintf_P(svalue, sizeof(svalue), PSTR("%s\"}"), svalue);
 
@@ -1813,19 +1906,22 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
 /********************************************************************************************/
 
 #ifdef USE_MQTT
-void send_button_power(byte device, byte state)
+void send_button_power(byte key, byte device, byte state)
 {
+// key 0 = button_topic
+// key 1 = switch_topic
+
   char stopic[TOPSZ], svalue[TOPSZ], stemp1[10];
 
   if (device > Maxdevice) device = 1;
   snprintf_P(stemp1, sizeof(stemp1), PSTR("%d"), device);
   snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/%s%s"),
-    SUB_PREFIX, sysCfg.mqtt_topic2, sysCfg.mqtt_subtopic, (Maxdevice > 1) ? stemp1 : "");
+    SUB_PREFIX, (key) ? sysCfg.switch_topic : sysCfg.button_topic, sysCfg.mqtt_subtopic, (Maxdevice > 1) ? stemp1 : "");
   
   if (state == 3) {
     svalue[0] = '\0';
   } else {
-    if (!strcmp(sysCfg.mqtt_topic,sysCfg.mqtt_topic2) && (state == 2)) {
+    if (!strcmp(sysCfg.mqtt_topic,(key) ? sysCfg.switch_topic : sysCfg.button_topic) && (state == 2)) {
       state = ~(power >> (device -1)) & 0x01;
     }
     snprintf_P(svalue, sizeof(svalue), PSTR("%s"), (state) ? (state == 2) ? MQTT_CMND_TOGGLE : MQTT_STATUS_ON : MQTT_STATUS_OFF);
@@ -1837,10 +1933,10 @@ void send_button_power(byte device, byte state)
       sysCfg.domoticz_key_idx[device -1], (state) ? (state == 2) ? "Toggle" : "On" : "Off");
     mqtt_publish(stopic, svalue);
   } else {
-    mqtt_publish_sec(stopic, svalue, sysCfg.mqtt_button_retain);
+    mqtt_publish_sec(stopic, svalue, (key) ? sysCfg.mqtt_switch_retain : sysCfg.mqtt_button_retain);
   }
 #else
-  mqtt_publish_sec(stopic, svalue, sysCfg.mqtt_button_retain);
+  mqtt_publish_sec(stopic, svalue, (key) ? sysCfg.mqtt_switch_retain : sysCfg.mqtt_button_retain);
 #endif  // USE_DOMOTICZ
 }
 #endif  // USE_MQTT
@@ -1951,10 +2047,10 @@ void publish_status(uint8_t payload)
   if ((payload == 0) || (payload == 99)) {
     if (sysCfg.message_format == JSON) {
       snprintf_P(svalue, sizeof(svalue), PSTR("{\"Status\":{\"Model\":%d, \"FriendlyName\":\"%s\", \"Topic\":\"%s\", \"ButtonTopic\":\"%s\", \"Subtopic\":\"%s\", \"Power\":%d, \"PowerOnState\":%d, \"LedState\":%d, \"SaveData\":%d, \"SaveState\":%d, \"ButtonRetain\":%d, \"PowerRetain\":%d}}"),
-        sysCfg.model, sysCfg.friendlyname[0], sysCfg.mqtt_topic, sysCfg.mqtt_topic2, sysCfg.mqtt_subtopic, power, sysCfg.poweronstate, sysCfg.ledstate, sysCfg.savedata, sysCfg.savestate, sysCfg.mqtt_button_retain, sysCfg.mqtt_power_retain);
+        sysCfg.model, sysCfg.friendlyname[0], sysCfg.mqtt_topic, sysCfg.button_topic, sysCfg.mqtt_subtopic, power, sysCfg.poweronstate, sysCfg.ledstate, sysCfg.savedata, sysCfg.savestate, sysCfg.mqtt_button_retain, sysCfg.mqtt_power_retain);
     } else {
       snprintf_P(svalue, sizeof(svalue), PSTR("%s, %d, %s, %s, %s, %s, %d, %d, %d, %d, %d, %d, %d"),
-        Version, sysCfg.model, sysCfg.friendlyname[0], sysCfg.mqtt_topic, sysCfg.mqtt_topic2, sysCfg.mqtt_subtopic, power, sysCfg.poweronstate, sysCfg.ledstate, sysCfg.savedata, sysCfg.savestate, sysCfg.mqtt_button_retain, sysCfg.mqtt_power_retain);
+        Version, sysCfg.model, sysCfg.friendlyname[0], sysCfg.mqtt_topic, sysCfg.button_topic, sysCfg.mqtt_subtopic, power, sysCfg.poweronstate, sysCfg.ledstate, sysCfg.savedata, sysCfg.savestate, sysCfg.mqtt_button_retain, sysCfg.mqtt_power_retain);
     }
     if (payload == 0) mqtt_publish(stopic, svalue);
   }
@@ -2332,8 +2428,8 @@ void stateloop()
         flag = (multipress == 1);
       }
 #ifdef USE_MQTT
-      if (flag && mqttClient.connected() && strcmp(sysCfg.mqtt_topic2, "0")) {
-        send_button_power(multipress, 2);  // Execute command via MQTT using ButtonTopic to sync external clients
+      if (flag && mqttClient.connected() && strcmp(sysCfg.button_topic, "0")) {
+        send_button_power(0, multipress, 2);  // Execute command via MQTT using ButtonTopic to sync external clients
       } else
 #endif  // USE_MQTT
       {
@@ -2356,8 +2452,8 @@ void stateloop()
   if (Maxdevice > 1) {
     button = digitalRead(KEY2_PIN);
     if ((button == PRESSED) && (lastbutton2 == NOT_PRESSED)) {
-      if (mqttClient.connected() && strcmp(sysCfg.mqtt_topic2, "0")) {
-        send_button_power(2, 2);   // Execute commend via MQTT
+      if (mqttClient.connected() && strcmp(sysCfg.button_topic, "0")) {
+        send_button_power(0, 2, 2);   // Execute commend via MQTT
       } else {
         do_cmnd_power(2, 2);       // Execute command internally
       }
@@ -2370,8 +2466,8 @@ void stateloop()
   if (Maxdevice > 2) {
     button = digitalRead(KEY3_PIN);
      if ((button == PRESSED) && (lastbutton3 == NOT_PRESSED)) {
-      if (mqttClient.connected() && strcmp(sysCfg.mqtt_topic2, "0")) {
-        send_button_power(3, 2);   // Execute commend via MQTT
+      if (mqttClient.connected() && strcmp(sysCfg.button_topic, "0")) {
+        send_button_power(0, 3, 2);   // Execute commend via MQTT
       } else {
         do_cmnd_power(3, 2);       // Execute command internally
       }
@@ -2384,8 +2480,8 @@ void stateloop()
   if (Maxdevice > 3) {
     button = digitalRead(KEY4_PIN);
     if ((button == PRESSED) && (lastbutton4 == NOT_PRESSED)) {
-      if (mqttClient.connected() && strcmp(sysCfg.mqtt_topic2, "0")) {
-        send_button_power(4, 2);   // Execute commend via MQTT
+      if (mqttClient.connected() && strcmp(sysCfg.button_topic, "0")) {
+        send_button_power(0, 4, 2);   // Execute commend via MQTT
       } else {
         do_cmnd_power(4, 2);       // Execute command internally
       }
@@ -2415,8 +2511,8 @@ void stateloop()
       if ((button == NOT_PRESSED) && (lastwallswitch == PRESSED)) switchflag = 2;  // Toggle with releasing pushbutton from Gnd
     }
     if (switchflag < 3) {
-      if (mqttClient.connected() && strcmp(sysCfg.mqtt_topic2,"0")) {
-        send_button_power(1, switchflag);   // Execute commend via MQTT
+      if (mqttClient.connected() && strcmp(sysCfg.switch_topic,"0")) {
+        send_button_power(1, 1, switchflag);   // Execute commend via MQTT
       } else {
         do_cmnd_power(1, switchflag);       // Execute command internally
       }
@@ -2684,19 +2780,24 @@ void setup()
   }
 
   if (MODULE == MOTOR_CAC) sysCfg.poweronstate = 1;  // Needs always on else in limbo!
-  if (sysCfg.poweronstate == 0) {       // All off
-    power = 0;
-    setRelay(power);
-  }
-  else if (sysCfg.poweronstate == 1) {  // All on
-    power = ((0x00FF << Maxdevice) >> 8);
-    setRelay(power);
-  }
-  else if (sysCfg.poweronstate == 2) {  // All saved state toggle
-    power = (sysCfg.power & ((0x00FF << Maxdevice) >> 8)) ^ 0xFF;
-    if (sysCfg.savestate) setRelay(power);
-  }
-  else {                                // All saved state
+  if (ESP.getResetReason() == "Power on") {
+    if (sysCfg.poweronstate == 0) {       // All off
+      power = 0;
+      setRelay(power);
+    }
+    else if (sysCfg.poweronstate == 1) {  // All on
+      power = ((0x00FF << Maxdevice) >> 8);
+      setRelay(power);
+    }
+    else if (sysCfg.poweronstate == 2) {  // All saved state toggle
+      power = (sysCfg.power & ((0x00FF << Maxdevice) >> 8)) ^ 0xFF;
+      if (sysCfg.savestate) setRelay(power);
+    }
+    else if (sysCfg.poweronstate == 3) {  // All saved state
+      power = sysCfg.power & ((0x00FF << Maxdevice) >> 8);
+      if (sysCfg.savestate) setRelay(power);
+    }
+  } else {
     power = sysCfg.power & ((0x00FF << Maxdevice) >> 8);
     if (sysCfg.savestate) setRelay(power);
   }

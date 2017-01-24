@@ -39,11 +39,7 @@
 #define WEB_LOG_LEVEL          LOG_LEVEL_INFO  // [WebLog]
 
 // -- Ota ------------------------------------
-#if (ARDUINO >= 168)
-  #define OTA_URL              "http://domus1:80/api/arduino/" PROJECT ".ino.bin"  // [OtaUrl]
-#else
-  #define OTA_URL              "http://domus1:80/api/arduino/" PROJECT ".cpp.bin"  // [OtaUrl]
-#endif
+#define OTA_URL                "http://domus1:80/api/arduino/" PROJECT ".ino.bin"  // [OtaUrl]
 
 // -- MQTT -----------------------------------
 #define USE_MQTT                            // Enable MQTT and Domoticz (+10k code, +1k mem)
@@ -73,8 +69,9 @@
 #define MQTT_TOPIC             PROJECT      // [Topic] (unique) MQTT device topic
 #define MQTT_BUTTON_RETAIN     0            // [ButtonRetain] Button may send retain flag (0 = off, 1 = on)
 #define MQTT_POWER_RETAIN      0            // [PowerRetain] Power status message may send retain flag (0 = off, 1 = on)
+#define MQTT_SWITCH_RETAIN     0            // [SwitchRetain] Switch may send retain flag (0 = off, 1 = on)
 
-#define MESSAGE_FORMAT         LEGACY       // [MessageFormat] MQTT Message Format (LEGACY or JSON)
+#define MESSAGE_FORMAT         JSON         // [MessageFormat] MQTT Message Format (LEGACY or JSON)
 #define MQTT_STATUS_OFF        "OFF"        // Command or Status result when turned off (needs to be a string like "0" or "Off")
 #define MQTT_STATUS_ON         "ON"         // Command or Status result when turned on (needs to be a string like "1" or "On")
 #define MQTT_CMND_TOGGLE       "TOGGLE"     // Command to send when toggling (needs to be a string like "2" or "Toggle")
@@ -345,11 +342,19 @@
 \*********************************************************************************************/
 
 #else
-  #error "Select either module SONOFF, SONOFF_85, SONOFF_POW, MOTOR_CAC or ELECTRO_DRAGON"
+  #error "Select either module SONOFF, SONOFF_2, SONOFF_POW, MOTOR_CAC or ELECTRO_DRAGON"
+#endif
+
+#if (WS2812_PIN == 3)
+  #warning "Expect Sonoff Pow exceptions when WS2812 DMA is enabled using WS2812_PIN 3"
 #endif
 
 #if defined(USE_WEMO_EMULATION) && defined(USE_HUE_EMULATION)
   #error "Select either USE_WEMO_EMULATION or USE_HUE_EMULATION"
+#endif
+
+#if (ARDUINO < 10610)
+  #error "This software is supported with Arduino IDE starting from 1.6.10 and ESP8266 Release 2.3.0"
 #endif
 
 #if defined(SEND_TELEMETRY_DS18B20) && defined(SEND_TELEMETRY_DS18x20)

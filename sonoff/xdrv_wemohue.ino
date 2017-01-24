@@ -210,7 +210,7 @@ void pollUDP()
       int len = portUDP.read(packetBuffer, UDP_BUFFER_SIZE -1);
       if (len > 0) packetBuffer[len] = 0;
       String request = packetBuffer;
-      addLog_P(LOG_LEVEL_DEBUG_MORE, packetBuffer);
+//      addLog_P(LOG_LEVEL_DEBUG_MORE, packetBuffer);
       if (request.indexOf("M-SEARCH") >= 0) {
 #ifdef USE_WEMO_EMULATION
         if (request.indexOf("urn:Belkin:device:**") > 0) {
