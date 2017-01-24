@@ -1,4 +1,8 @@
-/* 3.9.1 20170124
+/* 3.9.2 20170124
+ * Add confirmation before Reset Configuration via webpage (#244)
+ * Add WS2812 features (see Wiki commands)
+ *
+ * 3.9.1 20170124
  * Change PowerOnState function to only trigger when Power On (and not just restart) (#238)
  * Move HLW interrupts back to RAM and make WS2812_DMA optional as it generates Exception on Pow (#264)
  * Add charset=utf-8 to webpages (#266)

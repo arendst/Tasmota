@@ -10,7 +10,7 @@
  * ====================================================
 */
 
-#define VERSION                0x03090100   // 3.9.1
+#define VERSION                0x03090200   // 3.9.2
 
 enum log_t   {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG_MORE, LOG_LEVEL_ALL};
 enum week_t  {Last, First, Second, Third, Fourth};
@@ -41,9 +41,7 @@ enum led_t   {LED_OFF, LED_POWER, LED_MQTTSUB, LED_POWER_MQTTSUB, LED_MQTTPUB, L
  * No user configurable items below
 \*********************************************************************************************/
 
-// -- Initial module selection --------------------
-// Select from (SONOFF_BASIC, SONOFF_RF, SONOFF_SV, SONOFF_TH, SONOFF_DUAL, SONOFF_POW, SONOFF_4CH, S20, SLAMPHER, SONOFF_TOUCH, SONOFF_LED, CH1, CH4, MOTOR, USER_TEST, ELECTRODRAGON)
-#define MODULE                 SONOFF_BASIC      // [Module] Select default model
+#define MODULE                 SONOFF_BASIC // [Module] Select default model
 
 #ifndef SWITCH_MODE
 #define SWITCH_MODE            TOGGLE       // TOGGLE, FOLLOW or FOLLOW_INV (the wall switch state)
@@ -51,6 +49,14 @@ enum led_t   {LED_OFF, LED_POWER, LED_MQTTSUB, LED_POWER_MQTTSUB, LED_MQTTPUB, L
 
 #ifndef MQTT_FINGERPRINT
 #define MQTT_FINGERPRINT       "A5 02 FF 13 99 9F 8B 39 8E F1 83 4F 11 23 65 0B 32 36 FC 07"
+#endif
+
+#ifndef USE_DHT2
+#define USE_DHT1                            // Default DHT11 sensor needs no external library
+#endif
+
+#ifndef USE_DS18x20
+#define USE_DS18B20                         // Default DS18B20 sensor needs no external library
 #endif
 
 #ifndef WS2812_LEDS
@@ -517,7 +523,7 @@ void CFG_DefaultSet()
   sysCfg.ws_dimmer = 8;
   sysCfg.ws_fade = 0;
   sysCfg.ws_speed = 1;
-  sysCfg.ws_scheme = 1;
+  sysCfg.ws_scheme = 0;
   sysCfg.ws_width = 1;
   sysCfg.ws_wakeup = 0;
 
@@ -690,7 +696,7 @@ void CFG_Delta()
       sysCfg.ws_dimmer = 8;
       sysCfg.ws_fade = 0;
       sysCfg.ws_speed = 1;
-      sysCfg.ws_scheme = 1;
+      sysCfg.ws_scheme = 0;
       sysCfg.ws_width = 1;
       sysCfg.ws_wakeup = 0;
     }
@@ -1901,6 +1907,7 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
     else if ((pin[GPIO_WS2812] < 99) && !strcmp(type,"COLOR")) {
       if (data_len == 6) {
         ws2812_setColor(0, dataBufUc);
+        power = 1;
       }
       ws2812_getColor(0, svalue, sizeof(svalue));
     }
@@ -1949,17 +1956,25 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
       }
       snprintf_P(svalue, sizeof(svalue), PSTR("{\"Speed\":%d}"), sysCfg.ws_speed);
     }
+    else if ((pin[GPIO_WS2812] < 99) && !strcmp(type,"WIDTH")) {
+      if ((data_len > 0) && (payload >= 0) && (payload <= 4)) {
+        sysCfg.ws_width = payload;
+      }
+      snprintf_P(svalue, sizeof(svalue), PSTR("{\"Width\":%d}"), sysCfg.ws_width);
+    }
+    else if ((pin[GPIO_WS2812] < 99) && !strcmp(type,"WAKEUP")) {
+      if ((data_len > 0) && (payload > 0) && (payload < 3601)) {
+        sysCfg.ws_wakeup = payload;
+        if (sysCfg.ws_scheme == 1) sysCfg.ws_scheme = 0;
+      }
+      snprintf_P(svalue, sizeof(svalue), PSTR("{\"WakeUp\":%d}"), sysCfg.ws_wakeup);
+    }
     else if ((pin[GPIO_WS2812] < 99) && !strcmp(type,"SCHEME")) {
-      if ((data_len > 0) && (payload >= 0) && (payload <= 1)) {
+      if ((data_len > 0) && (payload >= 0) && (payload <= 9)) {
         sysCfg.ws_scheme = payload;
-/*
-        if (sysCfg.scheme == 1) {
-          wakeupDimmer = 0;
-          wakeupCntr = 0;
-        }
-*/        
+        if (sysCfg.ws_scheme == 1) ws2812_resetWakupState();
         power = 1;
-//        stripTimerCntr = 0;
+        ws2812_resetStripTimer();
       }
       snprintf_P(svalue, sizeof(svalue), PSTR("{\"Scheme\":%d}"), sysCfg.ws_scheme);
     }
@@ -1995,7 +2010,7 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
     if (i2c_flg) snprintf_P(svalue, sizeof(svalue), PSTR("%s, I2CScan"), svalue);
 #endif  // USE_I2C
 #ifdef USE_WS2812
-    if (pin[GPIO_WS2812] < 99) snprintf_P(svalue, sizeof(svalue), PSTR("%s, Pixels, Led, Color, Dimmer, Scheme, Fade, Speed, LedTable"), svalue);
+    if (pin[GPIO_WS2812] < 99) snprintf_P(svalue, sizeof(svalue), PSTR("%s, Pixels, Led, Color, Dimmer, Scheme, Fade, Speed, Width, Wakeup, LedTable"), svalue);
 #endif
     snprintf_P(svalue, sizeof(svalue), PSTR("%s\"}"), svalue);
 

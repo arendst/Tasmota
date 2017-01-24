@@ -93,7 +93,7 @@
   #define FRIENDLY_NAME4         "Sonoff4"       // [FriendlyName4] Friendlyname up to 32 characters used by Alexa
   #define WEB_SERVER             2               // [WebServer] Web server (0 = Off, 1 = Start as User, 2 = Start as Admin)
 //  #define USE_WEMO_EMULATION                     // Enable Belkin WeMo PowerSwitch emulation for Alexa (+4k code, +2k mem)
-  #define USE_HUE_EMULATION                      // Enable Hue Bridge emulation for Alexa (+5k code, +2k mem)
+//  #define USE_HUE_EMULATION                      // Enable Hue Bridge emulation for Alexa (+5k code, +2k mem)
 
 // -- mDNS ----------------------------------------
 #define USE_DISCOVERY                            // Enable mDNS for the following services (+8k code, +0.3k mem)
@@ -128,11 +128,8 @@
 #define PRESSURE_RESOLUTION    1                 // Maximum number of decimals (0 - 3) showing sensor Pressure
 
 // -- Sensor code selection -----------------------
-#define USE_DHT1                                 // *** Option 1 - No external library needed
-//#define USE_DHT2                                 // *** Option 2 - Use Adafruit DHT library
-
-#define USE_DS18B20                              // *** Option 1 - Single DS18B20 without library
-//#define USE_DS18x20                              // *** Option 2 - Use OneWire library for multiple DS18B20 and/or DS18S20
+//#define USE_DHT2                                 // Optional using Adafruit DHT library
+//#define USE_DS18x20                              // Optional using OneWire library for multiple DS18B20 and/or DS18S20
 
 #define USE_I2C                                  // I2C Support (+10k code, 0.2k mem)
   #define USE_BH1750                             // Add I2C code for BH1750 sensor
@@ -140,7 +137,7 @@
   #define USE_HTU                                // Add I2C code for HTU21 sensor
 
 #define USE_WS2812                               // WS2812 Led string support (+8k code, +1k mem)
-//  #define USE_WS2812_DMA                         // Using DMA only GPIO03 (= Serial TXD) is supported (+1k mem)
+//  #define USE_WS2812_DMA                         // DMA supports only GPIO03 (= Serial TXD) (+1k mem)
                                                  //   When USE_WS2812_DMA is enabled expect Exceptions on Pow
 
 /*********************************************************************************************\
