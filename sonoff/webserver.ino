@@ -109,7 +109,7 @@ const char HTTP_BTN_MENU2[] PROGMEM =
 #endif  // USE_MQTT
   "<br/><form action='/lg' method='post'><button>Configure Logging</button></form>"
   "<br/><form action='/co' method='post'><button>Configure Other</button></form>"
-  "<br/><form action='/rt' method='post'><button>Reset Configuration</button></form>";
+  "<br/><form action='/rt' method='post' onsubmit='return confirm(\"Confirm Reset Configuration\");'><button>Reset Configuration</button></form>";
 const char HTTP_BTN_MAIN[] PROGMEM =
   "<br/><br/><form action='/' method='post'><button>Main menu</button></form>";
 const char HTTP_BTN_CONF[] PROGMEM =

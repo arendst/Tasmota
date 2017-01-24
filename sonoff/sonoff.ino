@@ -10,7 +10,7 @@
  * ====================================================
 */
 
-#define VERSION                0x03020900   // 3.2.9
+#define VERSION                0x03020A00   // 3.2.10
 
 #define SONOFF                 1            // Sonoff, Sonoff RF, Sonoff SV, Sonoff Dual, Sonoff TH, S20 Smart Socket, 4 Channel
 #define SONOFF_POW             9            // Sonoff Pow
@@ -543,7 +543,7 @@ void CFG_DefaultSet()
   sysCfg.ws_dimmer = 8;
   sysCfg.ws_fade = 0;
   sysCfg.ws_speed = 1;
-  sysCfg.ws_scheme = 1;
+  sysCfg.ws_scheme = 0;
   sysCfg.ws_width = 1;
   sysCfg.ws_wakeup = 0;
 
@@ -699,7 +699,7 @@ void CFG_Delta()
       sysCfg.ws_dimmer = 8;
       sysCfg.ws_fade = 0;
       sysCfg.ws_speed = 1;
-      sysCfg.ws_scheme = 1;
+      sysCfg.ws_scheme = 0;
       sysCfg.ws_width = 1;
       sysCfg.ws_wakeup = 0;
     }
@@ -1785,6 +1785,7 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
     else if ((pin[GPIO_WS2812] < 99) && !strcmp(type,"COLOR")) {
       if (data_len == 6) {
         ws2812_setColor(0, dataBufUc);
+        power = 1;
       }
       ws2812_getColor(0, svalue, sizeof(svalue));
     }
@@ -1833,17 +1834,25 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
       }
       snprintf_P(svalue, sizeof(svalue), PSTR("{\"Speed\":%d}"), sysCfg.ws_speed);
     }
+    else if ((pin[GPIO_WS2812] < 99) && !strcmp(type,"WIDTH")) {
+      if ((data_len > 0) && (payload >= 0) && (payload <= 4)) {
+        sysCfg.ws_width = payload;
+      }
+      snprintf_P(svalue, sizeof(svalue), PSTR("{\"Width\":%d}"), sysCfg.ws_width);
+    }
+    else if ((pin[GPIO_WS2812] < 99) && !strcmp(type,"WAKEUP")) {
+      if ((data_len > 0) && (payload > 0) && (payload < 3601)) {
+        sysCfg.ws_wakeup = payload;
+        if (sysCfg.ws_scheme == 1) sysCfg.ws_scheme = 0;
+      }
+      snprintf_P(svalue, sizeof(svalue), PSTR("{\"WakeUp\":%d}"), sysCfg.ws_wakeup);
+    }
     else if ((pin[GPIO_WS2812] < 99) && !strcmp(type,"SCHEME")) {
-      if ((data_len > 0) && (payload >= 0) && (payload <= 1)) {
+      if ((data_len > 0) && (payload >= 0) && (payload <= 9)) {
         sysCfg.ws_scheme = payload;
-/*
-        if (sysCfg.scheme == 1) {
-          wakeupDimmer = 0;
-          wakeupCntr = 0;
-        }
-*/        
+        if (sysCfg.ws_scheme == 1) ws2812_resetWakupState();
         power = 1;
-//        stripTimerCntr = 0;
+        ws2812_resetStripTimer();
       }
       snprintf_P(svalue, sizeof(svalue), PSTR("{\"Scheme\":%d}"), sysCfg.ws_scheme);
     }
@@ -1885,7 +1894,7 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
     snprintf_P(svalue, sizeof(svalue), PSTR("%s, I2CScan"), svalue);
 #endif
 #ifdef USE_WS2812
-    if (pin[GPIO_WS2812] < 99) snprintf_P(svalue, sizeof(svalue), PSTR("%s, Pixels, Led, Color, Dimmer, Scheme, Fade, Speed, LedTable"), svalue);
+    if (pin[GPIO_WS2812] < 99) snprintf_P(svalue, sizeof(svalue), PSTR("%s, Pixels, Led, Color, Dimmer, Scheme, Fade, Speed, Width, Wakeup, LedTable"), svalue);
 #endif
     snprintf_P(svalue, sizeof(svalue), PSTR("%s\"}"), svalue);
 

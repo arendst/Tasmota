@@ -1,4 +1,8 @@
-/* 3.2.9 20170124
+/* 3.2.10 20170124
+ * Add confirmation before Reset Configuration via webpage (#244)
+ * Add WS2812 features (see Wiki commands)
+ *
+ * 3.2.9 20170124
  * Fix compile error when MQTT is disabled (#269)
  *
  * 3.2.8 20170124
