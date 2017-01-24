@@ -1,8 +1,11 @@
-/* 3.2.6b 20170122
- * Fix status module number
+/* 3.9.1 20170124
  * Change PowerOnState function to only trigger when Power On (and not just restart) (#238)
- * Fix possible ESP8285 flash problem by updating Flash Chip Mode to DOUT during web upload
  * Move HLW interrupts back to RAM and make WS2812_DMA optional as it generates Exception on Pow (#264)
+ * Add charset=utf-8 to webpages (#266)
+ * Update Hue emulation (#268)
+ * Fix status module number
+ * Add support for domoticz Dimmer on Sonoff_Led and WS2812
+ * Fix possible ESP8285 flash problem by updating Flash Chip Mode to DOUT during web upload
  *
  * 3.2.6a 20170120
  * Fix Sonoff Pow compile error (#255)

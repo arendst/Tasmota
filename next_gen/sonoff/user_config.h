@@ -72,7 +72,7 @@
 #define TELE_PERIOD            300               // [TelePeriod] Telemetry (0 = disable, 10 - 3600 seconds)
 
 // -- MQTT - Domoticz -----------------------------
-#define USE_DOMOTICZ                             // Enable Domoticz (+4k code, +0.2k mem) - Disable by //
+#define USE_DOMOTICZ                             // Enable Domoticz (+5k code, +0.3k mem) - Disable by //
   #define DOMOTICZ_IN_TOPIC      "domoticz/in"   // [DomoticzInTopic]
   #define DOMOTICZ_OUT_TOPIC     "domoticz/out"  // [DomoticzOutTopic]
   #define DOMOTICZ_RELAY_IDX1    0               // [DomoticzIdx1] Sonoff Relay 1 (0 = disable domoticz)
@@ -93,7 +93,7 @@
   #define FRIENDLY_NAME4         "Sonoff4"       // [FriendlyName4] Friendlyname up to 32 characters used by Alexa
   #define WEB_SERVER             2               // [WebServer] Web server (0 = Off, 1 = Start as User, 2 = Start as Admin)
 //  #define USE_WEMO_EMULATION                     // Enable Belkin WeMo PowerSwitch emulation for Alexa (+4k code, +2k mem)
-//  #define USE_HUE_EMULATION                      // Enable Hue Bridge emulation for Alexa (+5k code, +2k mem)
+  #define USE_HUE_EMULATION                      // Enable Hue Bridge emulation for Alexa (+5k code, +2k mem)
 
 // -- mDNS ----------------------------------------
 #define USE_DISCOVERY                            // Enable mDNS for the following services (+8k code, +0.3k mem)

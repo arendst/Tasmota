@@ -35,8 +35,9 @@ POSSIBILITY OF SUCH DAMAGE.
 #define STR(x) STR_HELPER(x)
 
 const char HTTP_HEAD[] PROGMEM =
-  "<!DOCTYPE html><html lang=\"en\">"
+  "<!DOCTYPE html><html lang=\"en\" class=\"\">"
   "<head>"
+  "<meta charset='utf-8'>"
   "<meta name=\"viewport\" content=\"width=device-width,initial-scale=1,user-scalable=no\"/>"
   "<title>{v}</title>"
   "<script>"
@@ -1378,24 +1379,27 @@ void handleUPnPsetup()
   webServer->send(200, "text/xml", description_xml);
 }
 
-void handle_hue_api(String path)
+void hue_todo(String path)
 {
-  /* HUE API uses /api/<userid>/<command> syntax. The userid is created by the echo device and
-   * on original HUE the pressed button allows for creation of this user. We simply ignore the
-   * user part and allow every caller as with Web or WeMo. */
-   
   char log[LOGSZ];
+  
+  snprintf_P(log, sizeof(log), PSTR("HTTP: HUE API not implemented (%s)"),path.c_str());
+  addLog(LOG_LEVEL_DEBUG_MORE, log);
+}
+
+void hue_lights(String path)
+{
   String response;
-  String command=path;
-  uint8_t device=1;
+  uint8_t device = 1;
+  uint8_t tmp = 0;
   char id[4];
 
-  command.remove(0, command.indexOf("/lights") +7); // remove all including lights cmd
-  if (path.startsWith("/api/invalid")) {}           // Ignore /api/invalid
-  else if (command.length() == 0) {                 // only /lights requested
-//    Serial.println("HUE: /lights");
+  path.remove(0,path.indexOf("/lights"));                 // Remove until /lights
+  if (path.endsWith("/lights"))                           // Got /lights
+  {
     response = "{\"";
-    for (uint8_t i = 1; i <= Maxdevice; i++) {
+    for (uint8_t i = 1; i <= Maxdevice; i++)
+    {
       response += i;
       response += "\":";
       response += FPSTR(HUE_LIGHT_STATUS_JSON);
@@ -1405,44 +1409,79 @@ void handle_hue_api(String path)
       response.replace("{j2}", hue_deviceId(i));  
     }
     response += "}";
-    webServer->send(200, "application/json", response);    
+    webServer->send(200, "application/json", response);
   }
-  else if (command.length() <= 3) {                // Only device ID (up to 63 on real Bridge)
-    device = atoi(command.c_str() +1);             // Skip leading '/'
+  else if (path.endsWith("/state"))                         // Got ID/state
+  {
+    path.remove(0,8);                                       // Remove /lights/
+    path.remove(path.indexOf("/state"));                    // Remove /state
+    device = atoi(path.c_str());
+    if ((device < 1) || (device > Maxdevice)) device = 1;
+    response = "{\"success\":{\"/lights/";
+    response += device;
+    if (webServer->args() == 1) 
+    {
+      String json = webServer->arg(0);
+//      Serial.print("HUE API: POST "); Serial.println(json.c_str());
+      if (json.indexOf("\"on\":") >= 0)      // Got "on" command
+      {
+        if (json.indexOf("false") >= 0)      // false -> turn device off
+        {
+          do_cmnd_power(device, 0);
+          response +="/state/on\": false";
+        }
+        else if(json.indexOf("true") >= 0)   // true -> Turn device on
+        {
+          do_cmnd_power(device, 1);
+          response +="/state/on\": true";        
+        }
+        else
+        {
+          response +="/state/on\": ";
+          response += (power & (0x01 << (device-1))) ? "true" : "false";
+        }
+      }
+      response += "}}";
+      webServer->send(200, "application/json", response);
+    }   
+    else webServer->send(406, "application/json", "{}");
+  }
+  else if((tmp=path.indexOf("/lights/")) >= 0)              // Got /lights/ID
+  {
+    path.remove(0,8);                                       // Remove /lights/
+    device = atoi(path.c_str());
     if ((device < 1) || (device > Maxdevice)) device = 1;
     response = FPSTR(HUE_LIGHT_STATUS_JSON);
     response.replace("{state}", (power & (0x01 << (device -1))) ? "true" : "false");
     response.replace("{j1}", sysCfg.friendlyname[device -1]);
     response.replace("{j2}", hue_deviceId(device));
-//    Serial.print("HUE: Get state of device "); Serial.println(device);
     webServer->send(200, "application/json", response);
   }
-  else if (command.endsWith("/state")) {          // Got ID/state
-//    Serial.println("HUE: Handle API /state");
-    command.remove(command.lastIndexOf("/state"));
-    device = atoi(command.c_str() +1);
-    if ((device < 1) || (device > Maxdevice)) device = 1;
-    response = "{\"success\":{\"/lights/";
-    response += device;
-    if (webServer->args() == 1) {
-      String json = webServer->arg(0);
-      Serial.println(json.c_str());
-      if (json.startsWith("{\"on\": false")) {
-        do_cmnd_power(device, 0);
-        response +="/state/on\": false}}";
-      }
-      else {
-        do_cmnd_power(device, 1);
-        response +="/state/on\": true}}";        
-      }
-      webServer->send(200, "application/json", response);
-    }
-    else  {
-//      Serial.println("HUE: /state no POST args");
-      webServer->send(406, "application/json", "{}");
-    }
-  }
-  else {
+  else webServer->send(406, "application/json", "{}");
+}
+
+void handle_hue_api(String path)
+{
+  /* HUE API uses /api/<userid>/<command> syntax. The userid is created by the echo device and
+   * on original HUE the pressed button allows for creation of this user. We simply ignore the
+   * user part and allow every caller as with Web or WeMo. 
+   *
+   * (c) Heiko Krupp, 2017
+   */
+   
+  char log[LOGSZ];
+
+  path.remove(0, 4);                                // remove /api      
+  if (path.endsWith("/invalid/")) {}                // Just ignore
+  else if (path.endsWith("/config")) hue_todo(path);
+  else if(path.indexOf("/lights") >= 0) hue_lights(path);
+  else if(path.endsWith("/groups")) hue_todo(path);
+  else if(path.endsWith("/schedules")) hue_todo(path); 
+  else if(path.endsWith("/sensors")) hue_todo(path);
+  else if(path.endsWith("/scenes")) hue_todo(path);
+  else if(path.endsWith("/rules")) hue_todo(path);
+  else 
+  {
     snprintf_P(log, sizeof(log), PSTR("HTTP: Handle Hue API (%s)"),path.c_str());
     addLog(LOG_LEVEL_DEBUG_MORE, log);
     webServer->send(406, "application/json", "{}");

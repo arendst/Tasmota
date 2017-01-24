@@ -10,7 +10,7 @@
  * ====================================================
 */
 
-#define VERSION                0x03020602   // 3.2.6b
+#define VERSION                0x03090100   // 3.9.1
 
 enum log_t   {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG_MORE, LOG_LEVEL_ALL};
 enum week_t  {Last, First, Second, Third, Fourth};
@@ -290,6 +290,9 @@ struct SYSCFG {
   uint16_t      ws_wakeup;  
 
   char          friendlyname[4][33];
+  char          switch_topic[33];
+  byte          mqtt_switch_retain;
+  uint8_t       mqtt_enabled;
 
   uint8_t       module;
   mytmplt       my_module;
@@ -304,9 +307,6 @@ struct SYSCFG {
   uint8_t       led_width;
   uint16_t      led_wakeup;
 
-  char          switch_topic[33];
-  byte          mqtt_switch_retain;
-  uint8_t       mqtt_enabled;
 } sysCfg;
 
 struct TIME_T {
@@ -700,7 +700,12 @@ void CFG_Delta()
       strlcpy(sysCfg.friendlyname[2], FRIENDLY_NAME3, sizeof(sysCfg.friendlyname[2]));
       strlcpy(sysCfg.friendlyname[3], FRIENDLY_NAME4, sizeof(sysCfg.friendlyname[3]));
     }      
-    if (sysCfg.version < 0x03020501) {  // 3.2.5a - Add parameter
+    if (sysCfg.version < 0x03020800) {  // 3.2.8 - Add parameter
+      strlcpy(sysCfg.switch_topic, sysCfg.button_topic, sizeof(sysCfg.switch_topic));
+      sysCfg.mqtt_switch_retain = MQTT_SWITCH_RETAIN;
+      sysCfg.mqtt_enabled = MQTT_USE;
+    }
+    if (sysCfg.version < 0x03090100) {  // 3.9.1 - Add parameter
       sysCfg.module = MODULE;
       for (byte i = 0; i < MAX_GPIO_PIN; i++) sysCfg.my_module.gp.io[i] = 0;
 
@@ -713,10 +718,6 @@ void CFG_Delta()
       sysCfg.led_scheme = 0;
       sysCfg.led_width = 0;
       sysCfg.led_wakeup = 0;
-
-      strlcpy(sysCfg.switch_topic, sysCfg.button_topic, sizeof(sysCfg.switch_topic));
-      sysCfg.mqtt_switch_retain = MQTT_SWITCH_RETAIN;
-      sysCfg.mqtt_enabled = MQTT_USE;
     }
 
     sysCfg.version = VERSION;
@@ -872,7 +873,7 @@ void json2legacy(char* stopic, char* svalue)
 #ifdef USE_DOMOTICZ
 unsigned long getKeyIntValue(const char *json, const char *key)
 {
-  char *p, *b;
+  char *p, *b, log[LOGSZ];
   int i;
 
   // search key
@@ -893,8 +894,11 @@ unsigned long getKeyIntValue(const char *json, const char *key)
       return 0;
     }
   }
+  b++;
+  // Allow integers as string too (used in "svalue" : "9")
+  while ((b[0] == ' ') || (b[0] == '"')) b++;
   // Convert to integer
-  return atoi(b +1);
+  return atoi(b);
 }
 #endif  // USE_DOMOTICZ
 
@@ -986,6 +990,17 @@ void mqtt_publishDomoticzPowerState(byte device)
 
   if (sysCfg.domoticz_relay_idx[device -1] && (strlen(sysCfg.domoticz_in_topic) != 0)) {
     if ((device < 1) || (device > Maxdevice)) device = 1;
+
+    if (sysCfg.module == SONOFF_LED) {
+      snprintf_P(svalue, sizeof(svalue), PSTR("{\"idx\":%d, \"nvalue\":2, \"svalue\":\"%d\"}"),
+        sysCfg.domoticz_relay_idx[device -1], sysCfg.led_dimmer[device -1]);
+      mqtt_publish(sysCfg.domoticz_in_topic, svalue);
+    }
+    else if ((device == 1) && (pin[GPIO_WS2812] < 99)) {
+      snprintf_P(svalue, sizeof(svalue), PSTR("{\"idx\":%d, \"nvalue\":2, \"svalue\":\"%d\"}"),
+        sysCfg.domoticz_relay_idx[device -1], sysCfg.ws_dimmer);
+      mqtt_publish(sysCfg.domoticz_in_topic, svalue);
+    }
     snprintf_P(svalue, sizeof(svalue), PSTR("{\"idx\":%d, \"nvalue\":%d, \"svalue\":\"\"}"),
       sysCfg.domoticz_relay_idx[device -1], (power & (0x01 << (device -1))) ? 1 : 0);
     mqtt_publish(sysCfg.domoticz_in_topic, svalue);
@@ -1126,6 +1141,7 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
 
   snprintf_P(svalue, sizeof(svalue), PSTR("RSLT: Receive topic %s, data size %d, data %s"), topicBuf, data_len, dataBuf);
   addLog(LOG_LEVEL_DEBUG_MORE, svalue);
+//  if (LOG_LEVEL_DEBUG_MORE <= seriallog_level) Serial.println(dataBuf);
 
 #ifdef USE_DOMOTICZ
   if (sysCfg.mqtt_enabled) {
@@ -1142,20 +1158,29 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
       addLog(LOG_LEVEL_DEBUG_MORE, svalue);
 
       data_len = 0;
-      if (nvalue == 0 || nvalue == 1) {
+      if (nvalue >= 0 && nvalue <= 2) {
         for (i = 0; i < Maxdevice; i++) {
           if ((idx > 0) && (idx == sysCfg.domoticz_relay_idx[i])) {
-            snprintf_P(dataBuf, sizeof(dataBuf), PSTR("%d"), nvalue);
+            snprintf_P(stemp1, sizeof(stemp1), PSTR("%d"), i +1);
+            if (nvalue == 2) {
+              nvalue = getKeyIntValue(dataBuf,"\"svalue1\"");
+              if ((pin[GPIO_WS2812] < 99) && (sysCfg.ws_dimmer == nvalue)) return;
+              if ((sysCfg.module == SONOFF_LED) && (sysCfg.led_dimmer[i] == nvalue)) return;
+              snprintf_P(topicBuf, sizeof(topicBuf), PSTR("%s/%s/DIMMER%s"),
+                SUB_PREFIX, sysCfg.mqtt_topic, (Maxdevice > 1) ? stemp1 : "");
+              snprintf_P(dataBuf, sizeof(dataBuf), PSTR("%d"), nvalue);
+            } else {
+              if (((power >> i) &1) == nvalue) return;
+              snprintf_P(topicBuf, sizeof(topicBuf), PSTR("%s/%s/%s%s"),
+                SUB_PREFIX, sysCfg.mqtt_topic, sysCfg.mqtt_subtopic, (Maxdevice > 1) ? stemp1 : "");
+              snprintf_P(dataBuf, sizeof(dataBuf), PSTR("%d"), nvalue);
+            }
             data_len = strlen(dataBuf);
             break;
           }
         }
       }
       if (!data_len) return;
-      if (((power >> i) &1) == nvalue) return;
-      snprintf_P(stemp1, sizeof(stemp1), PSTR("%d"), i +1);
-      snprintf_P(topicBuf, sizeof(topicBuf), PSTR("%s/%s/%s%s"),
-        SUB_PREFIX, sysCfg.mqtt_topic, sysCfg.mqtt_subtopic, (Maxdevice > 1) ? stemp1 : "");
 
       snprintf_P(svalue, sizeof(svalue), PSTR("DMTZ: Receive topic %s, data size %d, data %s"), topicBuf, data_len, dataBuf);
       addLog(LOG_LEVEL_DEBUG_MORE, svalue);
@@ -1272,6 +1297,9 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
       if ((data_len > 0) && (payload >= 0) && (payload <= 100)) {
         sysCfg.led_dimmer[index -1] = payload;
         power = 1;
+#ifdef USE_DOMOTICZ
+        mqtt_publishDomoticzPowerState(index);
+#endif  // USE_DOMOTICZ
         sl_setColor(index +1);
       }
       snprintf_P(svalue, sizeof(svalue), PSTR("{\"Dimmer%d\":%d}"), index, sysCfg.led_dimmer[index -1]);
@@ -1697,7 +1725,7 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
       snprintf_P(svalue, sizeof(svalue), PSTR("{\"ButtonTopic\":\"%s\"}"), sysCfg.button_topic);
     }
     else if (sysCfg.mqtt_enabled && !grpflg && !strcmp(type,"SWITCHTOPIC")) {
-      if ((data_len > 0) && (data_len < sizeof(sysCfg.switch_topic[index -1]))) {
+      if ((data_len > 0) && (data_len < sizeof(sysCfg.switch_topic))) {
         for(i = 0; i <= data_len; i++)
           if ((dataBuf[i] == '/') || (dataBuf[i] == '+') || (dataBuf[i] == '#')) dataBuf[i] = '_';
         if (!strcmp(dataBuf, MQTTClient)) payload = 1;
@@ -1864,17 +1892,25 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
       }
       snprintf_P(svalue, sizeof(svalue), PSTR("{\"Pixels\":%d}"), sysCfg.ws_pixels);
     }
-
+    else if ((pin[GPIO_WS2812] < 99) && !strcmp(type,"LED") && (index > 0) && (index <= sysCfg.ws_pixels)) {
+      if (data_len == 6) {
+        ws2812_setColor(index, dataBufUc);
+      }
+      ws2812_getColor(index, svalue, sizeof(svalue));
+    }
     else if ((pin[GPIO_WS2812] < 99) && !strcmp(type,"COLOR")) {
       if (data_len == 6) {
-        ws2812_setColor(dataBufUc);
+        ws2812_setColor(0, dataBufUc);
       }
-      ws2812_getColor(svalue, sizeof(svalue));
+      ws2812_getColor(0, svalue, sizeof(svalue));
     }
     else if ((pin[GPIO_WS2812] < 99) && !strcmp(type,"DIMMER")) {
       if ((data_len > 0) && (payload >= 0) && (payload <= 100)) {
         sysCfg.ws_dimmer = payload;
         power = 1;
+#ifdef USE_DOMOTICZ
+        mqtt_publishDomoticzPowerState(index);
+#endif  // USE_DOMOTICZ
       }
       snprintf_P(svalue, sizeof(svalue), PSTR("{\"Dimmer\":%d}"), sysCfg.ws_dimmer);
     }
@@ -1907,8 +1943,8 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
       }
       snprintf_P(svalue, sizeof(svalue), PSTR("{\"Fade\":\"%s\"}"), (sysCfg.ws_fade) ? MQTT_STATUS_ON : MQTT_STATUS_OFF);
     }
-    else if ((pin[GPIO_WS2812] < 99) && !strcmp(type,"SPEED")) {  // 0 - none, 1 - slow, 4 - fast
-      if ((data_len > 0) && (payload >= 0) && (payload <= 4)) {
+    else if ((pin[GPIO_WS2812] < 99) && !strcmp(type,"SPEED")) {  // 1 - fast, 5 - slow
+      if ((data_len > 0) && (payload > 0) && (payload <= 5)) {
         sysCfg.ws_speed = payload;
       }
       snprintf_P(svalue, sizeof(svalue), PSTR("{\"Speed\":%d}"), sysCfg.ws_speed);
@@ -1926,11 +1962,6 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
 //        stripTimerCntr = 0;
       }
       snprintf_P(svalue, sizeof(svalue), PSTR("{\"Scheme\":%d}"), sysCfg.ws_scheme);
-    }
-    
-    else if ((pin[GPIO_WS2812] < 99) && !strcmp(type,"LED")) {
-      do_cmnd_led(index, data);
-      return;
     }
 #endif  // USE_WS2812
 
@@ -1964,7 +1995,7 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
     if (i2c_flg) snprintf_P(svalue, sizeof(svalue), PSTR("%s, I2CScan"), svalue);
 #endif  // USE_I2C
 #ifdef USE_WS2812
-    if (pin[GPIO_WS2812] < 99) snprintf_P(svalue, sizeof(svalue), PSTR("%s, Pixels, Color, Dimmer, Scheme, Fade, Speed, LedTable"), svalue);
+    if (pin[GPIO_WS2812] < 99) snprintf_P(svalue, sizeof(svalue), PSTR("%s, Pixels, Led, Color, Dimmer, Scheme, Fade, Speed, LedTable"), svalue);
 #endif
     snprintf_P(svalue, sizeof(svalue), PSTR("%s\"}"), svalue);
 
