@@ -1,4 +1,9 @@
-/* 3.2.10 20170124
+/* 3.2.11 20170126
+ * Add confirmation before Restart via webpage
+ * Fix possible ESP8285 flash problem by updating Flash Chip Mode to DOUT during web upload
+ * Fix LedPower status after button press (#279)
+ *
+ * 3.2.10 20170124
  * Add confirmation before Reset Configuration via webpage (#244)
  * Add WS2812 features (see Wiki commands)
  *

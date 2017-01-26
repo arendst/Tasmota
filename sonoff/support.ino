@@ -220,47 +220,27 @@ void CFG_Erase()
 void CFG_Dump()
 {
   #define CFG_COLS 16
+  
   char log[LOGSZ];
-  uint8_t buffer[((sizeof(SYSCFG)+CFG_COLS)/CFG_COLS)*CFG_COLS];
-  uint16_t idx, row, col;
+  uint16_t idx, maxrow, row, col;
 
-  if (spiffsPresent()) {
-    if (!spiffsflag) {
-#ifdef USE_SPIFFS
-      File f = SPIFFS.open(SPIFFS_CONFIG, "r+");
-      if (f) {
-        uint8_t *bytes = (uint8_t*)&buffer;
-        for (int i = 0; i < sizeof(buffer); i++) bytes[i] = f.read();
-        f.close();
-        addLog(LOG_LEVEL_INFO, PSTR("Config: Loaded buffer from spiffs"));
-      } else {
-        addLog_P(LOG_LEVEL_ERROR, PSTR("Config: ERROR - Loading buffer failed"));
-      }
-    } else {
-#endif  // USE_SPIFFS
-      noInterrupts();
-      spi_flash_read((CFG_LOCATION + (sysCfg.saveFlag &1)) * SPI_FLASH_SEC_SIZE, (uint32*)&buffer, sizeof(buffer));
-      interrupts();
-      snprintf_P(log, sizeof(log), PSTR("Config: Loaded buffer from flash at %X"), CFG_LOCATION + (sysCfg.saveFlag &1));
-      addLog(LOG_LEVEL_INFO, log);
+  uint8_t *buffer = (uint8_t *) &sysCfg;
+  maxrow = ((sizeof(SYSCFG)+CFG_COLS)/CFG_COLS);
+
+  for (row = 0; row < maxrow; row++) {
+    idx = row * CFG_COLS;
+    snprintf_P(log, sizeof(log), PSTR("%04X:"), idx);
+    for (col = 0; col < CFG_COLS; col++) {
+      if (!(col%4)) snprintf_P(log, sizeof(log), PSTR("%s "), log);
+      snprintf_P(log, sizeof(log), PSTR("%s %02X"), log, buffer[idx + col]);
     }
-    for (row = 0; row < sizeof(buffer)/CFG_COLS; row++) {
-      idx = row * CFG_COLS;
-      snprintf_P(log, sizeof(log), PSTR("%04X:"), idx);
-      for (col = 0; col < CFG_COLS; col++) {
-        if (!(col%4)) snprintf_P(log, sizeof(log), PSTR("%s "), log);
-        snprintf_P(log, sizeof(log), PSTR("%s %02X"), log, buffer[idx + col]);
-      }
-      snprintf_P(log, sizeof(log), PSTR("%s |"), log);
-      for (col = 0; col < CFG_COLS; col++) {
-//        if (!(col%4)) snprintf_P(log, sizeof(log), PSTR("%s "), log);
-        snprintf_P(log, sizeof(log), PSTR("%s%c"), log, ((buffer[idx + col] > 0x20) && (buffer[idx + col] < 0x7F)) ? (char)buffer[idx + col] : ' ');
-      }
-      snprintf_P(log, sizeof(log), PSTR("%s|"), log);
-      addLog(LOG_LEVEL_INFO, log);
+    snprintf_P(log, sizeof(log), PSTR("%s |"), log);
+    for (col = 0; col < CFG_COLS; col++) {
+//      if (!(col%4)) snprintf_P(log, sizeof(log), PSTR("%s "), log);
+      snprintf_P(log, sizeof(log), PSTR("%s%c"), log, ((buffer[idx + col] > 0x20) && (buffer[idx + col] < 0x7F)) ? (char)buffer[idx + col] : ' ');
     }
-  } else {
-    addLog_P(LOG_LEVEL_ERROR, PSTR("Config: ERROR - No SPIFFS present"));
+    snprintf_P(log, sizeof(log), PSTR("%s|"), log);
+    addLog(LOG_LEVEL_INFO, log);
   }
 }
 

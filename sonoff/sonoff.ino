@@ -10,7 +10,7 @@
  * ====================================================
 */
 
-#define VERSION                0x03020A00   // 3.2.10
+#define VERSION                0x03020B00   // 3.2.11
 
 #define SONOFF                 1            // Sonoff, Sonoff RF, Sonoff SV, Sonoff Dual, Sonoff TH, S20 Smart Socket, 4 Channel
 #define SONOFF_POW             9            // Sonoff Pow
@@ -769,6 +769,12 @@ void setRelay(uint8_t power)
 #ifdef USE_POWERMONITOR
   power_steady_cntr = 2;
 #endif
+}
+
+void setLed(uint8_t state)
+{
+  if (state) state = 1;
+  digitalWrite(LED_PIN, (LED_INVERTED) ? !state : state);
 }
 
 void json2legacy(char* stopic, char* svalue)
@@ -1634,16 +1640,16 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
           sysCfg.ledstate ^= 8;
           break;
         }
-        uint8_t led = (sysCfg.ledstate >> 3) &1;
-//        digitalWrite(pin[GPIO_LED1], (led_inverted[0]) ? !led : led);
-        digitalWrite(LED_PIN, (LED_INVERTED) ? !led : led);
+        blinks = 0;
+//        uint8_t led = sysCfg.ledstate &8;
+        setLed(sysCfg.ledstate &8);
       }
       snprintf_P(svalue, sizeof(svalue), PSTR("{\"LedPower\":\"%s\"}"), (sysCfg.ledstate &8) ? MQTT_STATUS_ON : MQTT_STATUS_OFF);
     }
     else if (!strcmp(type,"LEDSTATE")) {
       if ((data_len > 0) && (payload >= 0) && (payload < MAX_LED_OPTION)) {
         sysCfg.ledstate = payload;
-        if (!sysCfg.ledstate) digitalWrite(LED_PIN, LED_INVERTED);
+        if (!sysCfg.ledstate) setLed(LED_INVERTED);
       }
       snprintf_P(svalue, sizeof(svalue), PSTR("{\"LedState\":%d}"), sysCfg.ledstate);
     }
@@ -2549,17 +2555,15 @@ void stateloop()
       } else {
         blinkstate ^= 1;  // Blink
       }
-      if ((sysCfg.ledstate &0x06) || (blinks > 200) || (blinkstate)) {
-        digitalWrite(LED_PIN, (LED_INVERTED) ? !blinkstate : blinkstate);
+      if ((!(sysCfg.ledstate &0x08)) && ((sysCfg.ledstate &0x06) || (blinks > 200) || (blinkstate))) {
+        setLed(blinkstate);
       }
       if (!blinkstate) {
         blinks--;
         if (blinks == 200) blinks = 0;
       }
     } else {
-      if (sysCfg.ledstate &0x01) {
-        digitalWrite(LED_PIN, (LED_INVERTED) ? !power : power);
-      }
+      if (sysCfg.ledstate &0x01) setLed(power);
     }
   }
 
@@ -2775,7 +2779,7 @@ void setup()
   getClient(MQTTClient, sysCfg.mqtt_client, sizeof(MQTTClient));
 
   pinMode(LED_PIN, OUTPUT);
-  digitalWrite(LED_PIN, (LED_INVERTED) ? !blinkstate : blinkstate);
+  setLed(sysCfg.ledstate &8);
 
   if ((sysCfg.model < SONOFF_DUAL) || (sysCfg.model > CHANNEL_4)) {
     pinMode(KEY_PIN, INPUT_PULLUP);

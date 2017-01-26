@@ -98,7 +98,7 @@ const char HTTP_BTN_MENU1[] PROGMEM =
   "<br/><form action='/up' method='post'><button>Firmware upgrade</button></form>"
   "<br/><form action='/cs' method='post'><button>Console</button></form>";
 const char HTTP_BTN_RSTRT[] PROGMEM =
-  "<br/><form action='/rb' method='post'><button>Restart</button></form>";
+  "<br/><form action='/rb' method='post' onsubmit='return confirm(\"Confirm Restart\");'><button>Restart</button></form>";
 const char HTTP_BTN_MENU2[] PROGMEM =
   "<br/><form action='/w0' method='post'><button>Configure WiFi</button></form>"
 #ifdef USE_MQTT
@@ -1033,6 +1033,13 @@ void handleUploadLoop()
         _uploaderror = 4;
         return;
       }
+      if ((MODULE == SONOFF_2) || (ESP.getFlashChipMode() == 3)) {
+        upload.buf[2] = 3; // DOUT - ESP8285
+      } else {
+        upload.buf[2] = 2; // DIO - ESP8266
+      }
+//      snprintf_P(log, sizeof(log), PSTR("Upload: Flash Chip Mode %02X"), upload.buf[2]);
+//      addLog(LOG_LEVEL_DEBUG, log);
     }
     if (!_uploaderror && (Update.write(upload.buf, upload.currentSize) != upload.currentSize)) {
       if (_serialoutput) Update.printError(Serial);
