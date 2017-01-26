@@ -36,6 +36,8 @@ POSSIBILITY OF SUCH DAMAGE.
   NeoPixelBus<NeoGrbFeature, NeoEsp8266BitBang800KbpsMethod> *strip = NULL;
 #endif  // USE_WS2812_DMA
 
+#define COLOR_SATURATION 254.0f
+
 struct wsColor {
   uint8_t red, green, blue;
 };
@@ -147,10 +149,34 @@ void ws2812_setColor(uint16_t led, char* colstr)
       sysCfg.ws_red = (uint8_t)fmyRed;
       sysCfg.ws_green = (uint8_t)fmyGrn;
       sysCfg.ws_blue = (uint8_t)fmyBlu;
-  
+
       lany = 1;
     }
   }
+}
+
+void ws2812_replaceHSB(String *response)
+{
+  ws2812_setDim(sysCfg.ws_dimmer);
+  HsbColor hsb=HsbColor(dcolor);
+  response->replace("{h}", String((uint16_t)(65535.0f * hsb.H)));
+  response->replace("{s}", String((uint8_t)(COLOR_SATURATION * hsb.S)));
+  response->replace("{b}", String((uint8_t)(COLOR_SATURATION * hsb.B)));
+}
+
+void ws2812_changeBrightness(uint8_t bri)
+{
+  char rgb[7];
+  
+  //sysCfg.ws_ledtable=1;                     // Switch on Gamma Correction for "natural" brightness controll
+  ws2812_setDim(sysCfg.ws_dimmer);
+  HsbColor hsb = HsbColor(dcolor);
+  if (!bri) bri=1;
+  if (bri==255) bri=252;
+  hsb.B=(float)(bri/COLOR_SATURATION);
+  RgbColor tmp = RgbColor(hsb);
+  sprintf(rgb,"%02X%02X%02X", tmp.R, tmp.G, tmp.B);
+  ws2812_setColor(0,rgb);
 }
 
 void ws2812_getColor(uint16_t led, char* svalue, uint16_t ssvalue)

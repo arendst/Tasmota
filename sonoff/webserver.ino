@@ -272,9 +272,9 @@ const char HUE_DESCRIPTION_XML[] PROGMEM =
 const char HUE_LIGHT_STATUS_JSON[] PROGMEM =
   "{\"state\":"
       "{\"on\":{state},"
-      "\"bri\":0,"
-      "\"hue\":0,"
-      "\"sat\":0,"
+      "\"bri\":{b},"
+      "\"hue\":{h},"
+      "\"sat\":{s},"
       "\"effect\":\"none\","
       "\"ct\":0,"
       "\"alert\":\"none\","
@@ -287,6 +287,9 @@ const char HUE_LIGHT_STATUS_JSON[] PROGMEM =
   "\"uniqueid\":\"{j2}\","
   "\"swversion\":\"66012040\""
   "}";
+
+const char HUE_LIGHT_RESPONSE_JSON[] PROGMEM =
+  "{\"success\":{\"{api}/{id}/{cmd}\":{res}}}";
 #endif  // USE_HUE_EMULATION
 
 #define DNS_PORT 53
@@ -1339,6 +1342,13 @@ void hue_lights(String path)
       response.replace("{state}", (power & (0x01 << (i-1))) ? "true" : "false");
       response.replace("{j1}", sysCfg.friendlyname[i-1]);
       response.replace("{j2}", hue_deviceId(i));  
+#ifdef USE_WS2812
+      ws2812_replaceHSB(&response);
+#else
+      response.replace("{h}", "0");
+      response.replace("{s}", "0");
+      response.replace("{b}", "0");
+#endif // USE_WS2812
     }
     response += "}";
     webServer->send(200, "application/json", response);
@@ -1349,8 +1359,11 @@ void hue_lights(String path)
     path.remove(path.indexOf("/state"));                    // Remove /state
     device = atoi(path.c_str());
     if ((device < 1) || (device > Maxdevice)) device = 1;
-    response = "{\"success\":{\"/lights/";
-    response += device;
+    response = "[";
+    response += FPSTR(HUE_LIGHT_RESPONSE_JSON);
+    response.replace("{api}", "/lights");
+    response.replace("{id}", String(device));
+    response.replace("{cmd}", "state/on");
     if (webServer->args() == 1) 
     {
       String json = webServer->arg(0);
@@ -1360,20 +1373,32 @@ void hue_lights(String path)
         if (json.indexOf("false") >= 0)      // false -> turn device off
         {
           do_cmnd_power(device, 0);
-          response +="/state/on\": false";
+          response.replace("{res}", "false");
         }
         else if(json.indexOf("true") >= 0)   // true -> Turn device on
         {
           do_cmnd_power(device, 1);
-          response +="/state/on\": true";        
+          response.replace("{res}", "true");
         }
         else
         {
-          response +="/state/on\": ";
-          response += (power & (0x01 << (device-1))) ? "true" : "false";
+          response.replace("{res}", (power & (0x01 << (device-1))) ? "true" : "false");
         }
       }
-      response += "}}";
+#ifdef USE_WS2812
+      if ((tmp=json.indexOf("\"bri\":")) >= 0)
+      {
+        tmp=atoi(json.substring(tmp+6).c_str());
+        ws2812_changeBrightness(tmp);
+        response += ",";
+        response += FPSTR(HUE_LIGHT_RESPONSE_JSON);
+        response.replace("{api}", "/lights");
+        response.replace("{id}", String(device));
+        response.replace("{cmd}", "state/bri");
+        response.replace("{res}", String(tmp));
+      }
+#endif // USE_WS2812
+      response += "]";
       webServer->send(200, "application/json", response);
     }   
     else webServer->send(406, "application/json", "{}");
@@ -1387,6 +1412,13 @@ void hue_lights(String path)
     response.replace("{state}", (power & (0x01 << (device -1))) ? "true" : "false");
     response.replace("{j1}", sysCfg.friendlyname[device -1]);
     response.replace("{j2}", hue_deviceId(device));
+#ifdef USE_WS2812
+    ws2812_replaceHSB(&response);
+#else
+    response.replace("{h}", "0");
+    response.replace("{s}", "0");
+    response.replace("{b}", "0");
+#endif // USE_WS2812
     webServer->send(200, "application/json", response);
   }
   else webServer->send(406, "application/json", "{}");

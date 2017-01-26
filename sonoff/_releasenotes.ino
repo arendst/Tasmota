@@ -1,4 +1,9 @@
-/* 3.2.11 20170126
+/* 3.2.12 20170126
+ * Add command Sleep 0 - 250 mSec for optional light sleep mode to lower energy consumption (#272)
+ *   (Expect overall button/key/switch misses and wrong values on Sonoff Pow)
+ * Add Hue brightness extension (#281)
+ *
+ * 3.2.11 20170126
  * Add confirmation before Restart via webpage
  * Fix possible ESP8285 flash problem by updating Flash Chip Mode to DOUT during web upload
  * Fix LedPower status after button press (#279)

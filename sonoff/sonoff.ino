@@ -10,7 +10,7 @@
  * ====================================================
 */
 
-#define VERSION                0x03020B00   // 3.2.11
+#define VERSION                0x03020C00   // 3.2.12
 
 #define SONOFF                 1            // Sonoff, Sonoff RF, Sonoff SV, Sonoff Dual, Sonoff TH, S20 Smart Socket, 4 Channel
 #define SONOFF_POW             9            // Sonoff Pow
@@ -330,6 +330,7 @@ struct SYSCFG {
   char          switch_topic[33];
   byte          mqtt_switch_retain;
   uint8_t       mqtt_enabled;
+  uint8_t       sleep;
 } sysCfg;
 
 struct TIME_T {
@@ -501,6 +502,7 @@ void CFG_DefaultSet()
   sysCfg.switchmode = SWITCH_MODE;
   sysCfg.blinktime = APP_BLINKTIME;
   sysCfg.blinkcount = APP_BLINKCOUNT;
+  sysCfg.sleep = APP_SLEEP;
 
   strlcpy(sysCfg.domoticz_in_topic, DOMOTICZ_IN_TOPIC, sizeof(sysCfg.domoticz_in_topic));
   strlcpy(sysCfg.domoticz_out_topic, DOMOTICZ_OUT_TOPIC, sizeof(sysCfg.domoticz_out_topic));
@@ -713,6 +715,9 @@ void CFG_Delta()
       strlcpy(sysCfg.switch_topic, sysCfg.button_topic, sizeof(sysCfg.switch_topic));
       sysCfg.mqtt_switch_retain = MQTT_SWITCH_RETAIN;
       sysCfg.mqtt_enabled = MQTT_USE;
+    }
+    if (sysCfg.version < 0x03020C00) {  // 3.2.12 - Add parameter
+      sysCfg.sleep = APP_SLEEP;
     }
 
     sysCfg.version = VERSION;
@@ -1284,6 +1289,13 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
       }
       snprintf_P(svalue, sizeof(svalue), PSTR("{\"Model\":%d}"), sysCfg.model);
     }
+    else if (!strcmp(type,"SLEEP")) {
+      if ((data_len > 0) && (payload >= 0) && (payload < 251)) {
+        sysCfg.sleep = payload;
+        restartflag = 2;
+      }
+      snprintf_P(svalue, sizeof(svalue), PSTR("{\"Sleep\":\"%d%s\"}"), sysCfg.sleep, (sysCfg.mqtt_units) ? " mS" : "");
+    }
     else if (!strcmp(type,"UPGRADE") || !strcmp(type,"UPLOAD")) {
       if ((data_len > 0) && (payload == 1)) {
         otaflag = 3;
@@ -1641,7 +1653,6 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
           break;
         }
         blinks = 0;
-//        uint8_t led = sysCfg.ledstate &8;
         setLed(sysCfg.ledstate &8);
       }
       snprintf_P(svalue, sizeof(svalue), PSTR("{\"LedPower\":\"%s\"}"), (sysCfg.ledstate &8) ? MQTT_STATUS_ON : MQTT_STATUS_OFF);
@@ -1872,7 +1883,7 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
   }
   if (type == NULL) {
     blinks = 201;
-    snprintf_P(svalue, sizeof(svalue), PSTR("{\"Commands1\":\"Status, SaveData, SaveSate, Upgrade, Otaurl, Restart, Reset, WifiConfig, Seriallog, Syslog, LogHost, LogPort, SSId1, SSId2, Password1, Password2, AP%s\"}"), (!grpflg) ? ", Hostname" : "");
+    snprintf_P(svalue, sizeof(svalue), PSTR("{\"Commands1\":\"Status, SaveData, SaveSate, Sleep, Upgrade, Otaurl, Restart, Reset, WifiConfig, Seriallog, Syslog, LogHost, LogPort, SSId1, SSId2, Password1, Password2, AP%s\"}"), (!grpflg) ? ", Hostname" : "");
     if (sysCfg.message_format != JSON) json2legacy(stopic, svalue);
     mqtt_publish(stopic, svalue);
 
@@ -2875,4 +2886,6 @@ void loop()
   if (Serial.available()) serial();
 
   yield();
+  
+  if (sysCfg.sleep) delay(sysCfg.sleep);
 }
