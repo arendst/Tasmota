@@ -52,7 +52,7 @@ enum led_t   {LED_OFF, LED_POWER, LED_MQTTSUB, LED_POWER_MQTTSUB, LED_MQTTPUB, L
 #endif
 
 #ifndef USE_DHT2
-#define USE_DHT1                            // Default DHT11 sensor needs no external library
+#define USE_DHT                             // Default DHT11 sensor needs no external library
 #endif
 
 #ifndef USE_DS18x20
