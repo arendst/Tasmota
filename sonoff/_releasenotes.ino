@@ -1,52 +1,47 @@
-/* 3.2.13 20170127
- * Prep for 4.0: Remove Legacy Info, Warning, Commands and Status messages
- * Add sleep status to StatusPRM message
- * Fix Hue brightness and change to call by reference (#283)
- *
- * 3.2.12 20170126
+/* 3.9.3 20170127
+ * Add confirmation before Restart via webpage
+ * Expand Domoticz Configuration webpage with Key, Switch and Sensor Index and 
+ *   add commands DomoticzSwitchIdx and DomoticzSensorIdx (#86) (#174) (#219)
+ * Fix default DHT11 sensor driver selection
+ * Fix LedPower status after button press (#279)
  * Add command Sleep 0 - 250 mSec for optional light sleep mode to lower energy consumption (#272)
  *   (Expect overall button/key/switch misses and wrong values on Sonoff Pow)
  * Add Hue brightness extension (#281)
+ * Fix Hue brightness and change to call by reference (#283)
  *
- * 3.2.11 20170126
- * Add confirmation before Restart via webpage
- * Fix possible ESP8285 flash problem by updating Flash Chip Mode to DOUT during web upload
- * Fix LedPower status after button press (#279)
- *
- * 3.2.10 20170124
+ * 3.9.2 20170124
  * Add confirmation before Reset Configuration via webpage (#244)
  * Add WS2812 features (see Wiki commands)
  *
- * 3.2.9 20170124
- * Fix compile error when MQTT is disabled (#269)
- *
- * 3.2.8 20170124
- * Change PowerOnState function to only trigger when Power On (and not on restart) (#238)
- * Add command LedPower On|Off to control main led (#247)
+ * 3.9.1 20170124
+ * Change PowerOnState function to only trigger when Power On (and not just restart) (#238)
+ * Move HLW interrupts back to RAM and make WS2812_DMA optional as it generates Exception on Pow (#264)
  * Add charset=utf-8 to webpages (#266)
  * Update Hue emulation (#268)
- * Rewrite WS2812 code and prep for 4.0
- * Add support for domoticz Dimmer on WS2812
- * Add commands SwitchTopic and SwitchRetain On|Off to be used with external switch instead of ButtonTopic and ButtonRetain
- * Enforce at least IDE 1.6.10 and ESP8266 2.3.0
+ * Fix status module number
+ * Add support for domoticz Dimmer on Sonoff_Led and WS2812
+ * Fix possible ESP8285 flash problem by updating Flash Chip Mode to DOUT during web upload
  *
- * 3.2.7 20170122
- * Move HLW interrupts back to RAM as it generates Exception on Pow (#264)
- *
- * 3.2.6 20170119
+ * 3.2.6a 20170120
  * Fix Sonoff Pow compile error (#255)
- * Move HLW interrupts back to ROM
- *
- * 3.2.5 20170119
+ * Move HLW interrupts back to ROM (Needed for WS2812 DMA interrupts)
+ * Removed all IO config from user_config.h as this will be done by commands or webpage
+ * Removed MessageFormat and supports JSON only except POWER/LIGHT status
+ * Add command LedPower to control main led (#247)
  * Add more FriendlyNames for Hue (#254)
- * Add DMA support for WS2812 when using pin 3
- *
- * 3.2.4 20170118
+ * Add DMA support for WS2812 when using pin 3 while other pins work just as well in my case...
  * Add HUE emulation for Alexa (#229)
  * Add basic WS2812 support (#229)
- * 
- * 3.2.3 20170116
  * Fix Wemo when MQTT is disabled (#245)
+ * Revert ButtonTopic and change SwitchTopic1 - 4 to one SwitchTopic
+ * Rename MqttUnits to Units
+ * Add Mqtt command to enable/disable MQTT
+ *
+ * 3.2.2a 20170115
+ * Add dynamic (Sonoff) Module, user GPIO and sensor selection (one size fits (almost) all)
+ * Add support for Sonoff LED
+ * Add Seriallog disable after 600 seconds for Sonoff Dual and 4 Channel
+ * Add ButtonTopic2 - 4, SwitchTopic1 - 4 and SwitchRetain
  *
  * 3.2.2 20170113
  * Fix PowerOnState 2 functionality after re-applying power (#230)
