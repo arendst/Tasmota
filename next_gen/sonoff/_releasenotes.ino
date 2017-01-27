@@ -1,4 +1,7 @@
-/* 3.9.3 20170127
+/* 3.9.4 20170127
+ * Fix Sonoff Dual Relay switching (#287)
+ *
+ * 3.9.3 20170127
  * Add confirmation before Restart via webpage
  * Expand Domoticz Configuration webpage with Key, Switch and Sensor Index and 
  *   add commands DomoticzSwitchIdx and DomoticzSensorIdx (#86) (#174) (#219)

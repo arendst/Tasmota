@@ -10,7 +10,7 @@
  * ====================================================
 */
 
-#define VERSION                0x03090300   // 3.9.3
+#define VERSION                0x03090400   // 3.9.4
 
 enum log_t   {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG_MORE, LOG_LEVEL_ALL};
 enum week_t  {Last, First, Second, Third, Fourth};
@@ -2611,7 +2611,7 @@ void GPIO_init()
 
   swt_flg = ((pin[GPIO_SWT1] < 99) || (pin[GPIO_SWT2] < 99) || (pin[GPIO_SWT3] < 99) || (pin[GPIO_SWT4] < 99));
 
-  if ((sysCfg.module == SONOFF_DUAL) && (sysCfg.module == CH4)) {
+  if ((sysCfg.module == SONOFF_DUAL) || (sysCfg.module == CH4)) {
     Baudrate = 19200;
   } else {  
     if (sysCfg.module == SONOFF_LED) {
