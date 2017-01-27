@@ -1314,23 +1314,24 @@ void handleUPnPsetup()
   webServer->send(200, "text/xml", description_xml);
 }
 
-void hue_todo(String path)
+void hue_todo(String *path)
 {
   char log[LOGSZ];
   
-  snprintf_P(log, sizeof(log), PSTR("HTTP: HUE API not implemented (%s)"),path.c_str());
+  snprintf_P(log, sizeof(log), PSTR("HTTP: HUE API not implemented (%s)"),path->c_str());
   addLog(LOG_LEVEL_DEBUG_MORE, log);
 }
 
-void hue_lights(String path)
+void hue_lights(String *path)
 {
   String response;
   uint8_t device = 1;
-  uint8_t tmp = 0;
+  int16_t pos = 0;
+  uint8_t bri = 0;
   char id[4];
 
-  path.remove(0,path.indexOf("/lights"));                 // Remove until /lights
-  if (path.endsWith("/lights"))                           // Got /lights
+  path->remove(0,path->indexOf("/lights"));                 // Remove until /lights
+  if (path->endsWith("/lights"))                           // Got /lights
   {
     response = "{\"";
     for (uint8_t i = 1; i <= Maxdevice; i++)
@@ -1353,11 +1354,11 @@ void hue_lights(String path)
     response += "}";
     webServer->send(200, "application/json", response);
   }
-  else if (path.endsWith("/state"))                         // Got ID/state
+  else if (path->endsWith("/state"))                         // Got ID/state
   {
-    path.remove(0,8);                                       // Remove /lights/
-    path.remove(path.indexOf("/state"));                    // Remove /state
-    device = atoi(path.c_str());
+    path->remove(0,8);                                       // Remove /lights/
+    path->remove(path->indexOf("/state"));                    // Remove /state
+    device = atoi(path->c_str());
     if ((device < 1) || (device > Maxdevice)) device = 1;
     response = "[";
     response += FPSTR(HUE_LIGHT_RESPONSE_JSON);
@@ -1386,16 +1387,16 @@ void hue_lights(String path)
         }
       }
 #ifdef USE_WS2812
-      if ((tmp=json.indexOf("\"bri\":")) >= 0)
+      if ((pos=json.indexOf("\"bri\":")) >= 0)
       {
-        tmp=atoi(json.substring(tmp+6).c_str());
-        ws2812_changeBrightness(tmp);
+        bri=atoi(json.substring(pos+6).c_str());
+        ws2812_changeBrightness(bri);
         response += ",";
         response += FPSTR(HUE_LIGHT_RESPONSE_JSON);
         response.replace("{api}", "/lights");
         response.replace("{id}", String(device));
         response.replace("{cmd}", "state/bri");
-        response.replace("{res}", String(tmp));
+        response.replace("{res}", String(bri));
       }
 #endif // USE_WS2812
       response += "]";
@@ -1403,10 +1404,10 @@ void hue_lights(String path)
     }   
     else webServer->send(406, "application/json", "{}");
   }
-  else if((tmp=path.indexOf("/lights/")) >= 0)              // Got /lights/ID
+  else if(path->indexOf("/lights/") >= 0)              // Got /lights/ID
   {
-    path.remove(0,8);                                       // Remove /lights/
-    device = atoi(path.c_str());
+    path->remove(0,8);                                 // Remove /lights/
+    device = atoi(path->c_str());
     if ((device < 1) || (device > Maxdevice)) device = 1;
     response = FPSTR(HUE_LIGHT_STATUS_JSON);
     response.replace("{state}", (power & (0x01 << (device -1))) ? "true" : "false");
@@ -1424,7 +1425,7 @@ void hue_lights(String path)
   else webServer->send(406, "application/json", "{}");
 }
 
-void handle_hue_api(String path)
+void handle_hue_api(String *path)
 {
   /* HUE API uses /api/<userid>/<command> syntax. The userid is created by the echo device and
    * on original HUE the pressed button allows for creation of this user. We simply ignore the
@@ -1435,18 +1436,18 @@ void handle_hue_api(String path)
    
   char log[LOGSZ];
 
-  path.remove(0, 4);                                // remove /api      
-  if (path.endsWith("/invalid/")) {}                // Just ignore
-  else if (path.endsWith("/config")) hue_todo(path);
-  else if(path.indexOf("/lights") >= 0) hue_lights(path);
-  else if(path.endsWith("/groups")) hue_todo(path);
-  else if(path.endsWith("/schedules")) hue_todo(path); 
-  else if(path.endsWith("/sensors")) hue_todo(path);
-  else if(path.endsWith("/scenes")) hue_todo(path);
-  else if(path.endsWith("/rules")) hue_todo(path);
+  path->remove(0, 4);                                // remove /api      
+  if (path->endsWith("/invalid/")) {}                // Just ignore
+  else if (path->endsWith("/config")) hue_todo(path);
+  else if(path->indexOf("/lights") >= 0) hue_lights(path);
+  else if(path->endsWith("/groups")) hue_todo(path);
+  else if(path->endsWith("/schedules")) hue_todo(path); 
+  else if(path->endsWith("/sensors")) hue_todo(path);
+  else if(path->endsWith("/scenes")) hue_todo(path);
+  else if(path->endsWith("/rules")) hue_todo(path);
   else 
   {
-    snprintf_P(log, sizeof(log), PSTR("HTTP: Handle Hue API (%s)"),path.c_str());
+    snprintf_P(log, sizeof(log), PSTR("HTTP: Handle Hue API (%s)"),path->c_str());
     addLog(LOG_LEVEL_DEBUG_MORE, log);
     webServer->send(406, "application/json", "{}");
   }
@@ -1464,7 +1465,7 @@ void handleNotFound()
 #ifdef USE_HUE_EMULATION  
   String path = webServer->uri();
   if (path.startsWith("/api"))
-    handle_hue_api(path);
+    handle_hue_api(&path);
   else {
 #endif // USE_HUE_EMULATION
   

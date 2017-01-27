@@ -1,4 +1,9 @@
-/* 3.2.12 20170126
+/* 3.2.13 20170127
+ * Prep for 4.0: Remove Legacy Info, Warning, Commands and Status messages
+ * Add sleep status to StatusPRM message
+ * Fix Hue brightness and change to call by reference (#283)
+ *
+ * 3.2.12 20170126
  * Add command Sleep 0 - 250 mSec for optional light sleep mode to lower energy consumption (#272)
  *   (Expect overall button/key/switch misses and wrong values on Sonoff Pow)
  * Add Hue brightness extension (#281)

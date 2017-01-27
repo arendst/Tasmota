@@ -142,7 +142,7 @@ void hue_respondToMSearch()
     portUDP.write(response.c_str());
     portUDP.endPacket();
     snprintf_P(message, sizeof(message), PSTR("Response1 sent"));
-    addLog(LOG_LEVEL_DEBUG_MORE, response.c_str());
+//    addLog(LOG_LEVEL_DEBUG_MORE, response.c_str());
     
     response = FPSTR(HUE_RESPONSE);
     response_st=FPSTR(HUE_ST2);
@@ -154,7 +154,7 @@ void hue_respondToMSearch()
     portUDP.write(response.c_str());
     portUDP.endPacket();
     snprintf_P(message, sizeof(message), PSTR("Response2 sent"));
-    addLog(LOG_LEVEL_DEBUG_MORE, response.c_str());
+//    addLog(LOG_LEVEL_DEBUG_MORE, response.c_str());
     
     response = FPSTR(HUE_RESPONSE);
     response_st=FPSTR(HUE_ST3);
@@ -165,7 +165,7 @@ void hue_respondToMSearch()
     portUDP.write(response.c_str());
     portUDP.endPacket();
     snprintf_P(message, sizeof(message), PSTR("Response3 sent"));
-    addLog(LOG_LEVEL_DEBUG_MORE, response.c_str());
+//    addLog(LOG_LEVEL_DEBUG_MORE, response.c_str());
 
   } else {
     snprintf_P(message, sizeof(message), PSTR("Failed to send response"));
