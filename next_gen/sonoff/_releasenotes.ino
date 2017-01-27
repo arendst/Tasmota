@@ -1,7 +1,7 @@
 /* 3.9.3 20170127
  * Add confirmation before Restart via webpage
  * Expand Domoticz Configuration webpage with Key, Switch and Sensor Index and 
- *   add commands DomoticzSwitchIdx and DomoticzSensorIdx
+ *   add commands DomoticzSwitchIdx and DomoticzSensorIdx (#86) (#174) (#219)
  * Fix default DHT11 sensor driver selection
  * Fix LedPower status after button press (#279)
  * Add command Sleep 0 - 250 mSec for optional light sleep mode to lower energy consumption (#272)
