@@ -172,7 +172,7 @@ boolean dsb_readTemp(bool S, float &t)
  * Presentation
 \*********************************************************************************************/
 
-void dsb_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
+void dsb_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson, uint8_t domidx)
 {
   char stemp1[10];
   float t;
@@ -181,6 +181,9 @@ void dsb_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
     dtostrf(t, 1, TEMP_RESOLUTION &3, stemp1);
     snprintf_P(svalue, ssvalue, PSTR("%s, \"DS18B20\":{\"Temperature\":\"%s\"}"), svalue, stemp1);
     *djson = 1;
+#ifdef USE_DOMOTICZ
+    domoticz_sensor1(stemp1);
+#endif  // USE_DOMOTICZ
   }
 }
 

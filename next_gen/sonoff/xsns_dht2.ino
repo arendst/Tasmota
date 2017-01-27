@@ -57,7 +57,7 @@ void dht_init()
  * Presentation
 \*********************************************************************************************/
 
-void dht_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
+void dht_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson, uint8_t domidx)
 {
   char stemp1[10], stemp2[10];
   float t, h;
@@ -67,6 +67,9 @@ void dht_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
     dtostrf(h, 1, HUMIDITY_RESOLUTION &3, stemp2);
     snprintf_P(svalue, ssvalue, PSTR("%s, \"DHT\":{\"Temperature\":\"%s\", \"Humidity\":\"%s\"}"), svalue, stemp1, stemp2);
     *djson = 1;
+#ifdef USE_DOMOTICZ
+    domoticz_sensor2(stemp1, stemp2);
+#endif  // USE_DOMOTICZ
   }
 }
 

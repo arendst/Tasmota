@@ -229,7 +229,7 @@ uint8_t htu_detect()
  * Presentation
 \*********************************************************************************************/
 
-void htu_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
+void htu_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson, uint8_t domidx)
 {
   if (!htutype) return;
 
@@ -242,6 +242,9 @@ void htu_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
   dtostrf(h, 1, HUMIDITY_RESOLUTION &3, stemp2);
   snprintf_P(svalue, ssvalue, PSTR("%s, \"%s\":{\"Temperature\":\"%s\", \"Humidity\":\"%s\"}"), svalue, htustype, stemp1, stemp2);
   *djson = 1;
+#ifdef USE_DOMOTICZ
+  domoticz_sensor2(stemp1, stemp2);
+#endif  // USE_DOMOTICZ
 }
 
 #ifdef USE_WEBSERVER

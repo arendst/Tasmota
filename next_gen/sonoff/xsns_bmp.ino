@@ -424,18 +424,18 @@ boolean bmp_detect()
  * Presentation
 \*********************************************************************************************/
 
-void bmp_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
+void bmp_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson, uint8_t domidx)
 {
   if (!bmptype) return;
 
   char stemp1[10], stemp2[10], stemp3[10];
 
-  double t_bmp = bmp_readTemperature(TEMP_CONVERSION);
-  double p_bmp = bmp_readPressure();
-  double h_bmp = bmp_readHumidity();
-  dtostrf(t_bmp, 1, TEMP_RESOLUTION &3, stemp1);
-  dtostrf(p_bmp, 1, PRESSURE_RESOLUTION &3, stemp2);
-  dtostrf(h_bmp, 1, HUMIDITY_RESOLUTION &3, stemp3);
+  double t = bmp_readTemperature(TEMP_CONVERSION);
+  double p = bmp_readPressure();
+  double h = bmp_readHumidity();
+  dtostrf(t, 1, TEMP_RESOLUTION &3, stemp1);
+  dtostrf(p, 1, PRESSURE_RESOLUTION &3, stemp2);
+  dtostrf(h, 1, HUMIDITY_RESOLUTION &3, stemp3);
   if (!strcmp(bmpstype,"BME280")) {
     snprintf_P(svalue, ssvalue, PSTR("%s, \"%s\":{\"Temperature\":\"%s\", \"Humidity\":\"%s\", \"Pressure\":\"%s\"}"),
       svalue, bmpstype, stemp1, stemp3, stemp2);
@@ -444,6 +444,9 @@ void bmp_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
       svalue, bmpstype, stemp1, stemp2);
   }
   *djson = 1;
+#ifdef USE_DOMOTICZ
+  domoticz_sensor3(stemp1, stemp3, stemp2); 
+#endif  // USE_DOMOTICZ
 }
 
 #ifdef USE_WEBSERVER

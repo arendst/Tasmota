@@ -82,13 +82,16 @@ boolean bh1750_detect()
  * Presentation
 \*********************************************************************************************/
 
-void bh1750_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
+void bh1750_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson, uint8_t domidx)
 {
   if (!bh1750type) return;
-  
+
   uint16_t l = bh1750_readLux();
   snprintf_P(svalue, ssvalue, PSTR("%s, \"%s\":{\"Illuminance\":%d}"), svalue, bh1750stype, l);
   *djson = 1;
+#ifdef USE_DOMOTICZ
+  domoticz_sensor5(l);
+#endif  // USE_DOMOTICZ
 }
 
 #ifdef USE_WEBSERVER

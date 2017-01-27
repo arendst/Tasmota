@@ -75,14 +75,6 @@
 #define USE_DOMOTICZ                             // Enable Domoticz (+5k code, +0.3k mem) - Disable by //
   #define DOMOTICZ_IN_TOPIC      "domoticz/in"   // [DomoticzInTopic]
   #define DOMOTICZ_OUT_TOPIC     "domoticz/out"  // [DomoticzOutTopic]
-  #define DOMOTICZ_RELAY_IDX1    0               // [DomoticzIdx1] Sonoff Relay 1 (0 = disable domoticz)
-  #define DOMOTICZ_RELAY_IDX2    0               // [DomoticzIdx2] Sonoff Dual and 4CH Relay 2
-  #define DOMOTICZ_RELAY_IDX3    0               // [DomoticzIdx3] Sonoff 4CH Relay 3
-  #define DOMOTICZ_RELAY_IDX4    0               // [DomoticzIdx4] Sonoff 4CH Relay 4
-  #define DOMOTICZ_KEY_IDX1      0               // [DomoticzKeyIdx1] Button single press (0 = disable)
-  #define DOMOTICZ_KEY_IDX2      0               // [DomoticzKeyIdx2] Button double press (0 = disable)
-  #define DOMOTICZ_KEY_IDX3      0               // [DomoticzKeyIdx3] Sonoff 4CH Button 3
-  #define DOMOTICZ_KEY_IDX4      0               // [DomoticzKeyIdx4] Sonoff 4CH Button 4
   #define DOMOTICZ_UPDATE_TIMER  0               // [DomoticzUpdateTimer] Send relay status (0 = disable, 1 - 3600 seconds) (Optional)
 
 // -- HTTP ----------------------------------------
@@ -118,6 +110,7 @@
 #define APP_POWERON_STATE      3                 // [PowerOnState] Power On Relay state (0 = Off, 1 = On, 2 = Toggle Saved state, 3 = Saved state)
 #define APP_BLINKTIME          10                // [BlinkTime] Time in 0.1 Sec to blink/toggle power for relay 1
 #define APP_BLINKCOUNT         10                // [BlinkCount] Number of blinks (0 = 32000)
+#define APP_SLEEP              0                 // [Sleep] Sleep time to lower energy consumption (0 = Off, 1 - 250 mSec) 
 
 #define SWITCH_MODE            TOGGLE            // [SwitchMode] TOGGLE, FOLLOW, FOLLOW_INV, PUSHBUTTON or PUSHBUTTON_INV (the wall switch state)
 #define WS2812_LEDS            30                // [Pixels] Number of WS2812 LEDs to start with

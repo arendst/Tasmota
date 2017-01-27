@@ -364,7 +364,7 @@ void hlw_margin_chk()
  * Presentation
 \*********************************************************************************************/
 
-void hlw_mqttPresent()
+void hlw_mqttPresent(uint8_t domidx)
 {
   char stopic[TOPSZ], svalue[MESSZ], stime[21], stemp0[10], stemp1[10], stemp2[10], stemp3[10];
   float ped, pi, pc;
@@ -381,6 +381,10 @@ void hlw_mqttPresent()
   snprintf_P(svalue, sizeof(svalue), PSTR("{\"Time\":\"%s\", \"Energy\":{\"Yesterday\":\"%s\", \"Today\":\"%s\", \"Period\":%d, \"Power\":%d, \"Factor\":\"%s\", \"Voltage\":%d, \"Current\":\"%s\"}}"),
     stime, stemp0, stemp1, pe, pw, stemp2, pu, stemp3);
   mqtt_publish(stopic, svalue);
+#ifdef USE_DOMOTICZ
+  dtostrf(ped * 1000, 1, 1, stemp1);
+  domoticz_sensor4(pw, stemp1);
+#endif  // USE_DOMOTICZ
 }
 
 #ifdef USE_WEBSERVER

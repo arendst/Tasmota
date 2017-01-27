@@ -1,4 +1,15 @@
-/* 3.9.2 20170124
+/* 3.9.3 20170127
+ * Add confirmation before Restart via webpage
+ * Expand Domoticz Configuration webpage with Key, Switch and Sensor Index and 
+ *   add commands DomoticzSwitchIdx and DomoticzSensorIdx
+ * Fix default DHT11 sensor driver selection
+ * Fix LedPower status after button press (#279)
+ * Add command Sleep 0 - 250 mSec for optional light sleep mode to lower energy consumption (#272)
+ *   (Expect overall button/key/switch misses and wrong values on Sonoff Pow)
+ * Add Hue brightness extension (#281)
+ * Fix Hue brightness and change to call by reference (#283)
+ *
+ * 3.9.2 20170124
  * Add confirmation before Reset Configuration via webpage (#244)
  * Add WS2812 features (see Wiki commands)
  *

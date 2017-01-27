@@ -97,7 +97,7 @@ const char HTTP_BTN_MENU1[] PROGMEM =
   "<br/><form action='/up' method='post'><button>Firmware upgrade</button></form>"
   "<br/><form action='/cs' method='post'><button>Console</button></form>";
 const char HTTP_BTN_RSTRT[] PROGMEM =
-  "<br/><form action='/rb' method='post'><button>Restart</button></form>";
+  "<br/><form action='/rb' method='post' onsubmit='return confirm(\"Confirm Restart\");'><button>Restart</button></form>";
 const char HTTP_BTN_MENU2[] PROGMEM =
   "<br/><form action='/md' method='post'><button>Configure Module</button></form>"
   "<br/><form action='/w0' method='post'><button>Configure WiFi</button></form>";
@@ -140,16 +140,6 @@ const char HTTP_FORM_MQTT[] PROGMEM =
   "<br/><b>User</b> (" MQTT_USER ")<br/><input id='mu' name='mu' length=32 placeholder='" MQTT_USER "' value='{m4}'><br/>"
   "<br/><b>Password</b><br/><input id='mp' name='mp' length=32 type='password' placeholder='" MQTT_PASS "' value='{m5}'><br/>"
   "<br/><b>Topic</b> (" MQTT_TOPIC ")<br/><input id='mt' name='mt' length=32 placeholder='" MQTT_TOPIC" ' value='{m6}'><br/>";
-#ifdef USE_DOMOTICZ
-const char HTTP_FORM_DOMOTICZ[] PROGMEM =
-  "<fieldset><legend><b>&nbsp;Domoticz parameters&nbsp;</b></legend><form method='post' action='sv'>"
-  "<input id='w' name='w' value='4' hidden><input id='r' name='r' value='1' hidden>"
-  "<br/><b>In topic</b> (" DOMOTICZ_IN_TOPIC ")<br/><input id='it' name='it' length=32 placeholder='" DOMOTICZ_IN_TOPIC "' value='{d1}'><br/>"
-  "<br/><b>Out topic</b> (" DOMOTICZ_OUT_TOPIC ")<br/><input id='ot' name='ot' length=32 placeholder='" DOMOTICZ_OUT_TOPIC "' value='{d2}'><br/>"
-  "<br/><b>Idx 1</b> (" STR(DOMOTICZ_RELAY_IDX1) ")<br/><input id='ix' name='ix' length=8 placeholder='" STR(DOMOTICZ_RELAY_IDX1) "' value='{d3}'><br/>";
-const char HTTP_FORM_DOMOTICZ2[] PROGMEM =
-  "<br/><b>Update timer</b> (" STR(DOMOTICZ_UPDATE_TIMER) ")<br/><input id='ut' name='ut' length=32 placeholder='" STR(DOMOTICZ_UPDATE_TIMER) "' value='{d7}'><br/>";
-#endif  // USE_DOMOTICZ
 const char HTTP_FORM_LOG1[] PROGMEM =
   "<fieldset><legend><b>&nbsp;Logging parameters&nbsp;</b></legend><form method='post' action='sv'>"
   "<input id='w' name='w' value='3' hidden><input id='r' name='r' value='0' hidden>";
@@ -275,9 +265,9 @@ const char HUE_DESCRIPTION_XML[] PROGMEM =
 const char HUE_LIGHT_STATUS_JSON[] PROGMEM =
   "{\"state\":"
       "{\"on\":{state},"
-      "\"bri\":0,"
-      "\"hue\":0,"
-      "\"sat\":0,"
+      "\"bri\":{b},"
+      "\"hue\":{h},"
+      "\"sat\":{s},"
       "\"effect\":\"none\","
       "\"ct\":0,"
       "\"alert\":\"none\","
@@ -290,6 +280,9 @@ const char HUE_LIGHT_STATUS_JSON[] PROGMEM =
   "\"uniqueid\":\"{j2}\","
   "\"swversion\":\"66012040\""
   "}";
+
+const char HUE_LIGHT_RESPONSE_JSON[] PROGMEM =
+  "{\"success\":{\"{api}/{id}/{cmd}\":{res}}}";
 #endif  // USE_HUE_EMULATION
 
 #define DNS_PORT 53
@@ -699,41 +692,6 @@ void handleMqtt()
   showPage(page);
 }
 
-#ifdef USE_DOMOTICZ
-void handleDomoticz()
-{
-  if (_httpflag == HTTP_USER) {
-    handleRoot();
-    return;
-  }
-  addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Handle Domoticz config"));
-
-  String page = FPSTR(HTTP_HEAD);
-  page.replace("{v}", "Configure Domoticz");
-  page += FPSTR(HTTP_FORM_DOMOTICZ);
-  page.replace("{d1}", String(sysCfg.domoticz_in_topic));
-  page.replace("{d2}", String(sysCfg.domoticz_out_topic));
-  page.replace("{d3}", String((int)sysCfg.domoticz_relay_idx[0]));
-  if (Maxdevice > 1) {
-    page += F("<br/><b>Idx 2</b> (" STR(DOMOTICZ_RELAY_IDX2) ")<br/><input id='iy' name='iy' length=8 placeholder='" STR(DOMOTICZ_RELAY_IDX2) "' value='{d4}'><br/>");
-    page.replace("{d4}", String((int)sysCfg.domoticz_relay_idx[1]));
-  }
-  if (Maxdevice > 2) {
-    page += F("<br/><b>Idx 3</b> (" STR(DOMOTICZ_RELAY_IDX3) ")<br/><input id='iz' name='iz' length=8 placeholder='" STR(DOMOTICZ_RELAY_IDX3) "' value='{d5}'><br/>");
-    page.replace("{d5}", String((int)sysCfg.domoticz_relay_idx[2]));
-  }
-  if (Maxdevice > 3) {
-    page += F("<br/><b>Idx 4</b> (" STR(DOMOTICZ_RELAY_IDX4) ")<br/><input id='iw' name='iw' length=8 placeholder='" STR(DOMOTICZ_RELAY_IDX4) "' value='{d6}'><br/>");
-    page.replace("{d6}", String((int)sysCfg.domoticz_relay_idx[3]));
-  }
-  page += FPSTR(HTTP_FORM_DOMOTICZ2);
-  page.replace("{d7}", String((int)sysCfg.domoticz_update_timer));
-  page += FPSTR(HTTP_FORM_END);
-  page += FPSTR(HTTP_BTN_CONF);
-  showPage(page);
-}
-#endif  // USE_DOMOTICZ
-
 void handleLog()
 {
   if (_httpflag == HTTP_USER) {
@@ -795,27 +753,14 @@ void handleOther()
   page.replace("{v}", "Configure Other");
   page += FPSTR(HTTP_FORM_OTHER);
   page.replace("{r1}", (sysCfg.mqtt_enabled) ? " checked" : "");
-  for (byte i = 0; i < Maxdevice; i++) {
-    page += F("<br/><b>Friendly Name ");
-    page += i +1;
-    page += F("</b> ({fn})<br/><input id='{id}' name='{id}' length=32 placeholder='{fn}' value='{f1}'><br/>");
-    if (i == 0) {
-      page.replace("{fn}", FRIENDLY_NAME1);
-      page.replace("{id}", "a1");
-    }
-    if (i == 1) {
-      page.replace("{fn}", FRIENDLY_NAME2);
-      page.replace("{id}", "a2");
-    }
-    else if (i == 2) {
-      page.replace("{fn}", FRIENDLY_NAME3);
-      page.replace("{id}", "a3");
-    }
-    else if (i == 3) {
-      page.replace("{fn}", FRIENDLY_NAME4);
-      page.replace("{id}", "a4");
-    }
-    page.replace("{f1}", String(sysCfg.friendlyname[i]));
+  for (int i = 0; i < Maxdevice; i++) {
+    page += F("<br/><b>Friendly Name {1</b> ({2)<br/><input id='a{1' name='a{1' length=32 placeholder='{2' value='{3'><br/>");
+    page.replace("{1", String(i +1));
+    if (i == 0) page.replace("{2", FRIENDLY_NAME1);
+    else if (i == 1) page.replace("{2", FRIENDLY_NAME2);
+    else if (i == 2) page.replace("{2", FRIENDLY_NAME3);
+    else if (i == 3) page.replace("{2", FRIENDLY_NAME4);
+    page.replace("{3", String(sysCfg.friendlyname[i]));
   }
   page += FPSTR(HTTP_FORM_END);
   page += FPSTR(HTTP_BTN_CONF);
@@ -874,17 +819,7 @@ void handleSave()
     break;
 #ifdef USE_DOMOTICZ
   case 4:
-    strlcpy(sysCfg.domoticz_in_topic, (!strlen(webServer->arg("it").c_str())) ? DOMOTICZ_IN_TOPIC : webServer->arg("it").c_str(), sizeof(sysCfg.domoticz_in_topic));
-    strlcpy(sysCfg.domoticz_out_topic, (!strlen(webServer->arg("ot").c_str())) ? DOMOTICZ_OUT_TOPIC : webServer->arg("ot").c_str(), sizeof(sysCfg.domoticz_out_topic));
-    sysCfg.domoticz_relay_idx[0] = (!strlen(webServer->arg("ix").c_str())) ? DOMOTICZ_RELAY_IDX1 : atoi(webServer->arg("ix").c_str());
-    sysCfg.domoticz_relay_idx[1] = (!strlen(webServer->arg("iy").c_str())) ? DOMOTICZ_RELAY_IDX2 : atoi(webServer->arg("iy").c_str());
-    sysCfg.domoticz_relay_idx[2] = (!strlen(webServer->arg("iz").c_str())) ? DOMOTICZ_RELAY_IDX3 : atoi(webServer->arg("iz").c_str());
-    sysCfg.domoticz_relay_idx[3] = (!strlen(webServer->arg("iw").c_str())) ? DOMOTICZ_RELAY_IDX4 : atoi(webServer->arg("iw").c_str());
-    sysCfg.domoticz_update_timer = (!strlen(webServer->arg("ut").c_str())) ? DOMOTICZ_UPDATE_TIMER : atoi(webServer->arg("ut").c_str());
-    snprintf_P(log, sizeof(log), PSTR("HTTP: Domoticz in_topic %s, out_topic %s, idx1 %d, idx2 %d, idx3 %d, idx4 %d, update_timer %d"),
-      sysCfg.domoticz_in_topic, sysCfg.domoticz_out_topic, sysCfg.domoticz_relay_idx[0], sysCfg.domoticz_relay_idx[1],
-      sysCfg.domoticz_relay_idx[2], sysCfg.domoticz_relay_idx[3], sysCfg.domoticz_update_timer);
-    addLog(LOG_LEVEL_INFO, log);
+    domoticz_saveSettings();
     break;
 #endif  // USE_DOMOTICZ
   case 5:
@@ -1101,7 +1036,7 @@ void handleUploadLoop()
         _uploaderror = 4;
         return;
       }
-      if ((sysCfg.module == SONOFF_TOUCH) || (sysCfg.module == SONOFF_4CH)) {
+      if ((sysCfg.module == SONOFF_TOUCH) || (sysCfg.module == SONOFF_4CH) || (ESP.getFlashChipMode() == 3)) {
         upload.buf[2] = 3; // DOUT - ESP8285
       } else {
         upload.buf[2] = 2; // DIO - ESP8266
@@ -1365,6 +1300,7 @@ void handleUPnPsetup()
 String hue_deviceId(uint8_t id)
 {
   char deviceid[16];
+  
   snprintf_P(deviceid, sizeof(deviceid), PSTR("5CCF7F%03X-%0d"), ESP.getChipId(), id);
   return String(deviceid);
 }
@@ -1379,23 +1315,24 @@ void handleUPnPsetup()
   webServer->send(200, "text/xml", description_xml);
 }
 
-void hue_todo(String path)
+void hue_todo(String *path)
 {
   char log[LOGSZ];
   
-  snprintf_P(log, sizeof(log), PSTR("HTTP: HUE API not implemented (%s)"),path.c_str());
+  snprintf_P(log, sizeof(log), PSTR("HTTP: HUE API not implemented (%s)"),path->c_str());
   addLog(LOG_LEVEL_DEBUG_MORE, log);
 }
 
-void hue_lights(String path)
+void hue_lights(String *path)
 {
   String response;
   uint8_t device = 1;
-  uint8_t tmp = 0;
+  int16_t pos = 0;
+  uint8_t bri = 0;
   char id[4];
 
-  path.remove(0,path.indexOf("/lights"));                 // Remove until /lights
-  if (path.endsWith("/lights"))                           // Got /lights
+  path->remove(0,path->indexOf("/lights"));                 // Remove until /lights
+  if (path->endsWith("/lights"))                           // Got /lights
   {
     response = "{\"";
     for (uint8_t i = 1; i <= Maxdevice; i++)
@@ -1407,18 +1344,28 @@ void hue_lights(String path)
       response.replace("{state}", (power & (0x01 << (i-1))) ? "true" : "false");
       response.replace("{j1}", sysCfg.friendlyname[i-1]);
       response.replace("{j2}", hue_deviceId(i));  
+#ifdef USE_WS2812
+      ws2812_replaceHSB(&response);
+#else
+      response.replace("{h}", "0");
+      response.replace("{s}", "0");
+      response.replace("{b}", "0");
+#endif // USE_WS2812
     }
     response += "}";
     webServer->send(200, "application/json", response);
   }
-  else if (path.endsWith("/state"))                         // Got ID/state
+  else if (path->endsWith("/state"))                         // Got ID/state
   {
-    path.remove(0,8);                                       // Remove /lights/
-    path.remove(path.indexOf("/state"));                    // Remove /state
-    device = atoi(path.c_str());
+    path->remove(0,8);                                       // Remove /lights/
+    path->remove(path->indexOf("/state"));                    // Remove /state
+    device = atoi(path->c_str());
     if ((device < 1) || (device > Maxdevice)) device = 1;
-    response = "{\"success\":{\"/lights/";
-    response += device;
+    response = "[";
+    response += FPSTR(HUE_LIGHT_RESPONSE_JSON);
+    response.replace("{api}", "/lights");
+    response.replace("{id}", String(device));
+    response.replace("{cmd}", "state/on");
     if (webServer->args() == 1) 
     {
       String json = webServer->arg(0);
@@ -1428,39 +1375,58 @@ void hue_lights(String path)
         if (json.indexOf("false") >= 0)      // false -> turn device off
         {
           do_cmnd_power(device, 0);
-          response +="/state/on\": false";
+          response.replace("{res}", "false");
         }
         else if(json.indexOf("true") >= 0)   // true -> Turn device on
         {
           do_cmnd_power(device, 1);
-          response +="/state/on\": true";        
+          response.replace("{res}", "true");
         }
         else
         {
-          response +="/state/on\": ";
-          response += (power & (0x01 << (device-1))) ? "true" : "false";
+          response.replace("{res}", (power & (0x01 << (device-1))) ? "true" : "false");
         }
       }
-      response += "}}";
+#ifdef USE_WS2812
+      if ((pos=json.indexOf("\"bri\":")) >= 0)
+      {
+        bri=atoi(json.substring(pos+6).c_str());
+        ws2812_changeBrightness(bri);
+        response += ",";
+        response += FPSTR(HUE_LIGHT_RESPONSE_JSON);
+        response.replace("{api}", "/lights");
+        response.replace("{id}", String(device));
+        response.replace("{cmd}", "state/bri");
+        response.replace("{res}", String(bri));
+      }
+#endif // USE_WS2812
+      response += "]";
       webServer->send(200, "application/json", response);
     }   
     else webServer->send(406, "application/json", "{}");
   }
-  else if((tmp=path.indexOf("/lights/")) >= 0)              // Got /lights/ID
+  else if(path->indexOf("/lights/") >= 0)              // Got /lights/ID
   {
-    path.remove(0,8);                                       // Remove /lights/
-    device = atoi(path.c_str());
+    path->remove(0,8);                                 // Remove /lights/
+    device = atoi(path->c_str());
     if ((device < 1) || (device > Maxdevice)) device = 1;
     response = FPSTR(HUE_LIGHT_STATUS_JSON);
     response.replace("{state}", (power & (0x01 << (device -1))) ? "true" : "false");
     response.replace("{j1}", sysCfg.friendlyname[device -1]);
     response.replace("{j2}", hue_deviceId(device));
+#ifdef USE_WS2812
+    ws2812_replaceHSB(&response);
+#else
+    response.replace("{h}", "0");
+    response.replace("{s}", "0");
+    response.replace("{b}", "0");
+#endif // USE_WS2812
     webServer->send(200, "application/json", response);
   }
   else webServer->send(406, "application/json", "{}");
 }
 
-void handle_hue_api(String path)
+void handle_hue_api(String *path)
 {
   /* HUE API uses /api/<userid>/<command> syntax. The userid is created by the echo device and
    * on original HUE the pressed button allows for creation of this user. We simply ignore the
@@ -1471,18 +1437,18 @@ void handle_hue_api(String path)
    
   char log[LOGSZ];
 
-  path.remove(0, 4);                                // remove /api      
-  if (path.endsWith("/invalid/")) {}                // Just ignore
-  else if (path.endsWith("/config")) hue_todo(path);
-  else if(path.indexOf("/lights") >= 0) hue_lights(path);
-  else if(path.endsWith("/groups")) hue_todo(path);
-  else if(path.endsWith("/schedules")) hue_todo(path); 
-  else if(path.endsWith("/sensors")) hue_todo(path);
-  else if(path.endsWith("/scenes")) hue_todo(path);
-  else if(path.endsWith("/rules")) hue_todo(path);
+  path->remove(0, 4);                                // remove /api      
+  if (path->endsWith("/invalid/")) {}                // Just ignore
+  else if (path->endsWith("/config")) hue_todo(path);
+  else if(path->indexOf("/lights") >= 0) hue_lights(path);
+  else if(path->endsWith("/groups")) hue_todo(path);
+  else if(path->endsWith("/schedules")) hue_todo(path); 
+  else if(path->endsWith("/sensors")) hue_todo(path);
+  else if(path->endsWith("/scenes")) hue_todo(path);
+  else if(path->endsWith("/rules")) hue_todo(path);
   else 
   {
-    snprintf_P(log, sizeof(log), PSTR("HTTP: Handle Hue API (%s)"),path.c_str());
+    snprintf_P(log, sizeof(log), PSTR("HTTP: Handle Hue API (%s)"),path->c_str());
     addLog(LOG_LEVEL_DEBUG_MORE, log);
     webServer->send(406, "application/json", "{}");
   }
@@ -1500,7 +1466,7 @@ void handleNotFound()
 #ifdef USE_HUE_EMULATION  
   String path = webServer->uri();
   if (path.startsWith("/api"))
-    handle_hue_api(path);
+    handle_hue_api(&path);
   else {
 #endif // USE_HUE_EMULATION
   
