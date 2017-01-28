@@ -11,7 +11,7 @@ Current version is **3.9.5** - See ```sonoff/_releasenotes.ino``` for change inf
 See [Wiki](wiki) for more information.<br />
 See [Community](https://groups.google.com/d/forum/sonoffusers) for forum and more user experience.
 
-Starting with version 2.0.0 the following devices are supported:
+The following devices are supported:
 - [iTead Sonoff Basic](http://sonoff.itead.cc/en/products/sonoff/sonoff-basic)
 - [iTead Sonoff RF](http://sonoff.itead.cc/en/products/sonoff/sonoff-rf)
 - [iTead Sonoff SV](https://www.itead.cc/sonoff-sv.html)
