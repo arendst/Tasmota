@@ -9,7 +9,7 @@ Current version is **3.9.4** - See ```_releasenotes.ino``` for change informatio
 - Some features still need to be ironed out.
 
 <img alt="Sonoff" src="https://github.com/arendst/arendst.github.io/blob/master/media/sonoffbasic.jpg" width="250" align="right" /> 
-See [Wiki](https://github.com/arendst/Sonoff-MQTT-OTA-Arduino/wiki) for more information.<br />
+See [Wiki](wiki) for more information.<br />
 See [Community](https://groups.google.com/d/forum/sonoffusers) for forum and more user experience.
 
 Starting with version 2.0.0 the following devices are supported:
