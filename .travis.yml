@@ -1,0 +1,18 @@
+language: python
+python:
+  - '2.7'
+sudo: false
+cache:
+  directories:
+    - "~/.platformio"
+install:
+    - pip install -U platformio
+
+script:
+    - platformio run
+deploy:
+  provider: releases
+  file: ".pioenvs/sonoff/firmware.bin"
+  skip_cleanup: true
+  on:
+    tags: true
