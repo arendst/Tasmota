@@ -29,9 +29,29 @@ POSSIBILITY OF SUCH DAMAGE.
  * Based on Source: Shenzhen Heli Technology Co., Ltd
 \*********************************************************************************************/
 
+#define FEATURE_POWER_LIMIT  false
+
+/*********************************************************************************************/
+
 #define HLW_PREF            10000    // 1000.0W
 #define HLW_UREF             2200    // 220.0V
 #define HLW_IREF             4545    // 4.545A
+
+byte hlw_pminflg = 0;
+byte hlw_pmaxflg = 0;
+byte hlw_uminflg = 0;
+byte hlw_umaxflg = 0;
+byte hlw_iminflg = 0;
+byte hlw_imaxflg = 0;
+
+byte power_steady_cntr;
+byte hlw_mkwh_state = 0;
+
+#if FEATURE_POWER_LIMIT
+  byte hlw_mplr_counter = 0;
+  uint16_t hlw_mplh_counter = 0;
+  uint16_t hlw_mplw_counter = 0;
+#endif  // FEATURE_POWER_LIMIT
 
 byte hlw_SELflag, hlw_cf_timer, hlw_cf1_timer, hlw_fifth_second, hlw_startup;
 unsigned long hlw_cf_plen, hlw_cf_last;
@@ -83,13 +103,19 @@ void hlw_200mS()
       hlw_temp = (HLW_PREF * sysCfg.hlw_pcal) / hlw_len;
       hlw_kWhtoday += (hlw_temp * 100) / 36;
     }
-    if (rtc_loctime() == rtc_midnight()) {
-      sysCfg.hlw_kWhyesterday = hlw_kWhtoday;
-      hlw_kWhtoday = 0;
-    }
-    if (hlw_startup && rtcTime.Valid && (rtcTime.DayOfYear == sysCfg.hlw_kWhdoy)) {
-      hlw_kWhtoday = sysCfg.hlw_kWhtoday;
-      hlw_startup = 0;
+    if (rtcTime.Valid) {
+      if (rtc_loctime() == rtc_midnight()) {
+        sysCfg.hlw_kWhyesterday = hlw_kWhtoday;
+        hlw_kWhtoday = 0;
+        hlw_mkwh_state = 3;
+      }
+      if ((rtcTime.Hour == sysCfg.hlw_mkwhs) && (hlw_mkwh_state == 3)) {
+        hlw_mkwh_state = 0;
+      }
+      if (hlw_startup && (rtcTime.DayOfYear == sysCfg.hlw_kWhdoy)) {
+        hlw_kWhtoday = sysCfg.hlw_kWhtoday;
+        hlw_startup = 0;
+      }
     }
   }
 
@@ -246,6 +272,11 @@ boolean hlw_margin(byte type, uint16_t margin, uint16_t value, byte &flag, byte 
   return (change != saveflag);
 }
 
+void hlw_setPowerSteadyCounter(byte value)
+{
+  power_steady_cntr = 2;
+}
+
 void hlw_margin_chk()
 {
   char log[LOGSZ], stopic[TOPSZ], svalue[MESSZ];
@@ -298,7 +329,7 @@ void hlw_margin_chk()
     }
   }
 
-#ifdef FEATURE_POWER_LIMIT
+#if FEATURE_POWER_LIMIT
   snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/RESULT"), PUB_PREFIX, sysCfg.mqtt_topic);
   // Max Power
   if (sysCfg.hlw_mpl) {
@@ -358,6 +389,131 @@ void hlw_margin_chk()
     }
   }
 #endif  // FEATURE_POWER_LIMIT
+}
+
+/*********************************************************************************************\
+ * Commands
+\*********************************************************************************************/
+
+boolean hlw_command(char *type, uint16_t index, char *dataBuf, uint16_t data_len, int16_t payload, char *svalue, uint16_t ssvalue)
+{
+  boolean serviced = true;
+
+  if (!strcmp(type,"POWERLOW")) {
+    if ((data_len > 0) && (payload >= 0) && (payload < 3601)) {
+      sysCfg.hlw_pmin = payload;
+    }
+    snprintf_P(svalue, ssvalue, PSTR("{\"PowerLow\":\"%d%s\"}"), sysCfg.hlw_pmin, (sysCfg.value_units) ? " W" : "");
+  }
+  else if (!strcmp(type,"POWERHIGH")) {
+    if ((data_len > 0) && (payload >= 0) && (payload < 3601)) {
+      sysCfg.hlw_pmax = payload;
+    }
+    snprintf_P(svalue, ssvalue, PSTR("{\"PowerHigh\":\"%d%s\"}"), sysCfg.hlw_pmax, (sysCfg.value_units) ? " W" : "");
+  }
+  else if (!strcmp(type,"VOLTAGELOW")) {
+    if ((data_len > 0) && (payload >= 0) && (payload < 501)) {
+      sysCfg.hlw_umin = payload;
+    }
+    snprintf_P(svalue, ssvalue, PSTR("{\"VoltageLow\":\"%d%s\"}"), sysCfg.hlw_umin, (sysCfg.value_units) ? " V" : "");
+  }
+  else if (!strcmp(type,"VOLTAGEHIGH")) {
+    if ((data_len > 0) && (payload >= 0) && (payload < 501)) {
+      sysCfg.hlw_umax = payload;
+    }
+    snprintf_P(svalue, ssvalue, PSTR("[\"VoltageHigh\":\"%d%s\"}"), sysCfg.hlw_umax, (sysCfg.value_units) ? " V" : "");
+  }
+  else if (!strcmp(type,"CURRENTLOW")) {
+    if ((data_len > 0) && (payload >= 0) && (payload < 16001)) {
+      sysCfg.hlw_imin = payload;
+    }
+    snprintf_P(svalue, ssvalue, PSTR("{\"CurrentLow\":\"%d%s\"}"), sysCfg.hlw_imin, (sysCfg.value_units) ? " mA" : "");
+  }
+  else if (!strcmp(type,"CURRENTHIGH")) {
+    if ((data_len > 0) && (payload >= 0) && (payload < 16001)) {
+      sysCfg.hlw_imax = payload;
+    }
+    snprintf_P(svalue, ssvalue, PSTR("{\"CurrentHigh\":\"%d%s\"}"), sysCfg.hlw_imax, (sysCfg.value_units) ? " mA" : "");
+  }
+  else if (!strcmp(type,"HLWPCAL")) {
+    if ((data_len > 0) && (payload > 0) && (payload < 32001)) {
+      sysCfg.hlw_pcal = (payload == 1) ? HLW_PREF_PULSE : payload;
+    }
+    snprintf_P(svalue, ssvalue, PSTR("(\"HlwPcal\":\"%d%s\"}"), sysCfg.hlw_pcal, (sysCfg.value_units) ? " uS" : "");
+  }
+  else if (!strcmp(type,"HLWUCAL")) {
+    if ((data_len > 0) && (payload > 0) && (payload < 32001)) {
+      sysCfg.hlw_ucal = (payload == 1) ? HLW_UREF_PULSE : payload;
+    }
+    snprintf_P(svalue, ssvalue, PSTR("{\"HlwUcal\":\"%d%s\"}"), sysCfg.hlw_ucal, (sysCfg.value_units) ? " uS" : "");
+  }
+  else if (!strcmp(type,"HLWICAL")) {
+    if ((data_len > 0) && (payload > 0) && (payload < 32001)) {
+      sysCfg.hlw_ical = (payload == 1) ? HLW_IREF_PULSE : payload;
+    }
+    snprintf_P(svalue, ssvalue, PSTR("{\"HlwIcal\":\"%d%s\"}"), sysCfg.hlw_ical, (sysCfg.value_units) ? " uS" : "");
+  }
+#if FEATURE_POWER_LIMIT
+  else if (!strcmp(type,"MAXPOWER")) {
+    if ((data_len > 0) && (payload >= 0) && (payload < 3601)) {
+      sysCfg.hlw_mpl = payload;
+    }
+    snprintf_P(svalue, ssvalue, PSTR("{\"MaxPower\":\"%d%s\"}"), sysCfg.hlw_mpl, (sysCfg.value_units) ? " W" : "");
+  }
+  else if (!strcmp(type,"MAXPOWERHOLD")) {
+    if ((data_len > 0) && (payload >= 0) && (payload < 3601)) {
+      sysCfg.hlw_mplh = (payload == 1) ? MAX_POWER_HOLD : payload;
+    }
+    snprintf_P(svalue, ssvalue, PSTR("{\"MaxPowerHold\":\"%d%s\"}"), sysCfg.hlw_mplh, (sysCfg.value_units) ? " Sec" : "");
+  }
+  else if (!strcmp(type,"MAXPOWERWINDOW")) {
+    if ((data_len > 0) && (payload >= 0) && (payload < 3601)) {
+      sysCfg.hlw_mplw = (payload == 1) ? MAX_POWER_WINDOW : payload;
+    }
+    snprintf_P(svalue, ssvalue, PSTR("{\"MaxPowerWindow\":\"%d%s\"}"), sysCfg.hlw_mplw, (sysCfg.value_units) ? " Sec" : "");
+  }
+  else if (!strcmp(type,"SAFEPOWER")) {
+    if ((data_len > 0) && (payload >= 0) && (payload < 3601)) {
+      sysCfg.hlw_mspl = payload;
+    }
+    snprintf_P(svalue, ssvalue, PSTR("{\"SafePower\":\"%d%s\"}"), sysCfg.hlw_mspl, (sysCfg.value_units) ? " W" : "");
+  }
+  else if (!strcmp(type,"SAFEPOWERHOLD")) {
+    if ((data_len > 0) && (payload >= 0) && (payload < 3601)) {
+      sysCfg.hlw_msplh = (payload == 1) ? SAFE_POWER_HOLD : payload;
+    }
+    snprintf_P(svalue, ssvalue, PSTR("{\"SafePowerHold\":\"%d%s\"}"), sysCfg.hlw_msplh, (sysCfg.value_units) ? " Sec" : "");
+  }
+  else if (!strcmp(type,"SAFEPOWERWINDOW")) {
+    if ((data_len > 0) && (payload >= 0) && (payload < 1440)) {
+      sysCfg.hlw_msplw = (payload == 1) ? SAFE_POWER_WINDOW : payload;
+    }
+    snprintf_P(svalue, ssvalue, PSTR("{\"SafePowerWindow\":\"%d%s\"}"), sysCfg.hlw_msplw, (sysCfg.value_units) ? " Min" : "");
+  }
+  else if (!strcmp(type,"MAXENERGY")) {
+    if ((data_len > 0) && (payload >= 0) && (payload < 3601)) {
+      sysCfg.hlw_mkwh = payload;
+      hlw_mkwh_state = 3;
+    }
+    snprintf_P(svalue, ssvalue, PSTR("{\"MaxEnergy\":\"%d%s\"}"), sysCfg.hlw_mkwh, (sysCfg.value_units) ? " Wh" : "");
+  }
+  else if (!strcmp(type,"MAXENERGYSTART")) {
+    if ((data_len > 0) && (payload >= 0) && (payload < 24)) {
+      sysCfg.hlw_mkwhs = payload;
+    }
+    snprintf_P(svalue, ssvalue, PSTR("{\"MaxEnergyStart\":\"%d%s\"}"), sysCfg.hlw_mkwhs, (sysCfg.value_units) ? " Hr" : "");
+  }
+#endif  // FEATURE_POWER_LIMIT
+  else {
+    serviced = false;
+  }
+  return serviced;
+}
+
+void hlw_commands(char *svalue, uint16_t ssvalue)
+{
+  snprintf_P(svalue, ssvalue, PSTR("{\"Commands\":\"PowerLow, PowerHigh, VoltageLow, VoltageHigh, CurrentLow, CurrentHigh%s\"}"),
+    (FEATURE_POWER_LIMIT)?"SafePower, SafePowerHold, SafePowerWindow, MaxPower, MaxPowerHold, MaxPowerWindow, MaxEnergy, MaxEnergyStart":"");
 }
 
 /*********************************************************************************************\

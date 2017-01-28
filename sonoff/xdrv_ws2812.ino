@@ -462,4 +462,107 @@ void ws2812_init()
   strip->Begin();
   ws2812_pixels();
 }
+
+/*********************************************************************************************\
+ * Commands
+\*********************************************************************************************/
+
+boolean ws2812_command(char *type, uint16_t index, char *dataBuf, uint16_t data_len, int16_t payload, char *svalue, uint16_t ssvalue)
+{
+  boolean serviced = true;
+
+  if (!strcmp(type,"PIXELS")) {
+    if ((data_len > 0) && (payload > 0) && (payload <= WS2812_MAX_LEDS)) {
+      sysCfg.ws_pixels = payload;
+      ws2812_pixels();
+    }
+    snprintf_P(svalue, ssvalue, PSTR("{\"Pixels\":%d}"), sysCfg.ws_pixels);
+  }
+  else if (!strcmp(type,"LED") && (index > 0) && (index <= sysCfg.ws_pixels)) {
+    if (data_len == 6) {
+//       ws2812_setColor(index, dataBufUc);
+      ws2812_setColor(index, dataBuf);
+    }
+    ws2812_getColor(index, svalue, ssvalue);
+  }
+  else if (!strcmp(type,"COLOR")) {
+    if (data_len == 6) {
+//        ws2812_setColor(0, dataBufUc);
+      ws2812_setColor(0, dataBuf);
+      power = 1;
+    }
+    ws2812_getColor(0, svalue, ssvalue);
+  }
+  else if (!strcmp(type,"DIMMER")) {
+    if ((data_len > 0) && (payload >= 0) && (payload <= 100)) {
+      sysCfg.ws_dimmer = payload;
+      power = 1;
+#ifdef USE_DOMOTICZ
+      mqtt_publishDomoticzPowerState(index);
+#endif  // USE_DOMOTICZ
+    }
+    snprintf_P(svalue, ssvalue, PSTR("{\"Dimmer\":%d}"), sysCfg.ws_dimmer);
+  }
+  else if (!strcmp(type,"LEDTABLE")) {
+    if ((data_len > 0) && (payload >= 0) && (payload <= 2)) {
+      switch (payload) {
+      case 0: // Off
+      case 1: // On
+        sysCfg.ws_ledtable = payload;
+        break;
+      case 2: // Toggle
+        sysCfg.ws_ledtable ^= 1;
+        break;
+      }
+      ws2812_update();
+    }
+    snprintf_P(svalue, ssvalue, PSTR("{\"LedTable\":\"%s\"}"), (sysCfg.ws_ledtable) ? MQTT_STATUS_ON : MQTT_STATUS_OFF);
+  }
+  else if (!strcmp(type,"FADE")) {
+    if ((data_len > 0) && (payload >= 0) && (payload <= 2)) {
+      switch (payload) {
+      case 0: // Off
+      case 1: // On
+        sysCfg.ws_fade = payload;
+        break;
+      case 2: // Toggle
+        sysCfg.ws_fade ^= 1;
+        break;
+      }
+    }
+    snprintf_P(svalue, ssvalue, PSTR("{\"Fade\":\"%s\"}"), (sysCfg.ws_fade) ? MQTT_STATUS_ON : MQTT_STATUS_OFF);
+  }
+  else if (!strcmp(type,"SPEED")) {  // 1 - fast, 5 - slow
+    if ((data_len > 0) && (payload > 0) && (payload <= 5)) {
+      sysCfg.ws_speed = payload;
+    }
+    snprintf_P(svalue, ssvalue, PSTR("{\"Speed\":%d}"), sysCfg.ws_speed);
+  }
+  else if (!strcmp(type,"WIDTH")) {
+    if ((data_len > 0) && (payload >= 0) && (payload <= 4)) {
+      sysCfg.ws_width = payload;
+    }
+    snprintf_P(svalue, ssvalue, PSTR("{\"Width\":%d}"), sysCfg.ws_width);
+  }
+  else if (!strcmp(type,"WAKEUP")) {
+    if ((data_len > 0) && (payload > 0) && (payload < 3601)) {
+      sysCfg.ws_wakeup = payload;
+      if (sysCfg.ws_scheme == 1) sysCfg.ws_scheme = 0;
+    }
+    snprintf_P(svalue, ssvalue, PSTR("{\"WakeUp\":%d}"), sysCfg.ws_wakeup);
+  }
+  else if (!strcmp(type,"SCHEME")) {
+    if ((data_len > 0) && (payload >= 0) && (payload <= 9)) {
+      sysCfg.ws_scheme = payload;
+      if (sysCfg.ws_scheme == 1) ws2812_resetWakupState();
+      power = 1;
+      ws2812_resetStripTimer();
+    }
+    snprintf_P(svalue, ssvalue, PSTR("{\"Scheme\":%d}"), sysCfg.ws_scheme);
+  }
+  else {
+    serviced = false;
+  }
+  return serviced;
+}
 #endif  // USE_WS2812

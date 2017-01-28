@@ -182,8 +182,10 @@ boolean domoticz_mqttData(char *topicBuf, uint16_t stopicBuf, char *dataBuf, uin
  * Commands
 \*********************************************************************************************/
 
-void domoticz_commands(char *type, uint16_t index, char *dataBuf, uint16_t data_len, int16_t payload, char *svalue, uint16_t ssvalue)
+boolean domoticz_command(char *type, uint16_t index, char *dataBuf, uint16_t data_len, int16_t payload, char *svalue, uint16_t ssvalue)
 {
+  boolean serviced = true;
+  
   if (!strcmp(type,"DOMOTICZINTOPIC")) {
     if ((data_len > 0) && (data_len < sizeof(sysCfg.domoticz_in_topic))) {
       strlcpy(sysCfg.domoticz_in_topic, (payload == 1) ? DOMOTICZ_IN_TOPIC : dataBuf, sizeof(sysCfg.domoticz_in_topic));
@@ -229,6 +231,15 @@ void domoticz_commands(char *type, uint16_t index, char *dataBuf, uint16_t data_
     }
     snprintf_P(svalue, ssvalue, PSTR("{\"DomoticzUpdateTimer\":%d}"), sysCfg.domoticz_update_timer);
   }
+  else {
+    serviced = false;
+  }
+  return serviced;
+}
+
+void domoticz_commands(char *svalue, uint16_t ssvalue)
+{
+  snprintf_P(svalue, ssvalue, PSTR("{\"Commands\":\"DomoticzInTopic, DomoticzOutTopic, DomoticzIdx, DomoticzKeyIdx, DomoticzSwitchIdx, DomoticzSensorIdx, DomoticzUpdateTimer\"}"));
 }
 
 boolean domoticz_button(byte key, byte device, byte state, byte svalflg)

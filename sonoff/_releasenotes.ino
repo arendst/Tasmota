@@ -1,4 +1,7 @@
-/* 3.9.4 20170127
+/* 3.9.5 2017018
+ * Fix error message in case of wrong Domoticz command
+ *
+ * 3.9.4 20170127
  * Fix Sonoff Dual Relay switching (#287)
  *
  * 3.9.3 20170127

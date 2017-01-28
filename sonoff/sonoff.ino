@@ -10,7 +10,7 @@
  * ====================================================
 */
 
-#define VERSION                0x03090400   // 3.9.4
+#define VERSION                0x03090500   // 3.9.5
 
 enum log_t   {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG_MORE, LOG_LEVEL_ALL};
 enum week_t  {Last, First, Second, Third, Fourth};
@@ -30,12 +30,6 @@ enum led_t   {LED_OFF, LED_POWER, LED_MQTTSUB, LED_POWER_MQTTSUB, LED_MQTTPUB, L
 \*********************************************************************************************/
 
 //#define USE_SPIFFS                          // Switch persistent configuration from flash to spiffs (+24k code, +0.6k mem)
-
-/*********************************************************************************************\
- * Not released yet
-\*********************************************************************************************/
-
-#define FEATURE_POWER_LIMIT
 
 /*********************************************************************************************\
  * No user configurable items below
@@ -410,20 +404,6 @@ uint8_t i2c_flg = 0;                  // I2C configured
 
 boolean mDNSbegun = false;
 
-byte hlw_pminflg = 0;
-byte hlw_pmaxflg = 0;
-byte hlw_uminflg = 0;
-byte hlw_umaxflg = 0;
-byte hlw_iminflg = 0;
-byte hlw_imaxflg = 0;
-byte power_steady_cntr;
-#ifdef FEATURE_POWER_LIMIT
-  byte hlw_mkwh_state = 0;
-  byte hlw_mplr_counter = 0;
-  uint16_t hlw_mplh_counter = 0;
-  uint16_t hlw_mplw_counter = 0;
-#endif  // FEATURE_POWER_LIMIT
-
 /********************************************************************************************/
 
 void CFG_DefaultSet()
@@ -776,7 +756,7 @@ void setRelay(uint8_t power)
       }
     }
   }
-  power_steady_cntr = 2;
+  hlw_setPowerSteadyCounter(2);
 }
 
 void setLed(uint8_t state)
@@ -1578,11 +1558,6 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
       }
       snprintf_P(svalue, sizeof(svalue), PSTR("{\"MqttPassword\":\"%s\"}"), sysCfg.mqtt_pwd);
     }
-#ifdef USE_DOMOTICZ
-    else if (sysCfg.mqtt_enabled && !strncmp(type,"DOMOTICZ...",8)) {
-      domoticz_commands(type, index, dataBuf, data_len, payload, svalue, sizeof(svalue));
-    }
-#endif  // USE_DOMOTICZ
     else if (sysCfg.mqtt_enabled && !strcmp(type,"GROUPTOPIC")) {
       if ((data_len > 0) && (data_len < sizeof(sysCfg.mqtt_grptopic))) {
         for(i = 0; i <= data_len; i++)
@@ -1661,209 +1636,19 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
       snprintf_P(stemp1, sizeof(stemp1), PSTR("%s"), (!strcmp(sysCfg.mqtt_subtopic,"POWER")) ? "Power" : "Light");
       snprintf_P(svalue, sizeof(svalue), PSTR("{\"%sRetain\":\"%s\"}"), stemp1, (sysCfg.mqtt_power_retain) ? MQTT_STATUS_ON : MQTT_STATUS_OFF);
     }
-
-/*** HLW Power management Commands ***********************************************************/
-
-    else if (hlw_flg && !strcmp(type,"POWERLOW")) {
-      if ((data_len > 0) && (payload >= 0) && (payload < 3601)) {
-        sysCfg.hlw_pmin = payload;
-      }
-      snprintf_P(svalue, sizeof(svalue), PSTR("{\"PowerLow\":\"%d%s\"}"), sysCfg.hlw_pmin, (sysCfg.value_units) ? " W" : "");
-    }
-    else if (hlw_flg && !strcmp(type,"POWERHIGH")) {
-      if ((data_len > 0) && (payload >= 0) && (payload < 3601)) {
-        sysCfg.hlw_pmax = payload;
-      }
-      snprintf_P(svalue, sizeof(svalue), PSTR("{\"PowerHigh\":\"%d%s\"}"), sysCfg.hlw_pmax, (sysCfg.value_units) ? " W" : "");
-    }
-    else if (hlw_flg && !strcmp(type,"VOLTAGELOW")) {
-      if ((data_len > 0) && (payload >= 0) && (payload < 501)) {
-        sysCfg.hlw_umin = payload;
-      }
-      snprintf_P(svalue, sizeof(svalue), PSTR("{\"VoltageLow\":\"%d%s\"}"), sysCfg.hlw_umin, (sysCfg.value_units) ? " V" : "");
-    }
-    else if (hlw_flg && !strcmp(type,"VOLTAGEHIGH")) {
-      if ((data_len > 0) && (payload >= 0) && (payload < 501)) {
-        sysCfg.hlw_umax = payload;
-      }
-      snprintf_P(svalue, sizeof(svalue), PSTR("[\"VoltageHigh\":\"%d%s\"}"), sysCfg.hlw_umax, (sysCfg.value_units) ? " V" : "");
-    }
-    else if (hlw_flg && !strcmp(type,"CURRENTLOW")) {
-      if ((data_len > 0) && (payload >= 0) && (payload < 16001)) {
-        sysCfg.hlw_imin = payload;
-      }
-      snprintf_P(svalue, sizeof(svalue), PSTR("{\"CurrentLow\":\"%d%s\"}"), sysCfg.hlw_imin, (sysCfg.value_units) ? " mA" : "");
-    }
-    else if (hlw_flg && !strcmp(type,"CURRENTHIGH")) {
-      if ((data_len > 0) && (payload >= 0) && (payload < 16001)) {
-        sysCfg.hlw_imax = payload;
-      }
-      snprintf_P(svalue, sizeof(svalue), PSTR("{\"CurrentHigh\":\"%d%s\"}"), sysCfg.hlw_imax, (sysCfg.value_units) ? " mA" : "");
-    }
-    else if (hlw_flg && !strcmp(type,"HLWPCAL")) {
-      if ((data_len > 0) && (payload > 0) && (payload < 32001)) {
-        sysCfg.hlw_pcal = (payload == 1) ? HLW_PREF_PULSE : payload;
-      }
-      snprintf_P(svalue, sizeof(svalue), PSTR("(\"HlwPcal\":\"%d%s\"}"), sysCfg.hlw_pcal, (sysCfg.value_units) ? " uS" : "");
-    }
-    else if (hlw_flg && !strcmp(type,"HLWUCAL")) {
-      if ((data_len > 0) && (payload > 0) && (payload < 32001)) {
-        sysCfg.hlw_ucal = (payload == 1) ? HLW_UREF_PULSE : payload;
-      }
-      snprintf_P(svalue, sizeof(svalue), PSTR("{\"HlwUcal\":\"%d%s\"}"), sysCfg.hlw_ucal, (sysCfg.value_units) ? " uS" : "");
-    }
-    else if (hlw_flg && !strcmp(type,"HLWICAL")) {
-      if ((data_len > 0) && (payload > 0) && (payload < 32001)) {
-        sysCfg.hlw_ical = (payload == 1) ? HLW_IREF_PULSE : payload;
-      }
-      snprintf_P(svalue, sizeof(svalue), PSTR("{\"HlwIcal\":\"%d%s\"}"), sysCfg.hlw_ical, (sysCfg.value_units) ? " uS" : "");
-    }
-#ifdef FEATURE_POWER_LIMIT
-    else if (hlw_flg && !strcmp(type,"MAXPOWER")) {
-      if ((data_len > 0) && (payload >= 0) && (payload < 3601)) {
-        sysCfg.hlw_mpl = payload;
-      }
-      snprintf_P(svalue, sizeof(svalue), PSTR("{\"MaxPower\":\"%d%s\"}"), sysCfg.hlw_mpl, (sysCfg.value_units) ? " W" : "");
-    }
-    else if (hlw_flg && !strcmp(type,"MAXPOWERHOLD")) {
-      if ((data_len > 0) && (payload >= 0) && (payload < 3601)) {
-        sysCfg.hlw_mplh = (payload == 1) ? MAX_POWER_HOLD : payload;
-      }
-      snprintf_P(svalue, sizeof(svalue), PSTR("{\"MaxPowerHold\":\"%d%s\"}"), sysCfg.hlw_mplh, (sysCfg.value_units) ? " Sec" : "");
-    }
-    else if (hlw_flg && !strcmp(type,"MAXPOWERWINDOW")) {
-      if ((data_len > 0) && (payload >= 0) && (payload < 3601)) {
-        sysCfg.hlw_mplw = (payload == 1) ? MAX_POWER_WINDOW : payload;
-      }
-      snprintf_P(svalue, sizeof(svalue), PSTR("{\"MaxPowerWindow\":\"%d%s\"}"), sysCfg.hlw_mplw, (sysCfg.value_units) ? " Sec" : "");
-    }
-    else if (hlw_flg && !strcmp(type,"SAFEPOWER")) {
-      if ((data_len > 0) && (payload >= 0) && (payload < 3601)) {
-        sysCfg.hlw_mspl = payload;
-      }
-      snprintf_P(svalue, sizeof(svalue), PSTR("{\"SafePower\":\"%d%s\"}"), sysCfg.hlw_mspl, (sysCfg.value_units) ? " W" : "");
-    }
-    else if (hlw_flg && !strcmp(type,"SAFEPOWERHOLD")) {
-      if ((data_len > 0) && (payload >= 0) && (payload < 3601)) {
-        sysCfg.hlw_msplh = (payload == 1) ? SAFE_POWER_HOLD : payload;
-      }
-      snprintf_P(svalue, sizeof(svalue), PSTR("{\"SafePowerHold\":\"%d%s\"}"), sysCfg.hlw_msplh, (sysCfg.value_units) ? " Sec" : "");
-    }
-    else if (hlw_flg && !strcmp(type,"SAFEPOWERWINDOW")) {
-      if ((data_len > 0) && (payload >= 0) && (payload < 1440)) {
-        sysCfg.hlw_msplw = (payload == 1) ? SAFE_POWER_WINDOW : payload;
-      }
-      snprintf_P(svalue, sizeof(svalue), PSTR("{\"SafePowerWindow\":\"%d%s\"}"), sysCfg.hlw_msplw, (sysCfg.value_units) ? " Min" : "");
-    }
-    else if (hlw_flg && !strcmp(type,"MAXENERGY")) {
-      if ((data_len > 0) && (payload >= 0) && (payload < 3601)) {
-        sysCfg.hlw_mkwh = payload;
-        hlw_mkwh_state = 3;
-      }
-      snprintf_P(svalue, sizeof(svalue), PSTR("{\"MaxEnergy\":\"%d%s\"}"), sysCfg.hlw_mkwh, (sysCfg.value_units) ? " Wh" : "");
-    }
-    else if (hlw_flg && !strcmp(type,"MAXENERGYSTART")) {
-      if ((data_len > 0) && (payload >= 0) && (payload < 24)) {
-        sysCfg.hlw_mkwhs = payload;
-      }
-      snprintf_P(svalue, sizeof(svalue), PSTR("{\"MaxEnergyStart\":\"%d%s\"}"), sysCfg.hlw_mkwhs, (sysCfg.value_units) ? " Hr" : "");
-    }
-#endif  // FEATURE_POWER_LIMIT
-
-/*** WS2812 Commands *************************************************************************/
-
-#ifdef USE_WS2812
-    else if ((pin[GPIO_WS2812] < 99) && !strcmp(type,"PIXELS")) {
-      if ((data_len > 0) && (payload > 0) && (payload <= WS2812_MAX_LEDS)) {
-        sysCfg.ws_pixels = payload;
-        ws2812_pixels();
-      }
-      snprintf_P(svalue, sizeof(svalue), PSTR("{\"Pixels\":%d}"), sysCfg.ws_pixels);
-    }
-    else if ((pin[GPIO_WS2812] < 99) && !strcmp(type,"LED") && (index > 0) && (index <= sysCfg.ws_pixels)) {
-      if (data_len == 6) {
-        ws2812_setColor(index, dataBufUc);
-      }
-      ws2812_getColor(index, svalue, sizeof(svalue));
-    }
-    else if ((pin[GPIO_WS2812] < 99) && !strcmp(type,"COLOR")) {
-      if (data_len == 6) {
-        ws2812_setColor(0, dataBufUc);
-        power = 1;
-      }
-      ws2812_getColor(0, svalue, sizeof(svalue));
-    }
-    else if ((pin[GPIO_WS2812] < 99) && !strcmp(type,"DIMMER")) {
-      if ((data_len > 0) && (payload >= 0) && (payload <= 100)) {
-        sysCfg.ws_dimmer = payload;
-        power = 1;
 #ifdef USE_DOMOTICZ
-        mqtt_publishDomoticzPowerState(index);
+    else if (sysCfg.mqtt_enabled && domoticz_command(type, index, dataBuf, data_len, payload, svalue, sizeof(svalue))) {
+      // Serviced
+    }
 #endif  // USE_DOMOTICZ
-      }
-      snprintf_P(svalue, sizeof(svalue), PSTR("{\"Dimmer\":%d}"), sysCfg.ws_dimmer);
+    else if (hlw_flg && hlw_command(type, index, dataBuf, data_len, payload, svalue, sizeof(svalue))) {
+      // Serviced
     }
-    else if ((pin[GPIO_WS2812] < 99) && !strcmp(type,"LEDTABLE")) {
-      if ((data_len > 0) && (payload >= 0) && (payload <= 2)) {
-        switch (payload) {
-        case 0: // Off
-        case 1: // On
-          sysCfg.ws_ledtable = payload;
-          break;
-        case 2: // Toggle
-          sysCfg.ws_ledtable ^= 1;
-          break;
-        }
-        ws2812_update();
-      }
-      snprintf_P(svalue, sizeof(svalue), PSTR("{\"LedTable\":\"%s\"}"), (sysCfg.ws_ledtable) ? MQTT_STATUS_ON : MQTT_STATUS_OFF);
-    }
-    else if ((pin[GPIO_WS2812] < 99) && !strcmp(type,"FADE")) {
-      if ((data_len > 0) && (payload >= 0) && (payload <= 2)) {
-        switch (payload) {
-        case 0: // Off
-        case 1: // On
-          sysCfg.ws_fade = payload;
-          break;
-        case 2: // Toggle
-          sysCfg.ws_fade ^= 1;
-          break;
-        }
-      }
-      snprintf_P(svalue, sizeof(svalue), PSTR("{\"Fade\":\"%s\"}"), (sysCfg.ws_fade) ? MQTT_STATUS_ON : MQTT_STATUS_OFF);
-    }
-    else if ((pin[GPIO_WS2812] < 99) && !strcmp(type,"SPEED")) {  // 1 - fast, 5 - slow
-      if ((data_len > 0) && (payload > 0) && (payload <= 5)) {
-        sysCfg.ws_speed = payload;
-      }
-      snprintf_P(svalue, sizeof(svalue), PSTR("{\"Speed\":%d}"), sysCfg.ws_speed);
-    }
-    else if ((pin[GPIO_WS2812] < 99) && !strcmp(type,"WIDTH")) {
-      if ((data_len > 0) && (payload >= 0) && (payload <= 4)) {
-        sysCfg.ws_width = payload;
-      }
-      snprintf_P(svalue, sizeof(svalue), PSTR("{\"Width\":%d}"), sysCfg.ws_width);
-    }
-    else if ((pin[GPIO_WS2812] < 99) && !strcmp(type,"WAKEUP")) {
-      if ((data_len > 0) && (payload > 0) && (payload < 3601)) {
-        sysCfg.ws_wakeup = payload;
-        if (sysCfg.ws_scheme == 1) sysCfg.ws_scheme = 0;
-      }
-      snprintf_P(svalue, sizeof(svalue), PSTR("{\"WakeUp\":%d}"), sysCfg.ws_wakeup);
-    }
-    else if ((pin[GPIO_WS2812] < 99) && !strcmp(type,"SCHEME")) {
-      if ((data_len > 0) && (payload >= 0) && (payload <= 9)) {
-        sysCfg.ws_scheme = payload;
-        if (sysCfg.ws_scheme == 1) ws2812_resetWakupState();
-        power = 1;
-        ws2812_resetStripTimer();
-      }
-      snprintf_P(svalue, sizeof(svalue), PSTR("{\"Scheme\":%d}"), sysCfg.ws_scheme);
+#ifdef USE_WS2812
+    else if ((pin[GPIO_WS2812] < 99) && ws2812_command(type, index, dataBuf, data_len, payload, svalue, sizeof(svalue))) {
+      // Serviced
     }
 #endif  // USE_WS2812
-
-/*********************************************************************************************/
-
     else {
       type = NULL;
     }
@@ -1895,16 +1680,12 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
 
 #ifdef USE_DOMOTICZ
     mqtt_publish(stopic, svalue);
-    snprintf_P(svalue, sizeof(svalue), PSTR("{\"Commands\":\"DomoticzInTopic, DomoticzOutTopic, DomoticzIdx, DomoticzKeyIdx, DomoticzSwitchIdx, DomoticzSensorIdx, DomoticzUpdateTimer\"}"));
+    domoticz_commands(svalue, sizeof(svalue));
 #endif  // USE_DOMOTICZ
 
     if (hlw_flg) {
       mqtt_publish(stopic, svalue);
-      snprintf_P(svalue, sizeof(svalue), PSTR("{\"Commands\":\"PowerLow, PowerHigh, VoltageLow, VoltageHigh, CurrentLow, CurrentHigh"));
-#ifdef FEATURE_POWER_LIMIT
-      snprintf_P(svalue, sizeof(svalue), PSTR("%s, SafePower, SafePowerHold, SafePowerWindow, MaxPower, MaxPowerHold, MaxPowerWindow, MaxEnergy, MaxEnergyStart"), svalue);
-#endif  // FEATURE_POWER_LIMIT
-      snprintf_P(svalue, sizeof(svalue), PSTR("%s\"}"), svalue);
+      hlw_commands(svalue, sizeof(svalue));
     }
   }
   mqtt_publish(stopic, svalue);
@@ -2116,16 +1897,6 @@ void every_second_cb()
   // 1 second rtc interrupt routine
   // Keep this code small (every_second is to large - it'll trip exception)
 
-#ifdef FEATURE_POWER_LIMIT
-  if (rtcTime.Valid) {
-    if (rtc_loctime() == rtc_midnight()) {
-      hlw_mkwh_state = 3;
-    }
-    if ((rtcTime.Hour == sysCfg.hlw_mkwhs) && (hlw_mkwh_state == 3)) {
-      hlw_mkwh_state = 0;
-    }
-  }
-#endif  // FEATURE_POWER_LIMIT
 }
 
 void every_second()
