@@ -1,4 +1,7 @@
-/* 3.9.5 2017018
+/* 3.9.6 20170129
+ * Add dynamic sleep for WS2812 animation (#1)
+ *
+ * 3.9.5 20170128
  * Fix error message in case of wrong Domoticz command
  *
  * 3.9.4 20170127

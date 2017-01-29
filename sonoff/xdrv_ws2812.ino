@@ -372,12 +372,13 @@ void ws2812_animate()
   
   stripTimerCntr++;
   if (power == 0) {  // Power Off
+    sleep = sysCfg.sleep;
     stripTimerCntr = 0;
     tcolor = 0;
 		sleep = sysCfg.sleep; // Power saving while off
   }
   else {
-		sleep = 0;            // No Power saving during animation
+    sleep = 0;
     switch (sysCfg.ws_scheme) {
       case 0:  // Power On
         ws2812_setDim(sysCfg.ws_dimmer);
