@@ -29,7 +29,7 @@ POSSIBILITY OF SUCH DAMAGE.
  * Based on Source: Shenzhen Heli Technology Co., Ltd
 \*********************************************************************************************/
 
-#define FEATURE_POWER_LIMIT  false
+#define FEATURE_POWER_LIMIT  true
 
 /*********************************************************************************************/
 
@@ -512,8 +512,8 @@ boolean hlw_command(char *type, uint16_t index, char *dataBuf, uint16_t data_len
 
 void hlw_commands(char *svalue, uint16_t ssvalue)
 {
-  snprintf_P(svalue, ssvalue, PSTR("{\"Commands\":\"PowerLow, PowerHigh, VoltageLow, VoltageHigh, CurrentLow, CurrentHigh%s\"}"),
-    (FEATURE_POWER_LIMIT)?"SafePower, SafePowerHold, SafePowerWindow, MaxPower, MaxPowerHold, MaxPowerWindow, MaxEnergy, MaxEnergyStart":"");
+  snprintf_P(svalue, ssvalue, PSTR("{\"Commands\":\"PowerLow, PowerHigh, VoltageLow, VoltageHigh, CurrentLow, CurrentHigh, HlwPcal, HlwUcal, HlwIcal%s\"}"),
+    (FEATURE_POWER_LIMIT)?", SafePower, SafePowerHold, SafePowerWindow, MaxPower, MaxPowerHold, MaxPowerWindow, MaxEnergy, MaxEnergyStart":"");
 }
 
 /*********************************************************************************************\

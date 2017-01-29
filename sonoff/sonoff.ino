@@ -10,7 +10,7 @@
  * ====================================================
 */
 
-#define VERSION                0x03090500   // 3.9.5
+#define VERSION                0x03090600   // 3.9.6
 
 enum log_t   {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG_MORE, LOG_LEVEL_ALL};
 enum week_t  {Last, First, Second, Third, Fourth};
@@ -383,6 +383,7 @@ byte syslog_level;                    // Current copy of sysCfg.syslog_level
 uint16_t syslog_timer = 0;            // Timer to re-enable syslog_level
 byte seriallog_level;                 // Current copy of sysCfg.seriallog_level
 uint16_t seriallog_timer = 0;         // Timer to disable Seriallog
+uint8_t sleep;                        // Current copy of sysCfg.sleep
 
 int blinks = 201;                     // Number of LED blinks
 uint8_t blinkstate = 0;               // LED state
@@ -1283,9 +1284,10 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
     else if (!strcmp(type,"SLEEP")) {
       if ((data_len > 0) && (payload >= 0) && (payload < 251)) {
         sysCfg.sleep = payload;
-        restartflag = 2;
+        sleep = payload;
+//        restartflag = 2;
       }
-      snprintf_P(svalue, sizeof(svalue), PSTR("{\"Sleep\":\"%d%s\"}"), sysCfg.sleep, (sysCfg.value_units) ? " mS" : "");
+      snprintf_P(svalue, sizeof(svalue), PSTR("{\"Sleep\":\"%d%s (%d%s)\"}"), sleep, (sysCfg.value_units) ? " mS" : "", sysCfg.sleep, (sysCfg.value_units) ? " mS" : "");
     }
     else if (!strcmp(type,"UPGRADE") || !strcmp(type,"UPLOAD")) {
       if ((data_len > 0) && (payload == 1)) {
@@ -2456,6 +2458,7 @@ void setup()
   seriallog_timer = SERIALLOG_TIMER;
   seriallog_level = sysCfg.seriallog_level;
   syslog_level = sysCfg.syslog_level;
+  sleep = sysCfg.sleep;
 
   GPIO_init();
 
@@ -2525,7 +2528,7 @@ void loop()
   if (millis() >= timerxs) stateloop();
   if (sysCfg.mqtt_enabled) mqttClient.loop();
   if (Serial.available()) serial();
-  yield();
 
-  if (sysCfg.sleep) delay(sysCfg.sleep);
+//  yield();     // yield == delay(0), delay contains yield, auto yield in loop
+  delay(sleep);  // https://github.com/esp8266/Arduino/issues/2021
 }

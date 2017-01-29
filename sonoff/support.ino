@@ -421,7 +421,8 @@ void WIFI_begin(uint8_t flag)
   }
   WiFi.disconnect();
   WiFi.mode(WIFI_STA);      // Disable AP mode
-  if (sysCfg.sleep) wifi_set_sleep_type(LIGHT_SLEEP_T);  // Allow light sleep during idle times
+//  if (sysCfg.sleep) wifi_set_sleep_type(LIGHT_SLEEP_T);  // Allow light sleep during idle times
+  WiFi.setSleepMode(WIFI_LIGHT_SLEEP);  // Allow light sleep during idle times
 //  if (WiFi.getPhyMode() != WIFI_PHY_MODE_11N) WiFi.setPhyMode(WIFI_PHY_MODE_11N);
   if (!WiFi.getAutoConnect()) WiFi.setAutoConnect(true);
 //  WiFi.setAutoReconnect(true);
