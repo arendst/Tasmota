@@ -8,7 +8,7 @@ Current version is **3.9.6** - See ```sonoff/_releasenotes.ino``` for change inf
 - After reboot select config menu again or use commands ```GPIOs``` and ```GPIO``` to change GPIO with desired sensor.
 
 <img alt="Sonoff" src="https://github.com/arendst/arendst.github.io/blob/master/media/sonoffbasic.jpg" width="250" align="right" /> 
-See [Wiki](wiki) for more information.<br />
+See [Wiki](https://github.com/arendst/Sonoff-Tasmota/wiki) for more information.<br />
 See [Community](https://groups.google.com/d/forum/sonoffusers) for forum and more user experience.
 
 Starting with version 2.0.0 the following devices are supported:
