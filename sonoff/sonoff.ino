@@ -2509,6 +2509,8 @@ void setup()
 
   rtc_init(every_second_cb);
 
+  sleep = sysCfg.sleep;
+
   snprintf_P(log, sizeof(log), PSTR("APP: Project %s %s (Topic %s, Fallback %s, GroupTopic %s) Version %s"),
     PROJECT, sysCfg.friendlyname[0], sysCfg.mqtt_topic, MQTTClient, sysCfg.mqtt_grptopic, Version);
   addLog(LOG_LEVEL_INFO, log);
