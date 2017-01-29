@@ -2527,7 +2527,7 @@ void loop()
   if (millis() >= timerxs) stateloop();
   if (sysCfg.mqtt_enabled) mqttClient.loop();
   if (Serial.available()) serial();
-  yield();
 
-  if (sleep) delay(sleep);
+  delay(sleep); // yield == delay(0), delay contains yield, auto yield in loop
+                // https://github.com/esp8266/Arduino/issues/2021
 }

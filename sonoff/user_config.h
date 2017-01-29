@@ -84,7 +84,7 @@
   #define FRIENDLY_NAME3         "Sonoff3"       // [FriendlyName3] Friendlyname up to 32 characters used by Alexa
   #define FRIENDLY_NAME4         "Sonoff4"       // [FriendlyName4] Friendlyname up to 32 characters used by Alexa
   #define WEB_SERVER             2               // [WebServer] Web server (0 = Off, 1 = Start as User, 2 = Start as Admin)
-//  #define USE_WEMO_EMULATION                     // Enable Belkin WeMo PowerSwitch emulation for Alexa (+4k code, +2k mem)
+  #define USE_WEMO_EMULATION                     // Enable Belkin WeMo PowerSwitch emulation for Alexa (+4k code, +2k mem)
 //  #define USE_HUE_EMULATION                      // Enable Hue Bridge emulation for Alexa (+5k code, +2k mem)
 
 // -- mDNS ----------------------------------------
