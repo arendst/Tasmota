@@ -1,4 +1,8 @@
-/* 3.9.6 20170129
+/* 3.9.7 20170129
+ * Fix possible WS2812 exceptions when using emulation
+ * Add command Emulation to dynamic configure Belkin WeMo and Hue Bridge for Alexa
+ *
+ * 3.9.6 20170129
  * Add dynamic sleep for WS2812 animation (#1)
  *
  * 3.9.5 20170128

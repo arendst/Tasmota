@@ -10,7 +10,7 @@
  * ====================================================
 */
 
-#define VERSION                0x03090600   // 3.9.6
+#define VERSION                0x03090700   // 3.9.7
 
 enum log_t   {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG_MORE, LOG_LEVEL_ALL};
 enum week_t  {Last, First, Second, Third, Fourth};
@@ -19,6 +19,7 @@ enum month_t {Jan=1, Feb, Mar, Apr, May, Jun, Jul, Aug, Sep, Oct, Nov, Dec};
 enum wifi_t  {WIFI_RESTART, WIFI_SMARTCONFIG, WIFI_MANAGER, WIFI_WPSCONFIG, WIFI_RETRY, MAX_WIFI_OPTION};
 enum swtch_t {TOGGLE, FOLLOW, FOLLOW_INV, PUSHBUTTON, PUSHBUTTON_INV, MAX_SWITCH_OPTION};
 enum led_t   {LED_OFF, LED_POWER, LED_MQTTSUB, LED_POWER_MQTTSUB, LED_MQTTPUB, LED_POWER_MQTTPUB, LED_MQTT, LED_POWER_MQTT, MAX_LED_OPTION};
+enum emul_t  {EMUL_NONE, EMUL_WEMO, EMUL_HUE, EMUL_MAX};
 
 #include "sonoff_template.h"
 
@@ -311,6 +312,8 @@ struct SYSCFG {
   uint8_t       led_width;
   uint16_t      led_wakeup;
 
+  uint8_t       emulation;
+
 } sysCfg;
 
 struct TIME_T {
@@ -422,7 +425,7 @@ void CFG_DefaultSet()
   sysCfg.model = 0;
   sysCfg.timezone = APP_TIMEZONE;
   strlcpy(sysCfg.otaUrl, OTA_URL, sizeof(sysCfg.otaUrl));
-  strlcpy(sysCfg.ex_friendlyname, FRIENDLY_NAME1, sizeof(sysCfg.ex_friendlyname));
+  strlcpy(sysCfg.ex_friendlyname, FRIENDLY_NAME, sizeof(sysCfg.ex_friendlyname));
 
   sysCfg.seriallog_level = SERIAL_LOG_LEVEL;
   sysCfg.sta_active = 0;
@@ -506,10 +509,10 @@ void CFG_DefaultSet()
   sysCfg.ws_width = 1;
   sysCfg.ws_wakeup = 0;
 
-  strlcpy(sysCfg.friendlyname[0], FRIENDLY_NAME1, sizeof(sysCfg.friendlyname[0]));
-  strlcpy(sysCfg.friendlyname[1], FRIENDLY_NAME2, sizeof(sysCfg.friendlyname[1]));
-  strlcpy(sysCfg.friendlyname[2], FRIENDLY_NAME3, sizeof(sysCfg.friendlyname[2]));
-  strlcpy(sysCfg.friendlyname[3], FRIENDLY_NAME4, sizeof(sysCfg.friendlyname[3]));
+  strlcpy(sysCfg.friendlyname[0], FRIENDLY_NAME, sizeof(sysCfg.friendlyname[0]));
+  strlcpy(sysCfg.friendlyname[1], FRIENDLY_NAME"2", sizeof(sysCfg.friendlyname[1]));
+  strlcpy(sysCfg.friendlyname[2], FRIENDLY_NAME"3", sizeof(sysCfg.friendlyname[2]));
+  strlcpy(sysCfg.friendlyname[3], FRIENDLY_NAME"4", sizeof(sysCfg.friendlyname[3]));
 
   for (byte i = 0; i < MAX_GPIO_PIN; i++) sysCfg.my_module.gp.io[i] = 0;
   
@@ -526,6 +529,8 @@ void CFG_DefaultSet()
   strlcpy(sysCfg.switch_topic, "0", sizeof(sysCfg.switch_topic));
   sysCfg.mqtt_switch_retain = MQTT_SWITCH_RETAIN;
   sysCfg.mqtt_enabled = MQTT_USE;
+
+  sysCfg.emulation = EMULATION;
   
 }
 
@@ -678,9 +683,9 @@ void CFG_Delta()
     }
     if (sysCfg.version < 0x03020500) {  // 3.2.5 - Add parameter
       strlcpy(sysCfg.friendlyname[0], sysCfg.ex_friendlyname, sizeof(sysCfg.friendlyname[0]));
-      strlcpy(sysCfg.friendlyname[1], FRIENDLY_NAME2, sizeof(sysCfg.friendlyname[1]));
-      strlcpy(sysCfg.friendlyname[2], FRIENDLY_NAME3, sizeof(sysCfg.friendlyname[2]));
-      strlcpy(sysCfg.friendlyname[3], FRIENDLY_NAME4, sizeof(sysCfg.friendlyname[3]));
+      strlcpy(sysCfg.friendlyname[1], FRIENDLY_NAME"2", sizeof(sysCfg.friendlyname[1]));
+      strlcpy(sysCfg.friendlyname[2], FRIENDLY_NAME"3", sizeof(sysCfg.friendlyname[2]));
+      strlcpy(sysCfg.friendlyname[3], FRIENDLY_NAME"4", sizeof(sysCfg.friendlyname[3]));
     }      
     if (sysCfg.version < 0x03020800) {  // 3.2.8 - Add parameter
       strlcpy(sysCfg.switch_topic, sysCfg.button_topic, sizeof(sysCfg.switch_topic));
@@ -706,6 +711,9 @@ void CFG_Delta()
       sysCfg.led_scheme = 0;
       sysCfg.led_width = 0;
       sysCfg.led_wakeup = 0;
+    }
+    if (sysCfg.version < 0x03090700) {  // 3.9.7 - Add parameter
+      sysCfg.emulation = EMULATION;
     }
 
     sysCfg.version = VERSION;
@@ -1003,9 +1011,9 @@ void mqtt_reconnect()
     mqtt_connected();
     return;
   }
-#if defined(USE_WEMO_EMULATION) || defined(USE_HUE_EMULATION)
+#ifdef USE_EMULATION
   UDP_Disconnect();
-#endif  // USE_WEMO_EMULATION || USE_HUE_EMULATION
+#endif  // USE_EMULATION
   if (mqttflag > 1) {
 #ifdef USE_MQTT_TLS
     addLog_P(LOG_LEVEL_INFO, PSTR("MQTT: Verify TLS fingerprint..."));
@@ -1389,14 +1397,12 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
     }
     else if (!strcmp(type,"FRIENDLYNAME") && (index > 0) && (index <= 4)) {
       if ((data_len > 0) && (data_len < sizeof(sysCfg.friendlyname[0]))) {
-        if (index == 1) 
-          strlcpy(sysCfg.friendlyname[0], (payload == 1) ? FRIENDLY_NAME1 : dataBuf, sizeof(sysCfg.friendlyname[0]));
-        else if (index == 2) 
-          strlcpy(sysCfg.friendlyname[1], (payload == 1) ? FRIENDLY_NAME2 : dataBuf, sizeof(sysCfg.friendlyname[1]));
-        else if (index == 3) 
-          strlcpy(sysCfg.friendlyname[2], (payload == 1) ? FRIENDLY_NAME3 : dataBuf, sizeof(sysCfg.friendlyname[2]));
-        else if (index == 4) 
-          strlcpy(sysCfg.friendlyname[3], (payload == 1) ? FRIENDLY_NAME4 : dataBuf, sizeof(sysCfg.friendlyname[3]));
+        if (index == 1) {
+          snprintf_P(stemp1, sizeof(stemp1), PSTR(FRIENDLY_NAME));
+        } else {
+          snprintf_P(stemp1, sizeof(stemp1), PSTR(FRIENDLY_NAME "%d"), index);
+        }
+        strlcpy(sysCfg.friendlyname[index -1], (payload == 1) ? stemp1 : dataBuf, sizeof(sysCfg.friendlyname[index -1]));
       }
       snprintf_P(svalue, sizeof(svalue), PSTR("{\"FriendlyName%d\":\"%s\"}"), index, sysCfg.friendlyname[index -1]);
     }
@@ -1424,6 +1430,15 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
       }
       snprintf_P(svalue, sizeof(svalue), PSTR("{\"WebLog\":%d}"), sysCfg.weblog_level);
     }
+#ifdef USE_EMULATION
+    else if (!strcmp(type,"EMULATION")) {
+      if ((data_len > 0) && (payload >= 0) && (payload <= 2)) {
+        sysCfg.emulation = payload;
+        restartflag = 2;
+      }
+      snprintf_P(svalue, sizeof(svalue), PSTR("{\"Emulation\":%d}"), sysCfg.emulation);
+    }
+#endif  // USE_EMULATION
 #endif  // USE_WEBSERVER
     else if (!strcmp(type,"UNITS")) {
       if ((data_len > 0) && (payload >= 0) && (payload <= 1)) {
@@ -1669,7 +1684,7 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
 
     snprintf_P(svalue, sizeof(svalue), PSTR("{\"Commands\":\"%s%s, PulseTime, BlinkTime, BlinkCount"), (Maxdevice == 1) ? "Power, Light" : "Power1, Power2, Light1 Light2", (sysCfg.module != MOTOR) ? ", PowerOnState" : "");
 #ifdef USE_WEBSERVER
-    snprintf_P(svalue, sizeof(svalue), PSTR("%s, Weblog, Webserver"), svalue);
+    snprintf_P(svalue, sizeof(svalue), PSTR("%s, Weblog, Webserver, Emulation"), svalue);
 #endif
     if (swt_flg) snprintf_P(svalue, sizeof(svalue), PSTR("%s, SwitchMode"), svalue);
 #ifdef USE_I2C
@@ -2521,9 +2536,9 @@ void loop()
   pollDnsWeb();
 #endif  // USE_WEBSERVER
 
-#if defined(USE_WEMO_EMULATION) || defined(USE_HUE_EMULATION)
-  pollUDP();
-#endif  // USE_WEMO_EMULATION || USE_HUE_EMULATION
+#ifdef USE_EMULATION
+  if (sysCfg.emulation) pollUDP();
+#endif  // USE_EMULATION
 
   if (millis() >= timerxs) stateloop();
   if (sysCfg.mqtt_enabled) mqttClient.loop();

@@ -23,7 +23,7 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 */
 
-#if defined(USE_WEMO_EMULATION) || defined(USE_HUE_EMULATION)
+#ifdef USE_EMULATION
 
 #define UDP_BUFFER_SIZE 200         // Max UDP buffer size needed for M-SEARCH message
 
@@ -33,7 +33,6 @@ char packetBuffer[UDP_BUFFER_SIZE]; // buffer to hold incoming UDP packet
 IPAddress ipMulticast(239, 255, 255, 250); // Simple Service Discovery Protocol (SSDP)
 uint32_t portMulticast = 1900;      // Multicast address and port
 
-#ifdef USE_WEMO_EMULATION
 /*********************************************************************************************\
  * WeMo UPNP support routines
 \*********************************************************************************************/
@@ -83,9 +82,7 @@ void wemo_respondToMSearch()
     message, portUDP.remoteIP().toString().c_str(), portUDP.remotePort());
   addLog(LOG_LEVEL_DEBUG, log);
 }
-#endif  // USE_WEMO_EMULATION
 
-#ifdef USE_HUE_EMULATION
 /*********************************************************************************************\
  * Hue Bridge UPNP support routines
  * Need to send 3 response packets with varying ST and USN
@@ -174,11 +171,9 @@ void hue_respondToMSearch()
     message, portUDP.remoteIP().toString().c_str(), portUDP.remotePort());
   addLog(LOG_LEVEL_DEBUG, log);
 }
-#endif  // USE_HUE_EMULATION
 
 /********************************************************************************************/
 
-#if defined(USE_WEMO_EMULATION) || defined(USE_HUE_EMULATION)
 boolean UDP_Disconnect()
 {
   if (udpConnected) {
@@ -212,22 +207,15 @@ void pollUDP()
       String request = packetBuffer;
 //      addLog_P(LOG_LEVEL_DEBUG_MORE, packetBuffer);
       if (request.indexOf("M-SEARCH") >= 0) {
-#ifdef USE_WEMO_EMULATION
-        if (request.indexOf("urn:Belkin:device:**") > 0) {
+        if ((sysCfg.emulation == EMUL_WEMO) &&(request.indexOf("urn:Belkin:device:**") > 0)) {
           wemo_respondToMSearch();
         }
-#endif // USE_WEMO_EMULATION
-#ifdef USE_HUE_EMULATION
-        if (request.indexOf("ST: urn:schemas-upnp-org:device:basic:1") > 0 ||
-            request.indexOf("ST: upnp:rootdevice") > 0 ||
-            request.indexOf("ST: ssdp:all") > 0) {
+        else if ((sysCfg.emulation == EMUL_HUE) && ((request.indexOf("ST: urn:schemas-upnp-org:device:basic:1") > 0) || (request.indexOf("ST: upnp:rootdevice") > 0) || (request.indexOf("ST: ssdp:all") > 0))) {
           hue_respondToMSearch();
         }
-#endif // USE_HUE_EMULATION
       }
     }
   }
 }
-#endif  // USE_WEMO_EMULATION || USE_HUE_EMULATION
-#endif  // USE_WEMO_EMULATION || USE_HUE_EMULATION
+#endif  // USE_EMULATION
 

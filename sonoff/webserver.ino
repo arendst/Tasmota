@@ -158,7 +158,16 @@ const char HTTP_FORM_LOG3[] PROGMEM =
 const char HTTP_FORM_OTHER[] PROGMEM =
   "<fieldset><legend><b>&nbsp;Other parameters&nbsp;</b></legend><form method='post' action='sv'>"
   "<input id='w' name='w' value='5' hidden><input id='r' name='r' value='1' hidden>"
-  "<br/><input style='width:10%;float:left' id='r1' name='r1' type='checkbox'{r1}><b>MQTT enable</b><br/>";
+  "<br/><input style='width:10%;float:left' id='b1' name='b1' type='checkbox'{r1}><b>MQTT enable</b><br/>";
+const char HTTP_FORM_OTHER2[] PROGMEM =
+  "<br/><b>Friendly Name {1</b> ({2)<br/><input id='a{1' name='a{1' length=32 placeholder='{2' value='{3'><br/>";
+#ifdef USE_EMULATION
+const char HTTP_FORM_OTHER3[] PROGMEM =
+  "<br/><fieldset><legend><b>&nbsp;Emulation&nbsp;</b></legend>"
+  "<br/><input style='width:10%;float:left' id='b2' name='b2' type='radio' value='0'{r2}><b>None</b><br/>"
+  "<br/><input style='width:10%;float:left' id='b2' name='b2' type='radio' value='1'{r3}><b>Belkin WeMo</b><br/>"
+  "<br/><input style='width:10%;float:left' id='b2' name='b2' type='radio' value='2'{r4}><b>Hue Bridge</b><br/>";
+#endif  // USE_EMULATION
 const char HTTP_FORM_END[] PROGMEM =
   "<br/><button type='submit'>Save</button></form></fieldset>";
 const char HTTP_FORM_UPG[] PROGMEM =
@@ -188,7 +197,7 @@ const char HTTP_END[] PROGMEM =
   "</div>"
   "</body>"
   "</html>";
-#ifdef USE_WEMO_EMULATION
+#ifdef USE_EMULATION
 const char WEMO_EVENTSERVICE_XML[] PROGMEM =
   "<?scpd xmlns=\"urn:Belkin:service-1-0\"?>"
   "<actionList>"
@@ -241,8 +250,6 @@ const char WEMO_SETUP_XML[] PROGMEM =
     "</device>"
   "</root>\r\n"
   "\r\n";
-#endif  // USE_WEMO_EMULATION
-#ifdef USE_HUE_EMULATION
 const char HUE_DESCRIPTION_XML[] PROGMEM =
   "<?xml version=\"1.0\"?>"
   "<root xmlns=\"urn:schemas-upnp-org:device-1-0\">"
@@ -261,7 +268,6 @@ const char HUE_DESCRIPTION_XML[] PROGMEM =
   "</device>"
   "</root>\r\n"
   "\r\n";
-
 const char HUE_LIGHT_STATUS_JSON[] PROGMEM =
   "{\"state\":"
       "{\"on\":{state},"
@@ -280,10 +286,9 @@ const char HUE_LIGHT_STATUS_JSON[] PROGMEM =
   "\"uniqueid\":\"{j2}\","
   "\"swversion\":\"66012040\""
   "}";
-
 const char HUE_LIGHT_RESPONSE_JSON[] PROGMEM =
   "{\"success\":{\"{api}/{id}/{cmd}\":{res}}}";
-#endif  // USE_HUE_EMULATION
+#endif  // USE_EMULATION
 
 #define DNS_PORT 53
 enum http_t {HTTP_OFF, HTTP_USER, HTTP_ADMIN, HTTP_MANAGER};
@@ -325,14 +330,14 @@ void startWebserver(int type, IPAddress ipweb)
       webServer->on("/in", handleInfo);
       webServer->on("/rb", handleRestart);
       webServer->on("/fwlink", handleRoot);  // Microsoft captive portal. Maybe not needed. Might be handled by notFound handler.
-#ifdef USE_WEMO_EMULATION
-      webServer->on("/upnp/control/basicevent1", HTTP_POST, handleUPnPevent);
-      webServer->on("/eventservice.xml", handleUPnPservice);
-      webServer->on("/setup.xml", handleUPnPsetup);
-#endif  // USE_WEMO_EMULATION
-#ifdef USE_HUE_EMULATION
-      webServer->on("/description.xml", handleUPnPsetup);
-#endif  // USE_HUE_EMULATION
+#ifdef USE_EMULATION
+      if (sysCfg.emulation == EMUL_WEMO) {
+        webServer->on("/upnp/control/basicevent1", HTTP_POST, handleUPnPevent);
+        webServer->on("/eventservice.xml", handleUPnPservice);
+        webServer->on("/setup.xml", handleUPnPsetupWemo);
+      }
+      if (sysCfg.emulation == EMUL_HUE) webServer->on("/description.xml", handleUPnPsetupHue);
+#endif  // USE_EMULATION
       webServer->onNotFound(handleNotFound);
     }
     webServer->begin(); // Web server start
@@ -572,9 +577,9 @@ void handleWifi(boolean scan)
   page.replace("{v}", "Configure Wifi");
 
   if (scan) {
-#if defined(USE_WEMO_EMULATION) || defined(USE_HUE_EMULATION)
+#ifdef USE_EMULATION
     UDP_Disconnect();
-#endif  // USE_WEMO_EMULATION || USE_HUE_EMULATION
+#endif  // USE_EMULATION
     int n = WiFi.scanNetworks();
     addLog_P(LOG_LEVEL_DEBUG, PSTR("Wifi: Scan done"));
 
@@ -748,20 +753,30 @@ void handleOther()
     return;
   }
   addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Handle other config"));
+  char stemp[40];
 
   String page = FPSTR(HTTP_HEAD);
   page.replace("{v}", "Configure Other");
   page += FPSTR(HTTP_FORM_OTHER);
   page.replace("{r1}", (sysCfg.mqtt_enabled) ? " checked" : "");
-  for (int i = 0; i < Maxdevice; i++) {
-    page += F("<br/><b>Friendly Name {1</b> ({2)<br/><input id='a{1' name='a{1' length=32 placeholder='{2' value='{3'><br/>");
+  page += FPSTR(HTTP_FORM_OTHER2);
+  page.replace("{1", "1");
+  page.replace("{2", FRIENDLY_NAME);
+  page.replace("{3", String(sysCfg.friendlyname[0]));
+#ifdef USE_EMULATION
+  page += FPSTR(HTTP_FORM_OTHER3);
+  page.replace("{r2}", (sysCfg.emulation == EMUL_NONE) ? " checked" : "");
+  page.replace("{r3}", (sysCfg.emulation == EMUL_WEMO) ? " checked" : "");
+  page.replace("{r4}", (sysCfg.emulation == EMUL_HUE) ? " checked" : "");
+  for (int i = 1; i < Maxdevice; i++) {
+    page += FPSTR(HTTP_FORM_OTHER2);
     page.replace("{1", String(i +1));
-    if (i == 0) page.replace("{2", FRIENDLY_NAME1);
-    else if (i == 1) page.replace("{2", FRIENDLY_NAME2);
-    else if (i == 2) page.replace("{2", FRIENDLY_NAME3);
-    else if (i == 3) page.replace("{2", FRIENDLY_NAME4);
+    snprintf_P(stemp, sizeof(stemp), PSTR(FRIENDLY_NAME"%d"), i +1);
+    page.replace("{2", stemp);
     page.replace("{3", String(sysCfg.friendlyname[i]));
   }
+  page += F("<br/></fieldset>");
+#endif  // USE_EMULATION
   page += FPSTR(HTTP_FORM_END);
   page += FPSTR(HTTP_BTN_CONF);
   showPage(page);
@@ -823,13 +838,16 @@ void handleSave()
     break;
 #endif  // USE_DOMOTICZ
   case 5:
-    sysCfg.mqtt_enabled = webServer->hasArg("r1");
-    strlcpy(sysCfg.friendlyname[0], (!strlen(webServer->arg("a1").c_str())) ? FRIENDLY_NAME1 : webServer->arg("a1").c_str(), sizeof(sysCfg.friendlyname[0]));
-    strlcpy(sysCfg.friendlyname[1], (!strlen(webServer->arg("a2").c_str())) ? FRIENDLY_NAME2 : webServer->arg("a2").c_str(), sizeof(sysCfg.friendlyname[1]));
-    strlcpy(sysCfg.friendlyname[2], (!strlen(webServer->arg("a3").c_str())) ? FRIENDLY_NAME3 : webServer->arg("a3").c_str(), sizeof(sysCfg.friendlyname[2]));
-    strlcpy(sysCfg.friendlyname[3], (!strlen(webServer->arg("a4").c_str())) ? FRIENDLY_NAME4 : webServer->arg("a4").c_str(), sizeof(sysCfg.friendlyname[3]));
-    snprintf_P(log, sizeof(log), PSTR("HTTP: Other MQTT Enable %s, Friendly Names %s, %s, %s and %s"),
-      (sysCfg.mqtt_enabled) ? MQTT_STATUS_ON : MQTT_STATUS_OFF, sysCfg.friendlyname[0], sysCfg.friendlyname[1], sysCfg.friendlyname[2], sysCfg.friendlyname[3]);
+    sysCfg.mqtt_enabled = webServer->hasArg("b1");
+#ifdef USE_EMULATION
+    sysCfg.emulation = (!strlen(webServer->arg("b2").c_str())) ? 0 : atoi(webServer->arg("b2").c_str());
+#endif  // USE_EMULATION
+    strlcpy(sysCfg.friendlyname[0], (!strlen(webServer->arg("a1").c_str())) ? FRIENDLY_NAME : webServer->arg("a1").c_str(), sizeof(sysCfg.friendlyname[0]));
+    strlcpy(sysCfg.friendlyname[1], (!strlen(webServer->arg("a2").c_str())) ? FRIENDLY_NAME"2" : webServer->arg("a2").c_str(), sizeof(sysCfg.friendlyname[1]));
+    strlcpy(sysCfg.friendlyname[2], (!strlen(webServer->arg("a3").c_str())) ? FRIENDLY_NAME"3" : webServer->arg("a3").c_str(), sizeof(sysCfg.friendlyname[2]));
+    strlcpy(sysCfg.friendlyname[3], (!strlen(webServer->arg("a4").c_str())) ? FRIENDLY_NAME"4" : webServer->arg("a4").c_str(), sizeof(sysCfg.friendlyname[3]));
+    snprintf_P(log, sizeof(log), PSTR("HTTP: Other MQTT Enable %s, Emulation %d, Friendly Names %s, %s, %s and %s"),
+      (sysCfg.mqtt_enabled) ? MQTT_STATUS_ON : MQTT_STATUS_OFF, sysCfg.emulation, sysCfg.friendlyname[0], sysCfg.friendlyname[1], sysCfg.friendlyname[2], sysCfg.friendlyname[3]);
     addLog(LOG_LEVEL_INFO, log);
     break;
   case 6:
@@ -1007,9 +1025,9 @@ void handleUploadLoop()
       _uploaderror = 1;
       return;
     }
-#if defined(USE_WEMO_EMULATION) || defined(USE_HUE_EMULATION)
+#ifdef USE_EMULATION
     UDP_Disconnect();
-#endif  // USE_WEMO_EMULATION || USE_HUE_EMULATION
+#endif  // USE_EMULATION
     if (sysCfg.mqtt_enabled) mqttClient.disconnect();
 
     snprintf_P(log, sizeof(log), PSTR("Upload: File %s ..."), upload.filename.c_str());
@@ -1262,7 +1280,7 @@ void handleRestart()
 
 /********************************************************************************************/
 
-#ifdef USE_WEMO_EMULATION
+#ifdef USE_EMULATION
 void handleUPnPevent()
 {
   addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Handle WeMo basic event"));
@@ -1281,7 +1299,7 @@ void handleUPnPservice()
   webServer->send(200, "text/plain", eventservice_xml);
 }
 
-void handleUPnPsetup()
+void handleUPnPsetupWemo()
 {
   addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Handle WeMo setup"));
 
@@ -1292,11 +1310,9 @@ void handleUPnPsetup()
   setup_xml.replace("{x3}", wemo_serial());
   webServer->send(200, "text/xml", setup_xml);
 }
-#endif  // USE_WEMO_EMULATION
 
 /********************************************************************************************/
 
-#ifdef USE_HUE_EMULATION
 String hue_deviceId(uint8_t id)
 {
   char deviceid[16];
@@ -1305,7 +1321,7 @@ String hue_deviceId(uint8_t id)
   return String(deviceid);
 }
 
-void handleUPnPsetup()
+void handleUPnPsetupHue()
 {
   addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Handle Hue Bridge setup"));
 
@@ -1344,13 +1360,16 @@ void hue_lights(String *path)
       response.replace("{state}", (power & (0x01 << (i-1))) ? "true" : "false");
       response.replace("{j1}", sysCfg.friendlyname[i-1]);
       response.replace("{j2}", hue_deviceId(i));  
+      if (pin[GPIO_WS2812] < 99) {
 #ifdef USE_WS2812
-      ws2812_replaceHSB(&response);
-#else
-      response.replace("{h}", "0");
-      response.replace("{s}", "0");
-      response.replace("{b}", "0");
+        ws2812_replaceHSB(&response);
 #endif // USE_WS2812
+      } else
+      {
+        response.replace("{h}", "0");
+        response.replace("{s}", "0");
+        response.replace("{b}", "0");
+      }
     }
     response += "}";
     webServer->send(200, "application/json", response);
@@ -1388,8 +1407,7 @@ void hue_lights(String *path)
         }
       }
 #ifdef USE_WS2812
-      if ((pos=json.indexOf("\"bri\":")) >= 0)
-      {
+      if ((pin[GPIO_WS2812] < 99) && ((pos=json.indexOf("\"bri\":")) >= 0)) {
         bri=atoi(json.substring(pos+6).c_str());
         ws2812_changeBrightness(bri);
         response += ",";
@@ -1405,8 +1423,7 @@ void hue_lights(String *path)
     }   
     else webServer->send(406, "application/json", "{}");
   }
-  else if(path->indexOf("/lights/") >= 0)              // Got /lights/ID
-  {
+  else if(path->indexOf("/lights/") >= 0) {            // Got /lights/ID
     path->remove(0,8);                                 // Remove /lights/
     device = atoi(path->c_str());
     if ((device < 1) || (device > Maxdevice)) device = 1;
@@ -1414,13 +1431,16 @@ void hue_lights(String *path)
     response.replace("{state}", (power & (0x01 << (device -1))) ? "true" : "false");
     response.replace("{j1}", sysCfg.friendlyname[device -1]);
     response.replace("{j2}", hue_deviceId(device));
+    if (pin[GPIO_WS2812] < 99) {
 #ifdef USE_WS2812
-    ws2812_replaceHSB(&response);
-#else
-    response.replace("{h}", "0");
-    response.replace("{s}", "0");
-    response.replace("{b}", "0");
+      ws2812_replaceHSB(&response);
 #endif // USE_WS2812
+    } else  
+    {
+      response.replace("{h}", "0");
+      response.replace("{s}", "0");
+      response.replace("{b}", "0");
+    }
     webServer->send(200, "application/json", response);
   }
   else webServer->send(406, "application/json", "{}");
@@ -1453,7 +1473,7 @@ void handle_hue_api(String *path)
     webServer->send(406, "application/json", "{}");
   }
 }
-#endif  // USE_HUE_EMULATION
+#endif  // USE_EMULATION
 
 /********************************************************************************************/
 
@@ -1463,33 +1483,30 @@ void handleNotFound()
     return;
   }
 
-#ifdef USE_HUE_EMULATION  
+#ifdef USE_EMULATION  
   String path = webServer->uri();
-  if (path.startsWith("/api"))
+  if ((sysCfg.emulation == EMUL_HUE) && (path.startsWith("/api"))) {
     handle_hue_api(&path);
-  else {
-#endif // USE_HUE_EMULATION
-  
-  String message = "File Not Found\n\n";
-  message += "URI: ";
-  message += webServer->uri();
-  message += "\nMethod: ";
-  message += ( webServer->method() == HTTP_GET ) ? "GET" : "POST";
-  message += "\nArguments: ";
-  message += webServer->args();
-  message += "\n";
-  for ( uint8_t i = 0; i < webServer->args(); i++ ) {
-    message += " " + webServer->argName ( i ) + ": " + webServer->arg ( i ) + "\n";
-  }
+  } else
+#endif // USE_EMULATION
+  {
+    String message = "File Not Found\n\n";
+    message += "URI: ";
+    message += webServer->uri();
+    message += "\nMethod: ";
+    message += ( webServer->method() == HTTP_GET ) ? "GET" : "POST";
+    message += "\nArguments: ";
+    message += webServer->args();
+    message += "\n";
+    for ( uint8_t i = 0; i < webServer->args(); i++ ) {
+      message += " " + webServer->argName ( i ) + ": " + webServer->arg ( i ) + "\n";
+    }
 
-  webServer->sendHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-  webServer->sendHeader("Pragma", "no-cache");
-  webServer->sendHeader("Expires", "-1");
-  webServer->send(404, "text/plain", message);
-#ifdef USE_HUE_EMULATION
-  addLog_P(LOG_LEVEL_DEBUG_MORE, message.c_str());
+    webServer->sendHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+    webServer->sendHeader("Pragma", "no-cache");
+    webServer->sendHeader("Expires", "-1");
+    webServer->send(404, "text/plain", message);
   }
-#endif // USE_HUE_EMULATION
 }
 
 /* Redirect to captive portal if we got a request for another domain. Return true in that case so the page handler do not try to handle the request again. */
@@ -1517,5 +1534,4 @@ boolean isIp(String str)
   }
   return true;
 }
-
 #endif  // USE_WEBSERVER
