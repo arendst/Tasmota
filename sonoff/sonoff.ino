@@ -369,6 +369,7 @@ uint8_t blink_power;                  // Blink power state
 uint8_t blink_mask = 0;               // Blink relay active mask
 uint8_t blink_powersave;              // Blink start power save state
 uint16_t mqtt_cmnd_publish = 0;       // ignore flag for publish command
+uint8_t sleep=APP_SLEEP;							// Set global sleep for dynamic changes
 
 #ifdef USE_MQTT_TLS
   WiFiClientSecure espClient;         // Wifi Secure Client
@@ -1283,6 +1284,7 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
     else if (!strcmp(type,"SLEEP")) {
       if ((data_len > 0) && (payload >= 0) && (payload < 251)) {
         sysCfg.sleep = payload;
+				sleep = payload;
         restartflag = 2;
       }
       snprintf_P(svalue, sizeof(svalue), PSTR("{\"Sleep\":\"%d%s\"}"), sysCfg.sleep, (sysCfg.value_units) ? " mS" : "");
@@ -2527,5 +2529,5 @@ void loop()
   if (Serial.available()) serial();
   yield();
 
-  if (sysCfg.sleep) delay(sysCfg.sleep);
+  if (sleep) delay(sleep);
 }
