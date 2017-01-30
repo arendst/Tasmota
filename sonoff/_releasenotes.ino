@@ -1,4 +1,8 @@
-/* 3.9.8 20170130
+/* 3.9.9 20170130
+ * Add command status 10 showing sensor data
+ * Fix hlw status messages if hlw is disabled
+ *
+ * 3.9.8 20170130
  * Remove GPIO07 and GPIO08 from user selectable (#5)
  *
  * 3.9.7 20170129
