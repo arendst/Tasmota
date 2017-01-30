@@ -1415,35 +1415,13 @@ void hue_global_cfg(String *path)
 void hue_auth(String *path)
 {
   String response;
-
-  response="[{\"success\":{\"username\":\"22a828f1898a4257c3f181e753241337\"}}]";
-  webServer->send(200, "application/json", response);
+  char uid[7];
   
-  if (webServer->args() == 1) 
-  {
-    String json = webServer->arg(0);
-    json.replace(" ","");                  // remove blanks
-/*    if (json.indexOf("\"on\":") >= 0)      // Got "on" command
-    {
-      if (json.indexOf("false") >= 0)      // false -> turn device off
-      {
-        response.replace("{res}", "false");
-      }
-      else if(json.indexOf("true") >= 0)   // true -> Turn device on
-      {
-        response.replace("{res}", "true");
-      }
-      else
-      {
-        response.replace("{res}", (power & (0x01 << (device-1))) ? "true" : "false");
-      }
-    } */
-  }
-  else 
-  {
-    response=FPSTR(HUE_NO_AUTH_JSON);
-    webServer->send(200, "application/json", response);
-  }
+  snprintf_P(uid, sizeof(uid), PSTR("%03x"), ESP.getChipId());
+  response="[{\"success\":{\"username\":\"";
+  response+=String(uid);
+  response+="\"}}]";
+  webServer->send(200, "application/json", response);
 }
 
 void hue_config(String *path)
@@ -1602,7 +1580,7 @@ void handle_hue_api(String *path)
   }
   
   if (path->endsWith("/invalid/")) {}                // Just ignore
-  else if(path->endsWith("/nouser/config")) hue_auth(path); // HUE App setup
+  else if(path->endsWith("/")) hue_auth(path);       // New HUE App setup
   else if(path->endsWith("/config")) hue_config(path);
   else if(path->indexOf("/lights") >= 0) hue_lights(path);
   else if(path->endsWith("/groups")) hue_todo(path);
