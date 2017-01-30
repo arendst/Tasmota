@@ -10,7 +10,7 @@
  * ====================================================
 */
 
-#define VERSION                0x03090700   // 3.9.7
+#define VERSION                0x03090800   // 3.9.8
 
 enum log_t   {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG_MORE, LOG_LEVEL_ALL};
 enum week_t  {Last, First, Second, Third, Fourth};

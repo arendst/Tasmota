@@ -1,4 +1,7 @@
-/* 3.9.7 20170129
+/* 3.9.8 20170130
+ * Remove GPIO07 and GPIO08 from user selectable (#5)
+ *
+ * 3.9.7 20170129
  * Fix possible WS2812 exceptions when using emulation
  * Add command Emulation to dynamic configure Belkin WeMo and Hue Bridge for Alexa
  *
