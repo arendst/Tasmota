@@ -1,14 +1,14 @@
 ## Sonoff-Tasmota
 Provide ESP8266 based Sonoff by [iTead Studio](https://www.itead.cc/) and ElectroDragon IoT Relay with Serial, Web and MQTT control allowing 'Over the Air' or OTA firmware updates using Arduino IDE.
 
-Current version is **3.9.6** - See ```sonoff/_releasenotes.ino``` for change information.
+Current version is **3.9.7** - See ```sonoff/_releasenotes.ino``` for change information.
 
 - This version provides all (Sonoff) modules in one file and starts up with Sonoff Basic.
 - Once uploaded select module using the configuration webpage or the commands ```Modules``` and ```Module```.
 - After reboot select config menu again or use commands ```GPIOs``` and ```GPIO``` to change GPIO with desired sensor.
 
 <img alt="Sonoff" src="https://github.com/arendst/arendst.github.io/blob/master/media/sonoffbasic.jpg" width="250" align="right" /> 
-See [Wiki](wiki) for more information.<br />
+See [Wiki](https://github.com/arendst/Sonoff-Tasmota/wiki) for more information.<br />
 See [Community](https://groups.google.com/d/forum/sonoffusers) for forum and more user experience.
 
 Starting with version 2.0.0 the following devices are supported:

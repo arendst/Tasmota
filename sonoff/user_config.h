@@ -79,13 +79,10 @@
 
 // -- HTTP ----------------------------------------
 #define USE_WEBSERVER                            // Enable web server and wifi manager (+43k code, +2k mem) - Disable by //
-  #define FRIENDLY_NAME1         "Sonoff"        // [FriendlyName1] Friendlyname up to 32 characters used by webpages and Alexa
-  #define FRIENDLY_NAME2         "Sonoff2"       // [FriendlyName2] Friendlyname up to 32 characters used by Alexa
-  #define FRIENDLY_NAME3         "Sonoff3"       // [FriendlyName3] Friendlyname up to 32 characters used by Alexa
-  #define FRIENDLY_NAME4         "Sonoff4"       // [FriendlyName4] Friendlyname up to 32 characters used by Alexa
+  #define FRIENDLY_NAME          "Sonoff"        // [FriendlyName] Friendlyname up to 32 characters used by webpages and Alexa
   #define WEB_SERVER             2               // [WebServer] Web server (0 = Off, 1 = Start as User, 2 = Start as Admin)
-  #define USE_WEMO_EMULATION                     // Enable Belkin WeMo PowerSwitch emulation for Alexa (+4k code, +2k mem)
-//  #define USE_HUE_EMULATION                      // Enable Hue Bridge emulation for Alexa (+5k code, +2k mem)
+  #define USE_EMULATION                          // Enable Belkin WeMo and Hue Bridge emulation for Alexa (+11k code, +2k mem)
+    #define EMULATION            EMUL_NONE       // [Emulation] Select Belkin WeMo or Hue Bridge emulation (EMUL_NONE, EMUL_WEMO or EMUL_HUE)
 
 // -- mDNS ----------------------------------------
 #define USE_DISCOVERY                            // Enable mDNS for the following services (+8k code, +0.3k mem)
