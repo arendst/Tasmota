@@ -288,6 +288,28 @@ const char HUE_LIGHT_STATUS_JSON[] PROGMEM =
   "}";
 const char HUE_LIGHT_RESPONSE_JSON[] PROGMEM =
   "{\"success\":{\"{api}/{id}/{cmd}\":{res}}}";
+const char HUE_CONFIG_RESPONSE_JSON[] PROGMEM =
+  "{\"name\":\"Philips hue\","
+   "\"mac\":\"{mac}\","
+   "\"dhcp\":true,"
+   "\"ipaddress\":\"{ip}\","
+   "\"netmask\":\"{mask}\","
+   "\"gateway\":\"{gw}\","
+   "\"proxyaddress\":\"\","
+   "\"proxyport\":0,"
+   "\"UTC\":\"{dt}\","
+   "\"whitelist\":{\"{id}\":{"
+     "\"last use date\":\"{dt}\","
+     "\"create date\":\"{dt}\","
+     "\"name\":\"Remote\"}},"
+   "\"swversion\":\"01036659\","
+   "\"apiversion\":\"1.16.0\","
+   "\"swupdate\":{\"updatestate\":0,\"url\":\"\",\"text\":\"\",\"notify\": false},"
+   "\"linkbutton\":false,"
+   "\"portalservices\":false"
+  "}";
+const char HUE_NO_AUTH_JSON[] PROGMEM =
+  "[{\"error\":{\"type\":101,\"address\":\"/\",\"description\":\"link button not pressed\"}}]";
 #endif  // USE_EMULATION
 
 #define DNS_PORT 53
@@ -1339,6 +1361,116 @@ void hue_todo(String *path)
   addLog(LOG_LEVEL_DEBUG_MORE, log);
 }
 
+void hue_global_cfg(String *path)
+{
+  String response;
+  char buffer[21];
+  IPAddress net;
+
+  path->remove(0,1);               // cut leading / to get <id>
+  response="{\"lights\":{\"";
+  for (uint8_t i = 1; i <= Maxdevice; i++)
+  {
+    response += i;
+    response += "\":";
+    response += FPSTR(HUE_LIGHT_STATUS_JSON);
+    if (i < Maxdevice) response += ",\"";
+    response.replace("{state}", (power & (0x01 << (i-1))) ? "true" : "false");
+    response.replace("{j1}", sysCfg.friendlyname[i-1]);
+    response.replace("{j2}", hue_deviceId(i));  
+    if (pin[GPIO_WS2812] < 99) {
+#ifdef USE_WS2812
+      ws2812_replaceHSB(&response);
+#endif // USE_WS2812
+    } else
+    {
+      response.replace("{h}", "0");
+      response.replace("{s}", "0");
+      response.replace("{b}", "0");
+    }
+  }
+  response += "},";
+  response += "\"groups\":{},";
+  response += "\"schedules\":{},";
+  response += "\"config\":";
+  response += FPSTR(HUE_CONFIG_RESPONSE_JSON);
+  response.replace("{mac}", String(WiFi.macAddress()));
+  net=WiFi.localIP();
+  sprintf(buffer, "%d.%d.%d.%d", net[0], net[1], net[2], net[3]);
+  response.replace("{ip}", String(buffer));
+  net=WiFi.subnetMask();
+  sprintf(buffer, "%d.%d.%d.%d", net[0], net[1], net[2], net[3]);
+  response.replace("{mask}", String(buffer));
+  net=WiFi.gatewayIP();
+  sprintf(buffer, "%d.%d.%d.%d", net[0], net[1], net[2], net[3]);
+  response.replace("{gw}", String(buffer));
+  snprintf_P(buffer, sizeof(buffer), PSTR("%04d-%02d-%02dT%02d:%02d:%02d"),
+    rtcTime.Year, rtcTime.Month, rtcTime.Day, rtcTime.Hour, rtcTime.Minute, rtcTime.Second);
+  response.replace("{dt}", String(buffer));
+  response.replace("{id}", *path);
+  response += "}";
+  webServer->send(200, "application/json", response);
+}
+
+void hue_auth(String *path)
+{
+  String response;
+
+  response="[{\"success\":{\"username\":\"22a828f1898a4257c3f181e753241337\"}}]";
+  webServer->send(200, "application/json", response);
+  
+  if (webServer->args() == 1) 
+  {
+    String json = webServer->arg(0);
+    json.replace(" ","");                  // remove blanks
+/*    if (json.indexOf("\"on\":") >= 0)      // Got "on" command
+    {
+      if (json.indexOf("false") >= 0)      // false -> turn device off
+      {
+        response.replace("{res}", "false");
+      }
+      else if(json.indexOf("true") >= 0)   // true -> Turn device on
+      {
+        response.replace("{res}", "true");
+      }
+      else
+      {
+        response.replace("{res}", (power & (0x01 << (device-1))) ? "true" : "false");
+      }
+    } */
+  }
+  else 
+  {
+    response=FPSTR(HUE_NO_AUTH_JSON);
+    webServer->send(200, "application/json", response);
+  }
+}
+
+void hue_config(String *path)
+{
+  String response;
+  char buffer[21];
+  IPAddress net;
+
+  path->remove(0,1);               // cut leading / to get <id>
+  response += FPSTR(HUE_CONFIG_RESPONSE_JSON);
+  response.replace("{mac}", String(WiFi.macAddress()));
+  net=WiFi.localIP();
+  sprintf(buffer, "%d.%d.%d.%d", net[0], net[1], net[2], net[3]);
+  response.replace("{ip}", String(buffer));
+  net=WiFi.subnetMask();
+  sprintf(buffer, "%d.%d.%d.%d", net[0], net[1], net[2], net[3]);
+  response.replace("{mask}", String(buffer));
+  net=WiFi.gatewayIP();
+  sprintf(buffer, "%d.%d.%d.%d", net[0], net[1], net[2], net[3]);
+  response.replace("{gw}", String(buffer));
+  snprintf_P(buffer, sizeof(buffer), PSTR("%04d-%02d-%02dT%02d:%02d:%02d"),
+    rtcTime.Year, rtcTime.Month, rtcTime.Day, rtcTime.Hour, rtcTime.Minute, rtcTime.Second);
+  response.replace("{dt}", String(buffer));
+  response.replace("{id}", *path);
+  webServer->send(200, "application/json", response);
+}
+
 void hue_lights(String *path)
 {
   String response;
@@ -1388,7 +1520,8 @@ void hue_lights(String *path)
     if (webServer->args() == 1) 
     {
       String json = webServer->arg(0);
-//      Serial.print("HUE API: POST "); Serial.println(json.c_str());
+      json.replace(" ","");                  // remove blanks
+
       if (json.indexOf("\"on\":") >= 0)      // Got "on" command
       {
         if (json.indexOf("false") >= 0)      // false -> turn device off
@@ -1456,22 +1589,35 @@ void handle_hue_api(String *path)
    */
    
   char log[LOGSZ];
+  uint8_t args=0;
 
   path->remove(0, 4);                                // remove /api      
+  snprintf_P(log, sizeof(log), PSTR("HTTP: Handle Hue API (%s)"),path->c_str());
+  addLog(LOG_LEVEL_DEBUG_MORE, log);
+  for(args=0;args<webServer->args();args++)
+  {
+    String json = webServer->arg(args);
+    snprintf_P(log, sizeof(log), PSTR("HTTP: Hue POST args (%s)"),json.c_str());
+    addLog(LOG_LEVEL_DEBUG_MORE, log);
+  }
+  
   if (path->endsWith("/invalid/")) {}                // Just ignore
-  else if (path->endsWith("/config")) hue_todo(path);
+  else if(path->endsWith("/nouser/config")) hue_auth(path); // HUE App setup
+  else if(path->endsWith("/config")) hue_config(path);
   else if(path->indexOf("/lights") >= 0) hue_lights(path);
   else if(path->endsWith("/groups")) hue_todo(path);
   else if(path->endsWith("/schedules")) hue_todo(path); 
   else if(path->endsWith("/sensors")) hue_todo(path);
   else if(path->endsWith("/scenes")) hue_todo(path);
   else if(path->endsWith("/rules")) hue_todo(path);
-  else 
-  {
+  else hue_global_cfg(path);
+
+/*  {
     snprintf_P(log, sizeof(log), PSTR("HTTP: Handle Hue API (%s)"),path->c_str());
     addLog(LOG_LEVEL_DEBUG_MORE, log);
     webServer->send(406, "application/json", "{}");
   }
+*/
 }
 #endif  // USE_EMULATION
 
