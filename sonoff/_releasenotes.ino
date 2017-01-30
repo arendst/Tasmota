@@ -1,4 +1,8 @@
-/* 3.9.9 20170130
+/* 3.9.10 20170130
+ * Add WS2812 Color Type selection (RGB or GRB) to user_config.h (#7)
+ * Hue api changes to support HUE App(s) (#8)
+ *
+ * 3.9.9 20170130
  * Add command status 10 showing sensor data
  * Fix hlw status messages if hlw is disabled
  *

@@ -31,9 +31,17 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <NeoPixelBus.h>
 
 #ifdef USE_WS2812_DMA
+#if (USE_WS2812_CTYPE == 1)
   NeoPixelBus<NeoGrbFeature, Neo800KbpsMethod> *strip = NULL;
-#else
+#else  // USE_WS2812_CTYPE
+  NeoPixelBus<NeoRgbFeature, Neo800KbpsMethod> *strip = NULL;
+#endif  // USE_WS2812_CTYPE
+#else  // USE_WS2812_DMA
+#if (USE_WS2812_CTYPE == 1)
   NeoPixelBus<NeoGrbFeature, NeoEsp8266BitBang800KbpsMethod> *strip = NULL;
+#else  // USE_WS2812_CTYPE
+  NeoPixelBus<NeoRgbFeature, NeoEsp8266BitBang800KbpsMethod> *strip = NULL;
+#endif  // USE_WS2812_CTYPE
 #endif  // USE_WS2812_DMA
 
 #define COLOR_SATURATION 254.0f
@@ -457,9 +465,17 @@ void ws2812_pixels()
 void ws2812_init()
 {
 #ifdef USE_WS2812_DMA
+#if (USE_WS2812_CTYPE == 1)
   strip = new NeoPixelBus<NeoGrbFeature, Neo800KbpsMethod>(WS2812_MAX_LEDS);  // For Esp8266, the Pin is omitted and it uses GPIO3 due to DMA hardware use.
-#else
+#else  // USE_WS2812_CTYPE
+  strip = new NeoPixelBus<NeoRgbFeature, Neo800KbpsMethod>(WS2812_MAX_LEDS);  // For Esp8266, the Pin is omitted and it uses GPIO3 due to DMA hardware use.
+#endif  // USE_WS2812_CTYPE
+#else  // USE_WS2812_DMA
+#if (USE_WS2812_CTYPE == 1)
   strip = new NeoPixelBus<NeoGrbFeature, NeoEsp8266BitBang800KbpsMethod>(WS2812_MAX_LEDS, pin[GPIO_WS2812]);
+#else  // USE_WS2812_CTYPE
+  strip = new NeoPixelBus<NeoRgbFeature, NeoEsp8266BitBang800KbpsMethod>(WS2812_MAX_LEDS, pin[GPIO_WS2812]);
+#endif  // USE_WS2812_CTYPE
 #endif  // USE_WS2812_DMA
   strip->Begin();
   ws2812_pixels();
