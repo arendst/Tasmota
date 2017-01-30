@@ -159,7 +159,6 @@ void hue_respondToMSearch()
     response.replace("{r3}", hue_UUID());
     portUDP.write(response.c_str());
     portUDP.endPacket();
-
     snprintf_P(message, sizeof(message), PSTR("3 response packets sent"));
 //    addLog(LOG_LEVEL_DEBUG_MORE, response.c_str());
 

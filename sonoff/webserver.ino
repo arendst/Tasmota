@@ -164,8 +164,8 @@ const char HTTP_FORM_OTHER2[] PROGMEM =
 #ifdef USE_EMULATION
 const char HTTP_FORM_OTHER3[] PROGMEM =
   "<br/><fieldset><legend><b>&nbsp;Emulation&nbsp;</b></legend>"
-  "<br/><input style='width:10%;float:left' id='b2' name='b2' type='radio' value='0'{r2}><b>None</b><br/>"
-  "<br/><input style='width:10%;float:left' id='b2' name='b2' type='radio' value='1'{r3}><b>Belkin WeMo</b><br/>"
+  "<br/><input style='width:10%;float:left' id='b2' name='b2' type='radio' value='0'{r2}><b>None</b>"
+  "<br/><input style='width:10%;float:left' id='b2' name='b2' type='radio' value='1'{r3}><b>Belkin WeMo</b>"
   "<br/><input style='width:10%;float:left' id='b2' name='b2' type='radio' value='2'{r4}><b>Hue Bridge</b><br/>";
 #endif  // USE_EMULATION
 const char HTTP_FORM_END[] PROGMEM =
@@ -1308,8 +1308,8 @@ void handleUPnPevent()
   addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Handle WeMo basic event"));
 
   String request = webServer->arg(0);
-  if(request.indexOf("State>1</Binary") > 0) do_cmnd_power(1, 1);
-  if(request.indexOf("State>0</Binary") > 0) do_cmnd_power(1, 0);
+  if (request.indexOf("State>1</Binary") > 0) do_cmnd_power(1, 1);
+  if (request.indexOf("State>0</Binary") > 0) do_cmnd_power(1, 0);
   webServer->send(200, "text/plain", "");
 }
 
@@ -1361,14 +1361,26 @@ void hue_todo(String *path)
   addLog(LOG_LEVEL_DEBUG_MORE, log);
 }
 
+void hue_config_response(String *response)
+{
+  char buffer[21];
+  
+  *response += FPSTR(HUE_CONFIG_RESPONSE_JSON);
+  response->replace("{mac}", WiFi.macAddress());
+  response->replace("{ip}", WiFi.localIP().toString());
+  response->replace("{mask}", WiFi.subnetMask().toString());
+  response->replace("{gw}", WiFi.gatewayIP().toString());
+  snprintf_P(buffer, sizeof(buffer), PSTR("%04d-%02d-%02dT%02d:%02d:%02d"),
+    rtcTime.Year, rtcTime.Month, rtcTime.Day, rtcTime.Hour, rtcTime.Minute, rtcTime.Second);
+  response->replace("{dt}", String(buffer));
+}
+
 void hue_global_cfg(String *path)
 {
   String response;
-  char buffer[21];
-  IPAddress net;
 
   path->remove(0,1);               // cut leading / to get <id>
-  response="{\"lights\":{\"";
+  response = "{\"lights\":{\"";
   for (uint8_t i = 1; i <= Maxdevice; i++)
   {
     response += i;
@@ -1389,24 +1401,9 @@ void hue_global_cfg(String *path)
       response.replace("{b}", "0");
     }
   }
-  response += "},";
-  response += "\"groups\":{},";
-  response += "\"schedules\":{},";
-  response += "\"config\":";
-  response += FPSTR(HUE_CONFIG_RESPONSE_JSON);
-  response.replace("{mac}", String(WiFi.macAddress()));
-  net=WiFi.localIP();
-  sprintf(buffer, "%d.%d.%d.%d", net[0], net[1], net[2], net[3]);
-  response.replace("{ip}", String(buffer));
-  net=WiFi.subnetMask();
-  sprintf(buffer, "%d.%d.%d.%d", net[0], net[1], net[2], net[3]);
-  response.replace("{mask}", String(buffer));
-  net=WiFi.gatewayIP();
-  sprintf(buffer, "%d.%d.%d.%d", net[0], net[1], net[2], net[3]);
-  response.replace("{gw}", String(buffer));
-  snprintf_P(buffer, sizeof(buffer), PSTR("%04d-%02d-%02dT%02d:%02d:%02d"),
-    rtcTime.Year, rtcTime.Month, rtcTime.Day, rtcTime.Hour, rtcTime.Minute, rtcTime.Second);
-  response.replace("{dt}", String(buffer));
+  response += F("},\"groups\":{},\"schedules\":{},\"config\":");
+
+  hue_config_response(&response);
   response.replace("{id}", *path);
   response += "}";
   webServer->send(200, "application/json", response);
@@ -1426,25 +1423,10 @@ void hue_auth(String *path)
 
 void hue_config(String *path)
 {
-  String response;
-  char buffer[21];
-  IPAddress net;
+  String response = "";
 
   path->remove(0,1);               // cut leading / to get <id>
-  response += FPSTR(HUE_CONFIG_RESPONSE_JSON);
-  response.replace("{mac}", String(WiFi.macAddress()));
-  net=WiFi.localIP();
-  sprintf(buffer, "%d.%d.%d.%d", net[0], net[1], net[2], net[3]);
-  response.replace("{ip}", String(buffer));
-  net=WiFi.subnetMask();
-  sprintf(buffer, "%d.%d.%d.%d", net[0], net[1], net[2], net[3]);
-  response.replace("{mask}", String(buffer));
-  net=WiFi.gatewayIP();
-  sprintf(buffer, "%d.%d.%d.%d", net[0], net[1], net[2], net[3]);
-  response.replace("{gw}", String(buffer));
-  snprintf_P(buffer, sizeof(buffer), PSTR("%04d-%02d-%02dT%02d:%02d:%02d"),
-    rtcTime.Year, rtcTime.Month, rtcTime.Day, rtcTime.Hour, rtcTime.Minute, rtcTime.Second);
-  response.replace("{dt}", String(buffer));
+  hue_config_response(&response);
   response.replace("{id}", *path);
   webServer->send(200, "application/json", response);
 }
@@ -1457,7 +1439,7 @@ void hue_lights(String *path)
   uint8_t bri = 0;
   char id[4];
 
-  path->remove(0,path->indexOf("/lights"));                 // Remove until /lights
+  path->remove(0,path->indexOf("/lights"));                // Remove until /lights
   if (path->endsWith("/lights"))                           // Got /lights
   {
     response = "{\"";
@@ -1519,7 +1501,7 @@ void hue_lights(String *path)
       }
 #ifdef USE_WS2812
       if ((pin[GPIO_WS2812] < 99) && ((pos=json.indexOf("\"bri\":")) >= 0)) {
-        bri=atoi(json.substring(pos+6).c_str());
+        bri = atoi(json.substring(pos+6).c_str());
         ws2812_changeBrightness(bri);
         response += ",";
         response += FPSTR(HUE_LIGHT_RESPONSE_JSON);
@@ -1567,30 +1549,29 @@ void handle_hue_api(String *path)
    */
    
   char log[LOGSZ];
-  uint8_t args=0;
+  uint8_t args = 0;
 
   path->remove(0, 4);                                // remove /api      
-  snprintf_P(log, sizeof(log), PSTR("HTTP: Handle Hue API (%s)"),path->c_str());
+  snprintf_P(log, sizeof(log), PSTR("HTTP: Handle Hue API (%s)"), path->c_str());
   addLog(LOG_LEVEL_DEBUG_MORE, log);
-  for(args=0;args<webServer->args();args++)
-  {
+  for (args = 0; args < webServer->args(); args++) {
     String json = webServer->arg(args);
-    snprintf_P(log, sizeof(log), PSTR("HTTP: Hue POST args (%s)"),json.c_str());
+    snprintf_P(log, sizeof(log), PSTR("HTTP: Hue POST args (%s)"), json.c_str());
     addLog(LOG_LEVEL_DEBUG_MORE, log);
   }
   
-  if (path->endsWith("/invalid/")) {}                // Just ignore
-  else if(path->endsWith("/")) hue_auth(path);       // New HUE App setup
-  else if(path->endsWith("/config")) hue_config(path);
-  else if(path->indexOf("/lights") >= 0) hue_lights(path);
-  else if(path->endsWith("/groups")) hue_todo(path);
-  else if(path->endsWith("/schedules")) hue_todo(path); 
-  else if(path->endsWith("/sensors")) hue_todo(path);
-  else if(path->endsWith("/scenes")) hue_todo(path);
-  else if(path->endsWith("/rules")) hue_todo(path);
+  if (path->endsWith("/invalid/")) {}                 // Just ignore
+  else if (path->endsWith("/")) hue_auth(path);       // New HUE App setup
+  else if (path->endsWith("/config")) hue_config(path);
+  else if (path->indexOf("/lights") >= 0) hue_lights(path);
+  else if (path->endsWith("/groups")) hue_todo(path);
+  else if (path->endsWith("/schedules")) hue_todo(path); 
+  else if (path->endsWith("/sensors")) hue_todo(path);
+  else if (path->endsWith("/scenes")) hue_todo(path);
+  else if (path->endsWith("/rules")) hue_todo(path);
   else hue_global_cfg(path);
-
-/*  {
+/*
+  {
     snprintf_P(log, sizeof(log), PSTR("HTTP: Handle Hue API (%s)"),path->c_str());
     addLog(LOG_LEVEL_DEBUG_MORE, log);
     webServer->send(406, "application/json", "{}");

@@ -127,6 +127,7 @@
   #define USE_HTU                                // Add I2C code for HTU21 sensor
 
 #define USE_WS2812                               // WS2812 Led string support (+8k code, +1k mem)
+  #define USE_WS2812_CTYPE     1                 // WS2812 Color type (0 - RGB, 1 - GRB)
 //  #define USE_WS2812_DMA                         // DMA supports only GPIO03 (= Serial TXD) (+1k mem)
                                                  //   When USE_WS2812_DMA is enabled expect Exceptions on Pow
 
