@@ -375,7 +375,6 @@ void ws2812_animate()
     sleep = sysCfg.sleep;
     stripTimerCntr = 0;
     tcolor = 0;
-		sleep = sysCfg.sleep; // Power saving while off
   }
   else {
     sleep = 0;
