@@ -520,7 +520,7 @@ void hlw_commands(char *svalue, uint16_t ssvalue)
  * Presentation
 \*********************************************************************************************/
 
-void hlw_mqttPresent(uint8_t domidx)
+void hlw_mqttPresent()
 {
   char stopic[TOPSZ], svalue[MESSZ], stime[21], stemp0[10], stemp1[10], stemp2[10], stemp3[10];
   float ped, pi, pc;

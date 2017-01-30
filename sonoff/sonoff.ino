@@ -10,7 +10,7 @@
  * ====================================================
 */
 
-#define VERSION                0x03090800   // 3.9.8
+#define VERSION                0x03090900   // 3.9.9
 
 enum log_t   {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG_MORE, LOG_LEVEL_ALL};
 enum week_t  {Last, First, Second, Third, Fourth};
@@ -93,7 +93,7 @@ enum emul_t  {EMUL_NONE, EMUL_WEMO, EMUL_HUE, EMUL_MAX};
 #endif
 
 #define APP_BAUDRATE           115200       // Default serial baudrate
-#define MAX_STATUS             9
+#define MAX_STATUS             10
 
 enum butt_t {PRESSED, NOT_PRESSED};
 
@@ -1836,6 +1836,7 @@ void publish_status(uint8_t payload)
     (!strcmp(SUB_PREFIX,PUB_PREFIX) && (!payload)) ? PUB_PREFIX2 : PUB_PREFIX, sysCfg.mqtt_topic);
 
   if ((!sysCfg.mqtt_enabled) && (payload == 6)) payload = 99;
+  if ((!hlw_flg) && ((payload == 8) || (payload == 9))) payload = 99;
 
   if ((payload == 0) || (payload == 99)) {
     snprintf_P(svalue, sizeof(svalue), PSTR("{\"Status\":{\"Module\":%d, \"FriendlyName\":\"%s\", \"Topic\":\"%s\", \"ButtonTopic\":\"%s\", \"Subtopic\":\"%s\", \"Power\":%d, \"PowerOnState\":%d, \"LedState\":%d, \"SaveData\":%d, \"SaveState\":%d, \"ButtonRetain\":%d, \"PowerRetain\":%d}}"),
@@ -1902,9 +1903,51 @@ void publish_status(uint8_t payload)
   if ((payload == 0) || (payload == 7)) {
     snprintf_P(svalue, sizeof(svalue), PSTR("{\"StatusTIM\":{\"UTC\":\"%s\", \"Local\":\"%s\", \"StartDST\":\"%s\", \"EndDST\":\"%s\", \"Timezone\":%d}}"),
       rtc_time(0).c_str(), rtc_time(1).c_str(), rtc_time(2).c_str(), rtc_time(3).c_str(), sysCfg.timezone);
+    if (payload == 0) mqtt_publish(stopic, svalue);
+  }
+
+  if ((payload == 0) || (payload == 10)) {
+    uint8_t djson = 0;
+    snprintf_P(svalue, sizeof(svalue), PSTR("{\"StatusSNS\":"));
+    sensors_mqttPresent(svalue, sizeof(svalue), &djson);
+    if (!djson) snprintf_P(svalue, sizeof(svalue), PSTR("%s}"), svalue);
   }
   
   mqtt_publish(stopic, svalue);
+}
+
+void sensors_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
+{
+  char stime[21];
+  
+  snprintf_P(stime, sizeof(stime), PSTR("%04d-%02d-%02dT%02d:%02d:%02d"),
+    rtcTime.Year, rtcTime.Month, rtcTime.Day, rtcTime.Hour, rtcTime.Minute, rtcTime.Second);
+  snprintf_P(svalue, ssvalue, PSTR("%s{\"Time\":\"%s\""), svalue, stime);
+  if (pin[GPIO_DSB] < 99) {
+#ifdef USE_DS18B20
+    dsb_mqttPresent(svalue, ssvalue, djson);
+#endif  // USE_DS18B20
+#ifdef USE_DS18x20
+    ds18x20_mqttPresent(svalue, ssvalue, djson);
+#endif  // USE_DS18x20
+  }
+#if defined(USE_DHT) || defined(USE_DHT2)
+  if (dht_type) dht_mqttPresent(svalue, ssvalue, djson);
+#endif  // USE_DHT/2
+#ifdef USE_I2C
+  if (i2c_flg) {
+#ifdef USE_HTU
+    htu_mqttPresent(svalue, ssvalue, djson);
+#endif  // USE_HTU
+#ifdef USE_BMP
+    bmp_mqttPresent(svalue, ssvalue, djson);
+#endif  // USE_BMP
+#ifdef USE_BH1750
+    bh1750_mqttPresent(svalue, ssvalue, djson);
+#endif  // USE_BH1750
+  }
+#endif  // USE_I2C      
+  snprintf_P(svalue, ssvalue, PSTR("%s}"), svalue);
 }
 
 /********************************************************************************************/
@@ -2003,37 +2046,11 @@ void every_second()
       mqtt_publish(stopic, svalue);
 
       uint8_t djson = 0;
-      snprintf_P(svalue, sizeof(svalue), PSTR("{\"Time\":\"%s\""), stime);
-      if (pin[GPIO_DSB] < 99) {
-#ifdef USE_DS18B20
-        dsb_mqttPresent(svalue, sizeof(svalue), &djson, 0);
-#endif  // USE_DS18B20
-#ifdef USE_DS18x20
-        ds18x20_mqttPresent(svalue, sizeof(svalue), &djson, 0);
-#endif  // USE_DS18x20
-      }
-#if defined(USE_DHT) || defined(USE_DHT2)
-      if (dht_type) dht_mqttPresent(svalue, sizeof(svalue), &djson, 1);
-#endif  // USE_DHT/2
-#ifdef USE_I2C
-      if (i2c_flg) {
-#ifdef USE_HTU
-        htu_mqttPresent(svalue, sizeof(svalue), &djson, 1);
-#endif  // USE_HTU
-#ifdef USE_BMP
-        bmp_mqttPresent(svalue, sizeof(svalue), &djson, 2);
-#endif  // USE_BMP
-#ifdef USE_BH1750
-        bh1750_mqttPresent(svalue, sizeof(svalue), &djson, 3);
-#endif  // USE_BH1750
-      }
-#endif  // USE_I2C      
-      if (djson) {
-        snprintf_P(svalue, sizeof(svalue), PSTR("%s}"), svalue);
-        mqtt_publish(stopic, svalue);
-      }
+      svalue[0] = '\0';
+      sensors_mqttPresent(svalue, sizeof(svalue), &djson);
+      if (djson) mqtt_publish(stopic, svalue);
 
-      if (hlw_flg) hlw_mqttPresent(4);
+      if (hlw_flg) hlw_mqttPresent();
     }
   }
 

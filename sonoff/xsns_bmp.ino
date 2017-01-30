@@ -424,7 +424,7 @@ boolean bmp_detect()
  * Presentation
 \*********************************************************************************************/
 
-void bmp_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson, uint8_t domidx)
+void bmp_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
 {
   if (!bmptype) return;
 
