@@ -1,4 +1,13 @@
-/* 3.9.10 20170130
+/* 3.9.11 20170204
+ * Fix command I2Cscan
+ * Fix not allowed spaces in Topic, ButtonTopic and SwitchTopic
+ * Make all TELEMETRY, STATUS and COMMAND message topics unique (#4)
+ * Advertise command topic to be used by iobroker (#299)
+ * Fix butten (non)detection if no GPIO_KEY1 is defined (#13)
+ * Change WeMo serialnumber from 7 decimal chars to 8 hexadecimal chars (#18)
+ * Update web page with Build Date/Time, Emulation and mDNS Discovery and Advertise information (#21)
+ *
+ * 3.9.10 20170130
  * Add WS2812 Color Type selection (RGB or GRB) to user_config.h (#7)
  * Hue api changes to support HUE App(s) (#8)
  *

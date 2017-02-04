@@ -52,14 +52,14 @@ const char WEMO_MSEARCH[] PROGMEM =
 
 String wemo_serial()
 {
-  char serial[15];
-  snprintf_P(serial, sizeof(serial), PSTR("201612K%07d"), ESP.getChipId());
+  char serial[16];
+  snprintf_P(serial, sizeof(serial), PSTR("201612K%08X"), ESP.getChipId());
   return String(serial);
 }
 
 String wemo_UUID()
 {
-  char uuid[26];
+  char uuid[27];
   snprintf_P(uuid, sizeof(uuid), PSTR("Socket-1_0-%s"), wemo_serial().c_str());
   return String(uuid);
 }
