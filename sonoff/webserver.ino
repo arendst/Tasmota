@@ -164,8 +164,8 @@ const char HTTP_FORM_OTHER2[] PROGMEM =
 #ifdef USE_EMULATION
 const char HTTP_FORM_OTHER3[] PROGMEM =
   "<br/><fieldset><legend><b>&nbsp;Emulation&nbsp;</b></legend>"
-  "<br/><input style='width:10%;float:left' id='b2' name='b2' type='radio' value='0'{r2}><b>None</b><br/>"
-  "<br/><input style='width:10%;float:left' id='b2' name='b2' type='radio' value='1'{r3}><b>Belkin WeMo</b><br/>"
+  "<br/><input style='width:10%;float:left' id='b2' name='b2' type='radio' value='0'{r2}><b>None</b>"
+  "<br/><input style='width:10%;float:left' id='b2' name='b2' type='radio' value='1'{r3}><b>Belkin WeMo</b>"
   "<br/><input style='width:10%;float:left' id='b2' name='b2' type='radio' value='2'{r4}><b>Hue Bridge</b><br/>";
 #endif  // USE_EMULATION
 const char HTTP_FORM_END[] PROGMEM =
@@ -288,6 +288,28 @@ const char HUE_LIGHT_STATUS_JSON[] PROGMEM =
   "}";
 const char HUE_LIGHT_RESPONSE_JSON[] PROGMEM =
   "{\"success\":{\"{api}/{id}/{cmd}\":{res}}}";
+const char HUE_CONFIG_RESPONSE_JSON[] PROGMEM =
+  "{\"name\":\"Philips hue\","
+   "\"mac\":\"{mac}\","
+   "\"dhcp\":true,"
+   "\"ipaddress\":\"{ip}\","
+   "\"netmask\":\"{mask}\","
+   "\"gateway\":\"{gw}\","
+   "\"proxyaddress\":\"\","
+   "\"proxyport\":0,"
+   "\"UTC\":\"{dt}\","
+   "\"whitelist\":{\"{id}\":{"
+     "\"last use date\":\"{dt}\","
+     "\"create date\":\"{dt}\","
+     "\"name\":\"Remote\"}},"
+   "\"swversion\":\"01036659\","
+   "\"apiversion\":\"1.16.0\","
+   "\"swupdate\":{\"updatestate\":0,\"url\":\"\",\"text\":\"\",\"notify\": false},"
+   "\"linkbutton\":false,"
+   "\"portalservices\":false"
+  "}";
+const char HUE_NO_AUTH_JSON[] PROGMEM =
+  "[{\"error\":{\"type\":101,\"address\":\"/\",\"description\":\"link button not pressed\"}}]";
 #endif  // USE_EMULATION
 
 #define DNS_PORT 53
@@ -971,23 +993,23 @@ void handleUploadDone()
   page.replace("{v}", "Info");
   page += F("<div style='text-align:center;'><b>Upload ");
   if (_uploaderror) {
-    page += F("<font color='red'>failed</font></b>");
+    page += F("<font color='red'>failed</font></b><br/><br/>");
     if (_uploaderror == 1) {
-      page += F("<br/><br/>No file selected");
+      page += F("No file selected");
     } else if (_uploaderror == 2) {
-      page += F("<br/><br/>File size is larger than available free space");
+      page += F("File size is larger than available free space");
     } else if (_uploaderror == 3) {
-      page += F("<br/><br/>File magic header does not start with 0xE9");
+      page += F("File magic header does not start with 0xE9");
     } else if (_uploaderror == 4) {
-      page += F("<br/><br/>File flash size is larger than device flash size");
+      page += F("File flash size is larger than device flash size");
     } else if (_uploaderror == 5) {
-      page += F("<br/><br/>File upload buffer miscompare");
+      page += F("File upload buffer miscompare");
     } else if (_uploaderror == 6) {
-      page += F("<br/><br/>Upload failed. Enable logging option 3 for more information");
+      page += F("Upload failed. Enable logging option 3 for more information");
     } else if (_uploaderror == 7) {
-      page += F("<br/><br/>Upload aborted");
+      page += F("Upload aborted");
     } else {
-      page += F("<br/><br/>Upload error code ");
+      page += F("Upload error code ");
       page += String(_uploaderror);
     }
     if (Update.hasError()) {
@@ -1205,52 +1227,86 @@ void handleInfo()
 //  page += F("<fieldset><legend><b>&nbsp;Information&nbsp;</b></legend>");
   page += F("<style>td{padding:0px 5px;}</style>");
   page += F("<table style'width:100%;'>");
-  page += F("<tr><td><b>Program version</b></td><td>"); page += Version; page += F("</td></tr>");
-  page += F("<tr><td><b>Core/SDK version</b></td><td>"); page += ESP.getCoreVersion(); page += F("/"); page += String(ESP.getSdkVersion()); page += F("</td></tr>");
-//  page += F("<tr><td><b>Boot version</b></td><td>"); page += String(ESP.getBootVersion()); page += F("</td></tr>");
-  page += F("<tr><td><b>Uptime</b></td><td>"); page += String(uptime); page += F(" Hours</td></tr>");
-  page += F("<tr><td><b>Flash write count</b></td><td>"); page += String(sysCfg.saveFlag); page += F("</td></tr>");
-  page += F("<tr><td><b>Boot count</b></td><td>"); page += String(sysCfg.bootcount); page += F("</td></tr>");
-  page += F("<tr><td><b>Reset reason</b></td><td>"); page += ESP.getResetReason(); page += F("</td></tr>");
+  page += F("<tr><th>Program version</th><td>"); page += Version; page += F("</td></tr>");
+  page += F("<tr><th>Build Date/Time</th><td>"); page += __DATE__;
+  page += F("/"); page += __TIME__ ; page += F("</td></tr>");
+  page += F("<tr><th>Core/SDK version</th><td>"); page += ESP.getCoreVersion(); page += F("/"); page += String(ESP.getSdkVersion()); page += F("</td></tr>");
+//  page += F("<tr><th>Boot version</th><td>"); page += String(ESP.getBootVersion()); page += F("</td></tr>");
+  page += F("<tr><th>Uptime</th><td>"); page += String(uptime); page += F(" Hours</td></tr>");
+  page += F("<tr><th>Flash write count</th><td>"); page += String(sysCfg.saveFlag); page += F("</td></tr>");
+  page += F("<tr><th>Boot count</th><td>"); page += String(sysCfg.bootcount); page += F("</td></tr>");
+  page += F("<tr><th>Reset reason</th><td>"); page += ESP.getResetReason(); page += F("</td></tr>");
   for (byte i = 0; i < Maxdevice; i++) {
-    page += F("<tr><td><b>Friendly name ");
+    page += F("<tr><th>Friendly name ");
     page += i +1;
-    page += F("</b></td><td>"); page += String(sysCfg.friendlyname[i]); page += F("</td></tr>");
+    page += F("</th><td>"); page += String(sysCfg.friendlyname[i]); page += F("</td></tr>");
   }
   page += F("<tr><td>&nbsp;</td></tr>");
-//  page += F("<tr><td><b>SSId (RSSI)</b></td><td>"); page += (sysCfg.sta_active)? sysCfg.sta_ssid2 : sysCfg.sta_ssid1; page += F(" ("); page += WIFI_getRSSIasQuality(WiFi.RSSI()); page += F("%)</td></tr>");
-  page += F("<tr><td><b>AP"); page += String(sysCfg.sta_active +1); page += F(" SSId (RSSI)</b></td><td>"); page += sysCfg.sta_ssid[sysCfg.sta_active]; page += F(" ("); page += WIFI_getRSSIasQuality(WiFi.RSSI()); page += F("%)</td></tr>");
-  page += F("<tr><td><b>Hostname</b></td><td>"); page += Hostname; page += F("</td></tr>");
+//  page += F("<tr><th>SSId (RSSI)</th><td>"); page += (sysCfg.sta_active)? sysCfg.sta_ssid2 : sysCfg.sta_ssid1; page += F(" ("); page += WIFI_getRSSIasQuality(WiFi.RSSI()); page += F("%)</td></tr>");
+  page += F("<tr><th>AP"); page += String(sysCfg.sta_active +1); page += F(" SSId (RSSI)</th><td>"); page += sysCfg.sta_ssid[sysCfg.sta_active]; page += F(" ("); page += WIFI_getRSSIasQuality(WiFi.RSSI()); page += F("%)</td></tr>");
+  page += F("<tr><th>Hostname</th><td>"); page += Hostname; page += F("</td></tr>");
   if (static_cast<uint32_t>(WiFi.localIP()) != 0) {
-    page += F("<tr><td><b>IP address</b></td><td>"); page += WiFi.localIP().toString(); page += F("</td></tr>");
-    page += F("<tr><td><b>Gateway</b></td><td>"); page += WiFi.gatewayIP().toString(); page += F("</td></tr>");
-    page += F("<tr><td><b>MAC address</b></td><td>"); page += WiFi.macAddress(); page += F("</td></tr>");
+    page += F("<tr><th>IP address</th><td>"); page += WiFi.localIP().toString(); page += F("</td></tr>");
+    page += F("<tr><th>Gateway</th><td>"); page += WiFi.gatewayIP().toString(); page += F("</td></tr>");
+    page += F("<tr><th>MAC address</th><td>"); page += WiFi.macAddress(); page += F("</td></tr>");
   }
   if (static_cast<uint32_t>(WiFi.softAPIP()) != 0) {
-    page += F("<tr><td><b>AP IP address</b></td><td>"); page += WiFi.softAPIP().toString(); page += F("</td></tr>");
-    page += F("<tr><td><b>AP Gateway</b></td><td>"); page += WiFi.softAPIP().toString(); page += F("</td></tr>");
-    page += F("<tr><td><b>AP MAC address</b></td><td>"); page += WiFi.softAPmacAddress(); page += F("</td></tr>");
+    page += F("<tr><th>AP IP address</th><td>"); page += WiFi.softAPIP().toString(); page += F("</td></tr>");
+    page += F("<tr><th>AP Gateway</th><td>"); page += WiFi.softAPIP().toString(); page += F("</td></tr>");
+    page += F("<tr><th>AP MAC address</th><td>"); page += WiFi.softAPmacAddress(); page += F("</td></tr>");
   }
   page += F("<tr><td>&nbsp;</td></tr>");
   if (sysCfg.mqtt_enabled) {
-    page += F("<tr><td><b>MQTT Host</b></td><td>"); page += sysCfg.mqtt_host; page += F("</td></tr>");
-    page += F("<tr><td><b>MQTT Port</b></td><td>"); page += String(sysCfg.mqtt_port); page += F("</td></tr>");
-    page += F("<tr><td><b>MQTT Client and<br/>&nbsp;Fallback Topic</b></td><td>"); page += MQTTClient; page += F("</td></tr>");
-    page += F("<tr><td><b>MQTT User</b></td><td>"); page += sysCfg.mqtt_user; page += F("</td></tr>");
-//    page += F("<tr><td><b>MQTT Password</b></td><td>"); page += sysCfg.mqtt_pwd; page += F("</td></tr>");
-    page += F("<tr><td><b>MQTT Topic</b></td><td>"); page += sysCfg.mqtt_topic; page += F("</td></tr>");
-    page += F("<tr><td><b>MQTT Group Topic</b></td><td>"); page += sysCfg.mqtt_grptopic; page += F("</td></tr>");
+    page += F("<tr><th>MQTT Host</th><td>"); page += sysCfg.mqtt_host; page += F("</td></tr>");
+    page += F("<tr><th>MQTT Port</th><td>"); page += String(sysCfg.mqtt_port); page += F("</td></tr>");
+    page += F("<tr><th>MQTT Client and<br/>&nbsp;Fallback Topic</th><td>"); page += MQTTClient; page += F("</td></tr>");
+    page += F("<tr><th>MQTT User</th><td>"); page += sysCfg.mqtt_user; page += F("</td></tr>");
+//    page += F("<tr><th>MQTT Password</th><td>"); page += sysCfg.mqtt_pwd; page += F("</td></tr>");
+    page += F("<tr><th>MQTT Topic</th><td>"); page += sysCfg.mqtt_topic; page += F("</td></tr>");
+    page += F("<tr><th>MQTT Group Topic</th><td>"); page += sysCfg.mqtt_grptopic; page += F("</td></tr>");
   } else {
-    page += F("<tr><td><b>MQTT</b></td><td>Disabled</td></tr>");
+    page += F("<tr><th>MQTT</th><td>Disabled</td></tr>");
   }
+  
+  page += F("<tr><th>Emulation</th><td>");
+#ifdef USE_EMULATION
+  if (sysCfg.emulation == EMUL_WEMO) {
+     page += F("Belkin WeMo");
+  }
+  else if (sysCfg.emulation == EMUL_HUE) {
+     page += F("Hue Bridge");
+  }
+  else {
+     page += F("None");
+  }
+#else
+    page += F("Disabled");
+#endif // USE_EMULATION
+  page += F("</td></tr>");
+  
+  page += F("<tr><th>mDNS Discovery</th><td>");
+#ifdef USE_DISCOVERY
+  page += F("Enabled");
+  page += F("</td></tr>");
+  page += F("<tr><th>mDNS Webserver Advertise</th><td>");
+#ifdef WEBSERVER_ADVERTISE
+  page += F("Enabled");
+#else
+  page += F("Disabled");
+#endif // WEBSERVER_ADVERTISE
+#else
+  page += F("Disabled");
+#endif // USE_DISCOVERY
+  page += F("</td></tr>");
+
   page += F("<tr><td>&nbsp;</td></tr>");
-  page += F("<tr><td><b>ESP Chip id</b></td><td>"); page += String(ESP.getChipId()); page += F("</td></tr>");
-  page += F("<tr><td><b>Flash Chip id</b></td><td>"); page += String(ESP.getFlashChipId()); page += F("</td></tr>");
-  page += F("<tr><td><b>Flash size</b></td><td>"); page += String(ESP.getFlashChipRealSize() / 1024); page += F("kB</td></tr>");
-  page += F("<tr><td><b>Program flash size</b></td><td>"); page += String(ESP.getFlashChipSize() / 1024); page += F("kB</td></tr>");
-  page += F("<tr><td><b>Program size</b></td><td>"); page += String(ESP.getSketchSize() / 1024); page += F("kB</td></tr>");
-  page += F("<tr><td><b>Free program space</b></td><td>"); page += String(ESP.getFreeSketchSpace() / 1024); page += F("kB</td></tr>");
-  page += F("<tr><td><b>Free memory</b></td><td>"); page += String(freeMem / 1024); page += F("kB</td></tr>");
+  page += F("<tr><th>ESP Chip id</th><td>"); page += String(ESP.getChipId()); page += F("</td></tr>");
+  page += F("<tr><th>Flash Chip id</th><td>"); page += String(ESP.getFlashChipId()); page += F("</td></tr>");
+  page += F("<tr><th>Flash size</th><td>"); page += String(ESP.getFlashChipRealSize() / 1024); page += F("kB</td></tr>");
+  page += F("<tr><th>Program flash size</th><td>"); page += String(ESP.getFlashChipSize() / 1024); page += F("kB</td></tr>");
+  page += F("<tr><th>Program size</th><td>"); page += String(ESP.getSketchSize() / 1024); page += F("kB</td></tr>");
+  page += F("<tr><th>Free program space</th><td>"); page += String(ESP.getFreeSketchSpace() / 1024); page += F("kB</td></tr>");
+  page += F("<tr><th>Free memory</th><td>"); page += String(freeMem / 1024); page += F("kB</td></tr>");
   page += F("</table>");
 //  page += F("</fieldset>");
   page += FPSTR(HTTP_BTN_MAIN);
@@ -1286,8 +1342,8 @@ void handleUPnPevent()
   addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Handle WeMo basic event"));
 
   String request = webServer->arg(0);
-  if(request.indexOf("State>1</Binary") > 0) do_cmnd_power(1, 1);
-  if(request.indexOf("State>0</Binary") > 0) do_cmnd_power(1, 0);
+  if (request.indexOf("State>1</Binary") > 0) do_cmnd_power(1, 1);
+  if (request.indexOf("State>0</Binary") > 0) do_cmnd_power(1, 0);
   webServer->send(200, "text/plain", "");
 }
 
@@ -1304,7 +1360,6 @@ void handleUPnPsetupWemo()
   addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Handle WeMo setup"));
 
   String setup_xml = FPSTR(WEMO_SETUP_XML);
-//  setup_xml.replace("{x1}", String(MQTTClient));
   setup_xml.replace("{x1}", String(sysCfg.friendlyname[0]));
   setup_xml.replace("{x2}", wemo_UUID());
   setup_xml.replace("{x3}", wemo_serial());
@@ -1339,6 +1394,76 @@ void hue_todo(String *path)
   addLog(LOG_LEVEL_DEBUG_MORE, log);
 }
 
+void hue_config_response(String *response)
+{
+  char buffer[21];
+  
+  *response += FPSTR(HUE_CONFIG_RESPONSE_JSON);
+  response->replace("{mac}", WiFi.macAddress());
+  response->replace("{ip}", WiFi.localIP().toString());
+  response->replace("{mask}", WiFi.subnetMask().toString());
+  response->replace("{gw}", WiFi.gatewayIP().toString());
+  snprintf_P(buffer, sizeof(buffer), PSTR("%04d-%02d-%02dT%02d:%02d:%02d"),
+    rtcTime.Year, rtcTime.Month, rtcTime.Day, rtcTime.Hour, rtcTime.Minute, rtcTime.Second);
+  response->replace("{dt}", String(buffer));
+}
+
+void hue_global_cfg(String *path)
+{
+  String response;
+
+  path->remove(0,1);               // cut leading / to get <id>
+  response = "{\"lights\":{\"";
+  for (uint8_t i = 1; i <= Maxdevice; i++)
+  {
+    response += i;
+    response += "\":";
+    response += FPSTR(HUE_LIGHT_STATUS_JSON);
+    if (i < Maxdevice) response += ",\"";
+    response.replace("{state}", (power & (0x01 << (i-1))) ? "true" : "false");
+    response.replace("{j1}", sysCfg.friendlyname[i-1]);
+    response.replace("{j2}", hue_deviceId(i));  
+    if (pin[GPIO_WS2812] < 99) {
+#ifdef USE_WS2812
+      ws2812_replaceHSB(&response);
+#endif // USE_WS2812
+    } else
+    {
+      response.replace("{h}", "0");
+      response.replace("{s}", "0");
+      response.replace("{b}", "0");
+    }
+  }
+  response += F("},\"groups\":{},\"schedules\":{},\"config\":");
+
+  hue_config_response(&response);
+  response.replace("{id}", *path);
+  response += "}";
+  webServer->send(200, "application/json", response);
+}
+
+void hue_auth(String *path)
+{
+  String response;
+  char uid[7];
+  
+  snprintf_P(uid, sizeof(uid), PSTR("%03x"), ESP.getChipId());
+  response="[{\"success\":{\"username\":\"";
+  response+=String(uid);
+  response+="\"}}]";
+  webServer->send(200, "application/json", response);
+}
+
+void hue_config(String *path)
+{
+  String response = "";
+
+  path->remove(0,1);               // cut leading / to get <id>
+  hue_config_response(&response);
+  response.replace("{id}", *path);
+  webServer->send(200, "application/json", response);
+}
+
 void hue_lights(String *path)
 {
   String response;
@@ -1347,7 +1472,7 @@ void hue_lights(String *path)
   uint8_t bri = 0;
   char id[4];
 
-  path->remove(0,path->indexOf("/lights"));                 // Remove until /lights
+  path->remove(0,path->indexOf("/lights"));                // Remove until /lights
   if (path->endsWith("/lights"))                           // Got /lights
   {
     response = "{\"";
@@ -1388,7 +1513,8 @@ void hue_lights(String *path)
     if (webServer->args() == 1) 
     {
       String json = webServer->arg(0);
-//      Serial.print("HUE API: POST "); Serial.println(json.c_str());
+      json.replace(" ","");                  // remove blanks
+
       if (json.indexOf("\"on\":") >= 0)      // Got "on" command
       {
         if (json.indexOf("false") >= 0)      // false -> turn device off
@@ -1408,7 +1534,7 @@ void hue_lights(String *path)
       }
 #ifdef USE_WS2812
       if ((pin[GPIO_WS2812] < 99) && ((pos=json.indexOf("\"bri\":")) >= 0)) {
-        bri=atoi(json.substring(pos+6).c_str());
+        bri = atoi(json.substring(pos+6).c_str());
         ws2812_changeBrightness(bri);
         response += ",";
         response += FPSTR(HUE_LIGHT_RESPONSE_JSON);
@@ -1456,22 +1582,34 @@ void handle_hue_api(String *path)
    */
    
   char log[LOGSZ];
+  uint8_t args = 0;
 
   path->remove(0, 4);                                // remove /api      
+  snprintf_P(log, sizeof(log), PSTR("HTTP: Handle Hue API (%s)"), path->c_str());
+  addLog(LOG_LEVEL_DEBUG_MORE, log);
+  for (args = 0; args < webServer->args(); args++) {
+    String json = webServer->arg(args);
+    snprintf_P(log, sizeof(log), PSTR("HTTP: Hue POST args (%s)"), json.c_str());
+    addLog(LOG_LEVEL_DEBUG_MORE, log);
+  }
+  
   if (path->endsWith("/invalid/")) {}                // Just ignore
-  else if (path->endsWith("/config")) hue_todo(path);
-  else if(path->indexOf("/lights") >= 0) hue_lights(path);
-  else if(path->endsWith("/groups")) hue_todo(path);
-  else if(path->endsWith("/schedules")) hue_todo(path); 
-  else if(path->endsWith("/sensors")) hue_todo(path);
-  else if(path->endsWith("/scenes")) hue_todo(path);
-  else if(path->endsWith("/rules")) hue_todo(path);
-  else 
+  else if (path->endsWith("/")) hue_auth(path);       // New HUE App setup
+  else if (path->endsWith("/config")) hue_config(path);
+  else if (path->indexOf("/lights") >= 0) hue_lights(path);
+  else if (path->endsWith("/groups")) hue_todo(path);
+  else if (path->endsWith("/schedules")) hue_todo(path); 
+  else if (path->endsWith("/sensors")) hue_todo(path);
+  else if (path->endsWith("/scenes")) hue_todo(path);
+  else if (path->endsWith("/rules")) hue_todo(path);
+  else hue_global_cfg(path);
+/*
   {
     snprintf_P(log, sizeof(log), PSTR("HTTP: Handle Hue API (%s)"),path->c_str());
     addLog(LOG_LEVEL_DEBUG_MORE, log);
     webServer->send(406, "application/json", "{}");
   }
+*/
 }
 #endif  // USE_EMULATION
 

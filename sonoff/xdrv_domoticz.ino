@@ -239,7 +239,7 @@ boolean domoticz_command(char *type, uint16_t index, char *dataBuf, uint16_t dat
 
 void domoticz_commands(char *svalue, uint16_t ssvalue)
 {
-  snprintf_P(svalue, ssvalue, PSTR("{\"Commands\":\"DomoticzInTopic, DomoticzOutTopic, DomoticzIdx, DomoticzKeyIdx, DomoticzSwitchIdx, DomoticzSensorIdx, DomoticzUpdateTimer\"}"));
+  snprintf_P(svalue, ssvalue, PSTR("{\"Commands4\":\"DomoticzInTopic, DomoticzOutTopic, DomoticzIdx, DomoticzKeyIdx, DomoticzSwitchIdx, DomoticzSensorIdx, DomoticzUpdateTimer\"}"));
 }
 
 boolean domoticz_button(byte key, byte device, byte state, byte svalflg)

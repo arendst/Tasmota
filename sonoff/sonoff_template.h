@@ -149,12 +149,10 @@ const mytmplt modules[MAXMODULE] PROGMEM = {
      GPIO_KEY1,        // GPIO00 Button 1
      0,
      GPIO_USER,        // GPIO02 Optional sensor
-     0,
+     GPIO_USER,        // GPIO03 Serial TXD and Optional sensor
      GPIO_REL3,        // GPIO04 Sonoff 4CH Red Led and Relay 3 (0 = Off, 1 = On)
      GPIO_REL2,        // GPIO05 Sonoff 4CH Red Led and Relay 2 (0 = Off, 1 = On)
-     0,
-     GPIO_USER,        // GPIO07 Optional sensor
-     GPIO_USER,        // GPIO08 Optional sensor
+     0, 0, 0,
      GPIO_KEY2,        // GPIO09 Button 2
      GPIO_KEY3,        // GPIO10 Button 3
      0,
@@ -235,7 +233,8 @@ const mytmplt modules[MAXMODULE] PROGMEM = {
   },
   { "User Test",       // Sonoff Basic User Test
      GPIO_KEY1,        // GPIO00 Button
-     0, 0,
+     0,
+     GPIO_USER,        // GPIO02 Optional sensor
      GPIO_USER,        // GPIO03 Serial TXD and Optional sensor
      GPIO_USER,        // GPIO04 Optional sensor
      0, 0, 0, 0, 0, 0, 0,

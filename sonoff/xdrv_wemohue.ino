@@ -52,14 +52,14 @@ const char WEMO_MSEARCH[] PROGMEM =
 
 String wemo_serial()
 {
-  char serial[15];
-  snprintf_P(serial, sizeof(serial), PSTR("201612K%07d"), ESP.getChipId());
+  char serial[16];
+  snprintf_P(serial, sizeof(serial), PSTR("201612K%08X"), ESP.getChipId());
   return String(serial);
 }
 
 String wemo_UUID()
 {
-  char uuid[26];
+  char uuid[27];
   snprintf_P(uuid, sizeof(uuid), PSTR("Socket-1_0-%s"), wemo_serial().c_str());
   return String(uuid);
 }
@@ -138,7 +138,6 @@ void hue_respondToMSearch()
     response.replace("{r3}", hue_UUID());
     portUDP.write(response.c_str());
     portUDP.endPacket();
-    snprintf_P(message, sizeof(message), PSTR("Response1 sent"));
 //    addLog(LOG_LEVEL_DEBUG_MORE, response.c_str());
     
     response = FPSTR(HUE_RESPONSE);
@@ -150,7 +149,6 @@ void hue_respondToMSearch()
     response.replace("{r3}", hue_UUID());
     portUDP.write(response.c_str());
     portUDP.endPacket();
-    snprintf_P(message, sizeof(message), PSTR("Response2 sent"));
 //    addLog(LOG_LEVEL_DEBUG_MORE, response.c_str());
     
     response = FPSTR(HUE_RESPONSE);
@@ -161,7 +159,8 @@ void hue_respondToMSearch()
     response.replace("{r3}", hue_UUID());
     portUDP.write(response.c_str());
     portUDP.endPacket();
-    snprintf_P(message, sizeof(message), PSTR("Response3 sent"));
+    
+    snprintf_P(message, sizeof(message), PSTR("3 response packets sent"));
 //    addLog(LOG_LEVEL_DEBUG_MORE, response.c_str());
 
   } else {

@@ -82,7 +82,7 @@ boolean bh1750_detect()
  * Presentation
 \*********************************************************************************************/
 
-void bh1750_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson, uint8_t domidx)
+void bh1750_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
 {
   if (!bh1750type) return;
 

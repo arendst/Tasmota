@@ -1,4 +1,24 @@
-/* 3.9.7 20170129
+/* 3.9.11 20170204
+ * Fix command I2Cscan
+ * Fix not allowed spaces in Topic, ButtonTopic and SwitchTopic
+ * Make all TELEMETRY, STATUS and COMMAND message topics unique (#4)
+ * Advertise command topic to be used by iobroker (#299)
+ * Fix butten (non)detection if no GPIO_KEY1 is defined (#13)
+ * Change WeMo serialnumber from 7 decimal chars to 8 hexadecimal chars (#18)
+ * Update web page with Build Date/Time, Emulation and mDNS Discovery and Advertise information (#21)
+ *
+ * 3.9.10 20170130
+ * Add WS2812 Color Type selection (RGB or GRB) to user_config.h (#7)
+ * Hue api changes to support HUE App(s) (#8)
+ *
+ * 3.9.9 20170130
+ * Add command status 10 showing sensor data
+ * Fix hlw status messages if hlw is disabled
+ *
+ * 3.9.8 20170130
+ * Remove GPIO07 and GPIO08 from user selectable (#5)
+ *
+ * 3.9.7 20170129
  * Fix possible WS2812 exceptions when using emulation
  * Add command Emulation to dynamic configure Belkin WeMo and Hue Bridge for Alexa
  *
