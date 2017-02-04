@@ -1228,6 +1228,8 @@ void handleInfo()
   page += F("<style>td{padding:0px 5px;}</style>");
   page += F("<table style'width:100%;'>");
   page += F("<tr><th>Program version</th><td>"); page += Version; page += F("</td></tr>");
+  page += F("<tr><th>Build Date/Time</th><td>"); page += __DATE__;
+  page += F("/"); page += __TIME__ ; page += F("</td></tr>");
   page += F("<tr><th>Core/SDK version</th><td>"); page += ESP.getCoreVersion(); page += F("/"); page += String(ESP.getSdkVersion()); page += F("</td></tr>");
 //  page += F("<tr><th>Boot version</th><td>"); page += String(ESP.getBootVersion()); page += F("</td></tr>");
   page += F("<tr><th>Uptime</th><td>"); page += String(uptime); page += F(" Hours</td></tr>");
@@ -1265,6 +1267,34 @@ void handleInfo()
   } else {
     page += F("<tr><th>MQTT</th><td>Disabled</td></tr>");
   }
+  page += F("<tr><th>Emulation</th><td>");
+#ifdef USE_EMULATION
+  if (sysCfg.emulation == EMUL_WEMO) {
+     page += F("Belkin WeMo");
+  }
+  else if (sysCfg.emulation == EMUL_HUE) {
+     page += F("Hue Bridge");
+  }
+  else {
+     page += F("None");
+  }
+#else
+    page += F("Disabled");
+#endif // USE_EMULATION
+  page += F("</td></tr>");
+  page += F("<tr><th>mDNS Discovery</th><td>");
+#ifdef USE_DISCOVERY
+  page += F("Enabled");
+#else
+  page += F("Disabled");
+#endif // USE_DISCOVERY
+  page += F("<tr><th>mDNS Webserver Advertise</th><td>");
+#ifdef WEBSERVER_ADVERTISE
+  page += F("Enabled");
+#else
+  page += F("Disabled");
+#endif // WEBSERVER_ADVERTISE
+  page += F("</td></tr>");
   page += F("<tr><td>&nbsp;</td></tr>");
   page += F("<tr><th>ESP Chip id</th><td>"); page += String(ESP.getChipId()); page += F("</td></tr>");
   page += F("<tr><th>Flash Chip id</th><td>"); page += String(ESP.getFlashChipId()); page += F("</td></tr>");
