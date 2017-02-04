@@ -10,7 +10,11 @@
  * ====================================================
 */
 
+<<<<<<< HEAD
 #define VERSION                0x03090B00   // 3.9.11
+=======
+#define VERSION                0x03090A00   // 3.9.10
+>>>>>>> origin/master
 
 enum log_t   {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG_MORE, LOG_LEVEL_ALL};
 enum week_t  {Last, First, Second, Third, Fourth};
@@ -1896,6 +1900,7 @@ void publish_status(uint8_t payload)
   if ((payload == 0) || (payload == 7)) {
     snprintf_P(svalue, sizeof(svalue), PSTR("{\"StatusTIM\":{\"UTC\":\"%s\", \"Local\":\"%s\", \"StartDST\":\"%s\", \"EndDST\":\"%s\", \"Timezone\":%d}}"),
       rtc_time(0).c_str(), rtc_time(1).c_str(), rtc_time(2).c_str(), rtc_time(3).c_str(), sysCfg.timezone);
+<<<<<<< HEAD
     mqtt_publish_topic_P(option, PSTR("STATUS7"), svalue);
   }
 
@@ -1910,6 +1915,9 @@ void publish_status(uint8_t payload)
         sysCfg.hlw_pmin, sysCfg.hlw_pmax, sysCfg.hlw_umin, sysCfg.hlw_umax, sysCfg.hlw_imin, sysCfg.hlw_imax);
       mqtt_publish_topic_P(option, PSTR("STATUS9"), svalue);
     }
+=======
+    if (payload == 0) mqtt_publish(stopic, svalue);
+>>>>>>> origin/master
   }
 
   if ((payload == 0) || (payload == 10)) {
@@ -1917,8 +1925,45 @@ void publish_status(uint8_t payload)
     snprintf_P(svalue, sizeof(svalue), PSTR("{\"StatusSNS\":"));
     sensors_mqttPresent(svalue, sizeof(svalue), &djson);
     if (!djson) snprintf_P(svalue, sizeof(svalue), PSTR("%s}"), svalue);
+<<<<<<< HEAD
     mqtt_publish_topic_P(option, PSTR("STATUS10"), svalue);
+=======
+>>>>>>> origin/master
   }
+}
+
+void sensors_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
+{
+  char stime[21];
+  
+  snprintf_P(stime, sizeof(stime), PSTR("%04d-%02d-%02dT%02d:%02d:%02d"),
+    rtcTime.Year, rtcTime.Month, rtcTime.Day, rtcTime.Hour, rtcTime.Minute, rtcTime.Second);
+  snprintf_P(svalue, ssvalue, PSTR("%s{\"Time\":\"%s\""), svalue, stime);
+  if (pin[GPIO_DSB] < 99) {
+#ifdef USE_DS18B20
+    dsb_mqttPresent(svalue, ssvalue, djson);
+#endif  // USE_DS18B20
+#ifdef USE_DS18x20
+    ds18x20_mqttPresent(svalue, ssvalue, djson);
+#endif  // USE_DS18x20
+  }
+#if defined(USE_DHT) || defined(USE_DHT2)
+  if (dht_type) dht_mqttPresent(svalue, ssvalue, djson);
+#endif  // USE_DHT/2
+#ifdef USE_I2C
+  if (i2c_flg) {
+#ifdef USE_HTU
+    htu_mqttPresent(svalue, ssvalue, djson);
+#endif  // USE_HTU
+#ifdef USE_BMP
+    bmp_mqttPresent(svalue, ssvalue, djson);
+#endif  // USE_BMP
+#ifdef USE_BH1750
+    bh1750_mqttPresent(svalue, ssvalue, djson);
+#endif  // USE_BH1750
+  }
+#endif  // USE_I2C      
+  snprintf_P(svalue, ssvalue, PSTR("%s}"), svalue);
 }
 
 void sensors_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
@@ -2052,7 +2097,11 @@ void every_second()
       uint8_t djson = 0;
       svalue[0] = '\0';
       sensors_mqttPresent(svalue, sizeof(svalue), &djson);
+<<<<<<< HEAD
       if (djson) mqtt_publish_topic_P(1, PSTR("SENSOR"), svalue);
+=======
+      if (djson) mqtt_publish(stopic, svalue);
+>>>>>>> origin/master
 
       if (hlw_flg) hlw_mqttPresent();
     }

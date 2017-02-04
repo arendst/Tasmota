@@ -518,7 +518,11 @@ void hlw_commands(char *svalue, uint16_t ssvalue)
  * Presentation
 \*********************************************************************************************/
 
+<<<<<<< HEAD
 void hlw_mqttStat(byte option, char* svalue, uint16_t ssvalue)
+=======
+void hlw_mqttPresent()
+>>>>>>> origin/master
 {
   char stemp0[10], stemp1[10], stemp2[10], stemp3[10], speriod[20];
   float ped, pi, pc;

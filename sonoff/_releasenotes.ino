@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 /* 3.9.11 20170204
  * Fix command I2Cscan
  * Fix not allowed spaces in Topic, ButtonTopic and SwitchTopic
@@ -8,6 +9,9 @@
  * Update web page with Build Date/Time, Emulation and mDNS Discovery and Advertise information (#21)
  *
  * 3.9.10 20170130
+=======
+/* 3.9.10 20170130
+>>>>>>> origin/master
  * Add WS2812 Color Type selection (RGB or GRB) to user_config.h (#7)
  * Hue api changes to support HUE App(s) (#8)
  *
