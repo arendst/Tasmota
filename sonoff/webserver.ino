@@ -993,23 +993,23 @@ void handleUploadDone()
   page.replace("{v}", "Info");
   page += F("<div style='text-align:center;'><b>Upload ");
   if (_uploaderror) {
-    page += F("<font color='red'>failed</font></b>");
+    page += F("<font color='red'>failed</font></b><br/><br/>");
     if (_uploaderror == 1) {
-      page += F("<br/><br/>No file selected");
+      page += F("No file selected");
     } else if (_uploaderror == 2) {
-      page += F("<br/><br/>File size is larger than available free space");
+      page += F("File size is larger than available free space");
     } else if (_uploaderror == 3) {
-      page += F("<br/><br/>File magic header does not start with 0xE9");
+      page += F("File magic header does not start with 0xE9");
     } else if (_uploaderror == 4) {
-      page += F("<br/><br/>File flash size is larger than device flash size");
+      page += F("File flash size is larger than device flash size");
     } else if (_uploaderror == 5) {
-      page += F("<br/><br/>File upload buffer miscompare");
+      page += F("File upload buffer miscompare");
     } else if (_uploaderror == 6) {
-      page += F("<br/><br/>Upload failed. Enable logging option 3 for more information");
+      page += F("Upload failed. Enable logging option 3 for more information");
     } else if (_uploaderror == 7) {
-      page += F("<br/><br/>Upload aborted");
+      page += F("Upload aborted");
     } else {
-      page += F("<br/><br/>Upload error code ");
+      page += F("Upload error code ");
       page += String(_uploaderror);
     }
     if (Update.hasError()) {
@@ -1227,52 +1227,82 @@ void handleInfo()
 //  page += F("<fieldset><legend><b>&nbsp;Information&nbsp;</b></legend>");
   page += F("<style>td{padding:0px 5px;}</style>");
   page += F("<table style'width:100%;'>");
-  page += F("<tr><td><b>Program version</b></td><td>"); page += Version; page += F("</td></tr>");
-  page += F("<tr><td><b>Core/SDK version</b></td><td>"); page += ESP.getCoreVersion(); page += F("/"); page += String(ESP.getSdkVersion()); page += F("</td></tr>");
-//  page += F("<tr><td><b>Boot version</b></td><td>"); page += String(ESP.getBootVersion()); page += F("</td></tr>");
-  page += F("<tr><td><b>Uptime</b></td><td>"); page += String(uptime); page += F(" Hours</td></tr>");
-  page += F("<tr><td><b>Flash write count</b></td><td>"); page += String(sysCfg.saveFlag); page += F("</td></tr>");
-  page += F("<tr><td><b>Boot count</b></td><td>"); page += String(sysCfg.bootcount); page += F("</td></tr>");
-  page += F("<tr><td><b>Reset reason</b></td><td>"); page += ESP.getResetReason(); page += F("</td></tr>");
+  page += F("<tr><th>Program version</th><td>"); page += Version; page += F("</td></tr>");
+  page += F("<tr><th>Build Date/Time</th><td>"); page += __DATE__;
+  page += F("/"); page += __TIME__ ; page += F("</td></tr>");
+  page += F("<tr><th>Core/SDK version</th><td>"); page += ESP.getCoreVersion(); page += F("/"); page += String(ESP.getSdkVersion()); page += F("</td></tr>");
+//  page += F("<tr><th>Boot version</th><td>"); page += String(ESP.getBootVersion()); page += F("</td></tr>");
+  page += F("<tr><th>Uptime</th><td>"); page += String(uptime); page += F(" Hours</td></tr>");
+  page += F("<tr><th>Flash write count</th><td>"); page += String(sysCfg.saveFlag); page += F("</td></tr>");
+  page += F("<tr><th>Boot count</th><td>"); page += String(sysCfg.bootcount); page += F("</td></tr>");
+  page += F("<tr><th>Reset reason</th><td>"); page += ESP.getResetReason(); page += F("</td></tr>");
   for (byte i = 0; i < Maxdevice; i++) {
-    page += F("<tr><td><b>Friendly name ");
+    page += F("<tr><th>Friendly name ");
     page += i +1;
-    page += F("</b></td><td>"); page += String(sysCfg.friendlyname[i]); page += F("</td></tr>");
+    page += F("</th><td>"); page += String(sysCfg.friendlyname[i]); page += F("</td></tr>");
   }
   page += F("<tr><td>&nbsp;</td></tr>");
-//  page += F("<tr><td><b>SSId (RSSI)</b></td><td>"); page += (sysCfg.sta_active)? sysCfg.sta_ssid2 : sysCfg.sta_ssid1; page += F(" ("); page += WIFI_getRSSIasQuality(WiFi.RSSI()); page += F("%)</td></tr>");
-  page += F("<tr><td><b>AP"); page += String(sysCfg.sta_active +1); page += F(" SSId (RSSI)</b></td><td>"); page += sysCfg.sta_ssid[sysCfg.sta_active]; page += F(" ("); page += WIFI_getRSSIasQuality(WiFi.RSSI()); page += F("%)</td></tr>");
-  page += F("<tr><td><b>Hostname</b></td><td>"); page += Hostname; page += F("</td></tr>");
+//  page += F("<tr><th>SSId (RSSI)</th><td>"); page += (sysCfg.sta_active)? sysCfg.sta_ssid2 : sysCfg.sta_ssid1; page += F(" ("); page += WIFI_getRSSIasQuality(WiFi.RSSI()); page += F("%)</td></tr>");
+  page += F("<tr><th>AP"); page += String(sysCfg.sta_active +1); page += F(" SSId (RSSI)</th><td>"); page += sysCfg.sta_ssid[sysCfg.sta_active]; page += F(" ("); page += WIFI_getRSSIasQuality(WiFi.RSSI()); page += F("%)</td></tr>");
+  page += F("<tr><th>Hostname</th><td>"); page += Hostname; page += F("</td></tr>");
   if (static_cast<uint32_t>(WiFi.localIP()) != 0) {
-    page += F("<tr><td><b>IP address</b></td><td>"); page += WiFi.localIP().toString(); page += F("</td></tr>");
-    page += F("<tr><td><b>Gateway</b></td><td>"); page += WiFi.gatewayIP().toString(); page += F("</td></tr>");
-    page += F("<tr><td><b>MAC address</b></td><td>"); page += WiFi.macAddress(); page += F("</td></tr>");
+    page += F("<tr><th>IP address</th><td>"); page += WiFi.localIP().toString(); page += F("</td></tr>");
+    page += F("<tr><th>Gateway</th><td>"); page += WiFi.gatewayIP().toString(); page += F("</td></tr>");
+    page += F("<tr><th>MAC address</th><td>"); page += WiFi.macAddress(); page += F("</td></tr>");
   }
   if (static_cast<uint32_t>(WiFi.softAPIP()) != 0) {
-    page += F("<tr><td><b>AP IP address</b></td><td>"); page += WiFi.softAPIP().toString(); page += F("</td></tr>");
-    page += F("<tr><td><b>AP Gateway</b></td><td>"); page += WiFi.softAPIP().toString(); page += F("</td></tr>");
-    page += F("<tr><td><b>AP MAC address</b></td><td>"); page += WiFi.softAPmacAddress(); page += F("</td></tr>");
+    page += F("<tr><th>AP IP address</th><td>"); page += WiFi.softAPIP().toString(); page += F("</td></tr>");
+    page += F("<tr><th>AP Gateway</th><td>"); page += WiFi.softAPIP().toString(); page += F("</td></tr>");
+    page += F("<tr><th>AP MAC address</th><td>"); page += WiFi.softAPmacAddress(); page += F("</td></tr>");
   }
   page += F("<tr><td>&nbsp;</td></tr>");
   if (sysCfg.mqtt_enabled) {
-    page += F("<tr><td><b>MQTT Host</b></td><td>"); page += sysCfg.mqtt_host; page += F("</td></tr>");
-    page += F("<tr><td><b>MQTT Port</b></td><td>"); page += String(sysCfg.mqtt_port); page += F("</td></tr>");
-    page += F("<tr><td><b>MQTT Client and<br/>&nbsp;Fallback Topic</b></td><td>"); page += MQTTClient; page += F("</td></tr>");
-    page += F("<tr><td><b>MQTT User</b></td><td>"); page += sysCfg.mqtt_user; page += F("</td></tr>");
-//    page += F("<tr><td><b>MQTT Password</b></td><td>"); page += sysCfg.mqtt_pwd; page += F("</td></tr>");
-    page += F("<tr><td><b>MQTT Topic</b></td><td>"); page += sysCfg.mqtt_topic; page += F("</td></tr>");
-    page += F("<tr><td><b>MQTT Group Topic</b></td><td>"); page += sysCfg.mqtt_grptopic; page += F("</td></tr>");
+    page += F("<tr><th>MQTT Host</th><td>"); page += sysCfg.mqtt_host; page += F("</td></tr>");
+    page += F("<tr><th>MQTT Port</th><td>"); page += String(sysCfg.mqtt_port); page += F("</td></tr>");
+    page += F("<tr><th>MQTT Client and<br/>&nbsp;Fallback Topic</th><td>"); page += MQTTClient; page += F("</td></tr>");
+    page += F("<tr><th>MQTT User</th><td>"); page += sysCfg.mqtt_user; page += F("</td></tr>");
+//    page += F("<tr><th>MQTT Password</th><td>"); page += sysCfg.mqtt_pwd; page += F("</td></tr>");
+    page += F("<tr><th>MQTT Topic</th><td>"); page += sysCfg.mqtt_topic; page += F("</td></tr>");
+    page += F("<tr><th>MQTT Group Topic</th><td>"); page += sysCfg.mqtt_grptopic; page += F("</td></tr>");
   } else {
-    page += F("<tr><td><b>MQTT</b></td><td>Disabled</td></tr>");
+    page += F("<tr><th>MQTT</th><td>Disabled</td></tr>");
   }
+  page += F("<tr><th>Emulation</th><td>");
+#ifdef USE_EMULATION
+  if (sysCfg.emulation == EMUL_WEMO) {
+     page += F("Belkin WeMo");
+  }
+  else if (sysCfg.emulation == EMUL_HUE) {
+     page += F("Hue Bridge");
+  }
+  else {
+     page += F("None");
+  }
+#else
+    page += F("Disabled");
+#endif // USE_EMULATION
+  page += F("</td></tr>");
+  page += F("<tr><th>mDNS Discovery</th><td>");
+#ifdef USE_DISCOVERY
+  page += F("Enabled");
+#else
+  page += F("Disabled");
+#endif // USE_DISCOVERY
+  page += F("<tr><th>mDNS Webserver Advertise</th><td>");
+#ifdef WEBSERVER_ADVERTISE
+  page += F("Enabled");
+#else
+  page += F("Disabled");
+#endif // WEBSERVER_ADVERTISE
+  page += F("</td></tr>");
   page += F("<tr><td>&nbsp;</td></tr>");
-  page += F("<tr><td><b>ESP Chip id</b></td><td>"); page += String(ESP.getChipId()); page += F("</td></tr>");
-  page += F("<tr><td><b>Flash Chip id</b></td><td>"); page += String(ESP.getFlashChipId()); page += F("</td></tr>");
-  page += F("<tr><td><b>Flash size</b></td><td>"); page += String(ESP.getFlashChipRealSize() / 1024); page += F("kB</td></tr>");
-  page += F("<tr><td><b>Program flash size</b></td><td>"); page += String(ESP.getFlashChipSize() / 1024); page += F("kB</td></tr>");
-  page += F("<tr><td><b>Program size</b></td><td>"); page += String(ESP.getSketchSize() / 1024); page += F("kB</td></tr>");
-  page += F("<tr><td><b>Free program space</b></td><td>"); page += String(ESP.getFreeSketchSpace() / 1024); page += F("kB</td></tr>");
-  page += F("<tr><td><b>Free memory</b></td><td>"); page += String(freeMem / 1024); page += F("kB</td></tr>");
+  page += F("<tr><th>ESP Chip id</th><td>"); page += String(ESP.getChipId()); page += F("</td></tr>");
+  page += F("<tr><th>Flash Chip id</th><td>"); page += String(ESP.getFlashChipId()); page += F("</td></tr>");
+  page += F("<tr><th>Flash size</th><td>"); page += String(ESP.getFlashChipRealSize() / 1024); page += F("kB</td></tr>");
+  page += F("<tr><th>Program flash size</th><td>"); page += String(ESP.getFlashChipSize() / 1024); page += F("kB</td></tr>");
+  page += F("<tr><th>Program size</th><td>"); page += String(ESP.getSketchSize() / 1024); page += F("kB</td></tr>");
+  page += F("<tr><th>Free program space</th><td>"); page += String(ESP.getFreeSketchSpace() / 1024); page += F("kB</td></tr>");
+  page += F("<tr><th>Free memory</th><td>"); page += String(freeMem / 1024); page += F("kB</td></tr>");
   page += F("</table>");
 //  page += F("</fieldset>");
   page += FPSTR(HTTP_BTN_MAIN);
