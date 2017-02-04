@@ -2,6 +2,7 @@
 Provide ESP8266 based Sonoff by [iTead Studio](https://www.itead.cc/) and ElectroDragon IoT Relay with Serial, Web and MQTT control allowing 'Over the Air' or OTA firmware updates using Arduino IDE.
 
 Current version is **3.2.13** - See ```sonoff/_releasenotes.ino``` for change information.
+
 New features will be introduced in the NextGen version only.
 
 **NextGen version** is available on [https://github.com/arendst/Sonoff-Tasmota](https://github.com/arendst/Sonoff-Tasmota)
