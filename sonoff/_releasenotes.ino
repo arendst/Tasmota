@@ -1,4 +1,7 @@
-/* 3.9.11 20170204
+/* 3.9.11a
+ * Fix compile error when webserver is disabled (#30)
+ *
+ * 3.9.11 20170204
  * Fix command I2Cscan
  * Fix not allowed spaces in Topic, ButtonTopic and SwitchTopic
  * Make all TELEMETRY, STATUS and COMMAND message topics unique (#4)

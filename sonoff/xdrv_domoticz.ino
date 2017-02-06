@@ -314,6 +314,7 @@ void domoticz_sensor5(uint16_t lux)
  * Presentation
 \*********************************************************************************************/
 
+#ifdef USE_WEBSERVER
 void handleDomoticz()
 {
   if (_httpflag == HTTP_USER) {
@@ -383,5 +384,6 @@ void domoticz_saveSettings()
     sysCfg.domoticz_sensor_idx[0], sysCfg.domoticz_sensor_idx[1], sysCfg.domoticz_sensor_idx[2], sysCfg.domoticz_sensor_idx[3], sysCfg.domoticz_sensor_idx[4]);
   addLog(LOG_LEVEL_INFO, log);
 }
+#endif  // USE_WEBSERVER
 #endif  // USE_DOMOTICZ
 
