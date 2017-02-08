@@ -10,7 +10,7 @@
  * ====================================================
 */
 
-#define VERSION                0x03090B00   // 3.9.11
+#define VERSION                0x03090C00   // 3.9.12
 
 enum log_t   {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG_MORE, LOG_LEVEL_ALL};
 enum week_t  {Last, First, Second, Third, Fourth};
@@ -58,7 +58,7 @@ enum emul_t  {EMUL_NONE, EMUL_WEMO, EMUL_HUE, EMUL_MAX};
 #define WS2812_LEDS            30           // [Pixels] Number of LEDs
 #endif
 
-#define DEF_WIFI_HOSTNAME      "%s-%04d"    // Expands to <MQTT_TOPIC>-<last 4 decimal chars of MAC address>
+#define WIFI_HOSTNAME          "%s-%04d"    // Expands to <MQTT_TOPIC>-<last 4 decimal chars of MAC address>
 
 #define HLW_PREF_PULSE         12530        // was 4975us = 201Hz = 1000W
 #define HLW_UREF_PULSE         1950         // was 1666us = 600Hz = 220V
@@ -1087,7 +1087,7 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
   uint16_t i = 0, grpflg = 0, index;
   char topicBuf[TOPSZ], dataBuf[data_len+1], dataBufUc[MESSZ];
   char *p, *mtopic = NULL, *type = NULL;
-  char stopic[TOPSZ], stemp1[TOPSZ], stemp2[10];
+  char stemp1[TOPSZ], stemp2[10];
 
   strncpy(topicBuf, topic, sizeof(topicBuf));
   memcpy(dataBuf, data, sizeof(dataBuf));
@@ -1306,6 +1306,12 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
       }
       snprintf_P(svalue, sizeof(svalue), PSTR("{\"Sleep\":\"%d%s (%d%s)\"}"), sleep, (sysCfg.value_units) ? " mS" : "", sysCfg.sleep, (sysCfg.value_units) ? " mS" : "");
     }
+    else if (!strcmp(type,"FLASHCHIPMODE")) {
+      if ((data_len > 0) && (payload >= 2) && (payload <= 3)) {
+        if (ESP.getFlashChipMode() != payload) setFlashChipMode(0, payload &3);
+      }
+      snprintf_P(svalue, sizeof(svalue), PSTR("{\"FlashChipMode\":%d}"), ESP.getFlashChipMode());
+    }
     else if (!strcmp(type,"UPGRADE") || !strcmp(type,"UPLOAD")) {
       if ((data_len > 0) && (payload == 1)) {
         otaflag = 3;
@@ -1383,8 +1389,7 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
     else if (!grpflg && !strcmp(type,"HOSTNAME")) {
       if ((data_len > 0) && (data_len < sizeof(sysCfg.hostname))) {
         strlcpy(sysCfg.hostname, (payload == 1) ? WIFI_HOSTNAME : dataBuf, sizeof(sysCfg.hostname));
-        if (strstr(sysCfg.hostname,"%"))
-          strlcpy(sysCfg.hostname, DEF_WIFI_HOSTNAME, sizeof(sysCfg.hostname));
+        if (strstr(sysCfg.hostname,"%")) strlcpy(sysCfg.hostname, WIFI_HOSTNAME, sizeof(sysCfg.hostname));
         restartflag = 2;
       }
       snprintf_P(svalue, sizeof(svalue), PSTR("{\"Hostname\":\"%s\"}"), sysCfg.hostname);
@@ -1838,9 +1843,7 @@ void do_cmnd(char *cmnd)
 
 void publish_status(uint8_t payload)
 {
-  char svalue[MESSZ], stemp1[TOPSZ], stemp2[10], stemp3[10];
-  float ped, pi, pc;
-  uint16_t pe, pw, pu;
+  char svalue[MESSZ];
   uint8_t option = 0;
 
   // Workaround MQTT - TCP/IP stack queueing when SUB_PREFIX = PUB_PREFIX
@@ -1966,7 +1969,7 @@ void every_second_cb()
 
 void every_second()
 {
-  char log[LOGSZ], stopic[TOPSZ], svalue[MESSZ], stime[21];
+  char svalue[MESSZ], stime[21];
 
   snprintf_P(stime, sizeof(stime), PSTR("%04d-%02d-%02dT%02d:%02d:%02d"),
     rtcTime.Year, rtcTime.Month, rtcTime.Day, rtcTime.Hour, rtcTime.Minute, rtcTime.Second);
@@ -2246,6 +2249,7 @@ void stateloop()
       if (otaflag == 10) {  // Allow MQTT to reconnect
         otaflag = 0;
         if (otaok) {
+          if ((sysCfg.module == SONOFF_TOUCH) || (sysCfg.module == SONOFF_4CH)) setFlashChipMode(1, 3); // DOUT - ESP8285
           snprintf_P(svalue, sizeof(svalue), PSTR("Successful. Restarting"));
           restartflag = 2;
         } else {
@@ -2508,8 +2512,8 @@ void setup()
     Serial.println();
   }
 
-  if (strstr(sysCfg.hostname, "%")) strlcpy(sysCfg.hostname, DEF_WIFI_HOSTNAME, sizeof(sysCfg.hostname));
-  if (!strcmp(sysCfg.hostname, DEF_WIFI_HOSTNAME)) {
+  if (strstr(sysCfg.hostname, "%")) {
+    strlcpy(sysCfg.hostname, WIFI_HOSTNAME, sizeof(sysCfg.hostname));
     snprintf_P(Hostname, sizeof(Hostname)-1, sysCfg.hostname, sysCfg.mqtt_topic, ESP.getChipId() & 0x1FFF);
   } else {
     snprintf_P(Hostname, sizeof(Hostname)-1, sysCfg.hostname);

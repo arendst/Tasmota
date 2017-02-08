@@ -42,7 +42,7 @@ byte domoticz_update_flag = 1;
 
 unsigned long getKeyIntValue(const char *json, const char *key)
 {
-  char *p, *b, log[LOGSZ];
+  char *p, *b;
   int i;
 
   // search key

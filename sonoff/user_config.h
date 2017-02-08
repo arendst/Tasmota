@@ -21,7 +21,6 @@
 #define STA_PASS1              "VnsqrtnrsddbrN"  // [Password1] Wifi password
 #define STA_SSID2              "indebuurt2"      // [Ssid2] Optional alternate AP Wifi SSID
 #define STA_PASS2              "VnsqrtnrsddbrN"  // [Password2] Optional alternate AP Wifi password
-#define WIFI_HOSTNAME          "%s-%04d"         // [Hostname] Expands to <MQTT_TOPIC>-<last 4 decimal chars of MAC address>
 #define WIFI_CONFIG_TOOL       WIFI_WPSCONFIG    // [WifiConfig] Default tool if wifi fails to connect
                                                  //   (WIFI_RESTART, WIFI_SMARTCONFIG, WIFI_MANAGER, WIFI_WPSCONFIG, WIFI_RETRY)
 // -- Syslog --------------------------------------
@@ -37,7 +36,7 @@
 // -- MQTT ----------------------------------------
 #define MQTT_USE               1                 // [Mqtt] Select default MQTT use (0 = Off, 1 = On)
 // !!! TLS uses a LOT OF MEMORY (20k) so be careful to enable other options at the same time !!!
-//#define USE_MQTT_TLS                             // EXPERIMENTAL Use TLS for MQTT connection (+53k code, +20k mem)
+//#define USE_MQTT_TLS                             // EXPERIMENTAL Use TLS for MQTT connection (+53k code, +20k mem) - Disable by //
                                                  //   Needs Fingerprint, TLS Port, UserId and Password
 #ifdef USE_MQTT_TLS
   #define MQTT_HOST            "m20.cloudmqtt.com"  // [MqttHost]
@@ -72,20 +71,20 @@
 #define TELE_PERIOD            300               // [TelePeriod] Telemetry (0 = disable, 10 - 3600 seconds)
 
 // -- MQTT - Domoticz -----------------------------
-#define USE_DOMOTICZ                             // Enable Domoticz (+5k code, +0.3k mem) - Disable by //
+#define USE_DOMOTICZ                             // Enable Domoticz (+7k code, +0.3k mem) - Disable by //
   #define DOMOTICZ_IN_TOPIC      "domoticz/in"   // [DomoticzInTopic]
   #define DOMOTICZ_OUT_TOPIC     "domoticz/out"  // [DomoticzOutTopic]
   #define DOMOTICZ_UPDATE_TIMER  0               // [DomoticzUpdateTimer] Send relay status (0 = disable, 1 - 3600 seconds) (Optional)
 
 // -- HTTP ----------------------------------------
-#define USE_WEBSERVER                            // Enable web server and wifi manager (+43k code, +2k mem) - Disable by //
+#define USE_WEBSERVER                            // Enable web server and wifi manager (+60k code, +4k mem) - Disable by //
   #define FRIENDLY_NAME          "Sonoff"        // [FriendlyName] Friendlyname up to 32 characters used by webpages and Alexa
   #define WEB_SERVER             2               // [WebServer] Web server (0 = Off, 1 = Start as User, 2 = Start as Admin)
   #define USE_EMULATION                          // Enable Belkin WeMo and Hue Bridge emulation for Alexa (+11k code, +2k mem)
     #define EMULATION            EMUL_NONE       // [Emulation] Select Belkin WeMo or Hue Bridge emulation (EMUL_NONE, EMUL_WEMO or EMUL_HUE)
 
 // -- mDNS ----------------------------------------
-#define USE_DISCOVERY                            // Enable mDNS for the following services (+8k code, +0.3k mem)
+#define USE_DISCOVERY                            // Enable mDNS for the following services (+8k code, +0.3k mem) - Disable by //
   #define WEBSERVER_ADVERTISE                    // Provide access to webserver by name <Hostname>.local/
   #define MQTT_HOST_DISCOVERY                    // Find MQTT host server (overrides MQTT_HOST if found)
 
@@ -121,12 +120,12 @@
 //#define USE_DHT2                                 // Optional using Adafruit DHT library
 //#define USE_DS18x20                              // Optional using OneWire library for multiple DS18B20 and/or DS18S20
 
-#define USE_I2C                                  // I2C Support (+10k code, 0.2k mem)
+#define USE_I2C                                  // I2C using library wire (+10k code, 0.2k mem) - Disable by //
   #define USE_BH1750                             // Add I2C code for BH1750 sensor
   #define USE_BMP                                // Add I2C code for BMP/BME280 sensor
   #define USE_HTU                                // Add I2C code for HTU21 sensor
 
-#define USE_WS2812                               // WS2812 Led string support (+8k code, +1k mem)
+#define USE_WS2812                               // WS2812 Led string using library NeoPixelBus (+8k code, +1k mem) - Disable by //
   #define USE_WS2812_CTYPE     1                 // WS2812 Color type (0 - RGB, 1 - GRB)
 //  #define USE_WS2812_DMA                         // DMA supports only GPIO03 (= Serial TXD) (+1k mem)
                                                  //   When USE_WS2812_DMA is enabled expect Exceptions on Pow

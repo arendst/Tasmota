@@ -1,5 +1,7 @@
-/* 3.9.11a
+/* 3.9.12 20170208
  * Fix compile error when webserver is disabled (#30)
+ * Fix possible ESP8285 flash problem by updating Flash Chip Mode to DOUT during OTA upload
+ * Fix hostname issues by not allowing user entry of string formatting and removing from user_config.h (#36)
  *
  * 3.9.11 20170204
  * Fix command I2Cscan

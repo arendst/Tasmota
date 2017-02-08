@@ -130,7 +130,7 @@ const char HTTP_FORM_WIFI[] PROGMEM =
   "<br/><b>AP1 Password</b></br><input id='p1' name='p1' length=64 type='password' placeholder='" STA_PASS1 "' value='{p1}'><br/>"
   "<br/><b>AP2 SSId</b> (" STA_SSID2 ")<br/><input id='s2' name='s2' length=32 placeholder='" STA_SSID2 "' value='{s2}'><br/>"
   "<br/><b>AP2 Password</b></br><input id='p2' name='p2' length=64 type='password' placeholder='" STA_PASS2 "' value='{p2}'><br/>"
-  "<br/><b>Hostname</b> ({h0})<br/><input id='h' name='h' length=32 placeholder='" WIFI_HOSTNAME" ' value='{h1}'><br/>";
+  "<br/><b>Hostname</b> (" WIFI_HOSTNAME ")<br/><input id='h' name='h' length=32 placeholder='" WIFI_HOSTNAME" ' value='{h1}'><br/>";
 const char HTTP_FORM_MQTT[] PROGMEM =
   "<fieldset><legend><b>&nbsp;MQTT parameters&nbsp;</b></legend><form method='post' action='sv'>"
   "<input id='w' name='w' value='2' hidden><input id='r' name='r' value='1' hidden>"
@@ -414,7 +414,6 @@ void showPage(String &page)
 {
   page.replace("{ha}", my_module.name);
   page.replace("{h}", String(sysCfg.friendlyname[0]));
-//  page.replace("{ha}", Hostname);
   if (_httpflag == HTTP_MANAGER) {
     if (WIFI_configCounter()) {
       page.replace("<body>", "<body onload='u()'>");
@@ -557,7 +556,6 @@ void handleModule()
   for (byte i = 0; i < MAX_GPIO_PIN; i++) {
     if (cmodule.gp.io[i] == GPIO_USER) {
       page += F("<br/><b>GPIO"); page += String(i); page += F("</b> <select id='g"); page += String(i); page += F("' name='g"); page += String(i); page += F("'>");
-      byte k = 0;
       for (byte j = GPIO_SENSOR_START; j < GPIO_SENSOR_END; j++) {
         page += F("<option ");
         if (j == my_module.gp.io[i]) page += F("selected ");
@@ -672,14 +670,6 @@ void handleWifi(boolean scan)
   }
 
   page += FPSTR(HTTP_FORM_WIFI);
-
-  char str[33];
-  if (!strcmp(WIFI_HOSTNAME, DEF_WIFI_HOSTNAME)) {
-    snprintf_P(str, sizeof(str), PSTR(DEF_WIFI_HOSTNAME), sysCfg.mqtt_topic, ESP.getChipId() & 0x1FFF);
-  } else {
-    snprintf_P(str, sizeof(str), PSTR(WIFI_HOSTNAME));
-  }
-  page.replace("{h0}", str);
   page.replace("{h1}", String(sysCfg.hostname));
   page.replace("{s1}", String(sysCfg.sta_ssid[0]));
   page.replace("{p1}", String(sysCfg.sta_pwd[0]));
@@ -820,7 +810,7 @@ void handleSave()
   switch (what) {
   case 1:
     strlcpy(sysCfg.hostname, (!strlen(webServer->arg("h").c_str())) ? WIFI_HOSTNAME : webServer->arg("h").c_str(), sizeof(sysCfg.hostname));
-    if (strstr(sysCfg.hostname,"%")) strlcpy(sysCfg.hostname, DEF_WIFI_HOSTNAME, sizeof(sysCfg.hostname));
+    if (strstr(sysCfg.hostname,"%")) strlcpy(sysCfg.hostname, WIFI_HOSTNAME, sizeof(sysCfg.hostname));
     strlcpy(sysCfg.sta_ssid[0], (!strlen(webServer->arg("s1").c_str())) ? STA_SSID1 : webServer->arg("s1").c_str(), sizeof(sysCfg.sta_ssid[0]));
     strlcpy(sysCfg.sta_pwd[0], (!strlen(webServer->arg("p1").c_str())) ? STA_PASS1 : webServer->arg("p1").c_str(), sizeof(sysCfg.sta_pwd[0]));
     strlcpy(sysCfg.sta_ssid[1], (!strlen(webServer->arg("s2").c_str())) ? STA_SSID2 : webServer->arg("s2").c_str(), sizeof(sysCfg.sta_ssid[1]));
@@ -1076,13 +1066,10 @@ void handleUploadLoop()
         _uploaderror = 4;
         return;
       }
-      if ((sysCfg.module == SONOFF_TOUCH) || (sysCfg.module == SONOFF_4CH) || (ESP.getFlashChipMode() == 3)) {
+      if ((sysCfg.module == SONOFF_TOUCH) || (sysCfg.module == SONOFF_4CH)) {
         upload.buf[2] = 3; // DOUT - ESP8285
-      } else {
-        upload.buf[2] = 2; // DIO - ESP8266
+        addLog_P(LOG_LEVEL_DEBUG, PSTR("FLSH: Updated Flash Chip Mode to 3"));
       }
-//      snprintf_P(log, sizeof(log), PSTR("Upload: Flash Chip Mode %02X"), upload.buf[2]);
-//      addLog(LOG_LEVEL_DEBUG, log);
     }
     if (!_uploaderror && (Update.write(upload.buf, upload.currentSize) != upload.currentSize)) {
       if (_serialoutput) Update.printError(Serial);

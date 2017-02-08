@@ -275,26 +275,40 @@ void initSpiffs()
 }
 #endif  // USE_SPIFFS
 
+#include "eboot_command.h"
+
 /*
-void setFlashChipMode(byte mode)
+ * Based on cores/esp8266/Updater.cpp
+ */
+void setFlashChipMode(byte option, byte mode)
 {
   char log[LOGSZ];
-  uint32_t data;
-  
-  uint8_t * bytes = (uint8_t *) &data;
-  // read first 4 byte (magic byte + flash config)
-  if (spi_flash_read(0x0000, &data, 4) == SPI_FLASH_RESULT_OK) {
+  uint8_t *_buffer;
+  uint32_t address;
 
-    snprintf_P(log, sizeof(log), PSTR("FLSH: Magic byte and flash config %08X"), data);
-    addLog(LOG_LEVEL_DEBUG, log);
-    
-    if (bytes[2] != mode) {
-      bytes[2] = mode &3;
-//      spi_flash_write(0x0000, &data, 4);
+  if (option) {
+    eboot_command ebcmd;
+    eboot_command_read(&ebcmd);
+    address = ebcmd.args[0];
+  } else {
+    address = 0;
+  }
+  _buffer = new uint8_t[FLASH_SECTOR_SIZE];
+  if (spi_flash_read(address, (uint32_t*)_buffer, FLASH_SECTOR_SIZE) == SPI_FLASH_RESULT_OK) {
+    if (_buffer[2] != mode) {
+      _buffer[2] = mode &3;
+      noInterrupts();
+      if (spi_flash_erase_sector(address / FLASH_SECTOR_SIZE) == SPI_FLASH_RESULT_OK) {
+        spi_flash_write(address, (uint32_t*)_buffer, FLASH_SECTOR_SIZE);
+      }
+      interrupts();
+      snprintf_P(log, sizeof(log), PSTR("FLSH: Updated Flash Chip Mode to %d"), (option) ? mode : ESP.getFlashChipMode());
+      addLog(LOG_LEVEL_DEBUG, log);
     }
   }
+  delete[] _buffer;
 }
-*/
+
 /*********************************************************************************************\
  * Wifi
 \*********************************************************************************************/
@@ -629,7 +643,6 @@ void IPtoCharArray(IPAddress address, char *ip_str, size_t size)
 
 int32_t i2c_read(uint8_t addr, uint8_t reg, uint8_t size)
 {
-  char log[LOGSZ];
   byte x = 0;
   int32_t data = 0;
 
@@ -646,10 +659,6 @@ int32_t i2c_read(uint8_t addr, uint8_t reg, uint8_t size)
     }
     x++;
   } while (Wire.endTransmission(true) != 0 && x <= I2C_RETRY_COUNTER); // end transmission
-
-//  snprintf_P(log, sizeof(log), PSTR("I2C: received %X, retries %d"), data, x -1);
-//  addLog(LOG_LEVEL_DEBUG_MORE, log);
-
   return data;
 }
 
