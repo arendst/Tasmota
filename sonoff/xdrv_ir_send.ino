@@ -62,7 +62,7 @@ boolean ir_send_command(char *type, uint16_t index, char *dataBuf, uint16_t data
 			else if (!strcmp(protocol,"DISH"))    irsend.sendDISH(data, bits);
 			else if (!strcmp(protocol,"JVC"))     irsend.sendJVC(data, bits, 1);
 			else if (!strcmp(protocol,"SAMSUNG")) irsend.sendSAMSUNG(data, bits);
-			else if (!strcmp(protocol,"COOLIX"))  irsend.sendCOOLIX(data, bits);
+//			else if (!strcmp(protocol,"COOLIX"))  irsend.sendCOOLIX(data, bits);
 		} 
   }
   else {
