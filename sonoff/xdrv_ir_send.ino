@@ -44,12 +44,26 @@ void ir_send_init(void)
 boolean ir_send_command(char *type, uint16_t index, char *dataBuf, uint16_t data_len, int16_t payload, char *svalue, uint16_t ssvalue)
 {
   boolean serviced = true;
-
+  const char *protocol;
+  uint8_t  bits=0;
+  uint32_t data=0;
+  
   if (!strcmp(type,"IRSEND")) {
-    if(index>0 && index<18 && data_len)
-    {
-//      irsend.send(index,strtoul(dataBuf),36);
-    }
+	  if(data_len) {
+			JsonObject &ir_json = jsonBuffer.parseObject(dataBuf);
+			protocol = ir_json["protocol"];
+		  bits = ir_json["bits"];
+			data = ir_json["data"];
+
+		  if      (!strcmp(protocol,"NEC"))     irsend.sendNEC(data, bits);
+		  else if (!strcmp(protocol,"SONY"))    irsend.sendSony(data, bits);
+			else if (!strcmp(protocol,"RC5"))     irsend.sendRC5(data, bits);
+			else if (!strcmp(protocol,"RC6"))     irsend.sendRC6(data, bits);
+			else if (!strcmp(protocol,"DISH"))    irsend.sendDISH(data, bits);
+			else if (!strcmp(protocol,"JVC"))     irsend.sendJVC(data, bits, 1);
+			else if (!strcmp(protocol,"SAMSUNG")) irsend.sendSAMSUNG(data, bits);
+			else if (!strcmp(protocol,"COOLIX"))  irsend.sendCOOLIX(data, bits);
+		} 
   }
   else {
     serviced = false;

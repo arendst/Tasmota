@@ -1500,8 +1500,8 @@ void hue_lights(String *path)
     response.replace("{cmd}", "state/on");
     if (webServer->args() == 1) 
     {
-      JsonObject &root = jsonBuffer.parseObject(webServer->arg(0));
-      on = root["on"];
+      JsonObject &hue_json = jsonBuffer.parseObject(webServer->arg(0));
+      on = hue_json["on"];
       switch(on)
       {
         case false : do_cmnd_power(device, 0);
@@ -1514,7 +1514,7 @@ void hue_lights(String *path)
                      break;
       }
 #ifdef USE_WS2812
-      bri = root["bri"];
+      bri = hue_json["bri"];
       if (pin[GPIO_WS2812] < 99) {
         ws2812_changeBrightness(bri);
         response += ",";
