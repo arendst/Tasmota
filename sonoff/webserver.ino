@@ -1453,11 +1453,12 @@ void hue_config(String *path)
 
 void hue_lights(String *path)
 {
-  String response;
+  String  response;
   uint8_t device = 1;
   int16_t pos = 0;
   uint8_t bri = 0;
-  char id[4];
+  bool    on = false;
+  char    id[4];
 
   path->remove(0,path->indexOf("/lights"));                // Remove until /lights
   if (path->endsWith("/lights"))                           // Got /lights
@@ -1499,29 +1500,22 @@ void hue_lights(String *path)
     response.replace("{cmd}", "state/on");
     if (webServer->args() == 1) 
     {
-      String json = webServer->arg(0);
-      json.replace(" ","");                  // remove blanks
-
-      if (json.indexOf("\"on\":") >= 0)      // Got "on" command
+      JsonObject &root = jsonBuffer.parseObject(webServer->arg(0));
+      on = root["on"];
+      switch(on)
       {
-        if (json.indexOf("false") >= 0)      // false -> turn device off
-        {
-          do_cmnd_power(device, 0);
-          response.replace("{res}", "false");
-        }
-        else if(json.indexOf("true") >= 0)   // true -> Turn device on
-        {
-          do_cmnd_power(device, 1);
-          response.replace("{res}", "true");
-        }
-        else
-        {
-          response.replace("{res}", (power & (0x01 << (device-1))) ? "true" : "false");
-        }
+        case false : do_cmnd_power(device, 0);
+                     response.replace("{res}", "false");
+                     break;
+        case true  : do_cmnd_power(device, 1);
+                     response.replace("{res}", "true");
+                     break;
+        default    : response.replace("{res}", (power & (0x01 << (device-1))) ? "true" : "false");
+                     break;
       }
 #ifdef USE_WS2812
-      if ((pin[GPIO_WS2812] < 99) && ((pos=json.indexOf("\"bri\":")) >= 0)) {
-        bri = atoi(json.substring(pos+6).c_str());
+      bri = root["bri"];
+      if (pin[GPIO_WS2812] < 99) {
         ws2812_changeBrightness(bri);
         response += ",";
         response += FPSTR(HUE_LIGHT_RESPONSE_JSON);

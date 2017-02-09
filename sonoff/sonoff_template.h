@@ -15,7 +15,8 @@
 #define GPIO_I2C_SDA       6    // I2C SDA
 #define GPIO_WS2812        7    // WS2812 Led string
 #define GPIO_SWT1          8    // User connected external switches
-#define GPIO_SENSOR_END    9
+#define GPIO_IRSEND        9    // Send IR codes
+#define GPIO_SENSOR_END    10
 
 #define GPIO_SWT2          9
 #define GPIO_SWT3          10
@@ -77,8 +78,8 @@ typedef struct MYTMPLT {
   myio         gp;  
 } mytmplt;
 
-const char sensors[GPIO_SENSOR_END][8] PROGMEM =
-  { "None", "DHT11", "AM2301", "DHT22", "DS18x20", "I2C SCL", "I2C SDA", "WS2812", "Switch" };
+const char sensors[GPIO_SENSOR_END][10] PROGMEM =
+  { "None", "DHT11", "AM2301", "DHT22", "DS18x20", "I2C SCL", "I2C SDA", "WS2812", "Switch", "IR Remote" };
 
 const mytmplt modules[MAXMODULE] PROGMEM = {
   { "Sonoff Basic",    // Sonoff Basic

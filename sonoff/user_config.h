@@ -129,6 +129,7 @@
   #define USE_WS2812_CTYPE     1                 // WS2812 Color type (0 - RGB, 1 - GRB)
 //  #define USE_WS2812_DMA                         // DMA supports only GPIO03 (= Serial TXD) (+1k mem)
                                                  //   When USE_WS2812_DMA is enabled expect Exceptions on Pow
+#define USE_IR_REMOTE                            // send IR remote commands
 
 /*********************************************************************************************\
  * No user configurable items below

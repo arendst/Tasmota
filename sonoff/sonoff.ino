@@ -116,6 +116,12 @@ enum butt_t {PRESSED, NOT_PRESSED};
 #ifdef USE_I2C
   #include <Wire.h>                         // I2C support library
 #endif  // USE_I2C
+#if defined USE_EMULATION || defined USE_IR_REMOTE
+  #include <ArduinoJson.h>
+
+  const size_t bufferSize = JSON_ARRAY_SIZE(2) + JSON_OBJECT_SIZE(10) + 130;  // Required size for complete HUE light JSON object or other JSON objects
+  DynamicJsonBuffer jsonBuffer(bufferSize);
+#endif // USE_EMULATION || USE_IR_REMOTE
 
 typedef void (*rtcCallback)();
 
@@ -1680,6 +1686,11 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
       // Serviced
     }
 #endif  // USE_WS2812
+#ifdef USE_IR_REMOTE
+    else if ((pin[GPIO_IRSEND] < 99) && ir_send_command(type, index, dataBuf, data_len, payload, svalue, sizeof(svalue))) {
+      // Serviced
+    }
+#endif // USE_IR_REMOTE
     else {
       type = NULL;
     }
@@ -1706,6 +1717,9 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
 #endif  // USE_I2C
 #ifdef USE_WS2812
     if (pin[GPIO_WS2812] < 99) snprintf_P(svalue, sizeof(svalue), PSTR("%s, Pixels, Led, Color, Dimmer, Scheme, Fade, Speed, Width, Wakeup, LedTable"), svalue);
+#endif
+#ifdef USE_IR_REMOTE
+    if (pin[GPIO_IRSEND] < 99) snprintf_P(svalue, sizeof(svalue), PSTR("%s, IRsend"), svalue);
 #endif
     snprintf_P(svalue, sizeof(svalue), PSTR("%s\"}"), svalue);
     mqtt_publish_topic_P(0, PSTR("COMMANDS3"), svalue);
@@ -2463,6 +2477,10 @@ void GPIO_init()
 #ifdef USE_WS2812
   if (pin[GPIO_WS2812] < 99) ws2812_init();
 #endif  // USE_WS2812
+
+#ifdef USE_IR_REMOTE
+  if (pin[GPIO_IRSEND] < 99) ir_send_init();
+#endif // USE_IR_REMOTE
 }
 
 void setup()
