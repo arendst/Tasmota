@@ -110,7 +110,9 @@ const char HTTP_BTN_MENU3[] PROGMEM =
 const char HTTP_BTN_MENU4[] PROGMEM =
   "<br/><form action='/lg' method='post'><button>Configure Logging</button></form>"
   "<br/><form action='/co' method='post'><button>Configure Other</button></form>"
-  "<br/><form action='/rt' method='post' onsubmit='return confirm(\"Confirm Reset Configuration\");'><button>Reset Configuration</button></form>";
+  "<br/><form action='/rt' method='post' onsubmit='return confirm(\"Confirm Reset Configuration\");'><button>Reset Configuration</button></form>"
+  "<br/><form action='/dl' method='post'><button>Backup Configuration</button></form>"
+  "<br/><form action='/rs' method='post'><button>Restore Configuration</button></form>";
 const char HTTP_BTN_MAIN[] PROGMEM =
   "<br/><br/><form action='/' method='post'><button>Main menu</button></form>";
 const char HTTP_BTN_CONF[] PROGMEM =
@@ -170,6 +172,15 @@ const char HTTP_FORM_OTHER3[] PROGMEM =
 #endif  // USE_EMULATION
 const char HTTP_FORM_END[] PROGMEM =
   "<br/><button type='submit'>Save</button></form></fieldset>";
+const char HTTP_FORM_RST[] PROGMEM =
+  "<div id='f1' name='f1' style='display:block;'>"
+  "<fieldset><legend><b>&nbsp;Restore configuration&nbsp;</b></legend>"
+  "<form method='post' action='u2' enctype='multipart/form-data'>"
+  "<br/><input type='file' name='u2'><br/>"
+  "<br/><button type='submit' onclick='document.getElementById(\"f1\").style.display=\"none\";document.getElementById(\"f2\").style.display=\"block\";this.form.submit();'>Start restore</button></form>"
+  "</fieldset>"
+  "</div>"
+  "<div id='f2' name='f2' style='display:none;text-align:center;'><b>Restore started ...</b></div>";
 const char HTTP_FORM_UPG[] PROGMEM =
   "<div id='f1' name='f1' style='display:block;'>"
   "<fieldset><legend><b>&nbsp;Upgrade by web server&nbsp;</b></legend>"
@@ -319,7 +330,8 @@ DNSServer *dnsServer;
 ESP8266WebServer *webServer;
 
 boolean _removeDuplicateAPs = true;
-int _minimumQuality = -1, _httpflag = HTTP_OFF, _uploaderror = 0, _colcount;
+int _minimumQuality = -1;
+uint8_t _httpflag = HTTP_OFF, _uploaderror = 0, _uploadfiletype, _colcount;
 
 void startWebserver(int type, IPAddress ipweb)
 {
@@ -341,10 +353,12 @@ void startWebserver(int type, IPAddress ipweb)
       }
       webServer->on("/lg", handleLog);
       webServer->on("/co", handleOther);
+      webServer->on("/dl", handleDownload);
       webServer->on("/sv", handleSave);
+      webServer->on("/rs", handleRestore);
       webServer->on("/rt", handleReset);
       webServer->on("/up", handleUpgrade);
-      webServer->on("/u1", handleUpgradeStart);
+      webServer->on("/u1", handleUpgradeStart);  // OTA
       webServer->on("/u2", HTTP_POST, handleUploadDone, handleUploadLoop);
       webServer->on("/cm", handleCmnd);
       webServer->on("/cs", handleConsole);
@@ -508,12 +522,16 @@ void handleRoot()
   }
 }
 
+boolean httpUser()
+{
+  boolean status = (_httpflag == HTTP_USER);
+  if (status) handleRoot();
+  return status;
+}
+
 void handleConfig()
 {
-  if (_httpflag == HTTP_USER) {
-    handleRoot();
-    return;
-  }
+  if (httpUser()) return;
   addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Handle config"));
 
   String page = FPSTR(HTTP_HEAD);
@@ -527,11 +545,7 @@ void handleConfig()
 
 void handleModule()
 {
-  if (_httpflag == HTTP_USER) {
-    handleRoot();
-    return;
-  }
-
+  if (httpUser()) return;
   char stemp[20];
   
   addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Handle Module config"));
@@ -585,10 +599,7 @@ void handleWifi0()
 
 void handleWifi(boolean scan)
 {
-  if (_httpflag == HTTP_USER) {
-    handleRoot();
-    return;
-  }
+  if (httpUser()) return;
   char log[LOGSZ];
 
   addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Handle Wifi config"));
@@ -686,10 +697,7 @@ void handleWifi(boolean scan)
 
 void handleMqtt()
 {
-  if (_httpflag == HTTP_USER) {
-    handleRoot();
-    return;
-  }
+  if (httpUser()) return;
   addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Handle MQTT config"));
 
   String page = FPSTR(HTTP_HEAD);
@@ -711,10 +719,7 @@ void handleMqtt()
 
 void handleLog()
 {
-  if (_httpflag == HTTP_USER) {
-    handleRoot();
-    return;
-  }
+  if (httpUser()) return;
   addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Handle Log config"));
 
   String page = FPSTR(HTTP_HEAD);
@@ -760,10 +765,7 @@ void handleLog()
 
 void handleOther()
 {
-  if (_httpflag == HTTP_USER) {
-    handleRoot();
-    return;
-  }
+  if (httpUser()) return;
   addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Handle other config"));
   char stemp[40];
 
@@ -794,12 +796,33 @@ void handleOther()
   showPage(page);
 }
 
+void handleDownload()
+{
+  if (httpUser()) return;
+  addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Handle download config"));
+
+  uint8_t buffer[sizeof(sysCfg)];
+
+  WiFiClient myClient = webServer->client();
+  webServer->setContentLength(4096);
+  String attachment = F("attachment; filename=Config_");
+  attachment += sysCfg.friendlyname[0];
+  attachment += F("_");
+  attachment += Version;
+  attachment += F(".dmp");
+  webServer->sendHeader("Content-Disposition", attachment);
+  webServer->send(200, "application/octet-stream", "");
+  memcpy(buffer, &sysCfg, sizeof(sysCfg));
+  buffer[0] = CONFIG_FILE_SIGN;
+  buffer[1] = (!CONFIG_FILE_XOR)?0:1;
+  if (buffer[1]) for (uint16_t i = 2; i < sizeof(buffer); i++) buffer[i] ^= (CONFIG_FILE_XOR +i);
+  myClient.write((const char*)buffer, sizeof(buffer));
+}
+
 void handleSave()
 {
-  if (_httpflag == HTTP_USER) {
-    handleRoot();
-    return;
-  }
+  if (httpUser()) return;
+
   char log[LOGSZ], stemp[20];
   byte what = 0, restart;
   String result = "";
@@ -903,10 +926,8 @@ void handleSave()
 
 void handleReset()
 {
-  if (_httpflag == HTTP_USER) {
-    handleRoot();
-    return;
-  }
+  if (httpUser()) return;
+
   char svalue[MESSZ];
 
   addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Reset parameters"));
@@ -922,12 +943,24 @@ void handleReset()
   do_cmnd(svalue);
 }
 
+void handleRestore()
+{
+  if (httpUser()) return;
+  addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Handle restore"));
+
+  String page = FPSTR(HTTP_HEAD);
+  page.replace("{v}", "Restore Configuration");
+  page += FPSTR(HTTP_FORM_RST);
+  page += FPSTR(HTTP_BTN_CONF);
+  showPage(page);
+
+  _uploaderror = 0;
+  _uploadfiletype = 1;
+}
+
 void handleUpgrade()
 {
-  if (_httpflag == HTTP_USER) {
-    handleRoot();
-    return;
-  }
+  if (httpUser()) return;
   addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Handle upgrade"));
 
   String page = FPSTR(HTTP_HEAD);
@@ -938,14 +971,12 @@ void handleUpgrade()
   showPage(page);
 
   _uploaderror = 0;
+  _uploadfiletype = 0;
 }
 
 void handleUpgradeStart()
 {
-  if (_httpflag == HTTP_USER) {
-    handleRoot();
-    return;
-  }
+  if (httpUser()) return;
   char svalue[MESSZ];
 
   addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Firmware upgrade start"));
@@ -969,12 +1000,10 @@ void handleUpgradeStart()
 
 void handleUploadDone()
 {
-  if (_httpflag == HTTP_USER) {
-    handleRoot();
-    return;
-  }
+  if (httpUser()) return;
+  addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: File upload done"));
 
-  addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Firmware upload done"));
+  char log[LOGSZ];
   WIFI_configCounter();
   restartflag = 0;
   mqttcounter = 0;
@@ -984,28 +1013,36 @@ void handleUploadDone()
   page += F("<div style='text-align:center;'><b>Upload ");
   if (_uploaderror) {
     page += F("<font color='red'>failed</font></b><br/><br/>");
+    String error = "";
     if (_uploaderror == 1) {
-      page += F("No file selected");
+      error = F("No file selected");
     } else if (_uploaderror == 2) {
-      page += F("File size is larger than available free space");
+      error = F("File size is larger than available free space");
     } else if (_uploaderror == 3) {
-      page += F("File magic header does not start with 0xE9");
+      error = F("File magic header does not start with 0xE9");
     } else if (_uploaderror == 4) {
-      page += F("File flash size is larger than device flash size");
+      error = F("File flash size is larger than device flash size");
     } else if (_uploaderror == 5) {
-      page += F("File upload buffer miscompare");
+      error = F("File upload buffer miscompare");
     } else if (_uploaderror == 6) {
-      page += F("Upload failed. Enable logging option 3 for more information");
+      error = F("Upload failed. Enable logging option 3 for more information");
     } else if (_uploaderror == 7) {
-      page += F("Upload aborted");
+      error = F("Upload aborted");
+    } else if (_uploaderror == 8) {
+      error = F("Invalid configuration file");
+    } else if (_uploaderror == 9) {
+      error = F("Configuration file too large");
     } else {
-      page += F("Upload error code ");
-      page += String(_uploaderror);
+      error = F("Upload error code ");
+      error += String(_uploaderror);
     }
-    if (Update.hasError()) {
+    page += error;
+    if (!_uploadfiletype && Update.hasError()) {
       page += F("<br/><br/>Update error code (see Updater.cpp) ");
       page += String(Update.getError());
     }
+    snprintf_P(log, sizeof(log), PSTR("Upload: Error - %s"), error.c_str());
+    addLog(LOG_LEVEL_DEBUG, log);
   } else {
     page += F("<font color='green'>successful</font></b><br/><br/>Device will restart in a few seconds");
     restartflag = 2;
@@ -1023,7 +1060,7 @@ void handleUploadLoop()
 
   if (_httpflag == HTTP_USER) return;
   if (_uploaderror) {
-    Update.end();
+    if (!_uploadfiletype) Update.end();
     return;
   }
 
@@ -1031,82 +1068,97 @@ void handleUploadLoop()
 
   if (upload.status == UPLOAD_FILE_START) {
     restartflag = 60;
-    mqttcounter = 60;
-    if (upload.filename.c_str()[0] == 0)
-    {
+    if (upload.filename.c_str()[0] == 0) {
       _uploaderror = 1;
       return;
     }
-#ifdef USE_EMULATION
-    UDP_Disconnect();
-#endif  // USE_EMULATION
-    if (sysCfg.mqtt_enabled) mqttClient.disconnect();
-
     snprintf_P(log, sizeof(log), PSTR("Upload: File %s ..."), upload.filename.c_str());
     addLog(LOG_LEVEL_INFO, log);
-
-    uint32_t maxSketchSpace = (ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000;
-    if (!Update.begin(maxSketchSpace)) {         //start with max available size
-      if (_serialoutput) Update.printError(Serial);
-      _uploaderror = 2;
-      return;
+    if (!_uploadfiletype) {
+      mqttcounter = 60;
+#ifdef USE_EMULATION
+      UDP_Disconnect();
+#endif  // USE_EMULATION
+      if (sysCfg.mqtt_enabled) mqttClient.disconnect();
+      uint32_t maxSketchSpace = (ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000;
+      if (!Update.begin(maxSketchSpace)) {         //start with max available size
+        if (_serialoutput) Update.printError(Serial);
+        _uploaderror = 2;
+        return;
+      }
     }
     _colcount = 0;
   } else if (!_uploaderror && (upload.status == UPLOAD_FILE_WRITE)) {
     if (upload.totalSize == 0)
     {
-      if (upload.buf[0] != 0xE9) {
-        addLog_P(LOG_LEVEL_DEBUG, PSTR("Upload: File magic header does not start with 0xE9"));
-        _uploaderror = 3;
+      if (_uploadfiletype) {
+        if (upload.buf[0] != CONFIG_FILE_SIGN) {
+          _uploaderror = 8;
+          return;
+        }
+        if (upload.currentSize > sizeof(sysCfg)) {
+          _uploaderror = 9;
+          return;
+        }
+      } else {
+        if (upload.buf[0] != 0xE9) {
+          _uploaderror = 3;
+          return;
+        }
+        uint32_t bin_flash_size = ESP.magicFlashChipSize((upload.buf[3] & 0xf0) >> 4);
+        if(bin_flash_size > ESP.getFlashChipRealSize()) {
+          _uploaderror = 4;
+          return;
+        }
+        if ((sysCfg.module == SONOFF_TOUCH) || (sysCfg.module == SONOFF_4CH)) {
+          upload.buf[2] = 3; // DOUT - ESP8285
+          addLog_P(LOG_LEVEL_DEBUG, PSTR("FLSH: Updated Flash Chip Mode to 3"));
+        }
+      }
+    }
+    if (_uploadfiletype) { // config
+      if (!_uploaderror) {
+        if (upload.buf[1]) for (uint16_t i = 2; i < upload.currentSize; i++) upload.buf[i] ^= (CONFIG_FILE_XOR +i);
+        CFG_DefaultSet2();
+        memcpy((char*)&sysCfg +16, upload.buf +16, upload.currentSize -16);
+      }
+    } else {  // firmware
+      if (!_uploaderror && (Update.write(upload.buf, upload.currentSize) != upload.currentSize)) {
+        if (_serialoutput) Update.printError(Serial);
+        _uploaderror = 5;
         return;
       }
-      uint32_t bin_flash_size = ESP.magicFlashChipSize((upload.buf[3] & 0xf0) >> 4);
-      if(bin_flash_size > ESP.getFlashChipRealSize()) {
-        addLog_P(LOG_LEVEL_DEBUG, PSTR("Upload: File flash size is larger than device flash size"));
-        _uploaderror = 4;
-        return;
-      }
-      if ((sysCfg.module == SONOFF_TOUCH) || (sysCfg.module == SONOFF_4CH)) {
-        upload.buf[2] = 3; // DOUT - ESP8285
-        addLog_P(LOG_LEVEL_DEBUG, PSTR("FLSH: Updated Flash Chip Mode to 3"));
+      if (_serialoutput) {
+        Serial.printf(".");
+        _colcount++;
+        if (!(_colcount % 80)) Serial.println();
       }
     }
-    if (!_uploaderror && (Update.write(upload.buf, upload.currentSize) != upload.currentSize)) {
-      if (_serialoutput) Update.printError(Serial);
-      _uploaderror = 5;
-      return;
-    }
-    if (_serialoutput) {
-      Serial.printf(".");
-      _colcount++;
-      if (!(_colcount % 80)) Serial.println();
-    }
-  } else if(!_uploaderror && (upload.status == UPLOAD_FILE_END)){
+  } else if(!_uploaderror && (upload.status == UPLOAD_FILE_END)) {
     if (_serialoutput && (_colcount % 80)) Serial.println();
-    if (Update.end(true)) { // true to set the size to the current progress
+    if (!_uploadfiletype) {
+      if (!Update.end(true)) { // true to set the size to the current progress
+        if (_serialoutput) Update.printError(Serial);
+        _uploaderror = 6;
+        return;
+      }
+    }
+    if (!_uploaderror) {
       snprintf_P(log, sizeof(log), PSTR("Upload: Successful %u bytes. Restarting"), upload.totalSize);
       addLog(LOG_LEVEL_INFO, log);
-    } else {
-      if (_serialoutput) Update.printError(Serial);
-      _uploaderror = 6;
-      return;
     }
   } else if(upload.status == UPLOAD_FILE_ABORTED) {
-    addLog_P(LOG_LEVEL_DEBUG, PSTR("Upload: Update was aborted"));
     restartflag = 0;
     mqttcounter = 0;
     _uploaderror = 7;
-    Update.end();
+    if (!_uploadfiletype) Update.end();
   }
   delay(0);
 }
 
 void handleCmnd()
 {
-  if (_httpflag == HTTP_USER) {
-    handleRoot();
-    return;
-  }
+  if (httpUser()) return;
   char svalue[MESSZ];
 
   addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Handle cmnd"));
@@ -1147,10 +1199,7 @@ void handleCmnd()
 
 void handleConsole()
 {
-  if (_httpflag == HTTP_USER) {
-    handleRoot();
-    return;
-  }
+  if (httpUser()) return;
   char svalue[MESSZ];
 
   addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Handle console"));
@@ -1170,10 +1219,7 @@ void handleConsole()
 
 void handleAjax()
 {
-  if (_httpflag == HTTP_USER) {
-    handleRoot();
-    return;
-  }
+  if (httpUser()) return;
   String message = "";
   uint16_t size = 0;
 
@@ -1201,10 +1247,7 @@ void handleAjax()
 
 void handleInfo()
 {
-  if (_httpflag == HTTP_USER) {
-    handleRoot();
-    return;
-  }
+  if (httpUser()) return;
   addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Handle info"));
 
   int freeMem = ESP.getFreeHeap();
@@ -1302,10 +1345,7 @@ void handleInfo()
 
 void handleRestart()
 {
-  if (_httpflag == HTTP_USER) {
-    handleRoot();
-    return;
-  }
+  if (httpUser()) return;
   addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Restarting"));
 
   String page = FPSTR(HTTP_HEAD);

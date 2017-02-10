@@ -54,6 +54,7 @@
 #define GPIO_USER          GPIO_SENSOR_END +33  // User configurable
 #define GPIO_MAX           GPIO_SENSOR_END +34
 
+
 /********************************************************************************************/
 
 enum module_t {SONOFF_BASIC, SONOFF_RF, SONOFF_SV, SONOFF_TH, SONOFF_DUAL, SONOFF_POW, SONOFF_4CH, S20, SLAMPHER, SONOFF_TOUCH, SONOFF_LED, CH1, CH4, MOTOR, ELECTRODRAGON, USER_TEST, MAXMODULE};
@@ -109,7 +110,8 @@ const mytmplt modules[MAXMODULE] PROGMEM = {
      0, 0,
      GPIO_USER,        // GPIO03 Serial TXD and Optional sensor
      GPIO_USER,        // GPIO04 Optional sensor
-     0, 0, 0, 0, 0, 0, 0,
+     GPIO_USER,        // GPIO05 Optional sensor
+     0, 0, 0, 0, 0, 0,
      GPIO_REL1,        // GPIO12 Red Led and Relay (0 = Off, 1 = On)
      GPIO_LED1_INV,    // GPIO13 Green Led (0 = On, 1 = Off)
      GPIO_USER,        // GPIO14 Optional sensor
@@ -238,7 +240,8 @@ const mytmplt modules[MAXMODULE] PROGMEM = {
      GPIO_USER,        // GPIO02 Optional sensor
      GPIO_USER,        // GPIO03 Serial TXD and Optional sensor
      GPIO_USER,        // GPIO04 Optional sensor
-     0, 0, 0, 0, 0, 0, 0,
+     GPIO_USER,        // GPIO05 Optional sensor
+     0, 0, 0, 0, 0, 0,
      GPIO_REL1,        // GPIO12 Red Led and Relay (0 = Off, 1 = On)
      GPIO_LED1_INV,    // GPIO13 Green Led (0 = On, 1 = Off)
      GPIO_USER,        // GPIO14 Optional sensor

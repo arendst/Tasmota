@@ -117,7 +117,6 @@
 #define PRESSURE_RESOLUTION    1                 // Maximum number of decimals (0 - 3) showing sensor Pressure
 
 // -- Sensor code selection -----------------------
-//#define USE_DHT2                                 // Optional using Adafruit DHT library
 //#define USE_DS18x20                              // Optional using OneWire library for multiple DS18B20 and/or DS18S20
 
 #define USE_I2C                                  // I2C using library wire (+10k code, 0.2k mem) - Disable by //

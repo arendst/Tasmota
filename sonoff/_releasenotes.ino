@@ -1,4 +1,11 @@
-/* 3.9.12 20170208
+/* 3.9.13 20170210
+ * Add FlashChipSize to Status 4
+ * Removed redundant DHT2 option and code
+ * Add Sonoff SV GPIO pin 05 configuration (#40)
+ * Add configuration file backup and restore via web page
+ * Fix latency due to light_sleep mode even if sleep was set to zero (#50)
+ *
+ * 3.9.12 20170208
  * Fix compile error when webserver is disabled (#30)
  * Fix possible ESP8285 flash problem by updating Flash Chip Mode to DOUT during OTA upload
  * Fix hostname issues by not allowing user entry of string formatting and removing from user_config.h (#36)

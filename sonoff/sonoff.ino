@@ -10,7 +10,7 @@
  * ====================================================
 */
 
-#define VERSION                0x03090C00   // 3.9.12
+#define VERSION                0x03090D00   // 3.9.13
 
 enum log_t   {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG_MORE, LOG_LEVEL_ALL};
 enum week_t  {Last, First, Second, Third, Fourth};
@@ -59,6 +59,8 @@ enum emul_t  {EMUL_NONE, EMUL_WEMO, EMUL_HUE, EMUL_MAX};
 #endif
 
 #define WIFI_HOSTNAME          "%s-%04d"    // Expands to <MQTT_TOPIC>-<last 4 decimal chars of MAC address>
+#define CONFIG_FILE_SIGN       0xA5         // Configuration file signature
+#define CONFIG_FILE_XOR        0x5A         // Configuration file xor (0 = No Xor)
 
 #define HLW_PREF_PULSE         12530        // was 4975us = 201Hz = 1000W
 #define HLW_UREF_PULSE         1950         // was 1666us = 600Hz = 220V
@@ -93,7 +95,7 @@ enum emul_t  {EMUL_NONE, EMUL_WEMO, EMUL_HUE, EMUL_MAX};
 #endif
 
 #define APP_BAUDRATE           115200       // Default serial baudrate
-#define MAX_STATUS             10
+#define MAX_STATUS             10           // Max number of status lines
 
 enum butt_t {PRESSED, NOT_PRESSED};
 
@@ -416,7 +418,7 @@ boolean mDNSbegun = false;
 
 /********************************************************************************************/
 
-void CFG_DefaultSet()
+void CFG_DefaultSet1()
 {
   memset(&sysCfg, 0x00, sizeof(SYSCFG));
 
@@ -424,7 +426,11 @@ void CFG_DefaultSet()
   sysCfg.saveFlag = 0;
   sysCfg.version = VERSION;
   sysCfg.bootcount = 0;
-  sysCfg.migflg = 0;
+}
+  
+void CFG_DefaultSet2()
+{
+  sysCfg.migflg = 0xA5;
   sysCfg.savedata = SAVE_DATA;
   sysCfg.savestate = SAVE_STATE;
   sysCfg.module = MODULE;
@@ -543,14 +549,16 @@ void CFG_DefaultSet()
 void CFG_Default()
 {
   addLog_P(LOG_LEVEL_NONE, PSTR("Config: Use default configuration"));
-  CFG_DefaultSet();
+  CFG_DefaultSet1();
+  CFG_DefaultSet2();
   CFG_Save();
 }
 
 void CFG_Migrate_Part2()
 {
   addLog_P(LOG_LEVEL_NONE, PSTR("Config: Migrating configuration"));
-  CFG_DefaultSet();
+  CFG_DefaultSet1();
+  CFG_DefaultSet2();
 
   sysCfg.seriallog_level = sysCfg2.seriallog_level;
   sysCfg.syslog_level = sysCfg2.syslog_level;
@@ -1306,6 +1314,7 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
     }
     else if (!strcmp(type,"SLEEP")) {
       if ((data_len > 0) && (payload >= 0) && (payload < 251)) {
+        if ((!sysCfg.sleep && payload) || (sysCfg.sleep && !payload)) restartflag = 2;
         sysCfg.sleep = payload;
         sleep = payload;
 //        restartflag = 2;
@@ -1891,9 +1900,9 @@ void publish_status(uint8_t payload)
   }
 
   if ((payload == 0) || (payload == 4)) {
-    snprintf_P(svalue, sizeof(svalue), PSTR("{\"StatusMEM\":{\"ProgramSize\":%d, \"Free\":%d, \"Heap\":%d, \"SpiffsStart\":%d, \"SpiffsSize\":%d, \"FlashSize\":%d, \"ProgramFlashSize\":%d}}"),
+    snprintf_P(svalue, sizeof(svalue), PSTR("{\"StatusMEM\":{\"ProgramSize\":%d, \"Free\":%d, \"Heap\":%d, \"SpiffsStart\":%d, \"SpiffsSize\":%d, \"FlashSize\":%d, \"ProgramFlashSize\":%d, \"FlashChipMode\",%d}}"),
       ESP.getSketchSize()/1024, ESP.getFreeSketchSpace()/1024, ESP.getFreeHeap()/1024, ((uint32_t)&_SPIFFS_start - 0x40200000)/1024,
-      (((uint32_t)&_SPIFFS_end - 0x40200000) - ((uint32_t)&_SPIFFS_start - 0x40200000))/1024, ESP.getFlashChipRealSize()/1024, ESP.getFlashChipSize()/1024);
+      (((uint32_t)&_SPIFFS_end - 0x40200000) - ((uint32_t)&_SPIFFS_start - 0x40200000))/1024, ESP.getFlashChipRealSize()/1024, ESP.getFlashChipSize()/1024, ESP.getFlashChipMode());
     mqtt_publish_topic_P(option, PSTR("STATUS4"), svalue);
   }
 
