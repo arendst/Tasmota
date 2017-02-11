@@ -534,7 +534,7 @@ void hlw_mqttPresent()
   dtostrf(pc, 1, 2, stemp2);
   dtostrf(pi, 1, 3, stemp3);
   snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/TELEMETRY"), PUB_PREFIX2, sysCfg.mqtt_topic);
-  snprintf_P(svalue, sizeof(svalue), PSTR("{\"Time\":\"%s\", \"Energy\":{\"Yesterday\":\"%s\", \"Today\":\"%s\", \"Period\":%d, \"Power\":%d, \"Factor\":\"%s\", \"Voltage\":%d, \"Current\":\"%s\"}}"),
+  snprintf_P(svalue, sizeof(svalue), PSTR("{\"Time\":\"%s\", \"Energy\":{\"Yesterday\": %s, \"Today\": %s, \"Period\":%d, \"Power\":%d, \"Factor\":%s, \"Voltage\":%d, \"Current\":%s}}"),
     stime, stemp0, stemp1, pe, pw, stemp2, pu, stemp3);
   mqtt_publish(stopic, svalue);
 #ifdef USE_DOMOTICZ
