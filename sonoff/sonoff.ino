@@ -10,7 +10,7 @@
  * ====================================================
 */
 
-#define VERSION                0x03090D00   // 3.9.13
+#define VERSION                0x03090E00   // 3.9.14
 
 enum log_t   {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG_MORE, LOG_LEVEL_ALL};
 enum week_t  {Last, First, Second, Third, Fourth};
@@ -46,10 +46,6 @@ enum emul_t  {EMUL_NONE, EMUL_WEMO, EMUL_HUE, EMUL_MAX};
 #define MQTT_FINGERPRINT       "A5 02 FF 13 99 9F 8B 39 8E F1 83 4F 11 23 65 0B 32 36 FC 07"
 #endif
 
-#ifndef USE_DHT2
-#define USE_DHT                             // Default DHT11 sensor needs no external library
-#endif
-
 #ifndef USE_DS18x20
 #define USE_DS18B20                         // Default DS18B20 sensor needs no external library
 #endif
@@ -59,6 +55,7 @@ enum emul_t  {EMUL_NONE, EMUL_WEMO, EMUL_HUE, EMUL_MAX};
 #endif
 
 #define WIFI_HOSTNAME          "%s-%04d"    // Expands to <MQTT_TOPIC>-<last 4 decimal chars of MAC address>
+#define USE_DHT                             // Default DHT11 sensor needs no external library
 #define CONFIG_FILE_SIGN       0xA5         // Configuration file signature
 #define CONFIG_FILE_XOR        0x5A         // Configuration file xor (0 = No Xor)
 
@@ -1147,8 +1144,8 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
     if (!strcmp(dataBufUc,"?")) data_len = 0;
     int16_t payload = atoi(dataBuf);     // -32766 - 32767
     uint16_t payload16 = atoi(dataBuf);  // 0 - 65535
-    if (!strcmp(dataBufUc,"OFF") || !strcmp(dataBufUc,"STOP")) payload = 0;
-    if (!strcmp(dataBufUc,"ON") || !strcmp(dataBufUc,"START") || !strcmp(dataBufUc,"USER")) payload = 1;
+    if (!strcmp(dataBufUc,"OFF") || !strcmp(dataBufUc,"FALSE") || !strcmp(dataBufUc,"STOP")) payload = 0;
+    if (!strcmp(dataBufUc,"ON") || !strcmp(dataBufUc,"TRUE") || !strcmp(dataBufUc,"START") || !strcmp(dataBufUc,"USER")) payload = 1;
     if (!strcmp(dataBufUc,"TOGGLE") || !strcmp(dataBufUc,"ADMIN")) payload = 2;
     if (!strcmp(dataBufUc,"BLINK")) payload = 3;
     if (!strcmp(dataBufUc,"BLINKOFF")) payload = 4;
@@ -1272,7 +1269,7 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
     else if (!strcmp(type,"GPIO") && (index < MAX_GPIO_PIN)) {
       mytmplt cmodule;
       memcpy_P(&cmodule, &modules[sysCfg.module], sizeof(cmodule));
-      if ((data_len > 0) && (cmodule.gp.io[index] == GPIO_USER) && (payload >= GPIO_SENSOR_START) && (payload < GPIO_SENSOR_END)) {
+      if ((data_len > 0) && (cmodule.gp.io[index] == GPIO_USER) && (payload >= 0) && (payload < GPIO_SENSOR_END)) {
         for (byte i = 0; i < MAX_GPIO_PIN; i++) {
           if ((cmodule.gp.io[i] == GPIO_USER) && (sysCfg.my_module.gp.io[i] == payload)) sysCfg.my_module.gp.io[i] = 0;
         }
@@ -1928,7 +1925,7 @@ void publish_status(uint8_t payload)
     uint8_t djson = 0;
     snprintf_P(svalue, sizeof(svalue), PSTR("{\"StatusSNS\":"));
     sensors_mqttPresent(svalue, sizeof(svalue), &djson);
-    if (!djson) snprintf_P(svalue, sizeof(svalue), PSTR("%s}"), svalue);
+    snprintf_P(svalue, sizeof(svalue), PSTR("%s}"), svalue);
     mqtt_publish_topic_P(option, PSTR("STATUS10"), svalue);
   }
 }
@@ -1948,9 +1945,9 @@ void sensors_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
     ds18x20_mqttPresent(svalue, ssvalue, djson);
 #endif  // USE_DS18x20
   }
-#if defined(USE_DHT) || defined(USE_DHT2)
+#ifdef USE_DHT
   if (dht_type) dht_mqttPresent(svalue, ssvalue, djson);
-#endif  // USE_DHT/2
+#endif  // USE_DHT
 #ifdef USE_I2C
   if (i2c_flg) {
 #ifdef USE_HTU
@@ -2019,7 +2016,7 @@ void every_second()
   if (sysCfg.tele_period) {
     tele_period++;
     if (tele_period == sysCfg.tele_period -1) {
-      if (pin[GPIO_DSB]) {
+      if (pin[GPIO_DSB] < 99) {
 #ifdef USE_DS18B20
         dsb_readTempPrep();
 #endif  // USE_DS18B20
@@ -2388,6 +2385,7 @@ void GPIO_init()
     if (sysCfg.my_module.gp.io[i] > GPIO_NONE) my_module.gp.io[i] = sysCfg.my_module.gp.io[i];
     if ((def_module.gp.io[i] > GPIO_NONE) && (def_module.gp.io[i] < GPIO_USER)) my_module.gp.io[i] = def_module.gp.io[i];
   }
+
   for (byte i = 0; i < GPIO_MAX; i++) pin[i] = 99;
   for (byte i = 0; i < MAX_GPIO_PIN; i++) {
     mpin = my_module.gp.io[i];
@@ -2404,13 +2402,13 @@ void GPIO_init()
         led_inverted[mpin - GPIO_LED1_INV] = 1;
         mpin -= 4;
       }
-      else if (mpin == GPIO_DHT11) dht_type = DHT11;
+      else if (mpin == GPIO_DHT11) dht_type = mpin;
       else if (mpin == GPIO_DHT21) {
-        dht_type = DHT21;
+        dht_type = mpin;
         mpin--;
       }
       else if (mpin == GPIO_DHT22) {
-        dht_type = DHT22;
+        dht_type = mpin;
         mpin -= 2;
       }
       pin[mpin] = i;
@@ -2460,9 +2458,13 @@ void GPIO_init()
   hlw_flg = ((pin[GPIO_HLW_SEL] < 99) && (pin[GPIO_HLW_CF1] < 99) && (pin[GPIO_HLW_CF] < 99));
   if (hlw_flg) hlw_init();
 
-#if defined(USE_DHT) || defined(USE_DHT2)
+#ifdef USE_DHT
   if (dht_type) dht_init();
-#endif  // USE_DHT/2
+#endif  // USE_DHT
+
+#ifdef USE_DS18x20
+  if (pin[GPIO_DSB] < 99) ds18x20_init();
+#endif  // USE_DS18x20
 
 #ifdef USE_I2C
   i2c_flg = ((pin[GPIO_I2C_SCL] < 99) && (pin[GPIO_I2C_SDA] < 99));

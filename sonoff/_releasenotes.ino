@@ -1,4 +1,9 @@
-/* 3.9.13 20170210
+/* 3.9.14 20170211
+ * Add False and True as alternatives for 0/Off and 1/On (#49)
+ * Fix Status10 JSON format (#52)
+ * Fix DS18x20 using OneWire library (#53)
+ *
+ * 3.9.13 20170210
  * Add FlashChipSize to Status 4
  * Removed redundant DHT2 option and code
  * Add Sonoff SV GPIO pin 05 configuration (#40)

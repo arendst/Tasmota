@@ -137,13 +137,13 @@ boolean dht_readTempHum(bool S, float &t, float &h)
 
   if (dht_read()) {
     switch (dht_type) {
-    case DHT11:
+    case GPIO_DHT11:
       h = data[0];
       t = data[2];
       if(S) t = dht_convertCtoF(t);
       break;
-    case DHT22:
-    case DHT21:
+    case GPIO_DHT22:
+    case GPIO_DHT21:
       h = data[0];
       h *= 256;
       h += data[1];

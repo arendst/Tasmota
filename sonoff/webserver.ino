@@ -491,11 +491,11 @@ void handleRoot()
     if (pin[GPIO_DSB] < 99) tpage += dsb_webPresent();
 #endif  // USE_DS18B20
 #ifdef USE_DS18x20
-    if (pin[GPIO_DSB] < 99) page += ds18x20_webPresent();
+    if (pin[GPIO_DSB] < 99) tpage += ds18x20_webPresent();
 #endif  // USE_DS18x20
-#if defined(USE_DHT) || defined(USE_DHT2)
+#ifdef USE_DHT
     if (dht_type) tpage += dht_webPresent();
-#endif  // USE_DHT/2
+#endif  // USE_DHT
 #ifdef USE_I2C
     if (i2c_flg) {
       tpage += htu_webPresent();
@@ -570,7 +570,7 @@ void handleModule()
   for (byte i = 0; i < MAX_GPIO_PIN; i++) {
     if (cmodule.gp.io[i] == GPIO_USER) {
       page += F("<br/><b>GPIO"); page += String(i); page += F("</b> <select id='g"); page += String(i); page += F("' name='g"); page += String(i); page += F("'>");
-      for (byte j = GPIO_SENSOR_START; j < GPIO_SENSOR_END; j++) {
+      for (byte j = 0; j < GPIO_SENSOR_END; j++) {
         page += F("<option ");
         if (j == my_module.gp.io[i]) page += F("selected ");
         page += F("value='"); page += String(j); page += F("'>");
