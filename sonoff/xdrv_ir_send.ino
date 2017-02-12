@@ -49,38 +49,39 @@ boolean ir_send_command(char *type, uint16_t index, char *dataBuf, uint16_t data
   uint8_t  bits=0;
   uint32_t data=0;
   
-  if (!strcmp(type,"IRSEND")) {
-	  if(data_len) {
+  if (!strcmp(type,"IRSEND"))
+  {
+	  if(data_len) 
+	  {
 			JsonObject &ir_json = jsonBuffer.parseObject(dataBuf);
+      if (!ir_json.success()) serviced = false;
 
-    if (!ir_json.success())
-      serviced = false;
-
-    if(serviced)
-    {
-      protocol = ir_json["protocol"];
-      bits = ir_json["bits"];
-      data = ir_json["data"];
-
-      if(protocol)
+      if(serviced)
       {
-        Serial.println(protocol);
-        Serial.println(bits);
-        Serial.println(data);
-		    if      (!strcmp(protocol,"NEC"))     irsend->sendNEC(data, bits);
-		    else if (!strcmp(protocol,"SONY"))    irsend->sendSony(data, bits);
-			  else if (!strcmp(protocol,"RC5"))     irsend->sendRC5(data, bits);
-			  else if (!strcmp(protocol,"RC6"))     irsend->sendRC6(data, bits);
-			  else if (!strcmp(protocol,"DISH"))    irsend->sendDISH(data, bits);
-			  else if (!strcmp(protocol,"JVC"))     irsend->sendJVC(data, bits, 1);
-			  else if (!strcmp(protocol,"SAMSUNG")) irsend->sendSAMSUNG(data, bits);
-        else serviced = false;
-      } else Serial.println("Invalid JSON data for IR"); 
-		} 
+        protocol = ir_json["protocol"];
+        bits = ir_json["bits"];
+        data = ir_json["data"];
+
+        if(protocol)
+        {
+          Serial.println(protocol);
+          Serial.println(bits);
+          Serial.println(data);
+		      if      (!strcmp(protocol,"NEC"))     irsend->sendNEC(data, bits);
+		      else if (!strcmp(protocol,"SONY"))    irsend->sendSony(data, bits);
+			    else if (!strcmp(protocol,"RC5"))     irsend->sendRC5(data, bits);
+			    else if (!strcmp(protocol,"RC6"))     irsend->sendRC6(data, bits);
+			    else if (!strcmp(protocol,"DISH"))    irsend->sendDISH(data, bits);
+			    else if (!strcmp(protocol,"JVC"))     irsend->sendJVC(data, bits, 1);
+			    else if (!strcmp(protocol,"SAMSUNG")) irsend->sendSAMSUNG(data, bits);
+          else serviced = false; // Unknown protocol
+        } else serviced = false; // protocol not decoded
+      } else serviced = false;   // JSON decode failed 
+		}                            // No data in MQTT request
   }
-  else {
-    serviced = false;
-  }
+  else serviced = false;         // Unknown command
+  snprintf_P(svalue, ssvalue, PSTR("{\"Command\":\"IRsend\" }"));
+
   return serviced;
 }
 #endif  // USE_IR_REMOTE
