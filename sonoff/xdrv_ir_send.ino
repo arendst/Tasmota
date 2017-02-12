@@ -64,9 +64,6 @@ boolean ir_send_command(char *type, uint16_t index, char *dataBuf, uint16_t data
 
         if(protocol)
         {
-          Serial.println(protocol);
-          Serial.println(bits);
-          Serial.println(data);
 		      if      (!strcmp(protocol,"NEC"))     irsend->sendNEC(data, bits);
 		      else if (!strcmp(protocol,"SONY"))    irsend->sendSony(data, bits);
 			    else if (!strcmp(protocol,"RC5"))     irsend->sendRC5(data, bits);
