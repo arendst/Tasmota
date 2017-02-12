@@ -2,73 +2,96 @@
  * Template parameters
 \*********************************************************************************************/
 
-#define GPIO_SENSOR_START  0
-#define GPIO_NONE          0    // Not used
-#define GPIO_DHT11         1    // DHT11
-#define GPIO_DHT21         2    // DHT21
-#define GPIO_AM2301        2    // AM2301
-#define GPIO_DHT22         3    // DHT22
-#define GPIO_AM2302        3    // AM2302
-#define GPIO_AM2321        3    // AM2321
-#define GPIO_DSB           4    // Single wire DS18B20 or DS18S20
-#define GPIO_I2C_SCL       5    // I2C SCL
-#define GPIO_I2C_SDA       6    // I2C SDA
-#define GPIO_WS2812        7    // WS2812 Led string
-#define GPIO_IRSEND        8    // Send IR codes
-#define GPIO_SWT1          9    // User connected external switches
-#define GPIO_SENSOR_END    10
+// User selectable GPIO functionality
+enum upins_t {
+  GPIO_NONE,           // Not used
+  GPIO_DHT11,          // DHT11
+  GPIO_DHT21,          // DHT21, AM2301
+  GPIO_DHT22,          // DHT22, AM2302, AM2321
+  GPIO_DSB,            // Single wire DS18B20 or DS18S20
+  GPIO_I2C_SCL,        // I2C SCL
+  GPIO_I2C_SDA,        // I2C SDA
+  GPIO_WS2812,         // WS2812 Led string
+  GPIO_IRSEND,				 // IR remote
+  GPIO_SWT1,           // User connected external switches
+  GPIO_SENSOR_END };
 
-#define GPIO_SWT2          GPIO_SENSOR_END
-#define GPIO_SWT3          GPIO_SENSOR_END +1
-#define GPIO_SWT4          GPIO_SENSOR_END +2
-#define GPIO_KEY1          GPIO_SENSOR_END +3   // Button usually connected to GPIO0
-#define GPIO_KEY2          GPIO_SENSOR_END +4
-#define GPIO_KEY3          GPIO_SENSOR_END +5
-#define GPIO_KEY4          GPIO_SENSOR_END +6
-#define GPIO_REL1          GPIO_SENSOR_END +7   // Relays
-#define GPIO_REL2          GPIO_SENSOR_END +8
-#define GPIO_REL3          GPIO_SENSOR_END +9
-#define GPIO_REL4          GPIO_SENSOR_END +10
-#define GPIO_REL1_INV      GPIO_SENSOR_END +11
-#define GPIO_REL2_INV      GPIO_SENSOR_END +12
-#define GPIO_REL3_INV      GPIO_SENSOR_END +13
-#define GPIO_REL4_INV      GPIO_SENSOR_END +14
-#define GPIO_LED1          GPIO_SENSOR_END +15  // Leds
-#define GPIO_LED2          GPIO_SENSOR_END +16
-#define GPIO_LED3          GPIO_SENSOR_END +17
-#define GPIO_LED4          GPIO_SENSOR_END +18
-#define GPIO_LED1_INV      GPIO_SENSOR_END +19
-#define GPIO_LED2_INV      GPIO_SENSOR_END +20
-#define GPIO_LED3_INV      GPIO_SENSOR_END +21
-#define GPIO_LED4_INV      GPIO_SENSOR_END +22
-#define GPIO_PWM0          GPIO_SENSOR_END +23  // Cold
-#define GPIO_PWM1          GPIO_SENSOR_END +24  // Warm
-#define GPIO_PWM2          GPIO_SENSOR_END +25  // Red (swapped with Blue from original)
-#define GPIO_PWM3          GPIO_SENSOR_END +26  // Green
-#define GPIO_PWM4          GPIO_SENSOR_END +27  // Blue (swapped with Red from original)
-#define GPIO_RXD           GPIO_SENSOR_END +28  // Serial interface
-#define GPIO_TXD           GPIO_SENSOR_END +29  // Serial interface
-#define GPIO_HLW_SEL       GPIO_SENSOR_END +30  // HLW8012 Sel output (Sonoff Pow)
-#define GPIO_HLW_CF1       GPIO_SENSOR_END +31  // HLW8012 CF1 voltage / current (Sonoff Pow)
-#define GPIO_HLW_CF        GPIO_SENSOR_END +32  // HLW8012 CF power (Sonoff Pow)
-#define GPIO_USER          GPIO_SENSOR_END +33  // User configurable
-#define GPIO_MAX           GPIO_SENSOR_END +34
+// Text in webpage Module Parameters and commands GPIOS and GPIO
+const char sensors[GPIO_SENSOR_END][10] PROGMEM = {
+  "None",
+  "DHT11",
+  "AM2301",
+  "DHT22",
+  "DS18x20",
+  "I2C SCL",
+  "I2C SDA",
+  "WS2812",
+  "IR Remote",
+  "Switch" };
 
+// Programmer selectable GPIO functionality offset by user selectable GPIOs
+enum fpins_t {
+  GPIO_SWT2 = GPIO_SENSOR_END,
+  GPIO_SWT3,
+  GPIO_SWT4,
+  GPIO_KEY1,           // Button usually connected to GPIO0
+  GPIO_KEY2,
+  GPIO_KEY3,
+  GPIO_KEY4,
+  GPIO_REL1,           // Relays
+  GPIO_REL2,
+  GPIO_REL3,
+  GPIO_REL4,
+  GPIO_REL1_INV,
+  GPIO_REL2_INV,
+  GPIO_REL3_INV,
+  GPIO_REL4_INV,
+  GPIO_LED1,           // Leds
+  GPIO_LED2,
+  GPIO_LED3,
+  GPIO_LED4,
+  GPIO_LED1_INV,
+  GPIO_LED2_INV,
+  GPIO_LED3_INV,
+  GPIO_LED4_INV,
+  GPIO_PWM0,           // Cold
+  GPIO_PWM1,           // Warm
+  GPIO_PWM2,           // Red (swapped with Blue from original)
+  GPIO_PWM3,           // Green
+  GPIO_PWM4,           // Blue (swapped with Red from original)
+  GPIO_RXD,            // Serial interface
+  GPIO_TXD,            // Serial interface
+  GPIO_HLW_SEL,        // HLW8012 Sel output (Sonoff Pow)
+  GPIO_HLW_CF1,        // HLW8012 CF1 voltage / current (Sonoff Pow)
+  GPIO_HLW_CF,         // HLW8012 CF power (Sonoff Pow)
+  GPIO_USER,           // User configurable
+  GPIO_MAX };
 
 /********************************************************************************************/
 
-enum module_t {SONOFF_BASIC, SONOFF_RF, SONOFF_SV, SONOFF_TH, SONOFF_DUAL, SONOFF_POW, SONOFF_4CH, S20, SLAMPHER, SONOFF_TOUCH, SONOFF_LED, CH1, CH4, MOTOR, ELECTRODRAGON, USER_TEST, MAXMODULE};
+// Supported hardware modules
+enum module_t {
+  SONOFF_BASIC,
+  SONOFF_RF,
+  SONOFF_SV,
+  SONOFF_TH,
+  SONOFF_DUAL,
+  SONOFF_POW,
+  SONOFF_4CH,
+  S20,
+  SLAMPHER,
+  SONOFF_TOUCH,
+  SONOFF_LED,
+  CH1,
+  CH4,
+  MOTOR,
+  ELECTRODRAGON,
+  USER_TEST,
+  MAXMODULE };
 
 /********************************************************************************************/
 
 #define MAX_GPIO_PIN       17   // Number of supported GPIO
-
-#define DHT11              11
-#define DHT21              21
-#define AM2301             21
-#define DHT22              22
-#define AM2302             22
-#define AM2321             22
 
 typedef struct MYIO {
   uint8_t      io[MAX_GPIO_PIN];
@@ -79,9 +102,7 @@ typedef struct MYTMPLT {
   myio         gp;  
 } mytmplt;
 
-const char sensors[GPIO_SENSOR_END][10] PROGMEM =
-  { "None", "DHT11", "AM2301", "DHT22", "DS18x20", "I2C SCL", "I2C SDA", "WS2812", "IR Remote", "Switch" };
-
+// Default module settings
 const mytmplt modules[MAXMODULE] PROGMEM = {
   { "Sonoff Basic",    // Sonoff Basic
      GPIO_KEY1,        // GPIO00 Button

@@ -36,11 +36,16 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include <OneWire.h>
 
-OneWire ds(pin[GPIO_DSB]);
+OneWire *ds = NULL;
 
 uint8_t ds18x20_addr[DS18X20_MAX_SENSORS][8];
 uint8_t ds18x20_idx[DS18X20_MAX_SENSORS];
 uint8_t ds18x20_snsrs = 0;
+
+void ds18x20_init()
+{
+  ds = new OneWire(pin[GPIO_DSB]);
+}
 
 void ds18x20_search()
 {
@@ -48,11 +53,11 @@ void ds18x20_search()
   uint8_t sensor = 0;
   uint8_t i;
 
-  ds.reset_search();
+  ds->reset_search();
   for (num_sensors = 0; num_sensors < DS18X20_MAX_SENSORS; num_sensors)
   {
-    if (!ds.search(ds18x20_addr[num_sensors])) {
-      ds.reset_search();
+    if (!ds->search(ds18x20_addr[num_sensors])) {
+      ds->reset_search();
       break;
     }
     // If CRC Ok and Type DS18S20 or DS18B20
@@ -104,9 +109,9 @@ String ds18x20_type(uint8_t sensor)
 
 void ds18x20_convert()
 {
-  ds.reset();
-  ds.write(W1_SKIP_ROM);        // Address all Sensors on Bus
-  ds.write(W1_CONVERT_TEMP);    // start conversion, no parasite power on at the end
+  ds->reset();
+  ds->write(W1_SKIP_ROM);        // Address all Sensors on Bus
+  ds->write(W1_CONVERT_TEMP);    // start conversion, no parasite power on at the end
 //  delay(750);                   // 750ms should be enough for 12bit conv
 }
 
@@ -125,11 +130,11 @@ boolean ds18x20_read(uint8_t sensor, bool S, float &t)
 
   t = NAN;
 
-  ds.reset();
-  ds.select(ds18x20_addr[ds18x20_idx[sensor]]);
-  ds.write(W1_READ_SCRATCHPAD); // Read Scratchpad
+  ds->reset();
+  ds->select(ds18x20_addr[ds18x20_idx[sensor]]);
+  ds->write(W1_READ_SCRATCHPAD); // Read Scratchpad
 
-  for (i = 0; i < 9; i++) data[i] = ds.read();
+  for (i = 0; i < 9; i++) data[i] = ds->read();
   if (OneWire::crc8(data, 8) == data[8]) {
     switch(ds18x20_addr[ds18x20_idx[sensor]][0]) {
     case 0x10:  // DS18S20

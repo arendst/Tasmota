@@ -30,11 +30,12 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include <IRremoteESP8266.h>
 
-IRsend irsend(pin[GPIO_IRSEND]); // an IR led is at GPIO_IRSEND
+IRsend *irsend=NULL;
 
 void ir_send_init(void)
-{  
-  irsend.begin();
+{
+    irsend = new IRsend(pin[GPIO_IRSEND]); // an IR led is at GPIO_IRSEND
+    irsend->begin();
 }
 
 /*********************************************************************************************\
@@ -51,18 +52,30 @@ boolean ir_send_command(char *type, uint16_t index, char *dataBuf, uint16_t data
   if (!strcmp(type,"IRSEND")) {
 	  if(data_len) {
 			JsonObject &ir_json = jsonBuffer.parseObject(dataBuf);
-			protocol = ir_json["protocol"];
-		  bits = ir_json["bits"];
-			data = ir_json["data"];
 
-		  if      (!strcmp(protocol,"NEC"))     irsend.sendNEC(data, bits);
-		  else if (!strcmp(protocol,"SONY"))    irsend.sendSony(data, bits);
-			else if (!strcmp(protocol,"RC5"))     irsend.sendRC5(data, bits);
-			else if (!strcmp(protocol,"RC6"))     irsend.sendRC6(data, bits);
-			else if (!strcmp(protocol,"DISH"))    irsend.sendDISH(data, bits);
-			else if (!strcmp(protocol,"JVC"))     irsend.sendJVC(data, bits, 1);
-			else if (!strcmp(protocol,"SAMSUNG")) irsend.sendSAMSUNG(data, bits);
-//			else if (!strcmp(protocol,"COOLIX"))  irsend.sendCOOLIX(data, bits);
+    if (!ir_json.success())
+      serviced = false;
+
+    if(serviced)
+    {
+      protocol = ir_json["protocol"];
+      bits = ir_json["bits"];
+      data = ir_json["data"];
+
+      if(protocol)
+      {
+        Serial.println(protocol);
+        Serial.println(bits);
+        Serial.println(data);
+		    if      (!strcmp(protocol,"NEC"))     irsend->sendNEC(data, bits);
+		    else if (!strcmp(protocol,"SONY"))    irsend->sendSony(data, bits);
+			  else if (!strcmp(protocol,"RC5"))     irsend->sendRC5(data, bits);
+			  else if (!strcmp(protocol,"RC6"))     irsend->sendRC6(data, bits);
+			  else if (!strcmp(protocol,"DISH"))    irsend->sendDISH(data, bits);
+			  else if (!strcmp(protocol,"JVC"))     irsend->sendJVC(data, bits, 1);
+			  else if (!strcmp(protocol,"SAMSUNG")) irsend->sendSAMSUNG(data, bits);
+        else serviced = false;
+      } else Serial.println("Invalid JSON data for IR"); 
 		} 
   }
   else {
