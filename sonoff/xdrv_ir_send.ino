@@ -80,8 +80,8 @@ boolean ir_send_command(char *type, uint16_t index, char *dataBuf, uint16_t data
 		}                            // No data in MQTT request
   }
   else serviced = false;         // Unknown command
-  snprintf_P(svalue, ssvalue, PSTR("{\"Command\":\"IRsend\" }"));
-
+  if (serviced) snprintf_P(svalue, ssvalue, PSTR("{\"Command\":\"IRsend\" }"));
+  
   return serviced;
 }
 #endif  // USE_IR_REMOTE
