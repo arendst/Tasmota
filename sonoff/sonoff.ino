@@ -10,7 +10,10 @@
  * ====================================================
 */
 
-#define VERSION                0x03090E00   // 3.9.14
+#define VERSION                0x03090F00   // 3.9.15
+
+//#define BE_MINIMAL                          // Compile a minimal version if upgrade memory gets tight (still 404k)
+                                            // To be used as step 1. Next step is compile and use desired version
 
 enum log_t   {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG_MORE, LOG_LEVEL_ALL};
 enum week_t  {Last, First, Second, Third, Fourth};
@@ -38,6 +41,41 @@ enum emul_t  {EMUL_NONE, EMUL_WEMO, EMUL_HUE, EMUL_MAX};
 
 #define MODULE                 SONOFF_BASIC // [Module] Select default model
 
+#define USE_DHT                             // Default DHT11 sensor needs no external library
+#ifndef USE_DS18x20
+#define USE_DS18B20                         // Default DS18B20 sensor needs no external library
+#endif
+
+#ifdef BE_MINIMAL
+//#ifdef USE_MQTT_TLS
+//#undef USE_MQTT_TLS                       // Disable TLS support won't work as the MQTTHost is not set
+//#endif
+#ifdef USE_DISCOVERY
+#undef USE_DISCOVERY                        // Disable Discovery services for both MQTT and web server
+#endif
+#ifdef USE_DOMOTICZ
+#undef USE_DOMOTICZ                         // Disable Domoticz
+#endif
+#ifdef USE_EMULATION
+#undef USE_EMULATION                        // Disable Wemo or Hue emulation
+#endif
+#ifdef USE_DS18x20
+#undef USE_DS18x20                          // Disable DS18x20 sensor
+#endif
+#ifdef USE_I2C
+#undef USE_I2C                              // Disable all I2C sensors
+#endif
+#ifdef USE_WS2812
+#undef USE_WS2812                           // Disable WS2812 Led string
+#endif
+#ifdef USE_DS18B20
+#undef USE_DS18B20                          // Disable internal DS18B20 sensor
+#endif
+#ifdef USE_DHT
+#undef USE_DHT                              // Disable internal DHT sensor
+#endif
+#endif  // BE_MINIMAL
+
 #ifndef SWITCH_MODE
 #define SWITCH_MODE            TOGGLE       // TOGGLE, FOLLOW or FOLLOW_INV (the wall switch state)
 #endif
@@ -46,16 +84,11 @@ enum emul_t  {EMUL_NONE, EMUL_WEMO, EMUL_HUE, EMUL_MAX};
 #define MQTT_FINGERPRINT       "A5 02 FF 13 99 9F 8B 39 8E F1 83 4F 11 23 65 0B 32 36 FC 07"
 #endif
 
-#ifndef USE_DS18x20
-#define USE_DS18B20                         // Default DS18B20 sensor needs no external library
-#endif
-
 #ifndef WS2812_LEDS
 #define WS2812_LEDS            30           // [Pixels] Number of LEDs
 #endif
 
 #define WIFI_HOSTNAME          "%s-%04d"    // Expands to <MQTT_TOPIC>-<last 4 decimal chars of MAC address>
-#define USE_DHT                             // Default DHT11 sensor needs no external library
 #define CONFIG_FILE_SIGN       0xA5         // Configuration file signature
 #define CONFIG_FILE_XOR        0x5A         // Configuration file xor (0 = No Xor)
 
@@ -88,7 +121,7 @@ enum emul_t  {EMUL_NONE, EMUL_WEMO, EMUL_HUE, EMUL_MAX};
 #ifdef USE_MQTT_TLS
   #define MAX_LOG_LINES        10           // Max number of lines in weblog
 #else
-  #define MAX_LOG_LINES        70           // Max number of lines in weblog
+  #define MAX_LOG_LINES        60           // Max number of lines in weblog
 #endif
 
 #define APP_BAUDRATE           115200       // Default serial baudrate
@@ -377,6 +410,8 @@ uint8_t blink_power;                  // Blink power state
 uint8_t blink_mask = 0;               // Blink relay active mask
 uint8_t blink_powersave;              // Blink start power save state
 uint16_t mqtt_cmnd_publish = 0;       // ignore flag for publish command
+uint8_t latching_power = 0;           // Power state at latching start
+uint8_t latching_relay_pulse = 0;     // Latching relay pulse timer
 
 #ifdef USE_MQTT_TLS
   WiFiClientSecure espClient;         // Wifi Secure Client
@@ -757,8 +792,26 @@ void getClient(char* output, const char* input, byte size)
   if (!digits) strlcpy(output, input, size);
 }
 
+void setLatchingRelay(uint8_t power, uint8_t state)
+{
+  power &= 1;
+  if (state == 2) {           // Init relay
+    state = 0;
+  }
+  else if (state == 1) {      // Set port power to On
+    latching_power = power;
+    latching_relay_pulse = 2; // max 200mS (initiated by stateloop())
+  }
+  else {                      // Set saved port to Off
+    power = latching_power;
+  }
+  if (pin[GPIO_REL1 +power] < 99) digitalWrite(pin[GPIO_REL1 +power], rel_inverted[power] ? !state : state);
+}
+
 void setRelay(uint8_t power)
 {
+  uint8_t state;
+  
   if ((sysCfg.module == SONOFF_DUAL) || (sysCfg.module == CH4)) {
     Serial.write(0xA0);
     Serial.write(0x04);
@@ -766,14 +819,18 @@ void setRelay(uint8_t power)
     Serial.write(0xA1);
     Serial.write('\n');
     Serial.flush();
-  } else {
-    if (sysCfg.module == SONOFF_LED) {
-      sl_setColor(power &1);
-    } else {
-      for (byte i = 0; i < Maxdevice; i++) {
-        if (pin[GPIO_REL1 +i] < 99) digitalWrite(pin[GPIO_REL1 +i], power & 0x1);
-        power >>= 1;
-      }
+  }
+  else if (sysCfg.module == SONOFF_LED) {
+    sl_setColor(power &1);
+  }
+  else if (sysCfg.module == EXS_RELAY) {
+    setLatchingRelay(power, 1);
+  }
+  else {
+    for (byte i = 0; i < Maxdevice; i++) {
+      state = power &1;
+      if (pin[GPIO_REL1 +i] < 99) digitalWrite(pin[GPIO_REL1 +i], rel_inverted[i] ? !state : state);
+      power >>= 1;
     }
   }
   hlw_setPowerSteadyCounter(2);
@@ -1519,7 +1576,7 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
       if ((data_len > 0) && (((payload >= -12) && (payload <= 12)) || (payload == 99))) {
         sysCfg.timezone = payload;
       }
-      snprintf_P(svalue, sizeof(svalue), PSTR("{\"Timezone\":\"%d%s\"}"), sysCfg.timezone, (sysCfg.value_units) ? " Hr" : "");
+      snprintf_P(svalue, sizeof(svalue), PSTR("{\"Timezone\":%d}"), sysCfg.timezone);
     }
     else if (!strcmp(type,"LEDPOWER")) {
       if ((data_len > 0) && (payload >= 0) && (payload <= 2)) {
@@ -2104,6 +2161,11 @@ void stateloop()
 
   if (mqtt_cmnd_publish) mqtt_cmnd_publish--;  // Clean up
 
+  if (latching_relay_pulse) {
+    latching_relay_pulse--;
+    if (!latching_relay_pulse) setLatchingRelay(0, 0);
+  }
+
   if ((pulse_timer > 0) && (pulse_timer < 112)) {
     pulse_timer--;
     if (!pulse_timer) do_cmnd_power(1, 0);
@@ -2445,16 +2507,16 @@ void GPIO_init()
 
   if ((sysCfg.module == SONOFF_DUAL) || (sysCfg.module == CH4)) {
     Baudrate = 19200;
-  } else {  
-    if (sysCfg.module == SONOFF_LED) {
-      for (byte i = 0; i < 5; i++) {
-        if (pin[GPIO_PWM0 +i] < 99) pinMode(pin[GPIO_PWM0 +i], OUTPUT);
-      }
-    } else {
-      for (byte i = 0; i < 4; i++) {
-        if (pin[GPIO_KEY1 +i] < 99) pinMode(pin[GPIO_KEY1 +i], INPUT_PULLUP);
-        if (pin[GPIO_REL1 +i] < 99) pinMode(pin[GPIO_REL1 +i], OUTPUT);
-      }
+  }
+  else if (sysCfg.module == SONOFF_LED) {
+    for (byte i = 0; i < 5; i++) {
+      if (pin[GPIO_PWM0 +i] < 99) pinMode(pin[GPIO_PWM0 +i], OUTPUT);
+    }
+  }
+  else {
+    for (byte i = 0; i < 4; i++) {
+      if (pin[GPIO_KEY1 +i] < 99) pinMode(pin[GPIO_KEY1 +i], INPUT_PULLUP);
+      if (pin[GPIO_REL1 +i] < 99) pinMode(pin[GPIO_REL1 +i], OUTPUT);
     }
   }
   for (byte i = 0; i < 4; i++) {
@@ -2466,6 +2528,10 @@ void GPIO_init()
       pinMode(pin[GPIO_SWT1 +i], INPUT_PULLUP);
       lastwallswitch[i] = digitalRead(pin[GPIO_SWT1 +i]);  // set global now so doesn't change the saved power state on first switch check
     }
+  }
+  if (sysCfg.module == EXS_RELAY) {
+    setLatchingRelay(0,2);
+    setLatchingRelay(1,2);
   }
   setLed(sysCfg.ledstate &8);
 

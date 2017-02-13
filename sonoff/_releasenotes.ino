@@ -1,10 +1,16 @@
-/* 3.9.14 20170211
+/* 3.9.15 20170213
+ * Change JSON float values from string to number according to http://json.org (#56)
+ * Add support for exs latched relay module https://ex-store.de/ESP8266-WiFi-Relay-V31 (#58)
+ * Add support for inverted relays
+ * Changed MAX_LOG_LINES from 70 to 60 to preserve memory
+ *
+ * 3.9.14 20170211
  * Add False and True as alternatives for 0/Off and 1/On (#49)
  * Fix Status10 JSON format (#52)
  * Fix DS18x20 using OneWire library (#53)
  *
  * 3.9.13 20170210
- * Add FlashChipSize to Status 4
+ * Add FlashChipMode to Status 4
  * Removed redundant DHT2 option and code
  * Add Sonoff SV GPIO pin 05 configuration (#40)
  * Add configuration file backup and restore via web page

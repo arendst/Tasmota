@@ -175,7 +175,7 @@ void ds18x20_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
         stemp1[0] = '\0';
       }
       dsxflg++;
-      snprintf_P(svalue, ssvalue, PSTR("%s%s\"DS%d\":{\"Type\":\"%s\", \"Address\":\"%s\", \"Temperature\":\"%s\"}"),
+      snprintf_P(svalue, ssvalue, PSTR("%s%s\"DS%d\":{\"Type\":\"%s\", \"Address\":\"%s\", \"Temperature\":%s}"),
         svalue, stemp1, i +1, ds18x20_type(i).c_str(), ds18x20_address(i).c_str(), stemp2);
       strcpy(stemp1, ", ");
 #ifdef USE_DOMOTICZ

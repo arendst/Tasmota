@@ -186,7 +186,7 @@ void dht_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
   if (dht_readTempHum(TEMP_CONVERSION, t, h)) {     // Read temperature
     dtostrf(t, 1, TEMP_RESOLUTION &3, stemp1);
     dtostrf(h, 1, HUMIDITY_RESOLUTION &3, stemp2);
-    snprintf_P(svalue, ssvalue, PSTR("%s, \"DHT\":{\"Temperature\":\"%s\", \"Humidity\":\"%s\"}"), svalue, stemp1, stemp2);
+    snprintf_P(svalue, ssvalue, PSTR("%s, \"DHT\":{\"Temperature\":%s, \"Humidity\":%s}"), svalue, stemp1, stemp2);
     *djson = 1;
 #ifdef USE_DOMOTICZ
     domoticz_sensor2(stemp1, stemp2);

@@ -179,7 +179,7 @@ void dsb_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
 
   if (dsb_readTemp(TEMP_CONVERSION, t)) {                 // Check if read failed
     dtostrf(t, 1, TEMP_RESOLUTION &3, stemp1);
-    snprintf_P(svalue, ssvalue, PSTR("%s, \"DS18B20\":{\"Temperature\":\"%s\"}"), svalue, stemp1);
+    snprintf_P(svalue, ssvalue, PSTR("%s, \"DS18B20\":{\"Temperature\":%s}"), svalue, stemp1);
     *djson = 1;
 #ifdef USE_DOMOTICZ
     domoticz_sensor1(stemp1);

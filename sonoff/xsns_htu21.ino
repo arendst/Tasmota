@@ -240,7 +240,7 @@ void htu_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
   h = htu21_compensatedHumidity(h, t);
   dtostrf(t, 1, TEMP_RESOLUTION &3, stemp1);
   dtostrf(h, 1, HUMIDITY_RESOLUTION &3, stemp2);
-  snprintf_P(svalue, ssvalue, PSTR("%s, \"%s\":{\"Temperature\":\"%s\", \"Humidity\":\"%s\"}"), svalue, htustype, stemp1, stemp2);
+  snprintf_P(svalue, ssvalue, PSTR("%s, \"%s\":{\"Temperature\":%s, \"Humidity\":%s}"), svalue, htustype, stemp1, stemp2);
   *djson = 1;
 #ifdef USE_DOMOTICZ
   domoticz_sensor2(stemp1, stemp2);

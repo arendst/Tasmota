@@ -437,10 +437,10 @@ void bmp_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
   dtostrf(p, 1, PRESSURE_RESOLUTION &3, stemp2);
   dtostrf(h, 1, HUMIDITY_RESOLUTION &3, stemp3);
   if (!strcmp(bmpstype,"BME280")) {
-    snprintf_P(svalue, ssvalue, PSTR("%s, \"%s\":{\"Temperature\":\"%s\", \"Humidity\":\"%s\", \"Pressure\":\"%s\"}"),
+    snprintf_P(svalue, ssvalue, PSTR("%s, \"%s\":{\"Temperature\":%s, \"Humidity\":%s, \"Pressure\":%s}"),
       svalue, bmpstype, stemp1, stemp3, stemp2);
   } else {
-    snprintf_P(svalue, ssvalue, PSTR("%s, \"%s\":{\"Temperature\":\"%s\", \"Pressure\":\"%s\"}"),
+    snprintf_P(svalue, ssvalue, PSTR("%s, \"%s\":{\"Temperature\":%s, \"Pressure\":%s}"),
       svalue, bmpstype, stemp1, stemp2);
   }
   *djson = 1;
