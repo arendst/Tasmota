@@ -84,6 +84,7 @@ enum module_t {
   CH4,
   MOTOR,
   ELECTRODRAGON,
+  EXS_RELAY,
   USER_TEST,
   MAXMODULE };
 
@@ -252,6 +253,21 @@ const mytmplt modules[MAXMODULE] PROGMEM = {
      GPIO_USER,        // GPIO14 Optional sensor
      0,
      GPIO_LED1         // GPIO16 Green/Blue Led (1 = On, 0 = Off)
+  },
+  { "EXS Relay",       // Latching relay https://ex-store.de/ESP8266-WiFi-Relay-V31
+                       //   Module Pin 1 VCC 3V3, Module Pin 6 GND
+     GPIO_KEY1,        // GPIO00 Module Pin 8 - Button (firmware flash)
+     GPIO_USER,        // GPIO01 Module Pin 2 = UART0_TXD
+     GPIO_USER,        // GPIO02 Module Pin 7
+     GPIO_USER,        // GPIO03 Module Pin 3 = UART0_RXD
+     GPIO_USER,        // GPIO04 Module Pin 10
+     GPIO_USER,        // GPIO05 Module Pin 9
+     0, 0, 0, 0, 0, 0,
+     GPIO_REL1,        // GPIO12 Relay1 ( 1 = Off)
+     GPIO_REL2,        // GPIO13 Relay1 ( 1 = On)
+     GPIO_USER,        // GPIO14 Module Pin 5
+     0,
+     GPIO_USER         // GPIO16 Module Pin 4
   },
   { "User Test",       // Sonoff Basic User Test
      GPIO_KEY1,        // GPIO00 Button

@@ -106,7 +106,7 @@
 #define APP_POWERON_STATE      3                 // [PowerOnState] Power On Relay state (0 = Off, 1 = On, 2 = Toggle Saved state, 3 = Saved state)
 #define APP_BLINKTIME          10                // [BlinkTime] Time in 0.1 Sec to blink/toggle power for relay 1
 #define APP_BLINKCOUNT         10                // [BlinkCount] Number of blinks (0 = 32000)
-#define APP_SLEEP              0                 // [Sleep] Sleep time to lower energy consumption (0 = Off, 1 - 250 mSec) 
+#define APP_SLEEP              0                 // [Sleep] Sleep time to lower energy consumption (0 = Off, 1 - 250 mSec)
 
 #define SWITCH_MODE            TOGGLE            // [SwitchMode] TOGGLE, FOLLOW, FOLLOW_INV, PUSHBUTTON or PUSHBUTTON_INV (the wall switch state)
 #define WS2812_LEDS            30                // [Pixels] Number of WS2812 LEDs to start with
@@ -132,10 +132,6 @@
 /*********************************************************************************************\
  * No user configurable items below
 \*********************************************************************************************/
-
-#if defined(USE_WEMO_EMULATION) && defined(USE_HUE_EMULATION)
-  #error "Select either USE_WEMO_EMULATION or USE_HUE_EMULATION"
-#endif
 
 #if (ARDUINO < 10610)
   #error "This software is supported with Arduino IDE starting from 1.6.10 and ESP8266 Release 2.3.0"

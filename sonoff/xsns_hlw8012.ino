@@ -530,7 +530,7 @@ void hlw_mqttStat(byte option, char* svalue, uint16_t ssvalue)
   dtostrf(pc, 1, 2, stemp2);
   dtostrf(pi, 1, 3, stemp3);
   snprintf_P(speriod, sizeof(speriod), PSTR(", \"Period\":%d"), pe);
-  snprintf_P(svalue, ssvalue, PSTR("%s\"Yesterday\":\"%s\", \"Today\":\"%s\"%s, \"Power\":%d, \"Factor\":\"%s\", \"Voltage\":%d, \"Current\":\"%s\"}"),
+  snprintf_P(svalue, ssvalue, PSTR("%s\"Yesterday\":%s, \"Today\":%s%s, \"Power\":%d, \"Factor\":%s, \"Voltage\":%d, \"Current\":%s}"),
     svalue, stemp0, stemp1, (option) ? speriod : "", pw, stemp2, pu, stemp3);
 #ifdef USE_DOMOTICZ
   dtostrf(ped * 1000, 1, 1, stemp1);
@@ -540,7 +540,6 @@ void hlw_mqttStat(byte option, char* svalue, uint16_t ssvalue)
 
 void hlw_mqttPresent()
 {
-//  char stopic[TOPSZ], svalue[MESSZ], stime[21];
   char svalue[MESSZ], stime[21];
 
   snprintf_P(stime, sizeof(stime), PSTR("%04d-%02d-%02dT%02d:%02d:%02d"),
