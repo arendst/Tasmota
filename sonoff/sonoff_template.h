@@ -12,11 +12,12 @@ enum upins_t {
   GPIO_I2C_SCL,        // I2C SCL
   GPIO_I2C_SDA,        // I2C SDA
   GPIO_WS2812,         // WS2812 Led string
+  GPIO_IRSEND,         // IR remote
   GPIO_SWT1,           // User connected external switches
   GPIO_SENSOR_END };
 
 // Text in webpage Module Parameters and commands GPIOS and GPIO
-const char sensors[GPIO_SENSOR_END][8] PROGMEM = {
+const char sensors[GPIO_SENSOR_END][9] PROGMEM = {
   "None",
   "DHT11",
   "AM2301",
@@ -25,6 +26,7 @@ const char sensors[GPIO_SENSOR_END][8] PROGMEM = {
   "I2C SCL",
   "I2C SDA",
   "WS2812",
+  "IRremote",
   "Switch" };
 
 // Programmer selectable GPIO functionality offset by user selectable GPIOs
@@ -257,7 +259,7 @@ const mytmplt modules[MAXMODULE] PROGMEM = {
   { "EXS Relay",       // Latching relay https://ex-store.de/ESP8266-WiFi-Relay-V31
                        //   Module Pin 1 VCC 3V3, Module Pin 6 GND
      GPIO_KEY1,        // GPIO00 Module Pin 8 - Button (firmware flash)
-     GPIO_USER,        // GPIO01 Module Pin 2 = UART0_TXD
+     0,                // GPIO01 Module Pin 2 = UART0_TXD
      GPIO_USER,        // GPIO02 Module Pin 7
      GPIO_USER,        // GPIO03 Module Pin 3 = UART0_RXD
      GPIO_USER,        // GPIO04 Module Pin 10

@@ -994,7 +994,7 @@ void addLog(byte loglevel, const char *line)
 #endif  // DEBUG_ESP_PORT
   if (loglevel <= seriallog_level) Serial.printf("%s %s\n", mxtime, line);
 #ifdef USE_WEBSERVER
-  if (loglevel <= sysCfg.weblog_level) {
+  if (sysCfg.webserver && (loglevel <= sysCfg.weblog_level)) {
     Log[logidx] = String(mxtime) + " " + String(line);
     logidx++;
     if (logidx > MAX_LOG_LINES -1) logidx = 0;

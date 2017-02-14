@@ -10,7 +10,7 @@
  * ====================================================
 */
 
-#define VERSION                0x03090F00   // 3.9.15
+#define VERSION                0x03091000   // 3.9.16
 
 //#define BE_MINIMAL                          // Compile a minimal version if upgrade memory gets tight (still 404k)
                                             // To be used as step 1. Next step is compile and use desired version
@@ -56,6 +56,9 @@ enum emul_t  {EMUL_NONE, EMUL_WEMO, EMUL_HUE, EMUL_MAX};
 #ifdef USE_DOMOTICZ
 #undef USE_DOMOTICZ                         // Disable Domoticz
 #endif
+//#ifdef USE_WEBSERVER
+//#undef USE_WEBSERVER                        // Disable Webserver
+//#endif
 #ifdef USE_EMULATION
 #undef USE_EMULATION                        // Disable Wemo or Hue emulation
 #endif
@@ -73,6 +76,9 @@ enum emul_t  {EMUL_NONE, EMUL_WEMO, EMUL_HUE, EMUL_MAX};
 #endif
 #ifdef USE_DHT
 #undef USE_DHT                              // Disable internal DHT sensor
+#endif
+#ifdef USE_IR_REMOTE
+#undef USE_IR_REMOTE                        // Disable IR driver
 #endif
 #endif  // BE_MINIMAL
 
@@ -148,6 +154,12 @@ enum butt_t {PRESSED, NOT_PRESSED};
 #ifdef USE_I2C
   #include <Wire.h>                         // I2C support library
 #endif  // USE_I2C
+#if defined USE_EMULATION || defined USE_IR_REMOTE
+  #include <ArduinoJson.h>
+
+  const size_t bufferSize = JSON_ARRAY_SIZE(2) + JSON_OBJECT_SIZE(10) + 130;  // Required size for complete HUE light JSON object or other JSON objects
+  DynamicJsonBuffer jsonBuffer(bufferSize);
+#endif // USE_EMULATION || USE_IR_REMOTE
 
 typedef void (*rtcCallback)();
 
@@ -789,17 +801,16 @@ void getClient(char* output, const char* input, byte size)
 void setLatchingRelay(uint8_t power, uint8_t state)
 {
   power &= 1;
-  if (state == 2) {           // Init relay
+  if (state == 2) {           // Reset relay
     state = 0;
+    latching_power = power;
+    latching_relay_pulse = 0;
   }
-  else if (state == 1) {      // Set port power to On
+  else if (state && !latching_relay_pulse) {  // Set port power to On
     latching_power = power;
     latching_relay_pulse = 2; // max 200mS (initiated by stateloop())
   }
-  else {                      // Set saved port to Off
-    power = latching_power;
-  }
-  if (pin[GPIO_REL1 +power] < 99) digitalWrite(pin[GPIO_REL1 +power], rel_inverted[power] ? !state : state);
+  if (pin[GPIO_REL1 +latching_power] < 99) digitalWrite(pin[GPIO_REL1 +latching_power], rel_inverted[latching_power] ? !state : state);
 }
 
 void setRelay(uint8_t power)
@@ -1743,6 +1754,11 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
       // Serviced
     }
 #endif  // USE_WS2812
+#ifdef USE_IR_REMOTE
+    else if ((pin[GPIO_IRSEND] < 99) && ir_send_command(type, index, dataBufUc, data_len, payload, svalue, sizeof(svalue))) {
+      // Serviced
+    }
+#endif // USE_IR_REMOTE
     else {
       type = NULL;
     }
@@ -1769,6 +1785,9 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
 #endif  // USE_I2C
 #ifdef USE_WS2812
     if (pin[GPIO_WS2812] < 99) snprintf_P(svalue, sizeof(svalue), PSTR("%s, Pixels, Led, Color, Dimmer, Scheme, Fade, Speed, Width, Wakeup, LedTable"), svalue);
+#endif
+#ifdef USE_IR_REMOTE
+    if (pin[GPIO_IRSEND] < 99) snprintf_P(svalue, sizeof(svalue), PSTR("%s, IRSend"), svalue);
 #endif
     snprintf_P(svalue, sizeof(svalue), PSTR("%s\"}"), svalue);
     mqtt_publish_topic_P(0, PSTR("COMMANDS3"), svalue);
@@ -2540,6 +2559,10 @@ void GPIO_init()
 #ifdef USE_WS2812
   if (pin[GPIO_WS2812] < 99) ws2812_init();
 #endif  // USE_WS2812
+
+#ifdef USE_IR_REMOTE
+  if (pin[GPIO_IRSEND] < 99) ir_send_init();
+#endif // USE_IR_REMOTE
 }
 
 void setup()

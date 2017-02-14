@@ -1497,6 +1497,7 @@ void hue_lights(String *path)
   uint8_t device = 1;
   int16_t pos = 0;
   uint8_t bri = 0;
+  bool on = false;
   char id[4];
 
   path->remove(0,path->indexOf("/lights"));                // Remove until /lights
@@ -1539,29 +1540,22 @@ void hue_lights(String *path)
     response.replace("{cmd}", "state/on");
     if (webServer->args() == 1) 
     {
-      String json = webServer->arg(0);
-      json.replace(" ","");                  // remove blanks
-
-      if (json.indexOf("\"on\":") >= 0)      // Got "on" command
+      JsonObject &hue_json = jsonBuffer.parseObject(webServer->arg(0));
+      on = hue_json["on"];
+      switch(on)
       {
-        if (json.indexOf("false") >= 0)      // false -> turn device off
-        {
-          do_cmnd_power(device, 0);
-          response.replace("{res}", "false");
-        }
-        else if(json.indexOf("true") >= 0)   // true -> Turn device on
-        {
-          do_cmnd_power(device, 1);
-          response.replace("{res}", "true");
-        }
-        else
-        {
-          response.replace("{res}", (power & (0x01 << (device-1))) ? "true" : "false");
-        }
+        case false : do_cmnd_power(device, 0);
+                     response.replace("{res}", "false");
+                     break;
+        case true  : do_cmnd_power(device, 1);
+                     response.replace("{res}", "true");
+                     break;
+        default    : response.replace("{res}", (power & (0x01 << (device-1))) ? "true" : "false");
+                     break;
       }
 #ifdef USE_WS2812
-      if ((pin[GPIO_WS2812] < 99) && ((pos=json.indexOf("\"bri\":")) >= 0)) {
-        bri = atoi(json.substring(pos+6).c_str());
+      bri = hue_json["bri"];
+      if (pin[GPIO_WS2812] < 99) {
         ws2812_changeBrightness(bri);
         response += ",";
         response += FPSTR(HUE_LIGHT_RESPONSE_JSON);
@@ -1620,7 +1614,7 @@ void handle_hue_api(String *path)
     addLog(LOG_LEVEL_DEBUG_MORE, log);
   }
   
-  if (path->endsWith("/invalid/")) {}                // Just ignore
+  if (path->endsWith("/invalid/")) {}                 // Just ignore
   else if (path->endsWith("/")) hue_auth(path);       // New HUE App setup
   else if (path->endsWith("/config")) hue_config(path);
   else if (path->indexOf("/lights") >= 0) hue_lights(path);
