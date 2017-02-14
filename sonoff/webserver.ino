@@ -1493,7 +1493,7 @@ void hue_config(String *path)
 
 void hue_lights(String *path)
 {
-  String  response;
+  String response;
   uint8_t device = 1;
   int16_t pos = 0;
   uint8_t bri = 0;
