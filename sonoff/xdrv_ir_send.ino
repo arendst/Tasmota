@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2017 Heiko Krupp.  All rights reserved.
+Copyright (c) 2017 Heiko Krupp and Theo Arends.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -30,12 +30,12 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include <IRremoteESP8266.h>
 
-IRsend *irsend=NULL;
+IRsend *irsend = NULL;
 
 void ir_send_init(void)
 {
-    irsend = new IRsend(pin[GPIO_IRSEND]); // an IR led is at GPIO_IRSEND
-    irsend->begin();
+  irsend = new IRsend(pin[GPIO_IRSEND]);  // an IR led is at GPIO_IRSEND
+  irsend->begin();
 }
 
 /*********************************************************************************************\
@@ -45,40 +45,40 @@ void ir_send_init(void)
 boolean ir_send_command(char *type, uint16_t index, char *dataBuf, uint16_t data_len, int16_t payload, char *svalue, uint16_t ssvalue)
 {
   boolean serviced = true;
+  boolean error = false;
   const char *protocol;
-  uint8_t  bits=0;
-  uint32_t data=0;
+  uint8_t  bits = 0;
+  uint32_t data = 0;
   
-  if (!strcmp(type,"IRSEND"))
-  {
-	  if(data_len) 
-	  {
+  if (!strcmp(type,"IRSEND")) {
+	  if (data_len) {
 			JsonObject &ir_json = jsonBuffer.parseObject(dataBuf);
-      if (!ir_json.success()) serviced = false;
-
-      if(serviced)
-      {
-        protocol = ir_json["protocol"];
-        bits = ir_json["bits"];
-        data = ir_json["data"];
-
-        if(protocol)
-        {
-		      if      (!strcmp(protocol,"NEC"))     irsend->sendNEC(data, bits);
-		      else if (!strcmp(protocol,"SONY"))    irsend->sendSony(data, bits);
-			    else if (!strcmp(protocol,"RC5"))     irsend->sendRC5(data, bits);
-			    else if (!strcmp(protocol,"RC6"))     irsend->sendRC6(data, bits);
-			    else if (!strcmp(protocol,"DISH"))    irsend->sendDISH(data, bits);
-			    else if (!strcmp(protocol,"JVC"))     irsend->sendJVC(data, bits, 1);
-			    else if (!strcmp(protocol,"SAMSUNG")) irsend->sendSAMSUNG(data, bits);
-          else serviced = false; // Unknown protocol
-        } else serviced = false; // protocol not decoded
-      } else serviced = false;   // JSON decode failed 
-		}                            // No data in MQTT request
+      if (!ir_json.success()) {
+        snprintf_P(svalue, ssvalue, PSTR("{\"IRSend\":\"Invalid JSON\"}"));  // JSON decode failed 
+      } else {
+        snprintf_P(svalue, ssvalue, PSTR("{\"IRSend\":\"Done\"}"));
+        protocol = ir_json["PROTOCOL"];
+        bits = ir_json["BITS"];
+        data = ir_json["DATA"];
+        if (protocol && bits && data) {
+          if      (!strcmp(protocol,"NEC"))     irsend->sendNEC(data, bits);
+          else if (!strcmp(protocol,"SONY"))    irsend->sendSony(data, bits);
+          else if (!strcmp(protocol,"RC5"))     irsend->sendRC5(data, bits);
+          else if (!strcmp(protocol,"RC6"))     irsend->sendRC6(data, bits);
+          else if (!strcmp(protocol,"DISH"))    irsend->sendDISH(data, bits);
+          else if (!strcmp(protocol,"JVC"))     irsend->sendJVC(data, bits, 1);
+          else if (!strcmp(protocol,"SAMSUNG")) irsend->sendSAMSUNG(data, bits);
+          else {
+            snprintf_P(svalue, ssvalue, PSTR("{\"IRSend\":\"Protocol not supported\"}"));
+          }
+        } else error = true;
+      }
+    } else error = true;
+    if (error) snprintf_P(svalue, ssvalue, PSTR("{\"IRSend\":\"No protocol, bits or data\"}"));
   }
-  else serviced = false;         // Unknown command
-  if (serviced) snprintf_P(svalue, ssvalue, PSTR("{\"Command\":\"IRsend\" }"));
-  
+  else {
+    serviced = false;  // Unknown command
+  }
   return serviced;
 }
 #endif  // USE_IR_REMOTE

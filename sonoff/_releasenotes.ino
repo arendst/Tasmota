@@ -1,4 +1,9 @@
-/* 3.9.15 20170213
+/* 3.9.16 20170214
+ * Update latching relay handler
+ * Add support for IR led using IRremoteESP8266 library (#59)
+ * Add Hue argument passing using ArduinoJSON library (#59)
+ *
+ * 3.9.15 20170213
  * Change JSON float values from string to number according to http://json.org (#56)
  * Add support for exs latched relay module https://ex-store.de/ESP8266-WiFi-Relay-V31 (#58)
  * Add support for inverted relays

@@ -1497,8 +1497,8 @@ void hue_lights(String *path)
   uint8_t device = 1;
   int16_t pos = 0;
   uint8_t bri = 0;
-  bool    on = false;
-  char    id[4];
+  bool on = false;
+  char id[4];
 
   path->remove(0,path->indexOf("/lights"));                // Remove until /lights
   if (path->endsWith("/lights"))                           // Got /lights

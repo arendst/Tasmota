@@ -579,7 +579,7 @@ boolean ws2812_command(char *type, uint16_t index, char *dataBuf, uint16_t data_
     snprintf_P(svalue, ssvalue, PSTR("{\"Scheme\":%d}"), sysCfg.ws_scheme);
   }
   else {
-    serviced = false;
+    serviced = false;  // Unknown command
   }
   return serviced;
 }
