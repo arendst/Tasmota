@@ -10,7 +10,7 @@
  * ====================================================
 */
 
-#define VERSION                0x03091000   // 3.9.16
+#define VERSION                0x03091100   // 3.9.17
 
 //#define BE_MINIMAL                          // Compile a minimal version if upgrade memory gets tight (still 404k)
                                             // To be used as step 1. Next step is compile and use desired version
@@ -127,7 +127,7 @@ enum emul_t  {EMUL_NONE, EMUL_WEMO, EMUL_HUE, EMUL_MAX};
 #ifdef USE_MQTT_TLS
   #define MAX_LOG_LINES        10           // Max number of lines in weblog
 #else
-  #define MAX_LOG_LINES        60           // Max number of lines in weblog
+  #define MAX_LOG_LINES        20           // Max number of lines in weblog
 #endif
 
 #define APP_BAUDRATE           115200       // Default serial baudrate
@@ -141,6 +141,7 @@ enum butt_t {PRESSED, NOT_PRESSED};
 #include <ESP8266HTTPClient.h>              // MQTT, Ota
 #include <ESP8266httpUpdate.h>              // Ota
 #include <PubSubClient.h>                   // MQTT
+#include <ArduinoJson.h>                    // WemoHue, IRremote, Domoticz
 #ifdef USE_WEBSERVER
   #include <ESP8266WebServer.h>             // WifiManager, Webserver
   #include <DNSServer.h>                    // WifiManager
@@ -154,12 +155,6 @@ enum butt_t {PRESSED, NOT_PRESSED};
 #ifdef USE_I2C
   #include <Wire.h>                         // I2C support library
 #endif  // USE_I2C
-#if defined USE_EMULATION || defined USE_IR_REMOTE
-  #include <ArduinoJson.h>
-
-  const size_t bufferSize = JSON_ARRAY_SIZE(2) + JSON_OBJECT_SIZE(10) + 130;  // Required size for complete HUE light JSON object or other JSON objects
-  DynamicJsonBuffer jsonBuffer(bufferSize);
-#endif // USE_EMULATION || USE_IR_REMOTE
 
 typedef void (*rtcCallback)();
 
@@ -899,6 +894,7 @@ void sl_setColor(byte type)
     }
   }
 }
+
 
 void json2legacy(char* stopic, char* svalue)
 {
@@ -2458,7 +2454,7 @@ void GPIO_init()
   uint8_t mpin;
   mytmplt def_module;
 
-  if (!sysCfg.module || (sysCfg.module >= MAXMODULE)) sysCfg.module = SONOFF_BASIC;  // Sonoff Basic
+  if (!sysCfg.module || (sysCfg.module >= MAXMODULE)) sysCfg.module = MODULE;
 
   memcpy_P(&def_module, &modules[sysCfg.module], sizeof(def_module));
   strlcpy(my_module.name, def_module.name, sizeof(my_module.name));

@@ -60,8 +60,19 @@ const char HTTP_HEAD[] PROGMEM =
       "var x=new XMLHttpRequest();"
       "x.onreadystatechange=function(){"
         "if(x.readyState==4&&x.status==200){"
-          "e.value=x.responseText;"
-          "e.scrollTop=100000;"
+          "var s1=x.responseText;"
+          "if(e.value.length==0){"
+            "e.value=s1;"
+          "}else{"
+            "var s2=e.value.slice(e.value.lastIndexOf(\"\\n\")+2);"
+            "var p2=s1.search(s2);"
+            "if(p2>-1){"
+              "e.value=e.value.replace(s2,s1.slice(p2));"
+            "}else{"
+              "e.value=e.value+\"\\n\"+s1;"
+            "}"
+          "}"
+          "e.scrollTop=99999;"
           "sn=e.scrollTop;"
         "}"
       "};"
@@ -75,7 +86,7 @@ const char HTTP_HEAD[] PROGMEM =
   "div,fieldset,input,select{padding:5px;font-size:1em;}"
   "input{width:95%;}"
   "select{width:100%;}"
-  "textarea{resize:none;width:98%;height:312px;padding:5px;overflow:auto;}"
+  "textarea{resize:none;width:98%;height:318px;padding:5px;overflow:auto;}"
   "body{text-align:center;font-family:verdana;}"
   "td{padding:0px;}"
   "button{border:0;border-radius:0.3rem;background-color:#1fa3ec;color:#fff;line-height:2.4rem;font-size:1.2rem;width:100%;-webkit-transition-duration:0.4s;transition-duration:0.4s;}"
@@ -197,9 +208,9 @@ const char HTTP_FORM_UPG[] PROGMEM =
   "</div>"
   "<div id='f2' name='f2' style='display:none;text-align:center;'><b>Upload started ...</b></div>";
 const char HTTP_FORM_CMND[] PROGMEM =
-  "<br/><textarea readonly id='t1' name='t1' cols='80' wrap='off'></textarea><br/><br/>"
+  "<br/><textarea readonly id='t1' name='t1' cols='99' wrap='off'></textarea><br/><br/>"
   "<form method='post' action='cs'>"
-  "<input style='width:98%' id='c1' name='c1' length=80 placeholder='Enter command' autofocus><br/>"
+  "<input style='width:98%' id='c1' name='c1' length='99' placeholder='Enter command' autofocus><br/>"
 //  "<br/><button type='submit'>Send command</button>"
   "</form>";
 const char HTTP_COUNTER[] PROGMEM =
@@ -427,7 +438,7 @@ void pollDnsWeb()
 void showPage(String &page)
 {
   page.replace("{ha}", my_module.name);
-  page.replace("{h}", String(sysCfg.friendlyname[0]));
+  page.replace("{h}", sysCfg.friendlyname[0]);
   if (_httpflag == HTTP_MANAGER) {
     if (WIFI_configCounter()) {
       page.replace("<body>", "<body onload='u()'>");
@@ -681,11 +692,11 @@ void handleWifi(boolean scan)
   }
 
   page += FPSTR(HTTP_FORM_WIFI);
-  page.replace("{h1}", String(sysCfg.hostname));
-  page.replace("{s1}", String(sysCfg.sta_ssid[0]));
-  page.replace("{p1}", String(sysCfg.sta_pwd[0]));
-  page.replace("{s2}", String(sysCfg.sta_ssid[1]));
-  page.replace("{p2}", String(sysCfg.sta_pwd[1]));
+  page.replace("{h1}", sysCfg.hostname);
+  page.replace("{s1}", sysCfg.sta_ssid[0]);
+  page.replace("{p1}", sysCfg.sta_pwd[0]);
+  page.replace("{s2}", sysCfg.sta_ssid[1]);
+  page.replace("{p2}", sysCfg.sta_pwd[1]);
   page += FPSTR(HTTP_FORM_END);
   if (_httpflag == HTTP_MANAGER) {
     page += FPSTR(HTTP_BTN_RSTRT);
@@ -706,12 +717,12 @@ void handleMqtt()
   char str[sizeof(sysCfg.mqtt_client)];
   getClient(str, MQTT_CLIENT_ID, sizeof(sysCfg.mqtt_client));
   page.replace("{m0}", str);
-  page.replace("{m1}", String(sysCfg.mqtt_host));
+  page.replace("{m1}", sysCfg.mqtt_host);
   page.replace("{m2}", String(sysCfg.mqtt_port));
-  page.replace("{m3}", String(sysCfg.mqtt_client));
-  page.replace("{m4}", String(sysCfg.mqtt_user));
-  page.replace("{m5}", String(sysCfg.mqtt_pwd));
-  page.replace("{m6}", String(sysCfg.mqtt_topic));
+  page.replace("{m3}", sysCfg.mqtt_client);
+  page.replace("{m4}", sysCfg.mqtt_user);
+  page.replace("{m5}", sysCfg.mqtt_pwd);
+  page.replace("{m6}", sysCfg.mqtt_topic);
   page += FPSTR(HTTP_FORM_END);
   page += FPSTR(HTTP_BTN_CONF);
   showPage(page);
@@ -755,7 +766,7 @@ void handleLog()
     }
   }
   page += FPSTR(HTTP_FORM_LOG3);
-  page.replace("{l2}", String(sysCfg.syslog_host));
+  page.replace("{l2}", sysCfg.syslog_host);
   page.replace("{l3}", String(sysCfg.syslog_port));
   page.replace("{l4}", String(sysCfg.tele_period));
   page += FPSTR(HTTP_FORM_END);
@@ -776,7 +787,7 @@ void handleOther()
   page += FPSTR(HTTP_FORM_OTHER2);
   page.replace("{1", "1");
   page.replace("{2", FRIENDLY_NAME);
-  page.replace("{3", String(sysCfg.friendlyname[0]));
+  page.replace("{3", sysCfg.friendlyname[0]);
 #ifdef USE_EMULATION
   page += FPSTR(HTTP_FORM_OTHER3);
   page.replace("{r2}", (sysCfg.emulation == EMUL_NONE) ? " checked" : "");
@@ -787,7 +798,7 @@ void handleOther()
     page.replace("{1", String(i +1));
     snprintf_P(stemp, sizeof(stemp), PSTR(FRIENDLY_NAME"%d"), i +1);
     page.replace("{2", stemp);
-    page.replace("{3", String(sysCfg.friendlyname[i]));
+    page.replace("{3", sysCfg.friendlyname[i]);
   }
   page += F("<br/></fieldset>");
 #endif  // USE_EMULATION
@@ -966,7 +977,7 @@ void handleUpgrade()
   String page = FPSTR(HTTP_HEAD);
   page.replace("{v}", "Firmware upgrade");
   page += FPSTR(HTTP_FORM_UPG);
-  page.replace("{o1}", String(sysCfg.otaUrl));
+  page.replace("{o1}", sysCfg.otaUrl);
   page += FPSTR(HTTP_BTN_MAIN);
   showPage(page);
 
@@ -1269,7 +1280,7 @@ void handleInfo()
   for (byte i = 0; i < Maxdevice; i++) {
     page += F("<tr><th>Friendly name ");
     page += i +1;
-    page += F("</th><td>"); page += String(sysCfg.friendlyname[i]); page += F("</td></tr>");
+    page += F("</th><td>"); page += sysCfg.friendlyname[i]; page += F("</td></tr>");
   }
   page += F("<tr><td>&nbsp;</td></tr>");
 //  page += F("<tr><th>SSId (RSSI)</th><td>"); page += (sysCfg.sta_active)? sysCfg.sta_ssid2 : sysCfg.sta_ssid1; page += F(" ("); page += WIFI_getRSSIasQuality(WiFi.RSSI()); page += F("%)</td></tr>");
@@ -1387,7 +1398,7 @@ void handleUPnPsetupWemo()
   addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Handle WeMo setup"));
 
   String setup_xml = FPSTR(WEMO_SETUP_XML);
-  setup_xml.replace("{x1}", String(sysCfg.friendlyname[0]));
+  setup_xml.replace("{x1}", sysCfg.friendlyname[0]);
   setup_xml.replace("{x2}", wemo_UUID());
   setup_xml.replace("{x3}", wemo_serial());
   webServer->send(200, "text/xml", setup_xml);
@@ -1432,7 +1443,7 @@ void hue_config_response(String *response)
   response->replace("{gw}", WiFi.gatewayIP().toString());
   snprintf_P(buffer, sizeof(buffer), PSTR("%04d-%02d-%02dT%02d:%02d:%02d"),
     rtcTime.Year, rtcTime.Month, rtcTime.Day, rtcTime.Hour, rtcTime.Minute, rtcTime.Second);
-  response->replace("{dt}", String(buffer));
+  response->replace("{dt}", buffer);
 }
 
 void hue_global_cfg(String *path)
@@ -1471,13 +1482,9 @@ void hue_global_cfg(String *path)
 
 void hue_auth(String *path)
 {
-  String response;
-  char uid[7];
+  char response[38];
   
-  snprintf_P(uid, sizeof(uid), PSTR("%03x"), ESP.getChipId());
-  response="[{\"success\":{\"username\":\"";
-  response+=String(uid);
-  response+="\"}}]";
+  snprintf_P(response, sizeof(response), PSTR("[{\"success\":{\"username\":\"%03x\"}}]"), ESP.getChipId());
   webServer->send(200, "application/json", response);
 }
 
@@ -1493,6 +1500,9 @@ void hue_config(String *path)
 
 void hue_lights(String *path)
 {
+/*
+ * http://sonoff/api/username/lights/1/state?1={"on":true,"hue":56100,"sat":254,"bri":254,"alert":"none","transitiontime":40}
+ */
   String response;
   uint8_t device = 1;
   int16_t pos = 0;
@@ -1530,7 +1540,7 @@ void hue_lights(String *path)
   else if (path->endsWith("/state"))                         // Got ID/state
   {
     path->remove(0,8);                                       // Remove /lights/
-    path->remove(path->indexOf("/state"));                    // Remove /state
+    path->remove(path->indexOf("/state"));                   // Remove /state
     device = atoi(path->c_str());
     if ((device < 1) || (device > Maxdevice)) device = 1;
     response = "[";
@@ -1540,6 +1550,7 @@ void hue_lights(String *path)
     response.replace("{cmd}", "state/on");
     if (webServer->args() == 1) 
     {
+      StaticJsonBuffer<400> jsonBuffer;
       JsonObject &hue_json = jsonBuffer.parseObject(webServer->arg(0));
       on = hue_json["on"];
       switch(on)

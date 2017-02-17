@@ -42,6 +42,11 @@ void ir_send_init(void)
  * Commands
 \*********************************************************************************************/
 
+/*
+ * ArduinoJSON IRsend entry used to calculate jsonBuf: JSON_OBJECT_SIZE(3) + 40 = 96
+ { "protocol": "SAMSUNG", "bits": 32, "data": 551502015 }
+*/
+
 boolean ir_send_command(char *type, uint16_t index, char *dataBuf, uint16_t data_len, int16_t payload, char *svalue, uint16_t ssvalue)
 {
   boolean serviced = true;
@@ -52,7 +57,8 @@ boolean ir_send_command(char *type, uint16_t index, char *dataBuf, uint16_t data
   
   if (!strcmp(type,"IRSEND")) {
 	  if (data_len) {
-			JsonObject &ir_json = jsonBuffer.parseObject(dataBuf);
+      StaticJsonBuffer<128> jsonBuf;
+      JsonObject &ir_json = jsonBuf.parseObject(dataBuf);
       if (!ir_json.success()) {
         snprintf_P(svalue, ssvalue, PSTR("{\"IRSend\":\"Invalid JSON\"}"));  // JSON decode failed 
       } else {
