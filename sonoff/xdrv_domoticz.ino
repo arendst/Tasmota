@@ -40,36 +40,6 @@ const char domoticz_sensors[DOMOTICZ_MAX_SENSORS][14] PROGMEM =
 int domoticz_update_timer = 0;
 byte domoticz_update_flag = 1;
 
-unsigned long getKeyIntValue(const char *json, const char *key)
-{
-  char *p, *b;
-  int i;
-
-  // search key
-  p = strstr(json, key);
-  if (!p) return 0;
-  // search following separator :
-  b = strchr(p + strlen(key), ':');
-  if (!b) return 0;
-  // Only the following chars are allowed between key and separator :
-  for(i = b - json + strlen(key); i < p-json; i++) {
-    switch (json[i]) {
-    case ' ':
-    case '\n':
-    case '\t':
-    case '\r':
-      continue;
-    default:
-      return 0;
-    }
-  }
-  b++;
-  // Allow integers as string too (used in "svalue" : "9")
-  while ((b[0] == ' ') || (b[0] == '"')) b++;
-  // Convert to integer
-  return atoi(b);
-}
-
 void mqtt_publishDomoticzPowerState(byte device)
 {
   char svalue[MESSZ];
@@ -130,6 +100,23 @@ boolean domoticz_update()
   return domoticz_update_flag;
 }
 
+/*
+ * ArduinoJSON Domoticz Switch entry used to calculate jsonBuf: JSON_OBJECT_SIZE(11) + 129 = 313
+{
+   "Battery" : 255,
+   "RSSI" : 12,
+   "dtype" : "Light/Switch",
+   "id" : "000140E7",
+   "idx" : 159,
+   "name" : "Sonoff1",
+   "nvalue" : 1,
+   "stype" : "Switch",
+   "svalue1" : "0",
+   "switchType" : "Dimmer",
+   "unit" : 1
+}
+*/
+
 boolean domoticz_mqttData(char *topicBuf, uint16_t stopicBuf, char *dataBuf, uint16_t sdataBuf)
 {
   char log[LOGSZ], stemp1[10];
@@ -139,8 +126,12 @@ boolean domoticz_mqttData(char *topicBuf, uint16_t stopicBuf, char *dataBuf, uin
   domoticz_update_flag = 1;
   if (!strncmp(topicBuf, sysCfg.domoticz_out_topic, strlen(sysCfg.domoticz_out_topic)) != 0) {
     if (sdataBuf < 20) return 1;
-    idx = getKeyIntValue(dataBuf,"\"idx\"");
-    nvalue = getKeyIntValue(dataBuf,"\"nvalue\"");
+    StaticJsonBuffer<400> jsonBuf;
+    JsonObject& domoticz = jsonBuf.parseObject(dataBuf);
+    if (!domoticz.success()) return 1;
+//    if (strcmp(domoticz["dtype"],"Light/Switch")) return 1;
+    idx = domoticz["idx"];
+    nvalue = domoticz["nvalue"];
 
     snprintf_P(log, sizeof(log), PSTR("DMTZ: idx %d, nvalue %d"), idx, nvalue);
     addLog(LOG_LEVEL_DEBUG_MORE, log);
@@ -150,7 +141,7 @@ boolean domoticz_mqttData(char *topicBuf, uint16_t stopicBuf, char *dataBuf, uin
         if ((idx > 0) && (idx == sysCfg.domoticz_relay_idx[i])) {
           snprintf_P(stemp1, sizeof(stemp1), PSTR("%d"), i +1);
           if (nvalue == 2) {
-            nvalue = getKeyIntValue(dataBuf,"\"svalue1\"");
+            nvalue = domoticz["svalue1"];
             if ((pin[GPIO_WS2812] < 99) && (sysCfg.ws_dimmer == nvalue)) return 1;
             if ((sysCfg.module == SONOFF_LED) && (sysCfg.led_dimmer[i] == nvalue)) return 1;
             snprintf_P(topicBuf, stopicBuf, PSTR("%s/%s/DIMMER%s"),

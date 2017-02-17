@@ -1,4 +1,9 @@
-/* 3.9.16 20170214
+/* 3.9.17 20170217
+ * Fix possible ArduinoJSON related memory fragmentation
+ * Changed console logging using less memory
+ * Add GPIO04 as user selectable for Sonoff Dual (#75)
+ *
+ * 3.9.16 20170214
  * Update latching relay handler
  * Add support for IR led using IRremoteESP8266 library (#59)
  * Add Hue argument passing using ArduinoJSON library (#59)
