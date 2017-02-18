@@ -82,7 +82,7 @@ void CFG_Save()
       }
     } else {
 #endif  // USE_SPIFFS
-      noInterrupts();
+      if (sysCfg.module != SONOFF_LED) noInterrupts();
       if (sysCfg.saveFlag == 0) {  // Handle default and rollover
         spi_flash_erase_sector(CFG_LOCATION + (sysCfg.saveFlag &1));
         spi_flash_write((CFG_LOCATION + (sysCfg.saveFlag &1)) * SPI_FLASH_SEC_SIZE, (uint32*)&sysCfg, sizeof(SYSCFG));
@@ -90,7 +90,7 @@ void CFG_Save()
       sysCfg.saveFlag++;
       spi_flash_erase_sector(CFG_LOCATION + (sysCfg.saveFlag &1));
       spi_flash_write((CFG_LOCATION + (sysCfg.saveFlag &1)) * SPI_FLASH_SEC_SIZE, (uint32*)&sysCfg, sizeof(SYSCFG));
-      interrupts();
+      if (sysCfg.module != SONOFF_LED) interrupts();
       snprintf_P(log, sizeof(log), PSTR("Config: Saved configuration (%d bytes) to flash at %X and count %d"), sizeof(SYSCFG), CFG_LOCATION + (sysCfg.saveFlag &1), sysCfg.saveFlag);
       addLog(LOG_LEVEL_DEBUG, log);
     }

@@ -10,7 +10,7 @@
  * ====================================================
 */
 
-#define VERSION                0x03091100   // 3.9.17
+#define VERSION                0x03091200   // 3.9.18
 
 //#define BE_MINIMAL                          // Compile a minimal version if upgrade memory gets tight (still 404k)
                                             // To be used as step 1. Next step is compile and use desired version
@@ -842,15 +842,15 @@ void setLed(uint8_t state)
   digitalWrite(pin[GPIO_LED1], (led_inverted[0]) ? !state : state);
 }
 
+/********************************************************************************************/
+
 void sl_setDim(uint8_t *my_color)
 {
   float newDim, fmyCld, fmyWrm, fmyRed, fmyGrn, fmyBlu;
   
   newDim = 100 / (float)sysCfg.led_dimmer[0];
   fmyCld = (float)sysCfg.led_color[0] / newDim;
-  newDim = 100 / (float)sysCfg.led_dimmer[1];
   fmyWrm = (float)sysCfg.led_color[1] / newDim;
-  newDim = 100 / (float)sysCfg.led_dimmer[2];
   fmyRed = (float)sysCfg.led_color[2] / newDim;
   fmyGrn = (float)sysCfg.led_color[3] / newDim;
   fmyBlu = (float)sysCfg.led_color[4] / newDim;
@@ -865,9 +865,8 @@ void sl_setColor(byte type)
 {
 // 0 = Off
 // 1 = On
-// 2 = Dim cold
-// 3 = Dim Warm
-// 4 = Dim color
+// 2 = Dim cold/warm
+// 3 = Dim color
   
   uint8_t my_color[5];
   
@@ -882,19 +881,30 @@ void sl_setColor(byte type)
       if (pin[GPIO_PWM0 +i] < 99) analogWrite(pin[GPIO_PWM0 +i], my_color[i]);
     }
   }
-  else if (type == 2) {  // Cold
-    if (pin[GPIO_PWM0] < 99) analogWrite(pin[GPIO_PWM0], my_color[0]);
+  else if (type == 2) {  // Cold/Warm
+    for (byte i = 0; i < 2; i++) {
+      if (pin[GPIO_PWM0 +i] < 99) analogWrite(pin[GPIO_PWM0 +i], my_color[i]);
+    }
   }
-  else if (type == 3) {  // Warm
-    if (pin[GPIO_PWM1] < 99) analogWrite(pin[GPIO_PWM1], my_color[1]);
-  }
-  else if (type == 4) {  // Color
+  else if (type == 3) {  // Color
     for (byte i = 2; i < 5; i++) {
       if (pin[GPIO_PWM0 +i] < 99) analogWrite(pin[GPIO_PWM0 +i], my_color[i]);
     }
   }
 }
 
+void sl_blank(byte state)
+{
+  if (sysCfg.module == SONOFF_LED) {
+    if (state) {
+      if (power &1) sl_setColor(1);
+    } else {
+      sl_setColor(0);
+    }
+  }
+}
+
+/********************************************************************************************/
 
 void json2legacy(char* stopic, char* svalue)
 {
@@ -1254,33 +1264,47 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
     }
 
 /*** Sonoff Led Commands *********************************************************************/
-    
-/*    
-    else if ((sysCfg.module == SONOFF_LED) && !strcmp(type,"COLOR"))) {
-      if ((data_len > 0) && (payload >= 0) && (payload <= 255)) {
-        sysCfg.led_color[index -1] = payload;
-        sl_setColor(4);
-      }
-      snprintf_P(svalue, sizeof(svalue), PSTR("{\"Color\":\"%s\"}"), sysCfg.led_color[index -1]);
-    }
-    else if ((sysCfg.module == SONOFF_LED) && !strcmp(type,"CWRGB") && (index > 0) && (index <= 5)) {
-      if ((data_len > 0) && (payload >= 0) && (payload <= 255)) {
-        sysCfg.led_color[index -1] = payload;
-        sl_setColor(1);
-      }
-      snprintf_P(svalue, sizeof(svalue), PSTR("{\"CWRGB%d\":%d}"), index, sysCfg.led_color[index -1]);
-    }
-*/    
-    else if ((sysCfg.module == SONOFF_LED) && !strcmp(type,"DIMMER") && (index > 0) && (index <= 3)) {
-      if ((data_len > 0) && (payload >= 0) && (payload <= 100)) {
-        sysCfg.led_dimmer[index -1] = payload;
+
+    else if ((sysCfg.module == SONOFF_LED) && !strcmp(type,"COLOR")) {
+      uint8_t my_color[5];
+      if (data_len == 4) {
+        char ccold[3], cwarm[3];
+        memcpy(ccold, dataBufUc, 2);
+        ccold[2] = '\0';
+        memcpy(cwarm, dataBufUc + 2, 2);
+        cwarm[2] = '\0';
+        my_color[0] = Atoh(ccold);
+        my_color[1] = Atoh(cwarm);
+        uint16_t temp = my_color[0];
+        if (temp < my_color[1]) temp = my_color[1];
+        float mDim = (float)temp / 2.55;
+        sysCfg.led_dimmer[0] = (uint8_t)mDim;
+        float newDim = 100 / mDim;
+        float fmyCold = (float)my_color[0] * newDim;
+        float fmyWarm = (float)my_color[1] * newDim;
+        sysCfg.led_color[0] = (uint8_t)fmyCold;
+        sysCfg.led_color[1] = (uint8_t)fmyWarm;
         power = 1;
 #ifdef USE_DOMOTICZ
         mqtt_publishDomoticzPowerState(index);
 #endif  // USE_DOMOTICZ
-        sl_setColor(index +1);
+        sl_setColor(2);
       }
-      snprintf_P(svalue, sizeof(svalue), PSTR("{\"Dimmer%d\":%d}"), index, sysCfg.led_dimmer[index -1]);
+      sl_setDim(my_color);
+      uint16_t color = (uint16_t)my_color[0] << 8;
+      color += (uint16_t)my_color[1];
+      snprintf_P(svalue, sizeof(svalue), PSTR("{\"Color\":\"%04X\"}"), color);
+    }
+    else if ((sysCfg.module == SONOFF_LED) && !strcmp(type,"DIMMER")) {
+      if ((data_len > 0) && (payload >= 0) && (payload <= 100)) {
+        sysCfg.led_dimmer[0] = payload;
+        power = 1;
+#ifdef USE_DOMOTICZ
+        mqtt_publishDomoticzPowerState(index);
+#endif  // USE_DOMOTICZ
+        sl_setColor(2);
+      }
+      snprintf_P(svalue, sizeof(svalue), PSTR("{\"Dimmer\":%d}"), sysCfg.led_dimmer[0]);
     }
 
 /*********************************************************************************************/
@@ -1599,7 +1623,7 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
     else if (!strcmp(type,"LEDSTATE")) {
       if ((data_len > 0) && (payload >= 0) && (payload < MAX_LED_OPTION)) {
         sysCfg.ledstate = payload;
-        if (!sysCfg.ledstate) setLed(led_inverted[0]);
+        if (!sysCfg.ledstate) setLed(0);
       }
       snprintf_P(svalue, sizeof(svalue), PSTR("{\"LedState\":%d}"), sysCfg.ledstate);
     }
@@ -2319,6 +2343,7 @@ void stateloop()
       if (otaflag <= 0) {
         otaflag = 12;
         ESPhttpUpdate.rebootOnUpdate(false);
+        sl_blank(0);
         // Try multiple times to get the update, in case we have a transient issue.
         // e.g. Someone issued "cmnd/sonoffs/update 1" and all the devices
         //      are hammering the OTAURL.
@@ -2336,6 +2361,7 @@ void stateloop()
           snprintf_P(svalue, sizeof(svalue), PSTR("Successful. Restarting"));
           restartflag = 2;
         } else {
+          sl_blank(1);
           snprintf_P(svalue, sizeof(svalue), PSTR("Failed %s"), ESPhttpUpdate.getLastErrorString().c_str());
         }
         mqtt_publish_topic_P(0, PSTR("UPGRADE"), svalue);
@@ -2510,6 +2536,8 @@ void GPIO_init()
     Baudrate = 19200;
   }
   else if (sysCfg.module == SONOFF_LED) {
+    analogWriteRange(255);  // Default is 1023 (Arduino.h)
+    analogWriteFreq(200);   // Default is 1000 (core_esp8266_wiring_pwm.c) - Try to lower flicker
     for (byte i = 0; i < 5; i++) {
       if (pin[GPIO_PWM0 +i] < 99) pinMode(pin[GPIO_PWM0 +i], OUTPUT);
     }
