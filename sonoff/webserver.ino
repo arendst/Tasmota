@@ -1054,6 +1054,7 @@ void handleUploadDone()
     }
     snprintf_P(log, sizeof(log), PSTR("Upload: Error - %s"), error.c_str());
     addLog(LOG_LEVEL_DEBUG, log);
+    sl_blank(1);
   } else {
     page += F("<font color='green'>successful</font></b><br/><br/>Device will restart in a few seconds");
     restartflag = 2;
@@ -1098,6 +1099,7 @@ void handleUploadLoop()
         return;
       }
     }
+    sl_blank(0);
     _colcount = 0;
   } else if (!_uploaderror && (upload.status == UPLOAD_FILE_WRITE)) {
     if (upload.totalSize == 0)

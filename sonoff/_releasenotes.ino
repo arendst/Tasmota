@@ -1,4 +1,12 @@
-/* 3.9.17 20170217
+/* 3.9.18 20170218
+ * Fix ledstate 0 to turn off led
+ * Fix Sonoff Led dimmer range (#16)
+ * Change Sonoff Led command Dimmer to act on both cold and warm color
+ * Add Sonoff Led command Color CCWW where CCWW are hexadecimal values fro 00 - FF
+ * Reduce Sonoff Led flickering by disabling interrupts during flash save and disabling 
+ *   Led during OTA upgrade and Web upload (#16)
+ *
+ * 3.9.17 20170217
  * Fix possible ArduinoJSON related memory fragmentation
  * Changed console logging using less memory
  * Add GPIO04 as user selectable for Sonoff Dual (#75)
