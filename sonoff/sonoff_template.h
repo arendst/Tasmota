@@ -212,13 +212,13 @@ const mytmplt modules[MAXMODULE] PROGMEM = {
   { "Sonoff LED",      // Sonoff LED
      GPIO_KEY1,        // GPIO00 Button
      0, 0, 0,
-     GPIO_PWM3,        // GPIO04 Green light
-     GPIO_PWM2,        // GPIO05 Red light
+     GPIO_USER,        // GPIO04 Optional sensor (PWM3 Green)
+     GPIO_USER,        // GPIO05 Optional sensor (PWM2 Red)
      0, 0, 0, 0, 0, 0,
      GPIO_PWM0,        // GPIO12 Cold light
      GPIO_LED1_INV,    // GPIO13 Blue Led (0 = On, 1 = Off)
      GPIO_PWM1,        // GPIO14 Warm light
-     GPIO_PWM4,        // GPIO15 Blue light
+     GPIO_USER,        // GPIO15 Optional sensor (PWM4 Blue)
      0
   },
   { "1 Channel",       // 1 Channel Inching/Latching Relay

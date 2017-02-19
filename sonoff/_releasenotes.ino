@@ -1,4 +1,8 @@
-/* 3.9.18 20170218
+/* 3.9.19 20170219
+ * Sonoff Led: Made GPIO04, 05 and 15 available for user
+ * Sonoff Led: Add commands Fade, Speed, WakupDuration, Wakeup and LedTable
+ *
+ * 3.9.18 20170218
  * Fix ledstate 0 to turn off led
  * Fix Sonoff Led dimmer range (#16)
  * Change Sonoff Led command Dimmer to act on both cold and warm color
