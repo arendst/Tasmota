@@ -47,7 +47,7 @@ void ir_send_init(void)
  { "protocol": "SAMSUNG", "bits": 32, "data": 551502015 }
 */
 
-boolean ir_send_command(char *type, uint16_t index, char *dataBuf, uint16_t data_len, int16_t payload, char *svalue, uint16_t ssvalue)
+boolean ir_send_command(char *type, uint16_t index, char *dataBufUc, uint16_t data_len, int16_t payload, char *svalue, uint16_t ssvalue)
 {
   boolean serviced = true;
   boolean error = false;
@@ -58,7 +58,7 @@ boolean ir_send_command(char *type, uint16_t index, char *dataBuf, uint16_t data
   if (!strcmp(type,"IRSEND")) {
 	  if (data_len) {
       StaticJsonBuffer<128> jsonBuf;
-      JsonObject &ir_json = jsonBuf.parseObject(dataBuf);
+      JsonObject &ir_json = jsonBuf.parseObject(dataBufUc);
       if (!ir_json.success()) {
         snprintf_P(svalue, ssvalue, PSTR("{\"IRSend\":\"Invalid JSON\"}"));  // JSON decode failed 
       } else {
