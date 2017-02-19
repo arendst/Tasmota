@@ -19,6 +19,7 @@
 // -- Wifi ----------------------------------------
 #define STA_SSID1              "indebuurt1"      // [Ssid1] Wifi SSID
 #define STA_PASS1              "VnsqrtnrsddbrN"  // [Password1] Wifi password
+#define WEB_PASSWORD           "admin"
 #define STA_SSID2              "indebuurt2"      // [Ssid2] Optional alternate AP Wifi SSID
 #define STA_PASS2              "VnsqrtnrsddbrN"  // [Password2] Optional alternate AP Wifi password
 #define WIFI_CONFIG_TOOL       WIFI_WPSCONFIG    // [WifiConfig] Default tool if wifi fails to connect
