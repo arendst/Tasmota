@@ -181,6 +181,8 @@ const char HTTP_FORM_OTHER3[] PROGMEM =
   "<br/><input style='width:10%;float:left' id='b2' name='b2' type='radio' value='1'{r3}><b>Belkin WeMo</b>"
   "<br/><input style='width:10%;float:left' id='b2' name='b2' type='radio' value='2'{r4}><b>Hue Bridge</b><br/>";
 #endif  // USE_EMULATION
+const char HTTP_FORM_OTHER4[] PROGMEM =
+  "<br/><b>Web Password</b><br/><input id='p1' name='p1' length=32 placeholder='" WEB_PASSWORD "' value='{p1}'><br/>";
 const char HTTP_FORM_END[] PROGMEM =
   "<br/><button type='submit'>Save</button></form></fieldset>";
 const char HTTP_FORM_RST[] PROGMEM =
@@ -437,6 +439,9 @@ void pollDnsWeb()
 
 void showPage(String &page)
 {
+  if(!webServer->authenticate("admin", sysCfg.web_password)) {
+    return webServer->requestAuthentication();
+  }
   page.replace("{ha}", my_module.name);
   page.replace("{h}", sysCfg.friendlyname[0]);
   if (_httpflag == HTTP_MANAGER) {
@@ -802,6 +807,8 @@ void handleOther()
   }
   page += F("<br/></fieldset>");
 #endif  // USE_EMULATION
+  page += FPSTR(HTTP_FORM_OTHER4);
+  page.replace("{p1}", sysCfg.web_password);
   page += FPSTR(HTTP_FORM_END);
   page += FPSTR(HTTP_BTN_CONF);
   showPage(page);
@@ -892,6 +899,7 @@ void handleSave()
     strlcpy(sysCfg.friendlyname[1], (!strlen(webServer->arg("a2").c_str())) ? FRIENDLY_NAME"2" : webServer->arg("a2").c_str(), sizeof(sysCfg.friendlyname[1]));
     strlcpy(sysCfg.friendlyname[2], (!strlen(webServer->arg("a3").c_str())) ? FRIENDLY_NAME"3" : webServer->arg("a3").c_str(), sizeof(sysCfg.friendlyname[2]));
     strlcpy(sysCfg.friendlyname[3], (!strlen(webServer->arg("a4").c_str())) ? FRIENDLY_NAME"4" : webServer->arg("a4").c_str(), sizeof(sysCfg.friendlyname[3]));
+    strlcpy(sysCfg.web_password, (!strlen(webServer->arg("p1").c_str())) ? WEB_PASSWORD : webServer->arg("p1").c_str(), sizeof(sysCfg.web_password));
     snprintf_P(log, sizeof(log), PSTR("HTTP: Other MQTT Enable %s, Emulation %d, Friendly Names %s, %s, %s and %s"),
       (sysCfg.mqtt_enabled) ? MQTT_STATUS_ON : MQTT_STATUS_OFF, sysCfg.emulation, sysCfg.friendlyname[0], sysCfg.friendlyname[1], sysCfg.friendlyname[2], sysCfg.friendlyname[3]);
     addLog(LOG_LEVEL_INFO, log);

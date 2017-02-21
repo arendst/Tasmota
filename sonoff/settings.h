@@ -184,5 +184,6 @@ struct SYSCFG {
 
   uint8_t       emulation;
 
+  char          web_password[33];
 } sysCfg;
 

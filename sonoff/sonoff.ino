@@ -10,7 +10,7 @@
  * ====================================================
 */
 
-#define VERSION                0x03091300   // 3.9.19
+#define VERSION                0x03091301   // 3.9.19
 
 //#define BE_MINIMAL                          // Compile a minimal version if upgrade memory gets tight (still 404k)
                                             // To be used as step 1. Next step is compile and use desired version

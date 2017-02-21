@@ -438,6 +438,8 @@ void CFG_DefaultSet2()
 
   sysCfg.emulation = EMULATION;
   
+
+  strlcpy(sysCfg.web_password, WEB_PASSWORD, sizeof(sysCfg.web_password));
 }
 
 void CFG_Default()
@@ -624,6 +626,9 @@ void CFG_Delta()
     }
     if (sysCfg.version < 0x03090700) {  // 3.9.7 - Add parameter
       sysCfg.emulation = EMULATION;
+    }
+    if (sysCfg.version < 0x03091301) {
+      strlcpy(sysCfg.web_password, WEB_PASSWORD, sizeof(sysCfg.web_password));
     }
 
     sysCfg.version = VERSION;
