@@ -1,0 +1,22 @@
+{
+  "name": "ArduinoJson",
+  "keywords": "json, rest, http, web",
+  "description": "An elegant and efficient JSON library for embedded systems",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/bblanchon/ArduinoJson.git"
+  },
+  "version": "5.8.3",
+  "authors": {
+    "name": "Benoit Blanchon",
+    "url": "https://blog.benoitblanchon.fr"
+  },
+  "exclude": [
+    "scripts",
+    "src/ArduinoJson.h",
+    "test",
+    "third-party"
+  ],
+  "frameworks": "arduino",
+  "platforms": "*"
+}
