@@ -1,0 +1,18 @@
+version: 5.8.3.{build}
+environment:
+  matrix:
+  - CMAKE_GENERATOR: Visual Studio 14 2015
+  - CMAKE_GENERATOR: Visual Studio 12 2013
+  - CMAKE_GENERATOR: Visual Studio 11 2012
+  - CMAKE_GENERATOR: Visual Studio 10 2010
+#  - CMAKE_GENERATOR: MinGW Makefiles
+# Note: Disabled because of unexplicated error -1073741511
+# This used to work fine with GCC 4.8.2 then failed after they upgraded to GCC 4.9.3
+configuration: Debug
+before_build:
+- set PATH=C:\MinGW\bin;%PATH:C:\Program Files\Git\usr\bin;=% # Workaround for CMake not wanting sh.exe on PATH for MinGW
+- cmake -DCMAKE_BUILD_TYPE=%CONFIGURATION% -G "%CMAKE_GENERATOR%" .
+build_script:
+- cmake --build . --config %CONFIGURATION%
+test_script:
+- ctest -V .

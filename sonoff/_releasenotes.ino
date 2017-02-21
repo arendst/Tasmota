@@ -1,4 +1,8 @@
-/* 3.9.19 20170219
+/* 3.9.20 20170221
+ * Add minimal basic authentication to Web Admin mode (#87)
+ * Fix Hue and add HSB support (#89)
+ * 
+ * 3.9.19 20170219
  * Sonoff Led: Made GPIO04, 05 and 15 available for user
  * Sonoff Led: Add commands Fade, Speed, WakupDuration, Wakeup and LedTable
  *

@@ -171,6 +171,7 @@ const char HTTP_FORM_LOG3[] PROGMEM =
 const char HTTP_FORM_OTHER[] PROGMEM =
   "<fieldset><legend><b>&nbsp;Other parameters&nbsp;</b></legend><form method='post' action='sv'>"
   "<input id='w' name='w' value='5' hidden><input id='r' name='r' value='1' hidden>"
+  "<br/><b>Web Admin Password</b><br/><input id='p1' name='p1' length=32 type='password' placeholder='" WEB_PASSWORD "' value='{p1}'><br/>"
   "<br/><input style='width:10%;float:left' id='b1' name='b1' type='checkbox'{r1}><b>MQTT enable</b><br/>";
 const char HTTP_FORM_OTHER2[] PROGMEM =
   "<br/><b>Friendly Name {1</b> ({2)<br/><input id='a{1' name='a{1' length=32 placeholder='{2' value='{3'><br/>";
@@ -219,121 +220,6 @@ const char HTTP_END[] PROGMEM =
   "</div>"
   "</body>"
   "</html>";
-#ifdef USE_EMULATION
-const char WEMO_EVENTSERVICE_XML[] PROGMEM =
-  "<?scpd xmlns=\"urn:Belkin:service-1-0\"?>"
-  "<actionList>"
-    "<action>"
-      "<name>SetBinaryState</name>"
-      "<argumentList>"
-        "<argument>"
-          "<retval/>"
-          "<name>BinaryState</name>"
-          "<relatedStateVariable>BinaryState</relatedStateVariable>"
-          "<direction>in</direction>"
-        "</argument>"
-      "</argumentList>"
-      "<serviceStateTable>"
-        "<stateVariable sendEvents=\"yes\">"
-          "<name>BinaryState</name>"
-          "<dataType>Boolean</dataType>"
-          "<defaultValue>0</defaultValue>"
-        "</stateVariable>"
-        "<stateVariable sendEvents=\"yes\">"
-          "<name>level</name>"
-          "<dataType>string</dataType>"
-          "<defaultValue>0</defaultValue>"
-        "</stateVariable>"
-      "</serviceStateTable>"
-    "</action>"
-  "</scpd>\r\n"
-  "\r\n";
-const char WEMO_SETUP_XML[] PROGMEM =
-  "<?xml version=\"1.0\"?>"
-  "<root>"
-    "<device>"
-      "<deviceType>urn:Belkin:device:controllee:1</deviceType>"
-      "<friendlyName>{x1}</friendlyName>"
-      "<manufacturer>Belkin International Inc.</manufacturer>"
-      "<modelName>Sonoff Socket</modelName>"
-      "<modelNumber>3.1415</modelNumber>"
-      "<UDN>uuid:{x2}</UDN>"
-      "<serialNumber>{x3}</serialNumber>"
-      "<binaryState>0</binaryState>"
-      "<serviceList>"
-        "<service>"
-          "<serviceType>urn:Belkin:service:basicevent:1</serviceType>"
-          "<serviceId>urn:Belkin:serviceId:basicevent1</serviceId>"
-          "<controlURL>/upnp/control/basicevent1</controlURL>"
-          "<eventSubURL>/upnp/event/basicevent1</eventSubURL>"
-          "<SCPDURL>/eventservice.xml</SCPDURL>"
-        "</service>"
-      "</serviceList>"
-    "</device>"
-  "</root>\r\n"
-  "\r\n";
-const char HUE_DESCRIPTION_XML[] PROGMEM =
-  "<?xml version=\"1.0\"?>"
-  "<root xmlns=\"urn:schemas-upnp-org:device-1-0\">"
-  "<specVersion>"
-      "<major>1</major>"
-      "<minor>0</minor>"
-  "</specVersion>"
-  "<URLBase>http://{x1}/</URLBase>"
-  "<device>"
-      "<deviceType>urn:schemas-upnp-org:device:Basic:1</deviceType>"
-      "<friendlyName>Amazon-Echo-HA-Bridge ({x1})</friendlyName>"
-      "<manufacturer>Royal Philips Electronics</manufacturer>"
-      "<modelName>Philips hue bridge 2012</modelName>"
-      "<modelNumber>929000226503</modelNumber>"
-      "<UDN>uuid:{x2}</UDN>"
-  "</device>"
-  "</root>\r\n"
-  "\r\n";
-const char HUE_LIGHT_STATUS_JSON[] PROGMEM =
-  "{\"state\":"
-      "{\"on\":{state},"
-      "\"bri\":{b},"
-      "\"hue\":{h},"
-      "\"sat\":{s},"
-      "\"effect\":\"none\","
-      "\"ct\":0,"
-      "\"alert\":\"none\","
-      "\"colormode\":\"hs\","
-      "\"reachable\":true"
-  "},"
-  "\"type\":\"Dimmable light\","
-  "\"name\":\"{j1}\","
-  "\"modelid\":\"LWB004\","
-  "\"manufacturername\":\"Philips\","
-  "\"uniqueid\":\"{j2}\","
-  "\"swversion\":\"66012040\""
-  "}";
-const char HUE_LIGHT_RESPONSE_JSON[] PROGMEM =
-  "{\"success\":{\"{api}/{id}/{cmd}\":{res}}}";
-const char HUE_CONFIG_RESPONSE_JSON[] PROGMEM =
-  "{\"name\":\"Philips hue\","
-   "\"mac\":\"{mac}\","
-   "\"dhcp\":true,"
-   "\"ipaddress\":\"{ip}\","
-   "\"netmask\":\"{mask}\","
-   "\"gateway\":\"{gw}\","
-   "\"proxyaddress\":\"\","
-   "\"proxyport\":0,"
-   "\"UTC\":\"{dt}\","
-   "\"whitelist\":{\"{id}\":{"
-     "\"last use date\":\"{dt}\","
-     "\"create date\":\"{dt}\","
-     "\"name\":\"Remote\"}},"
-   "\"swversion\":\"01036659\","
-   "\"apiversion\":\"1.16.0\","
-   "\"swupdate\":{\"updatestate\":0,\"url\":\"\",\"text\":\"\",\"notify\": false},"
-   "\"linkbutton\":false,"
-   "\"portalservices\":false"
-  "}";
-const char HUE_ERROR_JSON[] PROGMEM =
-  "[{\"error\":{\"type\":901,\"address\":\"/\",\"description\":\"Internal Error\"}}]";
-#endif  // USE_EMULATION
 
 #define DNS_PORT 53
 enum http_t {HTTP_OFF, HTTP_USER, HTTP_ADMIN, HTTP_MANAGER};
@@ -384,7 +270,9 @@ void startWebserver(int type, IPAddress ipweb)
         webServer->on("/eventservice.xml", handleUPnPservice);
         webServer->on("/setup.xml", handleUPnPsetupWemo);
       }
-      if (sysCfg.emulation == EMUL_HUE) webServer->on("/description.xml", handleUPnPsetupHue);
+      if (sysCfg.emulation == EMUL_HUE) {
+        webServer->on("/description.xml", handleUPnPsetupHue);
+      }
 #endif  // USE_EMULATION
       webServer->onNotFound(handleNotFound);
     }
@@ -438,6 +326,9 @@ void pollDnsWeb()
 
 void showPage(String &page)
 {
+  if((_httpflag == HTTP_ADMIN) && (sysCfg.web_password[0] != 0) && !webServer->authenticate(WEB_USERNAME, sysCfg.web_password)) {
+    return webServer->requestAuthentication();
+  }
   page.replace("{ha}", my_module.name);
   page.replace("{h}", sysCfg.friendlyname[0]);
   if (_httpflag == HTTP_MANAGER) {
@@ -784,6 +675,7 @@ void handleOther()
   String page = FPSTR(HTTP_HEAD);
   page.replace("{v}", "Configure Other");
   page += FPSTR(HTTP_FORM_OTHER);
+  page.replace("{p1}", sysCfg.web_password);
   page.replace("{r1}", (sysCfg.mqtt_enabled) ? " checked" : "");
   page += FPSTR(HTTP_FORM_OTHER2);
   page.replace("{1", "1");
@@ -885,6 +777,8 @@ void handleSave()
     break;
 #endif  // USE_DOMOTICZ
   case 5:
+    strlcpy(sysCfg.web_password, (!strlen(webServer->arg("p1").c_str())) ? WEB_PASSWORD : webServer->arg("p1").c_str(), sizeof(sysCfg.web_password));
+    if (sysCfg.web_password[0] == '0') sysCfg.web_password[0] = '\0';
     sysCfg.mqtt_enabled = webServer->hasArg("b1");
 #ifdef USE_EMULATION
     sysCfg.emulation = (!strlen(webServer->arg("b2").c_str())) ? 0 : atoi(webServer->arg("b2").c_str());
@@ -1177,32 +1071,43 @@ void handleCmnd()
 
   addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Handle cmnd"));
 
-  byte curridx = logidx;
-  if (strlen(webServer->arg(0).c_str())) {
-    snprintf_P(svalue, sizeof(svalue), webServer->arg(0).c_str());
-    do_cmnd(svalue);
+  uint8_t valid = 1;
+  if (sysCfg.web_password[0] != 0) {
+    if (!(!strcmp(webServer->arg("user").c_str(),WEB_USERNAME) && !strcmp(webServer->arg("password").c_str(),sysCfg.web_password))) {
+      valid = 0;
+    }
   }
 
   String message = "";
-  if (logidx != curridx) {
-    byte counter = curridx;
-    do {
-      if (Log[counter].length()) {
-        if (message.length()) message += F("\n");
-        if (sysCfg.mqtt_enabled) {
-          // [14:49:36 MQTT: stat/wemos5/RESULT = {"POWER":"OFF"}] > [RESULT = {"POWER":"OFF"}]
-//          message += Log[counter].substring(17 + strlen(PUB_PREFIX) + strlen(sysCfg.mqtt_topic));
-          message += Log[counter].substring(Log[counter].lastIndexOf("/",Log[counter].indexOf("="))+1);
-        } else {
-          // [14:49:36 RSLT: RESULT = {"POWER":"OFF"}] > [RESULT = {"POWER":"OFF"}]
-          message += Log[counter].substring(Log[counter].indexOf(": ")+2);
+  if (valid) {
+    byte curridx = logidx;
+    if (strlen(webServer->arg("cmnd").c_str())) {
+      snprintf_P(svalue, sizeof(svalue), webServer->arg("cmnd").c_str());
+      do_cmnd(svalue);
+    }
+
+    if (logidx != curridx) {
+      byte counter = curridx;
+      do {
+        if (Log[counter].length()) {
+          if (message.length()) message += F("\n");
+          if (sysCfg.mqtt_enabled) {
+            // [14:49:36 MQTT: stat/wemos5/RESULT = {"POWER":"OFF"}] > [RESULT = {"POWER":"OFF"}]
+//            message += Log[counter].substring(17 + strlen(PUB_PREFIX) + strlen(sysCfg.mqtt_topic));
+            message += Log[counter].substring(Log[counter].lastIndexOf("/",Log[counter].indexOf("="))+1);
+          } else {
+            // [14:49:36 RSLT: RESULT = {"POWER":"OFF"}] > [RESULT = {"POWER":"OFF"}]
+            message += Log[counter].substring(Log[counter].indexOf(": ")+2);
+          }
         }
-      }
-      counter++;
-      if (counter > MAX_LOG_LINES -1) counter = 0;
-    } while (counter != logidx);
+        counter++;
+        if (counter > MAX_LOG_LINES -1) counter = 0;
+      } while (counter != logidx);
+    } else {
+      message = F("Enable weblog 2 if response expected\n");
+    }
   } else {
-    message = F("Enable weblog 2 if response expected\n");
+    message = F("Need user=<username>&password=<password>\n");
   }
 
   webServer->sendHeader("Cache-Control", "no-cache, no-store, must-revalidate");
@@ -1314,17 +1219,11 @@ void handleInfo()
   
   page += F("<tr><th>Emulation</th><td>");
 #ifdef USE_EMULATION
-  if (sysCfg.emulation == EMUL_WEMO) {
-     page += F("Belkin WeMo");
-  }
-  else if (sysCfg.emulation == EMUL_HUE) {
-     page += F("Hue Bridge");
-  }
-  else {
-     page += F("None");
-  }
+  if (sysCfg.emulation == EMUL_WEMO) page += F("Belkin WeMo");
+  else if (sysCfg.emulation == EMUL_HUE) page += F("Hue Bridge");
+  else page += F("None");
 #else
-    page += F("Disabled");
+  page += F("Disabled");
 #endif // USE_EMULATION
   page += F("</td></tr>");
   
@@ -1377,315 +1276,6 @@ void handleRestart()
 
 /********************************************************************************************/
 
-#ifdef USE_EMULATION
-void handleUPnPevent()
-{
-  addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Handle WeMo basic event"));
-
-  String request = webServer->arg(0);
-  if (request.indexOf("State>1</Binary") > 0) do_cmnd_power(1, 1);
-  if (request.indexOf("State>0</Binary") > 0) do_cmnd_power(1, 0);
-  webServer->send(200, "text/plain", "");
-}
-
-void handleUPnPservice()
-{
-  addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Handle WeMo event service"));
-
-  String eventservice_xml = FPSTR(WEMO_EVENTSERVICE_XML);
-  webServer->send(200, "text/plain", eventservice_xml);
-}
-
-void handleUPnPsetupWemo()
-{
-  addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Handle WeMo setup"));
-
-  String setup_xml = FPSTR(WEMO_SETUP_XML);
-  setup_xml.replace("{x1}", sysCfg.friendlyname[0]);
-  setup_xml.replace("{x2}", wemo_UUID());
-  setup_xml.replace("{x3}", wemo_serial());
-  webServer->send(200, "text/xml", setup_xml);
-}
-
-/********************************************************************************************/
-
-String hue_deviceId(uint8_t id)
-{
-  char deviceid[16];
-  
-  snprintf_P(deviceid, sizeof(deviceid), PSTR("5CCF7F%03X-%0d"), ESP.getChipId(), id);
-  return String(deviceid);
-}
-
-void handleUPnPsetupHue()
-{
-  addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Handle Hue Bridge setup"));
-
-  String description_xml = FPSTR(HUE_DESCRIPTION_XML);
-  description_xml.replace("{x1}", WiFi.localIP().toString());
-  description_xml.replace("{x2}", hue_UUID());
-  webServer->send(200, "text/xml", description_xml);
-}
-
-void hue_todo(String *path)
-{
-  char log[LOGSZ];
-  
-  snprintf_P(log, sizeof(log), PSTR("HTTP: HUE API not implemented (%s)"),path->c_str());
-  addLog(LOG_LEVEL_DEBUG_MORE, log);
-}
-
-void hue_config_response(String *response)
-{
-  char buffer[21];
-  
-  *response += FPSTR(HUE_CONFIG_RESPONSE_JSON);
-  response->replace("{mac}", WiFi.macAddress());
-  response->replace("{ip}", WiFi.localIP().toString());
-  response->replace("{mask}", WiFi.subnetMask().toString());
-  response->replace("{gw}", WiFi.gatewayIP().toString());
-  snprintf_P(buffer, sizeof(buffer), PSTR("%04d-%02d-%02dT%02d:%02d:%02d"),
-    rtcTime.Year, rtcTime.Month, rtcTime.Day, rtcTime.Hour, rtcTime.Minute, rtcTime.Second);
-  response->replace("{dt}", buffer);
-}
-
-void hue_global_cfg(String *path)
-{
-  String response;
-
-  path->remove(0,1);               // cut leading / to get <id>
-  response = "{\"lights\":{\"";
-  for (uint8_t i = 1; i <= Maxdevice; i++)
-  {
-    response += i;
-    response += "\":";
-    response += FPSTR(HUE_LIGHT_STATUS_JSON);
-    if (i < Maxdevice) response += ",\"";
-    response.replace("{state}", (power & (0x01 << (i-1))) ? "true" : "false");
-    response.replace("{j1}", sysCfg.friendlyname[i-1]);
-    response.replace("{j2}", hue_deviceId(i));  
-    if (pin[GPIO_WS2812] < 99) {
-#ifdef USE_WS2812
-      ws2812_replaceHSB(&response);
-#endif // USE_WS2812
-    } else
-    {
-      response.replace("{h}", "0");
-      response.replace("{s}", "0");
-      response.replace("{b}", "0");
-    }
-  }
-  response += F("},\"groups\":{},\"schedules\":{},\"config\":");
-
-  hue_config_response(&response);
-  response.replace("{id}", *path);
-  response += "}";
-  webServer->send(200, "application/json", response);
-}
-
-void hue_auth(String *path)
-{
-  char response[38];
-  
-  snprintf_P(response, sizeof(response), PSTR("[{\"success\":{\"username\":\"%03x\"}}]"), ESP.getChipId());
-  webServer->send(200, "application/json", response);
-}
-
-void hue_config(String *path)
-{
-  String response = "";
-
-  path->remove(0,1);               // cut leading / to get <id>
-  hue_config_response(&response);
-  response.replace("{id}", *path);
-  webServer->send(200, "application/json", response);
-}
-
-void hue_lights(String *path)
-{
-/*
- * http://sonoff/api/username/lights/1/state?1={"on":true,"hue":56100,"sat":254,"bri":254,"alert":"none","transitiontime":40}
- */
-  String  response;
-  uint8_t device = 1;
-  uint16_t tmp=0;
-  int16_t pos = 0;
-  float   bri = 0;
-  float   hue = 0;
-  float   sat = 0;
-  bool on = false;
-  bool change = false;
-  char id[4];
-
-  path->remove(0,path->indexOf("/lights"));                // Remove until /lights
-  if (path->endsWith("/lights"))                           // Got /lights
-  {
-    response = "{\"";
-    for (uint8_t i = 1; i <= Maxdevice; i++)
-    {
-      response += i;
-      response += "\":";
-      response += FPSTR(HUE_LIGHT_STATUS_JSON);
-      if (i < Maxdevice) response += ",\"";
-      response.replace("{state}", (power & (0x01 << (i-1))) ? "true" : "false");
-      response.replace("{j1}", sysCfg.friendlyname[i-1]);
-      response.replace("{j2}", hue_deviceId(i));  
-      if (pin[GPIO_WS2812] < 99) {
-#ifdef USE_WS2812
-        ws2812_replaceHSB(&response);
-#endif // USE_WS2812
-      } else
-      {
-        response.replace("{h}", "0");
-        response.replace("{s}", "0");
-        response.replace("{b}", "0");
-      }
-    }
-    response += "}";
-    webServer->send(200, "application/json", response);
-  }
-  else if (path->endsWith("/state"))                         // Got ID/state
-  {
-    path->remove(0,8);                                       // Remove /lights/
-    path->remove(path->indexOf("/state"));                   // Remove /state
-    device = atoi(path->c_str());
-    if ((device < 1) || (device > Maxdevice)) device = 1;
-    response = "[";
-    response += FPSTR(HUE_LIGHT_RESPONSE_JSON);
-    response.replace("{api}", "/lights");
-    response.replace("{id}", String(device));
-    response.replace("{cmd}", "state/on");
-    if (webServer->args() == 1) 
-    {
-      StaticJsonBuffer<400> jsonBuffer;
-      JsonObject &hue_json = jsonBuffer.parseObject(webServer->arg(0));
-      if (hue_json.containsKey("on")) {
-        on = hue_json["on"];
-        switch(on)
-        {
-          case false : do_cmnd_power(device, 0);
-                       response.replace("{res}", "false");
-                       break;
-          case true  : do_cmnd_power(device, 1);
-                       response.replace("{res}", "true");
-                       break;
-          default    : response.replace("{res}", (power & (0x01 << (device-1))) ? "true" : "false");
-                       break;
-        }
-      }
-#ifdef USE_WS2812
-      ws2812_getHSB(&hue,&sat,&bri);
-			if (hue_json.containsKey("bri"))
-			{
-        tmp = hue_json["bri"];
-        bri = (float)tmp/254.0f;
-        response += ",";
-        response += FPSTR(HUE_LIGHT_RESPONSE_JSON);
-        response.replace("{api}", "/lights");
-        response.replace("{id}", String(device));
-        response.replace("{cmd}", "state/bri");
-        response.replace("{res}", String(tmp));
-        change = true;
-			}
-      if (hue_json.containsKey("hue")) 
-      {
-        tmp = hue_json["hue"];
-        hue = (float)tmp/65535.0f;
-        response += ",";
-        response += FPSTR(HUE_LIGHT_RESPONSE_JSON);
-        response.replace("{api}", "/lights");
-        response.replace("{id}", String(device));
-        response.replace("{cmd}", "state/hue");
-        response.replace("{res}", String(tmp));
-        change = true;
-      }
-      if (hue_json.containsKey("sat")) 
-      {
-        tmp = hue_json["sat"];
-        sat = (float)tmp/254.0f;
-        response += ",";
-        response += FPSTR(HUE_LIGHT_RESPONSE_JSON);
-        response.replace("{api}", "/lights");
-        response.replace("{id}", String(device));
-        response.replace("{cmd}", "state/sat");
-        response.replace("{res}", String(tmp));
-        change = true;
-      }
-      if (change && (pin[GPIO_WS2812] < 99))
-      {
-          ws2812_setHSB(hue,sat,bri);
-          change=false;
-      }
-#endif // USE_WS2812
-      response += "]";
-      webServer->send(200, "application/json", response);
-    }   
-    else 
-    {
-      response=FPSTR(HUE_ERROR_JSON);
-      webServer->send(200, "application/json", response);
-    }
-  }
-  else if(path->indexOf("/lights/") >= 0) {            // Got /lights/ID
-    path->remove(0,8);                                 // Remove /lights/
-    device = atoi(path->c_str());
-    if ((device < 1) || (device > Maxdevice)) device = 1;
-    response = FPSTR(HUE_LIGHT_STATUS_JSON);
-    response.replace("{state}", (power & (0x01 << (device -1))) ? "true" : "false");
-    response.replace("{j1}", sysCfg.friendlyname[device -1]);
-    response.replace("{j2}", hue_deviceId(device));
-    if (pin[GPIO_WS2812] < 99) {
-#ifdef USE_WS2812
-      ws2812_replaceHSB(&response);
-#endif // USE_WS2812
-    } else  
-    {
-      response.replace("{h}", "0");
-      response.replace("{s}", "0");
-      response.replace("{b}", "0");
-    }
-    webServer->send(200, "application/json", response);
-  }
-  else
-  {
-    response=FPSTR(HUE_ERROR_JSON);
-    webServer->send(200, "application/json", response);
-  }
-}
-
-void handle_hue_api(String *path)
-{
-  /* HUE API uses /api/<userid>/<command> syntax. The userid is created by the echo device and
-   * on original HUE the pressed button allows for creation of this user. We simply ignore the
-   * user part and allow every caller as with Web or WeMo. 
-   *
-   * (c) Heiko Krupp, 2017
-   */
-   
-  char log[LOGSZ];
-  uint8_t args = 0;
-
-  path->remove(0, 4);                                // remove /api      
-  snprintf_P(log, sizeof(log), PSTR("HTTP: Handle Hue API (%s)"), path->c_str());
-  addLog(LOG_LEVEL_DEBUG_MORE, log);
-  for (args = 0; args < webServer->args(); args++) {
-    String json = webServer->arg(args);
-    snprintf_P(log, sizeof(log), PSTR("HTTP: Hue POST args (%s)"), json.c_str());
-    addLog(LOG_LEVEL_DEBUG_MORE, log);
-  }
-  
-  if (path->endsWith("/invalid/")) {}                 // Just ignore
-  else if (path->endsWith("/")) hue_auth(path);       // New HUE App setup
-  else if (path->endsWith("/config")) hue_config(path);
-  else if (path->indexOf("/lights") >= 0) hue_lights(path);
-  else if (path->endsWith("/groups")) hue_todo(path);
-  else if (path->endsWith("/schedules")) hue_todo(path); 
-  else if (path->endsWith("/sensors")) hue_todo(path);
-  else if (path->endsWith("/scenes")) hue_todo(path);
-  else if (path->endsWith("/rules")) hue_todo(path);
-  else hue_global_cfg(path);
-}
-#endif  // USE_EMULATION
 
 /********************************************************************************************/
 

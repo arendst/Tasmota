@@ -10,7 +10,7 @@
  * ====================================================
 */
 
-#define VERSION                0x03091300   // 3.9.19
+#define VERSION                0x03091400   // 3.9.20
 
 //#define BE_MINIMAL                          // Compile a minimal version if upgrade memory gets tight (still 404k)
                                             // To be used as step 1. Next step is compile and use desired version
@@ -908,6 +908,16 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
       } else {
         snprintf_P(svalue, sizeof(svalue), PSTR("{\"Webserver\":\"%s\"}"), MQTT_STATUS_OFF);
       }
+    }
+    else if (!strcmp(type,"WEBPASSWORD")) {
+      if ((data_len > 0) && (data_len < sizeof(sysCfg.web_password))) {
+        if (payload == 0) {
+          sysCfg.web_password[0] = 0;  // No password
+        } else {
+          strlcpy(sysCfg.web_password, (payload == 1) ? WEB_PASSWORD : dataBuf, sizeof(sysCfg.web_password));
+        }
+      }
+      snprintf_P(svalue, sizeof(svalue), PSTR("{\"WebPassword\":\"%s\"}"), sysCfg.web_password);
     }
     else if (!strcmp(type,"WEBLOG")) {
       if ((data_len > 0) && (payload >= LOG_LEVEL_NONE) && (payload <= LOG_LEVEL_ALL)) {

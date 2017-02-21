@@ -1,0 +1,12 @@
+{
+  "name": "IRremoteESP8266",
+  "keywords": "infrared, ir, remote",
+  "description": "Send and receive infrared signals with multiple protocols",
+  "repository":
+  {
+    "type": "git",
+    "url": "https://github.com/sebastienwarin/IRremoteESP8266.git"
+  },
+  "frameworks": "arduino",
+  "platforms": "esp8266"
+}
