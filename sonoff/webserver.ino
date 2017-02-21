@@ -299,6 +299,7 @@ const char HUE_LIGHT_STATUS_JSON[] PROGMEM =
       "\"effect\":\"none\","
       "\"ct\":0,"
       "\"alert\":\"none\","
+      "\"colormode\":\"hs\","
       "\"reachable\":true"
   "},"
   "\"type\":\"Dimmable light\","
@@ -330,8 +331,8 @@ const char HUE_CONFIG_RESPONSE_JSON[] PROGMEM =
    "\"linkbutton\":false,"
    "\"portalservices\":false"
   "}";
-const char HUE_NO_AUTH_JSON[] PROGMEM =
-  "[{\"error\":{\"type\":101,\"address\":\"/\",\"description\":\"link button not pressed\"}}]";
+const char HUE_ERROR_JSON[] PROGMEM =
+  "[{\"error\":{\"type\":901,\"address\":\"/\",\"description\":\"Internal Error\"}}]";
 #endif  // USE_EMULATION
 
 #define DNS_PORT 53
@@ -1505,11 +1506,15 @@ void hue_lights(String *path)
 /*
  * http://sonoff/api/username/lights/1/state?1={"on":true,"hue":56100,"sat":254,"bri":254,"alert":"none","transitiontime":40}
  */
-  String response;
+  String  response;
   uint8_t device = 1;
+  uint16_t tmp=0;
   int16_t pos = 0;
-  uint8_t bri = 0;
+  float   bri = 0;
+  float   hue = 0;
+  float   sat = 0;
   bool on = false;
+  bool change = false;
   char id[4];
 
   path->remove(0,path->indexOf("/lights"));                // Remove until /lights
@@ -1554,34 +1559,72 @@ void hue_lights(String *path)
     {
       StaticJsonBuffer<400> jsonBuffer;
       JsonObject &hue_json = jsonBuffer.parseObject(webServer->arg(0));
-      on = hue_json["on"];
-      switch(on)
-      {
-        case false : do_cmnd_power(device, 0);
-                     response.replace("{res}", "false");
-                     break;
-        case true  : do_cmnd_power(device, 1);
-                     response.replace("{res}", "true");
-                     break;
-        default    : response.replace("{res}", (power & (0x01 << (device-1))) ? "true" : "false");
-                     break;
+      if (hue_json.containsKey("on")) {
+        on = hue_json["on"];
+        switch(on)
+        {
+          case false : do_cmnd_power(device, 0);
+                       response.replace("{res}", "false");
+                       break;
+          case true  : do_cmnd_power(device, 1);
+                       response.replace("{res}", "true");
+                       break;
+          default    : response.replace("{res}", (power & (0x01 << (device-1))) ? "true" : "false");
+                       break;
+        }
       }
 #ifdef USE_WS2812
-      bri = hue_json["bri"];
-      if (pin[GPIO_WS2812] < 99) {
-        ws2812_changeBrightness(bri);
+      ws2812_getHSB(&hue,&sat,&bri);
+			if (hue_json.containsKey("bri"))
+			{
+        tmp = hue_json["bri"];
+        bri = (float)tmp/254.0f;
         response += ",";
         response += FPSTR(HUE_LIGHT_RESPONSE_JSON);
         response.replace("{api}", "/lights");
         response.replace("{id}", String(device));
         response.replace("{cmd}", "state/bri");
-        response.replace("{res}", String(bri));
+        response.replace("{res}", String(tmp));
+        change = true;
+			}
+      if (hue_json.containsKey("hue")) 
+      {
+        tmp = hue_json["hue"];
+        hue = (float)tmp/65535.0f;
+        response += ",";
+        response += FPSTR(HUE_LIGHT_RESPONSE_JSON);
+        response.replace("{api}", "/lights");
+        response.replace("{id}", String(device));
+        response.replace("{cmd}", "state/hue");
+        response.replace("{res}", String(tmp));
+        change = true;
+      }
+      if (hue_json.containsKey("sat")) 
+      {
+        tmp = hue_json["sat"];
+        sat = (float)tmp/254.0f;
+        response += ",";
+        response += FPSTR(HUE_LIGHT_RESPONSE_JSON);
+        response.replace("{api}", "/lights");
+        response.replace("{id}", String(device));
+        response.replace("{cmd}", "state/sat");
+        response.replace("{res}", String(tmp));
+        change = true;
+      }
+      if (change && (pin[GPIO_WS2812] < 99))
+      {
+          ws2812_setHSB(hue,sat,bri);
+          change=false;
       }
 #endif // USE_WS2812
       response += "]";
       webServer->send(200, "application/json", response);
     }   
-    else webServer->send(406, "application/json", "{}");
+    else 
+    {
+      response=FPSTR(HUE_ERROR_JSON);
+      webServer->send(200, "application/json", response);
+    }
   }
   else if(path->indexOf("/lights/") >= 0) {            // Got /lights/ID
     path->remove(0,8);                                 // Remove /lights/
@@ -1603,7 +1646,11 @@ void hue_lights(String *path)
     }
     webServer->send(200, "application/json", response);
   }
-  else webServer->send(406, "application/json", "{}");
+  else
+  {
+    response=FPSTR(HUE_ERROR_JSON);
+    webServer->send(200, "application/json", response);
+  }
 }
 
 void handle_hue_api(String *path)
@@ -1637,13 +1684,6 @@ void handle_hue_api(String *path)
   else if (path->endsWith("/scenes")) hue_todo(path);
   else if (path->endsWith("/rules")) hue_todo(path);
   else hue_global_cfg(path);
-/*
-  {
-    snprintf_P(log, sizeof(log), PSTR("HTTP: Handle Hue API (%s)"),path->c_str());
-    addLog(LOG_LEVEL_DEBUG_MORE, log);
-    webServer->send(406, "application/json", "{}");
-  }
-*/
 }
 #endif  // USE_EMULATION
 
