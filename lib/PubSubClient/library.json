@@ -1,0 +1,17 @@
+{
+    "name": "PubSubClient",
+    "keywords": "ethernet, mqtt, m2m, iot",
+    "description": "A client library for MQTT messaging. MQTT is a lightweight messaging protocol ideal for small devices. This library allows you to send and receive MQTT messages. It supports the latest MQTT 3.1.1 protocol and can be configured to use the older MQTT 3.1 if needed. It supports all Arduino Ethernet Client compatible hardware, including the Intel Galileo/Edison, ESP8266 and TI CC3000.",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/knolleary/pubsubclient.git"
+    },
+    "version": "2.6",
+    "exclude": "tests",
+    "examples": "examples/*/*.ino",
+    "frameworks": "arduino",
+    "platforms": [
+        "atmelavr",
+        "espressif"
+    ]
+}
