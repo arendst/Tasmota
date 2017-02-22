@@ -206,7 +206,7 @@ void pollUDP()
       String request = packetBuffer;
 //      addLog_P(LOG_LEVEL_DEBUG_MORE, packetBuffer);
       if (request.indexOf("M-SEARCH") >= 0) {
-        if ((sysCfg.emulation == EMUL_WEMO) &&(request.indexOf("urn:Belkin:device:**") > 0)) {
+        if ((sysCfg.emulation == EMUL_WEMO) &&((request.indexOf("urn:Belkin:device:**") > 0)|| (request.indexOf("ST: ssdp:all") > 0))) {
           wemo_respondToMSearch();
         }
         else if ((sysCfg.emulation == EMUL_HUE) && ((request.indexOf("ST: urn:schemas-upnp-org:device:basic:1") > 0) || (request.indexOf("ST: upnp:rootdevice") > 0) || (request.indexOf("ST: ssdp:all") > 0))) {
