@@ -367,7 +367,7 @@ void CFG_DefaultSet2()
   sysCfg.poweronstate = APP_POWERON_STATE;
   sysCfg.pulsetime = APP_PULSETIME;
   sysCfg.ledstate = APP_LEDSTATE;
-  sysCfg.switchmode = SWITCH_MODE;
+//  sysCfg.switchmode = SWITCH_MODE;
   sysCfg.blinktime = APP_BLINKTIME;
   sysCfg.blinkcount = APP_BLINKCOUNT;
   sysCfg.sleep = APP_SLEEP;
@@ -376,6 +376,7 @@ void CFG_DefaultSet2()
   strlcpy(sysCfg.domoticz_out_topic, DOMOTICZ_OUT_TOPIC, sizeof(sysCfg.domoticz_out_topic));
   sysCfg.domoticz_update_timer = DOMOTICZ_UPDATE_TIMER;
   for (byte i = 0; i < 4; i++) {
+    sysCfg.switchmode[i] = SWITCH_MODE;
     sysCfg.domoticz_relay_idx[i] = 0;
     sysCfg.domoticz_key_idx[i] = 0;
     sysCfg.domoticz_switch_idx[i] = 0;
@@ -545,7 +546,7 @@ void CFG_Migrate_Part2()
     sysCfg.hlw_kWhdoy = sysCfg2.hlw_kWhdoy;
   }
   if (sysCfg2.version >= 0x02001200) {  // 2.0.18
-    sysCfg.switchmode = sysCfg2.switchmode;
+    sysCfg.switchmode[0] = sysCfg2.switchmode;
   }
   if (sysCfg2.version >= 0x02010000) {  // 2.1.0
     strlcpy(sysCfg.mqtt_fingerprint, sysCfg2.mqtt_fingerprint, sizeof(sysCfg.mqtt_fingerprint));
@@ -628,6 +629,9 @@ void CFG_Delta()
     }
     if (sysCfg.version < 0x03091301) {
       strlcpy(sysCfg.web_password, WEB_PASSWORD, sizeof(sysCfg.web_password));
+    }
+    if (sysCfg.version < 0x03091500) {
+      for (byte i = 0; i < 4; i++) sysCfg.switchmode[i] = sysCfg.ex_switchmode;
     }
 
     sysCfg.version = VERSION;

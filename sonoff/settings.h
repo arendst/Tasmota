@@ -114,7 +114,7 @@ struct SYSCFG {
 
   uint8_t       power;
   uint8_t       ledstate;
-  uint8_t       switchmode;
+  uint8_t       ex_switchmode;  // Not used since 3.9.21
 
   char          domoticz_in_topic[33];
   char          domoticz_out_topic[33];
@@ -185,5 +185,7 @@ struct SYSCFG {
   uint8_t       emulation;
 
   char          web_password[33];
+  uint8_t       switchmode[4];
+
 } sysCfg;
 

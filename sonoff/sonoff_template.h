@@ -14,6 +14,9 @@ enum upins_t {
   GPIO_WS2812,         // WS2812 Led string
   GPIO_IRSEND,         // IR remote
   GPIO_SWT1,           // User connected external switches
+  GPIO_SWT2,
+  GPIO_SWT3,
+  GPIO_SWT4,
   GPIO_SENSOR_END };
 
 // Text in webpage Module Parameters and commands GPIOS and GPIO
@@ -27,14 +30,14 @@ const char sensors[GPIO_SENSOR_END][9] PROGMEM = {
   "I2C SDA",
   "WS2812",
   "IRremote",
-  "Switch" };
-
+  "Switch1",
+  "Switch2",
+  "Switch3",
+  "Switch4" };
+  
 // Programmer selectable GPIO functionality offset by user selectable GPIOs
 enum fpins_t {
-  GPIO_SWT2 = GPIO_SENSOR_END,
-  GPIO_SWT3,
-  GPIO_SWT4,
-  GPIO_KEY1,           // Button usually connected to GPIO0
+  GPIO_KEY1 = GPIO_SENSOR_END,  // Button usually connected to GPIO0
   GPIO_KEY2,
   GPIO_KEY3,
   GPIO_KEY4,
@@ -107,14 +110,22 @@ typedef struct MYTMPLT {
 const mytmplt modules[MAXMODULE] PROGMEM = {
   { "Sonoff Basic",    // Sonoff Basic
      GPIO_KEY1,        // GPIO00 Button
-     0, 0,
+     0,                // GPIO01 Serial RXD
+     0,                // GPIO02 
      GPIO_USER,        // GPIO03 Serial TXD and Optional sensor
      GPIO_USER,        // GPIO04 Optional sensor
-     0, 0, 0, 0, 0, 0, 0,
+     0,                // GPIO05
+     0,                // GPIO06 (SD_CLK   Flash)
+     0,                // GPIO07 (SD_DATA0 Flash QIO/DIO/DOUT)
+     0,                // GPIO08 (SD_DATA1 Flash QIO/DIO)
+     0,                // GPIO09 (SD_DATA2 Flash QIO)
+     0,                // GPIO10 (SD_DATA3 Flash QIO)
+     0,                // GPIO11 (SD_CMD   Flash)
      GPIO_REL1,        // GPIO12 Red Led and Relay (0 = Off, 1 = On)
      GPIO_LED1_INV,    // GPIO13 Green Led (0 = On, 1 = Off)
      GPIO_USER,        // GPIO14 Optional sensor
-     0, 0
+     0,                // GPIO15
+     0                 // GPIO16
   },
   { "Sonoff RF",       // Sonoff RF
      GPIO_KEY1,        // GPIO00 Button
