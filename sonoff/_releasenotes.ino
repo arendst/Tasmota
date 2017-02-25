@@ -1,4 +1,9 @@
-/* 3.9.20 20170221
+/* 3.9.21 20170224
+ * Add ajax to web root page and web console (#79)
+ * Add commands SwitchMode1..4 and enable user switches 2, 3 and 4 (#84, #88)
+ * Fix MQTT upgrade when webserver is active
+ *
+ * 3.9.20 20170221
  * Add minimal basic authentication to Web Admin mode (#87)
  * Fix Hue and add HSB support (#89)
  * 

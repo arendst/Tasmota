@@ -53,33 +53,57 @@ const char HTTP_HEAD[] PROGMEM =
     "document.getElementById('s1').value=l.innerText||l.textContent;"
     "document.getElementById('p1').focus();"
   "}"
-  "var sn=0;"
+  "var x=null;"                  // Allow for abortion
+  "var lt;"                      // Enable clearTimeout
+  "function la(p){"
+    "var a='';"
+    "if(la.arguments.length==1){"
+      "a='?o='+p;"
+      "clearTimeout(lt);"
+    "}"
+    "if(x!=null){x.abort();}"    // Abort if no response within 2 seconds (happens on restart 1)
+    "x=new XMLHttpRequest();"
+    "x.onreadystatechange=function(){"
+      "if(x.readyState==4&&x.status==200){"
+        "document.getElementById('l1').innerHTML=x.responseText;"
+      "}"
+    "};"
+    "x.open('GET','ay'+a,true);"
+    "x.send();"
+    "lt=setTimeout(la,2000);"
+  "}"
+  "var sn=0;"                    // Scroll position
+  "var id=99;"                   // Get most of weblog initially
   "function l(){"
     "var e=document.getElementById('t1');"
-    "if(e.scrollTop>=sn){"
-      "var x=new XMLHttpRequest();"
+    "if(e.scrollTop>=sn){"       // User scrolled back so no updates
+      "if(x!=null){x.abort();}"  // Abort if no response within 2 seconds (happens on restart 1)
+      "x=new XMLHttpRequest();"
       "x.onreadystatechange=function(){"
         "if(x.readyState==4&&x.status==200){"
-          "var s1=x.responseText;"
-          "if(e.value.length==0){"
-            "e.value=s1;"
-          "}else{"
-            "var s2=e.value.slice(e.value.lastIndexOf(\"\\n\")+2);"
-            "var p2=s1.search(s2);"
-            "if(p2>-1){"
-              "e.value=e.value.replace(s2,s1.slice(p2));"
-            "}else{"
-              "e.value=e.value+\"\\n\"+s1;"
-            "}"
-          "}"
+          "var z,d;"
+          "d=x.responseXML;"
+          "id=d.getElementsByTagName('i')[0].childNodes[0].nodeValue;"
+          "if(d.getElementsByTagName('j')[0].childNodes[0].nodeValue==0){e.value=\"\";}"
+          "z=d.getElementsByTagName('l')[0].childNodes;"
+          "if(z.length>0){e.value+=z[0].nodeValue;}"
           "e.scrollTop=99999;"
           "sn=e.scrollTop;"
         "}"
       "};"
-      "x.open('GET','ax',true);"
+      "x.open('GET','ax?c2='+id,true);"
       "x.send();"
     "}"
     "setTimeout(l,2000);"
+  "}"
+  "function lc(){"
+    "var e=document.getElementById('c1');"
+//    "if(x!=null){x.abort();}"    // Abort if no response within 2 seconds (happens on restart 1)
+    "var x=new XMLHttpRequest();"
+    "x.open('GET','ax?c1='+e.value+'&c2='+id,true);"
+    "x.send();"
+    "e.value=\"\";"
+    "return false;"
   "}"
   "</script>"
   "<style>"
@@ -210,7 +234,7 @@ const char HTTP_FORM_UPG[] PROGMEM =
   "<div id='f2' name='f2' style='display:none;text-align:center;'><b>Upload started ...</b></div>";
 const char HTTP_FORM_CMND[] PROGMEM =
   "<br/><textarea readonly id='t1' name='t1' cols='99' wrap='off'></textarea><br/><br/>"
-  "<form method='post' action='cs'>"
+  "<form method='get' onsubmit='return lc();'>"
   "<input style='width:98%' id='c1' name='c1' length='99' placeholder='Enter command' autofocus><br/>"
 //  "<br/><button type='submit'>Send command</button>"
   "</form>";
@@ -261,6 +285,7 @@ void startWebserver(int type, IPAddress ipweb)
       webServer->on("/cm", handleCmnd);
       webServer->on("/cs", handleConsole);
       webServer->on("/ax", handleAjax);
+      webServer->on("/ay", handleAjax2);
       webServer->on("/in", handleInfo);
       webServer->on("/rb", handleRestart);
       webServer->on("/fwlink", handleRoot);  // Microsoft captive portal. Maybe not needed. Might be handled by notFound handler.
@@ -276,6 +301,7 @@ void startWebserver(int type, IPAddress ipweb)
 #endif  // USE_EMULATION
       webServer->onNotFound(handleNotFound);
     }
+    logajaxflg = 0;
     webServer->begin(); // Web server start
   }
   if (_httpflag != type) {
@@ -356,73 +382,81 @@ void handleRoot()
   if (_httpflag == HTTP_MANAGER) {
     handleWifi0();
   } else {
-
     String page = FPSTR(HTTP_HEAD);
-//    page.replace("<meta", "<meta http-equiv=\"refresh\" content=\"4; URL=/\"><meta");                    // Fails Edge (asks for reload)
-//    page.replace("</script>", "setTimeout(function(){window.location.reload(1);},4000);</script>");     // Repeats POST on All
-    page.replace("</script>", "setTimeout(function(){window.location.replace(\"/\");},4000);</script>");  // OK on All
     page.replace("{v}", "Main menu");
+    page.replace("<body>", "<body onload='la()'>");
 
+    page += F("<div id='l1' name='l1'></div>");
     if (Maxdevice) {
-      if (strlen(webServer->arg("o").c_str())) {
-        do_cmnd_power(atoi(webServer->arg("o").c_str()), 2);
-      }
-
       page += F("<table style='width:100%'><tr>");
       for (byte idx = 1; idx <= Maxdevice; idx++) {
         page += F("<td style='width:");
         page += String(100 / Maxdevice);
-        page += F("%'><form action='/?o=");
+        page += F("%'><button onclick='la(");
         page += String(idx);
-        page += F("' method='post'><div style='text-align:center;font-weight:bold;font-size:");
-        page += String(70 - (Maxdevice * 8));
-        page += F("px'>");
-        page += (power & (0x01 << (idx -1))) ? "ON" : "OFF";
-        page += F("</div><br/><button>Toggle");
+        page += F(");'>Toggle");
         if (Maxdevice > 1) {
           page += F(" ");
           page += String(idx);
         }
-        page += F("</button></form></td>");
+        page += F("</button></td>");
       }
-      page += F("</tr></table><br/>");
+      page += F("</tr></table>");
     }
-
-    String tpage = "";
-    if (hlw_flg) tpage += hlw_webPresent();
-#ifdef USE_DS18B20
-    if (pin[GPIO_DSB] < 99) tpage += dsb_webPresent();
-#endif  // USE_DS18B20
-#ifdef USE_DS18x20
-    if (pin[GPIO_DSB] < 99) tpage += ds18x20_webPresent();
-#endif  // USE_DS18x20
-#ifdef USE_DHT
-    if (dht_type) tpage += dht_webPresent();
-#endif  // USE_DHT
-#ifdef USE_I2C
-    if (i2c_flg) {
-      tpage += htu_webPresent();
-      tpage += bmp_webPresent();
-      tpage += bh1750_webPresent();
-    }
-#endif  // USE_I2C    
-    if (tpage.length() > 0) {
-      page += F("<table style='width:100%'>");
-      page += tpage;
-      page += F("</table><br/>");
-    }
-
+    
     if (_httpflag == HTTP_ADMIN) {
       page += FPSTR(HTTP_BTN_MENU1);
       page += FPSTR(HTTP_BTN_RSTRT);
     }
     showPage(page);
+  }
+}
 
+void handleAjax2()
+{
+  if (strlen(webServer->arg("o").c_str())) do_cmnd_power(atoi(webServer->arg("o").c_str()), 2);
+  String tpage = "";
+  if (hlw_flg) tpage += hlw_webPresent();
+#ifdef USE_DS18B20
+  if (pin[GPIO_DSB] < 99) tpage += dsb_webPresent();
+#endif  // USE_DS18B20
 #ifdef USE_DS18x20
+  if (pin[GPIO_DSB] < 99) {
+    tpage += ds18x20_webPresent();
     ds18x20_search();      // Check for changes in sensors number
     ds18x20_convert();     // Start Conversion, takes up to one second
-#endif  // USE_DS18x20
   }
+#endif  // USE_DS18x20
+#ifdef USE_DHT
+  if (dht_type) tpage += dht_webPresent();
+#endif  // USE_DHT
+#ifdef USE_I2C
+  if (i2c_flg) {
+    tpage += htu_webPresent();
+    tpage += bmp_webPresent();
+    tpage += bh1750_webPresent();
+  }
+#endif  // USE_I2C    
+  String page = "";
+  if (tpage.length() > 0) {
+    page += F("<table style='width:100%'>");
+    page += tpage;
+    page += F("</table>");
+  }
+  if (Maxdevice) {
+    page += F("<table style='width:100%'><tr>");
+    for (byte idx = 1; idx <= Maxdevice; idx++) {
+      page += F("<td style='width:{1%'><div style='text-align:center;font-weight:bold;font-size:{2px'>{3</div></td>");
+      page.replace("{1", String(100 / Maxdevice));
+      page.replace("{2", String(70 - (Maxdevice * 8)));
+      page.replace("{3", (power & (0x01 << (idx -1))) ? "ON" : "OFF");
+    }
+    page += F("</tr></table>");
+  }
+  webServer->sendHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+  webServer->sendHeader("Pragma", "no-cache");
+  webServer->sendHeader("Expires", "-1");
+  webServer->send(200, "text/plain", page);
 }
 
 boolean httpUser()
@@ -1119,14 +1153,8 @@ void handleCmnd()
 void handleConsole()
 {
   if (httpUser()) return;
-  char svalue[MESSZ];
 
   addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Handle console"));
-
-  if (strlen(webServer->arg("c1").c_str())) {
-    snprintf_P(svalue, sizeof(svalue), webServer->arg("c1").c_str());
-    do_cmnd(svalue);
-  }
 
   String page = FPSTR(HTTP_HEAD);
   page.replace("{v}", "Console");
@@ -1139,29 +1167,44 @@ void handleConsole()
 void handleAjax()
 {
   if (httpUser()) return;
-  String message = "";
-  uint16_t size = 0;
+  char svalue[MESSZ], log[LOGSZ];
+  byte counter = 99;
 
-  int maxSize = ESP.getFreeHeap() - 6000;
+  if (strlen(webServer->arg("c1").c_str())) {
+    snprintf_P(svalue, sizeof(svalue), webServer->arg("c1").c_str());
+    snprintf_P(log, sizeof(log), PSTR("CMND: %s"), svalue);
+    addLog(LOG_LEVEL_INFO, log);
+    do_cmnd(svalue);
+  }
+  
+  if (strlen(webServer->arg("c2").c_str())) counter = atoi(webServer->arg("c2").c_str());
 
-  byte counter = logidx;
-  do {
-    counter--;
-    if (counter == 255) counter = MAX_LOG_LINES -1;
-    size += Log[counter].length();
-  } while ((counter != logidx) && (size < maxSize));
-  do {
-    if (Log[counter].length()) {
-      if (message.length()) message += F("\n");
-      message += Log[counter];
-    }
-    counter++;
-    if (counter > MAX_LOG_LINES -1) counter = 0;
-  } while (counter != logidx);
+  String message = F("<r><i>");
+  message += String(logidx);
+  message += F("</i><j>");
+  message += String(logajaxflg);
+  if (!logajaxflg) {
+    counter = 99;
+    logajaxflg = 1;
+  }
+  message += F("</j><l>");
+  if (counter != logidx) {
+    if (counter == 99) counter = logidx;
+    do {
+      if (Log[counter].length()) {
+        message += F("\n");
+        message += Log[counter];
+      }
+      counter++;
+      if (counter > MAX_LOG_LINES -1) counter = 0;
+    } while (counter != logidx);
+  }
+  message += F("</l></r>");
+ 
   webServer->sendHeader("Cache-Control", "no-cache, no-store, must-revalidate");
   webServer->sendHeader("Pragma", "no-cache");
   webServer->sendHeader("Expires", "-1");
-  webServer->send(200, "text/plain", message);
+  webServer->send(200, "text/xml", message);
 }
 
 void handleInfo()
@@ -1273,9 +1316,6 @@ void handleRestart()
 
   restartflag = 2;
 }
-
-/********************************************************************************************/
-
 
 /********************************************************************************************/
 

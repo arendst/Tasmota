@@ -10,7 +10,7 @@
  * ====================================================
 */
 
-#define VERSION                0x03091400   // 3.9.20
+#define VERSION                0x03091500   // 3.9.21
 
 //#define BE_MINIMAL                          // Compile a minimal version if upgrade memory gets tight (still 404k)
                                             // To be used as step 1. Next step is compile and use desired version
@@ -118,7 +118,7 @@ enum emul_t  {EMUL_NONE, EMUL_WEMO, EMUL_HUE, EMUL_MAX};
 #define STATES                 10           // loops per second
 #define SYSLOG_TIMER           600          // Seconds to restore syslog_level
 #define SERIALLOG_TIMER        600          // Seconds to disable SerialLog
-#define OTA_ATTEMPTS           5            // Number of times to try fetching the new firmware
+#define OTA_ATTEMPTS           10           // Number of times to try fetching the new firmware
 
 #define INPUT_BUFFER_SIZE      100          // Max number of characters in serial buffer
 #define TOPSZ                  60           // Max number of characters in topic string
@@ -213,12 +213,14 @@ int state = 0;                        // State per second flag
 int mqttflag = 2;                     // MQTT connection messages flag
 int otaflag = 0;                      // OTA state flag
 int otaok = 0;                        // OTA result
+byte otaretry = OTA_ATTEMPTS;         // OTA retry counter
 int restartflag = 0;                  // Sonoff restart flag
 int wificheckflag = WIFI_RESTART;     // Wifi state flag
 int uptime = 0;                       // Current uptime in hours
 int tele_period = 0;                  // Tele period timer
 String Log[MAX_LOG_LINES];            // Web log buffer
 byte logidx = 0;                      // Index in Web log buffer
+byte logajaxflg = 0;                  // Reset web console log
 byte Maxdevice = MAX_DEVICE;          // Max number of devices supported
 int status_update_timer = 0;          // Refresh initial status
 uint16_t pulse_timer = 0;             // Power off timer
@@ -891,11 +893,11 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
       }
       snprintf_P(svalue, sizeof(svalue), PSTR("{\"FriendlyName%d\":\"%s\"}"), index, sysCfg.friendlyname[index -1]);
     }
-    else if (swt_flg && !strcmp(type,"SWITCHMODE")) {
+    else if (swt_flg && !strcmp(type,"SWITCHMODE") && (index > 0) && (index <= 4)) {
       if ((data_len > 0) && (payload >= 0) && (payload < MAX_SWITCH_OPTION)) {
-        sysCfg.switchmode = payload;
+        sysCfg.switchmode[index -1] = payload;
       }
-      snprintf_P(svalue, sizeof(svalue), PSTR("{\"SwitchMode\":%d}"), sysCfg.switchmode);
+      snprintf_P(svalue, sizeof(svalue), PSTR("{\"SwitchMode%d\":%d}"), index, sysCfg.switchmode[index-1]);
     }
 #ifdef USE_WEBSERVER
     else if (!strcmp(type,"WEBSERVER")) {
@@ -1184,7 +1186,7 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
 
     snprintf_P(svalue, sizeof(svalue), PSTR("{\"Commands3\":\"%s%s, PulseTime, BlinkTime, BlinkCount"), (Maxdevice == 1) ? "Power, Light" : "Power1, Power2, Light1 Light2", (sysCfg.module != MOTOR) ? ", PowerOnState" : "");
 #ifdef USE_WEBSERVER
-    snprintf_P(svalue, sizeof(svalue), PSTR("%s, Weblog, Webserver, Emulation"), svalue);
+    snprintf_P(svalue, sizeof(svalue), PSTR("%s, Weblog, Webserver, WebPassword, Emulation"), svalue);
 #endif
     if (swt_flg) snprintf_P(svalue, sizeof(svalue), PSTR("%s, SwitchMode"), svalue);
 #ifdef USE_I2C
@@ -1223,10 +1225,10 @@ void send_button_power(byte key, byte device, byte state)
 
   char stopic[TOPSZ], svalue[TOPSZ], stemp1[10];
 
-  if (device > Maxdevice) device = 1;
+  if (!key && (device > Maxdevice)) device = 1;
   snprintf_P(stemp1, sizeof(stemp1), PSTR("%d"), device);
   snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/%s%s"),
-    SUB_PREFIX, (key) ? sysCfg.switch_topic : sysCfg.button_topic, sysCfg.mqtt_subtopic, (Maxdevice > 1) ? stemp1 : "");
+    SUB_PREFIX, (key) ? sysCfg.switch_topic : sysCfg.button_topic, sysCfg.mqtt_subtopic, (key || (Maxdevice > 1)) ? stemp1 : "");
   
   if (state == 3) {
     svalue[0] = '\0';
@@ -1676,11 +1678,12 @@ void stateloop()
     lastbutton[i] = button;
   }
 
-  for (byte i = 0; i < Maxdevice; i++) if (pin[GPIO_SWT1 +i] < 99) {
+//  for (byte i = 0; i < Maxdevice; i++) if (pin[GPIO_SWT1 +i] < 99) {
+  for (byte i = 0; i < 4; i++) if (pin[GPIO_SWT1 +i] < 99) {
     button = digitalRead(pin[GPIO_SWT1 +i]);
     if (button != lastwallswitch[i]) {
       switchflag = 3;
-      switch (sysCfg.switchmode) {
+      switch (sysCfg.switchmode[i]) {
       case TOGGLE:
         switchflag = 2;                // Toggle
         break;
@@ -1698,9 +1701,9 @@ void stateloop()
       }
       if (switchflag < 3) {
         if (sysCfg.mqtt_enabled && mqttClient.connected() && strcmp(sysCfg.switch_topic,"0")) {
-          send_button_power(1, i +1, switchflag);   // Execute commend via MQTT
+          send_button_power(1, i +1, switchflag);  // Execute commend via MQTT
         } else {
-          do_cmnd_power(i +1, switchflag);       // Execute command internally
+          do_cmnd_power(i +1, switchflag);         // Execute command internally (if i < Maxdevice)
         }
       }
       lastwallswitch[i] = button;
@@ -1730,30 +1733,34 @@ void stateloop()
   case (STATES/10)*2:
     if (otaflag) {
       otaflag--;
-      if (otaflag <= 0) {
-        otaflag = 12;
+      if (otaflag == 2){
+        otaretry = OTA_ATTEMPTS;
         ESPhttpUpdate.rebootOnUpdate(false);
         sl_blank(1);
-        // Try multiple times to get the update, in case we have a transient issue.
-        // e.g. Someone issued "cmnd/sonoffs/update 1" and all the devices
-        //      are hammering the OTAURL.
-        for (byte i = 0; i < OTA_ATTEMPTS && !otaok; i++) {
-          // Delay an increasing pseudo-random time for each interation.
-          // Starting at 0 (no delay) up to a maximum of OTA_ATTEMPTS-1 seconds.
-          delay((ESP.getChipId() % 1000) * i);
+      }
+      if (otaflag <= 0) {
+#ifdef USE_WEBSERVER
+        if (sysCfg.webserver) stopWebserver();
+#endif  // USE_WEBSERVER
+        otaflag = 92;
+        otaok = 0;
+        otaretry--;
+        if (otaretry) {
+//          snprintf_P(log, sizeof(log), PSTR("OTA: Attempt %d"), OTA_ATTEMPTS - otaretry);
+//          addLog(LOG_LEVEL_INFO, log);
           otaok = (ESPhttpUpdate.update(sysCfg.otaUrl) == HTTP_UPDATE_OK);
+          if (!otaok) otaflag = 2;
         }
       }
-      if (otaflag == 10) {  // Allow MQTT to reconnect
+      if (otaflag == 90) {  // Allow MQTT to reconnect
         otaflag = 0;
         if (otaok) {
           if ((sysCfg.module == SONOFF_TOUCH) || (sysCfg.module == SONOFF_4CH)) setFlashChipMode(1, 3); // DOUT - ESP8285
           snprintf_P(svalue, sizeof(svalue), PSTR("Successful. Restarting"));
-          restartflag = 2;
         } else {
-          sl_blank(0);
           snprintf_P(svalue, sizeof(svalue), PSTR("Failed %s"), ESPhttpUpdate.getLastErrorString().c_str());
         }
+        restartflag = 2;  // Restart anyway to keep memory clean webserver
         mqtt_publish_topic_P(0, PSTR("UPGRADE"), svalue);
       }
     }
