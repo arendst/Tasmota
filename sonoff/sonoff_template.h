@@ -90,6 +90,7 @@ enum module_t {
   MOTOR,
   ELECTRODRAGON,
   EXS_RELAY,
+  WION,
   USER_TEST,
   MAXMODULE };
 
@@ -282,6 +283,17 @@ const mytmplt modules[MAXMODULE] PROGMEM = {
      GPIO_USER,        // GPIO14 Module Pin 5
      0,
      GPIO_USER         // GPIO16 Module Pin 4
+  },
+  { "wion",       // Sonoff Basic User Test
+     GPIO_USER,        // GPIO00 Optional sensor (pm clock)
+     0,
+     GPIO_LED1,        // GPIO02 Green Led (1 = On, 0 = Off)
+     0, 0, 0, 0, 0, 0, 0, 0, 0,
+     GPIO_USER,        // GPIO12 Optional sensor (pm data)
+     GPIO_KEY1,        // GPIO13 Button
+     0,
+     GPIO_REL1,        // GPIO15 Relay (0 = Off, 1 = On)
+     0
   },
   { "User Test",       // Sonoff Basic User Test
      GPIO_KEY1,        // GPIO00 Button
