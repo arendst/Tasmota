@@ -33,6 +33,7 @@
 
 #define HTU21_ADDR          0x40
 
+#define SI7021_CHIPID       0x15
 #define HTU21_CHIPID        0x32
 
 #define HTU21_READTEMP      0xE3
@@ -213,6 +214,7 @@ uint8_t htu_detect()
   snprintf_P(htustype, sizeof(htustype), PSTR("HTU"));
   switch (htutype) {
   case HTU21_CHIPID:
+	case SI7021_CHIPID:
     success = htu21_init();
     snprintf_P(htustype, sizeof(htustype), PSTR("HTU21"));
   }
