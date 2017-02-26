@@ -327,12 +327,10 @@ void setRelay(uint8_t power)
   else if (sysCfg.module == EXS_RELAY) {
     setLatchingRelay(power, 1);
   }
-  else {
     for (byte i = 0; i < Maxdevice; i++) {
-      state = power &1;
-      if (pin[GPIO_REL1 +i] < 99) digitalWrite(pin[GPIO_REL1 +i], rel_inverted[i] ? !state : state);
-      power >>= 1;
-    }
+    state = power &1;
+    if (pin[GPIO_REL1 +i] < 99) digitalWrite(pin[GPIO_REL1 +i], rel_inverted[i] ? !state : state);
+    power >>= 1;
   }
   hlw_setPowerSteadyCounter(2);
 }
@@ -1936,11 +1934,9 @@ void GPIO_init()
     pin[GPIO_WS2812] = 99;  // I do not allow both Sonoff Led AND WS2812 led
     sl_init();
   }
-  else {
-    for (byte i = 0; i < 4; i++) {
-      if (pin[GPIO_KEY1 +i] < 99) pinMode(pin[GPIO_KEY1 +i], INPUT_PULLUP);
-      if (pin[GPIO_REL1 +i] < 99) pinMode(pin[GPIO_REL1 +i], OUTPUT);
-    }
+  for (byte i = 0; i < 4; i++) {
+    if (pin[GPIO_KEY1 +i] < 99) pinMode(pin[GPIO_KEY1 +i], INPUT_PULLUP);
+    if (pin[GPIO_REL1 +i] < 99) pinMode(pin[GPIO_REL1 +i], OUTPUT);
   }
   for (byte i = 0; i < 4; i++) {
     if (pin[GPIO_LED1 +i] < 99) {
