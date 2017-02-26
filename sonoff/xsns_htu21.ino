@@ -56,7 +56,7 @@
 #define HTU21_RES_RH10_T13  0x80
 #define HTU21_RES_RH11_T11  0x81
 
-#define HTU21_MAX_HUM       16		// 16ms max time
+#define HTU21_MAX_HUM       23		// 16ms max time HTU21D | 23ms SI7021
 #define HTU21_MAX_TEMP      50		// 50ms max time
 
 #define HTU21_CRC8_POLYNOM  0x13100
