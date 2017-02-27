@@ -282,9 +282,9 @@ String htu_webPresent()
     float h_htu21 = htu21_readHumidity();
     h_htu21 = htu21_compensatedHumidity(h_htu21, t_htu21);
     dtostrf(t_htu21, 1, TEMP_RESOLUTION &3, itemp);
-    page += F("<tr><td>HTU Temperature: </td><td>"); page += itemp; page += iconv; page += F("</td></tr>");
+    page += F("<tr><td>"); page += htustype; page += F(" Temperature: </td><td>"); page += itemp; page += iconv; page += F("</td></tr>");
     dtostrf(h_htu21, 1, HUMIDITY_RESOLUTION &3, itemp);
-    page += F("<tr><td>HTU Humidity: </td><td>"); page += itemp; page += F("%</td></tr>");
+    page += F("<tr><td>"); page += htustype; page += F(" Humidity: </td><td>"); page += itemp; page += F("%</td></tr>");
   }
   return page;
 }
