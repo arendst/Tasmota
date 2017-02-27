@@ -1165,6 +1165,11 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
     else if ((pin[GPIO_IRSEND] < 99) && ir_send_command(type, index, dataBufUc, data_len, payload, svalue, sizeof(svalue))) {
       // Serviced
     }
+ #ifdef USE_IR_HVAC
+     else if ((pin[GPIO_IRSEND] < 99) && ir_hvac_command(type, index, dataBufUc, data_len, payload, svalue, sizeof(svalue))) {
+      // Serviced
+    }
+ #endif  //USE_IR_HVAC
 #endif // USE_IR_REMOTE
     else {
       type = NULL;

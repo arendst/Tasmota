@@ -88,6 +88,7 @@ enum module_t {
   ELECTRODRAGON,
   EXS_RELAY,
   USER_TEST,
+  NODEMCU,
   MAXMODULE };
 
 /********************************************************************************************/
@@ -284,6 +285,23 @@ const mytmplt modules[MAXMODULE] PROGMEM = {
      GPIO_LED1_INV,    // GPIO13 Green Led (0 = On, 1 = Off)
      GPIO_USER,        // GPIO14 Optional sensor
      0, 0
+  },
+  { "NodeMCU",    // NodeMCU hardware
+     GPIO_KEY1,        // GPIO00 Button
+     GPIO_USER,        // GPIO01
+     GPIO_USER,        // GPIO02
+     GPIO_USER,        // GPIO03 Serial TXD and Optional sensor
+     GPIO_USER,        // GPIO04 Optional sensor
+     GPIO_USER,        // GPIO05
+     0, 0, 0,
+     GPIO_USER,        // GPIO09
+     GPIO_USER,        // GPIO10
+     0,
+     GPIO_USER,        // GPIO12
+     GPIO_USER,        // GPIO13
+     GPIO_USER,        // GPIO14
+     GPIO_USER,        // GPIO15
+     0
   }
 };
 
