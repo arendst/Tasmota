@@ -56,12 +56,11 @@
 #define HTU21_RES_RH10_T13  0x80
 #define HTU21_RES_RH11_T11  0x81
 
-#define HTU21_MAX_HUM       23		// 16ms max time HTU21D | 23ms SI7021
-#define HTU21_MAX_TEMP      50		// 50ms max time
-
 #define HTU21_CRC8_POLYNOM  0x13100
 
 uint8_t htuaddr, htutype = 0;
+uint8_t delayT, delayH = 50;
+
 char htustype[7];
 
 uint8_t check_crc8(uint16_t data)
@@ -152,7 +151,7 @@ float htu21_readHumidity(void)
   Wire.beginTransmission(HTU21_ADDR);
   Wire.write(HTU21_READHUM);
   if(Wire.endTransmission() != 0) return 0.0; // In case of error
-  delay(HTU21_MAX_HUM);                       // HTU21 time at max resolution
+  delay(delayH);                       // HTU21 time at max resolution
 
   Wire.requestFrom(HTU21_ADDR, 3);
   if(3 <= Wire.available())
@@ -181,7 +180,7 @@ float htu21_readTemperature(bool S)
   Wire.beginTransmission(HTU21_ADDR);
   Wire.write(HTU21_READTEMP);
   if(Wire.endTransmission() != 0) return 0.0; // In case of error
-  delay(HTU21_MAX_TEMP);              // HTU21 time at max resolution
+  delay(delayT);              // HTU21 time at max resolution
 
   Wire.requestFrom(HTU21_ADDR, 3);
   if(3 == Wire.available())
@@ -213,14 +212,32 @@ uint8_t htu_detect()
 
   htuaddr = HTU21_ADDR;
   htutype = htu21_readDeviceID();
-  snprintf_P(htustype, sizeof(htustype), PSTR("HTU"));
+  success = htu21_init();
   switch (htutype) {
   case HTU21_CHIPID:
-	case SI7013_CHIPID:
-	case SI7020_CHIPID:
-	case SI7021_CHIPID:
-    success = htu21_init();
     snprintf_P(htustype, sizeof(htustype), PSTR("HTU21"));
+		delayT=50;
+		delayH=16;
+		break;
+	case SI7013_CHIPID:
+		delayT=12;
+		delayH=23;
+    snprintf_P(htustype, sizeof(htustype), PSTR("SI7013"));
+		break;
+	case SI7020_CHIPID:
+		delayT=12;
+		delayH=23;
+    snprintf_P(htustype, sizeof(htustype), PSTR("SI7020"));
+		break;
+	case SI7021_CHIPID:
+    snprintf_P(htustype, sizeof(htustype), PSTR("SI7021"));
+		delayT=12;
+		delayH=23;
+		break;
+	default:
+		snprintf_P(htustype, sizeof(htustype), PSTR("T/RH?"));
+		delayT=50;
+		delayH=23;
   }
   if (success) {
     snprintf_P(log, sizeof(log), PSTR("I2C: %s found at address 0x%x"), htustype, htuaddr);
