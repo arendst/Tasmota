@@ -90,6 +90,8 @@ enum module_t {
   MOTOR,
   ELECTRODRAGON,
   EXS_RELAY,
+  WION,
+  NODEMCU,
   USER_TEST,
   MAXMODULE };
 
@@ -282,6 +284,34 @@ const mytmplt modules[MAXMODULE] PROGMEM = {
      GPIO_USER,        // GPIO14 Module Pin 5
      0,
      GPIO_USER         // GPIO16 Module Pin 4
+  },
+  { "WiOn",            // Indoor Tap https://www.amazon.com/gp/product/B00ZYLUBJU/ref=s9_acsd_al_bw_c_x_3_w
+     GPIO_USER,        // GPIO00 Optional sensor (pm clock)
+     0,
+     GPIO_LED1,        // GPIO02 Green Led (1 = On, 0 = Off)
+     0, 0, 0, 0, 0, 0, 0, 0, 0,
+     GPIO_USER,        // GPIO12 Optional sensor (pm data)
+     GPIO_KEY1,        // GPIO13 Button
+     0,
+     GPIO_REL1,        // GPIO15 Relay (0 = Off, 1 = On)
+     0
+  },
+  { "NodeMCU",         // NodeMCU and Wemos hardware
+     GPIO_KEY1,        // GPIO00 Button
+     GPIO_USER,        // GPIO01 Serial RXD
+     GPIO_USER,        // GPIO02
+     GPIO_USER,        // GPIO03 Serial TXD and Optional sensor
+     GPIO_USER,        // GPIO04 Optional sensor
+     GPIO_USER,        // GPIO05
+     0, 0, 0,
+     GPIO_USER,        // GPIO09
+     GPIO_USER,        // GPIO10
+     0,
+     GPIO_USER,        // GPIO12
+     GPIO_USER,        // GPIO13
+     GPIO_USER,        // GPIO14
+     GPIO_USER,        // GPIO15
+     0
   },
   { "User Test",       // Sonoff Basic User Test
      GPIO_KEY1,        // GPIO00 Button

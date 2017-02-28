@@ -189,3 +189,10 @@ struct SYSCFG {
 
 } sysCfg;
 
+struct RTCMEM {
+  uint16_t      valid;
+  byte          osw_flag;
+  byte          nu1;
+  unsigned long hlw_kWhtoday;
+} rtcMem;
+

@@ -41,6 +41,7 @@ OneWire *ds = NULL;
 uint8_t ds18x20_addr[DS18X20_MAX_SENSORS][8];
 uint8_t ds18x20_idx[DS18X20_MAX_SENSORS];
 uint8_t ds18x20_snsrs = 0;
+char dsbstype[8];
 
 void ds18x20_init()
 {
@@ -88,23 +89,6 @@ String ds18x20_address(uint8_t sensor)
 
   for (i = 0; i < 8; i++) sprintf(addrStr+2*i, "%02X", ds18x20_addr[ds18x20_idx[sensor]][i]);
   return String(addrStr);
-}
-
-String ds18x20_type(uint8_t sensor)
-{
-  char typeStr[10];
-
-  switch(ds18x20_addr[ds18x20_idx[sensor]][0]) {
-  case 0x10:
-    strcpy(typeStr, "DS18S20");
-    break;
-  case 0x28:
-    strcpy(typeStr, "DS18B20");
-    break;
-  default:
-    strcpy(typeStr, "DS18x20");
-  }
-  return String(typeStr);
 }
 
 void ds18x20_convert()
@@ -160,6 +144,19 @@ boolean ds18x20_read(uint8_t sensor, bool S, float &t)
  * Presentation
 \*********************************************************************************************/
 
+void ds18x20_type(uint8_t sensor)
+{
+  strcpy_P(dsbstype, PSTR("DS18x20"));
+  switch(ds18x20_addr[ds18x20_idx[sensor]][0]) {
+  case 0x10:
+    strcpy_P(dsbstype, PSTR("DS18S20"));
+    break;
+  case 0x28:
+    strcpy_P(dsbstype, PSTR("DS18B20"));
+    break;
+  }
+}
+
 void ds18x20_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
 {
   char stemp1[10], stemp2[10];
@@ -168,6 +165,7 @@ void ds18x20_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
   byte dsxflg = 0;
   for (byte i = 0; i < ds18x20_sensors(); i++) {
     if (ds18x20_read(i, TEMP_CONVERSION, t)) {           // Check if read failed
+      ds18x20_type(i);
       dtostrf(t, 1, TEMP_RESOLUTION &3, stemp2);
       if (!dsxflg) {
         snprintf_P(svalue, ssvalue, PSTR("%s, \"DS18x20\":{"), svalue);
@@ -176,7 +174,7 @@ void ds18x20_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
       }
       dsxflg++;
       snprintf_P(svalue, ssvalue, PSTR("%s%s\"DS%d\":{\"Type\":\"%s\", \"Address\":\"%s\", \"Temperature\":%s}"),
-        svalue, stemp1, i +1, ds18x20_type(i).c_str(), ds18x20_address(i).c_str(), stemp2);
+        svalue, stemp1, i +1, dsbstype, ds18x20_address(i).c_str(), stemp2);
       strcpy(stemp1, ", ");
 #ifdef USE_DOMOTICZ
       if (dsxflg == 1) domoticz_sensor1(stemp2);
@@ -189,15 +187,17 @@ void ds18x20_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
 #ifdef USE_WEBSERVER
 String ds18x20_webPresent()
 {
-  char stemp[10], sconv[10];
-  float t;
   String page = "";
+  char stemp[10], stemp2[16], sensor[80];
+  float t;
 
-  snprintf_P(sconv, sizeof(sconv), PSTR("&deg;%c"), (TEMP_CONVERSION) ? 'F' : 'C');
   for (byte i = 0; i < ds18x20_sensors(); i++) {
     if (ds18x20_read(i, TEMP_CONVERSION, t)) {   // Check if read failed
+      ds18x20_type(i);
       dtostrf(t, 1, TEMP_RESOLUTION &3, stemp);
-      page += F("<tr><td>DS"); page += String(i +1); page += F(" Temperature: </td><td>"); page += stemp; page += sconv; page += F("</td></tr>");
+      snprintf_P(stemp2, sizeof(stemp2), PSTR("%s-%d"), dsbstype, i +1);
+      snprintf_P(sensor, sizeof(sensor), HTTP_SNS_TEMP, stemp2, stemp, (TEMP_CONVERSION) ? 'F' : 'C');
+      page += sensor;
     }
   }
   return page;

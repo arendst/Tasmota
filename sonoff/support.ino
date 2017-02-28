@@ -24,6 +24,127 @@ POSSIBILITY OF SUCH DAMAGE.
 */
 
 /*********************************************************************************************\
+ * Watchdog extension (https://github.com/esp8266/Arduino/issues/1532)
+\*********************************************************************************************/
+
+Ticker tickerOSWatch;
+
+#define OSWATCH_RESET_TIME 30
+
+static unsigned long osw_last_loop;
+byte osw_flag = 0;
+
+void ICACHE_RAM_ATTR osw_osWatch(void)
+{
+  unsigned long t = millis();
+  unsigned long last_run = abs(t - osw_last_loop);
+
+#ifdef DEBUG_THEO
+  char log[LOGSZ];
+  snprintf_P(log, sizeof(log), PSTR("osWatch: FreeRam %d, rssi %d, last_run %d"), ESP.getFreeHeap(), WIFI_getRSSIasQuality(WiFi.RSSI()), last_run);
+  addLog(LOG_LEVEL_DEBUG, log);
+#endif  // DEBUG_THEO
+  if(last_run >= (OSWATCH_RESET_TIME * 1000)) {
+    addLog_P(LOG_LEVEL_INFO, PSTR("osWatch: Warning, loop blocked. Restart now"));
+    rtcMem.osw_flag = 1;
+    RTC_Save();
+//    ESP.restart();  // normal reboot 
+    ESP.reset();  // hard reset
+  }
+}
+
+void osw_init()
+{
+  osw_flag = rtcMem.osw_flag;
+  rtcMem.osw_flag = 0;
+  osw_last_loop = millis();
+  tickerOSWatch.attach_ms(((OSWATCH_RESET_TIME / 3) * 1000), osw_osWatch);
+}
+
+void osw_loop()
+{
+  osw_last_loop = millis();
+//  while(1) delay(1000);  // this will trigger the os watch
+}
+
+String getResetReason()
+{
+  char buff[32];
+  if (osw_flag) {
+    strcpy_P(buff, PSTR("Blocked Loop"));
+    return String(buff);
+  } else {
+    return ESP.getResetReason();
+  }
+}
+
+#ifdef DEBUG_THEO
+void exception_tst(byte type)
+{
+/*    
+Exception (28):
+epc1=0x4000bf64 epc2=0x00000000 epc3=0x00000000 excvaddr=0x00000007 depc=0x00000000
+
+ctx: cont 
+sp: 3fff1f30 end: 3fff2840 offset: 01a0
+
+>>>stack>>>
+3fff20d0:  202c3573 756f7247 2c302070 646e4920  
+3fff20e0:  40236a6e 7954202c 45206570 00454358  
+3fff20f0:  00000010 00000007 00000000 3fff2180  
+3fff2100:  3fff2190 40107bfc 3fff3e4c 3fff22c0  
+3fff2110:  40261934 000000f0 3fff22c0 401004d8  
+3fff2120:  40238fcf 00000050 3fff2100 4021fc10  
+3fff2130:  3fff32bc 4021680c 3ffeade1 4021ff7d  
+3fff2140:  3fff2190 3fff2180 0000000c 7fffffff  
+3fff2150:  00000019 00000000 00000000 3fff21c0  
+3fff2160:  3fff23f3 3ffe8e08 00000000 4021ffb4  
+3fff2170:  3fff2190 3fff2180 0000000c 40201118  
+3fff2180:  3fff21c0 0000003c 3ffef840 00000007  
+3fff2190:  00000000 00000000 00000000 40201128  
+3fff21a0:  3fff23f3 000000f1 3fff23ec 4020fafb  
+3fff21b0:  3fff23f3 3fff21c0 3fff21d0 3fff23f6  
+3fff21c0:  00000000 3fff23fb 4022321b 00000000  
+
+Exception 28: LoadProhibited: A load referenced a page mapped with an attribute that does not permit loads
+Decoding 14 results
+0x40236a6e: ets_vsnprintf at ?? line ?
+0x40107bfc: vsnprintf at C:\Data2\Arduino\arduino-1.8.1-esp-2.3.0\portable\packages\esp8266\hardware\esp8266\2.3.0\cores\esp8266/libc_replacements.c line 387
+0x40261934: bignum_exptmod at ?? line ?
+0x401004d8: malloc at C:\Data2\Arduino\arduino-1.8.1-esp-2.3.0\portable\packages\esp8266\hardware\esp8266\2.3.0\cores\esp8266\umm_malloc/umm_malloc.c line 1664
+0x40238fcf: wifi_station_get_connect_status at ?? line ?
+0x4021fc10: operator new[](unsigned int) at C:\Data2\Arduino\arduino-1.8.1-esp-2.3.0\portable\packages\esp8266\hardware\esp8266\2.3.0\cores\esp8266/abi.cpp line 57
+0x4021680c: ESP8266WiFiSTAClass::status() at C:\Data2\Arduino\arduino-1.8.1-esp-2.3.0\portable\packages\esp8266\hardware\esp8266\2.3.0\libraries\ESP8266WiFi\src/ESP8266WiFiSTA.cpp line 569
+0x4021ff7d: vsnprintf_P(char*, unsigned int, char const*, __va_list_tag) at C:\Data2\Arduino\arduino-1.8.1-esp-2.3.0\portable\packages\esp8266\hardware\esp8266\2.3.0\cores\esp8266/pgmspace.cpp line 146
+0x4021ffb4: snprintf_P(char*, unsigned int, char const*, ...) at C:\Data2\Arduino\arduino-1.8.1-esp-2.3.0\portable\packages\esp8266\hardware\esp8266\2.3.0\cores\esp8266/pgmspace.cpp line 146
+0x40201118: atol at C:\Data2\Arduino\arduino-1.8.1-esp-2.3.0\portable\packages\esp8266\hardware\esp8266\2.3.0\cores\esp8266/core_esp8266_noniso.c line 45
+0x40201128: atoi at C:\Data2\Arduino\arduino-1.8.1-esp-2.3.0\portable\packages\esp8266\hardware\esp8266\2.3.0\cores\esp8266/core_esp8266_noniso.c line 45
+0x4020fafb: mqttDataCb(char*, unsigned char*, unsigned int) at R:\Arduino\Work-ESP8266\Theo\sonoff\sonoff-4\sonoff/sonoff.ino line 679 (discriminator 1)
+0x4022321b: pp_attach at ?? line ?
+
+00:00:08 MQTT: tele/sonoff/INFO3 = {"Started":"Fatal exception:28 flag:2 (EXCEPTION) epc1:0x4000bf64 epc2:0x00000000 epc3:0x00000000 excvaddr:0x00000007 depc:0x00000000"}
+*/
+  if (type == 1) {
+    char svalue[10];
+    snprintf_P(svalue, sizeof(svalue), PSTR("%s"), 7);  // Exception 28 as number in string (7 in excvaddr)
+  }
+/*
+14:50:52 osWatch: FreeRam 25896, rssi 68, last_run 0
+14:51:02 osWatch: FreeRam 25896, rssi 58, last_run 0
+14:51:03 CMND: exception 2
+14:51:12 osWatch: FreeRam 25360, rssi 60, last_run 8771
+14:51:22 osWatch: FreeRam 25360, rssi 62, last_run 18771
+14:51:32 osWatch: FreeRam 25360, rssi 62, last_run 28771
+14:51:42 osWatch: FreeRam 25360, rssi 62, last_run 38771
+14:51:42 osWatch: Warning, loop blocked. Restart now
+*/
+  if (type == 2) {
+    while(1) delay(1000);  // this will trigger the os watch
+  }
+}
+#endif  // DEBUG_THEO
+
+/*********************************************************************************************\
  * Wifi
 \*********************************************************************************************/
 
@@ -703,9 +824,6 @@ void addLog(byte loglevel, const char *line)
 
   snprintf_P(mxtime, sizeof(mxtime), PSTR("%02d:%02d:%02d"), rtcTime.Hour, rtcTime.Minute, rtcTime.Second);
 
-#ifdef DEBUG_ESP_PORT
-  DEBUG_ESP_PORT.printf("%s %s\n", mxtime, line);
-#endif  // DEBUG_ESP_PORT
   if (loglevel <= seriallog_level) Serial.printf("%s %s\n", mxtime, line);
 #ifdef USE_WEBSERVER
   if (sysCfg.webserver && (loglevel <= sysCfg.weblog_level)) {

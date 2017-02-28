@@ -67,7 +67,7 @@ boolean bh1750_detect()
   if (!status) {
     success = true;
     bh1750type = 1;
-    snprintf_P(bh1750stype, sizeof(bh1750stype), PSTR("BH1750"));
+    strcpy(bh1750stype, "BH1750");
   }
   if (success) {
     snprintf_P(log, sizeof(log), PSTR("I2C: %s found at address 0x%x"), bh1750stype, bh1750addr);
@@ -95,12 +95,16 @@ void bh1750_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
 }
 
 #ifdef USE_WEBSERVER
+const char HTTP_SNS_ILLUMINANCE[] PROGMEM =
+  "<tr><th>BH1750 Illuminance</th><td>%d lx</td></tr>";
+
 String bh1750_webPresent()
 {
   String page = "";
   if (bh1750type) {
-    uint16_t l = bh1750_readLux();
-    page += F("<tr><td>Illuminance: </td><td>"); page += String(l); page += F(" lx</td></tr>");
+    char sensor[80];
+    snprintf_P(sensor, sizeof(sensor), HTTP_SNS_ILLUMINANCE, bh1750_readLux());
+    page += sensor;
   }
   return page;
 }

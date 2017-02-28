@@ -397,19 +397,19 @@ boolean bmp_detect()
     bmpaddr--;
     bmptype = i2c_read8(bmpaddr, BMP_REGISTER_CHIPID);
   }
-  snprintf_P(bmpstype, sizeof(bmpstype), PSTR("BMP"));
+  strcpy_P(bmpstype, PSTR("BMP"));
   switch (bmptype) {
   case BMP180_CHIPID:
     success = bmp180_calibration();
-    snprintf_P(bmpstype, sizeof(bmpstype), PSTR("BMP180"));
+    strcpy_P(bmpstype, PSTR("BMP180"));
     break;
   case BMP280_CHIPID:
     success = bmp280_calibrate();
-    snprintf_P(bmpstype, sizeof(bmpstype), PSTR("BMP280"));
+    strcpy_P(bmpstype, PSTR("BMP280"));
     break;
   case BME280_CHIPID:
     success = bme280_calibrate();
-    snprintf_P(bmpstype, sizeof(bmpstype), PSTR("BME280"));
+    strcpy_P(bmpstype, PSTR("BME280"));
   }
   if (success) {
     snprintf_P(log, sizeof(log), PSTR("I2C: %s found at address 0x%x"), bmpstype, bmpaddr);
@@ -454,20 +454,22 @@ String bmp_webPresent()
 {
   String page = "";
   if (bmptype) {
-    char itemp[10], iconv[10];
+    char stemp[10], sensor[80];
 
-    snprintf_P(iconv, sizeof(iconv), PSTR("&deg;%c"), (TEMP_CONVERSION) ? 'F' : 'C');
     double t_bmp = bmp_readTemperature(TEMP_CONVERSION);
     double p_bmp = bmp_readPressure();
     double h_bmp = bmp_readHumidity();
-    dtostrf(t_bmp, 1, TEMP_RESOLUTION &3, itemp);
-    page += F("<tr><td>BMP Temperature: </td><td>"); page += itemp; page += iconv; page += F("</td></tr>");
+    dtostrf(t_bmp, 1, TEMP_RESOLUTION &3, stemp);
+    snprintf_P(sensor, sizeof(sensor), HTTP_SNS_TEMP, bmpstype, stemp, (TEMP_CONVERSION) ? 'F' : 'C');
+    page += sensor;
     if (!strcmp(bmpstype,"BME280")) {
-      dtostrf(h_bmp, 1, HUMIDITY_RESOLUTION &3, itemp);
-      page += F("<tr><td>BMP Humidity: </td><td>"); page += itemp; page += F("%</td></tr>");
+      dtostrf(h_bmp, 1, HUMIDITY_RESOLUTION &3, stemp);
+      snprintf_P(sensor, sizeof(sensor), HTTP_SNS_HUM, bmpstype, stemp);
+      page += sensor;
     }
-    dtostrf(p_bmp, 1, PRESSURE_RESOLUTION &3, itemp);
-    page += F("<tr><td>BMP Pressure: </td><td>"); page += itemp; page += F(" hPa</td></tr>");
+    dtostrf(p_bmp, 1, PRESSURE_RESOLUTION &3, stemp);
+    snprintf_P(sensor, sizeof(sensor), HTTP_SNS_PRESSURE, bmpstype, stemp);
+    page += sensor;
   }
   return page;
 }

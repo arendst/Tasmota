@@ -24,6 +24,85 @@ POSSIBILITY OF SUCH DAMAGE.
 */
 
 /*********************************************************************************************\
+ * RTC memory
+\*********************************************************************************************/
+
+#define RTC_MEM_VALID 0xA55A
+
+uint32_t _rtcHash = 0;
+
+uint32_t getRtcHash()
+{
+  uint32_t hash = 0;
+  uint8_t *bytes = (uint8_t*)&rtcMem;
+
+  for (uint16_t i = 0; i < sizeof(RTCMEM); i++) hash += bytes[i]*(i+1);
+  return hash;
+}
+
+void RTC_Save()
+{
+  if (getRtcHash() != _rtcHash) {
+    rtcMem.valid = RTC_MEM_VALID;
+    ESP.rtcUserMemoryWrite(100, (uint32_t*)&rtcMem, sizeof(RTCMEM));
+    _rtcHash = getRtcHash();
+#ifdef DEBUG_THEO
+    addLog_P(LOG_LEVEL_DEBUG, PSTR("Dump: Save"));
+    RTC_Dump();
+#endif  // DEBUG_THEO
+  }
+}
+
+void RTC_Load()
+{
+  ESP.rtcUserMemoryRead(100, (uint32_t*)&rtcMem, sizeof(RTCMEM));
+#ifdef DEBUG_THEO
+  addLog_P(LOG_LEVEL_DEBUG, PSTR("Dump: Load"));
+  RTC_Dump();
+#endif  // DEBUG_THEO
+  if (rtcMem.valid != RTC_MEM_VALID) {
+    memset(&rtcMem, 0x00, sizeof(RTCMEM));
+    rtcMem.valid = RTC_MEM_VALID;
+    RTC_Save();
+  }
+  _rtcHash = getRtcHash();
+}
+
+boolean RTC_Valid()
+{
+  return (rtcMem.valid == RTC_MEM_VALID);
+}
+
+#ifdef DEBUG_THEO
+void RTC_Dump()
+{
+  #define CFG_COLS 16
+  
+  char log[LOGSZ];
+  uint16_t idx, maxrow, row, col;
+
+  uint8_t *buffer = (uint8_t *) &rtcMem;
+  maxrow = ((sizeof(RTCMEM)+CFG_COLS)/CFG_COLS);
+
+  for (row = 0; row < maxrow; row++) {
+    idx = row * CFG_COLS;
+    snprintf_P(log, sizeof(log), PSTR("%04X:"), idx);
+    for (col = 0; col < CFG_COLS; col++) {
+      if (!(col%4)) snprintf_P(log, sizeof(log), PSTR("%s "), log);
+      snprintf_P(log, sizeof(log), PSTR("%s %02X"), log, buffer[idx + col]);
+    }
+    snprintf_P(log, sizeof(log), PSTR("%s |"), log);
+    for (col = 0; col < CFG_COLS; col++) {
+//      if (!(col%4)) snprintf_P(log, sizeof(log), PSTR("%s "), log);
+      snprintf_P(log, sizeof(log), PSTR("%s%c"), log, ((buffer[idx + col] > 0x20) && (buffer[idx + col] < 0x7F)) ? (char)buffer[idx + col] : ' ');
+    }
+    snprintf_P(log, sizeof(log), PSTR("%s|"), log);
+    addLog(LOG_LEVEL_INFO, log);
+  }
+}
+#endif  // DEBUG_THEO
+
+/*********************************************************************************************\
  * Config - Flash or Spiffs
 \*********************************************************************************************/
 
@@ -131,6 +210,7 @@ void CFG_Save()
     }
     _cfgHash = getHash();
   }
+  RTC_Save();
 }
 
 void CFG_Load()
@@ -177,6 +257,8 @@ void CFG_Load()
     }
   }
   _cfgHash = getHash();
+
+  RTC_Load();
 }
 
 void CFG_Migrate()

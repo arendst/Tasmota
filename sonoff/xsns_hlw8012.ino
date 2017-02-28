@@ -102,11 +102,13 @@ void hlw_200mS()
       hlw_EDcntr = 0;
       hlw_temp = (HLW_PREF * sysCfg.hlw_pcal) / hlw_len;
       hlw_kWhtoday += (hlw_temp * 100) / 36;
+      rtcMem.hlw_kWhtoday = hlw_kWhtoday;
     }
     if (rtcTime.Valid) {
       if (rtc_loctime() == rtc_midnight()) {
         sysCfg.hlw_kWhyesterday = hlw_kWhtoday;
         hlw_kWhtoday = 0;
+        rtcMem.hlw_kWhtoday = hlw_kWhtoday;
         hlw_mkwh_state = 3;
       }
       if ((rtcTime.Hour == sysCfg.hlw_mkwhs) && (hlw_mkwh_state == 3)) {
@@ -114,6 +116,7 @@ void hlw_200mS()
       }
       if (hlw_startup && (rtcTime.DayOfYear == sysCfg.hlw_kWhdoy)) {
         hlw_kWhtoday = sysCfg.hlw_kWhtoday;
+        rtcMem.hlw_kWhtoday = hlw_kWhtoday;
         hlw_startup = 0;
       }
     }
@@ -236,7 +239,7 @@ void hlw_init()
 
   hlw_Ecntr = 0;
   hlw_EDcntr = 0;
-  hlw_kWhtoday = 0;
+  hlw_kWhtoday = (RTC_Valid()) ? rtcMem.hlw_kWhtoday : 0;
 
   hlw_SELflag = 0;  // Voltage;
 
@@ -540,18 +543,16 @@ void hlw_mqttStat(byte option, char* svalue, uint16_t ssvalue)
 
 void hlw_mqttPresent()
 {
-  char svalue[MESSZ], stime[21];
+  char svalue[MESSZ];
 
-  snprintf_P(stime, sizeof(stime), PSTR("%04d-%02d-%02dT%02d:%02d:%02d"),
+  snprintf_P(svalue, sizeof(svalue), PSTR("{\"Time\":\"%04d-%02d-%02dT%02d:%02d:%02d\", "),
     rtcTime.Year, rtcTime.Month, rtcTime.Day, rtcTime.Hour, rtcTime.Minute, rtcTime.Second);
-  snprintf_P(svalue, sizeof(svalue), PSTR("{\"Time\":\"%s\", "), stime);
   hlw_mqttStat(1, svalue, sizeof(svalue));
 
 //  snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/ENERGY"), PUB_PREFIX2, sysCfg.mqtt_topic);
 //  mqtt_publish(stopic, svalue);
 
   mqtt_publish_topic_P(1, PSTR("ENERGY"), svalue);
-
 }
 
 void hlw_mqttStatus(char* svalue, uint16_t ssvalue)
@@ -562,24 +563,29 @@ void hlw_mqttStatus(char* svalue, uint16_t ssvalue)
 }
 
 #ifdef USE_WEBSERVER
+const char HTTP_ENERGY_SNS[] PROGMEM =
+  "<tr><th>Voltage</th><td>%d V</td></tr>"
+  "<tr><th>Current</th><td>%s A</td></tr>"
+  "<tr><th>Power</th><td>%d W</td></tr>"
+  "<tr><th>Power Factor</th><td>%s</td></tr>"
+  "<tr><th>Energy Today</th><td>%s kWh</td></tr>"
+  "<tr><th>Energy Yesterday</th><td>%s kWh</td></tr>";
+
 String hlw_webPresent()
 {
-  char stemp[10];
+  String page = "";
+  char stemp[10], stemp2[10], stemp3[10], stemp4[10], sensor[300];
   float ped, pi, pc;
   uint16_t pe, pw, pu;
-  String page = "";
 
   hlw_readEnergy(0, ped, pe, pw, pu, pi, pc);
-  page += F("<tr><td>Voltage: </td><td>"); page += String(pu); page += F(" V</td></tr>");
+
   dtostrf(pi, 1, 3, stemp);
-  page += F("<tr><td>Current: </td><td>"); page += stemp; page += F(" A</td></tr>");
-  page += F("<tr><td>Power: </td><td>"); page += String(pw); page += F(" W</td></tr>");
-  dtostrf(pc, 1, 2, stemp);
-  page += F("<tr><td>Power Factor: </td><td>"); page += stemp; page += F("</td></tr>");
-  dtostrf(ped, 1, 3, stemp);
-  page += F("<tr><td>Energy Today: </td><td>"); page += stemp; page += F(" kWh</td></tr>");
-  dtostrf((float)sysCfg.hlw_kWhyesterday / 100000000, 1, 3, stemp);
-  page += F("<tr><td>Energy Yesterday: </td><td>"); page += stemp; page += F(" kWh</td></tr>");
+  dtostrf(pc, 1, 2, stemp2);
+  dtostrf(ped, 1, 3, stemp3);
+  dtostrf((float)sysCfg.hlw_kWhyesterday / 100000000, 1, 3, stemp4);
+  snprintf_P(sensor, sizeof(sensor), HTTP_ENERGY_SNS, pu, stemp, pw, stemp2, stemp3, stemp4);
+  page += sensor;
   return page;
 }
 #endif  // USE_WEBSERVER

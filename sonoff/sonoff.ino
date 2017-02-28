@@ -10,7 +10,7 @@
  * ====================================================
 */
 
-#define VERSION                0x03091500   // 3.9.21
+#define VERSION                0x03091600   // 3.9.22
 
 //#define BE_MINIMAL                          // Compile a minimal version if upgrade memory gets tight (still 404k)
                                             // To be used as step 1. Next step is compile and use desired version
@@ -45,6 +45,7 @@ enum emul_t  {EMUL_NONE, EMUL_WEMO, EMUL_HUE, EMUL_MAX};
 #ifndef USE_DS18x20
 #define USE_DS18B20                         // Default DS18B20 sensor needs no external library
 #endif
+//#define DEBUG_THEO                          // Add debug code
 
 #ifdef BE_MINIMAL
 //#ifdef USE_MQTT_TLS
@@ -79,6 +80,9 @@ enum emul_t  {EMUL_NONE, EMUL_WEMO, EMUL_HUE, EMUL_MAX};
 #endif
 #ifdef USE_IR_REMOTE
 #undef USE_IR_REMOTE                        // Disable IR driver
+#endif
+#ifdef DEBUG_THEO
+#undef DEBUG_THEO                           // Disable debug code
 #endif
 #endif  // BE_MINIMAL
 
@@ -497,6 +501,9 @@ void mqtt_connected()
       mqtt_publish_topic_P(1, PSTR("INFO2"), svalue);
     }
 #endif  // USE_WEBSERVER
+    snprintf_P(svalue, sizeof(svalue), PSTR("{\"Started\":\"%s\"}"),
+      (getResetReason() == "Exception") ? ESP.getResetInfo().c_str() : getResetReason().c_str());
+    mqtt_publish_topic_P(1, PSTR("INFO3"), svalue);
     if (sysCfg.mqtt_enabled && (MQTT_MAX_PACKET_SIZE < (TOPSZ+MESSZ))) {
       snprintf_P(svalue, sizeof(svalue), PSTR("{\"Warning1\":\"Change MQTT_MAX_PACKET_SIZE in libraries/PubSubClient.h to at least %d\"}"), TOPSZ+MESSZ);
       mqtt_publish_topic_P(1, PSTR("WARNING1"), svalue);
@@ -1167,7 +1174,13 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
     else if ((pin[GPIO_IRSEND] < 99) && ir_send_command(type, index, dataBufUc, data_len, payload, svalue, sizeof(svalue))) {
       // Serviced
     }
-#endif // USE_IR_REMOTE
+#endif  // USE_IR_REMOTE
+#ifdef DEBUG_THEO
+    else if (!strcmp(type,"EXCEPTION")) {
+      if (data_len > 0) exception_tst(payload);
+      snprintf_P(svalue, sizeof(svalue), PSTR("{\"Exception\":\"Triggered\"}"));
+    }
+#endif  // DEBUG_THEO
     else {
       type = NULL;
     }
@@ -1369,7 +1382,7 @@ void publish_status(uint8_t payload)
   }
 
   if ((payload == 0) || (payload == 4)) {
-    snprintf_P(svalue, sizeof(svalue), PSTR("{\"StatusMEM\":{\"ProgramSize\":%d, \"Free\":%d, \"Heap\":%d, \"SpiffsStart\":%d, \"SpiffsSize\":%d, \"FlashSize\":%d, \"ProgramFlashSize\":%d, \"FlashChipMode\",%d}}"),
+    snprintf_P(svalue, sizeof(svalue), PSTR("{\"StatusMEM\":{\"ProgramSize\":%d, \"Free\":%d, \"Heap\":%d, \"SpiffsStart\":%d, \"SpiffsSize\":%d, \"FlashSize\":%d, \"ProgramFlashSize\":%d, \"FlashChipMode\":%d}}"),
       ESP.getSketchSize()/1024, ESP.getFreeSketchSpace()/1024, ESP.getFreeHeap()/1024, ((uint32_t)&_SPIFFS_start - 0x40200000)/1024,
       (((uint32_t)&_SPIFFS_end - 0x40200000) - ((uint32_t)&_SPIFFS_start - 0x40200000))/1024, ESP.getFlashChipRealSize()/1024, ESP.getFlashChipSize()/1024, ESP.getFlashChipMode());
     mqtt_publish_topic_P(option, PSTR("STATUS4"), svalue);
@@ -1916,20 +1929,12 @@ void GPIO_init()
   }
 
   Maxdevice = 1;
-  switch (sysCfg.module) {
-    case SONOFF_DUAL:
-    case ELECTRODRAGON:
-      Maxdevice = 2;
-      break;
-    case SONOFF_4CH:
-    case CH4:
-      Maxdevice = 4;
-      break;
+  if (sysCfg.module == SONOFF_DUAL) {
+    Maxdevice = 2;
+    Baudrate = 19200;
   }
-
-  swt_flg = ((pin[GPIO_SWT1] < 99) || (pin[GPIO_SWT2] < 99) || (pin[GPIO_SWT3] < 99) || (pin[GPIO_SWT4] < 99));
-
-  if ((sysCfg.module == SONOFF_DUAL) || (sysCfg.module == CH4)) {
+  else if (sysCfg.module == CH4) {
+    Maxdevice = 4;
     Baudrate = 19200;
   }
   else if (sysCfg.module == SONOFF_LED) {
@@ -1937,9 +1942,13 @@ void GPIO_init()
     sl_init();
   }
   else {
+    Maxdevice = 0;
     for (byte i = 0; i < 4; i++) {
+      if (pin[GPIO_REL1 +i] < 99) {
+        pinMode(pin[GPIO_REL1 +i], OUTPUT);
+        Maxdevice++;
+      }
       if (pin[GPIO_KEY1 +i] < 99) pinMode(pin[GPIO_KEY1 +i], INPUT_PULLUP);
-      if (pin[GPIO_REL1 +i] < 99) pinMode(pin[GPIO_REL1 +i], OUTPUT);
     }
   }
   for (byte i = 0; i < 4; i++) {
@@ -1948,6 +1957,7 @@ void GPIO_init()
       digitalWrite(pin[GPIO_LED1 +i], led_inverted[i]);
     }
     if (pin[GPIO_SWT1 +i] < 99) {
+      swt_flg = 1;
       pinMode(pin[GPIO_SWT1 +i], INPUT_PULLUP);
       lastwallswitch[i] = digitalRead(pin[GPIO_SWT1 +i]);  // set global now so doesn't change the saved power state on first switch check
     }
@@ -2006,6 +2016,8 @@ void setup()
 #endif
   CFG_Load();
   CFG_Delta();
+
+  osw_init();
 
   sysCfg.bootcount++;
   snprintf_P(log, sizeof(log), PSTR("APP: Bootcount %d"), sysCfg.bootcount);
@@ -2073,6 +2085,8 @@ void setup()
 
 void loop()
 {
+  osw_loop();
+  
 #ifdef USE_WEBSERVER
   pollDnsWeb();
 #endif  // USE_WEBSERVER

@@ -1,4 +1,14 @@
-/* 3.9.21 20170224
+/* 3.9.22 20170228
+ * Update web console
+ * Fix Status 4 JSON message
+ * Add Exception info during restart if available
+ * Add osWatch service to detect loop hangs that might happen during (OTA) upgrades
+ * Add WiOn support for relay and switch only (#82, #102)
+ * Allow for user specified relay count up to four in sonoff_template.h (#109)
+ * Add support for HTU21 compatible I2C sensors SI7013, SI7020 and SI7021 (#118)
+ * Add NodeMCU or Wemos configuration option (#119)
+ *
+ * 3.9.21 20170224
  * Add ajax to web root page and web console (#79)
  * Add commands SwitchMode1..4 and enable user switches 2, 3 and 4 (#84, #88)
  * Fix MQTT upgrade when webserver is active

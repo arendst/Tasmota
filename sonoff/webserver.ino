@@ -70,13 +70,22 @@ const char HTTP_HEAD[] PROGMEM =
     "};"
     "x.open('GET','ay'+a,true);"
     "x.send();"
-    "lt=setTimeout(la,2000);"
+    "lt=setTimeout(la,2345);"
   "}"
   "var sn=0;"                    // Scroll position
   "var id=99;"                   // Get most of weblog initially
-  "function l(){"
-    "var e=document.getElementById('t1');"
-    "if(e.scrollTop>=sn){"       // User scrolled back so no updates
+  "function l(p){"               // Console log and command service
+    "var c,o,t;"
+    "clearTimeout(lt);"
+    "o='';"
+    "t=document.getElementById('t1');"
+    "if(p==1){"
+      "c=document.getElementById('c1');"
+      "o='&c1='+c.value;"
+      "c.value='';"
+      "t.scrollTop=sn;"
+    "}"
+    "if(t.scrollTop>=sn){"       // User scrolled back so no updates
       "if(x!=null){x.abort();}"  // Abort if no response within 2 seconds (happens on restart 1)
       "x=new XMLHttpRequest();"
       "x.onreadystatechange=function(){"
@@ -84,25 +93,17 @@ const char HTTP_HEAD[] PROGMEM =
           "var z,d;"
           "d=x.responseXML;"
           "id=d.getElementsByTagName('i')[0].childNodes[0].nodeValue;"
-          "if(d.getElementsByTagName('j')[0].childNodes[0].nodeValue==0){e.value=\"\";}"
+          "if(d.getElementsByTagName('j')[0].childNodes[0].nodeValue==0){t.value='';}"
           "z=d.getElementsByTagName('l')[0].childNodes;"
-          "if(z.length>0){e.value+=z[0].nodeValue;}"
-          "e.scrollTop=99999;"
-          "sn=e.scrollTop;"
+          "if(z.length>0){t.value+=z[0].nodeValue;}"
+          "t.scrollTop=99999;"
+          "sn=t.scrollTop;"
         "}"
       "};"
-      "x.open('GET','ax?c2='+id,true);"
+      "x.open('GET','ax?c2='+id+o,true);"
       "x.send();"
     "}"
-    "setTimeout(l,2000);"
-  "}"
-  "function lc(){"
-    "var e=document.getElementById('c1');"
-//    "if(x!=null){x.abort();}"    // Abort if no response within 2 seconds (happens on restart 1)
-    "var x=new XMLHttpRequest();"
-    "x.open('GET','ax?c1='+e.value+'&c2='+id,true);"
-    "x.send();"
-    "e.value=\"\";"
+    "lt=setTimeout(l,2345);"
     "return false;"
   "}"
   "</script>"
@@ -122,7 +123,7 @@ const char HTTP_HEAD[] PROGMEM =
   "</style>"
   "</head>"
   "<body>"
-  "<div style='text-align:left;display:inline-block;min-width:260px;'>"
+  "<div style='text-align:left;display:inline-block;min-width:320px;'>"
   "<div style='text-align:center;'><h3>{ha} Module</h3><h2>{h}</h2></div>";
 const char HTTP_MSG_RSTRT[] PROGMEM =
   "<br/><div style='text-align:center;'>Device will restart in a few seconds</div><br/>";
@@ -234,12 +235,18 @@ const char HTTP_FORM_UPG[] PROGMEM =
   "<div id='f2' name='f2' style='display:none;text-align:center;'><b>Upload started ...</b></div>";
 const char HTTP_FORM_CMND[] PROGMEM =
   "<br/><textarea readonly id='t1' name='t1' cols='99' wrap='off'></textarea><br/><br/>"
-  "<form method='get' onsubmit='return lc();'>"
+  "<form method='get' onsubmit='return l(1);'>"
   "<input style='width:98%' id='c1' name='c1' length='99' placeholder='Enter command' autofocus><br/>"
 //  "<br/><button type='submit'>Send command</button>"
   "</form>";
 const char HTTP_COUNTER[] PROGMEM =
   "<br/><div id='t' name='t' style='text-align:center;'></div>";
+const char HTTP_SNS_TEMP[] PROGMEM =
+  "<tr><th>%s Temperature</th><td>%s&deg;%c</td></tr>";
+const char HTTP_SNS_HUM[] PROGMEM =
+  "<tr><th>%s Humidity</th><td>%s%</td></tr>";
+const char HTTP_SNS_PRESSURE[] PROGMEM =
+  "<tr><th>%s Pressure</th><td>%s hPa</td></tr>";
 const char HTTP_END[] PROGMEM =
   "</div>"
   "</body>"
@@ -1168,7 +1175,7 @@ void handleAjax()
 {
   if (httpUser()) return;
   char svalue[MESSZ], log[LOGSZ];
-  byte counter = 99;
+  byte cflg = 1, counter = 99;
 
   if (strlen(webServer->arg("c1").c_str())) {
     snprintf_P(svalue, sizeof(svalue), webServer->arg("c1").c_str());
@@ -1189,10 +1196,13 @@ void handleAjax()
   }
   message += F("</j><l>");
   if (counter != logidx) {
-    if (counter == 99) counter = logidx;
+    if (counter == 99) {
+      counter = logidx;
+      cflg = 0;
+    }
     do {
       if (Log[counter].length()) {
-        message += F("\n");
+        if (cflg) message += F("\n"); else cflg = 1;
         message += Log[counter];
       }
       counter++;
@@ -1227,7 +1237,7 @@ void handleInfo()
   page += F("<tr><th>Uptime</th><td>"); page += String(uptime); page += F(" Hours</td></tr>");
   page += F("<tr><th>Flash write count</th><td>"); page += String(sysCfg.saveFlag); page += F("</td></tr>");
   page += F("<tr><th>Boot count</th><td>"); page += String(sysCfg.bootcount); page += F("</td></tr>");
-  page += F("<tr><th>Reset reason</th><td>"); page += ESP.getResetReason(); page += F("</td></tr>");
+  page += F("<tr><th>Reset reason</th><td>"); page += getResetReason(); page += F("</td></tr>");
   for (byte i = 0; i < Maxdevice; i++) {
     page += F("<tr><th>Friendly name ");
     page += i +1;

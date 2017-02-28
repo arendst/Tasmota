@@ -191,14 +191,14 @@ void dsb_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
 String dsb_webPresent()
 {
   // Needs TelePeriod to refresh data (Do not do it here as it takes too much time)
-  char stemp[10], sconv[10];
-  float st;
   String page = "";
+  float st;
   
   if (dsb_readTemp(TEMP_CONVERSION, st)) {        // Check if read failed
-    snprintf_P(sconv, sizeof(sconv), PSTR("&deg;%c"), (TEMP_CONVERSION) ? 'F' : 'C');
+    char stemp[10], sensor[80];
     dtostrf(st, 1, TEMP_RESOLUTION &3, stemp);
-    page += F("<tr><td>DSB Temperature: </td><td>"); page += stemp; page += sconv; page += F("</td></tr>");
+    snprintf_P(sensor, sizeof(sensor), HTTP_SNS_TEMP, "DS18B20", stemp, (TEMP_CONVERSION) ? 'F' : 'C');
+    page += sensor;
   }
   return page;
 }

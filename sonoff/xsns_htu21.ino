@@ -33,6 +33,9 @@
 
 #define HTU21_ADDR          0x40
 
+#define SI7013_CHIPID       0x0D
+#define SI7020_CHIPID       0x14
+#define SI7021_CHIPID       0x15
 #define HTU21_CHIPID        0x32
 
 #define HTU21_READTEMP      0xE3
@@ -48,17 +51,15 @@
 #define HTU21_HEATER_ON     0x04
 #define HTU21_HEATER_OFF    0xFB
 
-#define HTU21_RES_RH12_T14  0x00	// Default
+#define HTU21_RES_RH12_T14  0x00  // Default
 #define HTU21_RES_RH8_T12   0x01
 #define HTU21_RES_RH10_T13  0x80
 #define HTU21_RES_RH11_T11  0x81
 
-#define HTU21_MAX_HUM       16		// 16ms max time
-#define HTU21_MAX_TEMP      50		// 50ms max time
-
 #define HTU21_CRC8_POLYNOM  0x13100
 
 uint8_t htuaddr, htutype = 0;
+uint8_t delayT, delayH = 50;
 char htustype[7];
 
 uint8_t check_crc8(uint16_t data)
@@ -149,7 +150,7 @@ float htu21_readHumidity(void)
   Wire.beginTransmission(HTU21_ADDR);
   Wire.write(HTU21_READHUM);
   if(Wire.endTransmission() != 0) return 0.0; // In case of error
-  delay(HTU21_MAX_HUM);                       // HTU21 time at max resolution
+  delay(delayH);                              // Sensor time at max resolution
 
   Wire.requestFrom(HTU21_ADDR, 3);
   if(3 <= Wire.available())
@@ -163,8 +164,8 @@ float htu21_readHumidity(void)
   sensorval ^= 0x02;      // clear status bits
   humidity = 0.001907 * (float)sensorval - 6;
 
-  if(humidity>100) return 100.0;
-  if(humidity<0) return 0.01;
+  if(humidity > 100) return 100.0;
+  if(humidity < 0) return 0.01;
 
   return humidity;
 }
@@ -178,7 +179,7 @@ float htu21_readTemperature(bool S)
   Wire.beginTransmission(HTU21_ADDR);
   Wire.write(HTU21_READTEMP);
   if(Wire.endTransmission() != 0) return 0.0; // In case of error
-  delay(HTU21_MAX_TEMP);              // HTU21 time at max resolution
+  delay(delayT);                          // Sensor time at max resolution
 
   Wire.requestFrom(HTU21_ADDR, 3);
   if(3 == Wire.available())
@@ -210,11 +211,32 @@ uint8_t htu_detect()
 
   htuaddr = HTU21_ADDR;
   htutype = htu21_readDeviceID();
-  snprintf_P(htustype, sizeof(htustype), PSTR("HTU"));
+  success = htu21_init();
   switch (htutype) {
   case HTU21_CHIPID:
-    success = htu21_init();
-    snprintf_P(htustype, sizeof(htustype), PSTR("HTU21"));
+    strcpy_P(htustype, PSTR("HTU21"));
+    delayT=50;
+    delayH=16;
+    break;
+  case SI7013_CHIPID:
+    strcpy_P(htustype, PSTR("SI7013"));
+    delayT=12;
+    delayH=23;
+    break;
+  case SI7020_CHIPID:
+    strcpy_P(htustype, PSTR("SI7020"));
+    delayT=12;
+    delayH=23;
+    break;
+  case SI7021_CHIPID:
+    strcpy_P(htustype, PSTR("SI7021"));
+    delayT=12;
+    delayH=23;
+    break;
+  default:
+    strcpy_P(htustype, PSTR("T/RH?"));
+    delayT=50;
+    delayH=23;
   }
   if (success) {
     snprintf_P(log, sizeof(log), PSTR("I2C: %s found at address 0x%x"), htustype, htuaddr);
@@ -240,7 +262,8 @@ void htu_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
   h = htu21_compensatedHumidity(h, t);
   dtostrf(t, 1, TEMP_RESOLUTION &3, stemp1);
   dtostrf(h, 1, HUMIDITY_RESOLUTION &3, stemp2);
-  snprintf_P(svalue, ssvalue, PSTR("%s, \"%s\":{\"Temperature\":%s, \"Humidity\":%s}"), svalue, htustype, stemp1, stemp2);
+  snprintf_P(svalue, ssvalue, PSTR("%s, \"%s\":{\"Temperature\":%s, \"Humidity\":%s}"),
+    svalue, htustype, stemp1, stemp2);
   *djson = 1;
 #ifdef USE_DOMOTICZ
   domoticz_sensor2(stemp1, stemp2);
@@ -252,16 +275,17 @@ String htu_webPresent()
 {
   String page = "";
   if (htutype) {
-    char itemp[10], iconv[10];
+    char stemp[10], sensor[128];
 
-    snprintf_P(iconv, sizeof(iconv), PSTR("&deg;%c"), (TEMP_CONVERSION) ? 'F' : 'C');
     float t_htu21 = htu21_readTemperature(TEMP_CONVERSION);
     float h_htu21 = htu21_readHumidity();
     h_htu21 = htu21_compensatedHumidity(h_htu21, t_htu21);
-    dtostrf(t_htu21, 1, TEMP_RESOLUTION &3, itemp);
-    page += F("<tr><td>HTU Temperature: </td><td>"); page += itemp; page += iconv; page += F("</td></tr>");
-    dtostrf(h_htu21, 1, HUMIDITY_RESOLUTION &3, itemp);
-    page += F("<tr><td>HTU Humidity: </td><td>"); page += itemp; page += F("%</td></tr>");
+    dtostrf(t_htu21, 1, TEMP_RESOLUTION &3, stemp);
+    snprintf_P(sensor, sizeof(sensor), HTTP_SNS_TEMP, htustype, stemp, (TEMP_CONVERSION) ? 'F' : 'C');
+    page += sensor;
+    dtostrf(h_htu21, 1, HUMIDITY_RESOLUTION &3, stemp);
+    snprintf_P(sensor, sizeof(sensor), HTTP_SNS_HUM, htustype, stemp);
+    page += sensor;
   }
   return page;
 }
