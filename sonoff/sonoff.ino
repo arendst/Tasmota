@@ -4,7 +4,7 @@
  * ====================================================
  * Prerequisites:
  *   - Change libraries/PubSubClient/src/PubSubClient.h
- *       #define MQTT_MAX_PACKET_SIZE 400
+ *       #define MQTT_MAX_PACKET_SIZE 1400
  *
  *   - Select IDE Tools - Flash size: "1M (64K SPIFFS)"
  * ====================================================
@@ -86,6 +86,28 @@ enum emul_t  {EMUL_NONE, EMUL_WEMO, EMUL_HUE, EMUL_MAX};
 #endif
 #endif  // BE_MINIMAL
 
+#include "support.h"                        // Global support
+#include <Ticker.h>                         // RTC
+#include <ESP8266WiFi.h>                    // MQTT, Ota, WifiManager
+#include <ESP8266HTTPClient.h>              // MQTT, Ota
+#include <ESP8266httpUpdate.h>              // Ota
+#include <PubSubClient.h>                   // MQTT
+#include <ArduinoJson.h>                    // WemoHue, IRremote, Domoticz
+#ifdef USE_WEBSERVER
+  #include <ESP8266WebServer.h>             // WifiManager, Webserver
+  #include <DNSServer.h>                    // WifiManager
+#endif  // USE_WEBSERVER
+#ifdef USE_DISCOVERY
+  #include <ESP8266mDNS.h>                  // MQTT, Webserver
+#endif  // USE_DISCOVERY
+#ifdef USE_SPIFFS
+  #include <FS.h>                           // Config
+#endif  // USE_SPIFFS
+#ifdef USE_I2C
+  #include <Wire.h>                         // I2C support library
+#endif  // USE_I2C
+#include "settings.h"
+
 #ifndef SWITCH_MODE
 #define SWITCH_MODE            TOGGLE       // TOGGLE, FOLLOW or FOLLOW_INV (the wall switch state)
 #endif
@@ -126,7 +148,13 @@ enum emul_t  {EMUL_NONE, EMUL_WEMO, EMUL_HUE, EMUL_MAX};
 
 #define INPUT_BUFFER_SIZE      100          // Max number of characters in serial buffer
 #define TOPSZ                  60           // Max number of characters in topic string
-#define MESSZ                  240          // Max number of characters in JSON message string
+#define MESSZ                  (MQTT_MAX_PACKET_SIZE -TOPSZ -60 -40)          // Max number of characters in JSON message string
+                               // 60 bytes for the IPv4 TCP header, 40 bytes to keep the original 400/240 headroom
+#ifdef MQTT_USE
+#if MESSZ <400  // If the max message size is too small, throw an error at compile time
+#error "MQTT_MAX_PACKET_SIZE is too small in libraries/PubSubClient/src/PubSubClient.h, increase it to at least 560"
+#endif
+#endif
 #define LOGSZ                  128          // Max number of characters in log string
 #ifdef USE_MQTT_TLS
   #define MAX_LOG_LINES        10           // Max number of lines in weblog
@@ -138,28 +166,6 @@ enum emul_t  {EMUL_NONE, EMUL_WEMO, EMUL_HUE, EMUL_MAX};
 #define MAX_STATUS             10           // Max number of status lines
 
 enum butt_t {PRESSED, NOT_PRESSED};
-
-#include "support.h"                        // Global support
-#include <Ticker.h>                         // RTC
-#include <ESP8266WiFi.h>                    // MQTT, Ota, WifiManager
-#include <ESP8266HTTPClient.h>              // MQTT, Ota
-#include <ESP8266httpUpdate.h>              // Ota
-#include <PubSubClient.h>                   // MQTT
-#include <ArduinoJson.h>                    // WemoHue, IRremote, Domoticz
-#ifdef USE_WEBSERVER
-  #include <ESP8266WebServer.h>             // WifiManager, Webserver
-  #include <DNSServer.h>                    // WifiManager
-#endif  // USE_WEBSERVER
-#ifdef USE_DISCOVERY
-  #include <ESP8266mDNS.h>                  // MQTT, Webserver
-#endif  // USE_DISCOVERY
-#ifdef USE_SPIFFS
-  #include <FS.h>                           // Config
-#endif  // USE_SPIFFS
-#ifdef USE_I2C
-  #include <Wire.h>                         // I2C support library
-#endif  // USE_I2C
-#include "settings.h"
 
 typedef void (*rtcCallback)();
 
@@ -504,10 +510,6 @@ void mqtt_connected()
     snprintf_P(svalue, sizeof(svalue), PSTR("{\"Started\":\"%s\"}"),
       (getResetReason() == "Exception") ? ESP.getResetInfo().c_str() : getResetReason().c_str());
     mqtt_publish_topic_P(1, PSTR("INFO3"), svalue);
-    if (sysCfg.mqtt_enabled && (MQTT_MAX_PACKET_SIZE < (TOPSZ+MESSZ))) {
-      snprintf_P(svalue, sizeof(svalue), PSTR("{\"Warning1\":\"Change MQTT_MAX_PACKET_SIZE in libraries/PubSubClient.h to at least %d\"}"), TOPSZ+MESSZ);
-      mqtt_publish_topic_P(1, PSTR("WARNING1"), svalue);
-    }
     if (!spiffsPresent()) {
       snprintf_P(svalue, sizeof(svalue), PSTR("{\"Warning2\":\"No persistent config. Please reflash with at least 16K SPIFFS\"}"));
       mqtt_publish_topic_P(1, PSTR("WARNING2"), svalue);
