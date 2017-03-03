@@ -17,12 +17,18 @@
 #define SAVE_STATE             1                 // [SaveState] Save changed power state to Flash (0 = disable, 1 = enable)
 
 // -- Wifi ----------------------------------------
+//#define USE_STATIC_IP_ADDRESS                    // Enable optional static IP address (Use DHCP by disabling using //)
+  #define WIFI_IP_ADDRESS      192,168,2,72      // IP address
+  #define WIFI_GATEWAY         192,168,2,254     // Gateway IP address
+  #define WIFI_DNS             192,168,2,27      // DNS IP address (might be the same as WIFI_GATEWAY)
+  #define WIFI_SUBNETMASK      255,255,255,0     // Network mask
 #define STA_SSID1              "indebuurt1"      // [Ssid1] Wifi SSID
 #define STA_PASS1              "VnsqrtnrsddbrN"  // [Password1] Wifi password
 #define STA_SSID2              "indebuurt2"      // [Ssid2] Optional alternate AP Wifi SSID
 #define STA_PASS2              "VnsqrtnrsddbrN"  // [Password2] Optional alternate AP Wifi password
 #define WIFI_CONFIG_TOOL       WIFI_WPSCONFIG    // [WifiConfig] Default tool if wifi fails to connect
                                                  //   (WIFI_RESTART, WIFI_SMARTCONFIG, WIFI_MANAGER, WIFI_WPSCONFIG, WIFI_RETRY)
+                                                 
 // -- Syslog --------------------------------------
 #define SYS_LOG_HOST           "domus1"          // [LogHost] (Linux) syslog host
 #define SYS_LOG_PORT           514               // [LogPort] default syslog UDP port
@@ -117,6 +123,7 @@
 #define TEMP_RESOLUTION        1                 // Maximum number of decimals (0 - 3) showing sensor Temperature
 #define HUMIDITY_RESOLUTION    1                 // Maximum number of decimals (0 - 3) showing sensor Humidity
 #define PRESSURE_RESOLUTION    1                 // Maximum number of decimals (0 - 3) showing sensor Pressure
+#define ENERGY_RESOLUTION      3                 // Maximum number of decimals (0 - 5) showing energy usage in kWh
 
 // -- Sensor code selection -----------------------
 //#define USE_DS18x20                              // Optional using OneWire library for multiple DS18B20 and/or DS18S20

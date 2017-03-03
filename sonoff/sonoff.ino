@@ -1,19 +1,21 @@
 /*
- * Sonoff and ElectroDragon by Theo Arends
+ * Sonoff-Tasmota by Theo Arends
  *
  * ====================================================
  * Prerequisites:
  *   - Change libraries/PubSubClient/src/PubSubClient.h
- *       #define MQTT_MAX_PACKET_SIZE 400
+ *       #define MQTT_MAX_PACKET_SIZE 512
  *
  *   - Select IDE Tools - Flash size: "1M (64K SPIFFS)"
  * ====================================================
 */
 
-#define VERSION                0x03091600   // 3.9.22
-
-//#define BE_MINIMAL                          // Compile a minimal version if upgrade memory gets tight (still 404k)
-                                            // To be used as step 1. Next step is compile and use desired version
+//#define ALLOW_MIGRATE_TO_V3
+#ifdef ALLOW_MIGRATE_TO_V3
+  #define VERSION              0x03091700   // 3.9.23
+#else
+  #define VERSION              0x04000000   // 4.0.0
+#endif  // ALLOW_MIGRATE_TO_V3
 
 enum log_t   {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG_MORE, LOG_LEVEL_ALL};
 enum week_t  {Last, First, Second, Third, Fourth};
@@ -34,6 +36,8 @@ enum emul_t  {EMUL_NONE, EMUL_WEMO, EMUL_HUE, EMUL_MAX};
 \*********************************************************************************************/
 
 //#define USE_SPIFFS                          // Switch persistent configuration from flash to spiffs (+24k code, +0.6k mem)
+//#define BE_MINIMAL                          // Compile a minimal version if upgrade memory gets tight (-45k code, -2k mem)
+                                            // To be used as step 1. Next step is compile and use desired version
 
 /*********************************************************************************************\
  * No user configurable items below
@@ -126,7 +130,6 @@ enum emul_t  {EMUL_NONE, EMUL_WEMO, EMUL_HUE, EMUL_MAX};
 
 #define INPUT_BUFFER_SIZE      100          // Max number of characters in serial buffer
 #define TOPSZ                  60           // Max number of characters in topic string
-#define MESSZ                  240          // Max number of characters in JSON message string
 #define LOGSZ                  128          // Max number of characters in log string
 #ifdef USE_MQTT_TLS
   #define MAX_LOG_LINES        10           // Max number of lines in weblog
@@ -140,11 +143,18 @@ enum emul_t  {EMUL_NONE, EMUL_WEMO, EMUL_HUE, EMUL_MAX};
 enum butt_t {PRESSED, NOT_PRESSED};
 
 #include "support.h"                        // Global support
+#include <PubSubClient.h>                   // MQTT
+
+#define MESSZ                 352           // Max number of characters in JSON message string
+#if (MQTT_MAX_PACKET_SIZE -TOPSZ -60 -40) < MESSZ  // If the max message size is too small, throw an error at compile time
+                                            // 60 bytes for the IPv4 TCP header, 40 bytes to keep the original 400/240 headroom
+  #error "MQTT_MAX_PACKET_SIZE is too small in libraries/PubSubClient/src/PubSubClient.h, increase it to at least 512"
+#endif
+
 #include <Ticker.h>                         // RTC
 #include <ESP8266WiFi.h>                    // MQTT, Ota, WifiManager
 #include <ESP8266HTTPClient.h>              // MQTT, Ota
 #include <ESP8266httpUpdate.h>              // Ota
-#include <PubSubClient.h>                   // MQTT
 #include <ArduinoJson.h>                    // WemoHue, IRremote, Domoticz
 #ifdef USE_WEBSERVER
   #include <ESP8266WebServer.h>             // WifiManager, Webserver
@@ -200,6 +210,13 @@ struct TimeChangeRule
 
 TimeChangeRule myDST = { TIME_DST };  // Daylight Saving Time
 TimeChangeRule mySTD = { TIME_STD };  // Standard Time
+
+#ifdef USE_STATIC_IP_ADDRESS
+const uint8_t ipadd[4] = { WIFI_IP_ADDRESS }; // Static ip
+const uint8_t ipgat[4] = { WIFI_GATEWAY };    // Local router gateway ip
+const uint8_t ipdns[4] = { WIFI_DNS };        // DNS ip
+const uint8_t ipsub[4] = { WIFI_SUBNETMASK }; // Subnetmask
+#endif  // USE_STATIC_IP_ADDRESS
 
 int Baudrate = APP_BAUDRATE;          // Serial interface baud rate
 byte SerialInByte;                    // Received byte
@@ -504,13 +521,9 @@ void mqtt_connected()
     snprintf_P(svalue, sizeof(svalue), PSTR("{\"Started\":\"%s\"}"),
       (getResetReason() == "Exception") ? ESP.getResetInfo().c_str() : getResetReason().c_str());
     mqtt_publish_topic_P(1, PSTR("INFO3"), svalue);
-    if (sysCfg.mqtt_enabled && (MQTT_MAX_PACKET_SIZE < (TOPSZ+MESSZ))) {
-      snprintf_P(svalue, sizeof(svalue), PSTR("{\"Warning1\":\"Change MQTT_MAX_PACKET_SIZE in libraries/PubSubClient.h to at least %d\"}"), TOPSZ+MESSZ);
-      mqtt_publish_topic_P(1, PSTR("WARNING1"), svalue);
-    }
     if (!spiffsPresent()) {
-      snprintf_P(svalue, sizeof(svalue), PSTR("{\"Warning2\":\"No persistent config. Please reflash with at least 16K SPIFFS\"}"));
-      mqtt_publish_topic_P(1, PSTR("WARNING2"), svalue);
+      snprintf_P(svalue, sizeof(svalue), PSTR("{\"Warning1\":\"No persistent config. Please reflash with at least 16K SPIFFS\"}"));
+      mqtt_publish_topic_P(1, PSTR("WARNING1"), svalue);
     }
     if (sysCfg.tele_period) tele_period = sysCfg.tele_period -9;
     status_update_timer = 2;
@@ -787,7 +800,7 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
       snprintf_P(svalue, sizeof(svalue), PSTR("{\"Sleep\":\"%d%s (%d%s)\"}"), sleep, (sysCfg.value_units) ? " mS" : "", sysCfg.sleep, (sysCfg.value_units) ? " mS" : "");
     }
     else if (!strcmp(type,"FLASHCHIPMODE")) {
-      if ((data_len > 0) && (payload >= 2) && (payload <= 3)) {
+      if ((data_len > 0) && (payload >= 0) && (payload <= 3)) {
         if (ESP.getFlashChipMode() != payload) setFlashChipMode(0, payload &3);
       }
       snprintf_P(svalue, sizeof(svalue), PSTR("{\"FlashChipMode\":%d}"), ESP.getFlashChipMode());

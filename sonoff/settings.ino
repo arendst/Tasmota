@@ -114,9 +114,11 @@ extern "C" {
 #define SPIFFS_START        ((uint32_t)&_SPIFFS_start - 0x40200000) / SPI_FLASH_SEC_SIZE
 #define SPIFFS_END          ((uint32_t)&_SPIFFS_end - 0x40200000) / SPI_FLASH_SEC_SIZE
 
-// Version 2.x config
-#define SPIFFS_CONFIG2      "/config.ini"
-#define CFG_LOCATION2       SPIFFS_END - 2
+#ifdef ALLOW_MIGRATE_TO_V3
+  // Version 2.x config
+  #define SPIFFS_CONFIG2      "/config.ini"
+  #define CFG_LOCATION2       SPIFFS_END - 2
+#endif  // ALLOW_MIGRATE_TO_V3
 
 // Version 3.x config
 #define SPIFFS_CONFIG       "/cfg.ini"
@@ -247,6 +249,7 @@ void CFG_Load()
       addLog(LOG_LEVEL_DEBUG, log);
     }
   }
+#ifdef ALLOW_MIGRATE_TO_V3
 //  snprintf_P(log, sizeof(log), PSTR("Config: Check 1 for migration (%08X)"), sysCfg.version);
 //  addLog(LOG_LEVEL_NONE, log);
   if (sysCfg.cfg_holder != CFG_HOLDER) {
@@ -256,11 +259,15 @@ void CFG_Load()
       CFG_Default();
     }
   }
+#else
+  if (sysCfg.cfg_holder != CFG_HOLDER) CFG_Default();
+#endif  // ALLOW_MIGRATE_TO_V3
   _cfgHash = getHash();
 
   RTC_Load();
 }
 
+#ifdef ALLOW_MIGRATE_TO_V3
 void CFG_Migrate()
 {
   char log[LOGSZ];
@@ -304,6 +311,7 @@ void CFG_Migrate()
   }
   _cfgHash = getHash();
 }
+#endif  // ALLOW_MIGRATE_TO_V3
 
 void CFG_Erase()
 {
@@ -532,6 +540,7 @@ void CFG_Default()
   CFG_Save();
 }
 
+#ifdef ALLOW_MIGRATE_TO_V3
 void CFG_Migrate_Part2()
 {
   addLog_P(LOG_LEVEL_NONE, PSTR("Config: Migrating configuration"));
@@ -640,6 +649,7 @@ void CFG_Migrate_Part2()
   }
   CFG_Save();
 }
+#endif  // ALLOW_MIGRATE_TO_V3
 
 /********************************************************************************************/
 

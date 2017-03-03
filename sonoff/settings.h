@@ -2,6 +2,7 @@
  * Config settings
 \*********************************************************************************************/
 
+#ifdef ALLOW_MIGRATE_TO_V3
 struct SYSCFG2 {      // Version 2.x (old)
   unsigned long cfg_holder;
   unsigned long saveFlag;
@@ -69,16 +70,17 @@ struct SYSCFG2 {      // Version 2.x (old)
   char          sta_pwd2[65];
 
 } sysCfg2;
+#endif  // ALLOW_MIGRATE_TO_V3
 
 struct SYSCFG {
   unsigned long cfg_holder;
   unsigned long saveFlag;
   unsigned long version;
   unsigned long bootcount;
-  byte          migflg;
+  byte          migflg;  // Not used since 3.9.1
   int16_t       savedata;
   byte          savestate;
-  byte          model;
+  byte          model;  // Not used since 3.9.1
   int8_t        timezone;
   char          otaUrl[101];
   char          ex_friendlyname[33];  // Not used since 3.2.5 - see below
@@ -158,7 +160,7 @@ struct SYSCFG {
   uint8_t       ws_speed;
   uint8_t       ws_scheme;
   uint8_t       ws_width;
-  uint16_t      ws_wakeup;  
+  uint16_t      ws_wakeup;
 
   char          friendlyname[4][33];
   char          switch_topic[33];

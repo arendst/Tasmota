@@ -27,6 +27,9 @@ POSSIBILITY OF SUCH DAMAGE.
  * Sonoff Led
 \*********************************************************************************************/
 
+#define ANALOG_WRITE_RANGE  255  // 127..1023 but as Color is addressed by 8 bits it should be 255 for my code
+#define ANALOG_WRITE_FREQ   432  // 100..1000 Hz led refresh 
+
 uint8_t ledTable[] = {
     0,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,
     1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,
@@ -87,8 +90,8 @@ void sl_setDim(uint8_t myDimmer)
 
 void sl_init(void)
 {
-  analogWriteRange(255);  // Default is 1023 (Arduino.h)
-  analogWriteFreq(200);   // Default is 1000 (core_esp8266_wiring_pwm.c) - Try to lower flicker
+  analogWriteRange(ANALOG_WRITE_RANGE);  // Default is 1023 (Arduino.h)
+  analogWriteFreq(ANALOG_WRITE_FREQ);    // Default is 1000 (core_esp8266_wiring_pwm.c) - Try to lower flicker
   sl_blankv = 0;
   sl_power = 0;
   sl_any = 0;

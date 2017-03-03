@@ -528,8 +528,8 @@ void hlw_mqttStat(byte option, char* svalue, uint16_t ssvalue)
   uint16_t pe, pw, pu;
 
   hlw_readEnergy(option, ped, pe, pw, pu, pi, pc);
-  dtostrf((float)sysCfg.hlw_kWhyesterday / 100000000, 1, 3, stemp0);
-  dtostrf(ped, 1, 3, stemp1);
+  dtostrf((float)sysCfg.hlw_kWhyesterday / 100000000, 1, ENERGY_RESOLUTION &7, stemp0);
+  dtostrf(ped, 1, ENERGY_RESOLUTION &7, stemp1);
   dtostrf(pc, 1, 2, stemp2);
   dtostrf(pi, 1, 3, stemp3);
   snprintf_P(speriod, sizeof(speriod), PSTR(", \"Period\":%d"), pe);
@@ -582,8 +582,8 @@ String hlw_webPresent()
 
   dtostrf(pi, 1, 3, stemp);
   dtostrf(pc, 1, 2, stemp2);
-  dtostrf(ped, 1, 3, stemp3);
-  dtostrf((float)sysCfg.hlw_kWhyesterday / 100000000, 1, 3, stemp4);
+  dtostrf(ped, 1, ENERGY_RESOLUTION &7, stemp3);
+  dtostrf((float)sysCfg.hlw_kWhyesterday / 100000000, 1, ENERGY_RESOLUTION &7, stemp4);
   snprintf_P(sensor, sizeof(sensor), HTTP_ENERGY_SNS, pu, stemp, pw, stemp2, stemp3, stemp4);
   page += sensor;
   return page;

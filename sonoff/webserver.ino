@@ -182,7 +182,7 @@ const char HTTP_FORM_LOG1[] PROGMEM =
   "<fieldset><legend><b>&nbsp;Logging parameters&nbsp;</b></legend><form method='post' action='sv'>"
   "<input id='w' name='w' value='3' hidden><input id='r' name='r' value='0' hidden>";
 const char HTTP_FORM_LOG2[] PROGMEM =
-  "<br/><b>{b0} level</b> ({b1})<br/><select id='{b2}' name='{b2}'>"
+  "<br/><b>{b0}log level</b> ({b1})<br/><select id='{b2}' name='{b2}'>"
   "<option{a0value='0'>0 None</option>"
   "<option{a1value='1'>1 Error</option>"
   "<option{a2value='2'>2 Info</option>"
@@ -389,6 +389,7 @@ void handleRoot()
   if (_httpflag == HTTP_MANAGER) {
     handleWifi0();
   } else {
+    char stemp[10], line[100];
     String page = FPSTR(HTTP_HEAD);
     page.replace("{v}", "Main menu");
     page.replace("<body>", "<body onload='la()'>");
@@ -397,16 +398,10 @@ void handleRoot()
     if (Maxdevice) {
       page += F("<table style='width:100%'><tr>");
       for (byte idx = 1; idx <= Maxdevice; idx++) {
-        page += F("<td style='width:");
-        page += String(100 / Maxdevice);
-        page += F("%'><button onclick='la(");
-        page += String(idx);
-        page += F(");'>Toggle");
-        if (Maxdevice > 1) {
-          page += F(" ");
-          page += String(idx);
-        }
-        page += F("</button></td>");
+        snprintf_P(stemp, sizeof(stemp), PSTR(" %d"), idx);
+        snprintf_P(line, sizeof(line), PSTR("<td style='width:%d%'><button onclick='la(%d);'>Toggle%s</button></td>"),
+          100 / Maxdevice, idx, (Maxdevice > 1) ? stemp : "");
+        page += line;
       }
       page += F("</tr></table>");
     }
@@ -450,13 +445,19 @@ void handleAjax2()
     page += tpage;
     page += F("</table>");
   }
+  char line[120];
   if (Maxdevice) {
     page += F("<table style='width:100%'><tr>");
     for (byte idx = 1; idx <= Maxdevice; idx++) {
+/*      
       page += F("<td style='width:{1%'><div style='text-align:center;font-weight:bold;font-size:{2px'>{3</div></td>");
       page.replace("{1", String(100 / Maxdevice));
       page.replace("{2", String(70 - (Maxdevice * 8)));
       page.replace("{3", (power & (0x01 << (idx -1))) ? "ON" : "OFF");
+*/
+      snprintf_P(line, sizeof(line), PSTR("<td style='width:%d%'><div style='text-align:center;font-weight:bold;font-size:%dpx'>%s</div></td>"),
+        100 / Maxdevice, 70 - (Maxdevice * 8), (power & (0x01 << (idx -1))) ? "ON" : "OFF");
+      page += line;
     }
     page += F("</tr></table>");
   }
@@ -490,7 +491,7 @@ void handleConfig()
 void handleModule()
 {
   if (httpUser()) return;
-  char stemp[20];
+  char stemp[20], line[128];
   
   addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Handle Module config"));
 
@@ -501,11 +502,11 @@ void handleModule()
   snprintf_P(stemp, sizeof(stemp), modules[MODULE].name);
   page.replace("{mt}", stemp);
 
-  for (byte i = 0; i < MAXMODULE; i++) {
-    page += F("<option ");
-    if (i == sysCfg.module) page += F("selected ");
+  for (byte i = 0; i < MAXMODULE; i++) {  
     snprintf_P(stemp, sizeof(stemp), modules[i].name);
-    page += F("value='"); page += String(i); page += F("'>"); page += String(i +1); page += F(" "); page += stemp; page += F("</option>");
+    snprintf_P(line, sizeof(line), PSTR("<option%s value='%d'>%d %s</option>"),
+      (i == sysCfg.module) ? " selected" : "", i, i +1, stemp);
+    page += line;
   }
   page += F("</select></br>");
 
@@ -513,14 +514,13 @@ void handleModule()
   memcpy_P(&cmodule, &modules[sysCfg.module], sizeof(cmodule));
   for (byte i = 0; i < MAX_GPIO_PIN; i++) {
     if (cmodule.gp.io[i] == GPIO_USER) {
-      page += F("<br/><b>GPIO"); page += String(i); page += F("</b> <select id='g"); page += String(i); page += F("' name='g"); page += String(i); page += F("'>");
+      snprintf_P(line, sizeof(line), PSTR("<br/><b>GPIO%d</b><select id='g%d' name='g%d'>"), i, i, i);
+      page += line;
       for (byte j = 0; j < GPIO_SENSOR_END; j++) {
-        page += F("<option ");
-        if (j == my_module.gp.io[i]) page += F("selected ");
-        page += F("value='"); page += String(j); page += F("'>");
-        page += String(j); page += F(" ");
         snprintf_P(stemp, sizeof(stemp), sensors[j]);
-        page += stemp;  page += F("</option>");
+        snprintf_P(line, sizeof(line), PSTR("<option%s value='%d'>%d %s</option>"),
+          (j == my_module.gp.io[i]) ? " selected" : "", j, j, stemp);
+        page += line;
       }
       page += F("</select></br>");
     }
@@ -673,7 +673,7 @@ void handleLog()
     page += FPSTR(HTTP_FORM_LOG2);
     switch (idx) {
     case 0:
-      page.replace("{b0}", "Serial log");
+      page.replace("{b0}", F("Serial "));
       page.replace("{b1}", STR(SERIAL_LOG_LEVEL));
       page.replace("{b2}", "ls");
       for (byte i = LOG_LEVEL_NONE; i < LOG_LEVEL_ALL; i++) {
@@ -681,7 +681,7 @@ void handleLog()
       }
       break;
     case 1:
-      page.replace("{b0}", "Web log");
+      page.replace("{b0}", F("Web "));
       page.replace("{b1}", STR(WEB_LOG_LEVEL));
       page.replace("{b2}", "lw");
       for (byte i = LOG_LEVEL_NONE; i < LOG_LEVEL_ALL; i++) {
@@ -689,7 +689,7 @@ void handleLog()
       }
       break;
     case 2:
-      page.replace("{b0}", "Syslog");
+      page.replace("{b0}", F("Sys"));
       page.replace("{b1}", STR(SYS_LOG_LEVEL));
       page.replace("{b2}", "ll");
       for (byte i = LOG_LEVEL_NONE; i < LOG_LEVEL_ALL; i++) {
@@ -750,11 +750,10 @@ void handleDownload()
 
   WiFiClient myClient = webServer->client();
   webServer->setContentLength(4096);
-  String attachment = F("attachment; filename=Config_");
-  attachment += sysCfg.friendlyname[0];
-  attachment += F("_");
-  attachment += Version;
-  attachment += F(".dmp");
+
+  char attachment[100];
+  snprintf_P(attachment, sizeof(attachment), PSTR("attachment; filename=Config_%s_%s.dmp"),
+    sysCfg.friendlyname[0], Version);
   webServer->sendHeader("Content-Disposition", attachment);
   webServer->send(200, "application/octet-stream", "");
   memcpy(buffer, &sysCfg, sizeof(sysCfg));
@@ -950,7 +949,7 @@ void handleUploadDone()
   if (httpUser()) return;
   addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: File upload done"));
 
-  char log[LOGSZ];
+  char error[80], log[LOGSZ];
   WIFI_configCounter();
   restartflag = 0;
   mqttcounter = 0;
@@ -960,35 +959,25 @@ void handleUploadDone()
   page += F("<div style='text-align:center;'><b>Upload ");
   if (_uploaderror) {
     page += F("<font color='red'>failed</font></b><br/><br/>");
-    String error = "";
-    if (_uploaderror == 1) {
-      error = F("No file selected");
-    } else if (_uploaderror == 2) {
-      error = F("File size is larger than available free space");
-    } else if (_uploaderror == 3) {
-      error = F("File magic header does not start with 0xE9");
-    } else if (_uploaderror == 4) {
-      error = F("File flash size is larger than device flash size");
-    } else if (_uploaderror == 5) {
-      error = F("File upload buffer miscompare");
-    } else if (_uploaderror == 6) {
-      error = F("Upload failed. Enable logging option 3 for more information");
-    } else if (_uploaderror == 7) {
-      error = F("Upload aborted");
-    } else if (_uploaderror == 8) {
-      error = F("Invalid configuration file");
-    } else if (_uploaderror == 9) {
-      error = F("Configuration file too large");
-    } else {
-      error = F("Upload error code ");
-      error += String(_uploaderror);
+    switch (_uploaderror) {
+      case 1: strcpy_P(error, PSTR("No file selected")); break;
+      case 2: strcpy_P(error, PSTR("File size is larger than available free space")); break;
+      case 3: strcpy_P(error, PSTR("File magic header does not start with 0xE9")); break;
+      case 4: strcpy_P(error, PSTR("File flash size is larger than device flash size")); break;
+      case 5: strcpy_P(error, PSTR("File upload buffer miscompare")); break;
+      case 6: strcpy_P(error, PSTR("Upload failed. Enable logging option 3 for more information")); break;
+      case 7: strcpy_P(error, PSTR("Upload aborted")); break;
+      case 8: strcpy_P(error, PSTR("Invalid configuration file")); break;
+      case 9: strcpy_P(error, PSTR("Configuration file too large")); break;
+      default:
+        snprintf_P(error, sizeof(error), PSTR("Upload error code %d"), _uploaderror);
     }
     page += error;
     if (!_uploadfiletype && Update.hasError()) {
       page += F("<br/><br/>Update error code (see Updater.cpp) ");
       page += String(Update.getError());
     }
-    snprintf_P(log, sizeof(log), PSTR("Upload: Error - %s"), error.c_str());
+    snprintf_P(log, sizeof(log), PSTR("Upload: Error - %s"), error);
     addLog(LOG_LEVEL_DEBUG, log);
     sl_blank(0);
   } else {
@@ -1124,7 +1113,10 @@ void handleCmnd()
     byte curridx = logidx;
     if (strlen(webServer->arg("cmnd").c_str())) {
       snprintf_P(svalue, sizeof(svalue), webServer->arg("cmnd").c_str());
+      byte syslog_now = syslog_level;
+      syslog_level = 0;  // Disable UDP syslog to not trigger hardware WDT
       do_cmnd(svalue);
+      syslog_level = syslog_now;
     }
 
     if (logidx != curridx) {
@@ -1181,7 +1173,10 @@ void handleAjax()
     snprintf_P(svalue, sizeof(svalue), webServer->arg("c1").c_str());
     snprintf_P(log, sizeof(log), PSTR("CMND: %s"), svalue);
     addLog(LOG_LEVEL_INFO, log);
+    byte syslog_now = syslog_level;
+    syslog_level = 0;  // Disable UDP syslog to not trigger hardware WDT
     do_cmnd(svalue);
+    syslog_level = syslog_now;
   }
   
   if (strlen(webServer->arg("c2").c_str())) counter = atoi(webServer->arg("c2").c_str());

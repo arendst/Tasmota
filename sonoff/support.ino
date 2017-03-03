@@ -285,6 +285,9 @@ void WIFI_begin(uint8_t flag)
     sysCfg.sta_active ^= 1;
   }        // 3: Current AP
   if (strlen(sysCfg.sta_ssid[1]) == 0) sysCfg.sta_active = 0;
+#ifdef USE_STATIC_IP_ADDRESS
+  WiFi.config(ipadd, ipgat, ipsub, ipdns);  // Set static IP
+#endif  // USE_STATIC_IP_ADDRESS
   WiFi.begin(sysCfg.sta_ssid[sysCfg.sta_active], sysCfg.sta_pwd[sysCfg.sta_active]);
   snprintf_P(log, sizeof(log), PSTR("Wifi: Connecting to AP%d %s in mode 11%c as %s..."),
     sysCfg.sta_active +1, sysCfg.sta_ssid[sysCfg.sta_active], PhyMode[WiFi.getPhyMode() & 0x3], Hostname);

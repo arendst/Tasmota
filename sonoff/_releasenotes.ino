@@ -1,4 +1,14 @@
-/* 3.9.22 20170228
+/* 4.0.0 20170303
+ * Add define to remove config migration code for versions below 3.0 (See Wiki-Upgrade-Migration path)
+ * Free memory by switching from String to char[]
+ * Raised Sonoff Led PWM frequency from 200Hz to 432Hz in search of stability (hardware watchdog timeouts) (#122)
+ * Increase message size and suggested minimum MQTT_MAX_PACKET_SIZE to 512 (#114, #124)
+ * Remove runtime warning message regarding MQTT_MAX_PACKET_SIZE too small as it is now moved to compile time (#124)
+ * Fix possible panics with web console and http commands while UDP syslog is active (#127)
+ * Add optional static IP address (#129)
+ * Add define ENERGY_RESOLUTION in user_config.h to allow user control over precision (#136)
+ *
+ * 3.9.22 20170228
  * Update web console
  * Fix Status 4 JSON message
  * Add Exception info during restart if available
