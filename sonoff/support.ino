@@ -807,7 +807,7 @@ void rtc_init(rtcCallback cb)
 
 void syslog(const char *message)
 {
-  char str[TOPSZ+MESSZ];
+  char str[TOPSZ + MESSZ];
 
   if (portUDP.beginPacket(sysCfg.syslog_host, sysCfg.syslog_port)) {
     snprintf_P(str, sizeof(str), PSTR("%s ESP-%s"), Hostname, message);
@@ -835,12 +835,13 @@ void addLog(byte loglevel, const char *line)
     if (logidx > MAX_LOG_LINES -1) logidx = 0;
   }
 #endif  // USE_WEBSERVER
+//  if (sysCfg.emulation) return;  // Disable syslog (UDP) when emulation using UDP is selected
   if ((WiFi.status() == WL_CONNECTED) && (loglevel <= syslog_level)) syslog(line);
 }
 
 void addLog_P(byte loglevel, const char *formatP)
 {
-  char mess[MESSZ];
+  char mess[LOGSZ];  // was MESSZ
 
   snprintf_P(mess, sizeof(mess), formatP);
   addLog(loglevel, mess);

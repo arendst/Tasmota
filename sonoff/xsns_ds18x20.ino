@@ -200,6 +200,8 @@ String ds18x20_webPresent()
       page += sensor;
     }
   }
+  ds18x20_search();      // Check for changes in sensors number
+  ds18x20_convert();     // Start Conversion, takes up to one second
   return page;
 }
 #endif  // USE_WEBSERVER

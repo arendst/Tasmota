@@ -275,7 +275,7 @@ String htu_webPresent()
 {
   String page = "";
   if (htutype) {
-    char stemp[10], sensor[128];
+    char stemp[10], sensor[80];
 
     float t_htu21 = htu21_readTemperature(TEMP_CONVERSION);
     float h_htu21 = htu21_readHumidity();

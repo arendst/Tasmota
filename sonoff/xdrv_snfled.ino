@@ -122,7 +122,8 @@ void sl_setPower(uint8_t power)
 
 void sl_animate()
 {
-  char svalue[MESSZ];
+// {"Wakeup":"Done"}
+  char svalue[32];  // was MESSZ
   uint8_t fadeValue;
   
   if ((sl_power == 0) || sl_blankv) {  // Power Off

@@ -30,6 +30,8 @@ POSSIBILITY OF SUCH DAMAGE.
  * Source: Marinus vd Broek https://github.com/ESP8266nu/ESPEasy and AlexTransit (CRC)
 \*********************************************************************************************/
 
+float dsb_mt = 0;
+
 uint8_t dsb_reset()
 {
   uint8_t r;
@@ -131,11 +133,15 @@ boolean dsb_readTemp(bool S, float &t)
   int16_t DSTemp;
   byte msb, lsb, crc;
 
-  t = NAN;
+  if (!dsb_mt) {
+    t = NAN;
+  } else {
+    t = dsb_mt;
+  }
 
   if (!dsb_read_bit()) {     //check measurement end
     addLog_P(LOG_LEVEL_DEBUG, PSTR("DSB: Sensor busy"));
-    return false;
+    return !isnan(t);
   }
 /*
   dsb_reset();
@@ -165,6 +171,7 @@ boolean dsb_readTemp(bool S, float &t)
     t = (float(DSTemp) * 0.0625);
     if(S) t = dsb_convertCtoF(t);
   }
+  if (!isnan(t)) dsb_mt = t;
   return !isnan(t);
 }
 
@@ -177,7 +184,7 @@ void dsb_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
   char stemp1[10];
   float t;
 
-  if (dsb_readTemp(TEMP_CONVERSION, t)) {                 // Check if read failed
+  if (dsb_readTemp(TEMP_CONVERSION, t)) {  // Check if read failed
     dtostrf(t, 1, TEMP_RESOLUTION &3, stemp1);
     snprintf_P(svalue, ssvalue, PSTR("%s, \"DS18B20\":{\"Temperature\":%s}"), svalue, stemp1);
     *djson = 1;
@@ -194,12 +201,13 @@ String dsb_webPresent()
   String page = "";
   float st;
   
-  if (dsb_readTemp(TEMP_CONVERSION, st)) {        // Check if read failed
+  if (dsb_readTemp(TEMP_CONVERSION, st)) {  // Check if read failed
     char stemp[10], sensor[80];
     dtostrf(st, 1, TEMP_RESOLUTION &3, stemp);
     snprintf_P(sensor, sizeof(sensor), HTTP_SNS_TEMP, "DS18B20", stemp, (TEMP_CONVERSION) ? 'F' : 'C');
     page += sensor;
   }
+  dsb_readTempPrep();
   return page;
 }
 #endif  // USE_WEBSERVER

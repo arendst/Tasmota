@@ -282,7 +282,7 @@ void hlw_setPowerSteadyCounter(byte value)
 
 void hlw_margin_chk()
 {
-  char log[LOGSZ], svalue[MESSZ];
+  char log[LOGSZ], svalue[200];  // was MESSZ
   float ped, pi, pc;
   uint16_t uped, piv, pe, pw, pu;
   byte flag, jsonflg;
@@ -543,7 +543,8 @@ void hlw_mqttStat(byte option, char* svalue, uint16_t ssvalue)
 
 void hlw_mqttPresent()
 {
-  char svalue[MESSZ];
+// {"Time":"2017-03-04T13:37:24", "Yesterday":0.013, "Today":0.000, "Period":0, "Power":0, "Factor":0.00, "Voltage":0, "Current":0.000}
+  char svalue[200];  // was MESSZ
 
   snprintf_P(svalue, sizeof(svalue), PSTR("{\"Time\":\"%04d-%02d-%02dT%02d:%02d:%02d\", "),
     rtcTime.Year, rtcTime.Month, rtcTime.Day, rtcTime.Hour, rtcTime.Minute, rtcTime.Second);

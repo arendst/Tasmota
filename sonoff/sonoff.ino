@@ -12,9 +12,9 @@
 
 //#define ALLOW_MIGRATE_TO_V3
 #ifdef ALLOW_MIGRATE_TO_V3
-  #define VERSION              0x03091700   // 3.9.23
+  #define VERSION              0x03091800   // 3.9.24
 #else
-  #define VERSION              0x04000000   // 4.0.0
+  #define VERSION              0x04000100   // 4.0.1
 #endif  // ALLOW_MIGRATE_TO_V3
 
 enum log_t   {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG_MORE, LOG_LEVEL_ALL};
@@ -36,8 +36,6 @@ enum emul_t  {EMUL_NONE, EMUL_WEMO, EMUL_HUE, EMUL_MAX};
 \*********************************************************************************************/
 
 //#define USE_SPIFFS                          // Switch persistent configuration from flash to spiffs (+24k code, +0.6k mem)
-//#define BE_MINIMAL                          // Compile a minimal version if upgrade memory gets tight (-45k code, -2k mem)
-                                            // To be used as step 1. Next step is compile and use desired version
 
 /*********************************************************************************************\
  * No user configurable items below
@@ -52,9 +50,9 @@ enum emul_t  {EMUL_NONE, EMUL_WEMO, EMUL_HUE, EMUL_MAX};
 //#define DEBUG_THEO                          // Add debug code
 
 #ifdef BE_MINIMAL
-//#ifdef USE_MQTT_TLS
-//#undef USE_MQTT_TLS                       // Disable TLS support won't work as the MQTTHost is not set
-//#endif
+#ifdef USE_MQTT_TLS
+#undef USE_MQTT_TLS                         // Disable TLS support won't work as the MQTTHost is not set
+#endif
 #ifdef USE_DISCOVERY
 #undef USE_DISCOVERY                        // Disable Discovery services for both MQTT and web server
 #endif
@@ -145,10 +143,10 @@ enum butt_t {PRESSED, NOT_PRESSED};
 #include "support.h"                        // Global support
 #include <PubSubClient.h>                   // MQTT
 
-#define MESSZ                 352           // Max number of characters in JSON message string
-#if (MQTT_MAX_PACKET_SIZE -TOPSZ -60 -40) < MESSZ  // If the max message size is too small, throw an error at compile time
-                                            // 60 bytes for the IPv4 TCP header, 40 bytes to keep the original 400/240 headroom
-  #error "MQTT_MAX_PACKET_SIZE is too small in libraries/PubSubClient/src/PubSubClient.h, increase it to at least 512"
+#define MESSZ                  360          // Max number of characters in JSON message string (4 x DS18x20 sensors)
+#if (MQTT_MAX_PACKET_SIZE -TOPSZ -7) < MESSZ  // If the max message size is too small, throw an error at compile time
+                                            // See pubsubclient.c line 359
+  #error "MQTT_MAX_PACKET_SIZE is too small in libraries/PubSubClient/src/PubSubClient.h, increase it to at least 427"
 #endif
 
 #include <Ticker.h>                         // RTC
@@ -415,7 +413,7 @@ void json2legacy(char* stopic, char* svalue)
 
 void mqtt_publish_sec(const char* topic, const char* data, boolean retained)
 {
-  char log[TOPSZ+MESSZ];
+  char log[TOPSZ + MESSZ];
 
   if (sysCfg.mqtt_enabled) {
     if (mqttClient.publish(topic, data, retained)) {
@@ -459,7 +457,7 @@ void mqtt_publish_topic_P(uint8_t prefix, const char* subtopic, const char* data
 
 void mqtt_publishPowerState(byte device)
 {
-  char stopic[TOPSZ], svalue[MESSZ], sdevice[10];
+  char stopic[TOPSZ], sdevice[10], svalue[64];  // was MESSZ
 
   if ((device < 1) || (device > Maxdevice)) device = 1;
   snprintf_P(sdevice, sizeof(sdevice), PSTR("%d"), device);
@@ -473,7 +471,7 @@ void mqtt_publishPowerState(byte device)
 
 void mqtt_publishPowerBlinkState(byte device)
 {
-  char svalue[MESSZ], sdevice[10];
+  char sdevice[10], svalue[64];  // was MESSZ
 
   if ((device < 1) || (device > Maxdevice)) device = 1;
   snprintf_P(sdevice, sizeof(sdevice), PSTR("%d"), device);
@@ -484,7 +482,7 @@ void mqtt_publishPowerBlinkState(byte device)
 
 void mqtt_connected()
 {
-  char stopic[TOPSZ], svalue[MESSZ];
+  char stopic[TOPSZ], svalue[128];  // was MESSZ
 
   if (sysCfg.mqtt_enabled) {
 
@@ -596,7 +594,6 @@ void mqtt_reconnect()
 void mqttDataCb(char* topic, byte* data, unsigned int data_len)
 {
   char *str;
-  char svalue[MESSZ];
 
   if (!strcmp(SUB_PREFIX,PUB_PREFIX)) {
     str = strstr(topic,SUB_PREFIX);
@@ -606,10 +603,10 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
     }
   }
 
-  uint16_t i = 0, grpflg = 0, index;
-  char topicBuf[TOPSZ], dataBuf[data_len+1], dataBufUc[MESSZ];
+  char topicBuf[TOPSZ], dataBuf[data_len+1], dataBufUc[128], svalue[MESSZ];
   char *p, *mtopic = NULL, *type = NULL;
   char stemp1[TOPSZ], stemp2[10];
+  uint16_t i = 0, grpflg = 0, index;
 
   strncpy(topicBuf, topic, sizeof(topicBuf));
   memcpy(dataBuf, data, sizeof(dataBuf));
@@ -823,19 +820,16 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
         sysCfg.seriallog_level = payload;
         seriallog_level = payload;
         seriallog_timer = 0;
-        snprintf_P(svalue, sizeof(svalue), PSTR("{\"SerialLog\":%d}"), sysCfg.syslog_level);
       }
-      snprintf_P(svalue, sizeof(svalue), PSTR("{\"SerialLog\":\"%d (Setting %d)\"}"), seriallog_level, sysCfg.seriallog_level);
+      snprintf_P(svalue, sizeof(svalue), PSTR("{\"SerialLog\":\"%d (Active %d)\"}"), sysCfg.seriallog_level, seriallog_level);
     }
     else if (!strcmp(type,"SYSLOG")) {
       if ((data_len > 0) && (payload >= LOG_LEVEL_NONE) && (payload <= LOG_LEVEL_ALL)) {
         sysCfg.syslog_level = payload;
-        syslog_level = payload;
+        syslog_level = (sysCfg.emulation) ? 0 : payload;
         syslog_timer = 0;
-        snprintf_P(svalue, sizeof(svalue), PSTR("{\"SysLog\":%d}"), sysCfg.syslog_level);
-      } else {
-       snprintf_P(svalue, sizeof(svalue), PSTR("{\"SysLog\":\"%d (Setting %d)\"}"), syslog_level, sysCfg.syslog_level);
       }
+      snprintf_P(svalue, sizeof(svalue), PSTR("{\"SysLog\":\"%d (Active %d)\"}"), sysCfg.syslog_level, syslog_level);
     }
     else if (!strcmp(type,"LOGHOST")) {
       if ((data_len > 0) && (data_len < sizeof(sysCfg.syslog_host))) {
@@ -1507,7 +1501,7 @@ void every_second()
   if (syslog_timer) {  // Restore syslog level
     syslog_timer--;
     if (!syslog_timer) {
-      syslog_level = sysCfg.syslog_level;
+      syslog_level = (sysCfg.emulation) ? 0 : sysCfg.syslog_level;
       if (sysCfg.syslog_level) {
         addLog_P(LOG_LEVEL_INFO, PSTR("SYSL: Syslog logging re-enabled"));  // Might trigger disable again (on purpose)
       }
@@ -1591,7 +1585,7 @@ void every_second()
 void stateloop()
 {
   uint8_t button = NOT_PRESSED, flag, switchflag, power_now;
-  char scmnd[20], log[LOGSZ], svalue[MESSZ];
+  char scmnd[20], log[LOGSZ], svalue[80];  // was MESSZ
 
   timerxs = millis() + (1000 / STATES);
   state++;
@@ -2038,7 +2032,10 @@ void setup()
   savedatacounter = sysCfg.savedata;
   seriallog_timer = SERIALLOG_TIMER;
   seriallog_level = sysCfg.seriallog_level;
-  syslog_level = sysCfg.syslog_level;
+#ifndef USE_EMULATION
+  sysCfg.emulation = 0;
+#endif  // USE_EMULATION
+  syslog_level = (sysCfg.emulation) ? 0 : sysCfg.syslog_level;
   sleep = sysCfg.sleep;
 
   GPIO_init();

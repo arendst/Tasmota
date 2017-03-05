@@ -214,7 +214,7 @@ String dht_webPresent()
   float t, h;
   
   if (dht_readTempHum(TEMP_CONVERSION, t, h)) {     // Read temperature as Celsius (the default)
-    char stemp[10], sensor[128];
+    char stemp[10], sensor[80];
     dtostrf(t, 1, TEMP_RESOLUTION &3, stemp);
     snprintf_P(sensor, sizeof(sensor), HTTP_SNS_TEMP, dhtstype, stemp, (TEMP_CONVERSION) ? 'F' : 'C');
     page += sensor;

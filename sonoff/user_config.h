@@ -126,7 +126,7 @@
 #define ENERGY_RESOLUTION      3                 // Maximum number of decimals (0 - 5) showing energy usage in kWh
 
 // -- Sensor code selection -----------------------
-//#define USE_DS18x20                              // Optional using OneWire library for multiple DS18B20 and/or DS18S20
+//#define USE_DS18x20                              // Optional using OneWire library for multiple DS18B20 and/or DS18S20 (+2k code)
 
 #define USE_I2C                                  // I2C using library wire (+10k code, 0.2k mem) - Disable by //
   #define USE_BH1750                             // Add I2C code for BH1750 sensor
@@ -139,6 +139,15 @@
   #define USE_WS2812_CTYPE     1                 // WS2812 Color type (0 - RGB, 1 - GRB)
 //  #define USE_WS2812_DMA                         // DMA supports only GPIO03 (= Serial TXD) (+1k mem)
                                                  //   When USE_WS2812_DMA is enabled expect Exceptions on Pow
+
+/*********************************************************************************************\
+ * Compile a minimal version if upgrade memory gets tight.
+ *   To be used as step 1 during upgrade. 
+ *   Step 2 is re-compile with option BE_MINIMAL commented out.
+ *   !!! Needed for next release of Arduino/ESP8266 (+22k code, +2k mem) !!!
+\*********************************************************************************************/
+
+//#define BE_MINIMAL                               // Minimal version if upgrade memory gets tight (-45k code, -2k mem)
 
 /*********************************************************************************************\
  * No user configurable items below

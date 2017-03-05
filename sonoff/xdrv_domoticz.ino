@@ -42,7 +42,7 @@ byte domoticz_update_flag = 1;
 
 void mqtt_publishDomoticzPowerState(byte device)
 {
-  char svalue[MESSZ];
+  char svalue[64];  // was MESSZ
 
   if (sysCfg.domoticz_relay_idx[device -1] && (strlen(sysCfg.domoticz_in_topic) != 0)) {
     if ((device < 1) || (device > Maxdevice)) device = 1;
@@ -236,7 +236,7 @@ void domoticz_commands(char *svalue, uint16_t ssvalue)
 boolean domoticz_button(byte key, byte device, byte state, byte svalflg)
 {
   if ((sysCfg.domoticz_key_idx[device -1] || sysCfg.domoticz_switch_idx[device -1]) && (svalflg)) {
-    char svalue[MESSZ];
+    char svalue[80];  // was MESSZ
 
     snprintf_P(svalue, sizeof(svalue), PSTR("{\"command\":\"switchlight\",\"idx\":%d,\"switchcmd\":\"%s\"}"),
       (key) ? sysCfg.domoticz_switch_idx[device -1] : sysCfg.domoticz_key_idx[device -1], (state) ? (state == 2) ? "Toggle" : "On" : "Off");

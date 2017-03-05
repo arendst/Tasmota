@@ -423,11 +423,7 @@ void handleAjax2()
   if (pin[GPIO_DSB] < 99) tpage += dsb_webPresent();
 #endif  // USE_DS18B20
 #ifdef USE_DS18x20
-  if (pin[GPIO_DSB] < 99) {
-    tpage += ds18x20_webPresent();
-    ds18x20_search();      // Check for changes in sensors number
-    ds18x20_convert();     // Start Conversion, takes up to one second
-  }
+  if (pin[GPIO_DSB] < 99) tpage += ds18x20_webPresent();
 #endif  // USE_DS18x20
 #ifdef USE_DHT
   if (dht_type) tpage += dht_webPresent();
@@ -874,7 +870,7 @@ void handleReset()
 {
   if (httpUser()) return;
 
-  char svalue[MESSZ];
+  char svalue[16];  // was MESSZ
 
   addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Reset parameters"));
 
@@ -923,7 +919,7 @@ void handleUpgrade()
 void handleUpgradeStart()
 {
   if (httpUser()) return;
-  char svalue[MESSZ];
+  char svalue[16];  // was MESSZ
 
   addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Firmware upgrade start"));
   WIFI_configCounter();
@@ -1097,7 +1093,7 @@ void handleUploadLoop()
 void handleCmnd()
 {
   if (httpUser()) return;
-  char svalue[MESSZ];
+  char svalue[128];  // was MESSZ
 
   addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Handle cmnd"));
 
@@ -1166,7 +1162,7 @@ void handleConsole()
 void handleAjax()
 {
   if (httpUser()) return;
-  char svalue[MESSZ], log[LOGSZ];
+  char log[LOGSZ], svalue[128];  // was MESSZ
   byte cflg = 1, counter = 99;
 
   if (strlen(webServer->arg("c1").c_str())) {

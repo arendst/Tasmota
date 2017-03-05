@@ -1,4 +1,10 @@
-/* 4.0.0 20170303
+/* 4.0.1 20170305
+ * Fix char default sizes and set MESSZ to 360 (#143)
+ * Fix SerialLog setting status
+ * Disable syslog when emulation is active
+ * Add DS18B20 web page display refresh
+ *
+ * 4.0.0 20170303
  * Add define to remove config migration code for versions below 3.0 (See Wiki-Upgrade-Migration path)
  * Free memory by switching from String to char[]
  * Raised Sonoff Led PWM frequency from 200Hz to 432Hz in search of stability (hardware watchdog timeouts) (#122)
