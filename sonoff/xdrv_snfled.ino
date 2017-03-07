@@ -98,12 +98,12 @@ void sl_init(void)
   sl_wakeupActive = 0;
 }
 
-void sl_blank(byte state)
-/*
+/**
  * Called by interrupt disabling routines like OTA or web upload
  * state = 0: No blank
  *         1: Blank led to solve flicker
  */
+void sl_blank(byte state)
 {
   if (sysCfg.module == SONOFF_LED) {
     sl_blankv = state;
