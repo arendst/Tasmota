@@ -98,7 +98,7 @@ void sl_init(void)
   sl_wakeupActive = 0;
 }
 
-/**
+/*
  * Called by interrupt disabling routines like OTA or web upload
  * state = 0: No blank
  *         1: Blank led to solve flicker
