@@ -1,4 +1,14 @@
-/* 4.0.1 20170305
+/* 4.0.2 20170308
+ * Restore correct seriallog level after Serial logging was disabled
+ * Add simple dimmer slider to Sonoff Led web page
+ * Reduced root webpage size by 31%
+ * Expand Status 2 with Build date/time and core version
+ * Fix webserver redirection when not in WifiManager mode (#156)
+ * Add command ButtonRestrict On/Off to restrict access to button hold and button multi press options above 2 (#161)
+ * Fix DS18S20 negative temperature readings (#165)
+ * Fix crlf compilation error due to bad syntax (#144, #167)
+ *
+ * 4.0.1 20170305
  * Fix char default sizes and set MESSZ to 360 (#143)
  * Fix SerialLog setting status
  * Disable syslog when emulation is active

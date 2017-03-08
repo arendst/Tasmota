@@ -546,8 +546,7 @@ void hlw_mqttPresent()
 // {"Time":"2017-03-04T13:37:24", "Yesterday":0.013, "Today":0.000, "Period":0, "Power":0, "Factor":0.00, "Voltage":0, "Current":0.000}
   char svalue[200];  // was MESSZ
 
-  snprintf_P(svalue, sizeof(svalue), PSTR("{\"Time\":\"%04d-%02d-%02dT%02d:%02d:%02d\", "),
-    rtcTime.Year, rtcTime.Month, rtcTime.Day, rtcTime.Hour, rtcTime.Minute, rtcTime.Second);
+  snprintf_P(svalue, sizeof(svalue), PSTR("{\"Time\":\"%s\", "), getDateTime().c_str());
   hlw_mqttStat(1, svalue, sizeof(svalue));
 
 //  snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/ENERGY"), PUB_PREFIX2, sysCfg.mqtt_topic);

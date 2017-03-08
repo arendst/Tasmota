@@ -414,7 +414,6 @@ void CFG_DefaultSet1()
   
 void CFG_DefaultSet2()
 {
-  sysCfg.migflg = 0xA5;
   sysCfg.savedata = SAVE_DATA;
   sysCfg.savestate = SAVE_STATE;
   sysCfg.module = MODULE;
@@ -449,8 +448,9 @@ void CFG_DefaultSet2()
   strlcpy(sysCfg.mqtt_subtopic, MQTT_SUBTOPIC, sizeof(sysCfg.mqtt_subtopic));
   sysCfg.mqtt_button_retain = MQTT_BUTTON_RETAIN;
   sysCfg.mqtt_power_retain = MQTT_POWER_RETAIN;
-  sysCfg.value_units = VALUE_UNITS;
-  sysCfg.message_format = 0;
+  sysCfg.value_units = 0;
+  sysCfg.button_restrict = 0;
+//  sysCfg.message_format = 0;
   sysCfg.tele_period = TELE_PERIOD;
 
   sysCfg.power = APP_POWER;
@@ -614,7 +614,7 @@ void CFG_Migrate_Part2()
     sysCfg.hlw_imax = sysCfg2.hlw_imax;
   }
   if (sysCfg2.version >= 0x02000700) {  // 2.0.7
-    sysCfg.message_format = 0;
+//    sysCfg.message_format = 0;
     strlcpy(sysCfg.domoticz_in_topic, sysCfg2.domoticz_in_topic, sizeof(sysCfg.domoticz_in_topic));
     strlcpy(sysCfg.domoticz_out_topic, sysCfg2.domoticz_out_topic, sizeof(sysCfg.domoticz_out_topic));
     sysCfg.domoticz_update_timer = sysCfg2.domoticz_update_timer;
@@ -670,7 +670,7 @@ void CFG_Delta()
       sysCfg.blinkcount = APP_BLINKCOUNT;
     }
     if (sysCfg.version < 0x03011000) {  // 3.1.16 - Add parameter
-      getClient(sysCfg.ex_friendlyname, sysCfg.mqtt_client, sizeof(sysCfg.ex_friendlyname));
+      getClient(sysCfg.friendlyname[0], sysCfg.mqtt_client, sizeof(sysCfg.friendlyname[0]));
     }
     if (sysCfg.version < 0x03020400) {  // 3.2.4 - Add parameter
       sysCfg.ws_pixels = WS2812_LEDS;
@@ -686,7 +686,7 @@ void CFG_Delta()
       sysCfg.ws_wakeup = 0;
     }
     if (sysCfg.version < 0x03020500) {  // 3.2.5 - Add parameter
-      strlcpy(sysCfg.friendlyname[0], sysCfg.ex_friendlyname, sizeof(sysCfg.friendlyname[0]));
+      getClient(sysCfg.friendlyname[0], sysCfg.mqtt_client, sizeof(sysCfg.friendlyname[0]));
       strlcpy(sysCfg.friendlyname[1], FRIENDLY_NAME"2", sizeof(sysCfg.friendlyname[1]));
       strlcpy(sysCfg.friendlyname[2], FRIENDLY_NAME"3", sizeof(sysCfg.friendlyname[2]));
       strlcpy(sysCfg.friendlyname[3], FRIENDLY_NAME"4", sizeof(sysCfg.friendlyname[3]));
@@ -725,8 +725,12 @@ void CFG_Delta()
     if (sysCfg.version < 0x03091500) {
       for (byte i = 0; i < 4; i++) sysCfg.switchmode[i] = sysCfg.ex_switchmode;
     }
+    if (sysCfg.version < 0x04000200) {
+      sysCfg.button_restrict = 0;
+    }
 
     sysCfg.version = VERSION;
   }
 }
+
 

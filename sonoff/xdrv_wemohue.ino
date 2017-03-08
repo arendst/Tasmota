@@ -394,16 +394,12 @@ void hue_todo(String *path)
 
 void hue_config_response(String *response)
 {
-  char buffer[21];
-  
   *response += FPSTR(HUE_CONFIG_RESPONSE_JSON);
   response->replace("{mac}", WiFi.macAddress());
   response->replace("{ip}", WiFi.localIP().toString());
   response->replace("{mask}", WiFi.subnetMask().toString());
   response->replace("{gw}", WiFi.gatewayIP().toString());
-  snprintf_P(buffer, sizeof(buffer), PSTR("%04d-%02d-%02dT%02d:%02d:%02d"),
-    rtcTime.Year, rtcTime.Month, rtcTime.Day, rtcTime.Hour, rtcTime.Minute, rtcTime.Second);
-  response->replace("{dt}", buffer);
+  response->replace("{dt}", getDateTime());
 }
 
 void hue_global_cfg(String *path)

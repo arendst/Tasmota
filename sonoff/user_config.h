@@ -141,7 +141,7 @@
                                                  //   When USE_WS2812_DMA is enabled expect Exceptions on Pow
 
 /*********************************************************************************************\
- * Compile a minimal version if upgrade memory gets tight.
+ * Compile a minimal version if upgrade memory gets tight ONLY TO BE USED FOR UPGRADE STEP 1!
  *   To be used as step 1 during upgrade. 
  *   Step 2 is re-compile with option BE_MINIMAL commented out.
  *   !!! Needed for next release of Arduino/ESP8266 (+22k code, +2k mem) !!!

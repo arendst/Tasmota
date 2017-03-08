@@ -77,10 +77,10 @@ struct SYSCFG {
   unsigned long saveFlag;
   unsigned long version;
   unsigned long bootcount;
-  byte          migflg;  // Not used since 3.9.1
+  byte          migflg;               // Not used since 3.9.1
   int16_t       savedata;
   byte          savestate;
-  byte          model;  // Not used since 3.9.1
+  byte          model;                // Not used since 3.9.1
   int8_t        timezone;
   char          otaUrl[101];
   char          ex_friendlyname[33];  // Not used since 3.2.5 - see below
@@ -111,12 +111,12 @@ struct SYSCFG {
   byte          mqtt_button_retain;
   byte          mqtt_power_retain;
   byte          value_units;
-  byte          message_format;  // Not used since 3.2.6a
+  byte          button_restrict;       // Was message_format until 3.2.6a
   uint16_t      tele_period;
 
   uint8_t       power;
   uint8_t       ledstate;
-  uint8_t       ex_switchmode;  // Not used since 3.9.21
+  uint8_t       ex_switchmode;         // Not used since 3.9.21
 
   char          domoticz_in_topic[33];
   char          domoticz_out_topic[33];
@@ -188,7 +188,6 @@ struct SYSCFG {
 
   char          web_password[33];
   uint8_t       switchmode[4];
-
 } sysCfg;
 
 struct RTCMEM {

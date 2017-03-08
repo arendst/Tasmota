@@ -40,8 +40,11 @@ const char HTTP_HEAD[] PROGMEM =
   "<meta charset='utf-8'>"
   "<meta name=\"viewport\" content=\"width=device-width,initial-scale=1,user-scalable=no\"/>"
   "<title>{v}</title>"
+
   "<script>"
-  "var cn=120;"
+  "var cn,x,lt;"
+  "cn=120;"
+  "x=null;"                  // Allow for abortion
   "function u(){"
     "if(cn>=0){"
       "document.getElementById('t').innerHTML='Restart in '+cn+' seconds';"
@@ -53,12 +56,10 @@ const char HTTP_HEAD[] PROGMEM =
     "document.getElementById('s1').value=l.innerText||l.textContent;"
     "document.getElementById('p1').focus();"
   "}"
-  "var x=null;"                  // Allow for abortion
-  "var lt;"                      // Enable clearTimeout
   "function la(p){"
     "var a='';"
     "if(la.arguments.length==1){"
-      "a='?o='+p;"
+      "a=p;"
       "clearTimeout(lt);"
     "}"
     "if(x!=null){x.abort();}"    // Abort if no response within 2 seconds (happens on restart 1)
@@ -72,6 +73,27 @@ const char HTTP_HEAD[] PROGMEM =
     "x.send();"
     "lt=setTimeout(la,2345);"
   "}"
+  "function lb(p){"
+    "la('?d='+p);"
+  "}"
+  "</script>"
+
+  "<style>"
+  "div,fieldset,input,select{padding:5px;font-size:1em;}"
+  "input{width:95%;}"
+  "select{width:100%;}"
+  "textarea{resize:none;width:98%;height:318px;padding:5px;overflow:auto;}"
+  "body{text-align:center;font-family:verdana;}"
+  "td{padding:0px;}"
+  "button{border:0;border-radius:0.3rem;background-color:#1fa3ec;color:#fff;line-height:2.4rem;font-size:1.2rem;width:100%;-webkit-transition-duration:0.4s;transition-duration:0.4s;}"
+  "button:hover{background-color:#006cba;}"
+  "</style>"
+
+  "</head>"
+  "<body>"
+  "<div style='text-align:left;display:inline-block;min-width:320px;'>"
+  "<div style='text-align:center;'><h3>{ha} Module</h3><h2>{h}</h2></div>";
+const char HTTP_SCRIPT_CONSOL[] PROGMEM =
   "var sn=0;"                    // Scroll position
   "var id=99;"                   // Get most of weblog initially
   "function l(p){"               // Console log and command service
@@ -106,25 +128,13 @@ const char HTTP_HEAD[] PROGMEM =
     "lt=setTimeout(l,2345);"
     "return false;"
   "}"
-  "</script>"
-  "<style>"
-  "div,fieldset,input,select{padding:5px;font-size:1em;}"
-  "input{width:95%;}"
-  "select{width:100%;}"
-  "textarea{resize:none;width:98%;height:318px;padding:5px;overflow:auto;}"
-  "body{text-align:center;font-family:verdana;}"
-  "td{padding:0px;}"
-  "button{border:0;border-radius:0.3rem;background-color:#1fa3ec;color:#fff;line-height:2.4rem;font-size:1.2rem;width:100%;-webkit-transition-duration:0.4s;transition-duration:0.4s;}"
-  "button:hover{background-color:#006cba;}"
+  "</script>";
+const char HTTP_LNK_STYLE[] PROGMEM =
   ".q{float:right;width:64px;text-align:right;}"
   ".l{background:url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAMAAABEpIrGAAAALVBMVEX///8EBwfBwsLw8PAzNjaCg4NTVVUjJiZDRUUUFxdiZGSho6O"
   "Sk5Pg4eFydHTCjaf3AAAAZElEQVQ4je2NSw7AIAhEBamKn97/uMXEGBvozkWb9C2Zx4xzWykBhFAeYp9gkLyZE0zIMno9n4g19hmdY39scwqVkOXaxph0ZCXQcqxSpgQpONa59wkRDOL93eA"
   "XvimwlbPbwwVAegLS1HGfZAAAAABJRU5ErkJggg==') no-repeat left center;background-size:1em;}"
-  "</style>"
-  "</head>"
-  "<body>"
-  "<div style='text-align:left;display:inline-block;min-width:320px;'>"
-  "<div style='text-align:center;'><h3>{ha} Module</h3><h2>{h}</h2></div>";
+  "</style>";
 const char HTTP_MSG_RSTRT[] PROGMEM =
   "<br/><div style='text-align:center;'>Device will restart in a few seconds</div><br/>";
 const char HTTP_BTN_MENU1[] PROGMEM =
@@ -396,10 +406,15 @@ void handleRoot()
 
     page += F("<div id='l1' name='l1'></div>");
     if (Maxdevice) {
+      if (sysCfg.module == SONOFF_LED) {
+        snprintf_P(line, sizeof(line), PSTR("<input type='range' min='1' max='100' value='%d' onchange='lb(value)'>"),
+          sysCfg.led_dimmer[0]);
+        page += line;
+      }
       page += F("<table style='width:100%'><tr>");
       for (byte idx = 1; idx <= Maxdevice; idx++) {
         snprintf_P(stemp, sizeof(stemp), PSTR(" %d"), idx);
-        snprintf_P(line, sizeof(line), PSTR("<td style='width:%d%'><button onclick='la(%d);'>Toggle%s</button></td>"),
+        snprintf_P(line, sizeof(line), PSTR("<td style='width:%d%'><button onclick='la(\"?o=%d\");'>Toggle%s</button></td>"),
           100 / Maxdevice, idx, (Maxdevice > 1) ? stemp : "");
         page += line;
       }
@@ -416,7 +431,14 @@ void handleRoot()
 
 void handleAjax2()
 {
+  char svalue[16];
+  
   if (strlen(webServer->arg("o").c_str())) do_cmnd_power(atoi(webServer->arg("o").c_str()), 2);
+  if (strlen(webServer->arg("d").c_str())) {
+    snprintf_P(svalue, sizeof(svalue), PSTR("dimmer %s"), webServer->arg("d").c_str());
+    do_cmnd(svalue);
+  }
+  
   String tpage = "";
   if (hlw_flg) tpage += hlw_webPresent();
 #ifdef USE_DS18B20
@@ -445,18 +467,20 @@ void handleAjax2()
   if (Maxdevice) {
     page += F("<table style='width:100%'><tr>");
     for (byte idx = 1; idx <= Maxdevice; idx++) {
-/*      
-      page += F("<td style='width:{1%'><div style='text-align:center;font-weight:bold;font-size:{2px'>{3</div></td>");
-      page.replace("{1", String(100 / Maxdevice));
-      page.replace("{2", String(70 - (Maxdevice * 8)));
-      page.replace("{3", (power & (0x01 << (idx -1))) ? "ON" : "OFF");
-*/
       snprintf_P(line, sizeof(line), PSTR("<td style='width:%d%'><div style='text-align:center;font-weight:bold;font-size:%dpx'>%s</div></td>"),
         100 / Maxdevice, 70 - (Maxdevice * 8), (power & (0x01 << (idx -1))) ? "ON" : "OFF");
       page += line;
     }
     page += F("</tr></table>");
   }
+/*
+ * Will interrupt user action when selected
+  if (sysCfg.module == SONOFF_LED) {
+    snprintf_P(line, sizeof(line), PSTR("<input type='range' min='1' max='100' value='%d' onchange='lb(value)'>"),
+      sysCfg.led_dimmer[0]);
+    page += line;
+  }
+*/
   webServer->sendHeader("Cache-Control", "no-cache, no-store, must-revalidate");
   webServer->sendHeader("Pragma", "no-cache");
   webServer->sendHeader("Expires", "-1");
@@ -478,7 +502,7 @@ void handleConfig()
   String page = FPSTR(HTTP_HEAD);
   page.replace("{v}", "Configuration");
   page += FPSTR(HTTP_BTN_MENU2);
-  if (sysCfg.mqtt_enabled)  page += FPSTR(HTTP_BTN_MENU3);
+  if (sysCfg.mqtt_enabled) page += FPSTR(HTTP_BTN_MENU3);
   page += FPSTR(HTTP_BTN_MENU4);
   page += FPSTR(HTTP_BTN_MAIN);
   showPage(page);
@@ -546,6 +570,7 @@ void handleWifi(boolean scan)
 
   String page = FPSTR(HTTP_HEAD);
   page.replace("{v}", "Configure Wifi");
+  page.replace("</style>", FPSTR(HTTP_LNK_STYLE));
 
   if (scan) {
 #ifdef USE_EMULATION
@@ -1153,6 +1178,7 @@ void handleConsole()
 
   String page = FPSTR(HTTP_HEAD);
   page.replace("{v}", "Console");
+  page.replace("</script>", FPSTR(HTTP_SCRIPT_CONSOL));
   page.replace("<body>", "<body onload='l()'>");
   page += FPSTR(HTTP_FORM_CMND);
   page += FPSTR(HTTP_BTN_MAIN);
@@ -1221,8 +1247,7 @@ void handleInfo()
   page += F("<style>td{padding:0px 5px;}</style>");
   page += F("<table style'width:100%;'>");
   page += F("<tr><th>Program version</th><td>"); page += Version; page += F("</td></tr>");
-  page += F("<tr><th>Build Date/Time</th><td>"); page += __DATE__;
-  page += F("/"); page += __TIME__ ; page += F("</td></tr>");
+  page += F("<tr><th>Build Date & Time</th><td>"); page += getBuildDateTime(); page += F("</td></tr>");
   page += F("<tr><th>Core/SDK version</th><td>"); page += ESP.getCoreVersion(); page += F("/"); page += String(ESP.getSdkVersion()); page += F("</td></tr>");
 //  page += F("<tr><th>Boot version</th><td>"); page += String(ESP.getBootVersion()); page += F("</td></tr>");
   page += F("<tr><th>Uptime</th><td>"); page += String(uptime); page += F(" Hours</td></tr>");
@@ -1252,7 +1277,7 @@ void handleInfo()
   if (sysCfg.mqtt_enabled) {
     page += F("<tr><th>MQTT Host</th><td>"); page += sysCfg.mqtt_host; page += F("</td></tr>");
     page += F("<tr><th>MQTT Port</th><td>"); page += String(sysCfg.mqtt_port); page += F("</td></tr>");
-    page += F("<tr><th>MQTT Client and<br/>&nbsp;Fallback Topic</th><td>"); page += MQTTClient; page += F("</td></tr>");
+    page += F("<tr><th>MQTT Client &<br/>&nbsp;Fallback Topic</th><td>"); page += MQTTClient; page += F("</td></tr>");
     page += F("<tr><th>MQTT User</th><td>"); page += sysCfg.mqtt_user; page += F("</td></tr>");
 //    page += F("<tr><th>MQTT Password</th><td>"); page += sysCfg.mqtt_pwd; page += F("</td></tr>");
     page += F("<tr><th>MQTT Topic</th><td>"); page += sysCfg.mqtt_topic; page += F("</td></tr>");
@@ -1275,9 +1300,9 @@ void handleInfo()
 #ifdef USE_DISCOVERY
   page += F("Enabled");
   page += F("</td></tr>");
-  page += F("<tr><th>mDNS Webserver Advertise</th><td>");
+  page += F("<tr><th>mDNS Advertise</th><td>");
 #ifdef WEBSERVER_ADVERTISE
-  page += F("Enabled");
+  page += F("Webserver");
 #else
   page += F("Disabled");
 #endif // WEBSERVER_ADVERTISE
@@ -1355,7 +1380,7 @@ void handleNotFound()
 /* Redirect to captive portal if we got a request for another domain. Return true in that case so the page handler do not try to handle the request again. */
 boolean captivePortal()
 {
-  if (!isIp(webServer->hostHeader())) {
+  if ((_httpflag == HTTP_MANAGER) && !isIp(webServer->hostHeader())) {
     addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Request redirected to captive portal"));
 
     webServer->sendHeader("Location", String("http://") + webServer->client().localIP().toString(), true);

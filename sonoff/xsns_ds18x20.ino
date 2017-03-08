@@ -107,7 +107,7 @@ float ds18x20_convertCtoF(float c)
 boolean ds18x20_read(uint8_t sensor, bool S, float &t)
 {
   byte data[12];
-  uint8_t sign = 1;
+  int8_t sign = 1;
   uint8_t i = 0;
   float temp9 = 0.0;
   uint8_t present = 0;
@@ -122,7 +122,24 @@ boolean ds18x20_read(uint8_t sensor, bool S, float &t)
   if (OneWire::crc8(data, 8) == data[8]) {
     switch(ds18x20_addr[ds18x20_idx[sensor]][0]) {
     case 0x10:  // DS18S20
-      if (data[1] > 0x80) sign = -1; // App-Note fix possible sign error
+/*
+//    App_note AN162.pdf page 9
+      int temp_lsb, temp_msb;
+      temp_msb = data[1];                             // Sign byte + lsbit
+      temp_lsb = data[0];                             // Temp data plus lsb
+      if (temp_msb <= 0x80) temp_lsb = (temp_lsb/2);  // Shift to get whole degree
+      temp_msb = temp_msb & 0x80;                     // Mask all but the sign bit
+      if (temp_msb >= 0x80) {                         // Negative temperature
+        temp_lsb = (~temp_lsb)+1;                     // Twos complement
+        temp_lsb = (temp_lsb/2);                      // Shift to get whole degree
+        temp_lsb = ((-1)*temp_lsb);                   // Add sign bit
+      }
+      t = (int)temp_lsb;                              // Temperature in whole degree
+*/
+      if (data[1] > 0x80) {
+        data[0] = (~data[0]) +1;
+        sign = -1;  // App-Note fix possible sign error
+      }
       if (data[0] & 1) {
         temp9 = ((data[0] >> 1) + 0.5) * sign;
       } else {

@@ -587,11 +587,48 @@ extern "C" {
 Ticker tickerRTC;
 
 static const uint8_t monthDays[] = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 }; // API starts months from 1, this array starts from 0
-static const char monthNames[37] = { "JanFebMrtAprMayJunJulAugSepOctNovDec" };
+static const char monthNames[] = "JanFebMarAprMayJunJulAugSepOctNovDec";
 
 uint32_t utctime = 0, loctime = 0, dsttime = 0, stdtime = 0, ntptime = 0, midnight = 1451602800;
 
 rtcCallback rtcCb = NULL;
+
+String getBuildDateTime()
+{
+  // "2017-03-07T11:08:02"
+  char bdt[21];
+  char *str, *p, *smonth;
+  char mdate[] = __DATE__;  // "Mar  7 2017"
+  int month, day, year;
+  
+//  sscanf(mdate, "%s %d %d", bdt, &day, &year);  // Not implemented in 2.3.0 and probably too many code
+  byte i = 0;
+  for (str = strtok_r(mdate, " ", &p); str && i < 3; str = strtok_r(NULL, " ", &p)) {
+    switch (i++) {
+    case 0:  // Month
+      smonth = str;
+      break;
+    case 1:  // Day
+      day = atoi(str);
+      break;
+    case 2:  // Year
+      year = atoi(str);
+    }
+  }
+  month = (strstr(monthNames, smonth) -monthNames) /3 +1;
+  snprintf_P(bdt, sizeof(bdt), PSTR("%d-%02d-%02dT%s"), year, month, day, __TIME__);
+  return String(bdt);
+}
+
+String getDateTime()
+{
+  // "2017-03-07T11:08:02"
+  char dt[21];
+  
+  snprintf_P(dt, sizeof(dt), PSTR("%04d-%02d-%02dT%02d:%02d:%02d"),
+    rtcTime.Year, rtcTime.Month, rtcTime.Day, rtcTime.Hour, rtcTime.Minute, rtcTime.Second);
+  return String(dt);
+}
 
 void breakTime(uint32_t timeInput, TIME_T &tm)
 {
