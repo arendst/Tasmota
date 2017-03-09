@@ -17,27 +17,7 @@ enum upins_t {
   GPIO_SWT2,
   GPIO_SWT3,
   GPIO_SWT4,
-  GPIO_SENSOR_END };
-
-// Text in webpage Module Parameters and commands GPIOS and GPIO
-const char sensors[GPIO_SENSOR_END][9] PROGMEM = {
-  "None",
-  "DHT11",
-  "AM2301",
-  "DHT22",
-  "DS18x20",
-  "I2C SCL",
-  "I2C SDA",
-  "WS2812",
-  "IRremote",
-  "Switch1",
-  "Switch2",
-  "Switch3",
-  "Switch4" };
-  
-// Programmer selectable GPIO functionality offset by user selectable GPIOs
-enum fpins_t {
-  GPIO_KEY1 = GPIO_SENSOR_END,  // Button usually connected to GPIO0
+  GPIO_KEY1,           // Button usually connected to GPIO0
   GPIO_KEY2,
   GPIO_KEY3,
   GPIO_KEY4,
@@ -57,7 +37,48 @@ enum fpins_t {
   GPIO_LED2_INV,
   GPIO_LED3_INV,
   GPIO_LED4_INV,
-  GPIO_PWM0,           // Cold
+  GPIO_SENSOR_END };
+
+// Text in webpage Module Parameters and commands GPIOS and GPIO
+const char sensors[GPIO_SENSOR_END][9] PROGMEM = {
+  "None",
+  "DHT11",
+  "AM2301",
+  "DHT22",
+  "DS18x20",
+  "I2C SCL",
+  "I2C SDA",
+  "WS2812",
+  "IRremote",
+  "Switch1",
+  "Switch2",
+  "Switch3",
+  "Switch4",
+  "Button1",
+  "Button2",
+  "Button3",
+  "Button4",
+  "Relay1",
+  "Relay2",
+  "Relay3",
+  "Relay4",
+  "Relay1I",
+  "Relay2I",
+  "Relay3I",
+  "Relay4I",
+  "Led1",
+  "Led2",
+  "Led3",
+  "Led4",
+  "Led1I",
+  "Led2I",
+  "Led3I",
+  "Led4I"
+  };
+  
+// Programmer selectable GPIO functionality offset by user selectable GPIOs
+enum fpins_t {
+  GPIO_PWM0 = GPIO_SENSOR_END,  // Cold
   GPIO_PWM1,           // Warm
   GPIO_PWM2,           // Red (swapped with Blue from original)
   GPIO_PWM3,           // Green
@@ -91,7 +112,7 @@ enum module_t {
   ELECTRODRAGON,
   EXS_RELAY,
   WION,
-  NODEMCU,
+  WEMOS,
   USER_TEST,
   MAXMODULE };
 
@@ -110,9 +131,9 @@ typedef struct MYTMPLT {
 
 // Default module settings
 const mytmplt modules[MAXMODULE] PROGMEM = {
-  { "Sonoff Basic",    // Sonoff Basic
+  { "Sonoff Basic",    // Sonoff Basic (ESP8266)
      GPIO_KEY1,        // GPIO00 Button
-     0,                // GPIO01 Serial RXD
+     GPIO_USER,        // GPIO01 Serial RXD and Optional sensor
      0,                // GPIO02 
      GPIO_USER,        // GPIO03 Serial TXD and Optional sensor
      GPIO_USER,        // GPIO04 Optional sensor
@@ -129,114 +150,126 @@ const mytmplt modules[MAXMODULE] PROGMEM = {
      0,                // GPIO15
      0                 // GPIO16
   },
-  { "Sonoff RF",       // Sonoff RF
+  { "Sonoff RF",       // Sonoff RF (ESP8266)
      GPIO_KEY1,        // GPIO00 Button
-     0, 0,
+     GPIO_USER,        // GPIO01 Serial RXD and Optional sensor
+     0,
      GPIO_USER,        // GPIO03 Serial TXD and Optional sensor
      GPIO_USER,        // GPIO04 Optional sensor
-     0, 0, 0, 0, 0, 0, 0,
+     0,
+     0, 0, 0, 0, 0, 0, // Flash connection
      GPIO_REL1,        // GPIO12 Red Led and Relay (0 = Off, 1 = On)
      GPIO_LED1_INV,    // GPIO13 Green Led (0 = On, 1 = Off)
      GPIO_USER,        // GPIO14 Optional sensor
      0, 0
   },
-  { "Sonoff SV",       // Sonoff SV
+  { "Sonoff SV",       // Sonoff SV (ESP8266)
      GPIO_KEY1,        // GPIO00 Button
-     0, 0,
+     GPIO_USER,        // GPIO01 Serial RXD and Optional sensor
+     0,
      GPIO_USER,        // GPIO03 Serial TXD and Optional sensor
      GPIO_USER,        // GPIO04 Optional sensor
      GPIO_USER,        // GPIO05 Optional sensor
-     0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, // Flash connection
      GPIO_REL1,        // GPIO12 Red Led and Relay (0 = Off, 1 = On)
      GPIO_LED1_INV,    // GPIO13 Green Led (0 = On, 1 = Off)
      GPIO_USER,        // GPIO14 Optional sensor
      0, 0
   },
-  { "Sonoff TH",       // Sonoff TH10/16
+  { "Sonoff TH",       // Sonoff TH10/16 (ESP8266)
      GPIO_KEY1,        // GPIO00 Button
-     0, 0,
+     GPIO_USER,        // GPIO01 Serial RXD and Optional sensor
+     0,
      GPIO_USER,        // GPIO03 Serial TXD and Optional sensor
      GPIO_USER,        // GPIO04 Optional sensor
-     0, 0, 0, 0, 0, 0, 0,
+     0,
+     0, 0, 0, 0, 0, 0, // Flash connection
      GPIO_REL1,        // GPIO12 Red Led and Relay (0 = Off, 1 = On)
      GPIO_LED1_INV,    // GPIO13 Green Led (0 = On, 1 = Off)
      GPIO_USER,        // GPIO14 Optional sensor
      0, 0
   },
-  { "Sonoff Dual",     // Sonoff Dual
+  { "Sonoff Dual",     // Sonoff Dual (ESP8266)
      0,
      GPIO_TXD,         // GPIO01 Relay control
      0,
      GPIO_RXD,         // GPIO03 Relay control
      GPIO_USER,        // GPIO04 Optional sensor
-     0, 0, 0, 0, 0, 0, 0, 0,
+     0,
+     0, 0, 0, 0, 0, 0, // Flash connection
+     0,
      GPIO_LED1_INV,    // GPIO13 Blue Led (0 = On, 1 = Off)
      0, 0, 0
   },
-  { "Sonoff Pow",      // Sonoff Pow
+  { "Sonoff Pow",      // Sonoff Pow (ESP8266)
      GPIO_KEY1,        // GPIO00 Button
      0, 0, 0, 0,
      GPIO_HLW_SEL,     // GPIO05 HLW8012 Sel output
-     0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, // Flash connection
      GPIO_REL1,        // GPIO12 Red Led and Relay (0 = Off, 1 = On)
      GPIO_HLW_CF1,     // GPIO13 HLW8012 CF1 voltage / current
      GPIO_HLW_CF,      // GPIO14 HLW8012 CF power
      GPIO_LED1,        // GPIO15 Green Led (0 = On, 1 = Off)
      0
   },
-  { "Sonoff 4CH",      // Sonoff 4CH
+  { "Sonoff 4CH",      // Sonoff 4CH (ESP8285)
      GPIO_KEY1,        // GPIO00 Button 1
-     0,
+     GPIO_USER,        // GPIO01 Serial RXD and Optional sensor
      GPIO_USER,        // GPIO02 Optional sensor
      GPIO_USER,        // GPIO03 Serial TXD and Optional sensor
      GPIO_REL3,        // GPIO04 Sonoff 4CH Red Led and Relay 3 (0 = Off, 1 = On)
      GPIO_REL2,        // GPIO05 Sonoff 4CH Red Led and Relay 2 (0 = Off, 1 = On)
-     0, 0, 0,
+     0, 0, 0,          // Flash connection
      GPIO_KEY2,        // GPIO09 Button 2
      GPIO_KEY3,        // GPIO10 Button 3
      0,
      GPIO_REL1,        // GPIO12 Red Led and Relay 1 (0 = Off, 1 = On)
-     GPIO_LED1_INV,    // GPIO13 Green Led (0 = On, 1 = Off)
+     GPIO_LED1_INV,    // GPIO13 Blue Led (0 = On, 1 = Off)
      GPIO_KEY4,        // GPIO14 Button 4
      GPIO_REL4,        // GPIO15 Red Led and Relay 4 (0 = Off, 1 = On)
      0
   },
-  { "S20 Socket",      // S20 Smart Socket
+  { "S20 Socket",      // S20 Smart Socket (ESP8266)
      GPIO_KEY1,        // GPIO00 Button
-     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, // Flash connection
      GPIO_REL1,        // GPIO12 Red Led and Relay (0 = Off, 1 = On)
      GPIO_LED1_INV,    // GPIO13 Green Led (0 = On, 1 = Off)
      0, 0, 0
   },
-  { "Slampher",        // Slampher
+  { "Slampher",        // Slampher (ESP8266)
      GPIO_KEY1,        // GPIO00 Button
-     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, // Flash connection
      GPIO_REL1,        // GPIO12 Red Led and Relay (0 = Off, 1 = On)
      GPIO_LED1_INV,    // GPIO13 Blue Led (0 = On, 1 = Off)
      0, 0, 0
   },
-  { "Sonoff Touch",    // Sonoff Touch
+  { "Sonoff Touch",    // Sonoff Touch (ESP8285)
      GPIO_KEY1,        // GPIO00 Button
-     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0,
+     0, 0, 0,          // Flash connection
+     0, 0, 0,
      GPIO_REL1,        // GPIO12 Red Led and Relay (0 = Off, 1 = On)
      GPIO_LED1_INV,    // GPIO13 Blue Led (0 = On, 1 = Off)
      0, 0, 0
   },
-  { "Sonoff LED",      // Sonoff LED
+  { "Sonoff LED",      // Sonoff LED (ESP8266)
      GPIO_KEY1,        // GPIO00 Button
      0, 0, 0,
      GPIO_USER,        // GPIO04 Optional sensor (PWM3 Green)
      GPIO_USER,        // GPIO05 Optional sensor (PWM2 Red)
-     0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, // Flash connection
      GPIO_PWM0,        // GPIO12 Cold light
      GPIO_LED1_INV,    // GPIO13 Blue Led (0 = On, 1 = Off)
      GPIO_PWM1,        // GPIO14 Warm light
      GPIO_USER,        // GPIO15 Optional sensor (PWM4 Blue)
      0
   },
-  { "1 Channel",       // 1 Channel Inching/Latching Relay
+  { "1 Channel",       // 1 Channel Inching/Latching Relay using (PSA-B01 - ESP8266)
      GPIO_KEY1,        // GPIO00 Button
-     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, // Flash connection
      GPIO_REL1,        // GPIO12 Red Led and Relay (0 = Off, 1 = On)
      GPIO_LED1_INV,    // GPIO13 Green Led (0 = On, 1 = Off)
      0, 0, 0
@@ -246,81 +279,83 @@ const mytmplt modules[MAXMODULE] PROGMEM = {
      GPIO_TXD,         // GPIO01 Relay control
      0,
      GPIO_RXD,         // GPIO03 Relay control
-     0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0, 0,
+     0, 0, 0, 0, 0, 0, // Flash connection
+     0,
      GPIO_LED1_INV,    // GPIO13 Blue Led (0 = On, 1 = Off)
      0, 0, 0
   },
-  { "Motor C/AC",      // Motor Clockwise / Anti clockwise
+  { "Motor C/AC",      // Motor Clockwise / Anti clockwise (PSA-B01 - ESP8266)
      GPIO_KEY1,        // GPIO00 Button
-     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, // Flash connection
      GPIO_REL1,        // GPIO12 Red Led and Relay (0 = Off, 1 = On)
      GPIO_LED1_INV,    // GPIO13 Green Led (0 = On, 1 = Off)
      0, 0, 0
   },
-  { "ElectroDragon",   // ElectroDragon IoT Relay Board
+  { "ElectroDragon",   // ElectroDragon IoT Relay Board (ESP8266)
      GPIO_KEY2,        // GPIO00 Button 2
-     0,
+     GPIO_USER,        // GPIO01 Serial RXD and Optional sensor
      GPIO_KEY1,        // GPIO02 Button 1
      GPIO_USER,        // GPIO03 Serial TXD and Optional sensor
      GPIO_USER,        // GPIO04 Optional sensor
-     0, 0, 0, 0, 0, 0, 0,
+     0,
+     0, 0, 0, 0, 0, 0, // Flash connection
      GPIO_REL2,        // GPIO12 Red Led and Relay 2 (0 = Off, 1 = On)
      GPIO_REL1,        // GPIO13 Red Led and Relay 1 (0 = Off, 1 = On)
      GPIO_USER,        // GPIO14 Optional sensor
      0,
      GPIO_LED1         // GPIO16 Green/Blue Led (1 = On, 0 = Off)
   },
-  { "EXS Relay",       // Latching relay https://ex-store.de/ESP8266-WiFi-Relay-V31
+  { "EXS Relay",       // Latching relay https://ex-store.de/ESP8266-WiFi-Relay-V31 (ESP8266)
                        //   Module Pin 1 VCC 3V3, Module Pin 6 GND
      GPIO_KEY1,        // GPIO00 Module Pin 8 - Button (firmware flash)
-     0,                // GPIO01 Module Pin 2 = UART0_TXD
+     GPIO_USER,        // GPIO01 Module Pin 2 = UART0_TXD
      GPIO_USER,        // GPIO02 Module Pin 7
      GPIO_USER,        // GPIO03 Module Pin 3 = UART0_RXD
      GPIO_USER,        // GPIO04 Module Pin 10
      GPIO_USER,        // GPIO05 Module Pin 9
-     0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, // Flash connection
      GPIO_REL1,        // GPIO12 Relay1 ( 1 = Off)
      GPIO_REL2,        // GPIO13 Relay1 ( 1 = On)
      GPIO_USER,        // GPIO14 Module Pin 5
      0,
      GPIO_USER         // GPIO16 Module Pin 4
   },
-  { "WiOn",            // Indoor Tap https://www.amazon.com/gp/product/B00ZYLUBJU/ref=s9_acsd_al_bw_c_x_3_w
+  { "WiOn",            // Indoor Tap https://www.amazon.com/gp/product/B00ZYLUBJU/ref=s9_acsd_al_bw_c_x_3_w (ESP8266)
      GPIO_USER,        // GPIO00 Optional sensor (pm clock)
      0,
      GPIO_LED1,        // GPIO02 Green Led (1 = On, 0 = Off)
-     0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0,
+     0, 0, 0, 0, 0, 0, // Flash connection
      GPIO_USER,        // GPIO12 Optional sensor (pm data)
      GPIO_KEY1,        // GPIO13 Button
      0,
      GPIO_REL1,        // GPIO15 Relay (0 = Off, 1 = On)
      0
   },
-  { "NodeMCU",         // NodeMCU and Wemos hardware
-     GPIO_KEY1,        // GPIO00 Button
-     GPIO_USER,        // GPIO01 Serial RXD
-     GPIO_USER,        // GPIO02
-     GPIO_USER,        // GPIO03 Serial TXD and Optional sensor
-     GPIO_USER,        // GPIO04 Optional sensor
-     GPIO_USER,        // GPIO05
-     0, 0, 0,
-     GPIO_USER,        // GPIO09
-     GPIO_USER,        // GPIO10
-     0,
-     GPIO_USER,        // GPIO12
-     GPIO_USER,        // GPIO13
-     GPIO_USER,        // GPIO14
-     GPIO_USER,        // GPIO15
-     0
+  { "WeMos D1 mini",   // WeMos and NodeMCU hardware (ESP8266)
+     GPIO_USER,        // GPIO00 D3 Wemos Button Shield
+     GPIO_USER,        // GPIO01 TX Serial RXD
+     GPIO_USER,        // GPIO02 D4 Wemos DHT Shield
+     GPIO_USER,        // GPIO03 RX Serial TXD and Optional sensor
+     GPIO_USER,        // GPIO04 D2 Wemos I2C SDA
+     GPIO_USER,        // GPIO05 D1 Wemos I2C SCL / Wemos Relay Shield (0 = Off, 1 = On) / Wemos WS2812B RGB led Shield
+     0, 0, 0, 0, 0, 0, // Flash connection
+     GPIO_USER,        // GPIO12 D6
+     GPIO_USER,        // GPIO13 D7
+     GPIO_USER,        // GPIO14 D5
+     GPIO_USER,        // GPIO15 D8
+     GPIO_USER         // GPIO16 D0 Wemos Wake
   },
-  { "User Test",       // Sonoff Basic User Test
+  { "User Test",       // Sonoff Basic User Test (ESP8266)
      GPIO_KEY1,        // GPIO00 Button
-     0,
+     GPIO_USER,        // GPIO01 Serial RXD and Optional sensor
      GPIO_USER,        // GPIO02 Optional sensor
      GPIO_USER,        // GPIO03 Serial TXD and Optional sensor
      GPIO_USER,        // GPIO04 Optional sensor
      GPIO_USER,        // GPIO05 Optional sensor
-     0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, // Flash connection
      GPIO_REL1,        // GPIO12 Red Led and Relay (0 = Off, 1 = On)
      GPIO_LED1_INV,    // GPIO13 Green Led (0 = On, 1 = Off)
      GPIO_USER,        // GPIO14 Optional sensor

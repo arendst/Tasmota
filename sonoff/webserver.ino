@@ -508,6 +508,15 @@ void handleConfig()
   showPage(page);
 }
 
+boolean inModule(byte val, uint8_t *arr)
+{
+  if (!val) return false;  // None
+  for (byte i = 0; i < MAX_GPIO_PIN; i++) {
+    if (arr[i] == val) return true;
+  }
+  return false;
+}
+
 void handleModule()
 {
   if (httpUser()) return;
@@ -524,28 +533,27 @@ void handleModule()
 
   for (byte i = 0; i < MAXMODULE; i++) {  
     snprintf_P(stemp, sizeof(stemp), modules[i].name);
-    snprintf_P(line, sizeof(line), PSTR("<option%s value='%d'>%d %s</option>"),
+    snprintf_P(line, sizeof(line), PSTR("<option%s value='%d'>%02d %s</option>"),
       (i == sysCfg.module) ? " selected" : "", i, i +1, stemp);
     page += line;
   }
   page += F("</select></br>");
-
   mytmplt cmodule;
   memcpy_P(&cmodule, &modules[sysCfg.module], sizeof(cmodule));
   for (byte i = 0; i < MAX_GPIO_PIN; i++) {
     if (cmodule.gp.io[i] == GPIO_USER) {
-      snprintf_P(line, sizeof(line), PSTR("<br/><b>GPIO%d</b><select id='g%d' name='g%d'>"), i, i, i);
+      snprintf_P(line, sizeof(line), PSTR("<br/><b>GPIO%d</b> %s<select id='g%d' name='g%d'>"),
+        i, (i==0)?"Button1":(i==1)?"Serial Out":(i==3)?"Serial In":(i==12)?"Relay1":(i==13)?"Led1I":(i==14)?"Sensor":"", i, i);
       page += line;
       for (byte j = 0; j < GPIO_SENSOR_END; j++) {
         snprintf_P(stemp, sizeof(stemp), sensors[j]);
-        snprintf_P(line, sizeof(line), PSTR("<option%s value='%d'>%d %s</option>"),
-          (j == my_module.gp.io[i]) ? " selected" : "", j, j, stemp);
+        snprintf_P(line, sizeof(line), PSTR("<option%s value='%d'>%02d %s</option>"),
+          (j == my_module.gp.io[i])?" selected":(inModule(j, cmodule.gp.io))?" disabled":"", j, j, stemp);
         page += line;
       }
       page += F("</select></br>");
     }
   }
-
   page += FPSTR(HTTP_FORM_END);
   page += FPSTR(HTTP_BTN_CONF);
   showPage(page);

@@ -12,9 +12,9 @@
 
 //#define ALLOW_MIGRATE_TO_V3
 #ifdef ALLOW_MIGRATE_TO_V3
-  #define VERSION              0x03091900   // 3.9.25
+  #define VERSION              0x03091A00   // 3.9.26
 #else
-  #define VERSION              0x04000200   // 4.0.2
+  #define VERSION              0x04000300   // 4.0.3
 #endif  // ALLOW_MIGRATE_TO_V3
 
 enum log_t   {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG_MORE, LOG_LEVEL_ALL};
@@ -890,7 +890,7 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
     else if (!strcmp(type,"MODULES")) {
       snprintf_P(svalue, sizeof(svalue), PSTR("{\"Modules1\":\""), svalue);
       byte jsflg = 0;
-      for (byte i = 0; i < 11; i++) {
+      for (byte i = 0; i < MAXMODULE /2; i++) {
         if (jsflg) snprintf_P(svalue, sizeof(svalue), PSTR("%s, "), svalue);
         jsflg = 1;
         snprintf_P(stemp1, sizeof(stemp1), modules[i].name);
@@ -900,7 +900,7 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
       mqtt_publish_topic_P(0, PSTR("RESULT"), svalue);
       snprintf_P(svalue, sizeof(svalue), PSTR("{\"Modules2\":\""), svalue);
       jsflg = 0;
-      for (byte i = 11; i < MAXMODULE; i++) {
+      for (byte i = MAXMODULE /2; i < MAXMODULE; i++) {
         if (jsflg) snprintf_P(svalue, sizeof(svalue), PSTR("%s, "), svalue);
         jsflg = 1;
         snprintf_P(stemp1, sizeof(stemp1), modules[i].name);
@@ -935,9 +935,19 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
       }
     }
     else if (!strcmp(type,"GPIOS")) {
-      snprintf_P(svalue, sizeof(svalue), PSTR("{\"GPIOs\":\""), svalue);
+      snprintf_P(svalue, sizeof(svalue), PSTR("{\"GPIOs1\":\""), svalue);
       byte jsflg = 0;
-      for (byte i = 0; i < GPIO_SENSOR_END; i++) {
+      for (byte i = 0; i < GPIO_SENSOR_END /2; i++) {
+        if (jsflg) snprintf_P(svalue, sizeof(svalue), PSTR("%s, "), svalue);
+        jsflg = 1;
+        snprintf_P(stemp1, sizeof(stemp1), sensors[i]);
+        snprintf_P(svalue, sizeof(svalue), PSTR("%s%s (%d)"), svalue, stemp1, i);
+      }
+      snprintf_P(svalue, sizeof(svalue), PSTR("%s\"}"), svalue);
+      mqtt_publish_topic_P(0, PSTR("RESULT"), svalue);
+      snprintf_P(svalue, sizeof(svalue), PSTR("{\"GPIOs2\":\""), svalue);
+      jsflg = 0;
+      for (byte i = GPIO_SENSOR_END /2; i < GPIO_SENSOR_END; i++) {
         if (jsflg) snprintf_P(svalue, sizeof(svalue), PSTR("%s, "), svalue);
         jsflg = 1;
         snprintf_P(stemp1, sizeof(stemp1), sensors[i]);

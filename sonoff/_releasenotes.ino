@@ -1,4 +1,10 @@
-/* 4.0.2 20170308
+/* 4.0.3 20170309
+ * Renamed Module NodeMCU to WeMos D1 mini
+ * Add GPIO1 as user option to some modules
+ * Add Buttons, Relays and Leds to user configurable options (#159)
+ * Add description on Module parameters web page to some well known GPIOs (#107, #171)
+ * 
+ * 4.0.2 20170308
  * Restore correct seriallog level after Serial logging was disabled
  * Add simple dimmer slider to Sonoff Led web page
  * Reduced root webpage size by 31%
