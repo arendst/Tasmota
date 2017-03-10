@@ -87,4 +87,150 @@ boolean ir_send_command(char *type, uint16_t index, char *dataBufUc, uint16_t da
   }
   return serviced;
 }
+
+#ifdef USE_IR_HVAC
+/* TOSHIBA HVAC support based on https://github.com/r45635/HVAC-IR-Control */
+
+
+
+// HVAC TOSHIBA_
+#define HVAC_TOSHIBA_HDR_MARK    4400
+#define HVAC_TOSHIBA_HDR_SPACE   4300
+#define HVAC_TOSHIBA_BIT_MARK    543
+#define HVAC_TOSHIBA_ONE_SPACE   1623
+#define HVAC_MISTUBISHI_ZERO_SPACE  472
+#define HVAC_TOSHIBA_RPT_MARK    440
+#define HVAC_TOSHIBA_RPT_SPACE   7048 // Above original iremote limit
+#define HVAC_TOSHIBA_DATALEN 9
+
+boolean ir_hvac_command(char *type, uint16_t index, char *dataBufUc, uint16_t data_len, int16_t payload, char *svalue, uint16_t ssvalue)
+{
+  boolean serviced = true;
+  boolean error = false;
+  const char *protocol;
+  const char *HVAC_Mode_Str;
+  const char *HVAC_FanMode_Str;
+  int HVAC_Temp = 21;
+  int OFF = true;                  // Example false
+
+  unsigned int rawdata[2 + 2*8*HVAC_TOSHIBA_DATALEN + 2];
+  byte data[HVAC_TOSHIBA_DATALEN] = { 0xF2, 0x0D, 0x03, 0xFC, 0x01, 0x00, 0x00, 0x00, 0x00 };
+
+  if (!strcmp(type,"IRHVAC")) {
+    if (data_len) {
+      StaticJsonBuffer<128> jsonBufer;
+      JsonObject &root = jsonBufer.parseObject(dataBufUc);
+      if (!root.success()) {
+        snprintf_P(svalue, ssvalue, PSTR("{\"IRHVAC\":\"Invalid JSON\"}"));  // JSON decode failed
+      } else {
+        snprintf_P(svalue, ssvalue, PSTR("{\"IRHVAC\":\"Done\"}"));
+        HVAC_Mode_Str = root["HVAC_MODE"];
+        HVAC_Temp = root["HVAC_TEMP"];
+        HVAC_FanMode_Str = root["HVAC_FANMODE"];
+        OFF = root["OFF"];
+
+
+          if (HVAC_Mode_Str == NULL || !strcmp(HVAC_Mode_Str,"HVAC_HOT")) //default HVAC_HOT
+          {
+            data[6] = (byte) B00000011;
+          } else if (HVAC_Mode_Str && !strcmp(HVAC_Mode_Str,"HVAC_COLD"))
+          {
+            data[6] = (byte) B00000001;
+          } else if (HVAC_Mode_Str && !strcmp(HVAC_Mode_Str,"HVAC_DRY"))
+          {
+            data[6] = (byte) B00000010;
+          } else if (HVAC_Mode_Str && !strcmp(HVAC_Mode_Str,"HVAC_AUTO"))
+          {
+            data[6] = (byte) B00000000;
+          } else
+          {
+            error = true;
+          }
+
+          if (OFF) {
+            data[6] = (byte) 0x07; // Turn OFF HVAC
+          }
+
+          if (HVAC_FanMode_Str && !strcmp(HVAC_FanMode_Str,"FAN_SPEED_1"))
+          {
+            data[6] = data[6] | (byte) B01000000;
+          } else if (HVAC_FanMode_Str && !strcmp(HVAC_FanMode_Str,"FAN_SPEED_2"))
+          {
+            data[6] = data[6] | (byte) B01100000;
+          } else if (HVAC_FanMode_Str && !strcmp(HVAC_FanMode_Str,"FAN_SPEED_3"))
+          {
+            data[6] = data[6] | (byte) B10000000;
+          } else if (HVAC_FanMode_Str && !strcmp(HVAC_FanMode_Str,"FAN_SPEED_4"))
+          {
+            data[6] = data[6] | (byte) B10100000;
+          } else if (HVAC_FanMode_Str && !strcmp(HVAC_FanMode_Str,"FAN_SPEED_5"))
+          {
+            data[6] = data[6] | (byte) B11000000;
+          } else if (HVAC_FanMode_Str == NULL || !strcmp(HVAC_FanMode_Str,"FAN_SPEED_AUTO")) //default FAN_SPEED_AUTO
+          {
+            data[6] = data[6] | (byte) B00000000;
+          } else if (HVAC_FanMode_Str && !strcmp(HVAC_FanMode_Str,"FAN_SPEED_SILENT"))
+          {
+            data[6] = data[6] | (byte) B00000000;
+            addLog_P(LOG_LEVEL_DEBUG, PSTR("spsilent"));
+          }
+          else
+          {
+            error = true;
+          }
+
+
+             byte Temp;
+             if (HVAC_Temp > 30) { Temp = 30;}
+             else if (HVAC_Temp < 17) { Temp = 17; }
+             else { Temp = HVAC_Temp; };
+             data[5] = (byte) Temp - 17<<4;
+
+             data[HVAC_TOSHIBA_DATALEN-1] = 0;
+             for (int x = 0; x < HVAC_TOSHIBA_DATALEN - 1; x++) {
+              data[HVAC_TOSHIBA_DATALEN-1] = (byte) data[x] ^ data[HVAC_TOSHIBA_DATALEN -1];  // CRC is a simple bits addition
+             }
+
+             int i = 0;
+             byte mask = 1;
+
+             //header
+             rawdata[i++] = HVAC_TOSHIBA_HDR_MARK;
+             rawdata[i++] = HVAC_TOSHIBA_HDR_SPACE;
+
+             //data
+             for (int b = 0; b < HVAC_TOSHIBA_DATALEN; b++)
+             {
+               for (mask = 10000000; mask > 0; mask >>= 1) { //iterate through bit mask
+                 if (data[b] & mask) { // Bit ONE
+                  rawdata[i++] = HVAC_TOSHIBA_BIT_MARK;
+                  rawdata[i++] = HVAC_TOSHIBA_ONE_SPACE;
+                 }
+                 else { // Bit ZERO
+                  rawdata[i++] = HVAC_TOSHIBA_BIT_MARK;
+                  rawdata[i++] = HVAC_MISTUBISHI_ZERO_SPACE;
+                 }
+               }
+             }
+
+             //trailer
+             rawdata[i++] = HVAC_TOSHIBA_RPT_MARK;
+             rawdata[i++] = HVAC_TOSHIBA_RPT_SPACE;
+
+             noInterrupts();
+             irsend->sendRaw(rawdata,i,38);
+             irsend->sendRaw(rawdata,i,38);
+             interrupts();
+
+      }
+    } else error = true;
+    if (error) snprintf_P(svalue, ssvalue, PSTR("{\"IRHVAC\":\"Wrong parameters value for HVAC_Mode and/or HVAC_FanMode\"}"));
+  }
+  else {
+    serviced = false;  // Unknown command
+  }
+  return serviced;
+}
+
+#endif  //USE_IR_HVAC
 #endif  // USE_IR_REMOTE
