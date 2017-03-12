@@ -135,7 +135,7 @@ enum emul_t  {EMUL_NONE, EMUL_WEMO, EMUL_HUE, EMUL_MAX};
 #endif
 
 #define APP_BAUDRATE           115200       // Default serial baudrate
-#define MAX_STATUS             10           // Max number of status lines
+#define MAX_STATUS             11           // Max number of status lines
 
 enum butt_t {PRESSED, NOT_PRESSED};
 
@@ -1463,6 +1463,20 @@ void publish_status(uint8_t payload)
     sensors_mqttPresent(svalue, sizeof(svalue), &djson);
     snprintf_P(svalue, sizeof(svalue), PSTR("%s}"), svalue);
     mqtt_publish_topic_P(option, PSTR("STATUS10"), svalue);
+  }
+
+  if ((payload == 0) || (payload == 11)) {
+    snprintf_P(svalue, sizeof(svalue), PSTR("{\"StatusPWR\":"));
+    for (byte i = 0; i < Maxdevice; i++) {
+      if (Maxdevice == 1) {  // Legacy
+        snprintf_P(svalue, sizeof(svalue), PSTR("%s, \"%s\":"), svalue, sysCfg.mqtt_subtopic);
+      } else {
+        snprintf_P(svalue, sizeof(svalue), PSTR("%s, \"%s%d\":"), svalue, sysCfg.mqtt_subtopic, i +1);
+      }
+      snprintf_P(svalue, sizeof(svalue), PSTR("%s\"%s\""), svalue, (power & (0x01 << i)) ? MQTT_STATUS_ON : MQTT_STATUS_OFF);
+    }
+    snprintf_P(svalue, sizeof(svalue), PSTR("%s}"), svalue);
+    mqtt_publish_topic_P(option, PSTR("STATUS11"), svalue);
   }
 }
 
