@@ -113,7 +113,6 @@ enum module_t {
   EXS_RELAY,
   WION,
   WEMOS,
-  USER_TEST,
   MAXMODULE };
 
 /********************************************************************************************/
@@ -299,12 +298,12 @@ const mytmplt modules[MAXMODULE] PROGMEM = {
      GPIO_KEY1,        // GPIO02 Button 1
      GPIO_USER,        // GPIO03 Serial TXD and Optional sensor
      GPIO_USER,        // GPIO04 Optional sensor
-     0,
+     GPIO_USER,        // GPIO05 Optional sensor
      0, 0, 0, 0, 0, 0, // Flash connection
      GPIO_REL2,        // GPIO12 Red Led and Relay 2 (0 = Off, 1 = On)
      GPIO_REL1,        // GPIO13 Red Led and Relay 1 (0 = Off, 1 = On)
      GPIO_USER,        // GPIO14 Optional sensor
-     0,
+     GPIO_USER,        // GPIO15 Optional sensor
      GPIO_LED1         // GPIO16 Green/Blue Led (1 = On, 0 = Off)
   },
   { "EXS Relay",       // Latching relay https://ex-store.de/ESP8266-WiFi-Relay-V31 (ESP8266)
@@ -347,19 +346,6 @@ const mytmplt modules[MAXMODULE] PROGMEM = {
      GPIO_USER,        // GPIO14 D5
      GPIO_USER,        // GPIO15 D8
      GPIO_USER         // GPIO16 D0 Wemos Wake
-  },
-  { "User Test",       // Sonoff Basic User Test (ESP8266)
-     GPIO_KEY1,        // GPIO00 Button
-     GPIO_USER,        // GPIO01 Serial RXD and Optional sensor
-     GPIO_USER,        // GPIO02 Optional sensor
-     GPIO_USER,        // GPIO03 Serial TXD and Optional sensor
-     GPIO_USER,        // GPIO04 Optional sensor
-     GPIO_USER,        // GPIO05 Optional sensor
-     0, 0, 0, 0, 0, 0, // Flash connection
-     GPIO_REL1,        // GPIO12 Red Led and Relay (0 = Off, 1 = On)
-     GPIO_LED1_INV,    // GPIO13 Green Led (0 = On, 1 = Off)
-     GPIO_USER,        // GPIO14 Optional sensor
-     0, 0
   }
 };
 

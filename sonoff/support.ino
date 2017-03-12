@@ -827,9 +827,15 @@ void rtc_second()
 void rtc_init(rtcCallback cb)
 {
   rtcCb = cb;
-  sntp_setservername(0, (char*)NTP_SERVER1);
-  sntp_setservername(1, (char*)NTP_SERVER2);
-  sntp_setservername(2, (char*)NTP_SERVER3);
+  
+//  sntp_setservername(0, (char*)NTP_SERVER1);
+//  sntp_setservername(1, (char*)NTP_SERVER2);
+//  sntp_setservername(2, (char*)NTP_SERVER3);
+
+  sntp_setservername(0, sysCfg.ntp_server[0]);
+  sntp_setservername(1, sysCfg.ntp_server[1]);
+  sntp_setservername(2, sysCfg.ntp_server[2]);
+
   sntp_stop();
   sntp_set_timezone(0);      // UTC time
   sntp_init();
