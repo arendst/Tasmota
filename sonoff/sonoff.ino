@@ -584,8 +584,8 @@ void mqtt_reconnect()
     mqtt_publish(stopic, svalue, true);
     mqtt_connected();
   } else {
-    snprintf_P(log, sizeof(log), PSTR("MQTT: CONNECT FAILED, rc %d. Retry in %d seconds"), mqttClient.state(), mqttcounter);
-    addLog(LOG_LEVEL_DEBUG, log);
+    snprintf_P(log, sizeof(log), PSTR("MQTT: CONNECT FAILED to (%s:%d), rc %d. Retry in %d seconds"), sysCfg.mqtt_host, sysCfg.mqtt_port, mqttClient.state(), mqttcounter);//status codes are documented here http://pubsubclient.knolleary.net/api.html#state
+    addLog(LOG_LEVEL_INFO, log);
   }
 }
 
