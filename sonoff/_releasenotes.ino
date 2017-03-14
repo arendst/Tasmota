@@ -1,4 +1,9 @@
-/* 4.0.4 20170312
+/* 4.0.5 20170314
+ * Add command Status 11 to show power status with Vcc if define USE_ADC_VCC is enabled (default)
+ * Add ADC input to Sonoff SV and Wemos D1 mini - Needs recompile with define USE_ADC_VCC disabled (#137)
+ * Add MQTT host:port to timeout message (#199)
+ *
+ * 4.0.4 20170312
  * Add pulse timers for up to 4 relays (#106)
  * Fix Sonoff Led power state when dimmer or color is 0 (#176)
  * Add command NtpServer<x> to configure up to three NTP servers (#177)
