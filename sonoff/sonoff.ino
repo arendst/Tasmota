@@ -10,6 +10,7 @@
  * ====================================================
 */
 
+
 //#define ALLOW_MIGRATE_TO_V3
 #ifdef ALLOW_MIGRATE_TO_V3
   #define VERSION              0x03091B00   // 3.9.27
@@ -30,6 +31,11 @@ enum emul_t  {EMUL_NONE, EMUL_WEMO, EMUL_HUE, EMUL_MAX};
 
 #include "user_config.h"
 #include "user_config_override.h"
+
+#ifdef USE_ADC_VCC
+  #include "adc_vcc.h" //the mode configuration can not be dynamic and it can't be in the main file - see issue and workaround here https://github.com/esp8266/Arduino/issues/2913 
+#endif
+
 
 /*********************************************************************************************\
  * Enable feature by removing leading // or disable feature by adding leading //
@@ -1408,14 +1414,20 @@ void publish_status(uint8_t payload)
   }
 
   if ((payload == 0) || (payload == 1)) {
-    snprintf_P(svalue, sizeof(svalue), PSTR("{\"StatusPRM\":{\"Baudrate\":%d, \"GroupTopic\":\"%s\", \"OtaUrl\":\"%s\", \"Uptime\":%d, \"Sleep\":%d, \"BootCount\":%d, \"SaveCount\":%d}}"),
-      Baudrate, sysCfg.mqtt_grptopic, sysCfg.otaUrl, uptime, sysCfg.sleep, sysCfg.bootcount, sysCfg.saveFlag);
+    snprintf_P(svalue, sizeof(svalue), PSTR("{\"StatusPRM\":{\"Baudrate\":%d, \"GroupTopic\":\"%s\", \"OtaUrl\":\"%s\", \"Uptime\":%d, \"Sleep\":%d, \"BootCount\":%d, \"SaveCount\":%d"
+#ifdef USE_ADC_VCC
+      ", \"VCC\":%d"
+#endif
+      "}}"),
+      Baudrate, sysCfg.mqtt_grptopic, sysCfg.otaUrl, uptime, sysCfg.sleep, sysCfg.bootcount, sysCfg.saveFlag 
+#ifdef USE_ADC_VCC
+      , ESP.getVcc()
+#endif      
+      );
     mqtt_publish_topic_P(option, PSTR("STATUS1"), svalue);
   }
 
   if ((payload == 0) || (payload == 2)) {
-//    snprintf_P(svalue, sizeof(svalue), PSTR("{\"StatusFWR\":{\"Program\":\"%s\", \"BuildDateTime\":\"%s/%s\", \"Boot\":%d, \"Core\":\"%s\", \"SDK\":\"%s\"}}"),
-//      Version, __DATE__, __TIME__, ESP.getBootVersion(), ESP.getCoreVersion().c_str(), ESP.getSdkVersion());
     snprintf_P(svalue, sizeof(svalue), PSTR("{\"StatusFWR\":{\"Program\":\"%s\", \"BuildDateTime\":\"%s\", \"Boot\":%d, \"Core\":\"%s\", \"SDK\":\"%s\"}}"),
       Version, getBuildDateTime().c_str(), ESP.getBootVersion(), ESP.getCoreVersion().c_str(), ESP.getSdkVersion());
     mqtt_publish_topic_P(option, PSTR("STATUS2"), svalue);
