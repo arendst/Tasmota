@@ -7,7 +7,7 @@ Current version is **4.0.5** - See [sonoff/_releasenotes.ino](https://github.com
 - Once uploaded select module using the configuration webpage or the commands ```Modules``` and ```Module```.
 - After reboot select config menu again or use commands ```GPIOs``` and ```GPIO``` to change GPIO with desired sensor.
 
-<img alt="Sonoff" src="https://github.com/arendst/arendst.github.io/blob/master/media/sonoffbasic.jpg" width="250" align="right" /> 
+<img alt="Sonoff" src="https://github.com/arendst/arendst.github.io/blob/master/media/sonoffbasic.jpg" width="250" align="right"> 
 See [Wiki](https://github.com/arendst/Sonoff-Tasmota/wiki) for more information.<br />
 See [Community](https://groups.google.com/d/forum/sonoffusers) for forum and more user experience.
 
