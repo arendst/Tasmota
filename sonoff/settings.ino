@@ -734,6 +734,10 @@ void CFG_Delta()
     if (sysCfg.version < 0x04000400) {
       CFG_DefaultSet_4_0_4();
     }
+    if (sysCfg.version < 0x04000500) {
+      memmove(sysCfg.my_module.gp.io, sysCfg.my_module.gp.io +1, MAX_GPIO_PIN -1);  // move myio 1 byte to front
+      sysCfg.my_module.gp.io[MAX_GPIO_PIN -1] = 0;  // Clear ADC0
+    }
     sysCfg.version = VERSION;
   }
 }
