@@ -1,5 +1,6 @@
 ## Sonoff-MQTT-OTA-Arduino - TASMOTA
-This software is End of Life and new features will be introduced in the **Sonoff-Tasmota version** available on [https://github.com/arendst/Sonoff-Tasmota](https://github.com/arendst/Sonoff-Tasmota)
+
+This software is End of Life. New features will be introduced in **Sonoff-Tasmota** available on [https://github.com/arendst/Sonoff-Tasmota](https://github.com/arendst/Sonoff-Tasmota)
 
 Provide ESP8266 based Sonoff by [iTead Studio](https://www.itead.cc/) and ElectroDragon IoT Relay with Serial, Web and MQTT control allowing 'Over the Air' or OTA firmware updates using Arduino IDE.
 
