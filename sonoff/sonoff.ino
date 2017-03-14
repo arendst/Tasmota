@@ -12,9 +12,9 @@
 
 //#define ALLOW_MIGRATE_TO_V3
 #ifdef ALLOW_MIGRATE_TO_V3
-  #define VERSION              0x03091C00   // 3.9.28
+  #define VERSION              0x03091B00   // 3.9.27
 #else
-  #define VERSION              0x04000500   // 4.0.5
+  #define VERSION              0x04000400   // 4.0.4
 #endif  // ALLOW_MIGRATE_TO_V3
 
 enum log_t   {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG_MORE, LOG_LEVEL_ALL};
@@ -136,7 +136,7 @@ enum emul_t  {EMUL_NONE, EMUL_WEMO, EMUL_HUE, EMUL_MAX};
 #endif
 
 #define APP_BAUDRATE           115200       // Default serial baudrate
-#define MAX_STATUS             11           // Max number of status lines
+#define MAX_STATUS             10           // Max number of status lines
 
 enum butt_t {PRESSED, NOT_PRESSED};
 
@@ -584,9 +584,8 @@ void mqtt_reconnect()
     mqtt_publish(stopic, svalue, true);
     mqtt_connected();
   } else {
-    snprintf_P(log, sizeof(log), PSTR("MQTT: Connect FAILED to %s:%d, rc %d. Retry in %d seconds"),
-      sysCfg.mqtt_host, sysCfg.mqtt_port, mqttClient.state(), mqttcounter);  //status codes are documented here http://pubsubclient.knolleary.net/api.html#state
-    addLog(LOG_LEVEL_INFO, log);
+    snprintf_P(log, sizeof(log), PSTR("MQTT: CONNECT FAILED, rc %d. Retry in %d seconds"), mqttClient.state(), mqttcounter);
+    addLog(LOG_LEVEL_DEBUG, log);
   }
 }
 
@@ -1474,47 +1473,12 @@ void publish_status(uint8_t payload)
     snprintf_P(svalue, sizeof(svalue), PSTR("%s}"), svalue);
     mqtt_publish_topic_P(option, PSTR("STATUS10"), svalue);
   }
-
-  if ((payload == 0) || (payload == 11)) {
-    snprintf_P(svalue, sizeof(svalue), PSTR("{\"StatusPWR\":"));
-    state_mqttPresent(svalue, sizeof(svalue));
-    snprintf_P(svalue, sizeof(svalue), PSTR("%s}"), svalue);
-    mqtt_publish_topic_P(option, PSTR("STATUS11"), svalue);
-  }
- 
-}
-
-void state_mqttPresent(char* svalue, uint16_t ssvalue)
-{
-  char stemp1[8];
-  
-  snprintf_P(svalue, ssvalue, PSTR("%s{\"Time\":\"%s\", \"Uptime\":%d"), svalue, getDateTime().c_str(), uptime);
-#ifdef USE_ADC_VCC
-  dtostrf((double)ESP.getVcc()/1000, 1, 3, stemp1);
-  snprintf_P(svalue, ssvalue, PSTR("%s, \"Vcc\":%s"), svalue, stemp1);
-#endif        
-  for (byte i = 0; i < Maxdevice; i++) {
-    if (Maxdevice == 1) {  // Legacy
-      snprintf_P(svalue, ssvalue, PSTR("%s, \"%s\":"), svalue, sysCfg.mqtt_subtopic);
-    } else {
-      snprintf_P(svalue, ssvalue, PSTR("%s, \"%s%d\":"), svalue, sysCfg.mqtt_subtopic, i +1);
-    }
-    snprintf_P(svalue, ssvalue, PSTR("%s\"%s\""), svalue, (power & (0x01 << i)) ? MQTT_STATUS_ON : MQTT_STATUS_OFF);
-  }
-  snprintf_P(svalue, ssvalue, PSTR("%s, \"Wifi\":{\"AP\":%d, \"SSID\":\"%s\", \"RSSI\":%d}}"),
-    svalue, sysCfg.sta_active +1, sysCfg.sta_ssid[sysCfg.sta_active], WIFI_getRSSIasQuality(WiFi.RSSI()));
 }
 
 void sensors_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
 {
   snprintf_P(svalue, ssvalue, PSTR("%s{\"Time\":\"%s\""), svalue, getDateTime().c_str());
-
-#ifndef USE_ADC_VCC
-  if (pin[GPIO_ADC0]) {
-    snprintf_P(svalue, ssvalue, PSTR("%s, \"AnalogInput0\":%d"), svalue, analogRead(A0));
-    *djson = 1;
-  }
-#endif    
+  
   if (pin[GPIO_DSB] < 99) {
 #ifdef USE_DS18B20
     dsb_mqttPresent(svalue, ssvalue, djson);
@@ -1620,8 +1584,17 @@ void every_second()
     if (tele_period >= sysCfg.tele_period) {
       tele_period = 0;
 
-      svalue[0] = '\0';
-      state_mqttPresent(svalue, sizeof(svalue));
+      snprintf_P(svalue, sizeof(svalue), PSTR("{\"Time\":\"%s\", \"Uptime\":%d"), getDateTime().c_str(), uptime);
+      for (byte i = 0; i < Maxdevice; i++) {
+        if (Maxdevice == 1) {  // Legacy
+          snprintf_P(svalue, sizeof(svalue), PSTR("%s, \"%s\":"), svalue, sysCfg.mqtt_subtopic);
+        } else {
+          snprintf_P(svalue, sizeof(svalue), PSTR("%s, \"%s%d\":"), svalue, sysCfg.mqtt_subtopic, i +1);
+        }
+        snprintf_P(svalue, sizeof(svalue), PSTR("%s\"%s\""), svalue, (power & (0x01 << i)) ? MQTT_STATUS_ON : MQTT_STATUS_OFF);
+      }
+      snprintf_P(svalue, sizeof(svalue), PSTR("%s, \"Wifi\":{\"AP\":%d, \"SSID\":\"%s\", \"RSSI\":%d}}"),
+        svalue, sysCfg.sta_active +1, sysCfg.sta_ssid[sysCfg.sta_active], WIFI_getRSSIasQuality(WiFi.RSSI()));
       mqtt_publish_topic_P(1, PSTR("STATE"), svalue);
 
       uint8_t djson = 0;
