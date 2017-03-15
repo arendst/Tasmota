@@ -6,15 +6,14 @@ Provide ESP8266 based Sonoff by [iTead Studio](https://www.itead.cc/) and Electr
 
 Current version is **3.2.13** - See ```sonoff/_releasenotes.ino``` for change information.
 
-<img alt="Sonoff" src="https://github.com/arendst/arendst.github.io/blob/master/media/sonoffbasic.jpg" width="250" align="right" /> 
+<img src="https://github.com/arendst/arendst.github.io/blob/master/media/sonoffbasic.jpg" width="250" align="right" /> 
 See [Wiki](https://github.com/arendst/Sonoff-MQTT-OTA-Arduino/wiki) for more information.<br />
 See [Community](https://groups.google.com/d/forum/sonoffusers) for forum and more user experience.
 
 Starting with version 2.0.0 the following devices are supported:
 - [iTead Sonoff Basic](http://sonoff.itead.cc/en/products/sonoff/sonoff-basic)
 - [iTead Sonoff RF](http://sonoff.itead.cc/en/products/sonoff/sonoff-rf)
-- [iTead Sonoff SV](https://www.itead.cc/sonoff-sv.html)
-<img alt="Sonoff" src="https://github.com/arendst/arendst.github.io/blob/master/media/sonoff_th.jpg" width="250" align="right" /> 
+- [iTead Sonoff SV](https://www.itead.cc/sonoff-sv.html)<img  src="https://github.com/arendst/arendst.github.io/blob/master/media/sonoff_th.jpg" width="250" align="right" /> 
 - [iTead Sonoff TH10/TH16 with temperature sensor](http://sonoff.itead.cc/en/products/sonoff/sonoff-th)
 - [iTead Sonoff Dual](http://sonoff.itead.cc/en/products/sonoff/sonoff-dual)
 - [iTead Sonoff Pow](http://sonoff.itead.cc/en/products/sonoff/sonoff-pow)
@@ -26,5 +25,5 @@ Starting with version 2.0.0 the following devices are supported:
 - [iTead Motor Clockwise/Anticlockwise](https://www.itead.cc/smart-home/motor-reversing-wifi-wireless-switch.html)
 - [Electrodragon IoT Relay Board](http://www.electrodragon.com/product/wifi-iot-relay-board-based-esp8266/)
 
-<img alt="Sonoff" src="https://github.com/arendst/arendst.github.io/blob/master/media/sonofftoucheu.jpg" height="280" align="left" /> 
-<img alt="Sonoff" src="https://github.com/arendst/arendst.github.io/blob/master/media/sonoff4ch.jpg" height="250" align="right" /> 
+<img src="https://github.com/arendst/arendst.github.io/blob/master/media/sonofftoucheu.jpg" height="280" align="left" /> 
+<img src="https://github.com/arendst/arendst.github.io/blob/master/media/sonoff4ch.jpg" height="250" align="right" /> 
