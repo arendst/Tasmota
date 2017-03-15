@@ -363,7 +363,7 @@ const mytmplt modules[MAXMODULE] PROGMEM = {
      GPIO_USER,        // GPIO05
      0, 0, 0, 0, 0, 0, // Flash connection
      GPIO_USER,        // GPIO12
-     GPIO_USER,        // GPIO13
+     GPIO_LED1_INV,    // GPIO13 BLUE LED
      GPIO_USER,        // GPIO14
      0,                // GPIO15
      0,                // GPIO16
