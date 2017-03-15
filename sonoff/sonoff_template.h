@@ -355,7 +355,7 @@ const mytmplt modules[MAXMODULE] PROGMEM = {
      GPIO_ADC0         // ADC0 A0 Analog input
   },
   { "Sonoff Dev",      // Sonoff Dev (ESP8266)
-     GPIO_KEY1,        // GPIO00 Button
+     GPIO_KEY1,        // GPIO00 E-FW Button
      GPIO_USER,        // GPIO01 TX Serial RXD and Optional sensor
      0,                // GPIO02
      GPIO_USER,        // GPIO03 RX Serial TXD and Optional sensor
