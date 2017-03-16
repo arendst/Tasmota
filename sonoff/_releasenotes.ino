@@ -1,9 +1,28 @@
-/* 4.0.3 20170309
+/* 4.0.6 20170316
+ * Fix to better find device by Wifi hostname
+ * Fix compile error when some I2C devices are disabled
+ * Add (experimental) support for SHT1X emulating I2C (#97)
+ * Add ADC to ElectroDragon (#203)
+ * Add support for Sonoff Dev (#206)
+ *
+ * 4.0.5 20170314
+ * Add command Status 11 to show power status with Vcc if define USE_ADC_VCC is enabled (default)
+ * Add ADC input to Sonoff SV and Wemos D1 mini - Needs recompile with define USE_ADC_VCC disabled (#137)
+ * Add MQTT host:port to timeout message (#199)
+ *
+ * 4.0.4 20170312
+ * Add pulse timers for up to 4 relays (#106)
+ * Fix Sonoff Led power state when dimmer or color is 0 (#176)
+ * Add command NtpServer<x> to configure up to three NTP servers (#177)
+ * Delete module User Test as module Wemos D1 mini has same/more user configurable GPIO (#178)
+ * Add more user configurable GPIO to module ElectroDragon (#183)
+ *
+ * 4.0.3 20170309
  * Renamed Module NodeMCU to WeMos D1 mini
  * Add GPIO1 as user option to some modules
  * Add Buttons, Relays and Leds to user configurable options (#159)
  * Add description on Module parameters web page to some well known GPIOs (#107, #171)
- * 
+ *
  * 4.0.2 20170308
  * Restore correct seriallog level after Serial logging was disabled
  * Add simple dimmer slider to Sonoff Led web page

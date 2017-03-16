@@ -288,6 +288,7 @@ void WIFI_begin(uint8_t flag)
 #ifdef USE_STATIC_IP_ADDRESS
   WiFi.config(ipadd, ipgat, ipsub, ipdns);  // Set static IP
 #endif  // USE_STATIC_IP_ADDRESS
+  WiFi.hostname(Hostname);
   WiFi.begin(sysCfg.sta_ssid[sysCfg.sta_active], sysCfg.sta_pwd[sysCfg.sta_active]);
   snprintf_P(log, sizeof(log), PSTR("Wifi: Connecting to AP%d %s in mode 11%c as %s..."),
     sysCfg.sta_active +1, sysCfg.sta_ssid[sysCfg.sta_active], PhyMode[WiFi.getPhyMode() & 0x3], Hostname);
@@ -417,10 +418,9 @@ int WIFI_State()
   return state;
 }
 
-void WIFI_Connect(char *Hostname)
+void WIFI_Connect()
 {
   WiFi.persistent(false);   // Solve possible wifi init errors
-  WiFi.hostname(Hostname);
   _wifistatus = 0;
   _wifiretry = WIFI_RETRY_SEC;
   _wificounter = 1;
@@ -590,8 +590,6 @@ static const uint8_t monthDays[] = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30,
 static const char monthNames[] = "JanFebMarAprMayJunJulAugSepOctNovDec";
 
 uint32_t utctime = 0, loctime = 0, dsttime = 0, stdtime = 0, ntptime = 0, midnight = 1451602800;
-
-rtcCallback rtcCb = NULL;
 
 String getBuildDateTime()
 {
@@ -821,15 +819,13 @@ void rtc_second()
     midnight = loctime;
   }
   rtcTime.Year += 1970;
-  if (rtcCb) rtcCb();
 }
 
-void rtc_init(rtcCallback cb)
+void rtc_init()
 {
-  rtcCb = cb;
-  sntp_setservername(0, (char*)NTP_SERVER1);
-  sntp_setservername(1, (char*)NTP_SERVER2);
-  sntp_setservername(2, (char*)NTP_SERVER3);
+  sntp_setservername(0, sysCfg.ntp_server[0]);
+  sntp_setservername(1, sysCfg.ntp_server[1]);
+  sntp_setservername(2, sysCfg.ntp_server[2]);
   sntp_stop();
   sntp_set_timezone(0);      // UTC time
   sntp_init();

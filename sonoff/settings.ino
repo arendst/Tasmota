@@ -416,7 +416,6 @@ void CFG_DefaultSet2()
 {
   sysCfg.savedata = SAVE_DATA;
   sysCfg.savestate = SAVE_STATE;
-  sysCfg.module = MODULE;
   sysCfg.model = 0;
   sysCfg.timezone = APP_TIMEZONE;
   strlcpy(sysCfg.otaUrl, OTA_URL, sizeof(sysCfg.otaUrl));
@@ -455,7 +454,7 @@ void CFG_DefaultSet2()
 
   sysCfg.power = APP_POWER;
   sysCfg.poweronstate = APP_POWERON_STATE;
-  sysCfg.pulsetime = APP_PULSETIME;
+//  sysCfg.pulsetime = APP_PULSETIME;
   sysCfg.ledstate = APP_LEDSTATE;
 //  sysCfg.switchmode = SWITCH_MODE;
   sysCfg.blinktime = APP_BLINKTIME;
@@ -471,7 +470,6 @@ void CFG_DefaultSet2()
     sysCfg.domoticz_key_idx[i] = 0;
     sysCfg.domoticz_switch_idx[i] = 0;
   }
-  for (byte i = 0; i < 12; i++) sysCfg.domoticz_sensor_idx[i] = 0;
 
   sysCfg.hlw_pcal = HLW_PREF_PULSE;
   sysCfg.hlw_ucal = HLW_UREF_PULSE;
@@ -494,6 +492,29 @@ void CFG_DefaultSet2()
   sysCfg.hlw_mkwh = 0;                             // MaxEnergy
   sysCfg.hlw_mkwhs = 0;                            // MaxEnergyStart
 
+  CFG_DefaultSet_3_2_4();
+  
+  strlcpy(sysCfg.friendlyname[0], FRIENDLY_NAME, sizeof(sysCfg.friendlyname[0]));
+  strlcpy(sysCfg.friendlyname[1], FRIENDLY_NAME"2", sizeof(sysCfg.friendlyname[1]));
+  strlcpy(sysCfg.friendlyname[2], FRIENDLY_NAME"3", sizeof(sysCfg.friendlyname[2]));
+  strlcpy(sysCfg.friendlyname[3], FRIENDLY_NAME"4", sizeof(sysCfg.friendlyname[3]));
+
+  CFG_DefaultSet_3_9_3();
+
+  strlcpy(sysCfg.switch_topic, "0", sizeof(sysCfg.switch_topic));
+  sysCfg.mqtt_switch_retain = MQTT_SWITCH_RETAIN;
+  sysCfg.mqtt_enabled = MQTT_USE;
+
+  sysCfg.emulation = EMULATION;
+
+  strlcpy(sysCfg.web_password, WEB_PASSWORD, sizeof(sysCfg.web_password));
+
+  CFG_DefaultSet_4_0_4();
+  sysCfg.pulsetime[0] = APP_PULSETIME;
+}
+
+void CFG_DefaultSet_3_2_4()
+{
   sysCfg.ws_pixels = WS2812_LEDS;
   sysCfg.ws_red = 255;
   sysCfg.ws_green = 0;
@@ -505,14 +526,16 @@ void CFG_DefaultSet2()
   sysCfg.ws_scheme = 0;
   sysCfg.ws_width = 1;
   sysCfg.ws_wakeup = 0;
+}
 
-  strlcpy(sysCfg.friendlyname[0], FRIENDLY_NAME, sizeof(sysCfg.friendlyname[0]));
-  strlcpy(sysCfg.friendlyname[1], FRIENDLY_NAME"2", sizeof(sysCfg.friendlyname[1]));
-  strlcpy(sysCfg.friendlyname[2], FRIENDLY_NAME"3", sizeof(sysCfg.friendlyname[2]));
-  strlcpy(sysCfg.friendlyname[3], FRIENDLY_NAME"4", sizeof(sysCfg.friendlyname[3]));
+void CFG_DefaultSet_3_9_3()
+{
+  for (byte i = 0; i < 4; i++) sysCfg.domoticz_switch_idx[i] = 0;
+  for (byte i = 0; i < 12; i++) sysCfg.domoticz_sensor_idx[i] = 0;
 
+  sysCfg.module = MODULE;
   for (byte i = 0; i < MAX_GPIO_PIN; i++) sysCfg.my_module.gp.io[i] = 0;
-  
+
   sysCfg.led_pixels = 0;
   for (byte i = 0; i < 5; i++) sysCfg.led_color[i] = 255;
   sysCfg.led_table = 0;
@@ -522,14 +545,18 @@ void CFG_DefaultSet2()
   sysCfg.led_scheme = 0;
   sysCfg.led_width = 0;
   sysCfg.led_wakeup = 0;
-  
-  strlcpy(sysCfg.switch_topic, "0", sizeof(sysCfg.switch_topic));
-  sysCfg.mqtt_switch_retain = MQTT_SWITCH_RETAIN;
-  sysCfg.mqtt_enabled = MQTT_USE;
+}
 
-  sysCfg.emulation = EMULATION;
-
-  strlcpy(sysCfg.web_password, WEB_PASSWORD, sizeof(sysCfg.web_password));
+void CFG_DefaultSet_4_0_4()
+{
+  strlcpy(sysCfg.ntp_server[0], NTP_SERVER1, sizeof(sysCfg.ntp_server[0]));
+  strlcpy(sysCfg.ntp_server[1], NTP_SERVER2, sizeof(sysCfg.ntp_server[1]));
+  strlcpy(sysCfg.ntp_server[2], NTP_SERVER3, sizeof(sysCfg.ntp_server[2]));
+  for (byte j =0; j < 3; j++)
+    for (byte i = 0; i < strlen(sysCfg.ntp_server[j]); i++)
+      if (sysCfg.ntp_server[j][i] == ',') sysCfg.ntp_server[j][i] = '.';
+  sysCfg.pulsetime[0] = sysCfg.ex_pulsetime;
+  for (byte i = 1; i < MAX_PULSETIMERS; i++) sysCfg.pulsetime[i] = 0;
 }
 
 void CFG_Default()
@@ -657,7 +684,7 @@ void CFG_Delta()
 {
   if (sysCfg.version != VERSION) {      // Fix version dependent changes
     if (sysCfg.version < 0x03000600) {  // 3.0.6 - Add parameter
-      sysCfg.pulsetime = APP_PULSETIME;
+      sysCfg.ex_pulsetime = APP_PULSETIME;
     }
     if (sysCfg.version < 0x03010100) {  // 3.1.1 - Add parameter
       sysCfg.poweronstate = APP_POWERON_STATE;
@@ -673,17 +700,7 @@ void CFG_Delta()
       getClient(sysCfg.friendlyname[0], sysCfg.mqtt_client, sizeof(sysCfg.friendlyname[0]));
     }
     if (sysCfg.version < 0x03020400) {  // 3.2.4 - Add parameter
-      sysCfg.ws_pixels = WS2812_LEDS;
-      sysCfg.ws_red = 255;
-      sysCfg.ws_green = 0;
-      sysCfg.ws_blue = 0;
-      sysCfg.ws_ledtable = 0;
-      sysCfg.ws_dimmer = 8;
-      sysCfg.ws_fade = 0;
-      sysCfg.ws_speed = 1;
-      sysCfg.ws_scheme = 0;
-      sysCfg.ws_width = 1;
-      sysCfg.ws_wakeup = 0;
+      CFG_DefaultSet_3_2_4();
     }
     if (sysCfg.version < 0x03020500) {  // 3.2.5 - Add parameter
       getClient(sysCfg.friendlyname[0], sysCfg.mqtt_client, sizeof(sysCfg.friendlyname[0]));
@@ -699,27 +716,13 @@ void CFG_Delta()
     if (sysCfg.version < 0x03020C00) {  // 3.2.12 - Add parameter
       sysCfg.sleep = APP_SLEEP;
     }
-    if (sysCfg.version < 0x03090204) {  // 3.9.2d - Add parameter
-      for (byte i = 0; i < 4; i++) sysCfg.domoticz_switch_idx[i] = 0;
-      for (byte i = 0; i < 12; i++) sysCfg.domoticz_sensor_idx[i] = 0;
-
-      sysCfg.module = MODULE;
-      for (byte i = 0; i < MAX_GPIO_PIN; i++) sysCfg.my_module.gp.io[i] = 0;
-
-      sysCfg.led_pixels = 0;
-      for (byte i = 0; i < 5; i++) sysCfg.led_color[i] = 255;
-      sysCfg.led_table = 0;
-      for (byte i = 0; i < 3; i++) sysCfg.led_dimmer[i] = 10;
-      sysCfg.led_fade = 0;
-      sysCfg.led_speed = 0;
-      sysCfg.led_scheme = 0;
-      sysCfg.led_width = 0;
-      sysCfg.led_wakeup = 0;
+    if (sysCfg.version < 0x03090300) {  // 3.9.2d - Add parameter
+      CFG_DefaultSet_3_9_3();
     }
     if (sysCfg.version < 0x03090700) {  // 3.9.7 - Add parameter
       sysCfg.emulation = EMULATION;
     }
-    if (sysCfg.version < 0x03091301) {
+    if (sysCfg.version < 0x03091400) {
       strlcpy(sysCfg.web_password, WEB_PASSWORD, sizeof(sysCfg.web_password));
     }
     if (sysCfg.version < 0x03091500) {
@@ -728,7 +731,13 @@ void CFG_Delta()
     if (sysCfg.version < 0x04000200) {
       sysCfg.button_restrict = 0;
     }
-
+    if (sysCfg.version < 0x04000400) {
+      CFG_DefaultSet_4_0_4();
+    }
+    if (sysCfg.version < 0x04000500) {
+      memmove(sysCfg.my_module.gp.io, sysCfg.my_module.gp.io +1, MAX_GPIO_PIN -1);  // move myio 1 byte to front
+      sysCfg.my_module.gp.io[MAX_GPIO_PIN -1] = 0;  // Clear ADC0
+    }
     sysCfg.version = VERSION;
   }
 }

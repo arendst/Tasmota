@@ -18,10 +18,10 @@
 
 // -- Wifi ----------------------------------------
 //#define USE_STATIC_IP_ADDRESS                    // Enable optional static IP address (Use DHCP by disabling using //)
-  #define WIFI_IP_ADDRESS      192,168,2,72      // IP address
-  #define WIFI_GATEWAY         192,168,2,254     // Gateway IP address
-  #define WIFI_DNS             192,168,2,27      // DNS IP address (might be the same as WIFI_GATEWAY)
-  #define WIFI_SUBNETMASK      255,255,255,0     // Network mask
+  #define WIFI_IP_ADDRESS      192,168,2,72      // IP address using commas
+  #define WIFI_GATEWAY         192,168,2,254     // Gateway IP address using commas
+  #define WIFI_DNS             192,168,2,27      // DNS IP address (might be the same as WIFI_GATEWAY) using commas
+  #define WIFI_SUBNETMASK      255,255,255,0     // Network mask using commas
 #define STA_SSID1              "indebuurt1"      // [Ssid1] Wifi SSID
 #define STA_PASS1              "VnsqrtnrsddbrN"  // [Password1] Wifi password
 #define STA_SSID2              "indebuurt2"      // [Ssid2] Optional alternate AP Wifi SSID
@@ -97,9 +97,9 @@
   #define MQTT_HOST_DISCOVERY                    // Find MQTT host server (overrides MQTT_HOST if found)
 
 // -- Time - Up to three NTP servers in your region
-#define NTP_SERVER1            "pool.ntp.org"
-#define NTP_SERVER2            "nl.pool.ntp.org"
-#define NTP_SERVER3            "0.nl.pool.ntp.org"
+#define NTP_SERVER1            "pool.ntp.org"       // [NtpServer1] Select first NTP server by name or IP address (129.250.35.250)
+#define NTP_SERVER2            "nl.pool.ntp.org"    // [NtpServer2] Select second NTP server by name or IP address (5.39.184.5)
+#define NTP_SERVER3            "0.nl.pool.ntp.org"  // [NtpServer3] Select third NTP server by name or IP address (93.94.224.67)
 
 // -- Time - Start Daylight Saving Time and timezone offset from UTC in minutes
 #define TIME_DST               Last, Sun, Mar, 2, +120  // Last sunday in march at 02:00 +120 minutes
@@ -126,12 +126,15 @@
 #define ENERGY_RESOLUTION      3                 // Maximum number of decimals (0 - 5) showing energy usage in kWh
 
 // -- Sensor code selection -----------------------
+#define USE_ADC_VCC                              // Display Vcc in Power status. Disable for use as Analog input on selected devices
+
 //#define USE_DS18x20                              // Optional using OneWire library for multiple DS18B20 and/or DS18S20 (+2k code)
 
 #define USE_I2C                                  // I2C using library wire (+10k code, 0.2k mem) - Disable by //
   #define USE_BH1750                             // Add I2C code for BH1750 sensor
   #define USE_BMP                                // Add I2C code for BMP/BME280 sensor
   #define USE_HTU                                // Add I2C code for HTU21/SI7013/SI7020/SI7021 sensor
+  #define USE_SHT                                // Add I2C emulating code for SHT1X sensor
 
 #define USE_IR_REMOTE                            // Send IR remote commands using library IRremoteESP8266 and ArduinoJson (+4k code, 0.3k mem)
 

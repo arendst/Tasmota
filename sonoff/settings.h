@@ -145,7 +145,7 @@ struct SYSCFG {
   uint16_t      hlw_mkwh;   // MaxEnergy
   uint16_t      hlw_mkwhs;  // MaxEnergyStart
 
-  uint16_t      pulsetime;
+  uint16_t      ex_pulsetime;         // Not used since 4.0.4
   uint8_t       poweronstate;
   uint16_t      blinktime;
   uint16_t      blinkcount;
@@ -188,6 +188,10 @@ struct SYSCFG {
 
   char          web_password[33];
   uint8_t       switchmode[4];
+
+  char          ntp_server[3][33];
+  uint16_t      pulsetime[MAX_PULSETIMERS];
+
 } sysCfg;
 
 struct RTCMEM {
@@ -196,4 +200,9 @@ struct RTCMEM {
   byte          nu1;
   unsigned long hlw_kWhtoday;
 } rtcMem;
+
+// See issue https://github.com/esp8266/Arduino/issues/2913  
+#ifdef USE_ADC_VCC
+  ADC_MODE(ADC_VCC);                        // Set ADC input for Power Supply Voltage usage
+#endif
 

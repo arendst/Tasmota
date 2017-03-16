@@ -12,9 +12,9 @@
 
 //#define ALLOW_MIGRATE_TO_V3
 #ifdef ALLOW_MIGRATE_TO_V3
-  #define VERSION              0x03091A00   // 3.9.26
+  #define VERSION              0x03091D00   // 3.9.29
 #else
-  #define VERSION              0x04000300   // 4.0.3
+  #define VERSION              0x04000600   // 4.0.6
 #endif  // ALLOW_MIGRATE_TO_V3
 
 enum log_t   {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG_MORE, LOG_LEVEL_ALL};
@@ -112,6 +112,7 @@ enum emul_t  {EMUL_NONE, EMUL_WEMO, EMUL_HUE, EMUL_MAX};
 #define MQTT_RETRY_SECS        10           // Seconds to retry MQTT connection
 #define APP_POWER              0            // Default saved power state Off
 #define MAX_DEVICE             1            // Max number of devices
+#define MAX_PULSETIMERS        4            // Max number of supported pulse timers
 #define WS2812_MAX_LEDS        256          // Max number of LEDs
 
 #define MAX_POWER_HOLD         10           // Time in SECONDS to allow max agreed power (Pow)
@@ -135,7 +136,7 @@ enum emul_t  {EMUL_NONE, EMUL_WEMO, EMUL_HUE, EMUL_MAX};
 #endif
 
 #define APP_BAUDRATE           115200       // Default serial baudrate
-#define MAX_STATUS             10           // Max number of status lines
+#define MAX_STATUS             11           // Max number of status lines
 
 enum butt_t {PRESSED, NOT_PRESSED};
 
@@ -148,7 +149,7 @@ enum butt_t {PRESSED, NOT_PRESSED};
   #error "MQTT_MAX_PACKET_SIZE is too small in libraries/PubSubClient/src/PubSubClient.h, increase it to at least 427"
 #endif
 
-#include <Ticker.h>                         // RTC
+#include <Ticker.h>                         // RTC, HLW8012, OSWatch
 #include <ESP8266WiFi.h>                    // MQTT, Ota, WifiManager
 #include <ESP8266HTTPClient.h>              // MQTT, Ota
 #include <ESP8266httpUpdate.h>              // Ota
@@ -241,7 +242,7 @@ byte logidx = 0;                      // Index in Web log buffer
 byte logajaxflg = 0;                  // Reset web console log
 byte Maxdevice = MAX_DEVICE;          // Max number of devices supported
 int status_update_timer = 0;          // Refresh initial status
-uint16_t pulse_timer = 0;             // Power off timer
+uint16_t pulse_timer[MAX_PULSETIMERS] = { 0 }; // Power off timer
 uint16_t blink_timer = 0;             // Power cycle timer
 uint16_t blink_counter = 0;           // Number of blink cycles
 uint8_t blink_power;                  // Blink power state
@@ -583,8 +584,9 @@ void mqtt_reconnect()
     mqtt_publish(stopic, svalue, true);
     mqtt_connected();
   } else {
-    snprintf_P(log, sizeof(log), PSTR("MQTT: CONNECT FAILED, rc %d. Retry in %d seconds"), mqttClient.state(), mqttcounter);
-    addLog(LOG_LEVEL_DEBUG, log);
+    snprintf_P(log, sizeof(log), PSTR("MQTT: Connect FAILED to %s:%d, rc %d. Retry in %d seconds"),
+      sysCfg.mqtt_host, sysCfg.mqtt_port, mqttClient.state(), mqttcounter);  //status codes are documented here http://pubsubclient.knolleary.net/api.html#state
+    addLog(LOG_LEVEL_INFO, log);
   }
 }
 
@@ -820,12 +822,12 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
       }
       snprintf_P(svalue, sizeof(svalue), PSTR("{\"PowerOnState\":%d}"), sysCfg.poweronstate);
     }
-    else if (!strcmp(type,"PULSETIME")) {
+    else if (!strcmp(type,"PULSETIME") && (index > 0) && (index <= MAX_PULSETIMERS)) {
       if (data_len > 0) {
-        sysCfg.pulsetime = payload16;  // 0 - 65535
-        pulse_timer = 0;
+        sysCfg.pulsetime[index -1] = payload16;  // 0 - 65535
+        pulse_timer[index -1] = 0;
       }
-      snprintf_P(svalue, sizeof(svalue), PSTR("{\"PulseTime\":%d}"), sysCfg.pulsetime);
+      snprintf_P(svalue, sizeof(svalue), PSTR("{\"PulseTime%d\":%d}"), index, sysCfg.pulsetime[index -1]);
     }
     else if (!strcmp(type,"BLINKTIME")) {
       if ((data_len > 0) && (payload > 2) && (payload <= 3600)) {
@@ -1010,6 +1012,14 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
         sysCfg.syslog_port = (payload == 1) ? SYS_LOG_PORT : payload;
       }
       snprintf_P(svalue, sizeof(svalue), PSTR("{\"LogPort\":%d}"), sysCfg.syslog_port);
+    }
+    else if (!strcmp(type,"NTPSERVER") && (index > 0) && (index <= 3)) {
+      if ((data_len > 0) && (data_len < sizeof(sysCfg.ntp_server[0]))) {
+        strlcpy(sysCfg.ntp_server[index -1], (payload == 1) ? (index==1)?NTP_SERVER1:(index==2)?NTP_SERVER2:NTP_SERVER3 : dataBuf, sizeof(sysCfg.ntp_server[0]));
+        for (i = 0; i < strlen(sysCfg.ntp_server[index -1]); i++) if (sysCfg.ntp_server[index -1][i] == ',') sysCfg.ntp_server[index -1][i] = '.';
+        restartflag = 2;
+      }
+      snprintf_P(svalue, sizeof(svalue), PSTR("{\"NTPServer%d\":\"%s\"}"), index, sysCfg.ntp_server[index -1]);
     }
     else if (!strcmp(type,"AP")) {
       if ((data_len > 0) && (payload >= 0) && (payload <= 2)) {
@@ -1237,7 +1247,7 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
     }
     mqtt_publish_topic_P(0, PSTR("COMMANDS2"), svalue);
 
-    snprintf_P(svalue, sizeof(svalue), PSTR("{\"Commands3\":\"%s%s, PulseTime, BlinkTime, BlinkCount, ButtonRestrict"), (Maxdevice == 1) ? "Power, Light" : "Power1, Power2, Light1 Light2", (sysCfg.module != MOTOR) ? ", PowerOnState" : "");
+    snprintf_P(svalue, sizeof(svalue), PSTR("{\"Commands3\":\"%s%s, PulseTime, BlinkTime, BlinkCount, ButtonRestrict, NtpServer"), (Maxdevice == 1) ? "Power, Light" : "Power1, Power2, Light1 Light2", (sysCfg.module != MOTOR) ? ", PowerOnState" : "");
 #ifdef USE_WEBSERVER
     snprintf_P(svalue, sizeof(svalue), PSTR("%s, Weblog, Webserver, WebPassword, Emulation"), svalue);
 #endif
@@ -1312,7 +1322,7 @@ void do_cmnd_power(byte device, byte state)
 
   if ((device < 1) || (device > Maxdevice)) device = 1;
   byte mask = 0x01 << (device -1);
-  pulse_timer = 0;
+  pulse_timer[(device -1)&3] = 0;
   if (state <= 2) {
     if ((blink_mask & mask)) {
       blink_mask &= (0xFF ^ mask);  // Clear device mask
@@ -1332,7 +1342,7 @@ void do_cmnd_power(byte device, byte state)
 #ifdef USE_DOMOTICZ
     domoticz_updatePowerState(device);
 #endif  // USE_DOMOTICZ
-    if (device == 1) pulse_timer = (power & mask) ? sysCfg.pulsetime : 0;
+    pulse_timer[(device -1)&3] = (power & mask) ? sysCfg.pulsetime[(device -1)&3] : 0;
   }
   else if (state == 3) { // Blink
     if (!(blink_mask & mask)) {
@@ -1469,12 +1479,47 @@ void publish_status(uint8_t payload)
     snprintf_P(svalue, sizeof(svalue), PSTR("%s}"), svalue);
     mqtt_publish_topic_P(option, PSTR("STATUS10"), svalue);
   }
+
+  if ((payload == 0) || (payload == 11)) {
+    snprintf_P(svalue, sizeof(svalue), PSTR("{\"StatusPWR\":"));
+    state_mqttPresent(svalue, sizeof(svalue));
+    snprintf_P(svalue, sizeof(svalue), PSTR("%s}"), svalue);
+    mqtt_publish_topic_P(option, PSTR("STATUS11"), svalue);
+  }
+ 
+}
+
+void state_mqttPresent(char* svalue, uint16_t ssvalue)
+{
+  char stemp1[8];
+  
+  snprintf_P(svalue, ssvalue, PSTR("%s{\"Time\":\"%s\", \"Uptime\":%d"), svalue, getDateTime().c_str(), uptime);
+#ifdef USE_ADC_VCC
+  dtostrf((double)ESP.getVcc()/1000, 1, 3, stemp1);
+  snprintf_P(svalue, ssvalue, PSTR("%s, \"Vcc\":%s"), svalue, stemp1);
+#endif        
+  for (byte i = 0; i < Maxdevice; i++) {
+    if (Maxdevice == 1) {  // Legacy
+      snprintf_P(svalue, ssvalue, PSTR("%s, \"%s\":"), svalue, sysCfg.mqtt_subtopic);
+    } else {
+      snprintf_P(svalue, ssvalue, PSTR("%s, \"%s%d\":"), svalue, sysCfg.mqtt_subtopic, i +1);
+    }
+    snprintf_P(svalue, ssvalue, PSTR("%s\"%s\""), svalue, (power & (0x01 << i)) ? MQTT_STATUS_ON : MQTT_STATUS_OFF);
+  }
+  snprintf_P(svalue, ssvalue, PSTR("%s, \"Wifi\":{\"AP\":%d, \"SSID\":\"%s\", \"RSSI\":%d}}"),
+    svalue, sysCfg.sta_active +1, sysCfg.sta_ssid[sysCfg.sta_active], WIFI_getRSSIasQuality(WiFi.RSSI()));
 }
 
 void sensors_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
 {
   snprintf_P(svalue, ssvalue, PSTR("%s{\"Time\":\"%s\""), svalue, getDateTime().c_str());
-  
+
+#ifndef USE_ADC_VCC
+  if (pin[GPIO_ADC0] < 99) {
+    snprintf_P(svalue, ssvalue, PSTR("%s, \"AnalogInput0\":%d"), svalue, analogRead(A0));
+    *djson = 1;
+  }
+#endif    
   if (pin[GPIO_DSB] < 99) {
 #ifdef USE_DS18B20
     dsb_mqttPresent(svalue, ssvalue, djson);
@@ -1488,6 +1533,9 @@ void sensors_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
 #endif  // USE_DHT
 #ifdef USE_I2C
   if (i2c_flg) {
+#ifdef USE_SHT
+    sht_mqttPresent(svalue, ssvalue, djson);
+#endif  // USE_SHT
 #ifdef USE_HTU
     htu_mqttPresent(svalue, ssvalue, djson);
 #endif  // USE_HTU
@@ -1504,18 +1552,11 @@ void sensors_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
 
 /********************************************************************************************/
 
-void every_second_cb()
-{
-  // 1 second rtc interrupt routine
-  // Keep this code small (every_second is to large - it'll trip exception)
-
-}
-
 void every_second()
 {
   char svalue[MESSZ];
 
-  if (pulse_timer > 111) pulse_timer--;
+  for (byte i = 0; i < MAX_PULSETIMERS; i++) if (pulse_timer[i] > 111) pulse_timer[i]--;
 
   if (seriallog_timer) {
     seriallog_timer--;
@@ -1565,6 +1606,9 @@ void every_second()
 #endif  // USE_DHT
 #ifdef USE_I2C
       if (i2c_flg) {
+#ifdef USE_SHT
+        sht_detect();
+#endif  // USE_SHT
 #ifdef USE_HTU
         htu_detect();
 #endif  // USE_HTU
@@ -1580,17 +1624,8 @@ void every_second()
     if (tele_period >= sysCfg.tele_period) {
       tele_period = 0;
 
-      snprintf_P(svalue, sizeof(svalue), PSTR("{\"Time\":\"%s\", \"Uptime\":%d"), getDateTime().c_str(), uptime);
-      for (byte i = 0; i < Maxdevice; i++) {
-        if (Maxdevice == 1) {  // Legacy
-          snprintf_P(svalue, sizeof(svalue), PSTR("%s, \"%s\":"), svalue, sysCfg.mqtt_subtopic);
-        } else {
-          snprintf_P(svalue, sizeof(svalue), PSTR("%s, \"%s%d\":"), svalue, sysCfg.mqtt_subtopic, i +1);
-        }
-        snprintf_P(svalue, sizeof(svalue), PSTR("%s\"%s\""), svalue, (power & (0x01 << i)) ? MQTT_STATUS_ON : MQTT_STATUS_OFF);
-      }
-      snprintf_P(svalue, sizeof(svalue), PSTR("%s, \"Wifi\":{\"AP\":%d, \"SSID\":\"%s\", \"RSSI\":%d}}"),
-        svalue, sysCfg.sta_active +1, sysCfg.sta_ssid[sysCfg.sta_active], WIFI_getRSSIasQuality(WiFi.RSSI()));
+      svalue[0] = '\0';
+      state_mqttPresent(svalue, sizeof(svalue));
       mqtt_publish_topic_P(1, PSTR("STATE"), svalue);
 
       uint8_t djson = 0;
@@ -1630,10 +1665,11 @@ void stateloop()
     if (!latching_relay_pulse) setLatchingRelay(0, 0);
   }
 
-  if ((pulse_timer > 0) && (pulse_timer < 112)) {
-    pulse_timer--;
-    if (!pulse_timer) do_cmnd_power(1, 0);
-  }
+  for (byte i = 0; i < MAX_PULSETIMERS; i++)
+    if ((pulse_timer[i] > 0) && (pulse_timer[i] < 112)) {
+      pulse_timer[i]--;
+      if (!pulse_timer[i]) do_cmnd_power(i +1, 0);
+    }
 
   if (blink_mask) {
     blink_timer--;
@@ -1820,7 +1856,10 @@ void stateloop()
       savedatacounter--;
       if (savedatacounter <= 0) {
         if (sysCfg.savestate) {
-          if (!((sysCfg.pulsetime > 0) && (sysCfg.pulsetime < 30) && ((sysCfg.power &0xFE) == (power &0xFE)))) sysCfg.power = power;
+          byte mask = 0xFF;
+          for (byte i = 0; i < MAX_PULSETIMERS; i++)
+            if ((sysCfg.pulsetime[i] > 0) && (sysCfg.pulsetime[i] < 30)) mask &= ~(1 << i);
+          if (!((sysCfg.power &mask) == (power &mask))) sysCfg.power = power;
         }
         CFG_Save();
         savedatacounter = sysCfg.savedata;
@@ -2018,7 +2057,7 @@ void GPIO_init()
 
 #ifdef USE_I2C
   i2c_flg = ((pin[GPIO_I2C_SCL] < 99) && (pin[GPIO_I2C_SDA] < 99));
-  if (i2c_flg) Wire.begin(pin[GPIO_I2C_SDA],pin[GPIO_I2C_SCL]);
+  if (i2c_flg) Wire.begin(pin[GPIO_I2C_SDA], pin[GPIO_I2C_SCL]);
 #endif  // USE_I2C
 
 #ifdef USE_WS2812
@@ -2088,7 +2127,7 @@ void setup()
   } else {
     snprintf_P(Hostname, sizeof(Hostname)-1, sysCfg.hostname);
   }
-  WIFI_Connect(Hostname);
+  WIFI_Connect();
 
   getClient(MQTTClient, sysCfg.mqtt_client, sizeof(MQTTClient));
 
@@ -2116,7 +2155,7 @@ void setup()
   }
   blink_powersave = power;
 
-  rtc_init(every_second_cb);
+  rtc_init();
 
   snprintf_P(log, sizeof(log), PSTR("APP: Project %s %s (Topic %s, Fallback %s, GroupTopic %s) Version %s"),
     PROJECT, sysCfg.friendlyname[0], sysCfg.mqtt_topic, MQTTClient, sysCfg.mqtt_grptopic, Version);

@@ -185,7 +185,7 @@ void sl_animate()
 
 boolean sl_command(char *type, uint16_t index, char *dataBufUc, uint16_t data_len, int16_t payload, char *svalue, uint16_t ssvalue)
 {
-  boolean serviced = true;
+  boolean serviced = true, coldim = false;
 
   if (!strcmp(type,"COLOR")) {
     uint8_t my_color[5];
@@ -206,25 +206,21 @@ boolean sl_command(char *type, uint16_t index, char *dataBufUc, uint16_t data_le
       float fmyWarm = (float)my_color[1] * newDim;
       sysCfg.led_color[0] = (uint8_t)fmyCold;
       sysCfg.led_color[1] = (uint8_t)fmyWarm;
-      do_cmnd_power(index, 1);
-#ifdef USE_DOMOTICZ
-      mqtt_publishDomoticzPowerState(index);
-#endif  // USE_DOMOTICZ
+      coldim = true;
+    } else {
+      sl_setDim(sysCfg.led_dimmer[0]);
+      uint16_t color = (uint16_t)sl_dcolor[0] << 8;
+      color += (uint16_t)sl_dcolor[1];
+      snprintf_P(svalue, ssvalue, PSTR("{\"Color\":\"%04X\"}"), color);
     }
-    sl_setDim(sysCfg.led_dimmer[0]);
-    uint16_t color = (uint16_t)sl_dcolor[0] << 8;
-    color += (uint16_t)sl_dcolor[1];
-    snprintf_P(svalue, ssvalue, PSTR("{\"Color\":\"%04X\"}"), color);
   }
   else if (!strcmp(type,"DIMMER")) {
     if ((data_len > 0) && (payload >= 0) && (payload <= 100)) {
       sysCfg.led_dimmer[0] = payload;
-      do_cmnd_power(index, 1);
-#ifdef USE_DOMOTICZ
-      mqtt_publishDomoticzPowerState(index);
-#endif  // USE_DOMOTICZ
+      coldim = true;
+    } else {
+      snprintf_P(svalue, ssvalue, PSTR("{\"Dimmer\":%d}"), sysCfg.led_dimmer[0]);
     }
-    snprintf_P(svalue, ssvalue, PSTR("{\"Dimmer\":%d}"), sysCfg.led_dimmer[0]);
   }
   else if (!strcmp(type,"LEDTABLE")) {
     if ((data_len > 0) && (payload >= 0) && (payload <= 2)) {
@@ -275,6 +271,19 @@ boolean sl_command(char *type, uint16_t index, char *dataBufUc, uint16_t data_le
   }
   else {
     serviced = false;  // Unknown command
+  }
+  if (coldim) {
+//    do_cmnd_power(index, (sysCfg.led_dimmer[0]>0));
+    if (sysCfg.led_dimmer[0] && !(power&1)) do_cmnd_power(1, 1);
+    else if (!sysCfg.led_dimmer[0] && (power&1)) do_cmnd_power(1, 0);
+#ifdef USE_DOMOTICZ
+    mqtt_publishDomoticzPowerState(1);
+#endif  // USE_DOMOTICZ
+    sl_setDim(sysCfg.led_dimmer[0]);
+    uint16_t color = (uint16_t)sl_dcolor[0] << 8;
+    color += (uint16_t)sl_dcolor[1];
+    snprintf_P(svalue, ssvalue, PSTR("{\"POWER\":\"%s\", \"Dimmer\":%d, \"Color\":\"%04X\"}"),
+      (power &1)?MQTT_STATUS_ON:MQTT_STATUS_OFF, sysCfg.led_dimmer[0], color);
   }
   return serviced;
 }
