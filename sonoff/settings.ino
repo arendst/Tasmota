@@ -511,6 +511,8 @@ void CFG_DefaultSet2()
 
   CFG_DefaultSet_4_0_4();
   sysCfg.pulsetime[0] = APP_PULSETIME;
+  
+  CFG_DefaultSet_4_0_6();
 }
 
 void CFG_DefaultSet_3_2_4()
@@ -557,6 +559,11 @@ void CFG_DefaultSet_4_0_4()
       if (sysCfg.ntp_server[j][i] == ',') sysCfg.ntp_server[j][i] = '.';
   sysCfg.pulsetime[0] = sysCfg.ex_pulsetime;
   for (byte i = 1; i < MAX_PULSETIMERS; i++) sysCfg.pulsetime[i] = 0;
+}
+
+void CFG_DefaultSet_4_0_6()
+{
+  for (byte i = 1; i < 4; i++) sysCfg.pwmvalue[i] = 0;
 }
 
 void CFG_Default()
@@ -737,6 +744,9 @@ void CFG_Delta()
     if (sysCfg.version < 0x04000500) {
       memmove(sysCfg.my_module.gp.io, sysCfg.my_module.gp.io +1, MAX_GPIO_PIN -1);  // move myio 1 byte to front
       sysCfg.my_module.gp.io[MAX_GPIO_PIN -1] = 0;  // Clear ADC0
+    }
+	  if (sysCfg.version < 0x04000600) {
+      for (byte i = 0; i < 4; i++) sysCfg.pwmvalue[i] = 0;
     }
     sysCfg.version = VERSION;
   }
