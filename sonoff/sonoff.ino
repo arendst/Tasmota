@@ -14,7 +14,7 @@
 #ifdef ALLOW_MIGRATE_TO_V3
   #define VERSION              0x03091C00   // 3.9.28
 #else
-  #define VERSION              0x04000500   // 4.0.5
+  #define VERSION              0x04000600   // 4.0.6
 #endif  // ALLOW_MIGRATE_TO_V3
 
 enum log_t   {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG_MORE, LOG_LEVEL_ALL};
@@ -1195,6 +1195,21 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
       }
       snprintf_P(svalue, sizeof(svalue), PSTR("{\"LedState\":%d}"), sysCfg.ledstate);
     }
+    else if (!strcmp(type,"PWM")) {
+      if ((index > 0) && (index <= 4) && (data_len > 0) && (payload >= 0) && (payload <= PWMRANGE) && (pin[GPIO_PWM1 + index -1] < 99)) {
+        sysCfg.pwmvalue[index-1] = payload;
+        analogWrite(pin[GPIO_PWM1 + index -1], payload);
+      }
+      snprintf_P(svalue, sizeof(svalue), PSTR("{\"PWM\":{"));
+      bool first = true;
+      for (byte i = 0; i < 4; i++) {
+        if(pin[GPIO_PWM1 + i] < 99) {
+          snprintf_P(svalue, sizeof(svalue), PSTR("%s%s\"PWM%d\":%d"), svalue, first ? "" : ", ", i+1, sysCfg.pwmvalue[i]);
+          first = false;
+        }
+      }
+      snprintf_P(svalue, sizeof(svalue), PSTR("%s}}"),svalue);
+    }
     else if (!strcmp(type,"CFGDUMP")) {
       CFG_Dump();
       snprintf_P(svalue, sizeof(svalue), PSTR("{\"CfgDump\":\"Done\"}"));
@@ -1257,6 +1272,8 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
 #ifdef USE_IR_REMOTE
     if (pin[GPIO_IRSEND] < 99) snprintf_P(svalue, sizeof(svalue), PSTR("%s, IRSend"), svalue);
 #endif
+    if (pin[GPIO_PWM1] < 99 || pin[GPIO_PWM2] < 99 || pin[GPIO_PWM3] < 99 || pin[GPIO_PWM4] < 99) snprintf_P(svalue, sizeof(svalue), PSTR("%s, PWM"), svalue);
+
     snprintf_P(svalue, sizeof(svalue), PSTR("%s\"}"), svalue);
     mqtt_publish_topic_P(0, PSTR("COMMANDS3"), svalue);
 
@@ -2028,6 +2045,12 @@ void GPIO_init()
       pinMode(pin[GPIO_LED1 +i], OUTPUT);
       digitalWrite(pin[GPIO_LED1 +i], led_inverted[i]);
     }
+    
+    if (pin[GPIO_PWM1 +i] < 99) {
+      pinMode(pin[GPIO_PWM1 +i], OUTPUT);
+      analogWrite(pin[GPIO_PWM1 +i], sysCfg.pwmvalue[i]);
+    }
+    
     if (pin[GPIO_SWT1 +i] < 99) {
       swt_flg = 1;
       pinMode(pin[GPIO_SWT1 +i], INPUT_PULLUP);

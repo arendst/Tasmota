@@ -171,11 +171,8 @@ void sl_animate()
     sl_any = 0;
     sl_lcolor[0] = sl_tcolor[0];
     sl_lcolor[1] = sl_tcolor[1];
-    for (byte i = 0; i < 2; i++) {
-      if (pin[GPIO_PWM0 +i] < 99) {
-        analogWrite(pin[GPIO_PWM0 +i], (sysCfg.led_table) ? ledTable[sl_lcolor[i]] : sl_lcolor[i]);
-      }
-    }
+    if (pin[GPIO_PWM0] < 99) analogWrite(pin[GPIO_PWM0], (sysCfg.led_table) ? ledTable[sl_lcolor[i]] : sl_lcolor[i]);
+	if (pin[GPIO_PWM1] < 99) analogWrite(pin[GPIO_PWM1], (sysCfg.led_table) ? ledTable[sl_lcolor[i]] : sl_lcolor[i]);
   }
 }
 

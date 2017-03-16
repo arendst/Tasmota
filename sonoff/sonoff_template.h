@@ -37,6 +37,10 @@ enum upins_t {
   GPIO_LED2_INV,
   GPIO_LED3_INV,
   GPIO_LED4_INV,
+  GPIO_PWM1,
+  GPIO_PWM2,
+  GPIO_PWM3,
+  GPIO_PWM4,
   GPIO_SENSOR_END };
 
 // Text in webpage Module Parameters and commands GPIOS and GPIO
@@ -73,23 +77,23 @@ const char sensors[GPIO_SENSOR_END][9] PROGMEM = {
   "Led1I",
   "Led2I",
   "Led3I",
-  "Led4I"
+  "Led4I",
+  "PWM1",
+  "PWM2",
+  "PWM3",
+  "PWM4"
   };
   
 // Programmer selectable GPIO functionality offset by user selectable GPIOs
 enum fpins_t {
-  GPIO_PWM0 = GPIO_SENSOR_END,  // Cold
-  GPIO_PWM1,           // Warm
-  GPIO_PWM2,           // Red (swapped with Blue from original)
-  GPIO_PWM3,           // Green
-  GPIO_PWM4,           // Blue (swapped with Red from original)
-  GPIO_RXD,            // Serial interface
-  GPIO_TXD,            // Serial interface
-  GPIO_HLW_SEL,        // HLW8012 Sel output (Sonoff Pow)
-  GPIO_HLW_CF1,        // HLW8012 CF1 voltage / current (Sonoff Pow)
-  GPIO_HLW_CF,         // HLW8012 CF power (Sonoff Pow)
-  GPIO_ADC0,           // ADC
-  GPIO_USER,           // User configurable
+  GPIO_PWM0 = GPIO_SENSOR_END, //Only PWM1-4 configurable to retain consistency
+  GPIO_RXD,                    // Serial interface
+  GPIO_TXD,                    // Serial interface
+  GPIO_HLW_SEL,                // HLW8012 Sel output (Sonoff Pow)
+  GPIO_HLW_CF1,                // HLW8012 CF1 voltage / current (Sonoff Pow)
+  GPIO_HLW_CF,                 // HLW8012 CF power (Sonoff Pow)
+  GPIO_ADC0,                   // ADC
+  GPIO_USER,                   // User configurable
   GPIO_MAX };
 
 /********************************************************************************************/
