@@ -452,9 +452,18 @@ void handleAjax2()
 #endif  // USE_DHT
 #ifdef USE_I2C
   if (i2c_flg) {
+#ifdef USE_SHT
+    tpage += sht_webPresent();
+#endif    
+#ifdef USE_HTU
     tpage += htu_webPresent();
+#endif
+#ifdef USE_BMP
     tpage += bmp_webPresent();
+#endif
+#ifdef USE_BH1750
     tpage += bh1750_webPresent();
+#endif
   }
 #endif  // USE_I2C    
   String page = "";

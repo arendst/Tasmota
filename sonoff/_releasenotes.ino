@@ -1,4 +1,11 @@
-/* 4.0.5 20170314
+/* 4.0.6 20170316
+ * Fix to better find device by Wifi hostname
+ * Fix compile error when some I2C devices are disabled
+ * Add (experimental) support for SHT1X emulating I2C (#97)
+ * Add ADC to ElectroDragon (#203)
+ * Add support for Sonoff Dev (#206)
+ *
+ * 4.0.5 20170314
  * Add command Status 11 to show power status with Vcc if define USE_ADC_VCC is enabled (default)
  * Add ADC input to Sonoff SV and Wemos D1 mini - Needs recompile with define USE_ADC_VCC disabled (#137)
  * Add MQTT host:port to timeout message (#199)

@@ -114,6 +114,7 @@ enum module_t {
   EXS_RELAY,
   WION,
   WEMOS,
+  SONOFF_DEV,
   MAXMODULE };
 
 /********************************************************************************************/
@@ -308,7 +309,7 @@ const mytmplt modules[MAXMODULE] PROGMEM = {
      GPIO_USER,        // GPIO14 Optional sensor
      GPIO_USER,        // GPIO15 Optional sensor
      GPIO_LED1,        // GPIO16 Green/Blue Led (1 = On, 0 = Off)
-     0
+     GPIO_ADC0         // ADC0   A0 Analog input
   },
   { "EXS Relay",       // Latching relay https://ex-store.de/ESP8266-WiFi-Relay-V31 (ESP8266)
                        //   Module Pin 1 VCC 3V3, Module Pin 6 GND
@@ -352,6 +353,21 @@ const mytmplt modules[MAXMODULE] PROGMEM = {
      GPIO_USER,        // GPIO15 D8
      GPIO_USER,        // GPIO16 D0 Wemos Wake
      GPIO_ADC0         // ADC0   A0 Analog input
+  },
+  { "Sonoff Dev",      // Sonoff Dev (ESP8266)
+     GPIO_KEY1,        // GPIO00 E-FW Button
+     GPIO_USER,        // GPIO01 TX Serial RXD and Optional sensor
+     0,                // GPIO02
+     GPIO_USER,        // GPIO03 RX Serial TXD and Optional sensor
+     GPIO_USER,        // GPIO04 Optional sensor
+     GPIO_USER,        // GPIO05 Optional sensor
+     0, 0, 0, 0, 0, 0, // Flash connection
+     GPIO_USER,        // GPIO12
+     GPIO_LED1_INV,    // GPIO13 BLUE LED
+     GPIO_USER,        // GPIO14 Optional sensor
+     0,                // GPIO15
+     0,                // GPIO16
+     GPIO_ADC0         // ADC0 A0 Analog input
   }
 };
 

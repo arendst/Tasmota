@@ -12,9 +12,9 @@
 
 //#define ALLOW_MIGRATE_TO_V3
 #ifdef ALLOW_MIGRATE_TO_V3
-  #define VERSION              0x03091C00   // 3.9.28
+  #define VERSION              0x03091D00   // 3.9.29
 #else
-  #define VERSION              0x04000500   // 4.0.5
+  #define VERSION              0x04000600   // 4.0.6
 #endif  // ALLOW_MIGRATE_TO_V3
 
 enum log_t   {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG_MORE, LOG_LEVEL_ALL};
@@ -149,7 +149,7 @@ enum butt_t {PRESSED, NOT_PRESSED};
   #error "MQTT_MAX_PACKET_SIZE is too small in libraries/PubSubClient/src/PubSubClient.h, increase it to at least 427"
 #endif
 
-#include <Ticker.h>                         // RTC
+#include <Ticker.h>                         // RTC, HLW8012, OSWatch
 #include <ESP8266WiFi.h>                    // MQTT, Ota, WifiManager
 #include <ESP8266HTTPClient.h>              // MQTT, Ota
 #include <ESP8266httpUpdate.h>              // Ota
@@ -1528,6 +1528,9 @@ void sensors_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
 #endif  // USE_DHT
 #ifdef USE_I2C
   if (i2c_flg) {
+#ifdef USE_SHT
+    sht_mqttPresent(svalue, ssvalue, djson);
+#endif  // USE_SHT
 #ifdef USE_HTU
     htu_mqttPresent(svalue, ssvalue, djson);
 #endif  // USE_HTU
@@ -1543,13 +1546,6 @@ void sensors_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
 }
 
 /********************************************************************************************/
-
-void every_second_cb()
-{
-  // 1 second rtc interrupt routine
-  // Keep this code small (every_second is to large - it'll trip exception)
-
-}
 
 void every_second()
 {
@@ -1605,6 +1601,9 @@ void every_second()
 #endif  // USE_DHT
 #ifdef USE_I2C
       if (i2c_flg) {
+#ifdef USE_SHT
+        sht_detect();
+#endif  // USE_SHT
 #ifdef USE_HTU
         htu_detect();
 #endif  // USE_HTU
@@ -2053,7 +2052,7 @@ void GPIO_init()
 
 #ifdef USE_I2C
   i2c_flg = ((pin[GPIO_I2C_SCL] < 99) && (pin[GPIO_I2C_SDA] < 99));
-  if (i2c_flg) Wire.begin(pin[GPIO_I2C_SDA],pin[GPIO_I2C_SCL]);
+  if (i2c_flg) Wire.begin(pin[GPIO_I2C_SDA], pin[GPIO_I2C_SCL]);
 #endif  // USE_I2C
 
 #ifdef USE_WS2812
@@ -2123,7 +2122,7 @@ void setup()
   } else {
     snprintf_P(Hostname, sizeof(Hostname)-1, sysCfg.hostname);
   }
-  WIFI_Connect(Hostname);
+  WIFI_Connect();
 
   getClient(MQTTClient, sysCfg.mqtt_client, sizeof(MQTTClient));
 
@@ -2151,7 +2150,7 @@ void setup()
   }
   blink_powersave = power;
 
-  rtc_init(every_second_cb);
+  rtc_init();
 
   snprintf_P(log, sizeof(log), PSTR("APP: Project %s %s (Topic %s, Fallback %s, GroupTopic %s) Version %s"),
     PROJECT, sysCfg.friendlyname[0], sysCfg.mqtt_topic, MQTTClient, sysCfg.mqtt_grptopic, Version);
