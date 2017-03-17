@@ -1,13 +1,164 @@
-/* 3.0.4 20161211
- * Fix intermittent Domoticz update misses
+/* 3.2.13 20170127
+ * Prep for 4.0: Remove Legacy Info, Warning, Commands and Status messages
+ * Add sleep status to StatusPRM message
+ * Fix Hue brightness and change to call by reference (#283)
+ *
+ * 3.2.12 20170126
+ * Add command Sleep 0 - 250 mSec for optional light sleep mode to lower energy consumption (#272)
+ *   (Expect overall button/key/switch misses and wrong values on Sonoff Pow)
+ * Add Hue brightness extension (#281)
+ *
+ * 3.2.11 20170126
+ * Add confirmation before Restart via webpage
+ * Fix possible ESP8285 flash problem by updating Flash Chip Mode to DOUT during web upload
+ * Fix LedPower status after button press (#279)
+ *
+ * 3.2.10 20170124
+ * Add confirmation before Reset Configuration via webpage (#244)
+ * Add WS2812 features (see Wiki commands)
+ *
+ * 3.2.9 20170124
+ * Fix compile error when MQTT is disabled (#269)
+ *
+ * 3.2.8 20170124
+ * Change PowerOnState function to only trigger when Power On (and not on restart) (#238)
+ * Add command LedPower On|Off to control main led (#247)
+ * Add charset=utf-8 to webpages (#266)
+ * Update Hue emulation (#268)
+ * Rewrite WS2812 code and prep for 4.0
+ * Add support for domoticz Dimmer on WS2812
+ * Add commands SwitchTopic and SwitchRetain On|Off to be used with external switch instead of ButtonTopic and ButtonRetain
+ * Enforce at least IDE 1.6.10 and ESP8266 2.3.0
+ *
+ * 3.2.7 20170122
+ * Move HLW interrupts back to RAM as it generates Exception on Pow (#264)
+ *
+ * 3.2.6 20170119
+ * Fix Sonoff Pow compile error (#255)
+ * Move HLW interrupts back to ROM
+ *
+ * 3.2.5 20170119
+ * Add more FriendlyNames for Hue (#254)
+ * Add DMA support for WS2812 when using pin 3
+ *
+ * 3.2.4 20170118
+ * Add HUE emulation for Alexa (#229)
+ * Add basic WS2812 support (#229)
+ * 
+ * 3.2.3 20170116
+ * Fix Wemo when MQTT is disabled (#245)
+ *
+ * 3.2.2 20170113
+ * Fix PowerOnState 2 functionality after re-applying power (#230)
+ *
+ * 3.2.1 20170113
+ * Fix some failed command decoding (#228)
+ * Removed passwords from status messages (#216)
+ *
+ * 3.2.0 20170111
+ * Add I2C BH1750 sensor (#222)
+ * Sensor rewrite preparing for online selection
+ *
+ * 3.1.16 20170109
+ * Fix Domoticz possible error condition
+ * Remove Wifi password from connection message (#216)
+ * Add Configure Other menu item to web page (#209)
+ * Add command FriendlyName, field Friendly Name and define FRIENDLY_NAME to be used by Alexa
+ *   eliminating current use of MQTT_CLIENT_ID (#209)
+ * Add friendlyname to webpage replacing former hostname
+ *
+ * 3.1.15 20170108
+ * Fix Domoticz send key regression with Toggle command  
+ *
+ * 3.1.14 20170107
+ * Add support for command TOGGLE (define MQTT_CMND_TOGGLE) when ButtonTopic is in use and not equal to Topic (#207)
+ *
+ * 3.1.13 20170107
+ * Fix web console command input when SUB_PREFIX contains '/' (#152)
+ * Add command response to web command (#200)
+ * Add option to disable MQTT as define USE_MQTT in user_config.h (#200)
+ *
+ * 3.1.12 20170106
+ * Add OTA retry to solve possible HTTP transient errors (#204)
+ * Fix MQTT host discovery
+ *
+ * 3.1.11 20170105
+ * Add mDNS to advertise webserver as <hostname>.local/
+ *
+ * 3.1.10 20170105
+ * Fix ButtonTopic when SUB_PREFIX = PUB_PREFIX
+ * Add workaround for possible MQTT queueing when SUB_PREFIX = PUB_PREFIX
+ * Add optional MQTT host discovery using define USE_DISCOVERY in user_config.h (#115)
+ *
+ * 3.1.9 20170104
+ * Fix Power Blink start position (toggled)
+ * Change PulseTime increments: 1 .. 111 in 0.1 sec (max 11 seconds) and 112 .. 64900 in seconds (= 12 seconds until 18 hours) (#188)
+ * Add support for SUB_PREFIX = PUB_PREFIX (#190)
+ *
+ * 3.1.8 20170103
+ * Add retain flag to LWT offline and only send "tele/sonoff/LWT Offline" (#179)
+ * Change retained LWT Online message to only send "tele/sonoff/LWT Online"
+ *
+ * 3.1.7 20161231
+ * Add retained message LWT Online when sonoff makes MQTT connection (#179)
+ *
+ * 3.1.6 20161230
+ * Add blinking using commands BlinkTime, BlinkCount and Power Blink|3|BlinkOff|4 (#165)
+ *
+ * 3.1.5 20161228
+ * Fix serial space command exception (28)
+ *
+ * 3.1.4 20161227
+ * Fix MQTT subscribe regression exception (3) (#162)
+ * Fix serial empty command exception (28)
+ *
+ * 3.1.3 20161225
+ * Extent Domoticz configuration webpage with optional indices (#153)
+ * Fix multi relay legacy tele message from tele/sonoff/2/POWER to tele/sonoff/POWER2
+ * Add support for iTead Motor Clockwise/Anticlockwise
+ *
+ * 3.1.2 20161224
+ * Extent command PowerOnState with toggle at power on (option 2 is now option 3!) (#156)
+ *
+ * 3.1.1 20161223
+ * Add support for Sonoff Touch and Sonoff 4CH (#40)
+ * Update DomoticzIdx and DomoticzKeyIdx with relay/key index (DomoticzIdx1/DomoticzKeyIdx1)
+ * Add command PowerOnState to control relay(s) at power on (#154)
+ *
+ * 3.1.0 20161221
+ * Add Sonoff Pow measurement smoothing
+ * Fix serial command topic preamble error (#151)
+ * Fix 2.x to 3.x migration inconsistencies (#146)
+ *
+ * 3.0.9 20161218
+ * Add Sonoff Pow voltage reading when relay is on but no load present (#123)
+ *
+ * 3.0.8 20161218
+ * Add temperature conversion to Fahrenheit as option in user_config.h (TEMP_CONVERSION) (#145)
+ *
+ * 3.0.7 20161217
+ * Add user_config_override.h to be used by user to override some defaults in user_config.h (#58)
+ * Fix Sonoff Pow low power (down to 4W) intermittent measurements (#123)
+ *
+ * 3.0.6 20161217
+ * Fix MQTT_CLIENT_ID starting with % sign as in "%06X" (#142)
+ * Add auto power off after PulseTime * 0.1 Sec to relay 1 (#134)
+ *
+ * 3.0.5 20161215
+ * Add more control over LED with command LedState options (#136, #143)
+ *   LED_OFF (0), LED_POWER (1), LED_MQTTSUB (2), LED_POWER_MQTTSUB (3), LED_MQTTPUB (4), LED_POWER_MQTTPUB (5), LED_MQTT (6), LED_POWER_MQTT (7)
+ * Add option WIFI_RETRY (4) to command WifiConfig to allow connection retry to other AP without restart (#73)
+ *
+ * 3.0.4 20161211
+ * Fix intermittent Domoticz update misses (#133)
  *
  * 3.0.3 20161210
- * Fix compiler warnings
+ * Fix compiler warnings (#132)
  * Remove redundant code
  * Fix Domoticz pushbutton support
  *
  * 3.0.2 20161209
- * Add pushbutton to SwitchMode
+ * Add pushbutton to SwitchMode (#130)
  *
  * 3.0.1 20161209
  * Fix initial config
@@ -22,10 +173,10 @@
  * Remove relay index in cmnd/sonoff/<relay>/POWER now changed
  *   to cmnd/sonoff/POWER for single relay units
  *   and cmnd/sonoff/POWER<relay> for multi relay units like Sonoff dual
- * Add retain option to Power/Light status controlled by command PowerRetain On|Off
+ * Add retain option to Power/Light status controlled by command PowerRetain On|Off (#126)
  *
  * 2.1.2 20161204
- * Add support for second wifi AP
+ * Add support for second wifi AP (#73)
  * Update command WifiConfig
  * Fix possible WifiManager hang
  *
@@ -34,23 +185,23 @@
  * Fix syslog setting using web page
  *
  * 2.1.1 20161202
- * Add support for ElectroDragon second relay and button (only toggle with optional ButtonTopic)
+ * Add support for ElectroDragon second relay and button (only toggle with optional ButtonTopic) (#110)
  *
  * 2.1.0 20161202
- * Add optional EXPERIMENTAL TLS to MQTT
- * Fix MQTT payload handling
+ * Add optional EXPERIMENTAL TLS to MQTT (#49)
+ * Fix MQTT payload handling (#111)
  * Optimzed WeMo code
  *
  * 2.0.21a 20161201
  * Fix WeMo PowerPlug emulation
  *
  * 2.0.21 20161130
- * Add Belkin WeMo PowerPlug emulation enabled with USE_WEMO_EMULATION in user_config.h (Heiko Krupp)
+ * Add Belkin WeMo PowerPlug emulation enabled with USE_WEMO_EMULATION in user_config.h (Heiko Krupp) (#105, #109)
  *
  * 2.0.20 20161130
- * Relax MQTTClient naming but only allows hexadecimal uppercase numbers
+ * Relax MQTTClient naming but only allows hexadecimal uppercase numbers (#107)
  * Add I2C support with command I2CScan
- * Add I2C sensor driver for HTU21 as alternate sensor using TH10/16 connectors (Heiko Krupp)
+ * Add I2C sensor driver for HTU21 as alternate sensor using TH10/16 connectors (Heiko Krupp) (#105)
  * Add I2C sensor driver for BMP085/BMP180/BMP280/BME280 as alternate sensor using TH10/16 connectors
  *
  * 2.0.19a 20161127
@@ -59,7 +210,7 @@
  *
  * 2.0.18 20161126
  * Add SUB_PREFIX multi level support allowing 'cmnd' or 'cmnd/level2/level3'
- * Add wall switch function to GPIO14 and command SwitchMode (Alex Scott)
+ * Add wall switch function to GPIO14 and command SwitchMode (Alex Scott) (#103)
  *
  * 2.0.17 20161123
  * Calibrate HLWPCAL from 12345 to 12530
@@ -71,10 +222,10 @@
  * Fix User mode webserver security
  *
  * 2.0.16 20161118
- * Add alternative sensor driver DS18x20 using OneWire library
+ * Add alternative sensor driver DS18x20 using OneWire library (#95)
  * Change sensor MQTT message from tele/sonoff/TEMPERATURE to tele/sonoff/DHT/TEMPERATURE or
  *   tele/sonoff/DS18B20/TEMPERATURE or tele/sonoff/DS18x20/1/TEMPERATURE
- * Add sensors to root webpage and auto refresh every 4 seconds
+ * Add sensors to root webpage and auto refresh every 4 seconds (#92)
  * Add optional JSON messageformat to all telemetry data
  * Enforce minimum TelePeriod to be 10 seconds
  * Fix Energy Yesterday reset after restart
@@ -89,11 +240,11 @@
  * Add HLW threshold delay
  * Fix HLW intermittent current deviation
  * Fix button functionality during wificonfig
- * Add CRC check to DS18B20 sensor
+ * Add CRC check to DS18B20 sensor (#88)
  *
  * 2.0.13 20161113
  * Add additional upload error code descriptions
- * Add PlatformIO support
+ * Add PlatformIO support (#80)
  *
  * 2.0.12 20161113
  * Fix Serial and Web response regression when no MQTT connection available
@@ -108,10 +259,10 @@
  * Fix power threshold tests
  *
  * 2.0.10 20161109
- * Add additional Domoticz define
+ * Add additional Domoticz define (#63)
  * Add defines MQTT_STATUS_ON and MQTT_STATUS_OFF in user_config.h to select status On/Off string
- * Fix status response differences
- * Fix divide by zero exception
+ * Fix status response differences (#65)
+ * Fix divide by zero exception (#70)
  * Fix syslog loop exception
  *
  * 2.0.9 20161108
@@ -122,11 +273,11 @@
  * Add initial status after power on
  * Seperate driver files
  * Fix hlw code and calibrate Pow
- * Move user config defines to user_config.h
+ * Move user config defines to user_config.h (#61)
  *
  * 2.0.7 20161030
  * Make Ticker mandatory
- * Add Domoticz support (Increase MQTT_MAX_PACKET_SIZE to 400)
+ * Add Domoticz support (Increase MQTT_MAX_PACKET_SIZE to 400) (#54)
  * Add command MessageFormat 0|1 to select either legacy or JSON output
  *
  * 2.0.6 20161024
@@ -151,14 +302,14 @@
  * Change TEMP to TEMPERATURE and HUM to HUMIDITY
  *
  * 2.0.4 20161009
- * Add MQTT_BUTTON_RETAIN, SAVE_DATA and SAVE_STATE defines to user_config.h
+ * Add MQTT_BUTTON_RETAIN, SAVE_DATA and SAVE_STATE defines to user_config.h (#35)
  * Update ButtonRetain to remove retained message(s) from broker when turned off
  * Add Retain for second relay on Sonoff Dual
  * Provide power status messages with device topic index if requested
  *
  * 2.0.3 20161008
  * Update wifi initialization
- * Add command BUTTONRETAIN for optional MQTT retain on button press
+ * Add command BUTTONRETAIN for optional MQTT retain on button press (#35)
  * Add command SAVESTATE to disable power state save. May be used with MQTT retain
  *
  * 2.0.2 20161006
@@ -174,7 +325,7 @@
  * 1.0.35 20160929
  * Add more lines to console
  * Add timeout and disable MQTT on web upload
- * Add command SAVEDATA to control parameter save (for flash wear afficionados)
+ * Add command SAVEDATA to control parameter save (for flash wear afficionados) (#30)
  *
  * 1.0.34 20160926
  * Fix button press six and seven
@@ -355,7 +506,7 @@
  * Remove initialization errors by better use of MQTT loop
  *
  * 1.0.6  20160406
- * Removed Wifi AP mode
+ * Removed Wifi AP mode (#1)
  * Add test for Arduino IDE version >= 1.6.8
  * Fix RTC time sync code
  *

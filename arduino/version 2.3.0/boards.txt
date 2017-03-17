@@ -262,6 +262,12 @@ esp8285.build.spiffs_pagesize=256
 esp8285.build.debug_port=
 esp8285.build.debug_level=
 
+esp8285.menu.UploadTool.esptool=Serial
+esp8285.menu.UploadTool.esptool.upload.tool=esptool
+esp8285.menu.UploadTool.esptool.upload.verbose=-vv
+esp8285.menu.UploadTool.espupload=OTA_upload
+esp8285.menu.UploadTool.espupload.upload.tool=espupload
+
 esp8285.menu.CpuFrequency.80=80 MHz
 esp8285.menu.CpuFrequency.80.build.f_cpu=80000000L
 esp8285.menu.CpuFrequency.160=160 MHz

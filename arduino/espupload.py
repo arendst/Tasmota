@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-# espupload by Theo Arends
+# espupload by Theo Arends - 20170103
 #
 # Uploads binary file to OTA server
 #
@@ -15,13 +15,17 @@ import optparse
 import logging
 import pycurl
 
-LOCALADDR = "domus1"
-LOCALPORT = 80
+HOST_ADDR = "domus1"
+HOST_PORT = 80
+HOST_URL = "/api/upload-arduino.php"
 
-def upload(localAddr, localPort, filename):
-  url = 'http://%s:%d/api/upload-arduino.php' % (localAddr, localPort)
+def upload(hostAddr, hostPort, filename):
+  url = 'http://%s:%d%s' % (hostAddr, hostPort, HOST_URL)
   c = pycurl.Curl()
   c.setopt(c.URL, url)
+  # The "Expect:" is there to suppress "Expect: 100-continue" behaviour that is
+  # the default in libcurl when posting large bodies (and fails on lighttpd).
+  c.setopt(c.HTTPHEADER, ["Expect:"])
   c.setopt(c.HTTPPOST, [('file', (c.FORM_FILE, filename, )), ])
   c.perform()
   c.close()
@@ -38,13 +42,13 @@ def parser():
     dest = "host_ip",
     action = "store",
     help = "Host IP Address.",
-    default = LOCALADDR
+    default = HOST_ADDR
   )
   group.add_option("-p", "--host_port",
     dest = "host_port",
     type = "int",
     help = "Host server ota Port. Default 80",
-    default = LOCALPORT
+    default = HOST_PORT
   )
   parser.add_option_group(group)
 

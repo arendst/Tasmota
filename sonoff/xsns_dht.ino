@@ -173,4 +173,46 @@ void dht_init()
   snprintf_P(log, sizeof(log), PSTR("DHT: Max clock cycles %d"), _maxcycles);
   addLog(LOG_LEVEL_DEBUG, log);
 }
+
+/*********************************************************************************************\
+ * Presentation
+\*********************************************************************************************/
+
+void dht_mqttPresent(char* stopic, uint16_t sstopic, char* svalue, uint16_t ssvalue, uint8_t* djson)
+{
+  char stemp1[10], stemp2[10];
+  float t, h;
+
+  if (dht_readTempHum(TEMP_CONVERSION, t, h)) {     // Read temperature
+    dtostrf(t, 1, TEMP_RESOLUTION &3, stemp1);
+    dtostrf(h, 1, HUMIDITY_RESOLUTION &3, stemp2);
+    if (sysCfg.message_format == JSON) {
+      snprintf_P(svalue, ssvalue, PSTR("%s, \"DHT\":{\"Temperature\":\"%s\", \"Humidity\":\"%s\"}"), svalue, stemp1, stemp2);
+      *djson = 1;
+    } else {
+      snprintf_P(stopic, sstopic, PSTR("%s/%s/DHT/TEMPERATURE"), PUB_PREFIX2, sysCfg.mqtt_topic);
+      snprintf_P(svalue, ssvalue, PSTR("%s%s"), stemp1, (sysCfg.mqtt_units) ? (TEMP_CONVERSION) ? " F" : " C" : "");
+      mqtt_publish(stopic, svalue);
+      snprintf_P(stopic, sstopic, PSTR("%s/%s/DHT/HUMIDITY"), PUB_PREFIX2, sysCfg.mqtt_topic);
+      snprintf_P(svalue, ssvalue, PSTR("%s%s"), stemp2, (sysCfg.mqtt_units) ? " %" : "");
+      mqtt_publish(stopic, svalue);
+    }
+  }
+}
+
+String dht_webPresent()
+{
+  char stemp[10], sconv[10];
+  float t, h;
+  String page = "";
+  
+  if (dht_readTempHum(TEMP_CONVERSION, t, h)) {     // Read temperature as Celsius (the default)
+    snprintf_P(sconv, sizeof(sconv), PSTR("&deg;%c"), (TEMP_CONVERSION) ? 'F' : 'C');
+    dtostrf(t, 1, TEMP_RESOLUTION &3, stemp);
+    page += F("<tr><td>DHT Temperature: </td><td>"); page += stemp; page += sconv; page += F("</td></tr>");
+    dtostrf(h, 1, HUMIDITY_RESOLUTION &3, stemp);
+    page += F("<tr><td>DHT Humidity: </td><td>"); page += stemp; page += F("%</td></tr>");
+  }
+  return page;
+}
 #endif  // SEND_TELEMETRY_DHT

@@ -57,7 +57,7 @@
 
 #define HTU21_CRC8_POLYNOM  0x13100
 
-uint8_t htutype = 0;
+uint8_t htuaddr, htutype = 0;
 char htustype[7];
 
 uint8_t check_crc8(uint16_t data)
@@ -134,6 +134,11 @@ boolean htu21_init()
   return true;
 }
 
+float htu21_convertCtoF(float c)
+{
+  return c * 1.8 + 32;
+}
+
 float htu21_readHumidity(void)
 {
   uint8_t  checksum=0;
@@ -163,10 +168,11 @@ float htu21_readHumidity(void)
   return humidity;
 }
 
-float htu21_readTemperature(void)
+float htu21_readTemperature(bool S)
 {
   uint8_t  checksum=0;
   uint16_t sensorval=0;
+  float t;
 
   Wire.beginTransmission(HTU21_ADDR);
   Wire.write(HTU21_READTEMP);
@@ -182,7 +188,9 @@ float htu21_readTemperature(void)
   }
   if(check_crc8(sensorval) != checksum) return 0.0; // Checksum mismatch
 
-  return (0.002681 * (float)sensorval - 46.85);
+  t = (0.002681 * (float)sensorval - 46.85);
+  if(S) t = htu21_convertCtoF(t);
+  return t;
 }
 
 float htu21_compensatedHumidity(float humidity, float temperature)
@@ -192,26 +200,14 @@ float htu21_compensatedHumidity(float humidity, float temperature)
     return (-0.15)*(25-temperature)+humidity;
 }
 
-char* htu_type()
-{
-  return htustype;
-}
-
-uint8_t htu_address()
-{
-  return (uint8_t)HTU21_ADDR;
-}
-
-uint8_t htu_found()
-{
-  return htutype;
-}
-
 uint8_t htu_detect()
 {
+  if (htutype) return true;
+
+  char log[LOGSZ];
   boolean success = false;
 
-  if (htutype) return true;
+  htuaddr = HTU21_ADDR;
   htutype = htu21_readDeviceID();
   snprintf_P(htustype, sizeof(htustype), PSTR("HTU"));
   switch (htutype) {
@@ -219,7 +215,59 @@ uint8_t htu_detect()
     success = htu21_init();
     snprintf_P(htustype, sizeof(htustype), PSTR("HTU21"));
   }
-  if (!success) htutype = 0;
+  if (success) {
+    snprintf_P(log, sizeof(log), PSTR("I2C: %s found at address 0x%x"), htustype, htuaddr);
+    addLog(LOG_LEVEL_DEBUG, log);
+  } else {
+    htutype = 0;
+  }
   return success;
+}
+
+/*********************************************************************************************\
+ * Presentation
+\*********************************************************************************************/
+
+void htu_mqttPresent(char* stopic, uint16_t sstopic, char* svalue, uint16_t ssvalue, uint8_t* djson)
+{
+  if (!htutype) return;
+
+  char stemp1[10], stemp2[10];
+
+  float t = htu21_readTemperature(TEMP_CONVERSION);
+  float h = htu21_readHumidity();
+  h = htu21_compensatedHumidity(h, t);
+  dtostrf(t, 1, TEMP_RESOLUTION &3, stemp1);
+  dtostrf(h, 1, HUMIDITY_RESOLUTION &3, stemp2);
+  if (sysCfg.message_format == JSON) {
+    snprintf_P(svalue, ssvalue, PSTR("%s, \"%s\":{\"Temperature\":\"%s\", \"Humidity\":\"%s\"}"), svalue, htustype, stemp1, stemp2);
+    *djson = 1;
+  }
+  else {
+    snprintf_P(stopic, sstopic, PSTR("%s/%s/%s/TEMPERATURE"), PUB_PREFIX2, sysCfg.mqtt_topic, htustype);
+    snprintf_P(svalue, ssvalue, PSTR("%s%s"), stemp1, (sysCfg.mqtt_units) ? (TEMP_CONVERSION) ? " F" : " C" : "");
+    mqtt_publish(stopic, svalue);
+    snprintf_P(stopic, sstopic, PSTR("%s/%s/%s/HUMIDITY"), PUB_PREFIX2, sysCfg.mqtt_topic, htustype);
+    snprintf_P(svalue, ssvalue, PSTR("%s%s"), stemp2, (sysCfg.mqtt_units) ? " %" : "");
+    mqtt_publish(stopic, svalue);
+  }
+}
+
+String htu_webPresent()
+{
+  String page = "";
+  if (htutype) {
+    char itemp[10], iconv[10];
+
+    snprintf_P(iconv, sizeof(iconv), PSTR("&deg;%c"), (TEMP_CONVERSION) ? 'F' : 'C');
+    float t_htu21 = htu21_readTemperature(TEMP_CONVERSION);
+    float h_htu21 = htu21_readHumidity();
+    h_htu21 = htu21_compensatedHumidity(h_htu21, t_htu21);
+    dtostrf(t_htu21, 1, TEMP_RESOLUTION &3, itemp);
+    page += F("<tr><td>HTU Temperature: </td><td>"); page += itemp; page += iconv; page += F("</td></tr>");
+    dtostrf(h_htu21, 1, HUMIDITY_RESOLUTION &3, itemp);
+    page += F("<tr><td>HTU Humidity: </td><td>"); page += itemp; page += F("%</td></tr>");
+  }
+  return page;
 }
 #endif //SEND_TELEMETRY_I2C
