@@ -250,7 +250,10 @@ const mytmplt modules[MAXMODULE] PROGMEM = {
   },
   { "Sonoff Touch",    // Sonoff Touch (ESP8285)
      GPIO_KEY1,        // GPIO00 Button
-     0, 0, 0, 0, 0,
+     GPIO_USER,        // GPIO01 Serial RXD and Optional sensor
+     0,                // GPIO02 
+     GPIO_USER,        // GPIO03 Serial TXD and Optional sensor
+     0, 0,
      0, 0, 0,          // Flash connection
      0, 0, 0,
      GPIO_REL1,        // GPIO12 Red Led and Relay (0 = Off, 1 = On)
