@@ -278,7 +278,7 @@ void startWebserver(int type, IPAddress ipweb)
 
   if (!_httpflag) {
     if (!webServer) {
-      webServer = new ESP8266WebServer(80);
+      webServer = new ESP8266WebServer((type==HTTP_MANAGER)?80:WEB_PORT);
       webServer->on("/", handleRoot);
       webServer->on("/cn", handleConfig);
       webServer->on("/md", handleModule);
@@ -805,7 +805,7 @@ void handleSave()
 {
   if (httpUser()) return;
 
-  char log[LOGSZ], stemp[20];
+  char log[LOGSZ +20], stemp[20];
   byte what = 0, restart;
   String result = "";
 
@@ -870,14 +870,16 @@ void handleSave()
     addLog(LOG_LEVEL_INFO, log);
     break;
   case 6:
-    sysCfg.module = (!strlen(webServer->arg("mt").c_str())) ? MODULE : atoi(webServer->arg("mt").c_str());
+    byte new_module = (!strlen(webServer->arg("mt").c_str())) ? MODULE : atoi(webServer->arg("mt").c_str());
+    byte new_modflg = (sysCfg.module != new_module);
+    sysCfg.module = new_module;
     mytmplt cmodule;
     memcpy_P(&cmodule, &modules[sysCfg.module], sizeof(cmodule));
     String gpios = "";
     for (byte i = 0; i < MAX_GPIO_PIN; i++) {
       if (cmodule.gp.io[i] == GPIO_USER) {
         snprintf_P(stemp, sizeof(stemp), PSTR("g%d"), i);
-        sysCfg.my_module.gp.io[i] = (!strlen(webServer->arg(stemp).c_str())) ? 0 : atoi(webServer->arg(stemp).c_str());
+        sysCfg.my_module.gp.io[i] = (new_modflg) ? 0 : (!strlen(webServer->arg(stemp).c_str())) ? 0 : atoi(webServer->arg(stemp).c_str());
         gpios += F(", GPIO"); gpios += String(i); gpios += F(" "); gpios += String(sysCfg.my_module.gp.io[i]);
       }
     }
@@ -961,7 +963,7 @@ void handleUpgrade()
 void handleUpgradeStart()
 {
   if (httpUser()) return;
-  char svalue[16];  // was MESSZ
+  char svalue[100];  // was MESSZ
 
   addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Firmware upgrade start"));
   WIFI_configCounter();

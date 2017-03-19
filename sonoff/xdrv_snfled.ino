@@ -27,9 +27,6 @@ POSSIBILITY OF SUCH DAMAGE.
  * Sonoff Led
 \*********************************************************************************************/
 
-#define ANALOG_WRITE_RANGE  255  // 127..1023 but as Color is addressed by 8 bits it should be 255 for my code
-#define ANALOG_WRITE_FREQ   432  // 100..1000 Hz led refresh 
-
 uint8_t ledTable[] = {
     0,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,
     1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,
@@ -90,8 +87,8 @@ void sl_setDim(uint8_t myDimmer)
 
 void sl_init(void)
 {
-  analogWriteRange(ANALOG_WRITE_RANGE);  // Default is 1023 (Arduino.h)
-  analogWriteFreq(ANALOG_WRITE_FREQ);    // Default is 1000 (core_esp8266_wiring_pwm.c) - Try to lower flicker
+  sysCfg.pwmvalue[0] = 0;  // We use led_color
+  sysCfg.pwmvalue[1] = 0;  // We use led_color
   sl_blankv = 0;
   sl_power = 0;
   sl_any = 0;
@@ -104,11 +101,14 @@ void sl_blank(byte state)
 // state = 0: No blank
 //         1: Blank led to solve flicker
 
+/*
+ * Disabled when used with latest arduino-esp8266 pwm files
   if (sysCfg.module == SONOFF_LED) {
     sl_blankv = state;
     sl_wakeupActive = 0;
     sl_animate();
   }
+*/
 }
 
 void sl_setPower(uint8_t power)
@@ -172,8 +172,8 @@ void sl_animate()
     sl_lcolor[0] = sl_tcolor[0];
     sl_lcolor[1] = sl_tcolor[1];
     for (byte i = 0; i < 2; i++) {
-      if (pin[GPIO_PWM0 +i] < 99) {
-        analogWrite(pin[GPIO_PWM0 +i], (sysCfg.led_table) ? ledTable[sl_lcolor[i]] : sl_lcolor[i]);
+      if (pin[GPIO_PWM1 +i] < 99) {
+        analogWrite(pin[GPIO_PWM1 +i], ((sysCfg.led_table) ? ledTable[sl_lcolor[i]] : sl_lcolor[i]) * (PWM_RANGE / 255));
       }
     }
   }

@@ -12,9 +12,9 @@
 
 //#define ALLOW_MIGRATE_TO_V3
 #ifdef ALLOW_MIGRATE_TO_V3
-  #define VERSION              0x03091D00   // 3.9.29
+  #define VERSION              0x03091E00   // 3.9.30
 #else
-  #define VERSION              0x04000600   // 4.0.6
+  #define VERSION              0x04000700   // 4.0.7
 #endif  // ALLOW_MIGRATE_TO_V3
 
 enum log_t   {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG_MORE, LOG_LEVEL_ALL};
@@ -114,6 +114,9 @@ enum emul_t  {EMUL_NONE, EMUL_WEMO, EMUL_HUE, EMUL_MAX};
 #define MAX_DEVICE             1            // Max number of devices
 #define MAX_PULSETIMERS        4            // Max number of supported pulse timers
 #define WS2812_MAX_LEDS        256          // Max number of LEDs
+
+#define PWM_RANGE              1023         // 127..1023 but as Color is addressed by 8 bits it should be 255 for my code
+#define PWM_FREQ               1000         // 100..1000 Hz led refresh
 
 #define MAX_POWER_HOLD         10           // Time in SECONDS to allow max agreed power (Pow)
 #define MAX_POWER_WINDOW       30           // Time in SECONDS to disable allow max agreed power (Pow)
@@ -284,6 +287,8 @@ uint8_t swt_flg = 0;                  // Any external switch configured
 uint8_t dht_type = 0;                 // DHT type (DHT11, DHT21 or DHT22)
 uint8_t hlw_flg = 0;                  // Power monitor configured
 uint8_t i2c_flg = 0;                  // I2C configured
+uint8_t pwm_flg = 0;                  // PWM configured
+uint8_t pwm_idxoffset = 0;            // Allowed PWM command offset (change for Sonoff Led)
 
 boolean mDNSbegun = false;
 
@@ -883,7 +888,10 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
     }
     else if (!strcmp(type,"MODULE")) {
       if ((data_len > 0) && (payload > 0) && (payload <= MAXMODULE)) {
-        sysCfg.module = payload -1;
+        payload--;
+        byte new_modflg = (sysCfg.module != payload);
+        sysCfg.module = payload;
+        if (new_modflg) for (byte i = 0; i < MAX_GPIO_PIN; i++) sysCfg.my_module.gp.io[i] = 0;
         restartflag = 2;
       }
       snprintf_P(stemp1, sizeof(stemp1), modules[sysCfg.module].name);
@@ -956,6 +964,21 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
         snprintf_P(svalue, sizeof(svalue), PSTR("%s%s (%d)"), svalue, stemp1, i);
       }
       snprintf_P(svalue, sizeof(svalue), PSTR("%s\"}"), svalue);
+    }
+    else if (!strcmp(type,"PWM") && (index > pwm_idxoffset) && (index <= 5)) {
+      if ((data_len > 0) && (payload >= 0) && (payload <= PWM_RANGE) && (pin[GPIO_PWM1 + index -1] < 99)) {
+        sysCfg.pwmvalue[index -1] = payload;
+        analogWrite(pin[GPIO_PWM1 + index -1], payload);
+      }
+      snprintf_P(svalue, sizeof(svalue), PSTR("{\"PWM\":{"));
+      bool first = true;
+      for (byte i = 0; i < 5; i++) {
+        if(pin[GPIO_PWM1 + i] < 99) {
+          snprintf_P(svalue, sizeof(svalue), PSTR("%s%s\"PWM%d\":%d"), svalue, first ? "" : ", ", i+1, sysCfg.pwmvalue[i]);
+          first = false;
+        }
+      }
+      snprintf_P(svalue, sizeof(svalue), PSTR("%s}}"),svalue);
     }
     else if (!strcmp(type,"SLEEP")) {
       if ((data_len > 0) && (payload >= 0) && (payload < 251)) {
@@ -1247,6 +1270,7 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
     snprintf_P(svalue, sizeof(svalue), PSTR("%s, Weblog, Webserver, WebPassword, Emulation"), svalue);
 #endif
     if (swt_flg) snprintf_P(svalue, sizeof(svalue), PSTR("%s, SwitchMode"), svalue);
+    if (pwm_flg) snprintf_P(svalue, sizeof(svalue), PSTR("%s, PWM"), svalue); 
 #ifdef USE_I2C
     if (i2c_flg) snprintf_P(svalue, sizeof(svalue), PSTR("%s, I2CScan"), svalue);
 #endif  // USE_I2C
@@ -1508,7 +1532,13 @@ void state_mqttPresent(char* svalue, uint16_t ssvalue)
 void sensors_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
 {
   snprintf_P(svalue, ssvalue, PSTR("%s{\"Time\":\"%s\""), svalue, getDateTime().c_str());
-
+  for (byte i = 0; i < 4; i++) {
+    if (pin[GPIO_SWT1 +i] < 99) {
+      byte swm = ((sysCfg.switchmode[i] == FOLLOW_INV)||(sysCfg.switchmode[i] == PUSHBUTTON_INV));
+      snprintf_P(svalue, ssvalue, PSTR("%s, \"Switch%d\":\"%s\""),
+        svalue, i +1, (lastwallswitch[i]) ? (swm) ? MQTT_STATUS_ON : MQTT_STATUS_OFF : (swm) ? MQTT_STATUS_OFF : MQTT_STATUS_ON);
+    }
+  }
 #ifndef USE_ADC_VCC
   if (pin[GPIO_ADC0] < 99) {
     snprintf_P(svalue, ssvalue, PSTR("%s, \"AnalogInput0\":%d"), svalue, analogRead(A0));
@@ -1999,6 +2029,9 @@ void GPIO_init()
     }
   }
 
+  analogWriteRange(PWM_RANGE);  // Default is 1023 (Arduino.h)
+  analogWriteFreq(PWM_FREQ);    // Default is 1000 (core_esp8266_wiring_pwm.c)
+
   Maxdevice = 1;
   if (sysCfg.module == SONOFF_DUAL) {
     Maxdevice = 2;
@@ -2009,6 +2042,7 @@ void GPIO_init()
     Baudrate = 19200;
   }
   else if (sysCfg.module == SONOFF_LED) {
+    pwm_idxoffset = 2;
     pin[GPIO_WS2812] = 99;  // I do not allow both Sonoff Led AND WS2812 led
     sl_init();
   }
@@ -2033,6 +2067,14 @@ void GPIO_init()
       lastwallswitch[i] = digitalRead(pin[GPIO_SWT1 +i]);  // set global now so doesn't change the saved power state on first switch check
     }
   }
+  for (byte i = pwm_idxoffset; i < 5; i++) {
+    if (pin[GPIO_PWM1 +i] < 99) {
+      pwm_flg = 1;
+      pinMode(pin[GPIO_PWM1 +i], OUTPUT);
+      analogWrite(pin[GPIO_PWM1 +i], sysCfg.pwmvalue[i]);
+    }
+  }
+  
   if (sysCfg.module == EXS_RELAY) {
     setLatchingRelay(0,2);
     setLatchingRelay(1,2);

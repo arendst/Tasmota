@@ -191,6 +191,7 @@ struct SYSCFG {
 
   char          ntp_server[3][33];
   uint16_t      pulsetime[MAX_PULSETIMERS];
+  uint16_t      pwmvalue[5];
 
 } sysCfg;
 

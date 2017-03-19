@@ -37,6 +37,11 @@ enum upins_t {
   GPIO_LED2_INV,
   GPIO_LED3_INV,
   GPIO_LED4_INV,
+  GPIO_PWM1,           // Sonoff Led Cold
+  GPIO_PWM2,           // Sonoff Led Warm
+  GPIO_PWM3,           // Red (swapped with Blue from original)
+  GPIO_PWM4,           // Green
+  GPIO_PWM5,           // Blue (swapped with Red from original)
   GPIO_SENSOR_END };
 
 // Text in webpage Module Parameters and commands GPIOS and GPIO
@@ -73,17 +78,17 @@ const char sensors[GPIO_SENSOR_END][9] PROGMEM = {
   "Led1I",
   "Led2I",
   "Led3I",
-  "Led4I"
+  "Led4I",
+  "PWM1",
+  "PWM2",
+  "PWM3",
+  "PWM4",
+  "PWM5"
   };
   
 // Programmer selectable GPIO functionality offset by user selectable GPIOs
 enum fpins_t {
-  GPIO_PWM0 = GPIO_SENSOR_END,  // Cold
-  GPIO_PWM1,           // Warm
-  GPIO_PWM2,           // Red (swapped with Blue from original)
-  GPIO_PWM3,           // Green
-  GPIO_PWM4,           // Blue (swapped with Red from original)
-  GPIO_RXD,            // Serial interface
+  GPIO_RXD = GPIO_SENSOR_END,  // Serial interface
   GPIO_TXD,            // Serial interface
   GPIO_HLW_SEL,        // HLW8012 Sel output (Sonoff Pow)
   GPIO_HLW_CF1,        // HLW8012 CF1 voltage / current (Sonoff Pow)
@@ -250,7 +255,10 @@ const mytmplt modules[MAXMODULE] PROGMEM = {
   },
   { "Sonoff Touch",    // Sonoff Touch (ESP8285)
      GPIO_KEY1,        // GPIO00 Button
-     0, 0, 0, 0, 0,
+     GPIO_USER,        // GPIO01 Serial RXD and Optional sensor
+     0,
+     GPIO_USER,        // GPIO03 Serial TXD and Optional sensor
+     0, 0,
      0, 0, 0,          // Flash connection
      0, 0, 0,
      GPIO_REL1,        // GPIO12 Red Led and Relay (0 = Off, 1 = On)
@@ -263,9 +271,9 @@ const mytmplt modules[MAXMODULE] PROGMEM = {
      GPIO_USER,        // GPIO04 Optional sensor (PWM3 Green)
      GPIO_USER,        // GPIO05 Optional sensor (PWM2 Red)
      0, 0, 0, 0, 0, 0, // Flash connection
-     GPIO_PWM0,        // GPIO12 Cold light
+     GPIO_PWM1,        // GPIO12 Cold light (PWM0 Cold)
      GPIO_LED1_INV,    // GPIO13 Blue Led (0 = On, 1 = Off)
-     GPIO_PWM1,        // GPIO14 Warm light
+     GPIO_PWM2,        // GPIO14 Warm light (PWM1 Warm)
      GPIO_USER,        // GPIO15 Optional sensor (PWM4 Blue)
      0, 0
   },
