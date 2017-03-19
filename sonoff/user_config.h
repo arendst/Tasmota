@@ -84,6 +84,7 @@
 
 // -- HTTP ----------------------------------------
 #define USE_WEBSERVER                            // Enable web server and wifi manager (+62k code, +4k mem) - Disable by //
+  #define WEB_PORT               80              // port for the webserver to run on
   #define WEB_SERVER             2               // [WebServer] Web server (0 = Off, 1 = Start as User, 2 = Start as Admin)
   #define WEB_USERNAME           "admin"         // Web server Admin mode user name
   #define WEB_PASSWORD           ""              // [WebPassword] Web server Admin mode Password for WEB_USERNAME (empty string = Disable)
