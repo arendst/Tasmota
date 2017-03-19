@@ -1075,6 +1075,7 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
       }
     }
     else if (!strcmp(type,"FRIENDLYNAME") && (index > 0) && (index <= 4)) {
+#ifdef USE_WEBSERVER
       if ((data_len > 0) && (data_len < sizeof(sysCfg.friendlyname[0]))) {
         if (index == 1) {
           snprintf_P(stemp1, sizeof(stemp1), PSTR(FRIENDLY_NAME));
@@ -1084,6 +1085,7 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
         strlcpy(sysCfg.friendlyname[index -1], (payload == 1) ? stemp1 : dataBuf, sizeof(sysCfg.friendlyname[index -1]));
       }
       snprintf_P(svalue, sizeof(svalue), PSTR("{\"FriendlyName%d\":\"%s\"}"), index, sysCfg.friendlyname[index -1]);
+#endif
     }
     else if (swt_flg && !strcmp(type,"SWITCHMODE") && (index > 0) && (index <= 4)) {
       if ((data_len > 0) && (payload >= 0) && (payload < MAX_SWITCH_OPTION)) {

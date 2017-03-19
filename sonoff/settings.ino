@@ -419,8 +419,9 @@ void CFG_DefaultSet2()
   sysCfg.model = 0;
   sysCfg.timezone = APP_TIMEZONE;
   strlcpy(sysCfg.otaUrl, OTA_URL, sizeof(sysCfg.otaUrl));
+#ifdef USE_WEBSERVER
   strlcpy(sysCfg.ex_friendlyname, FRIENDLY_NAME, sizeof(sysCfg.ex_friendlyname));
-
+#endif
   sysCfg.seriallog_level = SERIAL_LOG_LEVEL;
   sysCfg.sta_active = 0;
   strlcpy(sysCfg.sta_ssid[0], STA_SSID1, sizeof(sysCfg.sta_ssid[0]));
@@ -432,7 +433,9 @@ void CFG_DefaultSet2()
   strlcpy(sysCfg.syslog_host, SYS_LOG_HOST, sizeof(sysCfg.syslog_host));
   sysCfg.syslog_port = SYS_LOG_PORT;
   sysCfg.syslog_level = SYS_LOG_LEVEL;
+#ifdef USE_WEBSERVER
   sysCfg.webserver = WEB_SERVER;
+#endif
   sysCfg.weblog_level = WEB_LOG_LEVEL;
 
   strlcpy(sysCfg.mqtt_fingerprint, MQTT_FINGERPRINT, sizeof(sysCfg.mqtt_fingerprint));
@@ -461,6 +464,7 @@ void CFG_DefaultSet2()
   sysCfg.blinkcount = APP_BLINKCOUNT;
   sysCfg.sleep = APP_SLEEP;
 
+#ifdef USE_DOMOTOCZ
   strlcpy(sysCfg.domoticz_in_topic, DOMOTICZ_IN_TOPIC, sizeof(sysCfg.domoticz_in_topic));
   strlcpy(sysCfg.domoticz_out_topic, DOMOTICZ_OUT_TOPIC, sizeof(sysCfg.domoticz_out_topic));
   sysCfg.domoticz_update_timer = DOMOTICZ_UPDATE_TIMER;
@@ -470,7 +474,7 @@ void CFG_DefaultSet2()
     sysCfg.domoticz_key_idx[i] = 0;
     sysCfg.domoticz_switch_idx[i] = 0;
   }
-
+#endif
   sysCfg.hlw_pcal = HLW_PREF_PULSE;
   sysCfg.hlw_ucal = HLW_UREF_PULSE;
   sysCfg.hlw_ical = HLW_IREF_PULSE;
@@ -494,10 +498,12 @@ void CFG_DefaultSet2()
 
   CFG_DefaultSet_3_2_4();
 
+#ifdef USE_WEBSERVER
   strlcpy(sysCfg.friendlyname[0], FRIENDLY_NAME, sizeof(sysCfg.friendlyname[0]));
   strlcpy(sysCfg.friendlyname[1], FRIENDLY_NAME"2", sizeof(sysCfg.friendlyname[1]));
   strlcpy(sysCfg.friendlyname[2], FRIENDLY_NAME"3", sizeof(sysCfg.friendlyname[2]));
   strlcpy(sysCfg.friendlyname[3], FRIENDLY_NAME"4", sizeof(sysCfg.friendlyname[3]));
+#endif
 
   CFG_DefaultSet_3_9_3();
 
@@ -505,9 +511,11 @@ void CFG_DefaultSet2()
   sysCfg.mqtt_switch_retain = MQTT_SWITCH_RETAIN;
   sysCfg.mqtt_enabled = MQTT_USE;
 
+#ifdef USE_WEBSERVER
   sysCfg.emulation = EMULATION;
 
   strlcpy(sysCfg.web_password, WEB_PASSWORD, sizeof(sysCfg.web_password));
+#endif
 
   CFG_DefaultSet_4_0_4();
   sysCfg.pulsetime[0] = APP_PULSETIME;
@@ -704,9 +712,11 @@ void CFG_Delta()
     }
     if (sysCfg.version < 0x03020500) {  // 3.2.5 - Add parameter
       getClient(sysCfg.friendlyname[0], sysCfg.mqtt_client, sizeof(sysCfg.friendlyname[0]));
+#ifdef USE_WEBSERVER
       strlcpy(sysCfg.friendlyname[1], FRIENDLY_NAME"2", sizeof(sysCfg.friendlyname[1]));
       strlcpy(sysCfg.friendlyname[2], FRIENDLY_NAME"3", sizeof(sysCfg.friendlyname[2]));
       strlcpy(sysCfg.friendlyname[3], FRIENDLY_NAME"4", sizeof(sysCfg.friendlyname[3]));
+#endif
     }
     if (sysCfg.version < 0x03020800) {  // 3.2.8 - Add parameter
       strlcpy(sysCfg.switch_topic, sysCfg.button_topic, sizeof(sysCfg.switch_topic));
@@ -720,10 +730,14 @@ void CFG_Delta()
       CFG_DefaultSet_3_9_3();
     }
     if (sysCfg.version < 0x03090700) {  // 3.9.7 - Add parameter
+#ifdef USE_WEBSERVER
       sysCfg.emulation = EMULATION;
+#endif
     }
     if (sysCfg.version < 0x03091400) {
+#ifdef USE_WEBSERVER
       strlcpy(sysCfg.web_password, WEB_PASSWORD, sizeof(sysCfg.web_password));
+#endif
     }
     if (sysCfg.version < 0x03091500) {
       for (byte i = 0; i < 4; i++) sysCfg.switchmode[i] = sysCfg.ex_switchmode;
