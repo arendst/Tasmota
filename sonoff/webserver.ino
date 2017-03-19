@@ -278,7 +278,7 @@ void startWebserver(int type, IPAddress ipweb)
 
   if (!_httpflag) {
     if (!webServer) {
-      webServer = new ESP8266WebServer(80);
+      webServer = new ESP8266WebServer(WEB_PORT);
       webServer->on("/", handleRoot);
       webServer->on("/cn", handleConfig);
       webServer->on("/md", handleModule);
