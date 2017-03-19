@@ -344,7 +344,7 @@ double bmp_convertCtoF(double c)
 double bmp_readTemperature(bool S)
 {
   double t = NAN;
-  
+
   switch (bmptype) {
   case BMP180_CHIPID:
     t = bmp180_readTemperature();
@@ -445,7 +445,7 @@ void bmp_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
   }
   *djson = 1;
 #ifdef USE_DOMOTICZ
-  domoticz_sensor3(stemp1, stemp3, stemp2); 
+  domoticz_sensor3(stemp1, stemp3, stemp2);
 #endif  // USE_DOMOTICZ
 }
 

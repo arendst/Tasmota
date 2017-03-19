@@ -67,7 +67,7 @@
  * 3.9.20 20170221
  * Add minimal basic authentication to Web Admin mode (#87)
  * Fix Hue and add HSB support (#89)
- * 
+ *
  * 3.9.19 20170219
  * Sonoff Led: Made GPIO04, 05 and 15 available for user
  * Sonoff Led: Add commands Fade, Speed, WakupDuration, Wakeup and LedTable
@@ -77,7 +77,7 @@
  * Fix Sonoff Led dimmer range (#16)
  * Change Sonoff Led command Dimmer to act on both cold and warm color
  * Add Sonoff Led command Color CCWW where CCWW are hexadecimal values fro 00 - FF
- * Reduce Sonoff Led flickering by disabling interrupts during flash save and disabling 
+ * Reduce Sonoff Led flickering by disabling interrupts during flash save and disabling
  *   Led during OTA upgrade and Web upload (#16)
  *
  * 3.9.17 20170217
@@ -148,7 +148,7 @@
  *
  * 3.9.3 20170127
  * Add confirmation before Restart via webpage
- * Expand Domoticz Configuration webpage with Key, Switch and Sensor Index and 
+ * Expand Domoticz Configuration webpage with Key, Switch and Sensor Index and
  *   add commands DomoticzSwitchIdx and DomoticzSensorIdx (#86) (#174) (#219)
  * Fix default DHT11 sensor driver selection
  * Fix LedPower status after button press (#279)
@@ -211,7 +211,7 @@
  * Add friendlyname to webpage replacing former hostname
  *
  * 3.1.15 20170108
- * Fix Domoticz send key regression with Toggle command  
+ * Fix Domoticz send key regression with Toggle command
  *
  * 3.1.14 20170107
  * Add support for command TOGGLE (define MQTT_CMND_TOGGLE) when ButtonTopic is in use and not equal to Topic (#207)

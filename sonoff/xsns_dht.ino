@@ -212,7 +212,7 @@ String dht_webPresent()
 {
   String page = "";
   float t, h;
-  
+
   if (dht_readTempHum(TEMP_CONVERSION, t, h)) {     // Read temperature as Celsius (the default)
     char stemp[10], sensor[80];
     dtostrf(t, 1, TEMP_RESOLUTION &3, stemp);
@@ -221,7 +221,7 @@ String dht_webPresent()
     dtostrf(h, 1, HUMIDITY_RESOLUTION &3, stemp);
     snprintf_P(sensor, sizeof(sensor), HTTP_SNS_HUM, dhtstype, stemp);
     page += sensor;
-    
+
   }
   return page;
 }

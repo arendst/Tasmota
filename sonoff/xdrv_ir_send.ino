@@ -54,13 +54,13 @@ boolean ir_send_command(char *type, uint16_t index, char *dataBufUc, uint16_t da
   const char *protocol;
   uint8_t  bits = 0;
   uint32_t data = 0;
-  
+
   if (!strcmp(type,"IRSEND")) {
 	  if (data_len) {
       StaticJsonBuffer<128> jsonBuf;
       JsonObject &ir_json = jsonBuf.parseObject(dataBufUc);
       if (!ir_json.success()) {
-        snprintf_P(svalue, ssvalue, PSTR("{\"IRSend\":\"Invalid JSON\"}"));  // JSON decode failed 
+        snprintf_P(svalue, ssvalue, PSTR("{\"IRSend\":\"Invalid JSON\"}"));  // JSON decode failed
       } else {
         snprintf_P(svalue, ssvalue, PSTR("{\"IRSend\":\"Done\"}"));
         protocol = ir_json["PROTOCOL"];

@@ -126,7 +126,7 @@ void hlw_200mS()
     hlw_cf_timer--;
     if (!hlw_cf_timer) hlw_cf_plen = 0;  // No load for over three seconds
   }
-  
+
   hlw_cf1_timer++;
   if (hlw_cf1_timer >= 8) {
     hlw_cf1_timer = 0;

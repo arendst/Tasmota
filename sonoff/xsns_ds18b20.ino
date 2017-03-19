@@ -200,7 +200,7 @@ String dsb_webPresent()
   // Needs TelePeriod to refresh data (Do not do it here as it takes too much time)
   String page = "";
   float st;
-  
+
   if (dsb_readTemp(TEMP_CONVERSION, st)) {  // Check if read failed
     char stemp[10], sensor[80];
     dtostrf(st, 1, TEMP_RESOLUTION &3, stemp);

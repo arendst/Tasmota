@@ -77,7 +77,7 @@ boolean RTC_Valid()
 void RTC_Dump()
 {
   #define CFG_COLS 16
-  
+
   char log[LOGSZ];
   uint16_t idx, maxrow, row, col;
 
@@ -345,7 +345,7 @@ void CFG_Erase()
 void CFG_Dump()
 {
   #define CFG_COLS 16
-  
+
   char log[LOGSZ];
   uint16_t idx, maxrow, row, col;
 
@@ -411,7 +411,7 @@ void CFG_DefaultSet1()
   sysCfg.version = VERSION;
   sysCfg.bootcount = 0;
 }
-  
+
 void CFG_DefaultSet2()
 {
   sysCfg.savedata = SAVE_DATA;
@@ -493,7 +493,7 @@ void CFG_DefaultSet2()
   sysCfg.hlw_mkwhs = 0;                            // MaxEnergyStart
 
   CFG_DefaultSet_3_2_4();
-  
+
   strlcpy(sysCfg.friendlyname[0], FRIENDLY_NAME, sizeof(sysCfg.friendlyname[0]));
   strlcpy(sysCfg.friendlyname[1], FRIENDLY_NAME"2", sizeof(sysCfg.friendlyname[1]));
   strlcpy(sysCfg.friendlyname[2], FRIENDLY_NAME"3", sizeof(sysCfg.friendlyname[2]));
@@ -707,7 +707,7 @@ void CFG_Delta()
       strlcpy(sysCfg.friendlyname[1], FRIENDLY_NAME"2", sizeof(sysCfg.friendlyname[1]));
       strlcpy(sysCfg.friendlyname[2], FRIENDLY_NAME"3", sizeof(sysCfg.friendlyname[2]));
       strlcpy(sysCfg.friendlyname[3], FRIENDLY_NAME"4", sizeof(sysCfg.friendlyname[3]));
-    }      
+    }
     if (sysCfg.version < 0x03020800) {  // 3.2.8 - Add parameter
       strlcpy(sysCfg.switch_topic, sysCfg.button_topic, sizeof(sysCfg.switch_topic));
       sysCfg.mqtt_switch_retain = MQTT_SWITCH_RETAIN;

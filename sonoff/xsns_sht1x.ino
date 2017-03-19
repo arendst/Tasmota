@@ -160,7 +160,7 @@ boolean sht_detect()
   if (shttype) return true;
 
   float t, h;
-  
+
   sht_sda_pin = pin[GPIO_I2C_SDA];
   sht_scl_pin = pin[GPIO_I2C_SCL];
   if (sht_readTempHum(t, h)) {

@@ -28,7 +28,7 @@ POSSIBILITY OF SUCH DAMAGE.
 \*********************************************************************************************/
 
 #define ANALOG_WRITE_RANGE  255  // 127..1023 but as Color is addressed by 8 bits it should be 255 for my code
-#define ANALOG_WRITE_FREQ   432  // 100..1000 Hz led refresh 
+#define ANALOG_WRITE_FREQ   432  // 100..1000 Hz led refresh
 
 uint8_t ledTable[] = {
     0,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,
@@ -61,7 +61,7 @@ uint32_t Atoh(char *s)
 {
   uint32_t value = 0, digit;
   int8_t c;
-  
+
   while((c = *s++)){
     if('0' <= c && c <= '9')
       digit = c - '0';
@@ -78,7 +78,7 @@ uint32_t Atoh(char *s)
 void sl_setDim(uint8_t myDimmer)
 {
   float newDim, fmyCld, fmyWrm;
-  
+
   newDim = 100 / (float)myDimmer;
   fmyCld = (float)sysCfg.led_color[0] / newDim;
   fmyWrm = (float)sysCfg.led_color[1] / newDim;
@@ -124,7 +124,7 @@ void sl_animate()
 // {"Wakeup":"Done"}
   char svalue[32];  // was MESSZ
   uint8_t fadeValue;
-  
+
   if ((sl_power == 0) || sl_blankv) {  // Power Off
     sl_tcolor[0] = 0;
     sl_tcolor[1] = 0;

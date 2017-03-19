@@ -69,19 +69,19 @@ ColorScheme schemes[7] = {
   rainbow, 7,
   fire, 3 };
 
-uint8_t widthValues[5] = { 
+uint8_t widthValues[5] = {
     1,     // Small
     2,     // Medium
     4,     // Large
     8,     // Largest
   255 };   // All
-uint8_t repeatValues[5] = { 
+uint8_t repeatValues[5] = {
     8,     // Small
     6,     // Medium
     4,     // Large
     2,     // Largest
     1 };   // All
-uint8_t speedValues[6] = { 
+uint8_t speedValues[6] = {
     0,     // None
    18,     // Slowest
    14,     // Slower
@@ -128,8 +128,8 @@ void ws2812_setDim(uint8_t myDimmer)
 void ws2812_setColor(uint16_t led, char* colstr)
 {
   HtmlColor hcolor;
-  char log[LOGSZ], lcolstr[8]; 
-  
+  char log[LOGSZ], lcolstr[8];
+
   snprintf_P(lcolstr, sizeof(lcolstr), PSTR("#%s"), colstr);
   uint8_t result = hcolor.Parse<HtmlColorNames>((char *)lcolstr, 7);
   if (result) {
@@ -141,13 +141,13 @@ void ws2812_setColor(uint16_t led, char* colstr)
 
 //      snprintf_P(log, sizeof(log), PSTR("DBG: Red %02X, Green %02X, Blue %02X"), dcolor.R, dcolor.G, dcolor.B);
 //      addLog(LOG_LEVEL_DEBUG, log);
-  
+
       uint16_t temp = dcolor.R;
       if (temp < dcolor.G) temp = dcolor.G;
       if (temp < dcolor.B) temp = dcolor.B;
       float mDim = (float)temp / 2.55;
       sysCfg.ws_dimmer = (uint8_t)mDim;
-  
+
       float newDim = 100 / mDim;
       float fmyRed = (float)dcolor.R * newDim;
       float fmyGrn = (float)dcolor.G * newDim;
@@ -182,7 +182,7 @@ void ws2812_getHSB(float *hue, float *sat, float *bri)
 void ws2812_setHSB(float hue, float sat, float bri)
 {
   char rgb[7];
-  
+
   HsbColor hsb;
   hsb.H=hue;
   hsb.S=sat;
@@ -196,7 +196,7 @@ void ws2812_getColor(uint16_t led, char* svalue, uint16_t ssvalue)
 {
   RgbColor mcolor;
   char stemp[20];
-  
+
   if (led) {
     mcolor = strip->GetPixelColor(led -1);
     snprintf_P(stemp, sizeof(stemp), PSTR("Led%d"), led);
@@ -213,7 +213,7 @@ void ws2812_getColor(uint16_t led, char* svalue, uint16_t ssvalue)
 
 void ws2812_stripShow()
 {
-  RgbColor c;  
+  RgbColor c;
 
   if (sysCfg.ws_ledtable) {
     for (uint16_t i = 0; i < sysCfg.ws_pixels; i++) {
@@ -245,7 +245,7 @@ int mod(int a, int b)
 void ws2812_clock()
 {
   RgbColor c;
-  
+
   strip->ClearTo(0);   // Reset strip
   float newDim = 100 / (float)sysCfg.ws_dimmer;
   float f1 = 255 / newDim;
@@ -300,7 +300,7 @@ void ws2812_gradientColor(struct wsColor* mColor, uint8_t range, uint8_t gradRan
 
 void ws2812_gradient()
 {
-/* 
+/*
  * This routine courtesy Tony DiCola (Adafruit)
  * Display a gradient of colors for the current color scheme.
  *  Repeat is the number of repetitions of the gradient (pick a multiple of 2 for smooth looping of the gradient).
@@ -340,7 +340,7 @@ void ws2812_gradient()
 
 void ws2812_bars()
 {
-/* 
+/*
  * This routine courtesy Tony DiCola (Adafruit)
  * Display solid bars of color for the current color scheme.
  * Width is the width of each bar in pixels/lights.
@@ -382,7 +382,7 @@ void ws2812_animate()
 {
   char log[LOGSZ];
   uint8_t fadeValue;
-  
+
   stripTimerCntr++;
   if (power == 0) {  // Power Off
     sleep = sysCfg.sleep;
@@ -445,7 +445,7 @@ void ws2812_animate()
 //    addLog(LOG_LEVEL_DEBUG, log);
 
       if (sysCfg.ws_ledtable) {
-        for (uint16_t i = 0; i < sysCfg.ws_pixels; i++) strip->SetPixelColor(i, RgbColor(ledTable[lcolor.R],ledTable[lcolor.G],ledTable[lcolor.B]));      
+        for (uint16_t i = 0; i < sysCfg.ws_pixels; i++) strip->SetPixelColor(i, RgbColor(ledTable[lcolor.R],ledTable[lcolor.G],ledTable[lcolor.B]));
       } else {
         for (uint16_t i = 0; i < sysCfg.ws_pixels; i++) strip->SetPixelColor(i, lcolor);
       }

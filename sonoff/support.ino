@@ -48,7 +48,7 @@ void ICACHE_RAM_ATTR osw_osWatch(void)
     addLog_P(LOG_LEVEL_INFO, PSTR("osWatch: Warning, loop blocked. Restart now"));
     rtcMem.osw_flag = 1;
     RTC_Save();
-//    ESP.restart();  // normal reboot 
+//    ESP.restart();  // normal reboot
     ESP.reset();  // hard reset
   }
 }
@@ -81,30 +81,30 @@ String getResetReason()
 #ifdef DEBUG_THEO
 void exception_tst(byte type)
 {
-/*    
+/*
 Exception (28):
 epc1=0x4000bf64 epc2=0x00000000 epc3=0x00000000 excvaddr=0x00000007 depc=0x00000000
 
-ctx: cont 
+ctx: cont
 sp: 3fff1f30 end: 3fff2840 offset: 01a0
 
 >>>stack>>>
-3fff20d0:  202c3573 756f7247 2c302070 646e4920  
-3fff20e0:  40236a6e 7954202c 45206570 00454358  
-3fff20f0:  00000010 00000007 00000000 3fff2180  
-3fff2100:  3fff2190 40107bfc 3fff3e4c 3fff22c0  
-3fff2110:  40261934 000000f0 3fff22c0 401004d8  
-3fff2120:  40238fcf 00000050 3fff2100 4021fc10  
-3fff2130:  3fff32bc 4021680c 3ffeade1 4021ff7d  
-3fff2140:  3fff2190 3fff2180 0000000c 7fffffff  
-3fff2150:  00000019 00000000 00000000 3fff21c0  
-3fff2160:  3fff23f3 3ffe8e08 00000000 4021ffb4  
-3fff2170:  3fff2190 3fff2180 0000000c 40201118  
-3fff2180:  3fff21c0 0000003c 3ffef840 00000007  
-3fff2190:  00000000 00000000 00000000 40201128  
-3fff21a0:  3fff23f3 000000f1 3fff23ec 4020fafb  
-3fff21b0:  3fff23f3 3fff21c0 3fff21d0 3fff23f6  
-3fff21c0:  00000000 3fff23fb 4022321b 00000000  
+3fff20d0:  202c3573 756f7247 2c302070 646e4920
+3fff20e0:  40236a6e 7954202c 45206570 00454358
+3fff20f0:  00000010 00000007 00000000 3fff2180
+3fff2100:  3fff2190 40107bfc 3fff3e4c 3fff22c0
+3fff2110:  40261934 000000f0 3fff22c0 401004d8
+3fff2120:  40238fcf 00000050 3fff2100 4021fc10
+3fff2130:  3fff32bc 4021680c 3ffeade1 4021ff7d
+3fff2140:  3fff2190 3fff2180 0000000c 7fffffff
+3fff2150:  00000019 00000000 00000000 3fff21c0
+3fff2160:  3fff23f3 3ffe8e08 00000000 4021ffb4
+3fff2170:  3fff2190 3fff2180 0000000c 40201118
+3fff2180:  3fff21c0 0000003c 3ffef840 00000007
+3fff2190:  00000000 00000000 00000000 40201128
+3fff21a0:  3fff23f3 000000f1 3fff23ec 4020fafb
+3fff21b0:  3fff23f3 3fff21c0 3fff21d0 3fff23f6
+3fff21c0:  00000000 3fff23fb 4022321b 00000000
 
 Exception 28: LoadProhibited: A load referenced a page mapped with an attribute that does not permit loads
 Decoding 14 results
@@ -390,7 +390,7 @@ void WIFI_Check(uint8_t param)
 #ifdef USE_DISCOVERY
 #ifdef WEBSERVER_ADVERTISE
           MDNS.addService("http", "tcp", 80);
-#endif  // WEBSERVER_ADVERTISE          
+#endif  // WEBSERVER_ADVERTISE
 #endif  // USE_DISCOVERY
         } else {
           stopWebserver();
@@ -447,7 +447,7 @@ boolean mdns_discoverMQTTServer()
   if (n > 0) {
     // Note: current strategy is to get the first MQTT service (even when many are found)
     IPtoCharArray(MDNS.IP(0), ip_str, 20);
-    
+
     snprintf_P(log, sizeof(log), PSTR("mDNS: Service found on %s ip %s port %d"),
       MDNS.hostname(0).c_str(), ip_str, MDNS.port(0));
     addLog(LOG_LEVEL_INFO, log);
@@ -598,7 +598,7 @@ String getBuildDateTime()
   char *str, *p, *smonth;
   char mdate[] = __DATE__;  // "Mar  7 2017"
   int month, day, year;
-  
+
 //  sscanf(mdate, "%s %d %d", bdt, &day, &year);  // Not implemented in 2.3.0 and probably too many code
   byte i = 0;
   for (str = strtok_r(mdate, " ", &p); str && i < 3; str = strtok_r(NULL, " ", &p)) {
@@ -622,7 +622,7 @@ String getDateTime()
 {
   // "2017-03-07T11:08:02"
   char dt[21];
-  
+
   snprintf_P(dt, sizeof(dt), PSTR("%04d-%02d-%02dT%02d:%02d:%02d"),
     rtcTime.Year, rtcTime.Month, rtcTime.Day, rtcTime.Hour, rtcTime.Minute, rtcTime.Second);
   return String(dt);

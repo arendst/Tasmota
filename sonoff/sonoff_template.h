@@ -75,7 +75,7 @@ const char sensors[GPIO_SENSOR_END][9] PROGMEM = {
   "Led3I",
   "Led4I"
   };
-  
+
 // Programmer selectable GPIO functionality offset by user selectable GPIOs
 enum fpins_t {
   GPIO_PWM0 = GPIO_SENSOR_END,  // Cold
@@ -127,7 +127,7 @@ typedef struct MYIO {
 
 typedef struct MYTMPLT {
   char         name[15];
-  myio         gp;  
+  myio         gp;
 } mytmplt;
 
 // Default module settings
@@ -135,7 +135,7 @@ const mytmplt modules[MAXMODULE] PROGMEM = {
   { "Sonoff Basic",    // Sonoff Basic (ESP8266)
      GPIO_KEY1,        // GPIO00 Button
      GPIO_USER,        // GPIO01 Serial RXD and Optional sensor
-     0,                // GPIO02 
+     0,                // GPIO02
      GPIO_USER,        // GPIO03 Serial TXD and Optional sensor
      GPIO_USER,        // GPIO04 Optional sensor
      0,                // GPIO05

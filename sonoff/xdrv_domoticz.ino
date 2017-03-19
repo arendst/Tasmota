@@ -122,7 +122,7 @@ boolean domoticz_mqttData(char *topicBuf, uint16_t stopicBuf, char *dataBuf, uin
   char log[LOGSZ], stemp1[10];
   unsigned long idx = 0;
   int16_t nvalue, found = 0;
-  
+
   domoticz_update_flag = 1;
   if (!strncmp(topicBuf, sysCfg.domoticz_out_topic, strlen(sysCfg.domoticz_out_topic)) != 0) {
     if (sdataBuf < 20) return 1;
@@ -176,7 +176,7 @@ boolean domoticz_mqttData(char *topicBuf, uint16_t stopicBuf, char *dataBuf, uin
 boolean domoticz_command(char *type, uint16_t index, char *dataBuf, uint16_t data_len, int16_t payload, char *svalue, uint16_t ssvalue)
 {
   boolean serviced = true;
-  
+
   if (!strcmp(type,"DOMOTICZINTOPIC")) {
     if ((data_len > 0) && (data_len < sizeof(sysCfg.domoticz_in_topic))) {
       strlcpy(sysCfg.domoticz_in_topic, (payload == 1) ? DOMOTICZ_IN_TOPIC : dataBuf, sizeof(sysCfg.domoticz_in_topic));
@@ -315,7 +315,7 @@ void handleDomoticz()
   addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Handle Domoticz config"));
 
   char stemp[20];
-  
+
   String page = FPSTR(HTTP_HEAD);
   page.replace("{v}", "Configure Domoticz");
   page += FPSTR(HTTP_FORM_DOMOTICZ);
