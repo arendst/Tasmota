@@ -1,12 +1,12 @@
-void user_before_setup() {
+void userBeforeSetup() {
 // code to run before Tasmota's setup
 }
 
-void user_after_setup() {
+void userAfterSetup() {
 // code to run after Tasmota's setup
 }
 
-void user_loop() {
+void userLoop() {
 // code to run inside loop
 }
 
