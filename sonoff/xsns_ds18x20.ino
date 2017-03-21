@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2016 Theo Arends.  All rights reserved.
+Copyright (c) 2017 Theo Arends.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -23,7 +23,7 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifdef SEND_TELEMETRY_DS18x20
+#ifdef USE_DS18x20
 /*********************************************************************************************\
  * DS18B20 - Temperature
 \*********************************************************************************************/
@@ -36,11 +36,17 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include <OneWire.h>
 
-OneWire ds(DSB_PIN);
+OneWire *ds = NULL;
 
 uint8_t ds18x20_addr[DS18X20_MAX_SENSORS][8];
 uint8_t ds18x20_idx[DS18X20_MAX_SENSORS];
 uint8_t ds18x20_snsrs = 0;
+char dsbstype[8];
+
+void ds18x20_init()
+{
+  ds = new OneWire(pin[GPIO_DSB]);
+}
 
 void ds18x20_search()
 {
@@ -48,11 +54,11 @@ void ds18x20_search()
   uint8_t sensor = 0;
   uint8_t i;
 
-  ds.reset_search();
+  ds->reset_search();
   for (num_sensors = 0; num_sensors < DS18X20_MAX_SENSORS; num_sensors)
   {
-    if (!ds.search(ds18x20_addr[num_sensors])) {
-      ds.reset_search();
+    if (!ds->search(ds18x20_addr[num_sensors])) {
+      ds->reset_search();
       break;
     }
     // If CRC Ok and Type DS18S20 or DS18B20
@@ -85,28 +91,11 @@ String ds18x20_address(uint8_t sensor)
   return String(addrStr);
 }
 
-String ds18x20_type(uint8_t sensor)
-{
-  char typeStr[10];
-
-  switch(ds18x20_addr[ds18x20_idx[sensor]][0]) {
-  case 0x10:
-    strcpy(typeStr, "DS18S20");
-    break;
-  case 0x28:
-    strcpy(typeStr, "DS18B20");
-    break;
-  default:
-    strcpy(typeStr, "DS18x20");
-  }
-  return String(typeStr);
-}
-
 void ds18x20_convert()
 {
-  ds.reset();
-  ds.write(W1_SKIP_ROM);        // Address all Sensors on Bus
-  ds.write(W1_CONVERT_TEMP);    // start conversion, no parasite power on at the end
+  ds->reset();
+  ds->write(W1_SKIP_ROM);        // Address all Sensors on Bus
+  ds->write(W1_CONVERT_TEMP);    // start conversion, no parasite power on at the end
 //  delay(750);                   // 750ms should be enough for 12bit conv
 }
 
@@ -118,22 +107,39 @@ float ds18x20_convertCtoF(float c)
 boolean ds18x20_read(uint8_t sensor, bool S, float &t)
 {
   byte data[12];
-  uint8_t sign = 1;
+  int8_t sign = 1;
   uint8_t i = 0;
   float temp9 = 0.0;
   uint8_t present = 0;
 
   t = NAN;
 
-  ds.reset();
-  ds.select(ds18x20_addr[ds18x20_idx[sensor]]);
-  ds.write(W1_READ_SCRATCHPAD); // Read Scratchpad
+  ds->reset();
+  ds->select(ds18x20_addr[ds18x20_idx[sensor]]);
+  ds->write(W1_READ_SCRATCHPAD); // Read Scratchpad
 
-  for (i = 0; i < 9; i++) data[i] = ds.read();
+  for (i = 0; i < 9; i++) data[i] = ds->read();
   if (OneWire::crc8(data, 8) == data[8]) {
     switch(ds18x20_addr[ds18x20_idx[sensor]][0]) {
     case 0x10:  // DS18S20
-      if (data[1] > 0x80) sign = -1; // App-Note fix possible sign error
+/*
+//    App_note AN162.pdf page 9
+      int temp_lsb, temp_msb;
+      temp_msb = data[1];                             // Sign byte + lsbit
+      temp_lsb = data[0];                             // Temp data plus lsb
+      if (temp_msb <= 0x80) temp_lsb = (temp_lsb/2);  // Shift to get whole degree
+      temp_msb = temp_msb & 0x80;                     // Mask all but the sign bit
+      if (temp_msb >= 0x80) {                         // Negative temperature
+        temp_lsb = (~temp_lsb)+1;                     // Twos complement
+        temp_lsb = (temp_lsb/2);                      // Shift to get whole degree
+        temp_lsb = ((-1)*temp_lsb);                   // Add sign bit
+      }
+      t = (int)temp_lsb;                              // Temperature in whole degree
+*/
+      if (data[1] > 0x80) {
+        data[0] = (~data[0]) +1;
+        sign = -1;  // App-Note fix possible sign error
+      }
       if (data[0] & 1) {
         temp9 = ((data[0] >> 1) + 0.5) * sign;
       } else {
@@ -155,7 +161,20 @@ boolean ds18x20_read(uint8_t sensor, bool S, float &t)
  * Presentation
 \*********************************************************************************************/
 
-void ds18x20_mqttPresent(char* stopic, uint16_t sstopic, char* svalue, uint16_t ssvalue, uint8_t* djson)
+void ds18x20_type(uint8_t sensor)
+{
+  strcpy_P(dsbstype, PSTR("DS18x20"));
+  switch(ds18x20_addr[ds18x20_idx[sensor]][0]) {
+  case 0x10:
+    strcpy_P(dsbstype, PSTR("DS18S20"));
+    break;
+  case 0x28:
+    strcpy_P(dsbstype, PSTR("DS18B20"));
+    break;
+  }
+}
+
+void ds18x20_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
 {
   char stemp1[10], stemp2[10];
   float t;
@@ -163,43 +182,44 @@ void ds18x20_mqttPresent(char* stopic, uint16_t sstopic, char* svalue, uint16_t 
   byte dsxflg = 0;
   for (byte i = 0; i < ds18x20_sensors(); i++) {
     if (ds18x20_read(i, TEMP_CONVERSION, t)) {           // Check if read failed
+      ds18x20_type(i);
       dtostrf(t, 1, TEMP_RESOLUTION &3, stemp2);
-      if (sysCfg.message_format == JSON) {
-        if (!dsxflg) {
-          snprintf_P(svalue, ssvalue, PSTR("%s, \"DS18x20\":{"), svalue);
-          *djson = 1;
-          stemp1[0] = '\0';
-          dsxflg = 1;
-        }
-        snprintf_P(svalue, ssvalue, PSTR("%s%s\"DS%d\":{\"Type\":\"%s\", \"Address\":\"%s\", \"Temperature\":\"%s\"}"),
-          svalue, stemp1, i +1, ds18x20_type(i).c_str(), ds18x20_address(i).c_str(), stemp2);
-        strcpy(stemp1, ", ");
-      } else {
-        snprintf_P(stopic, sstopic, PSTR("%s/%s/%s/%d/ADDRESS"), PUB_PREFIX2, sysCfg.mqtt_topic, ds18x20_type(i).c_str(), i +1);
-        snprintf_P(svalue, ssvalue, PSTR("%s"), ds18x20_address(i).c_str());
-        mqtt_publish(stopic, svalue);
-        snprintf_P(stopic, sstopic, PSTR("%s/%s/%s/%d/TEMPERATURE"), PUB_PREFIX2, sysCfg.mqtt_topic, ds18x20_type(i).c_str(), i +1);
-        snprintf_P(svalue, ssvalue, PSTR("%s%s"), stemp2, (sysCfg.mqtt_units) ? (TEMP_CONVERSION) ? " F" : " C" : "");
-        mqtt_publish(stopic, svalue);
+      if (!dsxflg) {
+        snprintf_P(svalue, ssvalue, PSTR("%s, \"DS18x20\":{"), svalue);
+        *djson = 1;
+        stemp1[0] = '\0';
       }
+      dsxflg++;
+      snprintf_P(svalue, ssvalue, PSTR("%s%s\"DS%d\":{\"Type\":\"%s\", \"Address\":\"%s\", \"Temperature\":%s}"),
+        svalue, stemp1, i +1, dsbstype, ds18x20_address(i).c_str(), stemp2);
+      strcpy(stemp1, ", ");
+#ifdef USE_DOMOTICZ
+      if (dsxflg == 1) domoticz_sensor1(stemp2);
+#endif  // USE_DOMOTICZ
     }
   }
   if (dsxflg) snprintf_P(svalue, ssvalue, PSTR("%s}"), svalue);
 }
 
+#ifdef USE_WEBSERVER
 String ds18x20_webPresent()
 {
-  char stemp[10], sconv[10];
-  float t;
   String page = "";
+  char stemp[10], stemp2[16], sensor[80];
+  float t;
 
-  snprintf_P(sconv, sizeof(sconv), PSTR("&deg;%c"), (TEMP_CONVERSION) ? 'F' : 'C');
   for (byte i = 0; i < ds18x20_sensors(); i++) {
     if (ds18x20_read(i, TEMP_CONVERSION, t)) {   // Check if read failed
+      ds18x20_type(i);
       dtostrf(t, 1, TEMP_RESOLUTION &3, stemp);
-      page += F("<tr><td>DS"); page += String(i +1); page += F(" Temperature: </td><td>"); page += stemp; page += sconv; page += F("</td></tr>");
+      snprintf_P(stemp2, sizeof(stemp2), PSTR("%s-%d"), dsbstype, i +1);
+      snprintf_P(sensor, sizeof(sensor), HTTP_SNS_TEMP, stemp2, stemp, (TEMP_CONVERSION) ? 'F' : 'C');
+      page += sensor;
     }
   }
+  ds18x20_search();      // Check for changes in sensors number
+  ds18x20_convert();     // Start Conversion, takes up to one second
   return page;
 }
-#endif  // SEND_TELEMETRY_DS18x20
+#endif  // USE_WEBSERVER
+#endif  // USE_DS18x20

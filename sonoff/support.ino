@@ -24,256 +24,125 @@ POSSIBILITY OF SUCH DAMAGE.
 */
 
 /*********************************************************************************************\
- * Config - Flash or Spiffs
+ * Watchdog extension (https://github.com/esp8266/Arduino/issues/1532)
 \*********************************************************************************************/
 
-extern "C" {
-#include "spi_flash.h"
-}
+Ticker tickerOSWatch;
 
-#define SPIFFS_START        ((uint32_t)&_SPIFFS_start - 0x40200000) / SPI_FLASH_SEC_SIZE
-#define SPIFFS_END          ((uint32_t)&_SPIFFS_end - 0x40200000) / SPI_FLASH_SEC_SIZE
+#define OSWATCH_RESET_TIME 30
 
-// Version 2.x config
-#define SPIFFS_CONFIG2      "/config.ini"
-#define CFG_LOCATION2       SPIFFS_END - 2
+static unsigned long osw_last_loop;
+byte osw_flag = 0;
 
-// Version 3.x config
-#define SPIFFS_CONFIG       "/cfg.ini"
-#define CFG_LOCATION        SPIFFS_END - 4
-
-uint32_t _cfgHash = 0;
-int spiffsflag = 0;
-
-boolean spiffsPresent()
+void ICACHE_RAM_ATTR osw_osWatch(void)
 {
-  return (SPIFFS_END - SPIFFS_START);
-}
+  unsigned long t = millis();
+  unsigned long last_run = abs(t - osw_last_loop);
 
-uint32_t getHash()
-{
-  uint32_t hash = 0;
-  uint8_t *bytes = (uint8_t*)&sysCfg;
-
-  for (uint16_t i = 0; i < sizeof(SYSCFG); i++) hash += bytes[i]*(i+1);
-  return hash;
-}
-
-/*********************************************************************************************\
- * Config Save - Save parameters to Flash or Spiffs ONLY if any parameter has changed
-\*********************************************************************************************/
-void CFG_Save()
-{
+#ifdef DEBUG_THEO
   char log[LOGSZ];
-
-  if ((getHash() != _cfgHash) && (spiffsPresent())) {
-    if (!spiffsflag) {
-#ifdef USE_SPIFFS
-      sysCfg.saveFlag++;
-      File f = SPIFFS.open(SPIFFS_CONFIG, "r+");
-      if (f) {
-        uint8_t *bytes = (uint8_t*)&sysCfg;
-        for (int i = 0; i < sizeof(SYSCFG); i++) f.write(bytes[i]);
-        f.close();
-        snprintf_P(log, sizeof(log), PSTR("Config: Saved configuration (%d bytes) to spiffs count %d"), sizeof(SYSCFG), sysCfg.saveFlag);
-        addLog(LOG_LEVEL_DEBUG, log);
-      } else {
-        addLog_P(LOG_LEVEL_ERROR, PSTR("Config: ERROR - Saving configuration failed"));
-      }
-    } else {
-#endif  // USE_SPIFFS
-      noInterrupts();
-      if (sysCfg.saveFlag == 0) {  // Handle default and rollover
-        spi_flash_erase_sector(CFG_LOCATION + (sysCfg.saveFlag &1));
-        spi_flash_write((CFG_LOCATION + (sysCfg.saveFlag &1)) * SPI_FLASH_SEC_SIZE, (uint32*)&sysCfg, sizeof(SYSCFG));
-      }
-      sysCfg.saveFlag++;
-      spi_flash_erase_sector(CFG_LOCATION + (sysCfg.saveFlag &1));
-      spi_flash_write((CFG_LOCATION + (sysCfg.saveFlag &1)) * SPI_FLASH_SEC_SIZE, (uint32*)&sysCfg, sizeof(SYSCFG));
-      interrupts();
-      snprintf_P(log, sizeof(log), PSTR("Config: Saved configuration (%d bytes) to flash at %X and count %d"), sizeof(SYSCFG), CFG_LOCATION + (sysCfg.saveFlag &1), sysCfg.saveFlag);
-      addLog(LOG_LEVEL_DEBUG, log);
-    }
-    _cfgHash = getHash();
-  }
-}
-
-void CFG_Load()
-{
-  char log[LOGSZ];
-
-  if (spiffsPresent()) {
-    if (!spiffsflag) {
-#ifdef USE_SPIFFS
-      File f = SPIFFS.open(SPIFFS_CONFIG, "r+");
-      if (f) {
-        uint8_t *bytes = (uint8_t*)&sysCfg;
-        for (int i = 0; i < sizeof(SYSCFG); i++) bytes[i] = f.read();
-        f.close();
-        snprintf_P(log, sizeof(log), PSTR("Config: Loaded configuration from spiffs count %d"), sysCfg.saveFlag);
-        addLog(LOG_LEVEL_DEBUG, log);
-      } else {
-        addLog_P(LOG_LEVEL_ERROR, PSTR("Config: ERROR - Loading configuration failed"));
-      }
-    } else {
-#endif  // USE_SPIFFS
-      struct SYSCFGH {
-        unsigned long cfg_holder;
-        unsigned long saveFlag;
-      } _sysCfgH;
-
-      noInterrupts();
-      spi_flash_read((CFG_LOCATION) * SPI_FLASH_SEC_SIZE, (uint32*)&sysCfg, sizeof(SYSCFG));
-      spi_flash_read((CFG_LOCATION + 1) * SPI_FLASH_SEC_SIZE, (uint32*)&_sysCfgH, sizeof(SYSCFGH));
-      if (sysCfg.saveFlag < _sysCfgH.saveFlag)
-        spi_flash_read((CFG_LOCATION + 1) * SPI_FLASH_SEC_SIZE, (uint32*)&sysCfg, sizeof(SYSCFG));
-      interrupts();
-      snprintf_P(log, sizeof(log), PSTR("Config: Loaded configuration from flash at %X and count %d"), CFG_LOCATION + (sysCfg.saveFlag &1), sysCfg.saveFlag);
-      addLog(LOG_LEVEL_DEBUG, log);
-    }
-  }
-//  snprintf_P(log, sizeof(log), PSTR("Config: Check 1 for migration (%08X)"), sysCfg.version);
-//  addLog(LOG_LEVEL_NONE, log);
-  if (sysCfg.cfg_holder != CFG_HOLDER) {
-    if ((sysCfg.version < 0x03000000) || (sysCfg.version > 0x73000000)) {
-      CFG_Migrate();  // Config may be present with versions below 3.0.0
-    } else {
-      CFG_Default();
-    }
-  }
-  _cfgHash = getHash();
-}
-
-void CFG_Migrate()
-{
-  char log[LOGSZ];
-
-  if (spiffsPresent()) {
-    if (!spiffsflag) {
-#ifdef USE_SPIFFS
-      File f = SPIFFS.open(SPIFFS_CONFIG2, "r+");
-      if (f) {
-        uint8_t *bytes = (uint8_t*)&sysCfg2;
-        for (int i = 0; i < sizeof(SYSCFG2); i++) bytes[i] = f.read();
-        f.close();
-        snprintf_P(log, sizeof(log), PSTR("Config: Loaded previous configuration from spiffs count %d"), sysCfg2.saveFlag);
-        addLog(LOG_LEVEL_DEBUG, log);
-      } else {
-        addLog_P(LOG_LEVEL_ERROR, PSTR("Config: ERROR - Loading previous configuration failed"));
-      }
-    } else {
-#endif  // USE_SPIFFS
-      struct SYSCFGH {
-        unsigned long cfg_holder;
-        unsigned long saveFlag;
-      } _sysCfgH;
-
-      noInterrupts();
-      spi_flash_read((CFG_LOCATION2) * SPI_FLASH_SEC_SIZE, (uint32*)&sysCfg2, sizeof(SYSCFG2));
-      spi_flash_read((CFG_LOCATION2 + 1) * SPI_FLASH_SEC_SIZE, (uint32*)&_sysCfgH, sizeof(SYSCFGH));
-      if (sysCfg2.saveFlag < _sysCfgH.saveFlag)
-        spi_flash_read((CFG_LOCATION2 + 1) * SPI_FLASH_SEC_SIZE, (uint32*)&sysCfg2, sizeof(SYSCFG2));
-      interrupts();
-      snprintf_P(log, sizeof(log), PSTR("Config: Loaded previous configuration from flash at %X and count %d"), CFG_LOCATION2 + (sysCfg2.saveFlag &1), sysCfg2.saveFlag);
-      addLog(LOG_LEVEL_DEBUG, log);
-    }
-  }
-//  snprintf_P(log, sizeof(log), PSTR("Config: Check 2 for migration (%08X)"), sysCfg2.version);
-//  addLog(LOG_LEVEL_NONE, log);
-  if ((sysCfg2.version > 0x01000000) && (sysCfg2.version < 0x03000000)) {
-    CFG_Migrate_Part2();  // Config is present between version 1.0.0 and 3.0.0
-  } else {
-    CFG_Default();
-  }
-  _cfgHash = getHash();
-}
-
-void CFG_Erase()
-{
-  char log[LOGSZ];
-  SpiFlashOpResult result;
-
-  uint32_t _sectorStart = (ESP.getSketchSize() / SPI_FLASH_SEC_SIZE) + 1;
-  uint32_t _sectorEnd = ESP.getFlashChipRealSize() / SPI_FLASH_SEC_SIZE;
-  boolean _serialoutput = (LOG_LEVEL_DEBUG_MORE <= sysCfg.seriallog_level);
-
-  snprintf_P(log, sizeof(log), PSTR("Config: Erasing %d flash sectors"), _sectorEnd - _sectorStart);
+  snprintf_P(log, sizeof(log), PSTR("osWatch: FreeRam %d, rssi %d, last_run %d"), ESP.getFreeHeap(), WIFI_getRSSIasQuality(WiFi.RSSI()), last_run);
   addLog(LOG_LEVEL_DEBUG, log);
-
-  for (uint32_t _sector = _sectorStart; _sector < _sectorEnd; _sector++) {
-    noInterrupts();
-    result = spi_flash_erase_sector(_sector);
-    interrupts();
-    if (_serialoutput) {
-      Serial.print(F("Flash: Erased sector "));
-      Serial.print(_sector);
-      if (result == SPI_FLASH_RESULT_OK) {
-        Serial.println(F(" OK"));
-      } else {
-        Serial.println(F(" Error"));
-      }
-      delay(10);
-    }
+#endif  // DEBUG_THEO
+  if(last_run >= (OSWATCH_RESET_TIME * 1000)) {
+    addLog_P(LOG_LEVEL_INFO, PSTR("osWatch: Warning, loop blocked. Restart now"));
+    rtcMem.osw_flag = 1;
+    RTC_Save();
+//    ESP.restart();  // normal reboot 
+    ESP.reset();  // hard reset
   }
 }
 
-void CFG_Dump()
+void osw_init()
 {
-  #define CFG_COLS 16
-  
-  char log[LOGSZ];
-  uint16_t idx, maxrow, row, col;
-
-  uint8_t *buffer = (uint8_t *) &sysCfg;
-  maxrow = ((sizeof(SYSCFG)+CFG_COLS)/CFG_COLS);
-
-  for (row = 0; row < maxrow; row++) {
-    idx = row * CFG_COLS;
-    snprintf_P(log, sizeof(log), PSTR("%04X:"), idx);
-    for (col = 0; col < CFG_COLS; col++) {
-      if (!(col%4)) snprintf_P(log, sizeof(log), PSTR("%s "), log);
-      snprintf_P(log, sizeof(log), PSTR("%s %02X"), log, buffer[idx + col]);
-    }
-    snprintf_P(log, sizeof(log), PSTR("%s |"), log);
-    for (col = 0; col < CFG_COLS; col++) {
-//      if (!(col%4)) snprintf_P(log, sizeof(log), PSTR("%s "), log);
-      snprintf_P(log, sizeof(log), PSTR("%s%c"), log, ((buffer[idx + col] > 0x20) && (buffer[idx + col] < 0x7F)) ? (char)buffer[idx + col] : ' ');
-    }
-    snprintf_P(log, sizeof(log), PSTR("%s|"), log);
-    addLog(LOG_LEVEL_INFO, log);
-  }
+  osw_flag = rtcMem.osw_flag;
+  rtcMem.osw_flag = 0;
+  osw_last_loop = millis();
+  tickerOSWatch.attach_ms(((OSWATCH_RESET_TIME / 3) * 1000), osw_osWatch);
 }
 
-#ifdef USE_SPIFFS
-void initSpiffs()
+void osw_loop()
 {
-  spiffsflag = 0;
-  if (!spiffsPresent()) {
-    spiffsflag = 1;
+  osw_last_loop = millis();
+//  while(1) delay(1000);  // this will trigger the os watch
+}
+
+String getResetReason()
+{
+  char buff[32];
+  if (osw_flag) {
+    strcpy_P(buff, PSTR("Blocked Loop"));
+    return String(buff);
   } else {
-    if (!SPIFFS.begin()) {
-      addLog_P(LOG_LEVEL_ERROR, PSTR("SPIFFS: WARNING - Failed to mount file system. Will use flash"));
-      spiffsflag = 2;
-    } else {
-      addLog_P(LOG_LEVEL_DEBUG, PSTR("SPIFFS: Mount successful"));
-      File f = SPIFFS.open(SPIFFS_CONFIG, "r");
-      if (!f) {
-        addLog_P(LOG_LEVEL_DEBUG, PSTR("SPIFFS: Formatting..."));
-        SPIFFS.format();
-        addLog_P(LOG_LEVEL_DEBUG, PSTR("SPIFFS: Formatted"));
-        File f = SPIFFS.open(SPIFFS_CONFIG, "w");
-        if (f) {
-          for (int i = 0; i < sizeof(SYSCFG); i++) f.write(0);
-          f.close();
-        } else {
-          addLog_P(LOG_LEVEL_ERROR, PSTR("SPIFFS: WARNING - Failed to init config file. Will use flash"));
-          spiffsflag = 3;
-        }
-      }
-    }
+    return ESP.getResetReason();
   }
 }
-#endif  // USE_SPIFFS
+
+#ifdef DEBUG_THEO
+void exception_tst(byte type)
+{
+/*    
+Exception (28):
+epc1=0x4000bf64 epc2=0x00000000 epc3=0x00000000 excvaddr=0x00000007 depc=0x00000000
+
+ctx: cont 
+sp: 3fff1f30 end: 3fff2840 offset: 01a0
+
+>>>stack>>>
+3fff20d0:  202c3573 756f7247 2c302070 646e4920
+3fff20e0:  40236a6e 7954202c 45206570 00454358
+3fff20f0:  00000010 00000007 00000000 3fff2180
+3fff2100:  3fff2190 40107bfc 3fff3e4c 3fff22c0
+3fff2110:  40261934 000000f0 3fff22c0 401004d8
+3fff2120:  40238fcf 00000050 3fff2100 4021fc10
+3fff2130:  3fff32bc 4021680c 3ffeade1 4021ff7d
+3fff2140:  3fff2190 3fff2180 0000000c 7fffffff
+3fff2150:  00000019 00000000 00000000 3fff21c0
+3fff2160:  3fff23f3 3ffe8e08 00000000 4021ffb4
+3fff2170:  3fff2190 3fff2180 0000000c 40201118
+3fff2180:  3fff21c0 0000003c 3ffef840 00000007
+3fff2190:  00000000 00000000 00000000 40201128
+3fff21a0:  3fff23f3 000000f1 3fff23ec 4020fafb
+3fff21b0:  3fff23f3 3fff21c0 3fff21d0 3fff23f6
+3fff21c0:  00000000 3fff23fb 4022321b 00000000
+
+Exception 28: LoadProhibited: A load referenced a page mapped with an attribute that does not permit loads
+Decoding 14 results
+0x40236a6e: ets_vsnprintf at ?? line ?
+0x40107bfc: vsnprintf at C:\Data2\Arduino\arduino-1.8.1-esp-2.3.0\portable\packages\esp8266\hardware\esp8266\2.3.0\cores\esp8266/libc_replacements.c line 387
+0x40261934: bignum_exptmod at ?? line ?
+0x401004d8: malloc at C:\Data2\Arduino\arduino-1.8.1-esp-2.3.0\portable\packages\esp8266\hardware\esp8266\2.3.0\cores\esp8266\umm_malloc/umm_malloc.c line 1664
+0x40238fcf: wifi_station_get_connect_status at ?? line ?
+0x4021fc10: operator new[](unsigned int) at C:\Data2\Arduino\arduino-1.8.1-esp-2.3.0\portable\packages\esp8266\hardware\esp8266\2.3.0\cores\esp8266/abi.cpp line 57
+0x4021680c: ESP8266WiFiSTAClass::status() at C:\Data2\Arduino\arduino-1.8.1-esp-2.3.0\portable\packages\esp8266\hardware\esp8266\2.3.0\libraries\ESP8266WiFi\src/ESP8266WiFiSTA.cpp line 569
+0x4021ff7d: vsnprintf_P(char*, unsigned int, char const*, __va_list_tag) at C:\Data2\Arduino\arduino-1.8.1-esp-2.3.0\portable\packages\esp8266\hardware\esp8266\2.3.0\cores\esp8266/pgmspace.cpp line 146
+0x4021ffb4: snprintf_P(char*, unsigned int, char const*, ...) at C:\Data2\Arduino\arduino-1.8.1-esp-2.3.0\portable\packages\esp8266\hardware\esp8266\2.3.0\cores\esp8266/pgmspace.cpp line 146
+0x40201118: atol at C:\Data2\Arduino\arduino-1.8.1-esp-2.3.0\portable\packages\esp8266\hardware\esp8266\2.3.0\cores\esp8266/core_esp8266_noniso.c line 45
+0x40201128: atoi at C:\Data2\Arduino\arduino-1.8.1-esp-2.3.0\portable\packages\esp8266\hardware\esp8266\2.3.0\cores\esp8266/core_esp8266_noniso.c line 45
+0x4020fafb: mqttDataCb(char*, unsigned char*, unsigned int) at R:\Arduino\Work-ESP8266\Theo\sonoff\sonoff-4\sonoff/sonoff.ino line 679 (discriminator 1)
+0x4022321b: pp_attach at ?? line ?
+
+00:00:08 MQTT: tele/sonoff/INFO3 = {"Started":"Fatal exception:28 flag:2 (EXCEPTION) epc1:0x4000bf64 epc2:0x00000000 epc3:0x00000000 excvaddr:0x00000007 depc:0x00000000"}
+*/
+  if (type == 1) {
+    char svalue[10];
+    snprintf_P(svalue, sizeof(svalue), PSTR("%s"), 7);  // Exception 28 as number in string (7 in excvaddr)
+  }
+/*
+14:50:52 osWatch: FreeRam 25896, rssi 68, last_run 0
+14:51:02 osWatch: FreeRam 25896, rssi 58, last_run 0
+14:51:03 CMND: exception 2
+14:51:12 osWatch: FreeRam 25360, rssi 60, last_run 8771
+14:51:22 osWatch: FreeRam 25360, rssi 62, last_run 18771
+14:51:32 osWatch: FreeRam 25360, rssi 62, last_run 28771
+14:51:42 osWatch: FreeRam 25360, rssi 62, last_run 38771
+14:51:42 osWatch: Warning, loop blocked. Restart now
+*/
+  if (type == 2) {
+    while(1) delay(1000);  // this will trigger the os watch
+  }
+}
+#endif  // DEBUG_THEO
 
 /*********************************************************************************************\
  * Wifi
@@ -355,9 +224,9 @@ void WIFI_config(uint8_t type)
 {
   if (!_wificonfigflag) {
     if (type == WIFI_RETRY) return;
-#if defined(USE_WEMO_EMULATION) || defined(USE_HUE_EMULATION)
+#ifdef USE_EMULATION
     UDP_Disconnect();
-#endif  // USE_WEMO_EMULATION || USE_HUE_EMULATION
+#endif  // USE_EMULATION
     WiFi.disconnect();        // Solve possible Wifi hangs
     _wificonfigflag = type;
     _wifiConfigCounter = WIFI_CONFIG_SEC;   // Allow up to WIFI_CONFIG_SECS seconds for phone to provide ssid/pswd
@@ -392,16 +261,18 @@ void WIFI_begin(uint8_t flag)
   const char PhyMode[] = " BGN";
   char log[LOGSZ];
 
-#if defined(USE_WEMO_EMULATION) || defined(USE_HUE_EMULATION)
+#ifdef USE_EMULATION
   UDP_Disconnect();
-#endif  // USE_WEMO_EMULATION || USE_HUE_EMULATION
+#endif  // USE_EMULATION
   if (!strncmp(ESP.getSdkVersion(),"1.5.3",5)) {
     addLog_P(LOG_LEVEL_DEBUG, "Wifi: Patch issue 2186");
     WiFi.mode(WIFI_OFF);    // See https://github.com/esp8266/Arduino/issues/2186
   }
   WiFi.disconnect();
   WiFi.mode(WIFI_STA);      // Disable AP mode
-  if (sysCfg.sleep) wifi_set_sleep_type(LIGHT_SLEEP_T);  // Allow light sleep during idle times
+//  if (sysCfg.sleep) wifi_set_sleep_type(LIGHT_SLEEP_T);  // Allow light sleep during idle times
+  if (sysCfg.sleep) WiFi.setSleepMode(WIFI_LIGHT_SLEEP);  // Allow light sleep during idle times
+//  WiFi.setSleepMode(WIFI_LIGHT_SLEEP);  // Allow light sleep during idle times
 //  if (WiFi.getPhyMode() != WIFI_PHY_MODE_11N) WiFi.setPhyMode(WIFI_PHY_MODE_11N);
   if (!WiFi.getAutoConnect()) WiFi.setAutoConnect(true);
 //  WiFi.setAutoReconnect(true);
@@ -414,6 +285,10 @@ void WIFI_begin(uint8_t flag)
     sysCfg.sta_active ^= 1;
   }        // 3: Current AP
   if (strlen(sysCfg.sta_ssid[1]) == 0) sysCfg.sta_active = 0;
+#ifdef USE_STATIC_IP_ADDRESS
+  WiFi.config(ipadd, ipgat, ipsub, ipdns);  // Set static IP
+#endif  // USE_STATIC_IP_ADDRESS
+  WiFi.hostname(Hostname);
   WiFi.begin(sysCfg.sta_ssid[sysCfg.sta_active], sysCfg.sta_pwd[sysCfg.sta_active]);
   snprintf_P(log, sizeof(log), PSTR("Wifi: Connecting to AP%d %s in mode 11%c as %s..."),
     sysCfg.sta_active +1, sysCfg.sta_ssid[sysCfg.sta_active], PhyMode[WiFi.getPhyMode() & 0x3], Hostname);
@@ -520,14 +395,14 @@ void WIFI_Check(uint8_t param)
         } else {
           stopWebserver();
         }
-#if defined(USE_WEMO_EMULATION) || defined(USE_HUE_EMULATION)
-        UDP_Connect();
-#endif  // USE_WEMO_EMULATION || USE_HUE_EMULATION
+#ifdef USE_EMULATION
+        if (sysCfg.emulation) UDP_Connect();
+#endif  // USE_EMULATION
 #endif  // USE_WEBSERVER
       } else {
-#if defined(USE_WEMO_EMULATION) || defined(USE_HUE_EMULATION)
+#ifdef USE_EMULATION
         UDP_Disconnect();
-#endif  // USE_WEMO_EMULATION || USE_HUE_EMULATION
+#endif  // USE_EMULATION
         mDNSbegun = false;
       }
     }
@@ -543,10 +418,9 @@ int WIFI_State()
   return state;
 }
 
-void WIFI_Connect(char *Hostname)
+void WIFI_Connect()
 {
   WiFi.persistent(false);   // Solve possible wifi init errors
-  WiFi.hostname(Hostname);
   _wifistatus = 0;
   _wifiretry = WIFI_RETRY_SEC;
   _wificounter = 1;
@@ -603,12 +477,11 @@ void IPtoCharArray(IPAddress address, char *ip_str, size_t size)
  * Basic I2C routines
 \*********************************************************************************************/
 
-#ifdef SEND_TELEMETRY_I2C
+#ifdef USE_I2C
 #define I2C_RETRY_COUNTER 3
 
 int32_t i2c_read(uint8_t addr, uint8_t reg, uint8_t size)
 {
-  char log[LOGSZ];
   byte x = 0;
   int32_t data = 0;
 
@@ -625,10 +498,6 @@ int32_t i2c_read(uint8_t addr, uint8_t reg, uint8_t size)
     }
     x++;
   } while (Wire.endTransmission(true) != 0 && x <= I2C_RETRY_COUNTER); // end transmission
-
-//  snprintf_P(log, sizeof(log), PSTR("I2C: received %X, retries %d"), data, x -1);
-//  addLog(LOG_LEVEL_DEBUG_MORE, log);
-
   return data;
 }
 
@@ -697,7 +566,7 @@ void i2c_scan(char *devs, unsigned int devs_len)
     snprintf_P(devs, devs_len, PSTR("{\"I2Cscan\":\"No devices found\"}"));
   }
 }
-#endif //SEND_TELEMETRY_I2C
+#endif  // USE_I2C
 
 /*********************************************************************************************\
  * Real Time Clock
@@ -718,11 +587,46 @@ extern "C" {
 Ticker tickerRTC;
 
 static const uint8_t monthDays[] = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 }; // API starts months from 1, this array starts from 0
-static const char monthNames[37] = { "JanFebMrtAprMayJunJulAugSepOctNovDec" };
+static const char monthNames[] = "JanFebMarAprMayJunJulAugSepOctNovDec";
 
 uint32_t utctime = 0, loctime = 0, dsttime = 0, stdtime = 0, ntptime = 0, midnight = 1451602800;
 
-rtcCallback rtcCb = NULL;
+String getBuildDateTime()
+{
+  // "2017-03-07T11:08:02"
+  char bdt[21];
+  char *str, *p, *smonth;
+  char mdate[] = __DATE__;  // "Mar  7 2017"
+  int month, day, year;
+  
+//  sscanf(mdate, "%s %d %d", bdt, &day, &year);  // Not implemented in 2.3.0 and probably too many code
+  byte i = 0;
+  for (str = strtok_r(mdate, " ", &p); str && i < 3; str = strtok_r(NULL, " ", &p)) {
+    switch (i++) {
+    case 0:  // Month
+      smonth = str;
+      break;
+    case 1:  // Day
+      day = atoi(str);
+      break;
+    case 2:  // Year
+      year = atoi(str);
+    }
+  }
+  month = (strstr(monthNames, smonth) -monthNames) /3 +1;
+  snprintf_P(bdt, sizeof(bdt), PSTR("%d-%02d-%02dT%s"), year, month, day, __TIME__);
+  return String(bdt);
+}
+
+String getDateTime()
+{
+  // "2017-03-07T11:08:02"
+  char dt[21];
+  
+  snprintf_P(dt, sizeof(dt), PSTR("%04d-%02d-%02dT%02d:%02d:%02d"),
+    rtcTime.Year, rtcTime.Month, rtcTime.Day, rtcTime.Hour, rtcTime.Minute, rtcTime.Second);
+  return String(dt);
+}
 
 void breakTime(uint32_t timeInput, TIME_T &tm)
 {
@@ -915,15 +819,13 @@ void rtc_second()
     midnight = loctime;
   }
   rtcTime.Year += 1970;
-  if (rtcCb) rtcCb();
 }
 
-void rtc_init(rtcCallback cb)
+void rtc_init()
 {
-  rtcCb = cb;
-  sntp_setservername(0, (char*)NTP_SERVER1);
-  sntp_setservername(1, (char*)NTP_SERVER2);
-  sntp_setservername(2, (char*)NTP_SERVER3);
+  sntp_setservername(0, sysCfg.ntp_server[0]);
+  sntp_setservername(1, sysCfg.ntp_server[1]);
+  sntp_setservername(2, sysCfg.ntp_server[2]);
   sntp_stop();
   sntp_set_timezone(0);      // UTC time
   sntp_init();
@@ -938,7 +840,7 @@ void rtc_init(rtcCallback cb)
 
 void syslog(const char *message)
 {
-  char str[TOPSZ+MESSZ];
+  char str[TOPSZ + MESSZ];
 
   if (portUDP.beginPacket(sysCfg.syslog_host, sysCfg.syslog_port)) {
     snprintf_P(str, sizeof(str), PSTR("%s ESP-%s"), Hostname, message);
@@ -958,23 +860,21 @@ void addLog(byte loglevel, const char *line)
 
   snprintf_P(mxtime, sizeof(mxtime), PSTR("%02d:%02d:%02d"), rtcTime.Hour, rtcTime.Minute, rtcTime.Second);
 
-#ifdef DEBUG_ESP_PORT
-  DEBUG_ESP_PORT.printf("%s %s\n", mxtime, line);
-#endif  // DEBUG_ESP_PORT
-  if (loglevel <= sysCfg.seriallog_level) Serial.printf("%s %s\n", mxtime, line);
+  if (loglevel <= seriallog_level) Serial.printf("%s %s\n", mxtime, line);
 #ifdef USE_WEBSERVER
-  if (loglevel <= sysCfg.weblog_level) {
+  if (sysCfg.webserver && (loglevel <= sysCfg.weblog_level)) {
     Log[logidx] = String(mxtime) + " " + String(line);
     logidx++;
     if (logidx > MAX_LOG_LINES -1) logidx = 0;
   }
 #endif  // USE_WEBSERVER
+//  if (sysCfg.emulation) return;  // Disable syslog (UDP) when emulation using UDP is selected
   if ((WiFi.status() == WL_CONNECTED) && (loglevel <= syslog_level)) syslog(line);
 }
 
 void addLog_P(byte loglevel, const char *formatP)
 {
-  char mess[MESSZ];
+  char mess[LOGSZ];  // was MESSZ
 
   snprintf_P(mess, sizeof(mess), formatP);
   addLog(loglevel, mess);

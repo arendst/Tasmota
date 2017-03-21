@@ -1,52 +1,215 @@
-/* 3.2.13 20170127
- * Prep for 4.0: Remove Legacy Info, Warning, Commands and Status messages
- * Add sleep status to StatusPRM message
- * Fix Hue brightness and change to call by reference (#283)
+/* 4.0.8 20170321
+ * Fix entering non-numeric webpassword
+ * Force selection between TLS or Webserver due to memory restraint (#240)
+ * Allow entering empty string using "0" for selected commands (#242)
+ * Fix exception when posting commands to web console containing % (#250)
  *
- * 3.2.12 20170126
+ * 4.0.7 20170319
+ * Increased Sonoff Led PWM frequency from 432 to 1000
+ * Fix possible watch dog reboot after changing module type on web page
+ * Fix reporting of GPIO usage from web page
+ * Fix Sonoff Led blank during firmware upgrade
+ * Fix Sonoff Led flicker and possible flash corruption by using latest Arduino-esp8266 versions
+ *   of pwm core files included in sonoff library (#211)
+ * Add PWM output control with commands PWM1 to PWM5 using user selectable GPIOs (#211)
+ * Fix exceptions due to low values of commands HlwPCal (10000), HlwUCal (1000) and HlwICal (2500) (#223)
+ * Add Switch state to sensor status (#227, #233)
+ * Add user configuarble GPIO to module Sonoff Touch (#228)
+ * Add define WEB_PORT to user_config.h to change default web server port from 80 (#232)
+ * Fix failed Ota Firmware upgrade started from Web page (#235)
+ *
+ * 4.0.6 20170316
+ * Fix to better find device by Wifi hostname
+ * Fix compile error when some I2C devices are disabled
+ * Add (experimental) support for SHT1X emulating I2C (#97)
+ * Add ADC to ElectroDragon (#203)
+ * Add support for Sonoff Dev (#206)
+ *
+ * 4.0.5 20170314
+ * Add command Status 11 to show power status with Vcc if define USE_ADC_VCC is enabled (default)
+ * Add ADC input to Sonoff SV and Wemos D1 mini - Needs recompile with define USE_ADC_VCC disabled (#137)
+ * Add MQTT host:port to timeout message (#199)
+ *
+ * 4.0.4 20170312
+ * Add pulse timers for up to 4 relays (#106)
+ * Fix Sonoff Led power state when dimmer or color is 0 (#176)
+ * Add command NtpServer<x> to configure up to three NTP servers (#177)
+ * Delete module User Test as module Wemos D1 mini has same/more user configurable GPIO (#178)
+ * Add more user configurable GPIO to module ElectroDragon (#183)
+ *
+ * 4.0.3 20170309
+ * Renamed Module NodeMCU to WeMos D1 mini
+ * Add GPIO1 as user option to some modules
+ * Add Buttons, Relays and Leds to user configurable options (#159)
+ * Add description on Module parameters web page to some well known GPIOs (#107, #171)
+ *
+ * 4.0.2 20170308
+ * Restore correct seriallog level after Serial logging was disabled
+ * Add simple dimmer slider to Sonoff Led web page
+ * Reduced root webpage size by 31%
+ * Expand Status 2 with Build date/time and core version
+ * Fix webserver redirection when not in WifiManager mode (#156)
+ * Add command ButtonRestrict On/Off to restrict access to button hold and button multi press options above 2 (#161)
+ * Fix DS18S20 negative temperature readings (#165)
+ * Fix crlf compilation error due to bad syntax (#144, #167)
+ *
+ * 4.0.1 20170305
+ * Fix char default sizes and set MESSZ to 360 (#143)
+ * Fix SerialLog setting status
+ * Disable syslog when emulation is active
+ * Add DS18B20 web page display refresh
+ *
+ * 4.0.0 20170303
+ * Add define to remove config migration code for versions below 3.0 (See Wiki-Upgrade-Migration path)
+ * Free memory by switching from String to char[]
+ * Raised Sonoff Led PWM frequency from 200Hz to 432Hz in search of stability (hardware watchdog timeouts) (#122)
+ * Increase message size and suggested minimum MQTT_MAX_PACKET_SIZE to 512 (#114, #124)
+ * Remove runtime warning message regarding MQTT_MAX_PACKET_SIZE too small as it is now moved to compile time (#124)
+ * Fix possible panics with web console and http commands while UDP syslog is active (#127)
+ * Add optional static IP address (#129)
+ * Add define ENERGY_RESOLUTION in user_config.h to allow user control over precision (#136)
+ *
+ * 3.9.22 20170228
+ * Update web console
+ * Fix Status 4 JSON message
+ * Add Exception info during restart if available
+ * Add osWatch service to detect loop hangs that might happen during (OTA) upgrades
+ * Add WiOn support for relay and switch only (#82, #102)
+ * Allow for user specified relay count up to four in sonoff_template.h (#109)
+ * Add support for HTU21 compatible I2C sensors SI7013, SI7020 and SI7021 (#118)
+ * Add NodeMCU or Wemos configuration option (#119)
+ *
+ * 3.9.21 20170224
+ * Add ajax to web root page and web console (#79)
+ * Add commands SwitchMode1..4 and enable user switches 2, 3 and 4 (#84, #88)
+ * Fix MQTT upgrade when webserver is active
+ *
+ * 3.9.20 20170221
+ * Add minimal basic authentication to Web Admin mode (#87)
+ * Fix Hue and add HSB support (#89)
+ * 
+ * 3.9.19 20170219
+ * Sonoff Led: Made GPIO04, 05 and 15 available for user
+ * Sonoff Led: Add commands Fade, Speed, WakupDuration, Wakeup and LedTable
+ *
+ * 3.9.18 20170218
+ * Fix ledstate 0 to turn off led
+ * Fix Sonoff Led dimmer range (#16)
+ * Change Sonoff Led command Dimmer to act on both cold and warm color
+ * Add Sonoff Led command Color CCWW where CCWW are hexadecimal values fro 00 - FF
+ * Reduce Sonoff Led flickering by disabling interrupts during flash save and disabling 
+ *   Led during OTA upgrade and Web upload (#16)
+ *
+ * 3.9.17 20170217
+ * Fix possible ArduinoJSON related memory fragmentation
+ * Changed console logging using less memory
+ * Add GPIO04 as user selectable for Sonoff Dual (#75)
+ *
+ * 3.9.16 20170214
+ * Update latching relay handler
+ * Add support for IR led using IRremoteESP8266 library (#59)
+ * Add Hue argument passing using ArduinoJSON library (#59)
+ *
+ * 3.9.15 20170213
+ * Change JSON float values from string to number according to http://json.org (#56)
+ * Add support for exs latched relay module https://ex-store.de/ESP8266-WiFi-Relay-V31 (#58)
+ * Add support for inverted relays
+ * Changed MAX_LOG_LINES from 70 to 60 to preserve memory
+ *
+ * 3.9.14 20170211
+ * Add False and True as alternatives for 0/Off and 1/On (#49)
+ * Fix Status10 JSON format (#52)
+ * Fix DS18x20 using OneWire library (#53)
+ *
+ * 3.9.13 20170210
+ * Add FlashChipMode to Status 4
+ * Removed redundant DHT2 option and code
+ * Add Sonoff SV GPIO pin 05 configuration (#40)
+ * Add configuration file backup and restore via web page
+ * Fix latency due to light_sleep mode even if sleep was set to zero (#50)
+ *
+ * 3.9.12 20170208
+ * Fix compile error when webserver is disabled (#30)
+ * Fix possible ESP8285 flash problem by updating Flash Chip Mode to DOUT during OTA upload
+ * Fix hostname issues by not allowing user entry of string formatting and removing from user_config.h (#36)
+ *
+ * 3.9.11 20170204
+ * Fix command I2Cscan
+ * Fix not allowed spaces in Topic, ButtonTopic and SwitchTopic
+ * Make all TELEMETRY, STATUS and COMMAND message topics unique (#4)
+ * Advertise command topic to be used by iobroker (#299)
+ * Fix butten (non)detection if no GPIO_KEY1 is defined (#13)
+ * Change WeMo serialnumber from 7 decimal chars to 8 hexadecimal chars (#18)
+ * Update web page with Build Date/Time, Emulation and mDNS Discovery and Advertise information (#21)
+ *
+ * 3.9.10 20170130
+ * Add WS2812 Color Type selection (RGB or GRB) to user_config.h (#7)
+ * Hue api changes to support HUE App(s) (#8)
+ *
+ * 3.9.9 20170130
+ * Add command status 10 showing sensor data
+ * Fix hlw status messages if hlw is disabled
+ *
+ * 3.9.8 20170130
+ * Remove GPIO07 and GPIO08 from user selectable (#5)
+ *
+ * 3.9.7 20170129
+ * Fix possible WS2812 exceptions when using emulation
+ * Add command Emulation to dynamic configure Belkin WeMo and Hue Bridge for Alexa
+ *
+ * 3.9.6 20170129
+ * Add dynamic sleep for WS2812 animation (#1)
+ *
+ * 3.9.5 20170128
+ * Fix error message in case of wrong Domoticz command
+ *
+ * 3.9.4 20170127
+ * Fix Sonoff Dual Relay switching (#287)
+ *
+ * 3.9.3 20170127
+ * Add confirmation before Restart via webpage
+ * Expand Domoticz Configuration webpage with Key, Switch and Sensor Index and 
+ *   add commands DomoticzSwitchIdx and DomoticzSensorIdx (#86) (#174) (#219)
+ * Fix default DHT11 sensor driver selection
+ * Fix LedPower status after button press (#279)
  * Add command Sleep 0 - 250 mSec for optional light sleep mode to lower energy consumption (#272)
  *   (Expect overall button/key/switch misses and wrong values on Sonoff Pow)
  * Add Hue brightness extension (#281)
+ * Fix Hue brightness and change to call by reference (#283)
  *
- * 3.2.11 20170126
- * Add confirmation before Restart via webpage
- * Fix possible ESP8285 flash problem by updating Flash Chip Mode to DOUT during web upload
- * Fix LedPower status after button press (#279)
- *
- * 3.2.10 20170124
+ * 3.9.2 20170124
  * Add confirmation before Reset Configuration via webpage (#244)
  * Add WS2812 features (see Wiki commands)
  *
- * 3.2.9 20170124
- * Fix compile error when MQTT is disabled (#269)
- *
- * 3.2.8 20170124
- * Change PowerOnState function to only trigger when Power On (and not on restart) (#238)
- * Add command LedPower On|Off to control main led (#247)
+ * 3.9.1 20170124
+ * Change PowerOnState function to only trigger when Power On (and not just restart) (#238)
+ * Move HLW interrupts back to RAM and make WS2812_DMA optional as it generates Exception on Pow (#264)
  * Add charset=utf-8 to webpages (#266)
  * Update Hue emulation (#268)
- * Rewrite WS2812 code and prep for 4.0
- * Add support for domoticz Dimmer on WS2812
- * Add commands SwitchTopic and SwitchRetain On|Off to be used with external switch instead of ButtonTopic and ButtonRetain
- * Enforce at least IDE 1.6.10 and ESP8266 2.3.0
+ * Fix status module number
+ * Add support for domoticz Dimmer on Sonoff_Led and WS2812
+ * Fix possible ESP8285 flash problem by updating Flash Chip Mode to DOUT during web upload
  *
- * 3.2.7 20170122
- * Move HLW interrupts back to RAM as it generates Exception on Pow (#264)
- *
- * 3.2.6 20170119
+ * 3.2.6a 20170120
  * Fix Sonoff Pow compile error (#255)
- * Move HLW interrupts back to ROM
- *
- * 3.2.5 20170119
+ * Move HLW interrupts back to ROM (Needed for WS2812 DMA interrupts)
+ * Removed all IO config from user_config.h as this will be done by commands or webpage
+ * Removed MessageFormat and supports JSON only except POWER/LIGHT status
+ * Add command LedPower to control main led (#247)
  * Add more FriendlyNames for Hue (#254)
- * Add DMA support for WS2812 when using pin 3
- *
- * 3.2.4 20170118
+ * Add DMA support for WS2812 when using pin 3 while other pins work just as well in my case...
  * Add HUE emulation for Alexa (#229)
  * Add basic WS2812 support (#229)
- * 
- * 3.2.3 20170116
  * Fix Wemo when MQTT is disabled (#245)
+ * Revert ButtonTopic and change SwitchTopic1 - 4 to one SwitchTopic
+ * Rename MqttUnits to Units
+ * Add Mqtt command to enable/disable MQTT
+ *
+ * 3.2.2a 20170115
+ * Add dynamic (Sonoff) Module, user GPIO and sensor selection (one size fits (almost) all)
+ * Add support for Sonoff LED
+ * Add Seriallog disable after 600 seconds for Sonoff Dual and 4 Channel
+ * Add ButtonTopic2 - 4, SwitchTopic1 - 4 and SwitchRetain
  *
  * 3.2.2 20170113
  * Fix PowerOnState 2 functionality after re-applying power (#230)

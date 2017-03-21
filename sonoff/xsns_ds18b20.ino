@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2016 Theo Arends.  All rights reserved.
+Copyright (c) 2017 Theo Arends.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -23,29 +23,31 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifdef SEND_TELEMETRY_DS18B20
+#ifdef USE_DS18B20
 /*********************************************************************************************\
  * DS18B20 - Temperature
  *
  * Source: Marinus vd Broek https://github.com/ESP8266nu/ESPEasy and AlexTransit (CRC)
 \*********************************************************************************************/
 
+float dsb_mt = 0;
+
 uint8_t dsb_reset()
 {
   uint8_t r;
   uint8_t retries = 125;
 
-  pinMode(DSB_PIN, INPUT);
+  pinMode(pin[GPIO_DSB], INPUT);
   do  {                                 // wait until the wire is high... just in case
     if (--retries == 0) return 0;
     delayMicroseconds(2);
-  } while (!digitalRead(DSB_PIN));
-  pinMode(DSB_PIN, OUTPUT);
-  digitalWrite(DSB_PIN, LOW);
+  } while (!digitalRead(pin[GPIO_DSB]));
+  pinMode(pin[GPIO_DSB], OUTPUT);
+  digitalWrite(pin[GPIO_DSB], LOW);
   delayMicroseconds(492);               // Dallas spec. = Min. 480uSec. Arduino 500uSec.
-  pinMode(DSB_PIN, INPUT);              // Float
+  pinMode(pin[GPIO_DSB], INPUT);        // Float
   delayMicroseconds(40);
-  r = !digitalRead(DSB_PIN);
+  r = !digitalRead(pin[GPIO_DSB]);
   delayMicroseconds(420);
   return r;
 }
@@ -54,12 +56,12 @@ uint8_t dsb_read_bit(void)
 {
   uint8_t r;
 
-  pinMode(DSB_PIN, OUTPUT);
-  digitalWrite(DSB_PIN, LOW);
+  pinMode(pin[GPIO_DSB], OUTPUT);
+  digitalWrite(pin[GPIO_DSB], LOW);
   delayMicroseconds(3);
-  pinMode(DSB_PIN, INPUT);             // let pin float, pull up will raise
+  pinMode(pin[GPIO_DSB], INPUT);        // let pin float, pull up will raise
   delayMicroseconds(10);
-  r = digitalRead(DSB_PIN);
+  r = digitalRead(pin[GPIO_DSB]);
   delayMicroseconds(53);
   return r;
 }
@@ -77,16 +79,16 @@ uint8_t dsb_read(void)
 void dsb_write_bit(uint8_t v)
 {
   if (v & 1) {
-    digitalWrite(DSB_PIN, LOW);
-    pinMode(DSB_PIN, OUTPUT);
+    digitalWrite(pin[GPIO_DSB], LOW);
+    pinMode(pin[GPIO_DSB], OUTPUT);
     delayMicroseconds(10);
-    digitalWrite(DSB_PIN, HIGH);
+    digitalWrite(pin[GPIO_DSB], HIGH);
     delayMicroseconds(55);
   } else {
-    digitalWrite(DSB_PIN, LOW);
-    pinMode(DSB_PIN, OUTPUT);
+    digitalWrite(pin[GPIO_DSB], LOW);
+    pinMode(pin[GPIO_DSB], OUTPUT);
     delayMicroseconds(65);
-    digitalWrite(DSB_PIN, HIGH);
+    digitalWrite(pin[GPIO_DSB], HIGH);
     delayMicroseconds(5);
   }
 }
@@ -131,11 +133,15 @@ boolean dsb_readTemp(bool S, float &t)
   int16_t DSTemp;
   byte msb, lsb, crc;
 
-  t = NAN;
+  if (!dsb_mt) {
+    t = NAN;
+  } else {
+    t = dsb_mt;
+  }
 
   if (!dsb_read_bit()) {     //check measurement end
     addLog_P(LOG_LEVEL_DEBUG, PSTR("DSB: Sensor busy"));
-    return false;
+    return !isnan(t);
   }
 /*
   dsb_reset();
@@ -165,6 +171,7 @@ boolean dsb_readTemp(bool S, float &t)
     t = (float(DSTemp) * 0.0625);
     if(S) t = dsb_convertCtoF(t);
   }
+  if (!isnan(t)) dsb_mt = t;
   return !isnan(t);
 }
 
@@ -172,36 +179,36 @@ boolean dsb_readTemp(bool S, float &t)
  * Presentation
 \*********************************************************************************************/
 
-void dsb_mqttPresent(char* stopic, uint16_t sstopic, char* svalue, uint16_t ssvalue, uint8_t* djson)
+void dsb_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
 {
   char stemp1[10];
   float t;
 
-  if (dsb_readTemp(TEMP_CONVERSION, t)) {                 // Check if read failed
+  if (dsb_readTemp(TEMP_CONVERSION, t)) {  // Check if read failed
     dtostrf(t, 1, TEMP_RESOLUTION &3, stemp1);
-    if (sysCfg.message_format == JSON) {
-      snprintf_P(svalue, ssvalue, PSTR("%s, \"DS18B20\":{\"Temperature\":\"%s\"}"), svalue, stemp1);
-      *djson = 1;
-    } else {
-      snprintf_P(stopic, sstopic, PSTR("%s/%s/DS18B20/TEMPERATURE"), PUB_PREFIX2, sysCfg.mqtt_topic);
-      snprintf_P(svalue, ssvalue, PSTR("%s%s"), stemp1, (sysCfg.mqtt_units) ? (TEMP_CONVERSION) ? " F" : " C" : "");
-      mqtt_publish(stopic, svalue);
-    }
+    snprintf_P(svalue, ssvalue, PSTR("%s, \"DS18B20\":{\"Temperature\":%s}"), svalue, stemp1);
+    *djson = 1;
+#ifdef USE_DOMOTICZ
+    domoticz_sensor1(stemp1);
+#endif  // USE_DOMOTICZ
   }
 }
 
+#ifdef USE_WEBSERVER
 String dsb_webPresent()
 {
   // Needs TelePeriod to refresh data (Do not do it here as it takes too much time)
-  char stemp[10], sconv[10];
-  float st;
   String page = "";
+  float st;
   
-  if (dsb_readTemp(TEMP_CONVERSION, st)) {        // Check if read failed
-    snprintf_P(sconv, sizeof(sconv), PSTR("&deg;%c"), (TEMP_CONVERSION) ? 'F' : 'C');
+  if (dsb_readTemp(TEMP_CONVERSION, st)) {  // Check if read failed
+    char stemp[10], sensor[80];
     dtostrf(st, 1, TEMP_RESOLUTION &3, stemp);
-    page += F("<tr><td>DSB Temperature: </td><td>"); page += stemp; page += sconv; page += F("</td></tr>");
+    snprintf_P(sensor, sizeof(sensor), HTTP_SNS_TEMP, "DS18B20", stemp, (TEMP_CONVERSION) ? 'F' : 'C');
+    page += sensor;
   }
+  dsb_readTempPrep();
   return page;
 }
-#endif  // SEND_TELEMETRY_DS18B20
+#endif  // USE_WEBSERVER
+#endif  // USE_DS18B20

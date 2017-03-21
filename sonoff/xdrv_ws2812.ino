@@ -31,12 +31,18 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <NeoPixelBus.h>
 
 #ifdef USE_WS2812_DMA
+#if (USE_WS2812_CTYPE == 1)
   NeoPixelBus<NeoGrbFeature, Neo800KbpsMethod> *strip = NULL;
-#else
+#else  // USE_WS2812_CTYPE
+  NeoPixelBus<NeoRgbFeature, Neo800KbpsMethod> *strip = NULL;
+#endif  // USE_WS2812_CTYPE
+#else  // USE_WS2812_DMA
+#if (USE_WS2812_CTYPE == 1)
   NeoPixelBus<NeoGrbFeature, NeoEsp8266BitBang800KbpsMethod> *strip = NULL;
+#else  // USE_WS2812_CTYPE
+  NeoPixelBus<NeoRgbFeature, NeoEsp8266BitBang800KbpsMethod> *strip = NULL;
+#endif  // USE_WS2812_CTYPE
 #endif  // USE_WS2812_DMA
-
-#define COLOR_SATURATION 254.0f
 
 struct wsColor {
   uint8_t red, green, blue;
@@ -82,7 +88,7 @@ uint8_t speedValues[6] = {
    10,     // Slow
     6,     // Fast
     2 };   // Fastest
-
+/*
 uint8_t ledTable[] = {
     0,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,
     1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,
@@ -100,7 +106,7 @@ uint8_t ledTable[] = {
   153,155,157,159,161,163,165,166,168,170,172,174,176,178,180,182,
   184,186,189,191,193,195,197,199,201,204,206,208,210,212,215,217,
   219,221,224,226,228,231,233,235,238,240,243,245,248,250,253,255 };
-
+*/
 uint8_t lany = 0;
 RgbColor dcolor, tcolor, lcolor;
 
@@ -160,20 +166,27 @@ void ws2812_replaceHSB(String *response)
   ws2812_setDim(sysCfg.ws_dimmer);
   HsbColor hsb=HsbColor(dcolor);
   response->replace("{h}", String((uint16_t)(65535.0f * hsb.H)));
-  response->replace("{s}", String((uint8_t)(COLOR_SATURATION * hsb.S)));
-  response->replace("{b}", String((uint8_t)(COLOR_SATURATION * hsb.B)));
+  response->replace("{s}", String((uint8_t)(254.0f * hsb.S)));
+  response->replace("{b}", String((uint8_t)(254.0f * hsb.B)));
 }
 
-void ws2812_changeBrightness(uint8_t bri)
+void ws2812_getHSB(float *hue, float *sat, float *bri)
+{
+  ws2812_setDim(sysCfg.ws_dimmer);
+  HsbColor hsb=HsbColor(dcolor);
+  *hue=hsb.H;
+  *sat=hsb.S;
+  *bri=hsb.B;
+}
+
+void ws2812_setHSB(float hue, float sat, float bri)
 {
   char rgb[7];
   
-  //sysCfg.ws_ledtable=1;                     // Switch on Gamma Correction for "natural" brightness controll
-  ws2812_setDim(sysCfg.ws_dimmer);
-  HsbColor hsb = HsbColor(dcolor);
-  if (!bri) bri=1;
-  if (bri==255) bri=252;
-  hsb.B=(float)(bri/COLOR_SATURATION);
+  HsbColor hsb;
+  hsb.H=hue;
+  hsb.S=sat;
+  hsb.B=bri;
   RgbColor tmp = RgbColor(hsb);
   sprintf(rgb,"%02X%02X%02X", tmp.R, tmp.G, tmp.B);
   ws2812_setColor(0,rgb);
@@ -372,10 +385,12 @@ void ws2812_animate()
   
   stripTimerCntr++;
   if (power == 0) {  // Power Off
+    sleep = sysCfg.sleep;
     stripTimerCntr = 0;
     tcolor = 0;
   }
   else {
+    sleep = 0;
     switch (sysCfg.ws_scheme) {
       case 0:  // Power On
         ws2812_setDim(sysCfg.ws_dimmer);
@@ -455,11 +470,122 @@ void ws2812_pixels()
 void ws2812_init()
 {
 #ifdef USE_WS2812_DMA
+#if (USE_WS2812_CTYPE == 1)
   strip = new NeoPixelBus<NeoGrbFeature, Neo800KbpsMethod>(WS2812_MAX_LEDS);  // For Esp8266, the Pin is omitted and it uses GPIO3 due to DMA hardware use.
-#else
+#else  // USE_WS2812_CTYPE
+  strip = new NeoPixelBus<NeoRgbFeature, Neo800KbpsMethod>(WS2812_MAX_LEDS);  // For Esp8266, the Pin is omitted and it uses GPIO3 due to DMA hardware use.
+#endif  // USE_WS2812_CTYPE
+#else  // USE_WS2812_DMA
+#if (USE_WS2812_CTYPE == 1)
   strip = new NeoPixelBus<NeoGrbFeature, NeoEsp8266BitBang800KbpsMethod>(WS2812_MAX_LEDS, pin[GPIO_WS2812]);
+#else  // USE_WS2812_CTYPE
+  strip = new NeoPixelBus<NeoRgbFeature, NeoEsp8266BitBang800KbpsMethod>(WS2812_MAX_LEDS, pin[GPIO_WS2812]);
+#endif  // USE_WS2812_CTYPE
 #endif  // USE_WS2812_DMA
   strip->Begin();
   ws2812_pixels();
+}
+
+/*********************************************************************************************\
+ * Commands
+\*********************************************************************************************/
+
+boolean ws2812_command(char *type, uint16_t index, char *dataBuf, uint16_t data_len, int16_t payload, char *svalue, uint16_t ssvalue)
+{
+  boolean serviced = true;
+
+  if (!strcmp(type,"PIXELS")) {
+    if ((data_len > 0) && (payload > 0) && (payload <= WS2812_MAX_LEDS)) {
+      sysCfg.ws_pixels = payload;
+      ws2812_pixels();
+    }
+    snprintf_P(svalue, ssvalue, PSTR("{\"Pixels\":%d}"), sysCfg.ws_pixels);
+  }
+  else if (!strcmp(type,"LED") && (index > 0) && (index <= sysCfg.ws_pixels)) {
+    if (data_len == 6) {
+//       ws2812_setColor(index, dataBufUc);
+      ws2812_setColor(index, dataBuf);
+    }
+    ws2812_getColor(index, svalue, ssvalue);
+  }
+  else if (!strcmp(type,"COLOR")) {
+    if (data_len == 6) {
+//        ws2812_setColor(0, dataBufUc);
+      ws2812_setColor(0, dataBuf);
+      power = 1;
+    }
+    ws2812_getColor(0, svalue, ssvalue);
+  }
+  else if (!strcmp(type,"DIMMER")) {
+    if ((data_len > 0) && (payload >= 0) && (payload <= 100)) {
+      sysCfg.ws_dimmer = payload;
+      power = 1;
+#ifdef USE_DOMOTICZ
+      mqtt_publishDomoticzPowerState(index);
+#endif  // USE_DOMOTICZ
+    }
+    snprintf_P(svalue, ssvalue, PSTR("{\"Dimmer\":%d}"), sysCfg.ws_dimmer);
+  }
+  else if (!strcmp(type,"LEDTABLE")) {
+    if ((data_len > 0) && (payload >= 0) && (payload <= 2)) {
+      switch (payload) {
+      case 0: // Off
+      case 1: // On
+        sysCfg.ws_ledtable = payload;
+        break;
+      case 2: // Toggle
+        sysCfg.ws_ledtable ^= 1;
+        break;
+      }
+      ws2812_update();
+    }
+    snprintf_P(svalue, ssvalue, PSTR("{\"LedTable\":\"%s\"}"), (sysCfg.ws_ledtable) ? MQTT_STATUS_ON : MQTT_STATUS_OFF);
+  }
+  else if (!strcmp(type,"FADE")) {
+    if ((data_len > 0) && (payload >= 0) && (payload <= 2)) {
+      switch (payload) {
+      case 0: // Off
+      case 1: // On
+        sysCfg.ws_fade = payload;
+        break;
+      case 2: // Toggle
+        sysCfg.ws_fade ^= 1;
+        break;
+      }
+    }
+    snprintf_P(svalue, ssvalue, PSTR("{\"Fade\":\"%s\"}"), (sysCfg.ws_fade) ? MQTT_STATUS_ON : MQTT_STATUS_OFF);
+  }
+  else if (!strcmp(type,"SPEED")) {  // 1 - fast, 5 - slow
+    if ((data_len > 0) && (payload > 0) && (payload <= 5)) {
+      sysCfg.ws_speed = payload;
+    }
+    snprintf_P(svalue, ssvalue, PSTR("{\"Speed\":%d}"), sysCfg.ws_speed);
+  }
+  else if (!strcmp(type,"WIDTH")) {
+    if ((data_len > 0) && (payload >= 0) && (payload <= 4)) {
+      sysCfg.ws_width = payload;
+    }
+    snprintf_P(svalue, ssvalue, PSTR("{\"Width\":%d}"), sysCfg.ws_width);
+  }
+  else if (!strcmp(type,"WAKEUP")) {
+    if ((data_len > 0) && (payload > 0) && (payload < 3601)) {
+      sysCfg.ws_wakeup = payload;
+      if (sysCfg.ws_scheme == 1) sysCfg.ws_scheme = 0;
+    }
+    snprintf_P(svalue, ssvalue, PSTR("{\"WakeUp\":%d}"), sysCfg.ws_wakeup);
+  }
+  else if (!strcmp(type,"SCHEME")) {
+    if ((data_len > 0) && (payload >= 0) && (payload <= 9)) {
+      sysCfg.ws_scheme = payload;
+      if (sysCfg.ws_scheme == 1) ws2812_resetWakupState();
+      power = 1;
+      ws2812_resetStripTimer();
+    }
+    snprintf_P(svalue, ssvalue, PSTR("{\"Scheme\":%d}"), sysCfg.ws_scheme);
+  }
+  else {
+    serviced = false;  // Unknown command
+  }
+  return serviced;
 }
 #endif  // USE_WS2812

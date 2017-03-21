@@ -23,7 +23,8 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifdef SEND_TELEMETRY_I2C
+#ifdef USE_I2C
+#ifdef USE_BH1750
 /*********************************************************************************************\
  * BH1750 - Ambient Light Intensity
 \*********************************************************************************************/
@@ -66,7 +67,7 @@ boolean bh1750_detect()
   if (!status) {
     success = true;
     bh1750type = 1;
-    snprintf_P(bh1750stype, sizeof(bh1750stype), PSTR("BH1750"));
+    strcpy(bh1750stype, "BH1750");
   }
   if (success) {
     snprintf_P(log, sizeof(log), PSTR("I2C: %s found at address 0x%x"), bh1750stype, bh1750addr);
@@ -81,29 +82,33 @@ boolean bh1750_detect()
  * Presentation
 \*********************************************************************************************/
 
-void bh1750_mqttPresent(char* stopic, uint16_t sstopic, char* svalue, uint16_t ssvalue, uint8_t* djson)
+void bh1750_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
 {
   if (!bh1750type) return;
-  
+
   uint16_t l = bh1750_readLux();
-  if (sysCfg.message_format == JSON) {
-    snprintf_P(svalue, ssvalue, PSTR("%s, \"%s\":{\"Illuminance\":%d}"), svalue, bh1750stype, l);
-    *djson = 1;
-  }
-  else {
-    snprintf_P(stopic, sstopic, PSTR("%s/%s/ILLUMINANCE"), PUB_PREFIX2, sysCfg.mqtt_topic);
-    snprintf_P(svalue, ssvalue, PSTR("%d%s"), l, (sysCfg.mqtt_units) ? " lx" : "");
-    mqtt_publish(stopic, svalue);
-  }
+  snprintf_P(svalue, ssvalue, PSTR("%s, \"%s\":{\"Illuminance\":%d}"), svalue, bh1750stype, l);
+  *djson = 1;
+#ifdef USE_DOMOTICZ
+  domoticz_sensor5(l);
+#endif  // USE_DOMOTICZ
 }
+
+#ifdef USE_WEBSERVER
+const char HTTP_SNS_ILLUMINANCE[] PROGMEM =
+  "<tr><th>BH1750 Illuminance</th><td>%d lx</td></tr>";
 
 String bh1750_webPresent()
 {
   String page = "";
   if (bh1750type) {
-    uint16_t l = bh1750_readLux();
-    page += F("<tr><td>Illuminance: </td><td>"); page += String(l); page += F(" lx</td></tr>");
+    char sensor[80];
+    snprintf_P(sensor, sizeof(sensor), HTTP_SNS_ILLUMINANCE, bh1750_readLux());
+    page += sensor;
   }
   return page;
 }
-#endif //SEND_TELEMETRY_I2C
+#endif  // USE_WEBSERVER
+#endif  // USE_BH1750
+#endif  // USE_I2C
+

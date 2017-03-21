@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2016 Theo Arends.  All rights reserved.
+Copyright (c) 2017 Theo Arends.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -23,7 +23,7 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifdef SEND_TELEMETRY_DHT
+#ifdef USE_DHT
 /*********************************************************************************************\
  * DHT11, DHT21 (AM2301), DHT22 (AM2302, AM2321) - Temperature and Humidy
  *
@@ -35,20 +35,21 @@ POSSIBILITY OF SUCH DAMAGE.
 #define MIN_INTERVAL 2000
 
 uint8_t data[5];
+char dhtstype[7];
 uint32_t _lastreadtime, _maxcycles;
 bool _lastresult;
 float mt, mh = 0;
 
 void dht_readPrep()
 {
-  digitalWrite(DHT_PIN, HIGH);
+  digitalWrite(pin[GPIO_DHT11], HIGH);
 }
 
 uint32_t dht_expectPulse(bool level)
 {
   uint32_t count = 0;
 
-  while (digitalRead(DHT_PIN) == level)
+  while (digitalRead(pin[GPIO_DHT11]) == level)
     if (count++ >= _maxcycles) return 0;
   return count;
 }
@@ -66,17 +67,17 @@ boolean dht_read()
 
   data[0] = data[1] = data[2] = data[3] = data[4] = 0;
 
-//  digitalWrite(DHT_PIN, HIGH);
+//  digitalWrite(pin[GPIO_DHT11], HIGH);
 //  delay(250);
 
-  pinMode(DHT_PIN, OUTPUT);
-  digitalWrite(DHT_PIN, LOW);
+  pinMode(pin[GPIO_DHT11], OUTPUT);
+  digitalWrite(pin[GPIO_DHT11], LOW);
   delay(20);
 
   noInterrupts();
-  digitalWrite(DHT_PIN, HIGH);
+  digitalWrite(pin[GPIO_DHT11], HIGH);
   delayMicroseconds(40);
-  pinMode(DHT_PIN, INPUT_PULLUP);
+  pinMode(pin[GPIO_DHT11], INPUT_PULLUP);
   delayMicroseconds(10);
   if (dht_expectPulse(LOW) == 0) {
     addLog_P(LOG_LEVEL_DEBUG, PSTR("DHT: Timeout waiting for start signal low pulse"));
@@ -136,14 +137,14 @@ boolean dht_readTempHum(bool S, float &t, float &h)
   }
 
   if (dht_read()) {
-    switch (DHT_TYPE) {
-    case DHT11:
+    switch (dht_type) {
+    case GPIO_DHT11:
       h = data[0];
       t = data[2];
       if(S) t = dht_convertCtoF(t);
       break;
-    case DHT22:
-    case DHT21:
+    case GPIO_DHT22:
+    case GPIO_DHT21:
       h = data[0];
       h *= 256;
       h += data[1];
@@ -167,8 +168,19 @@ void dht_init()
   char log[LOGSZ];
   _maxcycles = microsecondsToClockCycles(1000);  // 1 millisecond timeout for
                                                  // reading pulses from DHT sensor.
-  pinMode(DHT_PIN, INPUT_PULLUP);
+  pinMode(pin[GPIO_DHT11], INPUT_PULLUP);
   _lastreadtime = -MIN_INTERVAL;
+
+  switch (dht_type) {
+  case GPIO_DHT11:
+    strcpy(dhtstype, "DHT11");
+    break;
+  case GPIO_DHT21:
+    strcpy(dhtstype, "AM2301");
+    break;
+  case GPIO_DHT22:
+    strcpy(dhtstype, "DHT22");
+  }
 
   snprintf_P(log, sizeof(log), PSTR("DHT: Max clock cycles %d"), _maxcycles);
   addLog(LOG_LEVEL_DEBUG, log);
@@ -178,7 +190,7 @@ void dht_init()
  * Presentation
 \*********************************************************************************************/
 
-void dht_mqttPresent(char* stopic, uint16_t sstopic, char* svalue, uint16_t ssvalue, uint8_t* djson)
+void dht_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
 {
   char stemp1[10], stemp2[10];
   float t, h;
@@ -186,33 +198,32 @@ void dht_mqttPresent(char* stopic, uint16_t sstopic, char* svalue, uint16_t ssva
   if (dht_readTempHum(TEMP_CONVERSION, t, h)) {     // Read temperature
     dtostrf(t, 1, TEMP_RESOLUTION &3, stemp1);
     dtostrf(h, 1, HUMIDITY_RESOLUTION &3, stemp2);
-    if (sysCfg.message_format == JSON) {
-      snprintf_P(svalue, ssvalue, PSTR("%s, \"DHT\":{\"Temperature\":\"%s\", \"Humidity\":\"%s\"}"), svalue, stemp1, stemp2);
-      *djson = 1;
-    } else {
-      snprintf_P(stopic, sstopic, PSTR("%s/%s/DHT/TEMPERATURE"), PUB_PREFIX2, sysCfg.mqtt_topic);
-      snprintf_P(svalue, ssvalue, PSTR("%s%s"), stemp1, (sysCfg.mqtt_units) ? (TEMP_CONVERSION) ? " F" : " C" : "");
-      mqtt_publish(stopic, svalue);
-      snprintf_P(stopic, sstopic, PSTR("%s/%s/DHT/HUMIDITY"), PUB_PREFIX2, sysCfg.mqtt_topic);
-      snprintf_P(svalue, ssvalue, PSTR("%s%s"), stemp2, (sysCfg.mqtt_units) ? " %" : "");
-      mqtt_publish(stopic, svalue);
-    }
+    snprintf_P(svalue, ssvalue, PSTR("%s, \"%s\":{\"Temperature\":%s, \"Humidity\":%s}"),
+      svalue, dhtstype, stemp1, stemp2);
+    *djson = 1;
+#ifdef USE_DOMOTICZ
+    domoticz_sensor2(stemp1, stemp2);
+#endif  // USE_DOMOTICZ
   }
 }
 
+#ifdef USE_WEBSERVER
 String dht_webPresent()
 {
-  char stemp[10], sconv[10];
-  float t, h;
   String page = "";
+  float t, h;
   
   if (dht_readTempHum(TEMP_CONVERSION, t, h)) {     // Read temperature as Celsius (the default)
-    snprintf_P(sconv, sizeof(sconv), PSTR("&deg;%c"), (TEMP_CONVERSION) ? 'F' : 'C');
+    char stemp[10], sensor[80];
     dtostrf(t, 1, TEMP_RESOLUTION &3, stemp);
-    page += F("<tr><td>DHT Temperature: </td><td>"); page += stemp; page += sconv; page += F("</td></tr>");
+    snprintf_P(sensor, sizeof(sensor), HTTP_SNS_TEMP, dhtstype, stemp, (TEMP_CONVERSION) ? 'F' : 'C');
+    page += sensor;
     dtostrf(h, 1, HUMIDITY_RESOLUTION &3, stemp);
-    page += F("<tr><td>DHT Humidity: </td><td>"); page += stemp; page += F("%</td></tr>");
+    snprintf_P(sensor, sizeof(sensor), HTTP_SNS_HUM, dhtstype, stemp);
+    page += sensor;
+    
   }
   return page;
 }
-#endif  // SEND_TELEMETRY_DHT
+#endif  // USE_WEBSERVER
+#endif  // USE_DHT

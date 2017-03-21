@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2016 Heiko Krupp and Theo Arends.  All rights reserved.
+ Copyright (c) 2017 Heiko Krupp and Theo Arends.  All rights reserved.
 
  Redistribution and use in source and binary forms, with or without
  modification, are permitted provided that the following conditions are met:
@@ -23,7 +23,8 @@
  POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifdef SEND_TELEMETRY_I2C
+#ifdef USE_I2C
+#ifdef USE_BMP
 /*********************************************************************************************\
  * BMP085, BMP180, BMP280, BME280 - Pressure and Temperature and Humidy (BME280 only)
  *
@@ -396,19 +397,19 @@ boolean bmp_detect()
     bmpaddr--;
     bmptype = i2c_read8(bmpaddr, BMP_REGISTER_CHIPID);
   }
-  snprintf_P(bmpstype, sizeof(bmpstype), PSTR("BMP"));
+  strcpy_P(bmpstype, PSTR("BMP"));
   switch (bmptype) {
   case BMP180_CHIPID:
     success = bmp180_calibration();
-    snprintf_P(bmpstype, sizeof(bmpstype), PSTR("BMP180"));
+    strcpy_P(bmpstype, PSTR("BMP180"));
     break;
   case BMP280_CHIPID:
     success = bmp280_calibrate();
-    snprintf_P(bmpstype, sizeof(bmpstype), PSTR("BMP280"));
+    strcpy_P(bmpstype, PSTR("BMP280"));
     break;
   case BME280_CHIPID:
     success = bme280_calibrate();
-    snprintf_P(bmpstype, sizeof(bmpstype), PSTR("BME280"));
+    strcpy_P(bmpstype, PSTR("BME280"));
   }
   if (success) {
     snprintf_P(log, sizeof(log), PSTR("I2C: %s found at address 0x%x"), bmpstype, bmpaddr);
@@ -423,61 +424,56 @@ boolean bmp_detect()
  * Presentation
 \*********************************************************************************************/
 
-void bmp_mqttPresent(char* stopic, uint16_t sstopic, char* svalue, uint16_t ssvalue, uint8_t* djson)
+void bmp_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
 {
   if (!bmptype) return;
 
   char stemp1[10], stemp2[10], stemp3[10];
 
-  double t_bmp = bmp_readTemperature(TEMP_CONVERSION);
-  double p_bmp = bmp_readPressure();
-  double h_bmp = bmp_readHumidity();
-  dtostrf(t_bmp, 1, TEMP_RESOLUTION &3, stemp1);
-  dtostrf(p_bmp, 1, PRESSURE_RESOLUTION &3, stemp2);
-  dtostrf(h_bmp, 1, HUMIDITY_RESOLUTION &3, stemp3);
-  if (sysCfg.message_format == JSON) {
-    if (!strcmp(bmpstype,"BME280")) {
-      snprintf_P(svalue, ssvalue, PSTR("%s, \"%s\":{\"Temperature\":\"%s\", \"Humidity\":\"%s\", \"Pressure\":\"%s\"}"),
-        svalue, bmpstype, stemp1, stemp3, stemp2);
-    } else {
-      snprintf_P(svalue, ssvalue, PSTR("%s, \"%s\":{\"Temperature\":\"%s\", \"Pressure\":\"%s\"}"),
-        svalue, bmpstype, stemp1, stemp2);
-    }
-    *djson = 1;
+  double t = bmp_readTemperature(TEMP_CONVERSION);
+  double p = bmp_readPressure();
+  double h = bmp_readHumidity();
+  dtostrf(t, 1, TEMP_RESOLUTION &3, stemp1);
+  dtostrf(p, 1, PRESSURE_RESOLUTION &3, stemp2);
+  dtostrf(h, 1, HUMIDITY_RESOLUTION &3, stemp3);
+  if (!strcmp(bmpstype,"BME280")) {
+    snprintf_P(svalue, ssvalue, PSTR("%s, \"%s\":{\"Temperature\":%s, \"Humidity\":%s, \"Pressure\":%s}"),
+      svalue, bmpstype, stemp1, stemp3, stemp2);
   } else {
-    snprintf_P(stopic, sstopic, PSTR("%s/%s/%s/TEMPERATURE"), PUB_PREFIX2, sysCfg.mqtt_topic, bmpstype);
-    snprintf_P(svalue, ssvalue, PSTR("%s%s"), stemp1, (sysCfg.mqtt_units) ? (TEMP_CONVERSION) ? " F" : " C" : "");
-    mqtt_publish(stopic, svalue);
-    if (!strcmp(bmpstype,"BME280")) {
-      snprintf_P(stopic, sstopic, PSTR("%s/%s/%s/HUMIDITY"), PUB_PREFIX2, sysCfg.mqtt_topic, bmpstype);
-      snprintf_P(svalue, ssvalue, PSTR("%s%s"), stemp3, (sysCfg.mqtt_units) ? " %" : "");
-      mqtt_publish(stopic, svalue);
-    }
-    snprintf_P(stopic, sstopic, PSTR("%s/%s/%s/PRESSURE"), PUB_PREFIX2, sysCfg.mqtt_topic, bmpstype);
-    snprintf_P(svalue, ssvalue, PSTR("%s%s"), stemp2, (sysCfg.mqtt_units) ? " hPa" : "");
-    mqtt_publish(stopic, svalue);
+    snprintf_P(svalue, ssvalue, PSTR("%s, \"%s\":{\"Temperature\":%s, \"Pressure\":%s}"),
+      svalue, bmpstype, stemp1, stemp2);
   }
+  *djson = 1;
+#ifdef USE_DOMOTICZ
+  domoticz_sensor3(stemp1, stemp3, stemp2); 
+#endif  // USE_DOMOTICZ
 }
 
+#ifdef USE_WEBSERVER
 String bmp_webPresent()
 {
   String page = "";
   if (bmptype) {
-    char itemp[10], iconv[10];
+    char stemp[10], sensor[80];
 
-    snprintf_P(iconv, sizeof(iconv), PSTR("&deg;%c"), (TEMP_CONVERSION) ? 'F' : 'C');
     double t_bmp = bmp_readTemperature(TEMP_CONVERSION);
     double p_bmp = bmp_readPressure();
     double h_bmp = bmp_readHumidity();
-    dtostrf(t_bmp, 1, TEMP_RESOLUTION &3, itemp);
-    page += F("<tr><td>BMP Temperature: </td><td>"); page += itemp; page += iconv; page += F("</td></tr>");
+    dtostrf(t_bmp, 1, TEMP_RESOLUTION &3, stemp);
+    snprintf_P(sensor, sizeof(sensor), HTTP_SNS_TEMP, bmpstype, stemp, (TEMP_CONVERSION) ? 'F' : 'C');
+    page += sensor;
     if (!strcmp(bmpstype,"BME280")) {
-      dtostrf(h_bmp, 1, HUMIDITY_RESOLUTION &3, itemp);
-      page += F("<tr><td>BMP Humidity: </td><td>"); page += itemp; page += F("%</td></tr>");
+      dtostrf(h_bmp, 1, HUMIDITY_RESOLUTION &3, stemp);
+      snprintf_P(sensor, sizeof(sensor), HTTP_SNS_HUM, bmpstype, stemp);
+      page += sensor;
     }
-    dtostrf(p_bmp, 1, PRESSURE_RESOLUTION &3, itemp);
-    page += F("<tr><td>BMP Pressure: </td><td>"); page += itemp; page += F(" hPa</td></tr>");
+    dtostrf(p_bmp, 1, PRESSURE_RESOLUTION &3, stemp);
+    snprintf_P(sensor, sizeof(sensor), HTTP_SNS_PRESSURE, bmpstype, stemp);
+    page += sensor;
   }
   return page;
 }
-#endif //SEND_TELEMETRY_I2C
+#endif  // USE_WEBSERVER
+#endif  // USE_BMP
+#endif  // USE_I2C
+
