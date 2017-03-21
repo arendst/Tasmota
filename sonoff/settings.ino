@@ -198,7 +198,8 @@ void CFG_Save()
       }
     } else {
 #endif  // USE_SPIFFS
-      if (sysCfg.module != SONOFF_LED) noInterrupts();
+      noInterrupts();
+//      if (sysCfg.module != SONOFF_LED) noInterrupts();
       if (sysCfg.saveFlag == 0) {  // Handle default and rollover
         spi_flash_erase_sector(CFG_LOCATION + (sysCfg.saveFlag &1));
         spi_flash_write((CFG_LOCATION + (sysCfg.saveFlag &1)) * SPI_FLASH_SEC_SIZE, (uint32*)&sysCfg, sizeof(SYSCFG));
@@ -206,7 +207,8 @@ void CFG_Save()
       sysCfg.saveFlag++;
       spi_flash_erase_sector(CFG_LOCATION + (sysCfg.saveFlag &1));
       spi_flash_write((CFG_LOCATION + (sysCfg.saveFlag &1)) * SPI_FLASH_SEC_SIZE, (uint32*)&sysCfg, sizeof(SYSCFG));
-      if (sysCfg.module != SONOFF_LED) interrupts();
+      interrupts();
+//      if (sysCfg.module != SONOFF_LED) interrupts();
       snprintf_P(log, sizeof(log), PSTR("Config: Saved configuration (%d bytes) to flash at %X and count %d"), sizeof(SYSCFG), CFG_LOCATION + (sysCfg.saveFlag &1), sysCfg.saveFlag);
       addLog(LOG_LEVEL_DEBUG, log);
     }
@@ -511,6 +513,9 @@ void CFG_DefaultSet2()
 
   CFG_DefaultSet_4_0_4();
   sysCfg.pulsetime[0] = APP_PULSETIME;
+
+  // v4.0.7
+  for (byte i = 0; i < 5; i++) sysCfg.pwmvalue[i] = 0;
 }
 
 void CFG_DefaultSet_3_2_4()
@@ -737,6 +742,9 @@ void CFG_Delta()
     if (sysCfg.version < 0x04000500) {
       memmove(sysCfg.my_module.gp.io, sysCfg.my_module.gp.io +1, MAX_GPIO_PIN -1);  // move myio 1 byte to front
       sysCfg.my_module.gp.io[MAX_GPIO_PIN -1] = 0;  // Clear ADC0
+    }
+    if (sysCfg.version < 0x04000700) {
+      for (byte i = 0; i < 5; i++) sysCfg.pwmvalue[i] = 0;
     }
     sysCfg.version = VERSION;
   }

@@ -103,7 +103,8 @@ const char HTTP_SCRIPT_CONSOL[] PROGMEM =
     "t=document.getElementById('t1');"
     "if(p==1){"
       "c=document.getElementById('c1');"
-      "o='&c1='+c.value;"
+//      "o='&c1='+c.value;"
+      "o='&c1='+encodeURI(c.value);"
       "c.value='';"
       "t.scrollTop=sn;"
     "}"
@@ -278,7 +279,7 @@ void startWebserver(int type, IPAddress ipweb)
 
   if (!_httpflag) {
     if (!webServer) {
-      webServer = new ESP8266WebServer(80);
+      webServer = new ESP8266WebServer((type==HTTP_MANAGER)?80:WEB_PORT);
       webServer->on("/", handleRoot);
       webServer->on("/cn", handleConfig);
       webServer->on("/md", handleModule);
@@ -691,8 +692,8 @@ void handleMqtt()
   page.replace("{m1}", sysCfg.mqtt_host);
   page.replace("{m2}", String(sysCfg.mqtt_port));
   page.replace("{m3}", sysCfg.mqtt_client);
-  page.replace("{m4}", sysCfg.mqtt_user);
-  page.replace("{m5}", sysCfg.mqtt_pwd);
+  page.replace("{m4}", (sysCfg.mqtt_user[0] == '\0')?"0":sysCfg.mqtt_user);
+  page.replace("{m5}", (sysCfg.mqtt_pwd[0] == '\0')?"0":sysCfg.mqtt_pwd);
   page.replace("{m6}", sysCfg.mqtt_topic);
   page += FPSTR(HTTP_FORM_END);
   page += FPSTR(HTTP_BTN_CONF);
@@ -805,7 +806,7 @@ void handleSave()
 {
   if (httpUser()) return;
 
-  char log[LOGSZ], stemp[20];
+  char log[LOGSZ +20], stemp[20];
   byte what = 0, restart;
   String result = "";
 
@@ -829,8 +830,8 @@ void handleSave()
     strlcpy(sysCfg.mqtt_host, (!strlen(webServer->arg("mh").c_str())) ? MQTT_HOST : webServer->arg("mh").c_str(), sizeof(sysCfg.mqtt_host));
     sysCfg.mqtt_port = (!strlen(webServer->arg("ml").c_str())) ? MQTT_PORT : atoi(webServer->arg("ml").c_str());
     strlcpy(sysCfg.mqtt_client, (!strlen(webServer->arg("mc").c_str())) ? MQTT_CLIENT_ID : webServer->arg("mc").c_str(), sizeof(sysCfg.mqtt_client));
-    strlcpy(sysCfg.mqtt_user, (!strlen(webServer->arg("mu").c_str())) ? MQTT_USER : webServer->arg("mu").c_str(), sizeof(sysCfg.mqtt_user));
-    strlcpy(sysCfg.mqtt_pwd, (!strlen(webServer->arg("mp").c_str())) ? MQTT_PASS : webServer->arg("mp").c_str(), sizeof(sysCfg.mqtt_pwd));
+    strlcpy(sysCfg.mqtt_user, (!strlen(webServer->arg("mu").c_str())) ? MQTT_USER : (!strcmp(webServer->arg("mu").c_str(),"0")) ? "" : webServer->arg("mu").c_str(), sizeof(sysCfg.mqtt_user));
+    strlcpy(sysCfg.mqtt_pwd, (!strlen(webServer->arg("mp").c_str())) ? MQTT_PASS : (!strcmp(webServer->arg("mp").c_str(),"0")) ? "" : webServer->arg("mp").c_str(), sizeof(sysCfg.mqtt_pwd));
     strlcpy(sysCfg.mqtt_topic, (!strlen(webServer->arg("mt").c_str())) ? MQTT_TOPIC : webServer->arg("mt").c_str(), sizeof(sysCfg.mqtt_topic));
     snprintf_P(log, sizeof(log), PSTR("HTTP: MQTT Host %s, Port %d, Client %s, User %s, Password %s, Topic %s"),
       sysCfg.mqtt_host, sysCfg.mqtt_port, sysCfg.mqtt_client, sysCfg.mqtt_user, sysCfg.mqtt_pwd, sysCfg.mqtt_topic);
@@ -855,8 +856,7 @@ void handleSave()
     break;
 #endif  // USE_DOMOTICZ
   case 5:
-    strlcpy(sysCfg.web_password, (!strlen(webServer->arg("p1").c_str())) ? WEB_PASSWORD : webServer->arg("p1").c_str(), sizeof(sysCfg.web_password));
-    if (sysCfg.web_password[0] == '0') sysCfg.web_password[0] = '\0';
+    strlcpy(sysCfg.web_password, (!strlen(webServer->arg("p1").c_str())) ? WEB_PASSWORD : (!strcmp(webServer->arg("p1").c_str(),"0")) ? "" : webServer->arg("p1").c_str(), sizeof(sysCfg.web_password));
     sysCfg.mqtt_enabled = webServer->hasArg("b1");
 #ifdef USE_EMULATION
     sysCfg.emulation = (!strlen(webServer->arg("b2").c_str())) ? 0 : atoi(webServer->arg("b2").c_str());
@@ -870,14 +870,16 @@ void handleSave()
     addLog(LOG_LEVEL_INFO, log);
     break;
   case 6:
-    sysCfg.module = (!strlen(webServer->arg("mt").c_str())) ? MODULE : atoi(webServer->arg("mt").c_str());
+    byte new_module = (!strlen(webServer->arg("mt").c_str())) ? MODULE : atoi(webServer->arg("mt").c_str());
+    byte new_modflg = (sysCfg.module != new_module);
+    sysCfg.module = new_module;
     mytmplt cmodule;
     memcpy_P(&cmodule, &modules[sysCfg.module], sizeof(cmodule));
     String gpios = "";
     for (byte i = 0; i < MAX_GPIO_PIN; i++) {
       if (cmodule.gp.io[i] == GPIO_USER) {
         snprintf_P(stemp, sizeof(stemp), PSTR("g%d"), i);
-        sysCfg.my_module.gp.io[i] = (!strlen(webServer->arg(stemp).c_str())) ? 0 : atoi(webServer->arg(stemp).c_str());
+        sysCfg.my_module.gp.io[i] = (new_modflg) ? 0 : (!strlen(webServer->arg(stemp).c_str())) ? 0 : atoi(webServer->arg(stemp).c_str());
         gpios += F(", GPIO"); gpios += String(i); gpios += F(" "); gpios += String(sysCfg.my_module.gp.io[i]);
       }
     }
@@ -961,7 +963,7 @@ void handleUpgrade()
 void handleUpgradeStart()
 {
   if (httpUser()) return;
-  char svalue[16];  // was MESSZ
+  char svalue[100];  // was MESSZ
 
   addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Firmware upgrade start"));
   WIFI_configCounter();
@@ -1150,7 +1152,8 @@ void handleCmnd()
   if (valid) {
     byte curridx = logidx;
     if (strlen(webServer->arg("cmnd").c_str())) {
-      snprintf_P(svalue, sizeof(svalue), webServer->arg("cmnd").c_str());
+//      snprintf_P(svalue, sizeof(svalue), webServer->arg("cmnd").c_str());
+      snprintf_P(svalue, sizeof(svalue), PSTR("%s"), webServer->arg("cmnd").c_str());
       byte syslog_now = syslog_level;
       syslog_level = 0;  // Disable UDP syslog to not trigger hardware WDT
       do_cmnd(svalue);
@@ -1209,7 +1212,7 @@ void handleAjax()
   byte cflg = 1, counter = 99;
 
   if (strlen(webServer->arg("c1").c_str())) {
-    snprintf_P(svalue, sizeof(svalue), webServer->arg("c1").c_str());
+    snprintf_P(svalue, sizeof(svalue), PSTR("%s"), webServer->arg("c1").c_str());
     snprintf_P(log, sizeof(log), PSTR("CMND: %s"), svalue);
     addLog(LOG_LEVEL_INFO, log);
     byte syslog_now = syslog_level;

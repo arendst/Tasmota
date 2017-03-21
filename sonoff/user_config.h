@@ -85,6 +85,7 @@
 // -- HTTP ----------------------------------------
 #define USE_WEBSERVER                            // Enable web server and wifi manager (+62k code, +4k mem) - Disable by //
   #define WEB_SERVER             2               // [WebServer] Web server (0 = Off, 1 = Start as User, 2 = Start as Admin)
+  #define WEB_PORT               80              // Web server Port for User and Admin mode
   #define WEB_USERNAME           "admin"         // Web server Admin mode user name
   #define WEB_PASSWORD           ""              // [WebPassword] Web server Admin mode Password for WEB_USERNAME (empty string = Disable)
   #define FRIENDLY_NAME          "Sonoff"        // [FriendlyName] Friendlyname up to 32 characters used by webpages and Alexa
@@ -159,6 +160,10 @@
 /*********************************************************************************************\
  * No user configurable items below
 \*********************************************************************************************/
+
+#if defined(USE_MQTT_TLS) && defined(USE_WEBSERVER)
+  #error "Select either USE_MQTT_TLS or USE_WEBSERVER as there is just not enough memory to play with"
+#endif
 
 #if (ARDUINO < 10610)
   #error "This software is supported with Arduino IDE starting from 1.6.10 and ESP8266 Release 2.3.0"

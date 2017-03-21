@@ -145,11 +145,17 @@ struct SYSCFG {
   uint16_t      hlw_mkwh;   // MaxEnergy
   uint16_t      hlw_mkwhs;  // MaxEnergyStart
 
+  // 3.0.6
   uint16_t      ex_pulsetime;         // Not used since 4.0.4
+
+  // 3.1.1
   uint8_t       poweronstate;
+
+  // 3.1.6
   uint16_t      blinktime;
   uint16_t      blinkcount;
 
+  // 3.2.4
   uint16_t      ws_pixels;
   uint8_t       ws_red;
   uint8_t       ws_green;
@@ -162,18 +168,22 @@ struct SYSCFG {
   uint8_t       ws_width;
   uint16_t      ws_wakeup;
 
+  // 3.2.5
   char          friendlyname[4][33];
+
+  // 3.2.8
   char          switch_topic[33];
   byte          mqtt_switch_retain;
   uint8_t       mqtt_enabled;
+
+  // 3.2.12
   uint8_t       sleep;
 
+  // 3.9.3
   uint16_t      domoticz_switch_idx[4];
   uint16_t      domoticz_sensor_idx[12];
-
   uint8_t       module;
   mytmplt       my_module;
-
   uint16_t      led_pixels;
   uint8_t       led_color[5];
   uint8_t       led_table;
@@ -184,13 +194,21 @@ struct SYSCFG {
   uint8_t       led_width;
   uint16_t      led_wakeup;
 
+  // 3.9.7
   uint8_t       emulation;
 
+  // 3.9.20
   char          web_password[33];
+
+  // 3.9.21
   uint8_t       switchmode[4];
 
+  // 4.0.4
   char          ntp_server[3][33];
   uint16_t      pulsetime[MAX_PULSETIMERS];
+
+  // 4.0.7
+  uint16_t      pwmvalue[5];
 
 } sysCfg;
 

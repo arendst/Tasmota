@@ -1,4 +1,24 @@
-/* 4.0.6 20170316
+/* 4.0.8 20170321
+ * Fix entering non-numeric webpassword
+ * Force selection between TLS or Webserver due to memory restraint (#240)
+ * Allow entering empty string using "0" for selected commands (#242)
+ * Fix exception when posting commands to web console containing % (#250)
+ *
+ * 4.0.7 20170319
+ * Increased Sonoff Led PWM frequency from 432 to 1000
+ * Fix possible watch dog reboot after changing module type on web page
+ * Fix reporting of GPIO usage from web page
+ * Fix Sonoff Led blank during firmware upgrade
+ * Fix Sonoff Led flicker and possible flash corruption by using latest Arduino-esp8266 versions
+ *   of pwm core files included in sonoff library (#211)
+ * Add PWM output control with commands PWM1 to PWM5 using user selectable GPIOs (#211)
+ * Fix exceptions due to low values of commands HlwPCal (10000), HlwUCal (1000) and HlwICal (2500) (#223)
+ * Add Switch state to sensor status (#227, #233)
+ * Add user configuarble GPIO to module Sonoff Touch (#228)
+ * Add define WEB_PORT to user_config.h to change default web server port from 80 (#232)
+ * Fix failed Ota Firmware upgrade started from Web page (#235)
+ *
+ * 4.0.6 20170316
  * Fix to better find device by Wifi hostname
  * Fix compile error when some I2C devices are disabled
  * Add (experimental) support for SHT1X emulating I2C (#97)
