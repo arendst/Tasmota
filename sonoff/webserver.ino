@@ -103,7 +103,7 @@ const char HTTP_SCRIPT_CONSOL[] PROGMEM =
     "t=document.getElementById('t1');"
     "if(p==1){"
       "c=document.getElementById('c1');"
-      "o='&c1='+c.value;"
+      "o='&c1='+encodeURI(c.value);"
       "c.value='';"
       "t.scrollTop=sn;"
     "}"
@@ -685,9 +685,7 @@ void handleMqtt()
   String page = FPSTR(HTTP_HEAD);
   page.replace("{v}", "Configure MQTT");
   page += FPSTR(HTTP_FORM_MQTT);
-  char str[sizeof(sysCfg.mqtt_client)];
-  getClient(str, MQTT_CLIENT_ID, sizeof(sysCfg.mqtt_client));
-  page.replace("{m0}", str);
+  page.replace("{m0}", MQTTClient);
   page.replace("{m1}", sysCfg.mqtt_host);
   page.replace("{m2}", String(sysCfg.mqtt_port));
   page.replace("{m3}", sysCfg.mqtt_client);
@@ -1152,7 +1150,7 @@ void handleCmnd()
   if (valid) {
     byte curridx = logidx;
     if (strlen(webServer->arg("cmnd").c_str())) {
-      snprintf_P(svalue, sizeof(svalue), webServer->arg("cmnd").c_str());
+      snprintf_P(svalue, sizeof(svalue), PSTR("%s"), webServer->arg("cmnd").c_str());
       byte syslog_now = syslog_level;
       syslog_level = 0;  // Disable UDP syslog to not trigger hardware WDT
       do_cmnd(svalue);
@@ -1174,7 +1172,7 @@ void handleCmnd()
           }
         }
         counter++;
-        if (counter > MAX_LOG_LINES -1) counter = 0;
+		if (counter > MAX_LOG_LINES -1) counter = 0;
       } while (counter != logidx);
     } else {
       message = F("Enable weblog 2 if response expected\n");
@@ -1211,7 +1209,7 @@ void handleAjax()
   byte cflg = 1, counter = 99;
 
   if (strlen(webServer->arg("c1").c_str())) {
-    snprintf_P(svalue, sizeof(svalue), webServer->arg("c1").c_str());
+    snprintf_P(svalue, sizeof(svalue), PSTR("%s"), webServer->arg("c1").c_str());
     snprintf_P(log, sizeof(log), PSTR("CMND: %s"), svalue);
     addLog(LOG_LEVEL_INFO, log);
     byte syslog_now = syslog_level;
