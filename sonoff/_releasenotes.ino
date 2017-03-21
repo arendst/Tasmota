@@ -1,4 +1,10 @@
-/* 4.0.7 20170319
+/* 4.0.8 20170321
+ * Fix entering non-numeric webpassword
+ * Force selection between TLS or Webserver due to memory restraint (#240)
+ * Allow entering empty string using "0" for selected commands (#242)
+ * Fix exception when posting commands to web console containing % (#250)
+ *
+ * 4.0.7 20170319
  * Increased Sonoff Led PWM frequency from 432 to 1000
  * Fix possible watch dog reboot after changing module type on web page
  * Fix reporting of GPIO usage from web page

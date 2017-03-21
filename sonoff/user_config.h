@@ -157,6 +157,10 @@
  * No user configurable items below
 \*********************************************************************************************/
 
+#if defined(USE_MQTT_TLS) && defined(USE_WEBSERVER)
+  #error "Select either USE_MQTT_TLS or USE_WEBSERVER as there is just not enough memory to play with"
+#endif
+
 #if (ARDUINO < 10610)
   #error "This software is supported with Arduino IDE starting from 1.6.10 and ESP8266 Release 2.3.0"
 #endif
