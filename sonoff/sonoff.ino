@@ -293,31 +293,6 @@ uint8_t pwm_idxoffset = 0;            // Allowed PWM command offset (change for 
 boolean mDNSbegun = false;
 
 /********************************************************************************************/
-
-void getClient(char* output, const char* input, byte size)
-{
-  char *token;
-  uint8_t digits = 0;
-
-  if (strstr(input, "%")) {
-    strlcpy(output, input, size);
-    token = strtok(output, "%");
-    if (strstr(input, "%") == input) {
-      output[0] = '\0';
-    } else {
-      token = strtok(NULL, "");
-    }
-    if (token != NULL) {
-      digits = atoi(token);
-      if (digits) {
-        snprintf_P(output, size, PSTR("%s%c0%dX"), output, '%', digits);
-        snprintf_P(output, size, output, ESP.getChipId());
-      }
-    }
-  }
-  if (!digits) strlcpy(output, input, size);
-}
-
 void setLatchingRelay(uint8_t power, uint8_t state)
 {
   power &= 1;
@@ -1077,7 +1052,6 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
     else if (!grpflg && !strcmp(type,"HOSTNAME")) {
       if ((data_len > 0) && (data_len < sizeof(sysCfg.hostname))) {
         strlcpy(sysCfg.hostname, (payload == 1) ? WIFI_HOSTNAME : dataBuf, sizeof(sysCfg.hostname));
-        if (strstr(sysCfg.hostname,"%")) strlcpy(sysCfg.hostname, WIFI_HOSTNAME, sizeof(sysCfg.hostname));
         restartflag = 2;
       }
       snprintf_P(svalue, sizeof(svalue), PSTR("{\"Hostname\":\"%s\"}"), sysCfg.hostname);
@@ -2158,15 +2132,10 @@ void setup()
     Serial.println();
   }
 
-  if (strstr(sysCfg.hostname, "%")) {
-    strlcpy(sysCfg.hostname, WIFI_HOSTNAME, sizeof(sysCfg.hostname));
-    snprintf_P(Hostname, sizeof(Hostname)-1, sysCfg.hostname, sysCfg.mqtt_topic, ESP.getChipId() & 0x1FFF);
-  } else {
-    snprintf_P(Hostname, sizeof(Hostname)-1, sysCfg.hostname);
-  }
+  snprintf_P(Hostname, sizeof(Hostname)-1, sysCfg.hostname, sysCfg.mqtt_topic, ESP.getChipId());
+  snprintf_P(MQTTClient, sizeof(MQTTClient), sysCfg.mqtt_client, ESP.getChipId());
+  
   WIFI_Connect();
-
-  getClient(MQTTClient, sysCfg.mqtt_client, sizeof(MQTTClient));
 
   if (sysCfg.module == MOTOR) sysCfg.poweronstate = 1;  // Needs always on else in limbo!
   if (ESP.getResetReason() == "Power on") {

@@ -702,13 +702,12 @@ void CFG_Delta()
       sysCfg.blinkcount = APP_BLINKCOUNT;
     }
     if (sysCfg.version < 0x03011000) {  // 3.1.16 - Add parameter
-      getClient(sysCfg.friendlyname[0], sysCfg.mqtt_client, sizeof(sysCfg.friendlyname[0]));
+      snprintf_P(sysCfg.friendlyname[0], sizeof(sysCfg.friendlyname[0]), sysCfg.mqtt_client, ESP.getChipId());
     }
     if (sysCfg.version < 0x03020400) {  // 3.2.4 - Add parameter
       CFG_DefaultSet_3_2_4();
     }
     if (sysCfg.version < 0x03020500) {  // 3.2.5 - Add parameter
-      getClient(sysCfg.friendlyname[0], sysCfg.mqtt_client, sizeof(sysCfg.friendlyname[0]));
       strlcpy(sysCfg.friendlyname[1], FRIENDLY_NAME"2", sizeof(sysCfg.friendlyname[1]));
       strlcpy(sysCfg.friendlyname[2], FRIENDLY_NAME"3", sizeof(sysCfg.friendlyname[2]));
       strlcpy(sysCfg.friendlyname[3], FRIENDLY_NAME"4", sizeof(sysCfg.friendlyname[3]));
