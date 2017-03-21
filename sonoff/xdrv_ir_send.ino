@@ -29,13 +29,19 @@ POSSIBILITY OF SUCH DAMAGE.
 \*********************************************************************************************/
 
 #include <IRremoteESP8266.h>
+#include <IRMitsubishiAC.h>
 
 IRsend *irsend = NULL;
+IRMitsubishiAC *mitsubir = NULL;
 
 void ir_send_init(void)
 {
   irsend = new IRsend(pin[GPIO_IRSEND]);  // an IR led is at GPIO_IRSEND
   irsend->begin();
+
+#ifdef USE_IR_HVAC
+  mitsubir = new IRMitsubishiAC(pin[GPIO_IRSEND]);
+#endif //USE_IR_HVAC
 }
 
 /*********************************************************************************************\
@@ -110,11 +116,10 @@ boolean ir_hvac_command(char *type, uint16_t index, char *dataBufUc, uint16_t da
   const char *protocol;
   const char *HVAC_Mode_Str;
   const char *HVAC_FanMode_Str;
+  const char *HVAC_Vendor;
   int HVAC_Temp = 21;
   int OFF = true;                  // Example false
 
-  unsigned int rawdata[2 + 2*8*HVAC_TOSHIBA_DATALEN + 2];
-  byte data[HVAC_TOSHIBA_DATALEN] = { 0xF2, 0x0D, 0x03, 0xFC, 0x01, 0x00, 0x00, 0x00, 0x00 };
 
   if (!strcmp(type,"IRHVAC")) {
     if (data_len) {
@@ -128,7 +133,32 @@ boolean ir_hvac_command(char *type, uint16_t index, char *dataBufUc, uint16_t da
         HVAC_Temp = root["HVAC_TEMP"];
         HVAC_FanMode_Str = root["HVAC_FANMODE"];
         OFF = root["OFF"];
+        HVAC_Vendor = root["HVAC_VENDOR"];
 
+        if (HVAC_Vendor == NULL || !strcmp(HVAC_Vendor,"TOSHIBA")) {
+          error = ir_hvac_toshiba(HVAC_Mode_Str,HVAC_FanMode_Str,OFF,HVAC_Temp);
+        } else if (!strcmp(HVAC_Vendor,"MITSUBISHI")) {
+          error = ir_hvac_mitsubishi(HVAC_Mode_Str,HVAC_FanMode_Str,OFF,HVAC_Temp);
+        } else {
+          error = true;
+        }
+        
+      }
+    } else error = true;
+    if (error) snprintf_P(svalue, ssvalue, PSTR("{\"IRHVAC\":\"Wrong parameters value for HVAC_Mode and/or HVAC_FanMode and/or HVAC_Vendor\"}"));
+  }
+  else {
+    serviced = false;  // Unknown command
+  }
+  return serviced;
+}
+
+
+boolean ir_hvac_toshiba(const char *HVAC_Mode_Str,const char *HVAC_FanMode_Str, int OFF, int HVAC_Temp)
+{
+  unsigned int rawdata[2 + 2*8*HVAC_TOSHIBA_DATALEN + 2];
+  byte data[HVAC_TOSHIBA_DATALEN] = { 0xF2, 0x0D, 0x03, 0xFC, 0x01, 0x00, 0x00, 0x00, 0x00 };
+  boolean error = false;
 
           if (HVAC_Mode_Str == NULL || !strcmp(HVAC_Mode_Str,"HVAC_HOT")) //default HVAC_HOT
           {
@@ -172,7 +202,6 @@ boolean ir_hvac_command(char *type, uint16_t index, char *dataBufUc, uint16_t da
           } else if (HVAC_FanMode_Str && !strcmp(HVAC_FanMode_Str,"FAN_SPEED_SILENT"))
           {
             data[6] = data[6] | (byte) B00000000;
-            addLog_P(LOG_LEVEL_DEBUG, PSTR("spsilent"));
           }
           else
           {
@@ -222,14 +251,70 @@ boolean ir_hvac_command(char *type, uint16_t index, char *dataBufUc, uint16_t da
              irsend->sendRaw(rawdata,i,38);
              interrupts();
 
-      }
-    } else error = true;
-    if (error) snprintf_P(svalue, ssvalue, PSTR("{\"IRHVAC\":\"Wrong parameters value for HVAC_Mode and/or HVAC_FanMode\"}"));
-  }
-  else {
-    serviced = false;  // Unknown command
-  }
-  return serviced;
+             return error;
+}
+
+boolean ir_hvac_mitsubishi(const char *HVAC_Mode_Str,const char *HVAC_FanMode_Str, int OFF, int HVAC_Temp)
+{
+    boolean error = false;
+    
+          mitsubir->stateReset();
+          
+          if (HVAC_Mode_Str == NULL || !strcmp(HVAC_Mode_Str,"HVAC_HOT")) //default HVAC_HOT
+          {
+            mitsubir->setMode(MITSUBISHI_AC_HEAT);
+          } else if (HVAC_Mode_Str && !strcmp(HVAC_Mode_Str,"HVAC_COLD"))
+          {
+            mitsubir->setMode(MITSUBISHI_AC_COOL);
+          } else if (HVAC_Mode_Str && !strcmp(HVAC_Mode_Str,"HVAC_DRY"))
+          {
+            mitsubir->setMode(MITSUBISHI_AC_DRY);
+          } else if (HVAC_Mode_Str && !strcmp(HVAC_Mode_Str,"HVAC_AUTO"))
+          {
+            mitsubir->setMode(MITSUBISHI_AC_AUTO);
+          } else
+          {
+            error = true;
+          }
+
+          if (OFF) {
+            mitsubir->off();
+          } else {
+            mitsubir->on();
+          }
+
+          if (HVAC_FanMode_Str && !strcmp(HVAC_FanMode_Str,"FAN_SPEED_1"))
+          {
+            mitsubir->setFan(1);
+          } else if (HVAC_FanMode_Str && !strcmp(HVAC_FanMode_Str,"FAN_SPEED_2"))
+          {
+            mitsubir->setFan(2);
+          } else if (HVAC_FanMode_Str && !strcmp(HVAC_FanMode_Str,"FAN_SPEED_3"))
+          {
+            mitsubir->setFan(3);
+          } else if (HVAC_FanMode_Str && !strcmp(HVAC_FanMode_Str,"FAN_SPEED_4"))
+          {
+            mitsubir->setFan(4);
+          } else if (HVAC_FanMode_Str && !strcmp(HVAC_FanMode_Str,"FAN_SPEED_5"))
+          {
+           mitsubir->setFan(5);
+          } else if (HVAC_FanMode_Str == NULL || !strcmp(HVAC_FanMode_Str,"FAN_SPEED_AUTO")) //default FAN_SPEED_AUTO
+          {
+            mitsubir->setFan(MITSUBISHI_AC_FAN_AUTO);
+          } else if (HVAC_FanMode_Str && !strcmp(HVAC_FanMode_Str,"FAN_SPEED_SILENT"))
+          {
+            mitsubir->setFan(MITSUBISHI_AC_FAN_SILENT);
+          }
+          else
+          {
+            error = true;
+          }
+
+          mitsubir->setTemp(HVAC_Temp);
+          mitsubir->setVane(MITSUBISHI_AC_VANE_AUTO);
+
+          mitsubir->send();
+
 }
 
 #endif  //USE_IR_HVAC
