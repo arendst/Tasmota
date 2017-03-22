@@ -63,6 +63,8 @@
 #define PUB_PREFIX             "stat"            // Sonoff devices publish to:- PUB_PREFIX/MQTT_TOPIC
 #define PUB_PREFIX2            "tele"            // Sonoff devices publish telemetry data to:- PUB_PREFIX2/MQTT_TOPIC/UPTIME, POWER/LIGHT and TIME
                                                  //   May be named the same as PUB_PREFIX
+#define PUB_RESULT             "result"          // Sonoff devices publish POWER result to:- PUB_PREFIX/MQTT_TOPIC/PUB_RESULT
+
 #define MQTT_TOPIC             PROJECT           // [Topic] (unique) MQTT device topic
 #define MQTT_GRPTOPIC          "sonoffs"         // [GroupTopic] MQTT Group topic
 #define MQTT_BUTTON_RETAIN     0                 // [ButtonRetain] Button may send retain flag (0 = off, 1 = on)
