@@ -28,7 +28,7 @@ POSSIBILITY OF SUCH DAMAGE.
  * IR Remote send using IRremoteESP8266 library
 \*********************************************************************************************/
 
-#include <IRremoteESP8266.h>
+//#include <IRremoteESP8266.h> //not needed because IRMitsubishiAC.h import it
 #include <IRMitsubishiAC.h>
 
 IRsend *irsend = NULL;
