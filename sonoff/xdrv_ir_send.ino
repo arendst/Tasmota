@@ -257,6 +257,7 @@ boolean ir_hvac_toshiba(const char *HVAC_Mode_Str,const char *HVAC_FanMode_Str, 
 boolean ir_hvac_mitsubishi(const char *HVAC_Mode_Str,const char *HVAC_FanMode_Str, int OFF, int HVAC_Temp)
 {
     boolean error = false;
+    char logmsg[LOGSZ];
     
           mitsubir->stateReset();
           
@@ -314,7 +315,9 @@ boolean ir_hvac_mitsubishi(const char *HVAC_Mode_Str,const char *HVAC_FanMode_St
           mitsubir->setVane(MITSUBISHI_AC_VANE_AUTO);
 
           mitsubir->send();
-
+          snprintf_P(logmsg, sizeof(logmsg), PSTR("IRHVAC: Sent to Mitsubishi. Power: %d,  Mode: %d, Temp: %dC, Fan Speed: %d, Vane Mode: %d"),mitsubir->getPower(), mitsubir->getMode(), mitsubir->getTemp(), mitsubir->getFan(), mitsubir->getVane());
+          addLog(LOG_LEVEL_INFO, logmsg);
+          
 }
 
 #endif  //USE_IR_HVAC
