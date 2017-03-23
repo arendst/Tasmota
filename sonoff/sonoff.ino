@@ -462,7 +462,7 @@ void mqtt_publishPowerState(byte device)
 
   if ((device < 1) || (device > Maxdevice)) device = 1;
   snprintf_P(sdevice, sizeof(sdevice), PSTR("%d"), device);
-  snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/RESULT"), PUB_PREFIX, sysCfg.mqtt_topic);
+  snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/STATE"), PUB_PREFIX, sysCfg.mqtt_topic);
   snprintf_P(svalue, sizeof(svalue), PSTR("{\"%s%s\":\"%s\"}"),
     sysCfg.mqtt_subtopic, (Maxdevice > 1) ? sdevice : "", (power & (0x01 << (device -1))) ? MQTT_STATUS_ON : MQTT_STATUS_OFF);
   mqtt_publish(stopic, svalue);
