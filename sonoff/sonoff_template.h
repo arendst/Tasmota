@@ -383,13 +383,13 @@ const mytmplt modules[MAXMODULE] PROGMEM = {
      GPIO_LED1,        // GPIO01 Green LED
      GPIO_USER,        // GPIO02 RX - Pin next to TX on the PCB
      GPIO_USER,        // GPIO03 TX - Pin next to GND on the PCB
-     GPIO_PWM1,        // GPIO04 W2 - not yet tested
+     GPIO_PWM2,        // GPIO04 W2 
      GPIO_LED2_INV,    // GPIO05 Red LED
      0, 0, 0, 0, 0, 0, // Flash connection
-     GPIO_PWM3,        // GPIO12 Blue - not yet tested
-     GPIO_PWM4,        // GPIO13 Green - not yet tested
-     GPIO_PWM2,        // GPIO14 W1 - not yet tested
-     GPIO_PWM5,        // GPIO15 Red - not yet tested
+     GPIO_PWM3,        // GPIO12 Blue 
+     GPIO_PWM4,        // GPIO13 Green 
+     GPIO_PWM1,        // GPIO14 W1 
+     GPIO_PWM5,        // GPIO15 Red 
      0,                // GPIO16
      0                 // ADC0 A0 Analog input
   }
