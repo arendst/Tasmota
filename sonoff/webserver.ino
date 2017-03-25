@@ -548,22 +548,30 @@ void handleModule()
     page += line;
   }
   page += F("</select></br>");
+  
   mytmplt cmodule;
   memcpy_P(&cmodule, &modules[sysCfg.module], sizeof(cmodule));
+  String func = F("var os;function sk(s,g){var o=os.replace(\"value='\"+s+\"'\",\"selected value='\"+s+\"'\");document.getElementById('g'+g).innerHTML=o;}function sl(){var o0=\"");
+  for (byte j = 0; j < GPIO_SENSOR_END; j++) {
+    snprintf_P(stemp, sizeof(stemp), sensors[j]);
+    snprintf_P(line, sizeof(line), PSTR("%s'%d'>%02d %s-2"),
+      (inModule(j, cmodule.gp.io))?"<options disabled value=":"-1", j, j, stemp);
+    func += line;
+  }
+  func += F("\";os=o0.replace(/-1/g,\"<option value=\").replace(/-2/g,\"</option>\");");
   for (byte i = 0; i < MAX_GPIO_PIN; i++) {
     if (cmodule.gp.io[i] == GPIO_USER) {
-      snprintf_P(line, sizeof(line), PSTR("<br/><b>GPIO%d</b> %s<select id='g%d' name='g%d'>"),
+      snprintf_P(line, sizeof(line), PSTR("<br/><b>GPIO%d</b> %s<select id='g%d' name='g%d'></select></br>"),
         i, (i==0)?"Button1":(i==1)?"Serial Out":(i==3)?"Serial In":(i==12)?"Relay1":(i==13)?"Led1I":(i==14)?"Sensor":"", i, i);
       page += line;
-      for (byte j = 0; j < GPIO_SENSOR_END; j++) {
-        snprintf_P(stemp, sizeof(stemp), sensors[j]);
-        snprintf_P(line, sizeof(line), PSTR("<option%s value='%d'>%02d %s</option>"),
-          (j == my_module.gp.io[i])?" selected":(inModule(j, cmodule.gp.io))?" disabled":"", j, j, stemp);
-        page += line;
-      }
-      page += F("</select></br>");
+      snprintf_P(line, sizeof(line), PSTR("sk(%d,%d);"), my_module.gp.io[i], i);
+      func += line;
     }
   }
+  func += F("}</script>");
+  page.replace("</script>", func);
+  page.replace("<body>", "<body onload='sl()'>");
+  
   page += FPSTR(HTTP_FORM_END);
   page += FPSTR(HTTP_BTN_CONF);
   showPage(page);
@@ -1285,7 +1293,9 @@ void handleInfo()
   page += F("<tr><th>Hostname</th><td>"); page += Hostname; page += F("</td></tr>");
   if (static_cast<uint32_t>(WiFi.localIP()) != 0) {
     page += F("<tr><th>IP address</th><td>"); page += WiFi.localIP().toString(); page += F("</td></tr>");
-    page += F("<tr><th>Gateway</th><td>"); page += WiFi.gatewayIP().toString(); page += F("</td></tr>");
+    page += F("<tr><th>Gateway</th><td>"); page += IPAddress(sysCfg.ip_address[1]).toString(); page += F("</td></tr>");
+    page += F("<tr><th>Subnet mask</th><td>"); page += IPAddress(sysCfg.ip_address[2]).toString(); page += F("</td></tr>");
+    page += F("<tr><th>DNS server</th><td>"); page += IPAddress(sysCfg.ip_address[3]).toString(); page += F("</td></tr>");
     page += F("<tr><th>MAC address</th><td>"); page += WiFi.macAddress(); page += F("</td></tr>");
   }
   if (static_cast<uint32_t>(WiFi.softAPIP()) != 0) {

@@ -83,7 +83,8 @@ struct SYSCFG {
   byte          model;                // Not used since 3.9.1
   int8_t        timezone;
   char          otaUrl[101];
-  char          ex_friendlyname[33];  // Not used since 3.2.5 - see below
+
+  char          mqtt_prefix[3][11];   // was ex_friendlyname[33] until 3.2.5
 
   byte          serial_enable;
   byte          seriallog_level;
@@ -209,6 +210,10 @@ struct SYSCFG {
 
   // 4.0.7
   uint16_t      pwmvalue[5];
+
+  // 4.0.9
+//  uint8_t       ip_address[4][4];
+  uint32_t      ip_address[4];
 
 } sysCfg;
 

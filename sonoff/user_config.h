@@ -17,11 +17,11 @@
 #define SAVE_STATE             1                 // [SaveState] Save changed power state to Flash (0 = disable, 1 = enable)
 
 // -- Wifi ----------------------------------------
-//#define USE_STATIC_IP_ADDRESS                    // Enable optional static IP address (Use DHCP by disabling using //)
-  #define WIFI_IP_ADDRESS      192,168,2,72      // IP address using commas
-  #define WIFI_GATEWAY         192,168,2,254     // Gateway IP address using commas
-  #define WIFI_DNS             192,168,2,27      // DNS IP address (might be the same as WIFI_GATEWAY) using commas
-  #define WIFI_SUBNETMASK      255,255,255,0     // Network mask using commas
+#define WIFI_IP_ADDRESS        "0.0.0.0"         // [IpAddress] Set to 0.0.0.0 for using DHCP or IP address
+#define WIFI_GATEWAY           "192.168.2.254"   // {Gateway] If not using DHCP set Gateway IP address
+#define WIFI_SUBNETMASK        "255.255.255.0"   // [Subnetmask] If not using DHCP set Network mask
+#define WIFI_DNS               "192.168.2.27"    // [DnsServer] If not using DHCP set DNS IP address (might be equal to WIFI_GATEWAY)
+
 #define STA_SSID1              "indebuurt1"      // [Ssid1] Wifi SSID
 #define STA_PASS1              "VnsqrtnrsddbrN"  // [Password1] Wifi password
 #define STA_SSID2              "indebuurt2"      // [Ssid2] Optional alternate AP Wifi SSID
@@ -59,9 +59,9 @@
 
 #define MQTT_CLIENT_ID         "DVES_%06X"       // [MqttClient] Also fall back topic using Chip Id = last 6 characters of MAC address
 
-#define SUB_PREFIX             "cmnd"            // Sonoff devices subscribe to:- SUB_PREFIX/MQTT_TOPIC and SUB_PREFIX/MQTT_GRPTOPIC
-#define PUB_PREFIX             "stat"            // Sonoff devices publish to:- PUB_PREFIX/MQTT_TOPIC
-#define PUB_PREFIX2            "tele"            // Sonoff devices publish telemetry data to:- PUB_PREFIX2/MQTT_TOPIC/UPTIME, POWER/LIGHT and TIME
+#define SUB_PREFIX             "cmnd"            // [Prefix1] Sonoff devices subscribe to:- SUB_PREFIX/MQTT_TOPIC and SUB_PREFIX/MQTT_GRPTOPIC
+#define PUB_PREFIX             "stat"            // [Prefix2] Sonoff devices publish to:- PUB_PREFIX/MQTT_TOPIC
+#define PUB_PREFIX2            "tele"            // [Prefix3] Sonoff devices publish telemetry data to:- PUB_PREFIX2/MQTT_TOPIC/UPTIME, POWER/LIGHT and TIME
                                                  //   May be named the same as PUB_PREFIX
 #define MQTT_TOPIC             PROJECT           // [Topic] (unique) MQTT device topic
 #define MQTT_GRPTOPIC          "sonoffs"         // [GroupTopic] MQTT Group topic
@@ -83,14 +83,14 @@
   #define DOMOTICZ_UPDATE_TIMER  0               // [DomoticzUpdateTimer] Send relay status (0 = disable, 1 - 3600 seconds) (Optional)
 
 // -- HTTP ----------------------------------------
-#define USE_WEBSERVER                            // Enable web server and wifi manager (+62k code, +4k mem) - Disable by //
-  #define WEB_SERVER             2               // [WebServer] Web server (0 = Off, 1 = Start as User, 2 = Start as Admin)
-  #define WEB_PORT               80              // Web server Port for User and Admin mode
-  #define WEB_USERNAME           "admin"         // Web server Admin mode user name
-  #define WEB_PASSWORD           ""              // [WebPassword] Web server Admin mode Password for WEB_USERNAME (empty string = Disable)
-  #define FRIENDLY_NAME          "Sonoff"        // [FriendlyName] Friendlyname up to 32 characters used by webpages and Alexa
+#define USE_WEBSERVER                            // Enable web server and wifi manager (+62k code, +8k mem) - Disable by //
+  #define WEB_SERVER           2                 // [WebServer] Web server (0 = Off, 1 = Start as User, 2 = Start as Admin)
+  #define WEB_PORT             80                // Web server Port for User and Admin mode
+  #define WEB_USERNAME         "admin"           // Web server Admin mode user name
+  #define WEB_PASSWORD         ""                // [WebPassword] Web server Admin mode Password for WEB_USERNAME (empty string = Disable)
+  #define FRIENDLY_NAME        "Sonoff"          // [FriendlyName] Friendlyname up to 32 characters used by webpages and Alexa
   #define USE_EMULATION                          // Enable Belkin WeMo and Hue Bridge emulation for Alexa (+11k code, +2k mem)
-    #define EMULATION            EMUL_NONE       // [Emulation] Select Belkin WeMo or Hue Bridge emulation (EMUL_NONE, EMUL_WEMO or EMUL_HUE)
+    #define EMULATION          EMUL_NONE         // [Emulation] Select Belkin WeMo or Hue Bridge emulation (EMUL_NONE, EMUL_WEMO or EMUL_HUE)
 
 // -- mDNS ----------------------------------------
 #define USE_DISCOVERY                            // Enable mDNS for the following services (+8k code, +0.3k mem) - Disable by //
