@@ -10,6 +10,8 @@
  * ====================================================
 */
 
+#define MQTT_MAX_PACKET_SIZE 512
+
 //#define ALLOW_MIGRATE_TO_V3
 #ifdef ALLOW_MIGRATE_TO_V3
   #define VERSION              0x03091F00  // 3.9.31
