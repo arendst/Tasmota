@@ -549,7 +549,7 @@ void hlw_mqttPresent()
   snprintf_P(svalue, sizeof(svalue), PSTR("{\"Time\":\"%s\", "), getDateTime().c_str());
   hlw_mqttStat(1, svalue, sizeof(svalue));
 
-//  snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/ENERGY"), PUB_PREFIX2, sysCfg.mqtt_topic);
+//  snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/ENERGY"), sysCfg.mqtt_prefix[2], sysCfg.mqtt_topic);
 //  mqtt_publish(stopic, svalue);
 
   mqtt_publish_topic_P(1, PSTR("ENERGY"), svalue);

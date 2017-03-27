@@ -1,4 +1,13 @@
-/* 4.0.8 20170321
+/* 4.1.0 20170325
+ * Change static IP addresses in user_config.h from list (using commas) to string (using dots)
+ * Unify display result of commands Modules, Module and Gpios
+ * Rewrite Module selection web page to bring size down from 18651 to 4319 bytes (!) (#234, #240)
+ * Add basic support for (Lixada) H801 RGBWW controller (#252)
+ * Add command Prefix1 to Prefix3 to assign SUB_PREFIX, PUB_PREFIX and PUB_PREFIX2 respectively (#255)
+ * Add static ip addresses to flash (#262)
+ * Add commands IpAddress, Gateway, Subnetmask and DnsServer to select static ip addresses (#273)
+ *
+ * 4.0.8 20170321
  * Fix entering non-numeric webpassword
  * Force selection between TLS or Webserver due to memory restraint (#240)
  * Allow entering empty string using "0" for selected commands (#242)

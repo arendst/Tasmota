@@ -418,10 +418,9 @@ void CFG_DefaultSet2()
 {
   sysCfg.savedata = SAVE_DATA;
   sysCfg.savestate = SAVE_STATE;
-  sysCfg.model = 0;
+//  sysCfg.model = 0;
   sysCfg.timezone = APP_TIMEZONE;
   strlcpy(sysCfg.otaUrl, OTA_URL, sizeof(sysCfg.otaUrl));
-  strlcpy(sysCfg.ex_friendlyname, FRIENDLY_NAME, sizeof(sysCfg.ex_friendlyname));
 
   sysCfg.seriallog_level = SERIAL_LOG_LEVEL;
   sysCfg.sta_active = 0;
@@ -451,14 +450,11 @@ void CFG_DefaultSet2()
   sysCfg.mqtt_power_retain = MQTT_POWER_RETAIN;
   sysCfg.value_units = 0;
   sysCfg.button_restrict = 0;
-//  sysCfg.message_format = 0;
   sysCfg.tele_period = TELE_PERIOD;
 
   sysCfg.power = APP_POWER;
   sysCfg.poweronstate = APP_POWERON_STATE;
-//  sysCfg.pulsetime = APP_PULSETIME;
   sysCfg.ledstate = APP_LEDSTATE;
-//  sysCfg.switchmode = SWITCH_MODE;
   sysCfg.blinktime = APP_BLINKTIME;
   sysCfg.blinkcount = APP_BLINKCOUNT;
   sysCfg.sleep = APP_SLEEP;
@@ -495,7 +491,7 @@ void CFG_DefaultSet2()
   sysCfg.hlw_mkwhs = 0;                            // MaxEnergyStart
 
   CFG_DefaultSet_3_2_4();
-  
+
   strlcpy(sysCfg.friendlyname[0], FRIENDLY_NAME, sizeof(sysCfg.friendlyname[0]));
   strlcpy(sysCfg.friendlyname[1], FRIENDLY_NAME"2", sizeof(sysCfg.friendlyname[1]));
   strlcpy(sysCfg.friendlyname[2], FRIENDLY_NAME"3", sizeof(sysCfg.friendlyname[2]));
@@ -514,8 +510,11 @@ void CFG_DefaultSet2()
   CFG_DefaultSet_4_0_4();
   sysCfg.pulsetime[0] = APP_PULSETIME;
 
-  // v4.0.7
+  // 4.0.7
   for (byte i = 0; i < 5; i++) sysCfg.pwmvalue[i] = 0;
+
+  // 4.0.9
+  CFG_DefaultSet_4_0_9();
 }
 
 void CFG_DefaultSet_3_2_4()
@@ -564,6 +563,17 @@ void CFG_DefaultSet_4_0_4()
   for (byte i = 1; i < MAX_PULSETIMERS; i++) sysCfg.pulsetime[i] = 0;
 }
 
+void CFG_DefaultSet_4_0_9()
+{
+  strlcpy(sysCfg.mqtt_prefix[0], SUB_PREFIX, sizeof(sysCfg.mqtt_prefix[0]));
+  strlcpy(sysCfg.mqtt_prefix[1], PUB_PREFIX, sizeof(sysCfg.mqtt_prefix[1]));
+  strlcpy(sysCfg.mqtt_prefix[2], PUB_PREFIX2, sizeof(sysCfg.mqtt_prefix[2]));
+  parseIP(&sysCfg.ip_address[0], WIFI_IP_ADDRESS);
+  parseIP(&sysCfg.ip_address[1], WIFI_GATEWAY);
+  parseIP(&sysCfg.ip_address[2], WIFI_SUBNETMASK);
+  parseIP(&sysCfg.ip_address[3], WIFI_DNS);
+}
+
 void CFG_Default()
 {
   addLog_P(LOG_LEVEL_NONE, PSTR("Config: Use default configuration"));
@@ -600,7 +610,7 @@ void CFG_Migrate_Part2()
     strlcpy(sysCfg.mqtt_client, sysCfg2.mqtt_client, sizeof(sysCfg.mqtt_client));
     strlcpy(sysCfg.mqtt_user, sysCfg2.mqtt_user, sizeof(sysCfg.mqtt_user));
     strlcpy(sysCfg.mqtt_pwd, sysCfg2.mqtt_pwd, sizeof(sysCfg.mqtt_pwd));
-    strlcpy(sysCfg.ex_friendlyname, sysCfg2.mqtt_client, sizeof(sysCfg.ex_friendlyname));
+    strlcpy(sysCfg.friendlyname[0], sysCfg2.mqtt_client, sizeof(sysCfg.friendlyname[0]));
   }
   if (sysCfg2.version >= 0x01001700) {  // 1.0.23
     sysCfg.webserver = sysCfg2.webserver;
@@ -691,18 +701,12 @@ void CFG_Delta()
     if (sysCfg.version < 0x03000600) {  // 3.0.6 - Add parameter
       sysCfg.ex_pulsetime = APP_PULSETIME;
     }
-    if (sysCfg.version < 0x03010100) {  // 3.1.1 - Add parameter
-      sysCfg.poweronstate = APP_POWERON_STATE;
-    }
     if (sysCfg.version < 0x03010200) {  // 3.1.2 - Add parameter
-      if (sysCfg.poweronstate == 2) sysCfg.poweronstate = 3;
+      sysCfg.poweronstate = APP_POWERON_STATE;
     }
     if (sysCfg.version < 0x03010600) {  // 3.1.6 - Add parameter
       sysCfg.blinktime = APP_BLINKTIME;
       sysCfg.blinkcount = APP_BLINKCOUNT;
-    }
-    if (sysCfg.version < 0x03011000) {  // 3.1.16 - Add parameter
-      getClient(sysCfg.friendlyname[0], sysCfg.mqtt_client, sizeof(sysCfg.friendlyname[0]));
     }
     if (sysCfg.version < 0x03020400) {  // 3.2.4 - Add parameter
       CFG_DefaultSet_3_2_4();
@@ -745,6 +749,9 @@ void CFG_Delta()
     }
     if (sysCfg.version < 0x04000700) {
       for (byte i = 0; i < 5; i++) sysCfg.pwmvalue[i] = 0;
+    }
+    if (sysCfg.version < 0x04000804) {
+      CFG_DefaultSet_4_0_9();
     }
     sysCfg.version = VERSION;
   }

@@ -145,6 +145,42 @@ Decoding 14 results
 #endif  // DEBUG_THEO
 
 /*********************************************************************************************\
+ * General
+\*********************************************************************************************/
+
+boolean parseIPx(char* str, uint16_t len, uint32_t* addr)
+{
+  uint8_t *part = (uint8_t *)addr;
+  byte i;
+
+  if (!len) return false;
+  *addr = 0;
+  for (i = 0; i <= len; i++) if (*(str +i) == ',') *(str +i) = '.';
+  for (i = 0; i < 4; i++) {
+    part[i] = strtoul(str, NULL, 10);        // Convert byte
+    str = strchr(str, '.');
+    if (str == NULL || *str == '\0') break;  // No more separators, exit
+    str++;                                   // Point to next character after separator
+  }
+  return (i == 3);
+}
+
+boolean parseIP(uint32_t* addr, const char* str)
+{
+  uint8_t *part = (uint8_t*)addr;
+  byte i;
+
+  *addr = 0;
+  for (i = 0; i < 4; i++) {
+    part[i] = strtoul(str, NULL, 10);        // Convert byte
+    str = strchr(str, '.');
+    if (str == NULL || *str == '\0') break;  // No more separators, exit
+    str++;                                   // Point to next character after separator
+  }
+  return (i == 3);
+}
+
+/*********************************************************************************************\
  * Wifi
 \*********************************************************************************************/
 
@@ -285,9 +321,8 @@ void WIFI_begin(uint8_t flag)
     sysCfg.sta_active ^= 1;
   }        // 3: Current AP
   if (strlen(sysCfg.sta_ssid[1]) == 0) sysCfg.sta_active = 0;
-#ifdef USE_STATIC_IP_ADDRESS
-  WiFi.config(ipadd, ipgat, ipsub, ipdns);  // Set static IP
-#endif  // USE_STATIC_IP_ADDRESS
+  if (sysCfg.ip_address[0]) 
+    WiFi.config(sysCfg.ip_address[0], sysCfg.ip_address[1], sysCfg.ip_address[2], sysCfg.ip_address[3]);  // Set static IP
   WiFi.hostname(Hostname);
   WiFi.begin(sysCfg.sta_ssid[sysCfg.sta_active], sysCfg.sta_pwd[sysCfg.sta_active]);
   snprintf_P(log, sizeof(log), PSTR("Wifi: Connecting to AP%d %s in mode 11%c as %s..."),
@@ -301,6 +336,12 @@ void WIFI_check_ip()
     _wificounter = WIFI_CHECK_SEC;
     _wifiretry = WIFI_RETRY_SEC;
     addLog_P((_wifistatus != WL_CONNECTED) ? LOG_LEVEL_INFO : LOG_LEVEL_DEBUG_MORE, PSTR("Wifi: Connected"));
+    if (_wifistatus != WL_CONNECTED) {
+//      addLog_P(LOG_LEVEL_INFO, PSTR("Wifi: Set IP addresses"));
+      sysCfg.ip_address[1] = (uint32_t)WiFi.gatewayIP();
+      sysCfg.ip_address[2] = (uint32_t)WiFi.subnetMask();
+      sysCfg.ip_address[3] = (uint32_t)WiFi.dnsIP();
+    }
     _wifistatus = WL_CONNECTED;
   } else {
     _wifistatus = WiFi.status();
