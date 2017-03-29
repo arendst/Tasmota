@@ -2098,8 +2098,13 @@ void GPIO_init()
   }
   setLed(sysCfg.ledstate &8);
 
+#ifdef USE_CS5460A
+  hlw_flg = ((pin[GPIO_CS_CLK] < 99) && (pin[GPIO_CS_SDO] < 99));
+  if (hlw_flg) cs_init();
+#else
   hlw_flg = ((pin[GPIO_HLW_SEL] < 99) && (pin[GPIO_HLW_CF1] < 99) && (pin[GPIO_HLW_CF] < 99));
   if (hlw_flg) hlw_init();
+#endif
 
 #ifdef USE_DHT
   if (dht_type) dht_init();
@@ -2224,6 +2229,10 @@ void loop()
 #ifdef USE_EMULATION
   if (sysCfg.emulation) pollUDP();
 #endif  // USE_EMULATION
+
+#ifdef USE_CS5460A
+  if (hlw_flg) cs_loop();
+#endif  // USE_CS5460A
 
   if (millis() >= timerxs) stateloop();
   if (sysCfg.mqtt_enabled) mqttClient.loop();

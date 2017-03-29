@@ -1084,6 +1084,9 @@ void handleUploadLoop()
 #ifdef USE_EMULATION
       UDP_Disconnect();
 #endif  // USE_EMULATION
+#ifdef USE_CS5460A
+      if(hlw_flg) cs_finish();
+#endif  // USE_CS5460A
       if (sysCfg.mqtt_enabled) mqttClient.disconnect();
       uint32_t maxSketchSpace = (ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000;
       if (!Update.begin(maxSketchSpace)) {         //start with max available size

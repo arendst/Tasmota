@@ -29,6 +29,7 @@ POSSIBILITY OF SUCH DAMAGE.
  * Based on Source: Shenzhen Heli Technology Co., Ltd
 \*********************************************************************************************/
 
+#ifndef USE_CS5460A
 #define FEATURE_POWER_LIMIT  true
 
 /*********************************************************************************************/
@@ -589,4 +590,5 @@ String hlw_webPresent()
   return page;
 }
 #endif  // USE_WEBSERVER
+#endif  // USE_CS5460A
 
