@@ -1,4 +1,20 @@
-/* 4.1.0 20170325
+/* 4.1.1 20170329
+ * Fix default Telemetry for command Prefix3
+ * Fix webserver Module parameters for disabled select
+ * Fix sensor status for enabled switches
+ * Remove Light as alternative for Power (save code space)
+ * Remove migration option from pre V3 (code cleanup)
+ * Remove unofficial SPIFFS support (code cleanup)
+ * Remove command list when unknown command is entered (save code space)
+ * Rename Status11 json from StatusPWR to unique StatusSTS
+ * Rename command Gateway to IPAddres2, Subnetmask to IPAddress3 and DnsServer to IPAddress4 (save code space)
+ * Add Command MqttResponse to select either command or RESULT topic as response (#258)
+ * Add command StateText1 to StateText3 to assign MQTT_STATUS_OFF, MQTT_STATUS_ON and MQTT_CMND_TOGGLE respectively (#286)
+ * Remove restart after IPAddress changes (#292)
+ * Add support for MAX31850 in xsns_ds18x20.ino (#295)
+ * Fix possible uptime update misses (#302)
+ * 
+ * 4.1.0 20170325
  * Change static IP addresses in user_config.h from list (using commas) to string (using dots)
  * Unify display result of commands Modules, Module and Gpios
  * Rewrite Module selection web page to bring size down from 18651 to 4319 bytes (!) (#234, #240)

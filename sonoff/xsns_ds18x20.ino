@@ -28,11 +28,15 @@ POSSIBILITY OF SUCH DAMAGE.
  * DS18B20 - Temperature
 \*********************************************************************************************/
 
-#define W1_SKIP_ROM 0xCC
-#define W1_CONVERT_TEMP 0x44
-#define W1_READ_SCRATCHPAD 0xBE
+#define DS18S20_CHIPID       0x10
+#define DS18B20_CHIPID       0x28
+#define MAX31850_CHIPID      0x3B
 
-#define DS18X20_MAX_SENSORS 8
+#define W1_SKIP_ROM          0xCC
+#define W1_CONVERT_TEMP      0x44
+#define W1_READ_SCRATCHPAD   0xBE
+
+#define DS18X20_MAX_SENSORS  8
 
 #include <OneWire.h>
 
@@ -41,7 +45,7 @@ OneWire *ds = NULL;
 uint8_t ds18x20_addr[DS18X20_MAX_SENSORS][8];
 uint8_t ds18x20_idx[DS18X20_MAX_SENSORS];
 uint8_t ds18x20_snsrs = 0;
-char dsbstype[8];
+char dsbstype[9];
 
 void ds18x20_init()
 {
@@ -61,9 +65,9 @@ void ds18x20_search()
       ds->reset_search();
       break;
     }
-    // If CRC Ok and Type DS18S20 or DS18B20
+    // If CRC Ok and Type DS18S20, DS18B20 or MAX31850
     if ((OneWire::crc8(ds18x20_addr[num_sensors], 7) == ds18x20_addr[num_sensors][7]) &&
-       ((ds18x20_addr[num_sensors][0]==0x10) || (ds18x20_addr[num_sensors][0]==0x28)))
+       ((ds18x20_addr[num_sensors][0]==DS18S20_CHIPID) || (ds18x20_addr[num_sensors][0]==DS18B20_CHIPID) || (ds18x20_addr[num_sensors][0]==MAX31850_CHIPID)))
        num_sensors++;
   }
   for (int i = 0; i < num_sensors; i++) ds18x20_idx[i] = i;
@@ -121,7 +125,7 @@ boolean ds18x20_read(uint8_t sensor, bool S, float &t)
   for (i = 0; i < 9; i++) data[i] = ds->read();
   if (OneWire::crc8(data, 8) == data[8]) {
     switch(ds18x20_addr[ds18x20_idx[sensor]][0]) {
-    case 0x10:  // DS18S20
+    case DS18S20_CHIPID:  // DS18S20
 /*
 //    App_note AN162.pdf page 9
       int temp_lsb, temp_msb;
@@ -148,7 +152,8 @@ boolean ds18x20_read(uint8_t sensor, bool S, float &t)
       t = (temp9 - 0.25) + ((16.0 - data[6]) / 16.0);
       if(S) t = ds18x20_convertCtoF(t);
       break;
-    case 0x28:  // DS18B20
+    case DS18B20_CHIPID:   // DS18B20
+    case MAX31850_CHIPID:  // MAX31850
       t = ((data[1] << 8) + data[0]) * 0.0625;
       if(S) t = ds18x20_convertCtoF(t);
       break;
@@ -165,11 +170,14 @@ void ds18x20_type(uint8_t sensor)
 {
   strcpy_P(dsbstype, PSTR("DS18x20"));
   switch(ds18x20_addr[ds18x20_idx[sensor]][0]) {
-  case 0x10:
+  case DS18S20_CHIPID:
     strcpy_P(dsbstype, PSTR("DS18S20"));
     break;
-  case 0x28:
+  case DS18B20_CHIPID:
     strcpy_P(dsbstype, PSTR("DS18B20"));
+    break;
+  case MAX31850_CHIPID:
+    strcpy_P(dsbstype, PSTR("MAX31850"));
     break;
   }
 }

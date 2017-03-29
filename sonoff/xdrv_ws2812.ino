@@ -539,7 +539,7 @@ boolean ws2812_command(char *type, uint16_t index, char *dataBuf, uint16_t data_
       }
       ws2812_update();
     }
-    snprintf_P(svalue, ssvalue, PSTR("{\"LedTable\":\"%s\"}"), (sysCfg.ws_ledtable) ? MQTT_STATUS_ON : MQTT_STATUS_OFF);
+    snprintf_P(svalue, ssvalue, PSTR("{\"LedTable\":\"%s\"}"), getStateText(sysCfg.ws_ledtable));
   }
   else if (!strcmp(type,"FADE")) {
     if ((data_len > 0) && (payload >= 0) && (payload <= 2)) {
@@ -553,7 +553,7 @@ boolean ws2812_command(char *type, uint16_t index, char *dataBuf, uint16_t data_
         break;
       }
     }
-    snprintf_P(svalue, ssvalue, PSTR("{\"Fade\":\"%s\"}"), (sysCfg.ws_fade) ? MQTT_STATUS_ON : MQTT_STATUS_OFF);
+    snprintf_P(svalue, ssvalue, PSTR("{\"Fade\":\"%s\"}"), getStateText(sysCfg.ws_fade));
   }
   else if (!strcmp(type,"SPEED")) {  // 1 - fast, 5 - slow
     if ((data_len > 0) && (payload > 0) && (payload <= 5)) {
