@@ -114,12 +114,6 @@ extern "C" {
 #define SPIFFS_START        ((uint32_t)&_SPIFFS_start - 0x40200000) / SPI_FLASH_SEC_SIZE
 #define SPIFFS_END          ((uint32_t)&_SPIFFS_end - 0x40200000) / SPI_FLASH_SEC_SIZE
 
-#ifdef ALLOW_MIGRATE_TO_V3
-  // Version 2.x config
-  #define SPIFFS_CONFIG2      "/config.ini"
-  #define CFG_LOCATION2       SPIFFS_END - 2
-#endif  // ALLOW_MIGRATE_TO_V3
-
 // Version 3.x config
 #define SPIFFS_CONFIG       "/cfg.ini"
 #define CFG_LOCATION        SPIFFS_END - 4
@@ -182,24 +176,10 @@ void CFG_Save()
 {
   char log[LOGSZ];
 
+#ifndef BE_MINIMAL
   if ((getHash() != _cfgHash) && (spiffsPresent())) {
     if (!spiffsflag) {
-#ifdef USE_SPIFFS
-      sysCfg.saveFlag++;
-      File f = SPIFFS.open(SPIFFS_CONFIG, "r+");
-      if (f) {
-        uint8_t *bytes = (uint8_t*)&sysCfg;
-        for (int i = 0; i < sizeof(SYSCFG); i++) f.write(bytes[i]);
-        f.close();
-        snprintf_P(log, sizeof(log), PSTR("Config: Saved configuration (%d bytes) to spiffs count %d"), sizeof(SYSCFG), sysCfg.saveFlag);
-        addLog(LOG_LEVEL_DEBUG, log);
-      } else {
-        addLog_P(LOG_LEVEL_ERROR, PSTR("Config: ERROR - Saving configuration failed"));
-      }
-    } else {
-#endif  // USE_SPIFFS
       noInterrupts();
-//      if (sysCfg.module != SONOFF_LED) noInterrupts();
       if (sysCfg.saveFlag == 0) {  // Handle default and rollover
         spi_flash_erase_sector(CFG_LOCATION + (sysCfg.saveFlag &1));
         spi_flash_write((CFG_LOCATION + (sysCfg.saveFlag &1)) * SPI_FLASH_SEC_SIZE, (uint32*)&sysCfg, sizeof(SYSCFG));
@@ -208,12 +188,12 @@ void CFG_Save()
       spi_flash_erase_sector(CFG_LOCATION + (sysCfg.saveFlag &1));
       spi_flash_write((CFG_LOCATION + (sysCfg.saveFlag &1)) * SPI_FLASH_SEC_SIZE, (uint32*)&sysCfg, sizeof(SYSCFG));
       interrupts();
-//      if (sysCfg.module != SONOFF_LED) interrupts();
       snprintf_P(log, sizeof(log), PSTR("Config: Saved configuration (%d bytes) to flash at %X and count %d"), sizeof(SYSCFG), CFG_LOCATION + (sysCfg.saveFlag &1), sysCfg.saveFlag);
       addLog(LOG_LEVEL_DEBUG, log);
     }
     _cfgHash = getHash();
   }
+#endif  // BE_MINIMAL
   RTC_Save();
 }
 
@@ -223,19 +203,6 @@ void CFG_Load()
 
   if (spiffsPresent()) {
     if (!spiffsflag) {
-#ifdef USE_SPIFFS
-      File f = SPIFFS.open(SPIFFS_CONFIG, "r+");
-      if (f) {
-        uint8_t *bytes = (uint8_t*)&sysCfg;
-        for (int i = 0; i < sizeof(SYSCFG); i++) bytes[i] = f.read();
-        f.close();
-        snprintf_P(log, sizeof(log), PSTR("Config: Loaded configuration from spiffs count %d"), sysCfg.saveFlag);
-        addLog(LOG_LEVEL_DEBUG, log);
-      } else {
-        addLog_P(LOG_LEVEL_ERROR, PSTR("Config: ERROR - Loading configuration failed"));
-      }
-    } else {
-#endif  // USE_SPIFFS
       struct SYSCFGH {
         unsigned long cfg_holder;
         unsigned long saveFlag;
@@ -251,69 +218,11 @@ void CFG_Load()
       addLog(LOG_LEVEL_DEBUG, log);
     }
   }
-#ifdef ALLOW_MIGRATE_TO_V3
-//  snprintf_P(log, sizeof(log), PSTR("Config: Check 1 for migration (%08X)"), sysCfg.version);
-//  addLog(LOG_LEVEL_NONE, log);
-  if (sysCfg.cfg_holder != CFG_HOLDER) {
-    if ((sysCfg.version < 0x03000000) || (sysCfg.version > 0x73000000)) {
-      CFG_Migrate();  // Config may be present with versions below 3.0.0
-    } else {
-      CFG_Default();
-    }
-  }
-#else
   if (sysCfg.cfg_holder != CFG_HOLDER) CFG_Default();
-#endif  // ALLOW_MIGRATE_TO_V3
   _cfgHash = getHash();
 
   RTC_Load();
 }
-
-#ifdef ALLOW_MIGRATE_TO_V3
-void CFG_Migrate()
-{
-  char log[LOGSZ];
-
-  if (spiffsPresent()) {
-    if (!spiffsflag) {
-#ifdef USE_SPIFFS
-      File f = SPIFFS.open(SPIFFS_CONFIG2, "r+");
-      if (f) {
-        uint8_t *bytes = (uint8_t*)&sysCfg2;
-        for (int i = 0; i < sizeof(SYSCFG2); i++) bytes[i] = f.read();
-        f.close();
-        snprintf_P(log, sizeof(log), PSTR("Config: Loaded previous configuration from spiffs count %d"), sysCfg2.saveFlag);
-        addLog(LOG_LEVEL_DEBUG, log);
-      } else {
-        addLog_P(LOG_LEVEL_ERROR, PSTR("Config: ERROR - Loading previous configuration failed"));
-      }
-    } else {
-#endif  // USE_SPIFFS
-      struct SYSCFGH {
-        unsigned long cfg_holder;
-        unsigned long saveFlag;
-      } _sysCfgH;
-
-      noInterrupts();
-      spi_flash_read((CFG_LOCATION2) * SPI_FLASH_SEC_SIZE, (uint32*)&sysCfg2, sizeof(SYSCFG2));
-      spi_flash_read((CFG_LOCATION2 + 1) * SPI_FLASH_SEC_SIZE, (uint32*)&_sysCfgH, sizeof(SYSCFGH));
-      if (sysCfg2.saveFlag < _sysCfgH.saveFlag)
-        spi_flash_read((CFG_LOCATION2 + 1) * SPI_FLASH_SEC_SIZE, (uint32*)&sysCfg2, sizeof(SYSCFG2));
-      interrupts();
-      snprintf_P(log, sizeof(log), PSTR("Config: Loaded previous configuration from flash at %X and count %d"), CFG_LOCATION2 + (sysCfg2.saveFlag &1), sysCfg2.saveFlag);
-      addLog(LOG_LEVEL_DEBUG, log);
-    }
-  }
-//  snprintf_P(log, sizeof(log), PSTR("Config: Check 2 for migration (%08X)"), sysCfg2.version);
-//  addLog(LOG_LEVEL_NONE, log);
-  if ((sysCfg2.version > 0x01000000) && (sysCfg2.version < 0x03000000)) {
-    CFG_Migrate_Part2();  // Config is present between version 1.0.0 and 3.0.0
-  } else {
-    CFG_Default();
-  }
-  _cfgHash = getHash();
-}
-#endif  // ALLOW_MIGRATE_TO_V3
 
 void CFG_Erase()
 {
@@ -371,37 +280,6 @@ void CFG_Dump()
   }
 }
 
-#ifdef USE_SPIFFS
-void initSpiffs()
-{
-  spiffsflag = 0;
-  if (!spiffsPresent()) {
-    spiffsflag = 1;
-  } else {
-    if (!SPIFFS.begin()) {
-      addLog_P(LOG_LEVEL_ERROR, PSTR("SPIFFS: WARNING - Failed to mount file system. Will use flash"));
-      spiffsflag = 2;
-    } else {
-      addLog_P(LOG_LEVEL_DEBUG, PSTR("SPIFFS: Mount successful"));
-      File f = SPIFFS.open(SPIFFS_CONFIG, "r");
-      if (!f) {
-        addLog_P(LOG_LEVEL_DEBUG, PSTR("SPIFFS: Formatting..."));
-        SPIFFS.format();
-        addLog_P(LOG_LEVEL_DEBUG, PSTR("SPIFFS: Formatted"));
-        File f = SPIFFS.open(SPIFFS_CONFIG, "w");
-        if (f) {
-          for (int i = 0; i < sizeof(SYSCFG); i++) f.write(0);
-          f.close();
-        } else {
-          addLog_P(LOG_LEVEL_ERROR, PSTR("SPIFFS: WARNING - Failed to init config file. Will use flash"));
-          spiffsflag = 3;
-        }
-      }
-    }
-  }
-}
-#endif  // USE_SPIFFS
-
 /********************************************************************************************/
 
 void CFG_DefaultSet1()
@@ -418,7 +296,6 @@ void CFG_DefaultSet2()
 {
   sysCfg.savedata = SAVE_DATA;
   sysCfg.savestate = SAVE_STATE;
-//  sysCfg.model = 0;
   sysCfg.timezone = APP_TIMEZONE;
   strlcpy(sysCfg.otaUrl, OTA_URL, sizeof(sysCfg.otaUrl));
 
@@ -445,7 +322,6 @@ void CFG_DefaultSet2()
   strlcpy(sysCfg.mqtt_topic, MQTT_TOPIC, sizeof(sysCfg.mqtt_topic));
   strlcpy(sysCfg.button_topic, "0", sizeof(sysCfg.button_topic));
   strlcpy(sysCfg.mqtt_grptopic, MQTT_GRPTOPIC, sizeof(sysCfg.mqtt_grptopic));
-  strlcpy(sysCfg.mqtt_subtopic, MQTT_SUBTOPIC, sizeof(sysCfg.mqtt_subtopic));
   sysCfg.mqtt_button_retain = MQTT_BUTTON_RETAIN;
   sysCfg.mqtt_power_retain = MQTT_POWER_RETAIN;
   sysCfg.value_units = 0;
@@ -515,6 +391,10 @@ void CFG_DefaultSet2()
 
   // 4.0.9
   CFG_DefaultSet_4_0_9();
+
+  // 4.1.1
+  CFG_DefaultSet_4_1_1();
+
 }
 
 void CFG_DefaultSet_3_2_4()
@@ -574,6 +454,14 @@ void CFG_DefaultSet_4_0_9()
   parseIP(&sysCfg.ip_address[3], WIFI_DNS);
 }
 
+void CFG_DefaultSet_4_1_1()
+{
+  sysCfg.mqtt_response = 0;
+  strlcpy(sysCfg.state_text[0], MQTT_STATUS_OFF, sizeof(sysCfg.state_text[0]));
+  strlcpy(sysCfg.state_text[1], MQTT_STATUS_ON, sizeof(sysCfg.state_text[1]));
+  strlcpy(sysCfg.state_text[2], MQTT_CMND_TOGGLE, sizeof(sysCfg.state_text[2]));
+}
+
 void CFG_Default()
 {
   addLog_P(LOG_LEVEL_NONE, PSTR("Config: Use default configuration"));
@@ -581,117 +469,6 @@ void CFG_Default()
   CFG_DefaultSet2();
   CFG_Save();
 }
-
-#ifdef ALLOW_MIGRATE_TO_V3
-void CFG_Migrate_Part2()
-{
-  addLog_P(LOG_LEVEL_NONE, PSTR("Config: Migrating configuration"));
-  CFG_DefaultSet1();
-  CFG_DefaultSet2();
-
-  sysCfg.seriallog_level = sysCfg2.seriallog_level;
-  sysCfg.syslog_level = sysCfg2.syslog_level;
-  strlcpy(sysCfg.syslog_host, sysCfg2.syslog_host, sizeof(sysCfg.syslog_host));
-  strlcpy(sysCfg.sta_ssid[0], sysCfg2.sta_ssid1, sizeof(sysCfg.sta_ssid[0]));
-  strlcpy(sysCfg.sta_pwd[0], sysCfg2.sta_pwd1, sizeof(sysCfg.sta_pwd[0]));
-  strlcpy(sysCfg.otaUrl, sysCfg2.otaUrl, sizeof(sysCfg.otaUrl));
-  strlcpy(sysCfg.mqtt_host, sysCfg2.mqtt_host, sizeof(sysCfg.mqtt_host));
-  strlcpy(sysCfg.mqtt_grptopic, sysCfg2.mqtt_grptopic, sizeof(sysCfg.mqtt_grptopic));
-  strlcpy(sysCfg.mqtt_topic, sysCfg2.mqtt_topic, sizeof(sysCfg.mqtt_topic));
-  strlcpy(sysCfg.button_topic, sysCfg2.mqtt_topic2, sizeof(sysCfg.button_topic));
-  strlcpy(sysCfg.mqtt_subtopic, sysCfg2.mqtt_subtopic, sizeof(sysCfg.mqtt_subtopic));
-  sysCfg.timezone = sysCfg2.timezone;
-  sysCfg.power = sysCfg2.power;
-  if (sysCfg2.version >= 0x01000D00) {  // 1.0.13
-    sysCfg.ledstate = sysCfg2.ledstate;
-  }
-  if (sysCfg2.version >= 0x01001600) {  // 1.0.22
-    sysCfg.mqtt_port = sysCfg2.mqtt_port;
-    strlcpy(sysCfg.mqtt_client, sysCfg2.mqtt_client, sizeof(sysCfg.mqtt_client));
-    strlcpy(sysCfg.mqtt_user, sysCfg2.mqtt_user, sizeof(sysCfg.mqtt_user));
-    strlcpy(sysCfg.mqtt_pwd, sysCfg2.mqtt_pwd, sizeof(sysCfg.mqtt_pwd));
-    strlcpy(sysCfg.friendlyname[0], sysCfg2.mqtt_client, sizeof(sysCfg.friendlyname[0]));
-  }
-  if (sysCfg2.version >= 0x01001700) {  // 1.0.23
-    sysCfg.webserver = sysCfg2.webserver;
-  }
-  if (sysCfg2.version >= 0x01001A00) {  // 1.0.26
-    sysCfg.bootcount = sysCfg2.bootcount;
-    strlcpy(sysCfg.hostname, sysCfg2.hostname, sizeof(sysCfg.hostname));
-    sysCfg.syslog_port = sysCfg2.syslog_port;
-  }
-  if (sysCfg2.version >= 0x01001B00) {  // 1.0.27
-    sysCfg.weblog_level = sysCfg2.weblog_level;
-  }
-  if (sysCfg2.version >= 0x01001C00) {  // 1.0.28
-    sysCfg.tele_period = sysCfg2.tele_period;
-    if ((sysCfg.tele_period > 0) && (sysCfg.tele_period < 10)) sysCfg.tele_period = 10;   // Do not allow periods < 10 seconds
-  }
-  if (sysCfg2.version >= 0x01002000) {  // 1.0.32
-    sysCfg.sta_config = sysCfg2.sta_config;
-  }
-  if (sysCfg2.version >= 0x01002300) {  // 1.0.35
-    sysCfg.savedata = sysCfg2.savedata;
-  }
-  if (sysCfg2.version >= 0x02000000) {  // 2.0.0
-    sysCfg.model = sysCfg2.model;
-  }
-  if (sysCfg2.version >= 0x02000300) {  // 2.0.3
-    sysCfg.mqtt_button_retain = sysCfg2.mqtt_retain;
-    sysCfg.savestate = sysCfg2.savestate;
-  }
-  if (sysCfg2.version >= 0x02000500) {  // 2.0.5
-    sysCfg.hlw_pcal = sysCfg2.hlw_pcal;
-    sysCfg.hlw_ucal = sysCfg2.hlw_ucal;
-    sysCfg.hlw_ical = sysCfg2.hlw_ical;
-    sysCfg.hlw_kWhyesterday = sysCfg2.hlw_kWhyesterday;
-    sysCfg.value_units = sysCfg2.value_units;
-  }
-  if (sysCfg2.version >= 0x02000600) {  // 2.0.6
-    sysCfg.hlw_pmin = sysCfg2.hlw_pmin;
-    sysCfg.hlw_pmax = sysCfg2.hlw_pmax;
-    sysCfg.hlw_umin = sysCfg2.hlw_umin;
-    sysCfg.hlw_umax = sysCfg2.hlw_umax;
-    sysCfg.hlw_imin = sysCfg2.hlw_imin;
-    sysCfg.hlw_imax = sysCfg2.hlw_imax;
-  }
-  if (sysCfg2.version >= 0x02000700) {  // 2.0.7
-//    sysCfg.message_format = 0;
-    strlcpy(sysCfg.domoticz_in_topic, sysCfg2.domoticz_in_topic, sizeof(sysCfg.domoticz_in_topic));
-    strlcpy(sysCfg.domoticz_out_topic, sysCfg2.domoticz_out_topic, sizeof(sysCfg.domoticz_out_topic));
-    sysCfg.domoticz_update_timer = sysCfg2.domoticz_update_timer;
-    for (byte i = 0; i < 4; i++) {
-      sysCfg.domoticz_relay_idx[i] = sysCfg2.domoticz_relay_idx[i];
-      sysCfg.domoticz_key_idx[i] = sysCfg2.domoticz_key_idx[i];
-    }
-
-    sysCfg.hlw_mpl = sysCfg2.hlw_mpl;              // MaxPowerLimit
-    sysCfg.hlw_mplh = sysCfg2.hlw_mplh;
-    sysCfg.hlw_mplw = sysCfg2.hlw_mplw;
-    sysCfg.hlw_mspl = sysCfg2.hlw_mspl;            // MaxSafePowerLimit
-    sysCfg.hlw_msplh = sysCfg2.hlw_msplh;
-    sysCfg.hlw_msplw = sysCfg2.hlw_msplw;
-    sysCfg.hlw_mkwh = sysCfg2.hlw_mkwh;            // MaxEnergy
-    sysCfg.hlw_mkwhs = sysCfg2.hlw_mkwhs;          // MaxEnergyStart
-  }
-  if (sysCfg2.version >= 0x02001000) {  // 2.0.16
-    sysCfg.hlw_kWhtoday = sysCfg2.hlw_kWhtoday;
-    sysCfg.hlw_kWhdoy = sysCfg2.hlw_kWhdoy;
-  }
-  if (sysCfg2.version >= 0x02001200) {  // 2.0.18
-    sysCfg.switchmode[0] = sysCfg2.switchmode;
-  }
-  if (sysCfg2.version >= 0x02010000) {  // 2.1.0
-    strlcpy(sysCfg.mqtt_fingerprint, sysCfg2.mqtt_fingerprint, sizeof(sysCfg.mqtt_fingerprint));
-  }
-  if (sysCfg2.version >= 0x02010200) {  // 2.1.2
-    sysCfg.sta_active = sysCfg2.sta_active;
-    strlcpy(sysCfg.sta_ssid[1], sysCfg2.sta_ssid2, sizeof(sysCfg.sta_ssid[1]));
-    strlcpy(sysCfg.sta_pwd[1], sysCfg2.sta_pwd2, sizeof(sysCfg.sta_pwd[1]));
-  }
-  CFG_Save();
-}
-#endif  // ALLOW_MIGRATE_TO_V3
 
 /********************************************************************************************/
 
@@ -752,6 +529,9 @@ void CFG_Delta()
     }
     if (sysCfg.version < 0x04000804) {
       CFG_DefaultSet_4_0_9();
+    }
+    if (sysCfg.version < 0x04010100) {
+      CFG_DefaultSet_4_1_1();
     }
     sysCfg.version = VERSION;
   }

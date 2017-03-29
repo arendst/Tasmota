@@ -235,7 +235,7 @@ boolean sl_command(char *type, uint16_t index, char *dataBufUc, uint16_t data_le
       }
       sl_any = 1;
     }
-    snprintf_P(svalue, ssvalue, PSTR("{\"LedTable\":\"%s\"}"), (sysCfg.led_table) ? MQTT_STATUS_ON : MQTT_STATUS_OFF);
+    snprintf_P(svalue, ssvalue, PSTR("{\"LedTable\":\"%s\"}"), getStateText(sysCfg.led_table));
   }
   else if (!strcmp(type,"FADE")) {
     if ((data_len > 0) && (payload >= 0) && (payload <= 2)) {
@@ -249,7 +249,7 @@ boolean sl_command(char *type, uint16_t index, char *dataBufUc, uint16_t data_le
         break;
       }
     }
-    snprintf_P(svalue, ssvalue, PSTR("{\"Fade\":\"%s\"}"), (sysCfg.led_fade) ? MQTT_STATUS_ON : MQTT_STATUS_OFF);
+    snprintf_P(svalue, ssvalue, PSTR("{\"Fade\":\"%s\"}"), getStateText(sysCfg.led_fade));
   }
   else if (!strcmp(type,"SPEED")) {  // 1 - fast, 8 - slow
     if ((data_len > 0) && (payload > 0) && (payload <= 8)) {
@@ -283,7 +283,7 @@ boolean sl_command(char *type, uint16_t index, char *dataBufUc, uint16_t data_le
     uint16_t color = (uint16_t)sl_dcolor[0] << 8;
     color += (uint16_t)sl_dcolor[1];
     snprintf_P(svalue, ssvalue, PSTR("{\"POWER\":\"%s\", \"Dimmer\":%d, \"Color\":\"%04X\"}"),
-      (power &1)?MQTT_STATUS_ON:MQTT_STATUS_OFF, sysCfg.led_dimmer[0], color);
+      getStateText(power &1), sysCfg.led_dimmer[0], color);
   }
   return serviced;
 }

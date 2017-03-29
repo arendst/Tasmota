@@ -130,6 +130,14 @@ const char HTTP_SCRIPT_CONSOL[] PROGMEM =
     "return false;"
   "}"
   "</script>";
+const char HTTP_SCRIPT_MODULE[] PROGMEM =
+  "var os;"
+  "function sk(s,g){"
+    "var o=os.replace(\"value='\"+s+\"'\",\"selected value='\"+s+\"'\");"
+    "document.getElementById('g'+g).innerHTML=o;"
+  "}"
+  "function sl(){"
+    "var o0=\"";
 const char HTTP_LNK_STYLE[] PROGMEM =
   ".q{float:right;width:64px;text-align:right;}"
   ".l{background:url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAMAAABEpIrGAAAALVBMVEX///8EBwfBwsLw8PAzNjaCg4NTVVUjJiZDRUUUFxdiZGSho6O"
@@ -521,6 +529,16 @@ void handleConfig()
 boolean inModule(byte val, uint8_t *arr)
 {
   if (!val) return false;  // None
+#ifndef USE_I2C
+  if (val == GPIO_I2C_SCL) return true;
+  if (val == GPIO_I2C_SDA) return true;
+#endif
+#ifndef USE_WS2812
+  if (val == GPIO_WS2812) return true;
+#endif
+#ifndef USE_IR_REMOTE
+  if (val == GPIO_IRSEND) return true;
+#endif
   for (byte i = 0; i < MAX_GPIO_PIN; i++) {
     if (arr[i] == val) return true;
   }
@@ -551,12 +569,14 @@ void handleModule()
   
   mytmplt cmodule;
   memcpy_P(&cmodule, &modules[sysCfg.module], sizeof(cmodule));
-  String func = F("var os;function sk(s,g){var o=os.replace(\"value='\"+s+\"'\",\"selected value='\"+s+\"'\");document.getElementById('g'+g).innerHTML=o;}function sl(){var o0=\"");
+  
+  String func = FPSTR(HTTP_SCRIPT_MODULE);
   for (byte j = 0; j < GPIO_SENSOR_END; j++) {
-    snprintf_P(stemp, sizeof(stemp), sensors[j]);
-    snprintf_P(line, sizeof(line), PSTR("%s'%d'>%02d %s-2"),
-      (inModule(j, cmodule.gp.io))?"<options disabled value=":"-1", j, j, stemp);
-    func += line;
+    if (!inModule(j, cmodule.gp.io)) {
+      snprintf_P(stemp, sizeof(stemp), sensors[j]);
+      snprintf_P(line, sizeof(line), PSTR("-1'%d'>%02d %s-2"), j, j, stemp);
+      func += line;
+    }
   }
   func += F("\";os=o0.replace(/-1/g,\"<option value=\").replace(/-2/g,\"</option>\");");
   for (byte i = 0; i < MAX_GPIO_PIN; i++) {
@@ -874,7 +894,7 @@ void handleSave()
     strlcpy(sysCfg.friendlyname[2], (!strlen(webServer->arg("a3").c_str())) ? FRIENDLY_NAME"3" : webServer->arg("a3").c_str(), sizeof(sysCfg.friendlyname[2]));
     strlcpy(sysCfg.friendlyname[3], (!strlen(webServer->arg("a4").c_str())) ? FRIENDLY_NAME"4" : webServer->arg("a4").c_str(), sizeof(sysCfg.friendlyname[3]));
     snprintf_P(log, sizeof(log), PSTR("HTTP: Other MQTT Enable %s, Emulation %d, Friendly Names %s, %s, %s and %s"),
-      (sysCfg.mqtt_enabled) ? MQTT_STATUS_ON : MQTT_STATUS_OFF, sysCfg.emulation, sysCfg.friendlyname[0], sysCfg.friendlyname[1], sysCfg.friendlyname[2], sysCfg.friendlyname[3]);
+      getStateText(sysCfg.mqtt_enabled), sysCfg.emulation, sysCfg.friendlyname[0], sysCfg.friendlyname[1], sysCfg.friendlyname[2], sysCfg.friendlyname[3]);
     addLog(LOG_LEVEL_INFO, log);
     break;
   case 6:

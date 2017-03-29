@@ -150,8 +150,8 @@ boolean domoticz_mqttData(char *topicBuf, uint16_t stopicBuf, char *dataBuf, uin
             found = 1;
           } else {
             if (((power >> i) &1) == nvalue) return 1;
-            snprintf_P(topicBuf, stopicBuf, PSTR("%s/%s/%s%s"),
-              sysCfg.mqtt_prefix[0], sysCfg.mqtt_topic, sysCfg.mqtt_subtopic, (Maxdevice > 1) ? stemp1 : "");
+            snprintf_P(topicBuf, stopicBuf, PSTR("%s/%s/POWER%s"),
+              sysCfg.mqtt_prefix[0], sysCfg.mqtt_topic, (Maxdevice > 1) ? stemp1 : "");
             snprintf_P(dataBuf, sdataBuf, PSTR("%d"), nvalue);
             found = 1;
           }
