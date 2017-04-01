@@ -33,7 +33,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <RingBuf.h>
 
 #define REGISTERS_PER_FRAME 3
-#define TIMER_RESET_US 20000L				        // Goal to achieve about 10-30ms timer interval
+#define INTER_FRAME_MS 35		            // Goal to achieve about 35ms timer interval
 #define BUFSIZE (REGISTERS_PER_FRAME * 10)  // Grab last 10 frames
 
 #define VOLTAGE_RANGE 0.250					    // Full scale V channel voltage
@@ -46,98 +46,52 @@ POSSIBILITY OF SUCH DAMAGE.
 #define VOLTAGE_MULTIPLIER   (float)  (1 / FLOAT24 * VOLTAGE_RANGE * VOLTAGE_DIVIDER)
 #define CURRENT_MULTIPLIER   (float)  (1 / FLOAT24 * CURRENT_RANGE * CURRENT_SHUNT)
 
-class PowerMeter_CS5460
-{
-public:
-	static float voltage;
-	static float current;
-	static float truePower;
-	static float powerFactor;
-  static float energy;
+float cs_voltage = 0;
+float cs_current = 0;
+float cs_truePower = 0;
+float cs_powerFactor = 0;
+float cs_energy = 0;
+int cs_lostDataCount = 0;
 
-	static volatile int lostDataCount;
+int _clkPin;
+int _sdoPin;
+uint32_t _sniffRegister = 0;
+uint8_t _bitsForNextData;
+bool _syncPulse = false;
+bool _readyReceived = false;
+unsigned long _lastClockTime = 0;
+RingBuf *_dataBuf = RingBuf_new(sizeof(uint32_t), BUFSIZE);
 
-	static void initialize(int clkPin, int sdoPin);
-  static void finalize();
-	static bool loop();
+#ifndef USE_WS2812_DMA  // Collides with Neopixelbus but solves exception
+void clockISR() ICACHE_RAM_ATTR;
+void timerOVF() ICACHE_RAM_ATTR;
+#endif  // USE_WS2812_DMA
 
-private:
-	static int _clkPin;
-	static int _sdoPin;
-
-	static volatile uint32_t _sniffRegister;
-	static volatile uint8_t _bitsForNextData;
-	static volatile bool _syncPulse;
-	static volatile bool _readyReceived;
-	static RingBuf *_dataBuf;
-
-	static void inline resetTimer();
-	static void inline clockISR();
-	static void inline timerOVF();
-};
-
-float PowerMeter_CS5460::voltage = 0;
-float PowerMeter_CS5460::current = 0;
-float PowerMeter_CS5460::truePower = 0;
-float PowerMeter_CS5460::powerFactor = 0;
-float PowerMeter_CS5460::energy = 0;
-int PowerMeter_CS5460::_clkPin;
-int PowerMeter_CS5460::_sdoPin;
-
-volatile int PowerMeter_CS5460::lostDataCount = 0;
-volatile uint32_t PowerMeter_CS5460::_sniffRegister = 0;
-volatile uint8_t PowerMeter_CS5460::_bitsForNextData;
-volatile bool PowerMeter_CS5460::_syncPulse = false;
-volatile bool PowerMeter_CS5460::_readyReceived = false;
-RingBuf *PowerMeter_CS5460::_dataBuf = RingBuf_new(sizeof(uint32_t), BUFSIZE);
-
-void PowerMeter_CS5460::initialize(int clkPin, int sdoPin)
+void cs5460_initialize(int clkPin, int sdoPin)
 {
 	_clkPin = clkPin;
 	_sdoPin = sdoPin;
 
-	// Setting up interrupt ISR on D2 (INT0), trigger function "clockISR()" when INT0 (CLK) is rising
+  // Set the CLK-pin and MISO-pin as inputs
+  pinMode(_clkPin, INPUT);
+  pinMode(_sdoPin, INPUT);
+  
+	// Setting up interrupt ISR, trigger function "clockISR()" when INT0 (CLK) is rising
 	attachInterrupt(digitalPinToInterrupt(_clkPin), clockISR, RISING);
-
-	// Set the CLK-pin and MISO-pin as inputs
-	pinMode(_clkPin, INPUT);
-	pinMode(_sdoPin, INPUT);
-
-	// Setup timer0 interrupt
-	noInterrupts();
-	timer0_isr_init();
-	timer0_attachInterrupt(timerOVF);
-	resetTimer();
-	interrupts();
 }
 
-void PowerMeter_CS5460::finalize()
+void clockISR()
 {
-  // Detach all interruptions
-  detachInterrupt(digitalPinToInterrupt(_clkPin));
-  timer0_detachInterrupt();
-}
+	 uint32_t elapsed = millis() - _lastClockTime;
+   _lastClockTime = millis();
 
-void inline PowerMeter_CS5460::resetTimer()
-{
-	uint32_t offset = (clockCyclesPerMicrosecond() * TIMER_RESET_US);  // Converts microseconds to ticks
-	timer0_write((ESP.getCycleCount() + offset));
-}
-
-void inline PowerMeter_CS5460::timerOVF()
-{
-	// Went ~20ms without a clock pulse, probably in an inter-frame period; reset sync
-	_syncPulse = true;
-	_readyReceived = false;
-	_bitsForNextData = 64;
-	resetTimer();
-}
-
-void inline PowerMeter_CS5460::clockISR()
-{
-	PowerMeter_CS5460::resetTimer();
-
-	if (!_syncPulse && !_readyReceived) {
+  // Went ~35ms without a clock pulse, probably in an inter-frame period; reset sync
+  if(elapsed > INTER_FRAME_MS) {
+    _syncPulse = true;
+    _readyReceived = false;
+    _bitsForNextData = 64;
+  }
+  else if (!_syncPulse && !_readyReceived) {
 		return;
 	}
 
@@ -156,15 +110,21 @@ void inline PowerMeter_CS5460::clockISR()
 			_bitsForNextData = 32;
 
 			// Useful data. Save in data buffer
-			if (_dataBuf->add(_dataBuf, (void*)&_sniffRegister) < 0)
+			if (_dataBuf->add=(_dataBuf, &_sniffRegister) < 0)
 			{
-				lostDataCount++;
+				cs_lostDataCount++;
 			}
 		}
 	}
 }
 
-bool PowerMeter_CS5460::loop()
+void cs_finish()
+{
+  // Detach all interruptions
+  detachInterrupt(digitalPinToInterrupt(_clkPin));
+}
+
+bool cs_loop()
 {
 	bool frameAvailable = _dataBuf->numElements(_dataBuf) >= REGISTERS_PER_FRAME;
 
@@ -174,11 +134,11 @@ bool PowerMeter_CS5460::loop()
 
 		// read Vrms register
 		_dataBuf->pull(_dataBuf, &rawRegister);
-		voltage = rawRegister * VOLTAGE_MULTIPLIER;
+		cs_voltage = rawRegister * VOLTAGE_MULTIPLIER;
 
 		// read Irms register
 		_dataBuf->pull(_dataBuf, &rawRegister);
-		current = rawRegister * CURRENT_MULTIPLIER;
+		cs_current = rawRegister * CURRENT_MULTIPLIER;
 
 		// read E (energy) register
 		_dataBuf->pull(_dataBuf, &rawRegister);
@@ -186,10 +146,10 @@ bool PowerMeter_CS5460::loop()
 			// must sign extend int24 -> int32LE
 			rawRegister |= 0xFF000000;
 		}
-		truePower = ((int32_t)rawRegister) * POWER_MULTIPLIER;
+		cs_truePower = ((int32_t)rawRegister) * POWER_MULTIPLIER;
 
-		float apparent_power = voltage * current;
-		powerFactor = truePower / apparent_power;
+		float apparent_power = cs_voltage * cs_current;
+		cs_powerFactor = cs_truePower / apparent_power;
 	}
 
 	return frameAvailable;
@@ -206,7 +166,6 @@ bool PowerMeter_CS5460::loop()
 
 
 
-PowerMeter_CS5460 powerMeter;
 Ticker tickerCS;
 
 byte cs_seconds, cs_startup;
@@ -223,26 +182,16 @@ void cs_init()
 
   cs_kWhtoday = 0;
 
-  powerMeter.initialize(pin[GPIO_CS_CLK], pin[GPIO_CS_SDO]);
+  cs5460_initialize(pin[GPIO_CS_CLK], pin[GPIO_CS_SDO]);
   
   tickerCS.attach_ms(200, cs_200mS);
-}
-
-void cs_finish()
-{
-  powerMeter.finalize();
-}
-
-void cs_loop()
-{
-  powerMeter.loop();
 }
 
 void cs_200mS()
 {
   unsigned long hlw_len, hlw_temp;
   
-  cs_kWhtoday = powerMeter.truePower;
+  cs_kWhtoday = cs_truePower;
 
   cs_seconds++;
   if (cs_seconds == 5) {
@@ -268,12 +217,12 @@ void hlw_savestate()
 
 boolean hlw_readEnergy(byte option, float &ed, uint16_t &e, uint16_t &w, uint16_t &u, float &i, float &c)
 {
-  ed = powerMeter.energy;
+  ed = cs_energy;
   e = 0;
-  w = powerMeter.truePower;
-  u = powerMeter.voltage;
-  i = powerMeter.current;
-  c = powerMeter.powerFactor;
+  w = cs_truePower;
+  u = cs_voltage;
+  i = cs_current;
+  c = cs_powerFactor;
   
   return true;
 }
@@ -310,9 +259,7 @@ void hlw_margin_chk()
 
 boolean hlw_command(char *type, uint16_t index, char *dataBuf, uint16_t data_len, int16_t payload, char *svalue, uint16_t ssvalue)
 {
-  boolean serviced = true;
-
-  snprintf_P(svalue, ssvalue, PSTR("{\"PowerLow\"}"));
+  boolean serviced = true; 
 
   if (!strcmp(type,"POWERLOW")) {
     if ((data_len > 0) && (payload >= 0) && (payload < 3601)) {
@@ -427,7 +374,8 @@ const char HTTP_ENERGY_SNS[] PROGMEM =
   "<tr><th>Power</th><td>%d W</td></tr>"
   "<tr><th>Power Factor</th><td>%s</td></tr>"
   "<tr><th>Energy Today</th><td>%s kWh</td></tr>"
-  "<tr><th>Energy Yesterday</th><td>%s kWh</td></tr>";
+  "<tr><th>Energy Yesterday</th><td>%s kWh</td></tr>"
+  "<tr><th>Lost data</th><td>%d</td></tr>";
 
 String hlw_webPresent()
 {
@@ -442,7 +390,7 @@ String hlw_webPresent()
   dtostrf(pc, 1, 2, stemp2);
   dtostrf(ped, 1, ENERGY_RESOLUTION &7, stemp3);
   dtostrf((float)sysCfg.hlw_kWhyesterday / 100000000, 1, ENERGY_RESOLUTION &7, stemp4);
-  snprintf_P(sensor, sizeof(sensor), HTTP_ENERGY_SNS, pu, stemp, pw, stemp2, stemp3, stemp4);
+  snprintf_P(sensor, sizeof(sensor), HTTP_ENERGY_SNS, pu, stemp, pw, stemp2, stemp3, stemp4, cs_lostDataCount);
   page += sensor;
   return page;
 }
