@@ -27,14 +27,14 @@ POSSIBILITY OF SUCH DAMAGE.
 /*********************************************************************************************\
  * CS5460A - Power Meter
  *
- * Source: Victor Ferrer https://github.com/vicfergar/ESP8266_MQTT
+ * Source: Victor Ferrer https://github.com/vicfergar/Sonoff-MQTT-OTA-Arduino
 \*********************************************************************************************/
 
 #include <RingBuf.h>
 
-#define REGISTERS_PER_FRAME 3
+#define BITS_PER_REGISTER 32            // Number of bits of read cycle
 #define INTER_FRAME_MS 35		            // Goal to achieve about 35ms timer interval
-#define BUFSIZE (REGISTERS_PER_FRAME * 10)  // Grab last 10 frames
+#define BUFSIZE 10                      // Grab last 10 frames
 
 #define VOLTAGE_RANGE 0.250					    // Full scale V channel voltage
 #define CURRENT_RANGE 0.050					    // Full scale I channel voltage (PGA 50x instead of 10x)
@@ -46,21 +46,38 @@ POSSIBILITY OF SUCH DAMAGE.
 #define VOLTAGE_MULTIPLIER   (float)  (1 / FLOAT24 * VOLTAGE_RANGE * VOLTAGE_DIVIDER)
 #define CURRENT_MULTIPLIER   (float)  (1 / FLOAT24 * CURRENT_RANGE * CURRENT_SHUNT)
 
+typedef enum
+{
+   WAIT_SYNC = 0,
+   WAIT_READY,
+   READ_VRMS,
+   READ_IRMS,
+   READ_E
+} CSReadStates;
+
+typedef struct
+{
+  uint32_t voltage;
+  uint32_t current;
+  uint32_t energy;
+} CSRawFrame;
+
 float cs_voltage = 0;
 float cs_current = 0;
 float cs_truePower = 0;
 float cs_powerFactor = 0;
 float cs_energy = 0;
 int cs_lostDataCount = 0;
+int cs_fullBufferWarnings = 0;
 
 int _clkPin;
 int _sdoPin;
 uint32_t _sniffRegister = 0;
 uint8_t _bitsForNextData;
-bool _syncPulse = false;
-bool _readyReceived = false;
+CSReadStates _readState = WAIT_SYNC;
+CSRawFrame _sniffFrame;
 unsigned long _lastClockTime = 0;
-RingBuf *_dataBuf = RingBuf_new(sizeof(uint32_t), BUFSIZE);
+RingBuf *_dataBuf = RingBuf_new(sizeof(CSRawFrame), BUFSIZE);
 
 #ifndef USE_WS2812_DMA  // Collides with Neopixelbus but solves exception
 void clockISR() ICACHE_RAM_ATTR;
@@ -85,36 +102,47 @@ void clockISR()
 	 uint32_t elapsed = millis() - _lastClockTime;
    _lastClockTime = millis();
 
-  // Went ~35ms without a clock pulse, probably in an inter-frame period; reset sync
-  if(elapsed > INTER_FRAME_MS) {
-    _syncPulse = true;
-    _readyReceived = false;
-    _bitsForNextData = 64;
+  if (elapsed > INTER_FRAME_MS) {
+    if (_readState != WAIT_SYNC) cs_lostDataCount++;
+    
+    // Went ~35ms without a clock pulse, probably in an inter-frame period; reset sync
+    _readState = WAIT_READY;
+    _bitsForNextData = 2 * BITS_PER_REGISTER; // Next valid register comes after 2 read cycles
   }
-  else if (!_syncPulse && !_readyReceived) {
-		return;
-	}
+  else if (_readState == WAIT_SYNC) {
+    return;
+  }
 
 	// Shift one bit to left and store MISO-value (0 or 1)
 	_sniffRegister = (_sniffRegister << 1) | digitalRead(_sdoPin);
-	_bitsForNextData--;
+  _bitsForNextData--;
 
 	if (_bitsForNextData == 0) {
-		if (!_readyReceived) {
+		if (_readState == WAIT_READY) {
 			// Check Status register is has conversion ready ( DRDY=1, ID=15 )
-			_readyReceived = _sniffRegister == 0x009003C1;
-			_bitsForNextData = 64;
+			_readState = _sniffRegister == 0x009003C1 ? READ_VRMS : WAIT_READY;
+			_bitsForNextData = 2 * BITS_PER_REGISTER; // Next valid register comes after 2 read cycles
 		}
-		else {
-			_syncPulse = false;
-			_bitsForNextData = 32;
+    else if (_readState == READ_VRMS){
+      _readState = READ_IRMS;
+      _bitsForNextData = BITS_PER_REGISTER; // Next cycle
+      _sniffFrame.voltage = _sniffRegister;
+    }
+    else if (_readState == READ_IRMS){
+      _readState = READ_E;
+      _bitsForNextData = BITS_PER_REGISTER; // Next cycle
+      _sniffFrame.current = _sniffRegister;
+    }
+    else if (_readState == READ_E){
+      _readState = WAIT_SYNC;
+      _sniffFrame.energy = _sniffRegister;
 
-			// Useful data. Save in data buffer
-			if (_dataBuf->add=(_dataBuf, &_sniffRegister) < 0)
-			{
-				cs_lostDataCount++;
-			}
-		}
+      // All useful data read. Save in data buffer
+      if (_dataBuf->add(_dataBuf, &_sniffFrame) < 0)
+      {
+        cs_fullBufferWarnings++;
+      }
+    }
 	}
 }
 
@@ -124,35 +152,28 @@ void cs_finish()
   detachInterrupt(digitalPinToInterrupt(_clkPin));
 }
 
-bool cs_loop()
+void cs_loop()
 {
-	bool frameAvailable = _dataBuf->numElements(_dataBuf) >= REGISTERS_PER_FRAME;
+  CSRawFrame readFrame;
 
-	if (frameAvailable)
+	if (_dataBuf->pull(_dataBuf, &readFrame))
 	{
-		uint32_t rawRegister;
-
 		// read Vrms register
-		_dataBuf->pull(_dataBuf, &rawRegister);
-		cs_voltage = rawRegister * VOLTAGE_MULTIPLIER;
+		cs_voltage = readFrame.voltage * VOLTAGE_MULTIPLIER;
 
 		// read Irms register
-		_dataBuf->pull(_dataBuf, &rawRegister);
-		cs_current = rawRegister * CURRENT_MULTIPLIER;
+		cs_current = readFrame.current * CURRENT_MULTIPLIER;
 
 		// read E (energy) register
-		_dataBuf->pull(_dataBuf, &rawRegister);
-		if (rawRegister & 0x800000) {
+		if (readFrame.energy & 0x800000) {
 			// must sign extend int24 -> int32LE
-			rawRegister |= 0xFF000000;
+			readFrame.energy |= 0xFF000000;
 		}
-		cs_truePower = ((int32_t)rawRegister) * POWER_MULTIPLIER;
+		cs_truePower = ((int32_t)readFrame.energy) * POWER_MULTIPLIER;
 
 		float apparent_power = cs_voltage * cs_current;
 		cs_powerFactor = cs_truePower / apparent_power;
 	}
-
-	return frameAvailable;
 }
 
 
@@ -214,19 +235,6 @@ void hlw_savestate()
   sysCfg.hlw_kWhdoy = (rtcTime.Valid) ? rtcTime.DayOfYear : 0;
   sysCfg.hlw_kWhtoday = cs_kWhtoday;
 }
-
-boolean hlw_readEnergy(byte option, float &ed, uint16_t &e, uint16_t &w, uint16_t &u, float &i, float &c)
-{
-  ed = cs_energy;
-  e = 0;
-  w = cs_truePower;
-  u = cs_voltage;
-  i = cs_current;
-  c = cs_powerFactor;
-  
-  return true;
-}
-
 /********************************************************************************************/
 
 boolean hlw_margin(byte type, uint16_t margin, uint16_t value, byte &flag, byte &saveflag)
@@ -332,18 +340,17 @@ void hlw_commands(char *svalue, uint16_t ssvalue)
 
 void hlw_mqttStat(byte option, char* svalue, uint16_t ssvalue)
 {
-  char stemp0[10], stemp1[10], stemp2[10], stemp3[10], speriod[20];
-  float ped, pi, pc;
-  uint16_t pe, pw, pu;
+  char stemp0[10], stemp1[10], stemp2[10], stemp3[10], stemp4[10], stemp5[10], speriod[20];
 
-  hlw_readEnergy(option, ped, pe, pw, pu, pi, pc);
   dtostrf((float)sysCfg.hlw_kWhyesterday / 100000000, 1, ENERGY_RESOLUTION &7, stemp0);
-  dtostrf(ped, 1, ENERGY_RESOLUTION &7, stemp1);
-  dtostrf(pc, 1, 2, stemp2);
-  dtostrf(pi, 1, 3, stemp3);
-  snprintf_P(speriod, sizeof(speriod), PSTR(", \"Period\":%d"), pe);
+  dtostrf(cs_energy, 1, ENERGY_RESOLUTION &7, stemp1);
+  dtostrf(cs_truePower, 1, 1, stemp2);
+  dtostrf(cs_powerFactor, 1, 2, stemp3);
+  dtostrf(cs_voltage, 1, 1, stemp4);
+  dtostrf(cs_current, 1, 3, stemp5);
+  snprintf_P(speriod, sizeof(speriod), PSTR(", \"Period\":%d"), 0);
   snprintf_P(svalue, ssvalue, PSTR("%s\"Yesterday\":%s, \"Today\":%s%s, \"Power\":%d, \"Factor\":%s, \"Voltage\":%d, \"Current\":%s}"),
-    svalue, stemp0, stemp1, (option) ? speriod : "", pw, stemp2, pu, stemp3);
+    svalue, stemp0, stemp1, (option) ? speriod : "", stemp2, stemp3, stemp4, stemp5);
 }
 
 void hlw_mqttPresent()
@@ -369,9 +376,9 @@ void hlw_mqttStatus(char* svalue, uint16_t ssvalue)
 
 #ifdef USE_WEBSERVER
 const char HTTP_ENERGY_SNS[] PROGMEM =
-  "<tr><th>Voltage</th><td>%d V</td></tr>"
+  "<tr><th>Voltage</th><td>%s V</td></tr>"
   "<tr><th>Current</th><td>%s A</td></tr>"
-  "<tr><th>Power</th><td>%d W</td></tr>"
+  "<tr><th>Power</th><td>%s W</td></tr>"
   "<tr><th>Power Factor</th><td>%s</td></tr>"
   "<tr><th>Energy Today</th><td>%s kWh</td></tr>"
   "<tr><th>Energy Yesterday</th><td>%s kWh</td></tr>"
@@ -380,17 +387,15 @@ const char HTTP_ENERGY_SNS[] PROGMEM =
 String hlw_webPresent()
 {
   String page = "";
-  char stemp[10], stemp2[10], stemp3[10], stemp4[10], sensor[300];
-  float ped, pi, pc;
-  uint16_t pe, pw, pu;
-
-  hlw_readEnergy(0, ped, pe, pw, pu, pi, pc);
-
-  dtostrf(pi, 1, 3, stemp);
-  dtostrf(pc, 1, 2, stemp2);
-  dtostrf(ped, 1, ENERGY_RESOLUTION &7, stemp3);
-  dtostrf((float)sysCfg.hlw_kWhyesterday / 100000000, 1, ENERGY_RESOLUTION &7, stemp4);
-  snprintf_P(sensor, sizeof(sensor), HTTP_ENERGY_SNS, pu, stemp, pw, stemp2, stemp3, stemp4, cs_lostDataCount);
+  char stemp[10], stemp2[10], stemp3[10], stemp4[10], stemp5[10], stemp6[10], sensor[350];
+  
+  dtostrf(cs_voltage, 1, 1, stemp);
+  dtostrf(cs_current, 1, 3, stemp2);
+  dtostrf(cs_truePower, 1, 1, stemp3);
+  dtostrf(cs_powerFactor, 1, 2, stemp4);
+  dtostrf(cs_energy, 1, ENERGY_RESOLUTION &7, stemp5);
+  dtostrf((float)sysCfg.hlw_kWhyesterday / 100000000, 1, ENERGY_RESOLUTION &7, stemp6);
+  snprintf_P(sensor, sizeof(sensor), HTTP_ENERGY_SNS, stemp, stemp2, stemp3, stemp4, stemp5, stemp6, cs_lostDataCount);
   page += sensor;
   return page;
 }

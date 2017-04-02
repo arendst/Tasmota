@@ -1797,7 +1797,7 @@ void stateloop()
     button = digitalRead(pin[GPIO_KEY1 +i]);
     if ((button == PRESSED) && (lastbutton[i] == NOT_PRESSED)) {
       if (sysCfg.mqtt_enabled && mqttClient.connected() && (strlen(sysCfg.button_topic) != 0) && strcmp(sysCfg.button_topic, "0")) {
-        send_button_power(0, i +1, 2);   // Execute commend via MQTT
+        send_button_power(0, i +1, 2);   // Execute command via MQTT
       } else {
         do_cmnd_power(i +1, 2);       // Execute command internally
       }
