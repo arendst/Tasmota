@@ -3,7 +3,7 @@
  * Remove all command lists
  * Remove command SmartConfig (superseded by WifiConfig)
  * Fix boot loop when selecting module Sonoff 4CH or Sonoff Touch on non ESP8285 hardware
- * Add optional support for Toshiba and Mitsubishi HVAC IR control (needs updated IRanother  (#257)
+ * Add optional support for Toshiba and Mitsubishi HVAC IR control (needs updated IRanother  (#83, #257)
  * Add all configured switches to Domoticz Configuration web page (#305)
  * Fix compile error when selecting WS2812 DMA (#313)
  *
