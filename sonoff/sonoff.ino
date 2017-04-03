@@ -10,7 +10,7 @@
  * ====================================================
 */
 
-#define VERSION                0x04010100  // 4.1.1
+#define VERSION                0x04010200  // 4.1.2
 
 enum log_t   {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG_MORE, LOG_LEVEL_ALL};
 enum week_t  {Last, First, Second, Third, Fourth};
@@ -541,7 +541,7 @@ void mqtt_reconnect()
 #ifdef USE_MQTT_TLS
     addLog_P(LOG_LEVEL_INFO, PSTR("MQTT: Verify TLS fingerprint..."));
     if (!espClient.connect(sysCfg.mqtt_host, sysCfg.mqtt_port)) {
-      snprintf_P(log, sizeof(log), PSTR("MQTT: TLS CONNECT FAILED USING WRONG MQTTHost (%s) or MQTTPort (%d). Retry in %d seconds"),
+      snprintf_P(log, sizeof(log), PSTR("MQTT: TLS Connect FAILED to %s:%d. Retry in %d seconds"),
         sysCfg.mqtt_host, sysCfg.mqtt_port, mqttcounter);
       addLog(LOG_LEVEL_DEBUG, log);
       return;
@@ -549,7 +549,7 @@ void mqtt_reconnect()
     if (espClient.verify(sysCfg.mqtt_fingerprint, sysCfg.mqtt_host)) {
       addLog_P(LOG_LEVEL_INFO, PSTR("MQTT: Verified"));
     } else {
-      addLog_P(LOG_LEVEL_DEBUG, PSTR("MQTT: WARNING - Insecure connection due to invalid Fingerprint"));
+      addLog_P(LOG_LEVEL_DEBUG, PSTR("MQTT: Insecure connection due to invalid Fingerprint"));
     }
 #endif  // USE_MQTT_TLS
     mqttClient.setCallback(mqttDataCb);
@@ -613,7 +613,8 @@ boolean mqtt_command(boolean grpflg, char *type, uint16_t index, char *dataBuf, 
   else if (!strcmp(type,"STATETEXT") && (index > 0) && (index <= 3)) {
     if ((data_len > 0) && (data_len < sizeof(sysCfg.state_text[0]))) {
       for(i = 0; i <= data_len; i++) if (dataBuf[i] == ' ') dataBuf[i] = '_';
-      strlcpy(sysCfg.state_text[index -1], (payload == 1) ? (index==1)?MQTT_STATUS_OFF:(index==2)?MQTT_STATUS_ON:MQTT_CMND_TOGGLE : dataBuf, sizeof(sysCfg.state_text[0]));
+//      strlcpy(sysCfg.state_text[index -1], (payload == 1) ? (index==1)?MQTT_STATUS_OFF:(index==2)?MQTT_STATUS_ON:MQTT_CMND_TOGGLE : dataBuf, sizeof(sysCfg.state_text[0]));
+      strlcpy(sysCfg.state_text[index -1], dataBuf, sizeof(sysCfg.state_text[0]));
     }
     snprintf_P(svalue, ssvalue, PSTR("{\"StateText%d\":\"%s\"}"), index, getStateText(index -1));
   }
@@ -899,7 +900,10 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
         payload--;
         byte new_modflg = (sysCfg.module != payload);
         sysCfg.module = payload;
-        if (new_modflg) for (byte i = 0; i < MAX_GPIO_PIN; i++) sysCfg.my_module.gp.io[i] = 0;
+        if (new_modflg) {
+          for (byte i = 0; i < MAX_GPIO_PIN; i++) sysCfg.my_module.gp.io[i] = 0;
+          setModuleFlashMode(0);
+        }
         restartflag = 2;
       }
       snprintf_P(stemp1, sizeof(stemp1), modules[sysCfg.module].name);
@@ -997,11 +1001,11 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
       }
       snprintf_P(svalue, sizeof(svalue), PSTR("{\"Sleep\":\"%d%s (%d%s)\"}"), sleep, (sysCfg.value_units) ? " mS" : "", sysCfg.sleep, (sysCfg.value_units) ? " mS" : "");
     }
-    else if (!strcmp(type,"FLASHCHIPMODE")) {
+    else if (!strcmp(type,"FLASHMODE")) {  // 0 = QIO, 1 = QOUT, 2 = DIO, 3 = DOUT
       if ((data_len > 0) && (payload >= 0) && (payload <= 3)) {
-        if (ESP.getFlashChipMode() != payload) setFlashChipMode(0, payload &3);
+        if (ESP.getFlashChipMode() != payload) setFlashMode(0, payload &3);
       }
-      snprintf_P(svalue, sizeof(svalue), PSTR("{\"FlashChipMode\":%d}"), ESP.getFlashChipMode());
+      snprintf_P(svalue, sizeof(svalue), PSTR("{\"FlashMode\":%d}"), ESP.getFlashChipMode());
     }
     else if (!strcmp(type,"UPGRADE") || !strcmp(type,"UPLOAD")) {
       if ((data_len > 0) && (payload == 1)) {
@@ -1098,7 +1102,7 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
       }
       snprintf_P(svalue, sizeof(svalue), PSTR("{\"Hostname\":\"%s\"}"), sysCfg.hostname);
     }
-    else if (!strcmp(type,"WIFICONFIG") || !strcmp(type,"SMARTCONFIG")) {
+    else if (!strcmp(type,"WIFICONFIG")) {
       if ((data_len > 0) && (payload >= WIFI_RESTART) && (payload < MAX_WIFI_OPTION)) {
         sysCfg.sta_config = payload;
         wificheckflag = sysCfg.sta_config;
@@ -1267,47 +1271,11 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
   }
   if (type == NULL) {
     blinks = 201;
-/*    
-    snprintf_P(svalue, sizeof(svalue), PSTR("{\"Commands1\":\"Status, SaveData, SaveSate, Sleep, Upgrade, Otaurl, Restart, Reset, WifiConfig, Seriallog, Syslog, LogHost, LogPort, SSId, Password, AP, IPAddres, NTPServer, Hostname, Module, Modules, GPIO, GPIOs\"}"));
-    mqtt_publish_topic_P(0, PSTR("COMMANDS1"), svalue);
-
-    snprintf_P(svalue, sizeof(svalue), PSTR("{\"Commands2\":\"Mqtt, MqttResponse, MqttHost, MqttPort, MqttUser, MqttPassword, MqttClient, Topic, GroupTopic, ButtonTopic, ButtonRetain, SwitchTopic, SwitchRetain, PowerRetain, Units, Timezone, LedState, LedPower, TelePeriod\"}"));
-    mqtt_publish_topic_P(0, PSTR("COMMANDS2"), svalue);
-
-    snprintf_P(svalue, sizeof(svalue), PSTR("{\"Commands3\":\"Power%s, PulseTime, BlinkTime, BlinkCount, ButtonRestrict"), (sysCfg.module != MOTOR) ? ", PowerOnState" : "");
-#ifdef USE_WEBSERVER
-    snprintf_P(svalue, sizeof(svalue), PSTR("%s, Weblog, Webserver, WebPassword, Emulation"), svalue);
-#endif
-    if (swt_flg) snprintf_P(svalue, sizeof(svalue), PSTR("%s, SwitchMode"), svalue);
-    if (pwm_flg) snprintf_P(svalue, sizeof(svalue), PSTR("%s, PWM"), svalue); 
-#ifdef USE_I2C
-    if (i2c_flg) snprintf_P(svalue, sizeof(svalue), PSTR("%s, I2CScan"), svalue);
-#endif  // USE_I2C
-    if (sysCfg.module == SONOFF_LED) snprintf_P(svalue, sizeof(svalue), PSTR("%s, Color, Dimmer, Fade, Speed, Wakeup, WakeupDuration, LedTable"), svalue);
-#ifdef USE_WS2812
-    if (pin[GPIO_WS2812] < 99) snprintf_P(svalue, sizeof(svalue), PSTR("%s, Color, Dimmer, Fade, Speed, Wakeup, LedTable, Pixels, Led, Width, Scheme"), svalue);
-#endif
-#ifdef USE_IR_REMOTE
-    if (pin[GPIO_IRSEND] < 99) snprintf_P(svalue, sizeof(svalue), PSTR("%s, IRSend"), svalue);
-#endif
-    snprintf_P(svalue, sizeof(svalue), PSTR("%s\"}"), svalue);
-    mqtt_publish_topic_P(0, PSTR("COMMANDS3"), svalue);
-
-#ifdef USE_DOMOTICZ
-    domoticz_commands(svalue, sizeof(svalue));
-    mqtt_publish_topic_P(0, PSTR("COMMANDS4"), svalue);
-#endif  // USE_DOMOTICZ
-
-    if (hlw_flg) {
-      hlw_commands(svalue, sizeof(svalue));
-      mqtt_publish_topic_P(0, PSTR("COMMANDS5"), svalue);
-    }
-*/
-    snprintf_P(svalue, sizeof(svalue), PSTR("{\"Command\":\"Invalid command\"}"));
-    mqtt_publish_topic_P(0, PSTR("COMMAND"), svalue);
-  } else {
-    mqtt_publish_topic_P(4, type, svalue);
+    snprintf_P(topicBuf, sizeof(topicBuf), PSTR("COMMAND"));
+    snprintf_P(svalue, sizeof(svalue), PSTR("{\"Command\":\"Unknown\"}"));
+    type = (char*)topicBuf;
   }
+  mqtt_publish_topic_P(4, type, svalue);
 }
 
 /********************************************************************************************/
@@ -1465,7 +1433,7 @@ void publish_status(uint8_t payload)
   }
 
   if ((payload == 0) || (payload == 4)) {
-    snprintf_P(svalue, sizeof(svalue), PSTR("{\"StatusMEM\":{\"ProgramSize\":%d, \"Free\":%d, \"Heap\":%d, \"SpiffsStart\":%d, \"SpiffsSize\":%d, \"FlashSize\":%d, \"ProgramFlashSize\":%d, \"FlashChipMode\":%d}}"),
+    snprintf_P(svalue, sizeof(svalue), PSTR("{\"StatusMEM\":{\"ProgramSize\":%d, \"Free\":%d, \"Heap\":%d, \"SpiffsStart\":%d, \"SpiffsSize\":%d, \"FlashSize\":%d, \"ProgramFlashSize\":%d, \"FlashMode\":%d}}"),
       ESP.getSketchSize()/1024, ESP.getFreeSketchSpace()/1024, ESP.getFreeHeap()/1024, ((uint32_t)&_SPIFFS_start - 0x40200000)/1024,
       (((uint32_t)&_SPIFFS_end - 0x40200000) - ((uint32_t)&_SPIFFS_start - 0x40200000))/1024, ESP.getFlashChipRealSize()/1024, ESP.getFlashChipSize()/1024, ESP.getFlashChipMode());
     mqtt_publish_topic_P(option, PSTR("STATUS4"), svalue);
@@ -1879,7 +1847,7 @@ void stateloop()
       if (otaflag == 90) {  // Allow MQTT to reconnect
         otaflag = 0;
         if (otaok) {
-          if ((sysCfg.module == SONOFF_TOUCH) || (sysCfg.module == SONOFF_4CH)) setFlashChipMode(1, 3); // DOUT - ESP8285
+          setModuleFlashMode(1);  // QIO - ESP8266, DOUT - ESP8285 (Sonoff 4CH and Touch)
           snprintf_P(svalue, sizeof(svalue), PSTR("Successful. Restarting"));
         } else {
           snprintf_P(svalue, sizeof(svalue), PSTR("Failed %s"), ESPhttpUpdate.getLastErrorString().c_str());
@@ -2160,7 +2128,7 @@ void setup()
 
   if (Serial.baudRate() != Baudrate) {
     if (seriallog_level) {
-      snprintf_P(log, sizeof(log), PSTR("APP: Change baudrate to %d and Serial logging will be disabled in %d seconds"), Baudrate, seriallog_timer);
+      snprintf_P(log, sizeof(log), PSTR("APP: Change your baudrate to %d"), Baudrate);
       addLog(LOG_LEVEL_INFO, log);
     }
     delay(100);

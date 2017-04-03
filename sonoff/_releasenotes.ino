@@ -1,4 +1,13 @@
-/* 4.1.1 20170329
+/* 4.1.2 20170403
+ * Rename Unrecognised command to Unknown command
+ * Remove all command lists
+ * Remove command SmartConfig (superseded by WifiConfig)
+ * Fix boot loop when selecting module Sonoff 4CH or Sonoff Touch on non ESP8285 hardware
+ * Add optional support for Toshiba and Mitsubishi HVAC IR control (needs updated IRanother  (#257)
+ * Add all configured switches to Domoticz Configuration web page (#305)
+ * Fix compile error when selecting WS2812 DMA (#313)
+ *
+ * 4.1.1 20170329
  * Fix default Telemetry for command Prefix3
  * Fix webserver Module parameters for disabled select
  * Fix sensor status for enabled switches

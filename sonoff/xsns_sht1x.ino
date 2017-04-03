@@ -183,8 +183,7 @@ void sht_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
 
   char stemp[10], shum[10];
   if (sht_readCharTempHum(stemp, shum)) {
-    snprintf_P(svalue, ssvalue, PSTR("%s, \"SHT1X\":{\"Temperature\":%s, \"Humidity\":%s}"),
-      svalue, stemp, shum);
+    snprintf_P(svalue, ssvalue, JSON_SNS_TEMPHUM, svalue, "SHT1X", stemp, shum);
     *djson = 1;
 #ifdef USE_DOMOTICZ
     domoticz_sensor2(stemp, shum);

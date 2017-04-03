@@ -28,13 +28,11 @@ POSSIBILITY OF SUCH DAMAGE.
  * IR Remote send using IRremoteESP8266 library
 \*********************************************************************************************/
 
-//  * Add support for Toshiba and Mitsubishi HVAC IR control (#257)
-//  #define USE_IR_HVAC                            // Support for HVAC system using IR (+2k code)
-
 #ifndef USE_IR_HVAC
   #include <IRremoteESP8266.h>
 #else
-  #include <IRMitsubishiAC.h>  // Currently firmware.elf section `.text' will not fit in region `iram1_0_seg'
+  #include <IRMitsubishiAC.h>
+
   // HVAC TOSHIBA_
   #define HVAC_TOSHIBA_HDR_MARK       4400
   #define HVAC_TOSHIBA_HDR_SPACE      4300
@@ -44,7 +42,11 @@ POSSIBILITY OF SUCH DAMAGE.
   #define HVAC_TOSHIBA_RPT_MARK       440
   #define HVAC_TOSHIBA_RPT_SPACE      7048 // Above original iremote limit
   #define HVAC_TOSHIBA_DATALEN        9
+
   IRMitsubishiAC *mitsubir = NULL;
+
+  const char FANSPEED[] = "A12345S";
+  const char HVACMODE[] = "HDCA";
 #endif
 
 IRsend *irsend = NULL;
@@ -143,7 +145,7 @@ boolean ir_send_command(char *type, uint16_t index, char *dataBufUc, uint16_t da
         else  error = true;
       }
     } else error = true;
-    if (error) snprintf_P(svalue, ssvalue, PSTR("{\"IRHVAC\":\"Wrong parameters value for Vendor, Mode and/or FanSpeed\"}"));
+    if (error) snprintf_P(svalue, ssvalue, PSTR("{\"IRHVAC\":\"Wrong Vendor, Mode and/or FanSpeed\"}"));
   }
 #endif  // USE_IR_HVAC
   else {
@@ -157,46 +159,30 @@ boolean ir_hvac_toshiba(const char *HVAC_Mode, const char *HVAC_FanMode, boolean
 {
   unsigned int rawdata[2 + 2*8*HVAC_TOSHIBA_DATALEN + 2];
   byte data[HVAC_TOSHIBA_DATALEN] = { 0xF2, 0x0D, 0x03, 0xFC, 0x01, 0x00, 0x00, 0x00, 0x00 };
-  boolean error = false;
 
-  if (HVAC_Mode == NULL || !strcmp(HVAC_Mode,"HOT")) { //default HVAC_HOT
-    data[6] = (byte) B00000011;
+  char *p, *token;
+  uint8_t mode;
+
+  if (HVAC_Mode == NULL) {
+    p = (char*)HVACMODE;  // default HVAC_HOT
+  } else {
+    p = strchr(HVACMODE, HVAC_Mode[0]);
   }
-  else if (HVAC_Mode && !strcmp(HVAC_Mode,"COLD")) {
-    data[6] = (byte) B00000001;
-  }
-  else if (HVAC_Mode && !strcmp(HVAC_Mode,"DRY")) {
-    data[6] = (byte) B00000010;
-  }
-  else if (HVAC_Mode && !strcmp(HVAC_Mode,"AUTO")) {
-    data[6] = (byte) B00000000;
-  }
-  else error = true;
+  if (!p) return true;
+  data[6] = (p - HVACMODE) ^ 0x03;  // HOT = 0x03, DRY = 0x02, COOL = 0x01, AUTO = 0x00
 
   if (!HVAC_Power) data[6] = (byte) 0x07; // Turn OFF HVAC
 
-  if (HVAC_FanMode && !strcmp(HVAC_FanMode,"1")) {
-    data[6] = data[6] | (byte) B01000000;
+  if (HVAC_FanMode == NULL) {
+    p = (char*)FANSPEED;  // default FAN_SPEED_AUTO
+  } else {
+    p = strchr(FANSPEED, HVAC_FanMode[0]);
   }
-  else if (HVAC_FanMode && !strcmp(HVAC_FanMode,"2")) {
-    data[6] = data[6] | (byte) B01100000;
-  }
-  else if (HVAC_FanMode && !strcmp(HVAC_FanMode,"3")) {
-    data[6] = data[6] | (byte) B10000000;
-  }
-  else if (HVAC_FanMode && !strcmp(HVAC_FanMode,"4")) {
-    data[6] = data[6] | (byte) B10100000;
-  }
-  else if (HVAC_FanMode && !strcmp(HVAC_FanMode,"5")) {
-    data[6] = data[6] | (byte) B11000000;
-  }
-  else if (HVAC_FanMode == NULL || !strcmp(HVAC_FanMode,"AUTO")) { // default FAN_SPEED_AUTO
-    data[6] = data[6] | (byte) B00000000;
-  }
-  else if (HVAC_FanMode && !strcmp(HVAC_FanMode,"SILENT")) {
-    data[6] = data[6] | (byte) B00000000;
-  }
-  else error = true;
+  if (!p) return true;
+  mode = p - FANSPEED +1;    
+  if ((mode == 1) || (mode == 7)) mode = 0;
+  mode = mode << 5;       // AUTO = 0x00, SPEED = 0x40, 0x60, 0x80, 0xA0, 0xC0, SILENT = 0x00
+  data[6] = data[6] | mode;
 
   byte Temp;
   if (HVAC_Temp > 30) {
@@ -243,63 +229,46 @@ boolean ir_hvac_toshiba(const char *HVAC_Mode, const char *HVAC_FanMode, boolean
   irsend->sendRaw(rawdata,i,38);
   interrupts();
 
-  return error;
+  return false;
 }
 
 boolean ir_hvac_mitsubishi(const char *HVAC_Mode,const char *HVAC_FanMode, boolean HVAC_Power, int HVAC_Temp)
 {
-  boolean error = false;
+  char *p, *token;
+  uint8_t mode;
   char log[LOGSZ];
     
   mitsubir->stateReset();
-          
-  if (HVAC_Mode == NULL || !strcmp(HVAC_Mode,"HOT")) {  // default HVAC_HOT
-    mitsubir->setMode(MITSUBISHI_AC_HEAT);
+
+  if (HVAC_Mode == NULL) {
+    p = (char*)HVACMODE;  // default HVAC_HOT
+  } else {
+    p = strchr(HVACMODE, HVAC_Mode[0]);
   }
-  else if (HVAC_Mode && !strcmp(HVAC_Mode,"COLD")) {
-    mitsubir->setMode(MITSUBISHI_AC_COOL);
-  }
-  else if (HVAC_Mode && !strcmp(HVAC_Mode,"DRY")) {
-    mitsubir->setMode(MITSUBISHI_AC_DRY);
-  }
-  else if (HVAC_Mode && !strcmp(HVAC_Mode,"AUTO")) {
-    mitsubir->setMode(MITSUBISHI_AC_AUTO);
-  } else error = true;
+  if (!p) return true;
+  mode = (p - HVACMODE +1) << 3;  // HOT = 0x08, DRY = 0x10, COOL = 0x18, AUTO = 0x20
+  mitsubir->setMode(mode);
 
   mitsubir->setPower(~HVAC_Power);
 
-  if (HVAC_FanMode && !strcmp(HVAC_FanMode,"1")) {
-    mitsubir->setFan(1);
+  if (HVAC_FanMode == NULL) {
+    p = (char*)FANSPEED;  // default FAN_SPEED_AUTO
+  } else {
+    p = strchr(FANSPEED, HVAC_FanMode[0]);
   }
-  else if (HVAC_FanMode && !strcmp(HVAC_FanMode,"2")) {
-    mitsubir->setFan(2);
-  }
-  else if (HVAC_FanMode && !strcmp(HVAC_FanMode,"3")) {
-    mitsubir->setFan(3);
-  }
-  else if (HVAC_FanMode && !strcmp(HVAC_FanMode,"4")) {
-    mitsubir->setFan(4);
-  }
-  else if (HVAC_FanMode && !strcmp(HVAC_FanMode,"5")) {
-    mitsubir->setFan(5);
-  }
-  else if (HVAC_FanMode == NULL || !strcmp(HVAC_FanMode,"AUTO")) { // default FAN_SPEED_AUTO
-    mitsubir->setFan(MITSUBISHI_AC_FAN_AUTO);
-  }
-  else if (HVAC_FanMode && !strcmp(HVAC_FanMode,"SILENT")) {
-    mitsubir->setFan(MITSUBISHI_AC_FAN_SILENT);
-  }
-  else error = true;
+  if (!p) return true;
+  mode = p - FANSPEED;    // AUTO = 0, SPEED = 1 .. 5, SILENT = 6
+  mitsubir->setFan(mode);
 
   mitsubir->setTemp(HVAC_Temp);
   mitsubir->setVane(MITSUBISHI_AC_VANE_AUTO);
-
   mitsubir->send();
-  snprintf_P(log, sizeof(log), PSTR("IRHVAC: Sent to Mitsubishi. Power %d,  Mode %d, FanSpeed %d, Temp %d, VaneMode %d"),
-    mitsubir->getPower(), mitsubir->getMode(), mitsubir->getFan(), mitsubir->getTemp(), mitsubir->getVane());
-  addLog(LOG_LEVEL_DEBUG, log);
   
-  return error;
+//  snprintf_P(log, sizeof(log), PSTR("IRHVAC: Mitsubishi Power %d, Mode %d, FanSpeed %d, Temp %d, VaneMode %d"),
+//    mitsubir->getPower(), mitsubir->getMode(), mitsubir->getFan(), mitsubir->getTemp(), mitsubir->getVane());
+//  addLog(LOG_LEVEL_DEBUG, log);
+  
+  return false;
 }
 #endif  // USE_IR_HVAC
 #endif  // USE_IR_REMOTE
