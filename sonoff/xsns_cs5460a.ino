@@ -60,15 +60,17 @@ typedef struct
   uint32_t voltage;
   uint32_t current;
   uint32_t energy;
+  uint32_t dt;
 } CSRawFrame;
 
 float cs_voltage = 0;
 float cs_current = 0;
 float cs_truePower = 0;
 float cs_powerFactor = 0;
-float cs_energy = 0;
 int cs_lostDataCount = 0;
 int cs_fullBufferWarnings = 0;
+
+unsigned long cs_kWhtoday;
 
 int _clkPin;
 int _sdoPin;
@@ -77,6 +79,7 @@ uint8_t _bitsForNextData;
 CSReadStates _readState = WAIT_SYNC;
 CSRawFrame _sniffFrame;
 unsigned long _lastClockTime = 0;
+unsigned long _lastDataFrameTime = 0;
 RingBuf *_dataBuf = RingBuf_new(sizeof(CSRawFrame), BUFSIZE);
 
 #ifndef USE_WS2812_DMA  // Collides with Neopixelbus but solves exception
@@ -99,10 +102,12 @@ void cs5460_initialize(int clkPin, int sdoPin)
 
 void clockISR()
 {
-	 uint32_t elapsed = millis() - _lastClockTime;
-   _lastClockTime = millis();
+   unsigned long currentClockTime = millis();
+  
+	 uint32_t elapsed = currentClockTime - _lastClockTime;
+   _lastClockTime = currentClockTime;
 
-  if (elapsed > INTER_FRAME_MS) {
+  if (elapsed > INTER_FRAME_MS && _readState != READ_E) { // Read E register can take a while for high consumption
     if (_readState != WAIT_SYNC) cs_lostDataCount++;
     
     // Went ~35ms without a clock pulse, probably in an inter-frame period; reset sync
@@ -120,7 +125,7 @@ void clockISR()
 	if (_bitsForNextData == 0) {
 		if (_readState == WAIT_READY) {
 			// Check Status register is has conversion ready ( DRDY=1, ID=15 )
-			_readState = _sniffRegister == 0x009003C1 ? READ_VRMS : WAIT_READY;
+			_readState = (_sniffRegister & 0x00800000) ? READ_VRMS : WAIT_READY;
 			_bitsForNextData = 2 * BITS_PER_REGISTER; // Next valid register comes after 2 read cycles
 		}
     else if (_readState == READ_VRMS){
@@ -136,6 +141,8 @@ void clockISR()
     else if (_readState == READ_E){
       _readState = WAIT_SYNC;
       _sniffFrame.energy = _sniffRegister;
+      _sniffFrame.dt = currentClockTime - _lastDataFrameTime;
+      _lastDataFrameTime = currentClockTime;
 
       // All useful data read. Save in data buffer
       if (_dataBuf->add(_dataBuf, &_sniffFrame) < 0)
@@ -170,6 +177,7 @@ void cs_loop()
 			readFrame.energy |= 0xFF000000;
 		}
 		cs_truePower = ((int32_t)readFrame.energy) * POWER_MULTIPLIER;
+    cs_kWhtoday += (cs_truePower * readFrame.dt) / 36;
 
 		float apparent_power = cs_voltage * cs_current;
 		cs_powerFactor = cs_truePower / apparent_power;
@@ -189,44 +197,28 @@ void cs_loop()
 
 Ticker tickerCS;
 
-byte cs_seconds, cs_startup;
-unsigned long cs_kWhtoday;
-uint32_t cs_lasttime;
+byte cs_startup;
 
 void cs_init()
 {
-  if (!sysCfg.hlw_pcal || (sysCfg.hlw_pcal == 4975)) {
-    sysCfg.hlw_pcal = HLW_PREF_PULSE;
-    sysCfg.hlw_ucal = HLW_UREF_PULSE;
-    sysCfg.hlw_ical = HLW_IREF_PULSE;
-  }
-
   cs_kWhtoday = 0;
+  cs_startup = 1;
 
   cs5460_initialize(pin[GPIO_CS_CLK], pin[GPIO_CS_SDO]);
   
-  tickerCS.attach_ms(200, cs_200mS);
+  tickerCS.attach_ms(1000, cs_1s);
 }
 
-void cs_200mS()
+void cs_1s()
 {
-  unsigned long hlw_len, hlw_temp;
+  if (rtc_loctime() == rtc_midnight()) {
+    sysCfg.hlw_kWhyesterday = cs_kWhtoday;
+    cs_kWhtoday = 0;
+  }
   
-  cs_kWhtoday = cs_truePower;
-
-  cs_seconds++;
-  if (cs_seconds == 5) {
-    cs_seconds = 0;
-
-    if (rtc_loctime() == rtc_midnight()) {
-      sysCfg.hlw_kWhyesterday = cs_kWhtoday;
-      cs_kWhtoday = 0;
-    }
-    
-    if (cs_startup && rtcTime.Valid && (rtcTime.DayOfYear == sysCfg.hlw_kWhdoy)) {
-      cs_kWhtoday = sysCfg.hlw_kWhtoday;
-      cs_startup = 0;
-    }
+  if (cs_startup && rtcTime.Valid && (rtcTime.DayOfYear == sysCfg.hlw_kWhdoy)) {
+    cs_kWhtoday = sysCfg.hlw_kWhtoday;
+    cs_startup = 0;
   }
 }
 
@@ -254,7 +246,6 @@ boolean hlw_margin(byte type, uint16_t margin, uint16_t value, byte &flag, byte 
 
 void hlw_setPowerSteadyCounter(byte value)
 {
-  //power_steady_cntr = 2;
 }
 
 void hlw_margin_chk()
@@ -343,7 +334,7 @@ void hlw_mqttStat(byte option, char* svalue, uint16_t ssvalue)
   char stemp0[10], stemp1[10], stemp2[10], stemp3[10], stemp4[10], stemp5[10], speriod[20];
 
   dtostrf((float)sysCfg.hlw_kWhyesterday / 100000000, 1, ENERGY_RESOLUTION &7, stemp0);
-  dtostrf(cs_energy, 1, ENERGY_RESOLUTION &7, stemp1);
+  dtostrf((float)cs_kWhtoday / 100000000, 1, ENERGY_RESOLUTION &7, stemp1);
   dtostrf(cs_truePower, 1, 1, stemp2);
   dtostrf(cs_powerFactor, 1, 2, stemp3);
   dtostrf(cs_voltage, 1, 1, stemp4);
@@ -393,7 +384,7 @@ String hlw_webPresent()
   dtostrf(cs_current, 1, 3, stemp2);
   dtostrf(cs_truePower, 1, 1, stemp3);
   dtostrf(cs_powerFactor, 1, 2, stemp4);
-  dtostrf(cs_energy, 1, ENERGY_RESOLUTION &7, stemp5);
+  dtostrf((float)cs_kWhtoday / 100000000, 1, ENERGY_RESOLUTION &7, stemp5);
   dtostrf((float)sysCfg.hlw_kWhyesterday / 100000000, 1, ENERGY_RESOLUTION &7, stemp6);
   snprintf_P(sensor, sizeof(sensor), HTTP_ENERGY_SNS, stemp, stemp2, stemp3, stemp4, stemp5, stemp6, cs_lostDataCount);
   page += sensor;
