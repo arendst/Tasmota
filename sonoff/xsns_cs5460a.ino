@@ -34,7 +34,9 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #define BITS_PER_REGISTER 32            // Number of bits of read cycle
 #define INTER_FRAME_MS 35		            // Goal to achieve about 35ms timer interval
-#define BUFSIZE 10                      // Grab last 10 frames
+#define READ_E_LIMIT_MS 400             // Limit of time to wait for E register reading. Empirically obtained for ~16A
+#define STATUS_RDY_MASK 0x00800001      // DRDY=1 (Data Ready) !IC=1 (Invalid Command. Normally logic 1)
+#define BUFSIZE 5                       // Grab last 5 frames
 
 #define VOLTAGE_RANGE 0.250					    // Full scale V channel voltage
 #define CURRENT_RANGE 0.050					    // Full scale I channel voltage (PGA 50x instead of 10x)
@@ -45,6 +47,8 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #define VOLTAGE_MULTIPLIER   (float)  (1 / FLOAT24 * VOLTAGE_RANGE * VOLTAGE_DIVIDER)
 #define CURRENT_MULTIPLIER   (float)  (1 / FLOAT24 * CURRENT_RANGE * CURRENT_SHUNT)
+
+#define MILLIS_TO_HOUR       (float)  (1 / 1000 * 3600)
 
 typedef enum
 {
@@ -67,10 +71,11 @@ float cs_voltage = 0;
 float cs_current = 0;
 float cs_truePower = 0;
 float cs_powerFactor = 0;
+float cs_period = 0;
 int cs_lostDataCount = 0;
 int cs_fullBufferWarnings = 0;
 
-unsigned long cs_kWhtoday;
+unsigned long cs_kWhtoday; // W * 10^-5 (deca micro Watt)
 
 int _clkPin;
 int _sdoPin;
@@ -107,7 +112,7 @@ void clockISR()
 	 uint32_t elapsed = currentClockTime - _lastClockTime;
    _lastClockTime = currentClockTime;
 
-  if (elapsed > INTER_FRAME_MS && _readState != READ_E) { // Read E register can take a while for high consumption
+  if ((elapsed > INTER_FRAME_MS && _readState != READ_E) || elapsed > READ_E_LIMIT_MS) { // Read E register can take a while for high consumption
     if (_readState != WAIT_SYNC) cs_lostDataCount++;
     
     // Went ~35ms without a clock pulse, probably in an inter-frame period; reset sync
@@ -124,8 +129,8 @@ void clockISR()
 
 	if (_bitsForNextData == 0) {
 		if (_readState == WAIT_READY) {
-			// Check Status register is has conversion ready ( DRDY=1, ID=15 )
-			_readState = (_sniffRegister & 0x00800000) ? READ_VRMS : WAIT_READY;
+			// Check Status register is has conversion ready
+			_readState = (_sniffRegister & STATUS_RDY_MASK) == STATUS_RDY_MASK ? READ_VRMS : WAIT_READY;
 			_bitsForNextData = 2 * BITS_PER_REGISTER; // Next valid register comes after 2 read cycles
 		}
     else if (_readState == READ_VRMS){
@@ -159,7 +164,7 @@ void cs_finish()
   detachInterrupt(digitalPinToInterrupt(_clkPin));
 }
 
-void cs_loop()
+void cs5460_loop()
 {
   CSRawFrame readFrame;
 
@@ -177,7 +182,12 @@ void cs_loop()
 			readFrame.energy |= 0xFF000000;
 		}
 		cs_truePower = ((int32_t)readFrame.energy) * POWER_MULTIPLIER;
+    cs_period = cs_truePower * readFrame.dt * MILLIS_TO_HOUR;
     cs_kWhtoday += (cs_truePower * readFrame.dt) / 36;
+
+    //char log[LOGSZ];
+    //snprintf_P(log, sizeof(log), PSTR("READ: kwh %d vrms %d irms %d e %d dt %d stat %d"), cs_kWhtoday, readFrame.voltage, readFrame.current, readFrame.energy, readFrame.dt, readFrame.stat);
+    //addLog(LOG_LEVEL_DEBUG, log);
 
 		float apparent_power = cs_voltage * cs_current;
 		cs_powerFactor = cs_truePower / apparent_power;
@@ -197,7 +207,15 @@ void cs_loop()
 
 Ticker tickerCS;
 
+byte hlw_pminflg = 0;
+byte hlw_pmaxflg = 0;
+byte hlw_uminflg = 0;
+byte hlw_umaxflg = 0;
+byte hlw_iminflg = 0;
+byte hlw_imaxflg = 0;
+
 byte cs_startup;
+byte power_steady_cntr;
 
 void cs_init()
 {
@@ -220,6 +238,8 @@ void cs_1s()
     cs_kWhtoday = sysCfg.hlw_kWhtoday;
     cs_startup = 0;
   }
+
+  cs5460_loop();
 }
 
 void hlw_savestate()
@@ -246,10 +266,57 @@ boolean hlw_margin(byte type, uint16_t margin, uint16_t value, byte &flag, byte 
 
 void hlw_setPowerSteadyCounter(byte value)
 {
+  power_steady_cntr = value;
 }
 
 void hlw_margin_chk()
 {
+  char log[LOGSZ], svalue[200];  // was MESSZ
+  uint16_t uped, piv;
+  boolean flag, jsonflg;
+
+  if (power_steady_cntr) {
+    power_steady_cntr--;
+    return;
+  }
+
+  if (power && (sysCfg.hlw_pmin || sysCfg.hlw_pmax || sysCfg.hlw_umin || sysCfg.hlw_umax || sysCfg.hlw_imin || sysCfg.hlw_imax)) {
+    piv = (uint16_t)(cs_current * 1000);
+
+//    snprintf_P(log, sizeof(log), PSTR("HLW: W %d, U %d, I %d"), pw, pu, piv);
+//    addLog(LOG_LEVEL_DEBUG, log);
+
+    snprintf_P(svalue, sizeof(svalue), PSTR("{"));
+    jsonflg = 0;
+    if (hlw_margin(0, sysCfg.hlw_pmin, cs_truePower, flag, hlw_pminflg)) {
+      snprintf_P(svalue, sizeof(svalue), PSTR("%s%s\"PowerLow\":\"%s\""), svalue, (jsonflg)?", ":"", getStateText(flag));
+      jsonflg = 1;
+    }
+    if (hlw_margin(1, sysCfg.hlw_pmax, cs_truePower, flag, hlw_pmaxflg)) {
+      snprintf_P(svalue, sizeof(svalue), PSTR("%s%s\"PowerHigh\":\"%s\""), svalue, (jsonflg)?", ":"", getStateText(flag));
+      jsonflg = 1;
+    }
+    if (hlw_margin(0, sysCfg.hlw_umin, cs_voltage, flag, hlw_uminflg)) {
+      snprintf_P(svalue, sizeof(svalue), PSTR("%s%s\"VoltageLow\":\"%s\""), svalue, (jsonflg)?", ":"", getStateText(flag));
+      jsonflg = 1;
+    }
+    if (hlw_margin(1, sysCfg.hlw_umax, cs_truePower, flag, hlw_umaxflg)) {
+      snprintf_P(svalue, sizeof(svalue), PSTR("%s%s\"VoltageHigh\":\"%s\""), svalue, (jsonflg)?", ":"", getStateText(flag));
+      jsonflg = 1;
+    }
+    if (hlw_margin(0, sysCfg.hlw_imin, piv, flag, hlw_iminflg)) {
+      snprintf_P(svalue, sizeof(svalue), PSTR("%s%s\"CurrentLow\":\"%s\""), svalue, (jsonflg)?", ":"", getStateText(flag));
+      jsonflg = 1;
+    }
+    if (hlw_margin(1, sysCfg.hlw_imax, piv, flag, hlw_imaxflg)) {
+      snprintf_P(svalue, sizeof(svalue), PSTR("%s%s\"CurrentHigh\":\"%s\""), svalue, (jsonflg)?", ":"", getStateText(flag));
+      jsonflg = 1;
+    }
+    if (jsonflg) {
+      snprintf_P(svalue, sizeof(svalue), PSTR("%s}"), svalue);
+      mqtt_publish_topic_P(1, PSTR("MARGINS"), svalue);
+    }
+  }
 }
 
 /*********************************************************************************************\
@@ -296,23 +363,9 @@ boolean hlw_command(char *type, uint16_t index, char *dataBuf, uint16_t data_len
     }
     snprintf_P(svalue, ssvalue, PSTR("{\"CurrentHigh\":\"%d%s\"}"), sysCfg.hlw_imax, (sysCfg.value_units) ? " mA" : "");
   }
-  else if (!strcmp(type,"HLWPCAL")) {
-    if ((data_len > 0) && (payload > 0) && (payload < 32001)) {
-      sysCfg.hlw_pcal = (payload > 9999) ? payload : HLW_PREF_PULSE;  // 12530
-    }
-    snprintf_P(svalue, ssvalue, PSTR("(\"HlwPcal\":\"%d%s\"}"), sysCfg.hlw_pcal, (sysCfg.value_units) ? " uS" : "");
-  }
-  else if (!strcmp(type,"HLWUCAL")) {
-    if ((data_len > 0) && (payload > 0) && (payload < 32001)) {
-      sysCfg.hlw_ucal = (payload > 999) ? payload : HLW_UREF_PULSE;  // 1950
-    }
-    snprintf_P(svalue, ssvalue, PSTR("{\"HlwUcal\":\"%d%s\"}"), sysCfg.hlw_ucal, (sysCfg.value_units) ? " uS" : "");
-  }
-  else if (!strcmp(type,"HLWICAL")) {
-    if ((data_len > 0) && (payload > 0) && (payload < 32001)) {
-      sysCfg.hlw_ical = (payload > 2499) ? payload : HLW_IREF_PULSE;  // 3500
-    }
-    snprintf_P(svalue, ssvalue, PSTR("{\"HlwIcal\":\"%d%s\"}"), sysCfg.hlw_ical, (sysCfg.value_units) ? " uS" : "");
+  else if (!strcmp(type,"RESETKWH")) {
+    cs_kWhtoday = 0;
+    snprintf_P(svalue, ssvalue, PSTR("{\"ResetKWh\":\"Done\"}"));
   }
   else {
     serviced = false;
@@ -322,7 +375,7 @@ boolean hlw_command(char *type, uint16_t index, char *dataBuf, uint16_t data_len
 
 void hlw_commands(char *svalue, uint16_t ssvalue)
 {
-  snprintf_P(svalue, ssvalue, PSTR("{\"Commands5\":\"PowerLow, PowerHigh, VoltageLow, VoltageHigh, CurrentLow, CurrentHigh, HlwPcal, HlwUcal, HlwIcal\"}"));
+  snprintf_P(svalue, ssvalue, PSTR("{\"Commands5\":\"PowerLow, PowerHigh, VoltageLow, VoltageHigh, CurrentLow, CurrentHigh, ResetKWh\"}"));
 }
 
 /*********************************************************************************************\
@@ -331,17 +384,18 @@ void hlw_commands(char *svalue, uint16_t ssvalue)
 
 void hlw_mqttStat(byte option, char* svalue, uint16_t ssvalue)
 {
-  char stemp0[10], stemp1[10], stemp2[10], stemp3[10], stemp4[10], stemp5[10], speriod[20];
+  char sKWHY[10], sKWHT[10], sTruePower[10], sPowerFactor[10], sVoltage[10], sCurrent[10], sPeriod1[10], sPeriod2[20];
 
-  dtostrf((float)sysCfg.hlw_kWhyesterday / 100000000, 1, ENERGY_RESOLUTION &7, stemp0);
-  dtostrf((float)cs_kWhtoday / 100000000, 1, ENERGY_RESOLUTION &7, stemp1);
-  dtostrf(cs_truePower, 1, 1, stemp2);
-  dtostrf(cs_powerFactor, 1, 2, stemp3);
-  dtostrf(cs_voltage, 1, 1, stemp4);
-  dtostrf(cs_current, 1, 3, stemp5);
-  snprintf_P(speriod, sizeof(speriod), PSTR(", \"Period\":%d"), 0);
-  snprintf_P(svalue, ssvalue, PSTR("%s\"Yesterday\":%s, \"Today\":%s%s, \"Power\":%d, \"Factor\":%s, \"Voltage\":%d, \"Current\":%s}"),
-    svalue, stemp0, stemp1, (option) ? speriod : "", stemp2, stemp3, stemp4, stemp5);
+  dtostrf((float)sysCfg.hlw_kWhyesterday / 100000000, 1, ENERGY_RESOLUTION &7, sKWHY);
+  dtostrf((float)cs_kWhtoday / 100000000, 1, ENERGY_RESOLUTION &7, sKWHT);
+  dtostrf(cs_truePower, 1, 1, sTruePower);
+  dtostrf(cs_powerFactor, 1, 2, sPowerFactor);
+  dtostrf(cs_voltage, 1, 1, sVoltage);
+  dtostrf(cs_current, 1, 3, sCurrent);
+  dtostrf(cs_period, 1, 3, sPeriod1);
+  snprintf_P(sPeriod2, sizeof(sPeriod2), PSTR(", \"Period\":%s"), sPeriod1);
+  snprintf_P(svalue, ssvalue, PSTR("%s\"Yesterday\":%s, \"Today\":%s%s, \"Power\":%s, \"Factor\":%s, \"Voltage\":%s, \"Current\":%s}"),
+    svalue, sKWHY, sKWHT, (option) ? sPeriod2 : "", sTruePower, sPowerFactor, sVoltage, sCurrent);
 }
 
 void hlw_mqttPresent()
@@ -378,15 +432,16 @@ const char HTTP_ENERGY_SNS[] PROGMEM =
 String hlw_webPresent()
 {
   String page = "";
-  char stemp[10], stemp2[10], stemp3[10], stemp4[10], stemp5[10], stemp6[10], sensor[350];
-  
-  dtostrf(cs_voltage, 1, 1, stemp);
-  dtostrf(cs_current, 1, 3, stemp2);
-  dtostrf(cs_truePower, 1, 1, stemp3);
-  dtostrf(cs_powerFactor, 1, 2, stemp4);
-  dtostrf((float)cs_kWhtoday / 100000000, 1, ENERGY_RESOLUTION &7, stemp5);
-  dtostrf((float)sysCfg.hlw_kWhyesterday / 100000000, 1, ENERGY_RESOLUTION &7, stemp6);
-  snprintf_P(sensor, sizeof(sensor), HTTP_ENERGY_SNS, stemp, stemp2, stemp3, stemp4, stemp5, stemp6, cs_lostDataCount);
+  char sKWHY[10], sKWHT[10], sTruePower[10], sPowerFactor[10], sVoltage[10], sCurrent[10], sensor[300];
+
+  dtostrf((float)sysCfg.hlw_kWhyesterday / 100000000, 1, ENERGY_RESOLUTION &7, sKWHY);
+  dtostrf((float)cs_kWhtoday / 100000000, 1, ENERGY_RESOLUTION &7, sKWHT);
+  dtostrf(cs_truePower, 1, 1, sTruePower);
+  dtostrf(cs_powerFactor, 1, 2, sPowerFactor);
+  dtostrf(cs_voltage, 1, 1, sVoltage);
+  dtostrf(cs_current, 1, 3, sCurrent);
+
+  snprintf_P(sensor, sizeof(sensor), HTTP_ENERGY_SNS, sVoltage, sCurrent, sTruePower, sPowerFactor, sKWHT, sKWHY, cs_lostDataCount);
   page += sensor;
   return page;
 }

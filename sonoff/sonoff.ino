@@ -2230,10 +2230,6 @@ void loop()
   if (sysCfg.emulation) pollUDP();
 #endif  // USE_EMULATION
 
-#ifdef USE_CS5460A
-  if (hlw_flg) cs_loop();
-#endif  // USE_CS5460A
-
   if (millis() >= timerxs) stateloop();
   if (sysCfg.mqtt_enabled) mqttClient.loop();
   if (Serial.available()) serial();
