@@ -141,7 +141,7 @@ void TouchScreen::_handleWidget_Name(int period)
 void TouchScreen::handleTop()
 {
   _handleWidget_Time(1000);
-  _handleWidget_Wifi(1800, random(100));
+  _handleWidget_Wifi(1800, (WiFi.status() != WL_CONNECTED) ? 0 : WIFI_getRSSIasQuality(WiFi.RSSI()));
   _handleWidget_Alarm(1000);
   _handleWidget_Network();
   _handleWidget_Name(1300);
