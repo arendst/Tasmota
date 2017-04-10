@@ -268,11 +268,11 @@ const char HTTP_SNS_HUM[] PROGMEM =
 const char HTTP_SNS_PRESSURE[] PROGMEM =
   "<tr><th>%s Pressure</th><td>%s hPa</td></tr>";
 const char HTTP_SNS_LIGHT[] PROGMEM =
-  "<tr><th>%s Light</th><td>%d of 10</td></tr>";
+  "<tr><th>%s Light</th><td>%d%</td></tr>";
 const char HTTP_SNS_NOISE[] PROGMEM =
-  "<tr><th>%s Noise</th><td>%d of 10</td></tr>";
+  "<tr><th>%s Noise</th><td>%d%</td></tr>";
 const char HTTP_SNS_DUST[] PROGMEM =
-  "<tr><th>%s Air quality</th><td>%d of 10</td></tr>";
+  "<tr><th>%s Air quality</th><td>%d%</td></tr>";
 const char HTTP_END[] PROGMEM =
   "</div>"
   "</body>"

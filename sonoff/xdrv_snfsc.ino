@@ -78,8 +78,9 @@ void sc_rcvstat(char *rcvstat)
     for (str = strtok_r(rcvstat, ":", &p); str && i < 5; str = strtok_r(NULL, ":", &p)) value[i++] = atoi(str);
     if (value[0] > 0) {
       for (byte i = 0; i < 5; i++) sc_value[i] = value[i];
-      sc_value[2] = 11 - sc_value[2];  // Invert light level
-      sc_value[4] = 11 - sc_value[4];  // Invert dust level
+      sc_value[2] = (11 - sc_value[2]) * 10;  // Invert light level
+      sc_value[3] *= 10;
+      sc_value[4] = (11 - sc_value[4]) * 10;  // Invert dust level
       Serial.write("AT+SEND=ok\e");
     } else {
       Serial.write("AT+SEND=fail\e");
