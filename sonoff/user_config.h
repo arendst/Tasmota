@@ -145,8 +145,6 @@
 //  #define USE_WS2812_DMA                         // DMA supports only GPIO03 (= Serial TXD) (+1k mem)
                                                  //   When USE_WS2812_DMA is enabled expect Exceptions on Pow
 
-#define USE_TOUCHSCREEN                          // Adafruit TFT TouchScreen (+14.6k code, +1.3k mem) - Diable by //
-
 /*********************************************************************************************\
  * Compile a minimal version if upgrade memory gets tight ONLY TO BE USED FOR UPGRADE STEP 1!
  *   To be used as step 1 during upgrade. 

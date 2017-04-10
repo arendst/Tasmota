@@ -27,7 +27,8 @@ enum emul_t  {EMUL_NONE, EMUL_WEMO, EMUL_HUE, EMUL_MAX};
 #include "user_config_override.h"
 
 #ifdef USE_TOUCHSCREEN
-#include "touchscreen.h"
+  #include "touchscreen.h"
+  extern TouchScreen *touchscreen;
 #endif // USE_TOUCHSCREEN
 
 
@@ -2214,7 +2215,7 @@ void setup()
   addLog(LOG_LEVEL_INFO, log);
 
 #ifdef USE_TOUCHSCREEN
-  touchscreen_setup();
+  touchscreen = new TouchScreen();
 #endif // USE_TOUCHSCREEN
 }
 
@@ -2235,7 +2236,7 @@ void loop()
   if (Serial.available()) serial();
 
 #ifdef USE_TOUCHSCREEN
-  touchscreen_handle();
+  if (touchscreen) touchscreen->handle();
 #endif // USE_TOUCHSCREEN
 
 //  yield();     // yield == delay(0), delay contains yield, auto yield in loop

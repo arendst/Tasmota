@@ -4,39 +4,23 @@
 
 TouchScreen *touchscreen = NULL;
 
-void touchscreen_setup()
-{
-  touchscreen = new TouchScreen();
-  
-  touchscreen->_tft->fillScreen(ILI9341_BLUE);
-  
-  touchscreen->_tft->drawRoundRect(24, 48, 80, 80, 8, ILI9341_GREEN);
-  touchscreen->_tft->drawRoundRect(120, 48, 80, 80, 8, ILI9341_GREEN);
-  touchscreen->_tft->drawRoundRect(216, 48, 80, 176, 8, ILI9341_GREEN);
-  touchscreen->_tft->drawRoundRect(24, 144, 176, 80, 8, ILI9341_GREEN);
-
-  touchscreen->_tft->drawFastHLine(0, 24, 320, ILI9341_WHITE);
-  touchscreen->_tft->drawFastHLine(0, 25, 320, ILI9341_WHITE);
-
-  /*
-  Serial.print("Initializing SD card...");
-  if (!SD.begin(SD_CS)) {
-    Serial.println("failed!");
-  }
-  Serial.println("OK!");
-  */
-}
-
-void touchscreen_handle() 
-{
-  touchscreen->handle();
-}
-
 TouchScreen::TouchScreen()
 {
   _tft = new Adafruit_ILI9341(TFT_CS, TFT_DC);
   _tft->begin();
   _tft->setRotation(1);
+
+  /* Temporary setup of the screen */
+  _tft->fillScreen(ILI9341_BLUE);
+  
+  _tft->drawRoundRect(24, 48, 80, 80, 8, ILI9341_GREEN);
+  _tft->drawRoundRect(120, 48, 80, 80, 8, ILI9341_GREEN);
+  _tft->drawRoundRect(216, 48, 80, 176, 8, ILI9341_GREEN);
+  _tft->drawRoundRect(24, 144, 176, 80, 8, ILI9341_GREEN);
+
+  _tft->drawFastHLine(0, 24, 320, ILI9341_WHITE);
+  _tft->drawFastHLine(0, 25, 320, ILI9341_WHITE);
+  /* END(temp setup) */
 
   _ts = new Adafruit_STMPE610(STMPE_CS);
   _ts->begin();

@@ -34,9 +34,6 @@
 #define SCREEN_MAX_BUTTONS 10
 typedef enum { TOUCH_NONE, TOUCH_DOWN, TOUCH_UP } ScreenTouch_t;
 
-void touchscreen_setup();
-void touchscreen_handle();
-
 class TouchScreen
 {
   public:
