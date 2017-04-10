@@ -1,4 +1,12 @@
-/* 4.1.2 20170403
+/* 4.1.3 20170410
+ * Add user configuarble GPIO to module S20 Socket and Slampher
+ * Add support for Sonoff SC (#112)
+ * Set PWM frequency from 1000Hz to 910Hz as used on iTead Sonoff Led firmware (#122)
+ * Set Sonoff Led unconfigured floating outputs to 0 to reduce exceptions due to power supply instabilities (#122)
+ * Add Access Point Mac Address to Status 11 and Telemetry (#329)
+ * Fix DS18B20 negative temperature readings (#334)
+ *
+ * 4.1.2 20170403
  * Rename Unrecognised command to Unknown command
  * Remove all command lists
  * Remove command SmartConfig (superseded by WifiConfig)

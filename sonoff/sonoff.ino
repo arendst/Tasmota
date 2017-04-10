@@ -10,7 +10,7 @@
  * ====================================================
 */
 
-#define VERSION                0x04010200  // 4.1.2
+#define VERSION                0x04010300  // 4.1.3
 
 enum log_t   {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG_MORE, LOG_LEVEL_ALL};
 enum week_t  {Last, First, Second, Third, Fourth};
@@ -104,7 +104,8 @@ enum emul_t  {EMUL_NONE, EMUL_WEMO, EMUL_HUE, EMUL_MAX};
 #define WS2812_MAX_LEDS        256          // Max number of LEDs
 
 #define PWM_RANGE              1023         // 255..1023 needs to be devisible by 256
-#define PWM_FREQ               1000         // 100..1000 Hz led refresh
+//#define PWM_FREQ               1000         // 100..1000 Hz led refresh
+#define PWM_FREQ               910          // 100..1000 Hz led refresh (iTead value)
 
 #define MAX_POWER_HOLD         10           // Time in SECONDS to allow max agreed power (Pow)
 #define MAX_POWER_WINDOW       30           // Time in SECONDS to disable allow max agreed power (Pow)
@@ -1505,8 +1506,8 @@ void state_mqttPresent(char* svalue, uint16_t ssvalue)
     }
     snprintf_P(svalue, ssvalue, PSTR("%s\"%s\""), svalue, getStateText(bitRead(power, i)));
   }
-  snprintf_P(svalue, ssvalue, PSTR("%s, \"Wifi\":{\"AP\":%d, \"SSID\":\"%s\", \"RSSI\":%d}}"),
-    svalue, sysCfg.sta_active +1, sysCfg.sta_ssid[sysCfg.sta_active], WIFI_getRSSIasQuality(WiFi.RSSI()));
+  snprintf_P(svalue, ssvalue, PSTR("%s, \"Wifi\":{\"AP\":%d, \"SSID\":\"%s\", \"RSSI\":%d, \"APMac\":\"%s\"}}"),
+    svalue, sysCfg.sta_active +1, sysCfg.sta_ssid[sysCfg.sta_active], WIFI_getRSSIasQuality(WiFi.RSSI()), WiFi.BSSIDstr().c_str());
 }
 
 void sensors_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
@@ -1524,7 +1525,8 @@ void sensors_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
     snprintf_P(svalue, ssvalue, PSTR("%s, \"AnalogInput0\":%d"), svalue, analogRead(A0));
     *djson = 1;
   }
-#endif    
+#endif
+  if (sysCfg.module == SONOFF_SC) sc_mqttPresent(svalue, ssvalue, djson);
   if (pin[GPIO_DSB] < 99) {
 #ifdef USE_DS18B20
     dsb_mqttPresent(svalue, ssvalue, djson);
@@ -1915,6 +1917,8 @@ void stateloop()
   }
 }
 
+/********************************************************************************************/
+
 void serial()
 {
   char log[LOGSZ];
@@ -1951,7 +1955,15 @@ void serial()
         SerialInByteCounter = 0;
       }
     }
-    if (SerialInByte == '\n') {
+
+    if (SerialInByte == '\x1B') {  // Sonoff SC status from ATMEGA328P
+      serialInBuf[SerialInByteCounter] = 0;  // serial data completed
+      sc_rcvstat(serialInBuf);
+      SerialInByteCounter = 0;
+      Serial.flush();
+      return;
+    }
+    else if (SerialInByte == '\n') {
       serialInBuf[SerialInByteCounter] = 0;  // serial data completed
       seriallog_level = (sysCfg.seriallog_level < LOG_LEVEL_INFO) ? LOG_LEVEL_INFO : sysCfg.seriallog_level;
       snprintf_P(log, sizeof(log), PSTR("CMND: %s"), serialInBuf);
@@ -2024,9 +2036,25 @@ void GPIO_init()
     Maxdevice = 4;
     Baudrate = 19200;
   }
+  else if (sysCfg.module == SONOFF_SC) {
+    Maxdevice = 0;
+    Baudrate = 19200;
+  }
   else if (sysCfg.module == SONOFF_LED) {
     pwm_idxoffset = 2;
     pin[GPIO_WS2812] = 99;  // I do not allow both Sonoff Led AND WS2812 led
+    if (!my_module.gp.io[4]) {
+      pinMode(4, OUTPUT);    // Stop floating outputs
+      digitalWrite(4, LOW);
+    }
+    if (!my_module.gp.io[5]) {
+      pinMode(5, OUTPUT);    // Stop floating outputs
+      digitalWrite(5, LOW);
+    }
+    if (!my_module.gp.io[14]) {
+      pinMode(14, OUTPUT);  // Stop floating outputs
+      digitalWrite(14, LOW);
+    }
     sl_init();
   }
   else {
@@ -2128,7 +2156,7 @@ void setup()
 
   if (Serial.baudRate() != Baudrate) {
     if (seriallog_level) {
-      snprintf_P(log, sizeof(log), PSTR("APP: Change your baudrate to %d"), Baudrate);
+      snprintf_P(log, sizeof(log), PSTR("APP: Set baudrate to %d"), Baudrate);
       addLog(LOG_LEVEL_INFO, log);
     }
     delay(100);
@@ -2171,6 +2199,8 @@ void setup()
     if (sysCfg.savestate) setRelay(power);
   }
   blink_powersave = power;
+
+  if (sysCfg.module == SONOFF_SC) sc_init();
 
   rtc_init();
 

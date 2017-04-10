@@ -267,6 +267,12 @@ const char HTTP_SNS_HUM[] PROGMEM =
   "<tr><th>%s Humidity</th><td>%s%</td></tr>";
 const char HTTP_SNS_PRESSURE[] PROGMEM =
   "<tr><th>%s Pressure</th><td>%s hPa</td></tr>";
+const char HTTP_SNS_LIGHT[] PROGMEM =
+  "<tr><th>%s Light</th><td>%d of 10</td></tr>";
+const char HTTP_SNS_NOISE[] PROGMEM =
+  "<tr><th>%s Noise</th><td>%d of 10</td></tr>";
+const char HTTP_SNS_DUST[] PROGMEM =
+  "<tr><th>%s Air quality</th><td>%d of 10</td></tr>";
 const char HTTP_END[] PROGMEM =
   "</div>"
   "</body>"
@@ -452,6 +458,7 @@ void handleAjax2()
   
   String tpage = "";
   if (hlw_flg) tpage += hlw_webPresent();
+  if (sysCfg.module == SONOFF_SC) tpage += sc_webPresent();
 #ifdef USE_DS18B20
   if (pin[GPIO_DSB] < 99) tpage += dsb_webPresent();
 #endif  // USE_DS18B20
