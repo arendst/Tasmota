@@ -413,6 +413,9 @@ void mqtt_publish_sec(const char* topic, const char* data, boolean retained)
   char log[TOPSZ + MESSZ];
 
   if (sysCfg.mqtt_enabled) {
+#ifdef USE_TOUCHSCREEN
+    if (touchscreen) touchscreen->NetworkSend();
+#endif // USE_TOUCHSCREEN
     if (mqttClient.publish(topic, data, retained)) {
       snprintf_P(log, sizeof(log), PSTR("MQTT: %s = %s%s"), topic, data, (retained) ? " (retained)" : "");
 //      mqttClient.loop();  // Do not use here! Will block previous publishes
@@ -757,6 +760,10 @@ boolean mqtt_command(boolean grpflg, char *type, uint16_t index, char *dataBuf, 
 void mqttDataCb(char* topic, byte* data, unsigned int data_len)
 {
   char *str;
+
+#ifdef USE_TOUCHSCREEN
+    if (touchscreen) touchscreen->NetworkRecv();
+#endif // USE_TOUCHSCREEN
 
   if (!strcmp(sysCfg.mqtt_prefix[0],sysCfg.mqtt_prefix[1])) {
     str = strstr(topic,sysCfg.mqtt_prefix[0]);

@@ -113,11 +113,6 @@ void TouchScreen::_handleWidget_Network(int period)
   if ((_millis_now < _last+period) && _last > 0) 
     return;
 
-  if (random(100) < 3)
-    NetworkSend();
-  if (random(100) < 10)
-    NetworkRecv();
-
   if ((_millis_now > _millis_network_send_clear && _millis_network_send_clear != 0) || _last==0) {
     _millis_network_send_clear=0;
     _handleWidget_NetworkSend(ILI9341_DARKGREY);
