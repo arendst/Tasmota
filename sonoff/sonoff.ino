@@ -26,6 +26,11 @@ enum emul_t  {EMUL_NONE, EMUL_WEMO, EMUL_HUE, EMUL_MAX};
 #include "user_config.h"
 #include "user_config_override.h"
 
+#ifdef USE_TOUCHSCREEN
+#include "touchscreen.h"
+#endif // USE_TOUCHSCREEN
+
+
 /*********************************************************************************************\
  * No user configurable items below
 \*********************************************************************************************/
@@ -2207,6 +2212,10 @@ void setup()
   snprintf_P(log, sizeof(log), PSTR("APP: Project %s %s (Topic %s, Fallback %s, GroupTopic %s) Version %s"),
     PROJECT, sysCfg.friendlyname[0], sysCfg.mqtt_topic, MQTTClient, sysCfg.mqtt_grptopic, Version);
   addLog(LOG_LEVEL_INFO, log);
+
+#ifdef USE_TOUCHSCREEN
+  touchscreen_setup();
+#endif // USE_TOUCHSCREEN
 }
 
 void loop()
@@ -2224,6 +2233,10 @@ void loop()
   if (millis() >= timerxs) stateloop();
   if (sysCfg.mqtt_enabled) mqttClient.loop();
   if (Serial.available()) serial();
+
+#ifdef USE_TOUCHSCREEN
+  touchscreen_handle();
+#endif // USE_TOUCHSCREEN
 
 //  yield();     // yield == delay(0), delay contains yield, auto yield in loop
   delay(sleep);  // https://github.com/esp8266/Arduino/issues/2021
