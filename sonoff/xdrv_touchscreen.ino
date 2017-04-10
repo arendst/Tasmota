@@ -130,8 +130,7 @@ void TouchScreen::_handleWidget_Name(int period)
     return;
   _last = _millis_now;
 
-  const char names[7][21] = { "Livingroom", "Attic", "Basement", "1234", "", "TestSetup", "01234567890123456789" };
-  sprintf(_namestring, "%-20s", names[random(7)]);
+  sprintf(_namestring, "%-20s", sysCfg.friendlyname[0]);
   _tft->setCursor(4,8);
   _tft->setTextColor(ILI9341_WHITE, ILI9341_BLUE);
   _tft->setTextSize(1);
