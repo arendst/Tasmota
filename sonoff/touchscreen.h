@@ -49,6 +49,7 @@ class TouchScreen
 
   void NetworkSend();           // Activate Up-Arrow icon, will clear in 100ms
   void NetworkRecv();           // Activate Down-Arrow icon, will clear in 100ms
+  void RelayState(bool);        // Activate Relay icon
   
   private:
   ScreenTouch_t _touch_last_type;
@@ -66,6 +67,7 @@ class TouchScreen
   void _handleWidget_Network(int period=100);
   void _handleWidget_NetworkSend(int color);
   void _handleWidget_NetworkRecv(int color);
+  void _handleWidget_RelayState(int color);
 };
 
 #endif // USE_TOUCHSCREEN

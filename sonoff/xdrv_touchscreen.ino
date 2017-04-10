@@ -2,6 +2,8 @@
 
 #ifdef USE_TOUCHSCREEN
 
+#define TOUCHSCREEN_BGCOLOR ILI9341_BLUE
+
 TouchScreen *touchscreen = NULL;
 
 TouchScreen::TouchScreen()
@@ -11,7 +13,7 @@ TouchScreen::TouchScreen()
   _tft->setRotation(1);
 
   /* Temporary setup of the screen */
-  _tft->fillScreen(ILI9341_BLUE);
+  _tft->fillScreen(TOUCHSCREEN_BGCOLOR);
   
   _tft->drawRoundRect(24, 48, 80, 80, 8, ILI9341_GREEN);
   _tft->drawRoundRect(120, 48, 80, 80, 8, ILI9341_GREEN);
@@ -20,6 +22,7 @@ TouchScreen::TouchScreen()
 
   _tft->drawFastHLine(0, 24, 320, ILI9341_WHITE);
   _tft->drawFastHLine(0, 25, 320, ILI9341_WHITE);
+  RelayState(power!=0);
   /* END(temp setup) */
 
   _ts = new Adafruit_STMPE610(STMPE_CS);
@@ -45,7 +48,7 @@ void TouchScreen::_handleWidget_Time(int period)
 
   sprintf(_timestring, "%02d:%02d:%02d", rtcTime.Hour, rtcTime.Minute, rtcTime.Second);
   _tft->setCursor(320-4-9*5,8);
-  _tft->setTextColor(ILI9341_WHITE, ILI9341_BLUE);
+  _tft->setTextColor(ILI9341_WHITE, TOUCHSCREEN_BGCOLOR);
   _tft->setTextSize(1);
   _tft->print(_timestring);
 }
@@ -70,6 +73,19 @@ void TouchScreen::_handleWidget_Wifi(int period, int wifi_signal_strength)
   _tft->setTextSize(1);
   _tft->print("X");
   }
+}
+
+void TouchScreen::_handleWidget_RelayState(int color)
+{
+  _tft->fillCircle(206, 11, 7, color);
+  _tft->fillCircle(206, 11, 5, TOUCHSCREEN_BGCOLOR);
+  _tft->fillRect(202, 2, 8, 8, TOUCHSCREEN_BGCOLOR);
+  _tft->fillRect(205, 3, 3, 8, color);
+}
+
+void TouchScreen::RelayState(bool on)
+{
+  _handleWidget_RelayState(on?ILI9341_GREEN : ILI9341_DARKGREY);
 }
 
 void TouchScreen::NetworkSend()
@@ -132,7 +148,7 @@ void TouchScreen::_handleWidget_Name(int period)
 
   sprintf(_namestring, "%-20s", sysCfg.friendlyname[0]);
   _tft->setCursor(4,8);
-  _tft->setTextColor(ILI9341_WHITE, ILI9341_BLUE);
+  _tft->setTextColor(ILI9341_WHITE, TOUCHSCREEN_BGCOLOR);
   _tft->setTextSize(1);
   _tft->print(_namestring);
 }

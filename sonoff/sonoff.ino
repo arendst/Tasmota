@@ -341,6 +341,9 @@ void setRelay(uint8_t power)
     for (byte i = 0; i < Maxdevice; i++) {
       state = power &1;
       if (pin[GPIO_REL1 +i] < 99) digitalWrite(pin[GPIO_REL1 +i], rel_inverted[i] ? !state : state);
+#ifdef USE_TOUCHSCREEN
+      if (touchscreen) touchscreen->RelayState(state != 0);
+#endif // USE_TOUCHSCREEN
       power >>= 1;
     }
   }
