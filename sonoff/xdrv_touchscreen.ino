@@ -36,7 +36,6 @@ void TouchScreen::handle()
 void TouchScreen::_handleWidget_Time(int period)
 {
   static unsigned long _last = 0;
-  unsigned long time_in_seconds;
   char _timestring[9]; // HH:MM:SS\0
   
   if ((_millis_now < _last+period) && _last > 0) 
@@ -44,8 +43,7 @@ void TouchScreen::_handleWidget_Time(int period)
 
   _last = _millis_now;
 
-  time_in_seconds = (_millis_now / 1000) % (24*60*60);
-  sprintf(_timestring, "%02d:%02d:%02d", (time_in_seconds/(60*60))%24, (time_in_seconds/(60))%60, time_in_seconds%60);
+  sprintf(_timestring, "%02d:%02d:%02d", rtcTime.Hour, rtcTime.Minute, rtcTime.Second);
   _tft->setCursor(320-4-9*5,8);
   _tft->setTextColor(ILI9341_WHITE, ILI9341_BLUE);
   _tft->setTextSize(1);
