@@ -1,3 +1,8 @@
+## Patchlevel1
+- Added support for 4 channel A/D converter ADS1115
+- Added ApMAC in MQTT STATUS to identify connected AccessPoint
+- Changes MQTT Heap and WEBSERVER HEAP from kByte to Byte
+
 ## Sonoff-Tasmota
 Provide ESP8266 based Sonoff by [iTead Studio](https://www.itead.cc/) and ElectroDragon IoT Relay with Serial, Web and MQTT control allowing 'Over the Air' or OTA firmware updates using Arduino IDE.
 
