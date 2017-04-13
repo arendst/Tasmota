@@ -1,6 +1,5 @@
 ## Patchlevel1
 - Added support for 4 channel A/D converter ADS1115
-- Added ApMAC in MQTT STATUS to identify connected AccessPoint
 - Changes MQTT Heap and WEBSERVER HEAP from kByte to Byte
 
 ## Sonoff-Tasmota
