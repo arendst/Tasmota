@@ -10,7 +10,7 @@
  * ====================================================
 */
 
-#define VERSION                0x04010300  // 4.1.3
+#define VERSION                0x04010301  // 4.1.3a
 
 enum log_t   {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG_MORE, LOG_LEVEL_ALL};
 enum week_t  {Last, First, Second, Third, Fourth};
@@ -155,6 +155,9 @@ enum butt_t {PRESSED, NOT_PRESSED};
 #endif  // USE_DISCOVERY
 #ifdef USE_I2C
   #include <Wire.h>                         // I2C support library
+  #ifdef USE_ADS1115                        // ADS115 A/D converter
+    #include <Adafruit_ADS1015.h>
+  #endif
 #endif  // USE_I2C
 #include "settings.h"
 
@@ -1552,6 +1555,9 @@ void sensors_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
 #ifdef USE_BH1750
     bh1750_mqttPresent(svalue, ssvalue, djson);
 #endif  // USE_BH1750
+#ifdef USE_ADS1115
+    ads1115_mqttPresent(svalue, ssvalue, djson);
+#endif  // USE_ADS1115    
   }
 #endif  // USE_I2C      
   snprintf_P(svalue, ssvalue, PSTR("%s}"), svalue);
@@ -1625,6 +1631,9 @@ void every_second()
 #ifdef USE_BH1750
         bh1750_detect();
 #endif  // USE_BH1750
+#ifdef USE_ADS1115
+        ads1115_detect();
+#endif  // USE_ADS1115        
       }
 #endif  // USE_I2C
     }
