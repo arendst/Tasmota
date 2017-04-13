@@ -482,6 +482,9 @@ void handleAjax2()
 #ifdef USE_BH1750
     tpage += bh1750_webPresent();
 #endif
+#ifdef USE_ADS1115
+    tpage += ads1115_webPresent();
+#endif
   }
 #endif  // USE_I2C    
   String page = "";
@@ -1386,7 +1389,7 @@ void handleInfo()
   page += F("<tr><th>Program flash size</th><td>"); page += String(ESP.getFlashChipSize() / 1024); page += F("kB</td></tr>");
   page += F("<tr><th>Program size</th><td>"); page += String(ESP.getSketchSize() / 1024); page += F("kB</td></tr>");
   page += F("<tr><th>Free program space</th><td>"); page += String(ESP.getFreeSketchSpace() / 1024); page += F("kB</td></tr>");
-  page += F("<tr><th>Free memory</th><td>"); page += String(freeMem / 1024); page += F("kB</td></tr>");
+  page += F("<tr><th>Free memory</th><td>"); page += String(freeMem); page += F("Byte</td></tr>");
   page += F("</table>");
 //  page += F("</fieldset>");
   page += FPSTR(HTTP_BTN_MAIN);
