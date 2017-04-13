@@ -23,7 +23,7 @@
 #define WIFI_DNS               "192.168.2.27"    // [IpAddress4] If not using DHCP set DNS IP address (might be equal to WIFI_GATEWAY)
 
 #define STA_SSID1              "BodeNet_Keller"  // [Ssid1] Wifi SSID
-#define STA_PASS1              "BettyUndStefa"   // [Password1] Wifi password
+#define STA_PASS1              "geheim"          // [Password1] Wifi password
 #define STA_SSID2              "indebuurt2"      // [Ssid2] Optional alternate AP Wifi SSID
 #define STA_PASS2              "VnsqrtnrsddbrN"  // [Password2] Optional alternate AP Wifi password
 #define WIFI_CONFIG_TOOL       WIFI_MANAGER      // [WifiConfig] Default tool if wifi fails to connect
@@ -48,8 +48,8 @@
   #define MQTT_HOST            "elocm.homeserver.com"  // [MqttHost]
   #define MQTT_FINGERPRINT     "EF:2A:0F:3E:87:95:6E:F0:4B:A6:F4:38:73:29:1A:14:7E:A9:A1:B7"  // [MqttFingerprint]
   #define MQTT_PORT            8883                // [MqttPort] MQTT TLS port
-  #define MQTT_USER            "homematic"      // [MqttUser] Mandatory user
-  #define MQTT_PASS            "sunSeaker1all"  // [MqttPassword] Mandatory password
+  #define MQTT_USER            "homematic"         // [MqttUser] Mandatory user
+  #define MQTT_PASS            "geheim"            // [MqttPassword] Mandatory password
 #else
   #define MQTT_HOST            "192.168.178.42"          // [MqttHost]
   #define MQTT_PORT            1883              // [MqttPort] MQTT port (10123 on CloudMQTT)
