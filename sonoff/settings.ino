@@ -355,26 +355,26 @@ void CFG_DefaultSet2()
     sysCfg.domoticz_switch_idx[i] = 0;
   }
 
-  sysCfg.hlw_pcal = HLW_PREF_PULSE;
-  sysCfg.hlw_ucal = HLW_UREF_PULSE;
-  sysCfg.hlw_ical = HLW_IREF_PULSE;
-  sysCfg.hlw_kWhtoday = 0;
-  sysCfg.hlw_kWhyesterday = 0;
-  sysCfg.hlw_kWhdoy = 0;
-  sysCfg.hlw_pmin = 0;
-  sysCfg.hlw_pmax = 0;
-  sysCfg.hlw_umin = 0;
-  sysCfg.hlw_umax = 0;
-  sysCfg.hlw_imin = 0;
-  sysCfg.hlw_imax = 0;
-  sysCfg.hlw_mpl = 0;                              // MaxPowerLimit
-  sysCfg.hlw_mplh = MAX_POWER_HOLD;
-  sysCfg.hlw_mplw = MAX_POWER_WINDOW;
-  sysCfg.hlw_mspl = 0;                             // MaxSafePowerLimit
-  sysCfg.hlw_msplh = SAFE_POWER_HOLD;
-  sysCfg.hlw_msplw = SAFE_POWER_WINDOW;
-  sysCfg.hlw_mkwh = 0;                             // MaxEnergy
-  sysCfg.hlw_mkwhs = 0;                            // MaxEnergyStart
+  sysCfg.wattmtr_pcal = HLW_PREF_PULSE;
+  sysCfg.wattmtr_ucal = HLW_UREF_PULSE;
+  sysCfg.wattmtr_ical = HLW_IREF_PULSE;
+  sysCfg.wattmtr_kWhtoday = 0;
+  sysCfg.wattmtr_kWhyesterday = 0;
+  sysCfg.wattmtr_kWhdoy = 0;
+  sysCfg.wattmtr_pmin = 0;
+  sysCfg.wattmtr_pmax = 0;
+  sysCfg.wattmtr_umin = 0;
+  sysCfg.wattmtr_umax = 0;
+  sysCfg.wattmtr_imin = 0;
+  sysCfg.wattmtr_imax = 0;
+  sysCfg.wattmtr_mpl = 0;                              // MaxPowerLimit
+  sysCfg.wattmtr_mplh = MAX_POWER_HOLD;
+  sysCfg.wattmtr_mplw = MAX_POWER_WINDOW;
+  sysCfg.wattmtr_mspl = 0;                             // MaxSafePowerLimit
+  sysCfg.wattmtr_msplh = SAFE_POWER_HOLD;
+  sysCfg.wattmtr_msplw = SAFE_POWER_WINDOW;
+  sysCfg.wattmtr_mkwh = 0;                             // MaxEnergy
+  sysCfg.wattmtr_mkwhs = 0;                            // MaxEnergyStart
 
   CFG_DefaultSet_3_2_4();
 

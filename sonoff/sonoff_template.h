@@ -94,6 +94,8 @@ enum fpins_t {
   GPIO_HLW_CF1,        // HLW8012 CF1 voltage / current (Sonoff Pow)
   GPIO_HLW_CF,         // HLW8012 CF power (Sonoff Pow)
   GPIO_ADC0,           // ADC
+  GPIO_CS_CLK,         // CS5460A CLK clock (Power meter)
+  GPIO_CS_SDO,         // CS5460A SDO data output (Power meter)
   GPIO_USER,           // User configurable
   GPIO_MAX };
 
@@ -122,6 +124,7 @@ enum module_t {
   SONOFF_DEV,
   H801,
   SONOFF_SC,
+  CS54060A,
   MAXMODULE };
 
 /********************************************************************************************/
@@ -409,6 +412,21 @@ const mytmplt modules[MAXMODULE] PROGMEM = {
      0,
      GPIO_LED1_INV,    // GPIO13 Green Led (0 = On, 1 = Off)
      0, 0, 0, 0
+  },
+  { "CS8460A",         // Board with CS8460A (ESP8266)
+     GPIO_USER,        // GPIO00 E-FW Button
+     GPIO_USER,        // GPIO01 TX Serial RXD and Optional sensor
+     0,                // GPIO02
+     GPIO_USER,        // GPIO03 RX Serial TXD and Optional sensor
+     GPIO_CS_CLK,      // GPIO04 CS8460A CLK (Clock)
+     GPIO_CS_SDO,      // GPIO05 CS8460A SDO (Data Output)
+     0, 0, 0, 0, 0, 0, // Flash connection
+     GPIO_REL1,        // GPIO12 Relay (0 = Off, 1 = On)
+     GPIO_LED1_INV,    // GPIO13 BLUE LED
+     GPIO_KEY1,        // GPIO14 Optional sensor
+     0,                // GPIO15
+     0,                // GPIO16
+     GPIO_ADC0         // ADC0 A0 Analog input
   }
 };
 

@@ -457,8 +457,10 @@ void handleAjax2()
   }
   
   String tpage = "";
-  if (hlw_flg) tpage += hlw_webPresent();
   if (sysCfg.module == SONOFF_SC) tpage += sc_webPresent();
+#ifdef USE_WATTMETER
+  if (wattmtr_flg) tpage += wattmtr_webPresent();
+#endif // USE_WATTMETER
 #ifdef USE_DS18B20
   if (pin[GPIO_DSB] < 99) tpage += dsb_webPresent();
 #endif  // USE_DS18B20
@@ -1102,6 +1104,9 @@ void handleUploadLoop()
 #ifdef USE_EMULATION
       UDP_Disconnect();
 #endif  // USE_EMULATION
+#ifdef USE_CS5460A
+      if(wattmtr_flg) cs_finish();
+#endif  // USE_CS5460A
       if (sysCfg.mqtt_enabled) mqttClient.disconnect();
       uint32_t maxSketchSpace = (ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000;
       if (!Update.begin(maxSketchSpace)) {         //start with max available size
