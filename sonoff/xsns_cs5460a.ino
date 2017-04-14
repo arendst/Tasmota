@@ -404,8 +404,7 @@ const char HTTP_ENERGY_SNS[] PROGMEM =
   "<tr><th>Power</th><td>%s W</td></tr>"
   "<tr><th>Power Factor</th><td>%s</td></tr>"
   "<tr><th>Energy Today</th><td>%s kWh</td></tr>"
-  "<tr><th>Energy Yesterday</th><td>%s kWh</td></tr>"
-  "<tr><th>Lost data</th><td>%d</td></tr>";
+  "<tr><th>Energy Yesterday</th><td>%s kWh</td></tr>";
 
 String wattmtr_webPresent()
 {
@@ -419,7 +418,7 @@ String wattmtr_webPresent()
   dtostrf(cs_voltage, 1, 1, sVoltage);
   dtostrf(cs_current, 1, 3, sCurrent);
 
-  snprintf_P(sensor, sizeof(sensor), HTTP_ENERGY_SNS, sVoltage, sCurrent, sTruePower, sPowerFactor, sKWHT, sKWHY, cs_lostDataCount);
+  snprintf_P(sensor, sizeof(sensor), HTTP_ENERGY_SNS, sVoltage, sCurrent, sTruePower, sPowerFactor, sKWHT, sKWHY);
   page += sensor;
   return page;
 }
