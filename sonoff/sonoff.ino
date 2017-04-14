@@ -77,6 +77,12 @@ enum emul_t  {EMUL_NONE, EMUL_WEMO, EMUL_HUE, EMUL_MAX};
 #ifdef DEBUG_THEO
 #undef DEBUG_THEO                           // Disable debug code
 #endif
+#ifdef USE_HLW8012
+#undef USE_HLW8012                          // Disable HLW8012 sensor
+#endif
+#ifdef USE_CS5460A
+#undef USE_CS5460A                          // Disable CS5460A sensor
+#endif
 #endif  // BE_MINIMAL
 
 #ifndef SWITCH_MODE
@@ -126,6 +132,10 @@ enum emul_t  {EMUL_NONE, EMUL_WEMO, EMUL_HUE, EMUL_MAX};
   #define MAX_LOG_LINES        10           // Max number of lines in weblog
 #else
   #define MAX_LOG_LINES        20           // Max number of lines in weblog
+#endif
+
+#if defined(USE_HLW8012) || defined(USE_CS5460A)
+#define USE_WATTMETER
 #endif
 
 #define APP_BAUDRATE           115200       // Default serial baudrate
@@ -266,7 +276,7 @@ uint8_t rel_inverted[4] = { 0 };      // Relay inverted flag (1 = (0 = On, 1 = O
 uint8_t led_inverted[4] = { 0 };      // LED inverted flag (1 = (0 = On, 1 = Off))
 uint8_t swt_flg = 0;                  // Any external switch configured
 uint8_t dht_type = 0;                 // DHT type (DHT11, DHT21 or DHT22)
-uint8_t hlw_flg = 0;                  // Power monitor configured
+uint8_t wattmtr_flg = 0;                  // Power monitor configured
 uint8_t i2c_flg = 0;                  // I2C configured
 uint8_t pwm_flg = 0;                  // PWM configured
 uint8_t pwm_idxoffset = 0;            // Allowed PWM command offset (change for Sonoff Led)
@@ -339,7 +349,10 @@ void setRelay(uint8_t power)
       power >>= 1;
     }
   }
-  hlw_setPowerSteadyCounter(2);
+  
+#ifdef USE_WATTMETER
+  wattmtr_setPowerSteadyCounter(2);
+#endif
 }
 
 void setLed(uint8_t state)
@@ -1239,9 +1252,11 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
     else if (sysCfg.mqtt_enabled && mqtt_command(grpflg, type, index, dataBuf, data_len, payload, svalue, sizeof(svalue))) {
       // Serviced
     }
-    else if (hlw_flg && hlw_command(type, index, dataBuf, data_len, payload, svalue, sizeof(svalue))) {
+#ifdef USE_WATTMETER
+    else if (wattmtr_flg && wattmtr_command(type, index, dataBuf, data_len, payload, svalue, sizeof(svalue))) {
       // Serviced
     }
+#endif
 #ifdef USE_I2C
     else if (i2c_flg && !strcmp(type,"I2CSCAN")) {
       i2c_scan(svalue, sizeof(svalue));
@@ -1300,10 +1315,12 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
     mqtt_publish_topic_P(0, PSTR("COMMANDS4"), svalue);
 #endif  // USE_DOMOTICZ
 
-    if (hlw_flg) {
-      hlw_commands(svalue, sizeof(svalue));
+#ifdef USE_WATTMETER
+    if (wattmtr_flg) {
+      wattmtr_commands(svalue, sizeof(svalue));
       mqtt_publish_topic_P(0, PSTR("COMMANDS5"), svalue);
     }
+#endif
 */
     snprintf_P(svalue, sizeof(svalue), PSTR("{\"Command\":\"Invalid command\"}"));
     mqtt_publish_topic_P(0, PSTR("COMMAND"), svalue);
@@ -1438,7 +1455,7 @@ void publish_status(uint8_t payload)
   option = (!strcmp(sysCfg.mqtt_prefix[0],sysCfg.mqtt_prefix[1]) && (!payload));
 
   if ((!sysCfg.mqtt_enabled) && (payload == 6)) payload = 99;
-  if ((!hlw_flg) && ((payload == 8) || (payload == 9))) payload = 99;
+  if ((!wattmtr_flg) && ((payload == 8) || (payload == 9))) payload = 99;
 
   if ((payload == 0) || (payload == 99)) {
     snprintf_P(svalue, sizeof(svalue), PSTR("{\"Status\":{\"Module\":%d, \"FriendlyName\":\"%s\", \"Topic\":\"%s\", \"ButtonTopic\":\"%s\", \"Power\":%d, \"PowerOnState\":%d, \"LedState\":%d, \"SaveData\":%d, \"SaveState\":%d, \"ButtonRetain\":%d, \"PowerRetain\":%d}}"),
@@ -1492,9 +1509,10 @@ void publish_status(uint8_t payload)
     mqtt_publish_topic_P(option, PSTR("STATUS7"), svalue);
   }
 
-  if (hlw_flg) {
+#ifdef USE_WATTMETER
+  if (wattmtr_flg) {
     if ((payload == 0) || (payload == 8)) {
-      hlw_mqttStatus(svalue, sizeof(svalue));      
+      wattmtr_mqttStatus(svalue, sizeof(svalue));      
       mqtt_publish_topic_P(option, PSTR("STATUS8"), svalue);
     }
 
@@ -1504,6 +1522,7 @@ void publish_status(uint8_t payload)
       mqtt_publish_topic_P(option, PSTR("STATUS9"), svalue);
     }
   }
+#endif
 
   if ((payload == 0) || (payload == 10)) {
     uint8_t djson = 0;
@@ -1672,11 +1691,15 @@ void every_second()
       sensors_mqttPresent(svalue, sizeof(svalue), &djson);
       if (djson) mqtt_publish_topic_P(1, PSTR("SENSOR"), svalue);
 
-      if (hlw_flg) hlw_mqttPresent();
+#ifdef USE_WATTMETER
+      if (wattmtr_flg) wattmtr_mqttPresent();
+#endif
     }
   }
 
-  if (hlw_flg) hlw_margin_chk();
+#ifdef USE_WATTMETER
+  if (wattmtr_flg) wattmtr_margin_chk();
+#endif
 
   if ((rtcTime.Minute == 2) && uptime_flg) {
     uptime_flg = false;
@@ -1916,7 +1939,9 @@ void stateloop()
         restartflag = 2;
       }
       if (sysCfg.savestate) sysCfg.power = power;
-      if (hlw_flg) hlw_savestate();
+#ifdef USE_WATTMETER
+      if (wattmtr_flg) wattmtr_savestate();
+#endif
       CFG_Save();
       restartflag--;
       if (restartflag <= 0) {
@@ -2099,11 +2124,12 @@ void GPIO_init()
   setLed(sysCfg.ledstate &8);
 
 #ifdef USE_CS5460A
-  hlw_flg = ((pin[GPIO_CS_CLK] < 99) && (pin[GPIO_CS_SDO] < 99));
-  if (hlw_flg) cs_init();
-#else
-  hlw_flg = ((pin[GPIO_HLW_SEL] < 99) && (pin[GPIO_HLW_CF1] < 99) && (pin[GPIO_HLW_CF] < 99));
-  if (hlw_flg) hlw_init();
+  wattmtr_flg = ((pin[GPIO_CS_CLK] < 99) && (pin[GPIO_CS_SDO] < 99));
+  if (wattmtr_flg) cs_init();
+#endif
+#ifdef USE_HLW8012
+  wattmtr_flg = ((pin[GPIO_HLW_SEL] < 99) && (pin[GPIO_HLW_CF1] < 99) && (pin[GPIO_HLW_CF] < 99));
+  if (wattmtr_flg) hlw_init();
 #endif
 
 #ifdef USE_DHT

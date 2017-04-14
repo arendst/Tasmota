@@ -96,7 +96,6 @@ enum fpins_t {
   GPIO_ADC0,           // ADC
   GPIO_CS_CLK,         // CS5460A CLK clock (Power meter)
   GPIO_CS_SDO,         // CS5460A SDO data output (Power meter)
-  GPIO_CS_SDI,         // CS5460A SDI data input (Power meter)
   GPIO_USER,           // User configurable
   GPIO_MAX };
 

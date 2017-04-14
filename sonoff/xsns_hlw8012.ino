@@ -29,7 +29,7 @@ POSSIBILITY OF SUCH DAMAGE.
  * Based on Source: Shenzhen Heli Technology Co., Ltd
 \*********************************************************************************************/
 
-#ifndef USE_CS5460A
+#ifdef USE_HLW8012
 #define FEATURE_POWER_LIMIT  true
 
 /*********************************************************************************************/
@@ -151,7 +151,7 @@ void hlw_200mS()
   }
 }
 
-void hlw_savestate()
+void wattmtr_savestate()
 {
   sysCfg.hlw_kWhdoy = (rtcTime.Valid) ? rtcTime.DayOfYear : 0;
   sysCfg.hlw_kWhtoday = hlw_kWhtoday;
@@ -276,12 +276,12 @@ boolean hlw_margin(byte type, uint16_t margin, uint16_t value, byte &flag, byte 
   return (change != saveflag);
 }
 
-void hlw_setPowerSteadyCounter(byte value)
+void wattmtr_setPowerSteadyCounter(byte value)
 {
-  power_steady_cntr = 2;
+  power_steady_cntr = value;
 }
 
-void hlw_margin_chk()
+void wattmtr_margin_chk()
 {
   char log[LOGSZ], svalue[200];  // was MESSZ
   float ped, pi, pc;
@@ -397,7 +397,7 @@ void hlw_margin_chk()
  * Commands
 \*********************************************************************************************/
 
-boolean hlw_command(char *type, uint16_t index, char *dataBuf, uint16_t data_len, int16_t payload, char *svalue, uint16_t ssvalue)
+boolean wattmtr_command(char *type, uint16_t index, char *dataBuf, uint16_t data_len, int16_t payload, char *svalue, uint16_t ssvalue)
 {
   boolean serviced = true;
 
@@ -512,7 +512,7 @@ boolean hlw_command(char *type, uint16_t index, char *dataBuf, uint16_t data_len
   return serviced;
 }
 
-void hlw_commands(char *svalue, uint16_t ssvalue)
+void wattmtr_commands(char *svalue, uint16_t ssvalue)
 {
   snprintf_P(svalue, ssvalue, PSTR("{\"Commands5\":\"PowerLow, PowerHigh, VoltageLow, VoltageHigh, CurrentLow, CurrentHigh, HlwPcal, HlwUcal, HlwIcal%s\"}"),
     (FEATURE_POWER_LIMIT)?", SafePower, SafePowerHold, SafePowerWindow, MaxPower, MaxPowerHold, MaxPowerWindow, MaxEnergy, MaxEnergyStart":"");
@@ -542,7 +542,7 @@ void hlw_mqttStat(byte option, char* svalue, uint16_t ssvalue)
 #endif  // USE_DOMOTICZ
 }
 
-void hlw_mqttPresent()
+void wattmtr_mqttPresent()
 {
 // {"Time":"2017-03-04T13:37:24", "Yesterday":0.013, "Today":0.000, "Period":0, "Power":0, "Factor":0.00, "Voltage":0, "Current":0.000}
   char svalue[200];  // was MESSZ
@@ -556,7 +556,7 @@ void hlw_mqttPresent()
   mqtt_publish_topic_P(1, PSTR("ENERGY"), svalue);
 }
 
-void hlw_mqttStatus(char* svalue, uint16_t ssvalue)
+void wattmtr_mqttStatus(char* svalue, uint16_t ssvalue)
 {
   snprintf_P(svalue, ssvalue, PSTR("{\"StatusPWR\":{"));
   hlw_mqttStat(0, svalue, ssvalue);
@@ -572,7 +572,7 @@ const char HTTP_ENERGY_SNS[] PROGMEM =
   "<tr><th>Energy Today</th><td>%s kWh</td></tr>"
   "<tr><th>Energy Yesterday</th><td>%s kWh</td></tr>";
 
-String hlw_webPresent()
+String wattmtr_webPresent()
 {
   String page = "";
   char stemp[10], stemp2[10], stemp3[10], stemp4[10], sensor[300];
@@ -590,5 +590,5 @@ String hlw_webPresent()
   return page;
 }
 #endif  // USE_WEBSERVER
-#endif  // USE_CS5460A
+#endif  // USE_HLW8012
 

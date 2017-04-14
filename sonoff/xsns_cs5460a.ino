@@ -89,13 +89,27 @@ RingBuf *_dataBuf = RingBuf_new(sizeof(CSRawFrame), BUFSIZE);
 
 #ifndef USE_WS2812_DMA  // Collides with Neopixelbus but solves exception
 void clockISR() ICACHE_RAM_ATTR;
-void timerOVF() ICACHE_RAM_ATTR;
 #endif  // USE_WS2812_DMA
 
-void cs5460_initialize(int clkPin, int sdoPin)
+Ticker tickerCS;
+
+byte hlw_pminflg = 0;
+byte hlw_pmaxflg = 0;
+byte hlw_uminflg = 0;
+byte hlw_umaxflg = 0;
+byte hlw_iminflg = 0;
+byte hlw_imaxflg = 0;
+
+byte cs_startup;
+byte power_steady_cntr;
+
+void cs_init()
 {
-	_clkPin = clkPin;
-	_sdoPin = sdoPin;
+  cs_kWhtoday = 0;
+  cs_startup = 1;
+
+  _clkPin = pin[GPIO_CS_CLK];
+  _sdoPin = pin[GPIO_CS_SDO];
 
   // Set the CLK-pin and MISO-pin as inputs
   pinMode(_clkPin, INPUT);
@@ -103,6 +117,8 @@ void cs5460_initialize(int clkPin, int sdoPin)
   
 	// Setting up interrupt ISR, trigger function "clockISR()" when INT0 (CLK) is rising
 	attachInterrupt(digitalPinToInterrupt(_clkPin), clockISR, RISING);
+
+  tickerCS.attach_ms(1000, cs_1s);
 }
 
 void clockISR()
@@ -194,39 +210,6 @@ void cs5460_loop()
 	}
 }
 
-
-
-
-
-
-
-
-
-
-
-
-Ticker tickerCS;
-
-byte hlw_pminflg = 0;
-byte hlw_pmaxflg = 0;
-byte hlw_uminflg = 0;
-byte hlw_umaxflg = 0;
-byte hlw_iminflg = 0;
-byte hlw_imaxflg = 0;
-
-byte cs_startup;
-byte power_steady_cntr;
-
-void cs_init()
-{
-  cs_kWhtoday = 0;
-  cs_startup = 1;
-
-  cs5460_initialize(pin[GPIO_CS_CLK], pin[GPIO_CS_SDO]);
-  
-  tickerCS.attach_ms(1000, cs_1s);
-}
-
 void cs_1s()
 {
   if (rtc_loctime() == rtc_midnight()) {
@@ -242,14 +225,14 @@ void cs_1s()
   cs5460_loop();
 }
 
-void hlw_savestate()
+void wattmtr_savestate()
 {
   sysCfg.hlw_kWhdoy = (rtcTime.Valid) ? rtcTime.DayOfYear : 0;
   sysCfg.hlw_kWhtoday = cs_kWhtoday;
 }
 /********************************************************************************************/
 
-boolean hlw_margin(byte type, uint16_t margin, uint16_t value, byte &flag, byte &saveflag)
+boolean cs_margin(byte type, uint16_t margin, uint16_t value, byte &flag, byte &saveflag)
 {
   byte change;
 
@@ -264,12 +247,12 @@ boolean hlw_margin(byte type, uint16_t margin, uint16_t value, byte &flag, byte 
   return (change != saveflag);
 }
 
-void hlw_setPowerSteadyCounter(byte value)
+void wattmtr_setPowerSteadyCounter(byte value)
 {
   power_steady_cntr = value;
 }
 
-void hlw_margin_chk()
+void wattmtr_margin_chk()
 {
   char log[LOGSZ], svalue[200];  // was MESSZ
   uint16_t uped, piv;
@@ -288,27 +271,27 @@ void hlw_margin_chk()
 
     snprintf_P(svalue, sizeof(svalue), PSTR("{"));
     jsonflg = 0;
-    if (hlw_margin(0, sysCfg.hlw_pmin, cs_truePower, flag, hlw_pminflg)) {
+    if (cs_margin(0, sysCfg.hlw_pmin, cs_truePower, flag, hlw_pminflg)) {
       snprintf_P(svalue, sizeof(svalue), PSTR("%s%s\"PowerLow\":\"%s\""), svalue, (jsonflg)?", ":"", getStateText(flag));
       jsonflg = 1;
     }
-    if (hlw_margin(1, sysCfg.hlw_pmax, cs_truePower, flag, hlw_pmaxflg)) {
+    if (cs_margin(1, sysCfg.hlw_pmax, cs_truePower, flag, hlw_pmaxflg)) {
       snprintf_P(svalue, sizeof(svalue), PSTR("%s%s\"PowerHigh\":\"%s\""), svalue, (jsonflg)?", ":"", getStateText(flag));
       jsonflg = 1;
     }
-    if (hlw_margin(0, sysCfg.hlw_umin, cs_voltage, flag, hlw_uminflg)) {
+    if (cs_margin(0, sysCfg.hlw_umin, cs_voltage, flag, hlw_uminflg)) {
       snprintf_P(svalue, sizeof(svalue), PSTR("%s%s\"VoltageLow\":\"%s\""), svalue, (jsonflg)?", ":"", getStateText(flag));
       jsonflg = 1;
     }
-    if (hlw_margin(1, sysCfg.hlw_umax, cs_truePower, flag, hlw_umaxflg)) {
+    if (cs_margin(1, sysCfg.hlw_umax, cs_truePower, flag, hlw_umaxflg)) {
       snprintf_P(svalue, sizeof(svalue), PSTR("%s%s\"VoltageHigh\":\"%s\""), svalue, (jsonflg)?", ":"", getStateText(flag));
       jsonflg = 1;
     }
-    if (hlw_margin(0, sysCfg.hlw_imin, piv, flag, hlw_iminflg)) {
+    if (cs_margin(0, sysCfg.hlw_imin, piv, flag, hlw_iminflg)) {
       snprintf_P(svalue, sizeof(svalue), PSTR("%s%s\"CurrentLow\":\"%s\""), svalue, (jsonflg)?", ":"", getStateText(flag));
       jsonflg = 1;
     }
-    if (hlw_margin(1, sysCfg.hlw_imax, piv, flag, hlw_imaxflg)) {
+    if (cs_margin(1, sysCfg.hlw_imax, piv, flag, hlw_imaxflg)) {
       snprintf_P(svalue, sizeof(svalue), PSTR("%s%s\"CurrentHigh\":\"%s\""), svalue, (jsonflg)?", ":"", getStateText(flag));
       jsonflg = 1;
     }
@@ -323,7 +306,7 @@ void hlw_margin_chk()
  * Commands
 \*********************************************************************************************/
 
-boolean hlw_command(char *type, uint16_t index, char *dataBuf, uint16_t data_len, int16_t payload, char *svalue, uint16_t ssvalue)
+boolean wattmtr_command(char *type, uint16_t index, char *dataBuf, uint16_t data_len, int16_t payload, char *svalue, uint16_t ssvalue)
 {
   boolean serviced = true; 
 
@@ -373,7 +356,7 @@ boolean hlw_command(char *type, uint16_t index, char *dataBuf, uint16_t data_len
   return serviced;
 }
 
-void hlw_commands(char *svalue, uint16_t ssvalue)
+void wattmtr_commands(char *svalue, uint16_t ssvalue)
 {
   snprintf_P(svalue, ssvalue, PSTR("{\"Commands5\":\"PowerLow, PowerHigh, VoltageLow, VoltageHigh, CurrentLow, CurrentHigh, ResetKWh\"}"));
 }
@@ -398,7 +381,7 @@ void hlw_mqttStat(byte option, char* svalue, uint16_t ssvalue)
     svalue, sKWHY, sKWHT, (option) ? sPeriod2 : "", sTruePower, sPowerFactor, sVoltage, sCurrent);
 }
 
-void hlw_mqttPresent()
+void wattmtr_mqttPresent()
 {
 // {"Time":"2017-03-04T13:37:24", "Yesterday":0.013, "Today":0.000, "Period":0, "Power":0, "Factor":0.00, "Voltage":0, "Current":0.000}
   char svalue[200];  // was MESSZ
@@ -412,7 +395,7 @@ void hlw_mqttPresent()
   mqtt_publish_topic_P(1, PSTR("ENERGY"), svalue);
 }
 
-void hlw_mqttStatus(char* svalue, uint16_t ssvalue)
+void wattmtr_mqttStatus(char* svalue, uint16_t ssvalue)
 {
   snprintf_P(svalue, ssvalue, PSTR("{\"StatusPWR\":{"));
   hlw_mqttStat(0, svalue, ssvalue);
@@ -429,7 +412,7 @@ const char HTTP_ENERGY_SNS[] PROGMEM =
   "<tr><th>Energy Yesterday</th><td>%s kWh</td></tr>"
   "<tr><th>Lost data</th><td>%d</td></tr>";
 
-String hlw_webPresent()
+String wattmtr_webPresent()
 {
   String page = "";
   char sKWHY[10], sKWHT[10], sTruePower[10], sPowerFactor[10], sVoltage[10], sCurrent[10], sensor[300];
