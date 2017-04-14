@@ -17,7 +17,7 @@ void setup()
 
 void loop() {
   Serial.println("NEC");
-  irsend.sendNEC(0x00FFE01F, 36);
+  irsend.sendNEC(0x00FFE01FUL, 32);
   delay(2000);
   Serial.println("Sony");
   irsend.sendSony(0xa90, 12);

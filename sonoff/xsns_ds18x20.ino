@@ -154,7 +154,12 @@ boolean ds18x20_read(uint8_t sensor, bool S, float &t)
       break;
     case DS18B20_CHIPID:   // DS18B20
     case MAX31850_CHIPID:  // MAX31850
-      t = ((data[1] << 8) + data[0]) * 0.0625;
+      uint16_t temp12 = (data[1] << 8) + data[0];
+      if (temp12 > 2047) {
+        temp12 = (~temp12) +1;
+        sign = -1;
+      }
+      t = sign * temp12 * 0.0625;
       if(S) t = ds18x20_convertCtoF(t);
       break;
     }

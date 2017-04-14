@@ -23,6 +23,9 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 */
 
+const char JSON_SNS_TEMPHUM[] PROGMEM =
+  "%s, \"%s\":{\"Temperature\":%s, \"Humidity\":%s}";
+
 /*********************************************************************************************\
  * Watchdog extension (https://github.com/esp8266/Arduino/issues/1532)
 \*********************************************************************************************/
@@ -34,7 +37,11 @@ Ticker tickerOSWatch;
 static unsigned long osw_last_loop;
 byte osw_flag = 0;
 
-void ICACHE_RAM_ATTR osw_osWatch(void)
+#ifndef USE_WS2812_DMA  // Collides with Neopixelbus but solves exception
+void osw_osWatch() ICACHE_RAM_ATTR;
+#endif  // USE_WS2812_DMA
+
+void osw_osWatch()
 {
   unsigned long t = millis();
   unsigned long last_run = abs(t - osw_last_loop);
@@ -599,7 +606,7 @@ void i2c_scan(char *devs, unsigned int devs_len)
       strncat(devs, tstr, devs_len);
       any = 1;
     }
-    else if (error == 4) snprintf_P(devs, devs_len, PSTR("{\"I2Cscan\":\"Unknow error at 0x%2x\"}"), address);
+    else if (error == 4) snprintf_P(devs, devs_len, PSTR("{\"I2Cscan\":\"Unknown error at 0x%2x\"}"), address);
   }
   if (any) {
     strncat(devs, "\"}", devs_len);

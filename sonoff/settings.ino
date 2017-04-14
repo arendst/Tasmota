@@ -125,11 +125,14 @@ int spiffsflag = 0;
 /*
  * Based on cores/esp8266/Updater.cpp
  */
-void setFlashChipMode(byte option, byte mode)
+void setFlashMode(byte option, byte mode)
 {
   char log[LOGSZ];
   uint8_t *_buffer;
   uint32_t address;
+
+// option 0 - Use absolute address 0
+// option 1 - Use OTA/Upgrade relative address
 
   if (option) {
     eboot_command ebcmd;
@@ -147,11 +150,18 @@ void setFlashChipMode(byte option, byte mode)
         spi_flash_write(address, (uint32_t*)_buffer, FLASH_SECTOR_SIZE);
       }
       interrupts();
-      snprintf_P(log, sizeof(log), PSTR("FLSH: Updated Flash Chip Mode to %d"), (option) ? mode : ESP.getFlashChipMode());
+      snprintf_P(log, sizeof(log), PSTR("FLSH: Set Flash Mode to %d"), (option) ? mode : ESP.getFlashChipMode());
       addLog(LOG_LEVEL_DEBUG, log);
     }
   }
   delete[] _buffer;
+}
+
+void setModuleFlashMode(byte option)
+{
+  uint8_t mode = 0;  // QIO - ESP8266
+  if ((sysCfg.module == SONOFF_TOUCH) || (sysCfg.module == SONOFF_4CH)) mode = 3;  // DOUT - ESP8285
+  setFlashMode(option, mode);
 }
 
 boolean spiffsPresent()

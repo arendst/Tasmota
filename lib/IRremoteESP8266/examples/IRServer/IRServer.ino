@@ -27,7 +27,7 @@ void handleIr(){
     if(server.argName(i) == "code") 
     {
       unsigned long code = server.arg(i).toInt();
-      irsend.sendNEC(code, 36);
+      irsend.sendNEC(code, 32);
     }
   }
   handleRoot();
