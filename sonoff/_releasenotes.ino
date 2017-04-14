@@ -1,4 +1,21 @@
-/* 4.1.1 20170329
+/* 4.1.3 20170410
+ * Add user configuarble GPIO to module S20 Socket and Slampher
+ * Add support for Sonoff SC (#112)
+ * Set PWM frequency from 1000Hz to 910Hz as used on iTead Sonoff Led firmware (#122)
+ * Set Sonoff Led unconfigured floating outputs to 0 to reduce exceptions due to power supply instabilities (#122)
+ * Add Access Point Mac Address to Status 11 and Telemetry (#329)
+ * Fix DS18B20 negative temperature readings (#334)
+ *
+ * 4.1.2 20170403
+ * Rename Unrecognised command to Unknown command
+ * Remove all command lists
+ * Remove command SmartConfig (superseded by WifiConfig)
+ * Fix boot loop when selecting module Sonoff 4CH or Sonoff Touch on non ESP8285 hardware
+ * Add optional support for Toshiba and Mitsubishi HVAC IR control (needs updated IRremote8266 library) (#83, #257)
+ * Add all configured switches to Domoticz Configuration web page (#305)
+ * Fix compile error when selecting WS2812 DMA (#313)
+ *
+ * 4.1.1 20170329
  * Fix default Telemetry for command Prefix3
  * Fix webserver Module parameters for disabled select
  * Fix sensor status for enabled switches

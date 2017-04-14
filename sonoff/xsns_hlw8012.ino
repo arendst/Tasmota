@@ -512,11 +512,6 @@ boolean wattmtr_command(char *type, uint16_t index, char *dataBuf, uint16_t data
   return serviced;
 }
 
-void wattmtr_commands(char *svalue, uint16_t ssvalue)
-{
-  snprintf_P(svalue, ssvalue, PSTR("{\"Commands5\":\"PowerLow, PowerHigh, VoltageLow, VoltageHigh, CurrentLow, CurrentHigh, HlwPcal, HlwUcal, HlwIcal%s\"}"),
-    (FEATURE_POWER_LIMIT)?", SafePower, SafePowerHold, SafePowerWindow, MaxPower, MaxPowerHold, MaxPowerWindow, MaxEnergy, MaxEnergyStart":"");
-}
 
 /*********************************************************************************************\
  * Presentation

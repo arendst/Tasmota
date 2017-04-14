@@ -131,7 +131,7 @@ float dsb_convertCtoF(float c)
 boolean dsb_readTemp(bool S, float &t)
 {
   int16_t DSTemp;
-  byte msb, lsb, crc;
+  byte msb, lsb, crc, sign = 1;
 
   if (!dsb_mt) {
     t = NAN;
@@ -168,7 +168,11 @@ boolean dsb_readTemp(bool S, float &t)
     addLog_P(LOG_LEVEL_DEBUG, PSTR("DSB: Sensor CRC error"));
   } else {
     DSTemp = (msb << 8) + lsb;
-    t = (float(DSTemp) * 0.0625);
+    if (DSTemp > 2047) {
+      DSTemp = (~DSTemp) +1;
+      sign = -1;
+    }
+    t = (float)sign * DSTemp * 0.0625;
     if(S) t = dsb_convertCtoF(t);
   }
   if (!isnan(t)) dsb_mt = t;

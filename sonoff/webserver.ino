@@ -103,7 +103,6 @@ const char HTTP_SCRIPT_CONSOL[] PROGMEM =
     "t=document.getElementById('t1');"
     "if(p==1){"
       "c=document.getElementById('c1');"
-//      "o='&c1='+c.value;"
       "o='&c1='+encodeURI(c.value);"
       "c.value='';"
       "t.scrollTop=sn;"
@@ -223,8 +222,8 @@ const char HTTP_FORM_OTHER2[] PROGMEM =
 const char HTTP_FORM_OTHER3[] PROGMEM =
   "<br/><fieldset><legend><b>&nbsp;Emulation&nbsp;</b></legend>"
   "<br/><input style='width:10%;float:left' id='b2' name='b2' type='radio' value='0'{r2}><b>None</b>"
-  "<br/><input style='width:10%;float:left' id='b2' name='b2' type='radio' value='1'{r3}><b>Belkin WeMo</b>"
-  "<br/><input style='width:10%;float:left' id='b2' name='b2' type='radio' value='2'{r4}><b>Hue Bridge</b><br/>";
+  "<br/><input style='width:10%;float:left' id='b2' name='b2' type='radio' value='1'{r3}><b>Belkin WeMo</b> single device"
+  "<br/><input style='width:10%;float:left' id='b2' name='b2' type='radio' value='2'{r4}><b>Hue Bridge</b> multi devices<br/>";
 #endif  // USE_EMULATION
 const char HTTP_FORM_END[] PROGMEM =
   "<br/><button type='submit'>Save</button></form></fieldset>";
@@ -258,6 +257,8 @@ const char HTTP_FORM_CMND[] PROGMEM =
   "<input style='width:98%' id='c1' name='c1' length='99' placeholder='Enter command' autofocus><br/>"
 //  "<br/><button type='submit'>Send command</button>"
   "</form>";
+const char HTTP_TABLE100[] PROGMEM =
+  "<table style='width:100%'>";
 const char HTTP_COUNTER[] PROGMEM =
   "<br/><div id='t' name='t' style='text-align:center;'></div>";
 const char HTTP_SNS_TEMP[] PROGMEM =
@@ -266,6 +267,12 @@ const char HTTP_SNS_HUM[] PROGMEM =
   "<tr><th>%s Humidity</th><td>%s%</td></tr>";
 const char HTTP_SNS_PRESSURE[] PROGMEM =
   "<tr><th>%s Pressure</th><td>%s hPa</td></tr>";
+const char HTTP_SNS_LIGHT[] PROGMEM =
+  "<tr><th>%s Light</th><td>%d%</td></tr>";
+const char HTTP_SNS_NOISE[] PROGMEM =
+  "<tr><th>%s Noise</th><td>%d%</td></tr>";
+const char HTTP_SNS_DUST[] PROGMEM =
+  "<tr><th>%s Air quality</th><td>%d%</td></tr>";
 const char HTTP_END[] PROGMEM =
   "</div>"
   "</body>"
@@ -420,7 +427,8 @@ void handleRoot()
           sysCfg.led_dimmer[0]);
         page += line;
       }
-      page += F("<table style='width:100%'><tr>");
+      page += FPSTR(HTTP_TABLE100);
+      page += F("<tr>");
       for (byte idx = 1; idx <= Maxdevice; idx++) {
         snprintf_P(stemp, sizeof(stemp), PSTR(" %d"), idx);
         snprintf_P(line, sizeof(line), PSTR("<td style='width:%d%'><button onclick='la(\"?o=%d\");'>Toggle%s</button></td>"),
@@ -449,6 +457,7 @@ void handleAjax2()
   }
   
   String tpage = "";
+  if (sysCfg.module == SONOFF_SC) tpage += sc_webPresent();
 #ifdef USE_WATTMETER
   if (wattmtr_flg) tpage += wattmtr_webPresent();
 #endif // USE_WATTMETER
@@ -479,16 +488,18 @@ void handleAjax2()
 #endif  // USE_I2C    
   String page = "";
   if (tpage.length() > 0) {
-    page += F("<table style='width:100%'>");
+    page += FPSTR(HTTP_TABLE100);
     page += tpage;
     page += F("</table>");
   }
   char line[120];
   if (Maxdevice) {
-    page += F("<table style='width:100%'><tr>");
+    page += FPSTR(HTTP_TABLE100);
+    page += F("<tr>");
     for (byte idx = 1; idx <= Maxdevice; idx++) {
       snprintf_P(line, sizeof(line), PSTR("<td style='width:%d%'><div style='text-align:center;font-weight:bold;font-size:%dpx'>%s</div></td>"),
-        100 / Maxdevice, 70 - (Maxdevice * 8), (power & (0x01 << (idx -1))) ? "ON" : "OFF");
+//        100 / Maxdevice, 70 - (Maxdevice * 8), (power & (0x01 << (idx -1))) ? "ON" : "OFF");
+        100 / Maxdevice, 70 - (Maxdevice * 8), getStateText(bitRead(power, idx -1)));
       page += line;
     }
     page += F("</tr></table>");
@@ -530,6 +541,8 @@ void handleConfig()
 
 boolean inModule(byte val, uint8_t *arr)
 {
+  int offset = 0;
+  
   if (!val) return false;  // None
 #ifndef USE_I2C
   if (val == GPIO_I2C_SCL) return true;
@@ -541,8 +554,11 @@ boolean inModule(byte val, uint8_t *arr)
 #ifndef USE_IR_REMOTE
   if (val == GPIO_IRSEND) return true;
 #endif
+  if (((val >= GPIO_REL1) && (val <= GPIO_REL4)) || ((val >= GPIO_LED1) && (val <= GPIO_LED4))) offset = 4;
+  if (((val >= GPIO_REL1_INV) && (val <= GPIO_REL4_INV)) || ((val >= GPIO_LED1_INV) && (val <= GPIO_LED4_INV))) offset = -4;
   for (byte i = 0; i < MAX_GPIO_PIN; i++) {
     if (arr[i] == val) return true;
+    if (arr[i] == val + offset) return true;
   }
   return false;
 }
@@ -907,12 +923,14 @@ void handleSave()
     memcpy_P(&cmodule, &modules[sysCfg.module], sizeof(cmodule));
     String gpios = "";
     for (byte i = 0; i < MAX_GPIO_PIN; i++) {
+      if (new_modflg) sysCfg.my_module.gp.io[i] = 0;
       if (cmodule.gp.io[i] == GPIO_USER) {
         snprintf_P(stemp, sizeof(stemp), PSTR("g%d"), i);
-        sysCfg.my_module.gp.io[i] = (new_modflg) ? 0 : (!strlen(webServer->arg(stemp).c_str())) ? 0 : atoi(webServer->arg(stemp).c_str());
+        sysCfg.my_module.gp.io[i] = (!strlen(webServer->arg(stemp).c_str())) ? 0 : atoi(webServer->arg(stemp).c_str());
         gpios += F(", GPIO"); gpios += String(i); gpios += F(" "); gpios += String(sysCfg.my_module.gp.io[i]);
       }
     }
+    setModuleFlashMode(0);
     snprintf_P(stemp, sizeof(stemp), modules[sysCfg.module].name);
     snprintf_P(log, sizeof(log), PSTR("HTTP: %s Module%s"), stemp, gpios.c_str());
     addLog(LOG_LEVEL_INFO, log);
@@ -1123,7 +1141,7 @@ void handleUploadLoop()
         }
         if ((sysCfg.module == SONOFF_TOUCH) || (sysCfg.module == SONOFF_4CH)) {
           upload.buf[2] = 3; // DOUT - ESP8285
-          addLog_P(LOG_LEVEL_DEBUG, PSTR("FLSH: Updated Flash Chip Mode to 3"));
+          addLog_P(LOG_LEVEL_DEBUG, PSTR("FLSH: Set Flash Mode to 3"));
         }
       }
     }

@@ -123,6 +123,7 @@ enum module_t {
   WEMOS,
   SONOFF_DEV,
   H801,
+  SONOFF_SC,
   CS54060A,
   MAXMODULE };
 
@@ -243,7 +244,10 @@ const mytmplt modules[MAXMODULE] PROGMEM = {
   },
   { "S20 Socket",      // S20 Smart Socket (ESP8266)
      GPIO_KEY1,        // GPIO00 Button
-     0, 0, 0, 0, 0,
+     GPIO_USER,        // GPIO01 Serial RXD and Optional sensor
+     0,
+     GPIO_USER,        // GPIO03 Serial TXD and Optional sensor
+     0, 0,
      0, 0, 0, 0, 0, 0, // Flash connection
      GPIO_REL1,        // GPIO12 Red Led and Relay (0 = Off, 1 = On)
      GPIO_LED1_INV,    // GPIO13 Green Led (0 = On, 1 = Off)
@@ -251,7 +255,10 @@ const mytmplt modules[MAXMODULE] PROGMEM = {
   },
   { "Slampher",        // Slampher (ESP8266)
      GPIO_KEY1,        // GPIO00 Button
-     0, 0, 0, 0, 0,
+     GPIO_USER,        // GPIO01 Serial RXD and Optional sensor
+     0,
+     GPIO_USER,        // GPIO03 Serial TXD and Optional sensor
+     0, 0,
      0, 0, 0, 0, 0, 0, // Flash connection
      GPIO_REL1,        // GPIO12 Red Led and Relay (0 = Off, 1 = On)
      GPIO_LED1_INV,    // GPIO13 Blue Led (0 = On, 1 = Off)
@@ -394,6 +401,17 @@ const mytmplt modules[MAXMODULE] PROGMEM = {
      GPIO_PWM1,        // GPIO14 W1 
      GPIO_PWM5,        // GPIO15 Red 
      0, 0
+  },
+  { "Sonoff SC",       // Sonoff SC (ESP8266)
+     GPIO_KEY1,        // GPIO00 Button
+     GPIO_TXD,         // GPIO01 RXD to ATMEGA328P
+     GPIO_USER,        // GPIO02 Optional sensor
+     GPIO_RXD,         // GPIO03 TXD to ATMEGA328P
+     0, 0,
+     0, 0, 0, 0, 0, 0, // Flash connection
+     0,
+     GPIO_LED1_INV,    // GPIO13 Green Led (0 = On, 1 = Off)
+     0, 0, 0, 0
   },
   { "CS8460A",         // Board with CS8460A (ESP8266)
      GPIO_USER,        // GPIO00 E-FW Button
