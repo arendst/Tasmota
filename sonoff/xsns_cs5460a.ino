@@ -93,12 +93,12 @@ void clockISR() ICACHE_RAM_ATTR;
 
 Ticker tickerCS;
 
-byte hlw_pminflg = 0;
-byte hlw_pmaxflg = 0;
-byte hlw_uminflg = 0;
-byte hlw_umaxflg = 0;
-byte hlw_iminflg = 0;
-byte hlw_imaxflg = 0;
+byte cs_pminflg = 0;
+byte cs_pmaxflg = 0;
+byte cs_uminflg = 0;
+byte cs_umaxflg = 0;
+byte cs_iminflg = 0;
+byte cs_imaxflg = 0;
 
 byte cs_startup;
 byte power_steady_cntr;
@@ -213,12 +213,12 @@ void cs5460_loop()
 void cs_1s()
 {
   if (rtc_loctime() == rtc_midnight()) {
-    sysCfg.hlw_kWhyesterday = cs_kWhtoday;
+    sysCfg.wattmtr_kWhyesterday = cs_kWhtoday;
     cs_kWhtoday = 0;
   }
   
-  if (cs_startup && rtcTime.Valid && (rtcTime.DayOfYear == sysCfg.hlw_kWhdoy)) {
-    cs_kWhtoday = sysCfg.hlw_kWhtoday;
+  if (cs_startup && rtcTime.Valid && (rtcTime.DayOfYear == sysCfg.wattmtr_kWhdoy)) {
+    cs_kWhtoday = sysCfg.wattmtr_kWhtoday;
     cs_startup = 0;
   }
 
@@ -227,8 +227,8 @@ void cs_1s()
 
 void wattmtr_savestate()
 {
-  sysCfg.hlw_kWhdoy = (rtcTime.Valid) ? rtcTime.DayOfYear : 0;
-  sysCfg.hlw_kWhtoday = cs_kWhtoday;
+  sysCfg.wattmtr_kWhdoy = (rtcTime.Valid) ? rtcTime.DayOfYear : 0;
+  sysCfg.wattmtr_kWhtoday = cs_kWhtoday;
 }
 /********************************************************************************************/
 
@@ -263,7 +263,7 @@ void wattmtr_margin_chk()
     return;
   }
 
-  if (power && (sysCfg.hlw_pmin || sysCfg.hlw_pmax || sysCfg.hlw_umin || sysCfg.hlw_umax || sysCfg.hlw_imin || sysCfg.hlw_imax)) {
+  if (power && (sysCfg.wattmtr_pmin || sysCfg.wattmtr_pmax || sysCfg.wattmtr_umin || sysCfg.wattmtr_umax || sysCfg.wattmtr_imin || sysCfg.wattmtr_imax)) {
     piv = (uint16_t)(cs_current * 1000);
 
 //    snprintf_P(log, sizeof(log), PSTR("HLW: W %d, U %d, I %d"), pw, pu, piv);
@@ -271,27 +271,27 @@ void wattmtr_margin_chk()
 
     snprintf_P(svalue, sizeof(svalue), PSTR("{"));
     jsonflg = 0;
-    if (cs_margin(0, sysCfg.hlw_pmin, cs_truePower, flag, hlw_pminflg)) {
+    if (cs_margin(0, sysCfg.wattmtr_pmin, cs_truePower, flag, cs_pminflg)) {
       snprintf_P(svalue, sizeof(svalue), PSTR("%s%s\"PowerLow\":\"%s\""), svalue, (jsonflg)?", ":"", getStateText(flag));
       jsonflg = 1;
     }
-    if (cs_margin(1, sysCfg.hlw_pmax, cs_truePower, flag, hlw_pmaxflg)) {
+    if (cs_margin(1, sysCfg.wattmtr_pmax, cs_truePower, flag, cs_pmaxflg)) {
       snprintf_P(svalue, sizeof(svalue), PSTR("%s%s\"PowerHigh\":\"%s\""), svalue, (jsonflg)?", ":"", getStateText(flag));
       jsonflg = 1;
     }
-    if (cs_margin(0, sysCfg.hlw_umin, cs_voltage, flag, hlw_uminflg)) {
+    if (cs_margin(0, sysCfg.wattmtr_umin, cs_voltage, flag, cs_uminflg)) {
       snprintf_P(svalue, sizeof(svalue), PSTR("%s%s\"VoltageLow\":\"%s\""), svalue, (jsonflg)?", ":"", getStateText(flag));
       jsonflg = 1;
     }
-    if (cs_margin(1, sysCfg.hlw_umax, cs_truePower, flag, hlw_umaxflg)) {
+    if (cs_margin(1, sysCfg.wattmtr_umax, cs_truePower, flag, cs_umaxflg)) {
       snprintf_P(svalue, sizeof(svalue), PSTR("%s%s\"VoltageHigh\":\"%s\""), svalue, (jsonflg)?", ":"", getStateText(flag));
       jsonflg = 1;
     }
-    if (cs_margin(0, sysCfg.hlw_imin, piv, flag, hlw_iminflg)) {
+    if (cs_margin(0, sysCfg.wattmtr_imin, piv, flag, cs_iminflg)) {
       snprintf_P(svalue, sizeof(svalue), PSTR("%s%s\"CurrentLow\":\"%s\""), svalue, (jsonflg)?", ":"", getStateText(flag));
       jsonflg = 1;
     }
-    if (cs_margin(1, sysCfg.hlw_imax, piv, flag, hlw_imaxflg)) {
+    if (cs_margin(1, sysCfg.wattmtr_imax, piv, flag, cs_imaxflg)) {
       snprintf_P(svalue, sizeof(svalue), PSTR("%s%s\"CurrentHigh\":\"%s\""), svalue, (jsonflg)?", ":"", getStateText(flag));
       jsonflg = 1;
     }
@@ -312,39 +312,39 @@ boolean wattmtr_command(char *type, uint16_t index, char *dataBuf, uint16_t data
 
   if (!strcmp(type,"POWERLOW")) {
     if ((data_len > 0) && (payload >= 0) && (payload < 3601)) {
-      sysCfg.hlw_pmin = payload;
+      sysCfg.wattmtr_pmin = payload;
     }
-    snprintf_P(svalue, ssvalue, PSTR("{\"PowerLow\":\"%d%s\"}"), sysCfg.hlw_pmin, (sysCfg.value_units) ? " W" : "");
+    snprintf_P(svalue, ssvalue, PSTR("{\"PowerLow\":\"%d%s\"}"), sysCfg.wattmtr_pmin, (sysCfg.value_units) ? " W" : "");
   }
   else if (!strcmp(type,"POWERHIGH")) {
     if ((data_len > 0) && (payload >= 0) && (payload < 3601)) {
-      sysCfg.hlw_pmax = payload;
+      sysCfg.wattmtr_pmax = payload;
     }
-    snprintf_P(svalue, ssvalue, PSTR("{\"PowerHigh\":\"%d%s\"}"), sysCfg.hlw_pmax, (sysCfg.value_units) ? " W" : "");
+    snprintf_P(svalue, ssvalue, PSTR("{\"PowerHigh\":\"%d%s\"}"), sysCfg.wattmtr_pmax, (sysCfg.value_units) ? " W" : "");
   }
   else if (!strcmp(type,"VOLTAGELOW")) {
     if ((data_len > 0) && (payload >= 0) && (payload < 501)) {
-      sysCfg.hlw_umin = payload;
+      sysCfg.wattmtr_umin = payload;
     }
-    snprintf_P(svalue, ssvalue, PSTR("{\"VoltageLow\":\"%d%s\"}"), sysCfg.hlw_umin, (sysCfg.value_units) ? " V" : "");
+    snprintf_P(svalue, ssvalue, PSTR("{\"VoltageLow\":\"%d%s\"}"), sysCfg.wattmtr_umin, (sysCfg.value_units) ? " V" : "");
   }
   else if (!strcmp(type,"VOLTAGEHIGH")) {
     if ((data_len > 0) && (payload >= 0) && (payload < 501)) {
-      sysCfg.hlw_umax = payload;
+      sysCfg.wattmtr_umax = payload;
     }
-    snprintf_P(svalue, ssvalue, PSTR("[\"VoltageHigh\":\"%d%s\"}"), sysCfg.hlw_umax, (sysCfg.value_units) ? " V" : "");
+    snprintf_P(svalue, ssvalue, PSTR("[\"VoltageHigh\":\"%d%s\"}"), sysCfg.wattmtr_umax, (sysCfg.value_units) ? " V" : "");
   }
   else if (!strcmp(type,"CURRENTLOW")) {
     if ((data_len > 0) && (payload >= 0) && (payload < 16001)) {
-      sysCfg.hlw_imin = payload;
+      sysCfg.wattmtr_imin = payload;
     }
-    snprintf_P(svalue, ssvalue, PSTR("{\"CurrentLow\":\"%d%s\"}"), sysCfg.hlw_imin, (sysCfg.value_units) ? " mA" : "");
+    snprintf_P(svalue, ssvalue, PSTR("{\"CurrentLow\":\"%d%s\"}"), sysCfg.wattmtr_imin, (sysCfg.value_units) ? " mA" : "");
   }
   else if (!strcmp(type,"CURRENTHIGH")) {
     if ((data_len > 0) && (payload >= 0) && (payload < 16001)) {
-      sysCfg.hlw_imax = payload;
+      sysCfg.wattmtr_imax = payload;
     }
-    snprintf_P(svalue, ssvalue, PSTR("{\"CurrentHigh\":\"%d%s\"}"), sysCfg.hlw_imax, (sysCfg.value_units) ? " mA" : "");
+    snprintf_P(svalue, ssvalue, PSTR("{\"CurrentHigh\":\"%d%s\"}"), sysCfg.wattmtr_imax, (sysCfg.value_units) ? " mA" : "");
   }
   else if (!strcmp(type,"RESETKWH")) {
     cs_kWhtoday = 0;
@@ -365,11 +365,11 @@ void wattmtr_commands(char *svalue, uint16_t ssvalue)
  * Presentation
 \*********************************************************************************************/
 
-void hlw_mqttStat(byte option, char* svalue, uint16_t ssvalue)
+void cs_mqttStat(byte option, char* svalue, uint16_t ssvalue)
 {
   char sKWHY[10], sKWHT[10], sTruePower[10], sPowerFactor[10], sVoltage[10], sCurrent[10], sPeriod1[10], sPeriod2[20];
 
-  dtostrf((float)sysCfg.hlw_kWhyesterday / 100000000, 1, ENERGY_RESOLUTION &7, sKWHY);
+  dtostrf((float)sysCfg.wattmtr_kWhyesterday / 100000000, 1, ENERGY_RESOLUTION &7, sKWHY);
   dtostrf((float)cs_kWhtoday / 100000000, 1, ENERGY_RESOLUTION &7, sKWHT);
   dtostrf(cs_truePower, 1, 1, sTruePower);
   dtostrf(cs_powerFactor, 1, 2, sPowerFactor);
@@ -387,7 +387,7 @@ void wattmtr_mqttPresent()
   char svalue[200];  // was MESSZ
 
   snprintf_P(svalue, sizeof(svalue), PSTR("{\"Time\":\"%s\", "), getDateTime().c_str());
-  hlw_mqttStat(1, svalue, sizeof(svalue));
+  cs_mqttStat(1, svalue, sizeof(svalue));
 
 //  snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/ENERGY"), sysCfg.mqtt_prefix[2], sysCfg.mqtt_topic);
 //  mqtt_publish(stopic, svalue);
@@ -398,7 +398,7 @@ void wattmtr_mqttPresent()
 void wattmtr_mqttStatus(char* svalue, uint16_t ssvalue)
 {
   snprintf_P(svalue, ssvalue, PSTR("{\"StatusPWR\":{"));
-  hlw_mqttStat(0, svalue, ssvalue);
+  cs_mqttStat(0, svalue, ssvalue);
   snprintf_P(svalue, ssvalue, PSTR("%s}"), svalue);
 }
 
@@ -417,7 +417,7 @@ String wattmtr_webPresent()
   String page = "";
   char sKWHY[10], sKWHT[10], sTruePower[10], sPowerFactor[10], sVoltage[10], sCurrent[10], sensor[300];
 
-  dtostrf((float)sysCfg.hlw_kWhyesterday / 100000000, 1, ENERGY_RESOLUTION &7, sKWHY);
+  dtostrf((float)sysCfg.wattmtr_kWhyesterday / 100000000, 1, ENERGY_RESOLUTION &7, sKWHY);
   dtostrf((float)cs_kWhtoday / 100000000, 1, ENERGY_RESOLUTION &7, sKWHT);
   dtostrf(cs_truePower, 1, 1, sTruePower);
   dtostrf(cs_powerFactor, 1, 2, sPowerFactor);

@@ -352,7 +352,7 @@ void setRelay(uint8_t power)
   
 #ifdef USE_WATTMETER
   wattmtr_setPowerSteadyCounter(2);
-#endif
+#endif // USE_WATTMETER
 }
 
 void setLed(uint8_t state)
@@ -1256,7 +1256,7 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
     else if (wattmtr_flg && wattmtr_command(type, index, dataBuf, data_len, payload, svalue, sizeof(svalue))) {
       // Serviced
     }
-#endif
+#endif // USE_WATTMETER
 #ifdef USE_I2C
     else if (i2c_flg && !strcmp(type,"I2CSCAN")) {
       i2c_scan(svalue, sizeof(svalue));
@@ -1320,7 +1320,7 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
       wattmtr_commands(svalue, sizeof(svalue));
       mqtt_publish_topic_P(0, PSTR("COMMANDS5"), svalue);
     }
-#endif
+#endif // USE_WATTMETER
 */
     snprintf_P(svalue, sizeof(svalue), PSTR("{\"Command\":\"Invalid command\"}"));
     mqtt_publish_topic_P(0, PSTR("COMMAND"), svalue);
@@ -1518,11 +1518,11 @@ void publish_status(uint8_t payload)
 
     if ((payload == 0) || (payload == 9)) {
       snprintf_P(svalue, sizeof(svalue), PSTR("{\"StatusPTH\":{\"PowerLow\":%d, \"PowerHigh\":%d, \"VoltageLow\":%d, \"VoltageHigh\":%d, \"CurrentLow\":%d, \"CurrentHigh\":%d}}"),
-        sysCfg.hlw_pmin, sysCfg.hlw_pmax, sysCfg.hlw_umin, sysCfg.hlw_umax, sysCfg.hlw_imin, sysCfg.hlw_imax);
+        sysCfg.wattmtr_pmin, sysCfg.wattmtr_pmax, sysCfg.wattmtr_umin, sysCfg.wattmtr_umax, sysCfg.wattmtr_imin, sysCfg.wattmtr_imax);
       mqtt_publish_topic_P(option, PSTR("STATUS9"), svalue);
     }
   }
-#endif
+#endif // USE_WATTMETER
 
   if ((payload == 0) || (payload == 10)) {
     uint8_t djson = 0;
@@ -1693,13 +1693,13 @@ void every_second()
 
 #ifdef USE_WATTMETER
       if (wattmtr_flg) wattmtr_mqttPresent();
-#endif
+#endif // USE_WATTMETER
     }
   }
 
 #ifdef USE_WATTMETER
   if (wattmtr_flg) wattmtr_margin_chk();
-#endif
+#endif // USE_WATTMETER
 
   if ((rtcTime.Minute == 2) && uptime_flg) {
     uptime_flg = false;
@@ -1941,7 +1941,7 @@ void stateloop()
       if (sysCfg.savestate) sysCfg.power = power;
 #ifdef USE_WATTMETER
       if (wattmtr_flg) wattmtr_savestate();
-#endif
+#endif // USE_WATTMETER
       CFG_Save();
       restartflag--;
       if (restartflag <= 0) {

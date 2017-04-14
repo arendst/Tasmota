@@ -451,7 +451,7 @@ void handleAjax2()
   String tpage = "";
 #ifdef USE_WATTMETER
   if (wattmtr_flg) tpage += wattmtr_webPresent();
-#endif
+#endif // USE_WATTMETER
 #ifdef USE_DS18B20
   if (pin[GPIO_DSB] < 99) tpage += dsb_webPresent();
 #endif  // USE_DS18B20
