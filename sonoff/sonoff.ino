@@ -2121,14 +2121,25 @@ void GPIO_init()
 #ifdef USE_CS5460A
   wattmtr_flg = ((pin[GPIO_CS_CLK] < 99) && (pin[GPIO_CS_SDO] < 99));
   if (wattmtr_flg) cs_init();
+#else
+  if ((pin[GPIO_CS_CLK] < 99) && (pin[GPIO_CS_SDO] < 99))
+    addLog_P(LOG_LEVEL_ERROR, PSTR("CS5460A: ERROR - No CS5460A support present. Please reflash with the identifier USE_CS5460A"));
 #endif // USE_CS5460A
+
 #ifdef USE_PZEM004T
   wattmtr_flg = ((pin[GPIO_PZEM_RX] < 99) && (pin[GPIO_PZEM_TX] < 99));
   if (wattmtr_flg) pzem_init();
+#else
+  if ((pin[GPIO_PZEM_RX] < 99) && (pin[GPIO_PZEM_TX] < 99))
+    addLog_P(LOG_LEVEL_ERROR, PSTR("PZEM004T: ERROR - No PZEM004T support present. Please reflash with the identifier USE_PZEM004T"));
 #endif // USE_PZEM004T
+
 #ifdef USE_HLW8012
   wattmtr_flg = ((pin[GPIO_HLW_SEL] < 99) && (pin[GPIO_HLW_CF1] < 99) && (pin[GPIO_HLW_CF] < 99));
   if (wattmtr_flg) hlw_init();
+#else
+  if ((pin[GPIO_HLW_SEL] < 99) && (pin[GPIO_HLW_CF1] < 99) && (pin[GPIO_HLW_CF] < 99))
+    addLog_P(LOG_LEVEL_ERROR, PSTR("HLW8012: ERROR - No HLW8012 support present. Please reflash with the identifier USE_HLW8012"));
 #endif // USE_HLW8012
 
 #ifdef USE_DHT
