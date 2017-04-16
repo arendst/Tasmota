@@ -96,6 +96,8 @@ enum fpins_t {
   GPIO_ADC0,           // ADC
   GPIO_CS_CLK,         // CS5460A CLK clock (Power meter)
   GPIO_CS_SDO,         // CS5460A SDO data output (Power meter)
+  GPIO_PZEM_RX,        // PZEM004T RX (Power meter)
+  GPIO_PZEM_TX,        // PZEM004T TX (Power meter)
   GPIO_USER,           // User configurable
   GPIO_MAX };
 
@@ -125,6 +127,7 @@ enum module_t {
   H801,
   SONOFF_SC,
   CS54060A,
+  PZEM004T,
   MAXMODULE };
 
 /********************************************************************************************/
@@ -423,10 +426,23 @@ const mytmplt modules[MAXMODULE] PROGMEM = {
      0, 0, 0, 0, 0, 0, // Flash connection
      GPIO_REL1,        // GPIO12 Relay (0 = Off, 1 = On)
      GPIO_LED1_INV,    // GPIO13 BLUE LED
-     GPIO_KEY1,        // GPIO14 Optional sensor
+     GPIO_KEY1,        // GPIO14 Button
      0,                // GPIO15
      0,                // GPIO16
      GPIO_ADC0         // ADC0 A0 Analog input
+  },
+  { "PZEM004T",        // Board with PZEM004T (ESP8266)
+     GPIO_USER,        // GPIO00
+     GPIO_USER,        // GPIO01 TX Serial RXD and Optional sensor
+     0,                // GPIO02
+     GPIO_USER,        // GPIO03 RX Serial TXD and Optional sensor
+     GPIO_PZEM_RX,     // GPIO04 PZEM004T RX
+     GPIO_PZEM_TX,     // GPIO05 PZEM004T TX
+     0, 0, 0, 0, 0, 0, // Flash connection
+     GPIO_USER,        // GPIO12
+     GPIO_LED1_INV,    // GPIO13 BLUE LED
+     GPIO_USER,        // GPIO14 Optional sensor
+     0, 0, 0
   }
 };
 
