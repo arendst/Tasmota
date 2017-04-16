@@ -81,6 +81,9 @@ enum emul_t  {EMUL_NONE, EMUL_WEMO, EMUL_HUE, EMUL_MAX};
 #ifdef USE_CS5460A
 #undef USE_CS5460A                          // Disable CS5460A sensor
 #endif
+#ifdef USE_PZEM004T
+#undef USE_PZEM004T                         // Disable PZEM004T sensor
+#endif
 #endif  // BE_MINIMAL
 
 #ifndef SWITCH_MODE
@@ -133,7 +136,7 @@ enum emul_t  {EMUL_NONE, EMUL_WEMO, EMUL_HUE, EMUL_MAX};
   #define MAX_LOG_LINES        20           // Max number of lines in weblog
 #endif
 
-#if defined(USE_HLW8012) || defined(USE_CS5460A)
+#if defined(USE_HLW8012) || defined(USE_CS5460A) || defined(USE_PZEM004T)
 #define USE_WATTMETER
 #endif
 
@@ -2118,11 +2121,15 @@ void GPIO_init()
 #ifdef USE_CS5460A
   wattmtr_flg = ((pin[GPIO_CS_CLK] < 99) && (pin[GPIO_CS_SDO] < 99));
   if (wattmtr_flg) cs_init();
-#endif
+#endif // USE_CS5460A
+#ifdef USE_PZEM004T
+  wattmtr_flg = ((pin[GPIO_PZEM_RX] < 99) && (pin[GPIO_PZEM_TX] < 99));
+  if (wattmtr_flg) pzem_init();
+#endif // USE_PZEM004T
 #ifdef USE_HLW8012
   wattmtr_flg = ((pin[GPIO_HLW_SEL] < 99) && (pin[GPIO_HLW_CF1] < 99) && (pin[GPIO_HLW_CF] < 99));
   if (wattmtr_flg) hlw_init();
-#endif
+#endif // USE_HLW8012
 
 #ifdef USE_DHT
   if (dht_type) dht_init();

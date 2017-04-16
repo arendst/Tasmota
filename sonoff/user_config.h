@@ -129,7 +129,7 @@
 // -- Sensor code selection -----------------------
 #define USE_ADC_VCC                              // Display Vcc in Power status. Disable for use as Analog input on selected devices
 
-//#define USE_DS18x20                              // Optional using OneWire library for multiple DS18B20 and/or DS18S20 (+2k code)
+#define USE_DS18x20                              // Optional using OneWire library for multiple DS18B20 and/or DS18S20 (+2k code)
 
 #define USE_I2C                                  // I2C using library wire (+10k code, 0.2k mem) - Disable by //
   #define USE_BH1750                             // Add I2C code for BH1750 sensor
@@ -140,13 +140,14 @@
 #define USE_IR_REMOTE                            // Send IR remote commands using library IRremoteESP8266 and ArduinoJson (+3k code, 0.3k mem)
 //  #define USE_IR_HVAC                            // Support for HVAC system using IR (+2k code)
 
-#define USE_WS2812                               // WS2812 Led string using library NeoPixelBus (+8k code, +1k mem) - Disable by //
+//#define USE_WS2812                               // WS2812 Led string using library NeoPixelBus (+8k code, +1k mem) - Disable by //
   #define USE_WS2812_CTYPE     1                 // WS2812 Color type (0 - RGB, 1 - GRB)
 //  #define USE_WS2812_DMA                         // DMA supports only GPIO03 (= Serial TXD) (+1k mem)
                                                  //   When USE_WS2812_DMA is enabled expect Exceptions on Pow
 
 #define USE_HLW8012                              // Enable HLW8012 wattmeter (+8k code, +0.4k mem) - Disable by //
 //#define USE_CS5460A                              // Enable CS5460A wattmeter (+5k code, +0.2k mem) - Disable by //
+//#define USE_PZEM004T                              // Enable USE_PZEM004T wattmeter (+6k code, +0.4k mem) - Disable by //
 
 /*********************************************************************************************\
  * Compile a minimal version if upgrade memory gets tight ONLY TO BE USED FOR UPGRADE STEP 1!
@@ -165,8 +166,8 @@
   #error "Select either USE_MQTT_TLS or USE_WEBSERVER as there is just not enough memory to play with"
 #endif
 
-#if defined(USE_HLW8012) && defined(USE_CS5460A)
-  #error "Select either USE_HLW8012 or USE_CS5460A"
+#if (defined(USE_HLW8012) && defined(USE_CS5460A)) || (defined(USE_HLW8012) && defined(USE_PZEM004T)) || (defined(USE_CS5460A) && defined(USE_PZEM004T))
+  #error "Select either USE_HLW8012 or USE_CS5460A or USE_PZEM004T"
 #endif
 
 #if (ARDUINO < 10610)
