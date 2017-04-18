@@ -224,11 +224,11 @@ PZEMReadStates _readState = SET_ADDRESS;
 float pzem_voltage = 0;
 float pzem_current = 0;
 float pzem_truePower = 0;
-float pzem_period = 0;
+float pzem_Whperiod = 0;
+float pzem_Whtotal;
+float pzem_Whstart;
 
-unsigned long pzem_kWhtoday; // W * 10^-5 (deca micro Watt)
-unsigned long pzem_kWhtotal;
-unsigned long pzem_kWhstart;
+unsigned long pzem_kWhtoday; // Wh * 10^-5 (deca micro Watt hours)
 
 IPAddress ip(192, 168, 1, 1);
 Ticker tickerPZEM;
@@ -242,9 +242,8 @@ byte pzem_imaxflg = 0;
 
 byte pzem_fifth_second;
 byte pzem_startup;
-byte power_steady_cntr;
-
 byte pzem_sendRetry = 0;
+byte power_steady_cntr;
 
 void pzem_init()
 {
@@ -259,55 +258,65 @@ void pzem_init()
 void pzem0004t_loop()
 {
   bool readSuccess = false;
-   
+
   if (PZEM004T_isReady()) {
-    switch(_readState) {
+    switch (_readState) {
       case SET_ADDRESS:
         if (PZEM004T_setAddress_rcv(ip)) _readState = READ_VOLTAGE;
         break;
       case READ_VOLTAGE:
         pzem_voltage = PZEM004T_voltage_rcv(ip);
         _readState = READ_CURRENT;
-      break;
+        break;
       case READ_CURRENT:
         pzem_current = PZEM004T_current_rcv(ip);
         _readState = READ_POWER;
-      break;
+        break;
       case READ_POWER:
         pzem_truePower = PZEM004T_power_rcv(ip);
         _readState = READ_ENERGY;
-      break;
+        break;
       case READ_ENERGY:
-        float e = PZEM004T_energy_rcv(ip);
+        pzem_Whtotal = PZEM004T_energy_rcv(ip);
         _readState = READ_VOLTAGE;
-        pzem_period = e - pzem_period;
-        pzem_kWhtoday = e * 100000;
-      break;
+
+        if (!pzem_startup) {
+          if (pzem_Whtotal < pzem_Whstart) {
+            pzem_Whstart = pzem_Whtotal;
+            sysCfg.pzem_Whstart = pzem_Whstart * 1000;
+          }
+
+          pzem_kWhtoday = (pzem_Whtotal - pzem_Whstart) * 100000;
+        }
+        break;
     }
-    
+
     readSuccess = true;
   }
-  
-  if (pzem_sendRetry-- == 0 || readSuccess) {
+
+  if (pzem_sendRetry == 0 || readSuccess) {
     pzem_sendRetry = 5;
-    
-    switch(_readState) {
+
+    switch (_readState) {
       case SET_ADDRESS:
         PZEM004T_setAddress_snd(ip);
-      break;
+        break;
       case READ_VOLTAGE:
         PZEM004T_voltage_snd(ip);
-      break;
+        break;
       case READ_CURRENT:
         PZEM004T_current_snd(ip);
-      break;  
+        break;
       case READ_POWER:
         PZEM004T_power_snd(ip);
-      break;
+        break;
       case READ_ENERGY:
         PZEM004T_energy_snd(ip);
-      break;
+        break;
     }
+  }
+  else {
+    pzem_sendRetry--;
   }
 }
 
@@ -320,13 +329,13 @@ void pzem_200ms()
     if (rtc_loctime() == rtc_midnight()) {
       sysCfg.wattmtr_kWhyesterday = pzem_kWhtoday;
       pzem_kWhtoday = 0;
-      pzem_kWhstart = pzem_kWhtotal;
-      sysCfg.pzem_kWhstart = pzem_kWhstart;
+      pzem_Whstart = pzem_Whtotal;
+      sysCfg.pzem_Whstart = pzem_Whstart * 1000;
     }
 
     if (pzem_startup && rtcTime.Valid && (rtcTime.DayOfYear == sysCfg.wattmtr_kWhdoy)) {
       pzem_kWhtoday = sysCfg.wattmtr_kWhtoday;
-      pzem_kWhstart = sysCfg.pzem_kWhstart;
+      pzem_Whstart = (float)sysCfg.pzem_Whstart / 1000;
       pzem_startup = 0;
     }
   }
@@ -457,8 +466,9 @@ boolean wattmtr_command(char *type, uint16_t index, char *dataBuf, uint16_t data
   }
   else if (!strcmp(type, "RESETKWH")) {
     pzem_kWhtoday = 0;
-    pzem_kWhstart = pzem_kWhtotal;
-    sysCfg.pzem_kWhstart = pzem_kWhstart;
+    pzem_Whstart = pzem_Whtotal;
+    pzem_Whperiod = pzem_Whtotal;
+    sysCfg.pzem_Whstart = pzem_Whstart * 1000;
     snprintf_P(svalue, ssvalue, PSTR("{\"ResetKWh\":\"Done\"}"));
   }
   else {
@@ -471,19 +481,29 @@ boolean wattmtr_command(char *type, uint16_t index, char *dataBuf, uint16_t data
    Presentation
   \*********************************************************************************************/
 
-void pzem_mqttStat(byte option, char* svalue, uint16_t ssvalue)
+void pzem_mqttStat(bool withPeriod, char* svalue, uint16_t ssvalue)
 {
-  char sKWHY[10], sKWHT[10], sTruePower[10], sPowerFactor[10], sVoltage[10], sCurrent[10], sPeriod1[10], sPeriod2[20];
+  char sKWHY[10], sKWHT[10], sTruePower[10], sPowerFactor[10], sVoltage[10], sCurrent[10], sPeriod[20];
+
+  if (withPeriod)
+  {    
+    if (pzem_Whperiod == 0)
+    {
+      pzem_Whperiod = pzem_Whtotal;
+    }
+    
+    snprintf_P(sPeriod, sizeof(sPeriod), PSTR(", \"Period\":%d"), (int)(pzem_Whtotal - pzem_Whperiod));
+    
+    pzem_Whperiod = pzem_Whtotal;
+  }
 
   dtostrf((float)sysCfg.wattmtr_kWhyesterday / 100000000, 1, ENERGY_RESOLUTION & 7, sKWHY);
   dtostrf((float)pzem_kWhtoday / 100000000, 1, ENERGY_RESOLUTION & 7, sKWHT);
   dtostrf(pzem_truePower, 1, 1, sTruePower);
   dtostrf(pzem_voltage, 1, 1, sVoltage);
   dtostrf(pzem_current, 1, 3, sCurrent);
-  dtostrf(pzem_period, 1, 3, sPeriod1);
-  snprintf_P(sPeriod2, sizeof(sPeriod2), PSTR(", \"Period\":%s"), sPeriod1);
   snprintf_P(svalue, ssvalue, PSTR("%s\"Yesterday\":%s, \"Today\":%s%s, \"Power\":%s, \"Voltage\":%s, \"Current\":%s}"),
-             svalue, sKWHY, sKWHT, (option) ? sPeriod2 : "", sTruePower, sVoltage, sCurrent);
+             svalue, sKWHY, sKWHT, (withPeriod) ? sPeriod : "", sTruePower, sVoltage, sCurrent);
 }
 
 void wattmtr_mqttPresent()
@@ -492,7 +512,7 @@ void wattmtr_mqttPresent()
   char svalue[200];  // was MESSZ
 
   snprintf_P(svalue, sizeof(svalue), PSTR("{\"Time\":\"%s\", "), getDateTime().c_str());
-  pzem_mqttStat(1, svalue, sizeof(svalue));
+  pzem_mqttStat(true, svalue, sizeof(svalue));
 
   //  snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/ENERGY"), sysCfg.mqtt_prefix[2], sysCfg.mqtt_topic);
   //  mqtt_publish(stopic, svalue);
@@ -503,7 +523,7 @@ void wattmtr_mqttPresent()
 void wattmtr_mqttStatus(char* svalue, uint16_t ssvalue)
 {
   snprintf_P(svalue, ssvalue, PSTR("{\"StatusPWR\":{"));
-  pzem_mqttStat(0, svalue, ssvalue);
+  pzem_mqttStat(false, svalue, ssvalue);
   snprintf_P(svalue, ssvalue, PSTR("%s}"), svalue);
 }
 
@@ -513,20 +533,22 @@ const char HTTP_ENERGY_SNS[] PROGMEM =
   "<tr><th>Current</th><td>%s A</td></tr>"
   "<tr><th>Power</th><td>%s W</td></tr>"
   "<tr><th>Energy Today</th><td>%s kWh</td></tr>"
-  "<tr><th>Energy Yesterday</th><td>%s kWh</td></tr>";
+  "<tr><th>Energy Yesterday</th><td>%s kWh</td></tr>"
+  "<tr><th>Energy Total</th><td>%s kWh</td></tr>";
 
 String wattmtr_webPresent()
 {
   String page = "";
-  char sKWHY[10], sKWHT[10], sTruePower[10], sVoltage[10], sCurrent[10], sensor[300];
+  char sKWHY[10], sKWHT[10], sWHTotal[10], sTruePower[10], sVoltage[10], sCurrent[10], sensor[300];
 
   dtostrf((float)sysCfg.wattmtr_kWhyesterday / 100000000, 1, ENERGY_RESOLUTION & 7, sKWHY);
   dtostrf((float)pzem_kWhtoday / 100000000, 1, ENERGY_RESOLUTION & 7, sKWHT);
+  dtostrf(pzem_Whtotal / 1000, 1, ENERGY_RESOLUTION & 7, sWHTotal);
   dtostrf(pzem_truePower, 1, 1, sTruePower);
   dtostrf(pzem_voltage, 1, 1, sVoltage);
   dtostrf(pzem_current, 1, 3, sCurrent);
 
-  snprintf_P(sensor, sizeof(sensor), HTTP_ENERGY_SNS, sVoltage, sCurrent, sTruePower, sKWHT, sKWHY);
+  snprintf_P(sensor, sizeof(sensor), HTTP_ENERGY_SNS, sVoltage, sCurrent, sTruePower, sKWHT, sKWHY, sWHTotal);
   page += sensor;
   return page;
   page += sensor;

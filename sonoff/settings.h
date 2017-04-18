@@ -145,7 +145,7 @@ struct SYSCFG {
   uint32_t      ip_address[4];
 
   // Next version
-  unsigned long pzem_kWhstart;
+  unsigned long pzem_Whstart;
 } sysCfg;
 
 struct RTCMEM {
