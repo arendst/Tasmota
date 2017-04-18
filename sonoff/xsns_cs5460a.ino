@@ -48,8 +48,6 @@ POSSIBILITY OF SUCH DAMAGE.
 #define VOLTAGE_MULTIPLIER   (float)  (1 / FLOAT24 * VOLTAGE_RANGE * VOLTAGE_DIVIDER)
 #define CURRENT_MULTIPLIER   (float)  (1 / FLOAT24 * CURRENT_RANGE * CURRENT_SHUNT)
 
-#define MILLIS_TO_HOUR       (float)  (1 / 1000 * 3600)
-
 typedef enum
 {
    WAIT_SYNC = 0,
@@ -75,7 +73,7 @@ float cs_period = 0;
 int cs_lostDataCount = 0;
 int cs_fullBufferWarnings = 0;
 
-unsigned long cs_kWhtoday; // W * 10^-5 (deca micro Watt)
+unsigned long cs_kWhtoday; // Wh * 10^-5 (deca micro Watt hours)
 
 int _clkPin;
 int _sdoPin;
@@ -198,7 +196,7 @@ void cs5460_loop()
 			readFrame.energy |= 0xFF000000;
 		}
 		cs_truePower = ((int32_t)readFrame.energy) * POWER_MULTIPLIER;
-    cs_period = cs_truePower * readFrame.dt * MILLIS_TO_HOUR;
+    cs_period += ((float)cs_truePower * readFrame.dt) / (1000 * 3600);
     cs_kWhtoday += (cs_truePower * readFrame.dt) / 36;
 
     //char log[LOGSZ];
@@ -348,6 +346,7 @@ boolean wattmtr_command(char *type, uint16_t index, char *dataBuf, uint16_t data
   }
   else if (!strcmp(type,"RESETKWH")) {
     cs_kWhtoday = 0;
+    cs_period = 0;
     snprintf_P(svalue, ssvalue, PSTR("{\"ResetKWh\":\"Done\"}"));
   }
   else {
@@ -360,9 +359,18 @@ boolean wattmtr_command(char *type, uint16_t index, char *dataBuf, uint16_t data
  * Presentation
 \*********************************************************************************************/
 
-void cs_mqttStat(byte option, char* svalue, uint16_t ssvalue)
+void cs_mqttStat(bool withPeriod, char* svalue, uint16_t ssvalue)
 {
-  char sKWHY[10], sKWHT[10], sTruePower[10], sPowerFactor[10], sVoltage[10], sCurrent[10], sPeriod1[10], sPeriod2[20];
+  char sKWHY[10], sKWHT[10], sTruePower[10], sPowerFactor[10], sVoltage[10], sCurrent[10], sPeriod[20];
+
+  if (withPeriod) {
+    char sPeriodTemp[10];
+
+    dtostrf(cs_period, 1, 3, sPeriodTemp);
+    snprintf_P(sPeriod, sizeof(sPeriod), PSTR(", \"Period\":%s"), sPeriodTemp);
+
+    cs_period = 0;
+  }
 
   dtostrf((float)sysCfg.wattmtr_kWhyesterday / 100000000, 1, ENERGY_RESOLUTION &7, sKWHY);
   dtostrf((float)cs_kWhtoday / 100000000, 1, ENERGY_RESOLUTION &7, sKWHT);
@@ -370,10 +378,8 @@ void cs_mqttStat(byte option, char* svalue, uint16_t ssvalue)
   dtostrf(cs_powerFactor, 1, 2, sPowerFactor);
   dtostrf(cs_voltage, 1, 1, sVoltage);
   dtostrf(cs_current, 1, 3, sCurrent);
-  dtostrf(cs_period, 1, 3, sPeriod1);
-  snprintf_P(sPeriod2, sizeof(sPeriod2), PSTR(", \"Period\":%s"), sPeriod1);
   snprintf_P(svalue, ssvalue, PSTR("%s\"Yesterday\":%s, \"Today\":%s%s, \"Power\":%s, \"Factor\":%s, \"Voltage\":%s, \"Current\":%s}"),
-    svalue, sKWHY, sKWHT, (option) ? sPeriod2 : "", sTruePower, sPowerFactor, sVoltage, sCurrent);
+    svalue, sKWHY, sKWHT, (withPeriod) ? sPeriod : "", sTruePower, sPowerFactor, sVoltage, sCurrent);
 }
 
 void wattmtr_mqttPresent()
@@ -382,7 +388,7 @@ void wattmtr_mqttPresent()
   char svalue[200];  // was MESSZ
 
   snprintf_P(svalue, sizeof(svalue), PSTR("{\"Time\":\"%s\", "), getDateTime().c_str());
-  cs_mqttStat(1, svalue, sizeof(svalue));
+  cs_mqttStat(true, svalue, sizeof(svalue));
 
 //  snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/ENERGY"), sysCfg.mqtt_prefix[2], sysCfg.mqtt_topic);
 //  mqtt_publish(stopic, svalue);
@@ -393,7 +399,7 @@ void wattmtr_mqttPresent()
 void wattmtr_mqttStatus(char* svalue, uint16_t ssvalue)
 {
   snprintf_P(svalue, ssvalue, PSTR("{\"StatusPWR\":{"));
-  cs_mqttStat(0, svalue, ssvalue);
+  cs_mqttStat(false, svalue, ssvalue);
   snprintf_P(svalue, ssvalue, PSTR("%s}"), svalue);
 }
 
