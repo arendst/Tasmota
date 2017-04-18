@@ -135,9 +135,13 @@ float PZEM004T_energy_rcv(const IPAddress &addr)
   return ((uint32_t)data[0] << 16) + ((uint16_t)data[1] << 8) + data[2];
 }
 
-bool PZEM004T_setAddress(const IPAddress &newAddr)
+void PZEM004T_setAddress_snd(const IPAddress &newAddr)
 {
   PZEM004T_send(newAddr, PZEM_SET_ADDRESS, 0);
+}
+
+bool PZEM004T_setAddress_rcv(const IPAddress &newAddr)
+{
   return PZEM004T_recieve(RESP_SET_ADDRESS, 0);
 }
 
@@ -208,14 +212,14 @@ uint8_t PZEM004T_crc(uint8_t *data, uint8_t sz)
 
 typedef enum
 {
-  UNDEFINED,
+  SET_ADDRESS,
   READ_VOLTAGE,
   READ_CURRENT,
   READ_POWER,
   READ_ENERGY,
 } PZEMReadStates;
 
-PZEMReadStates _readState = UNDEFINED;
+PZEMReadStates _readState = SET_ADDRESS;
 
 float pzem_voltage = 0;
 float pzem_current = 0;
@@ -240,13 +244,14 @@ byte pzem_fifth_second;
 byte pzem_startup;
 byte power_steady_cntr;
 
+byte pzem_sendRetry = 0;
+
 void pzem_init()
 {
   pzem_kWhtoday = 0;
   pzem_startup = 1;
 
   PZEM004T_init(pin[GPIO_PZEM_RX], pin[GPIO_PZEM_TX]);
-  PZEM004T_setAddress(ip);
 
   tickerPZEM.attach_ms(200, pzem_200ms);
 }
@@ -254,55 +259,54 @@ void pzem_init()
 void pzem0004t_loop()
 {
   bool readSuccess = false;
-
+   
   if (PZEM004T_isReady()) {
-    switch (_readState) {
-      case UNDEFINED:
+    switch(_readState) {
+      case SET_ADDRESS:
+        if (PZEM004T_setAddress_rcv(ip)) _readState = READ_VOLTAGE;
+        break;
       case READ_VOLTAGE:
         pzem_voltage = PZEM004T_voltage_rcv(ip);
         _readState = READ_CURRENT;
-        break;
+      break;
       case READ_CURRENT:
         pzem_current = PZEM004T_current_rcv(ip);
         _readState = READ_POWER;
-        break;
+      break;
       case READ_POWER:
         pzem_truePower = PZEM004T_power_rcv(ip);
         _readState = READ_ENERGY;
-        break;
+      break;
       case READ_ENERGY:
         float e = PZEM004T_energy_rcv(ip);
         _readState = READ_VOLTAGE;
-
-        if (pzem_kWhtotal < pzem_kWhstart) {
-          pzem_kWhstart = pzem_kWhtotal;
-          sysCfg.pzem_kWhstart = pzem_kWhstart;
-        }
-
-        pzem_period = e - ((float)pzem_kWhtotal / 100000);
-        pzem_kWhtotal = e * 100000;
-        pzem_kWhtoday = pzem_kWhtotal - pzem_kWhstart;
-        break;
+        pzem_period = e - pzem_period;
+        pzem_kWhtoday = e * 100000;
+      break;
     }
-
+    
     readSuccess = true;
   }
-
-  if (readSuccess || (_readState == UNDEFINED)) {
-    switch (_readState) {
-      case UNDEFINED:
+  
+  if (pzem_sendRetry-- == 0 || readSuccess) {
+    pzem_sendRetry = 5;
+    
+    switch(_readState) {
+      case SET_ADDRESS:
+        PZEM004T_setAddress_snd(ip);
+      break;
       case READ_VOLTAGE:
         PZEM004T_voltage_snd(ip);
-        break;
+      break;
       case READ_CURRENT:
         PZEM004T_current_snd(ip);
-        break;
+      break;  
       case READ_POWER:
         PZEM004T_power_snd(ip);
-        break;
+      break;
       case READ_ENERGY:
         PZEM004T_energy_snd(ip);
-        break;
+      break;
     }
   }
 }
