@@ -1,4 +1,16 @@
-## Patchlevel1
+## 4.1.3c (Patchlevel1)
+- Added support for 8 channel DIO board PCF8574. Multiple boards up to 8 are allowed. The I2C adress is changed though
+  pins on the board. Up to 64 relays can be now directly adressed. Special configuration menue for PCF8574. Relays can be INVERTED
+  Known issue:
+  - Ports can also be used as INPUT pin and change to LOW triggered the TriggerPin on the board. NOT IMPLEMENTED yet
+  - MQTT STATUS Message exceet allowed length if many relays defined. Anyhow MQTT is supported.
+  - Friendlyname (Wemos, Hue) get populated but is not supported for more than 4 relays.
+  - Inverted relays flicker when physically off and one other relay change (PCF8574 issue)
+  - Webserverpage gets "crowded" on more than 8 relays, but work
+  - Webserverpages and MQTT with TLS can rise memory problems because of amount of contend. Disable MQTT temporary
+  - Configuration of PCF8574 not supported though MQTT or COMMAND. ONLY web.
+  
+## 4.1.3a
 - Added support for 4 channel A/D converter ADS1115
 - Changes MQTT Heap and WEBSERVER HEAP from kByte to Byte
 
