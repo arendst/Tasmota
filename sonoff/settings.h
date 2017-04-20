@@ -45,7 +45,7 @@ struct SYSCFG {
   byte          button_restrict;       // Was message_format until 3.2.6a
   uint16_t      tele_period;
 
-  uint8_t       power;
+  uint64_t      power;
   uint8_t       ledstate;
   uint8_t       ex_switchmode;         // Not used since 3.9.21
 
@@ -144,6 +144,8 @@ struct SYSCFG {
   // 4.0.9
   uint32_t      ip_address[4];
 
+  uint8_t       pcf8574_config[8];
+  uint8_t       all_relays_inverted;
 } sysCfg;
 
 struct RTCMEM {
