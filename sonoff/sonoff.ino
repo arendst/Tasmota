@@ -10,7 +10,7 @@
  * ====================================================
 */
 
-#define VERSION                0x04010300  // 4.1.3
+#define VERSION                0x04010301  // 4.1.3a
 
 enum log_t   {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG_MORE, LOG_LEVEL_ALL};
 enum week_t  {Last, First, Second, Third, Fourth};
@@ -155,6 +155,9 @@ enum butt_t {PRESSED, NOT_PRESSED};
 #endif  // USE_DISCOVERY
 #ifdef USE_I2C
   #include <Wire.h>                         // I2C support library
+  #ifdef USE_ADS1115                        // ADS115 A/D converter
+    #include <Adafruit_ADS1015.h>
+  #endif
 #endif  // USE_I2C
 #include "settings.h"
 
@@ -243,7 +246,11 @@ uint8_t latching_relay_pulse = 0;     // Latching relay pulse timer
 PubSubClient mqttClient(espClient);   // MQTT Client
 WiFiUDP portUDP;                      // UDP Syslog and Alexa
 
-uint8_t power;                        // Current copy of sysCfg.power
+#ifndef USE_PCF8574
+  uint8_t power = 0;                        // Current copy of sysCfg.power
+#else
+  uint64_t power = 0;
+#endif
 byte syslog_level;                    // Current copy of sysCfg.syslog_level
 uint16_t syslog_timer = 0;            // Timer to re-enable syslog_level
 byte seriallog_level;                 // Current copy of sysCfg.seriallog_level
@@ -261,7 +268,11 @@ uint8_t lastwallswitch[4];            // Last wall switch states
 
 mytmplt my_module;                    // Active copy of GPIOs
 uint8_t pin[GPIO_MAX];                // Possible pin configurations
-uint8_t rel_inverted[4] = { 0 };      // Relay inverted flag (1 = (0 = On, 1 = Off))
+#ifdef USE_PCF8574
+  uint8_t rel_inverted[64] = { 0 };      // Relay inverted flag (1 = (0 = On, 1 = Off))
+#else
+  uint8_t rel_inverted[4] = { 0 };      // Relay inverted flag (1 = (0 = On, 1 = Off))
+#endif
 uint8_t led_inverted[4] = { 0 };      // LED inverted flag (1 = (0 = On, 1 = Off))
 uint8_t swt_flg = 0;                  // Any external switch configured
 uint8_t dht_type = 0;                 // DHT type (DHT11, DHT21 or DHT22)
@@ -313,14 +324,15 @@ void setLatchingRelay(uint8_t power, uint8_t state)
   if (pin[GPIO_REL1 +latching_power] < 99) digitalWrite(pin[GPIO_REL1 +latching_power], rel_inverted[latching_power] ? !state : state);
 }
 
-void setRelay(uint8_t power)
+void setRelay(uint64_t power)
 {
   uint8_t state;
-  
-  if ((sysCfg.module == SONOFF_DUAL) || (sysCfg.module == CH4)) {
+  //char log[MESSZ];
+    if ((sysCfg.module == SONOFF_DUAL) || (sysCfg.module == CH4)) {
+    uint8_t power2 = power&0xFF;
     Serial.write(0xA0);
     Serial.write(0x04);
-    Serial.write(power);
+    Serial.write(power2);
     Serial.write(0xA1);
     Serial.write('\n');
     Serial.flush();
@@ -334,7 +346,12 @@ void setRelay(uint8_t power)
   else {
     for (byte i = 0; i < Maxdevice; i++) {
       state = power &1;
+      //snprintf_P(log, sizeof(log), PSTR("RSLT: Powerflag is %d, state is %d"), power, state);
+      //addLog(LOG_LEVEL_INFO, log);
       if (pin[GPIO_REL1 +i] < 99) digitalWrite(pin[GPIO_REL1 +i], rel_inverted[i] ? !state : state);
+#ifdef USE_PCF8574
+      pcf8574_switchrelay(i, state);
+#endif
       power >>= 1;
     }
   }
@@ -1321,16 +1338,16 @@ void do_cmnd_power(byte device, byte state)
 // state 9 = Show power state
 
   if ((device < 1) || (device > Maxdevice)) device = 1;
-  byte mask = 0x01 << (device -1);
+  uint64_t mask = 0x01 << (device -1);
   pulse_timer[(device -1)&3] = 0;
   if (state <= 2) {
     if ((blink_mask & mask)) {
-      blink_mask &= (0xFF ^ mask);  // Clear device mask
+      blink_mask &= (0xFFFFFFFFFFFFFFFF ^ mask);  // Clear device mask
       mqtt_publishPowerBlinkState(device);
     }
     switch (state) {
     case 0: { // Off
-      power &= (0xFF ^ mask);
+      power &= (0xFFFFFFFFFFFFFFFF ^ mask);
       break; }
     case 1: // On
       power |= mask;
@@ -1346,7 +1363,7 @@ void do_cmnd_power(byte device, byte state)
   }
   else if (state == 3) { // Blink
     if (!(blink_mask & mask)) {
-      blink_powersave = (blink_powersave & (0xFF ^ mask)) | (power & mask);  // Save state
+      blink_powersave = (blink_powersave & (0xFFFFFFFFFFFFFFFF ^ mask)) | (power & mask);  // Save state
       blink_power = (power >> (device -1))&1;  // Prep to Toggle
     }
     blink_timer = 1;
@@ -1552,8 +1569,11 @@ void sensors_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
 #ifdef USE_BH1750
     bh1750_mqttPresent(svalue, ssvalue, djson);
 #endif  // USE_BH1750
+#ifdef USE_ADS1115
+    ads1115_mqttPresent(svalue, ssvalue, djson);
+#endif  // USE_ADS1115
   }
-#endif  // USE_I2C      
+#endif  // USE_I2C
   snprintf_P(svalue, ssvalue, PSTR("%s}"), svalue);
 }
 
@@ -1625,6 +1645,14 @@ void every_second()
 #ifdef USE_BH1750
         bh1750_detect();
 #endif  // USE_BH1750
+#ifdef USE_ADS1115
+        ads1115_detect();
+#endif  // USE_ADS1115
+#ifdef USE_PCF8574
+        pcf8574_detect();
+#endif  // USE_PCF8574
+
+
       }
 #endif  // USE_I2C
     }
@@ -1864,7 +1892,7 @@ void stateloop()
       savedatacounter--;
       if (savedatacounter <= 0) {
         if (sysCfg.savestate) {
-          byte mask = 0xFF;
+          uint64_t mask = 0xFFFFFFFFFFFFFFFF;
           for (byte i = 0; i < MAX_PULSETIMERS; i++)
             if ((sysCfg.pulsetime[i] > 0) && (sysCfg.pulsetime[i] < 30)) mask &= ~(1 << i);
           if (!((sysCfg.power &mask) == (power &mask))) sysCfg.power = power;
@@ -2027,6 +2055,11 @@ void GPIO_init()
   analogWriteRange(PWM_RANGE);  // Default is 1023 (Arduino.h)
   analogWriteFreq(PWM_FREQ);    // Default is 1000 (core_esp8266_wiring_pwm.c)
 
+  #ifdef USE_I2C
+    i2c_flg = ((pin[GPIO_I2C_SCL] < 99) && (pin[GPIO_I2C_SDA] < 99));
+    if (i2c_flg) Wire.begin(pin[GPIO_I2C_SDA], pin[GPIO_I2C_SCL]);
+  #endif  // USE_I2C
+
   Maxdevice = 1;
   if (sysCfg.module == SONOFF_DUAL) {
     Maxdevice = 2;
@@ -2066,6 +2099,10 @@ void GPIO_init()
       }
       if (pin[GPIO_KEY1 +i] < 99) pinMode(pin[GPIO_KEY1 +i], INPUT_PULLUP);
     }
+#ifdef USE_PCF8574
+    pcf8574_Init();
+#endif
+
   }
   for (byte i = 0; i < 4; i++) {
     if (pin[GPIO_LED1 +i] < 99) {
@@ -2103,10 +2140,7 @@ void GPIO_init()
   if (pin[GPIO_DSB] < 99) ds18x20_init();
 #endif  // USE_DS18x20
 
-#ifdef USE_I2C
-  i2c_flg = ((pin[GPIO_I2C_SCL] < 99) && (pin[GPIO_I2C_SDA] < 99));
-  if (i2c_flg) Wire.begin(pin[GPIO_I2C_SDA], pin[GPIO_I2C_SCL]);
-#endif  // USE_I2C
+
 
 #ifdef USE_WS2812
   if (pin[GPIO_WS2812] < 99) ws2812_init();
@@ -2183,21 +2217,26 @@ void setup()
       setRelay(power);
     }
     else if (sysCfg.poweronstate == 1) {  // All on
-      power = ((0x00FF << Maxdevice) >> 8);
+      power = (((uint64_t)0xFFFFFFFF << Maxdevice) >> 32);
       setRelay(power);
     }
     else if (sysCfg.poweronstate == 2) {  // All saved state toggle
-      power = (sysCfg.power & ((0x00FF << Maxdevice) >> 8)) ^ 0xFF;
+      power = (sysCfg.power & (((uint64_t)0xFFFFFFFF << Maxdevice) >> 32)) ^ 0xFFFFFFFF;
       if (sysCfg.savestate) setRelay(power);
+      snprintf_P(log, sizeof(log), PSTR("APP: Setting powermatrix all toggle 0x%16x"),power);
     }
     else if (sysCfg.poweronstate == 3) {  // All saved state
-      power = sysCfg.power & ((0x00FF << Maxdevice) >> 8);
+      power = sysCfg.power & (((uint64_t)0xFFFFFFFF << Maxdevice) >>32);
       if (sysCfg.savestate) setRelay(power);
+      snprintf_P(log, sizeof(log), PSTR("APP: Setting powermatrix all saved 0x%16x"),power);
     }
   } else {
-    power = sysCfg.power & ((0x00FF << Maxdevice) >> 8);
-    if (sysCfg.savestate) setRelay(power);
+    power = sysCfg.power & (((uint64_t)0xFFFFFFFF << Maxdevice) >> 32);
+    if (sysCfg.savestate) setRelay(sysCfg.power);
+    snprintf_P(log, sizeof(log), PSTR("APP: Setting powermatrix savestate 0x%8x, from 0x%8x, shifter is 0x%8x, maxdevice %d"),power, sysCfg.power, ((uint64_t)0xFFFFFFFF << Maxdevice) >> 32, Maxdevice);
+
   }
+  addLog(LOG_LEVEL_INFO, log);
   blink_powersave = power;
 
   if (sysCfg.module == SONOFF_SC) sc_init();
@@ -2212,7 +2251,7 @@ void setup()
 void loop()
 {
   osw_loop();
-  
+
 #ifdef USE_WEBSERVER
   pollDnsWeb();
 #endif  // USE_WEBSERVER
