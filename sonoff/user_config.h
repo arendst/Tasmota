@@ -45,16 +45,16 @@
 #define USE_MQTT_TLS                             // EXPERIMENTAL Use TLS for MQTT connection (+53k code, +20k mem) - Disable by //
                                                  //   Needs Fingerprint, TLS Port, UserId and Password
 #ifdef USE_MQTT_TLS
-  #define MQTT_HOST            "elocm.homeserver.com"  // [MqttHost]
+  #define MQTT_HOST            "cloud.mqtt.org"    // [MqttHost]
   #define MQTT_FINGERPRINT     "EF:2A:0F:3E:87:95:6E:F0:4B:A6:F4:38:73:29:1A:14:7E:A9:A1:B7"  // [MqttFingerprint]
   #define MQTT_PORT            8883                // [MqttPort] MQTT TLS port
   #define MQTT_USER            "homematic"         // [MqttUser] Mandatory user
   #define MQTT_PASS            "geheim"            // [MqttPassword] Mandatory password
 #else
-  #define MQTT_HOST            "192.168.178.42"          // [MqttHost]
-  #define MQTT_PORT            1883              // [MqttPort] MQTT port (10123 on CloudMQTT)
-  #define MQTT_USER            "homematic"       // [MqttUser] Optional user
-  #define MQTT_PASS            "sunSeaker1all"       // [MqttPassword] Optional password
+  #define MQTT_HOST            "192.168.178.42"    // [MqttHost]
+  #define MQTT_PORT            1883                // [MqttPort] MQTT port (10123 on CloudMQTT)
+  #define MQTT_USER            "homematic"         // [MqttUser] Optional user
+  #define MQTT_PASS            "geheim"            // [MqttPassword] Optional password
 #endif
 
 #define MQTT_CLIENT_ID         "ESPCLIENT_%06X"       // [MqttClient] Also fall back topic using Chip Id = last 6 characters of MAC address
