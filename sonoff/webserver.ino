@@ -163,6 +163,9 @@ const char HTTP_BTN_MENU3[] PROGMEM =
   "";
 const char HTTP_BTN_MENU4[] PROGMEM =
   "<br/><form action='/lg' method='post'><button>Configure Logging</button></form>"
+  #ifdef USE_PCF8574
+  "<br/><form action='/i2c' method='post'><button>Configure I2C</button></form>"
+  #endif
   "<br/><form action='/co' method='post'><button>Configure Other</button></form>"
   "<br/><form action='/rt' method='post' onsubmit='return confirm(\"Confirm Reset Configuration\");'><button>Reset Configuration</button></form>"
   "<br/><form action='/dl' method='post'><button>Backup Configuration</button></form>"
@@ -322,6 +325,9 @@ void startWebserver(int type, IPAddress ipweb)
       webServer->on("/in", handleInfo);
       webServer->on("/rb", handleRestart);
       webServer->on("/fwlink", handleRoot);  // Microsoft captive portal. Maybe not needed. Might be handled by notFound handler.
+#ifdef USE_PCF8574
+      webServer->on("/i2c", handleI2C);
+#endif
 #ifdef USE_EMULATION
       if (sysCfg.emulation == EMUL_WEMO) {
         webServer->on("/upnp/control/basicevent1", HTTP_POST, handleUPnPevent);
@@ -498,9 +504,11 @@ void handleAjax2()
     page += FPSTR(HTTP_TABLE100);
     page += F("<tr>");
     for (byte idx = 1; idx <= Maxdevice; idx++) {
-      snprintf_P(line, sizeof(line), PSTR("<td style='width:%d%'><div style='text-align:center;font-weight:bold;font-size:%dpx'>%s</div></td>"),
+      //snprintf_P(line, sizeof(line), PSTR("<td style='width:%d%'><div style='text-align:center;font-weight:bold;font-size:%dpx'>%s</div></td>"),
+      snprintf_P(line, sizeof(line), PSTR("<td style='width:%d%'><div style='text-align:center;font-weight:bold'>%s</div></td>"),
 //        100 / Maxdevice, 70 - (Maxdevice * 8), (power & (0x01 << (idx -1))) ? "ON" : "OFF");
-        100 / Maxdevice, 70 - (Maxdevice * 8), getStateText(bitRead(power, idx -1)));
+        //100 / Maxdevice, 70 - (Maxdevice * 8), getStateText(bitRead(power, idx -1)));
+        100 / Maxdevice,  getStateText(bitRead(power, idx -1)));
       page += line;
     }
     page += F("</tr></table>");
@@ -916,6 +924,12 @@ void handleSave()
       getStateText(sysCfg.mqtt_enabled), sysCfg.emulation, sysCfg.friendlyname[0], sysCfg.friendlyname[1], sysCfg.friendlyname[2], sysCfg.friendlyname[3]);
     addLog(LOG_LEVEL_INFO, log);
     break;
+  #ifdef USE_PCF8574
+  case 7:
+      pcf8574_saveSettings();
+    break;
+  #endif  // USE_PCF8574
+
   case 6:
     byte new_module = (!strlen(webServer->arg("mt").c_str())) ? MODULE : atoi(webServer->arg("mt").c_str());
     byte new_modflg = (sysCfg.module != new_module);
