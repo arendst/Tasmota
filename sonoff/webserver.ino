@@ -33,6 +33,8 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #define STR_HELPER(x) #x
 #define STR(x) STR_HELPER(x)
+#define max(a,b) ((a)>(b)?(a):(b))
+#define min(a,b) ((a)>(b)?(b):(a))
 
 const char HTTP_HEAD[] PROGMEM =
   "<!DOCTYPE html><html lang=\"en\" class=\"\">"
@@ -163,9 +165,9 @@ const char HTTP_BTN_MENU3[] PROGMEM =
   "";
 const char HTTP_BTN_MENU4[] PROGMEM =
   "<br/><form action='/lg' method='post'><button>Configure Logging</button></form>"
-  #ifdef USE_PCF8574
-  "<br/><form action='/i2c' method='post'><button>Configure I2C</button></form>"
-  #endif
+#ifdef USE_PCF8574
+  "<br/><form action='/i2c' method='post'><button>Configure PCF8574</button></form>"
+#endif // USE_PCF8574
   "<br/><form action='/co' method='post'><button>Configure Other</button></form>"
   "<br/><form action='/rt' method='post' onsubmit='return confirm(\"Confirm Reset Configuration\");'><button>Reset Configuration</button></form>"
   "<br/><form action='/dl' method='post'><button>Backup Configuration</button></form>"
@@ -209,7 +211,7 @@ const char HTTP_FORM_LOG2[] PROGMEM =
   "<option{a2value='2'>2 Info</option>"
   "<option{a3value='3'>3 Debug</option>"
   "<option{a4value='4'>4 More debug</option>"
-  "</select></br>";  
+  "</select></br>";
 const char HTTP_FORM_LOG3[] PROGMEM =
   "<br/><b>Syslog host</b> (" SYS_LOG_HOST ")<br/><input id='lh' name='lh' length=32 placeholder='" SYS_LOG_HOST "' value='{l2}'><br/>"
   "<br/><b>Syslog port</b> (" STR(SYS_LOG_PORT) ")<br/><input id='lp' name='lp' length=5 placeholder='" STR(SYS_LOG_PORT) "' value='{l3}'><br/>"
@@ -436,6 +438,10 @@ void handleRoot()
       page += FPSTR(HTTP_TABLE100);
       page += F("<tr>");
       for (byte idx = 1; idx <= Maxdevice; idx++) {
+        if ((idx-1)&0x7 == 0) {
+            addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: überlauf"));
+            page += F("</tr><tr>");
+        }
         snprintf_P(stemp, sizeof(stemp), PSTR(" %d"), idx);
         snprintf_P(line, sizeof(line), PSTR("<td style='width:%d%'><button onclick='la(\"?o=%d\");'>Toggle%s</button></td>"),
           100 / Maxdevice, idx, (Maxdevice > 1) ? stemp : "");
@@ -443,7 +449,7 @@ void handleRoot()
       }
       page += F("</tr></table>");
     }
-    
+
     if (_httpflag == HTTP_ADMIN) {
       page += FPSTR(HTTP_BTN_MENU1);
       page += FPSTR(HTTP_BTN_RSTRT);
@@ -455,13 +461,13 @@ void handleRoot()
 void handleAjax2()
 {
   char svalue[16];
-  
+
   if (strlen(webServer->arg("o").c_str())) do_cmnd_power(atoi(webServer->arg("o").c_str()), 2);
   if (strlen(webServer->arg("d").c_str())) {
     snprintf_P(svalue, sizeof(svalue), PSTR("dimmer %s"), webServer->arg("d").c_str());
     do_cmnd(svalue);
   }
-  
+
   String tpage = "";
   if (hlw_flg) tpage += hlw_webPresent();
   if (sysCfg.module == SONOFF_SC) tpage += sc_webPresent();
@@ -478,7 +484,7 @@ void handleAjax2()
   if (i2c_flg) {
 #ifdef USE_SHT
     tpage += sht_webPresent();
-#endif    
+#endif
 #ifdef USE_HTU
     tpage += htu_webPresent();
 #endif
@@ -492,7 +498,7 @@ void handleAjax2()
     tpage += ads1115_webPresent();
 #endif
   }
-#endif  // USE_I2C    
+#endif  // USE_I2C
   String page = "";
   if (tpage.length() > 0) {
     page += FPSTR(HTTP_TABLE100);
@@ -551,7 +557,7 @@ void handleConfig()
 boolean inModule(byte val, uint8_t *arr)
 {
   int offset = 0;
-  
+
   if (!val) return false;  // None
 #ifndef USE_I2C
   if (val == GPIO_I2C_SCL) return true;
@@ -576,7 +582,7 @@ void handleModule()
 {
   if (httpUser()) return;
   char stemp[20], line[128];
-  
+
   addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Handle Module config"));
 
   String page = FPSTR(HTTP_HEAD);
@@ -586,17 +592,17 @@ void handleModule()
   snprintf_P(stemp, sizeof(stemp), modules[MODULE].name);
   page.replace("{mt}", stemp);
 
-  for (byte i = 0; i < MAXMODULE; i++) {  
+  for (byte i = 0; i < MAXMODULE; i++) {
     snprintf_P(stemp, sizeof(stemp), modules[i].name);
     snprintf_P(line, sizeof(line), PSTR("<option%s value='%d'>%02d %s</option>"),
       (i == sysCfg.module) ? " selected" : "", i, i +1, stemp);
     page += line;
   }
   page += F("</select></br>");
-  
+
   mytmplt cmodule;
   memcpy_P(&cmodule, &modules[sysCfg.module], sizeof(cmodule));
-  
+
   String func = FPSTR(HTTP_SCRIPT_MODULE);
   for (byte j = 0; j < GPIO_SENSOR_END; j++) {
     if (!inModule(j, cmodule.gp.io)) {
@@ -618,7 +624,7 @@ void handleModule()
   func += F("}</script>");
   page.replace("</script>", func);
   page.replace("<body>", "<body onload='sl()'>");
-  
+
   page += FPSTR(HTTP_FORM_END);
   page += FPSTR(HTTP_BTN_CONF);
   showPage(page);
@@ -821,7 +827,7 @@ void handleOther()
   page.replace("{r2}", (sysCfg.emulation == EMUL_NONE) ? " checked" : "");
   page.replace("{r3}", (sysCfg.emulation == EMUL_WEMO) ? " checked" : "");
   page.replace("{r4}", (sysCfg.emulation == EMUL_HUE) ? " checked" : "");
-  for (int i = 1; i < Maxdevice; i++) {
+  for (int i = 1; i < min(Maxdevice,4); i++) {
     page += FPSTR(HTTP_FORM_OTHER2);
     page.replace("{1", String(i +1));
     snprintf_P(stemp, sizeof(stemp), PSTR(FRIENDLY_NAME"%d"), i +1);
@@ -1283,7 +1289,7 @@ void handleAjax()
     do_cmnd(svalue);
     syslog_level = syslog_now;
   }
-  
+
   if (strlen(webServer->arg("c2").c_str())) counter = atoi(webServer->arg("c2").c_str());
 
   String message = F("<r><i>");
@@ -1310,7 +1316,7 @@ void handleAjax()
     } while (counter != logidx);
   }
   message += F("</l></r>");
- 
+
   webServer->sendHeader("Cache-Control", "no-cache, no-store, must-revalidate");
   webServer->sendHeader("Pragma", "no-cache");
   webServer->sendHeader("Expires", "-1");
@@ -1337,7 +1343,7 @@ void handleInfo()
   page += F("<tr><th>Flash write count</th><td>"); page += String(sysCfg.saveFlag); page += F("</td></tr>");
   page += F("<tr><th>Boot count</th><td>"); page += String(sysCfg.bootcount); page += F("</td></tr>");
   page += F("<tr><th>Reset reason</th><td>"); page += getResetReason(); page += F("</td></tr>");
-  for (byte i = 0; i < Maxdevice; i++) {
+  for (byte i = 0; i < min(Maxdevice,4); i++) {
     page += F("<tr><th>Friendly name ");
     page += i +1;
     page += F("</th><td>"); page += sysCfg.friendlyname[i]; page += F("</td></tr>");
@@ -1370,7 +1376,7 @@ void handleInfo()
   } else {
     page += F("<tr><th>MQTT</th><td>Disabled</td></tr>");
   }
-  
+
   page += F("<tr><th>Emulation</th><td>");
 #ifdef USE_EMULATION
   if (sysCfg.emulation == EMUL_WEMO) page += F("Belkin WeMo");
@@ -1380,7 +1386,7 @@ void handleInfo()
   page += F("Disabled");
 #endif // USE_EMULATION
   page += F("</td></tr>");
-  
+
   page += F("<tr><th>mDNS Discovery</th><td>");
 #ifdef USE_DISCOVERY
   page += F("Enabled");
@@ -1436,7 +1442,7 @@ void handleNotFound()
     return;
   }
 
-#ifdef USE_EMULATION  
+#ifdef USE_EMULATION
   String path = webServer->uri();
   if ((sysCfg.emulation == EMUL_HUE) && (path.startsWith("/api"))) {
     handle_hue_api(&path);
