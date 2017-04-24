@@ -6,7 +6,7 @@
  *   - Change libraries/PubSubClient/src/PubSubClient.h
  *       #define MQTT_MAX_PACKET_SIZE 512
  *
- *   - Select IDE Tools - Flash size: "1M (no SPIFFS)"
+ *   - Select IDE Tools - Flash size: "1M (64k SPIFFS)"
  * ====================================================
 */
 
