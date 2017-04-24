@@ -103,7 +103,7 @@ void RTC_Dump()
 #endif  // DEBUG_THEO
 
 /*********************************************************************************************\
- * Config - Flash or Spiffs
+ * Config - Flash
 \*********************************************************************************************/
 
 extern "C" {
@@ -111,15 +111,18 @@ extern "C" {
 }
 #include "eboot_command.h"
 
-#define SPIFFS_START        ((uint32_t)&_SPIFFS_start - 0x40200000) / SPI_FLASH_SEC_SIZE
+//extern "C" uint32_t _SPIFFS_start;
+extern "C" uint32_t _SPIFFS_end;
+
 #define SPIFFS_END          ((uint32_t)&_SPIFFS_end - 0x40200000) / SPI_FLASH_SEC_SIZE
 
 // Version 3.x config
-#define SPIFFS_CONFIG       "/cfg.ini"
-#define CFG_LOCATION        SPIFFS_END - 4
+#define CFG_LOCATION_3      SPIFFS_END - 4
+
+// Version 4.2 config = eeprom area
+#define CFG_LOCATION        SPIFFS_END  // No need for SPIFFS as it uses EEPROM area
 
 uint32_t _cfgHash = 0;
-int spiffsflag = 0;
 
 /********************************************************************************************/
 /*
@@ -164,11 +167,6 @@ void setModuleFlashMode(byte option)
   setFlashMode(option, mode);
 }
 
-boolean spiffsPresent()
-{
-  return (SPIFFS_END - SPIFFS_START);
-}
-
 uint32_t getHash()
 {
   uint32_t hash = 0;
@@ -179,7 +177,7 @@ uint32_t getHash()
 }
 
 /*********************************************************************************************\
- * Config Save - Save parameters to Flash or Spiffs ONLY if any parameter has changed
+ * Config Save - Save parameters to Flash ONLY if any parameter has changed
 \*********************************************************************************************/
 
 void CFG_Save()
@@ -187,20 +185,14 @@ void CFG_Save()
   char log[LOGSZ];
 
 #ifndef BE_MINIMAL
-  if ((getHash() != _cfgHash) && (spiffsPresent())) {
-    if (!spiffsflag) {
-      noInterrupts();
-      if (sysCfg.saveFlag == 0) {  // Handle default and rollover
-        spi_flash_erase_sector(CFG_LOCATION + (sysCfg.saveFlag &1));
-        spi_flash_write((CFG_LOCATION + (sysCfg.saveFlag &1)) * SPI_FLASH_SEC_SIZE, (uint32*)&sysCfg, sizeof(SYSCFG));
-      }
-      sysCfg.saveFlag++;
-      spi_flash_erase_sector(CFG_LOCATION + (sysCfg.saveFlag &1));
-      spi_flash_write((CFG_LOCATION + (sysCfg.saveFlag &1)) * SPI_FLASH_SEC_SIZE, (uint32*)&sysCfg, sizeof(SYSCFG));
-      interrupts();
-      snprintf_P(log, sizeof(log), PSTR("Config: Saved configuration (%d bytes) to flash at %X and count %d"), sizeof(SYSCFG), CFG_LOCATION + (sysCfg.saveFlag &1), sysCfg.saveFlag);
-      addLog(LOG_LEVEL_DEBUG, log);
-    }
+  if (getHash() != _cfgHash) {
+    noInterrupts();
+    sysCfg.saveFlag++;
+    spi_flash_erase_sector(CFG_LOCATION);
+    spi_flash_write(CFG_LOCATION * SPI_FLASH_SEC_SIZE, (uint32*)&sysCfg, sizeof(SYSCFG));
+    interrupts();
+    snprintf_P(log, sizeof(log), PSTR("Config: Saved configuration (%d bytes) to flash at %X and count %d"), sizeof(SYSCFG), CFG_LOCATION, sysCfg.saveFlag);
+    addLog(LOG_LEVEL_DEBUG, log);
     _cfgHash = getHash();
   }
 #endif  // BE_MINIMAL
@@ -211,24 +203,32 @@ void CFG_Load()
 {
   char log[LOGSZ];
 
-  if (spiffsPresent()) {
-    if (!spiffsflag) {
-      struct SYSCFGH {
-        unsigned long cfg_holder;
-        unsigned long saveFlag;
-      } _sysCfgH;
+  struct SYSCFGH {
+    unsigned long cfg_holder;
+    unsigned long saveFlag;
+  } _sysCfgH;
 
+  noInterrupts();
+  spi_flash_read(CFG_LOCATION * SPI_FLASH_SEC_SIZE, (uint32*)&sysCfg, sizeof(SYSCFG));
+  interrupts();
+  snprintf_P(log, sizeof(log), PSTR("Config: Loaded configuration from flash at %X and count %d"), CFG_LOCATION, sysCfg.saveFlag);
+  addLog(LOG_LEVEL_DEBUG, log);
+
+  if (sysCfg.cfg_holder != CFG_HOLDER) {
+    if ((sysCfg.version < 0x04020000) || (sysCfg.version > 0x73000000)) {
       noInterrupts();
-      spi_flash_read((CFG_LOCATION) * SPI_FLASH_SEC_SIZE, (uint32*)&sysCfg, sizeof(SYSCFG));
-      spi_flash_read((CFG_LOCATION + 1) * SPI_FLASH_SEC_SIZE, (uint32*)&_sysCfgH, sizeof(SYSCFGH));
+      spi_flash_read((CFG_LOCATION_3) * SPI_FLASH_SEC_SIZE, (uint32*)&sysCfg, sizeof(SYSCFG));
+      spi_flash_read((CFG_LOCATION_3 + 1) * SPI_FLASH_SEC_SIZE, (uint32*)&_sysCfgH, sizeof(SYSCFGH));
       if (sysCfg.saveFlag < _sysCfgH.saveFlag)
-        spi_flash_read((CFG_LOCATION + 1) * SPI_FLASH_SEC_SIZE, (uint32*)&sysCfg, sizeof(SYSCFG));
+        spi_flash_read((CFG_LOCATION_3 + 1) * SPI_FLASH_SEC_SIZE, (uint32*)&sysCfg, sizeof(SYSCFG));
       interrupts();
-      snprintf_P(log, sizeof(log), PSTR("Config: Loaded configuration from flash at %X and count %d"), CFG_LOCATION + (sysCfg.saveFlag &1), sysCfg.saveFlag);
-      addLog(LOG_LEVEL_DEBUG, log);
+      if (sysCfg.cfg_holder != CFG_HOLDER) {
+        CFG_Default();
+      }
+    } else {
+      CFG_Default();
     }
   }
-  if (sysCfg.cfg_holder != CFG_HOLDER) CFG_Default();
   _cfgHash = getHash();
 
   RTC_Load();

@@ -6,11 +6,11 @@
  *   - Change libraries/PubSubClient/src/PubSubClient.h
  *       #define MQTT_MAX_PACKET_SIZE 512
  *
- *   - Select IDE Tools - Flash size: "1M (64K SPIFFS)"
+ *   - Select IDE Tools - Flash size: "1M (no SPIFFS)"
  * ====================================================
 */
 
-#define VERSION                0x04010300  // 4.1.3
+#define VERSION                0x04020000  // 4.2.0
 
 enum log_t   {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG_MORE, LOG_LEVEL_ALL};
 enum week_t  {Last, First, Second, Third, Fourth};
@@ -160,9 +160,6 @@ enum butt_t {PRESSED, NOT_PRESSED};
 
 typedef void (*rtcCallback)();
 
-extern "C" uint32_t _SPIFFS_start;
-extern "C" uint32_t _SPIFFS_end;
-
 #define MAX_BUTTON_COMMANDS    5            // Max number of button commands supported
 const char commands[MAX_BUTTON_COMMANDS][14] PROGMEM = {
   {"wificonfig 1"},   // Press button three times
@@ -204,7 +201,7 @@ int SerialInByteCounter = 0;          // Index in receive buffer
 char serialInBuf[INPUT_BUFFER_SIZE + 2];  // Receive buffer
 byte Hexcode = 0;                     // Sonoff dual input flag
 uint16_t ButtonCode = 0;              // Sonoff dual received code
-int16_t savedatacounter;              // Counter and flag for config save to Flash or Spiffs
+int16_t savedatacounter;              // Counter and flag for config save to Flash
 char Version[16];                     // Version string from VERSION define
 char Hostname[33];                    // Composed Wifi hostname
 char MQTTClient[33];                  // Composed MQTT Clientname
@@ -512,10 +509,6 @@ void mqtt_connected()
     snprintf_P(svalue, sizeof(svalue), PSTR("{\"Started\":\"%s\"}"),
       (getResetReason() == "Exception") ? ESP.getResetInfo().c_str() : getResetReason().c_str());
     mqtt_publish_topic_P(1, PSTR("INFO3"), svalue);
-    if (!spiffsPresent()) {
-      snprintf_P(svalue, sizeof(svalue), PSTR("{\"Warning1\":\"No persistent config. Please reflash with at least 16K SPIFFS\"}"));
-      mqtt_publish_topic_P(1, PSTR("WARNING1"), svalue);
-    }
     if (sysCfg.tele_period) tele_period = sysCfg.tele_period -9;
     status_update_timer = 2;
 #ifdef USE_DOMOTICZ
@@ -1434,9 +1427,8 @@ void publish_status(uint8_t payload)
   }
 
   if ((payload == 0) || (payload == 4)) {
-    snprintf_P(svalue, sizeof(svalue), PSTR("{\"StatusMEM\":{\"ProgramSize\":%d, \"Free\":%d, \"Heap\":%d, \"SpiffsStart\":%d, \"SpiffsSize\":%d, \"FlashSize\":%d, \"ProgramFlashSize\":%d, \"FlashMode\":%d}}"),
-      ESP.getSketchSize()/1024, ESP.getFreeSketchSpace()/1024, ESP.getFreeHeap()/1024, ((uint32_t)&_SPIFFS_start - 0x40200000)/1024,
-      (((uint32_t)&_SPIFFS_end - 0x40200000) - ((uint32_t)&_SPIFFS_start - 0x40200000))/1024, ESP.getFlashChipRealSize()/1024, ESP.getFlashChipSize()/1024, ESP.getFlashChipMode());
+    snprintf_P(svalue, sizeof(svalue), PSTR("{\"StatusMEM\":{\"ProgramSize\":%d, \"Free\":%d, \"Heap\":%d, \"FlashSize\":%d, \"ProgramFlashSize\":%d, \"FlashMode\":%d}}"),
+      ESP.getSketchSize()/1024, ESP.getFreeSketchSpace()/1024, ESP.getFreeHeap()/1024, ESP.getFlashChipRealSize()/1024, ESP.getFlashChipSize()/1024, ESP.getFlashChipMode());
     mqtt_publish_topic_P(option, PSTR("STATUS4"), svalue);
   }
 
@@ -2133,8 +2125,6 @@ void setup()
     Version[idx] = 96 + (VERSION & 0x1f);
     Version[idx +1] = 0;
   }
-  if (!spiffsPresent())
-    addLog_P(LOG_LEVEL_ERROR, PSTR("SPIFFS: ERROR - No spiffs present. Please reflash with at least 16K SPIFFS"));
   CFG_Load();
   CFG_Delta();
 

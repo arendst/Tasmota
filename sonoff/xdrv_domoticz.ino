@@ -27,6 +27,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #define DOMOTICZ_MAX_SENSORS  5
 
+#ifdef USE_WEBSERVER
 const char HTTP_FORM_DOMOTICZ[] PROGMEM =
   "<fieldset><legend><b>&nbsp;Domoticz parameters&nbsp;</b></legend><form method='post' action='sv'>"
   "<input id='w' name='w' value='4' hidden><input id='r' name='r' value='1' hidden>"
@@ -42,6 +43,7 @@ const char HTTP_FORM_DOMOTICZ_SENSOR[] PROGMEM =
   "<tr><td><b>Sensor idx {1</b> - {2</td><td><input id='l{1' name='l{1' length=8 placeholder='0' value='{5'></td></tr>";
 const char HTTP_FORM_DOMOTICZ_TIMER[] PROGMEM =
   "<tr><td><b>Update timer</b> (" STR(DOMOTICZ_UPDATE_TIMER) ")</td><td><input id='ut' name='ut' length=32 placeholder='" STR(DOMOTICZ_UPDATE_TIMER) "' value='{6'</td></tr>";
+#endif  // USE_WEBSERVER
 
 const char domoticz_sensors[DOMOTICZ_MAX_SENSORS][14] PROGMEM =
   { "Temp", "Temp,Hum", "Temp,Hum,Baro", "Power,Energy", "Illuminance" };
