@@ -10,7 +10,7 @@
  * ====================================================
 */
 
-#define VERSION                0x04010303  // 4.1.3c
+#define VERSION                0x04010304  // 4.1.3c
 
 enum log_t   {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG_MORE, LOG_LEVEL_ALL};
 enum week_t  {Last, First, Second, Third, Fourth};
@@ -100,7 +100,7 @@ enum emul_t  {EMUL_NONE, EMUL_WEMO, EMUL_HUE, EMUL_MAX};
 #define MQTT_RETRY_SECS        10           // Seconds to retry MQTT connection
 #define APP_POWER              0            // Default saved power state Off
 #define MAX_DEVICE             1            // Max number of devices
-#define MAX_PULSETIMERS        4            // Max number of supported pulse timers
+#define MAX_PULSETIMERS        8            // Max number of supported pulse timers
 #define WS2812_MAX_LEDS        256          // Max number of LEDs
 
 #define PWM_RANGE              1023         // 255..1023 needs to be devisible by 256
@@ -237,6 +237,8 @@ uint8_t blink_powersave;              // Blink start power save state
 uint16_t mqtt_cmnd_publish = 0;       // ignore flag for publish command
 uint8_t latching_power = 0;           // Power state at latching start
 uint8_t latching_relay_pulse = 0;     // Latching relay pulse timer
+// pulseCounting
+long pulseCount = 0;                  // Pulse Counter to count events on falling edge
 
 #ifdef USE_MQTT_TLS
   WiFiClientSecure espClient;         // Wifi Secure Client
@@ -275,7 +277,8 @@ uint8_t pin[GPIO_MAX];                // Possible pin configurations
 #endif
 uint8_t led_inverted[4] = { 0 };      // LED inverted flag (1 = (0 = On, 1 = Off))
 uint8_t swt_flg = 0;                  // Any external switch configured
-uint8_t dht_type = 0;                 // DHT type (DHT11, DHT21 or DHT22)
+uint8_t dht_type = 0;                 // DHT type (DHT11, DHT21 or DHT22
+uint8_t counter_flg = 0;              // Counter configured
 uint8_t hlw_flg = 0;                  // Power monitor configured
 uint8_t i2c_flg = 0;                  // I2C configured
 uint8_t pwm_flg = 0;                  // PWM configured
@@ -416,6 +419,12 @@ char* getStateText(byte state)
 {
   if (state > 2) state = 1;
   return sysCfg.state_text[state];
+}
+
+// The interrupt routine - runs each time a falling edge of a pulse is detected
+void onPulse()
+{
+  pulseCount++;                                               // count pulse
 }
 
 /********************************************************************************************/
@@ -1544,6 +1553,10 @@ void sensors_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
     *djson = 1;
   }
 #endif
+  if (counter_flg) {
+    snprintf_P(svalue, ssvalue, PSTR("%s, \"Counter0\":%ld"), svalue, pulseCount );
+    *djson = 1;
+  }
   if (sysCfg.module == SONOFF_SC) sc_mqttPresent(svalue, ssvalue, djson);
   if (pin[GPIO_DSB] < 99) {
 #ifdef USE_DS18B20
@@ -2051,6 +2064,11 @@ void GPIO_init()
     }
   }
 
+  counter_flg = (pin[GPIO_COUNTER] < 99);
+  if (counter_flg) {
+      attachInterrupt(pin[GPIO_COUNTER], onPulse, FALLING);
+  }
+
   if (pin[GPIO_TXD] == 2) Serial.set_tx(2);
 
   analogWriteRange(PWM_RANGE);  // Default is 1023 (Arduino.h)
@@ -2132,6 +2150,8 @@ void GPIO_init()
 
   hlw_flg = ((pin[GPIO_HLW_SEL] < 99) && (pin[GPIO_HLW_CF1] < 99) && (pin[GPIO_HLW_CF] < 99));
   if (hlw_flg) hlw_init();
+
+
 
 #ifdef USE_DHT
   if (dht_type) dht_init();
