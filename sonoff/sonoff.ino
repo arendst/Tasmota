@@ -10,7 +10,7 @@
  * ====================================================
 */
 
-#define VERSION                0x04010304  // 4.1.3c
+#define VERSION                0x04010304  // 4.1.3d
 
 enum log_t   {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG_MORE, LOG_LEVEL_ALL};
 enum week_t  {Last, First, Second, Third, Fourth};
@@ -251,7 +251,7 @@ WiFiUDP portUDP;                      // UDP Syslog and Alexa
 #ifndef USE_PCF8574
   uint8_t power = 0;                        // Current copy of sysCfg.power
 #else
-  uint64_t power = 0;
+  uint32_t power = 0;
 #endif
 byte syslog_level;                    // Current copy of sysCfg.syslog_level
 uint16_t syslog_timer = 0;            // Timer to re-enable syslog_level
@@ -271,7 +271,7 @@ uint8_t lastwallswitch[4];            // Last wall switch states
 mytmplt my_module;                    // Active copy of GPIOs
 uint8_t pin[GPIO_MAX];                // Possible pin configurations
 #ifdef USE_PCF8574
-  uint8_t rel_inverted[64] = { 0 };      // Relay inverted flag (1 = (0 = On, 1 = Off))
+  uint8_t rel_inverted[32] = { 0 };      // Relay inverted flag (1 = (0 = On, 1 = Off))
 #else
   uint8_t rel_inverted[4] = { 0 };      // Relay inverted flag (1 = (0 = On, 1 = Off))
 #endif
@@ -327,7 +327,7 @@ void setLatchingRelay(uint8_t power, uint8_t state)
   if (pin[GPIO_REL1 +latching_power] < 99) digitalWrite(pin[GPIO_REL1 +latching_power], rel_inverted[latching_power] ? !state : state);
 }
 
-void setRelay(uint64_t power)
+void setRelay(uint32_t power)
 {
   uint8_t state;
   char log[MESSZ];
@@ -1348,16 +1348,16 @@ void do_cmnd_power(byte device, byte state)
 // state 9 = Show power state
 
   if ((device < 1) || (device > Maxdevice)) device = 1;
-  uint64_t mask = 0x01 << (device -1);
+  uint32_t mask = 0x01 << (device -1);
   pulse_timer[(device -1)&3] = 0;
   if (state <= 2) {
     if ((blink_mask & mask)) {
-      blink_mask &= (0xFFFFFFFFFFFFFFFF ^ mask);  // Clear device mask
+      blink_mask &= (0xFFFFFFFF ^ mask);  // Clear device mask
       mqtt_publishPowerBlinkState(device);
     }
     switch (state) {
     case 0: { // Off
-      power &= (0xFFFFFFFFFFFFFFFF ^ mask);
+      power &= (0xFFFFFFFF ^ mask);
       break; }
     case 1: // On
       power |= mask;
@@ -1369,11 +1369,12 @@ void do_cmnd_power(byte device, byte state)
 #ifdef USE_DOMOTICZ
     domoticz_updatePowerState(device);
 #endif  // USE_DOMOTICZ
-    pulse_timer[(device -1)&3] = (power & mask) ? sysCfg.pulsetime[(device -1)&3] : 0;
+//STEFAN
+    pulse_timer[(device -1)&((1<<MAX_PULSETIMERS)-1)] = (power & mask) ? sysCfg.pulsetime[(device -1)&((1<<MAX_PULSETIMERS)-1)] : 0;
   }
   else if (state == 3) { // Blink
     if (!(blink_mask & mask)) {
-      blink_powersave = (blink_powersave & (0xFFFFFFFFFFFFFFFF ^ mask)) | (power & mask);  // Save state
+      blink_powersave = (blink_powersave & (0xFFFFFFFF ^ mask)) | (power & mask);  // Save state
       blink_power = (power >> (device -1))&1;  // Prep to Toggle
     }
     blink_timer = 1;
@@ -1384,7 +1385,7 @@ void do_cmnd_power(byte device, byte state)
   }
   else if (state == 4) { // No Blink
     byte flag = (blink_mask & mask);
-    blink_mask &= (0xFF ^ mask);  // Clear device mask
+    blink_mask &= (0xFFFFFFFF ^ mask);  // Clear device mask
     mqtt_publishPowerBlinkState(device);
     if (flag) do_cmnd_power(device, (blink_powersave >> (device -1))&1);  // Restore state
     return;
@@ -1399,7 +1400,7 @@ void stop_all_power_blink()
   for (i = 1; i <= Maxdevice; i++) {
     mask = 0x01 << (i -1);
     if (blink_mask & mask) {
-      blink_mask &= (0xFF ^ mask);  // Clear device mask
+      blink_mask &= (0xFFFFFFFF ^ mask);  // Clear device mask
       mqtt_publishPowerBlinkState(i);
       do_cmnd_power(i, (blink_powersave >> (i -1))&1);  // Restore state
     }
@@ -1906,7 +1907,7 @@ void stateloop()
       savedatacounter--;
       if (savedatacounter <= 0) {
         if (sysCfg.savestate) {
-          uint64_t mask = 0xFFFFFFFFFFFFFFFF;
+          uint32_t mask = 0xFFFFFFFF;
           for (byte i = 0; i < MAX_PULSETIMERS; i++)
             if ((sysCfg.pulsetime[i] > 0) && (sysCfg.pulsetime[i] < 30)) mask &= ~(1 << i);
           if (!((sysCfg.power &mask) == (power &mask))) sysCfg.power = power;
@@ -2232,29 +2233,34 @@ void setup()
   getClient(MQTTClient, sysCfg.mqtt_client, sizeof(MQTTClient));
 
   if (sysCfg.module == MOTOR) sysCfg.poweronstate = 1;  // Needs always on else in limbo!
-  if (ESP.getResetReason() == "Power on") {
+  //if (ESP.getResetReason() == "Power On") {
+  if (sysCfg.poweronstate) {
+    //snprintf_P(log, sizeof(log), PSTR("APP: maxdevices  %d"), Maxdevice);
+    addLog(LOG_LEVEL_INFO, log);
     if (sysCfg.poweronstate == 0) {       // All off
+      //snprintf_P(log, sizeof(log), PSTR("APP: Setting powermatrix all OFF 0x%8x"),power);
       power = 0;
       setRelay(power);
     }
     else if (sysCfg.poweronstate == 1) {  // All on
-      power = (((uint64_t)0xFFFFFFFF << Maxdevice) >> 32);
+      power = (1<<Maxdevice)-1;
+      //snprintf_P(log, sizeof(log), PSTR("APP: Setting powermatrix all ON 0x%8x"),power);
       setRelay(power);
     }
     else if (sysCfg.poweronstate == 2) {  // All saved state toggle
-      power = (sysCfg.power & (((uint64_t)0xFFFFFFFF << Maxdevice) >> 32)) ^ 0xFFFFFFFF;
+      power = (sysCfg.power & (1<<Maxdevice)-1 ) ^ 0xFFFFFFFF;
       if (sysCfg.savestate) setRelay(power);
-      snprintf_P(log, sizeof(log), PSTR("APP: Setting powermatrix all toggle 0x%16x"),power);
+      //snprintf_P(log, sizeof(log), PSTR("APP: Setting powermatrix all toggle 0x%8x"),power);
     }
     else if (sysCfg.poweronstate == 3) {  // All saved state
-      power = sysCfg.power & (((uint64_t)0xFFFFFFFF << Maxdevice) >>32);
+      power = sysCfg.power & (1<<Maxdevice)-1 ;
       if (sysCfg.savestate) setRelay(power);
-      snprintf_P(log, sizeof(log), PSTR("APP: Setting powermatrix all saved 0x%16x"),power);
+      //snprintf_P(log, sizeof(log), PSTR("APP: Setting powermatrix all saved 0x%8x"),power);
     }
   } else {
-    power = sysCfg.power & (((uint64_t)0xFFFFFFFF << Maxdevice) >> 32);
-    if (sysCfg.savestate) setRelay(sysCfg.power);
-    snprintf_P(log, sizeof(log), PSTR("APP: Setting powermatrix savestate 0x%8x, from 0x%8x, shifter is 0x%8x, maxdevice %d"),power, sysCfg.power, ((uint64_t)0xFFFFFFFF << Maxdevice) >> 32, Maxdevice);
+    power = sysCfg.power & (1<<Maxdevice)-1 ;
+    if (sysCfg.savestate) setRelay(power);
+    //snprintf_P(log, sizeof(log), PSTR("APP: Setting powermatrix savestate 0x%8x, from 0x%8x, shifter is 0x%8x, maxdevice %d"),power, sysCfg.power, (1<<Maxdevice)-1 , Maxdevice);
 
   }
   addLog(LOG_LEVEL_INFO, log);
