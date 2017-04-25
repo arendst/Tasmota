@@ -36,9 +36,11 @@ POSSIBILITY OF SUCH DAMAGE.
 
 uint8_t data[5];
 char dhtstype[7];
-uint32_t _lastreadtime, _maxcycles;
+uint32_t _lastreadtime;
+uint32_t _maxcycles;
 bool _lastresult;
-float mt, mh = 0;
+float mt;
+float mh = 0;
 
 void dht_readPrep()
 {
@@ -49,8 +51,11 @@ uint32_t dht_expectPulse(bool level)
 {
   uint32_t count = 0;
 
-  while (digitalRead(pin[GPIO_DHT11]) == level)
-    if (count++ >= _maxcycles) return 0;
+  while (digitalRead(pin[GPIO_DHT11]) == level) {
+    if (count++ >= _maxcycles) {
+      return 0;
+    }
+  }
   return count;
 }
 
@@ -79,17 +84,17 @@ boolean dht_read()
   delayMicroseconds(40);
   pinMode(pin[GPIO_DHT11], INPUT_PULLUP);
   delayMicroseconds(10);
-  if (dht_expectPulse(LOW) == 0) {
+  if (0 == dht_expectPulse(LOW)) {
     addLog_P(LOG_LEVEL_DEBUG, PSTR("DHT: Timeout waiting for start signal low pulse"));
     _lastresult = false;
     return _lastresult;
   }
-  if (dht_expectPulse(HIGH) == 0) {
+  if (0 == dht_expectPulse(HIGH)) {
     addLog_P(LOG_LEVEL_DEBUG, PSTR("DHT: Timeout waiting for start signal high pulse"));
     _lastresult = false;
     return _lastresult;
   }
-  for (int i=0; i<80; i+=2) {
+  for (int i = 0; i < 80; i += 2) {
     cycles[i]   = dht_expectPulse(LOW);
     cycles[i+1] = dht_expectPulse(HIGH);
   }
@@ -98,13 +103,15 @@ boolean dht_read()
   for (int i=0; i<40; ++i) {
     uint32_t lowCycles  = cycles[2*i];
     uint32_t highCycles = cycles[2*i+1];
-    if ((lowCycles == 0) || (highCycles == 0)) {
+    if ((0 == lowCycles) || (0 == highCycles)) {
       addLog_P(LOG_LEVEL_DEBUG, PSTR("DHT: Timeout waiting for pulse"));
       _lastresult = false;
       return _lastresult;
     }
     data[i/8] <<= 1;
-    if (highCycles > lowCycles) data[i/8] |= 1;
+    if (highCycles > lowCycles) {
+      data[i/8] |= 1;
+    }
   }
 
   snprintf_P(log, sizeof(log), PSTR("DHT: Received %02X, %02X, %02X, %02X, %02X =? %02X"),
@@ -141,7 +148,9 @@ boolean dht_readTempHum(bool S, float &t, float &h)
     case GPIO_DHT11:
       h = data[0];
       t = data[2];
-      if(S) t = dht_convertCtoF(t);
+      if (S) {
+        t = dht_convertCtoF(t);
+      }
       break;
     case GPIO_DHT22:
     case GPIO_DHT21:
@@ -153,12 +162,20 @@ boolean dht_readTempHum(bool S, float &t, float &h)
       t *= 256;
       t += data[3];
       t *= 0.1;
-      if (data[2] & 0x80) t *= -1;
-      if(S) t = dht_convertCtoF(t);
+      if (data[2] & 0x80) {
+        t *= -1;
+      }
+      if (S) {
+        t = dht_convertCtoF(t);
+      }
       break;
     }
-    if (!isnan(t)) mt = t;
-    if (!isnan(h)) mh = h;
+    if (!isnan(t)) {
+      mt = t;
+    }
+    if (!isnan(h)) {
+      mh = h;
+    }
   }
   return (!isnan(t) && !isnan(h));
 }
@@ -192,8 +209,10 @@ void dht_init()
 
 void dht_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
 {
-  char stemp1[10], stemp2[10];
-  float t, h;
+  char stemp1[10];
+  char stemp2[10];
+  float t;
+  float h;
 
   if (dht_readTempHum(TEMP_CONVERSION, t, h)) {     // Read temperature
     dtostrf(t, 1, TEMP_RESOLUTION &3, stemp1);
@@ -212,10 +231,13 @@ void dht_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
 String dht_webPresent()
 {
   String page = "";
-  float t, h;
+  float t;
+  float h;
   
   if (dht_readTempHum(TEMP_CONVERSION, t, h)) {     // Read temperature as Celsius (the default)
-    char stemp[10], sensor[80];
+    char stemp[10];
+    char sensor[80];
+    
     dtostrf(t, 1, TEMP_RESOLUTION &3, stemp);
     snprintf_P(sensor, sizeof(sensor), HTTP_SNS_TEMP, dhtstype, stemp, (TEMP_CONVERSION) ? 'F' : 'C');
     page += sensor;

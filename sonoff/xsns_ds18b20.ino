@@ -39,7 +39,9 @@ uint8_t dsb_reset()
 
   pinMode(pin[GPIO_DSB], INPUT);
   do  {                                 // wait until the wire is high... just in case
-    if (--retries == 0) return 0;
+    if (--retries == 0) {
+      return 0;
+    }
     delayMicroseconds(2);
   } while (!digitalRead(pin[GPIO_DSB]));
   pinMode(pin[GPIO_DSB], OUTPUT);
@@ -71,8 +73,11 @@ uint8_t dsb_read(void)
   uint8_t bitMask;
   uint8_t r = 0;
 
-  for (bitMask = 0x01; bitMask; bitMask <<= 1)
-    if (dsb_read_bit()) r |= bitMask;
+  for (bitMask = 0x01; bitMask; bitMask <<= 1) {
+    if (dsb_read_bit()) {
+      r |= bitMask;
+    }
+  }
   return r;
 }
 
@@ -97,8 +102,9 @@ void dsb_write(uint8_t ByteToWrite)
 {
   uint8_t bitMask;
 
-  for (bitMask = 0x01; bitMask; bitMask <<= 1)
+  for (bitMask = 0x01; bitMask; bitMask <<= 1) {
     dsb_write_bit((bitMask & ByteToWrite) ? 1 : 0);
+  }
 }
 
 uint8 dsb_crc(uint8 inp, uint8 crc)
@@ -173,7 +179,9 @@ boolean dsb_readTemp(bool S, float &t)
       sign = -1;
     }
     t = (float)sign * DSTemp * 0.0625;
-    if(S) t = dsb_convertCtoF(t);
+    if(S) {
+      t = dsb_convertCtoF(t);
+    }
   }
   if (!isnan(t)) dsb_mt = t;
   return !isnan(t);
@@ -206,7 +214,9 @@ String dsb_webPresent()
   float st;
   
   if (dsb_readTemp(TEMP_CONVERSION, st)) {  // Check if read failed
-    char stemp[10], sensor[80];
+    char stemp[10];
+    char sensor[80];
+    
     dtostrf(st, 1, TEMP_RESOLUTION &3, stemp);
     snprintf_P(sensor, sizeof(sensor), HTTP_SNS_TEMP, "DS18B20", stemp, (TEMP_CONVERSION) ? 'F' : 'C');
     page += sensor;

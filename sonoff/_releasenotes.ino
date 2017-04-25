@@ -1,4 +1,11 @@
-/* 4.2.0 20170424
+/* 5.0.0 20170425
+ * Memory status message update
+ * Fix setting migration to better preserve settings during move (#382)
+ * Best practice is first doing a Backup Configuration before installing version 5.0.0
+ * Reset save count after setting move
+ * Start using new linker script without SPIFFS
+ *
+ * 4.2.0 20170424
  * Prepare for SPIFFS removal by moving settings to EEPROM area
  * Fix compilation error when webserver is disabled (#378)
  *

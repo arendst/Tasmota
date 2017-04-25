@@ -56,14 +56,16 @@ void mqtt_publishDomoticzPowerState(byte device)
   char svalue[64];  // was MESSZ
 
   if (sysCfg.domoticz_relay_idx[device -1] && (strlen(sysCfg.domoticz_in_topic) != 0)) {
-    if ((device < 1) || (device > Maxdevice)) device = 1;
+    if ((device < 1) || (device > Maxdevice)) {
+      device = 1;
+    }
 
-    if (sysCfg.module == SONOFF_LED) {
+    if (SONOFF_LED == sysCfg.module) {
       snprintf_P(svalue, sizeof(svalue), PSTR("{\"idx\":%d,\"nvalue\":2,\"svalue\":\"%d\"}"),
         sysCfg.domoticz_relay_idx[device -1], sysCfg.led_dimmer[device -1]);
       mqtt_publish(sysCfg.domoticz_in_topic, svalue);
     }
-    else if ((device == 1) && (pin[GPIO_WS2812] < 99)) {
+    else if ((1 == device) && (pin[GPIO_WS2812] < 99)) {
       snprintf_P(svalue, sizeof(svalue), PSTR("{\"idx\":%d,\"nvalue\":2,\"svalue\":\"%d\"}"),
         sysCfg.domoticz_relay_idx[device -1], sysCfg.ws_dimmer);
       mqtt_publish(sysCfg.domoticz_in_topic, svalue);
@@ -76,7 +78,9 @@ void mqtt_publishDomoticzPowerState(byte device)
 
 void domoticz_updatePowerState(byte device)
 {
-   if (domoticz_update_flag) mqtt_publishDomoticzPowerState(device);
+   if (domoticz_update_flag) {
+    mqtt_publishDomoticzPowerState(device);
+   }
    domoticz_update_flag = 1;
 }
 
@@ -86,7 +90,9 @@ void domoticz_mqttUpdate()
     domoticz_update_timer--;
     if (domoticz_update_timer <= 0) {
       domoticz_update_timer = sysCfg.domoticz_update_timer;
-      for (byte i = 1; i <= Maxdevice; i++) mqtt_publishDomoticzPowerState(i);
+      for (byte i = 1; i <= Maxdevice; i++) {
+        mqtt_publishDomoticzPowerState(i);
+      }
     }
   }
 }
@@ -130,17 +136,25 @@ boolean domoticz_update()
 
 boolean domoticz_mqttData(char *topicBuf, uint16_t stopicBuf, char *dataBuf, uint16_t sdataBuf)
 {
-  char log[LOGSZ], stemp1[10];
+  char log[LOGSZ];
+  char stemp1[10];
   unsigned long idx = 0;
-  int16_t nvalue, found = 0;
+  int16_t nvalue;
+  int16_t found = 0;
   
   domoticz_update_flag = 1;
   if (!strncmp(topicBuf, sysCfg.domoticz_out_topic, strlen(sysCfg.domoticz_out_topic)) != 0) {
-    if (sdataBuf < 20) return 1;
+    if (sdataBuf < 20) {
+      return 1;
+    }
     StaticJsonBuffer<400> jsonBuf;
     JsonObject& domoticz = jsonBuf.parseObject(dataBuf);
-    if (!domoticz.success()) return 1;
-//    if (strcmp(domoticz["dtype"],"Light/Switch")) return 1;
+    if (!domoticz.success()) {
+      return 1;
+    }
+//    if (strcmp(domoticz["dtype"],"Light/Switch")) {
+//      return 1;
+//    }
     idx = domoticz["idx"];
     nvalue = domoticz["nvalue"];
 
@@ -151,16 +165,22 @@ boolean domoticz_mqttData(char *topicBuf, uint16_t stopicBuf, char *dataBuf, uin
       for (byte i = 0; i < Maxdevice; i++) {
         if ((idx > 0) && (idx == sysCfg.domoticz_relay_idx[i])) {
           snprintf_P(stemp1, sizeof(stemp1), PSTR("%d"), i +1);
-          if (nvalue == 2) {
+          if (2 == nvalue) {
             nvalue = domoticz["svalue1"];
-            if ((pin[GPIO_WS2812] < 99) && (sysCfg.ws_dimmer == nvalue)) return 1;
-            if ((sysCfg.module == SONOFF_LED) && (sysCfg.led_dimmer[i] == nvalue)) return 1;
+            if ((pin[GPIO_WS2812] < 99) && (sysCfg.ws_dimmer == nvalue)) {
+              return 1;
+            }
+            if ((SONOFF_LED == sysCfg.module) && (sysCfg.led_dimmer[i] == nvalue)) {
+              return 1;
+            }
             snprintf_P(topicBuf, stopicBuf, PSTR("%s/%s/DIMMER%s"),
               sysCfg.mqtt_prefix[0], sysCfg.mqtt_topic, (Maxdevice > 1) ? stemp1 : "");
             snprintf_P(dataBuf, sdataBuf, PSTR("%d"), nvalue);
             found = 1;
           } else {
-            if (((power >> i) &1) == nvalue) return 1;
+            if (((power >> i) &1) == nvalue) {
+              return 1;
+            }
             snprintf_P(topicBuf, stopicBuf, PSTR("%s/%s/POWER%s"),
               sysCfg.mqtt_prefix[0], sysCfg.mqtt_topic, (Maxdevice > 1) ? stemp1 : "");
             snprintf_P(dataBuf, sdataBuf, PSTR("%d"), nvalue);
@@ -170,7 +190,9 @@ boolean domoticz_mqttData(char *topicBuf, uint16_t stopicBuf, char *dataBuf, uin
         }
       }
     }
-    if (!found) return 1;
+    if (!found) {
+      return 1;
+    }
 
     snprintf_P(log, sizeof(log), PSTR("DMTZ: Receive topic %s, data %s"), topicBuf, dataBuf);
     addLog(LOG_LEVEL_DEBUG_MORE, log);
@@ -191,14 +213,14 @@ boolean domoticz_command(const char *type, uint16_t index, char *dataBuf, uint16
   if (!strncmp(type,"DOMOTICZ",8)) {
     if (!strcmp(type +8,"INTOPIC")) {
       if ((data_len > 0) && (data_len < sizeof(sysCfg.domoticz_in_topic))) {
-        strlcpy(sysCfg.domoticz_in_topic, (payload == 1) ? DOMOTICZ_IN_TOPIC : dataBuf, sizeof(sysCfg.domoticz_in_topic));
+        strlcpy(sysCfg.domoticz_in_topic, (1 == payload) ? DOMOTICZ_IN_TOPIC : dataBuf, sizeof(sysCfg.domoticz_in_topic));
         restartflag = 2;
       }
       snprintf_P(svalue, ssvalue, PSTR("{\"DomoticzInTopic\":\"%s\"}"), sysCfg.domoticz_in_topic);
     }
     else if (!strcmp(type +8,"OUTTOPIC")) {
       if ((data_len > 0) && (data_len < sizeof(sysCfg.domoticz_out_topic))) {
-        strlcpy(sysCfg.domoticz_out_topic, (payload == 1) ? DOMOTICZ_OUT_TOPIC : dataBuf, sizeof(sysCfg.domoticz_out_topic));
+        strlcpy(sysCfg.domoticz_out_topic, (1 == payload) ? DOMOTICZ_OUT_TOPIC : dataBuf, sizeof(sysCfg.domoticz_out_topic));
         restartflag = 2;
       }
       snprintf_P(svalue, ssvalue, PSTR("{\"DomoticzOutTopic\":\"%s\"}"), sysCfg.domoticz_out_topic);
@@ -246,7 +268,7 @@ boolean domoticz_button(byte key, byte device, byte state, byte svalflg)
     char svalue[80];  // was MESSZ
 
     snprintf_P(svalue, sizeof(svalue), PSTR("{\"command\":\"switchlight\",\"idx\":%d,\"switchcmd\":\"%s\"}"),
-      (key) ? sysCfg.domoticz_switch_idx[device -1] : sysCfg.domoticz_key_idx[device -1], (state) ? (state == 2) ? "Toggle" : "On" : "Off");
+      (key) ? sysCfg.domoticz_switch_idx[device -1] : sysCfg.domoticz_key_idx[device -1], (state) ? (2 == state) ? "Toggle" : "On" : "Off");
     mqtt_publish(sysCfg.domoticz_in_topic, svalue);
     return 1;
   } else {
@@ -315,7 +337,7 @@ void domoticz_sensor5(uint16_t lux)
 #ifdef USE_WEBSERVER
 void handleDomoticz()
 {
-  if (_httpflag == HTTP_USER) {
+  if (HTTP_USER == _httpflag) {
     handleRoot();
     return;
   }

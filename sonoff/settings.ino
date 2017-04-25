@@ -36,7 +36,9 @@ uint32_t getRtcHash()
   uint32_t hash = 0;
   uint8_t *bytes = (uint8_t*)&rtcMem;
 
-  for (uint16_t i = 0; i < sizeof(RTCMEM); i++) hash += bytes[i]*(i+1);
+  for (uint16_t i = 0; i < sizeof(RTCMEM); i++) {
+    hash += bytes[i]*(i+1);
+  }
   return hash;
 }
 
@@ -70,7 +72,7 @@ void RTC_Load()
 
 boolean RTC_Valid()
 {
-  return (rtcMem.valid == RTC_MEM_VALID);
+  return (RTC_MEM_VALID == rtcMem.valid);
 }
 
 #ifdef DEBUG_THEO
@@ -79,7 +81,10 @@ void RTC_Dump()
   #define CFG_COLS 16
   
   char log[LOGSZ];
-  uint16_t idx, maxrow, row, col;
+  uint16_t idx;
+  uint16_t maxrow;
+  uint16_t row;
+  uint16_t col;
 
   uint8_t *buffer = (uint8_t *) &rtcMem;
   maxrow = ((sizeof(RTCMEM)+CFG_COLS)/CFG_COLS);
@@ -88,12 +93,16 @@ void RTC_Dump()
     idx = row * CFG_COLS;
     snprintf_P(log, sizeof(log), PSTR("%04X:"), idx);
     for (col = 0; col < CFG_COLS; col++) {
-      if (!(col%4)) snprintf_P(log, sizeof(log), PSTR("%s "), log);
+      if (!(col%4)) {
+        snprintf_P(log, sizeof(log), PSTR("%s "), log);
+      }
       snprintf_P(log, sizeof(log), PSTR("%s %02X"), log, buffer[idx + col]);
     }
     snprintf_P(log, sizeof(log), PSTR("%s |"), log);
     for (col = 0; col < CFG_COLS; col++) {
-//      if (!(col%4)) snprintf_P(log, sizeof(log), PSTR("%s "), log);
+//      if (!(col%4)) {
+//        snprintf_P(log, sizeof(log), PSTR("%s "), log);
+//      }
       snprintf_P(log, sizeof(log), PSTR("%s%c"), log, ((buffer[idx + col] > 0x20) && (buffer[idx + col] < 0x7F)) ? (char)buffer[idx + col] : ' ');
     }
     snprintf_P(log, sizeof(log), PSTR("%s|"), log);
@@ -111,7 +120,6 @@ extern "C" {
 }
 #include "eboot_command.h"
 
-//extern "C" uint32_t _SPIFFS_start;
 extern "C" uint32_t _SPIFFS_end;
 
 #define SPIFFS_END          ((uint32_t)&_SPIFFS_end - 0x40200000) / SPI_FLASH_SEC_SIZE
@@ -145,11 +153,11 @@ void setFlashMode(byte option, byte mode)
     address = 0;
   }
   _buffer = new uint8_t[FLASH_SECTOR_SIZE];
-  if (spi_flash_read(address, (uint32_t*)_buffer, FLASH_SECTOR_SIZE) == SPI_FLASH_RESULT_OK) {
+  if (SPI_FLASH_RESULT_OK == spi_flash_read(address, (uint32_t*)_buffer, FLASH_SECTOR_SIZE)) {
     if (_buffer[2] != mode) {
       _buffer[2] = mode &3;
       noInterrupts();
-      if (spi_flash_erase_sector(address / FLASH_SECTOR_SIZE) == SPI_FLASH_RESULT_OK) {
+      if (SPI_FLASH_RESULT_OK == spi_flash_erase_sector(address / FLASH_SECTOR_SIZE)) {
         spi_flash_write(address, (uint32_t*)_buffer, FLASH_SECTOR_SIZE);
       }
       interrupts();
@@ -163,7 +171,9 @@ void setFlashMode(byte option, byte mode)
 void setModuleFlashMode(byte option)
 {
   uint8_t mode = 0;  // QIO - ESP8266
-  if ((sysCfg.module == SONOFF_TOUCH) || (sysCfg.module == SONOFF_4CH)) mode = 3;  // DOUT - ESP8285
+  if ((SONOFF_TOUCH == sysCfg.module) || (SONOFF_4CH == sysCfg.module)) {
+    mode = 3;  // DOUT - ESP8285
+  }
   setFlashMode(option, mode);
 }
 
@@ -172,7 +182,9 @@ uint32_t getHash()
   uint32_t hash = 0;
   uint8_t *bytes = (uint8_t*)&sysCfg;
 
-  for (uint16_t i = 0; i < sizeof(SYSCFG); i++) hash += bytes[i]*(i+1);
+  for (uint16_t i = 0; i < sizeof(SYSCFG); i++) {
+    hash += bytes[i]*(i+1);
+  }
   return hash;
 }
 
@@ -215,7 +227,7 @@ void CFG_Load()
   addLog(LOG_LEVEL_DEBUG, log);
 
   if (sysCfg.cfg_holder != CFG_HOLDER) {
-    if ((sysCfg.version < 0x04020000) || (sysCfg.version > 0x73000000)) {
+    if ((sysCfg.version < 0x04020000) || (sysCfg.version > 0x06000000)) {
       noInterrupts();
       spi_flash_read((CFG_LOCATION_3) * SPI_FLASH_SEC_SIZE, (uint32*)&sysCfg, sizeof(SYSCFG));
       spi_flash_read((CFG_LOCATION_3 + 1) * SPI_FLASH_SEC_SIZE, (uint32*)&_sysCfgH, sizeof(SYSCFGH));
@@ -224,6 +236,8 @@ void CFG_Load()
       interrupts();
       if (sysCfg.cfg_holder != CFG_HOLDER) {
         CFG_Default();
+      } else {
+        sysCfg.saveFlag = 0;
       }
     } else {
       CFG_Default();
@@ -253,7 +267,7 @@ void CFG_Erase()
     if (_serialoutput) {
       Serial.print(F("Flash: Erased sector "));
       Serial.print(_sector);
-      if (result == SPI_FLASH_RESULT_OK) {
+      if (SPI_FLASH_RESULT_OK == result) {
         Serial.println(F(" OK"));
       } else {
         Serial.println(F(" Error"));
@@ -268,7 +282,10 @@ void CFG_Dump()
   #define CFG_COLS 16
   
   char log[LOGSZ];
-  uint16_t idx, maxrow, row, col;
+  uint16_t idx;
+  uint16_t maxrow;
+  uint16_t row;
+  uint16_t col;
 
   uint8_t *buffer = (uint8_t *) &sysCfg;
   maxrow = ((sizeof(SYSCFG)+CFG_COLS)/CFG_COLS);
@@ -277,12 +294,16 @@ void CFG_Dump()
     idx = row * CFG_COLS;
     snprintf_P(log, sizeof(log), PSTR("%04X:"), idx);
     for (col = 0; col < CFG_COLS; col++) {
-      if (!(col%4)) snprintf_P(log, sizeof(log), PSTR("%s "), log);
+      if (!(col%4)) {
+        snprintf_P(log, sizeof(log), PSTR("%s "), log);
+      }
       snprintf_P(log, sizeof(log), PSTR("%s %02X"), log, buffer[idx + col]);
     }
     snprintf_P(log, sizeof(log), PSTR("%s |"), log);
     for (col = 0; col < CFG_COLS; col++) {
-//      if (!(col%4)) snprintf_P(log, sizeof(log), PSTR("%s "), log);
+//      if (!(col%4)) {
+//        snprintf_P(log, sizeof(log), PSTR("%s "), log);
+//      }
       snprintf_P(log, sizeof(log), PSTR("%s%c"), log, ((buffer[idx + col] > 0x20) && (buffer[idx + col] < 0x7F)) ? (char)buffer[idx + col] : ' ');
     }
     snprintf_P(log, sizeof(log), PSTR("%s|"), log);
@@ -424,16 +445,26 @@ void CFG_DefaultSet_3_2_4()
 
 void CFG_DefaultSet_3_9_3()
 {
-  for (byte i = 0; i < 4; i++) sysCfg.domoticz_switch_idx[i] = 0;
-  for (byte i = 0; i < 12; i++) sysCfg.domoticz_sensor_idx[i] = 0;
+  for (byte i = 0; i < 4; i++) {
+    sysCfg.domoticz_switch_idx[i] = 0;
+  }
+  for (byte i = 0; i < 12; i++) {
+    sysCfg.domoticz_sensor_idx[i] = 0;
+  }
 
   sysCfg.module = MODULE;
-  for (byte i = 0; i < MAX_GPIO_PIN; i++) sysCfg.my_module.gp.io[i] = 0;
+  for (byte i = 0; i < MAX_GPIO_PIN; i++){
+    sysCfg.my_module.gp.io[i] = 0;
+  }
 
   sysCfg.led_pixels = 0;
-  for (byte i = 0; i < 5; i++) sysCfg.led_color[i] = 255;
+  for (byte i = 0; i < 5; i++) {
+    sysCfg.led_color[i] = 255;
+  }
   sysCfg.led_table = 0;
-  for (byte i = 0; i < 3; i++) sysCfg.led_dimmer[i] = 10;
+  for (byte i = 0; i < 3; i++){
+    sysCfg.led_dimmer[i] = 10;
+  }
   sysCfg.led_fade = 0;
   sysCfg.led_speed = 0;
   sysCfg.led_scheme = 0;
@@ -446,11 +477,17 @@ void CFG_DefaultSet_4_0_4()
   strlcpy(sysCfg.ntp_server[0], NTP_SERVER1, sizeof(sysCfg.ntp_server[0]));
   strlcpy(sysCfg.ntp_server[1], NTP_SERVER2, sizeof(sysCfg.ntp_server[1]));
   strlcpy(sysCfg.ntp_server[2], NTP_SERVER3, sizeof(sysCfg.ntp_server[2]));
-  for (byte j =0; j < 3; j++)
-    for (byte i = 0; i < strlen(sysCfg.ntp_server[j]); i++)
-      if (sysCfg.ntp_server[j][i] == ',') sysCfg.ntp_server[j][i] = '.';
+  for (byte j =0; j < 3; j++) {
+    for (byte i = 0; i < strlen(sysCfg.ntp_server[j]); i++) {
+      if (sysCfg.ntp_server[j][i] == ',') {
+        sysCfg.ntp_server[j][i] = '.';
+      }
+    }
+  }
   sysCfg.pulsetime[0] = sysCfg.ex_pulsetime;
-  for (byte i = 1; i < MAX_PULSETIMERS; i++) sysCfg.pulsetime[i] = 0;
+  for (byte i = 1; i < MAX_PULSETIMERS; i++) {
+    sysCfg.pulsetime[i] = 0;
+  }
 }
 
 void CFG_DefaultSet_4_0_9()
@@ -535,7 +572,9 @@ void CFG_Delta()
       sysCfg.my_module.gp.io[MAX_GPIO_PIN -1] = 0;  // Clear ADC0
     }
     if (sysCfg.version < 0x04000700) {
-      for (byte i = 0; i < 5; i++) sysCfg.pwmvalue[i] = 0;
+      for (byte i = 0; i < 5; i++) {
+        sysCfg.pwmvalue[i] = 0;
+      }
     }
     if (sysCfg.version < 0x04000804) {
       CFG_DefaultSet_4_0_9();

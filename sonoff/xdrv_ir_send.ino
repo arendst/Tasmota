@@ -115,7 +115,9 @@ boolean ir_send_command(char *type, uint16_t index, char *dataBufUc, uint16_t da
         } else error = true;
       }
     } else error = true;
-    if (error) snprintf_P(svalue, ssvalue, PSTR("{\"IRSend\":\"No protocol, bits or data\"}"));
+    if (error) {
+      snprintf_P(svalue, ssvalue, PSTR("{\"IRSend\":\"No protocol, bits or data\"}"));
+    }
   }
 #ifdef USE_IR_HVAC
   else if (!strcmp(type,"IRHVAC")) {
@@ -145,7 +147,9 @@ boolean ir_send_command(char *type, uint16_t index, char *dataBufUc, uint16_t da
         else  error = true;
       }
     } else error = true;
-    if (error) snprintf_P(svalue, ssvalue, PSTR("{\"IRHVAC\":\"Wrong Vendor, Mode and/or FanSpeed\"}"));
+    if (error) {
+      snprintf_P(svalue, ssvalue, PSTR("{\"IRHVAC\":\"Wrong Vendor, Mode and/or FanSpeed\"}"));
+    }
   }
 #endif  // USE_IR_HVAC
   else {
@@ -160,7 +164,8 @@ boolean ir_hvac_toshiba(const char *HVAC_Mode, const char *HVAC_FanMode, boolean
   unsigned int rawdata[2 + 2*8*HVAC_TOSHIBA_DATALEN + 2];
   byte data[HVAC_TOSHIBA_DATALEN] = { 0xF2, 0x0D, 0x03, 0xFC, 0x01, 0x00, 0x00, 0x00, 0x00 };
 
-  char *p, *token;
+  char *p;
+  char *token;
   uint8_t mode;
 
   if (HVAC_Mode == NULL) {
@@ -168,19 +173,27 @@ boolean ir_hvac_toshiba(const char *HVAC_Mode, const char *HVAC_FanMode, boolean
   } else {
     p = strchr(HVACMODE, HVAC_Mode[0]);
   }
-  if (!p) return true;
+  if (!p) {
+    return true;
+  }
   data[6] = (p - HVACMODE) ^ 0x03;  // HOT = 0x03, DRY = 0x02, COOL = 0x01, AUTO = 0x00
 
-  if (!HVAC_Power) data[6] = (byte) 0x07; // Turn OFF HVAC
+  if (!HVAC_Power) {
+    data[6] = (byte) 0x07; // Turn OFF HVAC
+  }
 
   if (HVAC_FanMode == NULL) {
     p = (char*)FANSPEED;  // default FAN_SPEED_AUTO
   } else {
     p = strchr(FANSPEED, HVAC_FanMode[0]);
   }
-  if (!p) return true;
+  if (!p) {
+    return true;
+  }
   mode = p - FANSPEED +1;    
-  if ((mode == 1) || (mode == 7)) mode = 0;
+  if ((1 == mode) || (7 == mode)) {
+    mode = 0;
+  }
   mode = mode << 5;       // AUTO = 0x00, SPEED = 0x40, 0x60, 0x80, 0xA0, 0xC0, SILENT = 0x00
   data[6] = data[6] | mode;
 
@@ -191,7 +204,9 @@ boolean ir_hvac_toshiba(const char *HVAC_Mode, const char *HVAC_FanMode, boolean
   else if (HVAC_Temp < 17) {
     Temp = 17;
   }
-  else Temp = HVAC_Temp;
+  else {
+    Temp = HVAC_Temp;
+  }
   data[5] = (byte) Temp - 17 << 4;
 
   data[HVAC_TOSHIBA_DATALEN-1] = 0;
@@ -234,7 +249,8 @@ boolean ir_hvac_toshiba(const char *HVAC_Mode, const char *HVAC_FanMode, boolean
 
 boolean ir_hvac_mitsubishi(const char *HVAC_Mode,const char *HVAC_FanMode, boolean HVAC_Power, int HVAC_Temp)
 {
-  char *p, *token;
+  char *p;
+  char *token;
   uint8_t mode;
   char log[LOGSZ];
     
@@ -245,7 +261,9 @@ boolean ir_hvac_mitsubishi(const char *HVAC_Mode,const char *HVAC_FanMode, boole
   } else {
     p = strchr(HVACMODE, HVAC_Mode[0]);
   }
-  if (!p) return true;
+  if (!p) {
+    return true;
+  }
   mode = (p - HVACMODE +1) << 3;  // HOT = 0x08, DRY = 0x10, COOL = 0x18, AUTO = 0x20
   mitsubir->setMode(mode);
 
@@ -256,7 +274,9 @@ boolean ir_hvac_mitsubishi(const char *HVAC_Mode,const char *HVAC_FanMode, boole
   } else {
     p = strchr(FANSPEED, HVAC_FanMode[0]);
   }
-  if (!p) return true;
+  if (!p) {
+    return true;
+  }
   mode = p - FANSPEED;    // AUTO = 0, SPEED = 1 .. 5, SILENT = 6
   mitsubir->setFan(mode);
 

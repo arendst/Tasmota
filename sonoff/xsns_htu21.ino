@@ -58,18 +58,20 @@
 
 #define HTU21_CRC8_POLYNOM  0x13100
 
-uint8_t htuaddr, htutype = 0;
-uint8_t delayT, delayH = 50;
+uint8_t htuaddr;
+uint8_t htutype = 0;
+uint8_t delayT;
+uint8_t delayH = 50;
 char htustype[7];
 
 uint8_t check_crc8(uint16_t data)
 {
-  for (uint8_t bit = 0; bit < 16; bit++)
-  {
-    if (data & 0x8000)
+  for (uint8_t bit = 0; bit < 16; bit++) {
+    if (data & 0x8000) {
       data =  (data << 1) ^ HTU21_CRC8_POLYNOM;
-    else
+    } else {
       data <<= 1;
+    }
   }
   return data >>= 8;
 }
@@ -143,29 +145,36 @@ float htu21_convertCtoF(float c)
 
 float htu21_readHumidity(void)
 {
-  uint8_t  checksum=0;
-  uint16_t sensorval=0;
-  float    humidity=0.0;
+  uint8_t  checksum = 0;
+  uint16_t sensorval = 0;
+  float    humidity = 0.0;
 
   Wire.beginTransmission(HTU21_ADDR);
   Wire.write(HTU21_READHUM);
-  if(Wire.endTransmission() != 0) return 0.0; // In case of error
+  if (Wire.endTransmission() != 0) {
+    return 0.0; // In case of error
+  }
   delay(delayH);                              // Sensor time at max resolution
 
   Wire.requestFrom(HTU21_ADDR, 3);
-  if(3 <= Wire.available())
-  {
+  if (3 <= Wire.available()) {
     sensorval = Wire.read() << 8;             // MSB
     sensorval |= Wire.read();                 // LSB
     checksum = Wire.read();
   }
-  if(check_crc8(sensorval) != checksum) return 0.0; // Checksum mismatch
+  if (check_crc8(sensorval) != checksum) {
+    return 0.0; // Checksum mismatch
+  }
 
   sensorval ^= 0x02;      // clear status bits
   humidity = 0.001907 * (float)sensorval - 6;
 
-  if(humidity > 100) return 100.0;
-  if(humidity < 0) return 0.01;
+  if (humidity > 100) {
+    return 100.0;
+  }
+  if (humidity < 0) {
+    return 0.01;
+  }
 
   return humidity;
 }
@@ -178,33 +187,43 @@ float htu21_readTemperature(bool S)
 
   Wire.beginTransmission(HTU21_ADDR);
   Wire.write(HTU21_READTEMP);
-  if(Wire.endTransmission() != 0) return 0.0; // In case of error
+  if (Wire.endTransmission() != 0) {
+    return 0.0; // In case of error
+  }
   delay(delayT);                          // Sensor time at max resolution
 
   Wire.requestFrom(HTU21_ADDR, 3);
-  if(3 == Wire.available())
-  {
+  if (3 == Wire.available()) {
     sensorval = Wire.read() << 8;         // MSB
     sensorval |= Wire.read();             // LSB
     checksum = Wire.read();
   }
-  if(check_crc8(sensorval) != checksum) return 0.0; // Checksum mismatch
+  if (check_crc8(sensorval) != checksum) {
+    return 0.0; // Checksum mismatch
+  }
 
   t = (0.002681 * (float)sensorval - 46.85);
-  if(S) t = htu21_convertCtoF(t);
+  if(S) {
+    t = htu21_convertCtoF(t);
+  }
   return t;
 }
 
 float htu21_compensatedHumidity(float humidity, float temperature)
 {
-  if(humidity == 0.00 && temperature == 0.00) return 0.0;
-  if(temperature > 0.00 && temperature < 80.00)
+  if(humidity == 0.00 && temperature == 0.00) {
+    return 0.0;
+  }
+  if(temperature > 0.00 && temperature < 80.00) {
     return (-0.15)*(25-temperature)+humidity;
+  }
 }
 
 uint8_t htu_detect()
 {
-  if (htutype) return true;
+  if (htutype) {
+    return true;
+  }
 
   char log[LOGSZ];
   boolean success = false;
@@ -253,9 +272,12 @@ uint8_t htu_detect()
 
 void htu_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
 {
-  if (!htutype) return;
+  if (!htutype) {
+    return;
+  }
 
-  char stemp1[10], stemp2[10];
+  char stemp1[10];
+  char stemp2[10];
 
   float t = htu21_readTemperature(TEMP_CONVERSION);
   float h = htu21_readHumidity();
@@ -274,7 +296,8 @@ String htu_webPresent()
 {
   String page = "";
   if (htutype) {
-    char stemp[10], sensor[80];
+    char stemp[10];
+    char sensor[80];
 
     float t_htu21 = htu21_readTemperature(TEMP_CONVERSION);
     float h_htu21 = htu21_readHumidity();
