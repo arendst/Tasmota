@@ -26,6 +26,12 @@ enum emul_t  {EMUL_NONE, EMUL_WEMO, EMUL_HUE, EMUL_MAX};
 #include "user_config.h"
 #include "user_config_override.h"
 
+#ifdef USE_TOUCHSCREEN
+  #include "touchscreen.h"
+  extern TouchScreen *touchscreen;
+#endif // USE_TOUCHSCREEN
+
+
 /*********************************************************************************************\
  * No user configurable items below
 \*********************************************************************************************/
@@ -332,6 +338,9 @@ void setRelay(uint8_t power)
     for (byte i = 0; i < Maxdevice; i++) {
       state = power &1;
       if (pin[GPIO_REL1 +i] < 99) digitalWrite(pin[GPIO_REL1 +i], rel_inverted[i] ? !state : state);
+#ifdef USE_TOUCHSCREEN
+      if (touchscreen) touchscreen->RelayState(state != 0);
+#endif // USE_TOUCHSCREEN
       power >>= 1;
     }
   }
@@ -404,6 +413,9 @@ void mqtt_publish_sec(const char* topic, const char* data, boolean retained)
   char log[TOPSZ + MESSZ];
 
   if (sysCfg.mqtt_enabled) {
+#ifdef USE_TOUCHSCREEN
+    if (touchscreen) touchscreen->NetworkSend();
+#endif // USE_TOUCHSCREEN
     if (mqttClient.publish(topic, data, retained)) {
       snprintf_P(log, sizeof(log), PSTR("MQTT: %s = %s%s"), topic, data, (retained) ? " (retained)" : "");
 //      mqttClient.loop();  // Do not use here! Will block previous publishes
@@ -744,6 +756,10 @@ boolean mqtt_command(boolean grpflg, char *type, uint16_t index, char *dataBuf, 
 void mqttDataCb(char* topic, byte* data, unsigned int data_len)
 {
   char *str;
+
+#ifdef USE_TOUCHSCREEN
+    if (touchscreen) touchscreen->NetworkRecv();
+#endif // USE_TOUCHSCREEN
 
   if (!strcmp(sysCfg.mqtt_prefix[0],sysCfg.mqtt_prefix[1])) {
     str = strstr(topic,sysCfg.mqtt_prefix[0]);
@@ -2197,6 +2213,10 @@ void setup()
   snprintf_P(log, sizeof(log), PSTR("APP: Project %s %s (Topic %s, Fallback %s, GroupTopic %s) Version %s"),
     PROJECT, sysCfg.friendlyname[0], sysCfg.mqtt_topic, MQTTClient, sysCfg.mqtt_grptopic, Version);
   addLog(LOG_LEVEL_INFO, log);
+
+#ifdef USE_TOUCHSCREEN
+  touchscreen = new TouchScreen();
+#endif // USE_TOUCHSCREEN
 }
 
 void loop()
@@ -2214,6 +2234,10 @@ void loop()
   if (millis() >= timerxs) stateloop();
   if (sysCfg.mqtt_enabled) mqttClient.loop();
   if (Serial.available()) serial();
+
+#ifdef USE_TOUCHSCREEN
+  if (touchscreen) touchscreen->handle();
+#endif // USE_TOUCHSCREEN
 
 //  yield();     // yield == delay(0), delay contains yield, auto yield in loop
   delay(sleep);  // https://github.com/esp8266/Arduino/issues/2021
