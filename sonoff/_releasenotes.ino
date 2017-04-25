@@ -1,4 +1,15 @@
-/* 4.1.3 20170410
+/* 5.0.0 20170425
+ * Memory status message update
+ * Fix setting migration to better preserve settings during move (#382)
+ * Best practice is first doing a Backup Configuration before installing version 5.0.0
+ * Reset save count after setting move
+ * Start using new linker script without SPIFFS
+ *
+ * 4.2.0 20170424
+ * Prepare for SPIFFS removal by moving settings to EEPROM area
+ * Fix compilation error when webserver is disabled (#378)
+ *
+ * 4.1.3 20170410
  * Add user configuarble GPIO to module S20 Socket and Slampher
  * Add support for Sonoff SC (#112)
  * Set PWM frequency from 1000Hz to 910Hz as used on iTead Sonoff Led firmware (#122)

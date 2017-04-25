@@ -108,7 +108,9 @@ uint8_t ledTable[] = {
   219,221,224,226,228,231,233,235,238,240,243,245,248,250,253,255 };
 */
 uint8_t lany = 0;
-RgbColor dcolor, tcolor, lcolor;
+RgbColor dcolor;
+RgbColor tcolor;
+RgbColor lcolor;
 
 uint8_t wakeupDimmer = 0;
 uint16_t wakeupCntr = 0;
@@ -128,7 +130,8 @@ void ws2812_setDim(uint8_t myDimmer)
 void ws2812_setColor(uint16_t led, char* colstr)
 {
   HtmlColor hcolor;
-  char log[LOGSZ], lcolstr[8]; 
+  char log[LOGSZ];
+  char lcolstr[8]; 
   
   snprintf_P(lcolstr, sizeof(lcolstr), PSTR("#%s"), colstr);
   uint8_t result = hcolor.Parse<HtmlColorNames>((char *)lcolstr, 7);
@@ -143,8 +146,12 @@ void ws2812_setColor(uint16_t led, char* colstr)
 //      addLog(LOG_LEVEL_DEBUG, log);
   
       uint16_t temp = dcolor.R;
-      if (temp < dcolor.G) temp = dcolor.G;
-      if (temp < dcolor.B) temp = dcolor.B;
+      if (temp < dcolor.G) {
+        temp = dcolor.G;
+      }
+      if (temp < dcolor.B) {
+        temp = dcolor.B;
+      }
       float mDim = (float)temp / 2.55;
       sysCfg.ws_dimmer = (uint8_t)mDim;
   
@@ -164,7 +171,7 @@ void ws2812_setColor(uint16_t led, char* colstr)
 void ws2812_replaceHSB(String *response)
 {
   ws2812_setDim(sysCfg.ws_dimmer);
-  HsbColor hsb=HsbColor(dcolor);
+  HsbColor hsb = HsbColor(dcolor);
   response->replace("{h}", String((uint16_t)(65535.0f * hsb.H)));
   response->replace("{s}", String((uint8_t)(254.0f * hsb.S)));
   response->replace("{b}", String((uint8_t)(254.0f * hsb.B)));
@@ -173,10 +180,10 @@ void ws2812_replaceHSB(String *response)
 void ws2812_getHSB(float *hue, float *sat, float *bri)
 {
   ws2812_setDim(sysCfg.ws_dimmer);
-  HsbColor hsb=HsbColor(dcolor);
-  *hue=hsb.H;
-  *sat=hsb.S;
-  *bri=hsb.B;
+  HsbColor hsb = HsbColor(dcolor);
+  *hue = hsb.H;
+  *sat = hsb.S;
+  *bri = hsb.B;
 }
 
 void ws2812_setHSB(float hue, float sat, float bri)
@@ -184,9 +191,9 @@ void ws2812_setHSB(float hue, float sat, float bri)
   char rgb[7];
   
   HsbColor hsb;
-  hsb.H=hue;
-  hsb.S=sat;
-  hsb.B=bri;
+  hsb.H = hue;
+  hsb.S = sat;
+  hsb.B = bri;
   RgbColor tmp = RgbColor(hsb);
   sprintf(rgb,"%02X%02X%02X", tmp.R, tmp.G, tmp.B);
   ws2812_setColor(0,rgb);
@@ -238,7 +245,9 @@ void ws2812_resetStripTimer()
 int mod(int a, int b)
 {
    int ret = a % b;
-   if (ret < 0) ret += b;
+   if (ret < 0) {
+    ret += b;
+   }
    return ret;
 }
 
@@ -308,7 +317,9 @@ void ws2812_gradient()
   RgbColor c;
 
   ColorScheme scheme = schemes[sysCfg.ws_scheme -3];
-  if (scheme.count < 2) return;
+  if (scheme.count < 2) {
+    return;
+  }
 
   uint8_t repeat = repeatValues[sysCfg.ws_width];  // number of scheme.count per ledcount
   uint8_t range = (uint8_t)ceil((float)sysCfg.ws_pixels / (float)repeat);
@@ -319,7 +330,9 @@ void ws2812_gradient()
   ws2812_gradientColor(&oldColor, range, gradRange, offset);
   currentColor = oldColor;
   for (uint16_t i = 0; i < sysCfg.ws_pixels; i++) {
-    if (repeatValues[sysCfg.ws_width] > 1) ws2812_gradientColor(&currentColor, range, gradRange, i +offset);
+    if (repeatValues[sysCfg.ws_width] > 1) {
+      ws2812_gradientColor(&currentColor, range, gradRange, i +offset);
+    }
     if (sysCfg.ws_speed > 0) {
       // Blend old and current color based on time for smooth movement.
       c.R = map(stripTimerCntr % speedValues[sysCfg.ws_speed], 0, speedValues[sysCfg.ws_speed], oldColor.red, currentColor.red);
@@ -351,7 +364,9 @@ void ws2812_bars()
   ColorScheme scheme = schemes[sysCfg.ws_scheme -3];
 
   uint8_t maxSize = sysCfg.ws_pixels / scheme.count;
-  if (widthValues[sysCfg.ws_width] > maxSize) maxSize = 0;
+  if (widthValues[sysCfg.ws_width] > maxSize) {
+    maxSize = 0;
+  }
 
   uint8_t offset = speedValues[sysCfg.ws_speed] > 0 ? stripTimerCntr / speedValues[sysCfg.ws_speed] : 0;
 
@@ -368,8 +383,9 @@ void ws2812_bars()
   }
   uint8_t colorIndex = offset % scheme.count;
   for (i = 0; i < sysCfg.ws_pixels; i++) {
-    if (maxSize)
+    if (maxSize) {
       colorIndex = ((i + offset) % (scheme.count * widthValues[sysCfg.ws_width])) / widthValues[sysCfg.ws_width];
+    }
     c.R = mcolor[colorIndex].red;
     c.G = mcolor[colorIndex].green;
     c.B = mcolor[colorIndex].blue;
@@ -384,7 +400,7 @@ void ws2812_animate()
   uint8_t fadeValue;
   
   stripTimerCntr++;
-  if (power == 0) {  // Power Off
+  if (0 == power) {  // Power Off
     sleep = sysCfg.sleep;
     stripTimerCntr = 0;
     tcolor = 0;
@@ -394,22 +410,34 @@ void ws2812_animate()
     switch (sysCfg.ws_scheme) {
       case 0:  // Power On
         ws2812_setDim(sysCfg.ws_dimmer);
-        if (sysCfg.ws_fade == 0) {
+        if (0 == sysCfg.ws_fade) {
           tcolor = dcolor;
         } else {
           if (tcolor != dcolor) {
-            if (tcolor.R < dcolor.R) tcolor.R += ((dcolor.R - tcolor.R) >> sysCfg.ws_speed) +1;
-            if (tcolor.G < dcolor.G) tcolor.G += ((dcolor.G - tcolor.G) >> sysCfg.ws_speed) +1;
-            if (tcolor.B < dcolor.B) tcolor.B += ((dcolor.B - tcolor.B) >> sysCfg.ws_speed) +1;
-            if (tcolor.R > dcolor.R) tcolor.R -= ((tcolor.R - dcolor.R) >> sysCfg.ws_speed) +1;
-            if (tcolor.G > dcolor.G) tcolor.G -= ((tcolor.G - dcolor.G) >> sysCfg.ws_speed) +1;
-            if (tcolor.B > dcolor.B) tcolor.B -= ((tcolor.B - dcolor.B) >> sysCfg.ws_speed) +1;
+            if (tcolor.R < dcolor.R) {
+              tcolor.R += ((dcolor.R - tcolor.R) >> sysCfg.ws_speed) +1;
+            }
+            if (tcolor.G < dcolor.G) {
+              tcolor.G += ((dcolor.G - tcolor.G) >> sysCfg.ws_speed) +1;
+            }
+            if (tcolor.B < dcolor.B) {
+              tcolor.B += ((dcolor.B - tcolor.B) >> sysCfg.ws_speed) +1;
+            }
+            if (tcolor.R > dcolor.R) {
+              tcolor.R -= ((tcolor.R - dcolor.R) >> sysCfg.ws_speed) +1;
+            }
+            if (tcolor.G > dcolor.G) {
+              tcolor.G -= ((tcolor.G - dcolor.G) >> sysCfg.ws_speed) +1;
+            }
+            if (tcolor.B > dcolor.B) {
+              tcolor.B -= ((tcolor.B - dcolor.B) >> sysCfg.ws_speed) +1;
+            }
           }
         }
         break;
       case 1:  // Wake up light
         wakeupCntr++;
-        if (wakeupDimmer == 0) {
+        if (0 == wakeupDimmer) {
           tcolor = 0;
           wakeupDimmer++;
         }
@@ -426,11 +454,17 @@ void ws2812_animate()
         }
         break;
       case 2:  // Clock
-        if ((state == (STATES/10)*2) || (lany != 2)) ws2812_clock();
+        if (((STATES/10)*2 == state) || (lany != 2)) {
+          ws2812_clock();
+        }
         lany = 2;
         break;
       default:
-        if (sysCfg.ws_fade == 1) ws2812_gradient(); else ws2812_bars();
+        if (1 == sysCfg.ws_fade) {
+          ws2812_gradient();
+        } else {
+          ws2812_bars();
+        }
         lany = 1;
         break;
     }
@@ -445,9 +479,13 @@ void ws2812_animate()
 //    addLog(LOG_LEVEL_DEBUG, log);
 
       if (sysCfg.ws_ledtable) {
-        for (uint16_t i = 0; i < sysCfg.ws_pixels; i++) strip->SetPixelColor(i, RgbColor(ledTable[lcolor.R],ledTable[lcolor.G],ledTable[lcolor.B]));      
+        for (uint16_t i = 0; i < sysCfg.ws_pixels; i++) {
+          strip->SetPixelColor(i, RgbColor(ledTable[lcolor.R],ledTable[lcolor.G],ledTable[lcolor.B]));      
+        }
       } else {
-        for (uint16_t i = 0; i < sysCfg.ws_pixels; i++) strip->SetPixelColor(i, lcolor);
+        for (uint16_t i = 0; i < sysCfg.ws_pixels; i++) {
+          strip->SetPixelColor(i, lcolor);
+        }
       }
       strip->Show();
     }
@@ -502,14 +540,14 @@ boolean ws2812_command(char *type, uint16_t index, char *dataBuf, uint16_t data_
     snprintf_P(svalue, ssvalue, PSTR("{\"Pixels\":%d}"), sysCfg.ws_pixels);
   }
   else if (!strcmp(type,"LED") && (index > 0) && (index <= sysCfg.ws_pixels)) {
-    if (data_len == 6) {
+    if (6 == data_len) {
 //       ws2812_setColor(index, dataBufUc);
       ws2812_setColor(index, dataBuf);
     }
     ws2812_getColor(index, svalue, ssvalue);
   }
   else if (!strcmp(type,"COLOR")) {
-    if (data_len == 6) {
+    if (6 == data_len) {
 //        ws2812_setColor(0, dataBufUc);
       ws2812_setColor(0, dataBuf);
       power = 1;
@@ -570,14 +608,18 @@ boolean ws2812_command(char *type, uint16_t index, char *dataBuf, uint16_t data_
   else if (!strcmp(type,"WAKEUP")) {
     if ((data_len > 0) && (payload > 0) && (payload < 3601)) {
       sysCfg.ws_wakeup = payload;
-      if (sysCfg.ws_scheme == 1) sysCfg.ws_scheme = 0;
+      if (1 == sysCfg.ws_scheme) {
+        sysCfg.ws_scheme = 0;
+      }
     }
     snprintf_P(svalue, ssvalue, PSTR("{\"WakeUp\":%d}"), sysCfg.ws_wakeup);
   }
   else if (!strcmp(type,"SCHEME")) {
     if ((data_len > 0) && (payload >= 0) && (payload <= 9)) {
       sysCfg.ws_scheme = payload;
-      if (sysCfg.ws_scheme == 1) ws2812_resetWakupState();
+      if (1 == sysCfg.ws_scheme) {
+        ws2812_resetWakupState();
+      }
       power = 1;
       ws2812_resetStripTimer();
     }

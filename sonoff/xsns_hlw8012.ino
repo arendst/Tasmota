@@ -53,13 +53,26 @@ byte hlw_mkwh_state = 0;
   uint16_t hlw_mplw_counter = 0;
 #endif  // FEATURE_POWER_LIMIT
 
-byte hlw_SELflag, hlw_cf_timer, hlw_cf1_timer, hlw_fifth_second, hlw_startup;
-unsigned long hlw_cf_plen, hlw_cf_last;
-unsigned long hlw_cf1_plen, hlw_cf1_last, hlw_cf1_ptot, hlw_cf1_pcnt, hlw_cf1u_plen, hlw_cf1i_plen;
-unsigned long hlw_Ecntr, hlw_EDcntr, hlw_kWhtoday;
+byte hlw_SELflag;
+byte hlw_cf_timer;
+byte hlw_cf1_timer;
+byte hlw_fifth_second;
+byte hlw_startup;
+unsigned long hlw_cf_plen;
+unsigned long hlw_cf_last;
+unsigned long hlw_cf1_plen;
+unsigned long hlw_cf1_last;
+unsigned long hlw_cf1_ptot;
+unsigned long hlw_cf1_pcnt;
+unsigned long hlw_cf1u_plen;
+unsigned long hlw_cf1i_plen;
+unsigned long hlw_Ecntr;
+unsigned long hlw_EDcntr;
+unsigned long hlw_kWhtoday;
 uint32_t hlw_lasttime;
 
-unsigned long hlw_cf1u_pcntmax, hlw_cf1i_pcntmax;
+unsigned long hlw_cf1u_pcntmax;
+unsigned long hlw_cf1i_pcntmax;
 
 Ticker tickerHLW;
 
@@ -72,7 +85,9 @@ void hlw_cf_interrupt()  // Service Power
 {
   hlw_cf_plen = micros() - hlw_cf_last;
   hlw_cf_last = micros();
-  if (hlw_cf_plen > 4000000) hlw_cf_plen = 0;  // Just powered on
+  if (hlw_cf_plen > 4000000) {
+    hlw_cf_plen = 0;  // Just powered on
+  }
   hlw_cf_timer = 15;  // Support down to 4W which takes about 3 seconds
   hlw_EDcntr++;
   hlw_Ecntr++;
@@ -85,16 +100,19 @@ void hlw_cf1_interrupt()  // Service Voltage and Current
   if ((hlw_cf1_timer > 2) && (hlw_cf1_timer < 8)) {  // Allow for 300 mSec set-up time and measure for up to 1 second
     hlw_cf1_ptot += hlw_cf1_plen;
     hlw_cf1_pcnt++;
-    if (hlw_cf1_pcnt == 10) hlw_cf1_timer = 8;  // We need up to ten samples within 1 second (low current could take up to 0.3 second)
+    if (10 == hlw_cf1_pcnt) {
+      hlw_cf1_timer = 8;  // We need up to ten samples within 1 second (low current could take up to 0.3 second)
+    }
   }
 }
 
 void hlw_200mS()
 {
-  unsigned long hlw_len, hlw_temp;
+  unsigned long hlw_len;
+  unsigned long hlw_temp;
 
   hlw_fifth_second++;
-  if (hlw_fifth_second == 5) {
+  if (5 == hlw_fifth_second) {
     hlw_fifth_second = 0;
 
     if (hlw_EDcntr) {
@@ -111,7 +129,7 @@ void hlw_200mS()
         rtcMem.hlw_kWhtoday = hlw_kWhtoday;
         hlw_mkwh_state = 3;
       }
-      if ((rtcTime.Hour == sysCfg.hlw_mkwhs) && (hlw_mkwh_state == 3)) {
+      if ((rtcTime.Hour == sysCfg.hlw_mkwhs) && (3 == hlw_mkwh_state)) {
         hlw_mkwh_state = 0;
       }
       if (hlw_startup && (rtcTime.DayOfYear == sysCfg.hlw_kWhdoy)) {
@@ -124,7 +142,9 @@ void hlw_200mS()
 
   if (hlw_cf_timer) {
     hlw_cf_timer--;
-    if (!hlw_cf_timer) hlw_cf_plen = 0;  // No load for over three seconds
+    if (!hlw_cf_timer) {
+      hlw_cf_plen = 0;  // No load for over three seconds
+    }
   }
   
   hlw_cf1_timer++;
@@ -158,8 +178,13 @@ void hlw_savestate()
 
 boolean hlw_readEnergy(byte option, float &ed, uint16_t &e, uint16_t &w, uint16_t &u, float &i, float &c)
 {
-  unsigned long hlw_len, hlw_temp, hlw_w, hlw_u, hlw_i;
-  int hlw_period, hlw_interval;
+  unsigned long hlw_len;
+  unsigned long hlw_temp;
+  unsigned long hlw_w;
+  unsigned long hlw_u;
+  unsigned long hlw_i;
+  int hlw_period;
+  int hlw_interval;
 
 //char log[LOGSZ];
 //snprintf_P(log, sizeof(log), PSTR("HLW: CF %d, CF1U %d (%d), CF1I %d (%d)"), hlw_cf_plen, hlw_cf1u_plen, hlw_cf1u_pcntmax, hlw_cf1i_plen, hlw_cf1i_pcntmax);
@@ -222,7 +247,7 @@ boolean hlw_readEnergy(byte option, float &ed, uint16_t &e, uint16_t &w, uint16_
 
 void hlw_init()
 {
-  if (!sysCfg.hlw_pcal || (sysCfg.hlw_pcal == 4975)) {
+  if (!sysCfg.hlw_pcal || (4975 == sysCfg.hlw_pcal)) {
     sysCfg.hlw_pcal = HLW_PREF_PULSE;
     sysCfg.hlw_ucal = HLW_UREF_PULSE;
     sysCfg.hlw_ical = HLW_IREF_PULSE;
@@ -264,7 +289,9 @@ boolean hlw_margin(byte type, uint16_t margin, uint16_t value, byte &flag, byte 
 {
   byte change;
 
-  if (!margin) return false;
+  if (!margin) {
+    return false;
+  }
   change = saveflag;
   if (type) {
     flag = (value > margin);
@@ -282,10 +309,18 @@ void hlw_setPowerSteadyCounter(byte value)
 
 void hlw_margin_chk()
 {
-  char log[LOGSZ], svalue[200];  // was MESSZ
-  float ped, pi, pc;
-  uint16_t uped, piv, pe, pw, pu;
-  boolean flag, jsonflg;
+  char log[LOGSZ];
+  char svalue[200];  // was MESSZ
+  float ped;
+  float pi;
+  float pc;
+  uint16_t uped;
+  uint16_t piv;
+  uint16_t pe;
+  uint16_t pw;
+  uint16_t pu;
+  boolean flag;
+  boolean jsonflg;
 
   if (power_steady_cntr) {
     power_steady_cntr--;
@@ -343,7 +378,9 @@ void hlw_margin_chk()
           snprintf_P(svalue, sizeof(svalue), PSTR("{\"MaxPowerReached\":\"%d%s\"}"), pw, (sysCfg.value_units) ? " W" : "");
           mqtt_publish_topic_P(0, PSTR("WARNING"), svalue);
           do_cmnd_power(1, 0);
-          if (!hlw_mplr_counter) hlw_mplr_counter = MAX_POWER_RETRY +1;
+          if (!hlw_mplr_counter) {
+            hlw_mplr_counter = MAX_POWER_RETRY +1;
+          }
           hlw_mplw_counter = sysCfg.hlw_mplw;
         }
       }
@@ -381,7 +418,7 @@ void hlw_margin_chk()
       mqtt_publish_topic_P(4, PSTR("ENERGYMONITOR"), svalue);
       do_cmnd_power(1, 1);
     }
-    else if ((hlw_mkwh_state == 1) && (uped >= sysCfg.hlw_mkwh)) {
+    else if ((1 == hlw_mkwh_state) && (uped >= sysCfg.hlw_mkwh)) {
       hlw_mkwh_state = 2;
       dtostrf(ped, 1, 3, svalue);
       snprintf_P(svalue, sizeof(svalue), PSTR("{\"MaxEnergyReached\":\"%s%s\"}"), svalue, (sysCfg.value_units) ? " kWh" : "");
@@ -463,13 +500,13 @@ boolean hlw_command(char *type, uint16_t index, char *dataBuf, uint16_t data_len
   }
   else if (!strcmp(type,"MAXPOWERHOLD")) {
     if ((data_len > 0) && (payload >= 0) && (payload < 3601)) {
-      sysCfg.hlw_mplh = (payload == 1) ? MAX_POWER_HOLD : payload;
+      sysCfg.hlw_mplh = (1 == payload) ? MAX_POWER_HOLD : payload;
     }
     snprintf_P(svalue, ssvalue, PSTR("{\"MaxPowerHold\":\"%d%s\"}"), sysCfg.hlw_mplh, (sysCfg.value_units) ? " Sec" : "");
   }
   else if (!strcmp(type,"MAXPOWERWINDOW")) {
     if ((data_len > 0) && (payload >= 0) && (payload < 3601)) {
-      sysCfg.hlw_mplw = (payload == 1) ? MAX_POWER_WINDOW : payload;
+      sysCfg.hlw_mplw = (1 == payload) ? MAX_POWER_WINDOW : payload;
     }
     snprintf_P(svalue, ssvalue, PSTR("{\"MaxPowerWindow\":\"%d%s\"}"), sysCfg.hlw_mplw, (sysCfg.value_units) ? " Sec" : "");
   }
@@ -481,13 +518,13 @@ boolean hlw_command(char *type, uint16_t index, char *dataBuf, uint16_t data_len
   }
   else if (!strcmp(type,"SAFEPOWERHOLD")) {
     if ((data_len > 0) && (payload >= 0) && (payload < 3601)) {
-      sysCfg.hlw_msplh = (payload == 1) ? SAFE_POWER_HOLD : payload;
+      sysCfg.hlw_msplh = (1 == payload) ? SAFE_POWER_HOLD : payload;
     }
     snprintf_P(svalue, ssvalue, PSTR("{\"SafePowerHold\":\"%d%s\"}"), sysCfg.hlw_msplh, (sysCfg.value_units) ? " Sec" : "");
   }
   else if (!strcmp(type,"SAFEPOWERWINDOW")) {
     if ((data_len > 0) && (payload >= 0) && (payload < 1440)) {
-      sysCfg.hlw_msplw = (payload == 1) ? SAFE_POWER_WINDOW : payload;
+      sysCfg.hlw_msplw = (1 == payload) ? SAFE_POWER_WINDOW : payload;
     }
     snprintf_P(svalue, ssvalue, PSTR("{\"SafePowerWindow\":\"%d%s\"}"), sysCfg.hlw_msplw, (sysCfg.value_units) ? " Min" : "");
   }
@@ -517,9 +554,17 @@ boolean hlw_command(char *type, uint16_t index, char *dataBuf, uint16_t data_len
 
 void hlw_mqttStat(byte option, char* svalue, uint16_t ssvalue)
 {
-  char stemp0[10], stemp1[10], stemp2[10], stemp3[10], speriod[20];
-  float ped, pi, pc;
-  uint16_t pe, pw, pu;
+  char stemp0[10];
+  char stemp1[10];
+  char stemp2[10];
+  char stemp3[10];
+  char speriod[20];
+  float ped;
+  float pi;
+  float pc;
+  uint16_t pe;
+  uint16_t pw;
+  uint16_t pu;
 
   hlw_readEnergy(option, ped, pe, pw, pu, pi, pc);
   dtostrf((float)sysCfg.hlw_kWhyesterday / 100000000, 1, ENERGY_RESOLUTION &7, stemp0);
@@ -542,10 +587,6 @@ void hlw_mqttPresent()
 
   snprintf_P(svalue, sizeof(svalue), PSTR("{\"Time\":\"%s\", "), getDateTime().c_str());
   hlw_mqttStat(1, svalue, sizeof(svalue));
-
-//  snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/ENERGY"), sysCfg.mqtt_prefix[2], sysCfg.mqtt_topic);
-//  mqtt_publish(stopic, svalue);
-
   mqtt_publish_topic_P(1, PSTR("ENERGY"), svalue);
 }
 
@@ -568,9 +609,17 @@ const char HTTP_ENERGY_SNS[] PROGMEM =
 String hlw_webPresent()
 {
   String page = "";
-  char stemp[10], stemp2[10], stemp3[10], stemp4[10], sensor[300];
-  float ped, pi, pc;
-  uint16_t pe, pw, pu;
+  char stemp[10];
+  char stemp2[10];
+  char stemp3[10];
+  char stemp4[10];
+  char sensor[300];
+  float ped;
+  float pi;
+  float pc;
+  uint16_t pe;
+  uint16_t pw;
+  uint16_t pu;
 
   hlw_readEnergy(0, ped, pe, pw, pu, pi, pc);
 

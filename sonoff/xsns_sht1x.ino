@@ -38,7 +38,9 @@ enum {
   SHT1X_CMD_SOFT_RESET    = B00011110
 };
 
-uint8_t sht_sda_pin, sht_scl_pin, shttype = 0;
+uint8_t sht_sda_pin;
+uint8_t sht_scl_pin;
+uint8_t shttype = 0;
 
 boolean sht_reset()
 {
@@ -71,10 +73,14 @@ boolean sht_sendCommand(const byte cmd)
   boolean ackerror = false;
   digitalWrite(sht_scl_pin, HIGH);
   pinMode(sht_sda_pin, INPUT_PULLUP);
-  if (digitalRead(sht_sda_pin) != LOW) ackerror = true;
+  if (digitalRead(sht_sda_pin) != LOW) {
+    ackerror = true;
+  }
   digitalWrite(sht_scl_pin, LOW);
   delayMicroseconds(1);  // Give the sensor time to release the data line
-  if (digitalRead(sht_sda_pin) != HIGH) ackerror = true;
+  if (digitalRead(sht_sda_pin) != HIGH) {
+    ackerror = true;
+  }
   if (ackerror) {
     shttype = 0;
     addLog_P(LOG_LEVEL_DEBUG, PSTR("SHT1X: Sensor did not ACK command"));
@@ -86,7 +92,9 @@ boolean sht_awaitResult()
 {
   // Maximum 320ms for 14 bit measurement
   for (byte i = 0; i < 16; i++) {
-    if (digitalRead(sht_sda_pin) == LOW) return true;
+    if (LOW == digitalRead(sht_sda_pin)) {
+      return true;
+    }
     delay(20);
   }
   addLog_P(LOG_LEVEL_DEBUG, PSTR("SHT1X: Data not ready"));
@@ -117,21 +125,33 @@ int sht_readData()
 
 boolean sht_readTempHum(float &t, float &h)
 {
-  float tempRaw, humRaw, rhLinear;
+  float tempRaw;
+  float humRaw;
+  float rhLinear;
 
   t = NAN;
   h = NAN;
 
-  if (!sht_reset()) return false;
-  if (!sht_sendCommand(SHT1X_CMD_MEASURE_TEMP)) return false;
-  if (!sht_awaitResult()) return false;
+  if (!sht_reset()) {
+    return false;
+  }
+  if (!sht_sendCommand(SHT1X_CMD_MEASURE_TEMP)) {
+    return false;
+  }
+  if (!sht_awaitResult()) {
+    return false;
+  }
   tempRaw = sht_readData();
   // Temperature conversion coefficients from SHT1X datasheet for version 4
   const float d1 = -39.7;  // 3.5V
   const float d2 = 0.01;   // 14-bit
   t = d1 + (tempRaw * d2);
-  if (!sht_sendCommand(SHT1X_CMD_MEASURE_RH)) return false;
-  if (!sht_awaitResult()) return false;
+  if (!sht_sendCommand(SHT1X_CMD_MEASURE_RH)) {
+    return false;
+  }
+  if (!sht_awaitResult()) {
+    return false;
+  }
   humRaw = sht_readData();
   // Temperature conversion coefficients from SHT1X datasheet for version 4
   const float c1 = -2.0468;
@@ -141,13 +161,16 @@ boolean sht_readTempHum(float &t, float &h)
   const float t2 = 0.00008;
   rhLinear = c1 + c2 * humRaw + c3 * humRaw * humRaw;
   h = (t - 25) * (t1 + t2 * humRaw) + rhLinear;
-  if(!isnan(t) && TEMP_CONVERSION) t = t * 1.8 + 32;
+  if (!isnan(t) && TEMP_CONVERSION) {
+    t = t * 1.8 + 32;
+  }
   return (!isnan(t) && !isnan(h));
 }
 
 boolean sht_readCharTempHum(char* temp, char* hum)
 {
-  float t, h;
+  float t;
+  float h;
 
   boolean success = sht_readTempHum(t, h);
   dtostrf(t, 1, TEMP_RESOLUTION &3, temp);
@@ -157,9 +180,12 @@ boolean sht_readCharTempHum(char* temp, char* hum)
 
 boolean sht_detect()
 {
-  if (shttype) return true;
+  if (shttype) {
+    return true;
+  }
 
-  float t, h;
+  float t;
+  float h;
   
   sht_sda_pin = pin[GPIO_I2C_SDA];
   sht_scl_pin = pin[GPIO_I2C_SCL];
@@ -179,9 +205,13 @@ boolean sht_detect()
 
 void sht_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
 {
-  if (!shttype) return;
+  if (!shttype) {
+    return;
+  }
 
-  char stemp[10], shum[10];
+  char stemp[10];
+  char shum[10];
+  
   if (sht_readCharTempHum(stemp, shum)) {
     snprintf_P(svalue, ssvalue, JSON_SNS_TEMPHUM, svalue, "SHT1X", stemp, shum);
     *djson = 1;
@@ -196,7 +226,9 @@ String sht_webPresent()
 {
   String page = "";
   if (shttype) {
-    char stemp[10], shum[10];
+    char stemp[10];
+    char shum[10];
+    
     if (sht_readCharTempHum(stemp, shum)) {
       char sensor[80];
       snprintf_P(sensor, sizeof(sensor), HTTP_SNS_TEMP, "SHT1X", stemp, (TEMP_CONVERSION) ? 'F' : 'C');

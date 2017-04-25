@@ -87,7 +87,7 @@ const char sensors[GPIO_SENSOR_END][9] PROGMEM = {
   "PWM5",
   "Counter"
   };
-
+  
 // Programmer selectable GPIO functionality offset by user selectable GPIOs
 enum fpins_t {
   GPIO_RXD = GPIO_SENSOR_END,  // Serial interface
@@ -136,7 +136,7 @@ typedef struct MYIO {
 
 typedef struct MYTMPLT {
   char         name[15];
-  myio         gp;
+  myio         gp;  
 } mytmplt;
 
 // Default module settings
@@ -144,7 +144,7 @@ const mytmplt modules[MAXMODULE] PROGMEM = {
   { "Sonoff Basic",    // Sonoff Basic (ESP8266)
      GPIO_KEY1,        // GPIO00 Button
      GPIO_USER,        // GPIO01 Serial RXD and Optional sensor
-     0,                // GPIO02
+     0,                // GPIO02 
      GPIO_USER,        // GPIO03 Serial TXD and Optional sensor
      GPIO_USER,        // GPIO04 Optional sensor
      0,                // GPIO05
@@ -392,13 +392,13 @@ const mytmplt modules[MAXMODULE] PROGMEM = {
      GPIO_LED1,        // GPIO01 Green LED
      GPIO_TXD,         // GPIO02 RX - Pin next to TX on the PCB
      GPIO_RXD,         // GPIO03 TX - Pin next to GND on the PCB
-     GPIO_PWM2,        // GPIO04 W2
+     GPIO_PWM2,        // GPIO04 W2 
      GPIO_LED2_INV,    // GPIO05 Red LED
      0, 0, 0, 0, 0, 0, // Flash connection
-     GPIO_PWM3,        // GPIO12 Blue
-     GPIO_PWM4,        // GPIO13 Green
-     GPIO_PWM1,        // GPIO14 W1
-     GPIO_PWM5,        // GPIO15 Red
+     GPIO_PWM3,        // GPIO12 Blue 
+     GPIO_PWM4,        // GPIO13 Green 
+     GPIO_PWM1,        // GPIO14 W1 
+     GPIO_PWM5,        // GPIO15 Red 
      0, 0
   },
   { "Sonoff SC",       // Sonoff SC (ESP8266)
@@ -413,3 +413,4 @@ const mytmplt modules[MAXMODULE] PROGMEM = {
      0, 0, 0, 0
   }
 };
+

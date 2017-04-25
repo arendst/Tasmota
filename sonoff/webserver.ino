@@ -211,7 +211,7 @@ const char HTTP_FORM_LOG2[] PROGMEM =
   "<option{a2value='2'>2 Info</option>"
   "<option{a3value='3'>3 Debug</option>"
   "<option{a4value='4'>4 More debug</option>"
-  "</select></br>";
+  "</select></br>";  
 const char HTTP_FORM_LOG3[] PROGMEM =
   "<br/><b>Syslog host</b> (" SYS_LOG_HOST ")<br/><input id='lh' name='lh' length=32 placeholder='" SYS_LOG_HOST "' value='{l2}'><br/>"
   "<br/><b>Syslog port</b> (" STR(SYS_LOG_PORT) ")<br/><input id='lp' name='lp' length=5 placeholder='" STR(SYS_LOG_PORT) "' value='{l3}'><br/>"
@@ -291,7 +291,10 @@ ESP8266WebServer *webServer;
 
 boolean _removeDuplicateAPs = true;
 int _minimumQuality = -1;
-uint8_t _httpflag = HTTP_OFF, _uploaderror = 0, _uploadfiletype, _colcount;
+uint8_t _httpflag = HTTP_OFF;
+uint8_t _uploaderror = 0;
+uint8_t _uploadfiletype;
+uint8_t _colcount;
 
 void startWebserver(int type, IPAddress ipweb)
 {
@@ -299,7 +302,7 @@ void startWebserver(int type, IPAddress ipweb)
 
   if (!_httpflag) {
     if (!webServer) {
-      webServer = new ESP8266WebServer((type==HTTP_MANAGER)?80:WEB_PORT);
+      webServer = new ESP8266WebServer((HTTP_MANAGER==type)?80:WEB_PORT);
       webServer->on("/", handleRoot);
       webServer->on("/cn", handleConfig);
       webServer->on("/md", handleModule);
@@ -331,12 +334,12 @@ void startWebserver(int type, IPAddress ipweb)
       webServer->on("/i2c", handleI2C);
 #endif
 #ifdef USE_EMULATION
-      if (sysCfg.emulation == EMUL_WEMO) {
+      if (EMUL_WEMO == sysCfg.emulation) {
         webServer->on("/upnp/control/basicevent1", HTTP_POST, handleUPnPevent);
         webServer->on("/eventservice.xml", handleUPnPservice);
         webServer->on("/setup.xml", handleUPnPsetupWemo);
       }
-      if (sysCfg.emulation == EMUL_HUE) {
+      if (EMUL_HUE == sysCfg.emulation) {
         webServer->on("/description.xml", handleUPnPsetupHue);
       }
 #endif  // USE_EMULATION
@@ -365,7 +368,7 @@ void stopWebserver()
 void beginWifiManager()
 {
   // setup AP
-  if ((WiFi.status() == WL_CONNECTED) && (static_cast<uint32_t>(WiFi.localIP()) != 0)) {
+  if ((WL_CONNECTED == WiFi.status()) && (static_cast<uint32_t>(WiFi.localIP()) != 0)) {
     WiFi.mode(WIFI_AP_STA);
     addLog_P(LOG_LEVEL_DEBUG, PSTR("Wifimanager: Set AccessPoint and keep Station"));
   } else {
@@ -387,18 +390,22 @@ void beginWifiManager()
 
 void pollDnsWeb()
 {
-  if (dnsServer) dnsServer->processNextRequest();
-  if (webServer) webServer->handleClient();
+  if (dnsServer) {
+    dnsServer->processNextRequest();
+  }
+  if (webServer) {
+    webServer->handleClient();
+  }
 }
 
 void showPage(String &page)
 {
-  if((_httpflag == HTTP_ADMIN) && (sysCfg.web_password[0] != 0) && !webServer->authenticate(WEB_USERNAME, sysCfg.web_password)) {
+  if((HTTP_ADMIN == _httpflag) && (sysCfg.web_password[0] != 0) && !webServer->authenticate(WEB_USERNAME, sysCfg.web_password)) {
     return webServer->requestAuthentication();
   }
   page.replace("{ha}", my_module.name);
   page.replace("{h}", sysCfg.friendlyname[0]);
-  if (_httpflag == HTTP_MANAGER) {
+  if (HTTP_MANAGER == _httpflag) {
     if (WIFI_configCounter()) {
       page.replace("<body>", "<body onload='u()'>");
       page += FPSTR(HTTP_COUNTER);
@@ -420,7 +427,7 @@ void handleRoot()
     return;
   }
 
-  if (_httpflag == HTTP_MANAGER) {
+  if (HTTP_MANAGER == _httpflag) {
     handleWifi0();
   } else {
     char stemp[10], line[100];
@@ -430,7 +437,7 @@ void handleRoot()
 
     page += F("<div id='l1' name='l1'></div>");
     if (Maxdevice) {
-      if (sysCfg.module == SONOFF_LED) {
+      if (SONOFF_LED == sysCfg.module) {
         snprintf_P(line, sizeof(line), PSTR("<input type='range' min='1' max='100' value='%d' onchange='lb(value)'>"),
           sysCfg.led_dimmer[0]);
         page += line;
@@ -438,10 +445,6 @@ void handleRoot()
       page += FPSTR(HTTP_TABLE100);
       page += F("<tr>");
       for (byte idx = 1; idx <= Maxdevice; idx++) {
-        if ((idx-1)&0x7 == 0) {
-            addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: überlauf"));
-            page += F("</tr><tr>");
-        }
         snprintf_P(stemp, sizeof(stemp), PSTR(" %d"), idx);
         snprintf_P(line, sizeof(line), PSTR("<td style='width:%d%'><button onclick='la(\"?o=%d\");'>Toggle%s</button></td>"),
           100 / Maxdevice, idx, (Maxdevice > 1) ? stemp : "");
@@ -449,8 +452,8 @@ void handleRoot()
       }
       page += F("</tr></table>");
     }
-
-    if (_httpflag == HTTP_ADMIN) {
+    
+    if (HTTP_ADMIN == _httpflag) {
       page += FPSTR(HTTP_BTN_MENU1);
       page += FPSTR(HTTP_BTN_RSTRT);
     }
@@ -461,30 +464,42 @@ void handleRoot()
 void handleAjax2()
 {
   char svalue[16];
-
-  if (strlen(webServer->arg("o").c_str())) do_cmnd_power(atoi(webServer->arg("o").c_str()), 2);
+  
+  if (strlen(webServer->arg("o").c_str())) {
+    do_cmnd_power(atoi(webServer->arg("o").c_str()), 2);
+  }
   if (strlen(webServer->arg("d").c_str())) {
     snprintf_P(svalue, sizeof(svalue), PSTR("dimmer %s"), webServer->arg("d").c_str());
     do_cmnd(svalue);
   }
-
+  
   String tpage = "";
-  if (hlw_flg) tpage += hlw_webPresent();
-  if (sysCfg.module == SONOFF_SC) tpage += sc_webPresent();
+  if (hlw_flg) {
+    tpage += hlw_webPresent();
+  }
+  if (SONOFF_SC == sysCfg.module) {
+    tpage += sc_webPresent();
+  }
 #ifdef USE_DS18B20
-  if (pin[GPIO_DSB] < 99) tpage += dsb_webPresent();
+  if (pin[GPIO_DSB] < 99) {
+    tpage += dsb_webPresent();
+  }
 #endif  // USE_DS18B20
 #ifdef USE_DS18x20
-  if (pin[GPIO_DSB] < 99) tpage += ds18x20_webPresent();
+  if (pin[GPIO_DSB] < 99) {
+    tpage += ds18x20_webPresent();
+  }
 #endif  // USE_DS18x20
 #ifdef USE_DHT
-  if (dht_type) tpage += dht_webPresent();
+  if (dht_type) {
+    tpage += dht_webPresent();
+  }
 #endif  // USE_DHT
 #ifdef USE_I2C
   if (i2c_flg) {
 #ifdef USE_SHT
     tpage += sht_webPresent();
-#endif
+#endif    
 #ifdef USE_HTU
     tpage += htu_webPresent();
 #endif
@@ -498,7 +513,7 @@ void handleAjax2()
     tpage += ads1115_webPresent();
 #endif
   }
-#endif  // USE_I2C
+#endif  // USE_I2C    
   String page = "";
   if (tpage.length() > 0) {
     page += FPSTR(HTTP_TABLE100);
@@ -521,7 +536,7 @@ void handleAjax2()
   }
 /*
  * Will interrupt user action when selected
-  if (sysCfg.module == SONOFF_LED) {
+  if (SONOFF_LED == sysCfg.module) {
     snprintf_P(line, sizeof(line), PSTR("<input type='range' min='1' max='100' value='%d' onchange='lb(value)'>"),
       sysCfg.led_dimmer[0]);
     page += line;
@@ -535,20 +550,26 @@ void handleAjax2()
 
 boolean httpUser()
 {
-  boolean status = (_httpflag == HTTP_USER);
-  if (status) handleRoot();
+  boolean status = (HTTP_USER == _httpflag);
+  if (status) {
+    handleRoot();
+  }
   return status;
 }
 
 void handleConfig()
 {
-  if (httpUser()) return;
+  if (httpUser()) {
+    return;
+  }
   addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Handle config"));
 
   String page = FPSTR(HTTP_HEAD);
   page.replace("{v}", "Configuration");
   page += FPSTR(HTTP_BTN_MENU2);
-  if (sysCfg.mqtt_enabled) page += FPSTR(HTTP_BTN_MENU3);
+  if (sysCfg.mqtt_enabled) {
+    page += FPSTR(HTTP_BTN_MENU3);
+  }
   page += FPSTR(HTTP_BTN_MENU4);
   page += FPSTR(HTTP_BTN_MAIN);
   showPage(page);
@@ -557,32 +578,52 @@ void handleConfig()
 boolean inModule(byte val, uint8_t *arr)
 {
   int offset = 0;
-
-  if (!val) return false;  // None
+  
+  if (!val) {
+    return false;  // None
+  }
 #ifndef USE_I2C
-  if (val == GPIO_I2C_SCL) return true;
-  if (val == GPIO_I2C_SDA) return true;
+  if (GPIO_I2C_SCL == val) {
+    return true;
+  }
+  if (GPIO_I2C_SDA == val) {
+    return true;
+  }
 #endif
 #ifndef USE_WS2812
-  if (val == GPIO_WS2812) return true;
+  if (GPIO_WS2812 == val) {
+    return true;
+  }
 #endif
 #ifndef USE_IR_REMOTE
-  if (val == GPIO_IRSEND) return true;
+  if (GPIO_IRSEND == val) {
+    return true;
+  }
 #endif
-  if (((val >= GPIO_REL1) && (val <= GPIO_REL4)) || ((val >= GPIO_LED1) && (val <= GPIO_LED4))) offset = 4;
-  if (((val >= GPIO_REL1_INV) && (val <= GPIO_REL4_INV)) || ((val >= GPIO_LED1_INV) && (val <= GPIO_LED4_INV))) offset = -4;
+  if (((val >= GPIO_REL1) && (val <= GPIO_REL4)) || ((val >= GPIO_LED1) && (val <= GPIO_LED4))) {
+    offset = 4;
+  }
+  if (((val >= GPIO_REL1_INV) && (val <= GPIO_REL4_INV)) || ((val >= GPIO_LED1_INV) && (val <= GPIO_LED4_INV))) {
+    offset = -4;
+  }
   for (byte i = 0; i < MAX_GPIO_PIN; i++) {
-    if (arr[i] == val) return true;
-    if (arr[i] == val + offset) return true;
+    if (arr[i] == val) {
+      return true;
+    }
+    if (arr[i] == val + offset) {
+      return true;
+    }
   }
   return false;
 }
 
 void handleModule()
 {
-  if (httpUser()) return;
+  if (httpUser()) {
+    return;
+  }
   char stemp[20], line[128];
-
+  
   addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Handle Module config"));
 
   String page = FPSTR(HTTP_HEAD);
@@ -592,17 +633,17 @@ void handleModule()
   snprintf_P(stemp, sizeof(stemp), modules[MODULE].name);
   page.replace("{mt}", stemp);
 
-  for (byte i = 0; i < MAXMODULE; i++) {
+  for (byte i = 0; i < MAXMODULE; i++) {  
     snprintf_P(stemp, sizeof(stemp), modules[i].name);
     snprintf_P(line, sizeof(line), PSTR("<option%s value='%d'>%02d %s</option>"),
       (i == sysCfg.module) ? " selected" : "", i, i +1, stemp);
     page += line;
   }
   page += F("</select></br>");
-
+  
   mytmplt cmodule;
   memcpy_P(&cmodule, &modules[sysCfg.module], sizeof(cmodule));
-
+  
   String func = FPSTR(HTTP_SCRIPT_MODULE);
   for (byte j = 0; j < GPIO_SENSOR_END; j++) {
     if (!inModule(j, cmodule.gp.io)) {
@@ -613,9 +654,9 @@ void handleModule()
   }
   func += F("\";os=o0.replace(/-1/g,\"<option value=\").replace(/-2/g,\"</option>\");");
   for (byte i = 0; i < MAX_GPIO_PIN; i++) {
-    if (cmodule.gp.io[i] == GPIO_USER) {
+    if (GPIO_USER == cmodule.gp.io[i]) {
       snprintf_P(line, sizeof(line), PSTR("<br/><b>GPIO%d</b> %s<select id='g%d' name='g%d'></select></br>"),
-        i, (i==0)?"Button1":(i==1)?"Serial Out":(i==3)?"Serial In":(i==12)?"Relay1":(i==13)?"Led1I":(i==14)?"Sensor":"", i, i);
+        i, (0==i)?"Button1":(1==i)?"Serial Out":(3==i)?"Serial In":(12==i)?"Relay1":(13==i)?"Led1I":(14==i)?"Sensor":"", i, i);
       page += line;
       snprintf_P(line, sizeof(line), PSTR("sk(%d,%d);"), my_module.gp.io[i], i);
       func += line;
@@ -624,7 +665,7 @@ void handleModule()
   func += F("}</script>");
   page.replace("</script>", func);
   page.replace("<body>", "<body onload='sl()'>");
-
+  
   page += FPSTR(HTTP_FORM_END);
   page += FPSTR(HTTP_BTN_CONF);
   showPage(page);
@@ -642,7 +683,9 @@ void handleWifi0()
 
 void handleWifi(boolean scan)
 {
-  if (httpUser()) return;
+  if (httpUser()) {
+    return;
+  }
   char log[LOGSZ];
 
   addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Handle Wifi config"));
@@ -658,7 +701,7 @@ void handleWifi(boolean scan)
     int n = WiFi.scanNetworks();
     addLog_P(LOG_LEVEL_DEBUG, PSTR("Wifi: Scan done"));
 
-    if (n == 0) {
+    if (0 == n) {
       addLog_P(LOG_LEVEL_DEBUG, PSTR("Wifi: No networks found"));
       page += F("No networks found. Refresh to scan again.");
     } else {
@@ -681,7 +724,9 @@ void handleWifi(boolean scan)
       if (_removeDuplicateAPs) {
         String cssid;
         for (int i = 0; i < n; i++) {
-          if (indices[i] == -1) continue;
+          if (-1 == indices[i]) {
+            continue;
+          }
           cssid = WiFi.SSID(indices[i]);
           for (int j = i + 1; j < n; j++) {
             if (cssid == WiFi.SSID(indices[j])) {
@@ -695,7 +740,9 @@ void handleWifi(boolean scan)
 
       //display networks in page
       for (int i = 0; i < n; i++) {
-        if (indices[i] == -1) continue; // skip dups
+        if (-1 == indices[i]) {
+          continue; // skip dups
+        }
         snprintf_P(log, sizeof(log), PSTR("Wifi: SSID %s, RSSI %d"), WiFi.SSID(indices[i]).c_str(), WiFi.RSSI(indices[i]));
         addLog(LOG_LEVEL_DEBUG, log);
         int quality = WIFI_getRSSIasQuality(WiFi.RSSI(indices[i]));
@@ -731,7 +778,7 @@ void handleWifi(boolean scan)
   page.replace("{s2}", sysCfg.sta_ssid[1]);
   page.replace("{p2}", sysCfg.sta_pwd[1]);
   page += FPSTR(HTTP_FORM_END);
-  if (_httpflag == HTTP_MANAGER) {
+  if (HTTP_MANAGER == _httpflag) {
     page += FPSTR(HTTP_BTN_RSTRT);
   } else {
     page += FPSTR(HTTP_BTN_CONF);
@@ -741,7 +788,9 @@ void handleWifi(boolean scan)
 
 void handleMqtt()
 {
-  if (httpUser()) return;
+  if (httpUser()) {
+    return;
+  }
   addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Handle MQTT config"));
 
   String page = FPSTR(HTTP_HEAD);
@@ -763,7 +812,9 @@ void handleMqtt()
 
 void handleLog()
 {
-  if (httpUser()) return;
+  if (httpUser()) {
+    return;
+  }
   addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Handle Log config"));
 
   String page = FPSTR(HTTP_HEAD);
@@ -809,7 +860,9 @@ void handleLog()
 
 void handleOther()
 {
-  if (httpUser()) return;
+  if (httpUser()) {
+    return;
+  }
   addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Handle other config"));
   char stemp[40];
 
@@ -824,10 +877,10 @@ void handleOther()
   page.replace("{3", sysCfg.friendlyname[0]);
 #ifdef USE_EMULATION
   page += FPSTR(HTTP_FORM_OTHER3);
-  page.replace("{r2}", (sysCfg.emulation == EMUL_NONE) ? " checked" : "");
-  page.replace("{r3}", (sysCfg.emulation == EMUL_WEMO) ? " checked" : "");
-  page.replace("{r4}", (sysCfg.emulation == EMUL_HUE) ? " checked" : "");
-  for (int i = 1; i < min(Maxdevice,4); i++) {
+  page.replace("{r2}", (EMUL_NONE == sysCfg.emulation) ? " checked" : "");
+  page.replace("{r3}", (EMUL_WEMO == sysCfg.emulation) ? " checked" : "");
+  page.replace("{r4}", (EMUL_HUE == sysCfg.emulation) ? " checked" : "");
+  for (int i = 1; i < Maxdevice; i++) {
     page += FPSTR(HTTP_FORM_OTHER2);
     page.replace("{1", String(i +1));
     snprintf_P(stemp, sizeof(stemp), PSTR(FRIENDLY_NAME"%d"), i +1);
@@ -843,7 +896,9 @@ void handleOther()
 
 void handleDownload()
 {
-  if (httpUser()) return;
+  if (httpUser()) {
+    return;
+  }
   addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Handle download config"));
 
   uint8_t buffer[sizeof(sysCfg)];
@@ -859,25 +914,37 @@ void handleDownload()
   memcpy(buffer, &sysCfg, sizeof(sysCfg));
   buffer[0] = CONFIG_FILE_SIGN;
   buffer[1] = (!CONFIG_FILE_XOR)?0:1;
-  if (buffer[1]) for (uint16_t i = 2; i < sizeof(buffer); i++) buffer[i] ^= (CONFIG_FILE_XOR +i);
+  if (buffer[1]) {
+    for (uint16_t i = 2; i < sizeof(buffer); i++) {
+      buffer[i] ^= (CONFIG_FILE_XOR +i);
+    }
+  }
   myClient.write((const char*)buffer, sizeof(buffer));
 }
 
 void handleSave()
 {
-  if (httpUser()) return;
+  if (httpUser()) {
+    return;
+  }
 
-  char log[LOGSZ +20], stemp[20];
-  byte what = 0, restart;
+  char log[LOGSZ +20];
+  char stemp[20];
+  byte what = 0;
+  byte restart;
   String result = "";
 
   addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Parameter save"));
 
-  if (strlen(webServer->arg("w").c_str())) what = atoi(webServer->arg("w").c_str());
+  if (strlen(webServer->arg("w").c_str())) {
+    what = atoi(webServer->arg("w").c_str());
+  }
   switch (what) {
   case 1:
     strlcpy(sysCfg.hostname, (!strlen(webServer->arg("h").c_str())) ? WIFI_HOSTNAME : webServer->arg("h").c_str(), sizeof(sysCfg.hostname));
-    if (strstr(sysCfg.hostname,"%")) strlcpy(sysCfg.hostname, WIFI_HOSTNAME, sizeof(sysCfg.hostname));
+    if (strstr(sysCfg.hostname,"%")) {
+      strlcpy(sysCfg.hostname, WIFI_HOSTNAME, sizeof(sysCfg.hostname));
+    }
     strlcpy(sysCfg.sta_ssid[0], (!strlen(webServer->arg("s1").c_str())) ? STA_SSID1 : webServer->arg("s1").c_str(), sizeof(sysCfg.sta_ssid[0]));
     strlcpy(sysCfg.sta_pwd[0], (!strlen(webServer->arg("p1").c_str())) ? STA_PASS1 : webServer->arg("p1").c_str(), sizeof(sysCfg.sta_pwd[0]));
     strlcpy(sysCfg.sta_ssid[1], (!strlen(webServer->arg("s2").c_str())) ? STA_SSID2 : webServer->arg("s2").c_str(), sizeof(sysCfg.sta_ssid[1]));
@@ -944,8 +1011,10 @@ void handleSave()
     memcpy_P(&cmodule, &modules[sysCfg.module], sizeof(cmodule));
     String gpios = "";
     for (byte i = 0; i < MAX_GPIO_PIN; i++) {
-      if (new_modflg) sysCfg.my_module.gp.io[i] = 0;
-      if (cmodule.gp.io[i] == GPIO_USER) {
+      if (new_modflg) {
+        sysCfg.my_module.gp.io[i] = 0;
+      }
+      if (GPIO_USER == cmodule.gp.io[i]) {
         snprintf_P(stemp, sizeof(stemp), PSTR("g%d"), i);
         sysCfg.my_module.gp.io[i] = (!strlen(webServer->arg(stemp).c_str())) ? 0 : atoi(webServer->arg(stemp).c_str());
         gpios += F(", GPIO"); gpios += String(i); gpios += F(" "); gpios += String(sysCfg.my_module.gp.io[i]);
@@ -966,7 +1035,7 @@ void handleSave()
     page += result;
     page += F("</div>");
     page += FPSTR(HTTP_MSG_RSTRT);
-    if (_httpflag == HTTP_MANAGER) {
+    if (HTTP_MANAGER == _httpflag) {
       _httpflag = HTTP_ADMIN;
     } else {
       page += FPSTR(HTTP_BTN_MAIN);
@@ -981,7 +1050,9 @@ void handleSave()
 
 void handleReset()
 {
-  if (httpUser()) return;
+  if (httpUser()) {
+    return;
+  }
 
   char svalue[16];  // was MESSZ
 
@@ -1000,7 +1071,9 @@ void handleReset()
 
 void handleRestore()
 {
-  if (httpUser()) return;
+  if (httpUser()) {
+    return;
+  }
   addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Handle restore"));
 
   String page = FPSTR(HTTP_HEAD);
@@ -1015,7 +1088,9 @@ void handleRestore()
 
 void handleUpgrade()
 {
-  if (httpUser()) return;
+  if (httpUser()) {
+    return;
+  }
   addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Handle upgrade"));
 
   String page = FPSTR(HTTP_HEAD);
@@ -1031,7 +1106,9 @@ void handleUpgrade()
 
 void handleUpgradeStart()
 {
-  if (httpUser()) return;
+  if (httpUser()) {
+    return;
+  }
   char svalue[100];  // was MESSZ
 
   addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Firmware upgrade start"));
@@ -1055,10 +1132,14 @@ void handleUpgradeStart()
 
 void handleUploadDone()
 {
-  if (httpUser()) return;
+  if (httpUser()) {
+    return;
+  }
   addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: File upload done"));
 
-  char error[80], log[LOGSZ];
+  char error[80];
+  char log[LOGSZ];
+  
   WIFI_configCounter();
   restartflag = 0;
   mqttcounter = 0;
@@ -1088,7 +1169,6 @@ void handleUploadDone()
     }
     snprintf_P(log, sizeof(log), PSTR("Upload: Error - %s"), error);
     addLog(LOG_LEVEL_DEBUG, log);
-    sl_blank(0);
   } else {
     page += F("<font color='green'>successful</font></b><br/><br/>Device will restart in a few seconds");
     restartflag = 2;
@@ -1104,17 +1184,21 @@ void handleUploadLoop()
   char log[LOGSZ];
   boolean _serialoutput = (LOG_LEVEL_DEBUG <= seriallog_level);
 
-  if (_httpflag == HTTP_USER) return;
+  if (HTTP_USER == _httpflag) {
+    return;
+  }
   if (_uploaderror) {
-    if (!_uploadfiletype) Update.end();
+    if (!_uploadfiletype) {
+      Update.end();
+    }
     return;
   }
 
   HTTPUpload& upload = webServer->upload();
 
-  if (upload.status == UPLOAD_FILE_START) {
+  if (UPLOAD_FILE_START == upload.status) {
     restartflag = 60;
-    if (upload.filename.c_str()[0] == 0) {
+    if (0 == upload.filename.c_str()[0]) {
       _uploaderror = 1;
       return;
     }
@@ -1125,18 +1209,21 @@ void handleUploadLoop()
 #ifdef USE_EMULATION
       UDP_Disconnect();
 #endif  // USE_EMULATION
-      if (sysCfg.mqtt_enabled) mqttClient.disconnect();
+      if (sysCfg.mqtt_enabled) {
+        mqttClient.disconnect();
+      }
       uint32_t maxSketchSpace = (ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000;
       if (!Update.begin(maxSketchSpace)) {         //start with max available size
-        if (_serialoutput) Update.printError(Serial);
+        if (_serialoutput) {
+          Update.printError(Serial);
+        }
         _uploaderror = 2;
         return;
       }
     }
-    sl_blank(1);
     _colcount = 0;
-  } else if (!_uploaderror && (upload.status == UPLOAD_FILE_WRITE)) {
-    if (upload.totalSize == 0)
+  } else if (!_uploaderror && (UPLOAD_FILE_WRITE == upload.status)) {
+    if (0 == upload.totalSize)
     {
       if (_uploadfiletype) {
         if (upload.buf[0] != CONFIG_FILE_SIGN) {
@@ -1157,7 +1244,7 @@ void handleUploadLoop()
           _uploaderror = 4;
           return;
         }
-        if ((sysCfg.module == SONOFF_TOUCH) || (sysCfg.module == SONOFF_4CH)) {
+        if ((SONOFF_TOUCH == sysCfg.module) || (SONOFF_4CH == sysCfg.module)) {
           upload.buf[2] = 3; // DOUT - ESP8285
           addLog_P(LOG_LEVEL_DEBUG, PSTR("FLSH: Set Flash Mode to 3"));
         }
@@ -1165,27 +1252,39 @@ void handleUploadLoop()
     }
     if (_uploadfiletype) { // config
       if (!_uploaderror) {
-        if (upload.buf[1]) for (uint16_t i = 2; i < upload.currentSize; i++) upload.buf[i] ^= (CONFIG_FILE_XOR +i);
+        if (upload.buf[1]) {
+          for (uint16_t i = 2; i < upload.currentSize; i++) {
+            upload.buf[i] ^= (CONFIG_FILE_XOR +i);
+          }
+        }
         CFG_DefaultSet2();
         memcpy((char*)&sysCfg +16, upload.buf +16, upload.currentSize -16);
       }
     } else {  // firmware
       if (!_uploaderror && (Update.write(upload.buf, upload.currentSize) != upload.currentSize)) {
-        if (_serialoutput) Update.printError(Serial);
+        if (_serialoutput) {
+          Update.printError(Serial);
+        }
         _uploaderror = 5;
         return;
       }
       if (_serialoutput) {
         Serial.printf(".");
         _colcount++;
-        if (!(_colcount % 80)) Serial.println();
+        if (!(_colcount % 80)) {
+          Serial.println();
+        }
       }
     }
-  } else if(!_uploaderror && (upload.status == UPLOAD_FILE_END)) {
-    if (_serialoutput && (_colcount % 80)) Serial.println();
+  } else if(!_uploaderror && (UPLOAD_FILE_END == upload.status)) {
+    if (_serialoutput && (_colcount % 80)) {
+      Serial.println();
+    }
     if (!_uploadfiletype) {
       if (!Update.end(true)) { // true to set the size to the current progress
-        if (_serialoutput) Update.printError(Serial);
+        if (_serialoutput) {
+          Update.printError(Serial);
+        }
         _uploaderror = 6;
         return;
       }
@@ -1194,18 +1293,22 @@ void handleUploadLoop()
       snprintf_P(log, sizeof(log), PSTR("Upload: Successful %u bytes. Restarting"), upload.totalSize);
       addLog(LOG_LEVEL_INFO, log);
     }
-  } else if(upload.status == UPLOAD_FILE_ABORTED) {
+  } else if (UPLOAD_FILE_ABORTED == upload.status) {
     restartflag = 0;
     mqttcounter = 0;
     _uploaderror = 7;
-    if (!_uploadfiletype) Update.end();
+    if (!_uploadfiletype) {
+      Update.end();
+    }
   }
   delay(0);
 }
 
 void handleCmnd()
 {
-  if (httpUser()) return;
+  if (httpUser()) {
+    return;
+  }
   char svalue[128];  // was MESSZ
 
   addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Handle cmnd"));
@@ -1233,7 +1336,9 @@ void handleCmnd()
       byte counter = curridx;
       do {
         if (Log[counter].length()) {
-          if (message.length()) message += F("\n");
+          if (message.length()) {
+            message += F("\n");
+          }
           if (sysCfg.mqtt_enabled) {
             // [14:49:36 MQTT: stat/wemos5/RESULT = {"POWER":"OFF"}] > [RESULT = {"POWER":"OFF"}]
 //            message += Log[counter].substring(17 + strlen(PUB_PREFIX) + strlen(sysCfg.mqtt_topic));
@@ -1244,7 +1349,9 @@ void handleCmnd()
           }
         }
         counter++;
-        if (counter > MAX_LOG_LINES -1) counter = 0;
+        if (counter > MAX_LOG_LINES -1) {
+          counter = 0;
+        }
       } while (counter != logidx);
     } else {
       message = F("Enable weblog 2 if response expected\n");
@@ -1261,7 +1368,9 @@ void handleCmnd()
 
 void handleConsole()
 {
-  if (httpUser()) return;
+  if (httpUser()) {
+    return;
+  }
 
   addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Handle console"));
 
@@ -1276,9 +1385,13 @@ void handleConsole()
 
 void handleAjax()
 {
-  if (httpUser()) return;
-  char log[LOGSZ], svalue[128];  // was MESSZ
-  byte cflg = 1, counter = 99;
+  if (httpUser()) {
+    return;
+  }
+  char log[LOGSZ];
+  char svalue[128];  // was MESSZ
+  byte cflg = 1;
+  byte counter = 99;
 
   if (strlen(webServer->arg("c1").c_str())) {
     snprintf_P(svalue, sizeof(svalue), PSTR("%s"), webServer->arg("c1").c_str());
@@ -1289,8 +1402,10 @@ void handleAjax()
     do_cmnd(svalue);
     syslog_level = syslog_now;
   }
-
-  if (strlen(webServer->arg("c2").c_str())) counter = atoi(webServer->arg("c2").c_str());
+  
+  if (strlen(webServer->arg("c2").c_str())) {
+    counter = atoi(webServer->arg("c2").c_str());
+  }
 
   String message = F("<r><i>");
   message += String(logidx);
@@ -1302,21 +1417,27 @@ void handleAjax()
   }
   message += F("</j><l>");
   if (counter != logidx) {
-    if (counter == 99) {
+    if (99 == counter) {
       counter = logidx;
       cflg = 0;
     }
     do {
       if (Log[counter].length()) {
-        if (cflg) message += F("\n"); else cflg = 1;
+        if (cflg) {
+          message += F("\n");
+        } else {
+          cflg = 1;
+        }
         message += Log[counter];
       }
       counter++;
-      if (counter > MAX_LOG_LINES -1) counter = 0;
+      if (counter > MAX_LOG_LINES -1) {
+        counter = 0;
+      }
     } while (counter != logidx);
   }
   message += F("</l></r>");
-
+ 
   webServer->sendHeader("Cache-Control", "no-cache, no-store, must-revalidate");
   webServer->sendHeader("Pragma", "no-cache");
   webServer->sendHeader("Expires", "-1");
@@ -1325,7 +1446,9 @@ void handleAjax()
 
 void handleInfo()
 {
-  if (httpUser()) return;
+  if (httpUser()) {
+    return;
+  }
   addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Handle info"));
 
   int freeMem = ESP.getFreeHeap();
@@ -1376,17 +1499,23 @@ void handleInfo()
   } else {
     page += F("<tr><th>MQTT</th><td>Disabled</td></tr>");
   }
-
+  
   page += F("<tr><th>Emulation</th><td>");
 #ifdef USE_EMULATION
-  if (sysCfg.emulation == EMUL_WEMO) page += F("Belkin WeMo");
-  else if (sysCfg.emulation == EMUL_HUE) page += F("Hue Bridge");
-  else page += F("None");
+  if (EMUL_WEMO == sysCfg.emulation) {
+    page += F("Belkin WeMo");
+  }
+  else if (EMUL_HUE == sysCfg.emulation) {
+    page += F("Hue Bridge");
+  }
+  else {
+    page += F("None");
+  }
 #else
   page += F("Disabled");
 #endif // USE_EMULATION
   page += F("</td></tr>");
-
+  
   page += F("<tr><th>mDNS Discovery</th><td>");
 #ifdef USE_DISCOVERY
   page += F("Enabled");
@@ -1418,13 +1547,15 @@ void handleInfo()
 
 void handleRestart()
 {
-  if (httpUser()) return;
+  if (httpUser()) {
+    return;
+  }
   addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Restarting"));
 
   String page = FPSTR(HTTP_HEAD);
   page.replace("{v}", "Info");
   page += FPSTR(HTTP_MSG_RSTRT);
-  if (_httpflag == HTTP_MANAGER) {
+  if (HTTP_MANAGER == _httpflag) {
     _httpflag = HTTP_ADMIN;
   } else {
     page += FPSTR(HTTP_BTN_MAIN);
@@ -1442,9 +1573,9 @@ void handleNotFound()
     return;
   }
 
-#ifdef USE_EMULATION
+#ifdef USE_EMULATION  
   String path = webServer->uri();
-  if ((sysCfg.emulation == EMUL_HUE) && (path.startsWith("/api"))) {
+  if ((EMUL_HUE == sysCfg.emulation) && (path.startsWith("/api"))) {
     handle_hue_api(&path);
   } else
 #endif // USE_EMULATION
@@ -1471,7 +1602,7 @@ void handleNotFound()
 /* Redirect to captive portal if we got a request for another domain. Return true in that case so the page handler do not try to handle the request again. */
 boolean captivePortal()
 {
-  if ((_httpflag == HTTP_MANAGER) && !isIp(webServer->hostHeader())) {
+  if ((HTTP_MANAGER == _httpflag) && !isIp(webServer->hostHeader())) {
     addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Request redirected to captive portal"));
 
     webServer->sendHeader("Location", String("http://") + webServer->client().localIP().toString(), true);

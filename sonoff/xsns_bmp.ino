@@ -39,7 +39,8 @@
 
 #define BMP_REGISTER_CHIPID  0xD0
 
-uint8_t bmpaddr, bmptype = 0;
+uint8_t bmpaddr;
+uint8_t bmptype = 0;
 char bmpstype[7];
 
 /*********************************************************************************************\
@@ -67,8 +68,16 @@ char bmpstype[7];
 
 #define BMP180_OSS           3
 
-int16_t cal_ac1,cal_ac2,cal_ac3,cal_b1,cal_b2,cal_mc,cal_md;
-uint16_t cal_ac4,cal_ac5,cal_ac6;
+int16_t cal_ac1;
+int16_t cal_ac2;
+int16_t cal_ac3;
+int16_t cal_b1;
+int16_t cal_b2;
+int16_t cal_mc;
+int16_t cal_md;
+uint16_t cal_ac4;
+uint16_t cal_ac5;
+uint16_t cal_ac6;
 int32_t bmp180_b5 = 0;
 
 boolean bmp180_calibration()
@@ -85,21 +94,22 @@ boolean bmp180_calibration()
   cal_md  = i2c_read16(bmpaddr, BMP180_MD);
 
   // Check for Errors in calibration data. Value never is 0x0000 or 0xFFFF
-  if(!cal_ac1 | !cal_ac2 | !cal_ac3 | !cal_ac4 | !cal_ac5 |
-     !cal_ac6 | !cal_b1 | !cal_b2 | !cal_mc | !cal_md)
-     return false;
+  if (!cal_ac1 | !cal_ac2 | !cal_ac3 | !cal_ac4 | !cal_ac5 | !cal_ac6 | !cal_b1 | !cal_b2 | !cal_mc | !cal_md) {
+    return false;
+  }
 
-  if((cal_ac1==0xFFFF)|
-     (cal_ac2==0xFFFF)|
-     (cal_ac3==0xFFFF)|
-     (cal_ac4==0xFFFF)|
-     (cal_ac5==0xFFFF)|
-     (cal_ac6==0xFFFF)|
-     (cal_b1==0xFFFF)|
-     (cal_b2==0xFFFF)|
-     (cal_mc==0xFFFF)|
-     (cal_md==0xFFFF))
-     return false;
+  if ((cal_ac1 == 0xFFFF)|
+      (cal_ac2 == 0xFFFF)|
+      (cal_ac3 == 0xFFFF)|
+      (cal_ac4 == 0xFFFF)|
+      (cal_ac5 == 0xFFFF)|
+      (cal_ac6 == 0xFFFF)|
+      (cal_b1 == 0xFFFF)|
+      (cal_b2 == 0xFFFF)|
+      (cal_mc == 0xFFFF)|
+      (cal_md == 0xFFFF)) {
+    return false;
+  }
 
   return true;
 }
@@ -119,7 +129,9 @@ double bmp180_readTemperature()
 double bmp180_readPressure()
 {
   int32_t p;
-  uint8_t msb,lsb,xlsb;
+  uint8_t msb;
+  uint8_t lsb;
+  uint8_t xlsb;
 
   i2c_write8(bmpaddr, BMP180_REG_CONTROL, BMP180_PRESSURE3); // Highest resolution
   delay(2 + (4 << BMP180_OSS)); // 26ms conversion time at ultra high resolution
@@ -268,7 +280,8 @@ boolean bme280_calibrate()
 
 double bmp280_readTemperature(void)
 {
-  int32_t var1, var2;
+  int32_t var1;
+  int32_t var2;
 
   int32_t adc_T = i2c_read24(bmpaddr, BME280_REGISTER_TEMPDATA);
   adc_T >>= 4;
@@ -283,7 +296,9 @@ double bmp280_readTemperature(void)
 
 double bmp280_readPressure(void)
 {
-  int64_t var1, var2, p;
+  int64_t var1;
+  int64_t var2;
+  int64_t p;
 
 // Must be done first to get the t_fine variable set up
 //  bmp280_readTemperature();
@@ -297,7 +312,7 @@ double bmp280_readPressure(void)
   var2 = var2 + (((int64_t)_bme280_calib.dig_P4) << 35);
   var1 = ((var1 * var1 * (int64_t)_bme280_calib.dig_P3) >> 8) + ((var1 * (int64_t)_bme280_calib.dig_P2) << 12);
   var1 = (((((int64_t)1) << 47) + var1)) * ((int64_t)_bme280_calib.dig_P1) >> 33;
-  if (var1 == 0) {
+  if (0 == var1) {
     return 0;  // avoid exception caused by division by zero
   }
   p = 1048576 - adc_P;
@@ -354,7 +369,9 @@ double bmp_readTemperature(bool S)
     t = bmp280_readTemperature();
   }
   if (!isnan(t)) {
-    if(S) t = bmp_convertCtoF(t);
+    if (S) {
+      t = bmp_convertCtoF(t);
+    }
     return t;
   }
   return 0;
@@ -386,7 +403,9 @@ double bmp_readHumidity(void)
 
 boolean bmp_detect()
 {
-  if (bmptype) return true;
+  if (bmptype) {
+    return true;
+  }
 
   char log[LOGSZ];
   boolean success = false;
@@ -426,9 +445,13 @@ boolean bmp_detect()
 
 void bmp_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
 {
-  if (!bmptype) return;
+  if (!bmptype) {
+    return;
+  }
 
-  char stemp1[10], stemp2[10], stemp3[10];
+  char stemp1[10];
+  char stemp2[10];
+  char stemp3[10];
 
   double t = bmp_readTemperature(TEMP_CONVERSION);
   double p = bmp_readPressure();
@@ -454,7 +477,8 @@ String bmp_webPresent()
 {
   String page = "";
   if (bmptype) {
-    char stemp[10], sensor[80];
+    char stemp[10];
+    char sensor[80];
 
     double t_bmp = bmp_readTemperature(TEMP_CONVERSION);
     double p_bmp = bmp_readPressure();

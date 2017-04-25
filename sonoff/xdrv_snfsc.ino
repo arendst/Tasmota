@@ -70,14 +70,19 @@ void sc_init()
 
 void sc_rcvstat(char *rcvstat)
 {
-  char *p, *str;
+  char *p;
+  char *str;
   uint16_t value[5] = { 0 };
 
-  if (!strncmp(rcvstat,"AT+UPDATE=",10)) {
+  if (!strncmp(rcvstat, "AT+UPDATE=", 10)) {
     int8_t i = -1;
-    for (str = strtok_r(rcvstat, ":", &p); str && i < 5; str = strtok_r(NULL, ":", &p)) value[i++] = atoi(str);
+    for (str = strtok_r(rcvstat, ":", &p); str && i < 5; str = strtok_r(NULL, ":", &p)) {
+      value[i++] = atoi(str);
+    }
     if (value[0] > 0) {
-      for (byte i = 0; i < 5; i++) sc_value[i] = value[i];
+      for (byte i = 0; i < 5; i++) {
+        sc_value[i] = value[i];
+      }
       sc_value[2] = (11 - sc_value[2]) * 10;  // Invert light level
       sc_value[3] *= 10;
       sc_value[4] = (11 - sc_value[4]) * 10;  // Invert dust level
@@ -103,10 +108,13 @@ float sc_convertCtoF(float c)
 void sc_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
 {
   if (sc_value[0] > 0) {
-    char stemp1[10], stemp2[10];
+    char stemp1[10];
+    char stemp2[10];
 
     float t = sc_value[1];
-    if (TEMP_CONVERSION) t = sc_convertCtoF(t);
+    if (TEMP_CONVERSION) {
+      t = sc_convertCtoF(t);
+    }
     dtostrf(t, 1, TEMP_RESOLUTION &3, stemp1);
     float h = sc_value[0];
     dtostrf(h, 1, HUMIDITY_RESOLUTION &3, stemp2);
@@ -126,10 +134,14 @@ String sc_webPresent()
   String page = "";
 
   if (sc_value[0] > 0) {
-    char stemp[10], sensor[80], scstype[] = "SC";
+    char stemp[10];
+    char sensor[80];
+    char scstype[] = "SC";
 
     float t = sc_value[1];
-    if (TEMP_CONVERSION) t = sc_convertCtoF(t);
+    if (TEMP_CONVERSION) {
+      t = sc_convertCtoF(t);
+    }
     dtostrf(t, 1, TEMP_RESOLUTION &3, stemp);
     snprintf_P(sensor, sizeof(sensor), HTTP_SNS_TEMP, scstype, stemp, (TEMP_CONVERSION) ? 'F' : 'C');
     page += sensor;

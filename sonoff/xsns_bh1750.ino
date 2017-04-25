@@ -34,7 +34,8 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #define BH1750_CONTINUOUS_HIGH_RES_MODE 0x10 // Start measurement at 1lx resolution. Measurement time is approx 120ms.
 
-uint8_t bh1750addr, bh1750type = 0;
+uint8_t bh1750addr;
+uint8_t bh1750type = 0;
 char bh1750stype[7];
 
 uint16_t bh1750_readLux(void)
@@ -48,7 +49,9 @@ uint16_t bh1750_readLux(void)
 
 boolean bh1750_detect()
 {
-  if (bh1750type) return true;
+  if (bh1750type) {
+    return true;
+  }
 
   char log[LOGSZ];
   uint8_t status;
@@ -84,7 +87,9 @@ boolean bh1750_detect()
 
 void bh1750_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
 {
-  if (!bh1750type) return;
+  if (!bh1750type) {
+    return;
+  }
 
   uint16_t l = bh1750_readLux();
   snprintf_P(svalue, ssvalue, PSTR("%s, \"%s\":{\"Illuminance\":%d}"), svalue, bh1750stype, l);
