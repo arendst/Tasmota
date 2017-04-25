@@ -1,3 +1,8 @@
+## 5.0.0a
+  - Upgrade changes from latest original
+  - Fix 32 relay support for powerontimer
+  - Fix 32 relay support for powerOn states. Be carefull to change ESP.resetreason in code form "Power On" to something that matches to your device on reset.
+
 ## 4.1.3c (Patchlevel1)
 - Added support for 8 channel DIO board PCF8574. Multiple boards up to 8 are allowed. The I2C adress is changed though
   pins on the board. Up to 64 relays can be now directly adressed. Special configuration menue for PCF8574. Relays can be INVERTED
