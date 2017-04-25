@@ -1,6 +1,6 @@
 ## 5.0.0a
   - Upgrade changes from latest original
-  - Fix 32 relay support for powerontimer
+  - Fix 32 relay support for pulsetimer
   - Fix 32 relay support for powerOn states. Be carefull to change ESP.resetreason in code form "Power On" to something that matches to your device on reset.
 
 ## 4.1.3c (Patchlevel1)
