@@ -400,7 +400,7 @@ void ws2812_animate()
   uint8_t fadeValue;
   
   stripTimerCntr++;
-  if (0 == power) {  // Power Off
+  if ((sysCfg.module==SONOFF_LED) && (0 == power)) {  // Power Off
     sleep = sysCfg.sleep;
     stripTimerCntr = 0;
     tcolor = 0;
@@ -550,14 +550,14 @@ boolean ws2812_command(char *type, uint16_t index, char *dataBuf, uint16_t data_
     if (6 == data_len) {
 //        ws2812_setColor(0, dataBufUc);
       ws2812_setColor(0, dataBuf);
-      power = 1;
+      if (sysCfg.module==SONOFF_LED) power = 1;
     }
     ws2812_getColor(0, svalue, ssvalue);
   }
   else if (!strcmp(type,"DIMMER")) {
     if ((data_len > 0) && (payload >= 0) && (payload <= 100)) {
       sysCfg.ws_dimmer = payload;
-      power = 1;
+      if (sysCfg.module==SONOFF_LED) power = 1;
 #ifdef USE_DOMOTICZ
       mqtt_publishDomoticzPowerState(index);
 #endif  // USE_DOMOTICZ
@@ -620,7 +620,7 @@ boolean ws2812_command(char *type, uint16_t index, char *dataBuf, uint16_t data_
       if (1 == sysCfg.ws_scheme) {
         ws2812_resetWakupState();
       }
-      power = 1;
+      if (sysCfg.module==SONOFF_LED) power = 1;
       ws2812_resetStripTimer();
     }
     snprintf_P(svalue, ssvalue, PSTR("{\"Scheme\":%d}"), sysCfg.ws_scheme);
