@@ -465,7 +465,7 @@ void mqtt_publish_topic_P(uint8_t prefix, const char* subtopic, const char* data
 {
   char romram[16];
   char stopic[TOPSZ];
-  
+
   snprintf_P(romram, sizeof(romram), ((prefix > 3) && !sysCfg.mqtt_response) ? PSTR("RESULT") : subtopic);
   prefix &= 1;
   snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/%s"), sysCfg.mqtt_prefix[prefix +1], sysCfg.mqtt_topic, romram);

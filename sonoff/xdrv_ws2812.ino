@@ -17,10 +17,10 @@ INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT
 
 #ifdef USE_WS2812
 /*********************************************************************************************\
- * WS2812 Leds using NeopixelBus library \*********************************************************************************************/
+ * WS2812 Leds using NeopixelBus library
+\*********************************************************************************************/
 
 #include <NeoPixelBus.h>
-
 
 #ifdef USE_WS2812_DMA
 #if (USE_WS2812_CTYPE == 1)
@@ -53,7 +53,14 @@ struct ColorScheme {
   uint8_t count;
 };
 
-wsColor incandescent[2] = { 255, 140, 20, 0, 0, 0 }; wsColor rgb[3] = { 255, 0, 0, 0, 255, 0, 0, 0, 255 }; wsColor christmas[2] = { 255, 0, 0, 0, 255, 0 }; wsColor hanukkah[2] = { 0, 0, 255, 255, 255, 255 }; wsColor kwanzaa[3] = { 255, 0, 0, 0, 0, 0, 0, 255, 0 }; wsColor rainbow[7] = { 255, 0, 0, 255, 128, 0, 255, 255, 0, 0, 255, 0, 0, 0, 255, 128, 0, 255, 255, 0, 255 }; wsColor fire[3] = { 255, 0, 0, 255, 102, 0, 255, 192, 0 }; ColorScheme schemes[7] = {
+wsColor incandescent[2] = { 255, 140, 20, 0, 0, 0 };
+wsColor rgb[3] = { 255, 0, 0, 0, 255, 0, 0, 0, 255 };
+wsColor christmas[2] = { 255, 0, 0, 0, 255, 0 };
+wsColor hanukkah[2] = { 0, 0, 255, 255, 255, 255 };
+wsColor kwanzaa[3] = { 255, 0, 0, 0, 0, 0, 0, 255, 0 };
+wsColor rainbow[7] = { 255, 0, 0, 255, 128, 0, 255, 255, 0, 0, 255, 0, 0, 0, 255, 128, 0, 255, 255, 0, 255 };
+wsColor fire[3] = { 255, 0, 0, 255, 102, 0, 255, 192, 0 };
+ColorScheme schemes[7] = {
   incandescent, 2,
   rgb, 3,
   christmas, 2,
@@ -98,21 +105,16 @@ uint8_t ledTable[] = {
   125,127,129,130,132,134,135,137,139,141,142,144,146,148,150,151,
   153,155,157,159,161,163,165,166,168,170,172,174,176,178,180,182,
   184,186,189,191,193,195,197,199,201,204,206,208,210,212,215,217,
-  219,221,224,226,228,231,233,235,238,240,243,245,248,250,253,255 }; */ uint8_t lany = 0; RgbColor dcolor; RgbColor tcolor; RgbColor lcolor;
+  219,221,224,226,228,231,233,235,238,240,243,245,248,250,253,255 };
+*/
+uint8_t lany = 0;
+RgbColor dcolor;
+RgbColor tcolor;
+RgbColor lcolor;
 
 uint8_t wakeupDimmer = 0;
 uint16_t wakeupCntr = 0;
 unsigned long stripTimerCntr = 0;  // Bars and Gradient
-
-#ifdef USE_WS2812_ARTNET
-const int startUniverse = 1; // CHANGE FOR YOUR SETUP most software this is 1, some software send out artnet first universe as 0.
-const int numberOfChannels = WS2812_LEDS * 3;
-const int maxUniverses = numberOfChannels / 512 + ((numberOfChannels % 512) ? 1 : 0);
-bool universesReceived[maxUniverses];
-bool sendFrame = 1;
-int previousDataLength = 0;
-bool artnetHasNotStarted = true;
-#endif
 
 void ws2812_setDim(uint8_t myDimmer)
 {
@@ -125,7 +127,8 @@ void ws2812_setDim(uint8_t myDimmer)
   dcolor.B = (uint8_t)fmyBlu;
 }
 
-void ws2812_setColor(uint16_t led, char* colstr) {
+void ws2812_setColor(uint16_t led, char* colstr)
+{
   HtmlColor hcolor;
   char log[LOGSZ];
   char lcolstr[8];
@@ -165,14 +168,17 @@ void ws2812_setColor(uint16_t led, char* colstr) {
   }
 }
 
-void ws2812_replaceHSB(String *response) {
+void ws2812_replaceHSB(String *response)
+{
   ws2812_setDim(sysCfg.ws_dimmer);
   HsbColor hsb = HsbColor(dcolor);
   response->replace("{h}", String((uint16_t)(65535.0f * hsb.H)));
   response->replace("{s}", String((uint8_t)(254.0f * hsb.S)));
-  response->replace("{b}", String((uint8_t)(254.0f * hsb.B))); }
+  response->replace("{b}", String((uint8_t)(254.0f * hsb.B)));
+}
 
-void ws2812_getHSB(float *hue, float *sat, float *bri) {
+void ws2812_getHSB(float *hue, float *sat, float *bri)
+{
   ws2812_setDim(sysCfg.ws_dimmer);
   HsbColor hsb = HsbColor(dcolor);
   *hue = hsb.H;
@@ -180,7 +186,8 @@ void ws2812_getHSB(float *hue, float *sat, float *bri) {
   *bri = hsb.B;
 }
 
-void ws2812_setHSB(float hue, float sat, float bri) {
+void ws2812_setHSB(float hue, float sat, float bri)
+{
   char rgb[7];
 
   HsbColor hsb;
@@ -192,7 +199,8 @@ void ws2812_setHSB(float hue, float sat, float bri) {
   ws2812_setColor(0,rgb);
 }
 
-void ws2812_getColor(uint16_t led, char* svalue, uint16_t ssvalue) {
+void ws2812_getColor(uint16_t led, char* svalue, uint16_t ssvalue)
+{
   RgbColor mcolor;
   char stemp[20];
 
@@ -207,7 +215,8 @@ void ws2812_getColor(uint16_t led, char* svalue, uint16_t ssvalue) {
   uint32_t color = (uint32_t)mcolor.R << 16;
   color += (uint32_t)mcolor.G << 8;
   color += (uint32_t)mcolor.B;
-  snprintf_P(svalue, ssvalue, PSTR("{\"%s\":\"%06X\"}"), stemp, color); }
+  snprintf_P(svalue, ssvalue, PSTR("{\"%s\":\"%06X\"}"), stemp, color);
+}
 
 void ws2812_stripShow()
 {
@@ -273,7 +282,8 @@ void ws2812_clock()
   ws2812_stripShow();
 }
 
-void ws2812_gradientColor(struct wsColor* mColor, uint8_t range, uint8_t gradRange, uint8_t i) {
+void ws2812_gradientColor(struct wsColor* mColor, uint8_t range, uint8_t gradRange, uint8_t i)
+{
 /*
  * Compute the color of a pixel at position i using a gradient of the color scheme.
  * This function is used internally by the gradient function.
@@ -457,9 +467,7 @@ void ws2812_animate()
         }
         lany = 1;
         break;
-        }
-
-
+    }
   }
 
   if ((sysCfg.ws_scheme <= 1) || (!(power &1))) {
