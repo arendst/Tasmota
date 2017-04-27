@@ -116,6 +116,16 @@ uint8_t wakeupDimmer = 0;
 uint16_t wakeupCntr = 0;
 unsigned long stripTimerCntr = 0;  // Bars and Gradient
 
+#ifdef USE_WS2812_ARTNET
+const int startUniverse = 1; // CHANGE FOR YOUR SETUP most software this is 1, some software send out artnet first universe as 0.
+const int numberOfChannels = WS2812_LEDS * 3;
+const int maxUniverses = numberOfChannels / 512 + ((numberOfChannels % 512) ? 1 : 0);
+bool universesReceived[maxUniverses];
+bool sendFrame = 1;
+int previousDataLength = 0;
+bool artnetHasNotStarted = true;
+#endif
+
 void ws2812_setDim(uint8_t myDimmer)
 {
   float newDim = 100 / (float)myDimmer;
