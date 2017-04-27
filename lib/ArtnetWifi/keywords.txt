@@ -1,0 +1,21 @@
+# Datatypes
+
+ArtnetWifi	KEYWORD1
+
+# Methods
+
+begin	KEYWORD2
+read	KEYWORD2
+write	KEYWORD2
+setByte	KEYWORD2
+printPacketHeader	KEYWORD2
+printPacketContent	KEYWORD2
+getDmxFrame	KEYWORD2
+getOpcode	KEYWORD2
+getSequence	KEYWORD2
+getUniverse	KEYWORD2
+setUniverse	KEYWORD2
+setPhisical	KEYWORD2
+getLength	KEYWORD2
+setLength	KEYWORD2
+setArtDmxCallback	KEYWORD2
