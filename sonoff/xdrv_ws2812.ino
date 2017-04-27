@@ -1,8 +1,8 @@
+
 /*
 Copyright (c) 2017 Theo Arends.  All rights reserved.
 
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met:
+Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
 
 - Redistributions of source code must retain the above copyright notice,
   this list of conditions and the following disclaimer.
@@ -11,16 +11,8 @@ modification, are permitted provided that the following conditions are met:
   and/or other materials provided with the distribution.
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
-LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
-CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
-CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-POSSIBILITY OF SUCH DAMAGE.
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #ifdef USE_WS2812
@@ -43,6 +35,14 @@ POSSIBILITY OF SUCH DAMAGE.
   NeoPixelBus<NeoRgbFeature, NeoEsp8266BitBang800KbpsMethod> *strip = NULL;
 #endif  // USE_WS2812_CTYPE
 #endif  // USE_WS2812_DMA
+
+
+#define MAX_SCHEME 9
+
+#ifdef USE_WS2812_ARTNET
+#undef MAX_SCHEME
+#define MAX_SCHEME 10		// add scheme number 10 for ARTNET receiving mode
+#endif
 
 struct wsColor {
   uint8_t red, green, blue;
@@ -69,19 +69,19 @@ ColorScheme schemes[7] = {
   rainbow, 7,
   fire, 3 };
 
-uint8_t widthValues[5] = { 
+uint8_t widthValues[5] = {
     1,     // Small
     2,     // Medium
     4,     // Large
     8,     // Largest
   255 };   // All
-uint8_t repeatValues[5] = { 
+uint8_t repeatValues[5] = {
     8,     // Small
     6,     // Medium
     4,     // Large
     2,     // Largest
     1 };   // All
-uint8_t speedValues[6] = { 
+uint8_t speedValues[6] = {
     0,     // None
    18,     // Slowest
    14,     // Slower
@@ -116,6 +116,16 @@ uint8_t wakeupDimmer = 0;
 uint16_t wakeupCntr = 0;
 unsigned long stripTimerCntr = 0;  // Bars and Gradient
 
+#ifdef USE_WS2812_ARTNET
+const int startUniverse = 1; // CHANGE FOR YOUR SETUP most software this is 1, some software send out artnet first universe as 0.
+const int numberOfChannels = WS2812_LEDS * 3;
+const int maxUniverses = numberOfChannels / 512 + ((numberOfChannels % 512) ? 1 : 0);
+bool universesReceived[maxUniverses];
+bool sendFrame = 1;
+int previousDataLength = 0;
+bool artnetHasNotStarted = true;
+#endif
+
 void ws2812_setDim(uint8_t myDimmer)
 {
   float newDim = 100 / (float)myDimmer;
@@ -131,8 +141,8 @@ void ws2812_setColor(uint16_t led, char* colstr)
 {
   HtmlColor hcolor;
   char log[LOGSZ];
-  char lcolstr[8]; 
-  
+  char lcolstr[8];
+
   snprintf_P(lcolstr, sizeof(lcolstr), PSTR("#%s"), colstr);
   uint8_t result = hcolor.Parse<HtmlColorNames>((char *)lcolstr, 7);
   if (result) {
@@ -144,7 +154,7 @@ void ws2812_setColor(uint16_t led, char* colstr)
 
 //      snprintf_P(log, sizeof(log), PSTR("DBG: Red %02X, Green %02X, Blue %02X"), dcolor.R, dcolor.G, dcolor.B);
 //      addLog(LOG_LEVEL_DEBUG, log);
-  
+
       uint16_t temp = dcolor.R;
       if (temp < dcolor.G) {
         temp = dcolor.G;
@@ -154,7 +164,7 @@ void ws2812_setColor(uint16_t led, char* colstr)
       }
       float mDim = (float)temp / 2.55;
       sysCfg.ws_dimmer = (uint8_t)mDim;
-  
+
       float newDim = 100 / mDim;
       float fmyRed = (float)dcolor.R * newDim;
       float fmyGrn = (float)dcolor.G * newDim;
@@ -189,7 +199,7 @@ void ws2812_getHSB(float *hue, float *sat, float *bri)
 void ws2812_setHSB(float hue, float sat, float bri)
 {
   char rgb[7];
-  
+
   HsbColor hsb;
   hsb.H = hue;
   hsb.S = sat;
@@ -203,7 +213,7 @@ void ws2812_getColor(uint16_t led, char* svalue, uint16_t ssvalue)
 {
   RgbColor mcolor;
   char stemp[20];
-  
+
   if (led) {
     mcolor = strip->GetPixelColor(led -1);
     snprintf_P(stemp, sizeof(stemp), PSTR("Led%d"), led);
@@ -220,7 +230,7 @@ void ws2812_getColor(uint16_t led, char* svalue, uint16_t ssvalue)
 
 void ws2812_stripShow()
 {
-  RgbColor c;  
+  RgbColor c;
 
   if (sysCfg.ws_ledtable) {
     for (uint16_t i = 0; i < sysCfg.ws_pixels; i++) {
@@ -254,7 +264,7 @@ int mod(int a, int b)
 void ws2812_clock()
 {
   RgbColor c;
-  
+
   strip->ClearTo(0);   // Reset strip
   float newDim = 100 / (float)sysCfg.ws_dimmer;
   float f1 = 255 / newDim;
@@ -309,7 +319,7 @@ void ws2812_gradientColor(struct wsColor* mColor, uint8_t range, uint8_t gradRan
 
 void ws2812_gradient()
 {
-/* 
+/*
  * This routine courtesy Tony DiCola (Adafruit)
  * Display a gradient of colors for the current color scheme.
  *  Repeat is the number of repetitions of the gradient (pick a multiple of 2 for smooth looping of the gradient).
@@ -353,7 +363,7 @@ void ws2812_gradient()
 
 void ws2812_bars()
 {
-/* 
+/*
  * This routine courtesy Tony DiCola (Adafruit)
  * Display solid bars of color for the current color scheme.
  * Width is the width of each bar in pixels/lights.
@@ -398,7 +408,7 @@ void ws2812_animate()
 {
   char log[LOGSZ];
   uint8_t fadeValue;
-  
+
   stripTimerCntr++;
   if (0 == power) {  // Power Off
     sleep = sysCfg.sleep;
@@ -480,7 +490,7 @@ void ws2812_animate()
 
       if (sysCfg.ws_ledtable) {
         for (uint16_t i = 0; i < sysCfg.ws_pixels; i++) {
-          strip->SetPixelColor(i, RgbColor(ledTable[lcolor.R],ledTable[lcolor.G],ledTable[lcolor.B]));      
+          strip->SetPixelColor(i, RgbColor(ledTable[lcolor.R],ledTable[lcolor.G],ledTable[lcolor.B]));
         }
       } else {
         for (uint16_t i = 0; i < sysCfg.ws_pixels; i++) {
@@ -524,12 +534,48 @@ void ws2812_init()
   ws2812_pixels();
 }
 
+#ifdef USE_WS2812_ARTNET  // The callback method for the artnetwifi class, adapted for NEOPIXELBUS
+void onDmxFrame(uint16_t universe, uint16_t length, uint8_t sequence, uint8_t* data) {
+  sendFrame = 1;
+  // Store which universe has got in
+  if ((universe - startUniverse) < maxUniverses)
+    universesReceived[universe - startUniverse] = 1;
+
+  for (int i = 0 ; i < maxUniverses ; i++)
+  {
+    if (universesReceived[i] == 0)
+    {
+      sendFrame = 0;   // do nothing
+      break;
+    }
+  }
+
+  // read universe and put into the right part of the display buffer
+  for (int i = 0; i < length / 3; i++)
+  {
+    int led = i + (universe - startUniverse) * (previousDataLength / 3);
+    if (led < WS2812_LEDS)
+    {
+      strip->SetPixelColor(led, RgbColor(data[i * 3], data[i * 3 + 1], data[i * 3 + 2])); // Is there a way to send raw R,G and B to NEOPIXELBUS ??? It seems to be an unnecessary type conversion?
+    }
+
+  }
+  previousDataLength = length;
+
+  if (sendFrame)
+  {
+    strip->Show();
+    memset(universesReceived, 0, maxUniverses);
+  }
+}
+#endif
+
+
 /*********************************************************************************************\
  * Commands
 \*********************************************************************************************/
 
-boolean ws2812_command(char *type, uint16_t index, char *dataBuf, uint16_t data_len, int16_t payload, char *svalue, uint16_t ssvalue)
-{
+boolean ws2812_command(char *type, uint16_t index, char *dataBuf, uint16_t data_len, int16_t payload, char *svalue, uint16_t ssvalue) {
   boolean serviced = true;
 
   if (!strcmp(type,"PIXELS")) {
@@ -615,14 +661,32 @@ boolean ws2812_command(char *type, uint16_t index, char *dataBuf, uint16_t data_
     snprintf_P(svalue, ssvalue, PSTR("{\"WakeUp\":%d}"), sysCfg.ws_wakeup);
   }
   else if (!strcmp(type,"SCHEME")) {
-    if ((data_len > 0) && (payload >= 0) && (payload <= 9)) {
+    if ((data_len > 0) && (payload >= 0) && (payload <= MAX_SCHEME)) {
       sysCfg.ws_scheme = payload;
+
+#ifdef USE_WS2812_ARTNET		// Initialize and set some state for ARTNET
+	if (10 == sysCfg.ws_scheme) {
+        if (artnetHasNotStarted){ 	// Some kind of lazy instantiating
+		artnet.begin();
+		artnet.setArtDmxCallback(onDmxFrame);
+		artnetHasNotStarted = false;
+	  }
+	artnetIsActive = true;
+  }
+	else{
+#endif
       if (1 == sysCfg.ws_scheme) {
         ws2812_resetWakupState();
       }
       power = 1;
       ws2812_resetStripTimer();
+#ifdef USE_WS2812_ARTNET
+	    artnetIsActive = false;
+#endif
+	}
+#ifdef USE_WS2812_ARTNET
     }
+#endif
     snprintf_P(svalue, ssvalue, PSTR("{\"Scheme\":%d}"), sysCfg.ws_scheme);
   }
   else {
