@@ -41,7 +41,7 @@ INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT
 
 #ifdef USE_WS2812_ARTNET
 #undef MAX_SCHEME
-#define MAX_SCHEME 10		// add scheme number 10 for ARTNET receivung mode
+#define MAX_SCHEME 10		// add scheme number 10 for ARTNET receiving mode
 #endif
 
 struct wsColor {
