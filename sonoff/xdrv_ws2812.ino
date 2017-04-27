@@ -41,7 +41,7 @@ INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT
 
 #ifdef USE_WS2812_ARTNET
 #undef MAX_SCHEME
-#define MAX_SCHEME 10
+#define MAX_SCHEME 10		// add scheme number 10 for ARTNET receivung mode
 #endif
 
 struct wsColor {
@@ -516,7 +516,7 @@ void ws2812_init()
   ws2812_pixels();
 }
 
-#ifdef USE_WS2812_ARTNET
+#ifdef USE_WS2812_ARTNET  // The callback method for the artnetwifi class, adapted for NEOPIXELBUS
 void onDmxFrame(uint16_t universe, uint16_t length, uint8_t sequence, uint8_t* data) {
   sendFrame = 1;
   // Store which universe has got in
@@ -527,7 +527,7 @@ void onDmxFrame(uint16_t universe, uint16_t length, uint8_t sequence, uint8_t* d
   {
     if (universesReceived[i] == 0)
     {
-      sendFrame = 0;
+      sendFrame = 0;   // do nothing
       break;
     }
   }
@@ -538,7 +538,7 @@ void onDmxFrame(uint16_t universe, uint16_t length, uint8_t sequence, uint8_t* d
     int led = i + (universe - startUniverse) * (previousDataLength / 3);
     if (led < WS2812_LEDS)
     {
-      strip->SetPixelColor(led, RgbColor(data[i * 3], data[i * 3 + 1], data[i * 3 + 2]));
+      strip->SetPixelColor(led, RgbColor(data[i * 3], data[i * 3 + 1], data[i * 3 + 2])); // Is there a way to send raw R,G and B to NEOPIXELBUS ??? It seems to be an unnecessary type conversion?
     }
 
   }
@@ -646,9 +646,9 @@ boolean ws2812_command(char *type, uint16_t index, char *dataBuf, uint16_t data_
     if ((data_len > 0) && (payload >= 0) && (payload <= MAX_SCHEME)) {
       sysCfg.ws_scheme = payload;
 
-#ifdef USE_WS2812_ARTNET
+#ifdef USE_WS2812_ARTNET		// Initialize and set some state for ARTNET
 	if (10 == sysCfg.ws_scheme) {
-        if (artnetHasNotStarted){ // some kind of lazy instantiating
+        if (artnetHasNotStarted){ 	// Some kind of lazy instantiating
 		artnet.begin();
 		artnet.setArtDmxCallback(onDmxFrame);
 		artnetHasNotStarted = false;
