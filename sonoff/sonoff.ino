@@ -271,7 +271,7 @@ boolean mDNSbegun = false;
 
 #ifdef USE_WS2812_ARTNET
 #include "ArtnetWifi.h"
-ArtnetWifi artnet;
+ArtnetWifi artnet;                    // Need access in global scope for main loop
 bool artnetIsActive = false;
 #endif
 
@@ -2473,7 +2473,7 @@ void loop()
 #endif  // USE_EMULATION
 
 #ifdef USE_WS2812_ARTNET
-  if (artnetIsActive){  // Check early in the loop for performance reasons
+  if (artnetIsActive){  // Prevent stateloop for performance reasons while receiving ARTNET packages
   artnet.read();
   }
   else {
