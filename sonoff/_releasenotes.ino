@@ -1,4 +1,9 @@
-/* 5.0.0 20170425
+/* 5.0.1 20170429
+ * Adjust Sonoff SC messages to prepare for display feature
+ * Move static data from RAM to Flash
+ * Fix PowerOnState for some devices not reporting "Power on" state (#284, #380, #383)
+ *
+ * 5.0.0 20170425
  * Memory status message update
  * Fix setting migration to better preserve settings during move (#382)
  * Best practice is first doing a Backup Configuration before installing version 5.0.0

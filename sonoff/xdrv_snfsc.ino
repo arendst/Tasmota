@@ -91,7 +91,7 @@ void sc_rcvstat(char *rcvstat)
       Serial.write("AT+SEND=fail\e");
     }
   }
-  else if (!strcmp(rcvstat,"AT+STATUS?")) {
+  else if (!strcmp_P(rcvstat,PSTR("AT+STATUS?"))) {
     Serial.write("AT+STATUS=4\e");
   }
 }
@@ -118,7 +118,8 @@ void sc_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
     dtostrf(t, 1, TEMP_RESOLUTION &3, stemp1);
     float h = sc_value[0];
     dtostrf(h, 1, HUMIDITY_RESOLUTION &3, stemp2);
-    snprintf_P(svalue, ssvalue, PSTR("%s, \"SC\":{\"Temperature\":%s, \"Humidity\":%s, \"Light\":%d, \"Noise\":%d, \"AirQuality\":%d}"),
+//    snprintf_P(svalue, ssvalue, PSTR("%s, \"SC\":{\"Temperature\":%s, \"Humidity\":%s, \"Light\":%d, \"Noise\":%d, \"AirQuality\":%d}"),
+    snprintf_P(svalue, ssvalue, PSTR("%s, \"Temperature\":%s, \"Humidity\":%s, \"Light\":%d, \"Noise\":%d, \"AirQuality\":%d"),
       svalue, stemp1, stemp2, sc_value[2], sc_value[3], sc_value[4]);
     *djson = 1;
 #ifdef USE_DOMOTICZ
@@ -136,7 +137,7 @@ String sc_webPresent()
   if (sc_value[0] > 0) {
     char stemp[10];
     char sensor[80];
-    char scstype[] = "SC";
+    char scstype[] = "";
 
     float t = sc_value[1];
     if (TEMP_CONVERSION) {
