@@ -35,23 +35,23 @@ POSSIBILITY OF SUCH DAMAGE.
 #define MIN_INTERVAL 2000
 
 uint8_t data[5];
-char dhtstype[7];
-uint32_t _lastreadtime;
+char dhtstype[3][10];
+uint32_t _lastreadtime[3];
 uint32_t _maxcycles;
-bool _lastresult;
+bool _lastresult[3];
 float mt;
 float mh = 0;
 
-void dht_readPrep()
+void dht_readPrep(byte dht_index)
 {
-  digitalWrite(pin[GPIO_DHT11], HIGH);
+  digitalWrite(pin[GPIO_DHT11 + dht_index], HIGH);
 }
 
-uint32_t dht_expectPulse(bool level)
+uint32_t dht_expectPulse(byte dht_index, bool level)
 {
   uint32_t count = 0;
 
-  while (digitalRead(pin[GPIO_DHT11]) == level) {
+  while (digitalRead(pin[GPIO_DHT11 + dht_index]) == level) {
     if (count++ >= _maxcycles) {
       return 0;
     }
@@ -59,44 +59,44 @@ uint32_t dht_expectPulse(bool level)
   return count;
 }
 
-boolean dht_read()
+boolean dht_read(byte dht_index)
 {
   char log[LOGSZ];
   uint32_t cycles[80];
   uint32_t currenttime = millis();
 
-  if ((currenttime - _lastreadtime) < 2000) {
-    return _lastresult;
+  if ((currenttime - _lastreadtime[dht_index]) < 2000) {
+    return _lastresult[dht_index];
   }
-  _lastreadtime = currenttime;
+  _lastreadtime[dht_index] = currenttime;
 
   data[0] = data[1] = data[2] = data[3] = data[4] = 0;
 
-//  digitalWrite(pin[GPIO_DHT11], HIGH);
+//  digitalWrite(pin[GPIO_DHT11 + dht_index], HIGH);
 //  delay(250);
 
-  pinMode(pin[GPIO_DHT11], OUTPUT);
-  digitalWrite(pin[GPIO_DHT11], LOW);
+  pinMode(pin[GPIO_DHT11 + dht_index], OUTPUT);
+  digitalWrite(pin[GPIO_DHT11 + dht_index], LOW);
   delay(20);
 
   noInterrupts();
-  digitalWrite(pin[GPIO_DHT11], HIGH);
+  digitalWrite(pin[GPIO_DHT11 + dht_index], HIGH);
   delayMicroseconds(40);
-  pinMode(pin[GPIO_DHT11], INPUT_PULLUP);
+  pinMode(pin[GPIO_DHT11 + dht_index], INPUT_PULLUP);
   delayMicroseconds(10);
-  if (0 == dht_expectPulse(LOW)) {
+  if (0 == dht_expectPulse(dht_index, LOW)) {
     addLog_P(LOG_LEVEL_DEBUG, PSTR("DHT: Timeout waiting for start signal low pulse"));
-    _lastresult = false;
-    return _lastresult;
+    _lastresult[dht_index] = false;
+    return _lastresult[dht_index];
   }
-  if (0 == dht_expectPulse(HIGH)) {
+  if (0 == dht_expectPulse(dht_index, HIGH)) {
     addLog_P(LOG_LEVEL_DEBUG, PSTR("DHT: Timeout waiting for start signal high pulse"));
-    _lastresult = false;
-    return _lastresult;
+    _lastresult[dht_index] = false;
+    return _lastresult[dht_index];
   }
   for (int i = 0; i < 80; i += 2) {
-    cycles[i]   = dht_expectPulse(LOW);
-    cycles[i+1] = dht_expectPulse(HIGH);
+    cycles[i]   = dht_expectPulse(dht_index, LOW);
+    cycles[i+1] = dht_expectPulse(dht_index, HIGH);
   }
   interrupts();
 
@@ -105,8 +105,8 @@ boolean dht_read()
     uint32_t highCycles = cycles[2*i+1];
     if ((0 == lowCycles) || (0 == highCycles)) {
       addLog_P(LOG_LEVEL_DEBUG, PSTR("DHT: Timeout waiting for pulse"));
-      _lastresult = false;
-      return _lastresult;
+      _lastresult[dht_index] = false;
+      return _lastresult[dht_index];
     }
     data[i/8] <<= 1;
     if (highCycles > lowCycles) {
@@ -119,12 +119,12 @@ boolean dht_read()
   addLog(LOG_LEVEL_DEBUG, log);
 
   if (data[4] == ((data[0] + data[1] + data[2] + data[3]) & 0xFF)) {
-    _lastresult = true;
-    return _lastresult;
+    _lastresult[dht_index] = true;
+    return _lastresult[dht_index];
   } else {
     addLog_P(LOG_LEVEL_DEBUG, PSTR("DHT: Checksum failure"));
-    _lastresult = false;
-    return _lastresult;
+    _lastresult[dht_index] = false;
+    return _lastresult[dht_index];
   }
 }
 
@@ -133,7 +133,7 @@ float dht_convertCtoF(float c)
   return c * 1.8 + 32;
 }
 
-boolean dht_readTempHum(bool S, float &t, float &h)
+boolean dht_readTempHum(byte dht_index, bool S, float &t, float &h)
 {
   if (!mh) {
     t = NAN;
@@ -143,8 +143,8 @@ boolean dht_readTempHum(bool S, float &t, float &h)
     h = mh;
   }
 
-  if (dht_read()) {
-    switch (dht_type) {
+  if (dht_read(dht_index)) {
+    switch (dht_type[dht_index]) {
     case GPIO_DHT11:
       h = data[0];
       t = data[2];
@@ -180,23 +180,23 @@ boolean dht_readTempHum(bool S, float &t, float &h)
   return (!isnan(t) && !isnan(h));
 }
 
-void dht_init()
+void dht_init(byte dht_index)
 {
   char log[LOGSZ];
   _maxcycles = microsecondsToClockCycles(1000);  // 1 millisecond timeout for
                                                  // reading pulses from DHT sensor.
-  pinMode(pin[GPIO_DHT11], INPUT_PULLUP);
-  _lastreadtime = -MIN_INTERVAL;
+  pinMode(pin[GPIO_DHT11 + dht_index], INPUT_PULLUP);
+  _lastreadtime[dht_index] = -MIN_INTERVAL;
 
-  switch (dht_type) {
+  switch (dht_type[dht_index]) {
   case GPIO_DHT11:
-    strcpy(dhtstype, "DHT11");
+    snprintf(dhtstype[dht_index], 9, "DHT11_%02d", pin[GPIO_DHT11 + dht_index]);
     break;
   case GPIO_DHT21:
-    strcpy(dhtstype, "AM2301");
+    snprintf(dhtstype[dht_index], 9, "AM2301_%02d", pin[GPIO_DHT11 + dht_index]);
     break;
   case GPIO_DHT22:
-    strcpy(dhtstype, "DHT22");
+    snprintf(dhtstype[dht_index], 9, "DHT22_%02d", pin[GPIO_DHT11 + dht_index]);
   }
 
   snprintf_P(log, sizeof(log), PSTR("DHT: Max clock cycles %d"), _maxcycles);
@@ -207,19 +207,19 @@ void dht_init()
  * Presentation
 \*********************************************************************************************/
 
-void dht_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
+void dht_mqttPresent(byte dht_index, char* svalue, uint16_t ssvalue, uint8_t* djson)
 {
   char stemp1[10];
   char stemp2[10];
   float t;
   float h;
 
-  if (dht_readTempHum(TEMP_CONVERSION, t, h)) {     // Read temperature
+  if (dht_readTempHum(dht_index, TEMP_CONVERSION, t, h)) {     // Read temperature
     dtostrf(t, 1, TEMP_RESOLUTION &3, stemp1);
     dtostrf(h, 1, HUMIDITY_RESOLUTION &3, stemp2);
 //    snprintf_P(svalue, ssvalue, PSTR("%s, \"%s\":{\"Temperature\":%s, \"Humidity\":%s}"),
 //      svalue, dhtstype, stemp1, stemp2);
-    snprintf_P(svalue, ssvalue, JSON_SNS_TEMPHUM, svalue, dhtstype, stemp1, stemp2);
+    snprintf_P(svalue, ssvalue, JSON_SNS_TEMPHUM, svalue, dhtstype[dht_index], stemp1, stemp2);
     *djson = 1;
 #ifdef USE_DOMOTICZ
     domoticz_sensor2(stemp1, stemp2);
@@ -228,23 +228,22 @@ void dht_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
 }
 
 #ifdef USE_WEBSERVER
-String dht_webPresent()
+String dht_webPresent(byte dht_index)
 {
   String page = "";
   float t;
   float h;
   
-  if (dht_readTempHum(TEMP_CONVERSION, t, h)) {     // Read temperature as Celsius (the default)
+  if (dht_readTempHum(dht_index, TEMP_CONVERSION, t, h)) {     // Read temperature as Celsius (the default)
     char stemp[10];
     char sensor[80];
     
     dtostrf(t, 1, TEMP_RESOLUTION &3, stemp);
-    snprintf_P(sensor, sizeof(sensor), HTTP_SNS_TEMP, dhtstype, stemp, (TEMP_CONVERSION) ? 'F' : 'C');
+    snprintf_P(sensor, sizeof(sensor), HTTP_SNS_TEMP, dhtstype[dht_index], stemp, (TEMP_CONVERSION) ? 'F' : 'C');
     page += sensor;
     dtostrf(h, 1, HUMIDITY_RESOLUTION &3, stemp);
-    snprintf_P(sensor, sizeof(sensor), HTTP_SNS_HUM, dhtstype, stemp);
-    page += sensor;
-    
+    snprintf_P(sensor, sizeof(sensor), HTTP_SNS_HUM, dhtstype[dht_index], stemp);
+    page += sensor;    
   }
   return page;
 }
