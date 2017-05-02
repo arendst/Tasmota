@@ -264,7 +264,7 @@ uint8_t pin[GPIO_MAX];                // Possible pin configurations
 uint8_t rel_inverted[4] = { 0 };      // Relay inverted flag (1 = (0 = On, 1 = Off))
 uint8_t led_inverted[4] = { 0 };      // LED inverted flag (1 = (0 = On, 1 = Off))
 uint8_t swt_flg = 0;                  // Any external switch configured
-uint8_t dht_type = 0;                 // DHT type (DHT11, DHT21 or DHT22)
+uint8_t dht_type[] = { 0, 0, 0 };     // DHT type (DHT11, DHT21 or DHT22)
 uint8_t hlw_flg = 0;                  // Power monitor configured
 uint8_t i2c_flg = 0;                  // I2C configured
 uint8_t spi_flg = 0;                  // SPI configured
@@ -1687,8 +1687,10 @@ void sensors_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
 #endif  // USE_DS18x20
   }
 #ifdef USE_DHT
-  if (dht_type) {
-    dht_mqttPresent(svalue, ssvalue, djson);
+  for (byte i = 0; i < 3; i++) {
+    if (dht_type[i]) {
+      dht_mqttPresent(i, svalue, ssvalue, djson);
+    }
   }
 #endif  // USE_DHT
 #ifdef USE_I2C
@@ -1768,8 +1770,10 @@ void every_second()
 #endif  // USE_DS18x20
       }
 #ifdef USE_DHT
-      if (dht_type) {
-        dht_readPrep();
+      for (byte i = 0; i < 3; i++) {
+        if (dht_type[i]) {
+          dht_readPrep(i);
+        }
       }
 #endif  // USE_DHT
 #ifdef USE_I2C
@@ -2213,6 +2217,8 @@ void GPIO_init()
     }
   }
 
+  int dht_index = -1;
+
   for (byte i = 0; i < GPIO_MAX; i++) {
     pin[i] = 99;
   }
@@ -2232,17 +2238,25 @@ void GPIO_init()
         mpin -= 4;
       }
       else if (GPIO_DHT11 == mpin) {
-        dht_type = mpin;
+        dht_index++;
+        dht_type[dht_index] = mpin;
       }
       else if (GPIO_DHT21 == mpin) {
-        dht_type = mpin;
+        dht_index++;
+        dht_type[dht_index] = mpin;
         mpin--;
       }
       else if (GPIO_DHT22 == mpin) {
-        dht_type = mpin;
+        dht_index++;
+        dht_type[dht_index] = mpin;
         mpin -= 2;
       }
-      pin[mpin] = i;
+      if (GPIO_DHT11 == mpin) {
+        pin[mpin + dht_index] = i;
+      }
+      else {
+        pin[mpin] = i;
+      }
     }
   }
 
@@ -2326,8 +2340,10 @@ void GPIO_init()
   }
 
 #ifdef USE_DHT
-  if (dht_type) {
-    dht_init();
+  for (byte i = 0; i < 3; i++) {
+    if (dht_type[i]) {
+      dht_init(i);
+    }
   }
 #endif  // USE_DHT
 

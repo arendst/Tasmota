@@ -483,8 +483,10 @@ void handleAjax2()
   }
 #endif  // USE_DS18x20
 #ifdef USE_DHT
-  if (dht_type) {
-    tpage += dht_webPresent();
+  for (byte i = 0; i < 3; i++) {
+    if (dht_type[i]) {
+      tpage += dht_webPresent(i);
+    }
   }
 #endif  // USE_DHT
 #ifdef USE_I2C
