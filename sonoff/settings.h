@@ -2,21 +2,49 @@
  * Config settings
 \*********************************************************************************************/
 
+typedef struct {
+  uint32_t savestate : 1;
+  uint32_t button_restrict : 1;
+  uint32_t value_units : 1;
+  uint32_t mqtt_enabled : 1;
+  uint32_t mqtt_response : 1;
+  uint32_t mqtt_power_retain : 1;
+  uint32_t mqtt_button_retain : 1;
+  uint32_t mqtt_switch_retain : 1;
+  uint32_t temperature_conversion : 1;
+  uint32_t spare23 : 1;
+  uint32_t spare22 : 1;
+  uint32_t spare21 : 1;
+  uint32_t spare20 : 1;
+  uint32_t spare19 : 1;
+  uint32_t spare18 : 1;
+  uint32_t spare17 : 1;
+  uint32_t spare16 : 1;
+  uint32_t spare15 : 1;
+  uint32_t spare14 : 1;
+  uint32_t spare13 : 1;
+  uint32_t spare12 : 1;
+  uint32_t emulation : 2;
+  uint32_t energy_resolution : 3;
+  uint32_t pressure_resolution : 2;
+  uint32_t humidity_resolution : 2;
+  uint32_t temperature_resolution : 2;
+} sysBitfield;
+
 struct SYSCFG {
   unsigned long cfg_holder;
   unsigned long saveFlag;
   unsigned long version;
   unsigned long bootcount;
-  byte          migflg;               // Not used since 3.9.1
+  sysBitfield   flag;                  // Add flag since 5.0.2
   int16_t       savedata;
-  byte          savestate;
-  byte          mqtt_response;        // was model until 3.9.1
+  
   int8_t        timezone;
   char          otaUrl[101];
 
-  char          mqtt_prefix[3][11];   // was ex_friendlyname[33] until 3.2.5
+  char          mqtt_prefix[3][11];    // was ex_friendlyname[33] until 3.2.5
 
-  byte          serial_enable;
+  byte          serial_enable;         // Not used (ever)
   byte          seriallog_level;
   uint8_t       sta_config;
   byte          sta_active;
@@ -39,10 +67,10 @@ struct SYSCFG {
   char          button_topic[33];
   char          mqtt_grptopic[33];
   char          state_text[3][11];     // was ex_mqtt_subtopic[33] until 4.1.1
-  byte          mqtt_button_retain;
-  byte          mqtt_power_retain;
-  byte          value_units;
-  byte          button_restrict;       // Was message_format until 3.2.6a
+  byte          ex_mqtt_button_retain; // Not used since 5.0.2
+  byte          ex_mqtt_power_retain;  // Not used since 5.0.2
+  byte          ex_value_units;        // Not used since 5.0.2
+  byte          ex_button_restrict;    // Not used since 5.0.2
   uint16_t      tele_period;
 
   uint8_t       power;
@@ -77,7 +105,7 @@ struct SYSCFG {
   uint16_t      hlw_mkwhs;  // MaxEnergyStart
 
   // 3.0.6
-  uint16_t      ex_pulsetime;         // Not used since 4.0.4
+  uint16_t      ex_pulsetime;          // Not used since 4.0.4
 
   // 3.1.1
   uint8_t       poweronstate;
@@ -104,8 +132,8 @@ struct SYSCFG {
 
   // 3.2.8
   char          switch_topic[33];
-  byte          mqtt_switch_retain;
-  uint8_t       mqtt_enabled;
+  byte          ex_mqtt_switch_retain; // Not used since 5.0.2
+  uint8_t       ex_mqtt_enabled;       // Not used since 5.0.2
 
   // 3.2.12
   uint8_t       sleep;
@@ -126,7 +154,7 @@ struct SYSCFG {
   uint16_t      led_wakeup;
 
   // 3.9.7
-  uint8_t       emulation;
+  uint8_t       ex_emulation;          // Not used since 5.0.2
 
   // 3.9.20
   char          web_password[33];

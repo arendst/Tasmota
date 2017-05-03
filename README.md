@@ -1,7 +1,7 @@
 ## Sonoff-Tasmota
 Provide ESP8266 based Sonoff by [iTead Studio](https://www.itead.cc/) and ElectroDragon IoT Relay with Serial, Web and MQTT control allowing 'Over the Air' or OTA firmware updates using Arduino IDE.
 
-Current version is **5.0.1** - See [sonoff/_releasenotes.ino](https://github.com/arendst/Sonoff-Tasmota/blob/master/sonoff/_releasenotes.ino) for change information.
+Current version is **5.0.2** - See [sonoff/_releasenotes.ino](https://github.com/arendst/Sonoff-Tasmota/blob/master/sonoff/_releasenotes.ino) for change information.
 
 ### **** ATTENTION Version 5.0.x specific information ****
 
@@ -11,7 +11,7 @@ Best practice to implement is:
 - Open the webpage to your device
 - Perform option ``Backup Configuration``
 - Upgrade new firmware using ``Firmware upgrade``
-- If configuration conversion failed keep the webpage open and perform ``Restore Configuration``
+- If configuration conversion fails keep the webpage open and perform ``Restore Configuration``
 
 You should now have a device with 32k more code memory to play with.
 

@@ -1,4 +1,15 @@
-/* 5.0.1 20170429
+/* 5.0.2 20170503
+ * Reset SaveData, SaveState and MqttResponse to default values due to rearranging settings
+ * Moved some settings flag area
+ * Add command TempUnit Celsius|Fahrenheit for selecting Celsius or Fahrenheit (#347)
+ * Add command TempRes 0..3 for selecting Temperature Resolution (#347)
+ * Add command HumRes 0..3 for selecting Humidity Resolution (#347)
+ * Add command PressRes 0..3 for selecting Pressure Resolution (#347)
+ * Add command EnergyRes 0..5 for selecting Energy Resolution (#347)
+ * Add "TemperatureUnit":"C|F" to sensor JSON output (#347)
+ * Add support for up to three DHT type sensors each using a different GPIO (#339, #404)
+ *
+ * 5.0.1 20170429
  * Adjust Sonoff SC messages to prepare for display feature
  * Move static data from RAM to Flash
  * Fix PowerOnState for some devices not reporting "Power on" state (#284, #380, #383)

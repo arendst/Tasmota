@@ -161,9 +161,7 @@ boolean sht_readTempHum(float &t, float &h)
   const float t2 = 0.00008;
   rhLinear = c1 + c2 * humRaw + c3 * humRaw * humRaw;
   h = (t - 25) * (t1 + t2 * humRaw) + rhLinear;
-  if (!isnan(t) && TEMP_CONVERSION) {
-    t = t * 1.8 + 32;
-  }
+  t = convertTemp(t);
   return (!isnan(t) && !isnan(h));
 }
 
@@ -173,8 +171,8 @@ boolean sht_readCharTempHum(char* temp, char* hum)
   float h;
 
   boolean success = sht_readTempHum(t, h);
-  dtostrf(t, 1, TEMP_RESOLUTION &3, temp);
-  dtostrf(h, 1, HUMIDITY_RESOLUTION &3, hum);
+  dtostrf(t, 1, sysCfg.flag.temperature_resolution, temp);
+  dtostrf(h, 1, sysCfg.flag.humidity_resolution, hum);
   return success;
 }
 
@@ -231,7 +229,7 @@ String sht_webPresent()
     
     if (sht_readCharTempHum(stemp, shum)) {
       char sensor[80];
-      snprintf_P(sensor, sizeof(sensor), HTTP_SNS_TEMP, "SHT1X", stemp, (TEMP_CONVERSION) ? 'F' : 'C');
+      snprintf_P(sensor, sizeof(sensor), HTTP_SNS_TEMP, "SHT1X", stemp, tempUnit());
       page += sensor;
       snprintf_P(sensor, sizeof(sensor), HTTP_SNS_HUM, "SHT1X", shum);
       page += sensor;

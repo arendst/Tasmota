@@ -303,7 +303,7 @@ void startWebserver(int type, IPAddress ipweb)
       webServer->on("/md", handleModule);
       webServer->on("/w1", handleWifi1);
       webServer->on("/w0", handleWifi0);
-      if (sysCfg.mqtt_enabled) {
+      if (sysCfg.flag.mqtt_enabled) {
         webServer->on("/mq", handleMqtt);
 #ifdef USE_DOMOTICZ
         webServer->on("/dm", handleDomoticz);
@@ -326,12 +326,12 @@ void startWebserver(int type, IPAddress ipweb)
       webServer->on("/rb", handleRestart);
       webServer->on("/fwlink", handleRoot);  // Microsoft captive portal. Maybe not needed. Might be handled by notFound handler.
 #ifdef USE_EMULATION
-      if (EMUL_WEMO == sysCfg.emulation) {
+      if (EMUL_WEMO == sysCfg.flag.emulation) {
         webServer->on("/upnp/control/basicevent1", HTTP_POST, handleUPnPevent);
         webServer->on("/eventservice.xml", handleUPnPservice);
         webServer->on("/setup.xml", handleUPnPsetupWemo);
       }
-      if (EMUL_HUE == sysCfg.emulation) {
+      if (EMUL_HUE == sysCfg.flag.emulation) {
         webServer->on("/description.xml", handleUPnPsetupHue);
       }
 #endif  // USE_EMULATION
@@ -483,7 +483,7 @@ void handleAjax2()
   }
 #endif  // USE_DS18x20
 #ifdef USE_DHT
-  if (dht_type) {
+  if (dht_flg) {
     tpage += dht_webPresent();
   }
 #endif  // USE_DHT
@@ -554,7 +554,7 @@ void handleConfig()
   String page = FPSTR(HTTP_HEAD);
   page.replace("{v}", "Configuration");
   page += FPSTR(HTTP_BTN_MENU2);
-  if (sysCfg.mqtt_enabled) {
+  if (sysCfg.flag.mqtt_enabled) {
     page += FPSTR(HTTP_BTN_MENU3);
   }
   page += FPSTR(HTTP_BTN_MENU4);
@@ -857,16 +857,16 @@ void handleOther()
   page.replace("{v}", "Configure Other");
   page += FPSTR(HTTP_FORM_OTHER);
   page.replace("{p1}", sysCfg.web_password);
-  page.replace("{r1}", (sysCfg.mqtt_enabled) ? " checked" : "");
+  page.replace("{r1}", (sysCfg.flag.mqtt_enabled) ? " checked" : "");
   page += FPSTR(HTTP_FORM_OTHER2);
   page.replace("{1", "1");
   page.replace("{2", FRIENDLY_NAME);
   page.replace("{3", sysCfg.friendlyname[0]);
 #ifdef USE_EMULATION
   page += FPSTR(HTTP_FORM_OTHER3);
-  page.replace("{r2}", (EMUL_NONE == sysCfg.emulation) ? " checked" : "");
-  page.replace("{r3}", (EMUL_WEMO == sysCfg.emulation) ? " checked" : "");
-  page.replace("{r4}", (EMUL_HUE == sysCfg.emulation) ? " checked" : "");
+  page.replace("{r2}", (EMUL_NONE == sysCfg.flag.emulation) ? " checked" : "");
+  page.replace("{r3}", (EMUL_WEMO == sysCfg.flag.emulation) ? " checked" : "");
+  page.replace("{r4}", (EMUL_HUE == sysCfg.flag.emulation) ? " checked" : "");
   for (int i = 1; i < Maxdevice; i++) {
     page += FPSTR(HTTP_FORM_OTHER2);
     page.replace("{1", String(i +1));
@@ -972,16 +972,16 @@ void handleSave()
 #endif  // USE_DOMOTICZ
   case 5:
     strlcpy(sysCfg.web_password, (!strlen(webServer->arg("p1").c_str())) ? WEB_PASSWORD : (!strcmp(webServer->arg("p1").c_str(),"0")) ? "" : webServer->arg("p1").c_str(), sizeof(sysCfg.web_password));
-    sysCfg.mqtt_enabled = webServer->hasArg("b1");
+    sysCfg.flag.mqtt_enabled = webServer->hasArg("b1");
 #ifdef USE_EMULATION
-    sysCfg.emulation = (!strlen(webServer->arg("b2").c_str())) ? 0 : atoi(webServer->arg("b2").c_str());
+    sysCfg.flag.emulation = (!strlen(webServer->arg("b2").c_str())) ? 0 : atoi(webServer->arg("b2").c_str());
 #endif  // USE_EMULATION
     strlcpy(sysCfg.friendlyname[0], (!strlen(webServer->arg("a1").c_str())) ? FRIENDLY_NAME : webServer->arg("a1").c_str(), sizeof(sysCfg.friendlyname[0]));
     strlcpy(sysCfg.friendlyname[1], (!strlen(webServer->arg("a2").c_str())) ? FRIENDLY_NAME"2" : webServer->arg("a2").c_str(), sizeof(sysCfg.friendlyname[1]));
     strlcpy(sysCfg.friendlyname[2], (!strlen(webServer->arg("a3").c_str())) ? FRIENDLY_NAME"3" : webServer->arg("a3").c_str(), sizeof(sysCfg.friendlyname[2]));
     strlcpy(sysCfg.friendlyname[3], (!strlen(webServer->arg("a4").c_str())) ? FRIENDLY_NAME"4" : webServer->arg("a4").c_str(), sizeof(sysCfg.friendlyname[3]));
     snprintf_P(log, sizeof(log), PSTR("HTTP: Other MQTT Enable %s, Emulation %d, Friendly Names %s, %s, %s and %s"),
-      getStateText(sysCfg.mqtt_enabled), sysCfg.emulation, sysCfg.friendlyname[0], sysCfg.friendlyname[1], sysCfg.friendlyname[2], sysCfg.friendlyname[3]);
+      getStateText(sysCfg.flag.mqtt_enabled), sysCfg.flag.emulation, sysCfg.friendlyname[0], sysCfg.friendlyname[1], sysCfg.friendlyname[2], sysCfg.friendlyname[3]);
     addLog(LOG_LEVEL_INFO, log);
     break;
   case 6:
@@ -1190,7 +1190,7 @@ void handleUploadLoop()
 #ifdef USE_EMULATION
       UDP_Disconnect();
 #endif  // USE_EMULATION
-      if (sysCfg.mqtt_enabled) {
+      if (sysCfg.flag.mqtt_enabled) {
         mqttClient.disconnect();
       }
       uint32_t maxSketchSpace = (ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000;
@@ -1320,7 +1320,7 @@ void handleCmnd()
           if (message.length()) {
             message += F("\n");
           }
-          if (sysCfg.mqtt_enabled) {
+          if (sysCfg.flag.mqtt_enabled) {
             // [14:49:36 MQTT: stat/wemos5/RESULT = {"POWER":"OFF"}] > [RESULT = {"POWER":"OFF"}]
 //            message += Log[counter].substring(17 + strlen(PUB_PREFIX) + strlen(sysCfg.mqtt_topic));
             message += Log[counter].substring(Log[counter].lastIndexOf("/",Log[counter].indexOf("="))+1);
@@ -1469,7 +1469,7 @@ void handleInfo()
     page += F("<tr><th>AP MAC address</th><td>"); page += WiFi.softAPmacAddress(); page += F("</td></tr>");
   }
   page += F("<tr><td>&nbsp;</td></tr>");
-  if (sysCfg.mqtt_enabled) {
+  if (sysCfg.flag.mqtt_enabled) {
     page += F("<tr><th>MQTT Host</th><td>"); page += sysCfg.mqtt_host; page += F("</td></tr>");
     page += F("<tr><th>MQTT Port</th><td>"); page += String(sysCfg.mqtt_port); page += F("</td></tr>");
     page += F("<tr><th>MQTT Client &<br/>&nbsp;Fallback Topic</th><td>"); page += MQTTClient; page += F("</td></tr>");
@@ -1483,10 +1483,10 @@ void handleInfo()
   
   page += F("<tr><th>Emulation</th><td>");
 #ifdef USE_EMULATION
-  if (EMUL_WEMO == sysCfg.emulation) {
+  if (EMUL_WEMO == sysCfg.flag.emulation) {
     page += F("Belkin WeMo");
   }
-  else if (EMUL_HUE == sysCfg.emulation) {
+  else if (EMUL_HUE == sysCfg.flag.emulation) {
     page += F("Hue Bridge");
   }
   else {
@@ -1556,7 +1556,7 @@ void handleNotFound()
 
 #ifdef USE_EMULATION  
   String path = webServer->uri();
-  if ((EMUL_HUE == sysCfg.emulation) && (path.startsWith("/api"))) {
+  if ((EMUL_HUE == sysCfg.flag.emulation) && (path.startsWith("/api"))) {
     handle_hue_api(&path);
   } else
 #endif // USE_EMULATION

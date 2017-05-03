@@ -214,10 +214,10 @@ void pollUDP()
       String request = packetBuffer;
 //      addLog_P(LOG_LEVEL_DEBUG_MORE, packetBuffer);
       if (request.indexOf("M-SEARCH") >= 0) {
-        if ((EMUL_WEMO == sysCfg.emulation) &&(request.indexOf("urn:Belkin:device:**") > 0)) {
+        if ((EMUL_WEMO == sysCfg.flag.emulation) &&(request.indexOf("urn:Belkin:device:**") > 0)) {
           wemo_respondToMSearch();
         }
-        else if ((EMUL_HUE == sysCfg.emulation) && ((request.indexOf("ST: urn:schemas-upnp-org:device:basic:1") > 0) || (request.indexOf("ST: upnp:rootdevice") > 0) || (request.indexOf("ST: ssdp:all") > 0))) {
+        else if ((EMUL_HUE == sysCfg.flag.emulation) && ((request.indexOf("ST: urn:schemas-upnp-org:device:basic:1") > 0) || (request.indexOf("ST: upnp:rootdevice") > 0) || (request.indexOf("ST: ssdp:all") > 0))) {
           hue_respondToMSearch();
         }
       }

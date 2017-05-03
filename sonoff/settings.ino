@@ -277,7 +277,7 @@ void CFG_Erase()
   }
 }
 
-void CFG_Dump()
+void CFG_Dump(uint16_t srow, uint16_t mrow)
 {
   #define CFG_COLS 16
   
@@ -288,9 +288,19 @@ void CFG_Dump()
   uint16_t col;
 
   uint8_t *buffer = (uint8_t *) &sysCfg;
+  row = 0;
   maxrow = ((sizeof(SYSCFG)+CFG_COLS)/CFG_COLS);
+  if ((srow > 0) && (srow < maxrow)) {
+    row = srow;
+  }
+  if (0 == mrow) {  // Default only four lines
+    mrow = 4;
+  }
+  if ((mrow > 0) && (mrow < (maxrow - row))) {
+    maxrow = row + mrow;
+  }
 
-  for (row = 0; row < maxrow; row++) {
+  for (row = srow; row < maxrow; row++) {
     idx = row * CFG_COLS;
     snprintf_P(log, sizeof(log), PSTR("%04X:"), idx);
     for (col = 0; col < CFG_COLS; col++) {
@@ -313,25 +323,35 @@ void CFG_Dump()
 
 /********************************************************************************************/
 
+void CFG_Default()
+{
+  addLog_P(LOG_LEVEL_NONE, PSTR("Config: Use default configuration"));
+  CFG_DefaultSet1();
+  CFG_DefaultSet2();
+  CFG_Save();
+}
+
 void CFG_DefaultSet1()
 {
   memset(&sysCfg, 0x00, sizeof(SYSCFG));
 
   sysCfg.cfg_holder = CFG_HOLDER;
-  sysCfg.saveFlag = 0;
+//  sysCfg.saveFlag = 0;
   sysCfg.version = VERSION;
-  sysCfg.bootcount = 0;
+//  sysCfg.bootcount = 0;
 }
   
 void CFG_DefaultSet2()
 {
+  memset((char*)&sysCfg +16, 0x00, sizeof(SYSCFG) -16);
+  
+  sysCfg.flag.savestate = SAVE_STATE;
   sysCfg.savedata = SAVE_DATA;
-  sysCfg.savestate = SAVE_STATE;
   sysCfg.timezone = APP_TIMEZONE;
   strlcpy(sysCfg.otaUrl, OTA_URL, sizeof(sysCfg.otaUrl));
 
   sysCfg.seriallog_level = SERIAL_LOG_LEVEL;
-  sysCfg.sta_active = 0;
+//  sysCfg.sta_active = 0;
   strlcpy(sysCfg.sta_ssid[0], STA_SSID1, sizeof(sysCfg.sta_ssid[0]));
   strlcpy(sysCfg.sta_pwd[0], STA_PASS1, sizeof(sysCfg.sta_pwd[0]));
   strlcpy(sysCfg.sta_ssid[1], STA_SSID2, sizeof(sysCfg.sta_ssid[1]));
@@ -353,10 +373,10 @@ void CFG_DefaultSet2()
   strlcpy(sysCfg.mqtt_topic, MQTT_TOPIC, sizeof(sysCfg.mqtt_topic));
   strlcpy(sysCfg.button_topic, "0", sizeof(sysCfg.button_topic));
   strlcpy(sysCfg.mqtt_grptopic, MQTT_GRPTOPIC, sizeof(sysCfg.mqtt_grptopic));
-  sysCfg.mqtt_button_retain = MQTT_BUTTON_RETAIN;
-  sysCfg.mqtt_power_retain = MQTT_POWER_RETAIN;
-  sysCfg.value_units = 0;
-  sysCfg.button_restrict = 0;
+  sysCfg.flag.mqtt_button_retain = MQTT_BUTTON_RETAIN;
+  sysCfg.flag.mqtt_power_retain = MQTT_POWER_RETAIN;
+//  sysCfg.flag.value_units = 0;
+//  sysCfg.flag.button_restrict = 0;
   sysCfg.tele_period = TELE_PERIOD;
 
   sysCfg.power = APP_POWER;
@@ -371,31 +391,31 @@ void CFG_DefaultSet2()
   sysCfg.domoticz_update_timer = DOMOTICZ_UPDATE_TIMER;
   for (byte i = 0; i < 4; i++) {
     sysCfg.switchmode[i] = SWITCH_MODE;
-    sysCfg.domoticz_relay_idx[i] = 0;
-    sysCfg.domoticz_key_idx[i] = 0;
-    sysCfg.domoticz_switch_idx[i] = 0;
+//    sysCfg.domoticz_relay_idx[i] = 0;
+//    sysCfg.domoticz_key_idx[i] = 0;
+//    sysCfg.domoticz_switch_idx[i] = 0;
   }
 
   sysCfg.hlw_pcal = HLW_PREF_PULSE;
   sysCfg.hlw_ucal = HLW_UREF_PULSE;
   sysCfg.hlw_ical = HLW_IREF_PULSE;
-  sysCfg.hlw_kWhtoday = 0;
-  sysCfg.hlw_kWhyesterday = 0;
-  sysCfg.hlw_kWhdoy = 0;
-  sysCfg.hlw_pmin = 0;
-  sysCfg.hlw_pmax = 0;
-  sysCfg.hlw_umin = 0;
-  sysCfg.hlw_umax = 0;
-  sysCfg.hlw_imin = 0;
-  sysCfg.hlw_imax = 0;
-  sysCfg.hlw_mpl = 0;                              // MaxPowerLimit
+//  sysCfg.hlw_kWhtoday = 0;
+//  sysCfg.hlw_kWhyesterday = 0;
+//  sysCfg.hlw_kWhdoy = 0;
+//  sysCfg.hlw_pmin = 0;
+//  sysCfg.hlw_pmax = 0;
+//  sysCfg.hlw_umin = 0;
+//  sysCfg.hlw_umax = 0;
+//  sysCfg.hlw_imin = 0;
+//  sysCfg.hlw_imax = 0;
+//  sysCfg.hlw_mpl = 0;                              // MaxPowerLimit
   sysCfg.hlw_mplh = MAX_POWER_HOLD;
   sysCfg.hlw_mplw = MAX_POWER_WINDOW;
-  sysCfg.hlw_mspl = 0;                             // MaxSafePowerLimit
+//  sysCfg.hlw_mspl = 0;                             // MaxSafePowerLimit
   sysCfg.hlw_msplh = SAFE_POWER_HOLD;
   sysCfg.hlw_msplw = SAFE_POWER_WINDOW;
-  sysCfg.hlw_mkwh = 0;                             // MaxEnergy
-  sysCfg.hlw_mkwhs = 0;                            // MaxEnergyStart
+//  sysCfg.hlw_mkwh = 0;                             // MaxEnergy
+//  sysCfg.hlw_mkwhs = 0;                            // MaxEnergyStart
 
   CFG_DefaultSet_3_2_4();
 
@@ -407,10 +427,10 @@ void CFG_DefaultSet2()
   CFG_DefaultSet_3_9_3();
 
   strlcpy(sysCfg.switch_topic, "0", sizeof(sysCfg.switch_topic));
-  sysCfg.mqtt_switch_retain = MQTT_SWITCH_RETAIN;
-  sysCfg.mqtt_enabled = MQTT_USE;
+  sysCfg.flag.mqtt_switch_retain = MQTT_SWITCH_RETAIN;
+  sysCfg.flag.mqtt_enabled = MQTT_USE;
 
-  sysCfg.emulation = EMULATION;
+  sysCfg.flag.emulation = EMULATION;
 
   strlcpy(sysCfg.web_password, WEB_PASSWORD, sizeof(sysCfg.web_password));
 
@@ -418,7 +438,7 @@ void CFG_DefaultSet2()
   sysCfg.pulsetime[0] = APP_PULSETIME;
 
   // 4.0.7
-  for (byte i = 0; i < 5; i++) sysCfg.pwmvalue[i] = 0;
+//  for (byte i = 0; i < 5; i++) sysCfg.pwmvalue[i] = 0;
 
   // 4.0.9
   CFG_DefaultSet_4_0_9();
@@ -426,7 +446,11 @@ void CFG_DefaultSet2()
   // 4.1.1
   CFG_DefaultSet_4_1_1();
 
+  // 5.0.2
+  CFG_DefaultSet_5_0_2();
 }
+
+/********************************************************************************************/
 
 void CFG_DefaultSet_3_2_4()
 {
@@ -503,18 +527,18 @@ void CFG_DefaultSet_4_0_9()
 
 void CFG_DefaultSet_4_1_1()
 {
-  sysCfg.mqtt_response = 0;
   strlcpy(sysCfg.state_text[0], MQTT_STATUS_OFF, sizeof(sysCfg.state_text[0]));
   strlcpy(sysCfg.state_text[1], MQTT_STATUS_ON, sizeof(sysCfg.state_text[1]));
   strlcpy(sysCfg.state_text[2], MQTT_CMND_TOGGLE, sizeof(sysCfg.state_text[2]));
 }
 
-void CFG_Default()
+void CFG_DefaultSet_5_0_2()
 {
-  addLog_P(LOG_LEVEL_NONE, PSTR("Config: Use default configuration"));
-  CFG_DefaultSet1();
-  CFG_DefaultSet2();
-  CFG_Save();
+  sysCfg.flag.temperature_conversion = TEMP_CONVERSION;
+  sysCfg.flag.temperature_resolution = TEMP_RESOLUTION;
+  sysCfg.flag.humidity_resolution = HUMIDITY_RESOLUTION;
+  sysCfg.flag.pressure_resolution = PRESSURE_RESOLUTION;
+  sysCfg.flag.energy_resolution = ENERGY_RESOLUTION;
 }
 
 /********************************************************************************************/
@@ -543,8 +567,8 @@ void CFG_Delta()
     }      
     if (sysCfg.version < 0x03020800) {  // 3.2.8 - Add parameter
       strlcpy(sysCfg.switch_topic, sysCfg.button_topic, sizeof(sysCfg.switch_topic));
-      sysCfg.mqtt_switch_retain = MQTT_SWITCH_RETAIN;
-      sysCfg.mqtt_enabled = MQTT_USE;
+      sysCfg.ex_mqtt_switch_retain = MQTT_SWITCH_RETAIN;
+      sysCfg.ex_mqtt_enabled = MQTT_USE;
     }
     if (sysCfg.version < 0x03020C00) {  // 3.2.12 - Add parameter
       sysCfg.sleep = APP_SLEEP;
@@ -553,7 +577,7 @@ void CFG_Delta()
       CFG_DefaultSet_3_9_3();
     }
     if (sysCfg.version < 0x03090700) {  // 3.9.7 - Add parameter
-      sysCfg.emulation = EMULATION;
+      sysCfg.ex_emulation = EMULATION;
     }
     if (sysCfg.version < 0x03091400) {
       strlcpy(sysCfg.web_password, WEB_PASSWORD, sizeof(sysCfg.web_password));
@@ -562,7 +586,7 @@ void CFG_Delta()
       for (byte i = 0; i < 4; i++) sysCfg.switchmode[i] = sysCfg.ex_switchmode;
     }
     if (sysCfg.version < 0x04000200) {
-      sysCfg.button_restrict = 0;
+      sysCfg.ex_button_restrict = 0;
     }
     if (sysCfg.version < 0x04000400) {
       CFG_DefaultSet_4_0_4();
@@ -582,6 +606,23 @@ void CFG_Delta()
     if (sysCfg.version < 0x04010100) {
       CFG_DefaultSet_4_1_1();
     }
+    if (sysCfg.version < 0x05000105) {
+      sysCfg.flag = { 0 };
+      sysCfg.flag.savestate = SAVE_STATE;
+      sysCfg.flag.button_restrict = sysCfg.ex_button_restrict;
+      sysCfg.flag.value_units = sysCfg.ex_value_units;
+      sysCfg.flag.mqtt_enabled = sysCfg.ex_mqtt_enabled;
+//      sysCfg.flag.mqtt_response = 0;
+      sysCfg.flag.mqtt_power_retain = sysCfg.ex_mqtt_power_retain;
+      sysCfg.flag.mqtt_button_retain = sysCfg.ex_mqtt_button_retain;
+      sysCfg.flag.mqtt_switch_retain = sysCfg.ex_mqtt_switch_retain;
+      sysCfg.flag.emulation = sysCfg.ex_emulation;
+
+      CFG_DefaultSet_5_0_2();
+
+      sysCfg.savedata = SAVE_DATA;
+    }
+
     sysCfg.version = VERSION;
   }
 }
