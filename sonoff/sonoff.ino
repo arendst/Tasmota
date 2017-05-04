@@ -10,7 +10,7 @@
  * ====================================================
 */
 
-#define VERSION                0x05000200  // 5.0.2
+#define VERSION                0x05000300  // 5.0.3
 
 enum log_t   {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG_MORE, LOG_LEVEL_ALL};
 enum week_t  {Last, First, Second, Third, Fourth};
@@ -258,6 +258,7 @@ uint8_t holdcount = 0;                // Timer recording button hold
 uint8_t multiwindow = 0;              // Max time between button presses to record press count
 uint8_t multipress = 0;               // Number of button presses within multiwindow
 uint8_t lastwallswitch[4];            // Last wall switch states
+uint8_t blockgpio0 = 4;               // Block GPIO0 for 4 seconds after poweron to workaround Wemos D1 RTS circuit
 
 mytmplt my_module;                    // Active copy of GPIOs
 uint8_t pin[GPIO_MAX];                // Possible pin configurations
@@ -460,7 +461,7 @@ void mqtt_publish(const char* topic, const char* data)
   mqtt_publish(topic, data, false);
 }
 
-void mqtt_publish_topic_P(uint8_t prefix, const char* subtopic, const char* data)
+void mqtt_publish_topic_P(uint8_t prefix, const char* subtopic, const char* data, boolean retained)
 {
   char romram[16];
   char stopic[TOPSZ];  
@@ -468,7 +469,12 @@ void mqtt_publish_topic_P(uint8_t prefix, const char* subtopic, const char* data
   snprintf_P(romram, sizeof(romram), ((prefix > 3) && !sysCfg.flag.mqtt_response) ? PSTR("RESULT") : subtopic);
   prefix &= 1;
   snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/%s"), sysCfg.mqtt_prefix[prefix +1], sysCfg.mqtt_topic, romram);
-  mqtt_publish(stopic, data);
+  mqtt_publish(stopic, data, retained);
+}
+
+void mqtt_publish_topic_P(uint8_t prefix, const char* subtopic, const char* data)
+{
+  mqtt_publish_topic_P(prefix, subtopic, data, false);
 }
 
 void mqtt_publishPowerState(byte device)
@@ -793,6 +799,17 @@ boolean mqtt_command(boolean grpflg, char *type, uint16_t index, char *dataBuf, 
     }
     snprintf_P(svalue, ssvalue, PSTR("{\"PowerRetain\":\"%s\"}"), getStateText(sysCfg.flag.mqtt_power_retain));
   }
+  else if (!strcmp_P(type,PSTR("SENSORRETAIN"))) {
+    if ((data_len > 0) && (payload >= 0) && (payload <= 1)) {
+      if (!payload) {
+        svalue[0] = '\0';
+        mqtt_publish_topic_P(1, PSTR("SENSOR"), svalue, sysCfg.flag.mqtt_sensor_retain);
+      }
+      sysCfg.flag.mqtt_sensor_retain = payload;
+    }
+    snprintf_P(svalue, ssvalue, PSTR("{\"SensorRetain\":\"%s\"}"), getStateText(sysCfg.flag.mqtt_sensor_retain));
+  }
+
 #ifdef USE_DOMOTICZ
   else if (domoticz_command(type, index, dataBuf, data_len, payload, svalue, ssvalue)) {
     // Serviced
@@ -1765,6 +1782,10 @@ void every_second()
 {
   char svalue[MESSZ];
 
+  if (blockgpio0) {
+    blockgpio0--;
+  }
+
   for (byte i = 0; i < MAX_PULSETIMERS; i++) {
     if (pulse_timer[i] > 111) {
       pulse_timer[i]--;
@@ -1849,7 +1870,7 @@ void every_second()
       svalue[0] = '\0';
       sensors_mqttPresent(svalue, sizeof(svalue), &djson);
       if (djson) {
-        mqtt_publish_topic_P(1, PSTR("SENSOR"), svalue);
+        mqtt_publish_topic_P(1, PSTR("SENSOR"), svalue, sysCfg.flag.mqtt_sensor_retain);
       }
 
       if (hlw_flg) {
@@ -1947,7 +1968,7 @@ void stateloop()
       button = NOT_PRESSED;
     }
   } else {
-    if (pin[GPIO_KEY1] < 99) {
+    if ((pin[GPIO_KEY1] < 99) && !blockgpio0) {
       button = digitalRead(pin[GPIO_KEY1]);
     }
   }
@@ -2067,7 +2088,7 @@ void stateloop()
       }
     } else {
       if (sysCfg.ledstate &0x01) {
-        setLed(power);
+        setLed((SONOFF_TOUCH == sysCfg.module) ? (power ^1) : power);
       }
     }
   }

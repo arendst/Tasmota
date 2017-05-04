@@ -176,8 +176,8 @@ boolean parseIP(uint32_t* addr, const char* str)
  * Wifi
 \*********************************************************************************************/
 
-#define WIFI_CONFIG_SEC   60   // seconds before restart
-#define WIFI_MANAGER_SEC  120  // seconds before restart
+#define WIFI_CONFIG_SEC   180  // seconds before restart
+#define WIFI_MANAGER_SEC  180  // seconds before restart
 #define WIFI_CHECK_SEC    20   // seconds
 #define WIFI_RETRY_SEC    30   // seconds
 

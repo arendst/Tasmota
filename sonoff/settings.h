@@ -12,7 +12,7 @@ typedef struct {
   uint32_t mqtt_button_retain : 1;
   uint32_t mqtt_switch_retain : 1;
   uint32_t temperature_conversion : 1;
-  uint32_t spare23 : 1;
+  uint32_t mqtt_sensor_retain : 1;
   uint32_t spare22 : 1;
   uint32_t spare21 : 1;
   uint32_t spare20 : 1;

@@ -1,4 +1,10 @@
-/* 5.0.2 20170503
+/* 5.0.3 20170504
+ * Add command SensorRetain on|off to enable retaining of mqtt message tele/sonoff/SENSOR (#74)
+ * Change WifiConfig timeout from 60 seconds to 180 seconds (#212)
+ * Change Sonoff Touch command Ledstate functionality by turning led on if power is off (#214)
+ * Add 4 seconds delay after power on before enabling button to workaround Wemos D1 mini RTS circuit (#380)
+ *
+ * 5.0.2 20170503
  * Reset SaveData, SaveState and MqttResponse to default values due to rearranging settings
  * Moved some settings to flag area
  * Add command TempUnit Celsius|Fahrenheit for selecting Celsius or Fahrenheit (#347)
