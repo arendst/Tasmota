@@ -448,6 +448,10 @@ void CFG_DefaultSet2()
 
   // 5.0.2
   CFG_DefaultSet_5_0_2();
+
+  // 5.0.4
+//  sysCfg.hlw_kWhtotal = 0;
+  rtcMem.hlw_kWhtotal = 0;
 }
 
 /********************************************************************************************/
@@ -622,7 +626,10 @@ void CFG_Delta()
 
       sysCfg.savedata = SAVE_DATA;
     }
-
+    if (sysCfg.version < 0x05000400) {
+      sysCfg.hlw_kWhtotal = 0;
+      rtcMem.hlw_kWhtotal = 0;
+    }
     sysCfg.version = VERSION;
   }
 }

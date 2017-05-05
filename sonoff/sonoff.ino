@@ -10,7 +10,7 @@
  * ====================================================
 */
 
-#define VERSION                0x05000300  // 5.0.3
+#define VERSION                0x05000400  // 5.0.4
 
 enum log_t   {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG_MORE, LOG_LEVEL_ALL};
 enum week_t  {Last, First, Second, Third, Fourth};
@@ -319,31 +319,35 @@ void setLatchingRelay(uint8_t power, uint8_t state)
   }
 }
 
-void setRelay(uint8_t power)
+void setRelay(uint8_t rpower)
 {
   uint8_t state;
-  
+
+  if (4 == sysCfg.poweronstate) {  // All on and stay on
+    power = (1 << Maxdevice) -1;
+    rpower = power;
+  }
   if ((SONOFF_DUAL == sysCfg.module) || (CH4 == sysCfg.module)) {
     Serial.write(0xA0);
     Serial.write(0x04);
-    Serial.write(power);
+    Serial.write(rpower);
     Serial.write(0xA1);
     Serial.write('\n');
     Serial.flush();
   }
   else if (SONOFF_LED == sysCfg.module) {
-    sl_setPower(power &1);
+    sl_setPower(rpower &1);
   }
   else if (EXS_RELAY == sysCfg.module) {
-    setLatchingRelay(power, 1);
+    setLatchingRelay(rpower, 1);
   }
   else {
     for (byte i = 0; i < Maxdevice; i++) {
-      state = power &1;
+      state = rpower &1;
       if (pin[GPIO_REL1 +i] < 99) {
         digitalWrite(pin[GPIO_REL1 +i], rel_inverted[i] ? !state : state);
       }
-      power >>= 1;
+      rpower >>= 1;
     }
   }
   hlw_setPowerSteadyCounter(2);
@@ -949,8 +953,13 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
       return;
     }
     else if ((sysCfg.module != MOTOR) && !strcmp_P(type,PSTR("POWERONSTATE"))) {
-      if ((data_len > 0) && (payload >= 0) && (payload <= 3)) {
+      if ((data_len > 0) && (payload >= 0) && (payload <= 4)) {
         sysCfg.poweronstate = payload;
+        if (4 == sysCfg.poweronstate) {
+          for(byte i = 1; i <= Maxdevice; i++) {
+            do_cmnd_power(i, 1);
+          }
+        }
       }
       snprintf_P(svalue, sizeof(svalue), PSTR("{\"PowerOnState\":%d}"), sysCfg.poweronstate);
     }
@@ -2490,31 +2499,37 @@ void setup()
   if (MOTOR == sysCfg.module) {
     sysCfg.poweronstate = 1;  // Needs always on else in limbo!
   }
-  if ((resetInfo.reason == REASON_DEFAULT_RST) || (resetInfo.reason == REASON_EXT_SYS_RST)) {
-    if (0 == sysCfg.poweronstate) {       // All off
-      power = 0;
-      setRelay(power);
-    }
-    else if (1 == sysCfg.poweronstate) {  // All on
-      power = (1 << Maxdevice) -1;
-      setRelay(power);
-    }
-    else if (2 == sysCfg.poweronstate) {  // All saved state toggle
-      power = sysCfg.power & ((1 << Maxdevice) -1) ^ 0xFF;
-      if (sysCfg.flag.savestate) {
+  if (4 == sysCfg.poweronstate) {  // Allways on
+    setRelay(power);
+  } else {
+    if ((resetInfo.reason == REASON_DEFAULT_RST) || (resetInfo.reason == REASON_EXT_SYS_RST)) {
+      switch (sysCfg.poweronstate) {
+      case 0:  // All off
+        power = 0;
         setRelay(power);
+        break;
+      case 1:  // All on
+        power = (1 << Maxdevice) -1;
+        setRelay(power);
+        break;
+      case 2:  // All saved state toggle
+        power = sysCfg.power & ((1 << Maxdevice) -1) ^ 0xFF;
+        if (sysCfg.flag.savestate) {
+          setRelay(power);
+        }
+        break;
+      case 3:  // All saved state
+        power = sysCfg.power & ((1 << Maxdevice) -1);
+        if (sysCfg.flag.savestate) {
+          setRelay(power);
+        }
+        break;
       }
-    }
-    else if (3 == sysCfg.poweronstate) {  // All saved state
+    } else {
       power = sysCfg.power & ((1 << Maxdevice) -1);
       if (sysCfg.flag.savestate) {
         setRelay(power);
       }
-    }
-  } else {
-    power = sysCfg.power & ((1 << Maxdevice) -1);
-    if (sysCfg.flag.savestate) {
-      setRelay(power);
     }
   }
   blink_powersave = power;

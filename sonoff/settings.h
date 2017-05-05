@@ -172,6 +172,9 @@ struct SYSCFG {
   // 4.0.9
   uint32_t      ip_address[4];
 
+  // 5.0.4
+  unsigned long hlw_kWhtotal;
+
 } sysCfg;
 
 struct RTCMEM {
@@ -179,6 +182,7 @@ struct RTCMEM {
   byte          osw_flag;
   byte          nu1;
   unsigned long hlw_kWhtoday;
+  unsigned long hlw_kWhtotal;
 } rtcMem;
 
 // See issue https://github.com/esp8266/Arduino/issues/2913  

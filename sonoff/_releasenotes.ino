@@ -1,4 +1,10 @@
-/* 5.0.3 20170504
+/* 5.0.4 20170505
+ * Add Sonoff Pow Energy Total up to 40 MWh
+ * Add command EnergyReset 1|2|3 to reset Energy counters (#406)
+ * Fix Domoticz Energy logging (#411)
+ * Add command PowerOnState 4 to keep relay always on and disabling all power control (#418)
+ *
+ * 5.0.3 20170504
  * Add command SensorRetain on|off to enable retaining of mqtt message tele/sonoff/SENSOR (#74)
  * Change WifiConfig timeout from 60 seconds to 180 seconds (#212)
  * Change Sonoff Touch command Ledstate functionality by turning led on if power is off (#214)
