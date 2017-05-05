@@ -90,7 +90,7 @@ boolean ir_send_command(char *type, uint16_t index, char *dataBufUc, uint16_t da
 
 //  char log[LOGSZ];
 
-  if (!strcmp(type,"IRSEND")) {
+  if (!strcmp_P(type,PSTR("IRSEND"))) {
 	  if (data_len) {
       StaticJsonBuffer<128> jsonBuf;
       JsonObject &ir_json = jsonBuf.parseObject(dataBufUc);
@@ -102,13 +102,13 @@ boolean ir_send_command(char *type, uint16_t index, char *dataBufUc, uint16_t da
         bits = ir_json["BITS"];
         data = ir_json["DATA"];
         if (protocol && bits && data) {
-          if      (!strcmp(protocol,"NEC"))     irsend->sendNEC(data, bits);
-          else if (!strcmp(protocol,"SONY"))    irsend->sendSony(data, bits);
-          else if (!strcmp(protocol,"RC5"))     irsend->sendRC5(data, bits);
-          else if (!strcmp(protocol,"RC6"))     irsend->sendRC6(data, bits);
-          else if (!strcmp(protocol,"DISH"))    irsend->sendDISH(data, bits);
-          else if (!strcmp(protocol,"JVC"))     irsend->sendJVC(data, bits, 1);
-          else if (!strcmp(protocol,"SAMSUNG")) irsend->sendSAMSUNG(data, bits);
+          if      (!strcmp_P(protocol,PSTR("NEC")))     irsend->sendNEC(data, bits);
+          else if (!strcmp_P(protocol,PSTR("SONY")))    irsend->sendSony(data, bits);
+          else if (!strcmp_P(protocol,PSTR("RC5")))     irsend->sendRC5(data, bits);
+          else if (!strcmp_P(protocol,PSTR("RC6")))     irsend->sendRC6(data, bits);
+          else if (!strcmp_P(protocol,PSTR("DISH")))    irsend->sendDISH(data, bits);
+          else if (!strcmp_P(protocol,PSTR("JVC")))     irsend->sendJVC(data, bits, 1);
+          else if (!strcmp_P(protocol,PSTR("SAMSUNG"))) irsend->sendSAMSUNG(data, bits);
           else {
             snprintf_P(svalue, ssvalue, PSTR("{\"IRSend\":\"Protocol not supported\"}"));
           }
@@ -120,7 +120,7 @@ boolean ir_send_command(char *type, uint16_t index, char *dataBufUc, uint16_t da
     }
   }
 #ifdef USE_IR_HVAC
-  else if (!strcmp(type,"IRHVAC")) {
+  else if (!strcmp_P(type,PSTR("IRHVAC"))) {
     if (data_len) {
       StaticJsonBuffer<164> jsonBufer;
       JsonObject &root = jsonBufer.parseObject(dataBufUc);
@@ -138,10 +138,10 @@ boolean ir_send_command(char *type, uint16_t index, char *dataBufUc, uint16_t da
 //          HVAC_Vendor, HVAC_Power, HVAC_Mode, HVAC_FanMode, HVAC_Temp);
 //        addLog(LOG_LEVEL_DEBUG, log);
         
-        if (HVAC_Vendor == NULL || !strcmp(HVAC_Vendor,"TOSHIBA")) {
+        if (HVAC_Vendor == NULL || !strcmp_P(HVAC_Vendor,PSTR("TOSHIBA"))) {
           error = ir_hvac_toshiba(HVAC_Mode, HVAC_FanMode, HVAC_Power, HVAC_Temp);
         }
-        else if (!strcmp(HVAC_Vendor,"MITSUBISHI")) {
+        else if (!strcmp_P(HVAC_Vendor,PSTR("MITSUBISHI"))) {
           error = ir_hvac_mitsubishi(HVAC_Mode, HVAC_FanMode, HVAC_Power, HVAC_Temp);
         }
         else  error = true;

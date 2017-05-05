@@ -138,11 +138,6 @@ boolean htu21_init()
   return true;
 }
 
-float htu21_convertCtoF(float c)
-{
-  return c * 1.8 + 32;
-}
-
 float htu21_readHumidity(void)
 {
   uint8_t  checksum = 0;
@@ -179,7 +174,7 @@ float htu21_readHumidity(void)
   return humidity;
 }
 
-float htu21_readTemperature(bool S)
+float htu21_readTemperature()
 {
   uint8_t  checksum=0;
   uint16_t sensorval=0;
@@ -202,10 +197,7 @@ float htu21_readTemperature(bool S)
     return 0.0; // Checksum mismatch
   }
 
-  t = (0.002681 * (float)sensorval - 46.85);
-  if(S) {
-    t = htu21_convertCtoF(t);
-  }
+  t = convertTemp(0.002681 * (float)sensorval - 46.85);
   return t;
 }
 
@@ -279,11 +271,11 @@ void htu_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
   char stemp1[10];
   char stemp2[10];
 
-  float t = htu21_readTemperature(TEMP_CONVERSION);
+  float t = htu21_readTemperature();
   float h = htu21_readHumidity();
   h = htu21_compensatedHumidity(h, t);
-  dtostrf(t, 1, TEMP_RESOLUTION &3, stemp1);
-  dtostrf(h, 1, HUMIDITY_RESOLUTION &3, stemp2);
+  dtostrf(t, 1, sysCfg.flag.temperature_resolution, stemp1);
+  dtostrf(h, 1, sysCfg.flag.humidity_resolution, stemp2);
   snprintf_P(svalue, ssvalue, JSON_SNS_TEMPHUM, svalue, htustype, stemp1, stemp2);
   *djson = 1;
 #ifdef USE_DOMOTICZ
@@ -299,13 +291,13 @@ String htu_webPresent()
     char stemp[10];
     char sensor[80];
 
-    float t_htu21 = htu21_readTemperature(TEMP_CONVERSION);
+    float t_htu21 = htu21_readTemperature();
     float h_htu21 = htu21_readHumidity();
     h_htu21 = htu21_compensatedHumidity(h_htu21, t_htu21);
-    dtostrf(t_htu21, 1, TEMP_RESOLUTION &3, stemp);
-    snprintf_P(sensor, sizeof(sensor), HTTP_SNS_TEMP, htustype, stemp, (TEMP_CONVERSION) ? 'F' : 'C');
+    dtostrf(t_htu21, 1, sysCfg.flag.temperature_resolution, stemp);
+    snprintf_P(sensor, sizeof(sensor), HTTP_SNS_TEMP, htustype, stemp, tempUnit());
     page += sensor;
-    dtostrf(h_htu21, 1, HUMIDITY_RESOLUTION &3, stemp);
+    dtostrf(h_htu21, 1, sysCfg.flag.humidity_resolution, stemp);
     snprintf_P(sensor, sizeof(sensor), HTTP_SNS_HUM, htustype, stemp);
     page += sensor;
   }

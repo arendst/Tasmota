@@ -86,6 +86,7 @@
 #undef SUB_PREFIX
 #undef PUB_PREFIX
 #undef PUB_PREFIX2
+#undef USE_ADC_VCC 
 
 #define SUB_PREFIX             "hm/setting"           // Sonoff devices subscribe to:- SUB_PREFIX/MQTT_TOPIC and SUB_PREFIX/MQTT_GRPTOPIC
 #define PUB_PREFIX             "hm/status"            // Sonoff devices publish to:- PUB_PREFIX/MQTT_TOPIC

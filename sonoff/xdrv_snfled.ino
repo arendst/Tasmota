@@ -183,7 +183,7 @@ boolean sl_command(char *type, uint16_t index, char *dataBufUc, uint16_t data_le
   boolean serviced = true;
   boolean coldim = false;
 
-  if (!strcmp(type,"COLOR")) {
+  if (!strcmp_P(type,PSTR("COLOR"))) {
     uint8_t my_color[5];
     if (4 == data_len) {
       char ccold[3], cwarm[3];
@@ -212,7 +212,7 @@ boolean sl_command(char *type, uint16_t index, char *dataBufUc, uint16_t data_le
       snprintf_P(svalue, ssvalue, PSTR("{\"Color\":\"%04X\"}"), color);
     }
   }
-  else if (!strcmp(type,"DIMMER")) {
+  else if (!strcmp_P(type,PSTR("DIMMER"))) {
     if ((data_len > 0) && (payload >= 0) && (payload <= 100)) {
       sysCfg.led_dimmer[0] = payload;
       coldim = true;
@@ -220,7 +220,7 @@ boolean sl_command(char *type, uint16_t index, char *dataBufUc, uint16_t data_le
       snprintf_P(svalue, ssvalue, PSTR("{\"Dimmer\":%d}"), sysCfg.led_dimmer[0]);
     }
   }
-  else if (!strcmp(type,"LEDTABLE")) {
+  else if (!strcmp_P(type,PSTR("LEDTABLE"))) {
     if ((data_len > 0) && (payload >= 0) && (payload <= 2)) {
       switch (payload) {
       case 0: // Off
@@ -235,7 +235,7 @@ boolean sl_command(char *type, uint16_t index, char *dataBufUc, uint16_t data_le
     }
     snprintf_P(svalue, ssvalue, PSTR("{\"LedTable\":\"%s\"}"), getStateText(sysCfg.led_table));
   }
-  else if (!strcmp(type,"FADE")) {
+  else if (!strcmp_P(type,PSTR("FADE"))) {
     if ((data_len > 0) && (payload >= 0) && (payload <= 2)) {
       switch (payload) {
       case 0: // Off
@@ -249,20 +249,20 @@ boolean sl_command(char *type, uint16_t index, char *dataBufUc, uint16_t data_le
     }
     snprintf_P(svalue, ssvalue, PSTR("{\"Fade\":\"%s\"}"), getStateText(sysCfg.led_fade));
   }
-  else if (!strcmp(type,"SPEED")) {  // 1 - fast, 8 - slow
+  else if (!strcmp_P(type,PSTR("SPEED"))) {  // 1 - fast, 8 - slow
     if ((data_len > 0) && (payload > 0) && (payload <= 8)) {
       sysCfg.led_speed = payload;
     }
     snprintf_P(svalue, ssvalue, PSTR("{\"Speed\":%d}"), sysCfg.led_speed);
   }
-  else if (!strcmp(type,"WAKEUPDURATION")) {
+  else if (!strcmp_P(type,PSTR("WAKEUPDURATION"))) {
     if ((data_len > 0) && (payload > 0) && (payload < 3601)) {
       sysCfg.led_wakeup = payload;
       sl_wakeupActive = 0;
     }
     snprintf_P(svalue, ssvalue, PSTR("{\"WakeUpDuration\":%d}"), sysCfg.led_wakeup);
   }
-  else if (!strcmp(type,"WAKEUP")) {
+  else if (!strcmp_P(type,PSTR("WAKEUP"))) {
     do_cmnd_power(index, 1);
     sl_wakeupActive = 1;
     snprintf_P(svalue, ssvalue, PSTR("{\"Wakeup\":\"Started\"}"));

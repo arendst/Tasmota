@@ -532,21 +532,21 @@ boolean ws2812_command(char *type, uint16_t index, char *dataBuf, uint16_t data_
 {
   boolean serviced = true;
 
-  if (!strcmp(type,"PIXELS")) {
+  if (!strcmp_P(type,PSTR("PIXELS"))) {
     if ((data_len > 0) && (payload > 0) && (payload <= WS2812_MAX_LEDS)) {
       sysCfg.ws_pixels = payload;
       ws2812_pixels();
     }
     snprintf_P(svalue, ssvalue, PSTR("{\"Pixels\":%d}"), sysCfg.ws_pixels);
   }
-  else if (!strcmp(type,"LED") && (index > 0) && (index <= sysCfg.ws_pixels)) {
+  else if (!strcmp_P(type,PSTR("LED")) && (index > 0) && (index <= sysCfg.ws_pixels)) {
     if (6 == data_len) {
 //       ws2812_setColor(index, dataBufUc);
       ws2812_setColor(index, dataBuf);
     }
     ws2812_getColor(index, svalue, ssvalue);
   }
-  else if (!strcmp(type,"COLOR")) {
+  else if (!strcmp_P(type,PSTR("COLOR"))) {
     if (6 == data_len) {
 //        ws2812_setColor(0, dataBufUc);
       ws2812_setColor(0, dataBuf);
@@ -554,7 +554,7 @@ boolean ws2812_command(char *type, uint16_t index, char *dataBuf, uint16_t data_
     }
     ws2812_getColor(0, svalue, ssvalue);
   }
-  else if (!strcmp(type,"DIMMER")) {
+  else if (!strcmp_P(type,PSTR("DIMMER"))) {
     if ((data_len > 0) && (payload >= 0) && (payload <= 100)) {
       sysCfg.ws_dimmer = payload;
       power = 1;
@@ -564,7 +564,7 @@ boolean ws2812_command(char *type, uint16_t index, char *dataBuf, uint16_t data_
     }
     snprintf_P(svalue, ssvalue, PSTR("{\"Dimmer\":%d}"), sysCfg.ws_dimmer);
   }
-  else if (!strcmp(type,"LEDTABLE")) {
+  else if (!strcmp_P(type,PSTR("LEDTABLE"))) {
     if ((data_len > 0) && (payload >= 0) && (payload <= 2)) {
       switch (payload) {
       case 0: // Off
@@ -579,7 +579,7 @@ boolean ws2812_command(char *type, uint16_t index, char *dataBuf, uint16_t data_
     }
     snprintf_P(svalue, ssvalue, PSTR("{\"LedTable\":\"%s\"}"), getStateText(sysCfg.ws_ledtable));
   }
-  else if (!strcmp(type,"FADE")) {
+  else if (!strcmp_P(type,PSTR("FADE"))) {
     if ((data_len > 0) && (payload >= 0) && (payload <= 2)) {
       switch (payload) {
       case 0: // Off
@@ -593,19 +593,19 @@ boolean ws2812_command(char *type, uint16_t index, char *dataBuf, uint16_t data_
     }
     snprintf_P(svalue, ssvalue, PSTR("{\"Fade\":\"%s\"}"), getStateText(sysCfg.ws_fade));
   }
-  else if (!strcmp(type,"SPEED")) {  // 1 - fast, 5 - slow
+  else if (!strcmp_P(type,PSTR("SPEED"))) {  // 1 - fast, 5 - slow
     if ((data_len > 0) && (payload > 0) && (payload <= 5)) {
       sysCfg.ws_speed = payload;
     }
     snprintf_P(svalue, ssvalue, PSTR("{\"Speed\":%d}"), sysCfg.ws_speed);
   }
-  else if (!strcmp(type,"WIDTH")) {
+  else if (!strcmp_P(type,PSTR("WIDTH"))) {
     if ((data_len > 0) && (payload >= 0) && (payload <= 4)) {
       sysCfg.ws_width = payload;
     }
     snprintf_P(svalue, ssvalue, PSTR("{\"Width\":%d}"), sysCfg.ws_width);
   }
-  else if (!strcmp(type,"WAKEUP")) {
+  else if (!strcmp_P(type,PSTR("WAKEUP"))) {
     if ((data_len > 0) && (payload > 0) && (payload < 3601)) {
       sysCfg.ws_wakeup = payload;
       if (1 == sysCfg.ws_scheme) {
@@ -614,7 +614,7 @@ boolean ws2812_command(char *type, uint16_t index, char *dataBuf, uint16_t data_
     }
     snprintf_P(svalue, ssvalue, PSTR("{\"WakeUp\":%d}"), sysCfg.ws_wakeup);
   }
-  else if (!strcmp(type,"SCHEME")) {
+  else if (!strcmp_P(type,PSTR("SCHEME"))) {
     if ((data_len > 0) && (payload >= 0) && (payload <= 9)) {
       sysCfg.ws_scheme = payload;
       if (1 == sysCfg.ws_scheme) {

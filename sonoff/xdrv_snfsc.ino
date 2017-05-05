@@ -91,7 +91,7 @@ void sc_rcvstat(char *rcvstat)
       Serial.write("AT+SEND=fail\e");
     }
   }
-  else if (!strcmp(rcvstat,"AT+STATUS?")) {
+  else if (!strcmp_P(rcvstat,PSTR("AT+STATUS?"))) {
     Serial.write("AT+STATUS=4\e");
   }
 }
@@ -111,14 +111,12 @@ void sc_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
     char stemp1[10];
     char stemp2[10];
 
-    float t = sc_value[1];
-    if (TEMP_CONVERSION) {
-      t = sc_convertCtoF(t);
-    }
-    dtostrf(t, 1, TEMP_RESOLUTION &3, stemp1);
+    float t = convertTemp(sc_value[1]);
+    dtostrf(t, 1, sysCfg.flag.temperature_resolution, stemp1);
     float h = sc_value[0];
-    dtostrf(h, 1, HUMIDITY_RESOLUTION &3, stemp2);
-    snprintf_P(svalue, ssvalue, PSTR("%s, \"SC\":{\"Temperature\":%s, \"Humidity\":%s, \"Light\":%d, \"Noise\":%d, \"AirQuality\":%d}"),
+    dtostrf(h, 1, sysCfg.flag.humidity_resolution, stemp2);
+//    snprintf_P(svalue, ssvalue, PSTR("%s, \"SC\":{\"Temperature\":%s, \"Humidity\":%s, \"Light\":%d, \"Noise\":%d, \"AirQuality\":%d}"),
+    snprintf_P(svalue, ssvalue, PSTR("%s, \"Temperature\":%s, \"Humidity\":%s, \"Light\":%d, \"Noise\":%d, \"AirQuality\":%d"),
       svalue, stemp1, stemp2, sc_value[2], sc_value[3], sc_value[4]);
     *djson = 1;
 #ifdef USE_DOMOTICZ
@@ -136,17 +134,14 @@ String sc_webPresent()
   if (sc_value[0] > 0) {
     char stemp[10];
     char sensor[80];
-    char scstype[] = "SC";
+    char scstype[] = "";
 
-    float t = sc_value[1];
-    if (TEMP_CONVERSION) {
-      t = sc_convertCtoF(t);
-    }
-    dtostrf(t, 1, TEMP_RESOLUTION &3, stemp);
-    snprintf_P(sensor, sizeof(sensor), HTTP_SNS_TEMP, scstype, stemp, (TEMP_CONVERSION) ? 'F' : 'C');
+    float t = convertTemp(sc_value[1]);
+    dtostrf(t, 1, sysCfg.flag.temperature_resolution, stemp);
+    snprintf_P(sensor, sizeof(sensor), HTTP_SNS_TEMP, scstype, stemp, tempUnit());
     page += sensor;
     float h = sc_value[0];
-    dtostrf(h, 1, HUMIDITY_RESOLUTION &3, stemp);
+    dtostrf(h, 1, sysCfg.flag.humidity_resolution, stemp);
     snprintf_P(sensor, sizeof(sensor), HTTP_SNS_HUM, scstype, stemp);
     page += sensor;
     snprintf_P(sensor, sizeof(sensor), HTTP_SNS_LIGHT, scstype, sc_value[2]);

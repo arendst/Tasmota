@@ -176,8 +176,8 @@ boolean parseIP(uint32_t* addr, const char* str)
  * Wifi
 \*********************************************************************************************/
 
-#define WIFI_CONFIG_SEC   60   // seconds before restart
-#define WIFI_MANAGER_SEC  120  // seconds before restart
+#define WIFI_CONFIG_SEC   180  // seconds before restart
+#define WIFI_MANAGER_SEC  180  // seconds before restart
 #define WIFI_CHECK_SEC    20   // seconds
 #define WIFI_RETRY_SEC    30   // seconds
 
@@ -475,7 +475,7 @@ void WIFI_Check(uint8_t param)
           stopWebserver();
         }
 #ifdef USE_EMULATION
-        if (sysCfg.emulation) {
+        if (sysCfg.flag.emulation) {
           UDP_Connect();
         }
 #endif  // USE_EMULATION
@@ -940,6 +940,25 @@ void rtc_init()
   utctime = 0;
   breakTime(utctime, rtcTime);
   tickerRTC.attach(1, rtc_second);
+}
+
+/*********************************************************************************************\
+ * Miscellaneous
+\*********************************************************************************************/
+
+float convertTemp(float c)
+{
+  float result = c;
+  
+  if (!isnan(c) && sysCfg.flag.temperature_conversion) {
+    result = c * 1.8 + 32;  // Fahrenheit
+  }
+  return result;
+}
+
+char tempUnit()
+{
+  return (sysCfg.flag.temperature_conversion) ? 'F' : 'C';
 }
 
 /*********************************************************************************************\

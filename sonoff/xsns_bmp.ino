@@ -351,12 +351,7 @@ double bme280_readHumidity(void)
  * BMP
 \*********************************************************************************************/
 
-double bmp_convertCtoF(double c)
-{
-  return c * 1.8 + 32;
-}
-
-double bmp_readTemperature(bool S)
+double bmp_readTemperature(void)
 {
   double t = NAN;
   
@@ -369,9 +364,7 @@ double bmp_readTemperature(bool S)
     t = bmp280_readTemperature();
   }
   if (!isnan(t)) {
-    if (S) {
-      t = bmp_convertCtoF(t);
-    }
+    t = convertTemp(t);
     return t;
   }
   return 0;
@@ -453,12 +446,12 @@ void bmp_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
   char stemp2[10];
   char stemp3[10];
 
-  double t = bmp_readTemperature(TEMP_CONVERSION);
+  double t = bmp_readTemperature();
   double p = bmp_readPressure();
   double h = bmp_readHumidity();
-  dtostrf(t, 1, TEMP_RESOLUTION &3, stemp1);
-  dtostrf(p, 1, PRESSURE_RESOLUTION &3, stemp2);
-  dtostrf(h, 1, HUMIDITY_RESOLUTION &3, stemp3);
+  dtostrf(t, 1, sysCfg.flag.temperature_resolution, stemp1);
+  dtostrf(p, 1, sysCfg.flag.pressure_resolution, stemp2);
+  dtostrf(h, 1, sysCfg.flag.humidity_resolution, stemp3);
   if (!strcmp(bmpstype,"BME280")) {
     snprintf_P(svalue, ssvalue, PSTR("%s, \"%s\":{\"Temperature\":%s, \"Humidity\":%s, \"Pressure\":%s}"),
       svalue, bmpstype, stemp1, stemp3, stemp2);
@@ -480,18 +473,18 @@ String bmp_webPresent()
     char stemp[10];
     char sensor[80];
 
-    double t_bmp = bmp_readTemperature(TEMP_CONVERSION);
+    double t_bmp = bmp_readTemperature();
     double p_bmp = bmp_readPressure();
     double h_bmp = bmp_readHumidity();
-    dtostrf(t_bmp, 1, TEMP_RESOLUTION &3, stemp);
-    snprintf_P(sensor, sizeof(sensor), HTTP_SNS_TEMP, bmpstype, stemp, (TEMP_CONVERSION) ? 'F' : 'C');
+    dtostrf(t_bmp, 1, sysCfg.flag.temperature_resolution, stemp);
+    snprintf_P(sensor, sizeof(sensor), HTTP_SNS_TEMP, bmpstype, stemp, tempUnit());
     page += sensor;
     if (!strcmp(bmpstype,"BME280")) {
-      dtostrf(h_bmp, 1, HUMIDITY_RESOLUTION &3, stemp);
+      dtostrf(h_bmp, 1, sysCfg.flag.humidity_resolution, stemp);
       snprintf_P(sensor, sizeof(sensor), HTTP_SNS_HUM, bmpstype, stemp);
       page += sensor;
     }
-    dtostrf(p_bmp, 1, PRESSURE_RESOLUTION &3, stemp);
+    dtostrf(p_bmp, 1, sysCfg.flag.pressure_resolution, stemp);
     snprintf_P(sensor, sizeof(sensor), HTTP_SNS_PRESSURE, bmpstype, stemp);
     page += sensor;
   }

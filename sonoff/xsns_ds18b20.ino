@@ -129,12 +129,7 @@ void dsb_readTempPrep()
   dsb_write(0x44);           // Start conversion
 }
 
-float dsb_convertCtoF(float c)
-{
-  return c * 1.8 + 32;
-}
-
-boolean dsb_readTemp(bool S, float &t)
+boolean dsb_readTemp(float &t)
 {
   int16_t DSTemp;
   byte msb, lsb, crc, sign = 1;
@@ -178,10 +173,7 @@ boolean dsb_readTemp(bool S, float &t)
       DSTemp = (~DSTemp) +1;
       sign = -1;
     }
-    t = (float)sign * DSTemp * 0.0625;
-    if(S) {
-      t = dsb_convertCtoF(t);
-    }
+    t = convertTemp((float)sign * DSTemp * 0.0625);
   }
   if (!isnan(t)) dsb_mt = t;
   return !isnan(t);
@@ -196,8 +188,8 @@ void dsb_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
   char stemp1[10];
   float t;
 
-  if (dsb_readTemp(TEMP_CONVERSION, t)) {  // Check if read failed
-    dtostrf(t, 1, TEMP_RESOLUTION &3, stemp1);
+  if (dsb_readTemp(t)) {  // Check if read failed
+    dtostrf(t, 1, sysCfg.flag.temperature_resolution, stemp1);
     snprintf_P(svalue, ssvalue, PSTR("%s, \"DS18B20\":{\"Temperature\":%s}"), svalue, stemp1);
     *djson = 1;
 #ifdef USE_DOMOTICZ
@@ -213,12 +205,12 @@ String dsb_webPresent()
   String page = "";
   float st;
   
-  if (dsb_readTemp(TEMP_CONVERSION, st)) {  // Check if read failed
+  if (dsb_readTemp(st)) {  // Check if read failed
     char stemp[10];
     char sensor[80];
     
-    dtostrf(st, 1, TEMP_RESOLUTION &3, stemp);
-    snprintf_P(sensor, sizeof(sensor), HTTP_SNS_TEMP, "DS18B20", stemp, (TEMP_CONVERSION) ? 'F' : 'C');
+    dtostrf(st, 1, sysCfg.flag.temperature_resolution, stemp);
+    snprintf_P(sensor, sizeof(sensor), HTTP_SNS_TEMP, "DS18B20", stemp, tempUnit());
     page += sensor;
   }
   dsb_readTempPrep();

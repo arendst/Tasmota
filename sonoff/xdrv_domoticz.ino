@@ -152,7 +152,7 @@ boolean domoticz_mqttData(char *topicBuf, uint16_t stopicBuf, char *dataBuf, uin
     if (!domoticz.success()) {
       return 1;
     }
-//    if (strcmp(domoticz["dtype"],"Light/Switch")) {
+//    if (strcmp_P(domoticz["dtype"],PSTR("Light/Switch"))) {
 //      return 1;
 //    }
     idx = domoticz["idx"];
@@ -210,47 +210,47 @@ boolean domoticz_command(const char *type, uint16_t index, char *dataBuf, uint16
 {
   boolean serviced = true;
   
-  if (!strncmp(type,"DOMOTICZ",8)) {
-    if (!strcmp(type +8,"INTOPIC")) {
+  if (!strncmp_P(type,PSTR("DOMOTICZ"),8)) {
+    if (!strcmp_P(type +8,PSTR("INTOPIC"))) {
       if ((data_len > 0) && (data_len < sizeof(sysCfg.domoticz_in_topic))) {
         strlcpy(sysCfg.domoticz_in_topic, (1 == payload) ? DOMOTICZ_IN_TOPIC : dataBuf, sizeof(sysCfg.domoticz_in_topic));
         restartflag = 2;
       }
       snprintf_P(svalue, ssvalue, PSTR("{\"DomoticzInTopic\":\"%s\"}"), sysCfg.domoticz_in_topic);
     }
-    else if (!strcmp(type +8,"OUTTOPIC")) {
+    else if (!strcmp_P(type +8,PSTR("OUTTOPIC"))) {
       if ((data_len > 0) && (data_len < sizeof(sysCfg.domoticz_out_topic))) {
         strlcpy(sysCfg.domoticz_out_topic, (1 == payload) ? DOMOTICZ_OUT_TOPIC : dataBuf, sizeof(sysCfg.domoticz_out_topic));
         restartflag = 2;
       }
       snprintf_P(svalue, ssvalue, PSTR("{\"DomoticzOutTopic\":\"%s\"}"), sysCfg.domoticz_out_topic);
     }
-    else if (!strcmp(type +8,"IDX") && (index > 0) && (index <= Maxdevice)) {
+    else if (!strcmp_P(type +8,PSTR("IDX")) && (index > 0) && (index <= Maxdevice)) {
       if ((data_len > 0) && (payload >= 0)) {
         sysCfg.domoticz_relay_idx[index -1] = payload;
         restartflag = 2;
       }
       snprintf_P(svalue, ssvalue, PSTR("{\"DomoticzIdx%d\":%d}"), index, sysCfg.domoticz_relay_idx[index -1]);
     }
-    else if (!strcmp(type +8,"KEYIDX") && (index > 0) && (index <= Maxdevice)) {
+    else if (!strcmp_P(type +8,PSTR("KEYIDX")) && (index > 0) && (index <= Maxdevice)) {
       if ((data_len > 0) && (payload >= 0)) {
         sysCfg.domoticz_key_idx[index -1] = payload;
       }
       snprintf_P(svalue, ssvalue, PSTR("{\"DomoticzKeyIdx%d\":%d}"), index, sysCfg.domoticz_key_idx[index -1]);
     }
-    else if (!strcmp(type +8,"SWITCHIDX") && (index > 0) && (index <= Maxdevice)) {
+    else if (!strcmp_P(type +8,PSTR("SWITCHIDX")) && (index > 0) && (index <= Maxdevice)) {
       if ((data_len > 0) && (payload >= 0)) {
         sysCfg.domoticz_switch_idx[index -1] = payload;
       }
       snprintf_P(svalue, ssvalue, PSTR("{\"DomoticzSwitchIdx%d\":%d}"), index, sysCfg.domoticz_key_idx[index -1]);
     }
-    else if (!strcmp(type +8,"SENSORIDX") && (index > 0) && (index <= DOMOTICZ_MAX_SENSORS)) {
+    else if (!strcmp_P(type +8,PSTR("SENSORIDX")) && (index > 0) && (index <= DOMOTICZ_MAX_SENSORS)) {
       if ((data_len > 0) && (payload >= 0)) {
         sysCfg.domoticz_sensor_idx[index -1] = payload;
       }
       snprintf_P(svalue, ssvalue, PSTR("{\"DomoticzSensorIdx%d\":%d}"), index, sysCfg.domoticz_sensor_idx[index -1]);
     }
-    else if (!strcmp(type +8,"UPDATETIMER")) {
+    else if (!strcmp_P(type +8,PSTR("UPDATETIMER"))) {
       if ((data_len > 0) && (payload >= 0) && (payload < 3601)) {
         sysCfg.domoticz_update_timer = payload;
       }
