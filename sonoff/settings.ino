@@ -452,6 +452,10 @@ void CFG_DefaultSet2()
   // 5.0.4
 //  sysCfg.hlw_kWhtotal = 0;
   rtcMem.hlw_kWhtotal = 0;
+
+  // 5.0.4a
+  strlcpy(sysCfg.mqtt_fulltopic, MQTT_FULLTOPIC, sizeof(sysCfg.mqtt_fulltopic));
+
 }
 
 /********************************************************************************************/
@@ -629,6 +633,9 @@ void CFG_Delta()
     if (sysCfg.version < 0x05000400) {
       sysCfg.hlw_kWhtotal = 0;
       rtcMem.hlw_kWhtotal = 0;
+    }
+    if (sysCfg.version < 0x05000500) {
+      strlcpy(sysCfg.mqtt_fulltopic, MQTT_FULLTOPIC, sizeof(sysCfg.mqtt_fulltopic));
     }
     sysCfg.version = VERSION;
   }

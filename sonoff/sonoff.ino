@@ -10,7 +10,7 @@
  * ====================================================
 */
 
-#define VERSION                0x05000400  // 5.0.4
+#define VERSION                0x05000500  // 5.0.5
 
 enum log_t   {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG_MORE, LOG_LEVEL_ALL};
 enum week_t  {Last, First, Second, Third, Fourth};
@@ -119,7 +119,8 @@ enum emul_t  {EMUL_NONE, EMUL_WEMO, EMUL_HUE, EMUL_MAX};
 #define OTA_ATTEMPTS           10           // Number of times to try fetching the new firmware
 
 #define INPUT_BUFFER_SIZE      100          // Max number of characters in serial buffer
-#define TOPSZ                  60           // Max number of characters in topic string
+#define CMDSZ                  20           // Max number of characters in command
+#define TOPSZ                  100          // Max number of characters in topic string
 #define LOGSZ                  128          // Max number of characters in log string
 #ifdef USE_MQTT_TLS
   #define MAX_LOG_LINES        10           // Max number of lines in weblog
@@ -172,6 +173,8 @@ const char commands[MAX_BUTTON_COMMANDS][14] PROGMEM = {
   {"upgrade 1"}};     // Press button seven times
 
 const char wificfg[5][12] PROGMEM = { "Restart", "Smartconfig", "Wifimanager", "WPSconfig", "Retry" };
+
+const char PREFIXES[3][5] PROGMEM = { "cmnd", "stat", "tele" };
 
 struct TIME_T {
   uint8_t       Second;
@@ -363,58 +366,35 @@ void setLed(uint8_t state)
 
 /********************************************************************************************/
 
-void json2legacy(char* stopic, char* svalue)
+void getTopic_P(char *stopic, byte idx, char *topic, const char* subtopic)
 {
-  char *p;
-  char *token;
-  uint16_t i;
-  uint16_t j;
+  char romram[CMDSZ];
 
-  if (!strstr(svalue, "{\"")) {
-    return;  // No JSON
+  snprintf_P(romram, sizeof(romram), subtopic);
+  String fulltopic = sysCfg.mqtt_fulltopic;
+  if ((0 == idx) && (-1 == fulltopic.indexOf(F("%prefix%")))) {
+    fulltopic += F("/%prefix%");  // Need prefix for commands to handle mqtt topic loops
   }
-
-// stopic = stat/sonoff/RESULT
-// svalue = {"POWER2":"ON"}
-// --> stopic = "stat/sonoff/POWER2", svalue = "ON"
-// svalue = {"Upgrade":{"Version":"2.1.2", "OtaUrl":"%s"}}
-// --> stopic = "stat/sonoff/UPGRADE", svalue = "2.1.2"
-// svalue = {"SerialLog":2}
-// --> stopic = "stat/sonoff/SERIALLOG", svalue = "2"
-// svalue = {"POWER":""}
-// --> stopic = "stat/sonoff/POWER", svalue = ""
-
-  token = strtok(svalue, "{\"");      // Topic
-  p = strrchr(stopic, '/') +1;
-  i = p - stopic;
-  for (j = 0; j < strlen(token)+1; j++) {
-    stopic[i+j] = toupper(token[j]);
-  }
-  token = strtok(NULL, "\"");         // : or :3} or :3, or :{
-  if (strstr(token, ":{")) {
-    token = strtok(NULL, "\"");       // Subtopic
-    token = strtok(NULL, "\"");       // : or :3} or :3,
-  }
-  if (strlen(token) > 1) {
-    token++;
-    p = strchr(token, ',');
-    if (!p) {
-      p = strchr(token, '}');
-    }
-    i = p - token;
-    token[i] = '\0';                  // Value
-  } else {
-    token = strtok(NULL, "\"");       // Value or , or }
-    if ((token[0] == ',') || (token[0] == '}')) {  // Empty parameter
-      token = NULL;
+  for (byte i = 0; i < 3; i++) {
+    if ('\0' == sysCfg.mqtt_prefix[i][0]) {
+      snprintf_P(sysCfg.mqtt_prefix[i], sizeof(sysCfg.mqtt_prefix[i]), PREFIXES[i]);
     }
   }
-  if (token == NULL) {
-    svalue[0] = '\0';
-  } else {
-    memcpy(svalue, token, strlen(token)+1);
+  fulltopic.replace(F("%prefix%"), sysCfg.mqtt_prefix[idx]);
+  fulltopic.replace(F("%topic%"), topic);
+  fulltopic.replace(F("#"), "");
+  fulltopic.replace(F("//"), "/");
+  if (!fulltopic.endsWith("/")) {
+    fulltopic += "/";
   }
+  snprintf_P(stopic, TOPSZ, PSTR("%s%s"), fulltopic.c_str(), romram);
+/*
+  char log[LOGSZ];
+  snprintf_P(log, sizeof(log), PSTR("MTPC: %s"), stopic);
+  addLog(LOG_LEVEL_DEBUG, log);
+*/
 }
+
 
 char* getStateText(byte state)
 {
@@ -472,7 +452,7 @@ void mqtt_publish_topic_P(uint8_t prefix, const char* subtopic, const char* data
 
   snprintf_P(romram, sizeof(romram), ((prefix > 3) && !sysCfg.flag.mqtt_response) ? PSTR("RESULT") : subtopic);
   prefix &= 1;
-  snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/%s"), sysCfg.mqtt_prefix[prefix +1], sysCfg.mqtt_topic, romram);
+  getTopic_P(stopic, prefix +1, sysCfg.mqtt_topic, romram);
   mqtt_publish(stopic, data, retained);
 }
 
@@ -485,18 +465,21 @@ void mqtt_publishPowerState(byte device)
 {
   char stopic[TOPSZ];
   char sdevice[10];
+  char scommand[10];
   char svalue[64];  // was MESSZ
 
   if ((device < 1) || (device > Maxdevice)) {
     device = 1;
   }
   snprintf_P(sdevice, sizeof(sdevice), PSTR("%d"), device);
-  snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/%s"),
-    sysCfg.mqtt_prefix[1], sysCfg.mqtt_topic, (sysCfg.flag.mqtt_response)?"POWER":"RESULT");
-  snprintf_P(svalue, sizeof(svalue), PSTR("{\"POWER%s\":\"%s\"}"),
-    (Maxdevice > 1) ? sdevice : "", getStateText(bitRead(power, device -1)));
+  snprintf_P(scommand, sizeof(scommand), PSTR("POWER%s"), (Maxdevice > 1) ? sdevice : "");
+
+  getTopic_P(stopic, 1, sysCfg.mqtt_topic, (sysCfg.flag.mqtt_response)?"POWER":"RESULT");
+  snprintf_P(svalue, sizeof(svalue), PSTR("{\"%s\":\"%s\"}"), scommand, getStateText(bitRead(power, device -1)));
   mqtt_publish(stopic, svalue);
-  json2legacy(stopic, svalue);
+  
+  getTopic_P(stopic, 1, sysCfg.mqtt_topic, scommand);
+  snprintf_P(svalue, sizeof(svalue), PSTR("%s"), getStateText(bitRead(power, device -1)));
   mqtt_publish(stopic, svalue, sysCfg.flag.mqtt_power_retain);
 }
 
@@ -522,17 +505,19 @@ void mqtt_connected()
   if (sysCfg.flag.mqtt_enabled) {
 
     // Satisfy iobroker (#299)
-    snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/POWER"), sysCfg.mqtt_prefix[0], sysCfg.mqtt_topic);
+    getTopic_P(stopic, 0, sysCfg.mqtt_topic, PSTR("POWER"));
     svalue[0] ='\0';
     mqtt_publish(stopic, svalue);
     
-    snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/#"), sysCfg.mqtt_prefix[0], sysCfg.mqtt_topic);
+    getTopic_P(stopic, 0, sysCfg.mqtt_topic, PSTR("#"));
     mqttClient.subscribe(stopic);
     mqttClient.loop();  // Solve LmacRxBlk:1 messages
-    snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/#"), sysCfg.mqtt_prefix[0], sysCfg.mqtt_grptopic);
+
+    getTopic_P(stopic, 0, sysCfg.mqtt_grptopic, PSTR("#"));
     mqttClient.subscribe(stopic);
     mqttClient.loop();  // Solve LmacRxBlk:1 messages
-    snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/#"), sysCfg.mqtt_prefix[0], MQTTClient); // Fall back topic
+
+    getTopic_P(stopic, 0, MQTTClient, PSTR("#"));
     mqttClient.subscribe(stopic);
     mqttClient.loop();  // Solve LmacRxBlk:1 messages
 #ifdef USE_DOMOTICZ
@@ -610,7 +595,8 @@ void mqtt_reconnect()
 #endif  // USE_DISCOVERY
 #endif  // USE_MQTT_TLS
   mqttClient.setServer(sysCfg.mqtt_host, sysCfg.mqtt_port);
-  snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/LWT"), sysCfg.mqtt_prefix[2], sysCfg.mqtt_topic);
+
+  getTopic_P(stopic, 2, sysCfg.mqtt_topic, PSTR("LWT"));
   snprintf_P(svalue, sizeof(svalue), PSTR("Offline"));
   if (mqttClient.connect(MQTTClient, sysCfg.mqtt_user, sysCfg.mqtt_pwd, stopic, 1, true, svalue)) {
     addLog_P(LOG_LEVEL_INFO, PSTR("MQTT: Connected"));
@@ -632,6 +618,7 @@ boolean mqtt_command(boolean grpflg, char *type, uint16_t index, char *dataBuf, 
   boolean serviced = true;
   char stemp1[TOPSZ];
   char stemp2[10];
+  char scommand[CMDSZ];
   uint16_t i;
   
   if (!strcmp_P(type,PSTR("MQTTHOST"))) {
@@ -694,6 +681,23 @@ boolean mqtt_command(boolean grpflg, char *type, uint16_t index, char *dataBuf, 
       restartflag = 2;
     }
     snprintf_P(svalue, ssvalue, PSTR("{\"MqttPassword\":\"%s\"}"), sysCfg.mqtt_pwd);
+  }
+  else if (!grpflg && !strcmp_P(type,PSTR("FULLTOPIC"))) {
+    if ((data_len > 0) && (data_len < sizeof(sysCfg.mqtt_fulltopic))) {
+      for (i = 0; i <= data_len; i++) {
+        if ((dataBuf[i] == '+') || (dataBuf[i] == '#') || (dataBuf[i] == ' ')) {
+          for (byte j = i; j <= data_len; j++) {
+            dataBuf[j] = dataBuf[j +1];
+          }
+        }
+      }
+      if (!strcmp(dataBuf, MQTTClient)) {
+        payload = 1;
+      }
+      strlcpy(sysCfg.mqtt_fulltopic, (1 == payload) ? MQTT_FULLTOPIC : dataBuf, sizeof(sysCfg.mqtt_fulltopic));
+      restartflag = 2;
+    }
+    snprintf_P(svalue, ssvalue, PSTR("{\"FullTopic\":\"%s\"}"), sysCfg.mqtt_fulltopic);
   }
   else if (!strcmp_P(type,PSTR("PREFIX")) && (index > 0) && (index <= 3)) {
     if ((data_len > 0) && (data_len < sizeof(sysCfg.mqtt_prefix[0]))) {
@@ -795,7 +799,12 @@ boolean mqtt_command(boolean grpflg, char *type, uint16_t index, char *dataBuf, 
       if (!payload) {
         for(i = 1; i <= Maxdevice; i++) {  // Clear MQTT retain in broker
           snprintf_P(stemp2, sizeof(stemp2), PSTR("%d"), i);
-          snprintf_P(stemp1, sizeof(stemp1), PSTR("%s/%s/POWER%s"), sysCfg.mqtt_prefix[1], sysCfg.mqtt_topic, (Maxdevice > 1) ? stemp2 : "");
+
+          snprintf_P(scommand, sizeof(scommand), PSTR("POWER%s"), (Maxdevice > 1) ? stemp2 : "");
+          getTopic_P(stemp1, 1, sysCfg.mqtt_topic, scommand);
+
+//          snprintf_P(stemp1, sizeof(stemp1), PSTR("%s/%s/POWER%s"), sysCfg.mqtt_prefix[1], sysCfg.mqtt_topic, (Maxdevice > 1) ? stemp2 : "");
+
           mqtt_publish(stemp1, "", sysCfg.flag.mqtt_power_retain);
         }
       }
@@ -872,21 +881,8 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
   }
 #endif  // USE_DOMOTICZ
 
-  memmove(topicBuf, topicBuf+strlen(sysCfg.mqtt_prefix[0]), sizeof(topicBuf)-strlen(sysCfg.mqtt_prefix[0]));  // Remove SUB_PREFIX
-
-  i = 0;
-  for (str = strtok_r(topicBuf, "/", &p); str && i < 2; str = strtok_r(NULL, "/", &p)) {
-    switch (i++) {
-    case 0:  // Topic / GroupTopic / DVES_123456
-      mtopic = str;
-      break;
-    case 1:  // TopicIndex / Text
-      type = str;
-    }
-  }
-  if (!strcmp(mtopic, sysCfg.mqtt_grptopic)) {
-    grpflg = 1;
-  }
+  grpflg = (strstr(topicBuf, sysCfg.mqtt_grptopic) != NULL);
+  type = strrchr(topicBuf, '/') +1;
 
   index = 1;
   if (type != NULL) {
@@ -906,8 +902,8 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
     dataBufUc[i] = toupper(dataBuf[i]);
   }
 
-  snprintf_P(svalue, sizeof(svalue), PSTR("RSLT: DataCb Topic %s, Group %d, Index %d, Type %s, Data %s (%s)"),
-    mtopic, grpflg, index, type, dataBuf, dataBufUc);
+  snprintf_P(svalue, sizeof(svalue), PSTR("RSLT: DataCb Group %d, Index %d, Type %s, Data %s (%s)"),
+    grpflg, index, type, dataBuf, dataBufUc);
   addLog(LOG_LEVEL_DEBUG, svalue);
 
 //  snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/RESULT"), PUB_PREFIX, sysCfg.mqtt_topic);
@@ -1496,6 +1492,7 @@ void send_button_power(byte key, byte device, byte state)
 // key 1 = switch_topic
 
   char stopic[TOPSZ];
+  char scommand[CMDSZ];
   char svalue[TOPSZ];
   char stemp1[10];
 
@@ -1503,8 +1500,8 @@ void send_button_power(byte key, byte device, byte state)
     device = 1;
   }
   snprintf_P(stemp1, sizeof(stemp1), PSTR("%d"), device);
-  snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/POWER%s"),
-    sysCfg.mqtt_prefix[0], (key) ? sysCfg.switch_topic : sysCfg.button_topic, (key || (Maxdevice > 1)) ? stemp1 : "");
+  snprintf_P(scommand, sizeof(scommand), PSTR("POWER%s"), (key || (Maxdevice > 1)) ? stemp1 : "");
+  getTopic_P(stopic, 0, (key) ? sysCfg.switch_topic : sysCfg.button_topic, scommand);
   
   if (3 == state) {
     svalue[0] = '\0';
@@ -1598,7 +1595,7 @@ void stop_all_power_blink()
 
 void do_cmnd(char *cmnd)
 {
-  char stopic[TOPSZ];
+  char stopic[CMDSZ];
   char svalue[128];
   char *start;
   char *token;
@@ -1607,10 +1604,10 @@ void do_cmnd(char *cmnd)
   if (token != NULL) {
     start = strrchr(token, '/');   // Skip possible cmnd/sonoff/ preamble
     if (start) {
-      token = start;
+      token = start +1;
     }
   }
-  snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/%s"), sysCfg.mqtt_prefix[0], sysCfg.mqtt_topic, token);
+  snprintf_P(stopic, sizeof(stopic), PSTR("/%s"), token);
   token = strtok(NULL, "");
   snprintf_P(svalue, sizeof(svalue), PSTR("%s"), (token == NULL) ? "" : token);
   mqttDataCb(stopic, (byte*)svalue, strlen(svalue));

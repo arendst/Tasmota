@@ -175,6 +175,9 @@ struct SYSCFG {
   // 5.0.4
   unsigned long hlw_kWhtotal;
 
+  // 5.0.4a
+  char         mqtt_fulltopic[101];
+
 } sysCfg;
 
 struct RTCMEM {

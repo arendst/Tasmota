@@ -1,4 +1,9 @@
-/* 5.0.4 20170505
+/* 5.0.5 20170508
+ * Add command FullTopic with tokens %topic% (replaced by command Topic value) and 
+ *  %prefix% (replaced by command Prefix<x> values) for more flexible topic definitions (#244)
+ *  See wiki > MQTT Features https://github.com/arendst/Sonoff-Tasmota/wiki/MQTT-Features for more information
+ *
+ * 5.0.4 20170505
  * Add Sonoff Pow Energy Total up to 40 MWh
  * Add command EnergyReset 1|2|3 to reset Energy counters (#406)
  * Fix Domoticz Energy logging (#411)
