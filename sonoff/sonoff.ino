@@ -129,7 +129,7 @@ enum emul_t  {EMUL_NONE, EMUL_WEMO, EMUL_HUE, EMUL_MAX};
 #endif
 
 #define APP_BAUDRATE           115200       // Default serial baudrate
-#define MAX_STATUS             11           // Max number of status lines
+#define MAX_STATUS             12           // Max number of status lines
 
 enum butt_t {PRESSED, NOT_PRESSED};
 
@@ -1616,7 +1616,7 @@ void do_cmnd(char *cmnd)
 void publish_status(uint8_t payload)
 {
   char svalue[MESSZ];
-  uint8_t option = 0;
+  uint8_t option,firstitem = 0;
 
   // Workaround MQTT - TCP/IP stack queueing when SUB_PREFIX = PUB_PREFIX
   option = (!strcmp(sysCfg.mqtt_prefix[0],sysCfg.mqtt_prefix[1]) && (!payload));
@@ -1703,6 +1703,28 @@ void publish_status(uint8_t payload)
     state_mqttPresent(svalue, sizeof(svalue));
     snprintf_P(svalue, sizeof(svalue), PSTR("%s}"), svalue);
     mqtt_publish_topic_P(option, PSTR("STATUS11"), svalue);
+  }
+  if ((payload == 0) || (payload == 12)) {
+    firstitem=1;
+    snprintf_P(svalue, sizeof(svalue), PSTR("%s{\"StatusButton\":{"), svalue);
+    for (byte i = 0; i < Maxdevice; i++) if (pin[GPIO_KEY1 +i] < 99) {
+      if (firstitem) { // put a comma before everything but the first item of the list
+        firstitem=0;
+      } else {
+        snprintf_P(svalue, sizeof(svalue), PSTR("%s,"), svalue);
+      }
+      snprintf_P(svalue, sizeof(svalue), PSTR("%s{\"Button%d\": %d}"), svalue, (i+1), lastbutton[i]);
+    }
+    for (byte i = 0; i < 4; i++) if (pin[GPIO_SWT1 +i] < 99) {
+      if (firstitem) { // put a comma before everything but the first item of the list
+        firstitem=0;
+      } else {
+        snprintf_P(svalue, sizeof(svalue), PSTR("%s,"), svalue);
+      }
+      snprintf_P(svalue, sizeof(svalue), PSTR("%s{\"Switch%d\": %d}"), svalue, (i+1), lastwallswitch[i]);
+    }
+    snprintf_P(svalue, sizeof(svalue), PSTR("%s}}"), svalue);
+    mqtt_publish_topic_P(option, PSTR("STATUS12"), svalue);
   }
  
 }
