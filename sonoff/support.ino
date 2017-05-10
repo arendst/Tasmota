@@ -309,8 +309,8 @@ void WIFI_begin(uint8_t flag)
 #ifdef USE_EMULATION
   UDP_Disconnect();
 #endif  // USE_EMULATION
-  if (!strncmp(ESP.getSdkVersion(),"1.5.3",5)) {
-    addLog_P(LOG_LEVEL_DEBUG, "Wifi: Patch issue 2186");
+  if (!strncmp_P(ESP.getSdkVersion(),PSTR("1.5.3"),5)) {
+    addLog_P(LOG_LEVEL_DEBUG, PSTR("Wifi: Patch issue 2186"));
     WiFi.mode(WIFI_OFF);    // See https://github.com/esp8266/Arduino/issues/2186
   }
   WiFi.disconnect();

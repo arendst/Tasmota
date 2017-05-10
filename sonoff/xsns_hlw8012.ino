@@ -372,7 +372,7 @@ void hlw_margin_chk()
     }
     if (jsonflg) {
       snprintf_P(svalue, sizeof(svalue), PSTR("%s}"), svalue);
-      mqtt_publish_topic_P(1, PSTR("MARGINS"), svalue);
+      mqtt_publish_topic_P(2, PSTR("MARGINS"), svalue);
     }
   }
 
@@ -386,7 +386,7 @@ void hlw_margin_chk()
         hlw_mplh_counter--;
         if (!hlw_mplh_counter) {
           snprintf_P(svalue, sizeof(svalue), PSTR("{\"MaxPowerReached\":\"%d%s\"}"), pw, (sysCfg.flag.value_units) ? " W" : "");
-          mqtt_publish_topic_P(0, PSTR("WARNING"), svalue);
+          mqtt_publish_topic_P(1, PSTR("WARNING"), svalue);
           do_cmnd_power(1, 0);
           if (!hlw_mplr_counter) {
             hlw_mplr_counter = MAX_POWER_RETRY +1;
@@ -408,11 +408,11 @@ void hlw_margin_chk()
           hlw_mplr_counter--;
           if (hlw_mplr_counter) {
             snprintf_P(svalue, sizeof(svalue), PSTR("{\"PowerMonitor\":\"%s\"}"), getStateText(1));
-            mqtt_publish_topic_P(4, PSTR("POWERMONITOR"), svalue);
+            mqtt_publish_topic_P(5, PSTR("POWERMONITOR"), svalue);
             do_cmnd_power(1, 1);
           } else {
             snprintf_P(svalue, sizeof(svalue), PSTR("{\"MaxPowerReachedRetry\":\"%s\"}"), getStateText(0));
-            mqtt_publish_topic_P(0, PSTR("WARNING"), svalue);
+            mqtt_publish_topic_P(1, PSTR("WARNING"), svalue);
           }
         }
       }
@@ -425,14 +425,14 @@ void hlw_margin_chk()
     if (!hlw_mkwh_state && (rtcTime.Hour == sysCfg.hlw_mkwhs)) {
       hlw_mkwh_state = 1;
       snprintf_P(svalue, sizeof(svalue), PSTR("{\"EnergyMonitor\":\"%s\"}"), getStateText(1));
-      mqtt_publish_topic_P(4, PSTR("ENERGYMONITOR"), svalue);
+      mqtt_publish_topic_P(5, PSTR("ENERGYMONITOR"), svalue);
       do_cmnd_power(1, 1);
     }
     else if ((1 == hlw_mkwh_state) && (uped >= sysCfg.hlw_mkwh)) {
       hlw_mkwh_state = 2;
       dtostrf(ped, 1, 3, svalue);
       snprintf_P(svalue, sizeof(svalue), PSTR("{\"MaxEnergyReached\":\"%s%s\"}"), svalue, (sysCfg.flag.value_units) ? " kWh" : "");
-      mqtt_publish_topic_P(0, PSTR("WARNING"), svalue);
+      mqtt_publish_topic_P(1, PSTR("WARNING"), svalue);
       do_cmnd_power(1, 0);
     }
   }
@@ -625,7 +625,7 @@ void hlw_mqttPresent()
 
   snprintf_P(svalue, sizeof(svalue), PSTR("{\"Time\":\"%s\", "), getDateTime().c_str());
   hlw_mqttStat(1, svalue, sizeof(svalue));
-  mqtt_publish_topic_P(1, PSTR("ENERGY"), svalue);
+  mqtt_publish_topic_P(2, PSTR("ENERGY"), svalue);
 }
 
 void hlw_mqttStatus(char* svalue, uint16_t ssvalue)

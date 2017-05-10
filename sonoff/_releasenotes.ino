@@ -1,4 +1,8 @@
-/* 5.0.5 20170508
+/* 5.0.6 20170510
+ * Remove hyphen in case of a single DHT sensor connecetd (#427)
+ * Add command MqttRetry <seconds> to change default MQTT reconnect retry timer from minimal 10 seconds (#429)
+ *
+ * 5.0.5 20170508
  * Add command FullTopic with tokens %topic% (replaced by command Topic value) and 
  *  %prefix% (replaced by command Prefix<x> values) for more flexible topic definitions (#244)
  *  See wiki > MQTT Features https://github.com/arendst/Sonoff-Tasmota/wiki/MQTT-Features for more information

@@ -105,7 +105,7 @@ struct SYSCFG {
   uint16_t      hlw_mkwhs;  // MaxEnergyStart
 
   // 3.0.6
-  uint16_t      ex_pulsetime;          // Not used since 4.0.4
+  uint16_t      mqtt_retry;            // was ex_pulsetime until 4.0.4
 
   // 3.1.1
   uint8_t       poweronstate;
@@ -176,7 +176,7 @@ struct SYSCFG {
   unsigned long hlw_kWhtotal;
 
   // 5.0.4a
-  char         mqtt_fulltopic[101];
+  char          mqtt_fulltopic[101];
 
 } sysCfg;
 

@@ -578,12 +578,11 @@ void hue_lights(String *path)
       }
 #endif // USE_WS2812
       response += "]";
-      webServer->send(200, "application/json", response);
     }   
     else {
       response=FPSTR(HUE_ERROR_JSON);
-      webServer->send(200, "application/json", response);
     }
+    webServer->send(200, "application/json", response);
   }
   else if(path->indexOf("/lights/") >= 0) {            // Got /lights/ID
     path->remove(0,8);                                 // Remove /lights/

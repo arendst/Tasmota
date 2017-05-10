@@ -10,7 +10,7 @@
  * ====================================================
 */
 
-#define VERSION                0x05000500  // 5.0.5
+#define VERSION                0x05000600  // 5.0.6
 
 enum log_t   {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG_MORE, LOG_LEVEL_ALL};
 enum week_t  {Last, First, Second, Third, Fourth};
@@ -89,6 +89,9 @@ enum emul_t  {EMUL_NONE, EMUL_WEMO, EMUL_HUE, EMUL_MAX};
 #define WS2812_LEDS            30           // [Pixels] Number of LEDs
 #endif
 
+#define MQTT_TOKEN_PREFIX      "%prefix%"   // To be substituted by mqtt_prefix[x]
+#define MQTT_TOKEN_TOPIC       "%topic%"    // To be substituted by mqtt_topic, mqtt_grptopic, mqtt_buttontopic, mqtt_switchtopic
+
 #define WIFI_HOSTNAME          "%s-%04d"    // Expands to <MQTT_TOPIC>-<last 4 decimal chars of MAC address>
 #define CONFIG_FILE_SIGN       0xA5         // Configuration file signature
 #define CONFIG_FILE_XOR        0x5A         // Configuration file xor (0 = No Xor)
@@ -97,7 +100,7 @@ enum emul_t  {EMUL_NONE, EMUL_WEMO, EMUL_HUE, EMUL_MAX};
 #define HLW_UREF_PULSE         1950         // was 1666us = 600Hz = 220V
 #define HLW_IREF_PULSE         3500         // was 1666us = 600Hz = 4.545A
 
-#define MQTT_RETRY_SECS        10           // Seconds to retry MQTT connection
+#define MQTT_RETRY_SECS        10           // Minimum seconds to retry MQTT connection
 #define APP_POWER              0            // Default saved power state Off
 #define MAX_DEVICE             1            // Max number of devices
 #define MAX_PULSETIMERS        4            // Max number of supported pulse timers
@@ -139,7 +142,7 @@ enum butt_t {PRESSED, NOT_PRESSED};
 #define MESSZ                  360          // Max number of characters in JSON message string (4 x DS18x20 sensors)
 #if (MQTT_MAX_PACKET_SIZE -TOPSZ -7) < MESSZ  // If the max message size is too small, throw an error at compile time
                                             // See pubsubclient.c line 359
-  #error "MQTT_MAX_PACKET_SIZE is too small in libraries/PubSubClient/src/PubSubClient.h, increase it to at least 427"
+  #error "MQTT_MAX_PACKET_SIZE is too small in libraries/PubSubClient/src/PubSubClient.h, increase it to at least 467"
 #endif
 
 #include <Ticker.h>                         // RTC, HLW8012, OSWatch
@@ -158,11 +161,9 @@ enum butt_t {PRESSED, NOT_PRESSED};
   #include <Wire.h>                         // I2C support library
 #endif  // USE_I2C
 #ifdef USI_SPI
-  #include <SPI.h>                          // SPI, TFT
+  #include <SPI.h>                          // SPI support, TFT
 #endif  // USE_SPI
 #include "settings.h"
-
-typedef void (*rtcCallback)();
 
 #define MAX_BUTTON_COMMANDS    5            // Max number of button commands supported
 const char commands[MAX_BUTTON_COMMANDS][14] PROGMEM = {
@@ -173,7 +174,6 @@ const char commands[MAX_BUTTON_COMMANDS][14] PROGMEM = {
   {"upgrade 1"}};     // Press button seven times
 
 const char wificfg[5][12] PROGMEM = { "Restart", "Smartconfig", "Wifimanager", "WPSconfig", "Retry" };
-
 const char PREFIXES[3][5] PROGMEM = { "cmnd", "stat", "tele" };
 
 struct TIME_T {
@@ -305,6 +305,45 @@ void getClient(char* output, const char* input, byte size)
   }
 }
 
+void getTopic_P(char *stopic, byte prefix, char *topic, const char* subtopic)
+{
+  char romram[CMDSZ];
+
+  snprintf_P(romram, sizeof(romram), subtopic);
+  String fulltopic = sysCfg.mqtt_fulltopic;
+  if ((0 == prefix) && (-1 == fulltopic.indexOf(F(MQTT_TOKEN_PREFIX)))) {
+    fulltopic += F("/" MQTT_TOKEN_PREFIX);  // Need prefix for commands to handle mqtt topic loops
+  }
+  for (byte i = 0; i < 3; i++) {
+    if ('\0' == sysCfg.mqtt_prefix[i][0]) {
+      snprintf_P(sysCfg.mqtt_prefix[i], sizeof(sysCfg.mqtt_prefix[i]), PREFIXES[i]);
+    }
+  }
+  fulltopic.replace(F(MQTT_TOKEN_PREFIX), sysCfg.mqtt_prefix[prefix]);
+  fulltopic.replace(F(MQTT_TOKEN_TOPIC), topic);
+  fulltopic.replace(F("#"), "");
+  fulltopic.replace(F("//"), "/");
+  if (!fulltopic.endsWith("/")) {
+    fulltopic += "/";
+  }
+  snprintf_P(stopic, TOPSZ, PSTR("%s%s"), fulltopic.c_str(), romram);
+/*
+  char log[LOGSZ];
+  snprintf_P(log, sizeof(log), PSTR("MTPC: %s"), stopic);
+  addLog(LOG_LEVEL_DEBUG, log);
+*/
+}
+
+char* getStateText(byte state)
+{
+  if (state > 2) {
+    state = 1;
+  }
+  return sysCfg.state_text[state];
+}
+
+/********************************************************************************************/
+
 void setLatchingRelay(uint8_t power, uint8_t state)
 {
   power &= 1;
@@ -366,46 +405,6 @@ void setLed(uint8_t state)
 
 /********************************************************************************************/
 
-void getTopic_P(char *stopic, byte idx, char *topic, const char* subtopic)
-{
-  char romram[CMDSZ];
-
-  snprintf_P(romram, sizeof(romram), subtopic);
-  String fulltopic = sysCfg.mqtt_fulltopic;
-  if ((0 == idx) && (-1 == fulltopic.indexOf(F("%prefix%")))) {
-    fulltopic += F("/%prefix%");  // Need prefix for commands to handle mqtt topic loops
-  }
-  for (byte i = 0; i < 3; i++) {
-    if ('\0' == sysCfg.mqtt_prefix[i][0]) {
-      snprintf_P(sysCfg.mqtt_prefix[i], sizeof(sysCfg.mqtt_prefix[i]), PREFIXES[i]);
-    }
-  }
-  fulltopic.replace(F("%prefix%"), sysCfg.mqtt_prefix[idx]);
-  fulltopic.replace(F("%topic%"), topic);
-  fulltopic.replace(F("#"), "");
-  fulltopic.replace(F("//"), "/");
-  if (!fulltopic.endsWith("/")) {
-    fulltopic += "/";
-  }
-  snprintf_P(stopic, TOPSZ, PSTR("%s%s"), fulltopic.c_str(), romram);
-/*
-  char log[LOGSZ];
-  snprintf_P(log, sizeof(log), PSTR("MTPC: %s"), stopic);
-  addLog(LOG_LEVEL_DEBUG, log);
-*/
-}
-
-
-char* getStateText(byte state)
-{
-  if (state > 2) {
-    state = 1;
-  }
-  return sysCfg.state_text[state];
-}
-
-/********************************************************************************************/
-
 void mqtt_publish_sec(const char* topic, const char* data, boolean retained)
 {
   char log[TOPSZ + MESSZ];
@@ -447,12 +446,19 @@ void mqtt_publish(const char* topic, const char* data)
 
 void mqtt_publish_topic_P(uint8_t prefix, const char* subtopic, const char* data, boolean retained)
 {
+/* prefix 0 = cmnd using subtopic
+ * prefix 1 = stat using subtopic
+ * prefix 2 = tele using subtopic
+ * prefix 4 = cmnd using subtopic or RESULT
+ * prefix 5 = stat using subtopic or RESULT
+ * prefix 6 = tele using subtopic or RESULT
+ */
   char romram[16];
   char stopic[TOPSZ];  
 
   snprintf_P(romram, sizeof(romram), ((prefix > 3) && !sysCfg.flag.mqtt_response) ? PSTR("RESULT") : subtopic);
-  prefix &= 1;
-  getTopic_P(stopic, prefix +1, sysCfg.mqtt_topic, romram);
+  prefix &= 3;
+  getTopic_P(stopic, prefix, sysCfg.mqtt_topic, romram);
   mqtt_publish(stopic, data, retained);
 }
 
@@ -494,7 +500,7 @@ void mqtt_publishPowerBlinkState(byte device)
   snprintf_P(sdevice, sizeof(sdevice), PSTR("%d"), device);
   snprintf_P(svalue, sizeof(svalue), PSTR("{\"POWER%s\":\"BLINK %s\"}"),
     (Maxdevice > 1) ? sdevice : "", getStateText(bitRead(blink_mask, device -1)));
-  mqtt_publish_topic_P(4, PSTR("POWER"), svalue);
+  mqtt_publish_topic_P(5, PSTR("POWER"), svalue);
 }
 
 void mqtt_connected()
@@ -505,21 +511,20 @@ void mqtt_connected()
   if (sysCfg.flag.mqtt_enabled) {
 
     // Satisfy iobroker (#299)
-    getTopic_P(stopic, 0, sysCfg.mqtt_topic, PSTR("POWER"));
-    svalue[0] ='\0';
-    mqtt_publish(stopic, svalue);
+    svalue[0] = '\0';
+    mqtt_publish_topic_P(0, PSTR("POWER"), svalue);
     
     getTopic_P(stopic, 0, sysCfg.mqtt_topic, PSTR("#"));
     mqttClient.subscribe(stopic);
     mqttClient.loop();  // Solve LmacRxBlk:1 messages
-
-    getTopic_P(stopic, 0, sysCfg.mqtt_grptopic, PSTR("#"));
-    mqttClient.subscribe(stopic);
-    mqttClient.loop();  // Solve LmacRxBlk:1 messages
-
-    getTopic_P(stopic, 0, MQTTClient, PSTR("#"));
-    mqttClient.subscribe(stopic);
-    mqttClient.loop();  // Solve LmacRxBlk:1 messages
+    if (strstr(sysCfg.mqtt_fulltopic, MQTT_TOKEN_TOPIC) != NULL) {
+      getTopic_P(stopic, 0, sysCfg.mqtt_grptopic, PSTR("#"));
+      mqttClient.subscribe(stopic);
+      mqttClient.loop();  // Solve LmacRxBlk:1 messages
+      getTopic_P(stopic, 0, MQTTClient, PSTR("#"));
+      mqttClient.subscribe(stopic);
+      mqttClient.loop();  // Solve LmacRxBlk:1 messages
+    }
 #ifdef USE_DOMOTICZ
     domoticz_mqttSubscribe();
 #endif  // USE_DOMOTICZ
@@ -528,17 +533,17 @@ void mqtt_connected()
   if (mqttflag) {
     snprintf_P(svalue, sizeof(svalue), PSTR("{\"Module\":\"%s\", \"Version\":\"%s\", \"FallbackTopic\":\"%s\", \"GroupTopic\":\"%s\"}"),
       my_module.name, Version, MQTTClient, sysCfg.mqtt_grptopic);
-    mqtt_publish_topic_P(1, PSTR("INFO1"), svalue);
+    mqtt_publish_topic_P(2, PSTR("INFO1"), svalue);
 #ifdef USE_WEBSERVER
     if (sysCfg.webserver) {
       snprintf_P(svalue, sizeof(svalue), PSTR("{\"WebserverMode\":\"%s\", \"Hostname\":\"%s\", \"IPaddress\":\"%s\"}"),
         (2 == sysCfg.webserver) ? "Admin" : "User", Hostname, WiFi.localIP().toString().c_str());
-      mqtt_publish_topic_P(1, PSTR("INFO2"), svalue);
+      mqtt_publish_topic_P(2, PSTR("INFO2"), svalue);
     }
 #endif  // USE_WEBSERVER
     snprintf_P(svalue, sizeof(svalue), PSTR("{\"Started\":\"%s\"}"),
       (getResetReason() == "Exception") ? ESP.getResetInfo().c_str() : getResetReason().c_str());
-    mqtt_publish_topic_P(1, PSTR("INFO3"), svalue);
+    mqtt_publish_topic_P(2, PSTR("INFO3"), svalue);
     if (sysCfg.tele_period) {
       tele_period = sysCfg.tele_period -9;
     }
@@ -556,7 +561,7 @@ void mqtt_reconnect()
   char svalue[TOPSZ];
   char log[LOGSZ];
 
-  mqttcounter = MQTT_RETRY_SECS;
+  mqttcounter = sysCfg.mqtt_retry;
 
   if (!sysCfg.flag.mqtt_enabled) {
     mqtt_connected();
@@ -634,6 +639,13 @@ boolean mqtt_command(boolean grpflg, char *type, uint16_t index, char *dataBuf, 
       restartflag = 2;
     }
     snprintf_P(svalue, ssvalue, PSTR("{\"MqttPort\":%d}"), sysCfg.mqtt_port);
+  }
+  else if (!strcmp_P(type,PSTR("MQTTRETRY"))) {
+    if ((data_len > 0) && (payload >= MQTT_RETRY_SECS) && (payload < 32001)) {
+      sysCfg.mqtt_retry = payload;
+      mqttcounter = sysCfg.mqtt_retry;
+    }
+    snprintf_P(svalue, ssvalue, PSTR("{\"MqttRetry\":%d}"), sysCfg.mqtt_retry);
   }
   else if (!strcmp_P(type,PSTR("MQTTRESPONSE"))) {
     if ((data_len > 0) && (payload >= 0) && (payload <= 1)) {
@@ -816,7 +828,7 @@ boolean mqtt_command(boolean grpflg, char *type, uint16_t index, char *dataBuf, 
     if ((data_len > 0) && (payload >= 0) && (payload <= 1)) {
       if (!payload) {
         svalue[0] = '\0';
-        mqtt_publish_topic_P(1, PSTR("SENSOR"), svalue, sysCfg.flag.mqtt_sensor_retain);
+        mqtt_publish_topic_P(2, PSTR("SENSOR"), svalue, sysCfg.flag.mqtt_sensor_retain);
       }
       sysCfg.flag.mqtt_sensor_retain = payload;
     }
@@ -1084,7 +1096,7 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
         snprintf_P(svalue, sizeof(svalue), PSTR("%s%d (%s)"), svalue, i +1, stemp1);
       }
       snprintf_P(svalue, sizeof(svalue), PSTR("%s\"}"), svalue);
-      mqtt_publish_topic_P(4, type, svalue);
+      mqtt_publish_topic_P(5, type, svalue);
       snprintf_P(svalue, sizeof(svalue), PSTR("{\"Modules2\":\""), svalue);
       jsflg = 0;
       for (byte i = MAXMODULE /2; i < MAXMODULE; i++) {
@@ -1139,7 +1151,7 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
         snprintf_P(svalue, sizeof(svalue), PSTR("%s%d (%s)"), svalue, i, stemp1);
       }
       snprintf_P(svalue, sizeof(svalue), PSTR("%s\"}"), svalue);
-      mqtt_publish_topic_P(4, type, svalue);
+      mqtt_publish_topic_P(5, type, svalue);
       snprintf_P(svalue, sizeof(svalue), PSTR("{\"GPIOs2\":\""), svalue);
       jsflg = 0;
       for (byte i = GPIO_SENSOR_END /2; i < GPIO_SENSOR_END; i++) {
@@ -1481,7 +1493,7 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
     snprintf_P(svalue, sizeof(svalue), PSTR("{\"Command\":\"Unknown\"}"));
     type = (char*)topicBuf;
   }
-  mqtt_publish_topic_P(4, type, svalue);
+  mqtt_publish_topic_P(5, type, svalue);
 }
 
 /********************************************************************************************/
@@ -1616,10 +1628,12 @@ void do_cmnd(char *cmnd)
 void publish_status(uint8_t payload)
 {
   char svalue[MESSZ];
-  uint8_t option = 0;
+  uint8_t option = 1;
 
   // Workaround MQTT - TCP/IP stack queueing when SUB_PREFIX = PUB_PREFIX
-  option = (!strcmp(sysCfg.mqtt_prefix[0],sysCfg.mqtt_prefix[1]) && (!payload));
+  if (!strcmp(sysCfg.mqtt_prefix[0],sysCfg.mqtt_prefix[1]) && (!payload)) {
+    option++;
+  }
 
   if ((!sysCfg.flag.mqtt_enabled) && (6 == payload)) {
     payload = 99;
@@ -1870,13 +1884,13 @@ void every_second()
 
       svalue[0] = '\0';
       state_mqttPresent(svalue, sizeof(svalue));
-      mqtt_publish_topic_P(1, PSTR("STATE"), svalue);
+      mqtt_publish_topic_P(2, PSTR("STATE"), svalue);
 
       uint8_t djson = 0;
       svalue[0] = '\0';
       sensors_mqttPresent(svalue, sizeof(svalue), &djson);
       if (djson) {
-        mqtt_publish_topic_P(1, PSTR("SENSOR"), svalue, sysCfg.flag.mqtt_sensor_retain);
+        mqtt_publish_topic_P(2, PSTR("SENSOR"), svalue, sysCfg.flag.mqtt_sensor_retain);
       }
 
       if (hlw_flg) {
@@ -1893,7 +1907,7 @@ void every_second()
     uptime_flg = false;
     uptime++;
     snprintf_P(svalue, sizeof(svalue), PSTR("{\"Time\":\"%s\", \"Uptime\":%d}"), getDateTime().c_str(), uptime);
-    mqtt_publish_topic_P(1, PSTR("UPTIME"), svalue);
+    mqtt_publish_topic_P(2, PSTR("UPTIME"), svalue);
   }
   if ((3 == rtcTime.Minute) && !uptime_flg) {
     uptime_flg = true;
@@ -2134,7 +2148,7 @@ void stateloop()
           snprintf_P(svalue, sizeof(svalue), PSTR("Failed %s"), ESPhttpUpdate.getLastErrorString().c_str());
         }
         restartflag = 2;  // Restart anyway to keep memory clean webserver
-        mqtt_publish_topic_P(0, PSTR("UPGRADE"), svalue);
+        mqtt_publish_topic_P(1, PSTR("UPGRADE"), svalue);
       }
     }
     break;

@@ -453,9 +453,11 @@ void CFG_DefaultSet2()
 //  sysCfg.hlw_kWhtotal = 0;
   rtcMem.hlw_kWhtotal = 0;
 
-  // 5.0.4a
+  // 5.0.5
   strlcpy(sysCfg.mqtt_fulltopic, MQTT_FULLTOPIC, sizeof(sysCfg.mqtt_fulltopic));
 
+  // 5.0.6
+  sysCfg.mqtt_retry = MQTT_RETRY_SECS;
 }
 
 /********************************************************************************************/
@@ -516,7 +518,7 @@ void CFG_DefaultSet_4_0_4()
       }
     }
   }
-  sysCfg.pulsetime[0] = sysCfg.ex_pulsetime;
+  sysCfg.pulsetime[0] = APP_PULSETIME;
   for (byte i = 1; i < MAX_PULSETIMERS; i++) {
     sysCfg.pulsetime[i] = 0;
   }
@@ -554,9 +556,6 @@ void CFG_DefaultSet_5_0_2()
 void CFG_Delta()
 {
   if (sysCfg.version != VERSION) {      // Fix version dependent changes
-    if (sysCfg.version < 0x03000600) {  // 3.0.6 - Add parameter
-      sysCfg.ex_pulsetime = APP_PULSETIME;
-    }
     if (sysCfg.version < 0x03010200) {  // 3.1.2 - Add parameter
       sysCfg.poweronstate = APP_POWERON_STATE;
     }
@@ -636,6 +635,9 @@ void CFG_Delta()
     }
     if (sysCfg.version < 0x05000500) {
       strlcpy(sysCfg.mqtt_fulltopic, MQTT_FULLTOPIC, sizeof(sysCfg.mqtt_fulltopic));
+    }
+    if (sysCfg.version < 0x05000600) {
+      sysCfg.mqtt_retry = MQTT_RETRY_SECS;
     }
     sysCfg.version = VERSION;
   }
