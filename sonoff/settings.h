@@ -13,7 +13,7 @@ typedef struct {
   uint32_t mqtt_switch_retain : 1;
   uint32_t temperature_conversion : 1;
   uint32_t mqtt_sensor_retain : 1;
-  uint32_t spare22 : 1;
+  uint32_t mqtt_status_retain : 1;
   uint32_t spare21 : 1;
   uint32_t spare20 : 1;
   uint32_t spare19 : 1;
@@ -38,7 +38,7 @@ struct SYSCFG {
   unsigned long bootcount;
   sysBitfield   flag;                  // Add flag since 5.0.2
   int16_t       savedata;
-  
+
   int8_t        timezone;
   char          otaUrl[101];
 
@@ -105,7 +105,7 @@ struct SYSCFG {
   uint16_t      hlw_mkwhs;  // MaxEnergyStart
 
   // 3.0.6
-  uint16_t      ex_pulsetime;          // Not used since 4.0.4
+  uint16_t      mqtt_retry;            // was ex_pulsetime until 4.0.4
 
   // 3.1.1
   uint8_t       poweronstate;
@@ -172,8 +172,14 @@ struct SYSCFG {
   // 4.0.9
   uint32_t      ip_address[4];
 
+  // 5.0.4
+  unsigned long hlw_kWhtotal;
+
+  // 5.0.4a
+  char          mqtt_fulltopic[101];
   uint8_t       pcf8574_config[8];
   uint8_t       all_relays_inverted;
+  uint16_t      deepsleep;
 } sysCfg;
 
 struct RTCMEM {
@@ -181,6 +187,7 @@ struct RTCMEM {
   byte          osw_flag;
   byte          nu1;
   unsigned long hlw_kWhtoday;
+  unsigned long hlw_kWhtotal;
 } rtcMem;
 
 // See issue https://github.com/esp8266/Arduino/issues/2913  

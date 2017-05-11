@@ -138,6 +138,7 @@ boolean domoticz_mqttData(char *topicBuf, uint16_t stopicBuf, char *dataBuf, uin
 {
   char log[LOGSZ];
   char stemp1[10];
+  char scommand[10];
   unsigned long idx = 0;
   int16_t nvalue;
   int16_t found = 0;
@@ -173,16 +174,14 @@ boolean domoticz_mqttData(char *topicBuf, uint16_t stopicBuf, char *dataBuf, uin
             if ((SONOFF_LED == sysCfg.module) && (sysCfg.led_dimmer[i] == nvalue)) {
               return 1;
             }
-            snprintf_P(topicBuf, stopicBuf, PSTR("%s/%s/DIMMER%s"),
-              sysCfg.mqtt_prefix[0], sysCfg.mqtt_topic, (Maxdevice > 1) ? stemp1 : "");
+            snprintf_P(topicBuf, stopicBuf, PSTR("/DIMMER%s"), (Maxdevice > 1) ? stemp1 : "");
             snprintf_P(dataBuf, sdataBuf, PSTR("%d"), nvalue);
             found = 1;
           } else {
             if (((power >> i) &1) == nvalue) {
               return 1;
             }
-            snprintf_P(topicBuf, stopicBuf, PSTR("%s/%s/POWER%s"),
-              sysCfg.mqtt_prefix[0], sysCfg.mqtt_topic, (Maxdevice > 1) ? stemp1 : "");
+            snprintf_P(topicBuf, stopicBuf, PSTR("/POWER%s"), (Maxdevice > 1) ? stemp1 : "");
             snprintf_P(dataBuf, sdataBuf, PSTR("%d"), nvalue);
             found = 1;
           }

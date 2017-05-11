@@ -403,11 +403,11 @@ void showPage(String &page)
   if((HTTP_ADMIN == _httpflag) && (sysCfg.web_password[0] != 0) && !webServer->authenticate(WEB_USERNAME, sysCfg.web_password)) {
     return webServer->requestAuthentication();
   }
-  page.replace("{ha}", my_module.name);
-  page.replace("{h}", sysCfg.friendlyname[0]);
+  page.replace(F("{ha}"), my_module.name);
+  page.replace(F("{h}"), sysCfg.friendlyname[0]);
   if (HTTP_MANAGER == _httpflag) {
     if (WIFI_configCounter()) {
-      page.replace("<body>", "<body onload='u()'>");
+      page.replace(F("<body>"), F("<body onload='u()'>"));
       page += FPSTR(HTTP_COUNTER);
     }
   }
@@ -432,8 +432,8 @@ void handleRoot()
   } else {
     char stemp[10], line[100];
     String page = FPSTR(HTTP_HEAD);
-    page.replace("{v}", "Main menu");
-    page.replace("<body>", "<body onload='la()'>");
+    page.replace(F("{v}"), F("Main menu"));
+    page.replace(F("<body>"), F("<body onload='la()'>"));
 
     page += F("<div id='l1' name='l1'></div>");
     if (Maxdevice) {
@@ -565,7 +565,7 @@ void handleConfig()
   addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Handle config"));
 
   String page = FPSTR(HTTP_HEAD);
-  page.replace("{v}", "Configuration");
+  page.replace(F("{v}"), F("Configuration"));
   page += FPSTR(HTTP_BTN_MENU2);
   if (sysCfg.flag.mqtt_enabled) {
     page += FPSTR(HTTP_BTN_MENU3);
@@ -578,7 +578,7 @@ void handleConfig()
 boolean inModule(byte val, uint8_t *arr)
 {
   int offset = 0;
-  
+
   if (!val) {
     return false;  // None
   }
@@ -627,11 +627,11 @@ void handleModule()
   addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Handle Module config"));
 
   String page = FPSTR(HTTP_HEAD);
-  page.replace("{v}", "Config module");
+  page.replace(F("{v}"), F("Config module"));
   page += FPSTR(HTTP_FORM_MODULE);
 
   snprintf_P(stemp, sizeof(stemp), modules[MODULE].name);
-  page.replace("{mt}", stemp);
+  page.replace(F("{mt}"), stemp);
 
   for (byte i = 0; i < MAXMODULE; i++) {  
     snprintf_P(stemp, sizeof(stemp), modules[i].name);
@@ -655,16 +655,18 @@ void handleModule()
   func += F("\";os=o0.replace(/-1/g,\"<option value=\").replace(/-2/g,\"</option>\");");
   for (byte i = 0; i < MAX_GPIO_PIN; i++) {
     if (GPIO_USER == cmodule.gp.io[i]) {
+      //snprintf_P(line, sizeof(line), PSTR("<br/><b>GPIO%d</b> %s<select id='g%d' name='g%d'></select></br>"),
+      //  i, (0==i)?"Button1":(1==i)?"Serial Out":(3==i)?"Serial In":(12==i)?"Relay1":(13==i)?"Led1I":(14==i)?"Sensor":"", i, i);
       snprintf_P(line, sizeof(line), PSTR("<br/><b>GPIO%d</b> %s<select id='g%d' name='g%d'></select></br>"),
-        i, (0==i)?"Button1":(1==i)?"Serial Out":(3==i)?"Serial In":(12==i)?"Relay1":(13==i)?"Led1I":(14==i)?"Sensor":"", i, i);
+          i, (0==i)?"D3":(1==i)?"D10":(2==i)?"D4":(3==i)?"D9":(4==i)?"D2":(5==i)?"D1":(12==i)?"D6":(13==i)?"D7":(14==i)?"D5":(15==i)?"D8":(16==i)?"D0":"", i, i);
       page += line;
       snprintf_P(line, sizeof(line), PSTR("sk(%d,%d);"), my_module.gp.io[i], i);
       func += line;
     }
   }
   func += F("}</script>");
-  page.replace("</script>", func);
-  page.replace("<body>", "<body onload='sl()'>");
+  page.replace(F("</script>"), func);
+  page.replace(F("<body>"), F("<body onload='sl()'>"));
   
   page += FPSTR(HTTP_FORM_END);
   page += FPSTR(HTTP_BTN_CONF);
@@ -691,8 +693,8 @@ void handleWifi(boolean scan)
   addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Handle Wifi config"));
 
   String page = FPSTR(HTTP_HEAD);
-  page.replace("{v}", "Configure Wifi");
-  page.replace("</style>", FPSTR(HTTP_LNK_STYLE));
+  page.replace(F("{v}"), F("Configure Wifi"));
+  page.replace(F("</style>"), FPSTR(HTTP_LNK_STYLE));
 
   if (scan) {
 #ifdef USE_EMULATION
@@ -751,12 +753,12 @@ void handleWifi(boolean scan)
           String item = FPSTR(HTTP_LNK_ITEM);
           String rssiQ;
           rssiQ += quality;
-          item.replace("{v}", WiFi.SSID(indices[i]));
-          item.replace("{r}", rssiQ);
+          item.replace(F("{v}"), WiFi.SSID(indices[i]));
+          item.replace(F("{r}"), rssiQ);
           if (WiFi.encryptionType(indices[i]) != ENC_TYPE_NONE) {
-            item.replace("{i}", "l");
+            item.replace(F("{i}"), F("l"));
           } else {
-            item.replace("{i}", "");
+            item.replace(F("{i}"), "");
           }
           page += item;
           delay(0);
@@ -772,11 +774,11 @@ void handleWifi(boolean scan)
   }
 
   page += FPSTR(HTTP_FORM_WIFI);
-  page.replace("{h1}", sysCfg.hostname);
-  page.replace("{s1}", sysCfg.sta_ssid[0]);
-  page.replace("{p1}", sysCfg.sta_pwd[0]);
-  page.replace("{s2}", sysCfg.sta_ssid[1]);
-  page.replace("{p2}", sysCfg.sta_pwd[1]);
+  page.replace(F("{h1}"), sysCfg.hostname);
+  page.replace(F("{s1}"), sysCfg.sta_ssid[0]);
+  page.replace(F("{p1}"), sysCfg.sta_pwd[0]);
+  page.replace(F("{s2}"), sysCfg.sta_ssid[1]);
+  page.replace(F("{p2}"), sysCfg.sta_pwd[1]);
   page += FPSTR(HTTP_FORM_END);
   if (HTTP_MANAGER == _httpflag) {
     page += FPSTR(HTTP_BTN_RSTRT);
@@ -794,17 +796,17 @@ void handleMqtt()
   addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Handle MQTT config"));
 
   String page = FPSTR(HTTP_HEAD);
-  page.replace("{v}", "Configure MQTT");
+  page.replace(F("{v}"), F("Configure MQTT"));
   page += FPSTR(HTTP_FORM_MQTT);
   char str[sizeof(sysCfg.mqtt_client)];
   getClient(str, MQTT_CLIENT_ID, sizeof(sysCfg.mqtt_client));
-  page.replace("{m0}", str);
-  page.replace("{m1}", sysCfg.mqtt_host);
-  page.replace("{m2}", String(sysCfg.mqtt_port));
-  page.replace("{m3}", sysCfg.mqtt_client);
-  page.replace("{m4}", (sysCfg.mqtt_user[0] == '\0')?"0":sysCfg.mqtt_user);
-  page.replace("{m5}", (sysCfg.mqtt_pwd[0] == '\0')?"0":sysCfg.mqtt_pwd);
-  page.replace("{m6}", sysCfg.mqtt_topic);
+  page.replace(F("{m0}"), str);
+  page.replace(F("{m1}"), sysCfg.mqtt_host);
+  page.replace(F("{m2}"), String(sysCfg.mqtt_port));
+  page.replace(F("{m3}"), sysCfg.mqtt_client);
+  page.replace(F("{m4}"), (sysCfg.mqtt_user[0] == '\0')?"0":sysCfg.mqtt_user);
+  page.replace(F("{m5}"), (sysCfg.mqtt_pwd[0] == '\0')?"0":sysCfg.mqtt_pwd);
+  page.replace(F("{m6}"), sysCfg.mqtt_topic);
   page += FPSTR(HTTP_FORM_END);
   page += FPSTR(HTTP_BTN_CONF);
   showPage(page);
@@ -818,41 +820,41 @@ void handleLog()
   addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Handle Log config"));
 
   String page = FPSTR(HTTP_HEAD);
-  page.replace("{v}", "Config logging");
+  page.replace(F("{v}"), F("Config logging"));
   page += FPSTR(HTTP_FORM_LOG1);
   for (byte idx = 0; idx < 3; idx++) {
     page += FPSTR(HTTP_FORM_LOG2);
     switch (idx) {
     case 0:
-      page.replace("{b0}", F("Serial "));
-      page.replace("{b1}", STR(SERIAL_LOG_LEVEL));
-      page.replace("{b2}", "ls");
+      page.replace(F("{b0}"), F("Serial "));
+      page.replace(F("{b1}"), STR(SERIAL_LOG_LEVEL));
+      page.replace(F("{b2}"), F("ls"));
       for (byte i = LOG_LEVEL_NONE; i < LOG_LEVEL_ALL; i++) {
-        page.replace("{a" + String(i), (i == sysCfg.seriallog_level) ? " selected " : " ");
+        page.replace("{a" + String(i), (i == sysCfg.seriallog_level) ? F(" selected ") : F(" "));
       }
       break;
     case 1:
-      page.replace("{b0}", F("Web "));
-      page.replace("{b1}", STR(WEB_LOG_LEVEL));
-      page.replace("{b2}", "lw");
+      page.replace(F("{b0}"), F("Web "));
+      page.replace(F("{b1}"), STR(WEB_LOG_LEVEL));
+      page.replace(F("{b2}"), F("lw"));
       for (byte i = LOG_LEVEL_NONE; i < LOG_LEVEL_ALL; i++) {
-        page.replace("{a" + String(i), (i == sysCfg.weblog_level) ? " selected " : " ");
+        page.replace("{a" + String(i), (i == sysCfg.weblog_level) ? F(" selected ") : F(" "));
       }
       break;
     case 2:
-      page.replace("{b0}", F("Sys"));
-      page.replace("{b1}", STR(SYS_LOG_LEVEL));
-      page.replace("{b2}", "ll");
+      page.replace(F("{b0}"), F("Sys"));
+      page.replace(F("{b1}"), STR(SYS_LOG_LEVEL));
+      page.replace(F("{b2}"), F("ll"));
       for (byte i = LOG_LEVEL_NONE; i < LOG_LEVEL_ALL; i++) {
-        page.replace("{a" + String(i), (i == sysCfg.syslog_level) ? " selected " : " ");
+        page.replace("{a" + String(i), (i == sysCfg.syslog_level) ? F(" selected ") : F(" "));
       }
       break;
     }
   }
   page += FPSTR(HTTP_FORM_LOG3);
-  page.replace("{l2}", sysCfg.syslog_host);
-  page.replace("{l3}", String(sysCfg.syslog_port));
-  page.replace("{l4}", String(sysCfg.tele_period));
+  page.replace(F("{l2}"), sysCfg.syslog_host);
+  page.replace(F("{l3}"), String(sysCfg.syslog_port));
+  page.replace(F("{l4}"), String(sysCfg.tele_period));
   page += FPSTR(HTTP_FORM_END);
   page += FPSTR(HTTP_BTN_CONF);
   showPage(page);
@@ -867,25 +869,25 @@ void handleOther()
   char stemp[40];
 
   String page = FPSTR(HTTP_HEAD);
-  page.replace("{v}", "Configure Other");
+  page.replace(F("{v}"), F("Configure Other"));
   page += FPSTR(HTTP_FORM_OTHER);
-  page.replace("{p1}", sysCfg.web_password);
-  page.replace("{r1}", (sysCfg.flag.mqtt_enabled) ? " checked" : "");
+  page.replace(F("{p1}"), sysCfg.web_password);
+  page.replace(F("{r1}"), (sysCfg.flag.mqtt_enabled) ? F(" checked") : F(""));
   page += FPSTR(HTTP_FORM_OTHER2);
-  page.replace("{1", "1");
-  page.replace("{2", FRIENDLY_NAME);
-  page.replace("{3", sysCfg.friendlyname[0]);
+  page.replace(F("{1"), F("1"));
+  page.replace(F("{2"), FRIENDLY_NAME);
+  page.replace(F("{3"), sysCfg.friendlyname[0]);
 #ifdef USE_EMULATION
   page += FPSTR(HTTP_FORM_OTHER3);
-  page.replace("{r2}", (EMUL_NONE == sysCfg.flag.emulation) ? " checked" : "");
-  page.replace("{r3}", (EMUL_WEMO == sysCfg.flag.emulation) ? " checked" : "");
-  page.replace("{r4}", (EMUL_HUE == sysCfg.flag.emulation) ? " checked" : "");
+  page.replace(F("{r2}"), (EMUL_NONE == sysCfg.flag.emulation) ? F(" checked") : F(""));
+  page.replace(F("{r3}"), (EMUL_WEMO == sysCfg.flag.emulation) ? F(" checked") : F(""));
+  page.replace(F("{r4}"), (EMUL_HUE == sysCfg.flag.emulation) ? F(" checked") : F(""));
   for (int i = 1; i < Maxdevice; i++) {
     page += FPSTR(HTTP_FORM_OTHER2);
-    page.replace("{1", String(i +1));
+    page.replace(F("{1"), String(i +1));
     snprintf_P(stemp, sizeof(stemp), PSTR(FRIENDLY_NAME"%d"), i +1);
-    page.replace("{2", stemp);
-    page.replace("{3", sysCfg.friendlyname[i]);
+    page.replace(F("{2"), stemp);
+    page.replace(F("{3"), sysCfg.friendlyname[i]);
   }
   page += F("<br/></fieldset>");
 #endif  // USE_EMULATION
@@ -1030,7 +1032,7 @@ void handleSave()
   restart = (!strlen(webServer->arg("r").c_str())) ? 1 : atoi(webServer->arg("r").c_str());
   if (restart) {
     String page = FPSTR(HTTP_HEAD);
-    page.replace("{v}", "Save parameters");
+    page.replace(F("{v}"), F("Save parameters"));
     page += F("<div style='text-align:center;'><b>Parameters saved</b><br/>");
     page += result;
     page += F("</div>");
@@ -1059,7 +1061,7 @@ void handleReset()
   addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Reset parameters"));
 
   String page = FPSTR(HTTP_HEAD);
-  page.replace("{v}", "Default parameters");
+  page.replace(F("{v}"), F("Default parameters"));
   page += F("<div style='text-align:center;'>Parameters reset to default</div>");
   page += FPSTR(HTTP_MSG_RSTRT);
   page += FPSTR(HTTP_BTN_MAIN);
@@ -1077,7 +1079,7 @@ void handleRestore()
   addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Handle restore"));
 
   String page = FPSTR(HTTP_HEAD);
-  page.replace("{v}", "Restore Configuration");
+  page.replace(F("{v}"), F("Restore Configuration"));
   page += FPSTR(HTTP_FORM_RST);
   page += FPSTR(HTTP_BTN_CONF);
   showPage(page);
@@ -1094,9 +1096,9 @@ void handleUpgrade()
   addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Handle upgrade"));
 
   String page = FPSTR(HTTP_HEAD);
-  page.replace("{v}", "Firmware upgrade");
+  page.replace(F("{v}"), F("Firmware upgrade"));
   page += FPSTR(HTTP_FORM_UPG);
-  page.replace("{o1}", sysCfg.otaUrl);
+  page.replace(F("{o1}"), sysCfg.otaUrl);
   page += FPSTR(HTTP_BTN_MAIN);
   showPage(page);
 
@@ -1120,7 +1122,7 @@ void handleUpgradeStart()
   }
 
   String page = FPSTR(HTTP_HEAD);
-  page.replace("{v}", "Info");
+  page.replace(F("{v}"), F("Info"));
   page += F("<div style='text-align:center;'><b>Upgrade started ...</b></div>");
   page += FPSTR(HTTP_MSG_RSTRT);
   page += FPSTR(HTTP_BTN_MAIN);
@@ -1145,7 +1147,7 @@ void handleUploadDone()
   mqttcounter = 0;
 
   String page = FPSTR(HTTP_HEAD);
-  page.replace("{v}", "Info");
+  page.replace(F("{v}"), F("Info"));
   page += F("<div style='text-align:center;'><b>Upload ");
   if (_uploaderror) {
     page += F("<font color='red'>failed</font></b><br/><br/>");
@@ -1375,9 +1377,9 @@ void handleConsole()
   addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Handle console"));
 
   String page = FPSTR(HTTP_HEAD);
-  page.replace("{v}", "Console");
-  page.replace("</script>", FPSTR(HTTP_SCRIPT_CONSOL));
-  page.replace("<body>", "<body onload='l()'>");
+  page.replace(F("{v}"), F("Console"));
+  page.replace(F("</script>"), FPSTR(HTTP_SCRIPT_CONSOL));
+  page.replace(F("<body>"), F("<body onload='l()'>"));
   page += FPSTR(HTTP_FORM_CMND);
   page += FPSTR(HTTP_BTN_MAIN);
   showPage(page);
@@ -1454,7 +1456,7 @@ void handleInfo()
   int freeMem = ESP.getFreeHeap();
 
   String page = FPSTR(HTTP_HEAD);
-  page.replace("{v}", "Information");
+  page.replace(F("{v}"), F("Information"));
 //  page += F("<fieldset><legend><b>&nbsp;Information&nbsp;</b></legend>");
   page += F("<style>td{padding:0px 5px;}</style>");
   page += F("<table style'width:100%;'>");
@@ -1553,7 +1555,7 @@ void handleRestart()
   addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Restarting"));
 
   String page = FPSTR(HTTP_HEAD);
-  page.replace("{v}", "Info");
+  page.replace(F("{v}"), F("Info"));
   page += FPSTR(HTTP_MSG_RSTRT);
   if (HTTP_MANAGER == _httpflag) {
     _httpflag = HTTP_ADMIN;
@@ -1580,14 +1582,13 @@ void handleNotFound()
   } else
 #endif // USE_EMULATION
   {
-    String message = "File Not Found\n\n";
-    message += "URI: ";
+    String message = F("File Not Found\n\nURI: ");
     message += webServer->uri();
-    message += "\nMethod: ";
-    message += ( webServer->method() == HTTP_GET ) ? "GET" : "POST";
-    message += "\nArguments: ";
+    message += F("\nMethod: ");
+    message += ( webServer->method() == HTTP_GET ) ? F("GET") : F("POST");
+    message += F("\nArguments: ");
     message += webServer->args();
-    message += "\n";
+    message += F("\n");
     for ( uint8_t i = 0; i < webServer->args(); i++ ) {
       message += " " + webServer->argName ( i ) + ": " + webServer->arg ( i ) + "\n";
     }

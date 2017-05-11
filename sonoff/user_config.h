@@ -57,14 +57,6 @@
   #define MQTT_PASS            "DVES_PASS"       // [MqttPassword] Optional password
 #endif
 
-#define MQTT_CLIENT_ID         "DVES_%06X"       // [MqttClient] Also fall back topic using Chip Id = last 6 characters of MAC address
-
-#define SUB_PREFIX             "cmnd"            // [Prefix1] Sonoff devices subscribe to:- SUB_PREFIX/MQTT_TOPIC and SUB_PREFIX/MQTT_GRPTOPIC
-#define PUB_PREFIX             "stat"            // [Prefix2] Sonoff devices publish to:- PUB_PREFIX/MQTT_TOPIC
-#define PUB_PREFIX2            "tele"            // [Prefix3] Sonoff devices publish telemetry data to:- PUB_PREFIX2/MQTT_TOPIC/UPTIME, POWER/LIGHT and TIME
-                                                 //   May be named the same as PUB_PREFIX
-#define MQTT_TOPIC             PROJECT           // [Topic] (unique) MQTT device topic
-#define MQTT_GRPTOPIC          "sonoffs"         // [GroupTopic] MQTT Group topic
 #define MQTT_BUTTON_RETAIN     0                 // [ButtonRetain] Button may send retain flag (0 = off, 1 = on)
 #define MQTT_POWER_RETAIN      0                 // [PowerRetain] Power status message may send retain flag (0 = off, 1 = on)
 #define MQTT_SWITCH_RETAIN     0                 // [SwitchRetain] Switch may send retain flag (0 = off, 1 = on)
@@ -72,6 +64,20 @@
 #define MQTT_STATUS_OFF        "OFF"             // [StateText1] Command or Status result when turned off (needs to be a string like "0" or "Off")
 #define MQTT_STATUS_ON         "ON"              // [StateText2] Command or Status result when turned on (needs to be a string like "1" or "On")
 #define MQTT_CMND_TOGGLE       "TOGGLE"          // [StateText3] Command to send when toggling (needs to be a string like "2" or "Toggle")
+
+// -- MQTT topics ---------------------------------
+//#define MQTT_FULLTOPIC         "tasmota/bedroom/%topic%/%prefix%/" // Up to max 80 characers
+#define MQTT_FULLTOPIC         "%prefix%/%topic%/" // [FullTopic] Subscribe and Publish full topic name - Legacy topic
+
+// %prefix% token options
+#define SUB_PREFIX             "cmnd"            // [Prefix1] Sonoff devices subscribe to %prefix%/%topic% being SUB_PREFIX/MQTT_TOPIC and SUB_PREFIX/MQTT_GRPTOPIC
+#define PUB_PREFIX             "stat"            // [Prefix2] Sonoff devices publish to %prefix%/%topic% being PUB_PREFIX/MQTT_TOPIC
+#define PUB_PREFIX2            "tele"            // [Prefix3] Sonoff devices publish telemetry data to %prefix%/%topic% being PUB_PREFIX2/MQTT_TOPIC/UPTIME, POWER and TIME
+                                                 //   May be named the same as PUB_PREFIX
+// %topic% token options (also ButtonTopic and SwitchTopic)
+#define MQTT_TOPIC             PROJECT           // [Topic] (unique) MQTT device topic
+#define MQTT_GRPTOPIC          "sonoffs"         // [GroupTopic] MQTT Group topic
+#define MQTT_CLIENT_ID         "DVES_%06X"       // [MqttClient] Also fall back topic using Chip Id = last 6 characters of MAC address
 
 // -- MQTT - Telemetry ----------------------------
 #define TELE_PERIOD            300               // [TelePeriod] Telemetry (0 = disable, 10 - 3600 seconds)

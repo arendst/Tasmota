@@ -156,7 +156,7 @@ void sl_animate()
           sl_tcolor[1] = sl_dcolor[1];
         } else {
           snprintf_P(svalue, sizeof(svalue), PSTR("{\"Wakeup\":\"Done\"}"));
-          mqtt_publish_topic_P(1, PSTR("WAKEUP"), svalue);
+          mqtt_publish_topic_P(2, PSTR("WAKEUP"), svalue);
           sl_wakeupActive = 0;
         }
       }

@@ -86,7 +86,7 @@
 #undef SUB_PREFIX
 #undef PUB_PREFIX
 #undef PUB_PREFIX2
-#undef USE_ADC_VCC 
+#undef USE_ADC_VCC
 
 #define SUB_PREFIX             "hm/setting"           // Sonoff devices subscribe to:- SUB_PREFIX/MQTT_TOPIC and SUB_PREFIX/MQTT_GRPTOPIC
 #define PUB_PREFIX             "hm/status"            // Sonoff devices publish to:- PUB_PREFIX/MQTT_TOPIC
@@ -105,8 +105,15 @@
 #endif
 
 #define USE_DS18x20                              // Optional using OneWire library for multiple DS18B20 and/or DS18S20 (+2k code)
+
+#undef USE_I2C                                  // I2C using library wire (+10k code, 0.2k mem) - Disable by //
+#undef USE_BH1750                             // Add I2C code for BH1750 sensor
+#undef USE_BMP                                // Add I2C code for BMP/BME280 sensor
+#undef USE_HTU                                // Add I2C code for HTU21/SI7013/SI7020/SI7021 sensor
+#undef USE_SHT
 #define USE_I2C                                 // I2C using library wire (+10k code, 0.2k mem) - Disable by //
 #define USE_PCF8574                             // Add I2C code for PCF8574 8-channel DIO I/O chip.
+#define USE_ADS1115
 
 // -- Application ---------------------------------
 #undef APP_TIMEZONE

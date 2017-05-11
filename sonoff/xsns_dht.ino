@@ -202,13 +202,16 @@ void dht_init()
     dht[i].lastreadtime = -MIN_INTERVAL;
     switch (dht[i].type) {
     case GPIO_DHT11:
-      snprintf_P(dht[i].stype, sizeof(dht[i].stype), PSTR("DHT11-%02d"), dht[i].pin);
+      strcpy_P(dht[i].stype, PSTR("DHT11"));
       break;
     case GPIO_DHT21:
-      snprintf_P(dht[i].stype, sizeof(dht[i].stype), PSTR("AM2301-%02d"), dht[i].pin);
+      strcpy_P(dht[i].stype, PSTR("AM2301"));
       break;
     case GPIO_DHT22:
-      snprintf_P(dht[i].stype, sizeof(dht[i].stype), PSTR("DHT22-%02d"), dht[i].pin);
+      strcpy_P(dht[i].stype, PSTR("DHT22"));
+    }
+    if (dht_sensors > 1) {
+      snprintf_P(dht[i].stype, sizeof(dht[i].stype), PSTR("%s-%02d"), dht[i].stype, dht[i].pin);
     }
   }
   
