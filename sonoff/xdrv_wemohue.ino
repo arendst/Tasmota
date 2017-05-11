@@ -212,7 +212,10 @@ void pollUDP()
         packetBuffer[len] = 0;
       }
       String request = packetBuffer;
+
+//      addLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("UDP: Packet received"));
 //      addLog_P(LOG_LEVEL_DEBUG_MORE, packetBuffer);
+
       if (request.indexOf("M-SEARCH") >= 0) {
         if ((EMUL_WEMO == sysCfg.flag.emulation) &&(request.indexOf("urn:Belkin:device:**") > 0)) {
           wemo_respondToMSearch();
@@ -354,15 +357,13 @@ void handleUPnPevent()
   if (request.indexOf("State>0</Binary") > 0) {
     do_cmnd_power(1, 0);
   }
-  webServer->send(200, "text/plain", "");
+  webServer->send(200, F("text/plain"), "");
 }
 
 void handleUPnPservice()
 {
   addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Handle WeMo event service"));
-
-  String eventservice_xml = FPSTR(WEMO_EVENTSERVICE_XML);
-  webServer->send(200, "text/plain", eventservice_xml);
+  webServer->send_P(200, PSTR("text/plain"), WEMO_EVENTSERVICE_XML);
 }
 
 void handleUPnPsetupWemo()
@@ -373,7 +374,7 @@ void handleUPnPsetupWemo()
   setup_xml.replace("{x1}", sysCfg.friendlyname[0]);
   setup_xml.replace("{x2}", wemo_UUID());
   setup_xml.replace("{x3}", wemo_serial());
-  webServer->send(200, "text/xml", setup_xml);
+  webServer->send(200, F("text/xml"), setup_xml);
 }
 
 /********************************************************************************************/
@@ -393,7 +394,7 @@ void handleUPnPsetupHue()
   String description_xml = FPSTR(HUE_DESCRIPTION_XML);
   description_xml.replace("{x1}", WiFi.localIP().toString());
   description_xml.replace("{x2}", hue_UUID());
-  webServer->send(200, "text/xml", description_xml);
+  webServer->send(200, F("text/xml"), description_xml);
 }
 
 void hue_todo(String *path)
@@ -445,7 +446,7 @@ void hue_global_cfg(String *path)
   hue_config_response(&response);
   response.replace("{id}", *path);
   response += "}";
-  webServer->send(200, "application/json", response);
+  webServer->send(200, F("application/json"), response);
 }
 
 void hue_auth(String *path)
@@ -453,7 +454,7 @@ void hue_auth(String *path)
   char response[38];
   
   snprintf_P(response, sizeof(response), PSTR("[{\"success\":{\"username\":\"%03x\"}}]"), ESP.getChipId());
-  webServer->send(200, "application/json", response);
+  webServer->send(200, F("application/json"), response);
 }
 
 void hue_config(String *path)
@@ -463,7 +464,7 @@ void hue_config(String *path)
   path->remove(0,1);               // cut leading / to get <id>
   hue_config_response(&response);
   response.replace("{id}", *path);
-  webServer->send(200, "application/json", response);
+  webServer->send(200, F("application/json"), response);
 }
 
 void hue_lights(String *path)
@@ -506,7 +507,7 @@ void hue_lights(String *path)
       }
     }
     response += "}";
-    webServer->send(200, "application/json", response);
+    webServer->send(200, F("application/json"), response);
   }
   else if (path->endsWith("/state")) {                       // Got ID/state
     path->remove(0,8);                                       // Remove /lights/
@@ -582,7 +583,7 @@ void hue_lights(String *path)
     else {
       response=FPSTR(HUE_ERROR_JSON);
     }
-    webServer->send(200, "application/json", response);
+    webServer->send(200, F("application/json"), response);
   }
   else if(path->indexOf("/lights/") >= 0) {            // Got /lights/ID
     path->remove(0,8);                                 // Remove /lights/
@@ -603,9 +604,9 @@ void hue_lights(String *path)
       response.replace("{s}", "0");
       response.replace("{b}", "0");
     }
-    webServer->send(200, "application/json", response);
+    webServer->send(200, F("application/json"), response);
   }
-  else webServer->send(406, "application/json", "{}");
+  else webServer->send(406, F("application/json"), "{}");
 }
 
 void handle_hue_api(String *path)

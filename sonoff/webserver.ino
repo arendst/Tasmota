@@ -278,6 +278,9 @@ const char HTTP_END[] PROGMEM =
   "</body>"
   "</html>";
 
+const char HDR_CCNTL[] PROGMEM = "Cache-Control";
+const char HDR_REVAL[] PROGMEM = "no-cache, no-store, must-revalidate";
+
 #define DNS_PORT 53
 enum http_t {HTTP_OFF, HTTP_USER, HTTP_ADMIN, HTTP_MANAGER};
 
@@ -405,10 +408,10 @@ void showPage(String &page)
   }
   page += FPSTR(HTTP_END);
 
-  webServer->sendHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-  webServer->sendHeader("Pragma", "no-cache");
-  webServer->sendHeader("Expires", "-1");
-  webServer->send(200, "text/html", page);
+  webServer->sendHeader(FPSTR(HDR_CCNTL), FPSTR(HDR_REVAL));
+  webServer->sendHeader(F("Pragma"), F("no-cache"));
+  webServer->sendHeader(F("Expires"), F("-1"));
+  webServer->send(200, F("text/html"), page);
 }
 
 void handleRoot()
@@ -529,10 +532,7 @@ void handleAjax2()
     page += line;
   }
 */
-  webServer->sendHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-  webServer->sendHeader("Pragma", "no-cache");
-  webServer->sendHeader("Expires", "-1");
-  webServer->send(200, "text/plain", page);
+  webServer->send(200, F("text/html"), page);
 }
 
 boolean httpUser()
@@ -896,8 +896,8 @@ void handleDownload()
   char attachment[100];
   snprintf_P(attachment, sizeof(attachment), PSTR("attachment; filename=Config_%s_%s.dmp"),
     sysCfg.friendlyname[0], Version);
-  webServer->sendHeader("Content-Disposition", attachment);
-  webServer->send(200, "application/octet-stream", "");
+  webServer->sendHeader(F("Content-Disposition"), attachment);
+  webServer->send(200, F("application/octet-stream"), "");
   memcpy(buffer, &sysCfg, sizeof(sysCfg));
   buffer[0] = CONFIG_FILE_SIGN;
   buffer[1] = (!CONFIG_FILE_XOR)?0:1;
@@ -916,7 +916,7 @@ void handleSave()
   }
 
   char log[LOGSZ +20];
-  char stemp[20];
+  char stemp[TOPSZ];
   byte what = 0;
   byte restart;
   String result = "";
@@ -942,12 +942,16 @@ void handleSave()
     result += F("<br/>Trying to connect device to network<br/>If it fails reconnect to try again");
     break;
   case 2:
+    strlcpy(stemp, (!strlen(webServer->arg("mt").c_str())) ? MQTT_TOPIC : webServer->arg("mt").c_str(), sizeof(stemp));
+    if (strcmp(stemp, sysCfg.mqtt_topic)) {
+      mqtt_publish_topic_P(2, PSTR("LWT"), (sysCfg.flag.mqtt_offline) ? "Offline" : "", true);  // Offline or remove previous retained topic
+    }
+    strlcpy(sysCfg.mqtt_topic, stemp, sizeof(sysCfg.mqtt_topic));
     strlcpy(sysCfg.mqtt_host, (!strlen(webServer->arg("mh").c_str())) ? MQTT_HOST : webServer->arg("mh").c_str(), sizeof(sysCfg.mqtt_host));
     sysCfg.mqtt_port = (!strlen(webServer->arg("ml").c_str())) ? MQTT_PORT : atoi(webServer->arg("ml").c_str());
     strlcpy(sysCfg.mqtt_client, (!strlen(webServer->arg("mc").c_str())) ? MQTT_CLIENT_ID : webServer->arg("mc").c_str(), sizeof(sysCfg.mqtt_client));
     strlcpy(sysCfg.mqtt_user, (!strlen(webServer->arg("mu").c_str())) ? MQTT_USER : (!strcmp(webServer->arg("mu").c_str(),"0")) ? "" : webServer->arg("mu").c_str(), sizeof(sysCfg.mqtt_user));
     strlcpy(sysCfg.mqtt_pwd, (!strlen(webServer->arg("mp").c_str())) ? MQTT_PASS : (!strcmp(webServer->arg("mp").c_str(),"0")) ? "" : webServer->arg("mp").c_str(), sizeof(sysCfg.mqtt_pwd));
-    strlcpy(sysCfg.mqtt_topic, (!strlen(webServer->arg("mt").c_str())) ? MQTT_TOPIC : webServer->arg("mt").c_str(), sizeof(sysCfg.mqtt_topic));
     snprintf_P(log, sizeof(log), PSTR("HTTP: MQTT Host %s, Port %d, Client %s, User %s, Password %s, Topic %s"),
       sysCfg.mqtt_host, sysCfg.mqtt_port, sysCfg.mqtt_client, sysCfg.mqtt_user, sysCfg.mqtt_pwd, sysCfg.mqtt_topic);
     addLog(LOG_LEVEL_INFO, log);
@@ -1340,11 +1344,7 @@ void handleCmnd()
   } else {
     message = F("Need user=<username>&password=<password>\n");
   }
-
-  webServer->sendHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-  webServer->sendHeader("Pragma", "no-cache");
-  webServer->sendHeader("Expires", "-1");
-  webServer->send(200, "text/plain", message);
+  webServer->send(200, F("text/plain"), message);
 }
 
 void handleConsole()
@@ -1418,11 +1418,7 @@ void handleAjax()
     } while (counter != logidx);
   }
   message += F("</l></r>");
- 
-  webServer->sendHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-  webServer->sendHeader("Pragma", "no-cache");
-  webServer->sendHeader("Expires", "-1");
-  webServer->send(200, "text/xml", message);
+  webServer->send(200, F("text/xml"), message);
 }
 
 void handleInfo()
@@ -1572,10 +1568,10 @@ void handleNotFound()
       message += " " + webServer->argName ( i ) + ": " + webServer->arg ( i ) + "\n";
     }
 
-    webServer->sendHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-    webServer->sendHeader("Pragma", "no-cache");
-    webServer->sendHeader("Expires", "-1");
-    webServer->send(404, "text/plain", message);
+    webServer->sendHeader(FPSTR(HDR_CCNTL), FPSTR(HDR_REVAL));
+    webServer->sendHeader(F("Pragma"), F("no-cache"));
+    webServer->sendHeader(F("Expires"), F("-1"));
+    webServer->send(404, F("text/plain"), message);
   }
 }
 
@@ -1585,8 +1581,8 @@ boolean captivePortal()
   if ((HTTP_MANAGER == _httpflag) && !isIp(webServer->hostHeader())) {
     addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Request redirected to captive portal"));
 
-    webServer->sendHeader("Location", String("http://") + webServer->client().localIP().toString(), true);
-    webServer->send(302, "text/plain", ""); // Empty content inhibits Content-length header so we have to close the socket ourselves.
+    webServer->sendHeader(F("Location"), String("http://") + webServer->client().localIP().toString(), true);
+    webServer->send(302, F("text/plain"), ""); // Empty content inhibits Content-length header so we have to close the socket ourselves.
     webServer->client().stop(); // Stop is needed because we sent no content length
     return true;
   }

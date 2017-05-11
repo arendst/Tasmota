@@ -1,5 +1,14 @@
-/* 5.0.6 20170510
- * Remove hyphen in case of a single DHT sensor connecetd (#427)
+/* 5.0.7 20170511
+ * Fix possible exception 28 on empty command
+ * Add command SetOption0 as replacement for SaveState
+ * Add command SetOption1 as replacement for ButtonRestrict
+ * Add command SetOption2 as replacement for Units
+ * Add command SetOption4 as replacement for MqttResponse
+ * Add command SetOption8 as replacement for TempUnit
+ * Add command SetOption10 On|Off to select between Offline or Removing previous retained topic (#417, #436)
+ *
+ * 5.0.6 20170510
+ * Remove hyphen in case of a single DHT sensor connected (#427)
  * Add command MqttRetry <seconds> to change default MQTT reconnect retry timer from minimal 10 seconds (#429)
  *
  * 5.0.5 20170508

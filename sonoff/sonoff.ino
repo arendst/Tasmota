@@ -10,7 +10,7 @@
  * ====================================================
 */
 
-#define VERSION                0x05000600  // 5.0.6
+#define VERSION                0x05000700  // 5.0.7
 
 enum log_t   {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG_MORE, LOG_LEVEL_ALL};
 enum week_t  {Last, First, Second, Third, Fourth};
@@ -749,8 +749,12 @@ boolean mqtt_command(boolean grpflg, char *type, uint16_t index, char *dataBuf, 
       if (!strcmp(dataBuf, MQTTClient)) {
         payload = 1;
       }
-      strlcpy(sysCfg.mqtt_topic, (1 == payload) ? MQTT_TOPIC : dataBuf, sizeof(sysCfg.mqtt_topic));
-      restartflag = 2;
+      strlcpy(stemp1, (1 == payload) ? MQTT_TOPIC : dataBuf, sizeof(stemp1));
+      if (strcmp(stemp1, sysCfg.mqtt_topic)) {
+        mqtt_publish_topic_P(2, PSTR("LWT"), (sysCfg.flag.mqtt_offline) ? "Offline" : "", true);  // Offline or remove previous retained topic
+        strlcpy(sysCfg.mqtt_topic, stemp1, sizeof(sysCfg.mqtt_topic));
+        restartflag = 2;
+      }
     }
     snprintf_P(svalue, ssvalue, PSTR("{\"Topic\":\"%s\"}"), sysCfg.mqtt_topic);
   }
@@ -1012,6 +1016,20 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
         snprintf_P(stemp1, sizeof(stemp1), PSTR("Every %d seconds"), sysCfg.savedata);
       }
       snprintf_P(svalue, sizeof(svalue), PSTR("{\"SaveData\":\"%s\"}"), (sysCfg.savedata > 1) ? stemp1 : getStateText(sysCfg.savedata));
+    }
+    else if (!strcmp_P(type,PSTR("SETOPTION")) && (index >= 0) && (index <= 10)) {
+      if ((data_len > 0) && (payload >= 0) && (payload <= 1)) {
+        switch (index) {
+          case 0:   // savestate
+          case 1:   // button_restrict
+          case 2:   // value_units
+          case 4:   // mqtt_response
+          case 8:   // temperature_conversion
+          case 10:  // mqtt_offline
+            bitWrite(sysCfg.flag.data, index, payload);
+        }
+      }
+      snprintf_P(svalue, sizeof(svalue), PSTR("{\"SetOption%d\":\"%s\"}"), index, getStateText(bitRead(sysCfg.flag.data, index)));
     }
     else if (!strcmp_P(type,PSTR("SAVESTATE"))) {
       if ((data_len > 0) && (payload >= 0) && (payload <= 1)) {
@@ -1619,7 +1637,7 @@ void do_cmnd(char *cmnd)
       token = start +1;
     }
   }
-  snprintf_P(stopic, sizeof(stopic), PSTR("/%s"), token);
+  snprintf_P(stopic, sizeof(stopic), PSTR("/%s"), (token == NULL) ? "" : token);
   token = strtok(NULL, "");
   snprintf_P(svalue, sizeof(svalue), PSTR("%s"), (token == NULL) ? "" : token);
   mqttDataCb(stopic, (byte*)svalue, strlen(svalue));

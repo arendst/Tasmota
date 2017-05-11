@@ -2,33 +2,36 @@
  * Config settings
 \*********************************************************************************************/
 
-typedef struct {
-  uint32_t savestate : 1;
-  uint32_t button_restrict : 1;
-  uint32_t value_units : 1;
-  uint32_t mqtt_enabled : 1;
-  uint32_t mqtt_response : 1;
-  uint32_t mqtt_power_retain : 1;
-  uint32_t mqtt_button_retain : 1;
-  uint32_t mqtt_switch_retain : 1;
-  uint32_t temperature_conversion : 1;
-  uint32_t mqtt_sensor_retain : 1;
-  uint32_t spare22 : 1;
-  uint32_t spare21 : 1;
-  uint32_t spare20 : 1;
-  uint32_t spare19 : 1;
-  uint32_t spare18 : 1;
-  uint32_t spare17 : 1;
-  uint32_t spare16 : 1;
-  uint32_t spare15 : 1;
-  uint32_t spare14 : 1;
-  uint32_t spare13 : 1;
-  uint32_t spare12 : 1;
-  uint32_t emulation : 2;
-  uint32_t energy_resolution : 3;
-  uint32_t pressure_resolution : 2;
-  uint32_t humidity_resolution : 2;
-  uint32_t temperature_resolution : 2;
+typedef union {                           // Restricted by MISRA-C Rule 18.4 but so usefull...    
+  uint32_t data;                          // Allow bit manipulation using SetOption
+  struct {
+    uint32_t savestate : 1;               // bit 0
+    uint32_t button_restrict : 1;         // bit 1
+    uint32_t value_units : 1;             // bit 2
+    uint32_t mqtt_enabled : 1;
+    uint32_t mqtt_response : 1;           // bit 4
+    uint32_t mqtt_power_retain : 1;
+    uint32_t mqtt_button_retain : 1;
+    uint32_t mqtt_switch_retain : 1;
+    uint32_t temperature_conversion : 1;  // bit 8
+    uint32_t mqtt_sensor_retain : 1;
+    uint32_t mqtt_offline : 1;            // bit 10
+    uint32_t spare11 : 1;
+    uint32_t spare12 : 1;
+    uint32_t spare13 : 1;
+    uint32_t spare14 : 1;
+    uint32_t spare15 : 1;
+    uint32_t spare16 : 1;
+    uint32_t spare17 : 1;
+    uint32_t spare18 : 1;
+    uint32_t spare19 : 1;
+    uint32_t spare20 : 1;
+    uint32_t emulation : 2;
+    uint32_t energy_resolution : 3;
+    uint32_t pressure_resolution : 2;
+    uint32_t humidity_resolution : 2;
+    uint32_t temperature_resolution : 2;
+  };
 } sysBitfield;
 
 struct SYSCFG {
