@@ -1,4 +1,4 @@
-/* Flash Split for 1M chips */
+/* Flash Split for 1M chips, no SPIFFS */
 /* sketch 999KB */
 /* eeprom 20KB */
 
