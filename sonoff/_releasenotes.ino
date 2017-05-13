@@ -1,4 +1,9 @@
-/* 5.0.7 20170511
+/* 5.1.0 20170513
+ * Fix Offline/Removal of retained topic when FullTopic is changed
+ * Add FullTopic to MQTT Configuration and Information web page
+ * Adde license model GPLv3 (#188)
+ *
+ * 5.0.7 20170511
  * Fix possible exception 28 on empty command
  * Add command SetOption0 as replacement for SaveState
  * Add command SetOption1 as replacement for ButtonRestrict

@@ -1,16 +1,33 @@
 /*
- * Sonoff-Tasmota by Theo Arends
- *
- * ====================================================
- * Prerequisites:
- *   - Change libraries/PubSubClient/src/PubSubClient.h
- *       #define MQTT_MAX_PACKET_SIZE 512
- *
- *   - Select IDE Tools - Flash size: "1M (no SPIFFS)"
- * ====================================================
+  sonoff.ino - Sonoff-Tasmota firmware for iTead Sonoff, Wemos and NodeMCU hardware
+
+  Copyright (C) 2017  Theo Arends
+
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#define VERSION                0x05000700  // 5.0.7
+/*
+  ====================================================
+  Prerequisites:
+    - Change libraries/PubSubClient/src/PubSubClient.h
+        #define MQTT_MAX_PACKET_SIZE 512
+ 
+    - Select IDE Tools - Flash size: "1M (no SPIFFS)"
+  ====================================================
+*/
+
+#define VERSION                0x05010000  // 5.1.0
 
 enum log_t   {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG_MORE, LOG_LEVEL_ALL};
 enum week_t  {Last, First, Second, Third, Fourth};
@@ -327,11 +344,6 @@ void getTopic_P(char *stopic, byte prefix, char *topic, const char* subtopic)
     fulltopic += "/";
   }
   snprintf_P(stopic, TOPSZ, PSTR("%s%s"), fulltopic.c_str(), romram);
-/*
-  char log[LOGSZ];
-  snprintf_P(log, sizeof(log), PSTR("MTPC: %s"), stopic);
-  addLog(LOG_LEVEL_DEBUG, log);
-*/
 }
 
 char* getStateText(byte state)
@@ -706,8 +718,12 @@ boolean mqtt_command(boolean grpflg, char *type, uint16_t index, char *dataBuf, 
       if (!strcmp(dataBuf, MQTTClient)) {
         payload = 1;
       }
-      strlcpy(sysCfg.mqtt_fulltopic, (1 == payload) ? MQTT_FULLTOPIC : dataBuf, sizeof(sysCfg.mqtt_fulltopic));
-      restartflag = 2;
+      strlcpy(stemp1, (1 == payload) ? MQTT_FULLTOPIC : dataBuf, sizeof(stemp1));
+      if (strcmp(stemp1, sysCfg.mqtt_fulltopic)) {
+        mqtt_publish_topic_P(2, PSTR("LWT"), (sysCfg.flag.mqtt_offline) ? "Offline" : "", true);  // Offline or remove previous retained topic
+        strlcpy(sysCfg.mqtt_fulltopic, stemp1, sizeof(sysCfg.mqtt_fulltopic));
+        restartflag = 2;
+      }
     }
     snprintf_P(svalue, ssvalue, PSTR("{\"FullTopic\":\"%s\"}"), sysCfg.mqtt_fulltopic);
   }

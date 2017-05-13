@@ -1,26 +1,20 @@
 /*
-Copyright (c) 2017 Theo Arends.  All rights reserved.
+  webserver.ino - webserver for Sonoff-Tasmota
 
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met:
+  Copyright (C) 2017  Theo Arends
 
-- Redistributions of source code must retain the above copyright notice,
-  this list of conditions and the following disclaimer.
-- Redistributions in binary form must reproduce the above copyright notice,
-  this list of conditions and the following disclaimer in the documentation
-  and/or other materials provided with the distribution.
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
-LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
-CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
-CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-POSSIBILITY OF SUCH DAMAGE.
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #ifdef USE_WEBSERVER
@@ -195,7 +189,8 @@ const char HTTP_FORM_MQTT[] PROGMEM =
   "<br/><b>Client Id</b> ({m0})<br/><input id='mc' name='mc' length=32 placeholder='" MQTT_CLIENT_ID "' value='{m3}'><br/>"
   "<br/><b>User</b> (" MQTT_USER ")<br/><input id='mu' name='mu' length=32 placeholder='" MQTT_USER "' value='{m4}'><br/>"
   "<br/><b>Password</b><br/><input id='mp' name='mp' length=32 type='password' placeholder='" MQTT_PASS "' value='{m5}'><br/>"
-  "<br/><b>Topic</b> (" MQTT_TOPIC ")<br/><input id='mt' name='mt' length=32 placeholder='" MQTT_TOPIC" ' value='{m6}'><br/>";
+  "<br/><b>Topic</b> = %topic% (" MQTT_TOPIC ")<br/><input id='mt' name='mt' length=32 placeholder='" MQTT_TOPIC" ' value='{m6}'><br/>"
+  "<br/><b>Full Topic</b> (" MQTT_FULLTOPIC ")<br/><input id='mf' name='mf' length=80 placeholder='" MQTT_FULLTOPIC" ' value='{m7}'><br/>";
 const char HTTP_FORM_LOG1[] PROGMEM =
   "<fieldset><legend><b>&nbsp;Logging parameters&nbsp;</b></legend><form method='post' action='sv'>"
   "<input id='w' name='w' value='3' hidden><input id='r' name='r' value='0' hidden>";
@@ -229,13 +224,7 @@ const char HTTP_FORM_END[] PROGMEM =
   "<br/><button type='submit'>Save</button></form></fieldset>";
 const char HTTP_FORM_RST[] PROGMEM =
   "<div id='f1' name='f1' style='display:block;'>"
-  "<fieldset><legend><b>&nbsp;Restore configuration&nbsp;</b></legend>"
-  "<form method='post' action='u2' enctype='multipart/form-data'>"
-  "<br/><input type='file' name='u2'><br/>"
-  "<br/><button type='submit' onclick='document.getElementById(\"f1\").style.display=\"none\";document.getElementById(\"f2\").style.display=\"block\";this.form.submit();'>Start restore</button></form>"
-  "</fieldset>"
-  "</div>"
-  "<div id='f2' name='f2' style='display:none;text-align:center;'><b>Restore started ...</b></div>";
+  "<fieldset><legend><b>&nbsp;Restore configuration&nbsp;</b></legend>";
 const char HTTP_FORM_UPG[] PROGMEM =
   "<div id='f1' name='f1' style='display:block;'>"
   "<fieldset><legend><b>&nbsp;Upgrade by web server&nbsp;</b></legend>"
@@ -243,11 +232,11 @@ const char HTTP_FORM_UPG[] PROGMEM =
   "<br/>OTA Url<br/><input id='o' name='o' length=80 placeholder='OTA_URL' value='{o1}'><br/>"
   "<br/><button type='submit'>Start upgrade</button></form>"
   "</fieldset><br/><br/>"
-  "<fieldset><legend><b>&nbsp;Upgrade by file upload&nbsp;</b></legend>"
+  "<fieldset><legend><b>&nbsp;Upgrade by file upload&nbsp;</b></legend>";
+const char HTTP_FORM_RST_UPG[] PROGMEM =
   "<form method='post' action='u2' enctype='multipart/form-data'>"
   "<br/><input type='file' name='u2'><br/>"
-//  "<br/><button type='submit' onclick='this.disabled=true;this.form.submit();'>Start upgrade</button></form></fieldset>"
-  "<br/><button type='submit' onclick='document.getElementById(\"f1\").style.display=\"none\";document.getElementById(\"f2\").style.display=\"block\";this.form.submit();'>Start upgrade</button></form>"
+  "<br/><button type='submit' onclick='document.getElementById(\"f1\").style.display=\"none\";document.getElementById(\"f2\").style.display=\"block\";this.form.submit();'>Start {r1}</button></form>"
   "</fieldset>"
   "</div>"
   "<div id='f2' name='f2' style='display:none;text-align:center;'><b>Upload started ...</b></div>";
@@ -518,7 +507,6 @@ void handleAjax2()
     page += F("<tr>");
     for (byte idx = 1; idx <= Maxdevice; idx++) {
       snprintf_P(line, sizeof(line), PSTR("<td style='width:%d%'><div style='text-align:center;font-weight:bold;font-size:%dpx'>%s</div></td>"),
-//        100 / Maxdevice, 70 - (Maxdevice * 8), (power & (0x01 << (idx -1))) ? "ON" : "OFF");
         100 / Maxdevice, 70 - (Maxdevice * 8), getStateText(bitRead(power, idx -1)));
       page += line;
     }
@@ -792,6 +780,7 @@ void handleMqtt()
   page.replace(F("{m4}"), (sysCfg.mqtt_user[0] == '\0')?"0":sysCfg.mqtt_user);
   page.replace(F("{m5}"), (sysCfg.mqtt_pwd[0] == '\0')?"0":sysCfg.mqtt_pwd);
   page.replace(F("{m6}"), sysCfg.mqtt_topic);
+  page.replace(F("{m7}"), sysCfg.mqtt_fulltopic);
   page += FPSTR(HTTP_FORM_END);
   page += FPSTR(HTTP_BTN_CONF);
   showPage(page);
@@ -917,6 +906,7 @@ void handleSave()
 
   char log[LOGSZ +20];
   char stemp[TOPSZ];
+  char stemp2[TOPSZ];
   byte what = 0;
   byte restart;
   String result = "";
@@ -943,17 +933,19 @@ void handleSave()
     break;
   case 2:
     strlcpy(stemp, (!strlen(webServer->arg("mt").c_str())) ? MQTT_TOPIC : webServer->arg("mt").c_str(), sizeof(stemp));
-    if (strcmp(stemp, sysCfg.mqtt_topic)) {
+    strlcpy(stemp2, (!strlen(webServer->arg("mf").c_str())) ? MQTT_FULLTOPIC : webServer->arg("mf").c_str(), sizeof(stemp2));
+    if ((strcmp(stemp, sysCfg.mqtt_topic)) || (strcmp(stemp2, sysCfg.mqtt_fulltopic))) {
       mqtt_publish_topic_P(2, PSTR("LWT"), (sysCfg.flag.mqtt_offline) ? "Offline" : "", true);  // Offline or remove previous retained topic
     }
     strlcpy(sysCfg.mqtt_topic, stemp, sizeof(sysCfg.mqtt_topic));
+    strlcpy(sysCfg.mqtt_fulltopic, stemp2, sizeof(sysCfg.mqtt_fulltopic));
     strlcpy(sysCfg.mqtt_host, (!strlen(webServer->arg("mh").c_str())) ? MQTT_HOST : webServer->arg("mh").c_str(), sizeof(sysCfg.mqtt_host));
     sysCfg.mqtt_port = (!strlen(webServer->arg("ml").c_str())) ? MQTT_PORT : atoi(webServer->arg("ml").c_str());
     strlcpy(sysCfg.mqtt_client, (!strlen(webServer->arg("mc").c_str())) ? MQTT_CLIENT_ID : webServer->arg("mc").c_str(), sizeof(sysCfg.mqtt_client));
     strlcpy(sysCfg.mqtt_user, (!strlen(webServer->arg("mu").c_str())) ? MQTT_USER : (!strcmp(webServer->arg("mu").c_str(),"0")) ? "" : webServer->arg("mu").c_str(), sizeof(sysCfg.mqtt_user));
     strlcpy(sysCfg.mqtt_pwd, (!strlen(webServer->arg("mp").c_str())) ? MQTT_PASS : (!strcmp(webServer->arg("mp").c_str(),"0")) ? "" : webServer->arg("mp").c_str(), sizeof(sysCfg.mqtt_pwd));
-    snprintf_P(log, sizeof(log), PSTR("HTTP: MQTT Host %s, Port %d, Client %s, User %s, Password %s, Topic %s"),
-      sysCfg.mqtt_host, sysCfg.mqtt_port, sysCfg.mqtt_client, sysCfg.mqtt_user, sysCfg.mqtt_pwd, sysCfg.mqtt_topic);
+    snprintf_P(log, sizeof(log), PSTR("HTTP: MQTT Host %s, Port %d, Client %s, User %s, Password %s, Topic %s, FullTopic %s"),
+      sysCfg.mqtt_host, sysCfg.mqtt_port, sysCfg.mqtt_client, sysCfg.mqtt_user, sysCfg.mqtt_pwd, sysCfg.mqtt_topic, sysCfg.mqtt_fulltopic);
     addLog(LOG_LEVEL_INFO, log);
     break;
   case 3:
@@ -1064,6 +1056,8 @@ void handleRestore()
   String page = FPSTR(HTTP_HEAD);
   page.replace(F("{v}"), F("Restore Configuration"));
   page += FPSTR(HTTP_FORM_RST);
+  page += FPSTR(HTTP_FORM_RST_UPG);
+  page.replace(F("{r1}"), F("restore"));
   page += FPSTR(HTTP_BTN_CONF);
   showPage(page);
 
@@ -1082,6 +1076,8 @@ void handleUpgrade()
   page.replace(F("{v}"), F("Firmware upgrade"));
   page += FPSTR(HTTP_FORM_UPG);
   page.replace(F("{o1}"), sysCfg.otaUrl);
+  page += FPSTR(HTTP_FORM_RST_UPG);
+  page.replace(F("{r1}"), F("upgrade"));
   page += FPSTR(HTTP_BTN_MAIN);
   showPage(page);
 
@@ -1428,6 +1424,8 @@ void handleInfo()
   }
   addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Handle info"));
 
+  char stopic[TOPSZ];
+
   int freeMem = ESP.getFreeHeap();
 
   String page = FPSTR(HTTP_HEAD);
@@ -1473,10 +1471,14 @@ void handleInfo()
 //    page += F("<tr><th>MQTT Password</th><td>"); page += sysCfg.mqtt_pwd; page += F("</td></tr>");
     page += F("<tr><th>MQTT Topic</th><td>"); page += sysCfg.mqtt_topic; page += F("</td></tr>");
     page += F("<tr><th>MQTT Group Topic</th><td>"); page += sysCfg.mqtt_grptopic; page += F("</td></tr>");
+
+    getTopic_P(stopic, 0, sysCfg.mqtt_topic, "");
+    page += F("<tr><th>MQTT Full Topic</th><td>"); page += stopic; page += F("</td></tr>");
+    
   } else {
     page += F("<tr><th>MQTT</th><td>Disabled</td></tr>");
   }
-  
+  page += F("<tr><td>&nbsp;</td></tr>");
   page += F("<tr><th>Emulation</th><td>");
 #ifdef USE_EMULATION
   if (EMUL_WEMO == sysCfg.flag.emulation) {
