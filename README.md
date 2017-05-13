@@ -3,7 +3,7 @@ Provide ESP8266 based Sonoff by [iTead Studio](https://www.itead.cc/) and Electr
 
 Current version is **5.1.0** - See [sonoff/_releasenotes.ino](https://github.com/arendst/Sonoff-Tasmota/blob/master/sonoff/_releasenotes.ino) for change information.
 
-### **** ATTENTION Version 5.0.x specific information ****
+### **** ATTENTION Version 5.x.x specific information ****
 
 This version uses a new linker script to free flash memory for future code additions. It moves the settings from Spiffs to Eeprom. If you compile your own firmware download the new linker to your IDE or Platformio base folder. See [Wiki > Prerequisite](https://github.com/arendst/Sonoff-Tasmota/wiki/Prerequisite).
 
