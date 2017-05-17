@@ -1,26 +1,20 @@
 /*
-Copyright (c) 2017 Theo Arends.  All rights reserved.
+  xsns_dht.ino - DHTxx and AM23xx temperature and humidity sensor support for Sonoff-Tasmota
 
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met:
+  Copyright (C) 2017  Theo Arends
 
-- Redistributions of source code must retain the above copyright notice,
-  this list of conditions and the following disclaimer.
-- Redistributions in binary form must reproduce the above copyright notice,
-  this list of conditions and the following disclaimer in the documentation
-  and/or other materials provided with the distribution.
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
-LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
-CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
-CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-POSSIBILITY OF SUCH DAMAGE.
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #ifdef USE_DHT
@@ -32,157 +26,190 @@ POSSIBILITY OF SUCH DAMAGE.
  * Source: Adafruit Industries https://github.com/adafruit/DHT-sensor-library
 \*********************************************************************************************/
 
-#define MIN_INTERVAL 2000
+#define DHT_MAX_SENSORS  3
+#define MIN_INTERVAL     2000
 
-uint8_t data[5];
-char dhtstype[7];
-uint32_t _lastreadtime, _maxcycles;
-bool _lastresult;
-float mt, mh = 0;
+uint32_t dht_maxcycles;
+uint8_t dht_data[5];
+byte dht_sensors = 0;
+
+struct DHTSTRUCT {
+  byte     pin;
+  byte     type;
+  char     stype[10];
+  uint32_t lastreadtime;
+  bool     lastresult;
+  float    t;
+  float    h = 0;
+} dht[DHT_MAX_SENSORS];
 
 void dht_readPrep()
 {
-  digitalWrite(pin[GPIO_DHT11], HIGH);
+  for (byte i = 0; i < dht_sensors; i++) {
+    digitalWrite(dht[i].pin, HIGH);
+  }
 }
 
-uint32_t dht_expectPulse(bool level)
+uint32_t dht_expectPulse(byte sensor, bool level)
 {
   uint32_t count = 0;
 
-  while (digitalRead(pin[GPIO_DHT11]) == level)
-    if (count++ >= _maxcycles) return 0;
+  while (digitalRead(dht[sensor].pin) == level) {
+    if (count++ >= dht_maxcycles) {
+      return 0;
+    }
+  }
   return count;
 }
 
-boolean dht_read()
+boolean dht_read(byte sensor)
 {
   char log[LOGSZ];
   uint32_t cycles[80];
   uint32_t currenttime = millis();
 
-  if ((currenttime - _lastreadtime) < 2000) {
-    return _lastresult;
+  if ((currenttime - dht[sensor].lastreadtime) < 2000) {
+    return dht[sensor].lastresult;
   }
-  _lastreadtime = currenttime;
+  dht[sensor].lastreadtime = currenttime;
 
-  data[0] = data[1] = data[2] = data[3] = data[4] = 0;
+  dht_data[0] = dht_data[1] = dht_data[2] = dht_data[3] = dht_data[4] = 0;
 
-//  digitalWrite(pin[GPIO_DHT11], HIGH);
+//  digitalWrite(dht[sensor].pin, HIGH);
 //  delay(250);
 
-  pinMode(pin[GPIO_DHT11], OUTPUT);
-  digitalWrite(pin[GPIO_DHT11], LOW);
+  pinMode(dht[sensor].pin, OUTPUT);
+  digitalWrite(dht[sensor].pin, LOW);
   delay(20);
 
   noInterrupts();
-  digitalWrite(pin[GPIO_DHT11], HIGH);
+  digitalWrite(dht[sensor].pin, HIGH);
   delayMicroseconds(40);
-  pinMode(pin[GPIO_DHT11], INPUT_PULLUP);
+  pinMode(dht[sensor].pin, INPUT_PULLUP);
   delayMicroseconds(10);
-  if (dht_expectPulse(LOW) == 0) {
+  if (0 == dht_expectPulse(sensor, LOW)) {
     addLog_P(LOG_LEVEL_DEBUG, PSTR("DHT: Timeout waiting for start signal low pulse"));
-    _lastresult = false;
-    return _lastresult;
+    dht[sensor].lastresult = false;
+    return dht[sensor].lastresult;
   }
-  if (dht_expectPulse(HIGH) == 0) {
+  if (0 == dht_expectPulse(sensor, HIGH)) {
     addLog_P(LOG_LEVEL_DEBUG, PSTR("DHT: Timeout waiting for start signal high pulse"));
-    _lastresult = false;
-    return _lastresult;
+    dht[sensor].lastresult = false;
+    return dht[sensor].lastresult;
   }
-  for (int i=0; i<80; i+=2) {
-    cycles[i]   = dht_expectPulse(LOW);
-    cycles[i+1] = dht_expectPulse(HIGH);
+  for (int i = 0; i < 80; i += 2) {
+    cycles[i]   = dht_expectPulse(sensor, LOW);
+    cycles[i+1] = dht_expectPulse(sensor, HIGH);
   }
   interrupts();
 
   for (int i=0; i<40; ++i) {
     uint32_t lowCycles  = cycles[2*i];
     uint32_t highCycles = cycles[2*i+1];
-    if ((lowCycles == 0) || (highCycles == 0)) {
+    if ((0 == lowCycles) || (0 == highCycles)) {
       addLog_P(LOG_LEVEL_DEBUG, PSTR("DHT: Timeout waiting for pulse"));
-      _lastresult = false;
-      return _lastresult;
+      dht[sensor].lastresult = false;
+      return dht[sensor].lastresult;
     }
-    data[i/8] <<= 1;
-    if (highCycles > lowCycles) data[i/8] |= 1;
+    dht_data[i/8] <<= 1;
+    if (highCycles > lowCycles) {
+      dht_data[i/8] |= 1;
+    }
   }
 
   snprintf_P(log, sizeof(log), PSTR("DHT: Received %02X, %02X, %02X, %02X, %02X =? %02X"),
-    data[0], data[1], data[2], data[3], data[4], (data[0] + data[1] + data[2] + data[3]) & 0xFF);
+    dht_data[0], dht_data[1], dht_data[2], dht_data[3], dht_data[4], (dht_data[0] + dht_data[1] + dht_data[2] + dht_data[3]) & 0xFF);
   addLog(LOG_LEVEL_DEBUG, log);
 
-  if (data[4] == ((data[0] + data[1] + data[2] + data[3]) & 0xFF)) {
-    _lastresult = true;
-    return _lastresult;
+  if (dht_data[4] == ((dht_data[0] + dht_data[1] + dht_data[2] + dht_data[3]) & 0xFF)) {
+    dht[sensor].lastresult = true;
   } else {
     addLog_P(LOG_LEVEL_DEBUG, PSTR("DHT: Checksum failure"));
-    _lastresult = false;
-    return _lastresult;
+    dht[sensor].lastresult = false;
   }
+  return dht[sensor].lastresult;
 }
 
-float dht_convertCtoF(float c)
+boolean dht_readTempHum(byte sensor, float &t, float &h)
 {
-  return c * 1.8 + 32;
-}
-
-boolean dht_readTempHum(bool S, float &t, float &h)
-{
-  if (!mh) {
+  if (!dht[sensor].h) {
     t = NAN;
     h = NAN;
   } else {
-    t = mt;
-    h = mh;
+    t = dht[sensor].t;
+    h = dht[sensor].h;
   }
 
-  if (dht_read()) {
-    switch (dht_type) {
+  if (dht_read(sensor)) {
+    switch (dht[sensor].type) {
     case GPIO_DHT11:
-      h = data[0];
-      t = data[2];
-      if(S) t = dht_convertCtoF(t);
+      h = dht_data[0];
+      t = convertTemp(dht_data[2]);
       break;
     case GPIO_DHT22:
     case GPIO_DHT21:
-      h = data[0];
+      h = dht_data[0];
       h *= 256;
-      h += data[1];
+      h += dht_data[1];
       h *= 0.1;
-      t = data[2] & 0x7F;
+      t = dht_data[2] & 0x7F;
       t *= 256;
-      t += data[3];
+      t += dht_data[3];
       t *= 0.1;
-      if (data[2] & 0x80) t *= -1;
-      if(S) t = dht_convertCtoF(t);
+      if (dht_data[2] & 0x80) {
+        t *= -1;
+      }
+      t = convertTemp(t);
       break;
     }
-    if (!isnan(t)) mt = t;
-    if (!isnan(h)) mh = h;
+    if (!isnan(t)) {
+      dht[sensor].t = t;
+    }
+    if (!isnan(h)) {
+      dht[sensor].h = h;
+    }
   }
   return (!isnan(t) && !isnan(h));
+}
+
+boolean dht_setup(byte pin, byte type)
+{
+  boolean success = false;
+  
+  if (dht_sensors < DHT_MAX_SENSORS) {
+    dht[dht_sensors].pin = pin;
+    dht[dht_sensors].type = type;
+    dht_sensors++;
+    success = true;
+  }
+  return success;
 }
 
 void dht_init()
 {
   char log[LOGSZ];
-  _maxcycles = microsecondsToClockCycles(1000);  // 1 millisecond timeout for
-                                                 // reading pulses from DHT sensor.
-  pinMode(pin[GPIO_DHT11], INPUT_PULLUP);
-  _lastreadtime = -MIN_INTERVAL;
 
-  switch (dht_type) {
-  case GPIO_DHT11:
-    strcpy(dhtstype, "DHT11");
-    break;
-  case GPIO_DHT21:
-    strcpy(dhtstype, "AM2301");
-    break;
-  case GPIO_DHT22:
-    strcpy(dhtstype, "DHT22");
+  dht_maxcycles = microsecondsToClockCycles(1000);  // 1 millisecond timeout for reading pulses from DHT sensor.
+
+  for (byte i = 0; i < dht_sensors; i++) {
+    pinMode(dht[i].pin, INPUT_PULLUP);
+    dht[i].lastreadtime = -MIN_INTERVAL;
+    switch (dht[i].type) {
+    case GPIO_DHT11:
+      strcpy_P(dht[i].stype, PSTR("DHT11"));
+      break;
+    case GPIO_DHT21:
+      strcpy_P(dht[i].stype, PSTR("AM2301"));
+      break;
+    case GPIO_DHT22:
+      strcpy_P(dht[i].stype, PSTR("DHT22"));
+    }
+    if (dht_sensors > 1) {
+      snprintf_P(dht[i].stype, sizeof(dht[i].stype), PSTR("%s-%02d"), dht[i].stype, dht[i].pin);
+    }
   }
-
-  snprintf_P(log, sizeof(log), PSTR("DHT: Max clock cycles %d"), _maxcycles);
+  
+  snprintf_P(log, sizeof(log), PSTR("DHT: Max clock cycles %d"), dht_maxcycles);
   addLog(LOG_LEVEL_DEBUG, log);
 }
 
@@ -192,19 +219,27 @@ void dht_init()
 
 void dht_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
 {
-  char stemp1[10], stemp2[10];
-  float t, h;
+  char stemp1[10];
+  char stemp2[10];
+  float t;
+  float h;
 
-  if (dht_readTempHum(TEMP_CONVERSION, t, h)) {     // Read temperature
-    dtostrf(t, 1, TEMP_RESOLUTION &3, stemp1);
-    dtostrf(h, 1, HUMIDITY_RESOLUTION &3, stemp2);
-//    snprintf_P(svalue, ssvalue, PSTR("%s, \"%s\":{\"Temperature\":%s, \"Humidity\":%s}"),
-//      svalue, dhtstype, stemp1, stemp2);
-    snprintf_P(svalue, ssvalue, JSON_SNS_TEMPHUM, svalue, dhtstype, stemp1, stemp2);
-    *djson = 1;
+  byte dsxflg = 0;
+  for (byte i = 0; i < dht_sensors; i++) {
+    if (dht_readTempHum(i, t, h)) {     // Read temperature
+      dtostrf(t, 1, sysCfg.flag.temperature_resolution, stemp1);
+      dtostrf(h, 1, sysCfg.flag.humidity_resolution, stemp2);
+//      snprintf_P(svalue, ssvalue, PSTR("%s, \"%s\":{\"Temperature\":%s, \"Humidity\":%s}"),
+//        svalue, dhtstype, stemp1, stemp2);
+      snprintf_P(svalue, ssvalue, JSON_SNS_TEMPHUM, svalue, dht[i].stype, stemp1, stemp2);
+      *djson = 1;
 #ifdef USE_DOMOTICZ
-    domoticz_sensor2(stemp1, stemp2);
+      if (!dsxflg) {
+        domoticz_sensor2(stemp1, stemp2);
+        dsxflg++;
+      }
 #endif  // USE_DOMOTICZ
+    }
   }
 }
 
@@ -212,17 +247,20 @@ void dht_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
 String dht_webPresent()
 {
   String page = "";
-  float t, h;
+  char stemp[10];
+  char sensor[80];
+  float t;
+  float h;
   
-  if (dht_readTempHum(TEMP_CONVERSION, t, h)) {     // Read temperature as Celsius (the default)
-    char stemp[10], sensor[80];
-    dtostrf(t, 1, TEMP_RESOLUTION &3, stemp);
-    snprintf_P(sensor, sizeof(sensor), HTTP_SNS_TEMP, dhtstype, stemp, (TEMP_CONVERSION) ? 'F' : 'C');
-    page += sensor;
-    dtostrf(h, 1, HUMIDITY_RESOLUTION &3, stemp);
-    snprintf_P(sensor, sizeof(sensor), HTTP_SNS_HUM, dhtstype, stemp);
-    page += sensor;
-    
+  for (byte i = 0; i < dht_sensors; i++) {
+    if (dht_readTempHum(i, t, h)) {
+      dtostrf(t, 1, sysCfg.flag.temperature_resolution, stemp);
+      snprintf_P(sensor, sizeof(sensor), HTTP_SNS_TEMP, dht[i].stype, stemp, tempUnit());
+      page += sensor;
+      dtostrf(h, 1, sysCfg.flag.humidity_resolution, stemp);
+      snprintf_P(sensor, sizeof(sensor), HTTP_SNS_HUM, dht[i].stype, stemp);
+      page += sensor;
+    }
   }
   return page;
 }

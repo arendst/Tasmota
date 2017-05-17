@@ -312,37 +312,37 @@ boolean wattmtr_command(char *type, uint16_t index, char *dataBuf, uint16_t data
     if ((data_len > 0) && (payload >= 0) && (payload < 3601)) {
       sysCfg.wattmtr_pmin = payload;
     }
-    snprintf_P(svalue, ssvalue, PSTR("{\"PowerLow\":\"%d%s\"}"), sysCfg.wattmtr_pmin, (sysCfg.value_units) ? " W" : "");
+    snprintf_P(svalue, ssvalue, PSTR("{\"PowerLow\":\"%d%s\"}"), sysCfg.wattmtr_pmin, (sysCfg.flag.value_units) ? " W" : "");
   }
   else if (!strcmp(type,"POWERHIGH")) {
     if ((data_len > 0) && (payload >= 0) && (payload < 3601)) {
       sysCfg.wattmtr_pmax = payload;
     }
-    snprintf_P(svalue, ssvalue, PSTR("{\"PowerHigh\":\"%d%s\"}"), sysCfg.wattmtr_pmax, (sysCfg.value_units) ? " W" : "");
+    snprintf_P(svalue, ssvalue, PSTR("{\"PowerHigh\":\"%d%s\"}"), sysCfg.wattmtr_pmax, (sysCfg.flag.value_units) ? " W" : "");
   }
   else if (!strcmp(type,"VOLTAGELOW")) {
     if ((data_len > 0) && (payload >= 0) && (payload < 501)) {
       sysCfg.wattmtr_umin = payload;
     }
-    snprintf_P(svalue, ssvalue, PSTR("{\"VoltageLow\":\"%d%s\"}"), sysCfg.wattmtr_umin, (sysCfg.value_units) ? " V" : "");
+    snprintf_P(svalue, ssvalue, PSTR("{\"VoltageLow\":\"%d%s\"}"), sysCfg.wattmtr_umin, (sysCfg.flag.value_units) ? " V" : "");
   }
   else if (!strcmp(type,"VOLTAGEHIGH")) {
     if ((data_len > 0) && (payload >= 0) && (payload < 501)) {
       sysCfg.wattmtr_umax = payload;
     }
-    snprintf_P(svalue, ssvalue, PSTR("[\"VoltageHigh\":\"%d%s\"}"), sysCfg.wattmtr_umax, (sysCfg.value_units) ? " V" : "");
+    snprintf_P(svalue, ssvalue, PSTR("[\"VoltageHigh\":\"%d%s\"}"), sysCfg.wattmtr_umax, (sysCfg.flag.value_units) ? " V" : "");
   }
   else if (!strcmp(type,"CURRENTLOW")) {
     if ((data_len > 0) && (payload >= 0) && (payload < 16001)) {
       sysCfg.wattmtr_imin = payload;
     }
-    snprintf_P(svalue, ssvalue, PSTR("{\"CurrentLow\":\"%d%s\"}"), sysCfg.wattmtr_imin, (sysCfg.value_units) ? " mA" : "");
+    snprintf_P(svalue, ssvalue, PSTR("{\"CurrentLow\":\"%d%s\"}"), sysCfg.wattmtr_imin, (sysCfg.flag.value_units) ? " mA" : "");
   }
   else if (!strcmp(type,"CURRENTHIGH")) {
     if ((data_len > 0) && (payload >= 0) && (payload < 16001)) {
       sysCfg.wattmtr_imax = payload;
     }
-    snprintf_P(svalue, ssvalue, PSTR("{\"CurrentHigh\":\"%d%s\"}"), sysCfg.wattmtr_imax, (sysCfg.value_units) ? " mA" : "");
+    snprintf_P(svalue, ssvalue, PSTR("{\"CurrentHigh\":\"%d%s\"}"), sysCfg.wattmtr_imax, (sysCfg.flag.value_units) ? " mA" : "");
   }
   else if (!strcmp(type,"RESETKWH")) {
     cs_kWhtoday = 0;
