@@ -1436,6 +1436,12 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
         snprintf_P(svalue, sizeof(svalue), PSTR("{\"Reset\":\"1 to reset\"}"));
       }
     }
+    else if (!strcmp_P(type,PSTR("RESETCOUNTERS"))) {
+		snprintf_P(svalue, sizeof(svalue), PSTR("{\"ResetCounters\":\"Resetting counters\"}"));
+		for (byte i = 0; i < 4; i++) {
+			sysCfg.counters[i] = 0;
+		}
+    }	
     else if (!strcmp_P(type,PSTR("TIMEZONE"))) {
       if ((data_len > 0) && (((payload >= -12) && (payload <= 12)) || (99 == payload))) {
         sysCfg.timezone = payload;
@@ -1808,6 +1814,9 @@ void sensors_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
     dht_mqttPresent(svalue, ssvalue, djson);
   }
 #endif  // USE_DHT
+#ifdef USE_COUNTER
+  counter_mqttPresent(svalue, ssvalue, djson);
+#endif
 #ifdef USE_I2C
   if (i2c_flg) {
 #ifdef USE_SHT
@@ -2418,6 +2427,10 @@ void GPIO_init()
       }
     }
   }
+
+  typedef void (*function) () ;
+  function counter_callbacks[] = { counter_update1, counter_update2, counter_update3, counter_update4 };
+  
   for (byte i = 0; i < 4; i++) {
     if (pin[GPIO_LED1 +i] < 99) {
       pinMode(pin[GPIO_LED1 +i], OUTPUT);
@@ -2428,6 +2441,10 @@ void GPIO_init()
       pinMode(pin[GPIO_SWT1 +i], INPUT_PULLUP);
       lastwallswitch[i] = digitalRead(pin[GPIO_SWT1 +i]);  // set global now so doesn't change the saved power state on first switch check
     }
+    if (pin[GPIO_COUNTER1 +i] < 99) {      
+       pinMode(pin[GPIO_COUNTER1 +i], INPUT_PULLUP);
+       attachInterrupt(pin[GPIO_COUNTER1 +i], counter_callbacks[i], CHANGE);
+    }    
   }
   for (byte i = pwm_idxoffset; i < 5; i++) {
     if (pin[GPIO_PWM1 +i] < 99) {

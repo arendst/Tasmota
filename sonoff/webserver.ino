@@ -159,6 +159,7 @@ const char HTTP_BTN_MENU4[] PROGMEM =
   "<br/><form action='/lg' method='post'><button>Configure Logging</button></form>"
   "<br/><form action='/co' method='post'><button>Configure Other</button></form>"
   "<br/><form action='/rt' method='post' onsubmit='return confirm(\"Confirm Reset Configuration\");'><button>Reset Configuration</button></form>"
+  "<br/><form action='/rc' method='post' onsubmit='return confirm(\"Confirm Reset Counters\");'><button>Reset Counters</button></form>"
   "<br/><form action='/dl' method='post'><button>Backup Configuration</button></form>"
   "<br/><form action='/rs' method='post'><button>Restore Configuration</button></form>";
 const char HTTP_BTN_MAIN[] PROGMEM =
@@ -262,6 +263,8 @@ const char HTTP_SNS_NOISE[] PROGMEM =
   "<tr><th>%s Noise</th><td>%d%</td></tr>";
 const char HTTP_SNS_DUST[] PROGMEM =
   "<tr><th>%s Air quality</th><td>%d%</td></tr>";
+const char HTTP_SNS_COUNTER[] PROGMEM =
+  "<tr><th>Counter %d</th><td>%d</td></tr>";  
 const char HTTP_END[] PROGMEM =
   "</div>"
   "</body>"
@@ -307,6 +310,7 @@ void startWebserver(int type, IPAddress ipweb)
       webServer->on("/sv", handleSave);
       webServer->on("/rs", handleRestore);
       webServer->on("/rt", handleReset);
+	    webServer->on("/rc", handleResetCounters);
       webServer->on("/up", handleUpgrade);
       webServer->on("/u1", handleUpgradeStart);  // OTA
       webServer->on("/u2", HTTP_POST, handleUploadDone, handleUploadLoop);
@@ -479,6 +483,9 @@ void handleAjax2()
     tpage += dht_webPresent();
   }
 #endif  // USE_DHT
+#ifdef USE_COUNTER
+  tpage += counter_webPresent();
+#endif  // USE_COUNTER
 #ifdef USE_I2C
   if (i2c_flg) {
 #ifdef USE_SHT
@@ -1044,6 +1051,28 @@ void handleReset()
 
   snprintf_P(svalue, sizeof(svalue), PSTR("reset 1"));
   do_cmnd(svalue);
+}
+
+void handleResetCounters()
+{
+
+  if (httpUser()) {
+    return;
+  }
+
+  char svalue[16];
+
+  addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Reset counters"));
+
+  String page = FPSTR(HTTP_HEAD);
+  page.replace(F("{v}"), F("Reset counters"));
+  page += F("<div style='text-align:center;'>All counters reset to 0</div>");
+  page += FPSTR(HTTP_BTN_MAIN);
+  showPage(page);
+
+  snprintf_P(svalue, sizeof(svalue), PSTR("resetcounters 1"));
+  do_cmnd(svalue);
+  
 }
 
 void handleRestore()
