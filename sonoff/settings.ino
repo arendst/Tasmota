@@ -452,6 +452,12 @@ void CFG_DefaultSet2()
 
   // 5.0.6
   sysCfg.mqtt_retry = MQTT_RETRY_SECS;
+
+  // Counters default configuration
+  for (byte i = 0; i < 4; i++) {
+    sysCfg.counters[i] = 0;
+  }
+
 }
 
 /********************************************************************************************/

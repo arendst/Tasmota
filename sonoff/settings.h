@@ -196,6 +196,8 @@ struct SYSCFG {
   // 5.0.4a
   char          mqtt_fulltopic[101];
 
+  unsigned long counters[4];
+
 } sysCfg;
 
 struct RTCMEM {
