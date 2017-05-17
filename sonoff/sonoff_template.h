@@ -57,6 +57,10 @@ enum upins_t {
   GPIO_PWM3,           // Red (swapped with Blue from original)
   GPIO_PWM4,           // Green
   GPIO_PWM5,           // Blue (swapped with Red from original)
+  GPIO_CNTR1,
+  GPIO_CNTR2,
+  GPIO_CNTR3,
+  GPIO_CNTR4,
   GPIO_SENSOR_END };
 
 // Text in webpage Module Parameters and commands GPIOS and GPIO
@@ -98,7 +102,11 @@ const char sensors[GPIO_SENSOR_END][9] PROGMEM = {
   "PWM2",
   "PWM3",
   "PWM4",
-  "PWM5"
+  "PWM5",
+  "Counter1",
+  "Counter2",
+  "Counter3",
+  "Counter4"
   };
   
 // Programmer selectable GPIO functionality offset by user selectable GPIOs

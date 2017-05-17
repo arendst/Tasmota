@@ -682,6 +682,7 @@ uint32_t dsttime = 0;
 uint32_t stdtime = 0;
 uint32_t ntptime = 0;
 uint32_t midnight = 1451602800;
+uint8_t  midnightnow = 0;
 
 String getBuildDateTime()
 {
@@ -867,6 +868,15 @@ uint32_t rtc_midnight()
   return midnight;
 }
 
+boolean rtc_midnight_now()
+{
+  boolean mnflg = midnightnow;
+  if (mnflg) {
+    midnightnow = 0;
+  }
+  return mnflg;
+}
+
 void rtc_second()
 {
   char log[LOGSZ];
@@ -919,6 +929,7 @@ void rtc_second()
   breakTime(loctime, rtcTime);
   if (!rtcTime.Hour && !rtcTime.Minute && !rtcTime.Second && rtcTime.Valid) {
     midnight = loctime;
+    midnightnow = 1;
   }
   rtcTime.Year += 1970;
 }
@@ -934,6 +945,70 @@ void rtc_init()
   utctime = 0;
   breakTime(utctime, rtcTime);
   tickerRTC.attach(1, rtc_second);
+}
+
+/*********************************************************************************************\
+ * Counter sensors (water meters, electricity meters etc.)
+\*********************************************************************************************/
+
+void counter_update(byte index)
+{
+//  char log[LOGSZ];
+
+  unsigned long pTime = millis() - pTimeLast[index -1];
+  if (pTime > sysCfg.pCounterDebounce) {
+    pTimeLast[index -1] = millis();
+    if (bitRead(sysCfg.pCounterType, index -1)) {
+      rtcMem.pCounter[index -1] = pTime;
+    } else {
+      rtcMem.pCounter[index -1]++;
+    }
+
+//    snprintf_P(log, sizeof(log), PSTR("CNTR: Interrupt %d"), index);
+//    addLog(LOG_LEVEL_DEBUG, log);
+  }
+}
+
+void counter_update1()
+{
+  counter_update(1);
+}
+
+void counter_update2()
+{
+  counter_update(2);
+}
+
+void counter_update3()
+{
+  counter_update(3);
+}
+
+void counter_update4()
+{
+  counter_update(4);
+}
+
+void counter_savestate()
+{
+  for (byte i = 0; i < 4; i++) {
+    if (pin[GPIO_CNTR1 +i] < 99) {
+      sysCfg.pCounter[i] = rtcMem.pCounter[i];
+    }
+  }
+}
+
+void counter_init()
+{
+  typedef void (*function) () ;
+  function counter_callbacks[] = { counter_update1, counter_update2, counter_update3, counter_update4 };
+  
+  for (byte i = 0; i < 4; i++) {
+    if (pin[GPIO_CNTR1 +i] < 99) {
+      pinMode(pin[GPIO_CNTR1 +i], INPUT_PULLUP);
+      attachInterrupt(pin[GPIO_CNTR1 +i], counter_callbacks[i], FALLING);
+    }
+  }
 }
 
 /*********************************************************************************************\

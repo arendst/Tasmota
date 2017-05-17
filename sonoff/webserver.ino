@@ -250,6 +250,8 @@ const char HTTP_TABLE100[] PROGMEM =
   "<table style='width:100%'>";
 const char HTTP_COUNTER[] PROGMEM =
   "<br/><div id='t' name='t' style='text-align:center;'></div>";
+const char HTTP_SNS_COUNTER[] PROGMEM =
+  "<tr><th>Counter%d</th><td>%d</td></tr>";  
 const char HTTP_SNS_TEMP[] PROGMEM =
   "<tr><th>%s Temperature</th><td>%s&deg;%c</td></tr>";
 const char HTTP_SNS_HUM[] PROGMEM =
@@ -447,7 +449,7 @@ void handleRoot()
 
 void handleAjax2()
 {
-  char svalue[16];
+  char svalue[80];
   
   if (strlen(webServer->arg("o").c_str())) {
     do_cmnd_power(atoi(webServer->arg("o").c_str()), 2);
@@ -458,6 +460,12 @@ void handleAjax2()
   }
   
   String tpage = "";
+  for (byte i = 0; i < 4; i++) {
+    if (pin[GPIO_CNTR1 +i] < 99) {
+      snprintf_P(svalue, sizeof(svalue), HTTP_SNS_COUNTER, i+1, rtcMem.pCounter[i]);
+      tpage += svalue;
+    }
+  }
   if (hlw_flg) {
     tpage += hlw_webPresent();
   }

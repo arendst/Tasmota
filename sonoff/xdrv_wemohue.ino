@@ -346,10 +346,12 @@ void handleUPnPevent()
 
   String request = webServer->arg(0);
   if (request.indexOf("State>1</Binary") > 0) {
-    do_cmnd_power(1, 1);
+//    do_cmnd_power(1, 1);
+    do_cmnd_power(Maxdevice, 1);
   }
   if (request.indexOf("State>0</Binary") > 0) {
-    do_cmnd_power(1, 0);
+//    do_cmnd_power(1, 0);
+    do_cmnd_power(Maxdevice, 0);
   }
   webServer->send(200, F("text/plain"), "");
 }

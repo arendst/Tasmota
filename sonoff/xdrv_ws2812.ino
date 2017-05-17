@@ -107,6 +107,7 @@ RgbColor tcolor;
 RgbColor lcolor;
 
 uint8_t wakeupDimmer = 0;
+uint8_t ws_bit = 0;
 uint16_t wakeupCntr = 0;
 unsigned long stripTimerCntr = 0;  // Bars and Gradient
 
@@ -394,7 +395,7 @@ void ws2812_animate()
   uint8_t fadeValue;
   
   stripTimerCntr++;
-  if (0 == power) {  // Power Off
+  if (0 == bitRead(power, ws_bit)) {  // Power Off
     sleep = sysCfg.sleep;
     stripTimerCntr = 0;
     tcolor = 0;
@@ -464,7 +465,7 @@ void ws2812_animate()
     }
   }
 
-  if ((sysCfg.ws_scheme <= 1) || (!(power &1))) {
+  if ((sysCfg.ws_scheme <= 1) || (0 == bitRead(power, ws_bit))) {
     if ((lcolor != tcolor) || lany) {
       lany = 0;
       lcolor = tcolor;
@@ -499,8 +500,9 @@ void ws2812_pixels()
   lany = 1;
 }
 
-void ws2812_init()
+void ws2812_init(uint8_t powerbit)
 {
+  ws_bit = powerbit -1;
 #ifdef USE_WS2812_DMA
 #if (USE_WS2812_CTYPE == 1)
   strip = new NeoPixelBus<NeoGrbFeature, Neo800KbpsMethod>(WS2812_MAX_LEDS);  // For Esp8266, the Pin is omitted and it uses GPIO3 due to DMA hardware use.
@@ -544,14 +546,14 @@ boolean ws2812_command(char *type, uint16_t index, char *dataBuf, uint16_t data_
     if (6 == data_len) {
 //        ws2812_setColor(0, dataBufUc);
       ws2812_setColor(0, dataBuf);
-      power = 1;
+      bitSet(power, ws_bit);
     }
     ws2812_getColor(0, svalue, ssvalue);
   }
   else if (!strcmp_P(type,PSTR("DIMMER"))) {
     if ((data_len > 0) && (payload >= 0) && (payload <= 100)) {
       sysCfg.ws_dimmer = payload;
-      power = 1;
+      bitSet(power, ws_bit);
 #ifdef USE_DOMOTICZ
       mqtt_publishDomoticzPowerState(index);
 #endif  // USE_DOMOTICZ
@@ -599,6 +601,23 @@ boolean ws2812_command(char *type, uint16_t index, char *dataBuf, uint16_t data_
     }
     snprintf_P(svalue, ssvalue, PSTR("{\"Width\":%d}"), sysCfg.ws_width);
   }
+  else if (!strcmp_P(type,PSTR("UNDOCA"))) {  // Theos WS2812 legacy status
+    RgbColor mcolor;
+    char mtopic[TOPSZ];
+    getTopic_P(mtopic, 1, sysCfg.mqtt_topic, type);
+    ws2812_setDim(sysCfg.ws_dimmer);
+    mcolor = dcolor;
+    uint32_t color = (uint32_t)mcolor.R << 16;
+    color += (uint32_t)mcolor.G << 8;
+    color += (uint32_t)mcolor.B;
+    snprintf_P(svalue, ssvalue, PSTR("%s, %s, %d, %d, %d, %06X, %d, 0, %d, %d, %d, %d, %d, %d"),
+      Version, sysCfg.mqtt_topic, bitRead(power, ws_bit), sysCfg.ws_fade, sysCfg.ws_dimmer, color,
+      sysCfg.ws_pixels, sysCfg.ws_wakeup,
+      sysCfg.ws_scheme, sysCfg.ws_speed, sysCfg.ws_width, sysCfg.timezone, sysCfg.ws_ledtable);
+    mqtt_publish(mtopic, svalue);
+//    snprintf_P(svalue, ssvalue, PSTR("{\"UndocA\":\"Done\"}"));
+    svalue[0] = '\0';
+  }
   else if (!strcmp_P(type,PSTR("WAKEUP"))) {
     if ((data_len > 0) && (payload > 0) && (payload < 3601)) {
       sysCfg.ws_wakeup = payload;
@@ -614,7 +633,7 @@ boolean ws2812_command(char *type, uint16_t index, char *dataBuf, uint16_t data_
       if (1 == sysCfg.ws_scheme) {
         ws2812_resetWakupState();
       }
-      power = 1;
+      bitSet(power, ws_bit);
       ws2812_resetStripTimer();
     }
     snprintf_P(svalue, ssvalue, PSTR("{\"Scheme\":%d}"), sysCfg.ws_scheme);
