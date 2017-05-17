@@ -1,26 +1,20 @@
 /*
-Copyright (c) 2017 Heiko Krupp and Theo Arends.  All rights reserved.
+  xdrv_ir_send.ino - infra red support for Sonoff-Tasmota
 
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met:
+  Copyright (C) 2017  Heiko Krupp and Theo Arends
 
-- Redistributions of source code must retain the above copyright notice,
-  this list of conditions and the following disclaimer.
-- Redistributions in binary form must reproduce the above copyright notice,
-  this list of conditions and the following disclaimer in the documentation
-  and/or other materials provided with the distribution.
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
-LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
-CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
-CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-POSSIBILITY OF SUCH DAMAGE.
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #ifdef USE_IR_REMOTE
@@ -90,7 +84,7 @@ boolean ir_send_command(char *type, uint16_t index, char *dataBufUc, uint16_t da
 
 //  char log[LOGSZ];
 
-  if (!strcmp(type,"IRSEND")) {
+  if (!strcmp_P(type,PSTR("IRSEND"))) {
 	  if (data_len) {
       StaticJsonBuffer<128> jsonBuf;
       JsonObject &ir_json = jsonBuf.parseObject(dataBufUc);
@@ -102,23 +96,25 @@ boolean ir_send_command(char *type, uint16_t index, char *dataBufUc, uint16_t da
         bits = ir_json["BITS"];
         data = ir_json["DATA"];
         if (protocol && bits && data) {
-          if      (!strcmp(protocol,"NEC"))     irsend->sendNEC(data, bits);
-          else if (!strcmp(protocol,"SONY"))    irsend->sendSony(data, bits);
-          else if (!strcmp(protocol,"RC5"))     irsend->sendRC5(data, bits);
-          else if (!strcmp(protocol,"RC6"))     irsend->sendRC6(data, bits);
-          else if (!strcmp(protocol,"DISH"))    irsend->sendDISH(data, bits);
-          else if (!strcmp(protocol,"JVC"))     irsend->sendJVC(data, bits, 1);
-          else if (!strcmp(protocol,"SAMSUNG")) irsend->sendSAMSUNG(data, bits);
+          if      (!strcmp_P(protocol,PSTR("NEC")))     irsend->sendNEC(data, bits);
+          else if (!strcmp_P(protocol,PSTR("SONY")))    irsend->sendSony(data, bits);
+          else if (!strcmp_P(protocol,PSTR("RC5")))     irsend->sendRC5(data, bits);
+          else if (!strcmp_P(protocol,PSTR("RC6")))     irsend->sendRC6(data, bits);
+          else if (!strcmp_P(protocol,PSTR("DISH")))    irsend->sendDISH(data, bits);
+          else if (!strcmp_P(protocol,PSTR("JVC")))     irsend->sendJVC(data, bits, 1);
+          else if (!strcmp_P(protocol,PSTR("SAMSUNG"))) irsend->sendSAMSUNG(data, bits);
           else {
             snprintf_P(svalue, ssvalue, PSTR("{\"IRSend\":\"Protocol not supported\"}"));
           }
         } else error = true;
       }
     } else error = true;
-    if (error) snprintf_P(svalue, ssvalue, PSTR("{\"IRSend\":\"No protocol, bits or data\"}"));
+    if (error) {
+      snprintf_P(svalue, ssvalue, PSTR("{\"IRSend\":\"No protocol, bits or data\"}"));
+    }
   }
 #ifdef USE_IR_HVAC
-  else if (!strcmp(type,"IRHVAC")) {
+  else if (!strcmp_P(type,PSTR("IRHVAC"))) {
     if (data_len) {
       StaticJsonBuffer<164> jsonBufer;
       JsonObject &root = jsonBufer.parseObject(dataBufUc);
@@ -136,16 +132,18 @@ boolean ir_send_command(char *type, uint16_t index, char *dataBufUc, uint16_t da
 //          HVAC_Vendor, HVAC_Power, HVAC_Mode, HVAC_FanMode, HVAC_Temp);
 //        addLog(LOG_LEVEL_DEBUG, log);
         
-        if (HVAC_Vendor == NULL || !strcmp(HVAC_Vendor,"TOSHIBA")) {
+        if (HVAC_Vendor == NULL || !strcmp_P(HVAC_Vendor,PSTR("TOSHIBA"))) {
           error = ir_hvac_toshiba(HVAC_Mode, HVAC_FanMode, HVAC_Power, HVAC_Temp);
         }
-        else if (!strcmp(HVAC_Vendor,"MITSUBISHI")) {
+        else if (!strcmp_P(HVAC_Vendor,PSTR("MITSUBISHI"))) {
           error = ir_hvac_mitsubishi(HVAC_Mode, HVAC_FanMode, HVAC_Power, HVAC_Temp);
         }
         else  error = true;
       }
     } else error = true;
-    if (error) snprintf_P(svalue, ssvalue, PSTR("{\"IRHVAC\":\"Wrong Vendor, Mode and/or FanSpeed\"}"));
+    if (error) {
+      snprintf_P(svalue, ssvalue, PSTR("{\"IRHVAC\":\"Wrong Vendor, Mode and/or FanSpeed\"}"));
+    }
   }
 #endif  // USE_IR_HVAC
   else {
@@ -160,7 +158,8 @@ boolean ir_hvac_toshiba(const char *HVAC_Mode, const char *HVAC_FanMode, boolean
   unsigned int rawdata[2 + 2*8*HVAC_TOSHIBA_DATALEN + 2];
   byte data[HVAC_TOSHIBA_DATALEN] = { 0xF2, 0x0D, 0x03, 0xFC, 0x01, 0x00, 0x00, 0x00, 0x00 };
 
-  char *p, *token;
+  char *p;
+  char *token;
   uint8_t mode;
 
   if (HVAC_Mode == NULL) {
@@ -168,19 +167,27 @@ boolean ir_hvac_toshiba(const char *HVAC_Mode, const char *HVAC_FanMode, boolean
   } else {
     p = strchr(HVACMODE, HVAC_Mode[0]);
   }
-  if (!p) return true;
+  if (!p) {
+    return true;
+  }
   data[6] = (p - HVACMODE) ^ 0x03;  // HOT = 0x03, DRY = 0x02, COOL = 0x01, AUTO = 0x00
 
-  if (!HVAC_Power) data[6] = (byte) 0x07; // Turn OFF HVAC
+  if (!HVAC_Power) {
+    data[6] = (byte) 0x07; // Turn OFF HVAC
+  }
 
   if (HVAC_FanMode == NULL) {
     p = (char*)FANSPEED;  // default FAN_SPEED_AUTO
   } else {
     p = strchr(FANSPEED, HVAC_FanMode[0]);
   }
-  if (!p) return true;
+  if (!p) {
+    return true;
+  }
   mode = p - FANSPEED +1;    
-  if ((mode == 1) || (mode == 7)) mode = 0;
+  if ((1 == mode) || (7 == mode)) {
+    mode = 0;
+  }
   mode = mode << 5;       // AUTO = 0x00, SPEED = 0x40, 0x60, 0x80, 0xA0, 0xC0, SILENT = 0x00
   data[6] = data[6] | mode;
 
@@ -191,7 +198,9 @@ boolean ir_hvac_toshiba(const char *HVAC_Mode, const char *HVAC_FanMode, boolean
   else if (HVAC_Temp < 17) {
     Temp = 17;
   }
-  else Temp = HVAC_Temp;
+  else {
+    Temp = HVAC_Temp;
+  }
   data[5] = (byte) Temp - 17 << 4;
 
   data[HVAC_TOSHIBA_DATALEN-1] = 0;
@@ -234,7 +243,8 @@ boolean ir_hvac_toshiba(const char *HVAC_Mode, const char *HVAC_FanMode, boolean
 
 boolean ir_hvac_mitsubishi(const char *HVAC_Mode,const char *HVAC_FanMode, boolean HVAC_Power, int HVAC_Temp)
 {
-  char *p, *token;
+  char *p;
+  char *token;
   uint8_t mode;
   char log[LOGSZ];
     
@@ -245,7 +255,9 @@ boolean ir_hvac_mitsubishi(const char *HVAC_Mode,const char *HVAC_FanMode, boole
   } else {
     p = strchr(HVACMODE, HVAC_Mode[0]);
   }
-  if (!p) return true;
+  if (!p) {
+    return true;
+  }
   mode = (p - HVACMODE +1) << 3;  // HOT = 0x08, DRY = 0x10, COOL = 0x18, AUTO = 0x20
   mitsubir->setMode(mode);
 
@@ -256,7 +268,9 @@ boolean ir_hvac_mitsubishi(const char *HVAC_Mode,const char *HVAC_FanMode, boole
   } else {
     p = strchr(FANSPEED, HVAC_FanMode[0]);
   }
-  if (!p) return true;
+  if (!p) {
+    return true;
+  }
   mode = p - FANSPEED;    // AUTO = 0, SPEED = 1 .. 5, SILENT = 6
   mitsubir->setFan(mode);
 

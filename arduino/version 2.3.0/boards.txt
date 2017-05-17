@@ -153,6 +153,11 @@ generic.menu.FlashSize.1M64.build.spiffs_end=0xFB000
 generic.menu.FlashSize.1M64.build.spiffs_blocksize=4096
 generic.menu.FlashSize.1M64.upload.maximum_size=958448
 
+generic.menu.FlashSize.1M0=1M (no SPIFFS)
+generic.menu.FlashSize.1M0.build.flash_size=1M
+generic.menu.FlashSize.1M0.build.flash_ld=eagle.flash.1m0.ld
+generic.menu.FlashSize.1M0.upload.maximum_size=1023984
+
 generic.menu.FlashSize.2M=2M (1M SPIFFS)
 generic.menu.FlashSize.2M.build.flash_size=2M
 generic.menu.FlashSize.2M.build.flash_ld=eagle.flash.2m.ld
@@ -348,6 +353,10 @@ esp8285.menu.FlashSize.1M64.build.spiffs_end=0xFB000
 esp8285.menu.FlashSize.1M64.build.spiffs_blocksize=4096
 esp8285.menu.FlashSize.1M64.upload.maximum_size=958448
 
+esp8285.menu.FlashSize.1M0=1M (no SPIFFS)
+esp8285.menu.FlashSize.1M0.build.flash_size=1M
+esp8285.menu.FlashSize.1M0.build.flash_ld=eagle.flash.1m0.ld
+esp8285.menu.FlashSize.1M0.upload.maximum_size=1023984
 
 ##############################################################
 
@@ -916,12 +925,6 @@ nodemcu.menu.CpuFrequency.80.build.f_cpu=80000000L
 nodemcu.menu.CpuFrequency.160=160 MHz
 nodemcu.menu.CpuFrequency.160.build.f_cpu=160000000L
 
-nodemcu.menu.UploadTool.esptool=Serial
-nodemcu.menu.UploadTool.esptool.upload.tool=esptool
-nodemcu.menu.UploadTool.esptool.upload.verbose=-vv
-nodemcu.menu.UploadTool.espupload=OTA_upload
-nodemcu.menu.UploadTool.espupload.upload.tool=espupload
-
 nodemcu.menu.UploadSpeed.115200=115200
 nodemcu.menu.UploadSpeed.115200.upload.speed=115200
 nodemcu.menu.UploadSpeed.9600=9600
@@ -1292,12 +1295,6 @@ d1_mini.build.flash_size=4M
 d1_mini.build.flash_freq=40
 d1_mini.build.debug_port=
 d1_mini.build.debug_level=
-
-d1_mini.menu.UploadTool.esptool=Serial
-d1_mini.menu.UploadTool.esptool.upload.tool=esptool
-d1_mini.menu.UploadTool.esptool.upload.verbose=-vv
-d1_mini.menu.UploadTool.espupload=OTA_upload
-d1_mini.menu.UploadTool.espupload.upload.tool=espupload
 
 d1_mini.menu.CpuFrequency.80=80 MHz
 d1_mini.menu.CpuFrequency.80.build.f_cpu=80000000L

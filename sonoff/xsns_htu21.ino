@@ -1,26 +1,20 @@
 /*
- Copyright (c) 2017 Heiko Krupp.  All rights reserved.
+  xsns_htu21.ino - HTU21 temperature and humidity sensor support for Sonoff-Tasmota
 
- Redistribution and use in source and binary forms, with or without
- modification, are permitted provided that the following conditions are met:
+  Copyright (C) 2017  Heiko Krupp and Theo Arends
 
- - Redistributions of source code must retain the above copyright notice,
-   this list of conditions and the following disclaimer.
- - Redistributions in binary form must reproduce the above copyright notice,
-   this list of conditions and the following disclaimer in the documentation
-   and/or other materials provided with the distribution.
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
 
- THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
- LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- POSSIBILITY OF SUCH DAMAGE.
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #ifdef USE_I2C
@@ -58,18 +52,20 @@
 
 #define HTU21_CRC8_POLYNOM  0x13100
 
-uint8_t htuaddr, htutype = 0;
-uint8_t delayT, delayH = 50;
+uint8_t htuaddr;
+uint8_t htutype = 0;
+uint8_t delayT;
+uint8_t delayH = 50;
 char htustype[7];
 
 uint8_t check_crc8(uint16_t data)
 {
-  for (uint8_t bit = 0; bit < 16; bit++)
-  {
-    if (data & 0x8000)
+  for (uint8_t bit = 0; bit < 16; bit++) {
+    if (data & 0x8000) {
       data =  (data << 1) ^ HTU21_CRC8_POLYNOM;
-    else
+    } else {
       data <<= 1;
+    }
   }
   return data >>= 8;
 }
@@ -136,41 +132,43 @@ boolean htu21_init()
   return true;
 }
 
-float htu21_convertCtoF(float c)
-{
-  return c * 1.8 + 32;
-}
-
 float htu21_readHumidity(void)
 {
-  uint8_t  checksum=0;
-  uint16_t sensorval=0;
-  float    humidity=0.0;
+  uint8_t  checksum = 0;
+  uint16_t sensorval = 0;
+  float    humidity = 0.0;
 
   Wire.beginTransmission(HTU21_ADDR);
   Wire.write(HTU21_READHUM);
-  if(Wire.endTransmission() != 0) return 0.0; // In case of error
+  if (Wire.endTransmission() != 0) {
+    return 0.0; // In case of error
+  }
   delay(delayH);                              // Sensor time at max resolution
 
   Wire.requestFrom(HTU21_ADDR, 3);
-  if(3 <= Wire.available())
-  {
+  if (3 <= Wire.available()) {
     sensorval = Wire.read() << 8;             // MSB
     sensorval |= Wire.read();                 // LSB
     checksum = Wire.read();
   }
-  if(check_crc8(sensorval) != checksum) return 0.0; // Checksum mismatch
+  if (check_crc8(sensorval) != checksum) {
+    return 0.0; // Checksum mismatch
+  }
 
   sensorval ^= 0x02;      // clear status bits
   humidity = 0.001907 * (float)sensorval - 6;
 
-  if(humidity > 100) return 100.0;
-  if(humidity < 0) return 0.01;
+  if (humidity > 100) {
+    return 100.0;
+  }
+  if (humidity < 0) {
+    return 0.01;
+  }
 
   return humidity;
 }
 
-float htu21_readTemperature(bool S)
+float htu21_readTemperature()
 {
   uint8_t  checksum=0;
   uint16_t sensorval=0;
@@ -178,33 +176,40 @@ float htu21_readTemperature(bool S)
 
   Wire.beginTransmission(HTU21_ADDR);
   Wire.write(HTU21_READTEMP);
-  if(Wire.endTransmission() != 0) return 0.0; // In case of error
+  if (Wire.endTransmission() != 0) {
+    return 0.0; // In case of error
+  }
   delay(delayT);                          // Sensor time at max resolution
 
   Wire.requestFrom(HTU21_ADDR, 3);
-  if(3 == Wire.available())
-  {
+  if (3 == Wire.available()) {
     sensorval = Wire.read() << 8;         // MSB
     sensorval |= Wire.read();             // LSB
     checksum = Wire.read();
   }
-  if(check_crc8(sensorval) != checksum) return 0.0; // Checksum mismatch
+  if (check_crc8(sensorval) != checksum) {
+    return 0.0; // Checksum mismatch
+  }
 
-  t = (0.002681 * (float)sensorval - 46.85);
-  if(S) t = htu21_convertCtoF(t);
+  t = convertTemp(0.002681 * (float)sensorval - 46.85);
   return t;
 }
 
 float htu21_compensatedHumidity(float humidity, float temperature)
 {
-  if(humidity == 0.00 && temperature == 0.00) return 0.0;
-  if(temperature > 0.00 && temperature < 80.00)
+  if(humidity == 0.00 && temperature == 0.00) {
+    return 0.0;
+  }
+  if(temperature > 0.00 && temperature < 80.00) {
     return (-0.15)*(25-temperature)+humidity;
+  }
 }
 
 uint8_t htu_detect()
 {
-  if (htutype) return true;
+  if (htutype) {
+    return true;
+  }
 
   char log[LOGSZ];
   boolean success = false;
@@ -253,15 +258,18 @@ uint8_t htu_detect()
 
 void htu_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
 {
-  if (!htutype) return;
+  if (!htutype) {
+    return;
+  }
 
-  char stemp1[10], stemp2[10];
+  char stemp1[10];
+  char stemp2[10];
 
-  float t = htu21_readTemperature(TEMP_CONVERSION);
+  float t = htu21_readTemperature();
   float h = htu21_readHumidity();
   h = htu21_compensatedHumidity(h, t);
-  dtostrf(t, 1, TEMP_RESOLUTION &3, stemp1);
-  dtostrf(h, 1, HUMIDITY_RESOLUTION &3, stemp2);
+  dtostrf(t, 1, sysCfg.flag.temperature_resolution, stemp1);
+  dtostrf(h, 1, sysCfg.flag.humidity_resolution, stemp2);
   snprintf_P(svalue, ssvalue, JSON_SNS_TEMPHUM, svalue, htustype, stemp1, stemp2);
   *djson = 1;
 #ifdef USE_DOMOTICZ
@@ -274,15 +282,16 @@ String htu_webPresent()
 {
   String page = "";
   if (htutype) {
-    char stemp[10], sensor[80];
+    char stemp[10];
+    char sensor[80];
 
-    float t_htu21 = htu21_readTemperature(TEMP_CONVERSION);
+    float t_htu21 = htu21_readTemperature();
     float h_htu21 = htu21_readHumidity();
     h_htu21 = htu21_compensatedHumidity(h_htu21, t_htu21);
-    dtostrf(t_htu21, 1, TEMP_RESOLUTION &3, stemp);
-    snprintf_P(sensor, sizeof(sensor), HTTP_SNS_TEMP, htustype, stemp, (TEMP_CONVERSION) ? 'F' : 'C');
+    dtostrf(t_htu21, 1, sysCfg.flag.temperature_resolution, stemp);
+    snprintf_P(sensor, sizeof(sensor), HTTP_SNS_TEMP, htustype, stemp, tempUnit());
     page += sensor;
-    dtostrf(h_htu21, 1, HUMIDITY_RESOLUTION &3, stemp);
+    dtostrf(h_htu21, 1, sysCfg.flag.humidity_resolution, stemp);
     snprintf_P(sensor, sizeof(sensor), HTTP_SNS_HUM, htustype, stemp);
     page += sensor;
   }
