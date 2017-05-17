@@ -126,7 +126,7 @@ enum module_t {
   SONOFF_DEV,
   H801,
   SONOFF_SC,
-  CS54060A,
+  CS5460A,
   PZEM004T,
   MAXMODULE };
 
@@ -416,7 +416,7 @@ const mytmplt modules[MAXMODULE] PROGMEM = {
      GPIO_LED1_INV,    // GPIO13 Green Led (0 = On, 1 = Off)
      0, 0, 0, 0
   },
-  { "CS8460A",         // Board with CS8460A (ESP8266)
+  { "CS5460A",         // Board with CS5460A (ESP8266)
      GPIO_USER,        // GPIO00 E-FW Button
      GPIO_USER,        // GPIO01 TX Serial RXD and Optional sensor
      0,                // GPIO02
