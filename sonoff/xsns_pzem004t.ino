@@ -257,44 +257,55 @@ void pzem_init()
 
 void pzem0004t_loop()
 {
-  bool readSuccess = false;
+  bool dataReady = PZEM004T_isReady();
 
-  if (PZEM004T_isReady()) {
+  if (dataReady) {
+    float pzem_value;
     switch (_readState) {
       case SET_ADDRESS:
         if (PZEM004T_setAddress_rcv(ip)) _readState = READ_VOLTAGE;
         break;
       case READ_VOLTAGE:
-        pzem_voltage = PZEM004T_voltage_rcv(ip);
-        _readState = READ_CURRENT;
+        pzem_value = PZEM004T_voltage_rcv(ip);
+        if (pzem_value != PZEM_ERROR_VALUE) {
+          pzem_voltage = pzem_value;
+          _readState = READ_CURRENT;
+        }
         break;
       case READ_CURRENT:
-        pzem_current = PZEM004T_current_rcv(ip);
-        _readState = READ_POWER;
+        pzem_value = PZEM004T_current_rcv(ip);
+        if (pzem_value != PZEM_ERROR_VALUE) {
+          pzem_current = pzem_value;
+          _readState = READ_POWER;
+        }
         break;
       case READ_POWER:
-        pzem_truePower = PZEM004T_power_rcv(ip);
-        _readState = READ_ENERGY;
+        pzem_value = PZEM004T_power_rcv(ip);
+        if (pzem_value != PZEM_ERROR_VALUE) {
+          pzem_truePower = pzem_value;
+          _readState = READ_ENERGY;
+        }
         break;
       case READ_ENERGY:
-        pzem_Whtotal = PZEM004T_energy_rcv(ip);
-        _readState = READ_VOLTAGE;
+        pzem_value = PZEM004T_energy_rcv(ip);
+        if (pzem_value != PZEM_ERROR_VALUE) {
+          pzem_Whtotal = pzem_value;
+          _readState = READ_VOLTAGE;
 
-        if (!pzem_startup) {
-          if (pzem_Whtotal < pzem_Whstart) {
-            pzem_Whstart = pzem_Whtotal;
-            sysCfg.pzem_Whstart = pzem_Whstart * 1000;
+          if (!pzem_startup) {
+            if (pzem_Whtotal < pzem_Whstart) {
+              pzem_Whstart = pzem_Whtotal;
+              sysCfg.pzem_Whstart = pzem_Whstart * 1000;
+            }
+
+            pzem_kWhtoday = (pzem_Whtotal - pzem_Whstart) * 100000;
           }
-
-          pzem_kWhtoday = (pzem_Whtotal - pzem_Whstart) * 100000;
         }
         break;
     }
-
-    readSuccess = true;
   }
 
-  if (pzem_sendRetry == 0 || readSuccess) {
+  if (pzem_sendRetry == 0 || dataReady) {
     pzem_sendRetry = 5;
 
     switch (_readState) {
