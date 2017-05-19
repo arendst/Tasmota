@@ -537,14 +537,12 @@ boolean ws2812_command(char *type, uint16_t index, char *dataBuf, uint16_t data_
   }
   else if (!strcmp_P(type,PSTR("LED")) && (index > 0) && (index <= sysCfg.ws_pixels)) {
     if (6 == data_len) {
-//       ws2812_setColor(index, dataBufUc);
       ws2812_setColor(index, dataBuf);
     }
     ws2812_getColor(index, svalue, ssvalue);
   }
   else if (!strcmp_P(type,PSTR("COLOR"))) {
     if (6 == data_len) {
-//        ws2812_setColor(0, dataBufUc);
       ws2812_setColor(0, dataBuf);
       bitSet(power, ws_bit);
     }
@@ -555,7 +553,8 @@ boolean ws2812_command(char *type, uint16_t index, char *dataBuf, uint16_t data_
       sysCfg.ws_dimmer = payload;
       bitSet(power, ws_bit);
 #ifdef USE_DOMOTICZ
-      mqtt_publishDomoticzPowerState(index);
+//      mqtt_publishDomoticzPowerState(index);
+      mqtt_publishDomoticzPowerState(ws_bit +1);
 #endif  // USE_DOMOTICZ
     }
     snprintf_P(svalue, ssvalue, PSTR("{\"Dimmer\":%d}"), sysCfg.ws_dimmer);
@@ -601,23 +600,6 @@ boolean ws2812_command(char *type, uint16_t index, char *dataBuf, uint16_t data_
     }
     snprintf_P(svalue, ssvalue, PSTR("{\"Width\":%d}"), sysCfg.ws_width);
   }
-  else if (!strcmp_P(type,PSTR("UNDOCA"))) {  // Theos WS2812 legacy status
-    RgbColor mcolor;
-    char mtopic[TOPSZ];
-    getTopic_P(mtopic, 1, sysCfg.mqtt_topic, type);
-    ws2812_setDim(sysCfg.ws_dimmer);
-    mcolor = dcolor;
-    uint32_t color = (uint32_t)mcolor.R << 16;
-    color += (uint32_t)mcolor.G << 8;
-    color += (uint32_t)mcolor.B;
-    snprintf_P(svalue, ssvalue, PSTR("%s, %s, %d, %d, %d, %06X, %d, 0, %d, %d, %d, %d, %d, %d"),
-      Version, sysCfg.mqtt_topic, bitRead(power, ws_bit), sysCfg.ws_fade, sysCfg.ws_dimmer, color,
-      sysCfg.ws_pixels, sysCfg.ws_wakeup,
-      sysCfg.ws_scheme, sysCfg.ws_speed, sysCfg.ws_width, sysCfg.timezone, sysCfg.ws_ledtable);
-    mqtt_publish(mtopic, svalue);
-//    snprintf_P(svalue, ssvalue, PSTR("{\"UndocA\":\"Done\"}"));
-    svalue[0] = '\0';
-  }
   else if (!strcmp_P(type,PSTR("WAKEUP"))) {
     if ((data_len > 0) && (payload > 0) && (payload < 3601)) {
       sysCfg.ws_wakeup = payload;
@@ -637,6 +619,20 @@ boolean ws2812_command(char *type, uint16_t index, char *dataBuf, uint16_t data_
       ws2812_resetStripTimer();
     }
     snprintf_P(svalue, ssvalue, PSTR("{\"Scheme\":%d}"), sysCfg.ws_scheme);
+  }
+  else if (!strcmp_P(type,PSTR("UNDOCA"))) {  // Theos WS2812 legacy status
+    RgbColor mcolor;
+    char mtopic[TOPSZ];
+    getTopic_P(mtopic, 1, sysCfg.mqtt_topic, type);
+    ws2812_setDim(sysCfg.ws_dimmer);
+    mcolor = dcolor;
+    uint32_t color = (uint32_t)mcolor.R << 16;
+    color += (uint32_t)mcolor.G << 8;
+    color += (uint32_t)mcolor.B;
+    snprintf_P(svalue, ssvalue, PSTR("%06X, %d, %d, %d, %d, %d"),
+      color, sysCfg.ws_fade, sysCfg.ws_ledtable, sysCfg.ws_scheme, sysCfg.ws_speed, sysCfg.ws_width);
+    mqtt_publish(mtopic, svalue);
+    svalue[0] = '\0';
   }
   else {
     serviced = false;  // Unknown command

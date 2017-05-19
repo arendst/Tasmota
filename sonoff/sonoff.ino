@@ -24,7 +24,7 @@
     - Select IDE Tools - Flash size: "1M (no SPIFFS)"
   ====================================================*/
 
-#define VERSION                0x05010100  // 5.1.1
+#define VERSION                0x05010200  // 5.1.2
 
 enum log_t   {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG_MORE, LOG_LEVEL_ALL};
 enum week_t  {Last, First, Second, Third, Fourth};
@@ -1799,6 +1799,8 @@ void state_mqttPresent(char* svalue, uint16_t ssvalue)
 
 void sensors_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
 {
+  char stemp[16];
+  
   snprintf_P(svalue, ssvalue, PSTR("%s{\"Time\":\"%s\""), svalue, getDateTime().c_str());
   for (byte i = 0; i < 4; i++) {
     if (pin[GPIO_SWT1 +i] < 99) {
@@ -1809,7 +1811,12 @@ void sensors_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
   }
   for (byte i = 0; i < 4; i++) {
     if (pin[GPIO_CNTR1 +i] < 99) {
-      snprintf_P(svalue, ssvalue, PSTR("%s, {\"Counter%d\":%d}"), svalue, i +1, rtcMem.pCounter[i]);
+      if (bitRead(sysCfg.pCounterType, i)) {
+        dtostrf((double)rtcMem.pCounter[i] / 1000, 1, 3, stemp);
+      } else {
+        dtostrf(rtcMem.pCounter[i], 1, 0, stemp);
+      }
+      snprintf_P(svalue, ssvalue, PSTR("%s, \"Counter%d\":%s"), svalue, i +1, stemp);
       *djson = 1;
     }
   }
@@ -2467,13 +2474,27 @@ void GPIO_init()
       analogWrite(pin[GPIO_PWM1 +i], sysCfg.pwmvalue[i]);
     }
   }
-  counter_init();
 
   if (EXS_RELAY == sysCfg.module) {
     setLatchingRelay(0,2);
     setLatchingRelay(1,2);
   }
   setLed(sysCfg.ledstate &8);
+
+#ifdef USE_WS2812
+  if (pin[GPIO_WS2812] < 99) {
+    Maxdevice++;
+    ws2812_init(Maxdevice);
+  }
+#endif  // USE_WS2812
+
+#ifdef USE_IR_REMOTE
+  if (pin[GPIO_IRSEND] < 99) {
+    ir_send_init();
+  }
+#endif // USE_IR_REMOTE
+
+  counter_init();
 
   hlw_flg = ((pin[GPIO_HLW_SEL] < 99) && (pin[GPIO_HLW_CF1] < 99) && (pin[GPIO_HLW_CF] < 99));
   if (hlw_flg) {
@@ -2498,19 +2519,6 @@ void GPIO_init()
     Wire.begin(pin[GPIO_I2C_SDA], pin[GPIO_I2C_SCL]);
   }
 #endif  // USE_I2C
-
-#ifdef USE_WS2812
-  if (pin[GPIO_WS2812] < 99) {
-    Maxdevice++;
-    ws2812_init(Maxdevice);
-  }
-#endif  // USE_WS2812
-
-#ifdef USE_IR_REMOTE
-  if (pin[GPIO_IRSEND] < 99) {
-    ir_send_init();
-  }
-#endif // USE_IR_REMOTE
 }
 
 extern "C" {

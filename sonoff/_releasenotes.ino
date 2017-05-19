@@ -1,4 +1,8 @@
-/* 5.1.1 20170517
+/* 5.1.2 20170519
+ * Fix Counter/Timer JSON message and update Counter/Timer on webpage
+ * Fix WS2812 Domoticz related regression issues
+ * 
+ * 5.1.1 20170517
  * Allow command FullTopic in group mode
  * Prepare for more use of RTC memory
  * Add independant WS2812 led string power control (#386, #390)

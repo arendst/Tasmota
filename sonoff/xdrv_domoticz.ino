@@ -42,6 +42,7 @@ const char HTTP_FORM_DOMOTICZ_TIMER[] PROGMEM =
 const char domoticz_sensors[DOMOTICZ_MAX_SENSORS][14] PROGMEM =
   { "Temp", "Temp,Hum", "Temp,Hum,Baro", "Power,Energy", "Illuminance" };
 
+boolean domoticz_subscribe = false;
 int domoticz_update_timer = 0;
 byte domoticz_update_flag = 1;
 
@@ -59,7 +60,7 @@ void mqtt_publishDomoticzPowerState(byte device)
         sysCfg.domoticz_relay_idx[device -1], sysCfg.led_dimmer[device -1]);
       mqtt_publish(sysCfg.domoticz_in_topic, svalue);
     }
-    else if ((1 == device) && (pin[GPIO_WS2812] < 99)) {
+    else if ((Maxdevice == device) && (pin[GPIO_WS2812] < 99)) {
       snprintf_P(svalue, sizeof(svalue), PSTR("{\"idx\":%d,\"nvalue\":2,\"svalue\":\"%d\"}"),
         sysCfg.domoticz_relay_idx[device -1], sysCfg.ws_dimmer);
       mqtt_publish(sysCfg.domoticz_in_topic, svalue);
@@ -80,7 +81,7 @@ void domoticz_updatePowerState(byte device)
 
 void domoticz_mqttUpdate()
 {
-  if ((sysCfg.domoticz_update_timer || domoticz_update_timer) && sysCfg.domoticz_relay_idx[0]) {
+  if (domoticz_subscribe && (sysCfg.domoticz_update_timer || domoticz_update_timer)) {
     domoticz_update_timer--;
     if (domoticz_update_timer <= 0) {
       domoticz_update_timer = sysCfg.domoticz_update_timer;
@@ -98,7 +99,12 @@ void domoticz_setUpdateTimer(uint16_t value)
 
 void domoticz_mqttSubscribe()
 {
-  if (sysCfg.domoticz_relay_idx[0] && (strlen(sysCfg.domoticz_out_topic) != 0)) {
+  for (byte i = 0; i < Maxdevice; i++) {
+    if (sysCfg.domoticz_relay_idx[i]) {
+      domoticz_subscribe = true;
+    }
+  }
+  if (domoticz_subscribe && (strlen(sysCfg.domoticz_out_topic) != 0)) {
     char stopic[TOPSZ];
     snprintf_P(stopic, sizeof(stopic), PSTR("%s/#"), sysCfg.domoticz_out_topic); // domoticz topic
     mqttClient.subscribe(stopic);
