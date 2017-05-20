@@ -24,7 +24,7 @@
     - Select IDE Tools - Flash size: "1M (no SPIFFS)"
   ====================================================*/
 
-#define VERSION                0x05010200  // 5.1.2
+#define VERSION                0x05010300  // 5.1.3
 
 enum log_t   {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG_MORE, LOG_LEVEL_ALL};
 enum week_t  {Last, First, Second, Third, Fourth};
@@ -116,7 +116,7 @@ enum emul_t  {EMUL_NONE, EMUL_WEMO, EMUL_HUE, EMUL_MAX};
 
 #define MQTT_RETRY_SECS        10           // Minimum seconds to retry MQTT connection
 #define APP_POWER              0            // Default saved power state Off
-#define MAX_DEVICE             1            // Max number of devices
+#define MAX_COUNTERS           4            // Max number of counter sensors
 #define MAX_PULSETIMERS        4            // Max number of supported pulse timers
 #define WS2812_MAX_LEDS        256          // Max number of LEDs
 
@@ -240,7 +240,7 @@ int tele_period = 0;                  // Tele period timer
 String Log[MAX_LOG_LINES];            // Web log buffer
 byte logidx = 0;                      // Index in Web log buffer
 byte logajaxflg = 0;                  // Reset web console log
-byte Maxdevice = MAX_DEVICE;          // Max number of devices supported
+byte Maxdevice = 0;                   // Max number of devices supported
 int status_update_timer = 0;          // Refresh initial status
 uint16_t pulse_timer[MAX_PULSETIMERS] = { 0 }; // Power off timer
 uint16_t blink_timer = 0;             // Power cycle timer
@@ -251,7 +251,6 @@ uint8_t blink_powersave;              // Blink start power save state
 uint16_t mqtt_cmnd_publish = 0;       // ignore flag for publish command
 uint8_t latching_power = 0;           // Power state at latching start
 uint8_t latching_relay_pulse = 0;     // Latching relay pulse timer
-unsigned long pTimeLast[4];           // Last counter time in milli seconds
 
 #ifdef USE_MQTT_TLS
   WiFiClientSecure espClient;         // Wifi Secure Client
@@ -1211,14 +1210,14 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
       }
       snprintf_P(svalue, sizeof(svalue), PSTR("%s}}"),svalue);
     }
-    else if (!strcmp_P(type,PSTR("COUNTER")) && (index > 0) && (index <= 4)) {
+    else if (!strcmp_P(type,PSTR("COUNTER")) && (index > 0) && (index <= MAX_COUNTERS)) {
       if ((data_len > 0) && (pin[GPIO_CNTR1 + index -1] < 99)) {
         rtcMem.pCounter[index -1] = payload16;
         sysCfg.pCounter[index -1] = payload16;
       }
       snprintf_P(svalue, sizeof(svalue), PSTR("{\"Counter%d\":%d}"), index, rtcMem.pCounter[index -1]);
     }
-    else if (!strcmp_P(type,PSTR("COUNTERTYPE")) && (index > 0) && (index <= 4)) {
+    else if (!strcmp_P(type,PSTR("COUNTERTYPE")) && (index > 0) && (index <= MAX_COUNTERS)) {
       if ((data_len > 0) && (payload >= 0) && (payload <= 1) && (pin[GPIO_CNTR1 + index -1] < 99)) {
         bitWrite(sysCfg.pCounterType, index -1, payload &1);
         rtcMem.pCounter[index -1] = 0;
@@ -1799,8 +1798,6 @@ void state_mqttPresent(char* svalue, uint16_t ssvalue)
 
 void sensors_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
 {
-  char stemp[16];
-  
   snprintf_P(svalue, ssvalue, PSTR("%s{\"Time\":\"%s\""), svalue, getDateTime().c_str());
   for (byte i = 0; i < 4; i++) {
     if (pin[GPIO_SWT1 +i] < 99) {
@@ -1809,17 +1806,7 @@ void sensors_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
       *djson = 1;
     }
   }
-  for (byte i = 0; i < 4; i++) {
-    if (pin[GPIO_CNTR1 +i] < 99) {
-      if (bitRead(sysCfg.pCounterType, i)) {
-        dtostrf((double)rtcMem.pCounter[i] / 1000, 1, 3, stemp);
-      } else {
-        dtostrf(rtcMem.pCounter[i], 1, 0, stemp);
-      }
-      snprintf_P(svalue, ssvalue, PSTR("%s, \"Counter%d\":%s"), svalue, i +1, stemp);
-      *djson = 1;
-    }
-  }
+  counter_mqttPresent(svalue, ssvalue, djson);
 #ifndef USE_ADC_VCC
   if (pin[GPIO_ADC0] < 99) {
     snprintf_P(svalue, ssvalue, PSTR("%s, \"AnalogInput0\":%d"), svalue, analogRead(A0));

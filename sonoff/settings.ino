@@ -642,7 +642,7 @@ void CFG_Delta()
     if (sysCfg.version < 0x05010100) {
       sysCfg.pCounterType = 0;
       sysCfg.pCounterDebounce = 0;
-      for (byte i = 0; i < 4; i++) {
+      for (byte i = 0; i < MAX_COUNTERS; i++) {
         sysCfg.pCounter[i] = 0;
         rtcMem.pCounter[i] = 0;
       }

@@ -19,7 +19,7 @@
 
 #ifdef USE_DOMOTICZ
 
-#define DOMOTICZ_MAX_SENSORS  5
+#define DOMOTICZ_MAX_SENSORS  6
 
 #ifdef USE_WEBSERVER
 const char HTTP_FORM_DOMOTICZ[] PROGMEM =
@@ -40,7 +40,7 @@ const char HTTP_FORM_DOMOTICZ_TIMER[] PROGMEM =
 #endif  // USE_WEBSERVER
 
 const char domoticz_sensors[DOMOTICZ_MAX_SENSORS][14] PROGMEM =
-  { "Temp", "Temp,Hum", "Temp,Hum,Baro", "Power,Energy", "Illuminance" };
+  { "Temp", "Temp,Hum", "Temp,Hum,Baro", "Power,Energy", "Illuminance", "Count" };
 
 boolean domoticz_subscribe = false;
 int domoticz_update_timer = 0;
@@ -329,6 +329,13 @@ void domoticz_sensor5(uint16_t lux)
   dom_sensor(4, data);
 }
 
+void domoticz_sensor6(uint32_t count)
+{
+  char data[16];
+  snprintf_P(data, sizeof(data), PSTR("%d"), count);
+  dom_sensor(5, data);
+}
+
 /*********************************************************************************************\
  * Presentation
 \*********************************************************************************************/
@@ -400,10 +407,11 @@ void domoticz_saveSettings()
     sysCfg.domoticz_relay_idx[0], sysCfg.domoticz_relay_idx[1], sysCfg.domoticz_relay_idx[2], sysCfg.domoticz_relay_idx[3],
     sysCfg.domoticz_update_timer);
   addLog(LOG_LEVEL_INFO, log);
-  snprintf_P(log, sizeof(log), PSTR("HTTP: key %d, %d, %d, %d, switch %d, %d, %d, %d, sensor %d, %d, %d, %d, %d"),
+  snprintf_P(log, sizeof(log), PSTR("HTTP: key %d, %d, %d, %d, switch %d, %d, %d, %d, sensor %d, %d, %d, %d, %d, %d"),
     sysCfg.domoticz_key_idx[0], sysCfg.domoticz_key_idx[1], sysCfg.domoticz_key_idx[2], sysCfg.domoticz_key_idx[3],
     sysCfg.domoticz_switch_idx[0], sysCfg.domoticz_switch_idx[1], sysCfg.domoticz_switch_idx[2], sysCfg.domoticz_switch_idx[3],
-    sysCfg.domoticz_sensor_idx[0], sysCfg.domoticz_sensor_idx[1], sysCfg.domoticz_sensor_idx[2], sysCfg.domoticz_sensor_idx[3], sysCfg.domoticz_sensor_idx[4]);
+    sysCfg.domoticz_sensor_idx[0], sysCfg.domoticz_sensor_idx[1], sysCfg.domoticz_sensor_idx[2], sysCfg.domoticz_sensor_idx[3],
+    sysCfg.domoticz_sensor_idx[4], sysCfg.domoticz_sensor_idx[5]);
   addLog(LOG_LEVEL_INFO, log);
 }
 #endif  // USE_WEBSERVER

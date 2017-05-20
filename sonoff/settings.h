@@ -197,7 +197,7 @@ struct SYSCFG {
   char          mqtt_fulltopic[101];
 
   // 5.1.1
-  unsigned long pCounter[4];
+  unsigned long pCounter[MAX_COUNTERS];
   uint16_t      pCounterType;
   uint16_t      pCounterDebounce;
 
@@ -209,7 +209,7 @@ struct RTCMEM {
   uint8_t       power;
   unsigned long hlw_kWhtoday;
   unsigned long hlw_kWhtotal;
-  unsigned long pCounter[4];
+  unsigned long pCounter[MAX_COUNTERS];
 } rtcMem;
 
 // See issue https://github.com/esp8266/Arduino/issues/2913  

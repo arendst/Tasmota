@@ -1,4 +1,7 @@
-/* 5.1.2 20170519
+/* 5.1.3 20170520
+ * Add Domoticz Counter
+ *
+ * 5.1.2 20170519
  * Fix Counter/Timer JSON message and update Counter/Timer on webpage
  * Fix WS2812 Domoticz related regression issues
  * 
