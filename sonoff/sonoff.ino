@@ -2383,12 +2383,14 @@ void GPIO_init()
         mpin -= 4;
       }
       else if ((mpin >= GPIO_DHT11) && (mpin <= GPIO_DHT22)) {
+#ifdef USE_DHT
         if (dht_setup(i, mpin)) {
           dht_flg = 1;
           mpin = GPIO_DHT11;
         } else {
           mpin = 0;
         }
+#endif  // USE_DHT
       }
     }
     if (mpin) {
