@@ -153,7 +153,9 @@ enum butt_t {PRESSED, NOT_PRESSED};
 #include "support.h"                        // Global support
 
 #include <PubSubClient.h>                   // MQTT
-#define MESSZ                  360          // Max number of characters in JSON message string (4 x DS18x20 sensors)
+#ifndef MESSZ
+  #define MESSZ                  360          // Max number of characters in JSON message string (4 x DS18x20 sensors)
+#endif
 #if (MQTT_MAX_PACKET_SIZE -TOPSZ -7) < MESSZ  // If the max message size is too small, throw an error at compile time
                                             // See pubsubclient.c line 359
   #error "MQTT_MAX_PACKET_SIZE is too small in libraries/PubSubClient/src/PubSubClient.h, increase it to at least 467"
