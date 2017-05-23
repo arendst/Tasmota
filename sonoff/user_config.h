@@ -170,7 +170,7 @@
 
 #define USE_HLW8012                              // Enable HLW8012 wattmeter (+8k code, +0.4k mem) - Disable by //
 //#define USE_CS5460A                              // Enable CS5460A wattmeter (+5k code, +0.2k mem) - Disable by //
-//#define USE_PZEM004T                              // Enable USE_PZEM004T wattmeter (+6k code, +0.4k mem) - Disable by //
+//#define USE_PZEM004T                              // Enable PZEM004T wattmeter (+6k code, +0.4k mem) - Disable by //
 
 /*********************************************************************************************\
  * Compile a minimal version if upgrade memory gets tight ONLY TO BE USED FOR UPGRADE STEP 1!
