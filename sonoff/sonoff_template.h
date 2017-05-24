@@ -433,7 +433,7 @@ const mytmplt modules[MAXMODULE] PROGMEM = {
      0,
      GPIO_LED1_INV,    // GPIO13 Green Led (0 = On, 1 = Off)
      0, 0, 0, 0
-  }
+  },
   { "Huafan SS",      // Hua Fan Smart Socket (ESP8266) - like Sonoff Pow
      GPIO_LED1_INV,     // GPIO0 Blue Led (1 = Off, 0 = On)
      0, 0,
