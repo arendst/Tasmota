@@ -145,6 +145,7 @@ enum module_t {
   SONOFF_DEV,
   H801,
   SONOFF_SC,
+  HUAFAN_SS,
   MAXMODULE };
 
 /********************************************************************************************/
@@ -432,6 +433,18 @@ const mytmplt modules[MAXMODULE] PROGMEM = {
      0,
      GPIO_LED1_INV,    // GPIO13 Green Led (0 = On, 1 = Off)
      0, 0, 0, 0
+  }
+  { "Huafan SS",      // Hua Fan Smart Socket (ESP8266) - like Sonoff Pow
+     GPIO_LED1_INV,     // GPIO0 Blue Led (1 = Off, 0 = On)
+     0, 0,
+     GPIO_LED2_INV,     // GPIO3 Red Led (1 = Off, 0 = On)
+     GPIO_KEY1,         // GPIO4 Button
+     GPIO_REL1_INV,     // GPIO5 Relay (1 = Off, 0 = On)
+     0,0,0,0,0,0,
+     GPIO_HLW_CF1,     // GPIO12 HLW8012 CF1 voltage / current
+     GPIO_HLW_SEL,     // GPIO13 HLW8012 Sel output
+     GPIO_HLW_CF,      // GPIO14 HLW8012 CF power
+     0, 0, 0
   }
 };
 
