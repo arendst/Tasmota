@@ -143,6 +143,7 @@ enum module_t {
   SONOFF_SC,
   CS5460A,
   PZEM004T,
+  WM_CANDY_CTY_835,
   MAXMODULE };
 
 /********************************************************************************************/
@@ -458,6 +459,20 @@ const mytmplt modules[MAXMODULE] PROGMEM = {
      GPIO_LED1_INV,    // GPIO13 BLUE LED
      GPIO_USER,        // GPIO14 Optional sensor
      0, 0, 0
+  },
+  { "Candy CTY_835",   // Board to control a Candy CTY 835 washing machine (ESP8266)
+     0,                // GPIO00
+     GPIO_USER,        // GPIO01 TX Serial RXD and Optional sensor
+     0,                // GPIO02
+     GPIO_USER,        // GPIO03 RX Serial TXD and Optional sensor
+     0,                // GPIO04 60MIN led sensor
+     0,                // GPIO05 START led sensor
+     0, 0, 0, 0, 0, 0, // Flash connection
+     0,                // GPIO12 30MIN led sensor
+     GPIO_LED1_INV,    // GPIO13 15MIN led sensor
+     0,                // GPIO14 Switch servo
+     0,                // GPIO15 STOP led sensor
+     0, 0
   }
 };
 
