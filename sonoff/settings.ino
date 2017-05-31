@@ -59,6 +59,12 @@ void RTC_Load()
   if (rtcMem.valid != RTC_MEM_VALID) {
     memset(&rtcMem, 0x00, sizeof(RTCMEM));
     rtcMem.valid = RTC_MEM_VALID;
+    rtcMem.power = sysCfg.power;
+    rtcMem.wattmtr_kWhtoday = sysCfg.wattmtr_kWhtoday;
+    rtcMem.wattmtr_kWhtotal = sysCfg.wattmtr_kWhtotal;
+    for (byte i = 0; i < 4; i++) {
+      rtcMem.pCounter[i] = sysCfg.pCounter[i];
+    }
     RTC_Save();
   }
   _rtcHash = getRtcHash();
@@ -632,6 +638,14 @@ void CFG_Delta()
     }
     if (sysCfg.version < 0x05000600) {
       sysCfg.mqtt_retry = MQTT_RETRY_SECS;
+    }
+    if (sysCfg.version < 0x05010100) {
+      sysCfg.pCounterType = 0;
+      sysCfg.pCounterDebounce = 0;
+      for (byte i = 0; i < MAX_COUNTERS; i++) {
+        sysCfg.pCounter[i] = 0;
+        rtcMem.pCounter[i] = 0;
+      }
     }
     sysCfg.version = VERSION;
   }
