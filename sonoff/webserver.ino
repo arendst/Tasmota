@@ -458,6 +458,7 @@ void handleAjax2()
   }
   
   String tpage = "";
+  tpage += counter_webPresent();
   if (hlw_flg) {
     tpage += hlw_webPresent();
   }

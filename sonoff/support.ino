@@ -682,6 +682,7 @@ uint32_t dsttime = 0;
 uint32_t stdtime = 0;
 uint32_t ntptime = 0;
 uint32_t midnight = 1451602800;
+uint8_t  midnightnow = 0;
 
 String getBuildDateTime()
 {
@@ -867,6 +868,15 @@ uint32_t rtc_midnight()
   return midnight;
 }
 
+boolean rtc_midnight_now()
+{
+  boolean mnflg = midnightnow;
+  if (mnflg) {
+    midnightnow = 0;
+  }
+  return mnflg;
+}
+
 void rtc_second()
 {
   char log[LOGSZ];
@@ -919,6 +929,7 @@ void rtc_second()
   breakTime(loctime, rtcTime);
   if (!rtcTime.Hour && !rtcTime.Minute && !rtcTime.Second && rtcTime.Valid) {
     midnight = loctime;
+    midnightnow = 1;
   }
   rtcTime.Year += 1970;
 }

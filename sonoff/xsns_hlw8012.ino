@@ -265,9 +265,6 @@ void hlw_init()
   hlw_Ecntr = 0;
   hlw_EDcntr = 0;
   hlw_kWhtoday = (RTC_Valid()) ? rtcMem.hlw_kWhtoday : 0;
-  if (sysCfg.hlw_kWhtotal > rtcMem.hlw_kWhtotal) {
-    rtcMem.hlw_kWhtotal = sysCfg.hlw_kWhtotal;
-  }
 
   hlw_SELflag = 0;  // Voltage;
 
