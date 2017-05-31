@@ -1,4 +1,19 @@
-/* 5.1.0 20170513
+/* 5.1.3 20170520
+ * Add Domoticz Counter
+ *
+ * 5.1.2 20170519
+ * Fix Counter/Timer JSON message and update Counter/Timer on webpage
+ * Fix WS2812 Domoticz related regression issues
+ * 
+ * 5.1.1 20170517
+ * Allow command FullTopic in group mode
+ * Prepare for more use of RTC memory
+ * Add independant WS2812 led string power control (#386, #390)
+ * Add command Counter<x> to control up to four GPIO falling edge interrupt counters or timers (#459)
+ * Add command CounterType<x> to select between pulse counting or pulse timing
+ * Add command CounterDebounce to select global counter debounce time in mSec
+ *
+ * 5.1.0 20170513
  * Fix Offline/Removal of retained topic when FullTopic is changed
  * Add FullTopic to MQTT Configuration and Information web pages
  * Add license model GPLv3 (#188)

@@ -16,18 +16,15 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-
-/*
-  ====================================================
+/*====================================================
   Prerequisites:
     - Change libraries/PubSubClient/src/PubSubClient.h
         #define MQTT_MAX_PACKET_SIZE 512
  
     - Select IDE Tools - Flash size: "1M (no SPIFFS)"
-  ====================================================
-*/
+  ====================================================*/
 
-#define VERSION                0x05010000  // 5.1.0
+#define VERSION                0x05010300  // 5.1.3
 
 enum log_t   {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG_MORE, LOG_LEVEL_ALL};
 enum week_t  {Last, First, Second, Third, Fourth};
@@ -128,7 +125,7 @@ enum emul_t  {EMUL_NONE, EMUL_WEMO, EMUL_HUE, EMUL_MAX};
 
 #define MQTT_RETRY_SECS        10           // Minimum seconds to retry MQTT connection
 #define APP_POWER              0            // Default saved power state Off
-#define MAX_DEVICE             1            // Max number of devices
+#define MAX_COUNTERS           4            // Max number of counter sensors
 #define MAX_PULSETIMERS        4            // Max number of supported pulse timers
 #define WS2812_MAX_LEDS        256          // Max number of LEDs
 
@@ -256,7 +253,7 @@ int tele_period = 0;                  // Tele period timer
 String Log[MAX_LOG_LINES];            // Web log buffer
 byte logidx = 0;                      // Index in Web log buffer
 byte logajaxflg = 0;                  // Reset web console log
-byte Maxdevice = MAX_DEVICE;          // Max number of devices supported
+byte Maxdevice = 0;                   // Max number of devices supported
 int status_update_timer = 0;          // Refresh initial status
 uint16_t pulse_timer[MAX_PULSETIMERS] = { 0 }; // Power off timer
 uint16_t blink_timer = 0;             // Power cycle timer
@@ -722,7 +719,7 @@ boolean mqtt_command(boolean grpflg, char *type, uint16_t index, char *dataBuf, 
     }
     snprintf_P(svalue, ssvalue, PSTR("{\"MqttPassword\":\"%s\"}"), sysCfg.mqtt_pwd);
   }
-  else if (!grpflg && !strcmp_P(type,PSTR("FULLTOPIC"))) {
+  else if (!strcmp_P(type,PSTR("FULLTOPIC"))) {
     if ((data_len > 0) && (data_len < sizeof(sysCfg.mqtt_fulltopic))) {
       for (i = 0; i <= data_len; i++) {
         if ((dataBuf[i] == '+') || (dataBuf[i] == '#') || (dataBuf[i] == ' ')) {
@@ -1229,6 +1226,27 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
       }
       snprintf_P(svalue, sizeof(svalue), PSTR("%s}}"),svalue);
     }
+    else if (!strcmp_P(type,PSTR("COUNTER")) && (index > 0) && (index <= MAX_COUNTERS)) {
+      if ((data_len > 0) && (pin[GPIO_CNTR1 + index -1] < 99)) {
+        rtcMem.pCounter[index -1] = payload16;
+        sysCfg.pCounter[index -1] = payload16;
+      }
+      snprintf_P(svalue, sizeof(svalue), PSTR("{\"Counter%d\":%d}"), index, rtcMem.pCounter[index -1]);
+    }
+    else if (!strcmp_P(type,PSTR("COUNTERTYPE")) && (index > 0) && (index <= MAX_COUNTERS)) {
+      if ((data_len > 0) && (payload >= 0) && (payload <= 1) && (pin[GPIO_CNTR1 + index -1] < 99)) {
+        bitWrite(sysCfg.pCounterType, index -1, payload &1);
+        rtcMem.pCounter[index -1] = 0;
+        sysCfg.pCounter[index -1] = 0;
+      }
+      snprintf_P(svalue, sizeof(svalue), PSTR("{\"CounterType%d\":%d}"), index, bitRead(sysCfg.pCounterType, index -1));
+    }
+    else if (!strcmp_P(type,PSTR("COUNTERDEBOUNCE"))) {
+      if ((data_len > 0) && (payload16 < 32001) && (pin[GPIO_CNTR1 + index -1] < 99)) {
+        sysCfg.pCounterDebounce = payload16;
+      }
+      snprintf_P(svalue, sizeof(svalue), PSTR("{\"CounterDebounce\":%d}"), sysCfg.pCounterDebounce);
+    }
     else if (!strcmp_P(type,PSTR("SLEEP"))) {
       if ((data_len > 0) && (payload >= 0) && (payload < 251)) {
         if ((!sysCfg.sleep && payload) || (sysCfg.sleep && !payload)) {
@@ -1545,7 +1563,9 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
     snprintf_P(svalue, sizeof(svalue), PSTR("{\"Command\":\"Unknown\"}"));
     type = (char*)topicBuf;
   }
-  mqtt_publish_topic_P(5, type, svalue);
+  if (svalue[0] != '\0') {
+    mqtt_publish_topic_P(5, type, svalue);
+  }
 }
 
 /********************************************************************************************/
@@ -1806,6 +1826,7 @@ void sensors_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
       *djson = 1;
     }
   }
+  counter_mqttPresent(svalue, ssvalue, djson);
 #ifndef USE_ADC_VCC
   if (pin[GPIO_ADC0] < 99) {
     snprintf_P(svalue, ssvalue, PSTR("%s, \"AnalogInput0\":%d"), svalue, analogRead(A0));
@@ -2207,6 +2228,9 @@ void stateloop()
     }
     break;
   case (STATES/10)*4:
+    if (rtc_midnight_now()) {
+      counter_savestate();
+    }
     if (savedatacounter) {
       savedatacounter--;
       if (savedatacounter <= 0) {
@@ -2241,6 +2265,7 @@ void stateloop()
 #ifdef USE_WATTMETER
       if (wattmtr_flg) wattmtr_savestate();
 #endif // USE_WATTMETER
+      counter_savestate();
       CFG_Save();
       restartflag--;
       if (restartflag <= 0) {
@@ -2456,16 +2481,33 @@ void GPIO_init()
       analogWrite(pin[GPIO_PWM1 +i], sysCfg.pwmvalue[i]);
     }
   }
-  
+
   if (EXS_RELAY == sysCfg.module) {
     setLatchingRelay(0,2);
     setLatchingRelay(1,2);
   }
   setLed(sysCfg.ledstate &8);
 
+#ifdef USE_WS2812
+  if (pin[GPIO_WS2812] < 99) {
+    Maxdevice++;
+    ws2812_init(Maxdevice);
+  }
+#endif  // USE_WS2812
+
+#ifdef USE_IR_REMOTE
+  if (pin[GPIO_IRSEND] < 99) {
+    ir_send_init();
+  }
+#endif // USE_IR_REMOTE
+
+  counter_init();
+
 #ifdef USE_CS5460A
   wattmtr_flg = ((pin[GPIO_CS_CLK] < 99) && (pin[GPIO_CS_SDO] < 99));
-  if (wattmtr_flg) cs_init();
+  if (wattmtr_flg) {
+    cs_init();
+  }
 #else
   if ((pin[GPIO_CS_CLK] < 99) && (pin[GPIO_CS_SDO] < 99))
     addLog_P(LOG_LEVEL_ERROR, PSTR("CS5460A: ERROR - No CS5460A support present. Please reflash with the identifier USE_CS5460A"));
@@ -2473,7 +2515,9 @@ void GPIO_init()
 
 #ifdef USE_PZEM004T
   wattmtr_flg = ((pin[GPIO_PZEM_RX] < 99) && (pin[GPIO_PZEM_TX] < 99));
-  if (wattmtr_flg) pzem_init();
+  if (wattmtr_flg) {
+    pzem_init();
+  }
 #else
   if ((pin[GPIO_PZEM_RX] < 99) && (pin[GPIO_PZEM_TX] < 99))
     addLog_P(LOG_LEVEL_ERROR, PSTR("PZEM004T: ERROR - No PZEM004T support present. Please reflash with the identifier USE_PZEM004T"));
@@ -2481,7 +2525,9 @@ void GPIO_init()
 
 #ifdef USE_HLW8012
   wattmtr_flg = ((pin[GPIO_HLW_SEL] < 99) && (pin[GPIO_HLW_CF1] < 99) && (pin[GPIO_HLW_CF] < 99));
-  if (wattmtr_flg) hlw_init();
+  if (wattmtr_flg) {
+    hlw_init();
+  }
 #else
   if ((pin[GPIO_HLW_SEL] < 99) && (pin[GPIO_HLW_CF1] < 99) && (pin[GPIO_HLW_CF] < 99))
     addLog_P(LOG_LEVEL_ERROR, PSTR("HLW8012: ERROR - No HLW8012 support present. Please reflash with the identifier USE_HLW8012"));
@@ -2505,18 +2551,6 @@ void GPIO_init()
     Wire.begin(pin[GPIO_I2C_SDA], pin[GPIO_I2C_SCL]);
   }
 #endif  // USE_I2C
-
-#ifdef USE_WS2812
-  if (pin[GPIO_WS2812] < 99) {
-    ws2812_init();
-  }
-#endif  // USE_WS2812
-
-#ifdef USE_IR_REMOTE
-  if (pin[GPIO_IRSEND] < 99) {
-    ir_send_init();
-  }
-#endif // USE_IR_REMOTE
 }
 
 extern "C" {
