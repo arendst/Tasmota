@@ -1,4 +1,10 @@
-/* 5.1.3 20170520
+/* 5.1.4 20170601
+ * Removed pre-compiled versions from repository as they are available within the release
+ * Changed HUE Device type to color supporting version (#464)
+ * Fix compile error when BE_MINIMAL is selected (#467, #476)
+ * Add multiple compiled versions to release using updated Travis script and platformio.ini (#467)
+ * 
+ * 5.1.3 20170520
  * Add Domoticz Counter
  *
  * 5.1.2 20170519
