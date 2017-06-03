@@ -381,7 +381,7 @@ void AM2320_read()
 
 	Wire.beginTransmission(AM2320_ADDR); // wake sensor
 	Wire.endTransmission();
-
+	delay(1);			     // wait a tiny bit
 	Wire.beginTransmission(AM2320_ADDR); // now start reading
 	Wire.write(0x03);//
 	Wire.write(0x00); //
