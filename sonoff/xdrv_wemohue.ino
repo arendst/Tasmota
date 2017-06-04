@@ -305,6 +305,7 @@ const char HUE_LIGHT_STATUS_JSON[] PROGMEM =
       "\"ct\":500,"
       "\"xy\":[0.5, 0.5],"
       "\"alert\":\"none\","
+      "\"effect\":\"none\","
       "\"colormode\":\"hs\","
       "\"reachable\":true"
   "},"
