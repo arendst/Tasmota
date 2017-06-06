@@ -477,7 +477,7 @@ const mytmplt modules[MAXMODULE] PROGMEM = {
      0,                // GPIO05 START led sensor
      0, 0, 0, 0, 0, 0, // Flash connection
      0,                // GPIO12 30MIN led sensor
-     GPIO_LED1_INV,    // GPIO13 15MIN led sensor
+     0,                // GPIO13 15MIN led sensor
      0,                // GPIO14 Switch servo
      0,                // GPIO15 STOP led sensor
      0, 0
