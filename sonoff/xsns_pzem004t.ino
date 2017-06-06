@@ -508,8 +508,8 @@ void pzem_mqttStat(bool withPeriod, char* svalue, uint16_t ssvalue)
     pzem_Whperiod = pzem_Whtotal;
   }
 
-  dtostrf((float)sysCfg.wattmtr_kWhyesterday / 100000000, 1, ENERGY_RESOLUTION & 7, sKWHY);
-  dtostrf((float)pzem_kWhtoday / 100000000, 1, ENERGY_RESOLUTION & 7, sKWHT);
+  dtostrf((float)sysCfg.wattmtr_kWhyesterday / 100000000, 1, sysCfg.flag.energy_resolution, sKWHY);
+  dtostrf((float)pzem_kWhtoday / 100000000, 1, sysCfg.flag.energy_resolution, sKWHT);
   dtostrf(pzem_truePower, 1, 1, sTruePower);
   dtostrf(pzem_voltage, 1, 1, sVoltage);
   dtostrf(pzem_current, 1, 3, sCurrent);
@@ -552,16 +552,14 @@ String wattmtr_webPresent()
   String page = "";
   char sKWHY[10], sKWHT[10], sWHTotal[10], sTruePower[10], sVoltage[10], sCurrent[10], sensor[300];
 
-  dtostrf((float)sysCfg.wattmtr_kWhyesterday / 100000000, 1, ENERGY_RESOLUTION & 7, sKWHY);
-  dtostrf((float)pzem_kWhtoday / 100000000, 1, ENERGY_RESOLUTION & 7, sKWHT);
-  dtostrf(pzem_Whtotal / 1000, 1, ENERGY_RESOLUTION & 7, sWHTotal);
+  dtostrf((float)sysCfg.wattmtr_kWhyesterday / 100000000, 1, sysCfg.flag.energy_resolution, sKWHY);
+  dtostrf((float)pzem_kWhtoday / 100000000, 1, sysCfg.flag.energy_resolution, sKWHT);
+  dtostrf(pzem_Whtotal / 1000, 1, sysCfg.flag.energy_resolution, sWHTotal);
   dtostrf(pzem_truePower, 1, 1, sTruePower);
   dtostrf(pzem_voltage, 1, 1, sVoltage);
   dtostrf(pzem_current, 1, 3, sCurrent);
 
   snprintf_P(sensor, sizeof(sensor), HTTP_ENERGY_SNS, sVoltage, sCurrent, sTruePower, sKWHT, sKWHY, sWHTotal);
-  page += sensor;
-  return page;
   page += sensor;
   return page;
 }

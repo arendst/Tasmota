@@ -372,8 +372,8 @@ void cs_mqttStat(bool withPeriod, char* svalue, uint16_t ssvalue)
     cs_period = 0;
   }
 
-  dtostrf((float)sysCfg.wattmtr_kWhyesterday / 100000000, 1, ENERGY_RESOLUTION &7, sKWHY);
-  dtostrf((float)cs_kWhtoday / 100000000, 1, ENERGY_RESOLUTION &7, sKWHT);
+  dtostrf((float)sysCfg.wattmtr_kWhyesterday / 100000000, 1, sysCfg.flag.energy_resolution, sKWHY);
+  dtostrf((float)cs_kWhtoday / 100000000, 1, sysCfg.flag.energy_resolution, sKWHT);
   dtostrf(cs_truePower, 1, 1, sTruePower);
   dtostrf(cs_powerFactor, 1, 2, sPowerFactor);
   dtostrf(cs_voltage, 1, 1, sVoltage);
@@ -417,8 +417,8 @@ String wattmtr_webPresent()
   String page = "";
   char sKWHY[10], sKWHT[10], sTruePower[10], sPowerFactor[10], sVoltage[10], sCurrent[10], sensor[300];
 
-  dtostrf((float)sysCfg.wattmtr_kWhyesterday / 100000000, 1, ENERGY_RESOLUTION &7, sKWHY);
-  dtostrf((float)cs_kWhtoday / 100000000, 1, ENERGY_RESOLUTION &7, sKWHT);
+  dtostrf((float)sysCfg.wattmtr_kWhyesterday / 100000000, 1, sysCfg.flag.energy_resolution, sKWHY);
+  dtostrf((float)cs_kWhtoday / 100000000, 1, sysCfg.flag.energy_resolution, sKWHT);
   dtostrf(cs_truePower, 1, 1, sTruePower);
   dtostrf(cs_powerFactor, 1, 2, sPowerFactor);
   dtostrf(cs_voltage, 1, 1, sVoltage);
