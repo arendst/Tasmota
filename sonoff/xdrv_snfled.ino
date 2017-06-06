@@ -207,7 +207,7 @@ boolean sl_command(char *type, uint16_t index, char *dataBufUc, uint16_t data_le
     }
   }
   else if (!strcmp_P(type,PSTR("DIMMER"))) {
-    if ((data_len > 0) && (payload >= 0) && (payload <= 100)) {
+    if ((payload >= 0) && (payload <= 100)) {
       sysCfg.led_dimmer[0] = payload;
       coldim = true;
     } else {
@@ -215,7 +215,7 @@ boolean sl_command(char *type, uint16_t index, char *dataBufUc, uint16_t data_le
     }
   }
   else if (!strcmp_P(type,PSTR("LEDTABLE"))) {
-    if ((data_len > 0) && (payload >= 0) && (payload <= 2)) {
+    if ((payload >= 0) && (payload <= 2)) {
       switch (payload) {
       case 0: // Off
       case 1: // On
@@ -230,27 +230,25 @@ boolean sl_command(char *type, uint16_t index, char *dataBufUc, uint16_t data_le
     snprintf_P(svalue, ssvalue, PSTR("{\"LedTable\":\"%s\"}"), getStateText(sysCfg.led_table));
   }
   else if (!strcmp_P(type,PSTR("FADE"))) {
-    if ((data_len > 0) && (payload >= 0) && (payload <= 2)) {
-      switch (payload) {
-      case 0: // Off
-      case 1: // On
-        sysCfg.led_fade = payload;
-        break;
-      case 2: // Toggle
-        sysCfg.led_fade ^= 1;
-        break;
-      }
+    switch (payload) {
+    case 0: // Off
+    case 1: // On
+      sysCfg.led_fade = payload;
+      break;
+    case 2: // Toggle
+      sysCfg.led_fade ^= 1;
+      break;
     }
     snprintf_P(svalue, ssvalue, PSTR("{\"Fade\":\"%s\"}"), getStateText(sysCfg.led_fade));
   }
   else if (!strcmp_P(type,PSTR("SPEED"))) {  // 1 - fast, 8 - slow
-    if ((data_len > 0) && (payload > 0) && (payload <= 8)) {
+    if ((payload > 0) && (payload <= 8)) {
       sysCfg.led_speed = payload;
     }
     snprintf_P(svalue, ssvalue, PSTR("{\"Speed\":%d}"), sysCfg.led_speed);
   }
   else if (!strcmp_P(type,PSTR("WAKEUPDURATION"))) {
-    if ((data_len > 0) && (payload > 0) && (payload < 3601)) {
+    if ((payload > 0) && (payload < 3601)) {
       sysCfg.led_wakeup = payload;
       sl_wakeupActive = 0;
     }

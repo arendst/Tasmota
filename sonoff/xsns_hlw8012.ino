@@ -439,43 +439,43 @@ boolean hlw_command(char *type, uint16_t index, char *dataBuf, uint16_t data_len
   boolean serviced = true;
 
   if (!strcmp_P(type,PSTR("POWERLOW"))) {
-    if ((data_len > 0) && (payload >= 0) && (payload < 3601)) {
+    if ((payload >= 0) && (payload < 3601)) {
       sysCfg.hlw_pmin = payload;
     }
     snprintf_P(svalue, ssvalue, PSTR("{\"PowerLow\":\"%d%s\"}"), sysCfg.hlw_pmin, (sysCfg.flag.value_units) ? " W" : "");
   }
   else if (!strcmp_P(type,PSTR("POWERHIGH"))) {
-    if ((data_len > 0) && (payload >= 0) && (payload < 3601)) {
+    if ((payload >= 0) && (payload < 3601)) {
       sysCfg.hlw_pmax = payload;
     }
     snprintf_P(svalue, ssvalue, PSTR("{\"PowerHigh\":\"%d%s\"}"), sysCfg.hlw_pmax, (sysCfg.flag.value_units) ? " W" : "");
   }
   else if (!strcmp_P(type,PSTR("VOLTAGELOW"))) {
-    if ((data_len > 0) && (payload >= 0) && (payload < 501)) {
+    if ((payload >= 0) && (payload < 501)) {
       sysCfg.hlw_umin = payload;
     }
     snprintf_P(svalue, ssvalue, PSTR("{\"VoltageLow\":\"%d%s\"}"), sysCfg.hlw_umin, (sysCfg.flag.value_units) ? " V" : "");
   }
   else if (!strcmp_P(type,PSTR("VOLTAGEHIGH"))) {
-    if ((data_len > 0) && (payload >= 0) && (payload < 501)) {
+    if ((payload >= 0) && (payload < 501)) {
       sysCfg.hlw_umax = payload;
     }
     snprintf_P(svalue, ssvalue, PSTR("[\"VoltageHigh\":\"%d%s\"}"), sysCfg.hlw_umax, (sysCfg.flag.value_units) ? " V" : "");
   }
   else if (!strcmp_P(type,PSTR("CURRENTLOW"))) {
-    if ((data_len > 0) && (payload >= 0) && (payload < 16001)) {
+    if ((payload >= 0) && (payload < 16001)) {
       sysCfg.hlw_imin = payload;
     }
     snprintf_P(svalue, ssvalue, PSTR("{\"CurrentLow\":\"%d%s\"}"), sysCfg.hlw_imin, (sysCfg.flag.value_units) ? " mA" : "");
   }
   else if (!strcmp_P(type,PSTR("CURRENTHIGH"))) {
-    if ((data_len > 0) && (payload >= 0) && (payload < 16001)) {
+    if ((payload >= 0) && (payload < 16001)) {
       sysCfg.hlw_imax = payload;
     }
     snprintf_P(svalue, ssvalue, PSTR("{\"CurrentHigh\":\"%d%s\"}"), sysCfg.hlw_imax, (sysCfg.flag.value_units) ? " mA" : "");
   }
   else if (!strcmp_P(type,PSTR("ENERGYRESET"))) {
-    if ((data_len > 0) && (payload >= 1) && (payload <= 3)) {
+    if ((payload >= 1) && (payload <= 3)) {
       switch (payload) {
       case 1:
         hlw_kWhtoday = 0;
@@ -500,69 +500,69 @@ boolean hlw_command(char *type, uint16_t index, char *dataBuf, uint16_t data_len
     snprintf_P(svalue, ssvalue, PSTR("{\"EnergyReset\":{\"Total\":%s, \"Yesterday\":%s, \"Today\":%s}}"), stemp2, stemp0, stemp1);
   }
   else if (!strcmp_P(type,PSTR("HLWPCAL"))) {
-    if ((data_len > 0) && (payload > 0) && (payload < 32001)) {
+    if ((payload > 0) && (payload < 32001)) {
       sysCfg.hlw_pcal = (payload > 9999) ? payload : HLW_PREF_PULSE;  // 12530
     }
     snprintf_P(svalue, ssvalue, PSTR("(\"HlwPcal\":\"%d%s\"}"), sysCfg.hlw_pcal, (sysCfg.flag.value_units) ? " uS" : "");
   }
   else if (!strcmp_P(type,PSTR("HLWUCAL"))) {
-    if ((data_len > 0) && (payload > 0) && (payload < 32001)) {
+    if ((payload > 0) && (payload < 32001)) {
       sysCfg.hlw_ucal = (payload > 999) ? payload : HLW_UREF_PULSE;  // 1950
     }
     snprintf_P(svalue, ssvalue, PSTR("{\"HlwUcal\":\"%d%s\"}"), sysCfg.hlw_ucal, (sysCfg.flag.value_units) ? " uS" : "");
   }
   else if (!strcmp_P(type,PSTR("HLWICAL"))) {
-    if ((data_len > 0) && (payload > 0) && (payload < 32001)) {
+    if ((payload > 0) && (payload < 32001)) {
       sysCfg.hlw_ical = (payload > 2499) ? payload : HLW_IREF_PULSE;  // 3500
     }
     snprintf_P(svalue, ssvalue, PSTR("{\"HlwIcal\":\"%d%s\"}"), sysCfg.hlw_ical, (sysCfg.flag.value_units) ? " uS" : "");
   }
 #if FEATURE_POWER_LIMIT
   else if (!strcmp_P(type,PSTR("MAXPOWER"))) {
-    if ((data_len > 0) && (payload >= 0) && (payload < 3601)) {
+    if ((payload >= 0) && (payload < 3601)) {
       sysCfg.hlw_mpl = payload;
     }
     snprintf_P(svalue, ssvalue, PSTR("{\"MaxPower\":\"%d%s\"}"), sysCfg.hlw_mpl, (sysCfg.flag.value_units) ? " W" : "");
   }
   else if (!strcmp_P(type,PSTR("MAXPOWERHOLD"))) {
-    if ((data_len > 0) && (payload >= 0) && (payload < 3601)) {
+    if ((payload >= 0) && (payload < 3601)) {
       sysCfg.hlw_mplh = (1 == payload) ? MAX_POWER_HOLD : payload;
     }
     snprintf_P(svalue, ssvalue, PSTR("{\"MaxPowerHold\":\"%d%s\"}"), sysCfg.hlw_mplh, (sysCfg.flag.value_units) ? " Sec" : "");
   }
   else if (!strcmp_P(type,PSTR("MAXPOWERWINDOW"))) {
-    if ((data_len > 0) && (payload >= 0) && (payload < 3601)) {
+    if ((payload >= 0) && (payload < 3601)) {
       sysCfg.hlw_mplw = (1 == payload) ? MAX_POWER_WINDOW : payload;
     }
     snprintf_P(svalue, ssvalue, PSTR("{\"MaxPowerWindow\":\"%d%s\"}"), sysCfg.hlw_mplw, (sysCfg.flag.value_units) ? " Sec" : "");
   }
   else if (!strcmp_P(type,PSTR("SAFEPOWER"))) {
-    if ((data_len > 0) && (payload >= 0) && (payload < 3601)) {
+    if ((payload >= 0) && (payload < 3601)) {
       sysCfg.hlw_mspl = payload;
     }
     snprintf_P(svalue, ssvalue, PSTR("{\"SafePower\":\"%d%s\"}"), sysCfg.hlw_mspl, (sysCfg.flag.value_units) ? " W" : "");
   }
   else if (!strcmp_P(type,PSTR("SAFEPOWERHOLD"))) {
-    if ((data_len > 0) && (payload >= 0) && (payload < 3601)) {
+    if ((payload >= 0) && (payload < 3601)) {
       sysCfg.hlw_msplh = (1 == payload) ? SAFE_POWER_HOLD : payload;
     }
     snprintf_P(svalue, ssvalue, PSTR("{\"SafePowerHold\":\"%d%s\"}"), sysCfg.hlw_msplh, (sysCfg.flag.value_units) ? " Sec" : "");
   }
   else if (!strcmp_P(type,PSTR("SAFEPOWERWINDOW"))) {
-    if ((data_len > 0) && (payload >= 0) && (payload < 1440)) {
+    if ((payload >= 0) && (payload < 1440)) {
       sysCfg.hlw_msplw = (1 == payload) ? SAFE_POWER_WINDOW : payload;
     }
     snprintf_P(svalue, ssvalue, PSTR("{\"SafePowerWindow\":\"%d%s\"}"), sysCfg.hlw_msplw, (sysCfg.flag.value_units) ? " Min" : "");
   }
   else if (!strcmp_P(type,PSTR("MAXENERGY"))) {
-    if ((data_len > 0) && (payload >= 0) && (payload < 3601)) {
+    if ((payload >= 0) && (payload < 3601)) {
       sysCfg.hlw_mkwh = payload;
       hlw_mkwh_state = 3;
     }
     snprintf_P(svalue, ssvalue, PSTR("{\"MaxEnergy\":\"%d%s\"}"), sysCfg.hlw_mkwh, (sysCfg.flag.value_units) ? " Wh" : "");
   }
   else if (!strcmp_P(type,PSTR("MAXENERGYSTART"))) {
-    if ((data_len > 0) && (payload >= 0) && (payload < 24)) {
+    if ((payload >= 0) && (payload < 24)) {
       sysCfg.hlw_mkwhs = payload;
     }
     snprintf_P(svalue, ssvalue, PSTR("{\"MaxEnergyStart\":\"%d%s\"}"), sysCfg.hlw_mkwhs, (sysCfg.flag.value_units) ? " Hr" : "");

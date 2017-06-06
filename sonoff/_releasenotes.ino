@@ -1,4 +1,13 @@
-/* 5.1.5 20170604
+/* 5.1.6 20170606
+ * Shrink code
+ * Removed online configuration of Domoticz In and Domoticz Out MQTT strings
+ * Removed commands DomoticzInTopic and DomoticzOutTopic
+ * Add define KEY_HOLD_TIME to configure button hold threshold before sending MQTT Hold message
+ * Add command StateText4 to configure button MQTT Hold text (= MQTT_CMND_HOLD)
+ * Add command SetOption11 0|1 to swap pushbutton single and double press functionality (#200)
+ * Add command SwitchMode<x> 5 (PUSHBUTTONHOLD) and 6 (PUSHBUTTONHOLD_INV) (#489)
+ *
+ * 5.1.5 20170604
  * Shrink code in preparation to ESP8266-Arduino 2.4.0-rc1
  * Add effect parameter to HUE Device (#464)
  *
@@ -14,7 +23,7 @@
  * 5.1.2 20170519
  * Fix Counter/Timer JSON message and update Counter/Timer on webpage
  * Fix WS2812 Domoticz related regression issues
- * 
+ *
  * 5.1.1 20170517
  * Allow command FullTopic in group mode
  * Prepare for more use of RTC memory
