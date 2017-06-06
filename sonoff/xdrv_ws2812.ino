@@ -1,26 +1,20 @@
 /*
-Copyright (c) 2017 Theo Arends.  All rights reserved.
+  xdrv_ws2812.ino - ws2812 led string support for Sonoff-Tasmota
 
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met:
+  Copyright (C) 2017  Heiko Krupp and Theo Arends
 
-- Redistributions of source code must retain the above copyright notice,
-  this list of conditions and the following disclaimer.
-- Redistributions in binary form must reproduce the above copyright notice,
-  this list of conditions and the following disclaimer in the documentation
-  and/or other materials provided with the distribution.
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
-LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
-CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
-CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-POSSIBILITY OF SUCH DAMAGE.
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #ifdef USE_WS2812
@@ -113,6 +107,7 @@ RgbColor tcolor;
 RgbColor lcolor;
 
 uint8_t wakeupDimmer = 0;
+uint8_t ws_bit = 0;
 uint16_t wakeupCntr = 0;
 unsigned long stripTimerCntr = 0;  // Bars and Gradient
 
@@ -400,7 +395,7 @@ void ws2812_animate()
   uint8_t fadeValue;
   
   stripTimerCntr++;
-  if (0 == power) {  // Power Off
+  if (0 == bitRead(power, ws_bit)) {  // Power Off
     sleep = sysCfg.sleep;
     stripTimerCntr = 0;
     tcolor = 0;
@@ -470,7 +465,7 @@ void ws2812_animate()
     }
   }
 
-  if ((sysCfg.ws_scheme <= 1) || (!(power &1))) {
+  if ((sysCfg.ws_scheme <= 1) || (0 == bitRead(power, ws_bit))) {
     if ((lcolor != tcolor) || lany) {
       lany = 0;
       lcolor = tcolor;
@@ -505,8 +500,9 @@ void ws2812_pixels()
   lany = 1;
 }
 
-void ws2812_init()
+void ws2812_init(uint8_t powerbit)
 {
+  ws_bit = powerbit -1;
 #ifdef USE_WS2812_DMA
 #if (USE_WS2812_CTYPE == 1)
   strip = new NeoPixelBus<NeoGrbFeature, Neo800KbpsMethod>(WS2812_MAX_LEDS);  // For Esp8266, the Pin is omitted and it uses GPIO3 due to DMA hardware use.
@@ -541,25 +537,24 @@ boolean ws2812_command(char *type, uint16_t index, char *dataBuf, uint16_t data_
   }
   else if (!strcmp_P(type,PSTR("LED")) && (index > 0) && (index <= sysCfg.ws_pixels)) {
     if (6 == data_len) {
-//       ws2812_setColor(index, dataBufUc);
       ws2812_setColor(index, dataBuf);
     }
     ws2812_getColor(index, svalue, ssvalue);
   }
   else if (!strcmp_P(type,PSTR("COLOR"))) {
     if (6 == data_len) {
-//        ws2812_setColor(0, dataBufUc);
       ws2812_setColor(0, dataBuf);
-      power = 1;
+      bitSet(power, ws_bit);
     }
     ws2812_getColor(0, svalue, ssvalue);
   }
   else if (!strcmp_P(type,PSTR("DIMMER"))) {
     if ((data_len > 0) && (payload >= 0) && (payload <= 100)) {
       sysCfg.ws_dimmer = payload;
-      power = 1;
+      bitSet(power, ws_bit);
 #ifdef USE_DOMOTICZ
-      mqtt_publishDomoticzPowerState(index);
+//      mqtt_publishDomoticzPowerState(index);
+      mqtt_publishDomoticzPowerState(ws_bit +1);
 #endif  // USE_DOMOTICZ
     }
     snprintf_P(svalue, ssvalue, PSTR("{\"Dimmer\":%d}"), sysCfg.ws_dimmer);
@@ -620,10 +615,24 @@ boolean ws2812_command(char *type, uint16_t index, char *dataBuf, uint16_t data_
       if (1 == sysCfg.ws_scheme) {
         ws2812_resetWakupState();
       }
-      power = 1;
+      bitSet(power, ws_bit);
       ws2812_resetStripTimer();
     }
     snprintf_P(svalue, ssvalue, PSTR("{\"Scheme\":%d}"), sysCfg.ws_scheme);
+  }
+  else if (!strcmp_P(type,PSTR("UNDOCA"))) {  // Theos WS2812 legacy status
+    RgbColor mcolor;
+    char mtopic[TOPSZ];
+    getTopic_P(mtopic, 1, sysCfg.mqtt_topic, type);
+    ws2812_setDim(sysCfg.ws_dimmer);
+    mcolor = dcolor;
+    uint32_t color = (uint32_t)mcolor.R << 16;
+    color += (uint32_t)mcolor.G << 8;
+    color += (uint32_t)mcolor.B;
+    snprintf_P(svalue, ssvalue, PSTR("%06X, %d, %d, %d, %d, %d"),
+      color, sysCfg.ws_fade, sysCfg.ws_ledtable, sysCfg.ws_scheme, sysCfg.ws_speed, sysCfg.ws_width);
+    mqtt_publish(mtopic, svalue);
+    svalue[0] = '\0';
   }
   else {
     serviced = false;  // Unknown command

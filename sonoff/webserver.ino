@@ -1,26 +1,20 @@
 /*
-Copyright (c) 2017 Theo Arends.  All rights reserved.
+  webserver.ino - webserver for Sonoff-Tasmota
 
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met:
+  Copyright (C) 2017  Theo Arends
 
-- Redistributions of source code must retain the above copyright notice,
-  this list of conditions and the following disclaimer.
-- Redistributions in binary form must reproduce the above copyright notice,
-  this list of conditions and the following disclaimer in the documentation
-  and/or other materials provided with the distribution.
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
-LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
-CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
-CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-POSSIBILITY OF SUCH DAMAGE.
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #ifdef USE_WEBSERVER
@@ -139,12 +133,6 @@ const char HTTP_SCRIPT_MODULE[] PROGMEM =
   "}"
   "function sl(){"
     "var o0=\"";
-const char HTTP_LNK_STYLE[] PROGMEM =
-  ".q{float:right;width:64px;text-align:right;}"
-  ".l{background:url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAMAAABEpIrGAAAALVBMVEX///8EBwfBwsLw8PAzNjaCg4NTVVUjJiZDRUUUFxdiZGSho6O"
-  "Sk5Pg4eFydHTCjaf3AAAAZElEQVQ4je2NSw7AIAhEBamKn97/uMXEGBvozkWb9C2Zx4xzWykBhFAeYp9gkLyZE0zIMno9n4g19hmdY39scwqVkOXaxph0ZCXQcqxSpgQpONa59wkRDOL93eA"
-  "XvimwlbPbwwVAegLS1HGfZAAAAABJRU5ErkJggg==') no-repeat left center;background-size:1em;}"
-  "</style>";
 const char HTTP_MSG_RSTRT[] PROGMEM =
   "<br/><div style='text-align:center;'>Device will restart in a few seconds</div><br/>";
 const char HTTP_BTN_MENU1[] PROGMEM =
@@ -181,7 +169,7 @@ const char HTTP_FORM_MODULE[] PROGMEM =
   "<input id='w' name='w' value='6' hidden><input id='r' name='r' value='1' hidden>"
   "<br/><b>Module type</b> ({mt})<br/><select id='mt' name='mt'>";
 const char HTTP_LNK_ITEM[] PROGMEM =
-  "<div><a href='#p' onclick='c(this)'>{v}</a>&nbsp;<span class='q {i}'>{r}%</span></div>";
+  "<div><a href='#p' onclick='c(this)'>{v}</a>&nbsp;<span class='q'>{i} {r}%</span></div>";
 const char HTTP_LNK_SCAN[] PROGMEM =
   "<div><a href='/w1'>Scan for wifi networks</a></div><br/>";
 const char HTTP_FORM_WIFI[] PROGMEM =
@@ -200,7 +188,8 @@ const char HTTP_FORM_MQTT[] PROGMEM =
   "<br/><b>Client Id</b> ({m0})<br/><input id='mc' name='mc' length=32 placeholder='" MQTT_CLIENT_ID "' value='{m3}'><br/>"
   "<br/><b>User</b> (" MQTT_USER ")<br/><input id='mu' name='mu' length=32 placeholder='" MQTT_USER "' value='{m4}'><br/>"
   "<br/><b>Password</b><br/><input id='mp' name='mp' length=32 type='password' placeholder='" MQTT_PASS "' value='{m5}'><br/>"
-  "<br/><b>Topic</b> (" MQTT_TOPIC ")<br/><input id='mt' name='mt' length=32 placeholder='" MQTT_TOPIC" ' value='{m6}'><br/>";
+  "<br/><b>Topic</b> = %topic% (" MQTT_TOPIC ")<br/><input id='mt' name='mt' length=32 placeholder='" MQTT_TOPIC" ' value='{m6}'><br/>"
+  "<br/><b>Full Topic</b> (" MQTT_FULLTOPIC ")<br/><input id='mf' name='mf' length=80 placeholder='" MQTT_FULLTOPIC" ' value='{m7}'><br/>";
 const char HTTP_FORM_LOG1[] PROGMEM =
   "<fieldset><legend><b>&nbsp;Logging parameters&nbsp;</b></legend><form method='post' action='sv'>"
   "<input id='w' name='w' value='3' hidden><input id='r' name='r' value='0' hidden>";
@@ -224,23 +213,16 @@ const char HTTP_FORM_OTHER[] PROGMEM =
 const char HTTP_FORM_OTHER2[] PROGMEM =
   "<br/><b>Friendly Name {1</b> ({2)<br/><input id='a{1' name='a{1' length=32 placeholder='{2' value='{3'><br/>";
 #ifdef USE_EMULATION
-const char HTTP_FORM_OTHER3[] PROGMEM =
-  "<br/><fieldset><legend><b>&nbsp;Emulation&nbsp;</b></legend>"
-  "<br/><input style='width:10%;float:left' id='b2' name='b2' type='radio' value='0'{r2}><b>None</b>"
-  "<br/><input style='width:10%;float:left' id='b2' name='b2' type='radio' value='1'{r3}><b>Belkin WeMo</b> single device"
-  "<br/><input style='width:10%;float:left' id='b2' name='b2' type='radio' value='2'{r4}><b>Hue Bridge</b> multi devices<br/>";
+const char HTTP_FORM_OTHER3a[] PROGMEM =
+  "<br/><fieldset><legend><b>&nbsp;Emulation&nbsp;</b></legend>";
+const char HTTP_FORM_OTHER3b[] PROGMEM =
+  "<br/><input style='width:10%;float:left' id='b2' name='b2' type='radio' value='{1'{2><b>{3</b>{4";
 #endif  // USE_EMULATION
 const char HTTP_FORM_END[] PROGMEM =
   "<br/><button type='submit'>Save</button></form></fieldset>";
 const char HTTP_FORM_RST[] PROGMEM =
   "<div id='f1' name='f1' style='display:block;'>"
-  "<fieldset><legend><b>&nbsp;Restore configuration&nbsp;</b></legend>"
-  "<form method='post' action='u2' enctype='multipart/form-data'>"
-  "<br/><input type='file' name='u2'><br/>"
-  "<br/><button type='submit' onclick='document.getElementById(\"f1\").style.display=\"none\";document.getElementById(\"f2\").style.display=\"block\";this.form.submit();'>Start restore</button></form>"
-  "</fieldset>"
-  "</div>"
-  "<div id='f2' name='f2' style='display:none;text-align:center;'><b>Restore started ...</b></div>";
+  "<fieldset><legend><b>&nbsp;Restore configuration&nbsp;</b></legend>";
 const char HTTP_FORM_UPG[] PROGMEM =
   "<div id='f1' name='f1' style='display:block;'>"
   "<fieldset><legend><b>&nbsp;Upgrade by web server&nbsp;</b></legend>"
@@ -248,11 +230,11 @@ const char HTTP_FORM_UPG[] PROGMEM =
   "<br/>OTA Url<br/><input id='o' name='o' length=80 placeholder='OTA_URL' value='{o1}'><br/>"
   "<br/><button type='submit'>Start upgrade</button></form>"
   "</fieldset><br/><br/>"
-  "<fieldset><legend><b>&nbsp;Upgrade by file upload&nbsp;</b></legend>"
+  "<fieldset><legend><b>&nbsp;Upgrade by file upload&nbsp;</b></legend>";
+const char HTTP_FORM_RST_UPG[] PROGMEM =
   "<form method='post' action='u2' enctype='multipart/form-data'>"
   "<br/><input type='file' name='u2'><br/>"
-//  "<br/><button type='submit' onclick='this.disabled=true;this.form.submit();'>Start upgrade</button></form></fieldset>"
-  "<br/><button type='submit' onclick='document.getElementById(\"f1\").style.display=\"none\";document.getElementById(\"f2\").style.display=\"block\";this.form.submit();'>Start upgrade</button></form>"
+  "<br/><button type='submit' onclick='document.getElementById(\"f1\").style.display=\"none\";document.getElementById(\"f2\").style.display=\"block\";this.form.submit();'>Start {r1}</button></form>"
   "</fieldset>"
   "</div>"
   "<div id='f2' name='f2' style='display:none;text-align:center;'><b>Upload started ...</b></div>";
@@ -282,6 +264,9 @@ const char HTTP_END[] PROGMEM =
   "</div>"
   "</body>"
   "</html>";
+
+const char HDR_CCNTL[] PROGMEM = "Cache-Control";
+const char HDR_REVAL[] PROGMEM = "no-cache, no-store, must-revalidate";
 
 #define DNS_PORT 53
 enum http_t {HTTP_OFF, HTTP_USER, HTTP_ADMIN, HTTP_MANAGER};
@@ -413,10 +398,10 @@ void showPage(String &page)
   }
   page += FPSTR(HTTP_END);
 
-  webServer->sendHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-  webServer->sendHeader("Pragma", "no-cache");
-  webServer->sendHeader("Expires", "-1");
-  webServer->send(200, "text/html", page);
+  webServer->sendHeader(FPSTR(HDR_CCNTL), FPSTR(HDR_REVAL));
+  webServer->sendHeader(F("Pragma"), F("no-cache"));
+  webServer->sendHeader(F("Expires"), F("-1"));
+  webServer->send(200, F("text/html"), page);
 }
 
 void handleRoot()
@@ -474,6 +459,7 @@ void handleAjax2()
   }
   
   String tpage = "";
+  tpage += counter_webPresent();
   if (hlw_flg) {
     tpage += hlw_webPresent();
   }
@@ -542,10 +528,7 @@ void handleAjax2()
     page += line;
   }
 */
-  webServer->sendHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-  webServer->sendHeader("Pragma", "no-cache");
-  webServer->sendHeader("Expires", "-1");
-  webServer->send(200, "text/plain", page);
+  webServer->send(200, F("text/html"), page);
 }
 
 boolean httpUser()
@@ -578,7 +561,7 @@ void handleConfig()
 boolean inModule(byte val, uint8_t *arr)
 {
   int offset = 0;
-
+  
   if (!val) {
     return false;  // None
   }
@@ -655,8 +638,6 @@ void handleModule()
   func += F("\";os=o0.replace(/-1/g,\"<option value=\").replace(/-2/g,\"</option>\");");
   for (byte i = 0; i < MAX_GPIO_PIN; i++) {
     if (GPIO_USER == cmodule.gp.io[i]) {
-      //snprintf_P(line, sizeof(line), PSTR("<br/><b>GPIO%d</b> %s<select id='g%d' name='g%d'></select></br>"),
-      //  i, (0==i)?"Button1":(1==i)?"Serial Out":(3==i)?"Serial In":(12==i)?"Relay1":(13==i)?"Led1I":(14==i)?"Sensor":"", i, i);
       snprintf_P(line, sizeof(line), PSTR("<br/><b>GPIO%d</b> %s<select id='g%d' name='g%d'></select></br>"),
           i, (0==i)?"D3":(1==i)?"D10":(2==i)?"D4":(3==i)?"D9":(4==i)?"D2":(5==i)?"D1":(12==i)?"D6":(13==i)?"D7":(14==i)?"D5":(15==i)?"D8":(16==i)?"D0":"", i, i);
       page += line;
@@ -694,7 +675,6 @@ void handleWifi(boolean scan)
 
   String page = FPSTR(HTTP_HEAD);
   page.replace(F("{v}"), F("Configure Wifi"));
-  page.replace(F("</style>"), FPSTR(HTTP_LNK_STYLE));
 
   if (scan) {
 #ifdef USE_EMULATION
@@ -755,11 +735,8 @@ void handleWifi(boolean scan)
           rssiQ += quality;
           item.replace(F("{v}"), WiFi.SSID(indices[i]));
           item.replace(F("{r}"), rssiQ);
-          if (WiFi.encryptionType(indices[i]) != ENC_TYPE_NONE) {
-            item.replace(F("{i}"), F("l"));
-          } else {
-            item.replace(F("{i}"), "");
-          }
+          uint8_t auth = WiFi.encryptionType(indices[i]);
+          item.replace(F("{i}"), (ENC_TYPE_WEP == auth) ? F("WEP") : (ENC_TYPE_TKIP == auth) ? F("WPA PSK") : (ENC_TYPE_CCMP == auth) ? F("WPA2 PSK") : (ENC_TYPE_AUTO == auth) ? F("AUTO") : F(""));
           page += item;
           delay(0);
         } else {
@@ -807,6 +784,7 @@ void handleMqtt()
   page.replace(F("{m4}"), (sysCfg.mqtt_user[0] == '\0')?"0":sysCfg.mqtt_user);
   page.replace(F("{m5}"), (sysCfg.mqtt_pwd[0] == '\0')?"0":sysCfg.mqtt_pwd);
   page.replace(F("{m6}"), sysCfg.mqtt_topic);
+  page.replace(F("{m7}"), sysCfg.mqtt_fulltopic);
   page += FPSTR(HTTP_FORM_END);
   page += FPSTR(HTTP_BTN_CONF);
   showPage(page);
@@ -878,10 +856,15 @@ void handleOther()
   page.replace(F("{2"), FRIENDLY_NAME);
   page.replace(F("{3"), sysCfg.friendlyname[0]);
 #ifdef USE_EMULATION
-  page += FPSTR(HTTP_FORM_OTHER3);
-  page.replace(F("{r2}"), (EMUL_NONE == sysCfg.flag.emulation) ? F(" checked") : F(""));
-  page.replace(F("{r3}"), (EMUL_WEMO == sysCfg.flag.emulation) ? F(" checked") : F(""));
-  page.replace(F("{r4}"), (EMUL_HUE == sysCfg.flag.emulation) ? F(" checked") : F(""));
+  page += FPSTR(HTTP_FORM_OTHER3a);
+  for (byte i = 0; i < EMUL_MAX; i++) {
+    page += FPSTR(HTTP_FORM_OTHER3b);
+    page.replace(F("{1"), String(i));
+    page.replace(F("{2"), (i == sysCfg.flag.emulation) ? F(" checked") : F(""));
+    page.replace(F("{3"), (i == EMUL_NONE) ? F("None") : (i == EMUL_WEMO) ? F("Belkin WeMo") : F("Hue Bridge"));
+    page.replace(F("{4"), (i == EMUL_NONE) ? F("") : (i == EMUL_WEMO) ? F(" single device") : F(" multi devices"));
+  }
+  page += F("<br/>");
   for (int i = 1; i < Maxdevice; i++) {
     page += FPSTR(HTTP_FORM_OTHER2);
     page.replace(F("{1"), String(i +1));
@@ -911,8 +894,8 @@ void handleDownload()
   char attachment[100];
   snprintf_P(attachment, sizeof(attachment), PSTR("attachment; filename=Config_%s_%s.dmp"),
     sysCfg.friendlyname[0], Version);
-  webServer->sendHeader("Content-Disposition", attachment);
-  webServer->send(200, "application/octet-stream", "");
+  webServer->sendHeader(F("Content-Disposition"), attachment);
+  webServer->send(200, F("application/octet-stream"), "");
   memcpy(buffer, &sysCfg, sizeof(sysCfg));
   buffer[0] = CONFIG_FILE_SIGN;
   buffer[1] = (!CONFIG_FILE_XOR)?0:1;
@@ -931,7 +914,8 @@ void handleSave()
   }
 
   char log[LOGSZ +20];
-  char stemp[20];
+  char stemp[TOPSZ];
+  char stemp2[TOPSZ];
   byte what = 0;
   byte restart;
   String result = "";
@@ -957,14 +941,20 @@ void handleSave()
     result += F("<br/>Trying to connect device to network<br/>If it fails reconnect to try again");
     break;
   case 2:
+    strlcpy(stemp, (!strlen(webServer->arg("mt").c_str())) ? MQTT_TOPIC : webServer->arg("mt").c_str(), sizeof(stemp));
+    strlcpy(stemp2, (!strlen(webServer->arg("mf").c_str())) ? MQTT_FULLTOPIC : webServer->arg("mf").c_str(), sizeof(stemp2));
+    if ((strcmp(stemp, sysCfg.mqtt_topic)) || (strcmp(stemp2, sysCfg.mqtt_fulltopic))) {
+      mqtt_publish_topic_P(2, PSTR("LWT"), (sysCfg.flag.mqtt_offline) ? "Offline" : "", true);  // Offline or remove previous retained topic
+    }
+    strlcpy(sysCfg.mqtt_topic, stemp, sizeof(sysCfg.mqtt_topic));
+    strlcpy(sysCfg.mqtt_fulltopic, stemp2, sizeof(sysCfg.mqtt_fulltopic));
     strlcpy(sysCfg.mqtt_host, (!strlen(webServer->arg("mh").c_str())) ? MQTT_HOST : webServer->arg("mh").c_str(), sizeof(sysCfg.mqtt_host));
     sysCfg.mqtt_port = (!strlen(webServer->arg("ml").c_str())) ? MQTT_PORT : atoi(webServer->arg("ml").c_str());
     strlcpy(sysCfg.mqtt_client, (!strlen(webServer->arg("mc").c_str())) ? MQTT_CLIENT_ID : webServer->arg("mc").c_str(), sizeof(sysCfg.mqtt_client));
     strlcpy(sysCfg.mqtt_user, (!strlen(webServer->arg("mu").c_str())) ? MQTT_USER : (!strcmp(webServer->arg("mu").c_str(),"0")) ? "" : webServer->arg("mu").c_str(), sizeof(sysCfg.mqtt_user));
     strlcpy(sysCfg.mqtt_pwd, (!strlen(webServer->arg("mp").c_str())) ? MQTT_PASS : (!strcmp(webServer->arg("mp").c_str(),"0")) ? "" : webServer->arg("mp").c_str(), sizeof(sysCfg.mqtt_pwd));
-    strlcpy(sysCfg.mqtt_topic, (!strlen(webServer->arg("mt").c_str())) ? MQTT_TOPIC : webServer->arg("mt").c_str(), sizeof(sysCfg.mqtt_topic));
-    snprintf_P(log, sizeof(log), PSTR("HTTP: MQTT Host %s, Port %d, Client %s, User %s, Password %s, Topic %s"),
-      sysCfg.mqtt_host, sysCfg.mqtt_port, sysCfg.mqtt_client, sysCfg.mqtt_user, sysCfg.mqtt_pwd, sysCfg.mqtt_topic);
+    snprintf_P(log, sizeof(log), PSTR("HTTP: MQTT Host %s, Port %d, Client %s, User %s, Password %s, Topic %s, FullTopic %s"),
+      sysCfg.mqtt_host, sysCfg.mqtt_port, sysCfg.mqtt_client, sysCfg.mqtt_user, sysCfg.mqtt_pwd, sysCfg.mqtt_topic, sysCfg.mqtt_fulltopic);
     addLog(LOG_LEVEL_INFO, log);
     break;
   case 3:
@@ -1081,6 +1071,8 @@ void handleRestore()
   String page = FPSTR(HTTP_HEAD);
   page.replace(F("{v}"), F("Restore Configuration"));
   page += FPSTR(HTTP_FORM_RST);
+  page += FPSTR(HTTP_FORM_RST_UPG);
+  page.replace(F("{r1}"), F("restore"));
   page += FPSTR(HTTP_BTN_CONF);
   showPage(page);
 
@@ -1099,6 +1091,8 @@ void handleUpgrade()
   page.replace(F("{v}"), F("Firmware upgrade"));
   page += FPSTR(HTTP_FORM_UPG);
   page.replace(F("{o1}"), sysCfg.otaUrl);
+  page += FPSTR(HTTP_FORM_RST_UPG);
+  page.replace(F("{r1}"), F("upgrade"));
   page += FPSTR(HTTP_BTN_MAIN);
   showPage(page);
 
@@ -1151,25 +1145,21 @@ void handleUploadDone()
   page += F("<div style='text-align:center;'><b>Upload ");
   if (_uploaderror) {
     page += F("<font color='red'>failed</font></b><br/><br/>");
+    if (!_uploadfiletype && Update.hasError()) {
+      StreamString str;
+      Update.printError(str);
+      snprintf_P(error, sizeof(error), str.c_str());
+    } else {
+      snprintf_P(error, sizeof(error), PSTR("Upload error code %d"), _uploaderror);
+    }
     switch (_uploaderror) {
       case 1: strcpy_P(error, PSTR("No file selected")); break;
-      case 2: strcpy_P(error, PSTR("File size is larger than available free space")); break;
-      case 3: strcpy_P(error, PSTR("File magic header does not start with 0xE9")); break;
-      case 4: strcpy_P(error, PSTR("File flash size is larger than device flash size")); break;
-      case 5: strcpy_P(error, PSTR("File upload buffer miscompare")); break;
-      case 6: strcpy_P(error, PSTR("Upload failed. Enable logging option 3 for more information")); break;
       case 7: strcpy_P(error, PSTR("Upload aborted")); break;
       case 8: strcpy_P(error, PSTR("Invalid configuration file")); break;
       case 9: strcpy_P(error, PSTR("Configuration file too large")); break;
-      default:
-        snprintf_P(error, sizeof(error), PSTR("Upload error code %d"), _uploaderror);
     }
     page += error;
-    if (!_uploadfiletype && Update.hasError()) {
-      page += F("<br/><br/>Update error code (see Updater.cpp) ");
-      page += String(Update.getError());
-    }
-    snprintf_P(log, sizeof(log), PSTR("Upload: Error - %s"), error);
+    snprintf_P(log, sizeof(log), PSTR("Upload: %s"), error);
     addLog(LOG_LEVEL_DEBUG, log);
   } else {
     page += F("<font color='green'>successful</font></b><br/><br/>Device will restart in a few seconds");
@@ -1216,9 +1206,6 @@ void handleUploadLoop()
       }
       uint32_t maxSketchSpace = (ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000;
       if (!Update.begin(maxSketchSpace)) {         //start with max available size
-        if (_serialoutput) {
-          Update.printError(Serial);
-        }
         _uploaderror = 2;
         return;
       }
@@ -1264,9 +1251,6 @@ void handleUploadLoop()
       }
     } else {  // firmware
       if (!_uploaderror && (Update.write(upload.buf, upload.currentSize) != upload.currentSize)) {
-        if (_serialoutput) {
-          Update.printError(Serial);
-        }
         _uploaderror = 5;
         return;
       }
@@ -1284,9 +1268,6 @@ void handleUploadLoop()
     }
     if (!_uploadfiletype) {
       if (!Update.end(true)) { // true to set the size to the current progress
-        if (_serialoutput) {
-          Update.printError(Serial);
-        }
         _uploaderror = 6;
         return;
       }
@@ -1361,11 +1342,7 @@ void handleCmnd()
   } else {
     message = F("Need user=<username>&password=<password>\n");
   }
-
-  webServer->sendHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-  webServer->sendHeader("Pragma", "no-cache");
-  webServer->sendHeader("Expires", "-1");
-  webServer->send(200, "text/plain", message);
+  webServer->send(200, F("text/plain"), message);
 }
 
 void handleConsole()
@@ -1439,11 +1416,7 @@ void handleAjax()
     } while (counter != logidx);
   }
   message += F("</l></r>");
- 
-  webServer->sendHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-  webServer->sendHeader("Pragma", "no-cache");
-  webServer->sendHeader("Expires", "-1");
-  webServer->send(200, "text/xml", message);
+  webServer->send(200, F("text/xml"), message);
 }
 
 void handleInfo()
@@ -1452,6 +1425,8 @@ void handleInfo()
     return;
   }
   addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Handle info"));
+
+  char stopic[TOPSZ];
 
   int freeMem = ESP.getFreeHeap();
 
@@ -1498,10 +1473,14 @@ void handleInfo()
 //    page += F("<tr><th>MQTT Password</th><td>"); page += sysCfg.mqtt_pwd; page += F("</td></tr>");
     page += F("<tr><th>MQTT Topic</th><td>"); page += sysCfg.mqtt_topic; page += F("</td></tr>");
     page += F("<tr><th>MQTT Group Topic</th><td>"); page += sysCfg.mqtt_grptopic; page += F("</td></tr>");
+
+    getTopic_P(stopic, 0, sysCfg.mqtt_topic, "");
+    page += F("<tr><th>MQTT Full Topic</th><td>"); page += stopic; page += F("</td></tr>");
+    
   } else {
     page += F("<tr><th>MQTT</th><td>Disabled</td></tr>");
   }
-  
+  page += F("<tr><td>&nbsp;</td></tr>");
   page += F("<tr><th>Emulation</th><td>");
 #ifdef USE_EMULATION
   if (EMUL_WEMO == sysCfg.flag.emulation) {
@@ -1593,10 +1572,10 @@ void handleNotFound()
       message += " " + webServer->argName ( i ) + ": " + webServer->arg ( i ) + "\n";
     }
 
-    webServer->sendHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-    webServer->sendHeader("Pragma", "no-cache");
-    webServer->sendHeader("Expires", "-1");
-    webServer->send(404, "text/plain", message);
+    webServer->sendHeader(FPSTR(HDR_CCNTL), FPSTR(HDR_REVAL));
+    webServer->sendHeader(F("Pragma"), F("no-cache"));
+    webServer->sendHeader(F("Expires"), F("-1"));
+    webServer->send(404, F("text/plain"), message);
   }
 }
 
@@ -1606,8 +1585,8 @@ boolean captivePortal()
   if ((HTTP_MANAGER == _httpflag) && !isIp(webServer->hostHeader())) {
     addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Request redirected to captive portal"));
 
-    webServer->sendHeader("Location", String("http://") + webServer->client().localIP().toString(), true);
-    webServer->send(302, "text/plain", ""); // Empty content inhibits Content-length header so we have to close the socket ourselves.
+    webServer->sendHeader(F("Location"), String("http://") + webServer->client().localIP().toString(), true);
+    webServer->send(302, F("text/plain"), ""); // Empty content inhibits Content-length header so we have to close the socket ourselves.
     webServer->client().stop(); // Stop is needed because we sent no content length
     return true;
   }

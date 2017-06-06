@@ -1,6 +1,21 @@
-/*********************************************************************************************\
- * Template parameters
-\*********************************************************************************************/
+/*
+  sonoff_template.h - template settings for Sonoff-Tasmota
+
+  Copyright (C) 2017  Theo Arends
+
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
 
 // User selectable GPIO functionality
 enum upins_t {
@@ -42,6 +57,10 @@ enum upins_t {
   GPIO_PWM3,           // Red (swapped with Blue from original)
   GPIO_PWM4,           // Green
   GPIO_PWM5,           // Blue (swapped with Red from original)
+  GPIO_CNTR1,
+  GPIO_CNTR2,
+  GPIO_CNTR3,
+  GPIO_CNTR4,
   GPIO_COUNTER,
   GPIO_SENSOR_END };
 
@@ -85,6 +104,10 @@ const char sensors[GPIO_SENSOR_END][9] PROGMEM = {
   "PWM3",
   "PWM4",
   "PWM5",
+  "Counter1",
+  "Counter2",
+  "Counter3",
+  "Counter4",
   "Counter"
   };
   

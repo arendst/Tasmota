@@ -1,62 +1,56 @@
 /*
-Copyright (c) 2017 Theo Arends.  All rights reserved.
+  xdrv_snfsc.ino - sonoff SC support for Sonoff-Tasmota
 
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met:
+  Copyright (C) 2017  Heiko Krupp and Theo Arends
 
-- Redistributions of source code must retain the above copyright notice,
-  this list of conditions and the following disclaimer.
-- Redistributions in binary form must reproduce the above copyright notice,
-  this list of conditions and the following disclaimer in the documentation
-  and/or other materials provided with the distribution.
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
-LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
-CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
-CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-POSSIBILITY OF SUCH DAMAGE.
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 /*********************************************************************************************\
- * Sonoff Sc
- *
- * sc_value[0] DHT11 Humidity
- * sc_value[1] DHT11 Temperature in Celsius
- * sc_value[2] Light level from 1 (Dark) to 10 (Bright) - inverted from original
- * sc_value[3] Noise level from 1 (Quiet) to 10 (Loud)
- * sc_value[4] Air Quality level from 1 (Bad) to 10 (Good) - inverted from original
- *
- * To ATMEGA328P:
- *   AT+DEVCONFIG="uploadFreq":1800,"humiThreshold":2,"tempThreshold":1[1B]
- *   AT+NOTIFY="uploadFreq":1800,"humiThreshold":2,"tempThreshold":1[1B]
- *     response: AT+NOTIFY=ok[1B]
- *   AT+SEND=fail[1B]
- *   AT+SEND=ok[1B]
- *   AT+STATUS=4[1B]
- *   AT+STATUS[1B]
- *   AT+START[1B]
- * 
- * From ATMEGA328P:
- *   AT+UPDATE="humidity":42,"temperature":20,"light":7,"noise":3,"dusty":1[1B]
- *     response: AT+SEND=ok[1B] or AT+SEND=fail[1B]
- *   AT+STATUS?[1B]
- *     response: AT+STATUS=4[1B]
- *
- * Sequence:
- *  SC sends:        ATMEGA328P sends:
- *  AT+START[1B]
- *                   AT+UPDATE="humidity":42,"temperature":20,"light":7,"noise":3,"dusty":1[1B]
- *  AT+SEND=ok[1B]
- *
- *                   AT+STATUS?[1B]
- *  AT+STATUS=4[1B]
- *
+  Sonoff Sc
+
+  sc_value[0] DHT11 Humidity
+  sc_value[1] DHT11 Temperature in Celsius
+  sc_value[2] Light level from 1 (Dark) to 10 (Bright) - inverted from original
+  sc_value[3] Noise level from 1 (Quiet) to 10 (Loud)
+  sc_value[4] Air Quality level from 1 (Bad) to 10 (Good) - inverted from original
+
+  To ATMEGA328P:
+    AT+DEVCONFIG="uploadFreq":1800,"humiThreshold":2,"tempThreshold":1[1B]
+    AT+NOTIFY="uploadFreq":1800,"humiThreshold":2,"tempThreshold":1[1B]
+      response: AT+NOTIFY=ok[1B]
+    AT+SEND=fail[1B]
+    AT+SEND=ok[1B]
+    AT+STATUS=4[1B]
+    AT+STATUS[1B]
+    AT+START[1B]
+
+  From ATMEGA328P:
+    AT+UPDATE="humidity":42,"temperature":20,"light":7,"noise":3,"dusty":1[1B]
+      response: AT+SEND=ok[1B] or AT+SEND=fail[1B]
+    AT+STATUS?[1B]
+      response: AT+STATUS=4[1B]
+
+  Sequence:
+   SC sends:        ATMEGA328P sends:
+   AT+START[1B]
+                    AT+UPDATE="humidity":42,"temperature":20,"light":7,"noise":3,"dusty":1[1B]
+   AT+SEND=ok[1B]
+
+                    AT+STATUS?[1B]
+   AT+STATUS=4[1B]
+
 \*********************************************************************************************/
 
 uint16_t sc_value[5] = { 0 };

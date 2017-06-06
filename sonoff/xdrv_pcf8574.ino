@@ -111,18 +111,20 @@ void pcf8574_saveSettings()
 void pcf8574_switchrelay(byte i, uint8_t state)
 {
   //char log[TOPSZ];
-  uint8_t board = pcf8574_pin[i]>>3;
-  PCF857x pcf8574(pcf8574addr[board], &Wire);
-  //snprintf_P(log, sizeof(log), PSTR("RSLT: Setting I2C PCF8574 Relay Number %d (pin P%d, board %d,0x%2x, boardpin %d) to state %d, inverted %d"), i, pcf8574_pin[i], board,pcf8574addr[board],pcf8574_pin[i]&0x7, state, rel_inverted[i]);
-  //addLog(LOG_LEVEL_INFO, log);
-  pcf8574.write(pcf8574_pin[i]&0x7, rel_inverted[i] ? !state : state);
+  if (max_pcf8574_devices > 0) {
+    uint8_t board = pcf8574_pin[i]>>3;
+    PCF857x pcf8574(pcf8574addr[board], &Wire);
+    //snprintf_P(log, sizeof(log), PSTR("RSLT: Setting I2C PCF8574 Relay Number %d (pin P%d, board %d,0x%2x, boardpin %d) to state %d, inverted %d"), i, pcf8574_pin[i], board,pcf8574addr[board],pcf8574_pin[i]&0x7, state, rel_inverted[i]);
+    //addLog(LOG_LEVEL_INFO, log);
+    pcf8574.write(pcf8574_pin[i]&0x7, rel_inverted[i] ? !state : state);
+  }
 }
 
 void  pcf8574_Init()
 {
   char log[TOPSZ + MESSZ];
   //for (byte i=0;i<64;i++) pcf8574_pin[i]=99;
-  if (max_pcf8574_devices==0) {
+  if (max_pcf8574_devices==0 && (pin[GPIO_I2C_SCL] < 99) && (pin[GPIO_I2C_SDA] < 99)) {
     pcf8574_detect();
     snprintf_P(log, sizeof(log), PSTR("RSLT: pcf8574 %d boards"), max_pcf8574_devices);
     addLog(LOG_LEVEL_INFO, log);

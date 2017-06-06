@@ -87,12 +87,27 @@ boolean ads1115_detect()
 
 void ads1115_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
 {
+  char stemp1[10];
+  byte dsxflg = 0;
+
   if (!ads1115type) return;
+
   for (byte i = 0; i < 4; i++) {
     int16_t val = ads.readADC_SingleEnded(i);
-    snprintf_P(svalue, ssvalue, PSTR("%s, \"%s\":{\"AnalogInput%d\":%d}"), svalue, ads1115stype, i, val);
+    if (!dsxflg) {
+      snprintf_P(svalue, ssvalue, PSTR("%s, \"%s\":{"), svalue, ads1115stype);
+      *djson = 1;
+      stemp1[0] = '\0';
+    }
+    dsxflg++;
+    snprintf_P(svalue, ssvalue, PSTR("%s%s\"AnalogInput%d\":%d"),
+      svalue, stemp1, i, val);
+    strcpy(stemp1, ", ");
   }
   *djson = 1;
+  if (dsxflg) {
+    snprintf_P(svalue, ssvalue, PSTR("%s}"), svalue);
+  }
 #ifdef USE_DOMOTICZ
   domoticz_sensor5(l);
 #endif  // USE_DOMOTICZ

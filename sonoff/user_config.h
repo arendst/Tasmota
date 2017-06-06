@@ -1,6 +1,23 @@
+/*
+  user_config.h - user specific configuration for Sonoff-Tasmota
+
+  Copyright (C) 2017  Theo Arends
+
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 /*********************************************************************************************\
- * User specific configuration parameters
- *
  * ATTENTION: Changes to most PARAMETER defines will only override flash settings if you change
  *            define CFG_HOLDER.
  *            Most parameters can be changed online using commands via MQTT, WebConsole or serial
@@ -12,7 +29,7 @@
 #define PROJECT                "sonoff"          // PROJECT is used as the default topic delimiter and OTA file name
                                                  //   As an IDE restriction it needs to be the same as the main .ino file
 
-#define CFG_HOLDER             0x20161209        // [Reset 1] Change this value to load following default configuration parameters
+#define CFG_HOLDER             0x20161210        // [Reset 1] Change this value to load following default configuration parameters
 #define SAVE_DATA              1                 // [SaveData] Save changed parameters to Flash (0 = disable, 1 - 3600 seconds)
 #define SAVE_STATE             1                 // [SaveState] Save changed power state to Flash (0 = disable, 1 = enable)
 
@@ -148,7 +165,7 @@
 
 #define USE_WS2812                               // WS2812 Led string using library NeoPixelBus (+8k code, +1k mem) - Disable by //
   #define USE_WS2812_CTYPE     1                 // WS2812 Color type (0 - RGB, 1 - GRB)
-//  #define USE_WS2812_DMA                         // DMA supports only GPIO03 (= Serial TXD) (+1k mem)
+//  #define USE_WS2812_DMA                         // DMA supports only GPIO03 (= Serial RXD) (+1k mem)
                                                  //   When USE_WS2812_DMA is enabled expect Exceptions on Pow
 
 /*********************************************************************************************\

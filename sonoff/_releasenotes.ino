@@ -1,5 +1,44 @@
-/* 5.0.6 20170510
- * Remove hyphen in case of a single DHT sensor connecetd (#427)
+/* 5.1.5 20170604
+ * Shrink code in preparation to ESP8266-Arduino 2.4.0-rc1
+ * Add effect parameter to HUE Device (#464)
+ *
+ * 5.1.4 20170601
+ * Removed pre-compiled versions from repository as they are available within the release
+ * Changed HUE Device type to color supporting version (#464)
+ * Fix compile error when BE_MINIMAL is selected (#467, #476)
+ * Add multiple compiled versions to release using updated Travis script and platformio.ini (#467)
+ *
+ * 5.1.3 20170520
+ * Add Domoticz Counter
+ *
+ * 5.1.2 20170519
+ * Fix Counter/Timer JSON message and update Counter/Timer on webpage
+ * Fix WS2812 Domoticz related regression issues
+ * 
+ * 5.1.1 20170517
+ * Allow command FullTopic in group mode
+ * Prepare for more use of RTC memory
+ * Add independant WS2812 led string power control (#386, #390)
+ * Add command Counter<x> to control up to four GPIO falling edge interrupt counters or timers (#459)
+ * Add command CounterType<x> to select between pulse counting or pulse timing
+ * Add command CounterDebounce to select global counter debounce time in mSec
+ *
+ * 5.1.0 20170513
+ * Fix Offline/Removal of retained topic when FullTopic is changed
+ * Add FullTopic to MQTT Configuration and Information web pages
+ * Add license model GPLv3 (#188)
+ *
+ * 5.0.7 20170511
+ * Fix possible exception 28 on empty command
+ * Add command SetOption0 as replacement for SaveState
+ * Add command SetOption1 as replacement for ButtonRestrict
+ * Add command SetOption2 as replacement for Units
+ * Add command SetOption4 as replacement for MqttResponse
+ * Add command SetOption8 as replacement for TempUnit
+ * Add command SetOption10 On|Off to select between Offline or Removing previous retained topic (#417, #436)
+ *
+ * 5.0.6 20170510
+ * Remove hyphen in case of a single DHT sensor connected (#427)
  * Add command MqttRetry <seconds> to change default MQTT reconnect retry timer from minimal 10 seconds (#429)
  *
  * 5.0.5 20170508

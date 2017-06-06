@@ -1,34 +1,52 @@
-/*********************************************************************************************\
- * Config settings
-\*********************************************************************************************/
+/*
+  settings.h - setting variables for Sonoff-Tasmota
 
-typedef struct {
-  uint32_t savestate : 1;
-  uint32_t button_restrict : 1;
-  uint32_t value_units : 1;
-  uint32_t mqtt_enabled : 1;
-  uint32_t mqtt_response : 1;
-  uint32_t mqtt_power_retain : 1;
-  uint32_t mqtt_button_retain : 1;
-  uint32_t mqtt_switch_retain : 1;
-  uint32_t temperature_conversion : 1;
-  uint32_t mqtt_sensor_retain : 1;
-  uint32_t mqtt_status_retain : 1;
-  uint32_t spare21 : 1;
-  uint32_t spare20 : 1;
-  uint32_t spare19 : 1;
-  uint32_t spare18 : 1;
-  uint32_t spare17 : 1;
-  uint32_t spare16 : 1;
-  uint32_t spare15 : 1;
-  uint32_t spare14 : 1;
-  uint32_t spare13 : 1;
-  uint32_t spare12 : 1;
-  uint32_t emulation : 2;
-  uint32_t energy_resolution : 3;
-  uint32_t pressure_resolution : 2;
-  uint32_t humidity_resolution : 2;
-  uint32_t temperature_resolution : 2;
+  Copyright (C) 2017  Theo Arends
+
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+typedef union {                           // Restricted by MISRA-C Rule 18.4 but so usefull...    
+  uint32_t data;                          // Allow bit manipulation using SetOption
+  struct {
+    uint32_t savestate : 1;               // bit 0
+    uint32_t button_restrict : 1;         // bit 1
+    uint32_t value_units : 1;             // bit 2
+    uint32_t mqtt_enabled : 1;
+    uint32_t mqtt_response : 1;           // bit 4
+    uint32_t mqtt_power_retain : 1;
+    uint32_t mqtt_button_retain : 1;
+    uint32_t mqtt_switch_retain : 1;
+    uint32_t temperature_conversion : 1;  // bit 8
+    uint32_t mqtt_sensor_retain : 1;
+    uint32_t mqtt_offline : 1;            // bit 10
+    uint32_t spare11 : 1;
+    uint32_t spare12 : 1;
+    uint32_t spare13 : 1;
+    uint32_t spare14 : 1;
+    uint32_t spare15 : 1;
+    uint32_t spare16 : 1;
+    uint32_t spare17 : 1;
+    uint32_t spare18 : 1;
+    uint32_t spare19 : 1;
+    uint32_t spare20 : 1;
+    uint32_t emulation : 2;
+    uint32_t energy_resolution : 3;
+    uint32_t pressure_resolution : 2;
+    uint32_t humidity_resolution : 2;
+    uint32_t temperature_resolution : 2;
+  };
 } sysBitfield;
 
 struct SYSCFG {
@@ -38,7 +56,7 @@ struct SYSCFG {
   unsigned long bootcount;
   sysBitfield   flag;                  // Add flag since 5.0.2
   int16_t       savedata;
-
+  
   int8_t        timezone;
   char          otaUrl[101];
 
@@ -177,6 +195,12 @@ struct SYSCFG {
 
   // 5.0.4a
   char          mqtt_fulltopic[101];
+
+   // 5.1.1
+  unsigned long pCounter[MAX_COUNTERS];
+  uint16_t      pCounterType;
+  uint16_t      pCounterDebounce;
+   
   uint8_t       pcf8574_config[8];
   uint8_t       all_relays_inverted;
   uint16_t      deepsleep;
@@ -185,9 +209,10 @@ struct SYSCFG {
 struct RTCMEM {
   uint16_t      valid;
   byte          osw_flag;
-  byte          nu1;
+  uint32_t       power;
   unsigned long hlw_kWhtoday;
   unsigned long hlw_kWhtotal;
+  unsigned long pCounter[MAX_COUNTERS];
 } rtcMem;
 
 // See issue https://github.com/esp8266/Arduino/issues/2913  

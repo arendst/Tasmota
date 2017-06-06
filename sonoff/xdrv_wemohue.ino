@@ -1,26 +1,20 @@
 /*
-Copyright (c) 2017 Heiko Krupp and Theo Arends.  All rights reserved.
+  xdrv_wemohue.ino - wemo and hue support for Sonoff-Tasmota
 
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met:
+  Copyright (C) 2017  Heiko Krupp and Theo Arends
 
-- Redistributions of source code must retain the above copyright notice,
-  this list of conditions and the following disclaimer.
-- Redistributions in binary form must reproduce the above copyright notice,
-  this list of conditions and the following disclaimer in the documentation
-  and/or other materials provided with the distribution.
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
-LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
-CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
-CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-POSSIBILITY OF SUCH DAMAGE.
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #ifdef USE_EMULATION
@@ -212,7 +206,10 @@ void pollUDP()
         packetBuffer[len] = 0;
       }
       String request = packetBuffer;
+
+//      addLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("UDP: Packet received"));
 //      addLog_P(LOG_LEVEL_DEBUG_MORE, packetBuffer);
+
       if (request.indexOf("M-SEARCH") >= 0) {
         if ((EMUL_WEMO == sysCfg.flag.emulation) &&(request.indexOf("urn:Belkin:device:**") > 0)) {
           wemo_respondToMSearch();
@@ -305,18 +302,18 @@ const char HUE_LIGHT_STATUS_JSON[] PROGMEM =
       "\"bri\":{b},"
       "\"hue\":{h},"
       "\"sat\":{s},"
-      "\"effect\":\"none\","
-      "\"ct\":0,"
+      "\"ct\":500,"
+      "\"xy\":[0.5, 0.5],"
       "\"alert\":\"none\","
+      "\"effect\":\"none\","
       "\"colormode\":\"hs\","
       "\"reachable\":true"
   "},"
-  "\"type\":\"Dimmable light\","
+  "\"type\":\"Extended color light\","
   "\"name\":\"{j1}\","
-  "\"modelid\":\"LWB004\","
-  "\"manufacturername\":\"Philips\","
+  "\"modelid\":\"LCT007\","
   "\"uniqueid\":\"{j2}\","
-  "\"swversion\":\"66012040\""
+  "\"swversion\":\"5.50.1.19085\""
   "}";
 const char HUE_LIGHT_RESPONSE_JSON[] PROGMEM =
   "{\"success\":{\"{api}/{id}/{cmd}\":{res}}}";
@@ -349,20 +346,20 @@ void handleUPnPevent()
 
   String request = webServer->arg(0);
   if (request.indexOf("State>1</Binary") > 0) {
-    do_cmnd_power(1, 1);
+//    do_cmnd_power(1, 1);
+    do_cmnd_power(Maxdevice, 1);
   }
   if (request.indexOf("State>0</Binary") > 0) {
-    do_cmnd_power(1, 0);
+//    do_cmnd_power(1, 0);
+    do_cmnd_power(Maxdevice, 0);
   }
-  webServer->send(200, "text/plain", "");
+  webServer->send(200, F("text/plain"), "");
 }
 
 void handleUPnPservice()
 {
   addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Handle WeMo event service"));
-
-  String eventservice_xml = FPSTR(WEMO_EVENTSERVICE_XML);
-  webServer->send(200, "text/plain", eventservice_xml);
+  webServer->send_P(200, PSTR("text/plain"), WEMO_EVENTSERVICE_XML);
 }
 
 void handleUPnPsetupWemo()
@@ -373,7 +370,7 @@ void handleUPnPsetupWemo()
   setup_xml.replace("{x1}", sysCfg.friendlyname[0]);
   setup_xml.replace("{x2}", wemo_UUID());
   setup_xml.replace("{x3}", wemo_serial());
-  webServer->send(200, "text/xml", setup_xml);
+  webServer->send(200, F("text/xml"), setup_xml);
 }
 
 /********************************************************************************************/
@@ -393,7 +390,7 @@ void handleUPnPsetupHue()
   String description_xml = FPSTR(HUE_DESCRIPTION_XML);
   description_xml.replace("{x1}", WiFi.localIP().toString());
   description_xml.replace("{x2}", hue_UUID());
-  webServer->send(200, "text/xml", description_xml);
+  webServer->send(200, F("text/xml"), description_xml);
 }
 
 void hue_todo(String *path)
@@ -445,7 +442,7 @@ void hue_global_cfg(String *path)
   hue_config_response(&response);
   response.replace("{id}", *path);
   response += "}";
-  webServer->send(200, "application/json", response);
+  webServer->send(200, F("application/json"), response);
 }
 
 void hue_auth(String *path)
@@ -453,7 +450,7 @@ void hue_auth(String *path)
   char response[38];
   
   snprintf_P(response, sizeof(response), PSTR("[{\"success\":{\"username\":\"%03x\"}}]"), ESP.getChipId());
-  webServer->send(200, "application/json", response);
+  webServer->send(200, F("application/json"), response);
 }
 
 void hue_config(String *path)
@@ -463,7 +460,7 @@ void hue_config(String *path)
   path->remove(0,1);               // cut leading / to get <id>
   hue_config_response(&response);
   response.replace("{id}", *path);
-  webServer->send(200, "application/json", response);
+  webServer->send(200, F("application/json"), response);
 }
 
 void hue_lights(String *path)
@@ -506,7 +503,7 @@ void hue_lights(String *path)
       }
     }
     response += "}";
-    webServer->send(200, "application/json", response);
+    webServer->send(200, F("application/json"), response);
   }
   else if (path->endsWith("/state")) {                       // Got ID/state
     path->remove(0,8);                                       // Remove /lights/
@@ -582,7 +579,7 @@ void hue_lights(String *path)
     else {
       response=FPSTR(HUE_ERROR_JSON);
     }
-    webServer->send(200, "application/json", response);
+    webServer->send(200, F("application/json"), response);
   }
   else if(path->indexOf("/lights/") >= 0) {            // Got /lights/ID
     path->remove(0,8);                                 // Remove /lights/
@@ -603,9 +600,9 @@ void hue_lights(String *path)
       response.replace("{s}", "0");
       response.replace("{b}", "0");
     }
-    webServer->send(200, "application/json", response);
+    webServer->send(200, F("application/json"), response);
   }
-  else webServer->send(406, "application/json", "{}");
+  else webServer->send(406, F("application/json"), "{}");
 }
 
 void handle_hue_api(String *path)
