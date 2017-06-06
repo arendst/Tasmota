@@ -81,6 +81,7 @@ const char HTTP_HEAD[] PROGMEM =
   "td{padding:0px;}"
   "button{border:0;border-radius:0.3rem;background-color:#1fa3ec;color:#fff;line-height:2.4rem;font-size:1.2rem;width:100%;-webkit-transition-duration:0.4s;transition-duration:0.4s;}"
   "button:hover{background-color:#006cba;}"
+  ".q{float:right;width:200px;text-align:right;}"
   "</style>"
 
   "</head>"
@@ -131,12 +132,6 @@ const char HTTP_SCRIPT_MODULE[] PROGMEM =
   "}"
   "function sl(){"
     "var o0=\"";
-const char HTTP_LNK_STYLE[] PROGMEM =
-  ".q{float:right;width:64px;text-align:right;}"
-  ".l{background:url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAMAAABEpIrGAAAALVBMVEX///8EBwfBwsLw8PAzNjaCg4NTVVUjJiZDRUUUFxdiZGSho6O"
-  "Sk5Pg4eFydHTCjaf3AAAAZElEQVQ4je2NSw7AIAhEBamKn97/uMXEGBvozkWb9C2Zx4xzWykBhFAeYp9gkLyZE0zIMno9n4g19hmdY39scwqVkOXaxph0ZCXQcqxSpgQpONa59wkRDOL93eA"
-  "XvimwlbPbwwVAegLS1HGfZAAAAABJRU5ErkJggg==') no-repeat left center;background-size:1em;}"
-  "</style>";
 const char HTTP_MSG_RSTRT[] PROGMEM =
   "<br/><div style='text-align:center;'>Device will restart in a few seconds</div><br/>";
 const char HTTP_BTN_MENU1[] PROGMEM =
@@ -170,7 +165,7 @@ const char HTTP_FORM_MODULE[] PROGMEM =
   "<input id='w' name='w' value='6' hidden><input id='r' name='r' value='1' hidden>"
   "<br/><b>Module type</b> ({mt})<br/><select id='mt' name='mt'>";
 const char HTTP_LNK_ITEM[] PROGMEM =
-  "<div><a href='#p' onclick='c(this)'>{v}</a>&nbsp;<span class='q {i}'>{r}%</span></div>";
+  "<div><a href='#p' onclick='c(this)'>{v}</a>&nbsp;<span class='q'>{i} {r}%</span></div>";
 const char HTTP_LNK_SCAN[] PROGMEM =
   "<div><a href='/w1'>Scan for wifi networks</a></div><br/>";
 const char HTTP_FORM_WIFI[] PROGMEM =
@@ -214,11 +209,10 @@ const char HTTP_FORM_OTHER[] PROGMEM =
 const char HTTP_FORM_OTHER2[] PROGMEM =
   "<br/><b>Friendly Name {1</b> ({2)<br/><input id='a{1' name='a{1' length=32 placeholder='{2' value='{3'><br/>";
 #ifdef USE_EMULATION
-const char HTTP_FORM_OTHER3[] PROGMEM =
-  "<br/><fieldset><legend><b>&nbsp;Emulation&nbsp;</b></legend>"
-  "<br/><input style='width:10%;float:left' id='b2' name='b2' type='radio' value='0'{r2}><b>None</b>"
-  "<br/><input style='width:10%;float:left' id='b2' name='b2' type='radio' value='1'{r3}><b>Belkin WeMo</b> single device"
-  "<br/><input style='width:10%;float:left' id='b2' name='b2' type='radio' value='2'{r4}><b>Hue Bridge</b> multi devices<br/>";
+const char HTTP_FORM_OTHER3a[] PROGMEM =
+  "<br/><fieldset><legend><b>&nbsp;Emulation&nbsp;</b></legend>";
+const char HTTP_FORM_OTHER3b[] PROGMEM =
+  "<br/><input style='width:10%;float:left' id='b2' name='b2' type='radio' value='{1'{2><b>{3</b>{4";
 #endif  // USE_EMULATION
 const char HTTP_FORM_END[] PROGMEM =
   "<br/><button type='submit'>Save</button></form></fieldset>";
@@ -669,7 +663,6 @@ void handleWifi(boolean scan)
 
   String page = FPSTR(HTTP_HEAD);
   page.replace(F("{v}"), F("Configure Wifi"));
-  page.replace(F("</style>"), FPSTR(HTTP_LNK_STYLE));
 
   if (scan) {
 #ifdef USE_EMULATION
@@ -730,11 +723,8 @@ void handleWifi(boolean scan)
           rssiQ += quality;
           item.replace(F("{v}"), WiFi.SSID(indices[i]));
           item.replace(F("{r}"), rssiQ);
-          if (WiFi.encryptionType(indices[i]) != ENC_TYPE_NONE) {
-            item.replace(F("{i}"), F("l"));
-          } else {
-            item.replace(F("{i}"), "");
-          }
+          uint8_t auth = WiFi.encryptionType(indices[i]);
+          item.replace(F("{i}"), (ENC_TYPE_WEP == auth) ? F("WEP") : (ENC_TYPE_TKIP == auth) ? F("WPA PSK") : (ENC_TYPE_CCMP == auth) ? F("WPA2 PSK") : (ENC_TYPE_AUTO == auth) ? F("AUTO") : F(""));
           page += item;
           delay(0);
         } else {
@@ -854,10 +844,15 @@ void handleOther()
   page.replace(F("{2"), FRIENDLY_NAME);
   page.replace(F("{3"), sysCfg.friendlyname[0]);
 #ifdef USE_EMULATION
-  page += FPSTR(HTTP_FORM_OTHER3);
-  page.replace(F("{r2}"), (EMUL_NONE == sysCfg.flag.emulation) ? F(" checked") : F(""));
-  page.replace(F("{r3}"), (EMUL_WEMO == sysCfg.flag.emulation) ? F(" checked") : F(""));
-  page.replace(F("{r4}"), (EMUL_HUE == sysCfg.flag.emulation) ? F(" checked") : F(""));
+  page += FPSTR(HTTP_FORM_OTHER3a);
+  for (byte i = 0; i < EMUL_MAX; i++) {
+    page += FPSTR(HTTP_FORM_OTHER3b);
+    page.replace(F("{1"), String(i));
+    page.replace(F("{2"), (i == sysCfg.flag.emulation) ? F(" checked") : F(""));
+    page.replace(F("{3"), (i == EMUL_NONE) ? F("None") : (i == EMUL_WEMO) ? F("Belkin WeMo") : F("Hue Bridge"));
+    page.replace(F("{4"), (i == EMUL_NONE) ? F("") : (i == EMUL_WEMO) ? F(" single device") : F(" multi devices"));
+  }
+  page += F("<br/>");
   for (int i = 1; i < Maxdevice; i++) {
     page += FPSTR(HTTP_FORM_OTHER2);
     page.replace(F("{1"), String(i +1));
@@ -1132,25 +1127,21 @@ void handleUploadDone()
   page += F("<div style='text-align:center;'><b>Upload ");
   if (_uploaderror) {
     page += F("<font color='red'>failed</font></b><br/><br/>");
+    if (!_uploadfiletype && Update.hasError()) {
+      StreamString str;
+      Update.printError(str);
+      snprintf_P(error, sizeof(error), str.c_str());
+    } else {
+      snprintf_P(error, sizeof(error), PSTR("Upload error code %d"), _uploaderror);
+    }
     switch (_uploaderror) {
       case 1: strcpy_P(error, PSTR("No file selected")); break;
-      case 2: strcpy_P(error, PSTR("File size is larger than available free space")); break;
-      case 3: strcpy_P(error, PSTR("File magic header does not start with 0xE9")); break;
-      case 4: strcpy_P(error, PSTR("File flash size is larger than device flash size")); break;
-      case 5: strcpy_P(error, PSTR("File upload buffer miscompare")); break;
-      case 6: strcpy_P(error, PSTR("Upload failed. Enable logging option 3 for more information")); break;
       case 7: strcpy_P(error, PSTR("Upload aborted")); break;
       case 8: strcpy_P(error, PSTR("Invalid configuration file")); break;
       case 9: strcpy_P(error, PSTR("Configuration file too large")); break;
-      default:
-        snprintf_P(error, sizeof(error), PSTR("Upload error code %d"), _uploaderror);
     }
     page += error;
-    if (!_uploadfiletype && Update.hasError()) {
-      page += F("<br/><br/>Update error code (see Updater.cpp) ");
-      page += String(Update.getError());
-    }
-    snprintf_P(log, sizeof(log), PSTR("Upload: Error - %s"), error);
+    snprintf_P(log, sizeof(log), PSTR("Upload: %s"), error);
     addLog(LOG_LEVEL_DEBUG, log);
   } else {
     page += F("<font color='green'>successful</font></b><br/><br/>Device will restart in a few seconds");
@@ -1200,9 +1191,6 @@ void handleUploadLoop()
       }
       uint32_t maxSketchSpace = (ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000;
       if (!Update.begin(maxSketchSpace)) {         //start with max available size
-        if (_serialoutput) {
-          Update.printError(Serial);
-        }
         _uploaderror = 2;
         return;
       }
@@ -1248,9 +1236,6 @@ void handleUploadLoop()
       }
     } else {  // firmware
       if (!_uploaderror && (Update.write(upload.buf, upload.currentSize) != upload.currentSize)) {
-        if (_serialoutput) {
-          Update.printError(Serial);
-        }
         _uploaderror = 5;
         return;
       }
@@ -1268,9 +1253,6 @@ void handleUploadLoop()
     }
     if (!_uploadfiletype) {
       if (!Update.end(true)) { // true to set the size to the current progress
-        if (_serialoutput) {
-          Update.printError(Serial);
-        }
         _uploaderror = 6;
         return;
       }

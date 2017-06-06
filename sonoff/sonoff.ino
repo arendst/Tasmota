@@ -24,7 +24,7 @@
     - Select IDE Tools - Flash size: "1M (no SPIFFS)"
   ====================================================*/
 
-#define VERSION                0x05010300  // 5.1.3
+#define VERSION                0x05010500  // 5.1.5
 
 enum log_t   {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG_MORE, LOG_LEVEL_ALL};
 enum week_t  {Last, First, Second, Third, Fourth};
@@ -166,7 +166,9 @@ enum butt_t {PRESSED, NOT_PRESSED};
 #include "support.h"                        // Global support
 
 #include <PubSubClient.h>                   // MQTT
-#define MESSZ                  360          // Max number of characters in JSON message string (4 x DS18x20 sensors)
+#ifndef MESSZ
+  #define MESSZ                360          // Max number of characters in JSON message string (4 x DS18x20 sensors)
+#endif
 #if (MQTT_MAX_PACKET_SIZE -TOPSZ -7) < MESSZ  // If the max message size is too small, throw an error at compile time
                                             // See pubsubclient.c line 359
   #error "MQTT_MAX_PACKET_SIZE is too small in libraries/PubSubClient/src/PubSubClient.h, increase it to at least 467"
@@ -176,6 +178,7 @@ enum butt_t {PRESSED, NOT_PRESSED};
 #include <ESP8266WiFi.h>                    // MQTT, Ota, WifiManager
 #include <ESP8266HTTPClient.h>              // MQTT, Ota
 #include <ESP8266httpUpdate.h>              // Ota
+#include <StreamString.h>                   // Webserver, Updater
 #include <ArduinoJson.h>                    // WemoHue, IRremote, Domoticz
 #ifdef USE_WEBSERVER
   #include <ESP8266WebServer.h>             // WifiManager, Webserver
@@ -2400,6 +2403,7 @@ void GPIO_init()
         led_inverted[mpin - GPIO_LED1_INV] = 1;
         mpin -= 4;
       }
+#ifdef USE_DHT      
       else if ((mpin >= GPIO_DHT11) && (mpin <= GPIO_DHT22)) {
         if (dht_setup(i, mpin)) {
           dht_flg = 1;
@@ -2408,6 +2412,7 @@ void GPIO_init()
           mpin = 0;
         }
       }
+#endif  // USE_DHT      
     }
     if (mpin) {
       pin[mpin] = i;
