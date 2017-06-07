@@ -1,35 +1,44 @@
 /*
-  xsns_bmp.ino - BMP pressure, temperature and humidity sensor support for Sonoff-Tasmota
+ Copyright (c) 2017 Heiko Krupp and Theo Arends.  All rights reserved.
 
-  Copyright (C) 2017  Heiko Krupp and Theo Arends
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions are met:
 
-  This program is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
+ - Redistributions of source code must retain the above copyright notice,
+   this list of conditions and the following disclaimer.
+ - Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
 
-  This program is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+ LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ POSSIBILITY OF SUCH DAMAGE.
 */
 
 #ifdef USE_I2C
 #ifdef USE_BMP
 /*********************************************************************************************\
  * BMP085, BMP180, BMP280, BME280 - Pressure and Temperature and Humidy (BME280 only)
- *
+ * AM2320                         - Temperature and Humidy
  * Source: Heiko Krupp and Adafruit Industries
 \*********************************************************************************************/
 
 #define BMP_ADDR             0x77
+#define AM2320_ADDR          0x5C
 
 #define BMP180_CHIPID        0x55
 #define BMP280_CHIPID        0x58
 #define BME280_CHIPID        0x60
+
+#define AM2320_CHIPID        0xAA  // random value, just to have some ID for later use
 
 #define BMP_REGISTER_CHIPID  0xD0
 
@@ -73,6 +82,9 @@ uint16_t cal_ac4;
 uint16_t cal_ac5;
 uint16_t cal_ac6;
 int32_t bmp180_b5 = 0;
+
+double AM2320_t;
+double AM2320_h;
 
 boolean bmp180_calibration()
 {
@@ -162,6 +174,23 @@ double bmp180_calcSealevelPressure(float pAbs, float altitude_meters)
 {
   double pressure = pAbs*100.0;
   return (double)(pressure / pow(1.0-altitude_meters/44330, 5.255))/100.0;
+}
+
+unsigned int CRC16(byte *ptr, byte length)
+{
+      unsigned int crc = 0xFFFF;
+      uint8_t s = 0x00;
+
+      while(length--) {
+        crc ^= *ptr++;
+        for(s = 0; s < 8; s++) {
+          if((crc & 0x01) != 0) {
+            crc >>= 1;
+            crc ^= 0xA001;
+          } else crc >>= 1;
+        }
+      }
+      return crc;
 }
 
 /*********************************************************************************************\
@@ -342,13 +371,56 @@ double bme280_readHumidity(void)
 }
 
 /*********************************************************************************************\
+ * AM2320 - based on https://github.com/thakshak/AM2320
+\*********************************************************************************************/
+
+void AM2320_read()
+{
+	byte buf[8];
+	for(int s = 0; s < 8; s++) buf[s] = 0x00;
+
+	Wire.beginTransmission(AM2320_ADDR); // wake sensor
+	Wire.endTransmission();
+	delay(1);			     // wait a tiny bit
+	Wire.beginTransmission(AM2320_ADDR); // now start reading
+	Wire.write(0x03);//
+	Wire.write(0x00); //
+	Wire.write(0x04); //
+	if (Wire.endTransmission(1) != 0) {
+    AM2320_t = 999;  // use as debug-messages
+    AM2320_h = 999;
+  }
+	delayMicroseconds(1600); //>1.5ms
+
+	Wire.requestFrom(AM2320_ADDR, 0x08);
+	for (int i = 0; i < 0x08; i++) buf[i] = Wire.read();
+
+	// CRC check
+	unsigned int Rcrc = buf[7] << 8;
+	Rcrc += buf[6];
+	if (Rcrc == CRC16(buf, 6)) {
+		unsigned int temperature = ((buf[4] & 0x7F) << 8) + buf[5];
+		AM2320_t = temperature / 10.0;
+		AM2320_t = ((buf[4] & 0x80) >> 7) == 1 ? AM2320_t * (-1) : AM2320_t;
+
+		unsigned int humidity = (buf[2] << 8) + buf[3];
+		AM2320_h = humidity / 10.0;
+	}
+}
+
+/*********************************************************************************************\
  * BMP
 \*********************************************************************************************/
 
-double bmp_readTemperature(void)
+double bmp_convertCtoF(double c)
+{
+  return c * 1.8 + 32;
+}
+
+double bmp_readTemperature(bool S)
 {
   double t = NAN;
-  
+
   switch (bmptype) {
   case BMP180_CHIPID:
     t = bmp180_readTemperature();
@@ -356,9 +428,14 @@ double bmp_readTemperature(void)
   case BMP280_CHIPID:
   case BME280_CHIPID:
     t = bmp280_readTemperature();
+  case AM2320_CHIPID:
+    AM2320_read(); // read t and h and store it
+    t = AM2320_t;
   }
   if (!isnan(t)) {
-    t = convertTemp(t);
+    if (S) {
+      t = bmp_convertCtoF(t);
+    }
     return t;
   }
   return 0;
@@ -384,6 +461,8 @@ double bmp_readHumidity(void)
     break;
   case BME280_CHIPID:
     return bme280_readHumidity();
+  case AM2320_CHIPID:
+    return AM2320_h; // we allways read the temperature before
   }
   return 0;
 }
@@ -416,6 +495,20 @@ boolean bmp_detect()
   case BME280_CHIPID:
     success = bme280_calibrate();
     strcpy_P(bmpstype, PSTR("BME280"));
+  default:
+    Wire.beginTransmission(AM2320_ADDR); //Wake up
+    Wire.endTransmission();
+    delay(1);
+    Wire.beginTransmission(AM2320_ADDR); // Start real transmission
+    Wire.write(0x03);
+    Wire.write(0x00);
+    Wire.write(0x04);
+    if (Wire.endTransmission(1) == 0){
+      success = true;
+      strcpy_P(bmpstype, PSTR("AM2320"));
+      bmpaddr = AM2320_ADDR;
+      bmptype = AM2320_CHIPID;
+    }
   }
   if (success) {
     snprintf_P(log, sizeof(log), PSTR("I2C: %s found at address 0x%x"), bmpstype, bmpaddr);
@@ -440,22 +533,27 @@ void bmp_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
   char stemp2[10];
   char stemp3[10];
 
-  double t = bmp_readTemperature();
+  double t = bmp_readTemperature(TEMP_CONVERSION);
   double p = bmp_readPressure();
   double h = bmp_readHumidity();
-  dtostrf(t, 1, sysCfg.flag.temperature_resolution, stemp1);
-  dtostrf(p, 1, sysCfg.flag.pressure_resolution, stemp2);
-  dtostrf(h, 1, sysCfg.flag.humidity_resolution, stemp3);
+  dtostrf(t, 1, TEMP_RESOLUTION &3, stemp1);
+  dtostrf(p, 1, PRESSURE_RESOLUTION &3, stemp2);
+  dtostrf(h, 1, HUMIDITY_RESOLUTION &3, stemp3);
   if (!strcmp(bmpstype,"BME280")) {
     snprintf_P(svalue, ssvalue, PSTR("%s, \"%s\":{\"Temperature\":%s, \"Humidity\":%s, \"Pressure\":%s}"),
       svalue, bmpstype, stemp1, stemp3, stemp2);
-  } else {
+  }
+  if (!strcmp(bmpstype,"AM2320")) {
+    snprintf_P(svalue, ssvalue, PSTR("%s, \"%s\":{\"Temperature\":%s, \"Humidity\":%s}"),
+      svalue, bmpstype, stemp1, stemp3);
+  }
+  else {
     snprintf_P(svalue, ssvalue, PSTR("%s, \"%s\":{\"Temperature\":%s, \"Pressure\":%s}"),
       svalue, bmpstype, stemp1, stemp2);
   }
   *djson = 1;
 #ifdef USE_DOMOTICZ
-  domoticz_sensor3(stemp1, stemp3, stemp2); 
+  domoticz_sensor3(stemp1, stemp3, stemp2);
 #endif  // USE_DOMOTICZ
 }
 
@@ -467,24 +565,25 @@ String bmp_webPresent()
     char stemp[10];
     char sensor[80];
 
-    double t_bmp = bmp_readTemperature();
+    double t_bmp = bmp_readTemperature(TEMP_CONVERSION);
     double p_bmp = bmp_readPressure();
     double h_bmp = bmp_readHumidity();
-    dtostrf(t_bmp, 1, sysCfg.flag.temperature_resolution, stemp);
-    snprintf_P(sensor, sizeof(sensor), HTTP_SNS_TEMP, bmpstype, stemp, tempUnit());
+    dtostrf(t_bmp, 1, TEMP_RESOLUTION &3, stemp);
+    snprintf_P(sensor, sizeof(sensor), HTTP_SNS_TEMP, bmpstype, stemp, (TEMP_CONVERSION) ? 'F' : 'C');
     page += sensor;
-    if (!strcmp(bmpstype,"BME280")) {
-      dtostrf(h_bmp, 1, sysCfg.flag.humidity_resolution, stemp);
+    if ((!strcmp(bmpstype,"BME280"))||(!strcmp(bmpstype,"AM2320"))) {
+      dtostrf(h_bmp, 1, HUMIDITY_RESOLUTION &3, stemp);
       snprintf_P(sensor, sizeof(sensor), HTTP_SNS_HUM, bmpstype, stemp);
       page += sensor;
     }
-    dtostrf(p_bmp, 1, sysCfg.flag.pressure_resolution, stemp);
+    if (strcmp(bmpstype,"AM2320")) {
+    dtostrf(p_bmp, 1, PRESSURE_RESOLUTION &3, stemp);
     snprintf_P(sensor, sizeof(sensor), HTTP_SNS_PRESSURE, bmpstype, stemp);
     page += sensor;
+    }
   }
   return page;
 }
 #endif  // USE_WEBSERVER
 #endif  // USE_BMP
 #endif  // USE_I2C
-
