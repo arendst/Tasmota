@@ -1,5 +1,5 @@
 /*
-  xsns_counter.ino - Counter sensors (water meters, electricity meters etc.) sensor support for Sonoff-Tasmota 
+  xsns_counter.ino - Counter sensors (water meters, electricity meters etc.) sensor support for Sonoff-Tasmota
 
   Copyright (C) 2017  Maarten Damen and Theo Arends
 
@@ -74,7 +74,7 @@ void counter_init()
 {
   typedef void (*function) () ;
   function counter_callbacks[] = { counter_update1, counter_update2, counter_update3, counter_update4 };
-  
+
   for (byte i = 0; i < MAX_COUNTERS; i++) {
     if (pin[GPIO_CNTR1 +i] < 99) {
       pinMode(pin[GPIO_CNTR1 +i], INPUT_PULLUP);
@@ -114,7 +114,7 @@ void counter_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
 
 #ifdef USE_WEBSERVER
 const char HTTP_SNS_COUNTER[] PROGMEM =
-  "<tr><th>Counter%d</th><td>%s%s</td></tr>";  
+  "<tr><th>Counter%d</th><td>%s%s</td></tr>";
 
 String counter_webPresent()
 {
@@ -136,4 +136,3 @@ String counter_webPresent()
   return page;
 }
 #endif  // USE_WEBSERVER
-
