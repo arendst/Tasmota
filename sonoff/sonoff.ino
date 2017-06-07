@@ -2575,6 +2575,7 @@ void setup()
   Serial.begin(Baudrate);
   delay(10);
   Serial.println();
+  userBeforeSetup();
   seriallog_level = LOG_LEVEL_INFO;  // Allow specific serial messages until config loaded
 
   snprintf_P(Version, sizeof(Version), PSTR("%d.%d.%d"), VERSION >> 24 & 0xff, VERSION >> 16 & 0xff, VERSION >> 8 & 0xff);
@@ -2671,6 +2672,7 @@ void setup()
   snprintf_P(log, sizeof(log), PSTR("APP: Project %s %s (Topic %s, Fallback %s, GroupTopic %s) Version %s"),
     PROJECT, sysCfg.friendlyname[0], sysCfg.mqtt_topic, MQTTClient, sysCfg.mqtt_grptopic, Version);
   addLog(LOG_LEVEL_INFO, log);
+  userAfterSetup();
 }
 
 void loop()
@@ -2698,5 +2700,6 @@ void loop()
   }
 
 //  yield();     // yield == delay(0), delay contains yield, auto yield in loop
+  userLoop();
   delay(sleep);  // https://github.com/esp8266/Arduino/issues/2021
 }
