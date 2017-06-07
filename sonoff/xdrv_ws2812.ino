@@ -529,7 +529,7 @@ boolean ws2812_command(char *type, uint16_t index, char *dataBuf, uint16_t data_
   boolean serviced = true;
 
   if (!strcmp_P(type,PSTR("PIXELS"))) {
-    if ((data_len > 0) && (payload > 0) && (payload <= WS2812_MAX_LEDS)) {
+    if ((payload > 0) && (payload <= WS2812_MAX_LEDS)) {
       sysCfg.ws_pixels = payload;
       ws2812_pixels();
     }
@@ -549,7 +549,7 @@ boolean ws2812_command(char *type, uint16_t index, char *dataBuf, uint16_t data_
     ws2812_getColor(0, svalue, ssvalue);
   }
   else if (!strcmp_P(type,PSTR("DIMMER"))) {
-    if ((data_len > 0) && (payload >= 0) && (payload <= 100)) {
+    if ((payload >= 0) && (payload <= 100)) {
       sysCfg.ws_dimmer = payload;
       bitSet(power, ws_bit);
 #ifdef USE_DOMOTICZ
@@ -560,7 +560,7 @@ boolean ws2812_command(char *type, uint16_t index, char *dataBuf, uint16_t data_
     snprintf_P(svalue, ssvalue, PSTR("{\"Dimmer\":%d}"), sysCfg.ws_dimmer);
   }
   else if (!strcmp_P(type,PSTR("LEDTABLE"))) {
-    if ((data_len > 0) && (payload >= 0) && (payload <= 2)) {
+    if ((payload >= 0) && (payload <= 2)) {
       switch (payload) {
       case 0: // Off
       case 1: // On
@@ -575,33 +575,31 @@ boolean ws2812_command(char *type, uint16_t index, char *dataBuf, uint16_t data_
     snprintf_P(svalue, ssvalue, PSTR("{\"LedTable\":\"%s\"}"), getStateText(sysCfg.ws_ledtable));
   }
   else if (!strcmp_P(type,PSTR("FADE"))) {
-    if ((data_len > 0) && (payload >= 0) && (payload <= 2)) {
-      switch (payload) {
-      case 0: // Off
-      case 1: // On
-        sysCfg.ws_fade = payload;
-        break;
-      case 2: // Toggle
-        sysCfg.ws_fade ^= 1;
-        break;
-      }
+    switch (payload) {
+    case 0: // Off
+    case 1: // On
+      sysCfg.ws_fade = payload;
+      break;
+    case 2: // Toggle
+      sysCfg.ws_fade ^= 1;
+      break;
     }
     snprintf_P(svalue, ssvalue, PSTR("{\"Fade\":\"%s\"}"), getStateText(sysCfg.ws_fade));
   }
   else if (!strcmp_P(type,PSTR("SPEED"))) {  // 1 - fast, 5 - slow
-    if ((data_len > 0) && (payload > 0) && (payload <= 5)) {
+    if ((payload > 0) && (payload <= 5)) {
       sysCfg.ws_speed = payload;
     }
     snprintf_P(svalue, ssvalue, PSTR("{\"Speed\":%d}"), sysCfg.ws_speed);
   }
   else if (!strcmp_P(type,PSTR("WIDTH"))) {
-    if ((data_len > 0) && (payload >= 0) && (payload <= 4)) {
+    if ((payload >= 0) && (payload <= 4)) {
       sysCfg.ws_width = payload;
     }
     snprintf_P(svalue, ssvalue, PSTR("{\"Width\":%d}"), sysCfg.ws_width);
   }
   else if (!strcmp_P(type,PSTR("WAKEUP"))) {
-    if ((data_len > 0) && (payload > 0) && (payload < 3601)) {
+    if ((payload > 0) && (payload < 3601)) {
       sysCfg.ws_wakeup = payload;
       if (1 == sysCfg.ws_scheme) {
         sysCfg.ws_scheme = 0;
@@ -610,7 +608,7 @@ boolean ws2812_command(char *type, uint16_t index, char *dataBuf, uint16_t data_
     snprintf_P(svalue, ssvalue, PSTR("{\"WakeUp\":%d}"), sysCfg.ws_wakeup);
   }
   else if (!strcmp_P(type,PSTR("SCHEME"))) {
-    if ((data_len > 0) && (payload >= 0) && (payload <= 9)) {
+    if ((payload >= 0) && (payload <= 9)) {
       sysCfg.ws_scheme = payload;
       if (1 == sysCfg.ws_scheme) {
         ws2812_resetWakupState();
