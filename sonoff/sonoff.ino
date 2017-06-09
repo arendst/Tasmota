@@ -40,6 +40,57 @@ enum emul_t  {EMUL_NONE, EMUL_WEMO, EMUL_HUE, EMUL_MAX};
 #include "user_config.h"
 #include "user_config_override.h"
 
+
+/*********************************************************************************************\
+   Add for Blynk setup
+   To use blynk follow:
+   download latest from Blynk project:
+   https://github.com/blynkkk/blynk-library/releases/latest
+   
+   Blynk library should be installed manually. Follow the instructions:
+
+Download the latest release .zip file.
+Unzip it. You will notice that archive contains several folders and several libraries.
+Copy all these libraries to your_sketchbook_folder of Arduino IDE. To find the location of your_sketchbook_folder, go to top menu in Arduino IDE: File -> Preferences (if you are using Mac OS - go to Arduino → Preferences)
+The structure of your your_sketchbook_folder should now look like this, along with your other sketches (if you have them):
+
+your_sketchbook_folder/libraries/Blynk
+your_sketchbook_folder/libraries/BlynkESP8266_Lib
+...
+your_sketchbook_folder/tools/BlynkUpdater
+your_sketchbook_folder/tools/BlynkUsbScript
+...
+Note that libraries should go to libraries and tools to tools
+
+Now it is time to put it to work.
+
+   go to http://www.blynk.cc/getting-started/ and install Blynk APP for Apple or Android, open it,
+   create your account, than start a new projet or use your current as you wish, add a device,
+   now a new Token will be create, so get it and you will use below.
+    \*********************************************************************************************/
+
+#define useblynk              // if set enable, comment to disable use of Blynk
+#ifdef useblynk
+  #define BLYNK_PRINT Serial
+  #include <BlynkSimpleEsp8266.h>
+  // You should get Auth Token in the Blynk App.
+  // Go to the Project Settings (nut icon).
+  char auth[] = "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX";  // put your unique token here 
+
+  // Your WiFi credentials.
+  // Set password to "" for open networks.
+  char ssid[] = STA_SSID1;
+  char pass[] = STA_PASS1;
+
+#endif
+
+
+/*********************************************************************************************\
+   end for blynk setup
+    \*********************************************************************************************/
+
+
+
 /*********************************************************************************************\
  * No user configurable items below
 \*********************************************************************************************/
@@ -2577,6 +2628,12 @@ void setup()
   Serial.println();
   seriallog_level = LOG_LEVEL_INFO;  // Allow specific serial messages until config loaded
 
+// for blynk 
+#ifdef useblynk
+    Blynk.begin(auth, ssid, pass);
+#endif
+// end blynk
+  
   snprintf_P(Version, sizeof(Version), PSTR("%d.%d.%d"), VERSION >> 24 & 0xff, VERSION >> 16 & 0xff, VERSION >> 8 & 0xff);
   if (VERSION & 0x1f) {
     idx = strlen(Version);
@@ -2676,6 +2733,13 @@ void setup()
 void loop()
 {
   osw_loop();
+
+// for blynk 
+#ifdef useblynk
+      Blynk.run();
+#endif
+// end blynk
+  
   
 #ifdef USE_WEBSERVER
   pollDnsWeb();
