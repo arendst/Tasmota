@@ -1,9 +1,11 @@
+menu.BoardModel=Model
 menu.UploadSpeed=Upload Speed
+menu.UploadTool=Upload Using
 menu.CpuFrequency=CPU Frequency
+menu.CrystalFreq=Crystal Frequency
 menu.FlashSize=Flash Size
 menu.FlashMode=Flash Mode
 menu.FlashFreq=Flash Frequency
-menu.UploadTool=Upload Using
 menu.ResetMethod=Reset Method
 menu.ESPModule=Module
 menu.Debug=Debug port
@@ -1702,7 +1704,7 @@ coredev.build.lwip_flags=
 
 coredev.menu.LwIPVariant.Espressif=Espressif (xcc)
 coredev.menu.LwIPVariant.Espressif.build.lwip_lib=-llwip
-coredev.menu.LwIPVariant.Espressif.build.lwip_flags=
+coredev.menu.LwIPVariant.Espressif.build.lwip_flags=-DLWIP_MAYBE_XCC
 coredev.menu.LwIPVariant.Prebuilt=Prebuilt Source (gcc)
 coredev.menu.LwIPVariant.Prebuilt.build.lwip_lib=-llwip_gcc
 coredev.menu.LwIPVariant.Prebuilt.build.lwip_flags=-DLWIP_OPEN_SRC
@@ -1848,8 +1850,27 @@ coredev.menu.FlashSize.4M3M.build.flash_size=4M
 coredev.menu.FlashSize.4M3M.build.flash_ld=eagle.flash.4m.ld
 coredev.menu.FlashSize.4M3M.build.spiffs_start=0x100000
 coredev.menu.FlashSize.4M3M.build.spiffs_end=0x3FB000
+coredev.menu.FlashSize.4M3M.build.spiffs_pagesize=256
 coredev.menu.FlashSize.4M3M.build.spiffs_blocksize=8192
 coredev.menu.FlashSize.4M3M.upload.maximum_size=1044464
+
+coredev.menu.FlashSize.8M7M=8M (7M SPIFFS)
+coredev.menu.FlashSize.8M7M.build.flash_size=8M
+coredev.menu.FlashSize.8M7M.build.flash_ld=eagle.flash.8m.ld
+coredev.menu.FlashSize.8M7M.build.spiffs_start=0x100000
+coredev.menu.FlashSize.8M7M.build.spiffs_end=0x7FB000
+coredev.menu.FlashSize.8M7M.build.spiffs_pagesize=256
+coredev.menu.FlashSize.8M7M.build.spiffs_blocksize=8192
+coredev.menu.FlashSize.8M7M.upload.maximum_size=1044464
+
+coredev.menu.FlashSize.16M15M=16M (15M SPIFFS)
+coredev.menu.FlashSize.16M15M.build.flash_size=16M
+coredev.menu.FlashSize.16M15M.build.flash_ld=eagle.flash.16m.ld
+coredev.menu.FlashSize.16M15M.build.spiffs_start=0x100000
+coredev.menu.FlashSize.16M15M.build.spiffs_end=0x17FB000
+coredev.menu.FlashSize.16M15M.build.spiffs_pagesize=256
+coredev.menu.FlashSize.16M15M.build.spiffs_blocksize=8192
+coredev.menu.FlashSize.16M15M.upload.maximum_size=1044464
 
 coredev.menu.ResetMethod.ck=ck
 coredev.menu.ResetMethod.ck.upload.resetmethod=ck
@@ -1895,3 +1916,121 @@ coredev.menu.DebugLevel.OTA2____=OTA + Updater
 coredev.menu.DebugLevel.OTA2____.build.debug_level=-DDEBUG_ESP_OTA -DDEBUG_ESP_UPDATER
 coredev.menu.DebugLevel.all_____=All
 coredev.menu.DebugLevel.all_____.build.debug_level=-DDEBUG_ESP_CORE -DDEBUG_ESP_SSL -DDEBUG_ESP_WIFI -DDEBUG_ESP_HTTP_CLIENT -DDEBUG_ESP_HTTP_UPDATE -DDEBUG_ESP_HTTP_SERVER -DDEBUG_ESP_UPDATER -DDEBUG_ESP_OTA -DDEBUG_TLS_MEM
+
+############ Arduino boards with Esp8266 ############
+
+arduino-esp8266.name=Arduino
+
+arduino-esp8266.upload.tool=esptool
+arduino-esp8266.upload.speed=9600
+arduino-esp8266.upload.resetmethod=ck
+arduino-esp8266.upload.maximum_size=1044464
+arduino-esp8266.upload.maximum_data_size=81920
+arduino-esp8266.upload.wait_for_upload_port=true
+arduino-esp8266.serial.disableDTR=true
+arduino-esp8266.serial.disableRTS=true
+
+arduino-esp8266.build.mcu=esp8266
+arduino-esp8266.build.f_cpu=80000000L
+#arduino-esp8266.build.f_crystal=40000000
+arduino-esp8266.build.core=esp8266
+arduino-esp8266.build.flash_mode=qio
+arduino-esp8266.build.flash_size=4M
+arduino-esp8266.build.flash_freq=40
+arduino-esp8266.build.debug_port=
+arduino-esp8266.build.debug_level=
+arduino-esp8266.build.board=ESP8266_ARDUINO
+
+arduino-esp8266.menu.BoardModel.starottodeved=Star OTTO
+arduino-esp8266.menu.BoardModel.starottodeved.build.board=ESP8266_ARDUINO_STAR_OTTO
+arduino-esp8266.menu.BoardModel.starottodeved.build.variant=arduino_uart
+arduino-esp8266.menu.BoardModel.starottodeved.build.extra_flags=-DF_CRYSTAL=40000000
+
+arduino-esp8266.menu.BoardModel.primo=Primo
+arduino-esp8266.menu.BoardModel.primo.build.board=ESP8266_ARDUINO_PRIMO
+arduino-esp8266.menu.BoardModel.primo.build.variant=arduino_spi
+arduino-esp8266.menu.BoardModel.primo.build.extra_flags=-DF_CRYSTAL=40000000
+
+arduino-esp8266.menu.BoardModel.unowifideved=Uno WiFi
+arduino-esp8266.menu.BoardModel.unowifideved.build.board=ESP8266_ARDUINO_UNOWIFI
+arduino-esp8266.menu.BoardModel.unowifideved.build.variant=arduino_uart
+arduino-esp8266.menu.BoardModel.unowifideved.build.extra_flags=-DF_CRYSTAL=40000000
+
+arduino-esp8266.menu.UploadSpeed.9600=9600
+arduino-esp8266.menu.UploadSpeed.9600.upload.speed=9600
+arduino-esp8266.menu.UploadSpeed.19200=19200
+arduino-esp8266.menu.UploadSpeed.19200.upload.speed=19200
+arduino-esp8266.menu.UploadSpeed.57600=57600
+arduino-esp8266.menu.UploadSpeed.57600.upload.speed=57600
+arduino-esp8266.menu.UploadSpeed.115200=115200
+arduino-esp8266.menu.UploadSpeed.115200.upload.speed=115200
+arduino-esp8266.menu.UploadSpeed.230400=230400
+arduino-esp8266.menu.UploadSpeed.230400.upload.speed=230400
+arduino-esp8266.menu.UploadSpeed.460800=460800
+arduino-esp8266.menu.UploadSpeed.460800.upload.speed=460800
+
+arduino-esp8266.menu.FlashSize.4M1M=4M (1M SPIFFS)
+arduino-esp8266.menu.FlashSize.4M1M.build.flash_size=4M
+arduino-esp8266.menu.FlashSize.4M1M.build.flash_ld=eagle.flash.4m1m.ld
+arduino-esp8266.menu.FlashSize.4M1M.build.spiffs_start=0x300000
+arduino-esp8266.menu.FlashSize.4M1M.build.spiffs_end=0x3FB000
+arduino-esp8266.menu.FlashSize.4M1M.build.spiffs_blocksize=8192
+arduino-esp8266.menu.FlashSize.4M1M.build.spiffs_pagesize=256
+
+arduino-esp8266.menu.FlashSize.4M3M=4M (3M SPIFFS)
+arduino-esp8266.menu.FlashSize.4M3M.build.flash_size=4M
+arduino-esp8266.menu.FlashSize.4M3M.build.flash_ld=eagle.flash.4m.ld
+arduino-esp8266.menu.FlashSize.4M3M.build.spiffs_start=0x100000
+arduino-esp8266.menu.FlashSize.4M3M.build.spiffs_end=0x3FB000
+arduino-esp8266.menu.FlashSize.4M3M.build.spiffs_blocksize=8192
+arduino-esp8266.menu.FlashSize.4M3M.build.spiffs_pagesize=256
+
+##############################################################
+
+gen4iod.name=4D Systems gen4 IoD Range
+
+gen4iod.upload.tool=esptool
+gen4iod.upload.speed=921600
+gen4iod.upload.resetmethod=nodemcu
+gen4iod.upload.maximum_size=434160
+gen4iod.upload.maximum_data_size=81920
+gen4iod.upload.wait_for_upload_port=true
+gen4iod.serial.disableDTR=true
+gen4iod.serial.disableRTS=true
+
+gen4iod.build.mcu=esp8266
+gen4iod.build.f_cpu=160000000L
+gen4iod.build.board=GEN4_IOD
+gen4iod.build.core=esp8266
+gen4iod.build.variant=generic
+gen4iod.build.flash_mode=qio
+# flash chip: AT25SF041 (512 kbyte, 4Mbit)
+gen4iod.build.flash_size=512K
+gen4iod.build.flash_ld=eagle.flash.512k0.ld
+gen4iod.build.flash_freq=80
+gen4iod.build.debug_port=
+gen4iod.build.debug_level=
+
+gen4iod.menu.CpuFrequency.160=160 MHz
+gen4iod.menu.CpuFrequency.160.build.f_cpu=160000000L
+gen4iod.menu.CpuFrequency.80=80 MHz
+gen4iod.menu.CpuFrequency.80.build.f_cpu=80000000L
+
+gen4iod.menu.UploadSpeed.115200=115200
+gen4iod.menu.UploadSpeed.115200.upload.speed=115200
+gen4iod.menu.UploadSpeed.9600=9600
+gen4iod.menu.UploadSpeed.9600.upload.speed=9600
+gen4iod.menu.UploadSpeed.57600=57600
+gen4iod.menu.UploadSpeed.57600.upload.speed=57600
+gen4iod.menu.UploadSpeed.256000.windows=256000
+gen4iod.menu.UploadSpeed.256000.upload.speed=256000
+gen4iod.menu.UploadSpeed.230400.linux=230400
+gen4iod.menu.UploadSpeed.230400.macosx=230400
+gen4iod.menu.UploadSpeed.230400.upload.speed=230400
+gen4iod.menu.UploadSpeed.460800.linux=460800
+gen4iod.menu.UploadSpeed.460800.macosx=460800
+gen4iod.menu.UploadSpeed.460800.upload.speed=460800
+gen4iod.menu.UploadSpeed.512000.windows=512000
+gen4iod.menu.UploadSpeed.512000.upload.speed=512000
+gen4iod.menu.UploadSpeed.921600=921600
+gen4iod.menu.UploadSpeed.921600.upload.speed=921600

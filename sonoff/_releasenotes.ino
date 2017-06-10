@@ -1,4 +1,100 @@
-/* 4.1.3 20170410
+/* 5.1.6 20170606
+ * Shrink code
+ * Removed online configuration of Domoticz In and Domoticz Out MQTT strings
+ * Removed commands DomoticzInTopic and DomoticzOutTopic
+ * Add define KEY_HOLD_TIME to configure button hold threshold before sending MQTT Hold message
+ * Add command StateText4 to configure button MQTT Hold text (= MQTT_CMND_HOLD)
+ * Add command SetOption11 0|1 to swap pushbutton single and double press functionality (#200)
+ * Add command SwitchMode<x> 5 (PUSHBUTTONHOLD) and 6 (PUSHBUTTONHOLD_INV) (#489)
+ *
+ * 5.1.5 20170604
+ * Shrink code in preparation to ESP8266-Arduino 2.4.0-rc1
+ * Add effect parameter to HUE Device (#464)
+ *
+ * 5.1.4 20170601
+ * Removed pre-compiled versions from repository as they are available within the release
+ * Changed HUE Device type to color supporting version (#464)
+ * Fix compile error when BE_MINIMAL is selected (#467, #476)
+ * Add multiple compiled versions to release using updated Travis script and platformio.ini (#467)
+ *
+ * 5.1.3 20170520
+ * Add Domoticz Counter
+ *
+ * 5.1.2 20170519
+ * Fix Counter/Timer JSON message and update Counter/Timer on webpage
+ * Fix WS2812 Domoticz related regression issues
+ *
+ * 5.1.1 20170517
+ * Allow command FullTopic in group mode
+ * Prepare for more use of RTC memory
+ * Add independant WS2812 led string power control (#386, #390)
+ * Add command Counter<x> to control up to four GPIO falling edge interrupt counters or timers (#459)
+ * Add command CounterType<x> to select between pulse counting or pulse timing
+ * Add command CounterDebounce to select global counter debounce time in mSec
+ *
+ * 5.1.0 20170513
+ * Fix Offline/Removal of retained topic when FullTopic is changed
+ * Add FullTopic to MQTT Configuration and Information web pages
+ * Add license model GPLv3 (#188)
+ *
+ * 5.0.7 20170511
+ * Fix possible exception 28 on empty command
+ * Add command SetOption0 as replacement for SaveState
+ * Add command SetOption1 as replacement for ButtonRestrict
+ * Add command SetOption2 as replacement for Units
+ * Add command SetOption4 as replacement for MqttResponse
+ * Add command SetOption8 as replacement for TempUnit
+ * Add command SetOption10 On|Off to select between Offline or Removing previous retained topic (#417, #436)
+ *
+ * 5.0.6 20170510
+ * Remove hyphen in case of a single DHT sensor connected (#427)
+ * Add command MqttRetry <seconds> to change default MQTT reconnect retry timer from minimal 10 seconds (#429)
+ *
+ * 5.0.5 20170508
+ * Add command FullTopic with tokens %topic% (replaced by command Topic value) and 
+ *  %prefix% (replaced by command Prefix<x> values) for more flexible topic definitions (#244)
+ *  See wiki > MQTT Features https://github.com/arendst/Sonoff-Tasmota/wiki/MQTT-Features for more information
+ *
+ * 5.0.4 20170505
+ * Add Sonoff Pow Energy Total up to 40 MWh
+ * Add command EnergyReset 1|2|3 to reset Energy counters (#406)
+ * Fix Domoticz Energy logging (#411)
+ * Add command PowerOnState 4 to keep relay always on and disabling all power control (#418)
+ *
+ * 5.0.3 20170504
+ * Add command SensorRetain on|off to enable retaining of mqtt message tele/sonoff/SENSOR (#74)
+ * Change WifiConfig timeout from 60 seconds to 180 seconds (#212)
+ * Change Sonoff Touch command Ledstate functionality by turning led on if power is off (#214)
+ * Add 4 seconds delay after power on before enabling button to workaround Wemos D1 mini RTS circuit (#380)
+ *
+ * 5.0.2 20170503
+ * Reset SaveData, SaveState and MqttResponse to default values due to rearranging settings
+ * Moved some settings to flag area
+ * Add command TempUnit Celsius|Fahrenheit for selecting Celsius or Fahrenheit (#347)
+ * Add command TempRes 0..3 for selecting Temperature Resolution (#347)
+ * Add command HumRes 0..3 for selecting Humidity Resolution (#347)
+ * Add command PressRes 0..3 for selecting Pressure Resolution (#347)
+ * Add command EnergyRes 0..5 for selecting Energy Resolution (#347)
+ * Add "TempUnit":"C|F" to sensor JSON output (#347)
+ * Add support for up to three DHT type sensors each using a different GPIO (#339, #404)
+ *
+ * 5.0.1 20170429
+ * Adjust Sonoff SC messages to prepare for display feature
+ * Move static data from RAM to Flash
+ * Fix PowerOnState for some devices not reporting "Power on" state (#284, #380, #383)
+ *
+ * 5.0.0 20170425
+ * Memory status message update
+ * Fix setting migration to better preserve settings during move (#382)
+ * Best practice is first doing a Backup Configuration before installing version 5.0.0
+ * Reset save count after setting move
+ * Start using new linker script without SPIFFS
+ *
+ * 4.2.0 20170424
+ * Prepare for SPIFFS removal by moving settings to EEPROM area
+ * Fix compilation error when webserver is disabled (#378)
+ *
+ * 4.1.3 20170410
  * Add user configuarble GPIO to module S20 Socket and Slampher
  * Add support for Sonoff SC (#112)
  * Set PWM frequency from 1000Hz to 910Hz as used on iTead Sonoff Led firmware (#122)

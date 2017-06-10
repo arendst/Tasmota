@@ -1,26 +1,20 @@
 /*
- Copyright (c) 2017 Heiko Krupp and Theo Arends.  All rights reserved.
+  xsns_bmp.ino - BMP pressure, temperature and humidity sensor support for Sonoff-Tasmota
 
- Redistribution and use in source and binary forms, with or without
- modification, are permitted provided that the following conditions are met:
+  Copyright (C) 2017  Heiko Krupp and Theo Arends
 
- - Redistributions of source code must retain the above copyright notice,
-   this list of conditions and the following disclaimer.
- - Redistributions in binary form must reproduce the above copyright notice,
-   this list of conditions and the following disclaimer in the documentation
-   and/or other materials provided with the distribution.
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
 
- THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
- LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- POSSIBILITY OF SUCH DAMAGE.
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #ifdef USE_I2C
@@ -39,7 +33,8 @@
 
 #define BMP_REGISTER_CHIPID  0xD0
 
-uint8_t bmpaddr, bmptype = 0;
+uint8_t bmpaddr;
+uint8_t bmptype = 0;
 char bmpstype[7];
 
 /*********************************************************************************************\
@@ -67,8 +62,16 @@ char bmpstype[7];
 
 #define BMP180_OSS           3
 
-int16_t cal_ac1,cal_ac2,cal_ac3,cal_b1,cal_b2,cal_mc,cal_md;
-uint16_t cal_ac4,cal_ac5,cal_ac6;
+int16_t cal_ac1;
+int16_t cal_ac2;
+int16_t cal_ac3;
+int16_t cal_b1;
+int16_t cal_b2;
+int16_t cal_mc;
+int16_t cal_md;
+uint16_t cal_ac4;
+uint16_t cal_ac5;
+uint16_t cal_ac6;
 int32_t bmp180_b5 = 0;
 
 boolean bmp180_calibration()
@@ -85,21 +88,22 @@ boolean bmp180_calibration()
   cal_md  = i2c_read16(bmpaddr, BMP180_MD);
 
   // Check for Errors in calibration data. Value never is 0x0000 or 0xFFFF
-  if(!cal_ac1 | !cal_ac2 | !cal_ac3 | !cal_ac4 | !cal_ac5 |
-     !cal_ac6 | !cal_b1 | !cal_b2 | !cal_mc | !cal_md)
-     return false;
+  if (!cal_ac1 | !cal_ac2 | !cal_ac3 | !cal_ac4 | !cal_ac5 | !cal_ac6 | !cal_b1 | !cal_b2 | !cal_mc | !cal_md) {
+    return false;
+  }
 
-  if((cal_ac1==0xFFFF)|
-     (cal_ac2==0xFFFF)|
-     (cal_ac3==0xFFFF)|
-     (cal_ac4==0xFFFF)|
-     (cal_ac5==0xFFFF)|
-     (cal_ac6==0xFFFF)|
-     (cal_b1==0xFFFF)|
-     (cal_b2==0xFFFF)|
-     (cal_mc==0xFFFF)|
-     (cal_md==0xFFFF))
-     return false;
+  if ((cal_ac1 == 0xFFFF)|
+      (cal_ac2 == 0xFFFF)|
+      (cal_ac3 == 0xFFFF)|
+      (cal_ac4 == 0xFFFF)|
+      (cal_ac5 == 0xFFFF)|
+      (cal_ac6 == 0xFFFF)|
+      (cal_b1 == 0xFFFF)|
+      (cal_b2 == 0xFFFF)|
+      (cal_mc == 0xFFFF)|
+      (cal_md == 0xFFFF)) {
+    return false;
+  }
 
   return true;
 }
@@ -119,7 +123,9 @@ double bmp180_readTemperature()
 double bmp180_readPressure()
 {
   int32_t p;
-  uint8_t msb,lsb,xlsb;
+  uint8_t msb;
+  uint8_t lsb;
+  uint8_t xlsb;
 
   i2c_write8(bmpaddr, BMP180_REG_CONTROL, BMP180_PRESSURE3); // Highest resolution
   delay(2 + (4 << BMP180_OSS)); // 26ms conversion time at ultra high resolution
@@ -268,7 +274,8 @@ boolean bme280_calibrate()
 
 double bmp280_readTemperature(void)
 {
-  int32_t var1, var2;
+  int32_t var1;
+  int32_t var2;
 
   int32_t adc_T = i2c_read24(bmpaddr, BME280_REGISTER_TEMPDATA);
   adc_T >>= 4;
@@ -283,7 +290,9 @@ double bmp280_readTemperature(void)
 
 double bmp280_readPressure(void)
 {
-  int64_t var1, var2, p;
+  int64_t var1;
+  int64_t var2;
+  int64_t p;
 
 // Must be done first to get the t_fine variable set up
 //  bmp280_readTemperature();
@@ -297,7 +306,7 @@ double bmp280_readPressure(void)
   var2 = var2 + (((int64_t)_bme280_calib.dig_P4) << 35);
   var1 = ((var1 * var1 * (int64_t)_bme280_calib.dig_P3) >> 8) + ((var1 * (int64_t)_bme280_calib.dig_P2) << 12);
   var1 = (((((int64_t)1) << 47) + var1)) * ((int64_t)_bme280_calib.dig_P1) >> 33;
-  if (var1 == 0) {
+  if (0 == var1) {
     return 0;  // avoid exception caused by division by zero
   }
   p = 1048576 - adc_P;
@@ -336,12 +345,7 @@ double bme280_readHumidity(void)
  * BMP
 \*********************************************************************************************/
 
-double bmp_convertCtoF(double c)
-{
-  return c * 1.8 + 32;
-}
-
-double bmp_readTemperature(bool S)
+double bmp_readTemperature(void)
 {
   double t = NAN;
   
@@ -354,7 +358,7 @@ double bmp_readTemperature(bool S)
     t = bmp280_readTemperature();
   }
   if (!isnan(t)) {
-    if(S) t = bmp_convertCtoF(t);
+    t = convertTemp(t);
     return t;
   }
   return 0;
@@ -386,7 +390,9 @@ double bmp_readHumidity(void)
 
 boolean bmp_detect()
 {
-  if (bmptype) return true;
+  if (bmptype) {
+    return true;
+  }
 
   char log[LOGSZ];
   boolean success = false;
@@ -426,16 +432,20 @@ boolean bmp_detect()
 
 void bmp_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
 {
-  if (!bmptype) return;
+  if (!bmptype) {
+    return;
+  }
 
-  char stemp1[10], stemp2[10], stemp3[10];
+  char stemp1[10];
+  char stemp2[10];
+  char stemp3[10];
 
-  double t = bmp_readTemperature(TEMP_CONVERSION);
+  double t = bmp_readTemperature();
   double p = bmp_readPressure();
   double h = bmp_readHumidity();
-  dtostrf(t, 1, TEMP_RESOLUTION &3, stemp1);
-  dtostrf(p, 1, PRESSURE_RESOLUTION &3, stemp2);
-  dtostrf(h, 1, HUMIDITY_RESOLUTION &3, stemp3);
+  dtostrf(t, 1, sysCfg.flag.temperature_resolution, stemp1);
+  dtostrf(p, 1, sysCfg.flag.pressure_resolution, stemp2);
+  dtostrf(h, 1, sysCfg.flag.humidity_resolution, stemp3);
   if (!strcmp(bmpstype,"BME280")) {
     snprintf_P(svalue, ssvalue, PSTR("%s, \"%s\":{\"Temperature\":%s, \"Humidity\":%s, \"Pressure\":%s}"),
       svalue, bmpstype, stemp1, stemp3, stemp2);
@@ -454,20 +464,21 @@ String bmp_webPresent()
 {
   String page = "";
   if (bmptype) {
-    char stemp[10], sensor[80];
+    char stemp[10];
+    char sensor[80];
 
-    double t_bmp = bmp_readTemperature(TEMP_CONVERSION);
+    double t_bmp = bmp_readTemperature();
     double p_bmp = bmp_readPressure();
     double h_bmp = bmp_readHumidity();
-    dtostrf(t_bmp, 1, TEMP_RESOLUTION &3, stemp);
-    snprintf_P(sensor, sizeof(sensor), HTTP_SNS_TEMP, bmpstype, stemp, (TEMP_CONVERSION) ? 'F' : 'C');
+    dtostrf(t_bmp, 1, sysCfg.flag.temperature_resolution, stemp);
+    snprintf_P(sensor, sizeof(sensor), HTTP_SNS_TEMP, bmpstype, stemp, tempUnit());
     page += sensor;
     if (!strcmp(bmpstype,"BME280")) {
-      dtostrf(h_bmp, 1, HUMIDITY_RESOLUTION &3, stemp);
+      dtostrf(h_bmp, 1, sysCfg.flag.humidity_resolution, stemp);
       snprintf_P(sensor, sizeof(sensor), HTTP_SNS_HUM, bmpstype, stemp);
       page += sensor;
     }
-    dtostrf(p_bmp, 1, PRESSURE_RESOLUTION &3, stemp);
+    dtostrf(p_bmp, 1, sysCfg.flag.pressure_resolution, stemp);
     snprintf_P(sensor, sizeof(sensor), HTTP_SNS_PRESSURE, bmpstype, stemp);
     page += sensor;
   }
