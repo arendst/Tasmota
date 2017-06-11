@@ -1643,7 +1643,6 @@ void do_cmnd_power(byte device, byte state)
       /// a new module type is defined in sonoff_template.h as Shutter (fairly the same as Sonoff Dual)
       /// set pulsetime a bit higher than the shutter rising time (in my case 40 sec. - in web console: "pulsetime 140")
       /// PowerOnState should be 0 (console: "PowerOnState 0")
-/// progmem 480516 Bytes (46%), data 43308 Bytes (52%)
 
     if (SHUTTER == sysCfg.module) {
       setRelay(0);            /// both relays off first
