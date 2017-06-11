@@ -145,6 +145,7 @@ enum module_t {
   SONOFF_DEV,
   H801,
   SONOFF_SC,
+  SHUTTER,
   MAXMODULE };
 
 /********************************************************************************************/
@@ -431,6 +432,18 @@ const mytmplt modules[MAXMODULE] PROGMEM = {
      0, 0, 0, 0, 0, 0, // Flash connection
      0,
      GPIO_LED1_INV,    // GPIO13 Green Led (0 = On, 1 = Off)
+     0, 0, 0, 0
+  },
+  { "Shutter",         // Sonoff Dual as Shutter Switch (ESP8266)
+     0,
+     GPIO_TXD,         // GPIO01 Relay control
+     0,
+     GPIO_RXD,         // GPIO03 Relay control
+     GPIO_USER,        // GPIO04 Optional sensor
+     0,
+     0, 0, 0, 0, 0, 0, // Flash connection
+     0,
+     GPIO_LED1_INV,    // GPIO13 Blue Led (0 = On, 1 = Off)
      0, 0, 0, 0
   }
 };

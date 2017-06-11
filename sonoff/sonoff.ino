@@ -382,7 +382,7 @@ void setRelay(uint8_t rpower)
     power = (1 << Maxdevice) -1;
     rpower = power;
   }
-  if ((SONOFF_DUAL == sysCfg.module) || (CH4 == sysCfg.module)) {
+  if ((SONOFF_DUAL == sysCfg.module) || (SHUTTER == sysCfg.module) || (CH4 == sysCfg.module)) {  ///
     Serial.write(0xA0);
     Serial.write(0x04);
     Serial.write(rpower);
@@ -1623,7 +1623,7 @@ void do_cmnd_power(byte device, byte state)
     device = 1;
   }
   byte mask = 0x01 << (device -1);
-  pulse_timer[(device -1)&3] = 0;
+  if (SHUTTER != sysCfg.module) pulse_timer[(device -1)&3] = 0;  ///
   if (state <= 2) {
     if ((blink_mask & mask)) {
       blink_mask &= (0xFF ^ mask);  // Clear device mask
@@ -1639,11 +1639,27 @@ void do_cmnd_power(byte device, byte state)
     case 2: // Toggle
       power ^= mask;
     }
-    setRelay(power);
+      /// Sonoff Dual(or Ch4) as switch for rolling shutters
+      /// a new module type is defined in sonoff_template.h as Shutter (fairly the same as Sonoff Dual)
+      /// set pulsetime a bit higher than the shutter rising time (in my case 40 sec. - in web console: "pulsetime 140")
+      /// PowerOnState should be 0 (console: "PowerOnState 0")
+/// progmem 480516 Bytes (46%), data 43308 Bytes (52%)
+
+    if (SHUTTER == sysCfg.module) {
+      setRelay(0);            /// both relays off first
+      if (!pulse_timer[0]) {  /// any command during pulsetime stops the motors
+       delay(10);             /// wait 10 ms for relays shutoff - not shure this is needed
+       setRelay(2 - power);   /// ON -> relay 1, OFF -> relay 2
+       pulse_timer[0] = sysCfg.pulsetime[0];
+      } else
+        pulse_timer[0] = 0;    /// leave relays off
+    } else {
+      setRelay(power);
+      pulse_timer[(device -1)&3] = (power & mask) ? sysCfg.pulsetime[(device -1)&3] : 0;
+    }
 #ifdef USE_DOMOTICZ
     domoticz_updatePowerState(device);
 #endif  // USE_DOMOTICZ
-    pulse_timer[(device -1)&3] = (power & mask) ? sysCfg.pulsetime[(device -1)&3] : 0;
   }
   else if (3 == state) { // Blink
     if (!(blink_mask & mask)) {
@@ -2024,7 +2040,10 @@ void stateloop()
     if ((pulse_timer[i] > 0) && (pulse_timer[i] < 112)) {
       pulse_timer[i]--;
       if (!pulse_timer[i]) {
-        do_cmnd_power(i +1, 0);
+        if (SHUTTER == sysCfg.module) 
+          setRelay(0);                  /// relays off
+          else
+          do_cmnd_power(i +1, 0);
       }
     }
 
@@ -2053,11 +2072,13 @@ void stateloop()
   }
 #endif  // USE_WS2812
 
-  if ((SONOFF_DUAL == sysCfg.module) || (CH4 == sysCfg.module)) {
+  if ((SONOFF_DUAL == sysCfg.module) || (SHUTTER == sysCfg.module) || (CH4 == sysCfg.module)) {  ///
     if (ButtonCode) {
       snprintf_P(log, sizeof(log), PSTR("APP: Button code %04X"), ButtonCode);
       addLog(LOG_LEVEL_DEBUG, log);
-      button = PRESSED;
+      if ((SHUTTER == sysCfg.module) && (ButtonCode & 0x03)) {    /// external switches
+        do_cmnd_power(1, (ButtonCode & 0x02) ? 0 : 1);
+      } else button = PRESSED;
       if (0xF500 == ButtonCode) {
         holdcount = (STATES *4) -1;
       }
@@ -2096,7 +2117,7 @@ void stateloop()
     multiwindow--;
   } else {
     if ((!restartflag) && (!holdcount) && (multipress > 0) && (multipress < MAX_BUTTON_COMMANDS +3)) {
-      if ((SONOFF_DUAL == sysCfg.module) || (CH4 == sysCfg.module)) {
+      if ((SONOFF_DUAL == sysCfg.module) || (SHUTTER == sysCfg.module) || (CH4 == sysCfg.module)) {  ///
         flag = ((1 == multipress) || (2 == multipress));
       } else  {
 //        flag = (1 == multipress);
@@ -2459,6 +2480,10 @@ void GPIO_init()
   Maxdevice = 1;
   if (SONOFF_DUAL == sysCfg.module) {
     Maxdevice = 2;
+    Baudrate = 19200;
+  }
+  else if (SHUTTER == sysCfg.module) {  ///
+//    Maxdevice = 1;    
     Baudrate = 19200;
   }
   else if (CH4 == sysCfg.module) {
