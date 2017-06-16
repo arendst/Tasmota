@@ -17,13 +17,15 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#define PARAM8_SIZE  23                    // Number of param bytes
+
 typedef union {                            // Restricted by MISRA-C Rule 18.4 but so usefull...    
   uint32_t data;                           // Allow bit manipulation using SetOption
   struct {
     uint32_t savestate : 1;                // bit 0
     uint32_t button_restrict : 1;          // bit 1
     uint32_t value_units : 1;              // bit 2
-    uint32_t mqtt_enabled : 1;
+    uint32_t mqtt_enabled : 1;             // bit 3
     uint32_t mqtt_response : 1;            // bit 4
     uint32_t mqtt_power_retain : 1;
     uint32_t mqtt_button_retain : 1;
@@ -93,9 +95,8 @@ struct SYSCFG {
 
   uint8_t       power;
   uint8_t       ledstate;
-  uint8_t       ex_switchmode;             // Not used since 3.9.21
 
-  char          ex_domoticz_in_topic[22];  // Not used since 5.1.6
+  uint8_t       param[PARAM8_SIZE];        // was domoticz_in_topic until 5.1.6
   char          state_text[4][11];         // was domoticz_out_topic until 5.1.6
   
   uint16_t      domoticz_update_timer;

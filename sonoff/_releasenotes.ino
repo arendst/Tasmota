@@ -1,4 +1,12 @@
-/* 5.1.6 20170606
+/* 5.1.7 20170616
+ * Prep removal of SetOptions alternatives
+ * Restore webpage upgrade error messages removed in 5.1.5
+ * Add hold button functionality to buttons 2 to 4
+ * Add command SetOption32 1..100 to set Key Hold Time from 0.1 seconds to 10 seconds (#200)
+ * Allow slashes in Topic, GroupTopic, ButtonTopic and SwitchTopic (#507)
+ * Changed webpage form actions from post to get and use relative path url (#434, #522)
+ *
+ * 5.1.6 20170606
  * Shrink code
  * Removed online configuration of Domoticz In and Domoticz Out MQTT strings
  * Removed commands DomoticzInTopic and DomoticzOutTopic

@@ -456,6 +456,10 @@ void CFG_DefaultSet2()
 
   // 5.0.6
   sysCfg.mqtt_retry = MQTT_RETRY_SECS;
+
+  // 5.1.7
+  sysCfg.param[P_HOLD_TIME] = KEY_HOLD_TIME;  // Default 4 seconds hold time
+
 }
 
 /********************************************************************************************/
@@ -589,7 +593,7 @@ void CFG_Delta()
       strlcpy(sysCfg.web_password, WEB_PASSWORD, sizeof(sysCfg.web_password));
     }
     if (sysCfg.version < 0x03091500) {
-      for (byte i = 0; i < 4; i++) sysCfg.switchmode[i] = sysCfg.ex_switchmode;
+      for (byte i = 0; i < 4; i++) sysCfg.switchmode[i] = SWITCH_MODE;
     }
     if (sysCfg.version < 0x04000200) {
       sysCfg.ex_button_restrict = 0;
@@ -649,6 +653,9 @@ void CFG_Delta()
     if (sysCfg.version < 0x05010600) {
       memcpy(sysCfg.state_text, sysCfg.ex_state_text, 33);
       strlcpy(sysCfg.state_text[3], MQTT_CMND_HOLD, sizeof(sysCfg.state_text[3]));
+    }
+    if (sysCfg.version < 0x05010700) {
+      sysCfg.param[P_HOLD_TIME] = KEY_HOLD_TIME;  // Default 4 seconds hold time
     }
     
     sysCfg.version = VERSION;

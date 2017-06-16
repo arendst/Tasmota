@@ -166,6 +166,29 @@ boolean parseIP(uint32_t* addr, const char* str)
   return (3 == i);
 }
 
+void mqttfy(byte option, char* str)
+{
+// option 0 = replace by underscore
+// option 1 = delete character  
+  uint16_t i = 0;
+  while (str[i] > 0) {
+//        if ((str[i] == '/') || (str[i] == '+') || (str[i] == '#') || (str[i] == ' ')) {
+    if ((str[i] == '+') || (str[i] == '#') || (str[i] == ' ')) {
+      if (option) {
+        uint16_t j = i;
+        while (str[j] > 0) {
+          str[j] = str[j +1];
+          j++;
+        }
+        i--;
+      } else {
+        str[i] = '_';
+      }
+    }
+    i++;
+  }
+}
+
 /*********************************************************************************************\
  * Wifi
 \*********************************************************************************************/
