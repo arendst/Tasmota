@@ -24,7 +24,7 @@
     - Select IDE Tools - Flash size: "1M (no SPIFFS)"
   ====================================================*/
 
-#define VERSION                0x05010700  // 5.1.7
+#define VERSION                0x05020000  // 5.2.0
 
 enum log_t   {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG_MORE, LOG_LEVEL_ALL};
 enum week_t  {Last, First, Second, Third, Fourth};
@@ -149,7 +149,7 @@ enum emul_t  {EMUL_NONE, EMUL_WEMO, EMUL_HUE, EMUL_MAX};
 #define MAX_STATUS             11           // Max number of status lines
 
 enum butt_t  {PRESSED, NOT_PRESSED};
-enum opt_t   {P_HOLD_TIME, P_MAX_PARAM8};   // Index in sysCfg.param
+enum opt_t   {P_HOLD_TIME, P_MAX_POWER_RETRY, P_MAX_PARAM8};   // Index in sysCfg.param
 
 #include "support.h"                        // Global support
 
@@ -1001,13 +1001,13 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
       if (sysCfg.flag.savestate) {
         sysCfg.power = power;
       }
-      CFG_Save();
+      CFG_Save(0);
       if (sysCfg.savedata > 1) {
         snprintf_P(stemp1, sizeof(stemp1), PSTR("Every %d seconds"), sysCfg.savedata);
       }
       snprintf_P(svalue, sizeof(svalue), PSTR("{\"SaveData\":\"%s\"}"), (sysCfg.savedata > 1) ? stemp1 : getStateText(sysCfg.savedata));
     }
-    else if (!strcmp_P(type,PSTR("SETOPTION")) && ((index >= 0) && (index <= 11)) || ((index > 31) && (index <= P_MAX_PARAM8 +31))) {
+    else if (!strcmp_P(type,PSTR("SETOPTION")) && ((index >= 0) && (index <= 12)) || ((index > 31) && (index <= P_MAX_PARAM8 +31))) {
       if (index <= 31) {
         ptype = 0;   // SetOption0 .. 31
       } else {
@@ -1027,7 +1027,11 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
               case 8:   // temperature_conversion
               case 10:  // mqtt_offline
               case 11:  // button_swap
+              case 12:  // stop_flash_rotate
                 bitWrite(sysCfg.flag.data, index, payload);
+            }
+            if (12 == index) {
+              CFG_Save(1);
             }
           }
         }
@@ -1036,6 +1040,11 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
             case P_HOLD_TIME:
               if ((payload >= 1) && (payload <= 100)) {
                 sysCfg.param[P_HOLD_TIME] = payload;
+              }
+              break;
+            case P_MAX_POWER_RETRY:
+              if ((payload >= 1) && (payload <= 250)) {
+                sysCfg.param[P_MAX_POWER_RETRY] = payload;
               }
               break;
           }
@@ -1238,7 +1247,7 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
       snprintf_P(svalue, sizeof(svalue), PSTR("{\"CounterType%d\":%d}"), index, bitRead(sysCfg.pCounterType, index -1));
     }
     else if (!strcmp_P(type,PSTR("COUNTERDEBOUNCE"))) {
-      if ((data_len > 0) && (payload16 < 32001) && (pin[GPIO_CNTR1 + index -1] < 99)) {
+      if ((data_len > 0) && (payload16 < 32001)) {
         sysCfg.pCounterDebounce = payload16;
       }
       snprintf_P(svalue, sizeof(svalue), PSTR("{\"CounterDebounce\":%d}"), sysCfg.pCounterDebounce);
@@ -2248,6 +2257,7 @@ void stateloop()
       if (2 == otaflag) {
         otaretry = OTA_ATTEMPTS;
         ESPhttpUpdate.rebootOnUpdate(false);
+        CFG_Save(1);  // Free flash for OTA update
       }
       if (otaflag <= 0) {
 #ifdef USE_WEBSERVER
@@ -2298,7 +2308,7 @@ void stateloop()
             sysCfg.power = power;
           }
         }
-        CFG_Save();
+        CFG_Save(0);
         savedatacounter = sysCfg.savedata;
       }
     }
@@ -2319,7 +2329,7 @@ void stateloop()
         hlw_savestate();
       }
       counter_savestate();
-      CFG_Save();
+      CFG_Save(0);
       restartflag--;
       if (restartflag <= 0) {
         addLog_P(LOG_LEVEL_INFO, PSTR("APP: Restarting"));

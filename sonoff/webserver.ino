@@ -1177,6 +1177,7 @@ void handleUploadLoop()
       _uploaderror = 1;
       return;
     }
+    CFG_Save(1);  // Free flash for upload
     snprintf_P(log, sizeof(log), PSTR("Upload: File %s ..."), upload.filename.c_str());
     addLog(LOG_LEVEL_INFO, log);
     if (!_uploadfiletype) {

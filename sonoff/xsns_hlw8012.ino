@@ -380,7 +380,7 @@ void hlw_margin_chk()
           mqtt_publish_topic_P(1, PSTR("WARNING"), svalue);
           do_cmnd_power(1, 0);
           if (!hlw_mplr_counter) {
-            hlw_mplr_counter = MAX_POWER_RETRY +1;
+            hlw_mplr_counter = sysCfg.param[P_MAX_POWER_RETRY] +1;
           }
           hlw_mplw_counter = sysCfg.hlw_mplw;
         }
