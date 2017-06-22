@@ -124,6 +124,9 @@ extern "C" uint32_t _SPIFFS_end;
 
 #define SPIFFS_END          ((uint32_t)&_SPIFFS_end - 0x40200000) / SPI_FLASH_SEC_SIZE
 
+// Version 3.x config
+#define CFG_LOCATION_3      SPIFFS_END - 4
+
 // Version 4.2 config = eeprom area
 #define CFG_LOCATION        SPIFFS_END  // No need for SPIFFS as it uses EEPROM area
 // Version 5.2 allow for more flash space
@@ -258,9 +261,30 @@ void CFG_Load()
   }
   snprintf_P(log, sizeof(log), PSTR("Cnfg: Load from flash at %X and count %d"), _cfgLocation, sysCfg.saveFlag);
   addLog(LOG_LEVEL_DEBUG, log);
+/*  
   if (sysCfg.cfg_holder != CFG_HOLDER) {
     CFG_Default();
   }
+*/
+  if (sysCfg.cfg_holder != CFG_HOLDER) {
+    // Auto upgrade
+    if ((sysCfg.version < 0x04020000) || (sysCfg.version > 0x06000000)) {
+      noInterrupts();
+      spi_flash_read((CFG_LOCATION_3) * SPI_FLASH_SEC_SIZE, (uint32*)&sysCfg, sizeof(SYSCFG));
+      spi_flash_read((CFG_LOCATION_3 + 1) * SPI_FLASH_SEC_SIZE, (uint32*)&_sysCfgH, sizeof(SYSCFGH));
+      if (sysCfg.saveFlag < _sysCfgH.saveFlag)
+        spi_flash_read((CFG_LOCATION_3 + 1) * SPI_FLASH_SEC_SIZE, (uint32*)&sysCfg, sizeof(SYSCFG));
+      interrupts();
+      if (sysCfg.cfg_holder != CFG_HOLDER) {
+        CFG_Default();
+      } else {
+        sysCfg.saveFlag = 0;
+      }
+    } else {
+      CFG_Default();
+    }
+  }
+  
   _cfgHash = getHash();
 
   RTC_Load();
@@ -672,7 +696,9 @@ void CFG_Delta()
       }
     }
     if (sysCfg.version < 0x05010600) {
-      memcpy(sysCfg.state_text, sysCfg.ex_state_text, 33);
+      if (sysCfg.version > 0x04010100) {
+        memcpy(sysCfg.state_text, sysCfg.ex_state_text, 33);
+      }
       strlcpy(sysCfg.state_text[3], MQTT_CMND_HOLD, sizeof(sysCfg.state_text[3]));
     }
     if (sysCfg.version < 0x05010700) {
@@ -683,6 +709,7 @@ void CFG_Delta()
     }
     
     sysCfg.version = VERSION;
+    CFG_Save(1);
   }
 }
 
