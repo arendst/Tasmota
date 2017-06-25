@@ -195,22 +195,26 @@ uint32_t getHash()
  * Config Save - Save parameters to Flash ONLY if any parameter has changed
 \*********************************************************************************************/
 
-void CFG_Save(byte force)
+uint32_t CFG_Address()
+{
+  return _cfgLocation * SPI_FLASH_SEC_SIZE;
+}
+
+void CFG_Save(byte no_rotate)
 {
   char log[LOGSZ];
 
 #ifndef BE_MINIMAL
-  if ((getHash() != _cfgHash) || force) {
-    if (sysCfg.flag.stop_flash_rotate) {
+  if ((getHash() != _cfgHash) || no_rotate) {
+    if (no_rotate) {
+      stop_flash_rotate = 1;  // Disable flash rotate from now on
+    }
+    if (stop_flash_rotate) {
       _cfgLocation = CFG_LOCATION;
     } else {
-      if (force) {
+      _cfgLocation--;
+      if (_cfgLocation <= (CFG_LOCATION - CFG_ROTATES)) {
         _cfgLocation = CFG_LOCATION;
-      } else {
-        _cfgLocation--;
-        if (_cfgLocation <= (CFG_LOCATION - CFG_ROTATES)) {
-          _cfgLocation = CFG_LOCATION;
-        }
       }
     }
     sysCfg.saveFlag++;
@@ -218,7 +222,7 @@ void CFG_Save(byte force)
     spi_flash_erase_sector(_cfgLocation);
     spi_flash_write(_cfgLocation * SPI_FLASH_SEC_SIZE, (uint32*)&sysCfg, sizeof(SYSCFG));
     interrupts();
-    if (!sysCfg.flag.stop_flash_rotate && force) {
+    if (!stop_flash_rotate && no_rotate) {
       for (byte i = 1; i < CFG_ROTATES; i++) {
         noInterrupts();
         spi_flash_erase_sector(_cfgLocation -i);  // Delete previous configurations by resetting to 0xFF
@@ -226,7 +230,7 @@ void CFG_Save(byte force)
         delay(1);
       }
     }
-    snprintf_P(log, sizeof(log), PSTR("Cnfg: %s (%d bytes) to flash at %X and count %d"), (force) ? "Backup" : "Save", sizeof(SYSCFG), _cfgLocation, sysCfg.saveFlag);
+    snprintf_P(log, sizeof(log), PSTR("Cnfg: Save (%d bytes) to flash at %X and count %d"), sizeof(SYSCFG), _cfgLocation, sysCfg.saveFlag);
     addLog(LOG_LEVEL_DEBUG, log);
     _cfgHash = getHash();
   }

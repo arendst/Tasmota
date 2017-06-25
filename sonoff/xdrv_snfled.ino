@@ -49,30 +49,6 @@ uint8_t sl_wakeupActive = 0;
 uint8_t sl_wakeupDimmer = 0;
 uint16_t sl_wakeupCntr = 0;
 
-uint32_t Atoh(char *s)
-{
-  uint32_t value = 0;
-  uint32_t digit;
-  int8_t c;
-  
-  while((c = *s++)) {
-    if ('0' <= c && c <= '9') {
-      digit = c - '0';
-    }
-    else if ('A' <= c && c <= 'F') {
-      digit = c - 'A' + 10;
-    }
-    else if ('a' <= c && c <= 'f') {
-      digit = c - 'a' + 10;
-    }
-    else {
-      break;
-    }
-    value = (value << 4) | digit;
-  }
-  return value;
-}
-
 void sl_setDim(uint8_t myDimmer)
 {
   float newDim = 100 / (float)myDimmer;
@@ -176,6 +152,7 @@ boolean sl_command(char *type, uint16_t index, char *dataBufUc, uint16_t data_le
 {
   boolean serviced = true;
   boolean coldim = false;
+  char *p;
 
   if (!strcmp_P(type,PSTR("COLOR"))) {
     uint8_t my_color[5];
@@ -185,8 +162,8 @@ boolean sl_command(char *type, uint16_t index, char *dataBufUc, uint16_t data_le
       ccold[2] = '\0';
       memcpy(cwarm, dataBufUc + 2, 2);
       cwarm[2] = '\0';
-      my_color[0] = Atoh(ccold);
-      my_color[1] = Atoh(cwarm);
+      my_color[0] = strtol(ccold, &p, 16);
+      my_color[1] = strtol(cwarm, &p, 16);
       uint16_t temp = my_color[0];
       if (temp < my_color[1]) {
         temp = my_color[1];

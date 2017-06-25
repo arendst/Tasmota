@@ -24,7 +24,7 @@
     - Select IDE Tools - Flash size: "1M (no SPIFFS)"
   ====================================================*/
 
-#define VERSION                0x05020100  // 5.2.1
+#define VERSION                0x05020200  // 5.2.2
 
 enum log_t   {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG_MORE, LOG_LEVEL_ALL};
 enum week_t  {Last, First, Second, Third, Fourth};
@@ -270,6 +270,7 @@ uint16_t syslog_timer = 0;            // Timer to re-enable syslog_level
 byte seriallog_level;                 // Current copy of sysCfg.seriallog_level
 uint16_t seriallog_timer = 0;         // Timer to disable Seriallog
 uint8_t sleep;                        // Current copy of sysCfg.sleep
+uint8_t stop_flash_rotate = 0;        // Allow flash configuration rotation
 
 int blinks = 201;                     // Number of LED blinks
 uint8_t blinkstate = 0;               // LED state
@@ -915,11 +916,13 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
     if (!strcmp(dataBufUc,"?")) {
       data_len = 0;
     }
-    int16_t payload = -1;                // No payload
-    if (data_len && isdigit(dataBuf[0])) {
-      payload = atoi(dataBuf);           // -32766 - 32767
+    int16_t payload = -99;               // No payload
+    uint16_t payload16 = 0;
+    long lnum = strtol(dataBuf, &p, 10);
+    if (p != dataBuf) {
+      payload = (int16_t) lnum;          // -32766 - 32767
+      payload16 = (uint16_t) lnum;       // 0 - 65535
     }
-    uint16_t payload16 = atoi(dataBuf);  // 0 - 65535
 
     if (!strcmp_P(dataBufUc,PSTR("OFF")) || !strcmp_P(dataBufUc,PSTR("FALSE")) || !strcmp_P(dataBufUc,PSTR("STOP")) || !strcmp_P(dataBufUc,PSTR("CELSIUS"))) {
       payload = 0;
@@ -937,8 +940,8 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
       payload = 4;
     }
 
-//    snprintf_P(svalue, sizeof(svalue), PSTR("RSLT: Payload %d, Payload16 %d"), payload, payload16);
-//    addLog(LOG_LEVEL_DEBUG, svalue);
+    snprintf_P(svalue, sizeof(svalue), PSTR("RSLT: Payload %d, Payload16 %d"), payload, payload16);
+    addLog(LOG_LEVEL_DEBUG, svalue);
 
     if (!strcmp_P(type,PSTR("POWER")) && (index > 0) && (index <= Maxdevice)) {
       if ((payload < 0) || (payload > 4)) {
@@ -1030,8 +1033,9 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
               case 12:  // stop_flash_rotate
                 bitWrite(sysCfg.flag.data, index, payload);
             }
-            if (12 == index) {
-              CFG_Save(1);
+            if (12 == index) {  // stop_flash_rotate
+              stop_flash_rotate = payload;
+              CFG_Save(stop_flash_rotate);
             }
           }
         }
@@ -1735,8 +1739,8 @@ void publish_status(uint8_t payload)
   }
 
   if ((0 == payload) || (1 == payload)) {
-    snprintf_P(svalue, sizeof(svalue), PSTR("{\"StatusPRM\":{\"Baudrate\":%d, \"GroupTopic\":\"%s\", \"OtaUrl\":\"%s\", \"Uptime\":%d, \"Sleep\":%d, \"BootCount\":%d, \"SaveCount\":%d}}"),
-      Baudrate, sysCfg.mqtt_grptopic, sysCfg.otaUrl, uptime, sysCfg.sleep, sysCfg.bootcount, sysCfg.saveFlag);
+    snprintf_P(svalue, sizeof(svalue), PSTR("{\"StatusPRM\":{\"Baudrate\":%d, \"GroupTopic\":\"%s\", \"OtaUrl\":\"%s\", \"Uptime\":%d, \"Sleep\":%d, \"BootCount\":%d, \"SaveCount\":%d, \"SaveAddress\":\"%X\"}}"),
+      Baudrate, sysCfg.mqtt_grptopic, sysCfg.otaUrl, uptime, sysCfg.sleep, sysCfg.bootcount, sysCfg.saveFlag, CFG_Address());
     mqtt_publish_topic_P(option, PSTR("STATUS1"), svalue);
   }
 
@@ -2621,6 +2625,7 @@ void setup()
   sysCfg.bootcount++;
   snprintf_P(log, sizeof(log), PSTR("APP: Bootcount %d"), sysCfg.bootcount);
   addLog(LOG_LEVEL_DEBUG, log);
+  stop_flash_rotate = sysCfg.flag.stop_flash_rotate;
   savedatacounter = sysCfg.savedata;
   seriallog_timer = SERIALLOG_TIMER;
   seriallog_level = sysCfg.seriallog_level;

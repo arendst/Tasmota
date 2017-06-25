@@ -1,4 +1,10 @@
-/* 5.2.1 20170622
+/* 5.2.2 20170625
+ * Add configuration SaveAddress to Status 1 and Information Page
+ * Change Sonoff Led Color conversion from AtoH to strtol
+ * Fix possible wrong uploads due to configuration overwrites (#542)
+ * Fix payload negative numbers (#547)
+ *
+ * 5.2.1 20170622
  * Fix Restore Configuration in case of lower version
  * Revert auto configuration upgrade allowing easy upgrade which was removed in version 5.2.0 
  * Fix config auto upgrade from versions below version 4.1.1 (#530)
