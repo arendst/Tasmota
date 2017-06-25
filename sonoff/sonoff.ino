@@ -940,8 +940,8 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
       payload = 4;
     }
 
-    snprintf_P(svalue, sizeof(svalue), PSTR("RSLT: Payload %d, Payload16 %d"), payload, payload16);
-    addLog(LOG_LEVEL_DEBUG, svalue);
+//    snprintf_P(svalue, sizeof(svalue), PSTR("RSLT: Payload %d, Payload16 %d"), payload, payload16);
+//    addLog(LOG_LEVEL_DEBUG, svalue);
 
     if (!strcmp_P(type,PSTR("POWER")) && (index > 0) && (index <= Maxdevice)) {
       if ((payload < 0) || (payload > 4)) {
