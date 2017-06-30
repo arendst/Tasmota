@@ -1,4 +1,11 @@
-/* 5.2.2 20170625
+/* 5.2.3 20170630
+ * Change Sonoff Led color conversion code
+ * Fix SetOption12 handling
+ * Simplify auto configuration upgrade
+ * Add option Upgrade <version_number> to only upgrade to any higher version (Old PR #213)
+ * Change FallbackTopic to cmnd/<MQTTClient>/<command> <parameter> bypassing FullTopic and Prefix (#538)
+ *
+ * 5.2.2 20170625
  * Add configuration SaveAddress to Status 1 and Information Page
  * Change Sonoff Led Color conversion from AtoH to strtol
  * Fix possible wrong uploads due to configuration overwrites (#542)

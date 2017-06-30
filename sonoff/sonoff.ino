@@ -24,7 +24,7 @@
     - Select IDE Tools - Flash size: "1M (no SPIFFS)"
   ====================================================*/
 
-#define VERSION                0x05020200  // 5.2.2
+#define VERSION                0x05020300  // 5.2.3
 
 enum log_t   {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG_MORE, LOG_LEVEL_ALL};
 enum week_t  {Last, First, Second, Third, Fourth};
@@ -230,6 +230,7 @@ char Version[16];                     // Version string from VERSION define
 char Hostname[33];                    // Composed Wifi hostname
 char MQTTClient[33];                  // Composed MQTT Clientname
 uint8_t mqttcounter = 0;              // MQTT connection retry counter
+uint8_t fallbacktopic = 0;            // Use Topic or FallbackTopic
 unsigned long timerxs = 0;            // State loop timer
 int state = 0;                        // State per second flag
 int mqttflag = 2;                     // MQTT connection messages flag
@@ -328,19 +329,26 @@ void getClient(char* output, const char* input, byte size)
 void getTopic_P(char *stopic, byte prefix, char *topic, const char* subtopic)
 {
   char romram[CMDSZ];
-
+  String fulltopic;
+  
   snprintf_P(romram, sizeof(romram), subtopic);
-  String fulltopic = sysCfg.mqtt_fulltopic;
-  if ((0 == prefix) && (-1 == fulltopic.indexOf(F(MQTT_TOKEN_PREFIX)))) {
-    fulltopic += F("/" MQTT_TOKEN_PREFIX);  // Need prefix for commands to handle mqtt topic loops
-  }
-  for (byte i = 0; i < 3; i++) {
-    if ('\0' == sysCfg.mqtt_prefix[i][0]) {
-      snprintf_P(sysCfg.mqtt_prefix[i], sizeof(sysCfg.mqtt_prefix[i]), PREFIXES[i]);
+  if (fallbacktopic) {
+    fulltopic = FPSTR(PREFIXES[prefix]);
+    fulltopic += F("/");
+    fulltopic += MQTTClient;
+  } else {
+    fulltopic = sysCfg.mqtt_fulltopic;
+    if ((0 == prefix) && (-1 == fulltopic.indexOf(F(MQTT_TOKEN_PREFIX)))) {
+      fulltopic += F("/" MQTT_TOKEN_PREFIX);  // Need prefix for commands to handle mqtt topic loops
     }
+    for (byte i = 0; i < 3; i++) {
+      if ('\0' == sysCfg.mqtt_prefix[i][0]) {
+        snprintf_P(sysCfg.mqtt_prefix[i], sizeof(sysCfg.mqtt_prefix[i]), PREFIXES[i]);
+      }
+    }
+    fulltopic.replace(F(MQTT_TOKEN_PREFIX), sysCfg.mqtt_prefix[prefix]);
+    fulltopic.replace(F(MQTT_TOKEN_TOPIC), topic);
   }
-  fulltopic.replace(F(MQTT_TOKEN_PREFIX), sysCfg.mqtt_prefix[prefix]);
-  fulltopic.replace(F(MQTT_TOKEN_TOPIC), topic);
   fulltopic.replace(F("#"), "");
   fulltopic.replace(F("//"), "/");
   if (!fulltopic.endsWith("/")) {
@@ -536,7 +544,9 @@ void mqtt_connected()
       getTopic_P(stopic, 0, sysCfg.mqtt_grptopic, PSTR("#"));
       mqttClient.subscribe(stopic);
       mqttClient.loop();  // Solve LmacRxBlk:1 messages
+      fallbacktopic = 1;
       getTopic_P(stopic, 0, MQTTClient, PSTR("#"));
+      fallbacktopic = 0;
       mqttClient.subscribe(stopic);
       mqttClient.loop();  // Solve LmacRxBlk:1 messages
     }
@@ -883,6 +893,7 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
 #endif  // USE_DOMOTICZ
 
   grpflg = (strstr(topicBuf, sysCfg.mqtt_grptopic) != NULL);
+  fallbacktopic = (strstr(topicBuf, MQTTClient) != NULL);
   type = strrchr(topicBuf, '/') +1;  // Last part of received topic is always the command (type)
 
   index = 1;
@@ -948,6 +959,7 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
         payload = 9;
       }
       do_cmnd_power(index, payload);
+      fallbacktopic = 0;
       return;
     }
     else if (!strcmp_P(type,PSTR("STATUS"))) {
@@ -955,6 +967,7 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
         payload = 99;
       }
       publish_status(payload);
+      fallbacktopic = 0;
       return;
     }
     else if ((sysCfg.module != MOTOR) && !strcmp_P(type,PSTR("POWERONSTATE"))) {
@@ -1035,7 +1048,7 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
             }
             if (12 == index) {  // stop_flash_rotate
               stop_flash_rotate = payload;
-              CFG_Save(stop_flash_rotate);
+              CFG_Save(2);
             }
           }
         }
@@ -1275,11 +1288,15 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
       snprintf_P(svalue, sizeof(svalue), PSTR("{\"FlashMode\":%d}"), ESP.getFlashChipMode());
     }
     else if (!strcmp_P(type,PSTR("UPGRADE")) || !strcmp_P(type,PSTR("UPLOAD"))) {
-      if (1 == payload) {
+      // Check if the payload is numerically 1, and had no trailing chars.
+      //   e.g. "1foo" or "1.2.3" could fool us.
+      // Check if the version we have been asked to upgrade to is higher than our current version.
+      //   We also need at least 3 chars to make a valid version number string.
+      if (((1 == data_len) && (1 == payload)) || ((data_len >= 3) && newerVersion(dataBuf))) {
         otaflag = 3;
         snprintf_P(svalue, sizeof(svalue), PSTR("{\"Upgrade\":\"Version %s from %s\"}"), Version, sysCfg.otaUrl);
       } else {
-        snprintf_P(svalue, sizeof(svalue), PSTR("{\"Upgrade\":\"Option 1 to upgrade\"}"));
+        snprintf_P(svalue, sizeof(svalue), PSTR("{\"Upgrade\":\"Option 1 or >%s to upgrade\"}"), Version);
       }
     }
     else if (!strcmp_P(type,PSTR("OTAURL"))) {
@@ -1573,6 +1590,7 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
   if (svalue[0] != '\0') {
     mqtt_publish_topic_P(5, type, svalue);
   }
+  fallbacktopic = 0;
 }
 
 /********************************************************************************************/
