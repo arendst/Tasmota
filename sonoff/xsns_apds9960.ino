@@ -48,7 +48,6 @@ uint8_t APDS9960type = 0;
 char APDS9960stype[7];
 
 volatile uint8_t recovery_loop_counter = 0;  //count number of stateloops to switch the sensor of for some time
-#define APDS9960_SHORT_RECOVERY          7  //in stateloop-cycles after every gesture - NOT A NICE SOLUTION!!
 #define APDS9960_LONG_RECOVERY           100 //long pause after sensor overload
 #define APDS9960_MAX_GESTURE_CYCLES      50  //how many FIFO-reads are allowed to prevent crash
 bool APDS9960_overload = false;
