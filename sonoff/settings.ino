@@ -200,14 +200,25 @@ uint32_t CFG_Address()
   return _cfgLocation * SPI_FLASH_SEC_SIZE;
 }
 
-void CFG_Save(byte no_rotate)
+void CFG_Save(byte rotate)
 {
+/* Save configuration in eeprom or one of 7 slots below
+ *  
+ * rotate 0 = Save in next flash slot
+ * rotate 1 = Save only in eeprom flash slot until SetOption12 0 or restart
+ * rotate 2 = Save in eeprom flash slot and continue depending on stop_flash_rotate
+ * stop_flash_rotate 0 = Allow flash slot rotation (SetOption12 0)
+ * stop_flash_rotate 1 = Allow only eeprom flash slot use (SetOption12 1)
+ */
   char log[LOGSZ];
 
 #ifndef BE_MINIMAL
-  if ((getHash() != _cfgHash) || no_rotate) {
-    if (no_rotate) {
+  if ((getHash() != _cfgHash) || rotate) {
+    if (1 == rotate) {
       stop_flash_rotate = 1;  // Disable flash rotate from now on
+    }
+    if (2 == rotate) {
+      _cfgLocation = CFG_LOCATION +1;
     }
     if (stop_flash_rotate) {
       _cfgLocation = CFG_LOCATION;
@@ -222,7 +233,7 @@ void CFG_Save(byte no_rotate)
     spi_flash_erase_sector(_cfgLocation);
     spi_flash_write(_cfgLocation * SPI_FLASH_SEC_SIZE, (uint32*)&sysCfg, sizeof(SYSCFG));
     interrupts();
-    if (!stop_flash_rotate && no_rotate) {
+    if (!stop_flash_rotate && rotate) {
       for (byte i = 1; i < CFG_ROTATES; i++) {
         noInterrupts();
         spi_flash_erase_sector(_cfgLocation -i);  // Delete previous configurations by resetting to 0xFF
@@ -240,6 +251,8 @@ void CFG_Save(byte no_rotate)
 
 void CFG_Load()
 {
+/* Load configuration from eeprom or one of 7 slots below if first load does not stop_flash_rotate
+ */
   char log[LOGSZ];
 
   struct SYSCFGH {
@@ -258,7 +271,7 @@ void CFG_Load()
 //  snprintf_P(log, sizeof(log), PSTR("Cnfg: Check at %X with count %d and holder %X"), _cfgLocation -1, _sysCfgH.saveFlag, _sysCfgH.cfg_holder);
 //  addLog(LOG_LEVEL_DEBUG, log);
 
-    if (sysCfg.flag.stop_flash_rotate || (sysCfg.cfg_holder != _sysCfgH.cfg_holder) || (sysCfg.saveFlag > _sysCfgH.saveFlag)) {
+    if (((sysCfg.version > 0x05000200) && sysCfg.flag.stop_flash_rotate) || (sysCfg.cfg_holder != _sysCfgH.cfg_holder) || (sysCfg.saveFlag > _sysCfgH.saveFlag)) {
       break;
     }
     delay(1);
@@ -271,8 +284,9 @@ void CFG_Load()
   }
 */
   if (sysCfg.cfg_holder != CFG_HOLDER) {
+/*
     // Auto upgrade
-    if ((sysCfg.version < 0x04020000) || (sysCfg.version > 0x06000000)) {
+    if ((sysCfg.version < 0x04020000) || (sysCfg.version > VERSION)) {
       noInterrupts();
       spi_flash_read((CFG_LOCATION_3) * SPI_FLASH_SEC_SIZE, (uint32*)&sysCfg, sizeof(SYSCFG));
       spi_flash_read((CFG_LOCATION_3 + 1) * SPI_FLASH_SEC_SIZE, (uint32*)&_sysCfgH, sizeof(SYSCFGH));
@@ -285,6 +299,17 @@ void CFG_Load()
         sysCfg.saveFlag = 0;
       }
     } else {
+      CFG_Default();
+    }
+*/
+    // Auto upgrade
+    noInterrupts();
+    spi_flash_read((CFG_LOCATION_3) * SPI_FLASH_SEC_SIZE, (uint32*)&sysCfg, sizeof(SYSCFG));
+    spi_flash_read((CFG_LOCATION_3 + 1) * SPI_FLASH_SEC_SIZE, (uint32*)&_sysCfgH, sizeof(SYSCFGH));
+    if (sysCfg.saveFlag < _sysCfgH.saveFlag)
+      spi_flash_read((CFG_LOCATION_3 + 1) * SPI_FLASH_SEC_SIZE, (uint32*)&sysCfg, sizeof(SYSCFG));
+    interrupts();
+    if ((sysCfg.cfg_holder != CFG_HOLDER) || (sysCfg.version >= 0x04020000)) {
       CFG_Default();
     }
   }

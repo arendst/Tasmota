@@ -152,19 +152,15 @@ boolean sl_command(char *type, uint16_t index, char *dataBufUc, uint16_t data_le
 {
   boolean serviced = true;
   boolean coldim = false;
-  char *p;
 
   if (!strcmp_P(type,PSTR("COLOR"))) {
-    uint8_t my_color[5];
+    uint8_t my_color[2];
+    char *p;
     if (4 == data_len) {
-      char ccold[3], cwarm[3];
-      memcpy(ccold, dataBufUc, 2);
-      ccold[2] = '\0';
-      memcpy(cwarm, dataBufUc + 2, 2);
-      cwarm[2] = '\0';
-      my_color[0] = strtol(ccold, &p, 16);
-      my_color[1] = strtol(cwarm, &p, 16);
-      uint16_t temp = my_color[0];
+      uint16_t temp = strtol(dataBufUc, &p, 16);
+      my_color[1] = temp & 0xFF;  // Warm
+      temp >>= 8;
+      my_color[0] = temp & 0xFF;  // Cold
       if (temp < my_color[1]) {
         temp = my_color[1];
       }
