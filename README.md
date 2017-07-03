@@ -46,7 +46,7 @@ The following devices are supported:
 - [Electrodragon IoT Relay Board](http://www.electrodragon.com/product/wifi-iot-relay-board-based-esp8266/)
 
 Planned support:
-- [iTead Sonoff 4CH Pro](https://www.itead.cc/sonoff-4ch-pro.html)
+- [iTead Sonoff 4CH Pro](http://sonoff.itead.cc/en/products/sonoff/sonoff-4ch-pro)
 - [iTead Sonoff T1](https://www.itead.cc/smart-home/sonoff-t1.html)
 - [iTead Sonoff B1](https://www.itead.cc/smart-home/sonoff-b1.html)
 
