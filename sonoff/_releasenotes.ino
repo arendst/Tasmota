@@ -1,7 +1,7 @@
 /* 5.2.4 20170703
  * Removed flash mode update after selecting different module solving esp8285 related problems
  * Add device type flag to sonoff_template.ino
- * Change Sonoff Led Wakeup and add support for Sonoff BN-SZ01 Led
+ * Change Sonoff Led Wakeup and add support for Sonoff BN-SZ01 Led (#567)
  *
  * 5.2.3 20170630
  * Change Sonoff Led color conversion code
