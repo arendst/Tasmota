@@ -24,7 +24,7 @@
     - Select IDE Tools - Flash size: "1M (no SPIFFS)"
   ====================================================*/
 
-#define VERSION                0x05020300  // 5.2.3
+#define VERSION                0x05020400  // 5.2.4
 
 enum log_t   {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG_MORE, LOG_LEVEL_ALL};
 enum week_t  {Last, First, Second, Third, Fourth};
@@ -122,7 +122,8 @@ enum emul_t  {EMUL_NONE, EMUL_WEMO, EMUL_HUE, EMUL_MAX};
 
 #define PWM_RANGE              1023         // 255..1023 needs to be devisible by 256
 //#define PWM_FREQ               1000         // 100..1000 Hz led refresh
-#define PWM_FREQ               910          // 100..1000 Hz led refresh (iTead value)
+//#define PWM_FREQ               910          // 100..1000 Hz led refresh (iTead value)
+#define PWM_FREQ               880          // 100..1000 Hz led refresh (BN-SZ01 value)
 
 #define MAX_POWER_HOLD         10           // Time in SECONDS to allow max agreed power (Pow)
 #define MAX_POWER_WINDOW       30           // Time in SECONDS to disable allow max agreed power (Pow)
@@ -294,6 +295,7 @@ uint8_t hlw_flg = 0;                  // Power monitor configured
 uint8_t i2c_flg = 0;                  // I2C configured
 uint8_t spi_flg = 0;                  // SPI configured
 uint8_t pwm_flg = 0;                  // PWM configured
+uint8_t sfl_flg = 0;                  // Sonoff Led flag (0 = No led, 1 = BN-SZ01, 2 = Sonoff Led)
 uint8_t pwm_idxoffset = 0;            // Allowed PWM command offset (change for Sonoff Led)
 
 boolean mDNSbegun = false;
@@ -400,7 +402,7 @@ void setRelay(uint8_t rpower)
     Serial.write('\n');
     Serial.flush();
   }
-  else if (SONOFF_LED == sysCfg.module) {
+  else if (sfl_flg) {
     sl_setPower(rpower &1);
   }
   else if (EXS_RELAY == sysCfg.module) {
@@ -1006,7 +1008,7 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
       }
       snprintf_P(svalue, sizeof(svalue), PSTR("{\"BlinkCount\":%d}"), sysCfg.blinkcount);
     }
-    else if ((SONOFF_LED == sysCfg.module) && sl_command(type, index, dataBufUc, data_len, payload, svalue, sizeof(svalue))) {
+    else if (sfl_flg && sl_command(type, index, dataBufUc, data_len, payload, svalue, sizeof(svalue))) {
       // Serviced
     }
     else if (!strcmp_P(type,PSTR("SAVEDATA"))) {
@@ -1146,7 +1148,7 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
           for (byte i = 0; i < MAX_GPIO_PIN; i++) {
             sysCfg.my_module.gp.io[i] = 0;
           }
-          setModuleFlashMode(0);
+//          setModuleFlashMode(0);  // Fails on esp8285 based devices
         }
         restartflag = 2;
       }
@@ -2074,7 +2076,7 @@ void stateloop()
     }
   }
 
-  if (SONOFF_LED == sysCfg.module) {
+  if (sfl_flg) {  // Sonoff BN-SZ01 or Sonoff Led
     sl_animate();
   }
   
@@ -2302,7 +2304,7 @@ void stateloop()
       if (90 == otaflag) {  // Allow MQTT to reconnect
         otaflag = 0;
         if (otaok) {
-          setModuleFlashMode(1);  // QIO - ESP8266, DOUT - ESP8285 (Sonoff 4CH and Touch)
+          setModuleFlashMode(1);  // QIO - ESP8266, DOUT - ESP8285 (Sonoff 4CH, Touch and BN-SZ01)
           snprintf_P(svalue, sizeof(svalue), PSTR("Successful. Restarting"));
         } else {
           snprintf_P(svalue, sizeof(svalue), PSTR("Failed %s"), ESPhttpUpdate.getLastErrorString().c_str());
@@ -2457,6 +2459,7 @@ void GPIO_init()
   }
 
   memcpy_P(&def_module, &modules[sysCfg.module], sizeof(def_module));
+  sysCfg.my_module.flag = def_module.flag;
   strlcpy(my_module.name, def_module.name, sizeof(my_module.name));
   for (byte i = 0; i < MAX_GPIO_PIN; i++) {
     if (sysCfg.my_module.gp.io[i] > GPIO_NONE) {
@@ -2521,22 +2524,11 @@ void GPIO_init()
     Maxdevice = 0;
     Baudrate = 19200;
   }
+  else if (SONOFF_BN == sysCfg.module) {
+    sfl_flg = 1;
+  }
   else if (SONOFF_LED == sysCfg.module) {
-    pwm_idxoffset = 2;
-    pin[GPIO_WS2812] = 99;  // I do not allow both Sonoff Led AND WS2812 led
-    if (!my_module.gp.io[4]) {
-      pinMode(4, OUTPUT);    // Stop floating outputs
-      digitalWrite(4, LOW);
-    }
-    if (!my_module.gp.io[5]) {
-      pinMode(5, OUTPUT);    // Stop floating outputs
-      digitalWrite(5, LOW);
-    }
-    if (!my_module.gp.io[14]) {
-      pinMode(14, OUTPUT);  // Stop floating outputs
-      digitalWrite(14, LOW);
-    }
-    sl_init();
+    sfl_flg = 2;
   }
   else {
     Maxdevice = 0;
@@ -2560,6 +2552,24 @@ void GPIO_init()
       pinMode(pin[GPIO_SWT1 +i], INPUT_PULLUP);
       lastwallswitch[i] = digitalRead(pin[GPIO_SWT1 +i]);  // set global now so doesn't change the saved power state on first switch check
     }
+  }
+  
+  if (sfl_flg) {              // Sonoff Led or BN-SZ01
+    pwm_idxoffset = sfl_flg;  // 1 for BN-SZ01, 2 for Sonoff Led
+    pin[GPIO_WS2812] = 99;    // I do not allow both Sonoff Led AND WS2812 led
+    if (!my_module.gp.io[4]) {
+      pinMode(4, OUTPUT);     // Stop floating outputs
+      digitalWrite(4, LOW);
+    }
+    if (!my_module.gp.io[5]) {
+      pinMode(5, OUTPUT);     // Stop floating outputs
+      digitalWrite(5, LOW);
+    }
+    if (!my_module.gp.io[14]) {
+      pinMode(14, OUTPUT);    // Stop floating outputs
+      digitalWrite(14, LOW);
+    }
+    sl_init();
   }
   for (byte i = pwm_idxoffset; i < 5; i++) {
     if (pin[GPIO_PWM1 +i] < 99) {

@@ -174,7 +174,8 @@ void setFlashMode(byte option, byte mode)
 void setModuleFlashMode(byte option)
 {
   uint8_t mode = 0;  // QIO - ESP8266
-  if ((SONOFF_TOUCH == sysCfg.module) || (SONOFF_4CH == sysCfg.module)) {
+//  if ((SONOFF_TOUCH == sysCfg.module) || (SONOFF_4CH == sysCfg.module)) {
+  if (sysCfg.my_module.flag &1) {
     mode = 3;  // DOUT - ESP8285
   }
   setFlashMode(option, mode);

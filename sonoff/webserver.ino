@@ -415,7 +415,7 @@ void handleRoot()
 
     page += F("<div id='l1' name='l1'></div>");
     if (Maxdevice) {
-      if (SONOFF_LED == sysCfg.module) {
+      if (sfl_flg) {
         snprintf_P(line, sizeof(line), PSTR("<input type='range' min='1' max='100' value='%d' onchange='lb(value)'>"),
           sysCfg.led_dimmer[0]);
         page += line;
@@ -509,7 +509,7 @@ void handleAjax2()
   }
 /*
  * Will interrupt user action when selected
-  if (SONOFF_LED == sysCfg.module) {
+  if (sfl_flg) {
     snprintf_P(line, sizeof(line), PSTR("<input type='range' min='1' max='100' value='%d' onchange='lb(value)'>"),
       sysCfg.led_dimmer[0]);
     page += line;
@@ -995,7 +995,7 @@ void handleSave()
         gpios += F(", GPIO"); gpios += String(i); gpios += F(" "); gpios += String(sysCfg.my_module.gp.io[i]);
       }
     }
-    setModuleFlashMode(0);
+//    setModuleFlashMode(0);  // Fails on esp8285 based devices
     snprintf_P(stemp, sizeof(stemp), modules[sysCfg.module].name);
     snprintf_P(log, sizeof(log), PSTR("HTTP: %s Module%s"), stemp, gpios.c_str());
     addLog(LOG_LEVEL_INFO, log);
@@ -1218,7 +1218,8 @@ void handleUploadLoop()
           _uploaderror = 4;
           return;
         }
-        if ((SONOFF_TOUCH == sysCfg.module) || (SONOFF_4CH == sysCfg.module)) {
+//        if ((SONOFF_TOUCH == sysCfg.module) || (SONOFF_4CH == sysCfg.module)) {
+        if (sysCfg.my_module.flag &1) {
           upload.buf[2] = 3; // DOUT - ESP8285
           addLog_P(LOG_LEVEL_DEBUG, PSTR("FLSH: Set Flash Mode to 3"));
         }
