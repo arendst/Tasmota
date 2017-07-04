@@ -166,6 +166,73 @@ boolean parseIP(uint32_t* addr, const char* str)
   return (3 == i);
 }
 
+void mqttfy(byte option, char* str)
+{
+// option 0 = replace by underscore
+// option 1 = delete character  
+  uint16_t i = 0;
+  while (str[i] > 0) {
+//        if ((str[i] == '/') || (str[i] == '+') || (str[i] == '#') || (str[i] == ' ')) {
+    if ((str[i] == '+') || (str[i] == '#') || (str[i] == ' ')) {
+      if (option) {
+        uint16_t j = i;
+        while (str[j] > 0) {
+          str[j] = str[j +1];
+          j++;
+        }
+        i--;
+      } else {
+        str[i] = '_';
+      }
+    }
+    i++;
+  }
+}
+
+// Function to parse & check if version_str is newer than our currently installed version.
+bool newerVersion(char* version_str)
+{
+  uint32_t version = 0;
+  uint8_t i = 0;
+  char *str_ptr;
+  char* version_dup = strdup(version_str);  // Duplicate the version_str as strtok_r will modify it.
+
+  if (!version_dup) {
+    return false;  // Bail if we can't duplicate. Assume bad.
+  }
+  // Loop through the version string, splitting on '.' seperators.
+  for (char *str = strtok_r(version_dup, ".", &str_ptr); str && i < sizeof(VERSION); str = strtok_r(NULL, ".", &str_ptr), i++) {
+    int field = atoi(str);
+    // The fields in a version string can only range from 0-255.
+    if ((field < 0) || (field > 255)) {
+      free(version_dup);
+      return false;
+    }
+    // Shuffle the accumulated bytes across, and add the new byte.
+    version = (version << 8) + field;
+    // Check alpha delimiter after 1.2.3 only
+    if ((2 == i) && isalpha(str[strlen(str)-1])) {
+      field = str[strlen(str)-1] & 0x1f;
+      version = (version << 8) + field;
+      i++;
+    }
+  }
+  free(version_dup);  // We no longer need this.
+  // A version string should have 2-4 fields. e.g. 1.2, 1.2.3, or 1.2.3a (= 1.2.3.1).
+  // If not, then don't consider it a valid version string.
+  if ((i < 2) || (i > sizeof(VERSION))) {
+    return false;
+  }
+  // Keep shifting the parsed version until we hit the maximum number of tokens.
+  // VERSION stores the major number of the version in the most significant byte of the uint32_t.
+  while (i < sizeof(VERSION)) {
+    version <<= 8;
+    i++;
+  }
+  // Now we should have a fully constructed version number in uint32_t form.
+  return (version > VERSION);
+}
+
 /*********************************************************************************************\
  * Wifi
 \*********************************************************************************************/
