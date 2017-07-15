@@ -1,4 +1,12 @@
-/* 5.2.4 20170703
+/* 5.3.0 20170715
+ * Major Hue rewrite which might introduce Alexa problems. If so, initiate an issue
+ * Add support for Sonoff Led and BN-SZ01 Ceiling Led brightness control to Hue
+ * Fix Sonoff Led Power, Dimmer and Color MQTT response (#176)
+ * Add commands Delay and Backlog to allow multiple commands at once separated by ";" (#593)
+ * Use default flashmode DOUT to solve restart hangs on esp8285 chips (#453, #598)
+ * Change Web console column width from 99 to 300 (#599)
+ *
+ * 5.2.4 20170703
  * Removed flash mode update after selecting different module solving esp8285 related problems
  * Add device type flag to sonoff_template.ino
  * Change Sonoff Led Wakeup and add support for Sonoff BN-SZ01 Led (#567)

@@ -20,11 +20,12 @@
   Prerequisites:
     - Change libraries/PubSubClient/src/PubSubClient.h
         #define MQTT_MAX_PACKET_SIZE 512
- 
-    - Select IDE Tools - Flash size: "1M (no SPIFFS)"
+
+    - Select IDE Tools - Flash Mode: "DOUT"
+    - Select IDE Tools - Flash Size: "1M (no SPIFFS)"
   ====================================================*/
 
-#define VERSION                0x05020400  // 5.2.4
+#define VERSION                0x05030000  // 5.3.0
 
 enum log_t   {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG_MORE, LOG_LEVEL_ALL};
 enum week_t  {Last, First, Second, Third, Fourth};
@@ -136,7 +137,7 @@ enum emul_t  {EMUL_NONE, EMUL_WEMO, EMUL_HUE, EMUL_MAX};
 #define SERIALLOG_TIMER        600          // Seconds to disable SerialLog
 #define OTA_ATTEMPTS           10           // Number of times to try fetching the new firmware
 
-#define INPUT_BUFFER_SIZE      100          // Max number of characters in serial buffer
+#define INPUT_BUFFER_SIZE      250          // Max number of characters in (serial) command buffer
 #define CMDSZ                  20           // Max number of characters in command
 #define TOPSZ                  100          // Max number of characters in topic string
 #define LOGSZ                  128          // Max number of characters in log string
@@ -145,6 +146,8 @@ enum emul_t  {EMUL_NONE, EMUL_WEMO, EMUL_HUE, EMUL_MAX};
 #else
   #define MAX_LOG_LINES        20           // Max number of lines in weblog
 #endif
+#define MAX_BACKLOG            16           // Max number of commands in backlog (chk blogidx and blogptr code)
+#define MIN_BACKLOG_DELAY      2            // Minimal backlog delay in 0.1 seconds
 
 #define APP_BAUDRATE           115200       // Default serial baudrate
 #define MAX_STATUS             11           // Max number of status lines
@@ -179,7 +182,7 @@ enum opt_t   {P_HOLD_TIME, P_MAX_POWER_RETRY, P_MAX_PARAM8};   // Index in sysCf
 #ifdef USE_I2C
   #include <Wire.h>                         // I2C support library
 #endif  // USE_I2C
-#ifdef USI_SPI
+#ifdef USE_SPI
   #include <SPI.h>                          // SPI support, TFT
 #endif  // USE_SPI
 #include "settings.h"
@@ -257,6 +260,11 @@ uint8_t blink_powersave;              // Blink start power save state
 uint16_t mqtt_cmnd_publish = 0;       // ignore flag for publish command
 uint8_t latching_power = 0;           // Power state at latching start
 uint8_t latching_relay_pulse = 0;     // Latching relay pulse timer
+String Backlog[MAX_BACKLOG];          // Command backlog
+uint8_t blogidx = 0;                  // Command backlog index
+uint8_t blogptr = 0;                  // Command backlog pointer
+uint8_t blogmutex = 0;                // Command backlog pending
+uint16_t blogdelay = 0;               // Command backlog delay
 
 #ifdef USE_MQTT_TLS
   WiFiClientSecure espClient;         // Wifi Secure Client
@@ -936,6 +944,7 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
       payload = (int16_t) lnum;          // -32766 - 32767
       payload16 = (uint16_t) lnum;       // 0 - 65535
     }
+    blogdelay = MIN_BACKLOG_DELAY;       // Reset backlog delay
 
     if (!strcmp_P(dataBufUc,PSTR("OFF")) || !strcmp_P(dataBufUc,PSTR("FALSE")) || !strcmp_P(dataBufUc,PSTR("STOP")) || !strcmp_P(dataBufUc,PSTR("CELSIUS"))) {
       payload = 0;
@@ -956,7 +965,34 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
 //    snprintf_P(svalue, sizeof(svalue), PSTR("RSLT: Payload %d, Payload16 %d"), payload, payload16);
 //    addLog(LOG_LEVEL_DEBUG, svalue);
 
-    if (!strcmp_P(type,PSTR("POWER")) && (index > 0) && (index <= Maxdevice)) {
+    if (!strcmp_P(type,PSTR("BACKLOG"))) {
+      if (data_len) {
+        char *blcommand = strtok(dataBuf, ";");
+        while (blcommand != NULL) {
+          Backlog[blogidx] = String(blcommand);
+          blogidx++;
+/*
+          if (blogidx >= MAX_BACKLOG) {
+            blogidx = 0;
+          }
+*/
+          blogidx &= 0xF;
+          blcommand = strtok(NULL, ";");
+        }
+        snprintf_P(svalue, sizeof(svalue), PSTR("{\"Backlog\":\"Appended\"}"));
+      } else {
+        uint8_t blflag = (blogptr == blogidx);
+        blogptr = blogidx;
+        snprintf_P(svalue, sizeof(svalue), PSTR("{\"Backlog\":\"%s\"}"), blflag ? "Empty" : "Aborted");
+      }
+    }
+    else if (!strcmp_P(type,PSTR("DELAY"))) {
+      if ((payload >= MIN_BACKLOG_DELAY) && (payload <= 3600)) {
+        blogdelay = payload;
+      }
+      snprintf_P(svalue, sizeof(svalue), PSTR("{\"Delay\":%d}"), blogdelay);
+    }
+    else if (!strcmp_P(type,PSTR("POWER")) && (index > 0) && (index <= Maxdevice)) {
       if ((payload < 0) || (payload > 4)) {
         payload = 9;
       }
@@ -1148,7 +1184,6 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
           for (byte i = 0; i < MAX_GPIO_PIN; i++) {
             sysCfg.my_module.gp.io[i] = 0;
           }
-//          setModuleFlashMode(0);  // Fails on esp8285 based devices
         }
         restartflag = 2;
       }
@@ -1646,12 +1681,19 @@ void do_cmnd_power(byte device, byte state)
 {
 // device  = Relay number 1 and up
 // state 0 = Relay Off
-// state 1 = Relay on (turn off after sysCfg.pulsetime * 100 mSec if enabled)
+// state 1 = Relay On (turn off after sysCfg.pulsetime * 100 mSec if enabled)
 // state 2 = Toggle relay
 // state 3 = Blink relay
 // state 4 = Stop blinking relay
+// state 6 = Relay Off and no publishPowerState
+// state 7 = Relay On and no publishPowerState
 // state 9 = Show power state
 
+  uint8_t publishPower = 1;
+  if ((6 == state) || (7 == state)) {
+    state &= 1;
+    publishPower = 0;
+  }
   if ((device < 1) || (device > Maxdevice)) {
     device = 1;
   }
@@ -1698,7 +1740,9 @@ void do_cmnd_power(byte device, byte state)
     }
     return;
   }
-  mqtt_publishPowerState(device);
+  if (publishPower) {
+    mqtt_publishPowerState(device);
+  }
 }
 
 void stop_all_power_blink()
@@ -1718,7 +1762,7 @@ void stop_all_power_blink()
 void do_cmnd(char *cmnd)
 {
   char stopic[CMDSZ];
-  char svalue[128];
+  char svalue[INPUT_BUFFER_SIZE];
   char *start;
   char *token;
 
@@ -2045,7 +2089,7 @@ void stateloop()
   if (mqtt_cmnd_publish) {
     mqtt_cmnd_publish--;  // Clean up
   }
-
+  
   if (latching_relay_pulse) {
     latching_relay_pulse--;
     if (!latching_relay_pulse) {
@@ -2274,9 +2318,25 @@ void stateloop()
     }
   }
 
+  if (blogdelay) {
+    blogdelay--;
+  }
+  if ((blogptr != blogidx) && !blogdelay && !blogmutex) {
+    blogmutex = 1;
+    do_cmnd((char*)Backlog[blogptr].c_str());
+    blogmutex = 0;
+    blogptr++;
+/*
+    if (blogptr >= MAX_BACKLOG) {
+      blogptr = 0;
+    }
+*/
+    blogptr &= 0xF;
+  }
+
   switch (state) {
   case (STATES/10)*2:
-    if (otaflag) {
+    if (otaflag && (blogptr == blogidx)) {
       otaflag--;
       if (2 == otaflag) {
         otaretry = OTA_ATTEMPTS;
@@ -2304,7 +2364,7 @@ void stateloop()
       if (90 == otaflag) {  // Allow MQTT to reconnect
         otaflag = 0;
         if (otaok) {
-          setModuleFlashMode(1);  // QIO - ESP8266, DOUT - ESP8285 (Sonoff 4CH, Touch and BN-SZ01)
+          setFlashMode(1, 3);  // DOUT for both ESP8266 and ESP8285
           snprintf_P(svalue, sizeof(svalue), PSTR("Successful. Restarting"));
         } else {
           snprintf_P(svalue, sizeof(svalue), PSTR("Failed %s"), ESPhttpUpdate.getLastErrorString().c_str());
@@ -2318,7 +2378,7 @@ void stateloop()
     if (rtc_midnight_now()) {
       counter_savestate();
     }
-    if (savedatacounter) {
+    if (savedatacounter && (blogptr == blogidx)) {
       savedatacounter--;
       if (savedatacounter <= 0) {
         if (sysCfg.flag.savestate) {
@@ -2336,7 +2396,7 @@ void stateloop()
         savedatacounter = sysCfg.savedata;
       }
     }
-    if (restartflag) {
+    if (restartflag && (blogptr == blogidx)) {
       if (211 == restartflag) {
         CFG_Default();
         restartflag = 2;
@@ -2459,7 +2519,7 @@ void GPIO_init()
   }
 
   memcpy_P(&def_module, &modules[sysCfg.module], sizeof(def_module));
-  sysCfg.my_module.flag = def_module.flag;
+//  sysCfg.my_module.flag = def_module.flag;
   strlcpy(my_module.name, def_module.name, sizeof(my_module.name));
   for (byte i = 0; i < MAX_GPIO_PIN; i++) {
     if (sysCfg.my_module.gp.io[i] > GPIO_NONE) {

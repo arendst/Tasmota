@@ -130,7 +130,7 @@ extern "C" uint32_t _SPIFFS_end;
 // Version 4.2 config = eeprom area
 #define CFG_LOCATION        SPIFFS_END  // No need for SPIFFS as it uses EEPROM area
 // Version 5.2 allow for more flash space
-#define CFG_ROTATES         8           // Number of additional flash sectors used (handles uploads)
+#define CFG_ROTATES         8           // Number of flash sectors used (handles uploads)
 
 uint32_t _cfgHash = 0;
 uint32_t _cfgLocation = CFG_LOCATION;
@@ -169,16 +169,6 @@ void setFlashMode(byte option, byte mode)
     }
   }
   delete[] _buffer;
-}
-
-void setModuleFlashMode(byte option)
-{
-  uint8_t mode = 0;  // QIO - ESP8266
-//  if ((SONOFF_TOUCH == sysCfg.module) || (SONOFF_4CH == sysCfg.module)) {
-  if (sysCfg.my_module.flag &1) {
-    mode = 3;  // DOUT - ESP8285
-  }
-  setFlashMode(option, mode);
 }
 
 uint32_t getHash()
