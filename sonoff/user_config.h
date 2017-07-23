@@ -81,6 +81,7 @@
 #define MQTT_STATUS_OFF        "OFF"             // [StateText1] Command or Status result when turned off (needs to be a string like "0" or "Off")
 #define MQTT_STATUS_ON         "ON"              // [StateText2] Command or Status result when turned on (needs to be a string like "1" or "On")
 #define MQTT_CMND_TOGGLE       "TOGGLE"          // [StateText3] Command to send when toggling (needs to be a string like "2" or "Toggle")
+#define MQTT_CMND_HOLD         "HOLD"            // [StateText4] Command to send when button is kept down for over KEY_HOLD_TIME * 0.1 seconds (needs to be a string like "HOLD")
 
 // -- MQTT topics ---------------------------------
 //#define MQTT_FULLTOPIC         "tasmota/bedroom/%topic%/%prefix%/" // Up to max 80 characers
@@ -101,8 +102,8 @@
 
 // -- MQTT - Domoticz -----------------------------
 #define USE_DOMOTICZ                             // Enable Domoticz (+7k code, +0.3k mem) - Disable by //
-  #define DOMOTICZ_IN_TOPIC      "domoticz/in"   // [DomoticzInTopic]
-  #define DOMOTICZ_OUT_TOPIC     "domoticz/out"  // [DomoticzOutTopic]
+  #define DOMOTICZ_IN_TOPIC      "domoticz/in"   // Domoticz Input Topic
+  #define DOMOTICZ_OUT_TOPIC     "domoticz/out"  // Domoticz Output Topic
   #define DOMOTICZ_UPDATE_TIMER  0               // [DomoticzUpdateTimer] Send relay status (0 = disable, 1 - 3600 seconds) (Optional)
 
 // -- HTTP ----------------------------------------
@@ -140,7 +141,8 @@
 #define APP_BLINKCOUNT         10                // [BlinkCount] Number of blinks (0 = 32000)
 #define APP_SLEEP              0                 // [Sleep] Sleep time to lower energy consumption (0 = Off, 1 - 250 mSec)
 
-#define SWITCH_MODE            TOGGLE            // [SwitchMode] TOGGLE, FOLLOW, FOLLOW_INV, PUSHBUTTON or PUSHBUTTON_INV (the wall switch state)
+#define KEY_HOLD_TIME          40                // [SetOption32] Number of 0.1 seconds to hold Button or external Pushbutton before sending HOLD message
+#define SWITCH_MODE            TOGGLE            // [SwitchMode] TOGGLE, FOLLOW, FOLLOW_INV, PUSHBUTTON, PUSHBUTTON_INV, PUSHBUTTONHOLD or PUSHBUTTONHOLD_INV (the wall switch state)
 #define WS2812_LEDS            30                // [Pixels] Number of WS2812 LEDs to start with
 
 #define TEMP_CONVERSION        0                 // [TempUnit] Return temperature in (0 = Celsius or 1 = Fahrenheit)
@@ -163,7 +165,7 @@
 #define USE_IR_REMOTE                            // Send IR remote commands using library IRremoteESP8266 and ArduinoJson (+3k code, 0.3k mem)
 //  #define USE_IR_HVAC                            // Support for HVAC system using IR (+2k code)
 
-#define USE_WS2812                               // WS2812 Led string using library NeoPixelBus (+8k code, +1k mem) - Disable by //
+#define USE_WS2812                               // WS2812 Led string using library NeoPixelBus (+11k code, +1k mem) - Disable by //
   #define USE_WS2812_CTYPE     1                 // WS2812 Color type (0 - RGB, 1 - GRB)
 //  #define USE_WS2812_DMA                         // DMA supports only GPIO03 (= Serial RXD) (+1k mem)
                                                  //   When USE_WS2812_DMA is enabled expect Exceptions on Pow

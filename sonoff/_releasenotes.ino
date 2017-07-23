@@ -1,10 +1,73 @@
-/* 5.1.3 20170520
+/* 5.3.0 20170715
+ * Major Hue rewrite which might introduce Alexa problems. If so, initiate an issue
+ * Add support for Sonoff Led and BN-SZ01 Ceiling Led brightness control to Hue
+ * Fix Sonoff Led Power, Dimmer and Color MQTT response (#176)
+ * Add commands Delay and Backlog to allow multiple commands at once separated by ";" (#593)
+ * Use default flashmode DOUT to solve restart hangs on esp8285 chips (#453, #598)
+ * Change Web console column width from 99 to 300 (#599)
+ *
+ * 5.2.4 20170703
+ * Removed flash mode update after selecting different module solving esp8285 related problems
+ * Add device type flag to sonoff_template.ino
+ * Change Sonoff Led Wakeup and add support for Sonoff BN-SZ01 Led (#567)
+ *
+ * 5.2.3 20170630
+ * Change Sonoff Led color conversion code
+ * Fix SetOption12 handling
+ * Simplify auto configuration upgrade
+ * Add option Upgrade <version_number> to only upgrade to any higher version (Old PR #213)
+ * Change FallbackTopic to cmnd/<MQTTClient>/<command> <parameter> bypassing FullTopic and Prefix (#538)
+ *
+ * 5.2.2 20170625
+ * Add configuration SaveAddress to Status 1 and Information Page
+ * Change Sonoff Led Color conversion from AtoH to strtol
+ * Fix possible wrong uploads due to configuration overwrites (#542)
+ * Fix payload negative numbers (#547)
+ *
+ * 5.2.1 20170622
+ * Fix Restore Configuration in case of lower version
+ * Revert auto configuration upgrade allowing easy upgrade which was removed in version 5.2.0 
+ * Fix config auto upgrade from versions below version 4.1.1 (#530)
+ *
+ * 5.2.0 20170619
+ * Add command SetOption12 1 to disable newly released configuration flash rotate to reduce flash wear
+ * Fix command CounterDebounce by removing test for active GPIO (#524)
+ * Add command SetOption33 1..250 to allow user configure POW Max_Power_Retry count (#525)
+ *
+ * 5.1.7 20170616
+ * Prep removal of SetOptions alternatives
+ * Restore webpage upgrade error messages removed in 5.1.5
+ * Add hold button functionality to buttons 2 to 4
+ * Add command SetOption32 1..100 to set Key Hold Time from 0.1 seconds to 10 seconds (#200)
+ * Allow slashes in Topic, GroupTopic, ButtonTopic and SwitchTopic (#507)
+ * Changed webpage form actions from post to get and use relative path url (#434, #522)
+ *
+ * 5.1.6 20170606
+ * Shrink code
+ * Removed online configuration of Domoticz In and Domoticz Out MQTT strings
+ * Removed commands DomoticzInTopic and DomoticzOutTopic
+ * Add define KEY_HOLD_TIME to configure button hold threshold before sending MQTT Hold message
+ * Add command StateText4 to configure button MQTT Hold text (= MQTT_CMND_HOLD)
+ * Add command SetOption11 0|1 to swap pushbutton single and double press functionality (#200)
+ * Add command SwitchMode<x> 5 (PUSHBUTTONHOLD) and 6 (PUSHBUTTONHOLD_INV) (#489)
+ *
+ * 5.1.5 20170604
+ * Shrink code in preparation to ESP8266-Arduino 2.4.0-rc1
+ * Add effect parameter to HUE Device (#464)
+ *
+ * 5.1.4 20170601
+ * Removed pre-compiled versions from repository as they are available within the release
+ * Changed HUE Device type to color supporting version (#464)
+ * Fix compile error when BE_MINIMAL is selected (#467, #476)
+ * Add multiple compiled versions to release using updated Travis script and platformio.ini (#467)
+ *
+ * 5.1.3 20170520
  * Add Domoticz Counter
  *
  * 5.1.2 20170519
  * Fix Counter/Timer JSON message and update Counter/Timer on webpage
  * Fix WS2812 Domoticz related regression issues
- * 
+ *
  * 5.1.1 20170517
  * Allow command FullTopic in group mode
  * Prepare for more use of RTC memory
