@@ -1,4 +1,14 @@
-/* 5.3.0 20170715
+/* 5.4.0 20170725
+ * Fix command reset regression introduced in 5.2.0
+ * Increase polling from 0.1 second to 0.05 second
+ * Add multipress to all buttons
+ * Fix button 1 double press behaviour on multi relay devices
+ * Add support for Hua Fan Smart Socket (#479)
+ * Add support for Sonoff 4ch Pro (#565)
+ * Add command SetOption13 1 to allow immediate action on single button press 
+ *   (disables multipress, hold and unrestricted commands) (#587)
+ *
+ * 5.3.0 20170715
  * Major Hue rewrite which might introduce Alexa problems. If so, initiate an issue
  * Add support for Sonoff Led and BN-SZ01 Ceiling Led brightness control to Hue
  * Fix Sonoff Led Power, Dimmer and Color MQTT response (#176)

@@ -197,7 +197,7 @@ void CFG_Save(byte rotate)
  *  
  * rotate 0 = Save in next flash slot
  * rotate 1 = Save only in eeprom flash slot until SetOption12 0 or restart
- * rotate 2 = Save in eeprom flash slot and continue depending on stop_flash_rotate
+ * rotate 2 = Save in eeprom flash slot, erase next flash slots and continue depending on stop_flash_rotate
  * stop_flash_rotate 0 = Allow flash slot rotation (SetOption12 0)
  * stop_flash_rotate 1 = Allow only eeprom flash slot use (SetOption12 1)
  */
@@ -205,10 +205,10 @@ void CFG_Save(byte rotate)
 
 #ifndef BE_MINIMAL
   if ((getHash() != _cfgHash) || rotate) {
-    if (1 == rotate) {
-      stop_flash_rotate = 1;  // Disable flash rotate from now on
+    if (1 == rotate) {   // Use eeprom flash slot only and disable flash rotate from now on (upgrade)
+      stop_flash_rotate = 1;
     }
-    if (2 == rotate) {
+    if (2 == rotate) {   // Use eeprom flash slot and erase next flash slots if stop_flash_rotate is off (default)
       _cfgLocation = CFG_LOCATION +1;
     }
     if (stop_flash_rotate) {
@@ -390,7 +390,7 @@ void CFG_Default()
   addLog_P(LOG_LEVEL_NONE, PSTR("Cnfg: Use defaults"));
   CFG_DefaultSet1();
   CFG_DefaultSet2();
-  CFG_Save(1);
+  CFG_Save(2);
 }
 
 void CFG_DefaultSet1()

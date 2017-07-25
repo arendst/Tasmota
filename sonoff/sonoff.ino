@@ -25,7 +25,7 @@
     - Select IDE Tools - Flash Size: "1M (no SPIFFS)"
   ====================================================*/
 
-#define VERSION                0x05030000  // 5.3.0
+#define VERSION                0x05040000  // 5.4.0
 
 enum log_t   {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG_MORE, LOG_LEVEL_ALL};
 enum week_t  {Last, First, Second, Third, Fourth};
@@ -132,7 +132,7 @@ enum emul_t  {EMUL_NONE, EMUL_WEMO, EMUL_HUE, EMUL_MAX};
 #define SAFE_POWER_WINDOW      30           // Time in MINUTES to disable allow max unit safe power (Pow)
 #define MAX_POWER_RETRY        5            // Retry count allowing agreed power limit overflow (Pow)
 
-#define STATES                 10           // loops per second
+#define STATES                 20           // State loops per second
 #define SYSLOG_TIMER           600          // Seconds to restore syslog_level
 #define SERIALLOG_TIMER        600          // Seconds to disable SerialLog
 #define OTA_ATTEMPTS           10           // Number of times to try fetching the new firmware
@@ -287,8 +287,8 @@ uint8_t blinkstate = 0;               // LED state
 
 uint8_t lastbutton[4] = { NOT_PRESSED, NOT_PRESSED, NOT_PRESSED, NOT_PRESSED };     // Last button states
 uint8_t holdbutton[4] = { 0 };        // Timer for button hold
-uint8_t multiwindow = 0;              // Max time between button presses to record press count
-uint8_t multipress = 0;               // Number of button presses within multiwindow
+uint8_t multiwindow[4] = { 0 };       // Max time between button presses to record press count
+uint8_t multipress[4] = { 0 };        // Number of button presses within multiwindow
 uint8_t lastwallswitch[4];            // Last wall switch states
 uint8_t holdwallswitch[4] = { 0 };    // Timer for wallswitch push button hold
 uint8_t blockgpio0 = 4;               // Block GPIO0 for 4 seconds after poweron to workaround Wemos D1 RTS circuit
@@ -1061,7 +1061,7 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
       }
       snprintf_P(svalue, sizeof(svalue), PSTR("{\"SaveData\":\"%s\"}"), (sysCfg.savedata > 1) ? stemp1 : getStateText(sysCfg.savedata));
     }
-    else if (!strcmp_P(type,PSTR("SETOPTION")) && ((index >= 0) && (index <= 12)) || ((index > 31) && (index <= P_MAX_PARAM8 +31))) {
+    else if (!strcmp_P(type,PSTR("SETOPTION")) && ((index >= 0) && (index <= 13)) || ((index > 31) && (index <= P_MAX_PARAM8 +31))) {
       if (index <= 31) {
         ptype = 0;   // SetOption0 .. 31
       } else {
@@ -1082,6 +1082,7 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
               case 10:  // mqtt_offline
               case 11:  // button_swap
               case 12:  // stop_flash_rotate
+              case 13:  // button_single
                 bitWrite(sysCfg.flag.data, index, payload);
             }
             if (12 == index) {  // stop_flash_rotate
@@ -2069,167 +2070,152 @@ void every_second()
   }
 }
 
-void stateloop()
+/*********************************************************************************************\
+ * Button handler with single press only or multi-press and hold on all buttons
+\*********************************************************************************************/
+
+void button_handler()
 {
   uint8_t button = NOT_PRESSED;
-  uint8_t flag;
-  uint8_t switchflag;
-  uint8_t power_now;
+  uint8_t butt_present = 0;
+  uint8_t flag = 0;
   char scmnd[20];
   char log[LOGSZ];
-  char svalue[80];  // was MESSZ
 
-  timerxs = millis() + (1000 / STATES);
-  state++;
-  if (STATES == state) {             // Every second
-    state = 0;
-    every_second();
-  }
+  for (byte i = 0; i < Maxdevice; i++) {
+    butt_present = 0;
 
-  if (mqtt_cmnd_publish) {
-    mqtt_cmnd_publish--;  // Clean up
-  }
-  
-  if (latching_relay_pulse) {
-    latching_relay_pulse--;
-    if (!latching_relay_pulse) {
-      setLatchingRelay(0, 0);
-    }
-  }
-
-  for (byte i = 0; i < MAX_PULSETIMERS; i++)
-    if ((pulse_timer[i] > 0) && (pulse_timer[i] < 112)) {
-      pulse_timer[i]--;
-      if (!pulse_timer[i]) {
-        do_cmnd_power(i +1, 0);
-      }
-    }
-
-  if (blink_mask) {
-    blink_timer--;
-    if (!blink_timer) {
-      blink_timer = sysCfg.blinktime;
-      blink_counter--;
-      if (!blink_counter) {
-        stop_all_power_blink();
+    if (!i && ((SONOFF_DUAL == sysCfg.module) || (CH4 == sysCfg.module))) {
+      butt_present = 1;
+      if (ButtonCode) {
+        snprintf_P(log, sizeof(log), PSTR("APP: Button code %04X"), ButtonCode);
+        addLog(LOG_LEVEL_DEBUG, log);
+        button = PRESSED;
+        if (0xF500 == ButtonCode) {                     // Button hold
+          holdbutton[i] = (sysCfg.param[P_HOLD_TIME] * (STATES / 10)) -1;
+        }
+        ButtonCode = 0;
       } else {
-        blink_power ^= 1;
-        power_now = (power & (0xFF ^ blink_mask)) | ((blink_power) ? blink_mask : 0);
-        setRelay(power_now);
+        button = NOT_PRESSED;
       }
-    }
-  }
-
-  if (sfl_flg) {  // Sonoff BN-SZ01 or Sonoff Led
-    sl_animate();
-  }
-  
-#ifdef USE_WS2812
-  if (pin[GPIO_WS2812] < 99) {
-    ws2812_animate();
-  }
-#endif  // USE_WS2812
-
-  if ((SONOFF_DUAL == sysCfg.module) || (CH4 == sysCfg.module)) {
-    if (ButtonCode) {
-      snprintf_P(log, sizeof(log), PSTR("APP: Button code %04X"), ButtonCode);
-      addLog(LOG_LEVEL_DEBUG, log);
-      button = PRESSED;
-      if (0xF500 == ButtonCode) {
-        holdbutton[0] = (STATES *4) -1;
-      }
-      ButtonCode = 0;
     } else {
-      button = NOT_PRESSED;
-    }
-  } else {
-    if ((pin[GPIO_KEY1] < 99) && !blockgpio0) {
-      button = digitalRead(pin[GPIO_KEY1]);
-    }
-  }
-  if ((PRESSED == button) && (NOT_PRESSED == lastbutton[0])) {
-    multipress = (multiwindow) ? multipress +1 : 1;
-    snprintf_P(log, sizeof(log), PSTR("APP: Multipress %d"), multipress);
-    addLog(LOG_LEVEL_DEBUG, log);
-    blinks = 201;
-    multiwindow = STATES /2;         // 1/2 second multi press window
-  }
-  lastbutton[0] = button;
-  if (NOT_PRESSED == button) {
-    holdbutton[0] = 0;
-  } else {
-    holdbutton[0]++;
-    if (holdbutton[0] == sysCfg.param[P_HOLD_TIME]) {      // 4 seconds button hold
-      multipress = 0;
-      if (!sysCfg.flag.button_restrict) {  // no restriction (OPTION
-        snprintf_P(scmnd, sizeof(scmnd), PSTR("reset 1"));
-        do_cmnd(scmnd);
-      } else {
-        send_button_power(0, 1, 3);        // Execute command via MQTT
+      if ((pin[GPIO_KEY1 +i] < 99) && !blockgpio0) {
+        butt_present = 1;
+        button = digitalRead(pin[GPIO_KEY1 +i]);
       }
     }
-  }
-  if (multiwindow) {
-    multiwindow--;
-  } else {
-    if ((!restartflag) && (!holdbutton[0]) && (multipress > 0) && (multipress < MAX_BUTTON_COMMANDS +3)) {
-      if ((SONOFF_DUAL == sysCfg.module) || (CH4 == sysCfg.module)) {
-        flag = ((1 == multipress) || (2 == multipress));
-      } else  {
-//        flag = (1 == multipress);
-        flag = (sysCfg.flag.button_swap +1 == multipress);
-      }
-      if (flag && send_button_power(0, multipress, 2)) {  // Execute command via MQTT using ButtonTopic to sync external clients
-        // Success
+
+    if (butt_present) {
+      if (SONOFF_4CHPRO == sysCfg.module) {
+        if (holdbutton[i]) {
+          holdbutton[i]--;
+        }
+        flag = 0;
+        if ((PRESSED == button) && (NOT_PRESSED == lastbutton[i])) {
+          snprintf_P(log, sizeof(log), PSTR("APP: Button %d level 1-0"), i +1);
+          addLog(LOG_LEVEL_DEBUG, log);
+          holdbutton[i] = STATES;
+          flag = 1;
+        }
+        if ((NOT_PRESSED == button) && (PRESSED == lastbutton[i])) {
+          snprintf_P(log, sizeof(log), PSTR("APP: Button %d level 0-1"), i +1);
+          addLog(LOG_LEVEL_DEBUG, log);
+          if (!holdbutton[i]) {                           // Do not allow within 1 second
+            flag = 1;
+          }
+        }
+        if (flag) {
+          if (!send_button_power(0, i +1, 2)) {           // Execute Toggle command via MQTT if ButtonTopic is set
+            do_cmnd_power(i +1, 2);                       // Execute Toggle command internally
+          }
+        }
       } else {
-        if ((1 == multipress) || (2 == multipress)) {
-          if (WIFI_State()) {  // WPSconfig, Smartconfig or Wifimanager active
-            restartflag = 1;
+        if ((PRESSED == button) && (NOT_PRESSED == lastbutton[i])) {
+          if (sysCfg.flag.button_single) {                // Allow only single button press for immediate action
+            snprintf_P(log, sizeof(log), PSTR("APP: Button %d immediate"), i +1);
+            if (!send_button_power(0, i +1, 2)) {         // Execute Toggle command via MQTT if ButtonTopic is set
+              do_cmnd_power(i +1, 2);                     // Execute Toggle command internally
+            }
           } else {
-            do_cmnd_power(multipress, 2);    // Execute command internally
+            multipress[i] = (multiwindow[i]) ? multipress[i] +1 : 1;
+            snprintf_P(log, sizeof(log), PSTR("APP: Button %d multi-press %d"), i +1, multipress[i]);
+            multiwindow[i] = STATES /2;                   // 0.5 second multi press window
           }
+          addLog(LOG_LEVEL_DEBUG, log);
+          blinks = 201;
+        }
+    
+        if (NOT_PRESSED == button) {
+          holdbutton[i] = 0;
         } else {
-          if (!sysCfg.flag.button_restrict) {
-            snprintf_P(scmnd, sizeof(scmnd), commands[multipress -3]);
-            do_cmnd(scmnd);
+          holdbutton[i]++;
+          if (sysCfg.flag.button_single) {                // Allow only single button press for immediate action
+            if (holdbutton[i] == sysCfg.param[P_HOLD_TIME] * (STATES / 10) * 4) {  // Button hold for four times longer
+//              sysCfg.flag.button_single = 0;
+              snprintf_P(scmnd, sizeof(scmnd), PSTR("setoption13 0"));  // Disable single press only
+              do_cmnd(scmnd);
+            }
+          } else {
+            if (holdbutton[i] == sysCfg.param[P_HOLD_TIME] * (STATES / 10)) {      // Button hold
+              multipress[i] = 0;
+              if (!sysCfg.flag.button_restrict) {         // No button restriction
+                snprintf_P(scmnd, sizeof(scmnd), PSTR("reset 1"));
+                do_cmnd(scmnd);
+              } else {
+                send_button_power(0, i +1, 3);            // Execute Hold command via MQTT if ButtonTopic is set
+              }
+            }
+          }
+        }
+
+        if (!sysCfg.flag.button_single) {                 // Allow multi-press
+          if (multiwindow[i]) {
+            multiwindow[i]--;
+          } else {
+            if (!restartflag && !holdbutton[i] && (multipress[i] > 0) && (multipress[i] < MAX_BUTTON_COMMANDS +3)) {
+              flag = 0;
+              if (multipress[i] < 3) {                    // Single or Double press
+                if ((SONOFF_DUAL == sysCfg.module) || (CH4 == sysCfg.module)) {
+                  flag = 1;
+                } else  {
+                  flag = (sysCfg.flag.button_swap +1 == multipress[i]);
+                  multipress[i] = 1;
+                }
+              }
+              if (flag && send_button_power(0, i + multipress[i], 2)) {  // Execute Toggle command via MQTT if ButtonTopic is set
+                // Success
+              } else {
+                if (multipress[i] < 3) {                  // Single or Double press
+                  if (WIFI_State()) {                     // WPSconfig, Smartconfig or Wifimanager active
+                    restartflag = 1;
+                  } else {
+                    do_cmnd_power(i + multipress[i], 2);  // Execute Toggle command internally
+                  }
+                } else {                                  // 3 - 7 press
+                  if (!sysCfg.flag.button_restrict) {
+                    snprintf_P(scmnd, sizeof(scmnd), commands[multipress[i] -3]);
+                    do_cmnd(scmnd);
+                  }
+                }
+              }
+              multipress[i] = 0;
+            }
           }
         }
       }
-      multipress = 0;
-    }
-  }
-
-  for (byte i = 1; i < Maxdevice; i++) {
-    if (pin[GPIO_KEY1 +i] < 99) {
-
-      if (holdbutton[i]) {
-        holdbutton[i]--;
-        if (0 == holdbutton[i]) {
-          send_button_power(0, i +1, 3);  // Execute command via MQTT
-        }
-      }
-     
-      button = digitalRead(pin[GPIO_KEY1 +i]);
-/*      
-      if ((PRESSED == button) && (NOT_PRESSED == lastbutton[i])) {
-        if (!send_button_power(0, i +1, 2)) {  // Execute command via MQTT
-          do_cmnd_power(i +1, 2);              // Execute command internally
-        }
-      }
-*/
-      if ((PRESSED == button) && (NOT_PRESSED == lastbutton[i])) {
-        holdbutton[i] = sysCfg.param[P_HOLD_TIME];
-      }
-      if ((NOT_PRESSED == button) && (PRESSED == lastbutton[i]) && (holdbutton[i])) {
-        holdbutton[i] = 0;
-        if (!send_button_power(0, i +1, 2)) {  // Execute command via MQTT
-          do_cmnd_power(i +1, 2);              // Execute command internally
-        }
-      }
-      
       lastbutton[i] = button;
     }
   }
+}
+
+/*********************************************************************************************\
+ * Switch handler
+\*********************************************************************************************/
+
+void switch_handler()
+{
+  uint8_t button = NOT_PRESSED;
+  uint8_t switchflag;
 
   for (byte i = 0; i < 4; i++) {
     if (pin[GPIO_SWT1 +i] < 99) {
@@ -2237,7 +2223,7 @@ void stateloop()
       if (holdwallswitch[i]) {
         holdwallswitch[i]--;
         if (0 == holdwallswitch[i]) {
-          send_button_power(1, i +1, 3);  // Execute command via MQTT
+          send_button_power(1, i +1, 3);         // Execute command via MQTT
         }
       }
       
@@ -2246,7 +2232,7 @@ void stateloop()
         switchflag = 3;
         switch (sysCfg.switchmode[i]) {
         case TOGGLE:
-          switchflag = 2;                // Toggle
+          switchflag = 2;                        // Toggle
           break;
         case FOLLOW:
           switchflag = button & 0x01;    // Follow wall switch state
@@ -2266,7 +2252,7 @@ void stateloop()
           break;
         case PUSHBUTTONHOLD:
           if ((PRESSED == button) && (NOT_PRESSED == lastwallswitch[i])) {
-            holdwallswitch[i] = sysCfg.param[P_HOLD_TIME];
+            holdwallswitch[i] = sysCfg.param[P_HOLD_TIME] * (STATES / 10);
           }
           if ((NOT_PRESSED == button) && (PRESSED == lastwallswitch[i]) && (holdwallswitch[i])) {
             holdwallswitch[i] = 0;
@@ -2275,7 +2261,7 @@ void stateloop()
           break;
         case PUSHBUTTONHOLD_INV:
           if ((NOT_PRESSED == button) && (PRESSED == lastwallswitch[i])) {
-            holdwallswitch[i] = sysCfg.param[P_HOLD_TIME];
+            holdwallswitch[i] = sysCfg.param[P_HOLD_TIME] * (STATES / 10);
           }
           if ((PRESSED == button) && (NOT_PRESSED == lastwallswitch[i]) && (holdwallswitch[i])) {
             holdwallswitch[i] = 0;
@@ -2294,6 +2280,110 @@ void stateloop()
       }
     }
   }
+}
+
+/*********************************************************************************************\
+ * State loop
+\*********************************************************************************************/
+
+void stateloop()
+{
+  uint8_t power_now;
+  char log[LOGSZ];
+  char svalue[80];  // was MESSZ
+
+  timerxs = millis() + (1000 / STATES);
+  state++;
+
+/*-------------------------------------------------------------------------------------------*\
+ * Every second
+\*-------------------------------------------------------------------------------------------*/
+
+  if (STATES == state) {
+    state = 0;
+    every_second();
+  }
+
+/*-------------------------------------------------------------------------------------------*\
+ * Every 0.1 second
+\*-------------------------------------------------------------------------------------------*/
+
+//  if (0 == (state & 1)) {
+  if (!(state % (STATES/10))) {
+
+    if (mqtt_cmnd_publish) {
+      mqtt_cmnd_publish--;  // Clean up
+    }
+  
+    if (latching_relay_pulse) {
+      latching_relay_pulse--;
+      if (!latching_relay_pulse) {
+        setLatchingRelay(0, 0);
+      }
+    }
+
+    for (byte i = 0; i < MAX_PULSETIMERS; i++) {
+      if ((pulse_timer[i] > 0) && (pulse_timer[i] < 112)) {
+        pulse_timer[i]--;
+        if (!pulse_timer[i]) {
+          do_cmnd_power(i +1, 0);
+        }
+      }
+    }
+
+    if (blink_mask) {
+      blink_timer--;
+      if (!blink_timer) {
+        blink_timer = sysCfg.blinktime;
+        blink_counter--;
+        if (!blink_counter) {
+          stop_all_power_blink();
+        } else {
+          blink_power ^= 1;
+          power_now = (power & (0xFF ^ blink_mask)) | ((blink_power) ? blink_mask : 0);
+          setRelay(power_now);
+        }
+      }
+    }
+
+    if (sfl_flg) {  // Sonoff BN-SZ01 or Sonoff Led
+      sl_animate();
+    }
+  
+#ifdef USE_WS2812
+    if (pin[GPIO_WS2812] < 99) {
+      ws2812_animate();
+    }
+#endif  // USE_WS2812
+
+    // Backlog
+    if (blogdelay) {
+      blogdelay--;
+    }
+    if ((blogptr != blogidx) && !blogdelay && !blogmutex) {
+      blogmutex = 1;
+      do_cmnd((char*)Backlog[blogptr].c_str());
+      blogmutex = 0;
+      blogptr++;
+/*
+    if (blogptr >= MAX_BACKLOG) {
+      blogptr = 0;
+    }
+*/
+      blogptr &= 0xF;
+    }
+  }
+
+/*-------------------------------------------------------------------------------------------*\
+ * Every 0.05 second
+\*-------------------------------------------------------------------------------------------*/
+
+  button_handler();
+  switch_handler();
+
+/*-------------------------------------------------------------------------------------------*\
+ * Every 0.2 second
+\*-------------------------------------------------------------------------------------------*/
 
   if (!(state % ((STATES/10)*2))) {
     if (blinks || restartflag || otaflag) {
@@ -2318,21 +2408,9 @@ void stateloop()
     }
   }
 
-  if (blogdelay) {
-    blogdelay--;
-  }
-  if ((blogptr != blogidx) && !blogdelay && !blogmutex) {
-    blogmutex = 1;
-    do_cmnd((char*)Backlog[blogptr].c_str());
-    blogmutex = 0;
-    blogptr++;
-/*
-    if (blogptr >= MAX_BACKLOG) {
-      blogptr = 0;
-    }
-*/
-    blogptr &= 0xF;
-  }
+/*-------------------------------------------------------------------------------------------*\
+ * Every second at 0.2 second interval
+\*-------------------------------------------------------------------------------------------*/
 
   switch (state) {
   case (STATES/10)*2:

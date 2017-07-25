@@ -1,7 +1,7 @@
 ## Sonoff-Tasmota
 Provide ESP8266 based Sonoff by [iTead Studio](https://www.itead.cc/) and ElectroDragon IoT Relay with Serial, Web and MQTT control allowing 'Over the Air' or OTA firmware updates using Arduino IDE.
 
-Current version is **5.3.0** - See [sonoff/_releasenotes.ino](https://github.com/arendst/Sonoff-Tasmota/blob/master/sonoff/_releasenotes.ino) for change information.
+Current version is **5.4.0** - See [sonoff/_releasenotes.ino](https://github.com/arendst/Sonoff-Tasmota/blob/master/sonoff/_releasenotes.ino) for change information.
 
 ### **** ATTENTION Version 5.x.x specific information ****
 
@@ -34,6 +34,7 @@ The following devices are supported:
 - [iTead Sonoff Dual](http://sonoff.itead.cc/en/products/sonoff/sonoff-dual)
 - [iTead Sonoff Pow](http://sonoff.itead.cc/en/products/sonoff/sonoff-pow)
 - [iTead Sonoff 4CH](http://sonoff.itead.cc/en/products/sonoff/sonoff-4ch)
+- [iTead Sonoff 4CH Pro](http://sonoff.itead.cc/en/products/sonoff/sonoff-4ch-pro)
 - [iTead S20 Smart Socket](http://sonoff.itead.cc/en/products/residential/s20-socket)
 - [iTead Slampher](http://sonoff.itead.cc/en/products/residential/slampher-rf)
 - [iTead Sonoff Touch](http://sonoff.itead.cc/en/products/residential/sonoff-touch)
@@ -46,7 +47,6 @@ The following devices are supported:
 - [Electrodragon IoT Relay Board](http://www.electrodragon.com/product/wifi-iot-relay-board-based-esp8266/)
 
 Planned support:
-- [iTead Sonoff 4CH Pro](http://sonoff.itead.cc/en/products/sonoff/sonoff-4ch-pro)
 - [iTead Sonoff T1](https://www.itead.cc/smart-home/sonoff-t1.html)
 - [iTead Sonoff B1](https://www.itead.cc/smart-home/sonoff-b1.html)
 
