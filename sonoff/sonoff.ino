@@ -1932,9 +1932,9 @@ void sensors_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
 #endif  // USE_DHT
 #ifdef USE_I2C
   if (i2c_flg) {
-#ifdef USE_SHT
-    sht_mqttPresent(svalue, ssvalue, djson);
-#endif  // USE_SHT
+#ifdef USE_SHT1X
+    sht1x_mqttPresent(svalue, ssvalue, djson);
+#endif  // USE_SHT1X
 #ifdef USE_HTU
     htu_mqttPresent(svalue, ssvalue, djson);
 #endif  // USE_HTU
@@ -2020,9 +2020,9 @@ void every_second()
 #endif  // USE_DHT
 #ifdef USE_I2C
       if (i2c_flg) {
-#ifdef USE_SHT
-        sht_detect();
-#endif  // USE_SHT
+#ifdef USE_SHT1X
+        sht1x_detect();
+#endif  // USE_SHT1X
 #ifdef USE_HTU
         htu_detect();
 #endif  // USE_HTU

@@ -483,8 +483,8 @@ void handleAjax2()
 #endif  // USE_DHT
 #ifdef USE_I2C
   if (i2c_flg) {
-#ifdef USE_SHT
-    tpage += sht_webPresent();
+#ifdef USE_SHT1X
+    tpage += sht1x_webPresent();
 #endif    
 #ifdef USE_HTU
     tpage += htu_webPresent();
