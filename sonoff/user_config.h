@@ -161,6 +161,7 @@
   #define USE_BMP                                // Add I2C code for BMP/BME280 sensor
   #define USE_HTU                                // Add I2C code for HTU21/SI7013/SI7020/SI7021 sensor
   #define USE_SHT1X                              // Add I2C emulating code for SHT1X sensor
+  #define USE_SHT3X                              // Add I2C emulating code for SHT3X sensor
 
 #define USE_IR_REMOTE                            // Send IR remote commands using library IRremoteESP8266 and ArduinoJson (+3k code, 0.3k mem)
 //  #define USE_IR_HVAC                            // Support for HVAC system using IR (+2k code)
