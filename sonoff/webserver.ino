@@ -196,7 +196,7 @@ const char HTTP_FORM_LOG2[] PROGMEM =
   "<option{a2value='2'>2 Info</option>"
   "<option{a3value='3'>3 Debug</option>"
   "<option{a4value='4'>4 More debug</option>"
-  "</select></br>";  
+  "</select></br>";
 const char HTTP_FORM_LOG3[] PROGMEM =
   "<br/><b>Syslog host</b> (" SYS_LOG_HOST ")<br/><input id='lh' name='lh' length=32 placeholder='" SYS_LOG_HOST "' value='{l2}'><br/>"
   "<br/><b>Syslog port</b> (" STR(SYS_LOG_PORT) ")<br/><input id='lp' name='lp' length=5 placeholder='" STR(SYS_LOG_PORT) "' value='{l3}'><br/>"
@@ -437,7 +437,7 @@ void handleRoot()
       }
       page += F("</tr></table>");
     }
-    
+
     if (HTTP_ADMIN == _httpflag) {
       page += FPSTR(HTTP_BTN_MENU1);
       page += FPSTR(HTTP_BTN_RSTRT);
@@ -449,7 +449,7 @@ void handleRoot()
 void handleAjax2()
 {
   char svalue[16];
-  
+
   if (strlen(webServer->arg("o").c_str())) {
     do_cmnd_power(atoi(webServer->arg("o").c_str()), 2);
   }
@@ -457,7 +457,7 @@ void handleAjax2()
     snprintf_P(svalue, sizeof(svalue), PSTR("dimmer %s"), webServer->arg("d").c_str());
     do_cmnd(svalue);
   }
-  
+
   String tpage = "";
   tpage += counter_webPresent();
   if (hlw_flg) {
@@ -483,9 +483,12 @@ void handleAjax2()
 #endif  // USE_DHT
 #ifdef USE_I2C
   if (i2c_flg) {
-#ifdef USE_SHT
-    tpage += sht_webPresent();
-#endif    
+#ifdef USE_SHT1X
+    tpage += sht1x_webPresent();
+#endif
+#ifdef USE_SHT3X
+    tpage += sht3x_webPresent();
+#endif
 #ifdef USE_HTU
     tpage += htu_webPresent();
 #endif
@@ -496,7 +499,7 @@ void handleAjax2()
     tpage += bh1750_webPresent();
 #endif
   }
-#endif  // USE_I2C    
+#endif  // USE_I2C
   String page = "";
   if (tpage.length() > 0) {
     page += FPSTR(HTTP_TABLE100);
@@ -555,7 +558,7 @@ void handleConfig()
 boolean inModule(byte val, uint8_t *arr)
 {
   int offset = 0;
-  
+
   if (!val) {
     return false;  // None
   }
@@ -600,7 +603,7 @@ void handleModule()
     return;
   }
   char stemp[20], line[128];
-  
+
   addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Module config"));
 
   String page = FPSTR(HTTP_HEAD);
@@ -610,17 +613,17 @@ void handleModule()
   snprintf_P(stemp, sizeof(stemp), modules[MODULE].name);
   page.replace(F("{mt}"), stemp);
 
-  for (byte i = 0; i < MAXMODULE; i++) {  
+  for (byte i = 0; i < MAXMODULE; i++) {
     snprintf_P(stemp, sizeof(stemp), modules[i].name);
     snprintf_P(line, sizeof(line), PSTR("<option%s value='%d'>%02d %s</option>"),
       (i == sysCfg.module) ? " selected" : "", i, i +1, stemp);
     page += line;
   }
   page += F("</select></br>");
-  
+
   mytmplt cmodule;
   memcpy_P(&cmodule, &modules[sysCfg.module], sizeof(cmodule));
-  
+
   String func = FPSTR(HTTP_SCRIPT_MODULE);
   for (byte j = 0; j < GPIO_SENSOR_END; j++) {
     if (!inModule(j, cmodule.gp.io)) {
@@ -642,7 +645,7 @@ void handleModule()
   func += F("}</script>");
   page.replace(F("</script>"), func);
   page.replace(F("<body>"), F("<body onload='sl()'>"));
-  
+
   page += FPSTR(HTTP_FORM_END);
   page += FPSTR(HTTP_BTN_CONF);
   showPage(page);
@@ -1124,7 +1127,7 @@ void handleUploadDone()
 
   char error[80];
   char log[LOGSZ];
-  
+
   WIFI_configCounter();
   restartflag = 0;
   mqttcounter = 0;
@@ -1373,7 +1376,7 @@ void handleAjax()
     do_cmnd(svalue);
     syslog_level = syslog_now;
   }
-  
+
   if (strlen(webServer->arg("c2").c_str())) {
     counter = atoi(webServer->arg("c2").c_str());
   }
@@ -1469,7 +1472,7 @@ void handleInfo()
 
     getTopic_P(stopic, 0, sysCfg.mqtt_topic, "");
     page += F("<tr><th>MQTT Full Topic</th><td>"); page += stopic; page += F("</td></tr>");
-    
+
   } else {
     page += F("<tr><th>MQTT</th><td>Disabled</td></tr>");
   }
@@ -1489,7 +1492,7 @@ void handleInfo()
   page += F("Disabled");
 #endif // USE_EMULATION
   page += F("</td></tr>");
-  
+
   page += F("<tr><th>mDNS Discovery</th><td>");
 #ifdef USE_DISCOVERY
   page += F("Enabled");
@@ -1547,7 +1550,7 @@ void handleNotFound()
     return;
   }
 
-#ifdef USE_EMULATION  
+#ifdef USE_EMULATION
   String path = webServer->uri();
   if ((EMUL_HUE == sysCfg.flag.emulation) && (path.startsWith("/api"))) {
     handle_hue_api(&path);

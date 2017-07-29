@@ -18,7 +18,7 @@
 */
 
 #ifdef USE_I2C
-#ifdef USE_SHT
+#ifdef USE_SHT1X
 /*********************************************************************************************\
  * SHT1x - Temperature and Humidy
  *
@@ -32,92 +32,92 @@ enum {
   SHT1X_CMD_SOFT_RESET    = B00011110
 };
 
-uint8_t sht_sda_pin;
-uint8_t sht_scl_pin;
-uint8_t shttype = 0;
+uint8_t sht1x_sda_pin;
+uint8_t sht1x_scl_pin;
+uint8_t sht1x_type = 0;
 
-boolean sht_reset()
+boolean sht1x_reset()
 {
-  pinMode(sht_sda_pin, INPUT_PULLUP);
-  pinMode(sht_scl_pin, OUTPUT);
+  pinMode(sht1x_sda_pin, INPUT_PULLUP);
+  pinMode(sht1x_scl_pin, OUTPUT);
   delay(11);
   for (byte i = 0; i < 9; i++) {
-    digitalWrite(sht_scl_pin, HIGH);
-    digitalWrite(sht_scl_pin, LOW);
+    digitalWrite(sht1x_scl_pin, HIGH);
+    digitalWrite(sht1x_scl_pin, LOW);
   }
-  boolean success = sht_sendCommand(SHT1X_CMD_SOFT_RESET);
+  boolean success = sht1x_sendCommand(SHT1X_CMD_SOFT_RESET);
   delay(11);
   return success;
 }
 
-boolean sht_sendCommand(const byte cmd)
+boolean sht1x_sendCommand(const byte cmd)
 {
-  pinMode(sht_sda_pin, OUTPUT);
+  pinMode(sht1x_sda_pin, OUTPUT);
   // Transmission Start sequence
-  digitalWrite(sht_sda_pin, HIGH);
-  digitalWrite(sht_scl_pin, HIGH);
-  digitalWrite(sht_sda_pin, LOW);
-  digitalWrite(sht_scl_pin, LOW);
-  digitalWrite(sht_scl_pin, HIGH);
-  digitalWrite(sht_sda_pin, HIGH);
-  digitalWrite(sht_scl_pin, LOW);
+  digitalWrite(sht1x_sda_pin, HIGH);
+  digitalWrite(sht1x_scl_pin, HIGH);
+  digitalWrite(sht1x_sda_pin, LOW);
+  digitalWrite(sht1x_scl_pin, LOW);
+  digitalWrite(sht1x_scl_pin, HIGH);
+  digitalWrite(sht1x_sda_pin, HIGH);
+  digitalWrite(sht1x_scl_pin, LOW);
   // Send the command (address must be 000b)
-  shiftOut(sht_sda_pin, sht_scl_pin, MSBFIRST, cmd);
+  shiftOut(sht1x_sda_pin, sht1x_scl_pin, MSBFIRST, cmd);
   // Wait for ACK
   boolean ackerror = false;
-  digitalWrite(sht_scl_pin, HIGH);
-  pinMode(sht_sda_pin, INPUT_PULLUP);
-  if (digitalRead(sht_sda_pin) != LOW) {
+  digitalWrite(sht1x_scl_pin, HIGH);
+  pinMode(sht1x_sda_pin, INPUT_PULLUP);
+  if (digitalRead(sht1x_sda_pin) != LOW) {
     ackerror = true;
   }
-  digitalWrite(sht_scl_pin, LOW);
+  digitalWrite(sht1x_scl_pin, LOW);
   delayMicroseconds(1);  // Give the sensor time to release the data line
-  if (digitalRead(sht_sda_pin) != HIGH) {
+  if (digitalRead(sht1x_sda_pin) != HIGH) {
     ackerror = true;
   }
   if (ackerror) {
-    shttype = 0;
+    sht1x_type = 0;
     addLog_P(LOG_LEVEL_DEBUG, PSTR("SHT1X: Sensor did not ACK command"));
   }
   return (!ackerror);
 }
 
-boolean sht_awaitResult()
+boolean sht1x_awaitResult()
 {
   // Maximum 320ms for 14 bit measurement
   for (byte i = 0; i < 16; i++) {
-    if (LOW == digitalRead(sht_sda_pin)) {
+    if (LOW == digitalRead(sht1x_sda_pin)) {
       return true;
     }
     delay(20);
   }
   addLog_P(LOG_LEVEL_DEBUG, PSTR("SHT1X: Data not ready"));
-  shttype = 0;
+  sht1x_type = 0;
   return false;
 }
 
-int sht_readData()
+int sht1x_readData()
 {
   int val = 0;
 
   // Read most significant byte
-  val = shiftIn(sht_sda_pin, sht_scl_pin, 8);
+  val = shiftIn(sht1x_sda_pin, sht1x_scl_pin, 8);
   val <<= 8;
   // Send ACK
-  pinMode(sht_sda_pin, OUTPUT);
-  digitalWrite(sht_sda_pin, LOW);
-  digitalWrite(sht_scl_pin, HIGH);
-  digitalWrite(sht_scl_pin, LOW);
-  pinMode(sht_sda_pin, INPUT_PULLUP);
+  pinMode(sht1x_sda_pin, OUTPUT);
+  digitalWrite(sht1x_sda_pin, LOW);
+  digitalWrite(sht1x_scl_pin, HIGH);
+  digitalWrite(sht1x_scl_pin, LOW);
+  pinMode(sht1x_sda_pin, INPUT_PULLUP);
   // Read least significant byte
-  val |= shiftIn(sht_sda_pin, sht_scl_pin, 8);
+  val |= shiftIn(sht1x_sda_pin, sht1x_scl_pin, 8);
   // Keep DATA pin high to skip CRC
-  digitalWrite(sht_scl_pin, HIGH);
-  digitalWrite(sht_scl_pin, LOW);
+  digitalWrite(sht1x_scl_pin, HIGH);
+  digitalWrite(sht1x_scl_pin, LOW);
   return val;
 }
 
-boolean sht_readTempHum(float &t, float &h)
+boolean sht1x_readTempHum(float &t, float &h)
 {
   float tempRaw;
   float humRaw;
@@ -126,27 +126,27 @@ boolean sht_readTempHum(float &t, float &h)
   t = NAN;
   h = NAN;
 
-  if (!sht_reset()) {
+  if (!sht1x_reset()) {
     return false;
   }
-  if (!sht_sendCommand(SHT1X_CMD_MEASURE_TEMP)) {
+  if (!sht1x_sendCommand(SHT1X_CMD_MEASURE_TEMP)) {
     return false;
   }
-  if (!sht_awaitResult()) {
+  if (!sht1x_awaitResult()) {
     return false;
   }
-  tempRaw = sht_readData();
+  tempRaw = sht1x_readData();
   // Temperature conversion coefficients from SHT1X datasheet for version 4
   const float d1 = -39.7;  // 3.5V
   const float d2 = 0.01;   // 14-bit
   t = d1 + (tempRaw * d2);
-  if (!sht_sendCommand(SHT1X_CMD_MEASURE_RH)) {
+  if (!sht1x_sendCommand(SHT1X_CMD_MEASURE_RH)) {
     return false;
   }
-  if (!sht_awaitResult()) {
+  if (!sht1x_awaitResult()) {
     return false;
   }
-  humRaw = sht_readData();
+  humRaw = sht1x_readData();
   // Temperature conversion coefficients from SHT1X datasheet for version 4
   const float c1 = -2.0468;
   const float c2 = 0.0367;
@@ -159,52 +159,52 @@ boolean sht_readTempHum(float &t, float &h)
   return (!isnan(t) && !isnan(h));
 }
 
-boolean sht_readCharTempHum(char* temp, char* hum)
+boolean sht1x_readCharTempHum(char* temp, char* hum)
 {
   float t;
   float h;
 
-  boolean success = sht_readTempHum(t, h);
+  boolean success = sht1x_readTempHum(t, h);
   dtostrf(t, 1, sysCfg.flag.temperature_resolution, temp);
   dtostrf(h, 1, sysCfg.flag.humidity_resolution, hum);
   return success;
 }
 
-boolean sht_detect()
+boolean sht1x_detect()
 {
-  if (shttype) {
+  if (sht1x_type) {
     return true;
   }
 
   float t;
   float h;
   
-  sht_sda_pin = pin[GPIO_I2C_SDA];
-  sht_scl_pin = pin[GPIO_I2C_SCL];
-  if (sht_readTempHum(t, h)) {
-    shttype = 1;
+  sht1x_sda_pin = pin[GPIO_I2C_SDA];
+  sht1x_scl_pin = pin[GPIO_I2C_SCL];
+  if (sht1x_readTempHum(t, h)) {
+    sht1x_type = 1;
     addLog_P(LOG_LEVEL_DEBUG, PSTR("I2C: SHT1X found"));
   } else {
-    Wire.begin(sht_sda_pin, sht_scl_pin);
-    shttype = 0;
+    Wire.begin(sht1x_sda_pin, sht1x_scl_pin);
+    sht1x_type = 0;
   }
-  return shttype;
+  return sht1x_type;
 }
 
 /*********************************************************************************************\
  * Presentation
 \*********************************************************************************************/
 
-void sht_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
+void sht1x_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
 {
-  if (!shttype) {
+  if (!sht1x_type) {
     return;
   }
 
   char stemp[10];
   char shum[10];
   
-  if (sht_readCharTempHum(stemp, shum)) {
+  if (sht1x_readCharTempHum(stemp, shum)) {
     snprintf_P(svalue, ssvalue, JSON_SNS_TEMPHUM, svalue, "SHT1X", stemp, shum);
     *djson = 1;
 #ifdef USE_DOMOTICZ
@@ -214,14 +214,14 @@ void sht_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
 }
 
 #ifdef USE_WEBSERVER
-String sht_webPresent()
+String sht1x_webPresent()
 {
   String page = "";
-  if (shttype) {
+  if (sht1x_type) {
     char stemp[10];
     char shum[10];
     
-    if (sht_readCharTempHum(stemp, shum)) {
+    if (sht1x_readCharTempHum(stemp, shum)) {
       char sensor[80];
       snprintf_P(sensor, sizeof(sensor), HTTP_SNS_TEMP, "SHT1X", stemp, tempUnit());
       page += sensor;
@@ -232,6 +232,6 @@ String sht_webPresent()
   return page;
 }
 #endif  // USE_WEBSERVER
-#endif  // USE_SHT
+#endif  // USE_SHT1X
 #endif  // USE_I2C
 
