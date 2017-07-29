@@ -23,6 +23,8 @@
  * TSL2561 - Ambient Light Intensity
 \*********************************************************************************************/
 
+#include <TSL2561.h>
+
 uint8_t tsl2561addr;
 uint8_t tsl2561type = 0;
 char tsl2561stype[7];
@@ -95,7 +97,7 @@ void tsl2561_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
 }
 
 #ifdef USE_WEBSERVER
-const char HTTP_SNS_ILLUMINANCE[] PROGMEM =
+const char HTTP_SNS_TSL2561[] PROGMEM =
   "<tr><th>TSL2561 Illuminance</th><td>%d lx</td></tr>";
 
 String tsl2561_webPresent()
@@ -103,7 +105,7 @@ String tsl2561_webPresent()
   String page = "";
   if (tsl2561type) {
     char sensor[80];
-    snprintf_P(sensor, sizeof(sensor), HTTP_SNS_ILLUMINANCE, tsl2561_readLux());
+    snprintf_P(sensor, sizeof(sensor), HTTP_SNS_TSL2561, tsl2561_readLux());
     page += sensor;
   }
   return page;
