@@ -495,6 +495,9 @@ void handleAjax2()
 #ifdef USE_BH1750
     tpage += bh1750_webPresent();
 #endif
+#ifdef USE_ADS1115
+    tpage += ads1115_webPresent();
+#endif
   }
 #endif  // USE_I2C    
   String page = "";

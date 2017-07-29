@@ -158,6 +158,7 @@
 
 #define USE_I2C                                  // I2C using library wire (+10k code, 0.2k mem) - Disable by //
   #define USE_BH1750                             // Add I2C code for BH1750 sensor
+  #define USE_ADS1115                            // Add I2C code for ADS1115 16bit 4-channel A/D converter
   #define USE_BMP                                // Add I2C code for BMP/BME280 sensor
   #define USE_HTU                                // Add I2C code for HTU21/SI7013/SI7020/SI7021 sensor
   #define USE_SHT                                // Add I2C emulating code for SHT1X sensor

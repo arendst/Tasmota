@@ -1944,6 +1944,9 @@ void sensors_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
 #ifdef USE_BH1750
     bh1750_mqttPresent(svalue, ssvalue, djson);
 #endif  // USE_BH1750
+#ifdef USE_ADS1115
+    ads1115_mqttPresent(svalue, ssvalue, djson);
+#endif  // USE_ADS1115
   }
 #endif  // USE_I2C
   if (strstr_P(svalue, PSTR("Temperature"))) {
