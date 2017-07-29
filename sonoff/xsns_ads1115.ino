@@ -1,18 +1,18 @@
 /*
  *  xsns_ads1115.ino - ADS1115 16bit 4-channel A/D converter support for Sonoff-Tasmota
- * 
+ *
  *  Copyright (C) 2017  Sebastian Muszynski
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
@@ -24,7 +24,7 @@
  * ADS1115 - 16bit 4-channel A/D converter
  *
  * Required library: https://github.com/jrowberg/i2cdevlib/tree/master/Arduino/ADS1115
- * 
+ *
 \*********************************************************************************************/
 
 #include <ADS1115.h>
@@ -44,34 +44,34 @@ ADS1115 adc0(ads1115addresses[0]);
 
 int16_t ads1115_getConversion(byte channel)
 {
-  switch (channel) { 
+  switch (channel) {
     case 0:
       adc0.setMultiplexer(ADS1115_MUX_P0_NG);
-      break;    
+      break;
     case 1:
       adc0.setMultiplexer(ADS1115_MUX_P1_NG);
-      break;             
-    case 2:    
+      break;
+    case 2:
       adc0.setMultiplexer(ADS1115_MUX_P2_NG);
-      break;       
-    case 3:     
+      break;
+    case 3:
       adc0.setMultiplexer(ADS1115_MUX_P3_NG);
-      break;       
+      break;
   }
-  
+
   return adc0.getConversion(true);
 }
 
 boolean ads1115_detect()
 {
   if (ads1115type) {
-    return true;   
+    return true;
   }
-  
+
   char log[LOGSZ];
   uint8_t status;
   boolean success = false;
-  
+
   for (byte i = 0; i < 4; i++) {
     ads1115addr = ads1115addresses[i];
     ADS1115 adc0(ads1115addr);
@@ -88,18 +88,18 @@ boolean ads1115_detect()
       break;
     }
   }
-  
+
   if (success) {
     snprintf_P(log, sizeof(log), PSTR("I2C: %s found at address 0x%x"), ads1115stype, ads1115addr);
     addLog(LOG_LEVEL_DEBUG, log);
   }
-  
+
   return success;
 }
 
 /*********************************************************************************************\
  * Presentation
- * 
+ *
 \*********************************************************************************************/
 
 void ads1115_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
@@ -148,5 +148,3 @@ String ads1115_webPresent()
 #endif  // USE_WEBSERVER
 #endif  // USE_ADS1115
 #endif  // USE_I2C
-
-    
