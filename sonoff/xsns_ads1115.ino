@@ -29,8 +29,6 @@
 
 #include <ADS1115.h>
 
-ADS1115 adc0;
-
 uint8_t ads1115addr;
 uint8_t ads1115type = 0;
 char ads1115stype[8];
@@ -41,6 +39,8 @@ uint8_t ads1115addresses[] = {
   ADS1115_ADDRESS_ADDR_SDA, // address pin tied to SDA pin
   ADS1115_ADDRESS_ADDR_SCL // address pin tied to SCL pin
 };
+
+ADS1115 adc0(ads1115addresses[0]);
 
 int16_t ads1115_getConversion(byte channel)
 {
@@ -75,6 +75,10 @@ boolean ads1115_detect()
   for (byte i = 0; i < 4; i++) {
     ads1115addr = ads1115addresses[i];
     ADS1115 adc0(ads1115addr);
+
+    snprintf_P(log, sizeof(log), PSTR("I2C: Probing addr 0x%x for ADS1115."), ads1115addr);
+    addLog(LOG_LEVEL_DEBUG, log);
+
     if(adc0.testConnection()) {
       adc0.initialize();
       adc0.setGain(ADS1115_PGA_2P048); // Set the gain (PGA) +/-4.096V
