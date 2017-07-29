@@ -27,136 +27,47 @@
  * Source: Wemos https://github.com/wemos/WEMOS_SHT3x_Arduino_Library/blob/master/src/WEMOS_SHT3X.cpp
 \*********************************************************************************************/
 
-enum {
-  SHT3X_CMD_MEASURE_TEMP  = B00000011,
-  SHT3X_CMD_MEASURE_RH    = B00000101,
-  SHT3X_CMD_SOFT_RESET    = B00011110
-};
-
 uint8_t sht3x_sda_pin;
 uint8_t sht3x_scl_pin;
 uint8_t sht3x_type = 0;
 
-boolean sht3x_reset()
-{
-  pinMode(sht3x_sda_pin, INPUT_PULLUP);
-  pinMode(sht3x_scl_pin, OUTPUT);
-  delay(11);
-  for (byte i = 0; i < 9; i++) {
-    digitalWrite(sht3x_scl_pin, HIGH);
-    digitalWrite(sht3x_scl_pin, LOW);
-  }
-  boolean success = sht3x_sendCommand(SHT3X_CMD_SOFT_RESET);
-  delay(11);
-  return success;
-}
-
-boolean sht3x_sendCommand(const byte cmd)
-{
-  pinMode(sht3x_sda_pin, OUTPUT);
-  // Transmission Start sequence
-  digitalWrite(sht3x_sda_pin, HIGH);
-  digitalWrite(sht3x_scl_pin, HIGH);
-  digitalWrite(sht3x_sda_pin, LOW);
-  digitalWrite(sht3x_scl_pin, LOW);
-  digitalWrite(sht3x_scl_pin, HIGH);
-  digitalWrite(sht3x_sda_pin, HIGH);
-  digitalWrite(sht3x_scl_pin, LOW);
-  // Send the command (address must be 000b)
-  shiftOut(sht3x_sda_pin, sht1x_scl_pin, MSBFIRST, cmd);
-  // Wait for ACK
-  boolean ackerror = false;
-  digitalWrite(sht3x_scl_pin, HIGH);
-  pinMode(sht3x_sda_pin, INPUT_PULLUP);
-  if (digitalRead(sht3x_sda_pin) != LOW) {
-    ackerror = true;
-  }
-  digitalWrite(sht3x_scl_pin, LOW);
-  delayMicroseconds(1);  // Give the sensor time to release the data line
-  if (digitalRead(sht3x_sda_pin) != HIGH) {
-    ackerror = true;
-  }
-  if (ackerror) {
-    sht3x_type = 0;
-    addLog_P(LOG_LEVEL_DEBUG, PSTR("SHT3X: Sensor did not ACK command"));
-  }
-  return (!ackerror);
-}
-
-boolean sht3x_awaitResult()
-{
-  // Maximum 320ms for 14 bit measurement
-  for (byte i = 0; i < 16; i++) {
-    if (LOW == digitalRead(sht3x_sda_pin)) {
-      return true;
-    }
-    delay(20);
-  }
-  addLog_P(LOG_LEVEL_DEBUG, PSTR("SHT3X: Data not ready"));
-  sht3x_type = 0;
-  return false;
-}
-
-int sht3x_readData()
-{
-  int val = 0;
-
-  // Read most significant byte
-  val = shiftIn(sht3x_sda_pin, sht1x_scl_pin, 8);
-  val <<= 8;
-  // Send ACK
-  pinMode(sht3x_sda_pin, OUTPUT);
-  digitalWrite(sht3x_sda_pin, LOW);
-  digitalWrite(sht3x_scl_pin, HIGH);
-  digitalWrite(sht3x_scl_pin, LOW);
-  pinMode(sht3x_sda_pin, INPUT_PULLUP);
-  // Read least significant byte
-  val |= shiftIn(sht3x_sda_pin, sht1x_scl_pin, 8);
-  // Keep DATA pin high to skip CRC
-  digitalWrite(sht3x_scl_pin, HIGH);
-  digitalWrite(sht3x_scl_pin, LOW);
-  return val;
-}
 
 boolean sht3x_readTempHum(float &t, float &h)
 {
+   unsigned int data[6];
+
   float tempRaw;
   float humRaw;
-  float rhLinear;
 
-  t = NAN;
-  h = NAN;
+  Wire.beginTransmission(0x45);
+  // Send measurement command
+  Wire.write(0x2C);
+  Wire.write(0x06);
+  // Stop I2C transmission
+  if (Wire.endTransmission()!=0)
+    return 0;
 
-  if (!sht3x_reset()) {
-    return false;
-  }
-  if (!sht3x_sendCommand(SHT3X_CMD_MEASURE_TEMP)) {
-    return false;
-  }
-  if (!sht3x_awaitResult()) {
-    return false;
-  }
-  tempRaw = sht3x_readData();
-  // Temperature conversion coefficients from SHT3X datasheet for version 4
-  const float d1 = -39.7;  // 3.5V
-  const float d2 = 0.01;   // 14-bit
-  t = d1 + (tempRaw * d2);
-  if (!sht3x_sendCommand(SHT3X_CMD_MEASURE_RH)) {
-    return false;
-  }
-  if (!sht3x_awaitResult()) {
-    return false;
-  }
-  humRaw = sht3x_readData();
-  // Temperature conversion coefficients from SHT3X datasheet for version 4
-  const float c1 = -2.0468;
-  const float c2 = 0.0367;
-  const float c3 = -1.5955E-6;
-  const float t1 = 0.01;
-  const float t2 = 0.00008;
-  rhLinear = c1 + c2 * humRaw + c3 * humRaw * humRaw;
-  h = (t - 25) * (t1 + t2 * humRaw) + rhLinear;
-  t = convertTemp(t);
+  delay(500);
+
+  // Request 6 bytes of data
+  Wire.requestFrom(0x45, 6);
+
+  // Read 6 bytes of data
+  // cTemp msb, cTemp lsb, cTemp crc, humidity msb, humidity lsb, humidity crc
+  for (int i=0;i<6;i++) {
+          data[i]=Wire.read();
+  };
+
+  delay(50);
+
+  if (Wire.available()!=0)
+    return 0;
+
+  // Convert the data
+  t = ((((data[0] * 256.0) + data[1]) * 175) / 65535.0) - 45;
+  //fTemp = (cTemp * 1.8) + 32;
+  h = ((((data[3] * 256.0) + data[4]) * 100) / 65535.0);
+
   return (!isnan(t) && !isnan(h));
 }
 
@@ -179,14 +90,14 @@ boolean sht3x_detect()
 
   float t;
   float h;
-  
+
   sht3x_sda_pin = pin[GPIO_I2C_SDA];
   sht3x_scl_pin = pin[GPIO_I2C_SCL];
   if (sht3x_readTempHum(t, h)) {
     sht3x_type = 1;
     addLog_P(LOG_LEVEL_DEBUG, PSTR("I2C: SHT3X found"));
   } else {
-    Wire.begin(sht3x_sda_pin, sht1x_scl_pin);
+    Wire.begin(sht3x_sda_pin, sht3x_scl_pin);
     sht3x_type = 0;
   }
   return sht3x_type;
@@ -204,7 +115,7 @@ void sht3x_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
 
   char stemp[10];
   char shum[10];
-  
+
   if (sht3x_readCharTempHum(stemp, shum)) {
     snprintf_P(svalue, ssvalue, JSON_SNS_TEMPHUM, svalue, "SHT3X", stemp, shum);
     *djson = 1;
@@ -221,7 +132,7 @@ String sht3x_webPresent()
   if (sht3x_type) {
     char stemp[10];
     char shum[10];
-    
+
     if (sht3x_readCharTempHum(stemp, shum)) {
       char sensor[80];
       snprintf_P(sensor, sizeof(sensor), HTTP_SNS_TEMP, "SHT3X", stemp, tempUnit());
