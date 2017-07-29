@@ -2035,6 +2035,9 @@ void every_second()
 #ifdef USE_BH1750
         bh1750_detect();
 #endif  // USE_BH1750
+#ifdef USE_ADS1115
+        ads1115_detect();
+#endif  // USE_ADS1115
       }
 #endif  // USE_I2C
     }
