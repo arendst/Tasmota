@@ -27,7 +27,7 @@
 
 uint8_t tsl2561addr;
 uint8_t tsl2561type = 0;
-char tsl2561stype[7];
+char tsl2561stype[8];
 
 uint8_t tsl2561addresses[] = {
   TSL2561_ADDR_FLOAT,
