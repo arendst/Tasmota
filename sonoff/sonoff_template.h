@@ -148,6 +148,7 @@ enum module_t {
   SONOFF_BN,
   SONOFF_4CHPRO,
   HUAFAN_SS,
+  SONOFF_BRIDGE,
   MAXMODULE };
 
 /********************************************************************************************/
@@ -475,6 +476,19 @@ const mytmplt modules[MAXMODULE] PROGMEM = {
      GPIO_HLW_SEL,     // GPIO13 HLW8012 Sel output
      GPIO_HLW_CF,      // GPIO14 HLW8012 CF power
      0, 0, 0
+  },
+  { "Sonoff Bridge",   // Sonoff RF Bridge 433 (ESP8285)
+     GPIO_KEY1,        // GPIO00 Button
+     GPIO_TXD,         // GPIO01 RF bridge control
+     GPIO_USER,        // GPIO02 Optional sensor
+     GPIO_RXD,         // GPIO03 RF bridge control
+     0, 0,
+     0, 0, 0,          // Flash connection
+     0, 0,
+     0,                // Flash connection
+     0,
+     GPIO_LED1_INV,    // GPIO13 Blue Led (0 = On, 1 = Off)
+     0, 0, 0, 0
   }
 };
 

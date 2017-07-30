@@ -437,6 +437,7 @@ void hlw_margin_chk()
 boolean hlw_command(char *type, uint16_t index, char *dataBuf, uint16_t data_len, int16_t payload, char *svalue, uint16_t ssvalue)
 {
   boolean serviced = true;
+  uint8_t caltext = 0;
 
   if (!strcmp_P(type,PSTR("POWERLOW"))) {
     if ((payload >= 0) && (payload < 3601)) {
@@ -501,21 +502,39 @@ boolean hlw_command(char *type, uint16_t index, char *dataBuf, uint16_t data_len
   }
   else if (!strcmp_P(type,PSTR("HLWPCAL"))) {
     if ((payload > 0) && (payload < 32001)) {
-      sysCfg.hlw_pcal = (payload > 9999) ? payload : HLW_PREF_PULSE;  // 12530
+      sysCfg.hlw_pcal = (payload > 4000) ? payload : HLW_PREF_PULSE;  // 12530
     }
-    snprintf_P(svalue, ssvalue, PSTR("(\"HlwPcal\":\"%d%s\"}"), sysCfg.hlw_pcal, (sysCfg.flag.value_units) ? " uS" : "");
+    caltext = 1;
+  }
+  else if (!strcmp_P(type,PSTR("HLWPSET"))) {
+    if ((payload > 0) && (payload < 3601) && hlw_cf_plen) {
+      sysCfg.hlw_pcal = (payload * 10 * hlw_cf_plen) / HLW_PREF;
+    }
+    caltext = 1;
   }
   else if (!strcmp_P(type,PSTR("HLWUCAL"))) {
     if ((payload > 0) && (payload < 32001)) {
       sysCfg.hlw_ucal = (payload > 999) ? payload : HLW_UREF_PULSE;  // 1950
     }
-    snprintf_P(svalue, ssvalue, PSTR("{\"HlwUcal\":\"%d%s\"}"), sysCfg.hlw_ucal, (sysCfg.flag.value_units) ? " uS" : "");
+    caltext = 2;
+  }
+  else if (!strcmp_P(type,PSTR("HLWUSET"))) {
+    if ((payload > 0) && (payload < 501) && hlw_cf1u_plen) {
+      sysCfg.hlw_ucal = (payload * 10 * hlw_cf1u_plen) / HLW_UREF;
+    }
+    caltext = 2;
   }
   else if (!strcmp_P(type,PSTR("HLWICAL"))) {
     if ((payload > 0) && (payload < 32001)) {
-      sysCfg.hlw_ical = (payload > 2499) ? payload : HLW_IREF_PULSE;  // 3500
+      sysCfg.hlw_ical = (payload > 1100) ? payload : HLW_IREF_PULSE;  // 3500
     }
-    snprintf_P(svalue, ssvalue, PSTR("{\"HlwIcal\":\"%d%s\"}"), sysCfg.hlw_ical, (sysCfg.flag.value_units) ? " uS" : "");
+    caltext = 3;
+  }
+  else if (!strcmp_P(type,PSTR("HLWISET"))) {
+    if ((payload > 0) && (payload < 16001) && hlw_cf1i_plen) {
+      sysCfg.hlw_ical = (payload * hlw_cf1i_plen) / HLW_IREF;
+    }
+    caltext = 3;
   }
 #if FEATURE_POWER_LIMIT
   else if (!strcmp_P(type,PSTR("MAXPOWER"))) {
@@ -570,6 +589,17 @@ boolean hlw_command(char *type, uint16_t index, char *dataBuf, uint16_t data_len
 #endif  // FEATURE_POWER_LIMIT
   else {
     serviced = false;
+  }
+  switch (caltext) {
+    case 1:
+      snprintf_P(svalue, ssvalue, PSTR("(\"HlwPcal\":\"%d%s\"}"), sysCfg.hlw_pcal, (sysCfg.flag.value_units) ? " uS" : "");
+      break;
+    case 2:
+      snprintf_P(svalue, ssvalue, PSTR("{\"HlwUcal\":\"%d%s\"}"), sysCfg.hlw_ucal, (sysCfg.flag.value_units) ? " uS" : "");
+      break;
+    case 3:
+      snprintf_P(svalue, ssvalue, PSTR("(\"HlwIcal\":\"%d%s\"}"), sysCfg.hlw_ical, (sysCfg.flag.value_units) ? " uS" : "");
+      break;
   }
   return serviced;
 }

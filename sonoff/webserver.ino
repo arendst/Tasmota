@@ -437,6 +437,23 @@ void handleRoot()
       }
       page += F("</tr></table>");
     }
+    if (SONOFF_BRIDGE == sysCfg.module) {
+      page += FPSTR(HTTP_TABLE100);
+      page += F("<tr>");
+      byte idx = 0;
+      for (byte i = 0; i < 4; i++) {
+        if (idx > 0) {
+          page += F("</tr><tr>");
+        }
+        for (byte j = 0; j < 4; j++) {
+          idx++;
+          snprintf_P(line, sizeof(line), PSTR("<td style='width:25%'><button onclick='la(\"?k=%d\");'>%d</button></td>"),
+            idx, idx);
+          page += line;
+        }
+      }
+      page += F("</tr></table>");
+    }
     
     if (HTTP_ADMIN == _httpflag) {
       page += FPSTR(HTTP_BTN_MENU1);
@@ -455,6 +472,10 @@ void handleAjax2()
   }
   if (strlen(webServer->arg("d").c_str())) {
     snprintf_P(svalue, sizeof(svalue), PSTR("dimmer %s"), webServer->arg("d").c_str());
+    do_cmnd(svalue);
+  }
+  if (strlen(webServer->arg("k").c_str())) {
+    snprintf_P(svalue, sizeof(svalue), PSTR("rfkey%s"), webServer->arg("k").c_str());
     do_cmnd(svalue);
   }
   

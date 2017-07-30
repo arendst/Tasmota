@@ -290,7 +290,7 @@ boolean sl_command(char *type, uint16_t index, char *dataBufUc, uint16_t data_le
     snprintf_P(svalue, ssvalue, PSTR("{\"Speed\":%d}"), sysCfg.led_speed);
   }
   else if (!strcmp_P(type,PSTR("WAKEUPDURATION"))) {
-    if ((payload > 0) && (payload < 3601)) {
+    if ((payload > 0) && (payload < 3001)) {
       sysCfg.led_wakeup = payload;
       sl_wakeupActive = 0;
     }

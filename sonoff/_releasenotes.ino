@@ -1,4 +1,19 @@
-/* 5.4.0 20170725
+/* 5.5.0 20170730
+ * Reduce code space by removing the following commands as they are replaced by SetOption alternatives:
+ *   SaveState = SetOption0
+ *   ButtonRestrict = SetOption1
+ *   Units = SetOption2
+ *   MQTT = SetOption3
+ *   MQTTResponse = SetOption4
+ *   TempUnit = SetOption8
+ * Smoothing WS2812 animation poll, invert fade speed and max allowed wakeup time down to 3000 seconds
+ * Fix initial button press detection
+ * Add support for Sonoff RF Bridge 433 using command RfKey
+ * Fix regression from 5.0.7 by increasing message buffer size from 360 to 368 to accomodate 4 x DS18x20 sensors (#637)
+ * Add GroupTopic to Topic test when using ButtonTopic/SwitchTopic to send either ON/OFF or TOGGLE (#642)
+ * Adjust HLW calibration limits to accomodate HuaFan device and add commands HlwPSet, HlwUSet and HlwISet (#654)
+ *
+ * 5.4.0 20170725
  * Fix command reset regression introduced in 5.2.0
  * Increase polling from 0.1 second to 0.05 second
  * Add multipress to all buttons

@@ -17,6 +17,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+const uint8_t sfb_codeDefault[9] PROGMEM = { 0x21, 0x16, 0x01, 0x0E, 0x03, 0x48, 0x2E, 0x1A, 0x00 };
+
 /*********************************************************************************************\
  * RTC memory
 \*********************************************************************************************/
@@ -269,30 +271,7 @@ void CFG_Load()
   }
   snprintf_P(log, sizeof(log), PSTR("Cnfg: Load from flash at %X and count %d"), _cfgLocation, sysCfg.saveFlag);
   addLog(LOG_LEVEL_DEBUG, log);
-/*  
   if (sysCfg.cfg_holder != CFG_HOLDER) {
-    CFG_Default();
-  }
-*/
-  if (sysCfg.cfg_holder != CFG_HOLDER) {
-/*
-    // Auto upgrade
-    if ((sysCfg.version < 0x04020000) || (sysCfg.version > VERSION)) {
-      noInterrupts();
-      spi_flash_read((CFG_LOCATION_3) * SPI_FLASH_SEC_SIZE, (uint32*)&sysCfg, sizeof(SYSCFG));
-      spi_flash_read((CFG_LOCATION_3 + 1) * SPI_FLASH_SEC_SIZE, (uint32*)&_sysCfgH, sizeof(SYSCFGH));
-      if (sysCfg.saveFlag < _sysCfgH.saveFlag)
-        spi_flash_read((CFG_LOCATION_3 + 1) * SPI_FLASH_SEC_SIZE, (uint32*)&sysCfg, sizeof(SYSCFG));
-      interrupts();
-      if (sysCfg.cfg_holder != CFG_HOLDER) {
-        CFG_Default();
-      } else {
-        sysCfg.saveFlag = 0;
-      }
-    } else {
-      CFG_Default();
-    }
-*/
     // Auto upgrade
     noInterrupts();
     spi_flash_read((CFG_LOCATION_3) * SPI_FLASH_SEC_SIZE, (uint32*)&sysCfg, sizeof(SYSCFG));
@@ -339,7 +318,7 @@ void CFG_Erase()
   }
 }
 
-void CFG_Dump(uint16_t srow, uint16_t mrow)
+void CFG_Dump(char* parms)
 {
   #define CFG_COLS 16
   
@@ -348,18 +327,25 @@ void CFG_Dump(uint16_t srow, uint16_t mrow)
   uint16_t maxrow;
   uint16_t row;
   uint16_t col;
+  char *p;
 
   uint8_t *buffer = (uint8_t *) &sysCfg;
-  row = 0;
   maxrow = ((sizeof(SYSCFG)+CFG_COLS)/CFG_COLS);
-  if ((srow > 0) && (srow < maxrow)) {
-    row = srow;
+
+  uint16_t srow = strtol(parms, &p, 16) / CFG_COLS;
+  uint16_t mrow = strtol(p, &p, 10);
+
+//  snprintf_P(log, sizeof(log), PSTR("Cnfg: Parms %s, Start row %d, rows %d"), parms, srow, mrow);
+//  addLog(LOG_LEVEL_DEBUG, log);
+
+  if (0 == mrow) {  // Default only 8 lines
+    mrow = 8;
   }
-  if (0 == mrow) {  // Default only four lines
-    mrow = 4;
+  if (srow > maxrow) {
+    srow = maxrow - mrow;
   }
-  if ((mrow > 0) && (mrow < (maxrow - row))) {
-    maxrow = row + mrow;
+  if (mrow < (maxrow - srow)) {
+    maxrow = srow + mrow;
   }
 
   for (row = srow; row < maxrow; row++) {
@@ -525,6 +511,9 @@ void CFG_DefaultSet2()
   // 5.2.0
   sysCfg.param[P_MAX_POWER_RETRY] = MAX_POWER_RETRY;
 
+  // 5.4.1
+  memcpy_P(sysCfg.sfb_code[0], sfb_codeDefault, 9);
+ 
 }
 
 /********************************************************************************************/
@@ -726,6 +715,12 @@ void CFG_Delta()
     }
     if (sysCfg.version < 0x05020000) {
       sysCfg.param[P_MAX_POWER_RETRY] = MAX_POWER_RETRY;
+    }
+    if (sysCfg.version < 0x05050000) {
+      for (byte i = 0; i < 17; i++) {
+        sysCfg.sfb_code[i][0] = 0;
+      }
+      memcpy_P(sysCfg.sfb_code[0], sfb_codeDefault, 9);
     }
     
     sysCfg.version = VERSION;

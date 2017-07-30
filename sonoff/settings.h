@@ -203,6 +203,9 @@ struct SYSCFG {
   uint16_t      pCounterType;
   uint16_t      pCounterDebounce;
 
+  // 5.4.1
+  uint8_t       sfb_code[17][9];
+
 } sysCfg;
 
 struct RTCMEM {
