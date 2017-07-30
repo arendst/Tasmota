@@ -49,7 +49,6 @@ boolean tsl2561_detect()
   }
 
   char log[LOGSZ];
-  uint8_t status;
   boolean success = false;
 
   for (byte i = 0; i < 4; i++) {
@@ -66,13 +65,11 @@ boolean tsl2561_detect()
       success = true;
       tsl2561type = 1;
       strcpy(tsl2561stype, "TSL2561");
+
+      snprintf_P(log, sizeof(log), PSTR("I2C: %s found at address 0x%x"), tsl2561stype, tsl2561addr);
+      addLog(LOG_LEVEL_DEBUG, log);
       break;
     }
-  }
-
-  if (success) {
-    snprintf_P(log, sizeof(log), PSTR("I2C: %s found at address 0x%x"), tsl2561stype, tsl2561addr);
-    addLog(LOG_LEVEL_DEBUG, log);
   }
 
   return success;

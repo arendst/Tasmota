@@ -2035,6 +2035,9 @@ void every_second()
 #ifdef USE_BH1750
         bh1750_detect();
 #endif  // USE_BH1750
+#ifdef USE_TSL2561
+        tsl2561_detect();
+#endif  // USE_TSL2561
       }
 #endif  // USE_I2C
     }
