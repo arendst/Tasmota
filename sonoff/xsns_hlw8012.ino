@@ -536,6 +536,24 @@ boolean hlw_command(char *type, uint16_t index, char *dataBuf, uint16_t data_len
     }
     caltext = 3;
   }
+  else if (!strcmp_P(type,PSTR("HLWPSET"))) {
+    if ((payload > 0) && (payload < 3601) && hlw_cf_plen) {
+      sysCfg.hlw_pcal = (payload * 10 * hlw_cf_plen) / HLW_PREF;
+    }
+    snprintf_P(svalue, ssvalue, PSTR("(\"HlwPcal\":\"%d%s\"}"), sysCfg.hlw_pcal, (sysCfg.flag.value_units) ? " uS" : "");
+  }
+  else if (!strcmp_P(type,PSTR("HLWUSET"))) {
+    if ((payload > 0) && (payload < 501) && hlw_cf1u_plen) {
+      sysCfg.hlw_ucal = (payload * 10 * hlw_cf1u_plen) / HLW_UREF;
+    }
+    snprintf_P(svalue, ssvalue, PSTR("(\"HlwUcal\":\"%d%s\"}"), sysCfg.hlw_ucal, (sysCfg.flag.value_units) ? " uS" : "");
+  }
+  else if (!strcmp_P(type,PSTR("HLWISET"))) {
+    if ((payload > 0) && (payload < 16001) && hlw_cf1i_plen) {
+      sysCfg.hlw_ical = (payload * hlw_cf1i_plen) / HLW_IREF;
+    }
+    snprintf_P(svalue, ssvalue, PSTR("(\"HlwIcal\":\"%d%s\"}"), sysCfg.hlw_ical, (sysCfg.flag.value_units) ? " uS" : "");
+  }
 #if FEATURE_POWER_LIMIT
   else if (!strcmp_P(type,PSTR("MAXPOWER"))) {
     if ((payload >= 0) && (payload < 3601)) {
