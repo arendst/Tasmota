@@ -21,46 +21,77 @@
   Sonoff RF Bridge 433
 \*********************************************************************************************/
 
-uint8_t sfb_rcvflg = 0;                // Sonoff RF Bridge communication
+uint8_t sfb_rcvflg = 0;
 uint8_t sfb_learnKey = 1;
 uint8_t sfb_learnFlg = 0;
 
 void sb_received()
 {
-  char svalue[60];
+  uint8_t i = 0;
+  uint32_t sid = 0;
+  uint32_t rid = 0;
+  uint16_t rsy = 0;
+  uint16_t rlo = 0;
+  uint16_t rhi = 0;
+  char svalue[90];
+  char rfkey[8];
   char log[LOGSZ];
 
   svalue[0] = '\0';
-  for (byte i = 0; i < SerialInByteCounter; i++) {
+  for (i = 0; i < SerialInByteCounter; i++) {
     snprintf_P(svalue, sizeof(svalue), PSTR("%s%02X "), svalue, serialInBuf[i]);
   }
   snprintf_P(log, sizeof(log), PSTR("BRDG: Received %s"), svalue);
   addLog(LOG_LEVEL_DEBUG, log);
 
-  if (0xA2 == serialInBuf[0]) {  // Learn failed
+  if (0xA2 == serialInBuf[0]) {       // Learn timeout
     sfb_learnFlg = 0;
     snprintf_P(svalue, sizeof(svalue), PSTR("{\"RfKey%d\":\"Learn failed\"}"), sfb_learnKey);
     mqtt_publish_topic_P(5, PSTR("RFKEY"), svalue);
   }
-  if (0xA3 == serialInBuf[0]) {  // Learn
+  else if (0xA3 == serialInBuf[0]) {  // Learned A3 20 F8 01 18 03 3E 2E 1A 22 55
     sfb_learnFlg = 0;
-    for (uint8_t i = 0; i < 9; i++) {
-      sysCfg.sfb_code[sfb_learnKey][i] = serialInBuf[i +1];
+    rlo = serialInBuf[3] << 8 | serialInBuf[4];  // Low time in uSec
+    rhi = serialInBuf[5] << 8 | serialInBuf[6];  // High time in uSec
+    if (rlo && rhi) {
+      for (i = 0; i < 9; i++) {
+        sysCfg.sfb_code[sfb_learnKey][i] = serialInBuf[i +1];
+      }
+      snprintf_P(svalue, sizeof(svalue), PSTR("{\"RfKey%d\":\"Learned\"}"), sfb_learnKey);
+    } else {
+      snprintf_P(svalue, sizeof(svalue), PSTR("{\"RfKey%d\":\"Learn failed\"}"), sfb_learnKey);
     }
-    snprintf_P(svalue, sizeof(svalue), PSTR("{\"RfKey%d\":\"Learned\"}"), sfb_learnKey);
     mqtt_publish_topic_P(5, PSTR("RFKEY"), svalue);
   }
+  else if (0xA4 == serialInBuf[0]) {  // Received RF data A4 20 EE 01 18 03 3E 2E 1A 22 55
+    rsy = serialInBuf[1] << 8 | serialInBuf[2];  // Sync time in uSec
+    rlo = serialInBuf[3] << 8 | serialInBuf[4];  // Low time in uSec
+    rhi = serialInBuf[5] << 8 | serialInBuf[6];  // High time in uSec
+    rid = serialInBuf[7] << 16 | serialInBuf[8] << 8 | serialInBuf[9];
+    strcpy_P(rfkey, PSTR("\"None\""));
+    for (i = 1; i <= 16; i++) {
+      if (sysCfg.sfb_code[i][0]) {
+        sid = sysCfg.sfb_code[i][6] << 16 | sysCfg.sfb_code[i][7] << 8 | sysCfg.sfb_code[i][8];
+        if (sid == rid) {
+          snprintf_P(rfkey, sizeof(rfkey), PSTR("%d"), i);
+          break;
+        }
+      }
+    }
+    snprintf_P(svalue, sizeof(svalue), PSTR("{\"RfReceived\":{\"Sync\":%d, \"Low\":%d, \"High\":%d, \"Data\":\"%06X\", \"RfKey\":%s}}"),
+      rsy, rlo, rhi, rid, rfkey);
+    mqtt_publish_topic_P(6, PSTR("RFRECEIVED"), svalue);
+  }  
 }
 
 boolean sb_serial()
 {
   if (sfb_rcvflg) {
-    if (SerialInByte > 0) {
+    if (!((SerialInByteCounter == 0) && (SerialInByte == 0))) {  // Skip leading 0
       serialInBuf[SerialInByteCounter++] = SerialInByte;
-      if (0x55 == SerialInByte) {
-//        serialInBuf[SerialInByteCounter] = 0x55;
+      if (0x55 == SerialInByte) {          // 0x55 - End of text
         sb_received();
-        sfb_rcvflg = 0;                     // 0x55 - End of text
+        sfb_rcvflg = 0;
         return 1;
       }
     }
@@ -142,7 +173,7 @@ boolean sb_command(char *type, uint16_t index, char *dataBuf, uint16_t data_len,
         snprintf_P(svalue, ssvalue, PSTR("{\"RfKey%d\":\"Set to default\"}"), index);
       } else {
         if ((1 == payload) || (0 == sysCfg.sfb_code[index][0])) {
-          sb_send(0, index); 
+          sb_send(0, index);
           snprintf_P(svalue, ssvalue, PSTR("{\"RfKey%d\":\"Default sent\"}"), index);
         } else {
           sb_send(index, 0);

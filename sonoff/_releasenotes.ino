@@ -1,4 +1,12 @@
-/* 5.5.0 20170730
+/* 5.5.1 20170805
+ * Fix Sonoff Rf Bridge issues
+ * Add Sonoff RF Bridge MQTT messages on received and learned RF signal
+ * Add command VoltRes 0|1 to select voltage resolution to 0.1 V (#654)
+ * Add averaging to Analog input (#686)
+ * Add Energy tele data on Sonoff Pow Threshold change (#688)
+ * Fix inconsistent property names in Messages (#690)
+ *
+ * 5.5.0 20170730
  * Reduce code space by removing the following commands as they are replaced by SetOption alternatives:
  *   SaveState = SetOption0
  *   ButtonRestrict = SetOption1

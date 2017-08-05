@@ -366,6 +366,7 @@ void CFG_Dump(char* parms)
     }
     snprintf_P(log, sizeof(log), PSTR("%s|"), log);
     addLog(LOG_LEVEL_INFO, log);
+    delay(1);
   }
 }
 

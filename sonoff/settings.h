@@ -42,7 +42,7 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t spare17 : 1;
     uint32_t spare18 : 1;
     uint32_t spare19 : 1;
-    uint32_t spare20 : 1;
+    uint32_t voltage_resolution : 1;
     uint32_t emulation : 2;
     uint32_t energy_resolution : 3;
     uint32_t pressure_resolution : 2;

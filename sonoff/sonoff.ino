@@ -25,7 +25,7 @@
     - Select IDE Tools - Flash Size: "1M (no SPIFFS)"
   ====================================================*/
 
-#define VERSION                0x05050000  // 5.5.0
+#define VERSION                0x05050100  // 5.5.1
 
 enum log_t   {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG_MORE, LOG_LEVEL_ALL};
 enum week_t  {Last, First, Second, Third, Fourth};
@@ -1129,6 +1129,12 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
       }
       snprintf_P(svalue, sizeof(svalue), PSTR("{\"PressRes\":%d}"), sysCfg.flag.pressure_resolution);
     }
+    else if (!strcmp_P(type,PSTR("VOLTRES"))) {
+      if ((payload >= 0) && (payload <= 1)) {
+        sysCfg.flag.voltage_resolution = payload;
+      }
+      snprintf_P(svalue, sizeof(svalue), PSTR("{\"VoltRes\":%d}"), sysCfg.flag.voltage_resolution);
+    }
     else if (!strcmp_P(type,PSTR("ENERGYRES"))) {
       if ((payload >= 0) && (payload <= 5)) {
         sysCfg.flag.energy_resolution = payload;
@@ -1762,7 +1768,7 @@ void publish_status(uint8_t payload)
   }
 
   if ((0 == payload) || (3 == payload)) {
-    snprintf_P(svalue, sizeof(svalue), PSTR("{\"StatusLOG\":{\"Seriallog\":%d, \"Weblog\":%d, \"Syslog\":%d, \"LogHost\":\"%s\", \"SSId1\":\"%s\", \"SSId2\":\"%s\", \"TelePeriod\":%d, \"Option\":\"%X\"}}"),
+    snprintf_P(svalue, sizeof(svalue), PSTR("{\"StatusLOG\":{\"Seriallog\":%d, \"Weblog\":%d, \"Syslog\":%d, \"LogHost\":\"%s\", \"SSId1\":\"%s\", \"SSId2\":\"%s\", \"TelePeriod\":%d, \"Option\":\"%08X\"}}"),
       sysCfg.seriallog_level, sysCfg.weblog_level, sysCfg.syslog_level, sysCfg.syslog_host, sysCfg.sta_ssid[0], sysCfg.sta_ssid[1], sysCfg.tele_period, sysCfg.flag.data);
     mqtt_publish_topic_P(option, PSTR("STATUS3"), svalue);
   }
@@ -1774,7 +1780,7 @@ void publish_status(uint8_t payload)
   }
 
   if ((0 == payload) || (5 == payload)) {
-    snprintf_P(svalue, sizeof(svalue), PSTR("{\"StatusNET\":{\"Host\":\"%s\", \"IP\":\"%s\", \"Gateway\":\"%s\", \"Subnetmask\":\"%s\", \"DNSServer\":\"%s\", \"Mac\":\"%s\", \"Webserver\":%d, \"WifiConfig\":%d}}"),
+    snprintf_P(svalue, sizeof(svalue), PSTR("{\"StatusNET\":{\"Hostname\":\"%s\", \"IPaddress\":\"%s\", \"Gateway\":\"%s\", \"Subnetmask\":\"%s\", \"DNSServer\":\"%s\", \"Mac\":\"%s\", \"Webserver\":%d, \"WifiConfig\":%d}}"),
       Hostname, WiFi.localIP().toString().c_str(), IPAddress(sysCfg.ip_address[1]).toString().c_str(), IPAddress(sysCfg.ip_address[2]).toString().c_str(), IPAddress(sysCfg.ip_address[3]).toString().c_str(),
       WiFi.macAddress().c_str(), sysCfg.webserver, sysCfg.sta_config);
     mqtt_publish_topic_P(option, PSTR("STATUS5"), svalue);
@@ -1856,7 +1862,12 @@ void sensors_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
   counter_mqttPresent(svalue, ssvalue, djson);
 #ifndef USE_ADC_VCC
   if (pin[GPIO_ADC0] < 99) {
-    snprintf_P(svalue, ssvalue, PSTR("%s, \"AnalogInput0\":%d"), svalue, analogRead(A0));
+    uint16_t alr = 0;
+    for (byte i = 0; i < 32; i++) {
+      alr += analogRead(A0);
+      delay(1);
+    }
+    snprintf_P(svalue, ssvalue, PSTR("%s, \"AnalogInput0\":%d"), svalue, alr >> 5);
     *djson = 1;
   }
 #endif
