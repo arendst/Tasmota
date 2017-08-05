@@ -1,4 +1,7 @@
-/* 5.5.1 20170805
+/* 5.5.1a
+ * Extent max number of WS2812 pixels from 256 to 512 (#667)
+ *
+ * 5.5.1 20170805
  * Fix Sonoff Rf Bridge issues
  * Add Sonoff RF Bridge MQTT messages on received and learned RF signal
  * Add command VoltRes 0|1 to select voltage resolution to 0.1 V (#654)
