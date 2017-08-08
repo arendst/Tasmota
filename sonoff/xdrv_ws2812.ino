@@ -259,18 +259,18 @@ void ws2812_clock()
   ws2812_stripShow();
 }
 
-void ws2812_gradientColor(struct wsColor* mColor, uint16_t range, uint16_t gradRange, uint16_t i)
+void ws2812_gradientColor(struct wsColor* mColor, uint8_t range, uint8_t gradRange, uint8_t i)
 {
 /*
  * Compute the color of a pixel at position i using a gradient of the color scheme.
  * This function is used internally by the gradient function.
  */
   ColorScheme scheme = schemes[sysCfg.ws_scheme -3];
-  uint16_t curRange = i / range;
-  uint16_t rangeIndex = i % range;
-  uint16_t colorIndex = rangeIndex / gradRange;
-  uint16_t start = colorIndex;
-  uint16_t end = colorIndex +1;
+  uint8_t curRange = i / range;
+  uint8_t rangeIndex = i % range;
+  uint8_t colorIndex = rangeIndex / gradRange;
+  uint8_t start = colorIndex;
+  uint8_t end = colorIndex +1;
   if (curRange % 2 != 0) {
     start = (scheme.count -1) - start;
     end = (scheme.count -1) - end;
@@ -299,9 +299,9 @@ void ws2812_gradient()
   }
 
   uint8_t repeat = repeatValues[sysCfg.ws_width];  // number of scheme.count per ledcount
-  uint16_t range = (uint16_t)ceil((float)sysCfg.ws_pixels / (float)repeat);
-  uint16_t gradRange = (uint16_t)ceil((float)range / (float)(scheme.count - 1));
-  uint16_t offset = speedValues[sysCfg.ws_speed] > 0 ? stripTimerCntr / speedValues[sysCfg.ws_speed] : 0;
+  uint8_t range = (uint8_t)ceil((float)sysCfg.ws_pixels / (float)repeat);
+  uint8_t gradRange = (uint8_t)ceil((float)range / (float)(scheme.count - 1));
+  uint8_t offset = speedValues[sysCfg.ws_speed] > 0 ? stripTimerCntr / speedValues[sysCfg.ws_speed] : 0;
 
   wsColor oldColor, currentColor;
   ws2812_gradientColor(&oldColor, range, gradRange, offset);
@@ -340,7 +340,7 @@ void ws2812_bars()
 
   ColorScheme scheme = schemes[sysCfg.ws_scheme -3];
 
-  uint16_t maxSize = sysCfg.ws_pixels / scheme.count;
+  uint8_t maxSize = sysCfg.ws_pixels / scheme.count;
   if (widthValues[sysCfg.ws_width] > maxSize) {
     maxSize = 0;
   }
