@@ -1,4 +1,10 @@
-/* 5.5.1 20170805
+/* 5.5.2 20170808
+ * Extent max number of WS2812 pixels from 256 to 512 (#667)
+ * Add OTA handling if server responds with no update available (#695)
+ * Removed undocumented command FlashMode (#696)
+ * Fix compile time error message due to increased message buffer size (#703)
+ *
+ * 5.5.1 20170805
  * Fix Sonoff Rf Bridge issues
  * Add Sonoff RF Bridge MQTT messages on received and learned RF signal
  * Add command VoltRes 0|1 to select voltage resolution to 0.1 V (#654)
