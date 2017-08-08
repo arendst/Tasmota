@@ -1,5 +1,8 @@
-/* 5.5.1a
+/* 5.5.1b
  * Extent max number of WS2812 pixels from 256 to 512 (#667)
+ * Add OTA handling if server responds with no update available (#695)
+ * Removed undocumented command FlashMode (#696)
+ * Fix compile time error message due to increased message buffer size (#703)
  *
  * 5.5.1 20170805
  * Fix Sonoff Rf Bridge issues

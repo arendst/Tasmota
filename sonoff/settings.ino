@@ -141,33 +141,23 @@ uint32_t _cfgLocation = CFG_LOCATION;
 /*
  * Based on cores/esp8266/Updater.cpp
  */
-void setFlashMode(byte option, byte mode)
+void setFlashModeDout()
 {
-  char log[LOGSZ];
   uint8_t *_buffer;
   uint32_t address;
 
-// option 0 - Use absolute address 0
-// option 1 - Use OTA/Upgrade relative address
-
-  if (option) {
-    eboot_command ebcmd;
-    eboot_command_read(&ebcmd);
-    address = ebcmd.args[0];
-  } else {
-    address = 0;
-  }
+  eboot_command ebcmd;
+  eboot_command_read(&ebcmd);
+  address = ebcmd.args[0];
   _buffer = new uint8_t[FLASH_SECTOR_SIZE];
   if (SPI_FLASH_RESULT_OK == spi_flash_read(address, (uint32_t*)_buffer, FLASH_SECTOR_SIZE)) {
-    if (_buffer[2] != mode) {
-      _buffer[2] = mode &3;
+    if (_buffer[2] != 3) {  // DOUT
+      _buffer[2] = 3;
       noInterrupts();
       if (SPI_FLASH_RESULT_OK == spi_flash_erase_sector(address / FLASH_SECTOR_SIZE)) {
         spi_flash_write(address, (uint32_t*)_buffer, FLASH_SECTOR_SIZE);
       }
       interrupts();
-      snprintf_P(log, sizeof(log), PSTR("FLSH: Set Flash Mode to %d"), (option) ? mode : ESP.getFlashChipMode());
-      addLog(LOG_LEVEL_DEBUG, log);
     }
   }
   delete[] _buffer;
