@@ -1245,7 +1245,7 @@ void handleUploadLoop()
           _uploaderror = 4;
           return;
         }
-        upload.buf[2] = 3;  // Force DOUT - ESP8285
+        upload.buf[2] = 3; // Force DOUT - ESP8285
       }
     }
     if (_uploadfiletype) { // config
