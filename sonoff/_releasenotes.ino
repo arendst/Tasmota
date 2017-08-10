@@ -1,5 +1,6 @@
-/* 5.5.2a
- * Fix intermittent exception 0 on Sonoff Pow
+/* 5.5.2b
+ * Fix Sonoff Pow intermittent exception 0
+ * Change Sonoff Pow sending Domoticz telemetry data only
  *
  * 5.5.2 20170808
  * Extent max number of WS2812 pixels from 256 to 512 (#667)

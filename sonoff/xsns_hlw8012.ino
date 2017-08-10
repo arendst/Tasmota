@@ -1,7 +1,7 @@
 /*
   xsns_hlw8012.ino - sonoff pow HLW8012 energy sensor support for Sonoff-Tasmota
 
-  Copyright (C) 2017  Heiko Krupp and Theo Arends
+  Copyright (C) 2017  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -175,6 +175,9 @@ void hlw_savestate()
 
 void hlw_readEnergy(byte option, float &et, float &ed, uint16_t &e, uint16_t &w, float &u, float &i, float &c)
 {
+/* option 0 = do not calculate period energy usage
+ * option 1 = calculate period energy usage
+ */
   unsigned long cur_kWhtoday = hlw_kWhtoday;
   unsigned long hlw_len;
   unsigned long hlw_temp;
@@ -189,60 +192,50 @@ void hlw_readEnergy(byte option, float &et, float &ed, uint16_t &e, uint16_t &w,
 //addLog(LOG_LEVEL_DEBUG, log);
 
   et = (float)(rtcMem.hlw_kWhtotal + (cur_kWhtoday / 1000)) / 100000;
-  
+  ed = 0;
   if (cur_kWhtoday) {
     ed = (float)cur_kWhtoday / 100000000;
-  } else {
-    ed = 0;
   }
-
+  e = 0;
   if (option) {
     if (!hlw_lasttime) {
       hlw_period = sysCfg.tele_period;
     } else {
       hlw_period = rtc_loctime() - hlw_lasttime;
     }
-    if (!hlw_period) {
-      hlw_period = sysCfg.tele_period;
-    }
-    hlw_lasttime = rtc_loctime();
-    hlw_interval = 3600 / hlw_period;
-    if (hlw_Ecntr) {
-      hlw_len = hlw_period * 1000000 / hlw_Ecntr;
-      hlw_Ecntr = 0;
-      hlw_temp = ((HLW_PREF * sysCfg.hlw_pcal) / hlw_len) / hlw_interval;
-      e = hlw_temp / 10;
-    } else {
-      e = 0;
+    if (hlw_period) {
+      hlw_lasttime = rtc_loctime();
+      hlw_interval = 3600 / hlw_period;
+      if (hlw_Ecntr) {
+        hlw_len = hlw_period * 1000000 / hlw_Ecntr;
+        hlw_Ecntr = 0;
+        hlw_temp = ((HLW_PREF * sysCfg.hlw_pcal) / hlw_len) / hlw_interval;
+        e = hlw_temp / 10;
+      }
     }
   }
-
+  w = 0;
   if (hlw_cf_plen) {
     hlw_w = (HLW_PREF * sysCfg.hlw_pcal) / hlw_cf_plen;
     w = hlw_w / 10;
-  } else {
-    w = 0;
   }
+  u = 0;
   if (hlw_cf1u_plen && (w || (power &1))) {
     hlw_u = (HLW_UREF * sysCfg.hlw_ucal) / hlw_cf1u_plen;
     u = (float)hlw_u / 10;
-  } else {
-    u = 0;
   }
+  i = 0;
   if (hlw_cf1i_plen && w) {
     hlw_i = (HLW_IREF * sysCfg.hlw_ical) / hlw_cf1i_plen;
     i = (float)hlw_i / 1000;
-  } else {
-    i = 0;
   }
+  c = 0;
   if (hlw_i && hlw_u && hlw_w && w) {
     hlw_temp = (hlw_w * 100) / ((hlw_u * hlw_i) / 1000);
     if (hlw_temp > 100) {
       hlw_temp = 100;
     }
     c = (float)hlw_temp / 100;
-  } else {
-    c = 0;
   }
 }
 
@@ -617,6 +610,9 @@ boolean hlw_command(char *type, uint16_t index, char *dataBuf, uint16_t data_len
 
 void hlw_mqttStat(byte option, char* svalue, uint16_t ssvalue)
 {
+/* option 0 = do not show period energy usage
+ * option 1 = show period energy usage
+ */
   char stemp0[10];
   char stemp1[10];
   char stemp2[10];
@@ -643,13 +639,18 @@ void hlw_mqttStat(byte option, char* svalue, uint16_t ssvalue)
   snprintf_P(svalue, ssvalue, PSTR("%s\"Total\":%s, \"Yesterday\":%s, \"Today\":%s%s, \"Power\":%d, \"Factor\":%s, \"Voltage\":%s, \"Current\":%s}"),
     svalue, stemp4, stemp0, stemp1, (option) ? speriod : "", pw, stemp2, stemp5, stemp3);
 #ifdef USE_DOMOTICZ
-  dtostrf(pet * 1000, 1, 1, stemp1);
-  domoticz_sensor4(pw, stemp1);
+  if (option) {  // Only send if telemetry
+    dtostrf(pet * 1000, 1, 1, stemp1);
+    domoticz_sensor4(pw, stemp1);
+  }
 #endif  // USE_DOMOTICZ
 }
 
 void hlw_mqttPresent(byte option)
 {
+/* option 0 = do not show period energy usage
+ * option 1 = show period energy usage
+ */
 // {"Time":"2017-03-04T13:37:24", "Total":0.013, "Yesterday":0.013, "Today":0.000, "Period":0, "Power":0, "Factor":0.00, "Voltage":0, "Current":0.000}
   char svalue[200];  // was MESSZ
 
@@ -694,7 +695,6 @@ String hlw_webPresent()
   uint16_t pw;
 
   hlw_readEnergy(0, pet, ped, pe, pw, pu, pi, pc);
-
   dtostrf(pu, 1, sysCfg.flag.voltage_resolution, stemp6);
   dtostrf(pi, 1, 3, stemp);
   dtostrf(pc, 1, 2, stemp2);
