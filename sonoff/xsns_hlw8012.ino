@@ -173,7 +173,7 @@ void hlw_savestate()
   sysCfg.hlw_kWhtotal = rtcMem.hlw_kWhtotal;
 }
 
-boolean hlw_readEnergy(byte option, float &et, float &ed, uint16_t &e, uint16_t &w, float &u, float &i, float &c)
+void hlw_readEnergy(byte option, float &et, float &ed, uint16_t &e, uint16_t &w, float &u, float &i, float &c)
 {
   unsigned long cur_kWhtoday = hlw_kWhtoday;
   unsigned long hlw_len;
@@ -201,6 +201,9 @@ boolean hlw_readEnergy(byte option, float &et, float &ed, uint16_t &e, uint16_t 
       hlw_period = sysCfg.tele_period;
     } else {
       hlw_period = rtc_loctime() - hlw_lasttime;
+    }
+    if (!hlw_period) {
+      hlw_period = sysCfg.tele_period;
     }
     hlw_lasttime = rtc_loctime();
     hlw_interval = 3600 / hlw_period;
@@ -241,8 +244,6 @@ boolean hlw_readEnergy(byte option, float &et, float &ed, uint16_t &e, uint16_t 
   } else {
     c = 0;
   }
-
-  return true;
 }
 
 void hlw_init()
@@ -366,7 +367,7 @@ void hlw_margin_chk()
     if (jsonflg) {
       snprintf_P(svalue, sizeof(svalue), PSTR("%s}"), svalue);
       mqtt_publish_topic_P(2, PSTR("MARGINS"), svalue);
-      hlw_mqttPresent();
+      hlw_mqttPresent(0);
     }
   }
 
@@ -381,7 +382,7 @@ void hlw_margin_chk()
         if (!hlw_mplh_counter) {
           snprintf_P(svalue, sizeof(svalue), PSTR("{\"MaxPowerReached\":\"%d%s\"}"), pw, (sysCfg.flag.value_units) ? " W" : "");
           mqtt_publish_topic_P(1, PSTR("WARNING"), svalue);
-          hlw_mqttPresent();
+          hlw_mqttPresent(0);
           do_cmnd_power(1, 0);
           if (!hlw_mplr_counter) {
             hlw_mplr_counter = sysCfg.param[P_MAX_POWER_RETRY] +1;
@@ -408,7 +409,7 @@ void hlw_margin_chk()
           } else {
             snprintf_P(svalue, sizeof(svalue), PSTR("{\"MaxPowerReachedRetry\":\"%s\"}"), getStateText(0));
             mqtt_publish_topic_P(1, PSTR("WARNING"), svalue);
-            hlw_mqttPresent();
+            hlw_mqttPresent(0);
           }
         }
       }
@@ -429,7 +430,7 @@ void hlw_margin_chk()
       dtostrf(ped, 1, 3, svalue);
       snprintf_P(svalue, sizeof(svalue), PSTR("{\"MaxEnergyReached\":\"%s%s\"}"), svalue, (sysCfg.flag.value_units) ? " kWh" : "");
       mqtt_publish_topic_P(1, PSTR("WARNING"), svalue);
-      hlw_mqttPresent();
+      hlw_mqttPresent(0);
       do_cmnd_power(1, 0);
     }
   }
@@ -647,13 +648,13 @@ void hlw_mqttStat(byte option, char* svalue, uint16_t ssvalue)
 #endif  // USE_DOMOTICZ
 }
 
-void hlw_mqttPresent()
+void hlw_mqttPresent(byte option)
 {
 // {"Time":"2017-03-04T13:37:24", "Total":0.013, "Yesterday":0.013, "Today":0.000, "Period":0, "Power":0, "Factor":0.00, "Voltage":0, "Current":0.000}
   char svalue[200];  // was MESSZ
 
   snprintf_P(svalue, sizeof(svalue), PSTR("{\"Time\":\"%s\", "), getDateTime().c_str());
-  hlw_mqttStat(1, svalue, sizeof(svalue));
+  hlw_mqttStat(option, svalue, sizeof(svalue));
   mqtt_publish_topic_P(2, PSTR("ENERGY"), svalue);
 }
 

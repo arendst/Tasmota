@@ -1,4 +1,7 @@
-/* 5.5.2 20170808
+/* 5.5.2a
+ * Fix intermittent exception 0 on Sonoff Pow
+ *
+ * 5.5.2 20170808
  * Extent max number of WS2812 pixels from 256 to 512 (#667)
  * Add OTA handling if server responds with no update available (#695)
  * Removed undocumented command FlashMode (#696)
