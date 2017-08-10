@@ -25,7 +25,7 @@
     - Select IDE Tools - Flash Size: "1M (no SPIFFS)"
   ====================================================*/
 
-#define VERSION                0x05050100  // 5.5.1
+#define VERSION                0x05050200  // 5.5.2
 
 enum log_t   {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG_MORE, LOG_LEVEL_ALL};
 enum week_t  {Last, First, Second, Third, Fourth};
@@ -1026,6 +1026,15 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
       }
       snprintf_P(svalue, sizeof(svalue), PSTR("{\"PulseTime%d\":%d}"), index, sysCfg.pulsetime[index -1]);
     }
+    else if (!strcmp_P(type,PSTR("ISOLATE")) && (index > 0) && (index <= MAX_PULSETIMERS)) {
+      if (data_len > 0) {
+        if ((payload < 0) || (payload > 15)) {
+          payload = 0;
+        }
+        sysCfg.isolate[index -1] = payload;  // 1 - 4
+      }
+      snprintf_P(svalue, sizeof(svalue), PSTR("{\"Isolate%d\":%d}"), index, sysCfg.isolate[index -1]);
+    }
     else if (!strcmp_P(type,PSTR("BLINKTIME"))) {
       if ((payload > 2) && (payload <= 3600)) {
         sysCfg.blinktime = payload;
@@ -1650,7 +1659,29 @@ void do_cmnd_power(byte device, byte state)
   if ((device < 1) || (device > Maxdevice)) {
     device = 1;
   }
+
   byte mask = 0x01 << (device -1);
+
+  if (state == 1 || state == 7 || (state == 2 && (power & mask) == 0))
+  {
+    byte devs = sysCfg.isolate[device -1];
+    bool turnedOff = false;
+    if (devs != 0)
+    {
+      for (uint8_t i = 1; i <= MAX_PULSETIMERS; i += 1)
+      {
+        byte omask = 0x01 << (i - 1);
+        if ((devs & omask) && (power & omask)){
+          do_cmnd_power(i, 0);
+          turnedOff = true;
+        }
+      }
+      if (turnedOff){
+        delay(250);
+      }
+    }
+  }
+
   pulse_timer[(device -1)&3] = 0;
   if (state <= 2) {
     if ((blink_mask & mask)) {

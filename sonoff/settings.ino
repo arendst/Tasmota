@@ -514,7 +514,10 @@ void CFG_DefaultSet2()
 
   // 5.4.1
   memcpy_P(sysCfg.sfb_code[0], sfb_codeDefault, 9);
- 
+  
+  for (byte i = 0; i < MAX_PULSETIMERS; i++){
+    sysCfg.isolate[i] = 0;
+  }
 }
 
 /********************************************************************************************/
