@@ -206,7 +206,8 @@ struct SYSCFG {
   // 5.4.1
   uint8_t       sfb_code[17][9];
 
-  byte       isolate[MAX_PULSETIMERS];
+  byte       interlock[MAX_PULSETIMERS];
+  uint16_t   interlockTime;
 
 } sysCfg;
 

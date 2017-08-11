@@ -265,6 +265,7 @@ uint8_t blogidx = 0;                  // Command backlog index
 uint8_t blogptr = 0;                  // Command backlog pointer
 uint8_t blogmutex = 0;                // Command backlog pending
 uint16_t blogdelay = 0;               // Command backlog delay
+uint16_t interlock_timer[MAX_PULSETIMERS] = { 0 }; // interlock timer
 
 #ifdef USE_MQTT_TLS
   WiFiClientSecure espClient;         // Wifi Secure Client
@@ -1026,14 +1027,29 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
       }
       snprintf_P(svalue, sizeof(svalue), PSTR("{\"PulseTime%d\":%d}"), index, sysCfg.pulsetime[index -1]);
     }
-    else if (!strcmp_P(type,PSTR("ISOLATE")) && (index > 0) && (index <= MAX_PULSETIMERS)) {
+    else if (!strcmp_P(type,PSTR("INTERLOCK")) && (index > 0) && (index <= MAX_PULSETIMERS)) {
       if (data_len > 0) {
-        if ((payload < 0) || (payload > 15)) {
-          payload = 0;
+        byte mask = 0;
+        while (payload16 > 0){
+          mask |= 0x01 << ((payload16 % 10)-1);
+          payload16 /= 10;
         }
-        sysCfg.isolate[index -1] = payload;  // 1 - 4
+        sysCfg.interlock[index -1] = mask;
       }
-      snprintf_P(svalue, sizeof(svalue), PSTR("{\"Isolate%d\":%d}"), index, sysCfg.isolate[index -1]);
+      uint16_t value = 0;
+      for (byte i = 0; i < MAX_PULSETIMERS; i++)
+      {
+        if (sysCfg.interlock[index -1] & (0x01 << i)){
+          value = value * 10 + i + 1;
+        }
+      }
+      snprintf_P(svalue, sizeof(svalue), PSTR("{\"Interlock%d\":%d}"), index, value);
+    }
+    else if (!strcmp_P(type,PSTR("INTERLOCKTIME"))) {
+      if (data_len > 0) {
+        sysCfg.interlockTime = payload16;  // 0 - 65535
+      }
+      snprintf_P(svalue, sizeof(svalue), PSTR("{\"InterlockTime\":%d}"), index, sysCfg.interlockTime);
     }
     else if (!strcmp_P(type,PSTR("BLINKTIME"))) {
       if ((payload > 2) && (payload <= 3600)) {
@@ -1661,23 +1677,23 @@ void do_cmnd_power(byte device, byte state)
   }
 
   byte mask = 0x01 << (device -1);
+  interlock_timer[(device -1)&3] = 0;
 
   if (state == 1 || state == 7 || (state == 2 && (power & mask) == 0))
   {
-    byte devs = sysCfg.isolate[device -1];
+    byte devs = sysCfg.interlock[(device -1)&3];
     bool turnedOff = false;
-    if (devs != 0)
-    {
-      for (uint8_t i = 1; i <= MAX_PULSETIMERS; i += 1)
-      {
-        byte omask = 0x01 << (i - 1);
+    if (devs != 0){
+      for (uint8_t i = 0; i < MAX_PULSETIMERS; i++){
+        byte omask = 0x01 << i;
         if ((devs & omask) && (power & omask)){
-          do_cmnd_power(i, 0);
+          do_cmnd_power(i + 1, 0);
           turnedOff = true;
         }
       }
-      if (turnedOff){
-        delay(250);
+      if (turnedOff && sysCfg.interlockTime != 0){
+        interlock_timer[(device -1)&3] = sysCfg.interlockTime;
+        return;
       }
     }
   }
@@ -1953,6 +1969,9 @@ void every_second()
   for (byte i = 0; i < MAX_PULSETIMERS; i++) {
     if (pulse_timer[i] > 111) {
       pulse_timer[i]--;
+    }
+    if (interlock_timer[i] > 111) {
+      interlock_timer[i]--;
     }
   }
 
@@ -2315,7 +2334,14 @@ void stateloop()
           do_cmnd_power(i +1, 0);
         }
       }
+      if ((interlock_timer[i] > 0) && (interlock_timer[i] < 112)) {
+        interlock_timer[i]--;
+        if (!interlock_timer[i]) {
+          do_cmnd_power(i +1, 1);
+        }
+      }
     }
+
 
     if (blink_mask) {
       blink_timer--;
