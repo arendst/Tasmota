@@ -1049,7 +1049,7 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
       if (data_len > 0) {
         sysCfg.interlockTime = payload16;  // 0 - 65535
       }
-      snprintf_P(svalue, sizeof(svalue), PSTR("{\"InterlockTime\":%d}"), index, sysCfg.interlockTime);
+      snprintf_P(svalue, sizeof(svalue), PSTR("{\"InterlockTime\":%d}"), sysCfg.interlockTime);
     }
     else if (!strcmp_P(type,PSTR("BLINKTIME"))) {
       if ((payload > 2) && (payload <= 3600)) {
