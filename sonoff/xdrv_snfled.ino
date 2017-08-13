@@ -18,7 +18,7 @@
 */
 
 /*********************************************************************************************\
- * Sonoff B1, Led and BN-SZ01
+ * Sonoff B1, AiLight, Sonoff Led and BN-SZ01
 \*********************************************************************************************/
 
 uint8_t ledTable[] = {
@@ -50,7 +50,7 @@ uint8_t sl_wakeupDimmer = 0;
 uint16_t sl_wakeupCntr = 0;
 
 /*********************************************************************************************\
- * Sonoff B1 based on OpenLight https://github.com/icamgo/noduino-sdk (my9231 and my9291)
+ * Sonoff B1 (my9231) and AiLight (my9291) based on OpenLight https://github.com/icamgo/noduino-sdk
 \*********************************************************************************************/
 
 extern "C" {
@@ -76,7 +76,7 @@ void sl_dcki_pulse(uint8_t times)
   }
 }
 
-void sl_send_command(uint8_t command)
+void sl_my92x1_command(uint8_t chips, uint8_t command)
 {
   uint8_t command_data;
 
@@ -85,8 +85,8 @@ void sl_send_command(uint8_t command)
   // Send 12 DI pulse, after 6 pulse's falling edge store duty data, and 12
   // pulse's rising edge convert to command mode.
   sl_di_pulse(12);
-  os_delay_us(12);    // Delay >12us, begin send CMD data
-  for (uint8_t n = 0; n < 2; n++) {    // Send CMD data
+  os_delay_us(12);     // Delay >12us, begin send CMD data
+  for (uint8_t n = 0; n < chips; n++) {    // Send CMD data
     command_data = command;
     for (uint8_t i = 0; i < 4; i++) {  // Send byte
       digitalWrite(sl_pdcki, LOW);
@@ -107,7 +107,7 @@ void sl_send_command(uint8_t command)
 //  ets_intr_unlock();
 }
 
-void sl_send_duty(uint16_t duty_r, uint16_t duty_g, uint16_t duty_b, uint16_t duty_w, uint16_t duty_c)
+void sl_my9231_duty(uint16_t duty_r, uint16_t duty_g, uint16_t duty_b, uint16_t duty_w, uint16_t duty_c)
 {
   uint16_t duty_current = 0;
 
@@ -134,12 +134,39 @@ void sl_send_duty(uint16_t duty_r, uint16_t duty_g, uint16_t duty_b, uint16_t du
 //  ets_intr_unlock();
 }
 
+void sl_my9291_duty(uint16_t duty_r, uint16_t duty_g, uint16_t duty_b, uint16_t duty_w)
+{
+  uint16_t duty_current = 0;
+
+  uint16_t duty[4] = { duty_r, duty_g, duty_b, duty_w };  // Definition for RGBW channels
+
+//  ets_intr_lock();
+  os_delay_us(12);    // TStop > 12us.
+  for (uint8_t channel = 0; channel < 4; channel++) {  // RGBW 4CH
+    duty_current = duty[channel];                      // RGBW Channel
+    for (uint8_t i = 0; i < 4; i++) {                  // Send 8bit Data
+      digitalWrite(sl_pdcki, LOW);
+      digitalWrite(sl_pdi, (duty_current & 0x80));
+      digitalWrite(sl_pdcki, HIGH);
+      duty_current = duty_current << 1;
+      digitalWrite(sl_pdi, (duty_current & 0x80));
+      digitalWrite(sl_pdcki, LOW);
+      digitalWrite(sl_pdi, LOW);
+      duty_current = duty_current << 1;
+    }
+  }
+  os_delay_us(12);  // TStart > 12us. Ready for send DI pulse.
+  sl_di_pulse(8);   // Send 8 DI pulse. After 8 pulse falling edge, store old data.
+  os_delay_us(12);  // TStop > 12us.
+//  ets_intr_unlock();
+}
+
 /********************************************************************************************/
 
 void sl_init(void)
 {
   pin[GPIO_WS2812] = 99;    // I do not allow both Sonoff Led AND WS2812 led
-  if (sfl_flg < 5) {
+  if (sfl_flg < 4) {
     if (!my_module.gp.io[4]) {
       pinMode(4, OUTPUT);     // Stop floating outputs
       digitalWrite(4, LOW);
@@ -165,12 +192,15 @@ void sl_init(void)
     digitalWrite(sl_pdi, LOW);
     digitalWrite(sl_pdcki, LOW);
 
-    // Clear all duty register 
-    sl_dcki_pulse(64);
-    sl_send_command(0x18);  // ONE_SHOT_DISABLE, REACTION_FAST, BIT_WIDTH_8, FREQUENCY_DIVIDE_1, SCATTER_APDM
-
-    // Test
-//    sl_send_duty(16, 0, 0, 0, 0);  // Red
+    if (4 == sfl_flg) {
+      // Clear all duty register 
+      sl_dcki_pulse(32);  // 1 * 32 bits
+      sl_my92x1_command(1, 0x18);  // ONE_SHOT_DISABLE, REACTION_FAST, BIT_WIDTH_8, FREQUENCY_DIVIDE_1, SCATTER_APDM
+    } else if (5 == sfl_flg) {
+      // Clear all duty register 
+      sl_dcki_pulse(48);  // 2 * 24 bits
+      sl_my92x1_command(2, 0x18);  // ONE_SHOT_DISABLE, REACTION_FAST, BIT_WIDTH_8, FREQUENCY_DIVIDE_1, SCATTER_APDM
+    }
   }
   
   sl_power = 0;
@@ -320,14 +350,17 @@ void sl_animate()
     for (byte i = 0; i < sfl_flg; i++) {
       sl_lcolor[i] = sl_tcolor[i];
       cur_col[i] = (sysCfg.led_table) ? ledTable[sl_lcolor[i]] : sl_lcolor[i];
-      if (sfl_flg < 5) {
+      if (sfl_flg < 4) {
         if (pin[GPIO_PWM1 +i] < 99) {
           analogWrite(pin[GPIO_PWM1 +i], cur_col[i] * (PWM_RANGE / 255));
         }
       }
     }
-    if (5 == sfl_flg) {
-      sl_send_duty(cur_col[0], cur_col[1], cur_col[2], cur_col[3], cur_col[4]);
+    if (4 == sfl_flg) {
+      sl_my9291_duty(cur_col[0], cur_col[1], cur_col[2], cur_col[3]);
+    }
+    else if (5 == sfl_flg) {
+      sl_my9231_duty(cur_col[0], cur_col[1], cur_col[2], cur_col[3], cur_col[4]);
     }
   }
 }
@@ -417,7 +450,7 @@ void sl_replaceHSB(String *response)
   float sat;
   float bri;
   
-  if (5 == sfl_flg) {
+  if (sfl_flg > 2) {
     sl_rgb2hsb(&hue, &sat, &bri);
     response->replace("{h}", String((uint16_t)(65535.0f * hue)));
     response->replace("{s}", String((uint8_t)(254.0f * sat)));
@@ -431,7 +464,7 @@ void sl_replaceHSB(String *response)
 
 void sl_getHSB(float *hue, float *sat, float *bri)
 {
-  if (5 == sfl_flg) {
+  if (sfl_flg > 2) {
     sl_rgb2hsb(hue, sat, bri);
   } else {
     *hue = 0;
@@ -443,7 +476,7 @@ void sl_getHSB(float *hue, float *sat, float *bri)
 void sl_setHSB(float hue, float sat, float bri)
 {
   char svalue[MESSZ];
-
+/*
   char log[LOGSZ];
   char stemp1[10];
   char stemp2[10];
@@ -453,8 +486,8 @@ void sl_setHSB(float hue, float sat, float bri)
   dtostrf(bri, 1, 3, stemp3);
   snprintf_P(log, sizeof(log), PSTR("LED: Hue %s, Sat %s, Bri %s"), stemp1, stemp2, stemp3);
   addLog(LOG_LEVEL_DEBUG, log);
-
-  if (5 == sfl_flg) {
+*/
+  if (sfl_flg > 2) {
     sl_hsb2rgb(hue, sat, bri);
     sl_prepPower(svalue, sizeof(svalue));
     mqtt_publish_topic_P(5, "COLOR", svalue);

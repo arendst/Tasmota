@@ -152,7 +152,7 @@ enum module_t {
   HUAFAN_SS,
   SONOFF_BRIDGE,
   SONOFF_B1,
-  SONOFF_B1b,
+  AILIGHT,
   MAXMODULE };
 
 /********************************************************************************************/
@@ -506,10 +506,9 @@ const mytmplt modules[MAXMODULE] PROGMEM = {
      GPIO_DI,          // GPIO12 my9231 DI
      0,
      GPIO_DCKI,        // GPIO14 my9231 DCKI
-     0,
-     0, 0
+     0, 0, 0
   },
-  { "Sonoff B1 b",     // Sonoff B1 (ESP8285 - my9231)
+  { "AiLight",         // Ai-Thinker RGBW led (ESP8266 - my9291)
      GPIO_KEY1,        // GPIO00 Pad
      GPIO_USER,        // GPIO01 Serial RXD and Optional sensor pad
      GPIO_USER,        // GPIO02 Optional sensor SDA pad
@@ -519,9 +518,9 @@ const mytmplt modules[MAXMODULE] PROGMEM = {
      0, 0,
      0,                // Flash connection
      0,
-     GPIO_DI,          // GPIO13 my9231 DI
+     GPIO_DI,          // GPIO13 my9291 DI
      0,
-     GPIO_DCKI,        // GPIO15 my9231 DCKI
+     GPIO_DCKI,        // GPIO15 my9291 DCKI
      0, 0
   }
 
