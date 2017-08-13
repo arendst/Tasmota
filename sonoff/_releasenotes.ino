@@ -1,4 +1,4 @@
-/* 5.5.2c
+/* 5.5.2d
  * Fix Sonoff Pow intermittent exception 0
  * Change Sonoff Pow sending Domoticz telemetry data only
  * Add Sonoff B1 support (experimental)

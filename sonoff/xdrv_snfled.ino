@@ -50,24 +50,29 @@ uint8_t sl_wakeupDimmer = 0;
 uint16_t sl_wakeupCntr = 0;
 
 /*********************************************************************************************\
- * Sonoff B1 based on OpenLight https://github.com/icamgo/noduino-sdk
+ * Sonoff B1 based on OpenLight https://github.com/icamgo/noduino-sdk (my9231 and my9291)
 \*********************************************************************************************/
 
-uint8_t sl_last_command;
+extern "C" {
+  void os_delay_us(unsigned int);
+}
 
-void sl_di_pulse(byte times)
+uint8_t sl_pdi;
+uint8_t sl_pdcki;
+
+void sl_di_pulse(uint8_t times)
 {
-  for (byte i = 0; i < times; i++) {
-    digitalWrite(pin[GPIO_DI], HIGH);
-    digitalWrite(pin[GPIO_DI], LOW);
+  for (uint8_t i = 0; i < times; i++) {
+    digitalWrite(sl_pdi, HIGH);
+    digitalWrite(sl_pdi, LOW);
   }
 }
 
-void sl_dcki_pulse(byte times)
+void sl_dcki_pulse(uint8_t times)
 {
-  for (byte i = 0; i < times; i++) {
-    digitalWrite(pin[GPIO_DCKI], HIGH);
-    digitalWrite(pin[GPIO_DCKI], LOW);
+  for (uint8_t i = 0; i < times; i++) {
+    digitalWrite(sl_pdcki, HIGH);
+    digitalWrite(sl_pdcki, LOW);
   }
 }
 
@@ -75,84 +80,57 @@ void sl_send_command(uint8_t command)
 {
   uint8_t command_data;
 
-  sl_last_command = command;
-
 //  ets_intr_lock();
-  delayMicroseconds(12);     // TStop > 12us.
+  os_delay_us(12);     // TStop > 12us.
   // Send 12 DI pulse, after 6 pulse's falling edge store duty data, and 12
   // pulse's rising edge convert to command mode.
   sl_di_pulse(12);
-  delayMicroseconds(12);    // Delay >12us, begin send CMD data
-
-  for (byte n = 0; n < 2; n++) {    // Send CMD data
+  os_delay_us(12);    // Delay >12us, begin send CMD data
+  for (uint8_t n = 0; n < 2; n++) {    // Send CMD data
     command_data = command;
-
-    for (byte i = 0; i < 4; i++) {  // Send byte
-      digitalWrite(pin[GPIO_DCKI], LOW);
-      if (command_data & 0x80) {
-        digitalWrite(pin[GPIO_DI], HIGH);
-      } else {
-        digitalWrite(pin[GPIO_DI], LOW);
-      }
-
-//      digitalWrite(pin[GPIO_DI], (command_data & 0x80));
-      
-      digitalWrite(pin[GPIO_DCKI], HIGH);
+    for (uint8_t i = 0; i < 4; i++) {  // Send byte
+      digitalWrite(sl_pdcki, LOW);
+      digitalWrite(sl_pdi, (command_data & 0x80));
+      digitalWrite(sl_pdcki, HIGH);
       command_data = command_data << 1;
-      if (command_data & 0x80) {
-        digitalWrite(pin[GPIO_DI], HIGH);
-      } else {
-        digitalWrite(pin[GPIO_DI], LOW);
-      }
-      digitalWrite(pin[GPIO_DCKI], LOW);
-      digitalWrite(pin[GPIO_DI], LOW);
+      digitalWrite(sl_pdi, (command_data & 0x80));
+      digitalWrite(sl_pdcki, LOW);
+      digitalWrite(sl_pdi, LOW);
       command_data = command_data << 1;
     }
   }
-
-  delayMicroseconds(12);    // TStart > 12us. Delay 12 us.
+  os_delay_us(12);    // TStart > 12us. Delay 12 us.
   // Send 16 DI pulse, at 14 pulse's falling edge store CMD data, and
   // at 16 pulse's falling edge convert to duty mode.
   sl_di_pulse(16);
-  delayMicroseconds(12);    // TStop > 12us.
+  os_delay_us(12);    // TStop > 12us.
 //  ets_intr_unlock();
 }
 
 void sl_send_duty(uint16_t duty_r, uint16_t duty_g, uint16_t duty_b, uint16_t duty_w, uint16_t duty_c)
 {
-  uint8_t bit_length = 8;
   uint16_t duty_current = 0;
 
-  uint16_t duty[8] = { duty_r, duty_g, duty_b, 0, duty_w, duty_c, 0, 0 };  // Definition for RGBWC channels
+  uint16_t duty[6] = { duty_r, duty_g, duty_b, duty_w, duty_c, 0 };  // Definition for RGBWC channels
 
 //  ets_intr_lock();
-  delayMicroseconds(12);    // TStop > 12us.
-
-  for (byte channel = 0; channel < 8; channel++) {    // RGB0WC00 8CH
-    duty_current = duty[channel];                     // RGBWC Channel
-    for (byte i = 0; i < bit_length / 2; i++) {       // Send 8bit/12bit/14bit/16bit Data
-      digitalWrite(pin[GPIO_DCKI], LOW);
-      if (duty_current & (0x01 << (bit_length - 1))) {
-        digitalWrite(pin[GPIO_DI], HIGH);
-      } else {
-        digitalWrite(pin[GPIO_DI], LOW);
-      }
-      digitalWrite(pin[GPIO_DCKI], HIGH);
+  os_delay_us(12);    // TStop > 12us.
+  for (uint8_t channel = 0; channel < 6; channel++) {  // RGBWC0 6CH
+    duty_current = duty[channel];                      // RGBWC Channel
+    for (uint8_t i = 0; i < 4; i++) {                  // Send 8bit Data
+      digitalWrite(sl_pdcki, LOW);
+      digitalWrite(sl_pdi, (duty_current & 0x80));
+      digitalWrite(sl_pdcki, HIGH);
       duty_current = duty_current << 1;
-      if (duty_current & (0x01 << (bit_length - 1))) {
-        digitalWrite(pin[GPIO_DI], HIGH);
-      } else {
-        digitalWrite(pin[GPIO_DI], LOW);
-      }
-      digitalWrite(pin[GPIO_DCKI], LOW);
-      digitalWrite(pin[GPIO_DI], LOW);
+      digitalWrite(sl_pdi, (duty_current & 0x80));
+      digitalWrite(sl_pdcki, LOW);
+      digitalWrite(sl_pdi, LOW);
       duty_current = duty_current << 1;
     }
   }
-
-  delayMicroseconds(12);  // TStart > 12us. Ready for send DI pulse.
-  sl_di_pulse(8);      // Send 8 DI pulse. After 8 pulse falling edge, store old data.
-  delayMicroseconds(12);  // TStop > 12us.
+  os_delay_us(12);  // TStart > 12us. Ready for send DI pulse.
+  sl_di_pulse(8);   // Send 8 DI pulse. After 8 pulse falling edge, store old data.
+  os_delay_us(12);  // TStop > 12us.
 //  ets_intr_unlock();
 }
 
@@ -179,17 +157,20 @@ void sl_init(void)
       sysCfg.pwmvalue[1] = 0;  // We use led_color
     }
   } else {
-    pinMode(pin[GPIO_DI], OUTPUT);
-    pinMode(pin[GPIO_DCKI], OUTPUT);
-    digitalWrite(pin[GPIO_DI], LOW);
-    digitalWrite(pin[GPIO_DCKI], LOW);
+    sl_pdi = pin[GPIO_DI];
+    sl_pdcki = pin[GPIO_DCKI];
+    
+    pinMode(sl_pdi, OUTPUT);
+    pinMode(sl_pdcki, OUTPUT);
+    digitalWrite(sl_pdi, LOW);
+    digitalWrite(sl_pdcki, LOW);
 
     // Clear all duty register 
     sl_dcki_pulse(64);
     sl_send_command(0x18);  // ONE_SHOT_DISABLE, REACTION_FAST, BIT_WIDTH_8, FREQUENCY_DIVIDE_1, SCATTER_APDM
 
     // Test
-    sl_send_duty(16, 0, 0, 0, 0);  // Red
+//    sl_send_duty(16, 0, 0, 0, 0);  // Red
   }
   
   sl_power = 0;
@@ -463,7 +444,6 @@ void sl_setHSB(float hue, float sat, float bri)
 {
   char svalue[MESSZ];
 
-/*
   char log[LOGSZ];
   char stemp1[10];
   char stemp2[10];
@@ -473,7 +453,7 @@ void sl_setHSB(float hue, float sat, float bri)
   dtostrf(bri, 1, 3, stemp3);
   snprintf_P(log, sizeof(log), PSTR("LED: Hue %s, Sat %s, Bri %s"), stemp1, stemp2, stemp3);
   addLog(LOG_LEVEL_DEBUG, log);
-*/
+
   if (5 == sfl_flg) {
     sl_hsb2rgb(hue, sat, bri);
     sl_prepPower(svalue, sizeof(svalue));
