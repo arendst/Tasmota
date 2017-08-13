@@ -152,6 +152,7 @@ enum module_t {
   HUAFAN_SS,
   SONOFF_BRIDGE,
   SONOFF_B1,
+  SONOFF_B1b,
   MAXMODULE };
 
 /********************************************************************************************/
@@ -507,7 +508,22 @@ const mytmplt modules[MAXMODULE] PROGMEM = {
      GPIO_DCKI,        // GPIO14 my9231 DCKI
      0,
      0, 0
+  },
+  { "Sonoff B1 b",     // Sonoff B1 (ESP8285 - my9231)
+     GPIO_KEY1,        // GPIO00 Pad
+     GPIO_USER,        // GPIO01 Serial RXD and Optional sensor pad
+     GPIO_USER,        // GPIO02 Optional sensor SDA pad
+     GPIO_USER,        // GPIO03 Serial TXD and Optional sensor pad
+     0, 0,
+     0, 0, 0,          // Flash connection
+     0, 0,
+     0,                // Flash connection
+     0,
+     GPIO_DI,          // GPIO13 my9231 DI
+     0,
+     GPIO_DCKI,        // GPIO15 my9231 DCKI
+     0, 0
   }
-  
+
 };
 
