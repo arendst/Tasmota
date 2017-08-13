@@ -118,8 +118,6 @@ enum fpins_t {
   GPIO_HLW_CF,         // HLW8012 CF power (Sonoff Pow)
   GPIO_ADC0,           // ADC
   GPIO_USER,           // User configurable
-  GPIO_DI,             // my9231 PWM input
-  GPIO_DCKI,           // my9231 CLK input
   GPIO_MAX };
 
 /********************************************************************************************/
@@ -151,7 +149,6 @@ enum module_t {
   SONOFF_4CHPRO,
   HUAFAN_SS,
   SONOFF_BRIDGE,
-  SONOFF_B1,
   MAXMODULE };
 
 /********************************************************************************************/
@@ -492,22 +489,6 @@ const mytmplt modules[MAXMODULE] PROGMEM = {
      0,
      GPIO_LED1_INV,    // GPIO13 Blue Led (0 = On, 1 = Off)
      0, 0, 0, 0
-  },
-  { "Sonoff B1",       // Sonoff B1 (ESP8285 - my9231)
-     GPIO_KEY1,        // GPIO00 Pad
-     GPIO_USER,        // GPIO01 Serial RXD and Optional sensor pad
-     GPIO_USER,        // GPIO02 Optional sensor SDA pad
-     GPIO_USER,        // GPIO03 Serial TXD and Optional sensor pad
-     0, 0,
-     0, 0, 0,          // Flash connection
-     0, 0,
-     0,                // Flash connection
-     GPIO_DI,          // GPIO12 my9231 DI
-     0,
-     GPIO_DCKI,        // GPIO14 my9231 DCKI
-     0,
-     0, 0
   }
-  
 };
 
