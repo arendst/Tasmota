@@ -533,6 +533,7 @@ void hue_lights(String *path)
   float bri = 0;
   float hue = 0;
   float sat = 0;
+  float ct = 0;
   bool resp = false;
   bool on = false;
   bool change = false;
@@ -636,9 +637,21 @@ void hue_lights(String *path)
         response.replace("{res}", String(tmp));
         change = true;
       }
+      if (hue_json.containsKey("ct")) {  // Color temperature 153 (Cold) to 500 (Warm)
+        tmp = hue_json["ct"];
+        ct = (float)tmp / 500.0f;
+        if (resp) {
+          response += ",";
+        }
+        response += FPSTR(HUE_LIGHT_RESPONSE_JSON);
+        response.replace("{id}", String(device));
+        response.replace("{cmd}", "ct");
+        response.replace("{res}", String(tmp));
+        change = true;
+      }
       if (change) {
         if (sfl_flg) {
-          sl_setHSB(hue, sat, bri);
+          sl_setHSB(hue, sat, bri, ct);
 #ifdef USE_WS2812
         }
         else if (pin[GPIO_WS2812] < 99) {
@@ -655,6 +668,9 @@ void hue_lights(String *path)
     else {
       response = FPSTR(HUE_ERROR_JSON);
     }
+
+addLog(LOG_LEVEL_DEBUG_MORE, response.c_str());
+    
     webServer->send(200, FPSTR(HDR_CTYPE_JSON), response);
   }
   else if(path->indexOf("/lights/") >= 0) {            // Got /lights/ID
@@ -678,6 +694,9 @@ void hue_lights(String *path)
 
 void hue_groups(String *path)
 {
+/*  
+ * http://sonoff/api/username/groups?1={"name":"Woonkamer","lights":[],"type":"Room","class":"Living room"})
+ */
   String response = "{}";
   
   if (path->endsWith("/0")) {
@@ -721,7 +740,7 @@ void handle_hue_api(String *path)
   else if (path->endsWith("/")) hue_auth(path);       // New HUE App setup
   else if (path->endsWith("/config")) hue_config(path);
   else if (path->indexOf("/lights") >= 0) hue_lights(path);
-  else if (path->indexOf("/groups") >= 0) hue_groups(path);
+  else if (path->indexOf("/groups") >= 0) hue_groups(path); 
   else if (path->endsWith("/schedules")) hue_todo(path); 
   else if (path->endsWith("/sensors")) hue_todo(path);
   else if (path->endsWith("/scenes")) hue_todo(path);

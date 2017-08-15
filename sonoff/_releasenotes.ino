@@ -1,7 +1,9 @@
-/* 5.5.2f
+/* 5.5.2g
  * Fix Sonoff Pow intermittent exception 0
  * Change Sonoff Pow sending Domoticz telemetry data only
- * Add Ai-Thinker RGBW led (AiLight) and Sonoff B1 support (experimental)
+ * Add Sonoff B1 support
+ * Add Ai-Thinker RGBW led (AiLight) (experimental)
+ * Add NeoPixelBus library to Sonoff Led for Hue support (saves 1k1 code space)
  *
  * 5.5.2 20170808
  * Extent max number of WS2812 pixels from 256 to 512 (#667)

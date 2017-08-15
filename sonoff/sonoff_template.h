@@ -117,9 +117,9 @@ enum fpins_t {
   GPIO_HLW_CF1,        // HLW8012 CF1 voltage / current (Sonoff Pow)
   GPIO_HLW_CF,         // HLW8012 CF power (Sonoff Pow)
   GPIO_ADC0,           // ADC
+  GPIO_DI,             // my92x1 PWM input
+  GPIO_DCKI,           // my92x1 CLK input
   GPIO_USER,           // User configurable
-  GPIO_DI,             // my9231 PWM input
-  GPIO_DCKI,           // my9231 CLK input
   GPIO_MAX };
 
 /********************************************************************************************/

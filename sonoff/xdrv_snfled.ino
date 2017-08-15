@@ -80,7 +80,6 @@ void sl_my92x1_command(uint8_t chips, uint8_t command)
 {
   uint8_t command_data;
 
-//  ets_intr_lock();
   os_delay_us(12);     // TStop > 12us.
   // Send 12 DI pulse, after 6 pulse's falling edge store duty data, and 12
   // pulse's rising edge convert to command mode.
@@ -104,19 +103,17 @@ void sl_my92x1_command(uint8_t chips, uint8_t command)
   // at 16 pulse's falling edge convert to duty mode.
   sl_di_pulse(16);
   os_delay_us(12);    // TStop > 12us.
-//  ets_intr_unlock();
 }
 
-void sl_my9231_duty(uint16_t duty_r, uint16_t duty_g, uint16_t duty_b, uint16_t duty_w, uint16_t duty_c)
+void sl_my9231_duty(uint8_t duty_r, uint8_t duty_g, uint8_t duty_b, uint8_t duty_w, uint8_t duty_c)
 {
-  uint16_t duty_current = 0;
+  uint8_t duty_current = 0;
 
-  uint16_t duty[6] = { duty_r, duty_g, duty_b, duty_w, duty_c, 0 };  // Definition for RGBWC channels
+  uint8_t duty[6] = { duty_w, duty_c, 0, duty_g, duty_r, duty_b };  // Definition for RGBWC channels
 
-//  ets_intr_lock();
   os_delay_us(12);    // TStop > 12us.
-  for (uint8_t channel = 0; channel < 6; channel++) {  // RGBWC0 6CH
-    duty_current = duty[channel];                      // RGBWC Channel
+  for (uint8_t channel = 0; channel < 6; channel++) {  // WC0GRB 6CH
+    duty_current = duty[channel];
     for (uint8_t i = 0; i < 4; i++) {                  // Send 8bit Data
       digitalWrite(sl_pdcki, LOW);
       digitalWrite(sl_pdi, (duty_current & 0x80));
@@ -131,16 +128,14 @@ void sl_my9231_duty(uint16_t duty_r, uint16_t duty_g, uint16_t duty_b, uint16_t 
   os_delay_us(12);  // TStart > 12us. Ready for send DI pulse.
   sl_di_pulse(8);   // Send 8 DI pulse. After 8 pulse falling edge, store old data.
   os_delay_us(12);  // TStop > 12us.
-//  ets_intr_unlock();
 }
 
-void sl_my9291_duty(uint16_t duty_r, uint16_t duty_g, uint16_t duty_b, uint16_t duty_w)
+void sl_my9291_duty(uint8_t duty_r, uint8_t duty_g, uint8_t duty_b, uint8_t duty_w)
 {
-  uint16_t duty_current = 0;
+  uint8_t duty_current = 0;
 
-  uint16_t duty[4] = { duty_r, duty_g, duty_b, duty_w };  // Definition for RGBW channels
+  uint8_t duty[4] = { duty_r, duty_g, duty_b, duty_w };  // Definition for RGBW channels
 
-//  ets_intr_lock();
   os_delay_us(12);    // TStop > 12us.
   for (uint8_t channel = 0; channel < 4; channel++) {  // RGBW 4CH
     duty_current = duty[channel];                      // RGBW Channel
@@ -158,7 +153,6 @@ void sl_my9291_duty(uint16_t duty_r, uint16_t duty_g, uint16_t duty_b, uint16_t 
   os_delay_us(12);  // TStart > 12us. Ready for send DI pulse.
   sl_di_pulse(8);   // Send 8 DI pulse. After 8 pulse falling edge, store old data.
   os_delay_us(12);  // TStop > 12us.
-//  ets_intr_unlock();
 }
 
 /********************************************************************************************/
@@ -198,7 +192,7 @@ void sl_init(void)
       sl_my92x1_command(1, 0x18);  // ONE_SHOT_DISABLE, REACTION_FAST, BIT_WIDTH_8, FREQUENCY_DIVIDE_1, SCATTER_APDM
     } else if (5 == sfl_flg) {
       // Clear all duty register 
-      sl_dcki_pulse(48);  // 2 * 24 bits
+      sl_dcki_pulse(64);  // 2 * 32 bits
       sl_my92x1_command(2, 0x18);  // ONE_SHOT_DISABLE, REACTION_FAST, BIT_WIDTH_8, FREQUENCY_DIVIDE_1, SCATTER_APDM
     }
   }
@@ -211,7 +205,7 @@ void sl_init(void)
 void sl_setDim(uint8_t myDimmer)
 {
   float temp;
-  
+
   if ((1 == sfl_flg) && (100 == myDimmer)) {
     myDimmer = 99;  // BN-SZ01 starts flickering at dimmer = 100
   }
@@ -371,76 +365,17 @@ void sl_animate()
 
 void sl_rgb2hsb(float *hue, float *sat, float *bri)
 {
-  sl_setDim(sysCfg.led_dimmer[0]);
+  RgbColor dcolor;
   
-  float r = (float)(sl_dcolor[0] / 255.0f);
-  float g = (float)(sl_dcolor[1] / 255.0f);
-  float b = (float)(sl_dcolor[2] / 255.0f);
-
-  float max = fmax(fmax(r, g), b);
-  float min = fmin(fmin(r, g), b);
-
-  *bri = (max + min) / 2.0f;
-
-  if (max == min) {
-    *hue = *sat = 0.0f;
-  } else {
-    float d = max - min;
-    *sat = (*bri > 0.5f) ? d / (2.0f - max - min) : d / (max + min);
-
-    if (r > g && r > b) {
-      *hue = (g - b) / d + (g < b ? 6.0f : 0.0f);
-    }
-    else if (g > b) {
-      *hue = (b - r) / d + 2.0f;
-    }
-    else {
-      *hue = (r - g) / d + 4.0f;
-    }
-    *hue /= 6.0f;
-  }
-}
-
-float sl_hue2rgb(float p, float q, float t)
-{
-  if (t < 0.0f) {
-    t += 1.0f;
-  }
-  if (t > 1.0f) {
-    t -= 1.0f;
-  }
-  if (t < 1.0f / 6.0f) {
-    return p + (q - p) * 6.0f * t;
-  }
-  if (t < 1.0f / 2.0f) {
-    return q;
-  }
-  if (t < 2.0f / 3.0f) {
-    return p + (q - p) * (2.0f / 3.0f - t) * 6.0f;
-  }
-  return p;
-}
-
-void sl_hsb2rgb(float hue, float sat, float bri)
-{
-  float r;
-  float g;
-  float b;
-
-  if (sat == 0.0f) {
-    r = g = b = bri;
-  } else {
-    float q = bri < 0.5f ? bri * (1.0f + sat) : bri + sat - bri * sat;
-    float p = 2.0f * bri - q;
-    r = sl_hue2rgb(p, q, hue + 1.0f / 3.0f);
-    g = sl_hue2rgb(p, q, hue);
-    b = sl_hue2rgb(p, q, hue - 1.0f / 3.0f);
-  }
-  sl_dcolor[0] = (uint8_t)(r * 255 + 0.5f);
-  sl_dcolor[1] = (uint8_t)(g * 255 + 0.5f);
-  sl_dcolor[2] = (uint8_t)(b * 255 + 0.5f);
-  sl_setColor();
-}
+  sl_setDim(sysCfg.led_dimmer[0]);
+  dcolor.R = sl_dcolor[0];
+  dcolor.G = sl_dcolor[1];
+  dcolor.B = sl_dcolor[2];
+  HsbColor hsb = HsbColor(dcolor);
+  *hue = hsb.H;
+  *sat = hsb.S;
+  *bri = hsb.B;
+}  
 
 /********************************************************************************************/
 
@@ -458,7 +393,8 @@ void sl_replaceHSB(String *response)
   } else {
     response->replace("{h}", "0");
     response->replace("{s}", "0");
-    response->replace("{b}", String((uint8_t)(2.54f * (float)sysCfg.led_dimmer[0])));
+//    response->replace("{b}", String((uint8_t)(2.54f * (float)sysCfg.led_dimmer[0])));
+    response->replace("{b}", String((uint8_t)(0.01f * (float)sysCfg.led_dimmer[0])));
   }
 }
 
@@ -469,33 +405,68 @@ void sl_getHSB(float *hue, float *sat, float *bri)
   } else {
     *hue = 0;
     *sat = 0;
-    *bri = (2.54f * (float)sysCfg.led_dimmer[0]);
+//    *bri = (2.54f * (float)sysCfg.led_dimmer[0]);
+    *bri = (0.01f * (float)sysCfg.led_dimmer[0]);
   }
 }
 
-void sl_setHSB(float hue, float sat, float bri)
+void sl_setHSB(float hue, float sat, float bri, float ct)
 {
   char svalue[MESSZ];
+  HsbColor hsb;
+  float my_ct;
+  
 /*
   char log[LOGSZ];
   char stemp1[10];
   char stemp2[10];
   char stemp3[10];
+  char stemp4[10];
   dtostrf(hue, 1, 3, stemp1);
   dtostrf(sat, 1, 3, stemp2);
   dtostrf(bri, 1, 3, stemp3);
-  snprintf_P(log, sizeof(log), PSTR("LED: Hue %s, Sat %s, Bri %s"), stemp1, stemp2, stemp3);
+  dtostrf(ct, 1, 3, stemp4);
+  snprintf_P(log, sizeof(log), PSTR("HUE: Set Hue %s, Sat %s, Bri %s, Ct %s"), stemp1, stemp2, stemp3, stemp4);
   addLog(LOG_LEVEL_DEBUG, log);
 */
+
   if (sfl_flg > 2) {
-    sl_hsb2rgb(hue, sat, bri);
+    hsb.H = hue;
+    hsb.S = sat;
+    hsb.B = bri;
+    RgbColor tmp = RgbColor(hsb);
+    sl_dcolor[0] = tmp.R;
+    sl_dcolor[1] = tmp.G;
+    sl_dcolor[2] = tmp.B;
+    sl_setColor();
     sl_prepPower(svalue, sizeof(svalue));
     mqtt_publish_topic_P(5, "COLOR", svalue);
   } else {
     uint8_t tmp = (uint8_t)(bri * 100);
     sysCfg.led_dimmer[0] = tmp;
-    sl_prepPower(svalue, sizeof(svalue));
-    mqtt_publish_topic_P(5, "DIMMER", svalue);
+    if (2 == sfl_flg) {
+      if (ct > 0) {
+        my_ct = ct - 0.306;
+        if (my_ct > 0.694) {  // >500 (Warm)
+          my_ct = 0.694;
+        }
+        float fcold = 367 * (0.694 - my_ct);  // 0 - 255
+        float fwarm = 367 * my_ct;            // 0 - 255
+        float fmax = (fwarm > fcold) ? fwarm : fcold;
+        float fbri = 100 / (fmax / 2.55);     // Scale to 255
+        if (bri < 1) {
+          bri = bri + 0.01;                   // Adjust for sl_setColor
+        }
+        sl_dcolor[0] = (uint8_t)(fcold * fbri * bri);  // Cold
+        sl_dcolor[1] = (uint8_t)(fwarm * fbri * bri);  // Warm
+        sl_setColor();
+      }
+      sl_prepPower(svalue, sizeof(svalue));
+      mqtt_publish_topic_P(5, "COLOR", svalue);
+    } else {
+      sl_prepPower(svalue, sizeof(svalue));
+      mqtt_publish_topic_P(5, "DIMMER", svalue);
+    }
   }
 }
 
