@@ -1,9 +1,14 @@
-/* 5.5.2g
+/* 5.5.2h
  * Fix Sonoff Pow intermittent exception 0
  * Change Sonoff Pow sending Domoticz telemetry data only
- * Add Sonoff B1 support
+ * Add Sonoff B1 RGBCW led support with command Color RRGGBBCCWW (#676)
+ * Add command CT 152..500 to Sonoff Led and Sonoff B1 to control Color Temperature
+ * Add Cold-Warm slider to web page for Sonoff Led and Sonoff B1
+ * Add CT parameter to Hue
  * Add Ai-Thinker RGBW led (AiLight) (experimental)
- * Add NeoPixelBus library to Sonoff Led for Hue support (saves 1k1 code space)
+ * Add NeoPixelBus library to Sonoff Led for Hue support (saves 1k code space)
+ * Add user configurable GPIO4 and GPIO5 to module Sonoff Bridge
+ * Fix Mitsubishi HVAC IR power controll (#740)
  *
  * 5.5.2 20170808
  * Extent max number of WS2812 pixels from 256 to 512 (#667)

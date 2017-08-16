@@ -70,6 +70,9 @@ const char HTTP_HEAD[] PROGMEM =
   "function lb(p){"
     "la('?d='+p);"
   "}"
+  "function lc(p){"
+    "la('?t='+p);"
+  "}"
   "</script>"
 
   "<style>"
@@ -81,12 +84,13 @@ const char HTTP_HEAD[] PROGMEM =
   "td{padding:0px;}"
   "button{border:0;border-radius:0.3rem;background-color:#1fa3ec;color:#fff;line-height:2.4rem;font-size:1.2rem;width:100%;-webkit-transition-duration:0.4s;transition-duration:0.4s;}"
   "button:hover{background-color:#006cba;}"
-  ".q{float:right;width:200px;text-align:right;}"
+  ".p{float:left;text-align:left;}"
+  ".q{float:right;text-align:right;}"
   "</style>"
 
   "</head>"
   "<body>"
-  "<div style='text-align:left;display:inline-block;min-width:320px;'>"
+  "<div style='text-align:left;display:inline-block;min-width:340px;'>"
   "<div style='text-align:center;'><h3>{ha} Module</h3><h2>{h}</h2></div>";
 const char HTTP_SCRIPT_CONSOL[] PROGMEM =
   "var sn=0;"                    // Scroll position
@@ -415,7 +419,7 @@ void handleRoot()
   if (HTTP_MANAGER == _httpflag) {
     handleWifi0();
   } else {
-    char stemp[10], line[100];
+    char stemp[10], line[160];
     String page = FPSTR(HTTP_HEAD);
     page.replace(F("{v}"), F("Main menu"));
     page.replace(F("<body>"), F("<body onload='la()'>"));
@@ -423,7 +427,12 @@ void handleRoot()
     page += F("<div id='l1' name='l1'></div>");
     if (Maxdevice) {
       if (sfl_flg) {
-        snprintf_P(line, sizeof(line), PSTR("<input type='range' min='1' max='100' value='%d' onchange='lb(value)'>"),
+        if ((2 == sfl_flg) || (5 == sfl_flg)) {
+          snprintf_P(line, sizeof(line), PSTR("<div><span class='p'>Cold</span><span class='q'>Warm</span></div><div><input type='range' min='153' max='500' value='%d' onchange='lc(value)'></div>"),
+            sl_getColorTemp());
+          page += line;
+        }
+        snprintf_P(line, sizeof(line), PSTR("<div><span class='p'>Dark</span><span class='q'>Bright</span></div><div><input type='range' min='1' max='100' value='%d' onchange='lb(value)'></div>"),
           sysCfg.led_dimmer[0]);
         page += line;
       }
@@ -472,6 +481,10 @@ void handleAjax2()
   }
   if (strlen(webServer->arg("d").c_str())) {
     snprintf_P(svalue, sizeof(svalue), PSTR("dimmer %s"), webServer->arg("d").c_str());
+    do_cmnd(svalue);
+  }
+  if (strlen(webServer->arg("t").c_str())) {
+    snprintf_P(svalue, sizeof(svalue), PSTR("ct %s"), webServer->arg("t").c_str());
     do_cmnd(svalue);
   }
   if (strlen(webServer->arg("k").c_str())) {

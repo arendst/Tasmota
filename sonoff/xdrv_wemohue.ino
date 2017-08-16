@@ -533,7 +533,7 @@ void hue_lights(String *path)
   float bri = 0;
   float hue = 0;
   float sat = 0;
-  float ct = 0;
+  uint16_t ct = 0;
   bool resp = false;
   bool on = false;
   bool change = false;
@@ -638,15 +638,14 @@ void hue_lights(String *path)
         change = true;
       }
       if (hue_json.containsKey("ct")) {  // Color temperature 153 (Cold) to 500 (Warm)
-        tmp = hue_json["ct"];
-        ct = (float)tmp / 500.0f;
+        ct = hue_json["ct"];
         if (resp) {
           response += ",";
         }
         response += FPSTR(HUE_LIGHT_RESPONSE_JSON);
         response.replace("{id}", String(device));
         response.replace("{cmd}", "ct");
-        response.replace("{res}", String(tmp));
+        response.replace("{res}", String(ct));
         change = true;
       }
       if (change) {
@@ -669,7 +668,7 @@ void hue_lights(String *path)
       response = FPSTR(HUE_ERROR_JSON);
     }
 
-addLog(LOG_LEVEL_DEBUG_MORE, response.c_str());
+//addLog(LOG_LEVEL_DEBUG_MORE, response.c_str());
     
     webServer->send(200, FPSTR(HDR_CTYPE_JSON), response);
   }

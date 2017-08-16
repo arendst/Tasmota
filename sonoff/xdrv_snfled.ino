@@ -19,6 +19,13 @@
 
 /*********************************************************************************************\
  * Sonoff B1, AiLight, Sonoff Led and BN-SZ01
+ * 
+ * sfl_flg  Module        Color  ColorTemp
+ * 1        Sonoff BN-SZ  W      no
+ * 2        Sonoff Led    CW     yes
+ * 3        not used
+ * 4        AiLight       RGBW   no
+ * 5        Sonoff B1     RGBCW  yes
 \*********************************************************************************************/
 
 uint8_t ledTable[] = {
@@ -50,7 +57,7 @@ uint8_t sl_wakeupDimmer = 0;
 uint16_t sl_wakeupCntr = 0;
 
 /*********************************************************************************************\
- * Sonoff B1 (my9231) and AiLight (my9291) based on OpenLight https://github.com/icamgo/noduino-sdk
+ * Sonoff B1 and AiLight inspired by OpenLight https://github.com/icamgo/noduino-sdk
 \*********************************************************************************************/
 
 extern "C" {
@@ -76,83 +83,56 @@ void sl_dcki_pulse(uint8_t times)
   }
 }
 
-void sl_my92x1_command(uint8_t chips, uint8_t command)
+void sl_my92x1_write(uint8_t data)
 {
-  uint8_t command_data;
+  for (uint8_t i = 0; i < 4; i++) {    // Send 8bit Data
+    digitalWrite(sl_pdcki, LOW);
+    digitalWrite(sl_pdi, (data & 0x80));
+    digitalWrite(sl_pdcki, HIGH);
+    data = data << 1;
+    digitalWrite(sl_pdi, (data & 0x80));
+    digitalWrite(sl_pdcki, LOW);
+    digitalWrite(sl_pdi, LOW);
+    data = data << 1;
+  }
+}
 
-  os_delay_us(12);     // TStop > 12us.
+void sl_my92x1_init()
+{
+  uint8_t chips = sfl_flg -3;  // 1 (AiLight) or 2 (Sonoff B1)
+
+  sl_dcki_pulse(chips * 32);   // Clear all duty register 
+  os_delay_us(12);             // TStop > 12us.
   // Send 12 DI pulse, after 6 pulse's falling edge store duty data, and 12
   // pulse's rising edge convert to command mode.
   sl_di_pulse(12);
-  os_delay_us(12);     // Delay >12us, begin send CMD data
+  os_delay_us(12);             // Delay >12us, begin send CMD data
   for (uint8_t n = 0; n < chips; n++) {    // Send CMD data
-    command_data = command;
-    for (uint8_t i = 0; i < 4; i++) {  // Send byte
-      digitalWrite(sl_pdcki, LOW);
-      digitalWrite(sl_pdi, (command_data & 0x80));
-      digitalWrite(sl_pdcki, HIGH);
-      command_data = command_data << 1;
-      digitalWrite(sl_pdi, (command_data & 0x80));
-      digitalWrite(sl_pdcki, LOW);
-      digitalWrite(sl_pdi, LOW);
-      command_data = command_data << 1;
-    }
+    sl_my92x1_write(0x18);     // ONE_SHOT_DISABLE, REACTION_FAST, BIT_WIDTH_8, FREQUENCY_DIVIDE_1, SCATTER_APDM
   }
-  os_delay_us(12);    // TStart > 12us. Delay 12 us.
+  os_delay_us(12);             // TStart > 12us. Delay 12 us.
   // Send 16 DI pulse, at 14 pulse's falling edge store CMD data, and
   // at 16 pulse's falling edge convert to duty mode.
   sl_di_pulse(16);
-  os_delay_us(12);    // TStop > 12us.
+  os_delay_us(12);             // TStop > 12us.
 }
 
-void sl_my9231_duty(uint8_t duty_r, uint8_t duty_g, uint8_t duty_b, uint8_t duty_w, uint8_t duty_c)
+void sl_my92x1_duty(uint8_t duty_r, uint8_t duty_g, uint8_t duty_b, uint8_t duty_w, uint8_t duty_c)
 {
-  uint8_t duty_current = 0;
+  uint8_t channels[2] = { 4, 6 };
 
-  uint8_t duty[6] = { duty_w, duty_c, 0, duty_g, duty_r, duty_b };  // Definition for RGBWC channels
+  uint8_t didx = sfl_flg -4;   // 0 or 1
 
-  os_delay_us(12);    // TStop > 12us.
-  for (uint8_t channel = 0; channel < 6; channel++) {  // WC0GRB 6CH
-    duty_current = duty[channel];
-    for (uint8_t i = 0; i < 4; i++) {                  // Send 8bit Data
-      digitalWrite(sl_pdcki, LOW);
-      digitalWrite(sl_pdi, (duty_current & 0x80));
-      digitalWrite(sl_pdcki, HIGH);
-      duty_current = duty_current << 1;
-      digitalWrite(sl_pdi, (duty_current & 0x80));
-      digitalWrite(sl_pdcki, LOW);
-      digitalWrite(sl_pdi, LOW);
-      duty_current = duty_current << 1;
-    }
+  uint8_t duty[2][6] = {{ duty_r, duty_g, duty_b, duty_w, 0, 0 },        // Definition for RGBW channels
+                        { duty_w, duty_c, 0, duty_g, duty_r, duty_b }};  // Definition for RGBWC channels
+
+  os_delay_us(12);             // TStop > 12us.
+  for (uint8_t channel = 0; channel < channels[didx]; channel++) {
+    sl_my92x1_write(duty[didx][channel]);  // Send 8bit Data
   }
-  os_delay_us(12);  // TStart > 12us. Ready for send DI pulse.
-  sl_di_pulse(8);   // Send 8 DI pulse. After 8 pulse falling edge, store old data.
-  os_delay_us(12);  // TStop > 12us.
-}
-
-void sl_my9291_duty(uint8_t duty_r, uint8_t duty_g, uint8_t duty_b, uint8_t duty_w)
-{
-  uint8_t duty_current = 0;
-
-  uint8_t duty[4] = { duty_r, duty_g, duty_b, duty_w };  // Definition for RGBW channels
-
-  os_delay_us(12);    // TStop > 12us.
-  for (uint8_t channel = 0; channel < 4; channel++) {  // RGBW 4CH
-    duty_current = duty[channel];                      // RGBW Channel
-    for (uint8_t i = 0; i < 4; i++) {                  // Send 8bit Data
-      digitalWrite(sl_pdcki, LOW);
-      digitalWrite(sl_pdi, (duty_current & 0x80));
-      digitalWrite(sl_pdcki, HIGH);
-      duty_current = duty_current << 1;
-      digitalWrite(sl_pdi, (duty_current & 0x80));
-      digitalWrite(sl_pdcki, LOW);
-      digitalWrite(sl_pdi, LOW);
-      duty_current = duty_current << 1;
-    }
-  }
-  os_delay_us(12);  // TStart > 12us. Ready for send DI pulse.
-  sl_di_pulse(8);   // Send 8 DI pulse. After 8 pulse falling edge, store old data.
-  os_delay_us(12);  // TStop > 12us.
+  os_delay_us(12);             // TStart > 12us. Ready for send DI pulse.
+  sl_di_pulse(8);              // Send 8 DI pulse. After 8 pulse falling edge, store old data.
+  os_delay_us(12);             // TStop > 12us.
 }
 
 /********************************************************************************************/
@@ -186,20 +166,52 @@ void sl_init(void)
     digitalWrite(sl_pdi, LOW);
     digitalWrite(sl_pdcki, LOW);
 
-    if (4 == sfl_flg) {
-      // Clear all duty register 
-      sl_dcki_pulse(32);  // 1 * 32 bits
-      sl_my92x1_command(1, 0x18);  // ONE_SHOT_DISABLE, REACTION_FAST, BIT_WIDTH_8, FREQUENCY_DIVIDE_1, SCATTER_APDM
-    } else if (5 == sfl_flg) {
-      // Clear all duty register 
-      sl_dcki_pulse(64);  // 2 * 32 bits
-      sl_my92x1_command(2, 0x18);  // ONE_SHOT_DISABLE, REACTION_FAST, BIT_WIDTH_8, FREQUENCY_DIVIDE_1, SCATTER_APDM
-    }
+    sl_my92x1_init();
   }
   
   sl_power = 0;
   sl_any = 0;
   sl_wakeupActive = 0;
+}
+
+void sl_setColorTemp(uint16_t ct)
+{
+/* Color Temperature (https://developers.meethue.com/documentation/core-concepts)
+ * 
+ * ct = 153 = 2000K = Warm = CCWW = 00FF
+ * ct = 500 = 6500K = Cold = CCWW = FF00
+ */
+  uint16_t my_ct = ct - 153;
+  if (my_ct > 347) {
+    my_ct = 347;
+  }
+  uint16_t icold = (100 * (347 - my_ct)) / 136;
+  uint16_t iwarm = (100 * my_ct) / 136;
+  if (5 == sfl_flg) {
+    sysCfg.led_color[0] = 0;
+    sysCfg.led_color[1] = 0;
+    sysCfg.led_color[2] = 0;
+    sysCfg.led_color[3] = (uint8_t)icold;
+    sysCfg.led_color[4] = (uint8_t)iwarm;
+  } else {
+    sysCfg.led_color[0] = (uint8_t)icold;
+    sysCfg.led_color[1] = (uint8_t)iwarm;
+  }
+}
+
+uint16_t sl_getColorTemp()
+{
+  uint8_t ct_idx = 0;
+  if (5 == sfl_flg) {
+    ct_idx = 3;
+  }
+  uint16_t my_ct = sysCfg.led_color[ct_idx +1];
+  if (my_ct > 0) {
+    return ((my_ct * 136) / 100) + 154;
+  } else {
+    my_ct = sysCfg.led_color[ct_idx];
+    return 499 - ((my_ct * 136) / 100);
+  }
 }
 
 void sl_setDim(uint8_t myDimmer)
@@ -350,11 +362,8 @@ void sl_animate()
         }
       }
     }
-    if (4 == sfl_flg) {
-      sl_my9291_duty(cur_col[0], cur_col[1], cur_col[2], cur_col[3]);
-    }
-    else if (5 == sfl_flg) {
-      sl_my9231_duty(cur_col[0], cur_col[1], cur_col[2], cur_col[3], cur_col[4]);
+    if (sfl_flg > 3) {
+      sl_my92x1_duty(cur_col[0], cur_col[1], cur_col[2], cur_col[3], cur_col[4]);
     }
   }
 }
@@ -410,35 +419,36 @@ void sl_getHSB(float *hue, float *sat, float *bri)
   }
 }
 
-void sl_setHSB(float hue, float sat, float bri, float ct)
+void sl_setHSB(float hue, float sat, float bri, uint16_t ct)
 {
   char svalue[MESSZ];
   HsbColor hsb;
-  float my_ct;
   
 /*
   char log[LOGSZ];
   char stemp1[10];
   char stemp2[10];
   char stemp3[10];
-  char stemp4[10];
   dtostrf(hue, 1, 3, stemp1);
   dtostrf(sat, 1, 3, stemp2);
   dtostrf(bri, 1, 3, stemp3);
-  dtostrf(ct, 1, 3, stemp4);
-  snprintf_P(log, sizeof(log), PSTR("HUE: Set Hue %s, Sat %s, Bri %s, Ct %s"), stemp1, stemp2, stemp3, stemp4);
+  snprintf_P(log, sizeof(log), PSTR("HUE: Set Hue %s, Sat %s, Bri %s, Ct %d"), stemp1, stemp2, stemp3, ct);
   addLog(LOG_LEVEL_DEBUG, log);
 */
 
   if (sfl_flg > 2) {
-    hsb.H = hue;
-    hsb.S = sat;
-    hsb.B = bri;
-    RgbColor tmp = RgbColor(hsb);
-    sl_dcolor[0] = tmp.R;
-    sl_dcolor[1] = tmp.G;
-    sl_dcolor[2] = tmp.B;
-    sl_setColor();
+    if ((5 == sfl_flg) && (ct > 0)) {
+      sl_setColorTemp(ct);
+    } else {
+      hsb.H = hue;
+      hsb.S = sat;
+      hsb.B = bri;
+      RgbColor tmp = RgbColor(hsb);
+      sl_dcolor[0] = tmp.R;
+      sl_dcolor[1] = tmp.G;
+      sl_dcolor[2] = tmp.B;
+      sl_setColor();
+    }
     sl_prepPower(svalue, sizeof(svalue));
     mqtt_publish_topic_P(5, "COLOR", svalue);
   } else {
@@ -446,20 +456,7 @@ void sl_setHSB(float hue, float sat, float bri, float ct)
     sysCfg.led_dimmer[0] = tmp;
     if (2 == sfl_flg) {
       if (ct > 0) {
-        my_ct = ct - 0.306;
-        if (my_ct > 0.694) {  // >500 (Warm)
-          my_ct = 0.694;
-        }
-        float fcold = 367 * (0.694 - my_ct);  // 0 - 255
-        float fwarm = 367 * my_ct;            // 0 - 255
-        float fmax = (fwarm > fcold) ? fwarm : fcold;
-        float fbri = 100 / (fmax / 2.55);     // Scale to 255
-        if (bri < 1) {
-          bri = bri + 0.01;                   // Adjust for sl_setColor
-        }
-        sl_dcolor[0] = (uint8_t)(fcold * fbri * bri);  // Cold
-        sl_dcolor[1] = (uint8_t)(fwarm * fbri * bri);  // Warm
-        sl_setColor();
+        sl_setColorTemp(ct);
       }
       sl_prepPower(svalue, sizeof(svalue));
       mqtt_publish_topic_P(5, "COLOR", svalue);
@@ -491,6 +488,14 @@ boolean sl_command(char *type, uint16_t index, char *dataBufUc, uint16_t data_le
       coldim = true;
     } else {
       snprintf_P(svalue, ssvalue, PSTR("{\"Color\":\"%s\"}"), sl_getColor(scolor));
+    }
+  }
+  else if (!strcmp_P(type,PSTR("CT")) && ((2 == sfl_flg) || (5 == sfl_flg))) { // ColorTemp
+    if ((payload >= 153) && (payload <= 500)) {  // https://developers.meethue.com/documentation/core-concepts
+      sl_setColorTemp(payload);
+      coldim = true;
+    } else {
+      snprintf_P(svalue, ssvalue, PSTR("{\"CT\":%d}"), sl_getColorTemp());
     }
   }
   else if (!strcmp_P(type,PSTR("DIMMER"))) {
