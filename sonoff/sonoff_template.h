@@ -117,6 +117,8 @@ enum fpins_t {
   GPIO_HLW_CF1,        // HLW8012 CF1 voltage / current (Sonoff Pow)
   GPIO_HLW_CF,         // HLW8012 CF power (Sonoff Pow)
   GPIO_ADC0,           // ADC
+  GPIO_DI,             // my92x1 PWM input
+  GPIO_DCKI,           // my92x1 CLK input
   GPIO_USER,           // User configurable
   GPIO_MAX };
 
@@ -149,6 +151,8 @@ enum module_t {
   SONOFF_4CHPRO,
   HUAFAN_SS,
   SONOFF_BRIDGE,
+  SONOFF_B1,
+  AILIGHT,
   MAXMODULE };
 
 /********************************************************************************************/
@@ -482,13 +486,44 @@ const mytmplt modules[MAXMODULE] PROGMEM = {
      GPIO_TXD,         // GPIO01 RF bridge control
      GPIO_USER,        // GPIO02 Optional sensor
      GPIO_RXD,         // GPIO03 RF bridge control
-     0, 0,
+     GPIO_USER,        // GPIO04 Optional sensor
+     GPIO_USER,        // GPIO05 Optional sensor
      0, 0, 0,          // Flash connection
      0, 0,
      0,                // Flash connection
      0,
      GPIO_LED1_INV,    // GPIO13 Blue Led (0 = On, 1 = Off)
      0, 0, 0, 0
+  },
+  { "Sonoff B1",       // Sonoff B1 (ESP8285 - my9231)
+     GPIO_KEY1,        // GPIO00 Pad
+     GPIO_USER,        // GPIO01 Serial RXD and Optional sensor pad
+     GPIO_USER,        // GPIO02 Optional sensor SDA pad
+     GPIO_USER,        // GPIO03 Serial TXD and Optional sensor pad
+     0, 0,
+     0, 0, 0,          // Flash connection
+     0, 0,
+     0,                // Flash connection
+     GPIO_DI,          // GPIO12 my9231 DI
+     0,
+     GPIO_DCKI,        // GPIO14 my9231 DCKI
+     0, 0, 0
+  },
+  { "AiLight",         // Ai-Thinker RGBW led (ESP8266 - my9291)
+     GPIO_KEY1,        // GPIO00 Pad
+     GPIO_USER,        // GPIO01 Serial RXD and Optional sensor pad
+     GPIO_USER,        // GPIO02 Optional sensor SDA pad
+     GPIO_USER,        // GPIO03 Serial TXD and Optional sensor pad
+     0, 0,
+     0, 0, 0,          // Flash connection
+     0, 0,
+     0,                // Flash connection
+     0,
+     GPIO_DI,          // GPIO13 my9291 DI
+     0,
+     GPIO_DCKI,        // GPIO15 my9291 DCKI
+     0, 0
   }
+
 };
 

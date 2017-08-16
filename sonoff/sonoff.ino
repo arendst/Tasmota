@@ -25,7 +25,7 @@
     - Select IDE Tools - Flash Size: "1M (no SPIFFS)"
   ====================================================*/
 
-#define VERSION                0x05050202  // 5.5.2b
+#define VERSION                0x05050208  // 5.5.2h
 
 enum log_t   {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG_MORE, LOG_LEVEL_ALL};
 enum week_t  {Last, First, Second, Third, Fourth};
@@ -172,6 +172,7 @@ enum opt_t   {P_HOLD_TIME, P_MAX_POWER_RETRY, P_MAX_PARAM8};   // Index in sysCf
 #include <ESP8266httpUpdate.h>              // Ota
 #include <StreamString.h>                   // Webserver, Updater
 #include <ArduinoJson.h>                    // WemoHue, IRremote, Domoticz
+#include <NeoPixelBus.h>                    // Ws2812, Sonoff Led hue support
 #ifdef USE_WEBSERVER
   #include <ESP8266WebServer.h>             // WifiManager, Webserver
   #include <DNSServer.h>                    // WifiManager
@@ -303,7 +304,7 @@ uint8_t hlw_flg = 0;                  // Power monitor configured
 uint8_t i2c_flg = 0;                  // I2C configured
 uint8_t spi_flg = 0;                  // SPI configured
 uint8_t pwm_flg = 0;                  // PWM configured
-uint8_t sfl_flg = 0;                  // Sonoff Led flag (0 = No led, 1 = BN-SZ01, 2 = Sonoff Led)
+uint8_t sfl_flg = 0;                  // Sonoff Led flag (0 = No led, 1 = BN-SZ01, 2 = Sonoff Led, 5 = Sonoff B1)
 uint8_t pwm_idxoffset = 0;            // Allowed PWM command offset (change for Sonoff Led)
 
 boolean mDNSbegun = false;
@@ -2318,7 +2319,7 @@ void stateloop()
   button_handler();
   switch_handler();
 
-  if (sfl_flg) {  // Sonoff BN-SZ01 or Sonoff Led
+  if (sfl_flg) {  // Sonoff B1, AiLight, Sonoff led or BN-SZ01
     sl_animate();
   }
 
@@ -2627,11 +2628,17 @@ void GPIO_init()
     Maxdevice = 0;
     Baudrate = 19200;
   }
-  else if (SONOFF_BN == sysCfg.module) {
+  else if (SONOFF_BN == sysCfg.module) {   // Single color led (White)
     sfl_flg = 1;
   }
-  else if (SONOFF_LED == sysCfg.module) {
+  else if (SONOFF_LED == sysCfg.module) {  // Dual color led (White warm and cold)
     sfl_flg = 2;
+  }
+  else if (AILIGHT == sysCfg.module) {     // RGBW led
+    sfl_flg = 4;
+  }
+  else if (SONOFF_B1 == sysCfg.module) {   // RGBWC led
+    sfl_flg = 5;
   }
   else {
     Maxdevice = 0;
@@ -2660,20 +2667,9 @@ void GPIO_init()
     }
   }
   
-  if (sfl_flg) {              // Sonoff Led or BN-SZ01
-    pwm_idxoffset = sfl_flg;  // 1 for BN-SZ01, 2 for Sonoff Led
-    pin[GPIO_WS2812] = 99;    // I do not allow both Sonoff Led AND WS2812 led
-    if (!my_module.gp.io[4]) {
-      pinMode(4, OUTPUT);     // Stop floating outputs
-      digitalWrite(4, LOW);
-    }
-    if (!my_module.gp.io[5]) {
-      pinMode(5, OUTPUT);     // Stop floating outputs
-      digitalWrite(5, LOW);
-    }
-    if (!my_module.gp.io[14]) {
-      pinMode(14, OUTPUT);    // Stop floating outputs
-      digitalWrite(14, LOW);
+  if (sfl_flg) {                // Sonoff B1, AiLight, Sonoff Led or BN-SZ01
+    if (sfl_flg < 4) {
+      pwm_idxoffset = sfl_flg;  // 1 for BN-SZ01, 2 for Sonoff Led
     }
     sl_init();
   }

@@ -22,7 +22,7 @@
  * WS2812 Leds using NeopixelBus library
 \*********************************************************************************************/
 
-#include <NeoPixelBus.h>
+//#include <NeoPixelBus.h>  // Global defined as also used by Sonoff Led
 
 #ifdef USE_WS2812_DMA
 #if (USE_WS2812_CTYPE == 1)
@@ -143,37 +143,6 @@ void ws2812_setColor(uint16_t led, char* colstr)
       lany = 1;
     }
   }
-}
-
-void ws2812_replaceHSB(String *response)
-{
-  ws2812_setDim(sysCfg.ws_dimmer);
-  HsbColor hsb = HsbColor(dcolor);
-  response->replace("{h}", String((uint16_t)(65535.0f * hsb.H)));
-  response->replace("{s}", String((uint8_t)(254.0f * hsb.S)));
-  response->replace("{b}", String((uint8_t)(254.0f * hsb.B)));
-}
-
-void ws2812_getHSB(float *hue, float *sat, float *bri)
-{
-  ws2812_setDim(sysCfg.ws_dimmer);
-  HsbColor hsb = HsbColor(dcolor);
-  *hue = hsb.H;
-  *sat = hsb.S;
-  *bri = hsb.B;
-}
-
-void ws2812_setHSB(float hue, float sat, float bri)
-{
-  char rgb[7];
-  
-  HsbColor hsb;
-  hsb.H = hue;
-  hsb.S = sat;
-  hsb.B = bri;
-  RgbColor tmp = RgbColor(hsb);
-  sprintf(rgb,"%02X%02X%02X", tmp.R, tmp.G, tmp.B);
-  ws2812_setColor(0,rgb);
 }
 
 void ws2812_getColor(uint16_t led, char* svalue, uint16_t ssvalue)
@@ -502,6 +471,41 @@ void ws2812_init(uint8_t powerbit)
 #endif  // USE_WS2812_DMA
   strip->Begin();
   ws2812_pixels();
+}
+
+/*********************************************************************************************\
+ * Hue support
+\*********************************************************************************************/
+
+void ws2812_replaceHSB(String *response)
+{
+  ws2812_setDim(sysCfg.ws_dimmer);
+  HsbColor hsb = HsbColor(dcolor);
+  response->replace("{h}", String((uint16_t)(65535.0f * hsb.H)));
+  response->replace("{s}", String((uint8_t)(254.0f * hsb.S)));
+  response->replace("{b}", String((uint8_t)(254.0f * hsb.B)));
+}
+
+void ws2812_getHSB(float *hue, float *sat, float *bri)
+{
+  ws2812_setDim(sysCfg.ws_dimmer);
+  HsbColor hsb = HsbColor(dcolor);
+  *hue = hsb.H;
+  *sat = hsb.S;
+  *bri = hsb.B;
+}
+
+void ws2812_setHSB(float hue, float sat, float bri)
+{
+  char rgb[7];
+  
+  HsbColor hsb;
+  hsb.H = hue;
+  hsb.S = sat;
+  hsb.B = bri;
+  RgbColor tmp = RgbColor(hsb);
+  sprintf(rgb,"%02X%02X%02X", tmp.R, tmp.G, tmp.B);
+  ws2812_setColor(0,rgb);
 }
 
 /*********************************************************************************************\
