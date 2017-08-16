@@ -153,6 +153,9 @@ enum module_t {
   SONOFF_BRIDGE,
   SONOFF_B1,
   AILIGHT,
+  SONOFF_T11,
+  SONOFF_T12,
+  SONOFF_T13,
   MAXMODULE };
 
 /********************************************************************************************/
@@ -523,7 +526,51 @@ const mytmplt modules[MAXMODULE] PROGMEM = {
      0,
      GPIO_DCKI,        // GPIO15 my9291 DCKI
      0, 0
+  },
+  { "Sonoff T1 1CH",   // Sonoff T1 1CH (ESP8285)
+     0,
+     GPIO_USER,        // GPIO01 Serial RXD and Optional sensor
+     0,
+     GPIO_USER,        // GPIO03 Serial TXD and Optional sensor
+     0,
+     GPIO_REL1,        // GPIO05 Blue Led and Relay 1 (0 = Off, 1 = On)
+     0, 0, 0,          // Flash connection
+     GPIO_KEY1,        // GPIO09 Button 1
+     0,
+     0,                // Flash connection
+     0,
+     GPIO_LED1_INV,    // GPIO13 Blue Led (0 = On, 1 = Off)
+     0, 0, 0, 0
+  },
+  { "Sonoff T1 2CH",   // Sonoff T1 2CH (ESP8285)
+     GPIO_KEY1,        // GPIO00 Button 1
+     GPIO_USER,        // GPIO01 Serial RXD and Optional sensor
+     0,
+     GPIO_USER,        // GPIO03 Serial TXD and Optional sensor
+     GPIO_REL2,        // GPIO04 Blue Led and Relay 2 (0 = Off, 1 = On)
+     0,
+     0, 0, 0,          // Flash connection
+     0,
+     GPIO_KEY2,        // GPIO10 Button 2
+     0,                // Flash connection
+     GPIO_REL1,        // GPIO12 Blue Led and Relay 1 (0 = Off, 1 = On)
+     GPIO_LED1_INV,    // GPIO13 Blue Led (0 = On, 1 = Off)
+     0, 0, 0, 0
+  },
+  { "Sonoff T1 3CH",   // Sonoff T1 3CH (ESP8285)
+     GPIO_KEY1,        // GPIO00 Button 1
+     GPIO_USER,        // GPIO01 Serial RXD and Optional sensor
+     0,
+     GPIO_USER,        // GPIO03 Serial TXD and Optional sensor
+     GPIO_REL3,        // GPIO04 Blue Led and Relay 3 (0 = Off, 1 = On)
+     GPIO_REL2,        // GPIO05 Blue Led and Relay 2 (0 = Off, 1 = On)
+     0, 0, 0,          // Flash connection
+     GPIO_KEY2,        // GPIO09 Button 2
+     GPIO_KEY3,        // GPIO10 Button 3
+     0,                // Flash connection
+     GPIO_REL1,        // GPIO12 Blue Led and Relay 1 (0 = Off, 1 = On)
+     GPIO_LED1_INV,    // GPIO13 Blue Led (0 = On, 1 = Off)
+     0, 0, 0, 0
   }
-
 };
 
