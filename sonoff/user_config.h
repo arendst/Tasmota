@@ -31,7 +31,7 @@
 
 #define CFG_HOLDER             0x20161210        // [Reset 1] Change this value to load following default configuration parameters
 #define SAVE_DATA              1                 // [SaveData] Save changed parameters to Flash (0 = disable, 1 - 3600 seconds)
-#define SAVE_STATE             1                 // [SaveState] Save changed power state to Flash (0 = disable, 1 = enable)
+#define SAVE_STATE             1                 // [SetOption0] Save changed power state to Flash (0 = disable, 1 = enable)
 
 // -- Wifi ----------------------------------------
 #define WIFI_IP_ADDRESS        "0.0.0.0"         // [IpAddress1] Set to 0.0.0.0 for using DHCP or IP address
@@ -57,7 +57,7 @@
 #define OTA_URL                "http://domus1:80/api/arduino/" PROJECT ".ino.bin"  // [OtaUrl]
 
 // -- MQTT ----------------------------------------
-#define MQTT_USE               1                 // [Mqtt] Select default MQTT use (0 = Off, 1 = On)
+#define MQTT_USE               1                 // [SetOption3] Select default MQTT use (0 = Off, 1 = On)
 // !!! TLS uses a LOT OF MEMORY (20k) so be careful to enable other options at the same time !!!
 //#define USE_MQTT_TLS                             // EXPERIMENTAL Use TLS for MQTT connection (+53k code, +20k mem) - Disable by //
                                                  //   Needs Fingerprint, TLS Port, UserId and Password
@@ -145,16 +145,16 @@
 #define SWITCH_MODE            TOGGLE            // [SwitchMode] TOGGLE, FOLLOW, FOLLOW_INV, PUSHBUTTON, PUSHBUTTON_INV, PUSHBUTTONHOLD or PUSHBUTTONHOLD_INV (the wall switch state)
 #define WS2812_LEDS            30                // [Pixels] Number of WS2812 LEDs to start with
 
-#define TEMP_CONVERSION        0                 // [TempUnit] Return temperature in (0 = Celsius or 1 = Fahrenheit)
+#define TEMP_CONVERSION        0                 // [SetOption8] Return temperature in (0 = Celsius or 1 = Fahrenheit)
 #define TEMP_RESOLUTION        1                 // [TempRes] Maximum number of decimals (0 - 3) showing sensor Temperature
 #define HUMIDITY_RESOLUTION    1                 // [HumRes] Maximum number of decimals (0 - 3) showing sensor Humidity
 #define PRESSURE_RESOLUTION    1                 // [PressRes] Maximum number of decimals (0 - 3) showing sensor Pressure
 #define ENERGY_RESOLUTION      3                 // [EnergyRes] Maximum number of decimals (0 - 5) showing energy usage in kWh
 
 // -- Sensor code selection -----------------------
-#define USE_ADC_VCC                              // Display Vcc in Power status. Disable for use as Analog input on selected devices
+//#define USE_ADC_VCC                              // Display Vcc in Power status. Disable for use as Analog input on selected devices
 
-//#define USE_DS18x20                              // Optional using OneWire library for multiple DS18B20 and/or DS18S20 (+2k code)
+#define USE_DS18x20                              // Optional using OneWire library for multiple DS18B20 and/or DS18S20 (+2k code)
 
 #define USE_I2C                                  // I2C using library wire (+10k code, 0.2k mem) - Disable by //
   #define USE_BH1750                             // Add I2C code for BH1750 sensor
@@ -165,7 +165,7 @@
 #define USE_IR_REMOTE                            // Send IR remote commands using library IRremoteESP8266 and ArduinoJson (+3k code, 0.3k mem)
 //  #define USE_IR_HVAC                            // Support for HVAC system using IR (+2k code)
 
-#define USE_WS2812                               // WS2812 Led string using library NeoPixelBus (+8k code, +1k mem) - Disable by //
+#define USE_WS2812                               // WS2812 Led string using library NeoPixelBus (+11k code, +1k mem) - Disable by //
   #define USE_WS2812_CTYPE     1                 // WS2812 Color type (0 - RGB, 1 - GRB)
 //  #define USE_WS2812_DMA                         // DMA supports only GPIO03 (= Serial RXD) (+1k mem)
                                                  //   When USE_WS2812_DMA is enabled expect Exceptions on Pow

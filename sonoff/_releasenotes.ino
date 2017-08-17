@@ -1,4 +1,64 @@
-/* 5.2.4 20170703
+/* 5.5.2i
+ * Fix Sonoff Pow intermittent exception 0
+ * Change Sonoff Pow sending Domoticz telemetry data only
+ * Add Sonoff B1 RGBCW led support with command Color RRGGBBCCWW (#676)
+ * Add command CT 152..500 to Sonoff Led and Sonoff B1 to control Color Temperature
+ * Add Cold-Warm slider to web page for Sonoff Led and Sonoff B1
+ * Add CT parameter to Hue
+ * Add Ai-Thinker RGBW led (AiLight) (experimental)
+ * Add NeoPixelBus library to Sonoff Led for Hue support (saves 1k code space)
+ * Add user configurable GPIO4 and GPIO5 to module Sonoff Bridge
+ * Fix Mitsubishi HVAC IR power controll (#740)
+ * Add Sonoff T1 support (#582)
+ *
+ * 5.5.2 20170808
+ * Extent max number of WS2812 pixels from 256 to 512 (#667)
+ * Add OTA handling if server responds with no update available (#695)
+ * Removed undocumented command FlashMode (#696)
+ * Fix compile time error message due to increased message buffer size (#703)
+ *
+ * 5.5.1 20170805
+ * Fix Sonoff Rf Bridge issues
+ * Add Sonoff RF Bridge MQTT messages on received and learned RF signal
+ * Add command VoltRes 0|1 to select voltage resolution to 0.1 V (#654)
+ * Add averaging to Analog input (#686)
+ * Add Energy tele data on Sonoff Pow Threshold change (#688)
+ * Fix inconsistent property names in Messages (#690)
+ *
+ * 5.5.0 20170730
+ * Reduce code space by removing the following commands as they are replaced by SetOption alternatives:
+ *   SaveState = SetOption0
+ *   ButtonRestrict = SetOption1
+ *   Units = SetOption2
+ *   MQTT = SetOption3
+ *   MQTTResponse = SetOption4
+ *   TempUnit = SetOption8
+ * Smoothing WS2812 animation poll, invert fade speed and max allowed wakeup time down to 3000 seconds
+ * Fix initial button press detection
+ * Add support for Sonoff RF Bridge 433 using command RfKey
+ * Fix regression from 5.0.7 by increasing message buffer size from 360 to 368 to accomodate 4 x DS18x20 sensors (#637)
+ * Add GroupTopic to Topic test when using ButtonTopic/SwitchTopic to send either ON/OFF or TOGGLE (#642)
+ * Adjust HLW calibration limits to accomodate HuaFan device and add commands HlwPSet, HlwUSet and HlwISet (#654)
+ *
+ * 5.4.0 20170725
+ * Fix command reset regression introduced in 5.2.0
+ * Increase polling from 0.1 second to 0.05 second
+ * Add multipress to all buttons
+ * Fix button 1 double press behaviour on multi relay devices
+ * Add support for Hua Fan Smart Socket (#479)
+ * Add support for Sonoff 4ch Pro (#565)
+ * Add command SetOption13 1 to allow immediate action on single button press 
+ *   (disables multipress, hold and unrestricted commands) (#587)
+ *
+ * 5.3.0 20170715
+ * Major Hue rewrite which might introduce Alexa problems. If so, initiate an issue
+ * Add support for Sonoff Led and BN-SZ01 Ceiling Led brightness control to Hue
+ * Fix Sonoff Led Power, Dimmer and Color MQTT response (#176)
+ * Add commands Delay and Backlog to allow multiple commands at once separated by ";" (#593)
+ * Use default flashmode DOUT to solve restart hangs on esp8285 chips (#453, #598)
+ * Change Web console column width from 99 to 300 (#599)
+ *
+ * 5.2.4 20170703
  * Removed flash mode update after selecting different module solving esp8285 related problems
  * Add device type flag to sonoff_template.ino
  * Change Sonoff Led Wakeup and add support for Sonoff BN-SZ01 Led (#567)

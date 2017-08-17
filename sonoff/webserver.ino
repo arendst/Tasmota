@@ -22,7 +22,7 @@
  * Web server and WiFi Manager
  *
  * Enables configuration and reconfiguration of WiFi credentials using a Captive Portal
- * Source by AlexT (https://github.com/tzapu)
+ * Based on source by AlexT (https://github.com/tzapu)
 \*********************************************************************************************/
 
 #define STR_HELPER(x) #x
@@ -72,6 +72,9 @@ const char HTTP_HEAD[] PROGMEM =
   "function lb(p){"
     "la('?d='+p);"
   "}"
+  "function lc(p){"
+    "la('?t='+p);"
+  "}"
   "</script>"
 
   "<style>"
@@ -83,12 +86,13 @@ const char HTTP_HEAD[] PROGMEM =
   "td{padding:0px;}"
   "button{border:0;border-radius:0.3rem;background-color:#1fa3ec;color:#fff;line-height:2.4rem;font-size:1.2rem;width:100%;-webkit-transition-duration:0.4s;transition-duration:0.4s;}"
   "button:hover{background-color:#006cba;}"
-  ".q{float:right;width:200px;text-align:right;}"
+  ".p{float:left;text-align:left;}"
+  ".q{float:right;text-align:right;}"
   "</style>"
 
   "</head>"
   "<body>"
-  "<div style='text-align:left;display:inline-block;min-width:320px;'>"
+  "<div style='text-align:left;display:inline-block;min-width:340px;'>"
   "<div style='text-align:center;'><h3>{ha} Module</h3><h2>{h}</h2></div>";
 const char HTTP_SCRIPT_CONSOL[] PROGMEM =
   "var sn=0;"                    // Scroll position
@@ -240,7 +244,7 @@ const char HTTP_FORM_RST_UPG[] PROGMEM =
   "</div>"
   "<div id='f2' name='f2' style='display:none;text-align:center;'><b>Upload started ...</b></div>";
 const char HTTP_FORM_CMND[] PROGMEM =
-  "<br/><textarea readonly id='t1' name='t1' cols='99' wrap='off'></textarea><br/><br/>"
+  "<br/><textarea readonly id='t1' name='t1' cols='" STR(MESSZ) "' wrap='off'></textarea><br/><br/>"
   "<form method='get' onsubmit='return l(1);'>"
   "<input style='width:98%' id='c1' name='c1' length='99' placeholder='Enter command' autofocus><br/>"
 //  "<br/><button type='submit'>Send command</button>"
@@ -266,8 +270,11 @@ const char HTTP_END[] PROGMEM =
   "</body>"
   "</html>";
 
-const char HDR_CCNTL[] PROGMEM = "Cache-Control";
-const char HDR_REVAL[] PROGMEM = "no-cache, no-store, must-revalidate";
+const char HDR_CTYPE_PLAIN[] PROGMEM = "text/plain";
+const char HDR_CTYPE_HTML[] PROGMEM = "text/html";
+const char HDR_CTYPE_XML[] PROGMEM = "text/xml";
+const char HDR_CTYPE_JSON[] PROGMEM = "application/json";
+const char HDR_CTYPE_STREAM[] PROGMEM = "application/octet-stream";
 
 #define DNS_PORT 53
 enum http_t {HTTP_OFF, HTTP_USER, HTTP_ADMIN, HTTP_MANAGER};
@@ -384,6 +391,13 @@ void pollDnsWeb()
   }
 }
 
+void setHeader()
+{
+  webServer->sendHeader(F("Cache-Control"), F("no-cache, no-store, must-revalidate"));
+  webServer->sendHeader(F("Pragma"), F("no-cache"));
+  webServer->sendHeader(F("Expires"), F("-1"));
+}
+
 void showPage(String &page)
 {
   if((HTTP_ADMIN == _httpflag) && (sysCfg.web_password[0] != 0) && !webServer->authenticate(WEB_USERNAME, sysCfg.web_password)) {
@@ -398,16 +412,13 @@ void showPage(String &page)
     }
   }
   page += FPSTR(HTTP_END);
-
-  webServer->sendHeader(FPSTR(HDR_CCNTL), FPSTR(HDR_REVAL));
-  webServer->sendHeader(F("Pragma"), F("no-cache"));
-  webServer->sendHeader(F("Expires"), F("-1"));
-  webServer->send(200, F("text/html"), page);
+  setHeader();
+  webServer->send(200, FPSTR(HDR_CTYPE_HTML), page);
 }
 
 void handleRoot()
 {
-  addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Handle root"));
+  addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Root"));
 
   if (captivePortal()) { // If captive portal redirect instead of displaying the page.
     return;
@@ -416,7 +427,7 @@ void handleRoot()
   if (HTTP_MANAGER == _httpflag) {
     handleWifi0();
   } else {
-    char stemp[10], line[100];
+    char stemp[10], line[160];
     String page = FPSTR(HTTP_HEAD);
     page.replace(F("{v}"), F("Main menu"));
     page.replace(F("<body>"), F("<body onload='la()'>"));
@@ -424,7 +435,12 @@ void handleRoot()
     page += F("<div id='l1' name='l1'></div>");
     if (Maxdevice) {
       if (sfl_flg) {
-        snprintf_P(line, sizeof(line), PSTR("<input type='range' min='1' max='100' value='%d' onchange='lb(value)'>"),
+        if ((2 == sfl_flg) || (5 == sfl_flg)) {
+          snprintf_P(line, sizeof(line), PSTR("<div><span class='p'>Cold</span><span class='q'>Warm</span></div><div><input type='range' min='153' max='500' value='%d' onchange='lc(value)'></div>"),
+            sl_getColorTemp());
+          page += line;
+        }
+        snprintf_P(line, sizeof(line), PSTR("<div><span class='p'>Dark</span><span class='q'>Bright</span></div><div><input type='range' min='1' max='100' value='%d' onchange='lb(value)'></div>"),
           sysCfg.led_dimmer[0]);
         page += line;
       }
@@ -435,6 +451,23 @@ void handleRoot()
         snprintf_P(line, sizeof(line), PSTR("<td style='width:%d%'><button onclick='la(\"?o=%d\");'>Toggle%s</button></td>"),
           100 / Maxdevice, idx, (Maxdevice > 1) ? stemp : "");
         page += line;
+      }
+      page += F("</tr></table>");
+    }
+    if (SONOFF_BRIDGE == sysCfg.module) {
+      page += FPSTR(HTTP_TABLE100);
+      page += F("<tr>");
+      byte idx = 0;
+      for (byte i = 0; i < 4; i++) {
+        if (idx > 0) {
+          page += F("</tr><tr>");
+        }
+        for (byte j = 0; j < 4; j++) {
+          idx++;
+          snprintf_P(line, sizeof(line), PSTR("<td style='width:25%'><button onclick='la(\"?k=%d\");'>%d</button></td>"),
+            idx, idx);
+          page += line;
+        }
       }
       page += F("</tr></table>");
     }
@@ -456,6 +489,14 @@ void handleAjax2()
   }
   if (strlen(webServer->arg("d").c_str())) {
     snprintf_P(svalue, sizeof(svalue), PSTR("dimmer %s"), webServer->arg("d").c_str());
+    do_cmnd(svalue);
+  }
+  if (strlen(webServer->arg("t").c_str())) {
+    snprintf_P(svalue, sizeof(svalue), PSTR("ct %s"), webServer->arg("t").c_str());
+    do_cmnd(svalue);
+  }
+  if (strlen(webServer->arg("k").c_str())) {
+    snprintf_P(svalue, sizeof(svalue), PSTR("rfkey%s"), webServer->arg("k").c_str());
     do_cmnd(svalue);
   }
   
@@ -529,7 +570,7 @@ void handleAjax2()
     page += line;
   }
 */
-  webServer->send(200, F("text/html"), page);
+  webServer->send(200, FPSTR(HDR_CTYPE_HTML), page);
 }
 
 boolean httpUser()
@@ -546,7 +587,7 @@ void handleConfig()
   if (httpUser()) {
     return;
   }
-  addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Handle config"));
+  addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Config"));
 
   String page = FPSTR(HTTP_HEAD);
   page.replace(F("{v}"), F("Configuration"));
@@ -608,7 +649,7 @@ void handleModule()
   }
   char stemp[20], line[128];
   
-  addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Handle Module config"));
+  addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Module config"));
 
   String page = FPSTR(HTTP_HEAD);
   page.replace(F("{v}"), F("Config module"));
@@ -672,7 +713,7 @@ void handleWifi(boolean scan)
   }
   char log[LOGSZ];
 
-  addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Handle Wifi config"));
+  addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Wifi config"));
 
   String page = FPSTR(HTTP_HEAD);
   page.replace(F("{v}"), F("Configure Wifi"));
@@ -771,7 +812,7 @@ void handleMqtt()
   if (httpUser()) {
     return;
   }
-  addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Handle MQTT config"));
+  addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: MQTT config"));
 
   String page = FPSTR(HTTP_HEAD);
   page.replace(F("{v}"), F("Configure MQTT"));
@@ -796,7 +837,7 @@ void handleLog()
   if (httpUser()) {
     return;
   }
-  addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Handle Log config"));
+  addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Log config"));
 
   String page = FPSTR(HTTP_HEAD);
   page.replace(F("{v}"), F("Config logging"));
@@ -844,7 +885,7 @@ void handleOther()
   if (httpUser()) {
     return;
   }
-  addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Handle other config"));
+  addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Other config"));
   char stemp[40];
 
   String page = FPSTR(HTTP_HEAD);
@@ -885,7 +926,7 @@ void handleDownload()
   if (httpUser()) {
     return;
   }
-  addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Handle download config"));
+  addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Download config"));
 
   uint8_t buffer[sizeof(sysCfg)];
 
@@ -896,7 +937,7 @@ void handleDownload()
   snprintf_P(attachment, sizeof(attachment), PSTR("attachment; filename=Config_%s_%s.dmp"),
     sysCfg.friendlyname[0], Version);
   webServer->sendHeader(F("Content-Disposition"), attachment);
-  webServer->send(200, F("application/octet-stream"), "");
+  webServer->send(200, FPSTR(HDR_CTYPE_STREAM), "");
   memcpy(buffer, &sysCfg, sizeof(sysCfg));
   buffer[0] = CONFIG_FILE_SIGN;
   buffer[1] = (!CONFIG_FILE_XOR)?0:1;
@@ -1015,7 +1056,6 @@ void handleSave()
         gpios += F(", GPIO"); gpios += String(i); gpios += F(" "); gpios += String(sysCfg.my_module.gp.io[i]);
       }
     }
-//    setModuleFlashMode(0);  // Fails on esp8285 based devices
     snprintf_P(stemp, sizeof(stemp), modules[sysCfg.module].name);
     snprintf_P(log, sizeof(log), PSTR("HTTP: %s Module%s"), stemp, gpios.c_str());
     addLog(LOG_LEVEL_INFO, log);
@@ -1069,7 +1109,7 @@ void handleRestore()
   if (httpUser()) {
     return;
   }
-  addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Handle restore"));
+  addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Restore"));
 
   String page = FPSTR(HTTP_HEAD);
   page.replace(F("{v}"), F("Restore Configuration"));
@@ -1088,7 +1128,7 @@ void handleUpgrade()
   if (httpUser()) {
     return;
   }
-  addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Handle upgrade"));
+  addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Upgrade"));
 
   String page = FPSTR(HTTP_HEAD);
   page.replace(F("{v}"), F("Firmware upgrade"));
@@ -1238,11 +1278,7 @@ void handleUploadLoop()
           _uploaderror = 4;
           return;
         }
-//        if ((SONOFF_TOUCH == sysCfg.module) || (SONOFF_4CH == sysCfg.module)) {
-        if (sysCfg.my_module.flag &1) {
-          upload.buf[2] = 3; // DOUT - ESP8285
-          addLog_P(LOG_LEVEL_DEBUG, PSTR("FLSH: Set Flash Mode to 3"));
-        }
+        upload.buf[2] = 3;  // Force DOUT - ESP8285
       }
     }
     if (_uploadfiletype) { // config
@@ -1302,9 +1338,9 @@ void handleCmnd()
   if (httpUser()) {
     return;
   }
-  char svalue[128];  // was MESSZ
+  char svalue[INPUT_BUFFER_SIZE];  // big to serve Backlog
 
-  addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Handle cmnd"));
+  addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Command"));
 
   uint8_t valid = 1;
   if (sysCfg.web_password[0] != 0) {
@@ -1352,7 +1388,7 @@ void handleCmnd()
   } else {
     message = F("Need user=<username>&password=<password>\n");
   }
-  webServer->send(200, F("text/plain"), message);
+  webServer->send(200, FPSTR(HDR_CTYPE_PLAIN), message);
 }
 
 void handleConsole()
@@ -1361,7 +1397,7 @@ void handleConsole()
     return;
   }
 
-  addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Handle console"));
+  addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Console"));
 
   String page = FPSTR(HTTP_HEAD);
   page.replace(F("{v}"), F("Console"));
@@ -1378,7 +1414,7 @@ void handleAjax()
     return;
   }
   char log[LOGSZ];
-  char svalue[128];  // was MESSZ
+  char svalue[INPUT_BUFFER_SIZE];  // big to serve Backlog
   byte cflg = 1;
   byte counter = 99;
 
@@ -1426,7 +1462,7 @@ void handleAjax()
     } while (counter != logidx);
   }
   message += F("</l></r>");
-  webServer->send(200, F("text/xml"), message);
+  webServer->send(200, FPSTR(HDR_CTYPE_XML), message);
 }
 
 void handleInfo()
@@ -1434,7 +1470,7 @@ void handleInfo()
   if (httpUser()) {
     return;
   }
-  addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Handle info"));
+  addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Info"));
 
   char stopic[TOPSZ];
 
@@ -1460,8 +1496,8 @@ void handleInfo()
     page += F("</th><td>"); page += sysCfg.friendlyname[i]; page += F("</td></tr>");
   }
   page += F("<tr><td>&nbsp;</td></tr>");
-//  page += F("<tr><th>SSId (RSSI)</th><td>"); page += (sysCfg.sta_active)? sysCfg.sta_ssid2 : sysCfg.sta_ssid1; page += F(" ("); page += WIFI_getRSSIasQuality(WiFi.RSSI()); page += F("%)</td></tr>");
-  page += F("<tr><th>AP"); page += String(sysCfg.sta_active +1); page += F(" SSId (RSSI)</th><td>"); page += sysCfg.sta_ssid[sysCfg.sta_active]; page += F(" ("); page += WIFI_getRSSIasQuality(WiFi.RSSI()); page += F("%)</td></tr>");
+  page += F("<tr><th>AP"); page += String(sysCfg.sta_active +1);
+    page += F(" SSId (RSSI)</th><td>"); page += sysCfg.sta_ssid[sysCfg.sta_active]; page += F(" ("); page += WIFI_getRSSIasQuality(WiFi.RSSI()); page += F("%)</td></tr>");
   page += F("<tr><th>Hostname</th><td>"); page += Hostname; page += F("</td></tr>");
   if (static_cast<uint32_t>(WiFi.localIP()) != 0) {
     page += F("<tr><th>IP address</th><td>"); page += WiFi.localIP().toString(); page += F("</td></tr>");
@@ -1575,18 +1611,15 @@ void handleNotFound()
     String message = F("File Not Found\n\nURI: ");
     message += webServer->uri();
     message += F("\nMethod: ");
-    message += ( webServer->method() == HTTP_GET ) ? F("GET") : F("POST");
+    message += (webServer->method() == HTTP_GET) ? F("GET") : F("POST");
     message += F("\nArguments: ");
     message += webServer->args();
     message += F("\n");
     for ( uint8_t i = 0; i < webServer->args(); i++ ) {
-      message += " " + webServer->argName ( i ) + ": " + webServer->arg ( i ) + "\n";
+      message += " " + webServer->argName(i) + ": " + webServer->arg(i) + "\n";
     }
-
-    webServer->sendHeader(FPSTR(HDR_CCNTL), FPSTR(HDR_REVAL));
-    webServer->sendHeader(F("Pragma"), F("no-cache"));
-    webServer->sendHeader(F("Expires"), F("-1"));
-    webServer->send(404, F("text/plain"), message);
+    setHeader();
+    webServer->send(404, FPSTR(HDR_CTYPE_PLAIN), message);
   }
 }
 
@@ -1597,7 +1630,7 @@ boolean captivePortal()
     addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Request redirected to captive portal"));
 
     webServer->sendHeader(F("Location"), String("http://") + webServer->client().localIP().toString(), true);
-    webServer->send(302, F("text/plain"), ""); // Empty content inhibits Content-length header so we have to close the socket ourselves.
+    webServer->send(302, FPSTR(HDR_CTYPE_PLAIN), ""); // Empty content inhibits Content-length header so we have to close the socket ourselves.
     webServer->client().stop(); // Stop is needed because we sent no content length
     return true;
   }

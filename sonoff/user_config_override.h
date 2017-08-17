@@ -19,7 +19,7 @@
 
 /*****************************************************************************************************\
  * ATTENTION: - Changes to most PARAMETER defines will only override flash settings if you change
- *              define CFG_HOLDER. 
+ *              define CFG_HOLDER.
  *            - Expect compiler warnings when no ifdef/undef/endif sequence is used.
  *            - You still need to update user_config.h for major defines MODULE and USE_MQTT_TLS.
  *            - Changing MODULE defines are not being tested for validity as they are in user_config.h.
@@ -50,6 +50,14 @@
 #undef STA_PASS1
 #endif
 #define STA_PASS1              "BettyUndStefa"          // [Password1] Wifi password
+#ifdef STA_SSID2
+#undef STA_SSID2
+#endif
+#define STA_SSID2              "SchreiberWLAN"  // [Ssid1] Wifi SSID
+#ifdef STA_PASS2
+#undef STA_PASS2
+#endif
+#define STA_PASS2              "Me1nGast"          // [Password1] Wifi password
 #ifdef WIFI_CONFIG_TOOL
 #undef WIFI_CONFIG_TOOL
 #endif
@@ -63,6 +71,10 @@
 
 
 #define USE_MQTT_TLS                             // EXPERIMENTAL Use TLS for MQTT connection (+53k code, +20k mem) - Disable by //
+#ifdef MQTT_USE
+#undef MQTT_USE
+#endif
+#define MQTT_USE               1
 
 #ifdef MQTT_HOST
 #undef MQTT_HOST
@@ -82,12 +94,12 @@
 #ifdef MQTT_USER
 #undef MQTT_USER
 #endif
-#define MQTT_USER            "homematic"         // [MqttUser] Mandatory user
+#define MQTT_USER            "sonos"         // [MqttUser] Mandatory user
 
 #ifdef MQTT_PASS
 #undef MQTT_PASS
 #endif
-#define MQTT_PASS            "geheim"            // [MqttPassword] Mandatory password
+#define MQTT_PASS            "s1769fiZZs"            // [MqttPassword] Mandatory password
 
 
 #undef MQTT_BUTTON_RETAIN
@@ -103,7 +115,7 @@
 #undef SUB_PREFIX
 #undef PUB_PREFIX
 #undef PUB_PREFIX2
-#undef USE_ADC_VCC
+//#undef USE_ADC_VCC
 
 #define SUB_PREFIX             "hm/setting"           // Sonoff devices subscribe to:- SUB_PREFIX/MQTT_TOPIC and SUB_PREFIX/MQTT_GRPTOPIC
 #define PUB_PREFIX             "hm/status"            // Sonoff devices publish to:- PUB_PREFIX/MQTT_TOPIC
@@ -129,11 +141,11 @@
 #undef USE_HTU                                // Add I2C code for HTU21/SI7013/SI7020/SI7021 sensor
 #undef USE_SHT
 
-#define USE_I2C
+//#define USE_I2C
                              // I2C using library wire (+10k code, 0.2k mem) - Disable by //
-#define USE_PCF8574
+//#define USE_PCF8574
                           // Add I2C code for PCF8574 8-channel DIO I/O chip.
-#define USE_ADS1115
+//#define USE_ADS1115
 
 // -- Application ---------------------------------
 #undef APP_TIMEZONE
