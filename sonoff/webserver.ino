@@ -639,7 +639,9 @@ void handleModule()
   if (httpUser()) {
     return;
   }
-  char stemp[20], line[128];
+  char stemp[20];
+  char line[128];
+  uint8_t midx;
   
   addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Module config"));
 
@@ -650,10 +652,11 @@ void handleModule()
   snprintf_P(stemp, sizeof(stemp), modules[MODULE].name);
   page.replace(F("{mt}"), stemp);
 
-  for (byte i = 0; i < MAXMODULE; i++) {  
-    snprintf_P(stemp, sizeof(stemp), modules[i].name);
+  for (byte i = 0; i < MAXMODULE; i++) {
+    midx = pgm_read_byte(nicelist + i);
+    snprintf_P(stemp, sizeof(stemp), modules[midx].name);
     snprintf_P(line, sizeof(line), PSTR("<option%s value='%d'>%02d %s</option>"),
-      (i == sysCfg.module) ? " selected" : "", i, i +1, stemp);
+      (midx == sysCfg.module) ? " selected" : "", midx, midx +1, stemp);
     page += line;
   }
   page += F("</select></br>");
