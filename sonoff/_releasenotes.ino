@@ -1,4 +1,4 @@
-/* 5.5.2j
+/* 5.5.2k
  * Fix Sonoff Pow intermittent exception 0
  * Change Sonoff Pow sending Domoticz telemetry data only
  * Add Sonoff B1 RGBCW led support with command Color RRGGBBCCWW (#676)
@@ -11,6 +11,7 @@
  * Fix Mitsubishi HVAC IR power controll (#740)
  * Add Sonoff T1 support (#582)
  * Change Sonoff T1 command Ledstate functionality by turning led on if power is off
+ * Add command SetOption14 0|1 to enable interlock mode (#719, #721)
  *
  * 5.5.2 20170808
  * Extent max number of WS2812 pixels from 256 to 512 (#667)

@@ -25,7 +25,7 @@
     - Select IDE Tools - Flash Size: "1M (no SPIFFS)"
   ====================================================*/
 
-#define VERSION                0x0505020A  // 5.5.2j
+#define VERSION                0x0505020B  // 5.5.2k
 
 enum log_t   {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG_MORE, LOG_LEVEL_ALL};
 enum week_t  {Last, First, Second, Third, Fourth};
@@ -266,6 +266,7 @@ uint8_t blogidx = 0;                  // Command backlog index
 uint8_t blogptr = 0;                  // Command backlog pointer
 uint8_t blogmutex = 0;                // Command backlog pending
 uint16_t blogdelay = 0;               // Command backlog delay
+uint8_t interlockmutex = 0;           // Interlock power command pending
 
 #ifdef USE_MQTT_TLS
   WiFiClientSecure espClient;         // Wifi Secure Client
@@ -402,6 +403,20 @@ void setRelay(uint8_t rpower)
   if (4 == sysCfg.poweronstate) {  // All on and stay on
     power = (1 << Maxdevice) -1;
     rpower = power;
+  }
+  if (sysCfg.flag.interlock) {     // Allow only one or no relay set
+    uint8_t mask = 0x01;
+    uint8_t count = 0;
+    for (byte i = 0; i < Maxdevice; i++) {
+      if (rpower & mask) {
+        count++;
+      }
+      mask <<= 1;
+    }
+    if (count > 1) {
+      power = 0;
+      rpower = 0;
+    }
   }
   if ((SONOFF_DUAL == sysCfg.module) || (CH4 == sysCfg.module)) {
     Serial.write(0xA0);
@@ -1010,6 +1025,12 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
       return;
     }
     else if ((sysCfg.module != MOTOR) && !strcmp_P(type,PSTR("POWERONSTATE"))) {
+      /* 0 = Keep relays off after power on
+       * 1 = Turn relays on after power on
+       * 2 = Toggle relays after power on
+       * 3 = Set relays to last saved state after power on
+       * 4 = Turn relays on and disable any relay control (used for Sonoff Pow to always measure power)
+       */
       if ((payload >= 0) && (payload <= 4)) {
         sysCfg.poweronstate = payload;
         if (4 == sysCfg.poweronstate) {
@@ -1062,7 +1083,7 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
       }
       snprintf_P(svalue, sizeof(svalue), PSTR("{\"SaveData\":\"%s\"}"), (sysCfg.savedata > 1) ? stemp1 : getStateText(sysCfg.savedata));
     }
-    else if (!strcmp_P(type,PSTR("SETOPTION")) && ((index >= 0) && (index <= 13)) || ((index > 31) && (index <= P_MAX_PARAM8 +31))) {
+    else if (!strcmp_P(type,PSTR("SETOPTION")) && ((index >= 0) && (index <= 14)) || ((index > 31) && (index <= P_MAX_PARAM8 +31))) {
       if (index <= 31) {
         ptype = 0;   // SetOption0 .. 31
       } else {
@@ -1084,6 +1105,7 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
               case 11:  // button_swap
               case 12:  // stop_flash_rotate
               case 13:  // button_single
+              case 14:  // interlock
                 bitWrite(sysCfg.flag.data, index, payload);
             }
             if (12 == index) {  // stop_flash_rotate
@@ -1649,6 +1671,16 @@ void do_cmnd_power(byte device, byte state)
     if ((blink_mask & mask)) {
       blink_mask &= (0xFF ^ mask);  // Clear device mask
       mqtt_publishPowerBlinkState(device);
+    }
+    if (sysCfg.flag.interlock && !interlockmutex) {  // Clear all but masked relay
+      interlockmutex = 1;
+      for (byte i = 0; i < Maxdevice; i++) {
+        byte imask = 0x01 << i;
+        if ((power & imask) && (mask != imask)) {
+          do_cmnd_power(i +1, 0);
+        }
+      }
+      interlockmutex = 0;
     }
     switch (state) {
     case 0: { // Off
