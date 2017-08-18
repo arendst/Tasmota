@@ -1,7 +1,7 @@
 ## Sonoff-Tasmota
 Provide ESP8266 based Sonoff by [iTead Studio](https://www.itead.cc/) and ElectroDragon IoT Relay with Serial, Web and MQTT control allowing 'Over the Air' or OTA firmware updates using Arduino IDE.
 
-Current version is **5.5.2** - See [sonoff/_releasenotes.ino](https://github.com/arendst/Sonoff-Tasmota/blob/master/sonoff/_releasenotes.ino) for change information.
+Current version is **5.5.2k** - See [sonoff/_releasenotes.ino](https://github.com/arendst/Sonoff-Tasmota/blob/master/sonoff/_releasenotes.ino) for change information.
 
 ### ATTENTION All versions
 
@@ -44,18 +44,16 @@ The following devices are supported:
 - [iTead S20 Smart Socket](http://sonoff.itead.cc/en/products/residential/s20-socket)
 - [iTead Slampher](http://sonoff.itead.cc/en/products/residential/slampher-rf)
 - [iTead Sonoff Touch](http://sonoff.itead.cc/en/products/residential/sonoff-touch)
+- [iTead Sonoff T1](http://sonoff.itead.cc/en/products/residential/sonoff-t1)
 - [iTead Sonoff SC](http://sonoff.itead.cc/en/products/residential/sonoff-sc)
 - [iTead Sonoff Led](http://sonoff.itead.cc/en/products/appliances/sonoff-led)
 - [iTead Sonoff BN-SZ01 Ceiling Led](http://sonoff.itead.cc/en/products/appliances/bn-sz01)
+- [iTead Sonoff B1](http://sonoff.itead.cc/en/products/residential/sonoff-b1)
 - [iTead Sonoff RF Bridge 433](http://sonoff.itead.cc/en/products/appliances/sonoff-rf-bridge-433)
 - [iTead Sonoff Dev](https://www.itead.cc/sonoff-dev.html)
 - [iTead 1 Channel Switch 5V / 12V](https://www.itead.cc/smart-home/inching-self-locking-wifi-wireless-switch.html)
 - [iTead Motor Clockwise/Anticlockwise](https://www.itead.cc/smart-home/motor-reversing-wifi-wireless-switch.html)
 - [Electrodragon IoT Relay Board](http://www.electrodragon.com/product/wifi-iot-relay-board-based-esp8266/)
-
-Planned support:
-- [iTead Sonoff T1](http://sonoff.itead.cc/en/products/residential/sonoff-t1)
-- [iTead Sonoff B1](http://sonoff.itead.cc/en/products/residential/sonoff-b1)
 
 <img src="https://github.com/arendst/arendst.github.io/blob/master/media/sonofftoucheu.jpg" height="280" align="left" /> 
 <img src="https://github.com/arendst/arendst.github.io/blob/master/media/sonoff4ch.jpg" height="250" align="right" /> 

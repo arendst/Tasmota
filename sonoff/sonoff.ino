@@ -25,7 +25,7 @@
     - Select IDE Tools - Flash Size: "1M (no SPIFFS)"
   ====================================================*/
 
-#define VERSION                0x05050200  // 5.5.2
+#define VERSION                0x0505020B  // 5.5.2k
 
 enum log_t   {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG_MORE, LOG_LEVEL_ALL};
 enum week_t  {Last, First, Second, Third, Fourth};
@@ -172,6 +172,7 @@ enum opt_t   {P_HOLD_TIME, P_MAX_POWER_RETRY, P_MAX_PARAM8};   // Index in sysCf
 #include <ESP8266httpUpdate.h>              // Ota
 #include <StreamString.h>                   // Webserver, Updater
 #include <ArduinoJson.h>                    // WemoHue, IRremote, Domoticz
+#include <NeoPixelBus.h>                    // Ws2812, Sonoff Led hue support
 #ifdef USE_WEBSERVER
   #include <ESP8266WebServer.h>             // WifiManager, Webserver
   #include <DNSServer.h>                    // WifiManager
@@ -265,6 +266,7 @@ uint8_t blogidx = 0;                  // Command backlog index
 uint8_t blogptr = 0;                  // Command backlog pointer
 uint8_t blogmutex = 0;                // Command backlog pending
 uint16_t blogdelay = 0;               // Command backlog delay
+uint8_t interlockmutex = 0;           // Interlock power command pending
 
 #ifdef USE_MQTT_TLS
   WiFiClientSecure espClient;         // Wifi Secure Client
@@ -303,7 +305,7 @@ uint8_t hlw_flg = 0;                  // Power monitor configured
 uint8_t i2c_flg = 0;                  // I2C configured
 uint8_t spi_flg = 0;                  // SPI configured
 uint8_t pwm_flg = 0;                  // PWM configured
-uint8_t sfl_flg = 0;                  // Sonoff Led flag (0 = No led, 1 = BN-SZ01, 2 = Sonoff Led)
+uint8_t sfl_flg = 0;                  // Sonoff Led flag (0 = No led, 1 = BN-SZ01, 2 = Sonoff Led, 5 = Sonoff B1)
 uint8_t pwm_idxoffset = 0;            // Allowed PWM command offset (change for Sonoff Led)
 
 boolean mDNSbegun = false;
@@ -401,6 +403,20 @@ void setRelay(uint8_t rpower)
   if (4 == sysCfg.poweronstate) {  // All on and stay on
     power = (1 << Maxdevice) -1;
     rpower = power;
+  }
+  if (sysCfg.flag.interlock) {     // Allow only one or no relay set
+    uint8_t mask = 0x01;
+    uint8_t count = 0;
+    for (byte i = 0; i < Maxdevice; i++) {
+      if (rpower & mask) {
+        count++;
+      }
+      mask <<= 1;
+    }
+    if (count > 1) {
+      power = 0;
+      rpower = 0;
+    }
   }
   if ((SONOFF_DUAL == sysCfg.module) || (CH4 == sysCfg.module)) {
     Serial.write(0xA0);
@@ -1009,6 +1025,12 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
       return;
     }
     else if ((sysCfg.module != MOTOR) && !strcmp_P(type,PSTR("POWERONSTATE"))) {
+      /* 0 = Keep relays off after power on
+       * 1 = Turn relays on after power on
+       * 2 = Toggle relays after power on
+       * 3 = Set relays to last saved state after power on
+       * 4 = Turn relays on and disable any relay control (used for Sonoff Pow to always measure power)
+       */
       if ((payload >= 0) && (payload <= 4)) {
         sysCfg.poweronstate = payload;
         if (4 == sysCfg.poweronstate) {
@@ -1061,7 +1083,7 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
       }
       snprintf_P(svalue, sizeof(svalue), PSTR("{\"SaveData\":\"%s\"}"), (sysCfg.savedata > 1) ? stemp1 : getStateText(sysCfg.savedata));
     }
-    else if (!strcmp_P(type,PSTR("SETOPTION")) && ((index >= 0) && (index <= 13)) || ((index > 31) && (index <= P_MAX_PARAM8 +31))) {
+    else if (!strcmp_P(type,PSTR("SETOPTION")) && ((index >= 0) && (index <= 14)) || ((index > 31) && (index <= P_MAX_PARAM8 +31))) {
       if (index <= 31) {
         ptype = 0;   // SetOption0 .. 31
       } else {
@@ -1083,6 +1105,7 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
               case 11:  // button_swap
               case 12:  // stop_flash_rotate
               case 13:  // button_single
+              case 14:  // interlock
                 bitWrite(sysCfg.flag.data, index, payload);
             }
             if (12 == index) {  // stop_flash_rotate
@@ -1649,6 +1672,16 @@ void do_cmnd_power(byte device, byte state)
       blink_mask &= (0xFF ^ mask);  // Clear device mask
       mqtt_publishPowerBlinkState(device);
     }
+    if (sysCfg.flag.interlock && !interlockmutex) {  // Clear all but masked relay
+      interlockmutex = 1;
+      for (byte i = 0; i < Maxdevice; i++) {
+        byte imask = 0x01 << i;
+        if ((power & imask) && (mask != imask)) {
+          do_cmnd_power(i +1, 0);
+        }
+      }
+      interlockmutex = 0;
+    }
     switch (state) {
     case 0: { // Off
       power &= (0xFF ^ mask);
@@ -1999,7 +2032,7 @@ void every_second()
       }
 
       if (hlw_flg) {
-        hlw_mqttPresent();
+        hlw_mqttPresent(1);
       }
     }
   }
@@ -2318,7 +2351,7 @@ void stateloop()
   button_handler();
   switch_handler();
 
-  if (sfl_flg) {  // Sonoff BN-SZ01 or Sonoff Led
+  if (sfl_flg) {  // Sonoff B1, AiLight, Sonoff led or BN-SZ01
     sl_animate();
   }
 
@@ -2350,7 +2383,11 @@ void stateloop()
       }
     } else {
       if (sysCfg.ledstate &0x01) {
-        setLed((SONOFF_TOUCH == sysCfg.module) ? (power ^1) : power);
+        boolean tstate = power;
+        if ((SONOFF_TOUCH == sysCfg.module) || (SONOFF_T11 == sysCfg.module) || (SONOFF_T12 == sysCfg.module) || (SONOFF_T13 == sysCfg.module)) {
+          tstate = (!power) ? 1 : 0;
+        }
+        setLed(tstate);
       }
     }
   }
@@ -2627,11 +2664,17 @@ void GPIO_init()
     Maxdevice = 0;
     Baudrate = 19200;
   }
-  else if (SONOFF_BN == sysCfg.module) {
+  else if (SONOFF_BN == sysCfg.module) {   // Single color led (White)
     sfl_flg = 1;
   }
-  else if (SONOFF_LED == sysCfg.module) {
+  else if (SONOFF_LED == sysCfg.module) {  // Dual color led (White warm and cold)
     sfl_flg = 2;
+  }
+  else if (AILIGHT == sysCfg.module) {     // RGBW led
+    sfl_flg = 4;
+  }
+  else if (SONOFF_B1 == sysCfg.module) {   // RGBWC led
+    sfl_flg = 5;
   }
   else {
     Maxdevice = 0;
@@ -2660,20 +2703,9 @@ void GPIO_init()
     }
   }
   
-  if (sfl_flg) {              // Sonoff Led or BN-SZ01
-    pwm_idxoffset = sfl_flg;  // 1 for BN-SZ01, 2 for Sonoff Led
-    pin[GPIO_WS2812] = 99;    // I do not allow both Sonoff Led AND WS2812 led
-    if (!my_module.gp.io[4]) {
-      pinMode(4, OUTPUT);     // Stop floating outputs
-      digitalWrite(4, LOW);
-    }
-    if (!my_module.gp.io[5]) {
-      pinMode(5, OUTPUT);     // Stop floating outputs
-      digitalWrite(5, LOW);
-    }
-    if (!my_module.gp.io[14]) {
-      pinMode(14, OUTPUT);    // Stop floating outputs
-      digitalWrite(14, LOW);
+  if (sfl_flg) {                // Sonoff B1, AiLight, Sonoff Led or BN-SZ01
+    if (sfl_flg < 4) {
+      pwm_idxoffset = sfl_flg;  // 1 for BN-SZ01, 2 for Sonoff Led
     }
     sl_init();
   }
