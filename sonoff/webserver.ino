@@ -474,7 +474,7 @@ void handleRoot()
 
 void handleAjax2()
 {
-  char svalue[16];
+  char svalue[50];
   
   if (strlen(webServer->arg("o").c_str())) {
     do_cmnd_power(atoi(webServer->arg("o").c_str()), 2);
@@ -494,6 +494,12 @@ void handleAjax2()
   
   String tpage = "";
   tpage += counter_webPresent();
+#ifndef USE_ADC_VCC
+  if (pin[GPIO_ADC0] < 99) {
+    snprintf_P(svalue, sizeof(svalue), PSTR("<tr><th>AnalogInput0</th><td>%d</td></tr>"), getAdc0());
+    tpage += svalue;
+  }
+#endif
   if (hlw_flg) {
     tpage += hlw_webPresent();
   }
