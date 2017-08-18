@@ -25,7 +25,7 @@
     - Select IDE Tools - Flash Size: "1M (no SPIFFS)"
   ====================================================*/
 
-#define VERSION                0x05050209  // 5.5.2i
+#define VERSION                0x0505020A  // 5.5.2j
 
 enum log_t   {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG_MORE, LOG_LEVEL_ALL};
 enum week_t  {Last, First, Second, Third, Fourth};
@@ -2351,7 +2351,11 @@ void stateloop()
       }
     } else {
       if (sysCfg.ledstate &0x01) {
-        setLed((SONOFF_TOUCH == sysCfg.module) ? (power ^1) : power);
+        boolean tstate = power;
+        if ((SONOFF_TOUCH == sysCfg.module) || (SONOFF_T11 == sysCfg.module) || (SONOFF_T12 == sysCfg.module) || (SONOFF_T13 == sysCfg.module)) {
+          tstate = (!power) ? 1 : 0;
+        }
+        setLed(tstate);
       }
     }
   }
