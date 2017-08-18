@@ -1,17 +1,17 @@
-/* 5.5.2k
+/* 5.6.0 20170818
  * Fix Sonoff Pow intermittent exception 0
  * Change Sonoff Pow sending Domoticz telemetry data only
+ * Add Ai-Thinker RGBW led (AiLight) (experimental)
+ * Add NeoPixelBus library to Sonoff Led for Hue support
+ * Add user configurable GPIO4 and GPIO5 to module Sonoff Bridge
  * Add Sonoff B1 RGBCW led support with command Color RRGGBBCCWW (#676)
  * Add command CT 152..500 to Sonoff Led and Sonoff B1 to control Color Temperature
  * Add Cold-Warm slider to web page for Sonoff Led and Sonoff B1
  * Add CT parameter to Hue
- * Add Ai-Thinker RGBW led (AiLight) (experimental)
- * Add NeoPixelBus library to Sonoff Led for Hue support (saves 1k code space)
- * Add user configurable GPIO4 and GPIO5 to module Sonoff Bridge
- * Fix Mitsubishi HVAC IR power controll (#740)
  * Add Sonoff T1 support (#582)
- * Change Sonoff T1 command Ledstate functionality by turning led on if power is off
+ * Add AnalogInput0 if configured as Analog Input to webpage (#697, #746)
  * Add command SetOption14 0|1 to enable interlock mode (#719, #721)
+ * Fix Mitsubishi HVAC IR power controll (#740)
  *
  * 5.5.2 20170808
  * Extent max number of WS2812 pixels from 256 to 512 (#667)
