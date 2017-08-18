@@ -1,4 +1,8 @@
-/* 5.6.0 20170818
+/* 5.6.1 20170818
+ * Change module list order in webpage
+ * Fix Sonoff T1 1CH and 2CH configuration (#751)
+ *
+ * 5.6.0 20170818
  * Fix Sonoff Pow intermittent exception 0
  * Change Sonoff Pow sending Domoticz telemetry data only
  * Add Ai-Thinker RGBW led (AiLight) (experimental)
