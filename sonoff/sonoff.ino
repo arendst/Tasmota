@@ -1152,6 +1152,12 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
       }
       snprintf_P(svalue, sizeof(svalue), PSTR("{\"PressRes\":%d}"), sysCfg.flag.pressure_resolution);
     }
+    else if (!strcmp_P(type,PSTR("WATTRES"))) {
+      if ((payload >= 0) && (payload <= 1)) {
+        sysCfg.flag.wattage_resolution = payload;
+      }
+      snprintf_P(svalue, sizeof(svalue), PSTR("{\"WattRes\":%d}"), sysCfg.flag.wattage_resolution);
+    }
     else if (!strcmp_P(type,PSTR("VOLTRES"))) {
       if ((payload >= 0) && (payload <= 1)) {
         sysCfg.flag.voltage_resolution = payload;
