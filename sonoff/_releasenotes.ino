@@ -1,4 +1,7 @@
-/* 5.6.1a
+/* 5.6.1b
+ * Add Supla Espablo support (#755)
+ *
+ * 5.6.1a
  * Shrink module configuration webpage
  *
  * 5.6.1 20170818

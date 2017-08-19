@@ -156,6 +156,7 @@ enum module_t {
   SONOFF_T11,
   SONOFF_T12,
   SONOFF_T13,
+  SUPLA1,
   MAXMODULE };
 
 /********************************************************************************************/
@@ -197,6 +198,7 @@ const uint8_t nicelist[MAXMODULE] PROGMEM = {
   MOTOR,
   ELECTRODRAGON,
   EXS_RELAY,
+  SUPLA1,
   WION,
   H801,
   HUAFAN_SS,
@@ -602,6 +604,21 @@ const mytmplt modules[MAXMODULE] PROGMEM = {
      GPIO_REL1,        // GPIO12 Blue Led and Relay 1 (0 = Off, 1 = On)
      GPIO_LED1_INV,    // GPIO13 Blue Led (0 = On, 1 = Off)
      0, 0, 0, 0
+  },
+  { "Supla Espablo",   // Supla Espablo (ESP8266) - http://www.wykop.pl/ramka/3325399/diy-supla-do-puszki-instalacyjnej-podtynkowej-supla-org/
+     0,                // GPIO00 Flash jumper
+     GPIO_USER,        // GPIO01 Serial RXD and Optional sensor
+     GPIO_DSB,         // GPIO02 DS18B20 sensor
+     GPIO_USER,        // GPIO03 Serial TXD and Optional sensor
+     GPIO_KEY1,        // GPIO04 Button 1
+     GPIO_REL1,        // GPIO05 Relay 1 (0 = Off, 1 = On)
+     0, 0, 0, 0, 0, 0, // Flash connection
+     GPIO_USER,        // GPIO12 Optional sensor
+     GPIO_REL2,        // GPIO13 Relay 2 (0 = Off, 1 = On)
+     GPIO_USER,        // GPIO14 Optional sensor
+     0,
+     GPIO_LED1,        // GPIO16 Led (1 = On, 0 = Off)
+     GPIO_ADC0         // ADC0 A0 Analog input
   }
 };
 
