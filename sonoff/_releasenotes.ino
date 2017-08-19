@@ -1,4 +1,7 @@
-/* 5.6.1 20170818
+/* 5.6.1a
+ * Shrink module configuration webpage
+ *
+ * 5.6.1 20170818
  * Change module list order in webpage
  * Fix Sonoff T1 1CH and 2CH configuration (#751)
  *

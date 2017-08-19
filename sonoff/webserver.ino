@@ -128,7 +128,7 @@ const char HTTP_SCRIPT_CONSOL[] PROGMEM =
     "return false;"
   "}"
   "</script>";
-const char HTTP_SCRIPT_MODULE[] PROGMEM =
+const char HTTP_SCRIPT_MODULE1[] PROGMEM =
   "var os;"
   "function sk(s,g){"
     "var o=os.replace(\"value='\"+s+\"'\",\"selected value='\"+s+\"'\");"
@@ -136,6 +136,11 @@ const char HTTP_SCRIPT_MODULE[] PROGMEM =
   "}"
   "function sl(){"
     "var o0=\"";
+const char HTTP_SCRIPT_MODULE2[] PROGMEM =
+    "}1'%d'>%02d %s}2";     // "}1" and "}2" means do not use "}" in Module name and Sensor name
+const char HTTP_SCRIPT_MODULE3[] PROGMEM =
+    "\";"
+    "os=o0.replace(/}1/g,\"<option value=\").replace(/}2/g,\"</option>\");";
 const char HTTP_MSG_RSTRT[] PROGMEM =
   "<br/><div style='text-align:center;'>Device will restart in a few seconds</div><br/>";
 const char HTTP_BTN_MENU1[] PROGMEM =
@@ -167,7 +172,7 @@ const char HTTP_BTN_CONF[] PROGMEM =
 const char HTTP_FORM_MODULE[] PROGMEM =
   "<fieldset><legend><b>&nbsp;Module parameters&nbsp;</b></legend><form method='get' action='sv'>"
   "<input id='w' name='w' value='6' hidden><input id='r' name='r' value='1' hidden>"
-  "<br/><b>Module type</b> ({mt})<br/><select id='mt' name='mt'>";
+  "<br/><b>Module type</b> ({mt})<br/><select id='g99' name='g99'></select></br>";
 const char HTTP_LNK_ITEM[] PROGMEM =
   "<div><a href='#p' onclick='c(this)'>{v}</a>&nbsp;<span class='q'>{i} {r}%</span></div>";
 const char HTTP_LNK_SCAN[] PROGMEM =
@@ -648,37 +653,36 @@ void handleModule()
   String page = FPSTR(HTTP_HEAD);
   page.replace(F("{v}"), F("Config module"));
   page += FPSTR(HTTP_FORM_MODULE);
-
   snprintf_P(stemp, sizeof(stemp), modules[MODULE].name);
   page.replace(F("{mt}"), stemp);
 
-  for (byte i = 0; i < MAXMODULE; i++) {
-    midx = pgm_read_byte(nicelist + i);
-    snprintf_P(stemp, sizeof(stemp), modules[midx].name);
-    snprintf_P(line, sizeof(line), PSTR("<option%s value='%d'>%02d %s</option>"),
-      (midx == sysCfg.module) ? " selected" : "", midx, midx +1, stemp);
-    page += line;
-  }
-  page += F("</select></br>");
-  
   mytmplt cmodule;
   memcpy_P(&cmodule, &modules[sysCfg.module], sizeof(cmodule));
   
-  String func = FPSTR(HTTP_SCRIPT_MODULE);
+  String func = FPSTR(HTTP_SCRIPT_MODULE1);
+  for (byte i = 0; i < MAXMODULE; i++) {
+    midx = pgm_read_byte(nicelist + i);
+    snprintf_P(stemp, sizeof(stemp), modules[midx].name);
+    snprintf_P(line, sizeof(line), HTTP_SCRIPT_MODULE2, midx, midx +1, stemp);
+    func += line;
+  }
+  func += FPSTR(HTTP_SCRIPT_MODULE3);
+  snprintf_P(line, sizeof(line), PSTR("sk(%d,99);o0=\""), sysCfg.module);  // g99
+  func += line;
   for (byte j = 0; j < GPIO_SENSOR_END; j++) {
     if (!inModule(j, cmodule.gp.io)) {
       snprintf_P(stemp, sizeof(stemp), sensors[j]);
-      snprintf_P(line, sizeof(line), PSTR("-1'%d'>%02d %s-2"), j, j, stemp);
+      snprintf_P(line, sizeof(line), HTTP_SCRIPT_MODULE2, j, j, stemp);
       func += line;
     }
   }
-  func += F("\";os=o0.replace(/-1/g,\"<option value=\").replace(/-2/g,\"</option>\");");
+  func += FPSTR(HTTP_SCRIPT_MODULE3);
   for (byte i = 0; i < MAX_GPIO_PIN; i++) {
     if (GPIO_USER == cmodule.gp.io[i]) {
       snprintf_P(line, sizeof(line), PSTR("<br/><b>GPIO%d</b> %s<select id='g%d' name='g%d'></select></br>"),
         i, (0==i)?"Button1":(1==i)?"Serial Out":(3==i)?"Serial In":(12==i)?"Relay1":(13==i)?"Led1I":(14==i)?"Sensor":"", i, i);
       page += line;
-      snprintf_P(line, sizeof(line), PSTR("sk(%d,%d);"), my_module.gp.io[i], i);
+      snprintf_P(line, sizeof(line), PSTR("sk(%d,%d);"), my_module.gp.io[i], i);  // g0 - g16
       func += line;
     }
   }
@@ -1029,7 +1033,7 @@ void handleSave()
     addLog(LOG_LEVEL_INFO, log);
     break;
   case 6:
-    byte new_module = (!strlen(webServer->arg("mt").c_str())) ? MODULE : atoi(webServer->arg("mt").c_str());
+    byte new_module = (!strlen(webServer->arg("g99").c_str())) ? MODULE : atoi(webServer->arg("g99").c_str());
     byte new_modflg = (sysCfg.module != new_module);
     sysCfg.module = new_module;
     mytmplt cmodule;
