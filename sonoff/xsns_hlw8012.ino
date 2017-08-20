@@ -79,7 +79,7 @@ void hlw_cf_interrupt()  // Service Power
 {
   hlw_cf_plen = micros() - hlw_cf_last;
   hlw_cf_last = micros();
-  if (hlw_cf_plen > 4000000) {
+  if (hlw_cf_plen > 4000000) {  // 4 seconds
     hlw_cf_plen = 0;  // Just powered on
   }
   hlw_cf_timer = 15;  // Support down to 4W which takes about 3 seconds
@@ -139,7 +139,7 @@ void hlw_200mS()
   if (hlw_cf_timer) {
     hlw_cf_timer--;
     if (!hlw_cf_timer) {
-      hlw_cf_plen = 0;  // No load for over three seconds
+      hlw_cf_plen = 0;  // No load for over 3 seconds
     }
   }
   
@@ -173,7 +173,7 @@ void hlw_savestate()
   sysCfg.hlw_kWhtotal = rtcMem.hlw_kWhtotal;
 }
 
-void hlw_readEnergy(byte option, float &et, float &ed, uint16_t &e, uint16_t &w, float &u, float &i, float &c)
+void hlw_readEnergy(byte option, float &et, float &ed, float &e, float &w, float &u, float &i, float &c)
 {
 /* option 0 = do not calculate period energy usage
  * option 1 = calculate period energy usage
@@ -210,14 +210,14 @@ void hlw_readEnergy(byte option, float &et, float &ed, uint16_t &e, uint16_t &w,
         hlw_len = hlw_period * 1000000 / hlw_Ecntr;
         hlw_Ecntr = 0;
         hlw_temp = ((HLW_PREF * sysCfg.hlw_pcal) / hlw_len) / hlw_interval;
-        e = hlw_temp / 10;
+        e = (float)hlw_temp / 10;
       }
     }
   }
   w = 0;
   if (hlw_cf_plen) {
     hlw_w = (HLW_PREF * sysCfg.hlw_pcal) / hlw_cf_plen;
-    w = hlw_w / 10;
+    w = (float)hlw_w / 10;
   }
   u = 0;
   if (hlw_cf1u_plen && (w || (power &1))) {
@@ -307,14 +307,15 @@ void hlw_margin_chk()
   char svalue[200];  // was MESSZ
   float pet;
   float ped;
+  float pe;
+  float pw;
   float pu;
   float pi;
   float pc;
   uint16_t uped;
+  uint16_t pwv;
   uint16_t puv;
   uint16_t piv;
-  uint16_t pe;
-  uint16_t pw;
   boolean flag;
   boolean jsonflg;
 
@@ -325,6 +326,7 @@ void hlw_margin_chk()
 
   hlw_readEnergy(0, pet, ped, pe, pw, pu, pi, pc);
   if (power && (sysCfg.hlw_pmin || sysCfg.hlw_pmax || sysCfg.hlw_umin || sysCfg.hlw_umax || sysCfg.hlw_imin || sysCfg.hlw_imax)) {
+    pwv = (uint16_t)(pw);
     puv = (uint16_t)(pu);
     piv = (uint16_t)(pi * 1000);
 
@@ -333,11 +335,11 @@ void hlw_margin_chk()
 
     snprintf_P(svalue, sizeof(svalue), PSTR("{"));
     jsonflg = 0;
-    if (hlw_margin(0, sysCfg.hlw_pmin, pw, flag, hlw_pminflg)) {
+    if (hlw_margin(0, sysCfg.hlw_pmin, pwv, flag, hlw_pminflg)) {
       snprintf_P(svalue, sizeof(svalue), PSTR("%s%s\"PowerLow\":\"%s\""), svalue, (jsonflg)?", ":"", getStateText(flag));
       jsonflg = 1;
     }
-    if (hlw_margin(1, sysCfg.hlw_pmax, pw, flag, hlw_pmaxflg)) {
+    if (hlw_margin(1, sysCfg.hlw_pmax, pwv, flag, hlw_pmaxflg)) {
       snprintf_P(svalue, sizeof(svalue), PSTR("%s%s\"PowerHigh\":\"%s\""), svalue, (jsonflg)?", ":"", getStateText(flag));
       jsonflg = 1;
     }
@@ -373,7 +375,7 @@ void hlw_margin_chk()
       } else {
         hlw_mplh_counter--;
         if (!hlw_mplh_counter) {
-          snprintf_P(svalue, sizeof(svalue), PSTR("{\"MaxPowerReached\":\"%d%s\"}"), pw, (sysCfg.flag.value_units) ? " W" : "");
+          snprintf_P(svalue, sizeof(svalue), PSTR("{\"MaxPowerReached\":\"%d%s\"}"), pwv, (sysCfg.flag.value_units) ? " W" : "");
           mqtt_publish_topic_P(1, PSTR("WARNING"), svalue);
           hlw_mqttPresent(0);
           do_cmnd_power(1, 0);
@@ -384,7 +386,7 @@ void hlw_margin_chk()
         }
       }
     }
-    else if (power && (pw <= sysCfg.hlw_mpl)) {
+    else if (power && (pwv <= sysCfg.hlw_mpl)) {
       hlw_mplh_counter = 0;
       hlw_mplr_counter = 0;
       hlw_mplw_counter = 0;
@@ -492,13 +494,13 @@ boolean hlw_command(char *type, uint16_t index, char *dataBuf, uint16_t data_len
         break;
       }
     }
-    char stemp0[10];
-    char stemp1[10];
-    char stemp2[10];
-    dtostrf((float)sysCfg.hlw_kWhyesterday / 100000000, 1, sysCfg.flag.energy_resolution, stemp0);
-    dtostrf((float)rtcMem.hlw_kWhtoday / 100000000, 1, sysCfg.flag.energy_resolution, stemp1);
-    dtostrf((float)(rtcMem.hlw_kWhtotal + (hlw_kWhtoday / 1000)) / 100000, 1, sysCfg.flag.energy_resolution, stemp2);
-    snprintf_P(svalue, ssvalue, PSTR("{\"EnergyReset\":{\"Total\":%s, \"Yesterday\":%s, \"Today\":%s}}"), stemp2, stemp0, stemp1);
+    char sey[10];
+    char sen[10];
+    char set[10];
+    dtostrf((float)sysCfg.hlw_kWhyesterday / 100000000, 1, sysCfg.flag.energy_resolution, sey);
+    dtostrf((float)rtcMem.hlw_kWhtoday / 100000000, 1, sysCfg.flag.energy_resolution, sen);
+    dtostrf((float)(rtcMem.hlw_kWhtotal + (hlw_kWhtoday / 1000)) / 100000, 1, sysCfg.flag.energy_resolution, set);
+    snprintf_P(svalue, ssvalue, PSTR("{\"EnergyReset\":{\"Total\":%s, \"Yesterday\":%s, \"Today\":%s}}"), set, sey, sen);
   }
   else if (!strcmp_P(type,PSTR("HLWPCAL"))) {
     if ((payload > 0) && (payload < 32001)) {
@@ -613,35 +615,39 @@ void hlw_mqttStat(byte option, char* svalue, uint16_t ssvalue)
 /* option 0 = do not show period energy usage
  * option 1 = show period energy usage
  */
-  char stemp0[10];
-  char stemp1[10];
-  char stemp2[10];
-  char stemp3[10];
-  char stemp4[10];
-  char stemp5[10];
-  char speriod[20];
   float pet;
   float ped;
+  float pe;
+  float pw;
   float pu;
   float pi;
   float pc;
-  uint16_t pe;
-  uint16_t pw;
+  char spet[10];
+  char sped[10];
+  char spe[10];
+  char spw[10];
+  char spu[10];
+  char spi[10];
+  char spc[10];
+  char sey[10];
+  char speriod[20];
 
   hlw_readEnergy(option, pet, ped, pe, pw, pu, pi, pc);
-  dtostrf((float)sysCfg.hlw_kWhyesterday / 100000000, 1, sysCfg.flag.energy_resolution, stemp0);
-  dtostrf(ped, 1, sysCfg.flag.energy_resolution, stemp1);
-  dtostrf(pc, 1, 2, stemp2);
-  dtostrf(pi, 1, 3, stemp3);
-  dtostrf(pet, 1, sysCfg.flag.energy_resolution, stemp4);
-  dtostrf(pu, 1, sysCfg.flag.voltage_resolution, stemp5);
-  snprintf_P(speriod, sizeof(speriod), PSTR(", \"Period\":%d"), pe);
-  snprintf_P(svalue, ssvalue, PSTR("%s\"Total\":%s, \"Yesterday\":%s, \"Today\":%s%s, \"Power\":%d, \"Factor\":%s, \"Voltage\":%s, \"Current\":%s}"),
-    svalue, stemp4, stemp0, stemp1, (option) ? speriod : "", pw, stemp2, stemp5, stemp3);
+  dtostrf(pet, 1, sysCfg.flag.energy_resolution, spet);
+  dtostrf(ped, 1, sysCfg.flag.energy_resolution, sped);
+  dtostrf(pe, 1, sysCfg.flag.wattage_resolution, spe);
+  dtostrf(pw, 1, sysCfg.flag.wattage_resolution, spw);
+  dtostrf(pu, 1, sysCfg.flag.voltage_resolution, spu);
+  dtostrf(pi, 1, 3, spi);
+  dtostrf(pc, 1, 2, spc);
+  dtostrf((float)sysCfg.hlw_kWhyesterday / 100000000, 1, sysCfg.flag.energy_resolution, sey);
+  snprintf_P(speriod, sizeof(speriod), PSTR(", \"Period\":%s"), spe);
+  snprintf_P(svalue, ssvalue, PSTR("%s\"Total\":%s, \"Yesterday\":%s, \"Today\":%s%s, \"Power\":%s, \"Factor\":%s, \"Voltage\":%s, \"Current\":%s}"),
+    svalue, spet, sey, sped, (option) ? speriod : "", spw, spc, spu, spi);
 #ifdef USE_DOMOTICZ
   if (option) {  // Only send if telemetry
-    dtostrf(pet * 1000, 1, 1, stemp1);
-    domoticz_sensor4(pw, stemp1);
+    dtostrf(pet * 1000, 1, 1, spet);
+    domoticz_sensor4((uint16_t)pw, spet);
   }
 #endif  // USE_DOMOTICZ
 }
@@ -670,7 +676,7 @@ void hlw_mqttStatus(char* svalue, uint16_t ssvalue)
 const char HTTP_ENERGY_SNS[] PROGMEM =
   "<tr><th>Voltage</th><td>%s V</td></tr>"
   "<tr><th>Current</th><td>%s A</td></tr>"
-  "<tr><th>Power</th><td>%d W</td></tr>"
+  "<tr><th>Power</th><td>%s W</td></tr>"
   "<tr><th>Power Factor</th><td>%s</td></tr>"
   "<tr><th>Energy Today</th><td>%s kWh</td></tr>"
   "<tr><th>Energy Yesterday</th><td>%s kWh</td></tr>"
@@ -678,32 +684,32 @@ const char HTTP_ENERGY_SNS[] PROGMEM =
 
 String hlw_webPresent()
 {
-  String page = "";
-  char stemp[10];
-  char stemp2[10];
-  char stemp3[10];
-  char stemp4[10];
-  char stemp5[10];
-  char stemp6[10];
-  char sensor[320];
   float pet;
   float ped;
+  float pe;
+  float pw;
   float pu;
   float pi;
   float pc;
-  uint16_t pe;
-  uint16_t pw;
+  char spet[10];
+  char sped[10];
+  char spw[10];
+  char spu[10];
+  char spi[10];
+  char spc[10];
+  char sey[10];
+  char sensor[320];
 
   hlw_readEnergy(0, pet, ped, pe, pw, pu, pi, pc);
-  dtostrf(pu, 1, sysCfg.flag.voltage_resolution, stemp6);
-  dtostrf(pi, 1, 3, stemp);
-  dtostrf(pc, 1, 2, stemp2);
-  dtostrf(ped, 1, sysCfg.flag.energy_resolution, stemp3);
-  dtostrf((float)sysCfg.hlw_kWhyesterday / 100000000, 1, sysCfg.flag.energy_resolution, stemp4);
-  dtostrf(pet, 1, sysCfg.flag.energy_resolution, stemp5);
-  snprintf_P(sensor, sizeof(sensor), HTTP_ENERGY_SNS, stemp6, stemp, pw, stemp2, stemp3, stemp4, stemp5);
-  page += sensor;
-  return page;
+  dtostrf(pet, 1, sysCfg.flag.energy_resolution, spet);
+  dtostrf(ped, 1, sysCfg.flag.energy_resolution, sped);
+  dtostrf(pw, 1, sysCfg.flag.wattage_resolution, spw);
+  dtostrf(pu, 1, sysCfg.flag.voltage_resolution, spu);
+  dtostrf(pi, 1, 3, spi);
+  dtostrf(pc, 1, 2, spc);
+  dtostrf((float)sysCfg.hlw_kWhyesterday / 100000000, 1, sysCfg.flag.energy_resolution, sey);
+  snprintf_P(sensor, sizeof(sensor), HTTP_ENERGY_SNS, spu, spi, spw, spc, sped, sey, spet);
+  return String(sensor);
 }
 #endif  // USE_WEBSERVER
 

@@ -1,4 +1,7 @@
-/* 5.6.1b
+/* 5.6.1c
+ * Add more precision to Sonoff Pow period and power results using command WattRes 0|1 (#759)
+ *
+ * 5.6.1b
  * Add Supla Espablo support (#755)
  *
  * 5.6.1a

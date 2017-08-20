@@ -25,7 +25,7 @@
     - Select IDE Tools - Flash Size: "1M (no SPIFFS)"
   ====================================================*/
 
-#define VERSION                0x05060102  // 5.6.1b
+#define VERSION                0x05060103  // 5.6.1c
 
 enum log_t   {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG_MORE, LOG_LEVEL_ALL};
 enum week_t  {Last, First, Second, Third, Fourth};
@@ -1151,6 +1151,12 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
         sysCfg.flag.pressure_resolution = payload;
       }
       snprintf_P(svalue, sizeof(svalue), PSTR("{\"PressRes\":%d}"), sysCfg.flag.pressure_resolution);
+    }
+    else if (!strcmp_P(type,PSTR("WATTRES"))) {
+      if ((payload >= 0) && (payload <= 1)) {
+        sysCfg.flag.wattage_resolution = payload;
+      }
+      snprintf_P(svalue, sizeof(svalue), PSTR("{\"WattRes\":%d}"), sysCfg.flag.wattage_resolution);
     }
     else if (!strcmp_P(type,PSTR("VOLTRES"))) {
       if ((payload >= 0) && (payload <= 1)) {
