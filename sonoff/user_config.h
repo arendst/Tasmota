@@ -174,6 +174,8 @@
 //#define USE_CS5460A                              // Enable CS5460A wattmeter (+5k code, +0.2k mem) - Disable by //
 //#define USE_PZEM004T                              // Enable PZEM004T wattmeter (+6k code, +0.4k mem) - Disable by //
 
+#define USE_CTY835                               // Enable Candy CTY 835 monitor (+2.6k code, +0.4k mem) - Disable by //
+
 /*********************************************************************************************\
  * Compile a minimal version if upgrade memory gets tight ONLY TO BE USED FOR UPGRADE STEP 1!
  *   To be used as step 1 during upgrade. 
