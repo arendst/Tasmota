@@ -70,6 +70,9 @@ const char HTTP_HEAD[] PROGMEM =
   "function lb(p){"
     "la('?d='+p);"
   "}"
+  "function lc(p){"
+    "la('?t='+p);"
+  "}"
   "</script>"
 
   "<style>"
@@ -81,12 +84,13 @@ const char HTTP_HEAD[] PROGMEM =
   "td{padding:0px;}"
   "button{border:0;border-radius:0.3rem;background-color:#1fa3ec;color:#fff;line-height:2.4rem;font-size:1.2rem;width:100%;-webkit-transition-duration:0.4s;transition-duration:0.4s;}"
   "button:hover{background-color:#006cba;}"
-  ".q{float:right;width:200px;text-align:right;}"
+  ".p{float:left;text-align:left;}"
+  ".q{float:right;text-align:right;}"
   "</style>"
 
   "</head>"
   "<body>"
-  "<div style='text-align:left;display:inline-block;min-width:320px;'>"
+  "<div style='text-align:left;display:inline-block;min-width:340px;'>"
   "<div style='text-align:center;'><h3>{ha} Module</h3><h2>{h}</h2></div>";
 const char HTTP_SCRIPT_CONSOL[] PROGMEM =
   "var sn=0;"                    // Scroll position
@@ -415,7 +419,7 @@ void handleRoot()
   if (HTTP_MANAGER == _httpflag) {
     handleWifi0();
   } else {
-    char stemp[10], line[100];
+    char stemp[10], line[160];
     String page = FPSTR(HTTP_HEAD);
     page.replace(F("{v}"), F("Main menu"));
     page.replace(F("<body>"), F("<body onload='la()'>"));
@@ -423,7 +427,12 @@ void handleRoot()
     page += F("<div id='l1' name='l1'></div>");
     if (Maxdevice) {
       if (sfl_flg) {
-        snprintf_P(line, sizeof(line), PSTR("<input type='range' min='1' max='100' value='%d' onchange='lb(value)'>"),
+        if ((2 == sfl_flg) || (5 == sfl_flg)) {
+          snprintf_P(line, sizeof(line), PSTR("<div><span class='p'>Cold</span><span class='q'>Warm</span></div><div><input type='range' min='153' max='500' value='%d' onchange='lc(value)'></div>"),
+            sl_getColorTemp());
+          page += line;
+        }
+        snprintf_P(line, sizeof(line), PSTR("<div><span class='p'>Dark</span><span class='q'>Bright</span></div><div><input type='range' min='1' max='100' value='%d' onchange='lb(value)'></div>"),
           sysCfg.led_dimmer[0]);
         page += line;
       }
@@ -434,6 +443,23 @@ void handleRoot()
         snprintf_P(line, sizeof(line), PSTR("<td style='width:%d%'><button onclick='la(\"?o=%d\");'>Toggle%s</button></td>"),
           100 / Maxdevice, idx, (Maxdevice > 1) ? stemp : "");
         page += line;
+      }
+      page += F("</tr></table>");
+    }
+    if (SONOFF_BRIDGE == sysCfg.module) {
+      page += FPSTR(HTTP_TABLE100);
+      page += F("<tr>");
+      byte idx = 0;
+      for (byte i = 0; i < 4; i++) {
+        if (idx > 0) {
+          page += F("</tr><tr>");
+        }
+        for (byte j = 0; j < 4; j++) {
+          idx++;
+          snprintf_P(line, sizeof(line), PSTR("<td style='width:25%'><button onclick='la(\"?k=%d\");'>%d</button></td>"),
+            idx, idx);
+          page += line;
+        }
       }
       page += F("</tr></table>");
     }
@@ -448,7 +474,7 @@ void handleRoot()
 
 void handleAjax2()
 {
-  char svalue[16];
+  char svalue[50];
   
   if (strlen(webServer->arg("o").c_str())) {
     do_cmnd_power(atoi(webServer->arg("o").c_str()), 2);
@@ -457,16 +483,32 @@ void handleAjax2()
     snprintf_P(svalue, sizeof(svalue), PSTR("dimmer %s"), webServer->arg("d").c_str());
     do_cmnd(svalue);
   }
+  if (strlen(webServer->arg("t").c_str())) {
+    snprintf_P(svalue, sizeof(svalue), PSTR("ct %s"), webServer->arg("t").c_str());
+    do_cmnd(svalue);
+  }
+  if (strlen(webServer->arg("k").c_str())) {
+    snprintf_P(svalue, sizeof(svalue), PSTR("rfkey%s"), webServer->arg("k").c_str());
+    do_cmnd(svalue);
+  }
   
   String tpage = "";
-  if (SONOFF_SC == sysCfg.module) {
-    tpage += sc_webPresent();
+  tpage += counter_webPresent();
+#ifndef USE_ADC_VCC
+  if (pin[GPIO_ADC0] < 99) {
+    snprintf_P(svalue, sizeof(svalue), PSTR("<tr><th>AnalogInput0</th><td>%d</td></tr>"), getAdc0());
+    tpage += svalue;
   }
+#endif
 #ifdef USE_WATTMETER
   if (wattmtr_flg) {
     tpage += wattmtr_webPresent();
   }
 #endif // USE_WATTMETER
+  if (SONOFF_SC == sysCfg.module) {
+    tpage += sc_webPresent();
+  }
+
 #ifdef USE_DS18B20
   if (pin[GPIO_DSB] < 99) {
     tpage += dsb_webPresent();
@@ -600,7 +642,9 @@ void handleModule()
   if (httpUser()) {
     return;
   }
-  char stemp[20], line[128];
+  char stemp[20];
+  char line[128];
+  uint8_t midx;
   
   addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Module config"));
 
@@ -611,10 +655,11 @@ void handleModule()
   snprintf_P(stemp, sizeof(stemp), modules[MODULE].name);
   page.replace(F("{mt}"), stemp);
 
-  for (byte i = 0; i < MAXMODULE; i++) {  
-    snprintf_P(stemp, sizeof(stemp), modules[i].name);
+  for (byte i = 0; i < MAXMODULE; i++) {
+    midx = pgm_read_byte(nicelist + i);
+    snprintf_P(stemp, sizeof(stemp), modules[midx].name);
     snprintf_P(line, sizeof(line), PSTR("<option%s value='%d'>%02d %s</option>"),
-      (i == sysCfg.module) ? " selected" : "", i, i +1, stemp);
+      (midx == sysCfg.module) ? " selected" : "", midx, midx +1, stemp);
     page += line;
   }
   page += F("</select></br>");
@@ -1228,7 +1273,7 @@ void handleUploadLoop()
           _uploaderror = 4;
           return;
         }
-        upload.buf[2] = 3; // Force DOUT - ESP8285
+        upload.buf[2] = 3;  // Force DOUT - ESP8285
       }
     }
     if (_uploadfiletype) { // config

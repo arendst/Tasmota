@@ -35,14 +35,14 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t mqtt_offline : 1;             // bit 10
     uint32_t button_swap : 1;              // bit 11 (v5.1.6)
     uint32_t stop_flash_rotate : 1;        // bit 12 (v5.2.0)
-    uint32_t spare13 : 1;
-    uint32_t spare14 : 1;
+    uint32_t button_single : 1;            // bit 13 (v5.4.0)
+    uint32_t interlock : 1;                // bit 14 (v5.6.0)
     uint32_t spare15 : 1;
     uint32_t spare16 : 1;
     uint32_t spare17 : 1;
     uint32_t spare18 : 1;
     uint32_t spare19 : 1;
-    uint32_t spare20 : 1;
+    uint32_t voltage_resolution : 1;
     uint32_t emulation : 2;
     uint32_t energy_resolution : 3;
     uint32_t pressure_resolution : 2;
@@ -202,6 +202,9 @@ struct SYSCFG {
   unsigned long pCounter[MAX_COUNTERS];
   uint16_t      pCounterType;
   uint16_t      pCounterDebounce;
+
+  // 5.4.1
+  uint8_t       sfb_code[17][9];
 
   // Next version
   unsigned long pzem_Whstart;

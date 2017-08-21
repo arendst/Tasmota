@@ -517,18 +517,17 @@ void pzem_mqttStat(bool withPeriod, char* svalue, uint16_t ssvalue)
              svalue, sKWHY, sKWHT, (withPeriod) ? sPeriod : "", sTruePower, sVoltage, sCurrent);
 }
 
-void wattmtr_mqttPresent()
+void wattmtr_mqttPresent(byte option)
 {
-  // {"Time":"2017-03-04T13:37:24", "Yesterday":0.013, "Today":0.000, "Period":0, "Power":0, "Factor":0.00, "Voltage":0, "Current":0.000}
+/* option 0 = do not show period energy usage
+ * option 1 = show period energy usage
+ */
+// {"Time":"2017-03-04T13:37:24", "Total":0.013, "Yesterday":0.013, "Today":0.000, "Period":0, "Power":0, "Factor":0.00, "Voltage":0, "Current":0.000}
   char svalue[200];  // was MESSZ
 
   snprintf_P(svalue, sizeof(svalue), PSTR("{\"Time\":\"%s\", "), getDateTime().c_str());
-  pzem_mqttStat(true, svalue, sizeof(svalue));
-
-  //  snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/ENERGY"), sysCfg.mqtt_prefix[2], sysCfg.mqtt_topic);
-  //  mqtt_publish(stopic, svalue);
-
-  mqtt_publish_topic_P(1, PSTR("ENERGY"), svalue);
+  pzem_mqttStat(option, svalue, sizeof(svalue));
+  mqtt_publish_topic_P(2, PSTR("ENERGY"), svalue);
 }
 
 void wattmtr_mqttStatus(char* svalue, uint16_t ssvalue)
