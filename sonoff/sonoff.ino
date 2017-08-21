@@ -1085,6 +1085,11 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
     else if (sfl_flg && sl_command(type, index, dataBufUc, data_len, payload, svalue, sizeof(svalue))) {
       // Serviced
     }
+#ifdef USE_CTY835
+    else if ((WM_CANDY_CTY_835 == sysCfg.module) && ldy_command(type, index, dataBufUc, data_len, payload, svalue, sizeof(svalue))) {
+      // Serviced
+    }
+#endif  // USE_CTY835
     else if (!strcmp_P(type,PSTR("SAVEDATA"))) {
       if ((payload >= 0) && (payload <= 3600)) {
         sysCfg.savedata = payload;
@@ -2046,6 +2051,10 @@ void every_second()
         mqtt_publish_topic_P(2, PSTR("SENSOR"), svalue, sysCfg.flag.mqtt_sensor_retain);
       }
 
+#ifdef USE_CTY835
+  if (WM_CANDY_CTY_835 == sysCfg.module) ldy_mqttPresent();
+#endif // USE_CTY835
+
 #ifdef USE_WATTMETER
       if (wattmtr_flg) {
         wattmtr_mqttPresent(1);
@@ -2784,6 +2793,13 @@ void GPIO_init()
   if ((pin[GPIO_HLW_SEL] < 99) && (pin[GPIO_HLW_CF1] < 99) && (pin[GPIO_HLW_CF] < 99))
     addLog_P(LOG_LEVEL_ERROR, PSTR("HLW8012: ERROR - No HLW8012 support present. Please reflash with the identifier USE_HLW8012"));
 #endif // USE_HLW8012
+
+#ifdef USE_CTY835
+  if (WM_CANDY_CTY_835 == sysCfg.module) {
+    Maxdevice = 0;
+    ldy_init();
+  }
+#endif // USE_CTY835
 
 #ifdef USE_DHT
   if (dht_flg) {
