@@ -162,7 +162,7 @@
   #define USE_HTU                                // Add I2C code for HTU21/SI7013/SI7020/SI7021 sensor
   #define USE_SHT                                // Add I2C emulating code for SHT1X sensor
 
-//#define USE_IR_REMOTE                            // Send IR remote commands using library IRremoteESP8266 and ArduinoJson (+3k code, 0.3k mem)
+#define USE_IR_REMOTE                            // Send IR remote commands using library IRremoteESP8266 and ArduinoJson (+3k code, 0.3k mem)
 //  #define USE_IR_HVAC                            // Support for HVAC system using IR (+2k code)
 
 #define USE_WS2812                               // WS2812 Led string using library NeoPixelBus (+11k code, +1k mem) - Disable by //
@@ -170,9 +170,9 @@
 //  #define USE_WS2812_DMA                         // DMA supports only GPIO03 (= Serial RXD) (+1k mem)
                                                  //   When USE_WS2812_DMA is enabled expect Exceptions on Pow
 
-//#define USE_HLW8012                              // Enable HLW8012 wattmeter (+8k code, +0.4k mem) - Disable by //
+#define USE_HLW8012                              // Enable HLW8012 wattmeter (+8k code, +0.4k mem) - Disable by //
 //#define USE_CS5460A                              // Enable CS5460A wattmeter (+5k code, +0.2k mem) - Disable by //
-#define USE_PZEM004T                              // Enable PZEM004T wattmeter (+6k code, +0.4k mem) - Disable by //
+//#define USE_PZEM004T                              // Enable PZEM004T wattmeter (+6k code, +0.4k mem) - Disable by //
 
 /*********************************************************************************************\
  * Compile a minimal version if upgrade memory gets tight ONLY TO BE USED FOR UPGRADE STEP 1!
