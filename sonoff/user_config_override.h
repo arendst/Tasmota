@@ -141,11 +141,11 @@
 #undef USE_HTU                                // Add I2C code for HTU21/SI7013/SI7020/SI7021 sensor
 #undef USE_SHT
 
-//#define USE_I2C
+#define USE_I2C
                              // I2C using library wire (+10k code, 0.2k mem) - Disable by //
 //#define USE_PCF8574
                           // Add I2C code for PCF8574 8-channel DIO I/O chip.
-//#define USE_ADS1115
+#define USE_ADS1115
 
 // -- Application ---------------------------------
 #undef APP_TIMEZONE

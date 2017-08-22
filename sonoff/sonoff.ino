@@ -182,9 +182,6 @@ enum opt_t   {P_HOLD_TIME, P_MAX_POWER_RETRY, P_MAX_PARAM8};   // Index in sysCf
 #endif  // USE_DISCOVERY
 #ifdef USE_I2C
   #include <Wire.h>                         // I2C support library
-  #ifdef USE_ADS1115                        // ADS115 A/D converter
-    #include <Adafruit_ADS1015.h>
-  #endif
 #endif  // USE_I2C
 #ifdef USE_SPI
   #include <SPI.h>                          // SPI support, TFT
@@ -352,7 +349,7 @@ void getTopic_P(char *stopic, byte prefix, char *topic, const char* subtopic)
 {
   char romram[CMDSZ];
   String fulltopic;
-  
+
   snprintf_P(romram, sizeof(romram), subtopic);
   if (fallbacktopic) {
     fulltopic = FPSTR(PREFIXES[prefix]);
@@ -502,7 +499,7 @@ void mqtt_publish_topic_P(uint8_t prefix, const char* subtopic, const char* data
  * prefix 6 = tele using subtopic or RESULT
  */
   char romram[16];
-  char stopic[TOPSZ];  
+  char stopic[TOPSZ];
 
   snprintf_P(romram, sizeof(romram), ((prefix > 3) && !sysCfg.flag.mqtt_response) ? PSTR("RESULT") : subtopic);
   prefix &= 3;
@@ -531,7 +528,7 @@ void mqtt_publishPowerState(byte device)
   getTopic_P(stopic, 1, sysCfg.mqtt_topic, (sysCfg.flag.mqtt_response)?"POWER":"RESULT");
   snprintf_P(svalue, sizeof(svalue), PSTR("{\"%s\":\"%s\"}"), scommand, getStateText(bitRead(power, device -1)));
   mqtt_publish(stopic, svalue);
-  
+
   getTopic_P(stopic, 1, sysCfg.mqtt_topic, scommand);
   snprintf_P(svalue, sizeof(svalue), PSTR("%s"), getStateText(bitRead(power, device -1)));
   mqtt_publish(stopic, svalue, sysCfg.flag.mqtt_power_retain);
@@ -561,7 +558,7 @@ void mqtt_connected()
     // Satisfy iobroker (#299)
     svalue[0] = '\0';
     mqtt_publish_topic_P(0, PSTR("POWER"), svalue);
-    
+
     getTopic_P(stopic, 0, sysCfg.mqtt_topic, PSTR("#"));
     mqttClient.subscribe(stopic);
     mqttClient.loop();  // Solve LmacRxBlk:1 messages
@@ -675,7 +672,7 @@ boolean mqtt_command(boolean grpflg, char *type, uint16_t index, char *dataBuf, 
   char stemp2[10];
   char scommand[CMDSZ];
   uint16_t i;
-  
+
   if (!strcmp_P(type,PSTR("MQTTHOST"))) {
     if ((data_len > 0) && (data_len < sizeof(sysCfg.mqtt_host))) {
       strlcpy(sysCfg.mqtt_host, (1 == payload) ? MQTT_HOST : dataBuf, sizeof(sysCfg.mqtt_host));
@@ -878,7 +875,7 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
     str = strstr(topic,sysCfg.mqtt_prefix[0]);
     if ((str == topic) && mqtt_cmnd_publish) {
       if (mqtt_cmnd_publish > 8) {
-        mqtt_cmnd_publish -= 8; 
+        mqtt_cmnd_publish -= 8;
       } else {
         mqtt_cmnd_publish = 0;
       }
@@ -1622,7 +1619,7 @@ boolean send_button_power(byte key, byte device, byte state)
     snprintf_P(stemp1, sizeof(stemp1), PSTR("%d"), device);
     snprintf_P(scommand, sizeof(scommand), PSTR("POWER%s"), (key || (Maxdevice > 1)) ? stemp1 : "");
     getTopic_P(stopic, 0, key_topic, scommand);
-  
+
     if (9 == state) {
       svalue[0] = '\0';
     } else {
@@ -1813,7 +1810,7 @@ void publish_status(uint8_t payload)
 
   if (hlw_flg) {
     if ((0 == payload) || (8 == payload)) {
-      hlw_mqttStatus(svalue, sizeof(svalue));      
+      hlw_mqttStatus(svalue, sizeof(svalue));
       mqtt_publish_topic_P(option, PSTR("STATUS8"), svalue);
     }
 
@@ -1838,18 +1835,18 @@ void publish_status(uint8_t payload)
     snprintf_P(svalue, sizeof(svalue), PSTR("%s}"), svalue);
     mqtt_publish_topic_P(option, PSTR("STATUS11"), svalue);
   }
- 
+
 }
 
 void state_mqttPresent(char* svalue, uint16_t ssvalue)
 {
   char stemp1[8];
-  
+
   snprintf_P(svalue, ssvalue, PSTR("%s{\"Time\":\"%s\", \"Uptime\":%d"), svalue, getDateTime().c_str(), uptime);
 #ifdef USE_ADC_VCC
   dtostrf((double)ESP.getVcc()/1000, 1, 3, stemp1);
   snprintf_P(svalue, ssvalue, PSTR("%s, \"Vcc\":%s"), svalue, stemp1);
-#endif        
+#endif
   for (byte i = 0; i < Maxdevice; i++) {
     if (1 == Maxdevice) {  // Legacy
       snprintf_P(svalue, ssvalue, PSTR("%s, \"POWER\":"), svalue);
@@ -2136,7 +2133,7 @@ void button_handler()
           addLog(LOG_LEVEL_DEBUG, log);
           blinks = 201;
         }
-    
+
         if (NOT_PRESSED == button) {
           holdbutton[i] = 0;
         } else {
@@ -2218,7 +2215,7 @@ void switch_handler()
           send_button_power(1, i +1, 3);         // Execute command via MQTT
         }
       }
-      
+
       button = digitalRead(pin[GPIO_SWT1 +i]);
       if (button != lastwallswitch[i]) {
         switchflag = 3;
@@ -2261,13 +2258,13 @@ void switch_handler()
           }
           break;
         }
-        
+
         if (switchflag < 3) {
           if (!send_button_power(1, i +1, switchflag)) {  // Execute command via MQTT
             do_cmnd_power(i +1, switchflag);              // Execute command internally (if i < Maxdevice)
           }
         }
-        
+
         lastwallswitch[i] = button;
       }
     }
@@ -2305,7 +2302,7 @@ void stateloop()
     if (mqtt_cmnd_publish) {
       mqtt_cmnd_publish--;  // Clean up
     }
-  
+
     if (latching_relay_pulse) {
       latching_relay_pulse--;
       if (!latching_relay_pulse) {
@@ -2622,7 +2619,7 @@ void GPIO_init()
 
 //  snprintf_P(log, sizeof(log), PSTR("DBG: gpio pin %d, mpin %d"), i, mpin);
 //  addLog(LOG_LEVEL_DEBUG, log);
-    
+
     if (mpin) {
       if ((mpin >= GPIO_REL1_INV) && (mpin <= GPIO_REL4_INV)) {
         rel_inverted[mpin - GPIO_REL1_INV] = 1;
@@ -2632,7 +2629,7 @@ void GPIO_init()
         led_inverted[mpin - GPIO_LED1_INV] = 1;
         mpin -= 4;
       }
-#ifdef USE_DHT      
+#ifdef USE_DHT
       else if ((mpin >= GPIO_DHT11) && (mpin <= GPIO_DHT22)) {
         if (dht_setup(i, mpin)) {
           dht_flg = 1;
@@ -2641,7 +2638,7 @@ void GPIO_init()
           mpin = 0;
         }
       }
-#endif  // USE_DHT      
+#endif  // USE_DHT
     }
     if (mpin) {
       pin[mpin] = i;
@@ -2714,7 +2711,7 @@ void GPIO_init()
       lastwallswitch[i] = digitalRead(pin[GPIO_SWT1 +i]);  // set global now so doesn't change the saved power state on first switch check
     }
   }
-  
+
   if (sfl_flg) {                // Sonoff B1, AiLight, Sonoff Led or BN-SZ01
     if (sfl_flg < 4) {
       pwm_idxoffset = sfl_flg;  // 1 for BN-SZ01, 2 for Sonoff Led
@@ -2888,7 +2885,7 @@ void setup()
 void loop()
 {
   osw_loop();
-  
+
 #ifdef USE_WEBSERVER
   pollDnsWeb();
 #endif  // USE_WEBSERVER
