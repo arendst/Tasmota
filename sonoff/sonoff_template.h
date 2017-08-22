@@ -208,7 +208,10 @@ const uint8_t nicelist[MAXMODULE] PROGMEM = {
   H801,
   HUAFAN_SS,
   AILIGHT,
-  WEMOS
+  WEMOS,
+  CS5460A,
+  PZEM004T,
+  WM_CANDY_CTY_835,
 };
 
 // Default module settings
