@@ -90,6 +90,15 @@ enum emul_t  {EMUL_NONE, EMUL_WEMO, EMUL_HUE, EMUL_MAX};
 #ifdef DEBUG_THEO
 #undef DEBUG_THEO                           // Disable debug code
 #endif
+#ifdef USE_HLW8012
+#undef USE_HLW8012                          // Disable HLW8012 sensor
+#endif
+#ifdef USE_CS5460A
+#undef USE_CS5460A                          // Disable CS5460A sensor
+#endif
+#ifdef USE_PZEM004T
+#undef USE_PZEM004T                         // Disable PZEM004T sensor
+#endif
 #endif  // BE_MINIMAL
 
 #ifndef SWITCH_MODE
@@ -148,6 +157,10 @@ enum emul_t  {EMUL_NONE, EMUL_WEMO, EMUL_HUE, EMUL_MAX};
 #endif
 #define MAX_BACKLOG            16           // Max number of commands in backlog (chk blogidx and blogptr code)
 #define MIN_BACKLOG_DELAY      2            // Minimal backlog delay in 0.1 seconds
+
+#if defined(USE_HLW8012) || defined(USE_CS5460A) || defined(USE_PZEM004T)
+#define USE_WATTMETER
+#endif
 
 #define APP_BAUDRATE           115200       // Default serial baudrate
 #define MAX_STATUS             11           // Max number of status lines
@@ -301,7 +314,7 @@ uint8_t rel_inverted[4] = { 0 };      // Relay inverted flag (1 = (0 = On, 1 = O
 uint8_t led_inverted[4] = { 0 };      // LED inverted flag (1 = (0 = On, 1 = Off))
 uint8_t swt_flg = 0;                  // Any external switch configured
 uint8_t dht_flg = 0;                  // DHT configured
-uint8_t hlw_flg = 0;                  // Power monitor configured
+uint8_t wattmtr_flg = 0;              // Power monitor configured
 uint8_t i2c_flg = 0;                  // I2C configured
 uint8_t spi_flg = 0;                  // SPI configured
 uint8_t pwm_flg = 0;                  // PWM configured
@@ -441,7 +454,10 @@ void setRelay(uint8_t rpower)
       rpower >>= 1;
     }
   }
-  hlw_setPowerSteadyCounter(2);
+  
+#ifdef USE_WATTMETER
+  wattmtr_setPowerSteadyCounter(2);
+#endif // USE_WATTMETER
 }
 
 void setLed(uint8_t state)
@@ -1069,6 +1085,11 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
     else if (sfl_flg && sl_command(type, index, dataBufUc, data_len, payload, svalue, sizeof(svalue))) {
       // Serviced
     }
+#ifdef USE_CTY835
+    else if ((WM_CANDY_CTY_835 == sysCfg.module) && ldy_command(type, index, dataBufUc, data_len, payload, svalue, sizeof(svalue))) {
+      // Serviced
+    }
+#endif  // USE_CTY835
     else if (!strcmp_P(type,PSTR("SAVEDATA"))) {
       if ((payload >= 0) && (payload <= 3600)) {
         sysCfg.savedata = payload;
@@ -1553,9 +1574,11 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
     else if (sysCfg.flag.mqtt_enabled && mqtt_command(grpflg, type, index, dataBuf, data_len, payload, svalue, sizeof(svalue))) {
       // Serviced
     }
-    else if (hlw_flg && hlw_command(type, index, dataBuf, data_len, payload, svalue, sizeof(svalue))) {
+#ifdef USE_WATTMETER
+    else if (wattmtr_flg && wattmtr_command(type, index, dataBuf, data_len, payload, svalue, sizeof(svalue))) {
       // Serviced
     }
+#endif // USE_WATTMETER
     else if ((SONOFF_BRIDGE == sysCfg.module) && sb_command(type, index, dataBuf, data_len, payload, svalue, sizeof(svalue))) {
       // Serviced
     }
@@ -1770,7 +1793,7 @@ void publish_status(uint8_t payload)
   if ((!sysCfg.flag.mqtt_enabled) && (6 == payload)) {
     payload = 99;
   }
-  if ((!hlw_flg) && ((8 == payload) || (9 == payload))) {
+  if ((!wattmtr_flg) && ((8 == payload) || (9 == payload))) {
     payload = 99;
   }
 
@@ -1823,18 +1846,20 @@ void publish_status(uint8_t payload)
     mqtt_publish_topic_P(option, PSTR("STATUS7"), svalue);
   }
 
-  if (hlw_flg) {
+#ifdef USE_WATTMETER
+  if (wattmtr_flg) {
     if ((0 == payload) || (8 == payload)) {
-      hlw_mqttStatus(svalue, sizeof(svalue));      
+      wattmtr_mqttStatus(svalue, sizeof(svalue));      
       mqtt_publish_topic_P(option, PSTR("STATUS8"), svalue);
     }
 
     if ((0 == payload) || (9 == payload)) {
       snprintf_P(svalue, sizeof(svalue), PSTR("{\"StatusPTH\":{\"PowerLow\":%d, \"PowerHigh\":%d, \"VoltageLow\":%d, \"VoltageHigh\":%d, \"CurrentLow\":%d, \"CurrentHigh\":%d}}"),
-        sysCfg.hlw_pmin, sysCfg.hlw_pmax, sysCfg.hlw_umin, sysCfg.hlw_umax, sysCfg.hlw_imin, sysCfg.hlw_imax);
+        sysCfg.wattmtr_pmin, sysCfg.wattmtr_pmax, sysCfg.wattmtr_umin, sysCfg.wattmtr_umax, sysCfg.wattmtr_imin, sysCfg.wattmtr_imax);
       mqtt_publish_topic_P(option, PSTR("STATUS9"), svalue);
     }
   }
+#endif // USE_WATTMETER
 
   if ((0 == payload) || (10 == payload)) {
     uint8_t djson = 0;
@@ -2026,15 +2051,21 @@ void every_second()
         mqtt_publish_topic_P(2, PSTR("SENSOR"), svalue, sysCfg.flag.mqtt_sensor_retain);
       }
 
-      if (hlw_flg) {
-        hlw_mqttPresent(1);
+#ifdef USE_CTY835
+  if (WM_CANDY_CTY_835 == sysCfg.module) ldy_mqttPresent();
+#endif // USE_CTY835
+
+#ifdef USE_WATTMETER
+      if (wattmtr_flg) {
+        wattmtr_mqttPresent(1);
       }
+#endif // USE_WATTMETER
     }
   }
 
-  if (hlw_flg) {
-    hlw_margin_chk();
-  }
+#ifdef USE_WATTMETER
+  if (wattmtr_flg) wattmtr_margin_chk();
+#endif // USE_WATTMETER
 
   if ((2 == rtcTime.Minute) && uptime_flg) {
     uptime_flg = false;
@@ -2466,9 +2497,9 @@ void stateloop()
       if (sysCfg.flag.savestate) {
         sysCfg.power = power;
       }
-      if (hlw_flg) {
-        hlw_savestate();
-      }
+#ifdef USE_WATTMETER
+      if (wattmtr_flg) wattmtr_savestate();
+#endif // USE_WATTMETER
       counter_savestate();
       CFG_Save(0);
       restartflag--;
@@ -2733,10 +2764,42 @@ void GPIO_init()
 
   counter_init();
 
-  hlw_flg = ((pin[GPIO_HLW_SEL] < 99) && (pin[GPIO_HLW_CF1] < 99) && (pin[GPIO_HLW_CF] < 99));
-  if (hlw_flg) {
+#ifdef USE_CS5460A
+  wattmtr_flg = ((pin[GPIO_CS_CLK] < 99) && (pin[GPIO_CS_SDO] < 99));
+  if (wattmtr_flg) {
+    cs_init();
+  }
+#else
+  if ((pin[GPIO_CS_CLK] < 99) && (pin[GPIO_CS_SDO] < 99))
+    addLog_P(LOG_LEVEL_ERROR, PSTR("CS5460A: ERROR - No CS5460A support present. Please reflash with the identifier USE_CS5460A"));
+#endif // USE_CS5460A
+
+#ifdef USE_PZEM004T
+  wattmtr_flg = ((pin[GPIO_PZEM_RX] < 99) && (pin[GPIO_PZEM_TX] < 99));
+  if (wattmtr_flg) {
+    pzem_init();
+  }
+#else
+  if ((pin[GPIO_PZEM_RX] < 99) && (pin[GPIO_PZEM_TX] < 99))
+    addLog_P(LOG_LEVEL_ERROR, PSTR("PZEM004T: ERROR - No PZEM004T support present. Please reflash with the identifier USE_PZEM004T"));
+#endif // USE_PZEM004T
+
+#ifdef USE_HLW8012
+  wattmtr_flg = ((pin[GPIO_HLW_SEL] < 99) && (pin[GPIO_HLW_CF1] < 99) && (pin[GPIO_HLW_CF] < 99));
+  if (wattmtr_flg) {
     hlw_init();
   }
+#else
+  if ((pin[GPIO_HLW_SEL] < 99) && (pin[GPIO_HLW_CF1] < 99) && (pin[GPIO_HLW_CF] < 99))
+    addLog_P(LOG_LEVEL_ERROR, PSTR("HLW8012: ERROR - No HLW8012 support present. Please reflash with the identifier USE_HLW8012"));
+#endif // USE_HLW8012
+
+#ifdef USE_CTY835
+  if (WM_CANDY_CTY_835 == sysCfg.module) {
+    Maxdevice = 0;
+    ldy_init();
+  }
+#endif // USE_CTY835
 
 #ifdef USE_DHT
   if (dht_flg) {

@@ -62,8 +62,8 @@ void RTC_Load()
     memset(&rtcMem, 0x00, sizeof(RTCMEM));
     rtcMem.valid = RTC_MEM_VALID;
     rtcMem.power = sysCfg.power;
-    rtcMem.hlw_kWhtoday = sysCfg.hlw_kWhtoday;
-    rtcMem.hlw_kWhtotal = sysCfg.hlw_kWhtotal;
+    rtcMem.wattmtr_kWhtoday = sysCfg.wattmtr_kWhtoday;
+    rtcMem.wattmtr_kWhtotal = sysCfg.wattmtr_kWhtotal;
     for (byte i = 0; i < 4; i++) {
       rtcMem.pCounter[i] = sysCfg.pCounter[i];
     }
@@ -433,26 +433,26 @@ void CFG_DefaultSet2()
 //    sysCfg.domoticz_switch_idx[i] = 0;
   }
 
-  sysCfg.hlw_pcal = HLW_PREF_PULSE;
-  sysCfg.hlw_ucal = HLW_UREF_PULSE;
-  sysCfg.hlw_ical = HLW_IREF_PULSE;
-//  sysCfg.hlw_kWhtoday = 0;
-//  sysCfg.hlw_kWhyesterday = 0;
-//  sysCfg.hlw_kWhdoy = 0;
-//  sysCfg.hlw_pmin = 0;
-//  sysCfg.hlw_pmax = 0;
-//  sysCfg.hlw_umin = 0;
-//  sysCfg.hlw_umax = 0;
-//  sysCfg.hlw_imin = 0;
-//  sysCfg.hlw_imax = 0;
-//  sysCfg.hlw_mpl = 0;                              // MaxPowerLimit
-  sysCfg.hlw_mplh = MAX_POWER_HOLD;
-  sysCfg.hlw_mplw = MAX_POWER_WINDOW;
-//  sysCfg.hlw_mspl = 0;                             // MaxSafePowerLimit
-  sysCfg.hlw_msplh = SAFE_POWER_HOLD;
-  sysCfg.hlw_msplw = SAFE_POWER_WINDOW;
-//  sysCfg.hlw_mkwh = 0;                             // MaxEnergy
-//  sysCfg.hlw_mkwhs = 0;                            // MaxEnergyStart
+  sysCfg.wattmtr_pcal = HLW_PREF_PULSE;
+  sysCfg.wattmtr_ucal = HLW_UREF_PULSE;
+  sysCfg.wattmtr_ical = HLW_IREF_PULSE;
+//  sysCfg.wattmtr_kWhtoday = 0;
+//  sysCfg.wattmtr_kWhyesterday = 0;
+//  sysCfg.wattmtr_kWhdoy = 0;
+//  sysCfg.wattmtr_pmin = 0;
+//  sysCfg.wattmtr_pmax = 0;
+//  sysCfg.wattmtr_umin = 0;
+//  sysCfg.wattmtr_umax = 0;
+//  sysCfg.wattmtr_imin = 0;
+//  sysCfg.wattmtr_imax = 0;
+//  sysCfg.wattmtr_mpl = 0;                              // MaxPowerLimit
+  sysCfg.wattmtr_mplh = MAX_POWER_HOLD;
+  sysCfg.wattmtr_mplw = MAX_POWER_WINDOW;
+//  sysCfg.wattmtr_mspl = 0;                             // MaxSafePowerLimit
+  sysCfg.wattmtr_msplh = SAFE_POWER_HOLD;
+  sysCfg.wattmtr_msplw = SAFE_POWER_WINDOW;
+//  sysCfg.wattmtr_mkwh = 0;                             // MaxEnergy
+//  sysCfg.wattmtr_mkwhs = 0;                            // MaxEnergyStart
 
   CFG_DefaultSet_3_2_4();
 
@@ -487,8 +487,8 @@ void CFG_DefaultSet2()
   CFG_DefaultSet_5_0_2();
 
   // 5.0.4
-//  sysCfg.hlw_kWhtotal = 0;
-  rtcMem.hlw_kWhtotal = 0;
+//  sysCfg.wattmtr_kWhtotal = 0;
+  rtcMem.wattmtr_kWhtotal = 0;
 
   // 5.0.5
   strlcpy(sysCfg.mqtt_fulltopic, MQTT_FULLTOPIC, sizeof(sysCfg.mqtt_fulltopic));
@@ -678,8 +678,8 @@ void CFG_Delta()
       sysCfg.savedata = SAVE_DATA;
     }
     if (sysCfg.version < 0x05000400) {
-      sysCfg.hlw_kWhtotal = 0;
-      rtcMem.hlw_kWhtotal = 0;
+      sysCfg.wattmtr_kWhtotal = 0;
+      rtcMem.wattmtr_kWhtotal = 0;
     }
     if (sysCfg.version < 0x05000500) {
       strlcpy(sysCfg.mqtt_fulltopic, MQTT_FULLTOPIC, sizeof(sysCfg.mqtt_fulltopic));

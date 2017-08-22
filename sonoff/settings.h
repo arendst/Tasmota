@@ -103,26 +103,26 @@ struct SYSCFG {
   unsigned long domoticz_relay_idx[4];
   unsigned long domoticz_key_idx[4];
 
-  unsigned long hlw_pcal;
-  unsigned long hlw_ucal;
-  unsigned long hlw_ical;
-  unsigned long hlw_kWhtoday;
-  unsigned long hlw_kWhyesterday;
-  uint16_t      hlw_kWhdoy;
-  uint16_t      hlw_pmin;
-  uint16_t      hlw_pmax;
-  uint16_t      hlw_umin;
-  uint16_t      hlw_umax;
-  uint16_t      hlw_imin;
-  uint16_t      hlw_imax;
-  uint16_t      hlw_mpl;    // MaxPowerLimit
-  uint16_t      hlw_mplh;   // MaxPowerLimitHold
-  uint16_t      hlw_mplw;   // MaxPowerLimitWindow
-  uint16_t      hlw_mspl;   // MaxSafePowerLimit
-  uint16_t      hlw_msplh;  // MaxSafePowerLimitHold
-  uint16_t      hlw_msplw;  // MaxSafePowerLimitWindow
-  uint16_t      hlw_mkwh;   // MaxEnergy
-  uint16_t      hlw_mkwhs;  // MaxEnergyStart
+  unsigned long wattmtr_pcal;
+  unsigned long wattmtr_ucal;
+  unsigned long wattmtr_ical;
+  unsigned long wattmtr_kWhtoday;
+  unsigned long wattmtr_kWhyesterday;
+  uint16_t      wattmtr_kWhdoy;
+  uint16_t      wattmtr_pmin;
+  uint16_t      wattmtr_pmax;
+  uint16_t      wattmtr_umin;
+  uint16_t      wattmtr_umax;
+  uint16_t      wattmtr_imin;
+  uint16_t      wattmtr_imax;
+  uint16_t      wattmtr_mpl;    // MaxPowerLimit
+  uint16_t      wattmtr_mplh;   // MaxPowerLimitHold
+  uint16_t      wattmtr_mplw;   // MaxPowerLimitWindow
+  uint16_t      wattmtr_mspl;   // MaxSafePowerLimit
+  uint16_t      wattmtr_msplh;  // MaxSafePowerLimitHold
+  uint16_t      wattmtr_msplw;  // MaxSafePowerLimitWindow
+  uint16_t      wattmtr_mkwh;   // MaxEnergy
+  uint16_t      wattmtr_mkwhs;  // MaxEnergyStart
 
   // 3.0.6
   uint16_t      mqtt_retry;                // was ex_pulsetime until 4.0.4
@@ -193,7 +193,7 @@ struct SYSCFG {
   uint32_t      ip_address[4];
 
   // 5.0.4
-  unsigned long hlw_kWhtotal;
+  unsigned long wattmtr_kWhtotal;
 
   // 5.0.4a
   char          mqtt_fulltopic[101];
@@ -206,14 +206,16 @@ struct SYSCFG {
   // 5.4.1
   uint8_t       sfb_code[17][9];
 
+  // Next version
+  unsigned long pzem_Whstart;
 } sysCfg;
 
 struct RTCMEM {
   uint16_t      valid;
   byte          osw_flag;
   uint8_t       power;
-  unsigned long hlw_kWhtoday;
-  unsigned long hlw_kWhtotal;
+  unsigned long wattmtr_kWhtoday;
+  unsigned long wattmtr_kWhtotal;
   unsigned long pCounter[MAX_COUNTERS];
 } rtcMem;
 

@@ -119,6 +119,10 @@ enum fpins_t {
   GPIO_ADC0,           // ADC
   GPIO_DI,             // my92x1 PWM input
   GPIO_DCKI,           // my92x1 CLK input
+  GPIO_CS_CLK,         // CS5460A CLK clock (Power meter)
+  GPIO_CS_SDO,         // CS5460A SDO data output (Power meter)
+  GPIO_PZEM_RX,        // PZEM004T RX (Power meter)
+  GPIO_PZEM_TX,        // PZEM004T TX (Power meter)
   GPIO_USER,           // User configurable
   GPIO_MAX };
 
@@ -156,6 +160,9 @@ enum module_t {
   SONOFF_T11,
   SONOFF_T12,
   SONOFF_T13,
+  CS5460A,
+  PZEM004T,
+  WM_CANDY_CTY_835,
   MAXMODULE };
 
 /********************************************************************************************/
@@ -201,7 +208,10 @@ const uint8_t nicelist[MAXMODULE] PROGMEM = {
   H801,
   HUAFAN_SS,
   AILIGHT,
-  WEMOS
+  WEMOS,
+  CS5460A,
+  PZEM004T,
+  WM_CANDY_CTY_835,
 };
 
 // Default module settings
@@ -602,6 +612,48 @@ const mytmplt modules[MAXMODULE] PROGMEM = {
      GPIO_REL1,        // GPIO12 Blue Led and Relay 1 (0 = Off, 1 = On)
      GPIO_LED1_INV,    // GPIO13 Blue Led (0 = On, 1 = Off)
      0, 0, 0, 0
+  },
+  { "CS5460A",         // Board with CS5460A (ESP8266)
+     GPIO_USER,        // GPIO00 E-FW Button
+     GPIO_USER,        // GPIO01 TX Serial RXD and Optional sensor
+     0,                // GPIO02
+     GPIO_USER,        // GPIO03 RX Serial TXD and Optional sensor
+     GPIO_CS_CLK,      // GPIO04 CS8460A CLK (Clock)
+     GPIO_CS_SDO,      // GPIO05 CS8460A SDO (Data Output)
+     0, 0, 0, 0, 0, 0, // Flash connection
+     GPIO_REL1,        // GPIO12 Relay (0 = Off, 1 = On)
+     GPIO_LED1_INV,    // GPIO13 BLUE LED
+     GPIO_KEY1,        // GPIO14 Button
+     0,                // GPIO15
+     0,                // GPIO16
+     GPIO_ADC0         // ADC0 A0 Analog input
+  },
+  { "PZEM004T",        // Board with PZEM004T (ESP8266)
+     GPIO_USER,        // GPIO00
+     GPIO_USER,        // GPIO01 TX Serial RXD and Optional sensor
+     0,                // GPIO02
+     GPIO_USER,        // GPIO03 RX Serial TXD and Optional sensor
+     GPIO_PZEM_RX,     // GPIO04 PZEM004T RX
+     GPIO_PZEM_TX,     // GPIO05 PZEM004T TX
+     0, 0, 0, 0, 0, 0, // Flash connection
+     GPIO_USER,        // GPIO12
+     GPIO_LED1_INV,    // GPIO13 BLUE LED
+     GPIO_USER,        // GPIO14 Optional sensor
+     0, 0, 0
+  },
+  { "Candy CTY_835",   // Board to control a Candy CTY 835 washing machine (ESP8266)
+     0,                // GPIO00
+     GPIO_USER,        // GPIO01 TX Serial RXD and Optional sensor
+     0,                // GPIO02
+     GPIO_USER,        // GPIO03 RX Serial TXD and Optional sensor
+     0,                // GPIO04 60MIN led sensor
+     0,                // GPIO05 START led sensor
+     0, 0, 0, 0, 0, 0, // Flash connection
+     0,                // GPIO12 30MIN led sensor
+     0,                // GPIO13 15MIN led sensor
+     0,                // GPIO14 Switch servo
+     0,                // GPIO15 STOP led sensor
+     0, 0
   }
 };
 

@@ -23,6 +23,7 @@
  * Based on Source: Shenzhen Heli Technology Co., Ltd
 \*********************************************************************************************/
 
+#ifdef USE_HLW8012
 #define FEATURE_POWER_LIMIT  true
 
 /*********************************************************************************************/
@@ -112,25 +113,25 @@ void hlw_200mS()
     if (hlw_EDcntr) {
       hlw_len = 10000 / hlw_EDcntr;
       hlw_EDcntr = 0;
-      hlw_temp = ((HLW_PREF * sysCfg.hlw_pcal) / hlw_len) / 36;
+      hlw_temp = ((HLW_PREF * sysCfg.wattmtr_pcal) / hlw_len) / 36;
       hlw_kWhtoday += hlw_temp;
-      rtcMem.hlw_kWhtoday = hlw_kWhtoday;
+      rtcMem.wattmtr_kWhtoday = hlw_kWhtoday;
     }
     if (rtcTime.Valid) {
       if (rtc_loctime() == rtc_midnight()) {
-        sysCfg.hlw_kWhyesterday = hlw_kWhtoday;
-        sysCfg.hlw_kWhtotal += (hlw_kWhtoday / 1000);
-        rtcMem.hlw_kWhtotal = sysCfg.hlw_kWhtotal;
+        sysCfg.wattmtr_kWhyesterday = hlw_kWhtoday;
+        sysCfg.wattmtr_kWhtotal += (hlw_kWhtoday / 1000);
+        rtcMem.wattmtr_kWhtotal = sysCfg.wattmtr_kWhtotal;
         hlw_kWhtoday = 0;
-        rtcMem.hlw_kWhtoday = hlw_kWhtoday;
+        rtcMem.wattmtr_kWhtoday = hlw_kWhtoday;
         hlw_mkwh_state = 3;
       }
-      if ((rtcTime.Hour == sysCfg.hlw_mkwhs) && (3 == hlw_mkwh_state)) {
+      if ((rtcTime.Hour == sysCfg.wattmtr_mkwhs) && (3 == hlw_mkwh_state)) {
         hlw_mkwh_state = 0;
       }
-      if (hlw_startup && (rtcTime.DayOfYear == sysCfg.hlw_kWhdoy)) {
-        hlw_kWhtoday = sysCfg.hlw_kWhtoday;
-        rtcMem.hlw_kWhtoday = hlw_kWhtoday;
+      if (hlw_startup && (rtcTime.DayOfYear == sysCfg.wattmtr_kWhdoy)) {
+        hlw_kWhtoday = sysCfg.wattmtr_kWhtoday;
+        rtcMem.wattmtr_kWhtoday = hlw_kWhtoday;
         hlw_startup = 0;
       }
     }
@@ -166,11 +167,11 @@ void hlw_200mS()
   }
 }
 
-void hlw_savestate()
+void wattmtr_savestate()
 {
-  sysCfg.hlw_kWhdoy = (rtcTime.Valid) ? rtcTime.DayOfYear : 0;
-  sysCfg.hlw_kWhtoday = hlw_kWhtoday;
-  sysCfg.hlw_kWhtotal = rtcMem.hlw_kWhtotal;
+  sysCfg.wattmtr_kWhdoy = (rtcTime.Valid) ? rtcTime.DayOfYear : 0;
+  sysCfg.wattmtr_kWhtoday = hlw_kWhtoday;
+  sysCfg.wattmtr_kWhtotal = rtcMem.wattmtr_kWhtotal;
 }
 
 void hlw_readEnergy(byte option, float &et, float &ed, uint16_t &e, uint16_t &w, float &u, float &i, float &c)
@@ -191,7 +192,7 @@ void hlw_readEnergy(byte option, float &et, float &ed, uint16_t &e, uint16_t &w,
 //snprintf_P(log, sizeof(log), PSTR("HLW: CF %d, CF1U %d (%d), CF1I %d (%d)"), hlw_cf_plen, hlw_cf1u_plen, hlw_cf1u_pcntmax, hlw_cf1i_plen, hlw_cf1i_pcntmax);
 //addLog(LOG_LEVEL_DEBUG, log);
 
-  et = (float)(rtcMem.hlw_kWhtotal + (cur_kWhtoday / 1000)) / 100000;
+  et = (float)(rtcMem.wattmtr_kWhtotal + (cur_kWhtoday / 1000)) / 100000;
   ed = 0;
   if (cur_kWhtoday) {
     ed = (float)cur_kWhtoday / 100000000;
@@ -209,24 +210,24 @@ void hlw_readEnergy(byte option, float &et, float &ed, uint16_t &e, uint16_t &w,
       if (hlw_Ecntr) {
         hlw_len = hlw_period * 1000000 / hlw_Ecntr;
         hlw_Ecntr = 0;
-        hlw_temp = ((HLW_PREF * sysCfg.hlw_pcal) / hlw_len) / hlw_interval;
+        hlw_temp = ((HLW_PREF * sysCfg.wattmtr_pcal) / hlw_len) / hlw_interval;
         e = hlw_temp / 10;
       }
     }
   }
   w = 0;
   if (hlw_cf_plen) {
-    hlw_w = (HLW_PREF * sysCfg.hlw_pcal) / hlw_cf_plen;
+    hlw_w = (HLW_PREF * sysCfg.wattmtr_pcal) / hlw_cf_plen;
     w = hlw_w / 10;
   }
   u = 0;
   if (hlw_cf1u_plen && (w || (power &1))) {
-    hlw_u = (HLW_UREF * sysCfg.hlw_ucal) / hlw_cf1u_plen;
+    hlw_u = (HLW_UREF * sysCfg.wattmtr_ucal) / hlw_cf1u_plen;
     u = (float)hlw_u / 10;
   }
   i = 0;
   if (hlw_cf1i_plen && w) {
-    hlw_i = (HLW_IREF * sysCfg.hlw_ical) / hlw_cf1i_plen;
+    hlw_i = (HLW_IREF * sysCfg.wattmtr_ical) / hlw_cf1i_plen;
     i = (float)hlw_i / 1000;
   }
   c = 0;
@@ -241,10 +242,10 @@ void hlw_readEnergy(byte option, float &et, float &ed, uint16_t &e, uint16_t &w,
 
 void hlw_init()
 {
-  if (!sysCfg.hlw_pcal || (4975 == sysCfg.hlw_pcal)) {
-    sysCfg.hlw_pcal = HLW_PREF_PULSE;
-    sysCfg.hlw_ucal = HLW_UREF_PULSE;
-    sysCfg.hlw_ical = HLW_IREF_PULSE;
+  if (!sysCfg.wattmtr_pcal || (4975 == sysCfg.wattmtr_pcal)) {
+    sysCfg.wattmtr_pcal = HLW_PREF_PULSE;
+    sysCfg.wattmtr_ucal = HLW_UREF_PULSE;
+    sysCfg.wattmtr_ical = HLW_IREF_PULSE;
   }
 
   hlw_cf_plen = 0;
@@ -258,7 +259,7 @@ void hlw_init()
 
   hlw_Ecntr = 0;
   hlw_EDcntr = 0;
-  hlw_kWhtoday = (RTC_Valid()) ? rtcMem.hlw_kWhtoday : 0;
+  hlw_kWhtoday = (RTC_Valid()) ? rtcMem.wattmtr_kWhtoday : 0;
 
   hlw_SELflag = 0;  // Voltage;
 
@@ -296,12 +297,12 @@ boolean hlw_margin(byte type, uint16_t margin, uint16_t value, byte &flag, byte 
   return (change != saveflag);
 }
 
-void hlw_setPowerSteadyCounter(byte value)
+void wattmtr_setPowerSteadyCounter(byte value)
 {
-  power_steady_cntr = 2;
+  power_steady_cntr = value;
 }
 
-void hlw_margin_chk()
+void wattmtr_margin_chk()
 {
   char log[LOGSZ];
   char svalue[200];  // was MESSZ
@@ -324,7 +325,7 @@ void hlw_margin_chk()
   }
 
   hlw_readEnergy(0, pet, ped, pe, pw, pu, pi, pc);
-  if (power && (sysCfg.hlw_pmin || sysCfg.hlw_pmax || sysCfg.hlw_umin || sysCfg.hlw_umax || sysCfg.hlw_imin || sysCfg.hlw_imax)) {
+  if (power && (sysCfg.wattmtr_pmin || sysCfg.wattmtr_pmax || sysCfg.wattmtr_umin || sysCfg.wattmtr_umax || sysCfg.wattmtr_imin || sysCfg.wattmtr_imax)) {
     puv = (uint16_t)(pu);
     piv = (uint16_t)(pi * 1000);
 
@@ -333,58 +334,58 @@ void hlw_margin_chk()
 
     snprintf_P(svalue, sizeof(svalue), PSTR("{"));
     jsonflg = 0;
-    if (hlw_margin(0, sysCfg.hlw_pmin, pw, flag, hlw_pminflg)) {
+    if (hlw_margin(0, sysCfg.wattmtr_pmin, pw, flag, hlw_pminflg)) {
       snprintf_P(svalue, sizeof(svalue), PSTR("%s%s\"PowerLow\":\"%s\""), svalue, (jsonflg)?", ":"", getStateText(flag));
       jsonflg = 1;
     }
-    if (hlw_margin(1, sysCfg.hlw_pmax, pw, flag, hlw_pmaxflg)) {
+    if (hlw_margin(1, sysCfg.wattmtr_pmax, pw, flag, hlw_pmaxflg)) {
       snprintf_P(svalue, sizeof(svalue), PSTR("%s%s\"PowerHigh\":\"%s\""), svalue, (jsonflg)?", ":"", getStateText(flag));
       jsonflg = 1;
     }
-    if (hlw_margin(0, sysCfg.hlw_umin, puv, flag, hlw_uminflg)) {
+    if (hlw_margin(0, sysCfg.wattmtr_umin, puv, flag, hlw_uminflg)) {
       snprintf_P(svalue, sizeof(svalue), PSTR("%s%s\"VoltageLow\":\"%s\""), svalue, (jsonflg)?", ":"", getStateText(flag));
       jsonflg = 1;
     }
-    if (hlw_margin(1, sysCfg.hlw_umax, puv, flag, hlw_umaxflg)) {
+    if (hlw_margin(1, sysCfg.wattmtr_umax, puv, flag, hlw_umaxflg)) {
       snprintf_P(svalue, sizeof(svalue), PSTR("%s%s\"VoltageHigh\":\"%s\""), svalue, (jsonflg)?", ":"", getStateText(flag));
       jsonflg = 1;
     }
-    if (hlw_margin(0, sysCfg.hlw_imin, piv, flag, hlw_iminflg)) {
+    if (hlw_margin(0, sysCfg.wattmtr_imin, piv, flag, hlw_iminflg)) {
       snprintf_P(svalue, sizeof(svalue), PSTR("%s%s\"CurrentLow\":\"%s\""), svalue, (jsonflg)?", ":"", getStateText(flag));
       jsonflg = 1;
     }
-    if (hlw_margin(1, sysCfg.hlw_imax, piv, flag, hlw_imaxflg)) {
+    if (hlw_margin(1, sysCfg.wattmtr_imax, piv, flag, hlw_imaxflg)) {
       snprintf_P(svalue, sizeof(svalue), PSTR("%s%s\"CurrentHigh\":\"%s\""), svalue, (jsonflg)?", ":"", getStateText(flag));
       jsonflg = 1;
     }
     if (jsonflg) {
       snprintf_P(svalue, sizeof(svalue), PSTR("%s}"), svalue);
       mqtt_publish_topic_P(2, PSTR("MARGINS"), svalue);
-      hlw_mqttPresent(0);
+      wattmtr_mqttPresent(0);
     }
   }
 
 #if FEATURE_POWER_LIMIT
   // Max Power
-  if (sysCfg.hlw_mpl) {
-    if (pw > sysCfg.hlw_mpl) {
+  if (sysCfg.wattmtr_mpl) {
+    if (pw > sysCfg.wattmtr_mpl) {
       if (!hlw_mplh_counter) {
-        hlw_mplh_counter = sysCfg.hlw_mplh;
+        hlw_mplh_counter = sysCfg.wattmtr_mplh;
       } else {
         hlw_mplh_counter--;
         if (!hlw_mplh_counter) {
           snprintf_P(svalue, sizeof(svalue), PSTR("{\"MaxPowerReached\":\"%d%s\"}"), pw, (sysCfg.flag.value_units) ? " W" : "");
           mqtt_publish_topic_P(1, PSTR("WARNING"), svalue);
-          hlw_mqttPresent(0);
+          wattmtr_mqttPresent(0);
           do_cmnd_power(1, 0);
           if (!hlw_mplr_counter) {
             hlw_mplr_counter = sysCfg.param[P_MAX_POWER_RETRY] +1;
           }
-          hlw_mplw_counter = sysCfg.hlw_mplw;
+          hlw_mplw_counter = sysCfg.wattmtr_mplw;
         }
       }
     }
-    else if (power && (pw <= sysCfg.hlw_mpl)) {
+    else if (power && (pw <= sysCfg.wattmtr_mpl)) {
       hlw_mplh_counter = 0;
       hlw_mplr_counter = 0;
       hlw_mplw_counter = 0;
@@ -402,7 +403,7 @@ void hlw_margin_chk()
           } else {
             snprintf_P(svalue, sizeof(svalue), PSTR("{\"MaxPowerReachedRetry\":\"%s\"}"), getStateText(0));
             mqtt_publish_topic_P(1, PSTR("WARNING"), svalue);
-            hlw_mqttPresent(0);
+            wattmtr_mqttPresent(0);
           }
         }
       }
@@ -410,20 +411,20 @@ void hlw_margin_chk()
   }
 
   // Max Energy
-  if (sysCfg.hlw_mkwh) {
+  if (sysCfg.wattmtr_mkwh) {
     uped = (uint16_t)(ped * 1000);
-    if (!hlw_mkwh_state && (rtcTime.Hour == sysCfg.hlw_mkwhs)) {
+    if (!hlw_mkwh_state && (rtcTime.Hour == sysCfg.wattmtr_mkwhs)) {
       hlw_mkwh_state = 1;
       snprintf_P(svalue, sizeof(svalue), PSTR("{\"EnergyMonitor\":\"%s\"}"), getStateText(1));
       mqtt_publish_topic_P(5, PSTR("ENERGYMONITOR"), svalue);
       do_cmnd_power(1, 1);
     }
-    else if ((1 == hlw_mkwh_state) && (uped >= sysCfg.hlw_mkwh)) {
+    else if ((1 == hlw_mkwh_state) && (uped >= sysCfg.wattmtr_mkwh)) {
       hlw_mkwh_state = 2;
       dtostrf(ped, 1, 3, svalue);
       snprintf_P(svalue, sizeof(svalue), PSTR("{\"MaxEnergyReached\":\"%s%s\"}"), svalue, (sysCfg.flag.value_units) ? " kWh" : "");
       mqtt_publish_topic_P(1, PSTR("WARNING"), svalue);
-      hlw_mqttPresent(0);
+      wattmtr_mqttPresent(0);
       do_cmnd_power(1, 0);
     }
   }
@@ -434,157 +435,157 @@ void hlw_margin_chk()
  * Commands
 \*********************************************************************************************/
 
-boolean hlw_command(char *type, uint16_t index, char *dataBuf, uint16_t data_len, int16_t payload, char *svalue, uint16_t ssvalue)
+boolean wattmtr_command(char *type, uint16_t index, char *dataBuf, uint16_t data_len, int16_t payload, char *svalue, uint16_t ssvalue)
 {
   boolean serviced = true;
   uint8_t caltext = 0;
 
   if (!strcmp_P(type,PSTR("POWERLOW"))) {
     if ((payload >= 0) && (payload < 3601)) {
-      sysCfg.hlw_pmin = payload;
+      sysCfg.wattmtr_pmin = payload;
     }
-    snprintf_P(svalue, ssvalue, PSTR("{\"PowerLow\":\"%d%s\"}"), sysCfg.hlw_pmin, (sysCfg.flag.value_units) ? " W" : "");
+    snprintf_P(svalue, ssvalue, PSTR("{\"PowerLow\":\"%d%s\"}"), sysCfg.wattmtr_pmin, (sysCfg.flag.value_units) ? " W" : "");
   }
   else if (!strcmp_P(type,PSTR("POWERHIGH"))) {
     if ((payload >= 0) && (payload < 3601)) {
-      sysCfg.hlw_pmax = payload;
+      sysCfg.wattmtr_pmax = payload;
     }
-    snprintf_P(svalue, ssvalue, PSTR("{\"PowerHigh\":\"%d%s\"}"), sysCfg.hlw_pmax, (sysCfg.flag.value_units) ? " W" : "");
+    snprintf_P(svalue, ssvalue, PSTR("{\"PowerHigh\":\"%d%s\"}"), sysCfg.wattmtr_pmax, (sysCfg.flag.value_units) ? " W" : "");
   }
   else if (!strcmp_P(type,PSTR("VOLTAGELOW"))) {
     if ((payload >= 0) && (payload < 501)) {
-      sysCfg.hlw_umin = payload;
+      sysCfg.wattmtr_umin = payload;
     }
-    snprintf_P(svalue, ssvalue, PSTR("{\"VoltageLow\":\"%d%s\"}"), sysCfg.hlw_umin, (sysCfg.flag.value_units) ? " V" : "");
+    snprintf_P(svalue, ssvalue, PSTR("{\"VoltageLow\":\"%d%s\"}"), sysCfg.wattmtr_umin, (sysCfg.flag.value_units) ? " V" : "");
   }
   else if (!strcmp_P(type,PSTR("VOLTAGEHIGH"))) {
     if ((payload >= 0) && (payload < 501)) {
-      sysCfg.hlw_umax = payload;
+      sysCfg.wattmtr_umax = payload;
     }
-    snprintf_P(svalue, ssvalue, PSTR("[\"VoltageHigh\":\"%d%s\"}"), sysCfg.hlw_umax, (sysCfg.flag.value_units) ? " V" : "");
+    snprintf_P(svalue, ssvalue, PSTR("[\"VoltageHigh\":\"%d%s\"}"), sysCfg.wattmtr_umax, (sysCfg.flag.value_units) ? " V" : "");
   }
   else if (!strcmp_P(type,PSTR("CURRENTLOW"))) {
     if ((payload >= 0) && (payload < 16001)) {
-      sysCfg.hlw_imin = payload;
+      sysCfg.wattmtr_imin = payload;
     }
-    snprintf_P(svalue, ssvalue, PSTR("{\"CurrentLow\":\"%d%s\"}"), sysCfg.hlw_imin, (sysCfg.flag.value_units) ? " mA" : "");
+    snprintf_P(svalue, ssvalue, PSTR("{\"CurrentLow\":\"%d%s\"}"), sysCfg.wattmtr_imin, (sysCfg.flag.value_units) ? " mA" : "");
   }
   else if (!strcmp_P(type,PSTR("CURRENTHIGH"))) {
     if ((payload >= 0) && (payload < 16001)) {
-      sysCfg.hlw_imax = payload;
+      sysCfg.wattmtr_imax = payload;
     }
-    snprintf_P(svalue, ssvalue, PSTR("{\"CurrentHigh\":\"%d%s\"}"), sysCfg.hlw_imax, (sysCfg.flag.value_units) ? " mA" : "");
+    snprintf_P(svalue, ssvalue, PSTR("{\"CurrentHigh\":\"%d%s\"}"), sysCfg.wattmtr_imax, (sysCfg.flag.value_units) ? " mA" : "");
   }
   else if (!strcmp_P(type,PSTR("ENERGYRESET"))) {
     if ((payload >= 1) && (payload <= 3)) {
       switch (payload) {
       case 1:
         hlw_kWhtoday = 0;
-        rtcMem.hlw_kWhtoday = 0;
-        sysCfg.hlw_kWhtoday = 0;
+        rtcMem.wattmtr_kWhtoday = 0;
+        sysCfg.wattmtr_kWhtoday = 0;
         break;
       case 2:
-        sysCfg.hlw_kWhyesterday = 0;
+        sysCfg.wattmtr_kWhyesterday = 0;
         break;
       case 3:
-        rtcMem.hlw_kWhtotal = 0;
-        sysCfg.hlw_kWhtotal = rtcMem.hlw_kWhtotal;
+        rtcMem.wattmtr_kWhtotal = 0;
+        sysCfg.wattmtr_kWhtotal = rtcMem.wattmtr_kWhtotal;
         break;
       }
     }
     char stemp0[10];
     char stemp1[10];
     char stemp2[10];
-    dtostrf((float)sysCfg.hlw_kWhyesterday / 100000000, 1, sysCfg.flag.energy_resolution, stemp0);
-    dtostrf((float)rtcMem.hlw_kWhtoday / 100000000, 1, sysCfg.flag.energy_resolution, stemp1);
-    dtostrf((float)(rtcMem.hlw_kWhtotal + (hlw_kWhtoday / 1000)) / 100000, 1, sysCfg.flag.energy_resolution, stemp2);
+    dtostrf((float)sysCfg.wattmtr_kWhyesterday / 100000000, 1, sysCfg.flag.energy_resolution, stemp0);
+    dtostrf((float)rtcMem.wattmtr_kWhtoday / 100000000, 1, sysCfg.flag.energy_resolution, stemp1);
+    dtostrf((float)(rtcMem.wattmtr_kWhtotal + (hlw_kWhtoday / 1000)) / 100000, 1, sysCfg.flag.energy_resolution, stemp2);
     snprintf_P(svalue, ssvalue, PSTR("{\"EnergyReset\":{\"Total\":%s, \"Yesterday\":%s, \"Today\":%s}}"), stemp2, stemp0, stemp1);
   }
   else if (!strcmp_P(type,PSTR("HLWPCAL"))) {
     if ((payload > 0) && (payload < 32001)) {
-      sysCfg.hlw_pcal = (payload > 4000) ? payload : HLW_PREF_PULSE;  // 12530
+      sysCfg.wattmtr_pcal = (payload > 4000) ? payload : HLW_PREF_PULSE;  // 12530
     }
     caltext = 1;
   }
   else if (!strcmp_P(type,PSTR("HLWPSET"))) {
     if ((payload > 0) && (payload < 3601) && hlw_cf_plen) {
-      sysCfg.hlw_pcal = (payload * 10 * hlw_cf_plen) / HLW_PREF;
+      sysCfg.wattmtr_pcal = (payload * 10 * hlw_cf_plen) / HLW_PREF;
     }
     caltext = 1;
   }
   else if (!strcmp_P(type,PSTR("HLWUCAL"))) {
     if ((payload > 0) && (payload < 32001)) {
-      sysCfg.hlw_ucal = (payload > 999) ? payload : HLW_UREF_PULSE;  // 1950
+      sysCfg.wattmtr_ucal = (payload > 999) ? payload : HLW_UREF_PULSE;  // 1950
     }
     caltext = 2;
   }
   else if (!strcmp_P(type,PSTR("HLWUSET"))) {
     if ((payload > 0) && (payload < 501) && hlw_cf1u_plen) {
-      sysCfg.hlw_ucal = (payload * 10 * hlw_cf1u_plen) / HLW_UREF;
+      sysCfg.wattmtr_ucal = (payload * 10 * hlw_cf1u_plen) / HLW_UREF;
     }
     caltext = 2;
   }
   else if (!strcmp_P(type,PSTR("HLWICAL"))) {
     if ((payload > 0) && (payload < 32001)) {
-      sysCfg.hlw_ical = (payload > 1100) ? payload : HLW_IREF_PULSE;  // 3500
+      sysCfg.wattmtr_ical = (payload > 1100) ? payload : HLW_IREF_PULSE;  // 3500
     }
     caltext = 3;
   }
   else if (!strcmp_P(type,PSTR("HLWISET"))) {
     if ((payload > 0) && (payload < 16001) && hlw_cf1i_plen) {
-      sysCfg.hlw_ical = (payload * hlw_cf1i_plen) / HLW_IREF;
+      sysCfg.wattmtr_ical = (payload * hlw_cf1i_plen) / HLW_IREF;
     }
     caltext = 3;
   }
 #if FEATURE_POWER_LIMIT
   else if (!strcmp_P(type,PSTR("MAXPOWER"))) {
     if ((payload >= 0) && (payload < 3601)) {
-      sysCfg.hlw_mpl = payload;
+      sysCfg.wattmtr_mpl = payload;
     }
-    snprintf_P(svalue, ssvalue, PSTR("{\"MaxPower\":\"%d%s\"}"), sysCfg.hlw_mpl, (sysCfg.flag.value_units) ? " W" : "");
+    snprintf_P(svalue, ssvalue, PSTR("{\"MaxPower\":\"%d%s\"}"), sysCfg.wattmtr_mpl, (sysCfg.flag.value_units) ? " W" : "");
   }
   else if (!strcmp_P(type,PSTR("MAXPOWERHOLD"))) {
     if ((payload >= 0) && (payload < 3601)) {
-      sysCfg.hlw_mplh = (1 == payload) ? MAX_POWER_HOLD : payload;
+      sysCfg.wattmtr_mplh = (1 == payload) ? MAX_POWER_HOLD : payload;
     }
-    snprintf_P(svalue, ssvalue, PSTR("{\"MaxPowerHold\":\"%d%s\"}"), sysCfg.hlw_mplh, (sysCfg.flag.value_units) ? " Sec" : "");
+    snprintf_P(svalue, ssvalue, PSTR("{\"MaxPowerHold\":\"%d%s\"}"), sysCfg.wattmtr_mplh, (sysCfg.flag.value_units) ? " Sec" : "");
   }
   else if (!strcmp_P(type,PSTR("MAXPOWERWINDOW"))) {
     if ((payload >= 0) && (payload < 3601)) {
-      sysCfg.hlw_mplw = (1 == payload) ? MAX_POWER_WINDOW : payload;
+      sysCfg.wattmtr_mplw = (1 == payload) ? MAX_POWER_WINDOW : payload;
     }
-    snprintf_P(svalue, ssvalue, PSTR("{\"MaxPowerWindow\":\"%d%s\"}"), sysCfg.hlw_mplw, (sysCfg.flag.value_units) ? " Sec" : "");
+    snprintf_P(svalue, ssvalue, PSTR("{\"MaxPowerWindow\":\"%d%s\"}"), sysCfg.wattmtr_mplw, (sysCfg.flag.value_units) ? " Sec" : "");
   }
   else if (!strcmp_P(type,PSTR("SAFEPOWER"))) {
     if ((payload >= 0) && (payload < 3601)) {
-      sysCfg.hlw_mspl = payload;
+      sysCfg.wattmtr_mspl = payload;
     }
-    snprintf_P(svalue, ssvalue, PSTR("{\"SafePower\":\"%d%s\"}"), sysCfg.hlw_mspl, (sysCfg.flag.value_units) ? " W" : "");
+    snprintf_P(svalue, ssvalue, PSTR("{\"SafePower\":\"%d%s\"}"), sysCfg.wattmtr_mspl, (sysCfg.flag.value_units) ? " W" : "");
   }
   else if (!strcmp_P(type,PSTR("SAFEPOWERHOLD"))) {
     if ((payload >= 0) && (payload < 3601)) {
-      sysCfg.hlw_msplh = (1 == payload) ? SAFE_POWER_HOLD : payload;
+      sysCfg.wattmtr_msplh = (1 == payload) ? SAFE_POWER_HOLD : payload;
     }
-    snprintf_P(svalue, ssvalue, PSTR("{\"SafePowerHold\":\"%d%s\"}"), sysCfg.hlw_msplh, (sysCfg.flag.value_units) ? " Sec" : "");
+    snprintf_P(svalue, ssvalue, PSTR("{\"SafePowerHold\":\"%d%s\"}"), sysCfg.wattmtr_msplh, (sysCfg.flag.value_units) ? " Sec" : "");
   }
   else if (!strcmp_P(type,PSTR("SAFEPOWERWINDOW"))) {
     if ((payload >= 0) && (payload < 1440)) {
-      sysCfg.hlw_msplw = (1 == payload) ? SAFE_POWER_WINDOW : payload;
+      sysCfg.wattmtr_msplw = (1 == payload) ? SAFE_POWER_WINDOW : payload;
     }
-    snprintf_P(svalue, ssvalue, PSTR("{\"SafePowerWindow\":\"%d%s\"}"), sysCfg.hlw_msplw, (sysCfg.flag.value_units) ? " Min" : "");
+    snprintf_P(svalue, ssvalue, PSTR("{\"SafePowerWindow\":\"%d%s\"}"), sysCfg.wattmtr_msplw, (sysCfg.flag.value_units) ? " Min" : "");
   }
   else if (!strcmp_P(type,PSTR("MAXENERGY"))) {
     if ((payload >= 0) && (payload < 3601)) {
-      sysCfg.hlw_mkwh = payload;
+      sysCfg.wattmtr_mkwh = payload;
       hlw_mkwh_state = 3;
     }
-    snprintf_P(svalue, ssvalue, PSTR("{\"MaxEnergy\":\"%d%s\"}"), sysCfg.hlw_mkwh, (sysCfg.flag.value_units) ? " Wh" : "");
+    snprintf_P(svalue, ssvalue, PSTR("{\"MaxEnergy\":\"%d%s\"}"), sysCfg.wattmtr_mkwh, (sysCfg.flag.value_units) ? " Wh" : "");
   }
   else if (!strcmp_P(type,PSTR("MAXENERGYSTART"))) {
     if ((payload >= 0) && (payload < 24)) {
-      sysCfg.hlw_mkwhs = payload;
+      sysCfg.wattmtr_mkwhs = payload;
     }
-    snprintf_P(svalue, ssvalue, PSTR("{\"MaxEnergyStart\":\"%d%s\"}"), sysCfg.hlw_mkwhs, (sysCfg.flag.value_units) ? " Hr" : "");
+    snprintf_P(svalue, ssvalue, PSTR("{\"MaxEnergyStart\":\"%d%s\"}"), sysCfg.wattmtr_mkwhs, (sysCfg.flag.value_units) ? " Hr" : "");
   }
 #endif  // FEATURE_POWER_LIMIT
   else {
@@ -592,17 +593,18 @@ boolean hlw_command(char *type, uint16_t index, char *dataBuf, uint16_t data_len
   }
   switch (caltext) {
     case 1:
-      snprintf_P(svalue, ssvalue, PSTR("(\"HlwPcal\":\"%d%s\"}"), sysCfg.hlw_pcal, (sysCfg.flag.value_units) ? " uS" : "");
+      snprintf_P(svalue, ssvalue, PSTR("(\"HlwPcal\":\"%d%s\"}"), sysCfg.wattmtr_pcal, (sysCfg.flag.value_units) ? " uS" : "");
       break;
     case 2:
-      snprintf_P(svalue, ssvalue, PSTR("{\"HlwUcal\":\"%d%s\"}"), sysCfg.hlw_ucal, (sysCfg.flag.value_units) ? " uS" : "");
+      snprintf_P(svalue, ssvalue, PSTR("{\"HlwUcal\":\"%d%s\"}"), sysCfg.wattmtr_ucal, (sysCfg.flag.value_units) ? " uS" : "");
       break;
     case 3:
-      snprintf_P(svalue, ssvalue, PSTR("(\"HlwIcal\":\"%d%s\"}"), sysCfg.hlw_ical, (sysCfg.flag.value_units) ? " uS" : "");
+      snprintf_P(svalue, ssvalue, PSTR("(\"HlwIcal\":\"%d%s\"}"), sysCfg.wattmtr_ical, (sysCfg.flag.value_units) ? " uS" : "");
       break;
   }
   return serviced;
 }
+
 
 /*********************************************************************************************\
  * Presentation
@@ -629,7 +631,7 @@ void hlw_mqttStat(byte option, char* svalue, uint16_t ssvalue)
   uint16_t pw;
 
   hlw_readEnergy(option, pet, ped, pe, pw, pu, pi, pc);
-  dtostrf((float)sysCfg.hlw_kWhyesterday / 100000000, 1, sysCfg.flag.energy_resolution, stemp0);
+  dtostrf((float)sysCfg.wattmtr_kWhyesterday / 100000000, 1, sysCfg.flag.energy_resolution, stemp0);
   dtostrf(ped, 1, sysCfg.flag.energy_resolution, stemp1);
   dtostrf(pc, 1, 2, stemp2);
   dtostrf(pi, 1, 3, stemp3);
@@ -646,7 +648,7 @@ void hlw_mqttStat(byte option, char* svalue, uint16_t ssvalue)
 #endif  // USE_DOMOTICZ
 }
 
-void hlw_mqttPresent(byte option)
+void wattmtr_mqttPresent(byte option)
 {
 /* option 0 = do not show period energy usage
  * option 1 = show period energy usage
@@ -659,7 +661,7 @@ void hlw_mqttPresent(byte option)
   mqtt_publish_topic_P(2, PSTR("ENERGY"), svalue);
 }
 
-void hlw_mqttStatus(char* svalue, uint16_t ssvalue)
+void wattmtr_mqttStatus(char* svalue, uint16_t ssvalue)
 {
   snprintf_P(svalue, ssvalue, PSTR("{\"StatusPWR\":{"));
   hlw_mqttStat(0, svalue, ssvalue);
@@ -676,7 +678,7 @@ const char HTTP_ENERGY_SNS[] PROGMEM =
   "<tr><th>Energy Yesterday</th><td>%s kWh</td></tr>"
   "<tr><th>Energy Total</th><td>%s kWh</td></tr>";
 
-String hlw_webPresent()
+String wattmtr_webPresent()
 {
   String page = "";
   char stemp[10];
@@ -699,11 +701,12 @@ String hlw_webPresent()
   dtostrf(pi, 1, 3, stemp);
   dtostrf(pc, 1, 2, stemp2);
   dtostrf(ped, 1, sysCfg.flag.energy_resolution, stemp3);
-  dtostrf((float)sysCfg.hlw_kWhyesterday / 100000000, 1, sysCfg.flag.energy_resolution, stemp4);
+  dtostrf((float)sysCfg.wattmtr_kWhyesterday / 100000000, 1, sysCfg.flag.energy_resolution, stemp4);
   dtostrf(pet, 1, sysCfg.flag.energy_resolution, stemp5);
   snprintf_P(sensor, sizeof(sensor), HTTP_ENERGY_SNS, stemp6, stemp, pw, stemp2, stemp3, stemp4, stemp5);
   page += sensor;
   return page;
 }
 #endif  // USE_WEBSERVER
+#endif  // USE_HLW8012
 

@@ -170,6 +170,12 @@
 //  #define USE_WS2812_DMA                         // DMA supports only GPIO03 (= Serial RXD) (+1k mem)
                                                  //   When USE_WS2812_DMA is enabled expect Exceptions on Pow
 
+#define USE_HLW8012                              // Enable HLW8012 wattmeter (+8k code, +0.4k mem) - Disable by //
+//#define USE_CS5460A                              // Enable CS5460A wattmeter (+5k code, +0.2k mem) - Disable by //
+//#define USE_PZEM004T                              // Enable PZEM004T wattmeter (+6k code, +0.4k mem) - Disable by //
+
+#define USE_CTY835                               // Enable Candy CTY 835 monitor (+2.6k code, +0.4k mem) - Disable by //
+
 /*********************************************************************************************\
  * Compile a minimal version if upgrade memory gets tight ONLY TO BE USED FOR UPGRADE STEP 1!
  *   To be used as step 1 during upgrade. 
@@ -185,6 +191,10 @@
 
 #if defined(USE_MQTT_TLS) && defined(USE_WEBSERVER)
   #error "Select either USE_MQTT_TLS or USE_WEBSERVER as there is just not enough memory to play with"
+#endif
+
+#if (defined(USE_HLW8012) && defined(USE_CS5460A)) || (defined(USE_HLW8012) && defined(USE_PZEM004T)) || (defined(USE_CS5460A) && defined(USE_PZEM004T))
+  #error "Select either USE_HLW8012 or USE_CS5460A or USE_PZEM004T"
 #endif
 
 #if (ARDUINO < 10610)
