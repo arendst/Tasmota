@@ -1,4 +1,7 @@
-/* 5.6.1d
+/* 5.6.1e
+ * Remove Sonoff Pow HLW power timer to enable low power readings. Unstable below 3W due to used hardware. (#759)
+ *
+ * 5.6.1d
  * Fix settings order during startup to allow for displaying debug messages
  * Add more Sonoff Pow range checking (#772)
  *

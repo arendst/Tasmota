@@ -48,7 +48,6 @@ byte hlw_mkwh_state = 0;
 #endif  // FEATURE_POWER_LIMIT
 
 byte hlw_SELflag;
-byte hlw_cf_timer;
 byte hlw_cf1_timer;
 byte hlw_fifth_second;
 byte hlw_startup;
@@ -79,10 +78,6 @@ void hlw_cf_interrupt()  // Service Power
 {
   hlw_cf_plen = micros() - hlw_cf_last;
   hlw_cf_last = micros();
-  if (hlw_cf_plen > 4000000) {  // 4 seconds
-    hlw_cf_plen = 0;  // Just powered on
-  }
-  hlw_cf_timer = 15;  // Support down to 4W which takes about 3 seconds
   hlw_EDcntr++;
   hlw_Ecntr++;
 }
@@ -138,13 +133,6 @@ void hlw_200mS()
     }
   }
 
-  if (hlw_cf_timer) {
-    hlw_cf_timer--;
-    if (!hlw_cf_timer) {
-      hlw_cf_plen = 0;  // No load for over 3 seconds
-    }
-  }
-  
   hlw_cf1_timer++;
   if (hlw_cf1_timer >= 8) {
     hlw_cf1_timer = 0;
@@ -193,6 +181,9 @@ void hlw_readEnergy(byte option, float &et, float &ed, float &e, float &w, float
 //snprintf_P(log, sizeof(log), PSTR("HLW: CF %d, CF1U %d (%d), CF1I %d (%d)"), hlw_cf_plen, hlw_cf1u_plen, hlw_cf1u_pcntmax, hlw_cf1i_plen, hlw_cf1i_pcntmax);
 //addLog(LOG_LEVEL_DEBUG, log);
 
+  if (!(power &1)) {
+    hlw_cf_plen = 0;  // Powered off
+  }
   et = (float)(rtcMem.hlw_kWhtotal + (cur_kWhtoday / 1000)) / 100000;
   ed = 0;
   if (cur_kWhtoday) {
@@ -224,7 +215,7 @@ void hlw_readEnergy(byte option, float &et, float &ed, float &e, float &w, float
     w = (float)hlw_w / 10;
   }
   u = 0;
-  if (hlw_cf1u_plen && (w || (power &1))) {
+  if (hlw_cf1u_plen && w) {
     hlw_u = (HLW_UREF * sysCfg.hlw_ucal) / hlw_cf1u_plen;
     u = (float)hlw_u / 10;
   }
@@ -276,7 +267,6 @@ void hlw_init()
   hlw_startup = 1;
   hlw_lasttime = 0;
   hlw_fifth_second = 0;
-  hlw_cf_timer = 0;
   hlw_cf1_timer = 0;
   tickerHLW.attach_ms(200, hlw_200mS);
 }
