@@ -25,7 +25,7 @@
     - Select IDE Tools - Flash Size: "1M (no SPIFFS)"
   ====================================================*/
 
-#define VERSION                0x05060103  // 5.6.1c
+#define VERSION                0x05060104  // 5.6.1d
 
 enum log_t   {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG_MORE, LOG_LEVEL_ALL};
 enum week_t  {Last, First, Second, Third, Fourth};
@@ -2789,18 +2789,19 @@ void setup()
 
   osw_init();
 
-  sysCfg.bootcount++;
-  snprintf_P(log, sizeof(log), PSTR("APP: Bootcount %d"), sysCfg.bootcount);
-  addLog(LOG_LEVEL_DEBUG, log);
-  stop_flash_rotate = sysCfg.flag.stop_flash_rotate;
-  savedatacounter = sysCfg.savedata;
-  seriallog_timer = SERIALLOG_TIMER;
   seriallog_level = sysCfg.seriallog_level;
+  seriallog_timer = SERIALLOG_TIMER;
 #ifndef USE_EMULATION
   sysCfg.flag.emulation = 0;
 #endif  // USE_EMULATION
   syslog_level = (sysCfg.flag.emulation) ? 0 : sysCfg.syslog_level;
+  stop_flash_rotate = sysCfg.flag.stop_flash_rotate;
+  savedatacounter = sysCfg.savedata;
   sleep = sysCfg.sleep;
+
+  sysCfg.bootcount++;
+  snprintf_P(log, sizeof(log), PSTR("APP: Bootcount %d"), sysCfg.bootcount);
+  addLog(LOG_LEVEL_DEBUG, log);
 
   GPIO_init();
 

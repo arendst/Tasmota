@@ -112,9 +112,11 @@ void hlw_200mS()
     if (hlw_EDcntr) {
       hlw_len = 10000 / hlw_EDcntr;
       hlw_EDcntr = 0;
-      hlw_temp = ((HLW_PREF * sysCfg.hlw_pcal) / hlw_len) / 36;
-      hlw_kWhtoday += hlw_temp;
-      rtcMem.hlw_kWhtoday = hlw_kWhtoday;
+      if (hlw_len) {
+        hlw_temp = ((HLW_PREF * sysCfg.hlw_pcal) / hlw_len) / 36;
+        hlw_kWhtoday += hlw_temp;
+        rtcMem.hlw_kWhtoday = hlw_kWhtoday;
+      }
     }
     if (rtcTime.Valid) {
       if (rtc_loctime() == rtc_midnight()) {
@@ -184,8 +186,8 @@ void hlw_readEnergy(byte option, float &et, float &ed, float &e, float &w, float
   unsigned long hlw_w;
   unsigned long hlw_u;
   unsigned long hlw_i;
-  int hlw_period;
-  int hlw_interval;
+  uint16_t hlw_period;
+  uint16_t hlw_interval;
 
 //char log[LOGSZ];
 //snprintf_P(log, sizeof(log), PSTR("HLW: CF %d, CF1U %d (%d), CF1I %d (%d)"), hlw_cf_plen, hlw_cf1u_plen, hlw_cf1u_pcntmax, hlw_cf1i_plen, hlw_cf1i_pcntmax);
@@ -203,14 +205,16 @@ void hlw_readEnergy(byte option, float &et, float &ed, float &e, float &w, float
     } else {
       hlw_period = rtc_loctime() - hlw_lasttime;
     }
+    hlw_lasttime = rtc_loctime();
     if (hlw_period) {
-      hlw_lasttime = rtc_loctime();
       hlw_interval = 3600 / hlw_period;
       if (hlw_Ecntr) {
         hlw_len = hlw_period * 1000000 / hlw_Ecntr;
-        hlw_Ecntr = 0;
-        hlw_temp = ((HLW_PREF * sysCfg.hlw_pcal) / hlw_len) / hlw_interval;
-        e = (float)hlw_temp / 10;
+        if (hlw_interval && hlw_len) {
+          hlw_Ecntr = 0;
+          hlw_temp = ((HLW_PREF * sysCfg.hlw_pcal) / hlw_len) / hlw_interval;
+          e = (float)hlw_temp / 10;
+        }
       }
     }
   }
