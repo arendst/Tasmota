@@ -730,7 +730,7 @@ boolean mqtt_command(boolean grpflg, char *type, uint16_t index, char *dataBuf, 
       strlcpy(sysCfg.mqtt_user, (!strcmp(dataBuf,"0")) ? "" : (1 == payload) ? MQTT_USER : dataBuf, sizeof(sysCfg.mqtt_user));
       restartflag = 2;
     }
-    snprintf_P(svalue, ssvalue, PSTR("[\"MqttUser\":\"%s\"}"), sysCfg.mqtt_user);
+    snprintf_P(svalue, ssvalue, PSTR("{\"MqttUser\":\"%s\"}"), sysCfg.mqtt_user);
   }
   else if (!strcmp_P(type,PSTR("MQTTPASSWORD"))) {
     if ((data_len > 0) && (data_len < sizeof(sysCfg.mqtt_pwd))) {
