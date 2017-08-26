@@ -237,6 +237,7 @@ char MQTTClient[33];                  // Composed MQTT Clientname
 uint8_t mqttcounter = 0;              // MQTT connection retry counter
 uint8_t fallbacktopic = 0;            // Use Topic or FallbackTopic
 unsigned long timerxs = 0;            // State loop timer
+unsigned long last_save_uptime = 0;   // Loop timer to calculate ontime
 int state = 0;                        // State per second flag
 int mqttflag = 2;                     // MQTT connection messages flag
 int otaflag = 0;                      // OTA state flag
@@ -558,25 +559,24 @@ void mqtt_connected()
     // Satisfy iobroker (#299)
     svalue[0] = '\0';
     mqtt_publish_topic_P(0, PSTR("POWER"), svalue);
-
     getTopic_P(stopic, 0, sysCfg.mqtt_topic, PSTR("#"));
     mqttClient.subscribe(stopic);
+    delay(50);
     mqttClient.loop();  // Solve LmacRxBlk:1 messages
     if (strstr(sysCfg.mqtt_fulltopic, MQTT_TOKEN_TOPIC) != NULL) {
       getTopic_P(stopic, 0, sysCfg.mqtt_grptopic, PSTR("#"));
       mqttClient.subscribe(stopic);
       mqttClient.loop();  // Solve LmacRxBlk:1 messages
-      fallbacktopic = 1;
       getTopic_P(stopic, 0, MQTTClient, PSTR("#"));
       fallbacktopic = 0;
       mqttClient.subscribe(stopic);
       mqttClient.loop();  // Solve LmacRxBlk:1 messages
     }
+
 #ifdef USE_DOMOTICZ
     domoticz_mqttSubscribe();
 #endif  // USE_DOMOTICZ
   }
-
   if (mqttflag) {
     snprintf_P(svalue, sizeof(svalue), PSTR("{\"Module\":\"%s\", \"Version\":\"%s\", \"FallbackTopic\":\"%s\", \"GroupTopic\":\"%s\"}"),
       my_module.name, Version, MQTTClient, sysCfg.mqtt_grptopic);
@@ -591,8 +591,13 @@ void mqtt_connected()
     snprintf_P(svalue, sizeof(svalue), PSTR("{\"Started\":\"%s\"}"),
       (getResetReason() == "Exception") ? ESP.getResetInfo().c_str() : getResetReason().c_str());
     mqtt_publish_topic_P(2, PSTR("INFO3"), svalue);
-    if (sysCfg.tele_period) {
-      tele_period = sysCfg.tele_period -9;
+    if (sysCfg.tele_period ) {
+      if (rtc_loctime() > 100) {
+        tele_period = sysCfg.tele_period -2;
+      } else {
+        tele_period = sysCfg.tele_period -9;
+      }
+
     }
     status_update_timer = 2;
 #ifdef USE_DOMOTICZ
@@ -628,8 +633,10 @@ void mqtt_reconnect()
     }
     if (espClient.verify(sysCfg.mqtt_fingerprint, sysCfg.mqtt_host)) {
       addLog_P(LOG_LEVEL_INFO, PSTR("MQTT: Verified"));
+      yield();
     } else {
       addLog_P(LOG_LEVEL_DEBUG, PSTR("MQTT: Insecure connection due to invalid Fingerprint"));
+      yield();
     }
 #endif  // USE_MQTT_TLS
     mqttClient.setCallback(mqttDataCb);
@@ -654,8 +661,9 @@ void mqtt_reconnect()
     addLog_P(LOG_LEVEL_INFO, PSTR("MQTT: Connected"));
     mqttcounter = 0;
     snprintf_P(svalue, sizeof(svalue), PSTR("Online"));
-    mqtt_publish(stopic, svalue, true);
     mqtt_connected();
+    mqtt_publish(stopic, svalue, true);
+
   } else {
     snprintf_P(log, sizeof(log), PSTR("MQTT: Connect FAILED to %s:%d, rc %d. Retry in %d seconds"),
       sysCfg.mqtt_host, sysCfg.mqtt_port, mqttClient.state(), mqttcounter);  //status codes are documented here http://pubsubclient.knolleary.net/api.html#state
@@ -1842,7 +1850,7 @@ void state_mqttPresent(char* svalue, uint16_t ssvalue)
 {
   char stemp1[8];
 
-  snprintf_P(svalue, ssvalue, PSTR("%s{\"Time\":\"%s\", \"Uptime\":%d"), svalue, getDateTime().c_str(), uptime);
+  snprintf_P(svalue, ssvalue, PSTR("%s{\"Time\":\"%s\", \"Uptime\":%d"), svalue, getDateTime().c_str(), rtcMem.uptime);
 #ifdef USE_ADC_VCC
   dtostrf((double)ESP.getVcc()/1000, 1, 3, stemp1);
   snprintf_P(svalue, ssvalue, PSTR("%s, \"Vcc\":%s"), svalue, stemp1);
@@ -1855,8 +1863,8 @@ void state_mqttPresent(char* svalue, uint16_t ssvalue)
     }
     snprintf_P(svalue, ssvalue, PSTR("%s\"%s\""), svalue, getStateText(bitRead(power, i)));
   }
-  snprintf_P(svalue, ssvalue, PSTR("%s, \"Wifi\":{\"AP\":%d, \"SSID\":\"%s\", \"RSSI\":%d, \"APMac\":\"%s\"}}"),
-    svalue, sysCfg.sta_active +1, sysCfg.sta_ssid[sysCfg.sta_active], WIFI_getRSSIasQuality(WiFi.RSSI()), WiFi.BSSIDstr().c_str());
+  snprintf_P(svalue, ssvalue, PSTR("%s, \"Wifi\":{\"AP\":%d, \"SSID\":\"%s\", \"RSSI\":%d, \"APMac\":\"%s\"}, \"DeepSleep\":%d}"),
+    svalue, sysCfg.sta_active +1, sysCfg.sta_ssid[sysCfg.sta_active], WIFI_getRSSIasQuality(WiFi.RSSI()), WiFi.BSSIDstr().c_str() , sysCfg.deepsleep);
 }
 
 void sensors_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
@@ -1934,6 +1942,10 @@ void every_second()
   if (blockgpio0) {
     blockgpio0--;
   }
+  rtcMem.uptime += ((millis() - last_save_uptime) / 1000) ;
+  //snprintf_P(svalue, sizeof(svalue), PSTR("Uptime dump: %ld, last save: %ld"), rtcMem.uptime, last_save_uptime);
+  last_save_uptime = millis() ;
+  //addLog(LOG_LEVEL_DEBUG, svalue);
 
   for (byte i = 0; i < MAX_PULSETIMERS; i++) {
     if (pulse_timer[i] > 111) {
@@ -1976,6 +1988,9 @@ void every_second()
 
   if (sysCfg.tele_period) {
     tele_period++;
+    snprintf_P(svalue, sizeof(svalue), PSTR("Teleperiod %d"), tele_period);
+    addLog(LOG_LEVEL_DEBUG, svalue);
+
     if (tele_period == sysCfg.tele_period -1) {
       if (pin[GPIO_DSB] < 99) {
 #ifdef USE_DS18B20
@@ -2038,9 +2053,14 @@ void every_second()
         yield();
         mqtt_publish_topic_P(1, PSTR("LWT"), "Offline",1);
         yield();
+        snprintf_P(svalue, sizeof(svalue), PSTR("{\"Time\":\"%s\", \"Uptime_s\":%d}"), getDateTime().c_str(), rtcMem.uptime);
+        mqtt_publish_topic_P(2, PSTR("UPTIME_S"), svalue);
+        yield();
+        rtcMem.uptime = 0;
+        RTC_Save();
         // 10% of deepsleep to retry
-        ESP.deepSleep(100000 * sysCfg.deepsleep, WAKE_RF_DEFAULT);
-        delay(100);
+        ESP.deepSleep(1000000 * sysCfg.deepsleep, WAKE_RF_DEFAULT);
+        yield();
       }
     }
   }

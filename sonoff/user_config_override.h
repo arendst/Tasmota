@@ -150,3 +150,6 @@
 // -- Application ---------------------------------
 #undef APP_TIMEZONE
 #define APP_TIMEZONE           99                 // [Timezone] +1 hour (Amsterdam) (-12 .. 12 = hours from UTC, 99 = use TIME_DST/TIME_STD)
+
+
+//#define DEBUG_THEO

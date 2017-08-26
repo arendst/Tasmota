@@ -49,7 +49,7 @@ void osw_osWatch()
     addLog_P(LOG_LEVEL_INFO, PSTR("osWatch: Warning, loop blocked. Restart now"));
     rtcMem.osw_flag = 1;
     RTC_Save();
-//    ESP.restart();  // normal reboot 
+//    ESP.restart();  // normal reboot
     ESP.reset();  // hard reset
   }
 }
@@ -82,11 +82,11 @@ String getResetReason()
 #ifdef DEBUG_THEO
 void exception_tst(byte type)
 {
-/*    
+/*
 Exception (28):
 epc1=0x4000bf64 epc2=0x00000000 epc3=0x00000000 excvaddr=0x00000007 depc=0x00000000
 
-ctx: cont 
+ctx: cont
 sp: 3fff1f30 end: 3fff2840 offset: 01a0
 
 >>>stack>>>
@@ -169,7 +169,7 @@ boolean parseIP(uint32_t* addr, const char* str)
 void mqttfy(byte option, char* str)
 {
 // option 0 = replace by underscore
-// option 1 = delete character  
+// option 1 = delete character
   uint16_t i = 0;
   while (str[i] > 0) {
 //        if ((str[i] == '/') || (str[i] == '+') || (str[i] == '#') || (str[i] == ' ')) {
@@ -533,7 +533,7 @@ void WIFI_Check(uint8_t param)
 #ifdef USE_DISCOVERY
 #ifdef WEBSERVER_ADVERTISE
           MDNS.addService("http", "tcp", 80);
-#endif  // WEBSERVER_ADVERTISE          
+#endif  // WEBSERVER_ADVERTISE
 #endif  // USE_DISCOVERY
         } else {
           stopWebserver();
@@ -599,7 +599,7 @@ boolean mdns_discoverMQTTServer()
   if (n > 0) {
     // Note: current strategy is to get the first MQTT service (even when many are found)
     IPtoCharArray(MDNS.IP(0), ip_str, 20);
-    
+
     snprintf_P(log, sizeof(log), PSTR("mDNS: Service found on %s ip %s port %d"),
       MDNS.hostname(0).c_str(), ip_str, MDNS.port(0));
     addLog(LOG_LEVEL_INFO, log);
@@ -765,7 +765,7 @@ String getBuildDateTime()
   int month;
   int day;
   int year;
-  
+
 //  sscanf(mdate, "%s %d %d", bdt, &day, &year);  // Not implemented in 2.3.0 and probably too many code
   byte i = 0;
   for (str = strtok_r(mdate, " ", &p); str && i < 3; str = strtok_r(NULL, " ", &p)) {
@@ -789,7 +789,7 @@ String getDateTime()
 {
   // "2017-03-07T11:08:02" - ISO8601:2004
   char dt[21];
-  
+
   snprintf_P(dt, sizeof(dt), PSTR("%04d-%02d-%02dT%02d:%02d:%02d"),
     rtcTime.Year, rtcTime.Month, rtcTime.Day, rtcTime.Hour, rtcTime.Minute, rtcTime.Second);
   return String(dt);
@@ -993,6 +993,9 @@ void rtc_second()
       addLog(LOG_LEVEL_DEBUG, log);
       snprintf_P(log, sizeof(log), PSTR("RTC: (STD) %s"), rtc_time(3).c_str());
       addLog(LOG_LEVEL_DEBUG, log);
+      if (sysCfg.tele_period) {
+        tele_period = sysCfg.tele_period -2;
+      }
     }
   }
   utctime++;
@@ -1038,7 +1041,7 @@ void rtc_init()
 float convertTemp(float c)
 {
   float result = c;
-  
+
   if (!isnan(c) && sysCfg.flag.temperature_conversion) {
     result = c * 1.8 + 32;  // Fahrenheit
   }

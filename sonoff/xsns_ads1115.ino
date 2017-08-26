@@ -61,19 +61,18 @@ int16_t ads1115_getConversion(byte channel)
 {
   switch (channel) {
     case 0:
-      adc0.setMultiplexer(ADS1115_MUX_P0_NG);
+      adc0.getConversionP0GND();
       break;
     case 1:
-      adc0.setMultiplexer(ADS1115_MUX_P1_NG);
+      adc0.getConversionP1GND();
       break;
     case 2:
-      adc0.setMultiplexer(ADS1115_MUX_P2_NG);
+      adc0.getConversionP2GND();
       break;
     case 3:
-      adc0.setMultiplexer(ADS1115_MUX_P3_NG);
+      adc0.getConversionP3GND();
        break;
      }
-   return adc0.getConversion(true);
 }
 
 boolean ads1115_detect()
@@ -96,6 +95,8 @@ boolean ads1115_detect()
     if(adc0.testConnection()) {
       adc0.initialize();
       adc0.setGain(ADS1115_PGA_2P048); // Set the gain (PGA) +/-4.096V
+      adc0.setRate(ADS1115_RATE_860);
+      adc0.setMode(ADS1115_MODE_CONTINUOUS);
       success = true;
       ads1115type = 1;
       strcpy(ads1115stype, "ADS1115");
@@ -120,13 +121,16 @@ void ads1115_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
   if (!ads1115type) {
     return;
   }
-
+  char log[LOGSZ];
   char stemp1[10];
   byte dsxflg = 0;
 
   for (byte i = 0; i < 4; i++) {
-    int16_t val = ads1115_getConversion(i);
-    if (!dsxflg) {
+    int32_t val;
+
+    val = ads1115_getConversion(i);
+
+    if (!dsxflg  ) {
       snprintf_P(svalue, ssvalue, PSTR("%s, \"%s\":{"), svalue, ads1115stype);
       *djson = 1;
       stemp1[0] = '\0';
@@ -134,6 +138,7 @@ void ads1115_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
     dsxflg++;
     snprintf_P(svalue, ssvalue, PSTR("%s%s\"AnalogInput%d\":%d"), svalue, stemp1, i, val);
     strcpy(stemp1, ", ");
+
   }
   *djson = 1;
   if (dsxflg) {

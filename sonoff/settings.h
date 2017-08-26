@@ -19,7 +19,7 @@
 
 #define PARAM8_SIZE  23                    // Number of param bytes
 
-typedef union {                            // Restricted by MISRA-C Rule 18.4 but so usefull...    
+typedef union {                            // Restricted by MISRA-C Rule 18.4 but so usefull...
   uint32_t data;                           // Allow bit manipulation using SetOption
   struct {
     uint32_t savestate : 1;                // bit 0
@@ -58,7 +58,7 @@ struct SYSCFG {
   unsigned long bootcount;
   sysBitfield   flag;                      // Add flag since 5.0.2
   int16_t       savedata;
-  
+
   int8_t        timezone;
   char          otaUrl[101];
 
@@ -98,7 +98,7 @@ struct SYSCFG {
 
   uint8_t       param[PARAM8_SIZE];        // was domoticz_in_topic until 5.1.6
   char          state_text[4][11];         // was domoticz_out_topic until 5.1.6
-  
+
   uint16_t      domoticz_update_timer;
   unsigned long domoticz_relay_idx[4];
   unsigned long domoticz_key_idx[4];
@@ -106,6 +106,7 @@ struct SYSCFG {
   unsigned long hlw_pcal;
   unsigned long hlw_ucal;
   unsigned long hlw_ical;
+  unsigned long uptime;
   unsigned long hlw_kWhtoday;
   unsigned long hlw_kWhyesterday;
   uint16_t      hlw_kWhdoy;
@@ -202,10 +203,10 @@ struct SYSCFG {
   unsigned long pCounter[MAX_COUNTERS];
   uint16_t      pCounterType;
   uint16_t      pCounterDebounce;
-   
+
   // 5.4.1
   uint8_t       sfb_code[17][9];
-  
+
   uint8_t       pcf8574_config[8];
   uint8_t       all_relays_inverted;
   uint16_t      deepsleep;
@@ -214,14 +215,14 @@ struct SYSCFG {
 struct RTCMEM {
   uint16_t      valid;
   byte          osw_flag;
-  uint32_t       power;
+  uint32_t      power;
+  unsigned long uptime;
   unsigned long hlw_kWhtoday;
   unsigned long hlw_kWhtotal;
   unsigned long pCounter[MAX_COUNTERS];
 } rtcMem;
 
-// See issue https://github.com/esp8266/Arduino/issues/2913  
+// See issue https://github.com/esp8266/Arduino/issues/2913
 #ifdef USE_ADC_VCC
   ADC_MODE(ADC_VCC);                        // Set ADC input for Power Supply Voltage usage
 #endif
-
