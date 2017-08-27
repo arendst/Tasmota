@@ -63,6 +63,7 @@ unsigned long hlw_Ecntr;
 unsigned long hlw_EDcntr;
 unsigned long hlw_kWhtoday;
 uint32_t hlw_lasttime;
+boolean hlw_load_off;
 
 unsigned long hlw_cf1u_pcntmax;
 unsigned long hlw_cf1i_pcntmax;
@@ -76,10 +77,18 @@ void hlw_cf1_interrupt() ICACHE_RAM_ATTR;
 
 void hlw_cf_interrupt()  // Service Power
 {
-  hlw_cf_plen = micros() - hlw_cf_last;
-  hlw_cf_last = micros();
-  hlw_EDcntr++;
-  hlw_Ecntr++;
+  unsigned long us = micros();
+
+  if (hlw_load_off) {
+    // Restart the plen measurement
+    hlw_cf_last = us;
+    hlw_load_off = false;
+  } else {
+    hlw_cf_plen = us - hlw_cf_last;
+    hlw_cf_last = us;
+    hlw_EDcntr++;
+    hlw_Ecntr++;
+  }
 }
 
 void hlw_cf1_interrupt()  // Service Voltage and Current
@@ -133,6 +142,12 @@ void hlw_200mS()
     }
   }
 
+  if (micros() - hlw_cf_last > 10000000) {
+    // Assume that load is switched off
+    hlw_cf_plen = 0;
+    hlw_load_off = true;
+  }
+
   hlw_cf1_timer++;
   if (hlw_cf1_timer >= 8) {
     hlw_cf1_timer = 0;
@@ -181,9 +196,6 @@ void hlw_readEnergy(byte option, float &et, float &ed, float &e, float &w, float
 //snprintf_P(log, sizeof(log), PSTR("HLW: CF %d, CF1U %d (%d), CF1I %d (%d)"), hlw_cf_plen, hlw_cf1u_plen, hlw_cf1u_pcntmax, hlw_cf1i_plen, hlw_cf1i_pcntmax);
 //addLog(LOG_LEVEL_DEBUG, log);
 
-  if (!(power &1)) {
-    hlw_cf_plen = 0;  // Powered off
-  }
   et = (float)(rtcMem.hlw_kWhtotal + (cur_kWhtoday / 1000)) / 100000;
   ed = 0;
   if (cur_kWhtoday) {
@@ -210,17 +222,19 @@ void hlw_readEnergy(byte option, float &et, float &ed, float &e, float &w, float
     }
   }
   w = 0;
-  if (hlw_cf_plen) {
+  if (hlw_cf_plen && (power &1) && !hlw_load_off) {
     hlw_w = (HLW_PREF * sysCfg.hlw_pcal) / hlw_cf_plen;
     w = (float)hlw_w / 10;
   }
   u = 0;
-  if (hlw_cf1u_plen && w) {
+  if (hlw_cf1u_plen && (power &1)) {
+    // Report on voltage even if load is switched off
     hlw_u = (HLW_UREF * sysCfg.hlw_ucal) / hlw_cf1u_plen;
     u = (float)hlw_u / 10;
   }
   i = 0;
   if (hlw_cf1i_plen && w) {
+    // Zero current if no power being consumed
     hlw_i = (HLW_IREF * sysCfg.hlw_ical) / hlw_cf1i_plen;
     i = (float)hlw_i / 1000;
   }
@@ -250,6 +264,7 @@ void hlw_init()
   hlw_cf1i_plen = 0;
   hlw_cf1u_pcntmax = 0;
   hlw_cf1i_pcntmax = 0;
+  hlw_load_off = true;
 
   hlw_Ecntr = 0;
   hlw_EDcntr = 0;
