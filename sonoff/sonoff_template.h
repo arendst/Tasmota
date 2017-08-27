@@ -605,6 +605,14 @@ const mytmplt modules[MAXMODULE] PROGMEM = {
      GPIO_LED1_INV,    // GPIO13 Blue Led (0 = On, 1 = Off)
      0, 0, 0, 0
   },
+  { "Yunshan Relay",   // Yunshan Wifi Relay https://ucexperiment.wordpress.com/2016/12/18/yunshan-esp8266-250v-15a-acdc-network-wifi-relay-module/
+     0, 0,              
+     GPIO_LED1_INV,    // GPIO02 Module Pin 7
+     0,               
+     GPIO_REL1,        // GPIO04 Module Pin 10
+     GPIO_KEY1,        // GPIO05 Module Pin 9
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+  },
   { "Supla Espablo",   // Supla Espablo (ESP8266) - http://www.wykop.pl/ramka/3325399/diy-supla-do-puszki-instalacyjnej-podtynkowej-supla-org/
      0,                // GPIO00 Flash jumper
      GPIO_USER,        // GPIO01 Serial RXD and Optional sensor
