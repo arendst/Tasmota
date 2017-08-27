@@ -156,6 +156,7 @@ enum module_t {
   SONOFF_T11,
   SONOFF_T12,
   SONOFF_T13,
+  YUNSHAN,
   SUPLA1,
   MAXMODULE };
 
@@ -199,6 +200,7 @@ const uint8_t nicelist[MAXMODULE] PROGMEM = {
   ELECTRODRAGON,
   EXS_RELAY,
   SUPLA1,
+  YUNSHAN,
   WION,
   H801,
   HUAFAN_SS,
