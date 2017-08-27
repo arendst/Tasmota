@@ -25,7 +25,7 @@
     - Select IDE Tools - Flash Size: "1M (no SPIFFS)"
   ====================================================*/
 
-#define VERSION                0x05060105  // 5.6.1e
+#define VERSION                0x05060106  // 5.6.1f
 
 enum log_t   {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG_MORE, LOG_LEVEL_ALL};
 enum week_t  {Last, First, Second, Third, Fourth};
@@ -730,7 +730,7 @@ boolean mqtt_command(boolean grpflg, char *type, uint16_t index, char *dataBuf, 
       strlcpy(sysCfg.mqtt_user, (!strcmp(dataBuf,"0")) ? "" : (1 == payload) ? MQTT_USER : dataBuf, sizeof(sysCfg.mqtt_user));
       restartflag = 2;
     }
-    snprintf_P(svalue, ssvalue, PSTR("[\"MqttUser\":\"%s\"}"), sysCfg.mqtt_user);
+    snprintf_P(svalue, ssvalue, PSTR("{\"MqttUser\":\"%s\"}"), sysCfg.mqtt_user);
   }
   else if (!strcmp_P(type,PSTR("MQTTPASSWORD"))) {
     if ((data_len > 0) && (data_len < sizeof(sysCfg.mqtt_pwd))) {

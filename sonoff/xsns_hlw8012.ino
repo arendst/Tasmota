@@ -31,6 +31,8 @@
 #define HLW_UREF             2200    // 220.0V
 #define HLW_IREF             4545    // 4.545A
 
+#define HLW_POWER_PROBE_TIME   10    // Number of seconds to probe for power before deciding none used
+
 byte hlw_pminflg = 0;
 byte hlw_pmaxflg = 0;
 byte hlw_uminflg = 0;
@@ -48,6 +50,7 @@ byte hlw_mkwh_state = 0;
 #endif  // FEATURE_POWER_LIMIT
 
 byte hlw_SELflag;
+byte hlw_load_off;
 byte hlw_cf1_timer;
 byte hlw_fifth_second;
 byte hlw_startup;
@@ -76,16 +79,25 @@ void hlw_cf1_interrupt() ICACHE_RAM_ATTR;
 
 void hlw_cf_interrupt()  // Service Power
 {
-  hlw_cf_plen = micros() - hlw_cf_last;
-  hlw_cf_last = micros();
-  hlw_EDcntr++;
-  hlw_Ecntr++;
+  unsigned long us = micros();
+
+  if (hlw_load_off) {  // Restart plen measurement
+    hlw_cf_last = us;
+    hlw_load_off = 0;
+  } else {
+    hlw_cf_plen = us - hlw_cf_last;
+    hlw_cf_last = us;
+    hlw_EDcntr++;
+    hlw_Ecntr++;
+  }
 }
 
 void hlw_cf1_interrupt()  // Service Voltage and Current
 {
-  hlw_cf1_plen = micros() - hlw_cf1_last;
-  hlw_cf1_last = micros();
+  unsigned long us = micros();
+
+  hlw_cf1_plen = us - hlw_cf1_last;
+  hlw_cf1_last = us;
   if ((hlw_cf1_timer > 2) && (hlw_cf1_timer < 8)) {  // Allow for 300 mSec set-up time and measure for up to 1 second
     hlw_cf1_ptot += hlw_cf1_plen;
     hlw_cf1_pcnt++;
@@ -131,6 +143,11 @@ void hlw_200mS()
         hlw_startup = 0;
       }
     }
+  }
+
+  if (micros() - hlw_cf_last > (HLW_POWER_PROBE_TIME * 1000000)) {
+    hlw_cf_plen = 0;    // No load for some time
+    hlw_load_off = 1;
   }
 
   hlw_cf1_timer++;
@@ -181,9 +198,6 @@ void hlw_readEnergy(byte option, float &et, float &ed, float &e, float &w, float
 //snprintf_P(log, sizeof(log), PSTR("HLW: CF %d, CF1U %d (%d), CF1I %d (%d)"), hlw_cf_plen, hlw_cf1u_plen, hlw_cf1u_pcntmax, hlw_cf1i_plen, hlw_cf1i_pcntmax);
 //addLog(LOG_LEVEL_DEBUG, log);
 
-  if (!(power &1)) {
-    hlw_cf_plen = 0;  // Powered off
-  }
   et = (float)(rtcMem.hlw_kWhtotal + (cur_kWhtoday / 1000)) / 100000;
   ed = 0;
   if (cur_kWhtoday) {
@@ -210,17 +224,17 @@ void hlw_readEnergy(byte option, float &et, float &ed, float &e, float &w, float
     }
   }
   w = 0;
-  if (hlw_cf_plen) {
+  if (hlw_cf_plen  && (power &1) && !hlw_load_off) {
     hlw_w = (HLW_PREF * sysCfg.hlw_pcal) / hlw_cf_plen;
     w = (float)hlw_w / 10;
   }
   u = 0;
-  if (hlw_cf1u_plen && w) {
+  if (hlw_cf1u_plen && (power &1)) {     // If powered on always provide voltage
     hlw_u = (HLW_UREF * sysCfg.hlw_ucal) / hlw_cf1u_plen;
     u = (float)hlw_u / 10;
   }
   i = 0;
-  if (hlw_cf1i_plen && w) {
+  if (hlw_cf1i_plen && w) {             // No current if no power being consumed
     hlw_i = (HLW_IREF * sysCfg.hlw_ical) / hlw_cf1i_plen;
     i = (float)hlw_i / 1000;
   }
@@ -251,6 +265,7 @@ void hlw_init()
   hlw_cf1u_pcntmax = 0;
   hlw_cf1i_pcntmax = 0;
 
+  hlw_load_off = 1;
   hlw_Ecntr = 0;
   hlw_EDcntr = 0;
   hlw_kWhtoday = (RTC_Valid()) ? rtcMem.hlw_kWhtoday : 0;
