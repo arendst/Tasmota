@@ -160,6 +160,7 @@ enum module_t {
   SONOFF_T11,
   SONOFF_T12,
   SONOFF_T13,
+  SUPLA1,
   MAXMODULE };
 
 /********************************************************************************************/
@@ -174,6 +175,40 @@ typedef struct MYTMPLT {
   char         name[15];
   myio         gp;  
 } mytmplt;
+
+const uint8_t nicelist[MAXMODULE] PROGMEM = {
+  SONOFF_BASIC,
+  SONOFF_RF,
+  SONOFF_TH,
+  SONOFF_DUAL,
+  SONOFF_POW,
+  SONOFF_4CH,
+  SONOFF_4CHPRO,
+  SONOFF_SV,
+  SONOFF_DEV,
+  S20,
+  SLAMPHER,
+  SONOFF_TOUCH,
+  SONOFF_T11,
+  SONOFF_T12,
+  SONOFF_T13,
+  SONOFF_SC,
+  SONOFF_B1,
+  SONOFF_LED,
+  SONOFF_BN,
+  SONOFF_BRIDGE,
+  CH1,
+  CH4,
+  MOTOR,
+  ELECTRODRAGON,
+  EXS_RELAY,
+  SUPLA1,
+  WION,
+  H801,
+  HUAFAN_SS,
+  AILIGHT,
+  WEMOS
+};
 
 // Default module settings
 const mytmplt modules[MAXMODULE] PROGMEM = {
@@ -532,17 +567,15 @@ const mytmplt modules[MAXMODULE] PROGMEM = {
      0, 0
   },
   { "Sonoff T1 1CH",   // Sonoff T1 1CH (ESP8285)
-     0,
+     GPIO_KEY1,        // GPIO00 Button 1
      GPIO_USER,        // GPIO01 Serial RXD and Optional sensor
      0,
      GPIO_USER,        // GPIO03 Serial TXD and Optional sensor
-     0,
-     GPIO_REL1,        // GPIO05 Blue Led and Relay 1 (0 = Off, 1 = On)
+     0, 0,
      0, 0, 0,          // Flash connection
-     GPIO_KEY1,        // GPIO09 Button 1
-     0,
+     0, 0,
      0,                // Flash connection
-     0,
+     GPIO_REL1,        // GPIO12 Blue Led and Relay 1 (0 = Off, 1 = On)
      GPIO_LED1_INV,    // GPIO13 Blue Led (0 = On, 1 = Off)
      0, 0, 0, 0
   },
@@ -551,11 +584,11 @@ const mytmplt modules[MAXMODULE] PROGMEM = {
      GPIO_USER,        // GPIO01 Serial RXD and Optional sensor
      0,
      GPIO_USER,        // GPIO03 Serial TXD and Optional sensor
-     GPIO_REL2,        // GPIO04 Blue Led and Relay 2 (0 = Off, 1 = On)
      0,
+     GPIO_REL2,        // GPIO05 Blue Led and Relay 2 (0 = Off, 1 = On)
      0, 0, 0,          // Flash connection
+     GPIO_KEY2,        // GPIO09 Button 2
      0,
-     GPIO_KEY2,        // GPIO10 Button 2
      0,                // Flash connection
      GPIO_REL1,        // GPIO12 Blue Led and Relay 1 (0 = Off, 1 = On)
      GPIO_LED1_INV,    // GPIO13 Blue Led (0 = On, 1 = Off)
@@ -575,6 +608,21 @@ const mytmplt modules[MAXMODULE] PROGMEM = {
      GPIO_REL1,        // GPIO12 Blue Led and Relay 1 (0 = Off, 1 = On)
      GPIO_LED1_INV,    // GPIO13 Blue Led (0 = On, 1 = Off)
      0, 0, 0, 0
+  },
+  { "Supla Espablo",   // Supla Espablo (ESP8266) - http://www.wykop.pl/ramka/3325399/diy-supla-do-puszki-instalacyjnej-podtynkowej-supla-org/
+     0,                // GPIO00 Flash jumper
+     GPIO_USER,        // GPIO01 Serial RXD and Optional sensor
+     GPIO_DSB,         // GPIO02 DS18B20 sensor
+     GPIO_USER,        // GPIO03 Serial TXD and Optional sensor
+     GPIO_KEY1,        // GPIO04 Button 1
+     GPIO_REL1,        // GPIO05 Relay 1 (0 = Off, 1 = On)
+     0, 0, 0, 0, 0, 0, // Flash connection
+     GPIO_USER,        // GPIO12 Optional sensor
+     GPIO_REL2,        // GPIO13 Relay 2 (0 = Off, 1 = On)
+     GPIO_USER,        // GPIO14 Optional sensor
+     0,
+     GPIO_LED1,        // GPIO16 Led (1 = On, 0 = Off)
+     GPIO_ADC0         // ADC0 A0 Analog input
   }
 };
 

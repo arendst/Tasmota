@@ -130,7 +130,7 @@ const char HTTP_SCRIPT_CONSOL[] PROGMEM =
     "return false;"
   "}"
   "</script>";
-const char HTTP_SCRIPT_MODULE[] PROGMEM =
+const char HTTP_SCRIPT_MODULE1[] PROGMEM =
   "var os;"
   "function sk(s,g){"
     "var o=os.replace(\"value='\"+s+\"'\",\"selected value='\"+s+\"'\");"
@@ -138,6 +138,11 @@ const char HTTP_SCRIPT_MODULE[] PROGMEM =
   "}"
   "function sl(){"
     "var o0=\"";
+const char HTTP_SCRIPT_MODULE2[] PROGMEM =
+    "}1'%d'>%02d %s}2";     // "}1" and "}2" means do not use "}" in Module name and Sensor name
+const char HTTP_SCRIPT_MODULE3[] PROGMEM =
+    "\";"
+    "os=o0.replace(/}1/g,\"<option value=\").replace(/}2/g,\"</option>\");";
 const char HTTP_MSG_RSTRT[] PROGMEM =
   "<br/><div style='text-align:center;'>Device will restart in a few seconds</div><br/>";
 const char HTTP_BTN_MENU1[] PROGMEM =
@@ -172,7 +177,7 @@ const char HTTP_BTN_CONF[] PROGMEM =
 const char HTTP_FORM_MODULE[] PROGMEM =
   "<fieldset><legend><b>&nbsp;Module parameters&nbsp;</b></legend><form method='get' action='sv'>"
   "<input id='w' name='w' value='6' hidden><input id='r' name='r' value='1' hidden>"
-  "<br/><b>Module type</b> ({mt})<br/><select id='mt' name='mt'>";
+  "<br/><b>Module type</b> ({mt})<br/><select id='g99' name='g99'></select></br>";
 const char HTTP_LNK_ITEM[] PROGMEM =
   "<div><a href='#p' onclick='c(this)'>{v}</a>&nbsp;<span class='q'>{i} {r}%</span></div>";
 const char HTTP_LNK_SCAN[] PROGMEM =
@@ -205,7 +210,7 @@ const char HTTP_FORM_LOG2[] PROGMEM =
   "<option{a2value='2'>2 Info</option>"
   "<option{a3value='3'>3 Debug</option>"
   "<option{a4value='4'>4 More debug</option>"
-  "</select></br>";
+  "</select></br>";  
 const char HTTP_FORM_LOG3[] PROGMEM =
   "<br/><b>Syslog host</b> (" SYS_LOG_HOST ")<br/><input id='lh' name='lh' length=32 placeholder='" SYS_LOG_HOST "' value='{l2}'><br/>"
   "<br/><b>Syslog port</b> (" STR(SYS_LOG_PORT) ")<br/><input id='lp' name='lp' length=5 placeholder='" STR(SYS_LOG_PORT) "' value='{l3}'><br/>"
@@ -471,7 +476,7 @@ void handleRoot()
       }
       page += F("</tr></table>");
     }
-
+    
     if (HTTP_ADMIN == _httpflag) {
       page += FPSTR(HTTP_BTN_MENU1);
       page += FPSTR(HTTP_BTN_RSTRT);
@@ -482,8 +487,8 @@ void handleRoot()
 
 void handleAjax2()
 {
-  char svalue[16];
-
+  char svalue[50];
+  
   if (strlen(webServer->arg("o").c_str())) {
     do_cmnd_power(atoi(webServer->arg("o").c_str()), 2);
   }
@@ -499,9 +504,15 @@ void handleAjax2()
     snprintf_P(svalue, sizeof(svalue), PSTR("rfkey%s"), webServer->arg("k").c_str());
     do_cmnd(svalue);
   }
-
+  
   String tpage = "";
   tpage += counter_webPresent();
+#ifndef USE_ADC_VCC
+  if (pin[GPIO_ADC0] < 99) {
+    snprintf_P(svalue, sizeof(svalue), PSTR("<tr><th>AnalogInput0</th><td>%d</td></tr>"), getAdc0());
+    tpage += svalue;
+  }
+#endif
   if (hlw_flg) {
     tpage += hlw_webPresent();
   }
@@ -544,7 +555,7 @@ void handleAjax2()
     tpage += ads1115_webPresent();
 #endif
   }
-#endif  // USE_I2C
+#endif  // USE_I2C    
   String page = "";
   if (tpage.length() > 0) {
     page += FPSTR(HTTP_TABLE100);
@@ -606,7 +617,7 @@ void handleConfig()
 boolean inModule(byte val, uint8_t *arr)
 {
   int offset = 0;
-
+  
   if (!val) {
     return false;  // None
   }
@@ -650,50 +661,52 @@ void handleModule()
   if (httpUser()) {
     return;
   }
-  char stemp[20], line[128];
-
+  char stemp[20];
+  char line[128];
+  uint8_t midx;
+  
   addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Module config"));
 
   String page = FPSTR(HTTP_HEAD);
   page.replace(F("{v}"), F("Config module"));
   page += FPSTR(HTTP_FORM_MODULE);
-
   snprintf_P(stemp, sizeof(stemp), modules[MODULE].name);
   page.replace(F("{mt}"), stemp);
 
-  for (byte i = 0; i < MAXMODULE; i++) {
-    snprintf_P(stemp, sizeof(stemp), modules[i].name);
-    snprintf_P(line, sizeof(line), PSTR("<option%s value='%d'>%02d %s</option>"),
-      (i == sysCfg.module) ? " selected" : "", i, i +1, stemp);
-    page += line;
-  }
-  page += F("</select></br>");
-
   mytmplt cmodule;
   memcpy_P(&cmodule, &modules[sysCfg.module], sizeof(cmodule));
-
-  String func = FPSTR(HTTP_SCRIPT_MODULE);
+  
+  String func = FPSTR(HTTP_SCRIPT_MODULE1);
+  for (byte i = 0; i < MAXMODULE; i++) {
+    midx = pgm_read_byte(nicelist + i);
+    snprintf_P(stemp, sizeof(stemp), modules[midx].name);
+    snprintf_P(line, sizeof(line), HTTP_SCRIPT_MODULE2, midx, midx +1, stemp);
+    func += line;
+  }
+  func += FPSTR(HTTP_SCRIPT_MODULE3);
+  snprintf_P(line, sizeof(line), PSTR("sk(%d,99);o0=\""), sysCfg.module);  // g99
+  func += line;
   for (byte j = 0; j < GPIO_SENSOR_END; j++) {
     if (!inModule(j, cmodule.gp.io)) {
       snprintf_P(stemp, sizeof(stemp), sensors[j]);
-      snprintf_P(line, sizeof(line), PSTR("-1'%d'>%02d %s-2"), j, j, stemp);
+      snprintf_P(line, sizeof(line), HTTP_SCRIPT_MODULE2, j, j, stemp);
       func += line;
     }
   }
-  func += F("\";os=o0.replace(/-1/g,\"<option value=\").replace(/-2/g,\"</option>\");");
+  func += FPSTR(HTTP_SCRIPT_MODULE3);
   for (byte i = 0; i < MAX_GPIO_PIN; i++) {
     if (GPIO_USER == cmodule.gp.io[i]) {
       snprintf_P(line, sizeof(line), PSTR("<br/><b>GPIO%d</b> %s<select id='g%d' name='g%d'></select></br>"),
           i, (0==i)?"D3":(1==i)?"D10":(2==i)?"D4":(3==i)?"D9":(4==i)?"D2":(5==i)?"D1":(12==i)?"D6":(13==i)?"D7":(14==i)?"D5":(15==i)?"D8":(16==i)?"D0":"", i, i);
       page += line;
-      snprintf_P(line, sizeof(line), PSTR("sk(%d,%d);"), my_module.gp.io[i], i);
+      snprintf_P(line, sizeof(line), PSTR("sk(%d,%d);"), my_module.gp.io[i], i);  // g0 - g16
       func += line;
     }
   }
   func += F("}</script>");
   page.replace(F("</script>"), func);
   page.replace(F("<body>"), F("<body onload='sl()'>"));
-
+  
   page += FPSTR(HTTP_FORM_END);
   page += FPSTR(HTTP_BTN_CONF);
   showPage(page);
@@ -1043,7 +1056,7 @@ void handleSave()
   #endif  // USE_PCF8574
 
   case 6:
-    byte new_module = (!strlen(webServer->arg("mt").c_str())) ? MODULE : atoi(webServer->arg("mt").c_str());
+    byte new_module = (!strlen(webServer->arg("g99").c_str())) ? MODULE : atoi(webServer->arg("g99").c_str());
     byte new_modflg = (sysCfg.module != new_module);
     sysCfg.module = new_module;
     mytmplt cmodule;
@@ -1181,7 +1194,7 @@ void handleUploadDone()
 
   char error[80];
   char log[LOGSZ];
-
+  
   WIFI_configCounter();
   restartflag = 0;
   mqttcounter = 0;
@@ -1430,7 +1443,7 @@ void handleAjax()
     do_cmnd(svalue);
     syslog_level = syslog_now;
   }
-
+  
   if (strlen(webServer->arg("c2").c_str())) {
     counter = atoi(webServer->arg("c2").c_str());
   }
@@ -1526,7 +1539,7 @@ void handleInfo()
 
     getTopic_P(stopic, 0, sysCfg.mqtt_topic, "");
     page += F("<tr><th>MQTT Full Topic</th><td>"); page += stopic; page += F("</td></tr>");
-
+    
   } else {
     page += F("<tr><th>MQTT</th><td>Disabled</td></tr>");
   }
@@ -1546,7 +1559,7 @@ void handleInfo()
   page += F("Disabled");
 #endif // USE_EMULATION
   page += F("</td></tr>");
-
+  
   page += F("<tr><th>mDNS Discovery</th><td>");
 #ifdef USE_DISCOVERY
   page += F("Enabled");
@@ -1604,7 +1617,7 @@ void handleNotFound()
     return;
   }
 
-#ifdef USE_EMULATION
+#ifdef USE_EMULATION  
   String path = webServer->uri();
   if ((EMUL_HUE == sysCfg.flag.emulation) && (path.startsWith("/api"))) {
     handle_hue_api(&path);

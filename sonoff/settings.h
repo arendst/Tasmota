@@ -19,7 +19,7 @@
 
 #define PARAM8_SIZE  23                    // Number of param bytes
 
-typedef union {                            // Restricted by MISRA-C Rule 18.4 but so usefull...
+typedef union {                            // Restricted by MISRA-C Rule 18.4 but so usefull...    
   uint32_t data;                           // Allow bit manipulation using SetOption
   struct {
     uint32_t savestate : 1;                // bit 0
@@ -36,12 +36,12 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t button_swap : 1;              // bit 11 (v5.1.6)
     uint32_t stop_flash_rotate : 1;        // bit 12 (v5.2.0)
     uint32_t button_single : 1;            // bit 13 (v5.4.0)
-    uint32_t spare14 : 1;
+    uint32_t interlock : 1;                // bit 14 (v5.6.0)
     uint32_t spare15 : 1;
     uint32_t spare16 : 1;
     uint32_t spare17 : 1;
     uint32_t spare18 : 1;
-    uint32_t spare19 : 1;
+    uint32_t wattage_resolution : 1;
     uint32_t voltage_resolution : 1;
     uint32_t emulation : 2;
     uint32_t energy_resolution : 3;
@@ -58,7 +58,7 @@ struct SYSCFG {
   unsigned long bootcount;
   sysBitfield   flag;                      // Add flag since 5.0.2
   int16_t       savedata;
-
+  
   int8_t        timezone;
   char          otaUrl[101];
 
@@ -98,7 +98,7 @@ struct SYSCFG {
 
   uint8_t       param[PARAM8_SIZE];        // was domoticz_in_topic until 5.1.6
   char          state_text[4][11];         // was domoticz_out_topic until 5.1.6
-
+  
   uint16_t      domoticz_update_timer;
   unsigned long domoticz_relay_idx[4];
   unsigned long domoticz_key_idx[4];
