@@ -506,6 +506,7 @@ void CFG_DefaultSet2()
   // 5.4.1
   memcpy_P(sysCfg.sfb_code[0], sfb_codeDefault, 9);
 
+  sysCfg.deepsleep = 0;
 }
 
 /********************************************************************************************/

@@ -1922,6 +1922,9 @@ void sensors_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
 #ifdef USE_BH1750
     bh1750_mqttPresent(svalue, ssvalue, djson);
 #endif  // USE_BH1750
+#ifdef USE_CHIRP
+    chirp_mqttPresent(svalue, ssvalue, djson);
+#endif  // USE_CHIRP
 #ifdef USE_ADS1115
     ads1115_mqttPresent(svalue, ssvalue, djson);
 #endif  // USE_ADS1115
@@ -2020,6 +2023,9 @@ void every_second()
 #ifdef USE_BH1750
         bh1750_detect();
 #endif  // USE_BH1750
+#ifdef USE_CHIRP
+        chirp_detect();
+#endif  // USE_CHIRP
 #ifdef USE_ADS1115
         ads1115_detect();
 #endif  // USE_ADS1115
