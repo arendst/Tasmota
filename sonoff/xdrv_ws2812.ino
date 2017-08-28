@@ -22,7 +22,7 @@
  * WS2812 Leds using NeopixelBus library
 \*********************************************************************************************/
 
-#include <NeoPixelBus.h>
+//#include <NeoPixelBus.h>  // Global defined as also used by Sonoff Led
 
 #ifdef USE_WS2812_DMA
 #if (USE_WS2812_CTYPE == 1)
@@ -145,37 +145,6 @@ void ws2812_setColor(uint16_t led, char* colstr)
   }
 }
 
-void ws2812_replaceHSB(String *response)
-{
-  ws2812_setDim(sysCfg.ws_dimmer);
-  HsbColor hsb = HsbColor(dcolor);
-  response->replace("{h}", String((uint16_t)(65535.0f * hsb.H)));
-  response->replace("{s}", String((uint8_t)(254.0f * hsb.S)));
-  response->replace("{b}", String((uint8_t)(254.0f * hsb.B)));
-}
-
-void ws2812_getHSB(float *hue, float *sat, float *bri)
-{
-  ws2812_setDim(sysCfg.ws_dimmer);
-  HsbColor hsb = HsbColor(dcolor);
-  *hue = hsb.H;
-  *sat = hsb.S;
-  *bri = hsb.B;
-}
-
-void ws2812_setHSB(float hue, float sat, float bri)
-{
-  char rgb[7];
-  
-  HsbColor hsb;
-  hsb.H = hue;
-  hsb.S = sat;
-  hsb.B = bri;
-  RgbColor tmp = RgbColor(hsb);
-  sprintf(rgb,"%02X%02X%02X", tmp.R, tmp.G, tmp.B);
-  ws2812_setColor(0,rgb);
-}
-
 void ws2812_getColor(uint16_t led, char* svalue, uint16_t ssvalue)
 {
   RgbColor mcolor;
@@ -259,18 +228,18 @@ void ws2812_clock()
   ws2812_stripShow();
 }
 
-void ws2812_gradientColor(struct wsColor* mColor, uint8_t range, uint8_t gradRange, uint8_t i)
+void ws2812_gradientColor(struct wsColor* mColor, uint16_t range, uint16_t gradRange, uint16_t i)
 {
 /*
  * Compute the color of a pixel at position i using a gradient of the color scheme.
  * This function is used internally by the gradient function.
  */
   ColorScheme scheme = schemes[sysCfg.ws_scheme -3];
-  uint8_t curRange = i / range;
-  uint8_t rangeIndex = i % range;
-  uint8_t colorIndex = rangeIndex / gradRange;
-  uint8_t start = colorIndex;
-  uint8_t end = colorIndex +1;
+  uint16_t curRange = i / range;
+  uint16_t rangeIndex = i % range;
+  uint16_t colorIndex = rangeIndex / gradRange;
+  uint16_t start = colorIndex;
+  uint16_t end = colorIndex +1;
   if (curRange % 2 != 0) {
     start = (scheme.count -1) - start;
     end = (scheme.count -1) - end;
@@ -299,9 +268,9 @@ void ws2812_gradient()
   }
 
   uint8_t repeat = repeatValues[sysCfg.ws_width];  // number of scheme.count per ledcount
-  uint8_t range = (uint8_t)ceil((float)sysCfg.ws_pixels / (float)repeat);
-  uint8_t gradRange = (uint8_t)ceil((float)range / (float)(scheme.count - 1));
-  uint8_t offset = speedValues[sysCfg.ws_speed] > 0 ? stripTimerCntr / speedValues[sysCfg.ws_speed] : 0;
+  uint16_t range = (uint16_t)ceil((float)sysCfg.ws_pixels / (float)repeat);
+  uint16_t gradRange = (uint16_t)ceil((float)range / (float)(scheme.count - 1));
+  uint16_t offset = speedValues[sysCfg.ws_speed] > 0 ? stripTimerCntr / speedValues[sysCfg.ws_speed] : 0;
 
   wsColor oldColor, currentColor;
   ws2812_gradientColor(&oldColor, range, gradRange, offset);
@@ -340,7 +309,7 @@ void ws2812_bars()
 
   ColorScheme scheme = schemes[sysCfg.ws_scheme -3];
 
-  uint8_t maxSize = sysCfg.ws_pixels / scheme.count;
+  uint16_t maxSize = sysCfg.ws_pixels / scheme.count;
   if (widthValues[sysCfg.ws_width] > maxSize) {
     maxSize = 0;
   }
@@ -502,6 +471,41 @@ void ws2812_init(uint8_t powerbit)
 #endif  // USE_WS2812_DMA
   strip->Begin();
   ws2812_pixels();
+}
+
+/*********************************************************************************************\
+ * Hue support
+\*********************************************************************************************/
+
+void ws2812_replaceHSB(String *response)
+{
+  ws2812_setDim(sysCfg.ws_dimmer);
+  HsbColor hsb = HsbColor(dcolor);
+  response->replace("{h}", String((uint16_t)(65535.0f * hsb.H)));
+  response->replace("{s}", String((uint8_t)(254.0f * hsb.S)));
+  response->replace("{b}", String((uint8_t)(254.0f * hsb.B)));
+}
+
+void ws2812_getHSB(float *hue, float *sat, float *bri)
+{
+  ws2812_setDim(sysCfg.ws_dimmer);
+  HsbColor hsb = HsbColor(dcolor);
+  *hue = hsb.H;
+  *sat = hsb.S;
+  *bri = hsb.B;
+}
+
+void ws2812_setHSB(float hue, float sat, float bri)
+{
+  char rgb[7];
+  
+  HsbColor hsb;
+  hsb.H = hue;
+  hsb.S = sat;
+  hsb.B = bri;
+  RgbColor tmp = RgbColor(hsb);
+  sprintf(rgb,"%02X%02X%02X", tmp.R, tmp.G, tmp.B);
+  ws2812_setColor(0,rgb);
 }
 
 /*********************************************************************************************\

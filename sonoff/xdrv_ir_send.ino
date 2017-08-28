@@ -261,7 +261,7 @@ boolean ir_hvac_mitsubishi(const char *HVAC_Mode,const char *HVAC_FanMode, boole
   mode = (p - HVACMODE +1) << 3;  // HOT = 0x08, DRY = 0x10, COOL = 0x18, AUTO = 0x20
   mitsubir->setMode(mode);
 
-  mitsubir->setPower(~HVAC_Power);
+  mitsubir->setPower(HVAC_Power);
 
   if (HVAC_FanMode == NULL) {
     p = (char*)FANSPEED;  // default FAN_SPEED_AUTO

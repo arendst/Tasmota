@@ -1,4 +1,29 @@
-/* 5.5.1 20170805
+/* 5.6.1 20170818
+ * Change module list order in webpage
+ * Fix Sonoff T1 1CH and 2CH configuration (#751)
+ *
+ * 5.6.0 20170818
+ * Fix Sonoff Pow intermittent exception 0
+ * Change Sonoff Pow sending Domoticz telemetry data only
+ * Add Ai-Thinker RGBW led (AiLight) (experimental)
+ * Add NeoPixelBus library to Sonoff Led for Hue support
+ * Add user configurable GPIO4 and GPIO5 to module Sonoff Bridge
+ * Add Sonoff B1 RGBCW led support with command Color RRGGBBCCWW (#676)
+ * Add command CT 152..500 to Sonoff Led and Sonoff B1 to control Color Temperature
+ * Add Cold-Warm slider to web page for Sonoff Led and Sonoff B1
+ * Add CT parameter to Hue
+ * Add Sonoff T1 support (#582)
+ * Add AnalogInput0 if configured as Analog Input to webpage (#697, #746)
+ * Add command SetOption14 0|1 to enable interlock mode (#719, #721)
+ * Fix Mitsubishi HVAC IR power controll (#740)
+ *
+ * 5.5.2 20170808
+ * Extent max number of WS2812 pixels from 256 to 512 (#667)
+ * Add OTA handling if server responds with no update available (#695)
+ * Removed undocumented command FlashMode (#696)
+ * Fix compile time error message due to increased message buffer size (#703)
+ *
+ * 5.5.1 20170805
  * Fix Sonoff Rf Bridge issues
  * Add Sonoff RF Bridge MQTT messages on received and learned RF signal
  * Add command VoltRes 0|1 to select voltage resolution to 0.1 V (#654)
