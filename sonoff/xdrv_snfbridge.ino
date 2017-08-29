@@ -21,9 +21,13 @@
   Sonoff RF Bridge 433
 \*********************************************************************************************/
 
+#define SFB_TIME_AVOID_DUPLICATE  2000  // Milliseconds
+
 uint8_t sfb_rcvflg = 0;
 uint8_t sfb_learnKey = 1;
 uint8_t sfb_learnFlg = 0;
+uint32_t sfb_lastrid = 0;
+unsigned long sfb_lasttime = 0;
 
 void sb_received()
 {
@@ -68,19 +72,25 @@ void sb_received()
     rlo = serialInBuf[3] << 8 | serialInBuf[4];  // Low time in uSec
     rhi = serialInBuf[5] << 8 | serialInBuf[6];  // High time in uSec
     rid = serialInBuf[7] << 16 | serialInBuf[8] << 8 | serialInBuf[9];
-    strcpy_P(rfkey, PSTR("\"None\""));
-    for (i = 1; i <= 16; i++) {
-      if (sysCfg.sfb_code[i][0]) {
-        sid = sysCfg.sfb_code[i][6] << 16 | sysCfg.sfb_code[i][7] << 8 | sysCfg.sfb_code[i][8];
-        if (sid == rid) {
-          snprintf_P(rfkey, sizeof(rfkey), PSTR("%d"), i);
-          break;
+
+    unsigned long now = millis();
+    if (!((rid == sfb_lastrid) && (now - sfb_lasttime < SFB_TIME_AVOID_DUPLICATE))) {
+      sfb_lastrid = rid;
+      sfb_lasttime = now;
+      strcpy_P(rfkey, PSTR("\"None\""));
+      for (i = 1; i <= 16; i++) {
+        if (sysCfg.sfb_code[i][0]) {
+          sid = sysCfg.sfb_code[i][6] << 16 | sysCfg.sfb_code[i][7] << 8 | sysCfg.sfb_code[i][8];
+          if (sid == rid) {
+            snprintf_P(rfkey, sizeof(rfkey), PSTR("%d"), i);
+            break;
+          }
         }
       }
+      snprintf_P(svalue, sizeof(svalue), PSTR("{\"RfReceived\":{\"Sync\":%d, \"Low\":%d, \"High\":%d, \"Data\":\"%06X\", \"RfKey\":%s}}"),
+        rsy, rlo, rhi, rid, rfkey);
+      mqtt_publish_topic_P(6, PSTR("RFRECEIVED"), svalue);
     }
-    snprintf_P(svalue, sizeof(svalue), PSTR("{\"RfReceived\":{\"Sync\":%d, \"Low\":%d, \"High\":%d, \"Data\":\"%06X\", \"RfKey\":%s}}"),
-      rsy, rlo, rhi, rid, rfkey);
-    mqtt_publish_topic_P(6, PSTR("RFRECEIVED"), svalue);
   }  
 }
 

@@ -25,7 +25,7 @@
     - Select IDE Tools - Flash Size: "1M (no SPIFFS)"
   ====================================================*/
 
-#define VERSION                0x05060106  // 5.6.1f
+#define VERSION                0x05060107  // 5.6.1g
 
 enum log_t   {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG_MORE, LOG_LEVEL_ALL};
 enum week_t  {Last, First, Second, Third, Fourth};
@@ -2863,6 +2863,14 @@ void setup()
       }
     }
   }
+
+  // Issue #526
+  for (byte i = 0; i < Maxdevice; i++) {
+    if ((pin[GPIO_REL1 +i] < 99) && (digitalRead(pin[GPIO_REL1 +i]))) {
+      bitSet(power, i);
+    }
+  }
+  
   blink_powersave = power;
 
   if (SONOFF_SC == sysCfg.module) {

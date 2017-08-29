@@ -1,4 +1,8 @@
-/* 5.6.1f
+/* 5.6.1g
+ * Add power check at startup (#526)
+ * Add duplicate check to received RF signal within 2 seconds for Sonoff Bridge (#810)
+ *
+ * 5.6.1f
  * Fix JSON error (#786)
  * Revert changes from 5.6.1e but extent HLW power timer to 10 seconds (#796)
  *
