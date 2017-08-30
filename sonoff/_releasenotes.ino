@@ -1,4 +1,7 @@
-/* 5.6.1g
+/* 5.6.1h
+ * Add PulseTime to power check at startup (#526)
+ *
+ * 5.6.1g
  * Add power check at startup (#526)
  * Add duplicate check to received RF signal within 2 seconds for Sonoff Bridge (#810)
  *
