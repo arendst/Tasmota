@@ -210,7 +210,7 @@ const char HTTP_FORM_LOG2[] PROGMEM =
   "<option{a2value='2'>2 Info</option>"
   "<option{a3value='3'>3 Debug</option>"
   "<option{a4value='4'>4 More debug</option>"
-  "</select></br>";  
+  "</select></br>";
 const char HTTP_FORM_LOG3[] PROGMEM =
   "<br/><b>Syslog host</b> (" SYS_LOG_HOST ")<br/><input id='lh' name='lh' length=32 placeholder='" SYS_LOG_HOST "' value='{l2}'><br/>"
   "<br/><b>Syslog port</b> (" STR(SYS_LOG_PORT) ")<br/><input id='lp' name='lp' length=5 placeholder='" STR(SYS_LOG_PORT) "' value='{l3}'><br/>"
@@ -476,7 +476,7 @@ void handleRoot()
       }
       page += F("</tr></table>");
     }
-    
+
     if (HTTP_ADMIN == _httpflag) {
       page += FPSTR(HTTP_BTN_MENU1);
       page += FPSTR(HTTP_BTN_RSTRT);
@@ -488,7 +488,7 @@ void handleRoot()
 void handleAjax2()
 {
   char svalue[50];
-  
+
   if (strlen(webServer->arg("o").c_str())) {
     do_cmnd_power(atoi(webServer->arg("o").c_str()), 2);
   }
@@ -504,7 +504,7 @@ void handleAjax2()
     snprintf_P(svalue, sizeof(svalue), PSTR("rfkey%s"), webServer->arg("k").c_str());
     do_cmnd(svalue);
   }
-  
+
   String tpage = "";
   tpage += counter_webPresent();
 #ifndef USE_ADC_VCC
@@ -555,7 +555,10 @@ void handleAjax2()
     tpage += ads1115_webPresent();
 #endif
   }
-#endif  // USE_I2C    
+#endif  // USE_I2C
+if (sr04_flg) {
+  tpage += sr04_webPresent();
+}
   String page = "";
   if (tpage.length() > 0) {
     page += FPSTR(HTTP_TABLE100);
@@ -617,7 +620,7 @@ void handleConfig()
 boolean inModule(byte val, uint8_t *arr)
 {
   int offset = 0;
-  
+
   if (!val) {
     return false;  // None
   }
@@ -664,7 +667,7 @@ void handleModule()
   char stemp[20];
   char line[128];
   uint8_t midx;
-  
+
   addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Module config"));
 
   String page = FPSTR(HTTP_HEAD);
@@ -675,7 +678,7 @@ void handleModule()
 
   mytmplt cmodule;
   memcpy_P(&cmodule, &modules[sysCfg.module], sizeof(cmodule));
-  
+
   String func = FPSTR(HTTP_SCRIPT_MODULE1);
   for (byte i = 0; i < MAXMODULE; i++) {
     midx = pgm_read_byte(nicelist + i);
@@ -706,7 +709,7 @@ void handleModule()
   func += F("}</script>");
   page.replace(F("</script>"), func);
   page.replace(F("<body>"), F("<body onload='sl()'>"));
-  
+
   page += FPSTR(HTTP_FORM_END);
   page += FPSTR(HTTP_BTN_CONF);
   showPage(page);
@@ -1194,7 +1197,7 @@ void handleUploadDone()
 
   char error[80];
   char log[LOGSZ];
-  
+
   WIFI_configCounter();
   restartflag = 0;
   mqttcounter = 0;
@@ -1443,7 +1446,7 @@ void handleAjax()
     do_cmnd(svalue);
     syslog_level = syslog_now;
   }
-  
+
   if (strlen(webServer->arg("c2").c_str())) {
     counter = atoi(webServer->arg("c2").c_str());
   }
@@ -1539,7 +1542,7 @@ void handleInfo()
 
     getTopic_P(stopic, 0, sysCfg.mqtt_topic, "");
     page += F("<tr><th>MQTT Full Topic</th><td>"); page += stopic; page += F("</td></tr>");
-    
+
   } else {
     page += F("<tr><th>MQTT</th><td>Disabled</td></tr>");
   }
@@ -1559,7 +1562,7 @@ void handleInfo()
   page += F("Disabled");
 #endif // USE_EMULATION
   page += F("</td></tr>");
-  
+
   page += F("<tr><th>mDNS Discovery</th><td>");
 #ifdef USE_DISCOVERY
   page += F("Enabled");
@@ -1617,7 +1620,7 @@ void handleNotFound()
     return;
   }
 
-#ifdef USE_EMULATION  
+#ifdef USE_EMULATION
   String path = webServer->uri();
   if ((EMUL_HUE == sysCfg.flag.emulation) && (path.startsWith("/api"))) {
     handle_hue_api(&path);

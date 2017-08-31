@@ -124,7 +124,7 @@ void chirp_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
   uint16_t m = chirp_readMoist();
   float t = chirp_readTemp();
   dtostrf(t, 1, sysCfg.flag.temperature_resolution, stemp1);
-  snprintf_P(svalue, ssvalue, PSTR("%s, \"%s\":{\"Illuminance\":%d, \"Moisture\":%d, \"Temperature\":%s}"), svalue, chirpstype, l,m,stemp1);
+  snprintf_P(svalue, ssvalue, PSTR("%s, \"%s\":{\"Light\":%d, \"Moisture\":%d, \"Temperature\":%s}"), svalue, chirpstype, l,m,stemp1);
   *djson = 1;
 #ifdef USE_DOMOTICZ
   domoticz_sensor5(l);
