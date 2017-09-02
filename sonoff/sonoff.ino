@@ -151,6 +151,7 @@ enum emul_t  {EMUL_NONE, EMUL_WEMO, EMUL_HUE, EMUL_MAX};
 
 #define APP_BAUDRATE           115200       // Default serial baudrate
 #define MAX_STATUS             11           // Max number of status lines
+#define MAX_DEEPSLEEP_CYCLE    3600         // Maximum time for a deepsleep
 
 enum butt_t  {PRESSED, NOT_PRESSED};
 enum opt_t   {P_HOLD_TIME, P_MAX_POWER_RETRY, P_MAX_PARAM8};   // Index in sysCfg.param
@@ -2092,6 +2093,9 @@ void every_second()
       if (sysCfg.deepsleep > 10) {
         //TODO STEFAN
         yield();
+        if (sysCfg.deepsleep > MAX_DEEPSLEEP_CYCLE) {
+          rtcMem.ultradeepsleep = sysCfg.deepsleep;
+        }
         mqtt_publish_topic_P(1, PSTR("LWT"), "Offline",1);
         yield();
         snprintf_P(svalue, sizeof(svalue), PSTR("{\"Time\":\"%s\", \"Uptime_s\":%d}"), getDateTime().c_str(), rtcMem.uptime);
@@ -2100,7 +2104,11 @@ void every_second()
         rtcMem.uptime = 0;
         RTC_Save();
         // 10% of deepsleep to retry
-        ESP.deepSleep(1000000 * sysCfg.deepsleep, WAKE_RF_DEFAULT);
+        if (MAX_DEEPSLEEP_CYCLE < sysCfg.deepsleep) {
+          ESP.deepSleep(1000000 * MAX_DEEPSLEEP_CYCLE, WAKE_RF_DEFAULT);
+        } else {
+          ESP.deepSleep(1000000 * sysCfg.deepsleep, WAKE_RF_DEFAULT);
+        }
         yield();
       }
     }
@@ -2857,6 +2865,23 @@ void setup()
   }
   CFG_Load();
   CFG_Delta();
+  if (rtcMem.ultradeepsleep > 0) {
+     rtcMem.ultradeepsleep = rtcMem.ultradeepsleep - MAX_DEEPSLEEP_CYCLE;
+     snprintf_P(log, sizeof(log), PSTR("APP: Remain DeepSleep %d"), rtcMem.ultradeepsleep);
+     addLog(LOG_LEVEL_INFO, log);
+     snprintf_P(log, sizeof(log), PSTR("APP: online %d"), millis());
+     addLog(LOG_LEVEL_INFO, log);
+     if (MAX_DEEPSLEEP_CYCLE < rtcMem.ultradeepsleep) {
+       RTC_Save();
+       ESP.deepSleep(1000000 * MAX_DEEPSLEEP_CYCLE, WAKE_RF_DEFAULT);
+     } else {
+       unsigned long remaining_time = rtcMem.ultradeepsleep;
+       rtcMem.ultradeepsleep = 0;
+       RTC_Save();
+       ESP.deepSleep(1000000 * remaining_time, WAKE_RF_DEFAULT);
+     }
+     yield();
+  }
 
   osw_init();
 

@@ -63,6 +63,7 @@ void RTC_Load()
     rtcMem.valid = RTC_MEM_VALID;
     rtcMem.power = sysCfg.power;
     rtcMem.uptime = sysCfg.uptime;
+    rtcMem.ultradeepsleep = 0;
     rtcMem.hlw_kWhtoday = sysCfg.hlw_kWhtoday;
     rtcMem.hlw_kWhtotal = sysCfg.hlw_kWhtotal;
     for (byte i = 0; i < 4; i++) {
@@ -82,7 +83,7 @@ boolean RTC_Valid()
 void RTC_Dump()
 {
   #define CFG_COLS 16
-  
+
   char log[LOGSZ];
   uint16_t idx;
   uint16_t maxrow;
@@ -187,7 +188,7 @@ uint32_t CFG_Address()
 void CFG_Save(byte rotate)
 {
 /* Save configuration in eeprom or one of 7 slots below
- *  
+ *
  * rotate 0 = Save in next flash slot
  * rotate 1 = Save only in eeprom flash slot until SetOption12 0 or restart
  * rotate 2 = Save in eeprom flash slot, erase next flash slots and continue depending on stop_flash_rotate
@@ -274,7 +275,7 @@ void CFG_Load()
       CFG_Default();
     }
   }
-  
+
   _cfgHash = getHash();
 
   RTC_Load();
@@ -312,7 +313,7 @@ void CFG_Erase()
 void CFG_Dump(char* parms)
 {
   #define CFG_COLS 16
-  
+
   char log[LOGSZ];
   uint16_t idx;
   uint16_t maxrow;
@@ -380,11 +381,11 @@ void CFG_DefaultSet1()
   sysCfg.version = VERSION;
 //  sysCfg.bootcount = 0;
 }
-  
+
 void CFG_DefaultSet2()
 {
   memset((char*)&sysCfg +16, 0x00, sizeof(SYSCFG) -16);
-  
+
   sysCfg.flag.savestate = SAVE_STATE;
   sysCfg.savedata = SAVE_DATA;
   sysCfg.timezone = APP_TIMEZONE;
@@ -621,7 +622,7 @@ void CFG_Delta()
       strlcpy(sysCfg.friendlyname[1], FRIENDLY_NAME"2", sizeof(sysCfg.friendlyname[1]));
       strlcpy(sysCfg.friendlyname[2], FRIENDLY_NAME"3", sizeof(sysCfg.friendlyname[2]));
       strlcpy(sysCfg.friendlyname[3], FRIENDLY_NAME"4", sizeof(sysCfg.friendlyname[3]));
-    }      
+    }
     if (sysCfg.version < 0x03020800) {  // 3.2.8 - Add parameter
       strlcpy(sysCfg.switch_topic, sysCfg.button_topic, sizeof(sysCfg.switch_topic));
       sysCfg.ex_mqtt_switch_retain = MQTT_SWITCH_RETAIN;
@@ -715,10 +716,8 @@ void CFG_Delta()
       }
       memcpy_P(sysCfg.sfb_code[0], sfb_codeDefault, 9);
     }
-    
+
     sysCfg.version = VERSION;
     CFG_Save(1);
   }
 }
-
-
