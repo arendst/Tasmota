@@ -1,3 +1,14 @@
+## Stefan Bode fork of Tasmota-Master
+I keep this version in sync so far with the current development on the master. Anyhow my use case is a little bit different. Even, if I have some SONOFF devices, I like to buil my own based on different Versions of the ESP8266, depending on my requirements (batterie, external Antenna, add on I2C devices and others. Additionally I try to improve the overall project.
+
+Additional features:
+- DeepSleep support up to 1h (deepsleep=3600)
+- Improved Startuptime incl TLS MQTT and measurement in <9 sek 
+- Support for Ultrasonic distance measurement HC-SR04
+- Support for I2C 10bit 4-channel A/D converter ADS1115 
+- Support for I2C 8-channel DIO extension board PCF-8574 (large extension to support 32 relays and pulsetimers on 32 relays; other functions still stick to 4)
+- Report total UPTIME (seconds) between two deepsleep cycle. This allows to see uptime, even if connect was not successfull or there was a reboot. Using RTC memory to ensure correct uptime
+
 ## Sonoff-Tasmota
 Provide ESP8266 based Sonoff by [iTead Studio](https://www.itead.cc/) and ElectroDragon IoT Relay with Serial, Web and MQTT control allowing 'Over the Air' or OTA firmware updates using Arduino IDE.
 
