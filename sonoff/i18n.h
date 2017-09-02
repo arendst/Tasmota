@@ -17,10 +17,14 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef LANGUAGE
-  #define LANGUAGE "language/en-GB.h"
+#ifndef MY_LANGUAGE
+  #include "language/en-GB.h"
+#else
+  #define QUOTEME(x) QUOTEME_1(x)
+  #define QUOTEME_1(x) #x
+  #define INCLUDE_FILE(x) QUOTEME(language/x.h)
+  #include INCLUDE_FILE(MY_LANGUAGE)
 #endif
-#include LANGUAGE
 
 // Common
 

@@ -1,5 +1,5 @@
 /*
-  i18n_nl-NL.h - localization for Dutch - Nederland for Sonoff-Tasmota
+  nl-NL.h - localization for Dutch - Nederland for Sonoff-Tasmota
 
   Copyright (C) 2017  Theo Arends
 
@@ -26,7 +26,6 @@
  *
 \*********************************************************************/
 
-// Time and Date managed by SDK will not be localized (yet)
 // "2017-03-07T11:08:02" - ISO8601:2004
 #define D_YEAR_MONTH_SEPARATOR "-"
 #define D_MONTH_DAY_SEPARATOR "-"

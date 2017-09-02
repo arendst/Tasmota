@@ -26,8 +26,8 @@
 \*********************************************************************************************/
 
 // -- Localization --------------------------------
-#define LANGUAGE               "language/en-GB.h"
-//#define LANGUAGE               "language/nl-NL.h"
+//#define MY_LANGUAGE            en-GB           // Enabled by Default
+//#define MY_LANGUAGE            nl-NL
 
 // -- Project -------------------------------------
 #define PROJECT                "sonoff"          // PROJECT is used as the default topic delimiter and OTA file name
