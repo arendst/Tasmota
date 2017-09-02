@@ -578,16 +578,17 @@ void mqtt_connected()
     svalue[0] = '\0';
     mqtt_publish_topic_P(0, PSTR("POWER"), svalue);
     getTopic_P(stopic, 0, sysCfg.mqtt_topic, PSTR("#"));
-    mqttClient.subscribe(stopic , 2);
+    mqttClient.subscribe(stopic);
+    addLog_P(LOG_LEVEL_INFO, PSTR("MQTT: Subscribe topic..."));
     mqttClient.loop();  // Solve LmacRxBlk:1 messages
     if (strstr(sysCfg.mqtt_fulltopic, MQTT_TOKEN_TOPIC) != NULL) {
       getTopic_P(stopic, 0, sysCfg.mqtt_grptopic, PSTR("#"));
-      mqttClient.subscribe(stopic, 2);
+      mqttClient.subscribe(stopic);
       mqttClient.loop();  // Solve LmacRxBlk:1 messages
       fallbacktopic = 1;
       getTopic_P(stopic, 0, MQTTClient, PSTR("#"));
       fallbacktopic = 0;
-      mqttClient.subscribe(stopic, 2);
+      mqttClient.subscribe(stopic);
       mqttClient.loop();  // Solve LmacRxBlk:1 messages
     }
 #ifdef USE_DOMOTICZ
