@@ -52,7 +52,7 @@ const char WEMO_MSEARCH[] PROGMEM =
 String wemo_serial()
 {
   char serial[16];
-  
+
   snprintf_P(serial, sizeof(serial), PSTR("201612K%08X"), ESP.getChipId());
   return String(serial);
 }
@@ -60,7 +60,7 @@ String wemo_serial()
 String wemo_UUID()
 {
   char uuid[27];
-  
+
   snprintf_P(uuid, sizeof(uuid), PSTR("Socket-1_0-%s"), wemo_serial().c_str());
   return String(uuid);
 }
@@ -76,11 +76,11 @@ void wemo_respondToMSearch()
     response.replace("{r2}", wemo_UUID());
     portUDP.write(response.c_str());
     portUDP.endPacket();
-    snprintf_P(message, sizeof(message), PSTR("Response sent"));
+    snprintf_P(message, sizeof(message), PSTR(D_RESPONSE_SENT));
   } else {
-    snprintf_P(message, sizeof(message), PSTR("Failed to send response"));
+    snprintf_P(message, sizeof(message), PSTR(D_FAILED_TO_SEND_RESPONSE));
   }
-  snprintf_P(log, sizeof(log), PSTR("UPnP: Wemo %s to %s:%d"),
+  snprintf_P(log, sizeof(log), PSTR(D_LOG_UPNP D_WEMO " %s " D_TO " %s:%d"),
     message, portUDP.remoteIP().toString().c_str(), portUDP.remotePort());
   addLog(LOG_LEVEL_DEBUG, log);
 }
@@ -88,7 +88,7 @@ void wemo_respondToMSearch()
 /*********************************************************************************************\
  * Hue Bridge UPNP support routines
  * Need to send 3 response packets with varying ST and USN
- * 
+ *
  * Using Espressif Inc Mac Address of 5C:CF:7F:00:00:00
  * Philips Lighting is 00:17:88:00:00:00
 \*********************************************************************************************/
@@ -101,7 +101,7 @@ const char HUE_RESPONSE[] PROGMEM =
   "LOCATION: http://{r1}:80/description.xml\r\n"
   "SERVER: FreeRTOS/7.4.2 UPnP/1.0 IpBridge/1.16.0\r\n"
   "hue-bridgeid: {r2}\r\n";
-const char HUE_ST1[] PROGMEM = 
+const char HUE_ST1[] PROGMEM =
   "ST: upnp:rootdevice\r\n"
   "USN: uuid:{r3}::upnp:rootdevice\r\n"
   "\r\n";
@@ -113,7 +113,7 @@ const char HUE_ST3[] PROGMEM =
   "ST: urn:schemas-upnp-org:device:Basic:1\r\n"
   "USN: uuid:{r3}\r\n"
   "\r\n";
-  
+
 String hue_bridgeid()
 {
   String temp = WiFi.macAddress();
@@ -154,7 +154,7 @@ void hue_respondToMSearch()
     portUDP.endPacket();
 
 //addLog(LOG_LEVEL_DEBUG_MORE, response.c_str());
-    
+
     response = response1;
     response += FPSTR(HUE_ST2);
     response.replace("{r3}", hue_UUID());
@@ -162,7 +162,7 @@ void hue_respondToMSearch()
     portUDP.endPacket();
 
 //addLog(LOG_LEVEL_DEBUG_MORE, response.c_str());
-    
+
     response = response1;
     response += FPSTR(HUE_ST3);
     response.replace("{r3}", hue_UUID());
@@ -171,11 +171,11 @@ void hue_respondToMSearch()
 
 //addLog(LOG_LEVEL_DEBUG_MORE, response.c_str());
 
-    snprintf_P(message, sizeof(message), PSTR("3 response packets sent"));
+    snprintf_P(message, sizeof(message), PSTR(D_3_RESPONSE_PACKETS_SENT));
   } else {
-    snprintf_P(message, sizeof(message), PSTR("Failed to send response"));
+    snprintf_P(message, sizeof(message), PSTR(D_FAILED_TO_SEND_RESPONSE));
   }
-  snprintf_P(log, sizeof(log), PSTR("UPnP: HUE %s to %s:%d"),
+  snprintf_P(log, sizeof(log), PSTR(D_LOG_UPNP D_HUE " %s " D_TO " %s:%d"),
     message, portUDP.remoteIP().toString().c_str(), portUDP.remotePort());
   addLog(LOG_LEVEL_DEBUG, log);
 }
@@ -188,7 +188,7 @@ boolean UDP_Disconnect()
 {
   if (udpConnected) {
     WiFiUDP::stopAll();
-    addLog_P(LOG_LEVEL_DEBUG, PSTR("UPnP: Multicast disabled"));
+    addLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_UPNP D_MULTICAST_DISABLED));
     udpConnected = false;
   }
   return udpConnected;
@@ -198,10 +198,10 @@ boolean UDP_Connect()
 {
   if (!udpConnected) {
     if (portUDP.beginMulticast(WiFi.localIP(), ipMulticast, portMulticast)) {
-      addLog_P(LOG_LEVEL_INFO, PSTR("UPnP: Multicast (re)joined"));
+      addLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_UPNP D_MULTICAST_REJOINED));
       udpConnected = true;
     } else {
-      addLog_P(LOG_LEVEL_INFO, PSTR("UPnP: Multicast join failed"));
+      addLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_UPNP D_MULTICAST_JOIN_FAILED));
       udpConnected = false;
     }
   }
@@ -300,13 +300,12 @@ const char WEMO_SETUP_XML[] PROGMEM =
     "</device>"
   "</root>\r\n"
   "\r\n";
-  
+
 /********************************************************************************************/
 
 void handleUPnPevent()
 {
-  addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: WeMo basic event"));
-
+  addLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, PSTR(D_WEMO_BASIC_EVENT));
   String request = webServer->arg(0);
   if (request.indexOf(F("State>1</Binary")) > 0) {
 //    do_cmnd_power(1, 1);
@@ -321,14 +320,13 @@ void handleUPnPevent()
 
 void handleUPnPservice()
 {
-  addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: WeMo event service"));
-  
+  addLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, PSTR(D_WEMO_EVENT_SERVICE));
   webServer->send(200, FPSTR(HDR_CTYPE_PLAIN), FPSTR(WEMO_EVENTSERVICE_XML));
 }
 
 void handleUPnPsetupWemo()
 {
-  addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: WeMo setup"));
+  addLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, PSTR(D_WEMO_SETUP));
 
   String setup_xml = FPSTR(WEMO_SETUP_XML);
   setup_xml.replace("{x1}", sysCfg.friendlyname[0]);
@@ -432,8 +430,7 @@ String hue_userId()
 
 void handleUPnPsetupHue()
 {
-  addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Hue Bridge setup"));
-
+  addLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, PSTR(D_HUE_BRIDGE_SETUP));
   String description_xml = FPSTR(HUE_DESCRIPTION_XML);
   description_xml.replace("{x1}", WiFi.localIP().toString());
   description_xml.replace("{x2}", hue_UUID());
@@ -444,8 +441,8 @@ void handleUPnPsetupHue()
 void hue_todo(String *path)
 {
   char log[LOGSZ];
-  
-  snprintf_P(log, sizeof(log), PSTR("HTTP: HUE API not implemented (%s)"),path->c_str());
+
+  snprintf_P(log, sizeof(log), PSTR(D_LOG_HTTP D_HUE_API_NOT_IMPLEMENTED " (%s)"), path->c_str());
   addLog(LOG_LEVEL_DEBUG_MORE, log);
 
   webServer->send(200, FPSTR(HDR_CTYPE_JSON), "{}");
@@ -474,7 +471,7 @@ void hue_light_status(byte device, String *response)
 {
   *response += FPSTR(HUE_LIGHT_STATUS_JSON);
   response->replace("{state}", (power & (0x01 << (device-1))) ? "true" : "false");
-  
+
   if (sfl_flg) {
     sl_replaceHSB(response);
 #ifdef USE_WS2812
@@ -500,9 +497,9 @@ void hue_global_cfg(String *path)
     response += F("\":{\"state\":{");
     hue_light_status(i, &response);
     response += "},";
-    response += FPSTR(HUE_LIGHTS_STATUS_JSON);    
+    response += FPSTR(HUE_LIGHTS_STATUS_JSON);
     response.replace("{j1}", sysCfg.friendlyname[i-1]);
-    response.replace("{j2}", hue_deviceId(i));  
+    response.replace("{j2}", hue_deviceId(i));
     if (i < Maxdevice) {
       response += ",\"";
     }
@@ -516,7 +513,7 @@ void hue_global_cfg(String *path)
 void hue_auth(String *path)
 {
   char response[38];
-  
+
   snprintf_P(response, sizeof(response), PSTR("[{\"success\":{\"username\":\"%s\"}}]"), hue_userId().c_str());
   webServer->send(200, FPSTR(HDR_CTYPE_JSON), response);
 }
@@ -547,9 +544,9 @@ void hue_lights(String *path)
       response += F("\":{\"state\":{");
       hue_light_status(i, &response);
       response += "},";
-      response += FPSTR(HUE_LIGHTS_STATUS_JSON);    
+      response += FPSTR(HUE_LIGHTS_STATUS_JSON);
       response.replace("{j1}", sysCfg.friendlyname[i-1]);
-      response.replace("{j2}", hue_deviceId(i));  
+      response.replace("{j2}", hue_deviceId(i));
       if (i < Maxdevice) {
         response += ",\"";
       }
@@ -570,11 +567,11 @@ void hue_lights(String *path)
       StaticJsonBuffer<400> jsonBuffer;
       JsonObject &hue_json = jsonBuffer.parseObject(webServer->arg(0));
       if (hue_json.containsKey("on")) {
-      
+
         response += FPSTR(HUE_LIGHT_RESPONSE_JSON);
         response.replace("{id}", String(device));
         response.replace("{cmd}", "on");
-      
+
         on = hue_json["on"];
         switch(on)
         {
@@ -589,7 +586,7 @@ void hue_lights(String *path)
         }
         resp = true;
       }
-      
+
       if (sfl_flg) {
         sl_getHSB(&hue,&sat,&bri);
 #ifdef USE_WS2812
@@ -663,13 +660,13 @@ void hue_lights(String *path)
       if (2 == response.length()) {
         response = FPSTR(HUE_ERROR_JSON);
       }
-    }   
+    }
     else {
       response = FPSTR(HUE_ERROR_JSON);
     }
 
 //addLog(LOG_LEVEL_DEBUG_MORE, response.c_str());
-    
+
     webServer->send(200, FPSTR(HDR_CTYPE_JSON), response);
   }
   else if(path->indexOf("/lights/") >= 0) {            // Got /lights/ID
@@ -681,7 +678,7 @@ void hue_lights(String *path)
     response += F("{\"state\":{");
     hue_light_status(device, &response);
     response += "},";
-    response += FPSTR(HUE_LIGHTS_STATUS_JSON);    
+    response += FPSTR(HUE_LIGHTS_STATUS_JSON);
     response.replace("{j1}", sysCfg.friendlyname[device-1]);
     response.replace("{j2}", hue_deviceId(device));
     webServer->send(200, FPSTR(HDR_CTYPE_JSON), response);
@@ -693,11 +690,11 @@ void hue_lights(String *path)
 
 void hue_groups(String *path)
 {
-/*  
+/*
  * http://sonoff/api/username/groups?1={"name":"Woonkamer","lights":[],"type":"Room","class":"Living room"})
  */
   String response = "{}";
-  
+
   if (path->endsWith("/0")) {
     response = FPSTR(HUE_GROUP0_STATUS_JSON);
     String lights = F("\"1\"");
@@ -708,7 +705,7 @@ void hue_groups(String *path)
     hue_light_status(1, &response);
     response += F("}}");
   }
- 
+
   webServer->send(200, FPSTR(HDR_CTYPE_JSON), response);
 }
 
@@ -716,31 +713,31 @@ void handle_hue_api(String *path)
 {
   /* HUE API uses /api/<userid>/<command> syntax. The userid is created by the echo device and
    * on original HUE the pressed button allows for creation of this user. We simply ignore the
-   * user part and allow every caller as with Web or WeMo. 
+   * user part and allow every caller as with Web or WeMo.
    *
    * (c) Heiko Krupp, 2017
    */
-   
+
   char log[LOGSZ];
   uint8_t args = 0;
 
   path->remove(0, 4);                                // remove /api
   uint16_t apilen = path->length();
-  snprintf_P(log, sizeof(log), PSTR("HTTP: Hue API (%s)"), path->c_str());
+  snprintf_P(log, sizeof(log), PSTR(D_LOG_HTTP D_HUE_API " (%s)"), path->c_str());
   addLog(LOG_LEVEL_DEBUG_MORE, log);
   for (args = 0; args < webServer->args(); args++) {
     String json = webServer->arg(args);
-    snprintf_P(log, sizeof(log), PSTR("HTTP: Hue POST args (%s)"), json.c_str());
+    snprintf_P(log, sizeof(log), PSTR(D_LOG_HTTP D_HUE_POST_ARGS " (%s)"), json.c_str());
     addLog(LOG_LEVEL_DEBUG_MORE, log);
   }
-  
+
   if (path->endsWith("/invalid/")) {}                 // Just ignore
   else if (!apilen) hue_auth(path);                   // New HUE App setup
   else if (path->endsWith("/")) hue_auth(path);       // New HUE App setup
   else if (path->endsWith("/config")) hue_config(path);
   else if (path->indexOf("/lights") >= 0) hue_lights(path);
-  else if (path->indexOf("/groups") >= 0) hue_groups(path); 
-  else if (path->endsWith("/schedules")) hue_todo(path); 
+  else if (path->indexOf("/groups") >= 0) hue_groups(path);
+  else if (path->endsWith("/schedules")) hue_todo(path);
   else if (path->endsWith("/sensors")) hue_todo(path);
   else if (path->endsWith("/scenes")) hue_todo(path);
   else if (path->endsWith("/rules")) hue_todo(path);

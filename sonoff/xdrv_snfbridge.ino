@@ -45,13 +45,13 @@ void sb_received()
   for (i = 0; i < SerialInByteCounter; i++) {
     snprintf_P(svalue, sizeof(svalue), PSTR("%s%02X "), svalue, serialInBuf[i]);
   }
-  snprintf_P(log, sizeof(log), PSTR("BRDG: Received %s"), svalue);
+  snprintf_P(log, sizeof(log), PSTR(D_LOG_BRIDGE D_RECEIVED " %s"), svalue);
   addLog(LOG_LEVEL_DEBUG, log);
 
   if (0xA2 == serialInBuf[0]) {       // Learn timeout
     sfb_learnFlg = 0;
-    snprintf_P(svalue, sizeof(svalue), PSTR("{\"RfKey%d\":\"Learn failed\"}"), sfb_learnKey);
-    mqtt_publish_topic_P(5, PSTR("RFKEY"), svalue);
+    snprintf_P(svalue, sizeof(svalue), PSTR("{\"" D_CMND_RFKEY "%d\":\"" D_LEARN_FAILED "\"}"), sfb_learnKey);
+    mqtt_publish_topic_P(5, PSTR(D_CMND_RFKEY), svalue);
   }
   else if (0xA3 == serialInBuf[0]) {  // Learned A3 20 F8 01 18 03 3E 2E 1A 22 55
     sfb_learnFlg = 0;
@@ -61,11 +61,11 @@ void sb_received()
       for (i = 0; i < 9; i++) {
         sysCfg.sfb_code[sfb_learnKey][i] = serialInBuf[i +1];
       }
-      snprintf_P(svalue, sizeof(svalue), PSTR("{\"RfKey%d\":\"Learned\"}"), sfb_learnKey);
+      snprintf_P(svalue, sizeof(svalue), PSTR("{\"" D_CMND_RFKEY "%d\":\"" D_LEARNED "\"}"), sfb_learnKey);
     } else {
-      snprintf_P(svalue, sizeof(svalue), PSTR("{\"RfKey%d\":\"Learn failed\"}"), sfb_learnKey);
+      snprintf_P(svalue, sizeof(svalue), PSTR("{\"" D_CMND_RFKEY "%d\":\"" D_LEARN_FAILED "\"}"), sfb_learnKey);
     }
-    mqtt_publish_topic_P(5, PSTR("RFKEY"), svalue);
+    mqtt_publish_topic_P(5, PSTR(D_CMND_RFKEY), svalue);
   }
   else if (0xA4 == serialInBuf[0]) {  // Received RF data A4 20 EE 01 18 03 3E 2E 1A 22 55
     rsy = serialInBuf[1] << 8 | serialInBuf[2];  // Sync time in uSec
@@ -77,7 +77,7 @@ void sb_received()
     if (!((rid == sfb_lastrid) && (now - sfb_lasttime < SFB_TIME_AVOID_DUPLICATE))) {
       sfb_lastrid = rid;
       sfb_lasttime = now;
-      strcpy_P(rfkey, PSTR("\"None\""));
+      strcpy_P(rfkey, PSTR("\"" D_NONE "\""));
       for (i = 1; i <= 16; i++) {
         if (sysCfg.sfb_code[i][0]) {
           sid = sysCfg.sfb_code[i][6] << 16 | sysCfg.sfb_code[i][7] << 8 | sysCfg.sfb_code[i][8];
@@ -87,11 +87,11 @@ void sb_received()
           }
         }
       }
-      snprintf_P(svalue, sizeof(svalue), PSTR("{\"RfReceived\":{\"Sync\":%d, \"Low\":%d, \"High\":%d, \"Data\":\"%06X\", \"RfKey\":%s}}"),
+      snprintf_P(svalue, sizeof(svalue), PSTR("{\"" D_RFRECEIVED "\":{\"" D_SYNC "\":%d, \"" D_LOW "\":%d, \"" D_HIGH "\":%d, \"" D_DATA "\":\"%06X\", \"" D_CMND_RFKEY "\":%s}}"),
         rsy, rlo, rhi, rid, rfkey);
-      mqtt_publish_topic_P(6, PSTR("RFRECEIVED"), svalue);
+      mqtt_publish_topic_P(6, PSTR(D_RFRECEIVED), svalue);
     }
-  }  
+  }
 }
 
 boolean sb_serial()
@@ -125,7 +125,7 @@ void sb_sendAck()
 void sb_send(uint8_t idx, uint8_t key)
 {
   uint8_t code;
-  
+
   key--;               // Support 1 to 16
   Serial.write(0xAA);  // Start of Text
   Serial.write(0xA5);  // Send following code
@@ -160,7 +160,7 @@ boolean sb_command(char *type, uint16_t index, char *dataBuf, uint16_t data_len,
   boolean serviced = true;
   char *p;
 
-  if (!strcmp_P(type, PSTR("RFDEFAULT"))) {
+  if (!strcasecmp_P(type, PSTR(D_CMND_RFDEFAULT))) {
     if (4 == data_len) {
       uint16_t hexcode = strtol(dataBuf, &p, 16);
       uint8_t msb = hexcode >> 8;
@@ -170,28 +170,28 @@ boolean sb_command(char *type, uint16_t index, char *dataBuf, uint16_t data_len,
         sysCfg.sfb_code[0][7] = lsb;
       }
     }
-    snprintf_P(svalue, ssvalue, PSTR("{\"RfDefault\":\"%0X%0X\"}"), sysCfg.sfb_code[0][6], sysCfg.sfb_code[0][7]);
+    snprintf_P(svalue, ssvalue, PSTR("{\"" D_CMND_RFDEFAULT "\":\"%0X%0X\"}"), sysCfg.sfb_code[0][6], sysCfg.sfb_code[0][7]);
   }
-  else if (!strcmp_P(type, PSTR("RFKEY")) && (index > 0) && (index <= 16)) {
+  else if (!strcasecmp_P(type, PSTR(D_CMND_RFKEY)) && (index > 0) && (index <= 16)) {
     if (!sfb_learnFlg) {
       if (2 == payload) {
         sb_learn(index);
-        snprintf_P(svalue, ssvalue, PSTR("{\"RfKey%d\":\"Start learning\"}"), index);
+        snprintf_P(svalue, ssvalue, PSTR("{\"" D_CMND_RFKEY "%d\":\"" D_START_LEARNING "\"}"), index);
       }
       else if (3 == payload) {
         sysCfg.sfb_code[index][0] = 0;
-        snprintf_P(svalue, ssvalue, PSTR("{\"RfKey%d\":\"Set to default\"}"), index);
+        snprintf_P(svalue, ssvalue, PSTR("{\"" D_CMND_RFKEY "%d\":\"" D_SET_TO_DEFAULT "\"}"), index);
       } else {
         if ((1 == payload) || (0 == sysCfg.sfb_code[index][0])) {
           sb_send(0, index);
-          snprintf_P(svalue, ssvalue, PSTR("{\"RfKey%d\":\"Default sent\"}"), index);
+          snprintf_P(svalue, ssvalue, PSTR("{\"" D_CMND_RFKEY "%d\":\"" D_DEFAULT_SENT "\"}"), index);
         } else {
           sb_send(index, 0);
-          snprintf_P(svalue, ssvalue, PSTR("{\"RfKey%d\":\"Learned sent\"}"), index);
+          snprintf_P(svalue, ssvalue, PSTR("{\"" D_CMND_RFKEY "%d\":\"" D_LEARNED_SENT "\"}"), index);
         }
       }
     } else {
-      snprintf_P(svalue, ssvalue, PSTR("{\"RfKey%d\":\"Learning active\"}"), sfb_learnKey);
+      snprintf_P(svalue, ssvalue, PSTR("{\"" D_CMND_RFKEY "%d\":\"" D_LEARNING_ACTIVE "\"}"), sfb_learnKey);
     }
   }
   else {
