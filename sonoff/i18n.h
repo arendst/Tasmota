@@ -18,7 +18,7 @@
 */
 
 #ifndef LANGUAGE
-  #define LANGUAGE "language\en-GB.h"
+  #define LANGUAGE "language/en-GB.h"
 #endif
 #include LANGUAGE
 

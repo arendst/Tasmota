@@ -1,4 +1,7 @@
-/* 5.6.1i
+/* 5.6.1j
+ * Fix compile error on Linux due to language folder name
+ *
+ * 5.6.1i
  * Add basic internationalization and localization (#763)
  * Fix invalid JSON (#822)
  *
