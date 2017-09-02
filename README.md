@@ -1,5 +1,5 @@
 ## Stefan Bode fork of Tasmota-Master
-I keep this version in sync so far with the current development on the master. Anyhow my use case is a little bit different. Even, if I have some SONOFF devices, I like to buil my own based on different Versions of the ESP8266, depending on my requirements (batterie, external Antenna, add on I2C devices and others. Additionally I try to improve the overall project.
+I keep this version in sync with the current development of the master. Anyhow my use case is a little bit different. Even, if I have some SONOFF devices, I like to build(solder) my own based on different versions of the ESP8266, depending on my different requirements (batterie, external Antenna, add on I2C devices and others). Additionally I try to improve the overall project.
 
 Additional features:
 - DeepSleep support up to 1h (deepsleep=3600)
