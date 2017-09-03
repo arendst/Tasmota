@@ -136,3 +136,10 @@
 #define OTA_URL              "http://fw.tivi.bg:80/arduino/" PROJECT ".ino.bin" // default
 #endif
 
+#undef MQTT_BUTTON_RETAIN
+#undef MQTT_POWER_RETAIN
+#undef MQTT_SWITCH_RETAIN
+#define MQTT_BUTTON_RETAIN     1                 // [ButtonRetain] Button may send retain flag (0 = off, 1 = on)
+#define MQTT_POWER_RETAIN      1                 // [PowerRetain] Power status message may send retain flag (0 = off, 1 = on)
+#define MQTT_SWITCH_RETAIN     1                 // [SwitchRetain] Switch may send retain flag (0 = off, 1 = on)
+
