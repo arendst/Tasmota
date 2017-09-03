@@ -2105,7 +2105,7 @@ void every_second()
         RTC_Save();
         // 10% of deepsleep to retry
         if (MAX_DEEPSLEEP_CYCLE < sysCfg.deepsleep) {
-          ESP.deepSleep(1000000 * MAX_DEEPSLEEP_CYCLE, WAKE_RF_DEFAULT);
+          ESP.deepSleep(1000000 * (uint32_t)MAX_DEEPSLEEP_CYCLE, WAKE_RF_DEFAULT);
         } else {
           ESP.deepSleep(1000000 * sysCfg.deepsleep, WAKE_RF_DEFAULT);
         }
@@ -2873,7 +2873,7 @@ void setup()
      addLog(LOG_LEVEL_INFO, log);
      if (MAX_DEEPSLEEP_CYCLE < rtcMem.ultradeepsleep) {
        RTC_Save();
-       ESP.deepSleep(1000000 * MAX_DEEPSLEEP_CYCLE, WAKE_RF_DEFAULT);
+       ESP.deepSleep(1000000 * (uint32_t)MAX_DEEPSLEEP_CYCLE, WAKE_RF_DEFAULT);
      } else {
        unsigned long remaining_time = rtcMem.ultradeepsleep;
        rtcMem.ultradeepsleep = 0;

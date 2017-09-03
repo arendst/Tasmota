@@ -64,9 +64,9 @@ String sr04_readDistance(void)
     dtostrf(distance, 1, 2, stemp1);
     snprintf_P(log, sizeof(log), PSTR("HS-SR04: Distance: %s"),stemp1);
     addLog(LOG_LEVEL_DEBUG, log);
-
-    page += stemp1;
-
+    if (distance > 0) {
+      page += stemp1;
+    }
     return page;
 
   } else {
