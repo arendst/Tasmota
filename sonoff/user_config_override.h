@@ -32,9 +32,6 @@
 //        } else
 //        // mitko end
 
-#ifdef APP_NAME
-#undef APP_NAME
-#endif
 #ifdef OTA_URL
 #undef OTA_URL
 #endif
@@ -139,8 +136,3 @@
 #define OTA_URL              "http://fw.tivi.bg:80/arduino/" PROJECT ".ino.bin" // default
 #endif
 
-#ifdef APP_NAME
-// nishto
-#else
-#define APP_NAME             "Sonoff 8266 module for tivi.bg - " __DATE__
-#endif

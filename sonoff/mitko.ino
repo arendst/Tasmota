@@ -3,7 +3,7 @@ void do_cmnd_identify()
   IPAddress ip = WiFi.localIP();
   int digit; // ones, tens, hundreds
   
-  digitalWrite(LED_PIN, (LED_INVERTED) ? 1 : 0);
+  digitalWrite(GPIO_LED1_INV, 1);
   delay(600); // just in case - make it more visible
 
   if (ip[3] > 100) {
@@ -24,7 +24,7 @@ void do_cmnd_identify()
   
   // now return it back (don't know if it necessary, but just in case)
   if (sysCfg.ledstate &0x01) {
-      digitalWrite(LED_PIN, (LED_INVERTED) ? !power : power);
+      digitalWrite(GPIO_LED1_INV, !power);
   }
 }
 
@@ -33,9 +33,9 @@ void blinkCount(int count) {
   int i;
   for (i = 1; i <= count; i++) {
     delay(400);
-    digitalWrite(LED_PIN, (LED_INVERTED) ? 0 : 1);
+    digitalWrite(GPIO_LED1_INV, 0);
     delay(200);
-    digitalWrite(LED_PIN, (LED_INVERTED) ? 1 : 0);
+    digitalWrite(GPIO_LED1_INV, 1);
   }
 }
 
