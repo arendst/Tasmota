@@ -278,7 +278,8 @@ const mytmplt modules[MAXMODULE] PROGMEM = {
      0, 0, 0, 0, 0, 0, // Flash connection
      0,
      GPIO_LED1_INV,    // GPIO13 Blue Led (0 = On, 1 = Off)
-     0, 0, 0, 0
+     GPIO_USER,        // GPIO14 Optional sensor
+     0, 0, 0
   },
   { "Sonoff Pow",      // Sonoff Pow (ESP8266)
      GPIO_KEY1,        // GPIO00 Button
@@ -621,4 +622,3 @@ const mytmplt modules[MAXMODULE] PROGMEM = {
      GPIO_ADC0         // ADC0 A0 Analog input
   }
 };
-
