@@ -25,7 +25,7 @@
     - Select IDE Tools - Flash Size: "1M (no SPIFFS)"
   ====================================================*/
 
-#define VERSION                0x0506010B  // 5.6.1k
+#define VERSION                0x0506010C  // 5.6.1l
 
 enum log_t   {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG_MORE, LOG_LEVEL_ALL};
 enum week_t  {Last, First, Second, Third, Fourth};
@@ -544,7 +544,7 @@ void mqtt_publishPowerBlinkState(byte device)
 void mqtt_connected()
 {
   char stopic[TOPSZ];
-  char svalue[128];  // was MESSZ
+  char svalue[164];  // was MESSZ
 
   if (sysCfg.flag.mqtt_enabled) {
 

@@ -1,4 +1,9 @@
-/* 5.6.1k
+/* 5.6.1l
+ * Fix some string length issues
+ * Add more string length tests by using strncpy
+ * Tried to fix Exception 3 as I can't reproduce (#830)
+ *
+ * 5.6.1k
  * Fix preprocessor language selection
  *
  * 5.6.1j

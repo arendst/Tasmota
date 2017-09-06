@@ -77,7 +77,7 @@ void sb_received()
     if (!((rid == sfb_lastrid) && (now - sfb_lasttime < SFB_TIME_AVOID_DUPLICATE))) {
       sfb_lastrid = rid;
       sfb_lasttime = now;
-      strcpy_P(rfkey, PSTR("\"" D_NONE "\""));
+      strncpy_P(rfkey, PSTR("\"" D_NONE "\""), sizeof(rfkey));
       for (i = 1; i <= 16; i++) {
         if (sysCfg.sfb_code[i][0]) {
           sid = sysCfg.sfb_code[i][6] << 16 | sysCfg.sfb_code[i][7] << 8 | sysCfg.sfb_code[i][8];
