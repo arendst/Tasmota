@@ -1913,6 +1913,9 @@ void sensors_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
 #ifdef USE_BH1750
     bh1750_mqttPresent(svalue, ssvalue, djson);
 #endif  // USE_BH1750
+#ifdef USE_TSL2561
+    tsl2561_mqttPresent(svalue, ssvalue, djson);
+#endif  // USE_TSL2561
   }
 #endif  // USE_I2C
   if (strstr_P(svalue, PSTR(D_TEMPERATURE))) {
@@ -2001,6 +2004,9 @@ void every_second()
 #ifdef USE_BH1750
         bh1750_detect();
 #endif  // USE_BH1750
+#ifdef USE_TSL2561
+        tsl2561_detect();
+#endif  // USE_TSL2561
       }
 #endif  // USE_I2C
     }
