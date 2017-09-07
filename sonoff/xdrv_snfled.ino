@@ -19,7 +19,7 @@
 
 /*********************************************************************************************\
  * Sonoff B1, AiLight, Sonoff Led and BN-SZ01
- * 
+ *
  * sfl_flg  Module        Color  ColorTemp
  * 1        Sonoff BN-SZ  W      no
  * 2        Sonoff Led    CW     yes
@@ -101,7 +101,7 @@ void sl_my92x1_init()
 {
   uint8_t chips = sfl_flg -3;  // 1 (AiLight) or 2 (Sonoff B1)
 
-  sl_dcki_pulse(chips * 32);   // Clear all duty register 
+  sl_dcki_pulse(chips * 32);   // Clear all duty register
   os_delay_us(12);             // TStop > 12us.
   // Send 12 DI pulse, after 6 pulse's falling edge store duty data, and 12
   // pulse's rising edge convert to command mode.
@@ -160,7 +160,7 @@ void sl_init(void)
   } else {
     sl_pdi = pin[GPIO_DI];
     sl_pdcki = pin[GPIO_DCKI];
-    
+
     pinMode(sl_pdi, OUTPUT);
     pinMode(sl_pdcki, OUTPUT);
     digitalWrite(sl_pdi, LOW);
@@ -168,7 +168,7 @@ void sl_init(void)
 
     sl_my92x1_init();
   }
-  
+
   sl_power = 0;
   sl_any = 0;
   sl_wakeupActive = 0;
@@ -177,7 +177,7 @@ void sl_init(void)
 void sl_setColorTemp(uint16_t ct)
 {
 /* Color Temperature (https://developers.meethue.com/documentation/core-concepts)
- * 
+ *
  * ct = 153 = 2000K = Warm = CCWW = 00FF
  * ct = 500 = 6500K = Cold = CCWW = FF00
  */
@@ -260,7 +260,7 @@ char* sl_getColor(char* scolor)
 void sl_prepPower(char *svalue, uint16_t ssvalue)
 {
   char scolor[11];
-  
+
 //  do_cmnd_power(index, (sysCfg.led_dimmer[0]>0));
   if (sysCfg.led_dimmer[0] && !(power&1)) {
     do_cmnd_power(1, 7);  // No publishPowerState
@@ -272,10 +272,10 @@ void sl_prepPower(char *svalue, uint16_t ssvalue)
   mqtt_publishDomoticzPowerState(1);
 #endif  // USE_DOMOTICZ
   if (sfl_flg > 1) {
-    snprintf_P(svalue, ssvalue, PSTR("{\"POWER\":\"%s\", \"Dimmer\":%d, \"Color\":\"%s\"}"),
+    snprintf_P(svalue, ssvalue, PSTR("{\"" D_RSLT_POWER "\":\"%s\", \"" D_CMND_DIMMER "\":%d, \"" D_CMND_COLOR "\":\"%s\"}"),
       getStateText(power &1), sysCfg.led_dimmer[0], sl_getColor(scolor));
   } else {
-    snprintf_P(svalue, ssvalue, PSTR("{\"POWER\":\"%s\", \"Dimmer\":%d}"),
+    snprintf_P(svalue, ssvalue, PSTR("{\"" D_RSLT_POWER "\":\"%s\", \"" D_CMND_DIMMER "\":%d}"),
       getStateText(power &1), sysCfg.led_dimmer[0]);
   }
 }
@@ -295,7 +295,7 @@ void sl_animate()
   char svalue[32];  // was MESSZ
   uint8_t fadeValue;
   uint8_t cur_col[5];
-  
+
   if (0 == sl_power) {  // Power Off
     for (byte i = 0; i < sfl_flg; i++) {
       sl_tcolor[i] = 0;
@@ -339,8 +339,8 @@ void sl_animate()
             sl_tcolor[i] = sl_dcolor[i];
           }
         } else {
-          snprintf_P(svalue, sizeof(svalue), PSTR("{\"Wakeup\":\"Done\"}"));
-          mqtt_publish_topic_P(2, PSTR("WAKEUP"), svalue);
+          snprintf_P(svalue, sizeof(svalue), PSTR("{\"" D_CMND_WAKEUP "\":\"" D_DONE "\"}"));
+          mqtt_publish_topic_P(2, PSTR(D_CMND_WAKEUP), svalue);
           sl_wakeupActive = 0;
         }
       }
@@ -375,7 +375,7 @@ void sl_animate()
 void sl_rgb2hsb(float *hue, float *sat, float *bri)
 {
   RgbColor dcolor;
-  
+
   sl_setDim(sysCfg.led_dimmer[0]);
   dcolor.R = sl_dcolor[0];
   dcolor.G = sl_dcolor[1];
@@ -384,7 +384,7 @@ void sl_rgb2hsb(float *hue, float *sat, float *bri)
   *hue = hsb.H;
   *sat = hsb.S;
   *bri = hsb.B;
-}  
+}
 
 /********************************************************************************************/
 
@@ -393,7 +393,7 @@ void sl_replaceHSB(String *response)
   float hue;
   float sat;
   float bri;
-  
+
   if (sfl_flg > 2) {
     sl_rgb2hsb(&hue, &sat, &bri);
     response->replace("{h}", String((uint16_t)(65535.0f * hue)));
@@ -423,15 +423,15 @@ void sl_setHSB(float hue, float sat, float bri, uint16_t ct)
 {
   char svalue[MESSZ];
   HsbColor hsb;
-  
+
 /*
   char log[LOGSZ];
   char stemp1[10];
   char stemp2[10];
   char stemp3[10];
-  dtostrf(hue, 1, 3, stemp1);
-  dtostrf(sat, 1, 3, stemp2);
-  dtostrf(bri, 1, 3, stemp3);
+  dtostrfi(hue, 3, stemp1);
+  dtostrfi(sat, 3, stemp2);
+  dtostrfi(bri, 3, stemp3);
   snprintf_P(log, sizeof(log), PSTR("HUE: Set Hue %s, Sat %s, Bri %s, Ct %d"), stemp1, stemp2, stemp3, ct);
   addLog(LOG_LEVEL_DEBUG, log);
 */
@@ -450,7 +450,7 @@ void sl_setHSB(float hue, float sat, float bri, uint16_t ct)
       sl_setColor();
     }
     sl_prepPower(svalue, sizeof(svalue));
-    mqtt_publish_topic_P(5, "COLOR", svalue);
+    mqtt_publish_topic_P(5, PSTR(D_CMND_COLOR), svalue);
   } else {
     uint8_t tmp = (uint8_t)(bri * 100);
     sysCfg.led_dimmer[0] = tmp;
@@ -459,10 +459,10 @@ void sl_setHSB(float hue, float sat, float bri, uint16_t ct)
         sl_setColorTemp(ct);
       }
       sl_prepPower(svalue, sizeof(svalue));
-      mqtt_publish_topic_P(5, "COLOR", svalue);
+      mqtt_publish_topic_P(5, PSTR(D_CMND_COLOR), svalue);
     } else {
       sl_prepPower(svalue, sizeof(svalue));
-      mqtt_publish_topic_P(5, "DIMMER", svalue);
+      mqtt_publish_topic_P(5, PSTR(D_CMND_DIMMER), svalue);
     }
   }
 }
@@ -478,7 +478,7 @@ boolean sl_command(char *type, uint16_t index, char *dataBufUc, uint16_t data_le
   char scolor[11];
   char *p;
 
-  if ((sfl_flg > 1) && !strcmp_P(type,PSTR("COLOR"))) {
+  if ((sfl_flg > 1) && !strcasecmp_P(type, PSTR(D_CMND_COLOR))) {
     if ((2 * sfl_flg) == data_len) {
       for (byte i = 0; i < sfl_flg; i++) {
         strlcpy(scolor, dataBufUc + (i *2), 3);
@@ -487,26 +487,26 @@ boolean sl_command(char *type, uint16_t index, char *dataBufUc, uint16_t data_le
       sl_setColor();
       coldim = true;
     } else {
-      snprintf_P(svalue, ssvalue, PSTR("{\"Color\":\"%s\"}"), sl_getColor(scolor));
+      snprintf_P(svalue, ssvalue, PSTR("{\"" D_CMND_COLOR "\":\"%s\"}"), sl_getColor(scolor));
     }
   }
-  else if (!strcmp_P(type,PSTR("CT")) && ((2 == sfl_flg) || (5 == sfl_flg))) { // ColorTemp
+  else if (!strcasecmp_P(type, PSTR(D_CMND_COLORTEMPERATURE)) && ((2 == sfl_flg) || (5 == sfl_flg))) { // ColorTemp
     if ((payload >= 153) && (payload <= 500)) {  // https://developers.meethue.com/documentation/core-concepts
       sl_setColorTemp(payload);
       coldim = true;
     } else {
-      snprintf_P(svalue, ssvalue, PSTR("{\"CT\":%d}"), sl_getColorTemp());
+      snprintf_P(svalue, ssvalue, PSTR("{\"" D_CMND_COLORTEMPERATURE "\":%d}"), sl_getColorTemp());
     }
   }
-  else if (!strcmp_P(type,PSTR("DIMMER"))) {
+  else if (!strcasecmp_P(type, PSTR(D_CMND_DIMMER))) {
     if ((payload >= 0) && (payload <= 100)) {
       sysCfg.led_dimmer[0] = payload;
       coldim = true;
     } else {
-      snprintf_P(svalue, ssvalue, PSTR("{\"Dimmer\":%d}"), sysCfg.led_dimmer[0]);
+      snprintf_P(svalue, ssvalue, PSTR("{\"" D_CMND_DIMMER "\":%d}"), sysCfg.led_dimmer[0]);
     }
   }
-  else if (!strcmp_P(type,PSTR("LEDTABLE"))) {
+  else if (!strcasecmp_P(type, PSTR(D_CMND_LEDTABLE))) {
     if ((payload >= 0) && (payload <= 2)) {
       switch (payload) {
       case 0: // Off
@@ -519,9 +519,9 @@ boolean sl_command(char *type, uint16_t index, char *dataBufUc, uint16_t data_le
       }
       sl_any = 1;
     }
-    snprintf_P(svalue, ssvalue, PSTR("{\"LedTable\":\"%s\"}"), getStateText(sysCfg.led_table));
+    snprintf_P(svalue, ssvalue, PSTR("{\"" D_CMND_LEDTABLE "\":\"%s\"}"), getStateText(sysCfg.led_table));
   }
-  else if (!strcmp_P(type,PSTR("FADE"))) {
+  else if (!strcasecmp_P(type, PSTR(D_CMND_FADE))) {
     switch (payload) {
     case 0: // Off
     case 1: // On
@@ -531,25 +531,25 @@ boolean sl_command(char *type, uint16_t index, char *dataBufUc, uint16_t data_le
       sysCfg.led_fade ^= 1;
       break;
     }
-    snprintf_P(svalue, ssvalue, PSTR("{\"Fade\":\"%s\"}"), getStateText(sysCfg.led_fade));
+    snprintf_P(svalue, ssvalue, PSTR("{\"" D_CMND_FADE "\":\"%s\"}"), getStateText(sysCfg.led_fade));
   }
-  else if (!strcmp_P(type,PSTR("SPEED"))) {  // 1 - fast, 8 - slow
+  else if (!strcasecmp_P(type, PSTR(D_CMND_SPEED))) {  // 1 - fast, 8 - slow
     if ((payload > 0) && (payload <= 8)) {
       sysCfg.led_speed = payload;
     }
-    snprintf_P(svalue, ssvalue, PSTR("{\"Speed\":%d}"), sysCfg.led_speed);
+    snprintf_P(svalue, ssvalue, PSTR("{\"" D_CMND_SPEED "\":%d}"), sysCfg.led_speed);
   }
-  else if (!strcmp_P(type,PSTR("WAKEUPDURATION"))) {
+  else if (!strcasecmp_P(type, PSTR(D_CMND_WAKEUPDURATION))) {
     if ((payload > 0) && (payload < 3001)) {
       sysCfg.led_wakeup = payload;
       sl_wakeupActive = 0;
     }
-    snprintf_P(svalue, ssvalue, PSTR("{\"WakeUpDuration\":%d}"), sysCfg.led_wakeup);
+    snprintf_P(svalue, ssvalue, PSTR("{\"" D_CMND_WAKEUPDURATION "\":%d}"), sysCfg.led_wakeup);
   }
-  else if (!strcmp_P(type,PSTR("WAKEUP"))) {
+  else if (!strcasecmp_P(type, PSTR(D_CMND_WAKEUP))) {
     sl_wakeupActive = 3;
     do_cmnd_power(1, 1);
-    snprintf_P(svalue, ssvalue, PSTR("{\"Wakeup\":\"Started\"}"));
+    snprintf_P(svalue, ssvalue, PSTR("{\"" D_CMND_WAKEUP "\":\"" D_STARTED "\"}"));
   }
   else {
     serviced = false;  // Unknown command

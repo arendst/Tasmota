@@ -17,9 +17,6 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-const char JSON_SNS_TEMPHUM[] PROGMEM =
-  "%s, \"%s\":{\"Temperature\":%s, \"Humidity\":%s}";
-
 /*********************************************************************************************\
  * Watchdog extension (https://github.com/esp8266/Arduino/issues/1532)
 \*********************************************************************************************/
@@ -42,14 +39,14 @@ void osw_osWatch()
 
 #ifdef DEBUG_THEO
   char log[LOGSZ];
-  snprintf_P(log, sizeof(log), PSTR("osWatch: FreeRam %d, rssi %d, last_run %d"), ESP.getFreeHeap(), WIFI_getRSSIasQuality(WiFi.RSSI()), last_run);
+  snprintf_P(log, sizeof(log), PSTR(D_LOG_APPLICATION D_OSWATCH " FreeRam %d, rssi %d, last_run %d"), ESP.getFreeHeap(), WIFI_getRSSIasQuality(WiFi.RSSI()), last_run);
   addLog(LOG_LEVEL_DEBUG, log);
 #endif  // DEBUG_THEO
   if (last_run >= (OSWATCH_RESET_TIME * 1000)) {
-    addLog_P(LOG_LEVEL_INFO, PSTR("osWatch: Warning, loop blocked. Restart now"));
+    addLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_APPLICATION D_OSWATCH " " D_BLOCKED_LOOP ". " D_RESTARTING));
     rtcMem.osw_flag = 1;
     RTC_Save();
-//    ESP.restart();  // normal reboot 
+//    ESP.restart();  // normal reboot
     ESP.reset();  // hard reset
   }
 }
@@ -72,7 +69,7 @@ String getResetReason()
 {
   char buff[32];
   if (osw_flag) {
-    strcpy_P(buff, PSTR("Blocked Loop"));
+    strncpy_P(buff, PSTR(D_BLOCKED_LOOP), sizeof(buff));
     return String(buff);
   } else {
     return ESP.getResetReason();
@@ -82,11 +79,11 @@ String getResetReason()
 #ifdef DEBUG_THEO
 void exception_tst(byte type)
 {
-/*    
+/*
 Exception (28):
 epc1=0x4000bf64 epc2=0x00000000 epc3=0x00000000 excvaddr=0x00000007 depc=0x00000000
 
-ctx: cont 
+ctx: cont
 sp: 3fff1f30 end: 3fff2840 offset: 01a0
 
 >>>stack>>>
@@ -149,6 +146,85 @@ Decoding 14 results
  * General
 \*********************************************************************************************/
 
+char* _dtostrf(double number, unsigned char prec, char *s, bool i18n)
+{
+  bool negative = false;
+
+  if (isnan(number)) {
+    strcpy_P(s, PSTR("nan"));
+    return s;
+  }
+  if (isinf(number)) {
+    strcpy_P(s, PSTR("inf"));
+    return s;
+  }
+  char decimal = '.';
+  if (i18n) {
+    decimal = D_DECIMAL_SEPARATOR[0];
+  }
+
+  char* out = s;
+
+  // Handle negative numbers
+  if (number < 0.0) {
+    negative = true;
+    number = -number;
+  }
+
+  // Round correctly so that print(1.999, 2) prints as "2.00"
+  // I optimized out most of the divisions
+  double rounding = 2.0;
+  for (uint8_t i = 0; i < prec; ++i) {
+    rounding *= 10.0;
+  }
+  rounding = 1.0 / rounding;
+  number += rounding;
+
+  // Figure out how big our number really is
+  double tenpow = 1.0;
+  int digitcount = 1;
+  while (number >= 10.0 * tenpow) {
+    tenpow *= 10.0;
+    digitcount++;
+  }
+  number /= tenpow;
+
+  // Handle negative sign
+  if (negative) {
+    *out++ = '-';
+  }
+
+  // Print the digits, and if necessary, the decimal point
+  digitcount += prec;
+  int8_t digit = 0;
+  while (digitcount-- > 0) {
+    digit = (int8_t)number;
+    if (digit > 9) {
+      digit = 9; // insurance
+    }
+    *out++ = (char)('0' | digit);
+    if ((digitcount == prec) && (prec > 0)) {
+      *out++ = decimal;
+    }
+    number -= digit;
+    number *= 10.0;
+  }
+
+  // make sure the string is terminated
+  *out = 0;
+  return s;
+}
+
+char* dtostrfd(double number, unsigned char prec, char *s)  // Always decimal dot
+{
+  return _dtostrf(number, prec, s, 0);
+}
+
+char* dtostrfi(double number, unsigned char prec, char *s) // Use localized decimal dot
+{
+  return _dtostrf(number, prec, s, 1);
+}
+
 boolean parseIP(uint32_t* addr, const char* str)
 {
   uint8_t *part = (uint8_t*)addr;
@@ -169,7 +245,7 @@ boolean parseIP(uint32_t* addr, const char* str)
 void mqttfy(byte option, char* str)
 {
 // option 0 = replace by underscore
-// option 1 = delete character  
+// option 1 = delete character
   uint16_t i = 0;
   while (str[i] > 0) {
 //        if ((str[i] == '/') || (str[i] == '+') || (str[i] == '#') || (str[i] == ' ')) {
@@ -231,6 +307,23 @@ bool newerVersion(char* version_str)
   }
   // Now we should have a fully constructed version number in uint32_t form.
   return (version > VERSION);
+}
+
+char* getPowerDevice(char* dest, uint8_t idx, size_t size, uint8_t option)
+{
+  char sidx[8];
+
+  strncpy_P(dest, S_RSLT_POWER, size);
+  if ((Maxdevice + option) > 1) {
+    snprintf_P(sidx, sizeof(sidx), PSTR("%d"), idx);
+    strncat(dest, sidx, size);
+  }
+  return dest;
+}
+
+char* getPowerDevice(char* dest, uint8_t idx, size_t size)
+{
+  return getPowerDevice(dest, idx, size, 0);
 }
 
 /*********************************************************************************************\
@@ -295,7 +388,7 @@ void WIFI_wps_status_cb(wps_cb_status status)
   if (WPS_CB_ST_SUCCESS == _wpsresult) {
     wifi_wps_disable();
   } else {
-    snprintf_P(log, sizeof(log), PSTR("WPSconfig: FAILED with status %d"), _wpsresult);
+    snprintf_P(log, sizeof(log), PSTR(D_LOG_WIFI D_WPS_FAILED_WITH_STATUS " %d"), _wpsresult);
     addLog(LOG_LEVEL_DEBUG, log);
     _wifiConfigCounter = 2;
   }
@@ -342,20 +435,20 @@ void WIFI_config(uint8_t type)
       restartflag = 2;
     }
     else if (WIFI_SMARTCONFIG == _wificonfigflag) {
-      addLog_P(LOG_LEVEL_INFO, PSTR("Smartconfig: Active for 1 minute"));
+      addLog_P(LOG_LEVEL_INFO, S_LOG_WIFI, PSTR(D_WCFG_1_SMARTCONFIG D_ACTIVE_FOR_1_MINUTE));
       WiFi.beginSmartConfig();
     }
     else if (WIFI_WPSCONFIG == _wificonfigflag) {
       if (WIFI_beginWPSConfig()) {
-        addLog_P(LOG_LEVEL_INFO, PSTR("WPSconfig: Active for 1 minute"));
+        addLog_P(LOG_LEVEL_INFO, S_LOG_WIFI, PSTR(D_WCFG_3_WPSCONFIG D_ACTIVE_FOR_1_MINUTE));
       } else {
-        addLog_P(LOG_LEVEL_INFO, PSTR("WPSconfig: Failed to start"));
+        addLog_P(LOG_LEVEL_INFO, S_LOG_WIFI, PSTR(D_WCFG_3_WPSCONFIG D_FAILED_TO_START));
         _wifiConfigCounter = 3;
       }
     }
 #ifdef USE_WEBSERVER
     else if (WIFI_MANAGER == _wificonfigflag) {
-      addLog_P(LOG_LEVEL_INFO, PSTR("Wifimanager: Active for 1 minute"));
+      addLog_P(LOG_LEVEL_INFO, S_LOG_WIFI, PSTR(D_WCFG_2_WIFIMANAGER D_ACTIVE_FOR_1_MINUTE));
       beginWifiManager();
     }
 #endif  // USE_WEBSERVER
@@ -371,7 +464,7 @@ void WIFI_begin(uint8_t flag)
   UDP_Disconnect();
 #endif  // USE_EMULATION
   if (!strncmp_P(ESP.getSdkVersion(),PSTR("1.5.3"),5)) {
-    addLog_P(LOG_LEVEL_DEBUG, PSTR("Wifi: Patch issue 2186"));
+    addLog_P(LOG_LEVEL_DEBUG, S_LOG_WIFI, PSTR(D_PATCH_ISSUE_2186));
     WiFi.mode(WIFI_OFF);    // See https://github.com/esp8266/Arduino/issues/2186
   }
   WiFi.disconnect();
@@ -402,7 +495,7 @@ void WIFI_begin(uint8_t flag)
   }
   WiFi.hostname(Hostname);
   WiFi.begin(sysCfg.sta_ssid[sysCfg.sta_active], sysCfg.sta_pwd[sysCfg.sta_active]);
-  snprintf_P(log, sizeof(log), PSTR("Wifi: Connecting to AP%d %s in mode 11%c as %s..."),
+  snprintf_P(log, sizeof(log), PSTR(D_LOG_WIFI D_CONNECTING_TO_AP "%d %s " D_IN_MODE " 11%c " D_AS " %s..."),
     sysCfg.sta_active +1, sysCfg.sta_ssid[sysCfg.sta_active], PhyMode[WiFi.getPhyMode() & 0x3], Hostname);
   addLog(LOG_LEVEL_INFO, log);
 }
@@ -412,7 +505,7 @@ void WIFI_check_ip()
   if ((WL_CONNECTED == WiFi.status()) && (static_cast<uint32_t>(WiFi.localIP()) != 0)) {
     _wificounter = WIFI_CHECK_SEC;
     _wifiretry = WIFI_RETRY_SEC;
-    addLog_P((_wifistatus != WL_CONNECTED) ? LOG_LEVEL_INFO : LOG_LEVEL_DEBUG_MORE, PSTR("Wifi: Connected"));
+    addLog_P((_wifistatus != WL_CONNECTED) ? LOG_LEVEL_INFO : LOG_LEVEL_DEBUG_MORE, S_LOG_WIFI, PSTR(D_CONNECTED));
     if (_wifistatus != WL_CONNECTED) {
 //      addLog_P(LOG_LEVEL_INFO, PSTR("Wifi: Set IP addresses"));
       sysCfg.ip_address[1] = (uint32_t)WiFi.gatewayIP();
@@ -424,12 +517,12 @@ void WIFI_check_ip()
     _wifistatus = WiFi.status();
     switch (_wifistatus) {
       case WL_CONNECTED:
-        addLog_P(LOG_LEVEL_INFO, PSTR("Wifi: Connect failed as no IP address received"));
+        addLog_P(LOG_LEVEL_INFO, S_LOG_WIFI, PSTR(D_CONNECT_FAILED_NO_IP_ADDRESS));
         _wifistatus = 0;
         _wifiretry = WIFI_RETRY_SEC;
         break;
       case WL_NO_SSID_AVAIL:
-        addLog_P(LOG_LEVEL_INFO, PSTR("Wifi: Connect failed as AP cannot be reached"));
+        addLog_P(LOG_LEVEL_INFO, S_LOG_WIFI, PSTR(D_CONNECT_FAILED_AP_NOT_REACHED));
         if (_wifiretry > (WIFI_RETRY_SEC / 2)) {
           _wifiretry = WIFI_RETRY_SEC / 2;
         }
@@ -438,7 +531,7 @@ void WIFI_check_ip()
         }
         break;
       case WL_CONNECT_FAILED:
-        addLog_P(LOG_LEVEL_INFO, PSTR("Wifi: Connect failed with AP incorrect password"));
+        addLog_P(LOG_LEVEL_INFO, S_LOG_WIFI, PSTR(D_CONNECT_FAILED_WRONG_PASSWORD));
         if (_wifiretry > (WIFI_RETRY_SEC / 2)) {
           _wifiretry = WIFI_RETRY_SEC / 2;
         }
@@ -448,9 +541,9 @@ void WIFI_check_ip()
         break;
       default:  // WL_IDLE_STATUS and WL_DISCONNECTED
         if (!_wifiretry || ((WIFI_RETRY_SEC / 2) == _wifiretry)) {
-          addLog_P(LOG_LEVEL_INFO, PSTR("Wifi: Connect failed with AP timeout"));
+          addLog_P(LOG_LEVEL_INFO, S_LOG_WIFI, PSTR(D_CONNECT_FAILED_AP_TIMEOUT));
         } else {
-          addLog_P(LOG_LEVEL_DEBUG, PSTR("Wifi: Attempting connection..."));
+          addLog_P(LOG_LEVEL_DEBUG, S_LOG_WIFI, PSTR(D_ATTEMPTING_CONNECTION));
         }
     }
     if (_wifiretry) {
@@ -500,7 +593,7 @@ void WIFI_Check(uint8_t param)
             strlcpy(sysCfg.sta_pwd[0], WiFi.psk().c_str(), sizeof(sysCfg.sta_pwd[0]));
           }
           sysCfg.sta_active = 0;
-          snprintf_P(log, sizeof(log), PSTR("Wificonfig: SSID1 %s and Password1 %s"), sysCfg.sta_ssid[0], sysCfg.sta_pwd[0]);
+          snprintf_P(log, sizeof(log), PSTR(D_LOG_WIFI D_WCFG_1_SMARTCONFIG D_CMND_SSID "1 %s, " D_CMND_PASSWORD "1 %s"), sysCfg.sta_ssid[0], sysCfg.sta_pwd[0]);
           addLog(LOG_LEVEL_INFO, log);
         }
       }
@@ -512,7 +605,7 @@ void WIFI_Check(uint8_t param)
       }
     } else {
       if (_wificounter <= 0) {
-        addLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("Wifi: Checking connection..."));
+        addLog_P(LOG_LEVEL_DEBUG_MORE, S_LOG_WIFI, PSTR(D_CHECKING_CONNECTION));
         _wificounter = WIFI_CHECK_SEC;
         WIFI_check_ip();
       }
@@ -520,7 +613,7 @@ void WIFI_Check(uint8_t param)
 #ifdef USE_DISCOVERY
         if (!mDNSbegun) {
           mDNSbegun = MDNS.begin(Hostname);
-          snprintf_P(log, sizeof(log), PSTR("mDNS: %s"), (mDNSbegun)?"Initialized":"Failed");
+          snprintf_P(log, sizeof(log), PSTR(D_LOG_MDNS "%s"), (mDNSbegun) ? D_INITIALIZED : D_FAILED);
           addLog(LOG_LEVEL_INFO, log);
         }
 #endif  // USE_DISCOVERY
@@ -530,7 +623,7 @@ void WIFI_Check(uint8_t param)
 #ifdef USE_DISCOVERY
 #ifdef WEBSERVER_ADVERTISE
           MDNS.addService("http", "tcp", 80);
-#endif  // WEBSERVER_ADVERTISE          
+#endif  // WEBSERVER_ADVERTISE
 #endif  // USE_DISCOVERY
         } else {
           stopWebserver();
@@ -590,14 +683,14 @@ boolean mdns_discoverMQTTServer()
 
   n = MDNS.queryService("mqtt", "tcp");  // Search for mqtt service
 
-  snprintf_P(log, sizeof(log), PSTR("mDNS: Query done with %d mqtt services found"), n);
+  snprintf_P(log, sizeof(log), PSTR(D_LOG_MDNS D_QUERY_DONE " %d"), n);
   addLog(LOG_LEVEL_INFO, log);
 
   if (n > 0) {
     // Note: current strategy is to get the first MQTT service (even when many are found)
     IPtoCharArray(MDNS.IP(0), ip_str, 20);
-    
-    snprintf_P(log, sizeof(log), PSTR("mDNS: Service found on %s ip %s port %d"),
+
+    snprintf_P(log, sizeof(log), PSTR(D_LOG_MDNS D_MQTT_SERVICE_FOUND " %s, " D_IP_ADDRESS " %s, " D_PORT " %d"),
       MDNS.hostname(0).c_str(), ip_str, MDNS.port(0));
     addLog(LOG_LEVEL_INFO, log);
 
@@ -701,7 +794,7 @@ void i2c_scan(char *devs, unsigned int devs_len)
   byte any = 0;
   char tstr[10];
 
-  snprintf_P(devs, devs_len, PSTR("{\"I2Cscan\":\"Device(s) found at"));
+  snprintf_P(devs, devs_len, PSTR("{\"" D_CMND_I2CSCAN "\":\"" D_I2CSCAN_DEVICES_FOUND_AT));
   for (address = 1; address <= 127; address++) {
     Wire.beginTransmission(address);
     error = Wire.endTransmission();
@@ -711,13 +804,13 @@ void i2c_scan(char *devs, unsigned int devs_len)
       any = 1;
     }
     else if (4 == error) {
-      snprintf_P(devs, devs_len, PSTR("{\"I2Cscan\":\"Unknown error at 0x%2x\"}"), address);
+      snprintf_P(devs, devs_len, PSTR("{\"" D_CMND_I2CSCAN "\":\"" D_I2CSCAN_UNKNOWN_ERROR_AT " 0x%2x\"}"), address);
     }
   }
   if (any) {
     strncat(devs, "\"}", devs_len);
   } else {
-    snprintf_P(devs, devs_len, PSTR("{\"I2Cscan\":\"No devices found\"}"));
+    snprintf_P(devs, devs_len, PSTR("{\"" D_CMND_I2CSCAN "\":\"" D_I2CSCAN_NO_DEVICES_FOUND "\"}"));
   }
 }
 #endif  // USE_I2C
@@ -741,7 +834,6 @@ extern "C" {
 Ticker tickerRTC;
 
 static const uint8_t monthDays[] = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 }; // API starts months from 1, this array starts from 0
-static const char monthNames[] = "JanFebMarAprMayJunJulAugSepOctNovDec";
 
 uint32_t utctime = 0;
 uint32_t loctime = 0;
@@ -762,7 +854,7 @@ String getBuildDateTime()
   int month;
   int day;
   int year;
-  
+
 //  sscanf(mdate, "%s %d %d", bdt, &day, &year);  // Not implemented in 2.3.0 and probably too many code
   byte i = 0;
   for (str = strtok_r(mdate, " ", &p); str && i < 3; str = strtok_r(NULL, " ", &p)) {
@@ -778,7 +870,7 @@ String getBuildDateTime()
     }
   }
   month = (strstr(monthNames, smonth) -monthNames) /3 +1;
-  snprintf_P(bdt, sizeof(bdt), PSTR("%d-%02d-%02dT%s"), year, month, day, __TIME__);
+  snprintf_P(bdt, sizeof(bdt), PSTR("%d" D_YEAR_MONTH_SEPARATOR "%02d" D_MONTH_DAY_SEPARATOR "%02d" D_DATE_TIME_SEPARATOR "%s"), year, month, day, __TIME__);
   return String(bdt);
 }
 
@@ -786,8 +878,8 @@ String getDateTime()
 {
   // "2017-03-07T11:08:02" - ISO8601:2004
   char dt[21];
-  
-  snprintf_P(dt, sizeof(dt), PSTR("%04d-%02d-%02dT%02d:%02d:%02d"),
+
+  snprintf_P(dt, sizeof(dt), PSTR("%04d" D_YEAR_MONTH_SEPARATOR "%02d" D_MONTH_DAY_SEPARATOR "%02d" D_DATE_TIME_SEPARATOR "%02d" D_HOUR_MINUTE_SEPARATOR "%02d" D_MINUTE_SECOND_SEPARATOR "%02d"),
     rtcTime.Year, rtcTime.Month, rtcTime.Day, rtcTime.Hour, rtcTime.Minute, rtcTime.Second);
   return String(dt);
 }
@@ -801,7 +893,7 @@ String getUTCDateTime()
   breakTime(utctime, tmpTime);
   tmpTime.Year += 1970;
 
-  snprintf_P(dt, sizeof(dt), PSTR("%04d-%02d-%02dT%02d:%02d:%02d"),
+  snprintf_P(dt, sizeof(dt), PSTR("%04d" D_YEAR_MONTH_SEPARATOR "%02d" D_MONTH_DAY_SEPARATOR "%02d" D_DATE_TIME_SEPARATOR "%02d" D_HOUR_MINUTE_SEPARATOR "%02d" D_MINUTE_SECOND_SEPARATOR "%02d"),
     tmpTime.Year, tmpTime.Month, tmpTime.Day, tmpTime.Hour, tmpTime.Minute, tmpTime.Second);
   return String(dt);
 }
@@ -984,11 +1076,11 @@ void rtc_second()
       rtcTime.Year = tmpTime.Year + 1970;
       dsttime = toTime_t(myDST, rtcTime.Year);
       stdtime = toTime_t(mySTD, rtcTime.Year);
-      snprintf_P(log, sizeof(log), PSTR("RTC: (UTC) %s"), rtc_time(0).c_str());
+      snprintf_P(log, sizeof(log), PSTR(D_LOG_APPLICATION "(" D_UTC_TIME ") %s"), rtc_time(0).c_str());
       addLog(LOG_LEVEL_DEBUG, log);
-      snprintf_P(log, sizeof(log), PSTR("RTC: (DST) %s"), rtc_time(2).c_str());
+      snprintf_P(log, sizeof(log), PSTR(D_LOG_APPLICATION "(" D_DST_TIME ") %s"), rtc_time(2).c_str());
       addLog(LOG_LEVEL_DEBUG, log);
-      snprintf_P(log, sizeof(log), PSTR("RTC: (STD) %s"), rtc_time(3).c_str());
+      snprintf_P(log, sizeof(log), PSTR(D_LOG_APPLICATION "(" D_STD_TIME ") %s"), rtc_time(3).c_str());
       addLog(LOG_LEVEL_DEBUG, log);
     }
   }
@@ -1035,7 +1127,7 @@ void rtc_init()
 float convertTemp(float c)
 {
   float result = c;
-  
+
   if (!isnan(c) && sysCfg.flag.temperature_conversion) {
     result = c * 1.8 + 32;  // Fahrenheit
   }
@@ -1072,7 +1164,7 @@ void syslog(const char *message)
   } else {
     syslog_level = 0;
     syslog_timer = SYSLOG_TIMER;
-    snprintf_P(str, sizeof(str), PSTR("SYSL: Syslog Host not found so logging disabled for %d seconds. Consider syslog 0"), SYSLOG_TIMER);
+    snprintf_P(str, sizeof(str), PSTR(D_LOG_APPLICATION D_SYSLOG_HOST_NOT_FOUND ". " D_RETRY_IN " %d " D_UNIT_SECOND), SYSLOG_TIMER);
     addLog(LOG_LEVEL_INFO, str);
   }
 }
@@ -1081,7 +1173,7 @@ void addLog(byte loglevel, const char *line)
 {
   char mxtime[9];
 
-  snprintf_P(mxtime, sizeof(mxtime), PSTR("%02d:%02d:%02d"), rtcTime.Hour, rtcTime.Minute, rtcTime.Second);
+  snprintf_P(mxtime, sizeof(mxtime), PSTR("%02d" D_HOUR_MINUTE_SEPARATOR "%02d" D_MINUTE_SECOND_SEPARATOR "%02d"), rtcTime.Hour, rtcTime.Minute, rtcTime.Second);
 
   if (loglevel <= seriallog_level) Serial.printf("%s %s\n", mxtime, line);
 #ifdef USE_WEBSERVER
@@ -1103,6 +1195,17 @@ void addLog_P(byte loglevel, const char *formatP)
   char mess[LOGSZ];  // was MESSZ
 
   snprintf_P(mess, sizeof(mess), formatP);
+  addLog(loglevel, mess);
+}
+
+void addLog_P(byte loglevel, const char *formatP, const char *formatP2)
+{
+  char mess[LOGSZ];  // was MESSZ
+  char mes2[LOGSZ];
+
+  snprintf_P(mess, sizeof(mess), formatP);
+  snprintf_P(mes2, sizeof(mes2), formatP2);
+  strncat(mess, mes2, sizeof(mess));
   addLog(loglevel, mess);
 }
 

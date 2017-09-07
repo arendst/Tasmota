@@ -19,7 +19,7 @@
 
 #define PARAM8_SIZE  23                    // Number of param bytes
 
-typedef union {                            // Restricted by MISRA-C Rule 18.4 but so usefull...    
+typedef union {                            // Restricted by MISRA-C Rule 18.4 but so usefull...
   uint32_t data;                           // Allow bit manipulation using SetOption
   struct {
     uint32_t savestate : 1;                // bit 0
@@ -41,7 +41,7 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t spare16 : 1;
     uint32_t spare17 : 1;
     uint32_t spare18 : 1;
-    uint32_t spare19 : 1;
+    uint32_t wattage_resolution : 1;
     uint32_t voltage_resolution : 1;
     uint32_t emulation : 2;
     uint32_t energy_resolution : 3;
@@ -58,7 +58,7 @@ struct SYSCFG {
   unsigned long bootcount;
   sysBitfield   flag;                      // Add flag since 5.0.2
   int16_t       savedata;
-  
+
   int8_t        timezone;
   char          otaUrl[101];
 
@@ -98,7 +98,7 @@ struct SYSCFG {
 
   uint8_t       param[PARAM8_SIZE];        // was domoticz_in_topic until 5.1.6
   char          state_text[4][11];         // was domoticz_out_topic until 5.1.6
-  
+
   uint16_t      domoticz_update_timer;
   unsigned long domoticz_relay_idx[4];
   unsigned long domoticz_key_idx[4];
@@ -115,14 +115,14 @@ struct SYSCFG {
   uint16_t      hlw_umax;
   uint16_t      hlw_imin;
   uint16_t      hlw_imax;
-  uint16_t      hlw_mpl;    // MaxPowerLimit
-  uint16_t      hlw_mplh;   // MaxPowerLimitHold
-  uint16_t      hlw_mplw;   // MaxPowerLimitWindow
-  uint16_t      hlw_mspl;   // MaxSafePowerLimit
-  uint16_t      hlw_msplh;  // MaxSafePowerLimitHold
-  uint16_t      hlw_msplw;  // MaxSafePowerLimitWindow
-  uint16_t      hlw_mkwh;   // MaxEnergy
-  uint16_t      hlw_mkwhs;  // MaxEnergyStart
+  uint16_t      hlw_mpl;                   // MaxPowerLimit
+  uint16_t      hlw_mplh;                  // MaxPowerLimitHold
+  uint16_t      hlw_mplw;                  // MaxPowerLimitWindow
+  uint16_t      hlw_mspl;                  // MaxSafePowerLimit
+  uint16_t      hlw_msplh;                 // MaxSafePowerLimitHold
+  uint16_t      hlw_msplw;                 // MaxSafePowerLimitWindow
+  uint16_t      hlw_mkwh;                  // MaxEnergy
+  uint16_t      hlw_mkwhs;                 // MaxEnergyStart
 
   // 3.0.6
   uint16_t      mqtt_retry;                // was ex_pulsetime until 4.0.4
@@ -217,8 +217,7 @@ struct RTCMEM {
   unsigned long pCounter[MAX_COUNTERS];
 } rtcMem;
 
-// See issue https://github.com/esp8266/Arduino/issues/2913  
+// See issue https://github.com/esp8266/Arduino/issues/2913
 #ifdef USE_ADC_VCC
-  ADC_MODE(ADC_VCC);                        // Set ADC input for Power Supply Voltage usage
+  ADC_MODE(ADC_VCC);                       // Set ADC input for Power Supply Voltage usage
 #endif
-
