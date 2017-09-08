@@ -10,9 +10,9 @@ Only Flash Mode DOUT is supported. Do not use Flash Mode DIO / QIO / QOUT as it 
 
 See [Wiki](https://github.com/arendst/Sonoff-Tasmota/wiki/Theo's-Tasmota-Tips) for background information.
 
-### ATTENTION Version 5 specific information
+### ATTENTION Version 5 and up
 
-This version uses a new linker script to free flash memory for future code additions. It moves the settings from Spiffs to Eeprom. If you compile your own firmware download the new linker to your IDE or Platformio base folder. See [Wiki > Prerequisite](https://github.com/arendst/Sonoff-Tasmota/wiki/Prerequisite).
+These versions use a new linker script to free flash memory for future code additions. It moves the settings from Spiffs to Eeprom. If you compile your own firmware download the new linker to your IDE or Platformio base folder. See [Wiki > Prerequisite](https://github.com/arendst/Sonoff-Tasmota/wiki/Prerequisite).
 
 Best practice to implement is:
 - Open the webpage to your device
@@ -24,7 +24,7 @@ You should now have a device with 32k more code memory to play with.
 
 ### Version Information
 
-- This version provides all (Sonoff) modules in one file and starts up with Sonoff Basic.
+- Sonoff-Tasmota provides all (Sonoff) modules in one file and starts with module Sonoff Basic.
 - Once uploaded select module using the configuration webpage or the commands ```Modules``` and ```Module```.
 - After reboot select config menu again or use commands ```GPIOs``` and ```GPIO``` to change GPIO with desired sensor.
 
