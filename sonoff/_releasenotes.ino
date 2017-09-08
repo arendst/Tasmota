@@ -1,4 +1,8 @@
-/* 5.7.0a
+/* 5.7.0b
+ * Add snfled UNDOCA
+ * Allow # as prefix for color value for ws2812 too
+ *
+ * 5.7.0a
  * Remove leading spaces from MQTT data
  * Fix webconsole special character entry
  * Allow # as prefix for color value
