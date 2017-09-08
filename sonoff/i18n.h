@@ -27,6 +27,7 @@
 #endif
 
 // Common
+<<<<<<< HEAD
 
 const char S_LOG_HTTP[] PROGMEM = D_LOG_HTTP;
 const char S_LOG_WIFI[] PROGMEM = D_LOG_WIFI;
@@ -36,11 +37,22 @@ const char S_RSLT_POWER[] PROGMEM = D_RSLT_POWER;
 const char S_RSLT_RESULT[] PROGMEM = D_RSLT_RESULT;
 const char S_RSLT_WARNING[] PROGMEM = D_RSLT_WARNING;
 
+=======
+const char S_LOG_HTTP[] PROGMEM = D_LOG_HTTP;
+const char S_LOG_WIFI[] PROGMEM = D_LOG_WIFI;
+const char S_LOG_MQTT[] PROGMEM = D_LOG_MQTT;
+const char S_RSLT_POWER[] PROGMEM = D_RSLT_POWER;
+const char S_RSLT_RESULT[] PROGMEM = D_RSLT_RESULT;
+const char S_RSLT_WARNING[] PROGMEM = D_RSLT_WARNING;
+>>>>>>> 7618338bdd5a2ac59545f29b1dbc7da1b24c95bd
 const char S_LWT[] PROGMEM = D_LWT;
 const char S_OFFLINE[] PROGMEM = D_OFFLINE;
 
 // sonoff.ino
+<<<<<<< HEAD
 
+=======
+>>>>>>> 7618338bdd5a2ac59545f29b1dbc7da1b24c95bd
 #define MAX_BUTTON_COMMANDS  5  // Max number of button commands supported
 const char commands[MAX_BUTTON_COMMANDS][14] PROGMEM = {
   D_CMND_WIFICONFIG " 1",   // Press button three times
@@ -63,7 +75,10 @@ const char JSON_SNS_TEMPHUM[] PROGMEM =
   "%s, \"%s\":{\"" D_TEMPERATURE "\":%s, \"" D_HUMIDITY "\":%s}";
 
 // support.ino
+<<<<<<< HEAD
 
+=======
+>>>>>>> 7618338bdd5a2ac59545f29b1dbc7da1b24c95bd
 static const char monthNames[] = D_MONTH3LIST;
 
 // webserver.ino

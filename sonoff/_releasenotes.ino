@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 /* 5.6.1k
  * Fix preprocessor language selection
  *
@@ -34,6 +35,21 @@
  *
  * 5.6.1a
  * Shrink module configuration webpage
+=======
+/* 5.7.0 20170907
+ * Shrink module configuration webpage
+ * Fix settings order during startup to allow for displaying debug messages
+ * Fix some string length issues
+ * Add more string length tests by using strncpy
+ * Add Ai-Thinker RGBW led (AiLight)
+ * Add Power check and add PulseTime to power check at startup (#526)
+ * Add Supla Espablo support (#755)
+ * Add more precision to Sonoff Pow period and power results using command WattRes 0|1 (#759)
+ * Add basic internationalization and localization (#763)
+ * Add more Sonoff Pow range checking (#772)
+ * Fix invalid JSON (#786, #822)
+ * Add duplicate check to received RF signal within 2 seconds for Sonoff Bridge (#810)
+>>>>>>> 7618338bdd5a2ac59545f29b1dbc7da1b24c95bd
  *
  * 5.6.1 20170818
  * Change module list order in webpage

@@ -341,7 +341,11 @@ void handleDomoticz()
   char stemp[20];
 
   String page = FPSTR(HTTP_HEAD);
+<<<<<<< HEAD
   page.replace("{v}", S_CONFIGURE_DOMOTICZ);
+=======
+  page.replace(F("{v}"), FPSTR(S_CONFIGURE_DOMOTICZ));
+>>>>>>> 7618338bdd5a2ac59545f29b1dbc7da1b24c95bd
   page += FPSTR(HTTP_FORM_DOMOTICZ);
   for (int i = 0; i < 4; i++) {
     if (i < Maxdevice) {

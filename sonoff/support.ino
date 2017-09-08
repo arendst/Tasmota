@@ -69,7 +69,11 @@ String getResetReason()
 {
   char buff[32];
   if (osw_flag) {
+<<<<<<< HEAD
     strcpy_P(buff, PSTR(D_BLOCKED_LOOP));
+=======
+    strncpy_P(buff, PSTR(D_BLOCKED_LOOP), sizeof(buff));
+>>>>>>> 7618338bdd5a2ac59545f29b1dbc7da1b24c95bd
     return String(buff);
   } else {
     return ESP.getResetReason();
@@ -151,11 +155,19 @@ char* _dtostrf(double number, unsigned char prec, char *s, bool i18n)
   bool negative = false;
 
   if (isnan(number)) {
+<<<<<<< HEAD
     strcpy(s, "nan");
     return s;
   }
   if (isinf(number)) {
     strcpy(s, "inf");
+=======
+    strcpy_P(s, PSTR("nan"));
+    return s;
+  }
+  if (isinf(number)) {
+    strcpy_P(s, PSTR("inf"));
+>>>>>>> 7618338bdd5a2ac59545f29b1dbc7da1b24c95bd
     return s;
   }
   char decimal = '.';
