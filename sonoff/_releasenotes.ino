@@ -1,4 +1,9 @@
-/* 5.7.0 20170907
+/* 5.7.0a
+ * Remove leading spaces from MQTT data
+ * Fix webconsole special character entry
+ * Allow # as prefix for color value
+ *
+ * 5.7.0 20170907
  * Shrink module configuration webpage
  * Fix settings order during startup to allow for displaying debug messages
  * Fix some string length issues

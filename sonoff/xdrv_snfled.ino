@@ -479,6 +479,10 @@ boolean sl_command(char *type, uint16_t index, char *dataBufUc, uint16_t data_le
   char *p;
 
   if ((sfl_flg > 1) && !strcasecmp_P(type, PSTR(D_CMND_COLOR))) {
+    if (dataBufUc[0] == '#') {
+      dataBufUc++;
+      data_len--;
+    }
     if ((2 * sfl_flg) == data_len) {
       for (byte i = 0; i < sfl_flg; i++) {
         strlcpy(scolor, dataBufUc + (i *2), 3);

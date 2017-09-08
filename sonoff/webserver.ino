@@ -102,7 +102,7 @@ const char HTTP_SCRIPT_CONSOL[] PROGMEM =
     "t=document.getElementById('t1');"
     "if(p==1){"
       "c=document.getElementById('c1');"
-      "o='&c1='+encodeURI(c.value);"
+      "o='&c1='+encodeURIComponent(c.value);"
       "c.value='';"
       "t.scrollTop=sn;"
     "}"
