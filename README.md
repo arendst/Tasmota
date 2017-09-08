@@ -55,7 +55,7 @@ The following devices are supported:
 - [iTead 1 Channel Switch 5V / 12V](https://www.itead.cc/smart-home/inching-self-locking-wifi-wireless-switch.html)
 - [iTead Motor Clockwise/Anticlockwise](https://www.itead.cc/smart-home/motor-reversing-wifi-wireless-switch.html)
 - [Electrodragon IoT Relay Board](http://www.electrodragon.com/product/wifi-iot-relay-board-based-esp8266/)
-- [AI Light](http://www.ebay.com/itm/172644855726) or my9291 compatible RGBW LED
+- [AI Light or any my9291 compatible RGBW LED](http://www.ebay.com/itm/172644855726)
 
 
 ### License
