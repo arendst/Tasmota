@@ -157,6 +157,7 @@ enum module_t {
   SONOFF_T12,
   SONOFF_T13,
   SUPLA1,
+  WITTY,
   MAXMODULE };
 
 /********************************************************************************************/
@@ -203,7 +204,8 @@ const uint8_t nicelist[MAXMODULE] PROGMEM = {
   H801,
   HUAFAN_SS,
   AILIGHT,
-  WEMOS
+  WEMOS,
+  WITTY
 };
 
 // Default module settings
@@ -619,6 +621,22 @@ const mytmplt modules[MAXMODULE] PROGMEM = {
      0,
      GPIO_LED1,        // GPIO16 Led (1 = On, 0 = Off)
      GPIO_ADC0         // ADC0 A0 Analog input
+  },
+  { "Witty Cloud",     // Witty Cloud Dev Board (ESP8266)
+     0,                // GPIO00 D3 (flash button)
+     GPIO_TXD,         // GPIO01 TX
+     GPIO_LED1_INV,    // GPIO02 D4 buildin LED
+     GPIO_RXD,         // GPIO03 RX
+     GPIO_KEY1,        // GPIO04 D2 push button
+     GPIO_USER,        // GPIO05 D1 optional sensor
+     0, 0, 0,          
+     0, 0, 0,          
+     GPIO_PWM4,        // GPIO12 D6 green LED
+     GPIO_PWM5,        // GPIO13 D7 blue LED
+     GPIO_USER,        // GPIO14 D5 optional sensor
+     GPIO_PWM3,        // GPIO15 D8 red LED
+     GPIO_USER,        // GPIO16 D0 options sensor
+     GPIO_ADC0         // ADC0 light sensor / Requires USE_ADC_VCC in user_config.h to be disabled
   }
 };
 
