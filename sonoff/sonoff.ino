@@ -2677,13 +2677,13 @@ void GPIO_init()
         Maxdevice++;
       }
 //      if (pin[GPIO_KEY1 +i] < 99) {
-//        pinMode(pin[GPIO_KEY1 +i], INPUT_PULLUP);
+//        pinMode(pin[GPIO_KEY1 +i], pin[GPIO_KEY1 +i] == 16 ? INPUT_PULLDOWN_16 : INPUT_PULLUP);
 //      }
     }
   }
   for (byte i = 0; i < 4; i++) {
     if (pin[GPIO_KEY1 +i] < 99) {
-      pinMode(pin[GPIO_KEY1 +i], INPUT_PULLUP);
+      pinMode(pin[GPIO_KEY1 +i], pin[GPIO_KEY1 +i] == 16 ? INPUT_PULLDOWN_16 : INPUT_PULLUP);
     }
     if (pin[GPIO_LED1 +i] < 99) {
       pinMode(pin[GPIO_LED1 +i], OUTPUT);
@@ -2691,7 +2691,7 @@ void GPIO_init()
     }
     if (pin[GPIO_SWT1 +i] < 99) {
       swt_flg = 1;
-      pinMode(pin[GPIO_SWT1 +i], INPUT_PULLUP);
+      pinMode(pin[GPIO_SWT1 +i], pin[GPIO_SWT1 +i] == 16 ? INPUT_PULLDOWN_16 : INPUT_PULLUP);
       lastwallswitch[i] = digitalRead(pin[GPIO_SWT1 +i]);  // set global now so doesn't change the saved power state on first switch check
     }
   }
