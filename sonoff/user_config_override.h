@@ -66,7 +66,7 @@
 #ifdef MQTT_HOST
 #undef MQTT_HOST
 #endif
-#define MQTT_HOST            ""     // [MqttHost] - ako e prazno, ne prawi opit za reconnect, zashtoto inache spi dokato se wyrzhe
+#define MQTT_HOST            "192.168.1.3"     // [MqttHost] - ako e prazno, ne prawi opit za reconnect, zashtoto inache spi dokato se wyrzhe
 
 // vizh switchmode: 0 = default, 1 = follow, 2 = inverse follow, s i 4 pushbutton (inverted)
 //#define USE_WALL_SWITCH                   // Enable the use of a standard wall switch to control the relay
@@ -85,7 +85,7 @@
 #undef DHT_TYPE
 #endif
 #define DHT_TYPE             DHT21       // DHT module type (DHT11, DHT21, DHT22, AM2301, AM2302 or AM2321)
-#define OTA_URL              "http://fw.tivi.bg:80/arduino/" PROJECT ".ino.th.bin" // s temperaturen datchik
+#define OTA_URL              "http://fw.tivi.bg:80/arduino/" PROJECT ".ino.bin" // s temperaturen datchik
 #define APP_NAME             "Sonoff 8266 module for tivi.bg (temp+hydro) " __DATE__
 
 
@@ -142,4 +142,8 @@
 #define MQTT_BUTTON_RETAIN     1                 // [ButtonRetain] Button may send retain flag (0 = off, 1 = on)
 #define MQTT_POWER_RETAIN      1                 // [PowerRetain] Power status message may send retain flag (0 = off, 1 = on)
 #define MQTT_SWITCH_RETAIN     1                 // [SwitchRetain] Switch may send retain flag (0 = off, 1 = on)
+
+#undef APP_SLEEP
+#define APP_SLEEP              1                 // [Sleep] Sleep time to lower energy consumption (0 = Off, 1 - 250 mSec)
+
 
