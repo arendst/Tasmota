@@ -64,7 +64,7 @@ boolean bh1750_detect()
   if (!status) {
     success = true;
     bh1750type = 1;
-    strcpy(bh1750stype, "BH1750");
+    strcpy_P(bh1750stype, PSTR("BH1750"));
   }
   if (success) {
     snprintf_P(log, sizeof(log), PSTR(D_LOG_I2C "%s " D_FOUND_AT " 0x%x"), bh1750stype, bh1750addr);

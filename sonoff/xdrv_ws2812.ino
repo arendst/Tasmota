@@ -530,6 +530,10 @@ boolean ws2812_command(char *type, uint16_t index, char *dataBuf, uint16_t data_
     ws2812_getColor(index, svalue, ssvalue);
   }
   else if (!strcasecmp_P(type, PSTR(D_CMND_COLOR))) {
+    if (dataBuf[0] == '#') {
+      dataBuf++;
+      data_len--;
+    }
     if (6 == data_len) {
       ws2812_setColor(0, dataBuf);
       bitSet(power, ws_bit);
@@ -606,10 +610,8 @@ boolean ws2812_command(char *type, uint16_t index, char *dataBuf, uint16_t data_
     }
     snprintf_P(svalue, ssvalue, PSTR("{\"" D_CMND_SCHEME "\":%d}"), sysCfg.ws_scheme);
   }
-  else if (!strcmp_P(type,PSTR("UNDOCA"))) {  // Theos WS2812 legacy status
+  else if (!strcasecmp_P(type, PSTR("UNDOCA"))) {  // Theos legacy status
     RgbColor mcolor;
-    char mtopic[TOPSZ];
-    getTopic_P(mtopic, 1, sysCfg.mqtt_topic, type);
     ws2812_setDim(sysCfg.ws_dimmer);
     mcolor = dcolor;
     uint32_t color = (uint32_t)mcolor.R << 16;
@@ -617,7 +619,7 @@ boolean ws2812_command(char *type, uint16_t index, char *dataBuf, uint16_t data_
     color += (uint32_t)mcolor.B;
     snprintf_P(svalue, ssvalue, PSTR("%06X, %d, %d, %d, %d, %d"),
       color, sysCfg.ws_fade, sysCfg.ws_ledtable, sysCfg.ws_scheme, sysCfg.ws_speed, sysCfg.ws_width);
-    mqtt_publish(mtopic, svalue);
+    mqtt_publish_topic_P(1, type, svalue);
     svalue[0] = '\0';
   }
   else {

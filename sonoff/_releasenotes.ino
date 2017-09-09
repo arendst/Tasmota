@@ -1,39 +1,22 @@
-/* 5.6.1k
- * Fix preprocessor language selection
+/* 5.7.1 20170909
+ * Remove leading spaces from MQTT data
+ * Fix webconsole special character entry
+ * Allow # as prefix for color value
+ * Fix Alexa detection and Hue App Update Request (#698, #854)
  *
- * 5.6.1j
- * Fix compile error on Linux due to language folder name
- *
- * 5.6.1i
- * Add basic internationalization and localization (#763)
- * Fix invalid JSON (#822)
- *
- * 5.6.1h
- * Add PulseTime to power check at startup (#526)
- *
- * 5.6.1g
- * Add power check at startup (#526)
- * Add duplicate check to received RF signal within 2 seconds for Sonoff Bridge (#810)
- *
- * 5.6.1f
- * Fix JSON error (#786)
- * Revert changes from 5.6.1e but extent HLW power timer to 10 seconds (#796)
- *
- * 5.6.1e
- * Remove Sonoff Pow HLW power timer to enable low power readings. Unstable below 3W due to used hardware. (#759)
- *
- * 5.6.1d
- * Fix settings order during startup to allow for displaying debug messages
- * Add more Sonoff Pow range checking (#772)
- *
- * 5.6.1c
- * Add more precision to Sonoff Pow period and power results using command WattRes 0|1 (#759)
- *
- * 5.6.1b
- * Add Supla Espablo support (#755)
- *
- * 5.6.1a
+ * 5.7.0 20170907
  * Shrink module configuration webpage
+ * Fix settings order during startup to allow for displaying debug messages
+ * Fix some string length issues
+ * Add more string length tests by using strncpy
+ * Add Ai-Thinker RGBW led (AiLight)
+ * Add Power check and add PulseTime to power check at startup (#526)
+ * Add Supla Espablo support (#755)
+ * Add more precision to Sonoff Pow period and power results using command WattRes 0|1 (#759)
+ * Add basic internationalization and localization (#763)
+ * Add more Sonoff Pow range checking (#772)
+ * Fix invalid JSON (#786, #822)
+ * Add duplicate check to received RF signal within 2 seconds for Sonoff Bridge (#810)
  *
  * 5.6.1 20170818
  * Change module list order in webpage

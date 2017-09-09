@@ -479,6 +479,10 @@ boolean sl_command(char *type, uint16_t index, char *dataBufUc, uint16_t data_le
   char *p;
 
   if ((sfl_flg > 1) && !strcasecmp_P(type, PSTR(D_CMND_COLOR))) {
+    if (dataBufUc[0] == '#') {
+      dataBufUc++;
+      data_len--;
+    }
     if ((2 * sfl_flg) == data_len) {
       for (byte i = 0; i < sfl_flg; i++) {
         strlcpy(scolor, dataBufUc + (i *2), 3);
@@ -550,6 +554,14 @@ boolean sl_command(char *type, uint16_t index, char *dataBufUc, uint16_t data_le
     sl_wakeupActive = 3;
     do_cmnd_power(1, 1);
     snprintf_P(svalue, ssvalue, PSTR("{\"" D_CMND_WAKEUP "\":\"" D_STARTED "\"}"));
+  }
+  else if (!strcasecmp_P(type, PSTR("UNDOCA"))) {  // Theos legacy status
+    sl_getColor(scolor);
+    scolor[6] = '\0';  // RGB only
+    snprintf_P(svalue, ssvalue, PSTR("%s, %d, %d, 1, %d, 1"),
+      scolor, sysCfg.led_fade, sysCfg.led_table, sysCfg.led_speed);
+    mqtt_publish_topic_P(1, type, svalue);
+    svalue[0] = '\0';
   }
   else {
     serviced = false;  // Unknown command
