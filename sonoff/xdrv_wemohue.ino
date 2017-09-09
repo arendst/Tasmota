@@ -99,7 +99,7 @@ const char HUE_RESPONSE[] PROGMEM =
   "CACHE-CONTROL: max-age=100\r\n"
   "EXT:\r\n"
   "LOCATION: http://{r1}:80/description.xml\r\n"
-  "SERVER: FreeRTOS/7.4.2 UPnP/1.0 IpBridge/1.16.0\r\n"
+  "SERVER: Linux/3.14.0 UPnP/1.0 IpBridge/1.17.0\r\n"
   "hue-bridgeid: {r2}\r\n";
 const char HUE_ST1[] PROGMEM =
   "ST: upnp:rootdevice\r\n"
@@ -110,7 +110,7 @@ const char HUE_ST2[] PROGMEM =
   "USN: uuid:{r3}\r\n"
   "\r\n";
 const char HUE_ST3[] PROGMEM =
-  "ST: urn:schemas-upnp-org:device:Basic:1\r\n"
+  "ST: urn:schemas-upnp-org:device:basic:1\r\n"
   "USN: uuid:{r3}\r\n"
   "\r\n";
 
@@ -400,8 +400,8 @@ const char HUE_CONFIG_RESPONSE_JSON[] PROGMEM =
      "\"last use date\":\"{dt}\","
      "\"create date\":\"{dt}\","
      "\"name\":\"Remote\"}},"
-   "\"swversion\":\"01036659\","
-   "\"apiversion\":\"1.16.0\","
+   "\"swversion\":\"01039019\","
+   "\"apiversion\":\"1.17.0\","
    "\"swupdate\":{\"updatestate\":0,\"url\":\"\",\"text\":\"\",\"notify\": false},"
    "\"linkbutton\":false,"
    "\"portalservices\":false"
