@@ -1,11 +1,8 @@
-/* 5.7.0b
- * Add snfled UNDOCA
- * Allow # as prefix for color value for ws2812 too
- *
- * 5.7.0a
+/* 5.7.1 20170909
  * Remove leading spaces from MQTT data
  * Fix webconsole special character entry
  * Allow # as prefix for color value
+ * Fix Alexa detection and Hue App Update Request (#698, #854)
  *
  * 5.7.0 20170907
  * Shrink module configuration webpage
