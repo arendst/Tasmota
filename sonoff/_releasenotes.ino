@@ -1,4 +1,11 @@
-/* 5.7.1 20170909
+/* 5.7.1a
+ * Fix Domoticz loop when Emulation is selected
+ * Add GPIO14 to Sonoff Dual (#797, #839)
+ * Add support for Witty Cloud (#794)
+ * Add support for Yunshan Wifi Relay (#802)
+ * Add GPIO16 input pulldown (#827)
+ *
+ * 5.7.1 20170909
  * Remove leading spaces from MQTT data
  * Fix webconsole special character entry
  * Allow # as prefix for color value

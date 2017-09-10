@@ -269,7 +269,8 @@ void sl_prepPower(char *svalue, uint16_t ssvalue)
     do_cmnd_power(1, 6);  // No publishPowerState
   }
 #ifdef USE_DOMOTICZ
-  mqtt_publishDomoticzPowerState(1);
+//  mqtt_publishDomoticzPowerState(1);
+  domoticz_updatePowerState(1);
 #endif  // USE_DOMOTICZ
   if (sfl_flg > 1) {
     snprintf_P(svalue, ssvalue, PSTR("{\"" D_RSLT_POWER "\":\"%s\", \"" D_CMND_DIMMER "\":%d, \"" D_CMND_COLOR "\":\"%s\"}"),

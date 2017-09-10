@@ -25,7 +25,7 @@
     - Select IDE Tools - Flash Size: "1M (no SPIFFS)"
   ====================================================*/
 
-#define VERSION                0x05070100  // 5.7.1
+#define VERSION                0x05070101  // 5.7.1a
 
 enum log_t   {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG_MORE, LOG_LEVEL_ALL};
 enum week_t  {Last, First, Second, Third, Fourth};
@@ -2677,13 +2677,13 @@ void GPIO_init()
         Maxdevice++;
       }
 //      if (pin[GPIO_KEY1 +i] < 99) {
-//        pinMode(pin[GPIO_KEY1 +i], INPUT_PULLUP);
+//        pinMode(pin[GPIO_KEY1 +i], (16 == pin[GPIO_KEY1 +i]) ? INPUT_PULLDOWN_16 : INPUT_PULLUP);
 //      }
     }
   }
   for (byte i = 0; i < 4; i++) {
     if (pin[GPIO_KEY1 +i] < 99) {
-      pinMode(pin[GPIO_KEY1 +i], INPUT_PULLUP);
+      pinMode(pin[GPIO_KEY1 +i], (16 == pin[GPIO_KEY1 +i]) ? INPUT_PULLDOWN_16 : INPUT_PULLUP);
     }
     if (pin[GPIO_LED1 +i] < 99) {
       pinMode(pin[GPIO_LED1 +i], OUTPUT);
@@ -2691,7 +2691,7 @@ void GPIO_init()
     }
     if (pin[GPIO_SWT1 +i] < 99) {
       swt_flg = 1;
-      pinMode(pin[GPIO_SWT1 +i], INPUT_PULLUP);
+      pinMode(pin[GPIO_SWT1 +i], (16 == pin[GPIO_SWT1 +i]) ? INPUT_PULLDOWN_16 :INPUT_PULLUP);
       lastwallswitch[i] = digitalRead(pin[GPIO_SWT1 +i]);  // set global now so doesn't change the saved power state on first switch check
     }
   }

@@ -546,7 +546,8 @@ boolean ws2812_command(char *type, uint16_t index, char *dataBuf, uint16_t data_
       bitSet(power, ws_bit);
 #ifdef USE_DOMOTICZ
 //      mqtt_publishDomoticzPowerState(index);
-      mqtt_publishDomoticzPowerState(ws_bit +1);
+//      mqtt_publishDomoticzPowerState(ws_bit +1);
+      domoticz_updatePowerState(ws_bit +1);
 #endif  // USE_DOMOTICZ
     }
     snprintf_P(svalue, ssvalue, PSTR("{\"" D_CMND_DIMMER "\":%d}"), sysCfg.ws_dimmer);
