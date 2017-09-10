@@ -1,4 +1,7 @@
-/* 5.7.1a
+/* 5.7.1b
+ * Add timeout to DHT and DS18B20 sensors (#852)
+ *
+ * 5.7.1a
  * Fix Domoticz loop when Emulation is selected
  * Add GPIO14 to Sonoff Dual (#797, #839)
  * Add support for Witty Cloud (#794)
