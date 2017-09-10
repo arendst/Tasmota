@@ -197,7 +197,7 @@ void dht_init()
 
   for (byte i = 0; i < dht_sensors; i++) {
     pinMode(dht[i].pin, INPUT_PULLUP);
-    dht[i].lastreadtime -= MIN_INTERVAL;
+    dht[i].lastreadtime = 0;
     dht[i].lastresult = 0;
     switch (dht[i].type) {
     case GPIO_DHT11:
