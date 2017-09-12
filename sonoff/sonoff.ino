@@ -25,7 +25,7 @@
     - Select IDE Tools - Flash Size: "1M (no SPIFFS)"
   ====================================================*/
 
-#define VERSION                0x05070102  // 5.7.1b
+#define VERSION                0x05070103  // 5.7.1c
 
 enum log_t   {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG_MORE, LOG_LEVEL_ALL};
 enum week_t  {Last, First, Second, Third, Fourth};
@@ -658,7 +658,7 @@ void mqtt_reconnect()
 
 /********************************************************************************************/
 
-boolean mqtt_command(boolean grpflg, char *type, uint16_t index, char *dataBuf, uint16_t data_len, int16_t payload, char *svalue, uint16_t ssvalue)
+boolean mqtt_command(boolean grpflg, char *type, uint16_t index, char *dataBuf, uint16_t data_len, int16_t payload, uint16_t payload16, char *svalue, uint16_t ssvalue)
 {
   boolean serviced = true;
   char stemp1[TOPSZ];
@@ -674,8 +674,8 @@ boolean mqtt_command(boolean grpflg, char *type, uint16_t index, char *dataBuf, 
     snprintf_P(svalue, ssvalue, PSTR("{\"" D_CMND_MQTTHOST "\":\"%s\"}"), sysCfg.mqtt_host);
   }
   else if (!strcasecmp_P(type, PSTR(D_CMND_MQTTPORT))) {
-    if ((payload > 0) && (payload < 32766)) {
-      sysCfg.mqtt_port = (1 == payload) ? MQTT_PORT : payload;
+    if (payload16 > 0) {
+      sysCfg.mqtt_port = (1 == payload16) ? MQTT_PORT : payload16;
       restartflag = 2;
     }
     snprintf_P(svalue, ssvalue, PSTR("{\"" D_CMND_MQTTPORT "\":%d}"), sysCfg.mqtt_port);
@@ -1345,8 +1345,8 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
       snprintf_P(svalue, sizeof(svalue), PSTR("{\"" D_CMND_LOGHOST "\":\"%s\"}"), sysCfg.syslog_host);
     }
     else if (!strcasecmp_P(type, PSTR(D_CMND_LOGPORT))) {
-      if ((payload > 0) && (payload < 32766)) {
-        sysCfg.syslog_port = (1 == payload) ? SYS_LOG_PORT : payload;
+      if (payload16 > 0) {
+        sysCfg.syslog_port = (1 == payload16) ? SYS_LOG_PORT : payload16;
       }
       snprintf_P(svalue, sizeof(svalue), PSTR("{\"" D_CMND_LOGPORT "\":%d}"), sysCfg.syslog_port);
     }
@@ -1550,7 +1550,7 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
       CFG_Dump(dataBuf);
       snprintf_P(svalue, sizeof(svalue), PSTR("{\"" D_CMND_CFGDUMP "\":\"" D_DONE "\"}"));
     }
-    else if (sysCfg.flag.mqtt_enabled && mqtt_command(grpflg, type, index, dataBuf, data_len, payload, svalue, sizeof(svalue))) {
+    else if (sysCfg.flag.mqtt_enabled && mqtt_command(grpflg, type, index, dataBuf, data_len, payload, payload16, svalue, sizeof(svalue))) {
       // Serviced
     }
     else if (hlw_flg && hlw_command(type, index, dataBuf, data_len, payload, svalue, sizeof(svalue))) {
@@ -1796,8 +1796,8 @@ void publish_status(uint8_t payload)
   }
 
   if ((0 == payload) || (3 == payload)) {
-    snprintf_P(svalue, sizeof(svalue), PSTR("{\"" D_CMND_STATUS D_STATUS3_LOGGING "\":{\"" D_CMND_SERIALLOG "\":%d, \"" D_CMND_WEBLOG "\":%d, \"" D_CMND_SYSLOG "\":%d, \"" D_CMND_LOGHOST "\":\"%s\", \"" D_CMND_SSID "1\":\"%s\", \"" D_CMND_SSID "2\":\"%s\", \"" D_CMND_TELEPERIOD "\":%d, \"" D_CMND_SETOPTION "\":\"%08X\"}}"),
-      sysCfg.seriallog_level, sysCfg.weblog_level, sysCfg.syslog_level, sysCfg.syslog_host, sysCfg.sta_ssid[0], sysCfg.sta_ssid[1], sysCfg.tele_period, sysCfg.flag.data);
+    snprintf_P(svalue, sizeof(svalue), PSTR("{\"" D_CMND_STATUS D_STATUS3_LOGGING "\":{\"" D_CMND_SERIALLOG "\":%d, \"" D_CMND_WEBLOG "\":%d, \"" D_CMND_SYSLOG "\":%d, \"" D_CMND_LOGHOST "\":\"%s\", \"" D_CMND_LOGPORT "\":%d, \"" D_CMND_SSID "1\":\"%s\", \"" D_CMND_SSID "2\":\"%s\", \"" D_CMND_TELEPERIOD "\":%d, \"" D_CMND_SETOPTION "\":\"%08X\"}}"),
+      sysCfg.seriallog_level, sysCfg.weblog_level, sysCfg.syslog_level, sysCfg.syslog_host, sysCfg.syslog_port, sysCfg.sta_ssid[0], sysCfg.sta_ssid[1], sysCfg.tele_period, sysCfg.flag.data);
     mqtt_publish_topic_P(option, PSTR(D_CMND_STATUS "3"), svalue);
   }
 

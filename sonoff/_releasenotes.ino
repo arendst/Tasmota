@@ -1,4 +1,7 @@
-/* 5.7.1b
+/* 5.7.1c
+ * Allow LogPort and MqttPort up to 65535 and add LogPort tot Status 3 (#859)
+ *
+ * 5.7.1b
  * Add timeout to DHT and DS18B20 sensors (#852)
  *
  * 5.7.1a
