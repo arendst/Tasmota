@@ -506,15 +506,11 @@ void CFG_DefaultSet2()
 
   // 5.4.1
   memcpy_P(sysCfg.sfb_code[0], sfb_codeDefault, 9);
-<<<<<<< HEAD
   
   for (byte i = 0; i < MAX_PULSETIMERS; i++){
     sysCfg.interlock[i] = 0;
   }
   sysCfg.interlockTime = 0;
-=======
-
->>>>>>> pr/1
 }
 
 /********************************************************************************************/

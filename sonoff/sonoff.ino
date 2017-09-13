@@ -1050,7 +1050,6 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
       }
       snprintf_P(svalue, sizeof(svalue), PSTR("{\"" D_CMND_PULSETIME "%d\":%d}"), index, sysCfg.pulsetime[index -1]);
     }
-<<<<<<< HEAD
     else if (!strcmp_P(type,PSTR("INTERLOCK")) && (index > 0) && (index <= MAX_PULSETIMERS)) {
       if (data_len > 0) {
         byte mask = 0;
@@ -1076,9 +1075,7 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
       snprintf_P(svalue, sizeof(svalue), PSTR("{\"InterlockTime\":%d}"), sysCfg.interlockTime);
     }
     else if (!strcmp_P(type,PSTR("BLINKTIME"))) {
-=======
     else if (!strcasecmp_P(type, PSTR(D_CMND_BLINKTIME))) {
->>>>>>> pr/1
       if ((payload > 2) && (payload <= 3600)) {
         sysCfg.blinktime = payload;
         if (blink_timer) {
