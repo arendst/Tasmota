@@ -1,5 +1,5 @@
 /*
-  xsns_counter.ino - Counter sensors (water meters, electricity meters etc.) sensor support for Sonoff-Tasmota 
+  xsns_counter.ino - Counter sensors (water meters, electricity meters etc.) sensor support for Sonoff-Tasmota
 
   Copyright (C) 2017  Maarten Damen and Theo Arends
 
@@ -74,7 +74,7 @@ void counter_init()
 {
   typedef void (*function) () ;
   function counter_callbacks[] = { counter_update1, counter_update2, counter_update3, counter_update4 };
-  
+
   for (byte i = 0; i < MAX_COUNTERS; i++) {
     if (pin[GPIO_CNTR1 +i] < 99) {
       pinMode(pin[GPIO_CNTR1 +i], INPUT_PULLUP);
@@ -95,12 +95,12 @@ void counter_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
   for (byte i = 0; i < MAX_COUNTERS; i++) {
     if (pin[GPIO_CNTR1 +i] < 99) {
       if (bitRead(sysCfg.pCounterType, i)) {
-        dtostrf((double)rtcMem.pCounter[i] / 1000, 1, 3, stemp);
+        dtostrfd((double)rtcMem.pCounter[i] / 1000, 3, stemp);
       } else {
         dsxflg++;
-        dtostrf(rtcMem.pCounter[i], 1, 0, stemp);
+        dtostrfd(rtcMem.pCounter[i], 0, stemp);
       }
-      snprintf_P(svalue, ssvalue, PSTR("%s, \"Counter%d\":%s"), svalue, i +1, stemp);
+      snprintf_P(svalue, ssvalue, PSTR("%s, \"" D_COUNTER "%d\":%s"), svalue, i +1, stemp);
       *djson = 1;
 #ifdef USE_DOMOTICZ
       if (1 == dsxflg) {
@@ -114,7 +114,7 @@ void counter_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
 
 #ifdef USE_WEBSERVER
 const char HTTP_SNS_COUNTER[] PROGMEM =
-  "<tr><th>Counter%d</th><td>%s%s</td></tr>";  
+  "<tr><th>" D_COUNTER "%d</th><td>%s%s</td></tr>";
 
 String counter_webPresent()
 {
@@ -125,11 +125,11 @@ String counter_webPresent()
   for (byte i = 0; i < MAX_COUNTERS; i++) {
     if (pin[GPIO_CNTR1 +i] < 99) {
       if (bitRead(sysCfg.pCounterType, i)) {
-        dtostrf((double)rtcMem.pCounter[i] / 1000, 1, 3, stemp);
+        dtostrfi((double)rtcMem.pCounter[i] / 1000, 3, stemp);
       } else {
-        dtostrf(rtcMem.pCounter[i], 1, 0, stemp);
+        dtostrfi(rtcMem.pCounter[i], 0, stemp);
       }
-      snprintf_P(sensor, sizeof(sensor), HTTP_SNS_COUNTER, i+1, stemp, (bitRead(sysCfg.pCounterType, i)) ? " Sec" : "");
+      snprintf_P(sensor, sizeof(sensor), HTTP_SNS_COUNTER, i+1, stemp, (bitRead(sysCfg.pCounterType, i)) ? " " D_UNIT_SECOND : "");
       page += sensor;
     }
   }

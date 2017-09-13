@@ -81,7 +81,7 @@ boolean RTC_Valid()
 void RTC_Dump()
 {
   #define CFG_COLS 16
-  
+
   char log[LOGSZ];
   uint16_t idx;
   uint16_t maxrow;
@@ -141,33 +141,23 @@ uint32_t _cfgLocation = CFG_LOCATION;
 /*
  * Based on cores/esp8266/Updater.cpp
  */
-void setFlashMode(byte option, byte mode)
+void setFlashModeDout()
 {
-  char log[LOGSZ];
   uint8_t *_buffer;
   uint32_t address;
 
-// option 0 - Use absolute address 0
-// option 1 - Use OTA/Upgrade relative address
-
-  if (option) {
-    eboot_command ebcmd;
-    eboot_command_read(&ebcmd);
-    address = ebcmd.args[0];
-  } else {
-    address = 0;
-  }
+  eboot_command ebcmd;
+  eboot_command_read(&ebcmd);
+  address = ebcmd.args[0];
   _buffer = new uint8_t[FLASH_SECTOR_SIZE];
   if (SPI_FLASH_RESULT_OK == spi_flash_read(address, (uint32_t*)_buffer, FLASH_SECTOR_SIZE)) {
-    if (_buffer[2] != mode) {
-      _buffer[2] = mode &3;
+    if (_buffer[2] != 3) {  // DOUT
+      _buffer[2] = 3;
       noInterrupts();
       if (SPI_FLASH_RESULT_OK == spi_flash_erase_sector(address / FLASH_SECTOR_SIZE)) {
         spi_flash_write(address, (uint32_t*)_buffer, FLASH_SECTOR_SIZE);
       }
       interrupts();
-      snprintf_P(log, sizeof(log), PSTR("FLSH: Set Flash Mode to %d"), (option) ? mode : ESP.getFlashChipMode());
-      addLog(LOG_LEVEL_DEBUG, log);
     }
   }
   delete[] _buffer;
@@ -196,7 +186,7 @@ uint32_t CFG_Address()
 void CFG_Save(byte rotate)
 {
 /* Save configuration in eeprom or one of 7 slots below
- *  
+ *
  * rotate 0 = Save in next flash slot
  * rotate 1 = Save only in eeprom flash slot until SetOption12 0 or restart
  * rotate 2 = Save in eeprom flash slot, erase next flash slots and continue depending on stop_flash_rotate
@@ -234,7 +224,8 @@ void CFG_Save(byte rotate)
         delay(1);
       }
     }
-    snprintf_P(log, sizeof(log), PSTR("Cnfg: Save (%d bytes) to flash at %X and count %d"), sizeof(SYSCFG), _cfgLocation, sysCfg.saveFlag);
+    snprintf_P(log, sizeof(log), PSTR(D_LOG_CONFIG D_SAVED_TO_FLASH_AT " %X, " D_COUNT " %d, " D_BYTES " %d"),
+       _cfgLocation, sysCfg.saveFlag, sizeof(SYSCFG));
     addLog(LOG_LEVEL_DEBUG, log);
     _cfgHash = getHash();
   }
@@ -269,7 +260,8 @@ void CFG_Load()
     }
     delay(1);
   }
-  snprintf_P(log, sizeof(log), PSTR("Cnfg: Load from flash at %X and count %d"), _cfgLocation, sysCfg.saveFlag);
+  snprintf_P(log, sizeof(log), PSTR(D_LOG_CONFIG D_LOADED_FROM_FLASH_AT " %X, " D_COUNT " %d"),
+    _cfgLocation, sysCfg.saveFlag);
   addLog(LOG_LEVEL_DEBUG, log);
   if (sysCfg.cfg_holder != CFG_HOLDER) {
     // Auto upgrade
@@ -283,7 +275,7 @@ void CFG_Load()
       CFG_Default();
     }
   }
-  
+
   _cfgHash = getHash();
 
   RTC_Load();
@@ -298,7 +290,7 @@ void CFG_Erase()
   uint32_t _sectorEnd = ESP.getFlashChipRealSize() / SPI_FLASH_SEC_SIZE;
   boolean _serialoutput = (LOG_LEVEL_DEBUG_MORE <= seriallog_level);
 
-  snprintf_P(log, sizeof(log), PSTR("Cnfg: Erase %d flash sectors"), _sectorEnd - _sectorStart);
+  snprintf_P(log, sizeof(log), PSTR(D_LOG_APPLICATION D_ERASE " %d " D_UNIT_SECTORS), _sectorEnd - _sectorStart);
   addLog(LOG_LEVEL_DEBUG, log);
 
   for (uint32_t _sector = _sectorStart; _sector < _sectorEnd; _sector++) {
@@ -306,12 +298,12 @@ void CFG_Erase()
     result = spi_flash_erase_sector(_sector);
     interrupts();
     if (_serialoutput) {
-      Serial.print(F("Flash: Erased sector "));
+      Serial.print(F(D_LOG_APPLICATION D_ERASED_SECTOR " "));
       Serial.print(_sector);
       if (SPI_FLASH_RESULT_OK == result) {
-        Serial.println(F(" OK"));
+        Serial.println(F(" " D_OK));
       } else {
-        Serial.println(F(" Error"));
+        Serial.println(F(" " D_ERROR));
       }
       delay(10);
     }
@@ -321,7 +313,7 @@ void CFG_Erase()
 void CFG_Dump(char* parms)
 {
   #define CFG_COLS 16
-  
+
   char log[LOGSZ];
   uint16_t idx;
   uint16_t maxrow;
@@ -374,7 +366,7 @@ void CFG_Dump(char* parms)
 
 void CFG_Default()
 {
-  addLog_P(LOG_LEVEL_NONE, PSTR("Cnfg: Use defaults"));
+  addLog_P(LOG_LEVEL_NONE, PSTR(D_LOG_CONFIG D_USE_DEFAULTS));
   CFG_DefaultSet1();
   CFG_DefaultSet2();
   CFG_Save(2);
@@ -389,11 +381,11 @@ void CFG_DefaultSet1()
   sysCfg.version = VERSION;
 //  sysCfg.bootcount = 0;
 }
-  
+
 void CFG_DefaultSet2()
 {
   memset((char*)&sysCfg +16, 0x00, sizeof(SYSCFG) -16);
-  
+
   sysCfg.flag.savestate = SAVE_STATE;
   sysCfg.savedata = SAVE_DATA;
   sysCfg.timezone = APP_TIMEZONE;
@@ -514,11 +506,15 @@ void CFG_DefaultSet2()
 
   // 5.4.1
   memcpy_P(sysCfg.sfb_code[0], sfb_codeDefault, 9);
+<<<<<<< HEAD
   
   for (byte i = 0; i < MAX_PULSETIMERS; i++){
     sysCfg.interlock[i] = 0;
   }
   sysCfg.interlockTime = 0;
+=======
+
+>>>>>>> pr/1
 }
 
 /********************************************************************************************/
@@ -633,7 +629,7 @@ void CFG_Delta()
       strlcpy(sysCfg.friendlyname[1], FRIENDLY_NAME"2", sizeof(sysCfg.friendlyname[1]));
       strlcpy(sysCfg.friendlyname[2], FRIENDLY_NAME"3", sizeof(sysCfg.friendlyname[2]));
       strlcpy(sysCfg.friendlyname[3], FRIENDLY_NAME"4", sizeof(sysCfg.friendlyname[3]));
-    }      
+    }
     if (sysCfg.version < 0x03020800) {  // 3.2.8 - Add parameter
       strlcpy(sysCfg.switch_topic, sysCfg.button_topic, sizeof(sysCfg.switch_topic));
       sysCfg.ex_mqtt_switch_retain = MQTT_SWITCH_RETAIN;
@@ -727,7 +723,7 @@ void CFG_Delta()
       }
       memcpy_P(sysCfg.sfb_code[0], sfb_codeDefault, 9);
     }
-    
+
     sysCfg.version = VERSION;
     CFG_Save(1);
   }
