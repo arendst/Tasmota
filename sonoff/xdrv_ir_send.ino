@@ -68,7 +68,7 @@ void ir_send_init(void)
  { "Vendor": "<Toshiba|Mitsubishi>", "Power": <0|1>, "Mode": "<Hot|Cold|Dry|Auto>", "FanSpeed": "<1|2|3|4|5|Auto|Silence>", "Temp": <17..30> }
 */
 
-boolean ir_send_command(char *type, uint16_t index, char *dataBufUc, uint16_t data_len, int16_t payload, char *svalue, uint16_t ssvalue)
+boolean ir_send_command(char *type, uint16_t index, char *dataBufUc, uint16_t data_len, int16_t payload)
 {
   boolean serviced = true;
   boolean error = false;
@@ -82,16 +82,14 @@ boolean ir_send_command(char *type, uint16_t index, char *dataBufUc, uint16_t da
   int HVAC_Temp = 21;
   boolean HVAC_Power = true;
 
-//  char log[LOGSZ];
-
   if (!strcasecmp_P(type, PSTR(D_CMND_IRSEND))) {
 	  if (data_len) {
       StaticJsonBuffer<128> jsonBuf;
       JsonObject &ir_json = jsonBuf.parseObject(dataBufUc);
       if (!ir_json.success()) {
-        snprintf_P(svalue, ssvalue, PSTR("{\"" D_CMND_IRSEND "\":\"" D_INVALID_JSON "\"}"));  // JSON decode failed
+        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_IRSEND "\":\"" D_INVALID_JSON "\"}"));  // JSON decode failed
       } else {
-        snprintf_P(svalue, ssvalue, PSTR("{\"" D_CMND_IRSEND "\":\"" D_DONE "\"}"));
+        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_IRSEND "\":\"" D_DONE "\"}"));
         protocol = ir_json[D_IRSEND_PROTOCOL];
         bits = ir_json[D_IRSEND_BITS];
         data = ir_json[D_IRSEND_DATA];
@@ -104,13 +102,13 @@ boolean ir_send_command(char *type, uint16_t index, char *dataBufUc, uint16_t da
           else if (!strcmp_P(protocol,PSTR("JVC")))     irsend->sendJVC(data, bits, 1);
           else if (!strcmp_P(protocol,PSTR("SAMSUNG"))) irsend->sendSAMSUNG(data, bits);
           else {
-            snprintf_P(svalue, ssvalue, PSTR("{\"" D_CMND_IRSEND "\":\"" D_PROTOCOL_NOT_SUPPORTED "\"}"));
+            snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_IRSEND "\":\"" D_PROTOCOL_NOT_SUPPORTED "\"}"));
           }
         } else error = true;
       }
     } else error = true;
     if (error) {
-      snprintf_P(svalue, ssvalue, PSTR("{\"" D_CMND_IRSEND "\":\"" D_NO D_IRSEND_PROTOCOL ", " D_IRSEND_BITS " " D_OR " " D_IRSEND_DATA "\"}"));
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_IRSEND "\":\"" D_NO D_IRSEND_PROTOCOL ", " D_IRSEND_BITS " " D_OR " " D_IRSEND_DATA "\"}"));
     }
   }
 #ifdef USE_IR_HVAC
@@ -119,18 +117,18 @@ boolean ir_send_command(char *type, uint16_t index, char *dataBufUc, uint16_t da
       StaticJsonBuffer<164> jsonBufer;
       JsonObject &root = jsonBufer.parseObject(dataBufUc);
       if (!root.success()) {
-        snprintf_P(svalue, ssvalue, PSTR("{\"" D_CMND_IRHVAC "\":\"" D_INVALID_JSON "\"}"));  // JSON decode failed
+        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_IRHVAC "\":\"" D_INVALID_JSON "\"}"));  // JSON decode failed
       } else {
-        snprintf_P(svalue, ssvalue, PSTR("{\"" D_CMND_IRHVAC "\":\"" D_DONE "\"}"));
+        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_IRHVAC "\":\"" D_DONE "\"}"));
         HVAC_Vendor = root[D_IRHVAC_VENDOR];
         HVAC_Power = root[D_IRHVAC_POWER];
         HVAC_Mode = root[D_IRHVAC_MODE];
         HVAC_FanMode = root[D_IRHVAC_FANSPEED];
         HVAC_Temp = root[D_IRHVAC_TEMP];
 
-//        snprintf_P(log, sizeof(log), PSTR("IRHVAC: Received Vendor %s, Power %d, Mode %s, FanSpeed %s, Temp %d"),
+//        snprintf_P(log_data, sizeof(log_data), PSTR("IRHVAC: Received Vendor %s, Power %d, Mode %s, FanSpeed %s, Temp %d"),
 //          HVAC_Vendor, HVAC_Power, HVAC_Mode, HVAC_FanMode, HVAC_Temp);
-//        addLog(LOG_LEVEL_DEBUG, log);
+//        addLog(LOG_LEVEL_DEBUG);
 
         if (HVAC_Vendor == NULL || !strcmp_P(HVAC_Vendor,PSTR("TOSHIBA"))) {
           error = ir_hvac_toshiba(HVAC_Mode, HVAC_FanMode, HVAC_Power, HVAC_Temp);
@@ -142,7 +140,7 @@ boolean ir_send_command(char *type, uint16_t index, char *dataBufUc, uint16_t da
       }
     } else error = true;
     if (error) {
-      snprintf_P(svalue, ssvalue, PSTR("{\"" D_CMND_IRHVAC "\":\"" D_WRONG D_IRHVAC_VENDOR ", " D_IRHVAC_MODE " " D_OR " " D_IRHVAC_FANSPEED "\"}"));
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_IRHVAC "\":\"" D_WRONG D_IRHVAC_VENDOR ", " D_IRHVAC_MODE " " D_OR " " D_IRHVAC_FANSPEED "\"}"));
     }
   }
 #endif  // USE_IR_HVAC
@@ -246,7 +244,6 @@ boolean ir_hvac_mitsubishi(const char *HVAC_Mode,const char *HVAC_FanMode, boole
   char *p;
   char *token;
   uint8_t mode;
-  char log[LOGSZ];
 
   mitsubir->stateReset();
 
@@ -278,9 +275,9 @@ boolean ir_hvac_mitsubishi(const char *HVAC_Mode,const char *HVAC_FanMode, boole
   mitsubir->setVane(MITSUBISHI_AC_VANE_AUTO);
   mitsubir->send();
 
-//  snprintf_P(log, sizeof(log), PSTR("IRHVAC: Mitsubishi Power %d, Mode %d, FanSpeed %d, Temp %d, VaneMode %d"),
+//  snprintf_P(log_data, sizeof(log_data), PSTR("IRHVAC: Mitsubishi Power %d, Mode %d, FanSpeed %d, Temp %d, VaneMode %d"),
 //    mitsubir->getPower(), mitsubir->getMode(), mitsubir->getFan(), mitsubir->getTemp(), mitsubir->getVane());
-//  addLog(LOG_LEVEL_DEBUG, log);
+//  addLog(LOG_LEVEL_DEBUG);
 
   return false;
 }

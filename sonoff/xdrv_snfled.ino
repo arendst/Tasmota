@@ -257,7 +257,7 @@ char* sl_getColor(char* scolor)
   return scolor;
 }
 
-void sl_prepPower(char *svalue, uint16_t ssvalue)
+void sl_prepPower()
 {
   char scolor[11];
 
@@ -273,10 +273,10 @@ void sl_prepPower(char *svalue, uint16_t ssvalue)
   domoticz_updatePowerState(1);
 #endif  // USE_DOMOTICZ
   if (sfl_flg > 1) {
-    snprintf_P(svalue, ssvalue, PSTR("{\"" D_RSLT_POWER "\":\"%s\", \"" D_CMND_DIMMER "\":%d, \"" D_CMND_COLOR "\":\"%s\"}"),
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_RSLT_POWER "\":\"%s\", \"" D_CMND_DIMMER "\":%d, \"" D_CMND_COLOR "\":\"%s\"}"),
       getStateText(power &1), sysCfg.led_dimmer[0], sl_getColor(scolor));
   } else {
-    snprintf_P(svalue, ssvalue, PSTR("{\"" D_RSLT_POWER "\":\"%s\", \"" D_CMND_DIMMER "\":%d}"),
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_RSLT_POWER "\":\"%s\", \"" D_CMND_DIMMER "\":%d}"),
       getStateText(power &1), sysCfg.led_dimmer[0]);
   }
 }
@@ -293,7 +293,6 @@ void sl_setPower(uint8_t power)
 void sl_animate()
 {
 // {"Wakeup":"Done"}
-  char svalue[32];  // was MESSZ
   uint8_t fadeValue;
   uint8_t cur_col[5];
 
@@ -340,8 +339,8 @@ void sl_animate()
             sl_tcolor[i] = sl_dcolor[i];
           }
         } else {
-          snprintf_P(svalue, sizeof(svalue), PSTR("{\"" D_CMND_WAKEUP "\":\"" D_DONE "\"}"));
-          mqtt_publish_topic_P(2, PSTR(D_CMND_WAKEUP), svalue);
+          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_WAKEUP "\":\"" D_DONE "\"}"));
+          mqtt_publish_topic_P(2, PSTR(D_CMND_WAKEUP));
           sl_wakeupActive = 0;
         }
       }
@@ -422,19 +421,17 @@ void sl_getHSB(float *hue, float *sat, float *bri)
 
 void sl_setHSB(float hue, float sat, float bri, uint16_t ct)
 {
-  char svalue[MESSZ];
   HsbColor hsb;
 
 /*
-  char log[LOGSZ];
   char stemp1[10];
   char stemp2[10];
   char stemp3[10];
   dtostrfi(hue, 3, stemp1);
   dtostrfi(sat, 3, stemp2);
   dtostrfi(bri, 3, stemp3);
-  snprintf_P(log, sizeof(log), PSTR("HUE: Set Hue %s, Sat %s, Bri %s, Ct %d"), stemp1, stemp2, stemp3, ct);
-  addLog(LOG_LEVEL_DEBUG, log);
+  snprintf_P(log_data, sizeof(log_data), PSTR("HUE: Set Hue %s, Sat %s, Bri %s, Ct %d"), stemp1, stemp2, stemp3, ct);
+  addLog(LOG_LEVEL_DEBUG);
 */
 
   if (sfl_flg > 2) {
@@ -450,8 +447,8 @@ void sl_setHSB(float hue, float sat, float bri, uint16_t ct)
       sl_dcolor[2] = tmp.B;
       sl_setColor();
     }
-    sl_prepPower(svalue, sizeof(svalue));
-    mqtt_publish_topic_P(5, PSTR(D_CMND_COLOR), svalue);
+    sl_prepPower();
+    mqtt_publish_topic_P(5, PSTR(D_CMND_COLOR));
   } else {
     uint8_t tmp = (uint8_t)(bri * 100);
     sysCfg.led_dimmer[0] = tmp;
@@ -459,11 +456,11 @@ void sl_setHSB(float hue, float sat, float bri, uint16_t ct)
       if (ct > 0) {
         sl_setColorTemp(ct);
       }
-      sl_prepPower(svalue, sizeof(svalue));
-      mqtt_publish_topic_P(5, PSTR(D_CMND_COLOR), svalue);
+      sl_prepPower();
+      mqtt_publish_topic_P(5, PSTR(D_CMND_COLOR));
     } else {
-      sl_prepPower(svalue, sizeof(svalue));
-      mqtt_publish_topic_P(5, PSTR(D_CMND_DIMMER), svalue);
+      sl_prepPower();
+      mqtt_publish_topic_P(5, PSTR(D_CMND_DIMMER));
     }
   }
 }
@@ -472,7 +469,7 @@ void sl_setHSB(float hue, float sat, float bri, uint16_t ct)
  * Commands
 \*********************************************************************************************/
 
-boolean sl_command(char *type, uint16_t index, char *dataBufUc, uint16_t data_len, int16_t payload, char *svalue, uint16_t ssvalue)
+boolean sl_command(char *type, uint16_t index, char *dataBufUc, uint16_t data_len, int16_t payload)
 {
   boolean serviced = true;
   boolean coldim = false;
@@ -492,7 +489,7 @@ boolean sl_command(char *type, uint16_t index, char *dataBufUc, uint16_t data_le
       sl_setColor();
       coldim = true;
     } else {
-      snprintf_P(svalue, ssvalue, PSTR("{\"" D_CMND_COLOR "\":\"%s\"}"), sl_getColor(scolor));
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_COLOR "\":\"%s\"}"), sl_getColor(scolor));
     }
   }
   else if (!strcasecmp_P(type, PSTR(D_CMND_COLORTEMPERATURE)) && ((2 == sfl_flg) || (5 == sfl_flg))) { // ColorTemp
@@ -500,7 +497,7 @@ boolean sl_command(char *type, uint16_t index, char *dataBufUc, uint16_t data_le
       sl_setColorTemp(payload);
       coldim = true;
     } else {
-      snprintf_P(svalue, ssvalue, PSTR("{\"" D_CMND_COLORTEMPERATURE "\":%d}"), sl_getColorTemp());
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_COLORTEMPERATURE "\":%d}"), sl_getColorTemp());
     }
   }
   else if (!strcasecmp_P(type, PSTR(D_CMND_DIMMER))) {
@@ -508,7 +505,7 @@ boolean sl_command(char *type, uint16_t index, char *dataBufUc, uint16_t data_le
       sysCfg.led_dimmer[0] = payload;
       coldim = true;
     } else {
-      snprintf_P(svalue, ssvalue, PSTR("{\"" D_CMND_DIMMER "\":%d}"), sysCfg.led_dimmer[0]);
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_DIMMER "\":%d}"), sysCfg.led_dimmer[0]);
     }
   }
   else if (!strcasecmp_P(type, PSTR(D_CMND_LEDTABLE))) {
@@ -524,7 +521,7 @@ boolean sl_command(char *type, uint16_t index, char *dataBufUc, uint16_t data_le
       }
       sl_any = 1;
     }
-    snprintf_P(svalue, ssvalue, PSTR("{\"" D_CMND_LEDTABLE "\":\"%s\"}"), getStateText(sysCfg.led_table));
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_LEDTABLE "\":\"%s\"}"), getStateText(sysCfg.led_table));
   }
   else if (!strcasecmp_P(type, PSTR(D_CMND_FADE))) {
     switch (payload) {
@@ -536,39 +533,39 @@ boolean sl_command(char *type, uint16_t index, char *dataBufUc, uint16_t data_le
       sysCfg.led_fade ^= 1;
       break;
     }
-    snprintf_P(svalue, ssvalue, PSTR("{\"" D_CMND_FADE "\":\"%s\"}"), getStateText(sysCfg.led_fade));
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_FADE "\":\"%s\"}"), getStateText(sysCfg.led_fade));
   }
   else if (!strcasecmp_P(type, PSTR(D_CMND_SPEED))) {  // 1 - fast, 8 - slow
     if ((payload > 0) && (payload <= 8)) {
       sysCfg.led_speed = payload;
     }
-    snprintf_P(svalue, ssvalue, PSTR("{\"" D_CMND_SPEED "\":%d}"), sysCfg.led_speed);
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_SPEED "\":%d}"), sysCfg.led_speed);
   }
   else if (!strcasecmp_P(type, PSTR(D_CMND_WAKEUPDURATION))) {
     if ((payload > 0) && (payload < 3001)) {
       sysCfg.led_wakeup = payload;
       sl_wakeupActive = 0;
     }
-    snprintf_P(svalue, ssvalue, PSTR("{\"" D_CMND_WAKEUPDURATION "\":%d}"), sysCfg.led_wakeup);
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_WAKEUPDURATION "\":%d}"), sysCfg.led_wakeup);
   }
   else if (!strcasecmp_P(type, PSTR(D_CMND_WAKEUP))) {
     sl_wakeupActive = 3;
     do_cmnd_power(1, 1);
-    snprintf_P(svalue, ssvalue, PSTR("{\"" D_CMND_WAKEUP "\":\"" D_STARTED "\"}"));
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_WAKEUP "\":\"" D_STARTED "\"}"));
   }
   else if (!strcasecmp_P(type, PSTR("UNDOCA"))) {  // Theos legacy status
     sl_getColor(scolor);
     scolor[6] = '\0';  // RGB only
-    snprintf_P(svalue, ssvalue, PSTR("%s, %d, %d, 1, %d, 1"),
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s, %d, %d, 1, %d, 1"),
       scolor, sysCfg.led_fade, sysCfg.led_table, sysCfg.led_speed);
-    mqtt_publish_topic_P(1, type, svalue);
-    svalue[0] = '\0';
+    mqtt_publish_topic_P(1, type);
+    mqtt_data[0] = '\0';
   }
   else {
     serviced = false;  // Unknown command
   }
   if (coldim) {
-    sl_prepPower(svalue, ssvalue);
+    sl_prepPower();
   }
   return serviced;
 }

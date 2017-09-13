@@ -107,7 +107,6 @@ void ws2812_setDim(uint8_t myDimmer)
 void ws2812_setColor(uint16_t led, char* colstr)
 {
   HtmlColor hcolor;
-  char log[LOGSZ];
   char lcolstr[8];
 
   snprintf_P(lcolstr, sizeof(lcolstr), PSTR("#%s"), colstr);
@@ -119,8 +118,8 @@ void ws2812_setColor(uint16_t led, char* colstr)
     } else {
       dcolor = RgbColor(hcolor);
 
-//      snprintf_P(log, sizeof(log), PSTR("DBG: Red %02X, Green %02X, Blue %02X"), dcolor.R, dcolor.G, dcolor.B);
-//      addLog(LOG_LEVEL_DEBUG, log);
+//      snprintf_P(log_data, sizeof(log_data), PSTR("DBG: Red %02X, Green %02X, Blue %02X"), dcolor.R, dcolor.G, dcolor.B);
+//      addLog(LOG_LEVEL_DEBUG);
 
       uint16_t temp = dcolor.R;
       if (temp < dcolor.G) {
@@ -145,7 +144,7 @@ void ws2812_setColor(uint16_t led, char* colstr)
   }
 }
 
-void ws2812_getColor(uint16_t led, char* svalue, uint16_t ssvalue)
+void ws2812_getColor(uint16_t led)
 {
   RgbColor mcolor;
   char stemp[20];
@@ -161,7 +160,7 @@ void ws2812_getColor(uint16_t led, char* svalue, uint16_t ssvalue)
   uint32_t color = (uint32_t)mcolor.R << 16;
   color += (uint32_t)mcolor.G << 8;
   color += (uint32_t)mcolor.B;
-  snprintf_P(svalue, ssvalue, PSTR("{\"%s\":\"%06X\"}"), stemp, color);
+  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"%s\":\"%06X\"}"), stemp, color);
 }
 
 void ws2812_stripShow()
@@ -342,7 +341,6 @@ void ws2812_bars()
 
 void ws2812_animate()
 {
-  char log[LOGSZ];
   uint8_t fadeValue;
 
   stripTimerCntr++;
@@ -423,8 +421,8 @@ void ws2812_animate()
       lany = 0;
       lcolor = tcolor;
 
-//    snprintf_P(log, sizeof(log), PSTR("DBG: StripPixels %d, CfgPixels %d, Red %02X, Green %02X, Blue %02X"), strip->PixelCount(), sysCfg.ws_pixels, lcolor.R, lcolor.G, lcolor.B);
-//    addLog(LOG_LEVEL_DEBUG, log);
+//    snprintf_P(log_data, sizeof(log_data), PSTR("DBG: StripPixels %d, CfgPixels %d, Red %02X, Green %02X, Blue %02X"), strip->PixelCount(), sysCfg.ws_pixels, lcolor.R, lcolor.G, lcolor.B);
+//    addLog(LOG_LEVEL_DEBUG);
 
       if (sysCfg.ws_ledtable) {
         for (uint16_t i = 0; i < sysCfg.ws_pixels; i++) {
@@ -512,7 +510,7 @@ void ws2812_setHSB(float hue, float sat, float bri)
  * Commands
 \*********************************************************************************************/
 
-boolean ws2812_command(char *type, uint16_t index, char *dataBuf, uint16_t data_len, int16_t payload, char *svalue, uint16_t ssvalue)
+boolean ws2812_command(char *type, uint16_t index, char *dataBuf, uint16_t data_len, int16_t payload)
 {
   boolean serviced = true;
 
@@ -521,13 +519,13 @@ boolean ws2812_command(char *type, uint16_t index, char *dataBuf, uint16_t data_
       sysCfg.ws_pixels = payload;
       ws2812_pixels();
     }
-    snprintf_P(svalue, ssvalue, PSTR("{\"" D_CMND_PIXELS "\":%d}"), sysCfg.ws_pixels);
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_PIXELS "\":%d}"), sysCfg.ws_pixels);
   }
   else if (!strcasecmp_P(type, PSTR(D_CMND_LED)) && (index > 0) && (index <= sysCfg.ws_pixels)) {
     if (6 == data_len) {
       ws2812_setColor(index, dataBuf);
     }
-    ws2812_getColor(index, svalue, ssvalue);
+    ws2812_getColor(index);
   }
   else if (!strcasecmp_P(type, PSTR(D_CMND_COLOR))) {
     if (dataBuf[0] == '#') {
@@ -538,7 +536,7 @@ boolean ws2812_command(char *type, uint16_t index, char *dataBuf, uint16_t data_
       ws2812_setColor(0, dataBuf);
       bitSet(power, ws_bit);
     }
-    ws2812_getColor(0, svalue, ssvalue);
+    ws2812_getColor(0);
   }
   else if (!strcasecmp_P(type, PSTR(D_CMND_DIMMER))) {
     if ((payload >= 0) && (payload <= 100)) {
@@ -550,7 +548,7 @@ boolean ws2812_command(char *type, uint16_t index, char *dataBuf, uint16_t data_
       domoticz_updatePowerState(ws_bit +1);
 #endif  // USE_DOMOTICZ
     }
-    snprintf_P(svalue, ssvalue, PSTR("{\"" D_CMND_DIMMER "\":%d}"), sysCfg.ws_dimmer);
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_DIMMER "\":%d}"), sysCfg.ws_dimmer);
   }
   else if (!strcasecmp_P(type, PSTR(D_CMND_LEDTABLE))) {
     if ((payload >= 0) && (payload <= 2)) {
@@ -565,7 +563,7 @@ boolean ws2812_command(char *type, uint16_t index, char *dataBuf, uint16_t data_
       }
       ws2812_update();
     }
-    snprintf_P(svalue, ssvalue, PSTR("{\"" D_CMND_LEDTABLE "\":\"%s\"}"), getStateText(sysCfg.ws_ledtable));
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_LEDTABLE "\":\"%s\"}"), getStateText(sysCfg.ws_ledtable));
   }
   else if (!strcasecmp_P(type, PSTR(D_CMND_FADE))) {
     switch (payload) {
@@ -577,19 +575,19 @@ boolean ws2812_command(char *type, uint16_t index, char *dataBuf, uint16_t data_
       sysCfg.ws_fade ^= 1;
       break;
     }
-    snprintf_P(svalue, ssvalue, PSTR("{\"" D_CMND_FADE "\":\"%s\"}"), getStateText(sysCfg.ws_fade));
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_FADE "\":\"%s\"}"), getStateText(sysCfg.ws_fade));
   }
   else if (!strcasecmp_P(type, PSTR(D_CMND_SPEED))) {  // 1 - fast, 5 - slow
     if ((payload > 0) && (payload <= 5)) {
       sysCfg.ws_speed = payload;
     }
-    snprintf_P(svalue, ssvalue, PSTR("{\"" D_CMND_SPEED "\":%d}"), sysCfg.ws_speed);
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_SPEED "\":%d}"), sysCfg.ws_speed);
   }
   else if (!strcasecmp_P(type, PSTR(D_CMND_WIDTH))) {
     if ((payload >= 0) && (payload <= 4)) {
       sysCfg.ws_width = payload;
     }
-    snprintf_P(svalue, ssvalue, PSTR("{\"" D_CMND_WIDTH "\":%d}"), sysCfg.ws_width);
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_WIDTH "\":%d}"), sysCfg.ws_width);
   }
   else if (!strcasecmp_P(type, PSTR(D_CMND_WAKEUP))) {
     if ((payload > 0) && (payload < 3001)) {
@@ -598,7 +596,7 @@ boolean ws2812_command(char *type, uint16_t index, char *dataBuf, uint16_t data_
         sysCfg.ws_scheme = 0;
       }
     }
-    snprintf_P(svalue, ssvalue, PSTR("{\"" D_CMND_WAKEUP "\":%d}"), sysCfg.ws_wakeup);
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_WAKEUP "\":%d}"), sysCfg.ws_wakeup);
   }
   else if (!strcasecmp_P(type, PSTR(D_CMND_SCHEME))) {
     if ((payload >= 0) && (payload <= 9)) {
@@ -609,7 +607,7 @@ boolean ws2812_command(char *type, uint16_t index, char *dataBuf, uint16_t data_
       bitSet(power, ws_bit);
       ws2812_resetStripTimer();
     }
-    snprintf_P(svalue, ssvalue, PSTR("{\"" D_CMND_SCHEME "\":%d}"), sysCfg.ws_scheme);
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_SCHEME "\":%d}"), sysCfg.ws_scheme);
   }
   else if (!strcasecmp_P(type, PSTR("UNDOCA"))) {  // Theos legacy status
     RgbColor mcolor;
@@ -618,10 +616,10 @@ boolean ws2812_command(char *type, uint16_t index, char *dataBuf, uint16_t data_
     uint32_t color = (uint32_t)mcolor.R << 16;
     color += (uint32_t)mcolor.G << 8;
     color += (uint32_t)mcolor.B;
-    snprintf_P(svalue, ssvalue, PSTR("%06X, %d, %d, %d, %d, %d"),
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%06X, %d, %d, %d, %d, %d"),
       color, sysCfg.ws_fade, sysCfg.ws_ledtable, sysCfg.ws_scheme, sysCfg.ws_speed, sysCfg.ws_width);
-    mqtt_publish_topic_P(1, type, svalue);
-    svalue[0] = '\0';
+    mqtt_publish_topic_P(1, type);
+    mqtt_data[0] = '\0';
   }
   else {
     serviced = false;  // Unknown command

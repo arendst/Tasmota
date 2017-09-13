@@ -99,7 +99,7 @@ float sc_convertCtoF(float c)
   return c * 1.8 + 32;
 }
 
-void sc_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
+void sc_mqttPresent(uint8_t* djson)
 {
   if (sc_value[0] > 0) {
     char stemp1[10];
@@ -109,8 +109,8 @@ void sc_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
     dtostrfd(t, sysCfg.flag.temperature_resolution, stemp1);
     float h = sc_value[0];
     dtostrfd(h, sysCfg.flag.humidity_resolution, stemp2);
-    snprintf_P(svalue, ssvalue, PSTR("%s, \"" D_TEMPERATURE "\":%s, \"" D_HUMIDITY "\":%s, \"" D_LIGHT "\":%d, \"" D_NOISE "\":%d, \"" D_AIRQUALITY "\":%d"),
-      svalue, stemp1, stemp2, sc_value[2], sc_value[3], sc_value[4]);
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s, \"" D_TEMPERATURE "\":%s, \"" D_HUMIDITY "\":%s, \"" D_LIGHT "\":%d, \"" D_NOISE "\":%d, \"" D_AIRQUALITY "\":%d"),
+      mqtt_data, stemp1, stemp2, sc_value[2], sc_value[3], sc_value[4]);
     *djson = 1;
 #ifdef USE_DOMOTICZ
     domoticz_sensor2(stemp1, stemp2);

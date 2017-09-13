@@ -68,7 +68,6 @@ String wemo_UUID()
 void wemo_respondToMSearch()
 {
   char message[TOPSZ];
-  char log[LOGSZ];
 
   if (portUDP.beginPacket(portUDP.remoteIP(), portUDP.remotePort())) {
     String response = FPSTR(WEMO_MSEARCH);
@@ -80,9 +79,9 @@ void wemo_respondToMSearch()
   } else {
     snprintf_P(message, sizeof(message), PSTR(D_FAILED_TO_SEND_RESPONSE));
   }
-  snprintf_P(log, sizeof(log), PSTR(D_LOG_UPNP D_WEMO " %s " D_TO " %s:%d"),
+  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_UPNP D_WEMO " %s " D_TO " %s:%d"),
     message, portUDP.remoteIP().toString().c_str(), portUDP.remotePort());
-  addLog(LOG_LEVEL_DEBUG, log);
+  addLog(LOG_LEVEL_DEBUG);
 }
 
 /*********************************************************************************************\
@@ -140,7 +139,6 @@ String hue_UUID()
 void hue_respondToMSearch()
 {
   char message[TOPSZ];
-  char log[LOGSZ];
 
   if (portUDP.beginPacket(portUDP.remoteIP(), portUDP.remotePort())) {
     String response1 = FPSTR(HUE_RESPONSE);
@@ -153,15 +151,11 @@ void hue_respondToMSearch()
     portUDP.write(response.c_str());
     portUDP.endPacket();
 
-//addLog(LOG_LEVEL_DEBUG_MORE, response.c_str());
-
     response = response1;
     response += FPSTR(HUE_ST2);
     response.replace("{r3}", hue_UUID());
     portUDP.write(response.c_str());
     portUDP.endPacket();
-
-//addLog(LOG_LEVEL_DEBUG_MORE, response.c_str());
 
     response = response1;
     response += FPSTR(HUE_ST3);
@@ -169,15 +163,13 @@ void hue_respondToMSearch()
     portUDP.write(response.c_str());
     portUDP.endPacket();
 
-//addLog(LOG_LEVEL_DEBUG_MORE, response.c_str());
-
     snprintf_P(message, sizeof(message), PSTR(D_3_RESPONSE_PACKETS_SENT));
   } else {
     snprintf_P(message, sizeof(message), PSTR(D_FAILED_TO_SEND_RESPONSE));
   }
-  snprintf_P(log, sizeof(log), PSTR(D_LOG_UPNP D_HUE " %s " D_TO " %s:%d"),
+  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_UPNP D_HUE " %s " D_TO " %s:%d"),
     message, portUDP.remoteIP().toString().c_str(), portUDP.remotePort());
-  addLog(LOG_LEVEL_DEBUG, log);
+  addLog(LOG_LEVEL_DEBUG);
 }
 
 /*********************************************************************************************\
@@ -440,10 +432,8 @@ void handleUPnPsetupHue()
 
 void hue_todo(String *path)
 {
-  char log[LOGSZ];
-
-  snprintf_P(log, sizeof(log), PSTR(D_LOG_HTTP D_HUE_API_NOT_IMPLEMENTED " (%s)"), path->c_str());
-  addLog(LOG_LEVEL_DEBUG_MORE, log);
+  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_HTTP D_HUE_API_NOT_IMPLEMENTED " (%s)"), path->c_str());
+  addLog(LOG_LEVEL_DEBUG_MORE);
 
   webServer->send(200, FPSTR(HDR_CTYPE_JSON), "{}");
 }
@@ -665,8 +655,6 @@ void hue_lights(String *path)
       response = FPSTR(HUE_ERROR_JSON);
     }
 
-//addLog(LOG_LEVEL_DEBUG_MORE, response.c_str());
-
     webServer->send(200, FPSTR(HDR_CTYPE_JSON), response);
   }
   else if(path->indexOf("/lights/") >= 0) {            // Got /lights/ID
@@ -718,17 +706,16 @@ void handle_hue_api(String *path)
    * (c) Heiko Krupp, 2017
    */
 
-  char log[LOGSZ];
   uint8_t args = 0;
 
   path->remove(0, 4);                                // remove /api
   uint16_t apilen = path->length();
-  snprintf_P(log, sizeof(log), PSTR(D_LOG_HTTP D_HUE_API " (%s)"), path->c_str());
-  addLog(LOG_LEVEL_DEBUG_MORE, log);
+  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_HTTP D_HUE_API " (%s)"), path->c_str());
+  addLog(LOG_LEVEL_DEBUG_MORE);
   for (args = 0; args < webServer->args(); args++) {
     String json = webServer->arg(args);
-    snprintf_P(log, sizeof(log), PSTR(D_LOG_HTTP D_HUE_POST_ARGS " (%s)"), json.c_str());
-    addLog(LOG_LEVEL_DEBUG_MORE, log);
+    snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_HTTP D_HUE_POST_ARGS " (%s)"), json.c_str());
+    addLog(LOG_LEVEL_DEBUG_MORE);
   }
 
   if (path->endsWith("/invalid/")) {}                 // Just ignore

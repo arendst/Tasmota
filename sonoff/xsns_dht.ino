@@ -64,7 +64,6 @@ uint32_t dht_expectPulse(byte sensor, bool level)
 
 void dht_read(byte sensor)
 {
-  char log[LOGSZ];
   uint32_t cycles[80];
   uint32_t currenttime = millis();
 
@@ -117,9 +116,9 @@ void dht_read(byte sensor)
     }
   }
 
-  snprintf_P(log, sizeof(log), PSTR(D_LOG_DHT D_RECEIVED " %02X, %02X, %02X, %02X, %02X =? %02X"),
+  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_DHT D_RECEIVED " %02X, %02X, %02X, %02X, %02X =? %02X"),
     dht_data[0], dht_data[1], dht_data[2], dht_data[3], dht_data[4], (dht_data[0] + dht_data[1] + dht_data[2] + dht_data[3]) & 0xFF);
-  addLog(LOG_LEVEL_DEBUG, log);
+  addLog(LOG_LEVEL_DEBUG);
 
   if (dht_data[4] == ((dht_data[0] + dht_data[1] + dht_data[2] + dht_data[3]) & 0xFF)) {
     dht[sensor].lastresult = 0;
@@ -191,8 +190,6 @@ boolean dht_setup(byte pin, byte type)
 
 void dht_init()
 {
-  char log[LOGSZ];
-
   dht_maxcycles = microsecondsToClockCycles(1000);  // 1 millisecond timeout for reading pulses from DHT sensor.
 
   for (byte i = 0; i < dht_sensors; i++) {
@@ -219,7 +216,7 @@ void dht_init()
  * Presentation
 \*********************************************************************************************/
 
-void dht_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
+void dht_mqttPresent(uint8_t* djson)
 {
   char stemp1[10];
   char stemp2[10];
@@ -231,7 +228,7 @@ void dht_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
     if (dht_readTempHum(i, t, h)) {     // Read temperature
       dtostrfd(t, sysCfg.flag.temperature_resolution, stemp1);
       dtostrfd(h, sysCfg.flag.humidity_resolution, stemp2);
-      snprintf_P(svalue, ssvalue, JSON_SNS_TEMPHUM, svalue, dht[i].stype, stemp1, stemp2);
+      snprintf_P(mqtt_data, sizeof(mqtt_data), JSON_SNS_TEMPHUM, mqtt_data, dht[i].stype, stemp1, stemp2);
       *djson = 1;
 #ifdef USE_DOMOTICZ
       if (!dsxflg) {
