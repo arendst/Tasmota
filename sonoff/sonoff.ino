@@ -25,7 +25,7 @@
     - Select IDE Tools - Flash Size: "1M (no SPIFFS)"
   ====================================================*/
 
-#define VERSION                0x05070105  // 5.7.1e
+#define VERSION                0x05070106  // 5.7.1f
 
 enum log_t   {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG_MORE, LOG_LEVEL_ALL};
 enum week_t  {Last, First, Second, Third, Fourth};
@@ -882,6 +882,8 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
   char *type = NULL;
   byte otype = 0;
   byte ptype = 0;
+  byte jsflg = 0;
+  byte lines = 1;
   uint16_t i = 0;
   uint16_t grpflg = 0;
   uint16_t index;
@@ -1178,29 +1180,23 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_MODULE "\":\"%d (%s)\"}"), sysCfg.module +1, stemp1);
     }
     else if (!strcasecmp_P(type, PSTR(D_CMND_MODULES))) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_MODULES "1\":\""));
-      byte jsflg = 0;
-      for (byte i = 0; i < MAXMODULE /2; i++) {
-        if (jsflg) {
+      for (byte i = 0; i < MAXMODULE; i++) {
+        if (!jsflg) {
+          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_MODULES "%d\":\""), lines);
+        } else {
           snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s, "), mqtt_data);
         }
         jsflg = 1;
         snprintf_P(stemp1, sizeof(stemp1), modules[i].name);
         snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s%d (%s)"), mqtt_data, i +1, stemp1);
-      }
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s\"}"), mqtt_data);
-      mqtt_publish_topic_P(5, type);
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_MODULES "2\":\""));
-      jsflg = 0;
-      for (byte i = MAXMODULE /2; i < MAXMODULE; i++) {
-        if (jsflg) {
-          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s, "), mqtt_data);
+        if ((strlen(mqtt_data) > 200) || (i == MAXMODULE -1)) {
+          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s\"}"), mqtt_data);
+          mqtt_publish_topic_P(5, type);
+          jsflg = 0;
+          lines++;
         }
-        jsflg = 1;
-        snprintf_P(stemp1, sizeof(stemp1), modules[i].name);
-        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s%d (%s)"), mqtt_data, i +1, stemp1);
       }
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s\"}"), mqtt_data);
+      mqtt_data[0] = '\0';
     }
     else if (!strcasecmp_P(type, PSTR(D_CMND_GPIO)) && (index < MAX_GPIO_PIN)) {
       mytmplt cmodule;
@@ -1233,29 +1229,23 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
       }
     }
     else if (!strcasecmp_P(type, PSTR(D_CMND_GPIOS))) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_GPIOS "1\":\""));
-      byte jsflg = 0;
-      for (byte i = 0; i < GPIO_SENSOR_END /2; i++) {
-        if (jsflg) {
+      for (byte i = 0; i < GPIO_SENSOR_END; i++) {
+        if (!jsflg) {
+          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_GPIOS "%d\":\""), lines);
+        } else {
           snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s, "), mqtt_data);
         }
         jsflg = 1;
         snprintf_P(stemp1, sizeof(stemp1), sensors[i]);
         snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s%d (%s)"), mqtt_data, i, stemp1);
-      }
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s\"}"), mqtt_data);
-      mqtt_publish_topic_P(5, type);
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_GPIOS "2\":\""));
-      jsflg = 0;
-      for (byte i = GPIO_SENSOR_END /2; i < GPIO_SENSOR_END; i++) {
-        if (jsflg) {
-          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s, "), mqtt_data);
+        if ((strlen(mqtt_data) > 200) || (i == GPIO_SENSOR_END -1)) {
+          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s\"}"), mqtt_data);
+          mqtt_publish_topic_P(5, type);
+          jsflg = 0;
+          lines++;
         }
-        jsflg = 1;
-        snprintf_P(stemp1, sizeof(stemp1), sensors[i]);
-        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s%d (%s)"), mqtt_data, i, stemp1);
       }
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s\"}"), mqtt_data);
+      mqtt_data[0] = '\0';
     }
     else if (!strcasecmp_P(type, PSTR(D_CMND_PWM)) && (index > pwm_idxoffset) && (index <= 5)) {
       if ((payload >= 0) && (payload <= PWM_RANGE) && (pin[GPIO_PWM1 + index -1] < 99)) {

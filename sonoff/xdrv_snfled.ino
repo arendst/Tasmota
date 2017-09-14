@@ -549,6 +549,9 @@ boolean sl_command(char *type, uint16_t index, char *dataBufUc, uint16_t data_le
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_WAKEUPDURATION "\":%d}"), sysCfg.led_wakeup);
   }
   else if (!strcasecmp_P(type, PSTR(D_CMND_WAKEUP))) {
+    if ((payload >= 0) && (payload <= 100)) {
+      sysCfg.led_dimmer[0] = payload;
+    }
     sl_wakeupActive = 3;
     do_cmnd_power(1, 1);
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_WAKEUP "\":\"" D_STARTED "\"}"));

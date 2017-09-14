@@ -1,4 +1,8 @@
-/* 5.7.1e
+/* 5.7.1f
+ * Reduce code and string length for output of commands Modules and GPIOs
+ * Add optional dimmer parameter to command Wakeup (#867)
+ *
+ * 5.7.1e
  * Add Sonoff SC debug information
  * Change syslog service
  *
