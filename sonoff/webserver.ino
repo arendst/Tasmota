@@ -429,7 +429,8 @@ void handleRoot()
   if (HTTP_MANAGER == _httpflag) {
     handleWifi0();
   } else {
-    char stemp[10], line[160];
+    char stemp[10];
+    char line[160];
     String page = FPSTR(HTTP_HEAD);
     page.replace(F("{v}"), FPSTR(S_MAIN_MENU));
     page.replace(F("<body>"), F("<body onload='la()'>"));
@@ -1085,7 +1086,7 @@ void handleReset()
     return;
   }
 
-  char svalue[16];  // was MESSZ
+  char svalue[16];
 
   addLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_RESET_CONFIGURATION);
 
@@ -1144,7 +1145,7 @@ void handleUpgradeStart()
   if (httpUser()) {
     return;
   }
-  char svalue[100];  // was MESSZ
+  char svalue[100];
 
   addLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_UPGRADE_STARTED));
   WIFI_configCounter();

@@ -25,7 +25,7 @@
     - Select IDE Tools - Flash Size: "1M (no SPIFFS)"
   ====================================================*/
 
-#define VERSION                0x05070104  // 5.7.1d
+#define VERSION                0x05070105  // 5.7.1e
 
 enum log_t   {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG_MORE, LOG_LEVEL_ALL};
 enum week_t  {Last, First, Second, Third, Fourth};
@@ -158,7 +158,6 @@ enum opt_t   {P_HOLD_TIME, P_MAX_POWER_RETRY, P_MAX_PARAM8};   // Index in sysCf
 
 #include <PubSubClient.h>                   // MQTT
 #ifndef MESSZ
-//  #define MESSZ                368          // Max number of characters in JSON message string (4 x DS18x20 sensors)
   #define MESSZ                405          // Max number of characters in JSON message string (4 x DS18x20 sensors)
 #endif
 
@@ -218,13 +217,9 @@ TimeChangeRule mySTD = { TIME_STD };  // Standard Time
 int Baudrate = APP_BAUDRATE;          // Serial interface baud rate
 byte SerialInByte;                    // Received byte
 int SerialInByteCounter = 0;          // Index in receive buffer
-char serialInBuf[INPUT_BUFFER_SIZE + 2];  // Receive buffer
 byte Hexcode = 0;                     // Sonoff dual input flag
 uint16_t ButtonCode = 0;              // Sonoff dual received code
 int16_t savedatacounter;              // Counter and flag for config save to Flash
-char Version[16];                     // Version string from VERSION define
-char Hostname[33];                    // Composed Wifi hostname
-char MQTTClient[33];                  // Composed MQTT Clientname
 uint8_t mqttcounter = 0;              // MQTT connection retry counter
 uint8_t fallbacktopic = 0;            // Use Topic or FallbackTopic
 unsigned long timerxs = 0;            // State loop timer
@@ -298,6 +293,10 @@ uint8_t pwm_idxoffset = 0;            // Allowed PWM command offset (change for 
 
 boolean mDNSbegun = false;
 
+char Version[16];                     // Version string from VERSION define
+char Hostname[33];                    // Composed Wifi hostname
+char MQTTClient[33];                  // Composed MQTT Clientname
+char serialInBuf[INPUT_BUFFER_SIZE + 2];  // Receive buffer
 char mqtt_data[MESSZ];                // MQTT publish buffer
 char log_data[TOPSZ + MESSZ];         // Logging
 String Log[MAX_LOG_LINES];            // Web log buffer

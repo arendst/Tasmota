@@ -1146,11 +1146,15 @@ uint16_t getAdc0()
 
 void syslog()
 {
-  char str[TOPSZ + MESSZ];
+  // Destroys log_data
+  char syslog_preamble[64];  // Hostname + Id
 
   if (portUDP.beginPacket(sysCfg.syslog_host, sysCfg.syslog_port)) {
-    snprintf_P(str, sizeof(str), PSTR("%s ESP-%s"), Hostname, log_data);
-    portUDP.write(str);
+    snprintf_P(syslog_preamble, sizeof(syslog_preamble), PSTR("%s ESP-"), Hostname);
+    memmove(log_data + strlen(syslog_preamble), log_data, sizeof(log_data) - strlen(syslog_preamble));
+    log_data[sizeof(log_data) -1] = '\0';
+    memcpy(log_data, syslog_preamble, strlen(syslog_preamble));
+    portUDP.write(log_data);
     portUDP.endPacket();
   } else {
     syslog_level = 0;
@@ -1166,7 +1170,9 @@ void addLog(byte loglevel)
 
   snprintf_P(mxtime, sizeof(mxtime), PSTR("%02d" D_HOUR_MINUTE_SEPARATOR "%02d" D_MINUTE_SECOND_SEPARATOR "%02d"), rtcTime.Hour, rtcTime.Minute, rtcTime.Second);
 
-  if (loglevel <= seriallog_level) Serial.printf("%s %s\n", mxtime, log_data);
+  if (loglevel <= seriallog_level) {
+    Serial.printf("%s %s\n", mxtime, log_data);
+  }
 #ifdef USE_WEBSERVER
   if (sysCfg.webserver && (loglevel <= sysCfg.weblog_level)) {
     Log[logidx] = String(mxtime) + " " + String(log_data);
@@ -1189,11 +1195,11 @@ void addLog_P(byte loglevel, const char *formatP)
 
 void addLog_P(byte loglevel, const char *formatP, const char *formatP2)
 {
-  char mes2[100];
+  char message[100];
 
   snprintf_P(log_data, sizeof(log_data), formatP);
-  snprintf_P(mes2, sizeof(mes2), formatP2);
-  strncat(log_data, mes2, sizeof(log_data));
+  snprintf_P(message, sizeof(message), formatP2);
+  strncat(log_data, message, sizeof(log_data));
   addLog(loglevel);
 }
 
