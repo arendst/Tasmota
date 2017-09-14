@@ -2838,6 +2838,7 @@ void GPIO_init()
 #endif  // USE_DS18x20
   if ((pin[GPIO_SEN_TRIG] < 99) && (pin[GPIO_SEN_ECHO] < 99)) {
     sr04_init();
+    sr04_flg = 1;
   }
 
 

@@ -41,16 +41,18 @@ String sr04_readDistance(void)
     String page = "";
     snprintf_P(log, sizeof(log), PSTR("HS-SR04: Start measurement: Trig: %d Echo: %d"),pin[GPIO_SEN_TRIG],pin[GPIO_SEN_ECHO]);
     addLog(LOG_LEVEL_DEBUG, log);
-    long duration = 0,  counter = 0, max = 0;
+    long  duration = 0, counter = 0, max = 0;
     float distance = 0;
     while ( counter < 10) {
       digitalWrite(pin[GPIO_SEN_TRIG], LOW);  // Added this line
-      delayMicroseconds(10); // Added this line
+      delayMicroseconds(3); // Added this line
+      noInterrupts();
       digitalWrite(pin[GPIO_SEN_TRIG], HIGH);
       //  delayMicroseconds(1000); - Removed this line
-      delayMicroseconds(100); // Added this line
+      delayMicroseconds(10); // Added this line
       digitalWrite(pin[GPIO_SEN_TRIG], LOW);
       duration = pulseIn(pin[GPIO_SEN_ECHO], HIGH);
+      interrupts();
       yield();
       max = max(duration,max);
       dtostrf(duration, 1, 2, stemp1);
@@ -62,8 +64,9 @@ String sr04_readDistance(void)
     distance = (max/2) / 29.1;
 
     dtostrf(distance, 1, 2, stemp1);
-    snprintf_P(log, sizeof(log), PSTR("HS-SR04: Distance: %s"),stemp1);
+    snprintf_P(log, sizeof(log), PSTR("HS-SR04: Max Distance: %s"),stemp1);
     addLog(LOG_LEVEL_DEBUG, log);
+
     if (distance > 0) {
       page += stemp1;
     }
