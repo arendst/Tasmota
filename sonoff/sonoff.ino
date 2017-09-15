@@ -26,10 +26,14 @@
   ====================================================*/
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 #define VERSION                0x0506010B  // 5.6.1k
 =======
 #define VERSION                0x05070000  // 5.7.0
 >>>>>>> 7618338bdd5a2ac59545f29b1dbc7da1b24c95bd
+=======
+#define VERSION                0x05070002  // 5.7.0b
+>>>>>>> upstream/development
 
 enum log_t   {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG_MORE, LOG_LEVEL_ALL};
 enum week_t  {Last, First, Second, Third, Fourth};
@@ -894,7 +898,13 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
   uint32_t address;
 
   strncpy(topicBuf, topic, sizeof(topicBuf));
-  memcpy(dataBuf, data, sizeof(dataBuf));
+  for (i = 0; i < data_len; i++) {
+    if (!isspace(data[i])) {
+      break;
+    }
+  }
+  data_len -= i;
+  memcpy(dataBuf, data +i, sizeof(dataBuf));
   dataBuf[sizeof(dataBuf)-1] = 0;
 
   snprintf_P(svalue, sizeof(svalue), PSTR(D_LOG_RESULT D_RECEIVED_TOPIC " %s, " D_DATA_SIZE " %d, " D_DATA " %s"),

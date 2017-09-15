@@ -70,10 +70,14 @@ String getResetReason()
   char buff[32];
   if (osw_flag) {
 <<<<<<< HEAD
+<<<<<<< HEAD
     strcpy_P(buff, PSTR(D_BLOCKED_LOOP));
 =======
     strncpy_P(buff, PSTR(D_BLOCKED_LOOP), sizeof(buff));
 >>>>>>> 7618338bdd5a2ac59545f29b1dbc7da1b24c95bd
+=======
+    strncpy_P(buff, PSTR(D_BLOCKED_LOOP), sizeof(buff));
+>>>>>>> upstream/development
     return String(buff);
   } else {
     return ESP.getResetReason();
@@ -156,6 +160,7 @@ char* _dtostrf(double number, unsigned char prec, char *s, bool i18n)
 
   if (isnan(number)) {
 <<<<<<< HEAD
+<<<<<<< HEAD
     strcpy(s, "nan");
     return s;
   }
@@ -168,6 +173,13 @@ char* _dtostrf(double number, unsigned char prec, char *s, bool i18n)
   if (isinf(number)) {
     strcpy_P(s, PSTR("inf"));
 >>>>>>> 7618338bdd5a2ac59545f29b1dbc7da1b24c95bd
+=======
+    strcpy_P(s, PSTR("nan"));
+    return s;
+  }
+  if (isinf(number)) {
+    strcpy_P(s, PSTR("inf"));
+>>>>>>> upstream/development
     return s;
   }
   char decimal = '.';

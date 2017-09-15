@@ -102,7 +102,7 @@ const char HTTP_SCRIPT_CONSOL[] PROGMEM =
     "t=document.getElementById('t1');"
     "if(p==1){"
       "c=document.getElementById('c1');"
-      "o='&c1='+encodeURI(c.value);"
+      "o='&c1='+encodeURIComponent(c.value);"
       "c.value='';"
       "t.scrollTop=sn;"
     "}"
@@ -434,10 +434,14 @@ void handleRoot()
     char stemp[10], line[160];
     String page = FPSTR(HTTP_HEAD);
 <<<<<<< HEAD
+<<<<<<< HEAD
     page.replace(F("{v}"), S_MAIN_MENU);
 =======
     page.replace(F("{v}"), FPSTR(S_MAIN_MENU));
 >>>>>>> 7618338bdd5a2ac59545f29b1dbc7da1b24c95bd
+=======
+    page.replace(F("{v}"), FPSTR(S_MAIN_MENU));
+>>>>>>> upstream/development
     page.replace(F("<body>"), F("<body onload='la()'>"));
 
     page += F("<div id='l1' name='l1'></div>");
@@ -597,10 +601,14 @@ void handleConfig()
 
   String page = FPSTR(HTTP_HEAD);
 <<<<<<< HEAD
+<<<<<<< HEAD
   page.replace(F("{v}"), S_CONFIGURATION);
 =======
   page.replace(F("{v}"), FPSTR(S_CONFIGURATION));
 >>>>>>> 7618338bdd5a2ac59545f29b1dbc7da1b24c95bd
+=======
+  page.replace(F("{v}"), FPSTR(S_CONFIGURATION));
+>>>>>>> upstream/development
   page += FPSTR(HTTP_BTN_MENU2);
   if (sysCfg.flag.mqtt_enabled) {
     page += FPSTR(HTTP_BTN_MENU3);
@@ -665,10 +673,14 @@ void handleModule()
 
   String page = FPSTR(HTTP_HEAD);
 <<<<<<< HEAD
+<<<<<<< HEAD
   page.replace(F("{v}"), S_CONFIGURE_MODULE);
 =======
   page.replace(F("{v}"), FPSTR(S_CONFIGURE_MODULE));
 >>>>>>> 7618338bdd5a2ac59545f29b1dbc7da1b24c95bd
+=======
+  page.replace(F("{v}"), FPSTR(S_CONFIGURE_MODULE));
+>>>>>>> upstream/development
   page += FPSTR(HTTP_FORM_MODULE);
   snprintf_P(stemp, sizeof(stemp), modules[MODULE].name);
   page.replace(F("{mt}"), stemp);
@@ -733,10 +745,14 @@ void handleWifi(boolean scan)
 
   String page = FPSTR(HTTP_HEAD);
 <<<<<<< HEAD
+<<<<<<< HEAD
   page.replace(F("{v}"), S_CONFIGURE_WIFI);
 =======
   page.replace(F("{v}"), FPSTR(S_CONFIGURE_WIFI));
 >>>>>>> 7618338bdd5a2ac59545f29b1dbc7da1b24c95bd
+=======
+  page.replace(F("{v}"), FPSTR(S_CONFIGURE_WIFI));
+>>>>>>> upstream/development
 
   if (scan) {
 #ifdef USE_EMULATION
@@ -748,10 +764,14 @@ void handleWifi(boolean scan)
     if (0 == n) {
       addLog_P(LOG_LEVEL_DEBUG, S_LOG_WIFI, S_NO_NETWORKS_FOUND);
 <<<<<<< HEAD
+<<<<<<< HEAD
       page += S_NO_NETWORKS_FOUND;
 =======
       page += FPSTR(S_NO_NETWORKS_FOUND);
 >>>>>>> 7618338bdd5a2ac59545f29b1dbc7da1b24c95bd
+=======
+      page += FPSTR(S_NO_NETWORKS_FOUND);
+>>>>>>> upstream/development
       page += F(". " D_REFRESH_TO_SCAN_AGAIN ".");
     } else {
       //sort networks
@@ -841,10 +861,14 @@ void handleMqtt()
 
   String page = FPSTR(HTTP_HEAD);
 <<<<<<< HEAD
+<<<<<<< HEAD
   page.replace(F("{v}"), S_CONFIGURE_MQTT);
 =======
   page.replace(F("{v}"), FPSTR(S_CONFIGURE_MQTT));
 >>>>>>> 7618338bdd5a2ac59545f29b1dbc7da1b24c95bd
+=======
+  page.replace(F("{v}"), FPSTR(S_CONFIGURE_MQTT));
+>>>>>>> upstream/development
   page += FPSTR(HTTP_FORM_MQTT);
   char str[sizeof(sysCfg.mqtt_client)];
   getClient(str, MQTT_CLIENT_ID, sizeof(sysCfg.mqtt_client));
@@ -870,10 +894,14 @@ void handleLog()
 
   String page = FPSTR(HTTP_HEAD);
 <<<<<<< HEAD
+<<<<<<< HEAD
   page.replace(F("{v}"), S_CONFIGURE_LOGGING);
 =======
   page.replace(F("{v}"), FPSTR(S_CONFIGURE_LOGGING));
 >>>>>>> 7618338bdd5a2ac59545f29b1dbc7da1b24c95bd
+=======
+  page.replace(F("{v}"), FPSTR(S_CONFIGURE_LOGGING));
+>>>>>>> upstream/development
   page += FPSTR(HTTP_FORM_LOG1);
   for (byte idx = 0; idx < 3; idx++) {
     page += FPSTR(HTTP_FORM_LOG2);
@@ -923,10 +951,14 @@ void handleOther()
 
   String page = FPSTR(HTTP_HEAD);
 <<<<<<< HEAD
+<<<<<<< HEAD
   page.replace(F("{v}"), S_CONFIGURE_OTHER);
 =======
   page.replace(F("{v}"), FPSTR(S_CONFIGURE_OTHER));
 >>>>>>> 7618338bdd5a2ac59545f29b1dbc7da1b24c95bd
+=======
+  page.replace(F("{v}"), FPSTR(S_CONFIGURE_OTHER));
+>>>>>>> upstream/development
   page += FPSTR(HTTP_FORM_OTHER);
   page.replace(F("{p1}"), sysCfg.web_password);
   page.replace(F("{r1}"), (sysCfg.flag.mqtt_enabled) ? F(" checked") : F(""));
@@ -1097,10 +1129,14 @@ void handleSave()
   if (restart) {
     String page = FPSTR(HTTP_HEAD);
 <<<<<<< HEAD
+<<<<<<< HEAD
     page.replace(F("{v}"), S_SAVE_CONFIGURATION);
 =======
     page.replace(F("{v}"), FPSTR(S_SAVE_CONFIGURATION));
 >>>>>>> 7618338bdd5a2ac59545f29b1dbc7da1b24c95bd
+=======
+    page.replace(F("{v}"), FPSTR(S_SAVE_CONFIGURATION));
+>>>>>>> upstream/development
     page += F("<div style='text-align:center;'><b>" D_CONFIGURATION_SAVED "</b><br/>");
     page += result;
     page += F("</div>");
@@ -1130,10 +1166,14 @@ void handleReset()
 
   String page = FPSTR(HTTP_HEAD);
 <<<<<<< HEAD
+<<<<<<< HEAD
   page.replace(F("{v}"), S_RESET_CONFIGURATION);
 =======
   page.replace(F("{v}"), FPSTR(S_RESET_CONFIGURATION));
 >>>>>>> 7618338bdd5a2ac59545f29b1dbc7da1b24c95bd
+=======
+  page.replace(F("{v}"), FPSTR(S_RESET_CONFIGURATION));
+>>>>>>> upstream/development
   page += F("<div style='text-align:center;'>" D_CONFIGURATION_RESET "</div>");
   page += FPSTR(HTTP_MSG_RSTRT);
   page += FPSTR(HTTP_BTN_MAIN);
@@ -1152,10 +1192,14 @@ void handleRestore()
 
   String page = FPSTR(HTTP_HEAD);
 <<<<<<< HEAD
+<<<<<<< HEAD
   page.replace(F("{v}"), S_RESTORE_CONFIGURATION);
 =======
   page.replace(F("{v}"), FPSTR(S_RESTORE_CONFIGURATION));
 >>>>>>> 7618338bdd5a2ac59545f29b1dbc7da1b24c95bd
+=======
+  page.replace(F("{v}"), FPSTR(S_RESTORE_CONFIGURATION));
+>>>>>>> upstream/development
   page += FPSTR(HTTP_FORM_RST);
   page += FPSTR(HTTP_FORM_RST_UPG);
   page.replace(F("{r1}"), F(D_RESTORE));
@@ -1175,10 +1219,14 @@ void handleUpgrade()
 
   String page = FPSTR(HTTP_HEAD);
 <<<<<<< HEAD
+<<<<<<< HEAD
   page.replace(F("{v}"), S_FIRMWARE_UPGRADE);
 =======
   page.replace(F("{v}"), FPSTR(S_FIRMWARE_UPGRADE));
 >>>>>>> 7618338bdd5a2ac59545f29b1dbc7da1b24c95bd
+=======
+  page.replace(F("{v}"), FPSTR(S_FIRMWARE_UPGRADE));
+>>>>>>> upstream/development
   page += FPSTR(HTTP_FORM_UPG);
   page.replace(F("{o1}"), sysCfg.otaUrl);
   page += FPSTR(HTTP_FORM_RST_UPG);
@@ -1207,10 +1255,14 @@ void handleUpgradeStart()
 
   String page = FPSTR(HTTP_HEAD);
 <<<<<<< HEAD
+<<<<<<< HEAD
   page.replace(F("{v}"), S_INFORMATION);
 =======
   page.replace(F("{v}"), FPSTR(S_INFORMATION));
 >>>>>>> 7618338bdd5a2ac59545f29b1dbc7da1b24c95bd
+=======
+  page.replace(F("{v}"), FPSTR(S_INFORMATION));
+>>>>>>> upstream/development
   page += F("<div style='text-align:center;'><b>" D_UPGRADE_STARTED " ...</b></div>");
   page += FPSTR(HTTP_MSG_RSTRT);
   page += FPSTR(HTTP_BTN_MAIN);
@@ -1236,14 +1288,19 @@ void handleUploadDone()
 
   String page = FPSTR(HTTP_HEAD);
 <<<<<<< HEAD
+<<<<<<< HEAD
   page.replace(F("{v}"), S_INFORMATION);
 =======
   page.replace(F("{v}"), FPSTR(S_INFORMATION));
 >>>>>>> 7618338bdd5a2ac59545f29b1dbc7da1b24c95bd
+=======
+  page.replace(F("{v}"), FPSTR(S_INFORMATION));
+>>>>>>> upstream/development
   page += F("<div style='text-align:center;'><b>" D_UPLOAD " <font color='");
   if (_uploaderror) {
     page += F("red'>" D_FAILED "</font></b><br/><br/>");
     switch (_uploaderror) {
+<<<<<<< HEAD
 <<<<<<< HEAD
       case 1: strcpy_P(error, PSTR(D_UPLOAD_ERR_1)); break;
       case 2: strcpy_P(error, PSTR(D_UPLOAD_ERR_2)); break;
@@ -1255,6 +1312,8 @@ void handleUploadDone()
       case 8: strcpy_P(error, PSTR(D_UPLOAD_ERR_8)); break;
       case 9: strcpy_P(error, PSTR(D_UPLOAD_ERR_9)); break;
 =======
+=======
+>>>>>>> upstream/development
       case 1: strncpy_P(error, PSTR(D_UPLOAD_ERR_1), sizeof(error)); break;
       case 2: strncpy_P(error, PSTR(D_UPLOAD_ERR_2), sizeof(error)); break;
       case 3: strncpy_P(error, PSTR(D_UPLOAD_ERR_3), sizeof(error)); break;
@@ -1264,7 +1323,10 @@ void handleUploadDone()
       case 7: strncpy_P(error, PSTR(D_UPLOAD_ERR_7), sizeof(error)); break;
       case 8: strncpy_P(error, PSTR(D_UPLOAD_ERR_8), sizeof(error)); break;
       case 9: strncpy_P(error, PSTR(D_UPLOAD_ERR_9), sizeof(error)); break;
+<<<<<<< HEAD
 >>>>>>> 7618338bdd5a2ac59545f29b1dbc7da1b24c95bd
+=======
+>>>>>>> upstream/development
       default:
         snprintf_P(error, sizeof(error), PSTR(D_UPLOAD_ERROR_CODE " %d"), _uploaderror);
     }
@@ -1469,10 +1531,14 @@ void handleConsole()
 
   String page = FPSTR(HTTP_HEAD);
 <<<<<<< HEAD
+<<<<<<< HEAD
   page.replace(F("{v}"), S_CONSOLE);
 =======
   page.replace(F("{v}"), FPSTR(S_CONSOLE));
 >>>>>>> 7618338bdd5a2ac59545f29b1dbc7da1b24c95bd
+=======
+  page.replace(F("{v}"), FPSTR(S_CONSOLE));
+>>>>>>> upstream/development
   page.replace(F("</script>"), FPSTR(HTTP_SCRIPT_CONSOL));
   page.replace(F("<body>"), F("<body onload='l()'>"));
   page += FPSTR(HTTP_FORM_CMND);
@@ -1550,10 +1616,14 @@ void handleInfo()
 
   String page = FPSTR(HTTP_HEAD);
 <<<<<<< HEAD
+<<<<<<< HEAD
   page.replace(F("{v}"), S_INFORMATION);
 =======
   page.replace(F("{v}"), FPSTR(S_INFORMATION));
 >>>>>>> 7618338bdd5a2ac59545f29b1dbc7da1b24c95bd
+=======
+  page.replace(F("{v}"), FPSTR(S_INFORMATION));
+>>>>>>> upstream/development
 //  page += F("<fieldset><legend><b>&nbsp;Information&nbsp;</b></legend>");
   page += F("<style>td{padding:0px 5px;}</style>");
   page += F("<table style'width:100%;'>");
@@ -1655,10 +1725,14 @@ void handleRestart()
 
   String page = FPSTR(HTTP_HEAD);
 <<<<<<< HEAD
+<<<<<<< HEAD
   page.replace(F("{v}"), S_RESTART);
 =======
   page.replace(F("{v}"), FPSTR(S_RESTART));
 >>>>>>> 7618338bdd5a2ac59545f29b1dbc7da1b24c95bd
+=======
+  page.replace(F("{v}"), FPSTR(S_RESTART));
+>>>>>>> upstream/development
   page += FPSTR(HTTP_MSG_RSTRT);
   if (HTTP_MANAGER == _httpflag) {
     _httpflag = HTTP_ADMIN;
