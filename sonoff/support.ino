@@ -416,7 +416,7 @@ boolean WIFI_beginWPSConfig(void)
 void WIFI_config(uint8_t type)
 {
   if (!_wificonfigflag) {
-    if (WIFI_RETRY == type) {
+    if (type >= WIFI_RETRY) {  // WIFI_RETRY and WIFI_WAIT
       return;
     }
 #ifdef USE_EMULATION
@@ -518,11 +518,15 @@ void WIFI_check_ip()
         break;
       case WL_NO_SSID_AVAIL:
         addLog_P(LOG_LEVEL_INFO, S_LOG_WIFI, PSTR(D_CONNECT_FAILED_AP_NOT_REACHED));
-        if (_wifiretry > (WIFI_RETRY_SEC / 2)) {
-          _wifiretry = WIFI_RETRY_SEC / 2;
-        }
-        else if (_wifiretry) {
-          _wifiretry = 0;
+        if (WIFI_WAIT == sysCfg.sta_config) {
+          _wifiretry = WIFI_RETRY_SEC;
+        } else {
+          if (_wifiretry > (WIFI_RETRY_SEC / 2)) {
+            _wifiretry = WIFI_RETRY_SEC / 2;
+          }
+          else if (_wifiretry) {
+            _wifiretry = 0;
+          }
         }
         break;
       case WL_CONNECT_FAILED:
@@ -543,9 +547,9 @@ void WIFI_check_ip()
     }
     if (_wifiretry) {
       if (WIFI_RETRY_SEC == _wifiretry) {
-        WIFI_begin(3);        // Select default SSID
+        WIFI_begin(3);  // Select default SSID
       }
-      if ((WIFI_RETRY_SEC / 2) == _wifiretry) {
+      if ((sysCfg.sta_config != WIFI_WAIT) && ((WIFI_RETRY_SEC / 2) == _wifiretry)) {
         WIFI_begin(2);  // Select alternate SSID
       }
       _wificounter = 1;

@@ -589,6 +589,7 @@
   #define D_WCFG_2_WIFIMANAGER "WifiManager"
   #define D_WCFG_3_WPSCONFIG "WPSConfig"
   #define D_WCFG_4_RETRY "Opnieuw"
+  #define D_WCFG_5_WAIT "Wacht"
 #define D_CMND_FRIENDLYNAME "FriendlyName"
 #define D_CMND_SWITCHMODE "SwitchMode"
 #define D_CMND_WEBSERVER "Webserver"

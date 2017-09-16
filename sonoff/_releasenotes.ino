@@ -1,6 +1,9 @@
-/* 5.7.1f
+/* 5.7.1g
+ * Add option WIFI_WAIT (5) to command WifiConfig to allow connection retry to same AP without restart or update flash (#772, #869)
+ *
+ * 5.7.1f
  * Reduce code and string length for output of commands Modules and GPIOs
- * Add optional dimmer parameter to command Wakeup (#867)
+ * Add optional dimmer parameter to command Wakeup for AiLight, Sonoff B1, Led and BN-SZ01 (#867)
  *
  * 5.7.1e
  * Add Sonoff SC debug information

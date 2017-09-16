@@ -25,13 +25,13 @@
     - Select IDE Tools - Flash Size: "1M (no SPIFFS)"
   ====================================================*/
 
-#define VERSION                0x05070106  // 5.7.1f
+#define VERSION                0x05070107  // 5.7.1g
 
 enum log_t   {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG_MORE, LOG_LEVEL_ALL};
 enum week_t  {Last, First, Second, Third, Fourth};
 enum dow_t   {Sun=1, Mon, Tue, Wed, Thu, Fri, Sat};
 enum month_t {Jan=1, Feb, Mar, Apr, May, Jun, Jul, Aug, Sep, Oct, Nov, Dec};
-enum wifi_t  {WIFI_RESTART, WIFI_SMARTCONFIG, WIFI_MANAGER, WIFI_WPSCONFIG, WIFI_RETRY, MAX_WIFI_OPTION};
+enum wifi_t  {WIFI_RESTART, WIFI_SMARTCONFIG, WIFI_MANAGER, WIFI_WPSCONFIG, WIFI_RETRY, WIFI_WAIT, MAX_WIFI_OPTION};
 enum swtch_t {TOGGLE, FOLLOW, FOLLOW_INV, PUSHBUTTON, PUSHBUTTON_INV, PUSHBUTTONHOLD, PUSHBUTTONHOLD_INV, MAX_SWITCH_OPTION};
 enum led_t   {LED_OFF, LED_POWER, LED_MQTTSUB, LED_POWER_MQTTSUB, LED_MQTTPUB, LED_POWER_MQTTPUB, LED_MQTT, LED_POWER_MQTT, MAX_LED_OPTION};
 enum emul_t  {EMUL_NONE, EMUL_WEMO, EMUL_HUE, EMUL_MAX};
@@ -1375,7 +1375,7 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
     else if (!strcasecmp_P(type, PSTR(D_CMND_SSID)) && (index > 0) && (index <= 2)) {
       if ((data_len > 0) && (data_len < sizeof(sysCfg.sta_ssid[0]))) {
         strlcpy(sysCfg.sta_ssid[index -1], (1 == payload) ? (1 == index) ? STA_SSID1 : STA_SSID2 : dataBuf, sizeof(sysCfg.sta_ssid[0]));
-        sysCfg.sta_active = 0;
+        sysCfg.sta_active = index -1;
         restartflag = 2;
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_SSID "%d\":\"%s\"}"), index, sysCfg.sta_ssid[index -1]);
@@ -1383,7 +1383,7 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
     else if (!strcasecmp_P(type, PSTR(D_CMND_PASSWORD)) && (index > 0) && (index <= 2)) {
       if ((data_len > 0) && (data_len < sizeof(sysCfg.sta_pwd[0]))) {
         strlcpy(sysCfg.sta_pwd[index -1], (1 == payload) ? (1 == index) ? STA_PASS1 : STA_PASS2 : dataBuf, sizeof(sysCfg.sta_pwd[0]));
-        sysCfg.sta_active = 0;
+        sysCfg.sta_active = index -1;
         restartflag = 2;
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_PASSWORD "%d\":\"%s\"}"), index, sysCfg.sta_pwd[index -1]);
