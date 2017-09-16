@@ -464,11 +464,6 @@ void hue_light_status(byte device, String *response)
 
   if (sfl_flg) {
     sl_replaceHSB(response);
-#ifdef USE_WS2812
-  }
-  else if (pin[GPIO_WS2812] < 99) {
-    ws2812_replaceHSB(response);
-#endif // USE_WS2812
   } else {
     response->replace("{h}", "0");
     response->replace("{s}", "0");
@@ -579,11 +574,6 @@ void hue_lights(String *path)
 
       if (sfl_flg) {
         sl_getHSB(&hue,&sat,&bri);
-#ifdef USE_WS2812
-      }
-      else if (pin[GPIO_WS2812] < 99) {
-        ws2812_getHSB(&hue,&sat,&bri);
-#endif // USE_WS2812
       }
 
       if (hue_json.containsKey("bri")) {
@@ -638,11 +628,6 @@ void hue_lights(String *path)
       if (change) {
         if (sfl_flg) {
           sl_setHSB(hue, sat, bri, ct);
-#ifdef USE_WS2812
-        }
-        else if (pin[GPIO_WS2812] < 99) {
-          ws2812_setHSB(hue, sat, bri);
-#endif // USE_WS2812
         }
         change = false;
       }
