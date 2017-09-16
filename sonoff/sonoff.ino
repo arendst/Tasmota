@@ -25,7 +25,7 @@
     - Select IDE Tools - Flash Size: "1M (no SPIFFS)"
   ====================================================*/
 
-#define VERSION                0x05070108  // 5.7.1h
+#define VERSION                0x05070109  // 5.7.1i
 
 enum log_t   {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG_MORE, LOG_LEVEL_ALL};
 enum week_t  {Last, First, Second, Third, Fourth};
@@ -419,7 +419,6 @@ void setRelay(uint8_t rpower)
     Serial.flush();
   }
   else if (sfl_flg) {
-//    sl_setPower(rpower &1);
     sl_setPower(rpower);
   }
   else if (EXS_RELAY == sysCfg.module) {

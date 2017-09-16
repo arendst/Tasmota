@@ -1,4 +1,7 @@
-/* 5.7.1h
+/* 5.7.1i
+ * Add blink to WS2812 and Sonoff Led (#643)
+ *
+ * 5.7.1h
  * Consolidate WS2812 (xdrv_ws2812) into Sonoff Led (xdrv_snfled)
  * Invert WS2812 fade speed to align with Sonoff led (Speed 1 = fast, Speed 8 = slow)
  * Remove upper case MQTT receive buffer

@@ -63,6 +63,7 @@ uint8_t sl_dcolor[5];
 uint8_t sl_tcolor[5];
 uint8_t sl_lcolor[5];
 
+uint8_t sl_power = 0;
 uint8_t sl_any = 0;
 uint8_t sl_wakeupActive = 0;
 uint8_t sl_wakeupDimmer = 0;
@@ -481,6 +482,7 @@ void sl_init(void)
     sysCfg.led_scheme = 0;
   }
 
+  sl_power = 0;
   sl_any = 0;
   sl_wakeupActive = 0;
 }
@@ -568,20 +570,15 @@ char* sl_getColor(char* scolor)
   return scolor;
 }
 
-boolean sl_power()
-{
-  return ((power & (0x01 << (Maxdevice -1))) != 0);
-}
-
 void sl_prepPower()
 {
   char scolor[11];
 
 //  do_cmnd_power(index, (sysCfg.led_dimmer[0]>0));
-  if (sysCfg.led_dimmer[0] && !(sl_power())) {
+  if (sysCfg.led_dimmer[0] && !(sl_power)) {
     do_cmnd_power(Maxdevice, 7);  // No publishPowerState
   }
-  else if (!sysCfg.led_dimmer[0] && sl_power()) {
+  else if (!sysCfg.led_dimmer[0] && sl_power) {
     do_cmnd_power(Maxdevice, 6);  // No publishPowerState
   }
 #ifdef USE_DOMOTICZ
@@ -590,15 +587,16 @@ void sl_prepPower()
 #endif  // USE_DOMOTICZ
   if (sfl_flg > 1) {
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_RSLT_POWER "\":\"%s\", \"" D_CMND_DIMMER "\":%d, \"" D_CMND_COLOR "\":\"%s\"}"),
-      getStateText(sl_power()), sysCfg.led_dimmer[0], sl_getColor(scolor));
+      getStateText(sl_power), sysCfg.led_dimmer[0], sl_getColor(scolor));
   } else {
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_RSLT_POWER "\":\"%s\", \"" D_CMND_DIMMER "\":%d}"),
-      getStateText(sl_power()), sysCfg.led_dimmer[0]);
+      getStateText(sl_power), sysCfg.led_dimmer[0]);
   }
 }
 
 void sl_setPower(uint8_t mpower)
 {
+  sl_power = ((mpower & (0x01 << (Maxdevice -1))) != 0);
   if (sl_wakeupActive) {
     sl_wakeupActive--;
   }
@@ -612,7 +610,7 @@ void sl_animate()
   uint8_t cur_col[5];
 
   stripTimerCntr++;
-  if (!sl_power()) {  // Power Off
+  if (!sl_power) {  // Power Off
     sleep = sysCfg.sleep;
     stripTimerCntr = 0;
     for (byte i = 0; i < sfl_flg; i++) {
@@ -686,7 +684,7 @@ void sl_animate()
     }
   }
 
-  if ((sysCfg.led_scheme < 2) || !sl_power()) {
+  if ((sysCfg.led_scheme < 2) || !sl_power) {
     for (byte i = 0; i < sfl_flg; i++) {
       if (sl_lcolor[i] != sl_tcolor[i]) {
         sl_any = 1;
