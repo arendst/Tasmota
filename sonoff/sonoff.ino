@@ -25,7 +25,7 @@
     - Select IDE Tools - Flash Size: "1M (no SPIFFS)"
   ====================================================*/
 
-#define VERSION                0x05070107  // 5.7.1g
+#define VERSION                0x05070108  // 5.7.1h
 
 enum log_t   {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG_MORE, LOG_LEVEL_ALL};
 enum week_t  {Last, First, Second, Third, Fourth};
@@ -419,7 +419,8 @@ void setRelay(uint8_t rpower)
     Serial.flush();
   }
   else if (sfl_flg) {
-    sl_setPower(rpower &1);
+//    sl_setPower(rpower &1);
+    sl_setPower(rpower);
   }
   else if (EXS_RELAY == sysCfg.module) {
     setLatchingRelay(rpower, 1);
@@ -875,7 +876,6 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
 
   char topicBuf[TOPSZ];
   char dataBuf[data_len+1];
-  char dataBufUc[128];
   char stemp1[TOPSZ];
   char *p;
   char *mtopic = NULL;
@@ -930,12 +930,8 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
     type[i] = '\0';
   }
 
-  for (i = 0; i <= sizeof(dataBufUc); i++) {
-    dataBufUc[i] = toupper(dataBuf[i]);
-  }
-
-  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_RESULT D_GROUP " %d, " D_INDEX " %d, " D_COMMAND " %s, " D_DATA " %s (%s)"),
-    grpflg, index, type, dataBuf, dataBufUc);
+  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_RESULT D_GROUP " %d, " D_INDEX " %d, " D_COMMAND " %s, " D_DATA " %s"),
+    grpflg, index, type, dataBuf);
   addLog(LOG_LEVEL_DEBUG);
 
   if (type != NULL) {
@@ -944,7 +940,7 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
       blinks++;
     }
 
-    if (!strcmp(dataBufUc,"?")) {
+    if (!strcmp(dataBuf,"?")) {
       data_len = 0;
     }
     int16_t payload = -99;               // No payload
@@ -1060,7 +1056,7 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_BLINKCOUNT "\":%d}"), sysCfg.blinkcount);
     }
-    else if (sfl_flg && sl_command(type, index, dataBufUc, data_len, payload)) {
+    else if (sfl_flg && sl_command(type, index, dataBuf, data_len, payload)) {
       // Serviced
     }
     else if (!strcasecmp_P(type, PSTR(D_CMND_SAVEDATA))) {
@@ -1552,13 +1548,8 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
       i2c_scan(mqtt_data, sizeof(mqtt_data));
     }
 #endif  // USE_I2C
-#ifdef USE_WS2812
-    else if ((pin[GPIO_WS2812] < 99) && ws2812_command(type, index, dataBuf, data_len, payload)) {
-      // Serviced
-    }
-#endif  // USE_WS2812
 #ifdef USE_IR_REMOTE
-    else if ((pin[GPIO_IRSEND] < 99) && ir_send_command(type, index, dataBufUc, data_len, payload)) {
+    else if ((pin[GPIO_IRSEND] < 99) && ir_send_command(type, index, dataBuf, data_len, payload)) {
       // Serviced
     }
 #endif  // USE_IR_REMOTE
@@ -2330,12 +2321,6 @@ void stateloop()
     sl_animate();
   }
 
-#ifdef USE_WS2812
-  if (pin[GPIO_WS2812] < 99) {
-    ws2812_animate();
-  }
-#endif  // USE_WS2812
-
 /*-------------------------------------------------------------------------------------------*\
  * Every 0.2 second
 \*-------------------------------------------------------------------------------------------*/
@@ -2536,6 +2521,10 @@ void serial()
       }
     }
 
+/*-------------------------------------------------------------------------------------------*\
+ * Sonoff SC 19200 baud serial interface
+\*-------------------------------------------------------------------------------------------*/
+
     if (SerialInByte == '\x1B') {            // Sonoff SC status from ATMEGA328P
       serialInBuf[SerialInByteCounter] = 0;  // serial data completed
       sc_rcvstat(serialInBuf);
@@ -2543,6 +2532,9 @@ void serial()
       Serial.flush();
       return;
     }
+
+/*-------------------------------------------------------------------------------------------*/
+
     else if (SerialInByte == '\n') {
       serialInBuf[SerialInByteCounter] = 0;  // serial data completed
       seriallog_level = (sysCfg.seriallog_level < LOG_LEVEL_INFO) ? LOG_LEVEL_INFO : sysCfg.seriallog_level;
@@ -2674,8 +2666,14 @@ void GPIO_init()
     }
   }
 
-  if (sfl_flg) {                // Sonoff B1, AiLight, Sonoff Led or BN-SZ01
-    if (sfl_flg < 4) {
+#ifdef USE_WS2812
+  if (!sfl_flg && (pin[GPIO_WS2812] < 99)) {
+    Maxdevice++;
+    sfl_flg = 3;
+  }
+#endif  // USE_WS2812
+  if (sfl_flg) {                // Sonoff B1, AiLight, Sonoff Led or BN-SZ01, WS2812
+    if (sfl_flg < 3) {
       pwm_idxoffset = sfl_flg;  // 1 for BN-SZ01, 2 for Sonoff Led
     }
     sl_init();
@@ -2693,13 +2691,6 @@ void GPIO_init()
     setLatchingRelay(1,2);
   }
   setLed(sysCfg.ledstate &8);
-
-#ifdef USE_WS2812
-  if (pin[GPIO_WS2812] < 99) {
-    Maxdevice++;
-    ws2812_init(Maxdevice);
-  }
-#endif  // USE_WS2812
 
 #ifdef USE_IR_REMOTE
   if (pin[GPIO_IRSEND] < 99) {

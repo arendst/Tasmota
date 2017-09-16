@@ -500,6 +500,9 @@ void CFG_DefaultSet2()
   // 5.4.1
   memcpy_P(sysCfg.sfb_code[0], sfb_codeDefault, 9);
 
+  // 5.7.1g
+  sysCfg.led_pixels = WS2812_LEDS;
+
 }
 
 /********************************************************************************************/
@@ -533,7 +536,7 @@ void CFG_DefaultSet_3_9_3()
     sysCfg.my_module.gp.io[i] = 0;
   }
 
-  sysCfg.led_pixels = 0;
+  sysCfg.led_pixels = WS2812_LEDS;
   for (byte i = 0; i < 5; i++) {
     sysCfg.led_color[i] = 255;
   }
@@ -542,9 +545,9 @@ void CFG_DefaultSet_3_9_3()
     sysCfg.led_dimmer[i] = 10;
   }
   sysCfg.led_fade = 0;
-  sysCfg.led_speed = 0;
+  sysCfg.led_speed = 1;
   sysCfg.led_scheme = 0;
-  sysCfg.led_width = 0;
+  sysCfg.led_width = 1;
   sysCfg.led_wakeup = 0;
 }
 
@@ -707,6 +710,30 @@ void CFG_Delta()
         sysCfg.sfb_code[i][0] = 0;
       }
       memcpy_P(sysCfg.sfb_code[0], sfb_codeDefault, 9);
+    }
+    if (sysCfg.version < 0x05070108) {
+      uint8_t cfg_wsflg = 0;
+      for (byte i = 0; i < MAX_GPIO_PIN; i++) {
+        if (GPIO_WS2812 == sysCfg.my_module.gp.io[i]) {
+          cfg_wsflg = 1;
+        }
+      }
+      if (!sysCfg.led_pixels && cfg_wsflg) {
+        sysCfg.led_pixels = sysCfg.ws_pixels;
+        sysCfg.led_color[0] = sysCfg.ws_red;
+        sysCfg.led_color[1] = sysCfg.ws_green;
+        sysCfg.led_color[2] = sysCfg.ws_blue;
+        sysCfg.led_dimmer[0] = sysCfg.ws_dimmer;
+        sysCfg.led_table = sysCfg.ws_ledtable;
+        sysCfg.led_fade = sysCfg.ws_fade;
+        sysCfg.led_speed = sysCfg.ws_speed;
+        sysCfg.led_scheme = sysCfg.ws_scheme;
+        sysCfg.led_width = sysCfg.ws_width;
+        sysCfg.led_wakeup = sysCfg.ws_wakeup;
+      } else {
+        sysCfg.led_pixels = WS2812_LEDS;
+        sysCfg.led_width = 1;
+      }
     }
 
     sysCfg.version = VERSION;

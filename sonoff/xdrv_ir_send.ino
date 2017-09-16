@@ -68,7 +68,7 @@ void ir_send_init(void)
  { "Vendor": "<Toshiba|Mitsubishi>", "Power": <0|1>, "Mode": "<Hot|Cold|Dry|Auto>", "FanSpeed": "<1|2|3|4|5|Auto|Silence>", "Temp": <17..30> }
 */
 
-boolean ir_send_command(char *type, uint16_t index, char *dataBufUc, uint16_t data_len, int16_t payload)
+boolean ir_send_command(char *type, uint16_t index, char *dataBuf, uint16_t data_len, int16_t payload)
 {
   boolean serviced = true;
   boolean error = false;
@@ -85,7 +85,7 @@ boolean ir_send_command(char *type, uint16_t index, char *dataBufUc, uint16_t da
   if (!strcasecmp_P(type, PSTR(D_CMND_IRSEND))) {
 	  if (data_len) {
       StaticJsonBuffer<128> jsonBuf;
-      JsonObject &ir_json = jsonBuf.parseObject(dataBufUc);
+      JsonObject &ir_json = jsonBuf.parseObject(dataBuf);
       if (!ir_json.success()) {
         snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_IRSEND "\":\"" D_INVALID_JSON "\"}"));  // JSON decode failed
       } else {
@@ -94,13 +94,13 @@ boolean ir_send_command(char *type, uint16_t index, char *dataBufUc, uint16_t da
         bits = ir_json[D_IRSEND_BITS];
         data = ir_json[D_IRSEND_DATA];
         if (protocol && bits && data) {
-          if      (!strcmp_P(protocol,PSTR("NEC")))     irsend->sendNEC(data, bits);
-          else if (!strcmp_P(protocol,PSTR("SONY")))    irsend->sendSony(data, bits);
-          else if (!strcmp_P(protocol,PSTR("RC5")))     irsend->sendRC5(data, bits);
-          else if (!strcmp_P(protocol,PSTR("RC6")))     irsend->sendRC6(data, bits);
-          else if (!strcmp_P(protocol,PSTR("DISH")))    irsend->sendDISH(data, bits);
-          else if (!strcmp_P(protocol,PSTR("JVC")))     irsend->sendJVC(data, bits, 1);
-          else if (!strcmp_P(protocol,PSTR("SAMSUNG"))) irsend->sendSAMSUNG(data, bits);
+          if      (!strcasecmp_P(protocol, PSTR("NEC")))     irsend->sendNEC(data, bits);
+          else if (!strcasecmp_P(protocol, PSTR("SONY")))    irsend->sendSony(data, bits);
+          else if (!strcasecmp_P(protocol, PSTR("RC5")))     irsend->sendRC5(data, bits);
+          else if (!strcasecmp_P(protocol, PSTR("RC6")))     irsend->sendRC6(data, bits);
+          else if (!strcasecmp_P(protocol, PSTR("DISH")))    irsend->sendDISH(data, bits);
+          else if (!strcasecmp_P(protocol, PSTR("JVC")))     irsend->sendJVC(data, bits, 1);
+          else if (!strcasecmp_P(protocol, PSTR("SAMSUNG"))) irsend->sendSAMSUNG(data, bits);
           else {
             snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_IRSEND "\":\"" D_PROTOCOL_NOT_SUPPORTED "\"}"));
           }
@@ -115,7 +115,7 @@ boolean ir_send_command(char *type, uint16_t index, char *dataBufUc, uint16_t da
   else if (!strcasecmp_P(type, PSTR(D_CMND_IRHVAC))) {
     if (data_len) {
       StaticJsonBuffer<164> jsonBufer;
-      JsonObject &root = jsonBufer.parseObject(dataBufUc);
+      JsonObject &root = jsonBufer.parseObject(dataBuf);
       if (!root.success()) {
         snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_IRHVAC "\":\"" D_INVALID_JSON "\"}"));  // JSON decode failed
       } else {
@@ -130,10 +130,10 @@ boolean ir_send_command(char *type, uint16_t index, char *dataBufUc, uint16_t da
 //          HVAC_Vendor, HVAC_Power, HVAC_Mode, HVAC_FanMode, HVAC_Temp);
 //        addLog(LOG_LEVEL_DEBUG);
 
-        if (HVAC_Vendor == NULL || !strcmp_P(HVAC_Vendor,PSTR("TOSHIBA"))) {
+        if (HVAC_Vendor == NULL || !strcasecmp_P(HVAC_Vendor, PSTR("TOSHIBA"))) {
           error = ir_hvac_toshiba(HVAC_Mode, HVAC_FanMode, HVAC_Power, HVAC_Temp);
         }
-        else if (!strcmp_P(HVAC_Vendor,PSTR("MITSUBISHI"))) {
+        else if (!strcasecmp_P(HVAC_Vendor, PSTR("MITSUBISHI"))) {
           error = ir_hvac_mitsubishi(HVAC_Mode, HVAC_FanMode, HVAC_Power, HVAC_Temp);
         }
         else  error = true;
@@ -163,7 +163,7 @@ boolean ir_hvac_toshiba(const char *HVAC_Mode, const char *HVAC_FanMode, boolean
   if (HVAC_Mode == NULL) {
     p = (char*)HVACMODE;  // default HVAC_HOT
   } else {
-    p = strchr(HVACMODE, HVAC_Mode[0]);
+    p = strchr(HVACMODE, toupper(HVAC_Mode[0]));
   }
   if (!p) {
     return true;
@@ -177,7 +177,7 @@ boolean ir_hvac_toshiba(const char *HVAC_Mode, const char *HVAC_FanMode, boolean
   if (HVAC_FanMode == NULL) {
     p = (char*)FANSPEED;  // default FAN_SPEED_AUTO
   } else {
-    p = strchr(FANSPEED, HVAC_FanMode[0]);
+    p = strchr(FANSPEED, toupper(HVAC_FanMode[0]));
   }
   if (!p) {
     return true;
@@ -250,7 +250,7 @@ boolean ir_hvac_mitsubishi(const char *HVAC_Mode,const char *HVAC_FanMode, boole
   if (HVAC_Mode == NULL) {
     p = (char*)HVACMODE;  // default HVAC_HOT
   } else {
-    p = strchr(HVACMODE, HVAC_Mode[0]);
+    p = strchr(HVACMODE, toupper(HVAC_Mode[0]));
   }
   if (!p) {
     return true;
@@ -263,7 +263,7 @@ boolean ir_hvac_mitsubishi(const char *HVAC_Mode,const char *HVAC_FanMode, boole
   if (HVAC_FanMode == NULL) {
     p = (char*)FANSPEED;  // default FAN_SPEED_AUTO
   } else {
-    p = strchr(FANSPEED, HVAC_FanMode[0]);
+    p = strchr(FANSPEED, toupper(HVAC_FanMode[0]));
   }
   if (!p) {
     return true;
