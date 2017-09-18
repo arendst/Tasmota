@@ -39,19 +39,18 @@ void sb_received()
   uint16_t rhi = 0;
   char svalue[90];
   char rfkey[8];
-  char log[LOGSZ];
 
   svalue[0] = '\0';
   for (i = 0; i < SerialInByteCounter; i++) {
     snprintf_P(svalue, sizeof(svalue), PSTR("%s%02X "), svalue, serialInBuf[i]);
   }
-  snprintf_P(log, sizeof(log), PSTR(D_LOG_BRIDGE D_RECEIVED " %s"), svalue);
-  addLog(LOG_LEVEL_DEBUG, log);
+  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_BRIDGE D_RECEIVED " %s"), svalue);
+  addLog(LOG_LEVEL_DEBUG);
 
   if (0xA2 == serialInBuf[0]) {       // Learn timeout
     sfb_learnFlg = 0;
-    snprintf_P(svalue, sizeof(svalue), PSTR("{\"" D_CMND_RFKEY "%d\":\"" D_LEARN_FAILED "\"}"), sfb_learnKey);
-    mqtt_publish_topic_P(5, PSTR(D_CMND_RFKEY), svalue);
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_RFKEY "%d\":\"" D_LEARN_FAILED "\"}"), sfb_learnKey);
+    mqtt_publish_topic_P(5, PSTR(D_CMND_RFKEY));
   }
   else if (0xA3 == serialInBuf[0]) {  // Learned A3 20 F8 01 18 03 3E 2E 1A 22 55
     sfb_learnFlg = 0;
@@ -61,11 +60,11 @@ void sb_received()
       for (i = 0; i < 9; i++) {
         sysCfg.sfb_code[sfb_learnKey][i] = serialInBuf[i +1];
       }
-      snprintf_P(svalue, sizeof(svalue), PSTR("{\"" D_CMND_RFKEY "%d\":\"" D_LEARNED "\"}"), sfb_learnKey);
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_RFKEY "%d\":\"" D_LEARNED "\"}"), sfb_learnKey);
     } else {
-      snprintf_P(svalue, sizeof(svalue), PSTR("{\"" D_CMND_RFKEY "%d\":\"" D_LEARN_FAILED "\"}"), sfb_learnKey);
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_RFKEY "%d\":\"" D_LEARN_FAILED "\"}"), sfb_learnKey);
     }
-    mqtt_publish_topic_P(5, PSTR(D_CMND_RFKEY), svalue);
+    mqtt_publish_topic_P(5, PSTR(D_CMND_RFKEY));
   }
   else if (0xA4 == serialInBuf[0]) {  // Received RF data A4 20 EE 01 18 03 3E 2E 1A 22 55
     rsy = serialInBuf[1] << 8 | serialInBuf[2];  // Sync time in uSec
@@ -87,9 +86,9 @@ void sb_received()
           }
         }
       }
-      snprintf_P(svalue, sizeof(svalue), PSTR("{\"" D_RFRECEIVED "\":{\"" D_SYNC "\":%d, \"" D_LOW "\":%d, \"" D_HIGH "\":%d, \"" D_DATA "\":\"%06X\", \"" D_CMND_RFKEY "\":%s}}"),
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_RFRECEIVED "\":{\"" D_SYNC "\":%d, \"" D_LOW "\":%d, \"" D_HIGH "\":%d, \"" D_DATA "\":\"%06X\", \"" D_CMND_RFKEY "\":%s}}"),
         rsy, rlo, rhi, rid, rfkey);
-      mqtt_publish_topic_P(6, PSTR(D_RFRECEIVED), svalue);
+      mqtt_publish_topic_P(6, PSTR(D_RFRECEIVED));
     }
   }
 }
@@ -155,7 +154,7 @@ void sb_learn(uint8_t key)
  * Commands
 \*********************************************************************************************/
 
-boolean sb_command(char *type, uint16_t index, char *dataBuf, uint16_t data_len, int16_t payload, char *svalue, uint16_t ssvalue)
+boolean sb_command(char *type, uint16_t index, char *dataBuf, uint16_t data_len, int16_t payload)
 {
   boolean serviced = true;
   char *p;
@@ -170,28 +169,28 @@ boolean sb_command(char *type, uint16_t index, char *dataBuf, uint16_t data_len,
         sysCfg.sfb_code[0][7] = lsb;
       }
     }
-    snprintf_P(svalue, ssvalue, PSTR("{\"" D_CMND_RFDEFAULT "\":\"%0X%0X\"}"), sysCfg.sfb_code[0][6], sysCfg.sfb_code[0][7]);
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_RFDEFAULT "\":\"%0X%0X\"}"), sysCfg.sfb_code[0][6], sysCfg.sfb_code[0][7]);
   }
   else if (!strcasecmp_P(type, PSTR(D_CMND_RFKEY)) && (index > 0) && (index <= 16)) {
     if (!sfb_learnFlg) {
       if (2 == payload) {
         sb_learn(index);
-        snprintf_P(svalue, ssvalue, PSTR("{\"" D_CMND_RFKEY "%d\":\"" D_START_LEARNING "\"}"), index);
+        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_RFKEY "%d\":\"" D_START_LEARNING "\"}"), index);
       }
       else if (3 == payload) {
         sysCfg.sfb_code[index][0] = 0;
-        snprintf_P(svalue, ssvalue, PSTR("{\"" D_CMND_RFKEY "%d\":\"" D_SET_TO_DEFAULT "\"}"), index);
+        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_RFKEY "%d\":\"" D_SET_TO_DEFAULT "\"}"), index);
       } else {
         if ((1 == payload) || (0 == sysCfg.sfb_code[index][0])) {
           sb_send(0, index);
-          snprintf_P(svalue, ssvalue, PSTR("{\"" D_CMND_RFKEY "%d\":\"" D_DEFAULT_SENT "\"}"), index);
+          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_RFKEY "%d\":\"" D_DEFAULT_SENT "\"}"), index);
         } else {
           sb_send(index, 0);
-          snprintf_P(svalue, ssvalue, PSTR("{\"" D_CMND_RFKEY "%d\":\"" D_LEARNED_SENT "\"}"), index);
+          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_RFKEY "%d\":\"" D_LEARNED_SENT "\"}"), index);
         }
       }
     } else {
-      snprintf_P(svalue, ssvalue, PSTR("{\"" D_CMND_RFKEY "%d\":\"" D_LEARNING_ACTIVE "\"}"), sfb_learnKey);
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_RFKEY "%d\":\"" D_LEARNING_ACTIVE "\"}"), sfb_learnKey);
     }
   }
   else {

@@ -175,6 +175,7 @@
 #define D_TOGGLE "Toggle"  // Wissel, Tuimel
 #define D_TOPIC "Topic"  // Onderwerp
 #define D_TOTAL "Totaal"
+#define D_TRANSMIT "Verzend"
 #define D_TRUE "Waar"
 #define D_TYPE "Soort"
 #define D_UNKNOWN "Onbekend"
@@ -478,7 +479,7 @@
 #define D_LOG_APPLICATION "APP: "
 #define D_LOG_BRIDGE "BRG: "
 #define D_LOG_CONFIG "CFG: "
-#define D_LOG_COMMAND "CND: "
+#define D_LOG_COMMAND "CMD: "
 #define D_LOG_DHT "DHT: "
 #define D_LOG_DOMOTICZ "DOM: "
 #define D_LOG_DSB "DSB: "
@@ -494,6 +495,7 @@
 #define D_LOG_UPLOAD "UPL: "
 #define D_LOG_UPNP "UPP: "
 #define D_LOG_WIFI "WIF: "
+#define D_LOG_SERIAL "SER: "
 
 // Result
 #define D_RSLT_RESULT "RESULTAAT"
@@ -587,6 +589,7 @@
   #define D_WCFG_2_WIFIMANAGER "WifiManager"
   #define D_WCFG_3_WPSCONFIG "WPSConfig"
   #define D_WCFG_4_RETRY "Opnieuw"
+  #define D_WCFG_5_WAIT "Wacht"
 #define D_CMND_FRIENDLYNAME "FriendlyName"
 #define D_CMND_SWITCHMODE "SwitchMode"
 #define D_CMND_WEBSERVER "Webserver"

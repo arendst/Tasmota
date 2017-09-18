@@ -25,6 +25,7 @@
 \*********************************************************************************************/
 
 float dsb_mt = 0;
+uint16_t dsb_lastresult = 0;
 
 uint8_t dsb_reset()
 {
@@ -131,6 +132,10 @@ boolean dsb_readTemp(float &t)
   if (!dsb_mt) {
     t = NAN;
   } else {
+    dsb_lastresult++;
+    if (dsb_lastresult > 8) {  // Reset after 8 misses
+      dsb_mt = NAN;
+    }
     t = dsb_mt;
   }
 
@@ -168,8 +173,11 @@ boolean dsb_readTemp(float &t)
       sign = -1;
     }
     t = convertTemp((float)sign * DSTemp * 0.0625);
+    dsb_lastresult = 0;
   }
-  if (!isnan(t)) dsb_mt = t;
+  if (!isnan(t)) {
+    dsb_mt = t;
+  }
   return !isnan(t);
 }
 
@@ -177,14 +185,14 @@ boolean dsb_readTemp(float &t)
  * Presentation
 \*********************************************************************************************/
 
-void dsb_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
+void dsb_mqttPresent(uint8_t* djson)
 {
   char stemp1[10];
   float t;
 
   if (dsb_readTemp(t)) {  // Check if read failed
     dtostrfd(t, sysCfg.flag.temperature_resolution, stemp1);
-    snprintf_P(svalue, ssvalue, PSTR("%s, \"DS18B20\":{\"" D_TEMPERATURE "\":%s}"), svalue, stemp1);
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s, \"DS18B20\":{\"" D_TEMPERATURE "\":%s}"), mqtt_data, stemp1);
     *djson = 1;
 #ifdef USE_DOMOTICZ
     domoticz_sensor1(stemp1);

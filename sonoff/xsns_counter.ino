@@ -25,8 +25,6 @@ unsigned long pTimeLast[MAX_COUNTERS]; // Last counter time in milli seconds
 
 void counter_update(byte index)
 {
-//  char log[LOGSZ];
-
   unsigned long pTime = millis() - pTimeLast[index -1];
   if (pTime > sysCfg.pCounterDebounce) {
     pTimeLast[index -1] = millis();
@@ -36,8 +34,8 @@ void counter_update(byte index)
       rtcMem.pCounter[index -1]++;
     }
 
-//    snprintf_P(log, sizeof(log), PSTR("CNTR: Interrupt %d"), index);
-//    addLog(LOG_LEVEL_DEBUG, log);
+//    snprintf_P(log_data, sizeof(log_data), PSTR("CNTR: Interrupt %d"), index);
+//    addLog(LOG_LEVEL_DEBUG);
   }
 }
 
@@ -87,7 +85,7 @@ void counter_init()
  * Presentation
 \*********************************************************************************************/
 
-void counter_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
+void counter_mqttPresent(uint8_t* djson)
 {
   char stemp[16];
 
@@ -100,7 +98,7 @@ void counter_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
         dsxflg++;
         dtostrfd(rtcMem.pCounter[i], 0, stemp);
       }
-      snprintf_P(svalue, ssvalue, PSTR("%s, \"" D_COUNTER "%d\":%s"), svalue, i +1, stemp);
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s, \"" D_COUNTER "%d\":%s"), mqtt_data, i +1, stemp);
       *djson = 1;
 #ifdef USE_DOMOTICZ
       if (1 == dsxflg) {
