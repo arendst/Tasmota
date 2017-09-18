@@ -1,4 +1,9 @@
-/* 5.7.1i
+/* 5.7.1j
+ * Remove the need for NeoPixelBus library for Hue support
+ * Reintroduce xdrv_ws2812 for flexible future library changes
+ * Fix basic On, Off, Toggle, Blink and BlinkOff commands when other language is selected (#874)
+ *
+ * 5.7.1i
  * Add blink to WS2812 and Sonoff Led (#643)
  *
  * 5.7.1h

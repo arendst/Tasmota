@@ -71,294 +71,6 @@ uint16_t sl_wakeupCntr = 0;
 
 unsigned long stripTimerCntr = 0;  // Bars and Gradient
 
-#ifdef USE_WS2812
-/*********************************************************************************************\
- * WS2812 Leds using NeopixelBus library
-\*********************************************************************************************/
-
-#ifdef USE_WS2812_DMA
-#if (USE_WS2812_CTYPE == 1)
-  NeoPixelBus<NeoGrbFeature, Neo800KbpsMethod> *strip = NULL;
-#else  // USE_WS2812_CTYPE
-  NeoPixelBus<NeoRgbFeature, Neo800KbpsMethod> *strip = NULL;
-#endif  // USE_WS2812_CTYPE
-#else  // USE_WS2812_DMA
-#if (USE_WS2812_CTYPE == 1)
-  NeoPixelBus<NeoGrbFeature, NeoEsp8266BitBang800KbpsMethod> *strip = NULL;
-#else  // USE_WS2812_CTYPE
-  NeoPixelBus<NeoRgbFeature, NeoEsp8266BitBang800KbpsMethod> *strip = NULL;
-#endif  // USE_WS2812_CTYPE
-#endif  // USE_WS2812_DMA
-
-struct wsColor {
-  uint8_t red, green, blue;
-};
-
-struct ColorScheme {
-  wsColor* colors;
-  uint8_t count;
-};
-
-wsColor incandescent[2] = { 255, 140, 20, 0, 0, 0 };
-wsColor rgb[3] = { 255, 0, 0, 0, 255, 0, 0, 0, 255 };
-wsColor christmas[2] = { 255, 0, 0, 0, 255, 0 };
-wsColor hanukkah[2] = { 0, 0, 255, 255, 255, 255 };
-wsColor kwanzaa[3] = { 255, 0, 0, 0, 0, 0, 0, 255, 0 };
-wsColor rainbow[7] = { 255, 0, 0, 255, 128, 0, 255, 255, 0, 0, 255, 0, 0, 0, 255, 128, 0, 255, 255, 0, 255 };
-wsColor fire[3] = { 255, 0, 0, 255, 102, 0, 255, 192, 0 };
-ColorScheme schemes[7] = {
-  incandescent, 2,
-  rgb, 3,
-  christmas, 2,
-  hanukkah, 2,
-  kwanzaa, 3,
-  rainbow, 7,
-  fire, 3 };
-
-uint8_t widthValues[5] = {
-    1,     // Small
-    2,     // Medium
-    4,     // Large
-    8,     // Largest
-  255 };   // All
-uint8_t repeatValues[5] = {
-    8,     // Small
-    6,     // Medium
-    4,     // Large
-    2,     // Largest
-    1 };   // All
-
-uint8_t speedValues[9] = {
-    0,                     // None
-    1 * (STATES / 10),     // Fastest
-    3 * (STATES / 10),
-    5 * (STATES / 10),     // Fast
-    7 * (STATES / 10),
-    9 * (STATES / 10),
-   11 * (STATES / 10),     // Slow
-   13 * (STATES / 10),
-   15 * (STATES / 10) };   // Slowest
-
-uint8_t sl_ledcolor[3];
-
-/********************************************************************************************/
-
-void ws2812_pixels()
-{
-  strip->ClearTo(0);
-  strip->Show();
-  sl_any = 1;
-}
-
-void ws2812_init()
-{
-#ifdef USE_WS2812_DMA
-#if (USE_WS2812_CTYPE == 1)
-  strip = new NeoPixelBus<NeoGrbFeature, Neo800KbpsMethod>(WS2812_MAX_LEDS);  // For Esp8266, the Pin is omitted and it uses GPIO3 due to DMA hardware use.
-#else  // USE_WS2812_CTYPE
-  strip = new NeoPixelBus<NeoRgbFeature, Neo800KbpsMethod>(WS2812_MAX_LEDS);  // For Esp8266, the Pin is omitted and it uses GPIO3 due to DMA hardware use.
-#endif  // USE_WS2812_CTYPE
-#else  // USE_WS2812_DMA
-#if (USE_WS2812_CTYPE == 1)
-  strip = new NeoPixelBus<NeoGrbFeature, NeoEsp8266BitBang800KbpsMethod>(WS2812_MAX_LEDS, pin[GPIO_WS2812]);
-#else  // USE_WS2812_CTYPE
-  strip = new NeoPixelBus<NeoRgbFeature, NeoEsp8266BitBang800KbpsMethod>(WS2812_MAX_LEDS, pin[GPIO_WS2812]);
-#endif  // USE_WS2812_CTYPE
-#endif  // USE_WS2812_DMA
-  strip->Begin();
-  ws2812_pixels();
-}
-
-void ws2812_setLedColor(uint16_t led)
-{
-  RgbColor lcolor;
-  lcolor.R = sl_ledcolor[0];
-  lcolor.G = sl_ledcolor[1];
-  lcolor.B = sl_ledcolor[2];
-  strip->SetPixelColor(led -1, lcolor);  // Led 1 is strip Led 0 -> substract offset 1
-  strip->Show();
-}
-
-char* ws2812_getLedColor(uint16_t led, char* scolor)
-{
-  RgbColor lcolor = strip->GetPixelColor(led -1);
-  sl_ledcolor[0] = lcolor.R;
-  sl_ledcolor[1] = lcolor.G;
-  sl_ledcolor[2] = lcolor.B;
-  scolor[0] = '\0';
-  for (byte i = 0; i < sfl_flg; i++) {
-    snprintf_P(scolor, 11, PSTR("%s%02X"), scolor, sl_ledcolor[i]);
-  }
-  return scolor;
-}
-
-void ws2812_stripShow()
-{
-  RgbColor c;
-
-  if (sysCfg.led_table) {
-    for (uint16_t i = 0; i < sysCfg.led_pixels; i++) {
-      c = strip->GetPixelColor(i);
-      strip->SetPixelColor(i, RgbColor(ledTable[c.R], ledTable[c.G], ledTable[c.B]));
-    }
-  }
-  strip->Show();
-}
-
-int mod(int a, int b)
-{
-   int ret = a % b;
-   if (ret < 0) {
-    ret += b;
-   }
-   return ret;
-}
-
-void ws2812_clock()
-{
-  RgbColor c;
-
-  strip->ClearTo(0);   // Reset strip
-  float newDim = 100 / (float)sysCfg.led_dimmer[0];
-  float f1 = 255 / newDim;
-  uint8_t i1 = (uint8_t)f1;
-  float f2 = 127 / newDim;
-  uint8_t i2 = (uint8_t)f2;
-  float f3 = 63 / newDim;
-  uint8_t i3 = (uint8_t)f3;
-
-  int j = sysCfg.led_pixels;
-  int clksize = 600 / j;
-  int i = (rtcTime.Second * 10) / clksize;
-
-  c = strip->GetPixelColor(mod(i,    j)); c.B = i1; strip->SetPixelColor(mod(i,    j), c);
-  i = (rtcTime.Minute * 10) / clksize;
-  c = strip->GetPixelColor(mod(i -1, j)); c.G = i3; strip->SetPixelColor(mod(i -1, j), c);
-  c = strip->GetPixelColor(mod(i,    j)); c.G = i1; strip->SetPixelColor(mod(i,    j), c);
-  c = strip->GetPixelColor(mod(i +1, j)); c.G = i3; strip->SetPixelColor(mod(i +1, j), c);
-  i = (rtcTime.Hour % 12) * (50 / clksize);
-  c = strip->GetPixelColor(mod(i -2, j)); c.R = i3; strip->SetPixelColor(mod(i -2, j), c);
-  c = strip->GetPixelColor(mod(i -1, j)); c.R = i2; strip->SetPixelColor(mod(i -1, j), c);
-  c = strip->GetPixelColor(mod(i,    j)); c.R = i1; strip->SetPixelColor(mod(i,    j), c);
-  c = strip->GetPixelColor(mod(i +1, j)); c.R = i2; strip->SetPixelColor(mod(i +1, j), c);
-  c = strip->GetPixelColor(mod(i +2, j)); c.R = i3; strip->SetPixelColor(mod(i +2, j), c);
-  ws2812_stripShow();
-}
-
-void ws2812_gradientColor(struct wsColor* mColor, uint16_t range, uint16_t gradRange, uint16_t i)
-{
-/*
- * Compute the color of a pixel at position i using a gradient of the color scheme.
- * This function is used internally by the gradient function.
- */
-  ColorScheme scheme = schemes[sysCfg.led_scheme -3];
-  uint16_t curRange = i / range;
-  uint16_t rangeIndex = i % range;
-  uint16_t colorIndex = rangeIndex / gradRange;
-  uint16_t start = colorIndex;
-  uint16_t end = colorIndex +1;
-  if (curRange % 2 != 0) {
-    start = (scheme.count -1) - start;
-    end = (scheme.count -1) - end;
-  }
-  float newDim = 100 / (float)sysCfg.led_dimmer[0];
-  float fmyRed = (float)map(rangeIndex % gradRange, 0, gradRange, scheme.colors[start].red, scheme.colors[end].red) / newDim;
-  float fmyGrn = (float)map(rangeIndex % gradRange, 0, gradRange, scheme.colors[start].green, scheme.colors[end].green) / newDim;
-  float fmyBlu = (float)map(rangeIndex % gradRange, 0, gradRange, scheme.colors[start].blue, scheme.colors[end].blue) / newDim;
-  mColor->red = (uint8_t)fmyRed;
-  mColor->green = (uint8_t)fmyGrn;
-  mColor->blue = (uint8_t)fmyBlu;
-}
-
-void ws2812_gradient()
-{
-/*
- * This routine courtesy Tony DiCola (Adafruit)
- * Display a gradient of colors for the current color scheme.
- *  Repeat is the number of repetitions of the gradient (pick a multiple of 2 for smooth looping of the gradient).
- */
-  RgbColor c;
-
-  ColorScheme scheme = schemes[sysCfg.led_scheme -3];
-  if (scheme.count < 2) {
-    return;
-  }
-
-  uint8_t repeat = repeatValues[sysCfg.led_width];  // number of scheme.count per ledcount
-  uint16_t range = (uint16_t)ceil((float)sysCfg.led_pixels / (float)repeat);
-  uint16_t gradRange = (uint16_t)ceil((float)range / (float)(scheme.count - 1));
-  uint16_t offset = speedValues[sysCfg.led_speed] > 0 ? stripTimerCntr / speedValues[sysCfg.led_speed] : 0;
-
-  wsColor oldColor, currentColor;
-  ws2812_gradientColor(&oldColor, range, gradRange, offset);
-  currentColor = oldColor;
-  for (uint16_t i = 0; i < sysCfg.led_pixels; i++) {
-    if (repeatValues[sysCfg.led_width] > 1) {
-      ws2812_gradientColor(&currentColor, range, gradRange, i +offset);
-    }
-    if (sysCfg.led_speed > 0) {
-      // Blend old and current color based on time for smooth movement.
-      c.R = map(stripTimerCntr % speedValues[sysCfg.led_speed], 0, speedValues[sysCfg.led_speed], oldColor.red, currentColor.red);
-      c.G = map(stripTimerCntr % speedValues[sysCfg.led_speed], 0, speedValues[sysCfg.led_speed], oldColor.green, currentColor.green);
-      c.B = map(stripTimerCntr % speedValues[sysCfg.led_speed], 0, speedValues[sysCfg.led_speed], oldColor.blue, currentColor.blue);
-    }
-    else {
-      // No animation, just use the current color.
-      c.R = currentColor.red;
-      c.G = currentColor.green;
-      c.B = currentColor.blue;
-    }
-    strip->SetPixelColor(i, c);
-    oldColor = currentColor;
-  }
-  ws2812_stripShow();
-}
-
-void ws2812_bars()
-{
-/*
- * This routine courtesy Tony DiCola (Adafruit)
- * Display solid bars of color for the current color scheme.
- * Width is the width of each bar in pixels/lights.
- */
-  RgbColor c;
-  uint16_t i;
-
-  ColorScheme scheme = schemes[sysCfg.led_scheme -3];
-
-  uint16_t maxSize = sysCfg.led_pixels / scheme.count;
-  if (widthValues[sysCfg.led_width] > maxSize) {
-    maxSize = 0;
-  }
-
-  uint8_t offset = speedValues[sysCfg.led_speed] > 0 ? stripTimerCntr / speedValues[sysCfg.led_speed] : 0;
-
-  wsColor mcolor[scheme.count];
-  memcpy(mcolor, scheme.colors, sizeof(mcolor));
-  float newDim = 100 / (float)sysCfg.led_dimmer[0];
-  for (i = 0; i < scheme.count; i++) {
-    float fmyRed = (float)mcolor[i].red / newDim;
-    float fmyGrn = (float)mcolor[i].green / newDim;
-    float fmyBlu = (float)mcolor[i].blue / newDim;
-    mcolor[i].red = (uint8_t)fmyRed;
-    mcolor[i].green = (uint8_t)fmyGrn;
-    mcolor[i].blue = (uint8_t)fmyBlu;
-  }
-  uint8_t colorIndex = offset % scheme.count;
-  for (i = 0; i < sysCfg.led_pixels; i++) {
-    if (maxSize) {
-      colorIndex = ((i + offset) % (scheme.count * widthValues[sysCfg.led_width])) / widthValues[sysCfg.led_width];
-    }
-    c.R = mcolor[colorIndex].red;
-    c.G = mcolor[colorIndex].green;
-    c.B = mcolor[colorIndex].blue;
-    strip->SetPixelColor(i, c);
-  }
-  ws2812_stripShow();
-}
-
-#endif  // USE_WS2812
-
 /*********************************************************************************************\
  * Sonoff B1 and AiLight inspired by OpenLight https://github.com/icamgo/noduino-sdk
 \*********************************************************************************************/
@@ -600,6 +312,9 @@ void sl_setPower(uint8_t mpower)
   if (sl_wakeupActive) {
     sl_wakeupActive--;
   }
+  if (sl_power) {
+    sl_any = 1;
+  }
   sl_animate();
 }
 
@@ -666,20 +381,10 @@ void sl_animate()
         }
         break;
 #ifdef USE_WS2812  // ************************************************************************
-      case 2:  // Clock
-        if (((STATES/10)*2 == state) || (sl_any != 2)) {
-          ws2812_clock();
-        }
-        sl_any = 2;
-        break;
       default:
-        if (1 == sysCfg.led_fade) {
-          ws2812_gradient();
-        } else {
-          ws2812_bars();
+        if (3 == sfl_flg) {
+          ws2812_showScheme(sysCfg.led_scheme -2);
         }
-        sl_any = 1;
-        break;
 #endif  // USE_WS2812 ************************************************************************
     }
   }
@@ -703,14 +408,7 @@ void sl_animate()
       }
 #ifdef USE_WS2812  // ************************************************************************
       if (3 == sfl_flg) {
-        RgbColor lcolor;
-        lcolor.R = cur_col[0];
-        lcolor.G = cur_col[1];
-        lcolor.B = cur_col[2];
-        for (uint16_t i = 0; i < sysCfg.led_pixels; i++) {
-          strip->SetPixelColor(i, lcolor);
-        }
-        strip->Show();
+        ws2812_setColor(0, cur_col[0], cur_col[1], cur_col[2]);
       }
 #endif  // USE_ES2812 ************************************************************************
       if (sfl_flg > 3) {
@@ -724,33 +422,114 @@ void sl_animate()
  * Hue support
 \*********************************************************************************************/
 
-void sl_rgb2hsb(float *hue, float *sat, float *bri)
-{
-  RgbColor dcolor;
+float sl_Hue = 0.0;
+float sl_Sat = 0.0;
+float sl_Bri = 0.0;
 
+void sl_rgb2hsb()
+{
   sl_setDim(sysCfg.led_dimmer[0]);
-  dcolor.R = sl_dcolor[0];
-  dcolor.G = sl_dcolor[1];
-  dcolor.B = sl_dcolor[2];
-  HsbColor hsb = HsbColor(dcolor);
-  *hue = hsb.H;
-  *sat = hsb.S;
-  *bri = hsb.B;
+
+  // convert colors to float between (0.0 - 1.0)
+  float r = sl_dcolor[0] / 255.0f;
+  float g = sl_dcolor[1] / 255.0f;
+  float b = sl_dcolor[2] / 255.0f;
+
+  float max = (r > g && r > b) ? r : (g > b) ? g : b;
+  float min = (r < g && r < b) ? r : (g < b) ? g : b;
+
+  float d = max - min;
+
+  sl_Hue = 0.0;
+  sl_Bri = max;
+  sl_Sat = (0.0f == sl_Bri) ? 0 : (d / sl_Bri);
+
+  if (d != 0.0f)
+  {
+    if (r == max) {
+      sl_Hue = (g - b) / d + (g < b ? 6.0f : 0.0f);
+    } else if (g == max) {
+      sl_Hue = (b - r) / d + 2.0f;
+    } else {
+      sl_Hue = (r - g) / d + 4.0f;
+    }
+    sl_Hue /= 6.0f;
+  }
+}
+
+void sl_hsb2rgb()
+{
+  float r;
+  float g;
+  float b;
+
+  float h = sl_Hue;
+  float s = sl_Sat;
+  float v = sl_Bri;
+
+  if (0.0f == sl_Sat) {
+    r = g = b = v; // achromatic or black
+  } else {
+    if (h < 0.0f) {
+      h += 1.0f;
+    }
+    else if (h >= 1.0f) {
+      h -= 1.0f;
+    }
+    h *= 6.0f;
+    int i = (int)h;
+    float f = h - i;
+    float q = v * (1.0f - s * f);
+    float p = v * (1.0f - s);
+    float t = v * (1.0f - s * (1.0f - f));
+    switch (i) {
+      case 0:
+        r = v;
+        g = t;
+        b = p;
+        break;
+      case 1:
+        r = q;
+        g = v;
+        b = p;
+        break;
+      case 2:
+        r = p;
+        g = v;
+        b = t;
+        break;
+      case 3:
+        r = p;
+        g = q;
+        b = v;
+        break;
+      case 4:
+        r = t;
+        g = p;
+        b = v;
+        break;
+      default:
+        r = v;
+        g = p;
+        b = q;
+        break;
+      }
+  }
+
+  sl_dcolor[0] = (uint8_t)(r * 255.0f);
+  sl_dcolor[1] = (uint8_t)(g * 255.0f);
+  sl_dcolor[2] = (uint8_t)(b * 255.0f);
 }
 
 /********************************************************************************************/
 
 void sl_replaceHSB(String *response)
 {
-  float hue;
-  float sat;
-  float bri;
-
   if (sfl_flg > 2) {
-    sl_rgb2hsb(&hue, &sat, &bri);
-    response->replace("{h}", String((uint16_t)(65535.0f * hue)));
-    response->replace("{s}", String((uint8_t)(254.0f * sat)));
-    response->replace("{b}", String((uint8_t)(254.0f * bri)));
+    sl_rgb2hsb();
+    response->replace("{h}", String((uint16_t)(65535.0f * sl_Hue)));
+    response->replace("{s}", String((uint8_t)(254.0f * sl_Sat)));
+    response->replace("{b}", String((uint8_t)(254.0f * sl_Bri)));
   } else {
     response->replace("{h}", "0");
     response->replace("{s}", "0");
@@ -762,7 +541,10 @@ void sl_replaceHSB(String *response)
 void sl_getHSB(float *hue, float *sat, float *bri)
 {
   if (sfl_flg > 2) {
-    sl_rgb2hsb(hue, sat, bri);
+    sl_rgb2hsb();
+    *hue = sl_Hue;
+    *sat = sl_Sat;
+    *bri = sl_Bri;
   } else {
     *hue = 0;
     *sat = 0;
@@ -773,8 +555,6 @@ void sl_getHSB(float *hue, float *sat, float *bri)
 
 void sl_setHSB(float hue, float sat, float bri, uint16_t ct)
 {
-  HsbColor hsb;
-
 /*
   char stemp1[10];
   char stemp2[10];
@@ -790,13 +570,10 @@ void sl_setHSB(float hue, float sat, float bri, uint16_t ct)
     if ((5 == sfl_flg) && (ct > 0)) {
       sl_setColorTemp(ct);
     } else {
-      hsb.H = hue;
-      hsb.S = sat;
-      hsb.B = bri;
-      RgbColor tmp = RgbColor(hsb);
-      sl_dcolor[0] = tmp.R;
-      sl_dcolor[1] = tmp.G;
-      sl_dcolor[2] = tmp.B;
+      sl_Hue = hue;
+      sl_Sat = sat;
+      sl_Bri = bri;
+      sl_hsb2rgb();
       sl_setColor();
     }
     sl_prepPower();
@@ -850,19 +627,21 @@ boolean sl_command(char *type, uint16_t index, char *dataBuf, uint16_t data_len,
       dataBuf++;
       data_len--;
     }
+    uint8_t sl_ledcolor[3];
     if ((2 * sfl_flg) == data_len) {
       for (byte i = 0; i < sfl_flg; i++) {
         strlcpy(scolor, dataBuf + (i *2), 3);
         sl_ledcolor[i] = (uint8_t)strtol(scolor, &p, 16);
       }
-      ws2812_setLedColor(index);
+      ws2812_setColor(index, sl_ledcolor[0], sl_ledcolor[1], sl_ledcolor[2]);
     }
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_LED "%d\":\"%s\"}"), index, ws2812_getLedColor(index, scolor));
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_LED "%d\":\"%s\"}"), index, ws2812_getColor(index, scolor));
   }
   else if ((3 == sfl_flg) && !strcasecmp_P(type, PSTR(D_CMND_PIXELS))) {
     if ((payload > 0) && (payload <= WS2812_MAX_LEDS)) {
       sysCfg.led_pixels = payload;
-      ws2812_pixels();
+      ws2812_clear();
+      sl_any = 1;
     }
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_PIXELS "\":%d}"), sysCfg.led_pixels);
   }
@@ -884,6 +663,15 @@ boolean sl_command(char *type, uint16_t index, char *dataBuf, uint16_t data_len,
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_SCHEME "\":%d}"), sysCfg.led_scheme);
   }
 #endif  // USE_WS2812 ************************************************************************
+  else if (!strcasecmp_P(type, PSTR(D_CMND_WAKEUP))) {
+    if ((payload >= 0) && (payload <= 100)) {
+      sysCfg.led_dimmer[0] = payload;
+    }
+    sl_wakeupActive = 3;
+    sysCfg.led_scheme = 1;
+    do_cmnd_power(Maxdevice, 1);
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_WAKEUP "\":\"" D_STARTED "\"}"));
+  }
   else if (!strcasecmp_P(type, PSTR(D_CMND_COLORTEMPERATURE)) && ((2 == sfl_flg) || (5 == sfl_flg))) { // ColorTemp
     if ((payload >= 153) && (payload <= 500)) {  // https://developers.meethue.com/documentation/core-concepts
       sl_setColorTemp(payload);
@@ -939,15 +727,6 @@ boolean sl_command(char *type, uint16_t index, char *dataBuf, uint16_t data_len,
       sl_wakeupActive = 0;
     }
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_WAKEUPDURATION "\":%d}"), sysCfg.led_wakeup);
-  }
-  else if (!strcasecmp_P(type, PSTR(D_CMND_WAKEUP))) {
-    if ((payload >= 0) && (payload <= 100)) {
-      sysCfg.led_dimmer[0] = payload;
-    }
-    sl_wakeupActive = 3;
-    sysCfg.led_scheme = 1;
-    do_cmnd_power(Maxdevice, 1);
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_WAKEUP "\":\"" D_STARTED "\"}"));
   }
   else if (!strcasecmp_P(type, PSTR("UNDOCA"))) {  // Theos legacy status
     sl_getColor(scolor);

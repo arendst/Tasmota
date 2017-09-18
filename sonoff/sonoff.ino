@@ -25,7 +25,7 @@
     - Select IDE Tools - Flash Size: "1M (no SPIFFS)"
   ====================================================*/
 
-#define VERSION                0x05070109  // 5.7.1i
+#define VERSION                0x0507010A  // 5.7.1j
 
 enum log_t   {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG_MORE, LOG_LEVEL_ALL};
 enum week_t  {Last, First, Second, Third, Fourth};
@@ -173,7 +173,6 @@ enum opt_t   {P_HOLD_TIME, P_MAX_POWER_RETRY, P_MAX_PARAM8};   // Index in sysCf
 #include <ESP8266httpUpdate.h>              // Ota
 #include <StreamString.h>                   // Webserver, Updater
 #include <ArduinoJson.h>                    // WemoHue, IRremote, Domoticz
-#include <NeoPixelBus.h>                    // Ws2812, Sonoff Led hue support
 #ifdef USE_WEBSERVER
   #include <ESP8266WebServer.h>             // WifiManager, Webserver
   #include <DNSServer.h>                    // WifiManager
@@ -951,19 +950,19 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
     }
     blogdelay = MIN_BACKLOG_DELAY;       // Reset backlog delay
 
-    if (!strcasecmp_P(dataBuf, PSTR(D_OFF)) || !strcasecmp_P(dataBuf, PSTR(D_FALSE)) || !strcasecmp_P(dataBuf, PSTR(D_STOP)) || !strcasecmp_P(dataBuf, PSTR(D_CELSIUS))) {
+    if (!strcasecmp_P(dataBuf, PSTR("OFF")) || !strcasecmp_P(dataBuf, PSTR(D_OFF)) || !strcasecmp_P(dataBuf, sysCfg.state_text[0]) || !strcasecmp_P(dataBuf, PSTR(D_FALSE)) || !strcasecmp_P(dataBuf, PSTR(D_STOP)) || !strcasecmp_P(dataBuf, PSTR(D_CELSIUS))) {
       payload = 0;
     }
-    if (!strcasecmp_P(dataBuf, PSTR(D_ON)) || !strcasecmp_P(dataBuf, PSTR(D_TRUE)) || !strcasecmp_P(dataBuf, PSTR(D_START)) || !strcasecmp_P(dataBuf, PSTR(D_FAHRENHEIT)) || !strcasecmp_P(dataBuf, PSTR(D_USER))) {
+    if (!strcasecmp_P(dataBuf, PSTR("ON")) || !strcasecmp_P(dataBuf, PSTR(D_ON)) || !strcasecmp_P(dataBuf, sysCfg.state_text[1]) || !strcasecmp_P(dataBuf, PSTR(D_TRUE)) || !strcasecmp_P(dataBuf, PSTR(D_START)) || !strcasecmp_P(dataBuf, PSTR(D_FAHRENHEIT)) || !strcasecmp_P(dataBuf, PSTR(D_USER))) {
       payload = 1;
     }
-    if (!strcasecmp_P(dataBuf, PSTR(D_TOGGLE)) || !strcasecmp_P(dataBuf, PSTR(D_ADMIN))) {
+    if (!strcasecmp_P(dataBuf, PSTR("TOGGLE")) || !strcasecmp_P(dataBuf, PSTR(D_TOGGLE)) || !strcasecmp_P(dataBuf, sysCfg.state_text[2]) || !strcasecmp_P(dataBuf, PSTR(D_ADMIN))) {
       payload = 2;
     }
-    if (!strcasecmp_P(dataBuf, PSTR(D_BLINK))) {
+    if (!strcasecmp_P(dataBuf, PSTR("BLINK")) || !strcasecmp_P(dataBuf, PSTR(D_BLINK))) {
       payload = 3;
     }
-    if (!strcasecmp_P(dataBuf, PSTR(D_BLINKOFF))) {
+    if (!strcasecmp_P(dataBuf, PSTR("BLINKOFF")) || !strcasecmp_P(dataBuf, PSTR(D_BLINKOFF))) {
       payload = 4;
     }
 
