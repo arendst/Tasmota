@@ -500,9 +500,8 @@ void CFG_DefaultSet2()
   // 5.4.1
   memcpy_P(sysCfg.sfb_code[0], sfb_codeDefault, 9);
 
-  // 5.7.1g
+  // 5.8.0
   sysCfg.led_pixels = WS2812_LEDS;
-
 }
 
 /********************************************************************************************/
@@ -711,7 +710,7 @@ void CFG_Delta()
       }
       memcpy_P(sysCfg.sfb_code[0], sfb_codeDefault, 9);
     }
-    if (sysCfg.version < 0x05070108) {
+    if (sysCfg.version < 0x05080000) {
       uint8_t cfg_wsflg = 0;
       for (byte i = 0; i < MAX_GPIO_PIN; i++) {
         if (GPIO_WS2812 == sysCfg.my_module.gp.io[i]) {

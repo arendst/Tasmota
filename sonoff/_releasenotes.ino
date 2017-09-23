@@ -1,47 +1,34 @@
-/* 5.7.1j
+/* 5.8.0a
+ * Add translations to I2Cscan
+ * Add translation to BH1750 unit lx
+ * Set default WS2812 pixel count to WS2812_LEDS
+ * Fix GPIOx JSON response (#897)
+ *
+ * 5.8.0 20170918
  * Remove the need for NeoPixelBus library for Hue support
- * Reintroduce xdrv_ws2812 for flexible future library changes
- * Fix basic On, Off, Toggle, Blink and BlinkOff commands when other language is selected (#874)
- *
- * 5.7.1i
- * Add blink to WS2812 and Sonoff Led (#643)
- *
- * 5.7.1h
- * Consolidate WS2812 (xdrv_ws2812) into Sonoff Led (xdrv_snfled)
+ * Consolidate WS2812 into Sonoff Led for flexible future led strip library changes
  * Invert WS2812 fade speed to align with Sonoff led (Speed 1 = fast, Speed 8 = slow)
  * Remove upper case MQTT receive buffer
- *
- * 5.7.1g
- * Add option WIFI_WAIT (5) to command WifiConfig to allow connection retry to same AP without restart or update flash (#772, #869)
- *
- * 5.7.1f
  * Reduce code and string length for output of commands Modules and GPIOs
- * Add optional dimmer parameter to command Wakeup for AiLight, Sonoff B1, Led and BN-SZ01 (#867)
- *
- * 5.7.1e
  * Add Sonoff SC debug information
  * Change syslog service
- *
- * 5.7.1d
- * Fix watchdog timeout caused by lack of stack space by now using global buffers (#853)
  * Removed webserver syslog disable as now no longer needed
  * Increased default MQTT message size from 368 to 405 bytes while keeping MQTT_MAX_PACKET_SIZE = 512 (because we can)
  * Fix MQTT Offline or Remove MQTT retained topic code
- * Allow command SwitchTopic in group mode (#861)
- * Allow command SwitchMode if no switches are defined (#861)
- *
- * 5.7.1c
- * Allow LogPort and MqttPort up to 65535 and add LogPort tot Status 3 (#859)
- *
- * 5.7.1b
- * Add timeout to DHT and DS18B20 sensors (#852)
- *
- * 5.7.1a
  * Fix Domoticz loop when Emulation is selected
- * Add GPIO14 to Sonoff Dual (#797, #839)
+ * Add blink to WS2812 and Sonoff Led (#643)
+ * Add option WIFI_WAIT (5) to command WifiConfig to allow connection retry to same AP without restart or update flash (#772, #869)
  * Add support for Witty Cloud (#794)
+ * Add GPIO14 to Sonoff Dual (#797, #839)
  * Add support for Yunshan Wifi Relay (#802)
  * Add GPIO16 input pulldown (#827)
+ * Add timeout to DHT and DS18B20 sensors (#852)
+ * Fix watchdog timeout caused by lack of stack space by moving to heap (#853)
+ * Allow LogPort and MqttPort up to 65535 and add LogPort tot Status 3 (#859)
+ * Allow command SwitchTopic in group mode (#861)
+ * Allow command SwitchMode if no switches are defined (#861)
+ * Add optional dimmer parameter to command Wakeup for WS2812, AiLight, Sonoff B1, Led and BN-SZ01 (#867)
+ * Fix basic On, Off, Toggle, Blink and BlinkOff commands when other language is selected (#874)
  *
  * 5.7.1 20170909
  * Remove leading spaces from MQTT data

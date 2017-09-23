@@ -25,7 +25,7 @@
     - Select IDE Tools - Flash Size: "1M (no SPIFFS)"
   ====================================================*/
 
-#define VERSION                0x0507010A  // 5.7.1j
+#define VERSION                0x05080001  // 5.8.0a
 
 enum log_t   {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG_MORE, LOG_LEVEL_ALL};
 enum week_t  {Last, First, Second, Third, Fourth};
@@ -1213,7 +1213,7 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
           }
           jsflg = 1;
           snprintf_P(stemp1, sizeof(stemp1), sensors[sysCfg.my_module.gp.io[i]]);
-          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s\"" D_CMND_GPIO "%d\":%d (%s)"), mqtt_data, i, sysCfg.my_module.gp.io[i], stemp1);
+          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s\"" D_CMND_GPIO "%d\":\"%d (%s)\""), mqtt_data, i, sysCfg.my_module.gp.io[i], stemp1);
         }
       }
       if (jsflg) {

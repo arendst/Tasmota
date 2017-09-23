@@ -790,7 +790,7 @@ void i2c_scan(char *devs, unsigned int devs_len)
   byte any = 0;
   char tstr[10];
 
-  snprintf_P(devs, devs_len, PSTR("{\"I2Cscan\":\"Device(s) found at"));
+  snprintf_P(devs, devs_len, PSTR("{\"" D_CMND_I2CSCAN "\":\"" D_I2CSCAN_DEVICES_FOUND_AT));
   for (address = 1; address <= 127; address++) {
     Wire.beginTransmission(address);
     error = Wire.endTransmission();
@@ -800,13 +800,13 @@ void i2c_scan(char *devs, unsigned int devs_len)
       any = 1;
     }
     else if (4 == error) {
-      snprintf_P(devs, devs_len, PSTR("{\"I2Cscan\":\"Unknown error at 0x%2x\"}"), address);
+      snprintf_P(devs, devs_len, PSTR("{\"" D_CMND_I2CSCAN "\":\"" D_I2CSCAN_UNKNOWN_ERROR_AT " 0x%2x\"}"), address);
     }
   }
   if (any) {
     strncat(devs, "\"}", devs_len);
   } else {
-    snprintf_P(devs, devs_len, PSTR("{\"I2Cscan\":\"No devices found\"}"));
+    snprintf_P(devs, devs_len, PSTR("{\"" D_CMND_I2CSCAN "\":\"" D_I2CSCAN_NO_DEVICES_FOUND "\"}"));
   }
 }
 #endif  // USE_I2C

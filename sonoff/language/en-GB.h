@@ -459,11 +459,15 @@
 #define D_SENSOR_LED      "Led"      // Suffix "1I"
 #define D_SENSOR_PWM      "PWM"      // Suffix "1"
 #define D_SENSOR_COUNTER  "Counter"  // Suffix "1"
+#define D_SENSOR_SPI_CS   "SPI CS"
+#define D_SENSOR_SPI_DC   "SPI DC"
+#define D_SENSOR_BACKLIGHT "BLight"
 
 // Units
 #define D_UNIT_AMPERE "A"
 #define D_UNIT_HOUR "Hr"
 #define D_UNIT_KILOWATTHOUR "kWh"
+#define D_UNIT_LUX "lx"
 #define D_UNIT_MICROSECOND "us"
 #define D_UNIT_MILLIAMPERE "mA"
 #define D_UNIT_MILLISECOND "ms"
@@ -491,11 +495,11 @@
 #define D_LOG_MQTT "MQT: "
 #define D_LOG_OTHER "OTH: "
 #define D_LOG_RESULT "RSL: "
+#define D_LOG_SERIAL "SER: "
 #define D_LOG_SHT1 "SHT: "
 #define D_LOG_UPLOAD "UPL: "
 #define D_LOG_UPNP "UPP: "
 #define D_LOG_WIFI "WIF: "
-#define D_LOG_SERIAL "SER: "
 
 // Result
 #define D_RSLT_RESULT "RESULT"

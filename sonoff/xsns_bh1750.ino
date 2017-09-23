@@ -94,7 +94,7 @@ void bh1750_mqttPresent(uint8_t* djson)
 
 #ifdef USE_WEBSERVER
 const char HTTP_SNS_ILLUMINANCE[] PROGMEM =
-  "<tr><th>BH1750 " D_ILLUMINANCE "</th><td>%d lx</td></tr>";
+  "<tr><th>BH1750 " D_ILLUMINANCE "</th><td>%d " D_UNIT_LUX "</td></tr>";
 
 String bh1750_webPresent()
 {
