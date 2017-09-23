@@ -159,6 +159,7 @@ enum module_t {
   SUPLA1,
   WITTY,
   YUNSHAN,
+  GENERIC_ESP,
   MAXMODULE };
 
 /********************************************************************************************/
@@ -184,6 +185,7 @@ const uint8_t nicelist[MAXMODULE] PROGMEM = {
   SONOFF_4CHPRO,
   SONOFF_SV,
   SONOFF_DEV,
+  GENERIC_ESP,
   S20,
   SLAMPHER,
   SONOFF_TOUCH,
@@ -650,6 +652,21 @@ const mytmplt modules[MAXMODULE] PROGMEM = {
      GPIO_KEY1,        // GPIO05 Blue Led and OptoCoupler input - Module Pin 9
      0, 0, 0, 0, 0, 0, // Flash connection
      0, 0, 0, 0, 0
-  }
+  },
+  { "Generic ESP",
+     GPIO_USER,        // GPIO00
+     GPIO_USER,        // GPIO01 Serial RXD
+     GPIO_USER,        // GPIO02
+     GPIO_USER,        // GPIO03 Serial TXD
+     GPIO_USER,        // GPIO04
+     GPIO_USER,        // GPIO05
+     0, 0, 0, 0, 0, 0, // Flash connection
+     GPIO_USER,        // GPIO12
+     GPIO_USER,        // GPIO13
+     GPIO_USER,        // GPIO14
+     GPIO_USER,        // GPIO15
+     GPIO_USER,        // GPIO16
+     0
+  },
 };
 
