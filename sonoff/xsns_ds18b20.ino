@@ -195,7 +195,7 @@ void dsb_mqttPresent(uint8_t* djson)
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s, \"DS18B20\":{\"" D_TEMPERATURE "\":%s}"), mqtt_data, stemp1);
     *djson = 1;
 #ifdef USE_DOMOTICZ
-    domoticz_sensor1(stemp1);
+    domoticz_sensor(0, stemp1);
 #endif  // USE_DOMOTICZ
   }
 }

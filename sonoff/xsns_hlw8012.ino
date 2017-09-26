@@ -653,7 +653,9 @@ void hlw_mqttStat(byte option)
 #ifdef USE_DOMOTICZ
   if (option) {  // Only send if telemetry
     dtostrfd(pet * 1000, 1, spet);
-    domoticz_sensor4((uint16_t)pw, spet);
+    domoticz_sensor4((uint16_t)pw, spet);  // PowerUsage, EnergyToday
+    domoticz_sensor(6, spu);  // Voltage
+    domoticz_sensor(7, spi);  // Current
   }
 #endif  // USE_DOMOTICZ
 }

@@ -475,7 +475,7 @@ void hue_global_cfg(String *path)
 {
   String response;
 
-  path->remove(0,1);               // cut leading / to get <id>
+  path->remove(0,1);                                 // cut leading / to get <id>
   response = F("{\"lights\":{\"");
   for (uint8_t i = 1; i <= Maxdevice; i++) {
     response += i;
@@ -521,8 +521,8 @@ void hue_lights(String *path)
   bool change = false;
   char id[4];
 
-  path->remove(0,path->indexOf("/lights"));                // Remove until /lights
-  if (path->endsWith("/lights")) {                         // Got /lights
+  path->remove(0,path->indexOf("/lights"));          // Remove until /lights
+  if (path->endsWith("/lights")) {                   // Got /lights
     response = "{\"";
     for (uint8_t i = 1; i <= Maxdevice; i++) {
       response += i;
@@ -539,9 +539,9 @@ void hue_lights(String *path)
     response += "}";
     webServer->send(200, FPSTR(HDR_CTYPE_JSON), response);
   }
-  else if (path->endsWith("/state")) {                       // Got ID/state
-    path->remove(0,8);                                       // Remove /lights/
-    path->remove(path->indexOf("/state"));                   // Remove /state
+  else if (path->endsWith("/state")) {               // Got ID/state
+    path->remove(0,8);                               // Remove /lights/
+    path->remove(path->indexOf("/state"));           // Remove /state
     device = atoi(path->c_str());
     if ((device < 1) || (device > Maxdevice)) {
       device = 1;
@@ -614,7 +614,7 @@ void hue_lights(String *path)
         response.replace("{res}", String(tmp));
         change = true;
       }
-      if (hue_json.containsKey("ct")) {  // Color temperature 153 (Cold) to 500 (Warm)
+      if (hue_json.containsKey("ct")) {              // Color temperature 153 (Cold) to 500 (Warm)
         ct = hue_json["ct"];
         if (resp) {
           response += ",";
@@ -642,8 +642,8 @@ void hue_lights(String *path)
 
     webServer->send(200, FPSTR(HDR_CTYPE_JSON), response);
   }
-  else if(path->indexOf("/lights/") >= 0) {            // Got /lights/ID
-    path->remove(0,8);                                 // Remove /lights/
+  else if(path->indexOf("/lights/") >= 0) {          // Got /lights/ID
+    path->remove(0,8);                               // Remove /lights/
     device = atoi(path->c_str());
     if ((device < 1) || (device > Maxdevice)) {
       device = 1;
@@ -696,16 +696,16 @@ void handle_hue_api(String *path)
   path->remove(0, 4);                                // remove /api
   uint16_t apilen = path->length();
   snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_HTTP D_HUE_API " (%s)"), path->c_str());
-  addLog(LOG_LEVEL_DEBUG_MORE);
+  addLog(LOG_LEVEL_DEBUG_MORE);                      // HTP: Hue API (//lights/1/state)
   for (args = 0; args < webServer->args(); args++) {
     String json = webServer->arg(args);
     snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_HTTP D_HUE_POST_ARGS " (%s)"), json.c_str());
-    addLog(LOG_LEVEL_DEBUG_MORE);
+    addLog(LOG_LEVEL_DEBUG_MORE);                    // HTP: Hue POST args ({"on":false})
   }
 
-  if (path->endsWith("/invalid/")) {}                 // Just ignore
-  else if (!apilen) hue_auth(path);                   // New HUE App setup
-  else if (path->endsWith("/")) hue_auth(path);       // New HUE App setup
+  if (path->endsWith("/invalid/")) {}                // Just ignore
+  else if (!apilen) hue_auth(path);                  // New HUE App setup
+  else if (path->endsWith("/")) hue_auth(path);      // New HUE App setup
   else if (path->endsWith("/config")) hue_config(path);
   else if (path->indexOf("/lights") >= 0) hue_lights(path);
   else if (path->indexOf("/groups") >= 0) hue_groups(path);

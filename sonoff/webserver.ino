@@ -1349,7 +1349,8 @@ void handleCmnd()
   if (valid) {
     byte curridx = logidx;
     if (strlen(webServer->arg("cmnd").c_str())) {
-      snprintf_P(svalue, sizeof(svalue), webServer->arg("cmnd").c_str());
+//      snprintf_P(svalue, sizeof(svalue), webServer->arg("cmnd").c_str());  // Processes FullTopic %p
+      strlcpy(svalue, webServer->arg("cmnd").c_str(), sizeof(svalue));       // Fixed 5.8.0b
 //      byte syslog_now = syslog_level;
 //      syslog_level = 0;  // Disable UDP syslog to not trigger hardware WDT - Seems to work fine since 5.7.1d (global logging)
       do_cmnd(svalue);
@@ -1413,7 +1414,8 @@ void handleAjax()
   byte counter = 99;
 
   if (strlen(webServer->arg("c1").c_str())) {
-    snprintf_P(svalue, sizeof(svalue), webServer->arg("c1").c_str());
+//    snprintf_P(svalue, sizeof(svalue), webServer->arg("c1").c_str());  // Processes FullTopic %p
+    strlcpy(svalue, webServer->arg("c1").c_str(), sizeof(svalue));       // Fixed 5.8.0b
     snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_COMMAND "%s"), svalue);
     addLog(LOG_LEVEL_INFO);
 //    byte syslog_now = syslog_level;

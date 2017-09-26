@@ -19,7 +19,7 @@
 
 #ifdef USE_DOMOTICZ
 
-#define DOMOTICZ_MAX_SENSORS  6
+#define DOMOTICZ_MAX_SENSORS  8
 
 #ifdef USE_WEBSERVER
 const char HTTP_FORM_DOMOTICZ[] PROGMEM =
@@ -38,7 +38,7 @@ const char HTTP_FORM_DOMOTICZ_TIMER[] PROGMEM =
 #endif  // USE_WEBSERVER
 
 const char domoticz_sensors[DOMOTICZ_MAX_SENSORS][DOMOTICZ_SENSORS_MAX_STRING_LENGTH] PROGMEM =
-  { D_DOMOTICZ_TEMP, D_DOMOTICZ_TEMP_HUM, D_DOMOTICZ_TEMP_HUM_BARO, D_DOMOTICZ_POWER_ENERGY, D_DOMOTICZ_ILLUMINANCE, D_DOMOTICZ_COUNT };
+  { D_DOMOTICZ_TEMP, D_DOMOTICZ_TEMP_HUM, D_DOMOTICZ_TEMP_HUM_BARO, D_DOMOTICZ_POWER_ENERGY, D_DOMOTICZ_ILLUMINANCE, D_DOMOTICZ_COUNT, D_DOMOTICZ_VOLTAGE, D_DOMOTICZ_CURRENT };
 
 char domoticz_in_topic[] = DOMOTICZ_IN_TOPIC;
 char domoticz_out_topic[] = DOMOTICZ_OUT_TOPIC;
@@ -100,8 +100,7 @@ void domoticz_mqttSubscribe()
   if (domoticz_subscribe) {
     char stopic[TOPSZ];
     snprintf_P(stopic, sizeof(stopic), PSTR("%s/#"), domoticz_out_topic); // domoticz topic
-    mqttClient.subscribe(stopic);
-    mqttClient.loop();  // Solve LmacRxBlk:1 messages
+    mqtt_subscribe(stopic);
   }
 }
 
@@ -259,7 +258,7 @@ uint8_t dom_hum_stat(char *hum)
   return (!h) ? 0 : (h < 40) ? 2 : (h > 70) ? 3 : 1;
 }
 
-void dom_sensor(byte idx, char *data)
+void domoticz_sensor(byte idx, char *data)
 {
   if (sysCfg.domoticz_sensor_idx[idx]) {
     char dmess[64];
@@ -272,45 +271,45 @@ void dom_sensor(byte idx, char *data)
   }
 }
 
-void domoticz_sensor1(char *temp)
-{
-  dom_sensor(0, temp);
-}
+//  domoticz_sensor(0, temp);
 
 void domoticz_sensor2(char *temp, char *hum)
 {
   char data[16];
   snprintf_P(data, sizeof(data), PSTR("%s;%s;%d"), temp, hum, dom_hum_stat(hum));
-  dom_sensor(1, data);
+  domoticz_sensor(1, data);
 }
 
 void domoticz_sensor3(char *temp, char *hum, char *baro)
 {
   char data[32];
   snprintf_P(data, sizeof(data), PSTR("%s;%s;%d;%s;5"), temp, hum, dom_hum_stat(hum), baro);
-  dom_sensor(2, data);
+  domoticz_sensor(2, data);
 }
 
 void domoticz_sensor4(uint16_t power, char *energy)
 {
   char data[16];
   snprintf_P(data, sizeof(data), PSTR("%d;%s"), power, energy);
-  dom_sensor(3, data);
+  domoticz_sensor(3, data);
 }
 
 void domoticz_sensor5(uint16_t lux)
 {
   char data[8];
   snprintf_P(data, sizeof(data), PSTR("%d"), lux);
-  dom_sensor(4, data);
+  domoticz_sensor(4, data);
 }
 
 void domoticz_sensor6(uint32_t count)
 {
   char data[16];
   snprintf_P(data, sizeof(data), PSTR("%d"), count);
-  dom_sensor(5, data);
+  domoticz_sensor(5, data);
 }
+
+//  domoticz_sensor(6, voltage);
+//  domoticz_sensor(7, current);
 
 /*********************************************************************************************\
  * Presentation
@@ -380,11 +379,11 @@ void domoticz_saveSettings()
     sysCfg.domoticz_relay_idx[0], sysCfg.domoticz_relay_idx[1], sysCfg.domoticz_relay_idx[2], sysCfg.domoticz_relay_idx[3],
     sysCfg.domoticz_update_timer);
   addLog(LOG_LEVEL_INFO);
-  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_DOMOTICZ D_CMND_KEYIDX " %d, %d, %d, %d, " D_CMND_SWITCHIDX " %d, %d, %d, %d, " D_CMND_SENSORIDX " %d, %d, %d, %d, %d, %d"),
+  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_DOMOTICZ D_CMND_KEYIDX " %d, %d, %d, %d, " D_CMND_SWITCHIDX " %d, %d, %d, %d, " D_CMND_SENSORIDX " %d, %d, %d, %d, %d, %d, %d, %d"),
     sysCfg.domoticz_key_idx[0], sysCfg.domoticz_key_idx[1], sysCfg.domoticz_key_idx[2], sysCfg.domoticz_key_idx[3],
     sysCfg.domoticz_switch_idx[0], sysCfg.domoticz_switch_idx[1], sysCfg.domoticz_switch_idx[2], sysCfg.domoticz_switch_idx[3],
     sysCfg.domoticz_sensor_idx[0], sysCfg.domoticz_sensor_idx[1], sysCfg.domoticz_sensor_idx[2], sysCfg.domoticz_sensor_idx[3],
-    sysCfg.domoticz_sensor_idx[4], sysCfg.domoticz_sensor_idx[5]);
+    sysCfg.domoticz_sensor_idx[4], sysCfg.domoticz_sensor_idx[5], sysCfg.domoticz_sensor_idx[6], sysCfg.domoticz_sensor_idx[7]);
   addLog(LOG_LEVEL_INFO);
 }
 #endif  // USE_WEBSERVER

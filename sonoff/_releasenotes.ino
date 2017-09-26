@@ -1,8 +1,14 @@
-/* 5.8.0a
+/* 5.8.0b
+ * Fix command FullTopic entry when using serial or console interface
+ * Fix possible UDP syslog blocking
+ * Add debug information to MQTT subscribe
+ * Add Domoticz sensors for Voltage and Current (#903)
+ *
+ * 5.8.0a
  * Add translations to I2Cscan
  * Add translation to BH1750 unit lx
  * Set default WS2812 pixel count to WS2812_LEDS
- * Fix GPIOx JSON response (#897)
+ * Fix command GPIOx JSON response (#897)
  *
  * 5.8.0 20170918
  * Remove the need for NeoPixelBus library for Hue support

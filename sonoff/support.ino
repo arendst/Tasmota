@@ -1153,6 +1153,7 @@ void syslog()
   // Destroys log_data
   char syslog_preamble[64];  // Hostname + Id
 
+  yield();  // Fix possible UDP syslog blocking
   if (portUDP.beginPacket(sysCfg.syslog_host, sysCfg.syslog_port)) {
     snprintf_P(syslog_preamble, sizeof(syslog_preamble), PSTR("%s ESP-"), Hostname);
     memmove(log_data + strlen(syslog_preamble), log_data, sizeof(log_data) - strlen(syslog_preamble));

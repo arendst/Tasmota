@@ -25,16 +25,16 @@
     - Select IDE Tools - Flash Size: "1M (no SPIFFS)"
   ====================================================*/
 
-#define VERSION                0x05080001  // 5.8.0a
+#define VERSION                0x05080002  // 5.8.0b
 
-enum log_t   {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG_MORE, LOG_LEVEL_ALL};
 enum week_t  {Last, First, Second, Third, Fourth};
 enum dow_t   {Sun=1, Mon, Tue, Wed, Thu, Fri, Sat};
 enum month_t {Jan=1, Feb, Mar, Apr, May, Jun, Jul, Aug, Sep, Oct, Nov, Dec};
-enum wifi_t  {WIFI_RESTART, WIFI_SMARTCONFIG, WIFI_MANAGER, WIFI_WPSCONFIG, WIFI_RETRY, WIFI_WAIT, MAX_WIFI_OPTION};
-enum swtch_t {TOGGLE, FOLLOW, FOLLOW_INV, PUSHBUTTON, PUSHBUTTON_INV, PUSHBUTTONHOLD, PUSHBUTTONHOLD_INV, MAX_SWITCH_OPTION};
-enum led_t   {LED_OFF, LED_POWER, LED_MQTTSUB, LED_POWER_MQTTSUB, LED_MQTTPUB, LED_POWER_MQTTPUB, LED_MQTT, LED_POWER_MQTT, MAX_LED_OPTION};
-enum emul_t  {EMUL_NONE, EMUL_WEMO, EMUL_HUE, EMUL_MAX};
+enum log_t   {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG_MORE, LOG_LEVEL_ALL};  // SerialLog, Syslog, Weblog
+enum wifi_t  {WIFI_RESTART, WIFI_SMARTCONFIG, WIFI_MANAGER, WIFI_WPSCONFIG, WIFI_RETRY, WIFI_WAIT, MAX_WIFI_OPTION};  // WifiConfig
+enum swtch_t {TOGGLE, FOLLOW, FOLLOW_INV, PUSHBUTTON, PUSHBUTTON_INV, PUSHBUTTONHOLD, PUSHBUTTONHOLD_INV, MAX_SWITCH_OPTION};  // SwitchMode
+enum led_t   {LED_OFF, LED_POWER, LED_MQTTSUB, LED_POWER_MQTTSUB, LED_MQTTPUB, LED_POWER_MQTTPUB, LED_MQTT, LED_POWER_MQTT, MAX_LED_OPTION};  // LedState
+enum emul_t  {EMUL_NONE, EMUL_WEMO, EMUL_HUE, EMUL_MAX};  // Emulation
 
 #include "user_config.h"
 #include "user_config_override.h"
@@ -73,7 +73,10 @@ enum emul_t  {EMUL_NONE, EMUL_WEMO, EMUL_HUE, EMUL_MAX};
 #undef USE_DS18x20                          // Disable DS18x20 sensor
 #endif
 #ifdef USE_I2C
-#undef USE_I2C                              // Disable all I2C sensors
+#undef USE_I2C                              // Disable all I2C sensors and devices
+#endif
+#ifdef USE_SPI
+#undef USE_SPI                              // Disable all SPI devices
 #endif
 #ifdef USE_WS2812
 #undef USE_WS2812                           // Disable WS2812 Led string
@@ -445,6 +448,14 @@ void setLed(uint8_t state)
 
 /********************************************************************************************/
 
+void mqtt_subscribe(char *topic)
+{
+  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_MQTT D_SUBSCRIBE_TO " %s"), topic);
+  addLog(LOG_LEVEL_DEBUG);
+  mqttClient.subscribe(topic);
+  mqttClient.loop();  // Solve LmacRxBlk:1 messages
+}
+
 void mqtt_publish_sec(const char* topic, boolean retained)
 {
   if (sysCfg.flag.mqtt_enabled) {
@@ -550,17 +561,14 @@ void mqtt_connected()
     mqtt_publish_topic_P(0, S_RSLT_POWER);
 
     getTopic_P(stopic, 0, sysCfg.mqtt_topic, PSTR("#"));
-    mqttClient.subscribe(stopic);
-    mqttClient.loop();  // Solve LmacRxBlk:1 messages
+    mqtt_subscribe(stopic);
     if (strstr(sysCfg.mqtt_fulltopic, MQTT_TOKEN_TOPIC) != NULL) {
       getTopic_P(stopic, 0, sysCfg.mqtt_grptopic, PSTR("#"));
-      mqttClient.subscribe(stopic);
-      mqttClient.loop();  // Solve LmacRxBlk:1 messages
+      mqtt_subscribe(stopic);
       fallbacktopic = 1;
       getTopic_P(stopic, 0, MQTTClient, PSTR("#"));
       fallbacktopic = 0;
-      mqttClient.subscribe(stopic);
-      mqttClient.loop();  // Solve LmacRxBlk:1 messages
+      mqtt_subscribe(stopic);
     }
 #ifdef USE_DOMOTICZ
     domoticz_mqttSubscribe();
@@ -1450,7 +1458,7 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
     }
 #ifdef USE_EMULATION
     else if (!strcasecmp_P(type, PSTR(D_CMND_EMULATION))) {
-      if ((payload >= 0) && (payload <= 2)) {
+      if ((payload >= EMUL_NONE) && (payload < EMUL_MAX)) {
         sysCfg.flag.emulation = payload;
         restartflag = 2;
       }
@@ -1732,7 +1740,8 @@ void do_cmnd(char *cmnd)
   }
   snprintf_P(stopic, sizeof(stopic), PSTR("/%s"), (token == NULL) ? "" : token);
   token = strtok(NULL, "");
-  snprintf_P(svalue, sizeof(svalue), (token == NULL) ? "" : token);
+//  snprintf_P(svalue, sizeof(svalue), (token == NULL) ? "" : token);  // Fails with command FullTopic home/%prefix%/%topic% as it processes %p of %prefix%
+  strlcpy(svalue, (token == NULL) ? "" : token, sizeof(svalue));       // Fixed 5.8.0b
   mqttDataCb(stopic, (byte*)svalue, strlen(svalue));
 }
 

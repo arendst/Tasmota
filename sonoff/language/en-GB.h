@@ -163,6 +163,7 @@
 #define D_STOP "Stop"
 #define D_SUBNET_MASK "Subnet Mask"
 #define D_SUBNETMASK "Subnetmask"
+#define D_SUBSCRIBE_TO "Subscribe to"
 #define D_SUCCESSFUL "Successful"
 #define D_SWITCH "Switch"
 #define D_SYNC "Sync"
@@ -373,6 +374,8 @@
   #define D_DOMOTICZ_POWER_ENERGY "Power,Energy"
   #define D_DOMOTICZ_ILLUMINANCE "Illuminance"
   #define D_DOMOTICZ_COUNT "Count"
+  #define D_DOMOTICZ_VOLTAGE "Voltage"
+  #define D_DOMOTICZ_CURRENT "Current"
 #define D_DOMOTICZ_UPDATE_TIMER "Update timer"
 #define D_CONFIGURE_DOMOTICZ "Configure Domoticz"
 

@@ -163,6 +163,7 @@
 #define D_STOP "Stop"
 #define D_SUBNET_MASK "Subnet Masker"
 #define D_SUBNETMASK "Subnetmasker"
+#define D_SUBSCRIBE_TO "Abonneer op"
 #define D_SUCCESSFUL "Gelukt"
 #define D_SWITCH "Schakelaar"
 #define D_SYNC "Sync"
@@ -373,6 +374,8 @@
   #define D_DOMOTICZ_POWER_ENERGY "Power,Energy"
   #define D_DOMOTICZ_ILLUMINANCE "Illuminance"
   #define D_DOMOTICZ_COUNT "Count"
+  #define D_DOMOTICZ_VOLTAGE "Spanning"
+  #define D_DOMOTICZ_CURRENT "Stroom"
 #define D_DOMOTICZ_UPDATE_TIMER "Bijwerk timer"
 #define D_CONFIGURE_DOMOTICZ "Configureer Domoticz"
 
