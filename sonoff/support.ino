@@ -17,9 +17,6 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-IPAddress syslog_host_addr;  // Syslog host IP address
-unsigned long syslog_host_refresh = 0;
-
 /*********************************************************************************************\
  * Watchdog extension (https://github.com/esp8266/Arduino/issues/1532)
 \*********************************************************************************************/
@@ -1156,12 +1153,8 @@ void syslog()
   // Destroys log_data
   char syslog_preamble[64];  // Hostname + Id
 
-  if ((static_cast<uint32_t>(syslog_host_addr) == 0) || ((millis() - syslog_host_refresh) > 60000)) {
-    WiFi.hostByName(sysCfg.syslog_host, syslog_host_addr);
-    syslog_host_refresh = millis();
-  }
+  yield();  // Fix possible UDP syslog blocking
   if (portUDP.beginPacket(sysCfg.syslog_host, sysCfg.syslog_port)) {
-//  if (portUDP.beginPacket(sysCfg.syslog_host, sysCfg.syslog_port)) {
     snprintf_P(syslog_preamble, sizeof(syslog_preamble), PSTR("%s ESP-"), Hostname);
     memmove(log_data + strlen(syslog_preamble), log_data, sizeof(log_data) - strlen(syslog_preamble));
     log_data[sizeof(log_data) -1] = '\0';
