@@ -243,6 +243,7 @@
 #define D_SYSLOG_HOST_NOT_FOUND "Syslog Host not found"
 
 // webserver.ino
+#define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "MINIMAL firmware - please upgrade"
 #define D_WEBSERVER_ACTIVE_ON "Web server active on"
 #define D_WITH_IP_ADDRESS "with IP address"
 #define D_WEBSERVER_STOPPED "Web server stopped"

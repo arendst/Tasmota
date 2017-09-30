@@ -243,6 +243,7 @@
 #define D_SYSLOG_HOST_NOT_FOUND "Syslog Host niet gevonden"
 
 // webserver.ino
+#define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "MINIMAL firmware - opwaarderen"
 #define D_WEBSERVER_ACTIVE_ON "Webserver actief op"
 #define D_WITH_IP_ADDRESS "met IP adres"
 #define D_WEBSERVER_STOPPED "Webserver gestopt"
@@ -337,7 +338,7 @@
 #define D_ESP_CHIP_ID "ESP Chip Id"
 #define D_FLASH_CHIP_ID "Flash Chip Id"
 #define D_FLASH_CHIP_SIZE "Flash Grootte"
-#define D_FREE_PROGRAM_SPACE "Vrij programma ruimte"
+#define D_FREE_PROGRAM_SPACE "Programma ruimte over"
 
 #define D_UPGRADE_BY_WEBSERVER "Opwaarderen dmv webserver"
 #define D_OTA_URL "OTA Url"

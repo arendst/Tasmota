@@ -159,6 +159,7 @@ enum module_t {
   SUPLA1,
   WITTY,
   YUNSHAN,
+  MAGICHOME,
   MAXMODULE };
 
 /********************************************************************************************/
@@ -204,6 +205,7 @@ const uint8_t nicelist[MAXMODULE] PROGMEM = {
   YUNSHAN,
   WION,
   H801,
+  MAGICHOME,
   HUAFAN_SS,
   AILIGHT,
   WEMOS,
@@ -650,6 +652,18 @@ const mytmplt modules[MAXMODULE] PROGMEM = {
      GPIO_KEY1,        // GPIO05 Blue Led and OptoCoupler input - Module Pin 9
      0, 0, 0, 0, 0, 0, // Flash connection
      0, 0, 0, 0, 0
+  },
+  { "MagicHome",       // Magic Home (aka Flux-light) (ESP8266) - https://www.aliexpress.com/item/Magic-Home-Mini-RGB-RGBW-Wifi-Controller-For-Led-Strip-Panel-light-Timing-Function-16million-colors/32686853650.html
+     0, 0,
+     GPIO_LED1_INV,    // GPIO02 Blue onboard LED
+     0,
+     GPIO_USER,        // GPIO04 IR receiver (optional)
+     GPIO_PWM4,        // GPIO05 RGB LED Green
+     0, 0, 0, 0, 0, 0, // Flash connection
+     GPIO_PWM5,        // GPIO12 RGB LED Blue
+     GPIO_USER,        // GPIO13 RGBW LED White (optional - set to PWM1 for Cold White or PWM2 for Warm White)
+     GPIO_PWM3,        // GPIO14 RGB LED Red
+     0, 0, 0
   }
 };
 

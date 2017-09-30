@@ -135,7 +135,8 @@ void ws2812_clock()
   c = strip->GetPixelColor(mod(i -1, j)); c.G = i3; strip->SetPixelColor(mod(i -1, j), c);
   c = strip->GetPixelColor(mod(i,    j)); c.G = i1; strip->SetPixelColor(mod(i,    j), c);
   c = strip->GetPixelColor(mod(i +1, j)); c.G = i3; strip->SetPixelColor(mod(i +1, j), c);
-  i = (rtcTime.Hour % 12) * (50 / clksize);
+//  i = (rtcTime.Hour % 12) * (50 / clksize);
+  i = (rtcTime.Hour % 12 * 5 + rtcTime.Minute / 12 ) * 10 / clksize;
   c = strip->GetPixelColor(mod(i -2, j)); c.R = i3; strip->SetPixelColor(mod(i -2, j), c);
   c = strip->GetPixelColor(mod(i -1, j)); c.R = i2; strip->SetPixelColor(mod(i -1, j), c);
   c = strip->GetPixelColor(mod(i,    j)); c.R = i1; strip->SetPixelColor(mod(i,    j), c);
