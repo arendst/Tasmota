@@ -2,3 +2,5 @@
 .piolibdeps
 .clang_complete
 .gcc-flags.json
+sonoff/sonoff.ino.rf.bin
+*.bin
