@@ -90,6 +90,8 @@ void sb_received()
       snprintf_P(svalue, sizeof(svalue), PSTR("{\"" D_RFRECEIVED "\":{\"" D_SYNC "\":%d, \"" D_LOW "\":%d, \"" D_HIGH "\":%d, \"" D_DATA "\":\"%06X\", \"" D_CMND_RFKEY "\":%s}}"),
         rsy, rlo, rhi, rid, rfkey);
       mqtt_publish_topic_P(6, PSTR(D_RFRECEIVED), svalue);
+      // dom_sensor(5, rid); // rf to domoticz
+      domoticz_sensor6(rid); // reusing int32
     }
   }
 }
