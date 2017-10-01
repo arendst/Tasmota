@@ -38,7 +38,7 @@ struct DHTSTRUCT {
   byte     type;
   char     stype[10];
   uint32_t lastreadtime;
-  bool     lastresult;
+  uint16_t lastresult;
   float    t;
   float    h = 0;
 } dht[DHT_MAX_SENSORS];
@@ -62,14 +62,13 @@ uint32_t dht_expectPulse(byte sensor, bool level)
   return count;
 }
 
-boolean dht_read(byte sensor)
+void dht_read(byte sensor)
 {
-  char log[LOGSZ];
   uint32_t cycles[80];
   uint32_t currenttime = millis();
 
   if ((currenttime - dht[sensor].lastreadtime) < 2000) {
-    return dht[sensor].lastresult;
+    return;
   }
   dht[sensor].lastreadtime = currenttime;
 
@@ -89,13 +88,13 @@ boolean dht_read(byte sensor)
   delayMicroseconds(10);
   if (0 == dht_expectPulse(sensor, LOW)) {
     addLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DHT D_TIMEOUT_WAITING_FOR " " D_START_SIGNAL_LOW " " D_PULSE));
-    dht[sensor].lastresult = false;
-    return dht[sensor].lastresult;
+    dht[sensor].lastresult++;
+    return;
   }
   if (0 == dht_expectPulse(sensor, HIGH)) {
     addLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DHT D_TIMEOUT_WAITING_FOR " " D_START_SIGNAL_HIGH " " D_PULSE));
-    dht[sensor].lastresult = false;
-    return dht[sensor].lastresult;
+    dht[sensor].lastresult++;
+    return;
   }
   for (int i = 0; i < 80; i += 2) {
     cycles[i]   = dht_expectPulse(sensor, LOW);
@@ -108,8 +107,8 @@ boolean dht_read(byte sensor)
     uint32_t highCycles = cycles[2*i+1];
     if ((0 == lowCycles) || (0 == highCycles)) {
       addLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DHT D_TIMEOUT_WAITING_FOR " " D_PULSE));
-      dht[sensor].lastresult = false;
-      return dht[sensor].lastresult;
+      dht[sensor].lastresult++;
+      return;
     }
     dht_data[i/8] <<= 1;
     if (highCycles > lowCycles) {
@@ -117,17 +116,16 @@ boolean dht_read(byte sensor)
     }
   }
 
-  snprintf_P(log, sizeof(log), PSTR(D_LOG_DHT D_RECEIVED " %02X, %02X, %02X, %02X, %02X =? %02X"),
+  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_DHT D_RECEIVED " %02X, %02X, %02X, %02X, %02X =? %02X"),
     dht_data[0], dht_data[1], dht_data[2], dht_data[3], dht_data[4], (dht_data[0] + dht_data[1] + dht_data[2] + dht_data[3]) & 0xFF);
-  addLog(LOG_LEVEL_DEBUG, log);
+  addLog(LOG_LEVEL_DEBUG);
 
   if (dht_data[4] == ((dht_data[0] + dht_data[1] + dht_data[2] + dht_data[3]) & 0xFF)) {
-    dht[sensor].lastresult = true;
+    dht[sensor].lastresult = 0;
   } else {
     addLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DHT D_CHECKSUM_FAILURE));
-    dht[sensor].lastresult = false;
+    dht[sensor].lastresult++;
   }
-  return dht[sensor].lastresult;
 }
 
 boolean dht_readTempHum(byte sensor, float &t, float &h)
@@ -136,11 +134,16 @@ boolean dht_readTempHum(byte sensor, float &t, float &h)
     t = NAN;
     h = NAN;
   } else {
+    if (dht[sensor].lastresult > 8) {  // Reset after 8 misses
+      dht[sensor].t = NAN;
+      dht[sensor].h = NAN;
+    }
     t = dht[sensor].t;
     h = dht[sensor].h;
   }
 
-  if (dht_read(sensor)) {
+  dht_read(sensor);
+  if (!dht[sensor].lastresult) {
     switch (dht[sensor].type) {
     case GPIO_DHT11:
       h = dht_data[0];
@@ -187,13 +190,12 @@ boolean dht_setup(byte pin, byte type)
 
 void dht_init()
 {
-  char log[LOGSZ];
-
   dht_maxcycles = microsecondsToClockCycles(1000);  // 1 millisecond timeout for reading pulses from DHT sensor.
 
   for (byte i = 0; i < dht_sensors; i++) {
     pinMode(dht[i].pin, INPUT_PULLUP);
-    dht[i].lastreadtime = -MIN_INTERVAL;
+    dht[i].lastreadtime = 0;
+    dht[i].lastresult = 0;
     switch (dht[i].type) {
     case GPIO_DHT11:
       strcpy_P(dht[i].stype, PSTR("DHT11"));
@@ -214,7 +216,7 @@ void dht_init()
  * Presentation
 \*********************************************************************************************/
 
-void dht_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
+void dht_mqttPresent(uint8_t* djson)
 {
   char stemp1[10];
   char stemp2[10];
@@ -226,7 +228,7 @@ void dht_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
     if (dht_readTempHum(i, t, h)) {     // Read temperature
       dtostrfd(t, sysCfg.flag.temperature_resolution, stemp1);
       dtostrfd(h, sysCfg.flag.humidity_resolution, stemp2);
-      snprintf_P(svalue, ssvalue, JSON_SNS_TEMPHUM, svalue, dht[i].stype, stemp1, stemp2);
+      snprintf_P(mqtt_data, sizeof(mqtt_data), JSON_SNS_TEMPHUM, mqtt_data, dht[i].stype, stemp1, stemp2);
       *djson = 1;
 #ifdef USE_DOMOTICZ
       if (!dsxflg) {

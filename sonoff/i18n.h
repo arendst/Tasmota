@@ -44,12 +44,13 @@ const char commands[MAX_BUTTON_COMMANDS][14] PROGMEM = {
   D_CMND_WIFICONFIG " 3",   // Press button five times
   D_CMND_RESTART " 1",      // Press button six times
   D_CMND_UPGRADE " 1" };    // Press button seven times
-const char wificfg[5][WCFG_MAX_STRING_LENGTH] PROGMEM = {
+const char wificfg[MAX_WIFI_OPTION][WCFG_MAX_STRING_LENGTH] PROGMEM = {
   D_WCFG_0_RESTART,
   D_WCFG_1_SMARTCONFIG,
   D_WCFG_2_WIFIMANAGER,
   D_WCFG_3_WPSCONFIG,
-  D_WCFG_4_RETRY };
+  D_WCFG_4_RETRY,
+  D_WCFG_5_WAIT };
 const char PREFIXES[3][PRFX_MAX_STRING_LENGTH] PROGMEM = {
   D_CMND,
   D_STAT,

@@ -47,7 +47,6 @@ boolean bh1750_detect()
     return true;
   }
 
-  char log[LOGSZ];
   uint8_t status;
   boolean success = false;
 
@@ -67,8 +66,8 @@ boolean bh1750_detect()
     strcpy_P(bh1750stype, PSTR("BH1750"));
   }
   if (success) {
-    snprintf_P(log, sizeof(log), PSTR(D_LOG_I2C "%s " D_FOUND_AT " 0x%x"), bh1750stype, bh1750addr);
-    addLog(LOG_LEVEL_DEBUG, log);
+    snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_I2C "%s " D_FOUND_AT " 0x%x"), bh1750stype, bh1750addr);
+    addLog(LOG_LEVEL_DEBUG);
   } else {
     bh1750type = 0;
   }
@@ -79,14 +78,14 @@ boolean bh1750_detect()
  * Presentation
 \*********************************************************************************************/
 
-void bh1750_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
+void bh1750_mqttPresent(uint8_t* djson)
 {
   if (!bh1750type) {
     return;
   }
 
   uint16_t l = bh1750_readLux();
-  snprintf_P(svalue, ssvalue, PSTR("%s, \"%s\":{\"" D_ILLUMINANCE "\":%d}"), svalue, bh1750stype, l);
+  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s, \"%s\":{\"" D_ILLUMINANCE "\":%d}"), mqtt_data, bh1750stype, l);
   *djson = 1;
 #ifdef USE_DOMOTICZ
   domoticz_sensor5(l);

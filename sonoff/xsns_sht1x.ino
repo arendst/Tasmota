@@ -184,7 +184,7 @@ boolean sht_detect()
  * Presentation
 \*********************************************************************************************/
 
-void sht_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
+void sht_mqttPresent(uint8_t* djson)
 {
   if (!shttype) {
     return;
@@ -199,7 +199,7 @@ void sht_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
 
     dtostrfd(t, sysCfg.flag.temperature_resolution, stemp);
     dtostrfd(h, sysCfg.flag.humidity_resolution, shum);
-    snprintf_P(svalue, ssvalue, JSON_SNS_TEMPHUM, svalue, "SHT1X", stemp, shum);
+    snprintf_P(mqtt_data, sizeof(mqtt_data), JSON_SNS_TEMPHUM, mqtt_data, "SHT1X", stemp, shum);
     *djson = 1;
 #ifdef USE_DOMOTICZ
     domoticz_sensor2(stemp, shum);

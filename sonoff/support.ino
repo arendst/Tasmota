@@ -38,9 +38,8 @@ void osw_osWatch()
   unsigned long last_run = abs(t - osw_last_loop);
 
 #ifdef DEBUG_THEO
-  char log[LOGSZ];
-  snprintf_P(log, sizeof(log), PSTR(D_LOG_APPLICATION D_OSWATCH " FreeRam %d, rssi %d, last_run %d"), ESP.getFreeHeap(), WIFI_getRSSIasQuality(WiFi.RSSI()), last_run);
-  addLog(LOG_LEVEL_DEBUG, log);
+  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION D_OSWATCH " FreeRam %d, rssi %d, last_run %d"), ESP.getFreeHeap(), WIFI_getRSSIasQuality(WiFi.RSSI()), last_run);
+  addLog(LOG_LEVEL_DEBUG);
 #endif  // DEBUG_THEO
   if (last_run >= (OSWATCH_RESET_TIME * 1000)) {
     addLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_APPLICATION D_OSWATCH " " D_BLOCKED_LOOP ". " D_RESTARTING));
@@ -372,8 +371,6 @@ void WIFI_wps_status_cb(wps_cb_status status);
 
 void WIFI_wps_status_cb(wps_cb_status status)
 {
-  char log[LOGSZ];
-
 /* from user_interface.h:
   enum wps_cb_status {
     WPS_CB_ST_SUCCESS = 0,
@@ -383,13 +380,12 @@ void WIFI_wps_status_cb(wps_cb_status status)
     WPS_CB_ST_SCAN_ERR, // can not find the target WPS AP
   };
 */
-
   _wpsresult = status;
   if (WPS_CB_ST_SUCCESS == _wpsresult) {
     wifi_wps_disable();
   } else {
-    snprintf_P(log, sizeof(log), PSTR(D_LOG_WIFI D_WPS_FAILED_WITH_STATUS " %d"), _wpsresult);
-    addLog(LOG_LEVEL_DEBUG, log);
+    snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_WIFI D_WPS_FAILED_WITH_STATUS " %d"), _wpsresult);
+    addLog(LOG_LEVEL_DEBUG);
     _wifiConfigCounter = 2;
   }
 }
@@ -420,7 +416,7 @@ boolean WIFI_beginWPSConfig(void)
 void WIFI_config(uint8_t type)
 {
   if (!_wificonfigflag) {
-    if (WIFI_RETRY == type) {
+    if (type >= WIFI_RETRY) {  // WIFI_RETRY and WIFI_WAIT
       return;
     }
 #ifdef USE_EMULATION
@@ -458,7 +454,6 @@ void WIFI_config(uint8_t type)
 void WIFI_begin(uint8_t flag)
 {
   const char PhyMode[] = " BGN";
-  char log[LOGSZ];
 
 #ifdef USE_EMULATION
   UDP_Disconnect();
@@ -495,9 +490,9 @@ void WIFI_begin(uint8_t flag)
   }
   WiFi.hostname(Hostname);
   WiFi.begin(sysCfg.sta_ssid[sysCfg.sta_active], sysCfg.sta_pwd[sysCfg.sta_active]);
-  snprintf_P(log, sizeof(log), PSTR(D_LOG_WIFI D_CONNECTING_TO_AP "%d %s " D_IN_MODE " 11%c " D_AS " %s..."),
+  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_WIFI D_CONNECTING_TO_AP "%d %s " D_IN_MODE " 11%c " D_AS " %s..."),
     sysCfg.sta_active +1, sysCfg.sta_ssid[sysCfg.sta_active], PhyMode[WiFi.getPhyMode() & 0x3], Hostname);
-  addLog(LOG_LEVEL_INFO, log);
+  addLog(LOG_LEVEL_INFO);
 }
 
 void WIFI_check_ip()
@@ -523,11 +518,15 @@ void WIFI_check_ip()
         break;
       case WL_NO_SSID_AVAIL:
         addLog_P(LOG_LEVEL_INFO, S_LOG_WIFI, PSTR(D_CONNECT_FAILED_AP_NOT_REACHED));
-        if (_wifiretry > (WIFI_RETRY_SEC / 2)) {
-          _wifiretry = WIFI_RETRY_SEC / 2;
-        }
-        else if (_wifiretry) {
-          _wifiretry = 0;
+        if (WIFI_WAIT == sysCfg.sta_config) {
+          _wifiretry = WIFI_RETRY_SEC;
+        } else {
+          if (_wifiretry > (WIFI_RETRY_SEC / 2)) {
+            _wifiretry = WIFI_RETRY_SEC / 2;
+          }
+          else if (_wifiretry) {
+            _wifiretry = 0;
+          }
         }
         break;
       case WL_CONNECT_FAILED:
@@ -548,9 +547,9 @@ void WIFI_check_ip()
     }
     if (_wifiretry) {
       if (WIFI_RETRY_SEC == _wifiretry) {
-        WIFI_begin(3);        // Select default SSID
+        WIFI_begin(3);  // Select default SSID
       }
-      if ((WIFI_RETRY_SEC / 2) == _wifiretry) {
+      if ((sysCfg.sta_config != WIFI_WAIT) && ((WIFI_RETRY_SEC / 2) == _wifiretry)) {
         WIFI_begin(2);  // Select alternate SSID
       }
       _wificounter = 1;
@@ -565,8 +564,6 @@ void WIFI_check_ip()
 
 void WIFI_Check(uint8_t param)
 {
-  char log[LOGSZ];
-
   _wificounter--;
   switch (param) {
   case WIFI_SMARTCONFIG:
@@ -593,8 +590,8 @@ void WIFI_Check(uint8_t param)
             strlcpy(sysCfg.sta_pwd[0], WiFi.psk().c_str(), sizeof(sysCfg.sta_pwd[0]));
           }
           sysCfg.sta_active = 0;
-          snprintf_P(log, sizeof(log), PSTR(D_LOG_WIFI D_WCFG_1_SMARTCONFIG D_CMND_SSID "1 %s, " D_CMND_PASSWORD "1 %s"), sysCfg.sta_ssid[0], sysCfg.sta_pwd[0]);
-          addLog(LOG_LEVEL_INFO, log);
+          snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_WIFI D_WCFG_1_SMARTCONFIG D_CMND_SSID "1 %s, " D_CMND_PASSWORD "1 %s"), sysCfg.sta_ssid[0], sysCfg.sta_pwd[0]);
+          addLog(LOG_LEVEL_INFO);
         }
       }
       if (!_wifiConfigCounter) {
@@ -613,8 +610,8 @@ void WIFI_Check(uint8_t param)
 #ifdef USE_DISCOVERY
         if (!mDNSbegun) {
           mDNSbegun = MDNS.begin(Hostname);
-          snprintf_P(log, sizeof(log), PSTR(D_LOG_MDNS "%s"), (mDNSbegun) ? D_INITIALIZED : D_FAILED);
-          addLog(LOG_LEVEL_INFO, log);
+          snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_MDNS "%s"), (mDNSbegun) ? D_INITIALIZED : D_FAILED);
+          addLog(LOG_LEVEL_INFO);
         }
 #endif  // USE_DISCOVERY
 #ifdef USE_WEBSERVER
@@ -673,7 +670,6 @@ void WIFI_Connect()
 #ifdef MQTT_HOST_DISCOVERY
 boolean mdns_discoverMQTTServer()
 {
-  char log[LOGSZ];
   char ip_str[20];
   int n;
 
@@ -683,16 +679,16 @@ boolean mdns_discoverMQTTServer()
 
   n = MDNS.queryService("mqtt", "tcp");  // Search for mqtt service
 
-  snprintf_P(log, sizeof(log), PSTR(D_LOG_MDNS D_QUERY_DONE " %d"), n);
-  addLog(LOG_LEVEL_INFO, log);
+  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_MDNS D_QUERY_DONE " %d"), n);
+  addLog(LOG_LEVEL_INFO);
 
   if (n > 0) {
     // Note: current strategy is to get the first MQTT service (even when many are found)
     IPtoCharArray(MDNS.IP(0), ip_str, 20);
 
-    snprintf_P(log, sizeof(log), PSTR(D_LOG_MDNS D_MQTT_SERVICE_FOUND " %s, " D_IP_ADDRESS " %s, " D_PORT " %d"),
+    snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_MDNS D_MQTT_SERVICE_FOUND " %s, " D_IP_ADDRESS " %s, " D_PORT " %d"),
       MDNS.hostname(0).c_str(), ip_str, MDNS.port(0));
-    addLog(LOG_LEVEL_INFO, log);
+    addLog(LOG_LEVEL_INFO);
 
     strlcpy(sysCfg.mqtt_host, ip_str, sizeof(sysCfg.mqtt_host));
     sysCfg.mqtt_port = MDNS.port(0);
@@ -794,7 +790,7 @@ void i2c_scan(char *devs, unsigned int devs_len)
   byte any = 0;
   char tstr[10];
 
-  snprintf_P(devs, devs_len, PSTR("{\"" D_CMND_I2CSCAN "\":\"" D_I2CSCAN_DEVICES_FOUND_AT));
+  snprintf_P(devs, devs_len, PSTR("{\"I2Cscan\":\"Device(s) found at"));
   for (address = 1; address <= 127; address++) {
     Wire.beginTransmission(address);
     error = Wire.endTransmission();
@@ -804,13 +800,13 @@ void i2c_scan(char *devs, unsigned int devs_len)
       any = 1;
     }
     else if (4 == error) {
-      snprintf_P(devs, devs_len, PSTR("{\"" D_CMND_I2CSCAN "\":\"" D_I2CSCAN_UNKNOWN_ERROR_AT " 0x%2x\"}"), address);
+      snprintf_P(devs, devs_len, PSTR("{\"I2Cscan\":\"Unknown error at 0x%2x\"}"), address);
     }
   }
   if (any) {
     strncat(devs, "\"}", devs_len);
   } else {
-    snprintf_P(devs, devs_len, PSTR("{\"" D_CMND_I2CSCAN "\":\"" D_I2CSCAN_NO_DEVICES_FOUND "\"}"));
+    snprintf_P(devs, devs_len, PSTR("{\"I2Cscan\":\"No devices found\"}"));
   }
 }
 #endif  // USE_I2C
@@ -1027,7 +1023,7 @@ String rtc_time(int type)
   if (1 == type) time = loctime;
   if (2 == type) time = dsttime;
   if (3 == type) time = stdtime;
-  snprintf_P(stime, sizeof(stime), PSTR("%s"), sntp_get_real_time(time));
+  snprintf_P(stime, sizeof(stime), sntp_get_real_time(time));
   return String(stime);
 }
 
@@ -1052,7 +1048,6 @@ boolean rtc_midnight_now()
 
 void rtc_second()
 {
-  char log[LOGSZ];
   byte ntpsync;
   uint32_t stdoffset;
   uint32_t dstoffset;
@@ -1076,12 +1071,12 @@ void rtc_second()
       rtcTime.Year = tmpTime.Year + 1970;
       dsttime = toTime_t(myDST, rtcTime.Year);
       stdtime = toTime_t(mySTD, rtcTime.Year);
-      snprintf_P(log, sizeof(log), PSTR(D_LOG_APPLICATION "(" D_UTC_TIME ") %s"), rtc_time(0).c_str());
-      addLog(LOG_LEVEL_DEBUG, log);
-      snprintf_P(log, sizeof(log), PSTR(D_LOG_APPLICATION "(" D_DST_TIME ") %s"), rtc_time(2).c_str());
-      addLog(LOG_LEVEL_DEBUG, log);
-      snprintf_P(log, sizeof(log), PSTR(D_LOG_APPLICATION "(" D_STD_TIME ") %s"), rtc_time(3).c_str());
-      addLog(LOG_LEVEL_DEBUG, log);
+      snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION "(" D_UTC_TIME ") %s"), rtc_time(0).c_str());
+      addLog(LOG_LEVEL_DEBUG);
+      snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION "(" D_DST_TIME ") %s"), rtc_time(2).c_str());
+      addLog(LOG_LEVEL_DEBUG);
+      snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION "(" D_STD_TIME ") %s"), rtc_time(3).c_str());
+      addLog(LOG_LEVEL_DEBUG);
     }
   }
   utctime++;
@@ -1153,32 +1148,38 @@ uint16_t getAdc0()
  * Syslog
 \*********************************************************************************************/
 
-void syslog(const char *message)
+void syslog()
 {
-  char str[TOPSZ + MESSZ];
+  // Destroys log_data
+  char syslog_preamble[64];  // Hostname + Id
 
   if (portUDP.beginPacket(sysCfg.syslog_host, sysCfg.syslog_port)) {
-    snprintf_P(str, sizeof(str), PSTR("%s ESP-%s"), Hostname, message);
-    portUDP.write(str);
+    snprintf_P(syslog_preamble, sizeof(syslog_preamble), PSTR("%s ESP-"), Hostname);
+    memmove(log_data + strlen(syslog_preamble), log_data, sizeof(log_data) - strlen(syslog_preamble));
+    log_data[sizeof(log_data) -1] = '\0';
+    memcpy(log_data, syslog_preamble, strlen(syslog_preamble));
+    portUDP.write(log_data);
     portUDP.endPacket();
   } else {
     syslog_level = 0;
     syslog_timer = SYSLOG_TIMER;
-    snprintf_P(str, sizeof(str), PSTR(D_LOG_APPLICATION D_SYSLOG_HOST_NOT_FOUND ". " D_RETRY_IN " %d " D_UNIT_SECOND), SYSLOG_TIMER);
-    addLog(LOG_LEVEL_INFO, str);
+    snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION D_SYSLOG_HOST_NOT_FOUND ". " D_RETRY_IN " %d " D_UNIT_SECOND), SYSLOG_TIMER);
+    addLog(LOG_LEVEL_INFO);
   }
 }
 
-void addLog(byte loglevel, const char *line)
+void addLog(byte loglevel)
 {
-  char mxtime[9];
+  char mxtime[9];  // 13:45:21
 
   snprintf_P(mxtime, sizeof(mxtime), PSTR("%02d" D_HOUR_MINUTE_SEPARATOR "%02d" D_MINUTE_SECOND_SEPARATOR "%02d"), rtcTime.Hour, rtcTime.Minute, rtcTime.Second);
 
-  if (loglevel <= seriallog_level) Serial.printf("%s %s\n", mxtime, line);
+  if (loglevel <= seriallog_level) {
+    Serial.printf("%s %s\n", mxtime, log_data);
+  }
 #ifdef USE_WEBSERVER
   if (sysCfg.webserver && (loglevel <= sysCfg.weblog_level)) {
-    Log[logidx] = String(mxtime) + " " + String(line);
+    Log[logidx] = String(mxtime) + " " + String(log_data);
     logidx++;
     if (logidx > MAX_LOG_LINES -1) {
       logidx = 0;
@@ -1186,27 +1187,24 @@ void addLog(byte loglevel, const char *line)
   }
 #endif  // USE_WEBSERVER
   if ((WL_CONNECTED == WiFi.status()) && (loglevel <= syslog_level)) {
-    syslog(line);
+    syslog();
   }
 }
 
 void addLog_P(byte loglevel, const char *formatP)
 {
-  char mess[LOGSZ];  // was MESSZ
-
-  snprintf_P(mess, sizeof(mess), formatP);
-  addLog(loglevel, mess);
+  snprintf_P(log_data, sizeof(log_data), formatP);
+  addLog(loglevel);
 }
 
 void addLog_P(byte loglevel, const char *formatP, const char *formatP2)
 {
-  char mess[LOGSZ];  // was MESSZ
-  char mes2[LOGSZ];
+  char message[100];
 
-  snprintf_P(mess, sizeof(mess), formatP);
-  snprintf_P(mes2, sizeof(mes2), formatP2);
-  strncat(mess, mes2, sizeof(mess));
-  addLog(loglevel, mess);
+  snprintf_P(log_data, sizeof(log_data), formatP);
+  snprintf_P(message, sizeof(message), formatP2);
+  strncat(log_data, message, sizeof(log_data));
+  addLog(loglevel);
 }
 
 /*********************************************************************************************\
