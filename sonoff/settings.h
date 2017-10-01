@@ -37,7 +37,7 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t stop_flash_rotate : 1;        // bit 12 (v5.2.0)
     uint32_t button_single : 1;            // bit 13 (v5.4.0)
     uint32_t interlock : 1;                // bit 14 (v5.6.0)
-    uint32_t spare15 : 1;
+    uint32_t pwm_control : 1;              // bit 15 (v5.8.1)
     uint32_t spare16 : 1;
     uint32_t spare17 : 1;
     uint32_t spare18 : 1;

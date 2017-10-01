@@ -25,7 +25,7 @@
     - Select IDE Tools - Flash Size: "1M (no SPIFFS)"
   ====================================================*/
 
-#define VERSION                0x05080003  // 5.8.0c
+#define VERSION                0x05080004  // 5.8.0d
 
 enum week_t  {Last, First, Second, Third, Fourth};
 enum dow_t   {Sun=1, Mon, Tue, Wed, Thu, Fri, Sat};
@@ -290,7 +290,7 @@ uint8_t hlw_flg = 0;                  // Power monitor configured
 uint8_t i2c_flg = 0;                  // I2C configured
 uint8_t spi_flg = 0;                  // SPI configured
 uint8_t pwm_flg = 0;                  // PWM configured
-uint8_t sfl_flg = 0;                  // Sonoff Led flag (0 = No led, 1 = BN-SZ01, 2 = Sonoff Led, 5 = Sonoff B1)
+uint8_t sfl_flg = 0;                  // Sonoff Led flag (0 = No led, 1 = BN-SZ01, 2 = Sonoff Led, 3 = H801/MagicHome, 4 = H801/MagicHome, 5 = H801, 11 = WS2812, 12 = AiLight, 13 = Sonoff B1)
 uint8_t pwm_idxoffset = 0;            // Allowed PWM command offset (change for Sonoff Led)
 
 boolean mDNSbegun = false;
@@ -1079,7 +1079,7 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_SAVEDATA "\":\"%s\"}"), (sysCfg.savedata > 1) ? stemp1 : getStateText(sysCfg.savedata));
     }
-    else if (!strcasecmp_P(type, PSTR(D_CMND_SETOPTION)) && ((index >= 0) && (index <= 14)) || ((index > 31) && (index <= P_MAX_PARAM8 +31))) {
+    else if (!strcasecmp_P(type, PSTR(D_CMND_SETOPTION)) && ((index >= 0) && (index <= 15)) || ((index > 31) && (index <= P_MAX_PARAM8 +31))) {
       if (index <= 31) {
         ptype = 0;   // SetOption0 .. 31
       } else {
@@ -1091,6 +1091,7 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
           if (payload <= 1) {
             switch (index) {
               case 3:   // mqtt
+              case 15:  // pwm_control
                 restartflag = 2;
               case 0:   // savestate
               case 1:   // button_restrict
@@ -2324,7 +2325,7 @@ void stateloop()
   button_handler();
   switch_handler();
 
-  if (sfl_flg) {  // Sonoff B1, AiLight, Sonoff led or BN-SZ01
+  if (sfl_flg) {
     sl_animate();
   }
 
@@ -2619,6 +2620,15 @@ void GPIO_init()
   analogWriteRange(PWM_RANGE);  // Default is 1023 (Arduino.h)
   analogWriteFreq(PWM_FREQ);    // Default is 1000 (core_esp8266_wiring_pwm.c)
 
+  if (sysCfg.flag.pwm_control) {
+    sfl_flg = 0;
+    for (byte i = 0; i < 5; i++) {
+      if (pin[GPIO_PWM1 +i] < 99) {
+        sfl_flg++;
+      }
+    }
+  }
+
   Maxdevice = 1;
   if (SONOFF_BRIDGE == sysCfg.module) {
     Baudrate = 19200;
@@ -2635,17 +2645,22 @@ void GPIO_init()
     Maxdevice = 0;
     Baudrate = 19200;
   }
-  else if (SONOFF_BN == sysCfg.module) {   // Single color led (White)
+  else if ((H801 == sysCfg.module) || (MAGICHOME == sysCfg.module)) {  // PWM RGBCW led
+    if (!sysCfg.flag.pwm_control) {
+      sfl_flg = 0;
+    }
+  }
+  else if (SONOFF_BN == sysCfg.module) {   // PWM Single color led (White)
     sfl_flg = 1;
   }
-  else if (SONOFF_LED == sysCfg.module) {  // Dual color led (White warm and cold)
+  else if (SONOFF_LED == sysCfg.module) {  // PWM Dual color led (White warm and cold)
     sfl_flg = 2;
   }
   else if (AILIGHT == sysCfg.module) {     // RGBW led
-    sfl_flg = 4;
+    sfl_flg = 12;
   }
   else if (SONOFF_B1 == sysCfg.module) {   // RGBWC led
-    sfl_flg = 5;
+    sfl_flg = 13;
   }
   else {
     Maxdevice = 0;
@@ -2674,14 +2689,14 @@ void GPIO_init()
   }
 
 #ifdef USE_WS2812
-  if (!sfl_flg && (pin[GPIO_WS2812] < 99)) {
+  if (!sfl_flg && (pin[GPIO_WS2812] < 99)) {  // RGB led
     Maxdevice++;
-    sfl_flg = 3;
+    sfl_flg = 11;
   }
 #endif  // USE_WS2812
   if (sfl_flg) {                // Sonoff B1, AiLight, Sonoff Led or BN-SZ01, WS2812
-    if (sfl_flg < 3) {
-      pwm_idxoffset = sfl_flg;  // 1 for BN-SZ01, 2 for Sonoff Led
+    if (sfl_flg < 6) {
+      pwm_idxoffset = sfl_flg;  // 1 for BN-SZ01, 2 for Sonoff Led, 3,4,5 for H801 and  MagicHome
     }
     sl_init();
   }
@@ -2833,7 +2848,7 @@ void setup()
 
   // Issue #526
   for (byte i = 0; i < Maxdevice; i++) {
-    if ((pin[GPIO_REL1 +i] < 99) && (digitalRead(pin[GPIO_REL1 +i]))) {
+    if ((pin[GPIO_REL1 +i] < 99) && (digitalRead(pin[GPIO_REL1 +i]) ^ rel_inverted[i])) {
       bitSet(power, i);
       pulse_timer[i] = sysCfg.pulsetime[i];
     }

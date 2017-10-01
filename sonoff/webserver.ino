@@ -443,7 +443,7 @@ void handleRoot()
     page += F("<div id='l1' name='l1'></div>");
     if (Maxdevice) {
       if (sfl_flg) {
-        if ((2 == sfl_flg) || (5 == sfl_flg)) {
+        if ((2 == (sfl_flg &7)) || (5 == (sfl_flg &7))) {
           snprintf_P(line, sizeof(line), HTTP_MSG_SLIDER1, sl_getColorTemp());
           page += line;
         }
@@ -1051,11 +1051,12 @@ void handleSave()
     for (byte i = 0; i < MAX_GPIO_PIN; i++) {
       if (new_modflg) {
         sysCfg.my_module.gp.io[i] = 0;
-      }
-      if (GPIO_USER == cmodule.gp.io[i]) {
-        snprintf_P(stemp, sizeof(stemp), PSTR("g%d"), i);
-        sysCfg.my_module.gp.io[i] = (!strlen(webServer->arg(stemp).c_str())) ? 0 : atoi(webServer->arg(stemp).c_str());
-        gpios += F(", " D_GPIO ); gpios += String(i); gpios += F(" "); gpios += String(sysCfg.my_module.gp.io[i]);
+      } else {
+        if (GPIO_USER == cmodule.gp.io[i]) {
+          snprintf_P(stemp, sizeof(stemp), PSTR("g%d"), i);
+          sysCfg.my_module.gp.io[i] = (!strlen(webServer->arg(stemp).c_str())) ? 0 : atoi(webServer->arg(stemp).c_str());
+          gpios += F(", " D_GPIO ); gpios += String(i); gpios += F(" "); gpios += String(sysCfg.my_module.gp.io[i]);
+        }
       }
     }
     snprintf_P(stemp, sizeof(stemp), modules[sysCfg.module].name);

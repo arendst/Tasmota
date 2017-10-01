@@ -1,4 +1,20 @@
-/* 5.8.0c
+/* 5.8.0d
+ * Remove previous GPIO configuration when another module is selected
+ * Fix inverted relay power on state (#909)
+ * Change default PWM assignments for H801 RGB(CW) led controller to support optional Color/Dimmer control
+ *   GPIO04 (W2)    from GPIO_PWM2 to GPIO_USER to be user configurable for GPIO_PWM5 (second White - Warm if W1 is Cold)
+ *   GPIO12 (Blue)  GPIO_PWM3 no change
+ *   GPIO13 (Green) from GPIO_PWM4 to GPIO_PWM2
+ *   GPIO14 (W1)    from GPIO_PWM1 to GPIO_USER to be user configurable for GPIO_PWM4 (first White - Cold or Warm)
+ *   GPIO15 (Red)   from GPIO_PWM5 to GPIO_PWM1
+ * Change default PWM assignments for MagicHome RGB(W) led controller to support optional Color/Dimmer control
+ *   GPIO05 (Green) from GPIO_PWM4 to GPIO_PWM2
+ *   GPIO12 (Blue)  from GPIO_PWM5 to GPIO_PWM3
+ *   GPIO13 (White) GPIO_USER to be user configurable for GPIO_PWM4 (White - Cold or Warm)
+ *   GPIO14 (Red)   from GPIO_PWM3 to GPIO_PWM1
+ * Add command SetOption15 0 (default) for command PWM control or SetOption15 1 for commands Color/Dimmer control to PWM RGB(CW) leds (#941)
+ *
+ * 5.8.0c
  * Add warning to webpage when USE_MINIMAL is selected (#929)
  * Fix compile error when DOMOTICZ_UPDATE_TIMER is not defined (#930)
  * Fix alignment of web page items in some browsers (#935)

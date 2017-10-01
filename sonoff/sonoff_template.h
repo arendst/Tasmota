@@ -52,11 +52,11 @@ enum upins_t {
   GPIO_LED2_INV,
   GPIO_LED3_INV,
   GPIO_LED4_INV,
-  GPIO_PWM1,           // Sonoff Led Cold
-  GPIO_PWM2,           // Sonoff Led Warm
-  GPIO_PWM3,           // Red (swapped with Blue from original)
-  GPIO_PWM4,           // Green
-  GPIO_PWM5,           // Blue (swapped with Red from original)
+  GPIO_PWM1,           // RGB   Red   or C  Cold White
+  GPIO_PWM2,           // RGB   Green or CW Warm White
+  GPIO_PWM3,           // RGB   Blue
+  GPIO_PWM4,           // RGBW  (Cold) White
+  GPIO_PWM5,           // RGBCW Warm White
   GPIO_CNTR1,
   GPIO_CNTR2,
   GPIO_CNTR3,
@@ -467,13 +467,13 @@ const mytmplt modules[MAXMODULE] PROGMEM = {
      GPIO_LED1,        // GPIO01 Green LED
      GPIO_TXD,         // GPIO02 RX - Pin next to TX on the PCB
      GPIO_RXD,         // GPIO03 TX - Pin next to GND on the PCB
-     GPIO_PWM2,        // GPIO04 W2
+     GPIO_USER,        // GPIO04 W2 - PWM5
      GPIO_LED2_INV,    // GPIO05 Red LED
      0, 0, 0, 0, 0, 0, // Flash connection
      GPIO_PWM3,        // GPIO12 Blue
-     GPIO_PWM4,        // GPIO13 Green
-     GPIO_PWM1,        // GPIO14 W1
-     GPIO_PWM5,        // GPIO15 Red
+     GPIO_PWM2,        // GPIO13 Green
+     GPIO_USER,        // GPIO14 W1 - PWM4
+     GPIO_PWM1,        // GPIO15 Red
      0, 0
   },
   { "Sonoff SC",       // Sonoff SC (ESP8266)
@@ -658,11 +658,11 @@ const mytmplt modules[MAXMODULE] PROGMEM = {
      GPIO_LED1_INV,    // GPIO02 Blue onboard LED
      0,
      GPIO_USER,        // GPIO04 IR receiver (optional)
-     GPIO_PWM4,        // GPIO05 RGB LED Green
+     GPIO_PWM2,        // GPIO05 RGB LED Green
      0, 0, 0, 0, 0, 0, // Flash connection
-     GPIO_PWM5,        // GPIO12 RGB LED Blue
-     GPIO_USER,        // GPIO13 RGBW LED White (optional - set to PWM1 for Cold White or PWM2 for Warm White)
-     GPIO_PWM3,        // GPIO14 RGB LED Red
+     GPIO_PWM3,        // GPIO12 RGB LED Blue
+     GPIO_USER,        // GPIO13 RGBW LED White (optional - set to PWM4 for Cold White or Warm White)
+     GPIO_PWM1,        // GPIO14 RGB LED Red
      0, 0, 0
   }
 };

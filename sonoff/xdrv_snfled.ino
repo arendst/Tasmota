@@ -1,5 +1,5 @@
 /*
-  xdrv_snfled.ino - WS2812 and sonoff led support for Sonoff-Tasmota
+  xdrv_snfled.ino - PWM, WS2812 and sonoff led support for Sonoff-Tasmota
 
   Copyright (C) 2017  Theo Arends
 
@@ -18,14 +18,19 @@
 */
 
 /*********************************************************************************************\
- * WS2812, Sonoff B1, AiLight, Sonoff Led and BN-SZ01
+ * PWM, WS2812, Sonoff B1, AiLight, Sonoff Led and BN-SZ01
  *
- * sfl_flg  Module        Color  ColorTemp
- * 1        Sonoff BN-SZ  W      no
- * 2        Sonoff Led    CW     yes
- * 3        +WS2812       RGB    no
- * 4        AiLight       RGBW   no
- * 5        Sonoff B1     RGBCW  yes
+ * sfl_flg  Module     Color  ColorTemp
+ *  1       PWM1       W      no          (Sonoff BN-SZ)
+ *  2       PWM2       CW     yes         (Sonoff Led)
+ *  3       PWM3       RGB    no          (H801 and MagicHome)
+ *  4       PWM4       RGBW   no          (H801 and MagicHome)
+ *  5       PWM5       RGBCW  yes         (H801)
+ *  9       reserved          no
+ * 10       reserved          yes
+ * 11       +WS2812    RGB    no
+ * 12       AiLight    RGBW   no
+ * 13       Sonoff B1  RGBCW  yes
  *
  * led_scheme  WS2812  Others  Effect
  * 0           yes     yes     Color On/Off
@@ -114,7 +119,7 @@ void sl_my92x1_write(uint8_t data)
 
 void sl_my92x1_init()
 {
-  uint8_t chips = sfl_flg -3;  // 1 (AiLight) or 2 (Sonoff B1)
+  uint8_t chips = sfl_flg -11; // 1 (AiLight) or 2 (Sonoff B1)
 
   sl_dcki_pulse(chips * 32);   // Clear all duty register
   os_delay_us(12);             // TStop > 12us.
@@ -136,7 +141,7 @@ void sl_my92x1_duty(uint8_t duty_r, uint8_t duty_g, uint8_t duty_b, uint8_t duty
 {
   uint8_t channels[2] = { 4, 6 };
 
-  uint8_t didx = sfl_flg -4;   // 0 or 1
+  uint8_t didx = sfl_flg -12;  // 0 or 1
 
   uint8_t duty[2][6] = {{ duty_r, duty_g, duty_b, duty_w, 0, 0 },        // Definition for RGBW channels
                         { duty_w, duty_c, 0, duty_g, duty_r, duty_b }};  // Definition for RGBWC channels
@@ -154,27 +159,28 @@ void sl_my92x1_duty(uint8_t duty_r, uint8_t duty_g, uint8_t duty_b, uint8_t duty
 
 void sl_init(void)
 {
-  if (sfl_flg < 3) {
-    if (!my_module.gp.io[4]) {
-      pinMode(4, OUTPUT);     // Stop floating outputs
-      digitalWrite(4, LOW);
+  if (sfl_flg < 6) {  // PWM
+    for (byte i = 0; i < sfl_flg; i++) {
+      sysCfg.pwmvalue[i] = 0;  // Disable direct PWM control
     }
-    if (!my_module.gp.io[5]) {
-      pinMode(5, OUTPUT);     // Stop floating outputs
-      digitalWrite(5, LOW);
-    }
-    if (!my_module.gp.io[14]) {
-      pinMode(14, OUTPUT);    // Stop floating outputs
-      digitalWrite(14, LOW);
-    }
-    sysCfg.pwmvalue[0] = 0;    // We use dimmer / led_color
-    if (2 == sfl_flg) {
-      sysCfg.pwmvalue[1] = 0;  // We use led_color
+    if (SONOFF_LED == sysCfg.module) {  // Fix Sonoff Led instabilities
+      if (!my_module.gp.io[4]) {
+        pinMode(4, OUTPUT);     // Stop floating outputs
+        digitalWrite(4, LOW);
+      }
+      if (!my_module.gp.io[5]) {
+        pinMode(5, OUTPUT);     // Stop floating outputs
+        digitalWrite(5, LOW);
+      }
+      if (!my_module.gp.io[14]) {
+        pinMode(14, OUTPUT);    // Stop floating outputs
+        digitalWrite(14, LOW);
+      }
     }
     sysCfg.led_scheme = 0;
   }
 #ifdef USE_WS2812  // ************************************************************************
-  else if (3 == sfl_flg) {
+  else if (11 == sfl_flg) {
     ws2812_init();
     if (1 == sysCfg.led_scheme) {
       sysCfg.led_scheme = 0;
@@ -212,7 +218,7 @@ void sl_setColorTemp(uint16_t ct)
   }
   uint16_t icold = (100 * (347 - my_ct)) / 136;
   uint16_t iwarm = (100 * my_ct) / 136;
-  if (5 == sfl_flg) {
+  if (5 == (sfl_flg &7)) {
     sysCfg.led_color[0] = 0;
     sysCfg.led_color[1] = 0;
     sysCfg.led_color[2] = 0;
@@ -227,7 +233,7 @@ void sl_setColorTemp(uint16_t ct)
 uint16_t sl_getColorTemp()
 {
   uint8_t ct_idx = 0;
-  if (5 == sfl_flg) {
+  if (5 == (sfl_flg &7)) {
     ct_idx = 3;
   }
   uint16_t my_ct = sysCfg.led_color[ct_idx +1];
@@ -243,11 +249,11 @@ void sl_setDim(uint8_t myDimmer)
 {
   float temp;
 
-  if ((1 == sfl_flg) && (100 == myDimmer)) {
+  if ((SONOFF_BN == sysCfg.module) && (100 == myDimmer)) {
     myDimmer = 99;  // BN-SZ01 starts flickering at dimmer = 100
   }
   float newDim = 100 / (float)myDimmer;
-  for (byte i = 0; i < sfl_flg; i++) {
+  for (byte i = 0; i < (sfl_flg &7); i++) {
     temp = (float)sysCfg.led_color[i] / newDim;
     sl_dcolor[i] = (uint8_t)temp;
   }
@@ -258,7 +264,7 @@ void sl_setColor()
   uint8_t highest = 0;
   float temp;
 
-  for (byte i = 0; i < sfl_flg; i++) {
+  for (byte i = 0; i < (sfl_flg &7); i++) {
     if (highest < sl_dcolor[i]) {
       highest = sl_dcolor[i];
     }
@@ -266,7 +272,7 @@ void sl_setColor()
   float mDim = (float)highest / 2.55;
   sysCfg.led_dimmer[0] = (uint8_t)mDim;
   float newDim = 100 / mDim;
-  for (byte i = 0; i < sfl_flg; i++) {
+  for (byte i = 0; i < (sfl_flg &7); i++) {
     temp = (float)sl_dcolor[i] * newDim;
     sysCfg.led_color[i] = (uint8_t)temp;
   }
@@ -276,7 +282,7 @@ char* sl_getColor(char* scolor)
 {
   sl_setDim(sysCfg.led_dimmer[0]);
   scolor[0] = '\0';
-  for (byte i = 0; i < sfl_flg; i++) {
+  for (byte i = 0; i < (sfl_flg &7); i++) {
     snprintf_P(scolor, 11, PSTR("%s%02X"), scolor, sl_dcolor[i]);
   }
   return scolor;
@@ -297,7 +303,7 @@ void sl_prepPower()
 //  mqtt_publishDomoticzPowerState(1);
   domoticz_updatePowerState(Maxdevice);
 #endif  // USE_DOMOTICZ
-  if (sfl_flg > 1) {
+  if ((sfl_flg &7) > 1) {
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_RSLT_POWER "\":\"%s\", \"" D_CMND_DIMMER "\":%d, \"" D_CMND_COLOR "\":\"%s\"}"),
       getStateText(sl_power), sysCfg.led_dimmer[0], sl_getColor(scolor));
   } else {
@@ -328,7 +334,7 @@ void sl_animate()
   if (!sl_power) {  // Power Off
     sleep = sysCfg.sleep;
     stripTimerCntr = 0;
-    for (byte i = 0; i < sfl_flg; i++) {
+    for (byte i = 0; i < (sfl_flg &7); i++) {
       sl_tcolor[i] = 0;
     }
   }
@@ -338,11 +344,11 @@ void sl_animate()
       case 0:  // Power On
         sl_setDim(sysCfg.led_dimmer[0]);  // Power On
         if (0 == sysCfg.led_fade) {
-          for (byte i = 0; i < sfl_flg; i++) {
+          for (byte i = 0; i < (sfl_flg &7); i++) {
             sl_tcolor[i] = sl_dcolor[i];
           }
         } else {
-          for (byte i = 0; i < sfl_flg; i++) {
+          for (byte i = 0; i < (sfl_flg &7); i++) {
             if (sl_tcolor[i] != sl_dcolor[i]) {
               if (sl_tcolor[i] < sl_dcolor[i]) {
                 sl_tcolor[i] += ((sl_dcolor[i] - sl_tcolor[i]) >> sysCfg.led_speed) +1;
@@ -357,7 +363,7 @@ void sl_animate()
       case 1:  // Power On using wake up duration
         if (2 == sl_wakeupActive) {
           sl_wakeupActive = 1;
-          for (byte i = 0; i < sfl_flg; i++) {
+          for (byte i = 0; i < (sfl_flg &7); i++) {
             sl_tcolor[i] = 0;
           }
           sl_wakeupCntr = 0;
@@ -369,7 +375,7 @@ void sl_animate()
           sl_wakeupDimmer++;
           if (sl_wakeupDimmer <= sysCfg.led_dimmer[0]) {
             sl_setDim(sl_wakeupDimmer);
-            for (byte i = 0; i < sfl_flg; i++) {
+            for (byte i = 0; i < (sfl_flg &7); i++) {
               sl_tcolor[i] = sl_dcolor[i];
             }
           } else {
@@ -382,7 +388,7 @@ void sl_animate()
         break;
 #ifdef USE_WS2812  // ************************************************************************
       default:
-        if (3 == sfl_flg) {
+        if (11 == sfl_flg) {
           ws2812_showScheme(sysCfg.led_scheme -2);
         }
 #endif  // USE_WS2812 ************************************************************************
@@ -390,28 +396,28 @@ void sl_animate()
   }
 
   if ((sysCfg.led_scheme < 2) || !sl_power) {
-    for (byte i = 0; i < sfl_flg; i++) {
+    for (byte i = 0; i < (sfl_flg &7); i++) {
       if (sl_lcolor[i] != sl_tcolor[i]) {
         sl_any = 1;
       }
     }
     if (sl_any) {
       sl_any = 0;
-      for (byte i = 0; i < sfl_flg; i++) {
+      for (byte i = 0; i < (sfl_flg &7); i++) {
         sl_lcolor[i] = sl_tcolor[i];
         cur_col[i] = (sysCfg.led_table) ? ledTable[sl_lcolor[i]] : sl_lcolor[i];
-        if (sfl_flg < 3) {
+        if (sfl_flg < 6) {
           if (pin[GPIO_PWM1 +i] < 99) {
             analogWrite(pin[GPIO_PWM1 +i], cur_col[i] * (PWM_RANGE / 255));
           }
         }
       }
 #ifdef USE_WS2812  // ************************************************************************
-      if (3 == sfl_flg) {
+      if (11 == sfl_flg) {
         ws2812_setColor(0, cur_col[0], cur_col[1], cur_col[2]);
       }
 #endif  // USE_ES2812 ************************************************************************
-      if (sfl_flg > 3) {
+      if (sfl_flg > 11) {
         sl_my92x1_duty(cur_col[0], cur_col[1], cur_col[2], cur_col[3], cur_col[4]);
       }
     }
@@ -525,7 +531,7 @@ void sl_hsb2rgb()
 
 void sl_replaceHSB(String *response)
 {
-  if (sfl_flg > 2) {
+  if ((sfl_flg &7) > 2) {
     sl_rgb2hsb();
     response->replace("{h}", String((uint16_t)(65535.0f * sl_Hue)));
     response->replace("{s}", String((uint8_t)(254.0f * sl_Sat)));
@@ -540,7 +546,7 @@ void sl_replaceHSB(String *response)
 
 void sl_getHSB(float *hue, float *sat, float *bri)
 {
-  if (sfl_flg > 2) {
+  if ((sfl_flg &7) > 2) {
     sl_rgb2hsb();
     *hue = sl_Hue;
     *sat = sl_Sat;
@@ -567,7 +573,7 @@ void sl_setHSB(float hue, float sat, float bri, uint16_t ct)
 */
 
   if (sfl_flg > 2) {
-    if ((5 == sfl_flg) && (ct > 0)) {
+    if ((5 == (sfl_flg &7)) && (ct > 0)) {
       sl_setColorTemp(ct);
     } else {
       sl_Hue = hue;
@@ -581,7 +587,7 @@ void sl_setHSB(float hue, float sat, float bri, uint16_t ct)
   } else {
     uint8_t tmp = (uint8_t)(bri * 100);
     sysCfg.led_dimmer[0] = tmp;
-    if (2 == sfl_flg) {
+    if (2 == (sfl_flg &7)) {
       if (ct > 0) {
         sl_setColorTemp(ct);
       }
@@ -605,13 +611,13 @@ boolean sl_command(char *type, uint16_t index, char *dataBuf, uint16_t data_len,
   char scolor[11];
   char *p;
 
-  if ((sfl_flg > 1) && !strcasecmp_P(type, PSTR(D_CMND_COLOR))) {
+  if (((sfl_flg &7) > 1) && !strcasecmp_P(type, PSTR(D_CMND_COLOR))) {
     if (dataBuf[0] == '#') {
       dataBuf++;
       data_len--;
     }
-    if ((2 * sfl_flg) == data_len) {
-      for (byte i = 0; i < sfl_flg; i++) {
+    if ((2 * (sfl_flg &7)) == data_len) {
+      for (byte i = 0; i < (sfl_flg &7); i++) {
         strlcpy(scolor, dataBuf + (i *2), 3);
         sl_dcolor[i] = (uint8_t)strtol(scolor, &p, 16);
       }
@@ -622,14 +628,14 @@ boolean sl_command(char *type, uint16_t index, char *dataBuf, uint16_t data_len,
     }
   }
 #ifdef USE_WS2812  //  ***********************************************************************
-  else if ((3 == sfl_flg) && !strcasecmp_P(type, PSTR(D_CMND_LED)) && (index > 0) && (index <= sysCfg.led_pixels)) {
+  else if ((11 == sfl_flg) && !strcasecmp_P(type, PSTR(D_CMND_LED)) && (index > 0) && (index <= sysCfg.led_pixels)) {
     if (dataBuf[0] == '#') {
       dataBuf++;
       data_len--;
     }
     uint8_t sl_ledcolor[3];
-    if ((2 * sfl_flg) == data_len) {
-      for (byte i = 0; i < sfl_flg; i++) {
+    if ((2 * (sfl_flg &7)) == data_len) {
+      for (byte i = 0; i < (sfl_flg &7); i++) {
         strlcpy(scolor, dataBuf + (i *2), 3);
         sl_ledcolor[i] = (uint8_t)strtol(scolor, &p, 16);
       }
@@ -637,7 +643,7 @@ boolean sl_command(char *type, uint16_t index, char *dataBuf, uint16_t data_len,
     }
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_LED "%d\":\"%s\"}"), index, ws2812_getColor(index, scolor));
   }
-  else if ((3 == sfl_flg) && !strcasecmp_P(type, PSTR(D_CMND_PIXELS))) {
+  else if ((11 == sfl_flg) && !strcasecmp_P(type, PSTR(D_CMND_PIXELS))) {
     if ((payload > 0) && (payload <= WS2812_MAX_LEDS)) {
       sysCfg.led_pixels = payload;
       ws2812_clear();
@@ -645,13 +651,13 @@ boolean sl_command(char *type, uint16_t index, char *dataBuf, uint16_t data_len,
     }
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_PIXELS "\":%d}"), sysCfg.led_pixels);
   }
-  else if ((3 == sfl_flg) && !strcasecmp_P(type, PSTR(D_CMND_WIDTH))) {
+  else if ((11 == sfl_flg) && !strcasecmp_P(type, PSTR(D_CMND_WIDTH))) {
     if ((payload >= 0) && (payload <= 4)) {
       sysCfg.led_width = payload;
     }
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_WIDTH "\":%d}"), sysCfg.led_width);
   }
-  else if ((3 == sfl_flg) && !strcasecmp_P(type, PSTR(D_CMND_SCHEME))) {
+  else if ((11 == sfl_flg) && !strcasecmp_P(type, PSTR(D_CMND_SCHEME))) {
     if ((payload >= 0) && (payload <= 9)) {
       sysCfg.led_scheme = payload;
       if (1 == sysCfg.led_scheme) {
@@ -672,7 +678,7 @@ boolean sl_command(char *type, uint16_t index, char *dataBuf, uint16_t data_len,
     do_cmnd_power(Maxdevice, 1);
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_WAKEUP "\":\"" D_STARTED "\"}"));
   }
-  else if (!strcasecmp_P(type, PSTR(D_CMND_COLORTEMPERATURE)) && ((2 == sfl_flg) || (5 == sfl_flg))) { // ColorTemp
+  else if (!strcasecmp_P(type, PSTR(D_CMND_COLORTEMPERATURE)) && ((2 == (sfl_flg &7)) || (5 == (sfl_flg &7)))) { // ColorTemp
     if ((payload >= 153) && (payload <= 500)) {  // https://developers.meethue.com/documentation/core-concepts
       sl_setColorTemp(payload);
       coldim = true;
