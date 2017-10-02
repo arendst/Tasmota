@@ -2316,6 +2316,11 @@ void stateloop()
 */
       blogptr &= 0xF;
     }
+#ifdef USE_IR_REMOTE
+    if (pin[GPIO_IRRECV] < 99) {
+      ir_recv_check();  // check if there's anything on IR side
+    }
+#endif
   }
 
 /*-------------------------------------------------------------------------------------------*\
@@ -2717,6 +2722,9 @@ void GPIO_init()
 #ifdef USE_IR_REMOTE
   if (pin[GPIO_IRSEND] < 99) {
     ir_send_init();
+  }
+  if (pin[GPIO_IRRECV] < 99) {
+    ir_recv_init();
   }
 #endif // USE_IR_REMOTE
 

@@ -383,14 +383,16 @@
 // xdrv_ir-send.ino
 #define D_INVALID_JSON "Ongeldig JSON"
 #define D_PROTOCOL_NOT_SUPPORTED "Protocol wordt niet ondersteund"
-#define D_IRSEND_PROTOCOL "PROTOCOL"
-#define D_IRSEND_BITS "BITS"
-#define D_IRSEND_DATA "DATA"
+#define D_IR_PROTOCOL "PROTOCOL"
+#define D_IR_BITS "BITS"
+#define D_IR_DATA "DATA"
 #define D_IRHVAC_VENDOR "VENDOR"
 #define D_IRHVAC_POWER "POWER"
 #define D_IRHVAC_MODE "MODE"
 #define D_IRHVAC_FANSPEED "FANSPEED"
 #define D_IRHVAC_TEMP "TEMP"
+#define D_IRRECEIVED "IRReceived"
+
 
 // xdrv_snfbridge.ino
 #define D_RFRECEIVED "RfReceived"
@@ -456,7 +458,7 @@
 #define D_SENSOR_I2C_SCL  "I2C SCL"
 #define D_SENSOR_I2C_SDA  "I2C SDA"
 #define D_SENSOR_WS2812   "WS2812"
-#define D_SENSOR_IRREMOTE "IRremote"
+#define D_SENSOR_IRSEND   "IRsend"
 #define D_SENSOR_SWITCH   "Switch"  // Suffix "1"
 #define D_SENSOR_BUTTON   "Button"  // Suffix "1"
 #define D_SENSOR_RELAY    "Relais"  // Suffix "1I"
@@ -466,6 +468,7 @@
 #define D_SENSOR_SPI_CS   "SPI CS"
 #define D_SENSOR_SPI_DC   "SPI DC"
 #define D_SENSOR_BACKLIGHT "BLight"
+#define D_SENSOR_IRRECV   "IRrecv"
 
 // Units
 #define D_UNIT_AMPERE "A"
