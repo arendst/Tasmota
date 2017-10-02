@@ -44,6 +44,7 @@
 #endif
 
 IRsend *irsend = NULL;
+IRrecv *irrecv = NULL;
 
 void ir_send_init(void)
 {
@@ -53,6 +54,12 @@ void ir_send_init(void)
 #ifdef USE_IR_HVAC
   mitsubir = new IRMitsubishiAC(pin[GPIO_IRSEND]);
 #endif //USE_IR_HVAC
+}
+
+void ir_recv_init(void)
+{
+  irrecv = new IRrecv(pin[GPIO_IRRECV]);  // an IR led is at GPIO_IRRECV
+  irrecv->enableIRIn(); // Start the receiver
 }
 
 /*********************************************************************************************\
@@ -90,9 +97,9 @@ boolean ir_send_command(char *type, uint16_t index, char *dataBuf, uint16_t data
         snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_IRSEND "\":\"" D_INVALID_JSON "\"}"));  // JSON decode failed
       } else {
         snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_IRSEND "\":\"" D_DONE "\"}"));
-        protocol = ir_json[D_IRSEND_PROTOCOL];
-        bits = ir_json[D_IRSEND_BITS];
-        data = ir_json[D_IRSEND_DATA];
+        protocol = ir_json[D_IR_PROTOCOL];
+        bits = ir_json[D_IR_BITS];
+        data = ir_json[D_IR_DATA];
         if (protocol && bits && data) {
           if      (!strcasecmp_P(protocol, PSTR("NEC")))     irsend->sendNEC(data, bits);
           else if (!strcasecmp_P(protocol, PSTR("SONY")))    irsend->sendSony(data, bits);
@@ -108,7 +115,7 @@ boolean ir_send_command(char *type, uint16_t index, char *dataBuf, uint16_t data
       }
     } else error = true;
     if (error) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_IRSEND "\":\"" D_NO D_IRSEND_PROTOCOL ", " D_IRSEND_BITS " " D_OR " " D_IRSEND_DATA "\"}"));
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_IRSEND "\":\"" D_NO D_IR_PROTOCOL ", " D_IR_BITS " " D_OR " " D_IR_DATA "\"}"));
     }
   }
 #ifdef USE_IR_HVAC
@@ -282,4 +289,34 @@ boolean ir_hvac_mitsubishi(const char *HVAC_Mode,const char *HVAC_FanMode, boole
   return false;
 }
 #endif  // USE_IR_HVAC
+
+void ir_recv_check () {
+  decode_results results;
+
+  if (irrecv->decode(&results)) {
+    if (UNKNOWN != results.decode_type && results.bits > 0) {
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_IRRECEIVED "\":{\"" D_IR_PROTOCOL "\":"));
+      switch (results.decode_type) {
+        case NEC:          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR ("%s \"NEC\""), mqtt_data);          break;
+        case SONY:         snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR ("%s \"SONY\""), mqtt_data);         break;
+        case RC5:          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR ("%s \"RC5\""), mqtt_data);          break;
+        case RC6:          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR ("%s \"RC6\""), mqtt_data);          break;
+        case DISH:         snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR ("%s \"DISH\""), mqtt_data);         break;
+        case SHARP:        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR ("%s \"SHARP\""), mqtt_data);        break;
+        case JVC:          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR ("%s \"JVC\""), mqtt_data);          break;
+        case SANYO:        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR ("%s \"SANYO\""), mqtt_data);        break;
+        case MITSUBISHI:   snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR ("%s \"MITSUBISHI\""), mqtt_data);   break;
+        case SAMSUNG:      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR ("%s \"SAMSUNG\""), mqtt_data);      break;
+        case LG:           snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR ("%s \"LG\""), mqtt_data);           break;
+        case WHYNTER:      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR ("%s \"WHYNTER\""), mqtt_data);      break;
+        case AIWA_RC_T501: snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR ("%s \"AIWA_RC_T501\""), mqtt_data); break;
+        case PANASONIC:    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR ("%s \"PANASONIC\""), mqtt_data);    break;
+      }; // switch decode_type
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR ("%s,\"" D_IR_BITS "\":\"%d\",\"" D_IR_DATA "\":\"%x\"}}"), mqtt_data, results.bits, results.value);
+      mqtt_publish_topic_P(6, PSTR(D_IRRECEIVED));
+    }; // if results.bits > 0
+    irrecv->resume();
+  }; // if decode.results
+} // ir_recv_check ()
+
 #endif  // USE_IR_REMOTE
