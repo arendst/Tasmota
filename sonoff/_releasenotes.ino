@@ -1,4 +1,8 @@
-/* 5.8.0d
+/* 5.8.0e
+ * Add Domoticz counter sensor to Sonoff Bridge representing Received RF code (#943)
+ * Add support for Luani HVIO board (https://luani.de/projekte/esp8266-hvio/) (#953)
+ *
+ * 5.8.0d
  * Remove previous GPIO configuration when another module is selected
  * Fix inverted relay power on state (#909)
  * Change default PWM assignments for H801 RGB(CW) led controller to support optional Color/Dimmer control

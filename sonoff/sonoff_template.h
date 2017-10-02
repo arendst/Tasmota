@@ -160,6 +160,7 @@ enum module_t {
   WITTY,
   YUNSHAN,
   MAGICHOME,
+  LUANIHVIO,
   MAXMODULE };
 
 /********************************************************************************************/
@@ -202,6 +203,7 @@ const uint8_t nicelist[MAXMODULE] PROGMEM = {
   ELECTRODRAGON,
   EXS_RELAY,
   SUPLA1,
+  LUANIHVIO,
   YUNSHAN,
   WION,
   H801,
@@ -664,6 +666,21 @@ const mytmplt modules[MAXMODULE] PROGMEM = {
      GPIO_USER,        // GPIO13 RGBW LED White (optional - set to PWM4 for Cold White or Warm White)
      GPIO_PWM1,        // GPIO14 RGB LED Red
      0, 0, 0
+  },
+  { "Luani HVIO",      // ESP8266_HVIO - https://luani.de/projekte/esp8266-hvio/
+     0,                // GPIO00 Flash jumper
+     GPIO_USER,        // GPIO01 Serial RXD and Optional sensor
+     GPIO_USER,        // GPIO02 Optional sensor / I2C SDA pad
+     GPIO_USER,        // GPIO03 Serial TXD and Optional sensor
+     GPIO_REL1,        // GPIO04 Relay 1 (0 = Off, 1 = On)
+     GPIO_REL2,        // GPIO05 Relay 2 (0 = Off, 1 = On)
+     0, 0, 0, 0, 0, 0, // Flash connection
+     GPIO_SWT1,        // GPIO12 External input 1 (0 = On, 1 = Off)
+     GPIO_SWT2,        // GPIO13 External input 2 (0 = On, 1 = Off)
+     GPIO_USER,        // GPIO14 Optional sensor / I2C SCL pad
+     GPIO_LED1,        // GPIO15 Led (1 = On, 0 = Off)
+     0,
+     GPIO_ADC0         // ADC0 A0 Analog input
   }
 };
 
