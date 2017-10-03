@@ -57,6 +57,11 @@ enum upins_t {
   GPIO_PWM3,           // RGB   Blue
   GPIO_PWM4,           // RGBW  (Cold) White
   GPIO_PWM5,           // RGBCW Warm White
+  GPIO_PWM1_INV,       // RGB   Red   or C  Cold White
+  GPIO_PWM2_INV,       // RGB   Green or CW Warm White
+  GPIO_PWM3_INV,       // RGB   Blue
+  GPIO_PWM4_INV,       // RGBW  (Cold) White
+  GPIO_PWM5_INV,       // RGBCW Warm White
   GPIO_CNTR1,
   GPIO_CNTR2,
   GPIO_CNTR3,
@@ -103,6 +108,11 @@ const char sensors[GPIO_SENSOR_END][9] PROGMEM = {
   D_SENSOR_PWM "3",
   D_SENSOR_PWM "4",
   D_SENSOR_PWM "5",
+  D_SENSOR_PWM "1I",
+  D_SENSOR_PWM "2I",
+  D_SENSOR_PWM "3I",
+  D_SENSOR_PWM "4I",
+  D_SENSOR_PWM "5I",
   D_SENSOR_COUNTER "1",
   D_SENSOR_COUNTER "2",
   D_SENSOR_COUNTER "3",

@@ -408,7 +408,8 @@ void sl_animate()
         cur_col[i] = (sysCfg.led_table) ? ledTable[sl_lcolor[i]] : sl_lcolor[i];
         if (sfl_flg < 6) {
           if (pin[GPIO_PWM1 +i] < 99) {
-            analogWrite(pin[GPIO_PWM1 +i], cur_col[i] * (PWM_RANGE / 255));
+            int pwmvalue = cur_col[i] * (PWM_RANGE / 255);
+            analogWrite(pin[GPIO_PWM1 +i], pwm_inverted[i]?PWM_RANGE-pwmvalue:pwmvalue);
           }
         }
       }
