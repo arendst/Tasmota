@@ -447,7 +447,7 @@ void handleRoot()
           snprintf_P(line, sizeof(line), HTTP_MSG_SLIDER1, sl_getColorTemp());
           page += line;
         }
-        snprintf_P(line, sizeof(line), HTTP_MSG_SLIDER2, sysCfg.led_dimmer[0]);
+        snprintf_P(line, sizeof(line), HTTP_MSG_SLIDER2, sysCfg.led_dimmer);
         page += line;
       }
       page += FPSTR(HTTP_TABLE100);
@@ -572,7 +572,7 @@ void handleAjax2()
  * Will interrupt user action when selected
   if (sfl_flg) {
     snprintf_P(line, sizeof(line), PSTR("<input type='range' min='1' max='100' value='%d' onchange='lb(value)'>"),
-      sysCfg.led_dimmer[0]);
+      sysCfg.led_dimmer);
     page += line;
   }
 */

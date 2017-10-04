@@ -69,7 +69,7 @@ uint8_t sl_tcolor[5];
 uint8_t sl_lcolor[5];
 
 uint8_t sl_power = 0;
-uint8_t sl_any = 0;
+uint8_t sl_any = 1;
 uint8_t sl_wakeupActive = 0;
 uint8_t sl_wakeupDimmer = 0;
 uint16_t sl_wakeupCntr = 0;
@@ -201,7 +201,7 @@ void sl_init(void)
   }
 
   sl_power = 0;
-  sl_any = 0;
+  sl_any = 1;
   sl_wakeupActive = 0;
 }
 
@@ -270,7 +270,7 @@ void sl_setColor()
     }
   }
   float mDim = (float)highest / 2.55;
-  sysCfg.led_dimmer[0] = (uint8_t)mDim;
+  sysCfg.led_dimmer = (uint8_t)mDim;
   float newDim = 100 / mDim;
   for (byte i = 0; i < (sfl_flg &7); i++) {
     temp = (float)sl_dcolor[i] * newDim;
@@ -280,7 +280,7 @@ void sl_setColor()
 
 char* sl_getColor(char* scolor)
 {
-  sl_setDim(sysCfg.led_dimmer[0]);
+  sl_setDim(sysCfg.led_dimmer);
   scolor[0] = '\0';
   for (byte i = 0; i < (sfl_flg &7); i++) {
     snprintf_P(scolor, 11, PSTR("%s%02X"), scolor, sl_dcolor[i]);
@@ -292,11 +292,10 @@ void sl_prepPower()
 {
   char scolor[11];
 
-//  do_cmnd_power(index, (sysCfg.led_dimmer[0]>0));
-  if (sysCfg.led_dimmer[0] && !(sl_power)) {
+  if (sysCfg.led_dimmer && !(sl_power)) {
     do_cmnd_power(Maxdevice, 7);  // No publishPowerState
   }
-  else if (!sysCfg.led_dimmer[0] && sl_power) {
+  else if (!sysCfg.led_dimmer && sl_power) {
     do_cmnd_power(Maxdevice, 6);  // No publishPowerState
   }
 #ifdef USE_DOMOTICZ
@@ -305,10 +304,10 @@ void sl_prepPower()
 #endif  // USE_DOMOTICZ
   if ((sfl_flg &7) > 1) {
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_RSLT_POWER "\":\"%s\", \"" D_CMND_DIMMER "\":%d, \"" D_CMND_COLOR "\":\"%s\"}"),
-      getStateText(sl_power), sysCfg.led_dimmer[0], sl_getColor(scolor));
+      getStateText(sl_power), sysCfg.led_dimmer, sl_getColor(scolor));
   } else {
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_RSLT_POWER "\":\"%s\", \"" D_CMND_DIMMER "\":%d}"),
-      getStateText(sl_power), sysCfg.led_dimmer[0]);
+      getStateText(sl_power), sysCfg.led_dimmer);
   }
 }
 
@@ -342,7 +341,7 @@ void sl_animate()
     sleep = 0;
     switch (sysCfg.led_scheme) {
       case 0:  // Power On
-        sl_setDim(sysCfg.led_dimmer[0]);  // Power On
+        sl_setDim(sysCfg.led_dimmer);  // Power On
         if (0 == sysCfg.led_fade) {
           for (byte i = 0; i < (sfl_flg &7); i++) {
             sl_tcolor[i] = sl_dcolor[i];
@@ -370,10 +369,10 @@ void sl_animate()
           sl_wakeupDimmer = 0;
         }
         sl_wakeupCntr++;
-        if (sl_wakeupCntr > ((sysCfg.led_wakeup * STATES) / sysCfg.led_dimmer[0])) {
+        if (sl_wakeupCntr > ((sysCfg.led_wakeup * STATES) / sysCfg.led_dimmer)) {
           sl_wakeupCntr = 0;
           sl_wakeupDimmer++;
-          if (sl_wakeupDimmer <= sysCfg.led_dimmer[0]) {
+          if (sl_wakeupDimmer <= sysCfg.led_dimmer) {
             sl_setDim(sl_wakeupDimmer);
             for (byte i = 0; i < (sfl_flg &7); i++) {
               sl_tcolor[i] = sl_dcolor[i];
@@ -408,7 +407,8 @@ void sl_animate()
         cur_col[i] = (sysCfg.led_table) ? ledTable[sl_lcolor[i]] : sl_lcolor[i];
         if (sfl_flg < 6) {
           if (pin[GPIO_PWM1 +i] < 99) {
-            analogWrite(pin[GPIO_PWM1 +i], cur_col[i] * (PWM_RANGE / 255));
+            uint16_t curcol = cur_col[i] * (PWM_RANGE / 255);
+            analogWrite(pin[GPIO_PWM1 +i], pwm_inverted[i] ? PWM_RANGE - curcol : curcol);
           }
         }
       }
@@ -434,7 +434,7 @@ float sl_Bri = 0.0;
 
 void sl_rgb2hsb()
 {
-  sl_setDim(sysCfg.led_dimmer[0]);
+  sl_setDim(sysCfg.led_dimmer);
 
   // convert colors to float between (0.0 - 1.0)
   float r = sl_dcolor[0] / 255.0f;
@@ -539,8 +539,8 @@ void sl_replaceHSB(String *response)
   } else {
     response->replace("{h}", "0");
     response->replace("{s}", "0");
-//    response->replace("{b}", String((uint8_t)(2.54f * (float)sysCfg.led_dimmer[0])));
-    response->replace("{b}", String((uint8_t)(0.01f * (float)sysCfg.led_dimmer[0])));
+//    response->replace("{b}", String((uint8_t)(2.54f * (float)sysCfg.led_dimmer)));
+    response->replace("{b}", String((uint8_t)(0.01f * (float)sysCfg.led_dimmer)));
   }
 }
 
@@ -554,8 +554,8 @@ void sl_getHSB(float *hue, float *sat, float *bri)
   } else {
     *hue = 0;
     *sat = 0;
-//    *bri = (2.54f * (float)sysCfg.led_dimmer[0]);
-    *bri = (0.01f * (float)sysCfg.led_dimmer[0]);
+//    *bri = (2.54f * (float)sysCfg.led_dimmer);
+    *bri = (0.01f * (float)sysCfg.led_dimmer);
   }
 }
 
@@ -586,7 +586,7 @@ void sl_setHSB(float hue, float sat, float bri, uint16_t ct)
     mqtt_publish_topic_P(5, PSTR(D_CMND_COLOR));
   } else {
     uint8_t tmp = (uint8_t)(bri * 100);
-    sysCfg.led_dimmer[0] = tmp;
+    sysCfg.led_dimmer = tmp;
     if (2 == (sfl_flg &7)) {
       if (ct > 0) {
         sl_setColorTemp(ct);
@@ -671,7 +671,7 @@ boolean sl_command(char *type, uint16_t index, char *dataBuf, uint16_t data_len,
 #endif  // USE_WS2812 ************************************************************************
   else if (!strcasecmp_P(type, PSTR(D_CMND_WAKEUP))) {
     if ((payload >= 0) && (payload <= 100)) {
-      sysCfg.led_dimmer[0] = payload;
+      sysCfg.led_dimmer = payload;
     }
     sl_wakeupActive = 3;
     sysCfg.led_scheme = 1;
@@ -688,10 +688,10 @@ boolean sl_command(char *type, uint16_t index, char *dataBuf, uint16_t data_len,
   }
   else if (!strcasecmp_P(type, PSTR(D_CMND_DIMMER))) {
     if ((payload >= 0) && (payload <= 100)) {
-      sysCfg.led_dimmer[0] = payload;
+      sysCfg.led_dimmer = payload;
       coldim = true;
     } else {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_DIMMER "\":%d}"), sysCfg.led_dimmer[0]);
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_DIMMER "\":%d}"), sysCfg.led_dimmer);
     }
   }
   else if (!strcasecmp_P(type, PSTR(D_CMND_LEDTABLE))) {

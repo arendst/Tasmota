@@ -25,7 +25,7 @@
     - Select IDE Tools - Flash Size: "1M (no SPIFFS)"
   ====================================================*/
 
-#define VERSION                0x05080005  // 5.8.0e
+#define VERSION                0x05080006  // 5.8.0f
 
 enum week_t  {Last, First, Second, Third, Fourth};
 enum dow_t   {Sun=1, Mon, Tue, Wed, Thu, Fri, Sat};
@@ -285,6 +285,7 @@ mytmplt my_module;                    // Active copy of GPIOs
 uint8_t pin[GPIO_MAX];                // Possible pin configurations
 uint8_t rel_inverted[4] = { 0 };      // Relay inverted flag (1 = (0 = On, 1 = Off))
 uint8_t led_inverted[4] = { 0 };      // LED inverted flag (1 = (0 = On, 1 = Off))
+uint8_t pwm_inverted[5] = { 0 };      // PWM inverted flag (1 = inverted)
 uint8_t dht_flg = 0;                  // DHT configured
 uint8_t hlw_flg = 0;                  // Power monitor configured
 uint8_t i2c_flg = 0;                  // I2C configured
@@ -1253,7 +1254,7 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
     else if (!strcasecmp_P(type, PSTR(D_CMND_PWM)) && (index > pwm_idxoffset) && (index <= 5)) {
       if ((payload >= 0) && (payload <= PWM_RANGE) && (pin[GPIO_PWM1 + index -1] < 99)) {
         sysCfg.pwmvalue[index -1] = payload;
-        analogWrite(pin[GPIO_PWM1 + index -1], payload);
+        analogWrite(pin[GPIO_PWM1 + index -1], pwm_inverted[index -1] ? PWM_RANGE - payload : payload);
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_PWM "\":{"));
       bool first = true;
@@ -2421,6 +2422,8 @@ void stateloop()
           if (!((sysCfg.power &mask) == (power &mask))) {
             sysCfg.power = power;
           }
+        } else {
+          sysCfg.power = 0;
         }
         CFG_Save(0);
         savedatacounter = sysCfg.savedata;
@@ -2438,6 +2441,8 @@ void stateloop()
       }
       if (sysCfg.flag.savestate) {
         sysCfg.power = power;
+      } else {
+        sysCfg.power = 0;
       }
       if (hlw_flg) {
         hlw_savestate();
@@ -2597,6 +2602,10 @@ void GPIO_init()
         led_inverted[mpin - GPIO_LED1_INV] = 1;
         mpin -= 4;
       }
+      else if ((mpin >= GPIO_PWM1_INV) && (mpin <= GPIO_PWM5_INV)) {
+        pwm_inverted[mpin - GPIO_PWM1_INV] = 1;
+        mpin -= 5;
+      }
 #ifdef USE_DHT
       else if ((mpin >= GPIO_DHT11) && (mpin <= GPIO_DHT22)) {
         if (dht_setup(i, mpin)) {
@@ -2704,7 +2713,7 @@ void GPIO_init()
     if (pin[GPIO_PWM1 +i] < 99) {
       pwm_flg = 1;
       pinMode(pin[GPIO_PWM1 +i], OUTPUT);
-      analogWrite(pin[GPIO_PWM1 +i], sysCfg.pwmvalue[i]);
+      analogWrite(pin[GPIO_PWM1 +i], pwm_inverted[i] ? PWM_RANGE - sysCfg.pwmvalue[i] : sysCfg.pwmvalue[i]);
     }
   }
 

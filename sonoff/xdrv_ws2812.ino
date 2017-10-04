@@ -118,7 +118,7 @@ void ws2812_clock()
   RgbColor c;
 
   strip->ClearTo(0);   // Reset strip
-  float newDim = 100 / (float)sysCfg.led_dimmer[0];
+  float newDim = 100 / (float)sysCfg.led_dimmer;
   float f1 = 255 / newDim;
   uint8_t i1 = (uint8_t)f1;
   float f2 = 127 / newDim;
@@ -135,7 +135,6 @@ void ws2812_clock()
   c = strip->GetPixelColor(mod(i -1, j)); c.G = i3; strip->SetPixelColor(mod(i -1, j), c);
   c = strip->GetPixelColor(mod(i,    j)); c.G = i1; strip->SetPixelColor(mod(i,    j), c);
   c = strip->GetPixelColor(mod(i +1, j)); c.G = i3; strip->SetPixelColor(mod(i +1, j), c);
-//  i = (rtcTime.Hour % 12) * (50 / clksize);
   i = (rtcTime.Hour % 12 * 5 + rtcTime.Minute / 12 ) * 10 / clksize;
   c = strip->GetPixelColor(mod(i -2, j)); c.R = i3; strip->SetPixelColor(mod(i -2, j), c);
   c = strip->GetPixelColor(mod(i -1, j)); c.R = i2; strip->SetPixelColor(mod(i -1, j), c);
@@ -161,7 +160,7 @@ void ws2812_gradientColor(uint8_t schemenr, struct wsColor* mColor, uint16_t ran
     start = (scheme.count -1) - start;
     end = (scheme.count -1) - end;
   }
-  float newDim = 100 / (float)sysCfg.led_dimmer[0];
+  float newDim = 100 / (float)sysCfg.led_dimmer;
   float fmyRed = (float)map(rangeIndex % gradRange, 0, gradRange, scheme.colors[start].red, scheme.colors[end].red) / newDim;
   float fmyGrn = (float)map(rangeIndex % gradRange, 0, gradRange, scheme.colors[start].green, scheme.colors[end].green) / newDim;
   float fmyBlu = (float)map(rangeIndex % gradRange, 0, gradRange, scheme.colors[start].blue, scheme.colors[end].blue) / newDim;
@@ -235,7 +234,7 @@ void ws2812_bars(uint8_t schemenr)
 
   wsColor mcolor[scheme.count];
   memcpy(mcolor, scheme.colors, sizeof(mcolor));
-  float newDim = 100 / (float)sysCfg.led_dimmer[0];
+  float newDim = 100 / (float)sysCfg.led_dimmer;
   for (i = 0; i < scheme.count; i++) {
     float fmyRed = (float)mcolor[i].red / newDim;
     float fmyGrn = (float)mcolor[i].green / newDim;

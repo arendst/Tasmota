@@ -166,7 +166,9 @@ struct SYSCFG {
   uint16_t      led_pixels;
   uint8_t       led_color[5];
   uint8_t       led_table;
-  uint8_t       led_dimmer[3];
+  uint8_t       led_dimmer;
+  uint8_t       ex_led_dimmer1;            // Never used
+  uint8_t       ex_led_dimmer2;            // Never used
   uint8_t       led_fade;
   uint8_t       led_speed;
   uint8_t       led_scheme;

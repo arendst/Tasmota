@@ -544,9 +544,7 @@ void CFG_DefaultSet_3_9_3()
     sysCfg.led_color[i] = 255;
   }
   sysCfg.led_table = 0;
-  for (byte i = 0; i < 3; i++){
-    sysCfg.led_dimmer[i] = 10;
-  }
+  sysCfg.led_dimmer = 10;
   sysCfg.led_fade = 0;
   sysCfg.led_speed = 1;
   sysCfg.led_scheme = 0;
@@ -726,7 +724,7 @@ void CFG_Delta()
         sysCfg.led_color[0] = sysCfg.ws_red;
         sysCfg.led_color[1] = sysCfg.ws_green;
         sysCfg.led_color[2] = sysCfg.ws_blue;
-        sysCfg.led_dimmer[0] = sysCfg.ws_dimmer;
+        sysCfg.led_dimmer = sysCfg.ws_dimmer;
         sysCfg.led_table = sysCfg.ws_ledtable;
         sysCfg.led_fade = sysCfg.ws_fade;
         sysCfg.led_speed = sysCfg.ws_speed;

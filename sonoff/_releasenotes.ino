@@ -1,4 +1,9 @@
-/* 5.8.0e
+/* 5.8.0f
+ * Set all saved power settings to Off when SetOption0 (SaveState) = 0 (#955)
+ * Allow PWM initialization after restart (#955)
+ * Add support for inverted PWM (#960)
+ *
+ * 5.8.0e
  * Add Domoticz counter sensor to Sonoff Bridge representing Received RF code (#943)
  * Add support for Luani HVIO board (https://luani.de/projekte/esp8266-hvio/) (#953)
  *
