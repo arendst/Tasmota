@@ -632,10 +632,16 @@ boolean inModule(byte val, uint8_t *arr)
   }
 #endif
   if (((val >= GPIO_REL1) && (val <= GPIO_REL4)) || ((val >= GPIO_LED1) && (val <= GPIO_LED4))) {
-    offset = 4;
+    offset = (GPIO_REL1_INV - GPIO_REL1);
   }
   if (((val >= GPIO_REL1_INV) && (val <= GPIO_REL4_INV)) || ((val >= GPIO_LED1_INV) && (val <= GPIO_LED4_INV))) {
-    offset = -4;
+    offset = -(GPIO_REL1_INV - GPIO_REL1);
+  }
+  if ((val >= GPIO_PWM1) && (val <= GPIO_PWM5)) {
+    offset = (GPIO_PWM1_INV - GPIO_PWM1);
+  }
+  if ((val >= GPIO_PWM1_INV) && (val <= GPIO_PWM5_INV)) {
+    offset = -(GPIO_PWM1_INV - GPIO_PWM1);
   }
   for (byte i = 0; i < MAX_GPIO_PIN; i++) {
     if (arr[i] == val) {

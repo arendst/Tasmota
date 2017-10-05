@@ -25,7 +25,7 @@
     - Select IDE Tools - Flash Size: "1M (no SPIFFS)"
   ====================================================*/
 
-#define VERSION                0x05080006  // 5.8.0f
+#define VERSION                0x05080007  // 5.8.0g
 
 enum week_t  {Last, First, Second, Third, Fourth};
 enum dow_t   {Sun=1, Mon, Tue, Wed, Thu, Fri, Sat};
@@ -290,9 +290,7 @@ uint8_t dht_flg = 0;                  // DHT configured
 uint8_t hlw_flg = 0;                  // Power monitor configured
 uint8_t i2c_flg = 0;                  // I2C configured
 uint8_t spi_flg = 0;                  // SPI configured
-uint8_t pwm_flg = 0;                  // PWM configured
-uint8_t sfl_flg = 0;                  // Sonoff Led flag (0 = No led, 1 = BN-SZ01, 2 = Sonoff Led, 3 = H801/MagicHome, 4 = H801/MagicHome, 5 = H801, 11 = WS2812, 12 = AiLight, 13 = Sonoff B1)
-uint8_t pwm_idxoffset = 0;            // Allowed PWM command offset (change for Sonoff Led)
+uint8_t sfl_flg = 0;                  // Led flag (0 = No led, 1 = BN-SZ01, 2 = Sonoff Led, 3 = H801/MagicHome, 4 = H801/MagicHome, 5 = H801, 11 = WS2812, 12 = AiLight, 13 = Sonoff B1)
 
 boolean mDNSbegun = false;
 
@@ -1251,7 +1249,7 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
       }
       mqtt_data[0] = '\0';
     }
-    else if (!strcasecmp_P(type, PSTR(D_CMND_PWM)) && (index > pwm_idxoffset) && (index <= 5)) {
+    else if (!sfl_flg && !strcasecmp_P(type, PSTR(D_CMND_PWM)) && (index > 0) && (index <= 5)) {
       if ((payload >= 0) && (payload <= PWM_RANGE) && (pin[GPIO_PWM1 + index -1] < 99)) {
         sysCfg.pwmvalue[index -1] = payload;
         analogWrite(pin[GPIO_PWM1 + index -1], pwm_inverted[index -1] ? PWM_RANGE - payload : payload);
@@ -2596,15 +2594,15 @@ void GPIO_init()
     if (mpin) {
       if ((mpin >= GPIO_REL1_INV) && (mpin <= GPIO_REL4_INV)) {
         rel_inverted[mpin - GPIO_REL1_INV] = 1;
-        mpin -= 4;
+        mpin -= (GPIO_REL1_INV - GPIO_REL1);
       }
       else if ((mpin >= GPIO_LED1_INV) && (mpin <= GPIO_LED4_INV)) {
         led_inverted[mpin - GPIO_LED1_INV] = 1;
-        mpin -= 4;
+        mpin -= (GPIO_LED1_INV - GPIO_LED1);
       }
       else if ((mpin >= GPIO_PWM1_INV) && (mpin <= GPIO_PWM5_INV)) {
         pwm_inverted[mpin - GPIO_PWM1_INV] = 1;
-        mpin -= 5;
+        mpin -= (GPIO_PWM1_INV - GPIO_PWM1);
       }
 #ifdef USE_DHT
       else if ((mpin >= GPIO_DHT11) && (mpin <= GPIO_DHT22)) {
@@ -2626,19 +2624,18 @@ void GPIO_init()
     Serial.set_tx(2);
   }
 
-  analogWriteRange(PWM_RANGE);  // Default is 1023 (Arduino.h)
-  analogWriteFreq(PWM_FREQ);    // Default is 1000 (core_esp8266_wiring_pwm.c)
+  analogWriteRange(PWM_RANGE);             // Default is 1023 (Arduino.h)
+  analogWriteFreq(PWM_FREQ);               // Default is 1000 (core_esp8266_wiring_pwm.c)
 
+  Maxdevice = 1;
   if (sysCfg.flag.pwm_control) {
     sfl_flg = 0;
     for (byte i = 0; i < 5; i++) {
       if (pin[GPIO_PWM1 +i] < 99) {
-        sfl_flg++;
+        sfl_flg++;                         // Use Dimmer/Color control for all PWM as SetOption15 = 1
       }
     }
   }
-
-  Maxdevice = 1;
   if (SONOFF_BRIDGE == sysCfg.module) {
     Baudrate = 19200;
   }
@@ -2656,7 +2653,7 @@ void GPIO_init()
   }
   else if ((H801 == sysCfg.module) || (MAGICHOME == sysCfg.module)) {  // PWM RGBCW led
     if (!sysCfg.flag.pwm_control) {
-      sfl_flg = 0;
+      sfl_flg = 0;                         // Use basic PWM control if SetOption15 = 0
     }
   }
   else if (SONOFF_BN == sysCfg.module) {   // PWM Single color led (White)
@@ -2672,7 +2669,9 @@ void GPIO_init()
     sfl_flg = 13;
   }
   else {
-    Maxdevice = 0;
+    if (!sfl_flg) {
+      Maxdevice = 0;
+    }
     for (byte i = 0; i < 4; i++) {
       if (pin[GPIO_REL1 +i] < 99) {
         pinMode(pin[GPIO_REL1 +i], OUTPUT);
@@ -2703,17 +2702,14 @@ void GPIO_init()
     sfl_flg = 11;
   }
 #endif  // USE_WS2812
-  if (sfl_flg) {                // Sonoff B1, AiLight, Sonoff Led or BN-SZ01, WS2812
-    if (sfl_flg < 6) {
-      pwm_idxoffset = sfl_flg;  // 1 for BN-SZ01, 2 for Sonoff Led, 3,4,5 for H801 and  MagicHome
-    }
+  if (sfl_flg) {                           // Any Led light under Dimmer/Color control
     sl_init();
-  }
-  for (byte i = pwm_idxoffset; i < 5; i++) {
-    if (pin[GPIO_PWM1 +i] < 99) {
-      pwm_flg = 1;
-      pinMode(pin[GPIO_PWM1 +i], OUTPUT);
-      analogWrite(pin[GPIO_PWM1 +i], pwm_inverted[i] ? PWM_RANGE - sysCfg.pwmvalue[i] : sysCfg.pwmvalue[i]);
+  } else {
+    for (byte i = 0; i < 5; i++) {
+      if (pin[GPIO_PWM1 +i] < 99) {
+        pinMode(pin[GPIO_PWM1 +i], OUTPUT);
+        analogWrite(pin[GPIO_PWM1 +i], pwm_inverted[i] ? PWM_RANGE - sysCfg.pwmvalue[i] : sysCfg.pwmvalue[i]);
+      }
     }
   }
 

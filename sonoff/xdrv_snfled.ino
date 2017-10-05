@@ -161,19 +161,22 @@ void sl_init(void)
 {
   if (sfl_flg < 6) {  // PWM
     for (byte i = 0; i < sfl_flg; i++) {
-      sysCfg.pwmvalue[i] = 0;  // Disable direct PWM control
+      sysCfg.pwmvalue[i] = 0;           // Disable direct PWM control
+    }
+    if (1 == sfl_flg) {
+      sysCfg.led_color[0] = 255;        // One PWM channel only supports Dimmer but needs max color
     }
     if (SONOFF_LED == sysCfg.module) {  // Fix Sonoff Led instabilities
       if (!my_module.gp.io[4]) {
-        pinMode(4, OUTPUT);     // Stop floating outputs
+        pinMode(4, OUTPUT);             // Stop floating outputs
         digitalWrite(4, LOW);
       }
       if (!my_module.gp.io[5]) {
-        pinMode(5, OUTPUT);     // Stop floating outputs
+        pinMode(5, OUTPUT);             // Stop floating outputs
         digitalWrite(5, LOW);
       }
       if (!my_module.gp.io[14]) {
-        pinMode(14, OUTPUT);    // Stop floating outputs
+        pinMode(14, OUTPUT);            // Stop floating outputs
         digitalWrite(14, LOW);
       }
     }
@@ -408,6 +411,8 @@ void sl_animate()
         if (sfl_flg < 6) {
           if (pin[GPIO_PWM1 +i] < 99) {
             uint16_t curcol = cur_col[i] * (PWM_RANGE / 255);
+//            snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION "Cur_Col%d %d, CurCol %d"), i, cur_col[i], curcol);
+//            addLog(LOG_LEVEL_DEBUG);
             analogWrite(pin[GPIO_PWM1 +i], pwm_inverted[i] ? PWM_RANGE - curcol : curcol);
           }
         }
