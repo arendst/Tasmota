@@ -1505,7 +1505,7 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
       }
     }
     else if (!strcasecmp_P(type, PSTR(D_CMND_TIMEZONE))) {
-      if ((data_len > 0) && (((payload >= -12) && (payload <= 12)) || (99 == payload))) {
+      if ((data_len > 0) && (((payload >= -13) && (payload <= 13)) || (99 == payload))) {
         sysCfg.timezone = payload;
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_TIMEZONE "\":%d}"), sysCfg.timezone);

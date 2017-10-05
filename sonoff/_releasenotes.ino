@@ -1,6 +1,7 @@
 /* 5.8.0g
  * Fix inverted PWM index (#960)
  * Fix some PWM related issues (#967)
+ * Fix timezone range from -12/12 to -13/13 (#968)
  *
  * 5.8.0f
  * Set all saved power settings to Off when SetOption0 (SaveState) = 0 (#955)
