@@ -25,7 +25,7 @@
     - Select IDE Tools - Flash Size: "1M (no SPIFFS)"
   ====================================================*/
 
-#define VERSION                0x05080007  // 5.8.0g
+#define VERSION                0x05080008  // 5.8.0h
 
 enum week_t  {Last, First, Second, Third, Fourth};
 enum dow_t   {Sun=1, Mon, Tue, Wed, Thu, Fri, Sat};
@@ -2317,6 +2317,14 @@ void stateloop()
     }
   }
 
+#ifdef USE_IR_REMOTE
+#ifdef USE_IR_RECEIVE
+  if (pin[GPIO_IRRECV] < 99) {
+    ir_recv_check();  // check if there's anything on IR side
+  }
+#endif  // USE_IR_RECEIVE
+#endif  // USE_IR_REMOTE
+
 /*-------------------------------------------------------------------------------------------*\
  * Every 0.05 second
 \*-------------------------------------------------------------------------------------------*/
@@ -2723,7 +2731,12 @@ void GPIO_init()
   if (pin[GPIO_IRSEND] < 99) {
     ir_send_init();
   }
-#endif // USE_IR_REMOTE
+#ifdef USE_IR_RECEIVE
+  if (pin[GPIO_IRRECV] < 99) {
+    ir_recv_init();
+  }
+#endif  // USE_IR_RECEIVE
+#endif  // USE_IR_REMOTE
 
   counter_init();
 

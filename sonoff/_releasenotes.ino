@@ -1,4 +1,12 @@
-/* 5.8.0g
+/* 5.8.0h
+ * Rename command IRRemote to IRSend (#956)
+ * Add optional IR Receiver support (#956)
+ * Change default PWM assignment for Witty Cloud to support optional Color/Dimmer control (#976)
+ *   GPIO12 (Green) from GPIO_PWM4 to GPIO_PWM2
+ *   GPIO13 (Blue)  from GPIO_PWM5 to GPIO_PWM3
+ *   GPIO15 (Red)   from GPIO_PWM3 to GPIO_PWM1
+ *
+ * 5.8.0g
  * Fix inverted PWM index (#960)
  * Fix some PWM related issues (#967)
  * Fix timezone range from -12/12 to -13/13 (#968)

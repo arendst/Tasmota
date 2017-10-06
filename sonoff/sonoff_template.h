@@ -66,6 +66,7 @@ enum upins_t {
   GPIO_PWM3_INV,       // RGB   Blue
   GPIO_PWM4_INV,       // RGBW  (Cold) White
   GPIO_PWM5_INV,       // RGBCW Warm White
+  GPIO_IRRECV,         // IR receiver
   GPIO_SENSOR_END };
 
 // Text in webpage Module Parameters and commands GPIOS and GPIO
@@ -78,7 +79,7 @@ const char sensors[GPIO_SENSOR_END][9] PROGMEM = {
   D_SENSOR_I2C_SCL,
   D_SENSOR_I2C_SDA,
   D_SENSOR_WS2812,
-  D_SENSOR_IRREMOTE,
+  D_SENSOR_IRSEND,
   D_SENSOR_SWITCH "1",
   D_SENSOR_SWITCH "2",
   D_SENSOR_SWITCH "3",
@@ -116,7 +117,8 @@ const char sensors[GPIO_SENSOR_END][9] PROGMEM = {
   D_SENSOR_PWM "2I",
   D_SENSOR_PWM "3I",
   D_SENSOR_PWM "4I",
-  D_SENSOR_PWM "5I"
+  D_SENSOR_PWM "5I",
+  D_SENSOR_IRRECV
   };
 
 // Programmer selectable GPIO functionality offset by user selectable GPIOs
@@ -647,10 +649,10 @@ const mytmplt modules[MAXMODULE] PROGMEM = {
      GPIO_KEY1,        // GPIO04 D2 push button on ESP-12F board
      GPIO_USER,        // GPIO05 D1 optional sensor
      0, 0, 0, 0, 0, 0, // Flash connection
-     GPIO_PWM4,        // GPIO12 D6 RGB LED Green
-     GPIO_PWM5,        // GPIO13 D7 RGB LED Blue
+     GPIO_PWM2,        // GPIO12 D6 RGB LED Green
+     GPIO_PWM3,        // GPIO13 D7 RGB LED Blue
      GPIO_USER,        // GPIO14 D5 optional sensor
-     GPIO_PWM3,        // GPIO15 D8 RGB LED Red
+     GPIO_PWM1,        // GPIO15 D8 RGB LED Red
      GPIO_USER,        // GPIO16 D0 optional sensor
      GPIO_ADC0         // ADC0 A0 Light sensor / Requires USE_ADC_VCC in user_config.h to be disabled
   },
