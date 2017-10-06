@@ -647,10 +647,10 @@ const mytmplt modules[MAXMODULE] PROGMEM = {
      GPIO_KEY1,        // GPIO04 D2 push button on ESP-12F board
      GPIO_USER,        // GPIO05 D1 optional sensor
      0, 0, 0, 0, 0, 0, // Flash connection
-     GPIO_PWM4,        // GPIO12 D6 RGB LED Green
-     GPIO_PWM5,        // GPIO13 D7 RGB LED Blue
+     GPIO_PWM2,        // GPIO12 D6 RGB LED Green
+     GPIO_PWM3,        // GPIO13 D7 RGB LED Blue
      GPIO_USER,        // GPIO14 D5 optional sensor
-     GPIO_PWM3,        // GPIO15 D8 RGB LED Red
+     GPIO_PWM1,        // GPIO15 D8 RGB LED Red
      GPIO_USER,        // GPIO16 D0 optional sensor
      GPIO_ADC0         // ADC0 A0 Light sensor / Requires USE_ADC_VCC in user_config.h to be disabled
   },
