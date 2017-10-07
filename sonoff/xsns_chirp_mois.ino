@@ -86,8 +86,6 @@ boolean chirp_detect()
   if (chirptype) {
     return true;
   }
-
-  char log[LOGSZ];
   uint8_t status;
   boolean success = false;
 
@@ -101,8 +99,8 @@ boolean chirp_detect()
     strcpy(chirpstype, "CHIRP");
   }
   if (success) {
-    snprintf_P(log, sizeof(log), PSTR("I2C: %s found at address 0x%x"), chirpstype, chirpaddr);
-    addLog(LOG_LEVEL_DEBUG, log);
+    snprintf_P(log_data, sizeof(log_data), PSTR("I2C: %s found at address 0x%x"), chirpstype, chirpaddr);
+    addLog(LOG_LEVEL_DEBUG);
   } else {
     chirptype = 0;
   }
@@ -113,7 +111,7 @@ boolean chirp_detect()
  * Presentation
 \*********************************************************************************************/
 
-void chirp_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
+void chirp_mqttPresent(uint8_t* djson)
 {
   if (!chirptype) {
     return;
@@ -124,7 +122,7 @@ void chirp_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
   uint16_t m = chirp_readMoist();
   float t = chirp_readTemp();
   dtostrf(t, 1, sysCfg.flag.temperature_resolution, stemp1);
-  snprintf_P(svalue, ssvalue, PSTR("%s, \"%s\":{\"Light\":%d, \"Moisture\":%d, \"Temperature\":%s}"), svalue, chirpstype, l,m,stemp1);
+  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s, \"%s\":{\"Light\":%d, \"Moisture\":%d, \"Temperature\":%s}"), mqtt_data, chirpstype, l,m,stemp1);
   *djson = 1;
 #ifdef USE_DOMOTICZ
   domoticz_sensor5(l);

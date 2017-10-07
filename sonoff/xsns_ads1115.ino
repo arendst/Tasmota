@@ -80,8 +80,6 @@ boolean ads1115_detect()
   if (ads1115type) {
     return true;
   }
-
-  char log[LOGSZ];
   uint8_t status;
   boolean success = false;
 
@@ -89,8 +87,8 @@ boolean ads1115_detect()
     ads1115addr = ads1115addresses[i];
     ADS1115 adc0(ads1115addr);
 
-    snprintf_P(log, sizeof(log), PSTR("I2C: Probing addr 0x%x for ADS1115."), ads1115addr);
-    addLog(LOG_LEVEL_DEBUG, log);
+    snprintf_P(log_data, sizeof(log_data), PSTR("I2C: Probing addr 0x%x for ADS1115."), ads1115addr);
+    addLog(LOG_LEVEL_DEBUG);
 
     if(adc0.testConnection()) {
       adc0.initialize();
@@ -105,8 +103,8 @@ boolean ads1115_detect()
   }
 
   if (success) {
-    snprintf_P(log, sizeof(log), PSTR("I2C: %s found at address 0x%x"), ads1115stype, ads1115addr);
-    addLog(LOG_LEVEL_DEBUG, log);
+    snprintf_P(log_data, sizeof(log_data), PSTR("I2C: %s found at address 0x%x"), ads1115stype, ads1115addr);
+    addLog(LOG_LEVEL_DEBUG);
   }
 
   return success;
@@ -116,12 +114,11 @@ boolean ads1115_detect()
  * Presentation
 \*********************************************************************************************/
 
-void ads1115_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
+void ads1115_mqttPresent(uint8_t* djson)
 {
   if (!ads1115type) {
     return;
   }
-  char log[LOGSZ];
   char stemp1[10];
   byte dsxflg = 0;
 
@@ -131,18 +128,18 @@ void ads1115_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
     val = ads1115_getConversion(i);
 
     if (!dsxflg  ) {
-      snprintf_P(svalue, ssvalue, PSTR("%s, \"%s\":{"), svalue, ads1115stype);
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s, \"%s\":{"), mqtt_data, ads1115stype);
       *djson = 1;
       stemp1[0] = '\0';
     }
     dsxflg++;
-    snprintf_P(svalue, ssvalue, PSTR("%s%s\"AnalogInput%d\":%d"), svalue, stemp1, i, val);
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s%s\"AnalogInput%d\":%d"), mqtt_data, stemp1, i, val);
     strcpy(stemp1, ", ");
 
   }
   *djson = 1;
   if (dsxflg) {
-    snprintf_P(svalue, ssvalue, PSTR("%s}"), svalue);
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}"), mqtt_data);
   }
 }
 

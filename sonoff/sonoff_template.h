@@ -71,48 +71,48 @@ enum upins_t {
 
 // Text in webpage Module Parameters and commands GPIOS and GPIO
 const char sensors[GPIO_SENSOR_END][9] PROGMEM = {
-  "None",
-  "DHT11",
-  "AM2301",
-  "DHT22",
-  "DS18x20",
-  "I2C SCL",
-  "I2C SDA",
-  "WS2812",
-  "IRremote",
-  "Switch1",
-  "Switch2",
-  "Switch3",
-  "Switch4",
-  "Button1",
-  "Button2",
-  "Button3",
-  "Button4",
-  "Relay1",
-  "Relay2",
-  "Relay3",
-  "Relay4",
-  "Relay1I",
-  "Relay2I",
-  "Relay3I",
-  "Relay4I",
-  "Led1",
-  "Led2",
-  "Led3",
-  "Led4",
-  "Led1I",
-  "Led2I",
-  "Led3I",
-  "Led4I",
-  "PWM1",
-  "PWM2",
-  "PWM3",
-  "PWM4",
-  "PWM5",
-  "Counter1",
-  "Counter2",
-  "Counter3",
-  "Counter4",
+  D_SENSOR_NONE,
+  D_SENSOR_DHT11,
+  D_SENSOR_AM2301,
+  D_SENSOR_DHT22,
+  D_SENSOR_DS18X20,
+  D_SENSOR_I2C_SCL,
+  D_SENSOR_I2C_SDA,
+  D_SENSOR_WS2812,
+  D_SENSOR_IRREMOTE,
+  D_SENSOR_SWITCH "1",
+  D_SENSOR_SWITCH "2",
+  D_SENSOR_SWITCH "3",
+  D_SENSOR_SWITCH "4",
+  D_SENSOR_BUTTON "1",
+  D_SENSOR_BUTTON "2",
+  D_SENSOR_BUTTON "3",
+  D_SENSOR_BUTTON "4",
+  D_SENSOR_RELAY "1",
+  D_SENSOR_RELAY "2",
+  D_SENSOR_RELAY "3",
+  D_SENSOR_RELAY "4",
+  D_SENSOR_RELAY "1I",
+  D_SENSOR_RELAY "2I",
+  D_SENSOR_RELAY "3I",
+  D_SENSOR_RELAY "4I",
+  D_SENSOR_LED "1",
+  D_SENSOR_LED "2",
+  D_SENSOR_LED "3",
+  D_SENSOR_LED "4",
+  D_SENSOR_LED "1I",
+  D_SENSOR_LED "2I",
+  D_SENSOR_LED "3I",
+  D_SENSOR_LED "4I",
+  D_SENSOR_PWM "1",
+  D_SENSOR_PWM "2",
+  D_SENSOR_PWM "3",
+  D_SENSOR_PWM "4",
+  D_SENSOR_PWM "5",
+  D_SENSOR_COUNTER "1",
+  D_SENSOR_COUNTER "2",
+  D_SENSOR_COUNTER "3",
+  D_SENSOR_COUNTER "4",
   "SNS_TRIG",
   "SNS_ECHO",
   "Rel1SetA",
@@ -169,6 +169,8 @@ enum module_t {
   SONOFF_T12,
   SONOFF_T13,
   SUPLA1,
+  WITTY,
+  YUNSHAN,
   MAXMODULE };
 
 /********************************************************************************************/
@@ -211,11 +213,13 @@ const uint8_t nicelist[MAXMODULE] PROGMEM = {
   ELECTRODRAGON,
   EXS_RELAY,
   SUPLA1,
+  YUNSHAN,
   WION,
   H801,
   HUAFAN_SS,
   AILIGHT,
-  WEMOS
+  WEMOS,
+  WITTY
 };
 
 // Default module settings
@@ -290,7 +294,8 @@ const mytmplt modules[MAXMODULE] PROGMEM = {
      0, 0, 0, 0, 0, 0, // Flash connection
      0,
      GPIO_LED1_INV,    // GPIO13 Blue Led (0 = On, 1 = Off)
-     0, 0, 0, 0
+     GPIO_USER,        // GPIO14 Optional sensor
+     0, 0, 0
   },
   { "Sonoff Pow",      // Sonoff Pow (ESP8266)
      GPIO_KEY1,        // GPIO00 Button
@@ -631,5 +636,31 @@ const mytmplt modules[MAXMODULE] PROGMEM = {
      0,
      GPIO_LED1,        // GPIO16 Led (1 = On, 0 = Off)
      GPIO_ADC0         // ADC0 A0 Analog input
+  },
+  { "Witty Cloud",     // Witty Cloud Dev Board (ESP8266) - https://www.aliexpress.com/item/ESP8266-serial-WIFI-Witty-cloud-Development-Board-ESP-12F-module-MINI-nodemcu/32643464555.html
+     GPIO_USER,        // GPIO00 D3 flash push button on interface board
+     GPIO_USER,        // GPIO01 Serial RXD and Optional sensor
+     GPIO_LED1_INV,    // GPIO02 D4 Blue Led (0 = On, 1 = Off) on ESP-12F
+     GPIO_USER,        // GPIO03 Serial TXD and Optional sensor
+     GPIO_KEY1,        // GPIO04 D2 push button on ESP-12F board
+     GPIO_USER,        // GPIO05 D1 optional sensor
+     0, 0, 0, 0, 0, 0, // Flash connection
+     GPIO_PWM4,        // GPIO12 D6 RGB LED Green
+     GPIO_PWM5,        // GPIO13 D7 RGB LED Blue
+     GPIO_USER,        // GPIO14 D5 optional sensor
+     GPIO_PWM3,        // GPIO15 D8 RGB LED Red
+     GPIO_USER,        // GPIO16 D0 optional sensor
+     GPIO_ADC0         // ADC0 A0 Light sensor / Requires USE_ADC_VCC in user_config.h to be disabled
+  },
+  { "Yunshan Relay",   // Yunshan Wifi Relay (ESP8266) - https://www.ebay.com/p/Esp8266-220v-10a-Network-Relay-WiFi-Module/1369583381
+                       // Schematics and Info https://ucexperiment.wordpress.com/2016/12/18/yunshan-esp8266-250v-15a-acdc-network-wifi-relay-module/
+     0,                // GPIO00 Flash jumper - Module Pin 8
+     GPIO_USER,        // GPIO01 Serial RXD and Optional sensor - Module Pin 2
+     GPIO_LED1_INV,    // GPIO02 Blue Led (0 = On, 1 = Off) on ESP-12F - Module Pin 7
+     GPIO_USER,        // GPIO03 Serial TXD and Optional sensor - Module Pin 3
+     GPIO_REL1,        // GPIO04 Red Led and Relay (0 = Off, 1 = On) - Module Pin 10
+     GPIO_KEY1,        // GPIO05 Blue Led and OptoCoupler input - Module Pin 9
+     0, 0, 0, 0, 0, 0, // Flash connection
+     0, 0, 0, 0, 0
   }
 };

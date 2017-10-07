@@ -44,6 +44,7 @@
 // -- Wifi ----------------------------------------
 #ifdef STA_SSID1
 #undef STA_SSID1
+
 #endif
 #define STA_SSID1              "BodeNet_Keller"  // [Ssid1] Wifi SSID
 #ifdef STA_PASS1

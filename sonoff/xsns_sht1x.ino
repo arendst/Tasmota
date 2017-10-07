@@ -77,7 +77,7 @@ boolean sht_sendCommand(const byte cmd)
   }
   if (ackerror) {
     shttype = 0;
-    addLog_P(LOG_LEVEL_DEBUG, PSTR("SHT1X: Sensor did not ACK command"));
+    addLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_SHT1 D_SENSOR_DID_NOT_ACK_COMMAND));
   }
   return (!ackerror);
 }
@@ -91,7 +91,7 @@ boolean sht_awaitResult()
     }
     delay(20);
   }
-  addLog_P(LOG_LEVEL_DEBUG, PSTR("SHT1X: Data not ready"));
+  addLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_SHT1 D_SENSOR_BUSY));
   shttype = 0;
   return false;
 }
@@ -159,17 +159,6 @@ boolean sht_readTempHum(float &t, float &h)
   return (!isnan(t) && !isnan(h));
 }
 
-boolean sht_readCharTempHum(char* temp, char* hum)
-{
-  float t;
-  float h;
-
-  boolean success = sht_readTempHum(t, h);
-  dtostrf(t, 1, sysCfg.flag.temperature_resolution, temp);
-  dtostrf(h, 1, sysCfg.flag.humidity_resolution, hum);
-  return success;
-}
-
 boolean sht_detect()
 {
   if (shttype) {
@@ -178,12 +167,12 @@ boolean sht_detect()
 
   float t;
   float h;
-  
+
   sht_sda_pin = pin[GPIO_I2C_SDA];
   sht_scl_pin = pin[GPIO_I2C_SCL];
   if (sht_readTempHum(t, h)) {
     shttype = 1;
-    addLog_P(LOG_LEVEL_DEBUG, PSTR("I2C: SHT1X found"));
+    addLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_I2C D_SHT1X_FOUND));
   } else {
     Wire.begin(sht_sda_pin, sht_scl_pin);
     shttype = 0;
@@ -195,17 +184,22 @@ boolean sht_detect()
  * Presentation
 \*********************************************************************************************/
 
-void sht_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
+void sht_mqttPresent(uint8_t* djson)
 {
   if (!shttype) {
     return;
   }
 
-  char stemp[10];
-  char shum[10];
-  
-  if (sht_readCharTempHum(stemp, shum)) {
-    snprintf_P(svalue, ssvalue, JSON_SNS_TEMPHUM, svalue, "SHT1X", stemp, shum);
+  float t;
+  float h;
+
+  if (sht_readTempHum(t, h)) {
+    char stemp[10];
+    char shum[10];
+
+    dtostrfd(t, sysCfg.flag.temperature_resolution, stemp);
+    dtostrfd(h, sysCfg.flag.humidity_resolution, shum);
+    snprintf_P(mqtt_data, sizeof(mqtt_data), JSON_SNS_TEMPHUM, mqtt_data, "SHT1X", stemp, shum);
     *djson = 1;
 #ifdef USE_DOMOTICZ
     domoticz_sensor2(stemp, shum);
@@ -216,13 +210,18 @@ void sht_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
 #ifdef USE_WEBSERVER
 String sht_webPresent()
 {
+  float t;
+  float h;
+
   String page = "";
   if (shttype) {
-    char stemp[10];
-    char shum[10];
-    
-    if (sht_readCharTempHum(stemp, shum)) {
+    if (sht_readTempHum(t, h)) {
+      char stemp[10];
+      char shum[10];
       char sensor[80];
+
+      dtostrfi(t, sysCfg.flag.temperature_resolution, stemp);
+      dtostrfi(h, sysCfg.flag.humidity_resolution, shum);
       snprintf_P(sensor, sizeof(sensor), HTTP_SNS_TEMP, "SHT1X", stemp, tempUnit());
       page += sensor;
       snprintf_P(sensor, sizeof(sensor), HTTP_SNS_HUM, "SHT1X", shum);
@@ -234,4 +233,3 @@ String sht_webPresent()
 #endif  // USE_WEBSERVER
 #endif  // USE_SHT
 #endif  // USE_I2C
-

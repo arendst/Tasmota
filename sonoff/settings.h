@@ -116,14 +116,14 @@ struct SYSCFG {
   uint16_t      hlw_umax;
   uint16_t      hlw_imin;
   uint16_t      hlw_imax;
-  uint16_t      hlw_mpl;    // MaxPowerLimit
-  uint16_t      hlw_mplh;   // MaxPowerLimitHold
-  uint16_t      hlw_mplw;   // MaxPowerLimitWindow
-  uint16_t      hlw_mspl;   // MaxSafePowerLimit
-  uint16_t      hlw_msplh;  // MaxSafePowerLimitHold
-  uint16_t      hlw_msplw;  // MaxSafePowerLimitWindow
-  uint16_t      hlw_mkwh;   // MaxEnergy
-  uint16_t      hlw_mkwhs;  // MaxEnergyStart
+  uint16_t      hlw_mpl;                   // MaxPowerLimit
+  uint16_t      hlw_mplh;                  // MaxPowerLimitHold
+  uint16_t      hlw_mplw;                  // MaxPowerLimitWindow
+  uint16_t      hlw_mspl;                  // MaxSafePowerLimit
+  uint16_t      hlw_msplh;                 // MaxSafePowerLimitHold
+  uint16_t      hlw_msplw;                 // MaxSafePowerLimitWindow
+  uint16_t      hlw_mkwh;                  // MaxEnergy
+  uint16_t      hlw_mkwhs;                 // MaxEnergyStart
 
   // 3.0.6
   uint16_t      mqtt_retry;                // was ex_pulsetime until 4.0.4
@@ -225,5 +225,5 @@ struct RTCMEM {
 
 // See issue https://github.com/esp8266/Arduino/issues/2913
 #ifdef USE_ADC_VCC
-  ADC_MODE(ADC_VCC);                        // Set ADC input for Power Supply Voltage usage
+  ADC_MODE(ADC_VCC);                       // Set ADC input for Power Supply Voltage usage
 #endif
