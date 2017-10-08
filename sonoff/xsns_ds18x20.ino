@@ -202,7 +202,7 @@ void ds18x20_mqttPresent(uint8_t* djson)
       strcpy(stemp1, ", ");
 #ifdef USE_DOMOTICZ
       if (1 == dsxflg) {
-        domoticz_sensor(0, stemp2);
+        domoticz_sensor(DZ_TEMP, stemp2);
       }
 #endif  // USE_DOMOTICZ
     }

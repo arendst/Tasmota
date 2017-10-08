@@ -88,7 +88,7 @@ void bh1750_mqttPresent(uint8_t* djson)
   snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s, \"%s\":{\"" D_ILLUMINANCE "\":%d}"), mqtt_data, bh1750stype, l);
   *djson = 1;
 #ifdef USE_DOMOTICZ
-  domoticz_sensor5(l);
+  domoticz_sensor(DZ_ILLUMINANCE, l);
 #endif  // USE_DOMOTICZ
 }
 

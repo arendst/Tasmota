@@ -1,7 +1,7 @@
 /*
   xdrv_ir_send.ino - infra red support for Sonoff-Tasmota
 
-  Copyright (C) 2017  Heiko Krupp and Theo Arends
+  Copyright (C) 2017  Heiko Krupp, Lazar Obradovic and Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
 
 #ifdef USE_IR_REMOTE
 /*********************************************************************************************\
- * IR Remote send using IRremoteESP8266 library
+ * IR Remote send and receive using IRremoteESP8266 library
 \*********************************************************************************************/
 
 #ifndef USE_IR_HVAC
@@ -54,6 +54,20 @@ void ir_send_init(void)
   mitsubir = new IRMitsubishiAC(pin[GPIO_IRSEND]);
 #endif //USE_IR_HVAC
 }
+
+#ifdef USE_IR_RECEIVE
+#define IR_TIME_AVOID_DUPLICATE       500  // Milliseconds
+
+IRrecv *irrecv = NULL;
+unsigned long ir_lasttime = 0;
+
+void ir_recv_init(void)
+{
+  irrecv = new IRrecv(pin[GPIO_IRRECV]);  // an IR led is at GPIO_IRRECV
+  irrecv->enableIRIn();  // Start the receiver
+//  addLog_P(LOG_LEVEL_DEBUG, PSTR("IrReceive initialized"));
+}
+#endif  // USE_IR_RECEIVE
 
 /*********************************************************************************************\
  * Commands
@@ -90,9 +104,9 @@ boolean ir_send_command(char *type, uint16_t index, char *dataBuf, uint16_t data
         snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_IRSEND "\":\"" D_INVALID_JSON "\"}"));  // JSON decode failed
       } else {
         snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_IRSEND "\":\"" D_DONE "\"}"));
-        protocol = ir_json[D_IRSEND_PROTOCOL];
-        bits = ir_json[D_IRSEND_BITS];
-        data = ir_json[D_IRSEND_DATA];
+        protocol = ir_json[D_IR_PROTOCOL];
+        bits = ir_json[D_IR_BITS];
+        data = ir_json[D_IR_DATA];
         if (protocol && bits && data) {
           if      (!strcasecmp_P(protocol, PSTR("NEC")))     irsend->sendNEC(data, bits);
           else if (!strcasecmp_P(protocol, PSTR("SONY")))    irsend->sendSony(data, bits);
@@ -108,7 +122,7 @@ boolean ir_send_command(char *type, uint16_t index, char *dataBuf, uint16_t data
       }
     } else error = true;
     if (error) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_IRSEND "\":\"" D_NO D_IRSEND_PROTOCOL ", " D_IRSEND_BITS " " D_OR " " D_IRSEND_DATA "\"}"));
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_IRSEND "\":\"" D_NO " " D_IR_PROTOCOL ", " D_IR_BITS " " D_OR " " D_IR_DATA "\"}"));
     }
   }
 #ifdef USE_IR_HVAC
@@ -140,7 +154,7 @@ boolean ir_send_command(char *type, uint16_t index, char *dataBuf, uint16_t data
       }
     } else error = true;
     if (error) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_IRHVAC "\":\"" D_WRONG D_IRHVAC_VENDOR ", " D_IRHVAC_MODE " " D_OR " " D_IRHVAC_FANSPEED "\"}"));
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_IRHVAC "\":\"" D_WRONG " " D_IRHVAC_VENDOR ", " D_IRHVAC_MODE " " D_OR " " D_IRHVAC_FANSPEED "\"}"));
     }
   }
 #endif  // USE_IR_HVAC
@@ -282,4 +296,39 @@ boolean ir_hvac_mitsubishi(const char *HVAC_Mode,const char *HVAC_FanMode, boole
   return false;
 }
 #endif  // USE_IR_HVAC
+
+#ifdef USE_IR_RECEIVE
+void ir_recv_check()
+{
+  char sirtype[100];
+  char *protocol;
+  int8_t iridx = 0;
+
+  decode_results results;
+  if (irrecv->decode(&results)) {
+    snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_IRR "RawLen %d, Bits %d, Value %08X, Decode %d"),
+      results.rawlen, results.bits, results.value, results.decode_type);
+    addLog(LOG_LEVEL_DEBUG);
+    unsigned long now = millis();
+    if ((now - ir_lasttime > IR_TIME_AVOID_DUPLICATE) && (UNKNOWN != results.decode_type) && (results.bits > 0)) {
+      ir_lasttime = now;
+      iridx = results.decode_type;
+      if ((iridx < 0) || (iridx > 14)) {
+        iridx = 0;
+      }
+      // Based on IRremoteESP8266.h enum decode_type_t
+      snprintf_P(sirtype, sizeof(sirtype), PSTR("UNKNOWN RC5 RC6 NEC SONY PANASONIC JVC SAMSUNG WHYNTER AIWA_RC_T501 LG SANYO MITSUBISHI DISH SHARP"));
+      protocol = strtok(sirtype, " ");
+      while (iridx) {
+        iridx--;
+        protocol = strtok(NULL, " ");
+      }
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_IRRECEIVED "\":{\"" D_IR_PROTOCOL "\":\"%s\", \"" D_IR_BITS "\":%d, \"" D_IR_DATA "\":\"%X\"}}"),
+        protocol, results.bits, results.value);
+      mqtt_publish_topic_P(6, PSTR(D_IRRECEIVED));
+    }
+    irrecv->resume();
+  }
+}
+#endif  // USE_IR_RECEIVE
 #endif  // USE_IR_REMOTE

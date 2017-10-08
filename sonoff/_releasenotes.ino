@@ -1,4 +1,49 @@
-/* 5.8.0b
+/* 5.8.0h
+ * Rename command IRRemote to IRSend (#956)
+ * Add optional IR Receiver support (#956)
+ * Change default PWM assignment for Witty Cloud to support optional Color/Dimmer control (#976)
+ *   GPIO12 (Green) from GPIO_PWM4 to GPIO_PWM2
+ *   GPIO13 (Blue)  from GPIO_PWM5 to GPIO_PWM3
+ *   GPIO15 (Red)   from GPIO_PWM3 to GPIO_PWM1
+ *
+ * 5.8.0g
+ * Fix inverted PWM index (#960)
+ * Fix some PWM related issues (#967)
+ * Fix timezone range from -12/12 to -13/13 (#968)
+ *
+ * 5.8.0f
+ * Set all saved power settings to Off when SetOption0 (SaveState) = 0 (#955)
+ * Allow PWM initialization after restart (#955)
+ * Add support for inverted PWM (#960)
+ *
+ * 5.8.0e
+ * Add Domoticz counter sensor to Sonoff Bridge representing Received RF code (#943)
+ * Add support for Luani HVIO board (https://luani.de/projekte/esp8266-hvio/) (#953)
+ *
+ * 5.8.0d
+ * Remove previous GPIO configuration when another module is selected
+ * Fix inverted relay power on state (#909)
+ * Change default PWM assignments for H801 RGB(CW) led controller to support optional Color/Dimmer control
+ *   GPIO04 (W2)    from GPIO_PWM2 to GPIO_USER to be user configurable for GPIO_PWM5 (second White - Warm if W1 is Cold)
+ *   GPIO12 (Blue)  GPIO_PWM3 no change
+ *   GPIO13 (Green) from GPIO_PWM4 to GPIO_PWM2
+ *   GPIO14 (W1)    from GPIO_PWM1 to GPIO_USER to be user configurable for GPIO_PWM4 (first White - Cold or Warm)
+ *   GPIO15 (Red)   from GPIO_PWM5 to GPIO_PWM1
+ * Change default PWM assignments for MagicHome RGB(W) led controller to support optional Color/Dimmer control
+ *   GPIO05 (Green) from GPIO_PWM4 to GPIO_PWM2
+ *   GPIO12 (Blue)  from GPIO_PWM5 to GPIO_PWM3
+ *   GPIO13 (White) GPIO_USER to be user configurable for GPIO_PWM4 (White - Cold or Warm)
+ *   GPIO14 (Red)   from GPIO_PWM3 to GPIO_PWM1
+ * Add command SetOption15 0 (default) for command PWM control or SetOption15 1 for commands Color/Dimmer control to PWM RGB(CW) leds (#941)
+ *
+ * 5.8.0c
+ * Add warning to webpage when USE_MINIMAL is selected (#929)
+ * Fix compile error when DOMOTICZ_UPDATE_TIMER is not defined (#930)
+ * Fix alignment of web page items in some browsers (#935)
+ * Add smoother movement of hour hand in WS2812 led clock (#936)
+ * Add support for Magic Home RGBW Led controller (#940)
+ *
+ * 5.8.0b
  * Fix command FullTopic entry when using serial or console interface
  * Fix possible UDP syslog blocking
  * Add debug information to MQTT subscribe

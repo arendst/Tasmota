@@ -62,7 +62,6 @@ void handleI2C()
       page.replace("{b0}", "Board: "+  String(idx) + "  I2C P" + String(idx2));
       page.replace("{b2}", "i2cs" + String(idx2+8*idx));
       for (byte i = 0; i < 2; i++) {
-        char log[LOGSZ];
         byte helper = 1 << idx2;
         page.replace("{a" + String(i), ((helper & sysCfg.pcf8574_config[idx]) >> idx2 == i) ? " selected " : " ");
       }
@@ -110,33 +109,31 @@ void pcf8574_saveSettings()
 
 void pcf8574_switchrelay(byte i, uint8_t state)
 {
-  //char log[TOPSZ];
   if (max_pcf8574_devices > 0) {
     uint8_t board = pcf8574_pin[i]>>3;
     PCF857x pcf8574(pcf8574addr[board], &Wire);
-    //snprintf_P(log, sizeof(log), PSTR("RSLT: Setting I2C PCF8574 Relay Number %d (pin P%d, board %d,0x%2x, boardpin %d) to state %d, inverted %d"), i, pcf8574_pin[i], board,pcf8574addr[board],pcf8574_pin[i]&0x7, state, rel_inverted[i]);
-    //addLog(LOG_LEVEL_INFO, log);
+    //snprintf_P(log_data, sizeof(log_data), PSTR("RSLT: Setting I2C PCF8574 Relay Number %d (pin P%d, board %d,0x%2x, boardpin %d) to state %d, inverted %d"), i, pcf8574_pin[i], board,pcf8574addr[board],pcf8574_pin[i]&0x7, state, rel_inverted[i]);
+    //addLog(LOG_LEVEL_INFO);
     pcf8574.write(pcf8574_pin[i]&0x7, rel_inverted[i] ? !state : state);
   }
 }
 
 void  pcf8574_Init()
 {
-  char log[TOPSZ + MESSZ];
   //for (byte i=0;i<64;i++) pcf8574_pin[i]=99;
   if (max_pcf8574_devices==0 && (pin[GPIO_I2C_SCL] < 99) && (pin[GPIO_I2C_SDA] < 99)) {
     pcf8574_detect();
-    snprintf_P(log, sizeof(log), PSTR("RSLT: pcf8574 %d boards"), max_pcf8574_devices);
-    addLog(LOG_LEVEL_INFO, log);
+    snprintf_P(log_data, sizeof(log_data), PSTR("RSLT: pcf8574 %d boards"), max_pcf8574_devices);
+    addLog(LOG_LEVEL_INFO);
   }
   for (byte idx = 0; idx < max_pcf8574_devices; idx++) { // suport up to 8 boards PCF8574
     PCF857x pcf8574(pcf8574addr[idx], &Wire);
-    //snprintf_P(log, sizeof(log), PSTR("RSLT: I2C Config: %d"), sysCfg.pcf8574_config[idx]);
-    //addLog(LOG_LEVEL_INFO, log);
+    //snprintf_P(log_data, sizeof(log_data), PSTR("RSLT: I2C Config: %d"), sysCfg.pcf8574_config[idx]);
+    //addLog(LOG_LEVEL_INFO);
     for (byte i = 0; i < 8; i++) {
       uint8_t _result = sysCfg.pcf8574_config[idx]>>i&1;
-      //snprintf_P(log, sizeof(log), PSTR("RSLT: I2C shift i %d: %d. Powerstate: %d"), i,_result, sysCfg.power>>i&1);
-      //addLog(LOG_LEVEL_INFO, log);
+      //snprintf_P(log_data, sizeof(log_data), PSTR("RSLT: I2C shift i %d: %d. Powerstate: %d"), i,_result, sysCfg.power>>i&1);
+      //addLog(LOG_LEVEL_INFO);
       if (_result > 0) {
         pcf8574_pin[Maxdevice] = i + 8*idx;
         rel_inverted[Maxdevice] = sysCfg.all_relays_inverted;
@@ -144,8 +141,8 @@ void  pcf8574_Init()
       }
     }
   }
-  snprintf_P(log, sizeof(log), PSTR("RSLT: Final max devices: %d"), Maxdevice);
-  addLog(LOG_LEVEL_INFO, log);
+  snprintf_P(log_data, sizeof(log_data), PSTR("RSLT: Final max devices: %d"), Maxdevice);
+  addLog(LOG_LEVEL_INFO);
 }
 
 boolean pcf8574_detect()

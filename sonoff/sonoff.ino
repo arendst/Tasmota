@@ -25,7 +25,7 @@
     - Select IDE Tools - Flash Size: "1M (no SPIFFS)"
   ====================================================*/
 
-#define VERSION                0x05080002  // 5.8.0b
+#define VERSION                0x05080008  // 5.8.0h
 
 enum week_t  {Last, First, Second, Third, Fourth};
 enum dow_t   {Sun=1, Mon, Tue, Wed, Thu, Fri, Sat};
@@ -121,7 +121,9 @@ enum emul_t  {EMUL_NONE, EMUL_WEMO, EMUL_HUE, EMUL_MAX};  // Emulation
 #define MQTT_RETRY_SECS        10           // Minimum seconds to retry MQTT connection
 #define APP_POWER              0            // Default saved power state Off
 #define MAX_COUNTERS           4            // Max number of counter sensors
+//STB mod
 #define MAX_PULSETIMERS        8            // Max number of supported pulse timers
+//end
 #define WS2812_MAX_LEDS        512          // Max number of LEDs
 
 #define PWM_RANGE              1023         // 255..1023 needs to be devisible by 256
@@ -153,7 +155,9 @@ enum emul_t  {EMUL_NONE, EMUL_WEMO, EMUL_HUE, EMUL_MAX};  // Emulation
 
 #define APP_BAUDRATE           115200       // Default serial baudrate
 #define MAX_STATUS             11           // Max number of status lines
+//STB mod
 #define MAX_DEEPSLEEP_CYCLE    3600         // Maximum time for a deepsleep
+//end
 
 enum butt_t  {PRESSED, NOT_PRESSED};
 enum opt_t   {P_HOLD_TIME, P_MAX_POWER_RETRY, P_MAX_PARAM8};   // Index in sysCfg.param
@@ -226,7 +230,9 @@ int16_t savedatacounter;              // Counter and flag for config save to Fla
 uint8_t mqttcounter = 0;              // MQTT connection retry counter
 uint8_t fallbacktopic = 0;            // Use Topic or FallbackTopic
 unsigned long timerxs = 0;            // State loop timer
+//STB mod
 unsigned long last_save_uptime = 0;   // Loop timer to calculate ontime
+//end
 int state = 0;                        // State per second flag
 int mqttflag = 2;                     // MQTT connection messages flag
 int otaflag = 0;                      // OTA state flag
@@ -263,12 +269,9 @@ uint8_t interlockmutex = 0;           // Interlock power command pending
 #endif
 PubSubClient mqttClient(espClient);   // MQTT Client
 WiFiUDP portUDP;                      // UDP Syslog and Alexa
-
-#ifndef USE_PCF8574
-  uint8_t power = 0;                        // Current copy of sysCfg.power
-#else
-  uint32_t power = 0;
-#endif
+//STB mod
+powerarray power = 0;
+//end
 byte syslog_level;                    // Current copy of sysCfg.syslog_level
 uint16_t syslog_timer = 0;            // Timer to re-enable syslog_level
 byte seriallog_level;                 // Current copy of sysCfg.seriallog_level
@@ -289,20 +292,23 @@ uint8_t blockgpio0 = 4;               // Block GPIO0 for 4 seconds after poweron
 
 mytmplt my_module;                    // Active copy of GPIOs
 uint8_t pin[GPIO_MAX];                // Possible pin configurations
+//STB mod
 #ifdef USE_PCF8574
   uint8_t rel_inverted[32] = { 0 };      // Relay inverted flag (1 = (0 = On, 1 = Off))
 #else
   uint8_t rel_inverted[4] = { 0 };      // Relay inverted flag (1 = (0 = On, 1 = Off))
 #endif
+//end
 uint8_t led_inverted[4] = { 0 };      // LED inverted flag (1 = (0 = On, 1 = Off))
+uint8_t pwm_inverted[5] = { 0 };      // PWM inverted flag (1 = inverted)
 uint8_t dht_flg = 0;                  // DHT configured
 uint8_t hlw_flg = 0;                  // Power monitor configured
 uint8_t i2c_flg = 0;                  // I2C configured
 uint8_t spi_flg = 0;                  // SPI configured
-uint8_t pwm_flg = 0;                  // PWM configured
-uint8_t sfl_flg = 0;                  // Sonoff Led flag (0 = No led, 1 = BN-SZ01, 2 = Sonoff Led, 5 = Sonoff B1)
+uint8_t sfl_flg = 0;                  // Led flag (0 = No led, 1 = BN-SZ01, 2 = Sonoff Led, 3 = H801/MagicHome, 4 = H801/MagicHome, 5 = H801, 11 = WS2812, 12 = AiLight, 13 = Sonoff B1)
+//STB  mod
 uint8_t sr04_flg = 0;                 // HS-SR04 configured
-uint8_t pwm_idxoffset = 0;            // Allowed PWM command offset (change for Sonoff Led)
+//end
 
 boolean mDNSbegun = false;
 
@@ -401,7 +407,9 @@ void setLatchingRelay(uint8_t power, uint8_t state)
   }
 }
 
-void setRelay(uint32_t rpower)
+//STB mod
+void setRelay(powerarray rpower)
+//end
 {
   uint8_t state;
 
@@ -443,9 +451,11 @@ void setRelay(uint32_t rpower)
       if (pin[GPIO_REL1 +i] < 99) {
         digitalWrite(pin[GPIO_REL1 +i], rel_inverted[i] ? !state : state);
       }
+//STB mod
 #ifdef USE_PCF8574
       pcf8574_switchrelay(i, state);
 #endif
+//end
       rpower >>= 1;
     }
   }
@@ -603,13 +613,14 @@ void mqtt_connected()
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_RESTARTREASON "\":\"%s\"}"),
       (getResetReason() == "Exception") ? ESP.getResetInfo().c_str() : getResetReason().c_str());
     mqtt_publish_topic_P(2, PSTR(D_RSLT_INFO "3"));
-    if (sysCfg.tele_period ) {
+    if (sysCfg.tele_period) {
+    //STB mod
       if (rtc_loctime() > 100) {
         tele_period = sysCfg.tele_period -2;
       } else {
         tele_period = sysCfg.tele_period -9;
       }
-
+      //end
     }
     status_update_timer = 2;
 #ifdef USE_DOMOTICZ
@@ -646,13 +657,17 @@ void mqtt_reconnect()
     } else {
       addLog_P(LOG_LEVEL_DEBUG, S_LOG_MQTT, PSTR(D_INSECURE));
     }
+    //STB mod
     espClient.stop();
     yield();
+    //end
 #endif  // USE_MQTT_TLS
     mqttClient.setCallback(mqttDataCb);
     mqttflag = 1;
     mqttcounter = 1;
+    //STB mod
     //return;
+    //end
   }
 
   addLog_P(LOG_LEVEL_INFO, S_LOG_MQTT, PSTR(D_ATTEMPTING_CONNECTION));
@@ -1100,7 +1115,7 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_SAVEDATA "\":\"%s\"}"), (sysCfg.savedata > 1) ? stemp1 : getStateText(sysCfg.savedata));
     }
-    else if (!strcasecmp_P(type, PSTR(D_CMND_SETOPTION)) && ((index >= 0) && (index <= 14)) || ((index > 31) && (index <= P_MAX_PARAM8 +31))) {
+    else if (!strcasecmp_P(type, PSTR(D_CMND_SETOPTION)) && ((index >= 0) && (index <= 15)) || ((index > 31) && (index <= P_MAX_PARAM8 +31))) {
       if (index <= 31) {
         ptype = 0;   // SetOption0 .. 31
       } else {
@@ -1112,6 +1127,7 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
           if (payload <= 1) {
             switch (index) {
               case 3:   // mqtt
+              case 15:  // pwm_control
                 restartflag = 2;
               case 0:   // savestate
               case 1:   // button_restrict
@@ -1270,10 +1286,10 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
       }
       mqtt_data[0] = '\0';
     }
-    else if (!strcasecmp_P(type, PSTR(D_CMND_PWM)) && (index > pwm_idxoffset) && (index <= 5)) {
+    else if (!sfl_flg && !strcasecmp_P(type, PSTR(D_CMND_PWM)) && (index > 0) && (index <= 5)) {
       if ((payload >= 0) && (payload <= PWM_RANGE) && (pin[GPIO_PWM1 + index -1] < 99)) {
         sysCfg.pwmvalue[index -1] = payload;
-        analogWrite(pin[GPIO_PWM1 + index -1], payload);
+        analogWrite(pin[GPIO_PWM1 + index -1], pwm_inverted[index -1] ? PWM_RANGE - payload : payload);
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_PWM "\":{"));
       bool first = true;
@@ -1316,12 +1332,14 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_SLEEP "\":\"%d%s (%d%s)\"}"), sleep, (sysCfg.flag.value_units) ? " " D_UNIT_MILLISECOND : "", sysCfg.sleep, (sysCfg.flag.value_units) ? " " D_UNIT_MILLISECOND : "");
     }
+    //STB mod
     else if (!strcmp_P(type,PSTR("DEEPSLEEP"))) {
       if ((data_len > 0) && (payload16 >= 0) ) {
         sysCfg.deepsleep = payload16;
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"DeepSleep\":\"%d%s (%d%s)\"}"), sysCfg.deepsleep, (sysCfg.flag.value_units) ? " mS" : "", sysCfg.deepsleep, (sysCfg.flag.value_units) ? " mS" : "");
     }
+    //end
     else if (!strcasecmp_P(type, PSTR(D_CMND_UPGRADE)) || !strcasecmp_P(type, PSTR(D_CMND_UPLOAD))) {
       // Check if the payload is numerically 1, and had no trailing chars.
       //   e.g. "1foo" or "1.2.3" could fool us.
@@ -1532,7 +1550,7 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
       }
     }
     else if (!strcasecmp_P(type, PSTR(D_CMND_TIMEZONE))) {
-      if ((data_len > 0) && (((payload >= -12) && (payload <= 12)) || (99 == payload))) {
+      if ((data_len > 0) && (((payload >= -13) && (payload <= 13)) || (99 == payload))) {
         sysCfg.timezone = payload;
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_TIMEZONE "\":%d}"), sysCfg.timezone);
@@ -1679,11 +1697,15 @@ void do_cmnd_power(byte device, byte state)
   if ((device < 1) || (device > Maxdevice)) {
     device = 1;
   }
-  uint32_t mask = 0x01 << (device -1);
+  //STB mod
+  powerarray mask = 0x01 << (device -1);
+  //end
   pulse_timer[(device -1)&3] = 0;
   if (state <= 2) {
     if ((blink_mask & mask)) {
+    //STB mod
       blink_mask &= (0xFFFFFFFF ^ mask);  // Clear device mask
+   //end
       mqtt_publishPowerBlinkState(device);
     }
     if (sysCfg.flag.interlock && !interlockmutex) {  // Clear all but masked relay
@@ -1698,7 +1720,9 @@ void do_cmnd_power(byte device, byte state)
     }
     switch (state) {
     case 0: { // Off
+    //STB mod
       power &= (0xFFFFFFFF ^ mask);
+    //end
       break; }
     case 1: // On
       power |= mask;
@@ -1710,11 +1734,15 @@ void do_cmnd_power(byte device, byte state)
 #ifdef USE_DOMOTICZ
     domoticz_updatePowerState(device);
 #endif  // USE_DOMOTICZ
+//STB mod
     pulse_timer[(device -1)&((1<<MAX_PULSETIMERS)-1)] = (power & mask) ? sysCfg.pulsetime[(device -1)&((1<<MAX_PULSETIMERS)-1)] : 0;
+//end
   }
   else if (3 == state) { // Blink
     if (!(blink_mask & mask)) {
+    //STB mod
       blink_powersave = (blink_powersave & (0xFFFFFFFF ^ mask)) | (power & mask);  // Save state
+    //end
       blink_power = (power >> (device -1))&1;  // Prep to Toggle
     }
     blink_timer = 1;
@@ -1725,7 +1753,9 @@ void do_cmnd_power(byte device, byte state)
   }
   else if (4 == state) { // No Blink
     byte flag = (blink_mask & mask);
+    //STB mod
     blink_mask &= (0xFFFFFFFF ^ mask);  // Clear device mask
+    //end
     mqtt_publishPowerBlinkState(device);
     if (flag) {
       do_cmnd_power(device, (blink_powersave >> (device -1))&1);  // Restore state
@@ -1744,7 +1774,9 @@ void stop_all_power_blink()
   for (byte i = 1; i <= Maxdevice; i++) {
     mask = 0x01 << (i -1);
     if (blink_mask & mask) {
+    //STB mod
       blink_mask &= (0xFFFFFFFF ^ mask);  // Clear device mask
+    //end
       mqtt_publishPowerBlinkState(i);
       do_cmnd_power(i, (blink_powersave >> (i -1))&1);  // Restore state
     }
@@ -1879,8 +1911,10 @@ void state_mqttPresent()
   for (byte i = 0; i < Maxdevice; i++) {
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s, \"%s\":\"%s\""), mqtt_data, getPowerDevice(stemp1, i +1, sizeof(stemp1)), getStateText(bitRead(power, i)));
   }
+  //STB mod
   snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s, \"" D_WIFI "\":{\"" D_AP "\":%d, \"" D_SSID "\":\"%s\", \"" D_RSSI "\":%d, \"" D_APMAC_ADDRESS "\":\"%s\"}, \"DeepSleep\":%d}"),
     mqtt_data, sysCfg.sta_active +1, sysCfg.sta_ssid[sysCfg.sta_active], WIFI_getRSSIasQuality(WiFi.RSSI()), WiFi.BSSIDstr().c_str() , sysCfg.deepsleep);
+  //end
 }
 
 void sensors_mqttPresent(uint8_t* djson)
@@ -1930,17 +1964,21 @@ void sensors_mqttPresent(uint8_t* djson)
 #ifdef USE_BH1750
     bh1750_mqttPresent(djson);
 #endif  // USE_BH1750
+//STB mod
 #ifdef USE_CHIRP
     chirp_mqttPresent(djson);
 #endif  // USE_CHIRP
 #ifdef USE_ADS1115
     ads1115_mqttPresent( djson);
 #endif  // USE_ADS1115
+//end
   }
 #endif  // USE_I2C
+//STB mod
 if (sr04_flg) {
   sr04_mqttPresent( djson);
 }
+//end
   if (strstr_P(mqtt_data, PSTR(D_TEMPERATURE))) {
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s, \"" D_TEMPERATURE_UNIT "\":\"%c\""), mqtt_data, tempUnit());
   }
@@ -1954,10 +1992,12 @@ void every_second()
   if (blockgpio0) {
     blockgpio0--;
   }
+  //STB mod
   rtcMem.uptime += ((millis() - last_save_uptime) / 1000) ;
   //snprintf_P(svalue, sizeof(svalue), PSTR("Uptime dump: %ld, last save: %ld"), rtcMem.uptime, last_save_uptime);
   last_save_uptime = millis() ;
   //addLog(LOG_LEVEL_DEBUG, svalue);
+  //end
 
   for (byte i = 0; i < MAX_PULSETIMERS; i++) {
     if (pulse_timer[i] > 111) {
@@ -2029,6 +2069,7 @@ void every_second()
 #ifdef USE_BH1750
         bh1750_detect();
 #endif  // USE_BH1750
+//STB mod
 #ifdef USE_CHIRP
         chirp_detect();
 #endif  // USE_CHIRP
@@ -2038,7 +2079,7 @@ void every_second()
 #ifdef USE_PCF8574
         pcf8574_detect();
 #endif  // USE_PCF8574
-
+//end
 
       }
 #endif  // USE_I2C
@@ -2060,6 +2101,7 @@ void every_second()
       if (hlw_flg) {
         hlw_mqttPresent(1);
       }
+      //STB mod
       if (sysCfg.deepsleep > 10) {
         //TODO STEFAN
         yield();
@@ -2083,6 +2125,7 @@ void every_second()
         }
         yield();
       }
+      //end
     }
   }
 
@@ -2391,6 +2434,14 @@ void stateloop()
     }
   }
 
+#ifdef USE_IR_REMOTE
+#ifdef USE_IR_RECEIVE
+  if (pin[GPIO_IRRECV] < 99) {
+    ir_recv_check();  // check if there's anything on IR side
+  }
+#endif  // USE_IR_RECEIVE
+#endif  // USE_IR_REMOTE
+
 /*-------------------------------------------------------------------------------------------*\
  * Every 0.05 second
 \*-------------------------------------------------------------------------------------------*/
@@ -2398,7 +2449,7 @@ void stateloop()
   button_handler();
   switch_handler();
 
-  if (sfl_flg) {  // Sonoff B1, AiLight, Sonoff led or BN-SZ01
+  if (sfl_flg) {
     sl_animate();
   }
 
@@ -2485,7 +2536,9 @@ void stateloop()
       savedatacounter--;
       if (savedatacounter <= 0) {
         if (sysCfg.flag.savestate) {
-          uint32_t mask = 0xFFFFFFFF;
+	//STB mode
+          powerarray mask = 0xFFFFFFFF;
+	  //end
           for (byte i = 0; i < MAX_PULSETIMERS; i++) {
             if ((sysCfg.pulsetime[i] > 0) && (sysCfg.pulsetime[i] < 30)) {
               mask &= ~(1 << i);
@@ -2494,6 +2547,8 @@ void stateloop()
           if (!((sysCfg.power &mask) == (power &mask))) {
             sysCfg.power = power;
           }
+        } else {
+          sysCfg.power = 0;
         }
         CFG_Save(0);
         savedatacounter = sysCfg.savedata;
@@ -2511,6 +2566,8 @@ void stateloop()
       }
       if (sysCfg.flag.savestate) {
         sysCfg.power = power;
+      } else {
+        sysCfg.power = 0;
       }
       if (hlw_flg) {
         hlw_savestate();
@@ -2664,11 +2721,15 @@ void GPIO_init()
     if (mpin) {
       if ((mpin >= GPIO_REL1_INV) && (mpin <= GPIO_REL4_INV)) {
         rel_inverted[mpin - GPIO_REL1_INV] = 1;
-        mpin -= 4;
+        mpin -= (GPIO_REL1_INV - GPIO_REL1);
       }
       else if ((mpin >= GPIO_LED1_INV) && (mpin <= GPIO_LED4_INV)) {
         led_inverted[mpin - GPIO_LED1_INV] = 1;
-        mpin -= 4;
+        mpin -= (GPIO_LED1_INV - GPIO_LED1);
+      }
+      else if ((mpin >= GPIO_PWM1_INV) && (mpin <= GPIO_PWM5_INV)) {
+        pwm_inverted[mpin - GPIO_PWM1_INV] = 1;
+        mpin -= (GPIO_PWM1_INV - GPIO_PWM1);
       }
 #ifdef USE_DHT
       else if ((mpin >= GPIO_DHT11) && (mpin <= GPIO_DHT22)) {
@@ -2690,9 +2751,10 @@ void GPIO_init()
     Serial.set_tx(2);
   }
 
-  analogWriteRange(PWM_RANGE);  // Default is 1023 (Arduino.h)
-  analogWriteFreq(PWM_FREQ);    // Default is 1000 (core_esp8266_wiring_pwm.c)
+  analogWriteRange(PWM_RANGE);             // Default is 1023 (Arduino.h)
+  analogWriteFreq(PWM_FREQ);               // Default is 1000 (core_esp8266_wiring_pwm.c)
 
+//STB mode
 #ifdef USE_I2C
   i2c_flg = ((pin[GPIO_I2C_SCL] < 99) && (pin[GPIO_I2C_SDA] < 99));
   if (i2c_flg) {
@@ -2701,6 +2763,7 @@ void GPIO_init()
 #endif  // USE_I2C
 
   Maxdevice = 1;
+//end
   if (SONOFF_BRIDGE == sysCfg.module) {
     Baudrate = 19200;
   }
@@ -2716,20 +2779,27 @@ void GPIO_init()
     Maxdevice = 0;
     Baudrate = 19200;
   }
-  else if (SONOFF_BN == sysCfg.module) {   // Single color led (White)
+  else if ((H801 == sysCfg.module) || (MAGICHOME == sysCfg.module)) {  // PWM RGBCW led
+    if (!sysCfg.flag.pwm_control) {
+      sfl_flg = 0;                         // Use basic PWM control if SetOption15 = 0
+    }
+  }
+  else if (SONOFF_BN == sysCfg.module) {   // PWM Single color led (White)
     sfl_flg = 1;
   }
-  else if (SONOFF_LED == sysCfg.module) {  // Dual color led (White warm and cold)
+  else if (SONOFF_LED == sysCfg.module) {  // PWM Dual color led (White warm and cold)
     sfl_flg = 2;
   }
   else if (AILIGHT == sysCfg.module) {     // RGBW led
-    sfl_flg = 4;
+    sfl_flg = 12;
   }
   else if (SONOFF_B1 == sysCfg.module) {   // RGBWC led
-    sfl_flg = 5;
+    sfl_flg = 13;
   }
   else {
-    Maxdevice = 0;
+    if (!sfl_flg) {
+      Maxdevice = 0;
+    }
     for (byte i = 0; i < 4; i++) {
       if (pin[GPIO_REL1 +i] < 99) {
         pinMode(pin[GPIO_REL1 +i], OUTPUT);
@@ -2755,22 +2825,19 @@ void GPIO_init()
   }
 
 #ifdef USE_WS2812
-  if (!sfl_flg && (pin[GPIO_WS2812] < 99)) {
+  if (!sfl_flg && (pin[GPIO_WS2812] < 99)) {  // RGB led
     Maxdevice++;
-    sfl_flg = 3;
+    sfl_flg = 11;
   }
 #endif  // USE_WS2812
-  if (sfl_flg) {                // Sonoff B1, AiLight, Sonoff Led or BN-SZ01, WS2812
-    if (sfl_flg < 3) {
-      pwm_idxoffset = sfl_flg;  // 1 for BN-SZ01, 2 for Sonoff Led
-    }
+  if (sfl_flg) {                           // Any Led light under Dimmer/Color control
     sl_init();
-  }
-  for (byte i = pwm_idxoffset; i < 5; i++) {
-    if (pin[GPIO_PWM1 +i] < 99) {
-      pwm_flg = 1;
-      pinMode(pin[GPIO_PWM1 +i], OUTPUT);
-      analogWrite(pin[GPIO_PWM1 +i], sysCfg.pwmvalue[i]);
+  } else {
+    for (byte i = 0; i < 5; i++) {
+      if (pin[GPIO_PWM1 +i] < 99) {
+        pinMode(pin[GPIO_PWM1 +i], OUTPUT);
+        analogWrite(pin[GPIO_PWM1 +i], pwm_inverted[i] ? PWM_RANGE - sysCfg.pwmvalue[i] : sysCfg.pwmvalue[i]);
+      }
     }
   }
 
@@ -2784,7 +2851,12 @@ void GPIO_init()
   if (pin[GPIO_IRSEND] < 99) {
     ir_send_init();
   }
-#endif // USE_IR_REMOTE
+#ifdef USE_IR_RECEIVE
+  if (pin[GPIO_IRRECV] < 99) {
+    ir_recv_init();
+  }
+#endif  // USE_IR_RECEIVE
+#endif  // USE_IR_REMOTE
 
   counter_init();
 
@@ -2804,11 +2876,12 @@ void GPIO_init()
     ds18x20_init();
   }
 #endif  // USE_DS18x20
+//STB mod
   if ((pin[GPIO_SEN_TRIG] < 99) && (pin[GPIO_SEN_ECHO] < 99)) {
     sr04_init();
     sr04_flg = 1;
   }
-
+//end
 
 }
 
@@ -2833,6 +2906,7 @@ void setup()
   }
   CFG_Load();
   CFG_Delta();
+  //STB mod
   if (rtcMem.ultradeepsleep > 0) {
      rtcMem.ultradeepsleep = rtcMem.ultradeepsleep - MAX_DEEPSLEEP_CYCLE;
      snprintf_P(log_data, sizeof(log_data), PSTR("APP: Remain DeepSleep %d"), rtcMem.ultradeepsleep);
@@ -2850,6 +2924,7 @@ void setup()
      }
      yield();
   }
+  //end
 
   osw_init();
 
@@ -2908,7 +2983,9 @@ void setup()
         setRelay(power);
         break;
       case 2:  // All saved state toggle
+      //STB mod
         power = sysCfg.power & ((1 << Maxdevice) -1) ^ 0xFFFFFFFF;
+      //end
         if (sysCfg.flag.savestate) {
           setRelay(power);
         }
@@ -2930,7 +3007,7 @@ void setup()
 
   // Issue #526
   for (byte i = 0; i < Maxdevice; i++) {
-    if ((pin[GPIO_REL1 +i] < 99) && (digitalRead(pin[GPIO_REL1 +i]))) {
+    if ((pin[GPIO_REL1 +i] < 99) && (digitalRead(pin[GPIO_REL1 +i]) ^ rel_inverted[i])) {
       bitSet(power, i);
       pulse_timer[i] = sysCfg.pulsetime[i];
     }

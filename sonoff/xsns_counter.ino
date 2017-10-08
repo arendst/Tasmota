@@ -102,7 +102,7 @@ void counter_mqttPresent(uint8_t* djson)
       *djson = 1;
 #ifdef USE_DOMOTICZ
       if (1 == dsxflg) {
-        domoticz_sensor6(rtcMem.pCounter[i]);
+        domoticz_sensor(DZ_COUNT, rtcMem.pCounter[i]);
         dsxflg++;
       }
 #endif  // USE_DOMOTICZ

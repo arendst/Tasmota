@@ -48,7 +48,7 @@
 #define STA_SSID2              "indebuurt2"      // [Ssid2] Optional alternate AP Wifi SSID
 #define STA_PASS2              "VnsqrtnrsddbrN"  // [Password2] Optional alternate AP Wifi password
 #define WIFI_CONFIG_TOOL       WIFI_WPSCONFIG    // [WifiConfig] Default tool if wifi fails to connect
-                                                 //   (WIFI_RESTART, WIFI_SMARTCONFIG, WIFI_MANAGER, WIFI_WPSCONFIG, WIFI_RETRY)
+                                                 //   (WIFI_RESTART, WIFI_SMARTCONFIG, WIFI_MANAGER, WIFI_WPSCONFIG, WIFI_RETRY, WIFI_WAIT)
 
 // -- Syslog --------------------------------------
 #define SYS_LOG_HOST           "domus1"          // [LogHost] (Linux) syslog host
@@ -105,13 +105,13 @@
 #define TELE_PERIOD            300               // [TelePeriod] Telemetry (0 = disable, 10 - 3600 seconds)
 
 // -- MQTT - Domoticz -----------------------------
-#define USE_DOMOTICZ                             // Enable Domoticz (+7k code, +0.3k mem) - Disable by //
+#define USE_DOMOTICZ                             // Enable Domoticz (+6k code, +0.3k mem) - Disable by //
   #define DOMOTICZ_IN_TOPIC      "domoticz/in"   // Domoticz Input Topic
   #define DOMOTICZ_OUT_TOPIC     "domoticz/out"  // Domoticz Output Topic
   #define DOMOTICZ_UPDATE_TIMER  0               // [DomoticzUpdateTimer] Send relay status (0 = disable, 1 - 3600 seconds) (Optional)
 
 // -- HTTP ----------------------------------------
-#define USE_WEBSERVER                            // Enable web server and wifi manager (+62k code, +8k mem) - Disable by //
+#define USE_WEBSERVER                            // Enable web server and wifi manager (+66k code, +8k mem) - Disable by //
   #define WEB_SERVER           2                 // [WebServer] Web server (0 = Off, 1 = Start as User, 2 = Start as Admin)
   #define WEB_PORT             80                // Web server Port for User and Admin mode
   #define WEB_USERNAME         "admin"           // Web server Admin mode user name
@@ -156,19 +156,22 @@
 #define ENERGY_RESOLUTION      3                 // [EnergyRes] Maximum number of decimals (0 - 5) showing energy usage in kWh
 
 // -- Sensor code selection -----------------------
-//#define USE_ADC_VCC                              // Display Vcc in Power status. Disable for use as Analog input on selected devices
+#define USE_ADC_VCC                              // Display Vcc in Power status. Disable for use as Analog input on selected devices
 
-#define USE_DS18x20                              // Optional using OneWire library for multiple DS18B20 and/or DS18S20 (+2k code)
+//#define USE_DS18x20                              // Optional using OneWire library for multiple DS18B20 and/or DS18S20 (+2k code)
 
 #define USE_I2C                                  // I2C using library wire (+10k code, 0.2k mem) - Disable by //
   #define USE_BH1750                             // Add I2C code for BH1750 sensor
   #define USE_BMP                                // Add I2C code for BMP/BME280 sensor
   #define USE_HTU                                // Add I2C code for HTU21/SI7013/SI7020/SI7021 sensor
   #define USE_SHT                                // Add I2C emulating code for SHT1X sensor
+  //STB mod
   #define USE_CHIRP                              // Add I2C support for CHIRP moisture sensor
+  //end
 
 #define USE_IR_REMOTE                            // Send IR remote commands using library IRremoteESP8266 and ArduinoJson (+3k code, 0.3k mem)
 //  #define USE_IR_HVAC                            // Support for HVAC system using IR (+2k code)
+  #define USE_IR_RECEIVE                         // Support for IR receiver (+4k code)
 
 #define USE_WS2812                               // WS2812 Led string using library NeoPixelBus (+5k code, +1k mem) - Disable by //
   #define USE_WS2812_CTYPE     1                 // WS2812 Color type (0 - RGB, 1 - GRB)
@@ -195,3 +198,4 @@
 #if (ARDUINO < 10610)
   #error "This software is supported with Arduino IDE starting from 1.6.10 and ESP8266 Release 2.3.0"
 #endif
+

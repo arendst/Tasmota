@@ -17,6 +17,10 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#ifndef DOMOTICZ_UPDATE_TIMER
+#define DOMOTICZ_UPDATE_TIMER  0               // [DomoticzUpdateTimer] Send relay status (0 = disable, 1 - 3600 seconds) (Optional)
+#endif
+
 const uint8_t sfb_codeDefault[9] PROGMEM = { 0x21, 0x16, 0x01, 0x0E, 0x03, 0x48, 0x2E, 0x1A, 0x00 };
 
 /*********************************************************************************************\
@@ -62,8 +66,10 @@ void RTC_Load()
     memset(&rtcMem, 0x00, sizeof(RTCMEM));
     rtcMem.valid = RTC_MEM_VALID;
     rtcMem.power = sysCfg.power;
+    //STB mod
     rtcMem.uptime = sysCfg.uptime;
     rtcMem.ultradeepsleep = 0;
+    //end
     rtcMem.hlw_kWhtoday = sysCfg.hlw_kWhtoday;
     rtcMem.hlw_kWhtotal = sysCfg.hlw_kWhtotal;
     for (byte i = 0; i < 4; i++) {
@@ -504,8 +510,9 @@ void CFG_DefaultSet2()
 
 // 5.8.0
   sysCfg.led_pixels = WS2812_LEDS;
-  
+//STB mod  
   sysCfg.deepsleep = 0;
+//end
 }
 
 /********************************************************************************************/
@@ -544,9 +551,7 @@ void CFG_DefaultSet_3_9_3()
     sysCfg.led_color[i] = 255;
   }
   sysCfg.led_table = 0;
-  for (byte i = 0; i < 3; i++){
-    sysCfg.led_dimmer[i] = 10;
-  }
+  sysCfg.led_dimmer = 10;
   sysCfg.led_fade = 0;
   sysCfg.led_speed = 1;
   sysCfg.led_scheme = 0;
@@ -726,7 +731,7 @@ void CFG_Delta()
         sysCfg.led_color[0] = sysCfg.ws_red;
         sysCfg.led_color[1] = sysCfg.ws_green;
         sysCfg.led_color[2] = sysCfg.ws_blue;
-        sysCfg.led_dimmer[0] = sysCfg.ws_dimmer;
+        sysCfg.led_dimmer = sysCfg.ws_dimmer;
         sysCfg.led_table = sysCfg.ws_ledtable;
         sysCfg.led_fade = sysCfg.ws_fade;
         sysCfg.led_speed = sysCfg.ws_speed;

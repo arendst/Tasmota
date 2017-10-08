@@ -19,8 +19,6 @@
 
 #ifdef USE_DOMOTICZ
 
-#define DOMOTICZ_MAX_SENSORS  8
-
 #ifdef USE_WEBSERVER
 const char HTTP_FORM_DOMOTICZ[] PROGMEM =
   "<fieldset><legend><b>&nbsp;" D_DOMOTICZ_PARAMETERS "&nbsp;</b></legend><form method='post' action='sv'>"
@@ -37,8 +35,26 @@ const char HTTP_FORM_DOMOTICZ_TIMER[] PROGMEM =
   "<tr><td><b>" D_DOMOTICZ_UPDATE_TIMER "</b> (" STR(DOMOTICZ_UPDATE_TIMER) ")</td><td><input id='ut' name='ut' length=32 placeholder='" STR(DOMOTICZ_UPDATE_TIMER) "' value='{6'</td></tr>";
 #endif  // USE_WEBSERVER
 
-const char domoticz_sensors[DOMOTICZ_MAX_SENSORS][DOMOTICZ_SENSORS_MAX_STRING_LENGTH] PROGMEM =
-  { D_DOMOTICZ_TEMP, D_DOMOTICZ_TEMP_HUM, D_DOMOTICZ_TEMP_HUM_BARO, D_DOMOTICZ_POWER_ENERGY, D_DOMOTICZ_ILLUMINANCE, D_DOMOTICZ_COUNT, D_DOMOTICZ_VOLTAGE, D_DOMOTICZ_CURRENT };
+enum domoticz_sensors_t {
+  DZ_TEMP,
+  DZ_TEMP_HUM,
+  DZ_TEMP_HUM_BARO,
+  DZ_POWER_ENERGY,
+  DZ_ILLUMINANCE,
+  DZ_COUNT,
+  DZ_VOLTAGE,
+  DZ_CURRENT,
+  DZ_MAX_SENSORS };
+
+const char domoticz_sensors[DZ_MAX_SENSORS][DOMOTICZ_SENSORS_MAX_STRING_LENGTH] PROGMEM = {
+  D_DOMOTICZ_TEMP,
+  D_DOMOTICZ_TEMP_HUM,
+  D_DOMOTICZ_TEMP_HUM_BARO,
+  D_DOMOTICZ_POWER_ENERGY,
+  D_DOMOTICZ_ILLUMINANCE,
+  D_DOMOTICZ_COUNT,
+  D_DOMOTICZ_VOLTAGE,
+  D_DOMOTICZ_CURRENT };
 
 char domoticz_in_topic[] = DOMOTICZ_IN_TOPIC;
 char domoticz_out_topic[] = DOMOTICZ_OUT_TOPIC;
@@ -49,13 +65,13 @@ byte domoticz_update_flag = 1;
 
 void mqtt_publishDomoticzPowerState(byte device)
 {
+  if ((device < 1) || (device > Maxdevice)) {
+    device = 1;
+  }
   if (sysCfg.flag.mqtt_enabled && sysCfg.domoticz_relay_idx[device -1]) {
-    if ((device < 1) || (device > Maxdevice)) {
-      device = 1;
-    }
     if (sfl_flg) {
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"idx\":%d,\"nvalue\":2,\"svalue\":\"%d\"}"),
-        sysCfg.domoticz_relay_idx[device -1], sysCfg.led_dimmer[device -1]);
+        sysCfg.domoticz_relay_idx[device -1], sysCfg.led_dimmer);
       mqtt_publish(domoticz_in_topic);
     }
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"idx\":%d,\"nvalue\":%d,\"svalue\":\"\"}"),
@@ -135,7 +151,7 @@ boolean domoticz_mqttData(char *topicBuf, uint16_t stopicBuf, char *dataBuf, uin
   int16_t found = 0;
 
   domoticz_update_flag = 1;
-  if (!strncmp(topicBuf, domoticz_out_topic, strlen(domoticz_out_topic)) != 0) {
+  if (!strncmp(topicBuf, domoticz_out_topic, strlen(domoticz_out_topic))) {
     if (sdataBuf < 20) {
       return 1;
     }
@@ -153,16 +169,17 @@ boolean domoticz_mqttData(char *topicBuf, uint16_t stopicBuf, char *dataBuf, uin
     snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_DOMOTICZ "idx %d, nvalue %d"), idx, nvalue);
     addLog(LOG_LEVEL_DEBUG_MORE);
 
-    if (nvalue >= 0 && nvalue <= 2) {
+    if ((idx > 0) && (nvalue >= 0) && (nvalue <= 2)) {
       for (byte i = 0; i < Maxdevice; i++) {
-        if ((idx > 0) && (idx == sysCfg.domoticz_relay_idx[i])) {
+        if (idx == sysCfg.domoticz_relay_idx[i]) {
           snprintf_P(stemp1, sizeof(stemp1), PSTR("%d"), i +1);
           if (2 == nvalue) {
             nvalue = domoticz["svalue1"];
-            if (sfl_flg && (sysCfg.led_dimmer[i] == nvalue)) {
+//            if (sfl_flg && (sysCfg.led_dimmer == nvalue) && ((power >> i) &1)) {  // Unable to power off using webpage due to Domoticz re-sends dimmer state
+            if (sfl_flg && (sysCfg.led_dimmer == nvalue)) {
               return 1;
             }
-            snprintf_P(topicBuf, stopicBuf, PSTR("/" D_CMND_DIMMER "%s"), (Maxdevice > 1) ? stemp1 : "");
+            snprintf_P(topicBuf, stopicBuf, PSTR("/" D_CMND_DIMMER));
             snprintf_P(dataBuf, sdataBuf, PSTR("%d"), nvalue);
             found = 1;
           } else {
@@ -218,7 +235,7 @@ boolean domoticz_command(const char *type, uint16_t index, char *dataBuf, uint16
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_DOMOTICZ D_CMND_SWITCHIDX "%d\":%d}"), index, sysCfg.domoticz_key_idx[index -1]);
     }
-    else if (!strcasecmp_P(type +dmtcz_len, PSTR(D_CMND_SENSORIDX)) && (index > 0) && (index <= DOMOTICZ_MAX_SENSORS)) {
+    else if (!strcasecmp_P(type +dmtcz_len, PSTR(D_CMND_SENSORIDX)) && (index > 0) && (index <= DZ_MAX_SENSORS)) {
       if (payload >= 0) {
         sysCfg.domoticz_sensor_idx[index -1] = payload;
       }
@@ -271,45 +288,33 @@ void domoticz_sensor(byte idx, char *data)
   }
 }
 
-//  domoticz_sensor(0, temp);
+void domoticz_sensor(byte idx, uint32_t value)
+{
+  char data[16];
+  snprintf_P(data, sizeof(data), PSTR("%d"), value);
+  domoticz_sensor(idx, data);
+}
 
 void domoticz_sensor2(char *temp, char *hum)
 {
   char data[16];
   snprintf_P(data, sizeof(data), PSTR("%s;%s;%d"), temp, hum, dom_hum_stat(hum));
-  domoticz_sensor(1, data);
+  domoticz_sensor(DZ_TEMP_HUM, data);
 }
 
 void domoticz_sensor3(char *temp, char *hum, char *baro)
 {
   char data[32];
   snprintf_P(data, sizeof(data), PSTR("%s;%s;%d;%s;5"), temp, hum, dom_hum_stat(hum), baro);
-  domoticz_sensor(2, data);
+  domoticz_sensor(DZ_TEMP_HUM_BARO, data);
 }
 
 void domoticz_sensor4(uint16_t power, char *energy)
 {
   char data[16];
   snprintf_P(data, sizeof(data), PSTR("%d;%s"), power, energy);
-  domoticz_sensor(3, data);
+  domoticz_sensor(DZ_POWER_ENERGY, data);
 }
-
-void domoticz_sensor5(uint16_t lux)
-{
-  char data[8];
-  snprintf_P(data, sizeof(data), PSTR("%d"), lux);
-  domoticz_sensor(4, data);
-}
-
-void domoticz_sensor6(uint32_t count)
-{
-  char data[16];
-  snprintf_P(data, sizeof(data), PSTR("%d"), count);
-  domoticz_sensor(5, data);
-}
-
-//  domoticz_sensor(6, voltage);
-//  domoticz_sensor(7, current);
 
 /*********************************************************************************************\
  * Presentation
@@ -343,7 +348,7 @@ void handleDomoticz()
     }
     page.replace("{1", String(i +1));
   }
-  for (int i = 0; i < DOMOTICZ_MAX_SENSORS; i++) {
+  for (int i = 0; i < DZ_MAX_SENSORS; i++) {
     page += FPSTR(HTTP_FORM_DOMOTICZ_SENSOR);
     page.replace("{1", String(i +1));
     snprintf_P(stemp, sizeof(stemp), domoticz_sensors[i]);
@@ -370,7 +375,7 @@ void domoticz_saveSettings()
     snprintf_P(stemp, sizeof(stemp), PSTR("s%d"), i +1);
     sysCfg.domoticz_switch_idx[i] = (!strlen(webServer->arg(stemp).c_str())) ? 0 : atoi(webServer->arg(stemp).c_str());
   }
-  for (byte i = 0; i < DOMOTICZ_MAX_SENSORS; i++) {
+  for (byte i = 0; i < DZ_MAX_SENSORS; i++) {
     snprintf_P(stemp, sizeof(stemp), PSTR("l%d"), i +1);
     sysCfg.domoticz_sensor_idx[i] = (!strlen(webServer->arg(stemp).c_str())) ? 0 : atoi(webServer->arg(stemp).c_str());
   }

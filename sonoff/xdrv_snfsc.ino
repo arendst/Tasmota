@@ -120,7 +120,7 @@ void sc_mqttPresent(uint8_t* djson)
     *djson = 1;
 #ifdef USE_DOMOTICZ
     domoticz_sensor2(stemp1, stemp2);
-    domoticz_sensor5(sc_value[2]);
+    domoticz_sensor(DZ_ILLUMINANCE, sc_value[2]);
 #endif  // USE_DOMOTICZ
   }
 }

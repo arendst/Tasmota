@@ -17,11 +17,6 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#define STR_HELPER(x) #x
-#define STR(x) STR_HELPER(x)
-#define max(a,b) ((a)>(b)?(a):(b))
-#define min(a,b) ((a)>(b)?(b):(a))
-
 #ifdef USE_WEBSERVER
 /*********************************************************************************************\
  * Web server and WiFi Manager
@@ -30,7 +25,12 @@
  * Based on source by AlexT (https://github.com/tzapu)
 \*********************************************************************************************/
 
-
+#define STR_HELPER(x) #x
+#define STR(x) STR_HELPER(x)
+//STB mod
+#define max(a,b) ((a)>(b)?(a):(b))
+#define min(a,b) ((a)>(b)?(b):(a))
+//end
 
 const char HTTP_HEAD[] PROGMEM =
   "<!DOCTYPE html><html lang=\"en\" class=\"\">"
@@ -95,6 +95,9 @@ const char HTTP_HEAD[] PROGMEM =
   "</head>"
   "<body>"
   "<div style='text-align:left;display:inline-block;min-width:340px;'>"
+#ifdef BE_MINIMAL
+  "<div style='text-align:center;color:red;'><h3>" D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "</h3></div>"
+#endif
   "<div style='text-align:center;'><h3>{ha} " D_MODULE "</h3><h2>{h}</h2></div>";
 const char HTTP_SCRIPT_CONSOL[] PROGMEM =
   "var sn=0;"                    // Scroll position
@@ -154,8 +157,10 @@ const char HTTP_MSG_SLIDER2[] PROGMEM =
 const char HTTP_MSG_RSTRT[] PROGMEM =
   "<br/><div style='text-align:center;'>" D_DEVICE_WILL_RESTART "</div><br/>";
 const char HTTP_BTN_MENU1[] PROGMEM =
+#ifndef BE_MINIMAL
   "<br/><form action='cn' method='get'><button>" D_CONFIGURATION "</button></form>"
   "<br/><form action='in' method='get'><button>" D_INFORMATION "</button></form>"
+#endif
   "<br/><form action='up' method='get'><button>" D_FIRMWARE_UPGRADE "</button></form>"
   "<br/><form action='cs' method='get'><button>" D_CONSOLE "</button></form>";
 const char HTTP_BTN_RSTRT[] PROGMEM =
@@ -171,9 +176,11 @@ const char HTTP_BTN_MENU3[] PROGMEM =
   "";
 const char HTTP_BTN_MENU4[] PROGMEM =
   "<br/><form action='lg' method='get'><button>" D_CONFIGURE_LOGGING "</button></form>"
+//STB mod
 #ifdef USE_PCF8574
   "<br/><form action='i2c' method='get'><button>Configure PCF8574</button></form>"
 #endif // USE_PCF8574
+//end
   "<br/><form action='co' method='get'><button>" D_CONFIGURE_OTHER "</button></form>"
   "<br/><form action='rt' method='get' onsubmit='return confirm(\"" D_CONFIRM_RESET_CONFIGURATION "\");'><button>" D_RESET_CONFIGURATION "</button></form>"
   "<br/><form action='dl' method='get'><button>" D_BACKUP_CONFIGURATION "</button></form>"
@@ -227,15 +234,15 @@ const char HTTP_FORM_OTHER[] PROGMEM =
   "<fieldset><legend><b>&nbsp;" D_OTHER_PARAMETERS "&nbsp;</b></legend><form method='get' action='sv'>"
   "<input id='w' name='w' value='5' hidden><input id='r' name='r' value='1' hidden>"
   "<br/><b>" D_WEB_ADMIN_PASSWORD "</b><br/><input id='p1' name='p1' length=32 type='password' placeholder='" WEB_PASSWORD "' value='{p1}'><br/>"
-  "<br/><input style='width:10%;float:left' id='b1' name='b1' type='checkbox'{r1}><b>" D_MQTT_ENABLE "</b><br/>";
-const char HTTP_FORM_OTHER2[] PROGMEM =
+  "<br/><input style='width:10%;' id='b1' name='b1' type='checkbox'{r1}><b>" D_MQTT_ENABLE "</b><br/>";
+  const char HTTP_FORM_OTHER2[] PROGMEM =
   "<br/><b>" D_FRIENDLY_NAME " {1</b> ({2)<br/><input id='a{1' name='a{1' length=32 placeholder='{2' value='{3'><br/>";
 #ifdef USE_EMULATION
 const char HTTP_FORM_OTHER3a[] PROGMEM =
   "<br/><fieldset><legend><b>&nbsp;" D_EMULATION "&nbsp;</b></legend>";
 const char HTTP_FORM_OTHER3b[] PROGMEM =
-  "<br/><input style='width:10%;float:left' id='b2' name='b2' type='radio' value='{1'{2><b>{3</b>{4";
-#endif  // USE_EMULATION
+  "<br/><input style='width:10%;' id='b2' name='b2' type='radio' value='{1'{2><b>{3</b>{4";
+  #endif  // USE_EMULATION
 const char HTTP_FORM_END[] PROGMEM =
   "<br/><button type='submit'>" D_SAVE "</button></form></fieldset>";
 const char HTTP_FORM_RST[] PROGMEM =
@@ -334,9 +341,11 @@ void startWebserver(int type, IPAddress ipweb)
       webServer->on("/in", handleInfo);
       webServer->on("/rb", handleRestart);
       webServer->on("/fwlink", handleRoot);  // Microsoft captive portal. Maybe not needed. Might be handled by notFound handler.
+//STB mod
 #ifdef USE_PCF8574
       webServer->on("/i2c", handleI2C);
 #endif
+//end
 #ifdef USE_EMULATION
       if (EMUL_WEMO == sysCfg.flag.emulation) {
         webServer->on("/upnp/control/basicevent1", HTTP_POST, handleUPnPevent);
@@ -448,11 +457,11 @@ void handleRoot()
     page += F("<div id='l1' name='l1'></div>");
     if (Maxdevice) {
       if (sfl_flg) {
-        if ((2 == sfl_flg) || (5 == sfl_flg)) {
+        if ((2 == (sfl_flg &7)) || (5 == (sfl_flg &7))) {
           snprintf_P(line, sizeof(line), HTTP_MSG_SLIDER1, sl_getColorTemp());
           page += line;
         }
-        snprintf_P(line, sizeof(line), HTTP_MSG_SLIDER2, sysCfg.led_dimmer[0]);
+        snprintf_P(line, sizeof(line), HTTP_MSG_SLIDER2, sysCfg.led_dimmer);
         page += line;
       }
       page += FPSTR(HTTP_TABLE100);
@@ -554,17 +563,22 @@ void handleAjax2()
 #ifdef USE_BH1750
     tpage += bh1750_webPresent();
 #endif
+//STB mod
 #ifdef USE_CHIRP
     tpage += chirp_webPresent();
 #endif
 #ifdef USE_ADS1115
     tpage += ads1115_webPresent();
 #endif
+//end
   }
 #endif  // USE_I2C
+
+//STB mod
 if (sr04_flg) {
   tpage += sr04_webPresent();
 }
+//end
   String page = "";
   if (tpage.length() > 0) {
     page += FPSTR(HTTP_TABLE100);
@@ -576,11 +590,10 @@ if (sr04_flg) {
     page += FPSTR(HTTP_TABLE100);
     page += F("<tr>");
     for (byte idx = 1; idx <= Maxdevice; idx++) {
-      //snprintf_P(line, sizeof(line), PSTR("<td style='width:%d%'><div style='text-align:center;font-weight:bold;font-size:%dpx'>%s</div></td>"),
+//STB mod
       snprintf_P(line, sizeof(line), PSTR("<td style='width:%d%'><div style='text-align:center;font-weight:bold'>%s</div></td>"),
-//        100 / Maxdevice, 70 - (Maxdevice * 8), (power & (0x01 << (idx -1))) ? "ON" : "OFF");
-        //100 / Maxdevice, 70 - (Maxdevice * 8), getStateText(bitRead(power, idx -1)));
         100 / Maxdevice,  getStateText(bitRead(power, idx -1)));
+//end
       page += line;
     }
     page += F("</tr></table>");
@@ -589,7 +602,7 @@ if (sr04_flg) {
  * Will interrupt user action when selected
   if (sfl_flg) {
     snprintf_P(line, sizeof(line), PSTR("<input type='range' min='1' max='100' value='%d' onchange='lb(value)'>"),
-      sysCfg.led_dimmer[0]);
+      sysCfg.led_dimmer);
     page += line;
   }
 */
@@ -649,10 +662,16 @@ boolean inModule(byte val, uint8_t *arr)
   }
 #endif
   if (((val >= GPIO_REL1) && (val <= GPIO_REL4)) || ((val >= GPIO_LED1) && (val <= GPIO_LED4))) {
-    offset = 4;
+    offset = (GPIO_REL1_INV - GPIO_REL1);
   }
   if (((val >= GPIO_REL1_INV) && (val <= GPIO_REL4_INV)) || ((val >= GPIO_LED1_INV) && (val <= GPIO_LED4_INV))) {
-    offset = -4;
+    offset = -(GPIO_REL1_INV - GPIO_REL1);
+  }
+  if ((val >= GPIO_PWM1) && (val <= GPIO_PWM5)) {
+    offset = (GPIO_PWM1_INV - GPIO_PWM1);
+  }
+  if ((val >= GPIO_PWM1_INV) && (val <= GPIO_PWM5_INV)) {
+    offset = -(GPIO_PWM1_INV - GPIO_PWM1);
   }
   for (byte i = 0; i < MAX_GPIO_PIN; i++) {
     if (arr[i] == val) {
@@ -705,8 +724,8 @@ void handleModule()
   func += FPSTR(HTTP_SCRIPT_MODULE3);
   for (byte i = 0; i < MAX_GPIO_PIN; i++) {
     if (GPIO_USER == cmodule.gp.io[i]) {
-      snprintf_P(line, sizeof(line), PSTR("<br/><b>GPIO%d</b> %s<select id='g%d' name='g%d'></select></br>"),
-          i, (0==i)?"D3":(1==i)?"D10":(2==i)?"D4":(3==i)?"D9":(4==i)?"D2":(5==i)?"D1":(12==i)?"D6":(13==i)?"D7":(14==i)?"D5":(15==i)?"D8":(16==i)?"D0":"", i, i);
+      snprintf_P(line, sizeof(line), PSTR("<br/><b>" D_GPIO "%d</b> %s<select id='g%d' name='g%d'></select></br>"),
+        i, (0==i)? D_SENSOR_BUTTON "1":(1==i)? D_SERIAL_OUT :(3==i)? D_SERIAL_IN :(12==i)? D_SENSOR_RELAY "1":(13==i)? D_SENSOR_LED "1I":(14==i)? D_SENSOR :"", i, i);
       page += line;
       snprintf_P(line, sizeof(line), PSTR("sk(%d,%d);"), my_module.gp.io[i], i);  // g0 - g16
       func += line;
@@ -1058,12 +1077,13 @@ void handleSave()
       getStateText(sysCfg.flag.mqtt_enabled), sysCfg.flag.emulation, sysCfg.friendlyname[0], sysCfg.friendlyname[1], sysCfg.friendlyname[2], sysCfg.friendlyname[3]);
     addLog(LOG_LEVEL_INFO);
     break;
+//STB mod
   #ifdef USE_PCF8574
   case 7:
       pcf8574_saveSettings();
     break;
   #endif  // USE_PCF8574
-
+///end
   case 6:
     byte new_module = (!strlen(webServer->arg("g99").c_str())) ? MODULE : atoi(webServer->arg("g99").c_str());
     byte new_modflg = (sysCfg.module != new_module);
@@ -1074,11 +1094,12 @@ void handleSave()
     for (byte i = 0; i < MAX_GPIO_PIN; i++) {
       if (new_modflg) {
         sysCfg.my_module.gp.io[i] = 0;
-      }
-      if (GPIO_USER == cmodule.gp.io[i]) {
-        snprintf_P(stemp, sizeof(stemp), PSTR("g%d"), i);
-        sysCfg.my_module.gp.io[i] = (!strlen(webServer->arg(stemp).c_str())) ? 0 : atoi(webServer->arg(stemp).c_str());
-        gpios += F(", " D_GPIO ); gpios += String(i); gpios += F(" "); gpios += String(sysCfg.my_module.gp.io[i]);
+      } else {
+        if (GPIO_USER == cmodule.gp.io[i]) {
+          snprintf_P(stemp, sizeof(stemp), PSTR("g%d"), i);
+          sysCfg.my_module.gp.io[i] = (!strlen(webServer->arg(stemp).c_str())) ? 0 : atoi(webServer->arg(stemp).c_str());
+          gpios += F(", " D_GPIO ); gpios += String(i); gpios += F(" "); gpios += String(sysCfg.my_module.gp.io[i]);
+        }
       }
     }
     snprintf_P(stemp, sizeof(stemp), modules[sysCfg.module].name);
@@ -1513,7 +1534,9 @@ void handleInfo()
   page += F("<tr><th>" D_FLASH_WRITE_COUNT "</th><td>"); page += String(sysCfg.saveFlag); page += stopic; page += F("</td></tr>");
   page += F("<tr><th>" D_BOOT_COUNT "</th><td>"); page += String(sysCfg.bootcount); page += F("</td></tr>");
   page += F("<tr><th>" D_RESTART_REASON "</th><td>"); page += getResetReason(); page += F("</td></tr>");
+  //STB mod
     for (byte i = 0; i < min(Maxdevice,4); i++) {
+  //end
     page += F("<tr><th>" D_FRIENDLY_NAME " ");
     page += i +1;
     page += F("</th><td>"); page += sysCfg.friendlyname[i]; page += F("</td></tr>");

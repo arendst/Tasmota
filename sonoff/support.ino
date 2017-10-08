@@ -544,9 +544,11 @@ void WIFI_check_ip()
       default:  // WL_IDLE_STATUS and WL_DISCONNECTED
         if (!_wifiretry || ((WIFI_RETRY_SEC / 2) == _wifiretry)) {
           addLog_P(LOG_LEVEL_INFO, S_LOG_WIFI, PSTR(D_CONNECT_FAILED_AP_TIMEOUT));
+	  //STB mod
           if (sysCfg.deepsleep > 10) {
               ESP.deepSleep(1000000 * sysCfg.deepsleep, WAKE_RF_DEFAULT);
           }
+	  //end
         } else {
           addLog_P(LOG_LEVEL_DEBUG, S_LOG_WIFI, PSTR(D_ATTEMPTING_CONNECTION));
         }
@@ -1083,10 +1085,11 @@ void rtc_second()
       addLog(LOG_LEVEL_DEBUG);
       snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION "(" D_STD_TIME ") %s"), rtc_time(3).c_str());
       addLog(LOG_LEVEL_DEBUG);
-
+//STB mod
       if (sysCfg.tele_period) {
         tele_period = sysCfg.tele_period -2;
       }
+//end
     }
   }
   utctime++;

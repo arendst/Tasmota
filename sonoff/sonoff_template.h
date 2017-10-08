@@ -52,15 +52,21 @@ enum upins_t {
   GPIO_LED2_INV,
   GPIO_LED3_INV,
   GPIO_LED4_INV,
-  GPIO_PWM1,           // Sonoff Led Cold
-  GPIO_PWM2,           // Sonoff Led Warm
-  GPIO_PWM3,           // Red (swapped with Blue from original)
-  GPIO_PWM4,           // Green
-  GPIO_PWM5,           // Blue (swapped with Red from original)
+  GPIO_PWM1,           // RGB   Red   or C  Cold White
+  GPIO_PWM2,           // RGB   Green or CW Warm White
+  GPIO_PWM3,           // RGB   Blue
+  GPIO_PWM4,           // RGBW  (Cold) White
+  GPIO_PWM5,           // RGBCW Warm White
   GPIO_CNTR1,
   GPIO_CNTR2,
   GPIO_CNTR3,
   GPIO_CNTR4,
+  GPIO_PWM1_INV,       // RGB   Red   or C  Cold White
+  GPIO_PWM2_INV,       // RGB   Green or CW Warm White
+  GPIO_PWM3_INV,       // RGB   Blue
+  GPIO_PWM4_INV,       // RGBW  (Cold) White
+  GPIO_PWM5_INV,       // RGBCW Warm White
+  GPIO_IRRECV,         // IR receiver
   GPIO_SEN_TRIG,
   GPIO_SEN_ECHO,
   GPIO_REL1_TOG_A,
@@ -79,7 +85,7 @@ const char sensors[GPIO_SENSOR_END][9] PROGMEM = {
   D_SENSOR_I2C_SCL,
   D_SENSOR_I2C_SDA,
   D_SENSOR_WS2812,
-  D_SENSOR_IRREMOTE,
+  D_SENSOR_IRSEND,
   D_SENSOR_SWITCH "1",
   D_SENSOR_SWITCH "2",
   D_SENSOR_SWITCH "3",
@@ -113,6 +119,12 @@ const char sensors[GPIO_SENSOR_END][9] PROGMEM = {
   D_SENSOR_COUNTER "2",
   D_SENSOR_COUNTER "3",
   D_SENSOR_COUNTER "4",
+  D_SENSOR_PWM "1I",
+  D_SENSOR_PWM "2I",
+  D_SENSOR_PWM "3I",
+  D_SENSOR_PWM "4I",
+  D_SENSOR_PWM "5I",
+  D_SENSOR_IRRECV,
   "SNS_TRIG",
   "SNS_ECHO",
   "Rel1SetA",
@@ -171,6 +183,8 @@ enum module_t {
   SUPLA1,
   WITTY,
   YUNSHAN,
+  MAGICHOME,
+  LUANIHVIO,
   MAXMODULE };
 
 /********************************************************************************************/
@@ -213,9 +227,11 @@ const uint8_t nicelist[MAXMODULE] PROGMEM = {
   ELECTRODRAGON,
   EXS_RELAY,
   SUPLA1,
+  LUANIHVIO,
   YUNSHAN,
   WION,
   H801,
+  MAGICHOME,
   HUAFAN_SS,
   AILIGHT,
   WEMOS,
@@ -477,13 +493,13 @@ const mytmplt modules[MAXMODULE] PROGMEM = {
      GPIO_LED1,        // GPIO01 Green LED
      GPIO_TXD,         // GPIO02 RX - Pin next to TX on the PCB
      GPIO_RXD,         // GPIO03 TX - Pin next to GND on the PCB
-     GPIO_PWM2,        // GPIO04 W2
+     GPIO_USER,        // GPIO04 W2 - PWM5
      GPIO_LED2_INV,    // GPIO05 Red LED
      0, 0, 0, 0, 0, 0, // Flash connection
      GPIO_PWM3,        // GPIO12 Blue
-     GPIO_PWM4,        // GPIO13 Green
-     GPIO_PWM1,        // GPIO14 W1
-     GPIO_PWM5,        // GPIO15 Red
+     GPIO_PWM2,        // GPIO13 Green
+     GPIO_USER,        // GPIO14 W1 - PWM4
+     GPIO_PWM1,        // GPIO15 Red
      0, 0
   },
   { "Sonoff SC",       // Sonoff SC (ESP8266)
@@ -645,10 +661,10 @@ const mytmplt modules[MAXMODULE] PROGMEM = {
      GPIO_KEY1,        // GPIO04 D2 push button on ESP-12F board
      GPIO_USER,        // GPIO05 D1 optional sensor
      0, 0, 0, 0, 0, 0, // Flash connection
-     GPIO_PWM4,        // GPIO12 D6 RGB LED Green
-     GPIO_PWM5,        // GPIO13 D7 RGB LED Blue
+     GPIO_PWM2,        // GPIO12 D6 RGB LED Green
+     GPIO_PWM3,        // GPIO13 D7 RGB LED Blue
      GPIO_USER,        // GPIO14 D5 optional sensor
-     GPIO_PWM3,        // GPIO15 D8 RGB LED Red
+     GPIO_PWM1,        // GPIO15 D8 RGB LED Red
      GPIO_USER,        // GPIO16 D0 optional sensor
      GPIO_ADC0         // ADC0 A0 Light sensor / Requires USE_ADC_VCC in user_config.h to be disabled
   },
@@ -662,5 +678,32 @@ const mytmplt modules[MAXMODULE] PROGMEM = {
      GPIO_KEY1,        // GPIO05 Blue Led and OptoCoupler input - Module Pin 9
      0, 0, 0, 0, 0, 0, // Flash connection
      0, 0, 0, 0, 0
+  },
+  { "MagicHome",       // Magic Home (aka Flux-light) (ESP8266) - https://www.aliexpress.com/item/Magic-Home-Mini-RGB-RGBW-Wifi-Controller-For-Led-Strip-Panel-light-Timing-Function-16million-colors/32686853650.html
+     0, 0,
+     GPIO_LED1_INV,    // GPIO02 Blue onboard LED
+     0,
+     GPIO_USER,        // GPIO04 IR receiver (optional)
+     GPIO_PWM2,        // GPIO05 RGB LED Green
+     0, 0, 0, 0, 0, 0, // Flash connection
+     GPIO_PWM3,        // GPIO12 RGB LED Blue
+     GPIO_USER,        // GPIO13 RGBW LED White (optional - set to PWM4 for Cold White or Warm White)
+     GPIO_PWM1,        // GPIO14 RGB LED Red
+     0, 0, 0
+  },
+  { "Luani HVIO",      // ESP8266_HVIO - https://luani.de/projekte/esp8266-hvio/
+     0,                // GPIO00 Flash jumper
+     GPIO_USER,        // GPIO01 Serial RXD and Optional sensor
+     GPIO_USER,        // GPIO02 Optional sensor / I2C SDA pad
+     GPIO_USER,        // GPIO03 Serial TXD and Optional sensor
+     GPIO_REL1,        // GPIO04 Relay 1 (0 = Off, 1 = On)
+     GPIO_REL2,        // GPIO05 Relay 2 (0 = Off, 1 = On)
+     0, 0, 0, 0, 0, 0, // Flash connection
+     GPIO_SWT1,        // GPIO12 External input 1 (0 = On, 1 = Off)
+     GPIO_SWT2,        // GPIO13 External input 2 (0 = On, 1 = Off)
+     GPIO_USER,        // GPIO14 Optional sensor / I2C SCL pad
+     GPIO_LED1,        // GPIO15 Led (1 = On, 0 = Off)
+     0,
+     GPIO_ADC0         // ADC0 A0 Analog input
   }
 };

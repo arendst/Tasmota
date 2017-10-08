@@ -18,6 +18,9 @@
 */
 
 #define PARAM8_SIZE  23                    // Number of param bytes
+//STB mod
+typedef uint32_t powerarray;
+//end
 
 typedef union {                            // Restricted by MISRA-C Rule 18.4 but so usefull...
   uint32_t data;                           // Allow bit manipulation using SetOption
@@ -37,7 +40,7 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t stop_flash_rotate : 1;        // bit 12 (v5.2.0)
     uint32_t button_single : 1;            // bit 13 (v5.4.0)
     uint32_t interlock : 1;                // bit 14 (v5.6.0)
-    uint32_t spare15 : 1;
+    uint32_t pwm_control : 1;              // bit 15 (v5.8.1)
     uint32_t spare16 : 1;
     uint32_t spare17 : 1;
     uint32_t spare18 : 1;
@@ -92,8 +95,9 @@ struct SYSCFG {
   byte          ex_value_units;            // Not used since 5.0.2
   byte          ex_button_restrict;        // Not used since 5.0.2
   uint16_t      tele_period;
-
-  uint32_t      power;
+//STB mod
+  powerarray    power;
+//end
   uint8_t       ledstate;
 
   uint8_t       param[PARAM8_SIZE];        // was domoticz_in_topic until 5.1.6
@@ -106,7 +110,9 @@ struct SYSCFG {
   unsigned long hlw_pcal;
   unsigned long hlw_ucal;
   unsigned long hlw_ical;
+  //STB mod
   unsigned long uptime;
+  //end
   unsigned long hlw_kWhtoday;
   unsigned long hlw_kWhyesterday;
   uint16_t      hlw_kWhdoy;
@@ -167,7 +173,9 @@ struct SYSCFG {
   uint16_t      led_pixels;
   uint8_t       led_color[5];
   uint8_t       led_table;
-  uint8_t       led_dimmer[3];
+  uint8_t       led_dimmer;
+  uint8_t       ex_led_dimmer1;            // Never used
+  uint8_t       ex_led_dimmer2;            // Never used
   uint8_t       led_fade;
   uint8_t       led_speed;
   uint8_t       led_scheme;
@@ -206,18 +214,21 @@ struct SYSCFG {
 
   // 5.4.1
   uint8_t       sfb_code[17][9];
-
+//STB mod
   uint8_t       pcf8574_config[8];
   uint8_t       all_relays_inverted;
   uint16_t      deepsleep;
+  //end
 } sysCfg;
 
 struct RTCMEM {
   uint16_t      valid;
   byte          osw_flag;
-  uint32_t      power;
+  //STB mod
+  powerarray    power;
   unsigned long uptime;
   unsigned long ultradeepsleep;
+  //end
   unsigned long hlw_kWhtoday;
   unsigned long hlw_kWhtotal;
   unsigned long pCounter[MAX_COUNTERS];

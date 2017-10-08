@@ -89,6 +89,9 @@ void sb_received()
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_RFRECEIVED "\":{\"" D_SYNC "\":%d, \"" D_LOW "\":%d, \"" D_HIGH "\":%d, \"" D_DATA "\":\"%06X\", \"" D_CMND_RFKEY "\":%s}}"),
         rsy, rlo, rhi, rid, rfkey);
       mqtt_publish_topic_P(6, PSTR(D_RFRECEIVED));
+#ifdef USE_DOMOTICZ
+      domoticz_sensor(DZ_COUNT, rid);  // Send rid as Domoticz Counter value
+      #endif  // USE_DOMOTICZ
     }
   }
 }
@@ -139,6 +142,10 @@ void sb_send(uint8_t idx, uint8_t key)
   Serial.write(code);
   Serial.write(0x55);  // End of Text
   Serial.flush();
+#ifdef USE_DOMOTICZ
+//  uint32_t rid = sysCfg.sfb_code[idx][6] << 16 | sysCfg.sfb_code[idx][7] << 8 | code;
+//  domoticz_sensor(DZ_COUNT, rid);  // Send rid as Domoticz Counter value
+#endif  // USE_DOMOTICZ
 }
 
 void sb_learn(uint8_t key)
