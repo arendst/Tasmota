@@ -82,6 +82,7 @@ void ir_recv_check()
   char sirtype[100];
   char *protocol;
   int8_t iridx = 0;
+  uint8_t diridx = 0;
 
   decode_results results;
 
@@ -99,6 +100,7 @@ void ir_recv_check()
       if ((iridx < 0) || (iridx > 14)) {
         iridx = 0;
       }
+      diridx = iridx;
       // Based on IRremoteESP8266.h enum decode_type_t
       snprintf_P(sirtype, sizeof(sirtype), PSTR("UNKNOWN RC5 RC6 NEC SONY PANASONIC JVC SAMSUNG WHYNTER AIWA_RC_T501 LG SANYO MITSUBISHI DISH SHARP"));
       protocol = strtok(sirtype, " ");
@@ -111,7 +113,7 @@ void ir_recv_check()
                  protocol, results.bits, results.value);
       mqtt_publish_topic_P(6, PSTR(D_IRRECEIVED));
 #ifdef USE_DOMOTICZ
-      unsigned long value = results.value | (iridx << 28); // [Protocol:4, Data:28]
+      unsigned long value = results.value | (diridx << 28); // [Protocol:4, Data:28]
       domoticz_sensor(DZ_COUNT, value);                    // Send data as Domoticz Counter value
 #endif                                                     // USE_DOMOTICZ
     }
