@@ -270,6 +270,8 @@ const char HTTP_SNS_HUM[] PROGMEM =
   "<tr><th>%s " D_HUMIDITY "</th><td>%s%</td></tr>";
 const char HTTP_SNS_PRESSURE[] PROGMEM =
   "<tr><th>%s " D_PRESSURE "</th><td>%s " D_UNIT_PRESSURE "</td></tr>";
+const char HTTP_SNS_PRESSUREATSEALEVEL[] PROGMEM =
+  "<tr><th>%s " D_PRESSUREATSEALEVEL "</th><td>%s " D_UNIT_PRESSURE "</td></tr>";
 const char HTTP_SNS_LIGHT[] PROGMEM =
   "<tr><th>%s " D_LIGHT "</th><td>%d%</td></tr>";
 const char HTTP_SNS_NOISE[] PROGMEM =

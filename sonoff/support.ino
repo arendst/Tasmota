@@ -1086,8 +1086,13 @@ void rtc_second()
   loctime = utctime;
   if (loctime > 1451602800) {  // 2016-01-01
     if (99 == sysCfg.timezone) {
-      dstoffset = myDST.offset * SECS_PER_MIN;
-      stdoffset = mySTD.offset * SECS_PER_MIN;
+      if (myDST.hemis) {
+        dstoffset = mySTD.offset * SECS_PER_MIN;  // Southern hemisphere
+        stdoffset = myDST.offset * SECS_PER_MIN;
+      } else {
+        dstoffset = myDST.offset * SECS_PER_MIN;  // Northern hemisphere
+        stdoffset = mySTD.offset * SECS_PER_MIN;
+      }
       if ((utctime >= (dsttime - stdoffset)) && (utctime < (stdtime - dstoffset))) {
         loctime += dstoffset;  // Daylight Saving Time
       } else {

@@ -25,11 +25,12 @@
     - Select IDE Tools - Flash Size: "1M (no SPIFFS)"
   ====================================================*/
 
-#define VERSION                0x05080008  // 5.8.0h
+#define VERSION                0x05080009  // 5.8.0i
 
 enum week_t  {Last, First, Second, Third, Fourth};
 enum dow_t   {Sun=1, Mon, Tue, Wed, Thu, Fri, Sat};
 enum month_t {Jan=1, Feb, Mar, Apr, May, Jun, Jul, Aug, Sep, Oct, Nov, Dec};
+enum hemis_t {North, South};
 enum log_t   {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG_MORE, LOG_LEVEL_ALL};  // SerialLog, Syslog, Weblog
 enum wifi_t  {WIFI_RESTART, WIFI_SMARTCONFIG, WIFI_MANAGER, WIFI_WPSCONFIG, WIFI_RETRY, WIFI_WAIT, MAX_WIFI_OPTION};  // WifiConfig
 enum swtch_t {TOGGLE, FOLLOW, FOLLOW_INV, PUSHBUTTON, PUSHBUTTON_INV, PUSHBUTTONHOLD, PUSHBUTTONHOLD_INV, MAX_SWITCH_OPTION};  // SwitchMode
@@ -206,6 +207,7 @@ struct TIME_T {
 
 struct TimeChangeRule
 {
+  uint8_t       hemis;     // 0-Northern, 1=Southern Hemisphere (=Opposite DST/STD)
   uint8_t       week;      // 1=First, 2=Second, 3=Third, 4=Fourth, or 0=Last week of the month
   uint8_t       dow;       // day of week, 1=Sun, 2=Mon, ... 7=Sat
   uint8_t       month;     // 1=Jan, 2=Feb, ... 12=Dec
@@ -1509,6 +1511,12 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
         sysCfg.timezone = payload;
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_TIMEZONE "\":%d}"), sysCfg.timezone);
+    }
+    else if (!strcasecmp_P(type, PSTR(D_CMND_ALTITUDE))) {
+      if ((data_len > 0) && ((payload >= -30000) && (payload <= 30000))) {
+        sysCfg.altitude = payload;
+      }
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_ALTITUDE "\":%d}"), sysCfg.altitude);
     }
     else if (!strcasecmp_P(type, PSTR(D_CMND_LEDPOWER))) {
       if ((payload >= 0) && (payload <= 2)) {

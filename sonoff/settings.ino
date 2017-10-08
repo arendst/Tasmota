@@ -639,9 +639,6 @@ void CFG_Delta()
     if (sysCfg.version < 0x03091500) {
       for (byte i = 0; i < 4; i++) sysCfg.switchmode[i] = SWITCH_MODE;
     }
-    if (sysCfg.version < 0x04000200) {
-      sysCfg.ex_button_restrict = 0;
-    }
     if (sysCfg.version < 0x04000400) {
       CFG_DefaultSet_4_0_4();
     }
@@ -663,8 +660,8 @@ void CFG_Delta()
     if (sysCfg.version < 0x05000105) {
       sysCfg.flag = { 0 };
       sysCfg.flag.savestate = SAVE_STATE;
-      sysCfg.flag.button_restrict = sysCfg.ex_button_restrict;
-      sysCfg.flag.value_units = sysCfg.ex_value_units;
+      sysCfg.flag.button_restrict = 0;
+      sysCfg.flag.value_units = 0;
       sysCfg.flag.mqtt_enabled = sysCfg.ex_mqtt_enabled;
 //      sysCfg.flag.mqtt_response = 0;
       sysCfg.flag.mqtt_power_retain = sysCfg.ex_mqtt_power_retain;

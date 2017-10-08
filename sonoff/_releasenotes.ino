@@ -1,6 +1,13 @@
-/* 5.8.0h
+/* 5.8.0i
+ * Add Domoticz counter sensor to IrReceive representing Received IR Protocol and Data
+ * Fix Southern Hemisphere TIME_STD/TIME_DST (#968)
+ * Add Sea level pressure calculation (#974)
+ * Fix virtual relay status message used with Color/Dimmer control (#989)
+ * Fix command IRSend and IRHvac case sensitive parameter regression introduced with version 5.8.0 (#993)
+ *
+ * 5.8.0h
  * Rename command IRRemote to IRSend (#956)
- * Add optional IR Receiver support (#956)
+ * Add IR Receiver support. Disable in user_config.h (#956)
  * Change default PWM assignment for Witty Cloud to support optional Color/Dimmer control (#976)
  *   GPIO12 (Green) from GPIO_PWM4 to GPIO_PWM2
  *   GPIO13 (Blue)  from GPIO_PWM5 to GPIO_PWM3

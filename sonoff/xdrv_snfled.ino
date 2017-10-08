@@ -294,6 +294,7 @@ char* sl_getColor(char* scolor)
 void sl_prepPower()
 {
   char scolor[11];
+  char scommand[16];
 
   if (sysCfg.led_dimmer && !(sl_power)) {
     do_cmnd_power(Maxdevice, 7);  // No publishPowerState
@@ -305,12 +306,14 @@ void sl_prepPower()
 //  mqtt_publishDomoticzPowerState(1);
   domoticz_updatePowerState(Maxdevice);
 #endif  // USE_DOMOTICZ
+
+  getPowerDevice(scommand, Maxdevice, sizeof(scommand));
   if ((sfl_flg &7) > 1) {
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_RSLT_POWER "\":\"%s\", \"" D_CMND_DIMMER "\":%d, \"" D_CMND_COLOR "\":\"%s\"}"),
-      getStateText(sl_power), sysCfg.led_dimmer, sl_getColor(scolor));
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"%s\":\"%s\", \"" D_CMND_DIMMER "\":%d, \"" D_CMND_COLOR "\":\"%s\"}"),
+      scommand, getStateText(sl_power), sysCfg.led_dimmer, sl_getColor(scolor));
   } else {
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_RSLT_POWER "\":\"%s\", \"" D_CMND_DIMMER "\":%d}"),
-      getStateText(sl_power), sysCfg.led_dimmer);
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"%s\":\"%s\", \"" D_CMND_DIMMER "\":%d}"),
+      scommand, getStateText(sl_power), sysCfg.led_dimmer);
   }
 }
 
