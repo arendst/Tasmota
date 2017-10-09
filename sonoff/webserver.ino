@@ -661,10 +661,12 @@ boolean inModule(byte val, uint8_t *arr)
     return true;
   }
 #endif
-  if (((val >= GPIO_REL1) && (val <= GPIO_REL4)) || ((val >= GPIO_LED1) && (val <= GPIO_LED4))) {
+//STB mod
+  if (((val >= GPIO_REL1) && (val <= GPIO_REL8)) || ((val >= GPIO_LED1) && (val <= GPIO_LED4))) {
     offset = (GPIO_REL1_INV - GPIO_REL1);
   }
-  if (((val >= GPIO_REL1_INV) && (val <= GPIO_REL4_INV)) || ((val >= GPIO_LED1_INV) && (val <= GPIO_LED4_INV))) {
+  if (((val >= GPIO_REL1_INV) && (val <= GPIO_REL8_INV)) || ((val >= GPIO_LED1_INV) && (val <= GPIO_LED4_INV))) {
+//end
     offset = -(GPIO_REL1_INV - GPIO_REL1);
   }
   if ((val >= GPIO_PWM1) && (val <= GPIO_PWM5)) {

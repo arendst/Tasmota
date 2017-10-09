@@ -27,10 +27,10 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #define PFC8574_ADDR1        0x38
 
-uint8_t pcf8574_pin[64] , pcf8574addr[8], pcf8574type = 0;
+uint8_t pcf8574_pin[64] = {99}, pcf8574addr[8], pcf8574type = 0;
 byte max_pcf8574_devices = 0;         // Max numbers of PCF8574 modules
 char pcf8574stype[8];
-uint8_t _pcf8574pinMask[8] = {0,0,0,0,0,0,0,0};
+uint8_t _pcf8574pinMask[8] = {0};
 int _error;
 
 

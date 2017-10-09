@@ -299,7 +299,7 @@ uint8_t pin[GPIO_MAX];                // Possible pin configurations
 #ifdef USE_PCF8574
   uint8_t rel_inverted[32] = { 0 };      // Relay inverted flag (1 = (0 = On, 1 = Off))
 #else
-  uint8_t rel_inverted[4] = { 0 };      // Relay inverted flag (1 = (0 = On, 1 = Off))
+  uint8_t rel_inverted[8] = { 0 };      // Relay inverted flag (1 = (0 = On, 1 = Off))
 #endif
 //end
 uint8_t led_inverted[4] = { 0 };      // LED inverted flag (1 = (0 = On, 1 = Off))
@@ -2180,7 +2180,9 @@ void button_handler()
         ButtonCode = 0;
       }
     } else {
-      if ((pin[GPIO_KEY1 +i] < 99) && !blockgpio0) {
+      //STB mod
+      if ((pin[GPIO_KEY1 +i] < 99) && !blockgpio0 && i < 4) {
+      //end
         butt_present = 1;
         button = digitalRead(pin[GPIO_KEY1 +i]);
         snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION D_BUTTON " %d, %d, %d, max pcfdev %d"), pin[GPIO_KEY1 +i], i, GPIO_KEY1, max_pcf8574_connected_ports);
@@ -2730,7 +2732,9 @@ void GPIO_init()
 //  addLog(LOG_LEVEL_DEBUG);
 
     if (mpin) {
-      if ((mpin >= GPIO_REL1_INV) && (mpin <= GPIO_REL4_INV)) {
+      //STB mod
+      if ((mpin >= GPIO_REL1_INV) && (mpin <= GPIO_REL8_INV)) {
+      //end
         rel_inverted[mpin - GPIO_REL1_INV] = 1;
         mpin -= (GPIO_REL1_INV - GPIO_REL1);
       }
@@ -2811,7 +2815,9 @@ void GPIO_init()
     if (!sfl_flg) {
       Maxdevice = 0;
     }
-    for (byte i = 0; i < 4; i++) {
+    //STB mod
+    for (byte i = 0; i < 8; i++) {
+    //end
       if (pin[GPIO_REL1 +i] < 99) {
         pinMode(pin[GPIO_REL1 +i], OUTPUT);
         Maxdevice++;
