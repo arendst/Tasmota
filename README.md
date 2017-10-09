@@ -3,11 +3,11 @@ I keep this version in sync with the current development of the master. Anyhow m
 
 Additional features:
 - DeepSleep and UltraDeepSleep support up to unlimited (deepsleep=xxx [sec]), support also 1day or more deepsleep. Just define deepsleep e.g. 1 day = 86400. (wakes up every hour for 0.4 seconds until time reached)
-- Support 8-Relays and inverted Relays. Also Pulsetimer up to 8 relaqys supported. All other items still maximum 4.
+- Support 8-Relays and inverted Relays. Also Pulsetimer up to 8 relays supported. All other items still maximum 4.
 - Improved Startuptime incl TLS MQTT and measurement in <9 sek
 - Support for Ultrasonic distance measurement HC-SR04
 - Support for I2C 10bit 4-channel A/D converter ADS1115
-- Support for I2C 8-channel DIO extension board PCF-8574 (large extension to support 32 relays and pulsetimers on 32 relays; other functions still stick to 4)
+- Support for I2C 8-channel DIO extension board PCF-8574 (large extension to support 32 relays and pulsetimers on 8 relays (can be changed by changing constant MAX_PULSETIMER).
 - Report total UPTIME (seconds) between two deepsleep cycle. This allows to see uptime, even if connect was not successfull or there was a reboot. Using RTC memory to ensure correct uptime
 
 
