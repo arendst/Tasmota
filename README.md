@@ -2,13 +2,14 @@
 I keep this version in sync with the current development of the master. Anyhow my use case is a little bit different. Even, if I have some SONOFF devices, I like to build(solder) my own based on different versions of the ESP8266, depending on my different requirements (batterie, external Antenna, add on I2C devices and others). Additionally I try to improve the overall project.
 
 Additional features:
-- DeepSleep support up to unlimited (deepsleep=xxx [sec]), support also 1day or more deepsleep
+- DeepSleep and UltraDeepSleep support up to unlimited (deepsleep=xxx [sec]), support also 1day or more deepsleep. Just define deepsleep e.g. 1 day = 86400. (wakes up every hour for 0.4 seconds until time reached)
+- Support 8-Relays and inverted Relays. Also Pulsetimer up to 8 relaqys supported. All other items still maximum 4.
 - Improved Startuptime incl TLS MQTT and measurement in <9 sek
 - Support for Ultrasonic distance measurement HC-SR04
 - Support for I2C 10bit 4-channel A/D converter ADS1115
 - Support for I2C 8-channel DIO extension board PCF-8574 (large extension to support 32 relays and pulsetimers on 32 relays; other functions still stick to 4)
 - Report total UPTIME (seconds) between two deepsleep cycle. This allows to see uptime, even if connect was not successfull or there was a reboot. Using RTC memory to ensure correct uptime
-- Support UtraDeepSleep on any duration in seconds. Just define deepsleep e.g. 1 day = 86400. (wakes up every hour for 0.4 seconds until time reached)
+
 
 ## Sonoff-Tasmota
 Provide ESP8266 based Sonoff by [iTead Studio](https://www.itead.cc/) and ElectroDragon IoT Relay with Serial, Web and MQTT control allowing 'Over the Air' or OTA firmware updates using Arduino IDE.
