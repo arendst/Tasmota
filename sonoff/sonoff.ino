@@ -2881,6 +2881,10 @@ void GPIO_init()
     sr04_init();
     sr04_flg = 1;
   }
+
+#ifdef USE_PCF8574
+  pcf8574_Init();
+#endif  // USE_PCF8574
 //end
 
 }

@@ -153,6 +153,7 @@ uint8_t PCF857x::read(uint8_t pin)
 
 void PCF857x::write(uint8_t pin, uint8_t value)
 {
+  uint16_t oldpinmask = _pinModeMask;
   if(_is8575)
   {
     if(pin > 15)
@@ -169,8 +170,12 @@ void PCF857x::write(uint8_t pin, uint8_t value)
   uint8_t _val = value & 1;
   if(_val) _pinModeMask |= _val << pin;
   else _pinModeMask &= ~(1 << pin);
-  if(_is8575) PCF857x::write16(_pinModeMask);
-  else PCF857x::write8(_pinModeMask);
+  if (_pinModeMask != oldpinmask) {
+    if(_is8575) PCF857x::write16(_pinModeMask);
+    else PCF857x::write8(_pinModeMask);
+  } else {
+    printf("Skipping");
+  }
 }
 
 void PCF857x::toggle(uint8_t pin)

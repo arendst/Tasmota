@@ -112,8 +112,8 @@ void pcf8574_switchrelay(byte i, uint8_t state)
   if (max_pcf8574_devices > 0) {
     uint8_t board = pcf8574_pin[i]>>3;
     PCF857x pcf8574(pcf8574addr[board], &Wire);
-    //snprintf_P(log_data, sizeof(log_data), PSTR("RSLT: Setting I2C PCF8574 Relay Number %d (pin P%d, board %d,0x%2x, boardpin %d) to state %d, inverted %d"), i, pcf8574_pin[i], board,pcf8574addr[board],pcf8574_pin[i]&0x7, state, rel_inverted[i]);
-    //addLog(LOG_LEVEL_INFO);
+    snprintf_P(log_data, sizeof(log_data), PSTR("RSLT: Setting I2C PCF8574 Relay Number %d (pin P%d, board %d,0x%2x, boardpin %d) to state %d, inverted %d"), i, pcf8574_pin[i], board,pcf8574addr[board],pcf8574_pin[i]&0x7,  state, rel_inverted[i]);
+    addLog(LOG_LEVEL_INFO);
     pcf8574.write(pcf8574_pin[i]&0x7, rel_inverted[i] ? !state : state);
   }
 }
@@ -128,12 +128,12 @@ void  pcf8574_Init()
   }
   for (byte idx = 0; idx < max_pcf8574_devices; idx++) { // suport up to 8 boards PCF8574
     PCF857x pcf8574(pcf8574addr[idx], &Wire);
-    //snprintf_P(log_data, sizeof(log_data), PSTR("RSLT: I2C Config: %d"), sysCfg.pcf8574_config[idx]);
-    //addLog(LOG_LEVEL_INFO);
+    snprintf_P(log_data, sizeof(log_data), PSTR("RSLT: I2C Config: %d"), sysCfg.pcf8574_config[idx]);
+    addLog(LOG_LEVEL_INFO);
     for (byte i = 0; i < 8; i++) {
       uint8_t _result = sysCfg.pcf8574_config[idx]>>i&1;
-      //snprintf_P(log_data, sizeof(log_data), PSTR("RSLT: I2C shift i %d: %d. Powerstate: %d"), i,_result, sysCfg.power>>i&1);
-      //addLog(LOG_LEVEL_INFO);
+      snprintf_P(log_data, sizeof(log_data), PSTR("RSLT: I2C shift i %d: %d. Powerstate: %d"), i,_result, sysCfg.power>>i&1);
+      addLog(LOG_LEVEL_INFO);
       if (_result > 0) {
         pcf8574_pin[Maxdevice] = i + 8*idx;
         rel_inverted[Maxdevice] = sysCfg.all_relays_inverted;
@@ -151,6 +151,8 @@ boolean pcf8574_detect()
   boolean success = false;
 
   for (byte i = 0; i < 8; i++) {
+    snprintf_P(log_data, sizeof(log_data), PSTR("Probing addr: 0x%x for PCF8574"), PFC8574_ADDR1 + i);
+    addLog(LOG_LEVEL_INFO);
     PCF857x _pcf8574(PFC8574_ADDR1 + i, &Wire);
     int16_t val = -1;
     _pcf8574.begin();
@@ -164,6 +166,8 @@ boolean pcf8574_detect()
     if (!val) {
       pcf8574addr[max_pcf8574_devices] = PFC8574_ADDR1 + i;
       max_pcf8574_devices++;
+      snprintf_P(log_data, sizeof(log_data), PSTR("Device found at 0x%x"), PFC8574_ADDR1 + i);
+      addLog(LOG_LEVEL_INFO);
     }
 
   }
