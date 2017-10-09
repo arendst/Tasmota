@@ -1702,8 +1702,10 @@ void do_cmnd_power(byte device, byte state)
   }
   //STB mod
   powerarray mask = 0x01 << (device -1);
+  if (device <= MAX_PULSETIMERS) {
+    pulse_timer[(device -1)] = 0;
+  }
   //end
-  pulse_timer[(device -1)&3] = 0;
   if (state <= 2) {
     if ((blink_mask & mask)) {
     //STB mod
@@ -1739,7 +1741,7 @@ void do_cmnd_power(byte device, byte state)
 #endif  // USE_DOMOTICZ
 //STB mod
     if (device <= MAX_PULSETIMERS) {
-      pulse_timer[(device -1)&((1<<MAX_PULSETIMERS)-1)] = (power & mask) ? sysCfg.pulsetime[(device -1)&((1<<MAX_PULSETIMERS)-1)] : 0;
+      pulse_timer[(device -1)] = (power & mask) ? sysCfg.pulsetime[(device -1)] : 0;
     }
 //end
 
@@ -3019,7 +3021,11 @@ void setup()
   }
 
   // Issue #526
-  for (byte i = 0; i < Maxdevice; i++) {
+  //STB mod
+  uint8_t max_val = (Maxdevice>MAX_PULSETIMERS?MAX_PULSETIMERS:Maxdevice);
+
+  for (byte i = 0; i < max_val; i++) {
+  //end
     if ((pin[GPIO_REL1 +i] < 99) && (digitalRead(pin[GPIO_REL1 +i]) ^ rel_inverted[i])) {
       bitSet(power, i);
       pulse_timer[i] = sysCfg.pulsetime[i];
