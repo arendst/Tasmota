@@ -70,12 +70,12 @@ void mqtt_publishDomoticzPowerState(byte device)
   }
   if (sysCfg.flag.mqtt_enabled && sysCfg.domoticz_relay_idx[device -1]) {
     if (sfl_flg) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"idx\":%d,\"nvalue\":2,\"svalue\":\"%d\"}"),
-        sysCfg.domoticz_relay_idx[device -1], sysCfg.led_dimmer);
-      mqtt_publish(domoticz_in_topic);
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"idx\":%d,\"nvalue\":%d,\"svalue\":\"%d\"}"),
+        sysCfg.domoticz_relay_idx[device -1], (power & (0x01 << (device -1))) ? 1 : 0, sysCfg.led_dimmer);
+    } else {
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"idx\":%d,\"nvalue\":%d,\"svalue\":\"\"}"),
+        sysCfg.domoticz_relay_idx[device -1], (power & (0x01 << (device -1))) ? 1 : 0);
     }
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"idx\":%d,\"nvalue\":%d,\"svalue\":\"\"}"),
-      sysCfg.domoticz_relay_idx[device -1], (power & (0x01 << (device -1))) ? 1 : 0);
     mqtt_publish(domoticz_in_topic);
   }
 }
@@ -175,8 +175,7 @@ boolean domoticz_mqttData(char *topicBuf, uint16_t stopicBuf, char *dataBuf, uin
           snprintf_P(stemp1, sizeof(stemp1), PSTR("%d"), i +1);
           if (2 == nvalue) {
             nvalue = domoticz["svalue1"];
-//            if (sfl_flg && (sysCfg.led_dimmer == nvalue) && ((power >> i) &1)) {  // Unable to power off using webpage due to Domoticz re-sends dimmer state
-            if (sfl_flg && (sysCfg.led_dimmer == nvalue)) {
+            if (sfl_flg && (sysCfg.led_dimmer == nvalue) && ((power >> i) &1)) {
               return 1;
             }
             snprintf_P(topicBuf, stopicBuf, PSTR("/" D_CMND_DIMMER));
