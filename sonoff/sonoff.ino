@@ -246,6 +246,9 @@ int tele_period = 0;                  // Tele period timer
 byte logidx = 0;                      // Index in Web log buffer
 byte logajaxflg = 0;                  // Reset web console log
 byte Maxdevice = 0;                   // Max number of devices supported
+//STB mod
+byte max_pcf8574_connected_ports = 0;         // Max numbers of devices comming from PCF8574 modules
+//end
 int status_update_timer = 0;          // Refresh initial status
 uint16_t pulse_timer[MAX_PULSETIMERS] = { 0 }; // Power off timer
 uint16_t blink_timer = 0;             // Power cycle timer
@@ -448,7 +451,7 @@ void setRelay(powerarray rpower)
   else {
     for (byte i = 0; i < Maxdevice; i++) {
       state = rpower &1;
-      if (pin[GPIO_REL1 +i] < 99) {
+      if (pin[GPIO_REL1 +i] < 99 && (Maxdevice-max_pcf8574_connected_ports) > i) {
         digitalWrite(pin[GPIO_REL1 +i], rel_inverted[i] ? !state : state);
       }
 //STB mod
@@ -1735,8 +1738,11 @@ void do_cmnd_power(byte device, byte state)
     domoticz_updatePowerState(device);
 #endif  // USE_DOMOTICZ
 //STB mod
-    pulse_timer[(device -1)&((1<<MAX_PULSETIMERS)-1)] = (power & mask) ? sysCfg.pulsetime[(device -1)&((1<<MAX_PULSETIMERS)-1)] : 0;
+    if (device <= MAX_PULSETIMERS) {
+      pulse_timer[(device -1)&((1<<MAX_PULSETIMERS)-1)] = (power & mask) ? sysCfg.pulsetime[(device -1)&((1<<MAX_PULSETIMERS)-1)] : 0;
+    }
 //end
+
   }
   else if (3 == state) { // Blink
     if (!(blink_mask & mask)) {
@@ -2154,8 +2160,9 @@ void button_handler()
   uint8_t butt_present = 0;
   uint8_t flag = 0;
   char scmnd[20];
-
-  for (byte i = 0; i < Maxdevice; i++) {
+//STB mod
+  for (byte i = 0; i < (Maxdevice-max_pcf8574_connected_ports); i++) {
+//end
     button = NOT_PRESSED;
     butt_present = 0;
 
@@ -2174,6 +2181,8 @@ void button_handler()
       if ((pin[GPIO_KEY1 +i] < 99) && !blockgpio0) {
         butt_present = 1;
         button = digitalRead(pin[GPIO_KEY1 +i]);
+        snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION D_BUTTON " %d, %d, %d, max pcfdev %d"), pin[GPIO_KEY1 +i], i, GPIO_KEY1, max_pcf8574_connected_ports);
+        addLog(LOG_LEVEL_DEBUG);
       }
     }
 
