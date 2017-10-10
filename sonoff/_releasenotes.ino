@@ -1,4 +1,13 @@
-/* 5.8.0i
+/* 5.8.0j
+ * Set default altitude to 0 to be used with pressure sensors
+ * Document flash settings area for future use
+ * Prepare for 32-bit power control (#995)
+ * Introduce sonoff.h master header
+ * Fix TLS MQTT SSL fingerprint test (#808, #970)
+ * Fix pressure calculation for some BMP versions regression introduced with version 5.8.0i (#974)
+ * Fix Domoticz Dimmer set to same level not powering on (#945)
+ *
+ * 5.8.0i
  * Add Domoticz counter sensor to IrReceive representing Received IR Protocol and Data
  * Fix Southern Hemisphere TIME_STD/TIME_DST (#968)
  * Add Sea level pressure calculation (#974)

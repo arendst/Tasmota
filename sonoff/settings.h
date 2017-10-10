@@ -52,172 +52,166 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
 } sysBitfield;
 
 struct SYSCFG {
-  unsigned long cfg_holder;
-  unsigned long saveFlag;
-  unsigned long version;
-  unsigned long bootcount;
-  sysBitfield   flag;                      // Add flag since 5.0.2
-  int16_t       savedata;
+  unsigned long cfg_holder;                // 000
+  unsigned long saveFlag;                  // 004
+  unsigned long version;                   // 008
+  unsigned long bootcount;                 // 00C
+  sysBitfield   flag;                      // 010 Add flag since 5.0.2
+  int16_t       savedata;                  // 014
+  int8_t        timezone;                  // 016
+  char          otaUrl[101];               // 017
+  char          mqtt_prefix[3][11];        // 07C
 
-  int8_t        timezone;
-  char          otaUrl[101];
+  byte          free_09D[1];               // 09D
 
-  char          mqtt_prefix[3][11];        // was ex_friendlyname[33] until 3.2.5
+  byte          seriallog_level;           // 09E
+  uint8_t       sta_config;                // 09F
+  byte          sta_active;                // 0A0
+  char          sta_ssid[2][33];           // 0A1
+  char          sta_pwd[2][65];            // 0E3
+  char          hostname[33];              // 165
+  char          syslog_host[33];           // 186
 
-  byte          serial_enable;             // Not used (ever)
-  byte          seriallog_level;
-  uint8_t       sta_config;
-  byte          sta_active;
-  char          sta_ssid[2][33];
-  char          sta_pwd[2][65];
-  char          hostname[33];
-  char          syslog_host[33];
-  uint16_t      syslog_port;
-  byte          syslog_level;
-  uint8_t       webserver;
-  byte          weblog_level;
+  byte          free_1A7[1];               // 1A7
 
-  char          mqtt_fingerprint[60];
-  char          mqtt_host[33];
-  uint16_t      mqtt_port;
-  char          mqtt_client[33];
-  char          mqtt_user[33];
-  char          mqtt_pwd[33];
-  char          mqtt_topic[33];
-  char          button_topic[33];
-  char          mqtt_grptopic[33];
-  char          ex_state_text[3][11];      // was state_text until 5.1.6, was ex_mqtt_subtopic[33] until 4.1.1
-  byte          ex_mqtt_button_retain;     // Not used since 5.0.2
-  byte          ex_mqtt_power_retain;      // Not used since 5.0.2
-  //byte          ex_value_units;            // Not used since 5.0.2
-  //byte          ex_button_restrict;        // Not used since 5.0.2
-  int16_t       altitude;                  // Add since 5.8.0i
-  uint16_t      tele_period;
+  uint16_t      syslog_port;               // 1A8
+  byte          syslog_level;              // 1AA
+  uint8_t       webserver;                 // 1AB
+  byte          weblog_level;              // 1AC
+  char          mqtt_fingerprint[60];      // 1AD To be freed by binary fingerprint
+  char          mqtt_host[33];             // 1E9
+  uint16_t      mqtt_port;                 // 20A
+  char          mqtt_client[33];           // 20C
+  char          mqtt_user[33];             // 22D
+  char          mqtt_pwd[33];              // 24E
+  char          mqtt_topic[33];            // 26F
+  char          button_topic[33];          // 290
+  char          mqtt_grptopic[33];         // 2B1
+  uint8_t       mqtt_fingerprinth[20];     // 2D2 Reserved for binary fingerprint
 
-  uint8_t       power;
-  uint8_t       ledstate;
+  byte          free_2E6[2];               // 2E6
 
-  uint8_t       param[PARAM8_SIZE];        // was domoticz_in_topic until 5.1.6
-  char          state_text[4][11];         // was domoticz_out_topic until 5.1.6
+  power_t       power;                     // 2E8
 
-  uint16_t      domoticz_update_timer;
-  unsigned long domoticz_relay_idx[4];
-  unsigned long domoticz_key_idx[4];
+  byte          free_2EC[10];              // 2EC
 
-  unsigned long hlw_pcal;
-  unsigned long hlw_ucal;
-  unsigned long hlw_ical;
-  unsigned long hlw_kWhtoday;
-  unsigned long hlw_kWhyesterday;
-  uint16_t      hlw_kWhdoy;
-  uint16_t      hlw_pmin;
-  uint16_t      hlw_pmax;
-  uint16_t      hlw_umin;
-  uint16_t      hlw_umax;
-  uint16_t      hlw_imin;
-  uint16_t      hlw_imax;
-  uint16_t      hlw_mpl;                   // MaxPowerLimit
-  uint16_t      hlw_mplh;                  // MaxPowerLimitHold
-  uint16_t      hlw_mplw;                  // MaxPowerLimitWindow
-  uint16_t      hlw_mspl;                  // MaxSafePowerLimit
-  uint16_t      hlw_msplh;                 // MaxSafePowerLimitHold
-  uint16_t      hlw_msplw;                 // MaxSafePowerLimitWindow
-  uint16_t      hlw_mkwh;                  // MaxEnergy
-  uint16_t      hlw_mkwhs;                 // MaxEnergyStart
+  int16_t       altitude;                  // 2F6 Add since 5.8.0i
+  uint16_t      tele_period;               // 2F8
+  uint8_t       ex_power;                  // 2FA Not used since 5.8.0j
+  uint8_t       ledstate;                  // 2FB
+  uint8_t       param[PARAM8_SIZE];        // 2FC was domoticz_in_topic until 5.1.6
+  char          state_text[4][11];         // 313
 
-  // 3.0.6
-  uint16_t      mqtt_retry;                // was ex_pulsetime until 4.0.4
+  byte          free_33F[1];               // 33F
 
-  // 3.1.1
-  uint8_t       poweronstate;
+  uint16_t      domoticz_update_timer;     // 340
 
-  // 3.1.6
-  uint16_t      blinktime;
-  uint16_t      blinkcount;
+  byte          free_342[2];               // 342
 
-  // 3.2.4
-  uint16_t      ws_pixels;
-  uint8_t       ws_red;
-  uint8_t       ws_green;
-  uint8_t       ws_blue;
-  uint8_t       ws_ledtable;
-  uint8_t       ws_dimmer;
-  uint8_t       ws_fade;
-  uint8_t       ws_speed;
-  uint8_t       ws_scheme;
-  uint8_t       ws_width;
-  uint16_t      ws_wakeup;
+  unsigned long domoticz_relay_idx[4];     // 344
+  unsigned long domoticz_key_idx[4];       // 354
 
-  // 3.2.5
-  char          friendlyname[4][33];
+  unsigned long hlw_pcal;                  // 364
+  unsigned long hlw_ucal;                  // 368
+  unsigned long hlw_ical;                  // 36C
+  unsigned long hlw_kWhtoday;              // 370
+  unsigned long hlw_kWhyesterday;          // 374
+  uint16_t      hlw_kWhdoy;                // 378
+  uint16_t      hlw_pmin;                  // 37A
+  uint16_t      hlw_pmax;                  // 37C
+  uint16_t      hlw_umin;                  // 37E
+  uint16_t      hlw_umax;                  // 380
+  uint16_t      hlw_imin;                  // 382
+  uint16_t      hlw_imax;                  // 384
+  uint16_t      hlw_mpl;                   // 386 MaxPowerLimit
+  uint16_t      hlw_mplh;                  // 388 MaxPowerLimitHold
+  uint16_t      hlw_mplw;                  // 38A MaxPowerLimitWindow
+  uint16_t      hlw_mspl;                  // 38C MaxSafePowerLimit
+  uint16_t      hlw_msplh;                 // 38E MaxSafePowerLimitHold
+  uint16_t      hlw_msplw;                 // 390 MaxSafePowerLimitWindow
+  uint16_t      hlw_mkwh;                  // 392 MaxEnergy
+  uint16_t      hlw_mkwhs;                 // 394 MaxEnergyStart
+  uint16_t      mqtt_retry;                // 396
+  uint8_t       poweronstate;              // 398
 
-  // 3.2.8
-  char          switch_topic[33];
-  byte          ex_mqtt_switch_retain;     // Not used since 5.0.2
-  uint8_t       ex_mqtt_enabled;           // Not used since 5.0.2
+  byte          free_399[1];               // 399
 
-  // 3.2.12
-  uint8_t       sleep;
+  uint16_t      blinktime;                 // 39A
+  uint16_t      blinkcount;                // 39C
+  uint16_t      ws_pixels;                 // 39E Not used since 5.8.0
+  uint8_t       ws_red;                    // 3A0 Not used since 5.8.0
+  uint8_t       ws_green;                  // 3A1 Not used since 5.8.0
+  uint8_t       ws_blue;                   // 3A2 Not used since 5.8.0
+  uint8_t       ws_ledtable;               // 3A3 Not used since 5.8.0
+  uint8_t       ws_dimmer;                 // 3A4 Not used since 5.8.0
+  uint8_t       ws_fade;                   // 3A5 Not used since 5.8.0
+  uint8_t       ws_speed;                  // 3A6 Not used since 5.8.0
+  uint8_t       ws_scheme;                 // 3A7 Not used since 5.8.0
+  uint8_t       ws_width;                  // 3A8 Not used since 5.8.0
 
-  // 3.9.3
-  uint16_t      domoticz_switch_idx[4];
-  uint16_t      domoticz_sensor_idx[12];
-  uint8_t       module;
-  mytmplt       my_module;
-  uint16_t      led_pixels;
-  uint8_t       led_color[5];
-  uint8_t       led_table;
-  uint8_t       led_dimmer;
-  uint8_t       ex_led_dimmer1;            // Never used
-  uint8_t       ex_led_dimmer2;            // Never used
-  uint8_t       led_fade;
-  uint8_t       led_speed;
-  uint8_t       led_scheme;
-  uint8_t       led_width;
-  uint16_t      led_wakeup;
+  byte          free_3A9[1];               // 3A9
 
-  // 3.9.7
-  uint8_t       ex_emulation;              // Not used since 5.0.2
+  uint16_t      ws_wakeup;                 // 3AA Not used since 5.8.0
+  char          friendlyname[4][33];       // 3AC
+  char          switch_topic[33];          // 430
 
-  // 3.9.20
-  char          web_password[33];
+  byte          free_451[2];               // 451
 
-  // 3.9.21
-  uint8_t       switchmode[4];
+  uint8_t       sleep;                     // 453
+  uint16_t      domoticz_switch_idx[4];    // 454
+  uint16_t      domoticz_sensor_idx[12];   // 45C
+  uint8_t       module;                    // 474
 
-  // 4.0.4
-  char          ntp_server[3][33];
-  uint16_t      pulsetime[MAX_PULSETIMERS];
+  byte          free_475[15];              // 475
 
-  // 4.0.7
-  uint16_t      pwmvalue[5];
+  myio          my_gp;                     // 484
+  uint16_t      led_pixels;                // 496
+  uint8_t       led_color[5];              // 498
+  uint8_t       led_table;                 // 49D
+  uint8_t       led_dimmer;                // 49E
 
-  // 4.0.9
-  uint32_t      ip_address[4];
+  byte          free_49F[2];               // 49F
 
-  // 5.0.4
-  unsigned long hlw_kWhtotal;
+  uint8_t       led_fade;                  // 4A1
+  uint8_t       led_speed;                 // 4A2
+  uint8_t       led_scheme;                // 4A3
+  uint8_t       led_width;                 // 4A4
 
-  // 5.0.4a
-  char          mqtt_fulltopic[101];
+  byte          free_4A5[1];               // 4A5
 
-  // 5.1.1
-  unsigned long pCounter[MAX_COUNTERS];
-  uint16_t      pCounterType;
-  uint16_t      pCounterDebounce;
+  uint16_t      led_wakeup;                // 4A6
 
-  // 5.4.1
-  uint8_t       sfb_code[17][9];
+  byte          free_4A8[1];               // 4A8
+
+  char          web_password[33];          // 4A9
+  uint8_t       switchmode[4];             // 4CA
+  char          ntp_server[3][33];         // 4CE
+
+  byte          free_531[1];               // 531
+
+  uint16_t      pulsetime[MAX_PULSETIMERS]; // 532
+  uint16_t      pwmvalue[5];               // 53A
+  uint32_t      ip_address[4];             // 544
+  unsigned long hlw_kWhtotal;              // 554
+  char          mqtt_fulltopic[101];       // 558
+
+  byte          free_5BD[3];               // 5BD
+
+  unsigned long pCounter[MAX_COUNTERS];    // 5C0
+  uint16_t      pCounterType;              // 5D0
+  uint16_t      pCounterDebounce;          // 5D2
+  uint8_t       sfb_code[17][9];           // 5D4
 
 } sysCfg;
 
 struct RTCMEM {
-  uint16_t      valid;
-  byte          osw_flag;
-  uint8_t       power;
-  unsigned long hlw_kWhtoday;
-  unsigned long hlw_kWhtotal;
-  unsigned long pCounter[MAX_COUNTERS];
+  uint16_t      valid;                     // 000
+  byte          osw_flag;                  // 002
+  uint8_t       unused;                    // 003
+  unsigned long hlw_kWhtoday;              // 004
+  unsigned long hlw_kWhtotal;              // 008
+  unsigned long pCounter[MAX_COUNTERS];    // 00C
+  power_t       power;                     // 01C
 } rtcMem;
 
 // See issue https://github.com/esp8266/Arduino/issues/2913

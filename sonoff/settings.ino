@@ -63,14 +63,14 @@ void RTC_Load()
   RTC_Dump();
 #endif  // DEBUG_THEO
   if (rtcMem.valid != RTC_MEM_VALID) {
-    memset(&rtcMem, 0x00, sizeof(RTCMEM));
+    memset(&rtcMem, 0, sizeof(RTCMEM));
     rtcMem.valid = RTC_MEM_VALID;
-    rtcMem.power = sysCfg.power;
     rtcMem.hlw_kWhtoday = sysCfg.hlw_kWhtoday;
     rtcMem.hlw_kWhtotal = sysCfg.hlw_kWhtotal;
-    for (byte i = 0; i < 4; i++) {
+    for (byte i = 0; i < MAX_COUNTERS; i++) {
       rtcMem.pCounter[i] = sysCfg.pCounter[i];
     }
+    rtcMem.power = sysCfg.power;
     RTC_Save();
   }
   _rtcHash = getRtcHash();
@@ -384,6 +384,16 @@ void CFG_DefaultSet2()
   memset((char*)&sysCfg +16, 0x00, sizeof(SYSCFG) -16);
 
   sysCfg.flag.savestate = SAVE_STATE;
+  //sysCfg.flag.button_restrict = 0;
+  //sysCfg.flag.value_units = 0;
+  sysCfg.flag.mqtt_enabled = MQTT_USE;
+  //sysCfg.flag.mqtt_response = 0;
+  sysCfg.flag.mqtt_power_retain = MQTT_POWER_RETAIN;
+  sysCfg.flag.mqtt_button_retain = MQTT_BUTTON_RETAIN;
+  sysCfg.flag.mqtt_switch_retain = MQTT_SWITCH_RETAIN;
+
+  sysCfg.flag.emulation = EMULATION;
+
   sysCfg.savedata = SAVE_DATA;
   sysCfg.timezone = APP_TIMEZONE;
   strlcpy(sysCfg.otaUrl, OTA_URL, sizeof(sysCfg.otaUrl));
@@ -411,10 +421,6 @@ void CFG_DefaultSet2()
   strlcpy(sysCfg.mqtt_topic, MQTT_TOPIC, sizeof(sysCfg.mqtt_topic));
   strlcpy(sysCfg.button_topic, "0", sizeof(sysCfg.button_topic));
   strlcpy(sysCfg.mqtt_grptopic, MQTT_GRPTOPIC, sizeof(sysCfg.mqtt_grptopic));
-  sysCfg.flag.mqtt_button_retain = MQTT_BUTTON_RETAIN;
-  sysCfg.flag.mqtt_power_retain = MQTT_POWER_RETAIN;
-//  sysCfg.flag.value_units = 0;
-//  sysCfg.flag.button_restrict = 0;
   sysCfg.tele_period = TELE_PERIOD;
 
   sysCfg.power = APP_POWER;
@@ -463,10 +469,6 @@ void CFG_DefaultSet2()
   CFG_DefaultSet_3_9_3();
 
   strlcpy(sysCfg.switch_topic, "0", sizeof(sysCfg.switch_topic));
-  sysCfg.flag.mqtt_switch_retain = MQTT_SWITCH_RETAIN;
-  sysCfg.flag.mqtt_enabled = MQTT_USE;
-
-  sysCfg.flag.emulation = EMULATION;
 
   strlcpy(sysCfg.web_password, WEB_PASSWORD, sizeof(sysCfg.web_password));
 
@@ -536,7 +538,7 @@ void CFG_DefaultSet_3_9_3()
 
   sysCfg.module = MODULE;
   for (byte i = 0; i < MAX_GPIO_PIN; i++){
-    sysCfg.my_module.gp.io[i] = 0;
+    sysCfg.my_gp.io[i] = 0;
   }
 
   sysCfg.led_pixels = WS2812_LEDS;
@@ -621,17 +623,12 @@ void CFG_Delta()
     }
     if (sysCfg.version < 0x03020800) {  // 3.2.8 - Add parameter
       strlcpy(sysCfg.switch_topic, sysCfg.button_topic, sizeof(sysCfg.switch_topic));
-      sysCfg.ex_mqtt_switch_retain = MQTT_SWITCH_RETAIN;
-      sysCfg.ex_mqtt_enabled = MQTT_USE;
     }
     if (sysCfg.version < 0x03020C00) {  // 3.2.12 - Add parameter
       sysCfg.sleep = APP_SLEEP;
     }
     if (sysCfg.version < 0x03090300) {  // 3.9.2d - Add parameter
       CFG_DefaultSet_3_9_3();
-    }
-    if (sysCfg.version < 0x03090700) {  // 3.9.7 - Add parameter
-      sysCfg.ex_emulation = EMULATION;
     }
     if (sysCfg.version < 0x03091400) {
       strlcpy(sysCfg.web_password, WEB_PASSWORD, sizeof(sysCfg.web_password));
@@ -643,8 +640,8 @@ void CFG_Delta()
       CFG_DefaultSet_4_0_4();
     }
     if (sysCfg.version < 0x04000500) {
-      memmove(sysCfg.my_module.gp.io, sysCfg.my_module.gp.io +1, MAX_GPIO_PIN -1);  // move myio 1 byte to front
-      sysCfg.my_module.gp.io[MAX_GPIO_PIN -1] = 0;  // Clear ADC0
+      memmove(sysCfg.my_gp.io, sysCfg.my_gp.io +1, MAX_GPIO_PIN -1);  // move myio 1 byte to front
+      sysCfg.my_gp.io[MAX_GPIO_PIN -1] = 0;  // Clear ADC0
     }
     if (sysCfg.version < 0x04000700) {
       for (byte i = 0; i < 5; i++) {
@@ -660,14 +657,14 @@ void CFG_Delta()
     if (sysCfg.version < 0x05000105) {
       sysCfg.flag = { 0 };
       sysCfg.flag.savestate = SAVE_STATE;
-      sysCfg.flag.button_restrict = 0;
-      sysCfg.flag.value_units = 0;
-      sysCfg.flag.mqtt_enabled = sysCfg.ex_mqtt_enabled;
+//      sysCfg.flag.button_restrict = 0;
+//      sysCfg.flag.value_units = 0;
+      sysCfg.flag.mqtt_enabled = MQTT_USE;
 //      sysCfg.flag.mqtt_response = 0;
-      sysCfg.flag.mqtt_power_retain = sysCfg.ex_mqtt_power_retain;
-      sysCfg.flag.mqtt_button_retain = sysCfg.ex_mqtt_button_retain;
-      sysCfg.flag.mqtt_switch_retain = sysCfg.ex_mqtt_switch_retain;
-      sysCfg.flag.emulation = sysCfg.ex_emulation;
+//      sysCfg.flag.mqtt_power_retain = 0;
+//      sysCfg.flag.mqtt_button_retain = 0;
+      sysCfg.flag.mqtt_switch_retain = MQTT_SWITCH_RETAIN;
+      sysCfg.flag.emulation = EMULATION;
 
       CFG_DefaultSet_5_0_2();
 
@@ -692,10 +689,7 @@ void CFG_Delta()
       }
     }
     if (sysCfg.version < 0x05010600) {
-      if (sysCfg.version > 0x04010100) {
-        memcpy(sysCfg.state_text, sysCfg.ex_state_text, 33);
-      }
-      strlcpy(sysCfg.state_text[3], MQTT_CMND_HOLD, sizeof(sysCfg.state_text[3]));
+      CFG_DefaultSet_4_1_1();
     }
     if (sysCfg.version < 0x05010700) {
       sysCfg.param[P_HOLD_TIME] = KEY_HOLD_TIME;  // Default 4 seconds hold time
@@ -712,7 +706,7 @@ void CFG_Delta()
     if (sysCfg.version < 0x05080000) {
       uint8_t cfg_wsflg = 0;
       for (byte i = 0; i < MAX_GPIO_PIN; i++) {
-        if (GPIO_WS2812 == sysCfg.my_module.gp.io[i]) {
+        if (GPIO_WS2812 == sysCfg.my_gp.io[i]) {
           cfg_wsflg = 1;
         }
       }
@@ -732,6 +726,10 @@ void CFG_Delta()
         sysCfg.led_pixels = WS2812_LEDS;
         sysCfg.led_width = 1;
       }
+    }
+    if (sysCfg.version < 0x0508000A) {
+      sysCfg.power = sysCfg.ex_power;
+      sysCfg.altitude = 0;
     }
 
     sysCfg.version = VERSION;

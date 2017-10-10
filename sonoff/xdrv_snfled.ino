@@ -317,9 +317,9 @@ void sl_prepPower()
   }
 }
 
-void sl_setPower(uint8_t mpower)
+void sl_setPower(power_t mpower)
 {
-  sl_power = ((mpower & (0x01 << (Maxdevice -1))) != 0);
+  sl_power = ((mpower & (1 << (Maxdevice -1))) != 0);
   if (sl_wakeupActive) {
     sl_wakeupActive--;
   }
@@ -416,7 +416,7 @@ void sl_animate()
             uint16_t curcol = cur_col[i] * (PWM_RANGE / 255);
 //            snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION "Cur_Col%d %d, CurCol %d"), i, cur_col[i], curcol);
 //            addLog(LOG_LEVEL_DEBUG);
-            analogWrite(pin[GPIO_PWM1 +i], pwm_inverted[i] ? PWM_RANGE - curcol : curcol);
+            analogWrite(pin[GPIO_PWM1 +i], bitRead(pwm_inverted, i) ? PWM_RANGE - curcol : curcol);
           }
         }
       }

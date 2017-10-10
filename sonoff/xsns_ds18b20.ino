@@ -68,7 +68,7 @@ uint8_t dsb_read(void)
   uint8_t bitMask;
   uint8_t r = 0;
 
-  for (bitMask = 0x01; bitMask; bitMask <<= 1) {
+  for (bitMask = 1; bitMask; bitMask <<= 1) {
     if (dsb_read_bit()) {
       r |= bitMask;
     }
@@ -97,7 +97,7 @@ void dsb_write(uint8_t ByteToWrite)
 {
   uint8_t bitMask;
 
-  for (bitMask = 0x01; bitMask; bitMask <<= 1) {
+  for (bitMask = 1; bitMask; bitMask <<= 1) {
     dsb_write_bit((bitMask & ByteToWrite) ? 1 : 0);
   }
 }

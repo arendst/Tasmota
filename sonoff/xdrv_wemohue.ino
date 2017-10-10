@@ -460,7 +460,7 @@ void hue_config(String *path)
 void hue_light_status(byte device, String *response)
 {
   *response += FPSTR(HUE_LIGHT_STATUS_JSON);
-  response->replace("{state}", (power & (0x01 << (device-1))) ? "true" : "false");
+  response->replace("{state}", (power & (1 << (device-1))) ? "true" : "false");
 
   if (sfl_flg) {
     sl_replaceHSB(response);
@@ -566,7 +566,7 @@ void hue_lights(String *path)
           case true  : do_cmnd_power(device, 1);
                        response.replace("{res}", "true");
                        break;
-          default    : response.replace("{res}", (power & (0x01 << (device-1))) ? "true" : "false");
+          default    : response.replace("{res}", (power & (1 << (device-1))) ? "true" : "false");
                        break;
         }
         resp = true;

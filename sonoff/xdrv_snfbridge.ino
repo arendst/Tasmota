@@ -135,7 +135,7 @@ void sb_send(uint8_t idx, uint8_t key)
     Serial.write(sysCfg.sfb_code[idx][i]);
   }
   if (0 == idx) {
-    code = (0x10 << (key >> 2)) | (0x01 << (key & 3));  // 11,12,14,18,21,22,24,28,41,42,44,48,81,82,84,88
+    code = (0x10 << (key >> 2)) | (1 << (key & 3));  // 11,12,14,18,21,22,24,28,41,42,44,48,81,82,84,88
   } else {
     code = sysCfg.sfb_code[idx][8];
   }

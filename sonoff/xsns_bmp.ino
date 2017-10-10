@@ -404,6 +404,7 @@ double bmp_readPressure(void)
   switch (bmptype) {
   case BMP180_CHIPID:
     pressure = bmp180_readPressure();
+    break;
   case BMP280_CHIPID:
   case BME280_CHIPID:
     pressure = bmp280_readPressure();

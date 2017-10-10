@@ -114,8 +114,8 @@ void ir_recv_check()
       mqtt_publish_topic_P(6, PSTR(D_IRRECEIVED));
 #ifdef USE_DOMOTICZ
       unsigned long value = results.value | (diridx << 28); // [Protocol:4, Data:28]
-      domoticz_sensor(DZ_COUNT, value);                    // Send data as Domoticz Counter value
-#endif                                                     // USE_DOMOTICZ
+      domoticz_sensor(DZ_COUNT, value);                     // Send data as Domoticz Counter value
+#endif                                                      // USE_DOMOTICZ
     }
 
     irrecv->resume();
