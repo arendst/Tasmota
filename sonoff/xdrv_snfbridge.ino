@@ -91,7 +91,7 @@ void sb_received()
       mqtt_publish_topic_P(6, PSTR(D_RFRECEIVED));
 #ifdef USE_DOMOTICZ
       domoticz_sensor(DZ_COUNT, rid);  // Send rid as Domoticz Counter value
-      #endif  // USE_DOMOTICZ
+#endif  // USE_DOMOTICZ
     }
   }
 }

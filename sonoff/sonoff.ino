@@ -25,11 +25,12 @@
     - Select IDE Tools - Flash Size: "1M (no SPIFFS)"
   ====================================================*/
 
-#define VERSION                0x05080008  // 5.8.0h
+#define VERSION                0x05080009  // 5.8.0i
 
 enum week_t  {Last, First, Second, Third, Fourth};
 enum dow_t   {Sun=1, Mon, Tue, Wed, Thu, Fri, Sat};
 enum month_t {Jan=1, Feb, Mar, Apr, May, Jun, Jul, Aug, Sep, Oct, Nov, Dec};
+enum hemis_t {North, South};
 enum log_t   {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG_MORE, LOG_LEVEL_ALL};  // SerialLog, Syslog, Weblog
 enum wifi_t  {WIFI_RESTART, WIFI_SMARTCONFIG, WIFI_MANAGER, WIFI_WPSCONFIG, WIFI_RETRY, WIFI_WAIT, MAX_WIFI_OPTION};  // WifiConfig
 enum swtch_t {TOGGLE, FOLLOW, FOLLOW_INV, PUSHBUTTON, PUSHBUTTON_INV, PUSHBUTTONHOLD, PUSHBUTTONHOLD_INV, MAX_SWITCH_OPTION};  // SwitchMode
@@ -211,6 +212,7 @@ struct TIME_T {
 
 struct TimeChangeRule
 {
+  uint8_t       hemis;     // 0-Northern, 1=Southern Hemisphere (=Opposite DST/STD)
   uint8_t       week;      // 1=First, 2=Second, 3=Third, 4=Fourth, or 0=Last week of the month
   uint8_t       dow;       // day of week, 1=Sun, 2=Mon, ... 7=Sat
   uint8_t       month;     // 1=Jan, 2=Feb, ... 12=Dec
@@ -451,7 +453,9 @@ void setRelay(powerarray rpower)
   else {
     for (byte i = 0; i < Maxdevice; i++) {
       state = rpower &1;
+      //STB mod
       if (pin[GPIO_REL1 +i] < 99 && (Maxdevice-max_pcf8574_connected_ports) > i) {
+      //end
         digitalWrite(pin[GPIO_REL1 +i], rel_inverted[i] ? !state : state);
       }
 //STB mod
@@ -1558,6 +1562,12 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_TIMEZONE "\":%d}"), sysCfg.timezone);
     }
+    else if (!strcasecmp_P(type, PSTR(D_CMND_ALTITUDE))) {
+      if ((data_len > 0) && ((payload >= -30000) && (payload <= 30000))) {
+        sysCfg.altitude = payload;
+      }
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_ALTITUDE "\":%d}"), sysCfg.altitude);
+    }
     else if (!strcasecmp_P(type, PSTR(D_CMND_LEDPOWER))) {
       if ((payload >= 0) && (payload <= 2)) {
         sysCfg.ledstate &= 8;
@@ -2185,8 +2195,6 @@ void button_handler()
       //end
         butt_present = 1;
         button = digitalRead(pin[GPIO_KEY1 +i]);
-        snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION D_BUTTON " %d, %d, %d, max pcfdev %d"), pin[GPIO_KEY1 +i], i, GPIO_KEY1, max_pcf8574_connected_ports);
-        addLog(LOG_LEVEL_DEBUG);
       }
     }
 
@@ -2776,9 +2784,16 @@ void GPIO_init()
     Wire.begin(pin[GPIO_I2C_SDA], pin[GPIO_I2C_SCL]);
   }
 #endif  // USE_I2C
-
-  Maxdevice = 1;
 //end
+  Maxdevice = 1;
+  if (sysCfg.flag.pwm_control) {
+    sfl_flg = 0;
+    for (byte i = 0; i < 5; i++) {
+      if (pin[GPIO_PWM1 +i] < 99) {
+        sfl_flg++;                         // Use Dimmer/Color control for all PWM as SetOption15 = 1
+      }
+    }
+  }
   if (SONOFF_BRIDGE == sysCfg.module) {
     Baudrate = 19200;
   }

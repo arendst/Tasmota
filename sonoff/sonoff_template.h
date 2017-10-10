@@ -40,18 +40,22 @@ enum upins_t {
   GPIO_REL2,
   GPIO_REL3,
   GPIO_REL4,
+  //STB mod
   GPIO_REL5,
   GPIO_REL6,
   GPIO_REL7,
   GPIO_REL8,
+  //end
   GPIO_REL1_INV,
   GPIO_REL2_INV,
   GPIO_REL3_INV,
   GPIO_REL4_INV,
+  //STB mod
   GPIO_REL5_INV,
   GPIO_REL6_INV,
   GPIO_REL7_INV,
   GPIO_REL8_INV,
+  //end
   GPIO_LED1,           // Leds
   GPIO_LED2,
   GPIO_LED3,
@@ -75,12 +79,14 @@ enum upins_t {
   GPIO_PWM4_INV,       // RGBW  (Cold) White
   GPIO_PWM5_INV,       // RGBCW Warm White
   GPIO_IRRECV,         // IR receiver
+  //STB mod
   GPIO_SEN_TRIG,
   GPIO_SEN_ECHO,
   GPIO_REL1_TOG_A,
   GPIO_REL1_TOG_B,
   GPIO_REL2_TOG_A,
   GPIO_REL2_TOG_B,
+  //end
   GPIO_SENSOR_END };
 
 // Text in webpage Module Parameters and commands GPIOS and GPIO
@@ -106,18 +112,22 @@ const char sensors[GPIO_SENSOR_END][9] PROGMEM = {
   D_SENSOR_RELAY "2",
   D_SENSOR_RELAY "3",
   D_SENSOR_RELAY "4",
+  //STB mod
   D_SENSOR_RELAY "5",
   D_SENSOR_RELAY "6",
   D_SENSOR_RELAY "7",
   D_SENSOR_RELAY "8",
+  //end
   D_SENSOR_RELAY "1I",
   D_SENSOR_RELAY "2I",
   D_SENSOR_RELAY "3I",
   D_SENSOR_RELAY "4I",
+  //STB mod
   D_SENSOR_RELAY "5I",
   D_SENSOR_RELAY "6I",
   D_SENSOR_RELAY "7I",
   D_SENSOR_RELAY "8I",
+  //end
   D_SENSOR_LED "1",
   D_SENSOR_LED "2",
   D_SENSOR_LED "3",
@@ -141,12 +151,14 @@ const char sensors[GPIO_SENSOR_END][9] PROGMEM = {
   D_SENSOR_PWM "4I",
   D_SENSOR_PWM "5I",
   D_SENSOR_IRRECV,
+  //STB mod
   "SNS_TRIG",
   "SNS_ECHO",
   "Rel1SetA",
   "Rel1SetB",
   "Rel2SetA",
   "Rel2SetB"
+  //end
   };
 
 // Programmer selectable GPIO functionality offset by user selectable GPIOs

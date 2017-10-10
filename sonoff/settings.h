@@ -92,8 +92,9 @@ struct SYSCFG {
   char          ex_state_text[3][11];      // was state_text until 5.1.6, was ex_mqtt_subtopic[33] until 4.1.1
   byte          ex_mqtt_button_retain;     // Not used since 5.0.2
   byte          ex_mqtt_power_retain;      // Not used since 5.0.2
-  byte          ex_value_units;            // Not used since 5.0.2
-  byte          ex_button_restrict;        // Not used since 5.0.2
+  //byte          ex_value_units;            // Not used since 5.0.2
+  //byte          ex_button_restrict;        // Not used since 5.0.2
+  int16_t       altitude;                  // Add since 5.8.0i
   uint16_t      tele_period;
 //STB mod
   powerarray    power;
