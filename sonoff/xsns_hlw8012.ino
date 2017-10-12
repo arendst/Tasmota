@@ -668,7 +668,7 @@ void hlw_mqttPresent(byte option)
 // {"Time":"2017-03-04T13:37:24", "Total":0.013, "Yesterday":0.013, "Today":0.000, "Period":0, "Power":0, "Factor":0.00, "Voltage":0, "Current":0.000}
   snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_TIME "\":\"%s\", "), getDateTime().c_str());
   hlw_mqttStat(option);
-  mqtt_publish_topic_P(2, PSTR(D_RSLT_ENERGY));
+  mqtt_publish_topic_P(2, PSTR(D_RSLT_ENERGY), sysCfg.flag.mqtt_sensor_retain);
 }
 
 void hlw_mqttStatus()
