@@ -1,6 +1,7 @@
 /* 5.8.0k
  * Add support for up to 8 relays (#995)
  * Fix Blocked Loop when erasing large flash using command reset 2 (#1002)
+ * Add retain to ENERGY messages controlled by command SensorRetain (#1013)
  *
  * 5.8.0j
  * Set default altitude to 0 to be used with pressure sensors

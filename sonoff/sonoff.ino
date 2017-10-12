@@ -788,6 +788,7 @@ boolean mqtt_command(boolean grpflg, char *type, uint16_t index, char *dataBuf, 
       if (!payload) {
         mqtt_data[0] = '\0';
         mqtt_publish_topic_P(2, PSTR(D_RSLT_SENSOR), sysCfg.flag.mqtt_sensor_retain);
+        mqtt_publish_topic_P(2, PSTR(D_RSLT_ENERGY), sysCfg.flag.mqtt_sensor_retain);
       }
       sysCfg.flag.mqtt_sensor_retain = payload;
     }
@@ -1807,7 +1808,7 @@ void state_mqttPresent()
 void sensors_mqttPresent(uint8_t* djson)
 {
   snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s{\"" D_TIME "\":\"%s\""), mqtt_data, getDateTime().c_str());
-  for (byte i = 0; i < 4; i++) {
+  for (byte i = 0; i < MAX_SWITCHES; i++) {
     if (pin[GPIO_SWT1 +i] < 99) {
       boolean swm = ((FOLLOW_INV == sysCfg.switchmode[i]) || (PUSHBUTTON_INV == sysCfg.switchmode[i]) || (PUSHBUTTONHOLD_INV == sysCfg.switchmode[i]));
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s, \"" D_SWITCH "%d\":\"%s\""), mqtt_data, i +1, getStateText(swm ^ lastwallswitch[i]));
@@ -2370,7 +2371,7 @@ void stateloop()
         if (sysCfg.flag.savestate) {
           power_t mask = POWER_MASK;
           for (byte i = 0; i < MAX_PULSETIMERS; i++) {
-            if ((sysCfg.pulsetime[i] > 0) && (sysCfg.pulsetime[i] < 30)) {
+            if ((sysCfg.pulsetime[i] > 0) && (sysCfg.pulsetime[i] < 30)) {  // 3 seconds
               mask &= ~(1 << i);
             }
           }
@@ -2640,9 +2641,6 @@ void GPIO_init()
         pinMode(pin[GPIO_REL1 +i], OUTPUT);
         Maxdevice++;
       }
-//      if (pin[GPIO_KEY1 +i] < 99) {
-//        pinMode(pin[GPIO_KEY1 +i], (16 == pin[GPIO_KEY1 +i]) ? INPUT_PULLDOWN_16 : INPUT_PULLUP);
-//      }
     }
   }
   for (byte i = 0; i < MAX_KEYS; i++) {
@@ -2724,6 +2722,7 @@ extern struct rst_info resetInfo;
 void setup()
 {
   byte idx;
+  uint8_t maxdev;
 
   Serial.begin(Baudrate);
   delay(10);
@@ -2817,13 +2816,18 @@ void setup()
   }
 
   // Issue #526
-  uint8_t maxdev = (Maxdevice > MAX_RELAYS) ? MAX_RELAYS : Maxdevice;
+  maxdev = (Maxdevice > MAX_RELAYS) ? MAX_RELAYS : Maxdevice;
   for (byte i = 0; i < maxdev; i++) {
     if (pin[GPIO_REL1 +i] < 99) {
       if (digitalRead(pin[GPIO_REL1 +i]) ^ bitRead(rel_inverted, i)) {
         bitSet(power, i);
-        pulse_timer[i] = sysCfg.pulsetime[i];  // MAX_PULSETIMERS must be equal to MAX_RELAYS for this to work here
       }
+    }
+  }
+  maxdev = (Maxdevice > MAX_PULSETIMERS) ? MAX_PULSETIMERS : Maxdevice;
+  for (byte i = 0; i < maxdev; i++) {
+    if (bitRead(power, i)) {
+      pulse_timer[i] = sysCfg.pulsetime[i];  // MAX_PULSETIMERS must be equal to MAX_RELAYS for this to work here
     }
   }
 

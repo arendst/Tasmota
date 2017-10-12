@@ -732,7 +732,7 @@ int32_t i2c_read(uint8_t addr, uint8_t reg, uint8_t size)
     if (0 == Wire.endTransmission(false)) {   // Try to become I2C Master, send data and collect bytes, keep master status for next request...
       Wire.requestFrom((int)addr, (int)size); // send data n-bytes read
       if (Wire.available() == size) {
-        for(byte i = 0; i < size; i++) {
+        for (byte i = 0; i < size; i++) {
           data <<= 8;
           data |= Wire.read();                // receive DATA
         }

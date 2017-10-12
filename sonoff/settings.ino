@@ -432,7 +432,7 @@ void CFG_DefaultSet2()
   sysCfg.sleep = APP_SLEEP;
 
   sysCfg.domoticz_update_timer = DOMOTICZ_UPDATE_TIMER;
-  for (byte i = 0; i < 4; i++) {
+  for (byte i = 0; i < MAX_SWITCHES; i++) {
     sysCfg.switchmode[i] = SWITCH_MODE;
 //    sysCfg.domoticz_relay_idx[i] = 0;
 //    sysCfg.domoticz_key_idx[i] = 0;
@@ -477,7 +477,7 @@ void CFG_DefaultSet2()
   sysCfg.pulsetime[0] = APP_PULSETIME;
 
   // 4.0.7
-//  for (byte i = 0; i < 5; i++) sysCfg.pwmvalue[i] = 0;
+//  for (byte i = 0; i < MAX_PWMS; i++) sysCfg.pwmvalue[i] = 0;
 
   // 4.0.9
   CFG_DefaultSet_4_0_9();
@@ -530,7 +530,7 @@ void CFG_DefaultSet_3_2_4()
 
 void CFG_DefaultSet_3_9_3()
 {
-  for (byte i = 0; i < 4; i++) {
+  for (byte i = 0; i < MAX_DOMOTICZ_IDX; i++) {
     sysCfg.domoticz_switch_idx[i] = 0;
   }
   for (byte i = 0; i < 12; i++) {
@@ -543,7 +543,7 @@ void CFG_DefaultSet_3_9_3()
   }
 
   sysCfg.led_pixels = WS2812_LEDS;
-  for (byte i = 0; i < 5; i++) {
+  for (byte i = 0; i < MAX_PWMS; i++) {
     sysCfg.led_color[i] = 255;
   }
   sysCfg.led_table = 0;
@@ -560,7 +560,7 @@ void CFG_DefaultSet_4_0_4()
   strlcpy(sysCfg.ntp_server[0], NTP_SERVER1, sizeof(sysCfg.ntp_server[0]));
   strlcpy(sysCfg.ntp_server[1], NTP_SERVER2, sizeof(sysCfg.ntp_server[1]));
   strlcpy(sysCfg.ntp_server[2], NTP_SERVER3, sizeof(sysCfg.ntp_server[2]));
-  for (byte j =0; j < 3; j++) {
+  for (byte j = 0; j < 3; j++) {
     for (byte i = 0; i < strlen(sysCfg.ntp_server[j]); i++) {
       if (sysCfg.ntp_server[j][i] == ',') {
         sysCfg.ntp_server[j][i] = '.';
@@ -635,7 +635,9 @@ void CFG_Delta()
       strlcpy(sysCfg.web_password, WEB_PASSWORD, sizeof(sysCfg.web_password));
     }
     if (sysCfg.version < 0x03091500) {
-      for (byte i = 0; i < 4; i++) sysCfg.switchmode[i] = SWITCH_MODE;
+      for (byte i = 0; i < MAX_SWITCHES; i++) {
+        sysCfg.switchmode[i] = SWITCH_MODE;
+      }
     }
     if (sysCfg.version < 0x04000400) {
       CFG_DefaultSet_4_0_4();
@@ -645,7 +647,7 @@ void CFG_Delta()
       sysCfg.my_gp.io[MAX_GPIO_PIN -1] = 0;  // Clear ADC0
     }
     if (sysCfg.version < 0x04000700) {
-      for (byte i = 0; i < 5; i++) {
+      for (byte i = 0; i < MAX_PWMS; i++) {
         sysCfg.pwmvalue[i] = 0;
       }
     }
