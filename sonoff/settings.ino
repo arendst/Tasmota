@@ -305,6 +305,7 @@ void CFG_Erase()
       }
       delay(10);
     }
+    osw_loop();
   }
 }
 
@@ -730,6 +731,17 @@ void CFG_Delta()
     if (sysCfg.version < 0x0508000A) {
       sysCfg.power = sysCfg.ex_power;
       sysCfg.altitude = 0;
+    }
+    if (sysCfg.version < 0x0508000B) {
+      for (byte i = 0; i < MAX_GPIO_PIN; i++) {  // Move GPIO_LEDs
+        if ((sysCfg.my_gp.io[i] >= 25) && (sysCfg.my_gp.io[i] <= 32)) {  // Was GPIO_LED1
+          sysCfg.my_gp.io[i] += 23;  // Move GPIO_LED1
+        }
+      }
+      for (byte i = 0; i < MAX_PWMS; i++) {      // Move pwmvalue and reset additional pulsetimers
+        sysCfg.pwmvalue[i] = sysCfg.pulsetime[4 +i];
+        sysCfg.pulsetime[4 +i] = 0;
+      }
     }
 
     sysCfg.version = VERSION;

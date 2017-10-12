@@ -25,7 +25,7 @@
     - Select IDE Tools - Flash Size: "1M (no SPIFFS)"
   ====================================================*/
 
-#define VERSION                0x0508000A  // 5.8.0j
+#define VERSION                0x0508000B  // 5.8.0k
 
 #include "sonoff.h"
 #include "user_config.h"
@@ -215,10 +215,10 @@ int blinks = 201;                     // Number of LED blinks
 uint8_t blinkstate = 0;               // LED state
 
 uint8_t blockgpio0 = 4;               // Block GPIO0 for 4 seconds after poweron to workaround Wemos D1 RTS circuit
-uint8_t lastbutton[MAX_BUTTONS] = { NOT_PRESSED, NOT_PRESSED, NOT_PRESSED, NOT_PRESSED };     // Last button states
-uint8_t holdbutton[MAX_BUTTONS] = { 0 };       // Timer for button hold
-uint8_t multiwindow[MAX_BUTTONS] = { 0 };      // Max time between button presses to record press count
-uint8_t multipress[MAX_BUTTONS] = { 0 };       // Number of button presses within multiwindow
+uint8_t lastbutton[MAX_KEYS] = { NOT_PRESSED, NOT_PRESSED, NOT_PRESSED, NOT_PRESSED };     // Last button states
+uint8_t holdbutton[MAX_KEYS] = { 0 };       // Timer for button hold
+uint8_t multiwindow[MAX_KEYS] = { 0 };      // Max time between button presses to record press count
+uint8_t multipress[MAX_KEYS] = { 0 };       // Number of button presses within multiwindow
 uint8_t lastwallswitch[MAX_SWITCHES];          // Last wall switch states
 uint8_t holdwallswitch[MAX_SWITCHES] = { 0 };  // Timer for wallswitch push button hold
 
@@ -367,7 +367,8 @@ void setRelay(power_t rpower)
     setLatchingRelay(rpower, 1);
   }
   else {
-    for (byte i = 0; i < Maxdevice; i++) {
+    uint8_t maxdev = (Maxdevice > MAX_RELAYS) ? MAX_RELAYS : Maxdevice;
+    for (byte i = 0; i < maxdev; i++) {
       state = rpower &1;
       if (pin[GPIO_REL1 +i] < 99) {
         digitalWrite(pin[GPIO_REL1 +i], bitRead(rel_inverted, i) ? !state : state);
@@ -1554,13 +1555,7 @@ boolean send_button_power(byte key, byte device, byte state)
     if (!key && (device > Maxdevice)) {
       device = 1;
     }
-
-//    snprintf_P(stemp1, sizeof(stemp1), PSTR("%d"), device);
-//    snprintf_P(scommand, sizeof(scommand), PSTR("POWER%s"), (key || (Maxdevice > 1)) ? stemp1 : "");
-//    getTopic_P(stopic, 0, key_topic, scommand);
-
     getTopic_P(stopic, 0, key_topic, getPowerDevice(scommand, device, sizeof(scommand), key));
-
     if (9 == state) {
       mqtt_data[0] = '\0';
     } else {
@@ -1991,7 +1986,8 @@ void button_handler()
   uint8_t flag = 0;
   char scmnd[20];
 
-  for (byte i = 0; i < Maxdevice; i++) {
+  uint8_t maxdev = (Maxdevice > MAX_KEYS) ? MAX_KEYS : Maxdevice;
+  for (byte i = 0; i < maxdev; i++) {
     button = NOT_PRESSED;
     butt_present = 0;
 
@@ -2649,7 +2645,7 @@ void GPIO_init()
 //      }
     }
   }
-  for (byte i = 0; i < MAX_BUTTONS; i++) {
+  for (byte i = 0; i < MAX_KEYS; i++) {
     if (pin[GPIO_KEY1 +i] < 99) {
       pinMode(pin[GPIO_KEY1 +i], (16 == pin[GPIO_KEY1 +i]) ? INPUT_PULLDOWN_16 : INPUT_PULLUP);
     }
@@ -2821,10 +2817,13 @@ void setup()
   }
 
   // Issue #526
-  for (byte i = 0; i < Maxdevice; i++) {
-    if ((pin[GPIO_REL1 +i] < 99) && (digitalRead(pin[GPIO_REL1 +i]) ^ bitRead(rel_inverted, i))) {
-      bitSet(power, i);
-      pulse_timer[i] = sysCfg.pulsetime[i];
+  uint8_t maxdev = (Maxdevice > MAX_RELAYS) ? MAX_RELAYS : Maxdevice;
+  for (byte i = 0; i < maxdev; i++) {
+    if (pin[GPIO_REL1 +i] < 99) {
+      if (digitalRead(pin[GPIO_REL1 +i]) ^ bitRead(rel_inverted, i)) {
+        bitSet(power, i);
+        pulse_timer[i] = sysCfg.pulsetime[i];  // MAX_PULSETIMERS must be equal to MAX_RELAYS for this to work here
+      }
     }
   }
 

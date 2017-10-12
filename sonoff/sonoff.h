@@ -28,13 +28,16 @@ typedef unsigned long power_t;              // Power (Relay) type
  * Defines
 \*********************************************************************************************/
 
-#define MAX_RELAYS             4            // Max number of relays
-#define MAX_BUTTONS            4            // Max number of buttons or keys
-#define MAX_SWITCHES           4            // Max number of switches
+// Changes to the following MAX_ defines will impact settings layout
+#define MAX_RELAYS             8            // Max number of relays
 #define MAX_LEDS               4            // Max number of leds
+#define MAX_KEYS               4            // Max number of keys or buttons
+#define MAX_SWITCHES           4            // Max number of switches
 #define MAX_PWMS               5            // Max number of PWM channels
 #define MAX_COUNTERS           4            // Max number of counter sensors
-#define MAX_PULSETIMERS        4            // Max number of supported pulse timers
+#define MAX_PULSETIMERS        8            // Max number of supported pulse timers
+#define MAX_FRIENDLYNAMES      4            // Max number of Friendly names
+#define MAX_DOMOTICZ_IDX       4            // Max number of Domoticz device, key and switch indices
 
 #define MODULE                 SONOFF_BASIC // [Module] Select default model
 

@@ -65,17 +65,15 @@ byte domoticz_update_flag = 1;
 
 void mqtt_publishDomoticzPowerState(byte device)
 {
+  char sdimmer[8];
+
   if ((device < 1) || (device > Maxdevice)) {
     device = 1;
   }
   if (sysCfg.flag.mqtt_enabled && sysCfg.domoticz_relay_idx[device -1]) {
-    if (sfl_flg) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"idx\":%d,\"nvalue\":%d,\"svalue\":\"%d\"}"),
-        sysCfg.domoticz_relay_idx[device -1], (power & (1 << (device -1))) ? 1 : 0, sysCfg.led_dimmer);
-    } else {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"idx\":%d,\"nvalue\":%d,\"svalue\":\"\"}"),
-        sysCfg.domoticz_relay_idx[device -1], (power & (1 << (device -1))) ? 1 : 0);
-    }
+    snprintf_P(sdimmer, sizeof(sdimmer), PSTR("%d"), sysCfg.led_dimmer);
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"idx\":%d,\"nvalue\":%d,\"svalue\":\"%s\"}"),
+      sysCfg.domoticz_relay_idx[device -1], (power & (1 << (device -1))) ? 1 : 0, (sfl_flg) ? sdimmer : "");
     mqtt_publish(domoticz_in_topic);
   }
 }
@@ -108,7 +106,8 @@ void domoticz_setUpdateTimer(uint16_t value)
 
 void domoticz_mqttSubscribe()
 {
-  for (byte i = 0; i < Maxdevice; i++) {
+  uint8_t maxdev = (Maxdevice > MAX_DOMOTICZ_IDX) ? MAX_DOMOTICZ_IDX : Maxdevice;
+  for (byte i = 0; i < maxdev; i++) {
     if (sysCfg.domoticz_relay_idx[i]) {
       domoticz_subscribe = true;
     }
@@ -170,7 +169,8 @@ boolean domoticz_mqttData(char *topicBuf, uint16_t stopicBuf, char *dataBuf, uin
     addLog(LOG_LEVEL_DEBUG_MORE);
 
     if ((idx > 0) && (nvalue >= 0) && (nvalue <= 2)) {
-      for (byte i = 0; i < Maxdevice; i++) {
+      uint8_t maxdev = (Maxdevice > MAX_DOMOTICZ_IDX) ? MAX_DOMOTICZ_IDX : Maxdevice;
+      for (byte i = 0; i < maxdev; i++) {
         if (idx == sysCfg.domoticz_relay_idx[i]) {
           snprintf_P(stemp1, sizeof(stemp1), PSTR("%d"), i +1);
           if (2 == nvalue) {
@@ -215,20 +215,20 @@ boolean domoticz_command(const char *type, uint16_t index, char *dataBuf, uint16
   uint8_t dmtcz_len = strlen(D_CMND_DOMOTICZ);  // Prep for string length change
 
   if (!strncasecmp_P(type, PSTR(D_CMND_DOMOTICZ), dmtcz_len)) {  // Prefix
-    if (!strcasecmp_P(type +dmtcz_len, PSTR(D_CMND_IDX)) && (index > 0) && (index <= Maxdevice)) {
+    if (!strcasecmp_P(type +dmtcz_len, PSTR(D_CMND_IDX)) && (index > 0) && (index <= MAX_DOMOTICZ_IDX)) {
       if (payload >= 0) {
         sysCfg.domoticz_relay_idx[index -1] = payload;
         restartflag = 2;
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_DOMOTICZ D_CMND_IDX "%d\":%d}"), index, sysCfg.domoticz_relay_idx[index -1]);
     }
-    else if (!strcasecmp_P(type +dmtcz_len, PSTR(D_CMND_KEYIDX)) && (index > 0) && (index <= Maxdevice)) {
+    else if (!strcasecmp_P(type +dmtcz_len, PSTR(D_CMND_KEYIDX)) && (index > 0) && (index <= MAX_DOMOTICZ_IDX)) {
       if (payload >= 0) {
         sysCfg.domoticz_key_idx[index -1] = payload;
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_DOMOTICZ D_CMND_KEYIDX "%d\":%d}"), index, sysCfg.domoticz_key_idx[index -1]);
     }
-    else if (!strcasecmp_P(type +dmtcz_len, PSTR(D_CMND_SWITCHIDX)) && (index > 0) && (index <= Maxdevice)) {
+    else if (!strcasecmp_P(type +dmtcz_len, PSTR(D_CMND_SWITCHIDX)) && (index > 0) && (index <= MAX_DOMOTICZ_IDX)) {
       if (payload >= 0) {
         sysCfg.domoticz_switch_idx[index -1] = payload;
       }
@@ -335,7 +335,7 @@ void handleDomoticz()
   String page = FPSTR(HTTP_HEAD);
   page.replace(F("{v}"), FPSTR(S_CONFIGURE_DOMOTICZ));
   page += FPSTR(HTTP_FORM_DOMOTICZ);
-  for (int i = 0; i < 4; i++) {
+  for (int i = 0; i < MAX_DOMOTICZ_IDX; i++) {
     if (i < Maxdevice) {
       page += FPSTR(HTTP_FORM_DOMOTICZ_RELAY);
       page.replace("{2", String((int)sysCfg.domoticz_relay_idx[i]));
@@ -366,7 +366,7 @@ void domoticz_saveSettings()
 {
   char stemp[20];
 
-  for (byte i = 0; i < 4; i++) {
+  for (byte i = 0; i < MAX_DOMOTICZ_IDX; i++) {
     snprintf_P(stemp, sizeof(stemp), PSTR("r%d"), i +1);
     sysCfg.domoticz_relay_idx[i] = (!strlen(webServer->arg(stemp).c_str())) ? 0 : atoi(webServer->arg(stemp).c_str());
     snprintf_P(stemp, sizeof(stemp), PSTR("k%d"), i +1);

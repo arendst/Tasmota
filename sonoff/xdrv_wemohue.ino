@@ -474,10 +474,11 @@ void hue_light_status(byte device, String *response)
 void hue_global_cfg(String *path)
 {
   String response;
+  uint8_t maxhue = (Maxdevice > MAX_FRIENDLYNAMES) ? MAX_FRIENDLYNAMES : Maxdevice;
 
   path->remove(0,1);                                 // cut leading / to get <id>
   response = F("{\"lights\":{\"");
-  for (uint8_t i = 1; i <= Maxdevice; i++) {
+  for (uint8_t i = 1; i <= maxhue; i++) {
     response += i;
     response += F("\":{\"state\":{");
     hue_light_status(i, &response);
@@ -485,7 +486,7 @@ void hue_global_cfg(String *path)
     response += FPSTR(HUE_LIGHTS_STATUS_JSON);
     response.replace("{j1}", sysCfg.friendlyname[i-1]);
     response.replace("{j2}", hue_deviceId(i));
-    if (i < Maxdevice) {
+    if (i < maxhue) {
       response += ",\"";
     }
   }
@@ -520,11 +521,12 @@ void hue_lights(String *path)
   bool on = false;
   bool change = false;
   char id[4];
+  uint8_t maxhue = (Maxdevice > MAX_FRIENDLYNAMES) ? MAX_FRIENDLYNAMES : Maxdevice;
 
   path->remove(0,path->indexOf("/lights"));          // Remove until /lights
   if (path->endsWith("/lights")) {                   // Got /lights
     response = "{\"";
-    for (uint8_t i = 1; i <= Maxdevice; i++) {
+    for (uint8_t i = 1; i <= maxhue; i++) {
       response += i;
       response += F("\":{\"state\":{");
       hue_light_status(i, &response);
@@ -532,7 +534,7 @@ void hue_lights(String *path)
       response += FPSTR(HUE_LIGHTS_STATUS_JSON);
       response.replace("{j1}", sysCfg.friendlyname[i-1]);
       response.replace("{j2}", hue_deviceId(i));
-      if (i < Maxdevice) {
+      if (i < maxhue) {
         response += ",\"";
       }
     }
@@ -543,7 +545,7 @@ void hue_lights(String *path)
     path->remove(0,8);                               // Remove /lights/
     path->remove(path->indexOf("/state"));           // Remove /state
     device = atoi(path->c_str());
-    if ((device < 1) || (device > Maxdevice)) {
+    if ((device < 1) || (device > maxhue)) {
       device = 1;
     }
     if (1 == webServer->args()) {
@@ -645,7 +647,7 @@ void hue_lights(String *path)
   else if(path->indexOf("/lights/") >= 0) {          // Got /lights/ID
     path->remove(0,8);                               // Remove /lights/
     device = atoi(path->c_str());
-    if ((device < 1) || (device > Maxdevice)) {
+    if ((device < 1) || (device > maxhue)) {
       device = 1;
     }
     response += F("{\"state\":{");
@@ -667,11 +669,12 @@ void hue_groups(String *path)
  * http://sonoff/api/username/groups?1={"name":"Woonkamer","lights":[],"type":"Room","class":"Living room"})
  */
   String response = "{}";
+  uint8_t maxhue = (Maxdevice > MAX_FRIENDLYNAMES) ? MAX_FRIENDLYNAMES : Maxdevice;
 
   if (path->endsWith("/0")) {
     response = FPSTR(HUE_GROUP0_STATUS_JSON);
     String lights = F("\"1\"");
-    for (uint8_t i = 2; i <= Maxdevice; i++) {
+    for (uint8_t i = 2; i <= maxhue; i++) {
       lights += ",\"" + String(i) + "\"";
     }
     response.replace("{l1}", lights);

@@ -1,4 +1,8 @@
-/* 5.8.0j
+/* 5.8.0k
+ * Add support for up to 8 relays (#995)
+ * Fix Blocked Loop when erasing large flash using command reset 2 (#1002)
+ *
+ * 5.8.0j
  * Set default altitude to 0 to be used with pressure sensors
  * Document flash settings area for future use
  * Prepare for 32-bit power control (#995)

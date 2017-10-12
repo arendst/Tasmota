@@ -456,8 +456,8 @@ void handleRoot()
       page += F("<tr>");
       for (byte idx = 1; idx <= Maxdevice; idx++) {
         snprintf_P(stemp, sizeof(stemp), PSTR(" %d"), idx);
-        snprintf_P(line, sizeof(line), PSTR("<td style='width:%d%'><button onclick='la(\"?o=%d\");'>" D_BUTTON_TOGGLE "%s</button></td>"),
-          100 / Maxdevice, idx, (Maxdevice > 1) ? stemp : "");
+        snprintf_P(line, sizeof(line), PSTR("<td style='width:%d%'><button onclick='la(\"?o=%d\");'>%s%s</button></td>"),
+          100 / Maxdevice, idx, (Maxdevice < 5) ? D_BUTTON_TOGGLE : "", (Maxdevice > 1) ? stemp : "");
         page += line;
       }
       page += F("</tr></table>");
@@ -563,9 +563,11 @@ void handleAjax2()
   if (Maxdevice) {
     page += FPSTR(HTTP_TABLE100);
     page += F("<tr>");
+    uint8_t fsize = (Maxdevice < 5) ? 70 - (Maxdevice * 8) : 32;
     for (byte idx = 1; idx <= Maxdevice; idx++) {
-      snprintf_P(line, sizeof(line), PSTR("<td style='width:%d%'><div style='text-align:center;font-weight:bold;font-size:%dpx'>%s</div></td>"),
-        100 / Maxdevice, 70 - (Maxdevice * 8), getStateText(bitRead(power, idx -1)));
+      snprintf_P(svalue, sizeof(svalue), PSTR("%d"), bitRead(power, idx -1));
+      snprintf_P(line, sizeof(line), PSTR("<td style='width:%d%'><div style='text-align:center;font-weight:%s;font-size:%dpx'>%s</div></td>"),
+        100 / Maxdevice, (bitRead(power, idx -1)) ? "bold" : "normal", fsize, (Maxdevice < 5) ? getStateText(bitRead(power, idx -1)) : svalue);
       page += line;
     }
     page += F("</tr></table>");
@@ -633,16 +635,24 @@ boolean inModule(byte val, uint8_t *arr)
     return true;
   }
 #endif
-  if (((val >= GPIO_REL1) && (val <= GPIO_REL4)) || ((val >= GPIO_LED1) && (val <= GPIO_LED4))) {
+  if ((val >= GPIO_REL1) && (val < GPIO_REL1 + MAX_RELAYS)) {
     offset = (GPIO_REL1_INV - GPIO_REL1);
   }
-  if (((val >= GPIO_REL1_INV) && (val <= GPIO_REL4_INV)) || ((val >= GPIO_LED1_INV) && (val <= GPIO_LED4_INV))) {
+  if ((val >= GPIO_REL1_INV) && (val < GPIO_REL1_INV + MAX_RELAYS)) {
     offset = -(GPIO_REL1_INV - GPIO_REL1);
   }
-  if ((val >= GPIO_PWM1) && (val <= GPIO_PWM5)) {
+
+  if ((val >= GPIO_LED1) && (val < GPIO_LED1 + MAX_LEDS)) {
+    offset = (GPIO_LED1_INV - GPIO_LED1);
+  }
+  if ((val >= GPIO_LED1_INV) && (val < GPIO_LED1_INV + MAX_LEDS)) {
+    offset = -(GPIO_LED1_INV - GPIO_LED1);
+  }
+
+  if ((val >= GPIO_PWM1) && (val < GPIO_PWM1 + MAX_PWMS)) {
     offset = (GPIO_PWM1_INV - GPIO_PWM1);
   }
-  if ((val >= GPIO_PWM1_INV) && (val <= GPIO_PWM5_INV)) {
+  if ((val >= GPIO_PWM1_INV) && (val < GPIO_PWM1_INV + MAX_PWMS)) {
     offset = -(GPIO_PWM1_INV - GPIO_PWM1);
   }
   for (byte i = 0; i < MAX_GPIO_PIN; i++) {
@@ -697,7 +707,7 @@ void handleModule()
   for (byte i = 0; i < MAX_GPIO_PIN; i++) {
     if (GPIO_USER == cmodule.gp.io[i]) {
       snprintf_P(line, sizeof(line), PSTR("<br/><b>" D_GPIO "%d</b> %s<select id='g%d' name='g%d'></select></br>"),
-        i, (0==i)? D_SENSOR_BUTTON "1":(1==i)? D_SERIAL_OUT :(3==i)? D_SERIAL_IN :(12==i)? D_SENSOR_RELAY "1":(13==i)? D_SENSOR_LED "1I":(14==i)? D_SENSOR :"", i, i);
+        i, (0==i)? D_SENSOR_BUTTON "1":(1==i)? D_SERIAL_OUT :(3==i)? D_SERIAL_IN :(12==i)? D_SENSOR_RELAY "1":(13==i)? D_SENSOR_LED "1i":(14==i)? D_SENSOR :"", i, i);
       page += line;
       snprintf_P(line, sizeof(line), PSTR("sk(%d,%d);"), my_module.gp.io[i], i);  // g0 - g16
       func += line;
@@ -923,7 +933,8 @@ void handleOther()
     page.replace(F("{4"), (i == EMUL_NONE) ? F("") : (i == EMUL_WEMO) ? F(" " D_SINGLE_DEVICE) : F(" " D_MULTI_DEVICE));
   }
   page += F("<br/>");
-  for (int i = 1; i < Maxdevice; i++) {
+  uint8_t maxfn = (Maxdevice > MAX_FRIENDLYNAMES) ? MAX_FRIENDLYNAMES : Maxdevice;
+  for (byte i = 1; i < maxfn; i++) {
     page += FPSTR(HTTP_FORM_OTHER2);
     page.replace(F("{1"), String(i +1));
     snprintf_P(stemp, sizeof(stemp), PSTR(FRIENDLY_NAME"%d"), i +1);
@@ -1499,7 +1510,8 @@ void handleInfo()
   page += F("<tr><th>" D_FLASH_WRITE_COUNT "</th><td>"); page += String(sysCfg.saveFlag); page += stopic; page += F("</td></tr>");
   page += F("<tr><th>" D_BOOT_COUNT "</th><td>"); page += String(sysCfg.bootcount); page += F("</td></tr>");
   page += F("<tr><th>" D_RESTART_REASON "</th><td>"); page += getResetReason(); page += F("</td></tr>");
-  for (byte i = 0; i < Maxdevice; i++) {
+  uint8_t maxfn = (Maxdevice > MAX_FRIENDLYNAMES) ? MAX_FRIENDLYNAMES : Maxdevice;
+  for (byte i = 0; i < maxfn; i++) {
     page += F("<tr><th>" D_FRIENDLY_NAME " ");
     page += i +1;
     page += F("</th><td>"); page += sysCfg.friendlyname[i]; page += F("</td></tr>");

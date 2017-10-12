@@ -40,18 +40,18 @@ enum upins_t {
   GPIO_REL2,
   GPIO_REL3,
   GPIO_REL4,
+  GPIO_REL5,
+  GPIO_REL6,
+  GPIO_REL7,
+  GPIO_REL8,
   GPIO_REL1_INV,
   GPIO_REL2_INV,
   GPIO_REL3_INV,
   GPIO_REL4_INV,
-  GPIO_LED1,           // Leds
-  GPIO_LED2,
-  GPIO_LED3,
-  GPIO_LED4,
-  GPIO_LED1_INV,
-  GPIO_LED2_INV,
-  GPIO_LED3_INV,
-  GPIO_LED4_INV,
+  GPIO_REL5_INV,
+  GPIO_REL6_INV,
+  GPIO_REL7_INV,
+  GPIO_REL8_INV,
   GPIO_PWM1,           // RGB   Red   or C  Cold White
   GPIO_PWM2,           // RGB   Green or CW Warm White
   GPIO_PWM3,           // RGB   Blue
@@ -67,6 +67,14 @@ enum upins_t {
   GPIO_PWM4_INV,       // RGBW  (Cold) White
   GPIO_PWM5_INV,       // RGBCW Warm White
   GPIO_IRRECV,         // IR receiver
+  GPIO_LED1,           // Leds
+  GPIO_LED2,
+  GPIO_LED3,
+  GPIO_LED4,
+  GPIO_LED1_INV,
+  GPIO_LED2_INV,
+  GPIO_LED3_INV,
+  GPIO_LED4_INV,
   GPIO_SENSOR_END };
 
 // Text in webpage Module Parameters and commands GPIOS and GPIO
@@ -92,18 +100,18 @@ const char sensors[GPIO_SENSOR_END][9] PROGMEM = {
   D_SENSOR_RELAY "2",
   D_SENSOR_RELAY "3",
   D_SENSOR_RELAY "4",
-  D_SENSOR_RELAY "1I",
-  D_SENSOR_RELAY "2I",
-  D_SENSOR_RELAY "3I",
-  D_SENSOR_RELAY "4I",
-  D_SENSOR_LED "1",
-  D_SENSOR_LED "2",
-  D_SENSOR_LED "3",
-  D_SENSOR_LED "4",
-  D_SENSOR_LED "1I",
-  D_SENSOR_LED "2I",
-  D_SENSOR_LED "3I",
-  D_SENSOR_LED "4I",
+  D_SENSOR_RELAY "5",
+  D_SENSOR_RELAY "6",
+  D_SENSOR_RELAY "7",
+  D_SENSOR_RELAY "8",
+  D_SENSOR_RELAY "1i",
+  D_SENSOR_RELAY "2i",
+  D_SENSOR_RELAY "3i",
+  D_SENSOR_RELAY "4i",
+  D_SENSOR_RELAY "5i",
+  D_SENSOR_RELAY "6i",
+  D_SENSOR_RELAY "7i",
+  D_SENSOR_RELAY "8i",
   D_SENSOR_PWM "1",
   D_SENSOR_PWM "2",
   D_SENSOR_PWM "3",
@@ -113,13 +121,21 @@ const char sensors[GPIO_SENSOR_END][9] PROGMEM = {
   D_SENSOR_COUNTER "2",
   D_SENSOR_COUNTER "3",
   D_SENSOR_COUNTER "4",
-  D_SENSOR_PWM "1I",
-  D_SENSOR_PWM "2I",
-  D_SENSOR_PWM "3I",
-  D_SENSOR_PWM "4I",
-  D_SENSOR_PWM "5I",
-  D_SENSOR_IRRECV
-  };
+  D_SENSOR_PWM "1i",
+  D_SENSOR_PWM "2i",
+  D_SENSOR_PWM "3i",
+  D_SENSOR_PWM "4i",
+  D_SENSOR_PWM "5i",
+  D_SENSOR_IRRECV,
+  D_SENSOR_LED "1",
+  D_SENSOR_LED "2",
+  D_SENSOR_LED "3",
+  D_SENSOR_LED "4",
+  D_SENSOR_LED "1i",
+  D_SENSOR_LED "2i",
+  D_SENSOR_LED "3i",
+  D_SENSOR_LED "4i"
+};
 
 // Programmer selectable GPIO functionality offset by user selectable GPIOs
 enum fpins_t {

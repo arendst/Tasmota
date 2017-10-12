@@ -92,8 +92,8 @@ struct SYSCFG {
   byte          free_2E6[2];               // 2E6
 
   power_t       power;                     // 2E8
-
-  byte          free_2EC[10];              // 2EC
+  uint16_t      pwmvalue[MAX_PWMS];        // 2EC
+//  byte          free_2EC[10];              // 2EC
 
   int16_t       altitude;                  // 2F6 Add since 5.8.0i
   uint16_t      tele_period;               // 2F8
@@ -108,8 +108,8 @@ struct SYSCFG {
 
   byte          free_342[2];               // 342
 
-  unsigned long domoticz_relay_idx[4];     // 344
-  unsigned long domoticz_key_idx[4];       // 354
+  unsigned long domoticz_relay_idx[MAX_DOMOTICZ_IDX]; // 344
+  unsigned long domoticz_key_idx[MAX_DOMOTICZ_IDX];   // 354
 
   unsigned long hlw_pcal;                  // 364
   unsigned long hlw_ucal;                  // 368
@@ -152,13 +152,13 @@ struct SYSCFG {
   byte          free_3A9[1];               // 3A9
 
   uint16_t      ws_wakeup;                 // 3AA Not used since 5.8.0
-  char          friendlyname[4][33];       // 3AC
+  char          friendlyname[MAX_FRIENDLYNAMES][33]; // 3AC
   char          switch_topic[33];          // 430
 
   byte          free_451[2];               // 451
 
   uint8_t       sleep;                     // 453
-  uint16_t      domoticz_switch_idx[4];    // 454
+  uint16_t      domoticz_switch_idx[MAX_DOMOTICZ_IDX]; // 454
   uint16_t      domoticz_sensor_idx[12];   // 45C
   uint8_t       module;                    // 474
 
@@ -184,13 +184,16 @@ struct SYSCFG {
   byte          free_4A8[1];               // 4A8
 
   char          web_password[33];          // 4A9
-  uint8_t       switchmode[4];             // 4CA
+  uint8_t       switchmode[MAX_SWITCHES];  // 4CA
   char          ntp_server[3][33];         // 4CE
 
   byte          free_531[1];               // 531
 
   uint16_t      pulsetime[MAX_PULSETIMERS]; // 532
-  uint16_t      pwmvalue[5];               // 53A
+  //uint16_t      ex_pwmvalue[MAX_PWMS];     // 53A
+
+  byte          free_542[2];               // 542
+
   uint32_t      ip_address[4];             // 544
   unsigned long hlw_kWhtotal;              // 554
   char          mqtt_fulltopic[101];       // 558
