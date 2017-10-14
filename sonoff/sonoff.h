@@ -22,7 +22,7 @@
 \*********************************************************************************************/
 
 typedef unsigned long power_t;              // Power (Relay) type
-#define POWER_MASK             0xFFFFFFFF   // Power (Relay) full mask
+#define POWER_MASK             0xffffffffUL // Power (Relay) full mask
 
 /*********************************************************************************************\
  * Defines

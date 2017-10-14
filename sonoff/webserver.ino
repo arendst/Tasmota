@@ -77,7 +77,7 @@ const char HTTP_HEAD[] PROGMEM =
 
   "<style>"
   "div,fieldset,input,select{padding:5px;font-size:1em;}"
-  "input{width:95%;}"
+  "input{width:100%;box-sizing:border-box;-webkit-box-sizing:border-box;-moz-box-sizing:border-box;}"
   "select{width:100%;}"
   "textarea{resize:none;width:98%;height:318px;padding:5px;overflow:auto;}"
   "body{text-align:center;font-family:verdana;}"
@@ -173,6 +173,7 @@ const char HTTP_BTN_MENU3[] PROGMEM =
 const char HTTP_BTN_MENU4[] PROGMEM =
   "<br/><form action='lg' method='get'><button>" D_CONFIGURE_LOGGING "</button></form>"
   "<br/><form action='co' method='get'><button>" D_CONFIGURE_OTHER "</button></form>"
+  "<br/>"
   "<br/><form action='rt' method='get' onsubmit='return confirm(\"" D_CONFIRM_RESET_CONFIGURATION "\");'><button>" D_RESET_CONFIGURATION "</button></form>"
   "<br/><form action='dl' method='get'><button>" D_BACKUP_CONFIGURATION "</button></form>"
   "<br/><form action='rs' method='get'><button>" D_RESTORE_CONFIGURATION "</button></form>";
@@ -191,21 +192,21 @@ const char HTTP_LNK_SCAN[] PROGMEM =
 const char HTTP_FORM_WIFI[] PROGMEM =
   "<fieldset><legend><b>&nbsp;" D_WIFI_PARAMETERS "&nbsp;</b></legend><form method='get' action='sv'>"
   "<input id='w' name='w' value='1' hidden><input id='r' name='r' value='1' hidden>"
-  "<br/><b>" D_AP1_SSID "</b> (" STA_SSID1 ")<br/><input id='s1' name='s1' length=32 placeholder='" STA_SSID1 "' value='{s1}'><br/>"
-  "<br/><b>" D_AP1_PASSWORD "</b></br><input id='p1' name='p1' length=64 type='password' placeholder='" STA_PASS1 "' value='{p1}'><br/>"
-  "<br/><b>" D_AP2_SSID "</b> (" STA_SSID2 ")<br/><input id='s2' name='s2' length=32 placeholder='" STA_SSID2 "' value='{s2}'><br/>"
-  "<br/><b>" D_AP2_PASSWORD "</b></br><input id='p2' name='p2' length=64 type='password' placeholder='" STA_PASS2 "' value='{p2}'><br/>"
-  "<br/><b>" D_HOSTNAME "</b> (" WIFI_HOSTNAME ")<br/><input id='h' name='h' length=32 placeholder='" WIFI_HOSTNAME" ' value='{h1}'><br/>";
+  "<br/><b>" D_AP1_SSID "</b> (" STA_SSID1 ")<br/><input id='s1' name='s1' placeholder='" STA_SSID1 "' value='{s1}'><br/>"
+  "<br/><b>" D_AP1_PASSWORD "</b></br><input id='p1' name='p1' type='password' placeholder='" STA_PASS1 "' value='{p1}'><br/>"
+  "<br/><b>" D_AP2_SSID "</b> (" STA_SSID2 ")<br/><input id='s2' name='s2' placeholder='" STA_SSID2 "' value='{s2}'><br/>"
+  "<br/><b>" D_AP2_PASSWORD "</b></br><input id='p2' name='p2' type='password' placeholder='" STA_PASS2 "' value='{p2}'><br/>"
+  "<br/><b>" D_HOSTNAME "</b> (" WIFI_HOSTNAME ")<br/><input id='h' name='h' placeholder='" WIFI_HOSTNAME" ' value='{h1}'><br/>";
 const char HTTP_FORM_MQTT[] PROGMEM =
   "<fieldset><legend><b>&nbsp;" D_MQTT_PARAMETERS "&nbsp;</b></legend><form method='get' action='sv'>"
   "<input id='w' name='w' value='2' hidden><input id='r' name='r' value='1' hidden>"
-  "<br/><b>" D_HOST "</b> (" MQTT_HOST ")<br/><input id='mh' name='mh' length=32 placeholder='" MQTT_HOST" ' value='{m1}'><br/>"
-  "<br/><b>" D_PORT "</b> (" STR(MQTT_PORT) ")<br/><input id='ml' name='ml' length=5 placeholder='" STR(MQTT_PORT) "' value='{m2}'><br/>"
-  "<br/><b>" D_CLIENT "</b> ({m0})<br/><input id='mc' name='mc' length=32 placeholder='" MQTT_CLIENT_ID "' value='{m3}'><br/>"
-  "<br/><b>" D_USER "</b> (" MQTT_USER ")<br/><input id='mu' name='mu' length=32 placeholder='" MQTT_USER "' value='{m4}'><br/>"
-  "<br/><b>" D_PASSWORD "</b><br/><input id='mp' name='mp' length=32 type='password' placeholder='" MQTT_PASS "' value='{m5}'><br/>"
-  "<br/><b>" D_TOPIC "</b> = %topic% (" MQTT_TOPIC ")<br/><input id='mt' name='mt' length=32 placeholder='" MQTT_TOPIC" ' value='{m6}'><br/>"
-  "<br/><b>" D_FULL_TOPIC "</b> (" MQTT_FULLTOPIC ")<br/><input id='mf' name='mf' length=80 placeholder='" MQTT_FULLTOPIC" ' value='{m7}'><br/>";
+  "<br/><b>" D_HOST "</b> (" MQTT_HOST ")<br/><input id='mh' name='mh' placeholder='" MQTT_HOST" ' value='{m1}'><br/>"
+  "<br/><b>" D_PORT "</b> (" STR(MQTT_PORT) ")<br/><input id='ml' name='ml' placeholder='" STR(MQTT_PORT) "' value='{m2}'><br/>"
+  "<br/><b>" D_CLIENT "</b> ({m0})<br/><input id='mc' name='mc' placeholder='" MQTT_CLIENT_ID "' value='{m3}'><br/>"
+  "<br/><b>" D_USER "</b> (" MQTT_USER ")<br/><input id='mu' name='mu' placeholder='" MQTT_USER "' value='{m4}'><br/>"
+  "<br/><b>" D_PASSWORD "</b><br/><input id='mp' name='mp' type='password' placeholder='" MQTT_PASS "' value='{m5}'><br/>"
+  "<br/><b>" D_TOPIC "</b> = %topic% (" MQTT_TOPIC ")<br/><input id='mt' name='mt' placeholder='" MQTT_TOPIC" ' value='{m6}'><br/>"
+  "<br/><b>" D_FULL_TOPIC "</b> (" MQTT_FULLTOPIC ")<br/><input id='mf' name='mf' placeholder='" MQTT_FULLTOPIC" ' value='{m7}'><br/>";
 const char HTTP_FORM_LOG1[] PROGMEM =
   "<fieldset><legend><b>&nbsp;" D_LOGGING_PARAMETERS "&nbsp;</b></legend><form method='get' action='sv'>"
   "<input id='w' name='w' value='3' hidden><input id='r' name='r' value='0' hidden>";
@@ -218,16 +219,16 @@ const char HTTP_FORM_LOG2[] PROGMEM =
   "<option{a4value='4'>4 " D_MORE_DEBUG "</option>"
   "</select></br>";
 const char HTTP_FORM_LOG3[] PROGMEM =
-  "<br/><b>" D_SYSLOG_HOST "</b> (" SYS_LOG_HOST ")<br/><input id='lh' name='lh' length=32 placeholder='" SYS_LOG_HOST "' value='{l2}'><br/>"
-  "<br/><b>" D_SYSLOG_PORT "</b> (" STR(SYS_LOG_PORT) ")<br/><input id='lp' name='lp' length=5 placeholder='" STR(SYS_LOG_PORT) "' value='{l3}'><br/>"
-  "<br/><b>" D_TELEMETRY_PERIOD "</b> (" STR(TELE_PERIOD) ")<br/><input id='lt' name='lt' length=4 placeholder='" STR(TELE_PERIOD) "' value='{l4}'><br/>";
+  "<br/><b>" D_SYSLOG_HOST "</b> (" SYS_LOG_HOST ")<br/><input id='lh' name='lh' placeholder='" SYS_LOG_HOST "' value='{l2}'><br/>"
+  "<br/><b>" D_SYSLOG_PORT "</b> (" STR(SYS_LOG_PORT) ")<br/><input id='lp' name='lp' placeholder='" STR(SYS_LOG_PORT) "' value='{l3}'><br/>"
+  "<br/><b>" D_TELEMETRY_PERIOD "</b> (" STR(TELE_PERIOD) ")<br/><input id='lt' name='lt' placeholder='" STR(TELE_PERIOD) "' value='{l4}'><br/>";
 const char HTTP_FORM_OTHER[] PROGMEM =
   "<fieldset><legend><b>&nbsp;" D_OTHER_PARAMETERS "&nbsp;</b></legend><form method='get' action='sv'>"
   "<input id='w' name='w' value='5' hidden><input id='r' name='r' value='1' hidden>"
-  "<br/><b>" D_WEB_ADMIN_PASSWORD "</b><br/><input id='p1' name='p1' length=32 type='password' placeholder='" WEB_PASSWORD "' value='{p1}'><br/>"
+  "<br/><b>" D_WEB_ADMIN_PASSWORD "</b><br/><input id='p1' name='p1' type='password' placeholder='" WEB_PASSWORD "' value='{p1}'><br/>"
   "<br/><input style='width:10%;' id='b1' name='b1' type='checkbox'{r1}><b>" D_MQTT_ENABLE "</b><br/>";
   const char HTTP_FORM_OTHER2[] PROGMEM =
-  "<br/><b>" D_FRIENDLY_NAME " {1</b> ({2)<br/><input id='a{1' name='a{1' length=32 placeholder='{2' value='{3'><br/>";
+  "<br/><b>" D_FRIENDLY_NAME " {1</b> ({2)<br/><input id='a{1' name='a{1' placeholder='{2' value='{3'><br/>";
 #ifdef USE_EMULATION
 const char HTTP_FORM_OTHER3a[] PROGMEM =
   "<br/><fieldset><legend><b>&nbsp;" D_EMULATION "&nbsp;</b></legend>";
@@ -243,7 +244,7 @@ const char HTTP_FORM_UPG[] PROGMEM =
   "<div id='f1' name='f1' style='display:block;'>"
   "<fieldset><legend><b>&nbsp;" D_UPGRADE_BY_WEBSERVER "&nbsp;</b></legend>"
   "<form method='get' action='u1'>"
-  "<br/>" D_OTA_URL "<br/><input id='o' name='o' length=80 placeholder='OTA_URL' value='{o1}'><br/>"
+  "<br/>" D_OTA_URL "<br/><input id='o' name='o' placeholder='OTA_URL' value='{o1}'><br/>"
   "<br/><button type='submit'>" D_START_UPGRADE "</button></form>"
   "</fieldset><br/><br/>"
   "<fieldset><legend><b>&nbsp;" D_UPGRADE_BY_FILE_UPLOAD "&nbsp;</b></legend>";
@@ -257,8 +258,8 @@ const char HTTP_FORM_RST_UPG[] PROGMEM =
 const char HTTP_FORM_CMND[] PROGMEM =
   "<br/><textarea readonly id='t1' name='t1' cols='" STR(MESSZ) "' wrap='off'></textarea><br/><br/>"
   "<form method='get' onsubmit='return l(1);'>"
-  "<input style='width:98%' id='c1' name='c1' length='99' placeholder='" D_ENTER_COMMAND "' autofocus><br/>"
-//  "<br/><button type='submit'>Send command</button>"
+  "<input id='c1' name='c1' placeholder='" D_ENTER_COMMAND "' autofocus><br/>"
+  //  "<br/><button type='submit'>Send command</button>"
   "</form>";
 const char HTTP_TABLE100[] PROGMEM =
   "<table style='width:100%'>";
@@ -704,15 +705,20 @@ void handleModule()
     }
   }
   func += FPSTR(HTTP_SCRIPT_MODULE3);
+
+  page += F("<br/><table>");
   for (byte i = 0; i < MAX_GPIO_PIN; i++) {
     if (GPIO_USER == cmodule.gp.io[i]) {
-      snprintf_P(line, sizeof(line), PSTR("<br/><b>" D_GPIO "%d</b> %s<select id='g%d' name='g%d'></select></br>"),
-        i, (0==i)? D_SENSOR_BUTTON "1":(1==i)? D_SERIAL_OUT :(3==i)? D_SERIAL_IN :(12==i)? D_SENSOR_RELAY "1":(13==i)? D_SENSOR_LED "1i":(14==i)? D_SENSOR :"", i, i);
+      snprintf_P(stemp, 3, PINS_WEMOS +i*2);
+      snprintf_P(line, sizeof(line), PSTR("<tr><td width='190'>%s <b>" D_GPIO "%d</b> %s</td><td width='126'><select id='g%d' name='g%d'></select></td></tr>"),
+        (WEMOS==sysCfg.module)?stemp:"", i, (0==i)? D_SENSOR_BUTTON "1":(1==i)? D_SERIAL_OUT :(3==i)? D_SERIAL_IN :(12==i)? D_SENSOR_RELAY "1":(13==i)? D_SENSOR_LED "1i":(14==i)? D_SENSOR :"", i, i);
       page += line;
       snprintf_P(line, sizeof(line), PSTR("sk(%d,%d);"), my_module.gp.io[i], i);  // g0 - g16
       func += line;
     }
   }
+  page += F("</table>");
+
   func += F("}</script>");
   page.replace(F("</script>"), func);
   page.replace(F("<body>"), F("<body onload='sl()'>"));

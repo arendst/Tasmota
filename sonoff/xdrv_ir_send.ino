@@ -322,6 +322,8 @@ boolean ir_send_command(char *type, uint16_t index, char *dataBuf, uint16_t data
             irsend->sendJVC(data, bits, 1);
           else if (!strcasecmp_P(protocol, PSTR("SAMSUNG")))
             irsend->sendSAMSUNG(data, bits);
+          else if (!strcasecmp_P(protocol, PSTR("PANASONIC")))
+            irsend->sendPanasonic(data, bits);
           else {
             snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_IRSEND "\":\"" D_PROTOCOL_NOT_SUPPORTED "\"}"));
           }

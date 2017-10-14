@@ -25,7 +25,7 @@
     - Select IDE Tools - Flash Size: "1M (no SPIFFS)"
   ====================================================*/
 
-#define VERSION                0x0508000B  // 5.8.0k
+#define VERSION                0x0508000C  // 5.8.0l
 
 #include "sonoff.h"
 #include "user_config.h"
@@ -352,6 +352,9 @@ void setRelay(power_t rpower)
       rpower = 0;
     }
   }
+  if (sfl_flg) {
+    sl_setPower(rpower);
+  }
   if ((SONOFF_DUAL == sysCfg.module) || (CH4 == sysCfg.module)) {
     Serial.write(0xA0);
     Serial.write(0x04);
@@ -360,13 +363,18 @@ void setRelay(power_t rpower)
     Serial.write('\n');
     Serial.flush();
   }
-  else if (sfl_flg) {
-    sl_setPower(rpower);
-  }
   else if (EXS_RELAY == sysCfg.module) {
     setLatchingRelay(rpower, 1);
   }
   else {
+    for (byte i = 0; i < Maxdevice; i++) {
+      state = rpower &1;
+      if ((i < MAX_RELAYS) && (pin[GPIO_REL1 +i] < 99)) {
+        digitalWrite(pin[GPIO_REL1 +i], bitRead(rel_inverted, i) ? !state : state);
+      }
+      rpower >>= 1;
+    }
+/*
     uint8_t maxdev = (Maxdevice > MAX_RELAYS) ? MAX_RELAYS : Maxdevice;
     for (byte i = 0; i < maxdev; i++) {
       state = rpower &1;
@@ -375,6 +383,7 @@ void setRelay(power_t rpower)
       }
       rpower >>= 1;
     }
+*/
   }
   hlw_setPowerSteadyCounter(2);
 }
@@ -750,7 +759,7 @@ boolean mqtt_command(boolean grpflg, char *type, uint16_t index, char *dataBuf, 
     if ((payload >= 0) && (payload <= 1)) {
       strlcpy(sysCfg.button_topic, sysCfg.mqtt_topic, sizeof(sysCfg.button_topic));
       if (!payload) {
-        for(i = 1; i <= Maxdevice; i++) {
+        for(i = 1; i <= MAX_KEYS; i++) {
           send_button_power(0, i, 9);  // Clear MQTT retain in broker
         }
       }
@@ -2722,7 +2731,6 @@ extern struct rst_info resetInfo;
 void setup()
 {
   byte idx;
-  uint8_t maxdev;
 
   Serial.begin(Baudrate);
   delay(10);
@@ -2815,19 +2823,13 @@ void setup()
     }
   }
 
-  // Issue #526
-  maxdev = (Maxdevice > MAX_RELAYS) ? MAX_RELAYS : Maxdevice;
-  for (byte i = 0; i < maxdev; i++) {
-    if (pin[GPIO_REL1 +i] < 99) {
-      if (digitalRead(pin[GPIO_REL1 +i]) ^ bitRead(rel_inverted, i)) {
-        bitSet(power, i);
-      }
+  // Issue #526 and #909
+  for (byte i = 0; i < Maxdevice; i++) {
+    if ((i < MAX_RELAYS) && (pin[GPIO_REL1 +i] < 99)) {
+      bitWrite(power, i, digitalRead(pin[GPIO_REL1 +i]) ^ bitRead(rel_inverted, i));
     }
-  }
-  maxdev = (Maxdevice > MAX_PULSETIMERS) ? MAX_PULSETIMERS : Maxdevice;
-  for (byte i = 0; i < maxdev; i++) {
-    if (bitRead(power, i)) {
-      pulse_timer[i] = sysCfg.pulsetime[i];  // MAX_PULSETIMERS must be equal to MAX_RELAYS for this to work here
+    if ((i < MAX_PULSETIMERS) && bitRead(power, i)) {
+      pulse_timer[i] = sysCfg.pulsetime[i];
     }
   }
 

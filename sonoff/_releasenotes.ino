@@ -1,4 +1,10 @@
-/* 5.8.0k
+/* 5.8.0l
+ * Update HTML/CSS to enable nicer form field entry
+ * Fix inverted relay status after restart or power on as regression from 5.8.0d (#909)
+ * Add send protocol Panasonic to IRsend (#1014)
+ * Fix relay power control when light power control is also configured as regression from 5.8.0 (#1016)
+ *
+ * 5.8.0k
  * Add support for up to 8 relays (#995)
  * Fix Blocked Loop when erasing large flash using command reset 2 (#1002)
  * Add retain to ENERGY messages controlled by command SensorRetain (#1013)

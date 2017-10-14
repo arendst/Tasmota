@@ -23,16 +23,16 @@
 const char HTTP_FORM_DOMOTICZ[] PROGMEM =
   "<fieldset><legend><b>&nbsp;" D_DOMOTICZ_PARAMETERS "&nbsp;</b></legend><form method='post' action='sv'>"
   "<input id='w' name='w' value='4' hidden><input id='r' name='r' value='1' hidden>"
-  "<br/><table style='width:97%'>";
+  "<br/><table>";
 const char HTTP_FORM_DOMOTICZ_RELAY[] PROGMEM =
-  "<tr><td><b>" D_DOMOTICZ_IDX " {1</b></td></td><td width='20%'><input id='r{1' name='r{1' length=8 placeholder='0' value='{2'></td></tr>"
-  "<tr><td><b>" D_DOMOTICZ_KEY_IDX " {1</b></td><td><input id='k{1' name='k{1' length=8 placeholder='0' value='{3'></td></tr>";
-const char HTTP_FORM_DOMOTICZ_SWITCH[] PROGMEM =
-  "<tr><td><b>" D_DOMOTICZ_SWITCH_IDX " {1</b></td><td width='20%'><input id='s{1' name='s{1' length=8 placeholder='0' value='{4'></td></tr>";
+  "<tr><td width='260'><b>" D_DOMOTICZ_IDX " {1</b></td><td width='70'><input id='r{1' name='r{1' placeholder='0' value='{2'></td></tr>"
+  "<tr><td width='260'><b>" D_DOMOTICZ_KEY_IDX " {1</b></td><td width='70'><input id='k{1' name='k{1' placeholder='0' value='{3'></td></tr>";
+  const char HTTP_FORM_DOMOTICZ_SWITCH[] PROGMEM =
+  "<tr><td width='260'><b>" D_DOMOTICZ_SWITCH_IDX " {1</b></td><td width='70'><input id='s{1' name='s{1' placeholder='0' value='{4'></td></tr>";
 const char HTTP_FORM_DOMOTICZ_SENSOR[] PROGMEM =
-  "<tr><td><b>" D_DOMOTICZ_SENSOR_IDX " {1</b> - {2</td><td width='20%'><input id='l{1' name='l{1' length=8 placeholder='0' value='{5'></td></tr>";
+  "<tr><td width='260'><b>" D_DOMOTICZ_SENSOR_IDX " {1</b> {2</td><td width='70'><input id='l{1' name='l{1' placeholder='0' value='{5'></td></tr>";
 const char HTTP_FORM_DOMOTICZ_TIMER[] PROGMEM =
-  "<tr><td><b>" D_DOMOTICZ_UPDATE_TIMER "</b> (" STR(DOMOTICZ_UPDATE_TIMER) ")</td><td><input id='ut' name='ut' length=32 placeholder='" STR(DOMOTICZ_UPDATE_TIMER) "' value='{6'</td></tr>";
+  "<tr><td width='260'><b>" D_DOMOTICZ_UPDATE_TIMER "</b> (" STR(DOMOTICZ_UPDATE_TIMER) ")</td><td width='70'><input id='ut' name='ut' placeholder='" STR(DOMOTICZ_UPDATE_TIMER) "' value='{6'</td></tr>";
 #endif  // USE_WEBSERVER
 
 enum domoticz_sensors_t {

@@ -195,6 +195,8 @@ enum module_t {
 
 #define MAX_GPIO_PIN       18   // Number of supported GPIO
 
+const char PINS_WEMOS[] PROGMEM = "D3TXD4RXD2D1flashcontrolD6D7D5D8D0A0";
+
 typedef struct MYIO {
   uint8_t      io[MAX_GPIO_PIN];
 } myio;
