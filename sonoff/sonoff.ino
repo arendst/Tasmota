@@ -598,7 +598,14 @@ void mqtt_reconnect()
 
   getTopic_P(stopic, 2, sysCfg.mqtt_topic, S_LWT);
   snprintf_P(mqtt_data, sizeof(mqtt_data), S_OFFLINE);
-  if (mqttClient.connect(MQTTClient, sysCfg.mqtt_user, sysCfg.mqtt_pwd, stopic, 1, true, mqtt_data)) {
+
+  boolean connect_result = false;
+  if (strlen(sysCfg.mqtt_user)>0 && strlen(sysCfg.mqtt_pwd)>0)
+     connect_result = mqttClient.connect(MQTTClient, sysCfg.mqtt_user, sysCfg.mqtt_pwd, stopic, 1, true, svalue);
+  else
+     connect_result = mqttClient.connect(MQTTClient, stopic, 1, true, svalue);
+
+  if (connect_result) {
     addLog_P(LOG_LEVEL_INFO, S_LOG_MQTT, PSTR(D_CONNECTED));
     mqttcounter = 0;
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR(D_ONLINE));
