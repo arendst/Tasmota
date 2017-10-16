@@ -46,63 +46,6 @@
 #undef STA_SSID1
 
 #endif
-#define STA_SSID1              "BodeNet_Keller"  // [Ssid1] Wifi SSID
-#ifdef STA_PASS1
-#undef STA_PASS1
-#endif
-#define STA_PASS1              "BettyUndStefa"          // [Password1] Wifi password
-#ifdef STA_SSID2
-#undef STA_SSID2
-#endif
-#define STA_SSID2              "SchreiberWLAN"  // [Ssid1] Wifi SSID
-#ifdef STA_PASS2
-#undef STA_PASS2
-#endif
-#define STA_PASS2              "Me1nGast"          // [Password1] Wifi password
-#ifdef WIFI_CONFIG_TOOL
-#undef WIFI_CONFIG_TOOL
-#endif
-#define WIFI_CONFIG_TOOL       WIFI_MANAGER      // [WifiConfig] Default tool if wifi fails to connect
-
-// -- Syslog --------------------------------------
-#ifdef SYS_LOG_HOST
-#undef SYS_LOG_HOST
-#endif
-#define SYS_LOG_HOST           "192.168.178.42"          // [LogHost] (Linux) syslog host
-
-
-#define USE_MQTT_TLS                             // EXPERIMENTAL Use TLS for MQTT connection (+53k code, +20k mem) - Disable by //
-#ifdef MQTT_USE
-#undef MQTT_USE
-#endif
-#define MQTT_USE               1
-
-#ifdef MQTT_HOST
-#undef MQTT_HOST
-#endif
-#define MQTT_HOST            "elocm.homeserver.com"    // [MqttHost]
-
-#ifdef MQTT_FINGERPRINT
-#undef MQTT_FINGERPRINT
-#endif
-#define MQTT_FINGERPRINT     "EF:2A:0F:3E:87:95:6E:F0:4B:A6:F4:38:73:29:1A:14:7E:A9:A1:B7"  // [MqttFingerprint]
-
-#ifdef MQTT_PORT
-#undef MQTT_PORT
-#endif
-#define MQTT_PORT            8883                // [MqttPort] MQTT TLS port
-
-#ifdef MQTT_USER
-#undef MQTT_USER
-#endif
-#define MQTT_USER            "sonos"         // [MqttUser] Mandatory user
-
-#ifdef MQTT_PASS
-#undef MQTT_PASS
-#endif
-#define MQTT_PASS            "s1769fiZZs"            // [MqttPassword] Mandatory password
-
-
 #undef MQTT_BUTTON_RETAIN
 #undef MQTT_POWER_RETAIN
 #undef MQTT_SWITCH_RETAIN
