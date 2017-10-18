@@ -17,8 +17,11 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#ifndef _SONOFF_TEMPLATE_H_
+#define _SONOFF_TEMPLATE_H_
+
 // User selectable GPIO functionality
-enum upins_t {
+enum UserSelectablePins {
   GPIO_NONE,           // Not used
   GPIO_DHT11,          // DHT11
   GPIO_DHT21,          // DHT21, AM2301
@@ -78,7 +81,7 @@ enum upins_t {
   GPIO_SENSOR_END };
 
 // Text in webpage Module Parameters and commands GPIOS and GPIO
-const char sensors[GPIO_SENSOR_END][9] PROGMEM = {
+const char kSensors[GPIO_SENSOR_END][9] PROGMEM = {
   D_SENSOR_NONE,
   D_SENSOR_DHT11,
   D_SENSOR_AM2301,
@@ -138,7 +141,7 @@ const char sensors[GPIO_SENSOR_END][9] PROGMEM = {
 };
 
 // Programmer selectable GPIO functionality offset by user selectable GPIOs
-enum fpins_t {
+enum ProgramSelectablePins {
   GPIO_RXD = GPIO_SENSOR_END,  // Serial interface
   GPIO_TXD,            // Serial interface
   GPIO_HLW_SEL,        // HLW8012 Sel output (Sonoff Pow)
@@ -153,7 +156,7 @@ enum fpins_t {
 /********************************************************************************************/
 
 // Supported hardware modules
-enum module_t {
+enum SupportedModules {
   SONOFF_BASIC,
   SONOFF_RF,
   SONOFF_SV,
@@ -206,7 +209,7 @@ typedef struct MYTMPLT {
   myio         gp;
 } mytmplt;
 
-const uint8_t nicelist[MAXMODULE] PROGMEM = {
+const uint8_t kNiceList[MAXMODULE] PROGMEM = {
   SONOFF_BASIC,
   SONOFF_RF,
   SONOFF_TH,
@@ -245,7 +248,7 @@ const uint8_t nicelist[MAXMODULE] PROGMEM = {
 };
 
 // Default module settings
-const mytmplt modules[MAXMODULE] PROGMEM = {
+const mytmplt kModules[MAXMODULE] PROGMEM = {
   { "Sonoff Basic",    // Sonoff Basic (ESP8266)
      GPIO_KEY1,        // GPIO00 Button
      GPIO_USER,        // GPIO01 Serial RXD and Optional sensor
@@ -714,3 +717,4 @@ const mytmplt modules[MAXMODULE] PROGMEM = {
   }
 };
 
+#endif  // _SONOFF_TEMPLATE_H_

@@ -1,4 +1,13 @@
-/* 5.8.0l
+/* 5.8.0m
+ * Rewrite code (partly) using Google C++ Style Guide (https://google.github.io/styleguide/cppguide.html)
+ * Allow empty MqttHost name by using option 0
+ * Allow Mqtt server mDNS lookup only when MqttHost name is empty (#1026)
+ * Change Ws2812 clock with more flexible version (#1019)
+ * Add German language file (#1022)
+ * Support connecting to MQTT brokers without userid and/or password (#1023)
+ * Add commands PwmRange 1,255..1023 and PwmFrequency 1,100..4000 (#1025)
+ *
+ * 5.8.0l
  * Update HTML/CSS to enable nicer form field entry
  * Fix inverted relay status after restart or power on as regression from 5.8.0d (#909)
  * Add send protocol Panasonic to IRsend (#1014)
@@ -1018,7 +1027,7 @@
  * Add reset 2 option erasing flash
  * Add status 5 option displaying network info
  * Add syslog check for Wifi connection
- * Resize mqtt_publish log array
+ * Resize MqttPublish log array
  * Change Wifi smartconfig active from 100 to 60 seconds
  * Update Wifi initialization
  *

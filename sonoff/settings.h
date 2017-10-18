@@ -17,12 +17,15 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#ifndef _SETTINGS_H_
+#define _SETTINGS_H_
+
 #define PARAM8_SIZE  23                    // Number of param bytes
 
 typedef union {                            // Restricted by MISRA-C Rule 18.4 but so usefull...
   uint32_t data;                           // Allow bit manipulation using SetOption
   struct {
-    uint32_t savestate : 1;                // bit 0
+    uint32_t save_state : 1;               // bit 0
     uint32_t button_restrict : 1;          // bit 1
     uint32_t value_units : 1;              // bit 2
     uint32_t mqtt_enabled : 1;             // bit 3
@@ -49,17 +52,17 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t humidity_resolution : 2;
     uint32_t temperature_resolution : 2;
   };
-} sysBitfield;
+} SysBitfield;
 
 struct SYSCFG {
   unsigned long cfg_holder;                // 000
-  unsigned long saveFlag;                  // 004
+  unsigned long save_flag;                 // 004
   unsigned long version;                   // 008
   unsigned long bootcount;                 // 00C
-  sysBitfield   flag;                      // 010 Add flag since 5.0.2
-  int16_t       savedata;                  // 014
+  SysBitfield   flag;                      // 010 Add flag since 5.0.2
+  int16_t       save_data;                 // 014
   int8_t        timezone;                  // 016
-  char          otaUrl[101];               // 017
+  char          ota_url[101];              // 017
   char          mqtt_prefix[3][11];        // 07C
 
   byte          free_09D[1];               // 09D
@@ -89,11 +92,9 @@ struct SYSCFG {
   char          mqtt_grptopic[33];         // 2B1
   uint8_t       mqtt_fingerprinth[20];     // 2D2 Reserved for binary fingerprint
 
-  byte          free_2E6[2];               // 2E6
-
+  uint16_t      pwm_frequency;             // 2E6
   power_t       power;                     // 2E8
-  uint16_t      pwmvalue[MAX_PWMS];        // 2EC
-//  byte          free_2EC[10];              // 2EC
+  uint16_t      pwm_value[MAX_PWMS];       // 2EC
 
   int16_t       altitude;                  // 2F6 Add since 5.8.0i
   uint16_t      tele_period;               // 2F8
@@ -105,15 +106,14 @@ struct SYSCFG {
   byte          free_33F[1];               // 33F
 
   uint16_t      domoticz_update_timer;     // 340
-
-  byte          free_342[2];               // 342
+  uint16_t      pwm_range;                 // 342
 
   unsigned long domoticz_relay_idx[MAX_DOMOTICZ_IDX]; // 344
   unsigned long domoticz_key_idx[MAX_DOMOTICZ_IDX];   // 354
 
-  unsigned long hlw_pcal;                  // 364
-  unsigned long hlw_ucal;                  // 368
-  unsigned long hlw_ical;                  // 36C
+  unsigned long hlw_power_calibration;                  // 364
+  unsigned long hlw_voltage_calibration;                  // 368
+  unsigned long hlw_current_calibration;                  // 36C
   unsigned long hlw_kWhtoday;              // 370
   unsigned long hlw_kWhyesterday;          // 374
   uint16_t      hlw_kWhdoy;                // 378
@@ -189,8 +189,8 @@ struct SYSCFG {
 
   byte          free_531[1];               // 531
 
-  uint16_t      pulsetime[MAX_PULSETIMERS]; // 532
-  //uint16_t      ex_pwmvalue[MAX_PWMS];     // 53A
+  uint16_t      pulse_timer[MAX_PULSETIMERS]; // 532
+  //uint16_t      ex_pwm_value[MAX_PWMS];     // 53A
 
   byte          free_542[2];               // 542
 
@@ -200,24 +200,52 @@ struct SYSCFG {
 
   byte          free_5BD[3];               // 5BD
 
-  unsigned long pCounter[MAX_COUNTERS];    // 5C0
-  uint16_t      pCounterType;              // 5D0
-  uint16_t      pCounterDebounce;          // 5D2
-  uint8_t       sfb_code[17][9];           // 5D4
+  unsigned long pulse_counter[MAX_COUNTERS];  // 5C0
+  uint16_t      pulse_counter_type;        // 5D0
+  uint16_t      pulse_counter_debounce;    // 5D2
+  uint8_t       rf_code[17][9];            // 5D4
 
-} sysCfg;
+} Settings;
 
 struct RTCMEM {
   uint16_t      valid;                     // 000
-  byte          osw_flag;                  // 002
+  byte          oswatch_blocked_loop;      // 002
   uint8_t       unused;                    // 003
   unsigned long hlw_kWhtoday;              // 004
   unsigned long hlw_kWhtotal;              // 008
-  unsigned long pCounter[MAX_COUNTERS];    // 00C
+  unsigned long pulse_counter[MAX_COUNTERS];  // 00C
   power_t       power;                     // 01C
-} rtcMem;
+} RtcSettings;
+
+struct TIME_T {
+  uint8_t       second;
+  uint8_t       minute;
+  uint8_t       hour;
+  uint8_t       day_of_week;               // sunday is day 1
+  uint8_t       day_of_month;
+  uint8_t       month;
+  char          name_of_month[4];
+  uint16_t      day_of_year;
+  uint16_t      year;
+  unsigned long valid;
+} RtcTime;
+
+struct TimeChangeRule
+{
+  uint8_t       hemis;                     // 0-Northern, 1=Southern Hemisphere (=Opposite DST/STD)
+  uint8_t       week;                      // 1=First, 2=Second, 3=Third, 4=Fourth, or 0=Last week of the month
+  uint8_t       dow;                       // day of week, 1=Sun, 2=Mon, ... 7=Sat
+  uint8_t       month;                     // 1=Jan, 2=Feb, ... 12=Dec
+  uint8_t       hour;                      // 0-23
+  int           offset;                    // offset from UTC in minutes
+};
+
+TimeChangeRule DaylightSavingTime = { TIME_DST }; // Daylight Saving Time
+TimeChangeRule StandardTime = { TIME_STD }; // Standard Time
 
 // See issue https://github.com/esp8266/Arduino/issues/2913
 #ifdef USE_ADC_VCC
   ADC_MODE(ADC_VCC);                       // Set ADC input for Power Supply Voltage usage
 #endif
+
+#endif  // _SETTINGS_H_

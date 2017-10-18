@@ -17,6 +17,9 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#ifndef _USER_CONFIG_H_
+#define _USER_CONFIG_H_
+
 /*********************************************************************************************\
  * ATTENTION: Changes to most PARAMETER defines will only override flash settings if you change
  *            define CFG_HOLDER.
@@ -28,6 +31,7 @@
 // -- Localization --------------------------------
 //#define MY_LANGUAGE            en-GB           // Enabled by Default
 //#define MY_LANGUAGE            nl-NL
+//#define MY_LANGUAGE            de-DE
 
 // -- Project -------------------------------------
 #define PROJECT                "sonoff"          // PROJECT is used as the default topic delimiter and OTA file name
@@ -172,8 +176,14 @@
 
 #define USE_WS2812                               // WS2812 Led string using library NeoPixelBus (+5k code, +1k mem) - Disable by //
   #define USE_WS2812_CTYPE     1                 // WS2812 Color type (0 - RGB, 1 - GRB)
-//  #define USE_WS2812_DMA                         // DMA supports only GPIO03 (= Serial RXD) (+1k mem)
-                                                 //   When USE_WS2812_DMA is enabled expect Exceptions on Pow
+//  #define USE_WS2812_DMA                         // DMA supports only GPIO03 (= Serial RXD) (+1k mem). When USE_WS2812_DMA is enabled expect Exceptions on Pow
+  #define CLOCK_REVERSE        0                 // WS2812 Clock display (0 - Normal, 1 - Reverse)
+  #define CLOCK_SECOND_WIDTH   1                 // WS2812 Clock second hand pixel width
+  #define CLOCK_MINUTE_WIDTH   3                 // WS2812 Clock minute hand pixel width
+  #define CLOCK_HOUR_WIDTH     5                 // WS2812 Clock hour hand pixel width
+  #define CLOCK_SECOND_COLOR   (255, 0, 255)     // WS2812 Clock second pixel color
+  #define CLOCK_MINUTE_COLOR   (0, 255, 0)       // WS2812 Clock minute pixel color
+  #define CLOCK_HOUR_COLOR     (255, 0,0 )       // WS2812 Clock hour pixel color
 
 /*********************************************************************************************\
  * Compile a minimal version if upgrade memory gets tight ONLY TO BE USED FOR UPGRADE STEP 1!
@@ -196,3 +206,4 @@
   #error "This software is supported with Arduino IDE starting from 1.6.10 and ESP8266 Release 2.3.0"
 #endif
 
+#endif  // _USER_CONFIG_H_

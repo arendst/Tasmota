@@ -29,7 +29,7 @@
 #define DHT_MAX_SENSORS  3
 #define MIN_INTERVAL     2000
 
-uint32_t dht_maxcycles;
+uint32_t dht_max_cycles;
 uint8_t dht_data[5];
 byte dht_sensors = 0;
 
@@ -43,26 +43,26 @@ struct DHTSTRUCT {
   float    h = 0;
 } dht[DHT_MAX_SENSORS];
 
-void dht_readPrep()
+void DhtReadPrep()
 {
   for (byte i = 0; i < dht_sensors; i++) {
     digitalWrite(dht[i].pin, HIGH);
   }
 }
 
-uint32_t dht_expectPulse(byte sensor, bool level)
+uint32_t DhtExpectPulse(byte sensor, bool level)
 {
   uint32_t count = 0;
 
   while (digitalRead(dht[sensor].pin) == level) {
-    if (count++ >= dht_maxcycles) {
+    if (count++ >= dht_max_cycles) {
       return 0;
     }
   }
   return count;
 }
 
-void dht_read(byte sensor)
+void DhtRead(byte sensor)
 {
   uint32_t cycles[80];
   uint32_t currenttime = millis();
@@ -86,19 +86,19 @@ void dht_read(byte sensor)
   delayMicroseconds(40);
   pinMode(dht[sensor].pin, INPUT_PULLUP);
   delayMicroseconds(10);
-  if (0 == dht_expectPulse(sensor, LOW)) {
-    addLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DHT D_TIMEOUT_WAITING_FOR " " D_START_SIGNAL_LOW " " D_PULSE));
+  if (0 == DhtExpectPulse(sensor, LOW)) {
+    AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DHT D_TIMEOUT_WAITING_FOR " " D_START_SIGNAL_LOW " " D_PULSE));
     dht[sensor].lastresult++;
     return;
   }
-  if (0 == dht_expectPulse(sensor, HIGH)) {
-    addLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DHT D_TIMEOUT_WAITING_FOR " " D_START_SIGNAL_HIGH " " D_PULSE));
+  if (0 == DhtExpectPulse(sensor, HIGH)) {
+    AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DHT D_TIMEOUT_WAITING_FOR " " D_START_SIGNAL_HIGH " " D_PULSE));
     dht[sensor].lastresult++;
     return;
   }
   for (int i = 0; i < 80; i += 2) {
-    cycles[i]   = dht_expectPulse(sensor, LOW);
-    cycles[i+1] = dht_expectPulse(sensor, HIGH);
+    cycles[i]   = DhtExpectPulse(sensor, LOW);
+    cycles[i+1] = DhtExpectPulse(sensor, HIGH);
   }
   interrupts();
 
@@ -106,7 +106,7 @@ void dht_read(byte sensor)
     uint32_t lowCycles  = cycles[2*i];
     uint32_t highCycles = cycles[2*i+1];
     if ((0 == lowCycles) || (0 == highCycles)) {
-      addLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DHT D_TIMEOUT_WAITING_FOR " " D_PULSE));
+      AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DHT D_TIMEOUT_WAITING_FOR " " D_PULSE));
       dht[sensor].lastresult++;
       return;
     }
@@ -118,17 +118,17 @@ void dht_read(byte sensor)
 
   snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_DHT D_RECEIVED " %02X, %02X, %02X, %02X, %02X =? %02X"),
     dht_data[0], dht_data[1], dht_data[2], dht_data[3], dht_data[4], (dht_data[0] + dht_data[1] + dht_data[2] + dht_data[3]) & 0xFF);
-  addLog(LOG_LEVEL_DEBUG);
+  AddLog(LOG_LEVEL_DEBUG);
 
   if (dht_data[4] == ((dht_data[0] + dht_data[1] + dht_data[2] + dht_data[3]) & 0xFF)) {
     dht[sensor].lastresult = 0;
   } else {
-    addLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DHT D_CHECKSUM_FAILURE));
+    AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DHT D_CHECKSUM_FAILURE));
     dht[sensor].lastresult++;
   }
 }
 
-boolean dht_readTempHum(byte sensor, float &t, float &h)
+boolean DhtReadTempHum(byte sensor, float &t, float &h)
 {
   if (!dht[sensor].h) {
     t = NAN;
@@ -142,12 +142,12 @@ boolean dht_readTempHum(byte sensor, float &t, float &h)
     h = dht[sensor].h;
   }
 
-  dht_read(sensor);
+  DhtRead(sensor);
   if (!dht[sensor].lastresult) {
     switch (dht[sensor].type) {
     case GPIO_DHT11:
       h = dht_data[0];
-      t = convertTemp(dht_data[2]);
+      t = ConvertTemp(dht_data[2]);
       break;
     case GPIO_DHT22:
     case GPIO_DHT21:
@@ -162,7 +162,7 @@ boolean dht_readTempHum(byte sensor, float &t, float &h)
       if (dht_data[2] & 0x80) {
         t *= -1;
       }
-      t = convertTemp(t);
+      t = ConvertTemp(t);
       break;
     }
     if (!isnan(t)) {
@@ -175,7 +175,7 @@ boolean dht_readTempHum(byte sensor, float &t, float &h)
   return (!isnan(t) && !isnan(h));
 }
 
-boolean dht_setup(byte pin, byte type)
+boolean DhtSetup(byte pin, byte type)
 {
   boolean success = false;
 
@@ -188,9 +188,9 @@ boolean dht_setup(byte pin, byte type)
   return success;
 }
 
-void dht_init()
+void DhtInit()
 {
-  dht_maxcycles = microsecondsToClockCycles(1000);  // 1 millisecond timeout for reading pulses from DHT sensor.
+  dht_max_cycles = microsecondsToClockCycles(1000);  // 1 millisecond timeout for reading pulses from DHT sensor.
 
   for (byte i = 0; i < dht_sensors; i++) {
     pinMode(dht[i].pin, INPUT_PULLUP);
@@ -216,7 +216,7 @@ void dht_init()
  * Presentation
 \*********************************************************************************************/
 
-void dht_mqttPresent(uint8_t* djson)
+void MqttShowDht(uint8_t* djson)
 {
   char stemp1[10];
   char stemp2[10];
@@ -225,14 +225,14 @@ void dht_mqttPresent(uint8_t* djson)
 
   byte dsxflg = 0;
   for (byte i = 0; i < dht_sensors; i++) {
-    if (dht_readTempHum(i, t, h)) {     // Read temperature
-      dtostrfd(t, sysCfg.flag.temperature_resolution, stemp1);
-      dtostrfd(h, sysCfg.flag.humidity_resolution, stemp2);
+    if (DhtReadTempHum(i, t, h)) {     // Read temperature
+      dtostrfd(t, Settings.flag.temperature_resolution, stemp1);
+      dtostrfd(h, Settings.flag.humidity_resolution, stemp2);
       snprintf_P(mqtt_data, sizeof(mqtt_data), JSON_SNS_TEMPHUM, mqtt_data, dht[i].stype, stemp1, stemp2);
       *djson = 1;
 #ifdef USE_DOMOTICZ
       if (!dsxflg) {
-        domoticz_sensor2(stemp1, stemp2);
+        DomoticzTempHumSensor(stemp1, stemp2);
         dsxflg++;
       }
 #endif  // USE_DOMOTICZ
@@ -241,7 +241,7 @@ void dht_mqttPresent(uint8_t* djson)
 }
 
 #ifdef USE_WEBSERVER
-String dht_webPresent()
+String WebShowDht()
 {
   String page = "";
   char stemp[10];
@@ -250,11 +250,11 @@ String dht_webPresent()
   float h;
 
   for (byte i = 0; i < dht_sensors; i++) {
-    if (dht_readTempHum(i, t, h)) {
-      dtostrfi(t, sysCfg.flag.temperature_resolution, stemp);
-      snprintf_P(sensor, sizeof(sensor), HTTP_SNS_TEMP, dht[i].stype, stemp, tempUnit());
+    if (DhtReadTempHum(i, t, h)) {
+      dtostrfi(t, Settings.flag.temperature_resolution, stemp);
+      snprintf_P(sensor, sizeof(sensor), HTTP_SNS_TEMP, dht[i].stype, stemp, TempUnit());
       page += sensor;
-      dtostrfi(h, sysCfg.flag.humidity_resolution, stemp);
+      dtostrfi(h, Settings.flag.humidity_resolution, stemp);
       snprintf_P(sensor, sizeof(sensor), HTTP_SNS_HUM, dht[i].stype, stemp);
       page += sensor;
     }
