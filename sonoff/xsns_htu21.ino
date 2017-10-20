@@ -52,13 +52,13 @@
 
 #define HTU21_CRC8_POLYNOM  0x13100
 
-uint8_t htuaddr;
-uint8_t htutype = 0;
-uint8_t delayT;
-uint8_t delayH = 50;
-char htustype[7];
+uint8_t htu_address;
+uint8_t htu_type = 0;
+uint8_t delay_temp;
+uint8_t delay_humidity = 50;
+char htu_types[7];
 
-uint8_t check_crc8(uint16_t data)
+uint8_t HtuCheckCrc8(uint16_t data)
 {
   for (uint8_t bit = 0; bit < 16; bit++) {
     if (data & 0x8000) {
@@ -70,7 +70,7 @@ uint8_t check_crc8(uint16_t data)
   return data >>= 8;
 }
 
-uint8_t htu21_readDeviceID(void)
+uint8_t HtuReadDeviceId(void)
 {
   uint16_t deviceID = 0;
   uint8_t checksum = 0;
@@ -84,7 +84,7 @@ uint8_t htu21_readDeviceID(void)
   deviceID  = Wire.read() << 8;
   deviceID |= Wire.read();
   checksum  = Wire.read();
-  if (check_crc8(deviceID) == checksum) {
+  if (HtuCheckCrc8(deviceID) == checksum) {
     deviceID = deviceID >> 8;
   } else {
     deviceID = 0;
@@ -92,15 +92,15 @@ uint8_t htu21_readDeviceID(void)
   return (uint8_t)deviceID;
 }
 
-void htu21_setRes(uint8_t resolution)
+void HtuSetResolution(uint8_t resolution)
 {
-  uint8_t current = i2c_read8(HTU21_ADDR, HTU21_READREG);
+  uint8_t current = I2cRead8(HTU21_ADDR, HTU21_READREG);
   current &= 0x7E;                  // Replace current resolution bits with 0
   current |= resolution;            // Add new resolution bits to register
-  i2c_write8(HTU21_ADDR, HTU21_WRITEREG, current);
+  I2cWrite8(HTU21_ADDR, HTU21_WRITEREG, current);
 }
 
-void htu21_reset(void)
+void HtuReset(void)
 {
   Wire.beginTransmission(HTU21_ADDR);
   Wire.write(HTU21_RESET);
@@ -108,9 +108,9 @@ void htu21_reset(void)
   delay(15);                // Reset takes 15ms
 }
 
-void htu21_heater(uint8_t heater)
+void HtuHeater(uint8_t heater)
 {
-  uint8_t current = i2c_read8(HTU21_ADDR, HTU21_READREG);
+  uint8_t current = I2cRead8(HTU21_ADDR, HTU21_READREG);
 
   switch(heater)
   {
@@ -121,18 +121,18 @@ void htu21_heater(uint8_t heater)
     default               : current &= heater;
                             break;
   }
-  i2c_write8(HTU21_ADDR, HTU21_WRITEREG, current);
+  I2cWrite8(HTU21_ADDR, HTU21_WRITEREG, current);
 }
 
-boolean htu21_init()
+boolean HtuInit()
 {
-  htu21_reset();
-  htu21_heater(HTU21_HEATER_OFF);
-  htu21_setRes(HTU21_RES_RH12_T14);
+  HtuReset();
+  HtuHeater(HTU21_HEATER_OFF);
+  HtuSetResolution(HTU21_RES_RH12_T14);
   return true;
 }
 
-float htu21_readHumidity(void)
+float HtuReadHumidity(void)
 {
   uint8_t  checksum = 0;
   uint16_t sensorval = 0;
@@ -143,7 +143,7 @@ float htu21_readHumidity(void)
   if (Wire.endTransmission() != 0) {
     return 0.0; // In case of error
   }
-  delay(delayH);                              // Sensor time at max resolution
+  delay(delay_humidity);                              // Sensor time at max resolution
 
   Wire.requestFrom(HTU21_ADDR, 3);
   if (3 <= Wire.available()) {
@@ -151,7 +151,7 @@ float htu21_readHumidity(void)
     sensorval |= Wire.read();                 // LSB
     checksum = Wire.read();
   }
-  if (check_crc8(sensorval) != checksum) {
+  if (HtuCheckCrc8(sensorval) != checksum) {
     return 0.0; // Checksum mismatch
   }
 
@@ -168,7 +168,7 @@ float htu21_readHumidity(void)
   return humidity;
 }
 
-float htu21_readTemperature()
+float HtuReadTemperature()
 {
   uint8_t  checksum=0;
   uint16_t sensorval=0;
@@ -179,7 +179,7 @@ float htu21_readTemperature()
   if (Wire.endTransmission() != 0) {
     return 0.0; // In case of error
   }
-  delay(delayT);                          // Sensor time at max resolution
+  delay(delay_temp);                          // Sensor time at max resolution
 
   Wire.requestFrom(HTU21_ADDR, 3);
   if (3 == Wire.available()) {
@@ -187,15 +187,15 @@ float htu21_readTemperature()
     sensorval |= Wire.read();             // LSB
     checksum = Wire.read();
   }
-  if (check_crc8(sensorval) != checksum) {
+  if (HtuCheckCrc8(sensorval) != checksum) {
     return 0.0; // Checksum mismatch
   }
 
-  t = convertTemp(0.002681 * (float)sensorval - 46.85);
+  t = ConvertTemp(0.002681 * (float)sensorval - 46.85);
   return t;
 }
 
-float htu21_compensatedHumidity(float humidity, float temperature)
+float HtuCompensatedHumidity(float humidity, float temperature)
 {
   if(humidity == 0.00 && temperature == 0.00) {
     return 0.0;
@@ -205,48 +205,48 @@ float htu21_compensatedHumidity(float humidity, float temperature)
   }
 }
 
-uint8_t htu_detect()
+uint8_t HtuDetect()
 {
-  if (htutype) {
+  if (htu_type) {
     return true;
   }
 
   boolean success = false;
 
-  htuaddr = HTU21_ADDR;
-  htutype = htu21_readDeviceID();
-  success = htu21_init();
-  switch (htutype) {
+  htu_address = HTU21_ADDR;
+  htu_type = HtuReadDeviceId();
+  success = HtuInit();
+  switch (htu_type) {
   case HTU21_CHIPID:
-    strcpy_P(htustype, PSTR("HTU21"));
-    delayT=50;
-    delayH=16;
+    strcpy_P(htu_types, PSTR("HTU21"));
+    delay_temp=50;
+    delay_humidity=16;
     break;
   case SI7013_CHIPID:
-    strcpy_P(htustype, PSTR("SI7013"));
-    delayT=12;
-    delayH=23;
+    strcpy_P(htu_types, PSTR("SI7013"));
+    delay_temp=12;
+    delay_humidity=23;
     break;
   case SI7020_CHIPID:
-    strcpy_P(htustype, PSTR("SI7020"));
-    delayT=12;
-    delayH=23;
+    strcpy_P(htu_types, PSTR("SI7020"));
+    delay_temp=12;
+    delay_humidity=23;
     break;
   case SI7021_CHIPID:
-    strcpy_P(htustype, PSTR("SI7021"));
-    delayT=12;
-    delayH=23;
+    strcpy_P(htu_types, PSTR("SI7021"));
+    delay_temp=12;
+    delay_humidity=23;
     break;
   default:
-    strcpy_P(htustype, PSTR("T/RH?"));
-    delayT=50;
-    delayH=23;
+    strcpy_P(htu_types, PSTR("T/RH?"));
+    delay_temp=50;
+    delay_humidity=23;
   }
   if (success) {
-    snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_I2C "%s " D_FOUND_AT " 0x%x"), htustype, htuaddr);
-    addLog(LOG_LEVEL_DEBUG);
+    snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_I2C "%s " D_FOUND_AT " 0x%x"), htu_types, htu_address);
+    AddLog(LOG_LEVEL_DEBUG);
   } else {
-    htutype = 0;
+    htu_type = 0;
   }
   return success;
 }
@@ -255,43 +255,43 @@ uint8_t htu_detect()
  * Presentation
 \*********************************************************************************************/
 
-void htu_mqttPresent(uint8_t* djson)
+void MqttShowHtu(uint8_t* djson)
 {
-  if (!htutype) {
+  if (!htu_type) {
     return;
   }
 
   char stemp1[10];
   char stemp2[10];
 
-  float t = htu21_readTemperature();
-  float h = htu21_readHumidity();
-  h = htu21_compensatedHumidity(h, t);
-  dtostrfd(t, sysCfg.flag.temperature_resolution, stemp1);
-  dtostrfd(h, sysCfg.flag.humidity_resolution, stemp2);
-  snprintf_P(mqtt_data, sizeof(mqtt_data), JSON_SNS_TEMPHUM, mqtt_data, htustype, stemp1, stemp2);
+  float t = HtuReadTemperature();
+  float h = HtuReadHumidity();
+  h = HtuCompensatedHumidity(h, t);
+  dtostrfd(t, Settings.flag.temperature_resolution, stemp1);
+  dtostrfd(h, Settings.flag.humidity_resolution, stemp2);
+  snprintf_P(mqtt_data, sizeof(mqtt_data), JSON_SNS_TEMPHUM, mqtt_data, htu_types, stemp1, stemp2);
   *djson = 1;
 #ifdef USE_DOMOTICZ
-  domoticz_sensor2(stemp1, stemp2);
+  DomoticzTempHumSensor(stemp1, stemp2);
 #endif  // USE_DOMOTICZ
 }
 
 #ifdef USE_WEBSERVER
-String htu_webPresent()
+String WebShowHtu()
 {
   String page = "";
-  if (htutype) {
+  if (htu_type) {
     char stemp[10];
     char sensor[80];
 
-    float t_htu21 = htu21_readTemperature();
-    float h_htu21 = htu21_readHumidity();
-    h_htu21 = htu21_compensatedHumidity(h_htu21, t_htu21);
-    dtostrfi(t_htu21, sysCfg.flag.temperature_resolution, stemp);
-    snprintf_P(sensor, sizeof(sensor), HTTP_SNS_TEMP, htustype, stemp, tempUnit());
+    float t_htu21 = HtuReadTemperature();
+    float h_htu21 = HtuReadHumidity();
+    h_htu21 = HtuCompensatedHumidity(h_htu21, t_htu21);
+    dtostrfi(t_htu21, Settings.flag.temperature_resolution, stemp);
+    snprintf_P(sensor, sizeof(sensor), HTTP_SNS_TEMP, htu_types, stemp, TempUnit());
     page += sensor;
-    dtostrfi(h_htu21, sysCfg.flag.humidity_resolution, stemp);
-    snprintf_P(sensor, sizeof(sensor), HTTP_SNS_HUM, htustype, stemp);
+    dtostrfi(h_htu21, Settings.flag.humidity_resolution, stemp);
+    snprintf_P(sensor, sizeof(sensor), HTTP_SNS_HUM, htu_types, stemp);
     page += sensor;
   }
   return page;

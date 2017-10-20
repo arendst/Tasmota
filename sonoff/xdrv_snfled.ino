@@ -20,7 +20,7 @@
 /*********************************************************************************************\
  * PWM, WS2812, Sonoff B1, AiLight, Sonoff Led and BN-SZ01
  *
- * sfl_flg  Module     Color  ColorTemp
+ * light_type  Module     Color  ColorTemp
  *  1       PWM1       W      no          (Sonoff BN-SZ)
  *  2       PWM2       CW     yes         (Sonoff Led)
  *  3       PWM3       RGB    no          (H801 and MagicHome)
@@ -87,7 +87,7 @@ extern "C" {
 uint8_t sl_pdi;
 uint8_t sl_pdcki;
 
-void sl_di_pulse(uint8_t times)
+void LightDiPulse(uint8_t times)
 {
   for (uint8_t i = 0; i < times; i++) {
     digitalWrite(sl_pdi, HIGH);
@@ -95,7 +95,7 @@ void sl_di_pulse(uint8_t times)
   }
 }
 
-void sl_dcki_pulse(uint8_t times)
+void LightDckiPulse(uint8_t times)
 {
   for (uint8_t i = 0; i < times; i++) {
     digitalWrite(sl_pdcki, HIGH);
@@ -103,7 +103,7 @@ void sl_dcki_pulse(uint8_t times)
   }
 }
 
-void sl_my92x1_write(uint8_t data)
+void LightMy92x1Write(uint8_t data)
 {
   for (uint8_t i = 0; i < 4; i++) {    // Send 8bit Data
     digitalWrite(sl_pdcki, LOW);
@@ -117,56 +117,56 @@ void sl_my92x1_write(uint8_t data)
   }
 }
 
-void sl_my92x1_init()
+void LightMy92x1Init()
 {
-  uint8_t chips = sfl_flg -11; // 1 (AiLight) or 2 (Sonoff B1)
+  uint8_t chips = light_type -11; // 1 (AiLight) or 2 (Sonoff B1)
 
-  sl_dcki_pulse(chips * 32);   // Clear all duty register
+  LightDckiPulse(chips * 32);   // Clear all duty register
   os_delay_us(12);             // TStop > 12us.
   // Send 12 DI pulse, after 6 pulse's falling edge store duty data, and 12
   // pulse's rising edge convert to command mode.
-  sl_di_pulse(12);
+  LightDiPulse(12);
   os_delay_us(12);             // Delay >12us, begin send CMD data
   for (uint8_t n = 0; n < chips; n++) {    // Send CMD data
-    sl_my92x1_write(0x18);     // ONE_SHOT_DISABLE, REACTION_FAST, BIT_WIDTH_8, FREQUENCY_DIVIDE_1, SCATTER_APDM
+    LightMy92x1Write(0x18);     // ONE_SHOT_DISABLE, REACTION_FAST, BIT_WIDTH_8, FREQUENCY_DIVIDE_1, SCATTER_APDM
   }
   os_delay_us(12);             // TStart > 12us. Delay 12 us.
   // Send 16 DI pulse, at 14 pulse's falling edge store CMD data, and
   // at 16 pulse's falling edge convert to duty mode.
-  sl_di_pulse(16);
+  LightDiPulse(16);
   os_delay_us(12);             // TStop > 12us.
 }
 
-void sl_my92x1_duty(uint8_t duty_r, uint8_t duty_g, uint8_t duty_b, uint8_t duty_w, uint8_t duty_c)
+void LightMy92x1Duty(uint8_t duty_r, uint8_t duty_g, uint8_t duty_b, uint8_t duty_w, uint8_t duty_c)
 {
   uint8_t channels[2] = { 4, 6 };
 
-  uint8_t didx = sfl_flg -12;  // 0 or 1
+  uint8_t didx = light_type -12;  // 0 or 1
 
   uint8_t duty[2][6] = {{ duty_r, duty_g, duty_b, duty_w, 0, 0 },        // Definition for RGBW channels
                         { duty_w, duty_c, 0, duty_g, duty_r, duty_b }};  // Definition for RGBWC channels
 
   os_delay_us(12);             // TStop > 12us.
   for (uint8_t channel = 0; channel < channels[didx]; channel++) {
-    sl_my92x1_write(duty[didx][channel]);  // Send 8bit Data
+    LightMy92x1Write(duty[didx][channel]);  // Send 8bit Data
   }
   os_delay_us(12);             // TStart > 12us. Ready for send DI pulse.
-  sl_di_pulse(8);              // Send 8 DI pulse. After 8 pulse falling edge, store old data.
+  LightDiPulse(8);              // Send 8 DI pulse. After 8 pulse falling edge, store old data.
   os_delay_us(12);             // TStop > 12us.
 }
 
 /********************************************************************************************/
 
-void sl_init(void)
+void LightInit(void)
 {
-  if (sfl_flg < 6) {  // PWM
-    for (byte i = 0; i < sfl_flg; i++) {
-      sysCfg.pwmvalue[i] = 0;           // Disable direct PWM control
+  if (light_type < 6) {  // PWM
+    for (byte i = 0; i < light_type; i++) {
+      Settings.pwm_value[i] = 0;           // Disable direct PWM control
     }
-    if (1 == sfl_flg) {
-      sysCfg.led_color[0] = 255;        // One PWM channel only supports Dimmer but needs max color
+    if (1 == light_type) {
+      Settings.led_color[0] = 255;        // One PWM channel only supports Dimmer but needs max color
     }
-    if (SONOFF_LED == sysCfg.module) {  // Fix Sonoff Led instabilities
+    if (SONOFF_LED == Settings.module) {  // Fix Sonoff Led instabilities
       if (!my_module.gp.io[4]) {
         pinMode(4, OUTPUT);             // Stop floating outputs
         digitalWrite(4, LOW);
@@ -180,13 +180,13 @@ void sl_init(void)
         digitalWrite(14, LOW);
       }
     }
-    sysCfg.led_scheme = 0;
+    Settings.led_scheme = 0;
   }
 #ifdef USE_WS2812  // ************************************************************************
-  else if (11 == sfl_flg) {
-    ws2812_init();
-    if (1 == sysCfg.led_scheme) {
-      sysCfg.led_scheme = 0;
+  else if (11 == light_type) {
+    Ws2812Init();
+    if (1 == Settings.led_scheme) {
+      Settings.led_scheme = 0;
     }
   }
 #endif  // USE_WS2812 ************************************************************************
@@ -199,8 +199,8 @@ void sl_init(void)
     digitalWrite(sl_pdi, LOW);
     digitalWrite(sl_pdcki, LOW);
 
-    sl_my92x1_init();
-    sysCfg.led_scheme = 0;
+    LightMy92x1Init();
+    Settings.led_scheme = 0;
   }
 
   sl_power = 0;
@@ -208,7 +208,7 @@ void sl_init(void)
   sl_wakeupActive = 0;
 }
 
-void sl_setColorTemp(uint16_t ct)
+void LightSetColorTemp(uint16_t ct)
 {
 /* Color Temperature (https://developers.meethue.com/documentation/core-concepts)
  *
@@ -221,115 +221,115 @@ void sl_setColorTemp(uint16_t ct)
   }
   uint16_t icold = (100 * (347 - my_ct)) / 136;
   uint16_t iwarm = (100 * my_ct) / 136;
-  if (5 == (sfl_flg &7)) {
-    sysCfg.led_color[0] = 0;
-    sysCfg.led_color[1] = 0;
-    sysCfg.led_color[2] = 0;
-    sysCfg.led_color[3] = (uint8_t)icold;
-    sysCfg.led_color[4] = (uint8_t)iwarm;
+  if (5 == (light_type &7)) {
+    Settings.led_color[0] = 0;
+    Settings.led_color[1] = 0;
+    Settings.led_color[2] = 0;
+    Settings.led_color[3] = (uint8_t)icold;
+    Settings.led_color[4] = (uint8_t)iwarm;
   } else {
-    sysCfg.led_color[0] = (uint8_t)icold;
-    sysCfg.led_color[1] = (uint8_t)iwarm;
+    Settings.led_color[0] = (uint8_t)icold;
+    Settings.led_color[1] = (uint8_t)iwarm;
   }
 }
 
-uint16_t sl_getColorTemp()
+uint16_t LightGetColorTemp()
 {
   uint8_t ct_idx = 0;
-  if (5 == (sfl_flg &7)) {
+  if (5 == (light_type &7)) {
     ct_idx = 3;
   }
-  uint16_t my_ct = sysCfg.led_color[ct_idx +1];
+  uint16_t my_ct = Settings.led_color[ct_idx +1];
   if (my_ct > 0) {
     return ((my_ct * 136) / 100) + 154;
   } else {
-    my_ct = sysCfg.led_color[ct_idx];
+    my_ct = Settings.led_color[ct_idx];
     return 499 - ((my_ct * 136) / 100);
   }
 }
 
-void sl_setDim(uint8_t myDimmer)
+void LightSetDimmer(uint8_t myDimmer)
 {
   float temp;
 
-  if ((SONOFF_BN == sysCfg.module) && (100 == myDimmer)) {
+  if ((SONOFF_BN == Settings.module) && (100 == myDimmer)) {
     myDimmer = 99;  // BN-SZ01 starts flickering at dimmer = 100
   }
-  float newDim = 100 / (float)myDimmer;
-  for (byte i = 0; i < (sfl_flg &7); i++) {
-    temp = (float)sysCfg.led_color[i] / newDim;
+  float dimmer = 100 / (float)myDimmer;
+  for (byte i = 0; i < (light_type &7); i++) {
+    temp = (float)Settings.led_color[i] / dimmer;
     sl_dcolor[i] = (uint8_t)temp;
   }
 }
 
-void sl_setColor()
+void LightSetColor()
 {
   uint8_t highest = 0;
   float temp;
 
-  for (byte i = 0; i < (sfl_flg &7); i++) {
+  for (byte i = 0; i < (light_type &7); i++) {
     if (highest < sl_dcolor[i]) {
       highest = sl_dcolor[i];
     }
   }
   float mDim = (float)highest / 2.55;
-  sysCfg.led_dimmer = (uint8_t)mDim;
-  float newDim = 100 / mDim;
-  for (byte i = 0; i < (sfl_flg &7); i++) {
-    temp = (float)sl_dcolor[i] * newDim;
-    sysCfg.led_color[i] = (uint8_t)temp;
+  Settings.led_dimmer = (uint8_t)mDim;
+  float dimmer = 100 / mDim;
+  for (byte i = 0; i < (light_type &7); i++) {
+    temp = (float)sl_dcolor[i] * dimmer;
+    Settings.led_color[i] = (uint8_t)temp;
   }
 }
 
-char* sl_getColor(char* scolor)
+char* LightGetColor(char* scolor)
 {
-  sl_setDim(sysCfg.led_dimmer);
+  LightSetDimmer(Settings.led_dimmer);
   scolor[0] = '\0';
-  for (byte i = 0; i < (sfl_flg &7); i++) {
+  for (byte i = 0; i < (light_type &7); i++) {
     snprintf_P(scolor, 11, PSTR("%s%02X"), scolor, sl_dcolor[i]);
   }
   return scolor;
 }
 
-void sl_prepPower()
+void LightPreparePower()
 {
   char scolor[11];
   char scommand[16];
 
-  if (sysCfg.led_dimmer && !(sl_power)) {
-    do_cmnd_power(Maxdevice, 7);  // No publishPowerState
+  if (Settings.led_dimmer && !(sl_power)) {
+    ExecuteCommandPower(devices_present, 7);  // No publishPowerState
   }
-  else if (!sysCfg.led_dimmer && sl_power) {
-    do_cmnd_power(Maxdevice, 6);  // No publishPowerState
+  else if (!Settings.led_dimmer && sl_power) {
+    ExecuteCommandPower(devices_present, 6);  // No publishPowerState
   }
 #ifdef USE_DOMOTICZ
-//  mqtt_publishDomoticzPowerState(1);
-  domoticz_updatePowerState(Maxdevice);
+//  MqttPublishDomoticzPowerState(1);
+  DomoticzUpdatePowerState(devices_present);
 #endif  // USE_DOMOTICZ
 
-  getPowerDevice(scommand, Maxdevice, sizeof(scommand));
-  if ((sfl_flg &7) > 1) {
+  GetPowerDevice(scommand, devices_present, sizeof(scommand));
+  if ((light_type &7) > 1) {
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"%s\":\"%s\", \"" D_CMND_DIMMER "\":%d, \"" D_CMND_COLOR "\":\"%s\"}"),
-      scommand, getStateText(sl_power), sysCfg.led_dimmer, sl_getColor(scolor));
+      scommand, GetStateText(sl_power), Settings.led_dimmer, LightGetColor(scolor));
   } else {
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"%s\":\"%s\", \"" D_CMND_DIMMER "\":%d}"),
-      scommand, getStateText(sl_power), sysCfg.led_dimmer);
+      scommand, GetStateText(sl_power), Settings.led_dimmer);
   }
 }
 
-void sl_setPower(power_t mpower)
+void LightSetPower(uint8_t mpower)
 {
-  sl_power = ((mpower & (1 << (Maxdevice -1))) != 0);
+  sl_power = mpower;
   if (sl_wakeupActive) {
     sl_wakeupActive--;
   }
   if (sl_power) {
     sl_any = 1;
   }
-  sl_animate();
+  LightAnimate();
 }
 
-void sl_animate()
+void LightAnimate()
 {
 // {"Wakeup":"Done"}
   uint8_t fadeValue;
@@ -337,29 +337,29 @@ void sl_animate()
 
   stripTimerCntr++;
   if (!sl_power) {  // Power Off
-    sleep = sysCfg.sleep;
+    sleep = Settings.sleep;
     stripTimerCntr = 0;
-    for (byte i = 0; i < (sfl_flg &7); i++) {
+    for (byte i = 0; i < (light_type &7); i++) {
       sl_tcolor[i] = 0;
     }
   }
   else {
     sleep = 0;
-    switch (sysCfg.led_scheme) {
+    switch (Settings.led_scheme) {
       case 0:  // Power On
-        sl_setDim(sysCfg.led_dimmer);  // Power On
-        if (0 == sysCfg.led_fade) {
-          for (byte i = 0; i < (sfl_flg &7); i++) {
+        LightSetDimmer(Settings.led_dimmer);  // Power On
+        if (0 == Settings.led_fade) {
+          for (byte i = 0; i < (light_type &7); i++) {
             sl_tcolor[i] = sl_dcolor[i];
           }
         } else {
-          for (byte i = 0; i < (sfl_flg &7); i++) {
+          for (byte i = 0; i < (light_type &7); i++) {
             if (sl_tcolor[i] != sl_dcolor[i]) {
               if (sl_tcolor[i] < sl_dcolor[i]) {
-                sl_tcolor[i] += ((sl_dcolor[i] - sl_tcolor[i]) >> sysCfg.led_speed) +1;
+                sl_tcolor[i] += ((sl_dcolor[i] - sl_tcolor[i]) >> Settings.led_speed) +1;
               }
               if (sl_tcolor[i] > sl_dcolor[i]) {
-                sl_tcolor[i] -= ((sl_tcolor[i] - sl_dcolor[i]) >> sysCfg.led_speed) +1;
+                sl_tcolor[i] -= ((sl_tcolor[i] - sl_dcolor[i]) >> Settings.led_speed) +1;
               }
             }
           }
@@ -368,65 +368,65 @@ void sl_animate()
       case 1:  // Power On using wake up duration
         if (2 == sl_wakeupActive) {
           sl_wakeupActive = 1;
-          for (byte i = 0; i < (sfl_flg &7); i++) {
+          for (byte i = 0; i < (light_type &7); i++) {
             sl_tcolor[i] = 0;
           }
           sl_wakeupCntr = 0;
           sl_wakeupDimmer = 0;
         }
         sl_wakeupCntr++;
-        if (sl_wakeupCntr > ((sysCfg.led_wakeup * STATES) / sysCfg.led_dimmer)) {
+        if (sl_wakeupCntr > ((Settings.led_wakeup * STATES) / Settings.led_dimmer)) {
           sl_wakeupCntr = 0;
           sl_wakeupDimmer++;
-          if (sl_wakeupDimmer <= sysCfg.led_dimmer) {
-            sl_setDim(sl_wakeupDimmer);
-            for (byte i = 0; i < (sfl_flg &7); i++) {
+          if (sl_wakeupDimmer <= Settings.led_dimmer) {
+            LightSetDimmer(sl_wakeupDimmer);
+            for (byte i = 0; i < (light_type &7); i++) {
               sl_tcolor[i] = sl_dcolor[i];
             }
           } else {
             snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_WAKEUP "\":\"" D_DONE "\"}"));
-            mqtt_publish_topic_P(2, PSTR(D_CMND_WAKEUP));
+            MqttPublishPrefixTopic_P(2, PSTR(D_CMND_WAKEUP));
             sl_wakeupActive = 0;
-            sysCfg.led_scheme = 0;
+            Settings.led_scheme = 0;
           }
         }
         break;
 #ifdef USE_WS2812  // ************************************************************************
       default:
-        if (11 == sfl_flg) {
-          ws2812_showScheme(sysCfg.led_scheme -2);
+        if (11 == light_type) {
+          Ws2812ShowScheme(Settings.led_scheme -2);
         }
 #endif  // USE_WS2812 ************************************************************************
     }
   }
 
-  if ((sysCfg.led_scheme < 2) || !sl_power) {
-    for (byte i = 0; i < (sfl_flg &7); i++) {
+  if ((Settings.led_scheme < 2) || !sl_power) {
+    for (byte i = 0; i < (light_type &7); i++) {
       if (sl_lcolor[i] != sl_tcolor[i]) {
         sl_any = 1;
       }
     }
     if (sl_any) {
       sl_any = 0;
-      for (byte i = 0; i < (sfl_flg &7); i++) {
+      for (byte i = 0; i < (light_type &7); i++) {
         sl_lcolor[i] = sl_tcolor[i];
-        cur_col[i] = (sysCfg.led_table) ? ledTable[sl_lcolor[i]] : sl_lcolor[i];
-        if (sfl_flg < 6) {
+        cur_col[i] = (Settings.led_table) ? ledTable[sl_lcolor[i]] : sl_lcolor[i];
+        if (light_type < 6) {
           if (pin[GPIO_PWM1 +i] < 99) {
-            uint16_t curcol = cur_col[i] * (PWM_RANGE / 255);
+            uint16_t curcol = cur_col[i] * (Settings.pwm_range / 255);
 //            snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION "Cur_Col%d %d, CurCol %d"), i, cur_col[i], curcol);
-//            addLog(LOG_LEVEL_DEBUG);
-            analogWrite(pin[GPIO_PWM1 +i], bitRead(pwm_inverted, i) ? PWM_RANGE - curcol : curcol);
+//            AddLog(LOG_LEVEL_DEBUG);
+            analogWrite(pin[GPIO_PWM1 +i], bitRead(pwm_inverted, i) ? Settings.pwm_range - curcol : curcol);
           }
         }
       }
 #ifdef USE_WS2812  // ************************************************************************
-      if (11 == sfl_flg) {
-        ws2812_setColor(0, cur_col[0], cur_col[1], cur_col[2]);
+      if (11 == light_type) {
+        Ws2812SetColor(0, cur_col[0], cur_col[1], cur_col[2]);
       }
 #endif  // USE_ES2812 ************************************************************************
-      if (sfl_flg > 11) {
-        sl_my92x1_duty(cur_col[0], cur_col[1], cur_col[2], cur_col[3], cur_col[4]);
+      if (light_type > 11) {
+        LightMy92x1Duty(cur_col[0], cur_col[1], cur_col[2], cur_col[3], cur_col[4]);
       }
     }
   }
@@ -440,9 +440,9 @@ float sl_Hue = 0.0;
 float sl_Sat = 0.0;
 float sl_Bri = 0.0;
 
-void sl_rgb2hsb()
+void LightRgbToHsb()
 {
-  sl_setDim(sysCfg.led_dimmer);
+  LightSetDimmer(Settings.led_dimmer);
 
   // convert colors to float between (0.0 - 1.0)
   float r = sl_dcolor[0] / 255.0f;
@@ -471,7 +471,7 @@ void sl_rgb2hsb()
   }
 }
 
-void sl_hsb2rgb()
+void LightHsbToRgb()
 {
   float r;
   float g;
@@ -537,37 +537,37 @@ void sl_hsb2rgb()
 
 /********************************************************************************************/
 
-void sl_replaceHSB(String *response)
+void LightReplaceHsb(String *response)
 {
-  if ((sfl_flg &7) > 2) {
-    sl_rgb2hsb();
+  if ((light_type &7) > 2) {
+    LightRgbToHsb();
     response->replace("{h}", String((uint16_t)(65535.0f * sl_Hue)));
     response->replace("{s}", String((uint8_t)(254.0f * sl_Sat)));
     response->replace("{b}", String((uint8_t)(254.0f * sl_Bri)));
   } else {
     response->replace("{h}", "0");
     response->replace("{s}", "0");
-//    response->replace("{b}", String((uint8_t)(2.54f * (float)sysCfg.led_dimmer)));
-    response->replace("{b}", String((uint8_t)(0.01f * (float)sysCfg.led_dimmer)));
+//    response->replace("{b}", String((uint8_t)(2.54f * (float)Settings.led_dimmer)));
+    response->replace("{b}", String((uint8_t)(0.01f * (float)Settings.led_dimmer)));
   }
 }
 
-void sl_getHSB(float *hue, float *sat, float *bri)
+void LightGetHsb(float *hue, float *sat, float *bri)
 {
-  if ((sfl_flg &7) > 2) {
-    sl_rgb2hsb();
+  if ((light_type &7) > 2) {
+    LightRgbToHsb();
     *hue = sl_Hue;
     *sat = sl_Sat;
     *bri = sl_Bri;
   } else {
     *hue = 0;
     *sat = 0;
-//    *bri = (2.54f * (float)sysCfg.led_dimmer);
-    *bri = (0.01f * (float)sysCfg.led_dimmer);
+//    *bri = (2.54f * (float)Settings.led_dimmer);
+    *bri = (0.01f * (float)Settings.led_dimmer);
   }
 }
 
-void sl_setHSB(float hue, float sat, float bri, uint16_t ct)
+void LightSetHsb(float hue, float sat, float bri, uint16_t ct)
 {
 /*
   char stemp1[10];
@@ -577,33 +577,33 @@ void sl_setHSB(float hue, float sat, float bri, uint16_t ct)
   dtostrfi(sat, 3, stemp2);
   dtostrfi(bri, 3, stemp3);
   snprintf_P(log_data, sizeof(log_data), PSTR("HUE: Set Hue %s, Sat %s, Bri %s, Ct %d"), stemp1, stemp2, stemp3, ct);
-  addLog(LOG_LEVEL_DEBUG);
+  AddLog(LOG_LEVEL_DEBUG);
 */
 
-  if (sfl_flg > 2) {
-    if ((5 == (sfl_flg &7)) && (ct > 0)) {
-      sl_setColorTemp(ct);
+  if (light_type > 2) {
+    if ((5 == (light_type &7)) && (ct > 0)) {
+      LightSetColorTemp(ct);
     } else {
       sl_Hue = hue;
       sl_Sat = sat;
       sl_Bri = bri;
-      sl_hsb2rgb();
-      sl_setColor();
+      LightHsbToRgb();
+      LightSetColor();
     }
-    sl_prepPower();
-    mqtt_publish_topic_P(5, PSTR(D_CMND_COLOR));
+    LightPreparePower();
+    MqttPublishPrefixTopic_P(5, PSTR(D_CMND_COLOR));
   } else {
     uint8_t tmp = (uint8_t)(bri * 100);
-    sysCfg.led_dimmer = tmp;
-    if (2 == (sfl_flg &7)) {
+    Settings.led_dimmer = tmp;
+    if (2 == (light_type &7)) {
       if (ct > 0) {
-        sl_setColorTemp(ct);
+        LightSetColorTemp(ct);
       }
-      sl_prepPower();
-      mqtt_publish_topic_P(5, PSTR(D_CMND_COLOR));
+      LightPreparePower();
+      MqttPublishPrefixTopic_P(5, PSTR(D_CMND_COLOR));
     } else {
-      sl_prepPower();
-      mqtt_publish_topic_P(5, PSTR(D_CMND_DIMMER));
+      LightPreparePower();
+      MqttPublishPrefixTopic_P(5, PSTR(D_CMND_DIMMER));
     }
   }
 }
@@ -612,94 +612,94 @@ void sl_setHSB(float hue, float sat, float bri, uint16_t ct)
  * Commands
 \*********************************************************************************************/
 
-boolean sl_command(char *type, uint16_t index, char *dataBuf, uint16_t data_len, int16_t payload)
+boolean LightCommand(char *type, uint16_t index, char *dataBuf, uint16_t data_len, int16_t payload)
 {
   boolean serviced = true;
   boolean coldim = false;
   char scolor[11];
   char *p;
 
-  if (((sfl_flg &7) > 1) && !strcasecmp_P(type, PSTR(D_CMND_COLOR))) {
+  if (((light_type &7) > 1) && !strcasecmp_P(type, PSTR(D_CMND_COLOR))) {
     if (dataBuf[0] == '#') {
       dataBuf++;
       data_len--;
     }
-    if ((2 * (sfl_flg &7)) == data_len) {
-      for (byte i = 0; i < (sfl_flg &7); i++) {
+    if ((2 * (light_type &7)) == data_len) {
+      for (byte i = 0; i < (light_type &7); i++) {
         strlcpy(scolor, dataBuf + (i *2), 3);
         sl_dcolor[i] = (uint8_t)strtol(scolor, &p, 16);
       }
-      sl_setColor();
+      LightSetColor();
       coldim = true;
     } else {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_COLOR "\":\"%s\"}"), sl_getColor(scolor));
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_COLOR "\":\"%s\"}"), LightGetColor(scolor));
     }
   }
 #ifdef USE_WS2812  //  ***********************************************************************
-  else if ((11 == sfl_flg) && !strcasecmp_P(type, PSTR(D_CMND_LED)) && (index > 0) && (index <= sysCfg.led_pixels)) {
+  else if ((11 == light_type) && !strcasecmp_P(type, PSTR(D_CMND_LED)) && (index > 0) && (index <= Settings.led_pixels)) {
     if (dataBuf[0] == '#') {
       dataBuf++;
       data_len--;
     }
     uint8_t sl_ledcolor[3];
-    if ((2 * (sfl_flg &7)) == data_len) {
-      for (byte i = 0; i < (sfl_flg &7); i++) {
+    if ((2 * (light_type &7)) == data_len) {
+      for (byte i = 0; i < (light_type &7); i++) {
         strlcpy(scolor, dataBuf + (i *2), 3);
         sl_ledcolor[i] = (uint8_t)strtol(scolor, &p, 16);
       }
-      ws2812_setColor(index, sl_ledcolor[0], sl_ledcolor[1], sl_ledcolor[2]);
+      Ws2812SetColor(index, sl_ledcolor[0], sl_ledcolor[1], sl_ledcolor[2]);
     }
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_LED "%d\":\"%s\"}"), index, ws2812_getColor(index, scolor));
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_LED "%d\":\"%s\"}"), index, Ws2812GetColor(index, scolor));
   }
-  else if ((11 == sfl_flg) && !strcasecmp_P(type, PSTR(D_CMND_PIXELS))) {
+  else if ((11 == light_type) && !strcasecmp_P(type, PSTR(D_CMND_PIXELS))) {
     if ((payload > 0) && (payload <= WS2812_MAX_LEDS)) {
-      sysCfg.led_pixels = payload;
-      ws2812_clear();
+      Settings.led_pixels = payload;
+      Ws2812Clear();
       sl_any = 1;
     }
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_PIXELS "\":%d}"), sysCfg.led_pixels);
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_PIXELS "\":%d}"), Settings.led_pixels);
   }
-  else if ((11 == sfl_flg) && !strcasecmp_P(type, PSTR(D_CMND_WIDTH))) {
+  else if ((11 == light_type) && !strcasecmp_P(type, PSTR(D_CMND_WIDTH))) {
     if ((payload >= 0) && (payload <= 4)) {
-      sysCfg.led_width = payload;
+      Settings.led_width = payload;
     }
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_WIDTH "\":%d}"), sysCfg.led_width);
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_WIDTH "\":%d}"), Settings.led_width);
   }
-  else if ((11 == sfl_flg) && !strcasecmp_P(type, PSTR(D_CMND_SCHEME))) {
+  else if ((11 == light_type) && !strcasecmp_P(type, PSTR(D_CMND_SCHEME))) {
     if ((payload >= 0) && (payload <= 9)) {
-      sysCfg.led_scheme = payload;
-      if (1 == sysCfg.led_scheme) {
+      Settings.led_scheme = payload;
+      if (1 == Settings.led_scheme) {
         sl_wakeupActive = 3;
       }
-      do_cmnd_power(Maxdevice, 1);
+      ExecuteCommandPower(devices_present, 1);
       stripTimerCntr = 0;
     }
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_SCHEME "\":%d}"), sysCfg.led_scheme);
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_SCHEME "\":%d}"), Settings.led_scheme);
   }
 #endif  // USE_WS2812 ************************************************************************
   else if (!strcasecmp_P(type, PSTR(D_CMND_WAKEUP))) {
     if ((payload >= 0) && (payload <= 100)) {
-      sysCfg.led_dimmer = payload;
+      Settings.led_dimmer = payload;
     }
     sl_wakeupActive = 3;
-    sysCfg.led_scheme = 1;
-    do_cmnd_power(Maxdevice, 1);
+    Settings.led_scheme = 1;
+    ExecuteCommandPower(devices_present, 1);
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_WAKEUP "\":\"" D_STARTED "\"}"));
   }
-  else if (!strcasecmp_P(type, PSTR(D_CMND_COLORTEMPERATURE)) && ((2 == (sfl_flg &7)) || (5 == (sfl_flg &7)))) { // ColorTemp
+  else if (!strcasecmp_P(type, PSTR(D_CMND_COLORTEMPERATURE)) && ((2 == (light_type &7)) || (5 == (light_type &7)))) { // ColorTemp
     if ((payload >= 153) && (payload <= 500)) {  // https://developers.meethue.com/documentation/core-concepts
-      sl_setColorTemp(payload);
+      LightSetColorTemp(payload);
       coldim = true;
     } else {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_COLORTEMPERATURE "\":%d}"), sl_getColorTemp());
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_COLORTEMPERATURE "\":%d}"), LightGetColorTemp());
     }
   }
   else if (!strcasecmp_P(type, PSTR(D_CMND_DIMMER))) {
     if ((payload >= 0) && (payload <= 100)) {
-      sysCfg.led_dimmer = payload;
+      Settings.led_dimmer = payload;
       coldim = true;
     } else {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_DIMMER "\":%d}"), sysCfg.led_dimmer);
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_DIMMER "\":%d}"), Settings.led_dimmer);
     }
   }
   else if (!strcasecmp_P(type, PSTR(D_CMND_LEDTABLE))) {
@@ -707,54 +707,54 @@ boolean sl_command(char *type, uint16_t index, char *dataBuf, uint16_t data_len,
       switch (payload) {
       case 0: // Off
       case 1: // On
-        sysCfg.led_table = payload;
+        Settings.led_table = payload;
         break;
       case 2: // Toggle
-        sysCfg.led_table ^= 1;
+        Settings.led_table ^= 1;
         break;
       }
       sl_any = 1;
     }
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_LEDTABLE "\":\"%s\"}"), getStateText(sysCfg.led_table));
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_LEDTABLE "\":\"%s\"}"), GetStateText(Settings.led_table));
   }
   else if (!strcasecmp_P(type, PSTR(D_CMND_FADE))) {
     switch (payload) {
     case 0: // Off
     case 1: // On
-      sysCfg.led_fade = payload;
+      Settings.led_fade = payload;
       break;
     case 2: // Toggle
-      sysCfg.led_fade ^= 1;
+      Settings.led_fade ^= 1;
       break;
     }
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_FADE "\":\"%s\"}"), getStateText(sysCfg.led_fade));
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_FADE "\":\"%s\"}"), GetStateText(Settings.led_fade));
   }
   else if (!strcasecmp_P(type, PSTR(D_CMND_SPEED))) {  // 1 - fast, 8 - slow
     if ((payload > 0) && (payload <= 8)) {
-      sysCfg.led_speed = payload;
+      Settings.led_speed = payload;
     }
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_SPEED "\":%d}"), sysCfg.led_speed);
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_SPEED "\":%d}"), Settings.led_speed);
   }
   else if (!strcasecmp_P(type, PSTR(D_CMND_WAKEUPDURATION))) {
     if ((payload > 0) && (payload < 3001)) {
-      sysCfg.led_wakeup = payload;
+      Settings.led_wakeup = payload;
       sl_wakeupActive = 0;
     }
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_WAKEUPDURATION "\":%d}"), sysCfg.led_wakeup);
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_WAKEUPDURATION "\":%d}"), Settings.led_wakeup);
   }
   else if (!strcasecmp_P(type, PSTR("UNDOCA"))) {  // Theos legacy status
-    sl_getColor(scolor);
+    LightGetColor(scolor);
     scolor[6] = '\0';  // RGB only
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s, %d, %d, %d, %d, %d"),
-      scolor, sysCfg.led_fade, sysCfg.led_table, sysCfg.led_scheme, sysCfg.led_speed, sysCfg.led_width);
-    mqtt_publish_topic_P(1, type);
+      scolor, Settings.led_fade, Settings.led_table, Settings.led_scheme, Settings.led_speed, Settings.led_width);
+    MqttPublishPrefixTopic_P(1, type);
     mqtt_data[0] = '\0';
   }
   else {
     serviced = false;  // Unknown command
   }
   if (coldim) {
-    sl_prepPower();
+    LightPreparePower();
   }
   return serviced;
 }

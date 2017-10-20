@@ -17,9 +17,13 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#ifndef _LANGUAGE_NL_NL_H_
+#define _LANGUAGE_NL_NL_H_
+
 /*************************** ATTENTION *******************************\
  *
  * Due to memory constraints only UTF-8 is supported.
+ * To save code space keep text as short as possible.
  * Time and Date provided by SDK can not be localized (yet).
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
@@ -379,7 +383,6 @@
   #define D_DOMOTICZ_VOLTAGE "Spanning"
   #define D_DOMOTICZ_CURRENT "Stroom"
 #define D_DOMOTICZ_UPDATE_TIMER "Bijwerk timer"
-#define D_CONFIGURE_DOMOTICZ "Configureer Domoticz"
 
 // xdrv_ir-send.ino
 #define D_INVALID_JSON "Ongeldig JSON"
@@ -461,8 +464,8 @@
 #define D_SENSOR_IRSEND   "IRsend"
 #define D_SENSOR_SWITCH   "Switch"  // Suffix "1"
 #define D_SENSOR_BUTTON   "Button"  // Suffix "1"
-#define D_SENSOR_RELAY    "Relais"  // Suffix "1I"
-#define D_SENSOR_LED      "Led"     // Suffix "1I"
+#define D_SENSOR_RELAY    "Relais"  // Suffix "1i"
+#define D_SENSOR_LED      "Led"     // Suffix "1i"
 #define D_SENSOR_PWM      "PWM"     // Suffix "1"
 #define D_SENSOR_COUNTER  "Teller"  // Suffix "1"
 #define D_SENSOR_IRRECV   "IRrecv"
@@ -472,7 +475,7 @@
 
 // Units
 #define D_UNIT_AMPERE "A"
-#define D_UNIT_HOUR "Hr"
+#define D_UNIT_HOUR "h"
 #define D_UNIT_KILOWATTHOUR "kWh"
 #define D_UNIT_LUX "lx"
 #define D_UNIT_MICROSECOND "us"
@@ -576,6 +579,8 @@
   #define D_NOT_SUPPORTED "Not supported"
 #define D_CMND_GPIOS "GPIOs"
 #define D_CMND_PWM "PWM"
+#define D_CMND_PWMFREQUENCY "PWMFrequency"
+#define D_CMND_PWMRANGE "PWMRange"
 #define D_CMND_COUNTER "Counter"
 #define D_CMND_COUNTERTYPE "CounterType"
 #define D_CMND_COUNTERDEBOUNCE "CounterDebounce"
@@ -679,3 +684,5 @@
 #define D_CMND_SAFEPOWERWINDOW "SafePowerWindow"
 #define D_CMND_MAXENERGY "MaxEnergy"
 #define D_CMND_MAXENERGYSTART "MaxEnergyStart"
+
+#endif  // _LANGUAGE_NL_NL_H_

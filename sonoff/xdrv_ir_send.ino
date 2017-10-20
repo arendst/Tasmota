@@ -39,8 +39,8 @@
 
 IRMitsubishiAC *mitsubir = NULL;
 
-const char FANSPEED[] = "A12345S";
-const char HVACMODE[] = "HDCA";
+const char kFanSpeedOptions[] = "A12345S";
+const char kHvacModeOptions[] = "HDCA";
 #endif
 
 /*********************************************************************************************\
@@ -49,7 +49,7 @@ const char HVACMODE[] = "HDCA";
 
 IRsend *irsend = NULL;
 
-void ir_send_init(void)
+void IrSendInit(void)
 {
   irsend = new IRsend(pin[GPIO_IRSEND]); // an IR led is at GPIO_IRSEND
   irsend->begin();
@@ -69,15 +69,15 @@ void ir_send_init(void)
 IRrecv *irrecv = NULL;
 unsigned long ir_lasttime = 0;
 
-void ir_recv_init(void)
+void IrReceiveInit(void)
 {
   irrecv = new IRrecv(pin[GPIO_IRRECV]); // an IR led is at GPIO_IRRECV
   irrecv->enableIRIn();                  // Start the receiver
 
-  //  addLog_P(LOG_LEVEL_DEBUG, PSTR("IrReceive initialized"));
+  //  AddLog_P(LOG_LEVEL_DEBUG, PSTR("IrReceive initialized"));
 }
 
-void ir_recv_check()
+void IrReceiveCheck()
 {
   char sirtype[100];
   char *protocol;
@@ -90,7 +90,7 @@ void ir_recv_check()
 
     snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_IRR "RawLen %d, Bits %d, Value %08X, Decode %d"),
                results.rawlen, results.bits, results.value, results.decode_type);
-    addLog(LOG_LEVEL_DEBUG);
+    AddLog(LOG_LEVEL_DEBUG);
 
     unsigned long now = millis();
     if ((now - ir_lasttime > IR_TIME_AVOID_DUPLICATE) && (UNKNOWN != results.decode_type) && (results.bits > 0)) {
@@ -111,10 +111,10 @@ void ir_recv_check()
 
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_IRRECEIVED "\":{\"" D_IR_PROTOCOL "\":\"%s\", \"" D_IR_BITS "\":%d, \"" D_IR_DATA "\":\"%X\"}}"),
                  protocol, results.bits, results.value);
-      mqtt_publish_topic_P(6, PSTR(D_IRRECEIVED));
+      MqttPublishPrefixTopic_P(6, PSTR(D_IRRECEIVED));
 #ifdef USE_DOMOTICZ
       unsigned long value = results.value | (diridx << 28); // [Protocol:4, Data:28]
-      domoticz_sensor(DZ_COUNT, value);                     // Send data as Domoticz Counter value
+      DomoticzSensor(DZ_COUNT, value);                     // Send data as Domoticz Counter value
 #endif                                                      // USE_DOMOTICZ
     }
 
@@ -128,7 +128,7 @@ void ir_recv_check()
  * IR Heating, Ventilation and Air Conditioning using IRMitsubishiAC library
 \*********************************************************************************************/
 
-boolean ir_hvac_toshiba(const char *HVAC_Mode, const char *HVAC_FanMode, boolean HVAC_Power, int HVAC_Temp)
+boolean IrHvacToshiba(const char *HVAC_Mode, const char *HVAC_FanMode, boolean HVAC_Power, int HVAC_Temp)
 {
   unsigned int rawdata[2 + 2 * 8 * HVAC_TOSHIBA_DATALEN + 2];
   byte data[HVAC_TOSHIBA_DATALEN] = {0xF2, 0x0D, 0x03, 0xFC, 0x01, 0x00, 0x00, 0x00, 0x00};
@@ -138,30 +138,30 @@ boolean ir_hvac_toshiba(const char *HVAC_Mode, const char *HVAC_FanMode, boolean
   uint8_t mode;
 
   if (HVAC_Mode == NULL) {
-    p = (char *)HVACMODE; // default HVAC_HOT
+    p = (char *)kHvacModeOptions; // default HVAC_HOT
   }
   else {
-    p = strchr(HVACMODE, toupper(HVAC_Mode[0]));
+    p = strchr(kHvacModeOptions, toupper(HVAC_Mode[0]));
   }
   if (!p) {
     return true;
   }
-  data[6] = (p - HVACMODE) ^ 0x03; // HOT = 0x03, DRY = 0x02, COOL = 0x01, AUTO = 0x00
+  data[6] = (p - kHvacModeOptions) ^ 0x03; // HOT = 0x03, DRY = 0x02, COOL = 0x01, AUTO = 0x00
 
   if (!HVAC_Power) {
     data[6] = (byte)0x07; // Turn OFF HVAC
   }
 
   if (HVAC_FanMode == NULL) {
-    p = (char *)FANSPEED; // default FAN_SPEED_AUTO
+    p = (char *)kFanSpeedOptions; // default FAN_SPEED_AUTO
   }
   else {
-    p = strchr(FANSPEED, toupper(HVAC_FanMode[0]));
+    p = strchr(kFanSpeedOptions, toupper(HVAC_FanMode[0]));
   }
   if (!p) {
     return true;
   }
-  mode = p - FANSPEED + 1;
+  mode = p - kFanSpeedOptions + 1;
   if ((1 == mode) || (7 == mode)) {
     mode = 0;
   }
@@ -218,7 +218,7 @@ boolean ir_hvac_toshiba(const char *HVAC_Mode, const char *HVAC_FanMode, boolean
   return false;
 }
 
-boolean ir_hvac_mitsubishi(const char *HVAC_Mode, const char *HVAC_FanMode, boolean HVAC_Power, int HVAC_Temp)
+boolean IrHvacMitsubishi(const char *HVAC_Mode, const char *HVAC_FanMode, boolean HVAC_Power, int HVAC_Temp)
 {
   char *p;
   char *token;
@@ -227,29 +227,29 @@ boolean ir_hvac_mitsubishi(const char *HVAC_Mode, const char *HVAC_FanMode, bool
   mitsubir->stateReset();
 
   if (HVAC_Mode == NULL) {
-    p = (char *)HVACMODE; // default HVAC_HOT
+    p = (char *)kHvacModeOptions; // default HVAC_HOT
   }
   else {
-    p = strchr(HVACMODE, toupper(HVAC_Mode[0]));
+    p = strchr(kHvacModeOptions, toupper(HVAC_Mode[0]));
   }
   if (!p) {
     return true;
   }
-  mode = (p - HVACMODE + 1) << 3; // HOT = 0x08, DRY = 0x10, COOL = 0x18, AUTO = 0x20
+  mode = (p - kHvacModeOptions + 1) << 3; // HOT = 0x08, DRY = 0x10, COOL = 0x18, AUTO = 0x20
   mitsubir->setMode(mode);
 
   mitsubir->setPower(HVAC_Power);
 
   if (HVAC_FanMode == NULL) {
-    p = (char *)FANSPEED; // default FAN_SPEED_AUTO
+    p = (char *)kFanSpeedOptions; // default FAN_SPEED_AUTO
   }
   else {
-    p = strchr(FANSPEED, toupper(HVAC_FanMode[0]));
+    p = strchr(kFanSpeedOptions, toupper(HVAC_FanMode[0]));
   }
   if (!p) {
     return true;
   }
-  mode = p - FANSPEED; // AUTO = 0, SPEED = 1 .. 5, SILENT = 6
+  mode = p - kFanSpeedOptions; // AUTO = 0, SPEED = 1 .. 5, SILENT = 6
   mitsubir->setFan(mode);
 
   mitsubir->setTemp(HVAC_Temp);
@@ -258,7 +258,7 @@ boolean ir_hvac_mitsubishi(const char *HVAC_Mode, const char *HVAC_FanMode, bool
 
   //  snprintf_P(log_data, sizeof(log_data), PSTR("IRHVAC: Mitsubishi Power %d, Mode %d, FanSpeed %d, Temp %d, VaneMode %d"),
   //    mitsubir->getPower(), mitsubir->getMode(), mitsubir->getFan(), mitsubir->getTemp(), mitsubir->getVane());
-  //  addLog(LOG_LEVEL_DEBUG);
+  //  AddLog(LOG_LEVEL_DEBUG);
 
   return false;
 }
@@ -277,7 +277,7 @@ boolean ir_hvac_mitsubishi(const char *HVAC_Mode, const char *HVAC_FanMode, bool
  { "Vendor": "<Toshiba|Mitsubishi>", "Power": <0|1>, "Mode": "<Hot|Cold|Dry|Auto>", "FanSpeed": "<1|2|3|4|5|Auto|Silence>", "Temp": <17..30> }
 */
 
-boolean ir_send_command(char *type, uint16_t index, char *dataBuf, uint16_t data_len, int16_t payload)
+boolean IrSendCommand(char *type, uint16_t index, char *dataBuf, uint16_t data_len, int16_t payload)
 {
   boolean serviced = true;
   boolean error = false;
@@ -358,13 +358,13 @@ boolean ir_send_command(char *type, uint16_t index, char *dataBuf, uint16_t data
 
         //        snprintf_P(log_data, sizeof(log_data), PSTR("IRHVAC: Received Vendor %s, Power %d, Mode %s, FanSpeed %s, Temp %d"),
         //          HVAC_Vendor, HVAC_Power, HVAC_Mode, HVAC_FanMode, HVAC_Temp);
-        //        addLog(LOG_LEVEL_DEBUG);
+        //        AddLog(LOG_LEVEL_DEBUG);
 
         if (HVAC_Vendor == NULL || !strcasecmp_P(HVAC_Vendor, PSTR("TOSHIBA"))) {
-          error = ir_hvac_toshiba(HVAC_Mode, HVAC_FanMode, HVAC_Power, HVAC_Temp);
+          error = IrHvacToshiba(HVAC_Mode, HVAC_FanMode, HVAC_Power, HVAC_Temp);
         }
         else if (!strcasecmp_P(HVAC_Vendor, PSTR("MITSUBISHI"))) {
-          error = ir_hvac_mitsubishi(HVAC_Mode, HVAC_FanMode, HVAC_Power, HVAC_Temp);
+          error = IrHvacMitsubishi(HVAC_Mode, HVAC_FanMode, HVAC_Power, HVAC_Temp);
         }
         else {
           error = true;
