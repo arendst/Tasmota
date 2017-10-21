@@ -724,8 +724,8 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
     GPIO_HLW_CF1,     // GPIO05 HLW8012 CF1
     0, 0, 0, 0, 0, 0, // Flash connection
     GPIO_HLW_SEL,     // GPIO12 HLW8012 SEL
-    GPIO_LED1_INV,    // GPIO13 Green Led (0 = On, 1 = Off)
-    GPIO_REL1,        // GPIO14 Red Led and Relay (0 = Off, 1 = On)
+    GPIO_LED1_INV,    // GPIO13 Green Led
+    GPIO_REL1,        // GPIO14 Relay
     0, 0, 0
   }
 };
