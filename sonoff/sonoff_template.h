@@ -666,7 +666,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
   },
     { "TasSupla-RLPB",   // RL_PB_TASMOTA hardware (ESP8266)
 
-     GPIO_USER,        // GPIO00 Flash jumper
+     0,                 // GPIO00 Flash jumper
      0,                // GPIO01 Serial RXD and Optional sensor
      GPIO_DSB,         // GPIO02 DS18B20 sensor
      0,                // GPIO03 Serial TXD and Optional sensor
