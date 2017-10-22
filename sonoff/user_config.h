@@ -17,6 +17,9 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#ifndef _USER_CONFIG_H_
+#define _USER_CONFIG_H_
+
 /*********************************************************************************************\
  * ATTENTION: Changes to most PARAMETER defines will only override flash settings if you change
  *            define CFG_HOLDER.
@@ -24,6 +27,11 @@
  *
  * Corresponding MQTT/Serial/Console commands in [brackets]
 \*********************************************************************************************/
+
+// -- Localization --------------------------------
+//#define MY_LANGUAGE            en-GB           // Enabled by Default
+//#define MY_LANGUAGE            nl-NL
+//#define MY_LANGUAGE            de-DE
 
 // -- Project -------------------------------------
 #define PROJECT                "sonoff"          // PROJECT is used as the default topic delimiter and OTA file name
@@ -44,8 +52,8 @@
 #define STA_SSID2              "indebuurt2"      // [Ssid2] Optional alternate AP Wifi SSID
 #define STA_PASS2              "VnsqrtnrsddbrN"  // [Password2] Optional alternate AP Wifi password
 #define WIFI_CONFIG_TOOL       WIFI_WPSCONFIG    // [WifiConfig] Default tool if wifi fails to connect
-                                                 //   (WIFI_RESTART, WIFI_SMARTCONFIG, WIFI_MANAGER, WIFI_WPSCONFIG, WIFI_RETRY)
-                                                 
+                                                 //   (WIFI_RESTART, WIFI_SMARTCONFIG, WIFI_MANAGER, WIFI_WPSCONFIG, WIFI_RETRY, WIFI_WAIT)
+
 // -- Syslog --------------------------------------
 #define SYS_LOG_HOST           "domus1"          // [LogHost] (Linux) syslog host
 #define SYS_LOG_PORT           514               // [LogPort] default syslog UDP port
@@ -101,13 +109,13 @@
 #define TELE_PERIOD            300               // [TelePeriod] Telemetry (0 = disable, 10 - 3600 seconds)
 
 // -- MQTT - Domoticz -----------------------------
-#define USE_DOMOTICZ                             // Enable Domoticz (+7k code, +0.3k mem) - Disable by //
+#define USE_DOMOTICZ                             // Enable Domoticz (+6k code, +0.3k mem) - Disable by //
   #define DOMOTICZ_IN_TOPIC      "domoticz/in"   // Domoticz Input Topic
   #define DOMOTICZ_OUT_TOPIC     "domoticz/out"  // Domoticz Output Topic
   #define DOMOTICZ_UPDATE_TIMER  0               // [DomoticzUpdateTimer] Send relay status (0 = disable, 1 - 3600 seconds) (Optional)
 
 // -- HTTP ----------------------------------------
-#define USE_WEBSERVER                            // Enable web server and wifi manager (+62k code, +8k mem) - Disable by //
+#define USE_WEBSERVER                            // Enable web server and wifi manager (+66k code, +8k mem) - Disable by //
   #define WEB_SERVER           2                 // [WebServer] Web server (0 = Off, 1 = Start as User, 2 = Start as Admin)
   #define WEB_PORT             80                // Web server Port for User and Admin mode
   #define WEB_USERNAME         "admin"           // Web server Admin mode user name
@@ -127,10 +135,10 @@
 #define NTP_SERVER3            "0.nl.pool.ntp.org"  // [NtpServer3] Select third NTP server by name or IP address (93.94.224.67)
 
 // -- Time - Start Daylight Saving Time and timezone offset from UTC in minutes
-#define TIME_DST               Last, Sun, Mar, 2, +120  // Last sunday in march at 02:00 +120 minutes
+#define TIME_DST               North, Last, Sun, Mar, 2, +120  // Northern Hemisphere, Last sunday in march at 02:00 +120 minutes
 
 // -- Time - Start Standard Time and timezone offset from UTC in minutes
-#define TIME_STD               Last, Sun, Oct, 3, +60   // Last sunday in october 02:00 +60 minutes
+#define TIME_STD               North, Last, Sun, Oct, 3, +60   // Northern Hemisphere, Last sunday in october 02:00 +60 minutes
 
 // -- Application ---------------------------------
 #define APP_TIMEZONE           1                 // [Timezone] +1 hour (Amsterdam) (-12 .. 12 = hours from UTC, 99 = use TIME_DST/TIME_STD)
@@ -164,15 +172,22 @@
 
 #define USE_IR_REMOTE                            // Send IR remote commands using library IRremoteESP8266 and ArduinoJson (+3k code, 0.3k mem)
 //  #define USE_IR_HVAC                            // Support for HVAC system using IR (+2k code)
+  #define USE_IR_RECEIVE                         // Support for IR receiver (+4k code)
 
-#define USE_WS2812                               // WS2812 Led string using library NeoPixelBus (+11k code, +1k mem) - Disable by //
+#define USE_WS2812                               // WS2812 Led string using library NeoPixelBus (+5k code, +1k mem) - Disable by //
   #define USE_WS2812_CTYPE     1                 // WS2812 Color type (0 - RGB, 1 - GRB)
-//  #define USE_WS2812_DMA                         // DMA supports only GPIO03 (= Serial RXD) (+1k mem)
-                                                 //   When USE_WS2812_DMA is enabled expect Exceptions on Pow
+//  #define USE_WS2812_DMA                         // DMA supports only GPIO03 (= Serial RXD) (+1k mem). When USE_WS2812_DMA is enabled expect Exceptions on Pow
+  #define CLOCK_REVERSE        0                 // WS2812 Clock display (0 - Normal, 1 - Reverse)
+  #define CLOCK_SECOND_WIDTH   1                 // WS2812 Clock second hand pixel width
+  #define CLOCK_MINUTE_WIDTH   3                 // WS2812 Clock minute hand pixel width
+  #define CLOCK_HOUR_WIDTH     5                 // WS2812 Clock hour hand pixel width
+  #define CLOCK_SECOND_COLOR   (255, 0, 255)     // WS2812 Clock second pixel color
+  #define CLOCK_MINUTE_COLOR   (0, 255, 0)       // WS2812 Clock minute pixel color
+  #define CLOCK_HOUR_COLOR     (255, 0,0 )       // WS2812 Clock hour pixel color
 
 /*********************************************************************************************\
  * Compile a minimal version if upgrade memory gets tight ONLY TO BE USED FOR UPGRADE STEP 1!
- *   To be used as step 1 during upgrade. 
+ *   To be used as step 1 during upgrade.
  *   Step 2 is re-compile with option BE_MINIMAL commented out.
  *   !!! Needed for next release of Arduino/ESP8266 (+22k code, +2k mem) !!!
 \*********************************************************************************************/
@@ -191,3 +206,4 @@
   #error "This software is supported with Arduino IDE starting from 1.6.10 and ESP8266 Release 2.3.0"
 #endif
 
+#endif  // _USER_CONFIG_H_

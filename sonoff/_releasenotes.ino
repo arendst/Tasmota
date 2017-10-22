@@ -1,4 +1,143 @@
-/* 5.6.1 20170818
+/* 5.8.0m
+ * Rewrite code (partly) using Google C++ Style Guide (https://google.github.io/styleguide/cppguide.html)
+ * Allow empty MqttHost name by using option 0
+ * Allow Mqtt server mDNS lookup only when MqttHost name is empty (#1026)
+ * Change Ws2812 clock with more flexible version (#1019)
+ * Add German language file (#1022)
+ * Support connecting to MQTT brokers without userid and/or password (#1023)
+ * Add commands PwmRange 1,255..1023 and PwmFrequency 1,100..4000 (#1025)
+ *
+ * 5.8.0l
+ * Update HTML/CSS to enable nicer form field entry
+ * Fix inverted relay status after restart or power on as regression from 5.8.0d (#909)
+ * Add send protocol Panasonic to IRsend (#1014)
+ * Fix relay power control when light power control is also configured as regression from 5.8.0 (#1016)
+ *
+ * 5.8.0k
+ * Add support for up to 8 relays (#995)
+ * Fix Blocked Loop when erasing large flash using command reset 2 (#1002)
+ * Add retain to ENERGY messages controlled by command SensorRetain (#1013)
+ *
+ * 5.8.0j
+ * Set default altitude to 0 to be used with pressure sensors
+ * Document flash settings area for future use
+ * Prepare for 32-bit power control (#995)
+ * Introduce sonoff.h master header
+ * Fix TLS MQTT SSL fingerprint test (#808, #970)
+ * Fix pressure calculation for some BMP versions regression introduced with version 5.8.0i (#974)
+ * Fix Domoticz Dimmer set to same level not powering on (#945)
+ *
+ * 5.8.0i
+ * Add Domoticz counter sensor to IrReceive representing Received IR Protocol and Data
+ * Fix Southern Hemisphere TIME_STD/TIME_DST (#968)
+ * Add Sea level pressure calculation (#974)
+ * Fix virtual relay status message used with Color/Dimmer control (#989)
+ * Fix command IRSend and IRHvac case sensitive parameter regression introduced with version 5.8.0 (#993)
+ *
+ * 5.8.0h
+ * Rename command IRRemote to IRSend (#956)
+ * Add IR Receiver support. Disable in user_config.h (#956)
+ * Change default PWM assignment for Witty Cloud to support optional Color/Dimmer control (#976)
+ *   GPIO12 (Green) from GPIO_PWM4 to GPIO_PWM2
+ *   GPIO13 (Blue)  from GPIO_PWM5 to GPIO_PWM3
+ *   GPIO15 (Red)   from GPIO_PWM3 to GPIO_PWM1
+ *
+ * 5.8.0g
+ * Fix inverted PWM index (#960)
+ * Fix some PWM related issues (#967)
+ * Fix timezone range from -12/12 to -13/13 (#968)
+ *
+ * 5.8.0f
+ * Set all saved power settings to Off when SetOption0 (SaveState) = 0 (#955)
+ * Allow PWM initialization after restart (#955)
+ * Add support for inverted PWM (#960)
+ *
+ * 5.8.0e
+ * Add Domoticz counter sensor to Sonoff Bridge representing Received RF code (#943)
+ * Add support for Luani HVIO board (https://luani.de/projekte/esp8266-hvio/) (#953)
+ *
+ * 5.8.0d
+ * Remove previous GPIO configuration when another module is selected
+ * Fix inverted relay power on state (#909)
+ * Change default PWM assignments for H801 RGB(CW) led controller to support optional Color/Dimmer control
+ *   GPIO04 (W2)    from GPIO_PWM2 to GPIO_USER to be user configurable for GPIO_PWM5 (second White - Warm if W1 is Cold)
+ *   GPIO12 (Blue)  GPIO_PWM3 no change
+ *   GPIO13 (Green) from GPIO_PWM4 to GPIO_PWM2
+ *   GPIO14 (W1)    from GPIO_PWM1 to GPIO_USER to be user configurable for GPIO_PWM4 (first White - Cold or Warm)
+ *   GPIO15 (Red)   from GPIO_PWM5 to GPIO_PWM1
+ * Change default PWM assignments for MagicHome RGB(W) led controller to support optional Color/Dimmer control
+ *   GPIO05 (Green) from GPIO_PWM4 to GPIO_PWM2
+ *   GPIO12 (Blue)  from GPIO_PWM5 to GPIO_PWM3
+ *   GPIO13 (White) GPIO_USER to be user configurable for GPIO_PWM4 (White - Cold or Warm)
+ *   GPIO14 (Red)   from GPIO_PWM3 to GPIO_PWM1
+ * Add command SetOption15 0 (default) for command PWM control or SetOption15 1 for commands Color/Dimmer control to PWM RGB(CW) leds (#941)
+ *
+ * 5.8.0c
+ * Add warning to webpage when USE_MINIMAL is selected (#929)
+ * Fix compile error when DOMOTICZ_UPDATE_TIMER is not defined (#930)
+ * Fix alignment of web page items in some browsers (#935)
+ * Add smoother movement of hour hand in WS2812 led clock (#936)
+ * Add support for Magic Home RGBW Led controller (#940)
+ *
+ * 5.8.0b
+ * Fix command FullTopic entry when using serial or console interface
+ * Fix possible UDP syslog blocking
+ * Add debug information to MQTT subscribe
+ * Add Domoticz sensors for Voltage and Current (#903)
+ *
+ * 5.8.0a
+ * Add translations to I2Cscan
+ * Add translation to BH1750 unit lx
+ * Set default WS2812 pixel count to WS2812_LEDS
+ * Fix command GPIOx JSON response (#897)
+ *
+ * 5.8.0 20170918
+ * Remove the need for NeoPixelBus library for Hue support
+ * Consolidate WS2812 into Sonoff Led for flexible future led strip library changes
+ * Invert WS2812 fade speed to align with Sonoff led (Speed 1 = fast, Speed 8 = slow)
+ * Remove upper case MQTT receive buffer
+ * Reduce code and string length for output of commands Modules and GPIOs
+ * Add Sonoff SC debug information
+ * Change syslog service
+ * Removed webserver syslog disable as now no longer needed
+ * Increased default MQTT message size from 368 to 405 bytes while keeping MQTT_MAX_PACKET_SIZE = 512 (because we can)
+ * Fix MQTT Offline or Remove MQTT retained topic code
+ * Fix Domoticz loop when Emulation is selected
+ * Add blink to WS2812 and Sonoff Led (#643)
+ * Add option WIFI_WAIT (5) to command WifiConfig to allow connection retry to same AP without restart or update flash (#772, #869)
+ * Add support for Witty Cloud (#794)
+ * Add GPIO14 to Sonoff Dual (#797, #839)
+ * Add support for Yunshan Wifi Relay (#802)
+ * Add GPIO16 input pulldown (#827)
+ * Add timeout to DHT and DS18B20 sensors (#852)
+ * Fix watchdog timeout caused by lack of stack space by moving to heap (#853)
+ * Allow LogPort and MqttPort up to 65535 and add LogPort tot Status 3 (#859)
+ * Allow command SwitchTopic in group mode (#861)
+ * Allow command SwitchMode if no switches are defined (#861)
+ * Add optional dimmer parameter to command Wakeup for WS2812, AiLight, Sonoff B1, Led and BN-SZ01 (#867)
+ * Fix basic On, Off, Toggle, Blink and BlinkOff commands when other language is selected (#874)
+ *
+ * 5.7.1 20170909
+ * Remove leading spaces from MQTT data
+ * Fix webconsole special character entry
+ * Allow # as prefix for color value
+ * Fix Alexa detection and Hue App Update Request (#698, #854)
+ *
+ * 5.7.0 20170907
+ * Shrink module configuration webpage
+ * Fix settings order during startup to allow for displaying debug messages
+ * Fix some string length issues
+ * Add more string length tests by using strncpy
+ * Add Ai-Thinker RGBW led (AiLight)
+ * Add Power check and add PulseTime to power check at startup (#526)
+ * Add Supla Espablo support (#755)
+ * Add more precision to Sonoff Pow period and power results using command WattRes 0|1 (#759)
+ * Add basic internationalization and localization (#763)
+ * Add more Sonoff Pow range checking (#772)
+ * Fix invalid JSON (#786, #822)
+ * Add duplicate check to received RF signal within 2 seconds for Sonoff Bridge (#810)
+ *
+ * 5.6.1 20170818
  * Change module list order in webpage
  * Fix Sonoff T1 1CH and 2CH configuration (#751)
  *
@@ -53,7 +192,7 @@
  * Fix button 1 double press behaviour on multi relay devices
  * Add support for Hua Fan Smart Socket (#479)
  * Add support for Sonoff 4ch Pro (#565)
- * Add command SetOption13 1 to allow immediate action on single button press 
+ * Add command SetOption13 1 to allow immediate action on single button press
  *   (disables multipress, hold and unrestricted commands) (#587)
  *
  * 5.3.0 20170715
@@ -84,7 +223,7 @@
  *
  * 5.2.1 20170622
  * Fix Restore Configuration in case of lower version
- * Revert auto configuration upgrade allowing easy upgrade which was removed in version 5.2.0 
+ * Revert auto configuration upgrade allowing easy upgrade which was removed in version 5.2.0
  * Fix config auto upgrade from versions below version 4.1.1 (#530)
  *
  * 5.2.0 20170619
@@ -153,7 +292,7 @@
  * Add command MqttRetry <seconds> to change default MQTT reconnect retry timer from minimal 10 seconds (#429)
  *
  * 5.0.5 20170508
- * Add command FullTopic with tokens %topic% (replaced by command Topic value) and 
+ * Add command FullTopic with tokens %topic% (replaced by command Topic value) and
  *  %prefix% (replaced by command Prefix<x> values) for more flexible topic definitions (#244)
  *  See wiki > MQTT Features https://github.com/arendst/Sonoff-Tasmota/wiki/MQTT-Features for more information
  *
@@ -228,7 +367,7 @@
  * Remove restart after IPAddress changes (#292)
  * Add support for MAX31850 in xsns_ds18x20.ino (#295)
  * Fix possible uptime update misses (#302)
- * 
+ *
  * 4.1.0 20170325
  * Change static IP addresses in user_config.h from list (using commas) to string (using dots)
  * Unify display result of commands Modules, Module and Gpios
@@ -327,7 +466,7 @@
  * 3.9.20 20170221
  * Add minimal basic authentication to Web Admin mode (#87)
  * Fix Hue and add HSB support (#89)
- * 
+ *
  * 3.9.19 20170219
  * Sonoff Led: Made GPIO04, 05 and 15 available for user
  * Sonoff Led: Add commands Fade, Speed, WakupDuration, Wakeup and LedTable
@@ -337,7 +476,7 @@
  * Fix Sonoff Led dimmer range (#16)
  * Change Sonoff Led command Dimmer to act on both cold and warm color
  * Add Sonoff Led command Color CCWW where CCWW are hexadecimal values fro 00 - FF
- * Reduce Sonoff Led flickering by disabling interrupts during flash save and disabling 
+ * Reduce Sonoff Led flickering by disabling interrupts during flash save and disabling
  *   Led during OTA upgrade and Web upload (#16)
  *
  * 3.9.17 20170217
@@ -408,7 +547,7 @@
  *
  * 3.9.3 20170127
  * Add confirmation before Restart via webpage
- * Expand Domoticz Configuration webpage with Key, Switch and Sensor Index and 
+ * Expand Domoticz Configuration webpage with Key, Switch and Sensor Index and
  *   add commands DomoticzSwitchIdx and DomoticzSensorIdx (#86) (#174) (#219)
  * Fix default DHT11 sensor driver selection
  * Fix LedPower status after button press (#279)
@@ -471,7 +610,7 @@
  * Add friendlyname to webpage replacing former hostname
  *
  * 3.1.15 20170108
- * Fix Domoticz send key regression with Toggle command  
+ * Fix Domoticz send key regression with Toggle command
  *
  * 3.1.14 20170107
  * Add support for command TOGGLE (define MQTT_CMND_TOGGLE) when ButtonTopic is in use and not equal to Topic (#207)
@@ -888,7 +1027,7 @@
  * Add reset 2 option erasing flash
  * Add status 5 option displaying network info
  * Add syslog check for Wifi connection
- * Resize mqtt_publish log array
+ * Resize MqttPublish log array
  * Change Wifi smartconfig active from 100 to 60 seconds
  * Update Wifi initialization
  *

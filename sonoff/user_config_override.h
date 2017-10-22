@@ -17,9 +17,12 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#ifndef _USER_CONFIG_OVERRIDE_H_
+#define _USER_CONFIG_OVERRIDE_H_
+
 /*****************************************************************************************************\
  * ATTENTION: - Changes to most PARAMETER defines will only override flash settings if you change
- *              define CFG_HOLDER. 
+ *              define CFG_HOLDER.
  *            - Expect compiler warnings when no ifdef/undef/endif sequence is used.
  *            - You still need to update user_config.h for major defines MODULE and USE_MQTT_TLS.
  *            - Changing MODULE defines are not being tested for validity as they are in user_config.h.
@@ -38,3 +41,4 @@
 //#endif
 //#define STA_SSID1              "yourssid1"
 
+#endif  // _USER_CONFIG_OVERRIDE_H_
