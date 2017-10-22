@@ -188,6 +188,7 @@ enum SupportedModules {
   SONOFF_T12,
   SONOFF_T13,
   SUPLA1,
+  TASMOTA_RLPB,
   WITTY,
   YUNSHAN,
   MAGICHOME,
@@ -236,6 +237,7 @@ const uint8_t kNiceList[MAXMODULE] PROGMEM = {
   ELECTRODRAGON,
   EXS_RELAY,
   SUPLA1,
+  TASMOTA_RLPB,
   LUANIHVIO,
   YUNSHAN,
   WION,
@@ -661,6 +663,22 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      0,
      GPIO_LED1,        // GPIO16 Led (1 = On, 0 = Off)
      GPIO_ADC0         // ADC0 A0 Analog input
+  },
+    { "TasSupla-RLPB",   // RL_PB_TASMOTA hardware (ESP8266)
+
+     0,                 // GPIO00 Flash jumper
+     0,                // GPIO01 Serial RXD and Optional sensor
+     GPIO_DSB,         // GPIO02 DS18B20 sensor
+     0,                // GPIO03 Serial TXD and Optional sensor
+     GPIO_USER,        // GPIO04 Button 1
+     GPIO_REL1,        // GPIO05 Relay 1 (0 = Off, 1 = On)
+     0, 0, 0, 0, 0, 0, // Flash connection
+     GPIO_USER,        // GPIO12 Optional sensor Switch 2
+     GPIO_REL2,        // GPIO13 Relay 2 (0 = Off, 1 = On)
+     GPIO_USER,        // GPIO12 Optional sensor Switch 1
+     0,                // GPIO15 D8
+     GPIO_LED1,        // GPIO16 Led (1 = On, 0 = Off)
+     GPIO_ADC0         // ADC0 A0 Light sensor / Requires USE_ADC_VCC in user_config.h to be disabled
   },
   { "Witty Cloud",     // Witty Cloud Dev Board (ESP8266) - https://www.aliexpress.com/item/ESP8266-serial-WIFI-Witty-cloud-Development-Board-ESP-12F-module-MINI-nodemcu/32643464555.html
      GPIO_USER,        // GPIO00 D3 flash push button on interface board
