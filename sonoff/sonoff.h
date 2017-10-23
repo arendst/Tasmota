@@ -105,5 +105,7 @@ enum LedStateOptions {LED_OFF, LED_POWER, LED_MQTTSUB, LED_POWER_MQTTSUB, LED_MQ
 enum EmulationOptions {EMUL_NONE, EMUL_WEMO, EMUL_HUE, EMUL_MAX};
 enum ButtonStates {PRESSED, NOT_PRESSED};
 enum SettingsParmaIndex {P_HOLD_TIME, P_MAX_POWER_RETRY, P_MAX_PARAM8};
+enum Ws2812ClockIndex {WS_SECOND, WS_MINUTE, WS_HOUR};
+enum Ws2812Color {WS_RED, WS_GREEN, WS_BLUE};
 
 #endif  // _SONOFF_H_

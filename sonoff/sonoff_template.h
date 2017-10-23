@@ -192,6 +192,7 @@ enum SupportedModules {
   YUNSHAN,
   MAGICHOME,
   LUANIHVIO,
+  KMC_70011,
   MAXMODULE };
 
 /********************************************************************************************/
@@ -242,6 +243,7 @@ const uint8_t kNiceList[MAXMODULE] PROGMEM = {
   H801,
   MAGICHOME,
   HUAFAN_SS,
+  KMC_70011,
   AILIGHT,
   WEMOS,
   WITTY
@@ -714,6 +716,17 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_LED1,        // GPIO15 Led (1 = On, 0 = Off)
      0,
      GPIO_ADC0         // ADC0 A0 Analog input
+  },
+  { "KMC 70011",       // KMC 70011 (https://www.amazon.com/KMC-Timing-Monitoring-Network-125V-240V/dp/B06XRX2GTQ)
+     GPIO_KEY1,        // GPIO00 Button
+     0, 0, 0,
+     GPIO_HLW_CF,      // GPIO04 HLW8012 CF
+     GPIO_HLW_CF1,     // GPIO05 HLW8012 CF1
+     0, 0, 0, 0, 0, 0, // Flash connection
+     GPIO_HLW_SEL,     // GPIO12 HLW8012 SEL
+     GPIO_LED1_INV,    // GPIO13 Green Led
+     GPIO_REL1,        // GPIO14 Relay
+     0, 0, 0
   }
 };
 

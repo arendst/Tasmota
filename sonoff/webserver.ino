@@ -140,10 +140,19 @@ const char HTTP_SCRIPT_MODULE1[] PROGMEM =
   "function sl(){"
     "var o0=\"";
 const char HTTP_SCRIPT_MODULE2[] PROGMEM =
-    "}1'%d'>%02d %s}2";     // "}1" and "}2" means do not use "}" in Module name and Sensor name
+    "}1'%d'>%02d %s}2";     // "}1" and "}2" means do not use "}x" in Module name and Sensor name
 const char HTTP_SCRIPT_MODULE3[] PROGMEM =
     "\";"
     "os=o0.replace(/}1/g,\"<option value=\").replace(/}2/g,\"</option>\");";
+const char HTTP_SCRIPT_INFO_BEGIN[] PROGMEM =
+  "function i(){"
+    "var s,o=\"";
+const char HTTP_SCRIPT_INFO_END[] PROGMEM =
+    "\";"                   // "}1" and "}2" means do not use "}x" in Information text
+    "s=o.replace(/}1/g,\"</td></tr><tr><th>\").replace(/}2/g,\"</th><td>\");"
+    "document.getElementById('i').innerHTML=s;"
+  "}"
+  "</script>";
 const char HTTP_MSG_SLIDER1[] PROGMEM =
   "<div><span class='p'>" D_COLDLIGHT "</span><span class='q'>" D_WARMLIGHT "</span></div>"
   "<div><input type='range' min='153' max='500' value='%d' onchange='lc(value)'></div>";
@@ -1045,7 +1054,10 @@ void HandleSaveSettings()
     strlcpy(Settings.syslog_host, (!strlen(WebServer->arg("lh").c_str())) ? SYS_LOG_HOST : WebServer->arg("lh").c_str(), sizeof(Settings.syslog_host));
     Settings.syslog_port = (!strlen(WebServer->arg("lp").c_str())) ? SYS_LOG_PORT : atoi(WebServer->arg("lp").c_str());
     Settings.tele_period = (!strlen(WebServer->arg("lt").c_str())) ? TELE_PERIOD : atoi(WebServer->arg("lt").c_str());
-    snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_LOG D_CMND_SERIALLOG " %d, " D_CMND_WEBLOG " %d, " D_CMND_SYSLOG " %d, " D_CMND_LOGHOST " %s, " D_CMND_LOGPORT " %d, " D_CMND_TELEPERIOD " %d"),
+    if ((Settings.tele_period > 0) && (Settings.tele_period < 10)) {
+      Settings.tele_period = 10;   // Do not allow periods < 10 seconds
+    }
+snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_LOG D_CMND_SERIALLOG " %d, " D_CMND_WEBLOG " %d, " D_CMND_SYSLOG " %d, " D_CMND_LOGHOST " %s, " D_CMND_LOGPORT " %d, " D_CMND_TELEPERIOD " %d"),
       Settings.seriallog_level, Settings.weblog_level, Settings.syslog_level, Settings.syslog_host, Settings.syslog_port, Settings.tele_period);
     AddLog(LOG_LEVEL_INFO);
     break;
@@ -1507,95 +1519,104 @@ void HandleInformation()
 
   String page = FPSTR(HTTP_HEAD);
   page.replace(F("{v}"), FPSTR(S_INFORMATION));
-//  page += F("<fieldset><legend><b>&nbsp;Information&nbsp;</b></legend>");
+  //  page += F("<fieldset><legend><b>&nbsp;Information&nbsp;</b></legend>");
+
   page += F("<style>td{padding:0px 5px;}</style>");
-  page += F("<table style'width:100%;'>");
-  page += F("<tr><th>" D_PROGRAM_VERSION "</th><td>"); page += version; page += F("</td></tr>");
-  page += F("<tr><th>" D_BUILD_DATE_AND_TIME "</th><td>"); page += GetBuildDateAndTime(); page += F("</td></tr>");
-  page += F("<tr><th>" D_CORE_AND_SDK_VERSION "</th><td>"); page += ESP.getCoreVersion(); page += F("/"); page += String(ESP.getSdkVersion()); page += F("</td></tr>");
-  page += F("<tr><th>" D_UPTIME "</th><td>"); page += String(uptime); page += F(" Hours</td></tr>");
+  page += F("<div id='i' name='i'></div>");
+
+  // Save 1k of code space replacing table html with javascript replace codes
+  // }1 = </td></tr><tr><th>
+  // }2 = </th><td>
+  String func = FPSTR(HTTP_SCRIPT_INFO_BEGIN);
+  func += F("<table style'width:100%;'><tr><th>");
+  func += F(D_PROGRAM_VERSION "}2"); func += version;
+  func += F("}1" D_BUILD_DATE_AND_TIME "}2"); func += GetBuildDateAndTime();
+  func += F("}1" D_CORE_AND_SDK_VERSION "}2"); func += ESP.getCoreVersion(); func += F("/"); func += String(ESP.getSdkVersion());
+  func += F("}1" D_UPTIME "}2"); func += String(uptime); func += F(" Hours");
   snprintf_P(stopic, sizeof(stopic), PSTR(" at %X"), GetSettingsAddress());
-  page += F("<tr><th>" D_FLASH_WRITE_COUNT "</th><td>"); page += String(Settings.save_flag); page += stopic; page += F("</td></tr>");
-  page += F("<tr><th>" D_BOOT_COUNT "</th><td>"); page += String(Settings.bootcount); page += F("</td></tr>");
-  page += F("<tr><th>" D_RESTART_REASON "</th><td>"); page += GetResetReason(); page += F("</td></tr>");
+  func += F("}1" D_FLASH_WRITE_COUNT "}2"); func += String(Settings.save_flag); func += stopic;
+  func += F("}1" D_BOOT_COUNT "}2"); func += String(Settings.bootcount);
+  func += F("}1" D_RESTART_REASON "}2"); func += GetResetReason();
   uint8_t maxfn = (devices_present > MAX_FRIENDLYNAMES) ? MAX_FRIENDLYNAMES : devices_present;
   for (byte i = 0; i < maxfn; i++) {
-    page += F("<tr><th>" D_FRIENDLY_NAME " ");
-    page += i +1;
-    page += F("</th><td>"); page += Settings.friendlyname[i]; page += F("</td></tr>");
+    func += F("}1" D_FRIENDLY_NAME " "); func += i +1; func += F("}2"); func += Settings.friendlyname[i];
   }
-  page += F("<tr><td>&nbsp;</td></tr>");
-  page += F("<tr><th>" D_AP); page += String(Settings.sta_active +1);
-    page += F(" " D_SSID " (" D_RSSI ")</th><td>"); page += Settings.sta_ssid[Settings.sta_active]; page += F(" ("); page += WifiGetRssiAsQuality(WiFi.RSSI()); page += F("%)</td></tr>");
-  page += F("<tr><th>" D_HOSTNAME "</th><td>"); page += my_hostname; page += F("</td></tr>");
+
+  func += F("}1}2&nbsp;");  // Empty line
+  func += F("}1" D_AP); func += String(Settings.sta_active +1);
+    func += F(" " D_SSID " (" D_RSSI ")}2"); func += Settings.sta_ssid[Settings.sta_active]; func += F(" ("); func += WifiGetRssiAsQuality(WiFi.RSSI()); func += F("%)");
+  func += F("}1" D_HOSTNAME "}2"); func += my_hostname;
   if (static_cast<uint32_t>(WiFi.localIP()) != 0) {
-    page += F("<tr><th>" D_IP_ADDRESS "</th><td>"); page += WiFi.localIP().toString(); page += F("</td></tr>");
-    page += F("<tr><th>" D_GATEWAY "</th><td>"); page += IPAddress(Settings.ip_address[1]).toString(); page += F("</td></tr>");
-    page += F("<tr><th>" D_SUBNET_MASK "</th><td>"); page += IPAddress(Settings.ip_address[2]).toString(); page += F("</td></tr>");
-    page += F("<tr><th>" D_DNS_SERVER "</th><td>"); page += IPAddress(Settings.ip_address[3]).toString(); page += F("</td></tr>");
-    page += F("<tr><th>" D_MAC_ADDRESS "</th><td>"); page += WiFi.macAddress(); page += F("</td></tr>");
+    func += F("}1" D_IP_ADDRESS "}2"); func += WiFi.localIP().toString();
+    func += F("}1" D_GATEWAY "}2"); func += IPAddress(Settings.ip_address[1]).toString();
+    func += F("}1" D_SUBNET_MASK "}2"); func += IPAddress(Settings.ip_address[2]).toString();
+    func += F("}1" D_DNS_SERVER "}2"); func += IPAddress(Settings.ip_address[3]).toString();
+    func += F("}1" D_MAC_ADDRESS "}2"); func += WiFi.macAddress();
   }
   if (static_cast<uint32_t>(WiFi.softAPIP()) != 0) {
-    page += F("<tr><th>" D_AP " " D_IP_ADDRESS "</th><td>"); page += WiFi.softAPIP().toString(); page += F("</td></tr>");
-    page += F("<tr><th>" D_AP " " D_GATEWAY "</th><td>"); page += WiFi.softAPIP().toString(); page += F("</td></tr>");
-    page += F("<tr><th>" D_AP " " D_MAC_ADDRESS "</th><td>"); page += WiFi.softAPmacAddress(); page += F("</td></tr>");
+    func += F("}1" D_AP " " D_IP_ADDRESS "}2"); func += WiFi.softAPIP().toString();
+    func += F("}1" D_AP " " D_GATEWAY "}2"); func += WiFi.softAPIP().toString();
+    func += F("}1" D_AP " " D_MAC_ADDRESS "}2"); func += WiFi.softAPmacAddress();
   }
-  page += F("<tr><td>&nbsp;</td></tr>");
+
+  func += F("}1}2&nbsp;");  // Empty line
   if (Settings.flag.mqtt_enabled) {
-    page += F("<tr><th>" D_MQTT_HOST "</th><td>"); page += Settings.mqtt_host; page += F("</td></tr>");
-    page += F("<tr><th>" D_MQTT_PORT "</th><td>"); page += String(Settings.mqtt_port); page += F("</td></tr>");
-    page += F("<tr><th>" D_MQTT_CLIENT " &<br/>&nbsp;" D_FALLBACK_TOPIC "</th><td>"); page += mqtt_client; page += F("</td></tr>");
-    page += F("<tr><th>" D_MQTT_USER "</th><td>"); page += Settings.mqtt_user; page += F("</td></tr>");
-    page += F("<tr><th>" D_MQTT_TOPIC "</th><td>"); page += Settings.mqtt_topic; page += F("</td></tr>");
-    page += F("<tr><th>" D_MQTT_GROUP_TOPIC "</th><td>"); page += Settings.mqtt_grptopic; page += F("</td></tr>");
+    func += F("}1" D_MQTT_HOST "}2"); func += Settings.mqtt_host;
+    func += F("}1" D_MQTT_PORT "}2"); func += String(Settings.mqtt_port);
+    func += F("}1" D_MQTT_CLIENT " &<br/>&nbsp;" D_FALLBACK_TOPIC "}2"); func += mqtt_client;
+    func += F("}1" D_MQTT_USER "}2"); func += Settings.mqtt_user;
+    func += F("}1" D_MQTT_TOPIC "}2"); func += Settings.mqtt_topic;
+    func += F("}1" D_MQTT_GROUP_TOPIC "}2"); func += Settings.mqtt_grptopic;
     GetTopic_P(stopic, 0, Settings.mqtt_topic, "");
-    page += F("<tr><th>" D_MQTT_FULL_TOPIC "</th><td>"); page += stopic; page += F("</td></tr>");
+    func += F("}1" D_MQTT_FULL_TOPIC "}2"); func += stopic;
 
   } else {
-    page += F("<tr><th>" D_MQTT "</th><td>" D_DISABLED "</td></tr>");
+    func += F("}1" D_MQTT "}2" D_DISABLED);
   }
-  page += F("<tr><td>&nbsp;</td></tr>");
-  page += F("<tr><th>" D_EMULATION "</th><td>");
+
+  func += F("}1}2&nbsp;");  // Empty line
+  func += F("}1" D_EMULATION "}2");
 #ifdef USE_EMULATION
   if (EMUL_WEMO == Settings.flag.emulation) {
-    page += F(D_BELKIN_WEMO);
+    func += F(D_BELKIN_WEMO);
   }
   else if (EMUL_HUE == Settings.flag.emulation) {
-    page += F(D_HUE_BRIDGE);
+    func += F(D_HUE_BRIDGE);
   }
   else {
-    page += F(D_NONE);
+    func += F(D_NONE);
   }
 #else
-  page += F(D_DISABLED);
+  func += F(D_DISABLED);
 #endif // USE_EMULATION
-  page += F("</td></tr>");
 
-  page += F("<tr><th>" D_MDNS_DISCOVERY "</th><td>");
+  func += F("}1" D_MDNS_DISCOVERY "}2");
 #ifdef USE_DISCOVERY
-  page += F(D_ENABLED);
-  page += F("</td></tr>");
-  page += F("<tr><th>" D_MDNS_ADVERTISE "</th><td>");
+  func += F(D_ENABLED);
+  func += F("}1" D_MDNS_ADVERTISE "}2");
 #ifdef WEBSERVER_ADVERTISE
-  page += F(D_WEB_SERVER);
+  func += F(D_WEB_SERVER);
 #else
-  page += F(D_DISABLED);
+  func += F(D_DISABLED);
 #endif // WEBSERVER_ADVERTISE
 #else
-  page += F(D_DISABLED);
+  func += F(D_DISABLED);
 #endif // USE_DISCOVERY
-  page += F("</td></tr>");
 
-  page += F("<tr><td>&nbsp;</td></tr>");
-  page += F("<tr><th>" D_ESP_CHIP_ID "</th><td>"); page += String(ESP.getChipId()); page += F("</td></tr>");
-  page += F("<tr><th>" D_FLASH_CHIP_ID "</th><td>"); page += String(ESP.getFlashChipId()); page += F("</td></tr>");
-  page += F("<tr><th>" D_FLASH_CHIP_SIZE "</th><td>"); page += String(ESP.getFlashChipRealSize() / 1024); page += F("kB</td></tr>");
-  page += F("<tr><th>" D_PROGRAM_FLASH_SIZE "</th><td>"); page += String(ESP.getFlashChipSize() / 1024); page += F("kB</td></tr>");
-  page += F("<tr><th>" D_PROGRAM_SIZE "</th><td>"); page += String(ESP.getSketchSize() / 1024); page += F("kB</td></tr>");
-  page += F("<tr><th>" D_FREE_PROGRAM_SPACE "</th><td>"); page += String(ESP.getFreeSketchSpace() / 1024); page += F("kB</td></tr>");
-  page += F("<tr><th>" D_FREE_MEMORY "</th><td>"); page += String(freeMem / 1024); page += F("kB</td></tr>");
-  page += F("</table>");
-//  page += F("</fieldset>");
+  func += F("}1}2&nbsp;");  // Empty line
+  func += F("}1" D_ESP_CHIP_ID "}2"); func += String(ESP.getChipId());
+  func += F("}1" D_FLASH_CHIP_ID "}2"); func += String(ESP.getFlashChipId());
+  func += F("}1" D_FLASH_CHIP_SIZE "}2"); func += String(ESP.getFlashChipRealSize() / 1024); func += F("kB");
+  func += F("}1" D_PROGRAM_FLASH_SIZE "}2"); func += String(ESP.getFlashChipSize() / 1024); func += F("kB");
+  func += F("}1" D_PROGRAM_SIZE "}2"); func += String(ESP.getSketchSize() / 1024); func += F("kB");
+  func += F("}1" D_FREE_PROGRAM_SPACE "}2"); func += String(ESP.getFreeSketchSpace() / 1024); func += F("kB");
+  func += F("}1" D_FREE_MEMORY "}2"); func += String(freeMem / 1024); func += F("kB");
+  func += F("</td></tr></table>");
+  func += FPSTR(HTTP_SCRIPT_INFO_END);
+  page.replace(F("</script>"), func);
+  page.replace(F("<body>"), F("<body onload='i()'>"));
+
+  //  page += F("</fieldset>");
   page += FPSTR(HTTP_BTN_MAIN);
   ShowPage(page);
 }

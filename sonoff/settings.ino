@@ -509,6 +509,9 @@ void SettingsDefaultSet2()
 
   // 5.8.0
   Settings.led_pixels = WS2812_LEDS;
+
+  // 5.8.1
+  SettingsDefaultSet_5_8_1();
 }
 
 /********************************************************************************************/
@@ -524,7 +527,7 @@ void SettingsDefaultSet_3_2_4()
   Settings.ws_fade = 0;
   Settings.ws_speed = 1;
   Settings.ws_scheme = 0;
-  Settings.ws_width = 1;
+  Settings.ex_ws_width = 1;
   Settings.ws_wakeup = 0;
 }
 
@@ -599,6 +602,23 @@ void SettingsDefaultSet_5_0_2()
   Settings.flag.humidity_resolution = HUMIDITY_RESOLUTION;
   Settings.flag.pressure_resolution = PRESSURE_RESOLUTION;
   Settings.flag.energy_resolution = ENERGY_RESOLUTION;
+}
+
+void SettingsDefaultSet_5_8_1()
+{
+//  Settings.flag.ws_clock_reverse = 0;
+  Settings.ws_width[WS_SECOND] = 1;
+  Settings.ws_color[WS_SECOND][WS_RED] = 255;
+  Settings.ws_color[WS_SECOND][WS_GREEN] = 0;
+  Settings.ws_color[WS_SECOND][WS_BLUE] = 255;
+  Settings.ws_width[WS_MINUTE] = 3;
+  Settings.ws_color[WS_MINUTE][WS_RED] = 0;
+  Settings.ws_color[WS_MINUTE][WS_GREEN] = 255;
+  Settings.ws_color[WS_MINUTE][WS_BLUE] = 0;
+  Settings.ws_width[WS_HOUR] = 5;
+  Settings.ws_color[WS_HOUR][WS_RED] = 255;
+  Settings.ws_color[WS_HOUR][WS_GREEN] = 0;
+  Settings.ws_color[WS_HOUR][WS_BLUE] = 0;
 }
 
 /********************************************************************************************/
@@ -723,7 +743,7 @@ void SettingsDelta()
         Settings.led_fade = Settings.ws_fade;
         Settings.led_speed = Settings.ws_speed;
         Settings.led_scheme = Settings.ws_scheme;
-        Settings.led_width = Settings.ws_width;
+        Settings.led_width = Settings.ex_ws_width;
         Settings.led_wakeup = Settings.ws_wakeup;
       } else {
         Settings.led_pixels = WS2812_LEDS;
@@ -748,6 +768,9 @@ void SettingsDelta()
     if (Settings.version < 0x0508000D) {
       Settings.pwm_frequency = PWM_FREQ;
       Settings.pwm_range = PWM_RANGE;
+    }
+    if (Settings.version < 0x0508000E) {
+      SettingsDefaultSet_5_8_1();
     }
 
     Settings.version = VERSION;

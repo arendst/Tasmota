@@ -25,13 +25,13 @@
  * Source: Heiko Krupp and Adafruit Industries
 \*********************************************************************************************/
 
-#define BMP_ADDR 0x77
+#define BMP_ADDR             0x77
 
-#define BMP180_CHIPID 0x55
-#define BMP280_CHIPID 0x58
-#define BME280_CHIPID 0x60
+#define BMP180_CHIPID        0x55
+#define BMP280_CHIPID        0x58
+#define BME280_CHIPID        0x60
 
-#define BMP_REGISTER_CHIPID 0xD0
+#define BMP_REGISTER_CHIPID  0xD0
 
 double bmp_sealevel = 0.0;
 uint8_t bmp_address;
@@ -42,36 +42,36 @@ char bmp_types[7];
  * BMP085 and BME180
 \*********************************************************************************************/
 
-#define BMP180_REG_CONTROL 0xF4
-#define BMP180_REG_RESULT 0xF6
-#define BMP180_TEMPERATURE 0x2E
-#define BMP180_PRESSURE3 0xF4 // Max. oversampling -> OSS = 3
+#define BMP180_REG_CONTROL   0xF4
+#define BMP180_REG_RESULT    0xF6
+#define BMP180_TEMPERATURE   0x2E
+#define BMP180_PRESSURE3     0xF4 // Max. oversampling -> OSS = 3
 
-#define BMP180_AC1 0xAA
-#define BMP180_AC2 0xAC
-#define BMP180_AC3 0xAE
-#define BMP180_AC4 0xB0
-#define BMP180_AC5 0xB2
-#define BMP180_AC6 0xB4
-#define BMP180_VB1 0xB6
-#define BMP180_VB2 0xB8
-#define BMP180_MB 0xBA
-#define BMP180_MC 0xBC
-#define BMP180_MD 0xBE
+#define BMP180_AC1           0xAA
+#define BMP180_AC2           0xAC
+#define BMP180_AC3           0xAE
+#define BMP180_AC4           0xB0
+#define BMP180_AC5           0xB2
+#define BMP180_AC6           0xB4
+#define BMP180_VB1           0xB6
+#define BMP180_VB2           0xB8
+#define BMP180_MB            0xBA
+#define BMP180_MC            0xBC
+#define BMP180_MD            0xBE
 
-#define BMP180_OSS 3
+#define BMP180_OSS           3
 
-int16_t cal_ac1;
-int16_t cal_ac2;
-int16_t cal_ac3;
-int16_t cal_b1;
-int16_t cal_b2;
-int16_t cal_mc;
-int16_t cal_md;
+int16_t  cal_ac1;
+int16_t  cal_ac2;
+int16_t  cal_ac3;
+int16_t  cal_b1;
+int16_t  cal_b2;
+int16_t  cal_mc;
+int16_t  cal_md;
 uint16_t cal_ac4;
 uint16_t cal_ac5;
 uint16_t cal_ac6;
-int32_t bmp180_b5 = 0;
+int32_t  bmp180_b5 = 0;
 
 boolean Bmp180Calibration()
 {
@@ -81,10 +81,10 @@ boolean Bmp180Calibration()
   cal_ac4 = I2cRead16(bmp_address, BMP180_AC4);
   cal_ac5 = I2cRead16(bmp_address, BMP180_AC5);
   cal_ac6 = I2cRead16(bmp_address, BMP180_AC6);
-  cal_b1 = I2cRead16(bmp_address, BMP180_VB1);
-  cal_b2 = I2cRead16(bmp_address, BMP180_VB2);
-  cal_mc = I2cRead16(bmp_address, BMP180_MC);
-  cal_md = I2cRead16(bmp_address, BMP180_MD);
+  cal_b1  = I2cRead16(bmp_address, BMP180_VB1);
+  cal_b2  = I2cRead16(bmp_address, BMP180_VB2);
+  cal_mc  = I2cRead16(bmp_address, BMP180_MC);
+  cal_md  = I2cRead16(bmp_address, BMP180_MD);
 
   // Check for Errors in calibration data. Value never is 0x0000 or 0xFFFF
   if (!cal_ac1 | !cal_ac2 | !cal_ac3 | !cal_ac4 | !cal_ac5 | !cal_ac6 | !cal_b1 | !cal_b2 | !cal_mc | !cal_md) {
@@ -126,7 +126,7 @@ double Bmp180ReadPressure()
   uint8_t xlsb;
 
   I2cWrite8(bmp_address, BMP180_REG_CONTROL, BMP180_PRESSURE3); // Highest resolution
-  delay(2 + (4 << BMP180_OSS));                              // 26ms conversion time at ultra high resolution
+  delay(2 + (4 << BMP180_OSS));                                 // 26ms conversion time at ultra high resolution
   uint32_t up = I2cRead24(bmp_address, BMP180_REG_RESULT);
   up >>= (8 - BMP180_OSS);
 
@@ -154,7 +154,7 @@ double Bmp180ReadPressure()
   x2 = (-7357 * p) >> 16;
 
   p += ((x1 + x2 + (int32_t)3791) >> 4);
-  return p / 100.0; // convert to mbar
+  return p / 100.0;  // convert to mbar
 }
 
 /*********************************************************************************************\
@@ -163,51 +163,51 @@ double Bmp180ReadPressure()
  * Programmer : BMP280/BME280 Datasheet and Adafruit with changes by Theo Arends
 \*********************************************************************************************/
 
-#define BME280_REGISTER_CONTROLHUMID 0xF2
-#define BME280_REGISTER_CONTROL 0xF4
-#define BME280_REGISTER_PRESSUREDATA 0xF7
-#define BME280_REGISTER_TEMPDATA 0xFA
-#define BME280_REGISTER_HUMIDDATA 0xFD
+#define BME280_REGISTER_CONTROLHUMID  0xF2
+#define BME280_REGISTER_CONTROL       0xF4
+#define BME280_REGISTER_PRESSUREDATA  0xF7
+#define BME280_REGISTER_TEMPDATA      0xFA
+#define BME280_REGISTER_HUMIDDATA     0xFD
 
-#define BME280_REGISTER_DIG_T1 0x88
-#define BME280_REGISTER_DIG_T2 0x8A
-#define BME280_REGISTER_DIG_T3 0x8C
-#define BME280_REGISTER_DIG_P1 0x8E
-#define BME280_REGISTER_DIG_P2 0x90
-#define BME280_REGISTER_DIG_P3 0x92
-#define BME280_REGISTER_DIG_P4 0x94
-#define BME280_REGISTER_DIG_P5 0x96
-#define BME280_REGISTER_DIG_P6 0x98
-#define BME280_REGISTER_DIG_P7 0x9A
-#define BME280_REGISTER_DIG_P8 0x9C
-#define BME280_REGISTER_DIG_P9 0x9E
-#define BME280_REGISTER_DIG_H1 0xA1
-#define BME280_REGISTER_DIG_H2 0xE1
-#define BME280_REGISTER_DIG_H3 0xE3
-#define BME280_REGISTER_DIG_H4 0xE4
-#define BME280_REGISTER_DIG_H5 0xE5
-#define BME280_REGISTER_DIG_H6 0xE7
+#define BME280_REGISTER_DIG_T1        0x88
+#define BME280_REGISTER_DIG_T2        0x8A
+#define BME280_REGISTER_DIG_T3        0x8C
+#define BME280_REGISTER_DIG_P1        0x8E
+#define BME280_REGISTER_DIG_P2        0x90
+#define BME280_REGISTER_DIG_P3        0x92
+#define BME280_REGISTER_DIG_P4        0x94
+#define BME280_REGISTER_DIG_P5        0x96
+#define BME280_REGISTER_DIG_P6        0x98
+#define BME280_REGISTER_DIG_P7        0x9A
+#define BME280_REGISTER_DIG_P8        0x9C
+#define BME280_REGISTER_DIG_P9        0x9E
+#define BME280_REGISTER_DIG_H1        0xA1
+#define BME280_REGISTER_DIG_H2        0xE1
+#define BME280_REGISTER_DIG_H3        0xE3
+#define BME280_REGISTER_DIG_H4        0xE4
+#define BME280_REGISTER_DIG_H5        0xE5
+#define BME280_REGISTER_DIG_H6        0xE7
 
 struct BME280CALIBDATA
 {
   uint16_t dig_T1;
-  int16_t dig_T2;
-  int16_t dig_T3;
+  int16_t  dig_T2;
+  int16_t  dig_T3;
   uint16_t dig_P1;
-  int16_t dig_P2;
-  int16_t dig_P3;
-  int16_t dig_P4;
-  int16_t dig_P5;
-  int16_t dig_P6;
-  int16_t dig_P7;
-  int16_t dig_P8;
-  int16_t dig_P9;
-  uint8_t dig_H1;
-  int16_t dig_H2;
-  uint8_t dig_H3;
-  int16_t dig_H4;
-  int16_t dig_H5;
-  int8_t dig_H6;
+  int16_t  dig_P2;
+  int16_t  dig_P3;
+  int16_t  dig_P4;
+  int16_t  dig_P5;
+  int16_t  dig_P6;
+  int16_t  dig_P7;
+  int16_t  dig_P8;
+  int16_t  dig_P9;
+  uint8_t  dig_H1;
+  int16_t  dig_H2;
+  uint8_t  dig_H3;
+  int16_t  dig_H4;
+  int16_t  dig_H5;
+  int8_t   dig_H6;
 } Bme280CalibrationData;
 
 int32_t t_fine;
@@ -254,8 +254,7 @@ double Bme280ReadTemperature(void)
 
   var1 = ((((adc_T >> 3) - ((int32_t)Bme280CalibrationData.dig_T1 << 1))) * ((int32_t)Bme280CalibrationData.dig_T2)) >> 11;
   var2 = (((((adc_T >> 4) - ((int32_t)Bme280CalibrationData.dig_T1)) * ((adc_T >> 4) - ((int32_t)Bme280CalibrationData.dig_T1))) >> 12) *
-          ((int32_t)Bme280CalibrationData.dig_T3)) >>
-         14;
+    ((int32_t)Bme280CalibrationData.dig_T3)) >> 14;
   t_fine = var1 + var2;
   double T = (t_fine * 5 + 128) >> 8;
   return T / 100.0;
@@ -302,19 +301,12 @@ double Bme280ReadHumidity(void)
   v_x1_u32r = (t_fine - ((int32_t)76800));
 
   v_x1_u32r = (((((adc_H << 14) - (((int32_t)Bme280CalibrationData.dig_H4) << 20) -
-                (((int32_t)Bme280CalibrationData.dig_H5) * v_x1_u32r)) +
-                 ((int32_t)16384)) >>
-                15) *
-               (((((((v_x1_u32r * ((int32_t)Bme280CalibrationData.dig_H6)) >> 10) *
-                    (((v_x1_u32r * ((int32_t)Bme280CalibrationData.dig_H3)) >> 11) + ((int32_t)32768))) >>
-                   10) +
-                  ((int32_t)2097152)) *
-                     ((int32_t)Bme280CalibrationData.dig_H2) +
-                 8192) >>
-                14));
+    (((int32_t)Bme280CalibrationData.dig_H5) * v_x1_u32r)) + ((int32_t)16384)) >> 15) *
+    (((((((v_x1_u32r * ((int32_t)Bme280CalibrationData.dig_H6)) >> 10) *
+    (((v_x1_u32r * ((int32_t)Bme280CalibrationData.dig_H3)) >> 11) + ((int32_t)32768))) >> 10) +
+    ((int32_t)2097152)) * ((int32_t)Bme280CalibrationData.dig_H2) + 8192) >> 14));
   v_x1_u32r = (v_x1_u32r - (((((v_x1_u32r >> 15) * (v_x1_u32r >> 15)) >> 7) *
-                             ((int32_t)Bme280CalibrationData.dig_H1)) >>
-                            4));
+    ((int32_t)Bme280CalibrationData.dig_H1)) >> 4));
   v_x1_u32r = (v_x1_u32r < 0) ? 0 : v_x1_u32r;
   v_x1_u32r = (v_x1_u32r > 419430400) ? 419430400 : v_x1_u32r;
   double h = (v_x1_u32r >> 12);
@@ -359,7 +351,7 @@ double BmpReadPressure(void)
     pressure = Bme280ReadPressure();
   }
   if (pressure != 0.0) {
-//    bmp_sealevel = pressure / pow(1.0 - ((float)Settings.altitude / 44330.0), 5.255);  // Adds 8k to the code
+//    bmp_sealevel = pressure / pow(1.0 - ((float)Settings.altitude / 44330.0), 5.255);  // pow adds 8k to the code
     bmp_sealevel = (pressure / FastPrecisePow(1.0 - ((float)Settings.altitude / 44330.0), 5.255)) - 21.6;
   }
   return pressure;

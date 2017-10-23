@@ -129,15 +129,15 @@ void Ws2812UpdatePixelColor(int position, struct RgbColor hand_color, uint8_t ha
   strip->SetPixelColor(mod_position, color);
 }
 
-void Ws2812UpdateHand(int position, uint8_t width, struct RgbColor hand_color)
+void Ws2812UpdateHand(int position, uint8_t index)
 {
-  boolean clock_reverse = CLOCK_REVERSE;
-
-  if (clock_reverse) {
+  if (Settings.flag.ws_clock_reverse) {
     position = Settings.led_pixels -position;
   }
+  RgbColor hand_color = RgbColor(Settings.ws_color[index][WS_RED], Settings.ws_color[index][WS_GREEN], Settings.ws_color[index][WS_BLUE]);
+
   Ws2812UpdatePixelColor(position, hand_color, 0);
-  for (uint8_t h = 1; h <= ((width -1) / 2); h++) {
+  for (uint8_t h = 1; h <= ((Settings.ws_width[index] -1) / 2); h++) {
     Ws2812UpdatePixelColor(position -h, hand_color, h);
     Ws2812UpdatePixelColor(position +h, hand_color, h);
   }
@@ -145,21 +145,11 @@ void Ws2812UpdateHand(int position, uint8_t width, struct RgbColor hand_color)
 
 void Ws2812Clock()
 {
-  RgbColor c;
-
-  uint8_t hand_second_width = CLOCK_SECOND_WIDTH;
-  uint8_t hand_minute_width = CLOCK_MINUTE_WIDTH;
-  uint8_t hand_hour_width = CLOCK_HOUR_WIDTH;
-  RgbColor hand_second_color CLOCK_SECOND_COLOR;
-  RgbColor hand_minute_color CLOCK_MINUTE_COLOR;
-  RgbColor hand_hour_color CLOCK_HOUR_COLOR;
-
   strip->ClearTo(0); // Reset strip
   int clksize = 600 / (int)Settings.led_pixels;
-  Ws2812UpdateHand((RtcTime.second * 10) / clksize, hand_second_width, hand_second_color);
-  Ws2812UpdateHand((RtcTime.minute * 10) / clksize, hand_minute_width, hand_minute_color);
-  Ws2812UpdateHand((RtcTime.hour % 12) * (50 / clksize), hand_hour_width, hand_hour_color);
-
+  Ws2812UpdateHand((RtcTime.second * 10) / clksize, WS_SECOND);
+  Ws2812UpdateHand((RtcTime.minute * 10) / clksize, WS_MINUTE);
+  Ws2812UpdateHand((RtcTime.hour % 12) * (50 / clksize), WS_HOUR);
   Ws2812StripShow();
 }
 
@@ -205,7 +195,7 @@ void Ws2812Gradient(uint8_t schemenr)
   uint8_t repeat = kRepeat[Settings.led_width];  // number of scheme.count per ledcount
   uint16_t range = (uint16_t)ceil((float)Settings.led_pixels / (float)repeat);
   uint16_t gradRange = (uint16_t)ceil((float)range / (float)(scheme.count - 1));
-  uint16_t offset = kSpeed[Settings.led_speed] > 0 ? stripTimerCntr / kSpeed[Settings.led_speed] : 0;
+  uint16_t offset = kSpeed[Settings.led_speed] > 0 ? strip_timer_counter / kSpeed[Settings.led_speed] : 0;
 
   WsColor oldColor, currentColor;
   Ws2812GradientColor(schemenr, &oldColor, range, gradRange, offset);
@@ -216,9 +206,9 @@ void Ws2812Gradient(uint8_t schemenr)
     }
     if (Settings.led_speed > 0) {
       // Blend old and current color based on time for smooth movement.
-      c.R = map(stripTimerCntr % kSpeed[Settings.led_speed], 0, kSpeed[Settings.led_speed], oldColor.red, currentColor.red);
-      c.G = map(stripTimerCntr % kSpeed[Settings.led_speed], 0, kSpeed[Settings.led_speed], oldColor.green, currentColor.green);
-      c.B = map(stripTimerCntr % kSpeed[Settings.led_speed], 0, kSpeed[Settings.led_speed], oldColor.blue, currentColor.blue);
+      c.R = map(strip_timer_counter % kSpeed[Settings.led_speed], 0, kSpeed[Settings.led_speed], oldColor.red, currentColor.red);
+      c.G = map(strip_timer_counter % kSpeed[Settings.led_speed], 0, kSpeed[Settings.led_speed], oldColor.green, currentColor.green);
+      c.B = map(strip_timer_counter % kSpeed[Settings.led_speed], 0, kSpeed[Settings.led_speed], oldColor.blue, currentColor.blue);
     }
     else {
       // No animation, just use the current color.
@@ -249,7 +239,7 @@ void Ws2812Bars(uint8_t schemenr)
     maxSize = 0;
   }
 
-  uint8_t offset = kSpeed[Settings.led_speed] > 0 ? stripTimerCntr / kSpeed[Settings.led_speed] : 0;
+  uint8_t offset = kSpeed[Settings.led_speed] > 0 ? strip_timer_counter / kSpeed[Settings.led_speed] : 0;
 
   WsColor mcolor[scheme.count];
   memcpy(mcolor, scheme.colors, sizeof(mcolor));
@@ -333,7 +323,11 @@ char* Ws2812GetColor(uint16_t led, char* scolor)
   sl_ledcolor[2] = lcolor.B;
   scolor[0] = '\0';
   for (byte i = 0; i < 3; i++) {
-    snprintf_P(scolor, 11, PSTR("%s%02X"), scolor, sl_ledcolor[i]);
+    if (Settings.flag.decimal_text) {
+      snprintf_P(scolor, 25, PSTR("%s%s%d"), scolor, (i > 0) ? "," : "", sl_ledcolor[i]);
+    } else {
+      snprintf_P(scolor, 25, PSTR("%s%02X"), scolor, sl_ledcolor[i]);
+    }
   }
   return scolor;
 }

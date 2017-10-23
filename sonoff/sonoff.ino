@@ -25,7 +25,7 @@
     - Select IDE Tools - Flash Size: "1M (no SPIFFS)"
   ====================================================*/
 
-#define VERSION                0x0508000D   // 5.8.0m
+#define VERSION                0x0508000E   // 5.8.0n
 
 // Location specific includes
 #include "sonoff.h"                         // Enumaration used in user_config.h
@@ -942,7 +942,7 @@ void MqttDataCallback(char* topic, byte* data, unsigned int data_len)
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_SAVEDATA "\":\"%s\"}"), (Settings.save_data > 1) ? stemp1 : GetStateText(Settings.save_data));
     }
-    else if (!strcasecmp_P(type, PSTR(D_CMND_SETOPTION)) && ((index >= 0) && (index <= 15)) || ((index > 31) && (index <= P_MAX_PARAM8 +31))) {
+    else if (!strcasecmp_P(type, PSTR(D_CMND_SETOPTION)) && ((index >= 0) && (index <= 17)) || ((index > 31) && (index <= P_MAX_PARAM8 +31))) {
       if (index <= 31) {
         ptype = 0;   // SetOption0 .. 31
       } else {
@@ -966,6 +966,8 @@ void MqttDataCallback(char* topic, byte* data, unsigned int data_len)
               case 12:  // stop_flash_rotate
               case 13:  // button_single
               case 14:  // interlock
+              case 16:  // ws_clock_reverse
+              case 17:  // decimal_text
                 bitWrite(Settings.flag.data, index, payload);
             }
             if (12 == index) {  // stop_flash_rotate

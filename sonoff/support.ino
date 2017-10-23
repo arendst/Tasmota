@@ -673,14 +673,11 @@ void WifiConnect()
 #ifdef MQTT_HOST_DISCOVERY
 boolean MdnsDiscoverMqttServer()
 {
-//  char ip_str[20];
-  int n;
-
   if (!mdns_begun) {
     return false;
   }
 
-  n = MDNS.queryService("mqtt", "tcp");  // Search for mqtt service
+  int n = MDNS.queryService("mqtt", "tcp");  // Search for mqtt service
 
   snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_MDNS D_QUERY_DONE " %d"), n);
   AddLog(LOG_LEVEL_INFO);
