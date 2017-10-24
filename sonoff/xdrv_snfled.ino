@@ -607,29 +607,30 @@ void LightSetHsb(float hue, float sat, float bri, uint16_t ct)
 
 boolean LightColorEntry(char *buffer, uint8_t buffer_length)
 {
-  uint8_t entry_type = 0;                   // Decimal
   char scolor[10];
   char *p;
   char *str;
+  uint8_t entry_type = 0;                           // Invalid
 
-  if (buffer[0] == '#') {                   // Optional hexadecimal entry
+  if (buffer[0] == '#') {                           // Optional hexadecimal entry
     buffer++;
     buffer_length--;
   }
-  uint8_t size = (light_subtype > sizeof(light_entry_color)) ? sizeof(light_entry_color) : light_subtype;
-  if (strstr(buffer, ",")) {                // Decimal entry
+  if (strstr(buffer, ",")) {                        // Decimal entry
     int8_t i = 0;
-    for (str = strtok_r(buffer, ",", &p); str && i < size; str = strtok_r(NULL, ",", &p)) {
-      light_entry_color[i++] = atoi(str);
+    for (str = strtok_r(buffer, ",", &p); str && i < 6; str = strtok_r(NULL, ",", &p)) {
+      if (i < 5) {
+        light_entry_color[i++] = atoi(str);
+      }
     }
-    entry_type = (size == i) ? 2 : 0;       // Decimal
+    entry_type = (light_subtype == i) ? 2 : 0;      // Decimal
   }
-  else if ((2 * size) == buffer_length) {   // Hexadecimal entry
-    for (byte i = 0; i < size; i++) {
+  else if ((2 * light_subtype) == buffer_length) {  // Hexadecimal entry
+    for (byte i = 0; i < light_subtype; i++) {
       strlcpy(scolor, buffer + (i *2), 3);
       light_entry_color[i] = (uint8_t)strtol(scolor, &p, 16);
     }
-    entry_type = 1;                         // Hexadecimal
+    entry_type = 1;                                 // Hexadecimal
   }
   if (entry_type) {
     Settings.flag.decimal_text = entry_type -1;
@@ -644,16 +645,21 @@ boolean LightCommand(char *type, uint16_t index, char *dataBuf, uint16_t data_le
   boolean valid_entry = false;
   char scolor[25];
 
-  if ((light_subtype > 1) && !strcasecmp_P(type, PSTR(D_CMND_COLOR)) && (index > 0) && (index <= 5)) {
+  if ((light_subtype > 1) && !strcasecmp_P(type, PSTR(D_CMND_COLOR)) && (index > 0) && (index <= 4)) {
     if (data_len > 0) {
       valid_entry = LightColorEntry(dataBuf, data_len);
       if (valid_entry) {
-        if (1 == index) {
+        if (1 == index) {    // Color(1)
+//          for (byte i = 0; i < light_subtype; i++) {
+//            light_current_color[i] = light_entry_color[i];
+//          }
           memcpy(light_current_color, light_entry_color, sizeof(light_current_color));
           LightSetColor();
           coldim = true;
-        } else {
-          memcpy(Settings.ws_color + 3*(index -2), light_entry_color, 3);
+        } else {             // Color2, 3 and 4
+          for (byte i = 0; i < 3; i++) {
+            Settings.ws_color[index -2][i] = light_entry_color[i];
+          }
         }
       }
     }
