@@ -188,8 +188,9 @@
 #define D_UPGRADE "opwaarderen"
 #define D_UPLOAD "Verzenden"
 #define D_UPTIME "Bedrijfstijd"
-#define D_UTC_TIME "UTC"
 #define D_USER "Gebruiker"
+#define D_UTC_TIME "UTC"
+#define D_UV_LEVEL "UV niveau"
 #define D_VCC "Vcc"
 #define D_VERSION "Versie"
 #define D_VOLTAGE "Spanning"
@@ -373,7 +374,6 @@
 #define D_DOMOTICZ_KEY_IDX "Toets idx"
 #define D_DOMOTICZ_SWITCH_IDX "Schakelaar idx"
 #define D_DOMOTICZ_SENSOR_IDX "Sensor idx"
-  #define DOMOTICZ_SENSORS_MAX_STRING_LENGTH 14
   #define D_DOMOTICZ_TEMP "Temp"
   #define D_DOMOTICZ_TEMP_HUM "Temp,Hum"
   #define D_DOMOTICZ_TEMP_HUM_BARO "Temp,Hum,Baro"

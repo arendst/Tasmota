@@ -75,16 +75,6 @@ uint8_t kRepeat[5] = {
     4,     // Large
     2,     // Largest
     1 };   // All
-uint8_t kSpeed[9] = {
-    0,                     // None
-    1 * (STATES / 10),     // Fastest
-    3 * (STATES / 10),
-    5 * (STATES / 10),     // Fast
-    7 * (STATES / 10),
-    9 * (STATES / 10),
-   11 * (STATES / 10),     // Slow
-   13 * (STATES / 10),
-   15 * (STATES / 10) };   // Slowest
 
 uint8_t ws_show_next = 1;
 
@@ -195,7 +185,8 @@ void Ws2812Gradient(uint8_t schemenr)
   uint8_t repeat = kRepeat[Settings.led_width];  // number of scheme.count per ledcount
   uint16_t range = (uint16_t)ceil((float)Settings.led_pixels / (float)repeat);
   uint16_t gradRange = (uint16_t)ceil((float)range / (float)(scheme.count - 1));
-  uint16_t offset = kSpeed[Settings.led_speed] > 0 ? strip_timer_counter / kSpeed[Settings.led_speed] : 0;
+  uint16_t speed = ((Settings.led_speed * 2) -1) * (STATES / 10);
+  uint16_t offset = speed > 0 ? strip_timer_counter / speed : 0;
 
   WsColor oldColor, currentColor;
   Ws2812GradientColor(schemenr, &oldColor, range, gradRange, offset);
@@ -206,9 +197,9 @@ void Ws2812Gradient(uint8_t schemenr)
     }
     if (Settings.led_speed > 0) {
       // Blend old and current color based on time for smooth movement.
-      c.R = map(strip_timer_counter % kSpeed[Settings.led_speed], 0, kSpeed[Settings.led_speed], oldColor.red, currentColor.red);
-      c.G = map(strip_timer_counter % kSpeed[Settings.led_speed], 0, kSpeed[Settings.led_speed], oldColor.green, currentColor.green);
-      c.B = map(strip_timer_counter % kSpeed[Settings.led_speed], 0, kSpeed[Settings.led_speed], oldColor.blue, currentColor.blue);
+      c.R = map(strip_timer_counter % speed, 0, speed, oldColor.red, currentColor.red);
+      c.G = map(strip_timer_counter % speed, 0, speed, oldColor.green, currentColor.green);
+      c.B = map(strip_timer_counter % speed, 0, speed, oldColor.blue, currentColor.blue);
     }
     else {
       // No animation, just use the current color.
@@ -239,7 +230,8 @@ void Ws2812Bars(uint8_t schemenr)
     maxSize = 0;
   }
 
-  uint8_t offset = kSpeed[Settings.led_speed] > 0 ? strip_timer_counter / kSpeed[Settings.led_speed] : 0;
+  uint16_t speed = ((Settings.led_speed * 2) -1) * (STATES / 10);
+  uint8_t offset = speed > 0 ? strip_timer_counter / speed : 0;
 
   WsColor mcolor[scheme.count];
   memcpy(mcolor, scheme.colors, sizeof(mcolor));

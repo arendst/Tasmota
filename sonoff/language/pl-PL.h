@@ -188,8 +188,9 @@
 #define D_UPGRADE "Aktualizacji"
 #define D_UPLOAD "Wgraj"
 #define D_UPTIME "Uptime"
-#define D_UTC_TIME "UTC"
 #define D_USER "Uzytkownik"
+#define D_UTC_TIME "UTC"
+#define D_UV_LEVEL "UV Level"
 #define D_VCC "VCC"
 #define D_VERSION "Wersja"
 #define D_VOLTAGE "Napiecie"
@@ -373,7 +374,6 @@
 #define D_DOMOTICZ_KEY_IDX "Key idx"
 #define D_DOMOTICZ_SWITCH_IDX "Przelacznik idx"
 #define D_DOMOTICZ_SENSOR_IDX "Sensor idx"
-  #define DOMOTICZ_SENSORS_MAX_STRING_LENGTH 14
   #define D_DOMOTICZ_TEMP "Temp"
   #define D_DOMOTICZ_TEMP_HUM "Temp,Wilg"
   #define D_DOMOTICZ_TEMP_HUM_BARO "Temp,Wilg,Cis"

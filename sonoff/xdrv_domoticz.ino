@@ -35,26 +35,10 @@ const char HTTP_FORM_DOMOTICZ_TIMER[] PROGMEM =
   "<tr><td width='260'><b>" D_DOMOTICZ_UPDATE_TIMER "</b> (" STR(DOMOTICZ_UPDATE_TIMER) ")</td><td width='70'><input id='ut' name='ut' placeholder='" STR(DOMOTICZ_UPDATE_TIMER) "' value='{6'</td></tr>";
 #endif  // USE_WEBSERVER
 
-enum DomoticzSensors {
-  DZ_TEMP,
-  DZ_TEMP_HUM,
-  DZ_TEMP_HUM_BARO,
-  DZ_POWER_ENERGY,
-  DZ_ILLUMINANCE,
-  DZ_COUNT,
-  DZ_VOLTAGE,
-  DZ_CURRENT,
-  DZ_MAX_SENSORS };
+enum DomoticzSensors {DZ_TEMP, DZ_TEMP_HUM, DZ_TEMP_HUM_BARO, DZ_POWER_ENERGY, DZ_ILLUMINANCE, DZ_COUNT, DZ_VOLTAGE, DZ_CURRENT, DZ_MAX_SENSORS};
 
-const char kDomoticzSensors[DZ_MAX_SENSORS][DOMOTICZ_SENSORS_MAX_STRING_LENGTH] PROGMEM = {
-  D_DOMOTICZ_TEMP,
-  D_DOMOTICZ_TEMP_HUM,
-  D_DOMOTICZ_TEMP_HUM_BARO,
-  D_DOMOTICZ_POWER_ENERGY,
-  D_DOMOTICZ_ILLUMINANCE,
-  D_DOMOTICZ_COUNT,
-  D_DOMOTICZ_VOLTAGE,
-  D_DOMOTICZ_CURRENT };
+const char kDomoticzSensors[] PROGMEM =
+  D_DOMOTICZ_TEMP "|" D_DOMOTICZ_TEMP_HUM "|" D_DOMOTICZ_TEMP_HUM_BARO "|" D_DOMOTICZ_POWER_ENERGY "|" D_DOMOTICZ_ILLUMINANCE "|" D_DOMOTICZ_COUNT "|" D_DOMOTICZ_VOLTAGE "|" D_DOMOTICZ_CURRENT ;
 
 char domoticz_in_topic[] = DOMOTICZ_IN_TOPIC;
 char domoticz_out_topic[] = DOMOTICZ_OUT_TOPIC;
@@ -325,7 +309,8 @@ void HandleDomoticzConfiguration()
   }
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_CONFIGURE_DOMOTICZ);
 
-  char stemp[20];
+  char stemp[sizeof(kDomoticzSensors)];
+  char *sensortype;
 
   String page = FPSTR(HTTP_HEAD);
   page.replace(F("{v}"), FPSTR(S_CONFIGURE_DOMOTICZ));
@@ -345,8 +330,7 @@ void HandleDomoticzConfiguration()
   for (int i = 0; i < DZ_MAX_SENSORS; i++) {
     page += FPSTR(HTTP_FORM_DOMOTICZ_SENSOR);
     page.replace("{1", String(i +1));
-    snprintf_P(stemp, sizeof(stemp), kDomoticzSensors[i]);
-    page.replace("{2", stemp);
+    page.replace("{2", GetIndexedString(stemp, kDomoticzSensors, i));
     page.replace("{5", String((int)Settings.domoticz_sensor_idx[i]));
   }
   page += FPSTR(HTTP_FORM_DOMOTICZ_TIMER);

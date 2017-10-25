@@ -795,6 +795,17 @@ void I2cScan(char *devs, unsigned int devs_len)
     snprintf_P(devs, devs_len, PSTR("{\"" D_CMND_I2CSCAN "\":\"" D_I2CSCAN_NO_DEVICES_FOUND "\"}"));
   }
 }
+
+boolean I2cDevice(byte addr)
+{
+  for (byte address = 1; address <= 127; address++) {
+    Wire.beginTransmission(address);
+    if (!Wire.endTransmission() && (address == addr)) {
+      return true;
+    }
+  }
+  return false;
+}
 #endif  // USE_I2C
 
 /*********************************************************************************************\
@@ -1157,6 +1168,16 @@ double FastPrecisePow(double a, double b)
     e >>= 1;
   }
   return r * u.d;
+}
+
+char* GetIndexedString(char* destination, const char* source, uint8_t index)
+{
+  strcpy_P(destination, source);  // Copies Flash to Ram until end of string
+  char *indexed_string = strtok(destination, "|");
+  while (index--) {
+    indexed_string = strtok(NULL, "|");
+  }
+  return indexed_string;
 }
 
 /*********************************************************************************************\

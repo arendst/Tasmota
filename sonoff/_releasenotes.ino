@@ -1,8 +1,14 @@
-/* 5.8.0n
+/* 5.8.0o
+ * Remove max string length of 14 for Domoticz sensor descriptions
+ * Add light scheme options (Color cycle Up, Down, Random) and moving WS2812 schemes up by 3
+ * Add support for VEML6070 I2C Ultra Violet level sensor (#1053)
+ *
+ * 5.8.0n
  * Fix minimum TelePeriod of 10 seconds set by web page
  * Shrink information web page by 1k code space
  * Removed Arduino IDE version too low warning as it interferes with platformio.ini platform = espressif8266_stage
  * Add commands Color2, Color3, Color4, Width2, Width3, Width4 and SetOption16 to set Ws2812 Clock parameters (#1019)
+ * Fix Color3 and Color4 (#1019)
  * Add Polish language file (#1044, #1047)
  * Add support for KMC 70011 Power Monitoring Smart Plug (#1045)
  * Corrected German language file (#1054)
