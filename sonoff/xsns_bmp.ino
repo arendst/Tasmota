@@ -348,7 +348,7 @@ double bme280_readHumidity(void)
 double bmp_readTemperature(void)
 {
   double t = NAN;
-  
+
   switch (bmptype) {
   case BMP180_CHIPID:
     t = bmp180_readTemperature();
@@ -394,7 +394,6 @@ boolean bmp_detect()
     return true;
   }
 
-  char log[LOGSZ];
   boolean success = false;
 
   bmpaddr = BMP_ADDR;
@@ -418,8 +417,8 @@ boolean bmp_detect()
     strcpy_P(bmpstype, PSTR("BME280"));
   }
   if (success) {
-    snprintf_P(log, sizeof(log), PSTR("I2C: %s found at address 0x%x"), bmpstype, bmpaddr);
-    addLog(LOG_LEVEL_DEBUG, log);
+    snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_I2C "%s " D_FOUND_AT " 0x%x"), bmpstype, bmpaddr);
+    addLog(LOG_LEVEL_DEBUG);
   } else {
     bmptype = 0;
   }
@@ -430,7 +429,7 @@ boolean bmp_detect()
  * Presentation
 \*********************************************************************************************/
 
-void bmp_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
+void bmp_mqttPresent(uint8_t* djson)
 {
   if (!bmptype) {
     return;
@@ -443,19 +442,19 @@ void bmp_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
   double t = bmp_readTemperature();
   double p = bmp_readPressure();
   double h = bmp_readHumidity();
-  dtostrf(t, 1, sysCfg.flag.temperature_resolution, stemp1);
-  dtostrf(p, 1, sysCfg.flag.pressure_resolution, stemp2);
-  dtostrf(h, 1, sysCfg.flag.humidity_resolution, stemp3);
+  dtostrfd(t, sysCfg.flag.temperature_resolution, stemp1);
+  dtostrfd(p, sysCfg.flag.pressure_resolution, stemp2);
+  dtostrfd(h, sysCfg.flag.humidity_resolution, stemp3);
   if (!strcmp(bmpstype,"BME280")) {
-    snprintf_P(svalue, ssvalue, PSTR("%s, \"%s\":{\"Temperature\":%s, \"Humidity\":%s, \"Pressure\":%s}"),
-      svalue, bmpstype, stemp1, stemp3, stemp2);
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s, \"%s\":{\"" D_TEMPERATURE "\":%s, \"" D_HUMIDITY "\":%s, \"" D_PRESSURE "\":%s}"),
+      mqtt_data, bmpstype, stemp1, stemp3, stemp2);
   } else {
-    snprintf_P(svalue, ssvalue, PSTR("%s, \"%s\":{\"Temperature\":%s, \"Pressure\":%s}"),
-      svalue, bmpstype, stemp1, stemp2);
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s, \"%s\":{\"" D_TEMPERATURE "\":%s, \"" D_PRESSURE "\":%s}"),
+      mqtt_data, bmpstype, stemp1, stemp2);
   }
   *djson = 1;
 #ifdef USE_DOMOTICZ
-  domoticz_sensor3(stemp1, stemp3, stemp2); 
+  domoticz_sensor3(stemp1, stemp3, stemp2);
 #endif  // USE_DOMOTICZ
 }
 
@@ -470,15 +469,15 @@ String bmp_webPresent()
     double t_bmp = bmp_readTemperature();
     double p_bmp = bmp_readPressure();
     double h_bmp = bmp_readHumidity();
-    dtostrf(t_bmp, 1, sysCfg.flag.temperature_resolution, stemp);
+    dtostrfi(t_bmp, sysCfg.flag.temperature_resolution, stemp);
     snprintf_P(sensor, sizeof(sensor), HTTP_SNS_TEMP, bmpstype, stemp, tempUnit());
     page += sensor;
     if (!strcmp(bmpstype,"BME280")) {
-      dtostrf(h_bmp, 1, sysCfg.flag.humidity_resolution, stemp);
+      dtostrfi(h_bmp, sysCfg.flag.humidity_resolution, stemp);
       snprintf_P(sensor, sizeof(sensor), HTTP_SNS_HUM, bmpstype, stemp);
       page += sensor;
     }
-    dtostrf(p_bmp, 1, sysCfg.flag.pressure_resolution, stemp);
+    dtostrfi(p_bmp, sysCfg.flag.pressure_resolution, stemp);
     snprintf_P(sensor, sizeof(sensor), HTTP_SNS_PRESSURE, bmpstype, stemp);
     page += sensor;
   }

@@ -211,7 +211,6 @@ uint8_t htu_detect()
     return true;
   }
 
-  char log[LOGSZ];
   boolean success = false;
 
   htuaddr = HTU21_ADDR;
@@ -244,8 +243,8 @@ uint8_t htu_detect()
     delayH=23;
   }
   if (success) {
-    snprintf_P(log, sizeof(log), PSTR("I2C: %s found at address 0x%x"), htustype, htuaddr);
-    addLog(LOG_LEVEL_DEBUG, log);
+    snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_I2C "%s " D_FOUND_AT " 0x%x"), htustype, htuaddr);
+    addLog(LOG_LEVEL_DEBUG);
   } else {
     htutype = 0;
   }
@@ -256,7 +255,7 @@ uint8_t htu_detect()
  * Presentation
 \*********************************************************************************************/
 
-void htu_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
+void htu_mqttPresent(uint8_t* djson)
 {
   if (!htutype) {
     return;
@@ -268,9 +267,9 @@ void htu_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
   float t = htu21_readTemperature();
   float h = htu21_readHumidity();
   h = htu21_compensatedHumidity(h, t);
-  dtostrf(t, 1, sysCfg.flag.temperature_resolution, stemp1);
-  dtostrf(h, 1, sysCfg.flag.humidity_resolution, stemp2);
-  snprintf_P(svalue, ssvalue, JSON_SNS_TEMPHUM, svalue, htustype, stemp1, stemp2);
+  dtostrfd(t, sysCfg.flag.temperature_resolution, stemp1);
+  dtostrfd(h, sysCfg.flag.humidity_resolution, stemp2);
+  snprintf_P(mqtt_data, sizeof(mqtt_data), JSON_SNS_TEMPHUM, mqtt_data, htustype, stemp1, stemp2);
   *djson = 1;
 #ifdef USE_DOMOTICZ
   domoticz_sensor2(stemp1, stemp2);
@@ -288,10 +287,10 @@ String htu_webPresent()
     float t_htu21 = htu21_readTemperature();
     float h_htu21 = htu21_readHumidity();
     h_htu21 = htu21_compensatedHumidity(h_htu21, t_htu21);
-    dtostrf(t_htu21, 1, sysCfg.flag.temperature_resolution, stemp);
+    dtostrfi(t_htu21, sysCfg.flag.temperature_resolution, stemp);
     snprintf_P(sensor, sizeof(sensor), HTTP_SNS_TEMP, htustype, stemp, tempUnit());
     page += sensor;
-    dtostrf(h_htu21, 1, sysCfg.flag.humidity_resolution, stemp);
+    dtostrfi(h_htu21, sysCfg.flag.humidity_resolution, stemp);
     snprintf_P(sensor, sizeof(sensor), HTTP_SNS_HUM, htustype, stemp);
     page += sensor;
   }

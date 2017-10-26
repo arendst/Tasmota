@@ -19,7 +19,7 @@
 
 /*****************************************************************************************************\
  * ATTENTION: - Changes to most PARAMETER defines will only override flash settings if you change
- *              define CFG_HOLDER. 
+ *              define CFG_HOLDER.
  *            - Expect compiler warnings when no ifdef/undef/endif sequence is used.
  *            - You still need to update user_config.h for major defines MODULE and USE_MQTT_TLS.
  *            - Changing MODULE defines are not being tested for validity as they are in user_config.h.

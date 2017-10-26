@@ -180,7 +180,7 @@ void ds18x20_type(uint8_t sensor)
   }
 }
 
-void ds18x20_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
+void ds18x20_mqttPresent(uint8_t* djson)
 {
   char stemp1[10];
   char stemp2[10];
@@ -190,15 +190,15 @@ void ds18x20_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
   for (byte i = 0; i < ds18x20_sensors(); i++) {
     if (ds18x20_read(i, t)) {           // Check if read failed
       ds18x20_type(i);
-      dtostrf(t, 1, sysCfg.flag.temperature_resolution, stemp2);
+      dtostrfd(t, sysCfg.flag.temperature_resolution, stemp2);
       if (!dsxflg) {
-        snprintf_P(svalue, ssvalue, PSTR("%s, \"DS18x20\":{"), svalue);
+        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s, \"DS18x20\":{"), mqtt_data);
         *djson = 1;
         stemp1[0] = '\0';
       }
       dsxflg++;
-      snprintf_P(svalue, ssvalue, PSTR("%s%s\"DS%d\":{\"Type\":\"%s\", \"Address\":\"%s\", \"Temperature\":%s}"),
-        svalue, stemp1, i +1, dsbstype, ds18x20_address(i).c_str(), stemp2);
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s%s\"DS%d\":{\"" D_TYPE "\":\"%s\", \"" D_ADDRESS "\":\"%s\", \"" D_TEMPERATURE "\":%s}"),
+        mqtt_data, stemp1, i +1, dsbstype, ds18x20_address(i).c_str(), stemp2);
       strcpy(stemp1, ", ");
 #ifdef USE_DOMOTICZ
       if (1 == dsxflg) domoticz_sensor1(stemp2);
@@ -206,7 +206,7 @@ void ds18x20_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
     }
   }
   if (dsxflg) {
-    snprintf_P(svalue, ssvalue, PSTR("%s}"), svalue);
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}"), mqtt_data);
   }
 }
 
@@ -222,7 +222,7 @@ String ds18x20_webPresent()
   for (byte i = 0; i < ds18x20_sensors(); i++) {
     if (ds18x20_read(i, t)) {   // Check if read failed
       ds18x20_type(i);
-      dtostrf(t, 1, sysCfg.flag.temperature_resolution, stemp);
+      dtostrfi(t, sysCfg.flag.temperature_resolution, stemp);
       snprintf_P(stemp2, sizeof(stemp2), PSTR("%s-%d"), dsbstype, i +1);
       snprintf_P(sensor, sizeof(sensor), HTTP_SNS_TEMP, stemp2, stemp, tempUnit());
       page += sensor;

@@ -25,6 +25,7 @@
 \*********************************************************************************************/
 
 float dsb_mt = 0;
+uint16_t dsb_lastresult = 0;
 
 uint8_t dsb_reset()
 {
@@ -131,11 +132,15 @@ boolean dsb_readTemp(float &t)
   if (!dsb_mt) {
     t = NAN;
   } else {
+    dsb_lastresult++;
+    if (dsb_lastresult > 8) {  // Reset after 8 misses
+      dsb_mt = NAN;
+    }
     t = dsb_mt;
   }
 
   if (!dsb_read_bit()) {     //check measurement end
-    addLog_P(LOG_LEVEL_DEBUG, PSTR("DSB: Sensor busy"));
+    addLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DSB D_SENSOR_BUSY));
     return !isnan(t);
   }
 /*
@@ -160,7 +165,7 @@ boolean dsb_readTemp(float &t)
   crc = dsb_crc(dsb_read(), crc);
   dsb_reset();
   if (crc) { //check crc
-    addLog_P(LOG_LEVEL_DEBUG, PSTR("DSB: Sensor CRC error"));
+    addLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DSB D_SENSOR_CRC_ERROR));
   } else {
     DSTemp = (msb << 8) + lsb;
     if (DSTemp > 2047) {
@@ -168,8 +173,11 @@ boolean dsb_readTemp(float &t)
       sign = -1;
     }
     t = convertTemp((float)sign * DSTemp * 0.0625);
+    dsb_lastresult = 0;
   }
-  if (!isnan(t)) dsb_mt = t;
+  if (!isnan(t)) {
+    dsb_mt = t;
+  }
   return !isnan(t);
 }
 
@@ -177,14 +185,14 @@ boolean dsb_readTemp(float &t)
  * Presentation
 \*********************************************************************************************/
 
-void dsb_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
+void dsb_mqttPresent(uint8_t* djson)
 {
   char stemp1[10];
   float t;
 
   if (dsb_readTemp(t)) {  // Check if read failed
-    dtostrf(t, 1, sysCfg.flag.temperature_resolution, stemp1);
-    snprintf_P(svalue, ssvalue, PSTR("%s, \"DS18B20\":{\"Temperature\":%s}"), svalue, stemp1);
+    dtostrfd(t, sysCfg.flag.temperature_resolution, stemp1);
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s, \"DS18B20\":{\"" D_TEMPERATURE "\":%s}"), mqtt_data, stemp1);
     *djson = 1;
 #ifdef USE_DOMOTICZ
     domoticz_sensor1(stemp1);
@@ -198,12 +206,12 @@ String dsb_webPresent()
   // Needs TelePeriod to refresh data (Do not do it here as it takes too much time)
   String page = "";
   float st;
-  
+
   if (dsb_readTemp(st)) {  // Check if read failed
     char stemp[10];
     char sensor[80];
-    
-    dtostrf(st, 1, sysCfg.flag.temperature_resolution, stemp);
+
+    dtostrfi(st, sysCfg.flag.temperature_resolution, stemp);
     snprintf_P(sensor, sizeof(sensor), HTTP_SNS_TEMP, "DS18B20", stemp, tempUnit());
     page += sensor;
   }

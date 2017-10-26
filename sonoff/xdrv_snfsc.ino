@@ -55,11 +55,19 @@
 
 uint16_t sc_value[5] = { 0 };
 
+void sc_send(const char *data)
+{
+  Serial.write(data);
+  Serial.write('\x1B');
+  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_SERIAL D_TRANSMIT " %s"), data);
+  addLog(LOG_LEVEL_DEBUG);
+}
+
 void sc_init()
 {
-//  Serial.write("AT+DEVCONFIG=\"uploadFreq\":1800\e");
-  Serial.write("AT+START\e");
-//  Serial.write("AT+STATUS\e");
+//  sc_send("AT+DEVCONFIG=\"uploadFreq\":1800");
+  sc_send("AT+START");
+//  sc_send("AT+STATUS");
 }
 
 void sc_rcvstat(char *rcvstat)
@@ -68,7 +76,10 @@ void sc_rcvstat(char *rcvstat)
   char *str;
   uint16_t value[5] = { 0 };
 
-  if (!strncmp(rcvstat, "AT+UPDATE=", 10)) {
+  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_SERIAL D_RECEIVED " %s"), rcvstat);
+  addLog(LOG_LEVEL_DEBUG);
+
+  if (!strncasecmp_P(rcvstat, PSTR("AT+UPDATE="), 10)) {
     int8_t i = -1;
     for (str = strtok_r(rcvstat, ":", &p); str && i < 5; str = strtok_r(NULL, ":", &p)) {
       value[i++] = atoi(str);
@@ -80,13 +91,13 @@ void sc_rcvstat(char *rcvstat)
       sc_value[2] = (11 - sc_value[2]) * 10;  // Invert light level
       sc_value[3] *= 10;
       sc_value[4] = (11 - sc_value[4]) * 10;  // Invert dust level
-      Serial.write("AT+SEND=ok\e");
+      sc_send("AT+SEND=ok");
     } else {
-      Serial.write("AT+SEND=fail\e");
+      sc_send("AT+SEND=fail");
     }
   }
-  else if (!strcmp_P(rcvstat,PSTR("AT+STATUS?"))) {
-    Serial.write("AT+STATUS=4\e");
+  else if (!strcasecmp_P(rcvstat, PSTR("AT+STATUS?"))) {
+    sc_send("AT+STATUS=4");
   }
 }
 
@@ -94,24 +105,18 @@ void sc_rcvstat(char *rcvstat)
  * Presentation
 \*********************************************************************************************/
 
-float sc_convertCtoF(float c)
-{
-  return c * 1.8 + 32;
-}
-
-void sc_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
+void sc_mqttPresent(uint8_t* djson)
 {
   if (sc_value[0] > 0) {
     char stemp1[10];
     char stemp2[10];
 
     float t = convertTemp(sc_value[1]);
-    dtostrf(t, 1, sysCfg.flag.temperature_resolution, stemp1);
+    dtostrfd(t, sysCfg.flag.temperature_resolution, stemp1);
     float h = sc_value[0];
-    dtostrf(h, 1, sysCfg.flag.humidity_resolution, stemp2);
-//    snprintf_P(svalue, ssvalue, PSTR("%s, \"SC\":{\"Temperature\":%s, \"Humidity\":%s, \"Light\":%d, \"Noise\":%d, \"AirQuality\":%d}"),
-    snprintf_P(svalue, ssvalue, PSTR("%s, \"Temperature\":%s, \"Humidity\":%s, \"Light\":%d, \"Noise\":%d, \"AirQuality\":%d"),
-      svalue, stemp1, stemp2, sc_value[2], sc_value[3], sc_value[4]);
+    dtostrfd(h, sysCfg.flag.humidity_resolution, stemp2);
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s, \"" D_TEMPERATURE "\":%s, \"" D_HUMIDITY "\":%s, \"" D_LIGHT "\":%d, \"" D_NOISE "\":%d, \"" D_AIRQUALITY "\":%d"),
+      mqtt_data, stemp1, stemp2, sc_value[2], sc_value[3], sc_value[4]);
     *djson = 1;
 #ifdef USE_DOMOTICZ
     domoticz_sensor2(stemp1, stemp2);
@@ -131,11 +136,11 @@ String sc_webPresent()
     char scstype[] = "";
 
     float t = convertTemp(sc_value[1]);
-    dtostrf(t, 1, sysCfg.flag.temperature_resolution, stemp);
+    dtostrfi(t, sysCfg.flag.temperature_resolution, stemp);
     snprintf_P(sensor, sizeof(sensor), HTTP_SNS_TEMP, scstype, stemp, tempUnit());
     page += sensor;
     float h = sc_value[0];
-    dtostrf(h, 1, sysCfg.flag.humidity_resolution, stemp);
+    dtostrfi(h, sysCfg.flag.humidity_resolution, stemp);
     snprintf_P(sensor, sizeof(sensor), HTTP_SNS_HUM, scstype, stemp);
     page += sensor;
     snprintf_P(sensor, sizeof(sensor), HTTP_SNS_LIGHT, scstype, sc_value[2]);
