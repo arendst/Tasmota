@@ -461,7 +461,7 @@ void HandleRoot()
           snprintf_P(line, sizeof(line), HTTP_MSG_SLIDER1, LightGetColorTemp());
           page += line;
         }
-        snprintf_P(line, sizeof(line), HTTP_MSG_SLIDER2, Settings.led_dimmer);
+        snprintf_P(line, sizeof(line), HTTP_MSG_SLIDER2, Settings.light_dimmer);
         page += line;
       }
       page += FPSTR(HTTP_TABLE100);
@@ -591,7 +591,7 @@ void HandleAjaxStatusRefresh()
  * Will interrupt user action when selected
   if (light_type) {
     snprintf_P(line, sizeof(line), PSTR("<input type='range' min='1' max='100' value='%d' onchange='lb(value)'>"),
-      Settings.led_dimmer);
+      Settings.light_dimmer);
     page += line;
   }
 */

@@ -84,8 +84,8 @@ void Ws2812StripShow()
 {
   RgbColor c;
 
-  if (Settings.led_table) {
-    for (uint16_t i = 0; i < Settings.led_pixels; i++) {
+  if (Settings.light_correction) {
+    for (uint16_t i = 0; i < Settings.light_pixels; i++) {
       c = strip->GetPixelColor(i);
       strip->SetPixelColor(i, RgbColor(ledTable[c.R], ledTable[c.G], ledTable[c.B]));
     }
@@ -108,10 +108,10 @@ void Ws2812UpdatePixelColor(int position, struct RgbColor hand_color, uint8_t ha
 {
   RgbColor color;
 
-  uint16_t mod_position = mod(position, (int)Settings.led_pixels);
+  uint16_t mod_position = mod(position, (int)Settings.light_pixels);
 
   color = strip->GetPixelColor(mod_position);
-  float dimmer = 100 / (float)Settings.led_dimmer;
+  float dimmer = 100 / (float)Settings.light_dimmer;
   uint8_t offset = 1 << hand;
   color.R = cmin(color.R + ((hand_color.R / dimmer) / offset), 255);
   color.G = cmin(color.G + ((hand_color.G / dimmer) / offset), 255);
@@ -122,7 +122,7 @@ void Ws2812UpdatePixelColor(int position, struct RgbColor hand_color, uint8_t ha
 void Ws2812UpdateHand(int position, uint8_t index)
 {
   if (Settings.flag.ws_clock_reverse) {
-    position = Settings.led_pixels -position;
+    position = Settings.light_pixels -position;
   }
   RgbColor hand_color = RgbColor(Settings.ws_color[index][WS_RED], Settings.ws_color[index][WS_GREEN], Settings.ws_color[index][WS_BLUE]);
 
@@ -136,7 +136,7 @@ void Ws2812UpdateHand(int position, uint8_t index)
 void Ws2812Clock()
 {
   strip->ClearTo(0); // Reset strip
-  int clksize = 600 / (int)Settings.led_pixels;
+  int clksize = 600 / (int)Settings.light_pixels;
   Ws2812UpdateHand((RtcTime.second * 10) / clksize, WS_SECOND);
   Ws2812UpdateHand((RtcTime.minute * 10) / clksize, WS_MINUTE);
   Ws2812UpdateHand((RtcTime.hour % 12) * (50 / clksize), WS_HOUR);
@@ -159,7 +159,7 @@ void Ws2812GradientColor(uint8_t schemenr, struct WsColor* mColor, uint16_t rang
     start = (scheme.count -1) - start;
     end = (scheme.count -1) - end;
   }
-  float dimmer = 100 / (float)Settings.led_dimmer;
+  float dimmer = 100 / (float)Settings.light_dimmer;
   float fmyRed = (float)map(rangeIndex % gradRange, 0, gradRange, scheme.colors[start].red, scheme.colors[end].red) / dimmer;
   float fmyGrn = (float)map(rangeIndex % gradRange, 0, gradRange, scheme.colors[start].green, scheme.colors[end].green) / dimmer;
   float fmyBlu = (float)map(rangeIndex % gradRange, 0, gradRange, scheme.colors[start].blue, scheme.colors[end].blue) / dimmer;
@@ -182,20 +182,20 @@ void Ws2812Gradient(uint8_t schemenr)
     return;
   }
 
-  uint8_t repeat = kRepeat[Settings.led_width];  // number of scheme.count per ledcount
-  uint16_t range = (uint16_t)ceil((float)Settings.led_pixels / (float)repeat);
+  uint8_t repeat = kRepeat[Settings.light_width];  // number of scheme.count per ledcount
+  uint16_t range = (uint16_t)ceil((float)Settings.light_pixels / (float)repeat);
   uint16_t gradRange = (uint16_t)ceil((float)range / (float)(scheme.count - 1));
-  uint16_t speed = ((Settings.led_speed * 2) -1) * (STATES / 10);
+  uint16_t speed = ((Settings.light_speed * 2) -1) * (STATES / 10);
   uint16_t offset = speed > 0 ? strip_timer_counter / speed : 0;
 
   WsColor oldColor, currentColor;
   Ws2812GradientColor(schemenr, &oldColor, range, gradRange, offset);
   currentColor = oldColor;
-  for (uint16_t i = 0; i < Settings.led_pixels; i++) {
-    if (kRepeat[Settings.led_width] > 1) {
+  for (uint16_t i = 0; i < Settings.light_pixels; i++) {
+    if (kRepeat[Settings.light_width] > 1) {
       Ws2812GradientColor(schemenr, &currentColor, range, gradRange, i +offset);
     }
-    if (Settings.led_speed > 0) {
+    if (Settings.light_speed > 0) {
       // Blend old and current color based on time for smooth movement.
       c.R = map(strip_timer_counter % speed, 0, speed, oldColor.red, currentColor.red);
       c.G = map(strip_timer_counter % speed, 0, speed, oldColor.green, currentColor.green);
@@ -225,17 +225,17 @@ void Ws2812Bars(uint8_t schemenr)
 
   ColorScheme scheme = kSchemes[schemenr];
 
-  uint16_t maxSize = Settings.led_pixels / scheme.count;
-  if (kWidth[Settings.led_width] > maxSize) {
+  uint16_t maxSize = Settings.light_pixels / scheme.count;
+  if (kWidth[Settings.light_width] > maxSize) {
     maxSize = 0;
   }
 
-  uint16_t speed = ((Settings.led_speed * 2) -1) * (STATES / 10);
+  uint16_t speed = ((Settings.light_speed * 2) -1) * (STATES / 10);
   uint8_t offset = speed > 0 ? strip_timer_counter / speed : 0;
 
   WsColor mcolor[scheme.count];
   memcpy(mcolor, scheme.colors, sizeof(mcolor));
-  float dimmer = 100 / (float)Settings.led_dimmer;
+  float dimmer = 100 / (float)Settings.light_dimmer;
   for (i = 0; i < scheme.count; i++) {
     float fmyRed = (float)mcolor[i].red / dimmer;
     float fmyGrn = (float)mcolor[i].green / dimmer;
@@ -245,9 +245,9 @@ void Ws2812Bars(uint8_t schemenr)
     mcolor[i].blue = (uint8_t)fmyBlu;
   }
   uint8_t colorIndex = offset % scheme.count;
-  for (i = 0; i < Settings.led_pixels; i++) {
+  for (i = 0; i < Settings.light_pixels; i++) {
     if (maxSize) {
-      colorIndex = ((i + offset) % (scheme.count * kWidth[Settings.led_width])) / kWidth[Settings.led_width];
+      colorIndex = ((i + offset) % (scheme.count * kWidth[Settings.light_width])) / kWidth[Settings.light_width];
     }
     c.R = mcolor[colorIndex].red;
     c.G = mcolor[colorIndex].green;
@@ -297,7 +297,7 @@ void Ws2812SetColor(uint16_t led, uint8_t red, uint8_t green, uint8_t blue)
     strip->SetPixelColor(led -1, lcolor);  // Led 1 is strip Led 0 -> substract offset 1
   } else {
 //    strip->ClearTo(lcolor);  // Set WS2812_MAX_LEDS pixels
-    for (uint16_t i = 0; i < Settings.led_pixels; i++) {
+    for (uint16_t i = 0; i < Settings.light_pixels; i++) {
       strip->SetPixelColor(i, lcolor);
     }
   }
@@ -334,7 +334,7 @@ void Ws2812ShowScheme(uint8_t scheme)
       }
       break;
     default:
-      if (1 == Settings.led_fade) {
+      if (1 == Settings.light_fade) {
         Ws2812Gradient(scheme -1);
       } else {
         Ws2812Bars(scheme -1);

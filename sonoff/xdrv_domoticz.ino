@@ -55,7 +55,7 @@ void MqttPublishDomoticzPowerState(byte device)
     device = 1;
   }
   if (Settings.flag.mqtt_enabled && Settings.domoticz_relay_idx[device -1]) {
-    snprintf_P(sdimmer, sizeof(sdimmer), PSTR("%d"), Settings.led_dimmer);
+    snprintf_P(sdimmer, sizeof(sdimmer), PSTR("%d"), Settings.light_dimmer);
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"idx\":%d,\"nvalue\":%d,\"svalue\":\"%s\"}"),
       Settings.domoticz_relay_idx[device -1], (power & (1 << (device -1))) ? 1 : 0, (light_type) ? sdimmer : "");
     MqttPublish(domoticz_in_topic);
@@ -154,7 +154,7 @@ boolean DomoticzMqttData(char *topicBuf, uint16_t stopicBuf, char *dataBuf, uint
           snprintf_P(stemp1, sizeof(stemp1), PSTR("%d"), i +1);
           if (2 == nvalue) {
             nvalue = domoticz["svalue1"];
-            if (light_type && (Settings.led_dimmer == nvalue) && ((power >> i) &1)) {
+            if (light_type && (Settings.light_dimmer == nvalue) && ((power >> i) &1)) {
               return 1;
             }
             snprintf_P(topicBuf, stopicBuf, PSTR("/" D_CMND_DIMMER));

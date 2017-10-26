@@ -25,7 +25,7 @@
     - Select IDE Tools - Flash Size: "1M (no SPIFFS)"
   ====================================================*/
 
-#define VERSION                0x0508000F   // 5.8.0o
+#define VERSION                0x05080010   // 5.8.0p
 
 // Location specific includes
 #include "sonoff.h"                         // Enumaration used in user_config.h
@@ -2560,7 +2560,7 @@ void GpioInit()
     devices_present = 0;
     baudrate = 19200;
   }
-  else if ((H801 == Settings.module) || (MAGICHOME == Settings.module)) {  // PWM RGBCW led
+  else if ((H801 == Settings.module) || (MAGICHOME == Settings.module) || (ARILUX == Settings.module)) {  // PWM RGBCW led
     if (!Settings.flag.pwm_control) {
       light_type = LT_BASIC;                 // Use basic PWM control if SetOption15 = 0
     }

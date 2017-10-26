@@ -1,4 +1,11 @@
-/* 5.8.0o
+/* 5.8.0p
+ * Fix initial PwmFrequency and PwmRange
+ * Add support for Arilux AL-LC01 RGB Led controller (#370)
+ * Add light turn Off Fade (#925)
+ * Change IrSend Panasonic command to IrSend {"Protocol":"Panasonic", "Bits":16388, "Data":<Panasonic data>}
+ *  where 16388 is 0x4004 hexadecimal (#1014)
+ *
+ * 5.8.0o
  * Remove max string length of 14 for Domoticz sensor descriptions
  * Add light scheme options (Color cycle Up, Down, Random) and moving WS2812 schemes up by 3
  * Add support for VEML6070 I2C Ultra Violet level sensor (#1053)
@@ -92,7 +99,7 @@
  * Fix compile error when DOMOTICZ_UPDATE_TIMER is not defined (#930)
  * Fix alignment of web page items in some browsers (#935)
  * Add smoother movement of hour hand in WS2812 led clock (#936)
- * Add support for Magic Home and Arilux RGBW Led controller (#940)
+ * Add support for Magic Home RGBW Led controller (#940)
  *
  * 5.8.0b
  * Fix command FullTopic entry when using serial or console interface

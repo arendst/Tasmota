@@ -32,7 +32,7 @@
  * 12       AiLight    RGBW   no
  * 13       Sonoff B1  RGBCW  yes
  *
- * led_scheme  WS2812  Others  Effect
+ * light_scheme  WS2812  Others  Effect
  * 0           yes     yes     Color On/Off
  * 1           yes     yes     Wakeup light
  * 2           yes     no      Clock
@@ -167,7 +167,7 @@ void LightInit(void)
       Settings.pwm_value[i] = 0;        // Disable direct PWM control
     }
     if (LT_PWM1 == light_type) {
-      Settings.led_color[0] = 255;      // One PWM channel only supports Dimmer but needs max color
+      Settings.light_color[0] = 255;      // One PWM channel only supports Dimmer but needs max color
     }
     if (SONOFF_LED == Settings.module) { // Fix Sonoff Led instabilities
       if (!my_module.gp.io[4]) {
@@ -187,7 +187,7 @@ void LightInit(void)
 #ifdef USE_WS2812  // ************************************************************************
   else if (LT_WS2812 == light_type) {
     Ws2812Init();
-    max_scheme += 8;
+    max_scheme = LS_MAX +7;
   }
 #endif  // USE_WS2812 ************************************************************************
   else {
@@ -202,11 +202,13 @@ void LightInit(void)
     LightMy92x1Init();
   }
 
-  if ((LS_WAKEUP == Settings.led_scheme) || (Settings.led_scheme > max_scheme)) {
-    Settings.led_scheme = LS_POWER;
-  }
-
   light_subtype = light_type &7;
+  if (light_subtype < LST_RGB) {
+    max_scheme = LS_POWER;
+  }
+  if ((LS_WAKEUP == Settings.light_scheme) || (Settings.light_scheme > max_scheme)) {
+    Settings.light_scheme = LS_POWER;
+  }
   light_power = 0;
   light_update = 1;
   light_wakeup_active = 0;
@@ -226,14 +228,14 @@ void LightSetColorTemp(uint16_t ct)
   uint16_t icold = (100 * (347 - my_ct)) / 136;
   uint16_t iwarm = (100 * my_ct) / 136;
   if (LST_RGBWC == light_subtype) {
-    Settings.led_color[0] = 0;
-    Settings.led_color[1] = 0;
-    Settings.led_color[2] = 0;
-    Settings.led_color[3] = (uint8_t)icold;
-    Settings.led_color[4] = (uint8_t)iwarm;
+    Settings.light_color[0] = 0;
+    Settings.light_color[1] = 0;
+    Settings.light_color[2] = 0;
+    Settings.light_color[3] = (uint8_t)icold;
+    Settings.light_color[4] = (uint8_t)iwarm;
   } else {
-    Settings.led_color[0] = (uint8_t)icold;
-    Settings.led_color[1] = (uint8_t)iwarm;
+    Settings.light_color[0] = (uint8_t)icold;
+    Settings.light_color[1] = (uint8_t)iwarm;
   }
 }
 
@@ -243,11 +245,11 @@ uint16_t LightGetColorTemp()
   if (LST_RGBWC == light_subtype) {
     ct_idx = 3;
   }
-  uint16_t my_ct = Settings.led_color[ct_idx +1];
+  uint16_t my_ct = Settings.light_color[ct_idx +1];
   if (my_ct > 0) {
     return ((my_ct * 136) / 100) + 154;
   } else {
-    my_ct = Settings.led_color[ct_idx];
+    my_ct = Settings.light_color[ct_idx];
     return 499 - ((my_ct * 136) / 100);
   }
 }
@@ -261,7 +263,7 @@ void LightSetDimmer(uint8_t myDimmer)
   }
   float dimmer = 100 / (float)myDimmer;
   for (byte i = 0; i < light_subtype; i++) {
-    temp = (float)Settings.led_color[i] / dimmer;
+    temp = (float)Settings.light_color[i] / dimmer;
     light_current_color[i] = (uint8_t)temp;
   }
 }
@@ -276,17 +278,17 @@ void LightSetColor()
     }
   }
   float mDim = (float)highest / 2.55;
-  Settings.led_dimmer = (uint8_t)mDim;
+  Settings.light_dimmer = (uint8_t)mDim;
   float dimmer = 100 / mDim;
   for (byte i = 0; i < light_subtype; i++) {
     float temp = (float)light_current_color[i] * dimmer;
-    Settings.led_color[i] = (uint8_t)temp;
+    Settings.light_color[i] = (uint8_t)temp;
   }
 }
 
 char* LightGetColor(uint8_t type, char* scolor)
 {
-  LightSetDimmer(Settings.led_dimmer);
+  LightSetDimmer(Settings.light_dimmer);
   scolor[0] = '\0';
   for (byte i = 0; i < light_subtype; i++) {
     if (!type && Settings.flag.decimal_text) {
@@ -300,7 +302,7 @@ char* LightGetColor(uint8_t type, char* scolor)
 
 void LightPowerOn()
 {
-  if (Settings.led_dimmer && !(light_power)) {
+  if (Settings.light_dimmer && !(light_power)) {
     ExecuteCommandPower(devices_present, 1);
   }
 }
@@ -310,10 +312,10 @@ void LightPreparePower()
   char scolor[25];
   char scommand[16];
 
-  if (Settings.led_dimmer && !(light_power)) {
+  if (Settings.light_dimmer && !(light_power)) {
     ExecuteCommandPower(devices_present, 7);  // No publishPowerState
   }
-  else if (!Settings.led_dimmer && light_power) {
+  else if (!Settings.light_dimmer && light_power) {
     ExecuteCommandPower(devices_present, 6);  // No publishPowerState
   }
 #ifdef USE_DOMOTICZ
@@ -324,23 +326,23 @@ void LightPreparePower()
   GetPowerDevice(scommand, devices_present, sizeof(scommand));
   if (light_subtype > LST_SINGLE) {
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"%s\":\"%s\", \"" D_CMND_DIMMER "\":%d, \"" D_CMND_COLOR "\":\"%s\"}"),
-      scommand, GetStateText(light_power), Settings.led_dimmer, LightGetColor(0, scolor));
+      scommand, GetStateText(light_power), Settings.light_dimmer, LightGetColor(0, scolor));
   } else {
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"%s\":\"%s\", \"" D_CMND_DIMMER "\":%d}"),
-      scommand, GetStateText(light_power), Settings.led_dimmer);
+      scommand, GetStateText(light_power), Settings.light_dimmer);
   }
 }
 
 void LightFade()
 {
-  if (0 == Settings.led_fade) {
+  if (0 == Settings.light_fade) {
     for (byte i = 0; i < light_subtype; i++) {
       light_new_color[i] = light_current_color[i];
     }
   } else {
-    uint8_t shift = Settings.led_speed;
-    if (Settings.led_speed > 6) {
-      shift = (strip_timer_counter % (Settings.led_speed -6)) ? 0 : 8;
+    uint8_t shift = Settings.light_speed;
+    if (Settings.light_speed > 6) {
+      shift = (strip_timer_counter % (Settings.light_speed -6)) ? 0 : 8;
     }
     if (shift) {
       for (byte i = 0; i < light_subtype; i++) {
@@ -377,7 +379,7 @@ void LightWheel(uint8_t wheel_pos)
   }
   light_entry_color[3] = 0;
   light_entry_color[4] = 0;
-  float dimmer = 100 / (float)Settings.led_dimmer;
+  float dimmer = 100 / (float)Settings.light_dimmer;
   for (byte i = 0; i < LST_RGB; i++) {
     float temp = (float)light_entry_color[i] / dimmer;
     light_entry_color[i] = (uint8_t)temp;
@@ -386,7 +388,7 @@ void LightWheel(uint8_t wheel_pos)
 
 void LightCycleColor(int8_t direction)
 {
-  if (strip_timer_counter % (Settings.led_speed * 2)) {
+  if (strip_timer_counter % (Settings.light_speed * 2)) {
     return;
   }
   light_wheel += direction;
@@ -425,20 +427,36 @@ void LightSetPower(uint8_t mpower)
 void LightAnimate()
 {
   uint8_t cur_col[5];
+  uint16_t light_still_on;
 
   strip_timer_counter++;
   if (!light_power) {                   // Power Off
     sleep = Settings.sleep;
     strip_timer_counter = 0;
     for (byte i = 0; i < light_subtype; i++) {
-      light_new_color[i] = 0;
+      light_still_on += light_new_color[i];
+    }
+    if (light_still_on && Settings.light_fade) {
+      uint8_t speed = Settings.light_speed;
+      if (speed > 6) {
+        speed = 6;
+      }
+      for (byte i = 0; i < light_subtype; i++) {
+        if (light_new_color[i] > 0) {
+          light_new_color[i] -= (light_new_color[i] >> speed) +1;
+        }
+      }
+    } else {
+      for (byte i = 0; i < light_subtype; i++) {
+        light_new_color[i] = 0;
+      }
     }
   }
   else {
     sleep = 0;
-    switch (Settings.led_scheme) {
+    switch (Settings.light_scheme) {
       case LS_POWER:
-        LightSetDimmer(Settings.led_dimmer);
+        LightSetDimmer(Settings.light_dimmer);
         LightFade();
         break;
       case LS_WAKEUP:
@@ -451,10 +469,10 @@ void LightAnimate()
           light_wakeup_dimmer = 0;
         }
         light_wakeup_counter++;
-        if (light_wakeup_counter > ((Settings.led_wakeup * STATES) / Settings.led_dimmer)) {
+        if (light_wakeup_counter > ((Settings.light_wakeup * STATES) / Settings.light_dimmer)) {
           light_wakeup_counter = 0;
           light_wakeup_dimmer++;
-          if (light_wakeup_dimmer <= Settings.led_dimmer) {
+          if (light_wakeup_dimmer <= Settings.light_dimmer) {
             LightSetDimmer(light_wakeup_dimmer);
             for (byte i = 0; i < light_subtype; i++) {
               light_new_color[i] = light_current_color[i];
@@ -463,7 +481,7 @@ void LightAnimate()
             snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_WAKEUP "\":\"" D_DONE "\"}"));
             MqttPublishPrefixTopic_P(2, PSTR(D_CMND_WAKEUP));
             light_wakeup_active = 0;
-            Settings.led_scheme = LS_POWER;
+            Settings.light_scheme = LS_POWER;
           }
         }
         break;
@@ -479,13 +497,13 @@ void LightAnimate()
 #ifdef USE_WS2812  // ************************************************************************
       default:
         if (LT_WS2812 == light_type) {
-          Ws2812ShowScheme(Settings.led_scheme -LS_MAX);
+          Ws2812ShowScheme(Settings.light_scheme -LS_MAX);
         }
 #endif  // USE_WS2812 ************************************************************************
     }
   }
 
-  if ((Settings.led_scheme < LS_MAX) || !light_power) {
+  if ((Settings.light_scheme < LS_MAX) || !light_power) {
     for (byte i = 0; i < light_subtype; i++) {
       if (light_last_color[i] != light_new_color[i]) {
         light_update = 1;
@@ -495,7 +513,7 @@ void LightAnimate()
       light_update = 0;
       for (byte i = 0; i < light_subtype; i++) {
         light_last_color[i] = light_new_color[i];
-        cur_col[i] = (Settings.led_table) ? ledTable[light_last_color[i]] : light_last_color[i];
+        cur_col[i] = (Settings.light_correction) ? ledTable[light_last_color[i]] : light_last_color[i];
         if (light_type < LT_PWM6) {
           if (pin[GPIO_PWM1 +i] < 99) {
             uint16_t curcol = cur_col[i] * (Settings.pwm_range / 255);
@@ -527,7 +545,7 @@ float light_brightness = 0.0;
 
 void LightRgbToHsb()
 {
-  LightSetDimmer(Settings.led_dimmer);
+  LightSetDimmer(Settings.light_dimmer);
 
   // convert colors to float between (0.0 - 1.0)
   float r = light_current_color[0] / 255.0f;
@@ -632,8 +650,8 @@ void LightReplaceHsb(String *response)
   } else {
     response->replace("{h}", "0");
     response->replace("{s}", "0");
-//    response->replace("{b}", String((uint8_t)(2.54f * (float)Settings.led_dimmer)));
-    response->replace("{b}", String((uint8_t)(0.01f * (float)Settings.led_dimmer)));
+//    response->replace("{b}", String((uint8_t)(2.54f * (float)Settings.light_dimmer)));
+    response->replace("{b}", String((uint8_t)(0.01f * (float)Settings.light_dimmer)));
   }
 }
 
@@ -647,8 +665,8 @@ void LightGetHsb(float *hue, float *sat, float *bri)
   } else {
     *hue = 0;
     *sat = 0;
-//    *bri = (2.54f * (float)Settings.led_dimmer);
-    *bri = (0.01f * (float)Settings.led_dimmer);
+//    *bri = (2.54f * (float)Settings.light_dimmer);
+    *bri = (0.01f * (float)Settings.light_dimmer);
   }
 }
 
@@ -668,7 +686,7 @@ void LightSetHsb(float hue, float sat, float bri, uint16_t ct)
     MqttPublishPrefixTopic_P(5, PSTR(D_CMND_COLOR));
   } else {
     uint8_t tmp = (uint8_t)(bri * 100);
-    Settings.led_dimmer = tmp;
+    Settings.light_dimmer = tmp;
     if (LST_COLDWARM == light_subtype) {
       if (ct > 0) {
         LightSetColorTemp(ct);
@@ -719,6 +737,8 @@ boolean LightColorEntry(char *buffer, uint8_t buffer_length)
   return (entry_type);
 }
 
+/********************************************************************************************/
+
 boolean LightCommand(char *type, uint16_t index, char *dataBuf, uint16_t data_len, int16_t payload)
 {
   boolean serviced = true;
@@ -736,6 +756,7 @@ boolean LightCommand(char *type, uint16_t index, char *dataBuf, uint16_t data_le
 //          }
           memcpy(light_current_color, light_entry_color, sizeof(light_current_color));
           LightSetColor();
+          Settings.light_scheme = 0;
           coldim = true;
         } else {             // Color2, 3 and 4
           for (byte i = 0; i < LST_RGB; i++) {
@@ -760,7 +781,7 @@ boolean LightCommand(char *type, uint16_t index, char *dataBuf, uint16_t data_le
     }
   }
 #ifdef USE_WS2812  //  ***********************************************************************
-  else if ((LT_WS2812 == light_type) && !strcasecmp_P(type, PSTR(D_CMND_LED)) && (index > 0) && (index <= Settings.led_pixels)) {
+  else if ((LT_WS2812 == light_type) && !strcasecmp_P(type, PSTR(D_CMND_LED)) && (index > 0) && (index <= Settings.light_pixels)) {
     if (data_len > 0) {
       if (LightColorEntry(dataBuf, data_len)) {
         Ws2812SetColor(index, light_entry_color[0], light_entry_color[1], light_entry_color[2]);
@@ -770,18 +791,18 @@ boolean LightCommand(char *type, uint16_t index, char *dataBuf, uint16_t data_le
   }
   else if ((LT_WS2812 == light_type) && !strcasecmp_P(type, PSTR(D_CMND_PIXELS))) {
     if ((payload > 0) && (payload <= WS2812_MAX_LEDS)) {
-      Settings.led_pixels = payload;
+      Settings.light_pixels = payload;
       Ws2812Clear();
       light_update = 1;
     }
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_PIXELS "\":%d}"), Settings.led_pixels);
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_PIXELS "\":%d}"), Settings.light_pixels);
   }
   else if ((LT_WS2812 == light_type) && !strcasecmp_P(type, PSTR(D_CMND_WIDTH)) && (index > 0) && (index <= 4)) {
     if (1 == index) {
       if ((payload >= 0) && (payload <= 4)) {
-        Settings.led_width = payload;
+        Settings.light_width = payload;
       }
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_WIDTH "\":%d}"), Settings.led_width);
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_WIDTH "\":%d}"), Settings.light_width);
     } else {
       if ((payload > 0) && (payload < 32)) {
         Settings.ws_width[index -2] = payload;
@@ -790,30 +811,24 @@ boolean LightCommand(char *type, uint16_t index, char *dataBuf, uint16_t data_le
     }
   }
 #endif  // USE_WS2812 ************************************************************************
-  else if (!strcasecmp_P(type, PSTR(D_CMND_SCHEME))) {
-    uint8_t max_scheme = LS_WAKEUP;
-    if (light_subtype >= LST_RGB) {
-      max_scheme = LS_MAX -1;
-    }
-    if (LT_WS2812 == light_type) {
-      max_scheme += 8;
-    }
+  else if ((light_subtype >= LST_RGB) && !strcasecmp_P(type, PSTR(D_CMND_SCHEME))) {
+    uint8_t max_scheme = (LT_WS2812 == light_type) ? LS_MAX +7 : LS_MAX -1;
     if ((payload >= 0) && (payload <= max_scheme)) {
-      Settings.led_scheme = payload;
-      if (LS_WAKEUP == Settings.led_scheme) {
+      Settings.light_scheme = payload;
+      if (LS_WAKEUP == Settings.light_scheme) {
         light_wakeup_active = 3;
       }
       LightPowerOn();
       strip_timer_counter = 0;
     }
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_SCHEME "\":%d}"), Settings.led_scheme);
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_SCHEME "\":%d}"), Settings.light_scheme);
   }
   else if (!strcasecmp_P(type, PSTR(D_CMND_WAKEUP))) {
     if ((payload >= 0) && (payload <= 100)) {
-      Settings.led_dimmer = payload;
+      Settings.light_dimmer = payload;
     }
     light_wakeup_active = 3;
-    Settings.led_scheme = LS_WAKEUP;
+    Settings.light_scheme = LS_WAKEUP;
     LightPowerOn();
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_WAKEUP "\":\"" D_STARTED "\"}"));
   }
@@ -827,10 +842,10 @@ boolean LightCommand(char *type, uint16_t index, char *dataBuf, uint16_t data_le
   }
   else if (!strcasecmp_P(type, PSTR(D_CMND_DIMMER))) {
     if ((payload >= 0) && (payload <= 100)) {
-      Settings.led_dimmer = payload;
+      Settings.light_dimmer = payload;
       coldim = true;
     } else {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_DIMMER "\":%d}"), Settings.led_dimmer);
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_DIMMER "\":%d}"), Settings.light_dimmer);
     }
   }
   else if (!strcasecmp_P(type, PSTR(D_CMND_LEDTABLE))) {
@@ -838,46 +853,46 @@ boolean LightCommand(char *type, uint16_t index, char *dataBuf, uint16_t data_le
       switch (payload) {
       case 0: // Off
       case 1: // On
-        Settings.led_table = payload;
+        Settings.light_correction = payload;
         break;
       case 2: // Toggle
-        Settings.led_table ^= 1;
+        Settings.light_correction ^= 1;
         break;
       }
       light_update = 1;
     }
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_LEDTABLE "\":\"%s\"}"), GetStateText(Settings.led_table));
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_LEDTABLE "\":\"%s\"}"), GetStateText(Settings.light_correction));
   }
   else if (!strcasecmp_P(type, PSTR(D_CMND_FADE))) {
     switch (payload) {
     case 0: // Off
     case 1: // On
-      Settings.led_fade = payload;
+      Settings.light_fade = payload;
       break;
     case 2: // Toggle
-      Settings.led_fade ^= 1;
+      Settings.light_fade ^= 1;
       break;
     }
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_FADE "\":\"%s\"}"), GetStateText(Settings.led_fade));
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_FADE "\":\"%s\"}"), GetStateText(Settings.light_fade));
   }
   else if (!strcasecmp_P(type, PSTR(D_CMND_SPEED))) {  // 1 - fast, 20 - very slow
     if ((payload > 0) && (payload <= STATES)) {
-      Settings.led_speed = payload;
+      Settings.light_speed = payload;
     }
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_SPEED "\":%d}"), Settings.led_speed);
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_SPEED "\":%d}"), Settings.light_speed);
   }
   else if (!strcasecmp_P(type, PSTR(D_CMND_WAKEUPDURATION))) {
     if ((payload > 0) && (payload < 3001)) {
-      Settings.led_wakeup = payload;
+      Settings.light_wakeup = payload;
       light_wakeup_active = 0;
     }
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_WAKEUPDURATION "\":%d}"), Settings.led_wakeup);
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_WAKEUPDURATION "\":%d}"), Settings.light_wakeup);
   }
   else if (!strcasecmp_P(type, PSTR("UNDOCA"))) {  // Theos legacy status
     LightGetColor(1, scolor);
     scolor[6] = '\0';  // RGB only
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s, %d, %d, %d, %d, %d"),
-      scolor, Settings.led_fade, Settings.led_table, Settings.led_scheme, Settings.led_speed, Settings.led_width);
+      scolor, Settings.light_fade, Settings.light_correction, Settings.light_scheme, Settings.light_speed, Settings.light_width);
     MqttPublishPrefixTopic_P(1, type);
     mqtt_data[0] = '\0';
   }

@@ -508,9 +508,12 @@ void SettingsDefaultSet2()
   memcpy_P(Settings.rf_code[0], kDefaultRfCode, 9);
 
   // 5.8.0
-  Settings.led_pixels = WS2812_LEDS;
+  Settings.light_pixels = WS2812_LEDS;
 
   // 5.8.1
+//  Settings.altitude = 0;
+  Settings.pwm_frequency = PWM_FREQ;
+  Settings.pwm_range = PWM_RANGE;
   SettingsDefaultSet_5_8_1();
 }
 
@@ -545,17 +548,17 @@ void SettingsDefaultSet_3_9_3()
     Settings.my_gp.io[i] = 0;
   }
 
-  Settings.led_pixels = WS2812_LEDS;
+  Settings.light_pixels = WS2812_LEDS;
   for (byte i = 0; i < MAX_PWMS; i++) {
-    Settings.led_color[i] = 255;
+    Settings.light_color[i] = 255;
   }
-  Settings.led_table = 0;
-  Settings.led_dimmer = 10;
-  Settings.led_fade = 0;
-  Settings.led_speed = 1;
-  Settings.led_scheme = 0;
-  Settings.led_width = 1;
-  Settings.led_wakeup = 0;
+  Settings.light_correction = 0;
+  Settings.light_dimmer = 10;
+  Settings.light_fade = 0;
+  Settings.light_speed = 1;
+  Settings.light_scheme = 0;
+  Settings.light_width = 1;
+  Settings.light_wakeup = 0;
 }
 
 void SettingsDefaultSet_4_0_4()
@@ -733,21 +736,21 @@ void SettingsDelta()
           cfg_wsflg = 1;
         }
       }
-      if (!Settings.led_pixels && cfg_wsflg) {
-        Settings.led_pixels = Settings.ws_pixels;
-        Settings.led_color[0] = Settings.ws_red;
-        Settings.led_color[1] = Settings.ws_green;
-        Settings.led_color[2] = Settings.ws_blue;
-        Settings.led_dimmer = Settings.ws_dimmer;
-        Settings.led_table = Settings.ws_ledtable;
-        Settings.led_fade = Settings.ws_fade;
-        Settings.led_speed = Settings.ws_speed;
-        Settings.led_scheme = Settings.ws_scheme;
-        Settings.led_width = Settings.ex_ws_width;
-        Settings.led_wakeup = Settings.ws_wakeup;
+      if (!Settings.light_pixels && cfg_wsflg) {
+        Settings.light_pixels = Settings.ws_pixels;
+        Settings.light_color[0] = Settings.ws_red;
+        Settings.light_color[1] = Settings.ws_green;
+        Settings.light_color[2] = Settings.ws_blue;
+        Settings.light_dimmer = Settings.ws_dimmer;
+        Settings.light_correction = Settings.ws_ledtable;
+        Settings.light_fade = Settings.ws_fade;
+        Settings.light_speed = Settings.ws_speed;
+        Settings.light_scheme = Settings.ws_scheme;
+        Settings.light_width = Settings.ex_ws_width;
+        Settings.light_wakeup = Settings.ws_wakeup;
       } else {
-        Settings.led_pixels = WS2812_LEDS;
-        Settings.led_width = 1;
+        Settings.light_pixels = WS2812_LEDS;
+        Settings.light_width = 1;
       }
     }
     if (Settings.version < 0x0508000A) {

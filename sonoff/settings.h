@@ -111,9 +111,9 @@ struct SYSCFG {
   unsigned long domoticz_relay_idx[MAX_DOMOTICZ_IDX]; // 344
   unsigned long domoticz_key_idx[MAX_DOMOTICZ_IDX];   // 354
 
-  unsigned long hlw_power_calibration;                  // 364
-  unsigned long hlw_voltage_calibration;                  // 368
-  unsigned long hlw_current_calibration;                  // 36C
+  unsigned long hlw_power_calibration;     // 364
+  unsigned long hlw_voltage_calibration;   // 368
+  unsigned long hlw_current_calibration;   // 36C
   unsigned long hlw_kWhtoday;              // 370
   unsigned long hlw_kWhyesterday;          // 374
   uint16_t      hlw_kWhdoy;                // 378
@@ -166,21 +166,21 @@ struct SYSCFG {
   uint8_t       ws_width[3];               // 481
 
   myio          my_gp;                     // 484
-  uint16_t      led_pixels;                // 496
-  uint8_t       led_color[5];              // 498
-  uint8_t       led_table;                 // 49D
-  uint8_t       led_dimmer;                // 49E
+  uint16_t      light_pixels;              // 496
+  uint8_t       light_color[5];            // 498
+  uint8_t       light_correction;          // 49D
+  uint8_t       light_dimmer;              // 49E
 
   byte          free_49F[2];               // 49F
 
-  uint8_t       led_fade;                  // 4A1
-  uint8_t       led_speed;                 // 4A2
-  uint8_t       led_scheme;                // 4A3
-  uint8_t       led_width;                 // 4A4
+  uint8_t       light_fade;                // 4A1
+  uint8_t       light_speed;               // 4A2
+  uint8_t       light_scheme;              // 4A3
+  uint8_t       light_width;               // 4A4
 
   byte          free_4A5[1];               // 4A5
 
-  uint16_t      led_wakeup;                // 4A6
+  uint16_t      light_wakeup;              // 4A6
 
   byte          free_4A8[1];               // 4A8
 

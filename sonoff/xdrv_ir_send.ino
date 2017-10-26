@@ -276,7 +276,7 @@ boolean IrSendCommand(char *type, uint16_t index, char *dataBuf, uint16_t data_l
   boolean error = false;
   char dataBufUc[data_len];
   const char *protocol;
-  uint8_t bits = 0;
+  uint32_t bits = 0;
   uint32_t data = 0;
 
   const char *HVAC_Mode;
@@ -316,7 +316,7 @@ boolean IrSendCommand(char *type, uint16_t index, char *dataBuf, uint16_t data_l
           else if (!strcasecmp_P(protocol, PSTR("SAMSUNG")))
             irsend->sendSAMSUNG(data, bits);
           else if (!strcasecmp_P(protocol, PSTR("PANASONIC")))
-            irsend->sendPanasonic(data, bits);
+            irsend->sendPanasonic(bits, data);
           else {
             snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_IRSEND "\":\"" D_PROTOCOL_NOT_SUPPORTED "\"}"));
           }
