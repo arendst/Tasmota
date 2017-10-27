@@ -18,31 +18,36 @@
 */
 
 /*********************************************************************************************\
- * PWM, WS2812, Sonoff B1, AiLight, Sonoff Led and BN-SZ01
+ * PWM, WS2812, Sonoff B1, AiLight, Sonoff Led and BN-SZ01, H801, MagicHome and Arilux
  *
- * light_type  Module     Color  ColorTemp
- *  1       PWM1       W      no          (Sonoff BN-SZ)
- *  2       PWM2       CW     yes         (Sonoff Led)
- *  3       PWM3       RGB    no          (H801 and MagicHome)
- *  4       PWM4       RGBW   no          (H801 and MagicHome)
- *  5       PWM5       RGBCW  yes         (H801)
- *  9       reserved          no
- * 10       reserved          yes
- * 11       +WS2812    RGB    no
- * 12       AiLight    RGBW   no
- * 13       Sonoff B1  RGBCW  yes
+ * light_type  Module     Color  ColorTemp  Modules
+ * ----------  ---------  -----  ---------  ----------------------------
+ *  1          PWM1       W      no         (Sonoff BN-SZ)
+ *  2          PWM2       CW     yes        (Sonoff Led)
+ *  3          PWM3       RGB    no         (H801, MagicHome and Arilux)
+ *  4          PWM4       RGBW   no         (H801, MagicHome and Arilux)
+ *  5          PWM5       RGBCW  yes        (H801, Arilux)
+ *  9          reserved          no
+ * 10          reserved          yes
+ * 11          +WS2812    RGB    no
+ * 12          AiLight    RGBW   no
+ * 13          Sonoff B1  RGBCW  yes
  *
- * light_scheme  WS2812  Others  Effect
- * 0           yes     yes     Color On/Off
- * 1           yes     yes     Wakeup light
- * 2           yes     no      Clock
- * 3           yes     no      Incandescent
- * 4           yes     no      RGB
- * 5           yes     no      Christmas
- * 6           yes     no      Hanukkah
- * 7           yes     no      Kwanzaa
- * 8           yes     no      Rainbow
- * 9           yes     no      Fire
+ * light_scheme  WS2812  3+ Colors  1+2 Colors  Effect
+ * ------------  ------  ---------  ----------  -----------------
+ *  0            yes     yes        yes         Color On/Off
+ *  1            yes     yes        yes         Wakeup light
+ *  2            yes     yes        no          Color cycle RGB
+ *  3            yes     yes        no          Color cycle RBG
+ *  4            yes     yes        no          Random RGB colors
+ *  5            yes     no         no          Clock
+ *  6            yes     no         no          Incandescent
+ *  7            yes     no         no          RGB
+ *  8            yes     no         no          Christmas
+ *  9            yes     no         no          Hanukkah
+ * 10            yes     no         no          Kwanzaa
+ * 11            yes     no         no          Rainbow
+ * 12            yes     no         no          Fire
  *
 \*********************************************************************************************/
 
@@ -319,7 +324,6 @@ void LightPreparePower()
     ExecuteCommandPower(devices_present, 6);  // No publishPowerState
   }
 #ifdef USE_DOMOTICZ
-//  MqttPublishDomoticzPowerState(1);
   DomoticzUpdatePowerState(devices_present);
 #endif  // USE_DOMOTICZ
 
@@ -436,7 +440,7 @@ void LightAnimate()
     for (byte i = 0; i < light_subtype; i++) {
       light_still_on += light_new_color[i];
     }
-    if (light_still_on && Settings.light_fade) {
+    if (light_still_on && Settings.light_fade && (Settings.light_scheme < LS_MAX)) {
       uint8_t speed = Settings.light_speed;
       if (speed > 6) {
         speed = 6;
