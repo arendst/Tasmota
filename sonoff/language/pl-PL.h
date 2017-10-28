@@ -1,18 +1,14 @@
 /*
   pl-PL.h - localization for Polish without fonetick - Poland for Sonoff-Tasmota
-
   Copyright (C) 2017  Theo Arends (translated by roblad - Robert L.)
-
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
   the Free Software Foundation, either version 3 of the License, or
   (at your option) any later version.
-
   This program is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
   GNU General Public License for more details.
-
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
@@ -185,12 +181,12 @@
 #define D_TRUE "Prawda"
 #define D_TYPE "Typ"
 #define D_UNKNOWN "Nieznany"
-#define D_UPGRADE "Aktualizacji"
+#define D_UPGRADE "aktualizacji"
 #define D_UPLOAD "Wgraj"
 #define D_UPTIME "Uptime"
-#define D_USER "Uzytkownik"
 #define D_UTC_TIME "UTC"
-#define D_UV_LEVEL "UV Level"
+#define D_USER "Uzytkownik"
+#define D_UV_LEVEL "Poziom UV"
 #define D_VCC "VCC"
 #define D_VERSION "Wersja"
 #define D_VOLTAGE "Napiecie"
@@ -216,7 +212,7 @@
 #define D_SET_BAUDRATE_TO "Ustaw szybkosc transmisji na"
 #define D_RECEIVED_TOPIC "Otrzymany temat"
 #define D_DATA_SIZE "Wielkosc danych"
-#define D_ANALOG_INPUT0 "Wejscie analogowe-0"
+#define D_ANALOG_INPUT0 "Wej_analogowe"
 
 #define D_FINGERPRINT "Weryfikuj odcisk TLS..."
 #define D_TLS_CONNECT_FAILED_TO "Nieudane polaczenie TLS do"
@@ -247,7 +243,6 @@
 #define D_I2CSCAN_UNKNOWN_ERROR_AT "Nieznany blad w"
 #define D_I2CSCAN_NO_DEVICES_FOUND "Nie znaleziono urzadzen"
 #define D_SYSLOG_HOST_NOT_FOUND "Syslog Host nie znaleziony"
-
 // webserver.ino
 #define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "Oprogramowanie MINIMAL - prosze uaktualnic"
 #define D_WEBSERVER_ACTIVE_ON "Aktywny serwer Web"
@@ -374,6 +369,7 @@
 #define D_DOMOTICZ_KEY_IDX "Key idx"
 #define D_DOMOTICZ_SWITCH_IDX "Przelacznik idx"
 #define D_DOMOTICZ_SENSOR_IDX "Sensor idx"
+  #define DOMOTICZ_SENSORS_MAX_STRING_LENGTH 14
   #define D_DOMOTICZ_TEMP "Temp"
   #define D_DOMOTICZ_TEMP_HUM "Temp,Wilg"
   #define D_DOMOTICZ_TEMP_HUM_BARO "Temp,Wilg,Cis"
