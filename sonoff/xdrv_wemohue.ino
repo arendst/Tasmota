@@ -40,12 +40,12 @@ const char WEMO_MSEARCH[] PROGMEM =
   "CACHE-CONTROL: max-age=86400\r\n"
   "DATE: Fri, 15 Apr 2016 04:56:29 GMT\r\n"
   "EXT:\r\n"
-  "LOCATION: http://{r1}:80/setup.xml\r\n"
+  "LOCATION: http://{r1:80/setup.xml\r\n"
   "OPT: \"http://schemas.upnp.org/upnp/1/0/\"; ns=01\r\n"
   "01-NLS: b9200ebb-736d-4b93-bf03-835149d13983\r\n"
   "SERVER: Unspecified, UPnP/1.0, Unspecified\r\n"
   "ST: urn:Belkin:device:**\r\n"
-  "USN: uuid:{r2}::urn:Belkin:device:**\r\n"
+  "USN: uuid:{r2::urn:Belkin:device:**\r\n"
   "X-User-Agent: redsonic\r\n"
   "\r\n";
 
@@ -71,8 +71,8 @@ void WemoRespondToMSearch()
 
   if (PortUdp.beginPacket(PortUdp.remoteIP(), PortUdp.remotePort())) {
     String response = FPSTR(WEMO_MSEARCH);
-    response.replace("{r1}", WiFi.localIP().toString());
-    response.replace("{r2}", WemoUuid());
+    response.replace("{r1", WiFi.localIP().toString());
+    response.replace("{r2", WemoUuid());
     PortUdp.write(response.c_str());
     PortUdp.endPacket();
     snprintf_P(message, sizeof(message), PSTR(D_RESPONSE_SENT));
@@ -97,20 +97,20 @@ const char HUE_RESPONSE[] PROGMEM =
   "HOST: 239.255.255.250:1900\r\n"
   "CACHE-CONTROL: max-age=100\r\n"
   "EXT:\r\n"
-  "LOCATION: http://{r1}:80/description.xml\r\n"
+  "LOCATION: http://{r1:80/description.xml\r\n"
   "SERVER: Linux/3.14.0 UPnP/1.0 IpBridge/1.17.0\r\n"
-  "hue-bridgeid: {r2}\r\n";
+  "hue-bridgeid: {r2\r\n";
 const char HUE_ST1[] PROGMEM =
   "ST: upnp:rootdevice\r\n"
-  "USN: uuid:{r3}::upnp:rootdevice\r\n"
+  "USN: uuid:{r3::upnp:rootdevice\r\n"
   "\r\n";
 const char HUE_ST2[] PROGMEM =
-  "ST: uuid:{r3}\r\n"
-  "USN: uuid:{r3}\r\n"
+  "ST: uuid:{r3\r\n"
+  "USN: uuid:{r3\r\n"
   "\r\n";
 const char HUE_ST3[] PROGMEM =
   "ST: urn:schemas-upnp-org:device:basic:1\r\n"
-  "USN: uuid:{r3}\r\n"
+  "USN: uuid:{r3\r\n"
   "\r\n";
 
 String HueBridgeId()
@@ -142,24 +142,24 @@ void HueRespondToMSearch()
 
   if (PortUdp.beginPacket(PortUdp.remoteIP(), PortUdp.remotePort())) {
     String response1 = FPSTR(HUE_RESPONSE);
-    response1.replace("{r1}", WiFi.localIP().toString());
-    response1.replace("{r2}", HueBridgeId());
+    response1.replace("{r1", WiFi.localIP().toString());
+    response1.replace("{r2", HueBridgeId());
 
     String response = response1;
     response += FPSTR(HUE_ST1);
-    response.replace("{r3}", HueUuid());
+    response.replace("{r3", HueUuid());
     PortUdp.write(response.c_str());
     PortUdp.endPacket();
 
     response = response1;
     response += FPSTR(HUE_ST2);
-    response.replace("{r3}", HueUuid());
+    response.replace("{r3", HueUuid());
     PortUdp.write(response.c_str());
     PortUdp.endPacket();
 
     response = response1;
     response += FPSTR(HUE_ST3);
-    response.replace("{r3}", HueUuid());
+    response.replace("{r3", HueUuid());
     PortUdp.write(response.c_str());
     PortUdp.endPacket();
 
@@ -273,12 +273,12 @@ const char WEMO_SETUP_XML[] PROGMEM =
   "<root>"
     "<device>"
       "<deviceType>urn:Belkin:device:controllee:1</deviceType>"
-      "<friendlyName>{x1}</friendlyName>"
+      "<friendlyName>{x1</friendlyName>"
       "<manufacturer>Belkin International Inc.</manufacturer>"
       "<modelName>Sonoff Socket</modelName>"
       "<modelNumber>3.1415</modelNumber>"
-      "<UDN>uuid:{x2}</UDN>"
-      "<serialNumber>{x3}</serialNumber>"
+      "<UDN>uuid:{x2</UDN>"
+      "<serialNumber>{x3</serialNumber>"
       "<binaryState>0</binaryState>"
       "<serviceList>"
         "<service>"
@@ -321,9 +321,9 @@ void HandleUpnpSetupWemo()
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, PSTR(D_WEMO_SETUP));
 
   String setup_xml = FPSTR(WEMO_SETUP_XML);
-  setup_xml.replace("{x1}", Settings.friendlyname[0]);
-  setup_xml.replace("{x2}", WemoUuid());
-  setup_xml.replace("{x3}", WemoSerialnumber());
+  setup_xml.replace("{x1", Settings.friendlyname[0]);
+  setup_xml.replace("{x2", WemoUuid());
+  setup_xml.replace("{x3", WemoSerialnumber());
   WebServer->send(200, FPSTR(HDR_CTYPE_XML), setup_xml);
 }
 
@@ -338,18 +338,18 @@ const char HUE_DESCRIPTION_XML[] PROGMEM =
     "<major>1</major>"
     "<minor>0</minor>"
   "</specVersion>"
-//  "<URLBase>http://{x1}/</URLBase>"
-  "<URLBase>http://{x1}:80/</URLBase>"
+//  "<URLBase>http://{x1/</URLBase>"
+  "<URLBase>http://{x1:80/</URLBase>"
   "<device>"
     "<deviceType>urn:schemas-upnp-org:device:Basic:1</deviceType>"
-    "<friendlyName>Amazon-Echo-HA-Bridge ({x1})</friendlyName>"
-//    "<friendlyName>Philips hue ({x1})</friendlyName>"
+    "<friendlyName>Amazon-Echo-HA-Bridge ({x1)</friendlyName>"
+//    "<friendlyName>Philips hue ({x1)</friendlyName>"
     "<manufacturer>Royal Philips Electronics</manufacturer>"
     "<modelDescription>Philips hue Personal Wireless Lighting</modelDescription>"
     "<modelName>Philips hue bridge 2012</modelName>"
     "<modelNumber>929000226503</modelNumber>"
-    "<serialNumber>{x3}</serialNumber>"
-    "<UDN>uuid:{x2}</UDN>"
+    "<serialNumber>{x3</serialNumber>"
+    "<UDN>uuid:{x2</UDN>"
   "</device>"
   "</root>\r\n"
   "\r\n";
@@ -366,31 +366,31 @@ const char HueLightStatus_JSON[] PROGMEM =
   "\"reachable\":true";
 const char HUE_LIGHTS_STATUS_JSON[] PROGMEM =
   "\"type\":\"Extended color light\","
-  "\"name\":\"{j1}\","
+  "\"name\":\"{j1\","
   "\"modelid\":\"LCT007\","
-  "\"uniqueid\":\"{j2}\","
+  "\"uniqueid\":\"{j2\","
   "\"swversion\":\"5.50.1.19085\""
   "}";
 const char HUE_GROUP0_STATUS_JSON[] PROGMEM =
   "{\"name\":\"Group 0\","
-   "\"lights\":[{l1}],"
+   "\"lights\":[{l1],"
    "\"type\":\"LightGroup\","
    "\"action\":{";
 //     "\"scene\":\"none\",";
 const char HueConfigResponse_JSON[] PROGMEM =
   "{\"name\":\"Philips hue\","
-   "\"mac\":\"{mac}\","
+   "\"mac\":\"{ma\","
    "\"dhcp\":true,"
-   "\"ipaddress\":\"{ip}\","
-   "\"netmask\":\"{mask}\","
-   "\"gateway\":\"{gw}\","
+   "\"ipaddress\":\"{ip\","
+   "\"netmask\":\"{ms\","
+   "\"gateway\":\"{gw\","
    "\"proxyaddress\":\"none\","
    "\"proxyport\":0,"
-   "\"bridgeid\":\"{bid}\","
-   "\"UTC\":\"{dt}\","
-   "\"whitelist\":{\"{id}\":{"
-     "\"last use date\":\"{dt}\","
-     "\"create date\":\"{dt}\","
+   "\"bridgeid\":\"{br\","
+   "\"UTC\":\"{dt\","
+   "\"whitelist\":{\"{id\":{"
+     "\"last use date\":\"{dt\","
+     "\"create date\":\"{dt\","
      "\"name\":\"Remote\"}},"
    "\"swversion\":\"01039019\","
    "\"apiversion\":\"1.17.0\","
@@ -399,7 +399,7 @@ const char HueConfigResponse_JSON[] PROGMEM =
    "\"portalservices\":false"
   "}";
 const char HUE_LIGHT_RESPONSE_JSON[] PROGMEM =
-  "{\"success\":{\"/lights/{id}/state/{cmd}\":{res}}}";
+  "{\"success\":{\"/lights/{id/state/{cm\":{re}}";
 const char HUE_ERROR_JSON[] PROGMEM =
   "[{\"error\":{\"type\":901,\"address\":\"/\",\"description\":\"Internal Error\"}}]";
 
@@ -424,9 +424,9 @@ void HandleUpnpSetupHue()
 {
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, PSTR(D_HUE_BRIDGE_SETUP));
   String description_xml = FPSTR(HUE_DESCRIPTION_XML);
-  description_xml.replace("{x1}", WiFi.localIP().toString());
-  description_xml.replace("{x2}", HueUuid());
-  description_xml.replace("{x3}", HueSerialnumber());
+  description_xml.replace("{x1", WiFi.localIP().toString());
+  description_xml.replace("{x2", HueUuid());
+  description_xml.replace("{x3", HueSerialnumber());
   WebServer->send(200, FPSTR(HDR_CTYPE_XML), description_xml);
 }
 
@@ -441,13 +441,13 @@ void HueNotImplemented(String *path)
 void HueConfigResponse(String *response)
 {
   *response += FPSTR(HueConfigResponse_JSON);
-  response->replace("{mac}", WiFi.macAddress());
-  response->replace("{ip}", WiFi.localIP().toString());
-  response->replace("{mask}", WiFi.subnetMask().toString());
-  response->replace("{gw}", WiFi.gatewayIP().toString());
-  response->replace("{bid}", HueBridgeId());
-  response->replace("{dt}", GetUtcDateAndTime());
-  response->replace("{id}", GetHueUserId());
+  response->replace("{ma", WiFi.macAddress());
+  response->replace("{ip", WiFi.localIP().toString());
+  response->replace("{ms", WiFi.subnetMask().toString());
+  response->replace("{gw", WiFi.gatewayIP().toString());
+  response->replace("{br", HueBridgeId());
+  response->replace("{dt", GetUtcDateAndTime());
+  response->replace("{id", GetHueUserId());
 }
 
 void HueConfig(String *path)
@@ -484,8 +484,8 @@ void HueGlobalConfig(String *path)
     HueLightStatus(i, &response);
     response += "},";
     response += FPSTR(HUE_LIGHTS_STATUS_JSON);
-    response.replace("{j1}", Settings.friendlyname[i-1]);
-    response.replace("{j2}", GetHueDeviceId(i));
+    response.replace("{j1", Settings.friendlyname[i-1]);
+    response.replace("{j2", GetHueDeviceId(i));
     if (i < maxhue) {
       response += ",\"";
     }
@@ -532,8 +532,8 @@ void HueLights(String *path)
       HueLightStatus(i, &response);
       response += "},";
       response += FPSTR(HUE_LIGHTS_STATUS_JSON);
-      response.replace("{j1}", Settings.friendlyname[i-1]);
-      response.replace("{j2}", GetHueDeviceId(i));
+      response.replace("{j1", Settings.friendlyname[i-1]);
+      response.replace("{j2", GetHueDeviceId(i));
       if (i < maxhue) {
         response += ",\"";
       }
@@ -556,19 +556,19 @@ void HueLights(String *path)
       if (hue_json.containsKey("on")) {
 
         response += FPSTR(HUE_LIGHT_RESPONSE_JSON);
-        response.replace("{id}", String(device));
-        response.replace("{cmd}", "on");
+        response.replace("{id", String(device));
+        response.replace("{cm", "on");
 
         on = hue_json["on"];
         switch(on)
         {
           case false : ExecuteCommandPower(device, 0);
-                       response.replace("{res}", "false");
+                       response.replace("{re", "false");
                        break;
           case true  : ExecuteCommandPower(device, 1);
-                       response.replace("{res}", "true");
+                       response.replace("{re", "true");
                        break;
-          default    : response.replace("{res}", (power & (1 << (device-1))) ? "true" : "false");
+          default    : response.replace("{re", (power & (1 << (device-1))) ? "true" : "false");
                        break;
         }
         resp = true;
@@ -585,9 +585,9 @@ void HueLights(String *path)
           response += ",";
         }
         response += FPSTR(HUE_LIGHT_RESPONSE_JSON);
-        response.replace("{id}", String(device));
-        response.replace("{cmd}", "bri");
-        response.replace("{res}", String(tmp));
+        response.replace("{id", String(device));
+        response.replace("{cm", "bri");
+        response.replace("{re", String(tmp));
         resp = true;
         change = true;
       }
@@ -598,9 +598,9 @@ void HueLights(String *path)
           response += ",";
         }
         response += FPSTR(HUE_LIGHT_RESPONSE_JSON);
-        response.replace("{id}", String(device));
-        response.replace("{cmd}", "hue");
-        response.replace("{res}", String(tmp));
+        response.replace("{id", String(device));
+        response.replace("{cm", "hue");
+        response.replace("{re", String(tmp));
         resp = true;
         change = true;
       }
@@ -611,9 +611,9 @@ void HueLights(String *path)
           response += ",";
         }
         response += FPSTR(HUE_LIGHT_RESPONSE_JSON);
-        response.replace("{id}", String(device));
-        response.replace("{cmd}", "sat");
-        response.replace("{res}", String(tmp));
+        response.replace("{id", String(device));
+        response.replace("{cm", "sat");
+        response.replace("{re", String(tmp));
         change = true;
       }
       if (hue_json.containsKey("ct")) {              // Color temperature 153 (Cold) to 500 (Warm)
@@ -622,9 +622,9 @@ void HueLights(String *path)
           response += ",";
         }
         response += FPSTR(HUE_LIGHT_RESPONSE_JSON);
-        response.replace("{id}", String(device));
-        response.replace("{cmd}", "ct");
-        response.replace("{res}", String(ct));
+        response.replace("{id", String(device));
+        response.replace("{cm", "ct");
+        response.replace("{re", String(ct));
         change = true;
       }
       if (change) {
@@ -654,8 +654,8 @@ void HueLights(String *path)
     HueLightStatus(device, &response);
     response += "},";
     response += FPSTR(HUE_LIGHTS_STATUS_JSON);
-    response.replace("{j1}", Settings.friendlyname[device-1]);
-    response.replace("{j2}", GetHueDeviceId(device));
+    response.replace("{j1", Settings.friendlyname[device-1]);
+    response.replace("{j2", GetHueDeviceId(device));
     WebServer->send(200, FPSTR(HDR_CTYPE_JSON), response);
   }
   else {
@@ -677,7 +677,7 @@ void HueGroups(String *path)
     for (uint8_t i = 2; i <= maxhue; i++) {
       lights += ",\"" + String(i) + "\"";
     }
-    response.replace("{l1}", lights);
+    response.replace("{l1", lights);
     HueLightStatus(1, &response);
     response += F("}}");
   }

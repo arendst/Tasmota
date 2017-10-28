@@ -25,7 +25,7 @@
     - Select IDE Tools - Flash Size: "1M (no SPIFFS)"
   ====================================================*/
 
-#define VERSION                0x0508000E   // 5.8.0n
+#define VERSION                0x05080010   // 5.8.0p
 
 // Location specific includes
 #include "sonoff.h"                         // Enumaration used in user_config.h
@@ -1792,7 +1792,10 @@ void MqttShowSensor(uint8_t* djson)
 #ifdef USE_BH1750
     MqttShowBh1750(djson);
 #endif  // USE_BH1750
-  }
+#ifdef USE_VEML6070
+    MqttShowVeml6070(djson);
+#endif  // USE_VEML6070
+}
 #endif  // USE_I2C
   if (strstr_P(mqtt_data, PSTR(D_TEMPERATURE))) {
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s, \"" D_TEMPERATURE_UNIT "\":\"%c\""), mqtt_data, TempUnit());
@@ -1878,7 +1881,10 @@ void PerformEverySecond()
 #ifdef USE_BH1750
         Bh1750Detect();
 #endif  // USE_BH1750
-      }
+#ifdef USE_VEML6070
+        Veml6070Detect();
+#endif  // USE_VEML6070
+}
 #endif  // USE_I2C
     }
     if (tele_period >= Settings.tele_period) {
@@ -2532,7 +2538,7 @@ void GpioInit()
 
   devices_present = 1;
   if (Settings.flag.pwm_control) {
-    light_type = 0;
+    light_type = LT_BASIC;
     for (byte i = 0; i < MAX_PWMS; i++) {
       if (pin[GPIO_PWM1 +i] < 99) {
         light_type++;                        // Use Dimmer/Color control for all PWM as SetOption15 = 1
@@ -2554,22 +2560,22 @@ void GpioInit()
     devices_present = 0;
     baudrate = 19200;
   }
-  else if ((H801 == Settings.module) || (MAGICHOME == Settings.module)) {  // PWM RGBCW led
+  else if ((H801 == Settings.module) || (MAGICHOME == Settings.module) || (ARILUX == Settings.module)) {  // PWM RGBCW led
     if (!Settings.flag.pwm_control) {
-      light_type = 0;                        // Use basic PWM control if SetOption15 = 0
+      light_type = LT_BASIC;                 // Use basic PWM control if SetOption15 = 0
     }
   }
   else if (SONOFF_BN == Settings.module) {   // PWM Single color led (White)
-    light_type = 1;
+    light_type = LT_PWM1;
   }
   else if (SONOFF_LED == Settings.module) {  // PWM Dual color led (White warm and cold)
-    light_type = 2;
+    light_type = LT_PWM2;
   }
   else if (AILIGHT == Settings.module) {     // RGBW led
-    light_type = 12;
+    light_type = LT_RGBW;
   }
   else if (SONOFF_B1 == Settings.module) {   // RGBWC led
-    light_type = 13;
+    light_type = LT_RGBWC;
   }
   else {
     if (!light_type) {
@@ -2603,7 +2609,7 @@ void GpioInit()
 #ifdef USE_WS2812
   if (!light_type && (pin[GPIO_WS2812] < 99)) {  // RGB led
     devices_present++;
-    light_type = 11;
+    light_type = LT_WS2812;
   }
 #endif  // USE_WS2812
   if (light_type) {                           // Any Led light under Dimmer/Color control

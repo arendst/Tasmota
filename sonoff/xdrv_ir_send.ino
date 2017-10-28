@@ -66,6 +66,10 @@ void IrSendInit(void)
 
 #define IR_TIME_AVOID_DUPLICATE 500 // Milliseconds
 
+// Based on IRremoteESP8266.h enum decode_type_t
+const char kIrReceiveProtocols[] PROGMEM =
+  "UNKNOWN|RC5|RC6|NEC|SONY|PANASONIC|JVC|SAMSUNG|WHYNTER|AIWA_RC_T501|LG|SANYO|MITSUBISHI|DISH|SHARP";
+
 IRrecv *irrecv = NULL;
 unsigned long ir_lasttime = 0;
 
@@ -79,10 +83,8 @@ void IrReceiveInit(void)
 
 void IrReceiveCheck()
 {
-  char sirtype[100];
-  char *protocol;
+  char sirtype[sizeof(kIrReceiveProtocols)];
   int8_t iridx = 0;
-  uint8_t diridx = 0;
 
   decode_results results;
 
@@ -100,21 +102,12 @@ void IrReceiveCheck()
       if ((iridx < 0) || (iridx > 14)) {
         iridx = 0;
       }
-      diridx = iridx;
-      // Based on IRremoteESP8266.h enum decode_type_t
-      snprintf_P(sirtype, sizeof(sirtype), PSTR("UNKNOWN RC5 RC6 NEC SONY PANASONIC JVC SAMSUNG WHYNTER AIWA_RC_T501 LG SANYO MITSUBISHI DISH SHARP"));
-      protocol = strtok(sirtype, " ");
-      while (iridx) {
-        iridx--;
-        protocol = strtok(NULL, " ");
-      }
-
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_IRRECEIVED "\":{\"" D_IR_PROTOCOL "\":\"%s\", \"" D_IR_BITS "\":%d, \"" D_IR_DATA "\":\"%X\"}}"),
-                 protocol, results.bits, results.value);
+        GetIndexedString(sirtype, kIrReceiveProtocols, iridx), results.bits, results.value);
       MqttPublishPrefixTopic_P(6, PSTR(D_IRRECEIVED));
 #ifdef USE_DOMOTICZ
-      unsigned long value = results.value | (diridx << 28); // [Protocol:4, Data:28]
-      DomoticzSensor(DZ_COUNT, value);                     // Send data as Domoticz Counter value
+      unsigned long value = results.value | (iridx << 28);  // [Protocol:4, Data:28]
+      DomoticzSensor(DZ_COUNT, value);                      // Send data as Domoticz Counter value
 #endif                                                      // USE_DOMOTICZ
     }
 
@@ -283,7 +276,7 @@ boolean IrSendCommand(char *type, uint16_t index, char *dataBuf, uint16_t data_l
   boolean error = false;
   char dataBufUc[data_len];
   const char *protocol;
-  uint8_t bits = 0;
+  uint32_t bits = 0;
   uint32_t data = 0;
 
   const char *HVAC_Mode;
@@ -323,7 +316,7 @@ boolean IrSendCommand(char *type, uint16_t index, char *dataBuf, uint16_t data_l
           else if (!strcasecmp_P(protocol, PSTR("SAMSUNG")))
             irsend->sendSAMSUNG(data, bits);
           else if (!strcasecmp_P(protocol, PSTR("PANASONIC")))
-            irsend->sendPanasonic(data, bits);
+            irsend->sendPanasonic(bits, data);
           else {
             snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_IRSEND "\":\"" D_PROTOCOL_NOT_SUPPORTED "\"}"));
           }

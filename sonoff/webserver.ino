@@ -94,7 +94,7 @@ const char HTTP_HEAD[] PROGMEM =
 #ifdef BE_MINIMAL
   "<div style='text-align:center;color:red;'><h3>" D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "</h3></div>"
 #endif
-  "<div style='text-align:center;'><h3>{ha} " D_MODULE "</h3><h2>{h}</h2></div>";
+  "<div style='text-align:center;'><h3>{ha " D_MODULE "</h3><h2>{h}</h2></div>";
 const char HTTP_SCRIPT_CONSOL[] PROGMEM =
   "var sn=0;"                    // Scroll position
   "var id=99;"                   // Get most of weblog initially
@@ -193,7 +193,7 @@ const char HTTP_BTN_CONF[] PROGMEM =
 const char HTTP_FORM_MODULE[] PROGMEM =
   "<fieldset><legend><b>&nbsp;" D_MODULE_PARAMETERS "&nbsp;</b></legend><form method='get' action='sv'>"
   "<input id='w' name='w' value='6' hidden><input id='r' name='r' value='1' hidden>"
-  "<br/><b>" D_MODULE_TYPE "</b> ({mt})<br/><select id='g99' name='g99'></select><br/>";
+  "<br/><b>" D_MODULE_TYPE "</b> ({mt)<br/><select id='g99' name='g99'></select><br/>";
 const char HTTP_LNK_ITEM[] PROGMEM =
   "<div><a href='#p' onclick='c(this)'>{v}</a>&nbsp;<span class='q'>{i} {r}%</span></div>";
 const char HTTP_LNK_SCAN[] PROGMEM =
@@ -201,26 +201,26 @@ const char HTTP_LNK_SCAN[] PROGMEM =
 const char HTTP_FORM_WIFI[] PROGMEM =
   "<fieldset><legend><b>&nbsp;" D_WIFI_PARAMETERS "&nbsp;</b></legend><form method='get' action='sv'>"
   "<input id='w' name='w' value='1' hidden><input id='r' name='r' value='1' hidden>"
-  "<br/><b>" D_AP1_SSID "</b> (" STA_SSID1 ")<br/><input id='s1' name='s1' placeholder='" STA_SSID1 "' value='{s1}'><br/>"
-  "<br/><b>" D_AP1_PASSWORD "</b><br/><input id='p1' name='p1' type='password' placeholder='" STA_PASS1 "' value='{p1}'><br/>"
-  "<br/><b>" D_AP2_SSID "</b> (" STA_SSID2 ")<br/><input id='s2' name='s2' placeholder='" STA_SSID2 "' value='{s2}'><br/>"
-  "<br/><b>" D_AP2_PASSWORD "</b><br/><input id='p2' name='p2' type='password' placeholder='" STA_PASS2 "' value='{p2}'><br/>"
-  "<br/><b>" D_HOSTNAME "</b> (" WIFI_HOSTNAME ")<br/><input id='h' name='h' placeholder='" WIFI_HOSTNAME" ' value='{h1}'><br/>";
+  "<br/><b>" D_AP1_SSID "</b> (" STA_SSID1 ")<br/><input id='s1' name='s1' placeholder='" STA_SSID1 "' value='{s1'><br/>"
+  "<br/><b>" D_AP1_PASSWORD "</b><br/><input id='p1' name='p1' type='password' placeholder='" STA_PASS1 "' value='{p1'><br/>"
+  "<br/><b>" D_AP2_SSID "</b> (" STA_SSID2 ")<br/><input id='s2' name='s2' placeholder='" STA_SSID2 "' value='{s2'><br/>"
+  "<br/><b>" D_AP2_PASSWORD "</b><br/><input id='p2' name='p2' type='password' placeholder='" STA_PASS2 "' value='{p2'><br/>"
+  "<br/><b>" D_HOSTNAME "</b> (" WIFI_HOSTNAME ")<br/><input id='h' name='h' placeholder='" WIFI_HOSTNAME" ' value='{h1'><br/>";
 const char HTTP_FORM_MQTT[] PROGMEM =
   "<fieldset><legend><b>&nbsp;" D_MQTT_PARAMETERS "&nbsp;</b></legend><form method='get' action='sv'>"
   "<input id='w' name='w' value='2' hidden><input id='r' name='r' value='1' hidden>"
-  "<br/><b>" D_HOST "</b> (" MQTT_HOST ")<br/><input id='mh' name='mh' placeholder='" MQTT_HOST" ' value='{m1}'><br/>"
-  "<br/><b>" D_PORT "</b> (" STR(MQTT_PORT) ")<br/><input id='ml' name='ml' placeholder='" STR(MQTT_PORT) "' value='{m2}'><br/>"
-  "<br/><b>" D_CLIENT "</b> ({m0})<br/><input id='mc' name='mc' placeholder='" MQTT_CLIENT_ID "' value='{m3}'><br/>"
-  "<br/><b>" D_USER "</b> (" MQTT_USER ")<br/><input id='mu' name='mu' placeholder='" MQTT_USER "' value='{m4}'><br/>"
-  "<br/><b>" D_PASSWORD "</b><br/><input id='mp' name='mp' type='password' placeholder='" MQTT_PASS "' value='{m5}'><br/>"
-  "<br/><b>" D_TOPIC "</b> = %topic% (" MQTT_TOPIC ")<br/><input id='mt' name='mt' placeholder='" MQTT_TOPIC" ' value='{m6}'><br/>"
-  "<br/><b>" D_FULL_TOPIC "</b> (" MQTT_FULLTOPIC ")<br/><input id='mf' name='mf' placeholder='" MQTT_FULLTOPIC" ' value='{m7}'><br/>";
+  "<br/><b>" D_HOST "</b> (" MQTT_HOST ")<br/><input id='mh' name='mh' placeholder='" MQTT_HOST" ' value='{m1'><br/>"
+  "<br/><b>" D_PORT "</b> (" STR(MQTT_PORT) ")<br/><input id='ml' name='ml' placeholder='" STR(MQTT_PORT) "' value='{m2'><br/>"
+  "<br/><b>" D_CLIENT "</b> ({m0)<br/><input id='mc' name='mc' placeholder='" MQTT_CLIENT_ID "' value='{m3'><br/>"
+  "<br/><b>" D_USER "</b> (" MQTT_USER ")<br/><input id='mu' name='mu' placeholder='" MQTT_USER "' value='{m4'><br/>"
+  "<br/><b>" D_PASSWORD "</b><br/><input id='mp' name='mp' type='password' placeholder='" MQTT_PASS "' value='{m5'><br/>"
+  "<br/><b>" D_TOPIC "</b> = %topic% (" MQTT_TOPIC ")<br/><input id='mt' name='mt' placeholder='" MQTT_TOPIC" ' value='{m6'><br/>"
+  "<br/><b>" D_FULL_TOPIC "</b> (" MQTT_FULLTOPIC ")<br/><input id='mf' name='mf' placeholder='" MQTT_FULLTOPIC" ' value='{m7'><br/>";
 const char HTTP_FORM_LOG1[] PROGMEM =
   "<fieldset><legend><b>&nbsp;" D_LOGGING_PARAMETERS "&nbsp;</b></legend><form method='get' action='sv'>"
   "<input id='w' name='w' value='3' hidden><input id='r' name='r' value='0' hidden>";
 const char HTTP_FORM_LOG2[] PROGMEM =
-  "<br/><b>{b0}" D_LOG_LEVEL "</b> ({b1})<br/><select id='{b2}' name='{b2}'>"
+  "<br/><b>{b0" D_LOG_LEVEL "</b> ({b1)<br/><select id='{b2' name='{b2'>"
   "<option{a0value='0'>0 " D_NONE "</option>"
   "<option{a1value='1'>1 " D_ERROR "</option>"
   "<option{a2value='2'>2 " D_INFO "</option>"
@@ -228,14 +228,14 @@ const char HTTP_FORM_LOG2[] PROGMEM =
   "<option{a4value='4'>4 " D_MORE_DEBUG "</option>"
   "</select><br/>";
 const char HTTP_FORM_LOG3[] PROGMEM =
-  "<br/><b>" D_SYSLOG_HOST "</b> (" SYS_LOG_HOST ")<br/><input id='lh' name='lh' placeholder='" SYS_LOG_HOST "' value='{l2}'><br/>"
-  "<br/><b>" D_SYSLOG_PORT "</b> (" STR(SYS_LOG_PORT) ")<br/><input id='lp' name='lp' placeholder='" STR(SYS_LOG_PORT) "' value='{l3}'><br/>"
-  "<br/><b>" D_TELEMETRY_PERIOD "</b> (" STR(TELE_PERIOD) ")<br/><input id='lt' name='lt' placeholder='" STR(TELE_PERIOD) "' value='{l4}'><br/>";
+  "<br/><b>" D_SYSLOG_HOST "</b> (" SYS_LOG_HOST ")<br/><input id='lh' name='lh' placeholder='" SYS_LOG_HOST "' value='{l2'><br/>"
+  "<br/><b>" D_SYSLOG_PORT "</b> (" STR(SYS_LOG_PORT) ")<br/><input id='lp' name='lp' placeholder='" STR(SYS_LOG_PORT) "' value='{l3'><br/>"
+  "<br/><b>" D_TELEMETRY_PERIOD "</b> (" STR(TELE_PERIOD) ")<br/><input id='lt' name='lt' placeholder='" STR(TELE_PERIOD) "' value='{l4'><br/>";
 const char HTTP_FORM_OTHER[] PROGMEM =
   "<fieldset><legend><b>&nbsp;" D_OTHER_PARAMETERS "&nbsp;</b></legend><form method='get' action='sv'>"
   "<input id='w' name='w' value='5' hidden><input id='r' name='r' value='1' hidden>"
-  "<br/><b>" D_WEB_ADMIN_PASSWORD "</b><br/><input id='p1' name='p1' type='password' placeholder='" WEB_PASSWORD "' value='{p1}'><br/>"
-  "<br/><input style='width:10%;' id='b1' name='b1' type='checkbox'{r1}><b>" D_MQTT_ENABLE "</b><br/>";
+  "<br/><b>" D_WEB_ADMIN_PASSWORD "</b><br/><input id='p1' name='p1' type='password' placeholder='" WEB_PASSWORD "' value='{p1'><br/>"
+  "<br/><input style='width:10%;' id='b1' name='b1' type='checkbox'{r1><b>" D_MQTT_ENABLE "</b><br/>";
   const char HTTP_FORM_OTHER2[] PROGMEM =
   "<br/><b>" D_FRIENDLY_NAME " {1</b> ({2)<br/><input id='a{1' name='a{1' placeholder='{2' value='{3'><br/>";
 #ifdef USE_EMULATION
@@ -253,14 +253,14 @@ const char HTTP_FORM_UPG[] PROGMEM =
   "<div id='f1' name='f1' style='display:block;'>"
   "<fieldset><legend><b>&nbsp;" D_UPGRADE_BY_WEBSERVER "&nbsp;</b></legend>"
   "<form method='get' action='u1'>"
-  "<br/>" D_OTA_URL "<br/><input id='o' name='o' placeholder='OTA_URL' value='{o1}'><br/>"
+  "<br/>" D_OTA_URL "<br/><input id='o' name='o' placeholder='OTA_URL' value='{o1'><br/>"
   "<br/><button type='submit'>" D_START_UPGRADE "</button></form>"
   "</fieldset><br/><br/>"
   "<fieldset><legend><b>&nbsp;" D_UPGRADE_BY_FILE_UPLOAD "&nbsp;</b></legend>";
 const char HTTP_FORM_RST_UPG[] PROGMEM =
   "<form method='post' action='u2' enctype='multipart/form-data'>"
   "<br/><input type='file' name='u2'><br/>"
-  "<br/><button type='submit' onclick='document.getElementById(\"f1\").style.display=\"none\";document.getElementById(\"f2\").style.display=\"block\";this.form.submit();'>" D_START " {r1}</button></form>"
+  "<br/><button type='submit' onclick='document.getElementById(\"f1\").style.display=\"none\";document.getElementById(\"f2\").style.display=\"block\";this.form.submit();'>" D_START " {r1</button></form>"
   "</fieldset>"
   "</div>"
   "<div id='f2' name='f2' style='display:none;text-align:center;'><b>" D_UPLOAD_STARTED " ...</b></div>";
@@ -423,7 +423,7 @@ void ShowPage(String &page)
   if((HTTP_ADMIN == webserver_state) && (Settings.web_password[0] != 0) && !WebServer->authenticate(WEB_USERNAME, Settings.web_password)) {
     return WebServer->requestAuthentication();
   }
-  page.replace(F("{ha}"), my_module.name);
+  page.replace(F("{ha"), my_module.name);
   page.replace(F("{h}"), Settings.friendlyname[0]);
   if (HTTP_MANAGER == webserver_state) {
     if (WifiConfigCounter()) {
@@ -457,11 +457,11 @@ void HandleRoot()
     page += F("<div id='l1' name='l1'></div>");
     if (devices_present) {
       if (light_type) {
-        if ((2 == (light_type &7)) || (5 == (light_type &7))) {
+        if ((LST_COLDWARM == (light_type &7)) || (LST_RGBWC == (light_type &7))) {
           snprintf_P(line, sizeof(line), HTTP_MSG_SLIDER1, LightGetColorTemp());
           page += line;
         }
-        snprintf_P(line, sizeof(line), HTTP_MSG_SLIDER2, Settings.led_dimmer);
+        snprintf_P(line, sizeof(line), HTTP_MSG_SLIDER2, Settings.light_dimmer);
         page += line;
       }
       page += FPSTR(HTTP_TABLE100);
@@ -563,7 +563,10 @@ void HandleAjaxStatusRefresh()
 #ifdef USE_BH1750
     tpage += WebShowBh1750();
 #endif
-  }
+#ifdef USE_VEML6070
+    tpage += WebShowVeml6070();
+#endif
+}
 #endif  // USE_I2C
   String page = "";
   if (tpage.length() > 0) {
@@ -588,7 +591,7 @@ void HandleAjaxStatusRefresh()
  * Will interrupt user action when selected
   if (light_type) {
     snprintf_P(line, sizeof(line), PSTR("<input type='range' min='1' max='100' value='%d' onchange='lb(value)'>"),
-      Settings.led_dimmer);
+      Settings.light_dimmer);
     page += line;
   }
 */
@@ -693,7 +696,7 @@ void HandleModuleConfiguration()
   page.replace(F("{v}"), FPSTR(S_CONFIGURE_MODULE));
   page += FPSTR(HTTP_FORM_MODULE);
   snprintf_P(stemp, sizeof(stemp), kModules[MODULE].name);
-  page.replace(F("{mt}"), stemp);
+  page.replace(F("{mt"), stemp);
 
   mytmplt cmodule;
   memcpy_P(&cmodule, &kModules[Settings.module], sizeof(cmodule));
@@ -836,11 +839,11 @@ void HandleWifi(boolean scan)
   }
 
   page += FPSTR(HTTP_FORM_WIFI);
-  page.replace(F("{h1}"), Settings.hostname);
-  page.replace(F("{s1}"), Settings.sta_ssid[0]);
-  page.replace(F("{p1}"), Settings.sta_pwd[0]);
-  page.replace(F("{s2}"), Settings.sta_ssid[1]);
-  page.replace(F("{p2}"), Settings.sta_pwd[1]);
+  page.replace(F("{h1"), Settings.hostname);
+  page.replace(F("{s1"), Settings.sta_ssid[0]);
+  page.replace(F("{p1"), Settings.sta_pwd[0]);
+  page.replace(F("{s2"), Settings.sta_ssid[1]);
+  page.replace(F("{p2"), Settings.sta_pwd[1]);
   page += FPSTR(HTTP_FORM_END);
   if (HTTP_MANAGER == webserver_state) {
     page += FPSTR(HTTP_BTN_RSTRT);
@@ -862,14 +865,14 @@ void HandleMqttConfiguration()
   page += FPSTR(HTTP_FORM_MQTT);
   char str[sizeof(Settings.mqtt_client)];
   GetMqttClient(str, MQTT_CLIENT_ID, sizeof(Settings.mqtt_client));
-  page.replace(F("{m0}"), str);
-  page.replace(F("{m1}"), Settings.mqtt_host);
-  page.replace(F("{m2}"), String(Settings.mqtt_port));
-  page.replace(F("{m3}"), Settings.mqtt_client);
-  page.replace(F("{m4}"), (Settings.mqtt_user[0] == '\0')?"0":Settings.mqtt_user);
-  page.replace(F("{m5}"), (Settings.mqtt_pwd[0] == '\0')?"0":Settings.mqtt_pwd);
-  page.replace(F("{m6}"), Settings.mqtt_topic);
-  page.replace(F("{m7}"), Settings.mqtt_fulltopic);
+  page.replace(F("{m0"), str);
+  page.replace(F("{m1"), Settings.mqtt_host);
+  page.replace(F("{m2"), String(Settings.mqtt_port));
+  page.replace(F("{m3"), Settings.mqtt_client);
+  page.replace(F("{m4"), (Settings.mqtt_user[0] == '\0')?"0":Settings.mqtt_user);
+  page.replace(F("{m5"), (Settings.mqtt_pwd[0] == '\0')?"0":Settings.mqtt_pwd);
+  page.replace(F("{m6"), Settings.mqtt_topic);
+  page.replace(F("{m7"), Settings.mqtt_fulltopic);
   page += FPSTR(HTTP_FORM_END);
   page += FPSTR(HTTP_BTN_CONF);
   ShowPage(page);
@@ -889,25 +892,25 @@ void HandleLoggingConfiguration()
     page += FPSTR(HTTP_FORM_LOG2);
     switch (idx) {
     case 0:
-      page.replace(F("{b0}"), F(D_SERIAL " "));
-      page.replace(F("{b1}"), STR(SERIAL_LOG_LEVEL));
-      page.replace(F("{b2}"), F("ls"));
+      page.replace(F("{b0"), F(D_SERIAL " "));
+      page.replace(F("{b1"), STR(SERIAL_LOG_LEVEL));
+      page.replace(F("{b2"), F("ls"));
       for (byte i = LOG_LEVEL_NONE; i < LOG_LEVEL_ALL; i++) {
         page.replace("{a" + String(i), (i == Settings.seriallog_level) ? F(" selected ") : F(" "));
       }
       break;
     case 1:
-      page.replace(F("{b0}"), F(D_WEB " "));
-      page.replace(F("{b1}"), STR(WEB_LOG_LEVEL));
-      page.replace(F("{b2}"), F("lw"));
+      page.replace(F("{b0"), F(D_WEB " "));
+      page.replace(F("{b1"), STR(WEB_LOG_LEVEL));
+      page.replace(F("{b2"), F("lw"));
       for (byte i = LOG_LEVEL_NONE; i < LOG_LEVEL_ALL; i++) {
         page.replace("{a" + String(i), (i == Settings.weblog_level) ? F(" selected ") : F(" "));
       }
       break;
     case 2:
-      page.replace(F("{b0}"), F(D_SYS));
-      page.replace(F("{b1}"), STR(SYS_LOG_LEVEL));
-      page.replace(F("{b2}"), F("ll"));
+      page.replace(F("{b0"), F(D_SYS));
+      page.replace(F("{b1"), STR(SYS_LOG_LEVEL));
+      page.replace(F("{b2"), F("ll"));
       for (byte i = LOG_LEVEL_NONE; i < LOG_LEVEL_ALL; i++) {
         page.replace("{a" + String(i), (i == Settings.syslog_level) ? F(" selected ") : F(" "));
       }
@@ -915,9 +918,9 @@ void HandleLoggingConfiguration()
     }
   }
   page += FPSTR(HTTP_FORM_LOG3);
-  page.replace(F("{l2}"), Settings.syslog_host);
-  page.replace(F("{l3}"), String(Settings.syslog_port));
-  page.replace(F("{l4}"), String(Settings.tele_period));
+  page.replace(F("{l2"), Settings.syslog_host);
+  page.replace(F("{l3"), String(Settings.syslog_port));
+  page.replace(F("{l4"), String(Settings.tele_period));
   page += FPSTR(HTTP_FORM_END);
   page += FPSTR(HTTP_BTN_CONF);
   ShowPage(page);
@@ -934,8 +937,8 @@ void HandleOtherConfiguration()
   String page = FPSTR(HTTP_HEAD);
   page.replace(F("{v}"), FPSTR(S_CONFIGURE_OTHER));
   page += FPSTR(HTTP_FORM_OTHER);
-  page.replace(F("{p1}"), Settings.web_password);
-  page.replace(F("{r1}"), (Settings.flag.mqtt_enabled) ? F(" checked") : F(""));
+  page.replace(F("{p1"), Settings.web_password);
+  page.replace(F("{r1"), (Settings.flag.mqtt_enabled) ? F(" checked") : F(""));
   page += FPSTR(HTTP_FORM_OTHER2);
   page.replace(F("{1"), F("1"));
   page.replace(F("{2"), FRIENDLY_NAME);
@@ -1157,7 +1160,7 @@ void HandleRestoreConfiguration()
   page.replace(F("{v}"), FPSTR(S_RESTORE_CONFIGURATION));
   page += FPSTR(HTTP_FORM_RST);
   page += FPSTR(HTTP_FORM_RST_UPG);
-  page.replace(F("{r1}"), F(D_RESTORE));
+  page.replace(F("{r1"), F(D_RESTORE));
   page += FPSTR(HTTP_BTN_CONF);
   ShowPage(page);
 
@@ -1175,9 +1178,9 @@ void HandleUpgradeFirmware()
   String page = FPSTR(HTTP_HEAD);
   page.replace(F("{v}"), FPSTR(S_FIRMWARE_UPGRADE));
   page += FPSTR(HTTP_FORM_UPG);
-  page.replace(F("{o1}"), Settings.ota_url);
+  page.replace(F("{o1"), Settings.ota_url);
   page += FPSTR(HTTP_FORM_RST_UPG);
-  page.replace(F("{r1}"), F(D_UPGRADE));
+  page.replace(F("{r1"), F(D_UPGRADE));
   page += FPSTR(HTTP_BTN_MAIN);
   ShowPage(page);
 

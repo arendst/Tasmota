@@ -44,7 +44,7 @@
 
 // -- Wifi ----------------------------------------
 #define WIFI_IP_ADDRESS        "0.0.0.0"         // [IpAddress1] Set to 0.0.0.0 for using DHCP or IP address
-#define WIFI_GATEWAY           "192.168.2.254"   // {IpAddress2] If not using DHCP set Gateway IP address
+#define WIFI_GATEWAY           "192.168.2.254"   // [IpAddress2] If not using DHCP set Gateway IP address
 #define WIFI_SUBNETMASK        "255.255.255.0"   // [IpAddress3] If not using DHCP set Network mask
 #define WIFI_DNS               "192.168.2.27"    // [IpAddress4] If not using DHCP set DNS IP address (might be equal to WIFI_GATEWAY)
 
@@ -167,6 +167,7 @@
 
 #define USE_I2C                                  // I2C using library wire (+10k code, 0.2k mem) - Disable by //
   #define USE_BH1750                             // Add I2C code for BH1750 sensor
+//  #define USE_VEML6070                           // Add I2C code for VEML6070 sensor (+0.5k code)
   #define USE_BMP                                // Add I2C code for BMP/BME280 sensor
   #define USE_HTU                                // Add I2C code for HTU21/SI7013/SI7020/SI7021 sensor
   #define USE_SHT                                // Add I2C emulating code for SHT1X sensor
