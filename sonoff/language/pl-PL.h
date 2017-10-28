@@ -186,6 +186,7 @@
 #define D_UPTIME "Uptime"
 #define D_UTC_TIME "UTC"
 #define D_USER "Uzytkownik"
+#define D_UV_LEVEL "Poziom UV"
 #define D_VCC "VCC"
 #define D_VERSION "Wersja"
 #define D_VOLTAGE "Napiecie"
