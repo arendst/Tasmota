@@ -19,6 +19,8 @@
 #define max(a,b) ((a)>(b)?(a):(b))
 #define min(a,b) ((a)>(b)?(b):(a))
 
+float _distance;
+float MAX_DEVIATION_BETWEEN_MEASURES = 0.1;
 /*********************************************************************************************\
  * HS-SR04 - Ultrasonic distance sensor
 \*********************************************************************************************/
@@ -28,7 +30,7 @@ void sr04_init()
   pinMode(pin[GPIO_SEN_ECHO], INPUT);
   sr04_flg = 1;
   snprintf_P(log_data, sizeof(log_data), PSTR("HS-SR04: Device configured: Trig: %d Echo: %d"),pin[GPIO_SEN_TRIG],pin[GPIO_SEN_ECHO]);
-  addLog(LOG_LEVEL_DEBUG);
+  AddLog(LOG_LEVEL_DEBUG);
 }
 
 String sr04_readDistance(void)
@@ -39,7 +41,7 @@ String sr04_readDistance(void)
     char stemp1[6];
     String page = "";
     snprintf_P(log_data, sizeof(log_data), PSTR("HS-SR04: Start measurement: Trig: %d Echo: %d"),pin[GPIO_SEN_TRIG],pin[GPIO_SEN_ECHO]);
-    addLog(LOG_LEVEL_DEBUG);
+    AddLog(LOG_LEVEL_DEBUG);
     int  duration = 0, counter = 0, max = 0;
     float distance = 0;
     while ( counter < 10) {
@@ -56,15 +58,18 @@ String sr04_readDistance(void)
       max = max(duration,max);
       dtostrfi(duration, 2, stemp1);
       snprintf_P(log_data, sizeof(log_data), PSTR("HS-SR04 In Duration: %s"),stemp1);
-      addLog(LOG_LEVEL_ALL);
+      AddLog(LOG_LEVEL_ALL);
       counter++;
     }
 
     distance = (max/2) / 29.1;
+    _distance = (_distance==0?distance:_distance); //initialize on restart
+    _distance = (distance>_distance?min(distance,_distance+MAX_DEVIATION_BETWEEN_MEASURES):max(distance,_distance-MAX_DEVIATION_BETWEEN_MEASURES));
 
-    dtostrfd(distance, 2, stemp1);
+
+    dtostrfd(_distance, 2, stemp1);
     snprintf_P(log_data, sizeof(log_data), PSTR("HS-SR04: Max Distance: %s"),stemp1);
-    addLog(LOG_LEVEL_DEBUG);
+    AddLog(LOG_LEVEL_DEBUG);
 
     if (distance > 0 && distance < 200) {
       page += stemp1;

@@ -100,7 +100,7 @@ boolean chirp_detect()
   }
   if (success) {
     snprintf_P(log_data, sizeof(log_data), PSTR("I2C: %s found at address 0x%x"), chirpstype, chirpaddr);
-    addLog(LOG_LEVEL_DEBUG);
+    AddLog(LOG_LEVEL_DEBUG);
   } else {
     chirptype = 0;
   }
@@ -121,11 +121,11 @@ void chirp_mqttPresent(uint8_t* djson)
   uint16_t l = chirp_readLux();
   uint16_t m = chirp_readMoist();
   float t = chirp_readTemp();
-  dtostrf(t, 1, sysCfg.flag.temperature_resolution, stemp1);
+  dtostrf(t, 1, Settings.flag.temperature_resolution, stemp1);
   snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s, \"%s\":{\"Light\":%d, \"Moisture\":%d, \"Temperature\":%s}"), mqtt_data, chirpstype, l,m,stemp1);
   *djson = 1;
 #ifdef USE_DOMOTICZ
-  domoticz_sensor5(l);
+  //domoticz_sensor5(l);
 #endif  // USE_DOMOTICZ
 }
 
@@ -145,8 +145,8 @@ String chirp_webPresent()
     page += sensor;
     snprintf_P(sensor, sizeof(sensor), HTTP_CHIRP_MOISTURE, chirp_readMoist());
     page += sensor;
-    dtostrf(chirp_readTemp(), 1, sysCfg.flag.temperature_resolution, stemp1);
-    snprintf_P(sensor, sizeof(sensor), HTTP_SNS_TEMP, "CHIRP", stemp1, tempUnit());
+    dtostrf(chirp_readTemp(), 1, Settings.flag.temperature_resolution, stemp1);
+    snprintf_P(sensor, sizeof(sensor), HTTP_SNS_TEMP, "CHIRP", stemp1, TempUnit());
     page += sensor;
   }
   return page;

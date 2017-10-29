@@ -88,7 +88,7 @@ boolean ads1115_detect()
     ADS1115 adc0(ads1115addr);
 
     snprintf_P(log_data, sizeof(log_data), PSTR("I2C: Probing addr 0x%x for ADS1115."), ads1115addr);
-    addLog(LOG_LEVEL_DEBUG);
+    AddLog(LOG_LEVEL_DEBUG);
 
     if(adc0.testConnection()) {
       adc0.initialize();
@@ -104,7 +104,7 @@ boolean ads1115_detect()
 
   if (success) {
     snprintf_P(log_data, sizeof(log_data), PSTR("I2C: %s found at address 0x%x"), ads1115stype, ads1115addr);
-    addLog(LOG_LEVEL_DEBUG);
+    AddLog(LOG_LEVEL_DEBUG);
   }
 
   return success;

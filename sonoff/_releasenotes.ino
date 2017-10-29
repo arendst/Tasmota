@@ -1,4 +1,60 @@
-/* 5.8.0i
+/* 5.8.0q
+ * Shrink code by 4k using command lookup tables
+ * Add retry counter to DHT11/21/22 sensors (#1082)
+ * Add commands RfSync, RfLow, RfHigh, RfHost and RfCode to allow sending custom RF codes (#1001)
+ *
+ * 5.8.0p
+ * Fix initial PwmFrequency and PwmRange
+ * Add support for Arilux AL-LC01 RGB Led controller (#370)
+ * Add light turn Off Fade (#925)
+ * Change IrSend Panasonic command to IrSend {"Protocol":"Panasonic", "Bits":16388, "Data":<Panasonic data>}
+ *  where 16388 is 0x4004 hexadecimal (#1014)
+ *
+ * 5.8.0o
+ * Remove max string length of 14 for Domoticz sensor descriptions
+ * Add light scheme options (Color cycle Up, Down, Random) and moving WS2812 schemes up by 3
+ * Add support for VEML6070 I2C Ultra Violet level sensor (#1053)
+ *
+ * 5.8.0n
+ * Fix minimum TelePeriod of 10 seconds set by web page
+ * Shrink information web page by 1k code space
+ * Removed Arduino IDE version too low warning as it interferes with platformio.ini platform = espressif8266_stage
+ * Add commands Color2, Color3, Color4, Width2, Width3, Width4 and SetOption16 to set Ws2812 Clock parameters (#1019)
+ * Fix Color3 and Color4 (#1019)
+ * Add Polish language file (#1044, #1047)
+ * Add support for KMC 70011 Power Monitoring Smart Plug (#1045)
+ * Corrected German language file (#1054)
+ *
+ * 5.8.0m
+ * Rewrite code (partly) using Google C++ Style Guide (https://google.github.io/styleguide/cppguide.html)
+ * Allow empty MqttHost name by using option 0
+ * Allow Mqtt server mDNS lookup only when MqttHost name is empty (#1026)
+ * Change Ws2812 clock with more flexible version (#1019)
+ * Add German language file (#1022)
+ * Support connecting to MQTT brokers without userid and/or password (#1023)
+ * Add commands PwmRange 1,255..1023 and PwmFrequency 1,100..4000 (#1025)
+ *
+ * 5.8.0l
+ * Update HTML/CSS to enable nicer form field entry
+ * Fix inverted relay status after restart or power on as regression from 5.8.0d (#909)
+ * Add send protocol Panasonic to IRsend (#1014)
+ * Fix relay power control when light power control is also configured as regression from 5.8.0 (#1016)
+ *
+ * 5.8.0k
+ * Add support for up to 8 relays (#995)
+ * Fix Blocked Loop when erasing large flash using command reset 2 (#1002)
+ * Add retain to ENERGY messages controlled by command SensorRetain (#1013)
+ *
+ * 5.8.0j
+ * Set default altitude to 0 to be used with pressure sensors
+ * Document flash settings area for future use
+ * Prepare for 32-bit power control (#995)
+ * Introduce sonoff.h master header
+ * Fix TLS MQTT SSL fingerprint test (#808, #970)
+ * Fix pressure calculation for some BMP versions regression introduced with version 5.8.0i (#974)
+ * Fix Domoticz Dimmer set to same level not powering on (#945)
+ *
+ * 5.8.0i
  * Add Domoticz counter sensor to IrReceive representing Received IR Protocol and Data
  * Fix Southern Hemisphere TIME_STD/TIME_DST (#968)
  * Add Sea level pressure calculation (#974)
@@ -48,7 +104,7 @@
  * Fix compile error when DOMOTICZ_UPDATE_TIMER is not defined (#930)
  * Fix alignment of web page items in some browsers (#935)
  * Add smoother movement of hour hand in WS2812 led clock (#936)
- * Add support for Magic Home RGBW Led controller (#940)
+ * Add support for Magic Home RGBW and some Arilux Led controllers (#940)
  *
  * 5.8.0b
  * Fix command FullTopic entry when using serial or console interface
@@ -998,7 +1054,7 @@
  * Add reset 2 option erasing flash
  * Add status 5 option displaying network info
  * Add syslog check for Wifi connection
- * Resize mqtt_publish log array
+ * Resize MqttPublish log array
  * Change Wifi smartconfig active from 100 to 60 seconds
  * Update Wifi initialization
  *

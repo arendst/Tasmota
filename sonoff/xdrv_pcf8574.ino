@@ -47,14 +47,14 @@ const char HTTP_FORM_I2C_PCF8574_2[] PROGMEM =
 
 void handleI2C()
 {
-  if (httpUser()) return;
-  addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Configure PCF8574"));
+  if (HttpUser()) return;
+  AddLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Configure PCF8574"));
 
   String page = FPSTR(HTTP_HEAD);
 
   page.replace("{v}", "Configure I2C");
   page += FPSTR(HTTP_FORM_I2C_PCF8574_1);
-  page.replace("{r1}", (sysCfg.all_relays_inverted) ? " checked" : "");
+  page.replace("{r1}", (Settings.all_relays_inverted) ? " checked" : "");
   for (byte idx = 0; idx < max_pcf8574_devices; idx++) {
     page.replace("{b1}", String(idx));
     for (byte idx2 = 0; idx2 < 8; idx2++) {
@@ -63,48 +63,48 @@ void handleI2C()
       page.replace("{b2}", "i2cs" + String(idx2+8*idx));
       for (byte i = 0; i < 2; i++) {
         byte helper = 1 << idx2;
-        page.replace("{a" + String(i), ((helper & sysCfg.pcf8574_config[idx]) >> idx2 == i) ? " selected " : " ");
+        page.replace("{a" + String(i), ((helper & Settings.pcf8574_config[idx]) >> idx2 == i) ? " selected " : " ");
       }
     }
   }
   page += FPSTR(HTTP_FORM_END);
 
-  if (_httpflag == HTTP_MANAGER) {
-    _httpflag = HTTP_ADMIN;
+  if (webserver_state == HTTP_MANAGER) {
+    webserver_state = HTTP_ADMIN;
   } else {
     page += FPSTR(HTTP_BTN_CONF);
   }
-  showPage(page);
+  ShowPage(page);
 }
 
 void pcf8574_saveSettings()
 {
   char stemp[7];
-  sysCfg.all_relays_inverted = webServer->hasArg("b1");
+  Settings.all_relays_inverted = WebServer->hasArg("b1");
   for (byte idx = 0; idx < max_pcf8574_devices; idx++) {
     byte count=0;
-    byte n = sysCfg.pcf8574_config[idx];
+    byte n = Settings.pcf8574_config[idx];
     while(n!=0) {
       n = n&(n-1);
       count++;
     }
-    if (count <= Maxdevice) {
-      Maxdevice = Maxdevice - count;
+    if (count <= devices_present) {
+      devices_present = devices_present - count;
     }
     for (byte i = 0; i < 8; i++) {
       snprintf_P(stemp, sizeof(stemp), PSTR("i2cs%d"), i+8*idx);
-      byte _value = (!strlen(webServer->arg(stemp).c_str() )) ?  0 : atoi(webServer->arg(stemp).c_str() );
+      byte _value = (!strlen(WebServer->arg(stemp).c_str() )) ?  0 : atoi(WebServer->arg(stemp).c_str() );
       if (_value) {
-        sysCfg.pcf8574_config[idx] = sysCfg.pcf8574_config[idx] | 1 << i;
-        Maxdevice++;
+        Settings.pcf8574_config[idx] = Settings.pcf8574_config[idx] | 1 << i;
+        devices_present++;
         max_pcf8574_connected_ports++;
       } else {
-        sysCfg.pcf8574_config[idx] = sysCfg.pcf8574_config[idx] & ~(1 << i );
+        Settings.pcf8574_config[idx] = Settings.pcf8574_config[idx] & ~(1 << i );
       }
     }
-    //sysCfg.pcf8574_config[0] = (!strlen(webServer->arg("i2cs0").c_str())) ?  0 : atoi(webServer->arg("i2cs0").c_str());
-    //snprintf_P(log, sizeof(log), PSTR("HTTP: I2C Board: %d, Config: %2x"),  idx, sysCfg.pcf8574_config[idx]);
-    //addLog(LOG_LEVEL_INFO, log);
+    //Settings.pcf8574_config[0] = (!strlen(webServer->arg("i2cs0").c_str())) ?  0 : atoi(webServer->arg("i2cs0").c_str());
+    //snprintf_P(log, sizeof(log), PSTR("HTTP: I2C Board: %d, Config: %2x"),  idx, Settings.pcf8574_config[idx]);
+    //AddLog(LOG_LEVEL_INFO, log);
   }
 }
 #endif // USE_WEBSERVER
@@ -115,7 +115,7 @@ void pcf8574_switchrelay(byte i, uint8_t state)
   if (max_pcf8574_devices > 0 && pcf8574_pin[i] < 99) {
     uint8_t board = pcf8574_pin[i]>>3;
     uint8_t oldpinmask = _pcf8574pinMask[board];
-    uint8_t _val = rel_inverted[i] ? !state : state & 1;
+    uint8_t _val = bitRead(rel_inverted, i) ? !state : state;
 
     if(_val) _pcf8574pinMask[board] |= _val << (pcf8574_pin[i]&0x7);
     else _pcf8574pinMask[board] &= ~(1 << (pcf8574_pin[i]&0x7));
@@ -137,25 +137,25 @@ void  pcf8574_Init()
   if (max_pcf8574_devices==0 && (pin[GPIO_I2C_SCL] < 99) && (pin[GPIO_I2C_SDA] < 99)) {
     pcf8574_detect();
     snprintf_P(log_data, sizeof(log_data), PSTR("RSLT: pcf8574 %d boards"), max_pcf8574_devices);
-    addLog(LOG_LEVEL_INFO);
+    AddLog(LOG_LEVEL_INFO);
   }
   for (byte idx = 0; idx < max_pcf8574_devices; idx++) { // suport up to 8 boards PCF8574
-    snprintf_P(log_data, sizeof(log_data), PSTR("RSLT: I2C Config: %d"), sysCfg.pcf8574_config[idx]);
-    addLog(LOG_LEVEL_DEBUG);
+    snprintf_P(log_data, sizeof(log_data), PSTR("RSLT: I2C Config: %d"), Settings.pcf8574_config[idx]);
+    AddLog(LOG_LEVEL_DEBUG);
     for (byte i = 0; i < 8; i++) {
-      uint8_t _result = sysCfg.pcf8574_config[idx]>>i&1;
-      snprintf_P(log_data, sizeof(log_data), PSTR("RSLT: I2C shift i %d: %d. Powerstate: %d, Maxdevice: %d"), i,_result, sysCfg.power>>i&1, Maxdevice);
-      addLog(LOG_LEVEL_DEBUG);
+      uint8_t _result = Settings.pcf8574_config[idx]>>i&1;
+      snprintf_P(log_data, sizeof(log_data), PSTR("RSLT: I2C shift i %d: %d. Powerstate: %d, devices_present: %d"), i,_result, Settings.power>>i&1, devices_present);
+      AddLog(LOG_LEVEL_DEBUG);
       if (_result > 0) {
-        pcf8574_pin[Maxdevice] = i + 8*idx;
-        rel_inverted[Maxdevice] = sysCfg.all_relays_inverted;
-        Maxdevice++;
+        pcf8574_pin[devices_present] = i + 8*idx;
+        bitWrite(rel_inverted, devices_present, Settings.all_relays_inverted);
+        devices_present++;
         max_pcf8574_connected_ports++;
       }
     }
   }
-  snprintf_P(log_data, sizeof(log_data), PSTR("RSLT: Final max devices: %d, PCF8574 devices %d"), Maxdevice, max_pcf8574_connected_ports);
-  addLog(LOG_LEVEL_INFO);
+  snprintf_P(log_data, sizeof(log_data), PSTR("RSLT: Final max devices: %d, PCF8574 devices %d"), devices_present, max_pcf8574_connected_ports);
+  AddLog(LOG_LEVEL_INFO);
 }
 
 boolean pcf8574_detect()
@@ -165,7 +165,7 @@ boolean pcf8574_detect()
 
   for (byte i = 0; i < 8; i++) {
     snprintf_P(log_data, sizeof(log_data), PSTR("Probing addr: 0x%x for PCF8574"), PFC8574_ADDR1 + i);
-    addLog(LOG_LEVEL_DEBUG);
+    AddLog(LOG_LEVEL_DEBUG);
     Wire.beginTransmission(PFC8574_ADDR1 + i);
     int16_t val = -1;
     val = Wire.endTransmission();
@@ -178,7 +178,7 @@ boolean pcf8574_detect()
       pcf8574addr[max_pcf8574_devices] = PFC8574_ADDR1 + i;
       max_pcf8574_devices++;
       snprintf_P(log_data, sizeof(log_data), PSTR("Device found at 0x%x"), PFC8574_ADDR1 + i);
-      addLog(LOG_LEVEL_INFO);
+      AddLog(LOG_LEVEL_INFO);
     }
 
   }

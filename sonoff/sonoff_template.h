@@ -17,8 +17,11 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#ifndef _SONOFF_TEMPLATE_H_
+#define _SONOFF_TEMPLATE_H_
+
 // User selectable GPIO functionality
-enum upins_t {
+enum UserSelectablePins {
   GPIO_NONE,           // Not used
   GPIO_DHT11,          // DHT11
   GPIO_DHT21,          // DHT21, AM2301
@@ -40,30 +43,18 @@ enum upins_t {
   GPIO_REL2,
   GPIO_REL3,
   GPIO_REL4,
-  //STB mod
   GPIO_REL5,
   GPIO_REL6,
   GPIO_REL7,
   GPIO_REL8,
-  //end
   GPIO_REL1_INV,
   GPIO_REL2_INV,
   GPIO_REL3_INV,
   GPIO_REL4_INV,
-  //STB mod
   GPIO_REL5_INV,
   GPIO_REL6_INV,
   GPIO_REL7_INV,
   GPIO_REL8_INV,
-  //end
-  GPIO_LED1,           // Leds
-  GPIO_LED2,
-  GPIO_LED3,
-  GPIO_LED4,
-  GPIO_LED1_INV,
-  GPIO_LED2_INV,
-  GPIO_LED3_INV,
-  GPIO_LED4_INV,
   GPIO_PWM1,           // RGB   Red   or C  Cold White
   GPIO_PWM2,           // RGB   Green or CW Warm White
   GPIO_PWM3,           // RGB   Blue
@@ -79,6 +70,14 @@ enum upins_t {
   GPIO_PWM4_INV,       // RGBW  (Cold) White
   GPIO_PWM5_INV,       // RGBCW Warm White
   GPIO_IRRECV,         // IR receiver
+  GPIO_LED1,           // Leds
+  GPIO_LED2,
+  GPIO_LED3,
+  GPIO_LED4,
+  GPIO_LED1_INV,
+  GPIO_LED2_INV,
+  GPIO_LED3_INV,
+  GPIO_LED4_INV,
   //STB mod
   GPIO_SEN_TRIG,
   GPIO_SEN_ECHO,
@@ -90,7 +89,7 @@ enum upins_t {
   GPIO_SENSOR_END };
 
 // Text in webpage Module Parameters and commands GPIOS and GPIO
-const char sensors[GPIO_SENSOR_END][9] PROGMEM = {
+const char kSensors[GPIO_SENSOR_END][9] PROGMEM = {
   D_SENSOR_NONE,
   D_SENSOR_DHT11,
   D_SENSOR_AM2301,
@@ -112,30 +111,18 @@ const char sensors[GPIO_SENSOR_END][9] PROGMEM = {
   D_SENSOR_RELAY "2",
   D_SENSOR_RELAY "3",
   D_SENSOR_RELAY "4",
-  //STB mod
   D_SENSOR_RELAY "5",
   D_SENSOR_RELAY "6",
   D_SENSOR_RELAY "7",
   D_SENSOR_RELAY "8",
-  //end
-  D_SENSOR_RELAY "1I",
-  D_SENSOR_RELAY "2I",
-  D_SENSOR_RELAY "3I",
-  D_SENSOR_RELAY "4I",
-  //STB mod
-  D_SENSOR_RELAY "5I",
-  D_SENSOR_RELAY "6I",
-  D_SENSOR_RELAY "7I",
-  D_SENSOR_RELAY "8I",
-  //end
-  D_SENSOR_LED "1",
-  D_SENSOR_LED "2",
-  D_SENSOR_LED "3",
-  D_SENSOR_LED "4",
-  D_SENSOR_LED "1I",
-  D_SENSOR_LED "2I",
-  D_SENSOR_LED "3I",
-  D_SENSOR_LED "4I",
+  D_SENSOR_RELAY "1i",
+  D_SENSOR_RELAY "2i",
+  D_SENSOR_RELAY "3i",
+  D_SENSOR_RELAY "4i",
+  D_SENSOR_RELAY "5i",
+  D_SENSOR_RELAY "6i",
+  D_SENSOR_RELAY "7i",
+  D_SENSOR_RELAY "8i",
   D_SENSOR_PWM "1",
   D_SENSOR_PWM "2",
   D_SENSOR_PWM "3",
@@ -145,12 +132,20 @@ const char sensors[GPIO_SENSOR_END][9] PROGMEM = {
   D_SENSOR_COUNTER "2",
   D_SENSOR_COUNTER "3",
   D_SENSOR_COUNTER "4",
-  D_SENSOR_PWM "1I",
-  D_SENSOR_PWM "2I",
-  D_SENSOR_PWM "3I",
-  D_SENSOR_PWM "4I",
-  D_SENSOR_PWM "5I",
+  D_SENSOR_PWM "1i",
+  D_SENSOR_PWM "2i",
+  D_SENSOR_PWM "3i",
+  D_SENSOR_PWM "4i",
+  D_SENSOR_PWM "5i",
   D_SENSOR_IRRECV,
+  D_SENSOR_LED "1",
+  D_SENSOR_LED "2",
+  D_SENSOR_LED "3",
+  D_SENSOR_LED "4",
+  D_SENSOR_LED "1i",
+  D_SENSOR_LED "2i",
+  D_SENSOR_LED "3i",
+  D_SENSOR_LED "4i",
   //STB mod
   "SNS_TRIG",
   "SNS_ECHO",
@@ -159,10 +154,10 @@ const char sensors[GPIO_SENSOR_END][9] PROGMEM = {
   "Rel2SetA",
   "Rel2SetB"
   //end
-  };
+};
 
 // Programmer selectable GPIO functionality offset by user selectable GPIOs
-enum fpins_t {
+enum ProgramSelectablePins {
   GPIO_RXD = GPIO_SENSOR_END,  // Serial interface
   GPIO_TXD,            // Serial interface
   GPIO_HLW_SEL,        // HLW8012 Sel output (Sonoff Pow)
@@ -177,7 +172,7 @@ enum fpins_t {
 /********************************************************************************************/
 
 // Supported hardware modules
-enum module_t {
+enum SupportedModules {
   SONOFF_BASIC,
   SONOFF_RF,
   SONOFF_SV,
@@ -213,11 +208,15 @@ enum module_t {
   YUNSHAN,
   MAGICHOME,
   LUANIHVIO,
+  KMC_70011,
+  ARILUX,
   MAXMODULE };
 
 /********************************************************************************************/
 
 #define MAX_GPIO_PIN       18   // Number of supported GPIO
+
+const char PINS_WEMOS[] PROGMEM = "D3TXD4RXD2D1flashcontrolD6D7D5D8D0A0";
 
 typedef struct MYIO {
   uint8_t      io[MAX_GPIO_PIN];
@@ -228,7 +227,7 @@ typedef struct MYTMPLT {
   myio         gp;
 } mytmplt;
 
-const uint8_t nicelist[MAXMODULE] PROGMEM = {
+const uint8_t kNiceList[MAXMODULE] PROGMEM = {
   SONOFF_BASIC,
   SONOFF_RF,
   SONOFF_TH,
@@ -260,14 +259,16 @@ const uint8_t nicelist[MAXMODULE] PROGMEM = {
   WION,
   H801,
   MAGICHOME,
+  ARILUX,
   HUAFAN_SS,
+  KMC_70011,
   AILIGHT,
   WEMOS,
   WITTY
 };
 
 // Default module settings
-const mytmplt modules[MAXMODULE] PROGMEM = {
+const mytmplt kModules[MAXMODULE] PROGMEM = {
   { "Sonoff Basic",    // Sonoff Basic (ESP8266)
      GPIO_KEY1,        // GPIO00 Button
      GPIO_USER,        // GPIO01 Serial RXD and Optional sensor
@@ -733,5 +734,28 @@ const mytmplt modules[MAXMODULE] PROGMEM = {
      GPIO_LED1,        // GPIO15 Led (1 = On, 0 = Off)
      0,
      GPIO_ADC0         // ADC0 A0 Analog input
+  },
+  { "KMC 70011",       // KMC 70011 (https://www.amazon.com/KMC-Timing-Monitoring-Network-125V-240V/dp/B06XRX2GTQ)
+     GPIO_KEY1,        // GPIO00 Button
+     0, 0, 0,
+     GPIO_HLW_CF,      // GPIO04 HLW8012 CF
+     GPIO_HLW_CF1,     // GPIO05 HLW8012 CF1
+     0, 0, 0, 0, 0, 0, // Flash connection
+     GPIO_HLW_SEL,     // GPIO12 HLW8012 SEL
+     GPIO_LED1_INV,    // GPIO13 Green Led
+     GPIO_REL1,        // GPIO14 Relay
+     0, 0, 0
+  },
+  { "Arilux",          // Arilux AL-LC01 (ESP8285) - https://www.banggood.com/nl/ARILUX-AL-LC01-Super-Mini-LED-WIFI-Smart-RGB-Controller-For-RGB-LED-Strip-Light-DC-9-12V-p-1058603.html
+     0, 0, 0, 0,       //  (PwmFrequency 1111Hz)
+     GPIO_USER,        // GPIO04 IR or RF receiver (optional)
+     GPIO_PWM1,        // GPIO05 RGB LED Red
+     0, 0, 0, 0, 0, 0, // Flash connection
+     GPIO_PWM2,        // GPIO12 RGB LED Green
+     GPIO_PWM3,        // GPIO13 RGB LED Blue
+     GPIO_USER,        // GPIO14 RGBW LED White (optional - set to PWM4 for Cold White or Warm White)
+     0, 0, 0
   }
 };
+
+#endif  // _SONOFF_TEMPLATE_H_

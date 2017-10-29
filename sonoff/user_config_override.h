@@ -17,6 +17,9 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#ifndef _USER_CONFIG_OVERRIDE_H_
+#define _USER_CONFIG_OVERRIDE_H_
+
 /*****************************************************************************************************\
  * ATTENTION: - Changes to most PARAMETER defines will only override flash settings if you change
  *              define CFG_HOLDER.
@@ -70,7 +73,11 @@
 #endif
 #define SYS_LOG_HOST           "192.168.178.42"          // [LogHost] (Linux) syslog host
 
+#ifdef BE_MINIMAL
+#define MQTT_USE               0
+#endif
 
+#ifndef BE_MINIMAL
 #define USE_MQTT_TLS                             // EXPERIMENTAL Use TLS for MQTT connection (+53k code, +20k mem) - Disable by //
 #ifdef MQTT_USE
 #undef MQTT_USE
@@ -95,12 +102,12 @@
 #ifdef MQTT_USER
 #undef MQTT_USER
 #endif
-#define MQTT_USER            "sonos"         // [MqttUser] Mandatory user
+#define MQTT_USER            "sonoff"         // [MqttUser] Mandatory user
 
 #ifdef MQTT_PASS
 #undef MQTT_PASS
 #endif
-#define MQTT_PASS            "s1769fiZZs"            // [MqttPassword] Mandatory password
+#define MQTT_PASS            "c1q6pGUyc0Zk"            // [MqttPassword] Mandatory password
 
 
 #undef MQTT_BUTTON_RETAIN
@@ -116,15 +123,17 @@
 #undef SUB_PREFIX
 #undef PUB_PREFIX
 #undef PUB_PREFIX2
-//#undef USE_ADC_VCC
+#undef USE_ADC_VCC
 
 #define SUB_PREFIX             "hm/setting"           // Sonoff devices subscribe to:- SUB_PREFIX/MQTT_TOPIC and SUB_PREFIX/MQTT_GRPTOPIC
 #define PUB_PREFIX             "hm/status"            // Sonoff devices publish to:- PUB_PREFIX/MQTT_TOPIC
 #define PUB_PREFIX2            "hm/status"            // Sonoff devices publish telemetry data to:- PUB_PREFIX2/MQTT_TOPIC/UPTIME, POWER/LIGHT and TIME
+#endif // BE_MINIMAL
 
-#ifdef USE_DOMOTICZ
-#undef USE_DOMOTICZ                             // Enable Domoticz (+7k code, +0.3k mem) - Disable by //
-#endif
+
+//#ifdef USE_DOMOTICZ
+//#undef USE_DOMOTICZ                             // Enable Domoticz (+7k code, +0.3k mem) - Disable by //
+//#endif
 
 #ifdef USE_DISCOVERY
 #undef USE_DISCOVERY                            // Enable mDNS for the following services (+8k code, +0.3k mem) - Disable by //
@@ -140,13 +149,17 @@
 #undef USE_BH1750                             // Add I2C code for BH1750 sensor
 #undef USE_BMP                                // Add I2C code for BMP/BME280 sensor
 #undef USE_HTU                                // Add I2C code for HTU21/SI7013/SI7020/SI7021 sensor
-#undef USE_SHT
+#undef USE_IR_REMOTE                            // Send IR remote commands using library IRremoteESP8266 and ArduinoJson (+3k code, 0.3k mem)
+#undef USE_IR_RECEIVE
+#undef USE_WS2812
 
+#ifndef BE_MINIMAL
 #define USE_I2C
                              // I2C using library wire (+10k code, 0.2k mem) - Disable by //
 #define USE_PCF8574
                           // Add I2C code for PCF8574 8-channel DIO I/O chip.
 #define USE_ADS1115
+#endif
 
 // -- Application ---------------------------------
 #undef APP_TIMEZONE
@@ -154,3 +167,6 @@
 
 
 //#define DEBUG_THEO
+
+
+#endif  // _USER_CONFIG_OVERRIDE_H_
