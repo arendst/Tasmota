@@ -172,6 +172,11 @@ const char HTTP_BTN_RSTRT[] PROGMEM =
   "<br/><form action='rb' method='get' onsubmit='return confirm(\"" D_CONFIRM_RESTART "\");'><button>" D_RESTART "</button></form>";
 const char HTTP_BTN_MENU2[] PROGMEM =
   "<br/><form action='md' method='get'><button>" D_CONFIGURE_MODULE "</button></form>"
+  #ifdef USE_USERTIMERS
+  #ifdef USE_USERTIMERSWEB
+    "<br/><form action='tm' method='get'><button>" D_CONFIGURE_TIMERS "</button></form>"
+  #endif
+  #endif  
   "<br/><form action='w0' method='get'><button>" D_CONFIGURE_WIFI "</button></form>";
 const char HTTP_BTN_MENU3[] PROGMEM =
   "<br/><form action='mq' method='get'><button>" D_CONFIGURE_MQTT "</button></form>"
@@ -244,6 +249,53 @@ const char HTTP_FORM_OTHER3a[] PROGMEM =
 const char HTTP_FORM_OTHER3b[] PROGMEM =
   "<br/><input style='width:10%;' id='b2' name='b2' type='radio' value='{1'{2><b>{3</b>{4";
   #endif  // USE_EMULATION
+
+//**************************************************************************************
+  #ifdef USE_USERTIMERS
+  #ifdef USE_USERTIMERSWEB
+  
+  const char HTTP_FORM_TIMERS[] PROGMEM =
+    "<fieldset><legend><b>&nbsp;" D_TIMER_PARAMETERS "&nbsp;</b></legend><form method='get' action='sv'>"
+    "<input id='w' name='w' value='7' hidden><input id='r' name='r' value='1' hidden>";
+    const char HTTP_FORM_TIMERS1[] PROGMEM =
+  
+      "<div><b>Timer{t200}</b>&nbsp;<input style='width:20%;' id='{t100}' name='{t100}' placeholder='" D_TIMERS_TIME "' value='{t101}'>"
+  
+  
+  
+      "&nbsp;<select style='width:20%;' id='{m100}' name='{m100}'>"
+      "<option{a0value='0'>" D_TIMERS_NOP "</option>"
+      "<option{a1value='1'>" D_TIMERS_ON "</option>"
+      "<option{a2value='2'>" D_TIMERS_OFF "</option>"
+      "</select>"
+  
+      "&nbsp;<select style='width:20%;' id='{r100}' name='{r100}'>"
+      "<option{f0value='0'>" D_TIMERS_RELAY1 "</option>"
+      "<option{f1value='1'>" D_TIMERS_RELAY2 "</option>"
+      "<option{f2value='2'>" D_TIMERS_RELAY3 "</option>"
+      "<option{f3value='3'>" D_TIMERS_RELAY4 "</option>"
+      "<option{f4value='4'>" D_TIMERS_RELAY5 "</option>"
+      "<option{f5value='5'>" D_TIMERS_RELAY6 "</option>"
+      "<option{f6value='6'>" D_TIMERS_RELAY7 "</option>"
+      "<option{f7value='7'>" D_TIMERS_RELAY8 "</option>"
+      "</select>"
+  
+      "<input style='width:10%;' id='{o0}' name='{o0}' type='checkbox'{o100}>" D_TIMERS_ONCE "</div>"
+  
+      "<div><input style='width:5%;' id='{e1}' name='{e1}' type='checkbox'{d1}>" D_TIMERS_MON ""
+           "<input style='width:5%;' id='{e2}' name='{e2}' type='checkbox'{d2}>" D_TIMERS_TUE ""
+           "<input style='width:5%;' id='{e3}' name='{e3}' type='checkbox'{d3}>" D_TIMERS_WED ""
+           "<input style='width:5%;' id='{e4}' name='{e4}' type='checkbox'{d4}>" D_TIMERS_THU ""
+           "<input style='width:5%;' id='{e5}' name='{e5}' type='checkbox'{d5}>" D_TIMERS_FRI ""
+           "<input style='width:5%;' id='{e6}' name='{e6}' type='checkbox'{d6}>" D_TIMERS_SAT ""
+           "<input style='width:5%;' id='{e7}' name='{e7}' type='checkbox'{d7}>" D_TIMERS_SUN "</div><br><br/>";
+  
+  
+#endif
+  #endif
+  //************************************************************************************************
+  
+
 const char HTTP_FORM_END[] PROGMEM =
   "<br/><button type='submit'>" D_SAVE "</button></form></fieldset>";
 const char HTTP_FORM_RST[] PROGMEM =
@@ -320,6 +372,11 @@ void StartWebserver(int type, IPAddress ipweb)
       WebServer->on("/", HandleRoot);
       WebServer->on("/cn", HandleConfiguration);
       WebServer->on("/md", HandleModuleConfiguration);
+      #ifdef USE_USERTIMERS
+      #ifdef  USE_USERTIMERSWEB
+      WebServer->on("/tm", HandleTimerConfiguration);
+      #endif
+      #endif      
       WebServer->on("/w1", HandleWifiConfigurationWithScan);
       WebServer->on("/w0", HandleWifiConfiguration);
       if (Settings.flag.mqtt_enabled) {
@@ -742,6 +799,101 @@ void HandleModuleConfiguration()
   ShowPage(page);
 }
 
+
+//******************************************************************************
+#ifdef USE_USERTIMERS
+#ifdef USE_USERTIMERSWEB
+
+void HandleTimerConfiguration()
+{
+  if (HttpUser()) {
+    return;
+  }
+  char stemp[20];
+  char line[160];
+
+  uint8_t midx;
+
+  AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_CONFIGURE_TIMERS);
+
+
+  String page = FPSTR(HTTP_HEAD);
+  page.replace(F("{v}"), FPSTR(S_CONFIGURE_TIMERS));
+   page += FPSTR(HTTP_FORM_TIMERS);
+
+  for (uint8_t a =0;a<USED_USERTIMERS;a++)
+    {
+
+
+       page += FPSTR(HTTP_FORM_TIMERS1);
+
+       snprintf_P(line, sizeof(line), PSTR("%d"),1+a );
+       page.replace(F("{t200}"), line);   //Timer name label
+
+       snprintf_P(line, sizeof(line), PSTR("%d"),a );
+       String func = "t";
+       page.replace(F("{t100}"), func+line);  //Time id
+
+       snprintf_P(line, sizeof(line), PSTR("%02d:%02d"),Settings.UserTimers[a].time/100,Settings.UserTimers[a].time- ((Settings.UserTimers[a].time/100)*100) );  // g0 - g16
+       page.replace(F("{t101}"), line);   //Time value
+
+
+
+       func = "e";
+      page.replace(F("{e1}"), func+String(11+a*10));
+       page.replace(F("{d1}"), (Settings.UserTimers[a].days & 1) ? F(" checked") : F(" "));
+
+       page.replace(F("{e2}"), func+String(12+a*10));
+       page.replace(F("{d2}"), (Settings.UserTimers[a].days & 2) ? F(" checked") : F(" "));
+
+       page.replace(F("{e3}"), func+String(13+a*10));
+       page.replace(F("{d3}"), (Settings.UserTimers[a].days & 4) ? F(" checked") : F(" "));
+
+       page.replace(F("{e4}"), func+String(14+a*10));
+       page.replace(F("{d4}"), (Settings.UserTimers[a].days & 8) ? F(" checked") : F(" "));
+
+       page.replace(F("{e5}"), func+String(15+a*10));
+       page.replace(F("{d5}"), (Settings.UserTimers[a].days & 0x10) ? F(" checked") : F(" "));
+
+       page.replace(F("{e6}"), func+String(16+a*10));
+       page.replace(F("{d6}"), (Settings.UserTimers[a].days & 0x20) ? F(" checked") : F(" "));
+
+       page.replace(F("{e7}"), func+String(17+a*10));
+       page.replace(F("{d7}"), (Settings.UserTimers[a].days & 0x40) ? F(" checked") : F(" "));
+
+
+       snprintf_P(line, sizeof(line), PSTR("%d"),a );
+
+       func = "m";
+       page.replace(F("{m100}"), func+line);    // mode id   //XXXXX
+       for (byte i = 0; i < 3; i++) {
+         page.replace("{a" + String(i), (i == Settings.UserTimers[a].mode) ? F(" selected ") : F(" "));
+       }
+
+       func = "r";
+       page.replace(F("{r100}"), func+line);    // relay id
+       for (byte i = 0; i < 8; i++) {
+         page.replace("{f" + String(i), (i == Settings.UserTimers[a].relay) ? F(" selected ") : F(" "));
+       }
+
+       func = "o";
+       page.replace(F("{o0}"), func+line);
+       page.replace(F("{o100}") , (Settings.UserTimers[a].flags.oneshot) ? F(" checked") : F(" "));
+
+
+     }
+
+
+  page += FPSTR(HTTP_FORM_END);
+  page += FPSTR(HTTP_BTN_CONF);
+  ShowPage(page);
+}
+#endif
+#endif
+//******************************************************************************
+
+
+
 void HandleWifiConfigurationWithScan()
 {
   HandleWifi(true);
@@ -1014,6 +1166,44 @@ void HandleSaveSettings()
     what = atoi(WebServer->arg("w").c_str());
   }
   switch (what) {
+      
+          case 7:
+    #ifdef USE_USERTIMERS
+    #ifdef USE_USERTIMERSWEB
+  //  UserTimers[i].time=0;
+  //  UserTimers[i].days=0;
+  //  UserTimers[i].mode=0;                 //XXXXX
+  //  UserTimers[i].relay=0;
+  //  UserTimers[i].flags.data=0;
+     for(byte x=0 ; x < USED_USERTIMERS; x++)
+       {
+        strlcpy(stemp, (!strlen(WebServer->arg("t"+String(x)).c_str())) ? MQTT_TOPIC : WebServer->arg("t"+String(x)).c_str(), sizeof(stemp));
+        Settings.UserTimers[x].time=MakeValidTime(stemp);
+        Settings.UserTimers[x].mode = (!strlen(WebServer->arg("m"+String(x)).c_str())) ? MODULE : atoi(WebServer->arg("m"+String(x)).c_str());
+        Settings.UserTimers[x].relay = (!strlen(WebServer->arg("r"+String(x)).c_str())) ? MODULE : atoi(WebServer->arg("r"+String(x)).c_str());
+        Settings.UserTimers[x].flags.oneshot = WebServer->hasArg("o"+String(x));
+
+        Settings.UserTimers[x].days=0;
+        if (WebServer->hasArg("e"+String(11+x*10)))
+          Settings.UserTimers[x].days += 0x01;
+          if (WebServer->hasArg("e"+String(12+x*10)))
+            Settings.UserTimers[x].days += 0x02;
+            if (WebServer->hasArg("e"+String(13+x*10)))
+              Settings.UserTimers[x].days += 0x04;
+              if (WebServer->hasArg("e"+String(14+x*10)))
+                Settings.UserTimers[x].days += 0x08;
+                if (WebServer->hasArg("e"+String(15+x*10)))
+                  Settings.UserTimers[x].days += 0x10;
+                  if (WebServer->hasArg("e"+String(16+x*10)))
+                    Settings.UserTimers[x].days += 0x20;
+                    if (WebServer->hasArg("e"+String(17+x*10)))
+                      Settings.UserTimers[x].days += 0x40;
+
+       }
+    #endif
+    #endif
+    break;
+      
   case 1:
     strlcpy(Settings.hostname, (!strlen(WebServer->arg("h").c_str())) ? WIFI_HOSTNAME : WebServer->arg("h").c_str(), sizeof(Settings.hostname));
     if (strstr(Settings.hostname,"%")) {

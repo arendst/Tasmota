@@ -152,6 +152,11 @@ char log_data[TOPSZ + MESSZ];               // Logging
 String web_log[MAX_LOG_LINES];              // Web log buffer
 String backlog[MAX_BACKLOG];                // Command backlog
 
+
+#ifdef USE_USERTIMERS
+uint8_t BitsD[8] = {0,0x40,1,2,4,8,0x10,0x20};   //day of week translate
+#endif
+
 /********************************************************************************************/
 
 void GetMqttClient(char* output, const char* input, byte size)
@@ -424,11 +429,19 @@ void MqttConnected()
   }
 
   if (mqtt_connection_flag) {
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_MODULE "\":\"%s\", \"" D_VERSION "\":\"%s\", \"" D_FALLBACKTOPIC "\":\"%s\", \"" D_CMND_GROUPTOPIC "\":\"%s\"}"),
-      my_module.name, version, mqtt_client, Settings.mqtt_grptopic);
-    MqttPublishPrefixTopic_P(2, PSTR(D_RSLT_INFO "1"));
+ #ifdef USE_USERTIMERS
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_MODULE "\":\"%s\", \"" D_VERSION "\":\"%s\", \"" D_FALLBACKTOPIC "\":\"%s\", \"" D_CMND_GROUPTOPIC "\":\"%s\", \"" D_CMND_UTIMER_INFO "\":\"%d\"}"),
+    my_module.name, version, mqtt_client, Settings.mqtt_grptopic,USED_USERTIMERS);
+#else
+     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_MODULE "\":\"%s\", \"" D_VERSION "\":\"%s\", \"" D_FALLBACKTOPIC "\":\"%s\", \"" D_CMND_GROUPTOPIC "\":\"%s\"}"),
+     my_module.name, version, mqtt_client, Settings.mqtt_grptopic);
+#endif
+     MqttPublishPrefixTopic_P(2, PSTR(D_RSLT_INFO "1"));
 #ifdef USE_WEBSERVER
     if (Settings.webserver) {
+      
+
+      
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_WEBSERVER_MODE "\":\"%s\", \"" D_CMND_HOSTNAME "\":\"%s\", \"" D_CMND_IPADDRESS "\":\"%s\"}"),
         (2 == Settings.webserver) ? D_ADMIN : D_USER, my_hostname, WiFi.localIP().toString().c_str());
       MqttPublishPrefixTopic_P(2, PSTR(D_RSLT_INFO "2"));
@@ -907,6 +920,54 @@ void MqttDataCallback(char* topic, byte* data, unsigned int data_len)
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_PULSETIME "%d\":%d}"), index, Settings.pulse_timer[index -1]);
     }
+    
+   #ifdef USE_USERTIMERS
+    else if (!strcasecmp_P(type, PSTR(D_CMND_USERTIMER)) && (index > 0) && (index <= USED_USERTIMERS)) {
+      if (data_len > 0) {
+
+       StaticJsonBuffer<200> jsonBuffer;
+       JsonObject& root = jsonBuffer.parseObject(dataBuf);
+       if (root.success())
+          {
+            if (root[D_CMND_USERTIMER].success())
+              {
+                   JsonObject& UT_timer =  root[D_CMND_USERTIMER];
+                   if (UT_timer[D_CMND_UTRELAY].success())
+                        Settings.UserTimers[index-1].relay = ((uint16_t)UT_timer[D_CMND_UTRELAY] - 1);
+
+                   if (UT_timer[D_CMND_UTMODE].success())
+                        Settings.UserTimers[index-1].mode = ((uint8_t)UT_timer[D_CMND_UTMODE]);
+
+                   if (UT_timer[D_CMND_UTONETIME].success())
+                     {
+                          if (UT_timer[D_CMND_UTONETIME] == 0)
+                            Settings.UserTimers[index-1].flags.oneshot = false;
+                          else
+                            Settings.UserTimers[index-1].flags.oneshot = true;
+                     }
+                   if (UT_timer[D_CMND_UTTIME].success())
+                       {
+
+                        const char * ttime  = UT_timer[D_CMND_UTTIME];
+                        uint16_t a = ((*ttime++)-48)*1000;
+                        a+=((*ttime++)-48)*100;
+                        *ttime++;
+                        a+=((*ttime++)-48)*10;
+                        a+=((*ttime++)-48);
+                        Settings.UserTimers[index-1].time=a;
+                       }
+                    if (UT_timer[D_CMND_UTDAY].success())
+                       {
+                         const char * tday  = UT_timer[D_CMND_UTDAY];
+                         Settings.UserTimers[index-1].days=strtol(tday, 0, 16);
+                       }
+             }
+        }
+      }
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_USERTIMER "\":{\"No\":%d, \"" D_CMND_UTMODE "\":\"%d\", \"" D_CMND_UTTIME "\":\"%02d:%02d\", \"" D_CMND_UTRELAY "\":\"%d\", \"" D_CMND_UTONETIME "\":\"%d\", \"" D_CMND_UTDAY "\":\"%02X\"}}"), index,Settings.UserTimers[index-1].mode,Settings.UserTimers[index-1].time/100,Settings.UserTimers[index-1].time%100,Settings.UserTimers[index-1].relay+1,Settings.UserTimers[index-1].flags.oneshot,Settings.UserTimers[index-1].days);
+    }
+#endif 
+
     else if (!strcasecmp_P(type, PSTR(D_CMND_BLINKTIME))) {
       if ((payload > 2) && (payload <= 3600)) {
         Settings.blinktime = payload;
@@ -1741,8 +1802,14 @@ void MqttShowState()
   for (byte i = 0; i < devices_present; i++) {
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s, \"%s\":\"%s\""), mqtt_data, GetPowerDevice(stemp1, i +1, sizeof(stemp1)), GetStateText(bitRead(power, i)));
   }
+  
+ #ifdef USE_USERTIMERS
+  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s, \"" D_WIFI "\":{\"" D_AP "\":%d, \"" D_SSID "\":\"%s\", \"" D_RSSI "\":%d, \"" D_APMAC_ADDRESS "\":\"%s\"}, \"" D_CMND_UTIMER_INFO "\":%d}"),
+  mqtt_data, Settings.sta_active +1, Settings.sta_ssid[Settings.sta_active], WifiGetRssiAsQuality(WiFi.RSSI()), WiFi.BSSIDstr().c_str(), USED_USERTIMERS);
+#else
   snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s, \"" D_WIFI "\":{\"" D_AP "\":%d, \"" D_SSID "\":\"%s\", \"" D_RSSI "\":%d, \"" D_APMAC_ADDRESS "\":\"%s\"}}"),
-    mqtt_data, Settings.sta_active +1, Settings.sta_ssid[Settings.sta_active], WifiGetRssiAsQuality(WiFi.RSSI()), WiFi.BSSIDstr().c_str());
+  mqtt_data, Settings.sta_active +1, Settings.sta_ssid[Settings.sta_active], WifiGetRssiAsQuality(WiFi.RSSI()), WiFi.BSSIDstr().c_str());
+#endif 
 }
 
 void MqttShowSensor(uint8_t* djson)
@@ -1807,6 +1874,37 @@ void MqttShowSensor(uint8_t* djson)
 
 void PerformEverySecond()
 {
+  
+//******************************************************************************
+  #ifdef USE_USERTIMERS
+  uint16_t actT= (RtcTime.hour*100)+RtcTime.minute;
+  uint8_t actD = BitsD[RtcTime.day_of_week&7];
+  for(byte j = 0; j < USED_USERTIMERS;j++)
+    {
+      if (( actT == Settings.UserTimers[j].time) && (!Settings.UserTimers[j].flags.timetest) && (actD & Settings.UserTimers[j].days))
+        {
+        Settings.UserTimers[j].flags.timetest = 1;                //only one shot test
+
+        if (Settings.UserTimers[j].mode == 1)
+            ExecuteCommandPower(Settings.UserTimers[j].relay+1, 1);
+
+        else
+        if (Settings.UserTimers[j].mode == 2)
+            ExecuteCommandPower(Settings.UserTimers[j].relay+1, 0);
+
+        if  (Settings.UserTimers[j].flags.oneshot)
+            Settings.UserTimers[j].mode=0;
+
+        }
+      else
+      if (actT != Settings.UserTimers[j].time)
+         Settings.UserTimers[j].flags.timetest = 0;
+    }
+#endif
+// ******************************************************************************
+
+  
+  
   if (blockgpio0) {
     blockgpio0--;
   }

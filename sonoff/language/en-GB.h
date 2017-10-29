@@ -685,4 +685,49 @@
 #define D_CMND_MAXENERGY "MaxEnergy"
 #define D_CMND_MAXENERGYSTART "MaxEnergyStart"
 
+
+//******************************************************************************
+// user timers
+//******************************************************************************
+#ifdef  USE_USERTIMERS
+#define D_CONFIGURE_TIMERS "Configure Timers"
+#define D_TIMER_PARAMETERS "Timer settings"
+
+#define D_TIMERS_NOP "---"
+#define D_TIMERS_ON "on"
+#define D_TIMERS_OFF "off"
+#define D_TIMERS_ONCE "Once"
+#define D_TIMERS_TIME "User timers"
+
+#define D_TIMERS_MON  "Mon"
+#define D_TIMERS_TUE  "Tue"
+#define D_TIMERS_WED  "Wed"
+#define D_TIMERS_THU  "Thu"
+#define D_TIMERS_FRI  "Fri"
+#define D_TIMERS_SAT  "Sat"
+#define D_TIMERS_SUN  "Sun"
+
+
+#define D_TIMERS_RELAY1 "Rel1"
+#define D_TIMERS_RELAY2 "Rel2"
+#define D_TIMERS_RELAY3 "Rel3"
+#define D_TIMERS_RELAY4 "Rel4"
+#define D_TIMERS_RELAY5 "Rel5"
+#define D_TIMERS_RELAY6 "Rel6"
+#define D_TIMERS_RELAY7 "Rel7"
+#define D_TIMERS_RELAY8 "Rel8"
+
+#define D_CMND_USERTIMER "UTimer"
+#define D_CMND_UTIMER_INFO "UTimers"
+#define D_CMND_UTMODE "UTmode"
+#define D_CMND_UTTIME "UTtime"
+#define D_CMND_UTRELAY "UTrelay"
+#define D_CMND_UTONETIME "UTonce"
+#define D_CMND_UTDAY "UTday"
+#endif
+//******************************************************************************
+
+
+
+
 #endif  // _LANGUAGE_EN_GB_H_

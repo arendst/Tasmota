@@ -622,6 +622,16 @@ void SettingsDefaultSet_5_8_1()
   Settings.ws_color[WS_HOUR][WS_RED] = 255;
   Settings.ws_color[WS_HOUR][WS_GREEN] = 0;
   Settings.ws_color[WS_HOUR][WS_BLUE] = 0;
+  
+    // USERTIMERS default
+  for (uint8_t i=0;i<MAX_USERTIMERS;i++)
+   {
+     Settings.UserTimers[i].time=0;
+     Settings.UserTimers[i].days=0;
+     Settings.UserTimers[i].mode=0;
+     Settings.UserTimers[i].relay=0;
+     Settings.UserTimers[i].flags.data=0;
+   }
 }
 
 /********************************************************************************************/
