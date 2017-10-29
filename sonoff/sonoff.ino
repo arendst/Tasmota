@@ -429,19 +429,18 @@ void MqttConnected()
   }
 
   if (mqtt_connection_flag) {
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_MODULE "\":\"%s\", \"" D_VERSION "\":\"%s\", \"" D_FALLBACKTOPIC "\":\"%s\", \"" D_CMND_GROUPTOPIC "\":\"%s\"}"),
-      my_module.name, version, mqtt_client, Settings.mqtt_grptopic);
-    MqttPublishPrefixTopic_P(2, PSTR(D_RSLT_INFO "1"));
-#ifdef USE_WEBSERVER
-    if (Settings.webserver) {
-      
-#ifdef USE_USERTIMERS
+ #ifdef USE_USERTIMERS
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_MODULE "\":\"%s\", \"" D_VERSION "\":\"%s\", \"" D_FALLBACKTOPIC "\":\"%s\", \"" D_CMND_GROUPTOPIC "\":\"%s\", \"" D_CMND_UTIMER_INFO "\":\"%d\"}"),
     my_module.name, version, mqtt_client, Settings.mqtt_grptopic,USED_USERTIMERS);
 #else
      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_MODULE "\":\"%s\", \"" D_VERSION "\":\"%s\", \"" D_FALLBACKTOPIC "\":\"%s\", \"" D_CMND_GROUPTOPIC "\":\"%s\"}"),
      my_module.name, version, mqtt_client, Settings.mqtt_grptopic);
 #endif
+     MqttPublishPrefixTopic_P(2, PSTR(D_RSLT_INFO "1"));
+#ifdef USE_WEBSERVER
+    if (Settings.webserver) {
+      
+
       
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_WEBSERVER_MODE "\":\"%s\", \"" D_CMND_HOSTNAME "\":\"%s\", \"" D_CMND_IPADDRESS "\":\"%s\"}"),
         (2 == Settings.webserver) ? D_ADMIN : D_USER, my_hostname, WiFi.localIP().toString().c_str());
