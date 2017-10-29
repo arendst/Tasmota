@@ -180,6 +180,12 @@
   #define USE_WS2812_CTYPE     1                 // WS2812 Color type (0 - RGB, 1 - GRB)
 //  #define USE_WS2812_DMA                         // DMA supports only GPIO03 (= Serial RXD) (+1k mem). When USE_WS2812_DMA is enabled expect Exceptions on Pow
 
+#define USE_USERTIMERS              //Local timers funcionality active
+   #define USE_USERTIMERSWEB            // view user timers on WEB
+   #define MAX_USERTIMERS       16      // fixed configuration memory max size , do not change it
+   #define USED_USERTIMERS      8       // realy used timers 1 to 16
+
+
 /*********************************************************************************************\
  * Compile a minimal version if upgrade memory gets tight ONLY TO BE USED FOR UPGRADE STEP 1!
  *   To be used as step 1 during upgrade.
