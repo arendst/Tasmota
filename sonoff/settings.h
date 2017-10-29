@@ -22,6 +22,30 @@
 
 #define PARAM8_SIZE  23                    // Number of param bytes
 
+
+
+//*****************************
+// USERTIMERS
+//*****************************
+typedef union {                            // Restricted by MISRA-C Rule 18.4 but so usefull...
+  uint8_t data;                            // Allow bit manipulation using SetOption
+  struct {
+    uint8_t oneshot : 1;               // bit 0
+    uint8_t timetest : 1;          // bit 1
+  };
+} TimersBits;
+
+typedef struct  {
+  uint16_t time;
+  uint8_t days;
+  uint8_t mode;
+  uint8_t relay;
+  TimersBits   flags;
+}  UTimer;
+
+//***************************
+
+
 typedef union {                            // Restricted by MISRA-C Rule 18.4 but so usefull...
   uint32_t data;                           // Allow bit manipulation using SetOption
   struct {
@@ -204,6 +228,8 @@ struct SYSCFG {
   uint16_t      pulse_counter_type;        // 5D0
   uint16_t      pulse_counter_debounce;    // 5D2
   uint8_t       rf_code[17][9];            // 5D4
+  
+  UTimer       UserTimers[MAX_USERTIMERS];     // 6* MAX_USERTIMERS = 96 bytes
 
 } Settings;
 
