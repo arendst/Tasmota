@@ -689,6 +689,7 @@
 // user timers
 //******************************************************************************
 #ifdef  USE_USERTIMERS
+#define D_CONFIGURE_TIMERS "Configure Timers"
 #define D_TIMER_PARAMETERS "Timer settings"
 
 #define D_TIMERS_NOP "---"
