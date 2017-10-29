@@ -185,12 +185,12 @@
 #define D_TRUE "Prawda"
 #define D_TYPE "Typ"
 #define D_UNKNOWN "Nieznany"
-#define D_UPGRADE "Aktualizacji"
+#define D_UPGRADE "aktualizacji"
 #define D_UPLOAD "Wgraj"
 #define D_UPTIME "Uptime"
 #define D_USER "Uzytkownik"
 #define D_UTC_TIME "UTC"
-#define D_UV_LEVEL "UV Level"
+#define D_UV_LEVEL "Poziom UV"
 #define D_VCC "VCC"
 #define D_VERSION "Wersja"
 #define D_VOLTAGE "Napiecie"
@@ -216,7 +216,7 @@
 #define D_SET_BAUDRATE_TO "Ustaw szybkosc transmisji na"
 #define D_RECEIVED_TOPIC "Otrzymany temat"
 #define D_DATA_SIZE "Wielkosc danych"
-#define D_ANALOG_INPUT0 "Wejscie analogowe-0"
+#define D_ANALOG_INPUT0 "Wej_analogowe"
 
 #define D_FINGERPRINT "Weryfikuj odcisk TLS..."
 #define D_TLS_CONNECT_FAILED_TO "Nieudane polaczenie TLS do"
@@ -643,24 +643,26 @@
 #define D_CMND_IRHVAC "IRHVAC"
 
 // Commands xdrv_snfbridge.ino
+#define D_CMND_RFCODE "RfCode"
+#define D_CMND_RFHIGH "RfHigh"
+#define D_CMND_RFHOST "RfHost"
 #define D_CMND_RFKEY "RfKey"
-#define D_CMND_RFDEFAULT "RfDefault"
+#define D_CMND_RFLOW "RfLow"
+#define D_CMND_RFSYNC "RfSync"
 
 // Commands xdrv_snfled.ino
 #define D_CMND_COLOR "Color"
 #define D_CMND_COLORTEMPERATURE "CT"
 #define D_CMND_DIMMER "Dimmer"
+#define D_CMND_LED "Led"
 #define D_CMND_LEDTABLE "LedTable"
 #define D_CMND_FADE "Fade"
-#define D_CMND_SPEED "Speed"
-#define D_CMND_WAKEUPDURATION "WakeUpDuration"
-#define D_CMND_WAKEUP "Wakeup"
-
-// Commands xdrv_ws2812.ino
 #define D_CMND_PIXELS "Pixels"
-#define D_CMND_LED "Led"
-#define D_CMND_WIDTH "Width"
 #define D_CMND_SCHEME "Scheme"
+#define D_CMND_SPEED "Speed"
+#define D_CMND_WAKEUP "Wakeup"
+#define D_CMND_WAKEUPDURATION "WakeUpDuration"
+#define D_CMND_WIDTH "Width"
 
 // Commands xsns_hlw8012.ino
 #define D_CMND_POWERLOW "PowerLow"

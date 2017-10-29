@@ -23,6 +23,11 @@
 
 #define SFB_TIME_AVOID_DUPLICATE  2000  // Milliseconds
 
+enum SonoffBridgeCommands {
+    CMND_RFSYNC,      CMND_RFLOW,      CMND_RFHIGH,      CMND_RFHOST,      CMND_RFCODE,      CMND_RFKEY };
+const char kSonoffBridgeCommands[] PROGMEM =
+  D_CMND_RFSYNC "|" D_CMND_RFLOW "|" D_CMND_RFHIGH "|" D_CMND_RFHOST "|" D_CMND_RFCODE "|" D_CMND_RFKEY ;
+
 uint8_t sonoff_bridge_receive_flag = 0;
 uint8_t sonoff_bridge_learn_key = 1;
 uint8_t sonoff_bridge_learn_active = 0;
@@ -122,6 +127,20 @@ void SonoffBridgeSendAck()
   Serial.write(0x55);  // End of Text
 }
 
+void SonoffBridgeSendCode(uint32_t code)
+{
+  Serial.write(0xAA);  // Start of Text
+  Serial.write(0xA5);  // Send following code
+  for (uint8_t i = 0; i < 6; i++) {
+    Serial.write(Settings.rf_code[0][i]);
+  }
+  Serial.write(code >> 16 & 0xff);
+  Serial.write(code >> 8 & 0xff);
+  Serial.write(code & 0xff);
+  Serial.write(0x55);  // End of Text
+  Serial.flush();
+}
+
 void SonoffBridgeSend(uint8_t idx, uint8_t key)
 {
   uint8_t code;
@@ -161,22 +180,54 @@ void SonoffBridgeLearn(uint8_t key)
 
 boolean SonoffBridgeCommand(char *type, uint16_t index, char *dataBuf, uint16_t data_len, int16_t payload)
 {
+  char command [CMDSZ];
   boolean serviced = true;
-  char *p;
 
-  if (!strcasecmp_P(type, PSTR(D_CMND_RFDEFAULT))) {
-    if (4 == data_len) {
-      uint16_t hexcode = strtol(dataBuf, &p, 16);
-      uint8_t msb = hexcode >> 8;
-      uint8_t lsb = hexcode & 0xFF;
-      if ((hexcode > 0) && (hexcode < 0x7FFF) && (msb != 0x55) && (lsb != 0x55)) {
-        Settings.rf_code[0][6] = msb;
-        Settings.rf_code[0][7] = lsb;
+  int command_code = GetCommandCode(command, sizeof(command), type, kSonoffBridgeCommands);
+  if ((command_code >= CMND_RFSYNC) && (command_code <= CMND_RFCODE)) {  // RfSync, RfLow, RfHigh, RfHost and RfCode
+    char *p;
+    char stemp [10];
+    uint32_t code = 0;
+    uint8_t radix = 10;
+
+    uint8_t set_index = command_code *2;
+
+    if (dataBuf[0] == '#') {
+      dataBuf++;
+      data_len--;
+      radix = 16;
+    }
+
+    if (data_len) {
+      code = strtol(dataBuf, &p, radix);
+      if (code) {
+        if (CMND_RFCODE == command_code) {
+          SonoffBridgeSendCode(code);
+        } else {
+          if (1 == payload) {
+            code = pgm_read_byte(kDefaultRfCode + set_index) << 8 | pgm_read_byte(kDefaultRfCode + set_index +1);
+          }
+          uint8_t msb = code >> 8;
+          uint8_t lsb = code & 0xFF;
+          if ((code > 0) && (code < 0x7FFF) && (msb != 0x55) && (lsb != 0x55)) {  // Check for End of Text codes
+            Settings.rf_code[0][set_index] = msb;
+            Settings.rf_code[0][set_index +1] = lsb;
+          }
+        }
+      }
+    } else {
+      if (CMND_RFCODE != command_code) {
+        code = Settings.rf_code[0][set_index] << 8 | Settings.rf_code[0][set_index +1];
       }
     }
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_RFDEFAULT "\":\"%0X%0X\"}"), Settings.rf_code[0][6], Settings.rf_code[0][7]);
+    if (10 == radix) {
+      snprintf_P(stemp, sizeof(stemp), PSTR("%d"), code);
+    } else {
+      snprintf_P(stemp, sizeof(stemp), PSTR("\"#%X\""), code);
+    }
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"%s\":%s}"), command, stemp);
   }
-  else if (!strcasecmp_P(type, PSTR(D_CMND_RFKEY)) && (index > 0) && (index <= 16)) {
+  else if ((CMND_RFKEY == command_code) && (index > 0) && (index <= 16)) {
     if (!sonoff_bridge_learn_active) {
       if (2 == payload) {
         SonoffBridgeLearn(index);
@@ -197,9 +248,9 @@ boolean SonoffBridgeCommand(char *type, uint16_t index, char *dataBuf, uint16_t 
     } else {
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_RFKEY "%d\":\"" D_LEARNING_ACTIVE "\"}"), sonoff_bridge_learn_key);
     }
+  } else {
+    serviced = false;
   }
-  else {
-    serviced = false;  // Unknown command
-  }
+
   return serviced;
 }

@@ -139,7 +139,9 @@ void Ws2812Clock()
   int clksize = 600 / (int)Settings.light_pixels;
   Ws2812UpdateHand((RtcTime.second * 10) / clksize, WS_SECOND);
   Ws2812UpdateHand((RtcTime.minute * 10) / clksize, WS_MINUTE);
-  Ws2812UpdateHand((RtcTime.hour % 12) * (50 / clksize), WS_HOUR);
+//  Ws2812UpdateHand((RtcTime.hour % 12) * (50 / clksize), WS_HOUR);
+  Ws2812UpdateHand(((RtcTime.hour % 12) * (50 / clksize)) + ((RtcTime.minute * 10) / (12 * clksize)), WS_HOUR);
+
   Ws2812StripShow();
 }
 

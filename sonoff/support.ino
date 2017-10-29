@@ -1170,14 +1170,67 @@ double FastPrecisePow(double a, double b)
   return r * u.d;
 }
 
-char* GetIndexedString(char* destination, const char* source, uint8_t index)
+char* GetTextIndexed(char* destination, size_t destination_size, uint16_t index, const char* haystack)
 {
-  strcpy_P(destination, source);  // Copies Flash to Ram until end of string
-  char *indexed_string = strtok(destination, "|");
+  // Returns empty string if not found
+  // Returns text of found
+  char* write = destination;
+  const char* read = haystack;
+
+  index++;
   while (index--) {
-    indexed_string = strtok(NULL, "|");
+    size_t size = destination_size -1;
+    write = destination;
+    char ch = '.';
+    while ((ch != '\0') && (ch != '|')) {
+      ch = pgm_read_byte(read++);
+      if (size && (ch != '|'))  {
+        *write++ = ch;
+        size--;
+      }
+    }
+    if (0 == ch) {
+      if (index) {
+        write = destination;
+      }
+      break;
+    }
   }
-  return indexed_string;
+  *write = '\0';
+  return destination;
+}
+
+int GetCommandCode(char* destination, size_t destination_size, const char* needle, const char* haystack)
+{
+  // Returns -1 of not found
+  // Returns index and command if found
+  int result = -1;
+  const char* read = haystack;
+  char* write = destination;
+  size_t maxcopy = (strlen(needle) > destination_size) ? destination_size : strlen(needle);
+
+  while (true) {
+    result++;
+    size_t size = destination_size -1;
+    write = destination;
+    char ch = '.';
+    while ((ch != '\0') && (ch != '|')) {
+      ch = pgm_read_byte(read++);
+      if (size && (ch != '|'))  {
+        *write++ = ch;
+        size--;
+      }
+    }
+    *write = '\0';
+    if (!strcasecmp(needle, destination)) {
+      break;
+    }
+    if (0 == ch) {
+      result = -1;
+      break;
+    }
+  }
+  return result;
 }
 
 /*********************************************************************************************\

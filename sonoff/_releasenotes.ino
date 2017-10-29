@@ -1,4 +1,9 @@
-/* 5.8.0p
+/* 5.8.0q
+ * Shrink code by 4k using command lookup tables
+ * Add retry counter to DHT11/21/22 sensors (#1082)
+ * Add commands RfSync, RfLow, RfHigh, RfHost and RfCode to allow sending custom RF codes (#1001)
+ *
+ * 5.8.0p
  * Fix initial PwmFrequency and PwmRange
  * Add support for Arilux AL-LC01 RGB Led controller (#370)
  * Add light turn Off Fade (#925)
@@ -99,7 +104,7 @@
  * Fix compile error when DOMOTICZ_UPDATE_TIMER is not defined (#930)
  * Fix alignment of web page items in some browsers (#935)
  * Add smoother movement of hour hand in WS2812 led clock (#936)
- * Add support for Magic Home RGBW Led controller (#940)
+ * Add support for Magic Home RGBW and some Arilux Led controllers (#940)
  *
  * 5.8.0b
  * Fix command FullTopic entry when using serial or console interface

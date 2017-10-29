@@ -30,6 +30,55 @@
 #endif
 
 // Common
+enum UnitNames {
+  UNIT_AMPERE,
+  UNIT_HOUR,
+  UNIT_KILOWATTHOUR,
+  UNIT_LUX,
+  UNIT_MICROSECOND,
+  UNIT_MILLIAMPERE,
+  UNIT_MILLISECOND,
+  UNIT_MINUTE,
+  UNIT_PRESSURE,
+  UNIT_SECOND,
+  UNIT_SECTORS,
+  UNIT_VOLT,
+  UNIT_WATT,
+  UNIT_WATTHOUR };
+const char kUnitNames[] PROGMEM =
+  D_UNIT_AMPERE "|"
+  D_UNIT_HOUR "|"
+  D_UNIT_KILOWATTHOUR "|"
+  D_UNIT_LUX "|"
+  D_UNIT_MICROSECOND "|"
+  D_UNIT_MILLIAMPERE "|"
+  D_UNIT_MILLISECOND "|"
+  D_UNIT_MINUTE "|"
+  D_UNIT_PRESSURE "|"
+  D_UNIT_SECOND "|"
+  D_UNIT_SECTORS "|"
+  D_UNIT_VOLT "|"
+  D_UNIT_WATT "|"
+  D_UNIT_WATTHOUR ;
+
+const char S_JSON_COMMAND_NVALUE_SPACE_UNIT[] PROGMEM =       "{\"%s\":\"%d %s\"}";
+const char S_JSON_COMMAND_SVALUE_SPACE_UNIT[] PROGMEM =       "{\"%s\":\"%s %s\"}";
+const char S_JSON_COMMAND_NVALUE_UNIT[] PROGMEM =             "{\"%s\":\"%d%s\"}";
+const char S_JSON_COMMAND_NVALUE_UNIT_NVALUE_UNIT[] PROGMEM = "{\"%s\":\"%d%s (%d%s)\"}";
+
+const char S_JSON_COMMAND_NVALUE_SVALUE[] PROGMEM =           "{\"%s\":\"%d (%s)\"}";
+const char S_JSON_COMMAND_NVALUE_ACTIVE_NVALUE[] PROGMEM =    "{\"%s\":\"%d (" D_ACTIVE " %d)\"}";
+
+const char S_JSON_COMMAND_NVALUE[] PROGMEM =                  "{\"%s\":%d}";
+const char S_JSON_COMMAND_SVALUE[] PROGMEM =                  "{\"%s\":\"%s\"}";
+
+const char S_JSON_COMMAND_INDEX_NVALUE[] PROGMEM =            "{\"%s%d\":%d}";
+const char S_JSON_COMMAND_INDEX_SVALUE[] PROGMEM =            "{\"%s%d\":\"%s\"}";
+const char S_JSON_COMMAND_INDEX_SVALUE_SVALUE[] PROGMEM =     "{\"%s%d\":\"%s%s\"}";
+
+const char JSON_SNS_TEMPHUM[] PROGMEM =
+  "%s, \"%s\":{\"" D_TEMPERATURE "\":%s, \"" D_HUMIDITY "\":%s}";
+
 const char S_LOG_HTTP[] PROGMEM = D_LOG_HTTP;
 const char S_LOG_WIFI[] PROGMEM = D_LOG_WIFI;
 const char S_LOG_MQTT[] PROGMEM = D_LOG_MQTT;
@@ -58,9 +107,6 @@ const char kPrefixes[3][PRFX_MAX_STRING_LENGTH] PROGMEM = {
   D_CMND,
   D_STAT,
   D_TELE };
-
-const char JSON_SNS_TEMPHUM[] PROGMEM =
-  "%s, \"%s\":{\"" D_TEMPERATURE "\":%s, \"" D_HUMIDITY "\":%s}";
 
 // support.ino
 static const char kMonthNames[] = D_MONTH3LIST;
