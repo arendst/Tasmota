@@ -406,6 +406,7 @@
 #define D_LEARNING_ACTIVE "Wyuczone aktywne"
 #define D_LEARN_FAILED "Uczenie niepowodzenie"
 #define D_LEARNED "Wyuczone"
+#define D_SAVED "Zapisane"
 
 // xdrv_wemohue.ino
 #define D_MULTICAST_DISABLED "Multicast jest wylaczony"

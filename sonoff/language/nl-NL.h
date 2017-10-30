@@ -406,6 +406,7 @@
 #define D_LEARNING_ACTIVE "Leren actief"
 #define D_LEARN_FAILED "Leren mislukt"
 #define D_LEARNED "Geleerd"
+#define D_SAVED "Opgeslagen"
 
 // xdrv_wemohue.ino
 #define D_MULTICAST_DISABLED "Multicast uitgeschakeld"
