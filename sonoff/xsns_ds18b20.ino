@@ -24,10 +24,10 @@
  * Source: Marinus vd Broek https://github.com/ESP8266nu/ESPEasy and AlexTransit (CRC)
 \*********************************************************************************************/
 
-float dsb_mt = 0;
-uint16_t dsb_lastresult = 0;
+float ds18b20_last_temperature = 0;
+uint16_t ds18b20_last_result = 0;
 
-uint8_t dsb_reset()
+uint8_t Ds18b20Reset()
 {
   uint8_t r;
   uint8_t retries = 125;
@@ -49,7 +49,7 @@ uint8_t dsb_reset()
   return r;
 }
 
-uint8_t dsb_read_bit(void)
+uint8_t Ds18b20ReadBit(void)
 {
   uint8_t r;
 
@@ -63,20 +63,20 @@ uint8_t dsb_read_bit(void)
   return r;
 }
 
-uint8_t dsb_read(void)
+uint8_t Ds18b20Read(void)
 {
-  uint8_t bitMask;
+  uint8_t bit_mask;
   uint8_t r = 0;
 
-  for (bitMask = 0x01; bitMask; bitMask <<= 1) {
-    if (dsb_read_bit()) {
-      r |= bitMask;
+  for (bit_mask = 1; bit_mask; bit_mask <<= 1) {
+    if (Ds18b20ReadBit()) {
+      r |= bit_mask;
     }
   }
   return r;
 }
 
-void dsb_write_bit(uint8_t v)
+void Ds18b20WriteBit(uint8_t v)
 {
   if (v & 1) {
     digitalWrite(pin[GPIO_DSB], LOW);
@@ -93,16 +93,16 @@ void dsb_write_bit(uint8_t v)
   }
 }
 
-void dsb_write(uint8_t ByteToWrite)
+void Ds18b20Write(uint8_t byte_to_write)
 {
-  uint8_t bitMask;
+  uint8_t bit_mask;
 
-  for (bitMask = 0x01; bitMask; bitMask <<= 1) {
-    dsb_write_bit((bitMask & ByteToWrite) ? 1 : 0);
+  for (bit_mask = 1; bit_mask; bit_mask <<= 1) {
+    Ds18b20WriteBit((bit_mask & byte_to_write) ? 1 : 0);
   }
 }
 
-uint8 dsb_crc(uint8 inp, uint8 crc)
+uint8 Ds18b20Crc(uint8 inp, uint8 crc)
 {
   inp ^= crc;
   crc = 0;
@@ -117,66 +117,66 @@ uint8 dsb_crc(uint8 inp, uint8 crc)
   return crc;
 }
 
-void dsb_readTempPrep()
+void Ds18b20ReadTempPrep()
 {
-  dsb_reset();
-  dsb_write(0xCC);           // Skip ROM
-  dsb_write(0x44);           // Start conversion
+  Ds18b20Reset();
+  Ds18b20Write(0xCC);           // Skip ROM
+  Ds18b20Write(0x44);           // Start conversion
 }
 
-boolean dsb_readTemp(float &t)
+boolean Ds18b20ReadTemperature(float &t)
 {
   int16_t DSTemp;
   byte msb, lsb, crc, sign = 1;
 
-  if (!dsb_mt) {
+  if (!ds18b20_last_temperature) {
     t = NAN;
   } else {
-    dsb_lastresult++;
-    if (dsb_lastresult > 8) {  // Reset after 8 misses
-      dsb_mt = NAN;
+    ds18b20_last_result++;
+    if (ds18b20_last_result > 8) {  // Reset after 8 misses
+      ds18b20_last_temperature = NAN;
     }
-    t = dsb_mt;
+    t = ds18b20_last_temperature;
   }
 
-  if (!dsb_read_bit()) {     //check measurement end
-    addLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DSB D_SENSOR_BUSY));
+  if (!Ds18b20ReadBit()) {     //check measurement end
+    AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DSB D_SENSOR_BUSY));
     return !isnan(t);
   }
 /*
-  dsb_reset();
-  dsb_write(0xCC);           // Skip ROM
-  dsb_write(0x44);           // Start conversion
+  Ds18b20Reset();
+  Ds18b20Write(0xCC);           // Skip ROM
+  Ds18b20Write(0x44);           // Start conversion
   delay(800);
 */
-  dsb_reset();
-  dsb_write(0xCC);           // Skip ROM
-  dsb_write(0xBE);           // Read scratchpad
-  lsb = dsb_read();
-  msb = dsb_read();
-  crc = dsb_crc(lsb, crc);
-  crc = dsb_crc(msb, crc);
-  crc = dsb_crc(dsb_read(), crc);
-  crc = dsb_crc(dsb_read(), crc);
-  crc = dsb_crc(dsb_read(), crc);
-  crc = dsb_crc(dsb_read(), crc);
-  crc = dsb_crc(dsb_read(), crc);
-  crc = dsb_crc(dsb_read(), crc);
-  crc = dsb_crc(dsb_read(), crc);
-  dsb_reset();
+  Ds18b20Reset();
+  Ds18b20Write(0xCC);           // Skip ROM
+  Ds18b20Write(0xBE);           // Read scratchpad
+  lsb = Ds18b20Read();
+  msb = Ds18b20Read();
+  crc = Ds18b20Crc(lsb, crc);
+  crc = Ds18b20Crc(msb, crc);
+  crc = Ds18b20Crc(Ds18b20Read(), crc);
+  crc = Ds18b20Crc(Ds18b20Read(), crc);
+  crc = Ds18b20Crc(Ds18b20Read(), crc);
+  crc = Ds18b20Crc(Ds18b20Read(), crc);
+  crc = Ds18b20Crc(Ds18b20Read(), crc);
+  crc = Ds18b20Crc(Ds18b20Read(), crc);
+  crc = Ds18b20Crc(Ds18b20Read(), crc);
+  Ds18b20Reset();
   if (crc) { //check crc
-    addLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DSB D_SENSOR_CRC_ERROR));
+    AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DSB D_SENSOR_CRC_ERROR));
   } else {
     DSTemp = (msb << 8) + lsb;
     if (DSTemp > 2047) {
       DSTemp = (~DSTemp) +1;
       sign = -1;
     }
-    t = convertTemp((float)sign * DSTemp * 0.0625);
-    dsb_lastresult = 0;
+    t = ConvertTemp((float)sign * DSTemp * 0.0625);
+    ds18b20_last_result = 0;
   }
   if (!isnan(t)) {
-    dsb_mt = t;
+    ds18b20_last_temperature = t;
   }
   return !isnan(t);
 }
@@ -185,37 +185,37 @@ boolean dsb_readTemp(float &t)
  * Presentation
 \*********************************************************************************************/
 
-void dsb_mqttPresent(uint8_t* djson)
+void MqttShowDs18b20(uint8_t* djson)
 {
   char stemp1[10];
   float t;
 
-  if (dsb_readTemp(t)) {  // Check if read failed
-    dtostrfd(t, sysCfg.flag.temperature_resolution, stemp1);
+  if (Ds18b20ReadTemperature(t)) {  // Check if read failed
+    dtostrfd(t, Settings.flag.temperature_resolution, stemp1);
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s, \"DS18B20\":{\"" D_TEMPERATURE "\":%s}"), mqtt_data, stemp1);
     *djson = 1;
 #ifdef USE_DOMOTICZ
-    domoticz_sensor1(stemp1);
+    DomoticzSensor(DZ_TEMP, stemp1);
 #endif  // USE_DOMOTICZ
   }
 }
 
 #ifdef USE_WEBSERVER
-String dsb_webPresent()
+String WebShowDs18b20()
 {
   // Needs TelePeriod to refresh data (Do not do it here as it takes too much time)
   String page = "";
   float st;
 
-  if (dsb_readTemp(st)) {  // Check if read failed
+  if (Ds18b20ReadTemperature(st)) {  // Check if read failed
     char stemp[10];
     char sensor[80];
 
-    dtostrfi(st, sysCfg.flag.temperature_resolution, stemp);
-    snprintf_P(sensor, sizeof(sensor), HTTP_SNS_TEMP, "DS18B20", stemp, tempUnit());
+    dtostrfi(st, Settings.flag.temperature_resolution, stemp);
+    snprintf_P(sensor, sizeof(sensor), HTTP_SNS_TEMP, "DS18B20", stemp, TempUnit());
     page += sensor;
   }
-  dsb_readTempPrep();
+  Ds18b20ReadTempPrep();
   return page;
 }
 #endif  // USE_WEBSERVER

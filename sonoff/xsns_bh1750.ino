@@ -28,48 +28,48 @@
 
 #define BH1750_CONTINUOUS_HIGH_RES_MODE 0x10 // Start measurement at 1lx resolution. Measurement time is approx 120ms.
 
-uint8_t bh1750addr;
-uint8_t bh1750type = 0;
-char bh1750stype[7];
+uint8_t bh1750_address;
+uint8_t bh1750_type = 0;
+char bh1750_types[7];
 
-uint16_t bh1750_readLux(void)
+uint16_t Bh1750ReadLux()
 {
-  Wire.requestFrom(bh1750addr, (uint8_t)2);
+  Wire.requestFrom(bh1750_address, (uint8_t)2);
   byte msb = Wire.read();
   byte lsb = Wire.read();
   uint16_t value = ((msb << 8) | lsb) / 1.2;
   return value;
 }
 
-boolean bh1750_detect()
+boolean Bh1750Detect()
 {
-  if (bh1750type) {
+  if (bh1750_type) {
     return true;
   }
 
   uint8_t status;
   boolean success = false;
 
-  bh1750addr = BH1750_ADDR1;
-  Wire.beginTransmission(bh1750addr);
+  bh1750_address = BH1750_ADDR1;
+  Wire.beginTransmission(bh1750_address);
   Wire.write(BH1750_CONTINUOUS_HIGH_RES_MODE);
   status = Wire.endTransmission();
   if (status) {
-    bh1750addr = BH1750_ADDR2;
-    Wire.beginTransmission(bh1750addr);
+    bh1750_address = BH1750_ADDR2;
+    Wire.beginTransmission(bh1750_address);
     Wire.write(BH1750_CONTINUOUS_HIGH_RES_MODE);
     status = Wire.endTransmission();
   }
   if (!status) {
     success = true;
-    bh1750type = 1;
-    strcpy_P(bh1750stype, PSTR("BH1750"));
+    bh1750_type = 1;
+    strcpy_P(bh1750_types, PSTR("BH1750"));
   }
   if (success) {
-    snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_I2C "%s " D_FOUND_AT " 0x%x"), bh1750stype, bh1750addr);
-    addLog(LOG_LEVEL_DEBUG);
+    snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_I2C "%s " D_FOUND_AT " 0x%x"), bh1750_types, bh1750_address);
+    AddLog(LOG_LEVEL_DEBUG);
   } else {
-    bh1750type = 0;
+    bh1750_type = 0;
   }
   return success;
 }
@@ -78,30 +78,30 @@ boolean bh1750_detect()
  * Presentation
 \*********************************************************************************************/
 
-void bh1750_mqttPresent(uint8_t* djson)
+void MqttShowBh1750(uint8_t* djson)
 {
-  if (!bh1750type) {
+  if (!bh1750_type) {
     return;
   }
 
-  uint16_t l = bh1750_readLux();
-  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s, \"%s\":{\"" D_ILLUMINANCE "\":%d}"), mqtt_data, bh1750stype, l);
+  uint16_t l = Bh1750ReadLux();
+  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s, \"%s\":{\"" D_ILLUMINANCE "\":%d}"), mqtt_data, bh1750_types, l);
   *djson = 1;
 #ifdef USE_DOMOTICZ
-  domoticz_sensor5(l);
+  DomoticzSensor(DZ_ILLUMINANCE, l);
 #endif  // USE_DOMOTICZ
 }
 
 #ifdef USE_WEBSERVER
 const char HTTP_SNS_ILLUMINANCE[] PROGMEM =
-  "<tr><th>BH1750 " D_ILLUMINANCE "</th><td>%d lx</td></tr>";
+  "<tr><th>BH1750 " D_ILLUMINANCE "</th><td>%d " D_UNIT_LUX "</td></tr>";
 
-String bh1750_webPresent()
+String WebShowBh1750()
 {
   String page = "";
-  if (bh1750type) {
+  if (bh1750_type) {
     char sensor[80];
-    snprintf_P(sensor, sizeof(sensor), HTTP_SNS_ILLUMINANCE, bh1750_readLux());
+    snprintf_P(sensor, sizeof(sensor), HTTP_SNS_ILLUMINANCE, Bh1750ReadLux());
     page += sensor;
   }
   return page;

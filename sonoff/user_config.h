@@ -17,6 +17,9 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#ifndef _USER_CONFIG_H_
+#define _USER_CONFIG_H_
+
 /*********************************************************************************************\
  * ATTENTION: Changes to most PARAMETER defines will only override flash settings if you change
  *            define CFG_HOLDER.
@@ -26,8 +29,10 @@
 \*********************************************************************************************/
 
 // -- Localization --------------------------------
-//#define MY_LANGUAGE            en-GB           // Enabled by Default
-//#define MY_LANGUAGE            nl-NL
+//#define MY_LANGUAGE            en-GB           // English in Great Britain. Enabled by Default
+//#define MY_LANGUAGE            nl-NL           // Dutch in the Netherlands
+//#define MY_LANGUAGE            de-DE           // German in Germany
+//#define MY_LANGUAGE            pl-PL           // Polish in Poland
 
 // -- Project -------------------------------------
 #define PROJECT                "sonoff"          // PROJECT is used as the default topic delimiter and OTA file name
@@ -39,7 +44,7 @@
 
 // -- Wifi ----------------------------------------
 #define WIFI_IP_ADDRESS        "0.0.0.0"         // [IpAddress1] Set to 0.0.0.0 for using DHCP or IP address
-#define WIFI_GATEWAY           "192.168.2.254"   // {IpAddress2] If not using DHCP set Gateway IP address
+#define WIFI_GATEWAY           "192.168.2.254"   // [IpAddress2] If not using DHCP set Gateway IP address
 #define WIFI_SUBNETMASK        "255.255.255.0"   // [IpAddress3] If not using DHCP set Network mask
 #define WIFI_DNS               "192.168.2.27"    // [IpAddress4] If not using DHCP set DNS IP address (might be equal to WIFI_GATEWAY)
 
@@ -105,13 +110,13 @@
 #define TELE_PERIOD            300               // [TelePeriod] Telemetry (0 = disable, 10 - 3600 seconds)
 
 // -- MQTT - Domoticz -----------------------------
-#define USE_DOMOTICZ                             // Enable Domoticz (+7k code, +0.3k mem) - Disable by //
+#define USE_DOMOTICZ                             // Enable Domoticz (+6k code, +0.3k mem) - Disable by //
   #define DOMOTICZ_IN_TOPIC      "domoticz/in"   // Domoticz Input Topic
   #define DOMOTICZ_OUT_TOPIC     "domoticz/out"  // Domoticz Output Topic
   #define DOMOTICZ_UPDATE_TIMER  0               // [DomoticzUpdateTimer] Send relay status (0 = disable, 1 - 3600 seconds) (Optional)
 
 // -- HTTP ----------------------------------------
-#define USE_WEBSERVER                            // Enable web server and wifi manager (+62k code, +8k mem) - Disable by //
+#define USE_WEBSERVER                            // Enable web server and wifi manager (+66k code, +8k mem) - Disable by //
   #define WEB_SERVER           2                 // [WebServer] Web server (0 = Off, 1 = Start as User, 2 = Start as Admin)
   #define WEB_PORT             80                // Web server Port for User and Admin mode
   #define WEB_USERNAME         "admin"           // Web server Admin mode user name
@@ -131,10 +136,10 @@
 #define NTP_SERVER3            "0.nl.pool.ntp.org"  // [NtpServer3] Select third NTP server by name or IP address (93.94.224.67)
 
 // -- Time - Start Daylight Saving Time and timezone offset from UTC in minutes
-#define TIME_DST               Last, Sun, Mar, 2, +120  // Last sunday in march at 02:00 +120 minutes
+#define TIME_DST               North, Last, Sun, Mar, 2, +120  // Northern Hemisphere, Last sunday in march at 02:00 +120 minutes
 
 // -- Time - Start Standard Time and timezone offset from UTC in minutes
-#define TIME_STD               Last, Sun, Oct, 3, +60   // Last sunday in october 02:00 +60 minutes
+#define TIME_STD               North, Last, Sun, Oct, 3, +60   // Northern Hemisphere, Last sunday in october 02:00 +60 minutes
 
 // -- Application ---------------------------------
 #define APP_TIMEZONE           1                 // [Timezone] +1 hour (Amsterdam) (-12 .. 12 = hours from UTC, 99 = use TIME_DST/TIME_STD)
@@ -162,17 +167,18 @@
 
 #define USE_I2C                                  // I2C using library wire (+10k code, 0.2k mem) - Disable by //
   #define USE_BH1750                             // Add I2C code for BH1750 sensor
+//  #define USE_VEML6070                           // Add I2C code for VEML6070 sensor (+0.5k code)
   #define USE_BMP                                // Add I2C code for BMP/BME280 sensor
   #define USE_HTU                                // Add I2C code for HTU21/SI7013/SI7020/SI7021 sensor
   #define USE_SHT                                // Add I2C emulating code for SHT1X sensor
 
 #define USE_IR_REMOTE                            // Send IR remote commands using library IRremoteESP8266 and ArduinoJson (+3k code, 0.3k mem)
 //  #define USE_IR_HVAC                            // Support for HVAC system using IR (+2k code)
+  #define USE_IR_RECEIVE                         // Support for IR receiver (+4k code)
 
 #define USE_WS2812                               // WS2812 Led string using library NeoPixelBus (+5k code, +1k mem) - Disable by //
   #define USE_WS2812_CTYPE     1                 // WS2812 Color type (0 - RGB, 1 - GRB)
-//  #define USE_WS2812_DMA                         // DMA supports only GPIO03 (= Serial RXD) (+1k mem)
-                                                 //   When USE_WS2812_DMA is enabled expect Exceptions on Pow
+//  #define USE_WS2812_DMA                         // DMA supports only GPIO03 (= Serial RXD) (+1k mem). When USE_WS2812_DMA is enabled expect Exceptions on Pow
 
 /*********************************************************************************************\
  * Compile a minimal version if upgrade memory gets tight ONLY TO BE USED FOR UPGRADE STEP 1!
@@ -191,7 +197,4 @@
   #error "Select either USE_MQTT_TLS or USE_WEBSERVER as there is just not enough memory to play with"
 #endif
 
-#if (ARDUINO < 10610)
-  #error "This software is supported with Arduino IDE starting from 1.6.10 and ESP8266 Release 2.3.0"
-#endif
-
+#endif  // _USER_CONFIG_H_

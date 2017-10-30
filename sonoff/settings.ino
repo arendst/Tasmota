@@ -17,7 +17,9 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-const uint8_t sfb_codeDefault[9] PROGMEM = { 0x21, 0x16, 0x01, 0x0E, 0x03, 0x48, 0x2E, 0x1A, 0x00 };
+#ifndef DOMOTICZ_UPDATE_TIMER
+#define DOMOTICZ_UPDATE_TIMER  0               // [DomoticzUpdateTimer] Send relay status (0 = disable, 1 - 3600 seconds) (Optional)
+#endif
 
 /*********************************************************************************************\
  * RTC memory
@@ -25,12 +27,12 @@ const uint8_t sfb_codeDefault[9] PROGMEM = { 0x21, 0x16, 0x01, 0x0E, 0x03, 0x48,
 
 #define RTC_MEM_VALID 0xA55A
 
-uint32_t _rtcHash = 0;
+uint32_t rtc_settings_hash = 0;
 
-uint32_t getRtcHash()
+uint32_t GetRtcSettingsHash()
 {
   uint32_t hash = 0;
-  uint8_t *bytes = (uint8_t*)&rtcMem;
+  uint8_t *bytes = (uint8_t*)&RtcSettings;
 
   for (uint16_t i = 0; i < sizeof(RTCMEM); i++) {
     hash += bytes[i]*(i+1);
@@ -38,47 +40,47 @@ uint32_t getRtcHash()
   return hash;
 }
 
-void RTC_Save()
+void RtcSettingsSave()
 {
-  if (getRtcHash() != _rtcHash) {
-    rtcMem.valid = RTC_MEM_VALID;
-    ESP.rtcUserMemoryWrite(100, (uint32_t*)&rtcMem, sizeof(RTCMEM));
-    _rtcHash = getRtcHash();
+  if (GetRtcSettingsHash() != rtc_settings_hash) {
+    RtcSettings.valid = RTC_MEM_VALID;
+    ESP.rtcUserMemoryWrite(100, (uint32_t*)&RtcSettings, sizeof(RTCMEM));
+    rtc_settings_hash = GetRtcSettingsHash();
 #ifdef DEBUG_THEO
-    addLog_P(LOG_LEVEL_DEBUG, PSTR("Dump: Save"));
-    RTC_Dump();
+    AddLog_P(LOG_LEVEL_DEBUG, PSTR("Dump: Save"));
+    RtcSettingsDump();
 #endif  // DEBUG_THEO
   }
 }
 
-void RTC_Load()
+void RtcSettingsLoad()
 {
-  ESP.rtcUserMemoryRead(100, (uint32_t*)&rtcMem, sizeof(RTCMEM));
+  ESP.rtcUserMemoryRead(100, (uint32_t*)&RtcSettings, sizeof(RTCMEM));
 #ifdef DEBUG_THEO
-  addLog_P(LOG_LEVEL_DEBUG, PSTR("Dump: Load"));
-  RTC_Dump();
+  AddLog_P(LOG_LEVEL_DEBUG, PSTR("Dump: Load"));
+  RtcSettingsDump();
 #endif  // DEBUG_THEO
-  if (rtcMem.valid != RTC_MEM_VALID) {
-    memset(&rtcMem, 0x00, sizeof(RTCMEM));
-    rtcMem.valid = RTC_MEM_VALID;
-    rtcMem.power = sysCfg.power;
-    rtcMem.hlw_kWhtoday = sysCfg.hlw_kWhtoday;
-    rtcMem.hlw_kWhtotal = sysCfg.hlw_kWhtotal;
-    for (byte i = 0; i < 4; i++) {
-      rtcMem.pCounter[i] = sysCfg.pCounter[i];
+  if (RtcSettings.valid != RTC_MEM_VALID) {
+    memset(&RtcSettings, 0, sizeof(RTCMEM));
+    RtcSettings.valid = RTC_MEM_VALID;
+    RtcSettings.hlw_kWhtoday = Settings.hlw_kWhtoday;
+    RtcSettings.hlw_kWhtotal = Settings.hlw_kWhtotal;
+    for (byte i = 0; i < MAX_COUNTERS; i++) {
+      RtcSettings.pulse_counter[i] = Settings.pulse_counter[i];
     }
-    RTC_Save();
+    RtcSettings.power = Settings.power;
+    RtcSettingsSave();
   }
-  _rtcHash = getRtcHash();
+  rtc_settings_hash = GetRtcSettingsHash();
 }
 
-boolean RTC_Valid()
+boolean RtcSettingsValid()
 {
-  return (RTC_MEM_VALID == rtcMem.valid);
+  return (RTC_MEM_VALID == RtcSettings.valid);
 }
 
 #ifdef DEBUG_THEO
-void RTC_Dump()
+void RtcSettingsDump()
 {
   #define CFG_COLS 16
 
@@ -87,7 +89,7 @@ void RTC_Dump()
   uint16_t row;
   uint16_t col;
 
-  uint8_t *buffer = (uint8_t *) &rtcMem;
+  uint8_t *buffer = (uint8_t *) &RtcSettings;
   maxrow = ((sizeof(RTCMEM)+CFG_COLS)/CFG_COLS);
 
   for (row = 0; row < maxrow; row++) {
@@ -107,7 +109,7 @@ void RTC_Dump()
       snprintf_P(log_data, sizeof(log_data), PSTR("%s%c"), log_data, ((buffer[idx + col] > 0x20) && (buffer[idx + col] < 0x7F)) ? (char)buffer[idx + col] : ' ');
     }
     snprintf_P(log_data, sizeof(log_data), PSTR("%s|"), log_data);
-    addLog(LOG_LEVEL_INFO);
+    AddLog(LOG_LEVEL_INFO);
   }
 }
 #endif  // DEBUG_THEO
@@ -126,21 +128,21 @@ extern "C" uint32_t _SPIFFS_end;
 #define SPIFFS_END          ((uint32_t)&_SPIFFS_end - 0x40200000) / SPI_FLASH_SEC_SIZE
 
 // Version 3.x config
-#define CFG_LOCATION_3      SPIFFS_END - 4
+#define SETTINGS_LOCATION_3 SPIFFS_END - 4
 
 // Version 4.2 config = eeprom area
-#define CFG_LOCATION        SPIFFS_END  // No need for SPIFFS as it uses EEPROM area
+#define SETTINGS_LOCATION   SPIFFS_END  // No need for SPIFFS as it uses EEPROM area
 // Version 5.2 allow for more flash space
 #define CFG_ROTATES         8           // Number of flash sectors used (handles uploads)
 
-uint32_t _cfgHash = 0;
-uint32_t _cfgLocation = CFG_LOCATION;
+uint32_t settings_hash = 0;
+uint32_t settings_location = SETTINGS_LOCATION;
 
 /********************************************************************************************/
 /*
  * Based on cores/esp8266/Updater.cpp
  */
-void setFlashModeDout()
+void SetFlashModeDout()
 {
   uint8_t *_buffer;
   uint32_t address;
@@ -162,10 +164,10 @@ void setFlashModeDout()
   delete[] _buffer;
 }
 
-uint32_t getHash()
+uint32_t GetSettingsHash()
 {
   uint32_t hash = 0;
-  uint8_t *bytes = (uint8_t*)&sysCfg;
+  uint8_t *bytes = (uint8_t*)&Settings;
 
   for (uint16_t i = 0; i < sizeof(SYSCFG); i++) {
     hash += bytes[i]*(i+1);
@@ -177,12 +179,12 @@ uint32_t getHash()
  * Config Save - Save parameters to Flash ONLY if any parameter has changed
 \*********************************************************************************************/
 
-uint32_t CFG_Address()
+uint32_t GetSettingsAddress()
 {
-  return _cfgLocation * SPI_FLASH_SEC_SIZE;
+  return settings_location * SPI_FLASH_SEC_SIZE;
 }
 
-void CFG_Save(byte rotate)
+void SettingsSave(byte rotate)
 {
 /* Save configuration in eeprom or one of 7 slots below
  *
@@ -193,90 +195,90 @@ void CFG_Save(byte rotate)
  * stop_flash_rotate 1 = Allow only eeprom flash slot use (SetOption12 1)
  */
 #ifndef BE_MINIMAL
-  if ((getHash() != _cfgHash) || rotate) {
+  if ((GetSettingsHash() != settings_hash) || rotate) {
     if (1 == rotate) {   // Use eeprom flash slot only and disable flash rotate from now on (upgrade)
       stop_flash_rotate = 1;
     }
     if (2 == rotate) {   // Use eeprom flash slot and erase next flash slots if stop_flash_rotate is off (default)
-      _cfgLocation = CFG_LOCATION +1;
+      settings_location = SETTINGS_LOCATION +1;
     }
     if (stop_flash_rotate) {
-      _cfgLocation = CFG_LOCATION;
+      settings_location = SETTINGS_LOCATION;
     } else {
-      _cfgLocation--;
-      if (_cfgLocation <= (CFG_LOCATION - CFG_ROTATES)) {
-        _cfgLocation = CFG_LOCATION;
+      settings_location--;
+      if (settings_location <= (SETTINGS_LOCATION - CFG_ROTATES)) {
+        settings_location = SETTINGS_LOCATION;
       }
     }
-    sysCfg.saveFlag++;
+    Settings.save_flag++;
     noInterrupts();
-    spi_flash_erase_sector(_cfgLocation);
-    spi_flash_write(_cfgLocation * SPI_FLASH_SEC_SIZE, (uint32*)&sysCfg, sizeof(SYSCFG));
+    spi_flash_erase_sector(settings_location);
+    spi_flash_write(settings_location * SPI_FLASH_SEC_SIZE, (uint32*)&Settings, sizeof(SYSCFG));
     interrupts();
     if (!stop_flash_rotate && rotate) {
       for (byte i = 1; i < CFG_ROTATES; i++) {
         noInterrupts();
-        spi_flash_erase_sector(_cfgLocation -i);  // Delete previous configurations by resetting to 0xFF
+        spi_flash_erase_sector(settings_location -i);  // Delete previous configurations by resetting to 0xFF
         interrupts();
         delay(1);
       }
     }
     snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_CONFIG D_SAVED_TO_FLASH_AT " %X, " D_COUNT " %d, " D_BYTES " %d"),
-       _cfgLocation, sysCfg.saveFlag, sizeof(SYSCFG));
-    addLog(LOG_LEVEL_DEBUG);
-    _cfgHash = getHash();
+       settings_location, Settings.save_flag, sizeof(SYSCFG));
+    AddLog(LOG_LEVEL_DEBUG);
+    settings_hash = GetSettingsHash();
   }
 #endif  // BE_MINIMAL
-  RTC_Save();
+  RtcSettingsSave();
 }
 
-void CFG_Load()
+void SettingsLoad()
 {
 /* Load configuration from eeprom or one of 7 slots below if first load does not stop_flash_rotate
  */
   struct SYSCFGH {
     unsigned long cfg_holder;
-    unsigned long saveFlag;
-  } _sysCfgH;
+    unsigned long save_flag;
+  } _SettingsH;
 
-  _cfgLocation = CFG_LOCATION +1;
+  settings_location = SETTINGS_LOCATION +1;
   for (byte i = 0; i < CFG_ROTATES; i++) {
-    _cfgLocation--;
+    settings_location--;
     noInterrupts();
-    spi_flash_read(_cfgLocation * SPI_FLASH_SEC_SIZE, (uint32*)&sysCfg, sizeof(SYSCFG));
-    spi_flash_read((_cfgLocation -1) * SPI_FLASH_SEC_SIZE, (uint32*)&_sysCfgH, sizeof(SYSCFGH));
+    spi_flash_read(settings_location * SPI_FLASH_SEC_SIZE, (uint32*)&Settings, sizeof(SYSCFG));
+    spi_flash_read((settings_location -1) * SPI_FLASH_SEC_SIZE, (uint32*)&_SettingsH, sizeof(SYSCFGH));
     interrupts();
 
-//  snprintf_P(log_data, sizeof(log_data), PSTR("Cnfg: Check at %X with count %d and holder %X"), _cfgLocation -1, _sysCfgH.saveFlag, _sysCfgH.cfg_holder);
-//  addLog(LOG_LEVEL_DEBUG);
+//  snprintf_P(log_data, sizeof(log_data), PSTR("Cnfg: Check at %X with count %d and holder %X"), settings_location -1, _SettingsH.save_flag, _SettingsH.cfg_holder);
+//  AddLog(LOG_LEVEL_DEBUG);
 
-    if (((sysCfg.version > 0x05000200) && sysCfg.flag.stop_flash_rotate) || (sysCfg.cfg_holder != _sysCfgH.cfg_holder) || (sysCfg.saveFlag > _sysCfgH.saveFlag)) {
+    if (((Settings.version > 0x05000200) && Settings.flag.stop_flash_rotate) || (Settings.cfg_holder != _SettingsH.cfg_holder) || (Settings.save_flag > _SettingsH.save_flag)) {
       break;
     }
     delay(1);
   }
   snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_CONFIG D_LOADED_FROM_FLASH_AT " %X, " D_COUNT " %d"),
-    _cfgLocation, sysCfg.saveFlag);
-  addLog(LOG_LEVEL_DEBUG);
-  if (sysCfg.cfg_holder != CFG_HOLDER) {
+    settings_location, Settings.save_flag);
+  AddLog(LOG_LEVEL_DEBUG);
+  if (Settings.cfg_holder != CFG_HOLDER) {
     // Auto upgrade
     noInterrupts();
-    spi_flash_read((CFG_LOCATION_3) * SPI_FLASH_SEC_SIZE, (uint32*)&sysCfg, sizeof(SYSCFG));
-    spi_flash_read((CFG_LOCATION_3 + 1) * SPI_FLASH_SEC_SIZE, (uint32*)&_sysCfgH, sizeof(SYSCFGH));
-    if (sysCfg.saveFlag < _sysCfgH.saveFlag)
-      spi_flash_read((CFG_LOCATION_3 + 1) * SPI_FLASH_SEC_SIZE, (uint32*)&sysCfg, sizeof(SYSCFG));
+    spi_flash_read((SETTINGS_LOCATION_3) * SPI_FLASH_SEC_SIZE, (uint32*)&Settings, sizeof(SYSCFG));
+    spi_flash_read((SETTINGS_LOCATION_3 + 1) * SPI_FLASH_SEC_SIZE, (uint32*)&_SettingsH, sizeof(SYSCFGH));
+    if (Settings.save_flag < _SettingsH.save_flag)
+      spi_flash_read((SETTINGS_LOCATION_3 + 1) * SPI_FLASH_SEC_SIZE, (uint32*)&Settings, sizeof(SYSCFG));
     interrupts();
-    if ((sysCfg.cfg_holder != CFG_HOLDER) || (sysCfg.version >= 0x04020000)) {
-      CFG_Default();
+    if ((Settings.cfg_holder != CFG_HOLDER) || (Settings.version >= 0x04020000)) {
+      SettingsDefault();
     }
   }
 
-  _cfgHash = getHash();
+  settings_hash = GetSettingsHash();
 
-  RTC_Load();
+  RtcSettingsLoad();
 }
 
-void CFG_Erase()
+void SettingsErase()
 {
   SpiFlashOpResult result;
 
@@ -285,7 +287,7 @@ void CFG_Erase()
   boolean _serialoutput = (LOG_LEVEL_DEBUG_MORE <= seriallog_level);
 
   snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION D_ERASE " %d " D_UNIT_SECTORS), _sectorEnd - _sectorStart);
-  addLog(LOG_LEVEL_DEBUG);
+  AddLog(LOG_LEVEL_DEBUG);
 
   for (uint32_t _sector = _sectorStart; _sector < _sectorEnd; _sector++) {
     noInterrupts();
@@ -301,10 +303,11 @@ void CFG_Erase()
       }
       delay(10);
     }
+    OsWatchLoop();
   }
 }
 
-void CFG_Dump(char* parms)
+void SettingsDump(char* parms)
 {
   #define CFG_COLS 16
 
@@ -314,14 +317,14 @@ void CFG_Dump(char* parms)
   uint16_t col;
   char *p;
 
-  uint8_t *buffer = (uint8_t *) &sysCfg;
+  uint8_t *buffer = (uint8_t *) &Settings;
   maxrow = ((sizeof(SYSCFG)+CFG_COLS)/CFG_COLS);
 
   uint16_t srow = strtol(parms, &p, 16) / CFG_COLS;
   uint16_t mrow = strtol(p, &p, 10);
 
 //  snprintf_P(log_data, sizeof(log_data), PSTR("Cnfg: Parms %s, Start row %d, rows %d"), parms, srow, mrow);
-//  addLog(LOG_LEVEL_DEBUG);
+//  AddLog(LOG_LEVEL_DEBUG);
 
   if (0 == mrow) {  // Default only 8 lines
     mrow = 8;
@@ -350,393 +353,429 @@ void CFG_Dump(char* parms)
       snprintf_P(log_data, sizeof(log_data), PSTR("%s%c"), log_data, ((buffer[idx + col] > 0x20) && (buffer[idx + col] < 0x7F)) ? (char)buffer[idx + col] : ' ');
     }
     snprintf_P(log_data, sizeof(log_data), PSTR("%s|"), log_data);
-    addLog(LOG_LEVEL_INFO);
+    AddLog(LOG_LEVEL_INFO);
     delay(1);
   }
 }
 
 /********************************************************************************************/
 
-void CFG_Default()
+void SettingsDefault()
 {
-  addLog_P(LOG_LEVEL_NONE, PSTR(D_LOG_CONFIG D_USE_DEFAULTS));
-  CFG_DefaultSet1();
-  CFG_DefaultSet2();
-  CFG_Save(2);
+  AddLog_P(LOG_LEVEL_NONE, PSTR(D_LOG_CONFIG D_USE_DEFAULTS));
+  SettingsDefaultSet1();
+  SettingsDefaultSet2();
+  SettingsSave(2);
 }
 
-void CFG_DefaultSet1()
+void SettingsDefaultSet1()
 {
-  memset(&sysCfg, 0x00, sizeof(SYSCFG));
+  memset(&Settings, 0x00, sizeof(SYSCFG));
 
-  sysCfg.cfg_holder = CFG_HOLDER;
-//  sysCfg.saveFlag = 0;
-  sysCfg.version = VERSION;
-//  sysCfg.bootcount = 0;
+  Settings.cfg_holder = CFG_HOLDER;
+//  Settings.save_flag = 0;
+  Settings.version = VERSION;
+//  Settings.bootcount = 0;
 }
 
-void CFG_DefaultSet2()
+void SettingsDefaultSet2()
 {
-  memset((char*)&sysCfg +16, 0x00, sizeof(SYSCFG) -16);
+  memset((char*)&Settings +16, 0x00, sizeof(SYSCFG) -16);
 
-  sysCfg.flag.savestate = SAVE_STATE;
-  sysCfg.savedata = SAVE_DATA;
-  sysCfg.timezone = APP_TIMEZONE;
-  strlcpy(sysCfg.otaUrl, OTA_URL, sizeof(sysCfg.otaUrl));
+  Settings.flag.save_state = SAVE_STATE;
+  //Settings.flag.button_restrict = 0;
+  //Settings.flag.value_units = 0;
+  Settings.flag.mqtt_enabled = MQTT_USE;
+  //Settings.flag.mqtt_response = 0;
+  Settings.flag.mqtt_power_retain = MQTT_POWER_RETAIN;
+  Settings.flag.mqtt_button_retain = MQTT_BUTTON_RETAIN;
+  Settings.flag.mqtt_switch_retain = MQTT_SWITCH_RETAIN;
 
-  sysCfg.seriallog_level = SERIAL_LOG_LEVEL;
-//  sysCfg.sta_active = 0;
-  strlcpy(sysCfg.sta_ssid[0], STA_SSID1, sizeof(sysCfg.sta_ssid[0]));
-  strlcpy(sysCfg.sta_pwd[0], STA_PASS1, sizeof(sysCfg.sta_pwd[0]));
-  strlcpy(sysCfg.sta_ssid[1], STA_SSID2, sizeof(sysCfg.sta_ssid[1]));
-  strlcpy(sysCfg.sta_pwd[1], STA_PASS2, sizeof(sysCfg.sta_pwd[1]));
-  strlcpy(sysCfg.hostname, WIFI_HOSTNAME, sizeof(sysCfg.hostname));
-  sysCfg.sta_config = WIFI_CONFIG_TOOL;
-  strlcpy(sysCfg.syslog_host, SYS_LOG_HOST, sizeof(sysCfg.syslog_host));
-  sysCfg.syslog_port = SYS_LOG_PORT;
-  sysCfg.syslog_level = SYS_LOG_LEVEL;
-  sysCfg.webserver = WEB_SERVER;
-  sysCfg.weblog_level = WEB_LOG_LEVEL;
+  Settings.flag.emulation = EMULATION;
 
-  strlcpy(sysCfg.mqtt_fingerprint, MQTT_FINGERPRINT, sizeof(sysCfg.mqtt_fingerprint));
-  strlcpy(sysCfg.mqtt_host, MQTT_HOST, sizeof(sysCfg.mqtt_host));
-  sysCfg.mqtt_port = MQTT_PORT;
-  strlcpy(sysCfg.mqtt_client, MQTT_CLIENT_ID, sizeof(sysCfg.mqtt_client));
-  strlcpy(sysCfg.mqtt_user, MQTT_USER, sizeof(sysCfg.mqtt_user));
-  strlcpy(sysCfg.mqtt_pwd, MQTT_PASS, sizeof(sysCfg.mqtt_pwd));
-  strlcpy(sysCfg.mqtt_topic, MQTT_TOPIC, sizeof(sysCfg.mqtt_topic));
-  strlcpy(sysCfg.button_topic, "0", sizeof(sysCfg.button_topic));
-  strlcpy(sysCfg.mqtt_grptopic, MQTT_GRPTOPIC, sizeof(sysCfg.mqtt_grptopic));
-  sysCfg.flag.mqtt_button_retain = MQTT_BUTTON_RETAIN;
-  sysCfg.flag.mqtt_power_retain = MQTT_POWER_RETAIN;
-//  sysCfg.flag.value_units = 0;
-//  sysCfg.flag.button_restrict = 0;
-  sysCfg.tele_period = TELE_PERIOD;
+  Settings.save_data = SAVE_DATA;
+  Settings.timezone = APP_TIMEZONE;
+  strlcpy(Settings.ota_url, OTA_URL, sizeof(Settings.ota_url));
 
-  sysCfg.power = APP_POWER;
-  sysCfg.poweronstate = APP_POWERON_STATE;
-  sysCfg.ledstate = APP_LEDSTATE;
-  sysCfg.blinktime = APP_BLINKTIME;
-  sysCfg.blinkcount = APP_BLINKCOUNT;
-  sysCfg.sleep = APP_SLEEP;
+  Settings.seriallog_level = SERIAL_LOG_LEVEL;
+//  Settings.sta_active = 0;
+  strlcpy(Settings.sta_ssid[0], STA_SSID1, sizeof(Settings.sta_ssid[0]));
+  strlcpy(Settings.sta_pwd[0], STA_PASS1, sizeof(Settings.sta_pwd[0]));
+  strlcpy(Settings.sta_ssid[1], STA_SSID2, sizeof(Settings.sta_ssid[1]));
+  strlcpy(Settings.sta_pwd[1], STA_PASS2, sizeof(Settings.sta_pwd[1]));
+  strlcpy(Settings.hostname, WIFI_HOSTNAME, sizeof(Settings.hostname));
+  Settings.sta_config = WIFI_CONFIG_TOOL;
+  strlcpy(Settings.syslog_host, SYS_LOG_HOST, sizeof(Settings.syslog_host));
+  Settings.syslog_port = SYS_LOG_PORT;
+  Settings.syslog_level = SYS_LOG_LEVEL;
+  Settings.webserver = WEB_SERVER;
+  Settings.weblog_level = WEB_LOG_LEVEL;
 
-  sysCfg.domoticz_update_timer = DOMOTICZ_UPDATE_TIMER;
-  for (byte i = 0; i < 4; i++) {
-    sysCfg.switchmode[i] = SWITCH_MODE;
-//    sysCfg.domoticz_relay_idx[i] = 0;
-//    sysCfg.domoticz_key_idx[i] = 0;
-//    sysCfg.domoticz_switch_idx[i] = 0;
+  strlcpy(Settings.mqtt_fingerprint, MQTT_FINGERPRINT, sizeof(Settings.mqtt_fingerprint));
+  strlcpy(Settings.mqtt_host, MQTT_HOST, sizeof(Settings.mqtt_host));
+  Settings.mqtt_port = MQTT_PORT;
+  strlcpy(Settings.mqtt_client, MQTT_CLIENT_ID, sizeof(Settings.mqtt_client));
+  strlcpy(Settings.mqtt_user, MQTT_USER, sizeof(Settings.mqtt_user));
+  strlcpy(Settings.mqtt_pwd, MQTT_PASS, sizeof(Settings.mqtt_pwd));
+  strlcpy(Settings.mqtt_topic, MQTT_TOPIC, sizeof(Settings.mqtt_topic));
+  strlcpy(Settings.button_topic, "0", sizeof(Settings.button_topic));
+  strlcpy(Settings.mqtt_grptopic, MQTT_GRPTOPIC, sizeof(Settings.mqtt_grptopic));
+  Settings.tele_period = TELE_PERIOD;
+
+  Settings.power = APP_POWER;
+  Settings.poweronstate = APP_POWERON_STATE;
+  Settings.ledstate = APP_LEDSTATE;
+  Settings.blinktime = APP_BLINKTIME;
+  Settings.blinkcount = APP_BLINKCOUNT;
+  Settings.sleep = APP_SLEEP;
+
+  Settings.domoticz_update_timer = DOMOTICZ_UPDATE_TIMER;
+  for (byte i = 0; i < MAX_SWITCHES; i++) {
+    Settings.switchmode[i] = SWITCH_MODE;
+//    Settings.domoticz_relay_idx[i] = 0;
+//    Settings.domoticz_key_idx[i] = 0;
+//    Settings.domoticz_switch_idx[i] = 0;
   }
 
-  sysCfg.hlw_pcal = HLW_PREF_PULSE;
-  sysCfg.hlw_ucal = HLW_UREF_PULSE;
-  sysCfg.hlw_ical = HLW_IREF_PULSE;
-//  sysCfg.hlw_kWhtoday = 0;
-//  sysCfg.hlw_kWhyesterday = 0;
-//  sysCfg.hlw_kWhdoy = 0;
-//  sysCfg.hlw_pmin = 0;
-//  sysCfg.hlw_pmax = 0;
-//  sysCfg.hlw_umin = 0;
-//  sysCfg.hlw_umax = 0;
-//  sysCfg.hlw_imin = 0;
-//  sysCfg.hlw_imax = 0;
-//  sysCfg.hlw_mpl = 0;                              // MaxPowerLimit
-  sysCfg.hlw_mplh = MAX_POWER_HOLD;
-  sysCfg.hlw_mplw = MAX_POWER_WINDOW;
-//  sysCfg.hlw_mspl = 0;                             // MaxSafePowerLimit
-  sysCfg.hlw_msplh = SAFE_POWER_HOLD;
-  sysCfg.hlw_msplw = SAFE_POWER_WINDOW;
-//  sysCfg.hlw_mkwh = 0;                             // MaxEnergy
-//  sysCfg.hlw_mkwhs = 0;                            // MaxEnergyStart
+  Settings.hlw_power_calibration = HLW_PREF_PULSE;
+  Settings.hlw_voltage_calibration = HLW_UREF_PULSE;
+  Settings.hlw_current_calibration = HLW_IREF_PULSE;
+//  Settings.hlw_kWhtoday = 0;
+//  Settings.hlw_kWhyesterday = 0;
+//  Settings.hlw_kWhdoy = 0;
+//  Settings.hlw_pmin = 0;
+//  Settings.hlw_pmax = 0;
+//  Settings.hlw_umin = 0;
+//  Settings.hlw_umax = 0;
+//  Settings.hlw_imin = 0;
+//  Settings.hlw_imax = 0;
+//  Settings.hlw_mpl = 0;                              // MaxPowerLimit
+  Settings.hlw_mplh = MAX_POWER_HOLD;
+  Settings.hlw_mplw = MAX_POWER_WINDOW;
+//  Settings.hlw_mspl = 0;                             // MaxSafePowerLimit
+  Settings.hlw_msplh = SAFE_POWER_HOLD;
+  Settings.hlw_msplw = SAFE_POWER_WINDOW;
+//  Settings.hlw_mkwh = 0;                             // MaxEnergy
+//  Settings.hlw_mkwhs = 0;                            // MaxEnergyStart
 
-  CFG_DefaultSet_3_2_4();
+  SettingsDefaultSet_3_2_4();
 
-  strlcpy(sysCfg.friendlyname[0], FRIENDLY_NAME, sizeof(sysCfg.friendlyname[0]));
-  strlcpy(sysCfg.friendlyname[1], FRIENDLY_NAME"2", sizeof(sysCfg.friendlyname[1]));
-  strlcpy(sysCfg.friendlyname[2], FRIENDLY_NAME"3", sizeof(sysCfg.friendlyname[2]));
-  strlcpy(sysCfg.friendlyname[3], FRIENDLY_NAME"4", sizeof(sysCfg.friendlyname[3]));
+  strlcpy(Settings.friendlyname[0], FRIENDLY_NAME, sizeof(Settings.friendlyname[0]));
+  strlcpy(Settings.friendlyname[1], FRIENDLY_NAME"2", sizeof(Settings.friendlyname[1]));
+  strlcpy(Settings.friendlyname[2], FRIENDLY_NAME"3", sizeof(Settings.friendlyname[2]));
+  strlcpy(Settings.friendlyname[3], FRIENDLY_NAME"4", sizeof(Settings.friendlyname[3]));
 
-  CFG_DefaultSet_3_9_3();
+  SettingsDefaultSet_3_9_3();
 
-  strlcpy(sysCfg.switch_topic, "0", sizeof(sysCfg.switch_topic));
-  sysCfg.flag.mqtt_switch_retain = MQTT_SWITCH_RETAIN;
-  sysCfg.flag.mqtt_enabled = MQTT_USE;
+  strlcpy(Settings.switch_topic, "0", sizeof(Settings.switch_topic));
 
-  sysCfg.flag.emulation = EMULATION;
+  strlcpy(Settings.web_password, WEB_PASSWORD, sizeof(Settings.web_password));
 
-  strlcpy(sysCfg.web_password, WEB_PASSWORD, sizeof(sysCfg.web_password));
-
-  CFG_DefaultSet_4_0_4();
-  sysCfg.pulsetime[0] = APP_PULSETIME;
+  SettingsDefaultSet_4_0_4();
+  Settings.pulse_timer[0] = APP_PULSETIME;
 
   // 4.0.7
-//  for (byte i = 0; i < 5; i++) sysCfg.pwmvalue[i] = 0;
+//  for (byte i = 0; i < MAX_PWMS; i++) Settings.pwm_value[i] = 0;
 
   // 4.0.9
-  CFG_DefaultSet_4_0_9();
+  SettingsDefaultSet_4_0_9();
 
   // 4.1.1 + 5.1.6
-  CFG_DefaultSet_4_1_1();
+  SettingsDefaultSet_4_1_1();
 
   // 5.0.2
-  CFG_DefaultSet_5_0_2();
+  SettingsDefaultSet_5_0_2();
 
   // 5.0.4
-//  sysCfg.hlw_kWhtotal = 0;
-  rtcMem.hlw_kWhtotal = 0;
+//  Settings.hlw_kWhtotal = 0;
+  RtcSettings.hlw_kWhtotal = 0;
 
   // 5.0.5
-  strlcpy(sysCfg.mqtt_fulltopic, MQTT_FULLTOPIC, sizeof(sysCfg.mqtt_fulltopic));
+  strlcpy(Settings.mqtt_fulltopic, MQTT_FULLTOPIC, sizeof(Settings.mqtt_fulltopic));
 
   // 5.0.6
-  sysCfg.mqtt_retry = MQTT_RETRY_SECS;
+  Settings.mqtt_retry = MQTT_RETRY_SECS;
 
   // 5.1.7
-  sysCfg.param[P_HOLD_TIME] = KEY_HOLD_TIME;  // Default 4 seconds hold time
+  Settings.param[P_HOLD_TIME] = KEY_HOLD_TIME;  // Default 4 seconds hold time
 
   // 5.2.0
-  sysCfg.param[P_MAX_POWER_RETRY] = MAX_POWER_RETRY;
+  Settings.param[P_MAX_POWER_RETRY] = MAX_POWER_RETRY;
 
   // 5.4.1
-  memcpy_P(sysCfg.sfb_code[0], sfb_codeDefault, 9);
+  memcpy_P(Settings.rf_code[0], kDefaultRfCode, 9);
 
   // 5.8.0
-  sysCfg.led_pixels = 1;
+  Settings.light_pixels = WS2812_LEDS;
+
+  // 5.8.1
+//  Settings.altitude = 0;
+  Settings.pwm_frequency = PWM_FREQ;
+  Settings.pwm_range = PWM_RANGE;
+  SettingsDefaultSet_5_8_1();
 }
 
 /********************************************************************************************/
 
-void CFG_DefaultSet_3_2_4()
+void SettingsDefaultSet_3_2_4()
 {
-  sysCfg.ws_pixels = WS2812_LEDS;
-  sysCfg.ws_red = 255;
-  sysCfg.ws_green = 0;
-  sysCfg.ws_blue = 0;
-  sysCfg.ws_ledtable = 0;
-  sysCfg.ws_dimmer = 8;
-  sysCfg.ws_fade = 0;
-  sysCfg.ws_speed = 1;
-  sysCfg.ws_scheme = 0;
-  sysCfg.ws_width = 1;
-  sysCfg.ws_wakeup = 0;
+  Settings.ws_pixels = WS2812_LEDS;
+  Settings.ws_red = 255;
+  Settings.ws_green = 0;
+  Settings.ws_blue = 0;
+  Settings.ws_ledtable = 0;
+  Settings.ws_dimmer = 8;
+  Settings.ws_fade = 0;
+  Settings.ws_speed = 1;
+  Settings.ws_scheme = 0;
+  Settings.ex_ws_width = 1;
+  Settings.ws_wakeup = 0;
 }
 
-void CFG_DefaultSet_3_9_3()
+void SettingsDefaultSet_3_9_3()
 {
-  for (byte i = 0; i < 4; i++) {
-    sysCfg.domoticz_switch_idx[i] = 0;
+  for (byte i = 0; i < MAX_DOMOTICZ_IDX; i++) {
+    Settings.domoticz_switch_idx[i] = 0;
   }
   for (byte i = 0; i < 12; i++) {
-    sysCfg.domoticz_sensor_idx[i] = 0;
+    Settings.domoticz_sensor_idx[i] = 0;
   }
 
-  sysCfg.module = MODULE;
+  Settings.module = MODULE;
   for (byte i = 0; i < MAX_GPIO_PIN; i++){
-    sysCfg.my_module.gp.io[i] = 0;
+    Settings.my_gp.io[i] = 0;
   }
 
-  sysCfg.led_pixels = WS2812_LEDS;
-  for (byte i = 0; i < 5; i++) {
-    sysCfg.led_color[i] = 255;
+  Settings.light_pixels = WS2812_LEDS;
+  for (byte i = 0; i < MAX_PWMS; i++) {
+    Settings.light_color[i] = 255;
   }
-  sysCfg.led_table = 0;
-  for (byte i = 0; i < 3; i++){
-    sysCfg.led_dimmer[i] = 10;
-  }
-  sysCfg.led_fade = 0;
-  sysCfg.led_speed = 1;
-  sysCfg.led_scheme = 0;
-  sysCfg.led_width = 1;
-  sysCfg.led_wakeup = 0;
+  Settings.light_correction = 0;
+  Settings.light_dimmer = 10;
+  Settings.light_fade = 0;
+  Settings.light_speed = 1;
+  Settings.light_scheme = 0;
+  Settings.light_width = 1;
+  Settings.light_wakeup = 0;
 }
 
-void CFG_DefaultSet_4_0_4()
+void SettingsDefaultSet_4_0_4()
 {
-  strlcpy(sysCfg.ntp_server[0], NTP_SERVER1, sizeof(sysCfg.ntp_server[0]));
-  strlcpy(sysCfg.ntp_server[1], NTP_SERVER2, sizeof(sysCfg.ntp_server[1]));
-  strlcpy(sysCfg.ntp_server[2], NTP_SERVER3, sizeof(sysCfg.ntp_server[2]));
-  for (byte j =0; j < 3; j++) {
-    for (byte i = 0; i < strlen(sysCfg.ntp_server[j]); i++) {
-      if (sysCfg.ntp_server[j][i] == ',') {
-        sysCfg.ntp_server[j][i] = '.';
+  strlcpy(Settings.ntp_server[0], NTP_SERVER1, sizeof(Settings.ntp_server[0]));
+  strlcpy(Settings.ntp_server[1], NTP_SERVER2, sizeof(Settings.ntp_server[1]));
+  strlcpy(Settings.ntp_server[2], NTP_SERVER3, sizeof(Settings.ntp_server[2]));
+  for (byte j = 0; j < 3; j++) {
+    for (byte i = 0; i < strlen(Settings.ntp_server[j]); i++) {
+      if (Settings.ntp_server[j][i] == ',') {
+        Settings.ntp_server[j][i] = '.';
       }
     }
   }
-  sysCfg.pulsetime[0] = APP_PULSETIME;
+  Settings.pulse_timer[0] = APP_PULSETIME;
   for (byte i = 1; i < MAX_PULSETIMERS; i++) {
-    sysCfg.pulsetime[i] = 0;
+    Settings.pulse_timer[i] = 0;
   }
 }
 
-void CFG_DefaultSet_4_0_9()
+void SettingsDefaultSet_4_0_9()
 {
-  strlcpy(sysCfg.mqtt_prefix[0], SUB_PREFIX, sizeof(sysCfg.mqtt_prefix[0]));
-  strlcpy(sysCfg.mqtt_prefix[1], PUB_PREFIX, sizeof(sysCfg.mqtt_prefix[1]));
-  strlcpy(sysCfg.mqtt_prefix[2], PUB_PREFIX2, sizeof(sysCfg.mqtt_prefix[2]));
-  parseIP(&sysCfg.ip_address[0], WIFI_IP_ADDRESS);
-  parseIP(&sysCfg.ip_address[1], WIFI_GATEWAY);
-  parseIP(&sysCfg.ip_address[2], WIFI_SUBNETMASK);
-  parseIP(&sysCfg.ip_address[3], WIFI_DNS);
+  strlcpy(Settings.mqtt_prefix[0], SUB_PREFIX, sizeof(Settings.mqtt_prefix[0]));
+  strlcpy(Settings.mqtt_prefix[1], PUB_PREFIX, sizeof(Settings.mqtt_prefix[1]));
+  strlcpy(Settings.mqtt_prefix[2], PUB_PREFIX2, sizeof(Settings.mqtt_prefix[2]));
+  ParseIp(&Settings.ip_address[0], WIFI_IP_ADDRESS);
+  ParseIp(&Settings.ip_address[1], WIFI_GATEWAY);
+  ParseIp(&Settings.ip_address[2], WIFI_SUBNETMASK);
+  ParseIp(&Settings.ip_address[3], WIFI_DNS);
 }
 
-void CFG_DefaultSet_4_1_1()
+void SettingsDefaultSet_4_1_1()
 {
-  strlcpy(sysCfg.state_text[0], MQTT_STATUS_OFF, sizeof(sysCfg.state_text[0]));
-  strlcpy(sysCfg.state_text[1], MQTT_STATUS_ON, sizeof(sysCfg.state_text[1]));
-  strlcpy(sysCfg.state_text[2], MQTT_CMND_TOGGLE, sizeof(sysCfg.state_text[2]));
-  strlcpy(sysCfg.state_text[3], MQTT_CMND_HOLD, sizeof(sysCfg.state_text[3]));  // v5.1.6
+  strlcpy(Settings.state_text[0], MQTT_STATUS_OFF, sizeof(Settings.state_text[0]));
+  strlcpy(Settings.state_text[1], MQTT_STATUS_ON, sizeof(Settings.state_text[1]));
+  strlcpy(Settings.state_text[2], MQTT_CMND_TOGGLE, sizeof(Settings.state_text[2]));
+  strlcpy(Settings.state_text[3], MQTT_CMND_HOLD, sizeof(Settings.state_text[3]));  // v5.1.6
 }
 
-void CFG_DefaultSet_5_0_2()
+void SettingsDefaultSet_5_0_2()
 {
-  sysCfg.flag.temperature_conversion = TEMP_CONVERSION;
-  sysCfg.flag.temperature_resolution = TEMP_RESOLUTION;
-  sysCfg.flag.humidity_resolution = HUMIDITY_RESOLUTION;
-  sysCfg.flag.pressure_resolution = PRESSURE_RESOLUTION;
-  sysCfg.flag.energy_resolution = ENERGY_RESOLUTION;
+  Settings.flag.temperature_conversion = TEMP_CONVERSION;
+  Settings.flag.temperature_resolution = TEMP_RESOLUTION;
+  Settings.flag.humidity_resolution = HUMIDITY_RESOLUTION;
+  Settings.flag.pressure_resolution = PRESSURE_RESOLUTION;
+  Settings.flag.energy_resolution = ENERGY_RESOLUTION;
+}
+
+void SettingsDefaultSet_5_8_1()
+{
+//  Settings.flag.ws_clock_reverse = 0;
+  Settings.ws_width[WS_SECOND] = 1;
+  Settings.ws_color[WS_SECOND][WS_RED] = 255;
+  Settings.ws_color[WS_SECOND][WS_GREEN] = 0;
+  Settings.ws_color[WS_SECOND][WS_BLUE] = 255;
+  Settings.ws_width[WS_MINUTE] = 3;
+  Settings.ws_color[WS_MINUTE][WS_RED] = 0;
+  Settings.ws_color[WS_MINUTE][WS_GREEN] = 255;
+  Settings.ws_color[WS_MINUTE][WS_BLUE] = 0;
+  Settings.ws_width[WS_HOUR] = 5;
+  Settings.ws_color[WS_HOUR][WS_RED] = 255;
+  Settings.ws_color[WS_HOUR][WS_GREEN] = 0;
+  Settings.ws_color[WS_HOUR][WS_BLUE] = 0;
 }
 
 /********************************************************************************************/
 
-void CFG_Delta()
+void SettingsDelta()
 {
-  if (sysCfg.version != VERSION) {      // Fix version dependent changes
-    if (sysCfg.version < 0x03010200) {  // 3.1.2 - Add parameter
-      sysCfg.poweronstate = APP_POWERON_STATE;
+  if (Settings.version != VERSION) {      // Fix version dependent changes
+    if (Settings.version < 0x03010200) {  // 3.1.2 - Add parameter
+      Settings.poweronstate = APP_POWERON_STATE;
     }
-    if (sysCfg.version < 0x03010600) {  // 3.1.6 - Add parameter
-      sysCfg.blinktime = APP_BLINKTIME;
-      sysCfg.blinkcount = APP_BLINKCOUNT;
+    if (Settings.version < 0x03010600) {  // 3.1.6 - Add parameter
+      Settings.blinktime = APP_BLINKTIME;
+      Settings.blinkcount = APP_BLINKCOUNT;
     }
-    if (sysCfg.version < 0x03020400) {  // 3.2.4 - Add parameter
-      CFG_DefaultSet_3_2_4();
+    if (Settings.version < 0x03020400) {  // 3.2.4 - Add parameter
+      SettingsDefaultSet_3_2_4();
     }
-    if (sysCfg.version < 0x03020500) {  // 3.2.5 - Add parameter
-      getClient(sysCfg.friendlyname[0], sysCfg.mqtt_client, sizeof(sysCfg.friendlyname[0]));
-      strlcpy(sysCfg.friendlyname[1], FRIENDLY_NAME"2", sizeof(sysCfg.friendlyname[1]));
-      strlcpy(sysCfg.friendlyname[2], FRIENDLY_NAME"3", sizeof(sysCfg.friendlyname[2]));
-      strlcpy(sysCfg.friendlyname[3], FRIENDLY_NAME"4", sizeof(sysCfg.friendlyname[3]));
+    if (Settings.version < 0x03020500) {  // 3.2.5 - Add parameter
+      GetMqttClient(Settings.friendlyname[0], Settings.mqtt_client, sizeof(Settings.friendlyname[0]));
+      strlcpy(Settings.friendlyname[1], FRIENDLY_NAME"2", sizeof(Settings.friendlyname[1]));
+      strlcpy(Settings.friendlyname[2], FRIENDLY_NAME"3", sizeof(Settings.friendlyname[2]));
+      strlcpy(Settings.friendlyname[3], FRIENDLY_NAME"4", sizeof(Settings.friendlyname[3]));
     }
-    if (sysCfg.version < 0x03020800) {  // 3.2.8 - Add parameter
-      strlcpy(sysCfg.switch_topic, sysCfg.button_topic, sizeof(sysCfg.switch_topic));
-      sysCfg.ex_mqtt_switch_retain = MQTT_SWITCH_RETAIN;
-      sysCfg.ex_mqtt_enabled = MQTT_USE;
+    if (Settings.version < 0x03020800) {  // 3.2.8 - Add parameter
+      strlcpy(Settings.switch_topic, Settings.button_topic, sizeof(Settings.switch_topic));
     }
-    if (sysCfg.version < 0x03020C00) {  // 3.2.12 - Add parameter
-      sysCfg.sleep = APP_SLEEP;
+    if (Settings.version < 0x03020C00) {  // 3.2.12 - Add parameter
+      Settings.sleep = APP_SLEEP;
     }
-    if (sysCfg.version < 0x03090300) {  // 3.9.2d - Add parameter
-      CFG_DefaultSet_3_9_3();
+    if (Settings.version < 0x03090300) {  // 3.9.2d - Add parameter
+      SettingsDefaultSet_3_9_3();
     }
-    if (sysCfg.version < 0x03090700) {  // 3.9.7 - Add parameter
-      sysCfg.ex_emulation = EMULATION;
+    if (Settings.version < 0x03091400) {
+      strlcpy(Settings.web_password, WEB_PASSWORD, sizeof(Settings.web_password));
     }
-    if (sysCfg.version < 0x03091400) {
-      strlcpy(sysCfg.web_password, WEB_PASSWORD, sizeof(sysCfg.web_password));
-    }
-    if (sysCfg.version < 0x03091500) {
-      for (byte i = 0; i < 4; i++) sysCfg.switchmode[i] = SWITCH_MODE;
-    }
-    if (sysCfg.version < 0x04000200) {
-      sysCfg.ex_button_restrict = 0;
-    }
-    if (sysCfg.version < 0x04000400) {
-      CFG_DefaultSet_4_0_4();
-    }
-    if (sysCfg.version < 0x04000500) {
-      memmove(sysCfg.my_module.gp.io, sysCfg.my_module.gp.io +1, MAX_GPIO_PIN -1);  // move myio 1 byte to front
-      sysCfg.my_module.gp.io[MAX_GPIO_PIN -1] = 0;  // Clear ADC0
-    }
-    if (sysCfg.version < 0x04000700) {
-      for (byte i = 0; i < 5; i++) {
-        sysCfg.pwmvalue[i] = 0;
+    if (Settings.version < 0x03091500) {
+      for (byte i = 0; i < MAX_SWITCHES; i++) {
+        Settings.switchmode[i] = SWITCH_MODE;
       }
     }
-    if (sysCfg.version < 0x04000804) {
-      CFG_DefaultSet_4_0_9();
+    if (Settings.version < 0x04000400) {
+      SettingsDefaultSet_4_0_4();
     }
-    if (sysCfg.version < 0x04010100) {
-      CFG_DefaultSet_4_1_1();
+    if (Settings.version < 0x04000500) {
+      memmove(Settings.my_gp.io, Settings.my_gp.io +1, MAX_GPIO_PIN -1);  // move myio 1 byte to front
+      Settings.my_gp.io[MAX_GPIO_PIN -1] = 0;  // Clear ADC0
     }
-    if (sysCfg.version < 0x05000105) {
-      sysCfg.flag = { 0 };
-      sysCfg.flag.savestate = SAVE_STATE;
-      sysCfg.flag.button_restrict = sysCfg.ex_button_restrict;
-      sysCfg.flag.value_units = sysCfg.ex_value_units;
-      sysCfg.flag.mqtt_enabled = sysCfg.ex_mqtt_enabled;
-//      sysCfg.flag.mqtt_response = 0;
-      sysCfg.flag.mqtt_power_retain = sysCfg.ex_mqtt_power_retain;
-      sysCfg.flag.mqtt_button_retain = sysCfg.ex_mqtt_button_retain;
-      sysCfg.flag.mqtt_switch_retain = sysCfg.ex_mqtt_switch_retain;
-      sysCfg.flag.emulation = sysCfg.ex_emulation;
+    if (Settings.version < 0x04000700) {
+      for (byte i = 0; i < MAX_PWMS; i++) {
+        Settings.pwm_value[i] = 0;
+      }
+    }
+    if (Settings.version < 0x04000804) {
+      SettingsDefaultSet_4_0_9();
+    }
+    if (Settings.version < 0x04010100) {
+      SettingsDefaultSet_4_1_1();
+    }
+    if (Settings.version < 0x05000105) {
+      Settings.flag = { 0 };
+      Settings.flag.save_state = SAVE_STATE;
+//      Settings.flag.button_restrict = 0;
+//      Settings.flag.value_units = 0;
+      Settings.flag.mqtt_enabled = MQTT_USE;
+//      Settings.flag.mqtt_response = 0;
+//      Settings.flag.mqtt_power_retain = 0;
+//      Settings.flag.mqtt_button_retain = 0;
+      Settings.flag.mqtt_switch_retain = MQTT_SWITCH_RETAIN;
+      Settings.flag.emulation = EMULATION;
 
-      CFG_DefaultSet_5_0_2();
+      SettingsDefaultSet_5_0_2();
 
-      sysCfg.savedata = SAVE_DATA;
+      Settings.save_data = SAVE_DATA;
     }
-    if (sysCfg.version < 0x05000400) {
-      sysCfg.hlw_kWhtotal = 0;
-      rtcMem.hlw_kWhtotal = 0;
+    if (Settings.version < 0x05000400) {
+      Settings.hlw_kWhtotal = 0;
+      RtcSettings.hlw_kWhtotal = 0;
     }
-    if (sysCfg.version < 0x05000500) {
-      strlcpy(sysCfg.mqtt_fulltopic, MQTT_FULLTOPIC, sizeof(sysCfg.mqtt_fulltopic));
+    if (Settings.version < 0x05000500) {
+      strlcpy(Settings.mqtt_fulltopic, MQTT_FULLTOPIC, sizeof(Settings.mqtt_fulltopic));
     }
-    if (sysCfg.version < 0x05000600) {
-      sysCfg.mqtt_retry = MQTT_RETRY_SECS;
+    if (Settings.version < 0x05000600) {
+      Settings.mqtt_retry = MQTT_RETRY_SECS;
     }
-    if (sysCfg.version < 0x05010100) {
-      sysCfg.pCounterType = 0;
-      sysCfg.pCounterDebounce = 0;
+    if (Settings.version < 0x05010100) {
+      Settings.pulse_counter_type = 0;
+      Settings.pulse_counter_debounce = 0;
       for (byte i = 0; i < MAX_COUNTERS; i++) {
-        sysCfg.pCounter[i] = 0;
-        rtcMem.pCounter[i] = 0;
+        Settings.pulse_counter[i] = 0;
+        RtcSettings.pulse_counter[i] = 0;
       }
     }
-    if (sysCfg.version < 0x05010600) {
-      if (sysCfg.version > 0x04010100) {
-        memcpy(sysCfg.state_text, sysCfg.ex_state_text, 33);
-      }
-      strlcpy(sysCfg.state_text[3], MQTT_CMND_HOLD, sizeof(sysCfg.state_text[3]));
+    if (Settings.version < 0x05010600) {
+      SettingsDefaultSet_4_1_1();
     }
-    if (sysCfg.version < 0x05010700) {
-      sysCfg.param[P_HOLD_TIME] = KEY_HOLD_TIME;  // Default 4 seconds hold time
+    if (Settings.version < 0x05010700) {
+      Settings.param[P_HOLD_TIME] = KEY_HOLD_TIME;  // Default 4 seconds hold time
     }
-    if (sysCfg.version < 0x05020000) {
-      sysCfg.param[P_MAX_POWER_RETRY] = MAX_POWER_RETRY;
+    if (Settings.version < 0x05020000) {
+      Settings.param[P_MAX_POWER_RETRY] = MAX_POWER_RETRY;
     }
-    if (sysCfg.version < 0x05050000) {
+    if (Settings.version < 0x05050000) {
       for (byte i = 0; i < 17; i++) {
-        sysCfg.sfb_code[i][0] = 0;
+        Settings.rf_code[i][0] = 0;
       }
-      memcpy_P(sysCfg.sfb_code[0], sfb_codeDefault, 9);
+      memcpy_P(Settings.rf_code[0], kDefaultRfCode, 9);
     }
-    if (sysCfg.version < 0x05080000) {
+    if (Settings.version < 0x05080000) {
       uint8_t cfg_wsflg = 0;
       for (byte i = 0; i < MAX_GPIO_PIN; i++) {
-        if (GPIO_WS2812 == sysCfg.my_module.gp.io[i]) {
+        if (GPIO_WS2812 == Settings.my_gp.io[i]) {
           cfg_wsflg = 1;
         }
       }
-      if (!sysCfg.led_pixels && cfg_wsflg) {
-        sysCfg.led_pixels = sysCfg.ws_pixels;
-        sysCfg.led_color[0] = sysCfg.ws_red;
-        sysCfg.led_color[1] = sysCfg.ws_green;
-        sysCfg.led_color[2] = sysCfg.ws_blue;
-        sysCfg.led_dimmer[0] = sysCfg.ws_dimmer;
-        sysCfg.led_table = sysCfg.ws_ledtable;
-        sysCfg.led_fade = sysCfg.ws_fade;
-        sysCfg.led_speed = sysCfg.ws_speed;
-        sysCfg.led_scheme = sysCfg.ws_scheme;
-        sysCfg.led_width = sysCfg.ws_width;
-        sysCfg.led_wakeup = sysCfg.ws_wakeup;
+      if (!Settings.light_pixels && cfg_wsflg) {
+        Settings.light_pixels = Settings.ws_pixels;
+        Settings.light_color[0] = Settings.ws_red;
+        Settings.light_color[1] = Settings.ws_green;
+        Settings.light_color[2] = Settings.ws_blue;
+        Settings.light_dimmer = Settings.ws_dimmer;
+        Settings.light_correction = Settings.ws_ledtable;
+        Settings.light_fade = Settings.ws_fade;
+        Settings.light_speed = Settings.ws_speed;
+        Settings.light_scheme = Settings.ws_scheme;
+        Settings.light_width = Settings.ex_ws_width;
+        Settings.light_wakeup = Settings.ws_wakeup;
       } else {
-        sysCfg.led_pixels = 1;
-        sysCfg.led_width = 1;
+        Settings.light_pixels = WS2812_LEDS;
+        Settings.light_width = 1;
       }
     }
+    if (Settings.version < 0x0508000A) {
+      Settings.power = Settings.ex_power;
+      Settings.altitude = 0;
+    }
+    if (Settings.version < 0x0508000B) {
+      for (byte i = 0; i < MAX_GPIO_PIN; i++) {  // Move GPIO_LEDs
+        if ((Settings.my_gp.io[i] >= 25) && (Settings.my_gp.io[i] <= 32)) {  // Was GPIO_LED1
+          Settings.my_gp.io[i] += 23;  // Move GPIO_LED1
+        }
+      }
+      for (byte i = 0; i < MAX_PWMS; i++) {      // Move pwm_value and reset additional pulse_timerrs
+        Settings.pwm_value[i] = Settings.pulse_timer[4 +i];
+        Settings.pulse_timer[4 +i] = 0;
+      }
+    }
+    if (Settings.version < 0x0508000D) {
+      Settings.pwm_frequency = PWM_FREQ;
+      Settings.pwm_range = PWM_RANGE;
+    }
+    if (Settings.version < 0x0508000E) {
+      SettingsDefaultSet_5_8_1();
+    }
 
-    sysCfg.version = VERSION;
-    CFG_Save(1);
+    Settings.version = VERSION;
+    SettingsSave(1);
   }
 }
 

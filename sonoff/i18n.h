@@ -17,6 +17,9 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#ifndef _I18N_H_
+#define _I18N_H_
+
 #ifndef MY_LANGUAGE
   #include "language/en-GB.h"
 #else
@@ -27,6 +30,56 @@
 #endif
 
 // Common
+enum UnitNames {
+  UNIT_AMPERE,
+  UNIT_HOUR,
+  UNIT_KILOWATTHOUR,
+  UNIT_LUX,
+  UNIT_MICROSECOND,
+  UNIT_MILLIAMPERE,
+  UNIT_MILLISECOND,
+  UNIT_MINUTE,
+  UNIT_PRESSURE,
+  UNIT_SECOND,
+  UNIT_SECTORS,
+  UNIT_VOLT,
+  UNIT_WATT,
+  UNIT_WATTHOUR };
+const char kUnitNames[] PROGMEM =
+  D_UNIT_AMPERE "|"
+  D_UNIT_HOUR "|"
+  D_UNIT_KILOWATTHOUR "|"
+  D_UNIT_LUX "|"
+  D_UNIT_MICROSECOND "|"
+  D_UNIT_MILLIAMPERE "|"
+  D_UNIT_MILLISECOND "|"
+  D_UNIT_MINUTE "|"
+  D_UNIT_PRESSURE "|"
+  D_UNIT_SECOND "|"
+  D_UNIT_SECTORS "|"
+  D_UNIT_VOLT "|"
+  D_UNIT_WATT "|"
+  D_UNIT_WATTHOUR ;
+
+const char S_JSON_COMMAND_NVALUE_SPACE_UNIT[] PROGMEM =       "{\"%s\":\"%d %s\"}";
+const char S_JSON_COMMAND_SVALUE_SPACE_UNIT[] PROGMEM =       "{\"%s\":\"%s %s\"}";
+const char S_JSON_COMMAND_NVALUE_UNIT[] PROGMEM =             "{\"%s\":\"%d%s\"}";
+const char S_JSON_COMMAND_NVALUE_UNIT_NVALUE_UNIT[] PROGMEM = "{\"%s\":\"%d%s (%d%s)\"}";
+
+const char S_JSON_COMMAND_NVALUE_SVALUE[] PROGMEM =           "{\"%s\":\"%d (%s)\"}";
+const char S_JSON_COMMAND_NVALUE_ACTIVE_NVALUE[] PROGMEM =    "{\"%s\":\"%d (" D_ACTIVE " %d)\"}";
+
+const char S_JSON_COMMAND_NVALUE[] PROGMEM =                  "{\"%s\":%d}";
+const char S_JSON_COMMAND_SVALUE[] PROGMEM =                  "{\"%s\":\"%s\"}";
+const char S_JSON_COMMAND_XVALUE[] PROGMEM =                  "{\"%s\":%s}";  // %s must provide quotes on non-number
+
+const char S_JSON_COMMAND_INDEX_NVALUE[] PROGMEM =            "{\"%s%d\":%d}";
+const char S_JSON_COMMAND_INDEX_SVALUE[] PROGMEM =            "{\"%s%d\":\"%s\"}";
+const char S_JSON_COMMAND_INDEX_SVALUE_SVALUE[] PROGMEM =     "{\"%s%d\":\"%s%s\"}";
+
+const char JSON_SNS_TEMPHUM[] PROGMEM =
+  "%s, \"%s\":{\"" D_TEMPERATURE "\":%s, \"" D_HUMIDITY "\":%s}";
+
 const char S_LOG_HTTP[] PROGMEM = D_LOG_HTTP;
 const char S_LOG_WIFI[] PROGMEM = D_LOG_WIFI;
 const char S_LOG_MQTT[] PROGMEM = D_LOG_MQTT;
@@ -38,29 +91,26 @@ const char S_OFFLINE[] PROGMEM = D_OFFLINE;
 
 // sonoff.ino
 #define MAX_BUTTON_COMMANDS  5  // Max number of button commands supported
-const char commands[MAX_BUTTON_COMMANDS][14] PROGMEM = {
+const char kCommands[MAX_BUTTON_COMMANDS][14] PROGMEM = {
   D_CMND_WIFICONFIG " 1",   // Press button three times
   D_CMND_WIFICONFIG " 2",   // Press button four times
   D_CMND_WIFICONFIG " 3",   // Press button five times
   D_CMND_RESTART " 1",      // Press button six times
   D_CMND_UPGRADE " 1" };    // Press button seven times
-const char wificfg[MAX_WIFI_OPTION][WCFG_MAX_STRING_LENGTH] PROGMEM = {
+const char kWifiConfig[MAX_WIFI_OPTION][WCFG_MAX_STRING_LENGTH] PROGMEM = {
   D_WCFG_0_RESTART,
   D_WCFG_1_SMARTCONFIG,
   D_WCFG_2_WIFIMANAGER,
   D_WCFG_3_WPSCONFIG,
   D_WCFG_4_RETRY,
   D_WCFG_5_WAIT };
-const char PREFIXES[3][PRFX_MAX_STRING_LENGTH] PROGMEM = {
+const char kPrefixes[3][PRFX_MAX_STRING_LENGTH] PROGMEM = {
   D_CMND,
   D_STAT,
   D_TELE };
 
-const char JSON_SNS_TEMPHUM[] PROGMEM =
-  "%s, \"%s\":{\"" D_TEMPERATURE "\":%s, \"" D_HUMIDITY "\":%s}";
-
 // support.ino
-static const char monthNames[] = D_MONTH3LIST;
+static const char kMonthNames[] = D_MONTH3LIST;
 
 // webserver.ino
 const char S_MAIN_MENU[] PROGMEM = D_MAIN_MENU;
@@ -78,3 +128,5 @@ const char S_FIRMWARE_UPGRADE[] PROGMEM = D_FIRMWARE_UPGRADE;
 const char S_CONSOLE[] PROGMEM = D_CONSOLE;
 const char S_INFORMATION[] PROGMEM = D_INFORMATION;
 const char S_RESTART[] PROGMEM = D_RESTART;
+
+#endif  // _I18N_H_

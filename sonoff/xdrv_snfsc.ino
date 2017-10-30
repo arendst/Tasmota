@@ -55,29 +55,29 @@
 
 uint16_t sc_value[5] = { 0 };
 
-void sc_send(const char *data)
+void SonoffScSend(const char *data)
 {
   Serial.write(data);
   Serial.write('\x1B');
   snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_SERIAL D_TRANSMIT " %s"), data);
-  addLog(LOG_LEVEL_DEBUG);
+  AddLog(LOG_LEVEL_DEBUG);
 }
 
-void sc_init()
+void SonoffScInit()
 {
-//  sc_send("AT+DEVCONFIG=\"uploadFreq\":1800");
-  sc_send("AT+START");
-//  sc_send("AT+STATUS");
+//  SonoffScSend("AT+DEVCONFIG=\"uploadFreq\":1800");
+  SonoffScSend("AT+START");
+//  SonoffScSend("AT+STATUS");
 }
 
-void sc_rcvstat(char *rcvstat)
+void SonoffScSerialInput(char *rcvstat)
 {
   char *p;
   char *str;
   uint16_t value[5] = { 0 };
 
   snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_SERIAL D_RECEIVED " %s"), rcvstat);
-  addLog(LOG_LEVEL_DEBUG);
+  AddLog(LOG_LEVEL_DEBUG);
 
   if (!strncasecmp_P(rcvstat, PSTR("AT+UPDATE="), 10)) {
     int8_t i = -1;
@@ -91,13 +91,13 @@ void sc_rcvstat(char *rcvstat)
       sc_value[2] = (11 - sc_value[2]) * 10;  // Invert light level
       sc_value[3] *= 10;
       sc_value[4] = (11 - sc_value[4]) * 10;  // Invert dust level
-      sc_send("AT+SEND=ok");
+      SonoffScSend("AT+SEND=ok");
     } else {
-      sc_send("AT+SEND=fail");
+      SonoffScSend("AT+SEND=fail");
     }
   }
   else if (!strcasecmp_P(rcvstat, PSTR("AT+STATUS?"))) {
-    sc_send("AT+STATUS=4");
+    SonoffScSend("AT+STATUS=4");
   }
 }
 
@@ -105,28 +105,28 @@ void sc_rcvstat(char *rcvstat)
  * Presentation
 \*********************************************************************************************/
 
-void sc_mqttPresent(uint8_t* djson)
+void MqttShowSonoffSC(uint8_t* djson)
 {
   if (sc_value[0] > 0) {
     char stemp1[10];
     char stemp2[10];
 
-    float t = convertTemp(sc_value[1]);
-    dtostrfd(t, sysCfg.flag.temperature_resolution, stemp1);
+    float t = ConvertTemp(sc_value[1]);
+    dtostrfd(t, Settings.flag.temperature_resolution, stemp1);
     float h = sc_value[0];
-    dtostrfd(h, sysCfg.flag.humidity_resolution, stemp2);
+    dtostrfd(h, Settings.flag.humidity_resolution, stemp2);
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s, \"" D_TEMPERATURE "\":%s, \"" D_HUMIDITY "\":%s, \"" D_LIGHT "\":%d, \"" D_NOISE "\":%d, \"" D_AIRQUALITY "\":%d"),
       mqtt_data, stemp1, stemp2, sc_value[2], sc_value[3], sc_value[4]);
     *djson = 1;
 #ifdef USE_DOMOTICZ
-    domoticz_sensor2(stemp1, stemp2);
-    domoticz_sensor5(sc_value[2]);
+    DomoticzTempHumSensor(stemp1, stemp2);
+    DomoticzSensor(DZ_ILLUMINANCE, sc_value[2]);
 #endif  // USE_DOMOTICZ
   }
 }
 
 #ifdef USE_WEBSERVER
-String sc_webPresent()
+String WebShowSonoffSc()
 {
   String page = "";
 
@@ -135,12 +135,12 @@ String sc_webPresent()
     char sensor[80];
     char scstype[] = "";
 
-    float t = convertTemp(sc_value[1]);
-    dtostrfi(t, sysCfg.flag.temperature_resolution, stemp);
-    snprintf_P(sensor, sizeof(sensor), HTTP_SNS_TEMP, scstype, stemp, tempUnit());
+    float t = ConvertTemp(sc_value[1]);
+    dtostrfi(t, Settings.flag.temperature_resolution, stemp);
+    snprintf_P(sensor, sizeof(sensor), HTTP_SNS_TEMP, scstype, stemp, TempUnit());
     page += sensor;
     float h = sc_value[0];
-    dtostrfi(h, sysCfg.flag.humidity_resolution, stemp);
+    dtostrfi(h, Settings.flag.humidity_resolution, stemp);
     snprintf_P(sensor, sizeof(sensor), HTTP_SNS_HUM, scstype, stemp);
     page += sensor;
     snprintf_P(sensor, sizeof(sensor), HTTP_SNS_LIGHT, scstype, sc_value[2]);

@@ -21,57 +21,57 @@
  * Counter sensors (water meters, electricity meters etc.)
 \*********************************************************************************************/
 
-unsigned long pTimeLast[MAX_COUNTERS]; // Last counter time in milli seconds
+unsigned long last_counter_timer[MAX_COUNTERS]; // Last counter time in milli seconds
 
-void counter_update(byte index)
+void CounterUpdate(byte index)
 {
-  unsigned long pTime = millis() - pTimeLast[index -1];
-  if (pTime > sysCfg.pCounterDebounce) {
-    pTimeLast[index -1] = millis();
-    if (bitRead(sysCfg.pCounterType, index -1)) {
-      rtcMem.pCounter[index -1] = pTime;
+  unsigned long counter_debounce_time = millis() - last_counter_timer[index -1];
+  if (counter_debounce_time > Settings.pulse_counter_debounce) {
+    last_counter_timer[index -1] = millis();
+    if (bitRead(Settings.pulse_counter_type, index -1)) {
+      RtcSettings.pulse_counter[index -1] = counter_debounce_time;
     } else {
-      rtcMem.pCounter[index -1]++;
+      RtcSettings.pulse_counter[index -1]++;
     }
 
 //    snprintf_P(log_data, sizeof(log_data), PSTR("CNTR: Interrupt %d"), index);
-//    addLog(LOG_LEVEL_DEBUG);
+//    AddLog(LOG_LEVEL_DEBUG);
   }
 }
 
-void counter_update1()
+void CounterUpdate1()
 {
-  counter_update(1);
+  CounterUpdate(1);
 }
 
-void counter_update2()
+void CounterUpdate2()
 {
-  counter_update(2);
+  CounterUpdate(2);
 }
 
-void counter_update3()
+void CounterUpdate3()
 {
-  counter_update(3);
+  CounterUpdate(3);
 }
 
-void counter_update4()
+void CounterUpdate4()
 {
-  counter_update(4);
+  CounterUpdate(4);
 }
 
-void counter_savestate()
+void CounterSaveState()
 {
   for (byte i = 0; i < MAX_COUNTERS; i++) {
     if (pin[GPIO_CNTR1 +i] < 99) {
-      sysCfg.pCounter[i] = rtcMem.pCounter[i];
+      Settings.pulse_counter[i] = RtcSettings.pulse_counter[i];
     }
   }
 }
 
-void counter_init()
+void CounterInit()
 {
   typedef void (*function) () ;
-  function counter_callbacks[] = { counter_update1, counter_update2, counter_update3, counter_update4 };
+  function counter_callbacks[] = { CounterUpdate1, CounterUpdate2, CounterUpdate3, CounterUpdate4 };
 
   for (byte i = 0; i < MAX_COUNTERS; i++) {
     if (pin[GPIO_CNTR1 +i] < 99) {
@@ -85,24 +85,24 @@ void counter_init()
  * Presentation
 \*********************************************************************************************/
 
-void counter_mqttPresent(uint8_t* djson)
+void MqttShowCounter(uint8_t* djson)
 {
   char stemp[16];
 
   byte dsxflg = 0;
   for (byte i = 0; i < MAX_COUNTERS; i++) {
     if (pin[GPIO_CNTR1 +i] < 99) {
-      if (bitRead(sysCfg.pCounterType, i)) {
-        dtostrfd((double)rtcMem.pCounter[i] / 1000, 3, stemp);
+      if (bitRead(Settings.pulse_counter_type, i)) {
+        dtostrfd((double)RtcSettings.pulse_counter[i] / 1000, 3, stemp);
       } else {
         dsxflg++;
-        dtostrfd(rtcMem.pCounter[i], 0, stemp);
+        dtostrfd(RtcSettings.pulse_counter[i], 0, stemp);
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s, \"" D_COUNTER "%d\":%s"), mqtt_data, i +1, stemp);
       *djson = 1;
 #ifdef USE_DOMOTICZ
       if (1 == dsxflg) {
-        domoticz_sensor6(rtcMem.pCounter[i]);
+        DomoticzSensor(DZ_COUNT, RtcSettings.pulse_counter[i]);
         dsxflg++;
       }
 #endif  // USE_DOMOTICZ
@@ -114,7 +114,7 @@ void counter_mqttPresent(uint8_t* djson)
 const char HTTP_SNS_COUNTER[] PROGMEM =
   "<tr><th>" D_COUNTER "%d</th><td>%s%s</td></tr>";
 
-String counter_webPresent()
+String WebShowCounter()
 {
   String page = "";
   char stemp[16];
@@ -122,12 +122,12 @@ String counter_webPresent()
 
   for (byte i = 0; i < MAX_COUNTERS; i++) {
     if (pin[GPIO_CNTR1 +i] < 99) {
-      if (bitRead(sysCfg.pCounterType, i)) {
-        dtostrfi((double)rtcMem.pCounter[i] / 1000, 3, stemp);
+      if (bitRead(Settings.pulse_counter_type, i)) {
+        dtostrfi((double)RtcSettings.pulse_counter[i] / 1000, 3, stemp);
       } else {
-        dtostrfi(rtcMem.pCounter[i], 0, stemp);
+        dtostrfi(RtcSettings.pulse_counter[i], 0, stemp);
       }
-      snprintf_P(sensor, sizeof(sensor), HTTP_SNS_COUNTER, i+1, stemp, (bitRead(sysCfg.pCounterType, i)) ? " " D_UNIT_SECOND : "");
+      snprintf_P(sensor, sizeof(sensor), HTTP_SNS_COUNTER, i+1, stemp, (bitRead(Settings.pulse_counter_type, i)) ? " " D_UNIT_SECOND : "");
       page += sensor;
     }
   }
