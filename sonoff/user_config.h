@@ -74,13 +74,13 @@
   #define MQTT_HOST            "m20.cloudmqtt.com"  // [MqttHost]
   #define MQTT_FINGERPRINT     "A5 02 FF 13 99 9F 8B 39 8E F1 83 4F 11 23 65 0B 32 36 FC 07"  // [MqttFingerprint]
   #define MQTT_PORT            20123                // [MqttPort] MQTT TLS port
-  #define MQTT_USER            "cloudmqttuser"      // [MqttUser] Mandatory user
-  #define MQTT_PASS            "cloudmqttpassword"  // [MqttPassword] Mandatory password
+  #define MQTT_USER            ""                   // [MqttUser] Mandatory user
+  #define MQTT_PASS            ""                   // [MqttPassword] Mandatory password
 #else
   #define MQTT_HOST            "domus1"          // [MqttHost]
   #define MQTT_PORT            1883              // [MqttPort] MQTT port (10123 on CloudMQTT)
-  #define MQTT_USER            "DVES_USER"       // [MqttUser] Optional user
-  #define MQTT_PASS            "DVES_PASS"       // [MqttPassword] Optional password
+  #define MQTT_USER            ""                // [MqttUser] Optional user
+  #define MQTT_PASS            ""                // [MqttPassword] Optional password
 #endif
 
 #define MQTT_BUTTON_RETAIN     0                 // [ButtonRetain] Button may send retain flag (0 = off, 1 = on)
