@@ -44,7 +44,7 @@ uint16_t Veml6070ReadUv()
   }
   uvi |= Wire.read();
 
-  return uvi;  
+  return uvi;
 }
 
 boolean Veml6070Detect()
@@ -79,35 +79,60 @@ boolean Veml6070Detect()
  * Presentation
 \*********************************************************************************************/
 
-void MqttShowVeml6070(uint8_t* djson)
+boolean MqttShowVeml6070()
 {
   if (!veml6070_type) {
-    return;
+    return false;
   }
 
   uint16_t uv = Veml6070ReadUv();
   snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s, \"%s\":{\"" D_UV_LEVEL "\":%d}"), mqtt_data, veml6070_types, uv);
-  *djson = 1;
 #ifdef USE_DOMOTICZ
   DomoticzSensor(DZ_ILLUMINANCE, uv);
 #endif  // USE_DOMOTICZ
+  return true;
 }
 
 #ifdef USE_WEBSERVER
 const char HTTP_SNS_ULTRAVIOLET[] PROGMEM =
-  "<tr><th>VEML6070 " D_UV_LEVEL "</th><td>%d</td></tr>";
-  
-String WebShowVeml6070()
+  "%s{s}VEML6070 " D_UV_LEVEL "{m}%d{e}";  // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
+
+void WebShowVeml6070()
 {
-  String page = "";
   if (veml6070_type) {
-    char sensor[80];
-    snprintf_P(sensor, sizeof(sensor), HTTP_SNS_ULTRAVIOLET, Veml6070ReadUv());
-    page += sensor;
+    snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_ULTRAVIOLET, mqtt_data, Veml6070ReadUv());
   }
-  return page;
 }
 #endif  // USE_WEBSERVER
+
+/*********************************************************************************************\
+ * Interface
+\*********************************************************************************************/
+
+#define XSNS_11
+
+boolean Xsns11(byte function)
+{
+  boolean result = false;
+
+  switch (function) {
+//    case FUNC_XSNS_INIT:
+//      break;
+    case FUNC_XSNS_PREP:
+      Veml6070Detect();
+      break;
+    case FUNC_XSNS_JSON:
+      result = MqttShowVeml6070();
+      break;
+#ifdef USE_WEBSERVER
+    case FUNC_XSNS_WEB:
+      WebShowVeml6070();
+      break;
+#endif  // USE_WEBSERVER
+  }
+  return result;
+}
+
 #endif  // USE_VEML6070
 #endif  // USE_I2C
 

@@ -185,38 +185,66 @@ boolean Ds18b20ReadTemperature(float &t)
  * Presentation
 \*********************************************************************************************/
 
-void MqttShowDs18b20(uint8_t* djson)
+boolean MqttShowDs18b20()
 {
   char stemp1[10];
   float t;
+  boolean json_data_available = false;
 
   if (Ds18b20ReadTemperature(t)) {  // Check if read failed
     dtostrfd(t, Settings.flag.temperature_resolution, stemp1);
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s, \"DS18B20\":{\"" D_TEMPERATURE "\":%s}"), mqtt_data, stemp1);
-    *djson = 1;
+    json_data_available = true;
 #ifdef USE_DOMOTICZ
     DomoticzSensor(DZ_TEMP, stemp1);
 #endif  // USE_DOMOTICZ
   }
+  return json_data_available;
 }
 
 #ifdef USE_WEBSERVER
-String WebShowDs18b20()
+void WebShowDs18b20()
 {
-  // Needs TelePeriod to refresh data (Do not do it here as it takes too much time)
-  String page = "";
   float st;
 
   if (Ds18b20ReadTemperature(st)) {  // Check if read failed
     char stemp[10];
-    char sensor[80];
 
     dtostrfi(st, Settings.flag.temperature_resolution, stemp);
-    snprintf_P(sensor, sizeof(sensor), HTTP_SNS_TEMP, "DS18B20", stemp, TempUnit());
-    page += sensor;
+    snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TEMP, mqtt_data, "DS18B20", stemp, TempUnit());
   }
   Ds18b20ReadTempPrep();
-  return page;
 }
 #endif  // USE_WEBSERVER
+
+/*********************************************************************************************\
+ * Interface
+\*********************************************************************************************/
+
+#define XSNS_05
+
+boolean Xsns05(byte function)
+{
+  boolean result = false;
+
+  if (pin[GPIO_DSB] < 99) {
+    switch (function) {
+//      case FUNC_XSNS_INIT:
+//        break;
+      case FUNC_XSNS_PREP:
+        Ds18b20ReadTempPrep();
+        break;
+      case FUNC_XSNS_JSON:
+        result = MqttShowDs18b20();
+        break;
+#ifdef USE_WEBSERVER
+      case FUNC_XSNS_WEB:
+        WebShowDs18b20();
+        break;
+#endif  // USE_WEBSERVER
+    }
+  }
+  return result;
+}
+
 #endif  // USE_DS18B20

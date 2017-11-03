@@ -718,15 +718,15 @@ void HlwMqttStatus()
 
 #ifdef USE_WEBSERVER
 const char HTTP_ENERGY_SNS[] PROGMEM =
-  "<tr><th>" D_VOLTAGE "</th><td>%s " D_UNIT_VOLT "</td></tr>"
-  "<tr><th>" D_CURRENT "</th><td>%s " D_UNIT_AMPERE "</td></tr>"
-  "<tr><th>" D_POWERUSAGE "</th><td>%s " D_UNIT_WATT "</td></tr>"
-  "<tr><th>" D_POWER_FACTOR "</th><td>%s</td></tr>"
-  "<tr><th>" D_ENERGY_TODAY  "</th><td>%s " D_UNIT_KILOWATTHOUR "</td></tr>"
-  "<tr><th>" D_ENERGY_YESTERDAY "</th><td>%s " D_UNIT_KILOWATTHOUR "</td></tr>"
-  "<tr><th>" D_ENERGY_TOTAL "</th><td>%s " D_UNIT_KILOWATTHOUR "</td></tr>";
+  "{s}" D_VOLTAGE "{m}%s " D_UNIT_VOLT "{e}"
+  "{s}" D_CURRENT "{m}%s " D_UNIT_AMPERE "{e}"
+  "{s}" D_POWERUSAGE "{m}%s " D_UNIT_WATT "{e}"
+  "{s}" D_POWER_FACTOR "{m}%s{e}"
+  "{s}" D_ENERGY_TODAY  "{m}%s " D_UNIT_KILOWATTHOUR "{e}"
+  "{s}" D_ENERGY_YESTERDAY "{m}%s " D_UNIT_KILOWATTHOUR "{e}"
+  "{s}" D_ENERGY_TOTAL "{m}%s " D_UNIT_KILOWATTHOUR "{e}";      // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
 
-String WebShowHlw()
+void WebShowHlw()
 {
   float total_energy;
   float daily_energy;
@@ -742,7 +742,6 @@ String WebShowHlw()
   char scurrent[10];
   char spower_factor[10];
   char syesterday_energy[10];
-  char sensor[400];
 
   HlwReadEnergy(0, total_energy, daily_energy, energy, watts, voltage, current, power_factor);
   dtostrfi(total_energy, Settings.flag.energy_resolution, stotal_energy);
@@ -752,7 +751,36 @@ String WebShowHlw()
   dtostrfi(current, 3, scurrent);
   dtostrfi(power_factor, 2, spower_factor);
   dtostrfi((float)Settings.hlw_kWhyesterday / 100000000, Settings.flag.energy_resolution, syesterday_energy);
-  snprintf_P(sensor, sizeof(sensor), HTTP_ENERGY_SNS, svoltage, scurrent, swatts, spower_factor, sdaily_energy, syesterday_energy, stotal_energy);
-  return String(sensor);
+  snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_ENERGY_SNS, svoltage, scurrent, swatts, spower_factor, sdaily_energy, syesterday_energy, stotal_energy);
 }
 #endif  // USE_WEBSERVER
+
+/*********************************************************************************************\
+ * Interface
+\*********************************************************************************************/
+
+#define XSNS_03
+
+boolean Xsns03(byte function)
+{
+  boolean result = false;
+
+  if (hlw_flg) {
+    switch (function) {
+      case FUNC_XSNS_INIT:
+        HlwInit();
+        break;
+//      case FUNC_XSNS_PREP:
+//        break;
+//      case FUNC_XSNS_JSON:
+//        result = MqttShowHlw();
+//        break;
+#ifdef USE_WEBSERVER
+      case FUNC_XSNS_WEB:
+        WebShowHlw();
+        break;
+#endif  // USE_WEBSERVER
+    }
+  }
+  return result;
+}

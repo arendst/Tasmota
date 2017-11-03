@@ -411,10 +411,10 @@ boolean BmpDetect()
  * Presentation
 \*********************************************************************************************/
 
-void MqttShowBmp(uint8_t *djson)
+boolean MqttShowBmp()
 {
   if (!bmp_type) {
-    return;
+    return false;
   }
 
   char temperature[10];
@@ -440,42 +440,64 @@ void MqttShowBmp(uint8_t *djson)
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s, \"%s\":{\"" D_TEMPERATURE "\":%s, \"" D_PRESSURE "\":%s%s}"),
       mqtt_data, bmp_types, temperature, pressure, (Settings.altitude != 0) ? sealevel : "");
   }
-  *djson = 1;
 #ifdef USE_DOMOTICZ
   DomoticzTempHumPressureSensor(temperature, humidity, pressure);
 #endif // USE_DOMOTICZ
+  return true;
 }
 
 #ifdef USE_WEBSERVER
-String WebShowBmp()
+void WebShowBmp()
 {
-  String page = "";
   if (bmp_type) {
     char stemp[10];
-    char sensor[80];
 
     double t = BmpReadTemperature();
     double p = BmpReadPressure();
     double h = BmpReadHumidity();
     dtostrfi(t, Settings.flag.temperature_resolution, stemp);
-    snprintf_P(sensor, sizeof(sensor), HTTP_SNS_TEMP, bmp_types, stemp, TempUnit());
-    page += sensor;
+    snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TEMP, mqtt_data, bmp_types, stemp, TempUnit());
     if (BME280_CHIPID == bmp_type) {
       dtostrfi(h, Settings.flag.humidity_resolution, stemp);
-      snprintf_P(sensor, sizeof(sensor), HTTP_SNS_HUM, bmp_types, stemp);
-      page += sensor;
+      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_HUM, mqtt_data, bmp_types, stemp);
     }
     dtostrfi(p, Settings.flag.pressure_resolution, stemp);
-    snprintf_P(sensor, sizeof(sensor), HTTP_SNS_PRESSURE, bmp_types, stemp);
-    page += sensor;
+    snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_PRESSURE, mqtt_data, bmp_types, stemp);
     if (Settings.altitude != 0) {
       dtostrfi(bmp_sealevel, Settings.flag.pressure_resolution, stemp);
-      snprintf_P(sensor, sizeof(sensor), HTTP_SNS_PRESSUREATSEALEVEL, bmp_types, stemp);
-      page += sensor;
+      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_SEAPRESSURE, mqtt_data, bmp_types, stemp);
     }
   }
-  return page;
 }
 #endif // USE_WEBSERVER
+
+/*********************************************************************************************\
+ * Interface
+\*********************************************************************************************/
+
+#define XSNS_09
+
+boolean Xsns09(byte function)
+{
+  boolean result = false;
+
+  switch (function) {
+//    case FUNC_XSNS_INIT:
+//      break;
+    case FUNC_XSNS_PREP:
+      BmpDetect();
+      break;
+    case FUNC_XSNS_JSON:
+      result = MqttShowBmp();
+      break;
+#ifdef USE_WEBSERVER
+    case FUNC_XSNS_WEB:
+      WebShowBmp();
+      break;
+#endif // USE_WEBSERVER
+  }
+  return result;
+}
+
 #endif // USE_BMP
 #endif // USE_I2C

@@ -255,10 +255,10 @@ uint8_t HtuDetect()
  * Presentation
 \*********************************************************************************************/
 
-void MqttShowHtu(uint8_t* djson)
+boolean MqttShowHtu()
 {
   if (!htu_type) {
-    return;
+    return false;
   }
 
   char stemp1[10];
@@ -270,33 +270,57 @@ void MqttShowHtu(uint8_t* djson)
   dtostrfd(t, Settings.flag.temperature_resolution, stemp1);
   dtostrfd(h, Settings.flag.humidity_resolution, stemp2);
   snprintf_P(mqtt_data, sizeof(mqtt_data), JSON_SNS_TEMPHUM, mqtt_data, htu_types, stemp1, stemp2);
-  *djson = 1;
 #ifdef USE_DOMOTICZ
   DomoticzTempHumSensor(stemp1, stemp2);
 #endif  // USE_DOMOTICZ
+  return true;
 }
 
 #ifdef USE_WEBSERVER
-String WebShowHtu()
+void WebShowHtu()
 {
-  String page = "";
   if (htu_type) {
     char stemp[10];
-    char sensor[80];
 
     float t_htu21 = HtuReadTemperature();
     float h_htu21 = HtuReadHumidity();
     h_htu21 = HtuCompensatedHumidity(h_htu21, t_htu21);
     dtostrfi(t_htu21, Settings.flag.temperature_resolution, stemp);
-    snprintf_P(sensor, sizeof(sensor), HTTP_SNS_TEMP, htu_types, stemp, TempUnit());
-    page += sensor;
+    snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TEMP, mqtt_data, htu_types, stemp, TempUnit());
     dtostrfi(h_htu21, Settings.flag.humidity_resolution, stemp);
-    snprintf_P(sensor, sizeof(sensor), HTTP_SNS_HUM, htu_types, stemp);
-    page += sensor;
+    snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_HUM, mqtt_data, htu_types, stemp);
   }
-  return page;
 }
 #endif  // USE_WEBSERVER
+
+/*********************************************************************************************\
+ * Interface
+\*********************************************************************************************/
+
+#define XSNS_08
+
+boolean Xsns08(byte function)
+{
+  boolean result = false;
+
+  switch (function) {
+//    case FUNC_XSNS_INIT:
+//      break;
+    case FUNC_XSNS_PREP:
+      HtuDetect();
+      break;
+    case FUNC_XSNS_JSON:
+      result = MqttShowHtu();
+      break;
+#ifdef USE_WEBSERVER
+    case FUNC_XSNS_WEB:
+      WebShowHtu();
+      break;
+#endif  // USE_WEBSERVER
+  }
+  return result;
+}
+
 #endif  // USE_HTU
 #endif  // USE_I2C
 

@@ -163,11 +163,12 @@ void Ds18x20Type(uint8_t sensor)
   }
 }
 
-void MqttShowDs18x20(uint8_t* djson)
+boolean MqttShowDs18x20()
 {
   char stemp1[10];
   char stemp2[10];
   float t;
+  boolean json_data_available = false;
 
   byte dsxflg = 0;
   for (byte i = 0; i < Ds18x20Sensors(); i++) {
@@ -176,7 +177,7 @@ void MqttShowDs18x20(uint8_t* djson)
       dtostrfd(t, Settings.flag.temperature_resolution, stemp2);
       if (!dsxflg) {
         snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s, \"DS18x20\":{"), mqtt_data);
-        *djson = 1;
+        json_data_available = true;
         stemp1[0] = '\0';
       }
       dsxflg++;
@@ -193,15 +194,14 @@ void MqttShowDs18x20(uint8_t* djson)
   if (dsxflg) {
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}"), mqtt_data);
   }
+  return json_data_available;
 }
 
 #ifdef USE_WEBSERVER
-String WebShowDs18x20()
+void WebShowDs18x20()
 {
-  String page = "";
   char stemp[10];
   char stemp2[16];
-  char sensor[80];
   float t;
 
   for (byte i = 0; i < Ds18x20Sensors(); i++) {
@@ -209,13 +209,44 @@ String WebShowDs18x20()
       Ds18x20Type(i);
       dtostrfi(t, Settings.flag.temperature_resolution, stemp);
       snprintf_P(stemp2, sizeof(stemp2), PSTR("%s-%d"), ds18x20_types, i +1);
-      snprintf_P(sensor, sizeof(sensor), HTTP_SNS_TEMP, stemp2, stemp, TempUnit());
-      page += sensor;
+      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TEMP, mqtt_data, stemp2, stemp, TempUnit());
     }
   }
   Ds18x20Search();      // Check for changes in sensors number
   Ds18x20Convert();     // Start Conversion, takes up to one second
-  return page;
 }
 #endif  // USE_WEBSERVER
+
+/*********************************************************************************************\
+ * Interface
+\*********************************************************************************************/
+
+#define XSNS_05
+
+boolean Xsns05(byte function)
+{
+  boolean result = false;
+
+  if (pin[GPIO_DSB] < 99) {
+    switch (function) {
+      case FUNC_XSNS_INIT:
+        Ds18x20Init();
+        break;
+      case FUNC_XSNS_PREP:
+        Ds18x20Search();      // Check for changes in sensors number
+        Ds18x20Convert();     // Start Conversion, takes up to one second
+        break;
+      case FUNC_XSNS_JSON:
+        result = MqttShowDs18x20();
+        break;
+#ifdef USE_WEBSERVER
+      case FUNC_XSNS_WEB:
+        WebShowDs18x20();
+        break;
+#endif  // USE_WEBSERVER
+    }
+  }
+  return result;
+}
+
 #endif  // USE_DS18x20

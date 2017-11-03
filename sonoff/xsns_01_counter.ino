@@ -85,9 +85,10 @@ void CounterInit()
  * Presentation
 \*********************************************************************************************/
 
-void MqttShowCounter(uint8_t* djson)
+boolean MqttShowCounter()
 {
   char stemp[16];
+  boolean json_data_available = false;
 
   byte dsxflg = 0;
   for (byte i = 0; i < MAX_COUNTERS; i++) {
@@ -99,7 +100,7 @@ void MqttShowCounter(uint8_t* djson)
         dtostrfd(RtcSettings.pulse_counter[i], 0, stemp);
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s, \"" D_COUNTER "%d\":%s"), mqtt_data, i +1, stemp);
-      *djson = 1;
+      json_data_available = true;
 #ifdef USE_DOMOTICZ
       if (1 == dsxflg) {
         DomoticzSensor(DZ_COUNT, RtcSettings.pulse_counter[i]);
@@ -108,17 +109,16 @@ void MqttShowCounter(uint8_t* djson)
 #endif  // USE_DOMOTICZ
     }
   }
+  return json_data_available;
 }
 
 #ifdef USE_WEBSERVER
 const char HTTP_SNS_COUNTER[] PROGMEM =
-  "<tr><th>" D_COUNTER "%d</th><td>%s%s</td></tr>";
+  "%s{s}" D_COUNTER "%d{m}%s%s{e}";  // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
 
-String WebShowCounter()
+void WebShowCounter()
 {
-  String page = "";
   char stemp[16];
-  char sensor[80];
 
   for (byte i = 0; i < MAX_COUNTERS; i++) {
     if (pin[GPIO_CNTR1 +i] < 99) {
@@ -127,11 +127,36 @@ String WebShowCounter()
       } else {
         dtostrfi(RtcSettings.pulse_counter[i], 0, stemp);
       }
-      snprintf_P(sensor, sizeof(sensor), HTTP_SNS_COUNTER, i+1, stemp, (bitRead(Settings.pulse_counter_type, i)) ? " " D_UNIT_SECOND : "");
-      page += sensor;
+      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_COUNTER, mqtt_data, i +1, stemp, (bitRead(Settings.pulse_counter_type, i)) ? " " D_UNIT_SECOND : "");
     }
   }
-  return page;
 }
 #endif  // USE_WEBSERVER
 
+/*********************************************************************************************\
+ * Interface
+\*********************************************************************************************/
+
+#define XSNS_01
+
+boolean Xsns01(byte function)
+{
+  boolean result = false;
+
+  switch (function) {
+    case FUNC_XSNS_INIT:
+      CounterInit();
+      break;
+//    case FUNC_XSNS_PREP:
+//      break;
+    case FUNC_XSNS_JSON:
+      result = MqttShowCounter();
+      break;
+#ifdef USE_WEBSERVER
+    case FUNC_XSNS_WEB:
+      WebShowCounter();
+      break;
+#endif  // USE_WEBSERVER
+  }
+  return result;
+}

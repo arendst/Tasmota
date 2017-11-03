@@ -78,35 +78,59 @@ boolean Bh1750Detect()
  * Presentation
 \*********************************************************************************************/
 
-void MqttShowBh1750(uint8_t* djson)
+boolean MqttShowBh1750()
 {
   if (!bh1750_type) {
-    return;
+    return false;
   }
 
   uint16_t l = Bh1750ReadLux();
   snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s, \"%s\":{\"" D_ILLUMINANCE "\":%d}"), mqtt_data, bh1750_types, l);
-  *djson = 1;
 #ifdef USE_DOMOTICZ
   DomoticzSensor(DZ_ILLUMINANCE, l);
 #endif  // USE_DOMOTICZ
+  return true;
 }
 
 #ifdef USE_WEBSERVER
 const char HTTP_SNS_ILLUMINANCE[] PROGMEM =
-  "<tr><th>BH1750 " D_ILLUMINANCE "</th><td>%d " D_UNIT_LUX "</td></tr>";
+  "%s{s}BH1750 " D_ILLUMINANCE "{m}%d " D_UNIT_LUX "{e}";  // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
 
-String WebShowBh1750()
+void WebShowBh1750()
 {
-  String page = "";
   if (bh1750_type) {
-    char sensor[80];
-    snprintf_P(sensor, sizeof(sensor), HTTP_SNS_ILLUMINANCE, Bh1750ReadLux());
-    page += sensor;
+    snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_ILLUMINANCE, mqtt_data, Bh1750ReadLux());
   }
-  return page;
 }
 #endif  // USE_WEBSERVER
+
+/*********************************************************************************************\
+ * Interface
+\*********************************************************************************************/
+
+#define XSNS_10
+
+boolean Xsns10(byte function)
+{
+  boolean result = false;
+
+  switch (function) {
+//    case FUNC_XSNS_INIT:
+//      break;
+    case FUNC_XSNS_PREP:
+      Bh1750Detect();
+      break;
+    case FUNC_XSNS_JSON:
+      result = MqttShowBh1750();
+      break;
+#ifdef USE_WEBSERVER
+    case FUNC_XSNS_WEB:
+      WebShowBh1750();
+      break;
+#endif  // USE_WEBSERVER
+  }
+  return result;
+}
+
 #endif  // USE_BH1750
 #endif  // USE_I2C
-

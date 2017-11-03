@@ -222,12 +222,13 @@ void DhtInit()
  * Presentation
 \*********************************************************************************************/
 
-void MqttShowDht(uint8_t* djson)
+boolean MqttShowDht()
 {
   char stemp1[10];
   char stemp2[10];
   float t;
   float h;
+  boolean json_data_available = false;
 
   byte dsxflg = 0;
   for (byte i = 0; i < dht_sensors; i++) {
@@ -235,7 +236,7 @@ void MqttShowDht(uint8_t* djson)
       dtostrfd(t, Settings.flag.temperature_resolution, stemp1);
       dtostrfd(h, Settings.flag.humidity_resolution, stemp2);
       snprintf_P(mqtt_data, sizeof(mqtt_data), JSON_SNS_TEMPHUM, mqtt_data, Dht[i].stype, stemp1, stemp2);
-      *djson = 1;
+      json_data_available = true;
 #ifdef USE_DOMOTICZ
       if (!dsxflg) {
         DomoticzTempHumSensor(stemp1, stemp2);
@@ -244,28 +245,56 @@ void MqttShowDht(uint8_t* djson)
 #endif  // USE_DOMOTICZ
     }
   }
+  return json_data_available;
 }
 
 #ifdef USE_WEBSERVER
-String WebShowDht()
+void WebShowDht()
 {
-  String page = "";
   char stemp[10];
-  char sensor[80];
   float t;
   float h;
 
   for (byte i = 0; i < dht_sensors; i++) {
     if (DhtReadTempHum(i, t, h)) {
       dtostrfi(t, Settings.flag.temperature_resolution, stemp);
-      snprintf_P(sensor, sizeof(sensor), HTTP_SNS_TEMP, Dht[i].stype, stemp, TempUnit());
-      page += sensor;
+      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TEMP, mqtt_data, Dht[i].stype, stemp, TempUnit());
       dtostrfi(h, Settings.flag.humidity_resolution, stemp);
-      snprintf_P(sensor, sizeof(sensor), HTTP_SNS_HUM, Dht[i].stype, stemp);
-      page += sensor;
+      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_HUM, mqtt_data, Dht[i].stype, stemp);
     }
   }
-  return page;
 }
 #endif  // USE_WEBSERVER
+
+/*********************************************************************************************\
+ * Interface
+\*********************************************************************************************/
+
+#define XSNS_06
+
+boolean Xsns06(byte function)
+{
+  boolean result = false;
+
+  if (dht_flg) {
+    switch (function) {
+      case FUNC_XSNS_INIT:
+        DhtInit();
+        break;
+      case FUNC_XSNS_PREP:
+        DhtReadPrep();
+        break;
+      case FUNC_XSNS_JSON:
+        result = MqttShowDht();
+        break;
+#ifdef USE_WEBSERVER
+      case FUNC_XSNS_WEB:
+        WebShowDht();
+        break;
+#endif  // USE_WEBSERVER
+    }
+  }
+  return result;
+}
+
 #endif  // USE_DHT

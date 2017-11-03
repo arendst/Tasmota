@@ -105,8 +105,10 @@ void SonoffScSerialInput(char *rcvstat)
  * Presentation
 \*********************************************************************************************/
 
-void MqttShowSonoffSC(uint8_t* djson)
+boolean MqttShowSonoffSC()
 {
+  boolean json_data_available = false;
+
   if (sc_value[0] > 0) {
     char stemp1[10];
     char stemp2[10];
@@ -117,40 +119,62 @@ void MqttShowSonoffSC(uint8_t* djson)
     dtostrfd(h, Settings.flag.humidity_resolution, stemp2);
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s, \"" D_TEMPERATURE "\":%s, \"" D_HUMIDITY "\":%s, \"" D_LIGHT "\":%d, \"" D_NOISE "\":%d, \"" D_AIRQUALITY "\":%d"),
       mqtt_data, stemp1, stemp2, sc_value[2], sc_value[3], sc_value[4]);
-    *djson = 1;
+      json_data_available = true;
 #ifdef USE_DOMOTICZ
     DomoticzTempHumSensor(stemp1, stemp2);
     DomoticzSensor(DZ_ILLUMINANCE, sc_value[2]);
 #endif  // USE_DOMOTICZ
   }
+  return json_data_available;
 }
 
 #ifdef USE_WEBSERVER
-String WebShowSonoffSc()
-{
-  String page = "";
+const char HTTP_SNS_SCPLUS[] PROGMEM = "%s"
+  "{s}" D_LIGHT "{m}%d%{e}"
+  "{s}" D_NOISE "{m}%d%{e}"
+  "{s}" D_AIR_QUALITY "{m}%d%{e}";  // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
 
+void WebShowSonoffSc()
+{
   if (sc_value[0] > 0) {
     char stemp[10];
-    char sensor[80];
-    char scstype[] = "";
 
     float t = ConvertTemp(sc_value[1]);
     dtostrfi(t, Settings.flag.temperature_resolution, stemp);
-    snprintf_P(sensor, sizeof(sensor), HTTP_SNS_TEMP, scstype, stemp, TempUnit());
-    page += sensor;
+    snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TEMP, mqtt_data, "", stemp, TempUnit());
     float h = sc_value[0];
     dtostrfi(h, Settings.flag.humidity_resolution, stemp);
-    snprintf_P(sensor, sizeof(sensor), HTTP_SNS_HUM, scstype, stemp);
-    page += sensor;
-    snprintf_P(sensor, sizeof(sensor), HTTP_SNS_LIGHT, scstype, sc_value[2]);
-    page += sensor;
-    snprintf_P(sensor, sizeof(sensor), HTTP_SNS_NOISE, scstype, sc_value[3]);
-    page += sensor;
-    snprintf_P(sensor, sizeof(sensor), HTTP_SNS_DUST, scstype, sc_value[4]);
-    page += sensor;
+    snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_HUM, mqtt_data, "", stemp);
+    snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_SCPLUS, mqtt_data, sc_value[2], sc_value[3], sc_value[4]);
   }
-  return page;
 }
 #endif  // USE_WEBSERVER
 
+/*********************************************************************************************\
+ * Interface
+\*********************************************************************************************/
+
+#define XSNS_04
+
+boolean Xsns04(byte function)
+{
+  boolean result = false;
+
+  if (SONOFF_SC == Settings.module) {
+    switch (function) {
+//      case FUNC_XSNS_INIT:
+//        break;
+//      case FUNC_XSNS_PREP:
+//        break;
+      case FUNC_XSNS_JSON:
+        result = MqttShowSonoffSC();
+        break;
+#ifdef USE_WEBSERVER
+      case FUNC_XSNS_WEB:
+        WebShowSonoffSc();
+        break;
+#endif  // USE_WEBSERVER
+    }
+  }
+  return result;
+}

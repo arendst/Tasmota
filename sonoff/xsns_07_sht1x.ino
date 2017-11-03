@@ -184,12 +184,13 @@ boolean ShtDetect()
  * Presentation
 \*********************************************************************************************/
 
-void MqttShowSht(uint8_t* djson)
+boolean MqttShowSht()
 {
   if (!sht_type) {
-    return;
+    return false;
   }
 
+  boolean json_data_available = false;
   float t;
   float h;
 
@@ -200,36 +201,60 @@ void MqttShowSht(uint8_t* djson)
     dtostrfd(t, Settings.flag.temperature_resolution, stemp);
     dtostrfd(h, Settings.flag.humidity_resolution, shum);
     snprintf_P(mqtt_data, sizeof(mqtt_data), JSON_SNS_TEMPHUM, mqtt_data, "SHT1X", stemp, shum);
-    *djson = 1;
+    json_data_available = true;
 #ifdef USE_DOMOTICZ
     DomoticzTempHumSensor(stemp, shum);
 #endif  // USE_DOMOTICZ
   }
+  return json_data_available;
 }
 
 #ifdef USE_WEBSERVER
-String WebShowSht()
+void WebShowSht()
 {
   float t;
   float h;
 
-  String page = "";
   if (sht_type) {
     if (ShtReadTempHum(t, h)) {
       char stemp[10];
-      char shum[10];
-      char sensor[80];
 
       dtostrfi(t, Settings.flag.temperature_resolution, stemp);
-      dtostrfi(h, Settings.flag.humidity_resolution, shum);
-      snprintf_P(sensor, sizeof(sensor), HTTP_SNS_TEMP, "SHT1X", stemp, TempUnit());
-      page += sensor;
-      snprintf_P(sensor, sizeof(sensor), HTTP_SNS_HUM, "SHT1X", shum);
-      page += sensor;
+      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TEMP, mqtt_data, "SHT1X", stemp, TempUnit());
+      dtostrfi(h, Settings.flag.humidity_resolution, stemp);
+      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_HUM, mqtt_data, "SHT1X", stemp);
     }
   }
-  return page;
 }
 #endif  // USE_WEBSERVER
+
+/*********************************************************************************************\
+ * Interface
+\*********************************************************************************************/
+
+#define XSNS_07
+
+boolean Xsns07(byte function)
+{
+  boolean result = false;
+
+  switch (function) {
+//    case FUNC_XSNS_INIT:
+//      break;
+    case FUNC_XSNS_PREP:
+      ShtDetect();
+      break;
+    case FUNC_XSNS_JSON:
+      result = MqttShowSht();
+      break;
+#ifdef USE_WEBSERVER
+    case FUNC_XSNS_WEB:
+      WebShowSht();
+      break;
+#endif  // USE_WEBSERVER
+  }
+  return result;
+}
+
 #endif  // USE_SHT
 #endif  // USE_I2C

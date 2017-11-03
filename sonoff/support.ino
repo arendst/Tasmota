@@ -1136,16 +1136,6 @@ char TempUnit()
   return (Settings.flag.temperature_conversion) ? 'F' : 'C';
 }
 
-uint16_t GetAdc0()
-{
-  uint16_t alr = 0;
-  for (byte i = 0; i < 32; i++) {
-    alr += analogRead(A0);
-    delay(1);
-  }
-  return alr >> 5;
-}
-
 double FastPrecisePow(double a, double b)
 {
   // https://martin.ankerl.com/2012/01/25/optimized-approximative-pow-in-c-and-cpp/
@@ -1233,8 +1223,72 @@ int GetCommandCode(char* destination, size_t destination_size, const char* needl
   return result;
 }
 
+#ifndef USE_ADC_VCC
+/*********************************************************************************************\
+ * ADC support
+\*********************************************************************************************/
+
+uint16_t GetAdc0()
+{
+  uint16_t alr = 0;
+  for (byte i = 0; i < 32; i++) {
+    alr += analogRead(A0);
+    delay(1);
+  }
+  return alr >> 5;
+}
+
+boolean MqttShowAdc()
+{
+  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s, \"" D_ANALOG_INPUT0 "\":%d"), mqtt_data, GetAdc0());
+  return true;
+}
+
+#ifdef USE_WEBSERVER
+void WebShowAdc()
+{
+  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s{s}" D_ANALOG_INPUT0 "{m}%d{e}"), mqtt_data, GetAdc0());
+}
+#endif  // USE_WEBSERVER
+
+/*********************************************************************************************\
+ * Interface
+\*********************************************************************************************/
+
+#define XSNS_02
+
+boolean Xsns02(byte function)
+{
+  boolean result = false;
+
+  if (pin[GPIO_ADC0] < 99) {
+    switch (function) {
+//      case FUNC_XSNS_INIT:
+//        break;
+//      case FUNC_XSNS_PREP:
+//        break;
+      case FUNC_XSNS_JSON:
+        result = MqttShowAdc();
+        break;
+#ifdef USE_WEBSERVER
+      case FUNC_XSNS_WEB:
+        WebShowAdc();
+        break;
+#endif  // USE_WEBSERVER
+    }
+  }
+  return result;
+}
+
+#endif  // USE_ADC_VCC
+
 /*********************************************************************************************\
  * Syslog
+ * 
+ * Example:
+ *   snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_LOG "Any value %d"), value);
+ *   AddLog(LOG_LEVEL_DEBUG);
+ *
 \*********************************************************************************************/
 
 void Syslog()
