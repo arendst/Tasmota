@@ -47,6 +47,8 @@ uint16_t Veml6070ReadUv()
   return uvi;
 }
 
+/********************************************************************************************/
+
 boolean Veml6070Detect()
 {
   if (veml6070_type) {
@@ -75,35 +77,28 @@ boolean Veml6070Detect()
   return success;
 }
 
-/*********************************************************************************************\
- * Presentation
-\*********************************************************************************************/
-
-boolean MqttShowVeml6070()
-{
-  if (!veml6070_type) {
-    return false;
-  }
-
-  uint16_t uv = Veml6070ReadUv();
-  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s, \"%s\":{\"" D_UV_LEVEL "\":%d}"), mqtt_data, veml6070_types, uv);
-#ifdef USE_DOMOTICZ
-  DomoticzSensor(DZ_ILLUMINANCE, uv);
-#endif  // USE_DOMOTICZ
-  return true;
-}
-
 #ifdef USE_WEBSERVER
 const char HTTP_SNS_ULTRAVIOLET[] PROGMEM =
   "%s{s}VEML6070 " D_UV_LEVEL "{m}%d{e}";  // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
+#endif  // USE_WEBSERVER
 
-void WebShowVeml6070()
+void Veml6070Show(boolean json)
 {
   if (veml6070_type) {
-    snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_ULTRAVIOLET, mqtt_data, Veml6070ReadUv());
+    uint16_t uvlevel = Veml6070ReadUv();
+    
+    if (json) {
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s, \"%s\":{\"" D_UV_LEVEL "\":%d}"), mqtt_data, veml6070_types, uvlevel);
+#ifdef USE_DOMOTICZ
+      DomoticzSensor(DZ_ILLUMINANCE, uvlevel);
+#endif  // USE_DOMOTICZ
+#ifdef USE_WEBSERVER
+    } else {
+      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_ULTRAVIOLET, mqtt_data, uvlevel);
+#endif  // USE_WEBSERVER
+    }
   }
 }
-#endif  // USE_WEBSERVER
 
 /*********************************************************************************************\
  * Interface
@@ -115,20 +110,22 @@ boolean Xsns11(byte function)
 {
   boolean result = false;
 
-  switch (function) {
-//    case FUNC_XSNS_INIT:
-//      break;
-    case FUNC_XSNS_PREP:
-      Veml6070Detect();
-      break;
-    case FUNC_XSNS_JSON:
-      result = MqttShowVeml6070();
-      break;
+  if (i2c_flg) {
+    switch (function) {
+//      case FUNC_XSNS_INIT:
+//        break;
+      case FUNC_XSNS_PREP:
+        Veml6070Detect();
+        break;
+      case FUNC_XSNS_JSON:
+        Veml6070Show(1);
+        break;
 #ifdef USE_WEBSERVER
-    case FUNC_XSNS_WEB:
-      WebShowVeml6070();
-      break;
+      case FUNC_XSNS_WEB:
+        Veml6070Show(0);
+        break;
 #endif  // USE_WEBSERVER
+    }
   }
   return result;
 }

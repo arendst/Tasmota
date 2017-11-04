@@ -101,54 +101,40 @@ void SonoffScSerialInput(char *rcvstat)
   }
 }
 
-/*********************************************************************************************\
- * Presentation
-\*********************************************************************************************/
-
-boolean MqttShowSonoffSC()
-{
-  boolean json_data_available = false;
-
-  if (sc_value[0] > 0) {
-    char stemp1[10];
-    char stemp2[10];
-
-    float t = ConvertTemp(sc_value[1]);
-    dtostrfd(t, Settings.flag.temperature_resolution, stemp1);
-    float h = sc_value[0];
-    dtostrfd(h, Settings.flag.humidity_resolution, stemp2);
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s, \"" D_TEMPERATURE "\":%s, \"" D_HUMIDITY "\":%s, \"" D_LIGHT "\":%d, \"" D_NOISE "\":%d, \"" D_AIRQUALITY "\":%d"),
-      mqtt_data, stemp1, stemp2, sc_value[2], sc_value[3], sc_value[4]);
-      json_data_available = true;
-#ifdef USE_DOMOTICZ
-    DomoticzTempHumSensor(stemp1, stemp2);
-    DomoticzSensor(DZ_ILLUMINANCE, sc_value[2]);
-#endif  // USE_DOMOTICZ
-  }
-  return json_data_available;
-}
+/********************************************************************************************/
 
 #ifdef USE_WEBSERVER
-const char HTTP_SNS_SCPLUS[] PROGMEM = "%s"
-  "{s}" D_LIGHT "{m}%d%{e}"
-  "{s}" D_NOISE "{m}%d%{e}"
-  "{s}" D_AIR_QUALITY "{m}%d%{e}";  // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
+const char HTTP_SNS_SCPLUS[] PROGMEM =
+  "%s{s}" D_LIGHT "{m}%d%{e}{s}" D_NOISE "{m}%d%{e}{s}" D_AIR_QUALITY "{m}%d%{e}";  // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
+#endif  // USE_WEBSERVER
 
-void WebShowSonoffSc()
+void SonoffScShow(boolean json)
 {
   if (sc_value[0] > 0) {
-    char stemp[10];
+    char temperature[10];
+    char humidity[10];
 
     float t = ConvertTemp(sc_value[1]);
-    dtostrfi(t, Settings.flag.temperature_resolution, stemp);
-    snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TEMP, mqtt_data, "", stemp, TempUnit());
     float h = sc_value[0];
-    dtostrfi(h, Settings.flag.humidity_resolution, stemp);
-    snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_HUM, mqtt_data, "", stemp);
-    snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_SCPLUS, mqtt_data, sc_value[2], sc_value[3], sc_value[4]);
+    dtostrfd(t, Settings.flag.temperature_resolution, temperature);
+    dtostrfd(h, Settings.flag.humidity_resolution, humidity);
+
+    if (json) {
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s, \"" D_TEMPERATURE "\":%s, \"" D_HUMIDITY "\":%s, \"" D_LIGHT "\":%d, \"" D_NOISE "\":%d, \"" D_AIRQUALITY "\":%d"),
+        mqtt_data, temperature, humidity, sc_value[2], sc_value[3], sc_value[4]);
+#ifdef USE_DOMOTICZ
+      DomoticzTempHumSensor(temperature, humidity);
+      DomoticzSensor(DZ_ILLUMINANCE, sc_value[2]);
+#endif  // USE_DOMOTICZ
+#ifdef USE_WEBSERVER
+    } else {
+      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TEMP, mqtt_data, "", temperature, TempUnit());
+      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_HUM, mqtt_data, "", humidity);
+      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_SCPLUS, mqtt_data, sc_value[2], sc_value[3], sc_value[4]);
+#endif  // USE_WEBSERVER
+    }
   }
 }
-#endif  // USE_WEBSERVER
 
 /*********************************************************************************************\
  * Interface
@@ -167,11 +153,11 @@ boolean Xsns04(byte function)
 //      case FUNC_XSNS_PREP:
 //        break;
       case FUNC_XSNS_JSON:
-        result = MqttShowSonoffSC();
+        SonoffScShow(1);
         break;
 #ifdef USE_WEBSERVER
       case FUNC_XSNS_WEB:
-        WebShowSonoffSc();
+        SonoffScShow(0);
         break;
 #endif  // USE_WEBSERVER
     }

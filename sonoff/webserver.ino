@@ -60,7 +60,8 @@ const char HTTP_HEAD[] PROGMEM =
     "x=new XMLHttpRequest();"
     "x.onreadystatechange=function(){"
       "if(x.readyState==4&&x.status==200){"
-        "document.getElementById('l1').innerHTML=x.responseText;"
+        "var s=x.responseText.replace(/{s}/g,\"<tr><th>\").replace(/{m}/g,\"</th><td>\").replace(/{e}/g,\"</td></tr>\").replace(/{t}/g,\"%'><div style='text-align:center;font-weight:\");"
+        "document.getElementById('l1').innerHTML=s;"
       "}"
     "};"
     "x.open('GET','ay'+a,true);"
@@ -279,9 +280,6 @@ const char HTTP_END[] PROGMEM =
   "</body>"
   "</html>";
 
-const char HTTP_ROW_START[] PROGMEM = "<tr><th>";    // Replaces {s}
-const char HTTP_ROW_MIDDLE[] PROGMEM = "</th><td>";  // Replases {m}
-const char HTTP_ROW_END[] PROGMEM = "</td></tr>";    // Replaces {e}
 const char HTTP_SNS_TEMP[] PROGMEM = "%s{s}%s " D_TEMPERATURE "{m}%s&deg;%c{e}";                             // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
 const char HTTP_SNS_HUM[] PROGMEM = "%s{s}%s " D_HUMIDITY "{m}%s%{e}";                                       // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
 const char HTTP_SNS_PRESSURE[] PROGMEM = "%s{s}%s " D_PRESSURE "{m}%s " D_UNIT_PRESSURE "{e}";               // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
@@ -514,27 +512,23 @@ void HandleAjaxStatusRefresh()
     ExecuteCommand(svalue);
   }
 
+  String page = "";
   mqtt_data[0] = '\0';
   XsnsCall(FUNC_XSNS_WEB);
-  String tpage = mqtt_data;
-  tpage.replace(F("{s}"), FPSTR(HTTP_ROW_START));   // = <tr><th>
-  tpage.replace(F("{m}"), FPSTR(HTTP_ROW_MIDDLE));  // = </th><td>
-  tpage.replace(F("{e}"), FPSTR(HTTP_ROW_END));     // = </td></tr>
-
-  String page = "";
-  if (tpage.length() > 0) {
+  if (strlen(mqtt_data)) {
     page += FPSTR(HTTP_TABLE100);
-    page += tpage;
+    page += mqtt_data;
     page += F("</table>");
   }
-  char line[160];
+  char line[80];
   if (devices_present) {
     page += FPSTR(HTTP_TABLE100);
     page += F("<tr>");
     uint8_t fsize = (devices_present < 5) ? 70 - (devices_present * 8) : 32;
     for (byte idx = 1; idx <= devices_present; idx++) {
       snprintf_P(svalue, sizeof(svalue), PSTR("%d"), bitRead(power, idx -1));
-      snprintf_P(line, sizeof(line), PSTR("<td style='width:%d%'><div style='text-align:center;font-weight:%s;font-size:%dpx'>%s</div></td>"),
+//      snprintf_P(line, sizeof(line), PSTR("<td style='width:%d%'><div style='text-align:center;font-weight:%s;font-size:%dpx'>%s</div></td>"),
+      snprintf_P(line, sizeof(line), PSTR("<td style='width:%d{t}%s;font-size:%dpx'>%s</div></td>"),  // {t} = %'><div style='text-align:center;font-weight:
         100 / devices_present, (bitRead(power, idx -1)) ? "bold" : "normal", fsize, (devices_present < 5) ? GetStateText(bitRead(power, idx -1)) : svalue);
       page += line;
     }

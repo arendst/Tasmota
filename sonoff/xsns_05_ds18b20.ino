@@ -181,41 +181,34 @@ boolean Ds18b20ReadTemperature(float &t)
   return !isnan(t);
 }
 
-/*********************************************************************************************\
- * Presentation
-\*********************************************************************************************/
+/********************************************************************************************/
 
-boolean MqttShowDs18b20()
+void Ds18b20Show(boolean json)
 {
-  char stemp1[10];
   float t;
-  boolean json_data_available = false;
 
   if (Ds18b20ReadTemperature(t)) {  // Check if read failed
-    dtostrfd(t, Settings.flag.temperature_resolution, stemp1);
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s, \"DS18B20\":{\"" D_TEMPERATURE "\":%s}"), mqtt_data, stemp1);
-    json_data_available = true;
+    char temperature[10];
+
+    dtostrfi(t, Settings.flag.temperature_resolution, temperature);
+
+    if(json) {
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s, \"DS18B20\":{\"" D_TEMPERATURE "\":%s}"), mqtt_data, temperature);
 #ifdef USE_DOMOTICZ
-    DomoticzSensor(DZ_TEMP, stemp1);
+      DomoticzSensor(DZ_TEMP, temperature);
 #endif  // USE_DOMOTICZ
-  }
-  return json_data_available;
-}
-
 #ifdef USE_WEBSERVER
-void WebShowDs18b20()
-{
-  float st;
-
-  if (Ds18b20ReadTemperature(st)) {  // Check if read failed
-    char stemp[10];
-
-    dtostrfi(st, Settings.flag.temperature_resolution, stemp);
-    snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TEMP, mqtt_data, "DS18B20", stemp, TempUnit());
-  }
-  Ds18b20ReadTempPrep();
-}
+    } else {
+      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TEMP, mqtt_data, "DS18B20", temperature, TempUnit());
 #endif  // USE_WEBSERVER
+    }
+  }
+#ifdef USE_WEBSERVER
+  if (!json) {
+    Ds18b20ReadTempPrep();
+  }
+#endif  // USE_WEBSERVER
+}
 
 /*********************************************************************************************\
  * Interface
@@ -235,11 +228,11 @@ boolean Xsns05(byte function)
         Ds18b20ReadTempPrep();
         break;
       case FUNC_XSNS_JSON:
-        result = MqttShowDs18b20();
+        Ds18b20Show(1);
         break;
 #ifdef USE_WEBSERVER
       case FUNC_XSNS_WEB:
-        WebShowDs18b20();
+        Ds18b20Show(0);
         break;
 #endif  // USE_WEBSERVER
     }

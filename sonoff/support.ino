@@ -1228,28 +1228,23 @@ int GetCommandCode(char* destination, size_t destination_size, const char* needl
  * ADC support
 \*********************************************************************************************/
 
-uint16_t GetAdc0()
+void AdcShow(boolean json)
 {
-  uint16_t alr = 0;
+  uint16_t analog = 0;
   for (byte i = 0; i < 32; i++) {
-    alr += analogRead(A0);
+    analog += analogRead(A0);
     delay(1);
   }
-  return alr >> 5;
-}
+  analog >>= 5;
 
-boolean MqttShowAdc()
-{
-  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s, \"" D_ANALOG_INPUT0 "\":%d"), mqtt_data, GetAdc0());
-  return true;
-}
-
+  if (json) {
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s, \"" D_ANALOG_INPUT0 "\":%d"), mqtt_data, analog);
 #ifdef USE_WEBSERVER
-void WebShowAdc()
-{
-  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s{s}" D_ANALOG_INPUT0 "{m}%d{e}"), mqtt_data, GetAdc0());
-}
+  } else {
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s{s}" D_ANALOG_INPUT0 "{m}%d{e}"), mqtt_data, analog);
 #endif  // USE_WEBSERVER
+  }
+}
 
 /*********************************************************************************************\
  * Interface
@@ -1268,23 +1263,22 @@ boolean Xsns02(byte function)
 //      case FUNC_XSNS_PREP:
 //        break;
       case FUNC_XSNS_JSON:
-        result = MqttShowAdc();
+        AdcShow(1);
         break;
 #ifdef USE_WEBSERVER
       case FUNC_XSNS_WEB:
-        WebShowAdc();
+        AdcShow(0);
         break;
 #endif  // USE_WEBSERVER
     }
   }
   return result;
 }
-
 #endif  // USE_ADC_VCC
 
 /*********************************************************************************************\
  * Syslog
- * 
+ *
  * Example:
  *   snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_LOG "Any value %d"), value);
  *   AddLog(LOG_LEVEL_DEBUG);

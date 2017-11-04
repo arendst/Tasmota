@@ -159,6 +159,8 @@ boolean ShtReadTempHum(float &t, float &h)
   return (!isnan(t) && !isnan(h));
 }
 
+/********************************************************************************************/
+
 boolean ShtDetect()
 {
   if (sht_type) {
@@ -180,53 +182,33 @@ boolean ShtDetect()
   return sht_type;
 }
 
-/*********************************************************************************************\
- * Presentation
-\*********************************************************************************************/
-
-boolean MqttShowSht()
+void ShtShow(boolean json)
 {
-  if (!sht_type) {
-    return false;
-  }
-
-  boolean json_data_available = false;
-  float t;
-  float h;
-
-  if (ShtReadTempHum(t, h)) {
-    char stemp[10];
-    char shum[10];
-
-    dtostrfd(t, Settings.flag.temperature_resolution, stemp);
-    dtostrfd(h, Settings.flag.humidity_resolution, shum);
-    snprintf_P(mqtt_data, sizeof(mqtt_data), JSON_SNS_TEMPHUM, mqtt_data, "SHT1X", stemp, shum);
-    json_data_available = true;
-#ifdef USE_DOMOTICZ
-    DomoticzTempHumSensor(stemp, shum);
-#endif  // USE_DOMOTICZ
-  }
-  return json_data_available;
-}
-
-#ifdef USE_WEBSERVER
-void WebShowSht()
-{
-  float t;
-  float h;
-
   if (sht_type) {
-    if (ShtReadTempHum(t, h)) {
-      char stemp[10];
+    float t;
+    float h;
 
-      dtostrfi(t, Settings.flag.temperature_resolution, stemp);
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TEMP, mqtt_data, "SHT1X", stemp, TempUnit());
-      dtostrfi(h, Settings.flag.humidity_resolution, stemp);
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_HUM, mqtt_data, "SHT1X", stemp);
+    if (ShtReadTempHum(t, h)) {
+      char temperature[10];
+      char humidity[10];
+
+      dtostrfd(t, Settings.flag.temperature_resolution, temperature);
+      dtostrfd(h, Settings.flag.humidity_resolution, humidity);
+
+      if (json) {
+        snprintf_P(mqtt_data, sizeof(mqtt_data), JSON_SNS_TEMPHUM, mqtt_data, "SHT1X", temperature, humidity);
+#ifdef USE_DOMOTICZ
+        DomoticzTempHumSensor(temperature, humidity);
+#endif  // USE_DOMOTICZ
+#ifdef USE_WEBSERVER
+      } else {
+        snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TEMP, mqtt_data, "SHT1X", temperature, TempUnit());
+        snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_HUM, mqtt_data, "SHT1X", humidity);
+#endif  // USE_WEBSERVER
+      }
     }
   }
 }
-#endif  // USE_WEBSERVER
 
 /*********************************************************************************************\
  * Interface
@@ -238,20 +220,22 @@ boolean Xsns07(byte function)
 {
   boolean result = false;
 
-  switch (function) {
-//    case FUNC_XSNS_INIT:
-//      break;
-    case FUNC_XSNS_PREP:
-      ShtDetect();
-      break;
-    case FUNC_XSNS_JSON:
-      result = MqttShowSht();
-      break;
+  if (i2c_flg) {
+    switch (function) {
+//      case FUNC_XSNS_INIT:
+//        break;
+      case FUNC_XSNS_PREP:
+        ShtDetect();
+        break;
+      case FUNC_XSNS_JSON:
+        ShtShow(1);
+        break;
 #ifdef USE_WEBSERVER
-    case FUNC_XSNS_WEB:
-      WebShowSht();
-      break;
+      case FUNC_XSNS_WEB:
+        ShtShow(0);
+        break;
 #endif  // USE_WEBSERVER
+    }
   }
   return result;
 }

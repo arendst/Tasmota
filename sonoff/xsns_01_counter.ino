@@ -68,6 +68,8 @@ void CounterSaveState()
   }
 }
 
+/********************************************************************************************/
+
 void CounterInit()
 {
   typedef void (*function) () ;
@@ -81,57 +83,41 @@ void CounterInit()
   }
 }
 
-/*********************************************************************************************\
- * Presentation
-\*********************************************************************************************/
+#ifdef USE_WEBSERVER
+const char HTTP_SNS_COUNTER[] PROGMEM =
+  "%s{s}" D_COUNTER "%d{m}%s%s{e}";  // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
+#endif  // USE_WEBSERVER
 
-boolean MqttShowCounter()
+void CounterShow(boolean json)
 {
-  char stemp[16];
-  boolean json_data_available = false;
+  char counter[16];
 
   byte dsxflg = 0;
   for (byte i = 0; i < MAX_COUNTERS; i++) {
     if (pin[GPIO_CNTR1 +i] < 99) {
       if (bitRead(Settings.pulse_counter_type, i)) {
-        dtostrfd((double)RtcSettings.pulse_counter[i] / 1000, 3, stemp);
+        dtostrfd((double)RtcSettings.pulse_counter[i] / 1000, 3, counter);
       } else {
         dsxflg++;
-        dtostrfd(RtcSettings.pulse_counter[i], 0, stemp);
+        dtostrfd(RtcSettings.pulse_counter[i], 0, counter);
       }
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s, \"" D_COUNTER "%d\":%s"), mqtt_data, i +1, stemp);
-      json_data_available = true;
+
+      if (json) {
+        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s, \"" D_COUNTER "%d\":%s"), mqtt_data, i +1, counter);
 #ifdef USE_DOMOTICZ
-      if (1 == dsxflg) {
-        DomoticzSensor(DZ_COUNT, RtcSettings.pulse_counter[i]);
-        dsxflg++;
-      }
+        if (1 == dsxflg) {
+          DomoticzSensor(DZ_COUNT, RtcSettings.pulse_counter[i]);
+          dsxflg++;
+        }
 #endif  // USE_DOMOTICZ
-    }
-  }
-  return json_data_available;
-}
-
 #ifdef USE_WEBSERVER
-const char HTTP_SNS_COUNTER[] PROGMEM =
-  "%s{s}" D_COUNTER "%d{m}%s%s{e}";  // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
-
-void WebShowCounter()
-{
-  char stemp[16];
-
-  for (byte i = 0; i < MAX_COUNTERS; i++) {
-    if (pin[GPIO_CNTR1 +i] < 99) {
-      if (bitRead(Settings.pulse_counter_type, i)) {
-        dtostrfi((double)RtcSettings.pulse_counter[i] / 1000, 3, stemp);
       } else {
-        dtostrfi(RtcSettings.pulse_counter[i], 0, stemp);
+        snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_COUNTER, mqtt_data, i +1, counter, (bitRead(Settings.pulse_counter_type, i)) ? " " D_UNIT_SECOND : "");
+#endif  // USE_WEBSERVER
       }
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_COUNTER, mqtt_data, i +1, stemp, (bitRead(Settings.pulse_counter_type, i)) ? " " D_UNIT_SECOND : "");
     }
   }
 }
-#endif  // USE_WEBSERVER
 
 /*********************************************************************************************\
  * Interface
@@ -150,11 +136,11 @@ boolean Xsns01(byte function)
 //    case FUNC_XSNS_PREP:
 //      break;
     case FUNC_XSNS_JSON:
-      result = MqttShowCounter();
+      CounterShow(1);
       break;
 #ifdef USE_WEBSERVER
     case FUNC_XSNS_WEB:
-      WebShowCounter();
+      CounterShow(0);
       break;
 #endif  // USE_WEBSERVER
   }

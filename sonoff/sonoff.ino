@@ -183,6 +183,7 @@ uint8_t light_type = 0;                     // Light types
 
 boolean mdns_begun = false;
 
+uint8_t xsns_present = 0;                   // Number of External Sensors found
 boolean (*xsns_func_ptr[XSNS_MAX])(byte);   // External Sensor Function Pointers for simple implementation of sensors
 char version[16];                           // Version string from VERSION define
 char my_hostname[33];                       // Composed Wifi hostname
@@ -1791,19 +1792,16 @@ void MqttShowState()
 
 boolean MqttShowSensor()
 {
-  boolean json_data_available = false;
-
   snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s{\"" D_TIME "\":\"%s\""), mqtt_data, GetDateAndTime().c_str());
+  int json_data_start = strlen(mqtt_data);
   for (byte i = 0; i < MAX_SWITCHES; i++) {
     if (pin[GPIO_SWT1 +i] < 99) {
       boolean swm = ((FOLLOW_INV == Settings.switchmode[i]) || (PUSHBUTTON_INV == Settings.switchmode[i]) || (PUSHBUTTONHOLD_INV == Settings.switchmode[i]));
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s, \"" D_SWITCH "%d\":\"%s\""), mqtt_data, i +1, GetStateText(swm ^ lastwallswitch[i]));
-      json_data_available = true;
     }
   }
-  if (XsnsCall(FUNC_XSNS_JSON)) {
-    json_data_available = true;
-  }
+  XsnsCall(FUNC_XSNS_JSON);
+  boolean json_data_available = (strlen(mqtt_data) - json_data_start);
   if (strstr_P(mqtt_data, PSTR(D_TEMPERATURE))) {
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s, \"" D_TEMPERATURE_UNIT "\":\"%c\""), mqtt_data, TempUnit());
   }

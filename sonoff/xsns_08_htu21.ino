@@ -205,6 +205,8 @@ float HtuCompensatedHumidity(float humidity, float temperature)
   }
 }
 
+/********************************************************************************************/
+
 uint8_t HtuDetect()
 {
   if (htu_type) {
@@ -251,47 +253,31 @@ uint8_t HtuDetect()
   return success;
 }
 
-/*********************************************************************************************\
- * Presentation
-\*********************************************************************************************/
-
-boolean MqttShowHtu()
-{
-  if (!htu_type) {
-    return false;
-  }
-
-  char stemp1[10];
-  char stemp2[10];
-
-  float t = HtuReadTemperature();
-  float h = HtuReadHumidity();
-  h = HtuCompensatedHumidity(h, t);
-  dtostrfd(t, Settings.flag.temperature_resolution, stemp1);
-  dtostrfd(h, Settings.flag.humidity_resolution, stemp2);
-  snprintf_P(mqtt_data, sizeof(mqtt_data), JSON_SNS_TEMPHUM, mqtt_data, htu_types, stemp1, stemp2);
-#ifdef USE_DOMOTICZ
-  DomoticzTempHumSensor(stemp1, stemp2);
-#endif  // USE_DOMOTICZ
-  return true;
-}
-
-#ifdef USE_WEBSERVER
-void WebShowHtu()
+void HtuShow(boolean json)
 {
   if (htu_type) {
-    char stemp[10];
+    char temperature[10];
+    char humidity[10];
 
-    float t_htu21 = HtuReadTemperature();
-    float h_htu21 = HtuReadHumidity();
-    h_htu21 = HtuCompensatedHumidity(h_htu21, t_htu21);
-    dtostrfi(t_htu21, Settings.flag.temperature_resolution, stemp);
-    snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TEMP, mqtt_data, htu_types, stemp, TempUnit());
-    dtostrfi(h_htu21, Settings.flag.humidity_resolution, stemp);
-    snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_HUM, mqtt_data, htu_types, stemp);
+    float t = HtuReadTemperature();
+    float h = HtuReadHumidity();
+    h = HtuCompensatedHumidity(h, t);
+    dtostrfd(t, Settings.flag.temperature_resolution, temperature);
+    dtostrfd(h, Settings.flag.humidity_resolution, humidity);
+
+    if (json) {
+      snprintf_P(mqtt_data, sizeof(mqtt_data), JSON_SNS_TEMPHUM, mqtt_data, htu_types, temperature, humidity);
+#ifdef USE_DOMOTICZ
+      DomoticzTempHumSensor(temperature, humidity);
+#endif  // USE_DOMOTICZ
+#ifdef USE_WEBSERVER
+    } else {
+      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TEMP, mqtt_data, htu_types, temperature, TempUnit());
+      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_HUM, mqtt_data, htu_types, humidity);
+#endif  // USE_WEBSERVER
+    }
   }
 }
-#endif  // USE_WEBSERVER
 
 /*********************************************************************************************\
  * Interface
@@ -303,20 +289,22 @@ boolean Xsns08(byte function)
 {
   boolean result = false;
 
-  switch (function) {
-//    case FUNC_XSNS_INIT:
-//      break;
-    case FUNC_XSNS_PREP:
-      HtuDetect();
-      break;
-    case FUNC_XSNS_JSON:
-      result = MqttShowHtu();
-      break;
+  if (i2c_flg) {
+    switch (function) {
+//      case FUNC_XSNS_INIT:
+//        break;
+      case FUNC_XSNS_PREP:
+        HtuDetect();
+        break;
+      case FUNC_XSNS_JSON:
+        HtuShow(1);
+        break;
 #ifdef USE_WEBSERVER
-    case FUNC_XSNS_WEB:
-      WebShowHtu();
-      break;
+      case FUNC_XSNS_WEB:
+        HtuShow(0);
+        break;
 #endif  // USE_WEBSERVER
+    }
   }
   return result;
 }

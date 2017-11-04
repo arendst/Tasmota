@@ -194,6 +194,8 @@ boolean DhtSetup(byte pin, byte type)
   return success;
 }
 
+/********************************************************************************************/
+
 void DhtInit()
 {
   dht_max_cycles = microsecondsToClockCycles(1000);  // 1 millisecond timeout for reading pulses from DHT sensor.
@@ -218,53 +220,36 @@ void DhtInit()
   }
 }
 
-/*********************************************************************************************\
- * Presentation
-\*********************************************************************************************/
-
-boolean MqttShowDht()
+void DhtShow(boolean json)
 {
-  char stemp1[10];
-  char stemp2[10];
+  char temperature[10];
+  char humidity[10];
   float t;
   float h;
-  boolean json_data_available = false;
 
   byte dsxflg = 0;
   for (byte i = 0; i < dht_sensors; i++) {
     if (DhtReadTempHum(i, t, h)) {     // Read temperature
-      dtostrfd(t, Settings.flag.temperature_resolution, stemp1);
-      dtostrfd(h, Settings.flag.humidity_resolution, stemp2);
-      snprintf_P(mqtt_data, sizeof(mqtt_data), JSON_SNS_TEMPHUM, mqtt_data, Dht[i].stype, stemp1, stemp2);
-      json_data_available = true;
+      dtostrfd(t, Settings.flag.temperature_resolution, temperature);
+      dtostrfd(h, Settings.flag.humidity_resolution, humidity);
+
+      if (json) {
+        snprintf_P(mqtt_data, sizeof(mqtt_data), JSON_SNS_TEMPHUM, mqtt_data, Dht[i].stype, temperature, humidity);
 #ifdef USE_DOMOTICZ
-      if (!dsxflg) {
-        DomoticzTempHumSensor(stemp1, stemp2);
-        dsxflg++;
-      }
+        if (!dsxflg) {
+          DomoticzTempHumSensor(temperature, humidity);
+          dsxflg++;
+        }
 #endif  // USE_DOMOTICZ
-    }
-  }
-  return json_data_available;
-}
-
 #ifdef USE_WEBSERVER
-void WebShowDht()
-{
-  char stemp[10];
-  float t;
-  float h;
-
-  for (byte i = 0; i < dht_sensors; i++) {
-    if (DhtReadTempHum(i, t, h)) {
-      dtostrfi(t, Settings.flag.temperature_resolution, stemp);
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TEMP, mqtt_data, Dht[i].stype, stemp, TempUnit());
-      dtostrfi(h, Settings.flag.humidity_resolution, stemp);
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_HUM, mqtt_data, Dht[i].stype, stemp);
+      } else {
+        snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TEMP, mqtt_data, Dht[i].stype, temperature, TempUnit());
+        snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_HUM, mqtt_data, Dht[i].stype, humidity);
+#endif  // USE_WEBSERVER
+      }
     }
   }
 }
-#endif  // USE_WEBSERVER
 
 /*********************************************************************************************\
  * Interface
@@ -285,11 +270,11 @@ boolean Xsns06(byte function)
         DhtReadPrep();
         break;
       case FUNC_XSNS_JSON:
-        result = MqttShowDht();
+        DhtShow(1);
         break;
 #ifdef USE_WEBSERVER
       case FUNC_XSNS_WEB:
-        WebShowDht();
+        DhtShow(0);
         break;
 #endif  // USE_WEBSERVER
     }

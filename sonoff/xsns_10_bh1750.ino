@@ -41,6 +41,8 @@ uint16_t Bh1750ReadLux()
   return value;
 }
 
+/********************************************************************************************/
+
 boolean Bh1750Detect()
 {
   if (bh1750_type) {
@@ -74,35 +76,28 @@ boolean Bh1750Detect()
   return success;
 }
 
-/*********************************************************************************************\
- * Presentation
-\*********************************************************************************************/
-
-boolean MqttShowBh1750()
-{
-  if (!bh1750_type) {
-    return false;
-  }
-
-  uint16_t l = Bh1750ReadLux();
-  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s, \"%s\":{\"" D_ILLUMINANCE "\":%d}"), mqtt_data, bh1750_types, l);
-#ifdef USE_DOMOTICZ
-  DomoticzSensor(DZ_ILLUMINANCE, l);
-#endif  // USE_DOMOTICZ
-  return true;
-}
-
 #ifdef USE_WEBSERVER
 const char HTTP_SNS_ILLUMINANCE[] PROGMEM =
   "%s{s}BH1750 " D_ILLUMINANCE "{m}%d " D_UNIT_LUX "{e}";  // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
+#endif  // USE_WEBSERVER
 
-void WebShowBh1750()
+void Bh1750Show(boolean json)
 {
   if (bh1750_type) {
-    snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_ILLUMINANCE, mqtt_data, Bh1750ReadLux());
+    uint16_t illuminance = Bh1750ReadLux();
+    
+    if (json) {
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s, \"%s\":{\"" D_ILLUMINANCE "\":%d}"), mqtt_data, bh1750_types, illuminance);
+#ifdef USE_DOMOTICZ
+      DomoticzSensor(DZ_ILLUMINANCE, illuminance);
+#endif  // USE_DOMOTICZ
+#ifdef USE_WEBSERVER
+    } else {
+      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_ILLUMINANCE, mqtt_data, illuminance);
+#endif  // USE_WEBSERVER
+    }
   }
 }
-#endif  // USE_WEBSERVER
 
 /*********************************************************************************************\
  * Interface
@@ -114,20 +109,22 @@ boolean Xsns10(byte function)
 {
   boolean result = false;
 
-  switch (function) {
-//    case FUNC_XSNS_INIT:
-//      break;
-    case FUNC_XSNS_PREP:
-      Bh1750Detect();
-      break;
-    case FUNC_XSNS_JSON:
-      result = MqttShowBh1750();
-      break;
+  if (i2c_flg) {
+    switch (function) {
+//      case FUNC_XSNS_INIT:
+//        break;
+      case FUNC_XSNS_PREP:
+        Bh1750Detect();
+        break;
+      case FUNC_XSNS_JSON:
+        Bh1750Show(1);
+        break;
 #ifdef USE_WEBSERVER
-    case FUNC_XSNS_WEB:
-      WebShowBh1750();
-      break;
+      case FUNC_XSNS_WEB:
+        Bh1750Show(0);
+        break;
 #endif  // USE_WEBSERVER
+    }
   }
   return result;
 }

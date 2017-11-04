@@ -19,91 +19,89 @@
 
 void XSnsInit()
 {
-  byte x;
-
-  for (x = 0; x < XSNS_MAX; x++) {
-    xsns_func_ptr[x] = NULL;
+  for (byte i = 0; i < XSNS_MAX; i++) {
+    xsns_func_ptr[i] = NULL;
   }
-  x = 0;
+  xsns_present = 0;
 
 #ifdef XSNS_01
-  xsns_func_ptr[x++] = &Xsns01;
+  xsns_func_ptr[xsns_present++] = &Xsns01;
 #endif
 
 #ifdef XSNS_02
-  xsns_func_ptr[x++] = &Xsns02;
+  xsns_func_ptr[xsns_present++] = &Xsns02;
 #endif
 
 #ifdef XSNS_03
-  xsns_func_ptr[x++] = &Xsns03;
+  xsns_func_ptr[xsns_present++] = &Xsns03;
 #endif
 
 #ifdef XSNS_04
-  xsns_func_ptr[x++] = &Xsns04;
+  xsns_func_ptr[xsns_present++] = &Xsns04;
 #endif
 
 #ifdef XSNS_05
-  xsns_func_ptr[x++] = &Xsns05;
+  xsns_func_ptr[xsns_present++] = &Xsns05;
 #endif
 
 #ifdef XSNS_06
-  xsns_func_ptr[x++] = &Xsns06;
+  xsns_func_ptr[xsns_present++] = &Xsns06;
 #endif
 
 #ifdef XSNS_07
-  xsns_func_ptr[x++] = &Xsns07;
+  xsns_func_ptr[xsns_present++] = &Xsns07;
 #endif
 
 #ifdef XSNS_08
-  xsns_func_ptr[x++] = &Xsns08;
+  xsns_func_ptr[xsns_present++] = &Xsns08;
 #endif
 
 #ifdef XSNS_09
-  xsns_func_ptr[x++] = &Xsns09;
+  xsns_func_ptr[xsns_present++] = &Xsns09;
 #endif
 
 #ifdef XSNS_10
-  xsns_func_ptr[x++] = &Xsns10;
+  xsns_func_ptr[xsns_present++] = &Xsns10;
 #endif
 
 #ifdef XSNS_11
-  xsns_func_ptr[x++] = &Xsns11;
+  xsns_func_ptr[xsns_present++] = &Xsns11;
 #endif
 
 #ifdef XSNS_12
-  xsns_func_ptr[x++] = &Xsns12;
+  xsns_func_ptr[xsns_present++] = &Xsns12;
 #endif
 
 #ifdef XSNS_13
-  xsns_func_ptr[x++] = &Xsns13;
+  xsns_func_ptr[xsns_present++] = &Xsns13;
 #endif
 
 #ifdef XSNS_14
-  xsns_func_ptr[x++] = &Xsns14;
+  xsns_func_ptr[xsns_present++] = &Xsns14;
 #endif
 
 #ifdef XSNS_15
-  xsns_func_ptr[x++] = &Xsns15;
+  xsns_func_ptr[xsns_present++] = &Xsns15;
 #endif
 
 #ifdef XSNS_16
-  xsns_func_ptr[x++] = &Xsns16;
+  xsns_func_ptr[xsns_present++] = &Xsns16;
 #endif
 
 #ifdef XSNS_17
-  xsns_func_ptr[x++] = &Xsns17;
+  xsns_func_ptr[xsns_present++] = &Xsns17;
 #endif
 
 #ifdef XSNS_18
-  xsns_func_ptr[x++] = &Xsns18;
+  xsns_func_ptr[xsns_present++] = &Xsns18;
 #endif
 
 #ifdef XSNS_19
-  xsns_func_ptr[x++] = &Xsns19;
+  xsns_func_ptr[xsns_present++] = &Xsns19;
 #endif
 
 #ifdef XSNS_20
-  xsns_func_ptr[x++] = &Xsns20;
+  xsns_func_ptr[xsns_present++] = &Xsns20;
 #endif
 
   XsnsCall(FUNC_XSNS_INIT);
@@ -120,20 +118,12 @@ boolean XsnsCall(byte Function)
   switch (Function) {
     case FUNC_XSNS_INIT:
     case FUNC_XSNS_PREP:
-    case FUNC_XSNS_WEB:
-      for (byte x = 0; x < XSNS_MAX; x++) {
-        if (xsns_func_ptr[x]) {
-          xsns_func_ptr[x](Function);
-        }
-      }
-      break;
     case FUNC_XSNS_JSON:
-      for (byte x = 0; x < XSNS_MAX; x++) {
-        if (xsns_func_ptr[x]) {
-          if (xsns_func_ptr[x](Function)) {
-            result = true;
-          }
-        }
+    case FUNC_XSNS_WEB:
+      for (byte x = 0; x < xsns_present; x++) {
+//        if (xsns_func_ptr[x]) {
+          xsns_func_ptr[x](Function);
+//        }
       }
       break;
   }

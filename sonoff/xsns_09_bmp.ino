@@ -369,6 +369,8 @@ double BmpReadHumidity(void)
   return 0;
 }
 
+/********************************************************************************************/
+
 boolean BmpDetect()
 {
   if (bmp_type) {
@@ -407,69 +409,50 @@ boolean BmpDetect()
   return success;
 }
 
-/*********************************************************************************************\
- * Presentation
-\*********************************************************************************************/
-
-boolean MqttShowBmp()
-{
-  if (!bmp_type) {
-    return false;
-  }
-
-  char temperature[10];
-  char pressure[10];
-  char humidity[10];
-  char sea_pressure[10];
-  char sealevel[40];
-
-  double t = BmpReadTemperature();
-  double p = BmpReadPressure();
-  double h = BmpReadHumidity();
-  dtostrfd(t, Settings.flag.temperature_resolution, temperature);
-  dtostrfd(p, Settings.flag.pressure_resolution, pressure);
-  dtostrfd(h, Settings.flag.humidity_resolution, humidity);
-
-  dtostrfd(bmp_sealevel, Settings.flag.pressure_resolution, sea_pressure);
-  snprintf_P(sealevel, sizeof(sealevel), PSTR(", \"" D_PRESSUREATSEALEVEL "\":%s"), sea_pressure);
-  if (BME280_CHIPID == bmp_type) {
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s, \"%s\":{\"" D_TEMPERATURE "\":%s, \"" D_HUMIDITY "\":%s, \"" D_PRESSURE "\":%s%s}"),
-      mqtt_data, bmp_types, temperature, humidity, pressure, (Settings.altitude != 0) ? sealevel : "");
-  }
-  else {
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s, \"%s\":{\"" D_TEMPERATURE "\":%s, \"" D_PRESSURE "\":%s%s}"),
-      mqtt_data, bmp_types, temperature, pressure, (Settings.altitude != 0) ? sealevel : "");
-  }
-#ifdef USE_DOMOTICZ
-  DomoticzTempHumPressureSensor(temperature, humidity, pressure);
-#endif // USE_DOMOTICZ
-  return true;
-}
-
-#ifdef USE_WEBSERVER
-void WebShowBmp()
+void BmpShow(boolean json)
 {
   if (bmp_type) {
-    char stemp[10];
+    char temperature[10];
+    char pressure[10];
+    char humidity[10];
+    char sea_pressure[10];
+    char sealevel[40];
 
     double t = BmpReadTemperature();
     double p = BmpReadPressure();
     double h = BmpReadHumidity();
-    dtostrfi(t, Settings.flag.temperature_resolution, stemp);
-    snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TEMP, mqtt_data, bmp_types, stemp, TempUnit());
-    if (BME280_CHIPID == bmp_type) {
-      dtostrfi(h, Settings.flag.humidity_resolution, stemp);
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_HUM, mqtt_data, bmp_types, stemp);
-    }
-    dtostrfi(p, Settings.flag.pressure_resolution, stemp);
-    snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_PRESSURE, mqtt_data, bmp_types, stemp);
-    if (Settings.altitude != 0) {
-      dtostrfi(bmp_sealevel, Settings.flag.pressure_resolution, stemp);
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_SEAPRESSURE, mqtt_data, bmp_types, stemp);
+    dtostrfd(t, Settings.flag.temperature_resolution, temperature);
+    dtostrfd(p, Settings.flag.pressure_resolution, pressure);
+    dtostrfd(h, Settings.flag.humidity_resolution, humidity);
+    dtostrfd(bmp_sealevel, Settings.flag.pressure_resolution, sea_pressure);
+
+    if (json) {
+      snprintf_P(sealevel, sizeof(sealevel), PSTR(", \"" D_PRESSUREATSEALEVEL "\":%s"), sea_pressure);
+      if (BME280_CHIPID == bmp_type) {
+        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s, \"%s\":{\"" D_TEMPERATURE "\":%s, \"" D_HUMIDITY "\":%s, \"" D_PRESSURE "\":%s%s}"),
+          mqtt_data, bmp_types, temperature, humidity, pressure, (Settings.altitude != 0) ? sealevel : "");
+      }
+      else {
+        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s, \"%s\":{\"" D_TEMPERATURE "\":%s, \"" D_PRESSURE "\":%s%s}"),
+          mqtt_data, bmp_types, temperature, pressure, (Settings.altitude != 0) ? sealevel : "");
+      }
+#ifdef USE_DOMOTICZ
+      DomoticzTempHumPressureSensor(temperature, humidity, pressure);
+#endif // USE_DOMOTICZ
+#ifdef USE_WEBSERVER
+    } else {
+      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TEMP, mqtt_data, bmp_types, temperature, TempUnit());
+      if (BME280_CHIPID == bmp_type) {
+        snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_HUM, mqtt_data, bmp_types, humidity);
+      }
+      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_PRESSURE, mqtt_data, bmp_types, pressure);
+      if (Settings.altitude != 0) {
+        snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_SEAPRESSURE, mqtt_data, bmp_types, sea_pressure);
+#endif // USE_WEBSERVER
+      }
     }
   }
 }
-#endif // USE_WEBSERVER
 
 /*********************************************************************************************\
  * Interface
@@ -481,20 +464,22 @@ boolean Xsns09(byte function)
 {
   boolean result = false;
 
-  switch (function) {
-//    case FUNC_XSNS_INIT:
-//      break;
-    case FUNC_XSNS_PREP:
-      BmpDetect();
-      break;
-    case FUNC_XSNS_JSON:
-      result = MqttShowBmp();
-      break;
+  if (i2c_flg) {
+    switch (function) {
+//      case FUNC_XSNS_INIT:
+//        break;
+      case FUNC_XSNS_PREP:
+        BmpDetect();
+        break;
+      case FUNC_XSNS_JSON:
+        BmpShow(1);
+        break;
 #ifdef USE_WEBSERVER
-    case FUNC_XSNS_WEB:
-      WebShowBmp();
-      break;
+      case FUNC_XSNS_WEB:
+        BmpShow(0);
+        break;
 #endif // USE_WEBSERVER
+    }
   }
   return result;
 }
