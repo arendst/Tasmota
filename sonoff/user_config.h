@@ -173,6 +173,7 @@
   #define USE_SHT                                // Add I2C emulating code for SHT1X sensor
   //STB mod
   #define USE_CHIRP                              // Add I2C support for CHIRP moisture sensor
+  #define USE_ADS1115							 // Add I2C support for ADS1115 A/D converter
   //end
 
 #define USE_IR_REMOTE                            // Send IR remote commands using library IRremoteESP8266 and ArduinoJson (+3k code, 0.3k mem)
