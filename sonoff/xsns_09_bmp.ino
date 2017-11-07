@@ -1,5 +1,5 @@
 /*
-  xsns_bmp.ino - BMP pressure, temperature and humidity sensor support for Sonoff-Tasmota
+  xsns_09_bmp.ino - BMP pressure, temperature and humidity sensor support for Sonoff-Tasmota
 
   Copyright (C) 2017  Heiko Krupp and Theo Arends
 
@@ -400,7 +400,7 @@ boolean BmpDetect()
     strcpy_P(bmp_types, PSTR("BME280"));
   }
   if (success) {
-    snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_I2C "%s " D_FOUND_AT " 0x%x"), bmp_types, bmp_address);
+    snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, bmp_types, bmp_address);
     AddLog(LOG_LEVEL_DEBUG);
   }
   else {
@@ -448,8 +448,8 @@ void BmpShow(boolean json)
       snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_PRESSURE, mqtt_data, bmp_types, pressure);
       if (Settings.altitude != 0) {
         snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_SEAPRESSURE, mqtt_data, bmp_types, sea_pressure);
-#endif // USE_WEBSERVER
       }
+#endif // USE_WEBSERVER
     }
   }
 }
@@ -471,7 +471,7 @@ boolean Xsns09(byte function)
       case FUNC_XSNS_PREP:
         BmpDetect();
         break;
-      case FUNC_XSNS_JSON:
+      case FUNC_XSNS_JSON_APPEND:
         BmpShow(1);
         break;
 #ifdef USE_WEBSERVER

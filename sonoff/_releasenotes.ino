@@ -1,4 +1,9 @@
-/* 5.9.0a
+/* 5.9.0b
+ * Add support for ADS1115 to be enabled in user_config.h and needs libraries i2cdevlib-Core and i2cdevlib-ADS1115 (#338, #660)
+ * Fix Exception 26 and empty console screen after usage of command WakeupDuration (#1133)
+ * Fix some changed iTead web links in README.md (#1137)
+ *
+ * 5.9.0a
  * Add external sensor function pointer interface to enable easy sensor addition
  * Fix Backup Configuration file download failure by defining proper file size (#1115)
  *

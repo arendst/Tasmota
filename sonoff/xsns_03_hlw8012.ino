@@ -1,5 +1,5 @@
 /*
-  xsns_hlw8012.ino - sonoff pow HLW8012 energy sensor support for Sonoff-Tasmota
+  xsns_03_hlw8012.ino - sonoff pow HLW8012 energy sensor support for Sonoff-Tasmota
 
   Copyright (C) 2017  Theo Arends
 
@@ -749,9 +749,11 @@ boolean Xsns03(byte function)
         break;
 //      case FUNC_XSNS_PREP:
 //        break;
-//      case FUNC_XSNS_JSON:
-//        result = MqttShowHlw();
+//      case FUNC_XSNS_JSON_APPEND:
 //        break;
+      case FUNC_XSNS_MQTT_SHOW:
+        MqttShowHlw8012(1);
+        break;
 #ifdef USE_WEBSERVER
       case FUNC_XSNS_WEB:
         HlwShow(0, 0);

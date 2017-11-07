@@ -1,5 +1,5 @@
 /*
-  xsns_veml6070.ino - VEML6070 ultra violet light sensor support for Sonoff-Tasmota
+  xsns_11_veml6070.ino - VEML6070 ultra violet light sensor support for Sonoff-Tasmota
 
   Copyright (C) 2017  Theo Arends
 
@@ -69,7 +69,7 @@ boolean Veml6070Detect()
     strcpy_P(veml6070_types, PSTR("VEML6070"));
   }
   if (success) {
-    snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_I2C "%s " D_FOUND_AT " 0x%x"), veml6070_types, veml6070_address);
+    snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, veml6070_types, veml6070_address);
     AddLog(LOG_LEVEL_DEBUG);
   } else {
     veml6070_type = 0;
@@ -86,7 +86,7 @@ void Veml6070Show(boolean json)
 {
   if (veml6070_type) {
     uint16_t uvlevel = Veml6070ReadUv();
-    
+
     if (json) {
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s, \"%s\":{\"" D_UV_LEVEL "\":%d}"), mqtt_data, veml6070_types, uvlevel);
 #ifdef USE_DOMOTICZ
@@ -117,7 +117,7 @@ boolean Xsns11(byte function)
       case FUNC_XSNS_PREP:
         Veml6070Detect();
         break;
-      case FUNC_XSNS_JSON:
+      case FUNC_XSNS_JSON_APPEND:
         Veml6070Show(1);
         break;
 #ifdef USE_WEBSERVER

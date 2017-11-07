@@ -1,5 +1,5 @@
 /*
-  xsns_dht.ino - DHTxx and AM23xx temperature and humidity sensor support for Sonoff-Tasmota
+  xsns_06_dht.ino - DHTxx and AM23xx temperature and humidity sensor support for Sonoff-Tasmota
 
   Copyright (C) 2017  Theo Arends
 
@@ -269,7 +269,7 @@ boolean Xsns06(byte function)
       case FUNC_XSNS_PREP:
         DhtReadPrep();
         break;
-      case FUNC_XSNS_JSON:
+      case FUNC_XSNS_JSON_APPEND:
         DhtShow(1);
         break;
 #ifdef USE_WEBSERVER

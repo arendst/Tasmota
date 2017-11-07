@@ -1,5 +1,5 @@
 /*
-  xsns_counter.ino - Counter sensors (water meters, electricity meters etc.) sensor support for Sonoff-Tasmota
+  xsns_01_counter.ino - Counter sensors (water meters, electricity meters etc.) sensor support for Sonoff-Tasmota
 
   Copyright (C) 2017  Maarten Damen and Theo Arends
 
@@ -135,7 +135,7 @@ boolean Xsns01(byte function)
       break;
 //    case FUNC_XSNS_PREP:
 //      break;
-    case FUNC_XSNS_JSON:
+    case FUNC_XSNS_JSON_APPEND:
       CounterShow(1);
       break;
 #ifdef USE_WEBSERVER

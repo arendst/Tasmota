@@ -757,6 +757,17 @@ int32_t I2cRead24(uint8_t addr, uint8_t reg)
   return I2cRead(addr, reg, 3);
 }
 
+void I2cWrite8v(uint8_t addr, uint8_t val)
+{
+  byte x = I2C_RETRY_COUNTER;
+
+  do {
+    Wire.beginTransmission((uint8_t)addr);  // start transmission to device
+    Wire.write(val);                         // write data
+    x--;
+  } while (Wire.endTransmission(true) != 0 && x != 0); // end transmission
+}
+
 void I2cWrite8(uint8_t addr, uint8_t reg, uint8_t val)
 {
   byte x = I2C_RETRY_COUNTER;
@@ -1238,10 +1249,10 @@ void AdcShow(boolean json)
   analog >>= 5;
 
   if (json) {
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s, \"" D_ANALOG_INPUT0 "\":%d"), mqtt_data, analog);
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s, \"" D_ANALOG_INPUT "0\":%d"), mqtt_data, analog);
 #ifdef USE_WEBSERVER
   } else {
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s{s}" D_ANALOG_INPUT0 "{m}%d{e}"), mqtt_data, analog);
+    snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_ANALOG, mqtt_data, "", 0, analog);
 #endif  // USE_WEBSERVER
   }
 }
@@ -1262,7 +1273,7 @@ boolean Xsns02(byte function)
 //        break;
 //      case FUNC_XSNS_PREP:
 //        break;
-      case FUNC_XSNS_JSON:
+      case FUNC_XSNS_JSON_APPEND:
         AdcShow(1);
         break;
 #ifdef USE_WEBSERVER

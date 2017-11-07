@@ -25,7 +25,7 @@
     - Select IDE Tools - Flash Size: "1M (no SPIFFS)"
   ====================================================*/
 
-#define VERSION                0x05090001   // 5.9.0a
+#define VERSION                0x05090002   // 5.9.0b
 
 // Location specific includes
 #include "sonoff.h"                         // Enumaration used in user_config.h
@@ -1800,7 +1800,7 @@ boolean MqttShowSensor()
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s, \"" D_SWITCH "%d\":\"%s\""), mqtt_data, i +1, GetStateText(swm ^ lastwallswitch[i]));
     }
   }
-  XsnsCall(FUNC_XSNS_JSON);
+  XsnsCall(FUNC_XSNS_JSON_APPEND);
   boolean json_data_available = (strlen(mqtt_data) - json_data_start);
   if (strstr_P(mqtt_data, PSTR(D_TEMPERATURE))) {
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s, \"" D_TEMPERATURE_UNIT "\":\"%c\""), mqtt_data, TempUnit());
@@ -1873,9 +1873,7 @@ void PerformEverySecond()
         MqttPublishPrefixTopic_P(2, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);
       }
 
-      if (hlw_flg) {
-        MqttShowHlw8012(1);
-      }
+      XsnsCall(FUNC_XSNS_MQTT_SHOW);
     }
   }
 

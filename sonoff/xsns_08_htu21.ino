@@ -1,5 +1,5 @@
 /*
-  xsns_htu21.ino - HTU21 temperature and humidity sensor support for Sonoff-Tasmota
+  xsns_08_htu21.ino - HTU21 temperature and humidity sensor support for Sonoff-Tasmota
 
   Copyright (C) 2017  Heiko Krupp and Theo Arends
 
@@ -245,7 +245,7 @@ uint8_t HtuDetect()
     delay_humidity=23;
   }
   if (success) {
-    snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_I2C "%s " D_FOUND_AT " 0x%x"), htu_types, htu_address);
+    snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, htu_types, htu_address);
     AddLog(LOG_LEVEL_DEBUG);
   } else {
     htu_type = 0;
@@ -296,7 +296,7 @@ boolean Xsns08(byte function)
       case FUNC_XSNS_PREP:
         HtuDetect();
         break;
-      case FUNC_XSNS_JSON:
+      case FUNC_XSNS_JSON_APPEND:
         HtuShow(1);
         break;
 #ifdef USE_WEBSERVER

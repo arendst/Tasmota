@@ -1,5 +1,5 @@
 /*
-  xdrv_snfsc.ino - sonoff SC support for Sonoff-Tasmota
+  xsns_04_snfsc.ino - sonoff SC support for Sonoff-Tasmota
 
   Copyright (C) 2017  Theo Arends
 
@@ -152,7 +152,7 @@ boolean Xsns04(byte function)
 //        break;
 //      case FUNC_XSNS_PREP:
 //        break;
-      case FUNC_XSNS_JSON:
+      case FUNC_XSNS_JSON_APPEND:
         SonoffScShow(1);
         break;
 #ifdef USE_WEBSERVER

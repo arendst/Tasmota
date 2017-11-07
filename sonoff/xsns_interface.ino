@@ -108,7 +108,7 @@ void XSnsInit()
 }
 
 /*********************************************************************************************\
- * Function call to all or specific xsns
+ * Function call to all xsns
 \*********************************************************************************************/
 
 boolean XsnsCall(byte Function)
@@ -118,14 +118,14 @@ boolean XsnsCall(byte Function)
   switch (Function) {
     case FUNC_XSNS_INIT:
     case FUNC_XSNS_PREP:
-    case FUNC_XSNS_JSON:
+    case FUNC_XSNS_JSON_APPEND:
+    case FUNC_XSNS_MQTT_SHOW:
     case FUNC_XSNS_WEB:
       for (byte x = 0; x < xsns_present; x++) {
-//        if (xsns_func_ptr[x]) {
-          xsns_func_ptr[x](Function);
-//        }
+        xsns_func_ptr[x](Function);
       }
       break;
   }
+
   return result;
 }

@@ -1,5 +1,5 @@
 /*
-  xsns_sht1x.ino - SHT1x temperature and sensor support for Sonoff-Tasmota
+  xsns_07_sht1x.ino - SHT1x temperature and sensor support for Sonoff-Tasmota
 
   Copyright (C) 2017  Theo Arends
 
@@ -227,7 +227,7 @@ boolean Xsns07(byte function)
       case FUNC_XSNS_PREP:
         ShtDetect();
         break;
-      case FUNC_XSNS_JSON:
+      case FUNC_XSNS_JSON_APPEND:
         ShtShow(1);
         break;
 #ifdef USE_WEBSERVER

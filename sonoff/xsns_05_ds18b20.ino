@@ -1,5 +1,5 @@
 /*
-  xsns_ds18b20.ino - DS18B20 temperature sensor support for Sonoff-Tasmota
+  xsns_05_ds18b20.ino - DS18B20 temperature sensor support for Sonoff-Tasmota
 
   Copyright (C) 2017  Theo Arends
 
@@ -227,7 +227,7 @@ boolean Xsns05(byte function)
       case FUNC_XSNS_PREP:
         Ds18b20ReadTempPrep();
         break;
-      case FUNC_XSNS_JSON:
+      case FUNC_XSNS_JSON_APPEND:
         Ds18b20Show(1);
         break;
 #ifdef USE_WEBSERVER
