@@ -216,7 +216,7 @@
 #define D_SET_BAUDRATE_TO "Set Baudrate to"
 #define D_RECEIVED_TOPIC "Received Topic"
 #define D_DATA_SIZE "Data Size"
-#define D_ANALOG_INPUT0 "Analog0"
+#define D_ANALOG_INPUT "Analog"
 
 #define D_FINGERPRINT "Verify TLS fingerprint..."
 #define D_TLS_CONNECT_FAILED_TO "TLS Connect failed to"

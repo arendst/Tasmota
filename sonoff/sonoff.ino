@@ -25,7 +25,7 @@
     - Select IDE Tools - Flash Size: "1M (no SPIFFS)"
   ====================================================*/
 
-#define VERSION                0x05090000   // 5.9.0
+#define VERSION                0x05090100   // 5.9.1
 
 // Location specific includes
 #include "sonoff.h"                         // Enumaration used in user_config.h
@@ -183,6 +183,8 @@ uint8_t light_type = 0;                     // Light types
 
 boolean mdns_begun = false;
 
+uint8_t xsns_present = 0;                   // Number of External Sensors found
+boolean (*xsns_func_ptr[XSNS_MAX])(byte);   // External Sensor Function Pointers for simple implementation of sensors
 char version[16];                           // Version string from VERSION define
 char my_hostname[33];                       // Composed Wifi hostname
 char mqtt_client[33];                        // Composed MQTT Clientname
@@ -1757,9 +1759,8 @@ void PublishStatus(uint8_t payload)
   }
 
   if ((0 == payload) || (10 == payload)) {
-    uint8_t djson = 0;
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_STATUS D_STATUS10_SENSOR "\":"));
-    MqttShowSensor(&djson);
+    MqttShowSensor();
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}"), mqtt_data);
     MqttPublishPrefixTopic_P(option, PSTR(D_CMND_STATUS "10"));
   }
@@ -1789,62 +1790,23 @@ void MqttShowState()
     mqtt_data, Settings.sta_active +1, Settings.sta_ssid[Settings.sta_active], WifiGetRssiAsQuality(WiFi.RSSI()), WiFi.BSSIDstr().c_str());
 }
 
-void MqttShowSensor(uint8_t* djson)
+boolean MqttShowSensor()
 {
   snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s{\"" D_TIME "\":\"%s\""), mqtt_data, GetDateAndTime().c_str());
+  int json_data_start = strlen(mqtt_data);
   for (byte i = 0; i < MAX_SWITCHES; i++) {
     if (pin[GPIO_SWT1 +i] < 99) {
       boolean swm = ((FOLLOW_INV == Settings.switchmode[i]) || (PUSHBUTTON_INV == Settings.switchmode[i]) || (PUSHBUTTONHOLD_INV == Settings.switchmode[i]));
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s, \"" D_SWITCH "%d\":\"%s\""), mqtt_data, i +1, GetStateText(swm ^ lastwallswitch[i]));
-      *djson = 1;
     }
   }
-  MqttShowCounter(djson);
-#ifndef USE_ADC_VCC
-  if (pin[GPIO_ADC0] < 99) {
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s, \"" D_ANALOG_INPUT0 "\":%d"), mqtt_data, GetAdc0());
-    *djson = 1;
-  }
-#endif
-  if (SONOFF_SC == Settings.module) {
-    MqttShowSonoffSC(djson);
-  }
-  if (pin[GPIO_DSB] < 99) {
-#ifdef USE_DS18B20
-    MqttShowDs18b20(djson);
-#endif  // USE_DS18B20
-#ifdef USE_DS18x20
-    MqttShowDs18x20(djson);
-#endif  // USE_DS18x20
-  }
-#ifdef USE_DHT
-  if (dht_flg) {
-    MqttShowDht(djson);
-  }
-#endif  // USE_DHT
-#ifdef USE_I2C
-  if (i2c_flg) {
-#ifdef USE_SHT
-    MqttShowSht(djson);
-#endif  // USE_SHT
-#ifdef USE_HTU
-    MqttShowHtu(djson);
-#endif  // USE_HTU
-#ifdef USE_BMP
-    MqttShowBmp(djson);
-#endif  // USE_BMP
-#ifdef USE_BH1750
-    MqttShowBh1750(djson);
-#endif  // USE_BH1750
-#ifdef USE_VEML6070
-    MqttShowVeml6070(djson);
-#endif  // USE_VEML6070
-}
-#endif  // USE_I2C
+  XsnsCall(FUNC_XSNS_JSON_APPEND);
+  boolean json_data_available = (strlen(mqtt_data) - json_data_start);
   if (strstr_P(mqtt_data, PSTR(D_TEMPERATURE))) {
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s, \"" D_TEMPERATURE_UNIT "\":\"%c\""), mqtt_data, TempUnit());
   }
   snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}"), mqtt_data);
+  return json_data_available;
 }
 
 /********************************************************************************************/
@@ -1897,39 +1859,7 @@ void PerformEverySecond()
   if (Settings.tele_period) {
     tele_period++;
     if (tele_period == Settings.tele_period -1) {
-      if (pin[GPIO_DSB] < 99) {
-#ifdef USE_DS18B20
-        Ds18b20ReadTempPrep();
-#endif  // USE_DS18B20
-#ifdef USE_DS18x20
-        Ds18x20Search();      // Check for changes in sensors number
-        Ds18x20Convert();     // Start Conversion, takes up to one second
-#endif  // USE_DS18x20
-      }
-#ifdef USE_DHT
-      if (dht_flg) {
-        DhtReadPrep();
-      }
-#endif  // USE_DHT
-#ifdef USE_I2C
-      if (i2c_flg) {
-#ifdef USE_SHT
-        ShtDetect();
-#endif  // USE_SHT
-#ifdef USE_HTU
-        HtuDetect();
-#endif  // USE_HTU
-#ifdef USE_BMP
-        BmpDetect();
-#endif  // USE_BMP
-#ifdef USE_BH1750
-        Bh1750Detect();
-#endif  // USE_BH1750
-#ifdef USE_VEML6070
-        Veml6070Detect();
-#endif  // USE_VEML6070
-}
-#endif  // USE_I2C
+      XsnsCall(FUNC_XSNS_PREP);
     }
     if (tele_period >= Settings.tele_period) {
       tele_period = 0;
@@ -1938,16 +1868,12 @@ void PerformEverySecond()
       MqttShowState();
       MqttPublishPrefixTopic_P(2, PSTR(D_RSLT_STATE));
 
-      uint8_t djson = 0;
       mqtt_data[0] = '\0';
-      MqttShowSensor(&djson);
-      if (djson) {
+      if (MqttShowSensor()) {
         MqttPublishPrefixTopic_P(2, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);
       }
 
-      if (hlw_flg) {
-        MqttShowHlw8012(1);
-      }
+      XsnsCall(FUNC_XSNS_MQTT_SHOW);
     }
   }
 
@@ -2684,24 +2610,9 @@ void GpioInit()
 #endif  // USE_IR_RECEIVE
 #endif  // USE_IR_REMOTE
 
-  CounterInit();
-
   hlw_flg = ((pin[GPIO_HLW_SEL] < 99) && (pin[GPIO_HLW_CF1] < 99) && (pin[GPIO_HLW_CF] < 99));
-  if (hlw_flg) {
-    HlwInit();
-  }
 
-#ifdef USE_DHT
-  if (dht_flg) {
-    DhtInit();
-  }
-#endif  // USE_DHT
-
-#ifdef USE_DS18x20
-  if (pin[GPIO_DSB] < 99) {
-    Ds18x20Init();
-  }
-#endif  // USE_DS18x20
+  XSnsInit();
 }
 
 extern "C" {

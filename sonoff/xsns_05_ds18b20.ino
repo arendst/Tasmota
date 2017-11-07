@@ -1,5 +1,5 @@
 /*
-  xsns_ds18b20.ino - DS18B20 temperature sensor support for Sonoff-Tasmota
+  xsns_05_ds18b20.ino - DS18B20 temperature sensor support for Sonoff-Tasmota
 
   Copyright (C) 2017  Theo Arends
 
@@ -181,42 +181,63 @@ boolean Ds18b20ReadTemperature(float &t)
   return !isnan(t);
 }
 
-/*********************************************************************************************\
- * Presentation
-\*********************************************************************************************/
+/********************************************************************************************/
 
-void MqttShowDs18b20(uint8_t* djson)
+void Ds18b20Show(boolean json)
 {
-  char stemp1[10];
   float t;
 
   if (Ds18b20ReadTemperature(t)) {  // Check if read failed
-    dtostrfd(t, Settings.flag.temperature_resolution, stemp1);
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s, \"DS18B20\":{\"" D_TEMPERATURE "\":%s}"), mqtt_data, stemp1);
-    *djson = 1;
+    char temperature[10];
+
+    dtostrfi(t, Settings.flag.temperature_resolution, temperature);
+
+    if(json) {
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s, \"DS18B20\":{\"" D_TEMPERATURE "\":%s}"), mqtt_data, temperature);
 #ifdef USE_DOMOTICZ
-    DomoticzSensor(DZ_TEMP, stemp1);
+      DomoticzSensor(DZ_TEMP, temperature);
 #endif  // USE_DOMOTICZ
-  }
-}
-
 #ifdef USE_WEBSERVER
-String WebShowDs18b20()
-{
-  // Needs TelePeriod to refresh data (Do not do it here as it takes too much time)
-  String page = "";
-  float st;
-
-  if (Ds18b20ReadTemperature(st)) {  // Check if read failed
-    char stemp[10];
-    char sensor[80];
-
-    dtostrfi(st, Settings.flag.temperature_resolution, stemp);
-    snprintf_P(sensor, sizeof(sensor), HTTP_SNS_TEMP, "DS18B20", stemp, TempUnit());
-    page += sensor;
-  }
-  Ds18b20ReadTempPrep();
-  return page;
-}
+    } else {
+      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TEMP, mqtt_data, "DS18B20", temperature, TempUnit());
 #endif  // USE_WEBSERVER
+    }
+  }
+#ifdef USE_WEBSERVER
+  if (!json) {
+    Ds18b20ReadTempPrep();
+  }
+#endif  // USE_WEBSERVER
+}
+
+/*********************************************************************************************\
+ * Interface
+\*********************************************************************************************/
+
+#define XSNS_05
+
+boolean Xsns05(byte function)
+{
+  boolean result = false;
+
+  if (pin[GPIO_DSB] < 99) {
+    switch (function) {
+//      case FUNC_XSNS_INIT:
+//        break;
+      case FUNC_XSNS_PREP:
+        Ds18b20ReadTempPrep();
+        break;
+      case FUNC_XSNS_JSON_APPEND:
+        Ds18b20Show(1);
+        break;
+#ifdef USE_WEBSERVER
+      case FUNC_XSNS_WEB:
+        Ds18b20Show(0);
+        break;
+#endif  // USE_WEBSERVER
+    }
+  }
+  return result;
+}
+
 #endif  // USE_DS18B20

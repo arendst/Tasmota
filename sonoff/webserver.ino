@@ -60,7 +60,8 @@ const char HTTP_HEAD[] PROGMEM =
     "x=new XMLHttpRequest();"
     "x.onreadystatechange=function(){"
       "if(x.readyState==4&&x.status==200){"
-        "document.getElementById('l1').innerHTML=x.responseText;"
+        "var s=x.responseText.replace(/{s}/g,\"<tr><th>\").replace(/{m}/g,\"</th><td>\").replace(/{e}/g,\"</td></tr>\").replace(/{t}/g,\"%'><div style='text-align:center;font-weight:\");"
+        "document.getElementById('l1').innerHTML=s;"
       "}"
     "};"
     "x.open('GET','ay'+a,true);"
@@ -274,20 +275,6 @@ const char HTTP_TABLE100[] PROGMEM =
   "<table style='width:100%'>";
 const char HTTP_COUNTER[] PROGMEM =
   "<br/><div id='t' name='t' style='text-align:center;'></div>";
-const char HTTP_SNS_TEMP[] PROGMEM =
-  "<tr><th>%s " D_TEMPERATURE "</th><td>%s&deg;%c</td></tr>";
-const char HTTP_SNS_HUM[] PROGMEM =
-  "<tr><th>%s " D_HUMIDITY "</th><td>%s%</td></tr>";
-const char HTTP_SNS_PRESSURE[] PROGMEM =
-  "<tr><th>%s " D_PRESSURE "</th><td>%s " D_UNIT_PRESSURE "</td></tr>";
-const char HTTP_SNS_PRESSUREATSEALEVEL[] PROGMEM =
-  "<tr><th>%s " D_PRESSUREATSEALEVEL "</th><td>%s " D_UNIT_PRESSURE "</td></tr>";
-const char HTTP_SNS_LIGHT[] PROGMEM =
-  "<tr><th>%s " D_LIGHT "</th><td>%d%</td></tr>";
-const char HTTP_SNS_NOISE[] PROGMEM =
-  "<tr><th>%s " D_NOISE "</th><td>%d%</td></tr>";
-const char HTTP_SNS_DUST[] PROGMEM =
-  "<tr><th>%s " D_AIR_QUALITY "</th><td>%d%</td></tr>";
 const char HTTP_END[] PROGMEM =
   "</div>"
   "</body>"
@@ -520,68 +507,23 @@ void HandleAjaxStatusRefresh()
     ExecuteCommand(svalue);
   }
 
-  String tpage = "";
-  tpage += WebShowCounter();
-#ifndef USE_ADC_VCC
-  if (pin[GPIO_ADC0] < 99) {
-    snprintf_P(svalue, sizeof(svalue), PSTR("<tr><th>" D_ANALOG_INPUT0 "</th><td>%d</td></tr>"), GetAdc0());
-    tpage += svalue;
-  }
-#endif
-  if (hlw_flg) {
-    tpage += WebShowHlw();
-  }
-  if (SONOFF_SC == Settings.module) {
-    tpage += WebShowSonoffSc();
-  }
-#ifdef USE_DS18B20
-  if (pin[GPIO_DSB] < 99) {
-    tpage += WebShowDs18b20();
-  }
-#endif  // USE_DS18B20
-#ifdef USE_DS18x20
-  if (pin[GPIO_DSB] < 99) {
-    tpage += WebShowDs18x20();
-  }
-#endif  // USE_DS18x20
-#ifdef USE_DHT
-  if (dht_flg) {
-    tpage += WebShowDht();
-  }
-#endif  // USE_DHT
-#ifdef USE_I2C
-  if (i2c_flg) {
-#ifdef USE_SHT
-    tpage += WebShowSht();
-#endif
-#ifdef USE_HTU
-    tpage += WebShowHtu();
-#endif
-#ifdef USE_BMP
-    tpage += WebShowBmp();
-#endif
-#ifdef USE_BH1750
-    tpage += WebShowBh1750();
-#endif
-#ifdef USE_VEML6070
-    tpage += WebShowVeml6070();
-#endif
-}
-#endif  // USE_I2C
   String page = "";
-  if (tpage.length() > 0) {
+  mqtt_data[0] = '\0';
+  XsnsCall(FUNC_XSNS_WEB);
+  if (strlen(mqtt_data)) {
     page += FPSTR(HTTP_TABLE100);
-    page += tpage;
+    page += mqtt_data;
     page += F("</table>");
   }
-  char line[160];
+  char line[80];
   if (devices_present) {
     page += FPSTR(HTTP_TABLE100);
     page += F("<tr>");
     uint8_t fsize = (devices_present < 5) ? 70 - (devices_present * 8) : 32;
     for (byte idx = 1; idx <= devices_present; idx++) {
       snprintf_P(svalue, sizeof(svalue), PSTR("%d"), bitRead(power, idx -1));
-      snprintf_P(line, sizeof(line), PSTR("<td style='width:%d%'><div style='text-align:center;font-weight:%s;font-size:%dpx'>%s</div></td>"),
+//      snprintf_P(line, sizeof(line), PSTR("<td style='width:%d%'><div style='text-align:center;font-weight:%s;font-size:%dpx'>%s</div></td>"),
+      snprintf_P(line, sizeof(line), PSTR("<td style='width:%d{t}%s;font-size:%dpx'>%s</div></td>"),  // {t} = %'><div style='text-align:center;font-weight:
         100 / devices_present, (bitRead(power, idx -1)) ? "bold" : "normal", fsize, (devices_present < 5) ? GetStateText(bitRead(power, idx -1)) : svalue);
       page += line;
     }
@@ -978,14 +920,14 @@ void HandleBackupConfiguration()
   uint8_t buffer[sizeof(Settings)];
 
   WiFiClient myClient = WebServer->client();
-  WebServer->setContentLength(4096);
+  WebServer->setContentLength(sizeof(buffer));
 
   char attachment[100];
   snprintf_P(attachment, sizeof(attachment), PSTR("attachment; filename=Config_%s_%s.dmp"),
     Settings.friendlyname[0], version);
   WebServer->sendHeader(F("Content-Disposition"), attachment);
   WebServer->send(200, FPSTR(HDR_CTYPE_STREAM), "");
-  memcpy(buffer, &Settings, sizeof(Settings));
+  memcpy(buffer, &Settings, sizeof(buffer));
   buffer[0] = CONFIG_FILE_SIGN;
   buffer[1] = (!CONFIG_FILE_XOR)?0:1;
   if (buffer[1]) {

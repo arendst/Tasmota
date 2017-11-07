@@ -1,7 +1,7 @@
 ## Sonoff-Tasmota
 Provide ESP8266 based Sonoff by [iTead Studio](https://www.itead.cc/) and ElectroDragon IoT Relay with Serial, Web and MQTT control allowing 'Over the Air' or OTA firmware updates using Arduino IDE.
 
-Current version is **5.9.0** - See [sonoff/_releasenotes.ino](https://github.com/arendst/Sonoff-Tasmota/blob/master/sonoff/_releasenotes.ino) for change information.
+Current version is **5.9.1** - See [sonoff/_releasenotes.ino](https://github.com/arendst/Sonoff-Tasmota/blob/master/sonoff/_releasenotes.ino) for change information.
 
 ### ATTENTION All versions
 
@@ -33,23 +33,23 @@ See [Wiki](https://github.com/arendst/Sonoff-Tasmota/wiki) for more information.
 See [Community](https://groups.google.com/d/forum/sonoffusers) for forum and more user experience.
 
 The following devices are supported:
-- [iTead Sonoff Basic](http://sonoff.itead.cc/en/products/sonoff/sonoff-basic)
-- [iTead Sonoff RF](http://sonoff.itead.cc/en/products/sonoff/sonoff-rf)
-- [iTead Sonoff SV](https://www.itead.cc/sonoff-sv.html)<img src="https://github.com/arendst/arendst.github.io/blob/master/media/sonoff_th.jpg" width="250" align="right" />
-- [iTead Sonoff TH10/TH16 with temperature sensor](http://sonoff.itead.cc/en/products/sonoff/sonoff-th)
-- [iTead Sonoff Dual](http://sonoff.itead.cc/en/products/sonoff/sonoff-dual)
-- [iTead Sonoff Pow](http://sonoff.itead.cc/en/products/sonoff/sonoff-pow)
-- [iTead Sonoff 4CH](http://sonoff.itead.cc/en/products/sonoff/sonoff-4ch)
-- [iTead Sonoff 4CH Pro](http://sonoff.itead.cc/en/products/sonoff/sonoff-4ch-pro)
-- [iTead S20 Smart Socket](http://sonoff.itead.cc/en/products/residential/s20-socket)
-- [iTead Slampher](http://sonoff.itead.cc/en/products/residential/slampher-rf)
-- [iTead Sonoff Touch](http://sonoff.itead.cc/en/products/residential/sonoff-touch)
-- [iTead Sonoff T1](http://sonoff.itead.cc/en/products/residential/sonoff-t1)
-- [iTead Sonoff SC](http://sonoff.itead.cc/en/products/residential/sonoff-sc)
-- [iTead Sonoff Led](http://sonoff.itead.cc/en/products/appliances/sonoff-led)<img src="https://github.com/arendst/arendst.github.io/blob/master/media/sonoff4ch.jpg" height="250" align="right" />
-- [iTead Sonoff BN-SZ01 Ceiling Led](http://sonoff.itead.cc/en/products/appliances/bn-sz01)
-- [iTead Sonoff B1](http://sonoff.itead.cc/en/products/residential/sonoff-b1)
-- [iTead Sonoff RF Bridge 433](http://sonoff.itead.cc/en/products/appliances/sonoff-rf-bridge-433)
+- [iTead Sonoff Basic](https://www.itead.cc/smart-home/sonoff-wifi-wireless-switch-1.html)
+- [iTead Sonoff RF](https://www.itead.cc/smart-home/sonoff-rf.html)
+- [iTead Sonoff SV](https://www.itead.cc/smart-home/sonoff-sv.html)<img src="https://github.com/arendst/arendst.github.io/blob/master/media/sonoff_th.jpg" width="250" align="right" />
+- [iTead Sonoff TH10/TH16 with temperature sensor](https://www.itead.cc/smart-home/sonoff-th.html)
+- [iTead Sonoff Dual](https://www.itead.cc/smart-home/sonoff-dual.html)
+- [iTead Sonoff Pow](https://www.itead.cc/smart-home/sonoff-pow.html)
+- [iTead Sonoff 4CH](https://www.itead.cc/smart-home/sonoff-4ch.html)
+- [iTead Sonoff 4CH Pro](https://www.itead.cc/smart-home/sonoff-4ch-pro.html)
+- [iTead S20 Smart Socket](https://www.itead.cc/smart-socket.html)
+- [iTead Slampher](https://www.itead.cc/slampher.html)
+- [iTead Sonoff Touch](https://www.itead.cc/sonoff-touch-eu-local.html)
+- [iTead Sonoff T1](https://www.itead.cc/sonoff-t1.html)
+- [iTead Sonoff SC](https://www.itead.cc/sonoff-sc.html)
+- [iTead Sonoff Led](https://www.itead.cc/sonoff-led.html)<img src="https://github.com/arendst/arendst.github.io/blob/master/media/sonoff4ch.jpg" height="250" align="right" />
+- [iTead Sonoff BN-SZ01 Ceiling Led](https://www.itead.cc/bn-sz01.html)
+- [iTead Sonoff B1](https://www.itead.cc/sonoff-b1.html)
+- [iTead Sonoff RF Bridge 433](https://www.itead.cc/sonoff-rf-bridge-433.html)
 - [iTead Sonoff Dev](https://www.itead.cc/sonoff-dev.html)
 - [iTead 1 Channel Switch 5V / 12V](https://www.itead.cc/smart-home/inching-self-locking-wifi-wireless-switch.html)
 - [iTead Motor Clockwise/Anticlockwise](https://www.itead.cc/smart-home/motor-reversing-wifi-wireless-switch.html)

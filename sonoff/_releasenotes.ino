@@ -1,4 +1,11 @@
-/* 5.9.0 20171030
+/* 5.9.1 20171107
+ * Add external sensor function pointer interface to enable easy sensor addition
+ * Add support for ADS1115 to be enabled in user_config.h and needs libraries i2cdevlib-Core and i2cdevlib-ADS1115 (#338, #660)
+ * Fix Backup Configuration file download failure by defining proper file size (#1115)
+ * Fix Exception 26 and empty console screen after usage of command WakeupDuration (#1133)
+ * Fix some changed iTead web links in README.md (#1137)
+ *
+ * 5.9.0 20171030
  * Rewrite code (partly) using Google C++ Style Guide (https://google.github.io/styleguide/cppguide.html)
  * Rewrite code by using command lookup tables and javascript (client side) web page expansions
  * Change HTML/CSS to enable nicer form field entry

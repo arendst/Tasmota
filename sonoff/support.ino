@@ -757,6 +757,17 @@ int32_t I2cRead24(uint8_t addr, uint8_t reg)
   return I2cRead(addr, reg, 3);
 }
 
+void I2cWrite8v(uint8_t addr, uint8_t val)
+{
+  byte x = I2C_RETRY_COUNTER;
+
+  do {
+    Wire.beginTransmission((uint8_t)addr);  // start transmission to device
+    Wire.write(val);                         // write data
+    x--;
+  } while (Wire.endTransmission(true) != 0 && x != 0); // end transmission
+}
+
 void I2cWrite8(uint8_t addr, uint8_t reg, uint8_t val)
 {
   byte x = I2C_RETRY_COUNTER;
@@ -1136,16 +1147,6 @@ char TempUnit()
   return (Settings.flag.temperature_conversion) ? 'F' : 'C';
 }
 
-uint16_t GetAdc0()
-{
-  uint16_t alr = 0;
-  for (byte i = 0; i < 32; i++) {
-    alr += analogRead(A0);
-    delay(1);
-  }
-  return alr >> 5;
-}
-
 double FastPrecisePow(double a, double b)
 {
   // https://martin.ankerl.com/2012/01/25/optimized-approximative-pow-in-c-and-cpp/
@@ -1233,8 +1234,66 @@ int GetCommandCode(char* destination, size_t destination_size, const char* needl
   return result;
 }
 
+#ifndef USE_ADC_VCC
+/*********************************************************************************************\
+ * ADC support
+\*********************************************************************************************/
+
+void AdcShow(boolean json)
+{
+  uint16_t analog = 0;
+  for (byte i = 0; i < 32; i++) {
+    analog += analogRead(A0);
+    delay(1);
+  }
+  analog >>= 5;
+
+  if (json) {
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s, \"" D_ANALOG_INPUT "0\":%d"), mqtt_data, analog);
+#ifdef USE_WEBSERVER
+  } else {
+    snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_ANALOG, mqtt_data, "", 0, analog);
+#endif  // USE_WEBSERVER
+  }
+}
+
+/*********************************************************************************************\
+ * Interface
+\*********************************************************************************************/
+
+#define XSNS_02
+
+boolean Xsns02(byte function)
+{
+  boolean result = false;
+
+  if (pin[GPIO_ADC0] < 99) {
+    switch (function) {
+//      case FUNC_XSNS_INIT:
+//        break;
+//      case FUNC_XSNS_PREP:
+//        break;
+      case FUNC_XSNS_JSON_APPEND:
+        AdcShow(1);
+        break;
+#ifdef USE_WEBSERVER
+      case FUNC_XSNS_WEB:
+        AdcShow(0);
+        break;
+#endif  // USE_WEBSERVER
+    }
+  }
+  return result;
+}
+#endif  // USE_ADC_VCC
+
 /*********************************************************************************************\
  * Syslog
+ *
+ * Example:
+ *   snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_LOG "Any value %d"), value);
+ *   AddLog(LOG_LEVEL_DEBUG);
+ *
 \*********************************************************************************************/
 
 void Syslog()

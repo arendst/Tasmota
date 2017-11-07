@@ -1,5 +1,5 @@
 /*
-  xsns_counter.ino - Counter sensors (water meters, electricity meters etc.) sensor support for Sonoff-Tasmota
+  xsns_01_counter.ino - Counter sensors (water meters, electricity meters etc.) sensor support for Sonoff-Tasmota
 
   Copyright (C) 2017  Maarten Damen and Theo Arends
 
@@ -68,6 +68,8 @@ void CounterSaveState()
   }
 }
 
+/********************************************************************************************/
+
 void CounterInit()
 {
   typedef void (*function) () ;
@@ -81,57 +83,66 @@ void CounterInit()
   }
 }
 
-/*********************************************************************************************\
- * Presentation
-\*********************************************************************************************/
+#ifdef USE_WEBSERVER
+const char HTTP_SNS_COUNTER[] PROGMEM =
+  "%s{s}" D_COUNTER "%d{m}%s%s{e}";  // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
+#endif  // USE_WEBSERVER
 
-void MqttShowCounter(uint8_t* djson)
+void CounterShow(boolean json)
 {
-  char stemp[16];
+  char counter[16];
 
   byte dsxflg = 0;
   for (byte i = 0; i < MAX_COUNTERS; i++) {
     if (pin[GPIO_CNTR1 +i] < 99) {
       if (bitRead(Settings.pulse_counter_type, i)) {
-        dtostrfd((double)RtcSettings.pulse_counter[i] / 1000, 3, stemp);
+        dtostrfd((double)RtcSettings.pulse_counter[i] / 1000, 3, counter);
       } else {
         dsxflg++;
-        dtostrfd(RtcSettings.pulse_counter[i], 0, stemp);
+        dtostrfd(RtcSettings.pulse_counter[i], 0, counter);
       }
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s, \"" D_COUNTER "%d\":%s"), mqtt_data, i +1, stemp);
-      *djson = 1;
+
+      if (json) {
+        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s, \"" D_COUNTER "%d\":%s"), mqtt_data, i +1, counter);
 #ifdef USE_DOMOTICZ
-      if (1 == dsxflg) {
-        DomoticzSensor(DZ_COUNT, RtcSettings.pulse_counter[i]);
-        dsxflg++;
-      }
+        if (1 == dsxflg) {
+          DomoticzSensor(DZ_COUNT, RtcSettings.pulse_counter[i]);
+          dsxflg++;
+        }
 #endif  // USE_DOMOTICZ
-    }
-  }
-}
-
 #ifdef USE_WEBSERVER
-const char HTTP_SNS_COUNTER[] PROGMEM =
-  "<tr><th>" D_COUNTER "%d</th><td>%s%s</td></tr>";
-
-String WebShowCounter()
-{
-  String page = "";
-  char stemp[16];
-  char sensor[80];
-
-  for (byte i = 0; i < MAX_COUNTERS; i++) {
-    if (pin[GPIO_CNTR1 +i] < 99) {
-      if (bitRead(Settings.pulse_counter_type, i)) {
-        dtostrfi((double)RtcSettings.pulse_counter[i] / 1000, 3, stemp);
       } else {
-        dtostrfi(RtcSettings.pulse_counter[i], 0, stemp);
+        snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_COUNTER, mqtt_data, i +1, counter, (bitRead(Settings.pulse_counter_type, i)) ? " " D_UNIT_SECOND : "");
+#endif  // USE_WEBSERVER
       }
-      snprintf_P(sensor, sizeof(sensor), HTTP_SNS_COUNTER, i+1, stemp, (bitRead(Settings.pulse_counter_type, i)) ? " " D_UNIT_SECOND : "");
-      page += sensor;
     }
   }
-  return page;
 }
-#endif  // USE_WEBSERVER
 
+/*********************************************************************************************\
+ * Interface
+\*********************************************************************************************/
+
+#define XSNS_01
+
+boolean Xsns01(byte function)
+{
+  boolean result = false;
+
+  switch (function) {
+    case FUNC_XSNS_INIT:
+      CounterInit();
+      break;
+//    case FUNC_XSNS_PREP:
+//      break;
+    case FUNC_XSNS_JSON_APPEND:
+      CounterShow(1);
+      break;
+#ifdef USE_WEBSERVER
+    case FUNC_XSNS_WEB:
+      CounterShow(0);
+      break;
+#endif  // USE_WEBSERVER
+  }
+  return result;
+}

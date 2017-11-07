@@ -899,7 +899,7 @@ boolean LightCommand(char *type, uint16_t index, char *dataBuf, uint16_t data_le
       Settings.light_wakeup = payload;
       light_wakeup_active = 0;
     }
-    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, Settings.light_wakeup);
+    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, Settings.light_wakeup);
   }
   else if (CMND_UNDOCA == command_code) {  // Theos legacy status
     LightGetColor(1, scolor);

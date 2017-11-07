@@ -1,5 +1,5 @@
 /*
-  xsns_ds18x20.ino - DS18x20 temperature sensor support for Sonoff-Tasmota
+  xsns_05_ds18x20.ino - DS18x20 temperature sensor support for Sonoff-Tasmota
 
   Copyright (C) 2017  Heiko Krupp and Theo Arends
 
@@ -143,79 +143,100 @@ boolean Ds18x20Read(uint8_t sensor, float &t)
   return (!isnan(t));
 }
 
-/*********************************************************************************************\
- * Presentation
-\*********************************************************************************************/
+/********************************************************************************************/
 
 void Ds18x20Type(uint8_t sensor)
 {
   strcpy_P(ds18x20_types, PSTR("DS18x20"));
   switch(ds18x20_address[ds18x20_index[sensor]][0]) {
-  case DS18S20_CHIPID:
-    strcpy_P(ds18x20_types, PSTR("DS18S20"));
-    break;
-  case DS18B20_CHIPID:
-    strcpy_P(ds18x20_types, PSTR("DS18B20"));
-    break;
-  case MAX31850_CHIPID:
-    strcpy_P(ds18x20_types, PSTR("MAX31850"));
-    break;
+    case DS18S20_CHIPID:
+      strcpy_P(ds18x20_types, PSTR("DS18S20"));
+      break;
+    case DS18B20_CHIPID:
+      strcpy_P(ds18x20_types, PSTR("DS18B20"));
+      break;
+    case MAX31850_CHIPID:
+      strcpy_P(ds18x20_types, PSTR("MAX31850"));
+      break;
   }
 }
 
-void MqttShowDs18x20(uint8_t* djson)
+void Ds18x20Show(boolean json)
 {
-  char stemp1[10];
-  char stemp2[10];
+  char temperature[10];
+  char stemp[10];
   float t;
 
   byte dsxflg = 0;
   for (byte i = 0; i < Ds18x20Sensors(); i++) {
     if (Ds18x20Read(i, t)) {           // Check if read failed
       Ds18x20Type(i);
-      dtostrfd(t, Settings.flag.temperature_resolution, stemp2);
-      if (!dsxflg) {
-        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s, \"DS18x20\":{"), mqtt_data);
-        *djson = 1;
-        stemp1[0] = '\0';
-      }
-      dsxflg++;
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s%s\"DS%d\":{\"" D_TYPE "\":\"%s\", \"" D_ADDRESS "\":\"%s\", \"" D_TEMPERATURE "\":%s}"),
-        mqtt_data, stemp1, i +1, ds18x20_types, Ds18x20Addresses(i).c_str(), stemp2);
-      strcpy(stemp1, ", ");
+      dtostrfd(t, Settings.flag.temperature_resolution, temperature);
+
+      if (json) {
+        if (!dsxflg) {
+          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s, \"DS18x20\":{"), mqtt_data);
+          stemp[0] = '\0';
+        }
+        dsxflg++;
+        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s%s\"DS%d\":{\"" D_TYPE "\":\"%s\", \"" D_ADDRESS "\":\"%s\", \"" D_TEMPERATURE "\":%s}"),
+          mqtt_data, stemp, i +1, ds18x20_types, Ds18x20Addresses(i).c_str(), temperature);
+        strcpy(stemp, ", ");
 #ifdef USE_DOMOTICZ
-      if (1 == dsxflg) {
-        DomoticzSensor(DZ_TEMP, stemp2);
-      }
+        if (1 == dsxflg) {
+          DomoticzSensor(DZ_TEMP, temperature);
+        }
 #endif  // USE_DOMOTICZ
-    }
-  }
-  if (dsxflg) {
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}"), mqtt_data);
-  }
-}
-
 #ifdef USE_WEBSERVER
-String WebShowDs18x20()
-{
-  String page = "";
-  char stemp[10];
-  char stemp2[16];
-  char sensor[80];
-  float t;
-
-  for (byte i = 0; i < Ds18x20Sensors(); i++) {
-    if (Ds18x20Read(i, t)) {   // Check if read failed
-      Ds18x20Type(i);
-      dtostrfi(t, Settings.flag.temperature_resolution, stemp);
-      snprintf_P(stemp2, sizeof(stemp2), PSTR("%s-%d"), ds18x20_types, i +1);
-      snprintf_P(sensor, sizeof(sensor), HTTP_SNS_TEMP, stemp2, stemp, TempUnit());
-      page += sensor;
+      } else {
+        snprintf_P(stemp, sizeof(stemp), PSTR("%s-%d"), ds18x20_types, i +1);
+        snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TEMP, mqtt_data, stemp, temperature, TempUnit());
+#endif  // USE_WEBSERVER
+      }
     }
   }
-  Ds18x20Search();      // Check for changes in sensors number
-  Ds18x20Convert();     // Start Conversion, takes up to one second
-  return page;
-}
+  if (json) {
+    if (dsxflg) {
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}"), mqtt_data);
+    }
+#ifdef USE_WEBSERVER
+  } else {
+    Ds18x20Search();      // Check for changes in sensors number
+    Ds18x20Convert();     // Start Conversion, takes up to one second
 #endif  // USE_WEBSERVER
+  }
+}
+
+/*********************************************************************************************\
+ * Interface
+\*********************************************************************************************/
+
+#define XSNS_05
+
+boolean Xsns05(byte function)
+{
+  boolean result = false;
+
+  if (pin[GPIO_DSB] < 99) {
+    switch (function) {
+      case FUNC_XSNS_INIT:
+        Ds18x20Init();
+        break;
+      case FUNC_XSNS_PREP:
+        Ds18x20Search();      // Check for changes in sensors number
+        Ds18x20Convert();     // Start Conversion, takes up to one second
+        break;
+      case FUNC_XSNS_JSON_APPEND:
+        Ds18x20Show(1);
+        break;
+#ifdef USE_WEBSERVER
+      case FUNC_XSNS_WEB:
+        Ds18x20Show(0);
+        break;
+#endif  // USE_WEBSERVER
+    }
+  }
+  return result;
+}
+
 #endif  // USE_DS18x20

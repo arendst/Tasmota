@@ -216,7 +216,7 @@
 #define D_SET_BAUDRATE_TO "Baudrate eingestell auf"
 #define D_RECEIVED_TOPIC "erhaltenes topic"
 #define D_DATA_SIZE "Datengröße"
-#define D_ANALOG_INPUT0 "Analog0"
+#define D_ANALOG_INPUT "Analog"
 
 #define D_FINGERPRINT "TLS-Fingerabdruck wird verifiziert..."
 #define D_TLS_CONNECT_FAILED_TO "TLS-Verbindung fehlgeschlagen an"

@@ -216,7 +216,7 @@
 #define D_SET_BAUDRATE_TO "Zet baudrate op"
 #define D_RECEIVED_TOPIC "Ontvangen topic"
 #define D_DATA_SIZE "Data lengte"
-#define D_ANALOG_INPUT0 "Analoog0"
+#define D_ANALOG_INPUT "Analoog"
 
 #define D_FINGERPRINT "Controleer TLS vingerafdruk..."
 #define D_TLS_CONNECT_FAILED_TO "TLS Verbinding mislukt naar"

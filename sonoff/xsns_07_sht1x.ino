@@ -1,5 +1,5 @@
 /*
-  xsns_sht1x.ino - SHT1x temperature and sensor support for Sonoff-Tasmota
+  xsns_07_sht1x.ino - SHT1x temperature and sensor support for Sonoff-Tasmota
 
   Copyright (C) 2017  Theo Arends
 
@@ -159,6 +159,8 @@ boolean ShtReadTempHum(float &t, float &h)
   return (!isnan(t) && !isnan(h));
 }
 
+/********************************************************************************************/
+
 boolean ShtDetect()
 {
   if (sht_type) {
@@ -180,56 +182,63 @@ boolean ShtDetect()
   return sht_type;
 }
 
-/*********************************************************************************************\
- * Presentation
-\*********************************************************************************************/
-
-void MqttShowSht(uint8_t* djson)
+void ShtShow(boolean json)
 {
-  if (!sht_type) {
-    return;
-  }
-
-  float t;
-  float h;
-
-  if (ShtReadTempHum(t, h)) {
-    char stemp[10];
-    char shum[10];
-
-    dtostrfd(t, Settings.flag.temperature_resolution, stemp);
-    dtostrfd(h, Settings.flag.humidity_resolution, shum);
-    snprintf_P(mqtt_data, sizeof(mqtt_data), JSON_SNS_TEMPHUM, mqtt_data, "SHT1X", stemp, shum);
-    *djson = 1;
-#ifdef USE_DOMOTICZ
-    DomoticzTempHumSensor(stemp, shum);
-#endif  // USE_DOMOTICZ
-  }
-}
-
-#ifdef USE_WEBSERVER
-String WebShowSht()
-{
-  float t;
-  float h;
-
-  String page = "";
   if (sht_type) {
-    if (ShtReadTempHum(t, h)) {
-      char stemp[10];
-      char shum[10];
-      char sensor[80];
+    float t;
+    float h;
 
-      dtostrfi(t, Settings.flag.temperature_resolution, stemp);
-      dtostrfi(h, Settings.flag.humidity_resolution, shum);
-      snprintf_P(sensor, sizeof(sensor), HTTP_SNS_TEMP, "SHT1X", stemp, TempUnit());
-      page += sensor;
-      snprintf_P(sensor, sizeof(sensor), HTTP_SNS_HUM, "SHT1X", shum);
-      page += sensor;
+    if (ShtReadTempHum(t, h)) {
+      char temperature[10];
+      char humidity[10];
+
+      dtostrfd(t, Settings.flag.temperature_resolution, temperature);
+      dtostrfd(h, Settings.flag.humidity_resolution, humidity);
+
+      if (json) {
+        snprintf_P(mqtt_data, sizeof(mqtt_data), JSON_SNS_TEMPHUM, mqtt_data, "SHT1X", temperature, humidity);
+#ifdef USE_DOMOTICZ
+        DomoticzTempHumSensor(temperature, humidity);
+#endif  // USE_DOMOTICZ
+#ifdef USE_WEBSERVER
+      } else {
+        snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TEMP, mqtt_data, "SHT1X", temperature, TempUnit());
+        snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_HUM, mqtt_data, "SHT1X", humidity);
+#endif  // USE_WEBSERVER
+      }
     }
   }
-  return page;
 }
+
+/*********************************************************************************************\
+ * Interface
+\*********************************************************************************************/
+
+#define XSNS_07
+
+boolean Xsns07(byte function)
+{
+  boolean result = false;
+
+  if (i2c_flg) {
+    switch (function) {
+//      case FUNC_XSNS_INIT:
+//        break;
+      case FUNC_XSNS_PREP:
+        ShtDetect();
+        break;
+      case FUNC_XSNS_JSON_APPEND:
+        ShtShow(1);
+        break;
+#ifdef USE_WEBSERVER
+      case FUNC_XSNS_WEB:
+        ShtShow(0);
+        break;
 #endif  // USE_WEBSERVER
+    }
+  }
+  return result;
+}
+
 #endif  // USE_SHT
 #endif  // USE_I2C

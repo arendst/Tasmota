@@ -216,7 +216,7 @@
 #define D_SET_BAUDRATE_TO "Ustaw szybkosc transmisji na"
 #define D_RECEIVED_TOPIC "Otrzymany temat"
 #define D_DATA_SIZE "Wielkosc danych"
-#define D_ANALOG_INPUT0 "Wej_analogowe"
+#define D_ANALOG_INPUT "Wej_analogowe"
 
 #define D_FINGERPRINT "Weryfikuj odcisk TLS..."
 #define D_TLS_CONNECT_FAILED_TO "Nieudane polaczenie TLS do"
