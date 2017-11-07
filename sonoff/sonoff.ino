@@ -1755,8 +1755,10 @@ void PublishStatus(uint8_t payload)
   }
 
   if ((0 == payload) || (4 == payload)) {
+    //STB Mod
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_STATUS D_STATUS4_MEMORY "\":{\"" D_PROGRAMSIZE "\":%d, \"" D_FREEMEMORY "\":%d, \"" D_HEAPSIZE "\":%d, \"" D_PROGRAMFLASHSIZE "\":%d, \"" D_FLASHSIZE "\":%d, \"" D_FLASHMODE "\":%d}}"),
-      ESP.getSketchSize()/1024, ESP.getFreeSketchSpace()/1024, ESP.getFreeHeap()/1024, ESP.getFlashChipSize()/1024, ESP.getFlashChipRealSize()/1024, ESP.getFlashChipMode());
+      ESP.getSketchSize()/1024, ESP.getFreeSketchSpace()/1024, ESP.getFreeHeap(), ESP.getFlashChipSize()/1024, ESP.getFlashChipRealSize()/1024, ESP.getFlashChipMode());
+    //end
     MqttPublishPrefixTopic_P(option, PSTR(D_CMND_STATUS "4"));
   }
 
@@ -1822,8 +1824,8 @@ void MqttShowState()
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s, \"%s\":\"%s\""), mqtt_data, GetPowerDevice(stemp1, i +1, sizeof(stemp1)), GetStateText(bitRead(power, i)));
   }
   //STB mod
-  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s, \"" D_WIFI "\":{\"" D_AP "\":%d, \"" D_SSID "\":\"%s\", \"" D_RSSI "\":%d, \"" D_APMAC_ADDRESS "\":\"%s\"}, \"DeepSleep\":%d}"),
-    mqtt_data, Settings.sta_active +1, Settings.sta_ssid[Settings.sta_active], WifiGetRssiAsQuality(WiFi.RSSI()), WiFi.BSSIDstr().c_str() , Settings.deepsleep);
+  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s, \"" D_WIFI "\":{\"" D_AP "\":%d, \"" D_SSID "\":\"%s\", \"" D_RSSI "\":%d, \"" D_APMAC_ADDRESS "\":\"%s\"}, \"DeepSleep\":%d, \"" D_HEAPSIZE "\":%d}"),
+    mqtt_data, Settings.sta_active +1, Settings.sta_ssid[Settings.sta_active], WifiGetRssiAsQuality(WiFi.RSSI()), WiFi.BSSIDstr().c_str() , Settings.deepsleep, ESP.getFreeHeap());
   //end
 }
 
@@ -2018,7 +2020,7 @@ void PerformEverySecond()
         MqttShowHlw8012(1);
       }
       //STB mod
-      if (Settings.deepsleep > 10) {
+      if (Settings.deepsleep > 10 && Settings.deepsleep < 65000) {
         //TODO STEFAN
         yield();
         if (Settings.deepsleep > MAX_DEEPSLEEP_CYCLE) {
@@ -2031,6 +2033,7 @@ void PerformEverySecond()
         snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"Time\":\"%s\", \"Uptime_s\":%d}"), GetDateAndTime().c_str(), RtcSettings.uptime);
         MqttPublishPrefixTopic_P(2, PSTR("UPTIME_S"));
         yield();
+        delay(300);
         RtcSettings.uptime = 0;
         RtcSettingsSave();
         // 10% of deepsleep to retry
@@ -2834,7 +2837,7 @@ void setup()
   SettingsDelta();
 
   //STB mod
-  if (RtcSettings.ultradeepsleep > 0) {
+  if (RtcSettings.ultradeepsleep > 0 && RtcSettings.ultradeepsleep < 65000) {
      RtcSettings.ultradeepsleep = RtcSettings.ultradeepsleep - MAX_DEEPSLEEP_CYCLE;
      snprintf_P(log_data, sizeof(log_data), PSTR("APP: Remain DeepSleep %d"), RtcSettings.ultradeepsleep);
      AddLog(LOG_LEVEL_INFO);

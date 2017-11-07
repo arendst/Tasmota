@@ -314,7 +314,7 @@ enum HttpOptions {HTTP_OFF, HTTP_USER, HTTP_ADMIN, HTTP_MANAGER};
 DNSServer *DnsServer;
 ESP8266WebServer *WebServer;
 
-boolean remove_duplicate_access_points = true;
+boolean remove_duplicate_access_points = false;
 int minimum_signal_quality = -1;
 uint8_t webserver_state = HTTP_OFF;
 uint8_t upload_error = 0;
