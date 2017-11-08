@@ -25,7 +25,7 @@
     - Select IDE Tools - Flash Size: "1M (no SPIFFS)"
   ====================================================*/
 
-#define VERSION                0x05090002   // 5.9.0b
+#define VERSION                0x05090101   // 5.9.1a
 
 // Location specific includes
 #include "sonoff.h"                         // Enumaration used in user_config.h
@@ -2612,7 +2612,7 @@ void GpioInit()
 
   hlw_flg = ((pin[GPIO_HLW_SEL] < 99) && (pin[GPIO_HLW_CF1] < 99) && (pin[GPIO_HLW_CF] < 99));
 
-  XSnsInit();
+//  XSnsInit();
 }
 
 extern "C" {
@@ -2726,9 +2726,10 @@ void setup()
 
   blink_powersave = power;
 
-  if (SONOFF_SC == Settings.module) {
-    SonoffScInit();
-  }
+//  if (SONOFF_SC == Settings.module) {
+//    SonoffScInit();
+//  }
+  XSnsInit();
 
   RtcInit();
 

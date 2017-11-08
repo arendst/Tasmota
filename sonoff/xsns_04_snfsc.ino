@@ -148,8 +148,9 @@ boolean Xsns04(byte function)
 
   if (SONOFF_SC == Settings.module) {
     switch (function) {
-//      case FUNC_XSNS_INIT:
-//        break;
+      case FUNC_XSNS_INIT:
+        SonoffScInit();
+        break;
 //      case FUNC_XSNS_PREP:
 //        break;
       case FUNC_XSNS_JSON_APPEND:

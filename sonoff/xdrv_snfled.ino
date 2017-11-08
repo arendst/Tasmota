@@ -179,7 +179,7 @@ void LightInit(void)
       Settings.pwm_value[i] = 0;        // Disable direct PWM control
     }
     if (LT_PWM1 == light_type) {
-      Settings.light_color[0] = 255;      // One PWM channel only supports Dimmer but needs max color
+      Settings.light_color[0] = 255;    // One PWM channel only supports Dimmer but needs max color
     }
     if (SONOFF_LED == Settings.module) { // Fix Sonoff Led instabilities
       if (!my_module.gp.io[4]) {
@@ -270,8 +270,8 @@ void LightSetDimmer(uint8_t myDimmer)
 {
   float temp;
 
-  if ((SONOFF_BN == Settings.module) && (100 == myDimmer)) {
-    myDimmer = 99;                      // BN-SZ01 starts flickering at dimmer = 100
+  if (LT_PWM1 == light_type) {
+    Settings.light_color[0] = 255;    // One PWM channel only supports Dimmer but needs max color
   }
   float dimmer = 100 / (float)myDimmer;
   for (byte i = 0; i < light_subtype; i++) {
@@ -527,6 +527,9 @@ void LightAnimate()
         cur_col[i] = (Settings.light_correction) ? ledTable[light_last_color[i]] : light_last_color[i];
         if (light_type < LT_PWM6) {
           if (pin[GPIO_PWM1 +i] < 99) {
+            if (cur_col[i] > 0xFC) {
+              cur_col[i] = 0xFC;   // Fix unwanted blinking and PWM watchdog errors for values close to pwm_range (H801, Arilux and BN-SZ01)
+            }
             uint16_t curcol = cur_col[i] * (Settings.pwm_range / 255);
 //            snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION "Cur_Col%d %d, CurCol %d"), i, cur_col[i], curcol);
 //            AddLog(LOG_LEVEL_DEBUG);
@@ -856,6 +859,7 @@ boolean LightCommand(char *type, uint16_t index, char *dataBuf, uint16_t data_le
   else if (CMND_DIMMER == command_code) {
     if ((payload >= 0) && (payload <= 100)) {
       Settings.light_dimmer = payload;
+      light_update = 1;
       coldim = true;
     } else {
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, Settings.light_dimmer);
