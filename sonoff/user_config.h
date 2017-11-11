@@ -172,6 +172,7 @@
   #define USE_BH1750                             // Add I2C code for BH1750 sensor
 //  #define USE_VEML6070                           // Add I2C code for VEML6070 sensor (+0.5k code)
 //  #define USE_ADS1115                            // Add I2C code for ADS1x15 16 bit A/D converter using library i2cdevlib-Core and i2cdevlib-ADS1115 (+2k code)
+  #define USE_INA219                             // Add I2C code for INA219 Low voltage and current sensor (+1k code)
 
 #define USE_IR_REMOTE                            // Send IR remote commands using library IRremoteESP8266 and ArduinoJson (+3k code, 0.3k mem)
 //  #define USE_IR_HVAC                            // Support for HVAC system using IR (+2k code)

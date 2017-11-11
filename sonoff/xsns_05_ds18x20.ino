@@ -171,17 +171,17 @@ void Ds18x20Show(boolean json)
   for (byte i = 0; i < Ds18x20Sensors(); i++) {
     if (Ds18x20Read(i, t)) {           // Check if read failed
       Ds18x20Type(i);
-      dtostrfd(t, Settings.flag.temperature_resolution, temperature);
+      dtostrfd(t, Settings.flag2.temperature_resolution, temperature);
 
       if (json) {
         if (!dsxflg) {
-          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s, \"DS18x20\":{"), mqtt_data);
+          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"DS18x20\":{"), mqtt_data);
           stemp[0] = '\0';
         }
         dsxflg++;
-        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s%s\"DS%d\":{\"" D_TYPE "\":\"%s\", \"" D_ADDRESS "\":\"%s\", \"" D_TEMPERATURE "\":%s}"),
+        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s%s\"DS%d\":{\"" D_TYPE "\":\"%s\",\"" D_ADDRESS "\":\"%s\",\"" D_TEMPERATURE "\":%s}"),
           mqtt_data, stemp, i +1, ds18x20_types, Ds18x20Addresses(i).c_str(), temperature);
-        strcpy(stemp, ", ");
+        strcpy(stemp, ",");
 #ifdef USE_DOMOTICZ
         if (1 == dsxflg) {
           DomoticzSensor(DZ_TEMP, temperature);

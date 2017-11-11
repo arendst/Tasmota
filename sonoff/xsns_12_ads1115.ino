@@ -24,6 +24,8 @@
  *
  * Required library: https://github.com/jrowberg/i2cdevlib/tree/master/Arduino/ADS1115
  *
+ * I2C Address: 0x48, 0x49, 0x4A or 0x4B
+ *
  * The ADC input range (or gain) can be changed via the following
  * functions, but be careful never to exceed VDD +0.3V max, or to
  * exceed the upper and lower limits if you adjust the input range!
@@ -42,9 +44,8 @@
 
 ADS1115 adc0;
 
-uint8_t ads1115_address;
 uint8_t ads1115_type = 0;
-
+uint8_t ads1115_address;
 uint8_t ads1115_addresses[] = {
   ADS1115_ADDRESS_ADDR_GND,  // address pin low (GND)
   ADS1115_ADDRESS_ADDR_VDD,  // address pin high (VCC)
@@ -72,16 +73,13 @@ int16_t Ads1115GetConversion(byte channel)
 
 /********************************************************************************************/
 
-boolean Ads1115Detect()
+void Ads1115Detect()
 {
   if (ads1115_type) {
-    return true;
+    return;
   }
 
-  uint8_t status;
-  boolean success = false;
-
-  for (byte i = 0; i < 4; i++) {
+  for (byte i = 0; i < sizeof(ads1115_addresses); i++) {
     ads1115_address = ads1115_addresses[i];
     ADS1115 adc0(ads1115_address);
     if (adc0.testConnection()) {
@@ -89,16 +87,14 @@ boolean Ads1115Detect()
       adc0.setGain(ADS1115_PGA_2P048);        // Set the gain (PGA) +/-4.096V
       adc0.setRate(ADS1115_RATE_860);
       adc0.setMode(ADS1115_MODE_CONTINUOUS);
-      success = true;
       ads1115_type = 1;
       break;
     }
   }
-  if (success) {
+  if (ads1115_type) {
     snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, "ADS1115", ads1115_address);
     AddLog(LOG_LEVEL_DEBUG);
   }
-  return success;
 }
 
 void Ads1115Show(boolean json)
@@ -112,12 +108,12 @@ void Ads1115Show(boolean json)
 
       if (json) {
         if (!dsxflg  ) {
-          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s, \"ADS1115\":{"), mqtt_data);
+          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"ADS1115\":{"), mqtt_data);
           stemp[0] = '\0';
         }
         dsxflg++;
         snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s%s\"" D_ANALOG_INPUT "%d\":%d"), mqtt_data, stemp, i, adc_value);
-        strcpy(stemp, ", ");
+        strcpy(stemp, ",");
 #ifdef USE_WEBSERVER
       } else {
         snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_ANALOG, mqtt_data, "ADS1115", i, adc_value);

@@ -1,4 +1,8 @@
-/* 5.9.1a
+/* 5.9.1b
+ * Remove spaces in JSON messages
+ * Add support for INA219 Voltage and Current sensor to be enabled in user_config.h
+ *
+ * 5.9.1a
  * Fix PWM watchdog timeout if Dimmer is set to 100 or Color set to 0xFF (#1146)
  *
  * 5.9.1 20171107

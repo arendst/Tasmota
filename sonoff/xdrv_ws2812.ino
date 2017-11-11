@@ -47,13 +47,13 @@ struct ColorScheme {
   uint8_t count;
 };
 
-WsColor kIncandescent[2] = { 255, 140, 20, 0, 0, 0 };
-WsColor kRgb[3] = { 255, 0, 0, 0, 255, 0, 0, 0, 255 };
-WsColor kChristmas[2] = { 255, 0, 0, 0, 255, 0 };
-WsColor kHanukkah[2] = { 0, 0, 255, 255, 255, 255 };
-WsColor kwanzaa[3] = { 255, 0, 0, 0, 0, 0, 0, 255, 0 };
-WsColor kRainbow[7] = { 255, 0, 0, 255, 128, 0, 255, 255, 0, 0, 255, 0, 0, 0, 255, 128, 0, 255, 255, 0, 255 };
-WsColor kFire[3] = { 255, 0, 0, 255, 102, 0, 255, 192, 0 };
+WsColor kIncandescent[2] = { 255,140,20, 0,0,0 };
+WsColor kRgb[3] = { 255,0,0, 0,255,0, 0,0,255 };
+WsColor kChristmas[2] = { 255,0,0, 0,255,0 };
+WsColor kHanukkah[2] = { 0,0,255, 255,255,255 };
+WsColor kwanzaa[3] = { 255,0,0, 0,0,0, 0,255,0 };
+WsColor kRainbow[7] = { 255,0,0, 255,128,0, 255,255,0, 0,255,0, 0,0,255, 128,0,255, 255,0,255 };
+WsColor kFire[3] = { 255,0,0, 255,102,0, 255,192,0 };
 ColorScheme kSchemes[7] = {
   kIncandescent, 2,
   kRgb, 3,

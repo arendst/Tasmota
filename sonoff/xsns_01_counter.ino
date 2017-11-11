@@ -103,7 +103,7 @@ void CounterShow(boolean json)
       }
 
       if (json) {
-        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s, \"" D_COUNTER "%d\":%s"), mqtt_data, i +1, counter);
+        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"" D_COUNTER "%d\":%s"), mqtt_data, i +1, counter);
 #ifdef USE_DOMOTICZ
         if (1 == dsxflg) {
           DomoticzSensor(DZ_COUNT, RtcSettings.pulse_counter[i]);

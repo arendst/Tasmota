@@ -37,7 +37,7 @@ byte dht_sensors = 0;
 struct DHTSTRUCT {
   byte     pin;
   byte     type;
-  char     stype[10];
+  char     stype[12];
   uint32_t lastreadtime;
   uint8_t  lastresult;
   float    t;
@@ -204,16 +204,7 @@ void DhtInit()
     pinMode(Dht[i].pin, INPUT_PULLUP);
     Dht[i].lastreadtime = 0;
     Dht[i].lastresult = 0;
-    switch (Dht[i].type) {
-    case GPIO_DHT11:
-      strcpy_P(Dht[i].stype, PSTR("DHT11"));
-      break;
-    case GPIO_DHT21:
-      strcpy_P(Dht[i].stype, PSTR("AM2301"));
-      break;
-    case GPIO_DHT22:
-      strcpy_P(Dht[i].stype, PSTR("DHT22"));
-    }
+    strcpy_P(Dht[i].stype, kSensors[Dht[i].type]);
     if (dht_sensors > 1) {
       snprintf_P(Dht[i].stype, sizeof(Dht[i].stype), PSTR("%s-%02d"), Dht[i].stype, Dht[i].pin);
     }
@@ -230,8 +221,8 @@ void DhtShow(boolean json)
   byte dsxflg = 0;
   for (byte i = 0; i < dht_sensors; i++) {
     if (DhtReadTempHum(i, t, h)) {     // Read temperature
-      dtostrfd(t, Settings.flag.temperature_resolution, temperature);
-      dtostrfd(h, Settings.flag.humidity_resolution, humidity);
+      dtostrfd(t, Settings.flag2.temperature_resolution, temperature);
+      dtostrfd(h, Settings.flag2.humidity_resolution, humidity);
 
       if (json) {
         snprintf_P(mqtt_data, sizeof(mqtt_data), JSON_SNS_TEMPHUM, mqtt_data, Dht[i].stype, temperature, humidity);

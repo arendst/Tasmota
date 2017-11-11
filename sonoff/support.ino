@@ -629,7 +629,7 @@ void WifiCheck(uint8_t param)
           StopWebserver();
         }
 #ifdef USE_EMULATION
-        if (Settings.flag.emulation) {
+        if (Settings.flag2.emulation) {
           UdpConnect();
         }
 #endif  // USE_EMULATION
@@ -756,14 +756,34 @@ int32_t I2cRead24(uint8_t addr, uint8_t reg)
 {
   return I2cRead(addr, reg, 3);
 }
+/*
+void I2cWrite(uint8_t addr, uint8_t reg, uint32_t val, uint8_t size)
+{
+  byte x = I2C_RETRY_COUNTER;
+  int32_t data = val;
 
+  do {
+    Wire.beginTransmission((uint8_t)addr);  // start transmission to device
+    Wire.write(reg);                        // sends register address to read from
+
+    for (byte i = 0; i < size; i++) {
+
+    }
+
+    Wire.write((val >> 8) & 0xFF);          // write data
+    Wire.write(val);                        // write data
+
+    x--;
+  } while (Wire.endTransmission(true) != 0 && x != 0); // end transmission
+}
+*/
 void I2cWrite8v(uint8_t addr, uint8_t val)
 {
   byte x = I2C_RETRY_COUNTER;
 
   do {
     Wire.beginTransmission((uint8_t)addr);  // start transmission to device
-    Wire.write(val);                         // write data
+    Wire.write(val);                        // write data
     x--;
   } while (Wire.endTransmission(true) != 0 && x != 0); // end transmission
 }
@@ -774,10 +794,24 @@ void I2cWrite8(uint8_t addr, uint8_t reg, uint8_t val)
 
   do {
     Wire.beginTransmission((uint8_t)addr);  // start transmission to device
-    Wire.write(reg);                         // sends register address to read from
-    Wire.write(val);                         // write data
+    Wire.write(reg);                        // sends register address to write to
+    Wire.write(val);                        // write data
     x--;
   } while (Wire.endTransmission(true) != 0 && x != 0); // end transmission
+}
+
+bool I2cWrite16(uint8_t addr, uint8_t reg, uint16_t val)
+{
+  byte x = I2C_RETRY_COUNTER;
+
+  do {
+    Wire.beginTransmission((uint8_t)addr);  // start transmission to device
+    Wire.write(reg);                        // sends register address to write to
+    Wire.write((val >> 8) & 0xFF);          // write data
+    Wire.write(val & 0xFF);                 // write data
+    x--;
+  } while (Wire.endTransmission(true) != 0 && x != 0); // end transmission
+  return (x);
 }
 
 void I2cScan(char *devs, unsigned int devs_len)
@@ -1249,7 +1283,7 @@ void AdcShow(boolean json)
   analog >>= 5;
 
   if (json) {
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s, \"" D_ANALOG_INPUT "0\":%d"), mqtt_data, analog);
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"" D_ANALOG_INPUT "0\":%d"), mqtt_data, analog);
 #ifdef USE_WEBSERVER
   } else {
     snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_ANALOG, mqtt_data, "", 0, analog);

@@ -336,10 +336,10 @@ void LightPreparePower()
 
   GetPowerDevice(scommand, devices_present, sizeof(scommand));
   if (light_subtype > LST_SINGLE) {
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"%s\":\"%s\", \"" D_CMND_DIMMER "\":%d, \"" D_CMND_COLOR "\":\"%s\"}"),
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"%s\":\"%s\",\"" D_CMND_DIMMER "\":%d,\"" D_CMND_COLOR "\":\"%s\"}"),
       scommand, GetStateText(light_power), Settings.light_dimmer, LightGetColor(0, scolor));
   } else {
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"%s\":\"%s\", \"" D_CMND_DIMMER "\":%d}"),
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"%s\":\"%s\",\"" D_CMND_DIMMER "\":%d}"),
       scommand, GetStateText(light_power), Settings.light_dimmer);
   }
 }
@@ -782,7 +782,7 @@ boolean LightCommand(char *type, uint16_t index, char *dataBuf, uint16_t data_le
       }
     }
     if (!valid_entry && (1 == index)) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"%s\":\"%s\"}"), command, LightGetColor(0, scolor));
+      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, LightGetColor(0, scolor));
     }
     if (index > 1) {
       scolor[0] = '\0';
@@ -908,7 +908,7 @@ boolean LightCommand(char *type, uint16_t index, char *dataBuf, uint16_t data_le
   else if (CMND_UNDOCA == command_code) {  // Theos legacy status
     LightGetColor(1, scolor);
     scolor[6] = '\0';  // RGB only
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s, %d, %d, %d, %d, %d"),
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,%d,%d,%d,%d,%d"),
       scolor, Settings.light_fade, Settings.light_correction, Settings.light_scheme, Settings.light_speed, Settings.light_width);
     MqttPublishPrefixTopic_P(1, type);
     mqtt_data[0] = '\0';

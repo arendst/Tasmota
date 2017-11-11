@@ -332,12 +332,12 @@ void StartWebserver(int type, IPAddress ipweb)
       WebServer->on("/rb", HandleRestart);
       WebServer->on("/fwlink", HandleRoot);  // Microsoft captive portal. Maybe not needed. Might be handled by notFound handler.
 #ifdef USE_EMULATION
-      if (EMUL_WEMO == Settings.flag.emulation) {
+      if (EMUL_WEMO == Settings.flag2.emulation) {
         WebServer->on("/upnp/control/basicevent1", HTTP_POST, HandleUpnpEvent);
         WebServer->on("/eventservice.xml", HandleUpnpService);
         WebServer->on("/setup.xml", HandleUpnpSetupWemo);
       }
-      if (EMUL_HUE == Settings.flag.emulation) {
+      if (EMUL_HUE == Settings.flag2.emulation) {
         WebServer->on("/description.xml", HandleUpnpSetupHue);
       }
 #endif  // USE_EMULATION
@@ -890,7 +890,7 @@ void HandleOtherConfiguration()
   for (byte i = 0; i < EMUL_MAX; i++) {
     page += FPSTR(HTTP_FORM_OTHER3b);
     page.replace(F("{1"), String(i));
-    page.replace(F("{2"), (i == Settings.flag.emulation) ? F(" checked") : F(""));
+    page.replace(F("{2"), (i == Settings.flag2.emulation) ? F(" checked") : F(""));
     page.replace(F("{3"), (i == EMUL_NONE) ? F(D_NONE) : (i == EMUL_WEMO) ? F(D_BELKIN_WEMO) : F(D_HUE_BRIDGE));
     page.replace(F("{4"), (i == EMUL_NONE) ? F("") : (i == EMUL_WEMO) ? F(" " D_SINGLE_DEVICE) : F(" " D_MULTI_DEVICE));
   }
@@ -1015,14 +1015,14 @@ snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_LOG D_CMND_SERIALLOG " %d, " D
     strlcpy(Settings.web_password, (!strlen(WebServer->arg("p1").c_str())) ? WEB_PASSWORD : (!strcmp(WebServer->arg("p1").c_str(),"0")) ? "" : WebServer->arg("p1").c_str(), sizeof(Settings.web_password));
     Settings.flag.mqtt_enabled = WebServer->hasArg("b1");
 #ifdef USE_EMULATION
-    Settings.flag.emulation = (!strlen(WebServer->arg("b2").c_str())) ? 0 : atoi(WebServer->arg("b2").c_str());
+    Settings.flag2.emulation = (!strlen(WebServer->arg("b2").c_str())) ? 0 : atoi(WebServer->arg("b2").c_str());
 #endif  // USE_EMULATION
     strlcpy(Settings.friendlyname[0], (!strlen(WebServer->arg("a1").c_str())) ? FRIENDLY_NAME : WebServer->arg("a1").c_str(), sizeof(Settings.friendlyname[0]));
     strlcpy(Settings.friendlyname[1], (!strlen(WebServer->arg("a2").c_str())) ? FRIENDLY_NAME"2" : WebServer->arg("a2").c_str(), sizeof(Settings.friendlyname[1]));
     strlcpy(Settings.friendlyname[2], (!strlen(WebServer->arg("a3").c_str())) ? FRIENDLY_NAME"3" : WebServer->arg("a3").c_str(), sizeof(Settings.friendlyname[2]));
     strlcpy(Settings.friendlyname[3], (!strlen(WebServer->arg("a4").c_str())) ? FRIENDLY_NAME"4" : WebServer->arg("a4").c_str(), sizeof(Settings.friendlyname[3]));
     snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_OTHER D_MQTT_ENABLE " %s, " D_CMND_EMULATION " %d, " D_CMND_FRIENDLYNAME " %s, %s, %s, %s"),
-      GetStateText(Settings.flag.mqtt_enabled), Settings.flag.emulation, Settings.friendlyname[0], Settings.friendlyname[1], Settings.friendlyname[2], Settings.friendlyname[3]);
+      GetStateText(Settings.flag.mqtt_enabled), Settings.flag2.emulation, Settings.friendlyname[0], Settings.friendlyname[1], Settings.friendlyname[2], Settings.friendlyname[3]);
     AddLog(LOG_LEVEL_INFO);
     break;
   case 6:
@@ -1522,10 +1522,10 @@ void HandleInformation()
   func += F("}1}2&nbsp;");  // Empty line
   func += F("}1" D_EMULATION "}2");
 #ifdef USE_EMULATION
-  if (EMUL_WEMO == Settings.flag.emulation) {
+  if (EMUL_WEMO == Settings.flag2.emulation) {
     func += F(D_BELKIN_WEMO);
   }
-  else if (EMUL_HUE == Settings.flag.emulation) {
+  else if (EMUL_HUE == Settings.flag2.emulation) {
     func += F(D_HUE_BRIDGE);
   }
   else {
@@ -1596,7 +1596,7 @@ void HandleNotFound()
 
 #ifdef USE_EMULATION
   String path = WebServer->uri();
-  if ((EMUL_HUE == Settings.flag.emulation) && (path.startsWith("/api"))) {
+  if ((EMUL_HUE == Settings.flag2.emulation) && (path.startsWith("/api"))) {
     HandleHueApi(&path);
   } else
 #endif // USE_EMULATION

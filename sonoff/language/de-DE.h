@@ -573,6 +573,7 @@
 #define D_CMND_PRESSURE_RESOLUTION "PressRes"
 #define D_CMND_POWER_RESOLUTION "WattRes"
 #define D_CMND_VOLTAGE_RESOLUTION "VoltRes"
+#define D_CMND_CURRENT_RESOLUTION "AmpRes"
 #define D_CMND_ENERGY_RESOLUTION "EnergyRes"
 #define D_CMND_MODULE "Module"
 #define D_CMND_MODULES "Modules"
@@ -629,6 +630,7 @@
 #define D_CMND_LEDSTATE "LedState"
 #define D_CMND_CFGDUMP "CfgDump"
 #define D_CMND_I2CSCAN "I2CScan"
+#define D_CMND_INA219MODE "Ina219Mode"
 #define D_CMND_EXCEPTION "Exception"
 
 // Commands xdrv_domoticz.ino

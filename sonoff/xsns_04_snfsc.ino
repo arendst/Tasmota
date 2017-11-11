@@ -116,11 +116,11 @@ void SonoffScShow(boolean json)
 
     float t = ConvertTemp(sc_value[1]);
     float h = sc_value[0];
-    dtostrfd(t, Settings.flag.temperature_resolution, temperature);
-    dtostrfd(h, Settings.flag.humidity_resolution, humidity);
+    dtostrfd(t, Settings.flag2.temperature_resolution, temperature);
+    dtostrfd(h, Settings.flag2.humidity_resolution, humidity);
 
     if (json) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s, \"" D_TEMPERATURE "\":%s, \"" D_HUMIDITY "\":%s, \"" D_LIGHT "\":%d, \"" D_NOISE "\":%d, \"" D_AIRQUALITY "\":%d"),
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"" D_TEMPERATURE "\":%s,\"" D_HUMIDITY "\":%s,\"" D_LIGHT "\":%d,\"" D_NOISE "\":%d,\"" D_AIRQUALITY "\":%d"),
         mqtt_data, temperature, humidity, sc_value[2], sc_value[3], sc_value[4]);
 #ifdef USE_DOMOTICZ
       DomoticzTempHumSensor(temperature, humidity);

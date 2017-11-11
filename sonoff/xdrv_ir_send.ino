@@ -102,7 +102,7 @@ void IrReceiveCheck()
       if ((iridx < 0) || (iridx > 14)) {
         iridx = 0;
       }
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_IRRECEIVED "\":{\"" D_IR_PROTOCOL "\":\"%s\", \"" D_IR_BITS "\":%d, \"" D_IR_DATA "\":\"%X\"}}"),
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_IRRECEIVED "\":{\"" D_IR_PROTOCOL "\":\"%s\",\"" D_IR_BITS "\":%d,\"" D_IR_DATA "\":\"%X\"}}"),
         GetTextIndexed(sirtype, sizeof(sirtype), iridx, kIrRemoteProtocols), results.bits, results.value);
       MqttPublishPrefixTopic_P(6, PSTR(D_IRRECEIVED));
 #ifdef USE_DOMOTICZ

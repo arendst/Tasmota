@@ -391,7 +391,7 @@ void SettingsDefaultSet2()
   Settings.flag.mqtt_button_retain = MQTT_BUTTON_RETAIN;
   Settings.flag.mqtt_switch_retain = MQTT_SWITCH_RETAIN;
 
-  Settings.flag.emulation = EMULATION;
+  Settings.flag2.emulation = EMULATION;
 
   Settings.save_data = SAVE_DATA;
   Settings.timezone = APP_TIMEZONE;
@@ -513,6 +513,9 @@ void SettingsDefaultSet2()
   Settings.pwm_frequency = PWM_FREQ;
   Settings.pwm_range = PWM_RANGE;
   SettingsDefaultSet_5_8_1();
+
+  // 5.9.2
+  Settings.flag2.current_resolution = 3;
 }
 
 /********************************************************************************************/
@@ -599,10 +602,10 @@ void SettingsDefaultSet_4_1_1()
 void SettingsDefaultSet_5_0_2()
 {
   Settings.flag.temperature_conversion = TEMP_CONVERSION;
-  Settings.flag.temperature_resolution = TEMP_RESOLUTION;
-  Settings.flag.humidity_resolution = HUMIDITY_RESOLUTION;
-  Settings.flag.pressure_resolution = PRESSURE_RESOLUTION;
-  Settings.flag.energy_resolution = ENERGY_RESOLUTION;
+  Settings.flag2.temperature_resolution = TEMP_RESOLUTION;
+  Settings.flag2.humidity_resolution = HUMIDITY_RESOLUTION;
+  Settings.flag2.pressure_resolution = PRESSURE_RESOLUTION;
+  Settings.flag2.energy_resolution = ENERGY_RESOLUTION;
 }
 
 void SettingsDefaultSet_5_8_1()
@@ -688,7 +691,7 @@ void SettingsDelta()
 //      Settings.flag.mqtt_power_retain = 0;
 //      Settings.flag.mqtt_button_retain = 0;
       Settings.flag.mqtt_switch_retain = MQTT_SWITCH_RETAIN;
-      Settings.flag.emulation = EMULATION;
+      Settings.flag2.emulation = EMULATION;
 
       SettingsDefaultSet_5_0_2();
 
@@ -772,6 +775,13 @@ void SettingsDelta()
     }
     if (Settings.version < 0x0508000E) {
       SettingsDefaultSet_5_8_1();
+    }
+    if (Settings.version < 0x05090102) {
+      Settings.flag2.data = Settings.flag.data;
+      Settings.flag2.data &= 0xFFE80000;
+      Settings.flag2.voltage_resolution = Settings.flag.voltage_resolution;
+      Settings.flag2.current_resolution = 3;
+      Settings.ina219_mode = 0;
     }
 
     Settings.version = VERSION;
