@@ -1,6 +1,9 @@
-/* 5.9.1b
+/* 5.9.1c
+ * Add support for WS2812 RGBW ledstrips to be enabled in user_config.h with define USE_WS2812_CTYPE (#1156)
+ *
+ * 5.9.1b
  * Remove spaces in JSON messages
- * Add support for INA219 Voltage and Current sensor to be enabled in user_config.h
+ * Add support for INA219 Voltage and Current sensor to be enabled in user_config.h with define USE_INA219
  *
  * 5.9.1a
  * Fix PWM watchdog timeout if Dimmer is set to 100 or Color set to 0xFF (#1146)

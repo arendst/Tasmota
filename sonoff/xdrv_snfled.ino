@@ -29,7 +29,7 @@
  *  5          PWM5       RGBCW  yes        (H801, Arilux)
  *  9          reserved          no
  * 10          reserved          yes
- * 11          +WS2812    RGB    no
+ * 11          +WS2812    RGB(W) no         (One WS2812 RGB or RGBW ledstrip)
  * 12          AiLight    RGBW   no
  * 13          Sonoff B1  RGBCW  yes
  *
@@ -174,6 +174,8 @@ void LightInit(void)
 {
   uint8_t max_scheme = LS_MAX -1;
 
+  light_subtype = light_type &7;
+
   if (light_type < LT_PWM6) {           // PWM
     for (byte i = 0; i < light_type; i++) {
       Settings.pwm_value[i] = 0;        // Disable direct PWM control
@@ -198,6 +200,9 @@ void LightInit(void)
   }
 #ifdef USE_WS2812  // ************************************************************************
   else if (LT_WS2812 == light_type) {
+#if (USE_WS2812_CTYPE > 1)
+    light_subtype++;  // from RGB to RGBW
+#endif
     Ws2812Init();
     max_scheme = LS_MAX +7;
   }
@@ -214,7 +219,6 @@ void LightInit(void)
     LightMy92x1Init();
   }
 
-  light_subtype = light_type &7;
   if (light_subtype < LST_RGB) {
     max_scheme = LS_POWER;
   }
@@ -539,7 +543,7 @@ void LightAnimate()
       }
 #ifdef USE_WS2812  // ************************************************************************
       if (LT_WS2812 == light_type) {
-        Ws2812SetColor(0, cur_col[0], cur_col[1], cur_col[2]);
+        Ws2812SetColor(0, cur_col[0], cur_col[1], cur_col[2], cur_col[3]);
       }
 #endif  // USE_ES2812 ************************************************************************
       if (light_type > LT_WS2812) {
@@ -800,7 +804,7 @@ boolean LightCommand(char *type, uint16_t index, char *dataBuf, uint16_t data_le
   else if ((CMND_LED == command_code) && (LT_WS2812 == light_type) && (index > 0) && (index <= Settings.light_pixels)) {
     if (data_len > 0) {
       if (LightColorEntry(dataBuf, data_len)) {
-        Ws2812SetColor(index, light_entry_color[0], light_entry_color[1], light_entry_color[2]);
+        Ws2812SetColor(index, light_entry_color[0], light_entry_color[1], light_entry_color[2], light_entry_color[3]);
       }
     }
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, index, Ws2812GetColor(index, scolor));
