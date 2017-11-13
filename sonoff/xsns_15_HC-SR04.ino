@@ -84,24 +84,52 @@ String sr04_readDistance(void)
 /*********************************************************************************************\
  * Presentation
 \*********************************************************************************************/
+#ifdef USE_WEBSERVER
+const char HTTP_HSSR04_DISTANCE[] PROGMEM = "%s{s}%s " D_DISTANCE "{m}%s cm{e}";
+#endif
 
-void sr04_mqttPresent(uint8_t* djson)
+void sr04_Show(boolean json)
 {
-  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s, \"Distance\":%s"), mqtt_data, sr04_readDistance().c_str());
-  *djson = 1;
-}
+  if (json) {
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"" D_DISTANCE "\":%s"), mqtt_data, sr04_readDistance().c_str());
 
 #ifdef USE_WEBSERVER
-const char HTTP_HSSR04_DISTANCE[] PROGMEM =
-  "<tr><th>Distance</th><td>%s cm</td></tr>";
+  } else {
+    snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_HSSR04_DISTANCE, mqtt_data, sr04_readDistance().c_str());
+#endif
 
+  }
 
-String sr04_webPresent()
-{
-  String page = "";
-  char sensor[80];
-  snprintf_P(sensor, sizeof(sensor), HTTP_HSSR04_DISTANCE, sr04_readDistance().c_str());
-  page += sensor;
-  return page;
 }
-#endif  // USE_WEBSERVER
+
+
+
+/*********************************************************************************************\
+ * Interface
+\*********************************************************************************************/
+
+#define XSNS_15
+
+boolean Xsns15(byte function)
+{
+  boolean result = false;
+
+  if (sr04_flg) {
+    switch (function) {
+//      case FUNC_XSNS_INIT:
+//        break;
+      case FUNC_XSNS_PREP:
+        sr04_init();
+        break;
+      case FUNC_XSNS_JSON_APPEND:
+        sr04_Show(1);
+        break;
+#ifdef USE_WEBSERVER
+      case FUNC_XSNS_WEB:
+        sr04_Show(0);
+        break;
+#endif // USE_WEBSERVER
+    }
+  }
+  return result;
+}

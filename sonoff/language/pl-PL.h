@@ -200,6 +200,10 @@
 #define D_WIFI "Wifi"
 #define D_WRONG "Bledny"
 #define D_YESTERDAY "Wczoraj"
+//STB mod
+#define D_MOISTURE "Moisture"
+#define D_DISTANCE "Distance"
+//end
 
 // settings.ino
 #define D_SAVED_TO_FLASH_AT "Zapisane do pamieci flash w"
@@ -216,7 +220,7 @@
 #define D_SET_BAUDRATE_TO "Ustaw szybkosc transmisji na"
 #define D_RECEIVED_TOPIC "Otrzymany temat"
 #define D_DATA_SIZE "Wielkosc danych"
-#define D_ANALOG_INPUT0 "Wej_analogowe"
+#define D_ANALOG_INPUT "Wej_analogowe"
 
 #define D_FINGERPRINT "Weryfikuj odcisk TLS..."
 #define D_TLS_CONNECT_FAILED_TO "Nieudane polaczenie TLS do"
@@ -406,6 +410,7 @@
 #define D_LEARNING_ACTIVE "Wyuczone aktywne"
 #define D_LEARN_FAILED "Uczenie niepowodzenie"
 #define D_LEARNED "Wyuczone"
+#define D_SAVED "Zapisane"
 
 // xdrv_wemohue.ino
 #define D_MULTICAST_DISABLED "Multicast jest wylaczony"
@@ -572,6 +577,7 @@
 #define D_CMND_PRESSURE_RESOLUTION "PressRes"
 #define D_CMND_POWER_RESOLUTION "WattRes"
 #define D_CMND_VOLTAGE_RESOLUTION "VoltRes"
+#define D_CMND_CURRENT_RESOLUTION "AmpRes"
 #define D_CMND_ENERGY_RESOLUTION "EnergyRes"
 #define D_CMND_MODULE "Module"
 #define D_CMND_MODULES "Modules"
@@ -628,6 +634,7 @@
 #define D_CMND_LEDSTATE "LedState"
 #define D_CMND_CFGDUMP "CfgDump"
 #define D_CMND_I2CSCAN "I2CScan"
+#define D_CMND_INA219MODE "Ina219Mode"
 #define D_CMND_EXCEPTION "Exception"
 
 // Commands xdrv_domoticz.ino

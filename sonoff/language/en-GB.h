@@ -200,6 +200,10 @@
 #define D_WIFI "Wifi"
 #define D_WRONG "Wrong"
 #define D_YESTERDAY "Yesterday"
+//STB mod
+#define D_MOISTURE "Moisture"
+#define D_DISTANCE "Distance"
+//end
 
 // settings.ino
 #define D_SAVED_TO_FLASH_AT "Saved to flash at"
@@ -216,7 +220,7 @@
 #define D_SET_BAUDRATE_TO "Set Baudrate to"
 #define D_RECEIVED_TOPIC "Received Topic"
 #define D_DATA_SIZE "Data Size"
-#define D_ANALOG_INPUT0 "Analog0"
+#define D_ANALOG_INPUT "Analog"
 
 #define D_FINGERPRINT "Verify TLS fingerprint..."
 #define D_TLS_CONNECT_FAILED_TO "TLS Connect failed to"
@@ -406,6 +410,7 @@
 #define D_LEARNING_ACTIVE "Learning active"
 #define D_LEARN_FAILED "Learn failed"
 #define D_LEARNED "Learned"
+#define D_SAVED "Saved"
 
 // xdrv_wemohue.ino
 #define D_MULTICAST_DISABLED "Multicast disabled"
@@ -572,6 +577,7 @@
 #define D_CMND_PRESSURE_RESOLUTION "PressRes"
 #define D_CMND_POWER_RESOLUTION "WattRes"
 #define D_CMND_VOLTAGE_RESOLUTION "VoltRes"
+#define D_CMND_CURRENT_RESOLUTION "AmpRes"
 #define D_CMND_ENERGY_RESOLUTION "EnergyRes"
 #define D_CMND_MODULE "Module"
 #define D_CMND_MODULES "Modules"
@@ -628,6 +634,7 @@
 #define D_CMND_LEDSTATE "LedState"
 #define D_CMND_CFGDUMP "CfgDump"
 #define D_CMND_I2CSCAN "I2CScan"
+#define D_CMND_INA219MODE "Ina219Mode"
 #define D_CMND_EXCEPTION "Exception"
 
 // Commands xdrv_domoticz.ino

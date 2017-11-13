@@ -1,5 +1,5 @@
 /*
-  xsns_hlw8012.ino - sonoff pow HLW8012 energy sensor support for Sonoff-Tasmota
+  xsns_03_hlw8012.ino - sonoff pow HLW8012 energy sensor support for Sonoff-Tasmota
 
   Copyright (C) 2017  Theo Arends
 
@@ -354,27 +354,27 @@ void HlwMarginCheck()
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{"));
     jsonflg = 0;
     if (HlwMargin(0, Settings.hlw_pmin, uwatts, flag, hlw_pmin_flag)) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s%s\"" D_CMND_POWERLOW "\":\"%s\""), mqtt_data, (jsonflg)?", ":"", GetStateText(flag));
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s%s\"" D_CMND_POWERLOW "\":\"%s\""), mqtt_data, (jsonflg)?",":"", GetStateText(flag));
       jsonflg = 1;
     }
     if (HlwMargin(1, Settings.hlw_pmax, uwatts, flag, hlw_pmax_flag)) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s%s\"" D_CMND_POWERHIGH "\":\"%s\""), mqtt_data, (jsonflg)?", ":"", GetStateText(flag));
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s%s\"" D_CMND_POWERHIGH "\":\"%s\""), mqtt_data, (jsonflg)?",":"", GetStateText(flag));
       jsonflg = 1;
     }
     if (HlwMargin(0, Settings.hlw_umin, uvoltage, flag, hlw_umin_flag)) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s%s\"" D_CMND_VOLTAGELOW "\":\"%s\""), mqtt_data, (jsonflg)?", ":"", GetStateText(flag));
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s%s\"" D_CMND_VOLTAGELOW "\":\"%s\""), mqtt_data, (jsonflg)?",":"", GetStateText(flag));
       jsonflg = 1;
     }
     if (HlwMargin(1, Settings.hlw_umax, uvoltage, flag, hlw_umax_flag)) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s%s\"" D_CMND_VOLTAGEHIGH "\":\"%s\""), mqtt_data, (jsonflg)?", ":"", GetStateText(flag));
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s%s\"" D_CMND_VOLTAGEHIGH "\":\"%s\""), mqtt_data, (jsonflg)?",":"", GetStateText(flag));
       jsonflg = 1;
     }
     if (HlwMargin(0, Settings.hlw_imin, ucurrent, flag, hlw_imin_flag)) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s%s\"" D_CMND_CURRENTLOW "\":\"%s\""), mqtt_data, (jsonflg)?", ":"", GetStateText(flag));
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s%s\"" D_CMND_CURRENTLOW "\":\"%s\""), mqtt_data, (jsonflg)?",":"", GetStateText(flag));
       jsonflg = 1;
     }
     if (HlwMargin(1, Settings.hlw_imax, ucurrent, flag, hlw_imax_flag)) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s%s\"" D_CMND_CURRENTHIGH "\":\"%s\""), mqtt_data, (jsonflg)?", ":"", GetStateText(flag));
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s%s\"" D_CMND_CURRENTHIGH "\":\"%s\""), mqtt_data, (jsonflg)?",":"", GetStateText(flag));
       jsonflg = 1;
     }
     if (jsonflg) {
@@ -526,10 +526,10 @@ boolean HlwCommand(char *type, uint16_t index, char *dataBuf, uint16_t data_len,
     char syesterday_energy[10];
     char stoday_energy[10];
     char stotal_energy[10];
-    dtostrfd((float)Settings.hlw_kWhyesterday / 100000000, Settings.flag.energy_resolution, syesterday_energy);
-    dtostrfd((float)RtcSettings.hlw_kWhtoday / 100000000, Settings.flag.energy_resolution, stoday_energy);
-    dtostrfd((float)(RtcSettings.hlw_kWhtotal + (hlw_kWhtoday / 1000)) / 100000, Settings.flag.energy_resolution, stotal_energy);
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"%s\":{\"" D_TOTAL "\":%s, \"" D_YESTERDAY "\":%s, \"" D_TODAY "\":%s}}"),
+    dtostrfd((float)Settings.hlw_kWhyesterday / 100000000, Settings.flag2.energy_resolution, syesterday_energy);
+    dtostrfd((float)RtcSettings.hlw_kWhtoday / 100000000, Settings.flag2.energy_resolution, stoday_energy);
+    dtostrfd((float)(RtcSettings.hlw_kWhtotal + (hlw_kWhtoday / 1000)) / 100000, Settings.flag2.energy_resolution, stotal_energy);
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"%s\":{\"" D_TOTAL "\":%s,\"" D_YESTERDAY "\":%s,\"" D_TODAY "\":%s}}"),
       command, stotal_energy, syesterday_energy, stoday_energy);
     status_flag = 1;
   }
@@ -650,11 +650,20 @@ boolean HlwCommand(char *type, uint16_t index, char *dataBuf, uint16_t data_len,
   return serviced;
 }
 
-/*********************************************************************************************\
- * Presentation
-\*********************************************************************************************/
+/********************************************************************************************/
 
-void HlwMqttStat(byte option)
+#ifdef USE_WEBSERVER
+const char HTTP_ENERGY_SNS[] PROGMEM =
+  "{s}" D_VOLTAGE "{m}%s " D_UNIT_VOLT "{e}"
+  "{s}" D_CURRENT "{m}%s " D_UNIT_AMPERE "{e}"
+  "{s}" D_POWERUSAGE "{m}%s " D_UNIT_WATT "{e}"
+  "{s}" D_POWER_FACTOR "{m}%s{e}"
+  "{s}" D_ENERGY_TODAY  "{m}%s " D_UNIT_KILOWATTHOUR "{e}"
+  "{s}" D_ENERGY_YESTERDAY "{m}%s " D_UNIT_KILOWATTHOUR "{e}"
+  "{s}" D_ENERGY_TOTAL "{m}%s " D_UNIT_KILOWATTHOUR "{e}";      // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
+#endif  // USE_WEBSERVER
+
+void HlwShow(boolean json, boolean option)
 {
 /* option 0 = do not show period energy usage
  * option 1 = show period energy usage
@@ -677,25 +686,32 @@ void HlwMqttStat(byte option)
   char speriod[20];
 
   HlwReadEnergy(option, total_energy, daily_energy, energy, watts, voltage, current, power_factor);
-  dtostrfd(total_energy, Settings.flag.energy_resolution, stotal_energy);
-  dtostrfd(daily_energy, Settings.flag.energy_resolution, sdaily_energy);
-  dtostrfd(energy, Settings.flag.wattage_resolution, senergy);
-  dtostrfd(watts, Settings.flag.wattage_resolution, swatts);
-  dtostrfd(voltage, Settings.flag.voltage_resolution, svoltage);
-  dtostrfd(current, 3, scurrent);
+  dtostrfd(total_energy, Settings.flag2.energy_resolution, stotal_energy);
+  dtostrfd(daily_energy, Settings.flag2.energy_resolution, sdaily_energy);
+  dtostrfd(energy, Settings.flag2.wattage_resolution, senergy);
+  dtostrfd(watts, Settings.flag2.wattage_resolution, swatts);
+  dtostrfd(voltage, Settings.flag2.voltage_resolution, svoltage);
+  dtostrfd(current, Settings.flag2.current_resolution, scurrent);
   dtostrfd(power_factor, 2, spower_factor);
-  dtostrfd((float)Settings.hlw_kWhyesterday / 100000000, Settings.flag.energy_resolution, syesterday_energy);
-  snprintf_P(speriod, sizeof(speriod), PSTR(", \"" D_PERIOD "\":%s"), senergy);
-  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s\"" D_TOTAL "\":%s, \"" D_YESTERDAY "\":%s, \"" D_TODAY "\":%s%s, \"" D_POWERUSAGE "\":%s, \"" D_POWERFACTOR "\":%s, \"" D_VOLTAGE "\":%s, \"" D_CURRENT "\":%s}"),
-    mqtt_data, stotal_energy, syesterday_energy, sdaily_energy, (option) ? speriod : "", swatts, spower_factor, svoltage, scurrent);
+  dtostrfd((float)Settings.hlw_kWhyesterday / 100000000, Settings.flag2.energy_resolution, syesterday_energy);
+
+  if (json) {
+    snprintf_P(speriod, sizeof(speriod), PSTR(",\"" D_PERIOD "\":%s"), senergy);
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s\"" D_TOTAL "\":%s,\"" D_YESTERDAY "\":%s,\"" D_TODAY "\":%s%s,\"" D_POWERUSAGE "\":%s,\"" D_POWERFACTOR "\":%s,\"" D_VOLTAGE "\":%s,\"" D_CURRENT "\":%s}"),
+      mqtt_data, stotal_energy, syesterday_energy, sdaily_energy, (option) ? speriod : "", swatts, spower_factor, svoltage, scurrent);
 #ifdef USE_DOMOTICZ
-  if (option) {  // Only send if telemetry
-    dtostrfd(total_energy * 1000, 1, stotal_energy);
-    DomoticzSensorPowerEnergy((uint16_t)watts, stotal_energy);  // PowerUsage, EnergyToday
-    DomoticzSensor(DZ_VOLTAGE, svoltage);  // Voltage
-    DomoticzSensor(DZ_CURRENT, scurrent);  // Current
-  }
+    if (option) {  // Only send if telemetry
+      dtostrfd(total_energy * 1000, 1, stotal_energy);
+      DomoticzSensorPowerEnergy((uint16_t)watts, stotal_energy);  // PowerUsage, EnergyToday
+      DomoticzSensor(DZ_VOLTAGE, svoltage);  // Voltage
+      DomoticzSensor(DZ_CURRENT, scurrent);  // Current
+    }
 #endif  // USE_DOMOTICZ
+#ifdef USE_WEBSERVER
+  } else {
+    snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_ENERGY_SNS, svoltage, scurrent, swatts, spower_factor, sdaily_energy, syesterday_energy, stotal_energy);
+#endif  // USE_WEBSERVER
+  }
 }
 
 void MqttShowHlw8012(byte option)
@@ -704,55 +720,46 @@ void MqttShowHlw8012(byte option)
  * option 1 = show period energy usage
  */
 // {"Time":"2017-03-04T13:37:24", "Total":0.013, "Yesterday":0.013, "Today":0.000, "Period":0, "Power":0, "Factor":0.00, "Voltage":0, "Current":0.000}
-  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_TIME "\":\"%s\", "), GetDateAndTime().c_str());
-  HlwMqttStat(option);
+  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_TIME "\":\"%s\","), GetDateAndTime().c_str());
+  HlwShow(1, option);
   MqttPublishPrefixTopic_P(2, PSTR(D_RSLT_ENERGY), Settings.flag.mqtt_sensor_retain);
 }
 
 void HlwMqttStatus()
 {
   snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_STATUS D_STATUS8_POWER "\":{"));
-  HlwMqttStat(0);
+  HlwShow(1, 0);
   snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}"), mqtt_data);
 }
 
-#ifdef USE_WEBSERVER
-const char HTTP_ENERGY_SNS[] PROGMEM =
-  "<tr><th>" D_VOLTAGE "</th><td>%s " D_UNIT_VOLT "</td></tr>"
-  "<tr><th>" D_CURRENT "</th><td>%s " D_UNIT_AMPERE "</td></tr>"
-  "<tr><th>" D_POWERUSAGE "</th><td>%s " D_UNIT_WATT "</td></tr>"
-  "<tr><th>" D_POWER_FACTOR "</th><td>%s</td></tr>"
-  "<tr><th>" D_ENERGY_TODAY  "</th><td>%s " D_UNIT_KILOWATTHOUR "</td></tr>"
-  "<tr><th>" D_ENERGY_YESTERDAY "</th><td>%s " D_UNIT_KILOWATTHOUR "</td></tr>"
-  "<tr><th>" D_ENERGY_TOTAL "</th><td>%s " D_UNIT_KILOWATTHOUR "</td></tr>";
+/*********************************************************************************************\
+ * Interface
+\*********************************************************************************************/
 
-String WebShowHlw()
+#define XSNS_03
+
+boolean Xsns03(byte function)
 {
-  float total_energy;
-  float daily_energy;
-  float energy;
-  float watts;
-  float voltage;
-  float current;
-  float power_factor;
-  char stotal_energy[10];
-  char sdaily_energy[10];
-  char swatts[10];
-  char svoltage[10];
-  char scurrent[10];
-  char spower_factor[10];
-  char syesterday_energy[10];
-  char sensor[400];
+  boolean result = false;
 
-  HlwReadEnergy(0, total_energy, daily_energy, energy, watts, voltage, current, power_factor);
-  dtostrfi(total_energy, Settings.flag.energy_resolution, stotal_energy);
-  dtostrfi(daily_energy, Settings.flag.energy_resolution, sdaily_energy);
-  dtostrfi(watts, Settings.flag.wattage_resolution, swatts);
-  dtostrfi(voltage, Settings.flag.voltage_resolution, svoltage);
-  dtostrfi(current, 3, scurrent);
-  dtostrfi(power_factor, 2, spower_factor);
-  dtostrfi((float)Settings.hlw_kWhyesterday / 100000000, Settings.flag.energy_resolution, syesterday_energy);
-  snprintf_P(sensor, sizeof(sensor), HTTP_ENERGY_SNS, svoltage, scurrent, swatts, spower_factor, sdaily_energy, syesterday_energy, stotal_energy);
-  return String(sensor);
-}
+  if (hlw_flg) {
+    switch (function) {
+      case FUNC_XSNS_INIT:
+        HlwInit();
+        break;
+//      case FUNC_XSNS_PREP:
+//        break;
+//      case FUNC_XSNS_JSON_APPEND:
+//        break;
+      case FUNC_XSNS_MQTT_SHOW:
+        MqttShowHlw8012(1);
+        break;
+#ifdef USE_WEBSERVER
+      case FUNC_XSNS_WEB:
+        HlwShow(0, 0);
+        break;
 #endif  // USE_WEBSERVER
+    }
+  }
+  return result;
+}

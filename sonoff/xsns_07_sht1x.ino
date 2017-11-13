@@ -1,5 +1,5 @@
 /*
-  xsns_sht1x.ino - SHT1x temperature and sensor support for Sonoff-Tasmota
+  xsns_07_sht1x.ino - SHT1x temperature and sensor support for Sonoff-Tasmota
 
   Copyright (C) 2017  Theo Arends
 
@@ -24,6 +24,8 @@
  *
  * Reading temperature and humidity takes about 320 milliseconds!
  * Source: Marinus vd Broek https://github.com/ESP8266nu/ESPEasy
+ *
+ * I2C Address: None
 \*********************************************************************************************/
 
 enum {
@@ -159,10 +161,12 @@ boolean ShtReadTempHum(float &t, float &h)
   return (!isnan(t) && !isnan(h));
 }
 
-boolean ShtDetect()
+/********************************************************************************************/
+
+void ShtDetect()
 {
   if (sht_type) {
-    return true;
+    return;
   }
 
   float t;
@@ -177,59 +181,65 @@ boolean ShtDetect()
     Wire.begin(sht_sda_pin, sht_scl_pin);
     sht_type = 0;
   }
-  return sht_type;
+}
+
+void ShtShow(boolean json)
+{
+  if (sht_type) {
+    float t;
+    float h;
+
+    if (ShtReadTempHum(t, h)) {
+      char temperature[10];
+      char humidity[10];
+
+      dtostrfd(t, Settings.flag2.temperature_resolution, temperature);
+      dtostrfd(h, Settings.flag2.humidity_resolution, humidity);
+
+      if (json) {
+        snprintf_P(mqtt_data, sizeof(mqtt_data), JSON_SNS_TEMPHUM, mqtt_data, "SHT1X", temperature, humidity);
+#ifdef USE_DOMOTICZ
+        DomoticzTempHumSensor(temperature, humidity);
+#endif  // USE_DOMOTICZ
+#ifdef USE_WEBSERVER
+      } else {
+        snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TEMP, mqtt_data, "SHT1X", temperature, TempUnit());
+        snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_HUM, mqtt_data, "SHT1X", humidity);
+#endif  // USE_WEBSERVER
+      }
+    }
+  }
 }
 
 /*********************************************************************************************\
- * Presentation
+ * Interface
 \*********************************************************************************************/
 
-void MqttShowSht(uint8_t* djson)
+#define XSNS_07
+
+boolean Xsns07(byte function)
 {
-  if (!sht_type) {
-    return;
-  }
+  boolean result = false;
 
-  float t;
-  float h;
-
-  if (ShtReadTempHum(t, h)) {
-    char stemp[10];
-    char shum[10];
-
-    dtostrfd(t, Settings.flag.temperature_resolution, stemp);
-    dtostrfd(h, Settings.flag.humidity_resolution, shum);
-    snprintf_P(mqtt_data, sizeof(mqtt_data), JSON_SNS_TEMPHUM, mqtt_data, "SHT1X", stemp, shum);
-    *djson = 1;
-#ifdef USE_DOMOTICZ
-    DomoticzTempHumSensor(stemp, shum);
-#endif  // USE_DOMOTICZ
-  }
-}
-
+  if (i2c_flg) {
+    switch (function) {
+//      case FUNC_XSNS_INIT:
+//        break;
+      case FUNC_XSNS_PREP:
+        ShtDetect();
+        break;
+      case FUNC_XSNS_JSON_APPEND:
+        ShtShow(1);
+        break;
 #ifdef USE_WEBSERVER
-String WebShowSht()
-{
-  float t;
-  float h;
-
-  String page = "";
-  if (sht_type) {
-    if (ShtReadTempHum(t, h)) {
-      char stemp[10];
-      char shum[10];
-      char sensor[80];
-
-      dtostrfi(t, Settings.flag.temperature_resolution, stemp);
-      dtostrfi(h, Settings.flag.humidity_resolution, shum);
-      snprintf_P(sensor, sizeof(sensor), HTTP_SNS_TEMP, "SHT1X", stemp, TempUnit());
-      page += sensor;
-      snprintf_P(sensor, sizeof(sensor), HTTP_SNS_HUM, "SHT1X", shum);
-      page += sensor;
+      case FUNC_XSNS_WEB:
+        ShtShow(0);
+        break;
+#endif  // USE_WEBSERVER
     }
   }
-  return page;
+  return result;
 }
-#endif  // USE_WEBSERVER
+
 #endif  // USE_SHT
 #endif  // USE_I2C

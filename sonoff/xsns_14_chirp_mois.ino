@@ -99,7 +99,7 @@ boolean chirp_detect()
     strcpy(chirpstype, "CHIRP");
   }
   if (success) {
-    snprintf_P(log_data, sizeof(log_data), PSTR("I2C: %s found at address 0x%x"), chirpstype, chirpaddr);
+    snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, chirpstype, chirpaddr);
     AddLog(LOG_LEVEL_DEBUG);
   } else {
     chirptype = 0;
@@ -110,47 +110,71 @@ boolean chirp_detect()
 /*********************************************************************************************\
  * Presentation
 \*********************************************************************************************/
-
-void chirp_mqttPresent(uint8_t* djson)
-{
-  if (!chirptype) {
-    return;
-  }
-  char stemp1[6];
-  float t2;
-  uint16_t l = chirp_readLux();
-  uint16_t m = chirp_readMoist();
-  float t = chirp_readTemp();
-  dtostrf(t, 1, Settings.flag.temperature_resolution, stemp1);
-  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s, \"%s\":{\"Light\":%d, \"Moisture\":%d, \"Temperature\":%s}"), mqtt_data, chirpstype, l,m,stemp1);
-  *djson = 1;
-#ifdef USE_DOMOTICZ
-  //domoticz_sensor5(l);
-#endif  // USE_DOMOTICZ
-}
-
 #ifdef USE_WEBSERVER
-const char HTTP_CHIRP_ILLUMINANCE[] PROGMEM =
-  "<tr><th>CHIRP Illuminance</th><td>%d lx</td></tr>";
-const char HTTP_CHIRP_MOISTURE[] PROGMEM =
-    "<tr><th>CHIRP Moisture</th><td>%d</td></tr>";
-
-String chirp_webPresent()
-{
-  String page = "";
-  if (chirptype) {
-    char sensor[80];
-    char stemp1[6];
-    snprintf_P(sensor, sizeof(sensor), HTTP_CHIRP_ILLUMINANCE, chirp_readLux());
-    page += sensor;
-    snprintf_P(sensor, sizeof(sensor), HTTP_CHIRP_MOISTURE, chirp_readMoist());
-    page += sensor;
-    dtostrf(chirp_readTemp(), 1, Settings.flag.temperature_resolution, stemp1);
-    snprintf_P(sensor, sizeof(sensor), HTTP_SNS_TEMP, "CHIRP", stemp1, TempUnit());
-    page += sensor;
-  }
-  return page;
-}
+  const char HTTP_SNS_ILLUMINANCE[] PROGMEM =  "%s{s}%s " D_ILLUMINANCE "{m}%s%{e}";
+  const char HTTP_SNS_MOISTURE[] PROGMEM = "%s{s}%s " D_MOISTURE "{m}%s%{e}";
 #endif  // USE_WEBSERVER
-#endif  // USE_CHIRP
-#endif  // USE_I2C
+
+const char JSON_SNS_LIGHTMOISTTEMP[] PROGMEM = "%s,\"%s\":{\"" D_LIGHT "\":%d,\"" D_MOISTURE "\":%s,\"" D_TEMPERATURE "\":%s}";
+
+String chirp_Show(boolean json)
+{
+  if (chirptype) {
+    char temperature[10];
+    char moisture[10];
+    uint16_t l = chirp_readLux();
+
+    dtostrfd(chirp_readMoist(), Settings.flag2.humidity_resolution, moisture);
+    dtostrfd(chirp_readTemp() , Settings.flag2.temperature_resolution, temperature);
+
+     if (json) {
+       snprintf_P(mqtt_data, sizeof(mqtt_data), JSON_SNS_LIGHTMOISTTEMP, mqtt_data, "CHIRP", l, moisture,temperature);
+
+       #ifdef USE_DOMOTICZ
+         DomoticzTempHumSensor(temperature, moisture);
+         DomoticzSensor(DZ_ILLUMINANCE, l);
+       #endif  // USE_DOMOTICZ
+
+  #ifdef USE_WEBSERVER
+     } else {
+       snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_ILLUMINANCE, mqtt_data, "CHIRP", l);
+       snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_MOISTURE, mqtt_data, "CHIRP", moisture);
+       snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TEMP, mqtt_data, "CHIRP", temperature, TempUnit());
+
+  #endif // USE_WEBSERVER
+     }
+  }
+}
+
+/*********************************************************************************************\
+ * Interface
+\*********************************************************************************************/
+
+#define XSNS_14
+
+boolean Xsns14(byte function)
+{
+  boolean result = false;
+
+  if (chirptype) {
+    switch (function) {
+//      case FUNC_XSNS_INIT:
+//        break;
+      case FUNC_XSNS_PREP:
+        chirp_detect();
+        break;
+      case FUNC_XSNS_JSON_APPEND:
+        chirp_Show(1);
+        break;
+#ifdef USE_WEBSERVER
+      case FUNC_XSNS_WEB:
+        chirp_Show(0);
+        break;
+#endif // USE_WEBSERVER
+    }
+  }
+  return result;
+}
+
+#endif // USE_BMP
+#endif // USE_I2C

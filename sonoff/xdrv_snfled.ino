@@ -29,7 +29,7 @@
  *  5          PWM5       RGBCW  yes        (H801, Arilux)
  *  9          reserved          no
  * 10          reserved          yes
- * 11          +WS2812    RGB    no
+ * 11          +WS2812    RGB(W) no         (One WS2812 RGB or RGBW ledstrip)
  * 12          AiLight    RGBW   no
  * 13          Sonoff B1  RGBCW  yes
  *
@@ -174,12 +174,14 @@ void LightInit(void)
 {
   uint8_t max_scheme = LS_MAX -1;
 
+  light_subtype = light_type &7;
+
   if (light_type < LT_PWM6) {           // PWM
     for (byte i = 0; i < light_type; i++) {
       Settings.pwm_value[i] = 0;        // Disable direct PWM control
     }
     if (LT_PWM1 == light_type) {
-      Settings.light_color[0] = 255;      // One PWM channel only supports Dimmer but needs max color
+      Settings.light_color[0] = 255;    // One PWM channel only supports Dimmer but needs max color
     }
     if (SONOFF_LED == Settings.module) { // Fix Sonoff Led instabilities
       if (!my_module.gp.io[4]) {
@@ -198,6 +200,9 @@ void LightInit(void)
   }
 #ifdef USE_WS2812  // ************************************************************************
   else if (LT_WS2812 == light_type) {
+#if (USE_WS2812_CTYPE > 1)
+    light_subtype++;  // from RGB to RGBW
+#endif
     Ws2812Init();
     max_scheme = LS_MAX +7;
   }
@@ -214,7 +219,6 @@ void LightInit(void)
     LightMy92x1Init();
   }
 
-  light_subtype = light_type &7;
   if (light_subtype < LST_RGB) {
     max_scheme = LS_POWER;
   }
@@ -270,8 +274,8 @@ void LightSetDimmer(uint8_t myDimmer)
 {
   float temp;
 
-  if ((SONOFF_BN == Settings.module) && (100 == myDimmer)) {
-    myDimmer = 99;                      // BN-SZ01 starts flickering at dimmer = 100
+  if (LT_PWM1 == light_type) {
+    Settings.light_color[0] = 255;    // One PWM channel only supports Dimmer but needs max color
   }
   float dimmer = 100 / (float)myDimmer;
   for (byte i = 0; i < light_subtype; i++) {
@@ -336,10 +340,10 @@ void LightPreparePower()
 
   GetPowerDevice(scommand, devices_present, sizeof(scommand));
   if (light_subtype > LST_SINGLE) {
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"%s\":\"%s\", \"" D_CMND_DIMMER "\":%d, \"" D_CMND_COLOR "\":\"%s\"}"),
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"%s\":\"%s\",\"" D_CMND_DIMMER "\":%d,\"" D_CMND_COLOR "\":\"%s\"}"),
       scommand, GetStateText(light_power), Settings.light_dimmer, LightGetColor(0, scolor));
   } else {
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"%s\":\"%s\", \"" D_CMND_DIMMER "\":%d}"),
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"%s\":\"%s\",\"" D_CMND_DIMMER "\":%d}"),
       scommand, GetStateText(light_power), Settings.light_dimmer);
   }
 }
@@ -527,6 +531,9 @@ void LightAnimate()
         cur_col[i] = (Settings.light_correction) ? ledTable[light_last_color[i]] : light_last_color[i];
         if (light_type < LT_PWM6) {
           if (pin[GPIO_PWM1 +i] < 99) {
+            if (cur_col[i] > 0xFC) {
+              cur_col[i] = 0xFC;   // Fix unwanted blinking and PWM watchdog errors for values close to pwm_range (H801, Arilux and BN-SZ01)
+            }
             uint16_t curcol = cur_col[i] * (Settings.pwm_range / 255);
 //            snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION "Cur_Col%d %d, CurCol %d"), i, cur_col[i], curcol);
 //            AddLog(LOG_LEVEL_DEBUG);
@@ -536,7 +543,7 @@ void LightAnimate()
       }
 #ifdef USE_WS2812  // ************************************************************************
       if (LT_WS2812 == light_type) {
-        Ws2812SetColor(0, cur_col[0], cur_col[1], cur_col[2]);
+        Ws2812SetColor(0, cur_col[0], cur_col[1], cur_col[2], cur_col[3]);
       }
 #endif  // USE_ES2812 ************************************************************************
       if (light_type > LT_WS2812) {
@@ -779,7 +786,7 @@ boolean LightCommand(char *type, uint16_t index, char *dataBuf, uint16_t data_le
       }
     }
     if (!valid_entry && (1 == index)) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"%s\":\"%s\"}"), command, LightGetColor(0, scolor));
+      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, LightGetColor(0, scolor));
     }
     if (index > 1) {
       scolor[0] = '\0';
@@ -797,7 +804,7 @@ boolean LightCommand(char *type, uint16_t index, char *dataBuf, uint16_t data_le
   else if ((CMND_LED == command_code) && (LT_WS2812 == light_type) && (index > 0) && (index <= Settings.light_pixels)) {
     if (data_len > 0) {
       if (LightColorEntry(dataBuf, data_len)) {
-        Ws2812SetColor(index, light_entry_color[0], light_entry_color[1], light_entry_color[2]);
+        Ws2812SetColor(index, light_entry_color[0], light_entry_color[1], light_entry_color[2], light_entry_color[3]);
       }
     }
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, index, Ws2812GetColor(index, scolor));
@@ -856,6 +863,7 @@ boolean LightCommand(char *type, uint16_t index, char *dataBuf, uint16_t data_le
   else if (CMND_DIMMER == command_code) {
     if ((payload >= 0) && (payload <= 100)) {
       Settings.light_dimmer = payload;
+      light_update = 1;
       coldim = true;
     } else {
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, Settings.light_dimmer);
@@ -899,12 +907,12 @@ boolean LightCommand(char *type, uint16_t index, char *dataBuf, uint16_t data_le
       Settings.light_wakeup = payload;
       light_wakeup_active = 0;
     }
-    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, Settings.light_wakeup);
+    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, Settings.light_wakeup);
   }
   else if (CMND_UNDOCA == command_code) {  // Theos legacy status
     LightGetColor(1, scolor);
     scolor[6] = '\0';  // RGB only
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s, %d, %d, %d, %d, %d"),
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,%d,%d,%d,%d,%d"),
       scolor, Settings.light_fade, Settings.light_correction, Settings.light_scheme, Settings.light_speed, Settings.light_width);
     MqttPublishPrefixTopic_P(1, type);
     mqtt_data[0] = '\0';

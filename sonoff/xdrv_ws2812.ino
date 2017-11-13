@@ -19,7 +19,7 @@
 
 #ifdef USE_WS2812
 /*********************************************************************************************\
- * WS2812 Leds using NeopixelBus library
+ * WS2812 RGB / RGBW Leds using NeopixelBus library
 \*********************************************************************************************/
 
 #include <NeoPixelBus.h>
@@ -27,13 +27,21 @@
 #ifdef USE_WS2812_DMA
 #if (USE_WS2812_CTYPE == 1)
   NeoPixelBus<NeoGrbFeature, Neo800KbpsMethod> *strip = NULL;
-#else  // USE_WS2812_CTYPE
+#elif (USE_WS2812_CTYPE == 2)
+  NeoPixelBus<NeoRgbwFeature, Neo800KbpsMethod> *strip = NULL;
+#elif (USE_WS2812_CTYPE == 3)
+  NeoPixelBus<NeoGrbwFeature, Neo800KbpsMethod> *strip = NULL;
+#else   // USE_WS2812_CTYPE
   NeoPixelBus<NeoRgbFeature, Neo800KbpsMethod> *strip = NULL;
 #endif  // USE_WS2812_CTYPE
-#else  // USE_WS2812_DMA
+#else   // USE_WS2812_DMA
 #if (USE_WS2812_CTYPE == 1)
   NeoPixelBus<NeoGrbFeature, NeoEsp8266BitBang800KbpsMethod> *strip = NULL;
-#else  // USE_WS2812_CTYPE
+#elif (USE_WS2812_CTYPE == 2)
+  NeoPixelBus<NeoRgbwFeature, NeoEsp8266BitBang800KbpsMethod> *strip = NULL;
+#elif (USE_WS2812_CTYPE == 3)
+  NeoPixelBus<NeoGrbwFeature, NeoEsp8266BitBang800KbpsMethod> *strip = NULL;
+#else   // USE_WS2812_CTYPE
   NeoPixelBus<NeoRgbFeature, NeoEsp8266BitBang800KbpsMethod> *strip = NULL;
 #endif  // USE_WS2812_CTYPE
 #endif  // USE_WS2812_DMA
@@ -47,13 +55,13 @@ struct ColorScheme {
   uint8_t count;
 };
 
-WsColor kIncandescent[2] = { 255, 140, 20, 0, 0, 0 };
-WsColor kRgb[3] = { 255, 0, 0, 0, 255, 0, 0, 0, 255 };
-WsColor kChristmas[2] = { 255, 0, 0, 0, 255, 0 };
-WsColor kHanukkah[2] = { 0, 0, 255, 255, 255, 255 };
-WsColor kwanzaa[3] = { 255, 0, 0, 0, 0, 0, 0, 255, 0 };
-WsColor kRainbow[7] = { 255, 0, 0, 255, 128, 0, 255, 255, 0, 0, 255, 0, 0, 0, 255, 128, 0, 255, 255, 0, 255 };
-WsColor kFire[3] = { 255, 0, 0, 255, 102, 0, 255, 192, 0 };
+WsColor kIncandescent[2] = { 255,140,20, 0,0,0 };
+WsColor kRgb[3] = { 255,0,0, 0,255,0, 0,0,255 };
+WsColor kChristmas[2] = { 255,0,0, 0,255,0 };
+WsColor kHanukkah[2] = { 0,0,255, 255,255,255 };
+WsColor kwanzaa[3] = { 255,0,0, 0,0,0, 0,255,0 };
+WsColor kRainbow[7] = { 255,0,0, 255,128,0, 255,255,0, 0,255,0, 0,0,255, 128,0,255, 255,0,255 };
+WsColor kFire[3] = { 255,0,0, 255,102,0, 255,192,0 };
 ColorScheme kSchemes[7] = {
   kIncandescent, 2,
   kRgb, 3,
@@ -82,12 +90,22 @@ uint8_t ws_show_next = 1;
 
 void Ws2812StripShow()
 {
+#if (USE_WS2812_CTYPE > 1)
+  RgbwColor c;
+#else
   RgbColor c;
+#endif
 
   if (Settings.light_correction) {
     for (uint16_t i = 0; i < Settings.light_pixels; i++) {
       c = strip->GetPixelColor(i);
-      strip->SetPixelColor(i, RgbColor(ledTable[c.R], ledTable[c.G], ledTable[c.B]));
+      c.R = ledTable[c.R];
+      c.G = ledTable[c.G];
+      c.B = ledTable[c.B];
+#if (USE_WS2812_CTYPE > 1)
+      c.W = ledTable[c.W];
+#endif
+      strip->SetPixelColor(i, c);
     }
   }
   strip->Show();
@@ -104,18 +122,22 @@ int mod(int a, int b)
 
 #define cmin(a,b) ((a)<(b)?(a):(b))
 
-void Ws2812UpdatePixelColor(int position, struct RgbColor hand_color, uint8_t hand)
+void Ws2812UpdatePixelColor(int position, struct WsColor hand_color, uint8_t hand)
 {
+#if (USE_WS2812_CTYPE > 1)
+  RgbwColor color;
+#else
   RgbColor color;
+#endif
 
   uint16_t mod_position = mod(position, (int)Settings.light_pixels);
 
   color = strip->GetPixelColor(mod_position);
   float dimmer = 100 / (float)Settings.light_dimmer;
   uint8_t offset = 1 << hand;
-  color.R = cmin(color.R + ((hand_color.R / dimmer) / offset), 255);
-  color.G = cmin(color.G + ((hand_color.G / dimmer) / offset), 255);
-  color.B = cmin(color.B + ((hand_color.B / dimmer) / offset), 255);
+  color.R = cmin(color.R + ((hand_color.red / dimmer) / offset), 255);
+  color.G = cmin(color.G + ((hand_color.green / dimmer) / offset), 255);
+  color.B = cmin(color.B + ((hand_color.blue / dimmer) / offset), 255);
   strip->SetPixelColor(mod_position, color);
 }
 
@@ -124,7 +146,7 @@ void Ws2812UpdateHand(int position, uint8_t index)
   if (Settings.flag.ws_clock_reverse) {
     position = Settings.light_pixels -position;
   }
-  RgbColor hand_color = RgbColor(Settings.ws_color[index][WS_RED], Settings.ws_color[index][WS_GREEN], Settings.ws_color[index][WS_BLUE]);
+  WsColor hand_color = { Settings.ws_color[index][WS_RED], Settings.ws_color[index][WS_GREEN], Settings.ws_color[index][WS_BLUE] };
 
   Ws2812UpdatePixelColor(position, hand_color, 0);
   for (uint8_t h = 1; h <= ((Settings.ws_width[index] -1) / 2); h++) {
@@ -139,7 +161,6 @@ void Ws2812Clock()
   int clksize = 600 / (int)Settings.light_pixels;
   Ws2812UpdateHand((RtcTime.second * 10) / clksize, WS_SECOND);
   Ws2812UpdateHand((RtcTime.minute * 10) / clksize, WS_MINUTE);
-//  Ws2812UpdateHand((RtcTime.hour % 12) * (50 / clksize), WS_HOUR);
   Ws2812UpdateHand(((RtcTime.hour % 12) * (50 / clksize)) + ((RtcTime.minute * 10) / (12 * clksize)), WS_HOUR);
 
   Ws2812StripShow();
@@ -177,7 +198,12 @@ void Ws2812Gradient(uint8_t schemenr)
  * Display a gradient of colors for the current color scheme.
  *  Repeat is the number of repetitions of the gradient (pick a multiple of 2 for smooth looping of the gradient).
  */
+#if (USE_WS2812_CTYPE > 1)
+  RgbwColor c;
+  c.W = 0;
+#else
   RgbColor c;
+#endif
 
   ColorScheme scheme = kSchemes[schemenr];
   if (scheme.count < 2) {
@@ -222,7 +248,12 @@ void Ws2812Bars(uint8_t schemenr)
  * Display solid bars of color for the current color scheme.
  * Width is the width of each bar in pixels/lights.
  */
+#if (USE_WS2812_CTYPE > 1)
+  RgbwColor c;
+  c.W = 0;
+#else
   RgbColor c;
+#endif
   uint16_t i;
 
   ColorScheme scheme = kSchemes[schemenr];
@@ -268,12 +299,20 @@ void Ws2812Init()
 #ifdef USE_WS2812_DMA
 #if (USE_WS2812_CTYPE == 1)
   strip = new NeoPixelBus<NeoGrbFeature, Neo800KbpsMethod>(WS2812_MAX_LEDS);  // For Esp8266, the Pin is omitted and it uses GPIO3 due to DMA hardware use.
+#elif (USE_WS2812_CTYPE == 2)
+  strip = new NeoPixelBus<NeoRgbwFeature, Neo800KbpsMethod>(WS2812_MAX_LEDS);  // For Esp8266, the Pin is omitted and it uses GPIO3 due to DMA hardware use.
+#elif (USE_WS2812_CTYPE == 3)
+  strip = new NeoPixelBus<NeoGrbwFeature, Neo800KbpsMethod>(WS2812_MAX_LEDS);  // For Esp8266, the Pin is omitted and it uses GPIO3 due to DMA hardware use.
 #else  // USE_WS2812_CTYPE
   strip = new NeoPixelBus<NeoRgbFeature, Neo800KbpsMethod>(WS2812_MAX_LEDS);  // For Esp8266, the Pin is omitted and it uses GPIO3 due to DMA hardware use.
 #endif  // USE_WS2812_CTYPE
 #else  // USE_WS2812_DMA
 #if (USE_WS2812_CTYPE == 1)
   strip = new NeoPixelBus<NeoGrbFeature, NeoEsp8266BitBang800KbpsMethod>(WS2812_MAX_LEDS, pin[GPIO_WS2812]);
+#elif (USE_WS2812_CTYPE == 2)
+  strip = new NeoPixelBus<NeoRgbwFeature, NeoEsp8266BitBang800KbpsMethod>(WS2812_MAX_LEDS, pin[GPIO_WS2812]);
+#elif (USE_WS2812_CTYPE == 3)
+  strip = new NeoPixelBus<NeoGrbwFeature, NeoEsp8266BitBang800KbpsMethod>(WS2812_MAX_LEDS, pin[GPIO_WS2812]);
 #else  // USE_WS2812_CTYPE
   strip = new NeoPixelBus<NeoRgbFeature, NeoEsp8266BitBang800KbpsMethod>(WS2812_MAX_LEDS, pin[GPIO_WS2812]);
 #endif  // USE_WS2812_CTYPE
@@ -289,9 +328,15 @@ void Ws2812Clear()
   ws_show_next = 1;
 }
 
-void Ws2812SetColor(uint16_t led, uint8_t red, uint8_t green, uint8_t blue)
+void Ws2812SetColor(uint16_t led, uint8_t red, uint8_t green, uint8_t blue, uint8_t white)
 {
+#if (USE_WS2812_CTYPE > 1)
+  RgbwColor lcolor;
+  lcolor.W = white;
+#else
   RgbColor lcolor;
+#endif
+
   lcolor.R = red;
   lcolor.G = green;
   lcolor.B = blue;
@@ -309,14 +354,19 @@ void Ws2812SetColor(uint16_t led, uint8_t red, uint8_t green, uint8_t blue)
 
 char* Ws2812GetColor(uint16_t led, char* scolor)
 {
-  uint8_t sl_ledcolor[3];
+  uint8_t sl_ledcolor[4];
 
+ #if (USE_WS2812_CTYPE > 1)
+  RgbwColor lcolor = strip->GetPixelColor(led -1);
+  sl_ledcolor[3] = lcolor.W;
+ #else
   RgbColor lcolor = strip->GetPixelColor(led -1);
+ #endif
   sl_ledcolor[0] = lcolor.R;
   sl_ledcolor[1] = lcolor.G;
   sl_ledcolor[2] = lcolor.B;
   scolor[0] = '\0';
-  for (byte i = 0; i < 3; i++) {
+  for (byte i = 0; i < light_subtype; i++) {
     if (Settings.flag.decimal_text) {
       snprintf_P(scolor, 25, PSTR("%s%s%d"), scolor, (i > 0) ? "," : "", sl_ledcolor[i]);
     } else {

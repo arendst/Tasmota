@@ -166,14 +166,18 @@
 //#define USE_DS18x20                              // Optional using OneWire library for multiple DS18B20 and/or DS18S20 (+2k code)
 
 #define USE_I2C                                  // I2C using library wire (+10k code, 0.2k mem) - Disable by //
+  #define USE_SHT                                // Add I2C emulating code for SHT1X sensor
+  #define USE_HTU                                // Add I2C code for HTU21/SI7013/SI7020/SI7021 sensor
+  #define USE_BMP                                // Add I2C code for BMP/BME280 sensor
   #define USE_BH1750                             // Add I2C code for BH1750 sensor
 //  #define USE_VEML6070                           // Add I2C code for VEML6070 sensor (+0.5k code)
-  #define USE_BMP                                // Add I2C code for BMP/BME280 sensor
-  #define USE_HTU                                // Add I2C code for HTU21/SI7013/SI7020/SI7021 sensor
-  #define USE_SHT                                // Add I2C emulating code for SHT1X sensor
+//  #define USE_VEML6070                           // Add I2C code for VEML6070 sensor (+0.5k code)
+  #define USE_ADS1115                            // Add I2C code for ADS1x15 16 bit A/D converter using library i2cdevlib-Core and i2cdevlib-ADS1115 (+2k code)
+//  #define USE_INA219                             // Add I2C code for INA219 Low voltage and current sensor (+1k code)
+
   //STB mod
   #define USE_CHIRP                              // Add I2C support for CHIRP moisture sensor
-  #define USE_ADS1115							 // Add I2C support for ADS1115 A/D converter
+
   //end
 
 #define USE_IR_REMOTE                            // Send IR remote commands using library IRremoteESP8266 and ArduinoJson (+3k code, 0.3k mem)
@@ -181,7 +185,7 @@
   #define USE_IR_RECEIVE                         // Support for IR receiver (+4k code)
 
 #define USE_WS2812                               // WS2812 Led string using library NeoPixelBus (+5k code, +1k mem) - Disable by //
-  #define USE_WS2812_CTYPE     1                 // WS2812 Color type (0 - RGB, 1 - GRB)
+  #define USE_WS2812_CTYPE     1                 // WS2812 Color type (0 - RGB, 1 - GRB, 2 - RGBW, 3 - GRBW)
 //  #define USE_WS2812_DMA                         // DMA supports only GPIO03 (= Serial RXD) (+1k mem). When USE_WS2812_DMA is enabled expect Exceptions on Pow
 
 /*********************************************************************************************\

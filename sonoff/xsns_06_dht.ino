@@ -1,5 +1,5 @@
 /*
-  xsns_dht.ino - DHTxx and AM23xx temperature and humidity sensor support for Sonoff-Tasmota
+  xsns_06_dht.ino - DHTxx and AM23xx temperature and humidity sensor support for Sonoff-Tasmota
 
   Copyright (C) 2017  Theo Arends
 
@@ -37,7 +37,7 @@ byte dht_sensors = 0;
 struct DHTSTRUCT {
   byte     pin;
   byte     type;
-  char     stype[10];
+  char     stype[12];
   uint32_t lastreadtime;
   uint8_t  lastresult;
   float    t;
@@ -194,6 +194,8 @@ boolean DhtSetup(byte pin, byte type)
   return success;
 }
 
+/********************************************************************************************/
+
 void DhtInit()
 {
   dht_max_cycles = microsecondsToClockCycles(1000);  // 1 millisecond timeout for reading pulses from DHT sensor.
@@ -202,70 +204,73 @@ void DhtInit()
     pinMode(Dht[i].pin, INPUT_PULLUP);
     Dht[i].lastreadtime = 0;
     Dht[i].lastresult = 0;
-    switch (Dht[i].type) {
-    case GPIO_DHT11:
-      strcpy_P(Dht[i].stype, PSTR("DHT11"));
-      break;
-    case GPIO_DHT21:
-      strcpy_P(Dht[i].stype, PSTR("AM2301"));
-      break;
-    case GPIO_DHT22:
-      strcpy_P(Dht[i].stype, PSTR("DHT22"));
-    }
+    strcpy_P(Dht[i].stype, kSensors[Dht[i].type]);
     if (dht_sensors > 1) {
       snprintf_P(Dht[i].stype, sizeof(Dht[i].stype), PSTR("%s-%02d"), Dht[i].stype, Dht[i].pin);
     }
   }
 }
 
-/*********************************************************************************************\
- * Presentation
-\*********************************************************************************************/
-
-void MqttShowDht(uint8_t* djson)
+void DhtShow(boolean json)
 {
-  char stemp1[10];
-  char stemp2[10];
+  char temperature[10];
+  char humidity[10];
   float t;
   float h;
 
   byte dsxflg = 0;
   for (byte i = 0; i < dht_sensors; i++) {
     if (DhtReadTempHum(i, t, h)) {     // Read temperature
-      dtostrfd(t, Settings.flag.temperature_resolution, stemp1);
-      dtostrfd(h, Settings.flag.humidity_resolution, stemp2);
-      snprintf_P(mqtt_data, sizeof(mqtt_data), JSON_SNS_TEMPHUM, mqtt_data, Dht[i].stype, stemp1, stemp2);
-      *djson = 1;
+      dtostrfd(t, Settings.flag2.temperature_resolution, temperature);
+      dtostrfd(h, Settings.flag2.humidity_resolution, humidity);
+
+      if (json) {
+        snprintf_P(mqtt_data, sizeof(mqtt_data), JSON_SNS_TEMPHUM, mqtt_data, Dht[i].stype, temperature, humidity);
 #ifdef USE_DOMOTICZ
-      if (!dsxflg) {
-        DomoticzTempHumSensor(stemp1, stemp2);
-        dsxflg++;
-      }
+        if (!dsxflg) {
+          DomoticzTempHumSensor(temperature, humidity);
+          dsxflg++;
+        }
 #endif  // USE_DOMOTICZ
-    }
-  }
-}
-
 #ifdef USE_WEBSERVER
-String WebShowDht()
-{
-  String page = "";
-  char stemp[10];
-  char sensor[80];
-  float t;
-  float h;
-
-  for (byte i = 0; i < dht_sensors; i++) {
-    if (DhtReadTempHum(i, t, h)) {
-      dtostrfi(t, Settings.flag.temperature_resolution, stemp);
-      snprintf_P(sensor, sizeof(sensor), HTTP_SNS_TEMP, Dht[i].stype, stemp, TempUnit());
-      page += sensor;
-      dtostrfi(h, Settings.flag.humidity_resolution, stemp);
-      snprintf_P(sensor, sizeof(sensor), HTTP_SNS_HUM, Dht[i].stype, stemp);
-      page += sensor;
+      } else {
+        snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TEMP, mqtt_data, Dht[i].stype, temperature, TempUnit());
+        snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_HUM, mqtt_data, Dht[i].stype, humidity);
+#endif  // USE_WEBSERVER
+      }
     }
   }
-  return page;
 }
+
+/*********************************************************************************************\
+ * Interface
+\*********************************************************************************************/
+
+#define XSNS_06
+
+boolean Xsns06(byte function)
+{
+  boolean result = false;
+
+  if (dht_flg) {
+    switch (function) {
+      case FUNC_XSNS_INIT:
+        DhtInit();
+        break;
+      case FUNC_XSNS_PREP:
+        DhtReadPrep();
+        break;
+      case FUNC_XSNS_JSON_APPEND:
+        DhtShow(1);
+        break;
+#ifdef USE_WEBSERVER
+      case FUNC_XSNS_WEB:
+        DhtShow(0);
+        break;
 #endif  // USE_WEBSERVER
+    }
+  }
+  return result;
+}
+
 #endif  // USE_DHT

@@ -32,6 +32,7 @@ uint8_t sonoff_bridge_receive_flag = 0;
 uint8_t sonoff_bridge_learn_key = 1;
 uint8_t sonoff_bridge_learn_active = 0;
 uint32_t sonoff_bridge_last_received_id = 0;
+uint32_t sonoff_bridge_last_send_code = 0;
 unsigned long sonoff_bridge_last_time = 0;
 
 void SonoffBridgeReceived()
@@ -52,7 +53,7 @@ void SonoffBridgeReceived()
 
   if (0xA2 == serial_in_buffer[0]) {       // Learn timeout
     sonoff_bridge_learn_active = 0;
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_RFKEY "%d\":\"" D_LEARN_FAILED "\"}"), sonoff_bridge_learn_key);
+    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, D_CMND_RFKEY, sonoff_bridge_learn_key, D_LEARN_FAILED);
     MqttPublishPrefixTopic_P(5, PSTR(D_CMND_RFKEY));
   }
   else if (0xA3 == serial_in_buffer[0]) {  // Learned A3 20 F8 01 18 03 3E 2E 1A 22 55
@@ -63,9 +64,9 @@ void SonoffBridgeReceived()
       for (byte i = 0; i < 9; i++) {
         Settings.rf_code[sonoff_bridge_learn_key][i] = serial_in_buffer[i +1];
       }
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_RFKEY "%d\":\"" D_LEARNED "\"}"), sonoff_bridge_learn_key);
+      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, D_CMND_RFKEY, sonoff_bridge_learn_key, D_LEARNED);
     } else {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_RFKEY "%d\":\"" D_LEARN_FAILED "\"}"), sonoff_bridge_learn_key);
+      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, D_CMND_RFKEY, sonoff_bridge_learn_key, D_LEARN_FAILED);
     }
     MqttPublishPrefixTopic_P(5, PSTR(D_CMND_RFKEY));
   }
@@ -89,7 +90,7 @@ void SonoffBridgeReceived()
           }
         }
       }
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_RFRECEIVED "\":{\"" D_SYNC "\":%d, \"" D_LOW "\":%d, \"" D_HIGH "\":%d, \"" D_DATA "\":\"%06X\", \"" D_CMND_RFKEY "\":%s}}"),
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_RFRECEIVED "\":{\"" D_SYNC "\":%d,\"" D_LOW "\":%d,\"" D_HIGH "\":%d,\"" D_DATA "\":\"%06X\",\"" D_CMND_RFKEY "\":%s}}"),
         sync_time, low_time, high_time, received_id, rfkey);
       MqttPublishPrefixTopic_P(6, PSTR(D_RFRECEIVED));
 #ifdef USE_DOMOTICZ
@@ -131,11 +132,11 @@ void SonoffBridgeSendCode(uint32_t code)
 {
   Serial.write(0xAA);  // Start of Text
   Serial.write(0xA5);  // Send following code
-  for (uint8_t i = 0; i < 6; i++) {
+  for (byte i = 0; i < 6; i++) {
     Serial.write(Settings.rf_code[0][i]);
   }
-  Serial.write(code >> 16 & 0xff);
-  Serial.write(code >> 8 & 0xff);
+  Serial.write((code >> 16) & 0xff);
+  Serial.write((code >> 8) & 0xff);
   Serial.write(code & 0xff);
   Serial.write(0x55);  // End of Text
   Serial.flush();
@@ -148,7 +149,7 @@ void SonoffBridgeSend(uint8_t idx, uint8_t key)
   key--;               // Support 1 to 16
   Serial.write(0xAA);  // Start of Text
   Serial.write(0xA5);  // Send following code
-  for (uint8_t i = 0; i < 8; i++) {
+  for (byte i = 0; i < 8; i++) {
     Serial.write(Settings.rf_code[idx][i]);
   }
   if (0 == idx) {
@@ -202,6 +203,7 @@ boolean SonoffBridgeCommand(char *type, uint16_t index, char *dataBuf, uint16_t 
       code = strtol(dataBuf, &p, radix);
       if (code) {
         if (CMND_RFCODE == command_code) {
+          sonoff_bridge_last_send_code = code;
           SonoffBridgeSendCode(code);
         } else {
           if (1 == payload) {
@@ -215,38 +217,48 @@ boolean SonoffBridgeCommand(char *type, uint16_t index, char *dataBuf, uint16_t 
           }
         }
       }
+    }
+    if (CMND_RFCODE == command_code) {
+      code = sonoff_bridge_last_send_code;
     } else {
-      if (CMND_RFCODE != command_code) {
-        code = Settings.rf_code[0][set_index] << 8 | Settings.rf_code[0][set_index +1];
-      }
+      code = Settings.rf_code[0][set_index] << 8 | Settings.rf_code[0][set_index +1];
     }
     if (10 == radix) {
       snprintf_P(stemp, sizeof(stemp), PSTR("%d"), code);
     } else {
       snprintf_P(stemp, sizeof(stemp), PSTR("\"#%X\""), code);
     }
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"%s\":%s}"), command, stemp);
+    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_XVALUE, command, stemp);
   }
   else if ((CMND_RFKEY == command_code) && (index > 0) && (index <= 16)) {
     if (!sonoff_bridge_learn_active) {
-      if (2 == payload) {
+      if (2 == payload) {              // Learn RF data
         SonoffBridgeLearn(index);
-        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_RFKEY "%d\":\"" D_START_LEARNING "\"}"), index);
+        snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, index, D_START_LEARNING);
       }
-      else if (3 == payload) {
+      else if (3 == payload) {         // Unlearn RF data
         Settings.rf_code[index][0] = 0;
-        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_RFKEY "%d\":\"" D_SET_TO_DEFAULT "\"}"), index);
+        snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, index, D_SET_TO_DEFAULT);
+      }
+      else if (4 == payload) {         // Save RF data provided by RFSync, RfLow, RfHigh and last RfCode
+        for (byte i = 0; i < 6; i++) {
+          Settings.rf_code[index][i] = Settings.rf_code[0][i];
+        }
+        Settings.rf_code[index][6] = (sonoff_bridge_last_send_code >> 16) & 0xff;
+        Settings.rf_code[index][7] = (sonoff_bridge_last_send_code >> 8) & 0xff;
+        Settings.rf_code[index][8] = sonoff_bridge_last_send_code & 0xff;
+        snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, index, D_SAVED);
       } else {
         if ((1 == payload) || (0 == Settings.rf_code[index][0])) {
-          SonoffBridgeSend(0, index);
-          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_RFKEY "%d\":\"" D_DEFAULT_SENT "\"}"), index);
+          SonoffBridgeSend(0, index);  // Send default RF data
+          snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, index, D_DEFAULT_SENT);
         } else {
-          SonoffBridgeSend(index, 0);
-          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_RFKEY "%d\":\"" D_LEARNED_SENT "\"}"), index);
+          SonoffBridgeSend(index, 0);  // Send learned RF data
+          snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, index, D_LEARNED_SENT);
         }
       }
     } else {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_RFKEY "%d\":\"" D_LEARNING_ACTIVE "\"}"), sonoff_bridge_learn_key);
+      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, sonoff_bridge_learn_key, D_LEARNING_ACTIVE);
     }
   } else {
     serviced = false;

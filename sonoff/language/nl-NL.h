@@ -200,6 +200,10 @@
 #define D_WIFI "Wifi"
 #define D_WRONG "Fout"
 #define D_YESTERDAY "Gisteren"
+//STB mod
+#define D_MOISTURE "Moisture"
+#define D_DISTANCE "Distance"
+//end
 
 // settings.ino
 #define D_SAVED_TO_FLASH_AT "Opgeslagen in flash op"
@@ -216,7 +220,7 @@
 #define D_SET_BAUDRATE_TO "Zet baudrate op"
 #define D_RECEIVED_TOPIC "Ontvangen topic"
 #define D_DATA_SIZE "Data lengte"
-#define D_ANALOG_INPUT0 "Analoog0"
+#define D_ANALOG_INPUT "Analoog"
 
 #define D_FINGERPRINT "Controleer TLS vingerafdruk..."
 #define D_TLS_CONNECT_FAILED_TO "TLS Verbinding mislukt naar"
@@ -406,6 +410,7 @@
 #define D_LEARNING_ACTIVE "Leren actief"
 #define D_LEARN_FAILED "Leren mislukt"
 #define D_LEARNED "Geleerd"
+#define D_SAVED "Opgeslagen"
 
 // xdrv_wemohue.ino
 #define D_MULTICAST_DISABLED "Multicast uitgeschakeld"
@@ -572,6 +577,7 @@
 #define D_CMND_PRESSURE_RESOLUTION "PressRes"
 #define D_CMND_POWER_RESOLUTION "WattRes"
 #define D_CMND_VOLTAGE_RESOLUTION "VoltRes"
+#define D_CMND_CURRENT_RESOLUTION "AmpRes"
 #define D_CMND_ENERGY_RESOLUTION "EnergyRes"
 #define D_CMND_MODULE "Module"
 #define D_CMND_MODULES "Modules"
@@ -628,6 +634,7 @@
 #define D_CMND_LEDSTATE "LedState"
 #define D_CMND_CFGDUMP "CfgDump"
 #define D_CMND_I2CSCAN "I2CScan"
+#define D_CMND_INA219MODE "Ina219Mode"
 #define D_CMND_EXCEPTION "Exception"
 
 // Commands xdrv_domoticz.ino
