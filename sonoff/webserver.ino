@@ -1027,13 +1027,13 @@ snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_LOG D_CMND_SERIALLOG " %d, " D
     break;
   case 6:
     byte new_module = (!strlen(WebServer->arg("g99").c_str())) ? MODULE : atoi(WebServer->arg("g99").c_str());
-    byte new_modflg = (Settings.module != new_module);
+    Settings.last_module = Settings.module;
     Settings.module = new_module;
     mytmplt cmodule;
     memcpy_P(&cmodule, &kModules[Settings.module], sizeof(cmodule));
     String gpios = "";
     for (byte i = 0; i < MAX_GPIO_PIN; i++) {
-      if (new_modflg) {
+      if (Settings.last_module != new_module) {
         Settings.my_gp.io[i] = 0;
       } else {
         if (GPIO_USER == cmodule.gp.io[i]) {

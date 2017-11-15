@@ -177,8 +177,7 @@ struct SYSCFG {
   uint16_t      hlw_mkwhs;                 // 394 MaxEnergyStart
   uint16_t      mqtt_retry;                // 396
   uint8_t       poweronstate;              // 398
-
-  byte          free_399[1];               // 399
+  uint8_t       last_module;               // 399
 
   uint16_t      blinktime;                 // 39A
   uint16_t      blinkcount;                // 39C

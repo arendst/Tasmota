@@ -25,7 +25,7 @@
     - Select IDE Tools - Flash Size: "1M (no SPIFFS)"
   ====================================================*/
 
-#define VERSION                0x05090103   // 5.9.1c
+#define VERSION                0x05090104   // 5.9.1d
 
 // Location specific includes
 #include "sonoff.h"                         // Enumaration used in user_config.h
@@ -1087,9 +1087,9 @@ void MqttDataCallback(char* topic, byte* data, unsigned int data_len)
     else if (CMND_MODULE == command_code) {
       if ((payload > 0) && (payload <= MAXMODULE)) {
         payload--;
-        byte new_modflg = (Settings.module != payload);
+        Settings.last_module = Settings.module;
         Settings.module = payload;
-        if (new_modflg) {
+        if (Settings.last_module != payload) {
           for (byte i = 0; i < MAX_GPIO_PIN; i++) {
             Settings.my_gp.io[i] = 0;
           }
@@ -2456,6 +2456,7 @@ void GpioInit()
 
   if (!Settings.module || (Settings.module >= MAXMODULE)) {
     Settings.module = MODULE;
+    Settings.last_module = MODULE;
   }
 
   memcpy_P(&def_module, &kModules[Settings.module], sizeof(def_module));
@@ -2545,7 +2546,7 @@ void GpioInit()
     devices_present = 0;
     baudrate = 19200;
   }
-  else if ((H801 == Settings.module) || (MAGICHOME == Settings.module) || (ARILUX == Settings.module)) {  // PWM RGBCW led
+  else if ((H801 == Settings.module) || (MAGICHOME == Settings.module) || (ARILUX_LC01 == Settings.module) || (ARILUX_LC11 == Settings.module)) {  // PWM RGBCW led
     if (!Settings.flag.pwm_control) {
       light_type = LT_BASIC;                 // Use basic PWM control if SetOption15 = 0
     }
@@ -2760,6 +2761,12 @@ void loop()
     PollUdp();
   }
 #endif  // USE_EMULATION
+
+#ifdef USE_ARILUX_RF
+  if (pin[GPIO_ALIRFRCV] < 99) {
+    AriluxRfHandler();
+  }
+#endif  // USE_ARILUX_RF
 
   if (millis() >= state_loop_timer) {
     StateLoop();

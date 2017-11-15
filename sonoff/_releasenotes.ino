@@ -1,4 +1,9 @@
-/* 5.9.1c
+/* 5.9.1d
+ * Add support for Arilux LC11 (CLearing RF home code when selecting no Arilux module)
+ * Add fixed color options 1..12 to command Color
+ * Add + (plus) and - (minus) to commands Dimmer (+10/-10), Speed and Scheme
+ *
+ * 5.9.1c
  * Add support for WS2812 RGBW ledstrips to be enabled in user_config.h with define USE_WS2812_CTYPE (#1156)
  *
  * 5.9.1b
