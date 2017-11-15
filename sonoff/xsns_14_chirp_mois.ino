@@ -111,7 +111,9 @@ boolean chirp_detect()
  * Presentation
 \*********************************************************************************************/
 #ifdef USE_WEBSERVER
+ #ifndef USE_BH1750  // avoid duplicate definition
   const char HTTP_SNS_ILLUMINANCE[] PROGMEM =  "%s{s}%s " D_ILLUMINANCE "{m}%s%{e}";
+  #endif
   const char HTTP_SNS_MOISTURE[] PROGMEM = "%s{s}%s " D_MOISTURE "{m}%s%{e}";
 #endif  // USE_WEBSERVER
 

@@ -177,7 +177,7 @@
 
   //STB mod
   #define USE_CHIRP                              // Add I2C support for CHIRP moisture sensor
-
+  #define USE_PCF8574                            // Add I2C support for PCF8574 multi GPIO board
   //end
 
 #define USE_IR_REMOTE                            // Send IR remote commands using library IRremoteESP8266 and ArduinoJson (+3k code, 0.3k mem)
