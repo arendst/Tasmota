@@ -92,6 +92,12 @@ typedef unsigned long power_t;              // Power (Relay) type
 
 #define XSNS_MAX               20           // Max number of allowed Xsns External Sensors (Update xsns_interface.ino if changed)
 
+/*
+// Removed from esp8266 core since 20171105
+#define min(a,b) ((a)<(b)?(a):(b))
+#define max(a,b) ((a)>(b)?(a):(b))
+*/
+
 /*********************************************************************************************\
  * Enumeration
 \*********************************************************************************************/

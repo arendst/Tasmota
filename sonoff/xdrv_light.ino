@@ -102,6 +102,8 @@ uint8_t light_wakeup_active = 0;
 uint8_t light_wakeup_dimmer = 0;
 uint16_t light_wakeup_counter = 0;
 
+uint8_t light_fixed_color_index = 1;
+
 unsigned long strip_timer_counter = 0;  // Bars and Gradient
 
 #ifdef USE_ARILUX_RF
@@ -116,19 +118,19 @@ unsigned long strip_timer_counter = 0;  // Bars and Gradient
 #define ARILUX_RF_RECEIVE_TOLERANCE     60    // Percentage
 
 unsigned int arilux_rf_timings[ARILUX_RF_MAX_CHANGES];
+
 unsigned long arilux_rf_received_value = 0;
-
-unsigned long arilux_rf_lasttime = 0;
-unsigned int arilux_rf_change_count = 0;
-unsigned int arilux_rf_repeat_count = 0;
-
 unsigned long arilux_rf_last_received_value = 0;
 unsigned long arilux_rf_last_time = 0;
+unsigned long arilux_rf_lasttime = 0;
+
+unsigned int arilux_rf_change_count = 0;
+unsigned int arilux_rf_repeat_count = 0;
 
 uint8_t arilux_rf_toggle = 0;
 
 #ifndef USE_WS2812_DMA  // Collides with Neopixelbus but solves RF misses
-void AriluxRfInterrupt() ICACHE_RAM_ATTR;
+//void AriluxRfInterrupt() ICACHE_RAM_ATTR;  // As iram is tight and it works this way too
 #endif  // USE_WS2812_DMA
 
 void AriluxRfInterrupt()
@@ -143,20 +145,13 @@ void AriluxRfInterrupt()
         unsigned long code = 0;
         const unsigned int delay = arilux_rf_timings[0] / 31;
         const unsigned int delayTolerance = delay * ARILUX_RF_RECEIVE_TOLERANCE / 100;
-
         for (unsigned int i = 1; i < arilux_rf_change_count -1; i += 2) {
           code <<= 1;
-          if (abs(arilux_rf_timings[i] - delay) < delayTolerance && abs(arilux_rf_timings[i + 1] - (delay * 3)) < delayTolerance) {
-            // zero
-          } else if (abs(arilux_rf_timings[i] - (delay * 3)) < delayTolerance && abs(arilux_rf_timings[i + 1] - delay) < delayTolerance) {
-            // one
+          if (abs(arilux_rf_timings[i] - (delay *3)) < delayTolerance && abs(arilux_rf_timings[i +1] - delay) < delayTolerance) {
             code |= 1;
-          } else {
-            // Failed
           }
         }
-        if (arilux_rf_change_count > 7) {    // ignore very short transmissions: no device sends them, so this must be noise
-//        if (arilux_rf_change_count > 48) {    // ignore very short transmissions: no device sends them, so this must be noise
+        if (arilux_rf_change_count > 49) {  // Need 1 sync bit and 24 data bits
           arilux_rf_received_value = code;
         }
         arilux_rf_repeat_count = 0;
@@ -164,22 +159,16 @@ void AriluxRfInterrupt()
     }
     arilux_rf_change_count = 0;
   }
-
-  // detect overflow
   if (arilux_rf_change_count >= ARILUX_RF_MAX_CHANGES) {
     arilux_rf_change_count = 0;
     arilux_rf_repeat_count = 0;
   }
-
   arilux_rf_timings[arilux_rf_change_count++] = duration;
   arilux_rf_lasttime = time;
 }
 
 void AriluxRfHandler()
 {
-  char command[16];
-  char value = '-';
-
   unsigned long now = millis();
   if (arilux_rf_received_value && !((arilux_rf_received_value == arilux_rf_last_received_value) && (now - arilux_rf_last_time < ARILUX_RF_TIME_AVOID_DUPLICATE))) {
     arilux_rf_last_received_value = arilux_rf_received_value;
@@ -191,11 +180,13 @@ void AriluxRfHandler()
       Settings.rf_code[1][7] = hostcode & 0xFF;
     }
     uint16_t stored_hostcode = Settings.rf_code[1][6] << 8 | Settings.rf_code[1][7];
+
+    snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_RFR D_HOST D_CODE " 0x%04X, " D_RECEIVED " 0x%06X"), stored_hostcode, arilux_rf_received_value);
+    AddLog(LOG_LEVEL_DEBUG);
+
     if (hostcode == stored_hostcode) {
-
-      snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_RFR D_RECEIVED " 0x%06X"), arilux_rf_received_value);
-      AddLog(LOG_LEVEL_DEBUG);
-
+      char command[16];
+      char value = '-';
       command[0] = '\0';
       uint8_t  keycode = arilux_rf_received_value & 0xFF;
       switch (keycode) {
@@ -898,12 +889,25 @@ boolean LightColorEntry(char *buffer, uint8_t buffer_length)
   char *p;
   char *str;
   uint8_t entry_type = 0;                           // Invalid
+  uint8_t value = light_fixed_color_index;
 
   if (buffer[0] == '#') {                           // Optional hexadecimal entry
     buffer++;
     buffer_length--;
   }
-  uint8_t value = atoi(buffer);
+
+  if (light_subtype >= LST_RGB) {
+    char option = (1 == buffer_length) ? buffer[0] : '\0';
+    if (('+' == option) && (light_fixed_color_index < MAX_FIXED_COLOR)) {
+      value++;
+    }
+    else if (('-' == option) && (light_fixed_color_index > 1)) {
+      value--;
+    } else {
+      value = atoi(buffer);
+    }
+  }
+
   memset(&light_entry_color, 0x00, sizeof(light_entry_color));
   if (strstr(buffer, ",")) {                        // Decimal entry
     int8_t i = 0;
@@ -921,13 +925,20 @@ boolean LightColorEntry(char *buffer, uint8_t buffer_length)
     }
     entry_type = 1;                                 // Hexadecimal
   }
-  else if ((value > 0) && (value <= MAX_FIXED_COLOR)) {
+  else if ((light_subtype >= LST_RGB) && (value > 0) && (value <= MAX_FIXED_COLOR)) {
+    light_fixed_color_index = value;
     memcpy_P(&light_entry_color, &kFixedColor[value -1], 3);
     entry_type = 1;                                 // Hexadecimal
   }
   else if ((value > 199) && (value <= 199 + MAX_FIXED_COLD_WARM)) {
-    memcpy_P(&light_entry_color[3], &kFixedColdWarm[value -200], 2);
-    entry_type = 1;                                 // Hexadecimal
+    if (LST_COLDWARM == light_subtype) {
+      memcpy_P(&light_entry_color, &kFixedColdWarm[value -200], 2);
+      entry_type = 1;                                 // Hexadecimal
+    }
+    else if (LST_RGBWC == light_subtype) {
+      memcpy_P(&light_entry_color[3], &kFixedColdWarm[value -200], 2);
+      entry_type = 1;                                 // Hexadecimal
+    }
   }
   if (entry_type) {
     Settings.flag.decimal_text = entry_type -1;
@@ -1036,7 +1047,16 @@ boolean LightCommand(char *type, uint16_t index, char *dataBuf, uint16_t data_le
     LightPowerOn();
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, D_STARTED);
   }
-  else if ((CMND_COLORTEMPERATURE == command_code) && ((2 == light_subtype) || (5 == light_subtype))) { // ColorTemp
+  else if ((CMND_COLORTEMPERATURE == command_code) && ((LST_COLDWARM == light_subtype) || (LST_RGBWC == light_subtype))) { // ColorTemp
+    if (option != '\0') {
+      uint16_t value = LightGetColorTemp();
+      if ('+' == option) {
+        payload = (value  > 466) ? 500 : value + 34;
+      }
+      else if ('-' == option) {
+        payload = (value  < 187) ? 153 : value - 34;
+      }
+    }
     if ((payload >= 153) && (payload <= 500)) {  // https://developers.meethue.com/documentation/core-concepts
       LightSetColorTemp(payload);
       coldim = true;

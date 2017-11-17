@@ -384,7 +384,7 @@
   #define D_DOMOTICZ_CURRENT "Prad"
 #define D_DOMOTICZ_UPDATE_TIMER "Zaktualizuj czasomierz"
 
-// xdrv_ir-send.ino
+// xdrv_irremote.ino
 #define D_INVALID_JSON "Invalid JSON"
 #define D_PROTOCOL_NOT_SUPPORTED "Protokol nie jest obslugiwany"
 #define D_IR_PROTOCOL "PROTOCOL"
@@ -427,18 +427,7 @@
 #define D_HUE_POST_ARGS "Hue POST args"
 #define D_3_RESPONSE_PACKETS_SENT "3 pakiety odpowiedzi wysylane"
 
-// xsns_dht.ino
-#define D_TIMEOUT_WAITING_FOR "Trwa oczekiwanie"
-#define D_START_SIGNAL_LOW "sygnał startowy niski"
-#define D_START_SIGNAL_HIGH "sygnał startowy wysoki"
-#define D_PULSE "pulse"
-#define D_CHECKSUM_FAILURE "Bledna suma kontrolmna"
-
-// xsns_ds18b20.ino
-#define D_SENSOR_BUSY "Czujnik DS18x20 zajety"
-#define D_SENSOR_CRC_ERROR "Czujnik DS18x20 blad CRC"
-
-// xsns_hlw8012.ino
+// xsns_03_hlw8012.ino
 #define D_MAXPOWERREACHED "MaksMocOsiagnieta"
 #define D_MAXPOWERREACHEDRETRY "MaksMocOsiagnietaPonowienie"
 #define D_POWERMONITOR "MonitorMocy"
@@ -448,7 +437,18 @@
 #define D_ENERGY_YESTERDAY "Energia Wczoraj"
 #define D_ENERGY_TOTAL "Energia suma"
 
-// xsns_sht1x.ino
+// xsns_05_ds18b20.ino
+#define D_SENSOR_BUSY "Czujnik DS18x20 zajety"
+#define D_SENSOR_CRC_ERROR "Czujnik DS18x20 blad CRC"
+
+// xsns_06_dht.ino
+#define D_TIMEOUT_WAITING_FOR "Trwa oczekiwanie"
+#define D_START_SIGNAL_LOW "sygnał startowy niski"
+#define D_START_SIGNAL_HIGH "sygnał startowy wysoki"
+#define D_PULSE "pulse"
+#define D_CHECKSUM_FAILURE "Bledna suma kontrolmna"
+
+// xsns_07_sht1x.ino
 #define D_SENSOR_DID_NOT_ACK_COMMAND "Czujnik nie otrzymal komendy ACK"
 #define D_SHT1X_FOUND "SHT1X znaleziony"
 
@@ -643,19 +643,11 @@
 #define D_CMND_SENSORIDX "SensorIdx"
 #define D_CMND_UPDATETIMER "UpdateTimer"
 
-// Commands xdrv_ir_send.ino
+// Commands xdrv_irremote.ino
 #define D_CMND_IRSEND "IRSend"
 #define D_CMND_IRHVAC "IRHVAC"
 
-// Commands xdrv_snfbridge.ino
-#define D_CMND_RFCODE "RfCode"
-#define D_CMND_RFHIGH "RfHigh"
-#define D_CMND_RFHOST "RfHost"
-#define D_CMND_RFKEY "RfKey"
-#define D_CMND_RFLOW "RfLow"
-#define D_CMND_RFSYNC "RfSync"
-
-// Commands xdrv_snfled.ino
+// Commands xdrv_light.ino
 #define D_CMND_COLOR "Color"
 #define D_CMND_COLORTEMPERATURE "CT"
 #define D_CMND_DIMMER "Dimmer"
@@ -669,7 +661,15 @@
 #define D_CMND_WAKEUPDURATION "WakeUpDuration"
 #define D_CMND_WIDTH "Width"
 
-// Commands xsns_hlw8012.ino
+// Commands xdrv_snfbridge.ino
+#define D_CMND_RFCODE "RfCode"
+#define D_CMND_RFHIGH "RfHigh"
+#define D_CMND_RFHOST "RfHost"
+#define D_CMND_RFKEY "RfKey"
+#define D_CMND_RFLOW "RfLow"
+#define D_CMND_RFSYNC "RfSync"
+
+// Commands xsns_03_hlw8012.ino
 #define D_CMND_POWERLOW "PowerLow"
 #define D_CMND_POWERHIGH "PowerHigh"
 #define D_CMND_VOLTAGELOW "VoltageLow"

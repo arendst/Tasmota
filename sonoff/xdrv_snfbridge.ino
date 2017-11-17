@@ -34,6 +34,14 @@ uint8_t sonoff_bridge_learn_active = 0;
 uint32_t sonoff_bridge_last_received_id = 0;
 uint32_t sonoff_bridge_last_send_code = 0;
 unsigned long sonoff_bridge_last_time = 0;
+unsigned long sonoff_bridge_last_learn_time = 0;
+
+void SonoffBridgeLearnFailed()
+{
+  sonoff_bridge_learn_active = 0;
+  snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, D_CMND_RFKEY, sonoff_bridge_learn_key, D_LEARN_FAILED);
+  MqttPublishPrefixTopic_P(5, PSTR(D_CMND_RFKEY));
+}
 
 void SonoffBridgeReceived()
 {
@@ -52,9 +60,7 @@ void SonoffBridgeReceived()
   AddLog(LOG_LEVEL_DEBUG);
 
   if (0xA2 == serial_in_buffer[0]) {       // Learn timeout
-    sonoff_bridge_learn_active = 0;
-    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, D_CMND_RFKEY, sonoff_bridge_learn_key, D_LEARN_FAILED);
-    MqttPublishPrefixTopic_P(5, PSTR(D_CMND_RFKEY));
+    SonoffBridgeLearnFailed();
   }
   else if (0xA3 == serial_in_buffer[0]) {  // Learned A3 20 F8 01 18 03 3E 2E 1A 22 55
     sonoff_bridge_learn_active = 0;
@@ -65,37 +71,41 @@ void SonoffBridgeReceived()
         Settings.rf_code[sonoff_bridge_learn_key][i] = serial_in_buffer[i +1];
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, D_CMND_RFKEY, sonoff_bridge_learn_key, D_LEARNED);
+      MqttPublishPrefixTopic_P(5, PSTR(D_CMND_RFKEY));
     } else {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, D_CMND_RFKEY, sonoff_bridge_learn_key, D_LEARN_FAILED);
+      SonoffBridgeLearnFailed();
     }
-    MqttPublishPrefixTopic_P(5, PSTR(D_CMND_RFKEY));
   }
   else if (0xA4 == serial_in_buffer[0]) {  // Received RF data A4 20 EE 01 18 03 3E 2E 1A 22 55
-    sync_time = serial_in_buffer[1] << 8 | serial_in_buffer[2];  // Sync time in uSec
-    low_time = serial_in_buffer[3] << 8 | serial_in_buffer[4];  // Low time in uSec
-    high_time = serial_in_buffer[5] << 8 | serial_in_buffer[6];  // High time in uSec
-    received_id = serial_in_buffer[7] << 16 | serial_in_buffer[8] << 8 | serial_in_buffer[9];
+    if (sonoff_bridge_learn_active) {
+      SonoffBridgeLearnFailed();
+    } else {
+      sync_time = serial_in_buffer[1] << 8 | serial_in_buffer[2];  // Sync time in uSec
+      low_time = serial_in_buffer[3] << 8 | serial_in_buffer[4];  // Low time in uSec
+      high_time = serial_in_buffer[5] << 8 | serial_in_buffer[6];  // High time in uSec
+      received_id = serial_in_buffer[7] << 16 | serial_in_buffer[8] << 8 | serial_in_buffer[9];
 
-    unsigned long now = millis();
-    if (!((received_id == sonoff_bridge_last_received_id) && (now - sonoff_bridge_last_time < SFB_TIME_AVOID_DUPLICATE))) {
-      sonoff_bridge_last_received_id = received_id;
-      sonoff_bridge_last_time = now;
-      strncpy_P(rfkey, PSTR("\"" D_NONE "\""), sizeof(rfkey));
-      for (byte i = 1; i <= 16; i++) {
-        if (Settings.rf_code[i][0]) {
-          uint32_t send_id = Settings.rf_code[i][6] << 16 | Settings.rf_code[i][7] << 8 | Settings.rf_code[i][8];
-          if (send_id == received_id) {
-            snprintf_P(rfkey, sizeof(rfkey), PSTR("%d"), i);
-            break;
+      unsigned long now = millis();
+      if (!((received_id == sonoff_bridge_last_received_id) && (now - sonoff_bridge_last_time < SFB_TIME_AVOID_DUPLICATE))) {
+        sonoff_bridge_last_received_id = received_id;
+        sonoff_bridge_last_time = now;
+        strncpy_P(rfkey, PSTR("\"" D_NONE "\""), sizeof(rfkey));
+        for (byte i = 1; i <= 16; i++) {
+          if (Settings.rf_code[i][0]) {
+            uint32_t send_id = Settings.rf_code[i][6] << 16 | Settings.rf_code[i][7] << 8 | Settings.rf_code[i][8];
+            if (send_id == received_id) {
+              snprintf_P(rfkey, sizeof(rfkey), PSTR("%d"), i);
+              break;
+            }
           }
         }
+        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_RFRECEIVED "\":{\"" D_SYNC "\":%d,\"" D_LOW "\":%d,\"" D_HIGH "\":%d,\"" D_DATA "\":\"%06X\",\"" D_CMND_RFKEY "\":%s}}"),
+          sync_time, low_time, high_time, received_id, rfkey);
+        MqttPublishPrefixTopic_P(6, PSTR(D_RFRECEIVED));
+  #ifdef USE_DOMOTICZ
+        DomoticzSensor(DZ_COUNT, received_id);  // Send rid as Domoticz Counter value
+  #endif  // USE_DOMOTICZ
       }
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_RFRECEIVED "\":{\"" D_SYNC "\":%d,\"" D_LOW "\":%d,\"" D_HIGH "\":%d,\"" D_DATA "\":\"%06X\",\"" D_CMND_RFKEY "\":%s}}"),
-        sync_time, low_time, high_time, received_id, rfkey);
-      MqttPublishPrefixTopic_P(6, PSTR(D_RFRECEIVED));
-#ifdef USE_DOMOTICZ
-      DomoticzSensor(DZ_COUNT, received_id);  // Send rid as Domoticz Counter value
-#endif  // USE_DOMOTICZ
     }
   }
 }
@@ -170,6 +180,7 @@ void SonoffBridgeLearn(uint8_t key)
 {
   sonoff_bridge_learn_key = key;
   sonoff_bridge_learn_active = 1;
+  sonoff_bridge_last_learn_time = millis();
   Serial.write(0xAA);  // Start of Text
   Serial.write(0xA1);  // Start learning
   Serial.write(0x55);  // End of Text
@@ -231,7 +242,9 @@ boolean SonoffBridgeCommand(char *type, uint16_t index, char *dataBuf, uint16_t 
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_XVALUE, command, stemp);
   }
   else if ((CMND_RFKEY == command_code) && (index > 0) && (index <= 16)) {
-    if (!sonoff_bridge_learn_active) {
+    unsigned long now = millis();
+    if ((!sonoff_bridge_learn_active) || (now - sonoff_bridge_last_learn_time > 60100)) {
+      sonoff_bridge_learn_active = 0;
       if (2 == payload) {              // Learn RF data
         SonoffBridgeLearn(index);
         snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, index, D_START_LEARNING);

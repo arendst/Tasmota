@@ -120,7 +120,7 @@ const char HTTP_SCRIPT_CONSOL[] PROGMEM =
           "id=d.getElementsByTagName('i')[0].childNodes[0].nodeValue;"
           "if(d.getElementsByTagName('j')[0].childNodes[0].nodeValue==0){t.value='';}"
           "z=d.getElementsByTagName('l')[0].childNodes;"
-          "if(z.length>0){t.value+=z[0].nodeValue;}"
+          "if(z.length>0){t.value+=decodeURIComponent(z[0].nodeValue);}"
           "t.scrollTop=99999;"
           "sn=t.scrollTop;"
         "}"
@@ -1439,7 +1439,11 @@ void HandleAjaxConsoleRefresh()
         } else {
           cflg = 1;
         }
-        message += web_log[counter];
+        String nextline = web_log[counter];
+        nextline.replace(F("<"), F("%3C"));  // XML encoding to fix blank console log in concert with javascript decodeURIComponent
+        nextline.replace(F(">"), F("%3E"));
+        nextline.replace(F("&"), F("%26"));
+        message += nextline;
       }
       counter++;
       if (counter > MAX_LOG_LINES -1) {

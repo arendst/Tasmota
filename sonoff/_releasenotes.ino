@@ -1,5 +1,14 @@
-/* 5.9.1d
- * Add support for Arilux LC11 (CLearing RF home code when selecting no Arilux module)
+/* 5.9.1e
+ * Add + (plus) and - (minus) to command color to select 1 out of 12 preset colors
+ * Add + (plus) and - (minus) to command ct to control ColdWarm led ColorTemperature (+34/-34)
+ * Tune Arilux RF code
+ * Fix possible iram1_0_seg compile error by shrinking ICACHE_RAM_ATTR code
+ * Update core_esp8266_wiring_digital.c to latest (staged) level
+ * Workaround Sonoff Bridge Learn Mode hang caused by unrecognised RF code (#1181)
+ * Fix blank console log window by using XML character encoding (#1187)
+ *
+ * 5.9.1d
+ * Add support for Arilux LC11 (Clearing RF home code when selecting no Arilux module)
  * Add fixed color options 1..12 to command Color
  * Add + (plus) and - (minus) to commands Dimmer (+10/-10), Speed and Scheme
  *

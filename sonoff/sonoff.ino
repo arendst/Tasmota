@@ -25,7 +25,7 @@
     - Select IDE Tools - Flash Size: "1M (no SPIFFS)"
   ====================================================*/
 
-#define VERSION                0x05090104   // 5.9.1d
+#define VERSION                0x05090105   // 5.9.1e
 
 // Location specific includes
 #include "sonoff.h"                         // Enumaration used in user_config.h
