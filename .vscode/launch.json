@@ -1,0 +1,14 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "gdb",
+            "request": "launch",
+            "cwd": "${workspaceRoot}",
+            "name": "PlatformIO Debugger",
+            "target": "d:/Users/stbode/Documents/Internet-of-Things-with-ESP8266-master/Sonoff-Tasmota/.pioenvs/sonoff/firmware.elf",
+            "gdbpath": "D:/Users/stbode/.platformio/penv/Scripts/piodebuggdb",
+            "autorun": [ "source .pioinit" ]
+        }
+    ]
+}

@@ -330,10 +330,7 @@ void SetDevicePower(power_t rpower)
   else {
     for (byte i = 0; i < devices_present; i++) {
       state = rpower &1;
-      //STB mod
-      //if ((i < MAX_RELAYS) && (pin[GPIO_REL1 +i] < 99)) {
-      if (pin[GPIO_REL1 +i] < 99 && (MAX_RELAYS-max_pcf8574_connected_ports) > i) {
-      //end
+      if ((i < MAX_RELAYS) && (pin[GPIO_REL1 +i] < 99)) {
         digitalWrite(pin[GPIO_REL1 +i], bitRead(rel_inverted, i) ? !state : state);
       }
        rpower >>= 1;

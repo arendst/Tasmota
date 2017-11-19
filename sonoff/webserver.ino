@@ -27,10 +27,6 @@
 
 #define STR_HELPER(x) #x
 #define STR(x) STR_HELPER(x)
-//STB mod
-#define max(a,b) ((a)>(b)?(a):(b))
-#define min(a,b) ((a)>(b)?(b):(a))
-//end
 
 const char HTTP_HEAD[] PROGMEM =
   "<!DOCTYPE html><html lang=\"en\" class=\"\">"

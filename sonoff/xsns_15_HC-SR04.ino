@@ -95,9 +95,8 @@ void sr04_Show(boolean json)
 
 #ifdef USE_WEBSERVER
   } else {
-    snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_HSSR04_DISTANCE, mqtt_data, sr04_readDistance().c_str());
+    snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_HSSR04_DISTANCE, mqtt_data, "HS-SR04", sr04_readDistance().c_str());
 #endif
-
   }
 
 }
