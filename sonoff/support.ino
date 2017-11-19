@@ -32,7 +32,7 @@ static unsigned long oswatch_last_loop_time;
 byte oswatch_blocked_loop = 0;
 
 #ifndef USE_WS2812_DMA  // Collides with Neopixelbus but solves exception
-void OsWatchTicker() ICACHE_RAM_ATTR;
+//void OsWatchTicker() ICACHE_RAM_ATTR;
 #endif  // USE_WS2812_DMA
 
 void OsWatchTicker()

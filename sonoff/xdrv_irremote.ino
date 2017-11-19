@@ -22,10 +22,15 @@
  * IR Remote send and receive using IRremoteESP8266 library
 \*********************************************************************************************/
 
-#ifndef USE_IR_HVAC
 #include <IRremoteESP8266.h>
-#else
-#include <IRMitsubishiAC.h>
+
+// Based on IRremoteESP8266.h enum decode_type_t
+const char kIrRemoteProtocols[] PROGMEM =
+  "UNKNOWN|RC5|RC6|NEC|SONY|PANASONIC|JVC|SAMSUNG|WHYNTER|AIWA_RC_T501|LG|SANYO|MITSUBISHI|DISH|SHARP";
+
+#ifdef USE_IR_HVAC
+
+#include <ir_Mitsubishi.h>
 
 // HVAC TOSHIBA_
 #define HVAC_TOSHIBA_HDR_MARK 4400
@@ -47,6 +52,8 @@ const char kHvacModeOptions[] = "HDCA";
  * IR Send
 \*********************************************************************************************/
 
+#include <IRsend.h>
+
 IRsend *irsend = NULL;
 
 void IrSendInit(void)
@@ -64,11 +71,9 @@ void IrSendInit(void)
  * IR Receive
 \*********************************************************************************************/
 
-#define IR_TIME_AVOID_DUPLICATE 500 // Milliseconds
+#include <IRrecv.h>
 
-// Based on IRremoteESP8266.h enum decode_type_t
-const char kIrRemoteProtocols[] PROGMEM =
-  "UNKNOWN|RC5|RC6|NEC|SONY|PANASONIC|JVC|SAMSUNG|WHYNTER|AIWA_RC_T501|LG|SANYO|MITSUBISHI|DISH|SHARP";
+#define IR_TIME_AVOID_DUPLICATE 500 // Milliseconds
 
 IRrecv *irrecv = NULL;
 unsigned long ir_lasttime = 0;
@@ -123,7 +128,7 @@ void IrReceiveCheck()
 
 boolean IrHvacToshiba(const char *HVAC_Mode, const char *HVAC_FanMode, boolean HVAC_Power, int HVAC_Temp)
 {
-  unsigned int rawdata[2 + 2 * 8 * HVAC_TOSHIBA_DATALEN + 2];
+  uint16_t rawdata[2 + 2 * 8 * HVAC_TOSHIBA_DATALEN + 2];
   byte data[HVAC_TOSHIBA_DATALEN] = {0xF2, 0x0D, 0x03, 0xFC, 0x01, 0x00, 0x00, 0x00, 0x00};
 
   char *p;

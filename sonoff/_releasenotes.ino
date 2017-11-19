@@ -1,4 +1,13 @@
-/* 5.9.1e
+/* 5.9.1f
+ * Upgrade library ArduinoJson to 5.11.2
+ * Upgrade library IRRemoteEsp8266 to 2.2.1 + 2 commits but tweaked some protocols to keep code usage small
+ * Upgrade library NeoPixelBus to 2.2.9
+ * Upgrade library OneWire to 2.3.3 + 6 commits
+ * Formalize library PubSubClient to 2.6 + 9 commits and additional delay
+ * Add optional ADS1115 driver as alternative for unsupported I2Cdevlib in esp8266-core 2.4.0-rc2
+ * Fix wrong response name for command HlwISet (#1214)
+ *
+ * 5.9.1e
  * Add + (plus) and - (minus) to command color to select 1 out of 12 preset colors
  * Add + (plus) and - (minus) to command ct to control ColdWarm led ColorTemperature (+34/-34)
  * Tune Arilux RF code

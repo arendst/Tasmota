@@ -574,7 +574,7 @@ boolean HlwCommand(char *type, uint16_t index, char *dataBuf, uint16_t data_len,
     if ((payload > 0) && (payload < 16001) && hlw_cf1_current_pulse_length) {
       Settings.hlw_current_calibration = (payload * hlw_cf1_current_pulse_length) / HLW_IREF;
     }
-    snprintf_P(command, sizeof(command), PSTR(D_CMND_HLWPCAL));
+    snprintf_P(command, sizeof(command), PSTR(D_CMND_HLWICAL));
     nvalue = Settings.hlw_current_calibration;
     unit = UNIT_MICROSECOND;
   }
