@@ -150,7 +150,7 @@ enum ProgramSelectablePins {
   GPIO_ADC0,           // ADC
   GPIO_DI,             // my92x1 PWM input
   GPIO_DCKI,           // my92x1 CLK input
-  GPIO_ALIRFRCV,       // AliLux RF Receive input
+  GPIO_ARIRFRCV,       // AliLux RF Receive input
   GPIO_USER,           // User configurable
   GPIO_MAX };
 
@@ -739,7 +739,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      0,
      GPIO_LED2_INV,    // GPIO02 RF receiver control
      0,
-     GPIO_ALIRFRCV,    // GPIO04 IR or RF receiver (optional)
+     GPIO_ARIRFRCV,    // GPIO04 IR or RF receiver (optional)
      GPIO_PWM1,        // GPIO05 RGB LED Red
      0, 0, 0, 0, 0, 0, // Flash connection
      GPIO_PWM2,        // GPIO12 RGB LED Green
@@ -759,7 +759,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_PWM5,        // GPIO12 RGBCW LED Warm
      GPIO_PWM4,        // GPIO13 RGBW LED Cold
      GPIO_PWM3,        // GPIO14 RGB LED Blue
-     GPIO_ALIRFRCV,    // GPIO15 RF receiver input
+     GPIO_ARIRFRCV,    // GPIO15 RF receiver input
      0, 0
   }
 };

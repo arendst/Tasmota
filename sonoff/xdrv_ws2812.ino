@@ -122,7 +122,7 @@ int mod(int a, int b)
 
 #define cmin(a,b) ((a)<(b)?(a):(b))
 
-void Ws2812UpdatePixelColor(int position, struct WsColor hand_color, uint8_t hand)
+void Ws2812UpdatePixelColor(int position, struct WsColor hand_color, float offset)
 {
 #if (USE_WS2812_CTYPE > 1)
   RgbwColor color;
@@ -134,10 +134,9 @@ void Ws2812UpdatePixelColor(int position, struct WsColor hand_color, uint8_t han
 
   color = strip->GetPixelColor(mod_position);
   float dimmer = 100 / (float)Settings.light_dimmer;
-  uint8_t offset = 1 << hand;
-  color.R = cmin(color.R + ((hand_color.red / dimmer) / offset), 255);
-  color.G = cmin(color.G + ((hand_color.green / dimmer) / offset), 255);
-  color.B = cmin(color.B + ((hand_color.blue / dimmer) / offset), 255);
+  color.R = cmin(color.R + ((hand_color.red / dimmer) * offset), 255);
+  color.G = cmin(color.G + ((hand_color.green / dimmer) * offset), 255);
+  color.B = cmin(color.B + ((hand_color.blue / dimmer) * offset), 255);
   strip->SetPixelColor(mod_position, color);
 }
 
@@ -148,20 +147,22 @@ void Ws2812UpdateHand(int position, uint8_t index)
   }
   WsColor hand_color = { Settings.ws_color[index][WS_RED], Settings.ws_color[index][WS_GREEN], Settings.ws_color[index][WS_BLUE] };
 
-  Ws2812UpdatePixelColor(position, hand_color, 0);
-  for (uint8_t h = 1; h <= ((Settings.ws_width[index] -1) / 2); h++) {
-    Ws2812UpdatePixelColor(position -h, hand_color, h);
-    Ws2812UpdatePixelColor(position +h, hand_color, h);
+  Ws2812UpdatePixelColor(position, hand_color, 1);
+  uint8_t range = ((Settings.ws_width[index] -1) / 2) +1;
+  for (uint8_t h = 1; h < range; h++) {
+    float offset = (float)(range - h) / (float)range;
+    Ws2812UpdatePixelColor(position -h, hand_color, offset);
+    Ws2812UpdatePixelColor(position +h, hand_color, offset);
   }
 }
 
 void Ws2812Clock()
 {
   strip->ClearTo(0); // Reset strip
-  int clksize = 600 / (int)Settings.light_pixels;
-  Ws2812UpdateHand((RtcTime.second * 10) / clksize, WS_SECOND);
-  Ws2812UpdateHand((RtcTime.minute * 10) / clksize, WS_MINUTE);
-  Ws2812UpdateHand(((RtcTime.hour % 12) * (50 / clksize)) + ((RtcTime.minute * 10) / (12 * clksize)), WS_HOUR);
+  int clksize = 60000 / (int)Settings.light_pixels;
+  Ws2812UpdateHand((RtcTime.second * 1000) / clksize, WS_SECOND);
+  Ws2812UpdateHand((RtcTime.minute * 1000) / clksize, WS_MINUTE);
+  Ws2812UpdateHand(((RtcTime.hour % 12) * (5000 / clksize)) + ((RtcTime.minute * 1000) / (12 * clksize)), WS_HOUR);
 
   Ws2812StripShow();
 }

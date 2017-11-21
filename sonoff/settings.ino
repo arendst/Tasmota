@@ -175,6 +175,20 @@ uint32_t GetSettingsHash()
   return hash;
 }
 
+void SettingsSaveAll()
+{
+  if (Settings.flag.save_state) {
+    Settings.power = power;
+  } else {
+    Settings.power = 0;
+  }
+  if (hlw_flg) {
+    HlwSaveState();
+  }
+  CounterSaveState();
+  SettingsSave(0);
+}
+
 /*********************************************************************************************\
  * Config Save - Save parameters to Flash ONLY if any parameter has changed
 \*********************************************************************************************/

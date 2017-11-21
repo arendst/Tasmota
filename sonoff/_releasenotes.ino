@@ -1,4 +1,13 @@
-/* 5.9.1f
+/* 5.9.1g
+ * Fix typo ALIRFRCV into ARIRFRCV
+ * Add nicer clock support for larger hand widths
+ * Add better clock support for different pixel counts (#1226)
+ * Remove command EnergyReset 1..3
+ * Add commands EnergyReset1 0..42500, EnergyReset2 0..42500 and EnergyReset3 0..42500000
+ *  to (Re)set Energy Today, Yesterday or Total respectively in Wh (#406, #685, #1202)
+ * Add SettingsSaveAll routine to command SaveData to be used before controlled power down (#1202)
+ *
+ * 5.9.1f
  * Upgrade library ArduinoJson to 5.11.2
  * Upgrade library IRRemoteEsp8266 to 2.2.1 + 2 commits but tweaked some protocols to keep code usage small
  * Upgrade library NeoPixelBus to 2.2.9

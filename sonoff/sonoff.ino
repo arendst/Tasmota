@@ -25,7 +25,7 @@
     - Select IDE Tools - Flash Size: "1M (no SPIFFS)"
   ====================================================*/
 
-#define VERSION                0x05090106   // 5.9.1f
+#define VERSION                0x05090107   // 5.9.1g
 
 // Location specific includes
 #include "sonoff.h"                         // Enumaration used in user_config.h
@@ -979,10 +979,7 @@ void MqttDataCallback(char* topic, byte* data, unsigned int data_len)
         Settings.save_data = payload;
         save_data_counter = Settings.save_data;
       }
-      if (Settings.flag.save_state) {
-        Settings.power = power;
-      }
-      SettingsSave(0);
+      SettingsSaveAll();
       if (Settings.save_data > 1) {
         snprintf_P(stemp1, sizeof(stemp1), PSTR(D_EVERY " %d " D_UNIT_SECOND), Settings.save_data);
       }
@@ -2316,25 +2313,15 @@ void StateLoop()
       }
     }
     if (restart_flag && (backlog_pointer == backlog_index)) {
+      if (212 == restart_flag) {
+        SettingsErase();
+        restart_flag--;
+      }
       if (211 == restart_flag) {
         SettingsDefault();
         restart_flag = 2;
       }
-      if (212 == restart_flag) {
-        SettingsErase();
-        SettingsDefault();
-        restart_flag = 2;
-      }
-      if (Settings.flag.save_state) {
-        Settings.power = power;
-      } else {
-        Settings.power = 0;
-      }
-      if (hlw_flg) {
-        HlwSaveState();
-      }
-      CounterSaveState();
-      SettingsSave(0);
+      SettingsSaveAll();
       restart_flag--;
       if (restart_flag <= 0) {
         AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_APPLICATION D_RESTARTING));
@@ -2763,7 +2750,7 @@ void loop()
 #endif  // USE_EMULATION
 
 #ifdef USE_ARILUX_RF
-  if (pin[GPIO_ALIRFRCV] < 99) {
+  if (pin[GPIO_ARIRFRCV] < 99) {
     AriluxRfHandler();
   }
 #endif  // USE_ARILUX_RF
