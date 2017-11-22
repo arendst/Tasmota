@@ -205,7 +205,7 @@ void DhtInit()
     pinMode(Dht[i].pin, INPUT_PULLUP);
     Dht[i].lastreadtime = 0;
     Dht[i].lastresult = 0;
-    strcpy_P(Dht[i].stype, kSensors[Dht[i].type]);    
+    strcpy_P(Dht[i].stype, kSensors[Dht[i].type]);
     if (dht_sensors > 1) {
       snprintf_P(Dht[i].stype, sizeof(Dht[i].stype), PSTR("%s-%02d"), Dht[i].stype, Dht[i].pin);
     }
