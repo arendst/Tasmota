@@ -25,7 +25,7 @@
     - Select IDE Tools - Flash Size: "1M (no SPIFFS)"
   ====================================================*/
 
-#define VERSION                0x05090107   // 5.9.1g
+#define VERSION                0x05090108   // 5.9.1h
 
 // Location specific includes
 #include "sonoff.h"                         // Enumaration used in user_config.h
@@ -2081,6 +2081,11 @@ void SwitchHandler()
         case PUSHBUTTON_INV:
           if ((NOT_PRESSED == button) && (PRESSED == lastwallswitch[i])) {
             switchflag = 2;              // Toggle with releasing pushbutton from Gnd
+          }
+          break;
+        case PUSHBUTTON_TOGGLE:
+          if (button != lastwallswitch[i]) {
+            switchflag = 2;              // Toggle with any pushbutton change
           }
           break;
         case PUSHBUTTONHOLD:

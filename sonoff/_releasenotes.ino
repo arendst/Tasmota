@@ -1,4 +1,9 @@
-/* 5.9.1g
+/* 5.9.1h
+ * Patch library I2Cdevlib-Core for esp8266-core 2.4.0-rc2
+ * Add option PUSHBUTTON_TOGGLE (SwitchMode 7) to allow toggling on any switch change (#1221)
+ * Fix DHT sensor timeout recognition by distinguish "signal already there" from "timeout" (#1233)
+ *
+ * 5.9.1g
  * Fix typo ALIRFRCV into ARIRFRCV
  * Add nicer clock support for larger hand widths
  * Add better clock support for different pixel counts (#1226)
