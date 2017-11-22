@@ -29,6 +29,7 @@
 #define DHT_MAX_SENSORS  3
 #define DHT_MAX_RETRY    8
 #define MIN_INTERVAL     2000
+#define TIMEOUT -1
 
 uint32_t dht_max_cycles;
 uint8_t dht_data[5];
@@ -57,7 +58,7 @@ uint32_t DhtExpectPulse(byte sensor, bool level)
 
   while (digitalRead(Dht[sensor].pin) == level) {
     if (count++ >= dht_max_cycles) {
-      return 0;
+      return TIMEOUT;
     }
   }
   return count;
@@ -92,12 +93,12 @@ void DhtRead(byte sensor)
   delayMicroseconds(40);
   pinMode(Dht[sensor].pin, INPUT_PULLUP);
   delayMicroseconds(10);
-  if (0 == DhtExpectPulse(sensor, LOW)) {
+  if (TIMEOUT == DhtExpectPulse(sensor, LOW)) {
     AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DHT D_TIMEOUT_WAITING_FOR " " D_START_SIGNAL_LOW " " D_PULSE));
     Dht[sensor].lastresult++;
     return;
   }
-  if (0 == DhtExpectPulse(sensor, HIGH)) {
+  if (TIMEOUT == DhtExpectPulse(sensor, HIGH)) {
     AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DHT D_TIMEOUT_WAITING_FOR " " D_START_SIGNAL_HIGH " " D_PULSE));
     Dht[sensor].lastresult++;
     return;
@@ -111,7 +112,7 @@ void DhtRead(byte sensor)
   for (int i=0; i<40; ++i) {
     uint32_t lowCycles  = cycles[2*i];
     uint32_t highCycles = cycles[2*i+1];
-    if ((0 == lowCycles) || (0 == highCycles)) {
+    if ((TIMEOUT == lowCycles) || (TIMEOUT == highCycles)) {
       AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DHT D_TIMEOUT_WAITING_FOR " " D_PULSE));
       Dht[sensor].lastresult++;
       return;
