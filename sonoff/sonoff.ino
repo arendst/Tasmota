@@ -25,7 +25,7 @@
     - Select IDE Tools - Flash Size: "1M (no SPIFFS)"
   ====================================================*/
 
-#define VERSION                0x05090103   // 5.9.1c
+#define VERSION                0x05090106   // 5.9.1f
 
 // Location specific includes
 #include "sonoff.h"                         // Enumaration used in user_config.h
@@ -190,6 +190,7 @@ uint8_t spi_flg = 0;                        // SPI configured
 uint8_t light_type = 0;                     // Light types
 //STB  mod
 uint8_t sr04_flg = 0;                 // HS-SR04 configured
+byte max_pcf8574_devices = 0;         // Max numbers of PCF8574 modules
 //end
 
 boolean mdns_begun = false;
@@ -333,10 +334,12 @@ void SetDevicePower(power_t rpower)
       if ((i < MAX_RELAYS) && (pin[GPIO_REL1 +i] < 99)) {
         digitalWrite(pin[GPIO_REL1 +i], bitRead(rel_inverted, i) ? !state : state);
       }
-       rpower >>= 1;
+      rpower >>= 1;
 //STB mod
+#ifdef USE_I2C
 #ifdef USE_PCF8574
       pcf8574_switchrelay(i, state);
+#endif
 #endif
 //end
     }
@@ -1112,9 +1115,9 @@ void MqttDataCallback(char* topic, byte* data, unsigned int data_len)
     else if (CMND_MODULE == command_code) {
       if ((payload > 0) && (payload <= MAXMODULE)) {
         payload--;
-        byte new_modflg = (Settings.module != payload);
+        Settings.last_module = Settings.module;
         Settings.module = payload;
-        if (new_modflg) {
+        if (Settings.last_module != payload) {
           for (byte i = 0; i < MAX_GPIO_PIN; i++) {
             Settings.my_gp.io[i] = 0;
           }
@@ -1406,6 +1409,13 @@ void MqttDataCallback(char* topic, byte* data, unsigned int data_len)
     else if (CMND_WEBSERVER == command_code) {
       if ((payload >= 0) && (payload <= 2)) {
         Settings.webserver = payload;
+        // STB mod
+        // avoid total disconnect from the device
+          if (Settings.webserver == 0 && Settings.flag.mqtt_enabled == 0) {
+            Settings.flag.mqtt_enabled = 1;
+            restart_flag = 2;
+          }
+        //
       }
       if (Settings.webserver) {
         snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_WEBSERVER "\":\"" D_ACTIVE_FOR " %s " D_ON_DEVICE " %s " D_WITH_IP_ADDRESS " %s\"}"),
@@ -1919,16 +1929,6 @@ void PerformEverySecond()
     tele_period++;
     if (tele_period == Settings.tele_period -1) {
       XsnsCall(FUNC_XSNS_PREP);
-
-//STB mod
-#ifdef USE_CHIRP
-        chirp_detect();
-#endif  // USE_CHIRP
-#ifdef USE_PCF8574
-        pcf8574_detect();
-#endif  // USE_PCF8574
-//end
-
     }
     if (tele_period >= Settings.tele_period) {
       tele_period = 0;
@@ -1942,7 +1942,7 @@ void PerformEverySecond()
         MqttPublishPrefixTopic_P(2, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);
       }
 
-       XsnsCall(FUNC_XSNS_MQTT_SHOW);
+      XsnsCall(FUNC_XSNS_MQTT_SHOW);
 
       //STB mod
       if (Settings.deepsleep > 10 && Settings.deepsleep < 65000) {
@@ -1997,8 +1997,9 @@ void ButtonHandler()
   uint8_t button = NOT_PRESSED;
   uint8_t button_present = 0;
   char scmnd[20];
-
+// STB mod
   uint8_t maxdev = (devices_present-max_pcf8574_connected_ports > MAX_KEYS) ? MAX_KEYS : devices_present;
+//end
   for (byte i = 0; i < maxdev; i++) {
     button = NOT_PRESSED;
     button_present = 0;
@@ -2539,6 +2540,7 @@ void GpioInit()
 
   if (!Settings.module || (Settings.module >= MAXMODULE)) {
     Settings.module = MODULE;
+    Settings.last_module = MODULE;
   }
 
   memcpy_P(&def_module, &kModules[Settings.module], sizeof(def_module));
@@ -2628,7 +2630,7 @@ void GpioInit()
     devices_present = 0;
     baudrate = 19200;
   }
-  else if ((H801 == Settings.module) || (MAGICHOME == Settings.module) || (ARILUX == Settings.module)) {  // PWM RGBCW led
+  else if ((H801 == Settings.module) || (MAGICHOME == Settings.module) || (ARILUX_LC01 == Settings.module) || (ARILUX_LC11 == Settings.module)) {  // PWM RGBCW led
     if (!Settings.flag.pwm_control) {
       light_type = LT_BASIC;                 // Use basic PWM control if SetOption15 = 0
     }
@@ -2716,9 +2718,11 @@ void GpioInit()
     sr04_flg = 1;
   }
 
+#ifdef USE_I2C
 #ifdef USE_PCF8574
   pcf8574_Init();
 #endif  // USE_PCF8574
+#endif
 //end
 
 }
@@ -2879,6 +2883,12 @@ void loop()
     PollUdp();
   }
 #endif  // USE_EMULATION
+
+#ifdef USE_ARILUX_RF
+  if (pin[GPIO_ALIRFRCV] < 99) {
+    AriluxRfHandler();
+  }
+#endif  // USE_ARILUX_RF
 
   if (millis() >= state_loop_timer) {
     StateLoop();

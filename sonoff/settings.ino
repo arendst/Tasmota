@@ -517,7 +517,7 @@ void SettingsDefaultSet2()
   Settings.pwm_frequency = PWM_FREQ;
   Settings.pwm_range = PWM_RANGE;
   SettingsDefaultSet_5_8_1();
-  
+
   // 5.9.2
   Settings.flag2.current_resolution = 3;
 //STB mod

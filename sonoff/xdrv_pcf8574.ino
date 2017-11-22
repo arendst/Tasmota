@@ -23,12 +23,13 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 */
 
+
+#ifdef USE_I2C
 #ifdef USE_PCF8574
 
 #define PFC8574_ADDR1        0x38
 
 uint8_t pcf8574_pin[64] = {99}, pcf8574addr[8], pcf8574type = 0;
-byte max_pcf8574_devices = 0;         // Max numbers of PCF8574 modules
 char pcf8574stype[8];
 uint8_t _pcf8574pinMask[8] = {0};
 int _error;
@@ -136,16 +137,16 @@ void  pcf8574_Init()
   }
   if (max_pcf8574_devices==0 && (pin[GPIO_I2C_SCL] < 99) && (pin[GPIO_I2C_SDA] < 99)) {
     pcf8574_detect();
-    snprintf_P(log_data, sizeof(log_data), PSTR("RSLT: pcf8574 %d boards"), max_pcf8574_devices);
-    AddLog(LOG_LEVEL_INFO);
+  //  snprintf_P(log_data, sizeof(log_data), PSTR("RSLT: pcf8574 %d boards"), max_pcf8574_devices);
+  //  AddLog(LOG_LEVEL_INFO);
   }
   for (byte idx = 0; idx < max_pcf8574_devices; idx++) { // suport up to 8 boards PCF8574
-    snprintf_P(log_data, sizeof(log_data), PSTR("RSLT: I2C Config: %d"), Settings.pcf8574_config[idx]);
-    AddLog(LOG_LEVEL_DEBUG);
+  //  snprintf_P(log_data, sizeof(log_data), PSTR("RSLT: I2C Config: %d"), Settings.pcf8574_config[idx]);
+  //  AddLog(LOG_LEVEL_DEBUG);
     for (byte i = 0; i < 8; i++) {
       uint8_t _result = Settings.pcf8574_config[idx]>>i&1;
-      snprintf_P(log_data, sizeof(log_data), PSTR("RSLT: I2C shift i %d: %d. Powerstate: %d, devices_present: %d"), i,_result, Settings.power>>i&1, devices_present);
-      AddLog(LOG_LEVEL_DEBUG);
+  //    snprintf_P(log_data, sizeof(log_data), PSTR("RSLT: I2C shift i %d: %d. Powerstate: %d, devices_present: %d"), i,_result, Settings.power>>i&1, devices_present);
+  //    AddLog(LOG_LEVEL_DEBUG);
       if (_result > 0) {
         pcf8574_pin[devices_present] = i + 8*idx;
         bitWrite(rel_inverted, devices_present, Settings.all_relays_inverted);
@@ -154,8 +155,8 @@ void  pcf8574_Init()
       }
     }
   }
-  snprintf_P(log_data, sizeof(log_data), PSTR("RSLT: Final max devices: %d, PCF8574 devices %d"), devices_present, max_pcf8574_connected_ports);
-  AddLog(LOG_LEVEL_INFO);
+//  snprintf_P(log_data, sizeof(log_data), PSTR("RSLT: Final max devices: %d, PCF8574 devices %d"), devices_present, max_pcf8574_connected_ports);
+//  AddLog(LOG_LEVEL_INFO);
 }
 
 boolean pcf8574_detect()
@@ -164,8 +165,8 @@ boolean pcf8574_detect()
   boolean success = false;
 
   for (byte i = 0; i < 8; i++) {
-    snprintf_P(log_data, sizeof(log_data), PSTR("Probing addr: 0x%x for PCF8574"), PFC8574_ADDR1 + i);
-    AddLog(LOG_LEVEL_DEBUG);
+  //  snprintf_P(log_data, sizeof(log_data), PSTR("Probing addr: 0x%x for PCF8574"), PFC8574_ADDR1 + i);
+  //  AddLog(LOG_LEVEL_DEBUG);
     Wire.beginTransmission(PFC8574_ADDR1 + i);
     int16_t val = -1;
     val = Wire.endTransmission();
@@ -186,3 +187,4 @@ boolean pcf8574_detect()
 }
 
 #endif // USE_PCF8574
+#endif // USE_I2C

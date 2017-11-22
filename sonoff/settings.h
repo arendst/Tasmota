@@ -177,8 +177,7 @@ struct SYSCFG {
   uint16_t      hlw_mkwhs;                 // 394 MaxEnergyStart
   uint16_t      mqtt_retry;                // 396
   uint8_t       poweronstate;              // 398
-
-  byte          free_399[1];               // 399
+  uint8_t       last_module;               // 399
 
   uint16_t      blinktime;                 // 39A
   uint16_t      blinkcount;                // 39C
@@ -250,8 +249,13 @@ struct SYSCFG {
   uint8_t       rf_code[17][9];            // 5D4
   //STB mod
   unsigned long uptime;
+
+  #ifdef USE_I2C
+  #ifdef USE_PCF8574
   uint8_t       pcf8574_config[8];
   uint8_t       all_relays_inverted;
+  #endif
+  #endif
   uint16_t      deepsleep;
   //end
 } Settings;

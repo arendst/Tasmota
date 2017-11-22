@@ -380,8 +380,6 @@ double BmpReadHumidity(void)
 
 void BmpDetect()
 {
-  snprintf_P(log_data, sizeof(log_data), "Searching for BMP");
-  AddLog(LOG_LEVEL_DEBUG);
   if (bmp_type) {
     return;
   }

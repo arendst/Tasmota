@@ -1,4 +1,27 @@
-/* 5.9.1c
+/* 5.9.1f
+ * Upgrade library ArduinoJson to 5.11.2
+ * Upgrade library IRRemoteEsp8266 to 2.2.1 + 2 commits but tweaked some protocols to keep code usage small
+ * Upgrade library NeoPixelBus to 2.2.9
+ * Upgrade library OneWire to 2.3.3 + 6 commits
+ * Formalize library PubSubClient to 2.6 + 9 commits and additional delay
+ * Add optional ADS1115 driver as alternative for unsupported I2Cdevlib in esp8266-core 2.4.0-rc2
+ * Fix wrong response name for command HlwISet (#1214)
+ *
+ * 5.9.1e
+ * Add + (plus) and - (minus) to command color to select 1 out of 12 preset colors
+ * Add + (plus) and - (minus) to command ct to control ColdWarm led ColorTemperature (+34/-34)
+ * Tune Arilux RF code
+ * Fix possible iram1_0_seg compile error by shrinking ICACHE_RAM_ATTR code
+ * Update core_esp8266_wiring_digital.c to latest (staged) level
+ * Workaround Sonoff Bridge Learn Mode hang caused by unrecognised RF code (#1181)
+ * Fix blank console log window by using XML character encoding (#1187)
+ *
+ * 5.9.1d
+ * Add support for Arilux LC11 (Clearing RF home code when selecting no Arilux module)
+ * Add fixed color options 1..12 to command Color
+ * Add + (plus) and - (minus) to commands Dimmer (+10/-10), Speed and Scheme
+ *
+ * 5.9.1c
  * Add support for WS2812 RGBW ledstrips to be enabled in user_config.h with define USE_WS2812_CTYPE (#1156)
  *
  * 5.9.1b

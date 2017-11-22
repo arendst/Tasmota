@@ -120,7 +120,7 @@ const char HTTP_SCRIPT_CONSOL[] PROGMEM =
           "id=d.getElementsByTagName('i')[0].childNodes[0].nodeValue;"
           "if(d.getElementsByTagName('j')[0].childNodes[0].nodeValue==0){t.value='';}"
           "z=d.getElementsByTagName('l')[0].childNodes;"
-          "if(z.length>0){t.value+=z[0].nodeValue;}"
+          "if(z.length>0){t.value+=decodeURIComponent(z[0].nodeValue);}"
           "t.scrollTop=99999;"
           "sn=t.scrollTop;"
         "}"
@@ -183,9 +183,11 @@ const char HTTP_BTN_MENU3[] PROGMEM =
 const char HTTP_BTN_MENU4[] PROGMEM =
   "<br/><form action='lg' method='get'><button>" D_CONFIGURE_LOGGING "</button></form>"
 //STB mod
+#ifdef USE_I2C
 #ifdef USE_PCF8574
   "<br/><form action='i2c' method='get'><button>Configure PCF8574</button></form>"
 #endif // USE_PCF8574
+#endif
 //end
   "<br/><form action='co' method='get'><button>" D_CONFIGURE_OTHER "</button></form>"
   "<br/>"
@@ -337,8 +339,12 @@ void StartWebserver(int type, IPAddress ipweb)
       WebServer->on("/rb", HandleRestart);
       WebServer->on("/fwlink", HandleRoot);  // Microsoft captive portal. Maybe not needed. Might be handled by notFound handler.
 //STB mod
+#ifdef USE_I2C
 #ifdef USE_PCF8574
-      WebServer->on("/i2c", handleI2C);
+      if (max_pcf8574_devices > 0) {
+        WebServer->on("/i2c", handleI2C);
+      }
+#endif
 #endif
 //end
 #ifdef USE_EMULATION
@@ -516,7 +522,6 @@ void HandleAjaxStatusRefresh()
     snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_RFKEY "%s"), WebServer->arg("k").c_str());
     ExecuteCommand(svalue);
   }
-
 
   String page = "";
   mqtt_data[0] = '\0';
@@ -1037,21 +1042,23 @@ snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_LOG D_CMND_SERIALLOG " %d, " D
     AddLog(LOG_LEVEL_INFO);
     break;
 //STB mod
+  #ifdef USE_I2C
   #ifdef USE_PCF8574
   case 7:
       pcf8574_saveSettings();
     break;
   #endif  // USE_PCF8574
+  #endif
 ///end
   case 6:
     byte new_module = (!strlen(WebServer->arg("g99").c_str())) ? MODULE : atoi(WebServer->arg("g99").c_str());
-    byte new_modflg = (Settings.module != new_module);
+    Settings.last_module = Settings.module;
     Settings.module = new_module;
     mytmplt cmodule;
     memcpy_P(&cmodule, &kModules[Settings.module], sizeof(cmodule));
     String gpios = "";
     for (byte i = 0; i < MAX_GPIO_PIN; i++) {
-      if (new_modflg) {
+      if (Settings.last_module != new_module) {
         Settings.my_gp.io[i] = 0;
       } else {
         if (GPIO_USER == cmodule.gp.io[i]) {
@@ -1457,7 +1464,11 @@ void HandleAjaxConsoleRefresh()
         } else {
           cflg = 1;
         }
-        message += web_log[counter];
+        String nextline = web_log[counter];
+        nextline.replace(F("<"), F("%3C"));  // XML encoding to fix blank console log in concert with javascript decodeURIComponent
+        nextline.replace(F(">"), F("%3E"));
+        nextline.replace(F("&"), F("%26"));
+        message += nextline;
       }
       counter++;
       if (counter > MAX_LOG_LINES -1) {
