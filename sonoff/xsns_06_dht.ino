@@ -222,8 +222,8 @@ void DhtShow(boolean json)
   byte dsxflg = 0;
   for (byte i = 0; i < dht_sensors; i++) {
     if (DhtReadTempHum(i, t, h)) {     // Read temperature
-      dtostrfd(t, Settings.flag.temperature_resolution, temperature);
-      dtostrfd(h, Settings.flag.humidity_resolution, humidity);
+      dtostrfd(t, Settings.flag2.temperature_resolution, temperature);
+      dtostrfd(h, Settings.flag2.humidity_resolution, humidity);
 
       if (json) {
         snprintf_P(mqtt_data, sizeof(mqtt_data), JSON_SNS_TEMPHUM, mqtt_data, Dht[i].stype, temperature, humidity);
