@@ -29,6 +29,7 @@
 #define DHT_MAX_SENSORS  3
 #define DHT_MAX_RETRY    8
 #define MIN_INTERVAL     2000
+#define TIMEOUT -1
 
 uint32_t dht_max_cycles;
 uint8_t dht_data[5];
@@ -57,7 +58,7 @@ uint32_t DhtExpectPulse(byte sensor, bool level)
 
   while (digitalRead(Dht[sensor].pin) == level) {
     if (count++ >= dht_max_cycles) {
-      return 0;
+      return TIMEOUT;
     }
   }
   return count;
@@ -92,12 +93,12 @@ void DhtRead(byte sensor)
   delayMicroseconds(40);
   pinMode(Dht[sensor].pin, INPUT_PULLUP);
   delayMicroseconds(10);
-  if (0 == DhtExpectPulse(sensor, LOW)) {
+  if (TIMEOUT == DhtExpectPulse(sensor, LOW)) {
     AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DHT D_TIMEOUT_WAITING_FOR " " D_START_SIGNAL_LOW " " D_PULSE));
     Dht[sensor].lastresult++;
     return;
   }
-  if (0 == DhtExpectPulse(sensor, HIGH)) {
+  if (TIMEOUT == DhtExpectPulse(sensor, HIGH)) {
     AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DHT D_TIMEOUT_WAITING_FOR " " D_START_SIGNAL_HIGH " " D_PULSE));
     Dht[sensor].lastresult++;
     return;
@@ -111,7 +112,7 @@ void DhtRead(byte sensor)
   for (int i=0; i<40; ++i) {
     uint32_t lowCycles  = cycles[2*i];
     uint32_t highCycles = cycles[2*i+1];
-    if ((0 == lowCycles) || (0 == highCycles)) {
+    if ((TIMEOUT == lowCycles) || (TIMEOUT == highCycles)) {
       AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DHT D_TIMEOUT_WAITING_FOR " " D_PULSE));
       Dht[sensor].lastresult++;
       return;
@@ -204,7 +205,7 @@ void DhtInit()
     pinMode(Dht[i].pin, INPUT_PULLUP);
     Dht[i].lastreadtime = 0;
     Dht[i].lastresult = 0;
-    strcpy_P(Dht[i].stype, kSensors[Dht[i].type]);
+    strcpy_P(Dht[i].stype, kSensors[Dht[i].type]);    
     if (dht_sensors > 1) {
       snprintf_P(Dht[i].stype, sizeof(Dht[i].stype), PSTR("%s-%02d"), Dht[i].stype, Dht[i].pin);
     }
@@ -221,8 +222,8 @@ void DhtShow(boolean json)
   byte dsxflg = 0;
   for (byte i = 0; i < dht_sensors; i++) {
     if (DhtReadTempHum(i, t, h)) {     // Read temperature
-      dtostrfd(t, Settings.flag2.temperature_resolution, temperature);
-      dtostrfd(h, Settings.flag2.humidity_resolution, humidity);
+      dtostrfd(t, Settings.flag.temperature_resolution, temperature);
+      dtostrfd(h, Settings.flag.humidity_resolution, humidity);
 
       if (json) {
         snprintf_P(mqtt_data, sizeof(mqtt_data), JSON_SNS_TEMPHUM, mqtt_data, Dht[i].stype, temperature, humidity);
