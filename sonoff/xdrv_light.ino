@@ -241,6 +241,14 @@ void AriluxRfInit()
     attachInterrupt(pin[GPIO_ARIRFRCV], AriluxRfInterrupt, CHANGE);
   }
 }
+
+void AriluxRfDisable()
+{
+  if ((pin[GPIO_ARIRFRCV] < 99) && (pin[GPIO_LED2] < 99)) {
+    digitalWrite(pin[GPIO_LED2], bitRead(led_inverted, 1));  // Turn off RF
+    detachInterrupt(pin[GPIO_ARIRFRCV]);
+  }
+}
 #endif  // USE_ARILUX_RF
 
 /*********************************************************************************************\
