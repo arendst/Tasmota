@@ -437,9 +437,10 @@
 #define D_ENERGY_YESTERDAY "Energie gestern"
 #define D_ENERGY_TOTAL "Energie insgesamt"
 
-// xsns_05_ds18b20.ino
+// xsns_05_ds18x20.ino
 #define D_SENSOR_BUSY "Sensor beschäftigt"
 #define D_SENSOR_CRC_ERROR "Sensor CRC-Fehler"
+#define D_SENSORS_FOUND "Sensor gefunden"
 
 // xsns_06_dht.ino
 #define D_TIMEOUT_WAITING_FOR "Timeout wartet auf"

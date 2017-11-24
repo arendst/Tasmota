@@ -22,73 +22,58 @@
  * DS18B20 - Temperature
 \*********************************************************************************************/
 
-#define DS18S20_CHIPID       0x10
-#define DS18B20_CHIPID       0x28
-#define MAX31850_CHIPID      0x3B
+#define DS18S20_CHIPID       0x10  // +/-0.5C 9-bit
+#define DS1822_CHIPID        0x22  // +/-2C 12-bit
+#define DS18B20_CHIPID       0x28  // +/-0.5C 12-bit
+#define MAX31850_CHIPID      0x3B  // +/-0.25C 14-bit
 
 #define W1_SKIP_ROM          0xCC
 #define W1_CONVERT_TEMP      0x44
+#define W1_WRITE_EEPROM      0x48
+#define W1_WRITE_SCRATCHPAD  0x4E
 #define W1_READ_SCRATCHPAD   0xBE
 
 #define DS18X20_MAX_SENSORS  8
+
+const char kDs18x20Types[] PROGMEM = "DS18x20|DS18S20|DS1822|DS18B20|MAX31850";
 
 #include <OneWire.h>
 
 OneWire *ds = NULL;
 
+uint8_t ds18x20_chipids[] = { 0, DS18S20_CHIPID, DS1822_CHIPID, DS18B20_CHIPID, MAX31850_CHIPID };
 uint8_t ds18x20_address[DS18X20_MAX_SENSORS][8];
-uint8_t ds18x20_index[DS18X20_MAX_SENSORS];
+uint8_t ds18x20_index[DS18X20_MAX_SENSORS] = { 0 };
 uint8_t ds18x20_sensors = 0;
 char ds18x20_types[9];
 
 void Ds18x20Init()
 {
   ds = new OneWire(pin[GPIO_DSB]);
-}
-
-void Ds18x20Search()
-{
-  uint8_t num_sensors=0;
-  uint8_t sensor = 0;
-
   ds->reset_search();
-  for (num_sensors = 0; num_sensors < DS18X20_MAX_SENSORS; num_sensors) {
-    if (!ds->search(ds18x20_address[num_sensors])) {
+  for (ds18x20_sensors = 0; ds18x20_sensors < DS18X20_MAX_SENSORS; ds18x20_sensors) {
+    if (!ds->search(ds18x20_address[ds18x20_sensors])) {
       ds->reset_search();
       break;
     }
-    // If CRC Ok and Type DS18S20, DS18B20 or MAX31850
-    if ((OneWire::crc8(ds18x20_address[num_sensors], 7) == ds18x20_address[num_sensors][7]) &&
-       ((ds18x20_address[num_sensors][0]==DS18S20_CHIPID) || (ds18x20_address[num_sensors][0]==DS18B20_CHIPID) || (ds18x20_address[num_sensors][0]==MAX31850_CHIPID))) {
-      num_sensors++;
+    if ((OneWire::crc8(ds18x20_address[ds18x20_sensors], 7) == ds18x20_address[ds18x20_sensors][7]) &&
+       ((ds18x20_address[ds18x20_sensors][0] == DS18S20_CHIPID) ||
+        (ds18x20_address[ds18x20_sensors][0] == DS1822_CHIPID) ||
+        (ds18x20_address[ds18x20_sensors][0] == DS18B20_CHIPID) ||
+        (ds18x20_address[ds18x20_sensors][0] == MAX31850_CHIPID))) {
+      ds18x20_index[ds18x20_sensors] = ds18x20_sensors;
+      ds18x20_sensors++;
     }
   }
-  for (byte i = 0; i < num_sensors; i++) {
-    ds18x20_index[i] = i;
-  }
-  for (byte i = 0; i < num_sensors; i++) {
-    for (byte j = i + 1; j < num_sensors; j++) {
+  for (byte i = 0; i < ds18x20_sensors; i++) {
+    for (byte j = i + 1; j < ds18x20_sensors; j++) {
       if (uint32_t(ds18x20_address[ds18x20_index[i]]) > uint32_t(ds18x20_address[ds18x20_index[j]])) {
         std::swap(ds18x20_index[i], ds18x20_index[j]);
       }
     }
   }
-  ds18x20_sensors = num_sensors;
-}
-
-uint8_t Ds18x20Sensors()
-{
-  return ds18x20_sensors;
-}
-
-String Ds18x20Addresses(uint8_t sensor)
-{
-  char address[20];
-
-  for (byte i = 0; i < 8; i++) {
-    sprintf(address+2*i, "%02X", ds18x20_address[ds18x20_index[sensor]][i]);
-  }
-  return String(address);
+  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_DSB D_SENSORS_FOUND " %d"), ds18x20_sensors);
+  AddLog(LOG_LEVEL_DEBUG);
 }
 
 void Ds18x20Convert()
@@ -117,7 +102,7 @@ boolean Ds18x20Read(uint8_t sensor, float &t)
   }
   if (OneWire::crc8(data, 8) == data[8]) {
     switch(ds18x20_address[ds18x20_index[sensor]][0]) {
-    case DS18S20_CHIPID:  // DS18S20
+    case DS18S20_CHIPID:
       if (data[1] > 0x80) {
         data[0] = (~data[0]) +1;
         sign = -1;  // App-Note fix possible sign error
@@ -129,8 +114,20 @@ boolean Ds18x20Read(uint8_t sensor, float &t)
       }
       t = ConvertTemp((temp9 - 0.25) + ((16.0 - data[6]) / 16.0));
       break;
-    case DS18B20_CHIPID:   // DS18B20
-    case MAX31850_CHIPID:  // MAX31850
+    case DS1822_CHIPID:
+    case DS18B20_CHIPID:
+      if (data[4] != 0x7F) {
+        data[4] = 0x7F;                 // Set resolution to 12-bit
+        ds->reset();
+        ds->select(ds18x20_address[ds18x20_index[sensor]]);
+        ds->write(W1_WRITE_SCRATCHPAD); // Write Scratchpad
+        ds->write(data[2]);             // Th Register
+        ds->write(data[3]);             // Tl Register
+        ds->write(data[4]);             // Configuration Register
+        ds->select(ds18x20_address[ds18x20_index[sensor]]);
+        ds->write(W1_WRITE_EEPROM);     // Save scratchpad to EEPROM
+      }
+    case MAX31850_CHIPID:
       uint16_t temp12 = (data[1] << 8) + data[0];
       if (temp12 > 2047) {
         temp12 = (~temp12) +1;
@@ -139,71 +136,70 @@ boolean Ds18x20Read(uint8_t sensor, float &t)
       t = ConvertTemp(sign * temp12 * 0.0625);
       break;
     }
+  } else {
+    AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DSB D_SENSOR_CRC_ERROR));
   }
   return (!isnan(t));
 }
 
 /********************************************************************************************/
 
-void Ds18x20Type(uint8_t sensor)
-{
-  strcpy_P(ds18x20_types, PSTR("DS18x20"));
-  switch(ds18x20_address[ds18x20_index[sensor]][0]) {
-    case DS18S20_CHIPID:
-      strcpy_P(ds18x20_types, PSTR("DS18S20"));
-      break;
-    case DS18B20_CHIPID:
-      strcpy_P(ds18x20_types, PSTR("DS18B20"));
-      break;
-    case MAX31850_CHIPID:
-      strcpy_P(ds18x20_types, PSTR("MAX31850"));
-      break;
-  }
-}
-
 void Ds18x20Show(boolean json)
 {
   char temperature[10];
-  char stemp[10];
+  char stemp[12];
+  char separator[2] = { '\0' };
   float t;
+  bool domoticz_flag = true;
 
-  byte dsxflg = 0;
-  for (byte i = 0; i < Ds18x20Sensors(); i++) {
+  for (byte i = 0; i < ds18x20_sensors; i++) {
     if (Ds18x20Read(i, t)) {           // Check if read failed
-      Ds18x20Type(i);
       dtostrfd(t, Settings.flag2.temperature_resolution, temperature);
 
-      if (json) {
-        if (!dsxflg) {
-          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"DS18x20\":{"), mqtt_data);
-          stemp[0] = '\0';
+      uint8_t index = sizeof(ds18x20_chipids);
+      while (index) {
+        if (ds18x20_address[ds18x20_index[i]][0] == ds18x20_chipids[index]) {
+          break;
         }
-        dsxflg++;
-        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s%s\"DS%d\":{\"" D_TYPE "\":\"%s\",\"" D_ADDRESS "\":\"%s\",\"" D_TEMPERATURE "\":%s}"),
-          mqtt_data, stemp, i +1, ds18x20_types, Ds18x20Addresses(i).c_str(), temperature);
-        strcpy(stemp, ",");
+        index--;
+      }
+      GetTextIndexed(ds18x20_types, sizeof(ds18x20_types), index, kDs18x20Types);
+      if (json) {
+        if (1 == ds18x20_sensors) {
+          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"%s\":{\"" D_TEMPERATURE "\":%s}"), mqtt_data, ds18x20_types, temperature);
+        } else {
+          char address[17];
+//          for (byte j = 0; j < 8; j++) {
+//            sprintf(address+2*j, "%02X", ds18x20_address[ds18x20_index[i]][j]);
+//          }
+          for (byte j = 0; j < 6; j++) {
+            sprintf(address+2*j, "%02X", ds18x20_address[ds18x20_index[i]][6-j]);  // Skip sensor type and crc
+          }
+          if (!separator[0]) {
+            snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"DS18x20\":{"), mqtt_data);
+          }
+          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s%s\"DS%d\":{\"" D_TYPE "\":\"%s\",\"" D_ADDRESS "\":\"%s\",\"" D_TEMPERATURE "\":%s}"),
+            mqtt_data, separator, i +1, ds18x20_types, address, temperature);
+          separator[0] = ',';
+        }
 #ifdef USE_DOMOTICZ
-        if (1 == dsxflg) {
+        if (domoticz_flag) {
           DomoticzSensor(DZ_TEMP, temperature);
+          domoticz_flag = false;
         }
 #endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
       } else {
         snprintf_P(stemp, sizeof(stemp), PSTR("%s-%d"), ds18x20_types, i +1);
-        snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TEMP, mqtt_data, stemp, temperature, TempUnit());
+        snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TEMP, mqtt_data, (1 == ds18x20_sensors) ? ds18x20_types : stemp, temperature, TempUnit());
 #endif  // USE_WEBSERVER
       }
     }
   }
   if (json) {
-    if (dsxflg) {
+    if (separator[0]) {
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}"), mqtt_data);
     }
-#ifdef USE_WEBSERVER
-  } else {
-    Ds18x20Search();      // Check for changes in sensors number
-    Ds18x20Convert();     // Start Conversion, takes up to one second
-#endif  // USE_WEBSERVER
   }
 }
 
@@ -223,8 +219,7 @@ boolean Xsns05(byte function)
         Ds18x20Init();
         break;
       case FUNC_XSNS_PREP:
-        Ds18x20Search();      // Check for changes in sensors number
-        Ds18x20Convert();     // Start Conversion, takes up to one second
+        Ds18x20Convert();   // Check for changes in sensor number and start conversion, takes up to one second
         break;
       case FUNC_XSNS_JSON_APPEND:
         Ds18x20Show(1);
@@ -232,6 +227,7 @@ boolean Xsns05(byte function)
 #ifdef USE_WEBSERVER
       case FUNC_XSNS_WEB:
         Ds18x20Show(0);
+        Ds18x20Convert();   // Check for changes in sensor number and start conversion, takes up to one second
         break;
 #endif  // USE_WEBSERVER
     }

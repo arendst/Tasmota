@@ -25,7 +25,7 @@
     - Select IDE Tools - Flash Size: "1M (no SPIFFS)"
   ====================================================*/
 
-#define VERSION                0x05090108   // 5.9.1h
+#define VERSION                0x05090109   // 5.9.1i
 
 // Location specific includes
 #include "sonoff.h"                         // Enumaration used in user_config.h
@@ -864,7 +864,7 @@ void MqttDataCallback(char* topic, byte* data, unsigned int data_len)
       payload = (int16_t) lnum;          // -32766 - 32767
       payload16 = (uint16_t) lnum;       // 0 - 65535
     }
-    backlog_delay = MIN_BACKLOG_DELAY;       // Reset backlog delay
+    backlog_delay = MIN_BACKLOG_DELAY;   // Reset backlog delay
 
     if ((GetCommandCode(command, sizeof(command), dataBuf, kOptionOff) >= 0) || !strcasecmp(dataBuf, Settings.state_text[0])) {
       payload = 0;
@@ -2207,6 +2207,12 @@ void StateLoop()
 #endif  // USE_IR_RECEIVE
 #endif  // USE_IR_REMOTE
 
+#ifdef USE_ARILUX_RF
+  if (pin[GPIO_ARIRFRCV] < 99) {
+    AriluxRfHandler();
+  }
+#endif  // USE_ARILUX_RF
+
 /*-------------------------------------------------------------------------------------------*\
  * Every 0.05 second
 \*-------------------------------------------------------------------------------------------*/
@@ -2268,6 +2274,9 @@ void StateLoop()
           StopWebserver();
         }
 #endif  // USE_WEBSERVER
+#ifdef USE_ARILUX_RF
+        AriluxRfDisable();  // Prevent restart exception on Arilux Interrupt routine
+#endif  // USE_ARILUX_RF
         ota_state_flag = 92;
         ota_result = 0;
         ota_retry_counter--;
@@ -2276,19 +2285,19 @@ void StateLoop()
 //          AddLog(LOG_LEVEL_INFO);
           ota_result = (HTTP_UPDATE_FAILED != ESPhttpUpdate.update(Settings.ota_url));
           if (!ota_result) {
-            ota_state_flag = 2;
+            ota_state_flag = 2;    // Upgrade failed - retry
           }
         }
       }
-      if (90 == ota_state_flag) {     // Allow MQTT to reconnect
+      if (90 == ota_state_flag) {  // Allow MQTT to reconnect
         ota_state_flag = 0;
         if (ota_result) {
-          SetFlashModeDout();  // Force DOUT for both ESP8266 and ESP8285
+          SetFlashModeDout();      // Force DOUT for both ESP8266 and ESP8285
           snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR(D_SUCCESSFUL ". " D_RESTARTING));
         } else {
           snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR(D_FAILED " %s"), ESPhttpUpdate.getLastErrorString().c_str());
         }
-        restart_flag = 2;       // Restart anyway to keep memory clean webserver
+        restart_flag = 2;          // Restart anyway to keep memory clean webserver
         MqttPublishPrefixTopic_P(1, PSTR(D_CMND_UPGRADE));
       }
     }
@@ -2377,7 +2386,7 @@ void SerialInput()
         serial_in_byte = 0;
       } else {
         if (serial_in_byte != 0xA1) {
-          dual_button_code = 0;                    // 0xA1 - End of Sonoff dual button code
+          dual_button_code = 0;                // 0xA1 - End of Sonoff dual button code
         }
       }
     }
@@ -2753,12 +2762,6 @@ void loop()
     PollUdp();
   }
 #endif  // USE_EMULATION
-
-#ifdef USE_ARILUX_RF
-  if (pin[GPIO_ARIRFRCV] < 99) {
-    AriluxRfHandler();
-  }
-#endif  // USE_ARILUX_RF
 
   if (millis() >= state_loop_timer) {
     StateLoop();

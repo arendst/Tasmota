@@ -1,4 +1,10 @@
-/* 5.9.1h
+/* 5.9.1i
+ * Fix Arilux LC11 restart exception 0 after OTA upgrade
+ * Disabled CRC lookup-table in OneWire.h (#define ONEWIRE_CRC8_TABLE 0) to save some code space
+ * Rewrite xsns_05_ds18x20.ino adding support for DS1822, correct address calculation and force setting 12-bit resolution (#1222)
+ * DS18x20 sensor reconfiguration now only probed at restart removing dynamic connection and intermittent sensor loss (#1215)
+ *
+ * 5.9.1h
  * Patch library I2Cdevlib-Core for esp8266-core 2.4.0-rc2
  * Add option PUSHBUTTON_TOGGLE (SwitchMode 7) to allow toggling on any switch change (#1221)
  * Fix DHT sensor timeout recognition by distinguish "signal already there" from "timeout" (#1233)

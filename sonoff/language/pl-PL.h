@@ -437,9 +437,10 @@
 #define D_ENERGY_YESTERDAY "Energia Wczoraj"
 #define D_ENERGY_TOTAL "Energia suma"
 
-// xsns_05_ds18b20.ino
+// xsns_05_ds18x20.ino
 #define D_SENSOR_BUSY "Czujnik DS18x20 zajety"
 #define D_SENSOR_CRC_ERROR "Czujnik DS18x20 blad CRC"
+#define D_SENSORS_FOUND "Znaleziono Czujnik DS18x20"
 
 // xsns_06_dht.ino
 #define D_TIMEOUT_WAITING_FOR "Trwa oczekiwanie"
