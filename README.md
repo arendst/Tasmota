@@ -43,7 +43,7 @@ The following devices are supported:
 - [iTead Sonoff 4CH Pro](https://www.itead.cc/smart-home/sonoff-4ch-pro.html)
 - [iTead S20 Smart Socket](https://www.itead.cc/smart-socket.html)
 - [iTead Slampher](https://www.itead.cc/slampher.html)
-- [iTead Sonoff Touch](https://www.itead.cc/sonoff-touch-eu-local.html)
+- [iTead Sonoff Touch](https://www.itead.cc/sonoff-touch.html)
 - [iTead Sonoff T1](https://www.itead.cc/sonoff-t1.html)
 - [iTead Sonoff SC](https://www.itead.cc/sonoff-sc.html)
 - [iTead Sonoff Led](https://www.itead.cc/sonoff-led.html)<img src="https://github.com/arendst/arendst.github.io/blob/master/media/sonoff4ch.jpg" height="250" align="right" />
