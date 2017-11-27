@@ -34,9 +34,12 @@ void WifiWpsStatusCallback(wps_cb_status status);
 #endif
 
 #define USE_DHT                             // Default DHT11 sensor needs no external library
-#ifndef USE_DS18x20
+
+#if defined(USE_DS18x20) || defined(USE_DS18x20_LEGACY)
+#else
 #define USE_DS18B20                         // Default DS18B20 sensor needs no external library
 #endif
+
 //#define DEBUG_THEO                          // Add debug code
 
 #ifdef BE_MINIMAL
@@ -94,9 +97,8 @@ void WifiWpsStatusCallback(wps_cb_status status);
 #endif
 
 #ifndef MESSZ
-#define MESSZ                  405          // Max number of characters in JSON message string (4 x DS18x20 sensors)
+#define MESSZ                  405          // Max number of characters in JSON message string (6 x DS18x20 sensors)
 #endif
-
 
 
 #endif  // _SONOFF_POST_H_

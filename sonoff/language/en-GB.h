@@ -107,6 +107,7 @@
 #define D_HOST "Host"
 #define D_HOSTNAME "Hostname"
 #define D_HUMIDITY "Humidity"
+#define D_ID "Id"
 #define D_ILLUMINANCE "Illuminance"
 #define D_IMMEDIATE "immediate"      // Button immediate
 #define D_INDEX "Index"
@@ -437,7 +438,7 @@
 #define D_ENERGY_YESTERDAY "Energy Yesterday"
 #define D_ENERGY_TOTAL "Energy Total"
 
-// xsns_05_ds18x20.ino
+// xsns_05_ds18b20.ino
 #define D_SENSOR_BUSY "Sensor busy"
 #define D_SENSOR_CRC_ERROR "Sensor CRC error"
 #define D_SENSORS_FOUND "Sensors found"

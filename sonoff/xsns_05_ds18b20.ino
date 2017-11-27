@@ -19,175 +19,177 @@
 
 #ifdef USE_DS18B20
 /*********************************************************************************************\
- * DS18B20 - Temperature
- *
- * Source: Marinus vd Broek https://github.com/ESP8266nu/ESPEasy and AlexTransit (CRC)
+ * DS18B20 - Temperature - Single sensor
 \*********************************************************************************************/
+
+#define W1_SKIP_ROM          0xCC
+#define W1_CONVERT_TEMP      0x44
+#define W1_READ_SCRATCHPAD   0xBE
 
 float ds18b20_last_temperature = 0;
 uint16_t ds18b20_last_result = 0;
+uint8_t ds18x20_pin = 0;
 
-uint8_t Ds18b20Reset()
+/*********************************************************************************************\
+ * Embedded stripped and tuned OneWire library
+\*********************************************************************************************/
+
+uint8_t OneWireReset()
 {
-  uint8_t r;
   uint8_t retries = 125;
 
-  pinMode(pin[GPIO_DSB], INPUT);
-  do  {                                 // wait until the wire is high... just in case
+  //noInterrupts();
+  pinMode(ds18x20_pin, INPUT);
+  do {
     if (--retries == 0) {
       return 0;
     }
     delayMicroseconds(2);
-  } while (!digitalRead(pin[GPIO_DSB]));
-  pinMode(pin[GPIO_DSB], OUTPUT);
-  digitalWrite(pin[GPIO_DSB], LOW);
-  delayMicroseconds(492);               // Dallas spec. = Min. 480uSec. Arduino 500uSec.
-  pinMode(pin[GPIO_DSB], INPUT);        // Float
-  delayMicroseconds(40);
-  r = !digitalRead(pin[GPIO_DSB]);
-  delayMicroseconds(420);
+  } while (!digitalRead(ds18x20_pin));
+  pinMode(ds18x20_pin, OUTPUT);
+  digitalWrite(ds18x20_pin, LOW);
+  delayMicroseconds(480);
+  pinMode(ds18x20_pin, INPUT);
+  delayMicroseconds(70);
+  uint8_t r = !digitalRead(ds18x20_pin);
+  //interrupts();
+  delayMicroseconds(410);
   return r;
 }
 
-uint8_t Ds18b20ReadBit(void)
+void OneWireWriteBit(uint8_t v)
 {
-  uint8_t r;
+  static const uint8_t delay_low[2] = { 65, 10 };
+  static const uint8_t delay_high[2] = { 5, 55 };
 
-  pinMode(pin[GPIO_DSB], OUTPUT);
-  digitalWrite(pin[GPIO_DSB], LOW);
+  v &= 1;
+  //noInterrupts();
+  digitalWrite(ds18x20_pin, LOW);
+  pinMode(ds18x20_pin, OUTPUT);
+  delayMicroseconds(delay_low[v]);
+  digitalWrite(ds18x20_pin, HIGH);
+  //interrupts();
+  delayMicroseconds(delay_high[v]);
+}
+
+uint8_t OneWireReadBit()
+{
+  //noInterrupts();
+  pinMode(ds18x20_pin, OUTPUT);
+  digitalWrite(ds18x20_pin, LOW);
   delayMicroseconds(3);
-  pinMode(pin[GPIO_DSB], INPUT);        // let pin float, pull up will raise
+  pinMode(ds18x20_pin, INPUT);
   delayMicroseconds(10);
-  r = digitalRead(pin[GPIO_DSB]);
+  uint8_t r = digitalRead(ds18x20_pin);
+  //interrupts();
   delayMicroseconds(53);
   return r;
 }
 
-uint8_t Ds18b20Read(void)
+void OneWireWrite(uint8_t v)
 {
-  uint8_t bit_mask;
+  for (uint8_t bit_mask = 0x01; bit_mask; bit_mask <<= 1) {
+    OneWireWriteBit((bit_mask & v) ? 1 : 0);
+  }
+}
+
+uint8_t OneWireRead()
+{
   uint8_t r = 0;
 
-  for (bit_mask = 1; bit_mask; bit_mask <<= 1) {
-    if (Ds18b20ReadBit()) {
+  for (uint8_t bit_mask = 0x01; bit_mask; bit_mask <<= 1) {
+    if (OneWireReadBit()) {
       r |= bit_mask;
     }
   }
   return r;
 }
 
-void Ds18b20WriteBit(uint8_t v)
+boolean OneWireCrc8(uint8_t *addr)
 {
-  if (v & 1) {
-    digitalWrite(pin[GPIO_DSB], LOW);
-    pinMode(pin[GPIO_DSB], OUTPUT);
-    delayMicroseconds(10);
-    digitalWrite(pin[GPIO_DSB], HIGH);
-    delayMicroseconds(55);
-  } else {
-    digitalWrite(pin[GPIO_DSB], LOW);
-    pinMode(pin[GPIO_DSB], OUTPUT);
-    delayMicroseconds(65);
-    digitalWrite(pin[GPIO_DSB], HIGH);
-    delayMicroseconds(5);
+  uint8_t crc = 0;
+  uint8_t len = 8;
+
+  while (len--) {
+    uint8_t inbyte = *addr++;          // from 0 to 7
+    for (uint8_t i = 8; i; i--) {
+      uint8_t mix = (crc ^ inbyte) & 0x01;
+      crc >>= 1;
+      if (mix) {
+        crc ^= 0x8C;
+      }
+      inbyte >>= 1;
+    }
   }
+  return (crc == *addr);               // addr 8
 }
 
-void Ds18b20Write(uint8_t byte_to_write)
-{
-  uint8_t bit_mask;
+/********************************************************************************************/
 
-  for (bit_mask = 1; bit_mask; bit_mask <<= 1) {
-    Ds18b20WriteBit((bit_mask & byte_to_write) ? 1 : 0);
-  }
+void Ds18x20Init()
+{
+  ds18x20_pin = pin[GPIO_DSB];
 }
 
-uint8 Ds18b20Crc(uint8 inp, uint8 crc)
+void Ds18x20Convert()
 {
-  inp ^= crc;
-  crc = 0;
-  if (inp & 0x1) crc ^= 0x5e;
-  if (inp & 0x2) crc ^= 0xbc;
-  if (inp & 0x4) crc ^= 0x61;
-  if (inp & 0x8) crc ^= 0xc2;
-  if (inp & 0x10) crc ^= 0x9d;
-  if (inp & 0x20) crc ^= 0x23;
-  if (inp & 0x40) crc ^= 0x46;
-  if (inp & 0x80) crc ^= 0x8c;
-  return crc;
+  OneWireReset();
+  OneWireWrite(W1_SKIP_ROM);           // Address all Sensors on Bus
+  OneWireWrite(W1_CONVERT_TEMP);       // start conversion, no parasite power on at the end
+//  delay(750);                          // 750ms should be enough for 12bit conv
 }
 
-void Ds18b20ReadTempPrep()
+boolean Ds18b20Read(float &t)
 {
-  Ds18b20Reset();
-  Ds18b20Write(0xCC);           // Skip ROM
-  Ds18b20Write(0x44);           // Start conversion
-}
-
-boolean Ds18b20ReadTemperature(float &t)
-{
-  int16_t DSTemp;
-  byte msb, lsb, crc, sign = 1;
+  uint8_t data[9];
+  int8_t sign = 1;
 
   if (!ds18b20_last_temperature) {
     t = NAN;
   } else {
     ds18b20_last_result++;
-    if (ds18b20_last_result > 8) {  // Reset after 8 misses
+    if (ds18b20_last_result > 4) {     // Reset after 4 misses
       ds18b20_last_temperature = NAN;
     }
     t = ds18b20_last_temperature;
   }
 
-  if (!Ds18b20ReadBit()) {     //check measurement end
+/*
+  if (!OneWireReadBit()) {             //check measurement end
     AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DSB D_SENSOR_BUSY));
     return !isnan(t);
   }
-/*
-  Ds18b20Reset();
-  Ds18b20Write(0xCC);           // Skip ROM
-  Ds18b20Write(0x44);           // Start conversion
-  delay(800);
 */
-  Ds18b20Reset();
-  Ds18b20Write(0xCC);           // Skip ROM
-  Ds18b20Write(0xBE);           // Read scratchpad
-  lsb = Ds18b20Read();
-  msb = Ds18b20Read();
-  crc = Ds18b20Crc(lsb, crc);
-  crc = Ds18b20Crc(msb, crc);
-  crc = Ds18b20Crc(Ds18b20Read(), crc);
-  crc = Ds18b20Crc(Ds18b20Read(), crc);
-  crc = Ds18b20Crc(Ds18b20Read(), crc);
-  crc = Ds18b20Crc(Ds18b20Read(), crc);
-  crc = Ds18b20Crc(Ds18b20Read(), crc);
-  crc = Ds18b20Crc(Ds18b20Read(), crc);
-  crc = Ds18b20Crc(Ds18b20Read(), crc);
-  Ds18b20Reset();
-  if (crc) { //check crc
-    AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DSB D_SENSOR_CRC_ERROR));
-  } else {
-    DSTemp = (msb << 8) + lsb;
-    if (DSTemp > 2047) {
-      DSTemp = (~DSTemp) +1;
-      sign = -1;
+  for (uint8_t retry = 0; retry < 3; retry++) {
+    OneWireReset();
+    OneWireWrite(W1_SKIP_ROM);
+    OneWireWrite(W1_READ_SCRATCHPAD);
+    for (uint8_t i = 0; i < 9; i++) {
+      data[i] = OneWireRead();
     }
-    t = ConvertTemp((float)sign * DSTemp * 0.0625);
-    ds18b20_last_result = 0;
+    if (OneWireCrc8(data)) {
+      uint16_t temp12 = (data[1] << 8) + data[0];
+      if (temp12 > 2047) {
+        temp12 = (~temp12) +1;
+        sign = -1;
+      }
+      t = ConvertTemp(sign * temp12 * 0.0625);
+      ds18b20_last_result = 0;
+    }
+    if (!isnan(t)) {
+      ds18b20_last_temperature = t;
+      return true;
+    }
   }
-  if (!isnan(t)) {
-    ds18b20_last_temperature = t;
-  }
+  AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DSB D_SENSOR_CRC_ERROR));
   return !isnan(t);
 }
-
-/********************************************************************************************/
 
 void Ds18b20Show(boolean json)
 {
   float t;
 
-  if (Ds18b20ReadTemperature(t)) {  // Check if read failed
+  if (Ds18b20Read(t)) {                // Check if read failed
     char temperature[10];
 
     dtostrfi(t, Settings.flag2.temperature_resolution, temperature);
@@ -203,11 +205,6 @@ void Ds18b20Show(boolean json)
 #endif  // USE_WEBSERVER
     }
   }
-#ifdef USE_WEBSERVER
-  if (!json) {
-    Ds18b20ReadTempPrep();
-  }
-#endif  // USE_WEBSERVER
 }
 
 /*********************************************************************************************\
@@ -222,10 +219,11 @@ boolean Xsns05(byte function)
 
   if (pin[GPIO_DSB] < 99) {
     switch (function) {
-//      case FUNC_XSNS_INIT:
-//        break;
+      case FUNC_XSNS_INIT:
+        Ds18x20Init();
+        break;
       case FUNC_XSNS_PREP:
-        Ds18b20ReadTempPrep();
+        Ds18x20Convert();   // Start conversion, takes up to one second
         break;
       case FUNC_XSNS_JSON_APPEND:
         Ds18b20Show(1);
@@ -233,6 +231,7 @@ boolean Xsns05(byte function)
 #ifdef USE_WEBSERVER
       case FUNC_XSNS_WEB:
         Ds18b20Show(0);
+        Ds18x20Convert();   // Start conversion, takes up to one second
         break;
 #endif  // USE_WEBSERVER
     }

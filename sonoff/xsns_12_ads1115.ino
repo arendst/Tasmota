@@ -133,7 +133,7 @@ void Ads1115StartComparator(uint8_t channel, uint16_t mode)
 
   // Set single-ended input channel
   config |= (ADS1115_REG_CONFIG_MUX_SINGLE_0 + (0x1000 * channel));
-  
+
   // Write config register to the ADC
   I2cWrite16(ads1115_address, ADS1115_REG_POINTER_CONFIG, config);
 }
@@ -157,13 +157,15 @@ int16_t Ads1115GetConversion(uint8_t channel)
 
 void Ads1115Detect()
 {
+  uint16_t buffer;
+
   if (ads1115_type) {
     return;
   }
 
   for (byte i = 0; i < sizeof(ads1115_addresses); i++) {
     ads1115_address = ads1115_addresses[i];
-    if (I2cRead16(ads1115_address, ADS1115_REG_POINTER_CONVERT)) {
+    if (I2cValidRead16(&buffer, ads1115_address, ADS1115_REG_POINTER_CONVERT)) {
       Ads1115StartComparator(i, ADS1115_REG_CONFIG_MODE_CONTIN);
       ads1115_type = 1;
       break;

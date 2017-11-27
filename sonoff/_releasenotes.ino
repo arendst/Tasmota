@@ -1,6 +1,24 @@
-/* 5.9.1i
+/* 5.9.1j
+ * Revert changes to xsns_05_ds18x20.ino and rename to xsns_05_ds18x20_legacy.ino still needing library OneWire and providing legacy JSON message:
+ *  "DS18x20":{"DS1":{"Type":"DS18B20","Address":"284CC48E04000079","Temperature":19.5},"DS2":{"Type":"DS18B20","Address":"283AC28304000052","Temperature":19.6}}
+ * Add new xdrv_05_ds18x20.ino free from library OneWire and add the following features:
+ *  Add support for DS1822
+ *  Add forced setting of 12-bit resolution for selected device types (#1222)
+ *  Add read temperature retry counter (#1215)
+ *  Fix lost sensors by performing sensor probe at restart only thereby removing dynamic sensor probe (#1215)
+ *  Fix sensor address sorting using ascending sort on sensor type followed by sensor address
+ *  Rewrite JSON resulting in shorter message allowing more sensors in default firmware image:
+ *   "DS18B20-1":{"Id":"00000483C23A","Temperature":19.5},"DS18B20-2":{"Id":"0000048EC44C","Temperature":19.6}
+ * Add additional define in user_config.h to select either single sensor (defines disabled), new multi sensor (USE_DS18X20) or legacy multi sensor (USE_DS18X20_LEGACY)
+ * Add support for Sonoff Dual R2 (#1249)
+ * Fix ADS1115 detection (#1258)
+ *
+ * 5.9.1i
  * Fix Arilux LC11 restart exception 0 after OTA upgrade
  * Disabled CRC lookup-table in OneWire.h (#define ONEWIRE_CRC8_TABLE 0) to save some code space
+ * Change DS18x20 JSON message using less characters
+ *  from "DS18x20":{"DS1":{"Type":"DS18B20","Address":"284CC48E04000079","Temperature":19.5},"DS2":{"Type":"DS18B20","Address":"283AC28304000052","Temperature":19.6}}
+ *  into "DS18x20":{"DS1":{"Type":"DS18B20","Address":"0000048EC44C","Temperature":19.5},"DS2":{"Type":"DS18B20","Address":"00000483C23A","Temperature":19.6}}
  * Rewrite xsns_05_ds18x20.ino adding support for DS1822, correct address calculation and force setting 12-bit resolution (#1222)
  * DS18x20 sensor reconfiguration now only probed at restart removing dynamic connection and intermittent sensor loss (#1215)
  *
