@@ -189,7 +189,9 @@ void Ds18x20Show(boolean json)
 #endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
       } else {
-        snprintf_P(stemp, sizeof(stemp), PSTR("%s-%d"), ds18x20_types, i +1);
+//STB mod
+        snprintf_P(stemp, sizeof(stemp), PSTR("%s_%d"), ds18x20_types, i +1);
+// end
         snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TEMP, mqtt_data, stemp, temperature, TempUnit());
 #endif  // USE_WEBSERVER
       }

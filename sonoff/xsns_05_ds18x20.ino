@@ -362,8 +362,9 @@ void Ds18x20Show(boolean json)
         index--;
       }
       GetTextIndexed(ds18x20_types, sizeof(ds18x20_types), index, kDs18x20Types);
-
-      snprintf_P(stemp, sizeof(stemp), PSTR("%s-%d"), ds18x20_types, i +1);
+//STB mod
+      snprintf_P(stemp, sizeof(stemp), PSTR("%s_%d"), ds18x20_types, i +1);
+//end
       if (json) {
         if (1 == ds18x20_sensors) {
           snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"%s\":{\"" D_TEMPERATURE "\":%s}"), mqtt_data, ds18x20_types, temperature);
