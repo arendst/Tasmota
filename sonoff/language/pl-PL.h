@@ -107,6 +107,7 @@
 #define D_HOST "Serwer"
 #define D_HOSTNAME "Nazwa serwera"
 #define D_HUMIDITY "Wilgotnosc"
+#define D_ID "ID"
 #define D_ILLUMINANCE "Oswietlenie"
 #define D_IMMEDIATE "Natychmiastowe"      // Button immediate
 #define D_INDEX "Indeks"
@@ -444,6 +445,7 @@
 // xsns_05_ds18b20.ino
 #define D_SENSOR_BUSY "Czujnik DS18x20 zajety"
 #define D_SENSOR_CRC_ERROR "Czujnik DS18x20 blad CRC"
+#define D_SENSORS_FOUND "Znaleziono Czujnik DS18x20"
 
 // xsns_06_dht.ino
 #define D_TIMEOUT_WAITING_FOR "Trwa oczekiwanie"

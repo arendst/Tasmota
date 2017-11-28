@@ -107,6 +107,7 @@
 #define D_HOST "host"
 #define D_HOSTNAME "Hostname"
 #define D_HUMIDITY "Feuchtigkeit"
+#define D_ID "ID"
 #define D_ILLUMINANCE "Beleuchtungsintensität"
 #define D_IMMEDIATE "direkt"      // Button immediate
 #define D_INDEX "Index"
@@ -444,6 +445,7 @@
 // xsns_05_ds18b20.ino
 #define D_SENSOR_BUSY "Sensor beschäftigt"
 #define D_SENSOR_CRC_ERROR "Sensor CRC-Fehler"
+#define D_SENSORS_FOUND "Sensor gefunden"
 
 // xsns_06_dht.ino
 #define D_TIMEOUT_WAITING_FOR "Timeout wartet auf"

@@ -40,7 +40,7 @@
 // old versions of OneWire).  If you disable this, a slower
 // but very compact algorithm is used.
 #ifndef ONEWIRE_CRC8_TABLE
-#define ONEWIRE_CRC8_TABLE 1
+#define ONEWIRE_CRC8_TABLE 0
 #endif
 
 // You can allow 16-bit CRC checks by defining this to 1
@@ -514,8 +514,8 @@ class OneWire
     //    ReadBytes(net, buf+3, 10);  // Read 6 data bytes, 2 0xFF, 2 CRC16
     //    if (!CheckCRC16(buf, 11, &buf[11])) {
     //        // Handle error.
-    //    }     
-    //          
+    //    }
+    //
     // @param input - Array of bytes to checksum.
     // @param len - How many bytes to use.
     // @param inverted_crc - The two CRC16 bytes in the received data.
