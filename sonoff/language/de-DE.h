@@ -177,7 +177,7 @@
 #define D_TEMPERATURE "Temperatur"
 #define D_TEMPERATURE_UNIT "TempUnit"
 #define D_TIME "Zeit"
-#define D_TO "bis"
+#define D_TO "zu"
 #define D_TODAY "heute"
 #define D_TOGGLE "An/Aus"
 #define D_TOPIC "topic"
