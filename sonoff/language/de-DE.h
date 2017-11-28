@@ -173,7 +173,7 @@
 #define D_SUCCESSFUL "erfolgreich"
 #define D_SWITCH "Schalter"
 #define D_SYNC "sync"
-#define D_SYS "sys"                  // Sys log
+#define D_SYS "Sys "                  // Sys log
 #define D_TEMPERATURE "Temperatur"
 #define D_TEMPERATURE_UNIT "TempUnit"
 #define D_TIME "Zeit"
