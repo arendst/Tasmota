@@ -814,10 +814,10 @@ bool I2cWrite(uint8_t addr, uint8_t reg, uint32_t val, uint8_t size)
   do {
     Wire.beginTransmission((uint8_t)addr);              // start transmission to device
     Wire.write(reg);                                    // sends register address to write to
-    uint8_t loops = size -1;
-    do {
-      Wire.write((val >> (8 * loops)) & 0xFF);          // write data
-    } while(--loops);
+    uint8_t bytes = size;
+    while (bytes--) {
+      Wire.write((val >> (8 * bytes)) & 0xFF);          // write data
+    }
     x--;
   } while (Wire.endTransmission(true) != 0 && x != 0);  // end transmission
   return (x);
