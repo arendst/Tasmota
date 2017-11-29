@@ -33,7 +33,7 @@ const char HTTP_HEAD[] PROGMEM =
   "<head>"
   "<meta charset='utf-8'>"
   "<meta name=\"viewport\" content=\"width=device-width,initial-scale=1,user-scalable=no\"/>"
-  "<title>{v}</title>"
+  "<title>{h} - {v}</title>"
 
   "<script>"
   "var cn,x,lt;"
@@ -85,6 +85,7 @@ const char HTTP_HEAD[] PROGMEM =
   "td{padding:0px;}"
   "button{border:0;border-radius:0.3rem;background-color:#1fa3ec;color:#fff;line-height:2.4rem;font-size:1.2rem;width:100%;-webkit-transition-duration:0.4s;transition-duration:0.4s;}"
   "button:hover{background-color:#006cba;}"
+  "a{text-decoration:none;}"
   ".p{float:left;text-align:left;}"
   ".q{float:right;text-align:right;}"
   "</style>"
@@ -276,6 +277,8 @@ const char HTTP_TABLE100[] PROGMEM =
 const char HTTP_COUNTER[] PROGMEM =
   "<br/><div id='t' name='t' style='text-align:center;'></div>";
 const char HTTP_END[] PROGMEM =
+  "<br/>"
+  "<div style='text-align:right;font-size:11px;'><hr/><a href='https://github.com/arendst/Sonoff-Tasmota' target='_blank' style='color:#aaa;'>Sonoff-Tasmota {a} by Theo Arends</a></div>"
   "</div>"
   "</body>"
   "</html>";
@@ -419,6 +422,7 @@ void ShowPage(String &page)
     }
   }
   page += FPSTR(HTTP_END);
+  page.replace(F("{a}"), version);
   SetHeader();
   WebServer->send(200, FPSTR(HDR_CTYPE_HTML), page);
 }
