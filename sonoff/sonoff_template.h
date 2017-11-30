@@ -197,7 +197,7 @@ enum SupportedModules {
   ARILUX_LC01,
   ARILUX_LC11,
   SONOFF_DUAL_R2,
-  LCTECH
+  LCTECH,
   MAXMODULE };
 
 /********************************************************************************************/
@@ -792,7 +792,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      0,                
      0,                
      0, 0, 0
-  }  
+  }
 };
 
 #endif  // _SONOFF_TEMPLATE_H_
