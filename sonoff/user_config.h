@@ -163,7 +163,9 @@
 // -- Sensor code selection -----------------------
 #define USE_ADC_VCC                              // Display Vcc in Power status. Disable for use as Analog input on selected devices
 
-//#define USE_DS18x20                              // Optional for more than one DS18B20 and/or DS18S20 sensors using library OneWire (+1.5k code)
+                                                 // WARNING: Select none for default one sensor or enable one of the following two options for multiple sensors
+//#define USE_DS18x20                              // Optional for more than one DS18x20 sensors with id sort, single scan and read retry (+1.3k code)
+//#define USE_DS18x20_LEGACY                       // Optional for more than one DS18B20 sensors using library OneWire (+1.5k code)
 
 #define USE_I2C                                  // I2C using library wire (+10k code, 0.2k mem) - Disable by //
   #define USE_SHT                                // Add I2C emulating code for SHT1X sensor

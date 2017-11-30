@@ -704,46 +704,95 @@ boolean MdnsDiscoverMqttServer()
 #ifdef USE_I2C
 #define I2C_RETRY_COUNTER 3
 
-int32_t I2cRead(uint8_t addr, uint8_t reg, uint8_t size)
-{
-  byte x = 0;
-  int32_t data = 0;
+uint32_t i2c_buffer = 0;
 
+bool I2cValidRead(uint8_t addr, uint8_t reg, uint8_t size)
+{
+  byte x = I2C_RETRY_COUNTER;
+
+  i2c_buffer = 0;
   do {
-    Wire.beginTransmission(addr);             // start transmission to device
-    Wire.write(reg);                          // sends register address to read from
-    if (0 == Wire.endTransmission(false)) {   // Try to become I2C Master, send data and collect bytes, keep master status for next request...
-      Wire.requestFrom((int)addr, (int)size); // send data n-bytes read
+    Wire.beginTransmission(addr);                       // start transmission to device
+    Wire.write(reg);                                    // sends register address to read from
+    if (0 == Wire.endTransmission(false)) {             // Try to become I2C Master, send data and collect bytes, keep master status for next request...
+      Wire.requestFrom((int)addr, (int)size);           // send data n-bytes read
       if (Wire.available() == size) {
         for (byte i = 0; i < size; i++) {
-          data <<= 8;
-          data |= Wire.read();                // receive DATA
+          i2c_buffer = i2c_buffer << 8 | Wire.read();   // receive DATA
         }
       }
     }
-    x++;
-  } while (Wire.endTransmission(true) != 0 && x <= I2C_RETRY_COUNTER); // end transmission
-  return data;
+    x--;
+  } while (Wire.endTransmission(true) != 0 && x != 0);  // end transmission
+  return (x);
+}
+
+bool I2cValidRead8(uint8_t *data, uint8_t addr, uint8_t reg)
+{
+  bool status = I2cValidRead(addr, reg, 1);
+  *data = (uint8_t)i2c_buffer;
+  return status;
+}
+
+bool I2cValidRead16(uint16_t *data, uint8_t addr, uint8_t reg)
+{
+  bool status = I2cValidRead(addr, reg, 2);
+  *data = (uint16_t)i2c_buffer;
+  return status;
+}
+
+bool I2cValidReadS16(int16_t *data, uint8_t addr, uint8_t reg)
+{
+  bool status = I2cValidRead(addr, reg, 2);
+  *data = (int16_t)i2c_buffer;
+  return status;
+}
+
+bool I2cValidRead16LE(uint16_t *data, uint8_t addr, uint8_t reg)
+{
+  uint16_t ldata;
+  bool status = I2cValidRead16(&ldata, addr, reg);
+  *data = (ldata >> 8) | (ldata << 8);
+  return status;
+}
+
+bool I2cValidReadS16_LE(int16_t *data, uint8_t addr, uint8_t reg)
+{
+  uint16_t ldata;
+  bool status = I2cValidRead16LE(&ldata, addr, reg);
+  *data = (int16_t)ldata;
+  return status;
+}
+
+bool I2cValidRead24(int32_t *data, uint8_t addr, uint8_t reg)
+{
+  bool status = I2cValidRead(addr, reg, 3);
+  *data = i2c_buffer;
+  return status;
 }
 
 uint8_t I2cRead8(uint8_t addr, uint8_t reg)
 {
-  return I2cRead(addr, reg, 1);
+  I2cValidRead(addr, reg, 1);
+  return (uint8_t)i2c_buffer;
 }
 
 uint16_t I2cRead16(uint8_t addr, uint8_t reg)
 {
-  return I2cRead(addr, reg, 2);
+  I2cValidRead(addr, reg, 2);
+  return (uint16_t)i2c_buffer;
 }
 
 int16_t I2cReadS16(uint8_t addr, uint8_t reg)
 {
-  return (int16_t)I2cRead(addr, reg, 2);
+  I2cValidRead(addr, reg, 2);
+  return (int16_t)i2c_buffer;
 }
 
 uint16_t I2cRead16LE(uint8_t addr, uint8_t reg)
 {
-  uint16_t temp = I2cRead(addr, reg, 2);
+  I2cValidRead(addr, reg, 2);
+  uint16_t temp = (uint16_t)i2c_buffer;
   return (temp >> 8) | (temp << 8);
 }
 
@@ -754,64 +803,34 @@ int16_t I2cReadS16_LE(uint8_t addr, uint8_t reg)
 
 int32_t I2cRead24(uint8_t addr, uint8_t reg)
 {
-  return I2cRead(addr, reg, 3);
+  I2cValidRead(addr, reg, 3);
+  return i2c_buffer;
 }
-/*
-void I2cWrite(uint8_t addr, uint8_t reg, uint32_t val, uint8_t size)
+
+bool I2cWrite(uint8_t addr, uint8_t reg, uint32_t val, uint8_t size)
 {
   byte x = I2C_RETRY_COUNTER;
-  int32_t data = val;
 
   do {
-    Wire.beginTransmission((uint8_t)addr);  // start transmission to device
-    Wire.write(reg);                        // sends register address to read from
-
-    for (byte i = 0; i < size; i++) {
-
+    Wire.beginTransmission((uint8_t)addr);              // start transmission to device
+    Wire.write(reg);                                    // sends register address to write to
+    uint8_t bytes = size;
+    while (bytes--) {
+      Wire.write((val >> (8 * bytes)) & 0xFF);          // write data
     }
-
-    Wire.write((val >> 8) & 0xFF);          // write data
-    Wire.write(val);                        // write data
-
     x--;
-  } while (Wire.endTransmission(true) != 0 && x != 0); // end transmission
-}
-*/
-void I2cWrite8v(uint8_t addr, uint8_t val)
-{
-  byte x = I2C_RETRY_COUNTER;
-
-  do {
-    Wire.beginTransmission((uint8_t)addr);  // start transmission to device
-    Wire.write(val);                        // write data
-    x--;
-  } while (Wire.endTransmission(true) != 0 && x != 0); // end transmission
+  } while (Wire.endTransmission(true) != 0 && x != 0);  // end transmission
+  return (x);
 }
 
-void I2cWrite8(uint8_t addr, uint8_t reg, uint8_t val)
+bool I2cWrite8(uint8_t addr, uint8_t reg, uint16_t val)
 {
-  byte x = I2C_RETRY_COUNTER;
-
-  do {
-    Wire.beginTransmission((uint8_t)addr);  // start transmission to device
-    Wire.write(reg);                        // sends register address to write to
-    Wire.write(val);                        // write data
-    x--;
-  } while (Wire.endTransmission(true) != 0 && x != 0); // end transmission
+   return I2cWrite(addr, reg, val, 1);
 }
 
 bool I2cWrite16(uint8_t addr, uint8_t reg, uint16_t val)
 {
-  byte x = I2C_RETRY_COUNTER;
-
-  do {
-    Wire.beginTransmission((uint8_t)addr);  // start transmission to device
-    Wire.write(reg);                        // sends register address to write to
-    Wire.write((val >> 8) & 0xFF);          // write data
-    Wire.write(val & 0xFF);                 // write data
-    x--;
-  } while (Wire.endTransmission(true) != 0 && x != 0); // end transmission
-  return (x);
+   return I2cWrite(addr, reg, val, 2);
 }
 
 void I2cScan(char *devs, unsigned int devs_len)
