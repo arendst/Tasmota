@@ -64,6 +64,7 @@
 #define D_BRIGHTLIGHT "Bright"
 #define D_BUILDDATETIME "BuildDateTime"
 #define D_BUTTON "Button"
+#define D_BY "by"                    // Written by me
 #define D_CELSIUS "Celsius"
 #define D_CODE "code"                // Button code
 #define D_COLDLIGHT "Cold"

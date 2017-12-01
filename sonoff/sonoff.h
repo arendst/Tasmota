@@ -20,6 +20,11 @@
 #ifndef _SONOFF_H_
 #define _SONOFF_H_
 
+#define D_PROGRAMNAME          "Sonoff-Tasmota"
+#define D_AUTHOR               "Theo Arends"
+//#define D_WEBLINK              "https://github.com/arendst/Sonoff-Tasmota"
+#define D_WEBLINK              "https://bit.ly/tasmota"
+
 /*********************************************************************************************\
  * Power Type
 \*********************************************************************************************/

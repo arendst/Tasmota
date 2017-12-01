@@ -1,6 +1,35 @@
-/* 5.9.1j
- * Revert changes to xsns_05_ds18x20.ino and rename to xsns_05_ds18x20_legacy.ino still needing library OneWire and providing legacy JSON message:
- *  "DS18x20":{"DS1":{"Type":"DS18B20","Address":"284CC48E04000079","Temperature":19.5},"DS2":{"Type":"DS18B20","Address":"283AC28304000052","Temperature":19.6}}
+/* 5.10.0a
+ * Add (experimental) support for sensor SHT3x
+ *
+ * 5.10.0 20171201
+ * Upgrade library ArduinoJson to 5.11.2
+ * Upgrade library IRRemoteEsp8266 to 2.2.1 + 2 commits but disabled some protocols (code size reduction)
+ * Upgrade library NeoPixelBus to 2.2.9
+ * Upgrade library OneWire to 2.3.3 + 6 commits and disabled CRC lookup-table (#define ONEWIRE_CRC8_TABLE 0) (code size reduction)
+ * Update library PubSubClient to 2.6 + 9 commits and additional delay (#790)
+ * Update core_esp8266_wiring_digital.c to latest (staged) level
+ * Patch library I2Cdevlib-Core for esp8266-core 2.4.0-rc2 compatibility
+ * Remove command EnergyReset 1..3 now replaced by EnergyReset1 to EnergyReset3
+ * Remove spaces in JSON messages (code size reduction)
+ * Renamed xsns_05_ds18x20.ino to xsns_05_ds18x20_legacy.ino still using library OneWire and providing dynamic sensor scan
+ * Fix possible iram1_0_seg compile error by shrinking ICACHE_RAM_ATTR code usage
+ * Fix PWM watchdog timeout if Dimmer is set to 100 or Color set to 0xFF (#1146)
+ * Fix Sonoff Bridge Learn Mode hang caused by unrecognised RF code (#1181)
+ * Fix blank console log window by using XML character encoding (#1187)
+ * Fix wrong response name for command HlwISet (#1214)
+ * Fix DHT type sensor timeout recognition by distinguish "signal already there" from "timeout" (#1233)
+ * Add fixed color options 1..12 to command Color
+ * Add + (plus) and - (minus) to commands Dimmer (+10/-10), Speed and Scheme
+ * Add + (plus) and - (minus) to command Color to select 1 out of 12 preset colors
+ * Add + (plus) and - (minus) to command Ct to control ColdWarm led ColorTemperature (+34/-34)
+ * Add commands EnergyReset1 0..42500, EnergyReset2 0..42500 and EnergyReset3 0..42500000
+ *  to (Re)set Energy Today, Yesterday or Total respectively in Wh (#406, #685, #1202)
+ * Add optional ADS1115 driver as alternative for unsupported I2Cdevlib in esp8266-core 2.4.0-rc2
+ * Add support for INA219 Voltage and Current sensor to be enabled in user_config.h with define USE_INA219
+ * Add support for Arilux LC11 (Clearing RF home code when selecting no Arilux module)
+ * Add support for WS2812 RGBW ledstrips to be enabled in user_config.h with define USE_WS2812_CTYPE (#1156)
+ * Add SettingsSaveAll routine to command SaveData to be used before controlled power down (#1202)
+ * Add option PUSHBUTTON_TOGGLE (SwitchMode 7) to allow toggling on any switch change (#1221)
  * Add new xdrv_05_ds18x20.ino free from library OneWire and add the following features:
  *  Add support for DS1822
  *  Add forced setting of 12-bit resolution for selected device types (#1222)
@@ -10,64 +39,9 @@
  *  Rewrite JSON resulting in shorter message allowing more sensors in default firmware image:
  *   "DS18B20-1":{"Id":"00000483C23A","Temperature":19.5},"DS18B20-2":{"Id":"0000048EC44C","Temperature":19.6}
  * Add additional define in user_config.h to select either single sensor (defines disabled), new multi sensor (USE_DS18X20) or legacy multi sensor (USE_DS18X20_LEGACY)
+ * Add clock support for more different pixel counts (#1226)
  * Add support for Sonoff Dual R2 (#1249)
- * Fix ADS1115 detection (#1258)
- *
- * 5.9.1i
- * Fix Arilux LC11 restart exception 0 after OTA upgrade
- * Disabled CRC lookup-table in OneWire.h (#define ONEWIRE_CRC8_TABLE 0) to save some code space
- * Change DS18x20 JSON message using less characters
- *  from "DS18x20":{"DS1":{"Type":"DS18B20","Address":"284CC48E04000079","Temperature":19.5},"DS2":{"Type":"DS18B20","Address":"283AC28304000052","Temperature":19.6}}
- *  into "DS18x20":{"DS1":{"Type":"DS18B20","Address":"0000048EC44C","Temperature":19.5},"DS2":{"Type":"DS18B20","Address":"00000483C23A","Temperature":19.6}}
- * Rewrite xsns_05_ds18x20.ino adding support for DS1822, correct address calculation and force setting 12-bit resolution (#1222)
- * DS18x20 sensor reconfiguration now only probed at restart removing dynamic connection and intermittent sensor loss (#1215)
- *
- * 5.9.1h
- * Patch library I2Cdevlib-Core for esp8266-core 2.4.0-rc2
- * Add option PUSHBUTTON_TOGGLE (SwitchMode 7) to allow toggling on any switch change (#1221)
- * Fix DHT sensor timeout recognition by distinguish "signal already there" from "timeout" (#1233)
- *
- * 5.9.1g
- * Fix typo ALIRFRCV into ARIRFRCV
- * Add nicer clock support for larger hand widths
- * Add better clock support for different pixel counts (#1226)
- * Remove command EnergyReset 1..3
- * Add commands EnergyReset1 0..42500, EnergyReset2 0..42500 and EnergyReset3 0..42500000
- *  to (Re)set Energy Today, Yesterday or Total respectively in Wh (#406, #685, #1202)
- * Add SettingsSaveAll routine to command SaveData to be used before controlled power down (#1202)
- *
- * 5.9.1f
- * Upgrade library ArduinoJson to 5.11.2
- * Upgrade library IRRemoteEsp8266 to 2.2.1 + 2 commits but tweaked some protocols to keep code usage small
- * Upgrade library NeoPixelBus to 2.2.9
- * Upgrade library OneWire to 2.3.3 + 6 commits
- * Formalize library PubSubClient to 2.6 + 9 commits and additional delay
- * Add optional ADS1115 driver as alternative for unsupported I2Cdevlib in esp8266-core 2.4.0-rc2
- * Fix wrong response name for command HlwISet (#1214)
- *
- * 5.9.1e
- * Add + (plus) and - (minus) to command color to select 1 out of 12 preset colors
- * Add + (plus) and - (minus) to command ct to control ColdWarm led ColorTemperature (+34/-34)
- * Tune Arilux RF code
- * Fix possible iram1_0_seg compile error by shrinking ICACHE_RAM_ATTR code
- * Update core_esp8266_wiring_digital.c to latest (staged) level
- * Workaround Sonoff Bridge Learn Mode hang caused by unrecognised RF code (#1181)
- * Fix blank console log window by using XML character encoding (#1187)
- *
- * 5.9.1d
- * Add support for Arilux LC11 (Clearing RF home code when selecting no Arilux module)
- * Add fixed color options 1..12 to command Color
- * Add + (plus) and - (minus) to commands Dimmer (+10/-10), Speed and Scheme
- *
- * 5.9.1c
- * Add support for WS2812 RGBW ledstrips to be enabled in user_config.h with define USE_WS2812_CTYPE (#1156)
- *
- * 5.9.1b
- * Remove spaces in JSON messages
- * Add support for INA219 Voltage and Current sensor to be enabled in user_config.h with define USE_INA219
- *
- * 5.9.1a
- * Fix PWM watchdog timeout if Dimmer is set to 100 or Color set to 0xFF (#1146)
+ * Add FriendlyName to web page tab and add program information to web page footer (#1275)
  *
  * 5.9.1 20171107
  * Add external sensor function pointer interface to enable easy sensor addition
