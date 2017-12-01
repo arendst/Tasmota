@@ -23,6 +23,8 @@
  * HTU21 - Temperature and Humidy
  *
  * Source: Heiko Krupp
+ *
+ * I2C Address: 0x40
 \*********************************************************************************************/
 
 #define HTU21_ADDR          0x40
@@ -51,6 +53,8 @@
 #define HTU21_RES_RH11_T11  0x81
 
 #define HTU21_CRC8_POLYNOM  0x13100
+
+const char kHtuTypes[] PROGMEM = "HTU21|SI7013|SI7020|SI7021|T/RH?";
 
 uint8_t htu_address;
 uint8_t htu_type = 0;
@@ -95,8 +99,8 @@ uint8_t HtuReadDeviceId(void)
 void HtuSetResolution(uint8_t resolution)
 {
   uint8_t current = I2cRead8(HTU21_ADDR, HTU21_READREG);
-  current &= 0x7E;                  // Replace current resolution bits with 0
-  current |= resolution;            // Add new resolution bits to register
+  current &= 0x7E;          // Replace current resolution bits with 0
+  current |= resolution;    // Add new resolution bits to register
   I2cWrite8(HTU21_ADDR, HTU21_WRITEREG, current);
 }
 
@@ -124,12 +128,11 @@ void HtuHeater(uint8_t heater)
   I2cWrite8(HTU21_ADDR, HTU21_WRITEREG, current);
 }
 
-boolean HtuInit()
+void HtuInit()
 {
   HtuReset();
   HtuHeater(HTU21_HEATER_OFF);
   HtuSetResolution(HTU21_RES_RH12_T14);
-  return true;
 }
 
 float HtuReadHumidity(void)
@@ -207,50 +210,40 @@ float HtuCompensatedHumidity(float humidity, float temperature)
 
 /********************************************************************************************/
 
-uint8_t HtuDetect()
+void HtuDetect()
 {
   if (htu_type) {
-    return true;
+    return;
   }
-
-  boolean success = false;
 
   htu_address = HTU21_ADDR;
   htu_type = HtuReadDeviceId();
-  success = HtuInit();
-  switch (htu_type) {
-  case HTU21_CHIPID:
-    strcpy_P(htu_types, PSTR("HTU21"));
-    delay_temp=50;
-    delay_humidity=16;
-    break;
-  case SI7013_CHIPID:
-    strcpy_P(htu_types, PSTR("SI7013"));
-    delay_temp=12;
-    delay_humidity=23;
-    break;
-  case SI7020_CHIPID:
-    strcpy_P(htu_types, PSTR("SI7020"));
-    delay_temp=12;
-    delay_humidity=23;
-    break;
-  case SI7021_CHIPID:
-    strcpy_P(htu_types, PSTR("SI7021"));
-    delay_temp=12;
-    delay_humidity=23;
-    break;
-  default:
-    strcpy_P(htu_types, PSTR("T/RH?"));
-    delay_temp=50;
-    delay_humidity=23;
-  }
-  if (success) {
+  if (htu_type) {
+    uint8_t index = 0;
+    HtuInit();
+    switch (htu_type) {
+      case HTU21_CHIPID:
+        delay_temp = 50;
+        delay_humidity = 16;
+        break;
+      case SI7021_CHIPID:
+        index++;  // 3
+      case SI7020_CHIPID:
+        index++;  // 2
+      case SI7013_CHIPID:
+        index++;  // 1
+        delay_temp = 12;
+        delay_humidity = 23;
+        break;
+      default:
+        index = 4;
+        delay_temp = 50;
+        delay_humidity = 23;
+    }
+    GetTextIndexed(htu_types, sizeof(htu_types), index, kHtuTypes);
     snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, htu_types, htu_address);
     AddLog(LOG_LEVEL_DEBUG);
-  } else {
-    htu_type = 0;
   }
-  return success;
 }
 
 void HtuShow(boolean json)
@@ -262,8 +255,8 @@ void HtuShow(boolean json)
     float t = HtuReadTemperature();
     float h = HtuReadHumidity();
     h = HtuCompensatedHumidity(h, t);
-    dtostrfd(t, Settings.flag.temperature_resolution, temperature);
-    dtostrfd(h, Settings.flag.humidity_resolution, humidity);
+    dtostrfd(t, Settings.flag2.temperature_resolution, temperature);
+    dtostrfd(h, Settings.flag2.humidity_resolution, humidity);
 
     if (json) {
       snprintf_P(mqtt_data, sizeof(mqtt_data), JSON_SNS_TEMPHUM, mqtt_data, htu_types, temperature, humidity);

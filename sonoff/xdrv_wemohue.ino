@@ -28,7 +28,7 @@
 boolean udp_connected = false;
 
 char packet_buffer[UDP_BUFFER_SIZE]; // buffer to hold incoming UDP packet
-IPAddress ipMulticast(239, 255, 255, 250); // Simple Service Discovery Protocol (SSDP)
+IPAddress ipMulticast(239,255,255,250); // Simple Service Discovery Protocol (SSDP)
 uint32_t port_multicast = 1900;      // Multicast address and port
 
 /*********************************************************************************************\
@@ -220,10 +220,10 @@ void PollUdp()
 //        AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("UDP: M-SEARCH Packet received"));
 //        AddLog_P(LOG_LEVEL_DEBUG_MORE, request.c_str());
 
-        if ((EMUL_WEMO == Settings.flag.emulation) && (request.indexOf(F("urn:belkin:device:**")) > 0)) {
+        if ((EMUL_WEMO == Settings.flag2.emulation) && (request.indexOf(F("urn:belkin:device:**")) > 0)) {
           WemoRespondToMSearch();
         }
-        else if ((EMUL_HUE == Settings.flag.emulation) &&
+        else if ((EMUL_HUE == Settings.flag2.emulation) &&
                 ((request.indexOf(F("st:urn:schemas-upnp-org:device:basic:1")) > 0) ||
                  (request.indexOf(F("st:upnp:rootdevice")) > 0) ||
                  (request.indexOf(F("st:ssdpsearch:all")) > 0) ||

@@ -24,6 +24,8 @@
  *
  * Reading temperature and humidity takes about 320 milliseconds!
  * Source: Marinus vd Broek https://github.com/ESP8266nu/ESPEasy
+ *
+ * I2C Address: None
 \*********************************************************************************************/
 
 enum {
@@ -161,10 +163,10 @@ boolean ShtReadTempHum(float &t, float &h)
 
 /********************************************************************************************/
 
-boolean ShtDetect()
+void ShtDetect()
 {
   if (sht_type) {
-    return true;
+    return;
   }
 
   float t;
@@ -179,7 +181,6 @@ boolean ShtDetect()
     Wire.begin(sht_sda_pin, sht_scl_pin);
     sht_type = 0;
   }
-  return sht_type;
 }
 
 void ShtShow(boolean json)
@@ -192,8 +193,8 @@ void ShtShow(boolean json)
       char temperature[10];
       char humidity[10];
 
-      dtostrfd(t, Settings.flag.temperature_resolution, temperature);
-      dtostrfd(h, Settings.flag.humidity_resolution, humidity);
+      dtostrfd(t, Settings.flag2.temperature_resolution, temperature);
+      dtostrfd(h, Settings.flag2.humidity_resolution, humidity);
 
       if (json) {
         snprintf_P(mqtt_data, sizeof(mqtt_data), JSON_SNS_TEMPHUM, mqtt_data, "SHT1X", temperature, humidity);

@@ -31,9 +31,9 @@
 \*********************************************************************/
 
 // "2017-03-07T11:08:02" - ISO8601:2004
-#define D_YEAR_MONTH_SEPARATOR "-"
-#define D_MONTH_DAY_SEPARATOR "-"
-#define D_DATE_TIME_SEPARATOR "T"
+#define D_YEAR_MONTH_SEPARATOR "."
+#define D_MONTH_DAY_SEPARATOR "."
+#define D_DATE_TIME_SEPARATOR " "
 #define D_HOUR_MINUTE_SEPARATOR ":"
 #define D_MINUTE_SECOND_SEPARATOR ":"
 
@@ -59,17 +59,18 @@
 #define D_BLINK "Blinken"
 #define D_BLINKOFF "BlinkenAus"
 #define D_BOOTVERSION "Boot"
-#define D_BOOT_COUNT "Boot-Zähler"
+#define D_BOOT_COUNT "Anzahl Startvorgänge"
 #define D_BOOTCOUNT "BootZähler"
 #define D_BRIGHTLIGHT "hell"
 #define D_BUILDDATETIME "BuildDatumUhrzeit"
-#define D_BUTTON "Taste"
+#define D_BUTTON "Knopf"
+#define D_BY "von"                   // Written by me
 #define D_CELSIUS "Celsius"
 #define D_CODE "code"                // Button code
 #define D_COLDLIGHT "kalt"
 #define D_COMMAND "Befehl"
 #define D_CONNECTED "verbunden"
-#define D_COREVERSION "Kern"
+#define D_COREVERSION "Core"
 #define D_COUNT "zählen"
 #define D_COUNTER "Zähler"
 #define D_CURRENT "Strom"          // As in Voltage and Current
@@ -82,7 +83,7 @@
 #define D_DONE "erledigt"
 #define D_DST_TIME "DST"
 #define D_EMPTY "leer"
-#define D_EMULATION "Emulierung"
+#define D_EMULATION "Emulation"
 #define D_ENABLED "aktiviert"
 #define D_ENDDST "EndDST"           // End Daylight Savings Time
 #define D_ERASE "löschen"
@@ -97,16 +98,17 @@
 #define D_FILE "Datei"
 #define D_FLASHMODE "FlashMode"
 #define D_FLASHSIZE "FlashSize"
-#define D_FREE_MEMORY "freier Speicher"
+#define D_FREE_MEMORY "Freier Speicher"
 #define D_FREEMEMORY "frei"
 #define D_FROM "von"
 #define D_GATEWAY "Gateway"
 #define D_GROUP "Gruppe"
 #define D_HEAPSIZE "Heap-Größe"
 #define D_HIGH "hoch"
-#define D_HOST "host"
+#define D_HOST "Host"
 #define D_HOSTNAME "Hostname"
 #define D_HUMIDITY "Feuchtigkeit"
+#define D_ID "ID"
 #define D_ILLUMINANCE "Beleuchtungsintensität"
 #define D_IMMEDIATE "direkt"      // Button immediate
 #define D_INDEX "Index"
@@ -114,10 +116,10 @@
 #define D_INITIALIZED "initialisiert"
 #define D_IP_ADDRESS "IP-Addresse"
 #define D_LIGHT "Licht"
-#define D_LOCAL_TIME "örtlich"
+#define D_LOCAL_TIME "lokale Zeit"
 #define D_LOW "niedrig"
 #define D_LWT "LWT"
-#define D_MAC "Mac"
+#define D_MAC "MAC"
 #define D_MASK "Maske"
 #define D_MODULE "Modul"
 #define D_MQTT "MQTT"
@@ -133,13 +135,13 @@
 #define D_OR "oder"
 #define D_PASSWORD "Passwort"
 #define D_PERIOD "Punkt"
-#define D_PORT "port"
+#define D_PORT "Port"
 #define D_POWER_FACTOR "Leistungsfaktor"
 #define D_POWERFACTOR "Faktor"
 #define D_POWERUSAGE "Leistung"
 #define D_PRESSURE "Druck"
 #define D_PRESSUREATSEALEVEL "MeeresDruck"
-#define D_PROGRAM_FLASH_SIZE "Programm-Flash-Größe"
+#define D_PROGRAM_FLASH_SIZE "Programm Flash Größe"
 #define D_PROGRAMFLASHSIZE "ProgramFlashSize"
 #define D_PROGRAM_SIZE "Programmgröße"
 #define D_PROGRAMSIZE "ProgramSize"
@@ -149,16 +151,16 @@
 #define D_RESTARTING "starte neu"
 #define D_RESTART_REASON "Grund für Neustart"
 #define D_RESTARTREASON "RestartReason"
-#define D_RESTORE "wiederherstellen"
+#define D_RESTORE "Wiederherstellung"
 #define D_RETAINED "beibehalten"
-#define D_SAVE "speichern"
+#define D_SAVE "Speichern"
 #define D_SAVEADDRESS "SaveAddress"
 #define D_SAVECOUNT "SaveCount"
 #define D_SAVESTATE "SaveState"
 #define D_SDKVERSION "SDK"
 #define D_SELECTED "ausgewählt"
 #define D_SENSOR "Sensor"
-#define D_SERIAL "Serial"
+#define D_SERIAL "Seriell"
 #define D_BYTES "Bytes"
 #define D_SSID "SSID"
 #define D_START "Start"
@@ -170,23 +172,23 @@
 #define D_SUBNETMASK "Subnetmaske"
 #define D_SUBSCRIBE_TO "subscribe to"
 #define D_SUCCESSFUL "erfolgreich"
-#define D_SWITCH "switch"
+#define D_SWITCH "Schalter"
 #define D_SYNC "sync"
-#define D_SYS "sys"                  // Sys log
+#define D_SYS "Sys "                  // Sys log
 #define D_TEMPERATURE "Temperatur"
 #define D_TEMPERATURE_UNIT "TempUnit"
 #define D_TIME "Zeit"
-#define D_TO "bis"
+#define D_TO "zu"
 #define D_TODAY "heute"
-#define D_TOGGLE "schalten"
+#define D_TOGGLE "An/Aus"
 #define D_TOPIC "topic"
 #define D_TOTAL "Total"
 #define D_TRANSMIT "Übertragen"
 #define D_TRUE "wahr"
-#define D_TYPE "Typ"
+#define D_TYPE "Art"
 #define D_UNKNOWN "unbekannt"
-#define D_UPGRADE "upgrade"
-#define D_UPLOAD "upload"
+#define D_UPGRADE "update"
+#define D_UPLOAD "Upload"
 #define D_UPTIME "Laufzeit"
 #define D_USER "Benutzer"
 #define D_UTC_TIME "UTC"
@@ -195,26 +197,26 @@
 #define D_VERSION "Version"
 #define D_VOLTAGE "Spannung"
 #define D_WARMLIGHT "warm"
-#define D_WEB "web"                  // Web log
+#define D_WEB "Web"                  // Web log
 #define D_WEB_SERVER "Web-Server"
 #define D_WIFI "WLAN"
 #define D_WRONG "falsch"
 #define D_YESTERDAY "gestern"
 
 // settings.ino
-#define D_SAVED_TO_FLASH_AT "in flash gespeichert am"
-#define D_LOADED_FROM_FLASH_AT "geladen aus flash am"
+#define D_SAVED_TO_FLASH_AT "in Flash gespeichert am"
+#define D_LOADED_FROM_FLASH_AT "aus Flash geladen am"
 #define D_USE_DEFAULTS "Standard verwenden"
 #define D_ERASED_SECTOR "gelöschter Sektor"
 
 // sonoff.ino
 #define D_LEVEL_10 "level 1-0"
 #define D_LEVEL_01 "level 0-1"
-#define D_SERIAL_LOGGING_DISABLED "serielles logging deaktiviert"
-#define D_SYSLOG_LOGGING_REENABLED "syslog logging reaktiviert"
+#define D_SERIAL_LOGGING_DISABLED "Serielles logging deaktiviert"
+#define D_SYSLOG_LOGGING_REENABLED "Syslog logging reaktiviert"
 
-#define D_SET_BAUDRATE_TO "Baudrate eingestell auf"
-#define D_RECEIVED_TOPIC "erhaltenes topic"
+#define D_SET_BAUDRATE_TO "Baudrate eingestellt auf"
+#define D_RECEIVED_TOPIC "empfangenes topic"
 #define D_DATA_SIZE "Datengröße"
 #define D_ANALOG_INPUT "Analog"
 
@@ -228,16 +230,16 @@
 // support.ino
 #define D_OSWATCH "osWatch"
 #define D_BLOCKED_LOOP "Blocked Loop"
-#define D_WPS_FAILED_WITH_STATUS "WPSconfig fehlgeschlagen mit Status"
+#define D_WPS_FAILED_WITH_STATUS "WPS fehlgeschlagen mit Status"
 #define D_ACTIVE_FOR_1_MINUTE "aktiv für 1 Minute"
 #define D_FAILED_TO_START "Starten fehlgeschlagen"
 #define D_PATCH_ISSUE_2186 "Patch-Problem 2186"
 #define D_CONNECTING_TO_AP "verbinden mit AP"
 #define D_IN_MODE "in Modus"
-#define D_CONNECT_FAILED_NO_IP_ADDRESS "Verbindung fehlgeschlagen da keine IP-Adresse erhalten wurde"
+#define D_CONNECT_FAILED_NO_IP_ADDRESS "Verbindung fehlgeschlagen da keine IP-Adresse zugeteilt wurde"
 #define D_CONNECT_FAILED_AP_NOT_REACHED "Verbindung fehlgeschlagen da AP nicht erreicht werden konnte"
-#define D_CONNECT_FAILED_WRONG_PASSWORD "Verbindung fehlgeschlagen mit AP falschem Passwort"
-#define D_CONNECT_FAILED_AP_TIMEOUT "Verbindung fehlgeschlagen mit AP timeout"
+#define D_CONNECT_FAILED_WRONG_PASSWORD "Verbindung fehlgeschlagen mit AP weil das Passwort falsch ist"
+#define D_CONNECT_FAILED_AP_TIMEOUT "Verbindung fehlgeschlagen da der AP nicht antwortet (timeout)"
 #define D_ATTEMPTING_CONNECTION "Verbindungsversuch..."
 #define D_CHECKING_CONNECTION "prüfe Verbindung..."
 #define D_QUERY_DONE "Suchanfrage abgeschlossen. MQTT-Services gefunden"
@@ -246,7 +248,7 @@
 #define D_FOUND_AT "gefunden bei"
 #define D_I2CSCAN_UNKNOWN_ERROR_AT "unbekannter Fehler bei"
 #define D_I2CSCAN_NO_DEVICES_FOUND "keine Geräte gefunden"
-#define D_SYSLOG_HOST_NOT_FOUND "syslog host nicht gefunden"
+#define D_SYSLOG_HOST_NOT_FOUND "Syslog Host nicht gefunden"
 
 // webserver.ino
 #define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "MINIMUM-Firmware - bitte upgraden"
@@ -261,11 +263,11 @@
 
 #define D_RESTART_IN "Neustart in"
 #define D_SECONDS "Sekunden"
-#define D_DEVICE_WILL_RESTART "Gerät wird in wenigen Sekunden neu starten"
-#define D_BUTTON_TOGGLE "schalten"
+#define D_DEVICE_WILL_RESTART "Gerät wird jetzt neu gestartet"
+#define D_BUTTON_TOGGLE "An/Aus"
 #define D_CONFIGURATION "Einstellungen"
 #define D_INFORMATION "Informationen"
-#define D_FIRMWARE_UPGRADE "Firmware-Upgrade"
+#define D_FIRMWARE_UPGRADE "Firmware Update"
 #define D_CONSOLE "Konsole"
 #define D_CONFIRM_RESTART "Neustart bestätigen"
 
@@ -281,16 +283,16 @@
 #define D_RESTORE_CONFIGURATION "Konfiguration wiederherstellen"
 #define D_MAIN_MENU "Hauptmenü"
 
-#define D_MODULE_PARAMETERS "Modul-Parameter"
-#define D_MODULE_TYPE "Module-Typ"
+#define D_MODULE_PARAMETERS "Modul Einstellungen"
+#define D_MODULE_TYPE "Modul Typ"
 #define D_GPIO "GPIO"
 #define D_SERIAL_IN "serieller Eingang [serial in]"
 #define D_SERIAL_OUT "serieller Ausgang [serial out]"
 
-#define D_WIFI_PARAMETERS "WLAN-Parameter"
-#define D_SCAN_FOR_WIFI_NETWORKS "Suche nach WLAN-Netzwerke"
-#define D_SCAN_DONE "scan abgeschlossen"
-#define D_NO_NETWORKS_FOUND "keine Netzwerke gefunden"
+#define D_WIFI_PARAMETERS "WLAN Einstellungen"
+#define D_SCAN_FOR_WIFI_NETWORKS "WLAN-Netzwerk suchen und auswählen"
+#define D_SCAN_DONE "Suche abgeschlossen"
+#define D_NO_NETWORKS_FOUND "Keine Netzwerke gefunden"
 #define D_REFRESH_TO_SCAN_AGAIN "Aktualisieren um erneut zu suchen"
 #define D_DUPLICATE_ACCESSPOINT "AccessPoint duplizieren"
 #define D_SKIPPING_LOW_QUALITY "überspringe wegen niedriger Qualität"
@@ -298,42 +300,42 @@
 #define D_WEP "WEP"
 #define D_WPA_PSK "WPA PSK"
 #define D_WPA2_PSK "WPA2 PSK"
-#define D_AP1_SSID "AP1 SSID"
-#define D_AP1_PASSWORD "AP1 Password"
-#define D_AP2_SSID "AP2 SSID"
-#define D_AP2_PASSWORD "AP2 Password"
+#define D_AP1_SSID "WLAN 1 - SSID"
+#define D_AP1_PASSWORD "WLAN 1 - Passwort"
+#define D_AP2_SSID "WLAN 2 - SSID"
+#define D_AP2_PASSWORD "WLAN 2 - Passwort"
 
-#define D_MQTT_PARAMETERS "MQTT-Parameter"
+#define D_MQTT_PARAMETERS "MQTT Einstellungen"
 #define D_CLIENT "client"
 #define D_FULL_TOPIC "full topic"
 
-#define D_LOGGING_PARAMETERS "Logging-Parameter"
-#define D_LOG_LEVEL "log level"
+#define D_LOGGING_PARAMETERS "Logging Einstellungen"
+#define D_LOG_LEVEL "Log level"
 #define D_MORE_DEBUG "More debug"
-#define D_SYSLOG_HOST "Syslog host"
-#define D_SYSLOG_PORT "Syslog port"
+#define D_SYSLOG_HOST "Syslog Host"
+#define D_SYSLOG_PORT "Syslog Port"
 #define D_TELEMETRY_PERIOD "Telemetry period"
 
-#define D_OTHER_PARAMETERS "andere Parameter"
-#define D_WEB_ADMIN_PASSWORD "Web-Admin-Passwort"
+#define D_OTHER_PARAMETERS "Sonstige Einstellungen"
+#define D_WEB_ADMIN_PASSWORD "Passwort für Web Oberfläche"
 #define D_MQTT_ENABLE "MQTT aktivieren"
 #define D_FRIENDLY_NAME "Name [friendly name]"
 #define D_BELKIN_WEMO "Belkin WeMo"
 #define D_HUE_BRIDGE "Hue Bridge"
-#define D_SINGLE_DEVICE "einzelnes Gerät"
+#define D_SINGLE_DEVICE "Einzelnes Gerät"
 #define D_MULTI_DEVICE "Mehrfachgerät"
 
 #define D_SAVE_CONFIGURATION "Konfiguration speichern"
 #define D_CONFIGURATION_SAVED "Konfiguration gespeichert"
 #define D_CONFIGURATION_RESET "Konfiguration zurücksetzen"
 
-#define D_PROGRAM_VERSION "Programmversion"
+#define D_PROGRAM_VERSION "Tasmota Version"
 #define D_BUILD_DATE_AND_TIME "Build-Datum & -Uhrzeit"
 #define D_CORE_AND_SDK_VERSION "Core-/SDK-Version"
-#define D_FLASH_WRITE_COUNT "Flash-Schreibzähler"
+#define D_FLASH_WRITE_COUNT "Anz. Flash Schreibzugriffe"
 #define D_MAC_ADDRESS "MAC-Adresse"
-#define D_MQTT_HOST "MQTT host"
-#define D_MQTT_PORT "MQTT port"
+#define D_MQTT_HOST "MQTT Host"
+#define D_MQTT_PORT "MQTT Port"
 #define D_MQTT_CLIENT "MQTT client"
 #define D_MQTT_USER "MQTT-Benutzer"
 #define D_MQTT_TOPIC "MQTT topic"
@@ -343,26 +345,26 @@
 #define D_MDNS_ADVERTISE "mDNS-Bekanntmachung"
 #define D_ESP_CHIP_ID "ESP Chip ID"
 #define D_FLASH_CHIP_ID "Flash Chip ID"
-#define D_FLASH_CHIP_SIZE "Flash-Größe"
-#define D_FREE_PROGRAM_SPACE "freier Programmspeicherplatz"
+#define D_FLASH_CHIP_SIZE "Flash Größe"
+#define D_FREE_PROGRAM_SPACE "Freier Programm Speicher"
 
-#define D_UPGRADE_BY_WEBSERVER "Upgrade über Web-Server"
+#define D_UPGRADE_BY_WEBSERVER "Update über Web-Server"
 #define D_OTA_URL "OTA-URL"
-#define D_START_UPGRADE "Upgrade starten"
-#define D_UPGRADE_BY_FILE_UPLOAD "Upgrade per Datei-Upload"
+#define D_START_UPGRADE "Update starten"
+#define D_UPGRADE_BY_FILE_UPLOAD "Update Datei hochladen"
 #define D_UPLOAD_STARTED "Upload gestartet"
-#define D_UPGRADE_STARTED "Upgrade gestartet"
+#define D_UPGRADE_STARTED "Update gestartet"
 #define D_UPLOAD_DONE "Upload abgeschlossen"
 #define D_UPLOAD_ERR_1 "keine Datei ausgewählt"
 #define D_UPLOAD_ERR_2 "ungenügend Speicherplatz"
 #define D_UPLOAD_ERR_3 "magic byte ist nicht 0xE9"
-#define D_UPLOAD_ERR_4 "Flash-Größe des Programmes ist größer als die reale Flash-Größe"
+#define D_UPLOAD_ERR_4 "Flash-Größe des Programmes ist größer als der reale Flashspeicher"
 #define D_UPLOAD_ERR_5 "Upload-buffer-Vergleich weicht ab"
 #define D_UPLOAD_ERR_6 "Upload fehlgeschlagen. Aktiviere logging 3"
 #define D_UPLOAD_ERR_7 "Upload abgebrochen"
 #define D_UPLOAD_ERR_8 "Datei ungültig"
 #define D_UPLOAD_ERR_9 "Datei zu groß"
-#define D_UPLOAD_ERROR_CODE "Upload-Fehler-Code"
+#define D_UPLOAD_ERROR_CODE "Upload Fehler Nummer"
 
 #define D_ENTER_COMMAND "Befehl eingeben"
 #define D_ENABLE_WEBLOG_FOR_RESPONSE "aktivere weblog 2 falls Reaktion erwartet"
@@ -384,7 +386,7 @@
   #define D_DOMOTICZ_CURRENT "Current"
 #define D_DOMOTICZ_UPDATE_TIMER "Update timer"
 
-// xdrv_ir-send.ino
+// xdrv_irremote.ino
 #define D_INVALID_JSON "ungültiger JSON"
 #define D_PROTOCOL_NOT_SUPPORTED "Protokoll nicht unterstützt"
 #define D_IR_PROTOCOL "PROTOKOLL"
@@ -395,10 +397,10 @@
 #define D_IRHVAC_MODE "MODUS"
 #define D_IRHVAC_FANSPEED "LÜFTERGESCHWINDIGKEIT"
 #define D_IRHVAC_TEMP "TEMPERATUR"
-#define D_IRRECEIVED "IrReceived"
+#define D_IRRECEIVED "IR empfangen"
 
 // xdrv_snfbridge.ino
-#define D_RFRECEIVED "RfReceived"
+#define D_RFRECEIVED "RF empfangen"
 #define D_START_LEARNING "starte Anlernen"
 #define D_SET_TO_DEFAULT "auf Standard zurücksetzen"
 #define D_DEFAULT_SENT "Standard gesendet"
@@ -411,7 +413,7 @@
 // xdrv_wemohue.ino
 #define D_MULTICAST_DISABLED "Multicast deaktiviert"
 #define D_MULTICAST_REJOINED "Multicast (wieder-)verbunden"
-#define D_MULTICAST_JOIN_FAILED "Multicast-Verbinden fehlgeschlagen"
+#define D_MULTICAST_JOIN_FAILED "Multicast Verbindung fehlgeschlagen"
 #define D_FAILED_TO_SEND_RESPONSE "Antwort senden fehlgeschlagen"
 
 #define D_WEMO "WeMo"
@@ -427,18 +429,7 @@
 #define D_HUE_POST_ARGS "Hue POST args"
 #define D_3_RESPONSE_PACKETS_SENT "3 Antwortpakete gesendet"
 
-// xsns_dht.ino
-#define D_TIMEOUT_WAITING_FOR "Timeout wartet auf"
-#define D_START_SIGNAL_LOW "Startausschlag niedrig"
-#define D_START_SIGNAL_HIGH "Startausschlag hoch"
-#define D_PULSE "pulse"
-#define D_CHECKSUM_FAILURE "Checksum-Fehler"
-
-// xsns_ds18b20.ino
-#define D_SENSOR_BUSY "Sensor beschäftigt"
-#define D_SENSOR_CRC_ERROR "Sensor CRC-Fehler"
-
-// xsns_hlw8012.ino
+// xsns_03_hlw8012.ino
 #define D_MAXPOWERREACHED "MaxPowerReached"
 #define D_MAXPOWERREACHEDRETRY "MaxPowerReachedRetry"
 #define D_POWERMONITOR "PowerMonitor"
@@ -448,7 +439,19 @@
 #define D_ENERGY_YESTERDAY "Energie gestern"
 #define D_ENERGY_TOTAL "Energie insgesamt"
 
-// xsns_sht1x.ino
+// xsns_05_ds18b20.ino
+#define D_SENSOR_BUSY "Sensor beschäftigt"
+#define D_SENSOR_CRC_ERROR "Sensor CRC-Fehler"
+#define D_SENSORS_FOUND "Sensor gefunden"
+
+// xsns_06_dht.ino
+#define D_TIMEOUT_WAITING_FOR "Timeout wartet auf"
+#define D_START_SIGNAL_LOW "Startausschlag niedrig"
+#define D_START_SIGNAL_HIGH "Startausschlag hoch"
+#define D_PULSE "pulse"
+#define D_CHECKSUM_FAILURE "Checksum-Fehler"
+
+// xsns_07_sht1x.ino
 #define D_SENSOR_DID_NOT_ACK_COMMAND "Sensor hat ACK-Befehl nicht ausgeführt"
 #define D_SHT1X_FOUND "SHT1X gefunden"
 
@@ -462,14 +465,14 @@
 #define D_SENSOR_I2C_SCL  "I2C SCL"
 #define D_SENSOR_I2C_SDA  "I2C SDA"
 #define D_SENSOR_WS2812   "WS2812"
-#define D_SENSOR_IRSEND   "IRsend"
-#define D_SENSOR_SWITCH   "Switch"   // Suffix "1"
-#define D_SENSOR_BUTTON   "Button"   // Suffix "1"
-#define D_SENSOR_RELAY    "Relay"    // Suffix "1i"
-#define D_SENSOR_LED      "Led"      // Suffix "1i"
-#define D_SENSOR_PWM      "PWM"      // Suffix "1"
+#define D_SENSOR_IRSEND   "IRSend"
+#define D_SENSOR_SWITCH   "Switch "   // Suffix "1"
+#define D_SENSOR_BUTTON   "Button "   // Suffix "1"
+#define D_SENSOR_RELAY    "Relay "    // Suffix "1i"
+#define D_SENSOR_LED      "LED "      // Suffix "1i"
+#define D_SENSOR_PWM      "PWM "      // Suffix "1"
 #define D_SENSOR_COUNTER  "Counter"  // Suffix "1"
-#define D_SENSOR_IRRECV   "IRrecv"
+#define D_SENSOR_IRRECV   "IRRecv"
 #define D_SENSOR_SPI_CS   "SPI CS"
 #define D_SENSOR_SPI_DC   "SPI DC"
 #define D_SENSOR_BACKLIGHT "BLight"
@@ -479,39 +482,41 @@
 #define D_UNIT_HOUR "h"
 #define D_UNIT_KILOWATTHOUR "kWh"
 #define D_UNIT_LUX "lx"
-#define D_UNIT_MICROSECOND "us"
+#define D_UNIT_MICROSECOND "µs"
 #define D_UNIT_MILLIAMPERE "mA"
 #define D_UNIT_MILLISECOND "ms"
 #define D_UNIT_MINUTE "min"
 #define D_UNIT_PRESSURE "hPa"
-#define D_UNIT_SECOND "sec"
+#define D_UNIT_SECOND "sek"
 #define D_UNIT_SECTORS "Sektoren"
 #define D_UNIT_VOLT "V"
 #define D_UNIT_WATT "W"
 #define D_UNIT_WATTHOUR "Wh"
 
 // Log message prefix
-#define D_LOG_APPLICATION "APP: "
-#define D_LOG_BRIDGE "BRG: "
-#define D_LOG_CONFIG "CFG: "
-#define D_LOG_COMMAND "CMD: "
-#define D_LOG_DHT "DHT: "
-#define D_LOG_DOMOTICZ "DOM: "
-#define D_LOG_DSB "DSB: "
-#define D_LOG_HTTP "HTP: "
-#define D_LOG_I2C "I2C: "
-#define D_LOG_IRR "IRR: "
-#define D_LOG_LOG "LOG: "
-#define D_LOG_MODULE "MOD: "
-#define D_LOG_MDNS "DNS: "
-#define D_LOG_MQTT "MQT: "
-#define D_LOG_OTHER "OTH: "
-#define D_LOG_RESULT "RSL: "
-#define D_LOG_SERIAL "SER: "
-#define D_LOG_SHT1 "SHT: "
-#define D_LOG_UPLOAD "UPL: "
-#define D_LOG_UPNP "UPP: "
-#define D_LOG_WIFI "WIF: "
+#define D_LOG_APPLICATION "APP: "  // Application
+#define D_LOG_BRIDGE "BRG: "       // Bridge
+#define D_LOG_CONFIG "CFG: "       // Settings
+#define D_LOG_COMMAND "CMD: "      // Command
+#define D_LOG_DEBUG "DBG: "        // Debug
+#define D_LOG_DHT "DHT: "          // DHT sensor
+#define D_LOG_DOMOTICZ "DOM: "     // Domoticz
+#define D_LOG_DSB "DSB: "          // DS18xB20 sensor
+#define D_LOG_HTTP "HTP: "         // HTTP webserver
+#define D_LOG_I2C "I2C: "          // I2C
+#define D_LOG_IRR "IRR: "          // Infra Red Received
+#define D_LOG_LOG "LOG: "          // Logging
+#define D_LOG_MODULE "MOD: "       // Module
+#define D_LOG_MDNS "DNS: "         // mDNS
+#define D_LOG_MQTT "MQT: "         // MQTT
+#define D_LOG_OTHER "OTH: "        // Other
+#define D_LOG_RESULT "RSL: "       // Result
+#define D_LOG_RFR "RFR: "          // RF Received
+#define D_LOG_SERIAL "SER: "       // Serial
+#define D_LOG_SHT1 "SHT: "         // SHT1x sensor
+#define D_LOG_UPLOAD "UPL: "       // Upload
+#define D_LOG_UPNP "UPP: "         // UPnP
+#define D_LOG_WIFI "WIF: "         // Wifi
 
 // Result
 #define D_RSLT_RESULT "ERGEBNIS"
@@ -573,6 +578,7 @@
 #define D_CMND_PRESSURE_RESOLUTION "PressRes"
 #define D_CMND_POWER_RESOLUTION "WattRes"
 #define D_CMND_VOLTAGE_RESOLUTION "VoltRes"
+#define D_CMND_CURRENT_RESOLUTION "AmpRes"
 #define D_CMND_ENERGY_RESOLUTION "EnergyRes"
 #define D_CMND_MODULE "Module"
 #define D_CMND_MODULES "Modules"
@@ -629,6 +635,7 @@
 #define D_CMND_LEDSTATE "LedState"
 #define D_CMND_CFGDUMP "CfgDump"
 #define D_CMND_I2CSCAN "I2CScan"
+#define D_CMND_INA219MODE "Ina219Mode"
 #define D_CMND_EXCEPTION "Exception"
 
 // Commands xdrv_domoticz.ino
@@ -639,19 +646,11 @@
 #define D_CMND_SENSORIDX "SensorIdx"
 #define D_CMND_UPDATETIMER "UpdateTimer"
 
-// Commands xdrv_ir_send.ino
+// Commands xdrv_irremote.ino
 #define D_CMND_IRSEND "IRSend"
 #define D_CMND_IRHVAC "IRHVAC"
 
-// Commands xdrv_snfbridge.ino
-#define D_CMND_RFCODE "RfCode"
-#define D_CMND_RFHIGH "RfHigh"
-#define D_CMND_RFHOST "RfHost"
-#define D_CMND_RFKEY "RfKey"
-#define D_CMND_RFLOW "RfLow"
-#define D_CMND_RFSYNC "RfSync"
-
-// Commands xdrv_snfled.ino
+// Commands xdrv_light.ino
 #define D_CMND_COLOR "Color"
 #define D_CMND_COLORTEMPERATURE "CT"
 #define D_CMND_DIMMER "Dimmer"
@@ -665,7 +664,15 @@
 #define D_CMND_WAKEUPDURATION "WakeUpDuration"
 #define D_CMND_WIDTH "Width"
 
-// Commands xsns_hlw8012.ino
+// Commands xdrv_snfbridge.ino
+#define D_CMND_RFCODE "RfCode"
+#define D_CMND_RFHIGH "RfHigh"
+#define D_CMND_RFHOST "RfHost"
+#define D_CMND_RFKEY "RfKey"
+#define D_CMND_RFLOW "RfLow"
+#define D_CMND_RFSYNC "RfSync"
+
+// Commands xsns_03_hlw8012.ino
 #define D_CMND_POWERLOW "PowerLow"
 #define D_CMND_POWERHIGH "PowerHigh"
 #define D_CMND_VOLTAGELOW "VoltageLow"

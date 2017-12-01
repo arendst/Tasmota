@@ -37,7 +37,7 @@ byte dht_sensors = 0;
 struct DHTSTRUCT {
   byte     pin;
   byte     type;
-  char     stype[10];
+  char     stype[12];
   uint32_t lastreadtime;
   uint8_t  lastresult;
   float    t;
@@ -51,13 +51,13 @@ void DhtReadPrep()
   }
 }
 
-uint32_t DhtExpectPulse(byte sensor, bool level)
+int32_t DhtExpectPulse(byte sensor, bool level)
 {
-  uint32_t count = 0;
+  int32_t count = 0;
 
   while (digitalRead(Dht[sensor].pin) == level) {
     if (count++ >= dht_max_cycles) {
-      return 0;
+      return -1;  // Timeout
     }
   }
   return count;
@@ -65,7 +65,7 @@ uint32_t DhtExpectPulse(byte sensor, bool level)
 
 void DhtRead(byte sensor)
 {
-  uint32_t cycles[80];
+  int32_t cycles[80];
   uint32_t currenttime = millis();
 
   if ((currenttime - Dht[sensor].lastreadtime) < MIN_INTERVAL) {
@@ -92,12 +92,12 @@ void DhtRead(byte sensor)
   delayMicroseconds(40);
   pinMode(Dht[sensor].pin, INPUT_PULLUP);
   delayMicroseconds(10);
-  if (0 == DhtExpectPulse(sensor, LOW)) {
+  if (-1 == DhtExpectPulse(sensor, LOW)) {
     AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DHT D_TIMEOUT_WAITING_FOR " " D_START_SIGNAL_LOW " " D_PULSE));
     Dht[sensor].lastresult++;
     return;
   }
-  if (0 == DhtExpectPulse(sensor, HIGH)) {
+  if (-1 == DhtExpectPulse(sensor, HIGH)) {
     AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DHT D_TIMEOUT_WAITING_FOR " " D_START_SIGNAL_HIGH " " D_PULSE));
     Dht[sensor].lastresult++;
     return;
@@ -108,17 +108,17 @@ void DhtRead(byte sensor)
   }
   interrupts();
 
-  for (int i=0; i<40; ++i) {
-    uint32_t lowCycles  = cycles[2*i];
-    uint32_t highCycles = cycles[2*i+1];
-    if ((0 == lowCycles) || (0 == highCycles)) {
+  for (int i = 0; i < 40; ++i) {
+    int32_t lowCycles  = cycles[2*i];
+    int32_t highCycles = cycles[2*i+1];
+    if ((-1 == lowCycles) || (-1 == highCycles)) {
       AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DHT D_TIMEOUT_WAITING_FOR " " D_PULSE));
       Dht[sensor].lastresult++;
       return;
     }
     dht_data[i/8] <<= 1;
     if (highCycles > lowCycles) {
-      dht_data[i/8] |= 1;
+      dht_data[i / 8] |= 1;
     }
   }
 
@@ -204,16 +204,7 @@ void DhtInit()
     pinMode(Dht[i].pin, INPUT_PULLUP);
     Dht[i].lastreadtime = 0;
     Dht[i].lastresult = 0;
-    switch (Dht[i].type) {
-    case GPIO_DHT11:
-      strcpy_P(Dht[i].stype, PSTR("DHT11"));
-      break;
-    case GPIO_DHT21:
-      strcpy_P(Dht[i].stype, PSTR("AM2301"));
-      break;
-    case GPIO_DHT22:
-      strcpy_P(Dht[i].stype, PSTR("DHT22"));
-    }
+    strcpy_P(Dht[i].stype, kSensors[Dht[i].type]);
     if (dht_sensors > 1) {
       snprintf_P(Dht[i].stype, sizeof(Dht[i].stype), PSTR("%s-%02d"), Dht[i].stype, Dht[i].pin);
     }
@@ -230,8 +221,8 @@ void DhtShow(boolean json)
   byte dsxflg = 0;
   for (byte i = 0; i < dht_sensors; i++) {
     if (DhtReadTempHum(i, t, h)) {     // Read temperature
-      dtostrfd(t, Settings.flag.temperature_resolution, temperature);
-      dtostrfd(h, Settings.flag.humidity_resolution, humidity);
+      dtostrfd(t, Settings.flag2.temperature_resolution, temperature);
+      dtostrfd(h, Settings.flag2.humidity_resolution, humidity);
 
       if (json) {
         snprintf_P(mqtt_data, sizeof(mqtt_data), JSON_SNS_TEMPHUM, mqtt_data, Dht[i].stype, temperature, humidity);

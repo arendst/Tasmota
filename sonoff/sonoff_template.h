@@ -150,6 +150,7 @@ enum ProgramSelectablePins {
   GPIO_ADC0,           // ADC
   GPIO_DI,             // my92x1 PWM input
   GPIO_DCKI,           // my92x1 CLK input
+  GPIO_ARIRFRCV,       // AliLux RF Receive input
   GPIO_USER,           // User configurable
   GPIO_MAX };
 
@@ -193,7 +194,9 @@ enum SupportedModules {
   MAGICHOME,
   LUANIHVIO,
   KMC_70011,
-  ARILUX,
+  ARILUX_LC01,
+  ARILUX_LC11,
+  SONOFF_DUAL_R2,
   MAXMODULE };
 
 /********************************************************************************************/
@@ -216,6 +219,7 @@ const uint8_t kNiceList[MAXMODULE] PROGMEM = {
   SONOFF_RF,
   SONOFF_TH,
   SONOFF_DUAL,
+  SONOFF_DUAL_R2,
   SONOFF_POW,
   SONOFF_4CH,
   SONOFF_4CHPRO,
@@ -243,7 +247,8 @@ const uint8_t kNiceList[MAXMODULE] PROGMEM = {
   WION,
   H801,
   MAGICHOME,
-  ARILUX,
+  ARILUX_LC01,
+  ARILUX_LC11,
   HUAFAN_SS,
   KMC_70011,
   AILIGHT,
@@ -731,14 +736,48 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      0, 0, 0
   },
   { "Arilux",          // Arilux AL-LC01 (ESP8285) - https://www.banggood.com/nl/ARILUX-AL-LC01-Super-Mini-LED-WIFI-Smart-RGB-Controller-For-RGB-LED-Strip-Light-DC-9-12V-p-1058603.html
-     0, 0, 0, 0,       //  (PwmFrequency 1111Hz)
-     GPIO_USER,        // GPIO04 IR or RF receiver (optional)
+                       //  (PwmFrequency 1111Hz)
+     GPIO_KEY1,        // GPIO00 Optional Button
+     0,
+     GPIO_LED2_INV,    // GPIO02 RF receiver control
+     0,
+     GPIO_ARIRFRCV,    // GPIO04 IR or RF receiver (optional)
      GPIO_PWM1,        // GPIO05 RGB LED Red
      0, 0, 0, 0, 0, 0, // Flash connection
      GPIO_PWM2,        // GPIO12 RGB LED Green
      GPIO_PWM3,        // GPIO13 RGB LED Blue
      GPIO_USER,        // GPIO14 RGBW LED White (optional - set to PWM4 for Cold White or Warm White)
      0, 0, 0
+  },
+  { "Arilux LC11",     // Arilux AL-LC11 (ESP8266) - https://www.banggood.com/nl/ARILUX-AL-LC11-Super-Mini-LED-WIFI-APP-Controller-RF-Remote-Control-For-RGBWW-LED-Strip-DC9-28V-p-1085112.html
+                       //  (PwmFrequency 540Hz)
+     GPIO_KEY1,        // GPIO00 Optional Button
+     0,
+     GPIO_LED2_INV,    // GPIO02 RF receiver control
+     0,
+     GPIO_PWM2,        // GPIO04 RGB LED Green
+     GPIO_PWM1,        // GPIO05 RGB LED Red
+     0, 0, 0, 0, 0, 0, // Flash connection
+     GPIO_PWM5,        // GPIO12 RGBCW LED Warm
+     GPIO_PWM4,        // GPIO13 RGBW LED Cold
+     GPIO_PWM3,        // GPIO14 RGB LED Blue
+     GPIO_ARIRFRCV,    // GPIO15 RF receiver input
+     0, 0
+  },
+  { "Sonoff Dual R2",  // Sonoff Dual R2 (ESP8285)
+     GPIO_SWT1,        // GPIO00 Button 1 on header
+     GPIO_USER,        // GPIO01 Serial RXD and Optional sensor
+     0,
+     GPIO_USER,        // GPIO03 Serial TXD and Optional sensor
+     0,
+     GPIO_REL2,        // GPIO05 Relay 2 (0 = Off, 1 = On)
+     0, 0, 0,          // Flash connection
+     GPIO_SWT2,        // GPIO09 Button 2 on header
+     GPIO_KEY1,        // GPIO10 Button 3 on casing
+     0,                // Flash connection
+     GPIO_REL1,        // GPIO12 Relay 1 (0 = Off, 1 = On)
+     GPIO_LED1_INV,    // GPIO13 Blue Led (0 = On, 1 = Off)
+     0, 0, 0, 0
   }
 };
 

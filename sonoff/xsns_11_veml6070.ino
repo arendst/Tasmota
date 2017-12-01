@@ -21,6 +21,8 @@
 #ifdef USE_VEML6070
 /*********************************************************************************************\
  * VEML6070 - Ultra Violet Light Intensity
+ *
+ * I2C Address: 0x38 and 0x39
 \*********************************************************************************************/
 
 #define VEML6070_ADDR_H      0x39
@@ -88,7 +90,7 @@ void Veml6070Show(boolean json)
     uint16_t uvlevel = Veml6070ReadUv();
 
     if (json) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s, \"%s\":{\"" D_UV_LEVEL "\":%d}"), mqtt_data, veml6070_types, uvlevel);
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"%s\":{\"" D_UV_LEVEL "\":%d}"), mqtt_data, veml6070_types, uvlevel);
 #ifdef USE_DOMOTICZ
       DomoticzSensor(DZ_ILLUMINANCE, uvlevel);
 #endif  // USE_DOMOTICZ

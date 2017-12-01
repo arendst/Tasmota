@@ -1,7 +1,7 @@
 ## Sonoff-Tasmota
 Provide ESP8266 based Sonoff by [iTead Studio](https://www.itead.cc/) and ElectroDragon IoT Relay with Serial, Web and MQTT control allowing 'Over the Air' or OTA firmware updates using Arduino IDE.
 
-Current version is **5.9.1** - See [sonoff/_releasenotes.ino](https://github.com/arendst/Sonoff-Tasmota/blob/master/sonoff/_releasenotes.ino) for change information.
+Current version is **5.10.0** - See [sonoff/_releasenotes.ino](https://github.com/arendst/Sonoff-Tasmota/blob/master/sonoff/_releasenotes.ino) for change information.
 
 ### ATTENTION All versions
 
@@ -37,13 +37,13 @@ The following devices are supported:
 - [iTead Sonoff RF](https://www.itead.cc/smart-home/sonoff-rf.html)
 - [iTead Sonoff SV](https://www.itead.cc/smart-home/sonoff-sv.html)<img src="https://github.com/arendst/arendst.github.io/blob/master/media/sonoff_th.jpg" width="250" align="right" />
 - [iTead Sonoff TH10/TH16 with temperature sensor](https://www.itead.cc/smart-home/sonoff-th.html)
-- [iTead Sonoff Dual](https://www.itead.cc/smart-home/sonoff-dual.html)
+- [iTead Sonoff Dual (R2)](https://www.itead.cc/smart-home/sonoff-dual.html)
 - [iTead Sonoff Pow](https://www.itead.cc/smart-home/sonoff-pow.html)
 - [iTead Sonoff 4CH](https://www.itead.cc/smart-home/sonoff-4ch.html)
 - [iTead Sonoff 4CH Pro](https://www.itead.cc/smart-home/sonoff-4ch-pro.html)
 - [iTead S20 Smart Socket](https://www.itead.cc/smart-socket.html)
 - [iTead Slampher](https://www.itead.cc/slampher.html)
-- [iTead Sonoff Touch](https://www.itead.cc/sonoff-touch-eu-local.html)
+- [iTead Sonoff Touch](https://www.itead.cc/sonoff-touch.html)
 - [iTead Sonoff T1](https://www.itead.cc/sonoff-t1.html)
 - [iTead Sonoff SC](https://www.itead.cc/sonoff-sc.html)
 - [iTead Sonoff Led](https://www.itead.cc/sonoff-led.html)<img src="https://github.com/arendst/arendst.github.io/blob/master/media/sonoff4ch.jpg" height="250" align="right" />
