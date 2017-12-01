@@ -2,11 +2,12 @@
 I keep this version in sync with the current development of the master. Anyhow my use case is a little bit different. Even, if I have some SONOFF devices, I like to build(solder) my own based on different versions of the ESP8266, depending on my different requirements (batterie, external Antenna, add on I2C devices and others). Additionally I try to improve the overall project.
 
 Additional features:
-- DeepSleep and UltraDeepSleep support up to unlimited (deepsleep=xxx [sec]), support also 1day or more deepsleep. Just define deepsleep e.g. 1 day = 86400. (wakes up every hour for <0.3 seconds until time reached. just set deepslepp through serial or MQTT to a value in sec from 10 - 4.294.967.295 (136 Years :-))
+- DeepSleep support up to 136 Years (deepsleep=xxx [sec]). Support also 1day or more deepsleep. Just define deepsleep e.g. 1 day = 86400. (wakes up every hour for <0.3 seconds until time reached. just set deepslepp through serial or MQTT to a value in sec from 10 - 4.294.967.295 (136 Years :-))
 - Improved Startuptime incl TLS MQTT and measurement in <9 sek
 - Support for Ultrasonic distance measurement HC-SR04
 - Support for I2C 8-channel DIO extension board PCF-8574 (large extension to support 32 relays and pulsetimers on 8 relays (can be changed by changing constant MAX_PULSETIMER).
 - Report total UPTIME (seconds) between two deepsleep cycle. This allows to see uptime, even if connect was not successfull or there was a reboot. Using RTC memory to ensure correct uptime
+- Support CHIRP moisture sensor.
 
 
 ## Sonoff-Tasmota
