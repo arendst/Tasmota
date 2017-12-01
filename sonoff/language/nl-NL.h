@@ -204,6 +204,7 @@
 //STB mod
 #define D_MOISTURE "Moisture"
 #define D_DISTANCE "Distance"
+#define D_CONFIGURE_PCF8574 "Configure PCF8574"
 //end
 
 // settings.ino

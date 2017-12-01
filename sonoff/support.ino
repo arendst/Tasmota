@@ -724,8 +724,7 @@ bool I2cValidRead(uint8_t addr, uint8_t reg, uint8_t size)
       Wire.requestFrom((int)addr, (int)size);           // send data n-bytes read
       if (Wire.available() == size) {
         for (byte i = 0; i < size; i++) {
-          i2c_buffer <<=  8;
-          i2c_buffer|= Wire.read();   // receive DATA
+          i2c_buffer = i2c_buffer << 8 | Wire.read();   // receive DATA
         }
       }
     }
@@ -733,6 +732,8 @@ bool I2cValidRead(uint8_t addr, uint8_t reg, uint8_t size)
   } while (Wire.endTransmission(true) != 0 && x != 0);  // end transmission
   return (x);
 }
+
+
 
 bool I2cValidRead8(uint8_t *data, uint8_t addr, uint8_t reg)
 {
@@ -814,17 +815,16 @@ int32_t I2cRead24(uint8_t addr, uint8_t reg)
   return i2c_buffer;
 }
 
+
 bool I2cWrite(uint8_t addr, uint8_t reg, uint32_t val, uint8_t size)
 {
   byte x = I2C_RETRY_COUNTER;
-
   do {
     Wire.beginTransmission((uint8_t)addr);              // start transmission to device
     Wire.write(reg);                                    // sends register address to write to
-    uint8_t loops = size ;
-    do {
-      Wire.write((val >> (8 * (loops-1))) & 0xFF);          // write data
-    } while(--loops);
+    while (size--) {
+      Wire.write((val >> (8 * size)) & 0xFF);          // write data
+    }
     x--;
   } while (Wire.endTransmission(true) != 0 && x != 0);  // end transmission
   return (x);

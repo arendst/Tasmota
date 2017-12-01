@@ -202,8 +202,9 @@
 #define D_WRONG "Bledny"
 #define D_YESTERDAY "Wczoraj"
 //STB mod
-#define D_MOISTURE "Moisture"
-#define D_DISTANCE "Distance"
+#define D_MOISTURE "Wilgoc"
+#define D_DISTANCE "Odleglosc"
+#define D_CONFIGURE_PCF8574 "Konfiguruj PCF8574"
 //end
 
 // settings.ino

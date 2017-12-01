@@ -101,5 +101,4 @@ void WifiWpsStatusCallback(wps_cb_status status);
 #endif
 
 
-
 #endif  // _SONOFF_POST_H_

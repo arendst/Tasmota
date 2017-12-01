@@ -150,7 +150,6 @@ int16_t Ads1115GetConversion(uint8_t channel)
   delay(ADS1115_CONVERSIONDELAY);
   // Read the conversion results
   uint16_t res = I2cRead16(ads1115_address, ADS1115_REG_POINTER_CONVERT);
-
   return (int16_t)res;
 }
 
