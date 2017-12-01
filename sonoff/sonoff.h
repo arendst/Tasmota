@@ -99,7 +99,7 @@ typedef unsigned long power_t;              // Power (Relay) type
 */
 
 //STB mod
-#define MAX_DEEPSLEEP_CYCLE    3600         // Maximum time for a deepsleep
+#define MAX_DEEPSLEEP_CYCLE    10         // Maximum time for a deepsleep
 //end
 
 /*********************************************************************************************\

@@ -887,10 +887,12 @@ void MqttDataCallback(char* topic, byte* data, unsigned int data_len)
     }
     int16_t payload = -99;               // No payload
     uint16_t payload16 = 0;
+    uint32_t payload32 = 0;
     long lnum = strtol(dataBuf, &p, 10);
     if (p != dataBuf) {
       payload = (int16_t) lnum;          // -32766 - 32767
       payload16 = (uint16_t) lnum;       // 0 - 65535
+      payload32 = (uint32_t) lnum;       // 0 - 4294967296
     }
     backlog_delay = MIN_BACKLOG_DELAY;   // Reset backlog delay
 
@@ -1259,8 +1261,8 @@ void MqttDataCallback(char* topic, byte* data, unsigned int data_len)
     }
     //STB mod
     else if (!strcmp_P(type,PSTR("DEEPSLEEP"))) {
-      if ((data_len > 0) && (payload16 >= 0) ) {
-        Settings.deepsleep = payload16;
+      if ((data_len > 0) && (payload32 >= 0) ) {
+        Settings.deepsleep = payload32;
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"DeepSleep\":\"%d%s (%d%s)\"}"), Settings.deepsleep, (Settings.flag.value_units) ? " mS" : "", Settings.deepsleep, (Settings.flag.value_units) ? " mS" : "");
     }
@@ -1941,7 +1943,7 @@ void PerformEverySecond()
       XsnsCall(FUNC_XSNS_MQTT_SHOW);
 
       //STB mod
-      if (Settings.deepsleep > 10 && Settings.deepsleep < 65000) {
+      if (Settings.deepsleep > 10 && Settings.deepsleep < 4294967295) {
         //TODO STEFAN
         yield();
         if (Settings.deepsleep > MAX_DEEPSLEEP_CYCLE) {
@@ -2750,7 +2752,7 @@ void setup()
   SettingsDelta();
 
   //STB mod
-  if (RtcSettings.ultradeepsleep > 0 && RtcSettings.ultradeepsleep < 65000) {
+  if (RtcSettings.ultradeepsleep > 0 && RtcSettings.ultradeepsleep < 4294967295) {
      RtcSettings.ultradeepsleep = RtcSettings.ultradeepsleep - MAX_DEEPSLEEP_CYCLE;
      snprintf_P(log_data, sizeof(log_data), PSTR("APP: Remain DeepSleep %d"), RtcSettings.ultradeepsleep);
      AddLog(LOG_LEVEL_INFO);

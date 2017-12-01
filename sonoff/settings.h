@@ -256,7 +256,7 @@ struct SYSCFG {
   uint8_t       all_relays_inverted;
   #endif
   #endif
-  uint16_t      deepsleep;
+  uint32_t      deepsleep;
   //end
 } Settings;
 
@@ -270,7 +270,7 @@ struct RTCMEM {
   power_t       power;                     // 01C
   //STB mod
   unsigned long uptime;
-  unsigned long ultradeepsleep;
+  uint32_t      ultradeepsleep;
   //end
 } RtcSettings;
 
