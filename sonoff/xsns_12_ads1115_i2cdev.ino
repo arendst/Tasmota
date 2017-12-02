@@ -84,7 +84,7 @@ void Ads1115Detect()
     ADS1115 adc0(ads1115_address);
     if (adc0.testConnection()) {
       adc0.initialize();
-      adc0.setGain(ADS1115_PGA_2P048);        // Set the gain (PGA) +/-4.096V
+      adc0.setGain(ADS1115_PGA_4P096);        // Set the gain (PGA) +/-4.096V
       adc0.setRate(ADS1115_RATE_860);
       adc0.setMode(ADS1115_MODE_CONTINUOUS);
       ads1115_type = 1;

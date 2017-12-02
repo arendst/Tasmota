@@ -1925,7 +1925,7 @@ void ButtonHandler()
         snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION D_BUTTON " " D_CODE " %04X"), dual_button_code);
         AddLog(LOG_LEVEL_DEBUG);
         button = PRESSED;
-        if (0xF500 == dual_button_code) {                     // Button hold
+        if (0xF500 == dual_button_code) {             // Button hold
           holdbutton[i] = (Settings.param[P_HOLD_TIME] * (STATES / 10)) -1;
         }
         dual_button_code = 0;
@@ -1952,28 +1952,28 @@ void ButtonHandler()
         if ((NOT_PRESSED == button) && (PRESSED == lastbutton[i])) {
           snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION D_BUTTON " %d " D_LEVEL_01), i +1);
           AddLog(LOG_LEVEL_DEBUG);
-          if (!holdbutton[i]) {                           // Do not allow within 1 second
+          if (!holdbutton[i]) {                       // Do not allow within 1 second
             button_pressed = true;
           }
         }
         if (button_pressed) {
-          if (!send_button_power(0, i +1, 2)) {           // Execute Toggle command via MQTT if ButtonTopic is set
-            ExecuteCommandPower(i +1, 2);                       // Execute Toggle command internally
+          if (!send_button_power(0, i +1, 2)) {       // Execute Toggle command via MQTT if ButtonTopic is set
+            ExecuteCommandPower(i +1, 2);             // Execute Toggle command internally
           }
         }
       } else {
         if ((PRESSED == button) && (NOT_PRESSED == lastbutton[i])) {
-          if (Settings.flag.button_single) {                // Allow only single button press for immediate action
+          if (Settings.flag.button_single) {          // Allow only single button press for immediate action
             snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION D_BUTTON " %d " D_IMMEDIATE), i +1);
             AddLog(LOG_LEVEL_DEBUG);
-            if (!send_button_power(0, i +1, 2)) {         // Execute Toggle command via MQTT if ButtonTopic is set
-              ExecuteCommandPower(i +1, 2);                     // Execute Toggle command internally
+            if (!send_button_power(0, i +1, 2)) {     // Execute Toggle command via MQTT if ButtonTopic is set
+              ExecuteCommandPower(i +1, 2);           // Execute Toggle command internally
             }
           } else {
             multipress[i] = (multiwindow[i]) ? multipress[i] +1 : 1;
             snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION D_BUTTON " %d " D_MULTI_PRESS " %d"), i +1, multipress[i]);
             AddLog(LOG_LEVEL_DEBUG);
-            multiwindow[i] = STATES /2;                   // 0.5 second multi press window
+            multiwindow[i] = STATES /2;               // 0.5 second multi press window
           }
           blinks = 201;
         }
@@ -1982,33 +1982,33 @@ void ButtonHandler()
           holdbutton[i] = 0;
         } else {
           holdbutton[i]++;
-          if (Settings.flag.button_single) {                // Allow only single button press for immediate action
+          if (Settings.flag.button_single) {          // Allow only single button press for immediate action
             if (holdbutton[i] == Settings.param[P_HOLD_TIME] * (STATES / 10) * 4) {  // Button hold for four times longer
 //              Settings.flag.button_single = 0;
               snprintf_P(scmnd, sizeof(scmnd), PSTR(D_CMND_SETOPTION "13 0"));  // Disable single press only
               ExecuteCommand(scmnd);
             }
           } else {
-            if (holdbutton[i] == Settings.param[P_HOLD_TIME] * (STATES / 10)) {      // Button hold
+            if (holdbutton[i] == Settings.param[P_HOLD_TIME] * (STATES / 10)) {  // Button hold
               multipress[i] = 0;
-              if (!Settings.flag.button_restrict) {         // No button restriction
+              if (!Settings.flag.button_restrict) {   // No button restriction
                 snprintf_P(scmnd, sizeof(scmnd), PSTR(D_CMND_RESET " 1"));
                 ExecuteCommand(scmnd);
               } else {
-                send_button_power(0, i +1, 3);            // Execute Hold command via MQTT if ButtonTopic is set
+                send_button_power(0, i +1, 3);        // Execute Hold command via MQTT if ButtonTopic is set
               }
             }
           }
         }
 
-        if (!Settings.flag.button_single) {                 // Allow multi-press
+        if (!Settings.flag.button_single) {           // Allow multi-press
           if (multiwindow[i]) {
             multiwindow[i]--;
           } else {
             if (!restart_flag && !holdbutton[i] && (multipress[i] > 0) && (multipress[i] < MAX_BUTTON_COMMANDS +3)) {
               boolean single_press = false;
-              if (multipress[i] < 3) {                    // Single or Double press
-                if ((SONOFF_DUAL == Settings.module) || (CH4 == Settings.module)) {
+              if (multipress[i] < 3) {                // Single or Double press
+                if ((SONOFF_DUAL_R2 == Settings.module) || (SONOFF_DUAL == Settings.module) || (CH4 == Settings.module)) {
                   single_press = true;
                 } else  {
                   single_press = (Settings.flag.button_swap +1 == multipress[i]);
@@ -2018,13 +2018,13 @@ void ButtonHandler()
               if (single_press && send_button_power(0, i + multipress[i], 2)) {  // Execute Toggle command via MQTT if ButtonTopic is set
                 // Success
               } else {
-                if (multipress[i] < 3) {                  // Single or Double press
-                  if (WifiState()) {                     // WPSconfig, Smartconfig or Wifimanager active
+                if (multipress[i] < 3) {              // Single or Double press
+                  if (WifiState()) {                  // WPSconfig, Smartconfig or Wifimanager active
                     restart_flag = 1;
                   } else {
                     ExecuteCommandPower(i + multipress[i], 2);  // Execute Toggle command internally
                   }
-                } else {                                  // 3 - 7 press
+                } else {                              // 3 - 7 press
                   if (!Settings.flag.button_restrict) {
                     snprintf_P(scmnd, sizeof(scmnd), kCommands[multipress[i] -3]);
                     ExecuteCommand(scmnd);

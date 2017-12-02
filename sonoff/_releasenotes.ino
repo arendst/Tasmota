@@ -1,5 +1,7 @@
 /* 5.10.0a
  * Add (experimental) support for sensor SHT3x
+ * Change ADS1115 default voltage range from +/-2V to +/-4V (#1289)
+ * Add multipress support and more user configurable options to Sonoff Dual R2 (#1291)
  *
  * 5.10.0 20171201
  * Upgrade library ArduinoJson to 5.11.2
