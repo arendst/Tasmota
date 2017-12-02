@@ -1,7 +1,7 @@
 /*
-  xsns_14_sht3x.ino - SHT3X temperature and humidity sensor support for Sonoff-Tasmota
+  xsns_15SHT3X.ino - WeMos SHT30 Shield
 
-  Copyright (C) 2017  Theo Arends
+  Copyright (C) 2017  Palich2000
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -20,11 +20,10 @@
 #ifdef USE_I2C
 #ifdef USE_SHT3X
 /*********************************************************************************************\
- * SHT3X - Temperature and Humidy
+ * WeMos SHT30 Shield
+ * https://wiki.wemos.cc/products:d1_mini_shields:sht30_shield
  *
- * Required library: none but based on Adafruit Industries SHT31 library
- *
- * I2C Address: 0x44 or 0x45
+ * https://github.com/wemos/WEMOS_SHT3x_Arduino_Library
 \*********************************************************************************************/
 
 #define SHT3X_ADDR_GND      0x44  // address pin low (GND)

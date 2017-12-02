@@ -33,19 +33,19 @@
  *                                                                 ADS1115
  *                                                                 -------
  * ADS1115_REG_CONFIG_PGA_6_144V  // 2/3x gain +/- 6.144V  1 bit = 0.1875mV
- * ADS1115_REG_CONFIG_PGA_4_096V  // 1x gain   +/- 4.096V  1 bit = 0.125mV (default)
- * ADS1115_REG_CONFIG_PGA_2_048V  // 2x gain   +/- 2.048V  1 bit = 0.0625mV
+ * ADS1115_REG_CONFIG_PGA_4_096V  // 1x gain   +/- 4.096V  1 bit = 0.125mV
+ * ADS1115_REG_CONFIG_PGA_2_048V  // 2x gain   +/- 2.048V  1 bit = 0.0625mV (default)
  * ADS1115_REG_CONFIG_PGA_1_024V  // 4x gain   +/- 1.024V  1 bit = 0.03125mV
  * ADS1115_REG_CONFIG_PGA_0_512V  // 8x gain   +/- 0.512V  1 bit = 0.015625mV
  * ADS1115_REG_CONFIG_PGA_0_256V  // 16x gain  +/- 0.256V  1 bit = 0.0078125mV
 \*********************************************************************************************/
 
-#define ADS1115_ADDRESS_ADDR_GND        0x48      // address pin low (GND)
-#define ADS1115_ADDRESS_ADDR_VDD        0x49      // address pin high (VCC)
-#define ADS1115_ADDRESS_ADDR_SDA        0x4A      // address pin tied to SDA pin
-#define ADS1115_ADDRESS_ADDR_SCL        0x4B      // address pin tied to SCL pin
+#define ADS1115_ADDRESS_ADDR_GND        0x48 // address pin low (GND)
+#define ADS1115_ADDRESS_ADDR_VDD        0x49 // address pin high (VCC)
+#define ADS1115_ADDRESS_ADDR_SDA        0x4A // address pin tied to SDA pin
+#define ADS1115_ADDRESS_ADDR_SCL        0x4B // address pin tied to SCL pin
 
-#define ADS1115_CONVERSIONDELAY         (8)       // CONVERSION DELAY (in mS)
+#define ADS1115_CONVERSIONDELAY         (8)  // CONVERSION DELAY (in mS)
 
 /*======================================================================
 POINTER REGISTER
@@ -126,7 +126,7 @@ void Ads1115StartComparator(uint8_t channel, uint16_t mode)
   uint16_t config = mode |
                     ADS1115_REG_CONFIG_CQUE_NONE    | // Comparator enabled and asserts on 1 match
                     ADS1115_REG_CONFIG_CLAT_NONLAT  | // Non Latching mode
-                    ADS1115_REG_CONFIG_PGA_4_096V   | // ADC Input voltage range (Gain)
+                    ADS1115_REG_CONFIG_PGA_2_048V   | // ADC Input voltage range (Gain)
                     ADS1115_REG_CONFIG_CPOL_ACTVLOW | // Alert/Rdy active low   (default val)
                     ADS1115_REG_CONFIG_CMODE_TRAD   | // Traditional comparator (default val)
                     ADS1115_REG_CONFIG_DR_6000SPS;    // 6000 samples per second
