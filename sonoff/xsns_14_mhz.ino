@@ -30,7 +30,7 @@ const char HTTP_SNS_CO2[] PROGMEM = "%s{s}%s CO2 ppm {m}%s ppm {e}";            
 #define D_CO2 "CO2 ppm"
 
 // измерение СО2 черех serial
-int getCO2serial() {
+int getCO2serial(int &temp) {
   int ppm;
   uint8_t response[9];
   Serial.write(cmd_co2, 9);
@@ -38,6 +38,7 @@ int getCO2serial() {
   if (Serial.readBytes(response, 9) == 9) {
     int responseHigh = (int) response[2];
     int responseLow = (int) response[3];
+    temp = (int) response[4];
     ppm = (256 * responseHigh) + responseLow;    
   }  
   return ppm;
@@ -78,15 +79,19 @@ void CO2PWMReadPPMPrep()
 void MHZCO2Show(boolean json)
 {
   int ppm;
+  int temp;
   //ppm = getCO2pwm();
-  ppm = getCO2serial();
+  ppm = getCO2serial(temp);
   //if (ppm > 0) {  // Check if read failed
     char ppmCO[10];
+    char temperature[10];
 
-    dtostrfi(ppm, 0, ppmCO);    
+    dtostrfi(ppm, 0, ppmCO);
+    dtostrfi(temp, Settings.flag2.temperature_resolution, temperature);
 
     if(json) {
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"MHZxxCO2\":{\"" D_CO2 "\":%s}"), mqtt_data, ppmCO);
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"MHZxxTEMP\":{\"" D_TEMPERATURE "\":%s}"), mqtt_data, temperature);
 #ifdef USE_DOMOTICZ
       DomoticzSensor(DZ_CO2, ppmCO);
       //DomoticzSensor(DZ_CO2, ppm);
@@ -94,6 +99,7 @@ void MHZCO2Show(boolean json)
 #ifdef USE_WEBSERVER
     } else {
       snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_CO2, mqtt_data, "MH-Zxx", ppmCO, "ppm");
+      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TEMP, mqtt_data, "MH-Zxx", temperature, TempUnit());
 #endif  // USE_WEBSERVER
     }
   //}
