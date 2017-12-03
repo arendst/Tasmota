@@ -385,6 +385,7 @@
   #define D_DOMOTICZ_VOLTAGE "Napiecie"
   #define D_DOMOTICZ_CURRENT "Prad"
 #define D_DOMOTICZ_UPDATE_TIMER "Zaktualizuj czasomierz"
+#define D_DOMOTICZ_CO2    "CO2"  //storm_6
 
 // xdrv_irremote.ino
 #define D_INVALID_JSON "Invalid JSON"
@@ -454,6 +455,9 @@
 // xsns_07_sht1x.ino
 #define D_SENSOR_DID_NOT_ACK_COMMAND "Czujnik nie otrzymal komendy ACK"
 #define D_SHT1X_FOUND "SHT1X znaleziony"
+
+// xsns_14_mhz.ino
+#define D_SENSOR_CO2      "MHZхх" //storm_6
 
 // sonoff_template.h
 // Max string length is 8 characters including suffixes

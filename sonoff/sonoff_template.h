@@ -78,6 +78,7 @@ enum UserSelectablePins {
   GPIO_LED2_INV,
   GPIO_LED3_INV,
   GPIO_LED4_INV,
+  GPIO_CO2_MHZ,         //storm_6  CO2 sensor MH-Zxx
   GPIO_SENSOR_END };
 
 // Text in webpage Module Parameters and commands GPIOS and GPIO
@@ -137,7 +138,8 @@ const char kSensors[GPIO_SENSOR_END][9] PROGMEM = {
   D_SENSOR_LED "1i",
   D_SENSOR_LED "2i",
   D_SENSOR_LED "3i",
-  D_SENSOR_LED "4i"
+  D_SENSOR_LED "4i",
+  D_SENSOR_CO2  //storm_6  
 };
 
 // Programmer selectable GPIO functionality offset by user selectable GPIOs
