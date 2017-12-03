@@ -173,6 +173,11 @@
   #define USE_HTU                                // Add I2C code for HTU21/SI7013/SI7020/SI7021 sensor
   #define USE_BMP                                // Add I2C code for BMP/BME280 sensor
   #define USE_BH1750                             // Add I2C code for BH1750 sensor
+  #define USE_GROVE_MGS                          // Add I2C code for Grove - Mutichanel Gas Sensor
+  #define MGS_SENSOR_ADDR     0x04               // default Mutichanel Gas Sensor i2c addr 0x04
+  #define USE_SHT3X                              // Add I2C code for WeMos SHT30 Shield
+  #define SHT3X_SENSOR_ADDR   0x45               // default WeMos SHT30 Shield i2c addr 0x45
+
 //  #define USE_VEML6070                           // Add I2C code for VEML6070 sensor (+0.5k code)
 //  #define USE_ADS1115                            // Add I2C code for ADS1115 16 bit A/D converter based on Adafruit ADS1x15 library (library not needed) (+0.7k code)
 //  #define USE_ADS1115_I2CDEV                     // Add I2C code for ADS1115 16 bit A/D converter using library i2cdevlib-Core and i2cdevlib-ADS1115 (+2k code)

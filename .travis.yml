@@ -6,6 +6,7 @@ cache:
   directories:
     - "~/.platformio"
 install:
+  - pip install -U backports.functools_lru_cache
   - pip install -U platformio
 
 script:
