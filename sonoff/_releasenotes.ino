@@ -1,9 +1,10 @@
 /* 5.10.0a
  * Add (experimental) support for sensor SHT3x
  * Add (experimental) support for iTead SI7021 temperature and humidity sensor (#735)
+ * Fix BME280 calculation (#1051)
  * Change ADS1115 default voltage range from +/-2V to +/-6V (#1289)
  * Add multipress support and more user configurable options to Sonoff Dual R2 (#1291)
- * Fix missed learned key if learned data contains 0x55 (End of Transmission) flag (#1095, #1294)
+ * Fix Sonoff Bridge missed learned key if learned data contains 0x55 (End of Transmission) flag (#1095, #1294)
  *
  * 5.10.0 20171201
  * Upgrade library ArduinoJson to 5.11.2

@@ -2644,14 +2644,6 @@ void setup()
   Serial.println();
   seriallog_level = LOG_LEVEL_INFO;  // Allow specific serial messages until config loaded
 
-/*
-  snprintf_P(version, sizeof(version), PSTR("%d.%d.%d"), VERSION >> 24 & 0xff, VERSION >> 16 & 0xff, VERSION >> 8 & 0xff);
-  if (VERSION & 0x1f) {
-    idx = strlen(version);
-    version[idx] = 96 + (VERSION & 0x1f);
-    version[idx +1] = 0;
-  }
-*/
   SettingsLoad();
   SettingsDelta();
 
