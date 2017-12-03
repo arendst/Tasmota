@@ -1,6 +1,7 @@
 /* 5.10.0a
  * Add (experimental) support for sensor SHT3x
- * Change ADS1115 default voltage range from +/-2V to +/-4V (#1289)
+ * Add (experimental) support for iTead SI7021 temperature and humidity sensor (#735)
+ * Change ADS1115 default voltage range from +/-2V to +/-6V (#1289)
  * Add multipress support and more user configurable options to Sonoff Dual R2 (#1291)
  *
  * 5.10.0 20171201

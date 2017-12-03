@@ -2376,34 +2376,36 @@ void SerialInput()
     serial_in_byte = Serial.read();
 
 /*-------------------------------------------------------------------------------------------*\
- * Sonoff dual 19200 baud serial interface
+ * Sonoff dual and ch4 19200 baud serial interface
 \*-------------------------------------------------------------------------------------------*/
-
-    if (dual_hex_code) {
-      dual_hex_code--;
+    if ((SONOFF_DUAL == Settings.module) || (CH4 == Settings.module)) {
       if (dual_hex_code) {
-        dual_button_code = (dual_button_code << 8) | serial_in_byte;
-        serial_in_byte = 0;
-      } else {
-        if (serial_in_byte != 0xA1) {
-          dual_button_code = 0;                // 0xA1 - End of Sonoff dual button code
+        dual_hex_code--;
+        if (dual_hex_code) {
+          dual_button_code = (dual_button_code << 8) | serial_in_byte;
+          serial_in_byte = 0;
+        } else {
+          if (serial_in_byte != 0xA1) {
+            dual_button_code = 0;                // 0xA1 - End of Sonoff dual button code
+          }
         }
       }
-    }
-    if (0xA0 == serial_in_byte) {              // 0xA0 - Start of Sonoff dual button code
-      serial_in_byte = 0;
-      dual_button_code = 0;
-      dual_hex_code = 3;
+      if (0xA0 == serial_in_byte) {              // 0xA0 - Start of Sonoff dual button code
+        serial_in_byte = 0;
+        dual_button_code = 0;
+        dual_hex_code = 3;
+      }
     }
 
 /*-------------------------------------------------------------------------------------------*\
  * Sonoff bridge 19200 baud serial interface
 \*-------------------------------------------------------------------------------------------*/
-
-    if (SonoffBridgeSerialInput()) {
-      serial_in_byte_counter = 0;
-      Serial.flush();
-      return;
+    if (SONOFF_BRIDGE == Settings.module) {
+      if (SonoffBridgeSerialInput()) {
+        serial_in_byte_counter = 0;
+        Serial.flush();
+        return;
+      }
     }
 
 /*-------------------------------------------------------------------------------------------*/
@@ -2424,7 +2426,6 @@ void SerialInput()
 /*-------------------------------------------------------------------------------------------*\
  * Sonoff SC 19200 baud serial interface
 \*-------------------------------------------------------------------------------------------*/
-
     if (serial_in_byte == '\x1B') {            // Sonoff SC status from ATMEGA328P
       serial_in_buffer[serial_in_byte_counter] = 0;  // serial data completed
       SonoffScSerialInput(serial_in_buffer);
@@ -2494,7 +2495,7 @@ void GpioInit()
         mpin -= (GPIO_PWM1_INV - GPIO_PWM1);
       }
 #ifdef USE_DHT
-      else if ((mpin >= GPIO_DHT11) && (mpin <= GPIO_DHT22)) {
+      else if ((mpin >= GPIO_DHT11) && (mpin <= GPIO_SI7021)) {
         if (DhtSetup(i, mpin)) {
           dht_flg = 1;
           mpin = GPIO_DHT11;
