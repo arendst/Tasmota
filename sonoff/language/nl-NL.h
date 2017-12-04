@@ -66,6 +66,7 @@
 #define D_BUTTON "DrukKnop"
 #define D_BY "door"                  // Written by me
 #define D_CELSIUS "Celsius"
+#define D_CO2 "CO2"
 #define D_CODE "code"                // Button code
 #define D_COLDLIGHT "Koud"
 #define D_COMMAND "Opdracht"
@@ -472,6 +473,8 @@
 #define D_SENSOR_LED      "Led"     // Suffix "1i"
 #define D_SENSOR_PWM      "PWM"     // Suffix "1"
 #define D_SENSOR_COUNTER  "Teller"  // Suffix "1"
+#define D_SENSOR_MHZ_RX   "MHZ Rx"
+#define D_SENSOR_MHZ_TX   "MHZ Tx"
 #define D_SENSOR_IRRECV   "IRrecv"
 #define D_SENSOR_SPI_CS   "SPI CS"
 #define D_SENSOR_SPI_DC   "SPI DC"
@@ -486,6 +489,7 @@
 #define D_UNIT_MILLIAMPERE "mA"
 #define D_UNIT_MILLISECOND "ms"
 #define D_UNIT_MINUTE "Min"
+#define D_UNIT_PPM "ppm"
 #define D_UNIT_PRESSURE "hPa"
 #define D_UNIT_SECOND "sec"
 #define D_UNIT_SECTORS "sectoren"

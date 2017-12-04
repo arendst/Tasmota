@@ -1287,6 +1287,21 @@ int GetCommandCode(char* destination, size_t destination_size, const char* needl
   return result;
 }
 
+void SetSerialBaudrate(int baudrate)
+{
+  if (Serial.baudRate() != baudrate) {
+    if (seriallog_level) {
+      snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION D_SET_BAUDRATE_TO " %d"), baudrate);
+      AddLog(LOG_LEVEL_INFO);
+    }
+    delay(100);
+    Serial.flush();
+    Serial.begin(baudrate);
+    delay(10);
+    Serial.println();
+  }
+}
+
 #ifndef USE_ADC_VCC
 /*********************************************************************************************\
  * ADC support

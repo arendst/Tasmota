@@ -2665,17 +2665,7 @@ void setup()
 
   GpioInit();
 
-  if (Serial.baudRate() != baudrate) {
-    if (seriallog_level) {
-      snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION D_SET_BAUDRATE_TO " %d"), baudrate);
-      AddLog(LOG_LEVEL_INFO);
-    }
-    delay(100);
-    Serial.flush();
-    Serial.begin(baudrate);
-    delay(10);
-    Serial.println();
-  }
+  SetSerialBaudrate(baudrate);
 
   if (strstr(Settings.hostname, "%")) {
     strlcpy(Settings.hostname, WIFI_HOSTNAME, sizeof(Settings.hostname));
