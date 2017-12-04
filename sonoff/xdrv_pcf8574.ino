@@ -49,11 +49,11 @@ const char HTTP_FORM_I2C_PCF8574_2[] PROGMEM =
 void handleI2C()
 {
   if (HttpUser()) return;
-  AddLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Configure PCF8574"));
+  AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP  D_CONFIGURE_PCF8574));
 
   String page = FPSTR(HTTP_HEAD);
 
-  page.replace("{v}", "Configure I2C");
+  page.replace("{v}", D_CONFIGURE_PCF8574);
   page += FPSTR(HTTP_FORM_I2C_PCF8574_1);
   page.replace("{r1}", (Settings.all_relays_inverted) ? " checked" : "");
   for (byte idx = 0; idx < max_pcf8574_devices; idx++) {
@@ -178,8 +178,8 @@ boolean pcf8574_detect()
     if (!val) {
       pcf8574addr[max_pcf8574_devices] = PFC8574_ADDR1 + i;
       max_pcf8574_devices++;
-      snprintf_P(log_data, sizeof(log_data), PSTR("Device found at 0x%x"), PFC8574_ADDR1 + i);
-      AddLog(LOG_LEVEL_INFO);
+      snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, pcf8574stype,  PFC8574_ADDR1 + i);
+      AddLog(LOG_LEVEL_DEBUG);
     }
 
   }

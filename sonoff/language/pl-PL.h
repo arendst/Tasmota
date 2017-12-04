@@ -64,8 +64,9 @@
 #define D_BRIGHTLIGHT "Jasny"
 #define D_BUILDDATETIME "ZbudowanoDataCzas"
 #define D_BUTTON "Przycisk"
+#define D_BY "by"                    // Written by me
 #define D_CELSIUS "Celsiusza"
-#define D_CODE "kod"                // Button code
+#define D_CODE "kod"                 // Button code
 #define D_COLDLIGHT "Zimny"
 #define D_COMMAND "Komenda"
 #define D_CONNECTED "Polaczony"
@@ -464,7 +465,7 @@
 #define D_SENSOR_NONE     "Brak"
 #define D_SENSOR_DHT11    "DHT11"
 #define D_SENSOR_AM2301   "AM2301"
-#define D_SENSOR_DHT22    "DHT22"
+#define D_SENSOR_SI7021   "SI7021"
 #define D_SENSOR_DS18X20  "DS18x20"
 #define D_SENSOR_I2C_SCL  "I2C SCL"
 #define D_SENSOR_I2C_SDA  "I2C SDA"

@@ -31,6 +31,7 @@ const char kSonoffBridgeCommands[] PROGMEM =
 uint8_t sonoff_bridge_receive_flag = 0;
 uint8_t sonoff_bridge_learn_key = 1;
 uint8_t sonoff_bridge_learn_active = 0;
+uint8_t sonoff_bridge_expected_bytes = 0;
 uint32_t sonoff_bridge_last_received_id = 0;
 uint32_t sonoff_bridge_last_send_code = 0;
 unsigned long sonoff_bridge_last_time = 0;
@@ -64,7 +65,7 @@ void SonoffBridgeReceived()
   }
   else if (0xA3 == serial_in_buffer[0]) {  // Learned A3 20 F8 01 18 03 3E 2E 1A 22 55
     sonoff_bridge_learn_active = 0;
-    low_time = serial_in_buffer[3] << 8 | serial_in_buffer[4];  // Low time in uSec
+    low_time = serial_in_buffer[3] << 8 | serial_in_buffer[4];   // Low time in uSec
     high_time = serial_in_buffer[5] << 8 | serial_in_buffer[6];  // High time in uSec
     if (low_time && high_time) {
       for (byte i = 0; i < 9; i++) {
@@ -81,7 +82,7 @@ void SonoffBridgeReceived()
       SonoffBridgeLearnFailed();
     } else {
       sync_time = serial_in_buffer[1] << 8 | serial_in_buffer[2];  // Sync time in uSec
-      low_time = serial_in_buffer[3] << 8 | serial_in_buffer[4];  // Low time in uSec
+      low_time = serial_in_buffer[3] << 8 | serial_in_buffer[4];   // Low time in uSec
       high_time = serial_in_buffer[5] << 8 | serial_in_buffer[6];  // High time in uSec
       received_id = serial_in_buffer[7] << 16 | serial_in_buffer[8] << 8 | serial_in_buffer[9];
 
@@ -112,10 +113,17 @@ void SonoffBridgeReceived()
 
 boolean SonoffBridgeSerialInput()
 {
+  // iTead Rf Universal Transceiver Module Serial Protocol Version 1.0 (20170420)
   if (sonoff_bridge_receive_flag) {
     if (!((serial_in_byte_counter == 0) && (serial_in_byte == 0))) {  // Skip leading 0
+      if (!serial_in_byte_counter) {
+        sonoff_bridge_expected_bytes = 2;     // 0xA0, 0xA1, 0xA2
+        if (serial_in_byte >= 0xA3) {
+          sonoff_bridge_expected_bytes = 11;  // 0xA3, 0xA4, 0xA5
+        }
+      }
       serial_in_buffer[serial_in_byte_counter++] = serial_in_byte;
-      if (0x55 == serial_in_byte) {          // 0x55 - End of text
+      if  ((sonoff_bridge_expected_bytes == serial_in_byte_counter) && (0x55 == serial_in_byte)) {  // 0x55 - End of text
         SonoffBridgeReceived();
         sonoff_bridge_receive_flag = 0;
         return 1;
@@ -123,7 +131,7 @@ boolean SonoffBridgeSerialInput()
     }
     serial_in_byte = 0;
   }
-  if (0xAA == serial_in_byte) {              // 0xAA - Start of text
+  if (0xAA == serial_in_byte) {               // 0xAA - Start of text
     serial_in_byte_counter = 0;
     serial_in_byte = 0;
     sonoff_bridge_receive_flag = 1;

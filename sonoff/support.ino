@@ -733,8 +733,6 @@ bool I2cValidRead(uint8_t addr, uint8_t reg, uint8_t size)
   return (x);
 }
 
-
-
 bool I2cValidRead8(uint8_t *data, uint8_t addr, uint8_t reg)
 {
   bool status = I2cValidRead(addr, reg, 1);
@@ -815,15 +813,16 @@ int32_t I2cRead24(uint8_t addr, uint8_t reg)
   return i2c_buffer;
 }
 
-
 bool I2cWrite(uint8_t addr, uint8_t reg, uint32_t val, uint8_t size)
 {
   byte x = I2C_RETRY_COUNTER;
+
   do {
     Wire.beginTransmission((uint8_t)addr);              // start transmission to device
     Wire.write(reg);                                    // sends register address to write to
-    while (size--) {
-      Wire.write((val >> (8 * size)) & 0xFF);          // write data
+    uint8_t bytes = size;
+    while (bytes--) {
+      Wire.write((val >> (8 * bytes)) & 0xFF);          // write data
     }
     x--;
   } while (Wire.endTransmission(true) != 0 && x != 0);  // end transmission
@@ -1147,8 +1146,8 @@ void RtcSecond()
       AddLog(LOG_LEVEL_DEBUG);
 
 //STB mod
-      if (Settings.tele_period) {
-        tele_period = Settings.tele_period -2;
+      if (Settings.tele_period == 10) {
+        tele_period = Settings.tele_period ;
       }
 //end
     }

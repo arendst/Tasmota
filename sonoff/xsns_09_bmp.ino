@@ -172,6 +172,7 @@ double Bmp180ReadPressure()
 
 #define BME280_REGISTER_CONTROLHUMID  0xF2
 #define BME280_REGISTER_CONTROL       0xF4
+#define BME280_REGISTER_CONFIG        0xF5
 #define BME280_REGISTER_PRESSUREDATA  0xF7
 #define BME280_REGISTER_TEMPDATA      0xFA
 #define BME280_REGISTER_HUMIDDATA     0xFD
@@ -235,6 +236,7 @@ boolean Bmx280Calibrate()
   Bme280CalibrationData.dig_P7 = I2cReadS16_LE(bmp_address, BME280_REGISTER_DIG_P7);
   Bme280CalibrationData.dig_P8 = I2cReadS16_LE(bmp_address, BME280_REGISTER_DIG_P8);
   Bme280CalibrationData.dig_P9 = I2cReadS16_LE(bmp_address, BME280_REGISTER_DIG_P9);
+/*
   if (BME280_CHIPID == bmp_type) {
     Bme280CalibrationData.dig_H1 = I2cRead8(bmp_address, BME280_REGISTER_DIG_H1);
     Bme280CalibrationData.dig_H2 = I2cReadS16_LE(bmp_address, BME280_REGISTER_DIG_H2);
@@ -247,6 +249,23 @@ boolean Bmx280Calibrate()
     I2cWrite8(bmp_address, BME280_REGISTER_CONTROLHUMID, 0x05); // 16x oversampling (Adafruit)
   }
   I2cWrite8(bmp_address, BME280_REGISTER_CONTROL, 0xB7);      // 16x oversampling, normal mode (Adafruit)
+*/
+  if (BME280_CHIPID == bmp_type) {  // #1051
+    Bme280CalibrationData.dig_H1 = I2cRead8(bmp_address, BME280_REGISTER_DIG_H1);
+    Bme280CalibrationData.dig_H2 = I2cReadS16_LE(bmp_address, BME280_REGISTER_DIG_H2);
+    Bme280CalibrationData.dig_H3 = I2cRead8(bmp_address, BME280_REGISTER_DIG_H3);
+    Bme280CalibrationData.dig_H4 = (I2cRead8(bmp_address, BME280_REGISTER_DIG_H4) << 4) | (I2cRead8(bmp_address, BME280_REGISTER_DIG_H4 + 1) & 0xF);
+    Bme280CalibrationData.dig_H5 = (I2cRead8(bmp_address, BME280_REGISTER_DIG_H5 + 1) << 4) | (I2cRead8(bmp_address, BME280_REGISTER_DIG_H5) >> 4);
+    Bme280CalibrationData.dig_H6 = (int8_t)I2cRead8(bmp_address, BME280_REGISTER_DIG_H6);
+
+    I2cWrite8(bmp_address, BME280_REGISTER_CONTROL, 0x00);      // sleep mode since writes to config can be ignored in normal mode (Datasheet 5.4.5/6 page 27)
+    // Set before CONTROL_meas (DS 5.4.3)
+    I2cWrite8(bmp_address, BME280_REGISTER_CONTROLHUMID, 0x01); // 1x oversampling
+    I2cWrite8(bmp_address, BME280_REGISTER_CONFIG, 0xA0);       // 1sec standby between measurements (to limit self heating), IIR filter off
+    I2cWrite8(bmp_address, BME280_REGISTER_CONTROL, 0x27);      // 1x oversampling, normal mode
+  } else {
+    I2cWrite8(bmp_address, BME280_REGISTER_CONTROL, 0xB7);      // 16x oversampling, normal mode (Adafruit)
+  }
 
   return true;
 }
