@@ -22,6 +22,7 @@
 \*********************************************************************************************/
 
 unsigned long last_counter_timer[MAX_COUNTERS]; // Last counter time in milli seconds
+uint32_t  pulse_devider = 100;
 
 void CounterUpdate(byte index)
 {
@@ -79,6 +80,10 @@ void CounterInit()
     if (pin[GPIO_CNTR1 +i] < 99) {
       pinMode(pin[GPIO_CNTR1 +i], INPUT_PULLUP);
       attachInterrupt(pin[GPIO_CNTR1 +i], counter_callbacks[i], FALLING);
+// STB mode
+      //avoid DIV 0 on unitiialized
+      if (Settings.pulse_devider[i] == 0 || Settings.pulse_devider[i] == 65535 ) {Settings.pulse_devider[i] = 1;}
+// end
     }
   }
 }
@@ -99,14 +104,14 @@ void CounterShow(boolean json)
         dtostrfd((double)RtcSettings.pulse_counter[i] / 1000, 3, counter);
       } else {
         dsxflg++;
-        dtostrfd(RtcSettings.pulse_counter[i], 0, counter);
+        dtostrfd(RtcSettings.pulse_counter[i]/Settings.pulse_devider[i], 0, counter);
       }
 
       if (json) {
         snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"" D_COUNTER "%d\":%s"), mqtt_data, i +1, counter);
 #ifdef USE_DOMOTICZ
         if (1 == dsxflg) {
-          DomoticzSensor(DZ_COUNT, RtcSettings.pulse_counter[i]);
+          DomoticzSensor(DZ_COUNT, RtcSettings.pulse_counter[i]/Settings.pulse_devider[i]);
           dsxflg++;
         }
 #endif  // USE_DOMOTICZ

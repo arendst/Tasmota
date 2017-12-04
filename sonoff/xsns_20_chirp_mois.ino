@@ -152,9 +152,9 @@ String chirp_Show(boolean json)
  * Interface
 \*********************************************************************************************/
 
-#define XSNS_16
+#define XSNS_20
 
-boolean Xsns16(byte function)
+boolean Xsns20(byte function)
 {
   boolean result = false;
 

@@ -249,14 +249,10 @@ struct SYSCFG {
   uint8_t       rf_code[17][9];            // 5D4
   //STB mod
   unsigned long uptime;
-
-  #ifdef USE_I2C
-  #ifdef USE_PCF8574
   uint8_t       pcf8574_config[8];
   uint8_t       all_relays_inverted;
-  #endif
-  #endif
   uint32_t      deepsleep;
+  uint16_t      pulse_devider[MAX_COUNTERS];        
   //end
 } Settings;
 

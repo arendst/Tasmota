@@ -8,8 +8,7 @@ Additional features:
 - Support for I2C 8-channel DIO extension board PCF-8574 (large extension to support 32 relays and pulsetimers on 8 relays (can be changed by changing constant MAX_PULSETIMER).
 - Support CHIRP moisture sensor.
 - Report total UPTIME (seconds) between two deepsleep cycle. This allows to see uptime, even if connect was not successfull or there was a reboot. Using RTC memory to ensure correct uptime
-
-
+- Added support of "counterdevider[1..MAX_COUNTERS]" (serial and MQTT command), to count only the 1 count every counterdeviderX impulses (max 65.000 impulses = 1 count, default 1s). 
 
 ## Sonoff-Tasmota
 Provide ESP8266 based Sonoff by [iTead Studio](https://www.itead.cc/) and ElectroDragon IoT Relay with Serial, Web and MQTT control allowing 'Over the Air' or OTA firmware updates using Arduino IDE.

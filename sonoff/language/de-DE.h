@@ -206,7 +206,7 @@
 #define D_MOISTURE "Feuchtigkeit"
 #define D_DISTANCE "Distanz"
 #define D_CONFIGURE_PCF8574 "Konfiguriere PCF8574"
-
+#define D_CMND_COUNTERDEVIDER "CounterDevider"
 //end
 
 // settings.ino

@@ -206,6 +206,7 @@
 #define D_MOISTURE "Wilgoc"
 #define D_DISTANCE "Odleglosc"
 #define D_CONFIGURE_PCF8574 "Konfiguruj PCF8574"
+#define D_CMND_COUNTERDEVIDER "CounterDevider"
 //end
 
 // settings.ino

@@ -107,9 +107,9 @@ void sr04_Show(boolean json)
  * Interface
 \*********************************************************************************************/
 
-#define XSNS_15
+#define XSNS_19
 
-boolean Xsns15(byte function)
+boolean Xsns19(byte function)
 {
   boolean result = false;
 
