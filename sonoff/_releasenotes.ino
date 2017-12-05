@@ -1,6 +1,7 @@
 /* 5.10.0a
  * Add (experimental) support for sensor SHT3x
  * Add (experimental) support for sensor MH-Z19(B) to be enabled with define USE_MHZ19 in user_config.h (#561, #1248)
+ * Add (experimental) support for sensor MH-Z19(B) using SoftwareSerial to be enabled with define USE_MHZ19 in user_config.h (#561, #1248)
  * Add support for iTead SI7021 temperature and humidity sensor by consolidating DHT22 into AM2301 and using former DHT22 as SI7021 (#735)
  * Fix BME280 calculation (#1051)
  * Change ADS1115 default voltage range from +/-2V to +/-6V (#1289)
