@@ -1,0 +1,15 @@
+{
+    "name": "EspSoftwareSerialNoIram",
+    "version": "3.3.1",
+    "keywords": [
+      "serial", "io", "softwareserialnoiram"
+    ],
+    "description": "Implementation of the Arduino software serial for ESP8266 without iram usage.",
+    "repository":
+    {
+        "type": "git",
+        "url": "https://github.com/plerup/espsoftwareserial"
+    },
+    "frameworks": "arduino",
+    "platforms": "espressif8266"
+}
