@@ -248,11 +248,11 @@ struct SYSCFG {
   uint16_t      pulse_counter_debounce;    // 5D2
   uint8_t       rf_code[17][9];            // 5D4
   //STB mod
-  unsigned long uptime;
-  uint8_t       pcf8574_config[8];
-  uint8_t       all_relays_inverted;
-  uint32_t      deepsleep;
-  uint16_t      pulse_devider[MAX_COUNTERS];        
+  unsigned long uptime;                    // 66D
+  uint8_t       pcf8574_config[8];         // 671
+  uint8_t       all_relays_inverted;       // 672
+  uint32_t      deepsleep;                 // 673
+  uint16_t      pulse_devider[MAX_COUNTERS];     //677
   //end
 } Settings;
 
