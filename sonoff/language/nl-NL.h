@@ -102,6 +102,7 @@
 #define D_FREE_MEMORY "Vrij geheugen"
 #define D_FREEMEMORY "Vrij"
 #define D_FROM "van"
+#define D_GAS "Gas"
 #define D_GATEWAY "Gateway"
 #define D_GROUP "Groep"
 #define D_HEAPSIZE "Heap"
@@ -483,6 +484,7 @@
 // Units
 #define D_UNIT_AMPERE "A"
 #define D_UNIT_HOUR "h"
+#define D_UNIT_KILOOHM "kOhm"
 #define D_UNIT_KILOWATTHOUR "kWh"
 #define D_UNIT_LUX "lx"
 #define D_UNIT_MICROSECOND "us"

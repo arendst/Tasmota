@@ -102,6 +102,7 @@
 #define D_FREE_MEMORY "Wolna pamiec"
 #define D_FREEMEMORY "Wolne"
 #define D_FROM "z"
+#define D_GAS "Gas"
 #define D_GATEWAY "Brama"
 #define D_GROUP "Grupa"
 #define D_HEAPSIZE "Stos"
@@ -483,6 +484,7 @@
 // Units
 #define D_UNIT_AMPERE "A"
 #define D_UNIT_HOUR "Godz"
+#define D_UNIT_KILOOHM "kOhm"
 #define D_UNIT_KILOWATTHOUR "kWh"
 #define D_UNIT_LUX "lx"
 #define D_UNIT_MICROSECOND "us"
