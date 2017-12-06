@@ -22,7 +22,6 @@
 \*********************************************************************************************/
 
 unsigned long last_counter_timer[MAX_COUNTERS]; // Last counter time in milli seconds
-uint32_t  pulse_devider = 100;
 
 void CounterUpdate(byte index)
 {

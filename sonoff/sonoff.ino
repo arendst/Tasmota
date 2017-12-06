@@ -2027,7 +2027,7 @@ void ButtonHandler()
         snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION D_BUTTON " " D_CODE " %04X"), dual_button_code);
         AddLog(LOG_LEVEL_DEBUG);
         button = PRESSED;
-        if (0xF500 == dual_button_code) {                     // Button hold
+        if (0xF500 == dual_button_code) {             // Button hold
           holdbutton[i] = (Settings.param[P_HOLD_TIME] * (STATES / 10)) -1;
         }
         dual_button_code = 0;
@@ -2803,17 +2803,7 @@ void setup()
 
   GpioInit();
 
-  if (Serial.baudRate() != baudrate) {
-    if (seriallog_level) {
-      snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION D_SET_BAUDRATE_TO " %d"), baudrate);
-      AddLog(LOG_LEVEL_INFO);
-    }
-    delay(100);
-    Serial.flush();
-    Serial.begin(baudrate);
-    delay(10);
-    Serial.println();
-  }
+  SetSerialBaudrate(baudrate);
 
   if (strstr(Settings.hostname, "%")) {
     strlcpy(Settings.hostname, WIFI_HOSTNAME, sizeof(Settings.hostname));

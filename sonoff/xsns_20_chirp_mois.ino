@@ -45,40 +45,14 @@ char chirpstype[7];
 
 uint16_t chirp_readLux(void)
 {
-  Wire.beginTransmission(chirpaddr);
-  Wire.write(TWI_MEASURE_LIGHT);
-  Wire.write(TWI_GET_LIGHT);
-  Wire.endTransmission();
-  delay(20);
-  Wire.requestFrom(chirpaddr, (uint8_t)TWI_GET_ADDRESS);
-  unsigned int t = Wire.read() << 8;
-  t = t | Wire.read();
-  return t;
-}
-
-
-uint16_t chirp_readMoist(void)
-{
-  Wire.beginTransmission(chirpaddr);
-  Wire.write(TWI_GET_CAPACITANCE);
-  Wire.endTransmission();
-  delay(20);
-  Wire.requestFrom(chirpaddr, (uint8_t)TWI_GET_ADDRESS);
-  unsigned int t = Wire.read() << 8;
-  t = t | Wire.read();
-  return t;
-}
-
-float chirp_readTemp(void)
-{
-  Wire.beginTransmission(chirpaddr);
-  Wire.write(TWI_GET_TEMPERATURE);
-  Wire.endTransmission();
-  delay(20);
-  Wire.requestFrom(chirpaddr, (uint8_t)TWI_GET_ADDRESS);
-  unsigned int t = Wire.read() << 8;
-  t = t | Wire.read();
-  return t/10.0;
+  uint8_t counter = 0;
+  I2cWrite(chirpaddr, TWI_MEASURE_LIGHT, 1, 0);
+  while (I2cRead8(chirpaddr, TWI_GET_BUSY) && counter < 50) {
+    yield();
+    delay(100);
+    counter++;
+  }
+  return I2cRead16(chirpaddr, TWI_GET_LIGHT);
 }
 
 boolean chirp_detect()
@@ -88,11 +62,17 @@ boolean chirp_detect()
   }
   uint8_t status;
   boolean success = false;
-
   chirpaddr = CHIRP_ADDR1;
   Wire.beginTransmission(chirpaddr);
-  Wire.write(CHIRP_CONTINUOUS_HIGH_RES_MODE);
+
+  Wire.write(TWI_MEASURE_LIGHT);
   status = Wire.endTransmission();
+  if (chirpaddr == 4) {
+      I2cWrite(chirpaddr, TWI_SET_ADDRESS, 0x20, 1);
+      I2cWrite(chirpaddr, TWI_RESET, 0, 0);
+      snprintf_P(log_data, sizeof(log_data), PSTR("chirp_detect: reset address"));
+      AddLog(LOG_LEVEL_DEBUG);
+  }
   if (!status) {
     success = true;
     chirptype = 1;
@@ -112,37 +92,40 @@ boolean chirp_detect()
 \*********************************************************************************************/
 #ifdef USE_WEBSERVER
  #ifndef USE_BH1750  // avoid duplicate definition
-  const char HTTP_SNS_ILLUMINANCE[] PROGMEM =  "%s{s}%s " D_ILLUMINANCE "{m}%s%{e}";
-  #endif
+  const char HTTP_SNS_ILLUMINANCE[] PROGMEM =  "%s{s}%s " D_ILLUMINANCE "{m}%d%{e}";
+ #endif //USE_BH1750
   const char HTTP_SNS_MOISTURE[] PROGMEM = "%s{s}%s " D_MOISTURE "{m}%s%{e}";
-#endif  // USE_WEBSERVER
+#endif // USE_WEBSERVER
 
 const char JSON_SNS_LIGHTMOISTTEMP[] PROGMEM = "%s,\"%s\":{\"" D_LIGHT "\":%d,\"" D_MOISTURE "\":%s,\"" D_TEMPERATURE "\":%s}";
 
-String chirp_Show(boolean json)
+void chirp_Show(boolean json)
 {
   if (chirptype) {
-    char temperature[10];
-    char moisture[10];
-    uint16_t l = chirp_readLux();
+    char temperature[Settings.flag2.temperature_resolution+3];
+    char moisture[Settings.flag2.humidity_resolution+4];
+    uint16_t light;
+    if (!I2cRead8(chirpaddr, TWI_GET_BUSY)) {
+      light = chirp_readLux();
+    } else {
+      // Report old value. Do not wait for new value.
+      light = I2cRead16(chirpaddr, TWI_GET_LIGHT);
+    }
 
-    dtostrfd(chirp_readMoist(), Settings.flag2.humidity_resolution, moisture);
-    dtostrfd(chirp_readTemp() , Settings.flag2.temperature_resolution, temperature);
-
+    dtostrfd(I2cRead16(chirpaddr, TWI_GET_CAPACITANCE), Settings.flag2.humidity_resolution, moisture);
+    dtostrfd(I2cRead16(chirpaddr, TWI_GET_TEMPERATURE)/10.0 , Settings.flag2.temperature_resolution, temperature);
      if (json) {
-       snprintf_P(mqtt_data, sizeof(mqtt_data), JSON_SNS_LIGHTMOISTTEMP, mqtt_data, "CHIRP", l, moisture,temperature);
-
+       snprintf_P(mqtt_data, sizeof(mqtt_data), JSON_SNS_LIGHTMOISTTEMP, mqtt_data, chirpstype, light, moisture,temperature);
        #ifdef USE_DOMOTICZ
          DomoticzTempHumSensor(temperature, moisture);
-         DomoticzSensor(DZ_ILLUMINANCE, l);
+         DomoticzSensor(DZ_ILLUMINANCE,light);
        #endif  // USE_DOMOTICZ
 
   #ifdef USE_WEBSERVER
      } else {
-       snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_ILLUMINANCE, mqtt_data, "CHIRP", l);
-       snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_MOISTURE, mqtt_data, "CHIRP", moisture);
-       snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TEMP, mqtt_data, "CHIRP", temperature, TempUnit());
-
+       snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_ILLUMINANCE, mqtt_data, chirpstype, light);
+       snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_MOISTURE, mqtt_data, chirpstype, moisture);
+       snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TEMP, mqtt_data, chirpstype, temperature, TempUnit());
   #endif // USE_WEBSERVER
      }
   }
@@ -158,10 +141,11 @@ boolean Xsns20(byte function)
 {
   boolean result = false;
 
-  if (chirptype) {
+  if (i2c_flg) {
     switch (function) {
-//      case FUNC_XSNS_INIT:
-//        break;
+      case FUNC_XSNS_INIT:
+        chirp_detect();
+        break;
       case FUNC_XSNS_PREP:
         chirp_detect();
         break;
@@ -178,5 +162,5 @@ boolean Xsns20(byte function)
   return result;
 }
 
-#endif // USE_BMP
+#endif // USE_CHIRP
 #endif // USE_I2C

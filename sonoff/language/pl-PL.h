@@ -66,6 +66,7 @@
 #define D_BUTTON "Przycisk"
 #define D_BY "by"                    // Written by me
 #define D_CELSIUS "Celsiusza"
+#define D_CO2 "CO2"
 #define D_CODE "kod"                 // Button code
 #define D_COLDLIGHT "Zimny"
 #define D_COMMAND "Komenda"
@@ -206,7 +207,7 @@
 #define D_MOISTURE "Wilgoc"
 #define D_DISTANCE "Odleglosc"
 #define D_CONFIGURE_PCF8574 "Konfiguruj PCF8574"
-#define D_CMND_COUNTERDEVIDER "CounterDevider"
+#define D_CMND_COUNTERDEVIDER "Dzielnik licznika"
 //end
 
 // settings.ino
@@ -479,6 +480,8 @@
 #define D_SENSOR_PWM      "PWM"      // Suffix "1"
 #define D_SENSOR_COUNTER  "Liczni"  // Suffix "1"
 #define D_SENSOR_IRRECV   "IRrecv"
+#define D_SENSOR_MHZ_RX   "MHZ Rx"
+#define D_SENSOR_MHZ_TX   "MHZ Tx"
 #define D_SENSOR_SPI_CS   "SPI CS"
 #define D_SENSOR_SPI_DC   "SPI DC"
 #define D_SENSOR_BACKLIGHT "BLight"
@@ -492,6 +495,7 @@
 #define D_UNIT_MILLIAMPERE "mA"
 #define D_UNIT_MILLISECOND "ms"
 #define D_UNIT_MINUTE "Min"
+#define D_UNIT_PPM "ppm"
 #define D_UNIT_PRESSURE "hPa"
 #define D_UNIT_SECOND "sec"
 #define D_UNIT_SECTORS "sektory"

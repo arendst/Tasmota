@@ -78,6 +78,8 @@ enum UserSelectablePins {
   GPIO_LED2_INV,
   GPIO_LED3_INV,
   GPIO_LED4_INV,
+  GPIO_MHZ_TXD,
+  GPIO_MHZ_RXD,
   //STB mod
   GPIO_SEN_TRIG,
   GPIO_SEN_ECHO,
@@ -146,6 +148,8 @@ const char kSensors[GPIO_SENSOR_END][9] PROGMEM = {
   D_SENSOR_LED "2i",
   D_SENSOR_LED "3i",
   D_SENSOR_LED "4i",
+  D_SENSOR_MHZ_TX,
+  D_SENSOR_MHZ_RX,
   //STB mod
   "SNS_TRIG",
   "SNS_ECHO",
@@ -781,15 +785,15 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      0, 0
   },
   { "Sonoff Dual R2",  // Sonoff Dual R2 (ESP8285)
-     GPIO_SWT1,        // GPIO00 Button 1 on header
+     GPIO_USER,        // GPIO00 Button 0 on header (0 = On, 1 = Off)
      GPIO_USER,        // GPIO01 Serial RXD and Optional sensor
      0,
      GPIO_USER,        // GPIO03 Serial TXD and Optional sensor
      0,
      GPIO_REL2,        // GPIO05 Relay 2 (0 = Off, 1 = On)
      0, 0, 0,          // Flash connection
-     GPIO_SWT2,        // GPIO09 Button 2 on header
-     GPIO_KEY1,        // GPIO10 Button 3 on casing
+     GPIO_USER,        // GPIO09 Button 1 on header (0 = On, 1 = Off)
+     GPIO_KEY1,        // GPIO10 Button on casing
      0,                // Flash connection
      GPIO_REL1,        // GPIO12 Relay 1 (0 = Off, 1 = On)
      GPIO_LED1_INV,    // GPIO13 Blue Led (0 = On, 1 = Off)

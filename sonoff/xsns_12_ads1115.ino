@@ -158,7 +158,6 @@ int16_t Ads1115GetConversion(uint8_t channel)
 void Ads1115Detect()
 {
   uint16_t buffer;
-
   if (ads1115_type) {
     return;
   }
