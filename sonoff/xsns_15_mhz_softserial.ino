@@ -28,8 +28,13 @@
  * Select filter usage on low stability readings
 \*********************************************************************************************/
 
-#include <SoftwareSerialNoIram.h>
-SoftwareSerialNoIram *SoftSerial;
+#ifdef USE_SERIAL_NO_ICACHE
+  #include <SoftwareSerialNoIram.h>
+  SoftwareSerialNoIram *SoftSerial;
+#else
+  #include <SoftwareSerial.h>
+  SoftwareSerial *SoftSerial;
+#endif  // USE_SERIAL_NO_ICACHE
 
 enum Mhz19FilterOptions {MHZ19_FILTER_OFF, MHZ19_FILTER_OFF_ALLSAMPLES, MHZ19_FILTER_FAST, MHZ19_FILTER_MEDIUM, MHZ19_FILTER_SLOW};
 
@@ -206,9 +211,13 @@ bool Mhz19Read(uint16_t &p, float &t)
 
 void Mhz19Init()
 {
+#ifdef USE_SERIAL_NO_ICACHE
   SoftSerial = new SoftwareSerialNoIram(pin[GPIO_MHZ_RXD], pin[GPIO_MHZ_TXD]);
-  SoftSerial->begin(9600);
+#else
+  SoftSerial = new SoftwareSerial(pin[GPIO_MHZ_RXD], pin[GPIO_MHZ_TXD]);
+#endif  // USE_SERIAL_NO_ICACHE
 
+  SoftSerial->begin(9600);
   mhz19_type = 1;
 }
 

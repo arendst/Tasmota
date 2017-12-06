@@ -191,6 +191,7 @@
 
 //#define USE_MHZ19                                // Add support for MH-Z19 CO2 sensor using hardware serial interface at 9600 bps (+1k1 code)
 //#define USE_MHZ19_SOFT_SERIAL                    // Add support for MH-Z19 CO2 sensor using iram free software serial interface at 9600 bps (+2k3 code)
+//  #define USE_SERIAL_NO_ICACHE                   // Use no iram with SoftwareSerial (may loose characters)
 
 #define USE_ARILUX_RF                            // Add support for Arilux RF remote controller (+0k8 code)
 
