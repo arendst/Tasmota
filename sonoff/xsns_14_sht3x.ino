@@ -64,7 +64,7 @@ bool Sht3xRead(float &t, float &h)
 //  }
   t = ConvertTemp((float)((((data[0] << 8) | data[1]) * 175) / 65535.0) - 45);
   h = (float)((((data[3] << 8) | data[4]) * 100) / 65535.0);
-  return (!isnan(t) && !isnan(h));
+  return true;
 }
 
 /********************************************************************************************/

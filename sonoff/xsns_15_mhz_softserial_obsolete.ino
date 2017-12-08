@@ -17,19 +17,19 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifdef USE_MHZ19
+#ifdef USE_MHZ19_SOFT_SERIAL_OBSOLETE
 /*********************************************************************************************\
  * MH-Z19 - CO2 sensor
  *
- * Supported on hardware serial interface only due to lack of iram needed by SoftwareSerial
- *
  * Based on EspEasy plugin P049 by Dmitry (rel22 ___ inbox.ru)
- *
  **********************************************************************************************
  * Filter usage
  *
  * Select filter usage on low stability readings
 \*********************************************************************************************/
+
+#include <SoftwareSerial.h>
+SoftwareSerial *SoftSerial;
 
 enum Mhz19FilterOptions {MHZ19_FILTER_OFF, MHZ19_FILTER_OFF_ALLSAMPLES, MHZ19_FILTER_FAST, MHZ19_FILTER_MEDIUM, MHZ19_FILTER_SLOW};
 
@@ -129,16 +129,16 @@ bool Mhz19Read(uint16_t &p, float &t)
 
   if (mhz19_type)
   {
-    Serial.flush();
-    if (Serial.write(mhz19_cmnd_read_ppm, 9) != 9) {
+    SoftSerial->flush();
+    if (SoftSerial->write(mhz19_cmnd_read_ppm, 9) != 9) {
       return false;          // Unable to send 9 bytes
     }
     memset(mhz19_response, 0, sizeof(mhz19_response));
     uint32_t start = millis();
     uint8_t counter = 0;
     while (((millis() - start) < MHZ19_READ_TIMEOUT) && (counter < 9)) {
-      if (Serial.available() > 0) {
-        mhz19_response[counter++] = Serial.read();
+      if (SoftSerial->available() > 0) {
+        mhz19_response[counter++] = SoftSerial->read();
       } else {
         delay(10);
       }
@@ -189,9 +189,9 @@ bool Mhz19Read(uint16_t &p, float &t)
             if (mhz19_abc_must_apply) {
               mhz19_abc_must_apply = false;
               if (mhz19_abc_enable) {
-                Serial.write(mhz19_cmnd_abc_enable, 9);   // Sent sensor ABC Enable
+                SoftSerial->write(mhz19_cmnd_abc_enable, 9);   // Sent sensor ABC Enable
               } else {
-                Serial.write(mhz19_cmnd_abc_disable, 9);  // Sent sensor ABC Disable
+                SoftSerial->write(mhz19_cmnd_abc_disable, 9);  // Sent sensor ABC Disable
               }
             }
           }
@@ -206,10 +206,10 @@ bool Mhz19Read(uint16_t &p, float &t)
 
 void Mhz19Init()
 {
-  SetSerialBaudrate(MHZ19_BAUDRATE);
-  Serial.flush();
+  SoftSerial = new SoftwareSerial(pin[GPIO_MHZ_RXD], pin[GPIO_MHZ_TXD]);
+  SoftSerial->begin(9600);
 
-  seriallog_level = 0;
+
   mhz19_type = 1;
 }
 
@@ -274,4 +274,4 @@ boolean Xsns15(byte function)
   return result;
 }
 
-#endif  // USE_MHZ19
+#endif  // USE_MHZ19_SOFT_SERIAL_OBSOLETE

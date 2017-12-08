@@ -102,6 +102,7 @@
 #define D_FREE_MEMORY "Free Memory"
 #define D_FREEMEMORY "Free"
 #define D_FROM "from"
+#define D_GAS "Gas"
 #define D_GATEWAY "Gateway"
 #define D_GROUP "Group"
 #define D_HEAPSIZE "Heap"
@@ -483,6 +484,7 @@
 // Units
 #define D_UNIT_AMPERE "A"
 #define D_UNIT_HOUR "Hr"
+#define D_UNIT_KILOOHM "kOhm"
 #define D_UNIT_KILOWATTHOUR "kWh"
 #define D_UNIT_LUX "lx"
 #define D_UNIT_MICROSECOND "us"
