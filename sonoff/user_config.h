@@ -167,7 +167,7 @@
 //#define USE_DS18x20                              // Optional for more than one DS18x20 sensors with id sort, single scan and read retry (+1k3 code)
 //#define USE_DS18x20_LEGACY                       // Optional for more than one DS18x20 sensors with dynamic scan using library OneWire (+1k5 code)
 
-#define USE_I2C                                  // I2C using library wire (+10k code, 0k2 mem) - Disable by //
+#define USE_I2C                                  // I2C using library wire (+10k code, 0k2 mem, 124 iram)
   #define USE_SHT                                // Add I2C emulating code for SHT1X sensor (+1k4 code)
 //  #define USE_SHT3X                              // Add I2C code for SHT3x sensor based on Adafruit (+0k7 code)
 //  #define USE_SHT3X_V2                           // Add I2C code for SHT3x sensor based on EspEasy (+0k7 code)
@@ -181,17 +181,17 @@
 //  #define USE_ADS1115_I2CDEV                     // Add I2C code for ADS1115 16 bit A/D converter using library i2cdevlib-Core and i2cdevlib-ADS1115 (+2k code)
 //  #define USE_INA219                             // Add I2C code for INA219 Low voltage and current sensor (+1k code)
 
-#define USE_IR_REMOTE                            // Send IR remote commands using library IRremoteESP8266 and ArduinoJson (+4k code, 0k3 mem)
+#define USE_IR_REMOTE                            // Send IR remote commands using library IRremoteESP8266 and ArduinoJson (+4k code, 0k3 mem, 48 iram)
 //  #define USE_IR_HVAC                            // Support for HVAC system using IR (+2k code)
-  #define USE_IR_RECEIVE                         // Support for IR receiver (+5k5 code)
+  #define USE_IR_RECEIVE                         // Support for IR receiver (+5k5 code, 264 iram)
 
-#define USE_WS2812                               // WS2812 Led string using library NeoPixelBus (+5k code, +1k mem) - Disable by //
+#define USE_WS2812                               // WS2812 Led string using library NeoPixelBus (+5k code, +1k mem, 232 iram) - Disable by //
   #define USE_WS2812_CTYPE     1                 // WS2812 Color type (0 - RGB, 1 - GRB, 2 - RGBW, 3 - GRBW)
 //  #define USE_WS2812_DMA                         // DMA supports only GPIO03 (= Serial RXD) (+1k mem). When USE_WS2812_DMA is enabled expect Exceptions on Pow
 
-//#define USE_MHZ19                                // Add support for MH-Z19 CO2 sensor using hardware serial interface at 9600 bps (+1k1 code)
-//#define USE_MHZ19_SOFT_SERIAL                    // Add support for MH-Z19 CO2 sensor using iram free software serial interface at 9600 bps (+2k3 code)
-//  #define USE_SERIAL_NO_ICACHE                   // Use no iram with SoftwareSerial (may loose characters)
+//#define USE_MHZ19_HARD_SERIAL                    // Add support for MH-Z19 CO2 sensor using hardware serial interface at 9600 bps on GPIO1/3 only (+1k1 code)
+//#define USE_MHZ19_SOFT_SERIAL                    // Add support for MH-Z19 CO2 sensor using software serial interface at 9600 bps (+2k3 code, 215 iram)
+//#define USE_MHZ19_SOFT_SERIAL_OBSOLETE           // Add support for MH-Z19 CO2 sensor using software serial interface at 9600 bps (+2k3 code, 420 iram)
 
 #define USE_ARILUX_RF                            // Add support for Arilux RF remote controller (+0k8 code)
 

@@ -17,7 +17,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifdef USE_MHZ19_SOFT_SERIAL
+#ifdef USE_MHZ19_SOFT_SERIAL_OBSOLETE
 /*********************************************************************************************\
  * MH-Z19 - CO2 sensor
  *
@@ -27,6 +27,9 @@
  *
  * Select filter usage on low stability readings
 \*********************************************************************************************/
+
+#include <SoftwareSerial.h>
+SoftwareSerial *SoftSerial;
 
 enum Mhz19FilterOptions {MHZ19_FILTER_OFF, MHZ19_FILTER_OFF_ALLSAMPLES, MHZ19_FILTER_FAST, MHZ19_FILTER_MEDIUM, MHZ19_FILTER_SLOW};
 
@@ -57,135 +60,17 @@ enum Mhz19FilterOptions {MHZ19_FILTER_OFF, MHZ19_FILTER_OFF_ALLSAMPLES, MHZ19_FI
 
 const char kMhz19Types[] PROGMEM = "MHZ19|MHZ19B";
 
-const uint8_t mhz19_cmnd_read_ppm[9] =    {0xFF, 0x01, 0x86, 0x00, 0x00, 0x00, 0x00, 0x00, 0x79};
-const uint8_t mhz19_cmnd_abc_enable[9] =  {0xFF, 0x01, 0x79, 0xA0, 0x00, 0x00, 0x00, 0x00, 0xE6};
-const uint8_t mhz19_cmnd_abc_disable[9] = {0xFF, 0x01, 0x79, 0x00, 0x00, 0x00, 0x00, 0x00, 0x86};
+const byte mhz19_cmnd_read_ppm[9] =    {0xFF, 0x01, 0x86, 0x00, 0x00, 0x00, 0x00, 0x00, 0x79};
+const byte mhz19_cmnd_abc_enable[9] =  {0xFF, 0x01, 0x79, 0xA0, 0x00, 0x00, 0x00, 0x00, 0xE6};
+const byte mhz19_cmnd_abc_disable[9] = {0xFF, 0x01, 0x79, 0x00, 0x00, 0x00, 0x00, 0x00, 0x86};
 
 uint8_t mhz19_type = 0;
 uint16_t mhz19_last_ppm = 0;
 uint8_t mhz19_filter = MHZ19_FILTER_OPTION;
-uint8_t mhz19_response[9];
+byte mhz19_response[9];
 bool mhz19_abc_enable = MHZ19_ABC_ENABLE;
 bool mhz19_abc_must_apply = false;
 char mhz19_types[7];
-
-/*********************************************************************************************\
- * Subset SoftwareSerial
-\*********************************************************************************************/
-
-#define MHZ19_SERIAL_BUFFER_SIZE     20
-#define MHZ19_SERIAL_WAIT { while (ESP.getCycleCount() -start < wait) optimistic_yield(1); wait += mhz19_serial_bit_time; }
-
-uint8_t mhz19_serial_rx_pin;
-uint8_t mhz19_serial_tx_pin;
-uint8_t mhz19_serial_in_pos = 0;
-uint8_t mhz19_serial_out_pos = 0;
-uint8_t mhz19_serial_buffer[MHZ19_SERIAL_BUFFER_SIZE];
-unsigned long mhz19_serial_bit_time;
-unsigned long mhz19_serial_bit_time_start;
-
-bool Mhz19SerialValidGpioPin(uint8_t pin) {
-  return (pin >= 0 && pin <= 5) || (pin >= 12 && pin <= 15);
-}
-
-bool Mhz19Serial(uint8_t receive_pin, uint8_t transmit_pin)
-{
-  if (!((Mhz19SerialValidGpioPin(receive_pin)) && (Mhz19SerialValidGpioPin(transmit_pin) || transmit_pin == 16))) {
-    return false;
-  }
-  mhz19_serial_rx_pin = receive_pin;
-  pinMode(mhz19_serial_rx_pin, INPUT);
-  attachInterrupt(mhz19_serial_rx_pin, Mhz19SerialRxRead, FALLING);
-
-  mhz19_serial_tx_pin = transmit_pin;
-  pinMode(mhz19_serial_tx_pin, OUTPUT);
-  digitalWrite(mhz19_serial_tx_pin, 1);
-
-  mhz19_serial_bit_time = ESP.getCpuFreqMHz() *1000000 /MHZ19_BAUDRATE;   // 8333
-  mhz19_serial_bit_time_start = mhz19_serial_bit_time + mhz19_serial_bit_time /3 -500;  // 10610 ICACHE_RAM_ATTR start delay
-//  mhz19_serial_bit_time_start = mhz19_serial_bit_time;                           // Non ICACHE_RAM_ATTR start delay (experimental)
-
-  return true;
-}
-
-int Mhz19SerialRead() {
-  if (mhz19_serial_in_pos == mhz19_serial_out_pos) {
-    return -1;
-  }
-  int ch = mhz19_serial_buffer[mhz19_serial_out_pos];
-  mhz19_serial_out_pos = (mhz19_serial_out_pos +1) % MHZ19_SERIAL_BUFFER_SIZE;
-  return ch;
-}
-
-int Mhz19SerialAvailable() {
-  int avail = mhz19_serial_in_pos - mhz19_serial_out_pos;
-  if (avail < 0) {
-    avail += MHZ19_SERIAL_BUFFER_SIZE;
-  }
-  return avail;
-}
-
-void Mhz19SerialFlush()
-{
-  mhz19_serial_in_pos = 0;
-  mhz19_serial_out_pos = 0;
-}
-
-size_t Mhz19SerialTxWrite(uint8_t b)
-{
-  unsigned long wait = mhz19_serial_bit_time;
-  digitalWrite(mhz19_serial_tx_pin, HIGH);
-  unsigned long start = ESP.getCycleCount();
-    // Start bit;
-  digitalWrite(mhz19_serial_tx_pin, LOW);
-  MHZ19_SERIAL_WAIT;
-  for (int i = 0; i < 8; i++) {
-    digitalWrite(mhz19_serial_tx_pin, (b & 1) ? HIGH : LOW);
-    MHZ19_SERIAL_WAIT;
-    b >>= 1;
-  }
-   // Stop bit
-  digitalWrite(mhz19_serial_tx_pin, HIGH);
-  MHZ19_SERIAL_WAIT;
-  return 1;
-}
-
-size_t Mhz19SerialWrite(const uint8_t *buffer, size_t size = 1) {
-  size_t n = 0;
-  while(size--) {
-    n += Mhz19SerialTxWrite(*buffer++);
-  }
-  return n;
-}
-
-void Mhz19SerialRxRead() ICACHE_RAM_ATTR;  // Add 215 bytes to iram usage
-void Mhz19SerialRxRead() {
-  // Advance the starting point for the samples but compensate for the
-  // initial delay which occurs before the interrupt is delivered
-  unsigned long wait = mhz19_serial_bit_time_start;
-  unsigned long start = ESP.getCycleCount();
-  uint8_t rec = 0;
-  for (int i = 0; i < 8; i++) {
-    MHZ19_SERIAL_WAIT;
-    rec >>= 1;
-    if (digitalRead(mhz19_serial_rx_pin)) {
-      rec |= 0x80;
-    }
-  }
-  // Stop bit
-  MHZ19_SERIAL_WAIT;
-  // Store the received value in the buffer unless we have an overflow
-  int next = (mhz19_serial_in_pos +1) % MHZ19_SERIAL_BUFFER_SIZE;
-  if (next != mhz19_serial_out_pos) {
-    mhz19_serial_buffer[mhz19_serial_in_pos] = rec;
-    mhz19_serial_in_pos = next;
-  }
-  // Must clear this bit in the interrupt register,
-  // it gets set even when interrupts are disabled
-  GPIO_REG_WRITE(GPIO_STATUS_W1TC_ADDRESS, 1 << mhz19_serial_rx_pin);
-}
-
-/*********************************************************************************************/
 
 bool Mhz19CheckAndApplyFilter(uint16_t ppm, uint8_t s)
 {
@@ -208,15 +93,28 @@ bool Mhz19CheckAndApplyFilter(uint16_t ppm, uint8_t s)
     // value is more stable.
     // This will make the reading useful in more turbulent environments,
     // where the sensor would report more rapid change of measured values.
-    difference *= s;
+    difference = difference * s;
     difference /= 64;
   }
-  if (MHZ19_FILTER_OFF == mhz19_filter) {
-    if (s != 0 && s != 64) {
-      return false;
+  switch (mhz19_filter) {
+    case MHZ19_FILTER_OFF: {
+      if (s != 0 && s != 64) {
+        return false;
+      }
+      break;
     }
-  } else {
-    difference >>= (mhz19_filter -1);
+    // #Samples to reach >= 75% of step response
+    case MHZ19_FILTER_OFF_ALLSAMPLES:
+      break;                 // No Delay
+    case MHZ19_FILTER_FAST:
+      difference /= 2;
+      break;                 // Delay: 2 samples
+    case MHZ19_FILTER_MEDIUM:
+      difference /= 4;
+      break;                 // Delay: 5 samples
+    case MHZ19_FILTER_SLOW:
+      difference /= 8;
+      break;                 // Delay: 11 samples
   }
   mhz19_last_ppm = static_cast<uint16_t>(mhz19_last_ppm + difference);
   return true;
@@ -231,16 +129,16 @@ bool Mhz19Read(uint16_t &p, float &t)
 
   if (mhz19_type)
   {
-    Mhz19SerialFlush();
-    if (Mhz19SerialWrite(mhz19_cmnd_read_ppm, 9) != 9) {
+    SoftSerial->flush();
+    if (SoftSerial->write(mhz19_cmnd_read_ppm, 9) != 9) {
       return false;          // Unable to send 9 bytes
     }
     memset(mhz19_response, 0, sizeof(mhz19_response));
     uint32_t start = millis();
     uint8_t counter = 0;
     while (((millis() - start) < MHZ19_READ_TIMEOUT) && (counter < 9)) {
-      if (Mhz19SerialAvailable() > 0) {
-        mhz19_response[counter++] = Mhz19SerialRead();
+      if (SoftSerial->available() > 0) {
+        mhz19_response[counter++] = SoftSerial->read();
       } else {
         delay(10);
       }
@@ -291,9 +189,9 @@ bool Mhz19Read(uint16_t &p, float &t)
             if (mhz19_abc_must_apply) {
               mhz19_abc_must_apply = false;
               if (mhz19_abc_enable) {
-                Mhz19SerialWrite(mhz19_cmnd_abc_enable, 9);   // Sent sensor ABC Enable
+                SoftSerial->write(mhz19_cmnd_abc_enable, 9);   // Sent sensor ABC Enable
               } else {
-                Mhz19SerialWrite(mhz19_cmnd_abc_disable, 9);  // Sent sensor ABC Disable
+                SoftSerial->write(mhz19_cmnd_abc_disable, 9);  // Sent sensor ABC Disable
               }
             }
           }
@@ -308,9 +206,11 @@ bool Mhz19Read(uint16_t &p, float &t)
 
 void Mhz19Init()
 {
-  if (Mhz19Serial(pin[GPIO_MHZ_RXD], pin[GPIO_MHZ_TXD])) {
-    mhz19_type = 1;
-  }
+  SoftSerial = new SoftwareSerial(pin[GPIO_MHZ_RXD], pin[GPIO_MHZ_TXD]);
+  SoftSerial->begin(9600);
+
+
+  mhz19_type = 1;
 }
 
 #ifdef USE_WEBSERVER
@@ -374,4 +274,4 @@ boolean Xsns15(byte function)
   return result;
 }
 
-#endif  // USE_MHZ19_SOFT_SERIAL
+#endif  // USE_MHZ19_SOFT_SERIAL_OBSOLETE
