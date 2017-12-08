@@ -10,7 +10,8 @@
  * Add multipress support and more user configurable options to Sonoff Dual R2 (#1291)
  * Fix Sonoff Bridge missed learned key if learned data contains 0x55 (End of Transmission) flag (#1095, #1294)
  * Add support for TSL2561 using adafruit library (#661, #1311)
- * Add alternative support for SHT3x (#1314)
+ * Add alternative support for SHT3x enabled with define USE_SHT3X_V2 in user_config.h (#1314)
+ * Add alternative support for SHT3x enabled with define USE_SHT3X_V3 in user_config.h (#1314)
  *
  * 5.10.0 20171201
  * Upgrade library ArduinoJson to 5.11.2

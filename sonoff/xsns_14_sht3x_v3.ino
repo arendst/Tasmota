@@ -18,11 +18,11 @@
 */
 
 #ifdef USE_I2C
-#ifdef USE_SHT3X
+#ifdef USE_SHT3X_V3
 /*********************************************************************************************\
  * SHT3X - Temperature and Humidy
  *
- * Required library: none but based on Adafruit Industries SHT31 library
+ * Required library: none but based on Wemos library
  *
  * I2C Address: 0x44 or 0x45
 \*********************************************************************************************/
@@ -37,9 +37,17 @@ uint8_t sht3x_addresses[] = { SHT3X_ADDR_GND, SHT3X_ADDR_VDD };
 bool Sht3xConvert()
 {
   if (sht3x_type) {
-    return I2cWrite8(sht3x_address, 0x2C, 0x06);
+    // Start I2C Transmission
+    Wire.beginTransmission(sht3x_address);
+    // Send measurement command
+    Wire.write(0x2C);
+    Wire.write(0x06);
+    // Stop I2C transmission
+    if (Wire.endTransmission() != 0) {
+      return false;
+    }
   }
-  return false;
+  return true;
 }
 
 bool Sht3xRead(float &t, float &h)
@@ -49,19 +57,18 @@ bool Sht3xRead(float &t, float &h)
   t = NAN;
   h = NAN;
 
+  // Request 6 bytes of data
   Wire.requestFrom(sht3x_address, (uint8_t)6);
-  if (Wire.available() != 6) {
-    return false;
-  }
   // Read 6 bytes of data
   // cTemp msb, cTemp lsb, cTemp crc, humidity msb, humidity lsb, humidity crc
-  for (uint8_t i = 0; i < 6; i++) {
+  for (int i = 0; i < 6; i++) {
     data[i] = Wire.read();
+  };
+  delay(50);
+  if (Wire.available() != 0) {
+    return false;
   }
-//  delay(50);
-//  if (Wire.available() != 0) {
-//    return false;
-//  }
+	// Convert the data
   t = ConvertTemp((float)((((data[0] << 8) | data[1]) * 175) / 65535.0) - 45);
   h = (float)((((data[3] << 8) | data[4]) * 100) / 65535.0);
   return true;
@@ -145,5 +152,5 @@ boolean Xsns14(byte function)
   return result;
 }
 
-#endif  // USE_SHT3X
+#endif  // USE_SHT3X_V3
 #endif  // USE_I2C

@@ -171,6 +171,7 @@
   #define USE_SHT                                // Add I2C emulating code for SHT1X sensor (+1k4 code)
 //  #define USE_SHT3X                              // Add I2C code for SHT3x sensor based on Adafruit (+0k7 code)
 //  #define USE_SHT3X_V2                           // Add I2C code for SHT3x sensor based on EspEasy (+0k7 code)
+//  #define USE_SHT3X_V3                           // Add I2C code for SHT3x sensor based on Wemos (+0k7 code)
   #define USE_HTU                                // Add I2C code for HTU21/SI7013/SI7020/SI7021 sensor (+1k5 code)
   #define USE_BMP                                // Add I2C code for BMP085/BMP180/BMP280/BME280 sensor (+4k code)
 //    #define USE_BME680                           // Add additional support for BME680 sensor using Adafruit Sensor and BME680 libraries (+6k code)
