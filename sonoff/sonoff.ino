@@ -26,7 +26,7 @@
   ====================================================*/
 
 #define VERSION                0x050A0001
-#define VERSION_STRING         "5.10.0a"    // Would be great to have a macro that fills this from VERSION ...
+#define VERSION_STRING         "sonoff-pre-5.10.0a-fixed-wemo"    // Would be great to have a macro that fills this from VERSION ...
 
 // Location specific includes
 #include "sonoff.h"                         // Enumaration used in user_config.h
