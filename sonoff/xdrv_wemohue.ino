@@ -242,18 +242,18 @@ void PollUdp()
 
 const char WEMO_EVENTSERVICE_XML[] PROGMEM =
   "<?scpd xmlns=\"urn:Belkin:service-1-0\"?>"
-  "<actionList>"
-    "<action>"
-      "<name>SetBinaryState</name>"
-      "<argumentList>"
-        "<argument>"
-          "<retval/>"
-          "<name>BinaryState</name>"
-          "<relatedStateVariable>BinaryState</relatedStateVariable>"
-          "<direction>in</direction>"
-        "</argument>"
-      "</argumentList>"
-      "<serviceStateTable>"
+    "<actionList>"
+      "<action>"
+        "<name>SetBinaryState</name>"
+        "<argumentList>"
+          "<argument>"
+            "<retval/>"
+            "<name>BinaryState</name>"
+            "<relatedStateVariable>BinaryState</relatedStateVariable>"
+            "<direction>in</direction>"
+          "</argument>"
+        "</argumentList>"
+        "<serviceStateTable>"
         "<stateVariable sendEvents=\"yes\">"
           "<name>BinaryState</name>"
           "<dataType>Boolean</dataType>"
@@ -263,14 +263,43 @@ const char WEMO_EVENTSERVICE_XML[] PROGMEM =
           "<name>level</name>"
           "<dataType>string</dataType>"
           "<defaultValue>0</defaultValue>"
-        "</stateVariable>"
-      "</serviceStateTable>"
+          "</stateVariable>"
+        "</serviceStateTable>"
+      "</action>"
+    "<action>"
+      "<name>GetBinaryState</name>"
+      "<argumentList>"
+        "<argument>"
+          "<retval/>"
+          "<name>BinaryState</name>"
+          "<relatedStateVariable>BinaryState</relatedStateVariable>"
+          "<direction>out</direction>"
+        "</argument>"
+      "</argumentList>"
     "</action>"
   "</scpd>\r\n"
   "\r\n";
+const char WEMO_SETSTATE_XML[] PROGMEM =
+"<s:Envelope xmlns:s=\"http://schemas.xmlsoap.org/soap/envelope/\" s:encodingStyle=\"http://schemas.xmlsoap.org/soap/encoding/\">"
+  "<s:Body>"
+    "<u:SetBinaryStateResponse xmlns:u=\"urn:Belkin:service:basicevent:1\">"
+      "<BinaryState>{x1</BinaryState>"
+    "</u:SetBinaryStateResponse>"
+  "</s:Body>"
+"</s:Envelope>\r\n"
+"\r\n";
+const char WEMO_GETSTATE_XML[] PROGMEM =
+"<s:Envelope xmlns:s=\"http://schemas.xmlsoap.org/soap/envelope/\" s:encodingStyle=\"http://schemas.xmlsoap.org/soap/encoding/\">"
+  "<s:Body>"
+    "<u:GetBinaryStateResponse xmlns:u=\"urn:Belkin:service:basicevent:1\">"
+      "<BinaryState>{x1</BinaryState>"
+    "</u:GetBinaryStateResponse>"
+  "</s:Body>"
+"</s:Envelope>\r\n"
+"\r\n";
 const char WEMO_SETUP_XML[] PROGMEM =
   "<?xml version=\"1.0\"?>"
-  "<root>"
+   "<root xmlns=\"urn:Belkin:device-1-0\">"
     "<device>"
       "<deviceType>urn:Belkin:device:controllee:1</deviceType>"
       "<friendlyName>{x1</friendlyName>"
@@ -297,17 +326,34 @@ const char WEMO_SETUP_XML[] PROGMEM =
 
 void HandleUpnpEvent()
 {
-  AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, PSTR(D_WEMO_BASIC_EVENT));
   String request = WebServer->arg(0);
-  if (request.indexOf(F("State>1</Binary")) > 0) {
-//    ExecuteCommandPower(1, 1);
-    ExecuteCommandPower(devices_present, 1);
+  AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, PSTR(D_WEMO_BASIC_EVENT));
+  //differentiate get and set state
+  if (request.indexOf(F("SetBinaryState")) > 0) {
+    String setstate_xml = FPSTR(WEMO_SETSTATE_XML);
+    if (request.indexOf(F("State>1</Binary")) > 0) {
+      AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, PSTR(D_WEMO_BASIC_EVENT " SET STATE 1"));
+      ExecuteCommandPower(devices_present, 1);
+      setstate_xml.replace("{x1", "1");
+    }
+    else if (request.indexOf(F("State>0</Binary")) > 0) {
+      AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, PSTR(D_WEMO_BASIC_EVENT " SET STATE 0"));
+      ExecuteCommandPower(devices_present, 0);
+      setstate_xml.replace("{x1", "0");
+    }
+    WebServer->send(200, FPSTR(HDR_CTYPE_XML), setstate_xml.c_str());
   }
-  if (request.indexOf(F("State>0</Binary")) > 0) {
-//    ExecuteCommandPower(1, 0);
-    ExecuteCommandPower(devices_present, 0);
+  else if(request.indexOf(F("GetBinaryState")) > 0){
+    String getstate_xml = FPSTR(WEMO_GETSTATE_XML);
+    char svalue[80];
+    /** TODO: can only return one device status for now in response,
+     *  check how to response multi device status to echo
+     */
+    snprintf_P(svalue, sizeof(svalue), PSTR("%d"), bitRead(power, 1 -1));
+    AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, PSTR(D_WEMO_BASIC_EVENT " GET STATE"));
+    getstate_xml.replace("{x1", svalue);
+    WebServer->send(200, FPSTR(HDR_CTYPE_XML), getstate_xml.c_str());
   }
-  WebServer->send(200, FPSTR(HDR_CTYPE_PLAIN), "");
 }
 
 void HandleUpnpService()
@@ -720,4 +766,3 @@ void HandleHueApi(String *path)
 }
 #endif  // USE_WEBSERVER
 #endif  // USE_EMULATION
-
