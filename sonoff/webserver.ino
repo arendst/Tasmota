@@ -61,7 +61,8 @@ const char HTTP_HEAD[] PROGMEM =
     "x.onreadystatechange=function(){"
       "if(x.readyState==4&&x.status==200){"
         "var s=x.responseText.replace(/{s}/g,\"<tr><th>\").replace(/{m}/g,\"</th><td>\").replace(/{e}/g,\"</td></tr>\").replace(/{t}/g,\"%'><div style='text-align:center;font-weight:\");"
-        "document.getElementById('l1').innerHTML=s;"
+        "s = s.replace(/OFF/g,\" " D_OFF " \").replace(/ON/g,\" " D_ON " \").toUpperCase();" //translate ON/OFF
+        "document.getElementById('l1').innerHTML=s"
       "}"
     "};"
     "x.open('GET','ay'+a,true);"
