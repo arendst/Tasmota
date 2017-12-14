@@ -233,7 +233,7 @@
 #define D_OSWATCH "osWatch"
 #define D_BLOCKED_LOOP "Blocked Loop"
 #define D_WPS_FAILED_WITH_STATUS "WPSconfig mislukt met status"
-#define D_ACTIVE_FOR_3_MINUTEs "3 minuuten actief"
+#define D_ACTIVE_FOR_3_MINUTES "3 minuuten actief"
 #define D_FAILED_TO_START "mislukt"
 #define D_PATCH_ISSUE_2186 "Patch issue 2186"
 #define D_CONNECTING_TO_AP "Verbinden met AP"
