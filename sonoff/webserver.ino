@@ -79,11 +79,12 @@ const char HTTP_HEAD[] PROGMEM =
   "<style>"
   "div,fieldset,input,select{padding:5px;font-size:1em;}"
   "input{width:100%;box-sizing:border-box;-webkit-box-sizing:border-box;-moz-box-sizing:border-box;}"
+  "input[type=checkbox],input[type=radio]{width: auto!important;margin-right: 10px;}"
   "select{width:100%;}"
   "textarea{resize:none;width:98%;height:318px;padding:5px;overflow:auto;}"
   "body{text-align:center;font-family:verdana;}"
   "td{padding:0px;}"
-  "button{border:0;border-radius:0.3rem;background-color:#1fa3ec;color:#fff;line-height:2.4rem;font-size:1.2rem;width:100%;-webkit-transition-duration:0.4s;transition-duration:0.4s;}"
+  "button{border:0;border-radius:0.3rem;background-color:#1fa3ec;color:#fff;line-height:2.4rem;font-size:1.2rem;width:100%;-webkit-transition-duration:0.4s;transition-duration:0.4s;min-width:50%; width:50%;left: calc(50% - 25%);position: relative;}"
   "button:hover{background-color:#006cba;}"
   "a{text-decoration:none;}"
   ".p{float:left;text-align:left;}"
@@ -92,7 +93,7 @@ const char HTTP_HEAD[] PROGMEM =
 
   "</head>"
   "<body>"
-  "<div style='text-align:left;display:inline-block;min-width:340px;'>"
+  "<div style='text-align:left;display:inline-block;min-width:340px; width:50%;'>"
 #ifdef BE_MINIMAL
   "<div style='text-align:center;color:red;'><h3>" D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "</h3></div>"
 #endif
@@ -664,11 +665,11 @@ void HandleModuleConfiguration()
   }
   func += FPSTR(HTTP_SCRIPT_MODULE3);
 
-  page += F("<br/><table>");
+  page += F("<br/><table width='100%'>");
   for (byte i = 0; i < MAX_GPIO_PIN; i++) {
     if (GPIO_USER == cmodule.gp.io[i]) {
       snprintf_P(stemp, 3, PINS_WEMOS +i*2);
-      snprintf_P(line, sizeof(line), PSTR("<tr><td width='190'>%s <b>" D_GPIO "%d</b> %s</td><td width='126'><select id='g%d' name='g%d'></select></td></tr>"),
+      snprintf_P(line, sizeof(line), PSTR("<tr><td width='60%'>%s <b>" D_GPIO "%d</b> %s</td><td width='40%'><select id='g%d' name='g%d'></select></td></tr>"),
         (WEMOS==Settings.module)?stemp:"", i, (0==i)? D_SENSOR_BUTTON "1":(1==i)? D_SERIAL_OUT :(3==i)? D_SERIAL_IN :(12==i)? D_SENSOR_RELAY "1":(13==i)? D_SENSOR_LED "1i":(14==i)? D_SENSOR :"", i, i);
       page += line;
       snprintf_P(line, sizeof(line), PSTR("sk(%d,%d);"), my_module.gp.io[i], i);  // g0 - g16
