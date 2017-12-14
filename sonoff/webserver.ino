@@ -273,7 +273,7 @@ const char HTTP_FORM_CMND[] PROGMEM =
   //  "<br/><button type='submit'>Send command</button>"
   "</form>";
 const char HTTP_TABLE100[] PROGMEM =
-  "<table style='width:100%'>";
+  "<table width='100%'>";
 const char HTTP_COUNTER[] PROGMEM =
   "<br/><div id='t' name='t' style='text-align:center;'></div>";
 const char HTTP_END[] PROGMEM =
@@ -458,7 +458,7 @@ void HandleRoot()
       page += F("<tr>");
       for (byte idx = 1; idx <= devices_present; idx++) {
         snprintf_P(stemp, sizeof(stemp), PSTR(" %d"), idx);
-        snprintf_P(line, sizeof(line), PSTR("<td style='width:%d%'><button onclick='la(\"?o=%d\");'>%s%s</button></td>"),
+        snprintf_P(line, sizeof(line), PSTR("<td width='%d%'><button onclick='la(\"?o=%d\");'>%s%s</button></td>"),
           100 / devices_present, idx, (devices_present < 5) ? D_BUTTON_TOGGLE : "", (devices_present > 1) ? stemp : "");
         page += line;
       }
@@ -474,8 +474,7 @@ void HandleRoot()
         }
         for (byte j = 0; j < 4; j++) {
           idx++;
-          snprintf_P(line, sizeof(line), PSTR("<td style='width:25%'><button onclick='la(\"?k=%d\");'>%d</button></td>"),
-            idx, idx);
+          snprintf_P(line, sizeof(line), PSTR("<td width='25%'><button onclick='la(\"?k=%d\");'>%d</button></td>"), idx, idx);
           page += line;
         }
       }
@@ -526,7 +525,7 @@ void HandleAjaxStatusRefresh()
     for (byte idx = 1; idx <= devices_present; idx++) {
       snprintf_P(svalue, sizeof(svalue), PSTR("%d"), bitRead(power, idx -1));
 //      snprintf_P(line, sizeof(line), PSTR("<td style='width:%d%'><div style='text-align:center;font-weight:%s;font-size:%dpx'>%s</div></td>"),
-      snprintf_P(line, sizeof(line), PSTR("<td style='width:%d{t}%s;font-size:%dpx'>%s</div></td>"),  // {t} = %'><div style='text-align:center;font-weight:
+      snprintf_P(line, sizeof(line), PSTR("<td width='%d{t}%s;font-size:%dpx'>%s</div></td>"),  // {t} = %'><div style='text-align:center;font-weight:
         100 / devices_present, (bitRead(power, idx -1)) ? "bold" : "normal", fsize, (devices_present < 5) ? GetStateText(bitRead(power, idx -1)) : svalue);
       page += line;
     }
@@ -1480,7 +1479,7 @@ void HandleInformation()
   // }1 = </td></tr><tr><th>
   // }2 = </th><td>
   String func = FPSTR(HTTP_SCRIPT_INFO_BEGIN);
-  func += F("<table style'width:100%;'><tr><th>");
+  func += F("<table width='100%'><tr><th>");
   func += F(D_PROGRAM_VERSION "}2" VERSION_STRING);
   func += F("}1" D_BUILD_DATE_AND_TIME "}2"); func += GetBuildDateAndTime();
   func += F("}1" D_CORE_AND_SDK_VERSION "}2"); func += ESP.getCoreVersion(); func += F("/"); func += String(ESP.getSdkVersion());
