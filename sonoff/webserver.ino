@@ -1480,7 +1480,7 @@ void HandleInformation()
   // }1 = </td></tr><tr><th>
   // }2 = </th><td>
   String func = FPSTR(HTTP_SCRIPT_INFO_BEGIN);
-  func += F("<table style'width:100%;'><tr><th>");
+  func += F("<table width='100%'><tr><th>");
   func += F(D_PROGRAM_VERSION "}2" VERSION_STRING);
   func += F("}1" D_BUILD_DATE_AND_TIME "}2"); func += GetBuildDateAndTime();
   func += F("}1" D_CORE_AND_SDK_VERSION "}2"); func += ESP.getCoreVersion(); func += F("/"); func += String(ESP.getSdkVersion());
