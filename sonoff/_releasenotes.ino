@@ -12,6 +12,8 @@
  * Add support for TSL2561 using adafruit library (#661, #1311)
  * Add alternative support for SHT3x enabled with define USE_SHT3X_V2 in user_config.h (#1314)
  * Add alternative support for SHT3x enabled with define USE_SHT3X_V3 in user_config.h (#1314)
+ * Fix BME680 pressure data (#1356)
+ * Minor webpage HTML optimizations (#1358)
  *
  * 5.10.0 20171201
  * Upgrade library ArduinoJson to 5.11.2
