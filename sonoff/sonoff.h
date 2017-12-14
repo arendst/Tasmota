@@ -22,8 +22,10 @@
 
 #define D_PROGRAMNAME          "Sonoff-Tasmota"
 #define D_AUTHOR               "Theo Arends"
+#define D_MODIFY_AUTHOR        "reloxx13"
 //#define D_WEBLINK              "https://github.com/arendst/Sonoff-Tasmota"
 #define D_WEBLINK              "https://bit.ly/tasmota"
+#define D_MODIFIED_WEBLINK     "https://github.com/reloxx13/Sonoff-Tasmota"
 
 /*********************************************************************************************\
  * Power Type

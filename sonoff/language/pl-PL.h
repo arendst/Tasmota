@@ -701,4 +701,5 @@
 #define D_CMND_MAXENERGY "MaxEnergy"
 #define D_CMND_MAXENERGYSTART "MaxEnergyStart"
 
+#define D_MODIFIED = "modified"
 #endif  // _LANGUAGE_PL_PL_H_
