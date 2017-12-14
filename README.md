@@ -1,3 +1,13 @@
+## Sonoff-Tasmota MODIFIED
+In this repo i will share some modified oder fixes which did not get it into the [Sonoff-Tasmota Git from arendst](https://github.com/arendst/Sonoff-Tasmota/).
+
+The target group are home users which just want to use tasmota with their alexa and dont need every single device or a multi firmware.
+
+Ill try to hold it uptodate with the orginal tasmota as much as i can
+
+Current version is **5.10.0a-modified-1.2**
+
+
 ## Sonoff-Tasmota
 Provide ESP8266 based Sonoff by [iTead Studio](https://www.itead.cc/) and ElectroDragon IoT Relay with Serial, Web and MQTT control allowing 'Over the Air' or OTA firmware updates using Arduino IDE.
 
