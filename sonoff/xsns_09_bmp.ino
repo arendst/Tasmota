@@ -426,9 +426,9 @@ void BmpShow(boolean json)
 #ifdef USE_BME680
       case BME680_CHIPID:
         t = bme680.temperature;
-        p = bme680.pressure;
+        p = bme680.pressure / 100.0;
         h = bme680.humidity;
-        g = bme680.gas_resistance;
+        g = bme680.gas_resistance / 1000.0;
         break;
 #endif  // USE_BME680
     }
@@ -450,7 +450,7 @@ void BmpShow(boolean json)
     dtostrfd(h, Settings.flag2.humidity_resolution, humidity);
 #ifdef USE_BME680
     char gas_resistance[10];
-    dtostrfd(g / 1000.0, 2, gas_resistance);
+    dtostrfd(g, 2, gas_resistance);
 #endif  // USE_BME680
 
     if (json) {
