@@ -484,6 +484,8 @@ void SettingsDefaultSet2()
   strlcpy(Settings.switch_topic, "0", sizeof(Settings.switch_topic));
 
   strlcpy(Settings.web_password, WEB_PASSWORD, sizeof(Settings.web_password));
+  strlcpy(Settings.web_bc1, WEB_BC1, sizeof(Settings.web_bc1));
+  strlcpy(Settings.web_bc2, WEB_BC2, sizeof(Settings.web_bc2));
 
   SettingsDefaultSet_4_0_4();
   Settings.pulse_timer[0] = APP_PULSETIME;

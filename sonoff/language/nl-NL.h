@@ -627,6 +627,8 @@
   #define D_ACTIVE_FOR "Aktief als"
   #define D_ON_DEVICE "op"
 #define D_CMND_WEBPASSWORD "WebPassword"
+#define D_CMND_WEBBC1 "WebButtonColor1"
+#define D_CMND_WEBBC2 "WebButtonColor2"
 #define D_CMND_WEBLOG "WebLog"
 #define D_CMND_EMULATION "Emulation"
 #define D_CMND_TELEPERIOD "TelePeriod"
