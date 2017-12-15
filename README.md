@@ -3,9 +3,9 @@ In this repo i will share some modified oder fixes which did not get it into the
 
 The target group are home users which just want to use tasmota with their alexa and dont need every single device or a multi firmware.
 
-Ill try to hold it uptodate with the orginal tasmota as much as i can
+Ill try to hold it up-to-date with the orginal tasmota as much as i can
 
-Current version is **5.10.0a-modified-1.2**
+Current version is **5.10.0a-modified-1.2.1**
 
 
 ## Sonoff-Tasmota
