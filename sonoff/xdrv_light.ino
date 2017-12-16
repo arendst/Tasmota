@@ -339,6 +339,9 @@ void LightInit(void)
   if (light_type < LT_PWM6) {           // PWM
     for (byte i = 0; i < light_type; i++) {
       Settings.pwm_value[i] = 0;        // Disable direct PWM control
+      if (pin[GPIO_PWM1 +i] < 99) {
+        pinMode(pin[GPIO_PWM1 +i], OUTPUT);
+      }
     }
     if (LT_PWM1 == light_type) {
       Settings.light_color[0] = 255;    // One PWM channel only supports Dimmer but needs max color
