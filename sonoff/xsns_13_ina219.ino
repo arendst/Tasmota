@@ -77,7 +77,7 @@
 #define INA219_CONFIG_MODE_SANDBVOLT_CONTINUOUS (0x0007)
 
 #define INA219_REG_SHUNTVOLTAGE                 (0x01)
-#define INA219_REG_BUSVOLTAGE                   (0x02)
+#define INA219_REG_BUenergy_voltage_chr                   (0x02)
 #define INA219_REG_POWER                        (0x03)
 #define INA219_REG_CURRENT                      (0x04)
 #define INA219_REG_CALIBRATION                  (0x05)
@@ -129,11 +129,11 @@ float Ina219GetShuntVoltage_mV()
   return value * 0.01;
 }
 
-float Ina219GetBusVoltage_V()
+float Ina219GetBuenergy_voltage_chr_V()
 {
   // Shift to the right 3 to drop CNVR and OVF and multiply by LSB
   // raw bus voltage (16-bit signed integer, so +-32767)
-  int16_t value = (int16_t)(((uint16_t)I2cReadS16(ina219_address, INA219_REG_BUSVOLTAGE) >> 3) * 4);
+  int16_t value = (int16_t)(((uint16_t)I2cReadS16(ina219_address, INA219_REG_BUenergy_voltage_chr) >> 3) * 4);
   // bus voltage in volts
   return value * 0.001;
 }
@@ -185,7 +185,7 @@ void Ina219Show(boolean json)
     char current[10];
     char power[10];
 
-    float fvoltage = Ina219GetBusVoltage_V() + (Ina219GetShuntVoltage_mV() / 1000);
+    float fvoltage = Ina219GetBuenergy_voltage_chr_V() + (Ina219GetShuntVoltage_mV() / 1000);
     float fcurrent = Ina219GetCurrent_mA() / 1000;
     float fpower = fvoltage * fcurrent;
     dtostrfd(fvoltage, Settings.flag2.voltage_resolution, voltage);

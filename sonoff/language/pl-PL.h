@@ -233,7 +233,7 @@
 #define D_OSWATCH "osWatch"
 #define D_BLOCKED_LOOP "Petla zablokowana"
 #define D_WPS_FAILED_WITH_STATUS "Blad WPSconfig ze statusem"
-#define D_ACTIVE_FOR_1_MINUTE "aktywny 1 minute"
+#define D_ACTIVE_FOR_3_MINUTES "aktywny 3 minuty"
 #define D_FAILED_TO_START "nie udalo sie uruchomic"
 #define D_PATCH_ISSUE_2186 "Blad latki 2186"
 #define D_CONNECTING_TO_AP "Laczenie z AP"
@@ -431,7 +431,7 @@
 #define D_HUE_POST_ARGS "Hue POST args"
 #define D_3_RESPONSE_PACKETS_SENT "3 pakiety odpowiedzi wysylane"
 
-// xsns_03_hlw8012.ino
+// xsns_03_energy.ino
 #define D_MAXPOWERREACHED "MaksMocOsiagnieta"
 #define D_MAXPOWERREACHEDRETRY "MaksMocOsiagnietaPonowienie"
 #define D_POWERMONITOR "MonitorMocy"
@@ -477,6 +477,8 @@
 #define D_SENSOR_IRRECV   "IRrecv"
 #define D_SENSOR_MHZ_RX   "MHZ Rx"
 #define D_SENSOR_MHZ_TX   "MHZ Tx"
+#define D_SENSOR_PZEM_RX  "PZEM Rx"
+#define D_SENSOR_PZEM_TX  "PZEM Tx"
 #define D_SENSOR_SPI_CS   "SPI CS"
 #define D_SENSOR_SPI_DC   "SPI DC"
 #define D_SENSOR_BACKLIGHT "BLight"
@@ -678,7 +680,7 @@
 #define D_CMND_RFLOW "RfLow"
 #define D_CMND_RFSYNC "RfSync"
 
-// Commands xsns_03_hlw8012.ino
+// Commands xsns_03_energy.ino
 #define D_CMND_POWERLOW "PowerLow"
 #define D_CMND_POWERHIGH "PowerHigh"
 #define D_CMND_VOLTAGELOW "VoltageLow"

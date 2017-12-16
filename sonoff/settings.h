@@ -158,23 +158,23 @@ struct SYSCFG {
   unsigned long hlw_power_calibration;     // 364
   unsigned long hlw_voltage_calibration;   // 368
   unsigned long hlw_current_calibration;   // 36C
-  unsigned long hlw_kWhtoday;              // 370
-  unsigned long hlw_kWhyesterday;          // 374
-  uint16_t      hlw_kWhdoy;                // 378
-  uint16_t      hlw_pmin;                  // 37A
-  uint16_t      hlw_pmax;                  // 37C
-  uint16_t      hlw_umin;                  // 37E
-  uint16_t      hlw_umax;                  // 380
-  uint16_t      hlw_imin;                  // 382
-  uint16_t      hlw_imax;                  // 384
-  uint16_t      hlw_mpl;                   // 386 MaxPowerLimit
-  uint16_t      hlw_mplh;                  // 388 MaxPowerLimitHold
-  uint16_t      hlw_mplw;                  // 38A MaxPowerLimitWindow
-  uint16_t      hlw_mspl;                  // 38C MaxSafePowerLimit
-  uint16_t      hlw_msplh;                 // 38E MaxSafePowerLimitHold
-  uint16_t      hlw_msplw;                 // 390 MaxSafePowerLimitWindow
-  uint16_t      hlw_mkwh;                  // 392 MaxEnergy
-  uint16_t      hlw_mkwhs;                 // 394 MaxEnergyStart
+  unsigned long energy_kWhtoday;           // 370
+  unsigned long energy_kWhyesterday;       // 374
+  uint16_t      energy_kWhdoy;             // 378
+  uint16_t      energy_min_power;          // 37A
+  uint16_t      energy_max_power;          // 37C
+  uint16_t      energy_min_voltage;        // 37E
+  uint16_t      energy_max_voltage;        // 380
+  uint16_t      energy_min_current;        // 382
+  uint16_t      energy_max_current;        // 384
+  uint16_t      energy_max_power_limit;    // 386 MaxPowerLimit
+  uint16_t      energy_max_power_limit_hold;        // 388 MaxPowerLimitHold
+  uint16_t      energy_max_power_limit_window;      // 38A MaxPowerLimitWindow
+  uint16_t      energy_max_power_safe_limit;        // 38C MaxSafePowerLimit
+  uint16_t      energy_max_power_safe_limit_hold;   // 38E MaxSafePowerLimitHold
+  uint16_t      energy_max_power_safe_limit_window; // 390 MaxSafePowerLimitWindow
+  uint16_t      energy_max_energy;         // 392 MaxEnergy
+  uint16_t      energy_max_energy_start;   // 394 MaxEnergyStart
   uint16_t      mqtt_retry;                // 396
   uint8_t       poweronstate;              // 398
   uint8_t       last_module;               // 399
@@ -238,7 +238,7 @@ struct SYSCFG {
   byte          free_542[2];               // 542
 
   uint32_t      ip_address[4];             // 544
-  unsigned long hlw_kWhtotal;              // 554
+  unsigned long energy_kWhtotal;              // 554
   char          mqtt_fulltopic[100];       // 558
 
   SysBitfield2  flag2;                     // 5BC Add flag2 since 5.9.2
@@ -254,8 +254,8 @@ struct RTCMEM {
   uint16_t      valid;                     // 000
   byte          oswatch_blocked_loop;      // 002
   uint8_t       unused;                    // 003
-  unsigned long hlw_kWhtoday;              // 004
-  unsigned long hlw_kWhtotal;              // 008
+  unsigned long energy_kWhtoday;              // 004
+  unsigned long energy_kWhtotal;              // 008
   unsigned long pulse_counter[MAX_COUNTERS];  // 00C
   power_t       power;                     // 01C
 } RtcSettings;

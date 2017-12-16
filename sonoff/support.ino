@@ -434,12 +434,12 @@ void WifiConfig(uint8_t type)
       restart_flag = 2;
     }
     else if (WIFI_SMARTCONFIG == wifi_config_type) {
-      AddLog_P(LOG_LEVEL_INFO, S_LOG_WIFI, PSTR(D_WCFG_1_SMARTCONFIG D_ACTIVE_FOR_1_MINUTE));
+      AddLog_P(LOG_LEVEL_INFO, S_LOG_WIFI, PSTR(D_WCFG_1_SMARTCONFIG D_ACTIVE_FOR_3_MINUTES));
       WiFi.beginSmartConfig();
     }
     else if (WIFI_WPSCONFIG == wifi_config_type) {
       if (WifiWpsConfigBegin()) {
-        AddLog_P(LOG_LEVEL_INFO, S_LOG_WIFI, PSTR(D_WCFG_3_WPSCONFIG D_ACTIVE_FOR_1_MINUTE));
+        AddLog_P(LOG_LEVEL_INFO, S_LOG_WIFI, PSTR(D_WCFG_3_WPSCONFIG D_ACTIVE_FOR_3_MINUTES));
       } else {
         AddLog_P(LOG_LEVEL_INFO, S_LOG_WIFI, PSTR(D_WCFG_3_WPSCONFIG D_FAILED_TO_START));
         wifi_config_counter = 3;
@@ -447,7 +447,7 @@ void WifiConfig(uint8_t type)
     }
 #ifdef USE_WEBSERVER
     else if (WIFI_MANAGER == wifi_config_type) {
-      AddLog_P(LOG_LEVEL_INFO, S_LOG_WIFI, PSTR(D_WCFG_2_WIFIMANAGER D_ACTIVE_FOR_1_MINUTE));
+      AddLog_P(LOG_LEVEL_INFO, S_LOG_WIFI, PSTR(D_WCFG_2_WIFIMANAGER D_ACTIVE_FOR_3_MINUTES));
       WifiManagerBegin();
     }
 #endif  // USE_WEBSERVER

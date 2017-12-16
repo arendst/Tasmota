@@ -117,10 +117,11 @@ boolean XsnsCall(byte Function)
 
   switch (Function) {
     case FUNC_XSNS_INIT:
+    case FUNC_XSNS_EVERY_SECOND:
     case FUNC_XSNS_PREP:
     case FUNC_XSNS_JSON_APPEND:
-    case FUNC_XSNS_MQTT_SHOW:
     case FUNC_XSNS_WEB:
+    case FUNC_XSNS_SAVE_STATE:
       for (byte x = 0; x < xsns_present; x++) {
         xsns_func_ptr[x](Function);
       }
