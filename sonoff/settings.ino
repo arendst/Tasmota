@@ -63,8 +63,8 @@ void RtcSettingsLoad()
   if (RtcSettings.valid != RTC_MEM_VALID) {
     memset(&RtcSettings, 0, sizeof(RTCMEM));
     RtcSettings.valid = RTC_MEM_VALID;
-    RtcSettings.hlw_kWhtoday = Settings.hlw_kWhtoday;
-    RtcSettings.hlw_kWhtotal = Settings.hlw_kWhtotal;
+    RtcSettings.energy_kWhtoday = Settings.energy_kWhtoday;
+    RtcSettings.energy_kWhtotal = Settings.energy_kWhtotal;
     for (byte i = 0; i < MAX_COUNTERS; i++) {
       RtcSettings.pulse_counter[i] = Settings.pulse_counter[i];
     }
@@ -182,10 +182,7 @@ void SettingsSaveAll()
   } else {
     Settings.power = 0;
   }
-  if (hlw_flg) {
-    HlwSaveState();
-  }
-  CounterSaveState();
+  XsnsCall(FUNC_XSNS_SAVE_STATE);
   SettingsSave(0);
 }
 
@@ -454,23 +451,23 @@ void SettingsDefaultSet2()
   Settings.hlw_power_calibration = HLW_PREF_PULSE;
   Settings.hlw_voltage_calibration = HLW_UREF_PULSE;
   Settings.hlw_current_calibration = HLW_IREF_PULSE;
-//  Settings.hlw_kWhtoday = 0;
-//  Settings.hlw_kWhyesterday = 0;
-//  Settings.hlw_kWhdoy = 0;
-//  Settings.hlw_pmin = 0;
-//  Settings.hlw_pmax = 0;
-//  Settings.hlw_umin = 0;
-//  Settings.hlw_umax = 0;
-//  Settings.hlw_imin = 0;
-//  Settings.hlw_imax = 0;
-//  Settings.hlw_mpl = 0;                              // MaxPowerLimit
-  Settings.hlw_mplh = MAX_POWER_HOLD;
-  Settings.hlw_mplw = MAX_POWER_WINDOW;
-//  Settings.hlw_mspl = 0;                             // MaxSafePowerLimit
-  Settings.hlw_msplh = SAFE_POWER_HOLD;
-  Settings.hlw_msplw = SAFE_POWER_WINDOW;
-//  Settings.hlw_mkwh = 0;                             // MaxEnergy
-//  Settings.hlw_mkwhs = 0;                            // MaxEnergyStart
+//  Settings.energy_kWhtoday = 0;
+//  Settings.energy_kWhyesterday = 0;
+//  Settings.energy_kWhdoy = 0;
+//  Settings.energy_min_power = 0;
+//  Settings.energy_max_power = 0;
+//  Settings.energy_min_voltage = 0;
+//  Settings.energy_max_voltage = 0;
+//  Settings.energy_min_current = 0;
+//  Settings.energy_max_current = 0;
+//  Settings.energy_max_power_limit = 0;                              // MaxPowerLimit
+  Settings.energy_max_power_limit_hold = MAX_POWER_HOLD;
+  Settings.energy_max_power_limit_window = MAX_POWER_WINDOW;
+//  Settings.energy_max_power_safe_limit = 0;                             // MaxSafePowerLimit
+  Settings.energy_max_power_safe_limit_hold = SAFE_POWER_HOLD;
+  Settings.energy_max_power_safe_limit_window = SAFE_POWER_WINDOW;
+//  Settings.energy_max_energy = 0;                             // MaxEnergy
+//  Settings.energy_max_energy_start = 0;                            // MaxEnergyStart
 
   SettingsDefaultSet_3_2_4();
 
@@ -501,8 +498,8 @@ void SettingsDefaultSet2()
   SettingsDefaultSet_5_0_2();
 
   // 5.0.4
-//  Settings.hlw_kWhtotal = 0;
-  RtcSettings.hlw_kWhtotal = 0;
+//  Settings.energy_kWhtotal = 0;
+  RtcSettings.energy_kWhtotal = 0;
 
   // 5.0.5
   strlcpy(Settings.mqtt_fulltopic, MQTT_FULLTOPIC, sizeof(Settings.mqtt_fulltopic));
@@ -712,8 +709,8 @@ void SettingsDelta()
       Settings.save_data = SAVE_DATA;
     }
     if (Settings.version < 0x05000400) {
-      Settings.hlw_kWhtotal = 0;
-      RtcSettings.hlw_kWhtotal = 0;
+      Settings.energy_kWhtotal = 0;
+      RtcSettings.energy_kWhtotal = 0;
     }
     if (Settings.version < 0x05000500) {
       strlcpy(Settings.mqtt_fulltopic, MQTT_FULLTOPIC, sizeof(Settings.mqtt_fulltopic));
