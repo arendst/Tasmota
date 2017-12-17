@@ -3,3 +3,6 @@
 .clang_complete
 .gcc-flags.json
 lib/readme.txt
+releases/*
+!releases/releases.bat
+user_config.h.nils
