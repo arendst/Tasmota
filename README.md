@@ -5,7 +5,7 @@ The target group are home users which just want to use tasmota with their alexa 
 
 Ill try to hold it up-to-date with the orginal tasmota as much as i can
 
-Current version is **5.10.0a-modified-1.2.1**
+Current version is **5.10.0b-modified-1.2.1**
 
 
 ## Sonoff-Tasmota
