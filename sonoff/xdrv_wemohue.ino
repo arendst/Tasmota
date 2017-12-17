@@ -383,7 +383,7 @@ const char HUE_DESCRIPTION_XML[] PROGMEM =
 //    "<friendlyName>Philips hue ({x1)</friendlyName>"
     "<manufacturer>Royal Philips Electronics</manufacturer>"
     "<modelDescription>Philips hue Personal Wireless Lighting</modelDescription>"
-    "<modelName>Philips hue bridge 2012</modelName>"
+    "<modelName>Philips hue bridge 2015</modelName>"
     "<modelNumber>929000226503</modelNumber>"
     "<serialNumber>{x3</serialNumber>"
     "<UDN>uuid:{x2</UDN>"
@@ -415,7 +415,7 @@ const char HUE_GROUP0_STATUS_JSON[] PROGMEM =
    "\"action\":{";
 //     "\"scene\":\"none\",";
 const char HueConfigResponse_JSON[] PROGMEM =
-  "{\"name\":\"Philips hue\","
+  "{\"name\":\"{bn\","
    "\"mac\":\"{ma\","
    "\"dhcp\":true,"
    "\"ipaddress\":\"{ip\","
@@ -430,7 +430,7 @@ const char HueConfigResponse_JSON[] PROGMEM =
      "\"create date\":\"{dt\","
      "\"name\":\"Remote\"}},"
    "\"swversion\":\"01039019\","
-   "\"apiversion\":\"1.17.0\","
+   "\"apiversion\":\"1.2.1\","
    "\"swupdate\":{\"updatestate\":0,\"url\":\"\",\"text\":\"\",\"notify\": false},"
    "\"linkbutton\":false,"
    "\"portalservices\":false"
@@ -444,7 +444,8 @@ const char HUE_ERROR_JSON[] PROGMEM =
 
 String GetHueDeviceId(uint8_t id)
 {
-  String deviceid = WiFi.macAddress() + F(":00:11-") + String(id);
+  if(id<10)id+=10;
+  String deviceid = WiFi.macAddress() + F(":00:11-") + (id<10?"0":"") + String(id);
   deviceid.toLowerCase();
   return deviceid;  // 5c:cf:7f:13:9f:3d:00:11-1
 }
@@ -478,6 +479,7 @@ void HueNotImplemented(String *path)
 void HueConfigResponse(String *response)
 {
   *response += FPSTR(HueConfigResponse_JSON);
+  response->replace("{bn",Settings.hostname);
   response->replace("{ma", WiFi.macAddress());
   response->replace("{ip", WiFi.localIP().toString());
   response->replace("{ms", WiFi.subnetMask().toString());
@@ -504,7 +506,7 @@ void HueLightStatus(byte device, String *response)
   } else {
     response->replace("{h}", "0");
     response->replace("{s}", "0");
-    response->replace("{b}", "0");
+    response->replace("{b}", (power & (1 << (device-1))) ? "254" : "0");
   }
 }
 
