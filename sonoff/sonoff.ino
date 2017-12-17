@@ -193,7 +193,7 @@ boolean (*xsns_func_ptr[XSNS_MAX])(byte);   // External Sensor Function Pointers
 char my_hostname[33];                       // Composed Wifi hostname
 char mqtt_client[33];                        // Composed MQTT Clientname
 char serial_in_buffer[INPUT_BUFFER_SIZE + 2]; // Receive buffer
-char mqtt_data[TOPSZ + MESSZ];              // MQTT publish buffer
+char mqtt_data[MESSZ + TOPSZ];              // MQTT publish buffer (MESSZ) and web page ajax buffer (MESSZ + TOPSZ)
 char log_data[TOPSZ + MESSZ];               // Logging
 String web_log[MAX_LOG_LINES];              // Web log buffer
 String backlog[MAX_BACKLOG];                // Command backlog
@@ -353,6 +353,7 @@ void MqttSubscribe(char *topic)
 void MqttPublishDirect(const char* topic, boolean retained)
 {
   if (Settings.flag.mqtt_enabled) {
+    mqtt_data[MESSZ -1] = '\0';
     if (MqttClient.publish(topic, mqtt_data, retained)) {
       snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_MQTT "%s = %s%s"), topic, mqtt_data, (retained) ? " (" D_RETAINED ")" : "");
 //      MqttClient.loop();  // Do not use here! Will block previous publishes
@@ -2626,6 +2627,8 @@ void GpioInit()
   }
 #endif  // USE_IR_RECEIVE
 #endif  // USE_IR_REMOTE
+
+//  energy_flg = (((pin[GPIO_HLW_SEL] < 99) && (pin[GPIO_HLW_CF1] < 99) && (pin[GPIO_HLW_CF] < 99)) || ((pin[GPIO_PZEM_RX] < 99) && (pin[GPIO_PZEM_TX])));
 }
 
 extern "C" {

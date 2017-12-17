@@ -1339,7 +1339,7 @@ void HandleHttpCommand()
     }
   }
 
-  String message = "";
+  String message = F("{\"" D_RSLT_WARNING "\":\"");
   if (valid) {
     byte curridx = web_log_index;
     if (strlen(WebServer->arg("cmnd").c_str())) {
@@ -1353,18 +1353,15 @@ void HandleHttpCommand()
 
     if (web_log_index != curridx) {
       byte counter = curridx;
+      message = F("{");
       do {
         if (web_log[counter].length()) {
-          if (message.length()) {
-            message += F("\n");
-          }
-          if (Settings.flag.mqtt_enabled) {
-            // [14:49:36 MQTT: stat/wemos5/RESULT = {"POWER":"OFF"}] > [RESULT = {"POWER":"OFF"}]
-//            message += web_log[counter].substring(17 + strlen(PUB_PREFIX) + strlen(Settings.mqtt_topic));
-            message += web_log[counter].substring(web_log[counter].lastIndexOf("/",web_log[counter].indexOf("="))+1);
-          } else {
-            // [14:49:36 RSLT: RESULT = {"POWER":"OFF"}] > [RESULT = {"POWER":"OFF"}]
-            message += web_log[counter].substring(web_log[counter].indexOf(": ")+2);
+          // [14:49:36 MQTT: stat/wemos5/RESULT = {"POWER":"OFF"}] > [{"POWER":"OFF"}]
+          if (web_log[counter].indexOf("{") > 0) {  // Is it a JSON message (and not only [15:26:08 MQT: stat/wemos5/POWER = O])
+            if (message.length() > 1) {
+              message += F(",");
+            }
+            message += web_log[counter].substring(web_log[counter].indexOf("{")+1,web_log[counter].length()-1);
           }
         }
         counter++;
@@ -1372,13 +1369,14 @@ void HandleHttpCommand()
           counter = 0;
         }
       } while (counter != web_log_index);
+      message += F("}");
     } else {
-      message = F(D_ENABLE_WEBLOG_FOR_RESPONSE "\n");
+      message += F(D_ENABLE_WEBLOG_FOR_RESPONSE "\"}");
     }
   } else {
-    message = F(D_NEED_USER_AND_PASSWORD "\n");
+    message += F(D_NEED_USER_AND_PASSWORD "\"}");
   }
-  WebServer->send(200, FPSTR(HDR_CTYPE_PLAIN), message);
+  WebServer->send(200, FPSTR(HDR_CTYPE_JSON), message);
 }
 
 void HandleConsole()
