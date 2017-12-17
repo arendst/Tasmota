@@ -423,6 +423,10 @@ void SettingsDefaultSet2()
   Settings.syslog_port = SYS_LOG_PORT;
   Settings.syslog_level = SYS_LOG_LEVEL;
   Settings.webserver = WEB_SERVER;
+  //strlcpy(Settings.web_bc1, "#00ff00", 8);
+  //strlcpy(Settings.web_bc2, "#0000ff", 8);
+  strlcpy(Settings.web_bc1, WEB_BC1, sizeof(Settings.web_bc1));
+  strlcpy(Settings.web_bc2, WEB_BC2, sizeof(Settings.web_bc2));
   Settings.weblog_level = WEB_LOG_LEVEL;
 
   strlcpy(Settings.mqtt_fingerprint, MQTT_FINGERPRINT, sizeof(Settings.mqtt_fingerprint));
@@ -484,8 +488,6 @@ void SettingsDefaultSet2()
   strlcpy(Settings.switch_topic, "0", sizeof(Settings.switch_topic));
 
   strlcpy(Settings.web_password, WEB_PASSWORD, sizeof(Settings.web_password));
-  strlcpy(Settings.web_bc1, WEB_BC1, sizeof(Settings.web_bc1));
-  strlcpy(Settings.web_bc2, WEB_BC2, sizeof(Settings.web_bc2));
 
   SettingsDefaultSet_4_0_4();
   Settings.pulse_timer[0] = APP_PULSETIME;
@@ -799,10 +801,7 @@ void SettingsDelta()
       Settings.flag2.current_resolution = 3;
       Settings.ina219_mode = 0;
     }
-
     Settings.version = VERSION;
     SettingsSave(1);
   }
 }
-
-

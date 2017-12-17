@@ -247,8 +247,8 @@ struct SYSCFG {
   uint16_t      pulse_counter_type;        // 5D0
   uint16_t      pulse_counter_debounce;    // 5D2
   uint8_t       rf_code[17][9];            // 5D4
-  char          web_bc1[7];                // xxx
-  char          web_bc2[7];                // xxx
+  char          web_bc1[8];                // 5DC
+  char          web_bc2[8];                // 5E4
 
 } Settings;
 
