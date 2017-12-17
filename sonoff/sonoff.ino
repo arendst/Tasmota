@@ -177,7 +177,7 @@ power_t rel_inverted = 0;                   // Relay inverted flag (1 = (0 = On,
 uint8_t led_inverted = 0;                   // LED inverted flag (1 = (0 = On, 1 = Off))
 uint8_t pwm_inverted = 0;                   // PWM inverted flag (1 = inverted)
 uint8_t dht_flg = 0;                        // DHT configured
-bool energy_flg = true;                     // Energy monitor configured
+uint8_t energy_flg = 1;                     // Energy monitor configured
 uint8_t i2c_flg = 0;                        // I2C configured
 uint8_t spi_flg = 0;                        // SPI configured
 uint8_t light_type = 0;                     // Light types
