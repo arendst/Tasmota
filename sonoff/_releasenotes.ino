@@ -1,8 +1,9 @@
 /* 5.10.0b
  * Add optional support for PZEM004T energy sensor
- * Change Sonoff Pow Enenrgy MQTT data message and consolidate Status 8 into Status 10
+ * Change Sonoff Pow Energy MQTT data message and consolidate Status 8 into Status 10
  * Change Wemo SetBinaryState to distinguish from GetBinaryState (#1357)
  * Change output of HTTP command to valid JSON only (#1363)
+ * Change output to valid JSON Array if needed (#1363)
  *
  * 5.10.0a
  * Add (experimental) support for sensor SHT3x

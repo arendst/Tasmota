@@ -357,14 +357,14 @@ boolean Xsns15(byte function)
       case FUNC_XSNS_INIT:
         Mhz19Init();
         break;
-      case FUNC_XSNS_PREP:
+      case FUNC_XSNS_PREP_BEFORE_TELEPERIOD:
 //        Mhz19Prep();
         break;
       case FUNC_XSNS_JSON_APPEND:
         Mhz19Show(1);
         break;
 #ifdef USE_WEBSERVER
-      case FUNC_XSNS_WEB:
+      case FUNC_XSNS_WEB_APPEND:
         Mhz19Show(0);
 //        Mhz19Prep();
         break;

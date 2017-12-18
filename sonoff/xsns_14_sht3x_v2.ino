@@ -125,13 +125,13 @@ boolean Xsns14(byte function)
       case FUNC_XSNS_INIT:
         Sht3xDetect();
         break;
-//      case FUNC_XSNS_PREP:
+//      case FUNC_XSNS_PREP_BEFORE_TELEPERIOD:
 //        break;
       case FUNC_XSNS_JSON_APPEND:
         Sht3xShow(1);
         break;
 #ifdef USE_WEBSERVER
-      case FUNC_XSNS_WEB:
+      case FUNC_XSNS_WEB_APPEND:
         Sht3xShow(0);
         break;
 #endif  // USE_WEBSERVER

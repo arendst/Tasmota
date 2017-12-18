@@ -101,14 +101,14 @@ boolean Xsns10(byte function)
     switch (function) {
 //      case FUNC_XSNS_INIT:
 //        break;
-      case FUNC_XSNS_PREP:
+      case FUNC_XSNS_PREP_BEFORE_TELEPERIOD:
         Bh1750Detect();
         break;
       case FUNC_XSNS_JSON_APPEND:
         Bh1750Show(1);
         break;
 #ifdef USE_WEBSERVER
-      case FUNC_XSNS_WEB:
+      case FUNC_XSNS_WEB_APPEND:
         Bh1750Show(0);
         break;
 #endif  // USE_WEBSERVER
