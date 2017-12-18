@@ -83,8 +83,8 @@ const char HTTP_HEAD[] PROGMEM =
   "textarea{resize:none;width:98%;height:318px;padding:5px;overflow:auto;}"
   "body{text-align:center;font-family:verdana;}"
   "td{padding:0px;}"
-  "button{border:0;border-radius:0.3rem;background-color:{template_web_bc1};color:#fff;line-height:2.4rem;font-size:1.2rem;width:100%;-webkit-transition-duration:0.4s;transition-duration:0.4s;}"
-  "button:hover{background-color:{template_web_bc2};}"
+  "button{border:0;border-radius:0.3rem;background-color:{wbc};color:#fff;line-height:2.4rem;font-size:1.2rem;width:100%;-webkit-transition-duration:0.4s;transition-duration:0.4s;}"
+  "button:hover{background-color:{wbh};}"
   "a{text-decoration:none;}"
   ".p{float:left;text-align:left;}"
   ".q{float:right;text-align:right;}"
@@ -415,8 +415,8 @@ void ShowPage(String &page)
   }
   page.replace(F("{ha"), my_module.name);
   page.replace(F("{h}"), Settings.friendlyname[0]);
-  page.replace(F("{template_web_bc1}"), Settings.web_bc1);
-  page.replace(F("{template_web_bc2}"), Settings.web_bc2);
+  page.replace(F("{wbc}"), Settings.web_bc1);
+  page.replace(F("{wbh}"), Settings.web_bc2);
   if (HTTP_MANAGER == webserver_state) {
     if (WifiConfigCounter()) {
       page.replace(F("<body>"), F("<body onload='u()'>"));

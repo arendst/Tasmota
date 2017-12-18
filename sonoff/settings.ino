@@ -420,10 +420,6 @@ void SettingsDefaultSet2()
   Settings.syslog_port = SYS_LOG_PORT;
   Settings.syslog_level = SYS_LOG_LEVEL;
   Settings.webserver = WEB_SERVER;
-  //strlcpy(Settings.web_bc1, "#00ff00", 8);
-  //strlcpy(Settings.web_bc2, "#0000ff", 8);
-  strlcpy(Settings.web_bc1, WEB_BC1, sizeof(Settings.web_bc1));
-  strlcpy(Settings.web_bc2, WEB_BC2, sizeof(Settings.web_bc2));
   Settings.weblog_level = WEB_LOG_LEVEL;
 
   strlcpy(Settings.mqtt_fingerprint, MQTT_FINGERPRINT, sizeof(Settings.mqtt_fingerprint));
@@ -531,6 +527,11 @@ void SettingsDefaultSet2()
 
   // 5.9.2
   Settings.flag2.current_resolution = 3;
+
+  // 5.10.0
+  strlcpy(Settings.web_bc1, WEB_BC1, sizeof(Settings.web_bc1));
+  strlcpy(Settings.web_bc2, WEB_BC2, sizeof(Settings.web_bc2));
+
 }
 
 /********************************************************************************************/
@@ -797,6 +798,10 @@ void SettingsDelta()
       Settings.flag2.voltage_resolution = Settings.flag.voltage_resolution;
       Settings.flag2.current_resolution = 3;
       Settings.ina219_mode = 0;
+    }
+    if (Settings.version < 0x050A0000) {
+      strlcpy(Settings.web_bc1, WEB_BC1, sizeof(Settings.web_bc1));
+      strlcpy(Settings.web_bc2, WEB_BC2, sizeof(Settings.web_bc2));
     }
     Settings.version = VERSION;
     SettingsSave(1);
