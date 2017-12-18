@@ -59,6 +59,8 @@ void CounterUpdate4()
   CounterUpdate(4);
 }
 
+/********************************************************************************************/
+
 void CounterSaveState()
 {
   for (byte i = 0; i < MAX_COUNTERS; i++) {
@@ -67,8 +69,6 @@ void CounterSaveState()
     }
   }
 }
-
-/********************************************************************************************/
 
 void CounterInit()
 {
@@ -143,6 +143,9 @@ boolean Xsns01(byte function)
       CounterShow(0);
       break;
 #endif  // USE_WEBSERVER
+    case FUNC_XSNS_SAVE_STATE:
+      CounterSaveState();
+      break;
   }
   return result;
 }

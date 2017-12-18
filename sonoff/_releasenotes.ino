@@ -1,4 +1,10 @@
-/* 5.10.0a
+/* 5.10.0b
+ * Add optional support for PZEM004T energy sensor
+ * Change Sonoff Pow Enenrgy MQTT data message and consolidate Status 8 into Status 10
+ * Change Wemo SetBinaryState to distinguish from GetBinaryState (#1357)
+ * Change output of HTTP command to valid JSON only (#1363)
+ *
+ * 5.10.0a
  * Add (experimental) support for sensor SHT3x
  * Add support for sensor MH-Z19(B) using serial interface to be enabled with define USE_MHZ19_HARD_SERIAL in user_config.h (#561, #1248)
  * Add (experimental) support for sensor MH-Z19(B) using SoftwareSerial to be enabled with define USE_MHZ19_SOFT_SERIAL_OBSOLETE in user_config.h (#561, #1248)
@@ -12,6 +18,10 @@
  * Add support for TSL2561 using adafruit library (#661, #1311)
  * Add alternative support for SHT3x enabled with define USE_SHT3X_V2 in user_config.h (#1314)
  * Add alternative support for SHT3x enabled with define USE_SHT3X_V3 in user_config.h (#1314)
+ * Fix PWM initialization in Dimmer/Color mode (#1321)
+ * Fix BME680 pressure data (#1356)
+ * Minor webpage HTML optimizations (#1358)
+ * Change text to Active for 3 minutes (#1364)
  *
  * 5.10.0 20171201
  * Upgrade library ArduinoJson to 5.11.2

@@ -58,6 +58,9 @@ void WifiWpsStatusCallback(wps_cb_status status);
 #ifdef USE_EMULATION
 #undef USE_EMULATION                        // Disable Wemo or Hue emulation
 #endif
+#ifdef USE_PZEM004T
+#undef USE_PZEM004T                         // Disable PZEM004T energy sensor
+#endif
 #ifdef USE_DS18x20
 #undef USE_DS18x20                          // Disable DS18x20 sensor
 #endif
