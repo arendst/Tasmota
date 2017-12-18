@@ -1386,13 +1386,13 @@ void MqttDataCallback(char* topic, byte* data, unsigned int data_len)
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, Settings.web_password);
     }
     else if (CMND_WEBBC1 == command_code) {
-      if ((data_len > 0) && (data_len < sizeof(Settings.web_bc1))) {
+      if (data_len == 7) {
         strlcpy(Settings.web_bc1, (!strcmp(dataBuf,"0")) ? "" : (1 == payload) ? WEB_BC1 : dataBuf, sizeof(Settings.web_bc1));
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, Settings.web_bc1);
     }
     else if (CMND_WEBBC2 == command_code) {
-      if ((data_len > 0) && (data_len < sizeof(Settings.web_bc2))) {
+      if (data_len == 7) {
         strlcpy(Settings.web_bc2, (!strcmp(dataBuf,"0")) ? "" : (1 == payload) ? WEB_BC2 : dataBuf, sizeof(Settings.web_bc2));
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, Settings.web_bc2);
