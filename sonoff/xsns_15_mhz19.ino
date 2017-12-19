@@ -71,7 +71,7 @@ char mhz19_types[7];
 
 float mhz19_temperature = 0;
 uint8_t mhz19_timer = 0;
-uint8_t mhz19_retry = 0;
+uint8_t mhz19_retry = MHZ19_RETRY_COUNT;
 Ticker mhz19_ticker;
 
 /*********************************************************************************************\
