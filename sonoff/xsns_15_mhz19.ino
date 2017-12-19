@@ -54,6 +54,7 @@ enum Mhz19FilterOptions {MHZ19_FILTER_OFF, MHZ19_FILTER_OFF_ALLSAMPLES, MHZ19_FI
 
 #define MHZ19_BAUDRATE               9600
 #define MHZ19_READ_TIMEOUT           500     // Must be way less than 1000
+#define MHZ19_RETRY_COUNT            8
 
 const char kMhz19Types[] PROGMEM = "MHZ19|MHZ19B";
 
@@ -70,6 +71,7 @@ char mhz19_types[7];
 
 float mhz19_temperature = 0;
 uint8_t mhz19_timer = 0;
+uint8_t mhz19_retry = 0;
 Ticker mhz19_ticker;
 
 /*********************************************************************************************\
@@ -238,6 +240,14 @@ void Mhz19222ms()
   }
 
   if (1 == mhz19_timer) {
+    if (mhz19_retry) {
+      mhz19_retry--;
+      if (!mhz19_retry) {
+        mhz19_last_ppm = 0;
+        mhz19_temperature = 0;
+      }
+    }
+
     unsigned long  start = millis();
     uint8_t counter = 0;
     while (((millis() - start) < MHZ19_READ_TIMEOUT) && (counter < 9)) {
@@ -278,6 +288,7 @@ void Mhz19222ms()
       uint8_t s = mhz19_response[5];
       mhz19_type = (s) ? 1 : 2;
       if (Mhz19CheckAndApplyFilter(ppm, s)) {
+        mhz19_retry = MHZ19_RETRY_COUNT;
 
         if (0 == s || 64 == s) {  // Reading is stable.
           if (mhz19_abc_must_apply) {
