@@ -159,6 +159,9 @@
 #define HUMIDITY_RESOLUTION    1                 // [HumRes] Maximum number of decimals (0 - 3) showing sensor Humidity
 #define PRESSURE_RESOLUTION    1                 // [PressRes] Maximum number of decimals (0 - 3) showing sensor Pressure
 #define ENERGY_RESOLUTION      3                 // [EnergyRes] Maximum number of decimals (0 - 5) showing energy usage in kWh
+//STB mod
+#define COUNTERDEVIDER         1                 // counter divider or set CounterDevider 1-4
+//end
 
 // -- Sensor code selection -----------------------
 #define USE_ADC_VCC                              // Display Vcc in Power status. Disable for use as Analog input on selected devices

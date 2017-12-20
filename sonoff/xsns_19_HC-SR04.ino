@@ -42,33 +42,35 @@ String sr04_readDistance(void)
     String page = "";
     snprintf_P(log_data, sizeof(log_data), PSTR("HS-SR04: Start measurement: Trig: %d Echo: %d"),pin[GPIO_SEN_TRIG],pin[GPIO_SEN_ECHO]);
     AddLog(LOG_LEVEL_DEBUG);
-    int  duration = 0, counter = 0, max = 0;
+    int  duration = 0, counter = 0, sum = 0;
     float distance = 0;
-    while ( counter < 10) {
-      digitalWrite(pin[GPIO_SEN_TRIG], LOW);  // Added this line
-      delayMicroseconds(3); // Added this line
+    while ( counter < 20) {
+      //digitalWrite(pin[GPIO_SEN_TRIG], LOW);  // Added this line
+      //delayMicroseconds(3); // Added this line
       noInterrupts();
       digitalWrite(pin[GPIO_SEN_TRIG], HIGH);
       //  delayMicroseconds(1000); - Removed this line
-      delayMicroseconds(10); // Added this line
+      delayMicroseconds(50); // Added this line
       digitalWrite(pin[GPIO_SEN_TRIG], LOW);
       duration = pulseIn(pin[GPIO_SEN_ECHO], HIGH);
       interrupts();
       yield();
-      max = max(duration,max);
+      sum = sum + duration;
       dtostrfi(duration, 2, stemp1);
       snprintf_P(log_data, sizeof(log_data), PSTR("HS-SR04 In Duration: %s"),stemp1);
       AddLog(LOG_LEVEL_ALL);
       counter++;
     }
-
-    distance = (max/2) / 29.1;
+    distance = (sum/40.0) / 29.1;
     _distance = (_distance==0?distance:_distance); //initialize on restart
+    dtostrfd(distance, 2, stemp1);
+    snprintf_P(log_data, sizeof(log_data), PSTR("HS-SR04: Avg Distance measured: %s"),stemp1);
+    AddLog(LOG_LEVEL_DEBUG);
     _distance = (distance>_distance?min(distance,_distance+MAX_DEVIATION_BETWEEN_MEASURES):max(distance,_distance-MAX_DEVIATION_BETWEEN_MEASURES));
 
 
     dtostrfd(_distance, 2, stemp1);
-    snprintf_P(log_data, sizeof(log_data), PSTR("HS-SR04: Max Distance: %s"),stemp1);
+    snprintf_P(log_data, sizeof(log_data), PSTR("HS-SR04: New Distance: %s"),stemp1);
     AddLog(LOG_LEVEL_DEBUG);
 
     if (distance > 0 && distance < 200) {

@@ -81,7 +81,9 @@ void CounterInit()
       attachInterrupt(pin[GPIO_CNTR1 +i], counter_callbacks[i], FALLING);
 // STB mode
       //avoid DIV 0 on unitiialized
-      if (Settings.pulse_devider[i] == 0 || Settings.pulse_devider[i] == 65535 ) {Settings.pulse_devider[i] = 1;}
+      if (Settings.pulse_devider[i] == 0 || Settings.pulse_devider[i] == 65535 ) {
+        Settings.pulse_devider[i] = COUNTERDEVIDER;
+      }
 // end
     }
   }
