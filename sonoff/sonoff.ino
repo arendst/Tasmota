@@ -973,7 +973,17 @@ void MqttDataCallback(char* topic, byte* data, unsigned int data_len)
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, Settings.blinkcount);
     }
     else if (light_type && LightCommand(type, index, dataBuf, data_len, payload)) {
-      // Serviced
+      // lobradov: MQTT data is holding a command result, but we still need to send a light object out.
+      if (mqtt_data[0] != '\0') {
+        // flush the results.
+        MqttPublishPrefixTopic_P(5, type);
+        mqtt_data[0] = '\0';
+      }
+      LightGetStatus();
+      if (mqtt_data[0] != '\0') {
+        MqttPublishPrefixTopic_P(1, PSTR(D_RSLT_LIGHT), Settings.flag.mqtt_power_retain);
+        mqtt_data[0] = '\0';
+      }
     }
     else if (CMND_SAVEDATA == command_code) {
       if ((payload >= 0) && (payload <= 3600)) {

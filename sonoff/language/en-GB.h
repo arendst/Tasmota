@@ -535,6 +535,7 @@
 #define D_RSLT_MARGINS "MARGINS"
 #define D_RSLT_WARNING "WARNING"
 #define D_RSLT_ENERGY "ENERGY"
+#define D_RSLT_LIGHT  "LIGHT"
 
 // Commands
 #define D_CMND_MQTTHOST "MqttHost"
