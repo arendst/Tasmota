@@ -25,6 +25,7 @@ extern "C" {
 #endif
 
 #include "user_interface.h"
+#include "lva.h"
 
 // Function prototypes
 void WifiWpsStatusCallback(wps_cb_status status);
@@ -102,6 +103,5 @@ void WifiWpsStatusCallback(wps_cb_status status);
 #ifndef MESSZ
 #define MESSZ                  405          // Max number of characters in JSON message string (6 x DS18x20 sensors)
 #endif
-
 
 #endif  // _SONOFF_POST_H_

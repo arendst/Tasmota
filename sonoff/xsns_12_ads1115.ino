@@ -190,11 +190,19 @@ void Ads1115Show(boolean json)
           stemp[0] = '\0';
         }
         dsxflg++;
+#ifndef LVA // <- LVA
         snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s%s\"" D_ANALOG_INPUT "%d\":%d"), mqtt_data, stemp, i, adc_value);
+#else
+        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s%s\"A%d\":%d"), mqtt_data, stemp, i, adc_value);
+#endif //  -> LVA
         strcpy(stemp, ",");
 #ifdef USE_WEBSERVER
       } else {
+  #ifndef LVA // <- LVA
         snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_ANALOG, mqtt_data, "ADS1115", i, adc_value);
+  #else
+        snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_ANALOG, mqtt_data, "ADS1115", i, adc_value);
+  #endif //  -> LVA
 #endif  // USE_WEBSERVER
       }
     }
