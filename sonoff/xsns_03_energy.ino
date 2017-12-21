@@ -401,9 +401,6 @@ void PzemSerialRxRead() {
 #define PZEM_POWER_ALARM (uint8_t)0xB5
 #define RESP_POWER_ALARM (uint8_t)0xA5
 
-#define RESPONSE_SIZE sizeof(PZEMCommand)
-#define RESPONSE_DATA_SIZE RESPONSE_SIZE - 2
-
 #define PZEM_DEFAULT_READ_TIMEOUT 500
 #define PZEM_ERROR_VALUE -1.0
 
@@ -418,7 +415,7 @@ IPAddress pzem_ip(192, 168, 1, 1);
 
 float PZEM004T_voltage_rcv()
 {
-  uint8_t data[RESPONSE_DATA_SIZE];
+  uint8_t data[sizeof(PZEMCommand) -2];
 
   if (!PZEM004T_recieve(RESP_VOLTAGE, data)) {
     return PZEM_ERROR_VALUE;
@@ -428,7 +425,7 @@ float PZEM004T_voltage_rcv()
 
 float PZEM004T_current_rcv()
 {
-  uint8_t data[RESPONSE_DATA_SIZE];
+  uint8_t data[sizeof(PZEMCommand) -2];
 
   if (!PZEM004T_recieve(RESP_CURRENT, data)) {
     return PZEM_ERROR_VALUE;
@@ -438,7 +435,7 @@ float PZEM004T_current_rcv()
 
 float PZEM004T_power_rcv()
 {
-  uint8_t data[RESPONSE_DATA_SIZE];
+  uint8_t data[sizeof(PZEMCommand) -2];
 
   if (!PZEM004T_recieve(RESP_POWER, data)) {
     return PZEM_ERROR_VALUE;
@@ -448,7 +445,7 @@ float PZEM004T_power_rcv()
 
 float PZEM004T_energy_rcv()
 {
-  uint8_t data[RESPONSE_DATA_SIZE];
+  uint8_t data[sizeof(PZEMCommand) -2];
 
   if (!PZEM004T_recieve(RESP_ENERGY, data)) {
     return PZEM_ERROR_VALUE;
@@ -482,17 +479,16 @@ void PZEM004T_send(uint8_t cmd)
 
 bool PZEM004T_isReady()
 {
-  return PzemSerialAvailable() >= RESPONSE_SIZE;
+  return PzemSerialAvailable() >= sizeof(PZEMCommand);
 }
 
 bool PZEM004T_recieve(uint8_t resp, uint8_t *data)
 {
-  uint8_t buffer[RESPONSE_SIZE];
+  uint8_t buffer[sizeof(PZEMCommand)];
 
   unsigned long startTime = millis();
   uint8_t len = 0;
-//  while ((len < RESPONSE_SIZE) && (millis() - startTime < PZEM_DEFAULT_READ_TIMEOUT)) {
-  while ((len < RESPONSE_SIZE) && (millis() - startTime < PZEM_DEFAULT_READ_TIMEOUT)) {
+  while ((len < sizeof(PZEMCommand)) && (millis() - startTime < PZEM_DEFAULT_READ_TIMEOUT)) {
     if (PzemSerialAvailable() > 0) {
       uint8_t c = (uint8_t)PzemSerialRead();
       if (!c && !len) {
@@ -503,17 +499,20 @@ bool PZEM004T_recieve(uint8_t resp, uint8_t *data)
 //    yield();  // do background netw tasks while blocked for IO (prevents ESP watchdog trigger) - This triggers Watchdog!!!
   }
 
-  if (len != RESPONSE_SIZE) {
+  if (len != sizeof(PZEMCommand)) {
+//    AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "Pzem comms timeout"));
     return false;
   }
   if (buffer[6] != PZEM004T_crc(buffer, len - 1)) {
+//    AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "Pzem crc error"));
     return false;
   }
   if (buffer[0] != resp) {
+//    AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "Pzem bad response"));
     return false;
   }
   if (data) {
-    for (int i = 0; i < RESPONSE_DATA_SIZE; i++) {
+    for (int i = 0; i < sizeof(PZEMCommand) -2; i++) {
       data[i] = buffer[1 + i];
     }
   }
@@ -1150,17 +1149,17 @@ boolean Xsns03(byte function)
       case FUNC_XSNS_EVERY_SECOND:
         EnergyMarginCheck();
         break;
-//      case FUNC_XSNS_PREP:
+//      case FUNC_XSNS_PREP_BEFORE_TELEPERIOD:
 //        break;
       case FUNC_XSNS_JSON_APPEND:
         EnergyShow(1);
         break;
 #ifdef USE_WEBSERVER
-      case FUNC_XSNS_WEB:
+      case FUNC_XSNS_WEB_APPEND:
         EnergyShow(0);
         break;
 #endif  // USE_WEBSERVER
-      case FUNC_XSNS_SAVE_STATE:
+      case FUNC_XSNS_SAVE_BEFORE_RESTART:
         EnergySaveState();
         break;
     }

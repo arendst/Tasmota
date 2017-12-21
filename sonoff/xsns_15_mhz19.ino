@@ -1,7 +1,7 @@
 /*
-  xsns_15_mhz.ino - MH-Z19 CO2 sensor support for Sonoff-Tasmota
+  xsns_15_mhz.ino - MH-Z19(B) CO2 sensor support for Sonoff-Tasmota
 
-  Copyright (C) 2017  Theo Arends
+  Copyright (C) 2018  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -17,11 +17,11 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifdef USE_MHZ19_SOFT_SERIAL
+#ifdef USE_MHZ19
 /*********************************************************************************************\
  * MH-Z19 - CO2 sensor
  *
- * Based on EspEasy plugin P049 by Dmitry (rel22 ___ inbox.ru)
+ * Adapted from  EspEasy plugin P049 by Dmitry (rel22 ___ inbox.ru)
  **********************************************************************************************
  * Filter usage
  *
@@ -53,7 +53,8 @@ enum Mhz19FilterOptions {MHZ19_FILTER_OFF, MHZ19_FILTER_OFF_ALLSAMPLES, MHZ19_FI
 /*********************************************************************************************/
 
 #define MHZ19_BAUDRATE               9600
-#define MHZ19_READ_TIMEOUT           600     // Must be way less than 1000
+#define MHZ19_READ_TIMEOUT           500     // Must be way less than 1000
+#define MHZ19_RETRY_COUNT            8
 
 const char kMhz19Types[] PROGMEM = "MHZ19|MHZ19B";
 
@@ -61,13 +62,17 @@ const uint8_t mhz19_cmnd_read_ppm[9] =    {0xFF, 0x01, 0x86, 0x00, 0x00, 0x00, 0
 const uint8_t mhz19_cmnd_abc_enable[9] =  {0xFF, 0x01, 0x79, 0xA0, 0x00, 0x00, 0x00, 0x00, 0xE6};
 const uint8_t mhz19_cmnd_abc_disable[9] = {0xFF, 0x01, 0x79, 0x00, 0x00, 0x00, 0x00, 0x00, 0x86};
 
-uint8_t mhz19_type = 0;
+uint8_t mhz19_type = 1;
 uint16_t mhz19_last_ppm = 0;
 uint8_t mhz19_filter = MHZ19_FILTER_OPTION;
-uint8_t mhz19_response[9];
 bool mhz19_abc_enable = MHZ19_ABC_ENABLE;
 bool mhz19_abc_must_apply = false;
 char mhz19_types[7];
+
+float mhz19_temperature = 0;
+uint8_t mhz19_timer = 0;
+uint8_t mhz19_retry = MHZ19_RETRY_COUNT;
+Ticker mhz19_ticker;
 
 /*********************************************************************************************\
  * Subset SoftwareSerial
@@ -85,7 +90,7 @@ unsigned long mhz19_serial_bit_time;
 unsigned long mhz19_serial_bit_time_start;
 
 bool Mhz19SerialValidGpioPin(uint8_t pin) {
-  return (pin >= 0 && pin <= 5) || (pin >= 12 && pin <= 15);
+  return (pin >= 0 && pin <= 5) || (pin >= 9 && pin <= 10) || (pin >= 12 && pin <= 15);
 }
 
 bool Mhz19Serial(uint8_t receive_pin, uint8_t transmit_pin)
@@ -158,7 +163,7 @@ size_t Mhz19SerialWrite(const uint8_t *buffer, size_t size = 1) {
   return n;
 }
 
-void Mhz19SerialRxRead() ICACHE_RAM_ATTR;  // Add 215 bytes to iram usage
+//void Mhz19SerialRxRead() ICACHE_RAM_ATTR;  // Add 215 bytes to iram usage
 void Mhz19SerialRxRead() {
   // Advance the starting point for the samples but compensate for the
   // initial delay which occurs before the interrupt is delivered
@@ -222,31 +227,37 @@ bool Mhz19CheckAndApplyFilter(uint16_t ppm, uint8_t s)
   return true;
 }
 
-bool Mhz19Read(uint16_t &p, float &t)
+void Mhz19222ms()
 {
-  bool status = false;
+  uint8_t mhz19_response[9];
 
-  p = 0;
-  t = NAN;
+  mhz19_timer++;
+  if (6 == mhz19_timer) {  // MH-Z19 measuring cycle takes 1005 +5% ms
+    mhz19_timer = 0;
 
-  if (mhz19_type)
-  {
     Mhz19SerialFlush();
-    if (Mhz19SerialWrite(mhz19_cmnd_read_ppm, 9) != 9) {
-      return false;          // Unable to send 9 bytes
+    Mhz19SerialWrite(mhz19_cmnd_read_ppm, 9);
+  }
+
+  if (1 == mhz19_timer) {
+    if (mhz19_retry) {
+      mhz19_retry--;
+      if (!mhz19_retry) {
+        mhz19_last_ppm = 0;
+        mhz19_temperature = 0;
+      }
     }
-    memset(mhz19_response, 0, sizeof(mhz19_response));
-    uint32_t start = millis();
+
+    unsigned long  start = millis();
     uint8_t counter = 0;
     while (((millis() - start) < MHZ19_READ_TIMEOUT) && (counter < 9)) {
       if (Mhz19SerialAvailable() > 0) {
         mhz19_response[counter++] = Mhz19SerialRead();
-      } else {
-        delay(10);
       }
     }
-    if (counter < 9){
-      return false;          // Timeout while trying to read
+    if (counter < 9) {
+//      AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "MH-Z19 comms timeout"));
+      return;
     }
 
     byte crc = 0;
@@ -255,61 +266,56 @@ bool Mhz19Read(uint16_t &p, float &t)
     }
     crc = 255 - crc;
     crc++;
+    if (mhz19_response[8] != crc) {
+//      AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "MH-Z19 crc error"));
+      return;
+    }
+    if (0xFF != mhz19_response[0] || 0x86 != mhz19_response[1]) {
+//      AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "MH-Z19 bad response"));
+      return;
+    }
 
-/*
-    // Test data
-    mhz19_response[0] = 0xFF;
-    mhz19_response[1] = 0x86;
-    mhz19_response[2] = 0x12;
-    mhz19_response[3] = 0x86;
-    mhz19_response[4] = 64;
-//    mhz19_response[5] = 32;
-    mhz19_response[8] = crc;
-*/
+    uint16_t u = (mhz19_response[6] << 8) | mhz19_response[7];
+    if (15000 == u) {      // During (and only ever at) sensor boot, 'u' is reported as 15000
+      if (!mhz19_abc_enable) {
+        // After bootup of the sensor the ABC will be enabled.
+        // Thus only actively disable after bootup.
+        mhz19_abc_must_apply = true;
+      }
+    } else {
+      uint16_t ppm = (mhz19_response[2] << 8) | mhz19_response[3];
+      mhz19_temperature = ConvertTemp((float)mhz19_response[4] - 40);
+      uint8_t s = mhz19_response[5];
+      mhz19_type = (s) ? 1 : 2;
+      if (Mhz19CheckAndApplyFilter(ppm, s)) {
+        mhz19_retry = MHZ19_RETRY_COUNT;
 
-    if (0xFF == mhz19_response[0] && 0x86 == mhz19_response[1] && mhz19_response[8] == crc)  {
-      uint16_t u = (mhz19_response[6] << 8) | mhz19_response[7];
-      if (15000 == u) {      // During (and only ever at) sensor boot, 'u' is reported as 15000
-        if (!mhz19_abc_enable) {
-          // After bootup of the sensor the ABC will be enabled.
-          // Thus only actively disable after bootup.
-          mhz19_abc_must_apply = true;
-        }
-      } else {
-        uint16_t ppm = (mhz19_response[2] << 8) | mhz19_response[3];
-        t = ConvertTemp((float)mhz19_response[4] - 40);
-        uint8_t s = mhz19_response[5];
-        if (s) {
-          mhz19_type = 1;
-        } else {
-          mhz19_type = 2;
-        }
-        if (Mhz19CheckAndApplyFilter(ppm, s)) {
-          p = mhz19_last_ppm;
-
-          if (0 == s || 64 == s) {  // Reading is stable.
-            if (mhz19_abc_must_apply) {
-              mhz19_abc_must_apply = false;
-              if (mhz19_abc_enable) {
-                Mhz19SerialWrite(mhz19_cmnd_abc_enable, 9);   // Sent sensor ABC Enable
-              } else {
-                Mhz19SerialWrite(mhz19_cmnd_abc_disable, 9);  // Sent sensor ABC Disable
-              }
+        if (0 == s || 64 == s) {  // Reading is stable.
+          if (mhz19_abc_must_apply) {
+            mhz19_abc_must_apply = false;
+            if (mhz19_abc_enable) {
+              Mhz19SerialWrite(mhz19_cmnd_abc_enable, 9);   // Sent sensor ABC Enable
+            } else {
+              Mhz19SerialWrite(mhz19_cmnd_abc_disable, 9);  // Sent sensor ABC Disable
             }
           }
-
-          status = true;
         }
+
       }
     }
   }
-  return status;
 }
+
+/*********************************************************************************************/
 
 void Mhz19Init()
 {
-  if (Mhz19Serial(pin[GPIO_MHZ_RXD], pin[GPIO_MHZ_TXD])) {
-    mhz19_type = 1;
+  mhz19_type = 0;
+  if ((pin[GPIO_MHZ_RXD] < 99) && (pin[GPIO_MHZ_TXD] < 99)) {
+    if (Mhz19Serial(pin[GPIO_MHZ_RXD], pin[GPIO_MHZ_TXD])) {
+      mhz19_type = 1;
+      mhz19_ticker.attach_ms(222, Mhz19222ms);
+    }
   }
 }
 
@@ -320,25 +326,20 @@ const char HTTP_SNS_CO2[] PROGMEM =
 
 void Mhz19Show(boolean json)
 {
-  uint16_t co2;
-  float t;
+  char temperature[10];
+  dtostrfd(mhz19_temperature, Settings.flag2.temperature_resolution, temperature);
+  GetTextIndexed(mhz19_types, sizeof(mhz19_types), mhz19_type -1, kMhz19Types);
 
-  if (Mhz19Read(co2, t)) {
-    char temperature[10];
-    dtostrfd(t, Settings.flag2.temperature_resolution, temperature);
-    GetTextIndexed(mhz19_types, sizeof(mhz19_types), mhz19_type -1, kMhz19Types);
-
-    if (json) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"%s\":{\"" D_CO2 "\":%d,\"" D_TEMPERATURE "\":%s}"), mqtt_data, mhz19_types, co2, temperature);
+  if (json) {
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"%s\":{\"" D_CO2 "\":%d,\"" D_TEMPERATURE "\":%s}"), mqtt_data, mhz19_types, mhz19_last_ppm, temperature);
 #ifdef USE_DOMOTICZ
-      DomoticzSensor(DZ_COUNT, co2);
+    DomoticzSensor(DZ_COUNT, mhz19_last_ppm);
 #endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
-    } else {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_CO2, mqtt_data, mhz19_types, co2);
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TEMP, mqtt_data, mhz19_types, temperature, TempUnit());
+  } else {
+    snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_CO2, mqtt_data, mhz19_types, mhz19_last_ppm);
+    snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TEMP, mqtt_data, mhz19_types, temperature, TempUnit());
 #endif  // USE_WEBSERVER
-    }
   }
 }
 
@@ -352,21 +353,17 @@ boolean Xsns15(byte function)
 {
   boolean result = false;
 
-  if ((pin[GPIO_MHZ_RXD] < 99) && (pin[GPIO_MHZ_TXD] < 99)) {
+  if (mhz19_type) {
     switch (function) {
       case FUNC_XSNS_INIT:
         Mhz19Init();
-        break;
-      case FUNC_XSNS_PREP:
-//        Mhz19Prep();
         break;
       case FUNC_XSNS_JSON_APPEND:
         Mhz19Show(1);
         break;
 #ifdef USE_WEBSERVER
-      case FUNC_XSNS_WEB:
+      case FUNC_XSNS_WEB_APPEND:
         Mhz19Show(0);
-//        Mhz19Prep();
         break;
 #endif  // USE_WEBSERVER
     }
@@ -374,4 +371,4 @@ boolean Xsns15(byte function)
   return result;
 }
 
-#endif  // USE_MHZ19_SOFT_SERIAL
+#endif  // USE_MHZ19

@@ -504,7 +504,7 @@ boolean Xsns09(byte function)
     switch (function) {
 //      case FUNC_XSNS_INIT:
 //        break;
-      case FUNC_XSNS_PREP:
+      case FUNC_XSNS_PREP_BEFORE_TELEPERIOD:
         BmpDetect();
 #ifdef USE_BME680
         Bme680PerformReading();
@@ -514,7 +514,7 @@ boolean Xsns09(byte function)
         BmpShow(1);
         break;
 #ifdef USE_WEBSERVER
-      case FUNC_XSNS_WEB:
+      case FUNC_XSNS_WEB_APPEND:
         BmpShow(0);
 #ifdef USE_BME680
         Bme680PerformReading();

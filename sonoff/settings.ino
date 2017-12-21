@@ -182,7 +182,7 @@ void SettingsSaveAll()
   } else {
     Settings.power = 0;
   }
-  XsnsCall(FUNC_XSNS_SAVE_STATE);
+  XsnsCall(FUNC_XSNS_SAVE_BEFORE_RESTART);
   SettingsSave(0);
 }
 
