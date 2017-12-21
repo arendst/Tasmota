@@ -41,12 +41,4 @@
 //#endif
 //#define STA_SSID1              "yourssid1"
 
-// бесполезно т.к все утсройства выключены
-// LVA Added
-#ifdef USE_SPI
-  #undef USE_SPI                              // Disable all SPI devices
-#endif
-
-
-
 #endif  // _USER_CONFIG_OVERRIDE_H_
