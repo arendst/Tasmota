@@ -30,9 +30,9 @@
 
 #define BH1750_CONTINUOUS_HIGH_RES_MODE 0x10 // Start measurement at 1lx resolution. Measurement time is approx 120ms.
 
-uint8_t bh1750_type = 0;
 uint8_t bh1750_address;
 uint8_t bh1750_addresses[] = { BH1750_ADDR1, BH1750_ADDR2 };
+uint8_t bh1750_type = 0;
 
 uint16_t Bh1750ReadLux()
 {
@@ -57,12 +57,10 @@ void Bh1750Detect()
     Wire.write(BH1750_CONTINUOUS_HIGH_RES_MODE);
     if (!Wire.endTransmission()) {
       bh1750_type = 1;
+      snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, "BH1750", bh1750_address);
+      AddLog(LOG_LEVEL_DEBUG);
       break;
     }
-  }
-  if (bh1750_type) {
-    snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, "BH1750", bh1750_address);
-    AddLog(LOG_LEVEL_DEBUG);
   }
 }
 
@@ -103,14 +101,14 @@ boolean Xsns10(byte function)
     switch (function) {
 //      case FUNC_XSNS_INIT:
 //        break;
-      case FUNC_XSNS_PREP:
+      case FUNC_XSNS_PREP_BEFORE_TELEPERIOD:
         Bh1750Detect();
         break;
       case FUNC_XSNS_JSON_APPEND:
         Bh1750Show(1);
         break;
 #ifdef USE_WEBSERVER
-      case FUNC_XSNS_WEB:
+      case FUNC_XSNS_WEB_APPEND:
         Bh1750Show(0);
         break;
 #endif  // USE_WEBSERVER

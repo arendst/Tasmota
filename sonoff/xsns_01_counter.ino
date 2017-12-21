@@ -59,6 +59,8 @@ void CounterUpdate4()
   CounterUpdate(4);
 }
 
+/********************************************************************************************/
+
 void CounterSaveState()
 {
   for (byte i = 0; i < MAX_COUNTERS; i++) {
@@ -67,8 +69,6 @@ void CounterSaveState()
     }
   }
 }
-
-/********************************************************************************************/
 
 void CounterInit()
 {
@@ -139,16 +139,19 @@ boolean Xsns01(byte function)
     case FUNC_XSNS_INIT:
       CounterInit();
       break;
-//    case FUNC_XSNS_PREP:
+//    case FUNC_XSNS_PREP_BEFORE_TELEPERIOD:
 //      break;
     case FUNC_XSNS_JSON_APPEND:
       CounterShow(1);
       break;
 #ifdef USE_WEBSERVER
-    case FUNC_XSNS_WEB:
+    case FUNC_XSNS_WEB_APPEND:
       CounterShow(0);
       break;
 #endif  // USE_WEBSERVER
+    case FUNC_XSNS_SAVE_BEFORE_RESTART:
+      CounterSaveState();
+      break;
   }
   return result;
 }

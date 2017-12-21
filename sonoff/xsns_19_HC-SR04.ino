@@ -119,14 +119,14 @@ boolean Xsns19(byte function)
     switch (function) {
 //      case FUNC_XSNS_INIT:
 //        break;
-      case FUNC_XSNS_PREP:
+      case FUNC_XSNS_PREP_BEFORE_TELEPERIOD:
         sr04_init();
         break;
       case FUNC_XSNS_JSON_APPEND:
         sr04_Show(1);
         break;
 #ifdef USE_WEBSERVER
-      case FUNC_XSNS_WEB:
+      case FUNC_XSNS_WEB_APPEND:
         sr04_Show(0);
         break;
 #endif // USE_WEBSERVER

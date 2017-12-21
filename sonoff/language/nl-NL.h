@@ -102,6 +102,7 @@
 #define D_FREE_MEMORY "Vrij geheugen"
 #define D_FREEMEMORY "Vrij"
 #define D_FROM "van"
+#define D_GAS "Gas"
 #define D_GATEWAY "Gateway"
 #define D_GROUP "Groep"
 #define D_HEAPSIZE "Heap"
@@ -238,7 +239,7 @@
 #define D_OSWATCH "osWatch"
 #define D_BLOCKED_LOOP "Blocked Loop"
 #define D_WPS_FAILED_WITH_STATUS "WPSconfig mislukt met status"
-#define D_ACTIVE_FOR_1_MINUTE "1 minuut actief"
+#define D_ACTIVE_FOR_3_MINUTES "3 minuten actief"
 #define D_FAILED_TO_START "mislukt"
 #define D_PATCH_ISSUE_2186 "Patch issue 2186"
 #define D_CONNECTING_TO_AP "Verbinden met AP"
@@ -436,7 +437,7 @@
 #define D_HUE_POST_ARGS "Hue POST argumenten"
 #define D_3_RESPONSE_PACKETS_SENT "3 antwoord paketten verstuurd"
 
-// xsns_03_hlw8012.ino
+// xsns_03_energy.ino
 #define D_MAXPOWERREACHED "MaxPowerReached"
 #define D_MAXPOWERREACHEDRETRY "MaxPowerReachedRetry"
 #define D_POWERMONITOR "PowerMonitor"
@@ -481,6 +482,8 @@
 #define D_SENSOR_COUNTER  "Teller"  // Suffix "1"
 #define D_SENSOR_MHZ_RX   "MHZ Rx"
 #define D_SENSOR_MHZ_TX   "MHZ Tx"
+#define D_SENSOR_PZEM_RX  "PZEM Rx"
+#define D_SENSOR_PZEM_TX  "PZEM Tx"
 #define D_SENSOR_IRRECV   "IRrecv"
 #define D_SENSOR_SPI_CS   "SPI CS"
 #define D_SENSOR_SPI_DC   "SPI DC"
@@ -489,6 +492,7 @@
 // Units
 #define D_UNIT_AMPERE "A"
 #define D_UNIT_HOUR "h"
+#define D_UNIT_KILOOHM "kOhm"
 #define D_UNIT_KILOWATTHOUR "kWh"
 #define D_UNIT_LUX "lx"
 #define D_UNIT_MICROSECOND "us"
@@ -682,7 +686,7 @@
 #define D_CMND_RFLOW "RfLow"
 #define D_CMND_RFSYNC "RfSync"
 
-// Commands xsns_03_hlw8012.ino
+// Commands xsns_03_energy.ino
 #define D_CMND_POWERLOW "PowerLow"
 #define D_CMND_POWERHIGH "PowerHigh"
 #define D_CMND_VOLTAGELOW "VoltageLow"

@@ -88,12 +88,10 @@ void Ads1115Detect()
       adc0.setRate(ADS1115_RATE_860);
       adc0.setMode(ADS1115_MODE_CONTINUOUS);
       ads1115_type = 1;
+      snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, "ADS1115", ads1115_address);
+      AddLog(LOG_LEVEL_DEBUG);
       break;
     }
-  }
-  if (ads1115_type) {
-    snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, "ADS1115", ads1115_address);
-    AddLog(LOG_LEVEL_DEBUG);
   }
 }
 
@@ -142,14 +140,14 @@ boolean Xsns12(byte function)
     switch (function) {
 //      case FUNC_XSNS_INIT:
 //        break;
-      case FUNC_XSNS_PREP:
+      case FUNC_XSNS_PREP_BEFORE_TELEPERIOD:
         Ads1115Detect();
         break;
       case FUNC_XSNS_JSON_APPEND:
         Ads1115Show(1);
         break;
 #ifdef USE_WEBSERVER
-      case FUNC_XSNS_WEB:
+      case FUNC_XSNS_WEB_APPEND:
         Ads1115Show(0);
         break;
 #endif  // USE_WEBSERVER

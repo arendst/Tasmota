@@ -164,12 +164,10 @@ void Ina219Detect()
     ina219_address = ina219_addresses[i];
     if (Ina219SetCalibration(Settings.ina219_mode)) {
       ina219_type = 1;
+      snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, "INA219", ina219_address);
+      AddLog(LOG_LEVEL_DEBUG);
       break;
     }
-  }
-  if (ina219_type) {
-    snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, "INA219", ina219_address);
-    AddLog(LOG_LEVEL_DEBUG);
   }
 }
 
@@ -223,14 +221,14 @@ boolean Xsns13(byte function)
     switch (function) {
 //      case FUNC_XSNS_INIT:
 //        break;
-      case FUNC_XSNS_PREP:
+      case FUNC_XSNS_PREP_BEFORE_TELEPERIOD:
         Ina219Detect();
         break;
       case FUNC_XSNS_JSON_APPEND:
         Ina219Show(1);
         break;
 #ifdef USE_WEBSERVER
-      case FUNC_XSNS_WEB:
+      case FUNC_XSNS_WEB_APPEND:
         Ina219Show(0);
         break;
 #endif  // USE_WEBSERVER

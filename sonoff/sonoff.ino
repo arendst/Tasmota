@@ -25,8 +25,8 @@
     - Select IDE Tools - Flash Size: "1M (no SPIFFS)"
   ====================================================*/
 
-#define VERSION                0x050A0001
-#define VERSION_STRING         "5.10.0a"    // Would be great to have a macro that fills this from VERSION ...
+#define VERSION                0x050A0002
+#define VERSION_STRING         "5.10.0b"    // Would be great to have a macro that fills this from VERSION ...
 
 // Location specific includes
 #include "sonoff.h"                         // Enumaration used in user_config.h
@@ -42,7 +42,7 @@
 #if (MQTT_MAX_PACKET_SIZE -TOPSZ -7) < MESSZ  // If the max message size is too small, throw an error at compile time. See PubSubClient.cpp line 359
   #error "MQTT_MAX_PACKET_SIZE is too small in libraries/PubSubClient/src/PubSubClient.h, increase it to at least 512"
 #endif
-#include <Ticker.h>                         // RTC, HLW8012, OSWatch
+#include <Ticker.h>                         // RTC, Energy, OSWatch
 #include <ESP8266WiFi.h>                    // MQTT, Ota, WifiManager
 #include <ESP8266HTTPClient.h>              // MQTT, Ota
 #include <ESP8266httpUpdate.h>              // Ota
@@ -189,7 +189,7 @@ power_t rel_inverted = 0;                   // Relay inverted flag (1 = (0 = On,
 uint8_t led_inverted = 0;                   // LED inverted flag (1 = (0 = On, 1 = Off))
 uint8_t pwm_inverted = 0;                   // PWM inverted flag (1 = inverted)
 uint8_t dht_flg = 0;                        // DHT configured
-uint8_t hlw_flg = 0;                        // Power monitor configured
+uint8_t energy_flg = 1;                     // Energy monitor configured
 uint8_t i2c_flg = 0;                        // I2C configured
 uint8_t spi_flg = 0;                        // SPI configured
 uint8_t light_type = 0;                     // Light types
@@ -205,7 +205,7 @@ boolean (*xsns_func_ptr[XSNS_MAX])(byte);   // External Sensor Function Pointers
 char my_hostname[33];                       // Composed Wifi hostname
 char mqtt_client[33];                        // Composed MQTT Clientname
 char serial_in_buffer[INPUT_BUFFER_SIZE + 2]; // Receive buffer
-char mqtt_data[MESSZ];                      // MQTT publish buffer
+char mqtt_data[MESSZ + TOPSZ];              // MQTT publish buffer (MESSZ) and web page ajax buffer (MESSZ + TOPSZ)
 char log_data[TOPSZ + MESSZ];               // Logging
 String web_log[MAX_LOG_LINES];              // Web log buffer
 String backlog[MAX_BACKLOG];                // Command backlog
@@ -348,7 +348,7 @@ void SetDevicePower(power_t rpower)
     rpower >>= 1;
     }
   }
-  HlwSetPowerSteadyCounter(2);
+  EnergySetPowerSteadyCounter(2);
 }
 
 void SetLedPower(uint8_t state)
@@ -372,6 +372,7 @@ void MqttSubscribe(char *topic)
 void MqttPublishDirect(const char* topic, boolean retained)
 {
   if (Settings.flag.mqtt_enabled) {
+    mqtt_data[MESSZ -1] = '\0';
     if (MqttClient.publish(topic, mqtt_data, retained)) {
       snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_MQTT "%s = %s%s"), topic, mqtt_data, (retained) ? " (" D_RETAINED ")" : "");
 //      MqttClient.loop();  // Do not use here! Will block previous publishes
@@ -1137,15 +1138,15 @@ void MqttDataCallback(char* topic, byte* data, unsigned int data_len)
     else if (CMND_MODULES == command_code) {
       for (byte i = 0; i < MAXMODULE; i++) {
         if (!jsflg) {
-          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_MODULES "%d\":\""), lines);
+          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_MODULES "%d\":["), lines);
         } else {
           snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,"), mqtt_data);
         }
         jsflg = 1;
         snprintf_P(stemp1, sizeof(stemp1), kModules[i].name);
-        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s%d (%s)"), mqtt_data, i +1, stemp1);
-        if ((strlen(mqtt_data) > 200) || (i == MAXMODULE -1)) {
-          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s\"}"), mqtt_data);
+        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s\"%d (%s)\""), mqtt_data, i +1, stemp1);
+        if ((strlen(mqtt_data) > 300) || (i == MAXMODULE -1)) {
+          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s]}"), mqtt_data);
           MqttPublishPrefixTopic_P(5, type);
           jsflg = 0;
           lines++;
@@ -1186,15 +1187,15 @@ void MqttDataCallback(char* topic, byte* data, unsigned int data_len)
     else if (CMND_GPIOS == command_code) {
       for (byte i = 0; i < GPIO_SENSOR_END; i++) {
         if (!jsflg) {
-          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_GPIOS "%d\":\""), lines);
+          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_GPIOS "%d\":["), lines);
         } else {
           snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,"), mqtt_data);
         }
         jsflg = 1;
         snprintf_P(stemp1, sizeof(stemp1), kSensors[i]);
-        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s%d (%s)"), mqtt_data, i, stemp1);
-        if ((strlen(mqtt_data) > 200) || (i == GPIO_SENSOR_END -1)) {
-          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s\"}"), mqtt_data);
+        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s\"%d (%s)\""), mqtt_data, i, stemp1);
+        if ((strlen(mqtt_data) > 300) || (i == GPIO_SENSOR_END -1)) {
+          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s]}"), mqtt_data);
           MqttPublishPrefixTopic_P(5, type);
           jsflg = 0;
           lines++;
@@ -1561,7 +1562,7 @@ else if ((CMND_COUNTERDEVIDER == command_code) && (index > 0) && (index <= MAX_C
     else if (Settings.flag.mqtt_enabled && MqttCommand(grpflg, type, index, dataBuf, data_len, payload, payload16)) {
       // Serviced
     }
-    else if (hlw_flg && HlwCommand(type, index, dataBuf, data_len, payload)) {
+    else if (energy_flg && EnergyCommand(type, index, dataBuf, data_len, payload)) {
       // Serviced
     }
     else if ((SONOFF_BRIDGE == Settings.module) && SonoffBridgeCommand(type, index, dataBuf, data_len, payload)) {
@@ -1768,7 +1769,7 @@ void PublishStatus(uint8_t payload)
   if ((!Settings.flag.mqtt_enabled) && (6 == payload)) {
     payload = 99;
   }
-  if ((!hlw_flg) && ((8 == payload) || (9 == payload))) {
+  if (!energy_flg && (9 == payload)) {
     payload = 99;
   }
 
@@ -1823,24 +1824,23 @@ void PublishStatus(uint8_t payload)
     MqttPublishPrefixTopic_P(option, PSTR(D_CMND_STATUS "7"));
   }
 
-  if (hlw_flg) {
-    if ((0 == payload) || (8 == payload)) {
-      HlwMqttStatus();
-      MqttPublishPrefixTopic_P(option, PSTR(D_CMND_STATUS "8"));
-    }
-
+  if (energy_flg) {
     if ((0 == payload) || (9 == payload)) {
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_STATUS D_STATUS9_MARGIN "\":{\"" D_CMND_POWERLOW "\":%d,\"" D_CMND_POWERHIGH "\":%d,\"" D_CMND_VOLTAGELOW "\":%d,\"" D_CMND_VOLTAGEHIGH "\":%d,\"" D_CMND_CURRENTLOW "\":%d,\"" D_CMND_CURRENTHIGH "\":%d}}"),
-        Settings.hlw_pmin, Settings.hlw_pmax, Settings.hlw_umin, Settings.hlw_umax, Settings.hlw_imin, Settings.hlw_imax);
+        Settings.energy_min_power, Settings.energy_max_power, Settings.energy_min_voltage, Settings.energy_max_voltage, Settings.energy_min_current, Settings.energy_max_current);
       MqttPublishPrefixTopic_P(option, PSTR(D_CMND_STATUS "9"));
     }
   }
 
-  if ((0 == payload) || (10 == payload)) {
+  if ((0 == payload) || (8 == payload) || (10 == payload)) {
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_STATUS D_STATUS10_SENSOR "\":"));
     MqttShowSensor();
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}"), mqtt_data);
-    MqttPublishPrefixTopic_P(option, PSTR(D_CMND_STATUS "10"));
+    if (8 == payload) {
+      MqttPublishPrefixTopic_P(option, PSTR(D_CMND_STATUS "8"));
+    } else {
+      MqttPublishPrefixTopic_P(option, PSTR(D_CMND_STATUS "10"));
+    }
   }
 
   if ((0 == payload) || (11 == payload)) {
@@ -1945,7 +1945,7 @@ void PerformEverySecond()
   if (Settings.tele_period) {
     tele_period++;
     if (tele_period == Settings.tele_period -1) {
-      XsnsCall(FUNC_XSNS_PREP);
+      XsnsCall(FUNC_XSNS_PREP_BEFORE_TELEPERIOD);
     }
     if (tele_period >= Settings.tele_period) {
       tele_period = 0;
@@ -1958,9 +1958,9 @@ void PerformEverySecond()
       if (MqttShowSensor()) {
         MqttPublishPrefixTopic_P(2, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);
       }
-
-      XsnsCall(FUNC_XSNS_MQTT_SHOW);
-
+      
+      XsnsCall(FUNC_XSNS_EVERY_SECOND);
+		
       //STB mod
       if (Settings.deepsleep > 10 && Settings.deepsleep < 4294967295) {
         //TODO STEFAN
@@ -1988,10 +1988,6 @@ void PerformEverySecond()
       }
       //end
     }
-  }
-
-  if (hlw_flg) {
-    HlwMarginCheck();
   }
 
   if ((2 == RtcTime.minute) && latest_uptime_flag) {
@@ -2732,7 +2728,7 @@ void GpioInit()
 #endif  // USE_IR_RECEIVE
 #endif  // USE_IR_REMOTE
 
-  hlw_flg = ((pin[GPIO_HLW_SEL] < 99) && (pin[GPIO_HLW_CF1] < 99) && (pin[GPIO_HLW_CF] < 99));
+//  energy_flg = (((pin[GPIO_HLW_SEL] < 99) && (pin[GPIO_HLW_CF1] < 99) && (pin[GPIO_HLW_CF] < 99)) || ((pin[GPIO_PZEM_RX] < 99) && (pin[GPIO_PZEM_TX])));
 
 //STB mod
   if ((pin[GPIO_SEN_TRIG] < 99) && (pin[GPIO_SEN_ECHO] < 99)) {

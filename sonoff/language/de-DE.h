@@ -102,6 +102,7 @@
 #define D_FREE_MEMORY "Freier Speicher"
 #define D_FREEMEMORY "frei"
 #define D_FROM "von"
+#define D_GAS "Gas"
 #define D_GATEWAY "Gateway"
 #define D_GROUP "Gruppe"
 #define D_HEAPSIZE "Heap-Größe"
@@ -238,7 +239,7 @@
 #define D_OSWATCH "osWatch"
 #define D_BLOCKED_LOOP "Blocked Loop"
 #define D_WPS_FAILED_WITH_STATUS "WPS fehlgeschlagen mit Status"
-#define D_ACTIVE_FOR_1_MINUTE "aktiv für 1 Minute"
+#define D_ACTIVE_FOR_3_MINUTES "aktiv für 3 Minuten"
 #define D_FAILED_TO_START "Starten fehlgeschlagen"
 #define D_PATCH_ISSUE_2186 "Patch-Problem 2186"
 #define D_CONNECTING_TO_AP "verbinden mit AP"
@@ -436,7 +437,7 @@
 #define D_HUE_POST_ARGS "Hue POST args"
 #define D_3_RESPONSE_PACKETS_SENT "3 Antwortpakete gesendet"
 
-// xsns_03_hlw8012.ino
+// xsns_03_energy.ino
 #define D_MAXPOWERREACHED "MaxPowerReached"
 #define D_MAXPOWERREACHEDRETRY "MaxPowerReachedRetry"
 #define D_POWERMONITOR "PowerMonitor"
@@ -482,6 +483,8 @@
 #define D_SENSOR_IRRECV   "IRRecv"
 #define D_SENSOR_MHZ_RX   "MHZ Rx"
 #define D_SENSOR_MHZ_TX   "MHZ Tx"
+#define D_SENSOR_PZEM_RX  "PZEM Rx"
+#define D_SENSOR_PZEM_TX  "PZEM Tx"
 #define D_SENSOR_SPI_CS   "SPI CS"
 #define D_SENSOR_SPI_DC   "SPI DC"
 #define D_SENSOR_BACKLIGHT "BLight"
@@ -489,6 +492,7 @@
 // Units
 #define D_UNIT_AMPERE "A"
 #define D_UNIT_HOUR "h"
+#define D_UNIT_KILOOHM "kOhm"
 #define D_UNIT_KILOWATTHOUR "kWh"
 #define D_UNIT_LUX "lx"
 #define D_UNIT_MICROSECOND "µs"
@@ -682,7 +686,7 @@
 #define D_CMND_RFLOW "RfLow"
 #define D_CMND_RFSYNC "RfSync"
 
-// Commands xsns_03_hlw8012.ino
+// Commands xsns_03_energy.ino
 #define D_CMND_POWERLOW "PowerLow"
 #define D_CMND_POWERHIGH "PowerHigh"
 #define D_CMND_VOLTAGELOW "VoltageLow"

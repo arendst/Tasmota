@@ -146,14 +146,14 @@ boolean Xsns20(byte function)
       case FUNC_XSNS_INIT:
         chirp_detect();
         break;
-      case FUNC_XSNS_PREP:
+      case FUNC_XSNS_PREP_BEFORE_TELEPERIOD:
         chirp_detect();
         break;
       case FUNC_XSNS_JSON_APPEND:
         chirp_Show(1);
         break;
 #ifdef USE_WEBSERVER
-      case FUNC_XSNS_WEB:
+      case FUNC_XSNS_WEB_APPEND:
         chirp_Show(0);
         break;
 #endif // USE_WEBSERVER

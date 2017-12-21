@@ -64,7 +64,7 @@ bool Sht3xRead(float &t, float &h)
 //  }
   t = ConvertTemp((float)((((data[0] << 8) | data[1]) * 175) / 65535.0) - 45);
   h = (float)((((data[3] << 8) | data[4]) * 100) / 65535.0);
-  return (!isnan(t) && !isnan(h));
+  return true;
 }
 
 /********************************************************************************************/
@@ -128,14 +128,14 @@ boolean Xsns14(byte function)
       case FUNC_XSNS_INIT:
         Sht3xDetect();
         break;
-      case FUNC_XSNS_PREP:
+      case FUNC_XSNS_PREP_BEFORE_TELEPERIOD:
         Sht3xConvert();
         break;
       case FUNC_XSNS_JSON_APPEND:
         Sht3xShow(1);
         break;
 #ifdef USE_WEBSERVER
-      case FUNC_XSNS_WEB:
+      case FUNC_XSNS_WEB_APPEND:
         Sht3xShow(0);
         Sht3xConvert();
         break;
