@@ -1,7 +1,7 @@
 /*
   settings.h - setting variables for Sonoff-Tasmota
 
-  Copyright (C) 2017  Theo Arends
+  Copyright (C) 2018  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -201,8 +201,8 @@ struct SYSCFG {
   byte          free_451[2];               // 451
 
   uint8_t       sleep;                     // 453
-  uint16_t      domoticz_switch_idx[MAX_DOMOTICZ_IDX]; // 454
-  uint16_t      domoticz_sensor_idx[12];   // 45C
+  uint16_t      domoticz_switch_idx[MAX_DOMOTICZ_IDX];      // 454
+  uint16_t      domoticz_sensor_idx[MAX_DOMOTICZ_SNS_IDX];  // 45C
   uint8_t       module;                    // 474
 
   uint8_t       ws_color[4][3];            // 475

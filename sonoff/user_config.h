@@ -1,7 +1,7 @@
 /*
   user_config.h - user specific configuration for Sonoff-Tasmota
 
-  Copyright (C) 2017  Theo Arends
+  Copyright (C) 2018  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -192,7 +192,8 @@
   #define USE_WS2812_CTYPE     1                 // WS2812 Color type (0 - RGB, 1 - GRB, 2 - RGBW, 3 - GRBW)
 //  #define USE_WS2812_DMA                         // DMA supports only GPIO03 (= Serial RXD) (+1k mem). When USE_WS2812_DMA is enabled expect Exceptions on Pow
 
-//#define USE_MHZ19                               // Add support for MH-Z19 CO2 sensor (+1k8 code)
+//#define USE_MHZ19                                // Add support for MH-Z19 CO2 sensor (+1k8 code)
+//#define USE_SENSEAIR                             // Add support for SenseAir K30, K70 and S8 CO2 sensor (+1k8 code)
 
 #define USE_ARILUX_RF                            // Add support for Arilux RF remote controller (+0k8 code)
 

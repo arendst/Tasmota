@@ -1,5 +1,5 @@
 /*
-  xsns_15_mhz.ino - MH-Z19(B) CO2 sensor support for Sonoff-Tasmota
+  xsns_15_mhz19.ino - MH-Z19(B) CO2 sensor support for Sonoff-Tasmota
 
   Copyright (C) 2018  Theo Arends
 
@@ -227,7 +227,7 @@ bool Mhz19CheckAndApplyFilter(uint16_t ppm, uint8_t s)
   return true;
 }
 
-void Mhz19222ms()
+void Mhz19Ticker()
 {
   uint8_t mhz19_response[9];
 
@@ -314,26 +314,24 @@ void Mhz19Init()
   if ((pin[GPIO_MHZ_RXD] < 99) && (pin[GPIO_MHZ_TXD] < 99)) {
     if (Mhz19Serial(pin[GPIO_MHZ_RXD], pin[GPIO_MHZ_TXD])) {
       mhz19_type = 1;
-      mhz19_ticker.attach_ms(222, Mhz19222ms);
+      mhz19_ticker.attach_ms(222, Mhz19Ticker);
     }
   }
 }
-
-#ifdef USE_WEBSERVER
-const char HTTP_SNS_CO2[] PROGMEM =
-  "%s{s}%s " D_CO2 "{m}%d " D_UNIT_PPM "{e}";  // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
-#endif  // USE_WEBSERVER
 
 void Mhz19Show(boolean json)
 {
   char temperature[10];
   dtostrfd(mhz19_temperature, Settings.flag2.temperature_resolution, temperature);
   GetTextIndexed(mhz19_types, sizeof(mhz19_types), mhz19_type -1, kMhz19Types);
+//  uint8_t co2_limit = (mhz19_last_ppm > 1200) ? 3 : (mhz19_last_ppm > 800) ? 2 : 1;
+//  uint16_t co2_limit = mhz19_last_ppm / 400;  // <800 = 1(Green), <1200 = 2(Orange), >1200 = 3(Red)
 
   if (json) {
+//    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"%s\":{\"" D_CO2 "\":%d,\"" D_LIMIT "\":%d,\"" D_TEMPERATURE "\":%s}"), mqtt_data, mhz19_types, mhz19_last_ppm, co2_limit, temperature);
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"%s\":{\"" D_CO2 "\":%d,\"" D_TEMPERATURE "\":%s}"), mqtt_data, mhz19_types, mhz19_last_ppm, temperature);
 #ifdef USE_DOMOTICZ
-    DomoticzSensor(DZ_COUNT, mhz19_last_ppm);
+    DomoticzSensor(DZ_AIRQUALITY, mhz19_last_ppm);
 #endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
   } else {

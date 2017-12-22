@@ -1,7 +1,7 @@
 /*
   sonoff_template.h - template settings for Sonoff-Tasmota
 
-  Copyright (C) 2017  Theo Arends
+  Copyright (C) 2018  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -82,6 +82,8 @@ enum UserSelectablePins {
   GPIO_MHZ_RXD,        // MH-Z19 Serial interface
   GPIO_PZEM_TX,        // PZEM004T Serial interface
   GPIO_PZEM_RX,        // PZEM004T Serial interface
+  GPIO_SAIR_TX,        // SenseAir Serial interface
+  GPIO_SAIR_RX,        // SenseAir Serial interface
   GPIO_SENSOR_END };
 
 // Text in webpage Module Parameters and commands GPIOS and GPIO
@@ -145,7 +147,9 @@ const char kSensors[GPIO_SENSOR_END][9] PROGMEM = {
   D_SENSOR_MHZ_TX,
   D_SENSOR_MHZ_RX,
   D_SENSOR_PZEM_TX,
-  D_SENSOR_PZEM_RX
+  D_SENSOR_PZEM_RX,
+  D_SENSOR_SAIR_TX,
+  D_SENSOR_SAIR_RX
 };
 
 // Programmer selectable GPIO functionality offset by user selectable GPIOs

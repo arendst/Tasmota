@@ -1,7 +1,7 @@
 /*
   xsns_interface.ino - External sensor interface support for Sonoff-Tasmota
 
-  Copyright (C) 2017  Theo Arends inspired by ESPEasy
+  Copyright (C) 2018  Theo Arends inspired by ESPEasy
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
