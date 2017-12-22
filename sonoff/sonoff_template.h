@@ -209,6 +209,7 @@ enum SupportedModules {
   ARILUX_LC01,
   ARILUX_LC11,
   SONOFF_DUAL_R2,
+  LCTECH,
   MAXMODULE };
 
 /********************************************************************************************/
@@ -790,6 +791,19 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_REL1,        // GPIO12 Relay 1 (0 = Off, 1 = On)
      GPIO_LED1_INV,    // GPIO13 Blue Led (0 = On, 1 = Off)
      0, 0, 0, 0
+  },
+  { "LCTECH Relay",     // LC Technology WiFi Relay
+     0,
+     GPIO_TXD,          // GPIO01 Relay control
+     0,
+     GPIO_RXD,          // GPIO03 Relay control
+     0,                 
+     0,
+     0, 0, 0, 0, 0, 0,  // Flash connection
+     0,
+     0,                
+     0,                
+     0, 0, 0
   }
 };
 
