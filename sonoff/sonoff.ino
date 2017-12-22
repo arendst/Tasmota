@@ -2547,7 +2547,7 @@ void GpioInit()
     devices_present = 0;
     baudrate = 19200;
   }
-  else if ((H801 == Settings.module) || (MAGICHOME == Settings.module) || (ARILUX_LC01 == Settings.module) || (ARILUX_LC11 == Settings.module)) {  // PWM RGBCW led
+  else if ((H801 == Settings.module) || (MAGICHOME == Settings.module) || (ARILUX_LC01 == Settings.module) || (ARILUX_LC11 == Settings.module) || (ARILUX_LC06 == Settings.module)) {  // PWM RGBCW led
     if (!Settings.flag.pwm_control) {
       light_type = LT_BASIC;                 // Use basic PWM control if SetOption15 = 0
     }
