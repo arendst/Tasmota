@@ -62,6 +62,10 @@ byte energy_max_current_flag = 0;
 byte energy_power_steady_cntr = 8;  // Allow for power on stabilization
 byte energy_max_energy_state = 0;
 
+//STB mode
+byte deviceID = 0;
+//end
+
 #if FEATURE_POWER_LIMIT
 byte energy_mplr_counter = 0;
 uint16_t energy_mplh_counter = 0;
@@ -279,7 +283,7 @@ void HlwInit()
 #define PZEM_SERIAL_WAIT { while (ESP.getCycleCount() -start < wait) optimistic_yield(1); wait += pzem_serial_bit_time; }
 
 uint8_t pzem_serial_rx_pin;
-uint8_t pzem_serial_tx_pin;
+uint8_t pzem_serial_tx_pin[3];
 uint8_t pzem_serial_in_pos = 0;
 uint8_t pzem_serial_out_pos = 0;
 uint8_t pzem_serial_buffer[PZEM_SERIAL_BUFFER_SIZE];
@@ -299,9 +303,9 @@ bool PzemSerial(uint8_t receive_pin, uint8_t transmit_pin)
   pinMode(pzem_serial_rx_pin, INPUT);
   attachInterrupt(pzem_serial_rx_pin, PzemSerialRxRead, FALLING);
 
-  pzem_serial_tx_pin = transmit_pin;
-  pinMode(pzem_serial_tx_pin, OUTPUT);
-  digitalWrite(pzem_serial_tx_pin, 1);
+  pzem_serial_tx_pin[deviceID] = transmit_pin;
+  pinMode(pzem_serial_tx_pin[deviceID], OUTPUT);
+  digitalWrite(pzem_serial_tx_pin[deviceID], 1);
 
   pzem_serial_bit_time = ESP.getCpuFreqMHz() *1000000 /PZEM_BAUD_RATE;   // 8333
   pzem_serial_bit_time_start = pzem_serial_bit_time + pzem_serial_bit_time /3 -500;  // 10610 ICACHE_RAM_ATTR start delay
@@ -330,18 +334,18 @@ int PzemSerialAvailable() {
 size_t PzemSerialTxWrite(uint8_t b)
 {
   unsigned long wait = pzem_serial_bit_time;
-  digitalWrite(pzem_serial_tx_pin, HIGH);
+  digitalWrite(pzem_serial_tx_pin[deviceID], HIGH);
   unsigned long start = ESP.getCycleCount();
     // Start bit;
-  digitalWrite(pzem_serial_tx_pin, LOW);
+  digitalWrite(pzem_serial_tx_pin[deviceID], LOW);
   PZEM_SERIAL_WAIT;
   for (int i = 0; i < 8; i++) {
-    digitalWrite(pzem_serial_tx_pin, (b & 1) ? HIGH : LOW);
+    digitalWrite(pzem_serial_tx_pin[deviceID], (b & 1) ? HIGH : LOW);
     PZEM_SERIAL_WAIT;
     b >>= 1;
   }
    // Stop bit
-  digitalWrite(pzem_serial_tx_pin, HIGH);
+  digitalWrite(pzem_serial_tx_pin[deviceID], HIGH);
   PZEM_SERIAL_WAIT;
   return 1;
 }
@@ -544,6 +548,8 @@ PZEMReadStates pzem_read_state = SET_ADDRESS;
 
 byte pzem_sendRetry = 0;
 
+
+
 void PzemEvery200ms()
 {
   bool dataReady = PZEM004T_isReady();
@@ -553,21 +559,21 @@ void PzemEvery200ms()
     switch (pzem_read_state) {
       case SET_ADDRESS:
         if (PZEM004T_setAddress_rcv()) {
-          pzem_read_state = READ_VOLTAGE;
+          pzem_read_state = (deviceID < 2 ? SET_ADDRESS : READ_VOLTAGE);
         }
         break;
       case READ_VOLTAGE:
         pzem_value = PZEM004T_voltage_rcv();
         if (pzem_value != PZEM_ERROR_VALUE) {
           energy_voltage = pzem_value;    // 230.2V
-          pzem_read_state = READ_CURRENT;
+          pzem_read_state = (deviceID < 2 ? READ_VOLTAGE : READ_CURRENT);
         }
         break;
       case READ_CURRENT:
         pzem_value = PZEM004T_current_rcv();
         if (pzem_value != PZEM_ERROR_VALUE) {
           energy_current = pzem_value;    // 17.32A
-          pzem_read_state = READ_POWER;
+          pzem_read_state = (deviceID < 2 ? READ_CURRENT : READ_POWER);
         }
         break;
       case READ_POWER:
@@ -575,7 +581,7 @@ void PzemEvery200ms()
         if (pzem_value != PZEM_ERROR_VALUE) {
           energy_power = pzem_value;  // 20W
           energy_power_factor_ready = true;
-          pzem_read_state = READ_ENERGY;
+          pzem_read_state = (deviceID < 2 ? READ_POWER : READ_ENERGY);
         }
         break;
       case READ_ENERGY:
@@ -590,7 +596,7 @@ void PzemEvery200ms()
             energy_kWhtoday = (energy_total - energy_start) * 100000000;
             energy_daily = (float)energy_kWhtoday / 100000000;
           }
-          pzem_read_state = READ_VOLTAGE;
+          pzem_read_state = (deviceID < 2 ? READ_ENERGY : READ_VOLTAGE);
         }
         break;
     }
@@ -598,7 +604,8 @@ void PzemEvery200ms()
 
   if (0 == pzem_sendRetry || dataReady) {
     pzem_sendRetry = 5;
-
+    deviceID++;
+    if (deviceID==3) {deviceID=0;}
     switch (pzem_read_state) {
       case SET_ADDRESS:
         PZEM004T_send(PZEM_SET_ADDRESS);
@@ -624,7 +631,12 @@ void PzemEvery200ms()
 
 bool PzemInit()
 {
-  return PzemSerial(pin[GPIO_PZEM_RX], pin[GPIO_PZEM_TX]);
+  byte result=0;
+
+  for (byte i=0;i<3;i++) {
+    result = result + PzemSerial(pin[GPIO_PZEM_RX], pin[GPIO_PZEM_TX1 + i]);
+  }
+  return result;
 }
 
 /********************************************************************************************/
@@ -1055,7 +1067,7 @@ void EnergyInit()
     energy_flg = ENERGY_HLW8012;
     HlwInit();
 #ifdef USE_PZEM004T
-  } else if ((pin[GPIO_PZEM_RX] < 99) && (pin[GPIO_PZEM_TX])) {
+} else if ((pin[GPIO_PZEM_RX] < 99) && (pin[GPIO_PZEM_TX1])) {
     if (PzemInit()) {
       energy_flg = ENERGY_PZEM004T;
     }

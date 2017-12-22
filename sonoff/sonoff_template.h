@@ -80,7 +80,9 @@ enum UserSelectablePins {
   GPIO_LED4_INV,
   GPIO_MHZ_TXD,        // MH-Z19 Serial interface
   GPIO_MHZ_RXD,        // MH-Z19 Serial interface
-  GPIO_PZEM_TX,        // PZEM004T Serial interface
+  GPIO_PZEM_TX1,        // PZEM004T Serial interface
+  GPIO_PZEM_TX2,        // PZEM004T Serial interface
+  GPIO_PZEM_TX3,        // PZEM004T Serial interface
   GPIO_PZEM_RX,        // PZEM004T Serial interface
 
   //STB mod
@@ -153,7 +155,9 @@ const char kSensors[GPIO_SENSOR_END][9] PROGMEM = {
   D_SENSOR_LED "4i",
   D_SENSOR_MHZ_TX,
   D_SENSOR_MHZ_RX,
-  D_SENSOR_PZEM_TX,
+  D_SENSOR_PZEM_TX "1",
+  D_SENSOR_PZEM_TX "2",
+  D_SENSOR_PZEM_TX "3",
   D_SENSOR_PZEM_RX,
   //STB mod
   "SNS_TRIG",
