@@ -197,6 +197,7 @@ enum SupportedModules {
   ARILUX_LC01,
   ARILUX_LC11,
   SONOFF_DUAL_R2,
+  ARILUX_LC06,
   MAXMODULE };
 
 /********************************************************************************************/
@@ -248,6 +249,7 @@ const uint8_t kNiceList[MAXMODULE] PROGMEM = {
   H801,
   MAGICHOME,
   ARILUX_LC01,
+  ARILUX_LC06,
   ARILUX_LC11,
   HUAFAN_SS,
   KMC_70011,
@@ -778,7 +780,20 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_REL1,        // GPIO12 Relay 1 (0 = Off, 1 = On)
      GPIO_LED1_INV,    // GPIO13 Blue Led (0 = On, 1 = Off)
      0, 0, 0, 0
-  }
+  },
+  {  "Arilux LC06",     // Arilux AL-LC06 (ESP8285) - https://www.banggood.com/ARILUX-AL-LC06-LED-WIFI-Smartphone-Controller-Romote-5-Channels-DC12-24V-For-RGBWW-Strip-light-p-1061476.html
+     GPIO_KEY1,        // GPIO00 Optional Button
+     0,
+     GPIO_USER,        // GPIO02 Empty pad
+     0,
+     GPIO_USER,        // GPIO04 W2 - PWM5
+     0, 0, 0, 0, 0, 0, 0, // Flash connection
+     GPIO_PWM2,        // GPIO12 RGB LED Green
+     GPIO_PWM3,        // GPIO13 RGB LED Blue
+     GPIO_PWM1,        // GPIO14 RGB LED Red
+     GPIO_USER,        // GPIO15 RGBW LED White
+     0, 0
+  },
 };
 
 #endif  // _SONOFF_TEMPLATE_H_
