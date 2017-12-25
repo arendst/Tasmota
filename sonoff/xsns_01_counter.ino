@@ -130,20 +130,18 @@ boolean Xsns01(byte function)
   boolean result = false;
 
   switch (function) {
-    case FUNC_XSNS_INIT:
+    case FUNC_INIT:
       CounterInit();
       break;
-//    case FUNC_XSNS_PREP_BEFORE_TELEPERIOD:
-//      break;
-    case FUNC_XSNS_JSON_APPEND:
+    case FUNC_JSON_APPEND:
       CounterShow(1);
       break;
 #ifdef USE_WEBSERVER
-    case FUNC_XSNS_WEB_APPEND:
+    case FUNC_WEB_APPEND:
       CounterShow(0);
       break;
 #endif  // USE_WEBSERVER
-    case FUNC_XSNS_SAVE_BEFORE_RESTART:
+    case FUNC_SAVE_BEFORE_RESTART:
       CounterSaveState();
       break;
   }

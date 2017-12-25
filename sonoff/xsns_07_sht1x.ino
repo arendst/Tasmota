@@ -223,16 +223,14 @@ boolean Xsns07(byte function)
 
   if (i2c_flg) {
     switch (function) {
-//      case FUNC_XSNS_INIT:
-//        break;
-      case FUNC_XSNS_PREP_BEFORE_TELEPERIOD:
+      case FUNC_PREP_BEFORE_TELEPERIOD:
         ShtDetect();
         break;
-      case FUNC_XSNS_JSON_APPEND:
+      case FUNC_JSON_APPEND:
         ShtShow(1);
         break;
 #ifdef USE_WEBSERVER
-      case FUNC_XSNS_WEB_APPEND:
+      case FUNC_WEB_APPEND:
         ShtShow(0);
         break;
 #endif  // USE_WEBSERVER

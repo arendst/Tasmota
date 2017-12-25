@@ -163,7 +163,7 @@
 // -- Sensor code selection -----------------------
 #define USE_ADC_VCC                              // Display Vcc in Power status. Disable for use as Analog input on selected devices
 
-//#define USE_PZEM004T                             // Add support for PZEM004T Energy monitor (+2k3 code)
+//#define USE_PZEM004T                             // Add support for PZEM004T Energy monitor (+2k code)
 
                                                  // WARNING: Select none for default one DS18B20 sensor or enable one of the following two options for multiple sensors
 //#define USE_DS18x20                              // Optional for more than one DS18x20 sensors with id sort, single scan and read retry (+1k3 code)
@@ -192,8 +192,8 @@
   #define USE_WS2812_CTYPE     1                 // WS2812 Color type (0 - RGB, 1 - GRB, 2 - RGBW, 3 - GRBW)
 //  #define USE_WS2812_DMA                         // DMA supports only GPIO03 (= Serial RXD) (+1k mem). When USE_WS2812_DMA is enabled expect Exceptions on Pow
 
-//#define USE_MHZ19                                // Add support for MH-Z19 CO2 sensor (+1k8 code)
-//#define USE_SENSEAIR                             // Add support for SenseAir K30, K70 and S8 CO2 sensor (+1k8 code)
+//#define USE_MHZ19                                // Add support for MH-Z19 CO2 sensor (+2k code)
+//#define USE_SENSEAIR                             // Add support for SenseAir K30, K70 and S8 CO2 sensor (+2k3 code)
 
 #define USE_ARILUX_RF                            // Add support for Arilux RF remote controller (+0k8 code)
 

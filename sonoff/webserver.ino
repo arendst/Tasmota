@@ -511,7 +511,7 @@ void HandleAjaxStatusRefresh()
 
   String page = "";
   mqtt_data[0] = '\0';
-  XsnsCall(FUNC_XSNS_WEB_APPEND);
+  XsnsCall(FUNC_WEB_APPEND);
   if (strlen(mqtt_data)) {
     page += FPSTR(HTTP_TABLE100);
     page += mqtt_data;
