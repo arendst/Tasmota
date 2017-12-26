@@ -1,7 +1,7 @@
 /*
   sonoff.ino - Sonoff-Tasmota firmware for iTead Sonoff, Wemos and NodeMCU hardware
 
-  Copyright (C) 2017  Theo Arends
+  Copyright (C) 2018  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -25,12 +25,8 @@
     - Select IDE Tools - Flash Size: "1M (no SPIFFS)"
   ====================================================*/
 
-#define VERSION                0x050A0001
-#define VERSION_STRING         "5.10.0b"    // Would be great to have a macro that fills this from VERSION ...
-
-
-#define MOD_VERSION_STRING      VERSION_STRING   "-modified-1.2.1"    // Would be great to have a macro that fills this from VERSION ...
-
+#define VERSION                0x050A0003
+#define VERSION_STRING         "5.10.0c"    // Would be great to have a macro that fills this from VERSION ...
 
 // Location specific includes
 #include "sonoff.h"                         // Enumaration used in user_config.h
@@ -1104,15 +1100,15 @@ void MqttDataCallback(char* topic, byte* data, unsigned int data_len)
     else if (CMND_MODULES == command_code) {
       for (byte i = 0; i < MAXMODULE; i++) {
         if (!jsflg) {
-          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_MODULES "%d\":\""), lines);
+          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_MODULES "%d\":["), lines);
         } else {
           snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,"), mqtt_data);
         }
         jsflg = 1;
         snprintf_P(stemp1, sizeof(stemp1), kModules[i].name);
-        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s%d (%s)"), mqtt_data, i +1, stemp1);
-        if ((strlen(mqtt_data) > 200) || (i == MAXMODULE -1)) {
-          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s\"}"), mqtt_data);
+        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s\"%d (%s)\""), mqtt_data, i +1, stemp1);
+        if ((strlen(mqtt_data) > 300) || (i == MAXMODULE -1)) {
+          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s]}"), mqtt_data);
           MqttPublishPrefixTopic_P(5, type);
           jsflg = 0;
           lines++;
@@ -1153,15 +1149,15 @@ void MqttDataCallback(char* topic, byte* data, unsigned int data_len)
     else if (CMND_GPIOS == command_code) {
       for (byte i = 0; i < GPIO_SENSOR_END; i++) {
         if (!jsflg) {
-          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_GPIOS "%d\":\""), lines);
+          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_GPIOS "%d\":["), lines);
         } else {
           snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,"), mqtt_data);
         }
         jsflg = 1;
         snprintf_P(stemp1, sizeof(stemp1), kSensors[i]);
-        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s%d (%s)"), mqtt_data, i, stemp1);
-        if ((strlen(mqtt_data) > 200) || (i == GPIO_SENSOR_END -1)) {
-          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s\"}"), mqtt_data);
+        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s\"%d (%s)\""), mqtt_data, i, stemp1);
+        if ((strlen(mqtt_data) > 300) || (i == GPIO_SENSOR_END -1)) {
+          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s]}"), mqtt_data);
           MqttPublishPrefixTopic_P(5, type);
           jsflg = 0;
           lines++;
@@ -1816,7 +1812,7 @@ boolean MqttShowSensor()
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"" D_SWITCH "%d\":\"%s\""), mqtt_data, i +1, GetStateText(swm ^ lastwallswitch[i]));
     }
   }
-  XsnsCall(FUNC_XSNS_JSON_APPEND);
+  XsnsCall(FUNC_JSON_APPEND);
   boolean json_data_available = (strlen(mqtt_data) - json_data_start);
   if (strstr_P(mqtt_data, PSTR(D_TEMPERATURE))) {
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"" D_TEMPERATURE_UNIT "\":\"%c\""), mqtt_data, TempUnit());
@@ -1875,7 +1871,7 @@ void PerformEverySecond()
   if (Settings.tele_period) {
     tele_period++;
     if (tele_period == Settings.tele_period -1) {
-      XsnsCall(FUNC_XSNS_PREP);
+      XsnsCall(FUNC_PREP_BEFORE_TELEPERIOD);
     }
     if (tele_period >= Settings.tele_period) {
       tele_period = 0;
@@ -1891,7 +1887,7 @@ void PerformEverySecond()
     }
   }
 
-  XsnsCall(FUNC_XSNS_EVERY_SECOND);
+  XsnsCall(FUNC_EVERY_SECOND);
 
   if ((2 == RtcTime.minute) && latest_uptime_flag) {
     latest_uptime_flag = false;
@@ -2224,6 +2220,8 @@ void StateLoop()
     LightAnimate();
   }
 
+  XsnsCall(FUNC_EVERY_50_MSECOND);
+
 /*-------------------------------------------------------------------------------------------*\
  * Every 0.2 second
 \*-------------------------------------------------------------------------------------------*/
@@ -2525,17 +2523,20 @@ void GpioInit()
 #endif  // USE_I2C
 
   devices_present = 1;
+
+  light_type = LT_BASIC;                     // Use basic PWM control if SetOption15 = 0
   if (Settings.flag.pwm_control) {
-    light_type = LT_BASIC;
     for (byte i = 0; i < MAX_PWMS; i++) {
       if (pin[GPIO_PWM1 +i] < 99) {
         light_type++;                        // Use Dimmer/Color control for all PWM as SetOption15 = 1
       }
     }
   }
+
   if (SONOFF_BRIDGE == Settings.module) {
     baudrate = 19200;
   }
+
   if (SONOFF_DUAL == Settings.module) {
     devices_present = 2;
     baudrate = 19200;
@@ -2547,11 +2548,6 @@ void GpioInit()
   else if (SONOFF_SC == Settings.module) {
     devices_present = 0;
     baudrate = 19200;
-  }
-  else if ((H801 == Settings.module) || (MAGICHOME == Settings.module) || (ARILUX_LC01 == Settings.module) || (ARILUX_LC11 == Settings.module)) {  // PWM RGBCW led
-    if (!Settings.flag.pwm_control) {
-      light_type = LT_BASIC;                 // Use basic PWM control if SetOption15 = 0
-    }
   }
   else if (SONOFF_BN == Settings.module) {   // PWM Single color led (White)
     light_type = LT_PWM1;
@@ -2576,6 +2572,7 @@ void GpioInit()
       }
     }
   }
+
   for (byte i = 0; i < MAX_KEYS; i++) {
     if (pin[GPIO_KEY1 +i] < 99) {
       pinMode(pin[GPIO_KEY1 +i], (16 == pin[GPIO_KEY1 +i]) ? INPUT_PULLDOWN_16 : INPUT_PULLUP);
@@ -2603,7 +2600,7 @@ void GpioInit()
   if (light_type) {                           // Any Led light under Dimmer/Color control
     LightInit();
   } else {
-    for (byte i = 0; i < MAX_PWMS; i++) {
+    for (byte i = 0; i < MAX_PWMS; i++) {     // Basic PWM control only
       if (pin[GPIO_PWM1 +i] < 99) {
         pinMode(pin[GPIO_PWM1 +i], OUTPUT);
         analogWrite(pin[GPIO_PWM1 +i], bitRead(pwm_inverted, i) ? Settings.pwm_range - Settings.pwm_value[i] : Settings.pwm_value[i]);
@@ -2627,8 +2624,6 @@ void GpioInit()
   }
 #endif  // USE_IR_RECEIVE
 #endif  // USE_IR_REMOTE
-
-//  energy_flg = (((pin[GPIO_HLW_SEL] < 99) && (pin[GPIO_HLW_CF1] < 99) && (pin[GPIO_HLW_CF] < 99)) || ((pin[GPIO_PZEM_RX] < 99) && (pin[GPIO_PZEM_TX])));
 }
 
 extern "C" {

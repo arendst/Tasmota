@@ -1,14 +1,20 @@
-/* 5.10.0b
- * Add optional support for PZEM004T energy sensor
- * Change Sonoff Pow Enenrgy MQTT data message and consolidate Status 8 into Status 10
+/* 5.10.0c
+ * Consolidate device serial (MH-Z19, SenseAir and Pzem004T) into TasmotaSerial library
+ * Consolidate PWM device recognition
+ * Fix Wemo Emulation (#1357)
+ * Add support for Arilux LC06 (#1414)
+ *
+ * 5.10.0b
+ * Add support for PZEM004T energy sensor to be enabled with define USE_PZEM004T in user_config.h
+ * Change Sonoff Pow Energy MQTT data message and consolidate Status 8 into Status 10
  * Change Wemo SetBinaryState to distinguish from GetBinaryState (#1357)
- * Change output of HTTP command to valid JSON only (#1363)
+ * Change output of HTTP command to valid JSON and Array only (#1363)
+ * Add support for MH-Z19(B) CO2 sensor to be enabled with define USE_MHZ19 in user_config.h (#561, #1248)
+ * Add support for SenseAir S8 CO2 sensor to be enabled with define USE_SENSEAIR in user_config.h
+ * Add support for Domoticz Air Quality sensor to be used by MH-Z19(B) and SenseAir sensors
  *
  * 5.10.0a
  * Add (experimental) support for sensor SHT3x
- * Add support for sensor MH-Z19(B) using serial interface to be enabled with define USE_MHZ19_HARD_SERIAL in user_config.h (#561, #1248)
- * Add (experimental) support for sensor MH-Z19(B) using SoftwareSerial to be enabled with define USE_MHZ19_SOFT_SERIAL_OBSOLETE in user_config.h (#561, #1248)
- * Add (experimental) support for sensor MH-Z19(B) using stripped SoftwareSerial to be enabled with define USE_MHZ19_SOFT_SERIAL in user_config.h (#561, #1248)
  * Add support for iTead SI7021 temperature and humidity sensor by consolidating DHT22 into AM2301 and using former DHT22 as SI7021 (#735)
  * Fix BME280 calculation (#1051)
  * Add support for BME680 using adafruit libraries (#1212)
