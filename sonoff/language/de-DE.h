@@ -274,7 +274,7 @@
 #define D_CONSOLE "Konsole"
 #define D_CONFIRM_RESTART "Wirklich neustarten?"
 
-#define D_CONFIGURE_MODULE "Modul konfigurieren"
+#define D_CONFIGURE_MODULE "Gerät konfigurieren"
 #define D_CONFIGURE_WIFI "WLAN konfigurieren"
 #define D_CONFIGURE_MQTT "MQTT konfigurieren"
 #define D_CONFIGURE_DOMOTICZ "Domoticz konfigurieren"
