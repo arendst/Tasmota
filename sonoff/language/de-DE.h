@@ -48,10 +48,10 @@
 #define D_ACTIVE "aktiv"
 #define D_ADDRESS "Addresse"
 #define D_ADMIN "Admin"
-#define D_AIR_QUALITY "Ausschlagsqualität"
-#define D_AIRQUALITY "AusschlagsQualität"
+#define D_AIR_QUALITY "Luftqualität"
+#define D_AIRQUALITY "LuftQualität"
 #define D_AP "AP"                    // Access Point
-#define D_APMAC_ADDRESS "APMac"
+#define D_APMAC_ADDRESS "AP-Mac"
 #define D_APPENDED "angehängt"
 #define D_AS "wie"
 #define D_AUTO "AUTO"
@@ -66,7 +66,7 @@
 #define D_BUTTON "Knopf"
 #define D_BY "von"                   // Written by me
 #define D_CELSIUS "Celsius"
-#define D_CO2 "Kohlenstoffdioxid"
+#define D_CO2 "CO²"
 #define D_CODE "code"                // Button code
 #define D_COLDLIGHT "kalt"
 #define D_COMMAND "Befehl"
@@ -92,9 +92,9 @@
 #define D_EVERY "alle"
 #define D_FAHRENHEIT "Fahrenheit"
 #define D_FAILED "fehlgeschlagen"
-#define D_FALLBACK "Rückgriff"
-#define D_FALLBACK_TOPIC "Rückgriff topic"
-#define D_FALLBACKTOPIC "RückgriffTopic"
+#define D_FALLBACK "Fallback"
+#define D_FALLBACK_TOPIC "Fallback topic"
+#define D_FALLBACKTOPIC "FallbackTopic"
 #define D_FALSE "falsch"
 #define D_FILE "Datei"
 #define D_FLASHMODE "FlashMode"
@@ -170,7 +170,7 @@
 #define D_STARTED "gestartet"
 #define D_STARTDST "StartDST"        // Start Daylight Savings Time
 #define D_STD_TIME "STD"
-#define D_STOP "stopp"
+#define D_STOP "Stop"
 #define D_SUBNET_MASK "Subnetzmaske"
 #define D_SUBNETMASK "Subnetmaske"
 #define D_SUBSCRIBE_TO "subscribe to"
@@ -244,7 +244,7 @@
 #define D_CONNECT_FAILED_WRONG_PASSWORD "Verbindung fehlgeschlagen mit AP weil das Passwort falsch ist"
 #define D_CONNECT_FAILED_AP_TIMEOUT "Verbindung fehlgeschlagen da der AP nicht antwortet (timeout)"
 #define D_ATTEMPTING_CONNECTION "Verbindungsversuch..."
-#define D_CHECKING_CONNECTION "prüfe Verbindung..."
+#define D_CHECKING_CONNECTION "Prüfe Verbindung..."
 #define D_QUERY_DONE "Suchanfrage abgeschlossen. MQTT-Services gefunden"
 #define D_MQTT_SERVICE_FOUND "MQTT-Service gefunden bei"
 #define D_I2CSCAN_DEVICES_FOUND_AT "Gerät(e) gefunden bei"
@@ -272,7 +272,7 @@
 #define D_INFORMATION "Informationen"
 #define D_FIRMWARE_UPGRADE "Firmware Update"
 #define D_CONSOLE "Konsole"
-#define D_CONFIRM_RESTART "Neustart bestätigen"
+#define D_CONFIRM_RESTART "Wirklich neustarten?"
 
 #define D_CONFIGURE_MODULE "Modul konfigurieren"
 #define D_CONFIGURE_WIFI "WLAN konfigurieren"
@@ -286,8 +286,8 @@
 #define D_RESTORE_CONFIGURATION "Konfiguration wiederherstellen"
 #define D_MAIN_MENU "Hauptmenü"
 
-#define D_MODULE_PARAMETERS "Modul Einstellungen"
-#define D_MODULE_TYPE "Modul Typ"
+#define D_MODULE_PARAMETERS "Geräte Einstellungen"
+#define D_MODULE_TYPE "Geräte Typ"
 #define D_GPIO "GPIO"
 #define D_SERIAL_IN "serieller Eingang [serial in]"
 #define D_SERIAL_OUT "serieller Ausgang [serial out]"
@@ -370,7 +370,7 @@
 #define D_UPLOAD_ERROR_CODE "Upload Fehler Nummer"
 
 #define D_ENTER_COMMAND "Befehl eingeben"
-#define D_ENABLE_WEBLOG_FOR_RESPONSE "aktivere weblog 2 falls Reaktion erwartet"
+#define D_ENABLE_WEBLOG_FOR_RESPONSE "Aktivere Web Log Level 2 falls Reaktion erwartet"
 #define D_NEED_USER_AND_PASSWORD "Benutzer benötigt=<Benutzername>&password=<Passwort>"
 
 // xdrv_domoticz.ino
