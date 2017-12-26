@@ -1,7 +1,7 @@
 /*
   xdrv_wemohue.ino - wemo and hue support for Sonoff-Tasmota
 
-  Copyright (C) 2017  Heiko Krupp and Theo Arends
+  Copyright (C) 2018  Heiko Krupp and Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -268,6 +268,17 @@ const char WEMO_EVENTSERVICE_XML[] PROGMEM =
     "</action>"
   "</scpd>\r\n"
   "\r\n";
+
+const char WEMO_RESPONSE_STATE_SOAP[] PROGMEM =
+  "<s:Envelope xmlns:s=\"http://schemas.xmlsoap.org/soap/envelope/\">"
+    "<s:Body>"
+      "<u:SetBinaryStateResponse xmlns:u=\"urn:Belkin:service:basicevent:1\">"
+        "<BinaryState>{x1</BinaryState>"
+      "</u:SetBinaryStateResponse>"
+    "</s:Body>"
+  "</s:Envelope>\r\n"
+  "\r\n";
+
 const char WEMO_SETUP_XML[] PROGMEM =
   "<?xml version=\"1.0\"?>"
   "<root>"
@@ -299,17 +310,21 @@ void HandleUpnpEvent()
 {
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, PSTR(D_WEMO_BASIC_EVENT));
   String request = WebServer->arg(0);
+  String state_xml = FPSTR(WEMO_RESPONSE_STATE_SOAP);
+  //differentiate get and set state
   if (request.indexOf(F("SetBinaryState")) > 0) {
     if (request.indexOf(F("State>1</Binary")) > 0) {
-  //    ExecuteCommandPower(1, 1);
       ExecuteCommandPower(devices_present, 1);
     }
-    if (request.indexOf(F("State>0</Binary")) > 0) {
-  //    ExecuteCommandPower(1, 0);
+    else if (request.indexOf(F("State>0</Binary")) > 0) {
       ExecuteCommandPower(devices_present, 0);
     }
   }
-  WebServer->send(200, FPSTR(HDR_CTYPE_PLAIN), "");
+  else if(request.indexOf(F("GetBinaryState")) > 0){
+    state_xml.replace("Set", "Get");
+  }
+  state_xml.replace("{x1", String(bitRead(power, devices_present -1)));
+  WebServer->send(200, FPSTR(HDR_CTYPE_XML), state_xml);
 }
 
 void HandleUpnpService()

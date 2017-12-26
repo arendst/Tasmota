@@ -1,7 +1,7 @@
 /*
   nl-NL.h - localization for Dutch - Nederland for Sonoff-Tasmota
 
-  Copyright (C) 2017  Theo Arends
+  Copyright (C) 2018  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -66,7 +66,7 @@
 #define D_BUTTON "DrukKnop"
 #define D_BY "door"                  // Written by me
 #define D_CELSIUS "Celsius"
-#define D_CO2 "CO2"
+#define D_CO2 "Koolstofdioxide"
 #define D_CODE "code"                // Button code
 #define D_COLDLIGHT "Koud"
 #define D_COMMAND "Opdracht"
@@ -118,6 +118,7 @@
 #define D_INITIALIZED "Geinitialiseerd"
 #define D_IP_ADDRESS "IP Adres"
 #define D_LIGHT "Ligt"
+#define D_LIMIT "Grenswaarde"
 #define D_LOCAL_TIME "Plaatselijk"
 #define D_LOW "Laag"
 #define D_LWT "LWT"
@@ -386,6 +387,7 @@
   #define D_DOMOTICZ_COUNT "Count"
   #define D_DOMOTICZ_VOLTAGE "Spanning"
   #define D_DOMOTICZ_CURRENT "Stroom"
+  #define D_DOMOTICZ_AIRQUALITY "AirQuality"
 #define D_DOMOTICZ_UPDATE_TIMER "Bijwerk timer"
 
 // xdrv_irremote.ino
@@ -474,11 +476,13 @@
 #define D_SENSOR_LED      "Led"     // Suffix "1i"
 #define D_SENSOR_PWM      "PWM"     // Suffix "1"
 #define D_SENSOR_COUNTER  "Teller"  // Suffix "1"
+#define D_SENSOR_IRRECV   "IRrecv"
 #define D_SENSOR_MHZ_RX   "MHZ Rx"
 #define D_SENSOR_MHZ_TX   "MHZ Tx"
 #define D_SENSOR_PZEM_RX  "PZEM Rx"
 #define D_SENSOR_PZEM_TX  "PZEM Tx"
-#define D_SENSOR_IRRECV   "IRrecv"
+#define D_SENSOR_SAIR_RX  "SAir Rx"
+#define D_SENSOR_SAIR_TX  "SAir Tx"
 #define D_SENSOR_SPI_CS   "SPI CS"
 #define D_SENSOR_SPI_DC   "SPI DC"
 #define D_SENSOR_BACKLIGHT "BLight"
