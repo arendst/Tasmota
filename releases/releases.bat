@@ -1,4 +1,4 @@
-set version=5.10.0b.mod1.2.1
+set version=5.10.0c-mod-1.2.2
 
 mkdir %version%
 
