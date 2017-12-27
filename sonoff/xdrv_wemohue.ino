@@ -241,43 +241,51 @@ void PollUdp()
 \*********************************************************************************************/
 
 const char WEMO_EVENTSERVICE_XML[] PROGMEM =
-  "<?scpd xmlns=\"urn:Belkin:service-1-0\"?>"
-  "<actionList>"
-    "<action>"
-      "<name>SetBinaryState</name>"
-      "<argumentList>"
-        "<argument>"
-          "<retval/>"
-          "<name>BinaryState</name>"
-          "<relatedStateVariable>BinaryState</relatedStateVariable>"
-          "<direction>in</direction>"
-        "</argument>"
-      "</argumentList>"
-      "<serviceStateTable>"
-        "<stateVariable sendEvents=\"yes\">"
-          "<name>BinaryState</name>"
-          "<dataType>Boolean</dataType>"
-          "<defaultValue>0</defaultValue>"
-        "</stateVariable>"
-        "<stateVariable sendEvents=\"yes\">"
-          "<name>level</name>"
-          "<dataType>string</dataType>"
-          "<defaultValue>0</defaultValue>"
-        "</stateVariable>"
-      "</serviceStateTable>"
-    "</action>"
-  "</scpd>\r\n"
-  "\r\n";
+  // XosePerez version 20171108 - v2.3.0
+  "<?xml version=\"1.0\"?>"
+  "<scpd xmlns=\"urn:Belkin:service-1-0\">"
+    "<specVersion><major>1</major><minor>0</minor></specVersion>"
+    "<actionList>"
+      "<action>"
+        "<name>SetBinaryState</name>"
+        "<argumentList>"
+          "<argument>"
+            "<retval />"
+            "<name>BinaryState</name>"
+            "<relatedStateVariable>BinaryState</relatedStateVariable>"
+            "<direction>in</direction>"
+          "</argument>"
+        "</argumentList>"
+      "</action>"
+      "<action>"
+        "<name>GetBinaryState</name>"
+        "<argumentList>"
+          "<argument>"
+            "<retval/>"
+            "<name>BinaryState</name>"
+            "<relatedStateVariable>BinaryState</relatedStateVariable>"
+            "<direction>out</direction>"
+          "</argument>"
+        "</argumentList>"
+      "</action>"
+    "</actionList>"
+    "<serviceStateTable>"
+      "<stateVariable sendEvents=\"yes\">"
+        "<name>BinaryState</name>"
+        "<dataType>Boolean</dataType>"
+        "<defaultValue>0</defaultValue>"
+      "</stateVariable>"
+    "</serviceStateTable>"
+  "</scpd>";
 
 const char WEMO_RESPONSE_STATE_SOAP[] PROGMEM =
   "<s:Envelope xmlns:s=\"http://schemas.xmlsoap.org/soap/envelope/\">"
     "<s:Body>"
-      "<u:SetBinaryStateResponse xmlns:u=\"urn:Belkin:service:basicevent:1\">"
+      "<u:SetBinaryState xmlns:u=\"urn:Belkin:service:basicevent:1\">"
         "<BinaryState>{x1</BinaryState>"
-      "</u:SetBinaryStateResponse>"
+      "</u:SetBinaryState>"
     "</s:Body>"
-  "</s:Envelope>\r\n"
-  "\r\n";
+  "</s:Envelope>";
 
 const char WEMO_SETUP_XML[] PROGMEM =
   "<?xml version=\"1.0\"?>"
@@ -301,8 +309,7 @@ const char WEMO_SETUP_XML[] PROGMEM =
         "</service>"
       "</serviceList>"
     "</device>"
-  "</root>\r\n"
-  "\r\n";
+  "</root>";
 
 /********************************************************************************************/
 
@@ -321,7 +328,7 @@ void HandleUpnpEvent()
     }
   }
   else if(request.indexOf(F("GetBinaryState")) > 0){
-    state_xml.replace("Set", "Get");
+    state_xml.replace(F("SetBinaryState"), F("GetBinaryStateResponse"));
   }
   state_xml.replace("{x1", String(bitRead(power, devices_present -1)));
   WebServer->send(200, FPSTR(HDR_CTYPE_XML), state_xml);

@@ -1,4 +1,11 @@
-/* 5.10.0c
+/* 5.10.0d
+ * Renamed commands Color2,3,4 to Color3,4,5
+ * Add command Color2 to set color while keeping same dimmer value
+ * Add led signal to Carbon Dioxide (CO2) sensors (see user_config.h)
+ * Fix Wemo Emulation again (#1357)
+ * Updated German translation (#1438)
+ *
+ * 5.10.0c
  * Consolidate device serial (MH-Z19, SenseAir and Pzem004T) into TasmotaSerial library
  * Consolidate PWM device recognition
  * Fix Wemo Emulation (#1357)

@@ -25,8 +25,8 @@
     - Select IDE Tools - Flash Size: "1M (no SPIFFS)"
   ====================================================*/
 
-#define VERSION                0x050A0003
-#define VERSION_STRING         "5.10.0c"    // Would be great to have a macro that fills this from VERSION ...
+#define VERSION                0x050A0004
+#define VERSION_STRING         "5.10.0d"    // Would be great to have a macro that fills this from VERSION ...
 
 // Location specific includes
 #include "sonoff.h"                         // Enumaration used in user_config.h
@@ -986,7 +986,7 @@ void MqttDataCallback(char* topic, byte* data, unsigned int data_len)
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, (Settings.save_data > 1) ? stemp1 : GetStateText(Settings.save_data));
     }
-    else if ((CMND_SETOPTION == command_code) && ((index >= 0) && (index <= 17)) || ((index > 31) && (index <= P_MAX_PARAM8 +31))) {
+    else if ((CMND_SETOPTION == command_code) && ((index >= 0) && (index <= 18)) || ((index > 31) && (index <= P_MAX_PARAM8 +31))) {
       if (index <= 31) {
         ptype = 0;   // SetOption0 .. 31
       } else {
@@ -1012,6 +1012,7 @@ void MqttDataCallback(char* topic, byte* data, unsigned int data_len)
               case 14:  // interlock
               case 16:  // ws_clock_reverse
               case 17:  // decimal_text
+              case 18:  // light_signal
                 bitWrite(Settings.flag.data, index, payload);
             }
             if (12 == index) {  // stop_flash_rotate

@@ -43,9 +43,9 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t pwm_control : 1;              // bit 15 (v5.8.1)
     uint32_t ws_clock_reverse : 1;         // bit 16 (v5.8.1)
     uint32_t decimal_text : 1;             // bit 17 (v5.8.1)
-    uint32_t spare18 : 1;
+    uint32_t light_signal : 1;             // bit 18 (v5.10.0c)
     uint32_t spare19 : 1;
-    uint32_t voltage_resolution : 1;
+    uint32_t voltage_resolution : 1;       // Replaced by below
     uint32_t spare21 : 1;
     uint32_t spare22 : 1;
     uint32_t spare23 : 1;
