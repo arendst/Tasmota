@@ -1,7 +1,7 @@
 /*
   xsns_12_ads1115_ada.ino - ADS1115 A/D Converter support for Sonoff-Tasmota
 
-  Copyright (C) 2017  Theo Arends
+  Copyright (C) 2018  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -218,16 +218,14 @@ boolean Xsns12(byte function)
 
   if (i2c_flg) {
     switch (function) {
-//      case FUNC_XSNS_INIT:
-//        break;
-      case FUNC_XSNS_PREP_BEFORE_TELEPERIOD:
+      case FUNC_PREP_BEFORE_TELEPERIOD:
         Ads1115Detect();
         break;
-      case FUNC_XSNS_JSON_APPEND:
+      case FUNC_JSON_APPEND:
         Ads1115Show(1);
         break;
 #ifdef USE_WEBSERVER
-      case FUNC_XSNS_WEB_APPEND:
+      case FUNC_WEB_APPEND:
         Ads1115Show(0);
         break;
 #endif  // USE_WEBSERVER

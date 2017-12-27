@@ -1,7 +1,7 @@
 /*
   xsns_13_ina219.ino - INA219 Current Sensor support for Sonoff-Tasmota
 
-  Copyright (C) 2017  Stefan Bode and Theo Arends
+  Copyright (C) 2018  Stefan Bode and Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -219,16 +219,14 @@ boolean Xsns13(byte function)
 
   if (i2c_flg) {
     switch (function) {
-//      case FUNC_XSNS_INIT:
-//        break;
-      case FUNC_XSNS_PREP_BEFORE_TELEPERIOD:
+      case FUNC_PREP_BEFORE_TELEPERIOD:
         Ina219Detect();
         break;
-      case FUNC_XSNS_JSON_APPEND:
+      case FUNC_JSON_APPEND:
         Ina219Show(1);
         break;
 #ifdef USE_WEBSERVER
-      case FUNC_XSNS_WEB_APPEND:
+      case FUNC_WEB_APPEND:
         Ina219Show(0);
         break;
 #endif  // USE_WEBSERVER

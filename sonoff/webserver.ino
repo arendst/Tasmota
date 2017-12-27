@@ -1,7 +1,7 @@
 /*
   webserver.ino - webserver for Sonoff-Tasmota
 
-  Copyright (C) 2017  Theo Arends
+  Copyright (C) 2018  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -513,7 +513,7 @@ void HandleAjaxStatusRefresh()
 
   String page = "";
   mqtt_data[0] = '\0';
-  XsnsCall(FUNC_XSNS_WEB_APPEND);
+  XsnsCall(FUNC_WEB_APPEND);
   if (strlen(mqtt_data)) {
     page += FPSTR(HTTP_TABLE100);
     page += mqtt_data;

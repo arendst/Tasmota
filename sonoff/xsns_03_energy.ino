@@ -1,7 +1,7 @@
 /*
   xsns_03_energy.ino - HLW8012 (Sonoff Pow) and PZEM004T energy sensor support for Sonoff-Tasmota
 
-  Copyright (C) 2017  Theo Arends
+  Copyright (C) 2018  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -41,7 +41,6 @@ const char kEnergyCommands[] PROGMEM =
   D_CMND_MAXPOWER "|" D_CMND_MAXPOWERHOLD "|" D_CMND_MAXPOWERWINDOW "|"
   D_CMND_SAFEPOWER "|" D_CMND_SAFEPOWERHOLD "|"  D_CMND_SAFEPOWERWINDOW ;
 
-bool energy_power_factor_ready = false;
 float energy_voltage = 0;         // 123.1 V
 float energy_current = 0;         // 123.123 A
 float energy_power = 0;           // 123.1 W
@@ -208,25 +207,6 @@ void HlwEvery200ms()
     hlw_cf1_summed_pulse_length = 0;
     hlw_cf1_pulse_counter = 0;
   }
-
-/*
-  energy_power = 0;
-  if (hlw_cf_pulse_length && (power &1) && !hlw_load_off) {
-    hlw_w = (HLW_PREF * Settings.hlw_power_calibration) / hlw_cf_pulse_length;
-    energy_power = (float)hlw_w / 10;
-  }
-  energy_voltage = 0;
-  if (hlw_cf1_voltage_pulse_length && (power &1)) {     // If powered on always provide voltage
-    hlw_u = (HLW_UREF * Settings.hlw_voltage_calibration) / hlw_cf1_voltage_pulse_length;
-    energy_voltage = (float)hlw_u / 10;
-  }
-  energy_current = 0;
-  if (hlw_cf1_current_pulse_length && energy_power) {   // No current if no power being consumed
-    hlw_i = (HLW_IREF * Settings.hlw_current_calibration) / hlw_cf1_current_pulse_length;
-    energy_current = (float)hlw_i / 1000;
-  }
-*/
-  energy_power_factor_ready = true;
 }
 
 void HlwInit()
@@ -269,119 +249,9 @@ void HlwInit()
  * Based on: PZEM004T library https://github.com/olehs/PZEM004T
 \*********************************************************************************************/
 
-#define PZEM_BAUD_RATE              9600
+#include <TasmotaSerial.h>
 
-/*********************************************************************************************\
- * Subset SoftwareSerial
-\*********************************************************************************************/
-
-#define PZEM_SERIAL_BUFFER_SIZE     20
-#define PZEM_SERIAL_WAIT { while (ESP.getCycleCount() -start < wait) optimistic_yield(1); wait += pzem_serial_bit_time; }
-
-uint8_t pzem_serial_rx_pin;
-uint8_t pzem_serial_tx_pin;
-uint8_t pzem_serial_in_pos = 0;
-uint8_t pzem_serial_out_pos = 0;
-uint8_t pzem_serial_buffer[PZEM_SERIAL_BUFFER_SIZE];
-unsigned long pzem_serial_bit_time;
-unsigned long pzem_serial_bit_time_start;
-
-bool PzemSerialValidGpioPin(uint8_t pin) {
-  return (pin >= 0 && pin <= 5) || (pin >= 9 && pin <= 10) || (pin >= 12 && pin <= 15);
-}
-
-bool PzemSerial(uint8_t receive_pin, uint8_t transmit_pin)
-{
-  if (!((PzemSerialValidGpioPin(receive_pin)) && (PzemSerialValidGpioPin(transmit_pin) || transmit_pin == 16))) {
-    return false;
-  }
-  pzem_serial_rx_pin = receive_pin;
-  pinMode(pzem_serial_rx_pin, INPUT);
-  attachInterrupt(pzem_serial_rx_pin, PzemSerialRxRead, FALLING);
-
-  pzem_serial_tx_pin = transmit_pin;
-  pinMode(pzem_serial_tx_pin, OUTPUT);
-  digitalWrite(pzem_serial_tx_pin, 1);
-
-  pzem_serial_bit_time = ESP.getCpuFreqMHz() *1000000 /PZEM_BAUD_RATE;   // 8333
-  pzem_serial_bit_time_start = pzem_serial_bit_time + pzem_serial_bit_time /3 -500;  // 10610 ICACHE_RAM_ATTR start delay
-//  pzem_serial_bit_time_start = pzem_serial_bit_time;                           // Non ICACHE_RAM_ATTR start delay (experimental)
-
-  return true;
-}
-
-int PzemSerialRead() {
-  if (pzem_serial_in_pos == pzem_serial_out_pos) {
-    return -1;
-  }
-  int ch = pzem_serial_buffer[pzem_serial_out_pos];
-  pzem_serial_out_pos = (pzem_serial_out_pos +1) % PZEM_SERIAL_BUFFER_SIZE;
-  return ch;
-}
-
-int PzemSerialAvailable() {
-  int avail = pzem_serial_in_pos - pzem_serial_out_pos;
-  if (avail < 0) {
-    avail += PZEM_SERIAL_BUFFER_SIZE;
-  }
-  return avail;
-}
-
-size_t PzemSerialTxWrite(uint8_t b)
-{
-  unsigned long wait = pzem_serial_bit_time;
-  digitalWrite(pzem_serial_tx_pin, HIGH);
-  unsigned long start = ESP.getCycleCount();
-    // Start bit;
-  digitalWrite(pzem_serial_tx_pin, LOW);
-  PZEM_SERIAL_WAIT;
-  for (int i = 0; i < 8; i++) {
-    digitalWrite(pzem_serial_tx_pin, (b & 1) ? HIGH : LOW);
-    PZEM_SERIAL_WAIT;
-    b >>= 1;
-  }
-   // Stop bit
-  digitalWrite(pzem_serial_tx_pin, HIGH);
-  PZEM_SERIAL_WAIT;
-  return 1;
-}
-
-size_t PzemSerialWrite(const uint8_t *buffer, size_t size = 1) {
-  size_t n = 0;
-  while(size--) {
-    n += PzemSerialTxWrite(*buffer++);
-  }
-  return n;
-}
-
-//void PzemSerialRxRead() ICACHE_RAM_ATTR;  // Add 215 bytes to iram usage
-void PzemSerialRxRead() {
-  // Advance the starting point for the samples but compensate for the
-  // initial delay which occurs before the interrupt is delivered
-  unsigned long wait = pzem_serial_bit_time_start;
-  unsigned long start = ESP.getCycleCount();
-  uint8_t rec = 0;
-  for (int i = 0; i < 8; i++) {
-    PZEM_SERIAL_WAIT;
-    rec >>= 1;
-    if (digitalRead(pzem_serial_rx_pin)) {
-      rec |= 0x80;
-    }
-  }
-  // Stop bit
-  PZEM_SERIAL_WAIT;
-  // Store the received value in the buffer unless we have an overflow
-  int next = (pzem_serial_in_pos +1) % PZEM_SERIAL_BUFFER_SIZE;
-  if (next != pzem_serial_out_pos) {
-    pzem_serial_buffer[pzem_serial_in_pos] = rec;
-    pzem_serial_in_pos = next;
-  }
-  // Must clear this bit in the interrupt register,
-  // it gets set even when interrupts are disabled
-  GPIO_REG_WRITE(GPIO_STATUS_W1TC_ADDRESS, 1 << pzem_serial_rx_pin);
-}
-
-/*********************************************************************************************/
+TasmotaSerial *PzemSerial;
 
 #define PZEM_VOLTAGE (uint8_t)0xB0
 #define RESP_VOLTAGE (uint8_t)0xA0
@@ -402,7 +272,6 @@ void PzemSerialRxRead() {
 #define RESP_POWER_ALARM (uint8_t)0xA5
 
 #define PZEM_DEFAULT_READ_TIMEOUT 500
-#define PZEM_ERROR_VALUE -1.0
 
 struct PZEMCommand {
   uint8_t command;
@@ -413,52 +282,16 @@ struct PZEMCommand {
 
 IPAddress pzem_ip(192, 168, 1, 1);
 
-float PZEM004T_voltage_rcv()
+uint8_t PzemCrc(uint8_t *data)
 {
-  uint8_t data[sizeof(PZEMCommand) -2];
-
-  if (!PZEM004T_recieve(RESP_VOLTAGE, data)) {
-    return PZEM_ERROR_VALUE;
+  uint16_t crc = 0;
+  for (uint8_t i = 0; i < sizeof(PZEMCommand) -1; i++) {
+    crc += *data++;
   }
-  return (data[0] << 8) + data[1] + (data[2] / 10.0);                      // 65535.x V
+  return (uint8_t)(crc & 0xFF);
 }
 
-float PZEM004T_current_rcv()
-{
-  uint8_t data[sizeof(PZEMCommand) -2];
-
-  if (!PZEM004T_recieve(RESP_CURRENT, data)) {
-    return PZEM_ERROR_VALUE;
-  }
-  return (data[0] << 8) + data[1] + (data[2] / 100.0);                     // 65535.xx A
-}
-
-float PZEM004T_power_rcv()
-{
-  uint8_t data[sizeof(PZEMCommand) -2];
-
-  if (!PZEM004T_recieve(RESP_POWER, data)) {
-    return PZEM_ERROR_VALUE;
-  }
-  return (data[0] << 8) + data[1];                                         // 65535 W
-}
-
-float PZEM004T_energy_rcv()
-{
-  uint8_t data[sizeof(PZEMCommand) -2];
-
-  if (!PZEM004T_recieve(RESP_ENERGY, data)) {
-    return PZEM_ERROR_VALUE;
-  }
-  return ((uint32_t)data[0] << 16) + ((uint16_t)data[1] << 8) + data[2];   // 16777215 Wh
-}
-
-bool PZEM004T_setAddress_rcv()
-{
-  return PZEM004T_recieve(RESP_SET_ADDRESS, 0);
-}
-
-void PZEM004T_send(uint8_t cmd)
+void PzemSend(uint8_t cmd)
 {
   PZEMCommand pzem;
 
@@ -469,41 +302,37 @@ void PZEM004T_send(uint8_t cmd)
   pzem.data = 0;
 
   uint8_t *bytes = (uint8_t*)&pzem;
-  pzem.crc = PZEM004T_crc(bytes, sizeof(pzem) - 1);
+  pzem.crc = PzemCrc(bytes);
 
-  while (PzemSerialAvailable()) {
-    PzemSerialRead();
-  }
-  PzemSerialWrite(bytes, sizeof(pzem));
+  PzemSerial->write(bytes, sizeof(pzem));
 }
 
-bool PZEM004T_isReady()
+bool PzemReceiveReady()
 {
-  return PzemSerialAvailable() >= sizeof(PZEMCommand);
+  return PzemSerial->available() >= sizeof(PZEMCommand);
 }
 
-bool PZEM004T_recieve(uint8_t resp, uint8_t *data)
+bool PzemRecieve(uint8_t resp, float *data)
 {
   uint8_t buffer[sizeof(PZEMCommand)];
 
-  unsigned long startTime = millis();
+  unsigned long start = millis();
   uint8_t len = 0;
-  while ((len < sizeof(PZEMCommand)) && (millis() - startTime < PZEM_DEFAULT_READ_TIMEOUT)) {
-    if (PzemSerialAvailable() > 0) {
-      uint8_t c = (uint8_t)PzemSerialRead();
+  while ((len < sizeof(PZEMCommand)) && (millis() - start < PZEM_DEFAULT_READ_TIMEOUT)) {
+    if (PzemSerial->available() > 0) {
+      uint8_t c = (uint8_t)PzemSerial->read();
       if (!c && !len) {
         continue;  // skip 0 at startup
       }
       buffer[len++] = c;
     }
-//    yield();  // do background netw tasks while blocked for IO (prevents ESP watchdog trigger) - This triggers Watchdog!!!
   }
 
   if (len != sizeof(PZEMCommand)) {
 //    AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "Pzem comms timeout"));
     return false;
   }
-  if (buffer[6] != PZEM004T_crc(buffer, len - 1)) {
+  if (buffer[6] != PzemCrc(buffer)) {
 //    AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "Pzem crc error"));
     return false;
   }
@@ -511,77 +340,51 @@ bool PZEM004T_recieve(uint8_t resp, uint8_t *data)
 //    AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "Pzem bad response"));
     return false;
   }
-  if (data) {
-    for (int i = 0; i < sizeof(PZEMCommand) -2; i++) {
-      data[i] = buffer[1 + i];
-    }
-  }
 
+  switch (resp) {
+    case RESP_VOLTAGE:
+      *data = (float)(buffer[1] << 8) + buffer[2] + (buffer[3] / 10.0);    // 65535.x V
+      break;
+    case RESP_CURRENT:
+      *data = (float)(buffer[1] << 8) + buffer[2] + (buffer[3] / 100.0);   // 65535.xx A
+      break;
+    case RESP_POWER:
+      *data = (float)(buffer[1] << 8) + buffer[2];                         // 65535 W
+      break;
+    case RESP_ENERGY:
+      *data = (float)((uint32_t)buffer[1] << 16) + ((uint16_t)buffer[2] << 8) + buffer[3];  // 16777215 Wh
+      break;
+  }
   return true;
-}
-
-uint8_t PZEM004T_crc(uint8_t *data, uint8_t sz)
-{
-  uint16_t crc = 0;
-  for (uint8_t i = 0; i < sz; i++) {
-    crc += *data++;
-  }
-  return (uint8_t)(crc & 0xFF);
 }
 
 /*********************************************************************************************/
 
-typedef enum
-{
-  SET_ADDRESS,
-  READ_VOLTAGE,
-  READ_CURRENT,
-  READ_POWER,
-  READ_ENERGY,
-} PZEMReadStates;
+const uint8_t pzem_commands[]  { PZEM_SET_ADDRESS, PZEM_VOLTAGE, PZEM_CURRENT, PZEM_POWER, PZEM_ENERGY };
+const uint8_t pzem_responses[] { RESP_SET_ADDRESS, RESP_VOLTAGE, RESP_CURRENT, RESP_POWER, RESP_ENERGY };
 
-PZEMReadStates pzem_read_state = SET_ADDRESS;
-
-byte pzem_sendRetry = 0;
+uint8_t pzem_read_state = 0;
+uint8_t pzem_sendRetry = 0;
 
 void PzemEvery200ms()
 {
-  bool dataReady = PZEM004T_isReady();
+  bool data_ready = PzemReceiveReady();
 
-  if (dataReady) {
-    float pzem_value;
-    switch (pzem_read_state) {
-      case SET_ADDRESS:
-        if (PZEM004T_setAddress_rcv()) {
-          pzem_read_state = READ_VOLTAGE;
-        }
-        break;
-      case READ_VOLTAGE:
-        pzem_value = PZEM004T_voltage_rcv();
-        if (pzem_value != PZEM_ERROR_VALUE) {
-          energy_voltage = pzem_value;    // 230.2V
-          pzem_read_state = READ_CURRENT;
-        }
-        break;
-      case READ_CURRENT:
-        pzem_value = PZEM004T_current_rcv();
-        if (pzem_value != PZEM_ERROR_VALUE) {
-          energy_current = pzem_value;    // 17.32A
-          pzem_read_state = READ_POWER;
-        }
-        break;
-      case READ_POWER:
-        pzem_value = PZEM004T_power_rcv();
-        if (pzem_value != PZEM_ERROR_VALUE) {
-          energy_power = pzem_value;  // 20W
-          energy_power_factor_ready = true;
-          pzem_read_state = READ_ENERGY;
-        }
-        break;
-      case READ_ENERGY:
-        pzem_value = PZEM004T_energy_rcv();
-        if (pzem_value != PZEM_ERROR_VALUE) {
-          energy_total = pzem_value / 1000;    // 99999Wh
+  if (data_ready) {
+    float value = 0;
+    if (PzemRecieve(pzem_responses[pzem_read_state], &value)) {
+      switch (pzem_read_state) {
+        case 1:
+          energy_voltage = value;       // 230.2V
+          break;
+        case 2:
+          energy_current = value;       // 17.32A
+          break;
+        case 3:
+          energy_power = value;         // 20W
+          break;
+        case 4:
+          energy_total = value / 1000;  // 99999Wh
           if (!energy_startup) {
             if (energy_total < energy_start) {
               energy_start = energy_total;
@@ -590,32 +393,18 @@ void PzemEvery200ms()
             energy_kWhtoday = (energy_total - energy_start) * 100000000;
             energy_daily = (float)energy_kWhtoday / 100000000;
           }
-          pzem_read_state = READ_VOLTAGE;
-        }
-        break;
+          break;
+      }
+      pzem_read_state++;
+      if (5 == pzem_read_state) {
+        pzem_read_state = 1;
+      }
     }
   }
 
-  if (0 == pzem_sendRetry || dataReady) {
+  if (0 == pzem_sendRetry || data_ready) {
     pzem_sendRetry = 5;
-
-    switch (pzem_read_state) {
-      case SET_ADDRESS:
-        PZEM004T_send(PZEM_SET_ADDRESS);
-        break;
-      case READ_VOLTAGE:
-        PZEM004T_send(PZEM_VOLTAGE);
-        break;
-      case READ_CURRENT:
-        PZEM004T_send(PZEM_CURRENT);
-        break;
-      case READ_POWER:
-        PZEM004T_send(PZEM_POWER);
-        break;
-      case READ_ENERGY:
-        PZEM004T_send(PZEM_ENERGY);
-        break;
-    }
+    PzemSend(pzem_commands[pzem_read_state]);
   }
   else {
     pzem_sendRetry--;
@@ -624,7 +413,8 @@ void PzemEvery200ms()
 
 bool PzemInit()
 {
-  return PzemSerial(pin[GPIO_PZEM_RX], pin[GPIO_PZEM_TX]);
+  PzemSerial = new TasmotaSerial(pin[GPIO_PZEM_RX], pin[GPIO_PZEM_TX]);
+  return PzemSerial->begin();
 }
 
 /********************************************************************************************/
@@ -676,14 +466,14 @@ void Energy200ms()
 #endif  // USE_PZEM004T
   }
 
-  if (energy_power_factor_ready && energy_voltage && energy_current && energy_power) {
-    energy_power_factor_ready = false;
-    float power_factor = energy_power / (energy_voltage * energy_current);
+  float power_factor = 0;
+  if (energy_voltage && energy_current && energy_power) {
+    power_factor = energy_power / (energy_voltage * energy_current);
     if (power_factor > 1) {
       power_factor = 1;
     }
-    energy_power_factor = power_factor;
   }
+  energy_power_factor = power_factor;
 }
 
 void EnergySaveState()
@@ -1143,23 +933,21 @@ boolean Xsns03(byte function)
 
   if (energy_flg) {
     switch (function) {
-      case FUNC_XSNS_INIT:
+      case FUNC_INIT:
         EnergyInit();
         break;
-      case FUNC_XSNS_EVERY_SECOND:
+      case FUNC_EVERY_SECOND:
         EnergyMarginCheck();
         break;
-//      case FUNC_XSNS_PREP_BEFORE_TELEPERIOD:
-//        break;
-      case FUNC_XSNS_JSON_APPEND:
+      case FUNC_JSON_APPEND:
         EnergyShow(1);
         break;
 #ifdef USE_WEBSERVER
-      case FUNC_XSNS_WEB_APPEND:
+      case FUNC_WEB_APPEND:
         EnergyShow(0);
         break;
 #endif  // USE_WEBSERVER
-      case FUNC_XSNS_SAVE_BEFORE_RESTART:
+      case FUNC_SAVE_BEFORE_RESTART:
         EnergySaveState();
         break;
     }

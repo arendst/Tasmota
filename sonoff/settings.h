@@ -1,7 +1,7 @@
 /*
   settings.h - setting variables for Sonoff-Tasmota
 
-  Copyright (C) 2017  Theo Arends
+  Copyright (C) 2018  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -43,9 +43,9 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t pwm_control : 1;              // bit 15 (v5.8.1)
     uint32_t ws_clock_reverse : 1;         // bit 16 (v5.8.1)
     uint32_t decimal_text : 1;             // bit 17 (v5.8.1)
-    uint32_t spare18 : 1;
+    uint32_t light_signal : 1;             // bit 18 (v5.10.0c)
     uint32_t spare19 : 1;
-    uint32_t voltage_resolution : 1;
+    uint32_t voltage_resolution : 1;       // Replaced by below
     uint32_t spare21 : 1;
     uint32_t spare22 : 1;
     uint32_t spare23 : 1;
@@ -201,8 +201,8 @@ struct SYSCFG {
   byte          free_451[2];               // 451
 
   uint8_t       sleep;                     // 453
-  uint16_t      domoticz_switch_idx[MAX_DOMOTICZ_IDX]; // 454
-  uint16_t      domoticz_sensor_idx[12];   // 45C
+  uint16_t      domoticz_switch_idx[MAX_DOMOTICZ_IDX];      // 454
+  uint16_t      domoticz_sensor_idx[MAX_DOMOTICZ_SNS_IDX];  // 45C
   uint8_t       module;                    // 474
 
   uint8_t       ws_color[4][3];            // 475

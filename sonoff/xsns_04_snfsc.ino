@@ -1,7 +1,7 @@
 /*
   xsns_04_snfsc.ino - sonoff SC support for Sonoff-Tasmota
 
-  Copyright (C) 2017  Theo Arends
+  Copyright (C) 2018  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -148,16 +148,14 @@ boolean Xsns04(byte function)
 
   if (SONOFF_SC == Settings.module) {
     switch (function) {
-      case FUNC_XSNS_INIT:
+      case FUNC_INIT:
         SonoffScInit();
         break;
-//      case FUNC_XSNS_PREP_BEFORE_TELEPERIOD:
-//        break;
-      case FUNC_XSNS_JSON_APPEND:
+      case FUNC_JSON_APPEND:
         SonoffScShow(1);
         break;
 #ifdef USE_WEBSERVER
-      case FUNC_XSNS_WEB_APPEND:
+      case FUNC_WEB_APPEND:
         SonoffScShow(0);
         break;
 #endif  // USE_WEBSERVER

@@ -1,7 +1,7 @@
 /*
   support.ino - support for Sonoff-Tasmota
 
-  Copyright (C) 2017  Theo Arends
+  Copyright (C) 2018  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -1337,15 +1337,15 @@ boolean Xsns02(byte function)
 
   if (pin[GPIO_ADC0] < 99) {
     switch (function) {
-//      case FUNC_XSNS_INIT:
+//      case FUNC_INIT:
 //        break;
-//      case FUNC_XSNS_PREP_BEFORE_TELEPERIOD:
+//      case FUNC_PREP_BEFORE_TELEPERIOD:
 //        break;
-      case FUNC_XSNS_JSON_APPEND:
+      case FUNC_JSON_APPEND:
         AdcShow(1);
         break;
 #ifdef USE_WEBSERVER
-      case FUNC_XSNS_WEB_APPEND:
+      case FUNC_WEB_APPEND:
         AdcShow(0);
         break;
 #endif  // USE_WEBSERVER

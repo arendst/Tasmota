@@ -1,7 +1,7 @@
 /*
   xsns_05_ds18x20_legacy.ino - DS18x20 temperature sensor support for Sonoff-Tasmota
 
-  Copyright (C) 2017  Heiko Krupp and Theo Arends
+  Copyright (C) 2018  Heiko Krupp and Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -219,18 +219,18 @@ boolean Xsns05(byte function)
 
   if (pin[GPIO_DSB] < 99) {
     switch (function) {
-      case FUNC_XSNS_INIT:
+      case FUNC_INIT:
         Ds18x20Init();
         break;
-      case FUNC_XSNS_PREP_BEFORE_TELEPERIOD:
+      case FUNC_PREP_BEFORE_TELEPERIOD:
         Ds18x20Search();      // Check for changes in sensors number
         Ds18x20Convert();     // Start Conversion, takes up to one second
         break;
-      case FUNC_XSNS_JSON_APPEND:
+      case FUNC_JSON_APPEND:
         Ds18x20Show(1);
         break;
 #ifdef USE_WEBSERVER
-      case FUNC_XSNS_WEB_APPEND:
+      case FUNC_WEB_APPEND:
         Ds18x20Show(0);
         break;
 #endif  // USE_WEBSERVER

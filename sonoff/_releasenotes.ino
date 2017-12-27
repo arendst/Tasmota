@@ -1,10 +1,24 @@
-/* 5.10.0b
- * Add optional support for PZEM004T energy sensor
+/* 5.10.0d
+ * Renamed commands Color2,3,4 to Color3,4,5
+ * Add command Color2 to set color while keeping same dimmer value
+ * Add led signal to Carbon Dioxide (CO2) sensors (see user_config.h)
+ * Fix Wemo Emulation again (#1357)
+ * Updated German translation (#1438)
+ *
+ * 5.10.0c
+ * Consolidate device serial (MH-Z19, SenseAir and Pzem004T) into TasmotaSerial library
+ * Consolidate PWM device recognition
+ * Fix Wemo Emulation (#1357)
+ * Add support for Arilux LC06 (#1414)
+ *
+ * 5.10.0b
+ * Add support for PZEM004T energy sensor to be enabled with define USE_PZEM004T in user_config.h
  * Change Sonoff Pow Energy MQTT data message and consolidate Status 8 into Status 10
  * Change Wemo SetBinaryState to distinguish from GetBinaryState (#1357)
- * Change output of HTTP command to valid JSON only (#1363)
- * Change output to valid JSON Array if needed (#1363)
- * Add support for sensor MH-Z19(B) to be enabled with define USE_MHZ19 in user_config.h (#561, #1248)
+ * Change output of HTTP command to valid JSON and Array only (#1363)
+ * Add support for MH-Z19(B) CO2 sensor to be enabled with define USE_MHZ19 in user_config.h (#561, #1248)
+ * Add support for SenseAir S8 CO2 sensor to be enabled with define USE_SENSEAIR in user_config.h
+ * Add support for Domoticz Air Quality sensor to be used by MH-Z19(B) and SenseAir sensors
  *
  * 5.10.0a
  * Add (experimental) support for sensor SHT3x

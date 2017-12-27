@@ -1,7 +1,7 @@
 /*
   xdrv_domoticz.ino - domoticz support for Sonoff-Tasmota
 
-  Copyright (C) 2017  Theo Arends
+  Copyright (C) 2018  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -40,10 +40,14 @@ enum DomoticzCommands {
 const char kDomoticzCommands[] PROGMEM =
   D_CMND_IDX "|" D_CMND_KEYIDX "|" D_CMND_SWITCHIDX "|" D_CMND_SENSORIDX "|" D_CMND_UPDATETIMER ;
 
-enum DomoticzSensors {DZ_TEMP, DZ_TEMP_HUM, DZ_TEMP_HUM_BARO, DZ_POWER_ENERGY, DZ_ILLUMINANCE, DZ_COUNT, DZ_VOLTAGE, DZ_CURRENT, DZ_MAX_SENSORS};
+enum DomoticzSensors {DZ_TEMP, DZ_TEMP_HUM, DZ_TEMP_HUM_BARO, DZ_POWER_ENERGY, DZ_ILLUMINANCE, DZ_COUNT, DZ_VOLTAGE, DZ_CURRENT, DZ_AIRQUALITY, DZ_MAX_SENSORS};
+
+#if MAX_DOMOTICZ_SNS_IDX < DZ_MAX_SENSORS
+  #error "Domoticz: Too many sensors or change settings.h layout"
+#endif
 
 const char kDomoticzSensors[] PROGMEM =
-  D_DOMOTICZ_TEMP "|" D_DOMOTICZ_TEMP_HUM "|" D_DOMOTICZ_TEMP_HUM_BARO "|" D_DOMOTICZ_POWER_ENERGY "|" D_DOMOTICZ_ILLUMINANCE "|" D_DOMOTICZ_COUNT "|" D_DOMOTICZ_VOLTAGE "|" D_DOMOTICZ_CURRENT ;
+  D_DOMOTICZ_TEMP "|" D_DOMOTICZ_TEMP_HUM "|" D_DOMOTICZ_TEMP_HUM_BARO "|" D_DOMOTICZ_POWER_ENERGY "|" D_DOMOTICZ_ILLUMINANCE "|" D_DOMOTICZ_COUNT "|" D_DOMOTICZ_VOLTAGE "|" D_DOMOTICZ_CURRENT "|" D_DOMOTICZ_AIRQUALITY ;
 
 const char S_JSON_DOMOTICZ_COMMAND_INDEX_NVALUE[] PROGMEM = "{\"" D_CMND_DOMOTICZ "%s%d\":%d}";
 
@@ -254,6 +258,19 @@ boolean DomoticzButton(byte key, byte device, byte state, byte svalflg)
 
 /*********************************************************************************************\
  * Sensors
+ *
+ * Source : https://www.domoticz.com/wiki/Domoticz_API/JSON_URL%27s
+ *          https://www.domoticz.com/wiki/MQTT
+ *
+ * Percentage, Barometric, Air Quality:
+ * {\"idx\":%d,\"nvalue\":%s}, Idx, Value
+ *
+ * Humidity:
+ * {\"idx\":%d,\"nvalue\":%s,\"svalue\":\"%s\"}, Idx, Humidity, HumidityStatus
+ *
+ * All other:
+ * {\"idx\":%d,\"nvalue\":0,\"svalue\":\"%s\"}, Idx, Value(s)
+ *
 \*********************************************************************************************/
 
 uint8_t DomoticzHumidityState(char *hum)
@@ -268,8 +285,11 @@ void DomoticzSensor(byte idx, char *data)
     char dmess[64];
 
     memcpy(dmess, mqtt_data, sizeof(dmess));
-    snprintf_P(mqtt_data, sizeof(dmess), PSTR("{\"idx\":%d,\"nvalue\":0,\"svalue\":\"%s\"}"),
-      Settings.domoticz_sensor_idx[idx], data);
+    if (DZ_AIRQUALITY == idx) {
+      snprintf_P(mqtt_data, sizeof(dmess), PSTR("{\"idx\":%d,\"nvalue\":%s}"), Settings.domoticz_sensor_idx[idx], data);
+    } else {
+      snprintf_P(mqtt_data, sizeof(dmess), PSTR("{\"idx\":%d,\"nvalue\":0,\"svalue\":\"%s\"}"), Settings.domoticz_sensor_idx[idx], data);
+    }
     MqttPublish(domoticz_in_topic);
     memcpy(mqtt_data, dmess, sizeof(dmess));
   }
@@ -353,6 +373,7 @@ void HandleDomoticzConfiguration()
 void DomoticzSaveSettings()
 {
   char stemp[20];
+  char ssensor_indices[6 * MAX_DOMOTICZ_SNS_IDX];
 
   for (byte i = 0; i < MAX_DOMOTICZ_IDX; i++) {
     snprintf_P(stemp, sizeof(stemp), PSTR("r%d"), i +1);
@@ -362,20 +383,19 @@ void DomoticzSaveSettings()
     snprintf_P(stemp, sizeof(stemp), PSTR("s%d"), i +1);
     Settings.domoticz_switch_idx[i] = (!strlen(WebServer->arg(stemp).c_str())) ? 0 : atoi(WebServer->arg(stemp).c_str());
   }
+  ssensor_indices[0] = '\0';
   for (byte i = 0; i < DZ_MAX_SENSORS; i++) {
     snprintf_P(stemp, sizeof(stemp), PSTR("l%d"), i +1);
     Settings.domoticz_sensor_idx[i] = (!strlen(WebServer->arg(stemp).c_str())) ? 0 : atoi(WebServer->arg(stemp).c_str());
+    snprintf_P(ssensor_indices, sizeof(ssensor_indices), PSTR("%s%s%d"), ssensor_indices, (strlen(ssensor_indices)) ? "," : "",  Settings.domoticz_sensor_idx[i]);
   }
   Settings.domoticz_update_timer = (!strlen(WebServer->arg("ut").c_str())) ? DOMOTICZ_UPDATE_TIMER : atoi(WebServer->arg("ut").c_str());
-  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_DOMOTICZ D_CMND_IDX " %d, %d, %d, %d, " D_CMND_UPDATETIMER " %d"),
+
+  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_DOMOTICZ D_CMND_IDX " %d,%d,%d,%d, " D_CMND_KEYIDX " %d,%d,%d,%d, " D_CMND_SWITCHIDX " %d,%d,%d,%d, " D_CMND_SENSORIDX " %s, " D_CMND_UPDATETIMER " %d"),
     Settings.domoticz_relay_idx[0], Settings.domoticz_relay_idx[1], Settings.domoticz_relay_idx[2], Settings.domoticz_relay_idx[3],
-    Settings.domoticz_update_timer);
-  AddLog(LOG_LEVEL_INFO);
-  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_DOMOTICZ D_CMND_KEYIDX " %d, %d, %d, %d, " D_CMND_SWITCHIDX " %d, %d, %d, %d, " D_CMND_SENSORIDX " %d, %d, %d, %d, %d, %d, %d, %d"),
     Settings.domoticz_key_idx[0], Settings.domoticz_key_idx[1], Settings.domoticz_key_idx[2], Settings.domoticz_key_idx[3],
     Settings.domoticz_switch_idx[0], Settings.domoticz_switch_idx[1], Settings.domoticz_switch_idx[2], Settings.domoticz_switch_idx[3],
-    Settings.domoticz_sensor_idx[0], Settings.domoticz_sensor_idx[1], Settings.domoticz_sensor_idx[2], Settings.domoticz_sensor_idx[3],
-    Settings.domoticz_sensor_idx[4], Settings.domoticz_sensor_idx[5], Settings.domoticz_sensor_idx[6], Settings.domoticz_sensor_idx[7]);
+    ssensor_indices, Settings.domoticz_update_timer);
   AddLog(LOG_LEVEL_INFO);
 }
 #endif  // USE_WEBSERVER

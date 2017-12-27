@@ -1,7 +1,7 @@
 /*
   pl-PL.h - localization for Polish without fonetick - Poland for Sonoff-Tasmota
 
-  Copyright (C) 2017  Theo Arends (translated by roblad - Robert L.)
+  Copyright (C) 2018  Theo Arends (translated by roblad - Robert L.)
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -66,7 +66,7 @@
 #define D_BUTTON "Przycisk"
 #define D_BY "by"                    // Written by me
 #define D_CELSIUS "Celsiusza"
-#define D_CO2 "CO2"
+#define D_CO2 "Dwutlenku węgla"
 #define D_CODE "kod"                 // Button code
 #define D_COLDLIGHT "Zimny"
 #define D_COMMAND "Komenda"
@@ -118,6 +118,7 @@
 #define D_INITIALIZED "Zainicjowany"
 #define D_IP_ADDRESS "Adres IP"
 #define D_LIGHT "Swiatlo"
+#define D_LIMIT "Wartość graniczna"
 #define D_LOCAL_TIME "Lokalny"
 #define D_LOW "Niski"
 #define D_LWT "LWT"
@@ -386,6 +387,7 @@
   #define D_DOMOTICZ_COUNT "Licznik"
   #define D_DOMOTICZ_VOLTAGE "Napiecie"
   #define D_DOMOTICZ_CURRENT "Prad"
+  #define D_DOMOTICZ_AIRQUALITY "AirQuality"
 #define D_DOMOTICZ_UPDATE_TIMER "Zaktualizuj czasomierz"
 
 // xdrv_irremote.ino
@@ -479,6 +481,8 @@
 #define D_SENSOR_MHZ_TX   "MHZ Tx"
 #define D_SENSOR_PZEM_RX  "PZEM Rx"
 #define D_SENSOR_PZEM_TX  "PZEM Tx"
+#define D_SENSOR_SAIR_RX  "SAir Rx"
+#define D_SENSOR_SAIR_TX  "SAir Tx"
 #define D_SENSOR_SPI_CS   "SPI CS"
 #define D_SENSOR_SPI_DC   "SPI DC"
 #define D_SENSOR_BACKLIGHT "BLight"

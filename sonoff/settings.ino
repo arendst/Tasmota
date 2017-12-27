@@ -1,7 +1,7 @@
 /*
   settings.ino - user settings for Sonoff-Tasmota
 
-  Copyright (C) 2017  Theo Arends
+  Copyright (C) 2018  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -182,7 +182,7 @@ void SettingsSaveAll()
   } else {
     Settings.power = 0;
   }
-  XsnsCall(FUNC_XSNS_SAVE_BEFORE_RESTART);
+  XsnsCall(FUNC_SAVE_BEFORE_RESTART);
   SettingsSave(0);
 }
 

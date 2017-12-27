@@ -1,7 +1,7 @@
 /*
   xdrv_wemohue.ino - wemo and hue support for Sonoff-Tasmota
 
-  Copyright (C) 2017  Heiko Krupp and Theo Arends
+  Copyright (C) 2018  Heiko Krupp and Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -241,33 +241,52 @@ void PollUdp()
 \*********************************************************************************************/
 
 const char WEMO_EVENTSERVICE_XML[] PROGMEM =
-  "<?scpd xmlns=\"urn:Belkin:service-1-0\"?>"
-  "<actionList>"
-    "<action>"
-      "<name>SetBinaryState</name>"
-      "<argumentList>"
-        "<argument>"
-          "<retval/>"
-          "<name>BinaryState</name>"
-          "<relatedStateVariable>BinaryState</relatedStateVariable>"
-          "<direction>in</direction>"
-        "</argument>"
-      "</argumentList>"
-      "<serviceStateTable>"
-        "<stateVariable sendEvents=\"yes\">"
-          "<name>BinaryState</name>"
-          "<dataType>Boolean</dataType>"
-          "<defaultValue>0</defaultValue>"
-        "</stateVariable>"
-        "<stateVariable sendEvents=\"yes\">"
-          "<name>level</name>"
-          "<dataType>string</dataType>"
-          "<defaultValue>0</defaultValue>"
-        "</stateVariable>"
-      "</serviceStateTable>"
-    "</action>"
-  "</scpd>\r\n"
-  "\r\n";
+  // XosePerez version 20171108 - v2.3.0
+  "<?xml version=\"1.0\"?>"
+  "<scpd xmlns=\"urn:Belkin:service-1-0\">"
+    "<specVersion><major>1</major><minor>0</minor></specVersion>"
+    "<actionList>"
+      "<action>"
+        "<name>SetBinaryState</name>"
+        "<argumentList>"
+          "<argument>"
+            "<retval />"
+            "<name>BinaryState</name>"
+            "<relatedStateVariable>BinaryState</relatedStateVariable>"
+            "<direction>in</direction>"
+          "</argument>"
+        "</argumentList>"
+      "</action>"
+      "<action>"
+        "<name>GetBinaryState</name>"
+        "<argumentList>"
+          "<argument>"
+            "<retval/>"
+            "<name>BinaryState</name>"
+            "<relatedStateVariable>BinaryState</relatedStateVariable>"
+            "<direction>out</direction>"
+          "</argument>"
+        "</argumentList>"
+      "</action>"
+    "</actionList>"
+    "<serviceStateTable>"
+      "<stateVariable sendEvents=\"yes\">"
+        "<name>BinaryState</name>"
+        "<dataType>Boolean</dataType>"
+        "<defaultValue>0</defaultValue>"
+      "</stateVariable>"
+    "</serviceStateTable>"
+  "</scpd>";
+
+const char WEMO_RESPONSE_STATE_SOAP[] PROGMEM =
+  "<s:Envelope xmlns:s=\"http://schemas.xmlsoap.org/soap/envelope/\">"
+    "<s:Body>"
+      "<u:SetBinaryState xmlns:u=\"urn:Belkin:service:basicevent:1\">"
+        "<BinaryState>{x1</BinaryState>"
+      "</u:SetBinaryState>"
+    "</s:Body>"
+  "</s:Envelope>";
+
 const char WEMO_SETUP_XML[] PROGMEM =
   "<?xml version=\"1.0\"?>"
   "<root>"
@@ -290,8 +309,7 @@ const char WEMO_SETUP_XML[] PROGMEM =
         "</service>"
       "</serviceList>"
     "</device>"
-  "</root>\r\n"
-  "\r\n";
+  "</root>";
 
 /********************************************************************************************/
 
@@ -299,17 +317,21 @@ void HandleUpnpEvent()
 {
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, PSTR(D_WEMO_BASIC_EVENT));
   String request = WebServer->arg(0);
+  String state_xml = FPSTR(WEMO_RESPONSE_STATE_SOAP);
+  //differentiate get and set state
   if (request.indexOf(F("SetBinaryState")) > 0) {
     if (request.indexOf(F("State>1</Binary")) > 0) {
-  //    ExecuteCommandPower(1, 1);
       ExecuteCommandPower(devices_present, 1);
     }
-    if (request.indexOf(F("State>0</Binary")) > 0) {
-  //    ExecuteCommandPower(1, 0);
+    else if (request.indexOf(F("State>0</Binary")) > 0) {
       ExecuteCommandPower(devices_present, 0);
     }
   }
-  WebServer->send(200, FPSTR(HDR_CTYPE_PLAIN), "");
+  else if(request.indexOf(F("GetBinaryState")) > 0){
+    state_xml.replace(F("SetBinaryState"), F("GetBinaryStateResponse"));
+  }
+  state_xml.replace("{x1", String(bitRead(power, devices_present -1)));
+  WebServer->send(200, FPSTR(HDR_CTYPE_XML), state_xml);
 }
 
 void HandleUpnpService()
