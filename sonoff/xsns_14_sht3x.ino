@@ -22,25 +22,15 @@
 /*********************************************************************************************\
  * SHT3X - Temperature and Humidy
  *
- * Required library: none but based on Adafruit Industries SHT31 library
- *
  * I2C Address: 0x44 or 0x45
 \*********************************************************************************************/
 
-#define SHT3X_ADDR_GND      0x44  // address pin low (GND)
-#define SHT3X_ADDR_VDD      0x45  // address pin high (VDD)
+#define SHT3X_ADDR_GND      0x44       // address pin low (GND)
+#define SHT3X_ADDR_VDD      0x45       // address pin high (VDD)
 
 uint8_t sht3x_type = 0;
 uint8_t sht3x_address;
 uint8_t sht3x_addresses[] = { SHT3X_ADDR_GND, SHT3X_ADDR_VDD };
-
-bool Sht3xConvert()
-{
-  if (sht3x_type) {
-    return I2cWrite8(sht3x_address, 0x2C, 0x06);
-  }
-  return false;
-}
 
 bool Sht3xRead(float &t, float &h)
 {
@@ -49,22 +39,20 @@ bool Sht3xRead(float &t, float &h)
   t = NAN;
   h = NAN;
 
-  Wire.requestFrom(sht3x_address, (uint8_t)6);
-  if (Wire.available() != 6) {
+  Wire.beginTransmission(sht3x_address);
+  Wire.write(0x2C);                    // Enable clock stretching
+  Wire.write(0x06);                    // High repeatability
+  if (Wire.endTransmission() != 0) {   // Stop I2C transmission
     return false;
   }
-  // Read 6 bytes of data
-  // cTemp msb, cTemp lsb, cTemp crc, humidity msb, humidity lsb, humidity crc
-  for (uint8_t i = 0; i < 6; i++) {
-    data[i] = Wire.read();
-  }
-//  delay(50);
-//  if (Wire.available() != 0) {
-//    return false;
-//  }
+  delay(30);                           // Timing verified with logic analyzer (10 is to short)
+  Wire.requestFrom(sht3x_address, (uint8_t)6);   // Request 6 bytes of data
+  for (int i = 0; i < 6; i++) {
+    data[i] = Wire.read();             // cTemp msb, cTemp lsb, cTemp crc, humidity msb, humidity lsb, humidity crc
+  };
   t = ConvertTemp((float)((((data[0] << 8) | data[1]) * 175) / 65535.0) - 45);
   h = (float)((((data[3] << 8) | data[4]) * 100) / 65535.0);
-  return true;
+  return (!isnan(t) && !isnan(h));
 }
 
 /********************************************************************************************/
@@ -75,10 +63,12 @@ void Sht3xDetect()
     return;
   }
 
+  float t;
+  float h;
   sht3x_type = 1;
   for (byte i = 0; i < sizeof(sht3x_addresses); i++) {
     sht3x_address = sht3x_addresses[i];
-    if (Sht3xConvert()) {
+    if (Sht3xRead(t, h)) {
       snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, "SHT3X", sht3x_address);
       AddLog(LOG_LEVEL_DEBUG);
       return;
@@ -128,16 +118,12 @@ boolean Xsns14(byte function)
       case FUNC_INIT:
         Sht3xDetect();
         break;
-      case FUNC_PREP_BEFORE_TELEPERIOD:
-        Sht3xConvert();
-        break;
       case FUNC_JSON_APPEND:
         Sht3xShow(1);
         break;
 #ifdef USE_WEBSERVER
       case FUNC_WEB_APPEND:
         Sht3xShow(0);
-        Sht3xConvert();
         break;
 #endif  // USE_WEBSERVER
     }

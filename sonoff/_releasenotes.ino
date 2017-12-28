@@ -1,6 +1,7 @@
 /* 5.10.0e
  * Add Italian language file (#1449)
  * Fix Wemo Emulation once again closest to issue (#1357)
+ * Add support for sensor SHT3x
  *
  * 5.10.0d
  * Renamed commands Color2,3,4 to Color3,4,5
