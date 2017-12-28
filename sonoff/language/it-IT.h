@@ -118,6 +118,7 @@
 #define D_INITIALIZED "Inizializzato"
 #define D_IP_ADDRESS "Indirizzo IP"
 #define D_LIGHT "Light"
+#define D_LIMIT "Limit"
 #define D_LOCAL_TIME "Local"
 #define D_LOW "Low"
 #define D_LWT "LWT"
@@ -706,4 +707,4 @@
 #define D_CMND_MAXENERGY "MaxEnergy"
 #define D_CMND_MAXENERGYSTART "MaxEnergyStart"
 
-#endif  // _LANGUAGE_EN_GB_H_
+#endif  // _LANGUAGE_IT_IT_H_

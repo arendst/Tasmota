@@ -241,6 +241,38 @@ void PollUdp()
 \*********************************************************************************************/
 
 const char WEMO_EVENTSERVICE_XML[] PROGMEM =
+/*
+  // Original
+  "<?scpd xmlns=\"urn:Belkin:service-1-0\"?>"
+  "<actionList>"
+    "<action>"
+      "<name>SetBinaryState</name>"
+      "<argumentList>"
+        "<argument>"
+          "<retval/>"
+          "<name>BinaryState</name>"
+          "<relatedStateVariable>BinaryState</relatedStateVariable>"
+          "<direction>in</direction>"
+        "</argument>"
+      "</argumentList>"
+      "<serviceStateTable>"
+        "<stateVariable sendEvents=\"yes\">"
+          "<name>BinaryState</name>"
+          "<dataType>Boolean</dataType>"
+          "<defaultValue>0</defaultValue>"
+        "</stateVariable>"
+        "<stateVariable sendEvents=\"yes\">"
+          "<name>level</name>"
+          "<dataType>string</dataType>"
+          "<defaultValue>0</defaultValue>"
+        "</stateVariable>"
+      "</serviceStateTable>"
+    "</action>"
+  "</scpd>\r\n"
+  "\r\n";
+*/
+
+/*
   // XosePerez version 20171108 - v2.3.0
   "<?xml version=\"1.0\"?>"
   "<scpd xmlns=\"urn:Belkin:service-1-0\">"
@@ -277,19 +309,63 @@ const char WEMO_EVENTSERVICE_XML[] PROGMEM =
       "</stateVariable>"
     "</serviceStateTable>"
   "</scpd>";
+*/
+
+  // Reloxx13 from #1357
+  "<?scpd xmlns=\"urn:Belkin:service-1-0\"?>"
+    "<actionList>"
+      "<action>"
+        "<name>SetBinaryState</name>"
+        "<argumentList>"
+          "<argument>"
+            "<retval/>"
+            "<name>BinaryState</name>"
+            "<relatedStateVariable>BinaryState</relatedStateVariable>"
+            "<direction>in</direction>"
+          "</argument>"
+        "</argumentList>"
+        "<serviceStateTable>"
+          "<stateVariable sendEvents=\"yes\">"
+            "<name>BinaryState</name>"
+            "<dataType>Boolean</dataType>"
+            "<defaultValue>0</defaultValue>"
+          "</stateVariable>"
+          "<stateVariable sendEvents=\"yes\">"
+            "<name>level</name>"
+            "<dataType>string</dataType>"
+            "<defaultValue>0</defaultValue>"
+          "</stateVariable>"
+        "</serviceStateTable>"
+      "</action>"
+      "<action>"
+        "<name>GetBinaryState</name>"
+        "<argumentList>"
+          "<argument>"
+            "<retval/>"
+            "<name>BinaryState</name>"
+            "<relatedStateVariable>BinaryState</relatedStateVariable>"
+            "<direction>out</direction>"
+          "</argument>"
+        "</argumentList>"
+      "</action>"
+    "</actionList>"
+  "</scpd>\r\n"
+  "\r\n";
 
 const char WEMO_RESPONSE_STATE_SOAP[] PROGMEM =
-  "<s:Envelope xmlns:s=\"http://schemas.xmlsoap.org/soap/envelope/\">"
+  // Reloxx13 from #1357
+  "<s:Envelope xmlns:s=\"http://schemas.xmlsoap.org/soap/envelope/\" s:encodingStyle=\"http://schemas.xmlsoap.org/soap/encoding/\">"
     "<s:Body>"
-      "<u:SetBinaryState xmlns:u=\"urn:Belkin:service:basicevent:1\">"
+      "<u:SetBinaryStateResponse xmlns:u=\"urn:Belkin:service:basicevent:1\">"
         "<BinaryState>{x1</BinaryState>"
-      "</u:SetBinaryState>"
+      "</u:SetBinaryStateResponse>"
     "</s:Body>"
-  "</s:Envelope>";
+  "</s:Envelope>\r\n"
+  "\r\n";
 
 const char WEMO_SETUP_XML[] PROGMEM =
   "<?xml version=\"1.0\"?>"
-  "<root>"
+  "<root xmlns=\"urn:Belkin:device-1-0\">"
     "<device>"
       "<deviceType>urn:Belkin:device:controllee:1</deviceType>"
       "<friendlyName>{x1</friendlyName>"
@@ -316,6 +392,7 @@ const char WEMO_SETUP_XML[] PROGMEM =
 void HandleUpnpEvent()
 {
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, PSTR(D_WEMO_BASIC_EVENT));
+
   String request = WebServer->arg(0);
   String state_xml = FPSTR(WEMO_RESPONSE_STATE_SOAP);
   //differentiate get and set state
@@ -328,7 +405,7 @@ void HandleUpnpEvent()
     }
   }
   else if(request.indexOf(F("GetBinaryState")) > 0){
-    state_xml.replace(F("SetBinaryState"), F("GetBinaryStateResponse"));
+    state_xml.replace(F("Set"), F("Get"));
   }
   state_xml.replace("{x1", String(bitRead(power, devices_present -1)));
   WebServer->send(200, FPSTR(HDR_CTYPE_XML), state_xml);
@@ -337,6 +414,7 @@ void HandleUpnpEvent()
 void HandleUpnpService()
 {
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, PSTR(D_WEMO_EVENT_SERVICE));
+
   WebServer->send(200, FPSTR(HDR_CTYPE_PLAIN), FPSTR(WEMO_EVENTSERVICE_XML));
 }
 
