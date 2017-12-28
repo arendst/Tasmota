@@ -1,4 +1,8 @@
-/* 5.10.0d
+/* 5.10.0e
+ * Add Italian language file (#1449)
+ * Fix Wemo Emulation once again closest to issue (#1357)
+ *
+ * 5.10.0d
  * Renamed commands Color2,3,4 to Color3,4,5
  * Add command Color2 to set color while keeping same dimmer value
  * Add led signal to Carbon Dioxide (CO2) sensors (see user_config.h)
