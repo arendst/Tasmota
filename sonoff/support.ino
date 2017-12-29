@@ -891,6 +891,7 @@ extern "C" {
 Ticker TickerRtc;
 
 static const uint8_t kDaysInMonth[] = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 }; // API starts months from 1, this array starts from 0
+static const char kMonthNamesOrigin[] = "JanFebMarAprMayJunJulAugSepOctNovDec";
 
 uint32_t utc_time = 0;
 uint32_t local_time = 0;
@@ -926,7 +927,7 @@ String GetBuildDateAndTime()
       year = atoi(str);
     }
   }
-  month = (strstr(kMonthNames, smonth) -kMonthNames) /3 +1;
+  month = (strstr(kMonthNamesOrigin, smonth) -kMonthNamesOrigin) /3 +1;
   snprintf_P(bdt, sizeof(bdt), PSTR("%d" D_YEAR_MONTH_SEPARATOR "%02d" D_MONTH_DAY_SEPARATOR "%02d" D_DATE_TIME_SEPARATOR "%s"), year, month, day, __TIME__);
   return String(bdt);
 }
