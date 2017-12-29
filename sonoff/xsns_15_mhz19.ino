@@ -54,10 +54,17 @@ enum MhzFilterOptions {MHZ19_FILTER_OFF, MHZ19_FILTER_OFF_ALLSAMPLES, MHZ19_FILT
 
 #include <TasmotaSerial.h>
 
-TasmotaSerial *MhzSerial;
+#ifndef CO2_LOW
+#define CO2_LOW                      800     // Below this CO2 value show green light
+#endif
+#ifndef CO2_HIGH
+#define CO2_HIGH                     1200    // Above this CO2 value show red light
+#endif
 
 #define MHZ19_READ_TIMEOUT           500     // Must be way less than 1000
 #define MHZ19_RETRY_COUNT            8
+
+TasmotaSerial *MhzSerial;
 
 const char kMhzTypes[] PROGMEM = "MHZ19|MHZ19B";
 
@@ -180,6 +187,7 @@ void Mhz50ms()
         mhz_type = (s) ? 1 : 2;
         if (MhzCheckAndApplyFilter(ppm, s)) {
           mhz_retry = MHZ19_RETRY_COUNT;
+          LightSetSignal(CO2_LOW, CO2_HIGH, mhz_last_ppm);
 
           if (0 == s || 64 == s) {  // Reading is stable.
             if (mhz_abc_must_apply) {
