@@ -366,13 +366,13 @@ void Ds18x20Show(boolean json)
       snprintf_P(stemp, sizeof(stemp), PSTR("%s-%d"), ds18x20_types, i +1);
       if (json) {
         if (1 == ds18x20_sensors) {
-          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"%s\":{\"" D_TEMPERATURE "\":%s}"), mqtt_data, ds18x20_types, temperature);
+          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"%s\":{\"" D_JSON_TEMPERATURE "\":%s}"), mqtt_data, ds18x20_types, temperature);
         } else {
           char address[17];
           for (byte j = 0; j < 6; j++) {
             sprintf(address+2*j, "%02X", ds18x20_address[ds18x20_index[i]][6-j]);  // Skip sensor type and crc
           }
-          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"%s\":{\"" D_ID "\":\"%s\",\"" D_TEMPERATURE "\":%s}"), mqtt_data, stemp, address, temperature);
+          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"%s\":{\"" D_ID "\":\"%s\",\"" D_JSON_TEMPERATURE "\":%s}"), mqtt_data, stemp, address, temperature);
         }
 #ifdef USE_DOMOTICZ
         if (domoticz_flag) {

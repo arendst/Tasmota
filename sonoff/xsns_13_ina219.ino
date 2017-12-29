@@ -193,7 +193,7 @@ void Ina219Show(boolean json)
     dtostrfd(fcurrent, Settings.flag2.current_resolution, current);
 
     if (json) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"INA219\":{\"" D_VOLTAGE "\":%s,\"" D_CURRENT "\":%s,\"" D_POWERUSAGE "\":%s}"),
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"INA219\":{\"" D_JSON_VOLTAGE "\":%s,\"" D_JSON_CURRENT "\":%s,\"" D_JSON_POWERUSAGE "\":%s}"),
         mqtt_data, voltage, current, power);
 #ifdef USE_DOMOTICZ
       DomoticzSensor(DZ_VOLTAGE, voltage);

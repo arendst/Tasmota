@@ -698,7 +698,7 @@ void LightAnimate()
               light_new_color[i] = light_current_color[i];
             }
           } else {
-            snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_WAKEUP "\":\"" D_DONE "\"}"));
+            snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_WAKEUP "\":\"" D_JSON_DONE "\"}"));
             MqttPublishPrefixTopic_P(2, PSTR(D_CMND_WAKEUP));
             light_wakeup_active = 0;
             Settings.light_scheme = LS_POWER;

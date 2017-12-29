@@ -80,7 +80,7 @@ void Veml6070Show(boolean json)
     uint16_t uvlevel = Veml6070ReadUv();
 
     if (json) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"VEML6070\":{\"" D_UV_LEVEL "\":%d}"), mqtt_data, uvlevel);
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"VEML6070\":{\"" D_JSON_UV_LEVEL "\":%d}"), mqtt_data, uvlevel);
 #ifdef USE_DOMOTICZ
       DomoticzSensor(DZ_ILLUMINANCE, uvlevel);
 #endif  // USE_DOMOTICZ
