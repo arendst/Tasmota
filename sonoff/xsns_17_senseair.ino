@@ -26,6 +26,13 @@
 
 #include <TasmotaSerial.h>
 
+#ifndef CO2_LOW
+#define CO2_LOW                      800     // Below this CO2 value show green light
+#endif
+#ifndef CO2_HIGH
+#define CO2_HIGH                     1200    // Above this CO2 value show red light
+#endif
+
 TasmotaSerial *SensairSerial;
 
 const char kSenseairTypes[] PROGMEM = "Kx0|S8";
@@ -131,6 +138,7 @@ void Senseair50ms()              // Every 50 mSec
             break;
           case 2:                // 0x03 (3) READ_CO2 - fe 04 02 06 2c af 59
             senseair_co2 = value;
+            LightSetSignal(CO2_LOW, CO2_HIGH, senseair_co2);
             break;
           case 3:                // 0x04 (4) READ_TEMPERATURE - S8: fe 84 02 f2 f1 - Illegal Data Address
             senseair_temperature = ConvertTemp((float)value / 100);

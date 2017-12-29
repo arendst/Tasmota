@@ -93,6 +93,7 @@ uint8_t light_entry_color[5];
 uint8_t light_current_color[5];
 uint8_t light_new_color[5];
 uint8_t light_last_color[5];
+uint8_t light_signal_color[5];
 
 uint8_t light_wheel = 0;
 uint8_t light_subtype = 0;
@@ -451,7 +452,11 @@ void LightSetDimmer(uint8_t myDimmer)
   }
   float dimmer = 100 / (float)myDimmer;
   for (byte i = 0; i < light_subtype; i++) {
-    temp = (float)Settings.light_color[i] / dimmer;
+    if (Settings.flag.light_signal) {
+      temp = (float)light_signal_color[i] / dimmer;
+    } else {
+      temp = (float)Settings.light_color[i] / dimmer;
+    }
     light_current_color[i] = (uint8_t)temp;
   }
 }
@@ -471,6 +476,34 @@ void LightSetColor()
   for (byte i = 0; i < light_subtype; i++) {
     float temp = (float)light_current_color[i] * dimmer;
     Settings.light_color[i] = (uint8_t)temp;
+  }
+}
+
+void LightSetSignal(uint16_t lo, uint16_t hi, uint16_t value)
+{
+/* lo - below lo is green
+   hi - above hi is red
+*/
+  if (Settings.flag.light_signal) {
+    uint16_t signal = 0;
+    if (value > lo) {
+      signal = (value - lo) * 10 / ((hi - lo) * 10 / 256);
+      if (signal > 255) {
+        signal = 255;
+      }
+    }
+//    snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_DEBUG "Light signal %d"), signal);
+//    AddLog(LOG_LEVEL_DEBUG);
+    light_signal_color[0] = signal;
+    light_signal_color[1] = 255 - signal;
+    light_signal_color[2] = 0;
+    light_signal_color[3] = 0;
+    light_signal_color[4] = 0;
+
+    Settings.light_scheme = 0;
+    if (!Settings.light_dimmer) {
+      Settings.light_dimmer = 20;
+    }
   }
 }
 
@@ -969,32 +1002,36 @@ boolean LightCommand(char *type, uint16_t index, char *dataBuf, uint16_t data_le
   char option = (1 == data_len) ? dataBuf[0] : '\0';
 
   int command_code = GetCommandCode(command, sizeof(command), type, kLightCommands);
-  if ((CMND_COLOR == command_code) && (light_subtype > LST_SINGLE) && (index > 0) && (index <= 4)) {
+  if ((CMND_COLOR == command_code) && (light_subtype > LST_SINGLE) && (index > 0) && (index <= 5)) {
     if (data_len > 0) {
       valid_entry = LightColorEntry(dataBuf, data_len);
       if (valid_entry) {
-        if (1 == index) {    // Color(1)
+        if (index <= 2) {    // Color(1), 2
           memcpy(light_current_color, light_entry_color, sizeof(light_current_color));
+          uint8_t dimmer = Settings.light_dimmer;
           LightSetColor();
+          if (2 == index) {
+            Settings.light_dimmer = dimmer;
+          }
           Settings.light_scheme = 0;
           coldim = true;
-        } else {             // Color2, 3 and 4
+        } else {             // Color3, 4 and 5
           for (byte i = 0; i < LST_RGB; i++) {
-            Settings.ws_color[index -2][i] = light_entry_color[i];
+            Settings.ws_color[index -3][i] = light_entry_color[i];
           }
         }
       }
     }
-    if (!valid_entry && (1 == index)) {
+    if (!valid_entry && (index <= 2)) {
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, LightGetColor(0, scolor));
     }
-    if (index > 1) {
+    if (index >= 3) {
       scolor[0] = '\0';
       for (byte i = 0; i < LST_RGB; i++) {
         if (Settings.flag.decimal_text) {
-          snprintf_P(scolor, 25, PSTR("%s%s%d"), scolor, (i > 0) ? "," : "", Settings.ws_color[index -2][i]);
+          snprintf_P(scolor, 25, PSTR("%s%s%d"), scolor, (i > 0) ? "," : "", Settings.ws_color[index -3][i]);
         } else {
-          snprintf_P(scolor, 25, PSTR("%s%02X"), scolor, Settings.ws_color[index -2][i]);
+          snprintf_P(scolor, 25, PSTR("%s%02X"), scolor, Settings.ws_color[index -3][i]);
         }
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, index, scolor);
