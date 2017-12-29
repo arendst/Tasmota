@@ -1,6 +1,7 @@
 /* 5.10.0f
  * Differentiate between JSON text defines and other text defines to allow for English JSON while using different locale (#1449)
  * Fix display of build date and time in non-english locale (#1465)
+ * Add define for additional number of WS2812 schemes (#1463)
  *
  * 5.10.0e
  * Add Italian language file (#1449)

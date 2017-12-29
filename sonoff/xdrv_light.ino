@@ -51,6 +51,8 @@
  *
 \*********************************************************************************************/
 
+#define WS2812_SCHEMES       7    // Number of additional WS2812 schemes supported by xdrv_ws2812.ino
+
 enum LightCommands {
   CMND_COLOR, CMND_COLORTEMPERATURE, CMND_DIMMER, CMND_LED, CMND_LEDTABLE, CMND_FADE,
   CMND_PIXELS, CMND_SCHEME, CMND_SPEED, CMND_WAKEUP, CMND_WAKEUPDURATION, CMND_WIDTH, CMND_UNDOCA };
@@ -377,7 +379,7 @@ void LightInit(void)
     light_subtype++;  // from RGB to RGBW
 #endif
     Ws2812Init();
-    max_scheme = LS_MAX +7;
+    max_scheme = LS_MAX + WS2812_SCHEMES;
   }
 #endif  // USE_WS2812 ************************************************************************
   else {
@@ -1069,7 +1071,7 @@ boolean LightCommand(char *type, uint16_t index, char *dataBuf, uint16_t data_le
   }
 #endif  // USE_WS2812 ************************************************************************
   else if ((CMND_SCHEME == command_code) && (light_subtype >= LST_RGB)) {
-    uint8_t max_scheme = (LT_WS2812 == light_type) ? LS_MAX +7 : LS_MAX -1;
+    uint8_t max_scheme = (LT_WS2812 == light_type) ? LS_MAX + WS2812_SCHEMES : LS_MAX -1;
     if (('+' == option) && (Settings.light_scheme < max_scheme)) {
       payload = Settings.light_scheme + ((0 == Settings.light_scheme) ? 2 : 1);  // Skip wakeup
     }
