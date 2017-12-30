@@ -62,7 +62,7 @@ WsColor kHanukkah[2] = { 0,0,255, 255,255,255 };
 WsColor kwanzaa[3] = { 255,0,0, 0,0,0, 0,255,0 };
 WsColor kRainbow[7] = { 255,0,0, 255,128,0, 255,255,0, 0,255,0, 0,0,255, 128,0,255, 255,0,255 };
 WsColor kFire[3] = { 255,0,0, 255,102,0, 255,192,0 };
-ColorScheme kSchemes[7] = {
+ColorScheme kSchemes[WS2812_SCHEMES] = {
   kIncandescent, 2,
   kRgb, 3,
   kChristmas, 2,

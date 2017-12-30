@@ -75,7 +75,7 @@ void Bh1750Show(boolean json)
     uint16_t illuminance = Bh1750ReadLux();
 
     if (json) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"BH1750\":{\"" D_ILLUMINANCE "\":%d}"), mqtt_data, illuminance);
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"BH1750\":{\"" D_JSON_ILLUMINANCE "\":%d}"), mqtt_data, illuminance);
 #ifdef USE_DOMOTICZ
       DomoticzSensor(DZ_ILLUMINANCE, illuminance);
 #endif  // USE_DOMOTICZ

@@ -220,14 +220,18 @@ void PollUdp()
 //        AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("UDP: M-SEARCH Packet received"));
 //        AddLog_P(LOG_LEVEL_DEBUG_MORE, request.c_str());
 
-        if ((EMUL_WEMO == Settings.flag2.emulation) && (request.indexOf(F("urn:belkin:device:**")) > 0)) {
+        if ((EMUL_WEMO == Settings.flag2.emulation) &&
+           ((request.indexOf(F("urn:belkin:device:**")) > 0) ||
+            (request.indexOf(F("upnp:rootdevice")) > 0) ||         // Needed by 2nd generation Echo
+            (request.indexOf(F("ssdpsearch:all")) > 0) ||
+            (request.indexOf(F("ssdp:all")) > 0))) {
           WemoRespondToMSearch();
         }
         else if ((EMUL_HUE == Settings.flag2.emulation) &&
-                ((request.indexOf(F("st:urn:schemas-upnp-org:device:basic:1")) > 0) ||
-                 (request.indexOf(F("st:upnp:rootdevice")) > 0) ||
-                 (request.indexOf(F("st:ssdpsearch:all")) > 0) ||
-                 (request.indexOf(F("st:ssdp:all")) > 0))) {
+                ((request.indexOf(F("urn:schemas-upnp-org:device:basic:1")) > 0) ||
+                 (request.indexOf(F("upnp:rootdevice")) > 0) ||
+                 (request.indexOf(F("ssdpsearch:all")) > 0) ||
+                 (request.indexOf(F("ssdp:all")) > 0))) {
           HueRespondToMSearch();
         }
       }
@@ -241,48 +245,13 @@ void PollUdp()
 \*********************************************************************************************/
 
 const char WEMO_EVENTSERVICE_XML[] PROGMEM =
-/*
-  // Original
-  "<?scpd xmlns=\"urn:Belkin:service-1-0\"?>"
-  "<actionList>"
-    "<action>"
-      "<name>SetBinaryState</name>"
-      "<argumentList>"
-        "<argument>"
-          "<retval/>"
-          "<name>BinaryState</name>"
-          "<relatedStateVariable>BinaryState</relatedStateVariable>"
-          "<direction>in</direction>"
-        "</argument>"
-      "</argumentList>"
-      "<serviceStateTable>"
-        "<stateVariable sendEvents=\"yes\">"
-          "<name>BinaryState</name>"
-          "<dataType>Boolean</dataType>"
-          "<defaultValue>0</defaultValue>"
-        "</stateVariable>"
-        "<stateVariable sendEvents=\"yes\">"
-          "<name>level</name>"
-          "<dataType>string</dataType>"
-          "<defaultValue>0</defaultValue>"
-        "</stateVariable>"
-      "</serviceStateTable>"
-    "</action>"
-  "</scpd>\r\n"
-  "\r\n";
-*/
-
-/*
-  // XosePerez version 20171108 - v2.3.0
-  "<?xml version=\"1.0\"?>"
   "<scpd xmlns=\"urn:Belkin:service-1-0\">"
-    "<specVersion><major>1</major><minor>0</minor></specVersion>"
     "<actionList>"
       "<action>"
         "<name>SetBinaryState</name>"
         "<argumentList>"
           "<argument>"
-            "<retval />"
+            "<retval/>"
             "<name>BinaryState</name>"
             "<relatedStateVariable>BinaryState</relatedStateVariable>"
             "<direction>in</direction>"
@@ -307,48 +276,12 @@ const char WEMO_EVENTSERVICE_XML[] PROGMEM =
         "<dataType>Boolean</dataType>"
         "<defaultValue>0</defaultValue>"
       "</stateVariable>"
+      "<stateVariable sendEvents=\"yes\">"
+        "<name>level</name>"
+        "<dataType>string</dataType>"
+        "<defaultValue>0</defaultValue>"
+      "</stateVariable>"
     "</serviceStateTable>"
-  "</scpd>";
-*/
-
-  // Reloxx13 from #1357
-  "<?scpd xmlns=\"urn:Belkin:service-1-0\"?>"
-    "<actionList>"
-      "<action>"
-        "<name>SetBinaryState</name>"
-        "<argumentList>"
-          "<argument>"
-            "<retval/>"
-            "<name>BinaryState</name>"
-            "<relatedStateVariable>BinaryState</relatedStateVariable>"
-            "<direction>in</direction>"
-          "</argument>"
-        "</argumentList>"
-        "<serviceStateTable>"
-          "<stateVariable sendEvents=\"yes\">"
-            "<name>BinaryState</name>"
-            "<dataType>Boolean</dataType>"
-            "<defaultValue>0</defaultValue>"
-          "</stateVariable>"
-          "<stateVariable sendEvents=\"yes\">"
-            "<name>level</name>"
-            "<dataType>string</dataType>"
-            "<defaultValue>0</defaultValue>"
-          "</stateVariable>"
-        "</serviceStateTable>"
-      "</action>"
-      "<action>"
-        "<name>GetBinaryState</name>"
-        "<argumentList>"
-          "<argument>"
-            "<retval/>"
-            "<name>BinaryState</name>"
-            "<relatedStateVariable>BinaryState</relatedStateVariable>"
-            "<direction>out</direction>"
-          "</argument>"
-        "</argumentList>"
-      "</action>"
-    "</actionList>"
   "</scpd>\r\n"
   "\r\n";
 
@@ -360,8 +293,7 @@ const char WEMO_RESPONSE_STATE_SOAP[] PROGMEM =
         "<BinaryState>{x1</BinaryState>"
       "</u:SetBinaryStateResponse>"
     "</s:Body>"
-  "</s:Envelope>\r\n"
-  "\r\n";
+  "</s:Envelope>\r\n";
 
 const char WEMO_SETUP_XML[] PROGMEM =
   "<?xml version=\"1.0\"?>"
@@ -370,7 +302,7 @@ const char WEMO_SETUP_XML[] PROGMEM =
       "<deviceType>urn:Belkin:device:controllee:1</deviceType>"
       "<friendlyName>{x1</friendlyName>"
       "<manufacturer>Belkin International Inc.</manufacturer>"
-      "<modelName>Sonoff Socket</modelName>"
+      "<modelName>Socket</modelName>"
       "<modelNumber>3.1415</modelNumber>"
       "<UDN>uuid:{x2</UDN>"
       "<serialNumber>{x3</serialNumber>"
@@ -385,7 +317,7 @@ const char WEMO_SETUP_XML[] PROGMEM =
         "</service>"
       "</serviceList>"
     "</device>"
-  "</root>";
+  "</root>\r\n";
 
 /********************************************************************************************/
 
