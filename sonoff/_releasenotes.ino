@@ -1,7 +1,15 @@
-/* 5.10.0e
+/* 5.10.0g
+ * Add 2nd Gen Alexa support to Wemo emulation discovery (#1357, #1450)
+ *
+ * 5.10.0f
+ * Differentiate between JSON text defines and other text defines to allow for English JSON while using different locale (#1449)
+ * Fix display of build date and time in non-english locale (#1465)
+ * Add define for additional number of WS2812 schemes (#1463)
+ *
+ * 5.10.0e
  * Add Italian language file (#1449)
  * Fix Wemo Emulation once again closest to issue (#1357)
- * Add support for sensor SHT3x
+ * Add support for sensor SHT3x (#1314)
  *
  * 5.10.0d
  * Renamed commands Color2,3,4 to Color3,4,5

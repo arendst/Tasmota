@@ -25,8 +25,8 @@
     - Select IDE Tools - Flash Size: "1M (no SPIFFS)"
   ====================================================*/
 
-#define VERSION                0x050A0005
-#define VERSION_STRING         "5.10.0e"    // Would be great to have a macro that fills this from VERSION ...
+#define VERSION                0x050A0007
+#define VERSION_STRING         "5.10.0g"    // Would be great to have a macro that fills this from VERSION ...
 
 // Location specific includes
 #include "sonoff.h"                         // Enumaration used in user_config.h
@@ -1480,7 +1480,7 @@ void MqttDataCallback(char* topic, byte* data, unsigned int data_len)
     }
     else if (CMND_CFGDUMP == command_code) {
       SettingsDump(dataBuf);
-      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, D_DONE);
+      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, D_JSON_DONE);
     }
 #ifdef USE_I2C
     else if ((CMND_I2CSCAN == command_code) && i2c_flg) {
@@ -1515,7 +1515,7 @@ void MqttDataCallback(char* topic, byte* data, unsigned int data_len)
       if (data_len > 0) {
         ExceptionTest(payload);
       }
-      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, D_DONE);
+      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, D_JSON_DONE);
     }
 #endif  // DEBUG_THEO
     else {
@@ -1525,7 +1525,7 @@ void MqttDataCallback(char* topic, byte* data, unsigned int data_len)
   if (type == NULL) {
     blinks = 201;
     snprintf_P(topicBuf, sizeof(topicBuf), PSTR(D_COMMAND));
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_COMMAND "\":\"" D_UNKNOWN "\"}"));
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_COMMAND "\":\"" D_JSON_UNKNOWN "\"}"));
     type = (char*)topicBuf;
   }
   if (mqtt_data[0] != '\0') {

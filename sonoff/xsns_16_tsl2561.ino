@@ -67,7 +67,7 @@ void Tsl2561Show(boolean json)
     uint16_t illuminance = tsl->getLuminosity(TSL2561_VISIBLE);
 
     if (json) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"TSL2561\":{\"" D_ILLUMINANCE "\":%d}"), mqtt_data, illuminance);
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"TSL2561\":{\"" D_JSON_ILLUMINANCE "\":%d}"), mqtt_data, illuminance);
 #ifdef USE_DOMOTICZ
       DomoticzSensor(DZ_ILLUMINANCE, illuminance);
 #endif  // USE_DOMOTICZ

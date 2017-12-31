@@ -203,9 +203,9 @@ void SenseairShow(boolean json)
   GetTextIndexed(senseair_types, sizeof(senseair_types), senseair_type -1, kSenseairTypes);
 
   if (json) {
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"%s\":{\"" D_CO2 "\":%d"), mqtt_data, senseair_types, senseair_co2);
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"%s\":{\"" D_JSON_CO2 "\":%d"), mqtt_data, senseair_types, senseair_co2);
     if (senseair_type != 2) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"" D_TEMPERATURE "\":%s,\"" D_HUMIDITY "\":%s"), mqtt_data, temperature, humidity);
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"" D_JSON_TEMPERATURE "\":%s,\"" D_JSON_HUMIDITY "\":%s"), mqtt_data, temperature, humidity);
     }
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}"), mqtt_data);
 #ifdef USE_DOMOTICZ

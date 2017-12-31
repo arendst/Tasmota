@@ -891,6 +891,7 @@ extern "C" {
 Ticker TickerRtc;
 
 static const uint8_t kDaysInMonth[] = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 }; // API starts months from 1, this array starts from 0
+static const char kMonthNamesEnglish[] = "JanFebMarAprMayJunJulAugSepOctNovDec";
 
 uint32_t utc_time = 0;
 uint32_t local_time = 0;
@@ -926,7 +927,7 @@ String GetBuildDateAndTime()
       year = atoi(str);
     }
   }
-  month = (strstr(kMonthNames, smonth) -kMonthNames) /3 +1;
+  month = (strstr(kMonthNamesEnglish, smonth) -kMonthNamesEnglish) /3 +1;
   snprintf_P(bdt, sizeof(bdt), PSTR("%d" D_YEAR_MONTH_SEPARATOR "%02d" D_MONTH_DAY_SEPARATOR "%02d" D_DATE_TIME_SEPARATOR "%s"), year, month, day, __TIME__);
   return String(bdt);
 }
@@ -1317,7 +1318,7 @@ void AdcShow(boolean json)
   analog >>= 5;
 
   if (json) {
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"" D_ANALOG_INPUT "0\":%d"), mqtt_data, analog);
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"" D_JSON_ANALOG_INPUT "0\":%d"), mqtt_data, analog);
 #ifdef USE_WEBSERVER
   } else {
     snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_ANALOG, mqtt_data, "", 0, analog);
@@ -1337,10 +1338,6 @@ boolean Xsns02(byte function)
 
   if (pin[GPIO_ADC0] < 99) {
     switch (function) {
-//      case FUNC_INIT:
-//        break;
-//      case FUNC_PREP_BEFORE_TELEPERIOD:
-//        break;
       case FUNC_JSON_APPEND:
         AdcShow(1);
         break;

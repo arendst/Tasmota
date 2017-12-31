@@ -227,7 +227,7 @@ void MhzShow(boolean json)
   GetTextIndexed(mhz_types, sizeof(mhz_types), mhz_type -1, kMhzTypes);
 
   if (json) {
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"%s\":{\"" D_CO2 "\":%d,\"" D_TEMPERATURE "\":%s}"), mqtt_data, mhz_types, mhz_last_ppm, temperature);
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"%s\":{\"" D_JSON_CO2 "\":%d,\"" D_JSON_TEMPERATURE "\":%s}"), mqtt_data, mhz_types, mhz_last_ppm, temperature);
 #ifdef USE_DOMOTICZ
     DomoticzSensor(DZ_AIRQUALITY, mhz_last_ppm);
 #endif  // USE_DOMOTICZ
