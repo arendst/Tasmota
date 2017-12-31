@@ -33,12 +33,14 @@
 enum UnitNames {
   UNIT_AMPERE,
   UNIT_HOUR,
+  UNIT_KILOOHM,
   UNIT_KILOWATTHOUR,
   UNIT_LUX,
   UNIT_MICROSECOND,
   UNIT_MILLIAMPERE,
   UNIT_MILLISECOND,
   UNIT_MINUTE,
+  UNIT_PPM,
   UNIT_PRESSURE,
   UNIT_SECOND,
   UNIT_SECTORS,
@@ -48,12 +50,14 @@ enum UnitNames {
 const char kUnitNames[] PROGMEM =
   D_UNIT_AMPERE "|"
   D_UNIT_HOUR "|"
+  D_UNIT_KILOOHM "|"
   D_UNIT_KILOWATTHOUR "|"
   D_UNIT_LUX "|"
   D_UNIT_MICROSECOND "|"
   D_UNIT_MILLIAMPERE "|"
   D_UNIT_MILLISECOND "|"
   D_UNIT_MINUTE "|"
+  D_UNIT_PPM "|"
   D_UNIT_PRESSURE "|"
   D_UNIT_SECOND "|"
   D_UNIT_SECTORS "|"
@@ -77,7 +81,7 @@ const char S_JSON_COMMAND_INDEX_NVALUE[] PROGMEM =            "{\"%s%d\":%d}";
 const char S_JSON_COMMAND_INDEX_SVALUE[] PROGMEM =            "{\"%s%d\":\"%s\"}";
 const char S_JSON_COMMAND_INDEX_SVALUE_SVALUE[] PROGMEM =     "{\"%s%d\":\"%s%s\"}";
 
-const char JSON_SNS_TEMPHUM[] PROGMEM = "%s,\"%s\":{\"" D_TEMPERATURE "\":%s,\"" D_HUMIDITY "\":%s}";
+const char JSON_SNS_TEMPHUM[] PROGMEM = "%s,\"%s\":{\"" D_JSON_TEMPERATURE "\":%s,\"" D_JSON_HUMIDITY "\":%s}";
 
 const char S_LOG_I2C_FOUND_AT[] PROGMEM = D_LOG_I2C "%s " D_FOUND_AT " 0x%x";
 
