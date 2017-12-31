@@ -5,4 +5,4 @@
 lib/readme.txt
 releases/*
 !releases/releases.bat
-user_config.h.nils
+user_config_my.h
