@@ -11,6 +11,7 @@ Current version is **5.10.0g-modified-1.3.7**
 
 Default all sensors are disabled and MQTT Disabled, too.   
 This is for better responding with Alexa.   
+Default WIFI Setup is WIFI_MANAGER instead of WPS. I suggest to enter your wifi credentials in the user_config and change it to WIFI_RETRY to be sure your sonoff is connection back if your wifi fails.   
 You can always enable what you need in the user_config.h   
 
 Web Interface   
