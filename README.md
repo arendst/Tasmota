@@ -9,18 +9,19 @@ Current version is **5.10.0g-modified-1.3.7**
 
 ### Mods
 
-Default all sensors are disabled and MQTT Disabled, too.
-This is for better responding with Alexa.
-You can always enable what you need in the user_config.h
+Default all sensors are disabled and MQTT Disabled, too.   
+This is for better responding with Alexa.   
+You can always enable what you need in the user_config.h   
 
-Web Interface
--more width for desktop
--pointer cursor
--translated current status (on/off)
-
-WeMo Emu fixed
-Echo 2G Type2 discover fixed 
-- echo show not working discovering
+Web Interface   
+- more width for desktop   
+- pointer cursor   
+- translated current status (on/off)   
+   
+WeMo Emu fixed   
+   
+Echo 2G Type2 discover fixed    
+- discovering with echo show still not working    
 
 
 
