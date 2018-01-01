@@ -340,6 +340,7 @@ void StartWebserver(int type, IPAddress ipweb)
       if (EMUL_WEMO == Settings.flag2.emulation) {
         WebServer->on("/upnp/control/basicevent1", HTTP_POST, HandleUpnpEvent);
         WebServer->on("/eventservice.xml", HandleUpnpService);
+        WebServer->on("/metainfoservice.xml", HandleUpnpMetaService);
         WebServer->on("/setup.xml", HandleUpnpSetupWemo);
       }
       if (EMUL_HUE == Settings.flag2.emulation) {
@@ -1596,6 +1597,8 @@ void HandleRestart()
 
 void HandleNotFound()
 {
+  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_HTTP "NOT FOUND URL (%s)"), WebServer->uri().c_str());
+  AddLog(LOG_LEVEL_DEBUG);
   if (CaptivePortal()) { // If captive portal redirect instead of displaying the error page.
     return;
   }

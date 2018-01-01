@@ -441,6 +441,7 @@
 #define D_WEMO "WeMo"
 #define D_WEMO_BASIC_EVENT "WeMo basic event"
 #define D_WEMO_EVENT_SERVICE "WeMo event service"
+#define D_WEMO_META_SERVICE "WeMo meta service"
 #define D_WEMO_SETUP "WeMo-Setup"
 #define D_RESPONSE_SENT "Antwort gesendet"
 
