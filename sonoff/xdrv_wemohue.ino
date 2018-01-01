@@ -246,7 +246,6 @@ void PollUdp()
                 ((request.indexOf(F("urn:schemas-upnp-org:device:basic:1")) > 0) ||
                  (request.indexOf(F("upnp:rootdevice")) > 0) ||
                  (request.indexOf(F("ssdpsearch:all")) > 0) ||
-                 (request.indexOf(F("ssdp:discover")) > 0) ||
                  (request.indexOf(F("ssdp:all")) > 0))) {
           HueRespondToMSearch();
         }
