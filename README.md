@@ -7,7 +7,7 @@ Ill try to hold it up-to-date with the orginal tasmota as much as i can.
 
 Current version is **5.10.0g-modified-1.3.7**
 
-# Mods
+### Mods
 
 Default all sensors are disabled and MQTT Disabled, too.
 This is for better responding with Alexa.
