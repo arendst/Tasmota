@@ -238,7 +238,6 @@ void PollUdp()
            (//(request.indexOf(F("urn:belkin:device:**")) > 0) ||
             (request.indexOf(F("upnp:rootdevice")) > 0) ||         // Echo 2g (echo & echo plus)
             (request.indexOf(F("ssdpsearch:all")) > 0) ||
-            (request.indexOf(F("ssdp:discover")) > 0) || //echo 2g (echo show)
             (request.indexOf(F("ssdp:all")) > 0))) {
              String type = "rootdevice";
           WemoRespondToMSearch(type);
