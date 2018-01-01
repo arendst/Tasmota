@@ -1,13 +1,38 @@
 ## Sonoff-Tasmota MODIFIED
-In this repo i will share some modified oder fixes which did not get it into the [Sonoff-Tasmota Git from arendst](https://github.com/arendst/Sonoff-Tasmota/).
+In this repo i will share some mods or fixes which did not get it into the [Sonoff-Tasmota Git from arendst](https://github.com/arendst/Sonoff-Tasmota/).
 
 The target group are home users which just want to use tasmota with their alexa and dont need every single device or a multi firmware.
 
-Ill try to hold it up-to-date with the orginal tasmota as much as i can
+Ill try to hold it up-to-date with the orginal tasmota as much as i can.
 
-Current version is **5.10.0b-modified-1.2.1**
+Current version is **5.10.0g-modified-1.3.7**
+
+# Mods
+
+Default all sensors are disabled and MQTT Disabled, too.
+This is for better responding with Alexa.
+You can always enable what you need in the user_config.h
+
+Web Interface
+-more width for desktop
+-pointer cursor
+-translated current status (on/off)
+
+WeMo Emu fixed
+Echo 2G Type2 discover fixed 
+- echo show not working discovering
 
 
+
+
+
+
+   
+   
+   
+   
+   
+   
 ## Sonoff-Tasmota
 Provide ESP8266 based Sonoff by [iTead Studio](https://www.itead.cc/) and ElectroDragon IoT Relay with Serial, Web and MQTT control allowing 'Over the Air' or OTA firmware updates using Arduino IDE.
 
