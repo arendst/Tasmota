@@ -441,6 +441,7 @@
 #define D_WEMO "WeMo"
 #define D_WEMO_BASIC_EVENT "WeMo basis gebeurtenis"
 #define D_WEMO_EVENT_SERVICE "WeMo gebeurtenis dienst"
+#define D_WEMO_META_SERVICE "WeMo meta dienst"
 #define D_WEMO_SETUP "WeMo installatie"
 #define D_RESPONSE_SENT "Antwoord verstuurd"
 
