@@ -227,8 +227,8 @@ void PollUdp()
         request.toLowerCase();
         request.replace(" ", "");
 
-        AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("UDP: M-SEARCH Packet received"));
-        AddLog_P(LOG_LEVEL_DEBUG_MORE, request.c_str());
+        //AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("UDP: M-SEARCH Packet received"));
+        //AddLog_P(LOG_LEVEL_DEBUG_MORE, request.c_str());
         if ((EMUL_WEMO == Settings.flag2.emulation) &&
            (request.indexOf(F("urn:belkin:device:**")) > 0)){ //type1 echo dot 2g, echo 1g's
             String type = "belkin";
