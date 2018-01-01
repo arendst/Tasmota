@@ -7,6 +7,10 @@ Ill try to hold it up-to-date with the orginal tasmota as much as i can.
 
 Current version is **5.10.0g-modified-1.3.7**
 
+Check this [Beginner Guide](https://github.com/arendst/Sonoff-Tasmota/wiki/Beginner-Guide---Create-your-own-Firmware-Build) to build your own firmware with Atom.
+
+Use [SonOTA Exe](https://github.com/mirko/SonOTA/releases) for first flash of your Sonoff Device (firmware must be < 1.6.0) over WIFI.
+
 ### Mods
 
 Default all sensors are disabled and MQTT Disabled, too.   
@@ -23,6 +27,7 @@ WeMo Emu fixed
    
 Echo 2G Type2 discover fixed    
 - discovering with echo show still not working    
+
 
 
 
