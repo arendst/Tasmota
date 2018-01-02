@@ -531,6 +531,11 @@ void SettingsDefaultSet2()
 
   // 5.9.2
   Settings.flag2.current_resolution = 3;
+
+  // 5.10.0
+  strlcpy(Settings.web_bc1, WEB_BC1, sizeof(Settings.web_bc1));
+  strlcpy(Settings.web_bc2, WEB_BC2, sizeof(Settings.web_bc2));
+
 }
 
 /********************************************************************************************/
@@ -798,10 +803,11 @@ void SettingsDelta()
       Settings.flag2.current_resolution = 3;
       Settings.ina219_mode = 0;
     }
-
+    if (Settings.version < 0x050A0000) {
+      strlcpy(Settings.web_bc1, WEB_BC1, sizeof(Settings.web_bc1));
+      strlcpy(Settings.web_bc2, WEB_BC2, sizeof(Settings.web_bc2));
+    }
     Settings.version = VERSION;
     SettingsSave(1);
   }
 }
-
-
