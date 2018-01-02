@@ -62,7 +62,8 @@ const char HTTP_HEAD[] PROGMEM =
     "x.onreadystatechange=function(){"
       "if(x.readyState==4&&x.status==200){"
         "var s=x.responseText.replace(/{s}/g,\"<tr><th>\").replace(/{m}/g,\"</th><td>\").replace(/{e}/g,\"</td></tr>\").replace(/{t}/g,\"%'><div style='text-align:center;font-weight:\");"
-        "document.getElementById('l1').innerHTML=s;"
+        "s = s.replace(/OFF/g,\" " D_OFF " \").replace(/ON/g,\" " D_ON " \").toUpperCase();" //translate ON/OFF
+        "document.getElementById('l1').innerHTML=s"
       "}"
     "};"
     "x.open('GET','ay'+a,true);"
@@ -85,7 +86,7 @@ const char HTTP_HEAD[] PROGMEM =
   "textarea{resize:none;width:98%;height:318px;padding:5px;overflow:auto;}"
   "body{text-align:center;font-family:verdana;}"
   "td{padding:0px;}"
-  "button{cursor:pointer;border:0;border-radius:0.3rem;background-color:#1fa3ec;color:#fff;line-height:2.4rem;font-size:1.2rem;width:100%;-webkit-transition-duration:0.4s;transition-duration:0.4s;min-width:50%; width:80%;left: calc(50% - 40%);position:relative;}"
+  "button{cursor:pointer;border:0;border-radius:0.3rem;background-color:#1fa3ec;color:#fff;line-height:2.4rem;font-size:1.2rem;width:100%;-webkit-transition-duration:0.4s;transition-duration:0.4s;}"
   "button:hover{background-color:#006cba;}"
   "a{text-decoration:none;}"
   ".p{float:left;text-align:left;}"
@@ -280,7 +281,7 @@ const char HTTP_COUNTER[] PROGMEM =
   "<br/><div id='t' name='t' style='text-align:center;'></div>";
 const char HTTP_END[] PROGMEM =
   "<br/>"
-  "<div style='text-align:right;font-size:11px;'><hr/><a href='" D_WEBLINK "' target='_blank' style='color:#aaa;'>" D_PROGRAMNAME " " VERSION_STRING " " D_BY " " D_AUTHOR "</a></div>"
+  "<div style='text-align:right;font-size:11px;'><hr/><a href='" D_WEBLINK "' target='_blank' style='color:#aaa;'>" D_PROGRAMNAME " " MOD_VERSION_STRING " " D_BY " " D_AUTHOR "</a> <a href='" D_WEBLINK "' target='_blank' style='color:#aaa;'>" D_MODIFIED " " D_BY " " D_MODIFY_AUTHOR "</a></div>"
   "</div>"
   "</body>"
   "</html>";
