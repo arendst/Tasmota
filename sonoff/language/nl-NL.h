@@ -441,6 +441,7 @@
 #define D_WEMO "WeMo"
 #define D_WEMO_BASIC_EVENT "WeMo basis gebeurtenis"
 #define D_WEMO_EVENT_SERVICE "WeMo gebeurtenis dienst"
+#define D_WEMO_META_SERVICE "WeMo meta service"
 #define D_WEMO_SETUP "WeMo installatie"
 #define D_RESPONSE_SENT "Antwoord verstuurd"
 
@@ -667,6 +668,16 @@
 #define D_CMND_I2CSCAN "I2CScan"
 #define D_CMND_INA219MODE "Ina219Mode"
 #define D_CMND_EXCEPTION "Exception"
+
+// Commands xdrv_display.ino
+#define D_CMND_DISPLAY "Display"
+#define D_CMND_DISP_MODEL "Model"
+#define D_CMND_DISP_MODE "Mode"
+#define D_CMND_DISP_REFRESH "Refresh"
+#define D_CMND_DISP_DIMMER "Dimmer"
+#define D_CMND_DISP_COLS "Cols"
+#define D_CMND_DISP_ROWS "Rows"
+#define D_CMND_DISP_ADDRESS "Address"
 
 // Commands xdrv_domoticz.ino
 #define D_CMND_DOMOTICZ "Domoticz"
