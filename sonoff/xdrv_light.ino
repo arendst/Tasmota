@@ -532,9 +532,6 @@ void LightPowerOn()
 
 void LightPreparePower()
 {
-  char scolor[25];
-  char scommand[16];
-
   if (Settings.light_dimmer && !(light_power)) {
     ExecuteCommandPower(devices_present, 7);  // No publishPowerState
   }
@@ -544,6 +541,12 @@ void LightPreparePower()
 #ifdef USE_DOMOTICZ
   DomoticzUpdatePowerState(devices_present);
 #endif  // USE_DOMOTICZ
+
+}
+
+void LightGetStatus()  {
+  char scolor[25];
+  char scommand[16];
 
   GetPowerDevice(scommand, devices_present, sizeof(scommand));
   if (light_subtype > LST_SINGLE) {
@@ -1023,6 +1026,8 @@ boolean LightCommand(char *type, uint16_t index, char *dataBuf, uint16_t data_le
           }
         }
       }
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_COLOR "\":\"%s\"}"),
+        LightGetColor(0, scolor));
     }
     if (!valid_entry && (index <= 2)) {
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, LightGetColor(0, scolor));
@@ -1110,9 +1115,8 @@ boolean LightCommand(char *type, uint16_t index, char *dataBuf, uint16_t data_le
     if ((payload >= 153) && (payload <= 500)) {  // https://developers.meethue.com/documentation/core-concepts
       LightSetColorTemp(payload);
       coldim = true;
-    } else {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, LightGetColorTemp());
     }
+    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, LightGetColorTemp());
   }
   else if (CMND_DIMMER == command_code) {
     if ('+' == option) {
@@ -1125,9 +1129,8 @@ boolean LightCommand(char *type, uint16_t index, char *dataBuf, uint16_t data_le
       Settings.light_dimmer = payload;
       light_update = 1;
       coldim = true;
-    } else {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, Settings.light_dimmer);
     }
+    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, Settings.light_dimmer);
   }
   else if (CMND_LEDTABLE == command_code) {
     if ((payload >= 0) && (payload <= 2)) {
@@ -1190,5 +1193,5 @@ boolean LightCommand(char *type, uint16_t index, char *dataBuf, uint16_t data_le
     LightPreparePower();
   }
   return serviced;
-}
 
+}
