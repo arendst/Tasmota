@@ -44,8 +44,8 @@ const char WEMO_MSEARCH[] PROGMEM =
   "OPT: \"http://schemas.upnp.org/upnp/1/0/\"; ns=01\r\n"
   "01-NLS: b9200ebb-736d-4b93-bf03-835149d13983\r\n"
   "SERVER: Unspecified, UPnP/1.0, Unspecified\r\n"
-  "ST: {st\r\n"             //"{t1 = urn:Belkin:device:** {t2 = ::upnp:rootdevice"
-  "USN: uuid:{r2{usn}\r\n" //"{t1 = ::urn:Belkin:device:** {t2 = ::upnp:rootdevice
+  "ST: {r3\r\n"                 // type1 = urn:Belkin:device:**, type2 = upnp:rootdevice
+  "USN: uuid:{r2::{r3\r\n"      // type1 = urn:Belkin:device:**, type2 = upnp:rootdevice
   "X-User-Agent: redsonic\r\n"
   "\r\n";
 
@@ -65,7 +65,7 @@ String WemoUuid()
   return String(uuid);
 }
 
-void WemoRespondToMSearch(String requesttype)
+void WemoRespondToMSearch(uint8_t echo_type)
 {
   char message[TOPSZ];
 
@@ -73,24 +73,19 @@ void WemoRespondToMSearch(String requesttype)
     String response = FPSTR(WEMO_MSEARCH);
     response.replace("{r1", WiFi.localIP().toString());
     response.replace("{r2", WemoUuid());
-    if(requesttype == "rootdevice"){ //type2 echo 2g (echo, plus, show)
-      response.replace("{st", "::upnp:rootdevice");
-        response.replace("{usn", "::upnp:rootdevice");
-    }else{ //type1 echo 1g & dot 2g
-      response.replace("{st", "urn:Belkin:device:**");
-        response.replace("{usn", "::urn:Belkin:device:**");
+    if (1 == echo_type) {              // type1 echo 1g & dot 2g
+      response.replace("{r3", F("urn:Belkin:device:**"));
+    } else {                           // type2 echo 2g (echo, plus, show)
+      response.replace("{r3", F("upnp:rootdevice"));
     }
-    snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_UPNP D_WEMO " TYPE: %s"),
-      requesttype.c_str());
-    AddLog(LOG_LEVEL_DEBUG);
     PortUdp.write(response.c_str());
     PortUdp.endPacket();
     snprintf_P(message, sizeof(message), PSTR(D_RESPONSE_SENT));
   } else {
     snprintf_P(message, sizeof(message), PSTR(D_FAILED_TO_SEND_RESPONSE));
   }
-  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_UPNP D_WEMO " %s " D_TO " %s:%d"),
-    message, PortUdp.remoteIP().toString().c_str(), PortUdp.remotePort());
+  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_UPNP D_WEMO " " D_JSON_TYPE " %d, %s " D_TO " %s:%d"),
+    echo_type, message, PortUdp.remoteIP().toString().c_str(), PortUdp.remotePort());
   AddLog(LOG_LEVEL_DEBUG);
 }
 
@@ -227,20 +222,18 @@ void PollUdp()
         request.toLowerCase();
         request.replace(" ", "");
 
-        //AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("UDP: M-SEARCH Packet received"));
-        //AddLog_P(LOG_LEVEL_DEBUG_MORE, request.c_str());
-        if ((EMUL_WEMO == Settings.flag2.emulation) &&
-           (request.indexOf(F("urn:belkin:device:**")) > 0)){ //type1 echo dot 2g, echo 1g's
-            String type = "belkin";
-            WemoRespondToMSearch(type);
-        }
-        else if ((EMUL_WEMO == Settings.flag2.emulation) &&
-           (//(request.indexOf(F("urn:belkin:device:**")) > 0) ||
-            (request.indexOf(F("upnp:rootdevice")) > 0) ||         // Echo 2g (echo & echo plus)
-            (request.indexOf(F("ssdpsearch:all")) > 0) ||
-            (request.indexOf(F("ssdp:all")) > 0))) {
-             String type = "rootdevice";
-          WemoRespondToMSearch(type);
+//        AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("UDP: M-SEARCH Packet received"));
+//        AddLog_P(LOG_LEVEL_DEBUG_MORE, request.c_str());
+
+        if (EMUL_WEMO == Settings.flag2.emulation) {
+          if (request.indexOf(F("urn:belkin:device:**")) > 0) {    // type1 echo dot 2g, echo 1g's
+            WemoRespondToMSearch(1);
+          }
+          else if ((request.indexOf(F("upnp:rootdevice")) > 0) ||  // type2 Echo 2g (echo & echo plus)
+                   (request.indexOf(F("ssdpsearch:all")) > 0) ||
+                   (request.indexOf(F("ssdp:all")) > 0)) {
+            WemoRespondToMSearch(2);
+          }
         }
         else if ((EMUL_HUE == Settings.flag2.emulation) &&
                 ((request.indexOf(F("urn:schemas-upnp-org:device:basic:1")) > 0) ||
@@ -297,8 +290,7 @@ const char WEMO_EVENTSERVICE_XML[] PROGMEM =
         "<defaultValue>0</defaultValue>"
       "</stateVariable>"
     "</serviceStateTable>"
-  "</scpd>\r\n"
-  "\r\n";
+  "</scpd>\r\n\r\n";
 
 const char WEMO_METASERVICE_XML[] PROGMEM =
   "<scpd xmlns=\"urn:Belkin:service-1-0\">"
@@ -434,7 +426,7 @@ const char HUE_DESCRIPTION_XML[] PROGMEM =
 //    "<friendlyName>Philips hue ({x1)</friendlyName>"
     "<manufacturer>Royal Philips Electronics</manufacturer>"
     "<modelDescription>Philips hue Personal Wireless Lighting</modelDescription>"
-    "<modelName>Philips hue bridge 2015</modelName>"
+    "<modelName>Philips hue bridge 2012</modelName>"
     "<modelNumber>929000226503</modelNumber>"
     "<serialNumber>{x3</serialNumber>"
     "<UDN>uuid:{x2</UDN>"
@@ -466,7 +458,7 @@ const char HUE_GROUP0_STATUS_JSON[] PROGMEM =
    "\"action\":{";
 //     "\"scene\":\"none\",";
 const char HueConfigResponse_JSON[] PROGMEM =
-  "{\"name\":\"{bn\","
+  "{\"name\":\"Philips hue\","
    "\"mac\":\"{ma\","
    "\"dhcp\":true,"
    "\"ipaddress\":\"{ip\","
@@ -481,7 +473,7 @@ const char HueConfigResponse_JSON[] PROGMEM =
      "\"create date\":\"{dt\","
      "\"name\":\"Remote\"}},"
    "\"swversion\":\"01039019\","
-   "\"apiversion\":\"1.2.1\","
+   "\"apiversion\":\"1.17.0\","
    "\"swupdate\":{\"updatestate\":0,\"url\":\"\",\"text\":\"\",\"notify\": false},"
    "\"linkbutton\":false,"
    "\"portalservices\":false"
@@ -495,8 +487,7 @@ const char HUE_ERROR_JSON[] PROGMEM =
 
 String GetHueDeviceId(uint8_t id)
 {
-  if(id<10)id+=10;
-  String deviceid = WiFi.macAddress() + F(":00:11-") + (id<10?"0":"") + String(id);
+  String deviceid = WiFi.macAddress() + F(":00:11-") + String(id);
   deviceid.toLowerCase();
   return deviceid;  // 5c:cf:7f:13:9f:3d:00:11-1
 }
@@ -530,7 +521,6 @@ void HueNotImplemented(String *path)
 void HueConfigResponse(String *response)
 {
   *response += FPSTR(HueConfigResponse_JSON);
-  response->replace("{bn",Settings.hostname);
   response->replace("{ma", WiFi.macAddress());
   response->replace("{ip", WiFi.localIP().toString());
   response->replace("{ms", WiFi.subnetMask().toString());
@@ -557,7 +547,7 @@ void HueLightStatus(byte device, String *response)
   } else {
     response->replace("{h}", "0");
     response->replace("{s}", "0");
-    response->replace("{b}", (power & (1 << (device-1))) ? "254" : "0");
+    response->replace("{b}", "0");
   }
 }
 
@@ -810,3 +800,4 @@ void HandleHueApi(String *path)
 }
 #endif  // USE_WEBSERVER
 #endif  // USE_EMULATION
+

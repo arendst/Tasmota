@@ -61,8 +61,7 @@ const char HTTP_HEAD[] PROGMEM =
     "x.onreadystatechange=function(){"
       "if(x.readyState==4&&x.status==200){"
         "var s=x.responseText.replace(/{s}/g,\"<tr><th>\").replace(/{m}/g,\"</th><td>\").replace(/{e}/g,\"</td></tr>\").replace(/{t}/g,\"%'><div style='text-align:center;font-weight:\");"
-        "s = s.replace(/OFF/g,\" " D_OFF " \").replace(/ON/g,\" " D_ON " \").toUpperCase();" //translate ON/OFF
-        "document.getElementById('l1').innerHTML=s"
+        "document.getElementById('l1').innerHTML=s;"
       "}"
     "};"
     "x.open('GET','ay'+a,true);"
@@ -80,12 +79,11 @@ const char HTTP_HEAD[] PROGMEM =
   "<style>"
   "div,fieldset,input,select{padding:5px;font-size:1em;}"
   "input{width:100%;box-sizing:border-box;-webkit-box-sizing:border-box;-moz-box-sizing:border-box;}"
-  "input[type=checkbox],input[type=radio]{width: auto!important;margin-right: 10px;}"
   "select{width:100%;}"
   "textarea{resize:none;width:98%;height:318px;padding:5px;overflow:auto;}"
   "body{text-align:center;font-family:verdana;}"
   "td{padding:0px;}"
-  "button{cursor:pointer;border:0;border-radius:0.3rem;background-color:#1fa3ec;color:#fff;line-height:2.4rem;font-size:1.2rem;width:100%;-webkit-transition-duration:0.4s;transition-duration:0.4s;min-width:50%; width:50%;left: calc(50% - 25%);position: relative;}"
+  "button{border:0;border-radius:0.3rem;background-color:#1fa3ec;color:#fff;line-height:2.4rem;font-size:1.2rem;width:100%;-webkit-transition-duration:0.4s;transition-duration:0.4s;}"
   "button:hover{background-color:#006cba;}"
   "a{text-decoration:none;}"
   ".p{float:left;text-align:left;}"
@@ -94,7 +92,7 @@ const char HTTP_HEAD[] PROGMEM =
 
   "</head>"
   "<body>"
-  "<div style='text-align:left;display:inline-block;min-width:340px; width:50%;'>"
+  "<div style='text-align:left;display:inline-block;min-width:340px;'>"
 #ifdef BE_MINIMAL
   "<div style='text-align:center;color:red;'><h3>" D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "</h3></div>"
 #endif
@@ -280,7 +278,7 @@ const char HTTP_COUNTER[] PROGMEM =
   "<br/><div id='t' name='t' style='text-align:center;'></div>";
 const char HTTP_END[] PROGMEM =
   "<br/>"
-  "<div style='text-align:right;font-size:11px;'><hr/><a href='" D_WEBLINK "' target='_blank' style='color:#aaa;'>" D_PROGRAMNAME " " MOD_VERSION_STRING " " D_BY " " D_AUTHOR "</a> <a href='" D_WEBLINK "' target='_blank' style='color:#aaa;'>" D_MODIFIED " " D_BY " " D_MODIFY_AUTHOR "</a></div>"
+  "<div style='text-align:right;font-size:11px;'><hr/><a href='" D_WEBLINK "' target='_blank' style='color:#aaa;'>" D_PROGRAMNAME " " VERSION_STRING " " D_BY " " D_AUTHOR "</a></div>"
   "</div>"
   "</body>"
   "</html>";
@@ -667,11 +665,11 @@ void HandleModuleConfiguration()
   }
   func += FPSTR(HTTP_SCRIPT_MODULE3);
 
-  page += F("<br/><table width='100%'>");
+  page += F("<br/><table>");
   for (byte i = 0; i < MAX_GPIO_PIN; i++) {
     if (GPIO_USER == cmodule.gp.io[i]) {
       snprintf_P(stemp, 3, PINS_WEMOS +i*2);
-      snprintf_P(line, sizeof(line), PSTR("<tr><td width='60%'>%s <b>" D_GPIO "%d</b> %s</td><td width='40%'><select id='g%d' name='g%d'></select></td></tr>"),
+      snprintf_P(line, sizeof(line), PSTR("<tr><td width='190'>%s <b>" D_GPIO "%d</b> %s</td><td width='126'><select id='g%d' name='g%d'></select></td></tr>"),
         (WEMOS==Settings.module)?stemp:"", i, (0==i)? D_SENSOR_BUTTON "1":(1==i)? D_SERIAL_OUT :(3==i)? D_SERIAL_IN :(12==i)? D_SENSOR_RELAY "1":(13==i)? D_SENSOR_LED "1i":(14==i)? D_SENSOR :"", i, i);
       page += line;
       snprintf_P(line, sizeof(line), PSTR("sk(%d,%d);"), my_module.gp.io[i], i);  // g0 - g16
@@ -928,7 +926,7 @@ void HandleBackupConfiguration()
   WebServer->setContentLength(sizeof(buffer));
 
   char attachment[100];
-  snprintf_P(attachment, sizeof(attachment), PSTR("attachment; filename=Config_%s_" MOD_VERSION_STRING ".dmp"),
+  snprintf_P(attachment, sizeof(attachment), PSTR("attachment; filename=Config_%s_" VERSION_STRING ".dmp"),
     Settings.friendlyname[0]);
   WebServer->sendHeader(F("Content-Disposition"), attachment);
   WebServer->send(200, FPSTR(HDR_CTYPE_STREAM), "");
@@ -1481,7 +1479,7 @@ void HandleInformation()
   // }2 = </th><td>
   String func = FPSTR(HTTP_SCRIPT_INFO_BEGIN);
   func += F("<table width='100%'><tr><th>");
-  func += F(D_PROGRAM_VERSION "}2" MOD_VERSION_STRING);
+  func += F(D_PROGRAM_VERSION "}2" VERSION_STRING);
   func += F("}1" D_BUILD_DATE_AND_TIME "}2"); func += GetBuildDateAndTime();
   func += F("}1" D_CORE_AND_SDK_VERSION "}2"); func += ESP.getCoreVersion(); func += F("/"); func += String(ESP.getSdkVersion());
   func += F("}1" D_UPTIME "}2"); func += String(uptime); func += F(" Hours");
@@ -1597,8 +1595,9 @@ void HandleRestart()
 
 void HandleNotFound()
 {
-  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_HTTP "NOT FOUND URL (%s)"), WebServer->uri().c_str());
-  AddLog(LOG_LEVEL_DEBUG);
+//  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_HTTP "Not fount (%s)"), WebServer->uri().c_str());
+//  AddLog(LOG_LEVEL_DEBUG);
+
   if (CaptivePortal()) { // If captive portal redirect instead of displaying the error page.
     return;
   }

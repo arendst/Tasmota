@@ -1,4 +1,7 @@
-/* 5.10.0g
+/* 5.10.0h
+ * Fix Wemo Emulation for Gen 2 devices (#1486)
+ *
+ * 5.10.0g
  * Add 2nd Gen Alexa support to Wemo emulation discovery (#1357, #1450)
  *
  * 5.10.0f

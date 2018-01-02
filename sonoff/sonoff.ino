@@ -25,8 +25,8 @@
     - Select IDE Tools - Flash Size: "1M (no SPIFFS)"
   ====================================================*/
 
-#define VERSION                0x050A0007
-#define VERSION_STRING         "5.10.0g"    // Would be great to have a macro that fills this from VERSION ...
+#define VERSION                0x050A0008
+#define VERSION_STRING         "5.10.0h"    // Would be great to have a macro that fills this from VERSION ...
 
 #define MOD_VERSION_STRING      VERSION_STRING   "-modified-1.3.7"    // Would be great to have a macro that fills this from VERSION ...
 
