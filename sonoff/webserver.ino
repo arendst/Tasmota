@@ -462,7 +462,7 @@ void HandleRoot()
       page += F("<tr>");
       for (byte idx = 1; idx <= devices_present; idx++) {
         snprintf_P(stemp, sizeof(stemp), PSTR(" %d"), idx);
-        snprintf_P(line, sizeof(line), PSTR("<td width='%d%'><button onclick='la(\"?o=%d\");'>%s%s</button></td>"),
+        snprintf_P(line, sizeof(line), PSTR("<td width='%d%'><button style=\"line-height:5.0rem\" onclick='la(\"?o=%d\");'>%s%s</button></td>"),
           100 / devices_present, idx, (devices_present < 5) ? D_BUTTON_TOGGLE : "", (devices_present > 1) ? stemp : "");
         page += line;
       }
