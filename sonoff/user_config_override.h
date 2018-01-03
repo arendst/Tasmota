@@ -17,6 +17,9 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#ifndef _USER_CONFIG_OVERRIDE_H_
+#define _USER_CONFIG_OVERRIDE_H_
+
 /*****************************************************************************************************\
  * ATTENTION: - Changes to most PARAMETER defines will only override flash settings if you change
  *              define CFG_HOLDER.
@@ -38,3 +41,4 @@
 //#endif
 //#define STA_SSID1              "yourssid1"
 
+#endif  // _USER_CONFIG_OVERRIDE_H_

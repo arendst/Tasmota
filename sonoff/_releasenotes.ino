@@ -1,4 +1,129 @@
-/* 5.8.0 20170918
+/* 5.10.0 20171201
+ * Upgrade library ArduinoJson to 5.11.2
+ * Upgrade library IRRemoteEsp8266 to 2.2.1 + 2 commits but disabled some protocols (code size reduction)
+ * Upgrade library NeoPixelBus to 2.2.9
+ * Upgrade library OneWire to 2.3.3 + 6 commits and disabled CRC lookup-table (#define ONEWIRE_CRC8_TABLE 0) (code size reduction)
+ * Update library PubSubClient to 2.6 + 9 commits and additional delay (#790)
+ * Update core_esp8266_wiring_digital.c to latest (staged) level
+ * Patch library I2Cdevlib-Core for esp8266-core 2.4.0-rc2 compatibility
+ * Remove command EnergyReset 1..3 now replaced by ENergyReset1 to EnergyReset3
+ * Remove spaces in JSON messages (code size reduction)
+ * Renamed xsns_05_ds18x20.ino to xsns_05_ds18x20_legacy.ino still using library OneWire and providing dynamic sensor scan
+ * Fix possible iram1_0_seg compile error by shrinking ICACHE_RAM_ATTR code usage
+ * Fix PWM watchdog timeout if Dimmer is set to 100 or Color set to 0xFF (#1146)
+ * Fix Sonoff Bridge Learn Mode hang caused by unrecognised RF code (#1181)
+ * Fix blank console log window by using XML character encoding (#1187)
+ * Fix wrong response name for command HlwISet (#1214)
+ * Fix DHT type sensor timeout recognition by distinguish "signal already there" from "timeout" (#1233)
+ * Add fixed color options 1..12 to command Color
+ * Add + (plus) and - (minus) to commands Dimmer (+10/-10), Speed and Scheme
+ * Add + (plus) and - (minus) to command Color to select 1 out of 12 preset colors
+ * Add + (plus) and - (minus) to command Ct to control ColdWarm led ColorTemperature (+34/-34)
+ * Add commands EnergyReset1 0..42500, EnergyReset2 0..42500 and EnergyReset3 0..42500000
+ *  to (Re)set Energy Today, Yesterday or Total respectively in Wh (#406, #685, #1202)
+ * Add optional ADS1115 driver as alternative for unsupported I2Cdevlib in esp8266-core 2.4.0-rc2
+ * Add support for INA219 Voltage and Current sensor to be enabled in user_config.h with define USE_INA219
+ * Add support for Arilux LC11 (Clearing RF home code when selecting no Arilux module)
+ * Add support for WS2812 RGBW ledstrips to be enabled in user_config.h with define USE_WS2812_CTYPE (#1156)
+ * Add SettingsSaveAll routine to command SaveData to be used before controlled power down (#1202)
+ * Add option PUSHBUTTON_TOGGLE (SwitchMode 7) to allow toggling on any switch change (#1221)
+ * Add new xdrv_05_ds18x20.ino free from library OneWire and add the following features:
+ *  Add support for DS1822
+ *  Add forced setting of 12-bit resolution for selected device types (#1222)
+ *  Add read temperature retry counter (#1215)
+ *  Fix lost sensors by performing sensor probe at restart only thereby removing dynamic sensor probe (#1215)
+ *  Fix sensor address sorting using ascending sort on sensor type followed by sensor address
+ *  Rewrite JSON resulting in shorter message allowing more sensors in default firmware image:
+ *   "DS18B20-1":{"Id":"00000483C23A","Temperature":19.5},"DS18B20-2":{"Id":"0000048EC44C","Temperature":19.6}
+ * Add additional define in user_config.h to select either single sensor (defines disabled), new multi sensor (USE_DS18X20) or legacy multi sensor (USE_DS18X20_LEGACY)
+ * Add clock support for more different pixel counts (#1226)
+ * Add support for Sonoff Dual R2 (#1249)
+ * Add FriendlyName to web page tab and add program information to web page footer (#1275)
+ *
+ * 5.9.1 20171107
+ * Add external sensor function pointer interface to enable easy sensor addition
+ * Add support for ADS1115 to be enabled in user_config.h and needs libraries i2cdevlib-Core and i2cdevlib-ADS1115 (#338, #660)
+ * Fix Backup Configuration file download failure by defining proper file size (#1115)
+ * Fix Exception 26 and empty console screen after usage of command WakeupDuration (#1133)
+ * Fix some changed iTead web links in README.md (#1137)
+ *
+ * 5.9.0 20171030
+ * Rewrite code (partly) using Google C++ Style Guide (https://google.github.io/styleguide/cppguide.html)
+ * Rewrite code by using command lookup tables and javascript (client side) web page expansions
+ * Change HTML/CSS to enable nicer form field entry
+ * Change default PWM assignments for H801 RGB(CW) led controller to support optional Color/Dimmer control
+ *   GPIO04 (W2)    from GPIO_PWM2 to GPIO_USER to be user configurable for GPIO_PWM5 (second White - Warm if W1 is Cold)
+ *   GPIO12 (Blue)  GPIO_PWM3 no change
+ *   GPIO13 (Green) from GPIO_PWM4 to GPIO_PWM2
+ *   GPIO14 (W1)    from GPIO_PWM1 to GPIO_USER to be user configurable for GPIO_PWM4 (first White - Cold or Warm)
+ *   GPIO15 (Red)   from GPIO_PWM5 to GPIO_PWM1
+ * Change default PWM assignments for MagicHome RGB(W) led controller to support optional Color/Dimmer control
+ *   GPIO05 (Green) from GPIO_PWM4 to GPIO_PWM2
+ *   GPIO12 (Blue)  from GPIO_PWM5 to GPIO_PWM3
+ *   GPIO13 (White) GPIO_USER to be user configurable for GPIO_PWM4 (White - Cold or Warm)
+ *   GPIO14 (Red)   from GPIO_PWM3 to GPIO_PWM1
+ * Change default PWM assignment for Witty Cloud to support optional Color/Dimmer control (#976)
+ *   GPIO12 (Green) from GPIO_PWM4 to GPIO_PWM2
+ *   GPIO13 (Blue)  from GPIO_PWM5 to GPIO_PWM3
+ *   GPIO15 (Red)   from GPIO_PWM3 to GPIO_PWM1
+ * Change when another module is selected now all GPIO user configuration is removed
+ * Change command name IRRemote to IRSend (#956)
+ * Remove Arduino IDE version too low warning as it interferes with platformio.ini platform = espressif8266_stage
+ * Fix command FullTopic entry when using serial or console interface
+ * Fix possible UDP syslog blocking
+ * Fix minimum TelePeriod of 10 seconds set by web page
+ * Fix command GPIOx JSON response (#897)
+ * Fix inverted relay power on state (#909)
+ * Fix compile error when DOMOTICZ_UPDATE_TIMER is not defined (#930)
+ * Fix alignment of web page items in some browsers (#935)
+ * Fix setting all saved power settings to Off when SetOption0 (SaveState) = 0 (#955)
+ * Fix timezone range from -12/12 to -13/13 (#968)
+ * Fix Southern Hemisphere TIME_STD/TIME_DST (#968)
+ * Fix TLS MQTT SSL fingerprint test (#970, #808)
+ * Fix virtual relay status message used with Color/Dimmer control (#989)
+ * Fix command IRSend and IRHvac case sensitive parameter regression introduced with version 5.8.0 (#993)
+ * Fix pressure calculation for some BMP versions regression introduced with version 5.8.0i (#974)
+ * Fix Domoticz Dimmer set to same level not powering on (#945)
+ * Fix Blocked Loop when erasing large flash using command reset 2 (#1002)
+ * Fix relay power control when light power control is also configured as regression from 5.8.0 (#1016)
+ * Fix Mqtt server mDNS lookup only when MqttHost name is empty (#1026)
+ * Add debug information to MQTT subscribe
+ * Add translations to I2Cscan
+ * Add translation to BH1750 unit lx
+ * Add light scheme options (Color cycle Up, Down, Random) and moving WS2812 schemes up by 3
+ * Add Domoticz counter sensor to IrReceive representing Received IR Protocol and Data
+ * Add option 0 to MqttHost to allow empty Mqtt host name
+ * Add support for Arilux AL-LC01 RGB Led controller (#370)
+ * Add esp8266 de-blocking to PubSubClient library (#790)
+ * Add Domoticz sensors for Voltage and Current (#903)
+ * Add platformio OTA upload support (#928, #934)
+ * Add warning to webpage when USE_MINIMAL is selected (#929)
+ * Add smoother movement of hour hand in WS2812 led clock (#936)
+ * Add support for Magic Home RGBW and some Arilux Led controllers (#940)
+ * Add command SetOption15 0 (default) for command PWM control or SetOption15 1 for commands Color/Dimmer control to PWM RGB(CW) leds (#941)
+ * Add Domoticz counter sensor to Sonoff Bridge representing Received RF code (#943)
+ * Add support for Luani HVIO board (https://luani.de/projekte/esp8266-hvio/) (#953)
+ * Add PWM initialization after restart (#955)
+ * Add IR Receiver support. Disable in user_config.h (#956)
+ * Add support for inverted PWM (#960)
+ * Add Sea level pressure calculation and Provide command Altitude (#974)
+ * Add support for up to 8 relays (#995)
+ * Add commands RfSync, RfLow, RfHigh, RfHost and RfCode to allow sending custom RF codes (#1001)
+ * Add retain to ENERGY messages controlled by command SensorRetain (#1013)
+ * Add commands Color2, Color3, Color4, Width2, Width3, Width4 and SetOption16 to set Ws2812 Clock parameters (#1019)
+ * Add German language file (#1022)
+ * Add support for connecting to MQTT brokers without userid and/or password (#1023)
+ * Add support for esp8266 core v2.4.0-rc2 (#1024)
+ * Add commands PwmRange 1,255..1023 and PwmFrequency 1,100..4000 (#1025)
+ * Add Polish language file (#1044, #1047)
+ * Add support for KMC 70011 Power Monitoring Smart Plug (#1045)
+ * Add support for VEML6070 I2C Ultra Violet level sensor (#1053)
+ * Add light turn Off Fade (#925)
+ * Add IrSend command option Panasonic as IrSend {"Protocol":"Panasonic", "Bits":16388, "Data":<Panasonic data>}
+ *   where 16388 is 0x4004 hexadecimal (#1014)
+ * Add retry counter to DHT11/21/22 sensors (#1082)
+ *
+ * 5.8.0 20170918
  * Remove the need for NeoPixelBus library for Hue support
  * Consolidate WS2812 into Sonoff Led for flexible future led strip library changes
  * Invert WS2812 fade speed to align with Sonoff led (Speed 1 = fast, Speed 8 = slow)
@@ -934,7 +1059,7 @@
  * Add reset 2 option erasing flash
  * Add status 5 option displaying network info
  * Add syslog check for Wifi connection
- * Resize mqtt_publish log array
+ * Resize MqttPublish log array
  * Change Wifi smartconfig active from 100 to 60 seconds
  * Update Wifi initialization
  *
