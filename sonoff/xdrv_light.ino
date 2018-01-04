@@ -98,7 +98,6 @@ uint8_t light_last_color[5];
 uint8_t light_signal_color[5];
 
 uint8_t light_wheel = 0;
-uint8_t light_subtype = 0;
 uint8_t light_power = 0;
 uint8_t light_update = 1;
 uint8_t light_wakeup_active = 0;

@@ -667,6 +667,7 @@
 #define D_CMND_CFGDUMP "CfgDump"
 #define D_CMND_I2CSCAN "I2CScan"
 #define D_CMND_INA219MODE "Ina219Mode"
+#define D_CMND_LIGHTSUBTYPE "LightSubType"
 #define D_CMND_EXCEPTION "Exception"
 
 // Commands xdrv_display.ino
