@@ -74,7 +74,7 @@ enum TasmotaCommands {
   CMND_LOGHOST, CMND_LOGPORT, CMND_IPADDRESS, CMND_NTPSERVER, CMND_AP, CMND_SSID, CMND_PASSWORD, CMND_HOSTNAME,
   CMND_WIFICONFIG, CMND_FRIENDLYNAME, CMND_SWITCHMODE, CMND_WEBSERVER, CMND_WEBPASSWORD, CMND_WEBLOG, CMND_EMULATION,
   CMND_TELEPERIOD, CMND_RESTART, CMND_RESET, CMND_TIMEZONE, CMND_ALTITUDE, CMND_LEDPOWER, CMND_LEDSTATE,
-  CMND_CFGDUMP, CMND_I2CSCAN, CMND_INA219MODE, CMND_EXCEPTION };
+  CMND_CFGDUMP, CMND_I2CSCAN, CMND_INA219MODE, CMND_LIGHTSUBTYPE, CMND_EXCEPTION };
 const char kTasmotaCommands[] PROGMEM =
   D_CMND_BACKLOG "|" D_CMND_DELAY "|" D_CMND_POWER "|" D_CMND_STATUS "|" D_CMND_POWERONSTATE "|" D_CMND_PULSETIME "|"
   D_CMND_BLINKTIME "|" D_CMND_BLINKCOUNT "|" D_CMND_SAVEDATA "|" D_CMND_SETOPTION "|" D_CMND_TEMPERATURE_RESOLUTION "|" D_CMND_HUMIDITY_RESOLUTION "|"
@@ -84,7 +84,7 @@ const char kTasmotaCommands[] PROGMEM =
   D_CMND_LOGHOST "|" D_CMND_LOGPORT "|" D_CMND_IPADDRESS "|" D_CMND_NTPSERVER "|" D_CMND_AP "|" D_CMND_SSID "|" D_CMND_PASSWORD "|" D_CMND_HOSTNAME "|"
   D_CMND_WIFICONFIG "|" D_CMND_FRIENDLYNAME "|" D_CMND_SWITCHMODE "|" D_CMND_WEBSERVER "|" D_CMND_WEBPASSWORD "|" D_CMND_WEBLOG "|" D_CMND_EMULATION "|"
   D_CMND_TELEPERIOD "|" D_CMND_RESTART "|" D_CMND_RESET "|" D_CMND_TIMEZONE "|" D_CMND_ALTITUDE "|" D_CMND_LEDPOWER "|" D_CMND_LEDSTATE "|"
-  D_CMND_CFGDUMP "|" D_CMND_I2CSCAN "|" D_CMND_INA219MODE
+  D_CMND_CFGDUMP "|" D_CMND_I2CSCAN "|" D_CMND_INA219MODE "|" D_CMND_LIGHTSUBTYPE
 #ifdef DEBUG_THEO
   "|" D_CMND_EXCEPTION
 #endif
@@ -104,6 +104,9 @@ const char kOptionOn[] PROGMEM = "ON|" D_ON "|" D_TRUE "|" D_START "|" D_FAHRENH
 const char kOptionToggle[] PROGMEM = "TOGGLE|" D_TOGGLE "|" D_ADMIN ;
 const char kOptionBlink[] PROGMEM = "BLINK|" D_BLINK ;
 const char kOptionBlinkOff[] PROGMEM = "BLINKOFF|" D_BLINKOFF ;
+
+//enum LightSubtypes {LST_NONE, LST_SINGLE, LST_COLDWARM, LST_RGB, LST_RGBW, LST_RGBWC};
+const char kLightSubtypes[] PROGMEM = {"NONE|W|CW|RGB|RGBW|RGBWC"};
 
 // Global variables
 int baudrate = APP_BAUDRATE;                // Serial interface baud rate
@@ -181,6 +184,7 @@ uint8_t energy_flg = 1;                     // Energy monitor configured
 uint8_t i2c_flg = 0;                        // I2C configured
 uint8_t spi_flg = 0;                        // SPI configured
 uint8_t light_type = 0;                     // Light types
+uint8_t light_subtype = 0;                  // Light sub type
 
 boolean mdns_begun = false;
 
@@ -1165,6 +1169,10 @@ void MqttDataCallback(char* topic, byte* data, unsigned int data_len)
         }
       }
       mqtt_data[0] = '\0';
+    }
+    else if (CMND_LIGHTSUBTYPE == command_code) {
+      GetTextIndexed(stemp1, sizeof(stemp1), light_subtype, kLightSubtypes);
+      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE_SVALUE, command, light_subtype, stemp1);
     }
     else if ((CMND_PWM == command_code) && !light_type && (index > 0) && (index <= MAX_PWMS)) {
       if ((payload >= 0) && (payload <= Settings.pwm_range) && (pin[GPIO_PWM1 + index -1] < 99)) {
