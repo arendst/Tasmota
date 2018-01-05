@@ -5,7 +5,7 @@ The target group are home users which just want to use tasmota with their alexa 
 
 Ill try to hold it up-to-date with the orginal tasmota as much as i can.
 
-Current version is **5.10.0g-modified-1.3.7**
+Check the Release Page for ready to use bins.
 
 Check this [Beginner Guide](https://github.com/arendst/Sonoff-Tasmota/wiki/Beginner-Guide---Create-your-own-Firmware-Build) to build your own firmware with Atom.
 
