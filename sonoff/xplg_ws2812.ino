@@ -1,5 +1,5 @@
 /*
-  xdrv_ws2812.ino - ws2812 led string support for Sonoff-Tasmota
+  xplg_ws2812.ino - ws2812 led string support for Sonoff-Tasmota
 
   Copyright (C) 2018  Heiko Krupp and Theo Arends
 

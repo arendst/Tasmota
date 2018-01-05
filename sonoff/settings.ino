@@ -531,6 +531,9 @@ void SettingsDefaultSet2()
 
   // 5.9.2
   Settings.flag2.current_resolution = 3;
+
+  // 5.10.1
+  SettingsDefaultSet_5_10_1();
 }
 
 /********************************************************************************************/
@@ -638,6 +641,28 @@ void SettingsDefaultSet_5_8_1()
   Settings.ws_color[WS_HOUR][WS_RED] = 255;
   Settings.ws_color[WS_HOUR][WS_GREEN] = 0;
   Settings.ws_color[WS_HOUR][WS_BLUE] = 0;
+}
+
+void SettingsDefaultSet_5_10_1()
+{
+  Settings.display_model = 0;
+  Settings.display_mode = 1;
+  Settings.display_refresh = 2;
+  Settings.display_rows = 2;
+  Settings.display_cols[0] = 16;
+  Settings.display_cols[1] = 8;
+//#if defined(USE_I2C) && defined(USE_DISPLAY)
+  Settings.display_address[0] = MTX_ADDRESS1;
+  Settings.display_address[1] = MTX_ADDRESS2;
+  Settings.display_address[2] = MTX_ADDRESS3;
+  Settings.display_address[3] = MTX_ADDRESS4;
+  Settings.display_address[4] = MTX_ADDRESS5;
+  Settings.display_address[5] = MTX_ADDRESS6;
+  Settings.display_address[6] = MTX_ADDRESS7;
+  Settings.display_address[7] = MTX_ADDRESS8;
+//#endif  // USE_DISPLAY
+  Settings.display_dimmer = 1;
+  Settings.display_size = 1;
 }
 
 /********************************************************************************************/
@@ -797,6 +822,9 @@ void SettingsDelta()
       Settings.flag2.voltage_resolution = Settings.flag.voltage_resolution;
       Settings.flag2.current_resolution = 3;
       Settings.ina219_mode = 0;
+    }
+    if (Settings.version < 0x050A0009) {
+      SettingsDefaultSet_5_10_1();
     }
 
     Settings.version = VERSION;
