@@ -84,6 +84,9 @@ enum UserSelectablePins {
   GPIO_PZEM_RX,        // PZEM004T Serial interface
   GPIO_SAIR_TX,        // SenseAir Serial interface
   GPIO_SAIR_RX,        // SenseAir Serial interface
+  GPIO_SPI_CS,         // SPI Chip Select
+  GPIO_SPI_DC,         // SPI Data Direction
+  GPIO_BACKLIGHT,
   GPIO_SENSOR_END };
 
 // Text in webpage Module Parameters and commands GPIOS and GPIO
@@ -149,13 +152,19 @@ const char kSensors[GPIO_SENSOR_END][9] PROGMEM = {
   D_SENSOR_PZEM_TX,
   D_SENSOR_PZEM_RX,
   D_SENSOR_SAIR_TX,
-  D_SENSOR_SAIR_RX
+  D_SENSOR_SAIR_RX,
+  D_SENSOR_SPI_CS,
+  D_SENSOR_SPI_DC,
+  D_SENSOR_BACKLIGHT
 };
 
 // Programmer selectable GPIO functionality offset by user selectable GPIOs
 enum ProgramSelectablePins {
   GPIO_RXD = GPIO_SENSOR_END,  // Serial interface
   GPIO_TXD,            // Serial interface
+  GPIO_SPI_MISO,       // SPI MISO library fixed pin GPIO12
+  GPIO_SPI_MOSI,       // SPI MOSI library fixed pin GPIO13
+  GPIO_SPI_CLK,        // SPI Clk library fixed pin GPIO14
   GPIO_HLW_SEL,        // HLW8012 Sel output (Sonoff Pow)
   GPIO_HLW_CF1,        // HLW8012 CF1 voltage / current (Sonoff Pow)
   GPIO_HLW_CF,         // HLW8012 CF power (Sonoff Pow)
@@ -822,6 +831,17 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_REL1,        // GPIO13 Relay 1
      0,
      GPIO_REL3,        // GPIO15 Relay 3
+     0, 0
+  }
+
+  { "PowStro Basic",   // PowStro (ESP8266) - (#1419)
+     0, 0, 0, 0,
+     GPIO_REL1,        // GPIO04 Relay (0 = Off, 1 = On)
+     0,
+     0, 0, 0, 0, 0, 0, // Flash connection
+     GPIO_KEY1,        // GPIO12 Button
+     0, 0,
+     GPIO_LED1,        // GPIO15 Led (1 = On, 0 = Off)
      0, 0
   }
 */

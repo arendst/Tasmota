@@ -1,5 +1,5 @@
 /*
-  xdrv_irremote.ino - infra red support for Sonoff-Tasmota
+  xdrv_02_irremote.ino - infra red support for Sonoff-Tasmota
 
   Copyright (C) 2018  Heiko Krupp, Lazar Obradovic and Theo Arends
 
@@ -275,11 +275,12 @@ boolean IrHvacMitsubishi(const char *HVAC_Mode, const char *HVAC_FanMode, boolea
  { "Vendor": "<Toshiba|Mitsubishi>", "Power": <0|1>, "Mode": "<Hot|Cold|Dry|Auto>", "FanSpeed": "<1|2|3|4|5|Auto|Silence>", "Temp": <17..30> }
 */
 
-boolean IrSendCommand(char *type, uint16_t index, char *dataBuf, uint16_t data_len, int16_t payload)
+//boolean IrSendCommand(char *type, uint16_t index, char *dataBuf, uint16_t data_len, int16_t payload)
+boolean IrSendCommand()
 {
   boolean serviced = true;
   boolean error = false;
-  char dataBufUc[data_len];
+  char dataBufUc[XdrvMailbox.data_len];
   char protocol_text[20];
   const char *protocol;
   uint32_t bits = 0;
@@ -292,10 +293,10 @@ boolean IrSendCommand(char *type, uint16_t index, char *dataBuf, uint16_t data_l
   boolean HVAC_Power = true;
 
   for (uint16_t i = 0; i <= sizeof(dataBufUc); i++) {
-    dataBufUc[i] = toupper(dataBuf[i]);
+    dataBufUc[i] = toupper(XdrvMailbox.data[i]);
   }
-  if (!strcasecmp_P(type, PSTR(D_CMND_IRSEND))) {
-    if (data_len) {
+  if (!strcasecmp_P(XdrvMailbox.topic, PSTR(D_CMND_IRSEND))) {
+    if (XdrvMailbox.data_len) {
       StaticJsonBuffer<128> jsonBuf;
       JsonObject &ir_json = jsonBuf.parseObject(dataBufUc);
       if (!ir_json.success()) {
@@ -342,8 +343,8 @@ boolean IrSendCommand(char *type, uint16_t index, char *dataBuf, uint16_t data_l
     }
   }
 #ifdef USE_IR_HVAC
-  else if (!strcasecmp_P(type, PSTR(D_CMND_IRHVAC))) {
-    if (data_len) {
+  else if (!strcasecmp_P(XdrvMailbox.topic, PSTR(D_CMND_IRHVAC))) {
+    if (XdrvMailbox.data_len) {
       StaticJsonBuffer<164> jsonBufer;
       JsonObject &root = jsonBufer.parseObject(dataBufUc);
       if (!root.success()) {
@@ -380,9 +381,47 @@ boolean IrSendCommand(char *type, uint16_t index, char *dataBuf, uint16_t data_l
     }
   }
 #endif // USE_IR_HVAC
-  else {
-    serviced = false; // Unknown command
-  }
+  else serviced = false; // Unknown command
   return serviced;
 }
+
+/*********************************************************************************************\
+ * Interface
+\*********************************************************************************************/
+
+#define XDRV_02
+
+boolean Xdrv02(byte function)
+{
+  boolean result = false;
+
+  if ((pin[GPIO_IRSEND] < 99) || (pin[GPIO_IRRECV] < 99)) {
+    switch (function) {
+      case FUNC_INIT:
+        if (pin[GPIO_IRSEND] < 99) {
+          IrSendInit();
+        }
+#ifdef USE_IR_RECEIVE
+        if (pin[GPIO_IRRECV] < 99) {
+          IrReceiveInit();
+        }
+#endif  // USE_IR_RECEIVE
+        break;
+      case FUNC_EVERY_50_MSECOND:
+#ifdef USE_IR_RECEIVE
+        if (pin[GPIO_IRRECV] < 99) {
+          IrReceiveCheck();  // check if there's anything on IR side
+        }
+#endif  // USE_IR_RECEIVE
+        break;
+      case FUNC_COMMAND:
+        if (pin[GPIO_IRSEND] < 99) {
+          result = IrSendCommand();
+        }
+        break;
+    }
+  }
+  return result;
+}
+
 #endif // USE_IR_REMOTE

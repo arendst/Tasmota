@@ -1,5 +1,5 @@
 /*
-  xdrv_wemohue.ino - wemo and hue support for Sonoff-Tasmota
+  xplg_wemohue.ino - wemo and hue support for Sonoff-Tasmota
 
   Copyright (C) 2018  Heiko Krupp and Theo Arends
 
@@ -17,19 +17,26 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#ifdef USE_EMULATION
 /*********************************************************************************************\
  * Belkin WeMo and Philips Hue bridge emulation
 \*********************************************************************************************/
 
-#ifdef USE_EMULATION
+#define UDP_BUFFER_SIZE         200      // Max UDP buffer size needed for M-SEARCH message
+#define UDP_MSEARCH_SEND_DELAY  1500     // Delay in ms before M-Search response is send
 
-#define UDP_BUFFER_SIZE 200         // Max UDP buffer size needed for M-SEARCH message
+#include <Ticker.h>
+Ticker TickerMSearch;
 
 boolean udp_connected = false;
 
-char packet_buffer[UDP_BUFFER_SIZE]; // buffer to hold incoming UDP packet
-IPAddress ipMulticast(239,255,255,250); // Simple Service Discovery Protocol (SSDP)
-uint32_t port_multicast = 1900;      // Multicast address and port
+char packet_buffer[UDP_BUFFER_SIZE];     // buffer to hold incoming UDP packet
+IPAddress ipMulticast(239,255,255,250);  // Simple Service Discovery Protocol (SSDP)
+uint32_t port_multicast = 1900;          // Multicast address and port
+
+bool udp_response_mutex = false;         // M-Search response mutex to control re-entry
+IPAddress udp_remote_ip;                 // M-Search remote IP address
+uint16_t udp_remote_port;                // M-Search remote port
 
 /*********************************************************************************************\
  * WeMo UPNP support routines
@@ -65,11 +72,12 @@ String WemoUuid()
   return String(uuid);
 }
 
-void WemoRespondToMSearch(uint8_t echo_type)
+void WemoRespondToMSearch(int echo_type)
 {
   char message[TOPSZ];
 
-  if (PortUdp.beginPacket(PortUdp.remoteIP(), PortUdp.remotePort())) {
+  TickerMSearch.detach();
+  if (PortUdp.beginPacket(udp_remote_ip, udp_remote_port)) {
     String response = FPSTR(WEMO_MSEARCH);
     response.replace("{r1", WiFi.localIP().toString());
     response.replace("{r2", WemoUuid());
@@ -85,8 +93,10 @@ void WemoRespondToMSearch(uint8_t echo_type)
     snprintf_P(message, sizeof(message), PSTR(D_FAILED_TO_SEND_RESPONSE));
   }
   snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_UPNP D_WEMO " " D_JSON_TYPE " %d, %s " D_TO " %s:%d"),
-    echo_type, message, PortUdp.remoteIP().toString().c_str(), PortUdp.remotePort());
+    echo_type, message, udp_remote_ip.toString().c_str(), udp_remote_port);
   AddLog(LOG_LEVEL_DEBUG);
+
+  udp_response_mutex = false;
 }
 
 /*********************************************************************************************\
@@ -145,7 +155,8 @@ void HueRespondToMSearch()
 {
   char message[TOPSZ];
 
-  if (PortUdp.beginPacket(PortUdp.remoteIP(), PortUdp.remotePort())) {
+  TickerMSearch.detach();
+  if (PortUdp.beginPacket(udp_remote_ip, udp_remote_port)) {
     String response1 = FPSTR(HUE_RESPONSE);
     response1.replace("{r1", WiFi.localIP().toString());
     response1.replace("{r2", HueBridgeId());
@@ -173,8 +184,10 @@ void HueRespondToMSearch()
     snprintf_P(message, sizeof(message), PSTR(D_FAILED_TO_SEND_RESPONSE));
   }
   snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_UPNP D_HUE " %s " D_TO " %s:%d"),
-    message, PortUdp.remoteIP().toString().c_str(), PortUdp.remotePort());
+    message, udp_remote_ip.toString().c_str(), udp_remote_port);
   AddLog(LOG_LEVEL_DEBUG);
+
+  udp_response_mutex = false;
 }
 
 /*********************************************************************************************\
@@ -196,6 +209,7 @@ boolean UdpConnect()
   if (!udp_connected) {
     if (PortUdp.beginMulticast(WiFi.localIP(), ipMulticast, port_multicast)) {
       AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_UPNP D_MULTICAST_REJOINED));
+      udp_response_mutex = false;
       udp_connected = true;
     } else {
       AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_UPNP D_MULTICAST_JOIN_FAILED));
@@ -207,7 +221,7 @@ boolean UdpConnect()
 
 void PollUdp()
 {
-  if (udp_connected) {
+  if (udp_connected && !udp_response_mutex) {
     if (PortUdp.parsePacket()) {
       int len = PortUdp.read(packet_buffer, UDP_BUFFER_SIZE -1);
       if (len > 0) {
@@ -225,14 +239,18 @@ void PollUdp()
 //        AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("UDP: M-SEARCH Packet received"));
 //        AddLog_P(LOG_LEVEL_DEBUG_MORE, request.c_str());
 
+        udp_remote_ip = PortUdp.remoteIP();
+        udp_remote_port = PortUdp.remotePort();
         if (EMUL_WEMO == Settings.flag2.emulation) {
           if (request.indexOf(F("urn:belkin:device:**")) > 0) {    // type1 echo dot 2g, echo 1g's
-            WemoRespondToMSearch(1);
+            udp_response_mutex = true;
+            TickerMSearch.attach_ms(UDP_MSEARCH_SEND_DELAY, WemoRespondToMSearch, 1);
           }
           else if ((request.indexOf(F("upnp:rootdevice")) > 0) ||  // type2 Echo 2g (echo & echo plus)
                    (request.indexOf(F("ssdpsearch:all")) > 0) ||
                    (request.indexOf(F("ssdp:all")) > 0)) {
-            WemoRespondToMSearch(2);
+            udp_response_mutex = true;
+            TickerMSearch.attach_ms(UDP_MSEARCH_SEND_DELAY, WemoRespondToMSearch, 2);
           }
         }
         else if ((EMUL_HUE == Settings.flag2.emulation) &&
@@ -240,7 +258,8 @@ void PollUdp()
                  (request.indexOf(F("upnp:rootdevice")) > 0) ||
                  (request.indexOf(F("ssdpsearch:all")) > 0) ||
                  (request.indexOf(F("ssdp:all")) > 0))) {
-          HueRespondToMSearch();
+            udp_response_mutex = true;
+            TickerMSearch.attach_ms(UDP_MSEARCH_SEND_DELAY, HueRespondToMSearch);
         }
       }
     }
