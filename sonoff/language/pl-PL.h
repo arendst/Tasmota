@@ -517,4 +517,5 @@
 #define D_LOG_UPNP "UPP: "         // UPnP
 #define D_LOG_WIFI "WIF: "         // Wifi
 
+#define D_MODIFIED "modified"
 #endif  // _LANGUAGE_PL_PL_H_
