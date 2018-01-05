@@ -1,5 +1,5 @@
 /*
-  xdrv_snfbridge.ino - sonoff RF bridge 433 support for Sonoff-Tasmota
+  xdrv_04_snfbridge.ino - sonoff RF bridge 433 support for Sonoff-Tasmota
 
   Copyright (C) 2018  Theo Arends
 
@@ -198,12 +198,12 @@ void SonoffBridgeLearn(uint8_t key)
  * Commands
 \*********************************************************************************************/
 
-boolean SonoffBridgeCommand(char *type, uint16_t index, char *dataBuf, uint16_t data_len, int16_t payload)
+boolean SonoffBridgeCommand()
 {
   char command [CMDSZ];
   boolean serviced = true;
 
-  int command_code = GetCommandCode(command, sizeof(command), type, kSonoffBridgeCommands);
+  int command_code = GetCommandCode(command, sizeof(command), XdrvMailbox.topic, kSonoffBridgeCommands);
   if ((command_code >= CMND_RFSYNC) && (command_code <= CMND_RFCODE)) {  // RfSync, RfLow, RfHigh, RfHost and RfCode
     char *p;
     char stemp [10];
@@ -212,20 +212,20 @@ boolean SonoffBridgeCommand(char *type, uint16_t index, char *dataBuf, uint16_t 
 
     uint8_t set_index = command_code *2;
 
-    if (dataBuf[0] == '#') {
-      dataBuf++;
-      data_len--;
+    if (XdrvMailbox.data[0] == '#') {
+      XdrvMailbox.data++;
+      XdrvMailbox.data_len--;
       radix = 16;
     }
 
-    if (data_len) {
-      code = strtol(dataBuf, &p, radix);
+    if (XdrvMailbox.data_len) {
+      code = strtol(XdrvMailbox.data, &p, radix);
       if (code) {
         if (CMND_RFCODE == command_code) {
           sonoff_bridge_last_send_code = code;
           SonoffBridgeSendCode(code);
         } else {
-          if (1 == payload) {
+          if (1 == XdrvMailbox.payload) {
             code = pgm_read_byte(kDefaultRfCode + set_index) << 8 | pgm_read_byte(kDefaultRfCode + set_index +1);
           }
           uint8_t msb = code >> 8;
@@ -249,41 +249,59 @@ boolean SonoffBridgeCommand(char *type, uint16_t index, char *dataBuf, uint16_t 
     }
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_XVALUE, command, stemp);
   }
-  else if ((CMND_RFKEY == command_code) && (index > 0) && (index <= 16)) {
+  else if ((CMND_RFKEY == command_code) && (XdrvMailbox.index > 0) && (XdrvMailbox.index <= 16)) {
     unsigned long now = millis();
     if ((!sonoff_bridge_learn_active) || (now - sonoff_bridge_last_learn_time > 60100)) {
       sonoff_bridge_learn_active = 0;
-      if (2 == payload) {              // Learn RF data
-        SonoffBridgeLearn(index);
-        snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, index, D_START_LEARNING);
+      if (2 == XdrvMailbox.payload) {              // Learn RF data
+        SonoffBridgeLearn(XdrvMailbox.index);
+        snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, XdrvMailbox.index, D_START_LEARNING);
       }
-      else if (3 == payload) {         // Unlearn RF data
-        Settings.rf_code[index][0] = 0;
-        snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, index, D_SET_TO_DEFAULT);
+      else if (3 == XdrvMailbox.payload) {         // Unlearn RF data
+        Settings.rf_code[XdrvMailbox.index][0] = 0;
+        snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, XdrvMailbox.index, D_SET_TO_DEFAULT);
       }
-      else if (4 == payload) {         // Save RF data provided by RFSync, RfLow, RfHigh and last RfCode
+      else if (4 == XdrvMailbox.payload) {         // Save RF data provided by RFSync, RfLow, RfHigh and last RfCode
         for (byte i = 0; i < 6; i++) {
-          Settings.rf_code[index][i] = Settings.rf_code[0][i];
+          Settings.rf_code[XdrvMailbox.index][i] = Settings.rf_code[0][i];
         }
-        Settings.rf_code[index][6] = (sonoff_bridge_last_send_code >> 16) & 0xff;
-        Settings.rf_code[index][7] = (sonoff_bridge_last_send_code >> 8) & 0xff;
-        Settings.rf_code[index][8] = sonoff_bridge_last_send_code & 0xff;
-        snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, index, D_SAVED);
+        Settings.rf_code[XdrvMailbox.index][6] = (sonoff_bridge_last_send_code >> 16) & 0xff;
+        Settings.rf_code[XdrvMailbox.index][7] = (sonoff_bridge_last_send_code >> 8) & 0xff;
+        Settings.rf_code[XdrvMailbox.index][8] = sonoff_bridge_last_send_code & 0xff;
+        snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, XdrvMailbox.index, D_SAVED);
       } else {
-        if ((1 == payload) || (0 == Settings.rf_code[index][0])) {
-          SonoffBridgeSend(0, index);  // Send default RF data
-          snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, index, D_DEFAULT_SENT);
+        if ((1 == XdrvMailbox.payload) || (0 == Settings.rf_code[XdrvMailbox.index][0])) {
+          SonoffBridgeSend(0, XdrvMailbox.index);  // Send default RF data
+          snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, XdrvMailbox.index, D_DEFAULT_SENT);
         } else {
-          SonoffBridgeSend(index, 0);  // Send learned RF data
-          snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, index, D_LEARNED_SENT);
+          SonoffBridgeSend(XdrvMailbox.index, 0);  // Send learned RF data
+          snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, XdrvMailbox.index, D_LEARNED_SENT);
         }
       }
     } else {
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, sonoff_bridge_learn_key, D_LEARNING_ACTIVE);
     }
-  } else {
-    serviced = false;
-  }
-
+  } else serviced = false;
   return serviced;
 }
+
+/*********************************************************************************************\
+ * Interface
+\*********************************************************************************************/
+
+#define XDRV_04
+
+boolean Xdrv04(byte function)
+{
+  boolean result = false;
+
+  if (SONOFF_BRIDGE == Settings.module) {
+    switch (function) {
+      case FUNC_COMMAND:
+        result = SonoffBridgeCommand();
+        break;
+    }
+  }
+  return result;
+}
+

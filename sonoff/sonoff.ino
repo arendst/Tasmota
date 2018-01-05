@@ -25,8 +25,8 @@
     - Select IDE Tools - Flash Size: "1M (no SPIFFS)"
   ====================================================*/
 
-#define VERSION                0x050A0007
-#define VERSION_STRING         "5.10.0g"    // Would be great to have a macro that fills this from VERSION ...
+#define VERSION                0x050A0009
+#define VERSION_STRING         "5.10.0i"    // Would be great to have a macro that fills this from VERSION ...
 
 // Location specific includes
 #include "sonoff.h"                         // Enumaration used in user_config.h
@@ -184,6 +184,8 @@ uint8_t light_type = 0;                     // Light types
 
 boolean mdns_begun = false;
 
+uint8_t xdrv_present = 0;                   // Number of drivers found
+boolean (*xdrv_func_ptr[XDRV_MAX])(byte);   // Driver Function Pointers
 uint8_t xsns_present = 0;                   // Number of External Sensors found
 boolean (*xsns_func_ptr[XSNS_MAX])(byte);   // External Sensor Function Pointers for simple implementation of sensors
 char my_hostname[33];                       // Composed Wifi hostname
@@ -302,9 +304,9 @@ void SetDevicePower(power_t rpower)
       rpower = 0;
     }
   }
-  if (light_type) {
-    LightSetPower(bitRead(rpower, devices_present -1));
-  }
+
+  XdrvSetPower(bitRead(rpower, devices_present -1));
+
   if ((SONOFF_DUAL == Settings.module) || (CH4 == Settings.module)) {
     Serial.write(0xA0);
     Serial.write(0x04);
@@ -325,7 +327,6 @@ void SetDevicePower(power_t rpower)
       rpower >>= 1;
     }
   }
-  EnergySetPowerSteadyCounter(2);
 }
 
 void SetLedPower(uint8_t state)
@@ -461,9 +462,8 @@ void MqttConnected()
       fallback_topic_flag = 0;
       MqttSubscribe(stopic);
     }
-#ifdef USE_DOMOTICZ
-    DomoticzMqttSubscribe();
-#endif  // USE_DOMOTICZ
+
+    XdrvCall(FUNC_MQTT_SUBSCRIBE);
   }
 
   if (mqtt_connection_flag) {
@@ -758,15 +758,7 @@ boolean MqttCommand(boolean grpflg, char *type, uint16_t index, char *dataBuf, u
     }
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, GetStateText(Settings.flag.mqtt_sensor_retain));
   }
-
-#ifdef USE_DOMOTICZ
-  else if (DomoticzCommand(type, index, dataBuf, data_len, payload)) {
-    // Serviced
-  }
-#endif  // USE_DOMOTICZ
-  else {
-    serviced = false;
-  }
+  else serviced = false;
   return serviced;
 }
 
@@ -819,13 +811,9 @@ void MqttDataCallback(char* topic, byte* data, unsigned int data_len)
   AddLog(LOG_LEVEL_DEBUG_MORE);
 //  if (LOG_LEVEL_DEBUG_MORE <= seriallog_level) Serial.println(dataBuf);
 
-#ifdef USE_DOMOTICZ
-  if (Settings.flag.mqtt_enabled) {
-    if (DomoticzMqttData(topicBuf, sizeof(topicBuf), dataBuf, sizeof(dataBuf))) {
-      return;
-    }
+  if (XdrvMqttData(topicBuf, sizeof(topicBuf), dataBuf, sizeof(dataBuf))) {
+    return;
   }
-#endif  // USE_DOMOTICZ
 
   grpflg = (strstr(topicBuf, Settings.mqtt_grptopic) != NULL);
   fallback_topic_flag = (strstr(topicBuf, mqtt_client) != NULL);
@@ -972,9 +960,9 @@ void MqttDataCallback(char* topic, byte* data, unsigned int data_len)
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, Settings.blinkcount);
     }
-    else if (light_type && LightCommand(type, index, dataBuf, data_len, payload)) {
+//    else if (light_type && LightCommand(type, index, dataBuf, data_len, payload)) {
       // Serviced
-    }
+//    }
     else if (CMND_SAVEDATA == command_code) {
       if ((payload >= 0) && (payload <= 3600)) {
         Settings.save_data = payload;
@@ -1499,17 +1487,9 @@ void MqttDataCallback(char* topic, byte* data, unsigned int data_len)
     else if (Settings.flag.mqtt_enabled && MqttCommand(grpflg, type, index, dataBuf, data_len, payload, payload16)) {
       // Serviced
     }
-    else if (energy_flg && EnergyCommand(type, index, dataBuf, data_len, payload)) {
+    else if (XdrvCommand(type, index, dataBuf, data_len, payload)) {
       // Serviced
     }
-    else if ((SONOFF_BRIDGE == Settings.module) && SonoffBridgeCommand(type, index, dataBuf, data_len, payload)) {
-      // Serviced
-    }
-#ifdef USE_IR_REMOTE
-    else if ((pin[GPIO_IRSEND] < 99) && IrSendCommand(type, index, dataBuf, data_len, payload)) {
-      // Serviced
-    }
-#endif  // USE_IR_REMOTE
 #ifdef DEBUG_THEO
     else if (CMND_EXCEPTION == command_code) {
       if (data_len > 0) {
@@ -1819,6 +1799,10 @@ boolean MqttShowSensor()
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"" D_TEMPERATURE_UNIT "\":\"%c\""), mqtt_data, TempUnit());
   }
   snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}"), mqtt_data);
+
+  if (json_data_available) {
+    XdrvCall(FUNC_SHOW_SENSOR);
+  }
   return json_data_available;
 }
 
@@ -1856,10 +1840,6 @@ void PerformEverySecond()
     }
   }
 
-#ifdef USE_DOMOTICZ
-  DomoticzMqttUpdate();
-#endif  // USE_DOMOTICZ
-
   if (status_update_timer) {
     status_update_timer--;
     if (!status_update_timer) {
@@ -1885,9 +1865,11 @@ void PerformEverySecond()
       if (MqttShowSensor()) {
         MqttPublishPrefixTopic_P(2, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);
       }
+
     }
   }
 
+  XdrvCall(FUNC_EVERY_SECOND);
   XsnsCall(FUNC_EVERY_SECOND);
 
   if ((2 == RtcTime.minute) && latest_uptime_flag) {
@@ -2196,20 +2178,6 @@ void StateLoop()
     }
   }
 
-#ifdef USE_IR_REMOTE
-#ifdef USE_IR_RECEIVE
-  if (pin[GPIO_IRRECV] < 99) {
-    IrReceiveCheck();  // check if there's anything on IR side
-  }
-#endif  // USE_IR_RECEIVE
-#endif  // USE_IR_REMOTE
-
-#ifdef USE_ARILUX_RF
-  if (pin[GPIO_ARIRFRCV] < 99) {
-    AriluxRfHandler();
-  }
-#endif  // USE_ARILUX_RF
-
 /*-------------------------------------------------------------------------------------------*\
  * Every 0.05 second
 \*-------------------------------------------------------------------------------------------*/
@@ -2217,10 +2185,7 @@ void StateLoop()
   ButtonHandler();
   SwitchHandler();
 
-  if (light_type) {
-    LightAnimate();
-  }
-
+  XdrvCall(FUNC_EVERY_50_MSECOND);
   XsnsCall(FUNC_EVERY_50_MSECOND);
 
 /*-------------------------------------------------------------------------------------------*\
@@ -2516,6 +2481,23 @@ void GpioInit()
   analogWriteRange(Settings.pwm_range);      // Default is 1023 (Arduino.h)
   analogWriteFreq(Settings.pwm_frequency);   // Default is 1000 (core_esp8266_wiring_pwm.c)
 
+#ifdef USE_SPI
+  spi_flg = ((((pin[GPIO_SPI_CS] < 99) && (pin[GPIO_SPI_CS] > 14)) || (pin[GPIO_SPI_CS] < 12)) || (((pin[GPIO_SPI_DC] < 99) && (pin[GPIO_SPI_DC] > 14)) || (pin[GPIO_SPI_DC] < 12)));
+  if (spi_flg) {
+    for (byte i = 0; i < GPIO_MAX; i++) {
+      if ((pin[i] >= 12) && (pin[i] <=14)) {
+        pin[i] = 99;
+      }
+    }
+    my_module.gp.io[12] = GPIO_SPI_MISO;
+    pin[GPIO_SPI_MISO] = 12;
+    my_module.gp.io[13] = GPIO_SPI_MOSI;
+    pin[GPIO_SPI_MOSI] = 13;
+    my_module.gp.io[14] = GPIO_SPI_CLK;
+    pin[GPIO_SPI_CLK] = 14;
+  }
+#endif  // USE_SPI
+
 #ifdef USE_I2C
   i2c_flg = ((pin[GPIO_I2C_SCL] < 99) && (pin[GPIO_I2C_SDA] < 99));
   if (i2c_flg) {
@@ -2598,9 +2580,7 @@ void GpioInit()
     light_type = LT_WS2812;
   }
 #endif  // USE_WS2812
-  if (light_type) {                           // Any Led light under Dimmer/Color control
-    LightInit();
-  } else {
+  if (!light_type) {
     for (byte i = 0; i < MAX_PWMS; i++) {     // Basic PWM control only
       if (pin[GPIO_PWM1 +i] < 99) {
         pinMode(pin[GPIO_PWM1 +i], OUTPUT);
@@ -2615,16 +2595,7 @@ void GpioInit()
   }
   SetLedPower(Settings.ledstate &8);
 
-#ifdef USE_IR_REMOTE
-  if (pin[GPIO_IRSEND] < 99) {
-    IrSendInit();
-  }
-#ifdef USE_IR_RECEIVE
-  if (pin[GPIO_IRRECV] < 99) {
-    IrReceiveInit();
-  }
-#endif  // USE_IR_RECEIVE
-#endif  // USE_IR_REMOTE
+  XDrvInit();
 }
 
 extern "C" {

@@ -134,7 +134,16 @@ struct SYSCFG {
   char          mqtt_topic[33];            // 26F
   char          button_topic[33];          // 290
   char          mqtt_grptopic[33];         // 2B1
-  uint8_t       mqtt_fingerprinth[20];     // 2D2 Reserved for binary fingerprint
+
+  uint8_t       display_model;             // 2D2
+  uint8_t       display_mode;              // 2D3
+  uint8_t       display_refresh;           // 2D4
+  uint8_t       display_rows;              // 2D5
+  uint8_t       display_cols[2];           // 2D6
+  uint8_t       display_address[8];        // 2D8
+  uint8_t       display_dimmer;            // 2E0
+  uint8_t       display_size;              // 2E1
+  uint8_t       free_2E2[4];               // 2E2
 
   uint16_t      pwm_frequency;             // 2E6
   power_t       power;                     // 2E8
@@ -285,6 +294,15 @@ struct TimeChangeRule
 
 TimeChangeRule DaylightSavingTime = { TIME_DST }; // Daylight Saving Time
 TimeChangeRule StandardTime = { TIME_STD }; // Standard Time
+
+struct XDRVMAILBOX {
+  uint16_t      valid;
+  uint16_t      index;
+  uint16_t      data_len;
+  int16_t       payload;
+  char         *topic;
+  char         *data;
+} XdrvMailbox;
 
 // See issue https://github.com/esp8266/Arduino/issues/2913
 #ifdef USE_ADC_VCC

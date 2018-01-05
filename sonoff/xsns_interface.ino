@@ -118,23 +118,9 @@ boolean XsnsCall(byte Function)
 {
   boolean result = false;
 
-/*
-  switch (Function) {
-    case FUNC_INIT:
-    case FUNC_EVERY_50_MSECOND:
-    case FUNC_EVERY_SECOND:
-    case FUNC_PREP_BEFORE_TELEPERIOD:
-    case FUNC_JSON_APPEND:
-    case FUNC_WEB_APPEND:
-    case FUNC_SAVE_BEFORE_RESTART:
-*/
-      for (byte x = 0; x < xsns_present; x++) {
-        xsns_func_ptr[x](Function);
-      }
-/*
-      break;
+  for (byte x = 0; x < xsns_present; x++) {
+    xsns_func_ptr[x](Function);
   }
-*/
 
   return result;
 }
