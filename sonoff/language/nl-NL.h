@@ -220,6 +220,7 @@
 #define D_CONFIGURE_WIFI "Configureer WiFi"
 #define D_CONFIGURE_MQTT "Configureer MQTT"
 #define D_CONFIGURE_DOMOTICZ "Configureer Domoticz"
+#define D_CONFIGURE_HOME_ASSISTANT "Configureer Home Assistant"
 #define D_CONFIGURE_LOGGING "Configureer Logging"
 #define D_CONFIGURE_OTHER "Configureer Overige"
 #define D_CONFIRM_RESET_CONFIGURATION "Bevestig reset configuratie"
@@ -365,6 +366,11 @@
   #define D_DOMOTICZ_AIRQUALITY "AirQuality"
 #define D_DOMOTICZ_UPDATE_TIMER "Bijwerk timer"
 
+// xdrv_home_assistant.ino
+#define D_HOME_ASSISTANT_PARAMETERS "Home Assistant parameters"
+#define D_HOME_ASSISTANT_DISCOVERY_ENABLE "Activeer Discovery"
+#define D_HOME_ASSISTANT_DISCOVERY_PREFIX "Discovery Prefix"
+
 // xsns_03_energy.ino
 #define D_ENERGY_TODAY "Verbruik vandaag"
 #define D_ENERGY_YESTERDAY "Verbruik gisteren"
@@ -440,6 +446,7 @@
 #define D_LOG_DEBUG "DBG: "        // Debug
 #define D_LOG_DHT "DHT: "          // DHT sensor
 #define D_LOG_DOMOTICZ "DOM: "     // Domoticz
+#define D_LOG_HOME_ASSISTANT "HAS: " // Home Assistant
 #define D_LOG_DSB "DSB: "          // DS18xB20 sensor
 #define D_LOG_HTTP "HTP: "         // HTTP webserver
 #define D_LOG_I2C "I2C: "          // I2C
