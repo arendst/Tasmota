@@ -464,6 +464,10 @@ void MqttConnected()
     }
 
     XdrvCall(FUNC_MQTT_SUBSCRIBE);
+
+#ifdef USE_HOME_ASSISTANT
+    HomeAssistantStart();
+#endif // USE_HOME_ASSISTANT
   }
 
   if (mqtt_connection_flag) {
