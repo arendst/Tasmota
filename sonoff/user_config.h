@@ -184,7 +184,7 @@
 //  #define USE_ADS1115                            // Add I2C code for ADS1115 16 bit A/D converter based on Adafruit ADS1x15 library (no library needed) (+0k7 code)
 //  #define USE_ADS1115_I2CDEV                     // Add I2C code for ADS1115 16 bit A/D converter using library i2cdevlib-Core and i2cdevlib-ADS1115 (+2k code)
 //  #define USE_INA219                             // Add I2C code for INA219 Low voltage and current sensor (+1k code)
-//  #define USE_DISPLAY                            // Add I2C Display Support for LCD, Oled and up to eigth Matrices
+//  #define USE_DISPLAY                            // Add I2C Display Support for LCD, Oled and up to eigth Matrices (+19k code)
     #define MTX_ADDRESS1       0x71              // [DisplayAddress[1]] I2C address of first 8x8 matrix module
     #define MTX_ADDRESS2       0x74              // [DisplayAddress[2]] I2C address of second 8x8 matrix module
     #define MTX_ADDRESS3       0x75              // [DisplayAddress[3]] I2C address of third 8x8 matrix module
@@ -195,7 +195,7 @@
     #define MTX_ADDRESS8       0x00              // [DisplayAddress[8]] I2C address of eigth 8x8 matrix module
 #endif  // USE_I2C
 
-//#define USE_SPI                                  // SPI using library theo_TFT
+//#define USE_SPI                                  // SPI using library TasmotaTFT
 #ifdef USE_SPI
   #ifndef USE_DISPLAY
   #define USE_DISPLAY                            // Add SPI Display support for 320x240 and 480x320 TFT

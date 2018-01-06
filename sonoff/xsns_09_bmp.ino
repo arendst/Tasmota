@@ -460,7 +460,7 @@ void BmpShow(boolean json)
       snprintf_P(json_sealevel, sizeof(json_sealevel), PSTR(",\"" D_JSON_PRESSUREATSEALEVEL "\":%s"), sea_pressure);
 #ifdef USE_BME680
       char json_gas[40];
-      snprintf_P(json_gas, sizeof(json_gas), PSTR(",\"" D_GAS "\":%s"), gas_resistance);
+      snprintf_P(json_gas, sizeof(json_gas), PSTR(",\"" D_JSON_GAS "\":%s"), gas_resistance);
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"%s\":{\"" D_JSON_TEMPERATURE "\":%s%s,\"" D_JSON_PRESSURE "\":%s%s%s}"),
         mqtt_data, bmp_name, temperature, (bmp_model >= 2) ? json_humidity : "", pressure, (Settings.altitude != 0) ? json_sealevel : "", (bmp_model >= 3) ? json_gas : "");
 #else
