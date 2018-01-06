@@ -1096,7 +1096,7 @@ boolean LightCommand()
     light_wakeup_active = 3;
     Settings.light_scheme = LS_WAKEUP;
     LightPowerOn();
-    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, D_STARTED);
+    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, D_JSON_STARTED);
   }
   else if ((CMND_COLORTEMPERATURE == command_code) && ((LST_COLDWARM == light_subtype) || (LST_RGBWC == light_subtype))) { // ColorTemp
     if (option != '\0') {
