@@ -116,6 +116,11 @@
   #define DOMOTICZ_OUT_TOPIC     "domoticz/out"  // Domoticz Output Topic
   #define DOMOTICZ_UPDATE_TIMER  0               // [DomoticzUpdateTimer] Send relay status (0 = disable, 1 - 3600 seconds) (Optional)
 
+// -- MQTT - Home Assistant -----------------------
+#define USE_HOME_ASSISTANT                        // Enable Home Assistant - Disable by //
+  #define HOME_ASSISTANT_DISCOVERY_ENABLE 0       // Enable Home Assistant Discovery (0 = disable)
+  #define HOME_ASSISTANT_DISCOVERY_PREFIX "homeassistant" // Home Assistant discovery prefix
+
 // -- HTTP ----------------------------------------
 #define USE_WEBSERVER                            // Enable web server and wifi manager (+66k code, +8k mem) - Disable by //
   #define WEB_SERVER           2                 // [WebServer] Web server (0 = Off, 1 = Start as User, 2 = Start as Admin)

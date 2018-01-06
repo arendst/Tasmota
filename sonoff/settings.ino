@@ -452,6 +452,9 @@ void SettingsDefaultSet2()
 //    Settings.domoticz_switch_idx[i] = 0;
   }
 
+  Settings.home_assistant_discovery_enabled = HOME_ASSISTANT_DISCOVERY_ENABLE;
+  strlcpy(Settings.home_assistant_discovery_prefix, HOME_ASSISTANT_DISCOVERY_PREFIX, sizeof(Settings.home_assistant_discovery_prefix));
+
   Settings.hlw_power_calibration = HLW_PREF_PULSE;
   Settings.hlw_voltage_calibration = HLW_UREF_PULSE;
   Settings.hlw_current_calibration = HLW_IREF_PULSE;
