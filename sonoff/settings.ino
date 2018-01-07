@@ -25,6 +25,17 @@
 #define EMULATION              EMUL_NONE    // [Emulation] Select Belkin WeMo (single relay/light) or Hue Bridge emulation (multi relay/light) (EMUL_NONE, EMUL_WEMO or EMUL_HUE)
 #endif
 
+#ifndef USE_DISPLAY                         // Add Display Support for up to eigth Matrices
+#define MTX_ADDRESS1           0
+#define MTX_ADDRESS2           0
+#define MTX_ADDRESS3           0
+#define MTX_ADDRESS4           0
+#define MTX_ADDRESS5           0
+#define MTX_ADDRESS6           0
+#define MTX_ADDRESS7           0
+#define MTX_ADDRESS8           0
+#endif
+
 /*********************************************************************************************\
  * RTC memory
 \*********************************************************************************************/

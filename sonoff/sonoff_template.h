@@ -844,6 +844,21 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_LED1,        // GPIO15 Led (1 = On, 0 = Off)
      0, 0
   }
+
+  { "Zengge WF017",    // Zenggee ZJ-WF017-A (ESP12S)) - https://www.ebay.com/p/Smartphone-Android-IOS-WiFi-Music-Controller-for-RGB-5050-3528-LED-Strip-Light/534446632?_trksid=p2047675.l2644
+     GPIO_KEY1,        // GPIO00 Optional Button
+     0,
+     GPIO_USER,        // GPIO02 Empty pad
+     0,
+     GPIO_USER,        // GPIO04 W2 - PWM5
+     0,
+     0, 0, 0, 0, 0, 0, // Flash connection
+     GPIO_PWM2,        // GPIO12 RGB LED Green
+     GPIO_PWM1,        // GPIO13 RGB LED Red
+     GPIO_PWM3,        // GPIO14 RGB LED Blue
+     0, 0, 0
+  }
+
 */
 
 #endif  // _SONOFF_TEMPLATE_H_
