@@ -1,7 +1,7 @@
 /*
   settings.h - setting variables for Sonoff-Tasmota
 
-  Copyright (C) 2017  Theo Arends
+  Copyright (C) 2018  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -43,9 +43,9 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t pwm_control : 1;              // bit 15 (v5.8.1)
     uint32_t ws_clock_reverse : 1;         // bit 16 (v5.8.1)
     uint32_t decimal_text : 1;             // bit 17 (v5.8.1)
-    uint32_t spare18 : 1;
+    uint32_t light_signal : 1;             // bit 18 (v5.10.0c)
     uint32_t spare19 : 1;
-    uint32_t voltage_resolution : 1;
+    uint32_t voltage_resolution : 1;       // Replaced by below
     uint32_t spare21 : 1;
     uint32_t spare22 : 1;
     uint32_t spare23 : 1;
@@ -134,7 +134,16 @@ struct SYSCFG {
   char          mqtt_topic[33];            // 26F
   char          button_topic[33];          // 290
   char          mqtt_grptopic[33];         // 2B1
-  uint8_t       mqtt_fingerprinth[20];     // 2D2 Reserved for binary fingerprint
+
+  uint8_t       display_model;             // 2D2
+  uint8_t       display_mode;              // 2D3
+  uint8_t       display_refresh;           // 2D4
+  uint8_t       display_rows;              // 2D5
+  uint8_t       display_cols[2];           // 2D6
+  uint8_t       display_address[8];        // 2D8
+  uint8_t       display_dimmer;            // 2E0
+  uint8_t       display_size;              // 2E1
+  uint8_t       free_2E2[4];               // 2E2
 
   uint16_t      pwm_frequency;             // 2E6
   power_t       power;                     // 2E8
@@ -158,23 +167,23 @@ struct SYSCFG {
   unsigned long hlw_power_calibration;     // 364
   unsigned long hlw_voltage_calibration;   // 368
   unsigned long hlw_current_calibration;   // 36C
-  unsigned long hlw_kWhtoday;              // 370
-  unsigned long hlw_kWhyesterday;          // 374
-  uint16_t      hlw_kWhdoy;                // 378
-  uint16_t      hlw_pmin;                  // 37A
-  uint16_t      hlw_pmax;                  // 37C
-  uint16_t      hlw_umin;                  // 37E
-  uint16_t      hlw_umax;                  // 380
-  uint16_t      hlw_imin;                  // 382
-  uint16_t      hlw_imax;                  // 384
-  uint16_t      hlw_mpl;                   // 386 MaxPowerLimit
-  uint16_t      hlw_mplh;                  // 388 MaxPowerLimitHold
-  uint16_t      hlw_mplw;                  // 38A MaxPowerLimitWindow
-  uint16_t      hlw_mspl;                  // 38C MaxSafePowerLimit
-  uint16_t      hlw_msplh;                 // 38E MaxSafePowerLimitHold
-  uint16_t      hlw_msplw;                 // 390 MaxSafePowerLimitWindow
-  uint16_t      hlw_mkwh;                  // 392 MaxEnergy
-  uint16_t      hlw_mkwhs;                 // 394 MaxEnergyStart
+  unsigned long energy_kWhtoday;           // 370
+  unsigned long energy_kWhyesterday;       // 374
+  uint16_t      energy_kWhdoy;             // 378
+  uint16_t      energy_min_power;          // 37A
+  uint16_t      energy_max_power;          // 37C
+  uint16_t      energy_min_voltage;        // 37E
+  uint16_t      energy_max_voltage;        // 380
+  uint16_t      energy_min_current;        // 382
+  uint16_t      energy_max_current;        // 384
+  uint16_t      energy_max_power_limit;    // 386 MaxPowerLimit
+  uint16_t      energy_max_power_limit_hold;        // 388 MaxPowerLimitHold
+  uint16_t      energy_max_power_limit_window;      // 38A MaxPowerLimitWindow
+  uint16_t      energy_max_power_safe_limit;        // 38C MaxSafePowerLimit
+  uint16_t      energy_max_power_safe_limit_hold;   // 38E MaxSafePowerLimitHold
+  uint16_t      energy_max_power_safe_limit_window; // 390 MaxSafePowerLimitWindow
+  uint16_t      energy_max_energy;         // 392 MaxEnergy
+  uint16_t      energy_max_energy_start;   // 394 MaxEnergyStart
   uint16_t      mqtt_retry;                // 396
   uint8_t       poweronstate;              // 398
   uint8_t       last_module;               // 399
@@ -201,8 +210,8 @@ struct SYSCFG {
   byte          free_451[2];               // 451
 
   uint8_t       sleep;                     // 453
-  uint16_t      domoticz_switch_idx[MAX_DOMOTICZ_IDX]; // 454
-  uint16_t      domoticz_sensor_idx[12];   // 45C
+  uint16_t      domoticz_switch_idx[MAX_DOMOTICZ_IDX];      // 454
+  uint16_t      domoticz_sensor_idx[MAX_DOMOTICZ_SNS_IDX];  // 45C
   uint8_t       module;                    // 474
 
   uint8_t       ws_color[4][3];            // 475
@@ -238,7 +247,7 @@ struct SYSCFG {
   byte          free_542[2];               // 542
 
   uint32_t      ip_address[4];             // 544
-  unsigned long hlw_kWhtotal;              // 554
+  unsigned long energy_kWhtotal;              // 554
   char          mqtt_fulltopic[100];       // 558
 
   SysBitfield2  flag2;                     // 5BC Add flag2 since 5.9.2
@@ -254,8 +263,8 @@ struct RTCMEM {
   uint16_t      valid;                     // 000
   byte          oswatch_blocked_loop;      // 002
   uint8_t       unused;                    // 003
-  unsigned long hlw_kWhtoday;              // 004
-  unsigned long hlw_kWhtotal;              // 008
+  unsigned long energy_kWhtoday;              // 004
+  unsigned long energy_kWhtotal;              // 008
   unsigned long pulse_counter[MAX_COUNTERS];  // 00C
   power_t       power;                     // 01C
 } RtcSettings;
@@ -285,6 +294,15 @@ struct TimeChangeRule
 
 TimeChangeRule DaylightSavingTime = { TIME_DST }; // Daylight Saving Time
 TimeChangeRule StandardTime = { TIME_STD }; // Standard Time
+
+struct XDRVMAILBOX {
+  uint16_t      valid;
+  uint16_t      index;
+  uint16_t      data_len;
+  int16_t       payload;
+  char         *topic;
+  char         *data;
+} XdrvMailbox;
 
 // See issue https://github.com/esp8266/Arduino/issues/2913
 #ifdef USE_ADC_VCC

@@ -1,7 +1,7 @@
 /*
   xsns_11_veml6070.ino - VEML6070 ultra violet light sensor support for Sonoff-Tasmota
 
-  Copyright (C) 2017  Theo Arends
+  Copyright (C) 2018  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -32,7 +32,6 @@
 
 uint8_t veml6070_address;
 uint8_t veml6070_type = 0;
-char veml6070_types[9];
 
 uint16_t Veml6070ReadUv()
 {
@@ -51,32 +50,23 @@ uint16_t Veml6070ReadUv()
 
 /********************************************************************************************/
 
-boolean Veml6070Detect()
+void Veml6070Detect()
 {
   if (veml6070_type) {
-    return true;
+    return;
   }
 
-  uint8_t status;
   uint8_t itime = VEML6070_INTEGRATION_TIME;
-  boolean success = false;
 
   veml6070_address = VEML6070_ADDR_L;
   Wire.beginTransmission(veml6070_address);
   Wire.write((itime << 2) | 0x02);
-  status = Wire.endTransmission();
+  uint8_t status = Wire.endTransmission();
   if (!status) {
-    success = true;
     veml6070_type = 1;
-    strcpy_P(veml6070_types, PSTR("VEML6070"));
-  }
-  if (success) {
-    snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, veml6070_types, veml6070_address);
+    snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, "VEML6070", veml6070_address);
     AddLog(LOG_LEVEL_DEBUG);
-  } else {
-    veml6070_type = 0;
   }
-  return success;
 }
 
 #ifdef USE_WEBSERVER
@@ -90,7 +80,7 @@ void Veml6070Show(boolean json)
     uint16_t uvlevel = Veml6070ReadUv();
 
     if (json) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"%s\":{\"" D_UV_LEVEL "\":%d}"), mqtt_data, veml6070_types, uvlevel);
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"VEML6070\":{\"" D_JSON_UV_LEVEL "\":%d}"), mqtt_data, uvlevel);
 #ifdef USE_DOMOTICZ
       DomoticzSensor(DZ_ILLUMINANCE, uvlevel);
 #endif  // USE_DOMOTICZ
@@ -114,16 +104,14 @@ boolean Xsns11(byte function)
 
   if (i2c_flg) {
     switch (function) {
-//      case FUNC_XSNS_INIT:
-//        break;
-      case FUNC_XSNS_PREP:
+      case FUNC_PREP_BEFORE_TELEPERIOD:
         Veml6070Detect();
         break;
-      case FUNC_XSNS_JSON_APPEND:
+      case FUNC_JSON_APPEND:
         Veml6070Show(1);
         break;
 #ifdef USE_WEBSERVER
-      case FUNC_XSNS_WEB:
+      case FUNC_WEB_APPEND:
         Veml6070Show(0);
         break;
 #endif  // USE_WEBSERVER

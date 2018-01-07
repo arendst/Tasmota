@@ -1,7 +1,7 @@
 /*
   xsns_05_ds18b20.ino - DS18B20 temperature sensor support for Sonoff-Tasmota
 
-  Copyright (C) 2017  Theo Arends
+  Copyright (C) 2018  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -195,7 +195,7 @@ void Ds18b20Show(boolean json)
     dtostrfi(t, Settings.flag2.temperature_resolution, temperature);
 
     if(json) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"DS18B20\":{\"" D_TEMPERATURE "\":%s}"), mqtt_data, temperature);
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"DS18B20\":{\"" D_JSON_TEMPERATURE "\":%s}"), mqtt_data, temperature);
 #ifdef USE_DOMOTICZ
       DomoticzSensor(DZ_TEMP, temperature);
 #endif  // USE_DOMOTICZ
@@ -219,17 +219,17 @@ boolean Xsns05(byte function)
 
   if (pin[GPIO_DSB] < 99) {
     switch (function) {
-      case FUNC_XSNS_INIT:
+      case FUNC_INIT:
         Ds18x20Init();
         break;
-      case FUNC_XSNS_PREP:
+      case FUNC_PREP_BEFORE_TELEPERIOD:
         Ds18x20Convert();   // Start conversion, takes up to one second
         break;
-      case FUNC_XSNS_JSON_APPEND:
+      case FUNC_JSON_APPEND:
         Ds18b20Show(1);
         break;
 #ifdef USE_WEBSERVER
-      case FUNC_XSNS_WEB:
+      case FUNC_WEB_APPEND:
         Ds18b20Show(0);
         Ds18x20Convert();   // Start conversion, takes up to one second
         break;

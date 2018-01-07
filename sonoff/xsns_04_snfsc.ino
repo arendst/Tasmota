@@ -1,7 +1,7 @@
 /*
   xsns_04_snfsc.ino - sonoff SC support for Sonoff-Tasmota
 
-  Copyright (C) 2017  Theo Arends
+  Copyright (C) 2018  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -120,7 +120,7 @@ void SonoffScShow(boolean json)
     dtostrfd(h, Settings.flag2.humidity_resolution, humidity);
 
     if (json) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"" D_TEMPERATURE "\":%s,\"" D_HUMIDITY "\":%s,\"" D_LIGHT "\":%d,\"" D_NOISE "\":%d,\"" D_AIRQUALITY "\":%d"),
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"" D_JSON_TEMPERATURE "\":%s,\"" D_JSON_HUMIDITY "\":%s,\"" D_JSON_LIGHT "\":%d,\"" D_JSON_NOISE "\":%d,\"" D_JSON_AIRQUALITY "\":%d"),
         mqtt_data, temperature, humidity, sc_value[2], sc_value[3], sc_value[4]);
 #ifdef USE_DOMOTICZ
       DomoticzTempHumSensor(temperature, humidity);
@@ -148,16 +148,14 @@ boolean Xsns04(byte function)
 
   if (SONOFF_SC == Settings.module) {
     switch (function) {
-      case FUNC_XSNS_INIT:
+      case FUNC_INIT:
         SonoffScInit();
         break;
-//      case FUNC_XSNS_PREP:
-//        break;
-      case FUNC_XSNS_JSON_APPEND:
+      case FUNC_JSON_APPEND:
         SonoffScShow(1);
         break;
 #ifdef USE_WEBSERVER
-      case FUNC_XSNS_WEB:
+      case FUNC_WEB_APPEND:
         SonoffScShow(0);
         break;
 #endif  // USE_WEBSERVER

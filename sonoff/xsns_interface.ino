@@ -1,7 +1,7 @@
 /*
   xsns_interface.ino - External sensor interface support for Sonoff-Tasmota
 
-  Copyright (C) 2017  Theo Arends inspired by ESPEasy
+  Copyright (C) 2018  Theo Arends inspired by ESPEasy
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -104,7 +104,10 @@ void XSnsInit()
   xsns_func_ptr[xsns_present++] = &Xsns20;
 #endif
 
-  XsnsCall(FUNC_XSNS_INIT);
+//  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_DEBUG "Sensors found %d"), xsns_present);
+//  AddLog(LOG_LEVEL_DEBUG);
+
+  XsnsCall(FUNC_INIT);
 }
 
 /*********************************************************************************************\
@@ -115,16 +118,8 @@ boolean XsnsCall(byte Function)
 {
   boolean result = false;
 
-  switch (Function) {
-    case FUNC_XSNS_INIT:
-    case FUNC_XSNS_PREP:
-    case FUNC_XSNS_JSON_APPEND:
-    case FUNC_XSNS_MQTT_SHOW:
-    case FUNC_XSNS_WEB:
-      for (byte x = 0; x < xsns_present; x++) {
-        xsns_func_ptr[x](Function);
-      }
-      break;
+  for (byte x = 0; x < xsns_present; x++) {
+    xsns_func_ptr[x](Function);
   }
 
   return result;

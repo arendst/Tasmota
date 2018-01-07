@@ -1,7 +1,7 @@
 /*
   xsns_12_ads1115.ino - ADS1x15 A/D Converter support for Sonoff-Tasmota
 
-  Copyright (C) 2017  Stefan Bode and Theo Arends
+  Copyright (C) 2018  Stefan Bode and Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -84,16 +84,14 @@ void Ads1115Detect()
     ADS1115 adc0(ads1115_address);
     if (adc0.testConnection()) {
       adc0.initialize();
-      adc0.setGain(ADS1115_PGA_2P048);        // Set the gain (PGA) +/-4.096V
+      adc0.setGain(ADS1115_PGA_6P144);        // Set the gain (PGA) +/-6.144V
       adc0.setRate(ADS1115_RATE_860);
       adc0.setMode(ADS1115_MODE_CONTINUOUS);
       ads1115_type = 1;
+      snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, "ADS1115", ads1115_address);
+      AddLog(LOG_LEVEL_DEBUG);
       break;
     }
-  }
-  if (ads1115_type) {
-    snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, "ADS1115", ads1115_address);
-    AddLog(LOG_LEVEL_DEBUG);
   }
 }
 
@@ -112,7 +110,7 @@ void Ads1115Show(boolean json)
           stemp[0] = '\0';
         }
         dsxflg++;
-        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s%s\"" D_ANALOG_INPUT "%d\":%d"), mqtt_data, stemp, i, adc_value);
+        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s%s\"" D_JSON_ANALOG_INPUT "%d\":%d"), mqtt_data, stemp, i, adc_value);
         strcpy(stemp, ",");
 #ifdef USE_WEBSERVER
       } else {
@@ -140,16 +138,14 @@ boolean Xsns12(byte function)
 
   if (i2c_flg) {
     switch (function) {
-//      case FUNC_XSNS_INIT:
-//        break;
-      case FUNC_XSNS_PREP:
+      case FUNC_PREP_BEFORE_TELEPERIOD:
         Ads1115Detect();
         break;
-      case FUNC_XSNS_JSON_APPEND:
+      case FUNC_JSON_APPEND:
         Ads1115Show(1);
         break;
 #ifdef USE_WEBSERVER
-      case FUNC_XSNS_WEB:
+      case FUNC_WEB_APPEND:
         Ads1115Show(0);
         break;
 #endif  // USE_WEBSERVER

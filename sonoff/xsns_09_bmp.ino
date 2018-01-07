@@ -1,7 +1,7 @@
 /*
-  xsns_09_bmp.ino - BMP pressure, temperature and humidity sensor support for Sonoff-Tasmota
+  xsns_09_bmp.ino - BMP pressure, temperature, humidity and gas sensor support for Sonoff-Tasmota
 
-  Copyright (C) 2017  Heiko Krupp and Theo Arends
+  Copyright (C) 2018  Heiko Krupp and Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -20,7 +20,7 @@
 #ifdef USE_I2C
 #ifdef USE_BMP
 /*********************************************************************************************\
- * BMP085, BMP180, BMP280, BME280 - Pressure and Temperature and Humidy (BME280 only)
+ * BMP085, BMP180, BMP280, BME280, BME680 - Pressure, Temperature, Humidity (BME280/BME680) and gas (BME680)
  *
  * Source: Heiko Krupp and Adafruit Industries
  *
@@ -33,17 +33,17 @@
 #define BMP180_CHIPID        0x55
 #define BMP280_CHIPID        0x58
 #define BME280_CHIPID        0x60
+#define BME680_CHIPID        0x61
 
 #define BMP_REGISTER_CHIPID  0xD0
 
-const char kBmpTypes[] PROGMEM = "BMP180|BMP280|BME280";
+const char kBmpTypes[] PROGMEM = "BMP180|BMP280|BME280|BME680";
 
-uint8_t bmp_type = 0;
 uint8_t bmp_address;
 uint8_t bmp_addresses[] = { BMP_ADDR1, BMP_ADDR2 };
-char bmp_types[7];
-
-double bmp_sealevel = 0.0;
+uint8_t bmp_type = 0;
+uint8_t bmp_model = 0;
+char bmp_name[7];
 
 /*********************************************************************************************\
  * BMP085 and BME180
@@ -172,6 +172,7 @@ double Bmp180ReadPressure()
 
 #define BME280_REGISTER_CONTROLHUMID  0xF2
 #define BME280_REGISTER_CONTROL       0xF4
+#define BME280_REGISTER_CONFIG        0xF5
 #define BME280_REGISTER_PRESSUREDATA  0xF7
 #define BME280_REGISTER_TEMPDATA      0xFA
 #define BME280_REGISTER_HUMIDDATA     0xFD
@@ -235,6 +236,7 @@ boolean Bmx280Calibrate()
   Bme280CalibrationData.dig_P7 = I2cReadS16_LE(bmp_address, BME280_REGISTER_DIG_P7);
   Bme280CalibrationData.dig_P8 = I2cReadS16_LE(bmp_address, BME280_REGISTER_DIG_P8);
   Bme280CalibrationData.dig_P9 = I2cReadS16_LE(bmp_address, BME280_REGISTER_DIG_P9);
+/*
   if (BME280_CHIPID == bmp_type) {
     Bme280CalibrationData.dig_H1 = I2cRead8(bmp_address, BME280_REGISTER_DIG_H1);
     Bme280CalibrationData.dig_H2 = I2cReadS16_LE(bmp_address, BME280_REGISTER_DIG_H2);
@@ -247,6 +249,23 @@ boolean Bmx280Calibrate()
     I2cWrite8(bmp_address, BME280_REGISTER_CONTROLHUMID, 0x05); // 16x oversampling (Adafruit)
   }
   I2cWrite8(bmp_address, BME280_REGISTER_CONTROL, 0xB7);      // 16x oversampling, normal mode (Adafruit)
+*/
+  if (BME280_CHIPID == bmp_type) {  // #1051
+    Bme280CalibrationData.dig_H1 = I2cRead8(bmp_address, BME280_REGISTER_DIG_H1);
+    Bme280CalibrationData.dig_H2 = I2cReadS16_LE(bmp_address, BME280_REGISTER_DIG_H2);
+    Bme280CalibrationData.dig_H3 = I2cRead8(bmp_address, BME280_REGISTER_DIG_H3);
+    Bme280CalibrationData.dig_H4 = (I2cRead8(bmp_address, BME280_REGISTER_DIG_H4) << 4) | (I2cRead8(bmp_address, BME280_REGISTER_DIG_H4 + 1) & 0xF);
+    Bme280CalibrationData.dig_H5 = (I2cRead8(bmp_address, BME280_REGISTER_DIG_H5 + 1) << 4) | (I2cRead8(bmp_address, BME280_REGISTER_DIG_H5) >> 4);
+    Bme280CalibrationData.dig_H6 = (int8_t)I2cRead8(bmp_address, BME280_REGISTER_DIG_H6);
+
+    I2cWrite8(bmp_address, BME280_REGISTER_CONTROL, 0x00);      // sleep mode since writes to config can be ignored in normal mode (Datasheet 5.4.5/6 page 27)
+    // Set before CONTROL_meas (DS 5.4.3)
+    I2cWrite8(bmp_address, BME280_REGISTER_CONTROLHUMID, 0x01); // 1x oversampling
+    I2cWrite8(bmp_address, BME280_REGISTER_CONFIG, 0xA0);       // 1sec standby between measurements (to limit self heating), IIR filter off
+    I2cWrite8(bmp_address, BME280_REGISTER_CONTROL, 0x27);      // 1x oversampling, normal mode
+  } else {
+    I2cWrite8(bmp_address, BME280_REGISTER_CONTROL, 0xB7);      // 16x oversampling, normal mode (Adafruit)
+  }
 
   return true;
 }
@@ -320,61 +339,22 @@ double Bme280ReadHumidity(void)
   return h / 1024.0;
 }
 
+#ifdef USE_BME680
 /*********************************************************************************************\
- * BMP
+ * BME680
 \*********************************************************************************************/
 
-double BmpReadTemperature(void)
-{
-  double t = NAN;
+#include <Adafruit_BME680.h>
+Adafruit_BME680 bme680;
 
-  switch (bmp_type)
-  {
-  case BMP180_CHIPID:
-    t = Bmp180ReadTemperature();
-    break;
-  case BMP280_CHIPID:
-  case BME280_CHIPID:
-    t = Bme280ReadTemperature();
+void Bme680PerformReading()
+{
+  if (BME680_CHIPID == bmp_type) {
+    bme680.performReading();
   }
-  if (!isnan(t))
-  {
-    t = ConvertTemp(t);
-    return t;
-  }
-  return 0;
 }
 
-double BmpReadPressure(void)
-{
-  double pressure = 0.0;
-
-  switch (bmp_type) {
-  case BMP180_CHIPID:
-    pressure = Bmp180ReadPressure();
-    break;
-  case BMP280_CHIPID:
-  case BME280_CHIPID:
-    pressure = Bme280ReadPressure();
-  }
-  if (pressure != 0.0) {
-//    bmp_sealevel = pressure / pow(1.0 - ((float)Settings.altitude / 44330.0), 5.255);  // pow adds 8k to the code
-    bmp_sealevel = (pressure / FastPrecisePow(1.0 - ((float)Settings.altitude / 44330.0), 5.255)) - 21.6;
-  }
-  return pressure;
-}
-
-double BmpReadHumidity(void)
-{
-  switch (bmp_type) {
-  case BMP180_CHIPID:
-  case BMP280_CHIPID:
-    break;
-  case BME280_CHIPID:
-    return Bme280ReadHumidity();
-  }
-  return 0;
-}
+#endif  // USE_BME680
 
 /********************************************************************************************/
 
@@ -393,20 +373,28 @@ void BmpDetect()
   }
   if (bmp_type) {
     boolean success = false;
-    uint8_t index = 0;
     switch (bmp_type) {
       case BMP180_CHIPID:
         success = Bmp180Calibration();
         break;
-      case BME280_CHIPID:
-        index++;  // 2
       case BMP280_CHIPID:
-        index++;  // 1
+        bmp_model = 1;  // 1
         success = Bmx280Calibrate();
+        break;
+      case BME280_CHIPID:
+        bmp_model = 2;  // 2
+        success = Bmx280Calibrate();
+        break;
+#ifdef USE_BME680
+      case BME680_CHIPID:
+        bmp_model = 3;  // 2
+        success = bme680.begin(bmp_address);
+        break;
+#endif  // USE_BME680
     }
     if (success) {
-      GetTextIndexed(bmp_types, sizeof(bmp_types), index, kBmpTypes);
-      snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, bmp_types, bmp_address);
+      GetTextIndexed(bmp_name, sizeof(bmp_name), bmp_model, kBmpTypes);
+      snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, bmp_name, bmp_address);
       AddLog(LOG_LEVEL_DEBUG);
     }
     else {
@@ -418,43 +406,85 @@ void BmpDetect()
 void BmpShow(boolean json)
 {
   if (bmp_type) {
-    char temperature[10];
-    char pressure[10];
-    char humidity[10];
-    char sea_pressure[10];
-    char sealevel[40];
+    float t = 0.0;
+    float p = 0.0;
+    float h = 0.0;
+    float g = 0.0;
+    float bmp_sealevel = 0.0;
 
-    double t = BmpReadTemperature();
-    double p = BmpReadPressure();
-    double h = BmpReadHumidity();
+    switch (bmp_type) {
+      case BMP180_CHIPID:
+        t = Bmp180ReadTemperature();
+        p = Bmp180ReadPressure();
+        break;
+      case BME280_CHIPID:
+        h = Bme280ReadHumidity();
+      case BMP280_CHIPID:
+        t = Bme280ReadTemperature();
+        p = Bme280ReadPressure();
+        break;
+#ifdef USE_BME680
+      case BME680_CHIPID:
+        t = bme680.temperature;
+        p = bme680.pressure / 100.0;
+        h = bme680.humidity;
+        g = bme680.gas_resistance / 1000.0;
+        break;
+#endif  // USE_BME680
+    }
+    if (t != 0.0) {
+      t = ConvertTemp(t);
+    }
+    if (p != 0.0) {
+//    bmp_sealevel = p / pow(1.0 - ((float)Settings.altitude / 44330.0), 5.255);  // pow adds 8k to the code
+      bmp_sealevel = (p / FastPrecisePow(1.0 - ((float)Settings.altitude / 44330.0), 5.255)) - 21.6;
+    }
+
+    char temperature[10];
     dtostrfd(t, Settings.flag2.temperature_resolution, temperature);
+    char pressure[10];
     dtostrfd(p, Settings.flag2.pressure_resolution, pressure);
-    dtostrfd(h, Settings.flag2.humidity_resolution, humidity);
+    char sea_pressure[10];
     dtostrfd(bmp_sealevel, Settings.flag2.pressure_resolution, sea_pressure);
+    char humidity[10];
+    dtostrfd(h, Settings.flag2.humidity_resolution, humidity);
+#ifdef USE_BME680
+    char gas_resistance[10];
+    dtostrfd(g, 2, gas_resistance);
+#endif  // USE_BME680
 
     if (json) {
-      snprintf_P(sealevel, sizeof(sealevel), PSTR(",\"" D_PRESSUREATSEALEVEL "\":%s"), sea_pressure);
-      if (BME280_CHIPID == bmp_type) {
-        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"%s\":{\"" D_TEMPERATURE "\":%s,\"" D_HUMIDITY "\":%s,\"" D_PRESSURE "\":%s%s}"),
-          mqtt_data, bmp_types, temperature, humidity, pressure, (Settings.altitude != 0) ? sealevel : "");
-      }
-      else {
-        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"%s\":{\"" D_TEMPERATURE "\":%s,\"" D_PRESSURE "\":%s%s}"),
-          mqtt_data, bmp_types, temperature, pressure, (Settings.altitude != 0) ? sealevel : "");
-      }
+      char json_humidity[40];
+      snprintf_P(json_humidity, sizeof(json_humidity), PSTR(",\"" D_JSON_HUMIDITY "\":%s"), humidity);
+      char json_sealevel[40];
+      snprintf_P(json_sealevel, sizeof(json_sealevel), PSTR(",\"" D_JSON_PRESSUREATSEALEVEL "\":%s"), sea_pressure);
+#ifdef USE_BME680
+      char json_gas[40];
+      snprintf_P(json_gas, sizeof(json_gas), PSTR(",\"" D_JSON_GAS "\":%s"), gas_resistance);
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"%s\":{\"" D_JSON_TEMPERATURE "\":%s%s,\"" D_JSON_PRESSURE "\":%s%s%s}"),
+        mqtt_data, bmp_name, temperature, (bmp_model >= 2) ? json_humidity : "", pressure, (Settings.altitude != 0) ? json_sealevel : "", (bmp_model >= 3) ? json_gas : "");
+#else
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"%s\":{\"" D_JSON_TEMPERATURE "\":%s%s,\"" D_JSON_PRESSURE "\":%s%s}"),
+        mqtt_data, bmp_name, temperature, (bmp_model >= 2) ? json_humidity : "", pressure, (Settings.altitude != 0) ? json_sealevel : "");
+#endif  // USE_BME680
 #ifdef USE_DOMOTICZ
       DomoticzTempHumPressureSensor(temperature, humidity, pressure);
 #endif // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
     } else {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TEMP, mqtt_data, bmp_types, temperature, TempUnit());
-      if (BME280_CHIPID == bmp_type) {
-        snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_HUM, mqtt_data, bmp_types, humidity);
+      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TEMP, mqtt_data, bmp_name, temperature, TempUnit());
+      if (bmp_model >= 2) {
+        snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_HUM, mqtt_data, bmp_name, humidity);
       }
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_PRESSURE, mqtt_data, bmp_types, pressure);
+      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_PRESSURE, mqtt_data, bmp_name, pressure);
       if (Settings.altitude != 0) {
-        snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_SEAPRESSURE, mqtt_data, bmp_types, sea_pressure);
+        snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_SEAPRESSURE, mqtt_data, bmp_name, sea_pressure);
       }
+#ifdef USE_BME680
+      if (bmp_model >= 3) {
+        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s{s}%s " D_GAS "{m}%s " D_UNIT_KILOOHM "{e}"), mqtt_data, bmp_name, gas_resistance);
+      }
+#endif  // USE_BME680
 #endif // USE_WEBSERVER
     }
   }
@@ -472,17 +502,21 @@ boolean Xsns09(byte function)
 
   if (i2c_flg) {
     switch (function) {
-//      case FUNC_XSNS_INIT:
-//        break;
-      case FUNC_XSNS_PREP:
+      case FUNC_PREP_BEFORE_TELEPERIOD:
         BmpDetect();
+#ifdef USE_BME680
+        Bme680PerformReading();
+#endif  // USE_BME680
         break;
-      case FUNC_XSNS_JSON_APPEND:
+      case FUNC_JSON_APPEND:
         BmpShow(1);
         break;
 #ifdef USE_WEBSERVER
-      case FUNC_XSNS_WEB:
+      case FUNC_WEB_APPEND:
         BmpShow(0);
+#ifdef USE_BME680
+        Bme680PerformReading();
+#endif  // USE_BME680
         break;
 #endif // USE_WEBSERVER
     }

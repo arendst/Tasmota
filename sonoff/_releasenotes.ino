@@ -1,4 +1,38 @@
-/* 5.10.0 20171201
+/* 5.11.0 20180107
+ * Minor webpage HTML optimizations (#1358)
+ * Updated German translation (#1438)
+ * Change Sonoff Pow Energy MQTT data message and consolidate Status 8 into Status 10
+ * Change ADS1115 default voltage range from +/-2V to +/-6V (#1289)
+ * Change text to Active for 3 minutes (#1364)
+ * Change Wemo SetBinaryState to distinguish from GetBinaryState (#1357)
+ * Change output of HTTP command to valid JSON and Array only (#1363)
+ * Removed all MQTT, JSON and Command language defines from locale files and set fixed to English (#1473)
+ * Renamed commands Color2,3,4 to Color3,4,5
+ * Fix BME280 calculation (#1051)
+ * Fix Sonoff Bridge missed learned key if learned data contains 0x55 (End of Transmission) flag (#1095, #1294)
+ * Fix PWM initialization in Dimmer/Color mode (#1321)
+ * Fix Wemo Emulation (#1357)
+ * Fix display of build date and time in non-english locale (#1465)
+ * Fix Wemo and Hue emulation by adding M-Search response delay (#1486)
+ * Add libraries Adafruit_BME680-1.0.5, Adafruit_Sensor-1.0.2.02, TasmotaSerial-1.0.0 and TSL2561-Arduino-Library
+ * Add command Color2 to set color while keeping same dimmer value
+ * Add device function pointers
+ * Add support for SenseAir S8 CO2 sensor
+ * Add color led signal to Carbon Dioxide (CO2) sensors using defines CO2_LOW and CO2_HIGH in user_config.h
+ * Add support for Domoticz Air Quality sensor to be used by MH-Z19(B) and SenseAir sensors
+ * Add support for PZEM004T energy sensor
+ * Add support for iTead SI7021 temperature and humidity sensor by consolidating DHT22 into AM2301 and using former DHT22 as SI7021 (#735)
+ * Add support for BME680 using adafruit libraries (#1212)
+ * Add support for MH-Z19(B) CO2 sensor (#561, #1248)
+ * Add multipress support and more user configurable GPIO to Sonoff Dual R2 (#1291)
+ * Add support for TSL2561 using adafruit library (#661, #1311)
+ * Add support for SHT3x (#1314)
+ * Add support for Arilux LC06 (#1414)
+ * Add Italian language file (#1449)
+ * Add 2nd Gen Alexa support to Wemo emulation discovery (#1357, #1450)
+ * Add define for additional number of WS2812 schemes (#1463)
+ *
+ * 5.10.0 20171201
  * Upgrade library ArduinoJson to 5.11.2
  * Upgrade library IRRemoteEsp8266 to 2.2.1 + 2 commits but disabled some protocols (code size reduction)
  * Upgrade library NeoPixelBus to 2.2.9
@@ -6,7 +40,7 @@
  * Update library PubSubClient to 2.6 + 9 commits and additional delay (#790)
  * Update core_esp8266_wiring_digital.c to latest (staged) level
  * Patch library I2Cdevlib-Core for esp8266-core 2.4.0-rc2 compatibility
- * Remove command EnergyReset 1..3 now replaced by ENergyReset1 to EnergyReset3
+ * Remove command EnergyReset 1..3 now replaced by EnergyReset1 to EnergyReset3
  * Remove spaces in JSON messages (code size reduction)
  * Renamed xsns_05_ds18x20.ino to xsns_05_ds18x20_legacy.ino still using library OneWire and providing dynamic sensor scan
  * Fix possible iram1_0_seg compile error by shrinking ICACHE_RAM_ATTR code usage

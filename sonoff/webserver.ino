@@ -1,7 +1,7 @@
 /*
   webserver.ino - webserver for Sonoff-Tasmota
 
-  Copyright (C) 2017  Theo Arends
+  Copyright (C) 2018  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -222,7 +222,7 @@ const char HTTP_FORM_LOG1[] PROGMEM =
   "<fieldset><legend><b>&nbsp;" D_LOGGING_PARAMETERS "&nbsp;</b></legend><form method='get' action='sv'>"
   "<input id='w' name='w' value='3' hidden><input id='r' name='r' value='0' hidden>";
 const char HTTP_FORM_LOG2[] PROGMEM =
-  "<br/><b>{b0" D_LOG_LEVEL "</b> ({b1)<br/><select id='{b2' name='{b2'>"
+  "<br/><b>{b0</b> ({b1)<br/><select id='{b2' name='{b2'>"
   "<option{a0value='0'>0 " D_NONE "</option>"
   "<option{a1value='1'>1 " D_ERROR "</option>"
   "<option{a2value='2'>2 " D_INFO "</option>"
@@ -273,7 +273,7 @@ const char HTTP_FORM_CMND[] PROGMEM =
   //  "<br/><button type='submit'>Send command</button>"
   "</form>";
 const char HTTP_TABLE100[] PROGMEM =
-  "<table style='width:100%'>";
+  "<table width='100%'>";
 const char HTTP_COUNTER[] PROGMEM =
   "<br/><div id='t' name='t' style='text-align:center;'></div>";
 const char HTTP_END[] PROGMEM =
@@ -338,6 +338,7 @@ void StartWebserver(int type, IPAddress ipweb)
       if (EMUL_WEMO == Settings.flag2.emulation) {
         WebServer->on("/upnp/control/basicevent1", HTTP_POST, HandleUpnpEvent);
         WebServer->on("/eventservice.xml", HandleUpnpService);
+        WebServer->on("/metainfoservice.xml", HandleUpnpMetaService);
         WebServer->on("/setup.xml", HandleUpnpSetupWemo);
       }
       if (EMUL_HUE == Settings.flag2.emulation) {
@@ -458,7 +459,7 @@ void HandleRoot()
       page += F("<tr>");
       for (byte idx = 1; idx <= devices_present; idx++) {
         snprintf_P(stemp, sizeof(stemp), PSTR(" %d"), idx);
-        snprintf_P(line, sizeof(line), PSTR("<td style='width:%d%'><button onclick='la(\"?o=%d\");'>%s%s</button></td>"),
+        snprintf_P(line, sizeof(line), PSTR("<td width='%d%'><button onclick='la(\"?o=%d\");'>%s%s</button></td>"),
           100 / devices_present, idx, (devices_present < 5) ? D_BUTTON_TOGGLE : "", (devices_present > 1) ? stemp : "");
         page += line;
       }
@@ -474,8 +475,7 @@ void HandleRoot()
         }
         for (byte j = 0; j < 4; j++) {
           idx++;
-          snprintf_P(line, sizeof(line), PSTR("<td style='width:25%'><button onclick='la(\"?k=%d\");'>%d</button></td>"),
-            idx, idx);
+          snprintf_P(line, sizeof(line), PSTR("<td width='25%'><button onclick='la(\"?k=%d\");'>%d</button></td>"), idx, idx);
           page += line;
         }
       }
@@ -512,7 +512,7 @@ void HandleAjaxStatusRefresh()
 
   String page = "";
   mqtt_data[0] = '\0';
-  XsnsCall(FUNC_XSNS_WEB);
+  XsnsCall(FUNC_WEB_APPEND);
   if (strlen(mqtt_data)) {
     page += FPSTR(HTTP_TABLE100);
     page += mqtt_data;
@@ -526,7 +526,7 @@ void HandleAjaxStatusRefresh()
     for (byte idx = 1; idx <= devices_present; idx++) {
       snprintf_P(svalue, sizeof(svalue), PSTR("%d"), bitRead(power, idx -1));
 //      snprintf_P(line, sizeof(line), PSTR("<td style='width:%d%'><div style='text-align:center;font-weight:%s;font-size:%dpx'>%s</div></td>"),
-      snprintf_P(line, sizeof(line), PSTR("<td style='width:%d{t}%s;font-size:%dpx'>%s</div></td>"),  // {t} = %'><div style='text-align:center;font-weight:
+      snprintf_P(line, sizeof(line), PSTR("<td width='%d{t}%s;font-size:%dpx'>%s</div></td>"),  // {t} = %'><div style='text-align:center;font-weight:
         100 / devices_present, (bitRead(power, idx -1)) ? "bold" : "normal", fsize, (devices_present < 5) ? GetStateText(bitRead(power, idx -1)) : svalue);
       page += line;
     }
@@ -837,7 +837,7 @@ void HandleLoggingConfiguration()
     page += FPSTR(HTTP_FORM_LOG2);
     switch (idx) {
     case 0:
-      page.replace(F("{b0"), F(D_SERIAL " "));
+      page.replace(F("{b0"), F(D_SERIAL_LOG_LEVEL));
       page.replace(F("{b1"), STR(SERIAL_LOG_LEVEL));
       page.replace(F("{b2"), F("ls"));
       for (byte i = LOG_LEVEL_NONE; i < LOG_LEVEL_ALL; i++) {
@@ -845,7 +845,7 @@ void HandleLoggingConfiguration()
       }
       break;
     case 1:
-      page.replace(F("{b0"), F(D_WEB " "));
+      page.replace(F("{b0"), F(D_WEB_LOG_LEVEL));
       page.replace(F("{b1"), STR(WEB_LOG_LEVEL));
       page.replace(F("{b2"), F("lw"));
       for (byte i = LOG_LEVEL_NONE; i < LOG_LEVEL_ALL; i++) {
@@ -853,7 +853,7 @@ void HandleLoggingConfiguration()
       }
       break;
     case 2:
-      page.replace(F("{b0"), F(D_SYS));
+      page.replace(F("{b0"), F(D_SYS_LOG_LEVEL));
       page.replace(F("{b1"), STR(SYS_LOG_LEVEL));
       page.replace(F("{b2"), F("ll"));
       for (byte i = LOG_LEVEL_NONE; i < LOG_LEVEL_ALL; i++) {
@@ -1338,7 +1338,7 @@ void HandleHttpCommand()
     }
   }
 
-  String message = "";
+  String message = F("{\"" D_RSLT_WARNING "\":\"");
   if (valid) {
     byte curridx = web_log_index;
     if (strlen(WebServer->arg("cmnd").c_str())) {
@@ -1352,18 +1352,15 @@ void HandleHttpCommand()
 
     if (web_log_index != curridx) {
       byte counter = curridx;
+      message = F("{");
       do {
         if (web_log[counter].length()) {
-          if (message.length()) {
-            message += F("\n");
-          }
-          if (Settings.flag.mqtt_enabled) {
-            // [14:49:36 MQTT: stat/wemos5/RESULT = {"POWER":"OFF"}] > [RESULT = {"POWER":"OFF"}]
-//            message += web_log[counter].substring(17 + strlen(PUB_PREFIX) + strlen(Settings.mqtt_topic));
-            message += web_log[counter].substring(web_log[counter].lastIndexOf("/",web_log[counter].indexOf("="))+1);
-          } else {
-            // [14:49:36 RSLT: RESULT = {"POWER":"OFF"}] > [RESULT = {"POWER":"OFF"}]
-            message += web_log[counter].substring(web_log[counter].indexOf(": ")+2);
+          // [14:49:36 MQTT: stat/wemos5/RESULT = {"POWER":"OFF"}] > [{"POWER":"OFF"}]
+          if (web_log[counter].indexOf("{") > 0) {  // Is it a JSON message (and not only [15:26:08 MQT: stat/wemos5/POWER = O])
+            if (message.length() > 1) {
+              message += F(",");
+            }
+            message += web_log[counter].substring(web_log[counter].indexOf("{")+1,web_log[counter].length()-1);
           }
         }
         counter++;
@@ -1371,13 +1368,14 @@ void HandleHttpCommand()
           counter = 0;
         }
       } while (counter != web_log_index);
+      message += F("}");
     } else {
-      message = F(D_ENABLE_WEBLOG_FOR_RESPONSE "\n");
+      message += F(D_ENABLE_WEBLOG_FOR_RESPONSE "\"}");
     }
   } else {
-    message = F(D_NEED_USER_AND_PASSWORD "\n");
+    message += F(D_NEED_USER_AND_PASSWORD "\"}");
   }
-  WebServer->send(200, FPSTR(HDR_CTYPE_PLAIN), message);
+  WebServer->send(200, FPSTR(HDR_CTYPE_JSON), message);
 }
 
 void HandleConsole()
@@ -1480,10 +1478,10 @@ void HandleInformation()
   // }1 = </td></tr><tr><th>
   // }2 = </th><td>
   String func = FPSTR(HTTP_SCRIPT_INFO_BEGIN);
-  func += F("<table style'width:100%;'><tr><th>");
+  func += F("<table width='100%'><tr><th>");
   func += F(D_PROGRAM_VERSION "}2" VERSION_STRING);
   func += F("}1" D_BUILD_DATE_AND_TIME "}2"); func += GetBuildDateAndTime();
-  func += F("}1" D_CORE_AND_SDK_VERSION "}2"); func += ESP.getCoreVersion(); func += F("/"); func += String(ESP.getSdkVersion());
+  func += F("}1" D_CORE_AND_SDK_VERSION "}2" ARDUINO_ESP8266_RELEASE "/"); func += String(ESP.getSdkVersion());
   func += F("}1" D_UPTIME "}2"); func += String(uptime); func += F(" Hours");
   snprintf_P(stopic, sizeof(stopic), PSTR(" at %X"), GetSettingsAddress());
   func += F("}1" D_FLASH_WRITE_COUNT "}2"); func += String(Settings.save_flag); func += stopic;
@@ -1597,6 +1595,9 @@ void HandleRestart()
 
 void HandleNotFound()
 {
+//  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_HTTP "Not fount (%s)"), WebServer->uri().c_str());
+//  AddLog(LOG_LEVEL_DEBUG);
+
   if (CaptivePortal()) { // If captive portal redirect instead of displaying the error page.
     return;
   }

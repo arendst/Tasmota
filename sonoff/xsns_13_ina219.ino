@@ -1,7 +1,7 @@
 /*
   xsns_13_ina219.ino - INA219 Current Sensor support for Sonoff-Tasmota
 
-  Copyright (C) 2017  Stefan Bode and Theo Arends
+  Copyright (C) 2018  Stefan Bode and Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -164,12 +164,10 @@ void Ina219Detect()
     ina219_address = ina219_addresses[i];
     if (Ina219SetCalibration(Settings.ina219_mode)) {
       ina219_type = 1;
+      snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, "INA219", ina219_address);
+      AddLog(LOG_LEVEL_DEBUG);
       break;
     }
-  }
-  if (ina219_type) {
-    snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, "INA219", ina219_address);
-    AddLog(LOG_LEVEL_DEBUG);
   }
 }
 
@@ -195,7 +193,7 @@ void Ina219Show(boolean json)
     dtostrfd(fcurrent, Settings.flag2.current_resolution, current);
 
     if (json) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"INA219\":{\"" D_VOLTAGE "\":%s,\"" D_CURRENT "\":%s,\"" D_POWERUSAGE "\":%s}"),
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"INA219\":{\"" D_JSON_VOLTAGE "\":%s,\"" D_JSON_CURRENT "\":%s,\"" D_JSON_POWERUSAGE "\":%s}"),
         mqtt_data, voltage, current, power);
 #ifdef USE_DOMOTICZ
       DomoticzSensor(DZ_VOLTAGE, voltage);
@@ -221,16 +219,14 @@ boolean Xsns13(byte function)
 
   if (i2c_flg) {
     switch (function) {
-//      case FUNC_XSNS_INIT:
-//        break;
-      case FUNC_XSNS_PREP:
+      case FUNC_PREP_BEFORE_TELEPERIOD:
         Ina219Detect();
         break;
-      case FUNC_XSNS_JSON_APPEND:
+      case FUNC_JSON_APPEND:
         Ina219Show(1);
         break;
 #ifdef USE_WEBSERVER
-      case FUNC_XSNS_WEB:
+      case FUNC_WEB_APPEND:
         Ina219Show(0);
         break;
 #endif  // USE_WEBSERVER

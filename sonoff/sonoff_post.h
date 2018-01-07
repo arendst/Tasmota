@@ -1,7 +1,7 @@
 /*
   sonoff_post.h - Post header file for Sonoff-Tasmota
 
-  Copyright (C) 2017  Theo Arends
+  Copyright (C) 2018  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -58,6 +58,9 @@ void WifiWpsStatusCallback(wps_cb_status status);
 #ifdef USE_EMULATION
 #undef USE_EMULATION                        // Disable Wemo or Hue emulation
 #endif
+#ifdef USE_PZEM004T
+#undef USE_PZEM004T                         // Disable PZEM004T energy sensor
+#endif
 #ifdef USE_DS18x20
 #undef USE_DS18x20                          // Disable DS18x20 sensor
 #endif
@@ -100,5 +103,9 @@ void WifiWpsStatusCallback(wps_cb_status status);
 #define MESSZ                  405          // Max number of characters in JSON message string (6 x DS18x20 sensors)
 #endif
 
+#include <core_version.h>                   // Arduino_Esp8266 version information (ARDUINO_ESP8266_RELEASE and ARDUINO_ESP8266_RELEASE_2_3_0)
+#ifndef ARDUINO_ESP8266_RELEASE
+#define ARDUINO_ESP8266_RELEASE "STAGED"
+#endif
 
 #endif  // _SONOFF_POST_H_

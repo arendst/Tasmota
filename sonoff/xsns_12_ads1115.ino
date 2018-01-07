@@ -1,7 +1,7 @@
 /*
   xsns_12_ads1115_ada.ino - ADS1115 A/D Converter support for Sonoff-Tasmota
 
-  Copyright (C) 2017  Theo Arends
+  Copyright (C) 2018  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -32,20 +32,20 @@
  * Setting these values incorrectly may destroy your ADC!
  *                                                                 ADS1115
  *                                                                 -------
- * ADS1115_REG_CONFIG_PGA_6_144V  // 2/3x gain +/- 6.144V  1 bit = 0.1875mV
+ * ADS1115_REG_CONFIG_PGA_6_144V  // 2/3x gain +/- 6.144V  1 bit = 0.1875mV (default)
  * ADS1115_REG_CONFIG_PGA_4_096V  // 1x gain   +/- 4.096V  1 bit = 0.125mV
- * ADS1115_REG_CONFIG_PGA_2_048V  // 2x gain   +/- 2.048V  1 bit = 0.0625mV (default)
+ * ADS1115_REG_CONFIG_PGA_2_048V  // 2x gain   +/- 2.048V  1 bit = 0.0625mV
  * ADS1115_REG_CONFIG_PGA_1_024V  // 4x gain   +/- 1.024V  1 bit = 0.03125mV
  * ADS1115_REG_CONFIG_PGA_0_512V  // 8x gain   +/- 0.512V  1 bit = 0.015625mV
  * ADS1115_REG_CONFIG_PGA_0_256V  // 16x gain  +/- 0.256V  1 bit = 0.0078125mV
 \*********************************************************************************************/
 
-#define ADS1115_ADDRESS_ADDR_GND        0x48 // address pin low (GND)
-#define ADS1115_ADDRESS_ADDR_VDD        0x49 // address pin high (VCC)
-#define ADS1115_ADDRESS_ADDR_SDA        0x4A // address pin tied to SDA pin
-#define ADS1115_ADDRESS_ADDR_SCL        0x4B // address pin tied to SCL pin
+#define ADS1115_ADDRESS_ADDR_GND        0x48      // address pin low (GND)
+#define ADS1115_ADDRESS_ADDR_VDD        0x49      // address pin high (VCC)
+#define ADS1115_ADDRESS_ADDR_SDA        0x4A      // address pin tied to SDA pin
+#define ADS1115_ADDRESS_ADDR_SCL        0x4B      // address pin tied to SCL pin
 
-#define ADS1115_CONVERSIONDELAY         (8)  // CONVERSION DELAY (in mS)
+#define ADS1115_CONVERSIONDELAY         (8)       // CONVERSION DELAY (in mS)
 
 /*======================================================================
 POINTER REGISTER
@@ -75,9 +75,9 @@ CONFIG REGISTER
 #define ADS1115_REG_CONFIG_MUX_SINGLE_3 (0x7000)  // Single-ended AIN3
 
 #define ADS1115_REG_CONFIG_PGA_MASK     (0x0E00)
-#define ADS1115_REG_CONFIG_PGA_6_144V   (0x0000)  // +/-6.144V range = Gain 2/3
+#define ADS1115_REG_CONFIG_PGA_6_144V   (0x0000)  // +/-6.144V range = Gain 2/3 (default)
 #define ADS1115_REG_CONFIG_PGA_4_096V   (0x0200)  // +/-4.096V range = Gain 1
-#define ADS1115_REG_CONFIG_PGA_2_048V   (0x0400)  // +/-2.048V range = Gain 2 (default)
+#define ADS1115_REG_CONFIG_PGA_2_048V   (0x0400)  // +/-2.048V range = Gain 2
 #define ADS1115_REG_CONFIG_PGA_1_024V   (0x0600)  // +/-1.024V range = Gain 4
 #define ADS1115_REG_CONFIG_PGA_0_512V   (0x0800)  // +/-0.512V range = Gain 8
 #define ADS1115_REG_CONFIG_PGA_0_256V   (0x0A00)  // +/-0.256V range = Gain 16
@@ -126,7 +126,7 @@ void Ads1115StartComparator(uint8_t channel, uint16_t mode)
   uint16_t config = mode |
                     ADS1115_REG_CONFIG_CQUE_NONE    | // Comparator enabled and asserts on 1 match
                     ADS1115_REG_CONFIG_CLAT_NONLAT  | // Non Latching mode
-                    ADS1115_REG_CONFIG_PGA_2_048V   | // ADC Input voltage range (Gain)
+                    ADS1115_REG_CONFIG_PGA_6_144V   | // ADC Input voltage range (Gain)
                     ADS1115_REG_CONFIG_CPOL_ACTVLOW | // Alert/Rdy active low   (default val)
                     ADS1115_REG_CONFIG_CMODE_TRAD   | // Traditional comparator (default val)
                     ADS1115_REG_CONFIG_DR_6000SPS;    // 6000 samples per second
@@ -168,12 +168,10 @@ void Ads1115Detect()
     if (I2cValidRead16(&buffer, ads1115_address, ADS1115_REG_POINTER_CONVERT)) {
       Ads1115StartComparator(i, ADS1115_REG_CONFIG_MODE_CONTIN);
       ads1115_type = 1;
+      snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, "ADS1115", ads1115_address);
+      AddLog(LOG_LEVEL_DEBUG);
       break;
     }
-  }
-  if (ads1115_type) {
-    snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, "ADS1115", ads1115_address);
-    AddLog(LOG_LEVEL_DEBUG);
   }
 }
 
@@ -192,7 +190,7 @@ void Ads1115Show(boolean json)
           stemp[0] = '\0';
         }
         dsxflg++;
-        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s%s\"" D_ANALOG_INPUT "%d\":%d"), mqtt_data, stemp, i, adc_value);
+        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s%s\"" D_JSON_ANALOG_INPUT "%d\":%d"), mqtt_data, stemp, i, adc_value);
         strcpy(stemp, ",");
 #ifdef USE_WEBSERVER
       } else {
@@ -220,16 +218,14 @@ boolean Xsns12(byte function)
 
   if (i2c_flg) {
     switch (function) {
-//      case FUNC_XSNS_INIT:
-//        break;
-      case FUNC_XSNS_PREP:
+      case FUNC_PREP_BEFORE_TELEPERIOD:
         Ads1115Detect();
         break;
-      case FUNC_XSNS_JSON_APPEND:
+      case FUNC_JSON_APPEND:
         Ads1115Show(1);
         break;
 #ifdef USE_WEBSERVER
-      case FUNC_XSNS_WEB:
+      case FUNC_WEB_APPEND:
         Ads1115Show(0);
         break;
 #endif  // USE_WEBSERVER
