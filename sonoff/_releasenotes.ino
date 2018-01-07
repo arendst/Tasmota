@@ -1,4 +1,7 @@
-/* 5.11.0 20180107
+/* 5.11.1 20180107
+ * Fix Sonoff Pow command handling (#1542)
+ *
+ * 5.11.0 20180107
  * Minor webpage HTML optimizations (#1358)
  * Updated German translation (#1438)
  * Change Sonoff Pow Energy MQTT data message and consolidate Status 8 into Status 10
