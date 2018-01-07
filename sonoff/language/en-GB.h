@@ -124,7 +124,6 @@
 #define D_RETAINED "retained"
 #define D_SAVE "Save"
 #define D_SENSOR "Sensor"
-#define D_SERIAL "Serial"
 #define D_SSID "SSId"
 #define D_START "Start"
 #define D_STD_TIME "STD"
@@ -132,7 +131,6 @@
 #define D_SUBNET_MASK "Subnet Mask"
 #define D_SUBSCRIBE_TO "Subscribe to"
 #define D_SUCCESSFUL "Successful"
-#define D_SYS "Sys"                  // Sys log
 #define D_TEMPERATURE "Temperature"
 #define D_TO "to"
 #define D_TOGGLE "Toggle"
@@ -148,7 +146,6 @@
 #define D_VERSION "Version"
 #define D_VOLTAGE "Voltage"
 #define D_WARMLIGHT "Warm"
-#define D_WEB "Web"                  // Web log
 #define D_WEB_SERVER "Web Server"
 
 // sonoff.ino
@@ -255,7 +252,9 @@
 #define D_FULL_TOPIC "Full Topic"
 
 #define D_LOGGING_PARAMETERS "Logging parameters"
-#define D_LOG_LEVEL "log level"
+#define D_SERIAL_LOG_LEVEL "Serial log level"
+#define D_WEB_LOG_LEVEL "Web log level"
+#define D_SYS_LOG_LEVEL "Syslog level"
 #define D_MORE_DEBUG "More debug"
 #define D_SYSLOG_HOST "Syslog host"
 #define D_SYSLOG_PORT "Syslog port"
