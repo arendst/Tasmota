@@ -257,6 +257,8 @@ struct SYSCFG {
   uint16_t      pulse_counter_debounce;    // 5D2
   uint8_t       rf_code[17][9];            // 5D4
 
+  byte          home_assistant_discovery_enabled; // 5D5
+  char          home_assistant_discovery_prefix[33]; // 5F6
 } Settings;
 
 struct RTCMEM {

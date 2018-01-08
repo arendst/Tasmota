@@ -180,6 +180,9 @@ const char HTTP_BTN_MENU3[] PROGMEM =
 #ifdef USE_DOMOTICZ
   "<br/><form action='dm' method='get'><button>" D_CONFIGURE_DOMOTICZ "</button></form>"
 #endif  // USE_DOMOTICZ
+#ifdef USE_HOME_ASSISTANT
+  "<br/><form action='ha' method='get'><button>" D_CONFIGURE_HOME_ASSISTANT "</button></form>"
+#endif  // USE_HOME_ASSISTANT
   "";
 const char HTTP_BTN_MENU4[] PROGMEM =
   "<br/><form action='lg' method='get'><button>" D_CONFIGURE_LOGGING "</button></form>"
@@ -317,6 +320,9 @@ void StartWebserver(int type, IPAddress ipweb)
 #ifdef USE_DOMOTICZ
         WebServer->on("/dm", HandleDomoticzConfiguration);
 #endif  // USE_DOMOTICZ
+#ifdef USE_HOME_ASSISTANT
+        WebServer->on("/ha", HandleHomeAssistantConfiguration);
+#endif // USE_HOME_ASSISTANT
       }
       WebServer->on("/lg", HandleLoggingConfiguration);
       WebServer->on("/co", HandleOtherConfiguration);
@@ -978,9 +984,13 @@ void HandleSaveSettings()
     MakeValidMqtt(0, stemp);
     strlcpy(stemp2, (!strlen(WebServer->arg("mf").c_str())) ? MQTT_FULLTOPIC : WebServer->arg("mf").c_str(), sizeof(stemp2));
     MakeValidMqtt(1,stemp2);
+
     if ((strcmp(stemp, Settings.mqtt_topic)) || (strcmp(stemp2, Settings.mqtt_fulltopic))) {
       snprintf_P(mqtt_data, sizeof(mqtt_data), (Settings.flag.mqtt_offline) ? S_OFFLINE : "");
       MqttPublishPrefixTopic_P(2, S_LWT, true);  // Offline or remove previous retained topic
+#ifdef USE_HOME_ASSISTANT
+      HomeAssistantClearDiscovery();
+#endif //USE_HOME_ASSISTANT
     }
     strlcpy(Settings.mqtt_topic, stemp, sizeof(Settings.mqtt_topic));
     strlcpy(Settings.mqtt_fulltopic, stemp2, sizeof(Settings.mqtt_fulltopic));
@@ -1014,7 +1024,15 @@ snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_LOG D_CMND_SERIALLOG " %d, " D
     DomoticzSaveSettings();
     break;
 #endif  // USE_DOMOTICZ
+#ifdef USE_HOME_ASSISTANT
+  case 7:
+    HomeAssistantSaveSettings();
+    break;
+#endif  // USE_HOME_ASSISTANT
   case 5:
+#ifdef USE_HOME_ASSISTANT
+    HomeAssistantClearDiscovery();
+#endif // USE_HOME_ASSISTANT
     strlcpy(Settings.web_password, (!strlen(WebServer->arg("p1").c_str())) ? WEB_PASSWORD : (!strcmp(WebServer->arg("p1").c_str(),"0")) ? "" : WebServer->arg("p1").c_str(), sizeof(Settings.web_password));
     Settings.flag.mqtt_enabled = WebServer->hasArg("b1");
 #ifdef USE_EMULATION
@@ -1030,6 +1048,11 @@ snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_LOG D_CMND_SERIALLOG " %d, " D
     break;
   case 6:
     byte new_module = (!strlen(WebServer->arg("g99").c_str())) ? MODULE : atoi(WebServer->arg("g99").c_str());
+#ifdef USE_HOME_ASSISTANT
+    if (Settings.module != new_module) {
+        HomeAssistantClearDiscovery();
+    }
+#endif // USE_HOME_ASSISTANT
     Settings.last_module = Settings.module;
     Settings.module = new_module;
     mytmplt cmodule;
@@ -1235,6 +1258,9 @@ void HandleUploadLoop()
 #ifdef USE_EMULATION
       UdpDisconnect();
 #endif  // USE_EMULATION
+#ifdef USE_HOME_ASSISTANT
+      HomeAssistantClearDiscovery();
+#endif // USE_HOME_ASSISTANT
       if (Settings.flag.mqtt_enabled) {
         MqttClient.disconnect();
       }
