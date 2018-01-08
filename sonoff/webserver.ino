@@ -1031,9 +1031,7 @@ snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_LOG D_CMND_SERIALLOG " %d, " D
 #endif  // USE_HOME_ASSISTANT
   case 5:
 #ifdef USE_HOME_ASSISTANT
-    if (Settings.module != new_module) {
-        HomeAssistantClearDiscovery();
-    }
+    HomeAssistantClearDiscovery();
 #endif // USE_HOME_ASSISTANT
     strlcpy(Settings.web_password, (!strlen(WebServer->arg("p1").c_str())) ? WEB_PASSWORD : (!strcmp(WebServer->arg("p1").c_str(),"0")) ? "" : WebServer->arg("p1").c_str(), sizeof(Settings.web_password));
     Settings.flag.mqtt_enabled = WebServer->hasArg("b1");
