@@ -1,4 +1,7 @@
-/* 5.11.0a
+/* 5.11.1a
+ *
+ * 5.11.1 20180107
+ * Fix Sonoff Pow command handling (#1542)
  *
  * 5.11.0 20180107
  * Minor webpage HTML optimizations (#1358)

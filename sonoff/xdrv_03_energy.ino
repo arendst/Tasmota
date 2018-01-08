@@ -1,5 +1,5 @@
 /*
-  xsns_03_energy.ino - HLW8012 (Sonoff Pow) and PZEM004T energy sensor support for Sonoff-Tasmota
+  xdrv_03_energy.ino - HLW8012 (Sonoff Pow) and PZEM004T energy sensor support for Sonoff-Tasmota
 
   Copyright (C) 2018  Theo Arends
 
