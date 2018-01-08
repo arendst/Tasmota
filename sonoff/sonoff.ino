@@ -25,8 +25,8 @@
     - Select IDE Tools - Flash Size: "1M (no SPIFFS)"
   ====================================================*/
 
-#define VERSION                0x050A000A
-#define VERSION_STRING         "5.10.0j"    // Would be great to have a macro that fills this from VERSION ...
+#define VERSION                0x050B0101
+#define VERSION_STRING         "5.11.1a"    // Would be great to have a macro that fills this from VERSION ...
 
 // Location specific includes
 #include "sonoff.h"                         // Enumaration used in user_config.h

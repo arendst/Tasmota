@@ -124,7 +124,6 @@
 #define D_RETAINED "retained"
 #define D_SAVE "Opslaan"
 #define D_SENSOR "Sensor"
-#define D_SERIAL "Serieel"
 #define D_SSID "SSId"
 #define D_START "Start"
 #define D_STD_TIME "WT"
@@ -132,7 +131,6 @@
 #define D_SUBNET_MASK "Subnet Masker"
 #define D_SUBSCRIBE_TO "Abonneer op"
 #define D_SUCCESSFUL "Gelukt"
-#define D_SYS "Sys"                  // Sys log
 #define D_TEMPERATURE "Temperatuur"
 #define D_TO "naar"
 #define D_TOGGLE "Toggle"  // Wissel, Tuimel
@@ -148,7 +146,6 @@
 #define D_VERSION "Versie"
 #define D_VOLTAGE "Spanning"
 #define D_WARMLIGHT "Warm"
-#define D_WEB "Web"                  // Web log
 #define D_WEB_SERVER "Webserver"
 
 // sonoff.ino
@@ -256,7 +253,9 @@
 #define D_FULL_TOPIC "Volledig Topic"
 
 #define D_LOGGING_PARAMETERS "Logging parameters"
-#define D_LOG_LEVEL "log niveau"
+#define D_SERIAL_LOG_LEVEL "Serieel log niveau"
+#define D_WEB_LOG_LEVEL "Web log niveau"
+#define D_SYS_LOG_LEVEL "Syslog niveau"
 #define D_MORE_DEBUG "Meer debug"
 #define D_SYSLOG_HOST "Syslog host"
 #define D_SYSLOG_PORT "Syslog poort"
@@ -371,7 +370,7 @@
 #define D_HOME_ASSISTANT_DISCOVERY_ENABLE "Activeer Discovery"
 #define D_HOME_ASSISTANT_DISCOVERY_PREFIX "Discovery Prefix"
 
-// xsns_03_energy.ino
+// xdrv_03_energy.ino
 #define D_ENERGY_TODAY "Verbruik vandaag"
 #define D_ENERGY_YESTERDAY "Verbruik gisteren"
 #define D_ENERGY_TOTAL "Verbruik totaal"
@@ -419,6 +418,7 @@
 #define D_SENSOR_SPI_CS   "SPI CS"
 #define D_SENSOR_SPI_DC   "SPI DC"
 #define D_SENSOR_BACKLIGHT "BkLight"
+#define D_SENSOR_PMS5003  "PMS5003"
 
 // Units
 #define D_UNIT_AMPERE "A"

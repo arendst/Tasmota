@@ -124,7 +124,6 @@
 #define D_RETAINED "beibehalten"
 #define D_SAVE "Speichern"
 #define D_SENSOR "Sensor"
-#define D_SERIAL "Seriell"
 #define D_SSID "SSID"
 #define D_START "Start"
 #define D_STD_TIME "STD"
@@ -132,7 +131,6 @@
 #define D_SUBNET_MASK "Subnetzmaske"
 #define D_SUBSCRIBE_TO "subscribe to"
 #define D_SUCCESSFUL "erfolgreich"
-#define D_SYS "Sys "                  // Sys log
 #define D_TEMPERATURE "Temperatur"
 #define D_TO "zu"
 #define D_TOGGLE "An/Aus"
@@ -148,7 +146,6 @@
 #define D_VERSION "Version"
 #define D_VOLTAGE "Spannung"
 #define D_WARMLIGHT "warm"
-#define D_WEB "Web"                  // Web log
 #define D_WEB_SERVER "Web-Server"
 
 // sonoff.ino
@@ -256,7 +253,9 @@
 #define D_FULL_TOPIC "full topic"
 
 #define D_LOGGING_PARAMETERS "Logging Einstellungen"
-#define D_LOG_LEVEL "Log level"
+#define D_SERIAL_LOG_LEVEL "Seriell Log level"
+#define D_WEB_LOG_LEVEL "Web Log level"
+#define D_SYS_LOG_LEVEL "Sys Log level"
 #define D_MORE_DEBUG "More debug"
 #define D_SYSLOG_HOST "Sys Log Host"
 #define D_SYSLOG_PORT "Sys Log Port"
@@ -371,7 +370,7 @@
 #define D_HOME_ASSISTANT_DISCOVERY_ENABLE "Discovery aktivieren"
 #define D_HOME_ASSISTANT_DISCOVERY_PREFIX "Discovery Präfix"
 
-// xsns_03_energy.ino
+// xdrv_03_energy.ino
 #define D_ENERGY_TODAY "Energie heute"
 #define D_ENERGY_YESTERDAY "Energie gestern"
 #define D_ENERGY_TOTAL "Energie insgesamt"
@@ -419,6 +418,7 @@
 #define D_SENSOR_SPI_CS   "SPI CS"
 #define D_SENSOR_SPI_DC   "SPI DC"
 #define D_SENSOR_BACKLIGHT "BkLight"
+#define D_SENSOR_PMS5003  "PMS5003"
 
 // Units
 #define D_UNIT_AMPERE "A"
