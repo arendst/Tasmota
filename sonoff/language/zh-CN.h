@@ -52,7 +52,7 @@
 #define D_BLINK "闪烁"
 #define D_BLINKOFF "闪烁关"
 #define D_BOOT_COUNT "启动次数"
-#define D_BRIGHTLIGHT "亮度"
+#define D_BRIGHTLIGHT "亮"
 #define D_BUTTON "按钮"
 #define D_BY "by"                    // Written by me
 #define D_BYTES "大小:"
@@ -63,10 +63,10 @@
 #define D_COMMAND "命令:"
 #define D_CONNECTED "已连接"
 #define D_COUNT "数量:"
-#define D_COUNTER "Counter"
+#define D_COUNTER "计数器"
 #define D_CURRENT "电流"          // As in Voltage and Current
 #define D_DATA "数据:"
-#define D_DARKLIGHT "Dark"
+#define D_DARKLIGHT "暗"
 #define D_DEBUG "调试"
 #define D_DISABLED "禁用"
 #define D_DNS_SERVER "DNS服务器"
@@ -169,7 +169,7 @@
 // support.ino
 #define D_OSWATCH "osWatch"
 #define D_BLOCKED_LOOP "Blocked Loop"
-#define D_WPS_FAILED_WITH_STATUS "WPSconfig FAILED with status"
+#define D_WPS_FAILED_WITH_STATUS "WPS配置失败，状态:"
 #define D_ACTIVE_FOR_3_MINUTES "active for 3 minutes"
 #define D_FAILED_TO_START "未能启动"
 #define D_PATCH_ISSUE_2186 "Patch issue 2186"
@@ -183,14 +183,14 @@
 #define D_CHECKING_CONNECTION "检查连接..."
 #define D_QUERY_DONE "查询完成。 发现MQTT服务"
 #define D_MQTT_SERVICE_FOUND "发现MQTT服务:"
-#define D_FOUND_AT "found at"
+#define D_FOUND_AT "发现:"
 #define D_SYSLOG_HOST_NOT_FOUND "Syslog主机未找到"
 
 // settings.ino
 #define D_SAVED_TO_FLASH_AT "保存到 flash:"
-#define D_LOADED_FROM_FLASH_AT "从 flash 载入"
+#define D_LOADED_FROM_FLASH_AT "从 flash 载入:"
 #define D_USE_DEFAULTS "使用默认设置"
-#define D_ERASED_SECTOR "擦除删除"
+#define D_ERASED_SECTOR "擦除扇区"
 
 // webserver.ino
 #define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "固件版本过低 - 请升级"
@@ -276,7 +276,7 @@
 #define D_PROGRAM_VERSION "固件版本"
 #define D_BUILD_DATE_AND_TIME "编译时间"
 #define D_CORE_AND_SDK_VERSION "内核版本"
-#define D_FLASH_WRITE_COUNT "刷机次数"
+#define D_FLASH_WRITE_COUNT "Flash写入次数"
 #define D_MAC_ADDRESS "MAC地址"
 #define D_MQTT_HOST "MQTT主机"
 #define D_MQTT_PORT "MQTT端口"
@@ -291,8 +291,7 @@
 #define D_FLASH_CHIP_ID "Flash芯片ID"
 #define D_FLASH_CHIP_SIZE "Flash大小"
 #define D_FREE_PROGRAM_SPACE "空闲程序空间"
-#define D_UPGRADE_BY_WEBSERVER "通过网络升级"
-#define D_UPGRADE_BY_WEBSERVER "通过Web服务器升级"
+#define D_UPGRADE_BY_WEBSERVER "通过Web升级"
 #define D_OTA_URL "OTA地址"
 #define D_START_UPGRADE "开始升级"
 #define D_UPGRADE_BY_FILE_UPLOAD "通过文件升级"
@@ -384,6 +383,14 @@
 // xsns_07_sht1x.ino
 #define D_SENSOR_DID_NOT_ACK_COMMAND "传感器没有确认命令"
 #define D_SHT1X_FOUND "发现 SHT1X 传感器"
+
+// xsns_18_pms5003.ino
+#define D_STANDARD_CONCENTRATION "标准颗粒物浓度"
+#define D_ENVIRONMENTAL_CONCENTRATION "大气环境下浓度"
+#define D_PARTICALS_BEYOND "颗粒物直径大于"
+#define D_UNIT_MICROGRAM_PER_CUBIC_METER "微克/立方米"
+#define D_UNIT_MICROMETER "微米"
+#define D_UNIT_PARTS_PER_DECILITER "每分升"
 
 // sonoff_template.h
 // Max string length is 8 characters including suffixes
