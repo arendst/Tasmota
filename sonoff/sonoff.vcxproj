@@ -1,0 +1,171 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{8875A12F-F14F-4E5A-8B43-CAD2FC0B18BA}</ProjectGuid>
+    <RootNamespace>
+    </RootNamespace>
+    <ProjectName>sonoff</ProjectName>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>
+    </PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>
+    </PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup />
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <SDLCheck>true</SDLCheck>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\..\..\..\Documents\Arduino\libraries\ArduinoJson\src;$(ProjectDir)..\..\..\..\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.3.0\libraries\DNSServer\src;$(ProjectDir)..\..\..\..\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.3.0\libraries\ESP8266HTTPClient\src;$(ProjectDir)..\..\..\..\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.3.0\libraries\ESP8266httpUpdate\src;$(ProjectDir)..\..\..\..\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.3.0\libraries\ESP8266mDNS;$(ProjectDir)..\..\..\..\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.3.0\libraries\ESP8266WebServer\src;$(ProjectDir)..\..\..\..\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.3.0\libraries\ESP8266WiFi\src;$(ProjectDir)..\..\..\..\Documents\Arduino\libraries\IRremoteESP8266-master;$(ProjectDir)..\..\..\..\Documents\Arduino\libraries\PubSubClient\src;$(ProjectDir)..\..\..\..\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.3.0\libraries\SPI;$(ProjectDir)..\..\..\..\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.3.0\libraries\Ticker;$(ProjectDir)..\..\..\..\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.3.0\libraries\Wire;$(ProjectDir)..\..\..\..\..\..\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\IDE\Extensions\2iftqv1b.p1s\Micro Platforms\visualmicro\ide\libraries;$(ProjectDir)..\..\..\..\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.3.0\libraries;$(ProjectDir)..\..\..\..\Documents\Arduino\libraries;$(ProjectDir)..\..\..\..\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.3.0\cores\esp8266;$(ProjectDir)..\..\..\..\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.3.0\cores\esp8266\libb64;$(ProjectDir)..\..\..\..\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.3.0\cores\esp8266\spiffs;$(ProjectDir)..\..\..\..\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.3.0\cores\esp8266\umm_malloc;$(ProjectDir)..\..\..\..\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.3.0\variants\nodemcu;$(ProjectDir)..\sonoff;$(ProjectDir)..\..\..\..\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.3.0\tools\sdk\include;$(ProjectDir)..\..\..\..\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.3.0\tools\sdk\lwip\include;$(ProjectDir)..\..\..\..\AppData\Local\arduino15\packages\esp8266\tools\xtensa-lx106-elf-gcc\1.20.0-26-gb404fb9-2\xtensa-lx106-elf\include\c++\4.8.2;$(ProjectDir)..\..\..\..\AppData\Local\arduino15\packages\esp8266\tools\xtensa-lx106-elf-gcc\1.20.0-26-gb404fb9-2\xtensa-lx106-elf\include\c++\4.8.2\xtensa-lx106-elf;$(ProjectDir)..\..\..\..\AppData\Local\arduino15\packages\esp8266\tools\xtensa-lx106-elf-gcc\1.20.0-26-gb404fb9-2\xtensa-lx106-elf\include;$(ProjectDir)..\..\..\..\AppData\Local\arduino15\packages\esp8266\tools\xtensa-lx106-elf-gcc\1.20.0-26-gb404fb9-2\lib\gcc\xtensa-lx106-elf\4.8.2\include;$(ProjectDir)..\..\..\..\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.3.0\tools\sdk\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <ForcedIncludeFiles>$(ProjectDir)__vm\.sonoff.vsarduino.h;%(ForcedIncludeFiles)</ForcedIncludeFiles>
+      <IgnoreStandardIncludePath>false</IgnoreStandardIncludePath>
+      <PreprocessorDefinitions>__ESP8266_ESp8266__;__ESP8266_ESP8266__;__ets__;ICACHE_FLASH;F_CPU=160000000L;LWIP_OPEN_SRC;ARDUINO=10801;ARDUINO_ESP8266_NODEMCU;ARDUINO_ARCH_ESP8266;ESP8266;__cplusplus=201103L;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ProjectCapability Include="VisualMicro" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="settings.ino">
+      <FileType>CppCode</FileType>
+    </None>
+    <None Include="sonoff.ino">
+      <FileType>CppCode</FileType>
+    </None>
+    <None Include="support.ino">
+      <FileType>CppCode</FileType>
+    </None>
+    <None Include="webserver.ino">
+      <FileType>CppCode</FileType>
+    </None>
+    <None Include="xdrv_domoticz.ino">
+      <FileType>CppCode</FileType>
+    </None>
+    <None Include="xdrv_ir_send.ino">
+      <FileType>CppCode</FileType>
+    </None>
+    <None Include="xdrv_snfbridge.ino">
+      <FileType>CppCode</FileType>
+    </None>
+    <None Include="xdrv_snfled.ino">
+      <FileType>CppCode</FileType>
+    </None>
+    <None Include="xdrv_snfsc.ino">
+      <FileType>CppCode</FileType>
+    </None>
+    <None Include="xdrv_wemohue.ino">
+      <FileType>CppCode</FileType>
+    </None>
+    <None Include="xdrv_ws2812.ino">
+      <FileType>CppCode</FileType>
+    </None>
+    <None Include="xsns_bh1750.ino">
+      <FileType>CppCode</FileType>
+    </None>
+    <None Include="xsns_bmp.ino">
+      <FileType>CppCode</FileType>
+    </None>
+    <None Include="xsns_counter.ino">
+      <FileType>CppCode</FileType>
+    </None>
+    <None Include="xsns_dht.ino">
+      <FileType>CppCode</FileType>
+    </None>
+    <None Include="xsns_ds18b20.ino">
+      <FileType>CppCode</FileType>
+    </None>
+    <None Include="xsns_ds18x20.ino">
+      <FileType>CppCode</FileType>
+    </None>
+    <None Include="xsns_hlw8012.ino">
+      <FileType>CppCode</FileType>
+    </None>
+    <None Include="xsns_htu21.ino">
+      <FileType>CppCode</FileType>
+    </None>
+    <None Include="xsns_sht1x.ino">
+      <FileType>CppCode</FileType>
+    </None>
+    <None Include="_releasenotes.ino">
+      <FileType>CppCode</FileType>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="settings.h">
+      <FileType>CppCode</FileType>
+    </ClInclude>
+    <ClInclude Include="sonoff_template.h">
+      <FileType>CppCode</FileType>
+    </ClInclude>
+    <ClInclude Include="support.h">
+      <FileType>CppCode</FileType>
+    </ClInclude>
+    <ClInclude Include="user_config.h">
+      <FileType>CppCode</FileType>
+    </ClInclude>
+    <ClInclude Include="user_config_override.h">
+      <FileType>CppCode</FileType>
+    </ClInclude>
+    <ClInclude Include="__vm\.sonoff.vsarduino.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="core_esp8266_timer.c" />
+    <ClCompile Include="core_esp8266_wiring_digital.c" />
+    <ClCompile Include="core_esp8266_wiring_pwm.c" />
+  </ItemGroup>
+  <PropertyGroup>
+    <DebuggerFlavor>VisualMicroDebugger</DebuggerFlavor>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
