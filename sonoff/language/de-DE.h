@@ -149,6 +149,7 @@
 #define D_WEB_SERVER "Web-Server"
 
 // sonoff.ino
+#define D_WARNING_MINIMAL_VERSION "WARNING This version does not support persistent settings"
 #define D_LEVEL_10 "level 1-0"
 #define D_LEVEL_01 "level 0-1"
 #define D_SERIAL_LOGGING_DISABLED "Serielles logging deaktiviert"
@@ -385,6 +386,11 @@
 #define D_SENSOR_DID_NOT_ACK_COMMAND "Sensor hat ACK-Befehl nicht ausgeführt"
 #define D_SHT1X_FOUND "SHT1X gefunden"
 
+// xsns_18_pms5003.ino
+#define D_STANDARD_CONCENTRATION "Standard Concentration"
+#define D_ENVIRONMENTAL_CONCENTRATION "Environmental Concentration"
+#define D_PARTICALS_BEYOND "Particals beyond"
+
 // sonoff_template.h
 // Max string length is 8 characters including suffixes
 #define D_SENSOR_NONE     "None"
@@ -420,11 +426,14 @@
 #define D_UNIT_KILOOHM "kOhm"
 #define D_UNIT_KILOWATTHOUR "kWh"
 #define D_UNIT_LUX "lx"
+#define D_UNIT_MICROGRAM_PER_CUBIC_METER "ug/m3"
+#define D_UNIT_MICROMETER "um"
 #define D_UNIT_MICROSECOND "µs"
 #define D_UNIT_MILLIAMPERE "mA"
 #define D_UNIT_MILLISECOND "ms"
 #define D_UNIT_MINUTE "min"
-#define D_UNIT_PPM "ppm"
+#define D_UNIT_PARTS_PER_DECILITER "ppd"
+#define D_UNIT_PARTS_PER_MILLION "ppm"
 #define D_UNIT_PRESSURE "hPa"
 #define D_UNIT_SECOND "sek"
 #define D_UNIT_SECTORS "Sektoren"

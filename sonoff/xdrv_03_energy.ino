@@ -304,6 +304,7 @@ void PzemSend(uint8_t cmd)
   uint8_t *bytes = (uint8_t*)&pzem;
   pzem.crc = PzemCrc(bytes);
 
+  PzemSerial->flush();
   PzemSerial->write(bytes, sizeof(pzem));
 }
 

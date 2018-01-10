@@ -80,7 +80,7 @@ typedef unsigned long power_t;              // Power (Relay) type
 #define STATES                 20           // State loops per second
 #define SYSLOG_TIMER           600          // Seconds to restore syslog_level
 #define SERIALLOG_TIMER        600          // Seconds to disable SerialLog
-#define OTA_ATTEMPTS           10           // Number of times to try fetching the new firmware
+#define OTA_ATTEMPTS           5            // Number of times to try fetching the new firmware
 
 #define INPUT_BUFFER_SIZE      250          // Max number of characters in (serial) command buffer
 #define CMDSZ                  24           // Max number of characters in command

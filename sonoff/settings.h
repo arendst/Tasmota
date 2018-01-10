@@ -262,7 +262,7 @@ struct SYSCFG {
 struct RTCMEM {
   uint16_t      valid;                     // 000
   byte          oswatch_blocked_loop;      // 002
-  uint8_t       unused;                    // 003
+  uint8_t       ota_loader;                // 003
   unsigned long energy_kWhtoday;              // 004
   unsigned long energy_kWhtotal;              // 008
   unsigned long pulse_counter[MAX_COUNTERS];  // 00C

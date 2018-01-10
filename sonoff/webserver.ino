@@ -278,7 +278,7 @@ const char HTTP_COUNTER[] PROGMEM =
   "<br/><div id='t' name='t' style='text-align:center;'></div>";
 const char HTTP_END[] PROGMEM =
   "<br/>"
-  "<div style='text-align:right;font-size:11px;'><hr/><a href='" D_WEBLINK "' target='_blank' style='color:#aaa;'>" D_PROGRAMNAME " " VERSION_STRING " " D_BY " " D_AUTHOR "</a></div>"
+  "<div style='text-align:right;font-size:11px;'><hr/><a href='" D_WEBLINK "' target='_blank' style='color:#aaa;'>" D_PROGRAMNAME " {mv " D_BY " " D_AUTHOR "</a></div>"
   "</div>"
   "</body>"
   "</html>";
@@ -423,6 +423,7 @@ void ShowPage(String &page)
     }
   }
   page += FPSTR(HTTP_END);
+  page.replace(F("{mv"), my_version);
   SetHeader();
   WebServer->send(200, FPSTR(HDR_CTYPE_HTML), page);
 }
@@ -926,8 +927,7 @@ void HandleBackupConfiguration()
   WebServer->setContentLength(sizeof(buffer));
 
   char attachment[100];
-  snprintf_P(attachment, sizeof(attachment), PSTR("attachment; filename=Config_%s_" VERSION_STRING ".dmp"),
-    Settings.friendlyname[0]);
+  snprintf_P(attachment, sizeof(attachment), PSTR("attachment; filename=Config_%s_%s.dmp"), Settings.friendlyname[0], my_version);
   WebServer->sendHeader(F("Content-Disposition"), attachment);
   WebServer->send(200, FPSTR(HDR_CTYPE_STREAM), "");
   memcpy(buffer, &Settings, sizeof(buffer));
@@ -1479,7 +1479,7 @@ void HandleInformation()
   // }2 = </th><td>
   String func = FPSTR(HTTP_SCRIPT_INFO_BEGIN);
   func += F("<table width='100%'><tr><th>");
-  func += F(D_PROGRAM_VERSION "}2" VERSION_STRING);
+  func += F(D_PROGRAM_VERSION "}2"); func += my_version;
   func += F("}1" D_BUILD_DATE_AND_TIME "}2"); func += GetBuildDateAndTime();
   func += F("}1" D_CORE_AND_SDK_VERSION "}2" ARDUINO_ESP8266_RELEASE "/"); func += String(ESP.getSdkVersion());
   func += F("}1" D_UPTIME "}2"); func += String(uptime); func += F(" Hours");

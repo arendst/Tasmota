@@ -25,8 +25,7 @@
     - Select IDE Tools - Flash Size: "1M (no SPIFFS)"
   ====================================================*/
 
-#define VERSION                0x050B0101
-#define VERSION_STRING         "5.11.1a"    // Would be great to have a macro that fills this from VERSION ...
+#define VERSION                0x050B0101   // 5.11.1a
 
 // Location specific includes
 #include "sonoff.h"                         // Enumaration used in user_config.h
@@ -120,6 +119,7 @@ int mqtt_connection_flag = 2;               // MQTT connection messages flag
 int ota_state_flag = 0;                     // OTA state flag
 int ota_result = 0;                         // OTA result
 byte ota_retry_counter = OTA_ATTEMPTS;      // OTA retry counter
+char *ota_url;                              // OTA url string
 int restart_flag = 0;                       // Sonoff restart flag
 int wifi_state_flag = WIFI_RESTART;         // Wifi state flag
 int uptime = 0;                             // Current uptime in hours
@@ -188,6 +188,7 @@ uint8_t xdrv_present = 0;                   // Number of drivers found
 boolean (*xdrv_func_ptr[XDRV_MAX])(byte);   // Driver Function Pointers
 uint8_t xsns_present = 0;                   // Number of External Sensors found
 boolean (*xsns_func_ptr[XSNS_MAX])(byte);   // External Sensor Function Pointers for simple implementation of sensors
+char my_version[33];                        // Composed version string
 char my_hostname[33];                       // Composed Wifi hostname
 char mqtt_client[33];                        // Composed MQTT Clientname
 char serial_in_buffer[INPUT_BUFFER_SIZE + 2]; // Receive buffer
@@ -467,8 +468,8 @@ void MqttConnected()
   }
 
   if (mqtt_connection_flag) {
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_MODULE "\":\"%s\",\"" D_JSON_VERSION "\":\"" VERSION_STRING "\",\"" D_JSON_FALLBACKTOPIC "\":\"%s\",\"" D_CMND_GROUPTOPIC "\":\"%s\"}"),
-      my_module.name, mqtt_client, Settings.mqtt_grptopic);
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_MODULE "\":\"%s\",\"" D_JSON_VERSION "\":\"%s\",\"" D_JSON_FALLBACKTOPIC "\":\"%s\",\"" D_CMND_GROUPTOPIC "\":\"%s\"}"),
+      my_module.name, my_version, mqtt_client, Settings.mqtt_grptopic);
     MqttPublishPrefixTopic_P(2, PSTR(D_RSLT_INFO "1"));
 #ifdef USE_WEBSERVER
     if (Settings.webserver) {
@@ -1222,9 +1223,9 @@ void MqttDataCallback(char* topic, byte* data, unsigned int data_len)
       //   We also need at least 3 chars to make a valid version number string.
       if (((1 == data_len) && (1 == payload)) || ((data_len >= 3) && NewerVersion(dataBuf))) {
         ota_state_flag = 3;
-        snprintf_P(mqtt_data, sizeof(mqtt_data), "{\"%s\":\"" D_JSON_VERSION " " VERSION_STRING " " D_JSON_FROM " %s\"}", command, Settings.ota_url);
+        snprintf_P(mqtt_data, sizeof(mqtt_data), "{\"%s\":\"" D_JSON_VERSION " %s " D_JSON_FROM " %s\"}", command, my_version, Settings.ota_url);
       } else {
-        snprintf_P(mqtt_data, sizeof(mqtt_data), "{\"%s\":\"" D_JSON_ONE_OR_GT "\"}", command, VERSION_STRING);
+        snprintf_P(mqtt_data, sizeof(mqtt_data), "{\"%s\":\"" D_JSON_ONE_OR_GT "\"}", command, my_version);
       }
     }
     else if (CMND_OTAURL == command_code) {
@@ -1699,8 +1700,8 @@ void PublishStatus(uint8_t payload)
   }
 
   if ((0 == payload) || (2 == payload)) {
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_STATUS D_STATUS2_FIRMWARE "\":{\"" D_JSON_VERSION "\":\"" VERSION_STRING "\",\"" D_JSON_BUILDDATETIME "\":\"%s\",\"" D_JSON_BOOTVERSION "\":%d,\"" D_JSON_COREVERSION "\":\"" ARDUINO_ESP8266_RELEASE "\",\"" D_JSON_SDKVERSION "\":\"%s\"}}"),
-      GetBuildDateAndTime().c_str(), ESP.getBootVersion(), ESP.getSdkVersion());
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_STATUS D_STATUS2_FIRMWARE "\":{\"" D_JSON_VERSION "\":\"%s\",\"" D_JSON_BUILDDATETIME "\":\"%s\",\"" D_JSON_BOOTVERSION "\":%d,\"" D_JSON_COREVERSION "\":\"" ARDUINO_ESP8266_RELEASE "\",\"" D_JSON_SDKVERSION "\":\"%s\"}}"),
+      my_version, GetBuildDateAndTime().c_str(), ESP.getBootVersion(), ESP.getSdkVersion());
     MqttPublishPrefixTopic_P(option, PSTR(D_CMND_STATUS "2"));
   }
 
@@ -2224,6 +2225,8 @@ void StateLoop()
     if (ota_state_flag && (backlog_pointer == backlog_index)) {
       ota_state_flag--;
       if (2 == ota_state_flag) {
+        ota_url = Settings.ota_url;
+        RtcSettings.ota_loader = 0;  // Try requested image first
         ota_retry_counter = OTA_ATTEMPTS;
         ESPhttpUpdate.rebootOnUpdate(false);
         SettingsSave(1);  // Free flash for OTA update
@@ -2241,10 +2244,32 @@ void StateLoop()
         ota_result = 0;
         ota_retry_counter--;
         if (ota_retry_counter) {
-//          snprintf_P(log_data, sizeof(log_data), PSTR("OTA: Attempt %d"), OTA_ATTEMPTS - ota_retry_counter);
-//          AddLog(LOG_LEVEL_INFO);
-          ota_result = (HTTP_UPDATE_FAILED != ESPhttpUpdate.update(Settings.ota_url));
+#ifndef BE_MINIMAL
+          if (RtcSettings.ota_loader) {
+            char *pch = strrchr(Settings.ota_url, '-');  // Change from filename-DE.bin into filename-minimal.bin
+            char *ech = strrchr(Settings.ota_url, '.');  // Change from filename.bin into filename-minimal.bin
+            if (!pch) {
+              pch = ech;
+            }
+            if (pch) {
+              strlcpy(mqtt_data, Settings.ota_url, pch - Settings.ota_url +1);
+              snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s-" D_JSON_MINIMAL "%s"), mqtt_data, ech);  // Minimal filename must be filename-minimal
+              ota_url = mqtt_data;  // Try minimal image
+            }
+          }
+#endif  // BE_MINIMAL
+          snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_UPLOAD "%s"), ota_url);
+          AddLog(LOG_LEVEL_DEBUG);
+          ota_result = (HTTP_UPDATE_FAILED != ESPhttpUpdate.update(ota_url));
           if (!ota_result) {
+#ifndef BE_MINIMAL
+            int ota_error = ESPhttpUpdate.getLastError();
+//            snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_UPLOAD "Ota error %d"), ota_error);
+//            AddLog(LOG_LEVEL_DEBUG);
+            if ((HTTP_UE_TOO_LESS_SPACE == ota_error) || (HTTP_UE_BIN_FOR_WRONG_FLASH == ota_error)) {
+              RtcSettings.ota_loader = 1;  // Try minimal image next
+            }
+#endif  // BE_MINIMAL
             ota_state_flag = 2;    // Upgrade failed - retry
           }
         }
@@ -2607,6 +2632,16 @@ void setup()
   Serial.println();
   seriallog_level = LOG_LEVEL_INFO;  // Allow specific serial messages until config loaded
 
+  snprintf_P(my_version, sizeof(my_version), PSTR("%d.%d.%d"), VERSION >> 24 & 0xff, VERSION >> 16 & 0xff, VERSION >> 8 & 0xff);
+  if (VERSION & 0x1f) {
+    idx = strlen(my_version);
+    my_version[idx] = 96 + (VERSION & 0x1f);
+    my_version[idx +1] = 0;
+  }
+#ifdef BE_MINIMAL
+  snprintf_P(my_version, sizeof(my_version), PSTR("%s-" D_JSON_MINIMAL), my_version);
+#endif  // BE_MINIMAL
+
   SettingsLoad();
   SettingsDelta();
 
@@ -2689,9 +2724,13 @@ void setup()
 
   blink_powersave = power;
 
-  snprintf_P(log_data, sizeof(log_data), PSTR(D_PROJECT " %s %s (" D_CMND_TOPIC " %s, " D_FALLBACK " %s, " D_CMND_GROUPTOPIC " %s) " D_VERSION " " VERSION_STRING),
-    PROJECT, Settings.friendlyname[0], Settings.mqtt_topic, mqtt_client, Settings.mqtt_grptopic);
+  snprintf_P(log_data, sizeof(log_data), PSTR(D_PROJECT " %s %s (" D_CMND_TOPIC " %s, " D_FALLBACK " %s, " D_CMND_GROUPTOPIC " %s) " D_VERSION " %s"),
+    PROJECT, Settings.friendlyname[0], Settings.mqtt_topic, mqtt_client, Settings.mqtt_grptopic, my_version);
   AddLog(LOG_LEVEL_INFO);
+#ifdef BE_MINIMAL
+  snprintf_P(log_data, sizeof(log_data), PSTR(D_WARNING_MINIMAL_VERSION));
+  AddLog(LOG_LEVEL_INFO);
+#endif  // BE_MINIMAL
 
   RtcInit();
   XSnsInit();

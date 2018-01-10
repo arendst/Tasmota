@@ -86,7 +86,8 @@ enum UserSelectablePins {
   GPIO_SAIR_RX,        // SenseAir Serial interface
   GPIO_SPI_CS,         // SPI Chip Select
   GPIO_SPI_DC,         // SPI Data Direction
-  GPIO_BACKLIGHT,
+  GPIO_BACKLIGHT,      // Display backlight control
+  GPIO_PMS5003,        // Plantower PMS5003 Serial interface
   GPIO_SENSOR_END };
 
 // Text in webpage Module Parameters and commands GPIOS and GPIO
@@ -155,7 +156,8 @@ const char kSensors[GPIO_SENSOR_END][9] PROGMEM = {
   D_SENSOR_SAIR_RX,
   D_SENSOR_SPI_CS,
   D_SENSOR_SPI_DC,
-  D_SENSOR_BACKLIGHT
+  D_SENSOR_BACKLIGHT,
+  D_SENSOR_PMS5003
 };
 
 // Programmer selectable GPIO functionality offset by user selectable GPIOs

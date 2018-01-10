@@ -1,4 +1,6 @@
 /* 5.11.1a
+ * Add automagic two step Web server OTA upgrade using filename-minimal image if OTA free space is too small
+ * Add chinese language file (#1551)
  *
  * 5.11.1 20180107
  * Fix Sonoff Pow command handling (#1542)

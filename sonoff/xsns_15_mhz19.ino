@@ -134,6 +134,7 @@ void Mhz50ms()
     if (6 == mhz_timer) {  // MH-Z19 measuring cycle takes 1005 +5% ms
       mhz_timer = 0;
 
+      MhzSerial->flush();
       MhzSerial->write(mhz_cmnd_read_ppm, 9);
     }
 
