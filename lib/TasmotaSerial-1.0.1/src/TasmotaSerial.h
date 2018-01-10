@@ -26,18 +26,29 @@
 \*********************************************************************************************/
 
 #define TM_SERIAL_BAUDRATE           9600
-#define TM_SERIAL_BUFFER_SIZE        20
+#define TM_SERIAL_BUFFER_SIZE        64
 //#define TM_SERIAL_USE_IRAM                  // Enable to use iram (+368 bytes)
 
-class TasmotaSerial {
+#include <Stream.h>
+
+class TasmotaSerial : public Stream {
   public:
     TasmotaSerial(int receive_pin, int transmit_pin);
     bool begin();
-    size_t write(const uint8_t *buffer, size_t size = 1);
-    int read();
-    int available();
+    int peek();
+
+    virtual size_t write(uint8_t byte);
+    virtual int read();
+    virtual int available();
+    virtual void flush();
+
+//    size_t write(const uint8_t *buffer, size_t size = 1);
+//    int read();
+//    int available();
 
     void rxRead();
+
+    using Print::write;
 
   private:
     bool isValidGPIOpin(int pin);
