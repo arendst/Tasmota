@@ -410,6 +410,7 @@ void SetHeader()
   WebServer->sendHeader(F("Cache-Control"), F("no-cache, no-store, must-revalidate"));
   WebServer->sendHeader(F("Pragma"), F("no-cache"));
   WebServer->sendHeader(F("Expires"), F("-1"));
+  WebServer->sendHeader(F("Access-Control-Allow-Origin"), F("*"));
 }
 
 void ShowPage(String &page)
@@ -1378,6 +1379,7 @@ void HandleHttpCommand()
   } else {
     message += F(D_NEED_USER_AND_PASSWORD "\"}");
   }
+  SetHeader();
   WebServer->send(200, FPSTR(HDR_CTYPE_JSON), message);
 }
 
