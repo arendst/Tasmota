@@ -1,4 +1,8 @@
-/* 5.10.0i
+/* 5.10.0j
+ * Allow conditional code based on core version
+ * Removed all MQTT, JSON and Command language defines from locale files (#1473)
+ *
+ * 5.10.0i
  * Add device function pointers
  * Moved Command and JSON English language defines to one file (i18n.h)
  * Update it-IT.h language file (#1449)
