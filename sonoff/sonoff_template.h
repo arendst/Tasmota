@@ -221,6 +221,7 @@ enum SupportedModules {
   ARILUX_LC11,
   SONOFF_DUAL_R2,
   ARILUX_LC06,
+  ESP8266_RAW,
   MAXMODULE };
 
 /********************************************************************************************/
@@ -278,7 +279,8 @@ const uint8_t kNiceList[MAXMODULE] PROGMEM = {
   KMC_70011,
   AILIGHT,
   WEMOS,
-  WITTY
+  WITTY,
+  ESP8266_RAW
 };
 
 // Default module settings
@@ -817,7 +819,23 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_PWM1,        // GPIO14 RGB LED Red
      GPIO_USER,        // GPIO15 RGBW LED White
      0, 0
+  },
+  { "Raw ESP8266 module", // Raw esp8266 module
+     0,                // GPIO00
+     GPIO_USER,        // GPIO01 Serial RXD
+     GPIO_USER,        // GPIO02
+     GPIO_USER,        // GPIO03 Serial TXD
+     GPIO_USER,        // GPIO04
+     GPIO_USER,        // GPIO05
+     0, 0, 0, 0, 0, 0, // Flash connection
+     GPIO_USER,        // GPIO12
+     GPIO_USER,        // GPIO13
+     GPIO_USER,        // GPIO14
+     GPIO_USER,        // GPIO15
+     GPIO_LED1,        // GPIO16
+     GPIO_ADC0         // ADC0 A0 Analog input
   }
+
 };
 
 /*
