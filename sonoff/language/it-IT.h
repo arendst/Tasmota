@@ -149,7 +149,7 @@
 #define D_WEB_SERVER "Web Server"
 
 // sonoff.ino
-#define D_WARNING_MINIMAL_VERSION "WARNING This version does not support persistent settings"
+#define D_WARNING_MINIMAL_VERSION "ATTENZIONE Questa versione non supporta il salvataggio delle impostazioni"
 #define D_LEVEL_10 "level 1-0"
 #define D_LEVEL_01 "level 0-1"
 #define D_SERIAL_LOGGING_DISABLED "Log seriale disabilitato"
@@ -387,9 +387,9 @@
 #define D_SHT1X_FOUND "SHT1X trovato"
 
 // xsns_18_pms5003.ino
-#define D_STANDARD_CONCENTRATION "Standard Concentration"
-#define D_ENVIRONMENTAL_CONCENTRATION "Environmental Concentration"
-#define D_PARTICALS_BEYOND "Particals beyond"
+#define D_STANDARD_CONCENTRATION "Concentrazione Standard"
+#define D_ENVIRONMENTAL_CONCENTRATION "Concentrazione Ambientale"
+#define D_PARTICALS_BEYOND "Particelle oltre"
 
 // sonoff_template.h
 // Max string length is 8 characters including suffixes
