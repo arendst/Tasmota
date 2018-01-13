@@ -32,6 +32,7 @@
 //#define MY_LANGUAGE            de-DE           // German in Germany
 //#define MY_LANGUAGE            en-GB           // English in Great Britain. (Enabled by Default)
 //#define MY_LANGUAGE            es-AR           // Spanish in Argentina
+//#define MY_LANGUAGE            fr-FR           // French in France
 //#define MY_LANGUAGE            it-IT           // Italian in Italy
 //#define MY_LANGUAGE            nl-NL           // Dutch in the Netherlands
 //#define MY_LANGUAGE            pl-PL           // Polish in Poland
