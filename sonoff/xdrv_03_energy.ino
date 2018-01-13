@@ -1,5 +1,5 @@
 /*
-  xsns_03_energy.ino - HLW8012 (Sonoff Pow) and PZEM004T energy sensor support for Sonoff-Tasmota
+  xdrv_03_energy.ino - HLW8012 (Sonoff Pow) and PZEM004T energy sensor support for Sonoff-Tasmota
 
   Copyright (C) 2018  Theo Arends
 
@@ -304,6 +304,7 @@ void PzemSend(uint8_t cmd)
   uint8_t *bytes = (uint8_t*)&pzem;
   pzem.crc = PzemCrc(bytes);
 
+  PzemSerial->flush();
   PzemSerial->write(bytes, sizeof(pzem));
 }
 
