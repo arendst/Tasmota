@@ -27,7 +27,7 @@
 
 #define VERSION                0x050B0102   // 5.11.1b
 
-#define MOD_VERSION_STRING      VERSION_STRING   "-modified-1.6.10"    // Would be great to have a macro that fills this from VERSION ...
+#define MOD_VERSION_STRING         "modified-1.7.2"    // Would be great to have a macro that fills this from VERSION ...
 
 // Location specific includes
 #include "sonoff.h"                         // Enumaration used in user_config.h

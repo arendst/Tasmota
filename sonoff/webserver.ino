@@ -281,7 +281,7 @@ const char HTTP_COUNTER[] PROGMEM =
   "<br/><div id='t' name='t' style='text-align:center;'></div>";
 const char HTTP_END[] PROGMEM =
   "<br/>"
-  "<div style='text-align:right;font-size:11px;'><hr/><a href='" D_WEBLINK "' target='_blank' style='color:#aaa;'>" D_PROGRAMNAME " " MOD_VERSION_STRING " {mv " D_BY " " D_AUTHOR "</a> <a href='" D_WEBLINK "' target='_blank' style='color:#aaa;'>" D_MODIFIED " " D_BY " " D_MODIFY_AUTHOR "</a></div>"
+  "<div style='text-align:right;font-size:11px;'><hr/><a href='" D_WEBLINK "' target='_blank' style='color:#aaa;'>" D_PROGRAMNAME " {mv " MOD_VERSION_STRING " " D_BY " " D_AUTHOR "</a> <a href='" D_WEBLINK "' target='_blank' style='color:#aaa;'>" D_MODIFIED " " D_BY " " D_MODIFY_AUTHOR "</a></div>"
   "</div>"
   "</body>"
   "</html>";
