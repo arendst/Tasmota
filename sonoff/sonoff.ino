@@ -25,8 +25,7 @@
     - Select IDE Tools - Flash Size: "1M (no SPIFFS)"
   ====================================================*/
 
-#define VERSION                0x050A000A
-#define VERSION_STRING         "5.10.0j"    // Would be great to have a macro that fills this from VERSION ...
+#define VERSION                0x050B0102   // 5.11.1b
 
 #define MOD_VERSION_STRING      VERSION_STRING   "-modified-1.6.10"    // Would be great to have a macro that fills this from VERSION ...
 
@@ -122,6 +121,7 @@ int mqtt_connection_flag = 2;               // MQTT connection messages flag
 int ota_state_flag = 0;                     // OTA state flag
 int ota_result = 0;                         // OTA result
 byte ota_retry_counter = OTA_ATTEMPTS;      // OTA retry counter
+char *ota_url;                              // OTA url string
 int restart_flag = 0;                       // Sonoff restart flag
 int wifi_state_flag = WIFI_RESTART;         // Wifi state flag
 int uptime = 0;                             // Current uptime in hours
@@ -190,6 +190,7 @@ uint8_t xdrv_present = 0;                   // Number of drivers found
 boolean (*xdrv_func_ptr[XDRV_MAX])(byte);   // Driver Function Pointers
 uint8_t xsns_present = 0;                   // Number of External Sensors found
 boolean (*xsns_func_ptr[XSNS_MAX])(byte);   // External Sensor Function Pointers for simple implementation of sensors
+char my_version[33];                        // Composed version string
 char my_hostname[33];                       // Composed Wifi hostname
 char mqtt_client[33];                        // Composed MQTT Clientname
 char serial_in_buffer[INPUT_BUFFER_SIZE + 2]; // Receive buffer
@@ -396,7 +397,7 @@ void MqttPublishPrefixTopic_P(uint8_t prefix, const char* subtopic, boolean reta
  * prefix 5 = stat using subtopic or RESULT
  * prefix 6 = tele using subtopic or RESULT
  */
-  char romram[16];
+  char romram[33];
   char stopic[TOPSZ];
 
   snprintf_P(romram, sizeof(romram), ((prefix > 3) && !Settings.flag.mqtt_response) ? S_RSLT_RESULT : subtopic);
@@ -416,7 +417,7 @@ void MqttPublishPrefixTopic_P(uint8_t prefix, const char* subtopic)
 void MqttPublishPowerState(byte device)
 {
   char stopic[TOPSZ];
-  char scommand[16];
+  char scommand[33];
 
   if ((device < 1) || (device > devices_present)) {
     device = 1;
@@ -433,7 +434,7 @@ void MqttPublishPowerState(byte device)
 
 void MqttPublishPowerBlinkState(byte device)
 {
-  char scommand[16];
+  char scommand[33];
 
   if ((device < 1) || (device > devices_present)) {
     device = 1;
@@ -469,8 +470,8 @@ void MqttConnected()
   }
 
   if (mqtt_connection_flag) {
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_MODULE "\":\"%s\",\"" D_JSON_VERSION "\":\"" VERSION_STRING "\",\"" D_JSON_FALLBACKTOPIC "\":\"%s\",\"" D_CMND_GROUPTOPIC "\":\"%s\"}"),
-      my_module.name, mqtt_client, Settings.mqtt_grptopic);
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_MODULE "\":\"%s\",\"" D_JSON_VERSION "\":\"%s\",\"" D_JSON_FALLBACKTOPIC "\":\"%s\",\"" D_CMND_GROUPTOPIC "\":\"%s\"}"),
+      my_module.name, my_version, mqtt_client, Settings.mqtt_grptopic);
     MqttPublishPrefixTopic_P(2, PSTR(D_RSLT_INFO "1"));
 #ifdef USE_WEBSERVER
     if (Settings.webserver) {
@@ -921,12 +922,13 @@ void MqttDataCallback(char* topic, byte* data, unsigned int data_len)
     }
     else if ((CMND_POWERONSTATE == command_code) && (Settings.module != MOTOR)) {
       /* 0 = Keep relays off after power on
-       * 1 = Turn relays on after power on
+       * 1 = Turn relays on after power on, if PulseTime set wait for PulseTime seconds, and turn relays off
        * 2 = Toggle relays after power on
        * 3 = Set relays to last saved state after power on
        * 4 = Turn relays on and disable any relay control (used for Sonoff Pow to always measure power)
+       * 5 = Keep relays off after power on, if PulseTime set wait for PulseTime seconds, and turn relays on
        */
-      if ((payload >= 0) && (payload <= 4)) {
+      if ((payload >= 0) && (payload <= 5)) {
         Settings.poweronstate = payload;
         if (4 == Settings.poweronstate) {
           for (byte i = 1; i <= devices_present; i++) {
@@ -972,7 +974,7 @@ void MqttDataCallback(char* topic, byte* data, unsigned int data_len)
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, (Settings.save_data > 1) ? stemp1 : GetStateText(Settings.save_data));
     }
-    else if ((CMND_SETOPTION == command_code) && ((index >= 0) && (index <= 18)) || ((index > 31) && (index <= P_MAX_PARAM8 +31))) {
+    else if ((CMND_SETOPTION == command_code) && ((index >= 0) && (index <= 19)) || ((index > 31) && (index <= P_MAX_PARAM8 +31))) {
       if (index <= 31) {
         ptype = 0;   // SetOption0 .. 31
       } else {
@@ -985,6 +987,7 @@ void MqttDataCallback(char* topic, byte* data, unsigned int data_len)
             switch (index) {
               case 3:   // mqtt
               case 15:  // pwm_control
+              case 19:  // hass_discovery
                 restart_flag = 2;
               case 0:   // save_state
               case 1:   // button_restrict
@@ -1224,9 +1227,9 @@ void MqttDataCallback(char* topic, byte* data, unsigned int data_len)
       //   We also need at least 3 chars to make a valid version number string.
       if (((1 == data_len) && (1 == payload)) || ((data_len >= 3) && NewerVersion(dataBuf))) {
         ota_state_flag = 3;
-        snprintf_P(mqtt_data, sizeof(mqtt_data), "{\"%s\":\"" D_JSON_VERSION " " VERSION_STRING " " D_JSON_FROM " %s\"}", command, Settings.ota_url);
+        snprintf_P(mqtt_data, sizeof(mqtt_data), "{\"%s\":\"" D_JSON_VERSION " %s " D_JSON_FROM " %s\"}", command, my_version, Settings.ota_url);
       } else {
-        snprintf_P(mqtt_data, sizeof(mqtt_data), "{\"%s\":\"" D_JSON_ONE_OR_GT "\"}", command, VERSION_STRING);
+        snprintf_P(mqtt_data, sizeof(mqtt_data), "{\"%s\":\"" D_JSON_ONE_OR_GT "\"}", command, my_version);
       }
     }
     else if (CMND_OTAURL == command_code) {
@@ -1609,7 +1612,8 @@ void ExecuteCommandPower(byte device, byte state)
     DomoticzUpdatePowerState(device);
 #endif  // USE_DOMOTICZ
     if (device <= MAX_PULSETIMERS) {
-      pulse_timer[(device -1)] = (power & mask) ? Settings.pulse_timer[(device -1)] : 0;
+//      pulse_timer[(device -1)] = (power & mask) ? Settings.pulse_timer[(device -1)] : 0;
+      pulse_timer[(device -1)] = (((5 == Settings.poweronstate) ? ~power : power) & mask) ? Settings.pulse_timer[(device -1)] : 0;
     }
   }
   else if (3 == state) { // Blink
@@ -1701,8 +1705,8 @@ void PublishStatus(uint8_t payload)
   }
 
   if ((0 == payload) || (2 == payload)) {
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_STATUS D_STATUS2_FIRMWARE "\":{\"" D_JSON_VERSION "\":\"" VERSION_STRING "\",\"" D_JSON_BUILDDATETIME "\":\"%s\",\"" D_JSON_BOOTVERSION "\":%d,\"" D_JSON_COREVERSION "\":\"" ARDUINO_ESP8266_RELEASE "\",\"" D_JSON_SDKVERSION "\":\"%s\"}}"),
-      GetBuildDateAndTime().c_str(), ESP.getBootVersion(), ESP.getSdkVersion());
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_STATUS D_STATUS2_FIRMWARE "\":{\"" D_JSON_VERSION "\":\"%s\",\"" D_JSON_BUILDDATETIME "\":\"%s\",\"" D_JSON_BOOTVERSION "\":%d,\"" D_JSON_COREVERSION "\":\"" ARDUINO_ESP8266_RELEASE "\",\"" D_JSON_SDKVERSION "\":\"%s\"}}"),
+      my_version, GetBuildDateAndTime().c_str(), ESP.getBootVersion(), ESP.getSdkVersion());
     MqttPublishPrefixTopic_P(option, PSTR(D_CMND_STATUS "2"));
   }
 
@@ -1767,7 +1771,7 @@ void PublishStatus(uint8_t payload)
 
 void MqttShowState()
 {
-  char stemp1[16];
+  char stemp1[33];
 
   snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s{\"" D_JSON_TIME "\":\"%s\",\"" D_JSON_UPTIME "\":%d"), mqtt_data, GetDateAndTime().c_str(), uptime);
 #ifdef USE_ADC_VCC
@@ -2138,7 +2142,8 @@ void StateLoop()
       if ((pulse_timer[i] > 0) && (pulse_timer[i] < 112)) {
         pulse_timer[i]--;
         if (!pulse_timer[i]) {
-          ExecuteCommandPower(i +1, 0);
+//          ExecuteCommandPower(i +1, 0);
+          ExecuteCommandPower(i +1, (5 == Settings.poweronstate) ? 1: 0);
         }
       }
     }
@@ -2226,6 +2231,8 @@ void StateLoop()
     if (ota_state_flag && (backlog_pointer == backlog_index)) {
       ota_state_flag--;
       if (2 == ota_state_flag) {
+        ota_url = Settings.ota_url;
+        RtcSettings.ota_loader = 0;  // Try requested image first
         ota_retry_counter = OTA_ATTEMPTS;
         ESPhttpUpdate.rebootOnUpdate(false);
         SettingsSave(1);  // Free flash for OTA update
@@ -2243,10 +2250,32 @@ void StateLoop()
         ota_result = 0;
         ota_retry_counter--;
         if (ota_retry_counter) {
-//          snprintf_P(log_data, sizeof(log_data), PSTR("OTA: Attempt %d"), OTA_ATTEMPTS - ota_retry_counter);
-//          AddLog(LOG_LEVEL_INFO);
-          ota_result = (HTTP_UPDATE_FAILED != ESPhttpUpdate.update(Settings.ota_url));
+#ifndef BE_MINIMAL
+          if (RtcSettings.ota_loader) {
+            char *pch = strrchr(Settings.ota_url, '-');  // Change from filename-DE.bin into filename-minimal.bin
+            char *ech = strrchr(Settings.ota_url, '.');  // Change from filename.bin into filename-minimal.bin
+            if (!pch) {
+              pch = ech;
+            }
+            if (pch) {
+              strlcpy(mqtt_data, Settings.ota_url, pch - Settings.ota_url +1);
+              snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s-" D_JSON_MINIMAL "%s"), mqtt_data, ech);  // Minimal filename must be filename-minimal
+              ota_url = mqtt_data;  // Try minimal image
+            }
+          }
+#endif  // BE_MINIMAL
+          snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_UPLOAD "%s"), ota_url);
+          AddLog(LOG_LEVEL_DEBUG);
+          ota_result = (HTTP_UPDATE_FAILED != ESPhttpUpdate.update(ota_url));
           if (!ota_result) {
+#ifndef BE_MINIMAL
+            int ota_error = ESPhttpUpdate.getLastError();
+//            snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_UPLOAD "Ota error %d"), ota_error);
+//            AddLog(LOG_LEVEL_DEBUG);
+            if ((HTTP_UE_TOO_LESS_SPACE == ota_error) || (HTTP_UE_BIN_FOR_WRONG_FLASH == ota_error)) {
+              RtcSettings.ota_loader = 1;  // Try minimal image next
+            }
+#endif  // BE_MINIMAL
             ota_state_flag = 2;    // Upgrade failed - retry
           }
         }
@@ -2609,6 +2638,16 @@ void setup()
   Serial.println();
   seriallog_level = LOG_LEVEL_INFO;  // Allow specific serial messages until config loaded
 
+  snprintf_P(my_version, sizeof(my_version), PSTR("%d.%d.%d"), VERSION >> 24 & 0xff, VERSION >> 16 & 0xff, VERSION >> 8 & 0xff);
+  if (VERSION & 0x1f) {
+    idx = strlen(my_version);
+    my_version[idx] = 96 + (VERSION & 0x1f);
+    my_version[idx +1] = 0;
+  }
+#ifdef BE_MINIMAL
+  snprintf_P(my_version, sizeof(my_version), PSTR("%s-" D_JSON_MINIMAL), my_version);
+#endif  // BE_MINIMAL
+
   SettingsLoad();
   SettingsDelta();
 
@@ -2651,6 +2690,7 @@ void setup()
     if ((resetInfo.reason == REASON_DEFAULT_RST) || (resetInfo.reason == REASON_EXT_SYS_RST)) {
       switch (Settings.poweronstate) {
       case 0:  // All off
+      case 5:  // All off but on after PulseTime
         power = 0;
         SetDevicePower(power);
         break;
@@ -2684,16 +2724,21 @@ void setup()
     if ((i < MAX_RELAYS) && (pin[GPIO_REL1 +i] < 99)) {
       bitWrite(power, i, digitalRead(pin[GPIO_REL1 +i]) ^ bitRead(rel_inverted, i));
     }
-    if ((i < MAX_PULSETIMERS) && bitRead(power, i)) {
+//    if ((i < MAX_PULSETIMERS) && bitRead(power, i)) {
+    if ((i < MAX_PULSETIMERS) && (bitRead(power, i) || (5 == Settings.poweronstate))) {
       pulse_timer[i] = Settings.pulse_timer[i];
     }
   }
 
   blink_powersave = power;
 
-  snprintf_P(log_data, sizeof(log_data), PSTR(D_PROJECT " %s %s (" D_CMND_TOPIC " %s, " D_FALLBACK " %s, " D_CMND_GROUPTOPIC " %s) " D_VERSION " " VERSION_STRING),
-    PROJECT, Settings.friendlyname[0], Settings.mqtt_topic, mqtt_client, Settings.mqtt_grptopic);
+  snprintf_P(log_data, sizeof(log_data), PSTR(D_PROJECT " %s %s (" D_CMND_TOPIC " %s, " D_FALLBACK " %s, " D_CMND_GROUPTOPIC " %s) " D_VERSION " %s"),
+    PROJECT, Settings.friendlyname[0], Settings.mqtt_topic, mqtt_client, Settings.mqtt_grptopic, my_version);
   AddLog(LOG_LEVEL_INFO);
+#ifdef BE_MINIMAL
+  snprintf_P(log_data, sizeof(log_data), PSTR(D_WARNING_MINIMAL_VERSION));
+  AddLog(LOG_LEVEL_INFO);
+#endif  // BE_MINIMAL
 
   RtcInit();
   XSnsInit();

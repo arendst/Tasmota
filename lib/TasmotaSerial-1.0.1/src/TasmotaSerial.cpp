@@ -82,35 +82,50 @@ TasmotaSerial::TasmotaSerial(int receive_pin, int transmit_pin)
   if (!((isValidGPIOpin(receive_pin)) && (isValidGPIOpin(transmit_pin) || transmit_pin == 16))) {
     return;
   }
-  m_buffer = (uint8_t*)malloc(TM_SERIAL_BUFFER_SIZE);
-  if (m_buffer == NULL) {
-    return;
-  }
-  m_valid = true;
   m_rx_pin = receive_pin;
   m_tx_pin = transmit_pin;
   m_in_pos = m_out_pos = 0;
-  // Use getCycleCount() loop to get as exact timing as possible
-  m_bit_time = ESP.getCpuFreqMHz() *1000000 /TM_SERIAL_BAUDRATE;
-  pinMode(m_rx_pin, INPUT);
-  ObjList[m_rx_pin] = this;
-  attachInterrupt(m_rx_pin, ISRList[m_rx_pin], FALLING);
-  pinMode(m_tx_pin, OUTPUT);
-  digitalWrite(m_tx_pin, HIGH);
+  if (m_rx_pin > -1) {
+    m_buffer = (uint8_t*)malloc(TM_SERIAL_BUFFER_SIZE);
+    if (m_buffer == NULL) {
+      return;
+    }
+    // Use getCycleCount() loop to get as exact timing as possible
+    m_bit_time = ESP.getCpuFreqMHz() *1000000 /TM_SERIAL_BAUDRATE;
+    pinMode(m_rx_pin, INPUT);
+    ObjList[m_rx_pin] = this;
+    attachInterrupt(m_rx_pin, ISRList[m_rx_pin], FALLING);
+  }
+  if (m_tx_pin > -1) {
+    pinMode(m_tx_pin, OUTPUT);
+    digitalWrite(m_tx_pin, HIGH);
+  }
+  m_valid = true;
 }
 
 bool TasmotaSerial::isValidGPIOpin(int pin)
 {
-  return (pin >= 0 && pin <= 5) || (pin >= 12 && pin <= 15);
+  return (pin >= -1 && pin <= 5) || (pin >= 12 && pin <= 15);
 }
 
 bool TasmotaSerial::begin() {
   return m_valid;
 }
 
+void TasmotaSerial::flush() {
+  m_in_pos = m_out_pos = 0;
+}
+
+int TasmotaSerial::peek() {
+  if ((-1 == m_rx_pin) || (m_in_pos == m_out_pos)) {
+    return -1;
+  }
+  return m_buffer[m_out_pos];
+}
+
 int TasmotaSerial::read()
 {
-  if (m_in_pos == m_out_pos) {
+  if ((-1 == m_rx_pin) || (m_in_pos == m_out_pos)) {
     return -1;
   }
   uint8_t ch = m_buffer[m_out_pos];
@@ -130,8 +145,11 @@ int TasmotaSerial::available()
 //#define TM_SERIAL_WAIT { while (ESP.getCycleCount()-start < wait) optimistic_yield(1); wait += m_bit_time; }  // Watchdog timeouts
 #define TM_SERIAL_WAIT { while (ESP.getCycleCount()-start < wait); wait += m_bit_time; }
 
-size_t TasmotaSerial::txWrite(uint8_t b)
+size_t TasmotaSerial::write(uint8_t b)
 {
+  if (-1 == m_tx_pin) {
+    return 0;
+  }
   unsigned long wait = m_bit_time;
   digitalWrite(m_tx_pin, HIGH);
   unsigned long start = ESP.getCycleCount();
@@ -149,8 +167,12 @@ size_t TasmotaSerial::txWrite(uint8_t b)
   return 1;
 }
 
+/*
 size_t TasmotaSerial::write(const uint8_t *buffer, size_t size)
 {
+  if (-1 == m_tx_pin) {
+    return 0;
+  }
   size_t n = 0;
   // Flush input buffer on every write
   m_in_pos = m_out_pos = 0;
@@ -159,6 +181,7 @@ size_t TasmotaSerial::write(const uint8_t *buffer, size_t size)
   }
   return n;
 }
+*/
 
 #ifdef TM_SERIAL_USE_IRAM
 void ICACHE_RAM_ATTR TasmotaSerial::rxRead()

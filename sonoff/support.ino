@@ -26,7 +26,7 @@ unsigned long syslog_host_refresh = 0;
 
 Ticker tickerOSWatch;
 
-#define OSWATCH_RESET_TIME 30
+#define OSWATCH_RESET_TIME 120
 
 static unsigned long oswatch_last_loop_time;
 byte oswatch_blocked_loop = 0;
@@ -612,6 +612,12 @@ void WifiCheck(uint8_t param)
         WifiCheckIp();
       }
       if ((WL_CONNECTED == WiFi.status()) && (static_cast<uint32_t>(WiFi.localIP()) != 0) && !wifi_config_type) {
+#ifdef BE_MINIMAL
+        if (1 == RtcSettings.ota_loader) {
+          RtcSettings.ota_loader = 0;
+          ota_state_flag = 3;
+        }
+#endif  // BE_MINIMAL
 #ifdef USE_DISCOVERY
         if (!mdns_begun) {
           mdns_begun = MDNS.begin(my_hostname);

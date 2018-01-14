@@ -124,7 +124,6 @@
 #define D_RETAINED "retained"
 #define D_SAVE "Opslaan"
 #define D_SENSOR "Sensor"
-#define D_SERIAL "Serieel"
 #define D_SSID "SSId"
 #define D_START "Start"
 #define D_STD_TIME "WT"
@@ -132,7 +131,6 @@
 #define D_SUBNET_MASK "Subnet Masker"
 #define D_SUBSCRIBE_TO "Abonneer op"
 #define D_SUCCESSFUL "Gelukt"
-#define D_SYS "Sys"                  // Sys log
 #define D_TEMPERATURE "Temperatuur"
 #define D_TO "naar"
 #define D_TOGGLE "Toggle"  // Wissel, Tuimel
@@ -148,10 +146,10 @@
 #define D_VERSION "Versie"
 #define D_VOLTAGE "Spanning"
 #define D_WARMLIGHT "Warm"
-#define D_WEB "Web"                  // Web log
 #define D_WEB_SERVER "Webserver"
 
 // sonoff.ino
+#define D_WARNING_MINIMAL_VERSION "WAARSCHUWING Deze versie bewaart geen instellingen"
 #define D_LEVEL_10 "niveau 1-0"
 #define D_LEVEL_01 "niveau 0-1"
 #define D_SERIAL_LOGGING_DISABLED "Serieel logging uitgeschakeld"
@@ -255,7 +253,9 @@
 #define D_FULL_TOPIC "Volledig Topic"
 
 #define D_LOGGING_PARAMETERS "Logging parameters"
-#define D_LOG_LEVEL "log niveau"
+#define D_SERIAL_LOG_LEVEL "Serieel log niveau"
+#define D_WEB_LOG_LEVEL "Web log niveau"
+#define D_SYS_LOG_LEVEL "Syslog niveau"
 #define D_MORE_DEBUG "Meer debug"
 #define D_SYSLOG_HOST "Syslog host"
 #define D_SYSLOG_PORT "Syslog poort"
@@ -365,7 +365,7 @@
   #define D_DOMOTICZ_AIRQUALITY "AirQuality"
 #define D_DOMOTICZ_UPDATE_TIMER "Bijwerk timer"
 
-// xsns_03_energy.ino
+// xdrv_03_energy.ino
 #define D_ENERGY_TODAY "Verbruik vandaag"
 #define D_ENERGY_YESTERDAY "Verbruik gisteren"
 #define D_ENERGY_TOTAL "Verbruik totaal"
@@ -385,6 +385,11 @@
 // xsns_07_sht1x.ino
 #define D_SENSOR_DID_NOT_ACK_COMMAND "Geen opdracht ACK van sensor"
 #define D_SHT1X_FOUND "SHT1X gevonden"
+
+// xsns_18_pms5003.ino
+#define D_STANDARD_CONCENTRATION "Standard Concentration"
+#define D_ENVIRONMENTAL_CONCENTRATION "Environmental Concentration"
+#define D_PARTICALS_BEYOND "Particals beyond"
 
 // sonoff_template.h
 // Max string length is 8 characters including suffixes
@@ -413,6 +418,7 @@
 #define D_SENSOR_SPI_CS   "SPI CS"
 #define D_SENSOR_SPI_DC   "SPI DC"
 #define D_SENSOR_BACKLIGHT "BkLight"
+#define D_SENSOR_PMS5003  "PMS5003"
 
 // Units
 #define D_UNIT_AMPERE "A"
@@ -420,11 +426,14 @@
 #define D_UNIT_KILOOHM "kOhm"
 #define D_UNIT_KILOWATTHOUR "kWh"
 #define D_UNIT_LUX "lx"
+#define D_UNIT_MICROGRAM_PER_CUBIC_METER "ug/m3"
+#define D_UNIT_MICROMETER "um"
 #define D_UNIT_MICROSECOND "us"
 #define D_UNIT_MILLIAMPERE "mA"
 #define D_UNIT_MILLISECOND "ms"
 #define D_UNIT_MINUTE "Min"
-#define D_UNIT_PPM "ppm"
+#define D_UNIT_PARTS_PER_DECILITER "ppd"
+#define D_UNIT_PARTS_PER_MILLION "ppm"
 #define D_UNIT_PRESSURE "hPa"
 #define D_UNIT_SECOND "sec"
 #define D_UNIT_SECTORS "sectoren"

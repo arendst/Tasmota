@@ -124,7 +124,6 @@
 #define D_RETAINED "Zachowane"
 #define D_SAVE "Zapisz"
 #define D_SENSOR "Czujnik"
-#define D_SERIAL "Serial"
 #define D_SSID "SSID"
 #define D_START "Start"
 #define D_STD_TIME "STD"
@@ -132,7 +131,6 @@
 #define D_SUBNET_MASK "Maska podsieci"
 #define D_SUBSCRIBE_TO "Subskrybuj do"
 #define D_SUCCESSFUL "Powodzenie"
-#define D_SYS "System "                  // Sys log
 #define D_TEMPERATURE "Temperatura"
 #define D_TO "do"
 #define D_TOGGLE "Przelacz"
@@ -148,10 +146,10 @@
 #define D_VERSION "Wersja"
 #define D_VOLTAGE "Napiecie"
 #define D_WARMLIGHT "Nagrzanie"
-#define D_WEB "Web"                  // Web log
 #define D_WEB_SERVER "Web Server"
 
 // sonoff.ino
+#define D_WARNING_MINIMAL_VERSION "WARNING This version does not support persistent settings"
 #define D_LEVEL_10 "poziom 1-0"
 #define D_LEVEL_01 "poziom 0-1"
 #define D_SERIAL_LOGGING_DISABLED "Wylaczony dziennik na porcie szeregowym"
@@ -255,7 +253,9 @@
 #define D_FULL_TOPIC "Pelen temat"
 
 #define D_LOGGING_PARAMETERS "Opcje dziennika"
-#define D_LOG_LEVEL "poziom dziennika"
+#define D_SERIAL_LOG_LEVEL "Serial poziom dziennika"
+#define D_WEB_LOG_LEVEL "Web poziom dziennika"
+#define D_SYS_LOG_LEVEL "System poziom dziennika"
 #define D_MORE_DEBUG "Wiecej informacji debugujacych"
 #define D_SYSLOG_HOST "Syslog host"
 #define D_SYSLOG_PORT "Syslog port"
@@ -365,7 +365,7 @@
   #define D_DOMOTICZ_AIRQUALITY "AirQuality"
 #define D_DOMOTICZ_UPDATE_TIMER "Zaktualizuj czasomierz"
 
-// xsns_03_energy.ino
+// xdrv_03_energy.ino
 #define D_ENERGY_TODAY "Energia Dzisiaj"
 #define D_ENERGY_YESTERDAY "Energia Wczoraj"
 #define D_ENERGY_TOTAL "Energia suma"
@@ -385,6 +385,11 @@
 // xsns_07_sht1x.ino
 #define D_SENSOR_DID_NOT_ACK_COMMAND "Czujnik nie otrzymal komendy ACK"
 #define D_SHT1X_FOUND "SHT1X znaleziony"
+
+// xsns_18_pms5003.ino
+#define D_STANDARD_CONCENTRATION "Standard Concentration"
+#define D_ENVIRONMENTAL_CONCENTRATION "Environmental Concentration"
+#define D_PARTICALS_BEYOND "Particals beyond"
 
 // sonoff_template.h
 // Max string length is 8 characters including suffixes
@@ -413,6 +418,7 @@
 #define D_SENSOR_SPI_CS   "SPI CS"
 #define D_SENSOR_SPI_DC   "SPI DC"
 #define D_SENSOR_BACKLIGHT "BkLight"
+#define D_SENSOR_PMS5003  "PMS5003"
 
 // Units
 #define D_UNIT_AMPERE "A"
@@ -420,11 +426,14 @@
 #define D_UNIT_KILOOHM "kOhm"
 #define D_UNIT_KILOWATTHOUR "kWh"
 #define D_UNIT_LUX "lx"
+#define D_UNIT_MICROGRAM_PER_CUBIC_METER "ug/m3"
+#define D_UNIT_MICROMETER "um"
 #define D_UNIT_MICROSECOND "us"
 #define D_UNIT_MILLIAMPERE "mA"
 #define D_UNIT_MILLISECOND "ms"
 #define D_UNIT_MINUTE "Min"
-#define D_UNIT_PPM "ppm"
+#define D_UNIT_PARTS_PER_DECILITER "ppd"
+#define D_UNIT_PARTS_PER_MILLION "ppm"
 #define D_UNIT_PRESSURE "hPa"
 #define D_UNIT_SECOND "sec"
 #define D_UNIT_SECTORS "sektory"

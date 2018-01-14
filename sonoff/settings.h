@@ -44,7 +44,7 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t ws_clock_reverse : 1;         // bit 16 (v5.8.1)
     uint32_t decimal_text : 1;             // bit 17 (v5.8.1)
     uint32_t light_signal : 1;             // bit 18 (v5.10.0c)
-    uint32_t spare19 : 1;
+    uint32_t hass_discovery : 1;           // bit 19 (v5.11.1a)
     uint32_t voltage_resolution : 1;       // Replaced by below
     uint32_t spare21 : 1;
     uint32_t spare22 : 1;
@@ -262,7 +262,7 @@ struct SYSCFG {
 struct RTCMEM {
   uint16_t      valid;                     // 000
   byte          oswatch_blocked_loop;      // 002
-  uint8_t       unused;                    // 003
+  uint8_t       ota_loader;                // 003
   unsigned long energy_kWhtoday;              // 004
   unsigned long energy_kWhtotal;              // 008
   unsigned long pulse_counter[MAX_COUNTERS];  // 00C
