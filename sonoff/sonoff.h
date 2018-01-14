@@ -77,9 +77,10 @@ typedef unsigned long power_t;              // Power (Relay) type
 #define SAFE_POWER_WINDOW      30           // Time in MINUTES to disable allow max unit safe power (Pow)
 #define MAX_POWER_RETRY        5            // Retry count allowing agreed power limit overflow (Pow)
 //MyCode
-#define PWR_NOTIFY_STBY_WATTS  10           // Send a MSG when power rises above this value
-#define PWR_NOTIFY_ON_WATTS    50           // Send a MSG when power rises above this value
-
+#define STBY_POWER_WINDOW_LOW  5           // Below = OFF, Above & < HIGH = STANDBY
+#define STBY_POWER_WINDOW_HIGH 30           // Above = ON
+#define POWER_WINDOW_STABLE_COUNT 2         // Must stay in window for this no of state loops to be valid
+#define POWER_WINDOW_HYSTERESIS 2
 #define STATES                 20           // State loops per second
 #define SYSLOG_TIMER           600          // Seconds to restore syslog_level
 #define SERIALLOG_TIMER        600          // Seconds to disable SerialLog

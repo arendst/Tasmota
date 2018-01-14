@@ -284,6 +284,13 @@
 #define D_CMND_MAXENERGYSTART "MaxEnergyStart"
   #define D_JSON_ENERGYMONITOR "EnergyMonitor"
   #define D_JSON_MAXENERGYREACHED "MaxEnergyReached"
+// MyCode
+#define D_JSON_POWERWINDOW "PowerWindow"
+#define D_JSON_POWERON "on"
+#define D_JSON_POWERSTANDBY "standby"
+#define D_JSON_POWEROFF "off"
+#define D_CMND_POWERWINDOWLOW "PowerWindowLow"
+#define D_CMND_POWERWINDOWHIGH "PowerWindowHigh"
 
 // Commands xdrv_04_snfbridge.ino
 #define D_CMND_RFCODE "RfCode"

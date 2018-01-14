@@ -496,8 +496,9 @@ void SettingsDefaultSet2()
   Settings.energy_max_power_safe_limit_hold = SAFE_POWER_HOLD;
   Settings.energy_max_power_safe_limit_window = SAFE_POWER_WINDOW;
 //  Settings.energy_max_energy = 0;                             // MaxEnergy
-//  Settings.energy_max_energy_start = 0;                            // MaxEnergyStart
-
+//  Settings.energy_max_energy_start = 0;
+Settings.energy_standby_power_window_low = STBY_POWER_WINDOW_LOW;
+Settings.energy_standby_power_window_high = STBY_POWER_WINDOW_HIGH;
   SettingsDefaultSet_3_2_4();
 
   strlcpy(Settings.friendlyname[0], FRIENDLY_NAME, sizeof(Settings.friendlyname[0]));
@@ -856,5 +857,3 @@ void SettingsDelta()
     SettingsSave(1);
   }
 }
-
-
