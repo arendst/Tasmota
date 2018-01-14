@@ -188,7 +188,7 @@ void AriluxRfHandler()
     AddLog(LOG_LEVEL_DEBUG);
 
     if (hostcode == stored_hostcode) {
-      char command[16];
+      char command[33];
       char value = '-';
       command[0] = '\0';
       uint8_t  keycode = arilux_rf_received_value & 0xFF;
@@ -533,7 +533,7 @@ void LightPowerOn()
 void LightPreparePower()
 {
   char scolor[25];
-  char scommand[16];
+  char scommand[33];
 
   if (Settings.light_dimmer && !(light_power)) {
     ExecuteCommandPower(devices_present, 7);  // No publishPowerState
@@ -1096,7 +1096,7 @@ boolean LightCommand()
     light_wakeup_active = 3;
     Settings.light_scheme = LS_WAKEUP;
     LightPowerOn();
-    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, D_STARTED);
+    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, D_JSON_STARTED);
   }
   else if ((CMND_COLORTEMPERATURE == command_code) && ((LST_COLDWARM == light_subtype) || (LST_RGBWC == light_subtype))) { // ColorTemp
     if (option != '\0') {

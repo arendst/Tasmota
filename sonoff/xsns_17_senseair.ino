@@ -74,6 +74,7 @@ void ModbusSend(uint8_t function_code, uint16_t start_address, uint16_t register
   frame[7] = (uint8_t)((crc >> 8) & 0xFF);
   frame[6] = (uint8_t)(crc & 0xFF);
 
+  SensairSerial->flush();
   SensairSerial->write(frame, sizeof(frame));
 }
 

@@ -1,5 +1,5 @@
 /*
-  xsns_03_energy.ino - HLW8012 (Sonoff Pow) and PZEM004T energy sensor support for Sonoff-Tasmota
+  xdrv_03_energy.ino - HLW8012 (Sonoff Pow) and PZEM004T energy sensor support for Sonoff-Tasmota
 
   Copyright (C) 2018  Theo Arends
 
@@ -304,6 +304,7 @@ void PzemSend(uint8_t cmd)
   uint8_t *bytes = (uint8_t*)&pzem;
   pzem.crc = PzemCrc(bytes);
 
+  PzemSerial->flush();
   PzemSerial->write(bytes, sizeof(pzem));
 }
 
@@ -569,7 +570,7 @@ void EnergyMarginCheck()
       } else {
         energy_mplh_counter--;
         if (!energy_mplh_counter) {
-          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_MAXPOWERREACHED "\":\"%d%s\"}"), energy_power_u, (Settings.flag.value_units) ? " " D_UNIT_WATT : "");
+          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_MAXPOWERREACHED "\":\"%d%s\"}"), energy_power_u, (Settings.flag.value_units) ? " " D_UNIT_WATT : "");
           MqttPublishPrefixTopic_P(1, S_RSLT_WARNING);
           EnergyMqttShow();
           ExecuteCommandPower(1, 0);
@@ -592,11 +593,11 @@ void EnergyMarginCheck()
         if (energy_mplr_counter) {
           energy_mplr_counter--;
           if (energy_mplr_counter) {
-            snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_POWERMONITOR "\":\"%s\"}"), GetStateText(1));
-            MqttPublishPrefixTopic_P(5, PSTR(D_POWERMONITOR));
+            snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_POWERMONITOR "\":\"%s\"}"), GetStateText(1));
+            MqttPublishPrefixTopic_P(5, PSTR(D_JSON_POWERMONITOR));
             ExecuteCommandPower(1, 1);
           } else {
-            snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_MAXPOWERREACHEDRETRY "\":\"%s\"}"), GetStateText(0));
+            snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_MAXPOWERREACHEDRETRY "\":\"%s\"}"), GetStateText(0));
             MqttPublishPrefixTopic_P(1, S_RSLT_WARNING);
             EnergyMqttShow();
           }
@@ -610,14 +611,14 @@ void EnergyMarginCheck()
     energy_daily_u = (uint16_t)(energy_daily * 1000);
     if (!energy_max_energy_state && (RtcTime.hour == Settings.energy_max_energy_start)) {
       energy_max_energy_state = 1;
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_ENERGYMONITOR "\":\"%s\"}"), GetStateText(1));
-      MqttPublishPrefixTopic_P(5, PSTR(D_ENERGYMONITOR));
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_ENERGYMONITOR "\":\"%s\"}"), GetStateText(1));
+      MqttPublishPrefixTopic_P(5, PSTR(D_JSON_ENERGYMONITOR));
       ExecuteCommandPower(1, 1);
     }
     else if ((1 == energy_max_energy_state) && (energy_daily_u >= Settings.energy_max_energy)) {
       energy_max_energy_state = 2;
       dtostrfd(energy_daily, 3, mqtt_data);
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_MAXENERGYREACHED "\":\"%s%s\"}"), mqtt_data, (Settings.flag.value_units) ? " " D_UNIT_KILOWATTHOUR : "");
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_MAXENERGYREACHED "\":\"%s%s\"}"), mqtt_data, (Settings.flag.value_units) ? " " D_UNIT_KILOWATTHOUR : "");
       MqttPublishPrefixTopic_P(1, S_RSLT_WARNING);
       EnergyMqttShow();
       ExecuteCommandPower(1, 0);
@@ -629,7 +630,7 @@ void EnergyMarginCheck()
 void EnergyMqttShow()
 {
 // {"Time":"2017-12-16T11:48:55","ENERGY":{"Total":0.212,"Yesterday":0.000,"Today":0.014,"Period":2.0,"Power":22.0,"Factor":1.00,"Voltage":213.6,"Current":0.100}}
-  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_TIME "\":\"%s\""), GetDateAndTime().c_str());
+  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_TIME "\":\"%s\""), GetDateAndTime().c_str());
   EnergyShow(1);
   MqttPublishPrefixTopic_P(2, PSTR(D_RSLT_ENERGY), Settings.flag.mqtt_sensor_retain);
 }
