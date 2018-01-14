@@ -25,7 +25,7 @@
     - Select IDE Tools - Flash Size: "1M (no SPIFFS)"
   ====================================================*/
 
-#define VERSION                0x050B0101   // 5.11.1a
+#define VERSION                0x050B0102   // 5.11.1b
 
 // Location specific includes
 #include "sonoff.h"                         // Enumaration used in user_config.h
@@ -395,7 +395,7 @@ void MqttPublishPrefixTopic_P(uint8_t prefix, const char* subtopic, boolean reta
  * prefix 5 = stat using subtopic or RESULT
  * prefix 6 = tele using subtopic or RESULT
  */
-  char romram[16];
+  char romram[33];
   char stopic[TOPSZ];
 
   snprintf_P(romram, sizeof(romram), ((prefix > 3) && !Settings.flag.mqtt_response) ? S_RSLT_RESULT : subtopic);
@@ -415,7 +415,7 @@ void MqttPublishPrefixTopic_P(uint8_t prefix, const char* subtopic)
 void MqttPublishPowerState(byte device)
 {
   char stopic[TOPSZ];
-  char scommand[16];
+  char scommand[33];
 
   if ((device < 1) || (device > devices_present)) {
     device = 1;
@@ -432,7 +432,7 @@ void MqttPublishPowerState(byte device)
 
 void MqttPublishPowerBlinkState(byte device)
 {
-  char scommand[16];
+  char scommand[33];
 
   if ((device < 1) || (device > devices_present)) {
     device = 1;
@@ -920,12 +920,13 @@ void MqttDataCallback(char* topic, byte* data, unsigned int data_len)
     }
     else if ((CMND_POWERONSTATE == command_code) && (Settings.module != MOTOR)) {
       /* 0 = Keep relays off after power on
-       * 1 = Turn relays on after power on
+       * 1 = Turn relays on after power on, if PulseTime set wait for PulseTime seconds, and turn relays off
        * 2 = Toggle relays after power on
        * 3 = Set relays to last saved state after power on
        * 4 = Turn relays on and disable any relay control (used for Sonoff Pow to always measure power)
+       * 5 = Keep relays off after power on, if PulseTime set wait for PulseTime seconds, and turn relays on
        */
-      if ((payload >= 0) && (payload <= 4)) {
+      if ((payload >= 0) && (payload <= 5)) {
         Settings.poweronstate = payload;
         if (4 == Settings.poweronstate) {
           for (byte i = 1; i <= devices_present; i++) {
@@ -971,7 +972,7 @@ void MqttDataCallback(char* topic, byte* data, unsigned int data_len)
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, (Settings.save_data > 1) ? stemp1 : GetStateText(Settings.save_data));
     }
-    else if ((CMND_SETOPTION == command_code) && ((index >= 0) && (index <= 18)) || ((index > 31) && (index <= P_MAX_PARAM8 +31))) {
+    else if ((CMND_SETOPTION == command_code) && ((index >= 0) && (index <= 19)) || ((index > 31) && (index <= P_MAX_PARAM8 +31))) {
       if (index <= 31) {
         ptype = 0;   // SetOption0 .. 31
       } else {
@@ -984,6 +985,7 @@ void MqttDataCallback(char* topic, byte* data, unsigned int data_len)
             switch (index) {
               case 3:   // mqtt
               case 15:  // pwm_control
+              case 19:  // hass_discovery
                 restart_flag = 2;
               case 0:   // save_state
               case 1:   // button_restrict
@@ -1608,7 +1610,8 @@ void ExecuteCommandPower(byte device, byte state)
     DomoticzUpdatePowerState(device);
 #endif  // USE_DOMOTICZ
     if (device <= MAX_PULSETIMERS) {
-      pulse_timer[(device -1)] = (power & mask) ? Settings.pulse_timer[(device -1)] : 0;
+//      pulse_timer[(device -1)] = (power & mask) ? Settings.pulse_timer[(device -1)] : 0;
+      pulse_timer[(device -1)] = (((5 == Settings.poweronstate) ? ~power : power) & mask) ? Settings.pulse_timer[(device -1)] : 0;
     }
   }
   else if (3 == state) { // Blink
@@ -1766,7 +1769,7 @@ void PublishStatus(uint8_t payload)
 
 void MqttShowState()
 {
-  char stemp1[16];
+  char stemp1[33];
 
   snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s{\"" D_JSON_TIME "\":\"%s\",\"" D_JSON_UPTIME "\":%d"), mqtt_data, GetDateAndTime().c_str(), uptime);
 #ifdef USE_ADC_VCC
@@ -2137,7 +2140,8 @@ void StateLoop()
       if ((pulse_timer[i] > 0) && (pulse_timer[i] < 112)) {
         pulse_timer[i]--;
         if (!pulse_timer[i]) {
-          ExecuteCommandPower(i +1, 0);
+//          ExecuteCommandPower(i +1, 0);
+          ExecuteCommandPower(i +1, (5 == Settings.poweronstate) ? 1: 0);
         }
       }
     }
@@ -2684,6 +2688,7 @@ void setup()
     if ((resetInfo.reason == REASON_DEFAULT_RST) || (resetInfo.reason == REASON_EXT_SYS_RST)) {
       switch (Settings.poweronstate) {
       case 0:  // All off
+      case 5:  // All off but on after PulseTime
         power = 0;
         SetDevicePower(power);
         break;
@@ -2717,7 +2722,8 @@ void setup()
     if ((i < MAX_RELAYS) && (pin[GPIO_REL1 +i] < 99)) {
       bitWrite(power, i, digitalRead(pin[GPIO_REL1 +i]) ^ bitRead(rel_inverted, i));
     }
-    if ((i < MAX_PULSETIMERS) && bitRead(power, i)) {
+//    if ((i < MAX_PULSETIMERS) && bitRead(power, i)) {
+    if ((i < MAX_PULSETIMERS) && (bitRead(power, i) || (5 == Settings.poweronstate))) {
       pulse_timer[i] = Settings.pulse_timer[i];
     }
   }
