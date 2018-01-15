@@ -316,7 +316,7 @@ uint8_t DomoticzHumidityState(char *hum)
 void DomoticzSensor(byte idx, char *data)
 {
   if (Settings.domoticz_sensor_idx[idx]) {
-    char dmess[64]; //64 + 24 extra data
+    char dmess[88]; //64 + 24 extra data
 
     memcpy(dmess, mqtt_data, sizeof(dmess));
     if (DZ_AIRQUALITY == idx) {
