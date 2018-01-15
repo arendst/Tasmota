@@ -1,6 +1,9 @@
 /* 
- * 5.11.1b-DomoticzQuality
- * Add support for Battery and RSSI quality in Domoticz
+ * 5.11.1b2
+ * Add Domoticz "RSSI" and "Battery" to sensor
+ *
+ * 5.11.1b1
+ * Add support for Battery and RSSI quality in Domoticz switch command
  *
  * 5.11.1b
  * Add command PowerOnState option 5 which inverts PulseTime and allows for delayed always on after power on
