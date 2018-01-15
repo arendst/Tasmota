@@ -422,7 +422,10 @@ void MqttPublishPowerState(byte device)
   }
   GetPowerDevice(scommand, device, sizeof(scommand));
   GetTopic_P(stopic, 1, Settings.mqtt_topic, (Settings.flag.mqtt_response) ? scommand : S_RSLT_RESULT);
-  snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, scommand, GetStateText(bitRead(power, device -1)));
+  // Try and get a device specific result, if not use a generic one
+  if(!XdrvGetResult(device)) {
+    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, scommand, GetStateText(bitRead(power, device -1)));
+  }
   MqttPublish(stopic);
 
   GetTopic_P(stopic, 1, Settings.mqtt_topic, scommand);

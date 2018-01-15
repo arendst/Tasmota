@@ -530,11 +530,23 @@ void LightPowerOn()
   }
 }
 
-void LightPreparePower()
+boolean LightGetResult(byte device)
 {
   char scolor[25];
   char scommand[33];
 
+  GetPowerDevice(scommand, device, sizeof(scommand));
+  if (light_subtype > LST_SINGLE) {
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"%s\":\"%s\",\"" D_CMND_DIMMER "\":%d,\"" D_CMND_COLOR "\":\"%s\",\"" D_CMND_COLORTEMPERATURE "\":%d}"),
+      scommand, GetStateText(light_power), Settings.light_dimmer, LightGetColor(0, scolor), LightGetColorTemp());
+  } else {
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"%s\":\"%s\",\"" D_CMND_DIMMER "\":%d}"),
+      scommand, GetStateText(light_power), Settings.light_dimmer);
+  }
+}
+
+void LightPreparePower()
+{
   if (Settings.light_dimmer && !(light_power)) {
     ExecuteCommandPower(devices_present, 7);  // No publishPowerState
   }
@@ -545,14 +557,7 @@ void LightPreparePower()
   DomoticzUpdatePowerState(devices_present);
 #endif  // USE_DOMOTICZ
 
-  GetPowerDevice(scommand, devices_present, sizeof(scommand));
-  if (light_subtype > LST_SINGLE) {
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"%s\":\"%s\",\"" D_CMND_DIMMER "\":%d,\"" D_CMND_COLOR "\":\"%s\"}"),
-      scommand, GetStateText(light_power), Settings.light_dimmer, LightGetColor(0, scolor));
-  } else {
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"%s\":\"%s\",\"" D_CMND_DIMMER "\":%d}"),
-      scommand, GetStateText(light_power), Settings.light_dimmer);
-  }
+  LightGetResult(devices_present);
 }
 
 void LightFade()
@@ -1221,6 +1226,9 @@ boolean Xdrv01(byte function)
         break;
       case FUNC_SET_POWER:
         LightSetPower();
+        break;
+      case FUNC_GET_RESULT:
+        result = LightGetResult((byte)(XdrvMailbox.index & 0xFF));
         break;
     }
   }
