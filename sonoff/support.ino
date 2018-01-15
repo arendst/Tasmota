@@ -1,7 +1,7 @@
 /*
   support.ino - support for Sonoff-Tasmota
 
-  Copyright (C) 2017  Theo Arends
+  Copyright (C) 2018  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -26,7 +26,7 @@ unsigned long syslog_host_refresh = 0;
 
 Ticker tickerOSWatch;
 
-#define OSWATCH_RESET_TIME 30
+#define OSWATCH_RESET_TIME 120
 
 static unsigned long oswatch_last_loop_time;
 byte oswatch_blocked_loop = 0;
@@ -71,7 +71,7 @@ String GetResetReason()
 {
   char buff[32];
   if (oswatch_blocked_loop) {
-    strncpy_P(buff, PSTR(D_BLOCKED_LOOP), sizeof(buff));
+    strncpy_P(buff, PSTR(D_JSON_BLOCKED_LOOP), sizeof(buff));
     return String(buff);
   } else {
     return ESP.getResetReason();
@@ -461,10 +461,12 @@ void WifiBegin(uint8_t flag)
 #ifdef USE_EMULATION
   UdpDisconnect();
 #endif  // USE_EMULATION
-  if (!strncmp_P(ESP.getSdkVersion(),PSTR("1.5.3"),5)) {
-    AddLog_P(LOG_LEVEL_DEBUG, S_LOG_WIFI, PSTR(D_PATCH_ISSUE_2186));
-    WiFi.mode(WIFI_OFF);    // See https://github.com/esp8266/Arduino/issues/2186
-  }
+
+#ifdef ARDUINO_ESP8266_RELEASE_2_3_0  // (!strncmp_P(ESP.getSdkVersion(),PSTR("1.5.3"),5))
+  AddLog_P(LOG_LEVEL_DEBUG, S_LOG_WIFI, PSTR(D_PATCH_ISSUE_2186));
+  WiFi.mode(WIFI_OFF);    // See https://github.com/esp8266/Arduino/issues/2186
+#endif
+
   WiFi.disconnect();
   WiFi.mode(WIFI_STA);      // Disable AP mode
   if (Settings.sleep) {
@@ -616,6 +618,12 @@ void WifiCheck(uint8_t param)
         WifiCheckIp();
       }
       if ((WL_CONNECTED == WiFi.status()) && (static_cast<uint32_t>(WiFi.localIP()) != 0) && !wifi_config_type) {
+#ifdef BE_MINIMAL
+        if (1 == RtcSettings.ota_loader) {
+          RtcSettings.ota_loader = 0;
+          ota_state_flag = 3;
+        }
+#endif  // BE_MINIMAL
 #ifdef USE_DISCOVERY
         if (!mdns_begun) {
           mdns_begun = MDNS.begin(my_hostname);
@@ -846,7 +854,7 @@ void I2cScan(char *devs, unsigned int devs_len)
   byte any = 0;
   char tstr[10];
 
-  snprintf_P(devs, devs_len, PSTR("{\"" D_CMND_I2CSCAN "\":\"" D_I2CSCAN_DEVICES_FOUND_AT));
+  snprintf_P(devs, devs_len, PSTR("{\"" D_CMND_I2CSCAN "\":\"" D_JSON_I2CSCAN_DEVICES_FOUND_AT));
   for (address = 1; address <= 127; address++) {
     Wire.beginTransmission(address);
     error = Wire.endTransmission();
@@ -856,13 +864,13 @@ void I2cScan(char *devs, unsigned int devs_len)
       any = 1;
     }
     else if (4 == error) {
-      snprintf_P(devs, devs_len, PSTR("{\"" D_CMND_I2CSCAN "\":\"" D_I2CSCAN_UNKNOWN_ERROR_AT " 0x%2x\"}"), address);
+      snprintf_P(devs, devs_len, PSTR("{\"" D_CMND_I2CSCAN "\":\"" D_JSON_I2CSCAN_UNKNOWN_ERROR_AT " 0x%2x\"}"), address);
     }
   }
   if (any) {
     strncat(devs, "\"}", devs_len);
   } else {
-    snprintf_P(devs, devs_len, PSTR("{\"" D_CMND_I2CSCAN "\":\"" D_I2CSCAN_NO_DEVICES_FOUND "\"}"));
+    snprintf_P(devs, devs_len, PSTR("{\"" D_CMND_I2CSCAN "\":\"" D_JSON_I2CSCAN_NO_DEVICES_FOUND "\"}"));
   }
 }
 
@@ -897,6 +905,7 @@ extern "C" {
 Ticker TickerRtc;
 
 static const uint8_t kDaysInMonth[] = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 }; // API starts months from 1, this array starts from 0
+static const char kMonthNamesEnglish[] = "JanFebMarAprMayJunJulAugSepOctNovDec";
 
 uint32_t utc_time = 0;
 uint32_t local_time = 0;
@@ -932,7 +941,7 @@ String GetBuildDateAndTime()
       year = atoi(str);
     }
   }
-  month = (strstr(kMonthNames, smonth) -kMonthNames) /3 +1;
+  month = (strstr(kMonthNamesEnglish, smonth) -kMonthNamesEnglish) /3 +1;
   snprintf_P(bdt, sizeof(bdt), PSTR("%d" D_YEAR_MONTH_SEPARATOR "%02d" D_MONTH_DAY_SEPARATOR "%02d" D_DATE_TIME_SEPARATOR "%s"), year, month, day, __TIME__);
   return String(bdt);
 }
@@ -1329,7 +1338,7 @@ void AdcShow(boolean json)
   analog >>= 5;
 
   if (json) {
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"" D_ANALOG_INPUT "0\":%d"), mqtt_data, analog);
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"" D_JSON_ANALOG_INPUT "0\":%d"), mqtt_data, analog);
 #ifdef USE_WEBSERVER
   } else {
     snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_ANALOG, mqtt_data, "", 0, analog);
@@ -1349,15 +1358,11 @@ boolean Xsns02(byte function)
 
   if (pin[GPIO_ADC0] < 99) {
     switch (function) {
-//      case FUNC_XSNS_INIT:
-//        break;
-//      case FUNC_XSNS_PREP_BEFORE_TELEPERIOD:
-//        break;
-      case FUNC_XSNS_JSON_APPEND:
+      case FUNC_JSON_APPEND:
         AdcShow(1);
         break;
 #ifdef USE_WEBSERVER
-      case FUNC_XSNS_WEB_APPEND:
+      case FUNC_WEB_APPEND:
         AdcShow(0);
         break;
 #endif  // USE_WEBSERVER

@@ -1,7 +1,7 @@
 /*
   sonoff_template.h - template settings for Sonoff-Tasmota
 
-  Copyright (C) 2017  Theo Arends
+  Copyright (C) 2018  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -83,7 +83,13 @@ enum UserSelectablePins {
   GPIO_PZEM_TX1,        // PZEM004T Serial interface
   GPIO_PZEM_TX2,        // PZEM004T Serial interface
   GPIO_PZEM_TX3,        // PZEM004T Serial interface
-  GPIO_PZEM_RX,        // PZEM004T Serial interface
+  GPIO_PZEM_RX,        // PZEM004T Serial interfac
+  GPIO_SAIR_TX,        // SenseAir Serial interface
+  GPIO_SAIR_RX,        // SenseAir Serial interface
+  GPIO_SPI_CS,         // SPI Chip Select
+  GPIO_SPI_DC,         // SPI Data Direction
+  GPIO_BACKLIGHT,      // Display backlight control
+  GPIO_PMS5003,        // Plantower PMS5003 Serial interface
 
   //STB mod
   GPIO_SEN_TRIG,
@@ -159,6 +165,12 @@ const char kSensors[GPIO_SENSOR_END][9] PROGMEM = {
   D_SENSOR_PZEM_TX "2",
   D_SENSOR_PZEM_TX "3",
   D_SENSOR_PZEM_RX,
+  D_SENSOR_SAIR_TX,
+  D_SENSOR_SAIR_RX,
+  D_SENSOR_SPI_CS,
+  D_SENSOR_SPI_DC,
+  D_SENSOR_BACKLIGHT,
+  D_SENSOR_PMS5003,
   //STB mod
   "SNS_TRIG",
   "SNS_ECHO",
@@ -173,6 +185,9 @@ const char kSensors[GPIO_SENSOR_END][9] PROGMEM = {
 enum ProgramSelectablePins {
   GPIO_RXD = GPIO_SENSOR_END,  // Serial interface
   GPIO_TXD,            // Serial interface
+  GPIO_SPI_MISO,       // SPI MISO library fixed pin GPIO12
+  GPIO_SPI_MOSI,       // SPI MOSI library fixed pin GPIO13
+  GPIO_SPI_CLK,        // SPI Clk library fixed pin GPIO14
   GPIO_HLW_SEL,        // HLW8012 Sel output (Sonoff Pow)
   GPIO_HLW_CF1,        // HLW8012 CF1 voltage / current (Sonoff Pow)
   GPIO_HLW_CF,         // HLW8012 CF power (Sonoff Pow)
@@ -226,6 +241,7 @@ enum SupportedModules {
   ARILUX_LC01,
   ARILUX_LC11,
   SONOFF_DUAL_R2,
+  ARILUX_LC06,
   MAXMODULE };
 
 /********************************************************************************************/
@@ -277,6 +293,7 @@ const uint8_t kNiceList[MAXMODULE] PROGMEM = {
   H801,
   MAGICHOME,
   ARILUX_LC01,
+  ARILUX_LC06,
   ARILUX_LC11,
   HUAFAN_SS,
   KMC_70011,
@@ -764,7 +781,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_REL1,        // GPIO14 Relay
      0, 0, 0
   },
-  { "Arilux",          // Arilux AL-LC01 (ESP8285) - https://www.banggood.com/nl/ARILUX-AL-LC01-Super-Mini-LED-WIFI-Smart-RGB-Controller-For-RGB-LED-Strip-Light-DC-9-12V-p-1058603.html
+  { "Arilux LC01",     // Arilux AL-LC01 (ESP8285) - https://www.banggood.com/nl/ARILUX-AL-LC01-Super-Mini-LED-WIFI-Smart-RGB-Controller-For-RGB-LED-Strip-Light-DC-9-12V-p-1058603.html
                        //  (PwmFrequency 1111Hz)
      GPIO_KEY1,        // GPIO00 Optional Button
      0,
@@ -807,7 +824,64 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_REL1,        // GPIO12 Relay 1 (0 = Off, 1 = On)
      GPIO_LED1_INV,    // GPIO13 Blue Led (0 = On, 1 = Off)
      0, 0, 0, 0
+  },
+  { "Arilux LC06",     // Arilux AL-LC06 (ESP8285) - https://www.banggood.com/ARILUX-AL-LC06-LED-WIFI-Smartphone-Controller-Romote-5-Channels-DC12-24V-For-RGBWW-Strip-light-p-1061476.html
+     GPIO_KEY1,        // GPIO00 Optional Button
+     0,
+     GPIO_USER,        // GPIO02 Empty pad
+     0,
+     GPIO_USER,        // GPIO04 W2 - PWM5
+     0,
+     0, 0, 0, 0, 0, 0, // Flash connection
+     GPIO_PWM2,        // GPIO12 RGB LED Green
+     GPIO_PWM3,        // GPIO13 RGB LED Blue
+     GPIO_PWM1,        // GPIO14 RGB LED Red
+     GPIO_USER,        // GPIO15 RGBW LED White
+     0, 0
   }
 };
+
+/*
+  Optionals
+
+  { "Xenon 3CH",       // Xenon 3CH (ESP8266) - (#1128)
+     0, 0, 0,
+     GPIO_KEY2,        // GPIO03 Serial TXD and Optional sensor
+     GPIO_REL2,        // GPIO04 Relay 2
+     GPIO_KEY3,        // GPIO05 Input 2
+     0, 0, 0, 0, 0, 0, // Flash connection
+     GPIO_KEY1,        // GPIO12 Key input
+     GPIO_REL1,        // GPIO13 Relay 1
+     0,
+     GPIO_REL3,        // GPIO15 Relay 3
+     0, 0
+  }
+
+  { "PowStro Basic",   // PowStro (ESP8266) - (#1419)
+     0, 0, 0, 0,
+     GPIO_REL1,        // GPIO04 Relay (0 = Off, 1 = On)
+     0,
+     0, 0, 0, 0, 0, 0, // Flash connection
+     GPIO_KEY1,        // GPIO12 Button
+     0, 0,
+     GPIO_LED1,        // GPIO15 Led (1 = On, 0 = Off)
+     0, 0
+  }
+
+  { "Zengge WF017",    // Zenggee ZJ-WF017-A (ESP12S)) - https://www.ebay.com/p/Smartphone-Android-IOS-WiFi-Music-Controller-for-RGB-5050-3528-LED-Strip-Light/534446632?_trksid=p2047675.l2644
+     GPIO_KEY1,        // GPIO00 Optional Button
+     0,
+     GPIO_USER,        // GPIO02 Empty pad
+     0,
+     GPIO_USER,        // GPIO04 W2 - PWM5
+     0,
+     0, 0, 0, 0, 0, 0, // Flash connection
+     GPIO_PWM2,        // GPIO12 RGB LED Green
+     GPIO_PWM1,        // GPIO13 RGB LED Red
+     GPIO_PWM3,        // GPIO14 RGB LED Blue
+     0, 0, 0
+  }
+
+*/
 
 #endif  // _SONOFF_TEMPLATE_H_

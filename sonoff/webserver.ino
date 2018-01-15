@@ -1,7 +1,7 @@
 /*
   webserver.ino - webserver for Sonoff-Tasmota
 
-  Copyright (C) 2017  Theo Arends
+  Copyright (C) 2018  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -230,7 +230,7 @@ const char HTTP_FORM_LOG1[] PROGMEM =
   "<fieldset><legend><b>&nbsp;" D_LOGGING_PARAMETERS "&nbsp;</b></legend><form method='get' action='sv'>"
   "<input id='w' name='w' value='3' hidden><input id='r' name='r' value='0' hidden>";
 const char HTTP_FORM_LOG2[] PROGMEM =
-  "<br/><b>{b0" D_LOG_LEVEL "</b> ({b1)<br/><select id='{b2' name='{b2'>"
+  "<br/><b>{b0</b> ({b1)<br/><select id='{b2' name='{b2'>"
   "<option{a0value='0'>0 " D_NONE "</option>"
   "<option{a1value='1'>1 " D_ERROR "</option>"
   "<option{a2value='2'>2 " D_INFO "</option>"
@@ -286,7 +286,7 @@ const char HTTP_COUNTER[] PROGMEM =
   "<br/><div id='t' name='t' style='text-align:center;'></div>";
 const char HTTP_END[] PROGMEM =
   "<br/>"
-  "<div style='text-align:right;font-size:11px;'><hr/><a href='" D_WEBLINK "' target='_blank' style='color:#aaa;'>" D_PROGRAMNAME " " VERSION_STRING " " D_BY " " D_AUTHOR "</a></div>"
+  "<div style='text-align:right;font-size:11px;'><hr/><a href='" D_WEBLINK "' target='_blank' style='color:#aaa;'>" D_PROGRAMNAME " {mv " D_BY " " D_AUTHOR "</a></div>"
   "</div>"
   "</body>"
   "</html>";
@@ -355,6 +355,7 @@ void StartWebserver(int type, IPAddress ipweb)
       if (EMUL_WEMO == Settings.flag2.emulation) {
         WebServer->on("/upnp/control/basicevent1", HTTP_POST, HandleUpnpEvent);
         WebServer->on("/eventservice.xml", HandleUpnpService);
+        WebServer->on("/metainfoservice.xml", HandleUpnpMetaService);
         WebServer->on("/setup.xml", HandleUpnpSetupWemo);
       }
       if (EMUL_HUE == Settings.flag2.emulation) {
@@ -423,6 +424,9 @@ void SetHeader()
   WebServer->sendHeader(F("Cache-Control"), F("no-cache, no-store, must-revalidate"));
   WebServer->sendHeader(F("Pragma"), F("no-cache"));
   WebServer->sendHeader(F("Expires"), F("-1"));
+#ifndef ARDUINO_ESP8266_RELEASE_2_3_0
+  WebServer->sendHeader(F("Access-Control-Allow-Origin"), F("*"));
+#endif
 }
 
 void ShowPage(String &page)
@@ -439,6 +443,7 @@ void ShowPage(String &page)
     }
   }
   page += FPSTR(HTTP_END);
+  page.replace(F("{mv"), my_version);
   SetHeader();
   WebServer->send(200, FPSTR(HDR_CTYPE_HTML), page);
 }
@@ -528,7 +533,7 @@ void HandleAjaxStatusRefresh()
 
   String page = "";
   mqtt_data[0] = '\0';
-  XsnsCall(FUNC_XSNS_WEB_APPEND);
+  XsnsCall(FUNC_WEB_APPEND);
   if (strlen(mqtt_data)) {
     page += FPSTR(HTTP_TABLE100);
     page += mqtt_data;
@@ -862,7 +867,7 @@ void HandleLoggingConfiguration()
     page += FPSTR(HTTP_FORM_LOG2);
     switch (idx) {
     case 0:
-      page.replace(F("{b0"), F(D_SERIAL " "));
+      page.replace(F("{b0"), F(D_SERIAL_LOG_LEVEL));
       page.replace(F("{b1"), STR(SERIAL_LOG_LEVEL));
       page.replace(F("{b2"), F("ls"));
       for (byte i = LOG_LEVEL_NONE; i < LOG_LEVEL_ALL; i++) {
@@ -870,7 +875,7 @@ void HandleLoggingConfiguration()
       }
       break;
     case 1:
-      page.replace(F("{b0"), F(D_WEB " "));
+      page.replace(F("{b0"), F(D_WEB_LOG_LEVEL));
       page.replace(F("{b1"), STR(WEB_LOG_LEVEL));
       page.replace(F("{b2"), F("lw"));
       for (byte i = LOG_LEVEL_NONE; i < LOG_LEVEL_ALL; i++) {
@@ -878,7 +883,7 @@ void HandleLoggingConfiguration()
       }
       break;
     case 2:
-      page.replace(F("{b0"), F(D_SYS));
+      page.replace(F("{b0"), F(D_SYS_LOG_LEVEL));
       page.replace(F("{b1"), STR(SYS_LOG_LEVEL));
       page.replace(F("{b2"), F("ll"));
       for (byte i = LOG_LEVEL_NONE; i < LOG_LEVEL_ALL; i++) {
@@ -909,10 +914,14 @@ void HandleOtherConfiguration()
   page += FPSTR(HTTP_FORM_OTHER);
   page.replace(F("{p1"), Settings.web_password);
   page.replace(F("{r1"), (Settings.flag.mqtt_enabled) ? F(" checked") : F(""));
-  page += FPSTR(HTTP_FORM_OTHER2);
-  page.replace(F("{1"), F("1"));
-  page.replace(F("{2"), FRIENDLY_NAME);
-  page.replace(F("{3"), Settings.friendlyname[0]);
+  uint8_t maxfn = (devices_present > MAX_FRIENDLYNAMES) ? MAX_FRIENDLYNAMES : devices_present;
+  for (byte i = 0; i < maxfn; i++) {
+    page += FPSTR(HTTP_FORM_OTHER2);
+    page.replace(F("{1"), String(i +1));
+    snprintf_P(stemp, sizeof(stemp), PSTR(FRIENDLY_NAME"%d"), i +1);
+    page.replace(F("{2"), (i) ? stemp : FRIENDLY_NAME);
+    page.replace(F("{3"), Settings.friendlyname[i]);
+  }
 #ifdef USE_EMULATION
   page += FPSTR(HTTP_FORM_OTHER3a);
   for (byte i = 0; i < EMUL_MAX; i++) {
@@ -922,15 +931,7 @@ void HandleOtherConfiguration()
     page.replace(F("{3"), (i == EMUL_NONE) ? F(D_NONE) : (i == EMUL_WEMO) ? F(D_BELKIN_WEMO) : F(D_HUE_BRIDGE));
     page.replace(F("{4"), (i == EMUL_NONE) ? F("") : (i == EMUL_WEMO) ? F(" " D_SINGLE_DEVICE) : F(" " D_MULTI_DEVICE));
   }
-  page += F("<br/>");
-  uint8_t maxfn = (devices_present > MAX_FRIENDLYNAMES) ? MAX_FRIENDLYNAMES : devices_present;
-  for (byte i = 1; i < maxfn; i++) {
-    page += FPSTR(HTTP_FORM_OTHER2);
-    page.replace(F("{1"), String(i +1));
-    snprintf_P(stemp, sizeof(stemp), PSTR(FRIENDLY_NAME"%d"), i +1);
-    page.replace(F("{2"), stemp);
-    page.replace(F("{3"), Settings.friendlyname[i]);
-  }
+//  page += F("<br/>");
   page += F("<br/></fieldset>");
 #endif  // USE_EMULATION
   page += FPSTR(HTTP_FORM_END);
@@ -951,8 +952,7 @@ void HandleBackupConfiguration()
   WebServer->setContentLength(sizeof(buffer));
 
   char attachment[100];
-  snprintf_P(attachment, sizeof(attachment), PSTR("attachment; filename=Config_%s_" VERSION_STRING ".dmp"),
-    Settings.friendlyname[0]);
+  snprintf_P(attachment, sizeof(attachment), PSTR("attachment; filename=Config_%s_%s.dmp"), Settings.friendlyname[0], my_version);
   WebServer->sendHeader(F("Content-Disposition"), attachment);
   WebServer->send(200, FPSTR(HDR_CTYPE_STREAM), "");
   memcpy(buffer, &Settings, sizeof(buffer));
@@ -1113,7 +1113,7 @@ void HandleResetConfiguration()
     return;
   }
 
-  char svalue[16];
+  char svalue[33];
 
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_RESET_CONFIGURATION);
 
@@ -1409,6 +1409,7 @@ void HandleHttpCommand()
   } else {
     message += F(D_NEED_USER_AND_PASSWORD "\"}");
   }
+  SetHeader();
   WebServer->send(200, FPSTR(HDR_CTYPE_JSON), message);
 }
 
@@ -1513,9 +1514,9 @@ void HandleInformation()
   // }2 = </th><td>
   String func = FPSTR(HTTP_SCRIPT_INFO_BEGIN);
   func += F("<table width='100%'><tr><th>");
-  func += F(D_PROGRAM_VERSION "}2" VERSION_STRING);
+  func += F(D_PROGRAM_VERSION "}2"); func += my_version;
   func += F("}1" D_BUILD_DATE_AND_TIME "}2"); func += GetBuildDateAndTime();
-  func += F("}1" D_CORE_AND_SDK_VERSION "}2"); func += ESP.getCoreVersion(); func += F("/"); func += String(ESP.getSdkVersion());
+  func += F("}1" D_CORE_AND_SDK_VERSION "}2" ARDUINO_ESP8266_RELEASE "/"); func += String(ESP.getSdkVersion());
   func += F("}1" D_UPTIME "}2"); func += String(uptime); func += F(" Hours");
   snprintf_P(stopic, sizeof(stopic), PSTR(" at %X"), GetSettingsAddress());
   func += F("}1" D_FLASH_WRITE_COUNT "}2"); func += String(Settings.save_flag); func += stopic;
@@ -1629,6 +1630,9 @@ void HandleRestart()
 
 void HandleNotFound()
 {
+//  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_HTTP "Not fount (%s)"), WebServer->uri().c_str());
+//  AddLog(LOG_LEVEL_DEBUG);
+
   if (CaptivePortal()) { // If captive portal redirect instead of displaying the error page.
     return;
   }

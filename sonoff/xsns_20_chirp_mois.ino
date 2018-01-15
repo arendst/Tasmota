@@ -94,10 +94,10 @@ boolean chirp_detect()
  #ifndef USE_BH1750  // avoid duplicate definition
   const char HTTP_SNS_ILLUMINANCE[] PROGMEM =  "%s{s}%s " D_ILLUMINANCE "{m}%d%{e}";
  #endif //USE_BH1750
-  const char HTTP_SNS_MOISTURE[] PROGMEM = "%s{s}%s " D_MOISTURE "{m}%s%{e}";
+  const char HTTP_SNS_MOISTURE[] PROGMEM = "%s{s}%s " D_JSON_MOISTURE "{m}%s%{e}";
 #endif // USE_WEBSERVER
 
-const char JSON_SNS_LIGHTMOISTTEMP[] PROGMEM = "%s,\"%s\":{\"" D_LIGHT "\":%d,\"" D_MOISTURE "\":%s,\"" D_TEMPERATURE "\":%s}";
+const char JSON_SNS_LIGHTMOISTTEMP[] PROGMEM = "%s,\"%s\":{\"" D_JSON_LIGHT "\":%d,\"" D_JSON_MOISTURE "\":%s,\"" D_JSON_TEMPERATURE "\":%s}";
 
 void chirp_Show(boolean json)
 {
@@ -143,17 +143,17 @@ boolean Xsns20(byte function)
 
   if (i2c_flg) {
     switch (function) {
-      case FUNC_XSNS_INIT:
+      case FUNC_INIT:
         chirp_detect();
         break;
-      case FUNC_XSNS_PREP_BEFORE_TELEPERIOD:
+      case FUNC_PREP_BEFORE_TELEPERIOD:
         chirp_detect();
         break;
-      case FUNC_XSNS_JSON_APPEND:
+      case FUNC_JSON_APPEND:
         chirp_Show(1);
         break;
 #ifdef USE_WEBSERVER
-      case FUNC_XSNS_WEB_APPEND:
+      case FUNC_WEB_APPEND:
         chirp_Show(0);
         break;
 #endif // USE_WEBSERVER

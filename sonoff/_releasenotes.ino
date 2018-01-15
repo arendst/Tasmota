@@ -1,26 +1,51 @@
-/* 5.10.0b
- * Add optional support for PZEM004T energy sensor
- * Change Sonoff Pow Energy MQTT data message and consolidate Status 8 into Status 10
- * Change Wemo SetBinaryState to distinguish from GetBinaryState (#1357)
- * Change output of HTTP command to valid JSON only (#1363)
- * Change output to valid JSON Array if needed (#1363)
- * Add support for sensor MH-Z19(B) to be enabled with define USE_MHZ19 in user_config.h (#561, #1248)
+/* 5.11.1b
+ * Add command PowerOnState option 5 which inverts PulseTime and allows for delayed always on after power on
+ * Changed OSWATCH_RESET_TIME (Blocked loop) from 30 to 120 seconds to allow slow networks (#1556)
+ * Add French language file (#1561)
+ * Fix truncated command names and wrong response for DomoticzSwitchIdx (#1571)
+ * Add HTTP Allow Cross Origin removed from ESP8266/Arduino 2.4.0 (#1572)
+ * Fix %-sign issue as printf escape character in Humidity and Sonoff SC (#1579)
  *
- * 5.10.0a
- * Add (experimental) support for sensor SHT3x
- * Add support for iTead SI7021 temperature and humidity sensor by consolidating DHT22 into AM2301 and using former DHT22 as SI7021 (#735)
- * Fix BME280 calculation (#1051)
- * Add support for BME680 using adafruit libraries (#1212)
- * Change ADS1115 default voltage range from +/-2V to +/-6V (#1289)
- * Add multipress support and more user configurable options to Sonoff Dual R2 (#1291)
- * Fix Sonoff Bridge missed learned key if learned data contains 0x55 (End of Transmission) flag (#1095, #1294)
- * Add support for TSL2561 using adafruit library (#661, #1311)
- * Add alternative support for SHT3x enabled with define USE_SHT3X_V2 in user_config.h (#1314)
- * Add alternative support for SHT3x enabled with define USE_SHT3X_V3 in user_config.h (#1314)
- * Fix PWM initialization in Dimmer/Color mode (#1321)
- * Fix BME680 pressure data (#1356)
+ * 5.11.1a
+ * Add OtaMagic two step Web server OTA upgrade using filename-minimal image if OTA free space is too small
+ * Add chinese language file (#1551)
+ *
+ * 5.11.1 20180107
+ * Fix Sonoff Pow command handling (#1542)
+ *
+ * 5.11.0 20180107
  * Minor webpage HTML optimizations (#1358)
+ * Updated German translation (#1438)
+ * Change Sonoff Pow Energy MQTT data message and consolidate Status 8 into Status 10
+ * Change ADS1115 default voltage range from +/-2V to +/-6V (#1289)
  * Change text to Active for 3 minutes (#1364)
+ * Change Wemo SetBinaryState to distinguish from GetBinaryState (#1357)
+ * Change output of HTTP command to valid JSON and Array only (#1363)
+ * Removed all MQTT, JSON and Command language defines from locale files and set fixed to English (#1473)
+ * Renamed commands Color2,3,4 to Color3,4,5
+ * Fix BME280 calculation (#1051)
+ * Fix Sonoff Bridge missed learned key if learned data contains 0x55 (End of Transmission) flag (#1095, #1294)
+ * Fix PWM initialization in Dimmer/Color mode (#1321)
+ * Fix Wemo Emulation (#1357)
+ * Fix display of build date and time in non-english locale (#1465)
+ * Fix Wemo and Hue emulation by adding M-Search response delay (#1486)
+ * Add libraries Adafruit_BME680-1.0.5, Adafruit_Sensor-1.0.2.02, TasmotaSerial-1.0.0 and TSL2561-Arduino-Library
+ * Add command Color2 to set color while keeping same dimmer value
+ * Add device function pointers
+ * Add support for SenseAir S8 CO2 sensor
+ * Add color led signal to Carbon Dioxide (CO2) sensors using defines CO2_LOW and CO2_HIGH in user_config.h
+ * Add support for Domoticz Air Quality sensor to be used by MH-Z19(B) and SenseAir sensors
+ * Add support for PZEM004T energy sensor
+ * Add support for iTead SI7021 temperature and humidity sensor by consolidating DHT22 into AM2301 and using former DHT22 as SI7021 (#735)
+ * Add support for BME680 using adafruit libraries (#1212)
+ * Add support for MH-Z19(B) CO2 sensor (#561, #1248)
+ * Add multipress support and more user configurable GPIO to Sonoff Dual R2 (#1291)
+ * Add support for TSL2561 using adafruit library (#661, #1311)
+ * Add support for SHT3x (#1314)
+ * Add support for Arilux LC06 (#1414)
+ * Add Italian language file (#1449)
+ * Add 2nd Gen Alexa support to Wemo emulation discovery (#1357, #1450)
+ * Add define for additional number of WS2812 schemes (#1463)
  *
  * 5.10.0 20171201
  * Upgrade library ArduinoJson to 5.11.2

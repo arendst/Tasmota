@@ -39,18 +39,19 @@ String sr04_readDistance(void)
 
   if (sr04_flg) {
     char stemp1[6];
+    char stemp2[4];
     String page = "";
     snprintf_P(log_data, sizeof(log_data), PSTR("HS-SR04: Start measurement: Trig: %d Echo: %d"),pin[GPIO_SEN_TRIG],pin[GPIO_SEN_ECHO]);
     AddLog(LOG_LEVEL_DEBUG);
     int  duration = 0, counter = 0, sum = 0;
     float distance = 0;
-    while ( counter < 20) {
-      //digitalWrite(pin[GPIO_SEN_TRIG], LOW);  // Added this line
-      //delayMicroseconds(3); // Added this line
+    while ( counter < 20 && sum < 200000) {
+      digitalWrite(pin[GPIO_SEN_TRIG], LOW);  // Added this line
+      delayMicroseconds(3000); // Added this line
       noInterrupts();
       digitalWrite(pin[GPIO_SEN_TRIG], HIGH);
       //  delayMicroseconds(1000); - Removed this line
-      delayMicroseconds(50); // Added this line
+      delayMicroseconds(10); // Added this line
       digitalWrite(pin[GPIO_SEN_TRIG], LOW);
       duration = pulseIn(pin[GPIO_SEN_ECHO], HIGH);
       interrupts();
@@ -59,16 +60,16 @@ String sr04_readDistance(void)
       dtostrfi(duration, 2, stemp1);
       snprintf_P(log_data, sizeof(log_data), PSTR("HS-SR04 In Duration: %s"),stemp1);
       AddLog(LOG_LEVEL_ALL);
+      yield();
       counter++;
     }
-    distance = (sum/40.0) / 29.1;
+    distance = (sum/(counter*2.0)) / 29.1;
     _distance = (_distance==0?distance:_distance); //initialize on restart
     dtostrfd(distance, 2, stemp1);
-    snprintf_P(log_data, sizeof(log_data), PSTR("HS-SR04: Avg Distance measured: %s"),stemp1);
+    dtostrfd(counter, 0, stemp2);
+    snprintf_P(log_data, sizeof(log_data), PSTR("HS-SR04: Avg Distance measured: %s, loops: %s"),stemp1, stemp2);
     AddLog(LOG_LEVEL_DEBUG);
     _distance = (distance>_distance?min(distance,_distance+MAX_DEVIATION_BETWEEN_MEASURES):max(distance,_distance-MAX_DEVIATION_BETWEEN_MEASURES));
-
-
     dtostrfd(_distance, 2, stemp1);
     snprintf_P(log_data, sizeof(log_data), PSTR("HS-SR04: New Distance: %s"),stemp1);
     AddLog(LOG_LEVEL_DEBUG);
@@ -87,13 +88,13 @@ String sr04_readDistance(void)
  * Presentation
 \*********************************************************************************************/
 #ifdef USE_WEBSERVER
-const char HTTP_HSSR04_DISTANCE[] PROGMEM = "%s{s}%s " D_DISTANCE "{m}%s cm{e}";
+const char HTTP_HSSR04_DISTANCE[] PROGMEM = "%s{s}%s " D_JSON_DISTANCE "{m}%s cm{e}";
 #endif
 
 void sr04_Show(boolean json)
 {
   if (json) {
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"" D_DISTANCE "\":%s"), mqtt_data, sr04_readDistance().c_str());
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"" D_JSON_DISTANCE "\":%s"), mqtt_data, sr04_readDistance().c_str());
 
 #ifdef USE_WEBSERVER
   } else {
@@ -117,16 +118,14 @@ boolean Xsns19(byte function)
 
   if (sr04_flg) {
     switch (function) {
-//      case FUNC_XSNS_INIT:
-//        break;
-      case FUNC_XSNS_PREP_BEFORE_TELEPERIOD:
+      case FUNC_PREP_BEFORE_TELEPERIOD:
         sr04_init();
         break;
-      case FUNC_XSNS_JSON_APPEND:
+      case FUNC_JSON_APPEND:
         sr04_Show(1);
         break;
 #ifdef USE_WEBSERVER
-      case FUNC_XSNS_WEB_APPEND:
+      case FUNC_WEB_APPEND:
         sr04_Show(0);
         break;
 #endif // USE_WEBSERVER

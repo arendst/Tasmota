@@ -1,7 +1,7 @@
 /*
-  xdrv_irremote.ino - infra red support for Sonoff-Tasmota
+  xdrv_02_irremote.ino - infra red support for Sonoff-Tasmota
 
-  Copyright (C) 2017  Heiko Krupp, Lazar Obradovic and Theo Arends
+  Copyright (C) 2018  Heiko Krupp, Lazar Obradovic and Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -107,9 +107,9 @@ void IrReceiveCheck()
       if ((iridx < 0) || (iridx > 14)) {
         iridx = 0;
       }
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_IRRECEIVED "\":{\"" D_IR_PROTOCOL "\":\"%s\",\"" D_IR_BITS "\":%d,\"" D_IR_DATA "\":\"%X\"}}"),
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_IRRECEIVED "\":{\"" D_JSON_IR_PROTOCOL "\":\"%s\",\"" D_JSON_IR_BITS "\":%d,\"" D_JSON_IR_DATA "\":\"%X\"}}"),
         GetTextIndexed(sirtype, sizeof(sirtype), iridx, kIrRemoteProtocols), results.bits, results.value);
-      MqttPublishPrefixTopic_P(6, PSTR(D_IRRECEIVED));
+      MqttPublishPrefixTopic_P(6, PSTR(D_JSON_IRRECEIVED));
 #ifdef USE_DOMOTICZ
       unsigned long value = results.value | (iridx << 28);  // [Protocol:4, Data:28]
       DomoticzSensor(DZ_COUNT, value);                      // Send data as Domoticz Counter value
@@ -275,11 +275,12 @@ boolean IrHvacMitsubishi(const char *HVAC_Mode, const char *HVAC_FanMode, boolea
  { "Vendor": "<Toshiba|Mitsubishi>", "Power": <0|1>, "Mode": "<Hot|Cold|Dry|Auto>", "FanSpeed": "<1|2|3|4|5|Auto|Silence>", "Temp": <17..30> }
 */
 
-boolean IrSendCommand(char *type, uint16_t index, char *dataBuf, uint16_t data_len, int16_t payload)
+//boolean IrSendCommand(char *type, uint16_t index, char *dataBuf, uint16_t data_len, int16_t payload)
+boolean IrSendCommand()
 {
   boolean serviced = true;
   boolean error = false;
-  char dataBufUc[data_len];
+  char dataBufUc[XdrvMailbox.data_len];
   char protocol_text[20];
   const char *protocol;
   uint32_t bits = 0;
@@ -292,20 +293,20 @@ boolean IrSendCommand(char *type, uint16_t index, char *dataBuf, uint16_t data_l
   boolean HVAC_Power = true;
 
   for (uint16_t i = 0; i <= sizeof(dataBufUc); i++) {
-    dataBufUc[i] = toupper(dataBuf[i]);
+    dataBufUc[i] = toupper(XdrvMailbox.data[i]);
   }
-  if (!strcasecmp_P(type, PSTR(D_CMND_IRSEND))) {
-    if (data_len) {
+  if (!strcasecmp_P(XdrvMailbox.topic, PSTR(D_CMND_IRSEND))) {
+    if (XdrvMailbox.data_len) {
       StaticJsonBuffer<128> jsonBuf;
       JsonObject &ir_json = jsonBuf.parseObject(dataBufUc);
       if (!ir_json.success()) {
-        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_IRSEND "\":\"" D_INVALID_JSON "\"}")); // JSON decode failed
+        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_IRSEND "\":\"" D_JSON_INVALID_JSON "\"}")); // JSON decode failed
       }
       else {
-        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_IRSEND "\":\"" D_DONE "\"}"));
-        protocol = ir_json[D_IR_PROTOCOL];
-        bits = ir_json[D_IR_BITS];
-        data = ir_json[D_IR_DATA];
+        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_IRSEND "\":\"" D_JSON_DONE "\"}"));
+        protocol = ir_json[D_JSON_IR_PROTOCOL];
+        bits = ir_json[D_JSON_IR_BITS];
+        data = ir_json[D_JSON_IR_DATA];
         if (protocol && bits && data) {
           int protocol_code = GetCommandCode(protocol_text, sizeof(protocol_text), protocol, kIrRemoteProtocols);
           switch (protocol_code) {
@@ -326,7 +327,7 @@ boolean IrSendCommand(char *type, uint16_t index, char *dataBuf, uint16_t data_l
             case PANASONIC:
               irsend->sendPanasonic(bits, data); break;
             default:
-              snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_IRSEND "\":\"" D_PROTOCOL_NOT_SUPPORTED "\"}"));
+              snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_IRSEND "\":\"" D_JSON_PROTOCOL_NOT_SUPPORTED "\"}"));
           }
         }
         else {
@@ -338,24 +339,24 @@ boolean IrSendCommand(char *type, uint16_t index, char *dataBuf, uint16_t data_l
       error = true;
     }
     if (error) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_IRSEND "\":\"" D_NO " " D_IR_PROTOCOL ", " D_IR_BITS " " D_OR " " D_IR_DATA "\"}"));
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_IRSEND "\":\"" D_JSON_NO " " D_JSON_IR_PROTOCOL ", " D_JSON_IR_BITS " " D_JSON_OR " " D_JSON_IR_DATA "\"}"));
     }
   }
 #ifdef USE_IR_HVAC
-  else if (!strcasecmp_P(type, PSTR(D_CMND_IRHVAC))) {
-    if (data_len) {
+  else if (!strcasecmp_P(XdrvMailbox.topic, PSTR(D_CMND_IRHVAC))) {
+    if (XdrvMailbox.data_len) {
       StaticJsonBuffer<164> jsonBufer;
       JsonObject &root = jsonBufer.parseObject(dataBufUc);
       if (!root.success()) {
-        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_IRHVAC "\":\"" D_INVALID_JSON "\"}")); // JSON decode failed
+        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_IRHVAC "\":\"" D_JSON_INVALID_JSON "\"}")); // JSON decode failed
       }
       else {
-        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_IRHVAC "\":\"" D_DONE "\"}"));
-        HVAC_Vendor = root[D_IRHVAC_VENDOR];
-        HVAC_Power = root[D_IRHVAC_POWER];
-        HVAC_Mode = root[D_IRHVAC_MODE];
-        HVAC_FanMode = root[D_IRHVAC_FANSPEED];
-        HVAC_Temp = root[D_IRHVAC_TEMP];
+        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_IRHVAC "\":\"" D_JSON_DONE "\"}"));
+        HVAC_Vendor = root[D_JSON_IRHVAC_VENDOR];
+        HVAC_Power = root[D_JSON_IRHVAC_POWER];
+        HVAC_Mode = root[D_JSON_IRHVAC_MODE];
+        HVAC_FanMode = root[D_JSON_IRHVAC_FANSPEED];
+        HVAC_Temp = root[D_JSON_IRHVAC_TEMP];
 
         //        snprintf_P(log_data, sizeof(log_data), PSTR("IRHVAC: Received Vendor %s, Power %d, Mode %s, FanSpeed %s, Temp %d"),
         //          HVAC_Vendor, HVAC_Power, HVAC_Mode, HVAC_FanMode, HVAC_Temp);
@@ -376,13 +377,51 @@ boolean IrSendCommand(char *type, uint16_t index, char *dataBuf, uint16_t data_l
       error = true;
     }
     if (error) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_IRHVAC "\":\"" D_WRONG " " D_IRHVAC_VENDOR ", " D_IRHVAC_MODE " " D_OR " " D_IRHVAC_FANSPEED "\"}"));
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_IRHVAC "\":\"" D_JSON_WRONG " " D_JSON_IRHVAC_VENDOR ", " D_JSON_IRHVAC_MODE " " D_JSON_OR " " D_JSON_IRHVAC_FANSPEED "\"}"));
     }
   }
 #endif // USE_IR_HVAC
-  else {
-    serviced = false; // Unknown command
-  }
+  else serviced = false; // Unknown command
   return serviced;
 }
+
+/*********************************************************************************************\
+ * Interface
+\*********************************************************************************************/
+
+#define XDRV_02
+
+boolean Xdrv02(byte function)
+{
+  boolean result = false;
+
+  if ((pin[GPIO_IRSEND] < 99) || (pin[GPIO_IRRECV] < 99)) {
+    switch (function) {
+      case FUNC_INIT:
+        if (pin[GPIO_IRSEND] < 99) {
+          IrSendInit();
+        }
+#ifdef USE_IR_RECEIVE
+        if (pin[GPIO_IRRECV] < 99) {
+          IrReceiveInit();
+        }
+#endif  // USE_IR_RECEIVE
+        break;
+      case FUNC_EVERY_50_MSECOND:
+#ifdef USE_IR_RECEIVE
+        if (pin[GPIO_IRRECV] < 99) {
+          IrReceiveCheck();  // check if there's anything on IR side
+        }
+#endif  // USE_IR_RECEIVE
+        break;
+      case FUNC_COMMAND:
+        if (pin[GPIO_IRSEND] < 99) {
+          result = IrSendCommand();
+        }
+        break;
+    }
+  }
+  return result;
+}
+
 #endif // USE_IR_REMOTE

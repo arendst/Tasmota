@@ -1,7 +1,7 @@
 /*
   user_config.h - user specific configuration for Sonoff-Tasmota
 
-  Copyright (C) 2017  Theo Arends
+  Copyright (C) 2018  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -29,10 +29,13 @@
 \*********************************************************************************************/
 
 // -- Localization --------------------------------
+#define MY_LANGUAGE            de-DE           // German in Germany
 //#define MY_LANGUAGE            en-GB           // English in Great Britain. Enabled by Default
+//#define MY_LANGUAGE            fr-FR           // French in France
+//#define MY_LANGUAGE            it-IT           // Italian in Italy
 //#define MY_LANGUAGE            nl-NL           // Dutch in the Netherlands
-//#define MY_LANGUAGE            de-DE           // German in Germany
 //#define MY_LANGUAGE            pl-PL           // Polish in Poland
+//#define MY_LANGUAGE            zh-CN           // Chinese (Simplified) in China
 
 // -- Project -------------------------------------
 #define PROJECT                "sonoff"          // PROJECT is used as the default topic delimiter and OTA file name
@@ -122,7 +125,7 @@
   #define WEB_USERNAME         "admin"           // Web server Admin mode user name
   #define WEB_PASSWORD         ""                // [WebPassword] Web server Admin mode Password for WEB_USERNAME (empty string = Disable)
   #define FRIENDLY_NAME        "Sonoff"          // [FriendlyName] Friendlyname up to 32 characters used by webpages and Alexa
-  #define USE_EMULATION                          // Enable Belkin WeMo and Hue Bridge emulation for Alexa (+11k code, +2k mem)
+  #define USE_EMULATION                          // Enable Belkin WeMo and Hue Bridge emulation for Alexa (+16k code, +2k mem)
     #define EMULATION          EMUL_NONE         // [Emulation] Select Belkin WeMo (single relay/light) or Hue Bridge emulation (multi relay/light) (EMUL_NONE, EMUL_WEMO or EMUL_HUE)
 
 // -- mDNS ----------------------------------------
@@ -166,17 +169,17 @@
 // -- Sensor code selection -----------------------
 #define USE_ADC_VCC                              // Display Vcc in Power status. Disable for use as Analog input on selected devices
 
-#define USE_PZEM004T                             // Add support for PZEM004T Energy monitor (+2k3 code)
+#define USE_PZEM004T                             // Add support for PZEM004T Energy monitor (+2k code)
 
                                                  // WARNING: Select none for default one DS18B20 sensor or enable one of the following two options for multiple sensors
 //#define USE_DS18x20                              // Optional for more than one DS18x20 sensors with id sort, single scan and read retry (+1k3 code)
 //#define USE_DS18x20_LEGACY                       // Optional for more than one DS18x20 sensors with dynamic scan using library OneWire (+1k5 code)
 
+// -- I2C sensors ---------------------------------
 #define USE_I2C                                  // I2C using library wire (+10k code, 0k2 mem, 124 iram)
+#ifdef USE_I2C
   #define USE_SHT                                // Add I2C emulating code for SHT1X sensor (+1k4 code)
-//  #define USE_SHT3X                              // Add I2C code for SHT3x sensor based on Adafruit (+0k7 code)
-//  #define USE_SHT3X_V2                           // Add I2C code for SHT3x sensor based on EspEasy (+0k7 code)
-//  #define USE_SHT3X_V3                           // Add I2C code for SHT3x sensor based on Wemos (+0k7 code)
+  #define USE_SHT3X                              // Add I2C code for SHT3x sensor (+0k6 code)
   #define USE_HTU                                // Add I2C code for HTU21/SI7013/SI7020/SI7021 sensor (+1k5 code)
   #define USE_BMP                                // Add I2C code for BMP085/BMP180/BMP280/BME280 sensor (+4k code)
 //    #define USE_BME680                           // Add additional support for BME680 sensor using Adafruit Sensor and BME680 libraries (+6k code)
@@ -186,11 +189,34 @@
  #define USE_ADS1115                            // Add I2C code for ADS1115 16 bit A/D converter based on Adafruit ADS1x15 library (no library needed) (+0k7 code)
 //  #define USE_ADS1115_I2CDEV                     // Add I2C code for ADS1115 16 bit A/D converter using library i2cdevlib-Core and i2cdevlib-ADS1115 (+2k code)
 //  #define USE_INA219                             // Add I2C code for INA219 Low voltage and current sensor (+1k code)
+//  #define USE_DISPLAY                            // Add I2C Display Support for LCD, Oled and up to eigth Matrices (+19k code)
+    #define MTX_ADDRESS1       0x71              // [DisplayAddress[1]] I2C address of first 8x8 matrix module
+    #define MTX_ADDRESS2       0x74              // [DisplayAddress[2]] I2C address of second 8x8 matrix module
+    #define MTX_ADDRESS3       0x75              // [DisplayAddress[3]] I2C address of third 8x8 matrix module
+    #define MTX_ADDRESS4       0x72              // [DisplayAddress[4]] I2C address of fourth 8x8 matrix module
+    #define MTX_ADDRESS5       0x73              // [DisplayAddress[5]] I2C address of fifth 8x8 matrix module
+    #define MTX_ADDRESS6       0x76              // [DisplayAddress[6]] I2C address of sixth 8x8 matrix module
+    #define MTX_ADDRESS7       0x00              // [DisplayAddress[7]] I2C address of seventh 8x8 matrix module
+    #define MTX_ADDRESS8       0x00              // [DisplayAddress[8]] I2C address of eigth 8x8 matrix module
 
-  //STB mod
+ //STB mod
   #define USE_CHIRP                              // Add I2C support for CHIRP moisture sensor
   #define USE_PCF8574                            // Add I2C support for PCF8574 multi GPIO board
   //end
+#endif  // USE_I2C
+
+//#define USE_SPI                                  // SPI using library TasmotaTFT
+#ifdef USE_SPI
+  #ifndef USE_DISPLAY
+  #define USE_DISPLAY                            // Add SPI Display support for 320x240 and 480x320 TFT
+  #endif
+#endif  // USE_SPI
+
+// -- Carbon dioxide (CO2) sensors ----------------
+#define USE_MHZ19                                // Add support for MH-Z19 CO2 sensor (+2k code)
+#define USE_SENSEAIR                             // Add support for SenseAir K30, K70 and S8 CO2 sensor (+2k3 code)
+  #define CO2_LOW              800               // Below this CO2 value show green light (needs PWM or WS2812 RG(B) led and enable with SetOption18 1)
+  #define CO2_HIGH             1200              // Above this CO2 value show red light (needs PWM or WS2812 RG(B) led and enable with SetOption18 1)
 
 #define USE_IR_REMOTE                            // Send IR remote commands using library IRremoteESP8266 and ArduinoJson (+4k code, 0k3 mem, 48 iram)
 //  #define USE_IR_HVAC                            // Support for HVAC system using IR (+2k code)
@@ -199,8 +225,6 @@
 #define USE_WS2812                               // WS2812 Led string using library NeoPixelBus (+5k code, +1k mem, 232 iram) - Disable by //
   #define USE_WS2812_CTYPE     1                 // WS2812 Color type (0 - RGB, 1 - GRB, 2 - RGBW, 3 - GRBW)
 //  #define USE_WS2812_DMA                         // DMA supports only GPIO03 (= Serial RXD) (+1k mem). When USE_WS2812_DMA is enabled expect Exceptions on Pow
-
-//#define USE_MHZ19                               // Add support for MH-Z19 CO2 sensor (+1k8 code)
 
 #define USE_ARILUX_RF                            // Add support for Arilux RF remote controller (+0k8 code)
 

@@ -1,7 +1,7 @@
 /*
   settings.h - setting variables for Sonoff-Tasmota
 
-  Copyright (C) 2017  Theo Arends
+  Copyright (C) 2018  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -43,9 +43,9 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t pwm_control : 1;              // bit 15 (v5.8.1)
     uint32_t ws_clock_reverse : 1;         // bit 16 (v5.8.1)
     uint32_t decimal_text : 1;             // bit 17 (v5.8.1)
-    uint32_t spare18 : 1;
-    uint32_t spare19 : 1;
-    uint32_t voltage_resolution : 1;
+    uint32_t light_signal : 1;             // bit 18 (v5.10.0c)
+    uint32_t hass_discovery : 1;           // bit 19 (v5.11.1a)
+    uint32_t voltage_resolution : 1;       // Replaced by below
     uint32_t spare21 : 1;
     uint32_t spare22 : 1;
     uint32_t spare23 : 1;
@@ -134,7 +134,16 @@ struct SYSCFG {
   char          mqtt_topic[33];            // 26F
   char          button_topic[33];          // 290
   char          mqtt_grptopic[33];         // 2B1
-  uint8_t       mqtt_fingerprinth[20];     // 2D2 Reserved for binary fingerprint
+
+  uint8_t       display_model;             // 2D2
+  uint8_t       display_mode;              // 2D3
+  uint8_t       display_refresh;           // 2D4
+  uint8_t       display_rows;              // 2D5
+  uint8_t       display_cols[2];           // 2D6
+  uint8_t       display_address[8];        // 2D8
+  uint8_t       display_dimmer;            // 2E0
+  uint8_t       display_size;              // 2E1
+  uint8_t       free_2E2[4];               // 2E2
 
   uint16_t      pwm_frequency;             // 2E6
   power_t       power;                     // 2E8
@@ -201,8 +210,8 @@ struct SYSCFG {
   byte          free_451[2];               // 451
 
   uint8_t       sleep;                     // 453
-  uint16_t      domoticz_switch_idx[MAX_DOMOTICZ_IDX]; // 454
-  uint16_t      domoticz_sensor_idx[12];   // 45C
+  uint16_t      domoticz_switch_idx[MAX_DOMOTICZ_IDX];      // 454
+  uint16_t      domoticz_sensor_idx[MAX_DOMOTICZ_SNS_IDX];  // 45C
   uint8_t       module;                    // 474
 
   uint8_t       ws_color[4][3];            // 475
@@ -259,7 +268,7 @@ struct SYSCFG {
 struct RTCMEM {
   uint16_t      valid;                     // 000
   byte          oswatch_blocked_loop;      // 002
-  uint8_t       unused;                    // 003
+  uint8_t       ota_loader;                // 003
   unsigned long energy_kWhtoday;              // 004
   unsigned long energy_kWhtotal;              // 008
   unsigned long pulse_counter[MAX_COUNTERS];  // 00C
@@ -295,6 +304,15 @@ struct TimeChangeRule
 
 TimeChangeRule DaylightSavingTime = { TIME_DST }; // Daylight Saving Time
 TimeChangeRule StandardTime = { TIME_STD }; // Standard Time
+
+struct XDRVMAILBOX {
+  uint16_t      valid;
+  uint16_t      index;
+  uint16_t      data_len;
+  int16_t       payload;
+  char         *topic;
+  char         *data;
+} XdrvMailbox;
 
 // See issue https://github.com/esp8266/Arduino/issues/2913
 #ifdef USE_ADC_VCC

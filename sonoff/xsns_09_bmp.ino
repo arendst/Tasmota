@@ -1,7 +1,7 @@
 /*
   xsns_09_bmp.ino - BMP pressure, temperature, humidity and gas sensor support for Sonoff-Tasmota
 
-  Copyright (C) 2017  Heiko Krupp and Theo Arends
+  Copyright (C) 2018  Heiko Krupp and Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -455,16 +455,16 @@ void BmpShow(boolean json)
 
     if (json) {
       char json_humidity[40];
-      snprintf_P(json_humidity, sizeof(json_humidity), PSTR(",\"" D_HUMIDITY "\":%s"), humidity);
+      snprintf_P(json_humidity, sizeof(json_humidity), PSTR(",\"" D_JSON_HUMIDITY "\":%s"), humidity);
       char json_sealevel[40];
-      snprintf_P(json_sealevel, sizeof(json_sealevel), PSTR(",\"" D_PRESSUREATSEALEVEL "\":%s"), sea_pressure);
+      snprintf_P(json_sealevel, sizeof(json_sealevel), PSTR(",\"" D_JSON_PRESSUREATSEALEVEL "\":%s"), sea_pressure);
 #ifdef USE_BME680
       char json_gas[40];
-      snprintf_P(json_gas, sizeof(json_gas), PSTR(",\"" D_GAS "\":%s"), gas_resistance);
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"%s\":{\"" D_TEMPERATURE "\":%s%s,\"" D_PRESSURE "\":%s%s%s}"),
+      snprintf_P(json_gas, sizeof(json_gas), PSTR(",\"" D_JSON_GAS "\":%s"), gas_resistance);
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"%s\":{\"" D_JSON_TEMPERATURE "\":%s%s,\"" D_JSON_PRESSURE "\":%s%s%s}"),
         mqtt_data, bmp_name, temperature, (bmp_model >= 2) ? json_humidity : "", pressure, (Settings.altitude != 0) ? json_sealevel : "", (bmp_model >= 3) ? json_gas : "");
 #else
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"%s\":{\"" D_TEMPERATURE "\":%s%s,\"" D_PRESSURE "\":%s%s}"),
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"%s\":{\"" D_JSON_TEMPERATURE "\":%s%s,\"" D_JSON_PRESSURE "\":%s%s}"),
         mqtt_data, bmp_name, temperature, (bmp_model >= 2) ? json_humidity : "", pressure, (Settings.altitude != 0) ? json_sealevel : "");
 #endif  // USE_BME680
 #ifdef USE_DOMOTICZ
@@ -502,19 +502,17 @@ boolean Xsns09(byte function)
 
   if (i2c_flg) {
     switch (function) {
-//      case FUNC_XSNS_INIT:
-//        break;
-      case FUNC_XSNS_PREP_BEFORE_TELEPERIOD:
+      case FUNC_PREP_BEFORE_TELEPERIOD:
         BmpDetect();
 #ifdef USE_BME680
         Bme680PerformReading();
 #endif  // USE_BME680
         break;
-      case FUNC_XSNS_JSON_APPEND:
+      case FUNC_JSON_APPEND:
         BmpShow(1);
         break;
 #ifdef USE_WEBSERVER
-      case FUNC_XSNS_WEB_APPEND:
+      case FUNC_WEB_APPEND:
         BmpShow(0);
 #ifdef USE_BME680
         Bme680PerformReading();
