@@ -1,4 +1,11 @@
-/* 5.11.1b
+/* 
+ * 5.11.1b2
+ * Add Domoticz "RSSI" and "Battery" to sensor
+ *
+ * 5.11.1b1
+ * Add support for Battery and RSSI quality in Domoticz switch command
+ *
+ * 5.11.1b
  * Add command PowerOnState option 5 which inverts PulseTime and allows for delayed always on after power on
  * Changed OSWATCH_RESET_TIME (Blocked loop) from 30 to 120 seconds to allow slow networks (#1556)
  * Add French language file (#1561)
