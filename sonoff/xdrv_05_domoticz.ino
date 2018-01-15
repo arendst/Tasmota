@@ -316,13 +316,13 @@ uint8_t DomoticzHumidityState(char *hum)
 void DomoticzSensor(byte idx, char *data)
 {
   if (Settings.domoticz_sensor_idx[idx]) {
-    char dmess[64];
+    char dmess[64]; //64 + 24 extra data
 
     memcpy(dmess, mqtt_data, sizeof(dmess));
     if (DZ_AIRQUALITY == idx) {
-      snprintf_P(mqtt_data, sizeof(dmess), PSTR("{\"idx\":%d,\"nvalue\":%s}"), Settings.domoticz_sensor_idx[idx], data);
+      snprintf_P(mqtt_data, sizeof(dmess), PSTR("{\"idx\":%d,\"nvalue\":%s,\"Battery\":%d,\"RSSI\":%d}"), Settings.domoticz_sensor_idx[idx], data, SystemGetVoltageAsDomoticzQuality(ESP.getVcc()), WifiGetRssiAsDomoticzQuality(WiFi.RSSI()));
     } else {
-      snprintf_P(mqtt_data, sizeof(dmess), PSTR("{\"idx\":%d,\"nvalue\":0,\"svalue\":\"%s\"}"), Settings.domoticz_sensor_idx[idx], data);
+      snprintf_P(mqtt_data, sizeof(dmess), PSTR("{\"idx\":%d,\"nvalue\":0,\"svalue\":\"%s\",\"Battery\":%d,\"RSSI\":%d}"), Settings.domoticz_sensor_idx[idx], data, SystemGetVoltageAsDomoticzQuality(ESP.getVcc()), WifiGetRssiAsDomoticzQuality(WiFi.RSSI()));
     }
     MqttPublish(domoticz_in_topic);
     memcpy(mqtt_data, dmess, sizeof(dmess));
