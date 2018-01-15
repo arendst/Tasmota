@@ -1,18 +1,18 @@
 /*
   webserver.ino - webserver for Sonoff-Tasmota
-
+  
   Copyright (C) 2018  Theo Arends
-
+  
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
   the Free Software Foundation, either version 3 of the License, or
   (at your option) any later version.
-
+  
   This program is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
   GNU General Public License for more details.
-
+  
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
@@ -245,7 +245,7 @@ const char HTTP_FORM_OTHER3a[] PROGMEM =
   "<br/><fieldset><legend><b>&nbsp;" D_EMULATION "&nbsp;</b></legend>";
 const char HTTP_FORM_OTHER3b[] PROGMEM =
   "<br/><input style='width:10%;' id='b2' name='b2' type='radio' value='{1'{2><b>{3</b>{4";
-  #endif  // USE_EMULATION
+#endif  // USE_EMULATION
 const char HTTP_FORM_END[] PROGMEM =
   "<br/><button type='submit'>" D_SAVE "</button></form></fieldset>";
 const char HTTP_FORM_RST[] PROGMEM =
@@ -307,7 +307,7 @@ void StartWebserver(int type, IPAddress ipweb)
   if (!webserver_state) {
     if (!WebServer) {
       WebServer = new ESP8266WebServer((HTTP_MANAGER==type) ? 80 : WEB_PORT);
-      WebServer->on("/", HandleRoot);
+      WebServer->on("/", HandleRoot);    
       WebServer->on("/cn", HandleConfiguration);
       WebServer->on("/md", HandleModuleConfiguration);
       WebServer->on("/w1", HandleWifiConfigurationWithScan);
@@ -412,9 +412,10 @@ void SetHeader()
 #endif
 }
 
-void ShowPage(String &page)
+void ShowPage(String &page, bool auth = true)
 {
-  if((Settings.web_password[0] != 0) && !WebServer->authenticate(WEB_USERNAME, Settings.web_password)) {
+  //if((HTTP_ADMIN == webserver_state) && (Settings.web_password[0] != 0) && !WebServer->authenticate(WEB_USERNAME, Settings.web_password)) {
+  if(auth && (Settings.web_password[0] != 0) && !WebServer->authenticate(WEB_USERNAME, Settings.web_password)) {
     return WebServer->requestAuthentication();
   }
   page.replace(F("{ha"), my_module.name);
@@ -441,7 +442,16 @@ void HandleRoot()
   }
 
   if (HTTP_MANAGER == webserver_state) {
-    HandleWifiConfiguration();
+    if ((Settings.web_password[0] != 0) && !(WebServer->hasArg("USER1")) && !(WebServer->hasArg("PASS1"))) {
+      HandleWifiLOGIN();
+    } else {
+      if (!(Settings.web_password[0] != 0) || ((WebServer->arg("USER1") == WEB_USERNAME ) && (WebServer->arg("PASS1") == Settings.web_password ))) {
+        HandleWifiConfiguration();
+      } else {
+        // wrong user and pass
+        HandleWifiLOGIN();
+      }
+    }
   } else {
     char stemp[10];
     char line[160];
@@ -799,7 +809,17 @@ void HandleWifi(boolean scan)
   } else {
     page += FPSTR(HTTP_BTN_CONF);
   }
-  ShowPage(page);
+  ShowPage(page,!(HTTP_MANAGER == webserver_state));
+}
+
+void HandleWifiLOGIN()
+{
+  String page = FPSTR(HTTP_HEAD);
+  page.replace(F("{v}"), FPSTR( D_CONFIGURE_WIFI ));
+  page += FPSTR("<form action='/' method='POST'><br/><b>" D_USER "</b><br/><input name='USER1' placeholder='" D_USER "'><br/>");
+  page += FPSTR("<br/><b>" D_PASSWORD "</b><br/><input name='PASS1' type='password' placeholder='" D_PASSWORD "'><br/>");
+  page += FPSTR("<br/><br/><button>" D_OK "</button></form>");  
+  ShowPage(page,false); // false means show page no matter if the client has or has not credentials
 }
 
 void HandleMqttConfiguration()
