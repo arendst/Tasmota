@@ -58,6 +58,40 @@ boolean domoticz_subscribe = false;
 int domoticz_update_timer = 0;
 byte domoticz_update_flag = 1;
 
+int SystemGetVoltageAsDomoticzQuality(int voltage)
+{
+  int quality = 0;	//Voltage range from 2,6V > 0%  to 3,6V > 100%
+
+  if (voltage <= 2600) {
+    quality = 0;
+  } else if (voltage >= 4600) {
+    quality = 200;
+  } else {
+    quality = (voltage - 2600) / 10;
+  }
+  return quality;
+}
+
+int WifiGetRssiAsDomoticzQuality(int rssi)
+{
+  int quality = 0;
+
+  if (rssi <= -98) { quality = 0;}	// Domoticz quality 0
+  else {
+  if (-97 <= rssi) { quality++; } // Domoticz quality 1
+  if (-92 <= rssi) { quality++; }	// Domoticz quality 2
+  if (-87 <= rssi) { quality++; }	// Domoticz quality 3
+  if (-82 <= rssi) { quality++; }	// Domoticz quality 4
+  if (-77 <= rssi) { quality++; }	// Domoticz quality 5
+  if (-72 <= rssi) { quality++; }	// Domoticz quality 6
+  if (-67 <= rssi) { quality++; }	// Domoticz quality 7
+  if (-62 <= rssi) { quality++; }	// Domoticz quality 8
+  if (-57 <= rssi) { quality++; }	// Domoticz quality 9
+  if (-50 <= rssi) { quality = 10; }	// Domoticz quality 10
+  }
+  return quality;
+}
+
 void MqttPublishDomoticzPowerState(byte device)
 {
   char sdimmer[8];
@@ -67,8 +101,8 @@ void MqttPublishDomoticzPowerState(byte device)
   }
   if (Settings.flag.mqtt_enabled && Settings.domoticz_relay_idx[device -1]) {
     snprintf_P(sdimmer, sizeof(sdimmer), PSTR("%d"), Settings.light_dimmer);
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"idx\":%d,\"nvalue\":%d,\"svalue\":\"%s\"}"),
-      Settings.domoticz_relay_idx[device -1], (power & (1 << (device -1))) ? 1 : 0, (light_type) ? sdimmer : "");
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"idx\":%d,\"nvalue\":%d,\"svalue\":\"%s\",\"Battery\":%d,\"RSSI\":%d}"),
+      Settings.domoticz_relay_idx[device -1], (power & (1 << (device -1))) ? 1 : 0, (light_type) ? sdimmer : "", SystemGetVoltageAsDomoticzQuality(ESP.getVcc()), WifiGetRssiAsDomoticzQuality(WiFi.RSSI()));
     MqttPublish(domoticz_in_topic);
   }
 }
