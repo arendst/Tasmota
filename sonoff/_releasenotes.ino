@@ -1,4 +1,8 @@
-/* 5.11.1b
+/* 
+ * 5.11.1b-DomoticzQuality
+ * Added support for Battery and RSSI quality in Domoticz
+ *
+ * 5.11.1b
  * Add command PowerOnState option 5 which inverts PulseTime and allows for delayed always on after power on
  * Changed OSWATCH_RESET_TIME (Blocked loop) from 30 to 120 seconds to allow slow networks (#1556)
  * Add French language file (#1561)
