@@ -29,7 +29,7 @@
 \*********************************************************************************************/
 
 // -- Localization --------------------------------
-#define MY_LANGUAGE            de-DE           // German in Germany
+//#define MY_LANGUAGE            de-DE           // German in Germany
 //#define MY_LANGUAGE            en-GB           // English in Great Britain. Enabled by Default
 //#define MY_LANGUAGE            fr-FR           // French in France
 //#define MY_LANGUAGE            it-IT           // Italian in Italy

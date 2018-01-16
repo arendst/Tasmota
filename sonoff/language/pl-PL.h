@@ -148,13 +148,6 @@
 #define D_WARMLIGHT "Nagrzanie"
 #define D_WEB_SERVER "Web Server"
 
-//STB mod
-#define D_MOISTURE "Wilgoc"
-#define D_DISTANCE "Odleglosc"
-#define D_CONFIGURE_PCF8574 "Konfiguruj PCF8574"
-#define D_CMND_COUNTERDEVIDER "CounterDevider"
-//end
-
 // sonoff.ino
 #define D_WARNING_MINIMAL_VERSION "WARNING This version does not support persistent settings"
 #define D_LEVEL_10 "poziom 1-0"
@@ -199,6 +192,13 @@
 #define D_LOADED_FROM_FLASH_AT "Wczytane z pamieci flash z"
 #define D_USE_DEFAULTS "Uzyj domyslnych"
 #define D_ERASED_SECTOR "Wymazany sektor"
+
+//STB mod
+#define D_JSON_MOISTURE "Wilgoc"
+#define D_JSON_DISTANCE "Odleglosc"
+#define D_CONFIGURE_PCF8574 "Konfiguruj PCF8574"
+#define D_CMND_COUNTERDEVIDER "CounterDevider"
+//end
 
 // webserver.ino
 #define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "Oprogramowanie MINIMAL - prosze uaktualnic"

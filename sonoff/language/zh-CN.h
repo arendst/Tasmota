@@ -187,6 +187,13 @@
 #define D_FOUND_AT "found at"
 #define D_SYSLOG_HOST_NOT_FOUND "Syslog主机未找到"
 
+//STB mod
+#define D_JSON_MOISTURE "Moisture"
+#define D_JSON_DISTANCE "Distance"
+#define D_CONFIGURE_PCF8574 "Configure PCF8574"
+#define D_CMND_COUNTERDEVIDER "CounterDevider"
+//end
+
 // settings.ino
 #define D_SAVED_TO_FLASH_AT "保存到 flash:"
 #define D_LOADED_FROM_FLASH_AT "从 flash 载入"

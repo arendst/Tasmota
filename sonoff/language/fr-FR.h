@@ -187,6 +187,13 @@
 #define D_FOUND_AT "trouvé à"
 #define D_SYSLOG_HOST_NOT_FOUND "Host syslog introuvable"
 
+//STB mod
+#define D_JSON_MOISTURE "Moisture"
+#define D_JSON_DISTANCE "Distance"
+#define D_CONFIGURE_PCF8574 "Configure PCF8574"
+#define D_CMND_COUNTERDEVIDER "CounterDevider"
+//end
+
 // settings.ino
 #define D_SAVED_TO_FLASH_AT "Enregistré dans la flash à"
 #define D_LOADED_FROM_FLASH_AT "Chargé de la flash à"
