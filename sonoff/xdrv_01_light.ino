@@ -548,7 +548,9 @@ boolean LightGetResult(byte device)
 void LightPreparePower()
 {
   if (Settings.light_dimmer && !(light_power)) {
-    ExecuteCommandPower(devices_present, 7);  // No publishPowerState
+    if (!Settings.flag.not_power_linked) {
+      ExecuteCommandPower(devices_present, 7);  // No publishPowerState
+    }
   }
   else if (!Settings.light_dimmer && light_power) {
     ExecuteCommandPower(devices_present, 6);  // No publishPowerState
