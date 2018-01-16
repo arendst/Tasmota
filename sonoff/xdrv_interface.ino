@@ -100,6 +100,14 @@ boolean XdrvMqttData(char *topicBuf, uint16_t stopicBuf, char *dataBuf, uint16_t
   return XdrvCall(FUNC_MQTT_DATA);
 }
 
+
+boolean XdrvGetResult(byte device)
+{
+  XdrvMailbox.index = (uint16_t)device;
+  return XdrvCall(FUNC_GET_RESULT);
+}
+
+
 /*********************************************************************************************\
  * Function call to all xdrv
 \*********************************************************************************************/
