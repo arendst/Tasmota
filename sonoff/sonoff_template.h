@@ -221,6 +221,7 @@ enum SupportedModules {
   ARILUX_LC11,
   SONOFF_DUAL_R2,
   ARILUX_LC06,
+  LINKNODE_R8,
   MAXMODULE };
 
 /********************************************************************************************/
@@ -278,7 +279,8 @@ const uint8_t kNiceList[MAXMODULE] PROGMEM = {
   KMC_70011,
   AILIGHT,
   WEMOS,
-  WITTY
+  WITTY,
+  LINKNODE_R8
 };
 
 // Default module settings
@@ -817,6 +819,26 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_PWM1,        // GPIO14 RGB LED Red
      GPIO_USER,        // GPIO15 RGBW LED White
      0, 0
+  },
+  { "LinkNode R8",     // LinkNode R8 (ESP8266-12F) http://linksprite.com/wiki/index.php5
+     0,       
+     0,       
+     0,       
+     0,       
+     GPIO_REL6,     // GPIO4 Relay 6   
+     GPIO_REL7,     // GPIO5 Relay 7       
+     0,                
+     0,                
+     0,                
+     0,                
+     GPIO_REL5,     // GPIO10 Relay 5   
+     0,                
+     GPIO_REL3,     // GPIO12 Relay 3
+     GPIO_REL4,     // GPIO13 Relay 4
+     GPIO_REL2,     // GPIO14 Relay 2       
+     GPIO_REL8,     // GPIO15 Relay 8     
+     GPIO_REL1,     // GPIO16 Relay 1
+     0                 
   }
 };
 
