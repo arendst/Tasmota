@@ -204,9 +204,9 @@ const char HTTP_FORM_WIFI[] PROGMEM =
   "<fieldset><legend><b>&nbsp;" D_WIFI_PARAMETERS "&nbsp;</b></legend><form method='get' action='sv'>"
   "<input id='w' name='w' value='1' hidden><input id='r' name='r' value='1' hidden>"
   "<br/><b>" D_AP1_SSID "</b> (" STA_SSID1 ")<br/><input id='s1' name='s1' placeholder='" STA_SSID1 "' value='{s1'><br/>"
-  "<br/><b>" D_AP1_PASSWORD "</b><br/><input id='p1' name='p1' type='password' placeholder='" STA_PASS1 "' value='{p1'><br/>"
+  "<br/><b>" D_AP1_PASSWORD "</b><br/><input id='p1' name='p1' type='password' placeholder='" D_AP1_PASSWORD "' value='{p1'><br/>"
   "<br/><b>" D_AP2_SSID "</b> (" STA_SSID2 ")<br/><input id='s2' name='s2' placeholder='" STA_SSID2 "' value='{s2'><br/>"
-  "<br/><b>" D_AP2_PASSWORD "</b><br/><input id='p2' name='p2' type='password' placeholder='" STA_PASS2 "' value='{p2'><br/>"
+  "<br/><b>" D_AP2_PASSWORD "</b><br/><input id='p2' name='p2' type='password' placeholder='" D_AP2_PASSWORD "' value='{p2'><br/>"
   "<br/><b>" D_HOSTNAME "</b> (" WIFI_HOSTNAME ")<br/><input id='h' name='h' placeholder='" WIFI_HOSTNAME" ' value='{h1'><br/>";
 const char HTTP_FORM_MQTT[] PROGMEM =
   "<fieldset><legend><b>&nbsp;" D_MQTT_PARAMETERS "&nbsp;</b></legend><form method='get' action='sv'>"
@@ -236,7 +236,7 @@ const char HTTP_FORM_LOG3[] PROGMEM =
 const char HTTP_FORM_OTHER[] PROGMEM =
   "<fieldset><legend><b>&nbsp;" D_OTHER_PARAMETERS "&nbsp;</b></legend><form method='get' action='sv'>"
   "<input id='w' name='w' value='5' hidden><input id='r' name='r' value='1' hidden>"
-  "<br/><b>" D_WEB_ADMIN_PASSWORD "</b><br/><input id='p1' name='p1' type='password' placeholder='" WEB_PASSWORD "' value='{p1'><br/>"
+  "<br/><b>" D_WEB_ADMIN_PASSWORD "</b><br/><input id='p1' name='p1' type='password' placeholder='" D_WEB_ADMIN_PASSWORD "' value='{p1'><br/>"
   "<br/><input style='width:10%;' id='b1' name='b1' type='checkbox'{r1><b>" D_MQTT_ENABLE "</b><br/>";
   const char HTTP_FORM_OTHER2[] PROGMEM =
   "<br/><b>" D_FRIENDLY_NAME " {1</b> ({2)<br/><input id='a{1' name='a{1' placeholder='{2' value='{3'><br/>";
@@ -245,7 +245,7 @@ const char HTTP_FORM_OTHER3a[] PROGMEM =
   "<br/><fieldset><legend><b>&nbsp;" D_EMULATION "&nbsp;</b></legend>";
 const char HTTP_FORM_OTHER3b[] PROGMEM =
   "<br/><input style='width:10%;' id='b2' name='b2' type='radio' value='{1'{2><b>{3</b>{4";
-  #endif  // USE_EMULATION
+#endif  // USE_EMULATION
 const char HTTP_FORM_END[] PROGMEM =
   "<br/><button type='submit'>" D_SAVE "</button></form></fieldset>";
 const char HTTP_FORM_RST[] PROGMEM =
@@ -412,9 +412,9 @@ void SetHeader()
 #endif
 }
 
-void ShowPage(String &page)
+void ShowPage(String &page, bool auth = true)
 {
-  if((HTTP_ADMIN == webserver_state) && (Settings.web_password[0] != 0) && !WebServer->authenticate(WEB_USERNAME, Settings.web_password)) {
+  if(auth && (Settings.web_password[0] != 0) && !WebServer->authenticate(WEB_USERNAME, Settings.web_password)) {
     return WebServer->requestAuthentication();
   }
   page.replace(F("{ha"), my_module.name);
@@ -441,7 +441,16 @@ void HandleRoot()
   }
 
   if (HTTP_MANAGER == webserver_state) {
-    HandleWifiConfiguration();
+    if ((Settings.web_password[0] != 0) && !(WebServer->hasArg("USER1")) && !(WebServer->hasArg("PASS1"))) {
+      HandleWifiLOGIN();
+    } else {
+      if (!(Settings.web_password[0] != 0) || ((WebServer->arg("USER1") == WEB_USERNAME ) && (WebServer->arg("PASS1") == Settings.web_password ))) {
+        HandleWifiConfiguration();
+      } else {
+        // wrong user and pass
+        HandleWifiLOGIN();
+      }
+    }
   } else {
     char stemp[10];
     char line[160];
@@ -790,16 +799,26 @@ void HandleWifi(boolean scan)
   page += FPSTR(HTTP_FORM_WIFI);
   page.replace(F("{h1"), Settings.hostname);
   page.replace(F("{s1"), Settings.sta_ssid[0]);
-  page.replace(F("{p1"), Settings.sta_pwd[0]);
+  page.replace(F("{p1"), "**********");
   page.replace(F("{s2"), Settings.sta_ssid[1]);
-  page.replace(F("{p2"), Settings.sta_pwd[1]);
+  page.replace(F("{p2"), "**********");
   page += FPSTR(HTTP_FORM_END);
   if (HTTP_MANAGER == webserver_state) {
     page += FPSTR(HTTP_BTN_RSTRT);
   } else {
     page += FPSTR(HTTP_BTN_CONF);
   }
-  ShowPage(page);
+  ShowPage(page,!(HTTP_MANAGER == webserver_state));
+}
+
+void HandleWifiLOGIN()
+{
+  String page = FPSTR(HTTP_HEAD);
+  page.replace(F("{v}"), FPSTR( D_CONFIGURE_WIFI ));
+  page += FPSTR("<form action='/' method='POST'><br/><b>" D_USER "</b><br/><input name='USER1' placeholder='" D_USER "'><br/>");
+  page += FPSTR("<br/><b>" D_PASSWORD "</b><br/><input name='PASS1' type='password' placeholder='" D_PASSWORD "'><br/>");
+  page += FPSTR("<br/><br/><button>" D_OK "</button></form>");  
+  ShowPage(page,false); // false means show page no matter if the client has or has not credentials
 }
 
 void HandleMqttConfiguration()
@@ -886,7 +905,7 @@ void HandleOtherConfiguration()
   String page = FPSTR(HTTP_HEAD);
   page.replace(F("{v}"), FPSTR(S_CONFIGURE_OTHER));
   page += FPSTR(HTTP_FORM_OTHER);
-  page.replace(F("{p1"), Settings.web_password);
+  page.replace(F("{p1"), "**********");
   page.replace(F("{r1"), (Settings.flag.mqtt_enabled) ? F(" checked") : F(""));
   uint8_t maxfn = (devices_present > MAX_FRIENDLYNAMES) ? MAX_FRIENDLYNAMES : devices_present;
   for (byte i = 0; i < maxfn; i++) {
@@ -963,10 +982,10 @@ void HandleSaveSettings()
     if (strstr(Settings.hostname,"%")) {
       strlcpy(Settings.hostname, WIFI_HOSTNAME, sizeof(Settings.hostname));
     }
-    strlcpy(Settings.sta_ssid[0], (!strlen(WebServer->arg("s1").c_str())) ? STA_SSID1 : WebServer->arg("s1").c_str(), sizeof(Settings.sta_ssid[0]));
-    strlcpy(Settings.sta_pwd[0], (!strlen(WebServer->arg("p1").c_str())) ? STA_PASS1 : WebServer->arg("p1").c_str(), sizeof(Settings.sta_pwd[0]));
-    strlcpy(Settings.sta_ssid[1], (!strlen(WebServer->arg("s2").c_str())) ? STA_SSID2 : WebServer->arg("s2").c_str(), sizeof(Settings.sta_ssid[1]));
-    strlcpy(Settings.sta_pwd[1], (!strlen(WebServer->arg("p2").c_str())) ? STA_PASS2 : WebServer->arg("p2").c_str(), sizeof(Settings.sta_pwd[1]));
+    strlcpy(Settings.sta_ssid[0], (!strlen(WebServer->arg("s1").c_str())) ? "" : WebServer->arg("s1").c_str(), sizeof(Settings.sta_ssid[0]));
+    strlcpy(Settings.sta_pwd[0], (!strlen(WebServer->arg("p1").c_str())) ? "" : (strchr(WebServer->arg("p1").c_str(),'*')) ? Settings.sta_pwd[0] : WebServer->arg("p1").c_str(), sizeof(Settings.sta_pwd[0]));
+    strlcpy(Settings.sta_ssid[1], (!strlen(WebServer->arg("s2").c_str())) ? "" : WebServer->arg("s2").c_str(), sizeof(Settings.sta_ssid[1]));
+    strlcpy(Settings.sta_pwd[1], (!strlen(WebServer->arg("p2").c_str())) ? "" : (strchr(WebServer->arg("p2").c_str(),'*')) ? Settings.sta_pwd[1] : WebServer->arg("p2").c_str(), sizeof(Settings.sta_pwd[1]));
     snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_WIFI D_CMND_HOSTNAME " %s, " D_CMND_SSID "1 %s, " D_CMND_PASSWORD "1 %s, " D_CMND_SSID "2 %s, " D_CMND_PASSWORD "2 %s"),
       Settings.hostname, Settings.sta_ssid[0], Settings.sta_pwd[0], Settings.sta_ssid[1], Settings.sta_pwd[1]);
     AddLog(LOG_LEVEL_INFO);
@@ -1014,7 +1033,7 @@ snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_LOG D_CMND_SERIALLOG " %d, " D
     break;
 #endif  // USE_DOMOTICZ
   case 5:
-    strlcpy(Settings.web_password, (!strlen(WebServer->arg("p1").c_str())) ? WEB_PASSWORD : (!strcmp(WebServer->arg("p1").c_str(),"0")) ? "" : WebServer->arg("p1").c_str(), sizeof(Settings.web_password));
+    strlcpy(Settings.web_password, (!strlen(WebServer->arg("p1").c_str())) ? "" : (strchr(WebServer->arg("p1").c_str(),'*')) ? Settings.web_password : WebServer->arg("p1").c_str(), sizeof(Settings.web_password));
     Settings.flag.mqtt_enabled = WebServer->hasArg("b1");
 #ifdef USE_EMULATION
     Settings.flag2.emulation = (!strlen(WebServer->arg("b2").c_str())) ? 0 : atoi(WebServer->arg("b2").c_str());
