@@ -286,9 +286,9 @@
   #define D_JSON_MAXENERGYREACHED "MaxEnergyReached"
 // MyCode
 #define D_JSON_POWERWINDOW "PowerWindow"
-#define D_JSON_POWERON "on"
-#define D_JSON_POWERSTANDBY "standby"
-#define D_JSON_POWEROFF "off"
+#define D_JSON_POWERON "ON"
+#define D_JSON_POWERSTANDBY "STANDBY"
+#define D_JSON_POWEROFF "OFF"
 #define D_CMND_POWERWINDOWLOW "PowerWindowLow"
 #define D_CMND_POWERWINDOWHIGH "PowerWindowHigh"
 
