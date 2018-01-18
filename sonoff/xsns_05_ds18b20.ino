@@ -192,7 +192,7 @@ void Ds18b20Show(boolean json)
   if (Ds18b20Read(t)) {                // Check if read failed
     char temperature[10];
 
-    dtostrfi(t, Settings.flag2.temperature_resolution, temperature);
+    dtostrfd(t, Settings.flag2.temperature_resolution, temperature);
 
     if(json) {
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"DS18B20\":{\"" D_JSON_TEMPERATURE "\":%s}"), mqtt_data, temperature);
