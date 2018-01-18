@@ -407,6 +407,9 @@ void SetHeader()
   WebServer->sendHeader(F("Cache-Control"), F("no-cache, no-store, must-revalidate"));
   WebServer->sendHeader(F("Pragma"), F("no-cache"));
   WebServer->sendHeader(F("Expires"), F("-1"));
+#ifndef ARDUINO_ESP8266_RELEASE_2_3_0
+  WebServer->sendHeader(F("Access-Control-Allow-Origin"), F("*"));
+#endif
 }
 
 void ShowPage(String &page)
@@ -885,10 +888,14 @@ void HandleOtherConfiguration()
   page += FPSTR(HTTP_FORM_OTHER);
   page.replace(F("{p1"), Settings.web_password);
   page.replace(F("{r1"), (Settings.flag.mqtt_enabled) ? F(" checked") : F(""));
-  page += FPSTR(HTTP_FORM_OTHER2);
-  page.replace(F("{1"), F("1"));
-  page.replace(F("{2"), FRIENDLY_NAME);
-  page.replace(F("{3"), Settings.friendlyname[0]);
+  uint8_t maxfn = (devices_present > MAX_FRIENDLYNAMES) ? MAX_FRIENDLYNAMES : devices_present;
+  for (byte i = 0; i < maxfn; i++) {
+    page += FPSTR(HTTP_FORM_OTHER2);
+    page.replace(F("{1"), String(i +1));
+    snprintf_P(stemp, sizeof(stemp), PSTR(FRIENDLY_NAME"%d"), i +1);
+    page.replace(F("{2"), (i) ? stemp : FRIENDLY_NAME);
+    page.replace(F("{3"), Settings.friendlyname[i]);
+  }
 #ifdef USE_EMULATION
   page += FPSTR(HTTP_FORM_OTHER3a);
   for (byte i = 0; i < EMUL_MAX; i++) {
@@ -898,15 +905,7 @@ void HandleOtherConfiguration()
     page.replace(F("{3"), (i == EMUL_NONE) ? F(D_NONE) : (i == EMUL_WEMO) ? F(D_BELKIN_WEMO) : F(D_HUE_BRIDGE));
     page.replace(F("{4"), (i == EMUL_NONE) ? F("") : (i == EMUL_WEMO) ? F(" " D_SINGLE_DEVICE) : F(" " D_MULTI_DEVICE));
   }
-  page += F("<br/>");
-  uint8_t maxfn = (devices_present > MAX_FRIENDLYNAMES) ? MAX_FRIENDLYNAMES : devices_present;
-  for (byte i = 1; i < maxfn; i++) {
-    page += FPSTR(HTTP_FORM_OTHER2);
-    page.replace(F("{1"), String(i +1));
-    snprintf_P(stemp, sizeof(stemp), PSTR(FRIENDLY_NAME"%d"), i +1);
-    page.replace(F("{2"), stemp);
-    page.replace(F("{3"), Settings.friendlyname[i]);
-  }
+//  page += F("<br/>");
   page += F("<br/></fieldset>");
 #endif  // USE_EMULATION
   page += FPSTR(HTTP_FORM_END);
@@ -1079,7 +1078,7 @@ void HandleResetConfiguration()
     return;
   }
 
-  char svalue[16];
+  char svalue[33];
 
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_RESET_CONFIGURATION);
 
@@ -1375,6 +1374,7 @@ void HandleHttpCommand()
   } else {
     message += F(D_NEED_USER_AND_PASSWORD "\"}");
   }
+  SetHeader();
   WebServer->send(200, FPSTR(HDR_CTYPE_JSON), message);
 }
 

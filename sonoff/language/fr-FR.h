@@ -57,7 +57,7 @@
 #define D_BY "par"                    // Written by me
 #define D_BYTES "Bytes"
 #define D_CELSIUS "Celsius"
-#define D_CO2 "Dioxyde arbone"
+#define D_CO2 "Dioxyde de carbone"
 #define D_CODE "code"                // Button code
 #define D_COLDLIGHT "Froid"
 #define D_COMMAND "Commande"
@@ -149,6 +149,7 @@
 #define D_WEB_SERVER "Serveur web"
 
 // sonoff.ino
+#define D_WARNING_MINIMAL_VERSION "ATTENTION Cette version ne supporte pas les réglages persistants"
 #define D_LEVEL_10 "level 1-0"
 #define D_LEVEL_01 "level 0-1"
 #define D_SERIAL_LOGGING_DISABLED "Journalisation série désactivé"
@@ -263,7 +264,7 @@
 #define D_OTHER_PARAMETERS "Autres paramètres"
 #define D_WEB_ADMIN_PASSWORD "Mot de passe Web Admin"
 #define D_MQTT_ENABLE "MQTT activé"
-#define D_FRIENDLY_NAME "Nom d'usage"
+#define D_FRIENDLY_NAME "Surnom"
 #define D_BELKIN_WEMO "Belkin WeMo"
 #define D_HUE_BRIDGE "Hue Bridge"
 #define D_SINGLE_DEVICE "module unique"
@@ -382,8 +383,13 @@
 #define D_CHECKSUM_FAILURE "Echec checksum"
 
 // xsns_07_sht1x.ino
-#define D_SENSOR_DID_NOT_ACK_COMMAND "Sensor did not ACK command"
+#define D_SENSOR_DID_NOT_ACK_COMMAND "Le capteur n'a pas ACK la commande"
 #define D_SHT1X_FOUND "SHT1X found"
+
+// xsns_18_pms5003.ino
+#define D_STANDARD_CONCENTRATION "Concentration standard"
+#define D_ENVIRONMENTAL_CONCENTRATION "Concentration environmentale"
+#define D_PARTICALS_BEYOND "Particules au-delà"
 
 // sonoff_template.h
 // Max string length is 8 characters including suffixes
@@ -412,6 +418,7 @@
 #define D_SENSOR_SPI_CS   "SPI CS"
 #define D_SENSOR_SPI_DC   "SPI DC"
 #define D_SENSOR_BACKLIGHT "BkLight"
+#define D_SENSOR_PMS5003  "PMS5003"
 
 // Units
 #define D_UNIT_AMPERE "A"
@@ -419,11 +426,14 @@
 #define D_UNIT_KILOOHM "kOhm"
 #define D_UNIT_KILOWATTHOUR "kWh"
 #define D_UNIT_LUX "lx"
+#define D_UNIT_MICROGRAM_PER_CUBIC_METER "ug/m3"
+#define D_UNIT_MICROMETER "um"
 #define D_UNIT_MICROSECOND "us"
 #define D_UNIT_MILLIAMPERE "mA"
 #define D_UNIT_MILLISECOND "ms"
 #define D_UNIT_MINUTE "Min"
-#define D_UNIT_PPM "ppm"
+#define D_UNIT_PARTS_PER_DECILITER "ppd"
+#define D_UNIT_PARTS_PER_MILLION "ppm"
 #define D_UNIT_PRESSURE "hPa"
 #define D_UNIT_SECOND "sec"
 #define D_UNIT_SECTORS "secteurs"

@@ -1,5 +1,13 @@
-/* 5.11.1a
- * Add automagic two step Web server OTA upgrade using filename-minimal image if OTA free space is too small
+/* 5.11.1b
+ * Add command PowerOnState option 5 which inverts PulseTime and allows for delayed always on after power on
+ * Changed OSWATCH_RESET_TIME (Blocked loop) from 30 to 120 seconds to allow slow networks (#1556)
+ * Add French language file (#1561)
+ * Fix truncated command names and wrong response for DomoticzSwitchIdx (#1571)
+ * Add HTTP Allow Cross Origin removed from ESP8266/Arduino 2.4.0 (#1572)
+ * Fix %-sign issue as printf escape character in Humidity and Sonoff SC (#1579)
+ *
+ * 5.11.1a
+ * Add OtaMagic two step Web server OTA upgrade using filename-minimal image if OTA free space is too small
  * Add chinese language file (#1551)
  *
  * 5.11.1 20180107
