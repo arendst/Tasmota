@@ -106,6 +106,7 @@
 #define D_OFFLINE "offline"
 #define D_OK "OK"
 #define D_ON "an"
+#define D_STANDBY "Bereithalten"
 #define D_ONLINE "online"
 #define D_PASSWORD "Passwort"
 #define D_PORT "Port"

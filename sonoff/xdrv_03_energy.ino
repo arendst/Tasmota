@@ -678,37 +678,6 @@ void EnergyMarginCheck()
   }
   prev_power_window = current_power_window;
 
-/*
-    if (energy_power_prev_u < Settings.energy_standby_power_window_high-POWER_WINDOW_HYSTERESIS && energy_power_u > Settings.energy_standby_power_window_high+POWER_WINDOW_HYSTERESIS) {
-      AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "Power Window On"));
-      snprintf_P(log_data, sizeof(log_data), PSTR("EPU: %d, PREV %d, HI %d, LO %d"), energy_power_u, energy_power_prev_u, Settings.energy_standby_power_window_high, Settings.energy_standby_power_window_low);
-      AddLog(LOG_LEVEL_DEBUG);
-      current_power_window = WINDOW_ON;
-      energy_power_window_stable_count = 0;
-    }
-    else if (energy_power_prev_u < Settings.energy_standby_power_window_low-POWER_WINDOW_HYSTERESIS && energy_power_u > Settings.energy_standby_power_window_low+POWER_WINDOW_HYSTERESIS) {
-      AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "Power Window Standby1"));
-      snprintf_P(log_data, sizeof(log_data), PSTR("EPU: %d, PREV %d, HI %d, LO %d"), energy_power_u, energy_power_prev_u, Settings.energy_standby_power_window_high, Settings.energy_standby_power_window_low);
-      AddLog(LOG_LEVEL_DEBUG);
-      current_power_window = WINDOW_STANDBY;
-      energy_power_window_stable_count = 0;
-    }
-    else if (energy_power_prev_u > Settings.energy_standby_power_window_low+POWER_WINDOW_HYSTERESIS && energy_power_u < Settings.energy_standby_power_window_low-POWER_WINDOW_HYSTERESIS) {
-      AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "Power Window Off"));
-      snprintf_P(log_data, sizeof(log_data), PSTR("EPU: %d, PREV %d, HI %d, LO %d"), energy_power_u, energy_power_prev_u, Settings.energy_standby_power_window_high, Settings.energy_standby_power_window_low);
-      AddLog(LOG_LEVEL_DEBUG);
-      current_power_window = WINDOW_OFF;
-      energy_power_window_stable_count = 0;
-    }
-    else if (energy_power_prev_u > Settings.energy_standby_power_window_high+POWER_WINDOW_HYSTERESIS && energy_power_u < Settings.energy_standby_power_window_high-POWER_WINDOW_HYSTERESIS) {
-      AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "Power Window Standby2"));
-      snprintf_P(log_data, sizeof(log_data), PSTR("EPU: %d, PREV %d, HI %d, LO %d"), energy_power_u, energy_power_prev_u, Settings.energy_standby_power_window_high, Settings.energy_standby_power_window_low);
-      AddLog(LOG_LEVEL_DEBUG);
-      current_power_window = WINDOW_STANDBY;
-      energy_power_window_stable_count = 0;
-    }
-*/
-
 #endif  // FEATURE_POWER_CHANGE_REPORT
 
 }

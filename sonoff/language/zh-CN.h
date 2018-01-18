@@ -106,6 +106,7 @@
 #define D_OFFLINE "离线"
 #define D_OK "好"
 #define D_ON "开"
+#define D_STANDBY "待命"
 #define D_ONLINE "在线"
 #define D_PASSWORD "密码"
 #define D_PORT "端口"
