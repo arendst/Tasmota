@@ -369,19 +369,6 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_LED1,        // GPIO15 Green Led (0 = On, 1 = Off)
      0, 0
   },
-  { "TV Sonoff Pow",   // Sonoff Pow (ESP8266)
-     GPIO_KEY1,        // GPIO00 Button
-     0,0,
-     GPIO_KEY2,        // GPIO01 Button
-     GPIO_REL2,        // GPIO02 Sonoff 4CH Red Led and Relay 2 (0 = Off, 1 = On)
-     GPIO_HLW_SEL,     // GPIO05 HLW8012 Sel output
-     0, 0, 0, 0, 0, 0, // Flash connection
-     GPIO_REL1,        // GPIO12 Red Led and Relay (0 = Off, 1 = On)
-     GPIO_HLW_CF1,     // GPIO13 HLW8012 CF1 voltage / current
-     GPIO_HLW_CF,      // GPIO14 HLW8012 CF power
-     GPIO_LED1,        // GPIO15 Green Led (0 = On, 1 = Off)
-     0, 0
-  },
   { "Sonoff 4CH",      // Sonoff 4CH (ESP8285)
      GPIO_KEY1,        // GPIO00 Button 1
      GPIO_USER,        // GPIO01 Serial RXD and Optional sensor
