@@ -333,7 +333,6 @@ char* GetPowerDevice(char* dest, uint8_t idx, size_t size)
 \*********************************************************************************************/
 
 #define WIFI_CONFIG_SEC   180  // seconds before restart
-#define WIFI_MANAGER_SEC  180  // seconds before restart
 #define WIFI_CHECK_SEC    20   // seconds
 #define WIFI_RETRY_SEC    30   // seconds
 
@@ -361,7 +360,7 @@ int WifiGetRssiAsQuality(int rssi)
 boolean WifiConfigCounter()
 {
   if (wifi_config_counter) {
-    wifi_config_counter = WIFI_MANAGER_SEC;
+    wifi_config_counter = WIFI_CONFIG_SEC;
   }
   return (wifi_config_counter);
 }

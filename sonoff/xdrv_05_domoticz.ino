@@ -94,11 +94,6 @@ void DomoticzMqttUpdate()
   }
 }
 
-void DomoticzSetUpdateTimer(uint16_t value)
-{
-  domoticz_update_timer = value;
-}
-
 void DomoticzMqttSubscribe()
 {
   uint8_t maxdev = (devices_present > MAX_DOMOTICZ_IDX) ? MAX_DOMOTICZ_IDX : devices_present;
@@ -417,6 +412,9 @@ boolean Xdrv05(byte function)
         break;
       case FUNC_MQTT_SUBSCRIBE:
         DomoticzMqttSubscribe();
+        break;
+      case FUNC_MQTT_INIT:
+        domoticz_update_timer = 2;
         break;
       case FUNC_MQTT_DATA:
         result = DomoticzMqttData();
