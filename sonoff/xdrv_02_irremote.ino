@@ -109,7 +109,7 @@ void IrReceiveCheck()
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_IRRECEIVED "\":{\"" D_JSON_IR_PROTOCOL "\":\"%s\",\"" D_JSON_IR_BITS "\":%d,\"" D_JSON_IR_DATA "\":\"%X\"}}"),
         GetTextIndexed(sirtype, sizeof(sirtype), iridx, kIrRemoteProtocols), results.bits, results.value);
-      MqttPublishPrefixTopic_P(6, PSTR(D_JSON_IRRECEIVED));
+      MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_IRRECEIVED));
 #ifdef USE_DOMOTICZ
       unsigned long value = results.value | (iridx << 28);  // [Protocol:4, Data:28]
       DomoticzSensor(DZ_COUNT, value);                      // Send data as Domoticz Counter value

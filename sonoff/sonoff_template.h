@@ -501,7 +501,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_REL1,        // GPIO15 Relay (0 = Off, 1 = On)
      0, 0
   },
-  { "WeMos D1 mini",   // WeMos and NodeMCU hardware (ESP8266)
+  { "Generic",         // Any ESP8266/ESP8285 device like WeMos and NodeMCU hardware (ESP8266)
      GPIO_USER,        // GPIO00 D3 Wemos Button Shield
      GPIO_USER,        // GPIO01 TX Serial RXD
      GPIO_USER,        // GPIO02 D4 Wemos DHT Shield
@@ -858,6 +858,30 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_PWM2,        // GPIO12 RGB LED Green
      GPIO_PWM1,        // GPIO13 RGB LED Red
      GPIO_PWM3,        // GPIO14 RGB LED Blue
+     0, 0, 0
+  }
+
+  { "SMPW701E",        // SM-PW701E WLAN Socket (#1190)
+     0, 0, 0, 0,
+     GPIO_LED1_INV,    // GPIO04 Blue Led (0 = On, 1 = Off)
+     0,                // GPIO05 IR or RF receiver (optional)
+     0, 0, 0, 0, 0, 0, // Flash connection
+     GPIO_REL1,        // GPIO12 Relay and Red Led (0 = Off, 1 = On)
+     GPIO_KEY1,        // GPIO13 Button
+     0, 0, 0, 0
+  }
+
+  { "SWA1",            // Smart Plugs (ESP8266)
+     0,
+     GPIO_USER,        // GPIO01
+     0,
+     GPIO_USER,        // GPIO03
+     GPIO_LED1_INV,    // GPIO04 Blue LED
+     GPIO_REL1,        // GPIO05 Red LED and relay
+     0, 0, 0, 0, 0, 0, // Flash connection
+     0,
+     GPIO_KEY1,        // GPIO13 Button (normally GPIO00)
+     GPIO_USER,        // GPIO14
      0, 0, 0
   }
 
