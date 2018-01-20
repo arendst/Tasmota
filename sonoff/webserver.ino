@@ -422,7 +422,7 @@ void SetHeader()
 #endif
 }
 
-void ShowPage(String &page, bool auth = true)
+void ShowPage(String &page, bool auth)
 {
 //  if((HTTP_ADMIN == webserver_state) && (Settings.web_password[0] != 0) && !WebServer->authenticate(WEB_USERNAME, Settings.web_password)) {
 //    return WebServer->requestAuthentication();
@@ -446,6 +446,11 @@ void ShowPage(String &page, bool auth = true)
   SetHeader();
   WebServer->send(200, FPSTR(HDR_CTYPE_HTML), page);
 //  WebServer->sendContent("");
+}
+
+void ShowPage(String &page)
+{
+  ShowPage(page, true);
 }
 
 //Authentication
