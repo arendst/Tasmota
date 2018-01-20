@@ -86,7 +86,7 @@ typedef unsigned long power_t;              // Power (Relay) type
 #define CMDSZ                  24           // Max number of characters in command
 #define TOPSZ                  100          // Max number of characters in topic string
 #define LOGSZ                  400          // Max number of characters in log
-#define MIN_MESSZ              893          // Min number of characters in MQTT message 
+#define MIN_MESSZ              893          // Min number of characters in MQTT message
 #ifdef USE_MQTT_TLS
   #define MAX_LOG_LINES        10           // Max number of lines in weblog
 #else
@@ -144,5 +144,11 @@ enum XsnsFunctions {FUNC_INIT, FUNC_EVERY_50_MSECOND, FUNC_EVERY_SECOND, FUNC_PR
                     FUNC_COMMAND, FUNC_MQTT_SUBSCRIBE, FUNC_MQTT_INIT, FUNC_MQTT_DATA, FUNC_SET_POWER, FUNC_SHOW_SENSOR};
 
 const uint8_t kDefaultRfCode[9] PROGMEM = { 0x21, 0x16, 0x01, 0x0E, 0x03, 0x48, 0x2E, 0x1A, 0x00 };
+
+/*********************************************************************************************\
+ * Extern global variables
+\*********************************************************************************************/
+
+extern uint8_t light_device;  // Light device number
 
 #endif  // _SONOFF_H_

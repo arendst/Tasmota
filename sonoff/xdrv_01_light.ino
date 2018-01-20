@@ -99,6 +99,7 @@ uint8_t light_signal_color[5];
 
 uint8_t light_wheel = 0;
 uint8_t light_subtype = 0;
+uint8_t light_device = 0;
 uint8_t light_power = 0;
 uint8_t light_update = 1;
 uint8_t light_wakeup_active = 0;
@@ -337,6 +338,7 @@ void LightInit()
 {
   uint8_t max_scheme = LS_MAX -1;
 
+  light_device = devices_present;
   light_subtype = light_type &7;
 
   if (light_type < LT_PWM6) {           // PWM
@@ -526,35 +528,56 @@ char* LightGetColor(uint8_t type, char* scolor)
 void LightPowerOn()
 {
   if (Settings.light_dimmer && !(light_power)) {
-    ExecuteCommandPower(devices_present, 1);
+    ExecuteCommandPower(light_device, 1);
   }
 }
 
-void LightPreparePower()
+void LightState(uint8_t append)
 {
   char scolor[25];
   char scommand[33];
 
-  if (Settings.light_dimmer && !(light_power)) {
-    ExecuteCommandPower(devices_present, 7);  // No publishPowerState
+  if (append) {
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,"), mqtt_data);
+  } else {
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{"));
   }
-  else if (!Settings.light_dimmer && light_power) {
-    ExecuteCommandPower(devices_present, 6);  // No publishPowerState
-  }
-#ifdef USE_DOMOTICZ
-  DomoticzUpdatePowerState(devices_present);
-#endif  // USE_DOMOTICZ
-
-  GetPowerDevice(scommand, devices_present, sizeof(scommand));
-  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"%s\":\"%s\",\"" D_CMND_DIMMER "\":%d"),
-    scommand, GetStateText(light_power), Settings.light_dimmer);
+  GetPowerDevice(scommand, light_device, sizeof(scommand));
+  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s\"%s\":\"%s\",\"" D_CMND_DIMMER "\":%d"),
+    mqtt_data, scommand, GetStateText(light_power), Settings.light_dimmer);
   if (light_subtype > LST_SINGLE) {
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"" D_CMND_COLOR "\":\"%s\""), mqtt_data, LightGetColor(0, scolor));
   }
   if ((LST_COLDWARM == light_subtype) || (LST_RGBWC == light_subtype)) {
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"" D_CMND_COLORTEMPERATURE "\":%d"), mqtt_data, LightGetColorTemp());
   }
-  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}"), mqtt_data);
+  if (append) {
+    if (light_subtype >= LST_RGB) {
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"" D_CMND_SCHEME "\":%d"), mqtt_data, Settings.light_scheme);
+    }
+    if (LT_WS2812 == light_type) {
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"" D_CMND_WIDTH "\":%d"), mqtt_data, Settings.light_width);
+    }
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"" D_CMND_FADE "\":\"%s\",\"" D_CMND_SPEED "\":%d,\"" D_CMND_LEDTABLE "\":\"%s\""),
+      mqtt_data, GetStateText(Settings.light_fade), Settings.light_speed, GetStateText(Settings.light_correction));
+  } else {
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}"), mqtt_data);
+  }
+}
+
+void LightPreparePower()
+{
+  if (Settings.light_dimmer && !(light_power)) {
+    ExecuteCommandPower(light_device, 7);  // No publishPowerState
+  }
+  else if (!Settings.light_dimmer && light_power) {
+    ExecuteCommandPower(light_device, 6);  // No publishPowerState
+  }
+#ifdef USE_DOMOTICZ
+  DomoticzUpdatePowerState(light_device);
+#endif  // USE_DOMOTICZ
+
+  LightState(0);
 }
 
 void LightFade()
@@ -638,7 +661,8 @@ void LightRandomColor()
 
 void LightSetPower()
 {
-  light_power = XdrvMailbox.index;
+//  light_power = XdrvMailbox.index;
+  light_power = bitRead(XdrvMailbox.index, light_device -1);
   if (light_wakeup_active) {
     light_wakeup_active--;
   }

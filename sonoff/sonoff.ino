@@ -25,7 +25,7 @@
     - Select IDE Tools - Flash Size: "1M (no SPIFFS)"
   ====================================================*/
 
-#define VERSION                0x050B0103   // 5.11.1c
+#define VERSION                0x050B0104   // 5.11.1d
 
 // Location specific includes
 #include "sonoff.h"                         // Enumaration used in user_config.h
@@ -67,7 +67,7 @@
 #include "settings.h"
 
 enum TasmotaCommands {
-  CMND_BACKLOG, CMND_DELAY, CMND_POWER, CMND_STATUS, CMND_POWERONSTATE, CMND_PULSETIME,
+  CMND_BACKLOG, CMND_DELAY, CMND_POWER, CMND_STATUS, CMND_STATE, CMND_POWERONSTATE, CMND_PULSETIME,
   CMND_BLINKTIME, CMND_BLINKCOUNT, CMND_SAVEDATA, CMND_SETOPTION, CMND_TEMPERATURE_RESOLUTION, CMND_HUMIDITY_RESOLUTION,
   CMND_PRESSURE_RESOLUTION, CMND_POWER_RESOLUTION, CMND_VOLTAGE_RESOLUTION, CMND_CURRENT_RESOLUTION, CMND_ENERGY_RESOLUTION, CMND_MODULE, CMND_MODULES,
   CMND_GPIO, CMND_GPIOS, CMND_PWM, CMND_PWMFREQUENCY, CMND_PWMRANGE, CMND_COUNTER, CMND_COUNTERTYPE,
@@ -77,7 +77,7 @@ enum TasmotaCommands {
   CMND_TELEPERIOD, CMND_RESTART, CMND_RESET, CMND_TIMEZONE, CMND_ALTITUDE, CMND_LEDPOWER, CMND_LEDSTATE,
   CMND_CFGDUMP, CMND_I2CSCAN, CMND_INA219MODE, CMND_EXCEPTION };
 const char kTasmotaCommands[] PROGMEM =
-  D_CMND_BACKLOG "|" D_CMND_DELAY "|" D_CMND_POWER "|" D_CMND_STATUS "|" D_CMND_POWERONSTATE "|" D_CMND_PULSETIME "|"
+  D_CMND_BACKLOG "|" D_CMND_DELAY "|" D_CMND_POWER "|" D_CMND_STATUS "|" D_CMND_STATE "|"  D_CMND_POWERONSTATE "|" D_CMND_PULSETIME "|"
   D_CMND_BLINKTIME "|" D_CMND_BLINKCOUNT "|" D_CMND_SAVEDATA "|" D_CMND_SETOPTION "|" D_CMND_TEMPERATURE_RESOLUTION "|" D_CMND_HUMIDITY_RESOLUTION "|"
   D_CMND_PRESSURE_RESOLUTION "|" D_CMND_POWER_RESOLUTION "|" D_CMND_VOLTAGE_RESOLUTION "|" D_CMND_CURRENT_RESOLUTION "|" D_CMND_ENERGY_RESOLUTION "|" D_CMND_MODULE "|" D_CMND_MODULES "|"
   D_CMND_GPIO "|" D_CMND_GPIOS "|" D_CMND_PWM "|" D_CMND_PWMFREQUENCY "|" D_CMND_PWMRANGE "|" D_CMND_COUNTER "|"  D_CMND_COUNTERTYPE "|"
@@ -194,13 +194,8 @@ char my_version[33];                        // Composed version string
 char my_hostname[33];                       // Composed Wifi hostname
 char mqtt_client[33];                        // Composed MQTT Clientname
 char serial_in_buffer[INPUT_BUFFER_SIZE + 2]; // Receive buffer
-
-//char mqtt_data[MESSZ + TOPSZ];              // MQTT publish buffer (MESSZ) and web page ajax buffer (MESSZ + TOPSZ)
 char mqtt_data[MESSZ];                      // MQTT publish buffer and web page ajax buffer
-
-//char log_data[TOPSZ + MESSZ];               // Logging
 char log_data[LOGSZ];                       // Logging
-
 String web_log[MAX_LOG_LINES];              // Web log buffer
 String backlog[MAX_BACKLOG];                // Command backlog
 
@@ -317,7 +312,7 @@ void SetDevicePower(power_t rpower)
     }
   }
 
-  XdrvSetPower(bitRead(rpower, devices_present -1));
+  XdrvSetPower(rpower);
 
   if ((SONOFF_DUAL == Settings.module) || (CH4 == Settings.module)) {
     Serial.write(0xA0);
@@ -937,6 +932,10 @@ void MqttDataCallback(char* topic, byte* data, unsigned int data_len)
       PublishStatus(payload);
       fallback_topic_flag = 0;
       return;
+    }
+    else if (CMND_STATE == command_code) {
+      mqtt_data[0] = '\0';
+      MqttShowState();
     }
     else if ((CMND_POWERONSTATE == command_code) && (Settings.module != MOTOR)) {
       /* 0 = Keep relays off after power on
@@ -1796,9 +1795,15 @@ void MqttShowState()
   dtostrfd((double)ESP.getVcc()/1000, 3, stemp1);
   snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"" D_JSON_VCC "\":%s"), mqtt_data, stemp1);
 #endif
+
   for (byte i = 0; i < devices_present; i++) {
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"%s\":\"%s\""), mqtt_data, GetPowerDevice(stemp1, i +1, sizeof(stemp1)), GetStateText(bitRead(power, i)));
+    if (i == light_device -1) {
+      LightState(1);
+    } else {
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"%s\":\"%s\""), mqtt_data, GetPowerDevice(stemp1, i +1, sizeof(stemp1)), GetStateText(bitRead(power, i)));
+    }
   }
+
   snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"" D_JSON_WIFI "\":{\"" D_JSON_AP "\":%d,\"" D_JSON_SSID "\":\"%s\",\"" D_JSON_RSSI "\":%d,\"" D_JSON_APMAC_ADDRESS "\":\"%s\"}}"),
     mqtt_data, Settings.sta_active +1, Settings.sta_ssid[Settings.sta_active], WifiGetRssiAsQuality(WiFi.RSSI()), WiFi.BSSIDstr().c_str());
 }

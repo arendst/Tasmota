@@ -504,8 +504,12 @@ boolean Xsns09(byte function)
     switch (function) {
       case FUNC_PREP_BEFORE_TELEPERIOD:
         BmpDetect();
+        break;
+      case FUNC_EVERY_SECOND:
 #ifdef USE_BME680
-        Bme680PerformReading();
+        if (tele_period == Settings.tele_period -3) {
+          Bme680PerformReading();
+        }
 #endif  // USE_BME680
         break;
       case FUNC_JSON_APPEND:

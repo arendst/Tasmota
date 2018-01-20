@@ -335,19 +335,6 @@
 #define D_HUE_POST_ARGS "Hue POST args"
 #define D_3_RESPONSE_PACKETS_SENT "3 paquetes de respuesta enviados"
 
-// xdrv_02_irremote.ino
-#define D_JSON_INVALID_JSON "JSON no válido"
-#define D_JSON_PROTOCOL_NOT_SUPPORTED "Protocolo no soportado"
-#define D_JSON_IR_PROTOCOL "PROTOCOLO"
-#define D_JSON_IR_BITS "BITS"
-#define D_JSON_IR_DATA "DATA"
-#define D_JSON_IRHVAC_VENDOR "VENDOR"
-#define D_JSON_IRHVAC_POWER "POWER"
-#define D_JSON_IRHVAC_MODE "MODE"
-#define D_JSON_IRHVAC_FANSPEED "FANSPEED"
-#define D_JSON_IRHVAC_TEMP "TEMP"
-#define D_JSON_IRRECEIVED "IrReceived"
-
 // xdrv_05_domoticz.ino
 #define D_DOMOTICZ_PARAMETERS "Parámetros Domoticz"
 #define D_DOMOTICZ_IDX "Idx"
