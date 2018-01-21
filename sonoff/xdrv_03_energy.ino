@@ -251,7 +251,10 @@ void HlwInit()
 
 #include <TasmotaSerial.h>
 
-TasmotaSerial *PzemSerial;
+//stb mod
+byte PZEM004_DEVICES=0;
+TasmotaSerial *PzemSerial[3];
+// end
 
 #define PZEM_VOLTAGE (uint8_t)0xB0
 #define RESP_VOLTAGE (uint8_t)0xA0
@@ -281,6 +284,7 @@ struct PZEMCommand {
 };
 
 IPAddress pzem_ip(192, 168, 1, 1);
+uint8_t device_ID = 0 ;
 
 uint8_t PzemCrc(uint8_t *data)
 {
@@ -304,13 +308,19 @@ void PzemSend(uint8_t cmd)
   uint8_t *bytes = (uint8_t*)&pzem;
   pzem.crc = PzemCrc(bytes);
 
-  PzemSerial->flush();
-  PzemSerial->write(bytes, sizeof(pzem));
+  PzemSerial[device_ID]->flush();
+  PzemSerial[device_ID]->write(bytes, sizeof(pzem));
 }
 
 bool PzemReceiveReady()
 {
-  return PzemSerial->available() >= sizeof(PZEMCommand);
+  char stemp1[6];
+  char stemp2[4];
+  dtostrfd(sizeof(PZEMCommand), 0, stemp2);
+  dtostrfd(PzemSerial[device_ID]->available(), 0, stemp1);
+  snprintf_P(log_data, sizeof(log_data), PSTR("PzemReceiveReady: %s >= %s"),stemp1,stemp2);
+  AddLog(LOG_LEVEL_DEBUG);
+  return PzemSerial[device_ID]->available() >= sizeof(PZEMCommand);
 }
 
 bool PzemRecieve(uint8_t resp, float *data)
@@ -320,8 +330,8 @@ bool PzemRecieve(uint8_t resp, float *data)
   unsigned long start = millis();
   uint8_t len = 0;
   while ((len < sizeof(PZEMCommand)) && (millis() - start < PZEM_DEFAULT_READ_TIMEOUT)) {
-    if (PzemSerial->available() > 0) {
-      uint8_t c = (uint8_t)PzemSerial->read();
+    if (PzemSerial[device_ID]->available() > 0) {
+      uint8_t c = (uint8_t)PzemSerial[device_ID]->read();
       if (!c && !len) {
         continue;  // skip 0 at startup
       }
@@ -330,15 +340,15 @@ bool PzemRecieve(uint8_t resp, float *data)
   }
 
   if (len != sizeof(PZEMCommand)) {
-//    AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "Pzem comms timeout"));
+    AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "Pzem comms timeout"));
     return false;
   }
   if (buffer[6] != PzemCrc(buffer)) {
-//    AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "Pzem crc error"));
+    AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "Pzem crc error"));
     return false;
   }
   if (buffer[0] != resp) {
-//    AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "Pzem bad response"));
+    AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "Pzem bad response"));
     return false;
   }
 
@@ -370,23 +380,47 @@ uint8_t pzem_sendRetry = 0;
 void PzemEvery200ms()
 {
   bool data_ready = PzemReceiveReady();
-
+  char stemp1[6];
+  char stemp2[4];
+  dtostrfd(device_ID, 0, stemp2);
+  dtostrfd(data_ready, 0, stemp1);
+  snprintf_P(log_data, sizeof(log_data), PSTR("Data ready: %s at %s"),stemp1,stemp2);
+  AddLog(LOG_LEVEL_DEBUG);
   if (data_ready) {
     float value = 0;
     if (PzemRecieve(pzem_responses[pzem_read_state], &value)) {
+      dtostrfd(value, 2, stemp1);
       switch (pzem_read_state) {
         case 1:
           energy_voltage = value;       // 230.2V
+          snprintf_P(log_data, sizeof(log_data), PSTR("New voltage: %s"),stemp1);
+          AddLog(LOG_LEVEL_DEBUG);
           break;
         case 2:
-          energy_current = value;       // 17.32A
+          if (device_ID == 0) {
+            energy_current = value;       // 17.32A
+          } else {
+            energy_current =+ value;
+          }
+          snprintf_P(log_data, sizeof(log_data), PSTR("New current: %s"),stemp1);
+          AddLog(LOG_LEVEL_DEBUG);
           break;
         case 3:
-          energy_power = value;         // 20W
+          if (device_ID == 0) {
+            energy_power = value;         // 20W
+          } else {
+            energy_power =+ value;         // 20W
+          }
+          snprintf_P(log_data, sizeof(log_data), PSTR("New power: %s"),stemp1);
+          AddLog(LOG_LEVEL_DEBUG);
           break;
         case 4:
-          energy_total = value / 1000;  // 99999Wh
-          if (!energy_startup) {
+          if (device_ID == 0) {
+            energy_total = value / 1000;  // 99999Wh
+          } else {
+            energy_total =+ value / 1000;  // 99999Wh
+          }
+          if (!energy_startup && PZEM004_DEVICES == device_ID+1) {
             if (energy_total < energy_start) {
               energy_start = energy_total;
               Settings.hlw_power_calibration = energy_start * 1000;
@@ -399,7 +433,13 @@ void PzemEvery200ms()
       pzem_read_state++;
       if (5 == pzem_read_state) {
         pzem_read_state = 1;
+//STB mod
+        device_ID++;
       }
+      if (PZEM004_DEVICES == device_ID) {
+        device_ID = 0;
+      }
+//end
     }
   }
 
@@ -414,8 +454,9 @@ void PzemEvery200ms()
 
 bool PzemInit()
 {
-  PzemSerial = new TasmotaSerial(pin[GPIO_PZEM_RX], pin[GPIO_PZEM_TX1]);
-  return PzemSerial->begin();
+  PzemSerial[device_ID] = new TasmotaSerial(pin[GPIO_PZEM_RX], pin[GPIO_PZEM_TX1 + device_ID]);
+  PZEM004_DEVICES++;
+  return PzemSerial[device_ID]->begin();
 }
 
 /********************************************************************************************/
@@ -846,10 +887,22 @@ void EnergyInit()
     energy_flg = ENERGY_HLW8012;
     HlwInit();
 #ifdef USE_PZEM004T
-} else if ((pin[GPIO_PZEM_RX] < 99) && (pin[GPIO_PZEM_TX1])) {
+} else if ((pin[GPIO_PZEM_RX] < 99) && (pin[GPIO_PZEM_TX1] < 99)) {
     if (PzemInit()) {
       energy_flg = ENERGY_PZEM004T;
     }
+    // stb mode
+    if (pin[GPIO_PZEM_TX2] < 99) {
+      device_ID++;
+      PzemInit();
+    }
+    if (pin[GPIO_PZEM_TX3] < 99) {
+      device_ID++;
+      PzemInit();
+    }
+    snprintf_P(log_data, sizeof(log_data), PSTR("Total devices PZEM004: %d"),PZEM004_DEVICES);
+    AddLog(LOG_LEVEL_DEBUG);
+    //
 #endif  // USE_PZEM004T
   }
 

@@ -542,12 +542,33 @@ void MqttReconnect()
       snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_MQTT D_TLS_CONNECT_FAILED_TO " %s:%d. " D_RETRY_IN " %d " D_UNIT_SECOND),
         Settings.mqtt_host, Settings.mqtt_port, mqtt_retry_counter);
       AddLog(LOG_LEVEL_DEBUG);
+      //STB mod
+      if ( Settings.deepsleep > 10) {
+        if (MAX_DEEPSLEEP_CYCLE < Settings.deepsleep) {
+          ESP.deepSleep(1000000 * (uint32_t)MAX_DEEPSLEEP_CYCLE, WAKE_RF_DEFAULT);
+        } else {
+          ESP.deepSleep(1000000 * Settings.deepsleep, WAKE_RF_DEFAULT);
+        }
+        yield();
+      }
+      //end
       return;
     }
     if (EspClient.verify(Settings.mqtt_fingerprint, Settings.mqtt_host)) {
       AddLog_P(LOG_LEVEL_INFO, S_LOG_MQTT, PSTR(D_VERIFIED));
     } else {
       AddLog_P(LOG_LEVEL_DEBUG, S_LOG_MQTT, PSTR(D_INSECURE));
+      //STB mod
+      if ( Settings.deepsleep > 10) {
+        if (MAX_DEEPSLEEP_CYCLE < Settings.deepsleep) {
+          ESP.deepSleep(1000000 * (uint32_t)MAX_DEEPSLEEP_CYCLE, WAKE_RF_DEFAULT);
+        } else {
+          ESP.deepSleep(1000000 * Settings.deepsleep, WAKE_RF_DEFAULT);
+        }
+        yield();
+      }
+      return;
+      //end
     }
     EspClient.stop();
     yield();
@@ -1938,7 +1959,7 @@ void PerformEverySecond()
       mqtt_data[0] = '\0';
       if (MqttShowSensor()) {
         MqttPublishPrefixTopic_P(2, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);
-      }	
+      }
       //STB mod
       if (Settings.deepsleep > 10 && Settings.deepsleep < 4294967295) {
         //TODO STEFAN

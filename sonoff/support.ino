@@ -531,6 +531,11 @@ void WifiCheckIp()
           }
           else if (wifi_retry) {
             wifi_retry = 0;
+      //STB mod
+            if (Settings.deepsleep > 10) {
+                ESP.deepSleep(1000000 * Settings.deepsleep, WAKE_RF_DEFAULT);
+            }
+      //end
           }
         }
         break;
