@@ -51,7 +51,7 @@ const char HTTP_HEAD[] PROGMEM =
     "document.getElementById('p1').focus();"
   "}"
   "function la(p){"
-    "var a='';"
+    "let a='';"
     "if(la.arguments.length==1){"
       "a=p;"
       "clearTimeout(lt);"
@@ -60,7 +60,7 @@ const char HTTP_HEAD[] PROGMEM =
     "x=new XMLHttpRequest();"
     "x.onreadystatechange=function(){"
       "if(x.readyState==4&&x.status==200){"
-        "var s=x.responseText.replace(/{s}/g,\"<tr><th>\").replace(/{m}/g,\"</th><td>\").replace(/{e}/g,\"</td></tr>\").replace(/{t}/g,\"%'><div style='text-align:center;font-weight:\");"
+        "let s=x.responseText.replace(/{s}/g,\"<tr><th>\").replace(/{m}/g,\"</th><td>\").replace(/{e}/g,\"</td></tr>\").replace(/{t}/g,\"%'><div style='text-align:center;font-weight:\");"
         "document.getElementById('l1').innerHTML=s;"
       "}"
     "};"
@@ -105,7 +105,7 @@ const char HTTP_SCRIPT_CONSOL[] PROGMEM =
   "var sn=0;"                    // Scroll position
   "var id=99;"                   // Get most of weblog initially
   "function l(p){"               // Console log and command service
-    "var c,o,t;"
+    "let c,o,t;"
     "clearTimeout(lt);"
     "o='';"
     "t=document.getElementById('t1');"
@@ -120,7 +120,7 @@ const char HTTP_SCRIPT_CONSOL[] PROGMEM =
       "x=new XMLHttpRequest();"
       "x.onreadystatechange=function(){"
         "if(x.readyState==4&&x.status==200){"
-          "var z,d;"
+          "let z,d;"
           "d=x.responseXML;"
           "id=d.getElementsByTagName('i')[0].childNodes[0].nodeValue;"
           "if(d.getElementsByTagName('j')[0].childNodes[0].nodeValue==0){t.value='';}"
@@ -140,19 +140,73 @@ const char HTTP_SCRIPT_CONSOL[] PROGMEM =
 const char HTTP_SCRIPT_MODULE1[] PROGMEM =
   "var os;"
   "function sk(s,g){"
-    "var o=os.replace(\"value='\"+s+\"'\",\"selected value='\"+s+\"'\");"
+    "let o = os;"
     "document.getElementById('g'+g).innerHTML=o;"
+    "document.getElementById('g'+g).value = s;"
+  "}"
+  "function sn(s,g,h){"
+    "document.getElementById('g'+g).value = s;"
+    "document.getElementById('r'+g).style.display=h?'':'none';"
+  "}"
+  "var ox;"
+  "function GetNotUsedInModule(val){"
+    "let offset = 0;"
+    "let arr = ox;"
+    "val=parseInt(val);"
+    "if (!val) {"
+      "return true;"  // None
+    "}";
+const char HTTP_SCRIPT_MODULE2[] PROGMEM =
+    "if (%d == val) {"
+      "return false;"
+    "}";
+const char HTTP_SCRIPT_MODULE3[] PROGMEM =
+  "if ((val >= %d) && (val < %d + %d)) {"
+    "offset = %s(%d - %d);"
+  "}";
+const char HTTP_SCRIPT_MODULE4[] PROGMEM =
+  "for (i = 0; i <" STR(MAX_GPIO_PIN) "; i++) {"
+    "if (arr[i] == val) {"
+      "return false;"
+    "}"
+    "if (arr[i] == val + offset) {"
+      "return false;"
+    "}"
+  "}"
+  "return true;"
+ "}"
+ "var ot=[";
+const char HTTP_SCRIPT_MODULE5[] PROGMEM =
+    "['%d','%s (%02d)',";
+const char HTTP_SCRIPT_MODULE6[] PROGMEM =
+  "];"
+  "var ou=";
+const char HTTP_SCRIPT_MODULE7[] PROGMEM =
+  "var ov=[";
+const char HTTP_SCRIPT_MODULE8[] PROGMEM =
+  "];"
+  "function sm() {"
+    "let n=document.getElementById('g99').value;"
+    "ox=ot.filter(r=>r[0]===n)[0];"
+    "let ovf= ov.filter(GetNotUsedInModule);"
+    "os=ovf.map(e => e.join(\"'>\")).join(\"</option><option value='\");"
+    "os=\"<option value='\" + os + \"</option>\";";
+const char HTTP_SCRIPT_MODULE9[] PROGMEM =
+    "for (i=0;i<" STR(MAX_GPIO_PIN) ";i++){"
+      "sk(0,i);"
+      "sn(n===ou[0]?ou[i+2]:%d,i,ox[i+2]===%d);"
+    "}"
+    "sn(n===ou[0]?ou[" STR(MAX_GPIO_PIN) "+2]:ox[" STR(MAX_GPIO_PIN) "+2],98,1);";
+const char HTTP_SCRIPT_MODULE10[] PROGMEM =
   "}"
   "function sl(){"
-    "var o0=\"";
-const char HTTP_SCRIPT_MODULE2[] PROGMEM =
-    "}1'%d'>%02d %s}2";     // "}1" and "}2" means do not use "}x" in Module name and Sensor name
-const char HTTP_SCRIPT_MODULE3[] PROGMEM =
-    "\";"
-    "os=o0.replace(/}1/g,\"<option value=\").replace(/}2/g,\"</option>\");";
+    "os=ot.map(function(v,i) { return [v[0], v[1]]; });"
+    "os=os.sort(function(a,b){if(a[1]===b[1]){return 0;}else{return(a[1]< b[1])?-1:1;}});"
+    "os=os.map(e => e.join(\"'>\")).join(\"</option><option value='\");"
+    "os = \"<option value='\" + os + \"</option>\";";
 const char HTTP_SCRIPT_INFO_BEGIN[] PROGMEM =
   "function i(){"
-    "var s,o=\"";
+    "let s,o=\"";
 const char HTTP_SCRIPT_INFO_END[] PROGMEM =
     "\";"                   // "}1" and "}2" means do not use "}x" in Information text
     "s=o.replace(/}1/g,\"</td></tr><tr><th>\").replace(/}2/g,\"</th><td>\");"
@@ -205,7 +259,7 @@ const char HTTP_BTN_CONF[] PROGMEM =
 const char HTTP_FORM_MODULE[] PROGMEM =
   "<fieldset><legend><b>&nbsp;" D_MODULE_PARAMETERS "&nbsp;</b></legend><form method='get' action='sv'>"
   "<input id='w' name='w' value='6' hidden><input id='r' name='r' value='1' hidden>"
-  "<br/><b>" D_MODULE_TYPE "</b> ({mt)<br/><select id='g99' name='g99'></select><br/>";
+  "<br/><b>" D_MODULE_TYPE "</b> ({mt)<br/><select id='g99' name='g99' onchange='sm()'></select><br/>";
 const char HTTP_LNK_ITEM[] PROGMEM =
   "<div><a href='#p' onclick='c(this)'>{v}</a>&nbsp;<span class='q'>{i} {r}%</span></div>";
 const char HTTP_LNK_SCAN[] PROGMEM =
@@ -618,62 +672,6 @@ void HandleConfiguration()
   ShowPage(page);
 }
 
-boolean GetUsedInModule(byte val, uint8_t *arr)
-{
-  int offset = 0;
-
-  if (!val) {
-    return false;  // None
-  }
-#ifndef USE_I2C
-  if (GPIO_I2C_SCL == val) {
-    return true;
-  }
-  if (GPIO_I2C_SDA == val) {
-    return true;
-  }
-#endif
-#ifndef USE_WS2812
-  if (GPIO_WS2812 == val) {
-    return true;
-  }
-#endif
-#ifndef USE_IR_REMOTE
-  if (GPIO_IRSEND == val) {
-    return true;
-  }
-#endif
-  if ((val >= GPIO_REL1) && (val < GPIO_REL1 + MAX_RELAYS)) {
-    offset = (GPIO_REL1_INV - GPIO_REL1);
-  }
-  if ((val >= GPIO_REL1_INV) && (val < GPIO_REL1_INV + MAX_RELAYS)) {
-    offset = -(GPIO_REL1_INV - GPIO_REL1);
-  }
-
-  if ((val >= GPIO_LED1) && (val < GPIO_LED1 + MAX_LEDS)) {
-    offset = (GPIO_LED1_INV - GPIO_LED1);
-  }
-  if ((val >= GPIO_LED1_INV) && (val < GPIO_LED1_INV + MAX_LEDS)) {
-    offset = -(GPIO_LED1_INV - GPIO_LED1);
-  }
-
-  if ((val >= GPIO_PWM1) && (val < GPIO_PWM1 + MAX_PWMS)) {
-    offset = (GPIO_PWM1_INV - GPIO_PWM1);
-  }
-  if ((val >= GPIO_PWM1_INV) && (val < GPIO_PWM1_INV + MAX_PWMS)) {
-    offset = -(GPIO_PWM1_INV - GPIO_PWM1);
-  }
-  for (byte i = 0; i < MAX_GPIO_PIN; i++) {
-    if (arr[i] == val) {
-      return true;
-    }
-    if (arr[i] == val + offset) {
-      return true;
-    }
-  }
-  return false;
-}
-
 void HandleModuleConfiguration()
 {
   if (HttpUser()) {
@@ -692,39 +690,91 @@ void HandleModuleConfiguration()
   page.replace(F("{mt"), stemp);
 
   mytmplt cmodule;
-  memcpy_P(&cmodule, &kModules[Settings.module], sizeof(cmodule));
 
   String func = FPSTR(HTTP_SCRIPT_MODULE1);
+#ifndef USE_I2C
+    snprintf_P(line, sizeof(line), HTTP_SCRIPT_MODULE2, GPIO_I2C_SCL);
+    func += line;
+    snprintf_P(line, sizeof(line), HTTP_SCRIPT_MODULE2, GPIO_I2C_SDA);
+    func += line;
+#endif
+#ifndef USE_WS2812
+    snprintf_P(line, sizeof(line), HTTP_SCRIPT_MODULE2, GPIO_WS2812);
+    func += line;
+#endif
+#ifndef USE_IR_REMOTE
+    snprintf_P(line, sizeof(line), HTTP_SCRIPT_MODULE2, GPIO_IRSEND);
+    func += line;
+#endif
+
+  snprintf_P(line, sizeof(line), HTTP_SCRIPT_MODULE3, GPIO_REL1, GPIO_REL1, MAX_RELAYS, "", GPIO_REL1_INV, GPIO_REL1);
+  func += line;
+  snprintf_P(line, sizeof(line), HTTP_SCRIPT_MODULE3, GPIO_REL1_INV, GPIO_REL1_INV, MAX_RELAYS, "-", GPIO_REL1_INV, GPIO_REL1);
+  func += line;
+
+  snprintf_P(line, sizeof(line), HTTP_SCRIPT_MODULE3, GPIO_LED1, GPIO_LED1, MAX_LEDS, "", GPIO_LED1_INV, GPIO_LED1);
+  func += line;
+  snprintf_P(line, sizeof(line), HTTP_SCRIPT_MODULE3, GPIO_LED1_INV, GPIO_LED1_INV, MAX_LEDS, "-", GPIO_LED1_INV, GPIO_LED1);
+  func += line;
+
+  snprintf_P(line, sizeof(line), HTTP_SCRIPT_MODULE3, GPIO_PWM1, GPIO_PWM1, MAX_PWMS, "", GPIO_PWM1_INV, GPIO_PWM1);
+  func += line;
+  snprintf_P(line, sizeof(line), HTTP_SCRIPT_MODULE3, GPIO_PWM1_INV, GPIO_PWM1_INV, MAX_PWMS, "-", GPIO_PWM1_INV, GPIO_PWM1);
+  func += line;
+  func += FPSTR(HTTP_SCRIPT_MODULE4);
+
+  // Generate list of all modules
   for (byte i = 0; i < MAXMODULE; i++) {
     midx = pgm_read_byte(kNiceList + i);
-    snprintf_P(stemp, sizeof(stemp), kModules[midx].name);
-    snprintf_P(line, sizeof(line), HTTP_SCRIPT_MODULE2, midx, midx +1, stemp);
+    memcpy_P(&cmodule, &kModules[midx], sizeof(cmodule));
+    snprintf_P(stemp, sizeof(stemp), cmodule.name);
+    snprintf_P(line, sizeof(line), HTTP_SCRIPT_MODULE5, midx, stemp, midx +1);
     func += line;
-  }
-  func += FPSTR(HTTP_SCRIPT_MODULE3);
-  snprintf_P(line, sizeof(line), PSTR("sk(%d,99);o0=\""), Settings.module);  // g99
-  func += line;
-  for (byte j = 0; j < GPIO_SENSOR_END; j++) {
-    if (!GetUsedInModule(j, cmodule.gp.io)) {
-      snprintf_P(stemp, sizeof(stemp), kSensors[j]);
-      snprintf_P(line, sizeof(line), HTTP_SCRIPT_MODULE2, j, j, stemp);
+    for (byte i = 0; i < MAX_GPIO_PIN; i++) {
+      snprintf_P(line, sizeof(line), PSTR("%d,"), cmodule.gp.io[i]);
       func += line;
     }
+    snprintf_P(line, sizeof(line), PSTR("%d],"), cmodule.option15);
+    func += line;
   }
-  func += FPSTR(HTTP_SCRIPT_MODULE3);
+  func += FPSTR(HTTP_SCRIPT_MODULE6);
+
+  // Export current module settings
+  snprintf_P(stemp, sizeof(stemp), kModules[Settings.module].name);
+  snprintf_P(line, sizeof(line), HTTP_SCRIPT_MODULE5, Settings.module, stemp, Settings.module +1);
+  func += line;
+  for (byte i = 0; i < MAX_GPIO_PIN; i++) {
+    snprintf_P(line, sizeof(line), PSTR("%d,"), my_module.gp.io[i]);
+    func += line;
+  }
+  snprintf_P(line, sizeof(line), PSTR("%d];"), Settings.flag.pwm_control);
+  func += line;
+
+  // Generate GPIO option list
+  func += FPSTR(HTTP_SCRIPT_MODULE7);
+  for (byte j = 0; j < GPIO_SENSOR_END; j++) {
+    snprintf_P(stemp, sizeof(stemp), kSensors[j]);
+    snprintf_P(line, sizeof(line), PSTR("['%d','(%02d) %s'],"), j, j, stemp);
+    func += line;
+  }
+  func += FPSTR(HTTP_SCRIPT_MODULE8);
+  snprintf_P(line, sizeof(line), HTTP_SCRIPT_MODULE9, GPIO_NONE, GPIO_USER);
+  func += line;
+  func += FPSTR(HTTP_SCRIPT_MODULE10);
+  snprintf_P(line, sizeof(line), PSTR("sk(%d,99);"), Settings.module);  // g99
+  func += line;
+  func += F("sm();");
 
   page += F("<br/><table>");
   for (byte i = 0; i < MAX_GPIO_PIN; i++) {
-    if (GPIO_USER == cmodule.gp.io[i]) {
-      snprintf_P(stemp, 3, PINS_WEMOS +i*2);
-      snprintf_P(line, sizeof(line), PSTR("<tr><td style='width:190'>%s <b>" D_GPIO "%d</b> %s</td><td style='width:126'><select id='g%d' name='g%d'></select></td></tr>"),
-        (WEMOS==Settings.module)?stemp:"", i, (0==i)? D_SENSOR_BUTTON "1":(1==i)? D_SERIAL_OUT :(3==i)? D_SERIAL_IN :(12==i)? D_SENSOR_RELAY "1":(13==i)? D_SENSOR_LED "1i":(14==i)? D_SENSOR :"", i, i);
-      page += line;
-      snprintf_P(line, sizeof(line), PSTR("sk(%d,%d);"), my_module.gp.io[i], i);  // g0 - g16
-      func += line;
-    }
+    snprintf_P(stemp, 3, PINS_WEMOS +i*2);
+    snprintf_P(line, sizeof(line), PSTR("<tr id='r%d'><td style='width:190'>%s <b>" D_GPIO "%d</b> %s</td><td style='width:126'><select id='g%d' name='g%d'></select></td></tr>"),
+      i, (WEMOS==Settings.module)?stemp:"", i, (0==i)? D_SENSOR_BUTTON "1":(1==i)? D_SERIAL_OUT :(3==i)? D_SERIAL_IN :(12==i)? D_SENSOR_RELAY "1":(13==i)? D_SENSOR_LED "1i":(14==i)? D_SENSOR :"", i, i);
+    page += line;
   }
-  page += F("</table>");
+  page += F("<tr id='r98'><td width='190'><b>PWM Control</b></td><td width='126'>"
+              "<select id='g98' name='g98'><option value=\"0\">Manual PWM</option><option value=\"1\">LED Dimmer</option></select>"
+            "</td></tr></table>");
 
   func += F("}</script>");
   page.replace(F("</script>"), func);
@@ -1075,18 +1125,16 @@ snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_LOG D_CMND_SERIALLOG " %d, " D
     byte new_module = (!strlen(WebServer->arg("g99").c_str())) ? MODULE : atoi(WebServer->arg("g99").c_str());
     Settings.last_module = Settings.module;
     Settings.module = new_module;
+    Settings.flag.pwm_control = (!strlen(WebServer->arg("g98").c_str())) ? 0 : atoi(WebServer->arg("g98").c_str());
     mytmplt cmodule;
     memcpy_P(&cmodule, &kModules[Settings.module], sizeof(cmodule));
     String gpios = "";
     for (byte i = 0; i < MAX_GPIO_PIN; i++) {
-      if (Settings.last_module != new_module) {
-        Settings.my_gp.io[i] = 0;
-      } else {
-        if (GPIO_USER == cmodule.gp.io[i]) {
-          snprintf_P(stemp, sizeof(stemp), PSTR("g%d"), i);
-          Settings.my_gp.io[i] = (!strlen(WebServer->arg(stemp).c_str())) ? 0 : atoi(WebServer->arg(stemp).c_str());
-          gpios += F(", " D_GPIO ); gpios += String(i); gpios += F(" "); gpios += String(Settings.my_gp.io[i]);
-        }
+      Settings.my_gp.io[i] = 0;
+      if (GPIO_USER == cmodule.gp.io[i]) {
+        snprintf_P(stemp, sizeof(stemp), PSTR("g%d"), i);
+        Settings.my_gp.io[i] = (!strlen(WebServer->arg(stemp).c_str())) ? 0 : atoi(WebServer->arg(stemp).c_str());
+        gpios += F(", " D_GPIO ); gpios += String(i); gpios += F(" "); gpios += String(Settings.my_gp.io[i]);
       }
     }
     snprintf_P(stemp, sizeof(stemp), kModules[Settings.module].name);
