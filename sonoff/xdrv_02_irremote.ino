@@ -109,7 +109,7 @@ void IrReceiveCheck()
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_IRRECEIVED "\":{\"" D_JSON_IR_PROTOCOL "\":\"%s\",\"" D_JSON_IR_BITS "\":%d,\"" D_JSON_IR_DATA "\":\"%X\"}}"),
         GetTextIndexed(sirtype, sizeof(sirtype), iridx, kIrRemoteProtocols), results.bits, results.value);
-      MqttPublishPrefixTopic_P(6, PSTR(D_JSON_IRRECEIVED));
+      MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_IRRECEIVED));
 #ifdef USE_DOMOTICZ
       unsigned long value = results.value | (iridx << 28);  // [Protocol:4, Data:28]
       DomoticzSensor(DZ_COUNT, value);                      // Send data as Domoticz Counter value
@@ -309,21 +309,26 @@ boolean IrSendCommand()
         data = ir_json[D_JSON_IR_DATA];
         if (protocol && bits && data) {
           int protocol_code = GetCommandCode(protocol_text, sizeof(protocol_text), protocol, kIrRemoteProtocols);
+
+          snprintf_P(log_data, sizeof(log_data), PSTR("IRS: protocol_text %s, protocol %s, bits %d, data %d, protocol_code %d"),
+            protocol_text, protocol, bits, data, protocol_code);
+          AddLog(LOG_LEVEL_DEBUG);
+
           switch (protocol_code) {
             case NEC:
-              irsend->sendNEC(data, bits); break;
+              irsend->sendNEC(data, (bits > NEC_BITS) ? NEC_BITS : bits); break;
             case SONY:
-              irsend->sendSony(data, bits); break;
+              irsend->sendSony(data, (bits > SONY_20_BITS) ? SONY_20_BITS : bits, 2); break;
             case RC5:
               irsend->sendRC5(data, bits); break;
             case RC6:
               irsend->sendRC6(data, bits); break;
             case DISH:
-              irsend->sendDISH(data, bits); break;
+              irsend->sendDISH(data, (bits > DISH_BITS) ? DISH_BITS : bits); break;
             case JVC:
-              irsend->sendJVC(data, bits, 1); break;
+              irsend->sendJVC(data, (bits > JVC_BITS) ? JVC_BITS : bits, 1); break;
             case SAMSUNG:
-              irsend->sendSAMSUNG(data, bits); break;
+              irsend->sendSAMSUNG(data, (bits > SAMSUNG_BITS) ? SAMSUNG_BITS : bits); break;
             case PANASONIC:
               irsend->sendPanasonic(bits, data); break;
             default:

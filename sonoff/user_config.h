@@ -31,6 +31,7 @@
 // -- Localization --------------------------------
 //#define MY_LANGUAGE            de-DE           // German in Germany
 //#define MY_LANGUAGE            en-GB           // English in Great Britain. Enabled by Default
+//#define MY_LANGUAGE            es-AR           // Spanish in Argentina
 //#define MY_LANGUAGE            fr-FR           // French in France
 //#define MY_LANGUAGE            it-IT           // Italian in Italy
 //#define MY_LANGUAGE            nl-NL           // Dutch in the Netherlands
@@ -118,6 +119,10 @@
   #define DOMOTICZ_OUT_TOPIC     "domoticz/out"  // Domoticz Output Topic
   #define DOMOTICZ_UPDATE_TIMER  0               // [DomoticzUpdateTimer] Send relay status (0 = disable, 1 - 3600 seconds) (Optional)
 
+// -- MQTT - Home Assistant Discovery -------------
+//#define USE_HOME_ASSISTANT                       // Enable Home Assistant Discovery (+1k4 code)
+  #define HOME_ASSISTANT_DISCOVERY_PREFIX "homeassistant"  // Home Assistant discovery prefix
+
 // -- HTTP ----------------------------------------
 #define USE_WEBSERVER                            // Enable web server and wifi manager (+66k code, +8k mem) - Disable by //
   #define WEB_SERVER           2                 // [WebServer] Web server (0 = Off, 1 = Start as User, 2 = Start as Admin)
@@ -174,19 +179,19 @@
 
 // -- I2C sensors ---------------------------------
 //#define USE_I2C                                  // I2C using library wire (+10k code, 0k2 mem, 124 iram)
-// #ifdef USE_I2C
-  //#define USE_SHT                                // Add I2C emulating code for SHT1X sensor (+1k4 code)
-  //#define USE_SHT3X                              // Add I2C code for SHT3x sensor (+0k6 code)
-  //#define USE_HTU                                // Add I2C code for HTU21/SI7013/SI7020/SI7021 sensor (+1k5 code)
-  //#define USE_BMP                                // Add I2C code for BMP085/BMP180/BMP280/BME280 sensor (+4k code)
-//    #define USE_BME680                           // Add additional support for BME680 sensor using Adafruit Sensor and BME680 libraries (+6k code)
-  //#define USE_BH1750                             // Add I2C code for BH1750 sensor (+0k5 code)
-//  #define USE_VEML6070                           // Add I2C code for VEML6070 sensor (+0k5 code)
-//  #define USE_TSL2561                            // Add I2C code for TSL2561 sensor using library Adafruit TSL2561 Arduino (+1k2 code)
-//  #define USE_ADS1115                            // Add I2C code for ADS1115 16 bit A/D converter based on Adafruit ADS1x15 library (no library needed) (+0k7 code)
-//  #define USE_ADS1115_I2CDEV                     // Add I2C code for ADS1115 16 bit A/D converter using library i2cdevlib-Core and i2cdevlib-ADS1115 (+2k code)
-//  #define USE_INA219                             // Add I2C code for INA219 Low voltage and current sensor (+1k code)
-//  #define USE_DISPLAY                            // Add I2C Display Support for LCD, Oled and up to eigth Matrices (+19k code)
+#ifdef USE_I2C
+  #define USE_SHT                                // Add I2C emulating code for SHT1X sensor (+1k4 code)
+  #define USE_SHT3X                              // Add I2C code for SHT3x sensor (+0k6 code)
+  #define USE_HTU                                // Add I2C code for HTU21/SI7013/SI7020/SI7021 sensor (+1k5 code)
+  #define USE_BMP                                // Add I2C code for BMP085/BMP180/BMP280/BME280 sensor (+4k code)
+    #define USE_BME680                           // Add additional support for BME680 sensor using Adafruit Sensor and BME680 libraries (+6k code)
+  #define USE_BH1750                             // Add I2C code for BH1750 sensor (+0k5 code)
+  #define USE_VEML6070                           // Add I2C code for VEML6070 sensor (+0k5 code)
+  #define USE_TSL2561                            // Add I2C code for TSL2561 sensor using library Adafruit TSL2561 Arduino (+1k2 code)
+  #define USE_ADS1115                            // Add I2C code for ADS1115 16 bit A/D converter based on Adafruit ADS1x15 library (no library needed) (+0k7 code)
+  #define USE_ADS1115_I2CDEV                     // Add I2C code for ADS1115 16 bit A/D converter using library i2cdevlib-Core and i2cdevlib-ADS1115 (+2k code)
+  #define USE_INA219                             // Add I2C code for INA219 Low voltage and current sensor (+1k code)
+  #define USE_DISPLAY                            // Add I2C Display Support for LCD, Oled and up to eigth Matrices (+19k code)
     #define MTX_ADDRESS1       0x71              // [DisplayAddress[1]] I2C address of first 8x8 matrix module
     #define MTX_ADDRESS2       0x74              // [DisplayAddress[2]] I2C address of second 8x8 matrix module
     #define MTX_ADDRESS3       0x75              // [DisplayAddress[3]] I2C address of third 8x8 matrix module
@@ -195,14 +200,14 @@
     #define MTX_ADDRESS6       0x76              // [DisplayAddress[6]] I2C address of sixth 8x8 matrix module
     #define MTX_ADDRESS7       0x00              // [DisplayAddress[7]] I2C address of seventh 8x8 matrix module
     #define MTX_ADDRESS8       0x00              // [DisplayAddress[8]] I2C address of eigth 8x8 matrix module
-//#endif  // USE_I2C
+#endif  // USE_I2C
 
 //#define USE_SPI                                  // SPI using library theo_TFT
-//#ifdef USE_SPI
-  //#ifndef USE_DISPLAY
-  //#define USE_DISPLAY                            // Add SPI Display support for 320x240 and 480x320 TFT
-  //#endif
-//#endif  // USE_SPI
+#ifdef USE_SPI
+  #ifndef USE_DISPLAY
+  #define USE_DISPLAY                            // Add SPI Display support for 320x240 and 480x320 TFT
+  #endif
+#endif  // USE_SPI
 
 // -- Carbon dioxide (CO2) sensors ----------------
 //#define USE_MHZ19                                // Add support for MH-Z19 CO2 sensor (+2k code)

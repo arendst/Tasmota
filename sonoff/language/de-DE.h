@@ -335,19 +335,6 @@
 #define D_HUE_POST_ARGS "Hue POST args"
 #define D_3_RESPONSE_PACKETS_SENT "3 Antwortpakete gesendet"
 
-// xdrv_02_irremote.ino
-#define D_JSON_INVALID_JSON "ungültiger JSON"
-#define D_JSON_PROTOCOL_NOT_SUPPORTED "Protokoll nicht unterstützt"
-#define D_JSON_IR_PROTOCOL "PROTOKOLL"
-#define D_JSON_IR_BITS "BITS"
-#define D_JSON_IR_DATA "DATEN"
-#define D_JSON_IRHVAC_VENDOR "HERSTELLER"
-#define D_JSON_IRHVAC_POWER "STROM"
-#define D_JSON_IRHVAC_MODE "MODUS"
-#define D_JSON_IRHVAC_FANSPEED "LÜFTERGESCHWINDIGKEIT"
-#define D_JSON_IRHVAC_TEMP "TEMPERATUR"
-#define D_JSON_IRRECEIVED "IR empfangen"
-
 // xdrv_05_domoticz.ino
 #define D_DOMOTICZ_PARAMETERS "Domoticz parameters"
 #define D_DOMOTICZ_IDX "Idx"

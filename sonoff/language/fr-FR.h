@@ -57,7 +57,7 @@
 #define D_BY "par"                    // Written by me
 #define D_BYTES "Bytes"
 #define D_CELSIUS "Celsius"
-#define D_CO2 "Dioxyde arbone"
+#define D_CO2 "Dioxyde de carbone"
 #define D_CODE "code"                // Button code
 #define D_COLDLIGHT "Froid"
 #define D_COMMAND "Commande"
@@ -149,7 +149,7 @@
 #define D_WEB_SERVER "Serveur web"
 
 // sonoff.ino
-#define D_WARNING_MINIMAL_VERSION "WARNING This version does not support persistent settings"
+#define D_WARNING_MINIMAL_VERSION "ATTENTION Cette version ne supporte pas les réglages persistants"
 #define D_LEVEL_10 "level 1-0"
 #define D_LEVEL_01 "level 0-1"
 #define D_SERIAL_LOGGING_DISABLED "Journalisation série désactivé"
@@ -264,7 +264,7 @@
 #define D_OTHER_PARAMETERS "Autres paramètres"
 #define D_WEB_ADMIN_PASSWORD "Mot de passe Web Admin"
 #define D_MQTT_ENABLE "MQTT activé"
-#define D_FRIENDLY_NAME "Nom d'usage"
+#define D_FRIENDLY_NAME "Surnom"
 #define D_BELKIN_WEMO "Belkin WeMo"
 #define D_HUE_BRIDGE "Hue Bridge"
 #define D_SINGLE_DEVICE "module unique"
@@ -335,19 +335,6 @@
 #define D_HUE_POST_ARGS "Hue POST args"
 #define D_3_RESPONSE_PACKETS_SENT "3 paquets response envoyés"
 
-// xdrv_02_irremote.ino
-#define D_JSON_INVALID_JSON "JSON Invalide"
-#define D_JSON_PROTOCOL_NOT_SUPPORTED "Protocole non supporté"
-#define D_JSON_IR_PROTOCOL "PROTOCOL"
-#define D_JSON_IR_BITS "BITS"
-#define D_JSON_IR_DATA "DATA"
-#define D_JSON_IRHVAC_VENDOR "VENDOR"
-#define D_JSON_IRHVAC_POWER "POWER"
-#define D_JSON_IRHVAC_MODE "MODE"
-#define D_JSON_IRHVAC_FANSPEED "FANSPEED"
-#define D_JSON_IRHVAC_TEMP "TEMP"
-#define D_JSON_IRRECEIVED "IrReceived"
-
 // xdrv_05_domoticz.ino
 #define D_DOMOTICZ_PARAMETERS "Paramètres Domoticz"
 #define D_DOMOTICZ_IDX "Idx"
@@ -383,13 +370,13 @@
 #define D_CHECKSUM_FAILURE "Echec checksum"
 
 // xsns_07_sht1x.ino
-#define D_SENSOR_DID_NOT_ACK_COMMAND "Sensor did not ACK command"
+#define D_SENSOR_DID_NOT_ACK_COMMAND "Le capteur n'a pas ACK la commande"
 #define D_SHT1X_FOUND "SHT1X found"
 
 // xsns_18_pms5003.ino
-#define D_STANDARD_CONCENTRATION "Standard Concentration"
-#define D_ENVIRONMENTAL_CONCENTRATION "Environmental Concentration"
-#define D_PARTICALS_BEYOND "Particals beyond"
+#define D_STANDARD_CONCENTRATION "Concentration standard"
+#define D_ENVIRONMENTAL_CONCENTRATION "Concentration environmentale"
+#define D_PARTICALS_BEYOND "Particules au-delà"
 
 // sonoff_template.h
 // Max string length is 8 characters including suffixes

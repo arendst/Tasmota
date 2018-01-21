@@ -166,6 +166,7 @@
   #define D_STATUS9_MARGIN "PTH"
   #define D_STATUS10_SENSOR "SNS"
   #define D_STATUS11_STATUS "STS"
+#define D_CMND_STATE "State"
 #define D_CMND_POWER "Power"
 #define D_CMND_POWERONSTATE "PowerOnState"
 #define D_CMND_PULSETIME "PulseTime"
@@ -255,7 +256,18 @@
 
 // Commands xdrv_02_irremote.ino
 #define D_CMND_IRSEND "IRSend"
+  #define D_JSON_INVALID_JSON "Invalid JSON"
+  #define D_JSON_PROTOCOL_NOT_SUPPORTED "Protocol not supported"
+  #define D_JSON_IR_PROTOCOL "PROTOCOL"
+  #define D_JSON_IR_BITS "BITS"
+  #define D_JSON_IR_DATA "DATA"
 #define D_CMND_IRHVAC "IRHVAC"
+  #define D_JSON_IRHVAC_VENDOR "VENDOR"
+  #define D_JSON_IRHVAC_POWER "POWER"
+  #define D_JSON_IRHVAC_MODE "MODE"
+  #define D_JSON_IRHVAC_FANSPEED "FANSPEED"
+  #define D_JSON_IRHVAC_TEMP "TEMP"
+#define D_JSON_IRRECEIVED "IrReceived"
 
 // Commands xdrv_03_energy.ino
 #define D_CMND_POWERLOW "PowerLow"

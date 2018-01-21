@@ -1,4 +1,28 @@
-/* 5.11.1b
+/* 5.11.1d
+ * Add locale Decimal Separator to Web sensor page
+ * Add command State to retrieve device state information (same data as teleperiod state and status 11 in slightly different JSON format)
+ * Extent state information with Light parameters
+ * Fix IRSend parameter translation (#1636)
+ * Add optional login to Webserver AP mode (#1587, #1635)
+ * Fix BME680 teleperiod resistance measuring (#1647)
+ *
+ * 5.11.1c
+ * Make command color parameter input less strict to ease Hass support
+ * Add ColorTemperature to light status message
+ * Change PubSubClient.h define MQTT_MAX_PACKET_SIZE from 512 to 1000 for Hass support
+ * Make define MESSZ dependent on PubSubClient.h define MQTT_MAX_PACKET_SIZE
+ * Fix logging line length around 400 characters
+ * Change module name Wemos D1 mini into Generic (#1220)
+ * Revert HTML change from width=100% to style=width:100% supporting HTML5 (#1358)
+ * Add experimental (still Hass python exceptions) Home Assistant Discovery for switch and light to be enabled by command SetOption19 1 (#1534)
+ * Updated French Translation (#1561)
+ * Fix DS18B20 temperature JSON decimal dot (#1561)
+ * Add Spanish language file (#1589)
+ * Update Italian Language file (#1594)
+ * Consolidate WIFI_MANAGER_SEC into WIFI_CONFIG_SEC (#1616)
+ * Fix Energy JSON message (#1621)
+ *
+ * 5.11.1b
  * Add command PowerOnState option 5 which inverts PulseTime and allows for delayed always on after power on
  * Changed OSWATCH_RESET_TIME (Blocked loop) from 30 to 120 seconds to allow slow networks (#1556)
  * Add French language file (#1561)
