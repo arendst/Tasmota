@@ -112,6 +112,14 @@ void XSnsInit()
 
 /*********************************************************************************************\
  * Function call to all xsns
+ *
+ * FUNC_INIT
+ * FUNC_PREP_BEFORE_TELEPERIOD
+ * FUNC_SAVE_BEFORE_RESTART
+ * FUNC_JSON_APPEND
+ * FUNC_WEB_APPEND
+ * FUNC_EVERY_SECOND
+ * FUNC_EVERY_50_MSECOND
 \*********************************************************************************************/
 
 boolean XsnsCall(byte Function)

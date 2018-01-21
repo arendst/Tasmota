@@ -82,7 +82,7 @@ boolean XdrvCommand(char *type, uint16_t index, char *dataBuf, uint16_t data_len
   return XdrvCall(FUNC_COMMAND);
 }
 
-void XdrvSetPower(uint8_t mpower)
+void XdrvSetPower(power_t mpower)
 {
 //  XdrvMailbox.valid = 1;
   XdrvMailbox.index = mpower;
@@ -102,6 +102,16 @@ boolean XdrvMqttData(char *topicBuf, uint16_t stopicBuf, char *dataBuf, uint16_t
 
 /*********************************************************************************************\
  * Function call to all xdrv
+ *
+ * FUNC_INIT
+ * FUNC_MQTT_SUBSCRIBE
+ * FUNC_MQTT_INIT
+ * return FUNC_MQTT_DATA
+ * return FUNC_COMMAND
+ * FUNC_SET_POWER
+ * FUNC_SHOW_SENSOR
+ * FUNC_EVERY_SECOND
+ * FUNC_EVERY_50_MSECOND
 \*********************************************************************************************/
 
 boolean XdrvCall(byte Function)

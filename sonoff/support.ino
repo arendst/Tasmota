@@ -148,83 +148,9 @@ Decoding 14 results
  * General
 \*********************************************************************************************/
 
-char* _dtostrf(double number, unsigned char prec, char *s, bool i18n)
+char* dtostrfd(double number, unsigned char prec, char *s)
 {
-  bool negative = false;
-
-  if (isnan(number)) {
-    strcpy_P(s, PSTR("nan"));
-    return s;
-  }
-  if (isinf(number)) {
-    strcpy_P(s, PSTR("inf"));
-    return s;
-  }
-  char decimal = '.';
-  if (i18n) {
-    decimal = D_DECIMAL_SEPARATOR[0];
-  }
-
-  char* out = s;
-
-  // Handle negative numbers
-  if (number < 0.0) {
-    negative = true;
-    number = -number;
-  }
-
-  // Round correctly so that print(1.999, 2) prints as "2.00"
-  // I optimized out most of the divisions
-  double rounding = 2.0;
-  for (uint8_t i = 0; i < prec; ++i) {
-    rounding *= 10.0;
-  }
-  rounding = 1.0 / rounding;
-  number += rounding;
-
-  // Figure out how big our number really is
-  double tenpow = 1.0;
-  int digitcount = 1;
-  while (number >= 10.0 * tenpow) {
-    tenpow *= 10.0;
-    digitcount++;
-  }
-  number /= tenpow;
-
-  // Handle negative sign
-  if (negative) {
-    *out++ = '-';
-  }
-
-  // Print the digits, and if necessary, the decimal point
-  digitcount += prec;
-  int8_t digit = 0;
-  while (digitcount-- > 0) {
-    digit = (int8_t)number;
-    if (digit > 9) {
-      digit = 9; // insurance
-    }
-    *out++ = (char)('0' | digit);
-    if ((digitcount == prec) && (prec > 0)) {
-      *out++ = decimal;
-    }
-    number -= digit;
-    number *= 10.0;
-  }
-
-  // make sure the string is terminated
-  *out = 0;
-  return s;
-}
-
-char* dtostrfd(double number, unsigned char prec, char *s)  // Always decimal dot
-{
-  return _dtostrf(number, prec, s, 0);
-}
-
-char* dtostrfi(double number, unsigned char prec, char *s) // Use localized decimal dot
-{
-  return _dtostrf(number, prec, s, 1);
+  return dtostrf(number, 1, prec, s);
 }
 
 boolean ParseIp(uint32_t* addr, const char* str)
@@ -333,7 +259,6 @@ char* GetPowerDevice(char* dest, uint8_t idx, size_t size)
 \*********************************************************************************************/
 
 #define WIFI_CONFIG_SEC   180  // seconds before restart
-#define WIFI_MANAGER_SEC  180  // seconds before restart
 #define WIFI_CHECK_SEC    20   // seconds
 #define WIFI_RETRY_SEC    30   // seconds
 
@@ -361,7 +286,7 @@ int WifiGetRssiAsQuality(int rssi)
 boolean WifiConfigCounter()
 {
   if (wifi_config_counter) {
-    wifi_config_counter = WIFI_MANAGER_SEC;
+    wifi_config_counter = WIFI_CONFIG_SEC;
   }
   return (wifi_config_counter);
 }
