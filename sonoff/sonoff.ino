@@ -508,9 +508,9 @@ void MqttConnected()
 
     //STB mod
       if (LocalTime() > 100) {
-        tele_period = Settings.tele_period -2;
+        tele_period = 8 ;
       } else {
-        tele_period = Settings.tele_period -9;
+        tele_period = 1 ;
       }
       //end
     }
