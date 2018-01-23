@@ -1563,7 +1563,7 @@ void HandleInformation()
     func += F("}1" D_MQTT_USER "}2"); func += Settings.mqtt_user;
     func += F("}1" D_MQTT_TOPIC "}2"); func += Settings.mqtt_topic;
     func += F("}1" D_MQTT_GROUP_TOPIC "}2"); func += Settings.mqtt_grptopic;
-    GetTopic_P(stopic, CMND, Settings.mqtt_topic, "");
+    GetTopic_P(stopic, CMND, mqtt_topic, "");
     func += F("}1" D_MQTT_FULL_TOPIC "}2"); func += stopic;
 
   } else {
