@@ -453,43 +453,43 @@ const char HUE_DESCRIPTION_XML[] PROGMEM =
   "</root>\r\n"
   "\r\n";
 const char HueLightStatus_JSON[] PROGMEM =
-  "\"on\":{state},"
-  "\"bri\":{b},"
-  "\"hue\":{h},"
-  "\"sat\":{s},"
+  "{\"on\":%s,"
+  "\"bri\":%u,"
+  "\"hue\":%u,"
+  "\"sat\":%u,"
   "\"xy\":[0.5, 0.5],"
   "\"ct\":500,"
   "\"alert\":\"none\","
   "\"effect\":\"none\","
   "\"colormode\":\"hs\","
-  "\"reachable\":true";
+  "\"reachable\":true}";
 const char HUE_LIGHTS_STATUS_JSON[] PROGMEM =
-  "\"type\":\"Extended color light\","
-  "\"name\":\"{j1\","
+  ",\"type\":\"Extended color light\","
+  "\"name\":\"%s\","
   "\"modelid\":\"LCT007\","
-  "\"uniqueid\":\"{j2\","
+  "\"uniqueid\":\"%s\","
   "\"swversion\":\"5.50.1.19085\""
   "}";
 const char HUE_GROUP0_STATUS_JSON[] PROGMEM =
   "{\"name\":\"Group 0\","
-   "\"lights\":[{l1],"
+   "\"lights\":[%s],"
    "\"type\":\"LightGroup\","
-   "\"action\":{";
-//     "\"scene\":\"none\",";
+   "\"action\":";
+
 const char HueConfigResponse_JSON[] PROGMEM =
   "{\"name\":\"Philips hue\","
-   "\"mac\":\"{ma\","
+   "\"mac\":\"%s\","
    "\"dhcp\":true,"
-   "\"ipaddress\":\"{ip\","
-   "\"netmask\":\"{ms\","
-   "\"gateway\":\"{gw\","
+   "\"ipaddress\":\"%s\","
+   "\"netmask\":\"%s\","
+   "\"gateway\":\"%s\","
    "\"proxyaddress\":\"none\","
    "\"proxyport\":0,"
-   "\"bridgeid\":\"{br\","
-   "\"UTC\":\"{dt\","
-   "\"whitelist\":{\"{id\":{"
-     "\"last use date\":\"{dt\","
-     "\"create date\":\"{dt\","
+   "\"bridgeid\":\"%s\","
+   "\"UTC\":\"%s\","
+   "\"whitelist\":{\"%s\":{"
+     "\"last use date\":\"%s\","
+     "\"create date\":\"%s\","
      "\"name\":\"Remote\"}},"
    "\"swversion\":\"01039019\","
    "\"apiversion\":\"1.17.0\","
@@ -498,7 +498,7 @@ const char HueConfigResponse_JSON[] PROGMEM =
    "\"portalservices\":false"
   "}";
 const char HUE_LIGHT_RESPONSE_JSON[] PROGMEM =
-  "{\"success\":{\"/lights/{id/state/{cm\":{re}}";
+  "{\"success\":{\"/lights/%u/state/%s\":%s}}";
 const char HUE_ERROR_JSON[] PROGMEM =
   "[{\"error\":{\"type\":901,\"address\":\"/\",\"description\":\"Internal Error\"}}]";
 
@@ -537,62 +537,49 @@ void HueNotImplemented(String *path)
   WebServer->send(200, FPSTR(HDR_CTYPE_JSON), "{}");
 }
 
-void HueConfigResponse(String *response)
+int HueConfigResponse(char *output, int len)
 {
-  *response += FPSTR(HueConfigResponse_JSON);
-  response->replace("{ma", WiFi.macAddress());
-  response->replace("{ip", WiFi.localIP().toString());
-  response->replace("{ms", WiFi.subnetMask().toString());
-  response->replace("{gw", WiFi.gatewayIP().toString());
-  response->replace("{br", HueBridgeId());
-  response->replace("{dt", GetUtcDateAndTime());
-  response->replace("{id", GetHueUserId());
+
+  return snprintf_P(output, len, HueConfigResponse_JSON, WiFi.macAddress().c_str(), WiFi.localIP().toString().c_str(),
+                    WiFi.subnetMask().toString().c_str(), WiFi.gatewayIP().toString().c_str(), HueBridgeId().c_str(),
+                    GetUtcDateAndTime().c_str(), GetHueUserId().c_str(), GetUtcDateAndTime().c_str(), GetUtcDateAndTime().c_str());
 }
 
 void HueConfig(String *path)
 {
-  String response = "";
-  HueConfigResponse(&response);
-  WebServer->send(200, FPSTR(HDR_CTYPE_JSON), response);
-}
-
-void HueLightStatus(byte device, String *response)
-{
-  *response += FPSTR(HueLightStatus_JSON);
-  response->replace("{state}", (power & (1 << (device-1))) ? "true" : "false");
-
-  if (light_type) {
-    LightReplaceHsb(response);
-  } else {
-    response->replace("{h}", "0");
-    response->replace("{s}", "0");
-    response->replace("{b}", "0");
-  }
+  char* cresponse = mqtt_data;
+  HueConfigResponse(cresponse, sizeof(mqtt_data));
+  WebServer->send(200, FPSTR(HDR_CTYPE_JSON), cresponse);
 }
 
 void HueGlobalConfig(String *path)
 {
-  String response;
+  //String response;
+  char* cresponse = mqtt_data;
   uint8_t maxhue = (devices_present > MAX_FRIENDLYNAMES) ? MAX_FRIENDLYNAMES : devices_present;
 
-  path->remove(0,1);                                 // cut leading / to get <id>
-  response = F("{\"lights\":{\"");
+  char *cpath = (char*)path->c_str();
+
+  cpath++;                                           // skip leading / to get <id>
+  int tmpiter = 0;
+  tmpiter += snprintf_P(cresponse+tmpiter, sizeof(mqtt_data)-tmpiter, PSTR("{\"lights\":{"));
   for (uint8_t i = 1; i <= maxhue; i++) {
-    response += i;
-    response += F("\":{\"state\":{");
-    HueLightStatus(i, &response);
-    response += "},";
-    response += FPSTR(HUE_LIGHTS_STATUS_JSON);
-    response.replace("{j1", Settings.friendlyname[i-1]);
-    response.replace("{j2", GetHueDeviceId(i));
+    tmpiter += snprintf_P(cresponse+tmpiter, sizeof(mqtt_data)-tmpiter, PSTR("\"%d\":{\"state\":"), i);
+    uint16_t hue=0; uint8_t sat=0; uint8_t bri=0;
+    if (light_type) {
+      LightGetHsbFixedPoint(&hue, &sat, &bri);
+    }
+    tmpiter += snprintf_P(cresponse+tmpiter, sizeof(mqtt_data)-tmpiter, HueLightStatus_JSON, (power & (1 << (i-1))) ? "true" : "false", hue, sat, bri);
+    tmpiter += snprintf_P(cresponse+tmpiter, sizeof(mqtt_data)-tmpiter, HUE_LIGHTS_STATUS_JSON, Settings.friendlyname[i-1], GetHueDeviceId(i).c_str());
     if (i < maxhue) {
-      response += ",\"";
+      tmpiter += snprintf_P(cresponse+tmpiter, sizeof(mqtt_data)-tmpiter, ",");
     }
   }
-  response += F("},\"groups\":{},\"schedules\":{},\"config\":");
-  HueConfigResponse(&response);
-  response += "}";
-  WebServer->send(200, FPSTR(HDR_CTYPE_JSON), response);
+  tmpiter += snprintf_P(cresponse+tmpiter, sizeof(mqtt_data)-tmpiter, PSTR("},\"groups\":{},\"schedules\":{},\"config\":"));
+  tmpiter += HueConfigResponse(cresponse+tmpiter, sizeof(mqtt_data)-tmpiter);
+
+  tmpiter += snprintf_P(cresponse+tmpiter, sizeof(mqtt_data)-tmpiter, "}");
+  WebServer->send(200, FPSTR(HDR_CTYPE_JSON), cresponse);
 }
 
 void HueAuthentication(String *path)
@@ -603,12 +590,25 @@ void HueAuthentication(String *path)
   WebServer->send(200, FPSTR(HDR_CTYPE_JSON), response);
 }
 
+
+static int endsWith(const char *str, const char *suffix)
+{
+    if (!str || !suffix)
+        return 0;
+    size_t lenstr = strlen(str);
+    size_t lensuffix = strlen(suffix);
+    if (lensuffix >  lenstr)
+        return 0;
+    return strncmp(str + lenstr - lensuffix, suffix, lensuffix) == 0;
+}
+
 void HueLights(String *path)
 {
 /*
  * http://sonoff/api/username/lights/1/state?1={"on":true,"hue":56100,"sat":254,"bri":254,"alert":"none","transitiontime":40}
  */
-  String response;
+  //String response;
+  char* cresponse = mqtt_data;
   uint8_t device = 1;
   uint16_t tmp = 0;
   int16_t pos = 0;
@@ -619,57 +619,61 @@ void HueLights(String *path)
   bool resp = false;
   bool on = false;
   bool change = false;
+  bool changepower = false;
   char id[4];
   uint8_t maxhue = (devices_present > MAX_FRIENDLYNAMES) ? MAX_FRIENDLYNAMES : devices_present;
 
-  path->remove(0,path->indexOf("/lights"));          // Remove until /lights
-  if (path->endsWith("/lights")) {                   // Got /lights
-    response = "{\"";
+  char *cpath = (char*)path->c_str();
+
+  cpath = strstr(cpath, "/lights");
+  if (endsWith(cpath, "/lights")) {                   // Got /lights
+    int tmpiter = 0;
+    tmpiter += snprintf_P(cresponse+tmpiter, sizeof(mqtt_data)-tmpiter, "{\"");
     for (uint8_t i = 1; i <= maxhue; i++) {
-      response += i;
-      response += F("\":{\"state\":{");
-      HueLightStatus(i, &response);
-      response += "},";
-      response += FPSTR(HUE_LIGHTS_STATUS_JSON);
-      response.replace("{j1", Settings.friendlyname[i-1]);
-      response.replace("{j2", GetHueDeviceId(i));
-      if (i < maxhue) {
-        response += ",\"";
+      tmpiter += snprintf_P(cresponse+tmpiter, sizeof(mqtt_data)-tmpiter, PSTR("%d\":{\"state\":"), i);
+      uint16_t hue=0; uint8_t sat=0; uint8_t bri=0;
+      if (light_type) {
+        LightGetHsbFixedPoint(&hue, &sat, &bri);
       }
+      tmpiter += snprintf_P(cresponse+tmpiter, sizeof(mqtt_data)-tmpiter, HueLightStatus_JSON, (power & (1 << (i-1))) ? "true" : "false", hue, sat, bri);
+      tmpiter += snprintf_P(cresponse+tmpiter, sizeof(mqtt_data)-tmpiter, HUE_LIGHTS_STATUS_JSON, Settings.friendlyname[i-1], GetHueDeviceId(i).c_str());
+      if (i < maxhue) {
+        tmpiter += snprintf_P(cresponse+tmpiter, sizeof(mqtt_data)-tmpiter, ",\"");
+      }
+
     }
-    response += "}";
-    WebServer->send(200, FPSTR(HDR_CTYPE_JSON), response);
+    strncat(cresponse, "}", sizeof(mqtt_data));
+    WebServer->send(200, FPSTR(HDR_CTYPE_JSON), cresponse);
   }
-  else if (path->endsWith("/state")) {               // Got ID/state
-    path->remove(0,8);                               // Remove /lights/
-    path->remove(path->indexOf("/state"));           // Remove /state
-    device = atoi(path->c_str());
+  else if (endsWith(cpath, "/state")) {               // Got ID/state
+    int tmpiter = 0;
+    cpath += 8;
+    device = atoi(cpath); //Not necessary to trime "/state", atoi will ignore trailing garbage
     if ((device < 1) || (device > maxhue)) {
       device = 1;
     }
     if (1 == WebServer->args()) {
-      response = "[";
+      //response = "[";
+      tmpiter += snprintf_P(cresponse+tmpiter, sizeof(mqtt_data)-tmpiter, "[");
 
       StaticJsonBuffer<400> jsonBuffer;
       JsonObject &hue_json = jsonBuffer.parseObject(WebServer->arg(0));
       if (hue_json.containsKey("on")) {
-
-        response += FPSTR(HUE_LIGHT_RESPONSE_JSON);
-        response.replace("{id", String(device));
-        response.replace("{cm", "on");
+        const char* re;
 
         on = hue_json["on"];
         switch(on)
         {
-          case false : ExecuteCommandPower(device, 0);
-                       response.replace("{re", "false");
+          case false : changepower = true;
+                       re = "false";
                        break;
-          case true  : ExecuteCommandPower(device, 1);
-                       response.replace("{re", "true");
+          case true  : changepower = true;
+                       re = "true";
                        break;
-          default    : response.replace("{re", (power & (1 << (device-1))) ? "true" : "false");
+          default    : re = (power & (1 << (device-1))) ? "true" : "false";
                        break;
         }
+        tmpiter += snprintf_P(cresponse+tmpiter, sizeof(mqtt_data)-tmpiter, HUE_LIGHT_RESPONSE_JSON, device, "on", re);
         resp = true;
       }
 
@@ -681,12 +685,9 @@ void HueLights(String *path)
         tmp = hue_json["bri"];
         bri = (float)tmp / 254.0f;
         if (resp) {
-          response += ",";
+          tmpiter += snprintf_P(cresponse+tmpiter, sizeof(mqtt_data)-tmpiter, ",");
         }
-        response += FPSTR(HUE_LIGHT_RESPONSE_JSON);
-        response.replace("{id", String(device));
-        response.replace("{cm", "bri");
-        response.replace("{re", String(tmp));
+        tmpiter += snprintf_P(cresponse+tmpiter, sizeof(mqtt_data)-tmpiter, HUE_LIGHT_RESPONSE_JSON, device, "bri", String(tmp).c_str());
         resp = true;
         change = true;
       }
@@ -694,12 +695,9 @@ void HueLights(String *path)
         tmp = hue_json["hue"];
         hue = (float)tmp / 65535.0f;
         if (resp) {
-          response += ",";
+          tmpiter += snprintf_P(cresponse+tmpiter, sizeof(mqtt_data)-tmpiter, ",");
         }
-        response += FPSTR(HUE_LIGHT_RESPONSE_JSON);
-        response.replace("{id", String(device));
-        response.replace("{cm", "hue");
-        response.replace("{re", String(tmp));
+        tmpiter += snprintf_P(cresponse+tmpiter, sizeof(mqtt_data)-tmpiter, HUE_LIGHT_RESPONSE_JSON, device, "bri", String(tmp).c_str());
         resp = true;
         change = true;
       }
@@ -707,55 +705,52 @@ void HueLights(String *path)
         tmp = hue_json["sat"];
         sat = (float)tmp / 254.0f;
         if (resp) {
-          response += ",";
+          tmpiter += snprintf_P(cresponse+tmpiter, sizeof(mqtt_data)-tmpiter, ",");
         }
-        response += FPSTR(HUE_LIGHT_RESPONSE_JSON);
-        response.replace("{id", String(device));
-        response.replace("{cm", "sat");
-        response.replace("{re", String(tmp));
+        tmpiter += snprintf_P(cresponse+tmpiter, sizeof(mqtt_data)-tmpiter, HUE_LIGHT_RESPONSE_JSON, device, "sat", String(tmp).c_str());
         change = true;
       }
       if (hue_json.containsKey("ct")) {              // Color temperature 153 (Cold) to 500 (Warm)
         ct = hue_json["ct"];
         if (resp) {
-          response += ",";
+          tmpiter += snprintf_P(cresponse+tmpiter, sizeof(mqtt_data)-tmpiter, ",");
         }
-        response += FPSTR(HUE_LIGHT_RESPONSE_JSON);
-        response.replace("{id", String(device));
-        response.replace("{cm", "ct");
-        response.replace("{re", String(ct));
+        tmpiter += snprintf_P(cresponse+tmpiter, sizeof(mqtt_data)-tmpiter, HUE_LIGHT_RESPONSE_JSON, device, "sat", String(tmp).c_str());
         change = true;
       }
-      if (change) {
-        if (light_type) {
-          LightSetHsb(hue, sat, bri, ct);
-        }
-        change = false;
-      }
-      response += "]";
-      if (2 == response.length()) {
-        response = FPSTR(HUE_ERROR_JSON);
+      tmpiter += snprintf_P(cresponse+tmpiter, sizeof(mqtt_data)-tmpiter, "]");
+      if (2 == strlen(cresponse)) {
+        snprintf_P(cresponse, sizeof(mqtt_data), HUE_ERROR_JSON);
       }
     }
     else {
-      response = FPSTR(HUE_ERROR_JSON);
+      snprintf_P(cresponse, sizeof(mqtt_data), HUE_ERROR_JSON);
     }
 
-    WebServer->send(200, FPSTR(HDR_CTYPE_JSON), response);
+    // Do light commands
+    WebServer->send(200, FPSTR(HDR_CTYPE_JSON), cresponse);
+    if (change) {
+      if (light_type) {
+        LightSetHsb(hue, sat, bri, ct);
+      }
+    }
+    if (changepower) ExecuteCommandPower(device, on);
   }
-  else if(path->indexOf("/lights/") >= 0) {          // Got /lights/ID
-    path->remove(0,8);                               // Remove /lights/
-    device = atoi(path->c_str());
+  else if(strstr(cpath, "/lights/")) {          // Got /lights/ID
+    cpath+=8;                               // Remove /lights/
+    device = atoi(cpath);
     if ((device < 1) || (device > maxhue)) {
       device = 1;
     }
-    response += F("{\"state\":{");
-    HueLightStatus(device, &response);
-    response += "},";
-    response += FPSTR(HUE_LIGHTS_STATUS_JSON);
-    response.replace("{j1", Settings.friendlyname[device-1]);
-    response.replace("{j2", GetHueDeviceId(device));
-    WebServer->send(200, FPSTR(HDR_CTYPE_JSON), response);
+    int tmpiter = 0;
+    tmpiter += snprintf_P(cresponse+tmpiter, sizeof(mqtt_data)-tmpiter, PSTR("{\"state\":"));
+    uint16_t hue=0; uint8_t sat=0; uint8_t bri=0;
+    if (light_type) {
+      LightGetHsbFixedPoint(&hue, &sat, &bri);
+    }
+    tmpiter += snprintf_P(cresponse+tmpiter, sizeof(mqtt_data)-tmpiter, HueLightStatus_JSON, (power & (1 << (device-1))) ? "true" : "false", hue,sat,bri);
+    tmpiter += snprintf_P(cresponse+tmpiter, sizeof(mqtt_data)-tmpiter, HUE_LIGHTS_STATUS_JSON, Settings.friendlyname[device-1], GetHueDeviceId(device).c_str());
+    WebServer->send(200, FPSTR(HDR_CTYPE_JSON), cresponse);
   }
   else {
     WebServer->send(406, FPSTR(HDR_CTYPE_JSON), "{}");
@@ -767,21 +762,27 @@ void HueGroups(String *path)
 /*
  * http://sonoff/api/username/groups?1={"name":"Woonkamer","lights":[],"type":"Room","class":"Living room"})
  */
-  String response = "{}";
+  char* cresponse = (char*) "{}";
   uint8_t maxhue = (devices_present > MAX_FRIENDLYNAMES) ? MAX_FRIENDLYNAMES : devices_present;
+  char *cpath = (char*)path->c_str();
 
-  if (path->endsWith("/0")) {
-    response = FPSTR(HUE_GROUP0_STATUS_JSON);
+  if (endsWith(cpath, "/0")) {
+    int tmpiter = 0;
+    cresponse = mqtt_data;
     String lights = F("\"1\"");
     for (uint8_t i = 2; i <= maxhue; i++) {
       lights += ",\"" + String(i) + "\"";
     }
-    response.replace("{l1", lights);
-    HueLightStatus(1, &response);
-    response += F("}}");
+    tmpiter += snprintf_P(cresponse+tmpiter, sizeof(mqtt_data)-tmpiter, HUE_GROUP0_STATUS_JSON, lights.c_str());
+    uint16_t hue=0; uint8_t sat=0; uint8_t bri=0;
+    if (light_type) {
+      LightGetHsbFixedPoint(&hue, &sat, &bri);
+    }
+    tmpiter += snprintf_P(cresponse+tmpiter, sizeof(mqtt_data)-tmpiter, HueLightStatus_JSON, (power & (1 << (1-1))) ? "true" : "false", hue,sat,bri);
+    tmpiter += snprintf_P(cresponse+tmpiter, sizeof(mqtt_data)-tmpiter, PSTR("}"));
   }
 
-  WebServer->send(200, FPSTR(HDR_CTYPE_JSON), response);
+  WebServer->send(200, FPSTR(HDR_CTYPE_JSON), cresponse);
 }
 
 void HandleHueApi(String *path)

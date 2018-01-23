@@ -186,10 +186,6 @@ uint8_t light_type = 0;                     // Light types
 
 boolean mdns_begun = false;
 
-uint8_t xdrv_present = 0;                   // Number of drivers found
-boolean (*xdrv_func_ptr[XDRV_MAX])(byte);   // Driver Function Pointers
-uint8_t xsns_present = 0;                   // Number of External Sensors found
-boolean (*xsns_func_ptr[XSNS_MAX])(byte);   // External Sensor Function Pointers for simple implementation of sensors
 char my_version[33];                        // Composed version string
 char my_hostname[33];                       // Composed Wifi hostname
 char mqtt_client[33];                        // Composed MQTT Clientname

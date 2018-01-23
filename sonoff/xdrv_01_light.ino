@@ -891,18 +891,18 @@ void LightHsbToRgb()
 
 /********************************************************************************************/
 
-void LightReplaceHsb(String *response)
+void LightGetHsbFixedPoint(uint16_t *hue, uint8_t *sat, uint8_t *bri)
 {
   if (light_subtype > LST_COLDWARM) {
     LightRgbToHsb();
-    response->replace("{h}", String((uint16_t)(65535.0f * light_hue)));
-    response->replace("{s}", String((uint8_t)(254.0f * light_saturation)));
-    response->replace("{b}", String((uint8_t)(254.0f * light_brightness)));
+    *hue = (uint16_t)(65535.0f * light_hue);
+    *sat = (uint8_t)(254.0f * light_saturation);
+    *bri = (uint8_t)(254.0f * light_brightness);
   } else {
-    response->replace("{h}", "0");
-    response->replace("{s}", "0");
-//    response->replace("{b}", String((uint8_t)(2.54f * (float)Settings.light_dimmer)));
-    response->replace("{b}", String((uint8_t)(0.01f * (float)Settings.light_dimmer)));
+    *hue = 0;
+    *sat = 0;
+//    *sat = (uint8_t)(2.54f * (float)Settings.light_dimmer);
+    *sat = (uint8_t)(0.01f * (float)Settings.light_dimmer);
   }
 }
 
