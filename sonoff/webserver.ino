@@ -526,7 +526,7 @@ void HandleRoot()
         }
         for (byte j = 0; j < 4; j++) {
           idx++;
-          snprintf_P(line, sizeof(line), PSTR("<td style='width:25%'><button onclick='la(\"?k=%d\");'>%d</button></td>"), idx, idx);
+          snprintf_P(line, sizeof(line), PSTR("<td style='width:25%%'><button onclick='la(\"?k=%d\");'>%d</button></td>"), idx, idx);
           page += line;
         }
       }
@@ -721,7 +721,7 @@ void HandleModuleConfiguration()
   for (byte i = 0; i < MAX_GPIO_PIN; i++) {
     if (GPIO_USER == cmodule.gp.io[i]) {
       snprintf_P(stemp, 3, PINS_WEMOS +i*2);
-      snprintf_P(line, sizeof(line), PSTR("<tr><td style='width:60%'>%s <b>" D_GPIO "%d</b> %s</td><td style='width:40%'><select id='g%d' name='g%d'></select></td></tr>"),
+      snprintf_P(line, sizeof(line), PSTR("<tr><td style='width:60%%'>%s <b>" D_GPIO "%d</b> %s</td><td style='width:40%%'><select id='g%d' name='g%d'></select></td></tr>"),
 
         (WEMOS==Settings.module)?stemp:"", i, (0==i)? D_SENSOR_BUTTON "1":(1==i)? D_SERIAL_OUT :(3==i)? D_SERIAL_IN :(12==i)? D_SENSOR_RELAY "1":(13==i)? D_SENSOR_LED "1i":(14==i)? D_SENSOR :"", i, i);
       page += line;
