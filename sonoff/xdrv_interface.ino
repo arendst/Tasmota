@@ -17,58 +17,49 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-void XDrvInit()
-{
-  for (byte i = 0; i < XDRV_MAX; i++) {
-    xdrv_func_ptr[i] = NULL;
-  }
-  xdrv_present = 0;
-
+boolean (* const xdrv_func_ptr[])(byte) PROGMEM = {   // Driver Function Pointers
 #ifdef XDRV_01
-  xdrv_func_ptr[xdrv_present++] = &Xdrv01;
+  &Xdrv01,
 #endif
 
 #ifdef XDRV_02
-  xdrv_func_ptr[xdrv_present++] = &Xdrv02;
+  &Xdrv02,
 #endif
 
 #ifdef XDRV_03
-  xdrv_func_ptr[xdrv_present++] = &Xdrv03;
+  &Xdrv03,
 #endif
 
 #ifdef XDRV_04
-  xdrv_func_ptr[xdrv_present++] = &Xdrv04;
+  &Xdrv04,
 #endif
 
 #ifdef XDRV_05
-  xdrv_func_ptr[xdrv_present++] = &Xdrv05;
+  &Xdrv05,
 #endif
 
 #ifdef XDRV_06
-  xdrv_func_ptr[xdrv_present++] = &Xdrv06;
+  &Xdrv06,
 #endif
 
 #ifdef XDRV_07
-  xdrv_func_ptr[xdrv_present++] = &Xdrv07;
+  &Xdrv07,
 #endif
 
 #ifdef XDRV_08
-  xdrv_func_ptr[xdrv_present++] = &Xdrv08;
+  &Xdrv08,
 #endif
 
 #ifdef XDRV_09
-  xdrv_func_ptr[xdrv_present++] = &Xdrv09;
+  &Xdrv09,
 #endif
 
 #ifdef XDRV_10
-  xdrv_func_ptr[xdrv_present++] = &Xdrv10;
+  &Xdrv10,
 #endif
+};
 
-//  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_DEBUG "Drivers %d"), xdrv_present);
-//  AddLog(LOG_LEVEL_DEBUG);
-
-  XdrvCall(FUNC_INIT);
-}
+const uint8_t xdrv_present = sizeof(xdrv_func_ptr) / sizeof(xdrv_func_ptr[0]);  // Number of drivers found
 
 boolean XdrvCommand(char *type, uint16_t index, char *dataBuf, uint16_t data_len, int16_t payload)
 {

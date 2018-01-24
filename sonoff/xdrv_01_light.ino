@@ -528,7 +528,7 @@ char* LightGetColor(uint8_t type, char* scolor)
 void LightPowerOn()
 {
   if (Settings.light_dimmer && !(light_power)) {
-    ExecuteCommandPower(light_device, 1);
+    ExecuteCommandPower(light_device, POWER_ON);
   }
 }
 
@@ -568,10 +568,10 @@ void LightState(uint8_t append)
 void LightPreparePower()
 {
   if (Settings.light_dimmer && !(light_power)) {
-    ExecuteCommandPower(light_device, 7);  // No publishPowerState
+    ExecuteCommandPower(light_device, POWER_ON_NO_STATE);
   }
   else if (!Settings.light_dimmer && light_power) {
-    ExecuteCommandPower(light_device, 6);  // No publishPowerState
+    ExecuteCommandPower(light_device, POWER_OFF_NO_STATE);
   }
 #ifdef USE_DOMOTICZ
   DomoticzUpdatePowerState(light_device);

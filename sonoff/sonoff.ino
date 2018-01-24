@@ -25,10 +25,10 @@
     - Select IDE Tools - Flash Size: "1M (no SPIFFS)"
   ====================================================*/
 
-#define VERSION                0x050B0104   // 5.11.1d
+#define VERSION                0x050B0105   // 5.11.1e
 
 // Location specific includes
-#include "sonoff.h"                         // Enumaration used in user_config.h
+#include "sonoff.h"                         // Enumeration used in user_config.h
 #include "user_config.h"                    // Fixed user configurable options
 #include "user_config_override.h"           // Configuration overrides for user_config.h
 #include "i18n.h"                           // Language support configured by user_config.h
@@ -68,24 +68,24 @@
 
 enum TasmotaCommands {
   CMND_BACKLOG, CMND_DELAY, CMND_POWER, CMND_STATUS, CMND_STATE, CMND_POWERONSTATE, CMND_PULSETIME,
-  CMND_BLINKTIME, CMND_BLINKCOUNT, CMND_SAVEDATA, CMND_SETOPTION, CMND_TEMPERATURE_RESOLUTION, CMND_HUMIDITY_RESOLUTION,
+  CMND_BLINKTIME, CMND_BLINKCOUNT, CMND_SENSOR, CMND_SAVEDATA, CMND_SETOPTION, CMND_TEMPERATURE_RESOLUTION, CMND_HUMIDITY_RESOLUTION,
   CMND_PRESSURE_RESOLUTION, CMND_POWER_RESOLUTION, CMND_VOLTAGE_RESOLUTION, CMND_CURRENT_RESOLUTION, CMND_ENERGY_RESOLUTION, CMND_MODULE, CMND_MODULES,
   CMND_GPIO, CMND_GPIOS, CMND_PWM, CMND_PWMFREQUENCY, CMND_PWMRANGE, CMND_COUNTER, CMND_COUNTERTYPE,
   CMND_COUNTERDEBOUNCE, CMND_SLEEP, CMND_UPGRADE, CMND_UPLOAD, CMND_OTAURL, CMND_SERIALLOG, CMND_SYSLOG,
   CMND_LOGHOST, CMND_LOGPORT, CMND_IPADDRESS, CMND_NTPSERVER, CMND_AP, CMND_SSID, CMND_PASSWORD, CMND_HOSTNAME,
   CMND_WIFICONFIG, CMND_FRIENDLYNAME, CMND_SWITCHMODE, CMND_WEBSERVER, CMND_WEBPASSWORD, CMND_WEBLOG, CMND_EMULATION,
   CMND_TELEPERIOD, CMND_RESTART, CMND_RESET, CMND_TIMEZONE, CMND_ALTITUDE, CMND_LEDPOWER, CMND_LEDSTATE,
-  CMND_CFGDUMP, CMND_I2CSCAN, CMND_INA219MODE, CMND_EXCEPTION };
+  CMND_CFGDUMP, CMND_I2CSCAN, CMND_EXCEPTION };
 const char kTasmotaCommands[] PROGMEM =
   D_CMND_BACKLOG "|" D_CMND_DELAY "|" D_CMND_POWER "|" D_CMND_STATUS "|" D_CMND_STATE "|"  D_CMND_POWERONSTATE "|" D_CMND_PULSETIME "|"
-  D_CMND_BLINKTIME "|" D_CMND_BLINKCOUNT "|" D_CMND_SAVEDATA "|" D_CMND_SETOPTION "|" D_CMND_TEMPERATURE_RESOLUTION "|" D_CMND_HUMIDITY_RESOLUTION "|"
+  D_CMND_BLINKTIME "|" D_CMND_BLINKCOUNT "|" D_CMND_SENSOR "|" D_CMND_SAVEDATA "|" D_CMND_SETOPTION "|" D_CMND_TEMPERATURE_RESOLUTION "|" D_CMND_HUMIDITY_RESOLUTION "|"
   D_CMND_PRESSURE_RESOLUTION "|" D_CMND_POWER_RESOLUTION "|" D_CMND_VOLTAGE_RESOLUTION "|" D_CMND_CURRENT_RESOLUTION "|" D_CMND_ENERGY_RESOLUTION "|" D_CMND_MODULE "|" D_CMND_MODULES "|"
   D_CMND_GPIO "|" D_CMND_GPIOS "|" D_CMND_PWM "|" D_CMND_PWMFREQUENCY "|" D_CMND_PWMRANGE "|" D_CMND_COUNTER "|"  D_CMND_COUNTERTYPE "|"
   D_CMND_COUNTERDEBOUNCE "|" D_CMND_SLEEP "|" D_CMND_UPGRADE "|" D_CMND_UPLOAD "|" D_CMND_OTAURL "|" D_CMND_SERIALLOG "|" D_CMND_SYSLOG "|"
   D_CMND_LOGHOST "|" D_CMND_LOGPORT "|" D_CMND_IPADDRESS "|" D_CMND_NTPSERVER "|" D_CMND_AP "|" D_CMND_SSID "|" D_CMND_PASSWORD "|" D_CMND_HOSTNAME "|"
   D_CMND_WIFICONFIG "|" D_CMND_FRIENDLYNAME "|" D_CMND_SWITCHMODE "|" D_CMND_WEBSERVER "|" D_CMND_WEBPASSWORD "|" D_CMND_WEBLOG "|" D_CMND_EMULATION "|"
   D_CMND_TELEPERIOD "|" D_CMND_RESTART "|" D_CMND_RESET "|" D_CMND_TIMEZONE "|" D_CMND_ALTITUDE "|" D_CMND_LEDPOWER "|" D_CMND_LEDSTATE "|"
-  D_CMND_CFGDUMP "|" D_CMND_I2CSCAN "|" D_CMND_INA219MODE
+  D_CMND_CFGDUMP "|" D_CMND_I2CSCAN
 #ifdef DEBUG_THEO
   "|" D_CMND_EXCEPTION
 #endif
@@ -186,10 +186,6 @@ uint8_t light_type = 0;                     // Light types
 
 boolean mdns_begun = false;
 
-uint8_t xdrv_present = 0;                   // Number of drivers found
-boolean (*xdrv_func_ptr[XDRV_MAX])(byte);   // Driver Function Pointers
-uint8_t xsns_present = 0;                   // Number of External Sensors found
-boolean (*xsns_func_ptr[XSNS_MAX])(byte);   // External Sensor Function Pointers for simple implementation of sensors
 char my_version[33];                        // Composed version string
 char my_hostname[33];                       // Composed Wifi hostname
 char mqtt_client[33];                        // Composed MQTT Clientname
@@ -293,7 +289,7 @@ void SetDevicePower(power_t rpower)
 {
   uint8_t state;
 
-  if (4 == Settings.poweronstate) {  // All on and stay on
+  if (POWER_ALL_ALWAYS_ON == Settings.poweronstate) {  // All on and stay on
     power = (1 << devices_present) -1;
     rpower = power;
   }
@@ -945,11 +941,11 @@ void MqttDataCallback(char* topic, byte* data, unsigned int data_len)
        * 4 = Turn relays on and disable any relay control (used for Sonoff Pow to always measure power)
        * 5 = Keep relays off after power on, if PulseTime set wait for PulseTime seconds, and turn relays on
        */
-      if ((payload >= 0) && (payload <= 5)) {
+      if ((payload >= POWER_ALL_OFF) && (payload <= POWER_ALL_OFF_PULSETIME_ON)) {
         Settings.poweronstate = payload;
-        if (4 == Settings.poweronstate) {
+        if (POWER_ALL_ALWAYS_ON == Settings.poweronstate) {
           for (byte i = 1; i <= devices_present; i++) {
-            ExecuteCommandPower(i, 1);
+            ExecuteCommandPower(i, POWER_ON);
           }
         }
       }
@@ -990,6 +986,17 @@ void MqttDataCallback(char* topic, byte* data, unsigned int data_len)
         snprintf_P(stemp1, sizeof(stemp1), PSTR(D_JSON_EVERY " %d " D_UNIT_SECOND), Settings.save_data);
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, (Settings.save_data > 1) ? stemp1 : GetStateText(Settings.save_data));
+    }
+    else if (CMND_SENSOR == command_code) {
+      XdrvMailbox.topic = command;
+      XdrvMailbox.index = index;
+      XdrvMailbox.payload = payload;
+      XdrvMailbox.data_len = data_len;
+      XdrvMailbox.data = dataBuf;
+      XsnsCall(FUNC_COMMAND);
+//      if (!XsnsCall(FUNC_COMMAND)) {
+//        type = NULL;
+//      }
     }
     else if ((CMND_SETOPTION == command_code) && ((index >= 0) && (index <= 19)) || ((index > 31) && (index <= P_MAX_PARAM8 +31))) {
       if (index <= 31) {
@@ -1493,15 +1500,6 @@ void MqttDataCallback(char* topic, byte* data, unsigned int data_len)
       I2cScan(mqtt_data, sizeof(mqtt_data));
     }
 #endif  // USE_I2C
-#ifdef USE_INA219
-    else if (CMND_INA219MODE == command_code) {
-      if ((payload >= 0) && (payload <= 2)) {
-        Settings.ina219_mode = payload;
-        restart_flag = 2;
-      }
-      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, Settings.ina219_mode);
-    }
-#endif  // USE_INA219
     else if (Settings.flag.mqtt_enabled && MqttCommand(grpflg, type, index, dataBuf, data_len, payload, payload16)) {
       // Serviced
     }
@@ -1588,7 +1586,7 @@ void ExecuteCommandPower(byte device, byte state)
 // state 9 = Show power state
 
   uint8_t publish_power = 1;
-  if ((6 == state) || (7 == state)) {
+  if ((POWER_OFF_NO_STATE == state) || (POWER_ON_NO_STATE == state)) {
     state &= 1;
     publish_power = 0;
   }
@@ -1599,7 +1597,7 @@ void ExecuteCommandPower(byte device, byte state)
     pulse_timer[(device -1)] = 0;
   }
   power_t mask = 1 << (device -1);
-  if (state <= 2) {
+  if (state <= POWER_TOGGLE) {
     if ((blink_mask & mask)) {
       blink_mask &= (POWER_MASK ^ mask);  // Clear device mask
       MqttPublishPowerBlinkState(device);
@@ -1609,19 +1607,19 @@ void ExecuteCommandPower(byte device, byte state)
       for (byte i = 0; i < devices_present; i++) {
         power_t imask = 1 << i;
         if ((power & imask) && (mask != imask)) {
-          ExecuteCommandPower(i +1, 0);
+          ExecuteCommandPower(i +1, POWER_OFF);
         }
       }
       interlock_mutex = 0;
     }
     switch (state) {
-    case 0: { // Off
+    case POWER_OFF: {
       power &= (POWER_MASK ^ mask);
       break; }
-    case 1: // On
+    case POWER_ON:
       power |= mask;
       break;
-    case 2: // Toggle
+    case POWER_TOGGLE:
       power ^= mask;
     }
     SetDevicePower(power);
@@ -1630,10 +1628,10 @@ void ExecuteCommandPower(byte device, byte state)
 #endif  // USE_DOMOTICZ
     if (device <= MAX_PULSETIMERS) {
 //      pulse_timer[(device -1)] = (power & mask) ? Settings.pulse_timer[(device -1)] : 0;
-      pulse_timer[(device -1)] = (((5 == Settings.poweronstate) ? ~power : power) & mask) ? Settings.pulse_timer[(device -1)] : 0;
+      pulse_timer[(device -1)] = (((POWER_ALL_OFF_PULSETIME_ON == Settings.poweronstate) ? ~power : power) & mask) ? Settings.pulse_timer[(device -1)] : 0;
     }
   }
-  else if (3 == state) { // Blink
+  else if (POWER_BLINK == state) {
     if (!(blink_mask & mask)) {
       blink_powersave = (blink_powersave & (POWER_MASK ^ mask)) | (power & mask);  // Save state
       blink_power = (power >> (device -1))&1;  // Prep to Toggle
@@ -1644,7 +1642,7 @@ void ExecuteCommandPower(byte device, byte state)
     MqttPublishPowerBlinkState(device);
     return;
   }
-  else if (4 == state) { // No Blink
+  else if (POWER_BLINK_STOP == state) {
     byte flag = (blink_mask & mask);
     blink_mask &= (POWER_MASK ^ mask);  // Clear device mask
     MqttPublishPowerBlinkState(device);
@@ -1820,7 +1818,7 @@ boolean MqttShowSensor()
   }
   XsnsCall(FUNC_JSON_APPEND);
   boolean json_data_available = (strlen(mqtt_data) - json_data_start);
-  if (strstr_P(mqtt_data, PSTR(D_TEMPERATURE))) {
+  if (strstr_P(mqtt_data, PSTR(D_JSON_TEMPERATURE))) {
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"" D_JSON_TEMPERATURE_UNIT "\":\"%c\""), mqtt_data, TempUnit());
   }
   snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}"), mqtt_data);
@@ -1962,7 +1960,7 @@ void ButtonHandler()
         }
         if (button_pressed) {
           if (!send_button_power(0, i +1, 2)) {       // Execute Toggle command via MQTT if ButtonTopic is set
-            ExecuteCommandPower(i +1, 2);             // Execute Toggle command internally
+            ExecuteCommandPower(i +1, POWER_TOGGLE);  // Execute Toggle command internally
           }
         }
       } else {
@@ -1971,7 +1969,7 @@ void ButtonHandler()
             snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION D_BUTTON " %d " D_IMMEDIATE), i +1);
             AddLog(LOG_LEVEL_DEBUG);
             if (!send_button_power(0, i +1, 2)) {     // Execute Toggle command via MQTT if ButtonTopic is set
-              ExecuteCommandPower(i +1, 2);           // Execute Toggle command internally
+              ExecuteCommandPower(i +1, POWER_TOGGLE);  // Execute Toggle command internally
             }
           } else {
             multipress[i] = (multiwindow[i]) ? multipress[i] +1 : 1;
@@ -2026,7 +2024,7 @@ void ButtonHandler()
                   if (WifiState()) {                  // WPSconfig, Smartconfig or Wifimanager active
                     restart_flag = 1;
                   } else {
-                    ExecuteCommandPower(i + multipress[i], 2);  // Execute Toggle command internally
+                    ExecuteCommandPower(i + multipress[i], POWER_TOGGLE);  // Execute Toggle command internally
                   }
                 } else {                              // 3 - 7 press
                   if (!Settings.flag.button_restrict) {
@@ -2114,7 +2112,7 @@ void SwitchHandler()
 
         if (switchflag < 3) {
           if (!send_button_power(1, i +1, switchflag)) {  // Execute command via MQTT
-            ExecuteCommandPower(i +1, switchflag);              // Execute command internally (if i < devices_present)
+            ExecuteCommandPower(i +1, switchflag);        // Execute command internally (if i < devices_present)
           }
         }
 
@@ -2165,8 +2163,8 @@ void StateLoop()
       if ((pulse_timer[i] > 0) && (pulse_timer[i] < 112)) {
         pulse_timer[i]--;
         if (!pulse_timer[i]) {
-//          ExecuteCommandPower(i +1, 0);
-          ExecuteCommandPower(i +1, (5 == Settings.poweronstate) ? 1: 0);
+//          ExecuteCommandPower(i +1, POWER_OFF);
+          ExecuteCommandPower(i +1, (POWER_ALL_OFF_PULSETIME_ON == Settings.poweronstate) ? POWER_ON : POWER_OFF);
         }
       }
     }
@@ -2645,7 +2643,7 @@ void GpioInit()
   }
   SetLedPower(Settings.ledstate &8);
 
-  XDrvInit();
+  XdrvCall(FUNC_INIT);
 }
 
 extern "C" {
@@ -2705,29 +2703,29 @@ void setup()
   GetMqttClient(mqtt_client, Settings.mqtt_client, sizeof(mqtt_client));
 
   if (MOTOR == Settings.module) {
-    Settings.poweronstate = 1;  // Needs always on else in limbo!
+    Settings.poweronstate = POWER_ALL_ON;  // Needs always on else in limbo!
   }
-  if (4 == Settings.poweronstate) {  // Allways on
+  if (POWER_ALL_ALWAYS_ON == Settings.poweronstate) {
     SetDevicePower(1);
   } else {
     if ((resetInfo.reason == REASON_DEFAULT_RST) || (resetInfo.reason == REASON_EXT_SYS_RST)) {
       switch (Settings.poweronstate) {
-      case 0:  // All off
-      case 5:  // All off but on after PulseTime
+      case POWER_ALL_OFF:
+      case POWER_ALL_OFF_PULSETIME_ON:
         power = 0;
         SetDevicePower(power);
         break;
-      case 1:  // All on
+      case POWER_ALL_ON:  // All on
         power = (1 << devices_present) -1;
         SetDevicePower(power);
         break;
-      case 2:  // All saved state toggle
+      case POWER_ALL_SAVED_TOGGLE:
         power = Settings.power & ((1 << devices_present) -1) ^ POWER_MASK;
         if (Settings.flag.save_state) {
           SetDevicePower(power);
         }
         break;
-      case 3:  // All saved state
+      case POWER_ALL_SAVED:
         power = Settings.power & ((1 << devices_present) -1);
         if (Settings.flag.save_state) {
           SetDevicePower(power);
@@ -2747,8 +2745,7 @@ void setup()
     if ((i < MAX_RELAYS) && (pin[GPIO_REL1 +i] < 99)) {
       bitWrite(power, i, digitalRead(pin[GPIO_REL1 +i]) ^ bitRead(rel_inverted, i));
     }
-//    if ((i < MAX_PULSETIMERS) && bitRead(power, i)) {
-    if ((i < MAX_PULSETIMERS) && (bitRead(power, i) || (5 == Settings.poweronstate))) {
+    if ((i < MAX_PULSETIMERS) && (bitRead(power, i) || (POWER_ALL_OFF_PULSETIME_ON == Settings.poweronstate))) {
       pulse_timer[i] = Settings.pulse_timer[i];
     }
   }
@@ -2764,7 +2761,7 @@ void setup()
 #endif  // BE_MINIMAL
 
   RtcInit();
-  XSnsInit();
+  XsnsCall(FUNC_INIT);
 }
 
 void loop()
