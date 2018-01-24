@@ -368,22 +368,28 @@ void DomoticzSaveSettings()
 {
   char stemp[20];
   char ssensor_indices[6 * MAX_DOMOTICZ_SNS_IDX];
+  char tmp[100];
 
   for (byte i = 0; i < MAX_DOMOTICZ_IDX; i++) {
     snprintf_P(stemp, sizeof(stemp), PSTR("r%d"), i +1);
-    Settings.domoticz_relay_idx[i] = (!strlen(WebServer->arg(stemp).c_str())) ? 0 : atoi(WebServer->arg(stemp).c_str());
+    getarg(stemp, tmp, sizeof(tmp));
+    Settings.domoticz_relay_idx[i] = (!strlen(tmp)) ? 0 : atoi(tmp);
     snprintf_P(stemp, sizeof(stemp), PSTR("k%d"), i +1);
-    Settings.domoticz_key_idx[i] = (!strlen(WebServer->arg(stemp).c_str())) ? 0 : atoi(WebServer->arg(stemp).c_str());
+    getarg(stemp, tmp, sizeof(tmp));
+    Settings.domoticz_key_idx[i] = (!strlen(tmp)) ? 0 : atoi(tmp);
     snprintf_P(stemp, sizeof(stemp), PSTR("s%d"), i +1);
-    Settings.domoticz_switch_idx[i] = (!strlen(WebServer->arg(stemp).c_str())) ? 0 : atoi(WebServer->arg(stemp).c_str());
+    getarg(stemp, tmp, sizeof(tmp));
+    Settings.domoticz_switch_idx[i] = (!strlen(tmp)) ? 0 : atoi(tmp);
   }
   ssensor_indices[0] = '\0';
   for (byte i = 0; i < DZ_MAX_SENSORS; i++) {
     snprintf_P(stemp, sizeof(stemp), PSTR("l%d"), i +1);
-    Settings.domoticz_sensor_idx[i] = (!strlen(WebServer->arg(stemp).c_str())) ? 0 : atoi(WebServer->arg(stemp).c_str());
+    getarg(stemp, tmp, sizeof(tmp));
+    Settings.domoticz_sensor_idx[i] = (!strlen(tmp)) ? 0 : atoi(tmp);
     snprintf_P(ssensor_indices, sizeof(ssensor_indices), PSTR("%s%s%d"), ssensor_indices, (strlen(ssensor_indices)) ? "," : "",  Settings.domoticz_sensor_idx[i]);
   }
-  Settings.domoticz_update_timer = (!strlen(WebServer->arg("ut").c_str())) ? DOMOTICZ_UPDATE_TIMER : atoi(WebServer->arg("ut").c_str());
+  getarg("ut", tmp, sizeof(tmp));
+  Settings.domoticz_update_timer = (!strlen(tmp)) ? DOMOTICZ_UPDATE_TIMER : atoi(tmp);
 
   snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_DOMOTICZ D_CMND_IDX " %d,%d,%d,%d, " D_CMND_KEYIDX " %d,%d,%d,%d, " D_CMND_SWITCHIDX " %d,%d,%d,%d, " D_CMND_SENSORIDX " %s, " D_CMND_UPDATETIMER " %d"),
     Settings.domoticz_relay_idx[0], Settings.domoticz_relay_idx[1], Settings.domoticz_relay_idx[2], Settings.domoticz_relay_idx[3],
