@@ -885,6 +885,20 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      0, 0, 0
   }
 
+  { "MagicHome v2.3",  // Magic Home (aka Flux-light) (ESP8266) (#1353)
+     0, 0,
+     GPIO_LED1_INV,    // GPIO02 Blue onboard LED
+     0,
+     GPIO_USER,        // GPIO04 IR receiver (optional)
+     GPIO_PWM2,        // GPIO05 RGB LED Green
+     0, 0, 0, 0, 0, 0, // Flash connection
+     GPIO_PWM1,        // GPIO12 RGB LED Red
+     GPIO_PWM3,        // GPIO13 RGB LED Blue
+     0,
+     GPIO_PWM4,        // GPIO15 RGBW LED White
+     0, 0
+  },
+
 */
 
 #endif  // _SONOFF_TEMPLATE_H_

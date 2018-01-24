@@ -18,6 +18,9 @@
 */
 
 #ifdef USE_MHZ19
+
+#define XSNS_15 15
+
 /*********************************************************************************************\
  * MH-Z19 - CO2 sensor
  *
@@ -71,7 +74,7 @@ const char kMhzTypes[] PROGMEM = "MHZ19|MHZ19B";
 const uint8_t mhz_cmnd_read_ppm[9] =    {0xFF, 0x01, 0x86, 0x00, 0x00, 0x00, 0x00, 0x00, 0x79};
 const uint8_t mhz_cmnd_abc_enable[9] =  {0xFF, 0x01, 0x79, 0xA0, 0x00, 0x00, 0x00, 0x00, 0xE6};
 const uint8_t mhz_cmnd_abc_disable[9] = {0xFF, 0x01, 0x79, 0x00, 0x00, 0x00, 0x00, 0x00, 0x86};
-//const uint8_t mhz_cmnd_zeropoint[9] =   {0xff, 0x01, 0x87, 0x00, 0x00, 0x00, 0x00, 0x00, 0x78};
+const uint8_t mhz_cmnd_zeropoint[9] =   {0xff, 0x01, 0x87, 0x00, 0x00, 0x00, 0x00, 0x00, 0x78};
 
 uint8_t mhz_type = 1;
 uint16_t mhz_last_ppm = 0;
@@ -209,6 +212,34 @@ void Mhz50ms()
   }
 }
 
+/*********************************************************************************************\
+ * Command Sensor15
+\*********************************************************************************************/
+
+/*
+  0 - ABC Off
+  1 - ABC On
+  2 - Manual start = ABC Off
+
+  3 - Optional filter settings
+*/
+
+bool MhzCommandSensor()
+{
+  boolean serviced = true;
+
+  switch (XdrvMailbox.payload) {
+    case 2:
+      MhzSerial->write(mhz_cmnd_zeropoint, 9);
+      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_SENSOR_INDEX_SVALUE, XSNS_15, D_JSON_ZERO_POINT_CALIBRATION);
+      break;
+    default:
+      serviced = false;
+  }
+
+  return serviced;
+}
+
 /*********************************************************************************************/
 
 void MhzInit()
@@ -245,8 +276,6 @@ void MhzShow(boolean json)
  * Interface
 \*********************************************************************************************/
 
-#define XSNS_15
-
 boolean Xsns15(byte function)
 {
   boolean result = false;
@@ -258,6 +287,11 @@ boolean Xsns15(byte function)
         break;
       case FUNC_EVERY_50_MSECOND:
         Mhz50ms();
+        break;
+      case FUNC_COMMAND:
+        if (XSNS_15 == XdrvMailbox.index) {
+          result = MhzCommandSensor();
+        }
         break;
       case FUNC_JSON_APPEND:
         MhzShow(1);

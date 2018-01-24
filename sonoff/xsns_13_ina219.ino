@@ -19,6 +19,9 @@
 
 #ifdef USE_I2C
 #ifdef USE_INA219
+
+#define XSNS_13 13
+
 /*********************************************************************************************\
  * INA219 - Low voltage (max 32V!) Current sensor
  *
@@ -152,6 +155,23 @@ float Ina219GetCurrent_mA()
   return value;
 }
 
+/*********************************************************************************************\
+ * Command Sensor13
+\*********************************************************************************************/
+
+bool Ina219CommandSensor()
+{
+  boolean serviced = true;
+
+  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 2)) {
+    Settings.ina219_mode = XdrvMailbox.payload;
+    restart_flag = 2;
+  }
+  snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_SENSOR_INDEX_NVALUE, XSNS_13, Settings.ina219_mode);
+
+  return serviced;
+}
+
 /********************************************************************************************/
 
 void Ina219Detect()
@@ -211,14 +231,17 @@ void Ina219Show(boolean json)
  * Interface
 \*********************************************************************************************/
 
-#define XSNS_13
-
 boolean Xsns13(byte function)
 {
   boolean result = false;
 
   if (i2c_flg) {
     switch (function) {
+      case FUNC_COMMAND:
+        if ((XSNS_13 == XdrvMailbox.index) && (ina219_type)) {
+          result = Ina219CommandSensor();
+        }
+        break;
       case FUNC_PREP_BEFORE_TELEPERIOD:
         Ina219Detect();
         break;
