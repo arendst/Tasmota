@@ -507,8 +507,10 @@ boolean Xsns09(byte function)
         break;
       case FUNC_EVERY_SECOND:
 #ifdef USE_BME680
-        if (tele_period == Settings.tele_period -3) {
-          Bme680PerformReading();
+        if ((Settings.tele_period - tele_period) < 300) {  // 5 minute stabilization time
+          if (tele_period &1) {
+            Bme680PerformReading();  // Keep BME680 busy every two seconds
+          }
         }
 #endif  // USE_BME680
         break;

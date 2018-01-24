@@ -118,6 +118,7 @@
 #define D_JSON_WIFI "Wifi"
 #define D_JSON_WRONG "Wrong"
 #define D_JSON_YESTERDAY "Yesterday"
+#define D_JSON_ZERO_POINT_CALIBRATION "Zero Point Calibration"
 
 #define D_RSLT_ENERGY "ENERGY"
 #define D_RSLT_INFO "INFO"
@@ -172,6 +173,7 @@
 #define D_CMND_PULSETIME "PulseTime"
 #define D_CMND_BLINKTIME "BlinkTime"
 #define D_CMND_BLINKCOUNT "BlinkCount"
+#define D_CMND_SENSOR "Sensor"
 #define D_CMND_SAVEDATA "SaveData"
 #define D_CMND_SETOPTION "SetOption"
 #define D_CMND_TEMPERATURE_RESOLUTION "TempRes"
@@ -237,7 +239,6 @@
 #define D_CMND_LEDSTATE "LedState"
 #define D_CMND_CFGDUMP "CfgDump"
 #define D_CMND_I2CSCAN "I2CScan"
-#define D_CMND_INA219MODE "Ina219Mode"
 #define D_CMND_EXCEPTION "Exception"
 
 // Commands xdrv_01_light.ino
@@ -395,6 +396,9 @@ const char S_JSON_COMMAND_XVALUE[] PROGMEM =                  "{\"%s\":%s}";  //
 const char S_JSON_COMMAND_INDEX_NVALUE[] PROGMEM =            "{\"%s%d\":%d}";
 const char S_JSON_COMMAND_INDEX_SVALUE[] PROGMEM =            "{\"%s%d\":\"%s\"}";
 const char S_JSON_COMMAND_INDEX_SVALUE_SVALUE[] PROGMEM =     "{\"%s%d\":\"%s%s\"}";
+
+const char S_JSON_SENSOR_INDEX_NVALUE[] PROGMEM =            "{\"" D_CMND_SENSOR "%d\":%d}";
+const char S_JSON_SENSOR_INDEX_SVALUE[] PROGMEM =            "{\"" D_CMND_SENSOR "%d\":\"%s\"}";
 
 const char JSON_SNS_TEMPHUM[] PROGMEM = "%s,\"%s\":{\"" D_JSON_TEMPERATURE "\":%s,\"" D_JSON_HUMIDITY "\":%s}";
 
