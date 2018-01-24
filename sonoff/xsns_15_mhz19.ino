@@ -230,7 +230,7 @@ bool MhzCommandSensor()
 
   switch (XdrvMailbox.payload) {
     case 2:
-//      MhzSerial->write(mhz_cmnd_zeropoint, 9);
+      MhzSerial->write(mhz_cmnd_zeropoint, 9);
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_SENSOR_INDEX_SVALUE, XSNS_15, D_JSON_ZERO_POINT_CALIBRATION);
       break;
     default:
