@@ -86,7 +86,7 @@ typedef unsigned long power_t;              // Power (Relay) type
 #define CMDSZ                  24           // Max number of characters in command
 #define TOPSZ                  100          // Max number of characters in topic string
 #define LOGSZ                  400          // Max number of characters in log
-#define MIN_MESSZ              893          // Min number of characters in MQTT message 
+#define MIN_MESSZ              893          // Min number of characters in MQTT message
 #ifdef USE_MQTT_TLS
   #define MAX_LOG_LINES        10           // Max number of lines in weblog
 #else
@@ -128,6 +128,10 @@ enum EmulationOptions {EMUL_NONE, EMUL_WEMO, EMUL_HUE, EMUL_MAX};
 
 enum TopicOptions { CMND, STAT, TELE, nu1, RESULT_OR_CMND, RESULT_OR_STAT, RESULT_OR_TELE };
 
+enum ExecuteCommandPowerOptions { POWER_OFF, POWER_ON, POWER_TOGGLE, POWER_BLINK, POWER_BLINK_STOP, power_nu1, POWER_OFF_NO_STATE, POWER_ON_NO_STATE, power_nu2, POWER_SHOW_STATE };
+
+enum PowerOnStateOptions { POWER_ALL_OFF, POWER_ALL_ON, POWER_ALL_SAVED_TOGGLE, POWER_ALL_SAVED, POWER_ALL_ALWAYS_ON, POWER_ALL_OFF_PULSETIME_ON };
+
 enum ButtonStates {PRESSED, NOT_PRESSED};
 
 enum SettingsParmaIndex {P_HOLD_TIME, P_MAX_POWER_RETRY, P_MAX_PARAM8};
@@ -144,5 +148,11 @@ enum XsnsFunctions {FUNC_INIT, FUNC_EVERY_50_MSECOND, FUNC_EVERY_SECOND, FUNC_PR
                     FUNC_COMMAND, FUNC_MQTT_SUBSCRIBE, FUNC_MQTT_INIT, FUNC_MQTT_DATA, FUNC_SET_POWER, FUNC_SHOW_SENSOR};
 
 const uint8_t kDefaultRfCode[9] PROGMEM = { 0x21, 0x16, 0x01, 0x0E, 0x03, 0x48, 0x2E, 0x1A, 0x00 };
+
+/*********************************************************************************************\
+ * Extern global variables
+\*********************************************************************************************/
+
+extern uint8_t light_device;  // Light device number
 
 #endif  // _SONOFF_H_

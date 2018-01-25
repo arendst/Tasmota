@@ -30,6 +30,8 @@
  *
 \*********************************************************************/
 
+//#define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
+
 // "2017-03-07T11:08:02" - ISO8601:2004
 #define D_YEAR_MONTH_SEPARATOR "-"
 #define D_MONTH_DAY_SEPARATOR "-"
@@ -334,19 +336,6 @@
 #define D_HUE_API "Hue API"
 #define D_HUE_POST_ARGS "Hue POST 参数"
 #define D_3_RESPONSE_PACKETS_SENT "3 请求包发送"
-
-// xdrv_02_irremote.ino
-#define D_JSON_INVALID_JSON "无效的JSON"
-#define D_JSON_PROTOCOL_NOT_SUPPORTED "协议不支持"
-#define D_JSON_IR_PROTOCOL "协议"
-#define D_JSON_IR_BITS "BITS"
-#define D_JSON_IR_DATA "数据"
-#define D_JSON_IRHVAC_VENDOR "供应商"
-#define D_JSON_IRHVAC_POWER "电源"
-#define D_JSON_IRHVAC_MODE "模式"
-#define D_JSON_IRHVAC_FANSPEED "风扇转速"
-#define D_JSON_IRHVAC_TEMP "温度"
-#define D_JSON_IRRECEIVED "IrReceived"
 
 // xdrv_05_domoticz.ino
 #define D_DOMOTICZ_PARAMETERS "Domoticz 设置"

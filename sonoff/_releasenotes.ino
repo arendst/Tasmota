@@ -1,4 +1,22 @@
-/* 5.11.1c
+/* 5.11.1e
+ * Replaced command Ina219Mode with command Sensor13
+ * Add chunked webserver pages for large pages saving memory
+ * Fix Non-English JSON temperature unit attachement
+ * Add command Sensor15 2 to start MHZ19(B) Zero Point Calibration (#1643)
+ * Fix Sonoff Pow Energy Today and Energy Total reading after restart (#1648)
+ * Rewrite function pointers to save code space and memory (#1683)
+ * Add option define HOME_ASSISTANT_DISCOVERY_ENABLE in user_config.h (#1685)
+ * Fix SOnoff Pow Energy Period roll-over (#1688)
+ *
+ * 5.11.1d
+ * Add locale Decimal Separator to Web sensor page
+ * Add command State to retrieve device state information (same data as teleperiod state and status 11 in slightly different JSON format)
+ * Extent state information with Light parameters
+ * Fix IRSend parameter translation (#1636)
+ * Add optional login to Webserver AP mode (#1587, #1635)
+ * Fix BME680 teleperiod resistance measuring (#1647)
+ *
+ * 5.11.1c
  * Make command color parameter input less strict to ease Hass support
  * Add ColorTemperature to light status message
  * Change PubSubClient.h define MQTT_MAX_PACKET_SIZE from 512 to 1000 for Hass support

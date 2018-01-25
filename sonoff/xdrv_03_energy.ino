@@ -49,7 +49,7 @@ float energy_daily = 0;           // 12.123 kWh
 float energy_total = 0;           // 12345.12345 kWh
 float energy_start = 0;           // 12345.12345 kWh total from yesterday
 unsigned long energy_kWhtoday;    // 1212312345 Wh * 10^-5 (deca micro Watt hours) - 5763924 = 0.05763924 kWh = 0.058 kWh = energy_daily
-unsigned long energy_period = 0;  //
+unsigned long energy_period = 0;  // 1212312345 Wh * 10^-5 (deca micro Watt hours) - 5763924 = 0.05763924 kWh = 0.058 kWh = energy_daily
 
 byte energy_min_power_flag = 0;
 byte energy_max_power_flag = 0;
@@ -227,7 +227,7 @@ void HlwInit()
   hlw_cf1_current_max_pulse_counter = 0;
 
   hlw_load_off = 1;
-  hlw_energy_period_counter = 0;
+  hlw_energy_period_counter = 1;
 
   hlw_select_ui_flag = 0;  // Voltage;
 
@@ -437,6 +437,7 @@ void Energy200ms()
         Settings.energy_kWhtotal += (energy_kWhtoday / 1000);
         RtcSettings.energy_kWhtotal = Settings.energy_kWhtotal;
         energy_kWhtoday = 0;
+        energy_period = energy_kWhtoday;
         RtcSettings.energy_kWhtoday = energy_kWhtoday;
 #ifdef USE_PZEM004T
         if (ENERGY_PZEM004T == energy_flg) {
@@ -451,6 +452,7 @@ void Energy200ms()
       }
       if (energy_startup && (RtcTime.day_of_year == Settings.energy_kWhdoy)) {
         energy_kWhtoday = Settings.energy_kWhtoday;
+        energy_period = energy_kWhtoday;
         RtcSettings.energy_kWhtoday = energy_kWhtoday;
         energy_start = (float)Settings.hlw_power_calibration / 1000;  // Used by PZEM004T to store total yesterday
         energy_startup = 0;
@@ -573,7 +575,7 @@ void EnergyMarginCheck()
           snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_MAXPOWERREACHED "\":\"%d%s\"}"), energy_power_u, (Settings.flag.value_units) ? " " D_UNIT_WATT : "");
           MqttPublishPrefixTopic_P(STAT, S_RSLT_WARNING);
           EnergyMqttShow();
-          ExecuteCommandPower(1, 0);
+          ExecuteCommandPower(1, POWER_OFF);
           if (!energy_mplr_counter) {
             energy_mplr_counter = Settings.param[P_MAX_POWER_RETRY] +1;
           }
@@ -595,7 +597,7 @@ void EnergyMarginCheck()
           if (energy_mplr_counter) {
             snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_POWERMONITOR "\":\"%s\"}"), GetStateText(1));
             MqttPublishPrefixTopic_P(RESULT_OR_STAT, PSTR(D_JSON_POWERMONITOR));
-            ExecuteCommandPower(1, 1);
+            ExecuteCommandPower(1, POWER_ON);
           } else {
             snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_MAXPOWERREACHEDRETRY "\":\"%s\"}"), GetStateText(0));
             MqttPublishPrefixTopic_P(STAT, S_RSLT_WARNING);
@@ -613,7 +615,7 @@ void EnergyMarginCheck()
       energy_max_energy_state = 1;
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_ENERGYMONITOR "\":\"%s\"}"), GetStateText(1));
       MqttPublishPrefixTopic_P(RESULT_OR_STAT, PSTR(D_JSON_ENERGYMONITOR));
-      ExecuteCommandPower(1, 1);
+      ExecuteCommandPower(1, POWER_ON);
     }
     else if ((1 == energy_max_energy_state) && (energy_daily_u >= Settings.energy_max_energy)) {
       energy_max_energy_state = 2;
@@ -621,7 +623,7 @@ void EnergyMarginCheck()
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_MAXENERGYREACHED "\":\"%s%s\"}"), mqtt_data, (Settings.flag.value_units) ? " " D_UNIT_KILOWATTHOUR : "");
       MqttPublishPrefixTopic_P(STAT, S_RSLT_WARNING);
       EnergyMqttShow();
-      ExecuteCommandPower(1, 0);
+      ExecuteCommandPower(1, POWER_OFF);
     }
   }
 #endif  // FEATURE_POWER_LIMIT
@@ -699,6 +701,7 @@ boolean EnergyCommand()
       switch (XdrvMailbox.index) {
       case 1:
         energy_kWhtoday = lnum *100000;
+        energy_period = energy_kWhtoday;
         RtcSettings.energy_kWhtoday = energy_kWhtoday;
         Settings.energy_kWhtoday = energy_kWhtoday;
         break;
@@ -856,7 +859,7 @@ void EnergyInit()
 
   if (energy_flg) {
     energy_kWhtoday = (RtcSettingsValid()) ? RtcSettings.energy_kWhtoday : 0;
-
+    energy_period = energy_kWhtoday;
     energy_startup = 1;
     ticker_energy.attach_ms(200, Energy200ms);
   }
