@@ -119,13 +119,16 @@ boolean XsnsCall(byte Function)
   boolean result = false;
 
   for (byte x = 0; x < xsns_present; x++) {
+#ifdef USE_WEBSERVER
     if (FUNC_WEB_APPEND == Function) {
       mqtt_data[0] = '\0';
     }
+#endif  // USE_WEBSERVER
     result = xsns_func_ptr[x](Function);
     if (result) {
       break;
     }
+#ifdef USE_WEBSERVER
     if ((FUNC_WEB_APPEND == Function) && strlen(mqtt_data)) {
       if (D_DECIMAL_SEPARATOR[0] != '.') {
         for (int i = 0; i < strlen(mqtt_data); i++) {
@@ -136,6 +139,7 @@ boolean XsnsCall(byte Function)
       }
       WebServer->sendContent(mqtt_data);
     }
+#endif  // USE_WEBSERVER
   }
 
   return result;
