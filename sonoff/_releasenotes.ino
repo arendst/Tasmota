@@ -1,4 +1,8 @@
-/* 5.11.1e
+/* 5.11.1f
+ * Revert chunked webserver pages as it fails on many browsers due to chunks being too small (#1706)
+ * Reduce initial console weblog from 20 to 13 lines due to memory constraints
+ *
+ * 5.11.1e
  * Replaced command Ina219Mode with command Sensor13
  * Add chunked webserver pages for large pages saving memory
  * Fix Non-English JSON temperature unit attachement
