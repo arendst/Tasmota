@@ -105,10 +105,10 @@ lva.h - lva configuration overrides  for Sonoff-Tasmota
   #define NTP_SERVER3            "ntp4.stratum1.ru"  // [NtpServer3] Select third NTP server by name or IP address (93.94.224.67)
 #endif
 
-#ifdef USE_DS18x20_LEGACY
-    #undef USE_DS18x20_LEGACY
-
+#ifdef USE_DS18B20
+    #undef USE_DS18B20
 #endif
+
 
   #undef USE_SHT                                // Add I2C emulating code for SHT1X sensor
   #undef USE_SHT3X                              // Add I2C code for SHT3x sensor
@@ -126,9 +126,15 @@ lva.h - lva configuration overrides  for Sonoff-Tasmota
   #undef USE_WS2812_DMA                         // DMA supports only GPIO03 (= Serial RXD) (+1k mem). When USE_WS2812_DMA is enabled expect Exceptions on Pow
   #undef USE_MHZ19                                // Add support for MH-Z19 CO2 sensor using hardware serial interface at 9600 bps
   #undef USE_ARILUX_RF                            // Add support for Arilux RF remote controller (+0.8k code)
+  #undef USE_DS18x20
+
 
 #define LVA  // включить изменения LVA
+
+// нехочет рабатать
+//#define USE_DS18x20_LEGACY  // включили
 #define USE_DS18x20_LEGACY  // включили
+
 #define USE_ADS1115
 //#define USE_PCA9685
 

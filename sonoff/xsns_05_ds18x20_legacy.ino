@@ -30,7 +30,7 @@
 #define W1_CONVERT_TEMP      0x44
 #define W1_READ_SCRATCHPAD   0xBE
 
-#define DS18X20_MAX_SENSORS  8
+#define DS18X20_MAX_SENSORS  16 // увеличили 8
 
 #include <OneWire.h>
 
@@ -164,7 +164,8 @@ void Ds18x20Type(uint8_t sensor)
 void Ds18x20Show(boolean json)
 {
   char temperature[10];
-  char stemp[10];
+  //char stemp[10];
+  char stemp[16]; // Нафиг увеличил не помню
   float t;
 
   byte dsxflg = 0;
@@ -175,13 +176,29 @@ void Ds18x20Show(boolean json)
 
       if (json) {
         if (!dsxflg) {
+// LVA <--
+#ifndef LVA
           snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"DS18x20\":{"), mqtt_data);
+#else
+          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"DS18x20\":{\"Sensors\":%d,"), mqtt_data, Ds18x20Sensors());
+
+#endif
+//  LVA -->
           stemp[0] = '\0';
         }
         dsxflg++;
+// LVA <--
+#ifndef LVA
         snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s%s\"DS%d\":{\"" D_JSON_TYPE "\":\"%s\",\"" D_JSON_ADDRESS "\":\"%s\",\"" D_JSON_TEMPERATURE "\":%s}"),
           mqtt_data, stemp, i +1, ds18x20_types, Ds18x20Addresses(i).c_str(), temperature);
-        strcpy(stemp, ",");
+          strcpy(stemp, ",");
+          
+#else
+                //snprintf_P(stemp, sizeof(stemp), PSTR("%s"), Ds18x20Addresses(i).c_str());
+                snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s\"%s\":%s,"), mqtt_data, Ds18x20Addresses(i).c_str(), temperature);
+                //snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TEMP, mqtt_data, stemp, temperature, TempUnit());
+#endif
+//  LVA  -->
 #ifdef USE_DOMOTICZ
         if (1 == dsxflg) {
           DomoticzSensor(DZ_TEMP, temperature);
@@ -189,15 +206,28 @@ void Ds18x20Show(boolean json)
 #endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
       } else {
+// LVA <--
+#ifndef LVA
         snprintf_P(stemp, sizeof(stemp), PSTR("%s-%d"), ds18x20_types, i +1);
         snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TEMP, mqtt_data, stemp, temperature, TempUnit());
+#else
+        snprintf_P(stemp, sizeof(stemp), PSTR("%s"), Ds18x20Addresses(i).c_str());
+        snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TEMP, mqtt_data, stemp, temperature, TempUnit());
+#endif
+//  --> LVA
 #endif  // USE_WEBSERVER
       }
     }
   }
   if (json) {
     if (dsxflg) {
+// LVA <--
+//#ifndef LVA
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}"), mqtt_data);
+//#else
+//      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\n\"\"%s\":\":%s"), mqtt_data, Ds18x20Addresses(i).c_str(), temperature);
+//#endif //  -> LVA
+
     }
 #ifdef USE_WEBSERVER
   } else {
