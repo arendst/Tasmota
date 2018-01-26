@@ -1,7 +1,7 @@
 /*
   sonoff.h - Master header file for Sonoff-Tasmota
 
-  Copyright (C) 2017  Theo Arends
+  Copyright (C) 2018  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -46,6 +46,7 @@ typedef unsigned long power_t;              // Power (Relay) type
 #define MAX_PULSETIMERS        8            // Max number of supported pulse timers
 #define MAX_FRIENDLYNAMES      4            // Max number of Friendly names
 #define MAX_DOMOTICZ_IDX       4            // Max number of Domoticz device, key and switch indices
+#define MAX_DOMOTICZ_SNS_IDX   12           // Max number of Domoticz sensors indices
 
 #define MODULE                 SONOFF_BASIC // [Module] Select default model
 
@@ -79,11 +80,13 @@ typedef unsigned long power_t;              // Power (Relay) type
 #define STATES                 20           // State loops per second
 #define SYSLOG_TIMER           600          // Seconds to restore syslog_level
 #define SERIALLOG_TIMER        600          // Seconds to disable SerialLog
-#define OTA_ATTEMPTS           10           // Number of times to try fetching the new firmware
+#define OTA_ATTEMPTS           5            // Number of times to try fetching the new firmware
 
 #define INPUT_BUFFER_SIZE      250          // Max number of characters in (serial) command buffer
 #define CMDSZ                  24           // Max number of characters in command
 #define TOPSZ                  100          // Max number of characters in topic string
+#define LOGSZ                  400          // Max number of characters in log
+#define MIN_MESSZ              893          // Min number of characters in MQTT message
 #ifdef USE_MQTT_TLS
   #define MAX_LOG_LINES        10           // Max number of lines in weblog
 #else
@@ -95,6 +98,7 @@ typedef unsigned long power_t;              // Power (Relay) type
 #define APP_BAUDRATE           115200       // Default serial baudrate
 #define MAX_STATUS             11           // Max number of status lines
 
+#define XDRV_MAX               10           // Max number of allowed Xdrv drivers (Update xdrv_interface.ino if changed)
 #define XSNS_MAX               20           // Max number of allowed Xsns External Sensors (Update xsns_interface.ino if changed)
 
 /*
@@ -122,9 +126,17 @@ enum LedStateOptions {LED_OFF, LED_POWER, LED_MQTTSUB, LED_POWER_MQTTSUB, LED_MQ
 
 enum EmulationOptions {EMUL_NONE, EMUL_WEMO, EMUL_HUE, EMUL_MAX};
 
+enum TopicOptions { CMND, STAT, TELE, nu1, RESULT_OR_CMND, RESULT_OR_STAT, RESULT_OR_TELE };
+
+enum ExecuteCommandPowerOptions { POWER_OFF, POWER_ON, POWER_TOGGLE, POWER_BLINK, POWER_BLINK_STOP, power_nu1, POWER_OFF_NO_STATE, POWER_ON_NO_STATE, power_nu2, POWER_SHOW_STATE };
+
+enum PowerOnStateOptions { POWER_ALL_OFF, POWER_ALL_ON, POWER_ALL_SAVED_TOGGLE, POWER_ALL_SAVED, POWER_ALL_ALWAYS_ON, POWER_ALL_OFF_PULSETIME_ON };
+
 enum ButtonStates {PRESSED, NOT_PRESSED};
 
 enum SettingsParmaIndex {P_HOLD_TIME, P_MAX_POWER_RETRY, P_MAX_PARAM8};
+
+enum DomoticzSensors {DZ_TEMP, DZ_TEMP_HUM, DZ_TEMP_HUM_BARO, DZ_POWER_ENERGY, DZ_ILLUMINANCE, DZ_COUNT, DZ_VOLTAGE, DZ_CURRENT, DZ_AIRQUALITY, DZ_MAX_SENSORS};
 
 enum Ws2812ClockIndex {WS_SECOND, WS_MINUTE, WS_HOUR};
 enum Ws2812Color {WS_RED, WS_GREEN, WS_BLUE};
@@ -132,8 +144,15 @@ enum LightTypes {LT_BASIC, LT_PWM1, LT_PWM2, LT_PWM3, LT_PWM4, LT_PWM5, LT_PWM6,
 enum LichtSubtypes {LST_NONE, LST_SINGLE, LST_COLDWARM, LST_RGB, LST_RGBW, LST_RGBWC};
 enum LichtSchemes {LS_POWER, LS_WAKEUP, LS_CYCLEUP, LS_CYCLEDN, LS_RANDOM, LS_MAX};
 
-enum XsnsFunctions {FUNC_XSNS_INIT, FUNC_XSNS_EVERY_SECOND, FUNC_XSNS_PREP_BEFORE_TELEPERIOD, FUNC_XSNS_JSON_APPEND, FUNC_XSNS_WEB_APPEND, FUNC_XSNS_SAVE_BEFORE_RESTART};
+enum XsnsFunctions {FUNC_INIT, FUNC_EVERY_50_MSECOND, FUNC_EVERY_SECOND, FUNC_PREP_BEFORE_TELEPERIOD, FUNC_JSON_APPEND, FUNC_WEB_APPEND, FUNC_SAVE_BEFORE_RESTART,
+                    FUNC_COMMAND, FUNC_MQTT_SUBSCRIBE, FUNC_MQTT_INIT, FUNC_MQTT_DATA, FUNC_SET_POWER, FUNC_SHOW_SENSOR};
 
 const uint8_t kDefaultRfCode[9] PROGMEM = { 0x21, 0x16, 0x01, 0x0E, 0x03, 0x48, 0x2E, 0x1A, 0x00 };
+
+/*********************************************************************************************\
+ * Extern global variables
+\*********************************************************************************************/
+
+extern uint8_t light_device;  // Light device number
 
 #endif  // _SONOFF_H_

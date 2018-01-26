@@ -2,4 +2,5 @@
 .piolibdeps
 .clang_complete
 .gcc-flags.json
-lib/readme.txt
+.vscode
+sonoff/user_config_override.h

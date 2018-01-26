@@ -1,0 +1,15 @@
+{
+    "name": "TasmotaSerial",
+    "version": "1.0.0",
+    "keywords": [
+      "serial", "io", "TasmotaSerial"
+    ],
+    "description": "Implementation of software serial for ESP8266 at 9600 baud.",
+    "repository":
+    {
+        "type": "git",
+        "url": "https://github.com/arendst/Sonoff-Tasmota/lib/TasmotaSerial"
+    },
+    "frameworks": "arduino",
+    "platforms": "espressif8266"
+}

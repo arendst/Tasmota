@@ -1,7 +1,7 @@
 /*
   settings.ino - user settings for Sonoff-Tasmota
 
-  Copyright (C) 2017  Theo Arends
+  Copyright (C) 2018  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -18,7 +18,36 @@
 */
 
 #ifndef DOMOTICZ_UPDATE_TIMER
-#define DOMOTICZ_UPDATE_TIMER  0               // [DomoticzUpdateTimer] Send relay status (0 = disable, 1 - 3600 seconds) (Optional)
+#define DOMOTICZ_UPDATE_TIMER  0            // [DomoticzUpdateTimer] Send relay status (0 = disable, 1 - 3600 seconds) (Optional)
+#endif
+
+#ifndef EMULATION
+#define EMULATION              EMUL_NONE    // [Emulation] Select Belkin WeMo (single relay/light) or Hue Bridge emulation (multi relay/light) (EMUL_NONE, EMUL_WEMO or EMUL_HUE)
+#endif
+
+#ifndef MTX_ADDRESS1                        // Add Display Support for up to eigth Matrices
+#define MTX_ADDRESS1           0
+#endif
+#ifndef MTX_ADDRESS2
+#define MTX_ADDRESS2           0
+#endif
+#ifndef MTX_ADDRESS3
+#define MTX_ADDRESS3           0
+#endif
+#ifndef MTX_ADDRESS4
+#define MTX_ADDRESS4           0
+#endif
+#ifndef MTX_ADDRESS5
+#define MTX_ADDRESS5           0
+#endif
+#ifndef MTX_ADDRESS6
+#define MTX_ADDRESS6           0
+#endif
+#ifndef MTX_ADDRESS7
+#define MTX_ADDRESS7           0
+#endif
+#ifndef MTX_ADDRESS8
+#define MTX_ADDRESS8           0
 #endif
 
 /*********************************************************************************************\
@@ -182,7 +211,7 @@ void SettingsSaveAll()
   } else {
     Settings.power = 0;
   }
-  XsnsCall(FUNC_XSNS_SAVE_BEFORE_RESTART);
+  XsnsCall(FUNC_SAVE_BEFORE_RESTART);
   SettingsSave(0);
 }
 
@@ -401,6 +430,7 @@ void SettingsDefaultSet2()
   Settings.flag.mqtt_power_retain = MQTT_POWER_RETAIN;
   Settings.flag.mqtt_button_retain = MQTT_BUTTON_RETAIN;
   Settings.flag.mqtt_switch_retain = MQTT_SWITCH_RETAIN;
+  Settings.flag.hass_discovery = HOME_ASSISTANT_DISCOVERY_ENABLE; 
 
   Settings.flag2.emulation = EMULATION;
 
@@ -527,6 +557,9 @@ void SettingsDefaultSet2()
 
   // 5.9.2
   Settings.flag2.current_resolution = 3;
+
+  // 5.10.1
+  SettingsDefaultSet_5_10_1();
 }
 
 /********************************************************************************************/
@@ -634,6 +667,28 @@ void SettingsDefaultSet_5_8_1()
   Settings.ws_color[WS_HOUR][WS_RED] = 255;
   Settings.ws_color[WS_HOUR][WS_GREEN] = 0;
   Settings.ws_color[WS_HOUR][WS_BLUE] = 0;
+}
+
+void SettingsDefaultSet_5_10_1()
+{
+  Settings.display_model = 0;
+  Settings.display_mode = 1;
+  Settings.display_refresh = 2;
+  Settings.display_rows = 2;
+  Settings.display_cols[0] = 16;
+  Settings.display_cols[1] = 8;
+//#if defined(USE_I2C) && defined(USE_DISPLAY)
+  Settings.display_address[0] = MTX_ADDRESS1;
+  Settings.display_address[1] = MTX_ADDRESS2;
+  Settings.display_address[2] = MTX_ADDRESS3;
+  Settings.display_address[3] = MTX_ADDRESS4;
+  Settings.display_address[4] = MTX_ADDRESS5;
+  Settings.display_address[5] = MTX_ADDRESS6;
+  Settings.display_address[6] = MTX_ADDRESS7;
+  Settings.display_address[7] = MTX_ADDRESS8;
+//#endif  // USE_DISPLAY
+  Settings.display_dimmer = 1;
+  Settings.display_size = 1;
 }
 
 /********************************************************************************************/
@@ -793,6 +848,9 @@ void SettingsDelta()
       Settings.flag2.voltage_resolution = Settings.flag.voltage_resolution;
       Settings.flag2.current_resolution = 3;
       Settings.ina219_mode = 0;
+    }
+    if (Settings.version < 0x050A0009) {
+      SettingsDefaultSet_5_10_1();
     }
 
     Settings.version = VERSION;

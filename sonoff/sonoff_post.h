@@ -1,8 +1,8 @@
 /*
   sonoff_post.h - Post header file for Sonoff-Tasmota
 
-  Copyright (C) 2017  Theo Arends
-
+  Copyright (C) 2018  Theo Arends
+  EDITING LVA
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
   the Free Software Foundation, either version 3 of the License, or
@@ -53,6 +53,9 @@ void WifiWpsStatusCallback(wps_cb_status status);
 #ifdef USE_DOMOTICZ
 #undef USE_DOMOTICZ                         // Disable Domoticz
 #endif
+#ifdef USE_HOME_ASSISTANT
+#undef USE_HOME_ASSISTANT                   // Disable Home Assistant
+#endif
 //#ifdef USE_WEBSERVER
 //#undef USE_WEBSERVER                        // Disable Webserver
 //#endif
@@ -101,7 +104,14 @@ void WifiWpsStatusCallback(wps_cb_status status);
 #endif
 
 #ifndef MESSZ
-#define MESSZ                  405          // Max number of characters in JSON message string (6 x DS18x20 sensors)
+//#define MESSZ                  405          // Max number of characters in JSON message string (6 x DS18x20 sensors)
+//#define MESSZ                  893          // Max number of characters in JSON message string (Hass discovery and nice MQTT_MAX_PACKET_SIZE = 1000)
+#define MESSZ                  (MQTT_MAX_PACKET_SIZE -TOPSZ -7)  // Max number of characters in JSON message string (6 x DS18x20 sensors)
+#endif
+
+#include <core_version.h>                   // Arduino_Esp8266 version information (ARDUINO_ESP8266_RELEASE and ARDUINO_ESP8266_RELEASE_2_3_0)
+#ifndef ARDUINO_ESP8266_RELEASE
+#define ARDUINO_ESP8266_RELEASE "STAGED"
 #endif
 
 #endif  // _SONOFF_POST_H_

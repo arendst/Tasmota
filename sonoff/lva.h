@@ -35,6 +35,15 @@ lva.h - lva configuration overrides  for Sonoff-Tasmota
   #define PROJECT                "sonoff-lva"
 #endif
 
+
+#ifdef CFG_HOLDER
+  #undef CFG_HOLDER
+  #define CFG_HOLDER                0x20161210
+#endif
+
+
+
+
 #ifdef STA_SSID1
   #undef STA_SSID1
   #define STA_SSID1              "TP5-G-FL"      // [Ssid1] Wifi SSID
@@ -98,7 +107,7 @@ lva.h - lva configuration overrides  for Sonoff-Tasmota
 
 #ifdef USE_DS18x20_LEGACY
     #undef USE_DS18x20_LEGACY
-    #define USE_DS18x20_LEGACY
+
 #endif
 
   #undef USE_SHT                                // Add I2C emulating code for SHT1X sensor
@@ -119,7 +128,9 @@ lva.h - lva configuration overrides  for Sonoff-Tasmota
   #undef USE_ARILUX_RF                            // Add support for Arilux RF remote controller (+0.8k code)
 
 #define LVA  // включить изменения LVA
-
+#define USE_DS18x20_LEGACY  // включили
+#define USE_ADS1115
+//#define USE_PCA9685
 
 //#define CFG_HOLDER             0x20161210
 

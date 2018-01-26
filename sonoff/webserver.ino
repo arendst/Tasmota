@@ -1,7 +1,7 @@
 /*
   webserver.ino - webserver for Sonoff-Tasmota
 
-  Copyright (C) 2017  Theo Arends
+  Copyright (C) 2018  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -37,7 +37,7 @@ const char HTTP_HEAD[] PROGMEM =
 
   "<script>"
   "var cn,x,lt;"
-  "cn=120;"
+  "cn=180;"
   "x=null;"                  // Allow for abortion
   "function u(){"
     "if(cn>=0){"
@@ -73,7 +73,9 @@ const char HTTP_HEAD[] PROGMEM =
   "}"
   "function lc(p){"
     "la('?t='+p);"
-  "}"
+  "}";
+
+const char HTTP_HEAD_STYLE[] PROGMEM =
   "</script>"
 
   "<style>"
@@ -96,7 +98,11 @@ const char HTTP_HEAD[] PROGMEM =
 #ifdef BE_MINIMAL
   "<div style='text-align:center;color:red;'><h3>" D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "</h3></div>"
 #endif
+#ifdef LANGUAGE_MODULE_NAME
+  "<div style='text-align:center;'><h3>" D_MODULE " {ha</h3><h2>{h}</h2></div>";
+#else
   "<div style='text-align:center;'><h3>{ha " D_MODULE "</h3><h2>{h}</h2></div>";
+#endif
 const char HTTP_SCRIPT_CONSOL[] PROGMEM =
   "var sn=0;"                    // Scroll position
   "var id=99;"                   // Get most of weblog initially
@@ -190,6 +196,12 @@ const char HTTP_BTN_MENU4[] PROGMEM =
   "<br/><form action='rs' method='get'><button>" D_RESTORE_CONFIGURATION "</button></form>";
 const char HTTP_BTN_MAIN[] PROGMEM =
   "<br/><br/><form action='.' method='get'><button>" D_MAIN_MENU "</button></form>";
+const char HTTP_FORM_LOGIN[] PROGMEM =
+  "<form method='post' action='/'>"
+  "<br/><b>" D_USER "</b><br/><input name='USER1' placeholder='" D_USER "'><br/>"
+  "<br/><b>" D_PASSWORD "</b><br/><input name='PASS1' type='password' placeholder='" D_PASSWORD "'><br/>"
+  "<br/>"
+  "<br/><button>" D_OK "</button></form>";
 const char HTTP_BTN_CONF[] PROGMEM =
   "<br/><br/><form action='cn' method='get'><button>" D_CONFIGURATION "</button></form>";
 const char HTTP_FORM_MODULE[] PROGMEM =
@@ -204,9 +216,9 @@ const char HTTP_FORM_WIFI[] PROGMEM =
   "<fieldset><legend><b>&nbsp;" D_WIFI_PARAMETERS "&nbsp;</b></legend><form method='get' action='sv'>"
   "<input id='w' name='w' value='1' hidden><input id='r' name='r' value='1' hidden>"
   "<br/><b>" D_AP1_SSID "</b> (" STA_SSID1 ")<br/><input id='s1' name='s1' placeholder='" STA_SSID1 "' value='{s1'><br/>"
-  "<br/><b>" D_AP1_PASSWORD "</b><br/><input id='p1' name='p1' type='password' placeholder='" STA_PASS1 "' value='{p1'><br/>"
+  "<br/><b>" D_AP1_PASSWORD "</b><br/><input id='p1' name='p1' type='password' placeholder='" D_AP1_PASSWORD "' value='********'><br/>"
   "<br/><b>" D_AP2_SSID "</b> (" STA_SSID2 ")<br/><input id='s2' name='s2' placeholder='" STA_SSID2 "' value='{s2'><br/>"
-  "<br/><b>" D_AP2_PASSWORD "</b><br/><input id='p2' name='p2' type='password' placeholder='" STA_PASS2 "' value='{p2'><br/>"
+  "<br/><b>" D_AP2_PASSWORD "</b><br/><input id='p2' name='p2' type='password' placeholder='" D_AP2_PASSWORD "' value='********'><br/>"
   "<br/><b>" D_HOSTNAME "</b> (" WIFI_HOSTNAME ")<br/><input id='h' name='h' placeholder='" WIFI_HOSTNAME" ' value='{h1'><br/>";
 const char HTTP_FORM_MQTT[] PROGMEM =
   "<fieldset><legend><b>&nbsp;" D_MQTT_PARAMETERS "&nbsp;</b></legend><form method='get' action='sv'>"
@@ -222,7 +234,7 @@ const char HTTP_FORM_LOG1[] PROGMEM =
   "<fieldset><legend><b>&nbsp;" D_LOGGING_PARAMETERS "&nbsp;</b></legend><form method='get' action='sv'>"
   "<input id='w' name='w' value='3' hidden><input id='r' name='r' value='0' hidden>";
 const char HTTP_FORM_LOG2[] PROGMEM =
-  "<br/><b>{b0" D_LOG_LEVEL "</b> ({b1)<br/><select id='{b2' name='{b2'>"
+  "<br/><b>{b0</b> ({b1)<br/><select id='{b2' name='{b2'>"
   "<option{a0value='0'>0 " D_NONE "</option>"
   "<option{a1value='1'>1 " D_ERROR "</option>"
   "<option{a2value='2'>2 " D_INFO "</option>"
@@ -236,7 +248,7 @@ const char HTTP_FORM_LOG3[] PROGMEM =
 const char HTTP_FORM_OTHER[] PROGMEM =
   "<fieldset><legend><b>&nbsp;" D_OTHER_PARAMETERS "&nbsp;</b></legend><form method='get' action='sv'>"
   "<input id='w' name='w' value='5' hidden><input id='r' name='r' value='1' hidden>"
-  "<br/><b>" D_WEB_ADMIN_PASSWORD "</b><br/><input id='p1' name='p1' type='password' placeholder='" WEB_PASSWORD "' value='{p1'><br/>"
+  "<br/><b>" D_WEB_ADMIN_PASSWORD "</b><br/><input id='p1' name='p1' type='password' placeholder='" D_WEB_ADMIN_PASSWORD "' value='********'><br/>"
   "<br/><input style='width:10%;' id='b1' name='b1' type='checkbox'{r1><b>" D_MQTT_ENABLE "</b><br/>";
   const char HTTP_FORM_OTHER2[] PROGMEM =
   "<br/><b>" D_FRIENDLY_NAME " {1</b> ({2)<br/><input id='a{1' name='a{1' placeholder='{2' value='{3'><br/>";
@@ -244,8 +256,8 @@ const char HTTP_FORM_OTHER[] PROGMEM =
 const char HTTP_FORM_OTHER3a[] PROGMEM =
   "<br/><fieldset><legend><b>&nbsp;" D_EMULATION "&nbsp;</b></legend>";
 const char HTTP_FORM_OTHER3b[] PROGMEM =
-  "<br/><input style='width:10%;' id='b2' name='b2' type='radio' value='{1'{2><b>{3</b>{4";
-  #endif  // USE_EMULATION
+  "<br/><input style='width:10%;' id='r{1' name='b2' type='radio' value='{1'{2><b>{3</b>{4";  // Different id only used for labels
+#endif  // USE_EMULATION
 const char HTTP_FORM_END[] PROGMEM =
   "<br/><button type='submit'>" D_SAVE "</button></form></fieldset>";
 const char HTTP_FORM_RST[] PROGMEM =
@@ -267,18 +279,18 @@ const char HTTP_FORM_RST_UPG[] PROGMEM =
   "</div>"
   "<div id='f2' name='f2' style='display:none;text-align:center;'><b>" D_UPLOAD_STARTED " ...</b></div>";
 const char HTTP_FORM_CMND[] PROGMEM =
-  "<br/><textarea readonly id='t1' name='t1' cols='" STR(MESSZ) "' wrap='off'></textarea><br/><br/>"
+  "<br/><textarea readonly id='t1' name='t1' cols='340' wrap='off'></textarea><br/><br/>"
   "<form method='get' onsubmit='return l(1);'>"
   "<input id='c1' name='c1' placeholder='" D_ENTER_COMMAND "' autofocus><br/>"
   //  "<br/><button type='submit'>Send command</button>"
   "</form>";
 const char HTTP_TABLE100[] PROGMEM =
-  "<table width='100%'>";
+  "<table style='width:100%'>";
 const char HTTP_COUNTER[] PROGMEM =
   "<br/><div id='t' name='t' style='text-align:center;'></div>";
 const char HTTP_END[] PROGMEM =
   "<br/>"
-  "<div style='text-align:right;font-size:11px;'><hr/><a href='" D_WEBLINK "' target='_blank' style='color:#aaa;'>" D_PROGRAMNAME " " VERSION_STRING " " D_BY " " D_AUTHOR "</a></div>"
+  "<div style='text-align:right;font-size:11px;'><hr/><a href='" D_WEBLINK "' target='_blank' style='color:#aaa;'>" D_PROGRAMNAME " {mv " D_BY " " D_AUTHOR "</a></div>"
   "</div>"
   "</body>"
   "</html>";
@@ -338,6 +350,7 @@ void StartWebserver(int type, IPAddress ipweb)
       if (EMUL_WEMO == Settings.flag2.emulation) {
         WebServer->on("/upnp/control/basicevent1", HTTP_POST, HandleUpnpEvent);
         WebServer->on("/eventservice.xml", HandleUpnpService);
+        WebServer->on("/metainfoservice.xml", HandleUpnpMetaService);
         WebServer->on("/setup.xml", HandleUpnpSetupWemo);
       }
       if (EMUL_HUE == Settings.flag2.emulation) {
@@ -406,13 +419,19 @@ void SetHeader()
   WebServer->sendHeader(F("Cache-Control"), F("no-cache, no-store, must-revalidate"));
   WebServer->sendHeader(F("Pragma"), F("no-cache"));
   WebServer->sendHeader(F("Expires"), F("-1"));
+#ifndef ARDUINO_ESP8266_RELEASE_2_3_0
+  WebServer->sendHeader(F("Access-Control-Allow-Origin"), F("*"));
+#endif
 }
 
-void ShowPage(String &page)
+/*********************************************************************************************/
+
+void ShowPage(String &page, bool auth)
 {
-  if((HTTP_ADMIN == webserver_state) && (Settings.web_password[0] != 0) && !WebServer->authenticate(WEB_USERNAME, Settings.web_password)) {
+  if (auth && (Settings.web_password[0] != 0) && !WebServer->authenticate(WEB_USERNAME, Settings.web_password)) {
     return WebServer->requestAuthentication();
   }
+
   page.replace(F("{ha"), my_module.name);
   page.replace(F("{h}"), Settings.friendlyname[0]);
   if (HTTP_MANAGER == webserver_state) {
@@ -422,13 +441,80 @@ void ShowPage(String &page)
     }
   }
   page += FPSTR(HTTP_END);
+  page.replace(F("{mv"), my_version);
   SetHeader();
   WebServer->send(200, FPSTR(HDR_CTYPE_HTML), page);
 }
 
+void ShowPage(String &page)
+{
+  ShowPage(page, true);
+}
+
+/*********************************************************************************************/
+
+void ShowPageStartChunk()
+{
+  WebServer->setContentLength(CONTENT_LENGTH_UNKNOWN);
+  WebServer->send(200, FPSTR(HDR_CTYPE_HTML), "");
+}
+
+void ShowPageChunk(String &page)
+{
+  page.replace(F("{ha"), my_module.name);
+  page.replace(F("{h}"), Settings.friendlyname[0]);
+  if (HTTP_MANAGER == webserver_state) {
+    if (WifiConfigCounter()) {
+      page.replace(F("<body>"), F("<body onload='u()'>"));
+      page += FPSTR(HTTP_COUNTER);
+    }
+  }
+  WebServer->sendContent(page);
+}
+
+void ShowPageStart(String &page, bool auth)
+{
+  if (auth && (Settings.web_password[0] != 0) && !WebServer->authenticate(WEB_USERNAME, Settings.web_password)) {
+    return WebServer->requestAuthentication();
+  }
+  SetHeader();
+  ShowPageStartChunk();
+  ShowPageChunk(page);
+}
+
+void ShowPageStart(String &page)
+{
+  ShowPageStart(page, true);
+}
+
+void ShowPageStopChunk()
+{
+  WebServer->sendContent("");
+  WebServer->client().stop();  // Stop is needed because we sent no content length
+}
+
+void ShowPageEnd(String &page)
+{
+  ShowPageChunk(page);
+  String endpart = FPSTR(HTTP_END);
+  endpart.replace(F("{mv"), my_version);
+  WebServer->sendContent(endpart);
+  ShowPageStopChunk();
+}
+
+/*********************************************************************************************/
+
+void HandleWifiLogin()
+{
+  String page = FPSTR(HTTP_HEAD);
+  page.replace(F("{v}"), FPSTR( D_CONFIGURE_WIFI ));
+  page += FPSTR(HTTP_HEAD_STYLE);
+  page += FPSTR(HTTP_FORM_LOGIN);
+  ShowPage(page, false);  // false means show page no matter if the client has or has not credentials
+}
+
 void HandleRoot()
 {
-//  AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_MAIN_MENU));
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_MAIN_MENU);
 
   if (CaptivePortal()) { // If captive portal redirect instead of displaying the page.
@@ -436,12 +522,22 @@ void HandleRoot()
   }
 
   if (HTTP_MANAGER == webserver_state) {
-    HandleWifiConfiguration();
+    if ((Settings.web_password[0] != 0) && !(WebServer->hasArg("USER1")) && !(WebServer->hasArg("PASS1"))) {
+      HandleWifiLogin();
+    } else {
+      if (!(Settings.web_password[0] != 0) || ((WebServer->arg("USER1") == WEB_USERNAME ) && (WebServer->arg("PASS1") == Settings.web_password ))) {
+        HandleWifiConfiguration();
+      } else {
+        // wrong user and pass
+        HandleWifiLogin();
+      }
+    }
   } else {
     char stemp[10];
     char line[160];
     String page = FPSTR(HTTP_HEAD);
     page.replace(F("{v}"), FPSTR(S_MAIN_MENU));
+    page += FPSTR(HTTP_HEAD_STYLE);
     page.replace(F("<body>"), F("<body onload='la()'>"));
 
     page += F("<div id='l1' name='l1'></div>");
@@ -458,7 +554,7 @@ void HandleRoot()
       page += F("<tr>");
       for (byte idx = 1; idx <= devices_present; idx++) {
         snprintf_P(stemp, sizeof(stemp), PSTR(" %d"), idx);
-        snprintf_P(line, sizeof(line), PSTR("<td width='%d%'><button onclick='la(\"?o=%d\");'>%s%s</button></td>"),
+        snprintf_P(line, sizeof(line), PSTR("<td style='width:%d%'><button onclick='la(\"?o=%d\");'>%s%s</button></td>"),
           100 / devices_present, idx, (devices_present < 5) ? D_BUTTON_TOGGLE : "", (devices_present > 1) ? stemp : "");
         page += line;
       }
@@ -474,7 +570,7 @@ void HandleRoot()
         }
         for (byte j = 0; j < 4; j++) {
           idx++;
-          snprintf_P(line, sizeof(line), PSTR("<td width='25%'><button onclick='la(\"?k=%d\");'>%d</button></td>"), idx, idx);
+          snprintf_P(line, sizeof(line), PSTR("<td style='width:25%'><button onclick='la(\"?k=%d\");'>%d</button></td>"), idx, idx);
           page += line;
         }
       }
@@ -494,7 +590,7 @@ void HandleAjaxStatusRefresh()
   char svalue[80];
 
   if (strlen(WebServer->arg("o").c_str())) {
-    ExecuteCommandPower(atoi(WebServer->arg("o").c_str()), 2);
+    ExecuteCommandPower(atoi(WebServer->arg("o").c_str()), POWER_TOGGLE);
   }
   if (strlen(WebServer->arg("d").c_str())) {
     snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_DIMMER " %s"), WebServer->arg("d").c_str());
@@ -509,37 +605,23 @@ void HandleAjaxStatusRefresh()
     ExecuteCommand(svalue);
   }
 
-  String page = "";
-  mqtt_data[0] = '\0';
-  XsnsCall(FUNC_XSNS_WEB_APPEND);
-  if (strlen(mqtt_data)) {
-    page += FPSTR(HTTP_TABLE100);
-    page += mqtt_data;
-    page += F("</table>");
-  }
-  char line[80];
+  ShowPageStartChunk();
+  WebServer->sendContent(HTTP_TABLE100);
+  XsnsCall(FUNC_WEB_APPEND);
+  WebServer->sendContent(PSTR("</table>"));
   if (devices_present) {
-    page += FPSTR(HTTP_TABLE100);
-    page += F("<tr>");
+    WebServer->sendContent(HTTP_TABLE100);
+    WebServer->sendContent(PSTR("<tr>"));
     uint8_t fsize = (devices_present < 5) ? 70 - (devices_present * 8) : 32;
     for (byte idx = 1; idx <= devices_present; idx++) {
       snprintf_P(svalue, sizeof(svalue), PSTR("%d"), bitRead(power, idx -1));
-//      snprintf_P(line, sizeof(line), PSTR("<td style='width:%d%'><div style='text-align:center;font-weight:%s;font-size:%dpx'>%s</div></td>"),
-      snprintf_P(line, sizeof(line), PSTR("<td width='%d{t}%s;font-size:%dpx'>%s</div></td>"),  // {t} = %'><div style='text-align:center;font-weight:
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("<td style='width:%d{t}%s;font-size:%dpx'>%s</div></td>"),  // {t} = %'><div style='text-align:center;font-weight:
         100 / devices_present, (bitRead(power, idx -1)) ? "bold" : "normal", fsize, (devices_present < 5) ? GetStateText(bitRead(power, idx -1)) : svalue);
-      page += line;
+      WebServer->sendContent(mqtt_data);
     }
-    page += F("</tr></table>");
+    WebServer->sendContent(PSTR("</tr></table>"));
   }
-/*
- * Will interrupt user action when selected
-  if (light_type) {
-    snprintf_P(line, sizeof(line), PSTR("<input type='range' min='1' max='100' value='%d' onchange='lb(value)'>"),
-      Settings.light_dimmer);
-    page += line;
-  }
-*/
-  WebServer->send(200, FPSTR(HDR_CTYPE_HTML), page);
+  ShowPageStopChunk();
 }
 
 boolean HttpUser()
@@ -560,6 +642,7 @@ void HandleConfiguration()
 
   String page = FPSTR(HTTP_HEAD);
   page.replace(F("{v}"), FPSTR(S_CONFIGURATION));
+  page += FPSTR(HTTP_HEAD_STYLE);
   page += FPSTR(HTTP_BTN_MENU2);
   if (Settings.flag.mqtt_enabled) {
     page += FPSTR(HTTP_BTN_MENU3);
@@ -638,52 +721,60 @@ void HandleModuleConfiguration()
 
   String page = FPSTR(HTTP_HEAD);
   page.replace(F("{v}"), FPSTR(S_CONFIGURE_MODULE));
-  page += FPSTR(HTTP_FORM_MODULE);
-  snprintf_P(stemp, sizeof(stemp), kModules[MODULE].name);
-  page.replace(F("{mt"), stemp);
+  ShowPageStart(page);
 
-  mytmplt cmodule;
-  memcpy_P(&cmodule, &kModules[Settings.module], sizeof(cmodule));
-
-  String func = FPSTR(HTTP_SCRIPT_MODULE1);
+  page = FPSTR(HTTP_SCRIPT_MODULE1);
   for (byte i = 0; i < MAXMODULE; i++) {
     midx = pgm_read_byte(kNiceList + i);
     snprintf_P(stemp, sizeof(stemp), kModules[midx].name);
     snprintf_P(line, sizeof(line), HTTP_SCRIPT_MODULE2, midx, midx +1, stemp);
-    func += line;
+    page += line;
   }
-  func += FPSTR(HTTP_SCRIPT_MODULE3);
+  page += FPSTR(HTTP_SCRIPT_MODULE3);
+  ShowPageChunk(page);
+
   snprintf_P(line, sizeof(line), PSTR("sk(%d,99);o0=\""), Settings.module);  // g99
-  func += line;
+  page = line;
+
+  mytmplt cmodule;
+  memcpy_P(&cmodule, &kModules[Settings.module], sizeof(cmodule));
   for (byte j = 0; j < GPIO_SENSOR_END; j++) {
     if (!GetUsedInModule(j, cmodule.gp.io)) {
       snprintf_P(stemp, sizeof(stemp), kSensors[j]);
       snprintf_P(line, sizeof(line), HTTP_SCRIPT_MODULE2, j, j, stemp);
-      func += line;
+      page += line;
     }
   }
-  func += FPSTR(HTTP_SCRIPT_MODULE3);
+  page += FPSTR(HTTP_SCRIPT_MODULE3);
+  ShowPageChunk(page);
 
+  page = FPSTR(HTTP_HEAD_STYLE);
+  page += FPSTR(HTTP_FORM_MODULE);
+  snprintf_P(stemp, sizeof(stemp), kModules[MODULE].name);
+  page.replace(F("{mt"), stemp);
   page += F("<br/><table>");
+
+  String func = "";
   for (byte i = 0; i < MAX_GPIO_PIN; i++) {
     if (GPIO_USER == cmodule.gp.io[i]) {
       snprintf_P(stemp, 3, PINS_WEMOS +i*2);
-      snprintf_P(line, sizeof(line), PSTR("<tr><td width='190'>%s <b>" D_GPIO "%d</b> %s</td><td width='126'><select id='g%d' name='g%d'></select></td></tr>"),
+      snprintf_P(line, sizeof(line), PSTR("<tr><td style='width:190px'>%s <b>" D_GPIO "%d</b> %s</td><td style='width:126px'><select id='g%d' name='g%d'></select></td></tr>"),
         (WEMOS==Settings.module)?stemp:"", i, (0==i)? D_SENSOR_BUTTON "1":(1==i)? D_SERIAL_OUT :(3==i)? D_SERIAL_IN :(12==i)? D_SENSOR_RELAY "1":(13==i)? D_SENSOR_LED "1i":(14==i)? D_SENSOR :"", i, i);
       page += line;
       snprintf_P(line, sizeof(line), PSTR("sk(%d,%d);"), my_module.gp.io[i], i);  // g0 - g16
       func += line;
     }
   }
-  page += F("</table>");
+  func += F("}");
+  ShowPageChunk(func);
 
-  func += F("}</script>");
-  page.replace(F("</script>"), func);
   page.replace(F("<body>"), F("<body onload='sl()'>"));
+  page += F("</table>");
+  ShowPageChunk(page);
 
-  page += FPSTR(HTTP_FORM_END);
+  page = FPSTR(HTTP_FORM_END);
   page += FPSTR(HTTP_BTN_CONF);
-  ShowPage(page);
+  ShowPageEnd(page);
 }
 
 void HandleWifiConfigurationWithScan()
@@ -706,6 +797,7 @@ void HandleWifi(boolean scan)
 
   String page = FPSTR(HTTP_HEAD);
   page.replace(F("{v}"), FPSTR(S_CONFIGURE_WIFI));
+  page += FPSTR(HTTP_HEAD_STYLE);
 
   if (scan) {
 #ifdef USE_EMULATION
@@ -785,16 +877,15 @@ void HandleWifi(boolean scan)
   page += FPSTR(HTTP_FORM_WIFI);
   page.replace(F("{h1"), Settings.hostname);
   page.replace(F("{s1"), Settings.sta_ssid[0]);
-  page.replace(F("{p1"), Settings.sta_pwd[0]);
   page.replace(F("{s2"), Settings.sta_ssid[1]);
-  page.replace(F("{p2"), Settings.sta_pwd[1]);
   page += FPSTR(HTTP_FORM_END);
   if (HTTP_MANAGER == webserver_state) {
     page += FPSTR(HTTP_BTN_RSTRT);
   } else {
     page += FPSTR(HTTP_BTN_CONF);
   }
-  ShowPage(page);
+//  ShowPage(page);
+  ShowPage(page, !(HTTP_MANAGER == webserver_state));
 }
 
 void HandleMqttConfiguration()
@@ -806,6 +897,7 @@ void HandleMqttConfiguration()
 
   String page = FPSTR(HTTP_HEAD);
   page.replace(F("{v}"), FPSTR(S_CONFIGURE_MQTT));
+  page += FPSTR(HTTP_HEAD_STYLE);
   page += FPSTR(HTTP_FORM_MQTT);
   char str[sizeof(Settings.mqtt_client)];
   GetMqttClient(str, MQTT_CLIENT_ID, sizeof(Settings.mqtt_client));
@@ -831,12 +923,13 @@ void HandleLoggingConfiguration()
 
   String page = FPSTR(HTTP_HEAD);
   page.replace(F("{v}"), FPSTR(S_CONFIGURE_LOGGING));
+  page += FPSTR(HTTP_HEAD_STYLE);
   page += FPSTR(HTTP_FORM_LOG1);
   for (byte idx = 0; idx < 3; idx++) {
     page += FPSTR(HTTP_FORM_LOG2);
     switch (idx) {
     case 0:
-      page.replace(F("{b0"), F(D_SERIAL " "));
+      page.replace(F("{b0"), F(D_SERIAL_LOG_LEVEL));
       page.replace(F("{b1"), STR(SERIAL_LOG_LEVEL));
       page.replace(F("{b2"), F("ls"));
       for (byte i = LOG_LEVEL_NONE; i < LOG_LEVEL_ALL; i++) {
@@ -844,7 +937,7 @@ void HandleLoggingConfiguration()
       }
       break;
     case 1:
-      page.replace(F("{b0"), F(D_WEB " "));
+      page.replace(F("{b0"), F(D_WEB_LOG_LEVEL));
       page.replace(F("{b1"), STR(WEB_LOG_LEVEL));
       page.replace(F("{b2"), F("lw"));
       for (byte i = LOG_LEVEL_NONE; i < LOG_LEVEL_ALL; i++) {
@@ -852,7 +945,7 @@ void HandleLoggingConfiguration()
       }
       break;
     case 2:
-      page.replace(F("{b0"), F(D_SYS));
+      page.replace(F("{b0"), F(D_SYS_LOG_LEVEL));
       page.replace(F("{b1"), STR(SYS_LOG_LEVEL));
       page.replace(F("{b2"), F("ll"));
       for (byte i = LOG_LEVEL_NONE; i < LOG_LEVEL_ALL; i++) {
@@ -880,13 +973,17 @@ void HandleOtherConfiguration()
 
   String page = FPSTR(HTTP_HEAD);
   page.replace(F("{v}"), FPSTR(S_CONFIGURE_OTHER));
+  page += FPSTR(HTTP_HEAD_STYLE);
   page += FPSTR(HTTP_FORM_OTHER);
-  page.replace(F("{p1"), Settings.web_password);
   page.replace(F("{r1"), (Settings.flag.mqtt_enabled) ? F(" checked") : F(""));
-  page += FPSTR(HTTP_FORM_OTHER2);
-  page.replace(F("{1"), F("1"));
-  page.replace(F("{2"), FRIENDLY_NAME);
-  page.replace(F("{3"), Settings.friendlyname[0]);
+  uint8_t maxfn = (devices_present > MAX_FRIENDLYNAMES) ? MAX_FRIENDLYNAMES : devices_present;
+  for (byte i = 0; i < maxfn; i++) {
+    page += FPSTR(HTTP_FORM_OTHER2);
+    page.replace(F("{1"), String(i +1));
+    snprintf_P(stemp, sizeof(stemp), PSTR(FRIENDLY_NAME"%d"), i +1);
+    page.replace(F("{2"), (i) ? stemp : FRIENDLY_NAME);
+    page.replace(F("{3"), Settings.friendlyname[i]);
+  }
 #ifdef USE_EMULATION
   page += FPSTR(HTTP_FORM_OTHER3a);
   for (byte i = 0; i < EMUL_MAX; i++) {
@@ -897,14 +994,6 @@ void HandleOtherConfiguration()
     page.replace(F("{4"), (i == EMUL_NONE) ? F("") : (i == EMUL_WEMO) ? F(" " D_SINGLE_DEVICE) : F(" " D_MULTI_DEVICE));
   }
   page += F("<br/>");
-  uint8_t maxfn = (devices_present > MAX_FRIENDLYNAMES) ? MAX_FRIENDLYNAMES : devices_present;
-  for (byte i = 1; i < maxfn; i++) {
-    page += FPSTR(HTTP_FORM_OTHER2);
-    page.replace(F("{1"), String(i +1));
-    snprintf_P(stemp, sizeof(stemp), PSTR(FRIENDLY_NAME"%d"), i +1);
-    page.replace(F("{2"), stemp);
-    page.replace(F("{3"), Settings.friendlyname[i]);
-  }
   page += F("<br/></fieldset>");
 #endif  // USE_EMULATION
   page += FPSTR(HTTP_FORM_END);
@@ -925,8 +1014,7 @@ void HandleBackupConfiguration()
   WebServer->setContentLength(sizeof(buffer));
 
   char attachment[100];
-  snprintf_P(attachment, sizeof(attachment), PSTR("attachment; filename=Config_%s_" VERSION_STRING ".dmp"),
-    Settings.friendlyname[0]);
+  snprintf_P(attachment, sizeof(attachment), PSTR("attachment; filename=Config_%s_%s.dmp"), Settings.friendlyname[0], my_version);
   WebServer->sendHeader(F("Content-Disposition"), attachment);
   WebServer->send(200, FPSTR(HDR_CTYPE_STREAM), "");
   memcpy(buffer, &Settings, sizeof(buffer));
@@ -964,9 +1052,11 @@ void HandleSaveSettings()
       strlcpy(Settings.hostname, WIFI_HOSTNAME, sizeof(Settings.hostname));
     }
     strlcpy(Settings.sta_ssid[0], (!strlen(WebServer->arg("s1").c_str())) ? STA_SSID1 : WebServer->arg("s1").c_str(), sizeof(Settings.sta_ssid[0]));
-    strlcpy(Settings.sta_pwd[0], (!strlen(WebServer->arg("p1").c_str())) ? STA_PASS1 : WebServer->arg("p1").c_str(), sizeof(Settings.sta_pwd[0]));
     strlcpy(Settings.sta_ssid[1], (!strlen(WebServer->arg("s2").c_str())) ? STA_SSID2 : WebServer->arg("s2").c_str(), sizeof(Settings.sta_ssid[1]));
-    strlcpy(Settings.sta_pwd[1], (!strlen(WebServer->arg("p2").c_str())) ? STA_PASS2 : WebServer->arg("p2").c_str(), sizeof(Settings.sta_pwd[1]));
+//    strlcpy(Settings.sta_ssid[0], (!strlen(WebServer->arg("s1").c_str())) ? "" : WebServer->arg("s1").c_str(), sizeof(Settings.sta_ssid[0]));
+//    strlcpy(Settings.sta_ssid[1], (!strlen(WebServer->arg("s2").c_str())) ? "" : WebServer->arg("s2").c_str(), sizeof(Settings.sta_ssid[1]));
+    strlcpy(Settings.sta_pwd[0], (!strlen(WebServer->arg("p1").c_str())) ? "" : (strchr(WebServer->arg("p1").c_str(),'*')) ? Settings.sta_pwd[0] : WebServer->arg("p1").c_str(), sizeof(Settings.sta_pwd[0]));
+    strlcpy(Settings.sta_pwd[1], (!strlen(WebServer->arg("p2").c_str())) ? "" : (strchr(WebServer->arg("p2").c_str(),'*')) ? Settings.sta_pwd[1] : WebServer->arg("p2").c_str(), sizeof(Settings.sta_pwd[1]));
     snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_WIFI D_CMND_HOSTNAME " %s, " D_CMND_SSID "1 %s, " D_CMND_PASSWORD "1 %s, " D_CMND_SSID "2 %s, " D_CMND_PASSWORD "2 %s"),
       Settings.hostname, Settings.sta_ssid[0], Settings.sta_pwd[0], Settings.sta_ssid[1], Settings.sta_pwd[1]);
     AddLog(LOG_LEVEL_INFO);
@@ -979,7 +1069,7 @@ void HandleSaveSettings()
     MakeValidMqtt(1,stemp2);
     if ((strcmp(stemp, Settings.mqtt_topic)) || (strcmp(stemp2, Settings.mqtt_fulltopic))) {
       snprintf_P(mqtt_data, sizeof(mqtt_data), (Settings.flag.mqtt_offline) ? S_OFFLINE : "");
-      MqttPublishPrefixTopic_P(2, S_LWT, true);  // Offline or remove previous retained topic
+      MqttPublishPrefixTopic_P(TELE, S_LWT, true);  // Offline or remove previous retained topic
     }
     strlcpy(Settings.mqtt_topic, stemp, sizeof(Settings.mqtt_topic));
     strlcpy(Settings.mqtt_fulltopic, stemp2, sizeof(Settings.mqtt_fulltopic));
@@ -1014,7 +1104,7 @@ snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_LOG D_CMND_SERIALLOG " %d, " D
     break;
 #endif  // USE_DOMOTICZ
   case 5:
-    strlcpy(Settings.web_password, (!strlen(WebServer->arg("p1").c_str())) ? WEB_PASSWORD : (!strcmp(WebServer->arg("p1").c_str(),"0")) ? "" : WebServer->arg("p1").c_str(), sizeof(Settings.web_password));
+    strlcpy(Settings.web_password, (!strlen(WebServer->arg("p1").c_str())) ? "" : (strchr(WebServer->arg("p1").c_str(),'*')) ? Settings.web_password : WebServer->arg("p1").c_str(), sizeof(Settings.web_password));
     Settings.flag.mqtt_enabled = WebServer->hasArg("b1");
 #ifdef USE_EMULATION
     Settings.flag2.emulation = (!strlen(WebServer->arg("b2").c_str())) ? 0 : atoi(WebServer->arg("b2").c_str());
@@ -1055,6 +1145,7 @@ snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_LOG D_CMND_SERIALLOG " %d, " D
   if (restart) {
     String page = FPSTR(HTTP_HEAD);
     page.replace(F("{v}"), FPSTR(S_SAVE_CONFIGURATION));
+    page += FPSTR(HTTP_HEAD_STYLE);
     page += F("<div style='text-align:center;'><b>" D_CONFIGURATION_SAVED "</b><br/>");
     page += result;
     page += F("</div>");
@@ -1078,12 +1169,13 @@ void HandleResetConfiguration()
     return;
   }
 
-  char svalue[16];
+  char svalue[33];
 
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_RESET_CONFIGURATION);
 
   String page = FPSTR(HTTP_HEAD);
   page.replace(F("{v}"), FPSTR(S_RESET_CONFIGURATION));
+  page += FPSTR(HTTP_HEAD_STYLE);
   page += F("<div style='text-align:center;'>" D_CONFIGURATION_RESET "</div>");
   page += FPSTR(HTTP_MSG_RSTRT);
   page += FPSTR(HTTP_BTN_MAIN);
@@ -1102,6 +1194,7 @@ void HandleRestoreConfiguration()
 
   String page = FPSTR(HTTP_HEAD);
   page.replace(F("{v}"), FPSTR(S_RESTORE_CONFIGURATION));
+  page += FPSTR(HTTP_HEAD_STYLE);
   page += FPSTR(HTTP_FORM_RST);
   page += FPSTR(HTTP_FORM_RST_UPG);
   page.replace(F("{r1"), F(D_RESTORE));
@@ -1121,6 +1214,7 @@ void HandleUpgradeFirmware()
 
   String page = FPSTR(HTTP_HEAD);
   page.replace(F("{v}"), FPSTR(S_FIRMWARE_UPGRADE));
+  page += FPSTR(HTTP_HEAD_STYLE);
   page += FPSTR(HTTP_FORM_UPG);
   page.replace(F("{o1"), Settings.ota_url);
   page += FPSTR(HTTP_FORM_RST_UPG);
@@ -1149,6 +1243,7 @@ void HandleUpgradeFirmwareStart()
 
   String page = FPSTR(HTTP_HEAD);
   page.replace(F("{v}"), FPSTR(S_INFORMATION));
+  page += FPSTR(HTTP_HEAD_STYLE);
   page += F("<div style='text-align:center;'><b>" D_UPGRADE_STARTED " ...</b></div>");
   page += FPSTR(HTTP_MSG_RSTRT);
   page += FPSTR(HTTP_BTN_MAIN);
@@ -1173,6 +1268,7 @@ void HandleUploadDone()
 
   String page = FPSTR(HTTP_HEAD);
   page.replace(F("{v}"), FPSTR(S_INFORMATION));
+  page += FPSTR(HTTP_HEAD_STYLE);
   page += F("<div style='text-align:center;'><b>" D_UPLOAD " <font color='");
   if (upload_error) {
     page += F("red'>" D_FAILED "</font></b><br/><br/>");
@@ -1374,7 +1470,9 @@ void HandleHttpCommand()
   } else {
     message += F(D_NEED_USER_AND_PASSWORD "\"}");
   }
+  SetHeader();
   WebServer->send(200, FPSTR(HDR_CTYPE_JSON), message);
+//  WebServer->sendContent("");
 }
 
 void HandleConsole()
@@ -1387,6 +1485,7 @@ void HandleConsole()
 
   String page = FPSTR(HTTP_HEAD);
   page.replace(F("{v}"), FPSTR(S_CONSOLE));
+  page += FPSTR(HTTP_HEAD_STYLE);
   page.replace(F("</script>"), FPSTR(HTTP_SCRIPT_CONSOL));
   page.replace(F("<body>"), F("<body onload='l()'>"));
   page += FPSTR(HTTP_FORM_CMND);
@@ -1418,15 +1517,14 @@ void HandleAjaxConsoleRefresh()
     counter = atoi(WebServer->arg("c2").c_str());
   }
 
-  String message = F("<r><i>");
-  message += String(web_log_index);
-  message += F("</i><j>");
-  message += String(reset_web_log_flag);
+  WebServer->setContentLength(CONTENT_LENGTH_UNKNOWN);
+  WebServer->send(200, FPSTR(HDR_CTYPE_XML), "");
+  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("<r><i>%d</i><j>%d</j><l>"), web_log_index, reset_web_log_flag);
+  WebServer->sendContent(mqtt_data);
   if (!reset_web_log_flag) {
     counter = 99;
     reset_web_log_flag = 1;
   }
-  message += F("</j><l>");
   if (counter != web_log_index) {
     if (99 == counter) {
       counter = web_log_index;
@@ -1435,15 +1533,14 @@ void HandleAjaxConsoleRefresh()
     do {
       if (web_log[counter].length()) {
         if (cflg) {
-          message += F("\n");
+          WebServer->sendContent(PSTR("\n"));
         } else {
           cflg = 1;
         }
-        String nextline = web_log[counter];
-        nextline.replace(F("<"), F("%3C"));  // XML encoding to fix blank console log in concert with javascript decodeURIComponent
-        nextline.replace(F(">"), F("%3E"));
-        nextline.replace(F("&"), F("%26"));
-        message += nextline;
+        web_log[counter].replace(F("<"), F("%3C"));  // XML encoding to fix blank console log in concert with javascript decodeURIComponent
+        web_log[counter].replace(F(">"), F("%3E"));
+        web_log[counter].replace(F("&"), F("%26"));
+        WebServer->sendContent(web_log[counter]);
       }
       counter++;
       if (counter > MAX_LOG_LINES -1) {
@@ -1451,8 +1548,8 @@ void HandleAjaxConsoleRefresh()
       }
     } while (counter != web_log_index);
   }
-  message += F("</l></r>");
-  WebServer->send(200, FPSTR(HDR_CTYPE_XML), message);
+  WebServer->sendContent(PSTR("</l></r>"));
+  ShowPageStopChunk();
 }
 
 void HandleInformation()
@@ -1468,6 +1565,7 @@ void HandleInformation()
 
   String page = FPSTR(HTTP_HEAD);
   page.replace(F("{v}"), FPSTR(S_INFORMATION));
+  page += FPSTR(HTTP_HEAD_STYLE);
   //  page += F("<fieldset><legend><b>&nbsp;Information&nbsp;</b></legend>");
 
   page += F("<style>td{padding:0px 5px;}</style>");
@@ -1477,10 +1575,10 @@ void HandleInformation()
   // }1 = </td></tr><tr><th>
   // }2 = </th><td>
   String func = FPSTR(HTTP_SCRIPT_INFO_BEGIN);
-  func += F("<table width='100%'><tr><th>");
-  func += F(D_PROGRAM_VERSION "}2" VERSION_STRING);
+  func += F("<table style='width:100%'><tr><th>");
+  func += F(D_PROGRAM_VERSION "}2"); func += my_version;
   func += F("}1" D_BUILD_DATE_AND_TIME "}2"); func += GetBuildDateAndTime();
-  func += F("}1" D_CORE_AND_SDK_VERSION "}2"); func += ESP.getCoreVersion(); func += F("/"); func += String(ESP.getSdkVersion());
+  func += F("}1" D_CORE_AND_SDK_VERSION "}2" ARDUINO_ESP8266_RELEASE "/"); func += String(ESP.getSdkVersion());
   func += F("}1" D_UPTIME "}2"); func += String(uptime); func += F(" Hours");
   snprintf_P(stopic, sizeof(stopic), PSTR(" at %X"), GetSettingsAddress());
   func += F("}1" D_FLASH_WRITE_COUNT "}2"); func += String(Settings.save_flag); func += stopic;
@@ -1516,7 +1614,7 @@ void HandleInformation()
     func += F("}1" D_MQTT_USER "}2"); func += Settings.mqtt_user;
     func += F("}1" D_MQTT_TOPIC "}2"); func += Settings.mqtt_topic;
     func += F("}1" D_MQTT_GROUP_TOPIC "}2"); func += Settings.mqtt_grptopic;
-    GetTopic_P(stopic, 0, Settings.mqtt_topic, "");
+    GetTopic_P(stopic, CMND, Settings.mqtt_topic, "");
     func += F("}1" D_MQTT_FULL_TOPIC "}2"); func += stopic;
 
   } else {
@@ -1579,6 +1677,7 @@ void HandleRestart()
 
   String page = FPSTR(HTTP_HEAD);
   page.replace(F("{v}"), FPSTR(S_RESTART));
+  page += FPSTR(HTTP_HEAD_STYLE);
   page += FPSTR(HTTP_MSG_RSTRT);
   if (HTTP_MANAGER == webserver_state) {
     webserver_state = HTTP_ADMIN;
@@ -1594,6 +1693,9 @@ void HandleRestart()
 
 void HandleNotFound()
 {
+//  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_HTTP "Not fount (%s)"), WebServer->uri().c_str());
+//  AddLog(LOG_LEVEL_DEBUG);
+
   if (CaptivePortal()) { // If captive portal redirect instead of displaying the error page.
     return;
   }
@@ -1605,18 +1707,13 @@ void HandleNotFound()
   } else
 #endif // USE_EMULATION
   {
-    String message = F(D_FILE_NOT_FOUND "\n\nURI: ");
-    message += WebServer->uri();
-    message += F("\nMethod: ");
-    message += (WebServer->method() == HTTP_GET) ? F("GET") : F("POST");
-    message += F("\nArguments: ");
-    message += WebServer->args();
-    message += F("\n");
-    for ( uint8_t i = 0; i < WebServer->args(); i++ ) {
-      message += " " + WebServer->argName(i) + ": " + WebServer->arg(i) + "\n";
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR(D_FILE_NOT_FOUND "\n\nURI: %s\nMethod: %s\nArguments: %d\n"),
+      WebServer->uri().c_str(), (WebServer->method() == HTTP_GET) ? "GET" : "POST", WebServer->args());
+    for (uint8_t i = 0; i < WebServer->args(); i++) {
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s %s: %s\n"), mqtt_data, WebServer->argName(i).c_str(), WebServer->arg(i).c_str());
     }
     SetHeader();
-    WebServer->send(404, FPSTR(HDR_CTYPE_PLAIN), message);
+    WebServer->send(404, FPSTR(HDR_CTYPE_PLAIN), mqtt_data);
   }
 }
 

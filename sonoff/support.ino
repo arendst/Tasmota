@@ -1,7 +1,7 @@
 /*
   support.ino - support for Sonoff-Tasmota
 
-  Copyright (C) 2017  Theo Arends
+  Copyright (C) 2018  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -26,7 +26,7 @@ unsigned long syslog_host_refresh = 0;
 
 Ticker tickerOSWatch;
 
-#define OSWATCH_RESET_TIME 30
+#define OSWATCH_RESET_TIME 120
 
 static unsigned long oswatch_last_loop_time;
 byte oswatch_blocked_loop = 0;
@@ -71,7 +71,7 @@ String GetResetReason()
 {
   char buff[32];
   if (oswatch_blocked_loop) {
-    strncpy_P(buff, PSTR(D_BLOCKED_LOOP), sizeof(buff));
+    strncpy_P(buff, PSTR(D_JSON_BLOCKED_LOOP), sizeof(buff));
     return String(buff);
   } else {
     return ESP.getResetReason();
@@ -148,83 +148,9 @@ Decoding 14 results
  * General
 \*********************************************************************************************/
 
-char* _dtostrf(double number, unsigned char prec, char *s, bool i18n)
+char* dtostrfd(double number, unsigned char prec, char *s)
 {
-  bool negative = false;
-
-  if (isnan(number)) {
-    strcpy_P(s, PSTR("nan"));
-    return s;
-  }
-  if (isinf(number)) {
-    strcpy_P(s, PSTR("inf"));
-    return s;
-  }
-  char decimal = '.';
-  if (i18n) {
-    decimal = D_DECIMAL_SEPARATOR[0];
-  }
-
-  char* out = s;
-
-  // Handle negative numbers
-  if (number < 0.0) {
-    negative = true;
-    number = -number;
-  }
-
-  // Round correctly so that print(1.999, 2) prints as "2.00"
-  // I optimized out most of the divisions
-  double rounding = 2.0;
-  for (uint8_t i = 0; i < prec; ++i) {
-    rounding *= 10.0;
-  }
-  rounding = 1.0 / rounding;
-  number += rounding;
-
-  // Figure out how big our number really is
-  double tenpow = 1.0;
-  int digitcount = 1;
-  while (number >= 10.0 * tenpow) {
-    tenpow *= 10.0;
-    digitcount++;
-  }
-  number /= tenpow;
-
-  // Handle negative sign
-  if (negative) {
-    *out++ = '-';
-  }
-
-  // Print the digits, and if necessary, the decimal point
-  digitcount += prec;
-  int8_t digit = 0;
-  while (digitcount-- > 0) {
-    digit = (int8_t)number;
-    if (digit > 9) {
-      digit = 9; // insurance
-    }
-    *out++ = (char)('0' | digit);
-    if ((digitcount == prec) && (prec > 0)) {
-      *out++ = decimal;
-    }
-    number -= digit;
-    number *= 10.0;
-  }
-
-  // make sure the string is terminated
-  *out = 0;
-  return s;
-}
-
-char* dtostrfd(double number, unsigned char prec, char *s)  // Always decimal dot
-{
-  return _dtostrf(number, prec, s, 0);
-}
-
-char* dtostrfi(double number, unsigned char prec, char *s) // Use localized decimal dot
-{
-  return _dtostrf(number, prec, s, 1);
+  return dtostrf(number, 1, prec, s);
 }
 
 boolean ParseIp(uint32_t* addr, const char* str)
@@ -333,7 +259,6 @@ char* GetPowerDevice(char* dest, uint8_t idx, size_t size)
 \*********************************************************************************************/
 
 #define WIFI_CONFIG_SEC   180  // seconds before restart
-#define WIFI_MANAGER_SEC  180  // seconds before restart
 #define WIFI_CHECK_SEC    20   // seconds
 #define WIFI_RETRY_SEC    30   // seconds
 
@@ -361,7 +286,7 @@ int WifiGetRssiAsQuality(int rssi)
 boolean WifiConfigCounter()
 {
   if (wifi_config_counter) {
-    wifi_config_counter = WIFI_MANAGER_SEC;
+    wifi_config_counter = WIFI_CONFIG_SEC;
   }
   return (wifi_config_counter);
 }
@@ -461,10 +386,12 @@ void WifiBegin(uint8_t flag)
 #ifdef USE_EMULATION
   UdpDisconnect();
 #endif  // USE_EMULATION
-  if (!strncmp_P(ESP.getSdkVersion(),PSTR("1.5.3"),5)) {
-    AddLog_P(LOG_LEVEL_DEBUG, S_LOG_WIFI, PSTR(D_PATCH_ISSUE_2186));
-    WiFi.mode(WIFI_OFF);    // See https://github.com/esp8266/Arduino/issues/2186
-  }
+
+#ifdef ARDUINO_ESP8266_RELEASE_2_3_0  // (!strncmp_P(ESP.getSdkVersion(),PSTR("1.5.3"),5))
+  AddLog_P(LOG_LEVEL_DEBUG, S_LOG_WIFI, PSTR(D_PATCH_ISSUE_2186));
+  WiFi.mode(WIFI_OFF);    // See https://github.com/esp8266/Arduino/issues/2186
+#endif
+
   WiFi.disconnect();
   WiFi.mode(WIFI_STA);      // Disable AP mode
   if (Settings.sleep) {
@@ -610,6 +537,12 @@ void WifiCheck(uint8_t param)
         WifiCheckIp();
       }
       if ((WL_CONNECTED == WiFi.status()) && (static_cast<uint32_t>(WiFi.localIP()) != 0) && !wifi_config_type) {
+#ifdef BE_MINIMAL
+        if (1 == RtcSettings.ota_loader) {
+          RtcSettings.ota_loader = 0;
+          ota_state_flag = 3;
+        }
+#endif  // BE_MINIMAL
 #ifdef USE_DISCOVERY
         if (!mdns_begun) {
           mdns_begun = MDNS.begin(my_hostname);
@@ -840,7 +773,7 @@ void I2cScan(char *devs, unsigned int devs_len)
   byte any = 0;
   char tstr[10];
 
-  snprintf_P(devs, devs_len, PSTR("{\"" D_CMND_I2CSCAN "\":\"" D_I2CSCAN_DEVICES_FOUND_AT));
+  snprintf_P(devs, devs_len, PSTR("{\"" D_CMND_I2CSCAN "\":\"" D_JSON_I2CSCAN_DEVICES_FOUND_AT));
   for (address = 1; address <= 127; address++) {
     Wire.beginTransmission(address);
     error = Wire.endTransmission();
@@ -850,13 +783,13 @@ void I2cScan(char *devs, unsigned int devs_len)
       any = 1;
     }
     else if (4 == error) {
-      snprintf_P(devs, devs_len, PSTR("{\"" D_CMND_I2CSCAN "\":\"" D_I2CSCAN_UNKNOWN_ERROR_AT " 0x%2x\"}"), address);
+      snprintf_P(devs, devs_len, PSTR("{\"" D_CMND_I2CSCAN "\":\"" D_JSON_I2CSCAN_UNKNOWN_ERROR_AT " 0x%2x\"}"), address);
     }
   }
   if (any) {
     strncat(devs, "\"}", devs_len);
   } else {
-    snprintf_P(devs, devs_len, PSTR("{\"" D_CMND_I2CSCAN "\":\"" D_I2CSCAN_NO_DEVICES_FOUND "\"}"));
+    snprintf_P(devs, devs_len, PSTR("{\"" D_CMND_I2CSCAN "\":\"" D_JSON_I2CSCAN_NO_DEVICES_FOUND "\"}"));
   }
 }
 
@@ -891,6 +824,7 @@ extern "C" {
 Ticker TickerRtc;
 
 static const uint8_t kDaysInMonth[] = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 }; // API starts months from 1, this array starts from 0
+static const char kMonthNamesEnglish[] = "JanFebMarAprMayJunJulAugSepOctNovDec";
 
 uint32_t utc_time = 0;
 uint32_t local_time = 0;
@@ -926,7 +860,7 @@ String GetBuildDateAndTime()
       year = atoi(str);
     }
   }
-  month = (strstr(kMonthNames, smonth) -kMonthNames) /3 +1;
+  month = (strstr(kMonthNamesEnglish, smonth) -kMonthNamesEnglish) /3 +1;
   snprintf_P(bdt, sizeof(bdt), PSTR("%d" D_YEAR_MONTH_SEPARATOR "%02d" D_MONTH_DAY_SEPARATOR "%02d" D_DATE_TIME_SEPARATOR "%s"), year, month, day, __TIME__);
   return String(bdt);
 }
@@ -1317,7 +1251,7 @@ void AdcShow(boolean json)
   analog >>= 5;
 
   if (json) {
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"" D_ANALOG_INPUT "0\":%d"), mqtt_data, analog);
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"" D_JSON_ANALOG_INPUT "0\":%d"), mqtt_data, analog);
 #ifdef USE_WEBSERVER
   } else {
     snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_ANALOG, mqtt_data, "", 0, analog);
@@ -1337,15 +1271,11 @@ boolean Xsns02(byte function)
 
   if (pin[GPIO_ADC0] < 99) {
     switch (function) {
-//      case FUNC_XSNS_INIT:
-//        break;
-//      case FUNC_XSNS_PREP_BEFORE_TELEPERIOD:
-//        break;
-      case FUNC_XSNS_JSON_APPEND:
+      case FUNC_JSON_APPEND:
         AdcShow(1);
         break;
 #ifdef USE_WEBSERVER
-      case FUNC_XSNS_WEB_APPEND:
+      case FUNC_WEB_APPEND:
         AdcShow(0);
         break;
 #endif  // USE_WEBSERVER
