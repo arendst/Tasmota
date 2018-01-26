@@ -25,9 +25,10 @@
     - Select IDE Tools - Flash Size: "1M (no SPIFFS)"
   ====================================================*/
 
-#define VERSION                0x050B0105   // 5.11.1e
+#define VERSION                0x050B0106   // 5.11.1f
 
 // Location specific includes
+#include <core_version.h>                   // Arduino_Esp8266 version information (ARDUINO_ESP8266_RELEASE and ARDUINO_ESP8266_RELEASE_2_3_0)
 #include "sonoff.h"                         // Enumeration used in user_config.h
 #include "user_config.h"                    // Fixed user configurable options
 #include "user_config_override.h"           // Configuration overrides for user_config.h

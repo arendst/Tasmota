@@ -414,6 +414,8 @@ void PollDnsWebserver()
   }
 }
 
+/*********************************************************************************************/
+
 void SetHeader()
 {
   WebServer->sendHeader(F("Cache-Control"), F("no-cache, no-store, must-revalidate"));
@@ -423,8 +425,6 @@ void SetHeader()
   WebServer->sendHeader(F("Access-Control-Allow-Origin"), F("*"));
 #endif
 }
-
-/*********************************************************************************************/
 
 void ShowPage(String &page, bool auth)
 {
@@ -449,57 +449,6 @@ void ShowPage(String &page, bool auth)
 void ShowPage(String &page)
 {
   ShowPage(page, true);
-}
-
-/*********************************************************************************************/
-
-void ShowPageStartChunk()
-{
-  WebServer->setContentLength(CONTENT_LENGTH_UNKNOWN);
-  WebServer->send(200, FPSTR(HDR_CTYPE_HTML), "");
-}
-
-void ShowPageChunk(String &page)
-{
-  page.replace(F("{ha"), my_module.name);
-  page.replace(F("{h}"), Settings.friendlyname[0]);
-  if (HTTP_MANAGER == webserver_state) {
-    if (WifiConfigCounter()) {
-      page.replace(F("<body>"), F("<body onload='u()'>"));
-      page += FPSTR(HTTP_COUNTER);
-    }
-  }
-  WebServer->sendContent(page);
-}
-
-void ShowPageStart(String &page, bool auth)
-{
-  if (auth && (Settings.web_password[0] != 0) && !WebServer->authenticate(WEB_USERNAME, Settings.web_password)) {
-    return WebServer->requestAuthentication();
-  }
-  SetHeader();
-  ShowPageStartChunk();
-  ShowPageChunk(page);
-}
-
-void ShowPageStart(String &page)
-{
-  ShowPageStart(page, true);
-}
-
-void ShowPageStopChunk()
-{
-  WebServer->sendContent("");
-  WebServer->client().stop();  // Stop is needed because we sent no content length
-}
-
-void ShowPageEnd(String &page)
-{
-  ShowPageChunk(page);
-  String endpart = FPSTR(HTTP_END);
-  endpart.replace(F("{mv"), my_version);
-  WebServer->sendContent(endpart);
-  ShowPageStopChunk();
 }
 
 /*********************************************************************************************/
@@ -534,7 +483,6 @@ void HandleRoot()
     }
   } else {
     char stemp[10];
-    char line[160];
     String page = FPSTR(HTTP_HEAD);
     page.replace(F("{v}"), FPSTR(S_MAIN_MENU));
     page += FPSTR(HTTP_HEAD_STYLE);
@@ -544,19 +492,19 @@ void HandleRoot()
     if (devices_present) {
       if (light_type) {
         if ((LST_COLDWARM == (light_type &7)) || (LST_RGBWC == (light_type &7))) {
-          snprintf_P(line, sizeof(line), HTTP_MSG_SLIDER1, LightGetColorTemp());
-          page += line;
+          snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_MSG_SLIDER1, LightGetColorTemp());
+          page += mqtt_data;
         }
-        snprintf_P(line, sizeof(line), HTTP_MSG_SLIDER2, Settings.light_dimmer);
-        page += line;
+        snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_MSG_SLIDER2, Settings.light_dimmer);
+        page += mqtt_data;
       }
       page += FPSTR(HTTP_TABLE100);
       page += F("<tr>");
       for (byte idx = 1; idx <= devices_present; idx++) {
         snprintf_P(stemp, sizeof(stemp), PSTR(" %d"), idx);
-        snprintf_P(line, sizeof(line), PSTR("<td style='width:%d%'><button onclick='la(\"?o=%d\");'>%s%s</button></td>"),
+        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("<td style='width:%d%'><button onclick='la(\"?o=%d\");'>%s%s</button></td>"),
           100 / devices_present, idx, (devices_present < 5) ? D_BUTTON_TOGGLE : "", (devices_present > 1) ? stemp : "");
-        page += line;
+        page += mqtt_data;
       }
       page += F("</tr></table>");
     }
@@ -570,8 +518,8 @@ void HandleRoot()
         }
         for (byte j = 0; j < 4; j++) {
           idx++;
-          snprintf_P(line, sizeof(line), PSTR("<td style='width:25%'><button onclick='la(\"?k=%d\");'>%d</button></td>"), idx, idx);
-          page += line;
+          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("<td style='width:25%'><button onclick='la(\"?k=%d\");'>%d</button></td>"), idx, idx);
+          page += mqtt_data;
         }
       }
       page += F("</tr></table>");
@@ -605,23 +553,28 @@ void HandleAjaxStatusRefresh()
     ExecuteCommand(svalue);
   }
 
-  ShowPageStartChunk();
-  WebServer->sendContent(HTTP_TABLE100);
+  String page = "";
+  mqtt_data[0] = '\0';
   XsnsCall(FUNC_WEB_APPEND);
-  WebServer->sendContent(PSTR("</table>"));
+  if (strlen(mqtt_data)) {
+    page += FPSTR(HTTP_TABLE100);
+    page += mqtt_data;
+    page.replace(F("."), F(D_DECIMAL_SEPARATOR));
+    page += F("</table>");
+  }
   if (devices_present) {
-    WebServer->sendContent(HTTP_TABLE100);
-    WebServer->sendContent(PSTR("<tr>"));
+    page += FPSTR(HTTP_TABLE100);
+    page += F("<tr>");
     uint8_t fsize = (devices_present < 5) ? 70 - (devices_present * 8) : 32;
     for (byte idx = 1; idx <= devices_present; idx++) {
       snprintf_P(svalue, sizeof(svalue), PSTR("%d"), bitRead(power, idx -1));
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("<td style='width:%d{t}%s;font-size:%dpx'>%s</div></td>"),  // {t} = %'><div style='text-align:center;font-weight:
         100 / devices_present, (bitRead(power, idx -1)) ? "bold" : "normal", fsize, (devices_present < 5) ? GetStateText(bitRead(power, idx -1)) : svalue);
-      WebServer->sendContent(mqtt_data);
+      page += mqtt_data;
     }
-    WebServer->sendContent(PSTR("</tr></table>"));
+    page += F("</tr></table>");
   }
-  ShowPageStopChunk();
+  WebServer->send(200, FPSTR(HDR_CTYPE_HTML), page);
 }
 
 boolean HttpUser()
@@ -714,67 +667,57 @@ void HandleModuleConfiguration()
     return;
   }
   char stemp[20];
-  char line[160];
   uint8_t midx;
 
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_CONFIGURE_MODULE);
 
   String page = FPSTR(HTTP_HEAD);
   page.replace(F("{v}"), FPSTR(S_CONFIGURE_MODULE));
-  ShowPageStart(page);
-
-  page = FPSTR(HTTP_SCRIPT_MODULE1);
+  page += FPSTR(HTTP_SCRIPT_MODULE1);
   for (byte i = 0; i < MAXMODULE; i++) {
     midx = pgm_read_byte(kNiceList + i);
     snprintf_P(stemp, sizeof(stemp), kModules[midx].name);
-    snprintf_P(line, sizeof(line), HTTP_SCRIPT_MODULE2, midx, midx +1, stemp);
-    page += line;
+    snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SCRIPT_MODULE2, midx, midx +1, stemp);
+    page += mqtt_data;
   }
   page += FPSTR(HTTP_SCRIPT_MODULE3);
-  ShowPageChunk(page);
-
-  snprintf_P(line, sizeof(line), PSTR("sk(%d,99);o0=\""), Settings.module);  // g99
-  page = line;
+  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("sk(%d,99);o0=\""), Settings.module);  // g99
+  page += mqtt_data;
 
   mytmplt cmodule;
   memcpy_P(&cmodule, &kModules[Settings.module], sizeof(cmodule));
+
   for (byte j = 0; j < GPIO_SENSOR_END; j++) {
     if (!GetUsedInModule(j, cmodule.gp.io)) {
       snprintf_P(stemp, sizeof(stemp), kSensors[j]);
-      snprintf_P(line, sizeof(line), HTTP_SCRIPT_MODULE2, j, j, stemp);
-      page += line;
+      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SCRIPT_MODULE2, j, j, stemp);
+      page += mqtt_data;
     }
   }
   page += FPSTR(HTTP_SCRIPT_MODULE3);
-  ShowPageChunk(page);
 
-  page = FPSTR(HTTP_HEAD_STYLE);
-  page += FPSTR(HTTP_FORM_MODULE);
+  String part2 = FPSTR(HTTP_HEAD_STYLE);
+  part2 += FPSTR(HTTP_FORM_MODULE);
   snprintf_P(stemp, sizeof(stemp), kModules[MODULE].name);
-  page.replace(F("{mt"), stemp);
-  page += F("<br/><table>");
-
-  String func = "";
+  part2.replace(F("{mt"), stemp);
+  part2 += F("<br/><table>");
   for (byte i = 0; i < MAX_GPIO_PIN; i++) {
     if (GPIO_USER == cmodule.gp.io[i]) {
       snprintf_P(stemp, 3, PINS_WEMOS +i*2);
-      snprintf_P(line, sizeof(line), PSTR("<tr><td style='width:190px'>%s <b>" D_GPIO "%d</b> %s</td><td style='width:126px'><select id='g%d' name='g%d'></select></td></tr>"),
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("<tr><td style='width:190px'>%s <b>" D_GPIO "%d</b> %s</td><td style='width:126px'><select id='g%d' name='g%d'></select></td></tr>"),
         (WEMOS==Settings.module)?stemp:"", i, (0==i)? D_SENSOR_BUTTON "1":(1==i)? D_SERIAL_OUT :(3==i)? D_SERIAL_IN :(12==i)? D_SENSOR_RELAY "1":(13==i)? D_SENSOR_LED "1i":(14==i)? D_SENSOR :"", i, i);
-      page += line;
-      snprintf_P(line, sizeof(line), PSTR("sk(%d,%d);"), my_module.gp.io[i], i);  // g0 - g16
-      func += line;
+      part2 += mqtt_data;
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("sk(%d,%d);"), my_module.gp.io[i], i);  // g0 - g16
+      page += mqtt_data;
     }
   }
-  func += F("}");
-  ShowPageChunk(func);
-
+  page += F("}");
+  page += part2;
   page.replace(F("<body>"), F("<body onload='sl()'>"));
   page += F("</table>");
-  ShowPageChunk(page);
-
-  page = FPSTR(HTTP_FORM_END);
+  page += FPSTR(HTTP_FORM_END);
   page += FPSTR(HTTP_BTN_CONF);
-  ShowPageEnd(page);
+  ShowPage(page);
 }
 
 void HandleWifiConfigurationWithScan()
@@ -1472,7 +1415,6 @@ void HandleHttpCommand()
   }
   SetHeader();
   WebServer->send(200, FPSTR(HDR_CTYPE_JSON), message);
-//  WebServer->sendContent("");
 }
 
 void HandleConsole()
@@ -1517,10 +1459,8 @@ void HandleAjaxConsoleRefresh()
     counter = atoi(WebServer->arg("c2").c_str());
   }
 
-  WebServer->setContentLength(CONTENT_LENGTH_UNKNOWN);
-  WebServer->send(200, FPSTR(HDR_CTYPE_XML), "");
   snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("<r><i>%d</i><j>%d</j><l>"), web_log_index, reset_web_log_flag);
-  WebServer->sendContent(mqtt_data);
+  String message = F("}9");  // Cannot load mqtt_data here as <> will be encoded by replacements below
   if (!reset_web_log_flag) {
     counter = 99;
     reset_web_log_flag = 1;
@@ -1533,23 +1473,24 @@ void HandleAjaxConsoleRefresh()
     do {
       if (web_log[counter].length()) {
         if (cflg) {
-          WebServer->sendContent(PSTR("\n"));
+          message += F("\n");
         } else {
           cflg = 1;
         }
-        web_log[counter].replace(F("<"), F("%3C"));  // XML encoding to fix blank console log in concert with javascript decodeURIComponent
-        web_log[counter].replace(F(">"), F("%3E"));
-        web_log[counter].replace(F("&"), F("%26"));
-        WebServer->sendContent(web_log[counter]);
+        message += web_log[counter];
       }
       counter++;
       if (counter > MAX_LOG_LINES -1) {
         counter = 0;
       }
     } while (counter != web_log_index);
+    message.replace(F("<"), F("%3C"));  // XML encoding to fix blank console log in concert with javascript decodeURIComponent
+    message.replace(F(">"), F("%3E"));
+    message.replace(F("&"), F("%26"));
   }
-  WebServer->sendContent(PSTR("</l></r>"));
-  ShowPageStopChunk();
+  message.replace(F("}9"), mqtt_data);  // Save to load here
+  message += F("</l></r>");
+  WebServer->send(200, FPSTR(HDR_CTYPE_XML), message);
 }
 
 void HandleInformation()
