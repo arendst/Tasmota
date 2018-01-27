@@ -47,7 +47,7 @@
 
 // Common
 #define D_ADMIN "Admin"
-#define D_AIR_QUALITY "Lucht kwalitiet"
+#define D_AIR_QUALITY "Lucht kwaliteit"
 #define D_AP "AP"                    // Access Point
 #define D_AS "als"
 #define D_AUTO "AUTO"
