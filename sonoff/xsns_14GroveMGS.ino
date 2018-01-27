@@ -95,21 +95,25 @@ void MGSShow(boolean json)
 boolean Xsns14(byte function)
 {
   boolean result = false;
-
+  static int detected = false;
   if (i2c_flg) {
     switch (function) {
       case FUNC_XSNS_INIT:
 	//MGSInit();
         break;
       case FUNC_XSNS_PREP:
-        MGSPrepare();
+        detected = MGSPrepare();
         break;
       case FUNC_XSNS_JSON_APPEND:
-        MGSShow(1);
+	if (detected) {
+	    MGSShow(1);
+	}
         break;
 #ifdef USE_WEBSERVER
       case FUNC_XSNS_WEB:
-        MGSShow(0);
+	if (detected) {
+    	    MGSShow(0);
+	}
         break;
 #endif  // USE_WEBSERVER
     }

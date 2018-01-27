@@ -46,8 +46,8 @@ void MutichannelGasSensor::begin(int address)
 
     Wire.begin();
     i2cAddress = address;
-    __version = getVersion();
     __send_error = false;
+    __version = getVersion();
 }
 
 bool MutichannelGasSensor::isError()
