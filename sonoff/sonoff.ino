@@ -25,7 +25,7 @@
     - Select IDE Tools - Flash Size: "1M (no SPIFFS)"
   ====================================================*/
 
-#define VERSION                0x050B0106   // 5.11.1f
+#define VERSION                0x050B0107   // 5.11.1g
 
 // Location specific includes
 #include <core_version.h>                   // Arduino_Esp8266 version information (ARDUINO_ESP8266_RELEASE and ARDUINO_ESP8266_RELEASE_2_3_0)
@@ -1027,6 +1027,7 @@ void MqttDataCallback(char* topic, byte* data, unsigned int data_len)
               case 16:  // ws_clock_reverse
               case 17:  // decimal_text
               case 18:  // light_signal
+              case 20:  // not_power_linked
                 bitWrite(Settings.flag.data, index, payload);
             }
             if (12 == index) {  // stop_flash_rotate

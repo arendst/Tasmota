@@ -376,8 +376,8 @@
 #define D_SHT1X_FOUND "SHT1X found"
 
 // xsns_18_pms5003.ino
-#define D_STANDARD_CONCENTRATION "Standard Concentration"
-#define D_ENVIRONMENTAL_CONCENTRATION "Environmental Concentration"
+#define D_STANDARD_CONCENTRATION "Std Concentration"
+#define D_ENVIRONMENTAL_CONCENTRATION "Env Concentration"
 #define D_PARTICALS_BEYOND "Particals beyond"
 
 // sonoff_template.h

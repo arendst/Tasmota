@@ -47,7 +47,7 @@
 
 // Common
 #define D_ADMIN "Admin"
-#define D_AIR_QUALITY "Lucht kwalitiet"
+#define D_AIR_QUALITY "Lucht kwaliteit"
 #define D_AP "AP"                    // Access Point
 #define D_AS "als"
 #define D_AUTO "AUTO"
@@ -376,9 +376,9 @@
 #define D_SHT1X_FOUND "SHT1X gevonden"
 
 // xsns_18_pms5003.ino
-#define D_STANDARD_CONCENTRATION "Standard Concentration"
-#define D_ENVIRONMENTAL_CONCENTRATION "Environmental Concentration"
-#define D_PARTICALS_BEYOND "Particals beyond"
+#define D_STANDARD_CONCENTRATION "Std concentratie"
+#define D_ENVIRONMENTAL_CONCENTRATION "Omg concentratie"
+#define D_PARTICALS_BEYOND "Deeltjes groter dan"
 
 // sonoff_template.h
 // Max string length is 8 characters including suffixes

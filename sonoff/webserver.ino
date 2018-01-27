@@ -60,7 +60,7 @@ const char HTTP_HEAD[] PROGMEM =
     "x=new XMLHttpRequest();"
     "x.onreadystatechange=function(){"
       "if(x.readyState==4&&x.status==200){"
-        "var s=x.responseText.replace(/{s}/g,\"<tr><th>\").replace(/{m}/g,\"</th><td>\").replace(/{e}/g,\"</td></tr>\").replace(/{t}/g,\"%'><div style='text-align:center;font-weight:\");"
+        "var s=x.responseText.replace(/{t}/g,\"<table style='width:100%'>\").replace(/{s}/g,\"<tr><th>\").replace(/{m}/g,\"</th><td>\").replace(/{e}/g,\"</td></tr>\").replace(/{c}/g,\"%'><div style='text-align:center;font-weight:\");"
         "document.getElementById('l1').innerHTML=s;"
       "}"
     "};"
@@ -552,7 +552,7 @@ void HandleAjaxStatusRefresh()
     snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_RFKEY "%s"), WebServer->arg("k").c_str());
     ExecuteCommand(svalue);
   }
-
+/*
   String page = "";
   mqtt_data[0] = '\0';
   XsnsCall(FUNC_WEB_APPEND);
@@ -568,13 +568,58 @@ void HandleAjaxStatusRefresh()
     uint8_t fsize = (devices_present < 5) ? 70 - (devices_present * 8) : 32;
     for (byte idx = 1; idx <= devices_present; idx++) {
       snprintf_P(svalue, sizeof(svalue), PSTR("%d"), bitRead(power, idx -1));
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("<td style='width:%d{t}%s;font-size:%dpx'>%s</div></td>"),  // {t} = %'><div style='text-align:center;font-weight:
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("<td style='width:%d{c}%s;font-size:%dpx'>%s</div></td>"),  // {c} = %'><div style='text-align:center;font-weight:
         100 / devices_present, (bitRead(power, idx -1)) ? "bold" : "normal", fsize, (devices_present < 5) ? GetStateText(bitRead(power, idx -1)) : svalue);
       page += mqtt_data;
     }
     page += F("</tr></table>");
   }
   WebServer->send(200, FPSTR(HDR_CTYPE_HTML), page);
+*/
+/*
+  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("<table style='width:100%%'>"));
+  XsnsCall(FUNC_WEB_APPEND);
+  if (D_DECIMAL_SEPARATOR[0] != '.') {
+    for (int i = 0; i < strlen(mqtt_data); i++) {
+      if ('.' == mqtt_data[i]) {
+        mqtt_data[i] = D_DECIMAL_SEPARATOR[0];
+      }
+    }
+  }
+  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s</table>"), mqtt_data);
+  if (devices_present) {
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s<table style='width:100%%'><tr>"), mqtt_data);
+    uint8_t fsize = (devices_present < 5) ? 70 - (devices_present * 8) : 32;
+    for (byte idx = 1; idx <= devices_present; idx++) {
+      snprintf_P(svalue, sizeof(svalue), PSTR("%d"), bitRead(power, idx -1));
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s<td style='width:%d{c}%s;font-size:%dpx'>%s</div></td>"),  // {c} = %'><div style='text-align:center;font-weight:
+        mqtt_data, 100 / devices_present, (bitRead(power, idx -1)) ? "bold" : "normal", fsize, (devices_present < 5) ? GetStateText(bitRead(power, idx -1)) : svalue);
+    }
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s</tr></table>"), mqtt_data);
+  }
+  WebServer->send(200, FPSTR(HDR_CTYPE_HTML), mqtt_data);
+*/
+  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{t}"));
+  XsnsCall(FUNC_WEB_APPEND);
+  if (D_DECIMAL_SEPARATOR[0] != '.') {
+    for (int i = 0; i < strlen(mqtt_data); i++) {
+      if ('.' == mqtt_data[i]) {
+        mqtt_data[i] = D_DECIMAL_SEPARATOR[0];
+      }
+    }
+  }
+  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s</table>"), mqtt_data);
+  if (devices_present) {
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s{t}<tr>"), mqtt_data);
+    uint8_t fsize = (devices_present < 5) ? 70 - (devices_present * 8) : 32;
+    for (byte idx = 1; idx <= devices_present; idx++) {
+      snprintf_P(svalue, sizeof(svalue), PSTR("%d"), bitRead(power, idx -1));
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s<td style='width:%d{c}%s;font-size:%dpx'>%s</div></td>"),  // {c} = %'><div style='text-align:center;font-weight:
+        mqtt_data, 100 / devices_present, (bitRead(power, idx -1)) ? "bold" : "normal", fsize, (devices_present < 5) ? GetStateText(bitRead(power, idx -1)) : svalue);
+    }
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s</tr></table>"), mqtt_data);
+  }
+  WebServer->send(200, FPSTR(HDR_CTYPE_HTML), mqtt_data);
 }
 
 boolean HttpUser()
@@ -696,24 +741,28 @@ void HandleModuleConfiguration()
   }
   page += FPSTR(HTTP_SCRIPT_MODULE3);
 
-  String part2 = FPSTR(HTTP_HEAD_STYLE);
-  part2 += FPSTR(HTTP_FORM_MODULE);
-  snprintf_P(stemp, sizeof(stemp), kModules[MODULE].name);
-  part2.replace(F("{mt"), stemp);
-  part2 += F("<br/><table>");
   for (byte i = 0; i < MAX_GPIO_PIN; i++) {
     if (GPIO_USER == cmodule.gp.io[i]) {
-      snprintf_P(stemp, 3, PINS_WEMOS +i*2);
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("<tr><td style='width:190px'>%s <b>" D_GPIO "%d</b> %s</td><td style='width:126px'><select id='g%d' name='g%d'></select></td></tr>"),
-        (WEMOS==Settings.module)?stemp:"", i, (0==i)? D_SENSOR_BUTTON "1":(1==i)? D_SERIAL_OUT :(3==i)? D_SERIAL_IN :(12==i)? D_SENSOR_RELAY "1":(13==i)? D_SENSOR_LED "1i":(14==i)? D_SENSOR :"", i, i);
-      part2 += mqtt_data;
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("sk(%d,%d);"), my_module.gp.io[i], i);  // g0 - g16
       page += mqtt_data;
     }
   }
   page += F("}");
-  page += part2;
+
+  page += FPSTR(HTTP_HEAD_STYLE);
   page.replace(F("<body>"), F("<body onload='sl()'>"));
+  page += FPSTR(HTTP_FORM_MODULE);
+  snprintf_P(stemp, sizeof(stemp), kModules[MODULE].name);
+  page.replace(F("{mt"), stemp);
+  page += F("<br/><table>");
+  for (byte i = 0; i < MAX_GPIO_PIN; i++) {
+    if (GPIO_USER == cmodule.gp.io[i]) {
+      snprintf_P(stemp, 3, PINS_WEMOS +i*2);
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("<tr><td style='width:190px'>%s <b>" D_GPIO "%d</b> %s</td><td style='width:126px'><select id='g%d' name='g%d'></select></td></tr>"),
+        (WEMOS==Settings.module)?stemp:"", i, (0==i)? D_SENSOR_BUTTON "1":(1==i)? D_SERIAL_OUT :(3==i)? D_SERIAL_IN :(12==i)? D_SENSOR_RELAY "1":(13==i)? D_SENSOR_LED "1i":(14==i)? D_SENSOR :"", i, i);
+      page += mqtt_data;
+    }
+  }
   page += F("</table>");
   page += FPSTR(HTTP_FORM_END);
   page += FPSTR(HTTP_BTN_CONF);

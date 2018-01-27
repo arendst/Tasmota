@@ -90,11 +90,11 @@ typedef unsigned long power_t;              // Power (Relay) type
 #ifdef USE_MQTT_TLS
   #define MAX_LOG_LINES        10           // Max number of lines in weblog
 #else
-  #ifdef ARDUINO_ESP8266_RELEASE_2_3_0
+//  #ifdef ARDUINO_ESP8266_RELEASE_2_3_0
     #define MAX_LOG_LINES      20           // Max number of lines in weblog
-  #else
-    #define MAX_LOG_LINES      13           // Max number of lines in weblog (less due to more memory usage)
-  #endif
+//  #else
+//    #define MAX_LOG_LINES      13           // Max number of lines in weblog (less due to more memory usage which prohibits full webpage load)
+//  #endif
 #endif
 #define MAX_BACKLOG            16           // Max number of commands in backlog (chk backlog_index and backlog_pointer code)
 #define MIN_BACKLOG_DELAY      2            // Minimal backlog delay in 0.1 seconds

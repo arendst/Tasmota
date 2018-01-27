@@ -1,4 +1,10 @@
-/* 5.11.1f
+/* 5.11.1g
+ * Add support for PMS5003 particle concentration sensor
+ * Reinstate console weblog to 20 lines after some webpage rewrite
+ * Add command SetOption20 to allow update of Dimmer/Color/Ct without turning power on (#1719)
+ * Update language files nl-NL (#1723) and es-AR (#1722)
+ *
+ * 5.11.1f
  * Revert chunked webserver pages as it fails on many browsers due to chunks being too small (#1706)
  * Reduce initial console weblog from 20 to 13 lines due to memory constraints
  *

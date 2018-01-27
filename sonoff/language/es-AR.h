@@ -54,7 +54,7 @@
 #define D_BLINK "Blink"
 #define D_BLINKOFF "BlinkOff"
 #define D_BOOT_COUNT "Conteo Reinicios"
-#define D_BRIGHTLIGHT "Brillo"
+#define D_BRIGHTLIGHT "Brillante"
 #define D_BUTTON "Botón"
 #define D_BY "por"                    // Written by me
 #define D_BYTES "Bytes"
@@ -79,7 +79,7 @@
 #define D_ERASE "Borrar"
 #define D_ERROR "Error"
 #define D_FAHRENHEIT "Fahrenheit"
-#define D_FAILED "Fallo"
+#define D_FAILED "Falló"
 #define D_FALLBACK "Fallback"
 #define D_FALLBACK_TOPIC "FallbackTopic"
 #define D_FALSE "Falso"
