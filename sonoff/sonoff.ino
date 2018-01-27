@@ -204,28 +204,24 @@ String backlog[MAX_BACKLOG];                // Command backlog
 
 void GetMqttClient(char* output, const char* input, byte size)
 {
-  char *token;
-  uint8_t digits = 0;
+  size_t prefixwidth = strcspn(input, "%");
+  const char* it = input + prefixwidth;
+  if (*it != '\0') it++;
+  int precision = atoi(it);
+  char tmp[11];
+  strncpy_P(tmp, PSTR("0123456789"), 11);
+  size_t precisionwidth = strspn(it, tmp);
+  char format = it[precisionwidth];
 
-  if (strstr(input, "%")) {
-    // Sanitize printf-style format string "input" by allowing at most one format specifier, and replacing it with type 'X'
-    strlcpy(output, input, size);
-    token = strtok(output, "%");
-    if (strstr(input, "%") == input) {
-      output[0] = '\0';
-    } else {
-      token = strtok(NULL, "");
-    }
-    if (token != NULL) {
-      digits = atoi(token);
-      if (digits) {
-        snprintf_P(output, size, PSTR("%s%c0%dX"), output, '%', digits);
-        snprintf_P(output, size, output, ESP.getChipId());
-      }
-    }
+  if (format == '\0' && prefixwidth) // No format, and non empty prefix
+  {
+    snprintf_P(output, size, PSTR("%.*s"), prefixwidth, input);
   }
-  if (!digits) {
-    strlcpy(output, input, size);
+  else if (format == 'd') {
+    snprintf_P(output, size, PSTR("%.*s%0*d"), prefixwidth, input, precision, ESP.getChipId() & 0x1FFF);
+  }
+  else { // Default: Prefix (possibly empty) suffixed with ChipId
+    snprintf_P(output, size, PSTR("%.*s%0*X"), prefixwidth, input, precision, ESP.getChipId());
   }
 }
 
