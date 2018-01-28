@@ -314,6 +314,13 @@ uint8_t upload_error = 0;
 uint8_t upload_file_type;
 uint8_t upload_progress_dot_count;
 
+// Helper function to avoid code duplication (saves 4k Flash)
+static void getarg(const char* arg, char* out, size_t max) {
+  String s = WebServer->arg(arg);
+  strncpy(out, s.c_str(), max);
+  out[max-1] = '\0'; // Ensure terminating NUL
+}
+
 void StartWebserver(int type, IPAddress ipweb)
 {
   if (!webserver_state) {
@@ -536,20 +543,25 @@ void HandleRoot()
 void HandleAjaxStatusRefresh()
 {
   char svalue[80];
+  char tmp[100];
 
-  if (strlen(WebServer->arg("o").c_str())) {
-    ExecuteCommandPower(atoi(WebServer->arg("o").c_str()), POWER_TOGGLE);
+  getarg("o", tmp, sizeof(tmp));
+  if (strlen(tmp)) {
+    ExecuteCommandPower(atoi(tmp), POWER_TOGGLE);
   }
-  if (strlen(WebServer->arg("d").c_str())) {
-    snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_DIMMER " %s"), WebServer->arg("d").c_str());
+  getarg("d", tmp, sizeof(tmp));
+  if (strlen(tmp)) {
+    snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_DIMMER " %s"), tmp);
     ExecuteCommand(svalue);
   }
-  if (strlen(WebServer->arg("t").c_str())) {
-    snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_COLORTEMPERATURE " %s"), WebServer->arg("t").c_str());
+  getarg("t", tmp, sizeof(tmp));
+  if (strlen(tmp)) {
+    snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_COLORTEMPERATURE " %s"), tmp);
     ExecuteCommand(svalue);
   }
-  if (strlen(WebServer->arg("k").c_str())) {
-    snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_RFKEY "%s"), WebServer->arg("k").c_str());
+  getarg("k", tmp, sizeof(tmp));
+  if (strlen(tmp)) {
+    snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_RFKEY "%s"), tmp);
     ExecuteCommand(svalue);
   }
 /*
@@ -1034,30 +1046,41 @@ void HandleSaveSettings()
 
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_SAVE_CONFIGURATION);
 
-  if (strlen(WebServer->arg("w").c_str())) {
-    what = atoi(WebServer->arg("w").c_str());
+  char tmp[100];
+  getarg("w", tmp, sizeof(tmp));
+  if (strlen(tmp)) {
+    what = atoi(tmp);
   }
   switch (what) {
   case 1:
-    strlcpy(Settings.hostname, (!strlen(WebServer->arg("h").c_str())) ? WIFI_HOSTNAME : WebServer->arg("h").c_str(), sizeof(Settings.hostname));
+    getarg("h", tmp, sizeof(tmp));
+    strlcpy(Settings.hostname, (!strlen(tmp)) ? WIFI_HOSTNAME : tmp, sizeof(Settings.hostname));
     if (strstr(Settings.hostname,"%")) {
       strlcpy(Settings.hostname, WIFI_HOSTNAME, sizeof(Settings.hostname));
     }
-    strlcpy(Settings.sta_ssid[0], (!strlen(WebServer->arg("s1").c_str())) ? STA_SSID1 : WebServer->arg("s1").c_str(), sizeof(Settings.sta_ssid[0]));
-    strlcpy(Settings.sta_ssid[1], (!strlen(WebServer->arg("s2").c_str())) ? STA_SSID2 : WebServer->arg("s2").c_str(), sizeof(Settings.sta_ssid[1]));
-//    strlcpy(Settings.sta_ssid[0], (!strlen(WebServer->arg("s1").c_str())) ? "" : WebServer->arg("s1").c_str(), sizeof(Settings.sta_ssid[0]));
-//    strlcpy(Settings.sta_ssid[1], (!strlen(WebServer->arg("s2").c_str())) ? "" : WebServer->arg("s2").c_str(), sizeof(Settings.sta_ssid[1]));
-    strlcpy(Settings.sta_pwd[0], (!strlen(WebServer->arg("p1").c_str())) ? "" : (strchr(WebServer->arg("p1").c_str(),'*')) ? Settings.sta_pwd[0] : WebServer->arg("p1").c_str(), sizeof(Settings.sta_pwd[0]));
-    strlcpy(Settings.sta_pwd[1], (!strlen(WebServer->arg("p2").c_str())) ? "" : (strchr(WebServer->arg("p2").c_str(),'*')) ? Settings.sta_pwd[1] : WebServer->arg("p2").c_str(), sizeof(Settings.sta_pwd[1]));
+    getarg("s1", tmp, sizeof(tmp));
+    strlcpy(Settings.sta_ssid[0], (!strlen(tmp)) ? STA_SSID1 : tmp, sizeof(Settings.sta_ssid[0]));
+    getarg("s2", tmp, sizeof(tmp));
+    strlcpy(Settings.sta_ssid[1], (!strlen(tmp)) ? STA_SSID2 : tmp, sizeof(Settings.sta_ssid[1]));
+//    getarg("s1", tmp, sizeof(tmp));
+//    strlcpy(Settings.sta_ssid[0], (!strlen(tmp)) ? "" : tmp, sizeof(Settings.sta_ssid[0]));
+//    getarg("s2", tmp, sizeof(tmp));
+//    strlcpy(Settings.sta_ssid[1], (!strlen(tmp)) ? "" : tmp, sizeof(Settings.sta_ssid[1]));
+    getarg("p1", tmp, sizeof(tmp));
+    strlcpy(Settings.sta_pwd[0], (!strlen(tmp)) ? "" : (strchr(tmp,'*')) ? Settings.sta_pwd[0] : tmp, sizeof(Settings.sta_pwd[0]));
+    getarg("p2", tmp, sizeof(tmp));
+    strlcpy(Settings.sta_pwd[1], (!strlen(tmp)) ? "" : (strchr(tmp,'*')) ? Settings.sta_pwd[1] : tmp, sizeof(Settings.sta_pwd[1]));
     snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_WIFI D_CMND_HOSTNAME " %s, " D_CMND_SSID "1 %s, " D_CMND_PASSWORD "1 %s, " D_CMND_SSID "2 %s, " D_CMND_PASSWORD "2 %s"),
       Settings.hostname, Settings.sta_ssid[0], Settings.sta_pwd[0], Settings.sta_ssid[1], Settings.sta_pwd[1]);
     AddLog(LOG_LEVEL_INFO);
     result += F("<br/>" D_TRYING_TO_CONNECT "<br/>");
     break;
   case 2:
-    strlcpy(stemp, (!strlen(WebServer->arg("mt").c_str())) ? MQTT_TOPIC : WebServer->arg("mt").c_str(), sizeof(stemp));
+    getarg("mt", tmp, sizeof(tmp));
+    strlcpy(stemp, (!strlen(tmp)) ? MQTT_TOPIC : tmp, sizeof(stemp));
     MakeValidMqtt(0, stemp);
-    strlcpy(stemp2, (!strlen(WebServer->arg("mf").c_str())) ? MQTT_FULLTOPIC : WebServer->arg("mf").c_str(), sizeof(stemp2));
+    getarg("mf", tmp, sizeof(tmp));
+    strlcpy(stemp2, (!strlen(tmp)) ? MQTT_FULLTOPIC : tmp, sizeof(stemp2));
     MakeValidMqtt(1,stemp2);
     if ((strcmp(stemp, Settings.mqtt_topic)) || (strcmp(stemp2, Settings.mqtt_fulltopic))) {
       snprintf_P(mqtt_data, sizeof(mqtt_data), (Settings.flag.mqtt_offline) ? S_OFFLINE : "");
@@ -1065,24 +1088,35 @@ void HandleSaveSettings()
     }
     strlcpy(Settings.mqtt_topic, stemp, sizeof(Settings.mqtt_topic));
     strlcpy(Settings.mqtt_fulltopic, stemp2, sizeof(Settings.mqtt_fulltopic));
-    strlcpy(Settings.mqtt_host, (!strlen(WebServer->arg("mh").c_str())) ? MQTT_HOST : (!strcmp(WebServer->arg("mh").c_str(),"0")) ? "" : WebServer->arg("mh").c_str(), sizeof(Settings.mqtt_host));
-    Settings.mqtt_port = (!strlen(WebServer->arg("ml").c_str())) ? MQTT_PORT : atoi(WebServer->arg("ml").c_str());
-    strlcpy(Settings.mqtt_client, (!strlen(WebServer->arg("mc").c_str())) ? MQTT_CLIENT_ID : WebServer->arg("mc").c_str(), sizeof(Settings.mqtt_client));
-    strlcpy(Settings.mqtt_user, (!strlen(WebServer->arg("mu").c_str())) ? MQTT_USER : (!strcmp(WebServer->arg("mu").c_str(),"0")) ? "" : WebServer->arg("mu").c_str(), sizeof(Settings.mqtt_user));
-    strlcpy(Settings.mqtt_pwd, (!strlen(WebServer->arg("mp").c_str())) ? MQTT_PASS : (!strcmp(WebServer->arg("mp").c_str(),"0")) ? "" : WebServer->arg("mp").c_str(), sizeof(Settings.mqtt_pwd));
+    getarg("mh", tmp, sizeof(tmp));
+    strlcpy(Settings.mqtt_host, (!strlen(tmp)) ? MQTT_HOST : (!strcmp(tmp,"0")) ? "" : tmp, sizeof(Settings.mqtt_host));
+    getarg("ml", tmp, sizeof(tmp));
+    Settings.mqtt_port = (!strlen(tmp)) ? MQTT_PORT : atoi(tmp);
+    getarg("mc", tmp, sizeof(tmp));
+    strlcpy(Settings.mqtt_client, (!strlen(tmp)) ? MQTT_CLIENT_ID : tmp, sizeof(Settings.mqtt_client));
+    getarg("mu", tmp, sizeof(tmp));
+    strlcpy(Settings.mqtt_user, (!strlen(tmp)) ? MQTT_USER : (!strcmp(tmp,"0")) ? "" : tmp, sizeof(Settings.mqtt_user));
+    getarg("mp", tmp, sizeof(tmp));
+    strlcpy(Settings.mqtt_pwd, (!strlen(tmp)) ? MQTT_PASS : (!strcmp(tmp,"0")) ? "" : tmp, sizeof(Settings.mqtt_pwd));
     snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_MQTT D_CMND_MQTTHOST " %s, " D_CMND_MQTTPORT " %d, " D_CMND_MQTTCLIENT " %s, " D_CMND_MQTTUSER " %s, " D_CMND_MQTTPASSWORD " %s, " D_CMND_TOPIC " %s, " D_CMND_FULLTOPIC " %s"),
       Settings.mqtt_host, Settings.mqtt_port, Settings.mqtt_client, Settings.mqtt_user, Settings.mqtt_pwd, Settings.mqtt_topic, Settings.mqtt_fulltopic);
     AddLog(LOG_LEVEL_INFO);
     break;
   case 3:
-    Settings.seriallog_level = (!strlen(WebServer->arg("ls").c_str())) ? SERIAL_LOG_LEVEL : atoi(WebServer->arg("ls").c_str());
-    Settings.weblog_level = (!strlen(WebServer->arg("lw").c_str())) ? WEB_LOG_LEVEL : atoi(WebServer->arg("lw").c_str());
-    Settings.syslog_level = (!strlen(WebServer->arg("ll").c_str())) ? SYS_LOG_LEVEL : atoi(WebServer->arg("ll").c_str());
+    getarg("ls", tmp, sizeof(tmp));
+    Settings.seriallog_level = (!strlen(tmp)) ? SERIAL_LOG_LEVEL : atoi(tmp);
+    getarg("lw", tmp, sizeof(tmp));
+    Settings.weblog_level = (!strlen(tmp)) ? WEB_LOG_LEVEL : atoi(tmp);
+    getarg("ll", tmp, sizeof(tmp));
+    Settings.syslog_level = (!strlen(tmp)) ? SYS_LOG_LEVEL : atoi(tmp);
     syslog_level = Settings.syslog_level;
     syslog_timer = 0;
-    strlcpy(Settings.syslog_host, (!strlen(WebServer->arg("lh").c_str())) ? SYS_LOG_HOST : WebServer->arg("lh").c_str(), sizeof(Settings.syslog_host));
-    Settings.syslog_port = (!strlen(WebServer->arg("lp").c_str())) ? SYS_LOG_PORT : atoi(WebServer->arg("lp").c_str());
-    Settings.tele_period = (!strlen(WebServer->arg("lt").c_str())) ? TELE_PERIOD : atoi(WebServer->arg("lt").c_str());
+    getarg("lh", tmp, sizeof(tmp));
+    strlcpy(Settings.syslog_host, (!strlen(tmp)) ? SYS_LOG_HOST : tmp, sizeof(Settings.syslog_host));
+    getarg("lp", tmp, sizeof(tmp));
+    Settings.syslog_port = (!strlen(tmp)) ? SYS_LOG_PORT : atoi(tmp);
+    getarg("lt", tmp, sizeof(tmp));
+    Settings.tele_period = (!strlen(tmp)) ? TELE_PERIOD : atoi(tmp);
     if ((Settings.tele_period > 0) && (Settings.tele_period < 10)) {
       Settings.tele_period = 10;   // Do not allow periods < 10 seconds
     }
@@ -1096,21 +1130,28 @@ snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_LOG D_CMND_SERIALLOG " %d, " D
     break;
 #endif  // USE_DOMOTICZ
   case 5:
-    strlcpy(Settings.web_password, (!strlen(WebServer->arg("p1").c_str())) ? "" : (strchr(WebServer->arg("p1").c_str(),'*')) ? Settings.web_password : WebServer->arg("p1").c_str(), sizeof(Settings.web_password));
+    getarg("p1", tmp, sizeof(tmp));
+    strlcpy(Settings.web_password, (!strlen(tmp)) ? "" : (strchr(tmp,'*')) ? Settings.web_password : tmp, sizeof(Settings.web_password));
     Settings.flag.mqtt_enabled = WebServer->hasArg("b1");
 #ifdef USE_EMULATION
-    Settings.flag2.emulation = (!strlen(WebServer->arg("b2").c_str())) ? 0 : atoi(WebServer->arg("b2").c_str());
+    getarg("b2", tmp, sizeof(tmp));
+    Settings.flag2.emulation = (!strlen(tmp)) ? 0 : atoi(tmp);
 #endif  // USE_EMULATION
-    strlcpy(Settings.friendlyname[0], (!strlen(WebServer->arg("a1").c_str())) ? FRIENDLY_NAME : WebServer->arg("a1").c_str(), sizeof(Settings.friendlyname[0]));
-    strlcpy(Settings.friendlyname[1], (!strlen(WebServer->arg("a2").c_str())) ? FRIENDLY_NAME"2" : WebServer->arg("a2").c_str(), sizeof(Settings.friendlyname[1]));
-    strlcpy(Settings.friendlyname[2], (!strlen(WebServer->arg("a3").c_str())) ? FRIENDLY_NAME"3" : WebServer->arg("a3").c_str(), sizeof(Settings.friendlyname[2]));
-    strlcpy(Settings.friendlyname[3], (!strlen(WebServer->arg("a4").c_str())) ? FRIENDLY_NAME"4" : WebServer->arg("a4").c_str(), sizeof(Settings.friendlyname[3]));
+    getarg("a1", tmp, sizeof(tmp));
+    strlcpy(Settings.friendlyname[0], (!strlen(tmp)) ? FRIENDLY_NAME : tmp, sizeof(Settings.friendlyname[0]));
+    getarg("a2", tmp, sizeof(tmp));
+    strlcpy(Settings.friendlyname[1], (!strlen(tmp)) ? FRIENDLY_NAME"2" : tmp, sizeof(Settings.friendlyname[1]));
+    getarg("a3", tmp, sizeof(tmp));
+    strlcpy(Settings.friendlyname[2], (!strlen(tmp)) ? FRIENDLY_NAME"3" : tmp, sizeof(Settings.friendlyname[2]));
+    getarg("a4", tmp, sizeof(tmp));
+    strlcpy(Settings.friendlyname[3], (!strlen(tmp)) ? FRIENDLY_NAME"4" : tmp, sizeof(Settings.friendlyname[3]));
     snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_OTHER D_MQTT_ENABLE " %s, " D_CMND_EMULATION " %d, " D_CMND_FRIENDLYNAME " %s, %s, %s, %s"),
       GetStateText(Settings.flag.mqtt_enabled), Settings.flag2.emulation, Settings.friendlyname[0], Settings.friendlyname[1], Settings.friendlyname[2], Settings.friendlyname[3]);
     AddLog(LOG_LEVEL_INFO);
     break;
   case 6:
-    byte new_module = (!strlen(WebServer->arg("g99").c_str())) ? MODULE : atoi(WebServer->arg("g99").c_str());
+    getarg("g99", tmp, sizeof(tmp));
+    byte new_module = (!strlen(tmp)) ? MODULE : atoi(tmp);
     Settings.last_module = Settings.module;
     Settings.module = new_module;
     mytmplt cmodule;
@@ -1122,7 +1163,8 @@ snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_LOG D_CMND_SERIALLOG " %d, " D
       } else {
         if (GPIO_USER == cmodule.gp.io[i]) {
           snprintf_P(stemp, sizeof(stemp), PSTR("g%d"), i);
-          Settings.my_gp.io[i] = (!strlen(WebServer->arg(stemp).c_str())) ? 0 : atoi(WebServer->arg(stemp).c_str());
+          getarg(stemp, tmp, sizeof(tmp));
+          Settings.my_gp.io[i] = (!strlen(tmp)) ? 0 : atoi(tmp);
           gpios += F(", " D_GPIO ); gpios += String(i); gpios += F(" "); gpios += String(Settings.my_gp.io[i]);
         }
       }
@@ -1133,7 +1175,8 @@ snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_LOG D_CMND_SERIALLOG " %d, " D
     break;
   }
 
-  restart = (!strlen(WebServer->arg("r").c_str())) ? 1 : atoi(WebServer->arg("r").c_str());
+  getarg("r", tmp, sizeof(tmp));
+  restart = (!strlen(tmp)) ? 1 : atoi(tmp);
   if (restart) {
     String page = FPSTR(HTTP_HEAD);
     page.replace(F("{v}"), FPSTR(S_SAVE_CONFIGURATION));
@@ -1228,8 +1271,10 @@ void HandleUpgradeFirmwareStart()
   AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_UPGRADE_STARTED));
   WifiConfigCounter();
 
-  if (strlen(WebServer->arg("o").c_str())) {
-    snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_OTAURL " %s"), WebServer->arg("o").c_str());
+  char tmp[100];
+  getarg("o", tmp, sizeof(tmp));
+  if (strlen(tmp)) {
+    snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_OTAURL " %s"), tmp);
     ExecuteCommand(svalue);
   }
 
@@ -1420,7 +1465,9 @@ void HandleHttpCommand()
 
   uint8_t valid = 1;
   if (Settings.web_password[0] != 0) {
-    if (!(!strcmp(WebServer->arg("user").c_str(),WEB_USERNAME) && !strcmp(WebServer->arg("password").c_str(),Settings.web_password))) {
+    char tmp1[100]; getarg("user", tmp1, sizeof(tmp1));
+    char tmp2[100]; getarg("password", tmp2, sizeof(tmp2));
+    if (!(!strcmp(tmp1,WEB_USERNAME) && !strcmp(tmp2,Settings.web_password))) {
       valid = 0;
     }
   }
@@ -1428,9 +1475,10 @@ void HandleHttpCommand()
   String message = F("{\"" D_RSLT_WARNING "\":\"");
   if (valid) {
     byte curridx = web_log_index;
-    if (strlen(WebServer->arg("cmnd").c_str())) {
-//      snprintf_P(svalue, sizeof(svalue), WebServer->arg("cmnd").c_str());  // Processes FullTopic %p
-      strlcpy(svalue, WebServer->arg("cmnd").c_str(), sizeof(svalue));       // Fixed 5.8.0b
+    char tmp[100]; getarg("cmnd", tmp, sizeof(tmp));
+    if (strlen(tmp)) {
+//      snprintf_P(svalue, sizeof(svalue), tmp);  // Processes FullTopic %p
+      strlcpy(svalue, tmp, sizeof(svalue));       // Fixed 5.8.0b
 //      byte syslog_now = syslog_level;
 //      syslog_level = 0;  // Disable UDP syslog to not trigger hardware WDT - Seems to work fine since 5.7.1d (global logging)
       ExecuteCommand(svalue);
@@ -1493,9 +1541,11 @@ void HandleAjaxConsoleRefresh()
   byte cflg = 1;
   byte counter = 99;
 
-  if (strlen(WebServer->arg("c1").c_str())) {
-//    snprintf_P(svalue, sizeof(svalue), WebServer->arg("c1").c_str());  // Processes FullTopic %p
-    strlcpy(svalue, WebServer->arg("c1").c_str(), sizeof(svalue));       // Fixed 5.8.0b
+  char tmp[100];
+  getarg("c1", tmp, sizeof(tmp));
+  if (strlen(tmp)) {
+//    snprintf_P(svalue, sizeof(svalue), tmp);  // Processes FullTopic %p
+    strlcpy(svalue, tmp, sizeof(svalue));       // Fixed 5.8.0b
     snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_COMMAND "%s"), svalue);
     AddLog(LOG_LEVEL_INFO);
 //    byte syslog_now = syslog_level;
@@ -1504,8 +1554,9 @@ void HandleAjaxConsoleRefresh()
 //    syslog_level = syslog_now;
   }
 
-  if (strlen(WebServer->arg("c2").c_str())) {
-    counter = atoi(WebServer->arg("c2").c_str());
+  getarg("c2", tmp, sizeof(tmp));
+  if (strlen(tmp)) {
+    counter = atoi(tmp);
   }
 
   snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("<r><i>%d</i><j>%d</j><l>"), web_log_index, reset_web_log_flag);
