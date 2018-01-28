@@ -2598,7 +2598,7 @@ void GpioInit()
     if (!light_type) {
       devices_present = 0;
     }
-    for (byte i = 0; i < MAX_RELAYS; i++) {
+    for (byte i = 0; i < MAX_GPIO_PIN; i++) {
       if (pin[GPIO_REL1 +i] < 99) {
         pinMode(pin[GPIO_REL1 +i], OUTPUT);
         devices_present++;
