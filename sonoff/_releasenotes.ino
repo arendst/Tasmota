@@ -1,5 +1,5 @@
 /* 5.11.1g
- * Add support for PMS5003 particle concentration sensor
+ * Add support for PMS5003 and PMS7003 particle concentration sensor
  * Reinstate console weblog to 20 lines after some webpage rewrite
  * Add command SetOption20 to allow update of Dimmer/Color/Ct without turning power on (#1719)
  * Update language files nl-NL (#1723) and es-AR (#1722)

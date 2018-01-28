@@ -376,9 +376,9 @@
 #define D_SHT1X_FOUND "SHT1X encontrado"
 
 // xsns_18_pms5003.ino
-#define D_STANDARD_CONCENTRATION "Concentración Standard"
-#define D_ENVIRONMENTAL_CONCENTRATION "Concentración en Medio Ambiente"
-#define D_PARTICALS_BEYOND "Partículas sobre"
+#define D_STANDARD_CONCENTRATION "CF-1 PM"     // Standard Particle CF-1 Particle Matter
+#define D_ENVIRONMENTAL_CONCENTRATION "PM"     // Environmetal Particle Matter
+#define D_PARTICALS_BEYOND "Partículas"
 
 // sonoff_template.h
 // Max string length is 8 characters including suffixes
