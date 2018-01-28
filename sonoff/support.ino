@@ -1195,7 +1195,6 @@ int GetCommandCode(char* destination, size_t destination_size, const char* needl
   int result = -1;
   const char* read = haystack;
   char* write = destination;
-  size_t maxcopy = (strlen(needle) > destination_size) ? destination_size : strlen(needle);
 
   while (true) {
     result++;
@@ -1318,22 +1317,65 @@ void Syslog()
   }
 }
 
+#ifdef USE_WEBSERVER
+void GetLog(byte idx, char** entry_pp, size_t* len_p)
+{
+  char* entry_p = NULL;
+  size_t len = 0;
+  char* it = web_log;
+  byte cur_idx;
+  if (!idx) {*len_p = 0; *entry_pp = NULL; return;}
+  do {
+    cur_idx = *it; it++;
+    size_t tmp = strcspn(it, "\1");
+    tmp++; // Skip terminating '\1'
+    if (cur_idx == idx)
+    {
+      // Found the requested entry
+      len = tmp;
+      entry_p = it;
+      break;
+    }
+    it += tmp;
+  } while (it < web_log+WEB_LOG_SIZE && *it != '\0');
+  *entry_pp = entry_p;
+  *len_p = len;
+}
+#endif  // USE_WEBSERVER
+
 void AddLog(byte loglevel)
 {
-  char mxtime[9];  // 13:45:21
+  char mxtime[10];  // '13:45:21 '
 
-  snprintf_P(mxtime, sizeof(mxtime), PSTR("%02d" D_HOUR_MINUTE_SEPARATOR "%02d" D_MINUTE_SECOND_SEPARATOR "%02d"), RtcTime.hour, RtcTime.minute, RtcTime.second);
+  snprintf_P(mxtime, sizeof(mxtime), PSTR("%02d" D_HOUR_MINUTE_SEPARATOR "%02d" D_MINUTE_SECOND_SEPARATOR "%02d "), RtcTime.hour, RtcTime.minute, RtcTime.second);
 
   if (loglevel <= seriallog_level) {
-    Serial.printf("%s %s\n", mxtime, log_data);
+    Serial.printf("%s%s\n", mxtime, log_data);
   }
 #ifdef USE_WEBSERVER
+  // Delimited, zero-terminated buffer of log lines.
+  // Each entry has this format: [index][log data]['\01']
   if (Settings.webserver && (loglevel <= Settings.weblog_level)) {
-    web_log[web_log_index] = String(mxtime) + " " + String(log_data);
-    web_log_index++;
-    if (web_log_index > MAX_LOG_LINES -1) {
-      web_log_index = 0;
+    if (!web_log_index) web_log_index++;  // Index 0 is not allowed
+    while (web_log_index == web_log[0] || // If log already holds the next index, remove it
+           strlen(web_log) + strlen(log_data) + 13 > WEB_LOG_SIZE) // 13 = web_log_index + mxtime + '\1' + '\0'
+    {
+      char* it = web_log;
+      it++;                               // Skip index
+      it += strcspn(it, "\1");            // Skip log line
+      it++;                               // Skip delimiting "\1"
+      memmove(web_log, it, WEB_LOG_SIZE); // Move buffer to remove oldest log line
     }
+    size_t space = WEB_LOG_SIZE;
+    char* it = web_log;
+    char* end = web_log+WEB_LOG_SIZE;
+    size_t tmp = strlen(web_log); it += tmp; space -= tmp;
+    *it++ = web_log_index++;
+    space--;
+    tmp = strlcpy(it, mxtime, space); it += tmp; space -= tmp;
+    tmp = strlcpy(it, log_data, space); it += tmp; space -= tmp;
+    *it++ = '\1';
+    *it++ = '\0';
   }
 #endif  // USE_WEBSERVER
   if ((WL_CONNECTED == WiFi.status()) && (loglevel <= syslog_level)) {

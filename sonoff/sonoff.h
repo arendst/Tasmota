@@ -87,15 +87,17 @@ typedef unsigned long power_t;              // Power (Relay) type
 #define TOPSZ                  100          // Max number of characters in topic string
 #define LOGSZ                  400          // Max number of characters in log
 #define MIN_MESSZ              893          // Min number of characters in MQTT message
+
 #ifdef USE_MQTT_TLS
-  #define MAX_LOG_LINES        10           // Max number of lines in weblog
+  #define WEB_LOG_SIZE         2000         // Max number of lines in weblog
 #else
   #ifdef ARDUINO_ESP8266_RELEASE_2_3_0
-    #define MAX_LOG_LINES      20           // Max number of lines in weblog
+    #define WEB_LOG_SIZE       4000         // Max number of lines in weblog
   #else
-    #define MAX_LOG_LINES      13           // Max number of lines in weblog (less due to more memory usage)
+    #define WEB_LOG_SIZE       3000         // Max number of lines in weblog (less due to more memory usage)
   #endif
 #endif
+
 #define MAX_BACKLOG            16           // Max number of commands in backlog (chk backlog_index and backlog_pointer code)
 #define MIN_BACKLOG_DELAY      2            // Minimal backlog delay in 0.1 seconds
 

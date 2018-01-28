@@ -1392,19 +1392,22 @@ void HandleHttpCommand()
       byte counter = curridx;
       message = F("{");
       do {
-        if (web_log[counter].length()) {
+        char* tmp;
+        size_t len;
+        GetLog(counter, &tmp, &len);
+        if (len) {
           // [14:49:36 MQTT: stat/wemos5/RESULT = {"POWER":"OFF"}] > [{"POWER":"OFF"}]
-          if (web_log[counter].indexOf("{") > 0) {  // Is it a JSON message (and not only [15:26:08 MQT: stat/wemos5/POWER = O])
+          char* JSON = (char*)memchr(tmp, '{', len);
+          if (JSON) { // Is it a JSON message (and not only [15:26:08 MQT: stat/wemos5/POWER = O])
             if (message.length() > 1) {
               message += F(",");
             }
-            message += web_log[counter].substring(web_log[counter].indexOf("{")+1,web_log[counter].length()-1);
+            size_t JSONlen = len-(JSON-tmp);
+            strlcpy(log_data, JSON+1, JSONlen-2);
+            message += log_data;
           }
         }
         counter++;
-        if (counter > MAX_LOG_LINES -1) {
-          counter = 0;
-        }
       } while (counter != web_log_index);
       message += F("}");
     } else {
@@ -1471,22 +1474,24 @@ void HandleAjaxConsoleRefresh()
       cflg = 0;
     }
     do {
-      if (web_log[counter].length()) {
+      char* tmp;
+      size_t len;
+      GetLog(counter, &tmp, &len);
+      if (len) {
         if (cflg) {
           message += F("\n");
         } else {
           cflg = 1;
         }
-        message += web_log[counter];
+        strlcpy(log_data, tmp, len);
+        message += log_data;
       }
       counter++;
-      if (counter > MAX_LOG_LINES -1) {
-        counter = 0;
-      }
     } while (counter != web_log_index);
     message.replace(F("<"), F("%3C"));  // XML encoding to fix blank console log in concert with javascript decodeURIComponent
     message.replace(F(">"), F("%3E"));
     message.replace(F("&"), F("%26"));
+    message.replace(F("%"), F("%25"));
   }
   message.replace(F("}9"), mqtt_data);  // Save to load here
   message += F("</l></r>");

@@ -189,11 +189,11 @@ boolean mdns_begun = false;
 
 char my_version[33];                        // Composed version string
 char my_hostname[33];                       // Composed Wifi hostname
-char mqtt_client[33];                        // Composed MQTT Clientname
+char mqtt_client[33];                       // Composed MQTT Clientname
 char serial_in_buffer[INPUT_BUFFER_SIZE + 2]; // Receive buffer
 char mqtt_data[MESSZ];                      // MQTT publish buffer and web page ajax buffer
 char log_data[LOGSZ];                       // Logging
-String web_log[MAX_LOG_LINES];              // Web log buffer
+char web_log[WEB_LOG_SIZE] = {'\0'};        // Web log buffer
 String backlog[MAX_BACKLOG];                // Command backlog
 
 /********************************************************************************************/
