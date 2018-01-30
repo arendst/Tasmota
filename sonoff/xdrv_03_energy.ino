@@ -866,7 +866,7 @@ void EnergyInit()
 }
 
 #ifdef USE_WEBSERVER
-const char HTTP_ENERGY_SNS[] PROGMEM =
+const char HTTP_ENERGY_SNS[] PROGMEM = "%s"
   "{s}" D_VOLTAGE "{m}%s " D_UNIT_VOLT "{e}"
   "{s}" D_CURRENT "{m}%s " D_UNIT_AMPERE "{e}"
   "{s}" D_POWERUSAGE "{m}%s " D_UNIT_WATT "{e}"
@@ -921,7 +921,7 @@ void EnergyShow(boolean json)
 #endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
   } else {
-    snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_ENERGY_SNS, energy_voltage_chr, energy_current_chr, energy_power_chr, energy_power_factor_chr, energy_daily_chr, energy_yesterday_chr, energy_total_chr);
+    snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_ENERGY_SNS, mqtt_data, energy_voltage_chr, energy_current_chr, energy_power_chr, energy_power_factor_chr, energy_daily_chr, energy_yesterday_chr, energy_total_chr);
 #endif  // USE_WEBSERVER
   }
 }
