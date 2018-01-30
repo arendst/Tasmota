@@ -453,8 +453,7 @@ const char HUE_DESCRIPTION_XML[] PROGMEM =
   "</root>\r\n"
   "\r\n";
 const char HUE_LIGHTS_STATUS_JSON[] PROGMEM =
-  "{\"state\":{"
-  "\"on\":{state},"
+  "{\"on\":{state},"
   "\"bri\":{b},"
   "\"hue\":{h},"
   "\"sat\":{s},"
@@ -474,7 +473,7 @@ const char HUE_GROUP0_STATUS_JSON[] PROGMEM =
   "{\"name\":\"Group 0\","
    "\"lights\":[{l1],"
    "\"type\":\"LightGroup\","
-   "\"action\":{";
+   "\"action\":";
 //     "\"scene\":\"none\",";
 const char HueConfigResponse_JSON[] PROGMEM =
   "{\"name\":\"Philips hue\","
@@ -588,7 +587,7 @@ void HueGlobalConfig(String *path)
   response = F("{\"lights\":{\"");
   for (uint8_t i = 1; i <= maxhue; i++) {
     response += i;
-    response += F("\":");
+    response += F("\":{\"state\":");
     HueLightStatus1(i, &response);
     HueLightStatus2(i, &response);
     if (i < maxhue) {
@@ -633,7 +632,7 @@ void HueLights(String *path)
     response = "{\"";
     for (uint8_t i = 1; i <= maxhue; i++) {
       response += i;
-      response += F("\":");
+      response += F("\":{\"state\":");
       HueLightStatus1(i, &response);
       HueLightStatus2(i, &response);
       if (i < maxhue) {
@@ -752,6 +751,7 @@ void HueLights(String *path)
     if ((device < 1) || (device > maxhue)) {
       device = 1;
     }
+    response += F("{\"state\":");
     HueLightStatus1(device, &response);
     HueLightStatus2(device, &response);
     WebServer->send(200, FPSTR(HDR_CTYPE_JSON), response);
