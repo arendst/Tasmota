@@ -80,16 +80,20 @@ typedef unsigned long power_t;              // Power (Relay) type
 #define STATES                 20           // State loops per second
 #define SYSLOG_TIMER           600          // Seconds to restore syslog_level
 #define SERIALLOG_TIMER        600          // Seconds to disable SerialLog
-#define OTA_ATTEMPTS           10           // Number of times to try fetching the new firmware
+#define OTA_ATTEMPTS           5            // Number of times to try fetching the new firmware
 
 #define INPUT_BUFFER_SIZE      250          // Max number of characters in (serial) command buffer
 #define CMDSZ                  24           // Max number of characters in command
 #define TOPSZ                  100          // Max number of characters in topic string
+#define LOGSZ                  400          // Max number of characters in log
+#define MIN_MESSZ              893          // Min number of characters in MQTT message
+
 #ifdef USE_MQTT_TLS
-  #define MAX_LOG_LINES        10           // Max number of lines in weblog
+  #define WEB_LOG_SIZE         2000         // Max number of characters in weblog
 #else
-  #define MAX_LOG_LINES        20           // Max number of lines in weblog
+  #define WEB_LOG_SIZE         4000         // Max number of characters in weblog
 #endif
+
 #define MAX_BACKLOG            16           // Max number of commands in backlog (chk backlog_index and backlog_pointer code)
 #define MIN_BACKLOG_DELAY      2            // Minimal backlog delay in 0.1 seconds
 
@@ -124,6 +128,12 @@ enum LedStateOptions {LED_OFF, LED_POWER, LED_MQTTSUB, LED_POWER_MQTTSUB, LED_MQ
 
 enum EmulationOptions {EMUL_NONE, EMUL_WEMO, EMUL_HUE, EMUL_MAX};
 
+enum TopicOptions { CMND, STAT, TELE, nu1, RESULT_OR_CMND, RESULT_OR_STAT, RESULT_OR_TELE };
+
+enum ExecuteCommandPowerOptions { POWER_OFF, POWER_ON, POWER_TOGGLE, POWER_BLINK, POWER_BLINK_STOP, power_nu1, POWER_OFF_NO_STATE, POWER_ON_NO_STATE, power_nu2, POWER_SHOW_STATE };
+
+enum PowerOnStateOptions { POWER_ALL_OFF, POWER_ALL_ON, POWER_ALL_SAVED_TOGGLE, POWER_ALL_SAVED, POWER_ALL_ALWAYS_ON, POWER_ALL_OFF_PULSETIME_ON };
+
 enum ButtonStates {PRESSED, NOT_PRESSED};
 
 enum SettingsParmaIndex {P_HOLD_TIME, P_MAX_POWER_RETRY, P_MAX_PARAM8};
@@ -137,8 +147,14 @@ enum LichtSubtypes {LST_NONE, LST_SINGLE, LST_COLDWARM, LST_RGB, LST_RGBW, LST_R
 enum LichtSchemes {LS_POWER, LS_WAKEUP, LS_CYCLEUP, LS_CYCLEDN, LS_RANDOM, LS_MAX};
 
 enum XsnsFunctions {FUNC_INIT, FUNC_EVERY_50_MSECOND, FUNC_EVERY_SECOND, FUNC_PREP_BEFORE_TELEPERIOD, FUNC_JSON_APPEND, FUNC_WEB_APPEND, FUNC_SAVE_BEFORE_RESTART,
-                    FUNC_COMMAND, FUNC_MQTT_SUBSCRIBE, FUNC_MQTT_DATA, FUNC_SET_POWER, FUNC_SHOW_SENSOR};
+                    FUNC_COMMAND, FUNC_MQTT_SUBSCRIBE, FUNC_MQTT_INIT, FUNC_MQTT_DATA, FUNC_SET_POWER, FUNC_SHOW_SENSOR};
 
 const uint8_t kDefaultRfCode[9] PROGMEM = { 0x21, 0x16, 0x01, 0x0E, 0x03, 0x48, 0x2E, 0x1A, 0x00 };
+
+/*********************************************************************************************\
+ * Extern global variables
+\*********************************************************************************************/
+
+extern uint8_t light_device;  // Light device number
 
 #endif  // _SONOFF_H_

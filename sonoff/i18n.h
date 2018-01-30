@@ -75,6 +75,7 @@
 #define D_JSON_LOW "Low"
 #define D_JSON_MAC "Mac"
 #define D_JSON_MASK "Mask"
+#define D_JSON_MINIMAL "minimal"
 #define D_JSON_NO "No"
 #define D_JSON_NOISE "Noise"
 #define D_JSON_NONE "None"
@@ -117,6 +118,7 @@
 #define D_JSON_WIFI "Wifi"
 #define D_JSON_WRONG "Wrong"
 #define D_JSON_YESTERDAY "Yesterday"
+#define D_JSON_ZERO_POINT_CALIBRATION "Zero Point Calibration"
 
 #define D_RSLT_ENERGY "ENERGY"
 #define D_RSLT_INFO "INFO"
@@ -165,11 +167,13 @@
   #define D_STATUS9_MARGIN "PTH"
   #define D_STATUS10_SENSOR "SNS"
   #define D_STATUS11_STATUS "STS"
+#define D_CMND_STATE "State"
 #define D_CMND_POWER "Power"
 #define D_CMND_POWERONSTATE "PowerOnState"
 #define D_CMND_PULSETIME "PulseTime"
 #define D_CMND_BLINKTIME "BlinkTime"
 #define D_CMND_BLINKCOUNT "BlinkCount"
+#define D_CMND_SENSOR "Sensor"
 #define D_CMND_SAVEDATA "SaveData"
 #define D_CMND_SETOPTION "SetOption"
 #define D_CMND_TEMPERATURE_RESOLUTION "TempRes"
@@ -235,7 +239,6 @@
 #define D_CMND_LEDSTATE "LedState"
 #define D_CMND_CFGDUMP "CfgDump"
 #define D_CMND_I2CSCAN "I2CScan"
-#define D_CMND_INA219MODE "Ina219Mode"
 #define D_CMND_EXCEPTION "Exception"
 
 // Commands xdrv_01_light.ino
@@ -254,9 +257,20 @@
 
 // Commands xdrv_02_irremote.ino
 #define D_CMND_IRSEND "IRSend"
+  #define D_JSON_INVALID_JSON "Invalid JSON"
+  #define D_JSON_PROTOCOL_NOT_SUPPORTED "Protocol not supported"
+  #define D_JSON_IR_PROTOCOL "PROTOCOL"
+  #define D_JSON_IR_BITS "BITS"
+  #define D_JSON_IR_DATA "DATA"
 #define D_CMND_IRHVAC "IRHVAC"
+  #define D_JSON_IRHVAC_VENDOR "VENDOR"
+  #define D_JSON_IRHVAC_POWER "POWER"
+  #define D_JSON_IRHVAC_MODE "MODE"
+  #define D_JSON_IRHVAC_FANSPEED "FANSPEED"
+  #define D_JSON_IRHVAC_TEMP "TEMP"
+#define D_JSON_IRRECEIVED "IrReceived"
 
-// Commands xsns_03_energy.ino
+// Commands xdrv_03_energy.ino
 #define D_CMND_POWERLOW "PowerLow"
 #define D_CMND_POWERHIGH "PowerHigh"
 #define D_CMND_VOLTAGELOW "VoltageLow"
@@ -359,7 +373,7 @@ const char kUnitNames[] PROGMEM =
   D_UNIT_MILLIAMPERE "|"
   D_UNIT_MILLISECOND "|"
   D_UNIT_MINUTE "|"
-  D_UNIT_PPM "|"
+  D_UNIT_PARTS_PER_MILLION "|"
   D_UNIT_PRESSURE "|"
   D_UNIT_SECOND "|"
   D_UNIT_SECTORS "|"
@@ -382,6 +396,9 @@ const char S_JSON_COMMAND_XVALUE[] PROGMEM =                  "{\"%s\":%s}";  //
 const char S_JSON_COMMAND_INDEX_NVALUE[] PROGMEM =            "{\"%s%d\":%d}";
 const char S_JSON_COMMAND_INDEX_SVALUE[] PROGMEM =            "{\"%s%d\":\"%s\"}";
 const char S_JSON_COMMAND_INDEX_SVALUE_SVALUE[] PROGMEM =     "{\"%s%d\":\"%s%s\"}";
+
+const char S_JSON_SENSOR_INDEX_NVALUE[] PROGMEM =            "{\"" D_CMND_SENSOR "%d\":%d}";
+const char S_JSON_SENSOR_INDEX_SVALUE[] PROGMEM =            "{\"" D_CMND_SENSOR "%d\":\"%s\"}";
 
 const char JSON_SNS_TEMPHUM[] PROGMEM = "%s,\"%s\":{\"" D_JSON_TEMPERATURE "\":%s,\"" D_JSON_HUMIDITY "\":%s}";
 
@@ -422,13 +439,13 @@ static const char kMonthNames[] = D_MONTH3LIST;
 // webserver.ino
 #ifdef USE_WEBSERVER
 const char HTTP_SNS_TEMP[] PROGMEM = "%s{s}%s " D_TEMPERATURE "{m}%s&deg;%c{e}";                             // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
-const char HTTP_SNS_HUM[] PROGMEM = "%s{s}%s " D_HUMIDITY "{m}%s%{e}";                                       // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
+const char HTTP_SNS_HUM[] PROGMEM = "%s{s}%s " D_HUMIDITY "{m}%s%%{e}";                                      // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
 const char HTTP_SNS_PRESSURE[] PROGMEM = "%s{s}%s " D_PRESSURE "{m}%s " D_UNIT_PRESSURE "{e}";               // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
 const char HTTP_SNS_SEAPRESSURE[] PROGMEM = "%s{s}%s " D_PRESSUREATSEALEVEL "{m}%s " D_UNIT_PRESSURE "{e}";  // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
 const char HTTP_SNS_ANALOG[] PROGMEM = "%s{s}%s " D_ANALOG_INPUT "%d{m}%d{e}";                               // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
 
 #if defined(USE_MHZ19) || defined(USE_SENSEAIR)
-const char HTTP_SNS_CO2[] PROGMEM = "%s{s}%s " D_CO2 "{m}%d " D_UNIT_PPM "{e}";                              // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
+const char HTTP_SNS_CO2[] PROGMEM = "%s{s}%s " D_CO2 "{m}%d " D_UNIT_PARTS_PER_MILLION "{e}";                              // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
 #endif  // USE_WEBSERVER
 
 const char S_MAIN_MENU[] PROGMEM = D_MAIN_MENU;

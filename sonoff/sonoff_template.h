@@ -86,7 +86,8 @@ enum UserSelectablePins {
   GPIO_SAIR_RX,        // SenseAir Serial interface
   GPIO_SPI_CS,         // SPI Chip Select
   GPIO_SPI_DC,         // SPI Data Direction
-  GPIO_BACKLIGHT,
+  GPIO_BACKLIGHT,      // Display backlight control
+  GPIO_PMS5003,        // Plantower PMS5003 Serial interface
   GPIO_SENSOR_END };
 
 // Text in webpage Module Parameters and commands GPIOS and GPIO
@@ -155,7 +156,8 @@ const char kSensors[GPIO_SENSOR_END][9] PROGMEM = {
   D_SENSOR_SAIR_RX,
   D_SENSOR_SPI_CS,
   D_SENSOR_SPI_DC,
-  D_SENSOR_BACKLIGHT
+  D_SENSOR_BACKLIGHT,
+  D_SENSOR_PMS5003
 };
 
 // Programmer selectable GPIO functionality offset by user selectable GPIOs
@@ -501,7 +503,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_REL1,        // GPIO15 Relay (0 = Off, 1 = On)
      0, 0
   },
-  { "WeMos D1 mini",   // WeMos and NodeMCU hardware (ESP8266)
+  { "Generic",         // Any ESP8266/ESP8285 device like WeMos and NodeMCU hardware (ESP8266)
      GPIO_USER,        // GPIO00 D3 Wemos Button Shield
      GPIO_USER,        // GPIO01 TX Serial RXD
      GPIO_USER,        // GPIO02 D4 Wemos DHT Shield
@@ -860,6 +862,59 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_LED1,        // GPIO15 Led (1 = On, 0 = Off)
      0, 0
   }
+
+  { "Zengge WF017",    // Zenggee ZJ-WF017-A (ESP12S)) - https://www.ebay.com/p/Smartphone-Android-IOS-WiFi-Music-Controller-for-RGB-5050-3528-LED-Strip-Light/534446632?_trksid=p2047675.l2644
+     GPIO_KEY1,        // GPIO00 Optional Button
+     0,
+     GPIO_USER,        // GPIO02 Empty pad
+     0,
+     GPIO_USER,        // GPIO04 W2 - PWM5
+     0,
+     0, 0, 0, 0, 0, 0, // Flash connection
+     GPIO_PWM2,        // GPIO12 RGB LED Green
+     GPIO_PWM1,        // GPIO13 RGB LED Red
+     GPIO_PWM3,        // GPIO14 RGB LED Blue
+     0, 0, 0
+  }
+
+  { "SMPW701E",        // SM-PW701E WLAN Socket (#1190)
+     0, 0, 0, 0,
+     GPIO_LED1_INV,    // GPIO04 Blue Led (0 = On, 1 = Off)
+     0,                // GPIO05 IR or RF receiver (optional)
+     0, 0, 0, 0, 0, 0, // Flash connection
+     GPIO_REL1,        // GPIO12 Relay and Red Led (0 = Off, 1 = On)
+     GPIO_KEY1,        // GPIO13 Button
+     0, 0, 0, 0
+  }
+
+  { "SWA1",            // Smart Plugs (ESP8266)
+     0,
+     GPIO_USER,        // GPIO01
+     0,
+     GPIO_USER,        // GPIO03
+     GPIO_LED1_INV,    // GPIO04 Blue LED
+     GPIO_REL1,        // GPIO05 Red LED and relay
+     0, 0, 0, 0, 0, 0, // Flash connection
+     0,
+     GPIO_KEY1,        // GPIO13 Button (normally GPIO00)
+     GPIO_USER,        // GPIO14
+     0, 0, 0
+  }
+
+  { "MagicHome v2.3",  // Magic Home (aka Flux-light) (ESP8266) (#1353)
+     0, 0,
+     GPIO_LED1_INV,    // GPIO02 Blue onboard LED
+     0,
+     GPIO_USER,        // GPIO04 IR receiver (optional)
+     GPIO_PWM2,        // GPIO05 RGB LED Green
+     0, 0, 0, 0, 0, 0, // Flash connection
+     GPIO_PWM1,        // GPIO12 RGB LED Red
+     GPIO_PWM3,        // GPIO13 RGB LED Blue
+     0,
+     GPIO_PWM4,        // GPIO15 RGBW LED White
+     0, 0
+  },
+
 */
 
 #endif  // _SONOFF_TEMPLATE_H_

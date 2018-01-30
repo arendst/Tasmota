@@ -29,11 +29,14 @@
 \*********************************************************************************************/
 
 // -- Localization --------------------------------
-//#define MY_LANGUAGE            en-GB           // English in Great Britain. Enabled by Default
-//#define MY_LANGUAGE            nl-NL           // Dutch in the Netherlands
 //#define MY_LANGUAGE            de-DE           // German in Germany
-//#define MY_LANGUAGE            pl-PL           // Polish in Poland
+//#define MY_LANGUAGE            en-GB           // English in Great Britain. Enabled by Default
+//#define MY_LANGUAGE            es-AR           // Spanish in Argentina
+//#define MY_LANGUAGE            fr-FR           // French in France
 //#define MY_LANGUAGE            it-IT           // Italian in Italy
+//#define MY_LANGUAGE            nl-NL           // Dutch in the Netherlands
+//#define MY_LANGUAGE            pl-PL           // Polish in Poland
+//#define MY_LANGUAGE            zh-CN           // Chinese (Simplified) in China
 
 // -- Project -------------------------------------
 #define PROJECT                "sonoff"          // PROJECT is used as the default topic delimiter and OTA file name
@@ -116,6 +119,11 @@
   #define DOMOTICZ_OUT_TOPIC     "domoticz/out"  // Domoticz Output Topic
   #define DOMOTICZ_UPDATE_TIMER  0               // [DomoticzUpdateTimer] Send relay status (0 = disable, 1 - 3600 seconds) (Optional)
 
+// -- MQTT - Home Assistant Discovery -------------
+#define USE_HOME_ASSISTANT                       // Enable Home Assistant Discovery Support (+1k4 code)
+  #define HOME_ASSISTANT_DISCOVERY_PREFIX "homeassistant"  // Home Assistant discovery prefix
+  #define HOME_ASSISTANT_DISCOVERY_ENABLE 0      // [SetOption19] Home Assistant Discovery (0 = Disable, 1 = Enable)
+
 // -- HTTP ----------------------------------------
 #define USE_WEBSERVER                            // Enable web server and wifi manager (+66k code, +8k mem) - Disable by //
   #define WEB_SERVER           2                 // [WebServer] Web server (0 = Off, 1 = Start as User, 2 = Start as Admin)
@@ -177,7 +185,7 @@
   #define USE_SHT3X                              // Add I2C code for SHT3x sensor (+0k6 code)
   #define USE_HTU                                // Add I2C code for HTU21/SI7013/SI7020/SI7021 sensor (+1k5 code)
   #define USE_BMP                                // Add I2C code for BMP085/BMP180/BMP280/BME280 sensor (+4k code)
-//    #define USE_BME680                           // Add additional support for BME680 sensor using Adafruit Sensor and BME680 libraries (+6k code)
+    #define USE_BME680                           // Add additional support for BME680 sensor using Adafruit Sensor and BME680 libraries (+6k code)
   #define USE_BH1750                             // Add I2C code for BH1750 sensor (+0k5 code)
 //  #define USE_VEML6070                           // Add I2C code for VEML6070 sensor (+0k5 code)
 //  #define USE_TSL2561                            // Add I2C code for TSL2561 sensor using library Adafruit TSL2561 Arduino (+1k2 code)
@@ -207,6 +215,8 @@
 #define USE_SENSEAIR                             // Add support for SenseAir K30, K70 and S8 CO2 sensor (+2k3 code)
   #define CO2_LOW              800               // Below this CO2 value show green light (needs PWM or WS2812 RG(B) led and enable with SetOption18 1)
   #define CO2_HIGH             1200              // Above this CO2 value show red light (needs PWM or WS2812 RG(B) led and enable with SetOption18 1)
+
+#define USE_PMS5003                              // Add support for PMS5003 and PMS7003 particle concentration sensor (+1k3 code)
 
 #define USE_IR_REMOTE                            // Send IR remote commands using library IRremoteESP8266 and ArduinoJson (+4k code, 0k3 mem, 48 iram)
 //  #define USE_IR_HVAC                            // Support for HVAC system using IR (+2k code)
