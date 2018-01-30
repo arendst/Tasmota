@@ -26,7 +26,7 @@ unsigned long syslog_host_refresh = 0;
 
 Ticker tickerOSWatch;
 
-#define OSWATCH_RESET_TIME 120
+#define OSWATCH_RESET_TIME 30
 
 static unsigned long oswatch_last_loop_time;
 byte oswatch_blocked_loop = 0;
@@ -145,75 +145,86 @@ Decoding 14 results
 #endif  // DEBUG_THEO
 
 /*********************************************************************************************\
- * Miscellaneous
+ * General
 \*********************************************************************************************/
 
-#ifdef ARDUINO_ESP8266_RELEASE_2_3_0
-// Functions not available in 2.3.0
-
-// http://clc-wiki.net/wiki/C_standard_library:string.h:memchr
-void* memchr(const void* ptr, int value, size_t num)
+char* _dtostrf(double number, unsigned char prec, char *s, bool i18n)
 {
-  unsigned char *p = (unsigned char*)ptr;
-  while (num--) {
-    if (*p != (unsigned char)value) {
-      p++;
-    } else {
-      return p;
-    }
+  bool negative = false;
+
+  if (isnan(number)) {
+    strcpy_P(s, PSTR("nan"));
+    return s;
   }
-  return 0;
+  if (isinf(number)) {
+    strcpy_P(s, PSTR("inf"));
+    return s;
+  }
+  char decimal = '.';
+  if (i18n) {
+    decimal = D_DECIMAL_SEPARATOR[0];
+  }
+
+  char* out = s;
+
+  // Handle negative numbers
+  if (number < 0.0) {
+    negative = true;
+    number = -number;
+  }
+
+  // Round correctly so that print(1.999, 2) prints as "2.00"
+  // I optimized out most of the divisions
+  double rounding = 2.0;
+  for (uint8_t i = 0; i < prec; ++i) {
+    rounding *= 10.0;
+  }
+  rounding = 1.0 / rounding;
+  number += rounding;
+
+  // Figure out how big our number really is
+  double tenpow = 1.0;
+  int digitcount = 1;
+  while (number >= 10.0 * tenpow) {
+    tenpow *= 10.0;
+    digitcount++;
+  }
+  number /= tenpow;
+
+  // Handle negative sign
+  if (negative) {
+    *out++ = '-';
+  }
+
+  // Print the digits, and if necessary, the decimal point
+  digitcount += prec;
+  int8_t digit = 0;
+  while (digitcount-- > 0) {
+    digit = (int8_t)number;
+    if (digit > 9) {
+      digit = 9; // insurance
+    }
+    *out++ = (char)('0' | digit);
+    if ((digitcount == prec) && (prec > 0)) {
+      *out++ = decimal;
+    }
+    number -= digit;
+    number *= 10.0;
+  }
+
+  // make sure the string is terminated
+  *out = 0;
+  return s;
 }
 
-// http://clc-wiki.net/wiki/C_standard_library:string.h:strspn
-size_t strcspn(const char *str1, const char *str2)
+char* dtostrfd(double number, unsigned char prec, char *s)  // Always decimal dot
 {
-  size_t ret = 0;
-  while (*str1) {
-    if (strchr(str2, *str1)) {
-      return ret;
-    } else {
-      str1++;
-      ret++;
-    }
-  }
-  return ret;
+  return _dtostrf(number, prec, s, 0);
 }
 
-/*
- * strcspn.c --
- *
- *	Source code for the "strcspn" library routine.
- *
- * Copyright 1988 Regents of the University of California
- * Permission to use, copy, modify, and distribute this
- * software and its documentation for any purpose and without
- * fee is hereby granted, provided that the above copyright
- * notice appear in all copies.  The University of California
- * makes no representations about the suitability of this
- * software for any purpose.  It is provided "as is" without
- * express or implied warranty.
- */
-/*
-size_t strcspn(const char* str1, const char* str2)
+char* dtostrfi(double number, unsigned char prec, char *s) // Use localized decimal dot
 {
-  char c;
-  const char* p;
-  const char* s;
-
-  for (s = str1, c = *s; c != 0; s++, c = *s) {
-    for (p = str2; *p != 0; p++) {
-      if (c == *p) return s -str1;
-    }
-  }
-  return s -str1;
-}
-*/
-#endif  // ARDUINO_ESP8266_RELEASE_2_3_0
-
-char* dtostrfd(double number, unsigned char prec, char *s)
-{
-  return dtostrf(number, 1, prec, s);
+  return _dtostrf(number, prec, s, 1);
 }
 
 boolean ParseIp(uint32_t* addr, const char* str)
@@ -317,127 +328,12 @@ char* GetPowerDevice(char* dest, uint8_t idx, size_t size)
   return GetPowerDevice(dest, idx, size, 0);
 }
 
-float ConvertTemp(float c)
-{
-  float result = c;
-
-  if (!isnan(c) && Settings.flag.temperature_conversion) {
-    result = c * 1.8 + 32;  // Fahrenheit
-  }
-  return result;
-}
-
-char TempUnit()
-{
-  return (Settings.flag.temperature_conversion) ? 'F' : 'C';
-}
-
-double FastPrecisePow(double a, double b)
-{
-  // https://martin.ankerl.com/2012/01/25/optimized-approximative-pow-in-c-and-cpp/
-  // calculate approximation with fraction of the exponent
-  int e = (int)b;
-  union {
-    double d;
-    int x[2];
-  } u = { a };
-  u.x[1] = (int)((b - e) * (u.x[1] - 1072632447) + 1072632447);
-  u.x[0] = 0;
-  // exponentiation by squaring with the exponent's integer part
-  // double r = u.d makes everything much slower, not sure why
-  double r = 1.0;
-  while (e) {
-    if (e & 1) {
-      r *= a;
-    }
-    a *= a;
-    e >>= 1;
-  }
-  return r * u.d;
-}
-
-char* GetTextIndexed(char* destination, size_t destination_size, uint16_t index, const char* haystack)
-{
-  // Returns empty string if not found
-  // Returns text of found
-  char* write = destination;
-  const char* read = haystack;
-
-  index++;
-  while (index--) {
-    size_t size = destination_size -1;
-    write = destination;
-    char ch = '.';
-    while ((ch != '\0') && (ch != '|')) {
-      ch = pgm_read_byte(read++);
-      if (size && (ch != '|'))  {
-        *write++ = ch;
-        size--;
-      }
-    }
-    if (0 == ch) {
-      if (index) {
-        write = destination;
-      }
-      break;
-    }
-  }
-  *write = '\0';
-  return destination;
-}
-
-int GetCommandCode(char* destination, size_t destination_size, const char* needle, const char* haystack)
-{
-  // Returns -1 of not found
-  // Returns index and command if found
-  int result = -1;
-  const char* read = haystack;
-  char* write = destination;
-
-  while (true) {
-    result++;
-    size_t size = destination_size -1;
-    write = destination;
-    char ch = '.';
-    while ((ch != '\0') && (ch != '|')) {
-      ch = pgm_read_byte(read++);
-      if (size && (ch != '|'))  {
-        *write++ = ch;
-        size--;
-      }
-    }
-    *write = '\0';
-    if (!strcasecmp(needle, destination)) {
-      break;
-    }
-    if (0 == ch) {
-      result = -1;
-      break;
-    }
-  }
-  return result;
-}
-
-void SetSerialBaudrate(int baudrate)
-{
-  if (Serial.baudRate() != baudrate) {
-    if (seriallog_level) {
-      snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION D_SET_BAUDRATE_TO " %d"), baudrate);
-      AddLog(LOG_LEVEL_INFO);
-    }
-    delay(100);
-    Serial.flush();
-    Serial.begin(baudrate);
-    delay(10);
-    Serial.println();
-  }
-}
-
 /*********************************************************************************************\
  * Wifi
 \*********************************************************************************************/
 
 #define WIFI_CONFIG_SEC   180  // seconds before restart
+#define WIFI_MANAGER_SEC  180  // seconds before restart
 #define WIFI_CHECK_SEC    20   // seconds
 #define WIFI_RETRY_SEC    30   // seconds
 
@@ -465,7 +361,7 @@ int WifiGetRssiAsQuality(int rssi)
 boolean WifiConfigCounter()
 {
   if (wifi_config_counter) {
-    wifi_config_counter = WIFI_CONFIG_SEC;
+    wifi_config_counter = WIFI_MANAGER_SEC;
   }
   return (wifi_config_counter);
 }
@@ -716,12 +612,6 @@ void WifiCheck(uint8_t param)
         WifiCheckIp();
       }
       if ((WL_CONNECTED == WiFi.status()) && (static_cast<uint32_t>(WiFi.localIP()) != 0) && !wifi_config_type) {
-#ifdef BE_MINIMAL
-        if (1 == RtcSettings.ota_loader) {
-          RtcSettings.ota_loader = 0;
-          ota_state_flag = 3;
-        }
-#endif  // BE_MINIMAL
 #ifdef USE_DISCOVERY
         if (!mdns_begun) {
           mdns_begun = MDNS.begin(my_hostname);
@@ -1294,6 +1184,127 @@ void RtcInit()
   TickerRtc.attach(1, RtcSecond);
 }
 
+/*********************************************************************************************\
+ * Miscellaneous
+\*********************************************************************************************/
+
+float ConvertTemp(float c)
+{
+  float result = c;
+
+  if (!isnan(c) && Settings.flag.temperature_conversion) {
+    result = c * 1.8 + 32;  // Fahrenheit
+  }
+  return result;
+}
+
+char TempUnit()
+{
+  return (Settings.flag.temperature_conversion) ? 'F' : 'C';
+}
+
+double FastPrecisePow(double a, double b)
+{
+  // https://martin.ankerl.com/2012/01/25/optimized-approximative-pow-in-c-and-cpp/
+  // calculate approximation with fraction of the exponent
+  int e = (int)b;
+  union {
+    double d;
+    int x[2];
+  } u = { a };
+  u.x[1] = (int)((b - e) * (u.x[1] - 1072632447) + 1072632447);
+  u.x[0] = 0;
+  // exponentiation by squaring with the exponent's integer part
+  // double r = u.d makes everything much slower, not sure why
+  double r = 1.0;
+  while (e) {
+    if (e & 1) {
+      r *= a;
+    }
+    a *= a;
+    e >>= 1;
+  }
+  return r * u.d;
+}
+
+char* GetTextIndexed(char* destination, size_t destination_size, uint16_t index, const char* haystack)
+{
+  // Returns empty string if not found
+  // Returns text of found
+  char* write = destination;
+  const char* read = haystack;
+
+  index++;
+  while (index--) {
+    size_t size = destination_size -1;
+    write = destination;
+    char ch = '.';
+    while ((ch != '\0') && (ch != '|')) {
+      ch = pgm_read_byte(read++);
+      if (size && (ch != '|'))  {
+        *write++ = ch;
+        size--;
+      }
+    }
+    if (0 == ch) {
+      if (index) {
+        write = destination;
+      }
+      break;
+    }
+  }
+  *write = '\0';
+  return destination;
+}
+
+int GetCommandCode(char* destination, size_t destination_size, const char* needle, const char* haystack)
+{
+  // Returns -1 of not found
+  // Returns index and command if found
+  int result = -1;
+  const char* read = haystack;
+  char* write = destination;
+  size_t maxcopy = (strlen(needle) > destination_size) ? destination_size : strlen(needle);
+
+  while (true) {
+    result++;
+    size_t size = destination_size -1;
+    write = destination;
+    char ch = '.';
+    while ((ch != '\0') && (ch != '|')) {
+      ch = pgm_read_byte(read++);
+      if (size && (ch != '|'))  {
+        *write++ = ch;
+        size--;
+      }
+    }
+    *write = '\0';
+    if (!strcasecmp(needle, destination)) {
+      break;
+    }
+    if (0 == ch) {
+      result = -1;
+      break;
+    }
+  }
+  return result;
+}
+
+void SetSerialBaudrate(int baudrate)
+{
+  if (Serial.baudRate() != baudrate) {
+    if (seriallog_level) {
+      snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION D_SET_BAUDRATE_TO " %d"), baudrate);
+      AddLog(LOG_LEVEL_INFO);
+    }
+    delay(100);
+    Serial.flush();
+    Serial.begin(baudrate);
+    delay(10);
+    Serial.println();
+  }
+}
+
 #ifndef USE_ADC_VCC
 /*********************************************************************************************\
  * ADC support
@@ -1352,32 +1363,6 @@ boolean Xsns02(byte function)
  *
 \*********************************************************************************************/
 
-#ifdef USE_WEBSERVER
-void GetLog(byte idx, char** entry_pp, size_t* len_p)
-{
-  char* entry_p = NULL;
-  size_t len = 0;
-
-  if (idx) {
-    char* it = web_log;
-    do {
-      byte cur_idx = *it;
-      it++;
-      size_t tmp = strcspn(it, "\1");
-      tmp++;                             // Skip terminating '\1'
-      if (cur_idx == idx) {              // Found the requested entry
-        len = tmp;
-        entry_p = it;
-        break;
-      }
-      it += tmp;
-    } while (it < web_log + WEB_LOG_SIZE && *it != '\0');
-  }
-  *entry_pp = entry_p;
-  *len_p = len;
-}
-#endif  // USE_WEBSERVER
-
 void Syslog()
 {
   // Destroys log_data
@@ -1404,28 +1389,20 @@ void Syslog()
 
 void AddLog(byte loglevel)
 {
-  char mxtime[10];  // "13:45:21 "
+  char mxtime[9];  // 13:45:21
 
-  snprintf_P(mxtime, sizeof(mxtime), PSTR("%02d" D_HOUR_MINUTE_SEPARATOR "%02d" D_MINUTE_SECOND_SEPARATOR "%02d "), RtcTime.hour, RtcTime.minute, RtcTime.second);
+  snprintf_P(mxtime, sizeof(mxtime), PSTR("%02d" D_HOUR_MINUTE_SEPARATOR "%02d" D_MINUTE_SECOND_SEPARATOR "%02d"), RtcTime.hour, RtcTime.minute, RtcTime.second);
 
   if (loglevel <= seriallog_level) {
-    Serial.printf("%s%s\n", mxtime, log_data);
+    Serial.printf("%s %s\n", mxtime, log_data);
   }
 #ifdef USE_WEBSERVER
   if (Settings.webserver && (loglevel <= Settings.weblog_level)) {
-    // Delimited, zero-terminated buffer of log lines.
-    // Each entry has this format: [index][log data]['\1']
-    if (!web_log_index) web_log_index++;   // Index 0 is not allowed as it is the end of char string
-    while (web_log_index == web_log[0] ||  // If log already holds the next index, remove it
-           strlen(web_log) + strlen(log_data) + 13 > WEB_LOG_SIZE)  // 13 = web_log_index + mxtime + '\1' + '\0'
-    {
-      char* it = web_log;
-      it++;                                // Skip web_log_index
-      it += strcspn(it, "\1");             // Skip log line
-      it++;                                // Skip delimiting "\1"
-      memmove(web_log, it, WEB_LOG_SIZE -(it-web_log));  // Move buffer forward to remove oldest log line
+    web_log[web_log_index] = String(mxtime) + " " + String(log_data);
+    web_log_index++;
+    if (web_log_index > MAX_LOG_LINES -1) {
+      web_log_index = 0;
     }
-    snprintf_P(web_log, sizeof(web_log), PSTR("%s%c%s%s\1"), web_log, web_log_index++, mxtime, log_data);
   }
 #endif  // USE_WEBSERVER
   if ((WL_CONNECTED == WiFi.status()) && (loglevel <= syslog_level)) {

@@ -17,49 +17,58 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-boolean (* const xdrv_func_ptr[])(byte) PROGMEM = {   // Driver Function Pointers
+void XDrvInit()
+{
+  for (byte i = 0; i < XDRV_MAX; i++) {
+    xdrv_func_ptr[i] = NULL;
+  }
+  xdrv_present = 0;
+
 #ifdef XDRV_01
-  &Xdrv01,
+  xdrv_func_ptr[xdrv_present++] = &Xdrv01;
 #endif
 
 #ifdef XDRV_02
-  &Xdrv02,
+  xdrv_func_ptr[xdrv_present++] = &Xdrv02;
 #endif
 
 #ifdef XDRV_03
-  &Xdrv03,
+  xdrv_func_ptr[xdrv_present++] = &Xdrv03;
 #endif
 
 #ifdef XDRV_04
-  &Xdrv04,
+  xdrv_func_ptr[xdrv_present++] = &Xdrv04;
 #endif
 
 #ifdef XDRV_05
-  &Xdrv05,
+  xdrv_func_ptr[xdrv_present++] = &Xdrv05;
 #endif
 
 #ifdef XDRV_06
-  &Xdrv06,
+  xdrv_func_ptr[xdrv_present++] = &Xdrv06;
 #endif
 
 #ifdef XDRV_07
-  &Xdrv07,
+  xdrv_func_ptr[xdrv_present++] = &Xdrv07;
 #endif
 
 #ifdef XDRV_08
-  &Xdrv08,
+  xdrv_func_ptr[xdrv_present++] = &Xdrv08;
 #endif
 
 #ifdef XDRV_09
-  &Xdrv09,
+  xdrv_func_ptr[xdrv_present++] = &Xdrv09;
 #endif
 
 #ifdef XDRV_10
-  &Xdrv10,
+  xdrv_func_ptr[xdrv_present++] = &Xdrv10;
 #endif
-};
 
-const uint8_t xdrv_present = sizeof(xdrv_func_ptr) / sizeof(xdrv_func_ptr[0]);  // Number of drivers found
+//  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_DEBUG "Drivers %d"), xdrv_present);
+//  AddLog(LOG_LEVEL_DEBUG);
+
+  XdrvCall(FUNC_INIT);
+}
 
 boolean XdrvCommand(char *type, uint16_t index, char *dataBuf, uint16_t data_len, int16_t payload)
 {
@@ -73,7 +82,7 @@ boolean XdrvCommand(char *type, uint16_t index, char *dataBuf, uint16_t data_len
   return XdrvCall(FUNC_COMMAND);
 }
 
-void XdrvSetPower(power_t mpower)
+void XdrvSetPower(uint8_t mpower)
 {
 //  XdrvMailbox.valid = 1;
   XdrvMailbox.index = mpower;
@@ -93,16 +102,6 @@ boolean XdrvMqttData(char *topicBuf, uint16_t stopicBuf, char *dataBuf, uint16_t
 
 /*********************************************************************************************\
  * Function call to all xdrv
- *
- * FUNC_INIT
- * FUNC_MQTT_SUBSCRIBE
- * FUNC_MQTT_INIT
- * return FUNC_MQTT_DATA
- * return FUNC_COMMAND
- * FUNC_SET_POWER
- * FUNC_SHOW_SENSOR
- * FUNC_EVERY_SECOND
- * FUNC_EVERY_50_MSECOND
 \*********************************************************************************************/
 
 boolean XdrvCall(byte Function)
