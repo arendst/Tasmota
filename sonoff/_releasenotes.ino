@@ -1,4 +1,9 @@
-/* 5.11.1g
+/* 5.11.1h
+ * Rewrite webserver argument processing gaining 5k code space (#1705)
+ * Redesign weblog storage (#1730)
+ * Fix command SetOption20 (#1741)
+ *
+ * 5.11.1g
  * Add support for PMS5003 and PMS7003 particle concentration sensor
  * Reinstate console weblog to 20 lines after some webpage rewrite
  * Add command SetOption20 to allow update of Dimmer/Color/Ct without turning power on (#1719)
