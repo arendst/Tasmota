@@ -388,10 +388,10 @@ void HandleUpnpEvent()
   //differentiate get and set state
   if (request.indexOf(F("SetBinaryState")) > 0) {
     if (request.indexOf(F("State>1</Binary")) > 0) {
-      ExecuteCommandPower(devices_present, POWER_ON);
+      ExecuteCommandPower(devices_present, 1);
     }
     else if (request.indexOf(F("State>0</Binary")) > 0) {
-      ExecuteCommandPower(devices_present, POWER_OFF);
+      ExecuteCommandPower(devices_present, 0);
     }
   }
   else if(request.indexOf(F("GetBinaryState")) > 0){
@@ -452,8 +452,8 @@ const char HUE_DESCRIPTION_XML[] PROGMEM =
   "</device>"
   "</root>\r\n"
   "\r\n";
-const char HUE_LIGHTS_STATUS_JSON[] PROGMEM =
-  "{\"on\":{state},"
+const char HueLightStatus_JSON[] PROGMEM =
+  "\"on\":{state},"
   "\"bri\":{b},"
   "\"hue\":{h},"
   "\"sat\":{s},"
@@ -462,18 +462,19 @@ const char HUE_LIGHTS_STATUS_JSON[] PROGMEM =
   "\"alert\":\"none\","
   "\"effect\":\"none\","
   "\"colormode\":\"hs\","
-  "\"reachable\":true}";
-const char HUE_LIGHTS_STATUS_JSON2[] PROGMEM =
-  ",\"type\":\"Extended color light\","
+  "\"reachable\":true";
+const char HUE_LIGHTS_STATUS_JSON[] PROGMEM =
+  "\"type\":\"Extended color light\","
   "\"name\":\"{j1\","
   "\"modelid\":\"LCT007\","
   "\"uniqueid\":\"{j2\","
-  "\"swversion\":\"5.50.1.19085\"}";
+  "\"swversion\":\"5.50.1.19085\""
+  "}";
 const char HUE_GROUP0_STATUS_JSON[] PROGMEM =
   "{\"name\":\"Group 0\","
    "\"lights\":[{l1],"
    "\"type\":\"LightGroup\","
-   "\"action\":";
+   "\"action\":{";
 //     "\"scene\":\"none\",";
 const char HueConfigResponse_JSON[] PROGMEM =
   "{\"name\":\"Philips hue\","
@@ -555,27 +556,18 @@ void HueConfig(String *path)
   WebServer->send(200, FPSTR(HDR_CTYPE_JSON), response);
 }
 
-void HueLightStatus1(byte device, String *response)
+void HueLightStatus(byte device, String *response)
 {
-  float hue = 0;
-  float sat = 0;
-  float bri = 0;
+  *response += FPSTR(HueLightStatus_JSON);
+  response->replace("{state}", (power & (1 << (device-1))) ? "true" : "false");
 
   if (light_type) {
-    LightGetHsb(&hue, &sat, &bri);
+    LightReplaceHsb(response);
+  } else {
+    response->replace("{h}", "0");
+    response->replace("{s}", "0");
+    response->replace("{b}", "0");
   }
-  *response += FPSTR(HUE_LIGHTS_STATUS_JSON);
-  response->replace("{state}", (power & (1 << (device-1))) ? "true" : "false");
-  response->replace("{h}", String((uint16_t)(65535.0f * hue)));
-  response->replace("{s}", String((uint8_t)(254.0f * sat)));
-  response->replace("{b}", String((uint8_t)(254.0f * bri)));
-}
-
-void HueLightStatus2(byte device, String *response)
-{
-  *response += FPSTR(HUE_LIGHTS_STATUS_JSON2);
-  response->replace("{j1", Settings.friendlyname[device-1]);
-  response->replace("{j2", GetHueDeviceId(device));
 }
 
 void HueGlobalConfig(String *path)
@@ -587,9 +579,12 @@ void HueGlobalConfig(String *path)
   response = F("{\"lights\":{\"");
   for (uint8_t i = 1; i <= maxhue; i++) {
     response += i;
-    response += F("\":{\"state\":");
-    HueLightStatus1(i, &response);
-    HueLightStatus2(i, &response);
+    response += F("\":{\"state\":{");
+    HueLightStatus(i, &response);
+    response += "},";
+    response += FPSTR(HUE_LIGHTS_STATUS_JSON);
+    response.replace("{j1", Settings.friendlyname[i-1]);
+    response.replace("{j2", GetHueDeviceId(i));
     if (i < maxhue) {
       response += ",\"";
     }
@@ -632,9 +627,12 @@ void HueLights(String *path)
     response = "{\"";
     for (uint8_t i = 1; i <= maxhue; i++) {
       response += i;
-      response += F("\":{\"state\":");
-      HueLightStatus1(i, &response);
-      HueLightStatus2(i, &response);
+      response += F("\":{\"state\":{");
+      HueLightStatus(i, &response);
+      response += "},";
+      response += FPSTR(HUE_LIGHTS_STATUS_JSON);
+      response.replace("{j1", Settings.friendlyname[i-1]);
+      response.replace("{j2", GetHueDeviceId(i));
       if (i < maxhue) {
         response += ",\"";
       }
@@ -663,10 +661,10 @@ void HueLights(String *path)
         on = hue_json["on"];
         switch(on)
         {
-          case false : ExecuteCommandPower(device, POWER_OFF);
+          case false : ExecuteCommandPower(device, 0);
                        response.replace("{re", "false");
                        break;
-          case true  : ExecuteCommandPower(device, POWER_ON);
+          case true  : ExecuteCommandPower(device, 1);
                        response.replace("{re", "true");
                        break;
           default    : response.replace("{re", (power & (1 << (device-1))) ? "true" : "false");
@@ -676,7 +674,7 @@ void HueLights(String *path)
       }
 
       if (light_type) {
-        LightGetHsb(&hue, &sat, &bri);
+        LightGetHsb(&hue,&sat,&bri);
       }
 
       if (hue_json.containsKey("bri")) {
@@ -751,9 +749,12 @@ void HueLights(String *path)
     if ((device < 1) || (device > maxhue)) {
       device = 1;
     }
-    response += F("{\"state\":");
-    HueLightStatus1(device, &response);
-    HueLightStatus2(device, &response);
+    response += F("{\"state\":{");
+    HueLightStatus(device, &response);
+    response += "},";
+    response += FPSTR(HUE_LIGHTS_STATUS_JSON);
+    response.replace("{j1", Settings.friendlyname[device-1]);
+    response.replace("{j2", GetHueDeviceId(device));
     WebServer->send(200, FPSTR(HDR_CTYPE_JSON), response);
   }
   else {
@@ -776,8 +777,8 @@ void HueGroups(String *path)
       lights += ",\"" + String(i) + "\"";
     }
     response.replace("{l1", lights);
-    HueLightStatus1(1, &response);
-    response += F("}");
+    HueLightStatus(1, &response);
+    response += F("}}");
   }
 
   WebServer->send(200, FPSTR(HDR_CTYPE_JSON), response);

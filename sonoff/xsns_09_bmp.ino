@@ -504,14 +504,8 @@ boolean Xsns09(byte function)
     switch (function) {
       case FUNC_PREP_BEFORE_TELEPERIOD:
         BmpDetect();
-        break;
-      case FUNC_EVERY_SECOND:
 #ifdef USE_BME680
-        if ((Settings.tele_period - tele_period) < 300) {  // 5 minute stabilization time
-          if (tele_period &1) {
-            Bme680PerformReading();  // Keep BME680 busy every two seconds
-          }
-        }
+        Bme680PerformReading();
 #endif  // USE_BME680
         break;
       case FUNC_JSON_APPEND:
