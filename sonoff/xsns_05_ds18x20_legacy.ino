@@ -3,6 +3,8 @@
 
   Copyright (C) 2018  Heiko Krupp and Theo Arends
 
+EDITING LVA
+
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
   the Free Software Foundation, either version 3 of the License, or
@@ -30,7 +32,14 @@
 #define W1_CONVERT_TEMP      0x44
 #define W1_READ_SCRATCHPAD   0xBE
 
-#define DS18X20_MAX_SENSORS  16 // увеличили 8
+  // LVA <--
+#ifndef LVA
+#define DS18X20_MAX_SENSORS  8
+#else
+  #undef DS18X20_MAX_SENSORS
+  #define DS18X20_MAX_SENSORS  16 // увеличили 8
+#endif
+//  LVA  -->
 
 #include <OneWire.h>
 
@@ -164,8 +173,13 @@ void Ds18x20Type(uint8_t sensor)
 void Ds18x20Show(boolean json)
 {
   char temperature[10];
-  //char stemp[10];
+// LVA <--
+#ifndef LVA
+  char stemp[10];
+#else
   char stemp[16]; // Нафиг увеличил не помню
+#endif
+//  LVA -->
   float t;
 
   byte dsxflg = 0;
@@ -191,8 +205,8 @@ void Ds18x20Show(boolean json)
 #ifndef LVA
         snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s%s\"DS%d\":{\"" D_JSON_TYPE "\":\"%s\",\"" D_JSON_ADDRESS "\":\"%s\",\"" D_JSON_TEMPERATURE "\":%s}"),
           mqtt_data, stemp, i +1, ds18x20_types, Ds18x20Addresses(i).c_str(), temperature);
-          strcpy(stemp, ",");
-          
+        strcpy(stemp, ",");
+
 #else
                 //snprintf_P(stemp, sizeof(stemp), PSTR("%s"), Ds18x20Addresses(i).c_str());
                 snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s\"%s\":%s,"), mqtt_data, Ds18x20Addresses(i).c_str(), temperature);

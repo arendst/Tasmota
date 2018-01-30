@@ -124,7 +124,11 @@ lva.h - lva configuration overrides  for Sonoff-Tasmota
   #undef USE_WS2812                               // WS2812 Led string using library NeoPixelBus (+5k code, +1k mem) - Disable by //
   #undef USE_WS2812_CTYPE                      // WS2812 Color type (0 - RGB, 1 - GRB, 2 - RGBW, 3 - GRBW)
   #undef USE_WS2812_DMA                         // DMA supports only GPIO03 (= Serial RXD) (+1k mem). When USE_WS2812_DMA is enabled expect Exceptions on Pow
+
+  #undef USE_SPI                                  // SPI using library TasmotaTFT
   #undef USE_MHZ19                                // Add support for MH-Z19 CO2 sensor using hardware serial interface at 9600 bps
+  #undef USE_SENSEAIR                             // Add support for SenseAir K30, K70 and S8 CO2 sensor (+2k3 code)
+  #undef USE_PMS5003                              // Add support for PMS5003 particle concentration sensor (+1k3 code)
   #undef USE_ARILUX_RF                            // Add support for Arilux RF remote controller (+0.8k code)
   #undef USE_DS18x20
 

@@ -3,7 +3,14 @@ LVA Updated Files
  patformio. ini - установлена по умолчанию плата LVA, настроен компорт
 
  папка sanoff
-  i18n.h  					- сокращен вывод 
+  i18n.h  					- сокращен вывод
   lva.h 					- переопределение определений
   sonoff_post.h 			- подключается  lva.h
   xsns_12_ads1115_ada.ino	- передалан вывод строк
+
+
+  // LVA <--
+#ifndef LVA
+#else
+#endif
+//  LVA  -->

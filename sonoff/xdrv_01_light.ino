@@ -568,7 +568,9 @@ void LightState(uint8_t append)
 void LightPreparePower()
 {
   if (Settings.light_dimmer && !(light_power)) {
-    ExecuteCommandPower(light_device, POWER_ON_NO_STATE);
+    if (!Settings.flag.not_power_linked) {
+      ExecuteCommandPower(light_device, POWER_ON_NO_STATE);
+    }
   }
   else if (!Settings.light_dimmer && light_power) {
     ExecuteCommandPower(light_device, POWER_OFF_NO_STATE);
