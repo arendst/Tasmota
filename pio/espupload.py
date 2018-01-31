@@ -18,13 +18,19 @@ import pycurl
 HOST_URL = "domus1:80/api/upload-arduino.php"
 
 def upload(hostUrl, filename):
+  tname = os.path.normpath(os.path.dirname(filename))
+  new_filename = tname + os.sep + os.path.basename(tname) + '.bin'
+  if os.path.exists(new_filename):
+    os.remove(new_filename)
+  os.rename(filename, new_filename)
+
   url = 'http://%s' % (hostUrl)
   c = pycurl.Curl()
   c.setopt(c.URL, url)
   # The "Expect:" is there to suppress "Expect: 100-continue" behaviour that is
   # the default in libcurl when posting large bodies (and fails on lighttpd).
   c.setopt(c.HTTPHEADER, ["Expect:"])
-  c.setopt(c.HTTPPOST, [('file', (c.FORM_FILE, filename, )), ])
+  c.setopt(c.HTTPPOST, [('file', (c.FORM_FILE, new_filename, )), ])
   c.perform()
   c.close()
 

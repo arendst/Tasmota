@@ -105,14 +105,18 @@ void CounterShow(boolean json)
         dtostrfd((double)RtcSettings.pulse_counter[i] / 1000, 3, counter);
       } else {
         dsxflg++;
+	//STB mode
         dtostrfd(RtcSettings.pulse_counter[i]/Settings.pulse_devider[i], 0, counter);
+	//end
       }
 
       if (json) {
         snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"" D_JSON_COUNTER "%d\":%s"), mqtt_data, i +1, counter);
 #ifdef USE_DOMOTICZ
         if (1 == dsxflg) {
+	  //STB mod
           DomoticzSensor(DZ_COUNT, RtcSettings.pulse_counter[i]/Settings.pulse_devider[i]);
+	  //end
           dsxflg++;
         }
 #endif  // USE_DOMOTICZ

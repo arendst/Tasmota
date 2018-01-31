@@ -45,7 +45,7 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t decimal_text : 1;             // bit 17 (v5.8.1)
     uint32_t light_signal : 1;             // bit 18 (v5.10.0c)
     uint32_t hass_discovery : 1;           // bit 19 (v5.11.1a)
-    uint32_t voltage_resolution : 1;       // Replaced by below
+    uint32_t not_power_linked : 1;         // bit 20 (v5.11.1f)
     uint32_t spare21 : 1;
     uint32_t spare22 : 1;
     uint32_t spare23 : 1;
@@ -57,15 +57,6 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t spare29 : 1;
     uint32_t spare30 : 1;
     uint32_t spare31 : 1;
-    /*
-    uint32_t wattage_resolution : 1;
-    uint32_t voltage_resolution : 1;
-    uint32_t emulation : 2;
-    uint32_t energy_resolution : 3;
-    uint32_t pressure_resolution : 2;
-    uint32_t humidity_resolution : 2;
-    uint32_t temperature_resolution : 2;
-*/
   };
 } SysBitfield;
 

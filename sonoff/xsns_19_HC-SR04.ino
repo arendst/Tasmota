@@ -57,7 +57,7 @@ String sr04_readDistance(void)
       interrupts();
       yield();
       sum = sum + duration;
-      dtostrfi(duration, 2, stemp1);
+      dtostrfd(duration, 2, stemp1);
       snprintf_P(log_data, sizeof(log_data), PSTR("HS-SR04 In Duration: %s"),stemp1);
       AddLog(LOG_LEVEL_ALL);
       yield();
