@@ -568,7 +568,9 @@ void LightState(uint8_t append)
 void LightPreparePower()
 {
   if (Settings.light_dimmer && !(light_power)) {
-    ExecuteCommandPower(light_device, POWER_ON_NO_STATE);
+    if (!Settings.flag.not_power_linked) {
+      ExecuteCommandPower(light_device, POWER_ON_NO_STATE);
+    }
   }
   else if (!Settings.light_dimmer && light_power) {
     ExecuteCommandPower(light_device, POWER_OFF_NO_STATE);
@@ -890,21 +892,6 @@ void LightHsbToRgb()
 }
 
 /********************************************************************************************/
-
-void LightReplaceHsb(String *response)
-{
-  if (light_subtype > LST_COLDWARM) {
-    LightRgbToHsb();
-    response->replace("{h}", String((uint16_t)(65535.0f * light_hue)));
-    response->replace("{s}", String((uint8_t)(254.0f * light_saturation)));
-    response->replace("{b}", String((uint8_t)(254.0f * light_brightness)));
-  } else {
-    response->replace("{h}", "0");
-    response->replace("{s}", "0");
-//    response->replace("{b}", String((uint8_t)(2.54f * (float)Settings.light_dimmer)));
-    response->replace("{b}", String((uint8_t)(0.01f * (float)Settings.light_dimmer)));
-  }
-}
 
 void LightGetHsb(float *hue, float *sat, float *bri)
 {

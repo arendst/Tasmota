@@ -25,7 +25,7 @@
     - Select IDE Tools - Flash Size: "1M (no SPIFFS)"
   ====================================================*/
 
-#define VERSION                0x050B0106   // 5.11.1f
+#define VERSION                0x050B0108   // 5.11.1h
 
 // Location specific includes
 #include <core_version.h>                   // Arduino_Esp8266 version information (ARDUINO_ESP8266_RELEASE and ARDUINO_ESP8266_RELEASE_2_3_0)
@@ -190,10 +190,10 @@ boolean mdns_begun = false;
 char my_version[33];                        // Composed version string
 char my_hostname[33];                       // Composed Wifi hostname
 char mqtt_client[33];                        // Composed MQTT Clientname
-char serial_in_buffer[INPUT_BUFFER_SIZE + 2]; // Receive buffer
+char serial_in_buffer[INPUT_BUFFER_SIZE + 2];  // Receive buffer
 char mqtt_data[MESSZ];                      // MQTT publish buffer and web page ajax buffer
 char log_data[LOGSZ];                       // Logging
-String web_log[MAX_LOG_LINES];              // Web log buffer
+char web_log[WEB_LOG_SIZE] = {'\0'};        // Web log buffer
 String backlog[MAX_BACKLOG];                // Command backlog
 
 /********************************************************************************************/
@@ -999,7 +999,7 @@ void MqttDataCallback(char* topic, byte* data, unsigned int data_len)
 //        type = NULL;
 //      }
     }
-    else if ((CMND_SETOPTION == command_code) && ((index >= 0) && (index <= 19)) || ((index > 31) && (index <= P_MAX_PARAM8 +31))) {
+    else if ((CMND_SETOPTION == command_code) && ((index >= 0) && (index <= 20)) || ((index > 31) && (index <= P_MAX_PARAM8 +31))) {
       if (index <= 31) {
         ptype = 0;   // SetOption0 .. 31
       } else {
@@ -1027,6 +1027,7 @@ void MqttDataCallback(char* topic, byte* data, unsigned int data_len)
               case 16:  // ws_clock_reverse
               case 17:  // decimal_text
               case 18:  // light_signal
+              case 20:  // not_power_linked
                 bitWrite(Settings.flag.data, index, payload);
             }
             if (12 == index) {  // stop_flash_rotate

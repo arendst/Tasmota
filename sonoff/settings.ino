@@ -430,7 +430,7 @@ void SettingsDefaultSet2()
   Settings.flag.mqtt_power_retain = MQTT_POWER_RETAIN;
   Settings.flag.mqtt_button_retain = MQTT_BUTTON_RETAIN;
   Settings.flag.mqtt_switch_retain = MQTT_SWITCH_RETAIN;
-  Settings.flag.hass_discovery = HOME_ASSISTANT_DISCOVERY_ENABLE; 
+  Settings.flag.hass_discovery = HOME_ASSISTANT_DISCOVERY_ENABLE;
 
   Settings.flag2.emulation = EMULATION;
 
@@ -845,13 +845,17 @@ void SettingsDelta()
     if (Settings.version < 0x05090102) {
       Settings.flag2.data = Settings.flag.data;
       Settings.flag2.data &= 0xFFE80000;
-      Settings.flag2.voltage_resolution = Settings.flag.voltage_resolution;
+      Settings.flag2.voltage_resolution = Settings.flag.not_power_linked;
       Settings.flag2.current_resolution = 3;
       Settings.ina219_mode = 0;
     }
     if (Settings.version < 0x050A0009) {
       SettingsDefaultSet_5_10_1();
     }
+    if (Settings.version < 0x050B0107) {
+      Settings.flag.not_power_linked = 0;
+    }
+
 
     Settings.version = VERSION;
     SettingsSave(1);
