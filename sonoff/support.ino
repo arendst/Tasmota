@@ -166,11 +166,12 @@ void* memchr(const void* ptr, int value, size_t num)
 }
 
 // http://clc-wiki.net/wiki/C_standard_library:string.h:strspn
+// Get span until any character in string
 size_t strcspn(const char *str1, const char *str2)
 {
   size_t ret = 0;
   while (*str1) {
-    if (strchr(str2, *str1)) {
+    if (strchr(str2, *str1)) {  // Slow
       return ret;
     } else {
       str1++;
@@ -179,37 +180,17 @@ size_t strcspn(const char *str1, const char *str2)
   }
   return ret;
 }
-
-/*
- * strcspn.c --
- *
- *	Source code for the "strcspn" library routine.
- *
- * Copyright 1988 Regents of the University of California
- * Permission to use, copy, modify, and distribute this
- * software and its documentation for any purpose and without
- * fee is hereby granted, provided that the above copyright
- * notice appear in all copies.  The University of California
- * makes no representations about the suitability of this
- * software for any purpose.  It is provided "as is" without
- * express or implied warranty.
- */
-/*
-size_t strcspn(const char* str1, const char* str2)
-{
-  char c;
-  const char* p;
-  const char* s;
-
-  for (s = str1, c = *s; c != 0; s++, c = *s) {
-    for (p = str2; *p != 0; p++) {
-      if (c == *p) return s -str1;
-    }
-  }
-  return s -str1;
-}
-*/
 #endif  // ARDUINO_ESP8266_RELEASE_2_3_0
+
+// Get span until single character in string
+size_t strchrspn(const char *str1, int character)
+{
+  size_t ret = 0;
+  char *start = (char*)str1;
+  char *end = strchr(str1, character);
+  if (end) ret = end - start;
+  return ret;
+}
 
 char* dtostrfd(double number, unsigned char prec, char *s)
 {
@@ -1363,7 +1344,7 @@ void GetLog(byte idx, char** entry_pp, size_t* len_p)
     do {
       byte cur_idx = *it;
       it++;
-      size_t tmp = strcspn(it, "\1");
+      size_t tmp = strchrspn(it, '\1');
       tmp++;                             // Skip terminating '\1'
       if (cur_idx == idx) {              // Found the requested entry
         len = tmp;
@@ -1421,7 +1402,7 @@ void AddLog(byte loglevel)
     {
       char* it = web_log;
       it++;                                // Skip web_log_index
-      it += strcspn(it, "\1");             // Skip log line
+      it += strchrspn(it, '\1');           // Skip log line
       it++;                                // Skip delimiting "\1"
       memmove(web_log, it, WEB_LOG_SIZE -(it-web_log));  // Move buffer forward to remove oldest log line
     }

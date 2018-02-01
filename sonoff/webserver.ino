@@ -708,8 +708,7 @@ void HandleModuleConfiguration()
 
   for (byte j = 0; j < GPIO_SENSOR_END; j++) {
     if (!GetUsedInModule(j, cmodule.gp.io)) {
-      snprintf_P(stemp, sizeof(stemp), kSensors[j]);
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SCRIPT_MODULE2, j, j, stemp);
+      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SCRIPT_MODULE2, j, j, GetTextIndexed(stemp, sizeof(stemp), j, kSensorNames));
       page += mqtt_data;
     }
   }

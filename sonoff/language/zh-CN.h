@@ -381,7 +381,6 @@
 #define D_PARTICALS_BEYOND "颗粒物直径大于"
 
 // sonoff_template.h
-// Max string length is 8 characters including suffixes
 #define D_SENSOR_NONE     "None"
 #define D_SENSOR_DHT11    "DHT11"
 #define D_SENSOR_AM2301   "AM2301"
