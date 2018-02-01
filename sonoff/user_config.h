@@ -83,7 +83,9 @@
   #define MQTT_PASS            "zhopa"           // [MqttPassword] Optional password
 #endif
 #define USE_PZEM_004T	       1                 //Serial Power monitor
+
 #ifdef USE_PZEM_004T
+#define USE_SERIAL
 #include "SoftwareSerial.h"
 #endif //USE_PZEM_004T
 

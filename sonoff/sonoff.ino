@@ -2517,7 +2517,7 @@ void GpioInit()
   analogWriteRange(Settings.pwm_range);      // Default is 1023 (Arduino.h)
   analogWriteFreq(Settings.pwm_frequency);   // Default is 1000 (core_esp8266_wiring_pwm.c)
 #ifdef USE_SERIAL
-  serial_flg = ((pin[GPIO_SERIAL_TX] < 99) && (pin[GPIO_SERIAL_RX_SDA] < 99));
+  serial_flg = ((pin[GPIO_SERIAL_TX] < 99) && (pin[GPIO_SERIAL_RX] < 99));
   if (serial_flg) {
 	// serial init
   }
