@@ -82,6 +82,10 @@
   #define MQTT_USER            "owntracks"       // [MqttUser] Optional user
   #define MQTT_PASS            "zhopa"           // [MqttPassword] Optional password
 #endif
+#define USE_PZEM_004T	       1                 //Serial Power monitor
+#ifdef USE_PZEM_004T
+#include "SoftwareSerial.h"
+#endif //USE_PZEM_004T
 
 #define MQTT_BUTTON_RETAIN     1                 // [ButtonRetain] Button may send retain flag (0 = off, 1 = on)
 #define MQTT_POWER_RETAIN      1                 // [PowerRetain] Power status message may send retain flag (0 = off, 1 = on)

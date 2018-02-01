@@ -474,6 +474,9 @@
 #define D_SENSOR_SPI_CS   "SPI CS"
 #define D_SENSOR_SPI_DC   "SPI DC"
 #define D_SENSOR_BACKLIGHT "BLight"
+#define D_SENSOR_SERIAL_TX "Ser TX"
+#define D_SENSOR_SERIAL_RX "Ser RX"
+
 
 // Units
 #define D_UNIT_AMPERE "A"

@@ -574,6 +574,15 @@ boolean GetUsedInModule(byte val, uint8_t *arr)
   if (!val) {
     return false;  // None
   }
+
+#ifndef USE_SERIAL
+  if (GPIO_SERIAL_TX == val) {
+    return true;
+  }
+  if (GPIO_SERIAL_RX == val) {
+    return true;
+  }
+#endif
 #ifndef USE_I2C
   if (GPIO_I2C_SCL == val) {
     return true;

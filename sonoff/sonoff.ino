@@ -180,6 +180,7 @@ uint8_t hlw_flg = 0;                        // Power monitor configured
 uint8_t i2c_flg = 0;                        // I2C configured
 uint8_t spi_flg = 0;                        // SPI configured
 uint8_t light_type = 0;                     // Light types
+uint8_t serial_flg =0;                      // Serial use
 
 boolean mdns_begun = false;
 
@@ -2515,7 +2516,12 @@ void GpioInit()
 
   analogWriteRange(Settings.pwm_range);      // Default is 1023 (Arduino.h)
   analogWriteFreq(Settings.pwm_frequency);   // Default is 1000 (core_esp8266_wiring_pwm.c)
-
+#ifdef USE_SERIAL
+  serial_flg = ((pin[GPIO_SERIAL_TX] < 99) && (pin[GPIO_SERIAL_RX_SDA] < 99));
+  if (serial_flg) {
+	// serial init
+  }
+#endif //USE_SERIAL
 #ifdef USE_I2C
   i2c_flg = ((pin[GPIO_I2C_SCL] < 99) && (pin[GPIO_I2C_SDA] < 99));
   if (i2c_flg) {
