@@ -145,8 +145,52 @@ Decoding 14 results
 #endif  // DEBUG_THEO
 
 /*********************************************************************************************\
- * General
+ * Miscellaneous
 \*********************************************************************************************/
+
+#ifdef ARDUINO_ESP8266_RELEASE_2_3_0
+// Functions not available in 2.3.0
+
+// http://clc-wiki.net/wiki/C_standard_library:string.h:memchr
+void* memchr(const void* ptr, int value, size_t num)
+{
+  unsigned char *p = (unsigned char*)ptr;
+  while (num--) {
+    if (*p != (unsigned char)value) {
+      p++;
+    } else {
+      return p;
+    }
+  }
+  return 0;
+}
+
+// http://clc-wiki.net/wiki/C_standard_library:string.h:strspn
+// Get span until any character in string
+size_t strcspn(const char *str1, const char *str2)
+{
+  size_t ret = 0;
+  while (*str1) {
+    if (strchr(str2, *str1)) {  // Slow
+      return ret;
+    } else {
+      str1++;
+      ret++;
+    }
+  }
+  return ret;
+}
+#endif  // ARDUINO_ESP8266_RELEASE_2_3_0
+
+// Get span until single character in string
+size_t strchrspn(const char *str1, int character)
+{
+  size_t ret = 0;
+  char *start = (char*)str1;
+  char *end = strchr(str1, character);
+  if (end) ret = end - start;
+  return ret;
+}
 
 char* dtostrfd(double number, unsigned char prec, char *s)
 {
@@ -252,6 +296,122 @@ char* GetPowerDevice(char* dest, uint8_t idx, size_t size, uint8_t option)
 char* GetPowerDevice(char* dest, uint8_t idx, size_t size)
 {
   return GetPowerDevice(dest, idx, size, 0);
+}
+
+float ConvertTemp(float c)
+{
+  float result = c;
+
+  if (!isnan(c) && Settings.flag.temperature_conversion) {
+    result = c * 1.8 + 32;  // Fahrenheit
+  }
+  return result;
+}
+
+char TempUnit()
+{
+  return (Settings.flag.temperature_conversion) ? 'F' : 'C';
+}
+
+double FastPrecisePow(double a, double b)
+{
+  // https://martin.ankerl.com/2012/01/25/optimized-approximative-pow-in-c-and-cpp/
+  // calculate approximation with fraction of the exponent
+  int e = (int)b;
+  union {
+    double d;
+    int x[2];
+  } u = { a };
+  u.x[1] = (int)((b - e) * (u.x[1] - 1072632447) + 1072632447);
+  u.x[0] = 0;
+  // exponentiation by squaring with the exponent's integer part
+  // double r = u.d makes everything much slower, not sure why
+  double r = 1.0;
+  while (e) {
+    if (e & 1) {
+      r *= a;
+    }
+    a *= a;
+    e >>= 1;
+  }
+  return r * u.d;
+}
+
+char* GetTextIndexed(char* destination, size_t destination_size, uint16_t index, const char* haystack)
+{
+  // Returns empty string if not found
+  // Returns text of found
+  char* write = destination;
+  const char* read = haystack;
+
+  index++;
+  while (index--) {
+    size_t size = destination_size -1;
+    write = destination;
+    char ch = '.';
+    while ((ch != '\0') && (ch != '|')) {
+      ch = pgm_read_byte(read++);
+      if (size && (ch != '|'))  {
+        *write++ = ch;
+        size--;
+      }
+    }
+    if (0 == ch) {
+      if (index) {
+        write = destination;
+      }
+      break;
+    }
+  }
+  *write = '\0';
+  return destination;
+}
+
+int GetCommandCode(char* destination, size_t destination_size, const char* needle, const char* haystack)
+{
+  // Returns -1 of not found
+  // Returns index and command if found
+  int result = -1;
+  const char* read = haystack;
+  char* write = destination;
+
+  while (true) {
+    result++;
+    size_t size = destination_size -1;
+    write = destination;
+    char ch = '.';
+    while ((ch != '\0') && (ch != '|')) {
+      ch = pgm_read_byte(read++);
+      if (size && (ch != '|'))  {
+        *write++ = ch;
+        size--;
+      }
+    }
+    *write = '\0';
+    if (!strcasecmp(needle, destination)) {
+      break;
+    }
+    if (0 == ch) {
+      result = -1;
+      break;
+    }
+  }
+  return result;
+}
+
+void SetSerialBaudrate(int baudrate)
+{
+  if (Serial.baudRate() != baudrate) {
+    if (seriallog_level) {
+      snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION D_SET_BAUDRATE_TO " %d"), baudrate);
+      AddLog(LOG_LEVEL_INFO);
+    }
+    delay(100);
+    Serial.flush();
+    Serial.begin(baudrate);
+    delay(10);
+    Serial.println();
+  }
 }
 
 /*********************************************************************************************\
@@ -1115,127 +1275,6 @@ void RtcInit()
   TickerRtc.attach(1, RtcSecond);
 }
 
-/*********************************************************************************************\
- * Miscellaneous
-\*********************************************************************************************/
-
-float ConvertTemp(float c)
-{
-  float result = c;
-
-  if (!isnan(c) && Settings.flag.temperature_conversion) {
-    result = c * 1.8 + 32;  // Fahrenheit
-  }
-  return result;
-}
-
-char TempUnit()
-{
-  return (Settings.flag.temperature_conversion) ? 'F' : 'C';
-}
-
-double FastPrecisePow(double a, double b)
-{
-  // https://martin.ankerl.com/2012/01/25/optimized-approximative-pow-in-c-and-cpp/
-  // calculate approximation with fraction of the exponent
-  int e = (int)b;
-  union {
-    double d;
-    int x[2];
-  } u = { a };
-  u.x[1] = (int)((b - e) * (u.x[1] - 1072632447) + 1072632447);
-  u.x[0] = 0;
-  // exponentiation by squaring with the exponent's integer part
-  // double r = u.d makes everything much slower, not sure why
-  double r = 1.0;
-  while (e) {
-    if (e & 1) {
-      r *= a;
-    }
-    a *= a;
-    e >>= 1;
-  }
-  return r * u.d;
-}
-
-char* GetTextIndexed(char* destination, size_t destination_size, uint16_t index, const char* haystack)
-{
-  // Returns empty string if not found
-  // Returns text of found
-  char* write = destination;
-  const char* read = haystack;
-
-  index++;
-  while (index--) {
-    size_t size = destination_size -1;
-    write = destination;
-    char ch = '.';
-    while ((ch != '\0') && (ch != '|')) {
-      ch = pgm_read_byte(read++);
-      if (size && (ch != '|'))  {
-        *write++ = ch;
-        size--;
-      }
-    }
-    if (0 == ch) {
-      if (index) {
-        write = destination;
-      }
-      break;
-    }
-  }
-  *write = '\0';
-  return destination;
-}
-
-int GetCommandCode(char* destination, size_t destination_size, const char* needle, const char* haystack)
-{
-  // Returns -1 of not found
-  // Returns index and command if found
-  int result = -1;
-  const char* read = haystack;
-  char* write = destination;
-  size_t maxcopy = (strlen(needle) > destination_size) ? destination_size : strlen(needle);
-
-  while (true) {
-    result++;
-    size_t size = destination_size -1;
-    write = destination;
-    char ch = '.';
-    while ((ch != '\0') && (ch != '|')) {
-      ch = pgm_read_byte(read++);
-      if (size && (ch != '|'))  {
-        *write++ = ch;
-        size--;
-      }
-    }
-    *write = '\0';
-    if (!strcasecmp(needle, destination)) {
-      break;
-    }
-    if (0 == ch) {
-      result = -1;
-      break;
-    }
-  }
-  return result;
-}
-
-void SetSerialBaudrate(int baudrate)
-{
-  if (Serial.baudRate() != baudrate) {
-    if (seriallog_level) {
-      snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION D_SET_BAUDRATE_TO " %d"), baudrate);
-      AddLog(LOG_LEVEL_INFO);
-    }
-    delay(100);
-    Serial.flush();
-    Serial.begin(baudrate);
-    delay(10);
-    Serial.println();
-  }
-}
-
 #ifndef USE_ADC_VCC
 /*********************************************************************************************\
  * ADC support
@@ -1294,6 +1333,32 @@ boolean Xsns02(byte function)
  *
 \*********************************************************************************************/
 
+#ifdef USE_WEBSERVER
+void GetLog(byte idx, char** entry_pp, size_t* len_p)
+{
+  char* entry_p = NULL;
+  size_t len = 0;
+
+  if (idx) {
+    char* it = web_log;
+    do {
+      byte cur_idx = *it;
+      it++;
+      size_t tmp = strchrspn(it, '\1');
+      tmp++;                             // Skip terminating '\1'
+      if (cur_idx == idx) {              // Found the requested entry
+        len = tmp;
+        entry_p = it;
+        break;
+      }
+      it += tmp;
+    } while (it < web_log + WEB_LOG_SIZE && *it != '\0');
+  }
+  *entry_pp = entry_p;
+  *len_p = len;
+}
+#endif  // USE_WEBSERVER
+
 void Syslog()
 {
   // Destroys log_data
@@ -1320,20 +1385,28 @@ void Syslog()
 
 void AddLog(byte loglevel)
 {
-  char mxtime[9];  // 13:45:21
+  char mxtime[10];  // "13:45:21 "
 
-  snprintf_P(mxtime, sizeof(mxtime), PSTR("%02d" D_HOUR_MINUTE_SEPARATOR "%02d" D_MINUTE_SECOND_SEPARATOR "%02d"), RtcTime.hour, RtcTime.minute, RtcTime.second);
+  snprintf_P(mxtime, sizeof(mxtime), PSTR("%02d" D_HOUR_MINUTE_SEPARATOR "%02d" D_MINUTE_SECOND_SEPARATOR "%02d "), RtcTime.hour, RtcTime.minute, RtcTime.second);
 
   if (loglevel <= seriallog_level) {
-    Serial.printf("%s %s\n", mxtime, log_data);
+    Serial.printf("%s%s\n", mxtime, log_data);
   }
 #ifdef USE_WEBSERVER
   if (Settings.webserver && (loglevel <= Settings.weblog_level)) {
-    web_log[web_log_index] = String(mxtime) + " " + String(log_data);
-    web_log_index++;
-    if (web_log_index > MAX_LOG_LINES -1) {
-      web_log_index = 0;
+    // Delimited, zero-terminated buffer of log lines.
+    // Each entry has this format: [index][log data]['\1']
+    if (!web_log_index) web_log_index++;   // Index 0 is not allowed as it is the end of char string
+    while (web_log_index == web_log[0] ||  // If log already holds the next index, remove it
+           strlen(web_log) + strlen(log_data) + 13 > WEB_LOG_SIZE)  // 13 = web_log_index + mxtime + '\1' + '\0'
+    {
+      char* it = web_log;
+      it++;                                // Skip web_log_index
+      it += strchrspn(it, '\1');           // Skip log line
+      it++;                                // Skip delimiting "\1"
+      memmove(web_log, it, WEB_LOG_SIZE -(it-web_log));  // Move buffer forward to remove oldest log line
     }
+    snprintf_P(web_log, sizeof(web_log), PSTR("%s%c%s%s\1"), web_log, web_log_index++, mxtime, log_data);
   }
 #endif  // USE_WEBSERVER
   if ((WL_CONNECTED == WiFi.status()) && (loglevel <= syslog_level)) {
