@@ -376,12 +376,11 @@
 #define D_SHT1X_FOUND "发现 SHT1X 传感器"
 
 // xsns_18_pms5003.ino
-#define D_STANDARD_CONCENTRATION "标准颗粒物浓度"
-#define D_ENVIRONMENTAL_CONCENTRATION "大气环境下浓度"
+#define D_STANDARD_CONCENTRATION "CF-1 PM"     // Standard Particle CF-1 Particle Matter
+#define D_ENVIRONMENTAL_CONCENTRATION "PM"     // Environmetal Particle Matter
 #define D_PARTICALS_BEYOND "颗粒物直径大于"
 
 // sonoff_template.h
-// Max string length is 8 characters including suffixes
 #define D_SENSOR_NONE     "None"
 #define D_SENSOR_DHT11    "DHT11"
 #define D_SENSOR_AM2301   "AM2301"

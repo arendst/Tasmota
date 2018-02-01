@@ -119,22 +119,9 @@ boolean XsnsCall(byte Function)
   boolean result = false;
 
   for (byte x = 0; x < xsns_present; x++) {
-    if (FUNC_WEB_APPEND == Function) {
-      mqtt_data[0] = '\0';
-    }
     result = xsns_func_ptr[x](Function);
     if (result) {
       break;
-    }
-    if ((FUNC_WEB_APPEND == Function) && strlen(mqtt_data)) {
-      if (D_DECIMAL_SEPARATOR[0] != '.') {
-        for (int i = 0; i < strlen(mqtt_data); i++) {
-          if ('.' == mqtt_data[i]) {
-            mqtt_data[i] = D_DECIMAL_SEPARATOR[0];
-          }
-        }
-      }
-      WebServer->sendContent(mqtt_data);
     }
   }
 

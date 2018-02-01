@@ -54,7 +54,7 @@
 #define D_BLINK "Blink"
 #define D_BLINKOFF "BlinkOff"
 #define D_BOOT_COUNT "Conteo Reinicios"
-#define D_BRIGHTLIGHT "Brillo"
+#define D_BRIGHTLIGHT "Brillante"
 #define D_BUTTON "Botón"
 #define D_BY "por"                    // Written by me
 #define D_BYTES "Bytes"
@@ -79,7 +79,7 @@
 #define D_ERASE "Borrar"
 #define D_ERROR "Error"
 #define D_FAHRENHEIT "Fahrenheit"
-#define D_FAILED "Fallo"
+#define D_FAILED "Falló"
 #define D_FALLBACK "Fallback"
 #define D_FALLBACK_TOPIC "FallbackTopic"
 #define D_FALSE "Falso"
@@ -376,12 +376,11 @@
 #define D_SHT1X_FOUND "SHT1X encontrado"
 
 // xsns_18_pms5003.ino
-#define D_STANDARD_CONCENTRATION "Concentración Standard"
-#define D_ENVIRONMENTAL_CONCENTRATION "Concentración en Medio Ambiente"
-#define D_PARTICALS_BEYOND "Partículas sobre"
+#define D_STANDARD_CONCENTRATION "CF-1 PM"     // Standard Particle CF-1 Particle Matter
+#define D_ENVIRONMENTAL_CONCENTRATION "PM"     // Environmetal Particle Matter
+#define D_PARTICALS_BEYOND "Partículas"
 
 // sonoff_template.h
-// Max string length is 8 characters including suffixes
 #define D_SENSOR_NONE     "Ninguno"
 #define D_SENSOR_DHT11    "DHT11"
 #define D_SENSOR_AM2301   "AM2301"
