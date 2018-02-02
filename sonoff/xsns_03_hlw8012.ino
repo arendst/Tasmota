@@ -688,6 +688,7 @@ void HlwShow(boolean json, boolean option)
   char speriod[20];
 
   HlwReadEnergy(option, total_energy, daily_energy, energy, watts, voltage, current, power_factor);
+
   dtostrfd(total_energy, Settings.flag2.energy_resolution, stotal_energy);
   dtostrfd(daily_energy, Settings.flag2.energy_resolution, sdaily_energy);
   dtostrfd(energy, Settings.flag2.wattage_resolution, senergy);
