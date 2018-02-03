@@ -998,17 +998,16 @@ String GetBuildDateAndTime()
 {
   // "2017-03-07T11:08:02" - ISO8601:2004
   char bdt[21];
-  char *str;
   char *p;
-  char *smonth;
   char mdate[] = __DATE__;  // "Mar  7 2017"
+  char *smonth = mdate;
   int month;
-  int day;
-  int year;
+  int day = 0;
+  int year = 0;
 
 //  sscanf(mdate, "%s %d %d", bdt, &day, &year);  // Not implemented in 2.3.0 and probably too many code
   byte i = 0;
-  for (str = strtok_r(mdate, " ", &p); str && i < 3; str = strtok_r(NULL, " ", &p)) {
+  for (char * str = strtok_r(mdate, " ", &p); str && i < 3; str = strtok_r(NULL, " ", &p)) {
     switch (i++) {
     case 0:  // Month
       smonth = str;

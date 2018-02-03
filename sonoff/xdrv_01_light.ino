@@ -677,7 +677,7 @@ void LightSetPower()
 void LightAnimate()
 {
   uint8_t cur_col[5];
-  uint16_t light_still_on;
+  uint16_t light_still_on = 0;
 
   strip_timer_counter++;
   if (!light_power) {                   // Power Off

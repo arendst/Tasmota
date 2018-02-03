@@ -296,7 +296,7 @@ void PzemSend(uint8_t cmd)
   PZEMCommand pzem;
 
   pzem.command = cmd;
-  for (int i = 0; i < sizeof(pzem.addr); i++) {
+  for (unsigned int i = 0; i < sizeof(pzem.addr); i++) {
     pzem.addr[i] = pzem_ip[i];
   }
   pzem.data = 0;
@@ -310,7 +310,7 @@ void PzemSend(uint8_t cmd)
 
 bool PzemReceiveReady()
 {
-  return PzemSerial->available() >= sizeof(PZEMCommand);
+  return PzemSerial->available() >= (int)sizeof(PZEMCommand);
 }
 
 bool PzemRecieve(uint8_t resp, float *data)
@@ -511,7 +511,7 @@ void EnergySetPowerSteadyCounter()
 void EnergyMarginCheck()
 {
   uint16_t energy_daily_u;
-  uint16_t energy_power_u;
+  uint16_t energy_power_u = 0;
   uint16_t energy_voltage_u;
   uint16_t energy_current_u;
   boolean flag;
@@ -833,9 +833,9 @@ boolean EnergyCommand()
   }
   if (!status_flag) {
     if (Settings.flag.value_units) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE_SPACE_UNIT, command, nvalue, GetTextIndexed(sunit, sizeof(sunit), unit, kUnitNames));
+      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_LVALUE_SPACE_UNIT, command, nvalue, GetTextIndexed(sunit, sizeof(sunit), unit, kUnitNames));
     } else {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, nvalue);
+      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_LVALUE, command, nvalue);
     }
   }
   return serviced;

@@ -132,7 +132,6 @@ boolean IrHvacToshiba(const char *HVAC_Mode, const char *HVAC_FanMode, boolean H
   byte data[HVAC_TOSHIBA_DATALEN] = {0xF2, 0x0D, 0x03, 0xFC, 0x01, 0x00, 0x00, 0x00, 0x00};
 
   char *p;
-  char *token;
   uint8_t mode;
 
   if (HVAC_Mode == NULL) {
@@ -176,7 +175,7 @@ boolean IrHvacToshiba(const char *HVAC_Mode, const char *HVAC_FanMode, boolean H
   else {
     Temp = HVAC_Temp;
   }
-  data[5] = (byte)Temp - 17 << 4;
+  data[5] = (byte)(Temp - 17) << 4;
 
   data[HVAC_TOSHIBA_DATALEN - 1] = 0;
   for (int x = 0; x < HVAC_TOSHIBA_DATALEN - 1; x++) {
@@ -219,7 +218,6 @@ boolean IrHvacToshiba(const char *HVAC_Mode, const char *HVAC_FanMode, boolean H
 boolean IrHvacMitsubishi(const char *HVAC_Mode, const char *HVAC_FanMode, boolean HVAC_Power, int HVAC_Temp)
 {
   char *p;
-  char *token;
   uint8_t mode;
 
   mitsubir->stateReset();
@@ -286,12 +284,6 @@ boolean IrSendCommand()
   uint32_t bits = 0;
   uint32_t data = 0;
 
-  const char *HVAC_Mode;
-  const char *HVAC_FanMode;
-  const char *HVAC_Vendor;
-  int HVAC_Temp = 21;
-  boolean HVAC_Power = true;
-
   for (uint16_t i = 0; i <= sizeof(dataBufUc); i++) {
     dataBufUc[i] = toupper(XdrvMailbox.data[i]);
   }
@@ -349,6 +341,11 @@ boolean IrSendCommand()
   }
 #ifdef USE_IR_HVAC
   else if (!strcasecmp_P(XdrvMailbox.topic, PSTR(D_CMND_IRHVAC))) {
+    const char *HVAC_Mode;
+    const char *HVAC_FanMode;
+    const char *HVAC_Vendor;
+    int HVAC_Temp = 21;
+    boolean HVAC_Power = true;
     if (XdrvMailbox.data_len) {
       StaticJsonBuffer<164> jsonBufer;
       JsonObject &root = jsonBufer.parseObject(dataBufUc);

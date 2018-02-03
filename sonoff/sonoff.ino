@@ -583,7 +583,6 @@ boolean MqttCommand(boolean grpflg, char *type, uint16_t index, char *dataBuf, u
   char command [CMDSZ];
   boolean serviced = true;
   char stemp1[TOPSZ];
-  char stemp2[10];
   char scommand[CMDSZ];
   uint16_t i;
 
@@ -797,9 +796,7 @@ void MqttDataCallback(char* topic, byte* data, unsigned int data_len)
   char command [CMDSZ];
   char stemp1[TOPSZ];
   char *p;
-  char *mtopic = NULL;
   char *type = NULL;
-  byte otype = 0;
   byte ptype = 0;
   byte jsflg = 0;
   byte lines = 1;
@@ -999,12 +996,12 @@ void MqttDataCallback(char* topic, byte* data, unsigned int data_len)
 //        type = NULL;
 //      }
     }
-    else if ((CMND_SETOPTION == command_code) && ((index >= 0) && (index <= 20)) || ((index > 31) && (index <= P_MAX_PARAM8 +31))) {
+    else if ((CMND_SETOPTION == command_code) && ((index <= 20) || ((index > 31) && (index <= P_MAX_PARAM8 + 31)))) {
       if (index <= 31) {
         ptype = 0;   // SetOption0 .. 31
       } else {
         ptype = 1;   // SetOption32 ..
-        index = index -32;
+        index = index - 32;
       }
       if (payload >= 0) {
         if (0 == ptype) {  // SetOption0 .. 31
@@ -1205,7 +1202,7 @@ void MqttDataCallback(char* topic, byte* data, unsigned int data_len)
     else if (CMND_PWMRANGE == command_code) {
       if ((1 == payload) || ((payload > 254) && (payload < 1024))) {
         Settings.pwm_range = (1 == payload) ? PWM_RANGE : payload;
-        for (byte i; i < MAX_PWMS; i++) {
+        for (byte i = 0; i < MAX_PWMS; i++) {
           if (Settings.pwm_value[i] > Settings.pwm_range) {
             Settings.pwm_value[i] = Settings.pwm_range;
           }
@@ -1219,7 +1216,7 @@ void MqttDataCallback(char* topic, byte* data, unsigned int data_len)
         RtcSettings.pulse_counter[index -1] = payload16;
         Settings.pulse_counter[index -1] = payload16;
       }
-      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_NVALUE, command, index, RtcSettings.pulse_counter[index -1]);
+      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_LVALUE, command, index, RtcSettings.pulse_counter[index -1]);
     }
     else if ((CMND_COUNTERTYPE == command_code) && (index > 0) && (index <= MAX_COUNTERS)) {
       if ((payload >= 0) && (payload <= 1) && (pin[GPIO_CNTR1 + index -1] < 99)) {
@@ -1545,7 +1542,6 @@ boolean send_button_power(byte key, byte device, byte state)
 
   char stopic[TOPSZ];
   char scommand[CMDSZ];
-  char stemp1[10];
   boolean result = false;
 
   char *key_topic = (key) ? Settings.switch_topic : Settings.button_topic;
@@ -2451,7 +2447,7 @@ void SerialInput()
 
     else if (serial_in_byte == '\n') {
       serial_in_buffer[serial_in_byte_counter] = 0;  // serial data completed
-      seriallog_level = (Settings.seriallog_level < LOG_LEVEL_INFO) ? LOG_LEVEL_INFO : Settings.seriallog_level;
+      seriallog_level = (Settings.seriallog_level < LOG_LEVEL_INFO) ? (byte)LOG_LEVEL_INFO : Settings.seriallog_level;
       snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_COMMAND "%s"), serial_in_buffer);
       AddLog(LOG_LEVEL_INFO);
       ExecuteCommand(serial_in_buffer);
@@ -2721,7 +2717,7 @@ void setup()
         SetDevicePower(power);
         break;
       case POWER_ALL_SAVED_TOGGLE:
-        power = Settings.power & ((1 << devices_present) -1) ^ POWER_MASK;
+        power = (Settings.power & ((1 << devices_present) -1)) ^ POWER_MASK;
         if (Settings.flag.save_state) {
           SetDevicePower(power);
         }

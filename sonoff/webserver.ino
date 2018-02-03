@@ -576,7 +576,7 @@ void HandleAjaxStatusRefresh()
   snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{t}"));
   XsnsCall(FUNC_WEB_APPEND);
   if (D_DECIMAL_SEPARATOR[0] != '.') {
-    for (int i = 0; i < strlen(mqtt_data); i++) {
+    for (unsigned int i = 0; i < strlen(mqtt_data); i++) {
       if ('.' == mqtt_data[i]) {
         mqtt_data[i] = D_DECIMAL_SEPARATOR[0];
       }
