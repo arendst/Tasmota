@@ -548,7 +548,7 @@ void HueConfigResponse(String *response)
   response->replace("{id", GetHueUserId());
 }
 
-void HueConfig(String *path)
+void HueConfig(String *path __attribute__((unused)))
 {
   String response = "";
   HueConfigResponse(&response);
@@ -600,7 +600,7 @@ void HueGlobalConfig(String *path)
   WebServer->send(200, FPSTR(HDR_CTYPE_JSON), response);
 }
 
-void HueAuthentication(String *path)
+void HueAuthentication(String *path __attribute__((unused)))
 {
   char response[38];
 
@@ -616,7 +616,6 @@ void HueLights(String *path)
   String response;
   uint8_t device = 1;
   uint16_t tmp = 0;
-  int16_t pos = 0;
   float bri = 0;
   float hue = 0;
   float sat = 0;
@@ -624,7 +623,6 @@ void HueLights(String *path)
   bool resp = false;
   bool on = false;
   bool change = false;
-  char id[4];
   uint8_t maxhue = (devices_present > MAX_FRIENDLYNAMES) ? MAX_FRIENDLYNAMES : devices_present;
 
   path->remove(0,path->indexOf("/lights"));          // Remove until /lights
