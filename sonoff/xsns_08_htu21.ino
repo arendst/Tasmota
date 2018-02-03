@@ -206,6 +206,7 @@ float HtuCompensatedHumidity(float humidity, float temperature)
   if(temperature > 0.00 && temperature < 80.00) {
     return (-0.15)*(25-temperature)+humidity;
   }
+  return humidity;
 }
 
 /********************************************************************************************/

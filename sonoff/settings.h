@@ -152,12 +152,12 @@ struct SYSCFG {
   uint16_t      domoticz_update_timer;     // 340
   uint16_t      pwm_range;                 // 342
 
-  unsigned long domoticz_relay_idx[MAX_DOMOTICZ_IDX]; // 344
-  unsigned long domoticz_key_idx[MAX_DOMOTICZ_IDX];   // 354
+  unsigned long domoticz_relay_idx[MAX_DOMOTICZ_IDX];  // 344
+  unsigned long domoticz_key_idx[MAX_DOMOTICZ_IDX];    // 354
 
-  unsigned long hlw_power_calibration;     // 364
-  unsigned long hlw_voltage_calibration;   // 368
-  unsigned long hlw_current_calibration;   // 36C
+  unsigned long energy_power_calibration;  // 364
+  unsigned long energy_voltage_calibration;  // 368
+  unsigned long energy_current_calibration;  // 36C
   unsigned long energy_kWhtoday;           // 370
   unsigned long energy_kWhyesterday;       // 374
   uint16_t      energy_kWhdoy;             // 378
@@ -168,11 +168,11 @@ struct SYSCFG {
   uint16_t      energy_min_current;        // 382
   uint16_t      energy_max_current;        // 384
   uint16_t      energy_max_power_limit;    // 386 MaxPowerLimit
-  uint16_t      energy_max_power_limit_hold;        // 388 MaxPowerLimitHold
-  uint16_t      energy_max_power_limit_window;      // 38A MaxPowerLimitWindow
-  uint16_t      energy_max_power_safe_limit;        // 38C MaxSafePowerLimit
-  uint16_t      energy_max_power_safe_limit_hold;   // 38E MaxSafePowerLimitHold
-  uint16_t      energy_max_power_safe_limit_window; // 390 MaxSafePowerLimitWindow
+  uint16_t      energy_max_power_limit_hold;         // 388 MaxPowerLimitHold
+  uint16_t      energy_max_power_limit_window;       // 38A MaxPowerLimitWindow
+  uint16_t      energy_max_power_safe_limit;         // 38C MaxSafePowerLimit
+  uint16_t      energy_max_power_safe_limit_hold;    // 38E MaxSafePowerLimitHold
+  uint16_t      energy_max_power_safe_limit_window;  // 390 MaxSafePowerLimitWindow
   uint16_t      energy_max_energy;         // 392 MaxEnergy
   uint16_t      energy_max_energy_start;   // 394 MaxEnergyStart
   uint16_t      mqtt_retry;                // 396

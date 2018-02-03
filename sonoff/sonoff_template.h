@@ -175,6 +175,7 @@ enum SupportedModules {
   ARILUX_LC11,
   SONOFF_DUAL_R2,
   ARILUX_LC06,
+  SONOFF_S31,
   MAXMODULE };
 
 /********************************************************************************************/
@@ -199,6 +200,7 @@ const uint8_t kNiceList[MAXMODULE] PROGMEM = {
   SONOFF_DUAL,
   SONOFF_DUAL_R2,
   SONOFF_POW,
+  SONOFF_S31,
   SONOFF_4CH,
   SONOFF_4CHPRO,
   SONOFF_SV,
@@ -771,6 +773,17 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_PWM1,        // GPIO14 RGB LED Red
      GPIO_USER,        // GPIO15 RGBW LED White
      0, 0
+  },
+  { "Sonoff S31",      // Sonoff S31 (ESP8266)
+     GPIO_KEY1,        // GPIO00 Button
+     0,                // GPIO01 Serial RXD 4800 baud 8E1 CSE7766 energy sensor
+     0,
+     0,                // GPIO03 Serial TXD
+     0, 0,
+     0, 0, 0, 0, 0, 0, // Flash connection
+     GPIO_REL1,        // GPIO12 Red Led and Relay (0 = Off, 1 = On)
+     GPIO_LED1_INV,    // GPIO13 Green Led (0 = On, 1 = Off)
+     0, 0, 0, 0
   }
 };
 

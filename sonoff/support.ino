@@ -408,7 +408,7 @@ void SetSerialBaudrate(int baudrate)
     }
     delay(100);
     Serial.flush();
-    Serial.begin(baudrate);
+    Serial.begin(baudrate, serial_config);
     delay(10);
     Serial.println();
   }
@@ -998,17 +998,15 @@ String GetBuildDateAndTime()
 {
   // "2017-03-07T11:08:02" - ISO8601:2004
   char bdt[21];
-  char *str;
   char *p;
-  char *smonth;
   char mdate[] = __DATE__;  // "Mar  7 2017"
-  int month;
-  int day;
-  int year;
+  char *smonth = mdate;
+  int day = 0;
+  int year = 0;
 
-//  sscanf(mdate, "%s %d %d", bdt, &day, &year);  // Not implemented in 2.3.0 and probably too many code
+  // sscanf(mdate, "%s %d %d", bdt, &day, &year);  // Not implemented in 2.3.0 and probably too much code
   byte i = 0;
-  for (str = strtok_r(mdate, " ", &p); str && i < 3; str = strtok_r(NULL, " ", &p)) {
+  for (char *str = strtok_r(mdate, " ", &p); str && i < 3; str = strtok_r(NULL, " ", &p)) {
     switch (i++) {
     case 0:  // Month
       smonth = str;
@@ -1020,7 +1018,7 @@ String GetBuildDateAndTime()
       year = atoi(str);
     }
   }
-  month = (strstr(kMonthNamesEnglish, smonth) -kMonthNamesEnglish) /3 +1;
+  int month = (strstr(kMonthNamesEnglish, smonth) -kMonthNamesEnglish) /3 +1;
   snprintf_P(bdt, sizeof(bdt), PSTR("%d" D_YEAR_MONTH_SEPARATOR "%02d" D_MONTH_DAY_SEPARATOR "%02d" D_DATE_TIME_SEPARATOR "%s"), year, month, day, __TIME__);
   return String(bdt);
 }
