@@ -56,7 +56,7 @@ int32_t DhtExpectPulse(byte sensor, bool level)
   int32_t count = 0;
 
   while (digitalRead(Dht[sensor].pin) == level) {
-    if (count++ >= dht_max_cycles) {
+    if (count++ >= (int32_t)dht_max_cycles) {
       return -1;  // Timeout
     }
   }
