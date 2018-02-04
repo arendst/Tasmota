@@ -1428,6 +1428,15 @@ void AddLog_P(byte loglevel, const char *formatP, const char *formatP2)
   AddLog(loglevel);
 }
 
+void AddLogSerial(byte loglevel)
+{
+  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_SERIAL D_RECEIVED));
+  for (byte i = 0; i < serial_in_byte_counter; i++) {
+    snprintf_P(log_data, sizeof(log_data), PSTR("%s %02X"), log_data, serial_in_buffer[i]);
+  }
+  AddLog(loglevel);
+}
+
 /*********************************************************************************************\
  *
 \*********************************************************************************************/
