@@ -2,6 +2,8 @@
  * Update TasmotaSerial library to 1.1.0
  * Rename commands HlwPCal, HlwUCal and HlwICal to PowerCal, VoltageCal and CurrentCal to be used for both Pow and S31 calibration
  * Rename commands HlwPSet, HlwUSet and HlwISet to PowerSet, VoltageSet and CurrentSet to be used for both Pow and S31 calibration
+ * Fix some Energy Monitoring related issues
+ * Add command SetOption21 1 to allow Energy Monitoring when power is off on Sonoff Pow and Sonoff S31 (#1420)
  * Add support for Sonoff S31 Smart Socket with Power Consumption Detection (#1626)
  * Fix IRReceive Data value (#1663)
  * Fix compiler warnings (#1774)
