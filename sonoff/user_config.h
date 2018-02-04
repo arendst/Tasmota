@@ -82,10 +82,12 @@
   #define MQTT_USER            "owntracks"       // [MqttUser] Optional user
   #define MQTT_PASS            "zhopa"           // [MqttPassword] Optional password
 #endif
+
+
 #define USE_PZEM_004T	       1                 //Serial Power monitor
 
 #ifdef USE_PZEM_004T
-#define USE_SERIAL
+#define USE_SERIAL           1
 #include "SoftwareSerial.h"
 #endif //USE_PZEM_004T
 

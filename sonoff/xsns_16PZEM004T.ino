@@ -23,7 +23,7 @@
  * Peacefair PZEM-004T Energy monitor
  *
  *
- * https://github.com/olehs/PZEM004T
+ * library https://github.com/olehs/PZEM004T 
 \*********************************************************************************************/
 
 #include "PZEM004T.h"
@@ -32,52 +32,95 @@ IPAddress PZEM004T_ip(192, 168, 1, 1);
 PZEM004T * pzem = NULL;
 
 bool PZEM004TInit() {
-    AddLog_P(LOG_LEVEL_INFO, __FUNCTION__);
-    return(serial_flg != 0);
+    return(PZEM_004T_flg != 0);
 }
 
 boolean PZEM004TPrep() {
-    AddLog_P(LOG_LEVEL_INFO, __FUNCTION__);
-
-    if (!pzem) {
-        pzem = new PZEM004T(pin[GPIO_SERIAL_RX], pin[GPIO_SERIAL_TX]);
+    static byte pin_GPIO_PZEM004T_RX = 99;
+    static byte pin_GPIO_PZEM004T_TX = 99;
+    if (PZEM_004T_flg){
+        if ((pin_GPIO_PZEM004T_RX != pin[GPIO_PZEM004T_RX]) || (pin_GPIO_PZEM004T_TX != pin[GPIO_PZEM004T_TX])) {
+            if (pzem) {
+                delete pzem;
+                pzem = NULL;
+            }
+            // D6 GPIO-12 TX
+            // D7 GPIO-13 RX
+            snprintf_P(log_data, sizeof(log_data), PSTR("prepare RX:%d TX:%d"), pin[GPIO_PZEM004T_RX], pin[GPIO_PZEM004T_TX]);
+            AddLog(LOG_LEVEL_INFO);
+            pzem = new PZEM004T(pin[GPIO_PZEM004T_RX], pin[GPIO_PZEM004T_TX]);
+            if (pzem) {
+                if (!pzem->setAddress(PZEM004T_ip)) {
+                    snprintf_P(log_data, sizeof(log_data), PSTR("Failed to set address"));
+                    AddLog(LOG_LEVEL_INFO);
+                }
+            }
+        }
     }
-    return(serial_flg != 0);
+    return(PZEM_004T_flg != 0);
+}
+void PZEM004TRead(float * rvoltage, float * rcurrent, float * rpower, float * renergy) {
+    static float voltage = -1;
+    static float current = -1;
+    static float power = -1;
+    static float energy = -1;
+    static unsigned long last_get_power = 0;
+    if ((pzem) && (PZEM_004T_flg != 0) && (millis() > last_get_power + 5000)) {
+        while (1) {
+            float r = pzem->voltage(PZEM004T_ip);
+            if (r >= 0.0) {
+                voltage = r;
+            } else {
+                //AddLog_P(LOG_LEVEL_INFO, __FUNCTION__,"E1");
+                break;
+            }
+            delay(50);
+            r = pzem->current(PZEM004T_ip);
+            if (r >= 0.0) {
+                current = r;
+            } else {
+                //AddLog_P(LOG_LEVEL_INFO, __FUNCTION__,"E2");
+                //break;
+            }
+            delay(50);
+            r = pzem->power(PZEM004T_ip);
+            if (r >= 0.0) {
+                power = r;
+            } else {
+                //AddLog_P(LOG_LEVEL_INFO, __FUNCTION__,"E3");
+                //break;
+            }
+            delay(50);
+            r = pzem->energy(PZEM004T_ip);
+            if (r >= 0.0) {
+                energy = r;
+            } else {
+                //AddLog_P(LOG_LEVEL_INFO, __FUNCTION__,"E4");
+                //break;
+            }
+            break;
+        }
+        last_get_power = millis();
+    }
+    *rvoltage = voltage;
+    *rcurrent = current;
+    *rpower = power;
+    *renergy = energy;
 }
 
 void PZEM004TShowJSON() {
-    AddLog_P(LOG_LEVEL_INFO, __FUNCTION__);
-    if ((pzem) && (serial_flg != 0)) {
-        float r;
-        static float voltage = 0.0;
-        static float current = 0.0;
-        static float power = 0.0;
-        static float energy = 0.0;
+    if ((pzem) && (PZEM_004T_flg != 0)) {
+        float voltage;
+        float current;
+        float power;
+        float energy;
 
         char svoltage[10];
         char scurrent[10];
         char spower[10];
         char senergy[10];
 
-        r = pzem->voltage(PZEM004T_ip);
-        if (r >= 0) {
-            voltage = r;
-        }
-
-        r = pzem->current(PZEM004T_ip);
-        if (r >= 0) {
-            current = r;
-        }
-
-        r = pzem->power(PZEM004T_ip);
-        if (r >= 0) {
-            power = r;
-        }
-
-        r = pzem->energy(PZEM004T_ip);
-        if (r >= 0) {
-            energy = r;
-        }
+        PZEM004TRead(&voltage, &current, &power, &energy);
 
         dtostrfd(energy, Settings.flag2.energy_resolution, senergy);
         dtostrfd(power, Settings.flag2.wattage_resolution, spower);
@@ -92,33 +135,39 @@ void PZEM004TShowJSON() {
 
 #ifdef MQTT_USE
 void PZEM004TShowMQTT() {
-    AddLog_P(LOG_LEVEL_INFO, __FUNCTION__);
+    //AddLog_P(LOG_LEVEL_INFO, __FUNCTION__);
 }
 #endif //  MQTT_USE
 
 #ifdef USE_WEBSERVER
 const char HTTP_ENERGY_PZEM004T[] PROGMEM =
+    "%s"
     "{s}" D_VOLTAGE "{m}%s " D_UNIT_VOLT "{e}"
     "{s}" D_CURRENT "{m}%s " D_UNIT_AMPERE "{e}"
     "{s}" D_POWERUSAGE "{m}%s " D_UNIT_WATT "{e}"
-    "{s}" D_POWER_FACTOR "{m}%s{e}"
-    "{s}" D_ENERGY_TODAY  "{m}%s " D_UNIT_KILOWATTHOUR "{e}"
-    "{s}" D_ENERGY_YESTERDAY "{m}%s " D_UNIT_KILOWATTHOUR "{e}"
     "{s}" D_ENERGY_TOTAL "{m}%s " D_UNIT_KILOWATTHOUR "{e}";      // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
 #endif  // USE_WEBSERVER
 
 #ifdef USE_WEBSERVER
 void PZEM004TShowWEB() {
-    AddLog_P(LOG_LEVEL_INFO, __FUNCTION__);
-    if ((serial_flg != 0)) {
-        char svoltage[10] = "0.0";
-        char scurrent[10] = "0.0";
-        char swatts[10] = "0.0";
-        char spower_factor[10] = "0.0";
-        char sdaily_energy[10] = "0.0";
-        char syesterday_energy[10] = "0.0";
-        char stotal_energy[10] = "0.0";
-        snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_ENERGY_PZEM004T, svoltage, scurrent, swatts, spower_factor, sdaily_energy, syesterday_energy, stotal_energy);
+    if ((pzem) && (PZEM_004T_flg != 0)) {
+        float voltage;
+        float current;
+        float power;
+        float energy;
+
+        char svoltage[10];
+        char scurrent[10];
+        char spower[10];
+        char senergy[10];
+
+        PZEM004TRead(&voltage, &current, &power, &energy);
+
+        dtostrfd(energy, Settings.flag2.energy_resolution, senergy);
+        dtostrfd(power, Settings.flag2.wattage_resolution, spower);
+        dtostrfd(voltage, Settings.flag2.voltage_resolution, svoltage);
+        dtostrfd(current, Settings.flag2.current_resolution, scurrent);
+        snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_ENERGY_PZEM004T, mqtt_data, svoltage, scurrent, spower, senergy);
     }
 }
 #endif  // USE_WEBSERVER
@@ -133,7 +182,7 @@ void PZEM004TShowWEB() {
 
 boolean Xsns16(byte function) {
     boolean result = false;
-    if (serial_flg) {
+    if (PZEM_004T_flg) {
         switch (function) {
         case FUNC_XSNS_INIT:
             result = PZEM004TInit();

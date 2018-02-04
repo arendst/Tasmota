@@ -576,10 +576,10 @@ boolean GetUsedInModule(byte val, uint8_t *arr)
   }
 
 #ifndef USE_SERIAL
-  if (GPIO_SERIAL_TX == val) {
+  if (GPIO_PZEM004T_TX == val) {
     return true;
   }
-  if (GPIO_SERIAL_RX == val) {
+  if (GPIO_PZEM004T_RX == val) {
     return true;
   }
 #endif

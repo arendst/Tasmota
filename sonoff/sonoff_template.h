@@ -78,8 +78,8 @@ enum UserSelectablePins {
   GPIO_LED2_INV,
   GPIO_LED3_INV,
   GPIO_LED4_INV,
-  GPIO_SERIAL_TX,
-  GPIO_SERIAL_RX,
+  GPIO_PZEM004T_TX,
+  GPIO_PZEM004T_RX,
   GPIO_SENSOR_END };
 
 // Text in webpage Module Parameters and commands GPIOS and GPIO
