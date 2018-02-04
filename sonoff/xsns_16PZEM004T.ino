@@ -40,18 +40,20 @@ boolean PZEM004TPrep() {
     static byte pin_GPIO_PZEM004T_TX = 99;
     if (PZEM_004T_flg){
         if ((pin_GPIO_PZEM004T_RX != pin[GPIO_PZEM004T_RX]) || (pin_GPIO_PZEM004T_TX != pin[GPIO_PZEM004T_TX])) {
+            pin_GPIO_PZEM004T_RX != pin[GPIO_PZEM004T_RX];
+            pin_GPIO_PZEM004T_TX != pin[GPIO_PZEM004T_TX];
             if (pzem) {
                 delete pzem;
                 pzem = NULL;
             }
             // D6 GPIO-12 TX
             // D7 GPIO-13 RX
-            snprintf_P(log_data, sizeof(log_data), PSTR("prepare RX:%d TX:%d"), pin[GPIO_PZEM004T_RX], pin[GPIO_PZEM004T_TX]);
+            snprintf_P(log_data, sizeof(log_data), PSTR(" prepare RX:%d TX:%d"), pin[GPIO_PZEM004T_RX], pin[GPIO_PZEM004T_TX]);
             AddLog(LOG_LEVEL_INFO);
             pzem = new PZEM004T(pin[GPIO_PZEM004T_RX], pin[GPIO_PZEM004T_TX]);
             if (pzem) {
                 if (!pzem->setAddress(PZEM004T_ip)) {
-                    snprintf_P(log_data, sizeof(log_data), PSTR("Failed to set address"));
+                    snprintf_P(log_data, sizeof(log_data), PSTR(" Failed to set address"));
                     AddLog(LOG_LEVEL_INFO);
                 }
             }
@@ -59,6 +61,7 @@ boolean PZEM004TPrep() {
     }
     return(PZEM_004T_flg != 0);
 }
+
 void PZEM004TRead(float * rvoltage, float * rcurrent, float * rpower, float * renergy) {
     static float voltage = -1;
     static float current = -1;
