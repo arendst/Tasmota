@@ -730,7 +730,7 @@ void HandleModuleConfiguration()
   page += FPSTR(HTTP_FORM_MODULE);
   snprintf_P(stemp, sizeof(stemp), kModules[MODULE].name);
   page.replace(F("{mt"), stemp);
-  page += F("<br/><table style='width: 100%;>");
+  page += F("<br/><table style='width: 100%;'>");
   for (byte i = 0; i < MAX_GPIO_PIN; i++) {
     if (GPIO_USER == cmodule.gp.io[i]) {
       snprintf_P(stemp, 3, PINS_WEMOS +i*2);
