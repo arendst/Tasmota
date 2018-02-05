@@ -55,6 +55,23 @@ const char HASS_DISCOVER_LIGHT_SCHEME[] PROGMEM =
   "\"effect_value_template\":\"{{value_json." D_CMND_SCHEME "}}\","
   "\"effect_list\":\"[0, 1, 2, 3, 4]\"";           // Needs to be a Python string list providing Scheme parameter values (Unable to get this functional)
 */
+/*
+#1690 - investigate
+effect_list:
+- 0
+- 1
+- 2
+- 3
+- 4
+- 5
+- 6
+- 7
+- 8
+- 9
+- 10
+- 11
+- 12
+*/
 void HAssDiscovery()
 {
   char sidx[8];

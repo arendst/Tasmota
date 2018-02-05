@@ -30,6 +30,8 @@
  *
 \*********************************************************************/
 
+//#define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
+
 // "2017-03-07T11:08:02" - ISO8601:2004
 #define D_YEAR_MONTH_SEPARATOR "."
 #define D_MONTH_DAY_SEPARATOR "."
@@ -337,19 +339,6 @@
 #define D_HUE_POST_ARGS "Hue POST args"
 #define D_3_RESPONSE_PACKETS_SENT "3 Antwortpakete gesendet"
 
-// xdrv_02_irremote.ino
-#define D_JSON_INVALID_JSON "ungültiger JSON"
-#define D_JSON_PROTOCOL_NOT_SUPPORTED "Protokoll nicht unterstützt"
-#define D_JSON_IR_PROTOCOL "PROTOKOLL"
-#define D_JSON_IR_BITS "BITS"
-#define D_JSON_IR_DATA "DATEN"
-#define D_JSON_IRHVAC_VENDOR "HERSTELLER"
-#define D_JSON_IRHVAC_POWER "STROM"
-#define D_JSON_IRHVAC_MODE "MODUS"
-#define D_JSON_IRHVAC_FANSPEED "LÜFTERGESCHWINDIGKEIT"
-#define D_JSON_IRHVAC_TEMP "TEMPERATUR"
-#define D_JSON_IRRECEIVED "IR empfangen"
-
 // xdrv_05_domoticz.ino
 #define D_DOMOTICZ_PARAMETERS "Domoticz parameters"
 #define D_DOMOTICZ_IDX "Idx"
@@ -389,12 +378,11 @@
 #define D_SHT1X_FOUND "SHT1X gefunden"
 
 // xsns_18_pms5003.ino
-#define D_STANDARD_CONCENTRATION "Standard Concentration"
-#define D_ENVIRONMENTAL_CONCENTRATION "Environmental Concentration"
-#define D_PARTICALS_BEYOND "Particals beyond"
+#define D_STANDARD_CONCENTRATION "CF-1 PM"     // Standard Particle CF-1 Particle Matter
+#define D_ENVIRONMENTAL_CONCENTRATION "PM"     // Environmetal Particle Matter
+#define D_PARTICALS_BEYOND "Particals"
 
 // sonoff_template.h
-// Max string length is 8 characters including suffixes
 #define D_SENSOR_NONE     "None"
 #define D_SENSOR_DHT11    "DHT11"
 #define D_SENSOR_AM2301   "AM2301"

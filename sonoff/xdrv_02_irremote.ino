@@ -107,8 +107,8 @@ void IrReceiveCheck()
       if ((iridx < 0) || (iridx > 14)) {
         iridx = 0;
       }
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_IRRECEIVED "\":{\"" D_JSON_IR_PROTOCOL "\":\"%s\",\"" D_JSON_IR_BITS "\":%d,\"" D_JSON_IR_DATA "\":\"%X\"}}"),
-        GetTextIndexed(sirtype, sizeof(sirtype), iridx, kIrRemoteProtocols), results.bits, results.value);
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_IRRECEIVED "\":{\"" D_JSON_IR_PROTOCOL "\":\"%s\",\"" D_JSON_IR_BITS "\":%d,\"" D_JSON_IR_DATA "\":\"%lX\"}}"),
+        GetTextIndexed(sirtype, sizeof(sirtype), iridx, kIrRemoteProtocols), results.bits, (uint32_t)results.value);
       MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_IRRECEIVED));
 #ifdef USE_DOMOTICZ
       unsigned long value = results.value | (iridx << 28);  // [Protocol:4, Data:28]
@@ -132,7 +132,6 @@ boolean IrHvacToshiba(const char *HVAC_Mode, const char *HVAC_FanMode, boolean H
   byte data[HVAC_TOSHIBA_DATALEN] = {0xF2, 0x0D, 0x03, 0xFC, 0x01, 0x00, 0x00, 0x00, 0x00};
 
   char *p;
-  char *token;
   uint8_t mode;
 
   if (HVAC_Mode == NULL) {
@@ -176,7 +175,7 @@ boolean IrHvacToshiba(const char *HVAC_Mode, const char *HVAC_FanMode, boolean H
   else {
     Temp = HVAC_Temp;
   }
-  data[5] = (byte)Temp - 17 << 4;
+  data[5] = (byte)(Temp - 17) << 4;
 
   data[HVAC_TOSHIBA_DATALEN - 1] = 0;
   for (int x = 0; x < HVAC_TOSHIBA_DATALEN - 1; x++) {
@@ -219,7 +218,6 @@ boolean IrHvacToshiba(const char *HVAC_Mode, const char *HVAC_FanMode, boolean H
 boolean IrHvacMitsubishi(const char *HVAC_Mode, const char *HVAC_FanMode, boolean HVAC_Power, int HVAC_Temp)
 {
   char *p;
-  char *token;
   uint8_t mode;
 
   mitsubir->stateReset();
@@ -286,12 +284,6 @@ boolean IrSendCommand()
   uint32_t bits = 0;
   uint32_t data = 0;
 
-  const char *HVAC_Mode;
-  const char *HVAC_FanMode;
-  const char *HVAC_Vendor;
-  int HVAC_Temp = 21;
-  boolean HVAC_Power = true;
-
   for (uint16_t i = 0; i <= sizeof(dataBufUc); i++) {
     dataBufUc[i] = toupper(XdrvMailbox.data[i]);
   }
@@ -309,21 +301,26 @@ boolean IrSendCommand()
         data = ir_json[D_JSON_IR_DATA];
         if (protocol && bits && data) {
           int protocol_code = GetCommandCode(protocol_text, sizeof(protocol_text), protocol, kIrRemoteProtocols);
+
+          snprintf_P(log_data, sizeof(log_data), PSTR("IRS: protocol_text %s, protocol %s, bits %d, data %d, protocol_code %d"),
+            protocol_text, protocol, bits, data, protocol_code);
+          AddLog(LOG_LEVEL_DEBUG);
+
           switch (protocol_code) {
             case NEC:
-              irsend->sendNEC(data, bits); break;
+              irsend->sendNEC(data, (bits > NEC_BITS) ? NEC_BITS : bits); break;
             case SONY:
-              irsend->sendSony(data, bits); break;
+              irsend->sendSony(data, (bits > SONY_20_BITS) ? SONY_20_BITS : bits, 2); break;
             case RC5:
               irsend->sendRC5(data, bits); break;
             case RC6:
               irsend->sendRC6(data, bits); break;
             case DISH:
-              irsend->sendDISH(data, bits); break;
+              irsend->sendDISH(data, (bits > DISH_BITS) ? DISH_BITS : bits); break;
             case JVC:
-              irsend->sendJVC(data, bits, 1); break;
+              irsend->sendJVC(data, (bits > JVC_BITS) ? JVC_BITS : bits, 1); break;
             case SAMSUNG:
-              irsend->sendSAMSUNG(data, bits); break;
+              irsend->sendSAMSUNG(data, (bits > SAMSUNG_BITS) ? SAMSUNG_BITS : bits); break;
             case PANASONIC:
               irsend->sendPanasonic(bits, data); break;
             default:
@@ -344,6 +341,12 @@ boolean IrSendCommand()
   }
 #ifdef USE_IR_HVAC
   else if (!strcasecmp_P(XdrvMailbox.topic, PSTR(D_CMND_IRHVAC))) {
+    const char *HVAC_Mode;
+    const char *HVAC_FanMode;
+    const char *HVAC_Vendor;
+    int HVAC_Temp = 21;
+    boolean HVAC_Power = true;
+
     if (XdrvMailbox.data_len) {
       StaticJsonBuffer<164> jsonBufer;
       JsonObject &root = jsonBufer.parseObject(dataBufUc);

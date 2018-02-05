@@ -1,4 +1,47 @@
-/* 5.11.1c
+/* 5.11.1i
+ * Update TasmotaSerial library to 1.1.0
+ * Rename commands HlwPCal, HlwUCal and HlwICal to PowerCal, VoltageCal and CurrentCal to be used for both Pow and S31 calibration
+ * Rename commands HlwPSet, HlwUSet and HlwISet to PowerSet, VoltageSet and CurrentSet to be used for both Pow and S31 calibration
+ * Fix some Energy Monitoring related issues
+ * Add command SetOption21 1 to allow Energy Monitoring when power is off on Sonoff Pow and Sonoff S31 (#1420)
+ * Add support for Sonoff S31 Smart Socket with Power Consumption Detection (#1626)
+ * Fix IRReceive Data value (#1663)
+ * Fix compiler warnings (#1774)
+ *
+ * 5.11.1h
+ * Rewrite webserver argument processing gaining 5k code space (#1705)
+ * Redesign weblog storage (#1730)
+ * Fix command SetOption20 (#1741)
+ *
+ * 5.11.1g
+ * Add support for PMS5003 and PMS7003 particle concentration sensor
+ * Reinstate console weblog to 20 lines after some webpage rewrite
+ * Add command SetOption20 to allow update of Dimmer/Color/Ct without turning power on (#1719)
+ * Update language files nl-NL (#1723) and es-AR (#1722)
+ *
+ * 5.11.1f
+ * Revert chunked webserver pages as it fails on many browsers due to chunks being too small (#1706)
+ * Reduce initial console weblog from 20 to 13 lines due to memory constraints
+ *
+ * 5.11.1e
+ * Replaced command Ina219Mode with command Sensor13
+ * Add chunked webserver pages for large pages saving memory
+ * Fix Non-English JSON temperature unit attachement
+ * Add command Sensor15 2 to start MHZ19(B) Zero Point Calibration (#1643)
+ * Fix Sonoff Pow Energy Today and Energy Total reading after restart (#1648)
+ * Rewrite function pointers to save code space and memory (#1683)
+ * Add option define HOME_ASSISTANT_DISCOVERY_ENABLE in user_config.h (#1685)
+ * Fix SOnoff Pow Energy Period roll-over (#1688)
+ *
+ * 5.11.1d
+ * Add locale Decimal Separator to Web sensor page
+ * Add command State to retrieve device state information (same data as teleperiod state and status 11 in slightly different JSON format)
+ * Extent state information with Light parameters
+ * Fix IRSend parameter translation (#1636)
+ * Add optional login to Webserver AP mode (#1587, #1635)
+ * Fix BME680 teleperiod resistance measuring (#1647)
+ *
+ * 5.11.1c
  * Make command color parameter input less strict to ease Hass support
  * Add ColorTemperature to light status message
  * Change PubSubClient.h define MQTT_MAX_PACKET_SIZE from 512 to 1000 for Hass support

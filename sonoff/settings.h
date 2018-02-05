@@ -45,8 +45,8 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t decimal_text : 1;             // bit 17 (v5.8.1)
     uint32_t light_signal : 1;             // bit 18 (v5.10.0c)
     uint32_t hass_discovery : 1;           // bit 19 (v5.11.1a)
-    uint32_t voltage_resolution : 1;       // Replaced by below
-    uint32_t spare21 : 1;
+    uint32_t not_power_linked : 1;         // bit 20 (v5.11.1f)
+    uint32_t no_power_on_check : 1;        // bit 21 (v5.11.1i)
     uint32_t spare22 : 1;
     uint32_t spare23 : 1;
     uint32_t spare24 : 1;
@@ -57,15 +57,6 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t spare29 : 1;
     uint32_t spare30 : 1;
     uint32_t spare31 : 1;
-    /*
-    uint32_t wattage_resolution : 1;
-    uint32_t voltage_resolution : 1;
-    uint32_t emulation : 2;
-    uint32_t energy_resolution : 3;
-    uint32_t pressure_resolution : 2;
-    uint32_t humidity_resolution : 2;
-    uint32_t temperature_resolution : 2;
-*/
   };
 } SysBitfield;
 
@@ -161,12 +152,12 @@ struct SYSCFG {
   uint16_t      domoticz_update_timer;     // 340
   uint16_t      pwm_range;                 // 342
 
-  unsigned long domoticz_relay_idx[MAX_DOMOTICZ_IDX]; // 344
-  unsigned long domoticz_key_idx[MAX_DOMOTICZ_IDX];   // 354
+  unsigned long domoticz_relay_idx[MAX_DOMOTICZ_IDX];  // 344
+  unsigned long domoticz_key_idx[MAX_DOMOTICZ_IDX];    // 354
 
-  unsigned long hlw_power_calibration;     // 364
-  unsigned long hlw_voltage_calibration;   // 368
-  unsigned long hlw_current_calibration;   // 36C
+  unsigned long energy_power_calibration;  // 364
+  unsigned long energy_voltage_calibration;  // 368
+  unsigned long energy_current_calibration;  // 36C
   unsigned long energy_kWhtoday;           // 370
   unsigned long energy_kWhyesterday;       // 374
   uint16_t      energy_kWhdoy;             // 378
@@ -177,11 +168,11 @@ struct SYSCFG {
   uint16_t      energy_min_current;        // 382
   uint16_t      energy_max_current;        // 384
   uint16_t      energy_max_power_limit;    // 386 MaxPowerLimit
-  uint16_t      energy_max_power_limit_hold;        // 388 MaxPowerLimitHold
-  uint16_t      energy_max_power_limit_window;      // 38A MaxPowerLimitWindow
-  uint16_t      energy_max_power_safe_limit;        // 38C MaxSafePowerLimit
-  uint16_t      energy_max_power_safe_limit_hold;   // 38E MaxSafePowerLimitHold
-  uint16_t      energy_max_power_safe_limit_window; // 390 MaxSafePowerLimitWindow
+  uint16_t      energy_max_power_limit_hold;         // 388 MaxPowerLimitHold
+  uint16_t      energy_max_power_limit_window;       // 38A MaxPowerLimitWindow
+  uint16_t      energy_max_power_safe_limit;         // 38C MaxSafePowerLimit
+  uint16_t      energy_max_power_safe_limit_hold;    // 38E MaxSafePowerLimitHold
+  uint16_t      energy_max_power_safe_limit_window;  // 390 MaxSafePowerLimitWindow
   uint16_t      energy_max_energy;         // 392 MaxEnergy
   uint16_t      energy_max_energy_start;   // 394 MaxEnergyStart
   uint16_t      mqtt_retry;                // 396

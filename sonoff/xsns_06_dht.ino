@@ -56,7 +56,7 @@ int32_t DhtExpectPulse(byte sensor, bool level)
   int32_t count = 0;
 
   while (digitalRead(Dht[sensor].pin) == level) {
-    if (count++ >= dht_max_cycles) {
+    if (count++ >= (int32_t)dht_max_cycles) {
       return -1;  // Timeout
     }
   }
@@ -203,7 +203,7 @@ void DhtInit()
     pinMode(Dht[i].pin, INPUT_PULLUP);
     Dht[i].lastreadtime = 0;
     Dht[i].lastresult = 0;
-    strcpy_P(Dht[i].stype, kSensors[Dht[i].type]);
+    GetTextIndexed(Dht[i].stype, sizeof(Dht[i].stype), Dht[i].type, kSensorNames);
     if (dht_sensors > 1) {
       snprintf_P(Dht[i].stype, sizeof(Dht[i].stype), PSTR("%s-%02d"), Dht[i].stype, Dht[i].pin);
     }

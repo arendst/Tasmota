@@ -90,76 +90,6 @@ enum UserSelectablePins {
   GPIO_PMS5003,        // Plantower PMS5003 Serial interface
   GPIO_SENSOR_END };
 
-// Text in webpage Module Parameters and commands GPIOS and GPIO
-const char kSensors[GPIO_SENSOR_END][9] PROGMEM = {
-  D_SENSOR_NONE,
-  D_SENSOR_DHT11,
-  D_SENSOR_AM2301,
-  D_SENSOR_SI7021,
-  D_SENSOR_DS18X20,
-  D_SENSOR_I2C_SCL,
-  D_SENSOR_I2C_SDA,
-  D_SENSOR_WS2812,
-  D_SENSOR_IRSEND,
-  D_SENSOR_SWITCH "1",
-  D_SENSOR_SWITCH "2",
-  D_SENSOR_SWITCH "3",
-  D_SENSOR_SWITCH "4",
-  D_SENSOR_BUTTON "1",
-  D_SENSOR_BUTTON "2",
-  D_SENSOR_BUTTON "3",
-  D_SENSOR_BUTTON "4",
-  D_SENSOR_RELAY "1",
-  D_SENSOR_RELAY "2",
-  D_SENSOR_RELAY "3",
-  D_SENSOR_RELAY "4",
-  D_SENSOR_RELAY "5",
-  D_SENSOR_RELAY "6",
-  D_SENSOR_RELAY "7",
-  D_SENSOR_RELAY "8",
-  D_SENSOR_RELAY "1i",
-  D_SENSOR_RELAY "2i",
-  D_SENSOR_RELAY "3i",
-  D_SENSOR_RELAY "4i",
-  D_SENSOR_RELAY "5i",
-  D_SENSOR_RELAY "6i",
-  D_SENSOR_RELAY "7i",
-  D_SENSOR_RELAY "8i",
-  D_SENSOR_PWM "1",
-  D_SENSOR_PWM "2",
-  D_SENSOR_PWM "3",
-  D_SENSOR_PWM "4",
-  D_SENSOR_PWM "5",
-  D_SENSOR_COUNTER "1",
-  D_SENSOR_COUNTER "2",
-  D_SENSOR_COUNTER "3",
-  D_SENSOR_COUNTER "4",
-  D_SENSOR_PWM "1i",
-  D_SENSOR_PWM "2i",
-  D_SENSOR_PWM "3i",
-  D_SENSOR_PWM "4i",
-  D_SENSOR_PWM "5i",
-  D_SENSOR_IRRECV,
-  D_SENSOR_LED "1",
-  D_SENSOR_LED "2",
-  D_SENSOR_LED "3",
-  D_SENSOR_LED "4",
-  D_SENSOR_LED "1i",
-  D_SENSOR_LED "2i",
-  D_SENSOR_LED "3i",
-  D_SENSOR_LED "4i",
-  D_SENSOR_MHZ_TX,
-  D_SENSOR_MHZ_RX,
-  D_SENSOR_PZEM_TX,
-  D_SENSOR_PZEM_RX,
-  D_SENSOR_SAIR_TX,
-  D_SENSOR_SAIR_RX,
-  D_SENSOR_SPI_CS,
-  D_SENSOR_SPI_DC,
-  D_SENSOR_BACKLIGHT,
-  D_SENSOR_PMS5003
-};
-
 // Programmer selectable GPIO functionality offset by user selectable GPIOs
 enum ProgramSelectablePins {
   GPIO_RXD = GPIO_SENSOR_END,  // Serial interface
@@ -177,6 +107,30 @@ enum ProgramSelectablePins {
   GPIO_USER,           // User configurable
   GPIO_MAX };
 
+// Text in webpage Module Parameters and commands GPIOS and GPIO
+const char kSensorNames[] PROGMEM =
+  D_SENSOR_NONE "|"
+  D_SENSOR_DHT11 "|" D_SENSOR_AM2301 "|" D_SENSOR_SI7021 "|"
+  D_SENSOR_DS18X20 "|"
+  D_SENSOR_I2C_SCL "|" D_SENSOR_I2C_SDA "|"
+  D_SENSOR_WS2812 "|"
+  D_SENSOR_IRSEND "|"
+  D_SENSOR_SWITCH "1|" D_SENSOR_SWITCH "2|" D_SENSOR_SWITCH "3|" D_SENSOR_SWITCH "4|"
+  D_SENSOR_BUTTON "1|" D_SENSOR_BUTTON "2|" D_SENSOR_BUTTON "3|" D_SENSOR_BUTTON "4|"
+  D_SENSOR_RELAY "1|" D_SENSOR_RELAY "2|" D_SENSOR_RELAY "3|" D_SENSOR_RELAY "4|" D_SENSOR_RELAY "5|" D_SENSOR_RELAY "6|" D_SENSOR_RELAY "7|" D_SENSOR_RELAY "8|"
+  D_SENSOR_RELAY "1i|" D_SENSOR_RELAY "2i|" D_SENSOR_RELAY "3i|" D_SENSOR_RELAY "4i|" D_SENSOR_RELAY "5i|" D_SENSOR_RELAY "6i|" D_SENSOR_RELAY "7i|" D_SENSOR_RELAY "8i|"
+  D_SENSOR_PWM "1|" D_SENSOR_PWM "2|" D_SENSOR_PWM "3|" D_SENSOR_PWM "4|" D_SENSOR_PWM "5|"
+  D_SENSOR_COUNTER "1|" D_SENSOR_COUNTER "2|" D_SENSOR_COUNTER "3|" D_SENSOR_COUNTER "4|"
+  D_SENSOR_PWM "1i|" D_SENSOR_PWM "2i|" D_SENSOR_PWM "3i|" D_SENSOR_PWM "4i|" D_SENSOR_PWM "5i|"
+  D_SENSOR_IRRECV "|"
+  D_SENSOR_LED "1|" D_SENSOR_LED "2|" D_SENSOR_LED "3|" D_SENSOR_LED "4|"
+  D_SENSOR_LED "1i|" D_SENSOR_LED "2i|" D_SENSOR_LED "3i|" D_SENSOR_LED "4i|"
+  D_SENSOR_MHZ_TX "|" D_SENSOR_MHZ_RX "|"
+  D_SENSOR_PZEM_TX "|" D_SENSOR_PZEM_RX "|"
+  D_SENSOR_SAIR_TX "|" D_SENSOR_SAIR_RX "|"
+  D_SENSOR_SPI_CS "|" D_SENSOR_SPI_DC "|" D_SENSOR_BACKLIGHT "|"
+  D_SENSOR_PMS5003;
+
 /********************************************************************************************/
 
 // Supported hardware modules
@@ -187,7 +141,6 @@ enum SupportedModules {
   SONOFF_TH,
   SONOFF_DUAL,
   SONOFF_POW,
-  TV_SONOFF_POW,
   SONOFF_4CH,
   S20,
   SLAMPHER,
@@ -222,6 +175,7 @@ enum SupportedModules {
   ARILUX_LC11,
   SONOFF_DUAL_R2,
   ARILUX_LC06,
+  SONOFF_S31,
   MAXMODULE };
 
 /********************************************************************************************/
@@ -246,7 +200,7 @@ const uint8_t kNiceList[MAXMODULE] PROGMEM = {
   SONOFF_DUAL,
   SONOFF_DUAL_R2,
   SONOFF_POW,
-  TV_SONOFF_POW,
+  SONOFF_S31,
   SONOFF_4CH,
   SONOFF_4CHPRO,
   SONOFF_SV,
@@ -819,6 +773,17 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_PWM1,        // GPIO14 RGB LED Red
      GPIO_USER,        // GPIO15 RGBW LED White
      0, 0
+  },
+  { "Sonoff S31",      // Sonoff S31 (ESP8266)
+     GPIO_KEY1,        // GPIO00 Button
+     0,                // GPIO01 Serial RXD 4800 baud 8E1 CSE7766 energy sensor
+     0,
+     0,                // GPIO03 Serial TXD
+     0, 0,
+     0, 0, 0, 0, 0, 0, // Flash connection
+     GPIO_REL1,        // GPIO12 Red Led and Relay (0 = Off, 1 = On)
+     GPIO_LED1_INV,    // GPIO13 Green Led (0 = On, 1 = Off)
+     0, 0, 0, 0
   }
 };
 
@@ -886,6 +851,20 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_USER,        // GPIO14
      0, 0, 0
   }
+
+  { "MagicHome v2.3",  // Magic Home (aka Flux-light) (ESP8266) (#1353)
+     0, 0,
+     GPIO_LED1_INV,    // GPIO02 Blue onboard LED
+     0,
+     GPIO_USER,        // GPIO04 IR receiver (optional)
+     GPIO_PWM2,        // GPIO05 RGB LED Green
+     0, 0, 0, 0, 0, 0, // Flash connection
+     GPIO_PWM1,        // GPIO12 RGB LED Red
+     GPIO_PWM3,        // GPIO13 RGB LED Blue
+     0,
+     GPIO_PWM4,        // GPIO15 RGBW LED White
+     0, 0
+  },
 
 */
 
