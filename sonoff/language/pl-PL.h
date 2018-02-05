@@ -111,6 +111,7 @@
 #define D_PASSWORD "Haslo"
 #define D_PORT "Port"
 #define D_POWER_FACTOR "Wspolczynik mocy"
+#define D_POWER_WINDOW "Power Window"
 #define D_POWERUSAGE "Moc"
 #define D_PRESSURE "Cisnienie"
 #define D_PRESSUREATSEALEVEL "Cisnienie na poziomie morza"

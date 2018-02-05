@@ -111,6 +111,7 @@
 #define D_PASSWORD "Password"
 #define D_PORT "Porta"
 #define D_POWER_FACTOR "Fattore di potenza"
+#define D_POWER_WINDOW "Power Window"
 #define D_POWERUSAGE "Potenza"
 #define D_PRESSURE "Pressione"
 #define D_PRESSUREATSEALEVEL "Pressione al livello del mare"

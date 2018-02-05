@@ -111,6 +111,7 @@
 #define D_PASSWORD "Wachtwoord"
 #define D_PORT "Poort"
 #define D_POWER_FACTOR "Arbeidsfactor"
+#define D_POWER_WINDOW "Power Window"
 #define D_POWERUSAGE "Vermogen"
 #define D_PRESSURE "Luchtdruk"
 #define D_PRESSUREATSEALEVEL "ZeeLuchtdruk"

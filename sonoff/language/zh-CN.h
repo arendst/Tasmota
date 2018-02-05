@@ -111,6 +111,7 @@
 #define D_PASSWORD "密码"
 #define D_PORT "端口"
 #define D_POWER_FACTOR "功率因数"
+#define D_POWER_WINDOW "Power Window"
 #define D_POWERUSAGE "功率"
 #define D_PRESSURE "气压"
 #define D_PRESSUREATSEALEVEL "海平面气压"
