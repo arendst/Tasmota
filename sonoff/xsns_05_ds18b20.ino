@@ -127,7 +127,7 @@ void Ds18b20ReadTempPrep()
 boolean Ds18b20ReadTemperature(float &t)
 {
   int16_t DSTemp;
-  byte msb, lsb, crc, sign = 1;
+  byte msb, lsb, crc = 0, sign = 1;
 
   if (!ds18b20_last_temperature) {
     t = NAN;

@@ -285,11 +285,11 @@ boolean IrSendCommand(char *type, uint16_t index, char *dataBuf, uint16_t data_l
   uint32_t bits = 0;
   uint32_t data = 0;
 
-  const char *HVAC_Mode;
-  const char *HVAC_FanMode;
-  const char *HVAC_Vendor;
-  int HVAC_Temp = 21;
-  boolean HVAC_Power = true;
+//  const char *HVAC_Mode;
+//  const char *HVAC_FanMode;
+//  const char *HVAC_Vendor;
+//  int HVAC_Temp = 21;
+//  boolean HVAC_Power = true;
 
   for (uint16_t i = 0; i <= sizeof(dataBufUc); i++) {
     dataBufUc[i] = toupper(dataBuf[i]);

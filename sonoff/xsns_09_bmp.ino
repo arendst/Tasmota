@@ -128,9 +128,9 @@ double Bmp180ReadTemperature()
 double Bmp180ReadPressure()
 {
   int32_t p;
-  uint8_t msb;
-  uint8_t lsb;
-  uint8_t xlsb;
+  //uint8_t msb;
+  //uint8_t lsb;
+  //uint8_t xlsb;
 
   I2cWrite8(bmp_address, BMP180_REG_CONTROL, BMP180_PRESSURE3); // Highest resolution
   delay(2 + (4 << BMP180_OSS));                                 // 26ms conversion time at ultra high resolution

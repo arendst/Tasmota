@@ -887,11 +887,11 @@ String GetBuildDateAndTime()
   char bdt[21];
   char *str;
   char *p;
-  char *smonth;
+  const char *smonth = "";
   char mdate[] = __DATE__;  // "Mar  7 2017"
-  int month;
-  int day;
-  int year;
+  int month = 1;
+  int day = 1;
+  int year = 2000;
 
 //  sscanf(mdate, "%s %d %d", bdt, &day, &year);  // Not implemented in 2.3.0 and probably too many code
   byte i = 0;
@@ -1242,7 +1242,7 @@ int GetCommandCode(char* destination, size_t destination_size, const char* needl
   int result = -1;
   const char* read = haystack;
   char* write = destination;
-  size_t maxcopy = (strlen(needle) > destination_size) ? destination_size : strlen(needle);
+  //size_t maxcopy = (strlen(needle) > destination_size) ? destination_size : strlen(needle);
 
   while (true) {
     result++;

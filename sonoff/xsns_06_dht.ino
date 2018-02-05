@@ -53,7 +53,7 @@ void DhtReadPrep()
 
 int32_t DhtExpectPulse(byte sensor, bool level)
 {
-  int32_t count = 0;
+  uint32_t count = 0;
 
   while (digitalRead(Dht[sensor].pin) == level) {
     if (count++ >= dht_max_cycles) {
@@ -218,7 +218,7 @@ void DhtShow(boolean json)
   float t;
   float h;
 
-  byte dsxflg = 0;
+//  byte dsxflg = 0;
   for (byte i = 0; i < dht_sensors; i++) {
     if (DhtReadTempHum(i, t, h)) {     // Read temperature
       dtostrfd(t, Settings.flag2.temperature_resolution, temperature);

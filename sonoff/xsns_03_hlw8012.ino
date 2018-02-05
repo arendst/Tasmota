@@ -201,9 +201,9 @@ void HlwReadEnergy(byte option, float &total_energy, float &daily_energy, float 
   unsigned long cur_kWhtoday = hlw_kWhtoday;
   unsigned long hlw_len;
   unsigned long hlw_temp;
-  unsigned long hlw_w;
-  unsigned long hlw_u;
-  unsigned long hlw_i;
+  unsigned long hlw_w = 0;
+  unsigned long hlw_u = 0;
+  unsigned long hlw_i = 0;
   uint16_t hlw_period;
 
 //snprintf_P(log_data, sizeof(log_data), PSTR("HLW: CF %d, CF1U %d (%d), CF1I %d (%d)"), hlw_cf_pulse_length, hlw_cf1_voltage_pulse_length, hlw_cf1_voltage_max_pulse_counter, hlw_cf1_current_pulse_length, hlw_cf1_current_max_pulse_counter);
@@ -331,7 +331,7 @@ void HlwMarginCheck()
   float current;
   float power_factor;
   uint16_t udaily_energy;
-  uint16_t uwatts;
+  uint16_t uwatts = 0;
   uint16_t uvoltage;
   uint16_t ucurrent;
   boolean flag;
@@ -644,9 +644,9 @@ boolean HlwCommand(char *type, uint16_t index, char *dataBuf, uint16_t data_len,
   }
   if (!status_flag) {
     if (Settings.flag.value_units) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE_SPACE_UNIT, command, nvalue, GetTextIndexed(sunit, sizeof(sunit), unit, kUnitNames));
+      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE_SPACE_UNIT, command, (int)nvalue, GetTextIndexed(sunit, sizeof(sunit), unit, kUnitNames));
     } else {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, nvalue);
+      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, (int)nvalue);
     }
   }
   return serviced;

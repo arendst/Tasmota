@@ -40,8 +40,8 @@ boolean PZEM004TPrep() {
     static byte pin_GPIO_PZEM004T_TX = 99;
     if (PZEM_004T_flg){
         if ((pin_GPIO_PZEM004T_RX != pin[GPIO_PZEM004T_RX]) || (pin_GPIO_PZEM004T_TX != pin[GPIO_PZEM004T_TX])) {
-            pin_GPIO_PZEM004T_RX != pin[GPIO_PZEM004T_RX];
-            pin_GPIO_PZEM004T_TX != pin[GPIO_PZEM004T_TX];
+            pin_GPIO_PZEM004T_RX = pin[GPIO_PZEM004T_RX];
+            pin_GPIO_PZEM004T_TX = pin[GPIO_PZEM004T_TX];
             if (pzem) {
                 delete pzem;
                 pzem = NULL;
@@ -62,7 +62,7 @@ boolean PZEM004TPrep() {
     return(PZEM_004T_flg != 0);
 }
 
-void PZEM004TRead(float * rvoltage, float * rcurrent, float * rpower, float * renergy) {
+bool PZEM004TRead(float * rvoltage, float * rcurrent, float * rpower, float * renergy) {
     static float voltage = -1;
     static float current = -1;
     static float power = -1;
@@ -105,10 +105,11 @@ void PZEM004TRead(float * rvoltage, float * rcurrent, float * rpower, float * re
         }
         last_get_power = millis();
     }
-    *rvoltage = voltage;
-    *rcurrent = current;
-    *rpower = power;
-    *renergy = energy;
+    if (rvoltage) *rvoltage = voltage;
+    if (rcurrent) *rcurrent = current;
+    if (rpower)   *rpower = power;
+    if (renergy)  *renergy = energy;
+    return (voltage > -1) && (current > -1) && (power > -1) && (energy > -1);
 }
 
 void PZEM004TShowJSON() {
@@ -118,21 +119,21 @@ void PZEM004TShowJSON() {
         float power;
         float energy;
 
-        char svoltage[10];
-        char scurrent[10];
-        char spower[10];
-        char senergy[10];
+        if (PZEM004TRead(&voltage, &current, &power, &energy)) {
+            char svoltage[10];
+            char scurrent[10];
+            char spower[10];
+            char senergy[10];
 
-        PZEM004TRead(&voltage, &current, &power, &energy);
+            dtostrfd(energy, Settings.flag2.energy_resolution, senergy);
+            dtostrfd(power, Settings.flag2.wattage_resolution, spower);
+            dtostrfd(voltage, Settings.flag2.voltage_resolution, svoltage);
+            dtostrfd(current, Settings.flag2.current_resolution, scurrent);
 
-        dtostrfd(energy, Settings.flag2.energy_resolution, senergy);
-        dtostrfd(power, Settings.flag2.wattage_resolution, spower);
-        dtostrfd(voltage, Settings.flag2.voltage_resolution, svoltage);
-        dtostrfd(current, Settings.flag2.current_resolution, scurrent);
-
-        snprintf_P(mqtt_data, sizeof(mqtt_data),
-                   PSTR("%s,\"PZEM004T\":{\"" D_TOTAL "\":%s,\"" D_POWERUSAGE "\":%s,\"" D_VOLTAGE "\":%s,\"" D_CURRENT "\":%s}"),
-                   mqtt_data, senergy, spower, svoltage, scurrent);
+            snprintf_P(mqtt_data, sizeof(mqtt_data),
+                    PSTR("%s,\"PZEM004T\":{\"" D_TOTAL "\":%s,\"" D_POWERUSAGE "\":%s,\"" D_VOLTAGE "\":%s,\"" D_CURRENT "\":%s}"),
+                    mqtt_data, senergy, spower, svoltage, scurrent);
+        }
     }
 }
 
@@ -159,18 +160,18 @@ void PZEM004TShowWEB() {
         float power;
         float energy;
 
-        char svoltage[10];
-        char scurrent[10];
-        char spower[10];
-        char senergy[10];
+        if (PZEM004TRead(&voltage, &current, &power, &energy)) {
+            char svoltage[10];
+            char scurrent[10];
+            char spower[10];
+            char senergy[10];
 
-        PZEM004TRead(&voltage, &current, &power, &energy);
-
-        dtostrfd(energy, Settings.flag2.energy_resolution, senergy);
-        dtostrfd(power, Settings.flag2.wattage_resolution, spower);
-        dtostrfd(voltage, Settings.flag2.voltage_resolution, svoltage);
-        dtostrfd(current, Settings.flag2.current_resolution, scurrent);
-        snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_ENERGY_PZEM004T, mqtt_data, svoltage, scurrent, spower, senergy);
+            dtostrfd(energy, Settings.flag2.energy_resolution, senergy);
+            dtostrfd(power, Settings.flag2.wattage_resolution, spower);
+            dtostrfd(voltage, Settings.flag2.voltage_resolution, svoltage);
+            dtostrfd(current, Settings.flag2.current_resolution, scurrent);
+            snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_ENERGY_PZEM004T, mqtt_data, svoltage, scurrent, spower, senergy);
+        }
     }
 }
 #endif  // USE_WEBSERVER
