@@ -9,6 +9,7 @@
  * Fix IRReceive Data value (#1663)
  * Fix compiler warnings (#1774)
  * Fix command PWM response if no PWM channel is configured (#1783)
+ * Fix Software Watchdog restart around log roll-over (#1793)
  *
  * 5.11.1h
  * Rewrite webserver argument processing gaining 5k code space (#1705)

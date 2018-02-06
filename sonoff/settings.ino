@@ -123,7 +123,7 @@ void RtcSettingsDump()
 
   for (row = 0; row < maxrow; row++) {
     idx = row * CFG_COLS;
-    snprintf_P(log_data, sizeof(log_data), PSTR("%04X:"), idx);
+    snprintf_P(log_data, sizeof(log_data), PSTR("%03X:"), idx);
     for (col = 0; col < CFG_COLS; col++) {
       if (!(col%4)) {
         snprintf_P(log_data, sizeof(log_data), PSTR("%s "), log_data);
@@ -378,7 +378,7 @@ void SettingsDump(char* parms)
 
   for (row = srow; row < maxrow; row++) {
     idx = row * CFG_COLS;
-    snprintf_P(log_data, sizeof(log_data), PSTR("%04X:"), idx);
+    snprintf_P(log_data, sizeof(log_data), PSTR("%03X:"), idx);
     for (col = 0; col < CFG_COLS; col++) {
       if (!(col%4)) {
         snprintf_P(log_data, sizeof(log_data), PSTR("%s "), log_data);
