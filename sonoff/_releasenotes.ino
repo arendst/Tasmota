@@ -5,8 +5,11 @@
  * Fix some Energy Monitoring related issues
  * Add command SetOption21 1 to allow Energy Monitoring when power is off on Sonoff Pow and Sonoff S31 (#1420)
  * Add support for Sonoff S31 Smart Socket with Power Consumption Detection (#1626)
+ * Fix TSL2561 device detection (#1644)
  * Fix IRReceive Data value (#1663)
  * Fix compiler warnings (#1774)
+ * Fix command PWM response if no PWM channel is configured (#1783)
+ * Fix Software Watchdog restart around log roll-over (#1793)
  *
  * 5.11.1h
  * Rewrite webserver argument processing gaining 5k code space (#1705)

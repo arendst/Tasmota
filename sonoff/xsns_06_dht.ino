@@ -40,8 +40,8 @@ struct DHTSTRUCT {
   char     stype[12];
   uint32_t lastreadtime;
   uint8_t  lastresult;
-  float    t;
-  float    h = 0;
+  float    t = NAN;
+  float    h = NAN;
 } Dht[DHT_MAX_SENSORS];
 
 void DhtReadPrep()
@@ -141,7 +141,7 @@ void DhtRead(byte sensor)
 
 boolean DhtReadTempHum(byte sensor, float &t, float &h)
 {
-  if (!Dht[sensor].h) {
+  if (NAN == Dht[sensor].h) {
     t = NAN;
     h = NAN;
   } else {
@@ -214,11 +214,11 @@ void DhtShow(boolean json)
 {
   char temperature[10];
   char humidity[10];
-  float t;
-  float h;
 
   byte dsxflg = 0;
   for (byte i = 0; i < dht_sensors; i++) {
+    float t = NAN;
+    float h = NAN;
     if (DhtReadTempHum(i, t, h)) {     // Read temperature
       dtostrfd(t, Settings.flag2.temperature_resolution, temperature);
       dtostrfd(h, Settings.flag2.humidity_resolution, humidity);

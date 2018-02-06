@@ -47,7 +47,7 @@ float energy_power = 0;           // 123.1 W
 float energy_power_factor = 0;    // 0.12
 float energy_daily = 0;           // 12.123 kWh
 float energy_total = 0;           // 12345.12345 kWh
-float energy_start = 0;           // 12345.12345 kWh total from yesterday
+float energy_start = 0;           // 12345.12345 kWh total previous
 unsigned long energy_kWhtoday;    // 1212312345 Wh * 10^-5 (deca micro Watt hours) - 5763924 = 0.05763924 kWh = 0.058 kWh = energy_daily
 unsigned long energy_period = 0;  // 1212312345 Wh * 10^-5 (deca micro Watt hours) - 5763924 = 0.05763924 kWh = 0.058 kWh = energy_daily
 
@@ -254,7 +254,7 @@ void HlwInit()
 
 #define CSE_NOT_CALIBRATED          0xAA
 
-#define CSE_PULSES_NOT_INITIALIZED  0x90000
+#define CSE_PULSES_NOT_INITIALIZED  -1
 
 #define CSE_PREF                    1000
 #define CSE_UREF                    100
@@ -314,9 +314,9 @@ void CseReceived()
   power_cycle = serial_in_buffer[17] << 16 | serial_in_buffer[18] << 8 | serial_in_buffer[19];
   cf_pulses = serial_in_buffer[21] << 8 | serial_in_buffer[22];
 
-  if (adjustement & 0x80) {  // CF overflow
-    cf_pulses = cf_pulses | 0x10000;
-  }
+//  if (adjustement & 0x80) {  // CF overflow
+//    cf_pulses += 0x10000;
+//  }
   if (energy_power_on) {  // Powered on
     if (adjustement & 0x40) {  // Voltage valid
       energy_voltage = (float)(Settings.energy_voltage_calibration * CSE_UREF) / (float)voltage_cycle;
@@ -367,11 +367,16 @@ bool CseSerialInput()
 
 void CseEverySecond()
 {
+  long cf_frequency = 0;
+
   if (CSE_PULSES_NOT_INITIALIZED == cf_pulses_last_time) {
-    cf_pulses_last_time = cf_pulses;
+    cf_pulses_last_time = cf_pulses;  // Init after restart
   } else {
-    if (cf_pulses < cf_pulses_last_time) cf_pulses_last_time = 0;  // Looses at most one second of data
-    unsigned long cf_frequency = cf_pulses - cf_pulses_last_time;
+    if (cf_pulses < cf_pulses_last_time) {  // Rolled over after 65535 pulses
+      cf_frequency = (65536 - cf_pulses_last_time) + cf_pulses;
+    } else {
+      cf_frequency = cf_pulses - cf_pulses_last_time;
+    }
     if (cf_frequency && energy_power)  {
       cf_pulses_last_time = cf_pulses;
       energy_kWhtoday += (cf_frequency * Settings.energy_power_calibration) / 36;
@@ -424,9 +429,7 @@ IPAddress pzem_ip(192, 168, 1, 1);
 uint8_t PzemCrc(uint8_t *data)
 {
   uint16_t crc = 0;
-  for (uint8_t i = 0; i < sizeof(PZEMCommand) -1; i++) {
-    crc += *data++;
-  }
+  for (uint8_t i = 0; i < sizeof(PZEMCommand) -1; i++) crc += *data++;
   return (uint8_t)(crc & 0xFF);
 }
 
@@ -435,9 +438,7 @@ void PzemSend(uint8_t cmd)
   PZEMCommand pzem;
 
   pzem.command = cmd;
-  for (uint8_t i = 0; i < sizeof(pzem.addr); i++) {
-    pzem.addr[i] = pzem_ip[i];
-  }
+  for (uint8_t i = 0; i < sizeof(pzem.addr); i++) pzem.addr[i] = pzem_ip[i];
   pzem.data = 0;
 
   uint8_t *bytes = (uint8_t*)&pzem;
@@ -514,30 +515,24 @@ void PzemEvery200ms()
     float value = 0;
     if (PzemRecieve(pzem_responses[pzem_read_state], &value)) {
       switch (pzem_read_state) {
-        case 1:
-          energy_voltage = value;       // 230.2V
+        case 1:  // Voltage as 230.2V
+          energy_voltage = value;
           break;
-        case 2:
-          energy_current = value;       // 17.32A
+        case 2:  // Current as 17.32A
+          energy_current = value;
           break;
-        case 3:
-          energy_power = value;         // 20W
+        case 3:  // Power as 20W
+          energy_power = value;
           break;
-        case 4:
-          energy_total = value / 1000;  // 99999Wh
-          if (energy_total < energy_start) {
-            energy_start = energy_total;
-            Settings.energy_power_calibration = energy_start * 1000;
-          }
-          energy_kWhtoday = (energy_total - energy_start) * 100000000;
-          RtcSettings.energy_kWhtoday = energy_kWhtoday;
-          energy_daily = (float)energy_kWhtoday / 100000000;
+        case 4:  // Total energy as 99999Wh
+          if (!energy_start || (value < energy_start)) energy_start = value;  // Init after restart and hanlde roll-over if any
+          energy_kWhtoday += (value - energy_start) * 100000;
+          energy_start = value;
+          EnergyUpdateToday();
           break;
       }
       pzem_read_state++;
-      if (5 == pzem_read_state) {
-        pzem_read_state = 1;
-      }
+      if (5 == pzem_read_state) pzem_read_state = 1;
     }
   }
 
@@ -565,13 +560,8 @@ void Energy200ms()
   if (5 == energy_fifth_second) {
     energy_fifth_second = 0;
 
-    if (ENERGY_HLW8012 == energy_flg) {
-      HlwEverySecond();
-    }
-
-    if (ENERGY_CSE7766 == energy_flg) {
-      CseEverySecond();
-    }
+    if (ENERGY_HLW8012 == energy_flg) HlwEverySecond();
+    if (ENERGY_CSE7766 == energy_flg) CseEverySecond();
 
     if (RtcTime.valid) {
       if (LocalTime() == Midnight()) {
@@ -580,13 +570,7 @@ void Energy200ms()
         RtcSettings.energy_kWhtotal = Settings.energy_kWhtotal;
         energy_kWhtoday = 0;
         energy_period = energy_kWhtoday;
-        RtcSettings.energy_kWhtoday = energy_kWhtoday;
-#ifdef USE_PZEM004T
-        if (ENERGY_PZEM004T == energy_flg) {
-          energy_start = energy_total;
-          Settings.energy_power_calibration = energy_start * 1000;
-        }
-#endif  // USE_PZEM004T
+        EnergyUpdateToday();
         energy_max_energy_state = 3;
       }
       if ((RtcTime.hour == Settings.energy_max_energy_start) && (3 == energy_max_energy_state)) {
@@ -597,21 +581,15 @@ void Energy200ms()
 
   energy_power_on = (power &1) | Settings.flag.no_power_on_check;
 
-  if (ENERGY_HLW8012 == energy_flg) {
-    HlwEvery200ms();
+  if (ENERGY_HLW8012 == energy_flg) HlwEvery200ms();
 #ifdef USE_PZEM004T
-  }
-  else if (ENERGY_PZEM004T == energy_flg) {
-    PzemEvery200ms();
+  if (ENERGY_PZEM004T == energy_flg) PzemEvery200ms();
 #endif  // USE_PZEM004T
-  }
 
   float power_factor = 0;
   if (energy_voltage && energy_current && energy_power) {
     power_factor = energy_power / (energy_voltage * energy_current);
-    if (power_factor > 1) {
-      power_factor = 1;
-    }
+    if (power_factor > 1) power_factor = 1;
   }
   energy_power_factor = power_factor;
 }
@@ -628,9 +606,7 @@ boolean EnergyMargin(byte type, uint16_t margin, uint16_t value, byte &flag, byt
 {
   byte change;
 
-  if (!margin) {
-    return false;
-  }
+  if (!margin) return false;
   change = save_flag;
   if (type) {
     flag = (value > margin);
@@ -916,7 +892,7 @@ boolean EnergyCommand()
       if ((ENERGY_HLW8012 == energy_flg) && hlw_cf1_current_pulse_length) {
         Settings.energy_current_calibration = (XdrvMailbox.payload * hlw_cf1_current_pulse_length) / HLW_IREF;
       }
-      if ((ENERGY_CSE7766 == energy_flg) && current_cycle) {
+      else if ((ENERGY_CSE7766 == energy_flg) && current_cycle) {
         Settings.energy_current_calibration = (XdrvMailbox.payload * current_cycle) / 1000;
       }
     }
@@ -1019,15 +995,12 @@ void EnergyDrvInit()
 
 void EnergyInit()
 {
-  if (ENERGY_HLW8012 == energy_flg) {
-    HlwInit();
-  }
+  if (ENERGY_HLW8012 == energy_flg) HlwInit();
 
   if (energy_flg) {
     energy_kWhtoday = (RtcSettingsValid()) ? RtcSettings.energy_kWhtoday : (RtcTime.day_of_year == Settings.energy_kWhdoy) ? Settings.energy_kWhtoday : 0;
     energy_period = energy_kWhtoday;
     EnergyUpdateToday();
-    energy_start = (float)Settings.energy_power_calibration / 1000;  // Used by PZEM004T to store total yesterday
     ticker_energy.attach_ms(200, Energy200ms);
   }
 }
@@ -1059,9 +1032,7 @@ void EnergyShow(boolean json)
 
   float energy = 0;
   if (show_energy_period) {
-    if (energy_period) {
-      energy = (float)(energy_kWhtoday - energy_period) / 100000;
-    }
+    if (energy_period) energy = (float)(energy_kWhtoday - energy_period) / 100000;
     energy_period = energy_kWhtoday;
   }
 
