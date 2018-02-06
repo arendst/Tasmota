@@ -247,6 +247,8 @@ struct SYSCFG {
   uint16_t      pulse_counter_type;        // 5D0
   uint16_t      pulse_counter_debounce;    // 5D2
   uint8_t       rf_code[17][9];            // 5D4
+  uint16_t      energy_standby_power_window_low; //
+  uint16_t      energy_standby_power_window_high; //
 
 } Settings;
 

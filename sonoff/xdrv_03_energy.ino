@@ -25,6 +25,8 @@
 \*********************************************************************************************/
 
 #define FEATURE_POWER_LIMIT  true
+// MyCode
+#define FEATURE_POWER_CHANGE_REPORT true
 
 enum EnergyHardware { ENERGY_NONE, ENERGY_HLW8012, ENERGY_CSE7766, ENERGY_PZEM004T };
 
@@ -33,13 +35,13 @@ enum EnergyCommands {
   CMND_POWERCAL, CMND_POWERSET, CMND_VOLTAGECAL, CMND_VOLTAGESET, CMND_CURRENTCAL, CMND_CURRENTSET,
   CMND_ENERGYRESET, CMND_MAXENERGY, CMND_MAXENERGYSTART,
   CMND_MAXPOWER, CMND_MAXPOWERHOLD, CMND_MAXPOWERWINDOW,
-  CMND_SAFEPOWER, CMND_SAFEPOWERHOLD, CMND_SAFEPOWERWINDOW };
+  CMND_SAFEPOWER, CMND_SAFEPOWERHOLD, CMND_SAFEPOWERWINDOW, CMND_POWERWINDOWLOW, CMND_POWERWINDOWHIGH };
 const char kEnergyCommands[] PROGMEM =
   D_CMND_POWERLOW "|" D_CMND_POWERHIGH "|" D_CMND_VOLTAGELOW "|" D_CMND_VOLTAGEHIGH "|" D_CMND_CURRENTLOW "|" D_CMND_CURRENTHIGH "|"
   D_CMND_POWERCAL "|" D_CMND_POWERSET "|" D_CMND_VOLTAGECAL "|" D_CMND_VOLTAGESET "|" D_CMND_CURRENTCAL "|" D_CMND_CURRENTSET "|"
   D_CMND_ENERGYRESET "|" D_CMND_MAXENERGY "|" D_CMND_MAXENERGYSTART "|"
   D_CMND_MAXPOWER "|" D_CMND_MAXPOWERHOLD "|" D_CMND_MAXPOWERWINDOW "|"
-  D_CMND_SAFEPOWER "|" D_CMND_SAFEPOWERHOLD "|"  D_CMND_SAFEPOWERWINDOW ;
+  D_CMND_SAFEPOWER "|" D_CMND_SAFEPOWERHOLD "|"  D_CMND_SAFEPOWERWINDOW "|" D_CMND_POWERWINDOWLOW "|" D_CMND_POWERWINDOWHIGH;
 
 float energy_voltage = 0;         // 123.1 V
 float energy_current = 0;         // 123.123 A
@@ -69,6 +71,21 @@ uint16_t energy_mplh_counter = 0;
 uint16_t energy_mplw_counter = 0;
 #endif  // FEATURE_POWER_LIMIT
 
+// MyCode
+#if FEATURE_POWER_CHANGE_REPORT
+enum PowerWindows {
+  UNKNOWN,
+  PWR_WINDOW_OFF,
+  PWR_WINDOW_STANDBY,
+  PWR_WINDOW_ON
+};
+byte energy_power_window_stable_count = 0;
+PowerWindows current_power_window = UNKNOWN;
+PowerWindows prev_power_window = UNKNOWN;
+const char * const kPowerWindows[] PROGMEM = {"",D_JSON_POWEROFF,D_JSON_POWERSTANDBY,D_JSON_POWERON};
+#endif // FEATURE_POWER_CHANGE_REPORT
+
+byte energy_startup = 1;
 byte energy_fifth_second = 0;
 Ticker ticker_energy;
 
@@ -641,8 +658,8 @@ void EnergyMarginCheck()
     energy_voltage_u = (uint16_t)(energy_voltage);
     energy_current_u = (uint16_t)(energy_current * 1000);
 
-//    snprintf_P(log_data, sizeof(log_data), PSTR("HLW: W %d, U %d, I %d"), energy_power_u, energy_voltage_u, energy_current_u);
-//    AddLog(LOG_LEVEL_DEBUG);
+    snprintf_P(log_data, sizeof(log_data), PSTR("HLW: W %d, U %d, I %d"), energy_power_u, energy_voltage_u, energy_current_u);
+    AddLog(LOG_LEVEL_DEBUG);
 
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{"));
     jsonflg = 0;
@@ -741,6 +758,45 @@ void EnergyMarginCheck()
     }
   }
 #endif  // FEATURE_POWER_LIMIT
+
+// MyCode
+#if FEATURE_POWER_CHANGE_REPORT
+  if (Settings.energy_standby_power_window_high) {
+    energy_power_u = (uint16_t)(energy_power);
+    AddLog(LOG_LEVEL_DEBUG);
+
+    if (energy_power_u > Settings.energy_standby_power_window_high+POWER_WINDOW_HYSTERESIS) {
+      current_power_window = PWR_WINDOW_ON;
+    }
+
+    else if (Settings.energy_standby_power_window_low &&
+      (energy_power_u > Settings.energy_standby_power_window_low+POWER_WINDOW_HYSTERESIS && energy_power_u < Settings.energy_standby_power_window_high-POWER_WINDOW_HYSTERESIS)) {
+      current_power_window = PWR_WINDOW_STANDBY;
+    }
+    else {
+      current_power_window = PWR_WINDOW_OFF;
+    }
+
+    if (current_power_window == prev_power_window) {
+      if (energy_power_window_stable_count <= POWER_WINDOW_STABLE_COUNT) {
+        energy_power_window_stable_count++;
+      }
+    }
+    else {
+      energy_power_window_stable_count = 0;
+    }
+
+    if (energy_power_window_stable_count == POWER_WINDOW_STABLE_COUNT) {
+      snprintf_P(log_data, sizeof(log_data), PSTR("EPU: %d, LO %d, HI %d, PWR_WINDOW: %s"), energy_power_u, Settings.energy_standby_power_window_low, Settings.energy_standby_power_window_high, kPowerWindows[current_power_window]);
+      AddLog(LOG_LEVEL_DEBUG);
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_POWERWINDOW "\":\"%s\"}"), kPowerWindows[current_power_window]);
+      MqttPublishPrefixTopic_P(5, PSTR(D_JSON_POWERWINDOW));
+    }
+  }
+  prev_power_window = current_power_window;
+
+#endif  // FEATURE_POWER_CHANGE_REPORT
+
 }
 
 void EnergyMqttShow()
@@ -960,6 +1016,24 @@ boolean EnergyCommand()
     unit = UNIT_HOUR;
   }
 #endif  // FEATURE_POWER_LIMIT
+// MyCode
+#if FEATURE_POWER_CHANGE_REPORT
+  else if (CMND_POWERWINDOWHIGH == command_code) {
+    if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < 3601)) {
+      Settings.energy_standby_power_window_high = XdrvMailbox.payload;
+    }
+    nvalue = Settings.energy_standby_power_window_high;
+    unit = UNIT_WATT;
+  }
+  else if (CMND_POWERWINDOWLOW == command_code) {
+    if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < 3601)) {
+      Settings.energy_standby_power_window_low = XdrvMailbox.payload;
+    }
+    nvalue = Settings.energy_standby_power_window_low;
+    unit = UNIT_WATT;
+  }
+  #endif  // FEATURE_POWER_CHANGE_REPORT
+
   else {
     serviced = false;
   }
@@ -1011,6 +1085,10 @@ const char HTTP_ENERGY_SNS[] PROGMEM = "%s"
   "{s}" D_CURRENT "{m}%s " D_UNIT_AMPERE "{e}"
   "{s}" D_POWERUSAGE "{m}%s " D_UNIT_WATT "{e}"
   "{s}" D_POWER_FACTOR "{m}%s{e}"
+  // MyCode
+  #if FEATURE_POWER_CHANGE_REPORT
+  "{s}" D_POWER_WINDOW "{m}%s{e}"
+  #endif
   "{s}" D_ENERGY_TODAY  "{m}%s " D_UNIT_KILOWATTHOUR "{e}"
   "{s}" D_ENERGY_YESTERDAY "{m}%s " D_UNIT_KILOWATTHOUR "{e}"
   "{s}" D_ENERGY_TOTAL "{m}%s " D_UNIT_KILOWATTHOUR "{e}";      // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
@@ -1047,8 +1125,14 @@ void EnergyShow(boolean json)
 
   if (json) {
     snprintf_P(speriod, sizeof(speriod), PSTR(",\"" D_JSON_PERIOD "\":%s"), energy_period_chr);
+    // MyCode
+    #if FEATURE_POWER_CHANGE_REPORT
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"" D_RSLT_ENERGY "\":{\"" D_JSON_TOTAL "\":%s,\"" D_JSON_YESTERDAY "\":%s,\"" D_JSON_TODAY "\":%s%s,\"" D_JSON_POWERUSAGE "\":%s,\"" D_JSON_POWERFACTOR "\":%s,\"" D_JSON_VOLTAGE "\":%s,\"" D_JSON_CURRENT "\":%s,\"" D_JSON_POWERWINDOW "\":\"%s\"}"),
+      mqtt_data, energy_total_chr, energy_yesterday_chr, energy_daily_chr, (show_energy_period) ? speriod : "", energy_power_chr, energy_power_factor_chr, energy_voltage_chr, energy_current_chr, kPowerWindows[current_power_window]);
+    #else
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"" D_RSLT_ENERGY "\":{\"" D_JSON_TOTAL "\":%s,\"" D_JSON_YESTERDAY "\":%s,\"" D_JSON_TODAY "\":%s%s,\"" D_JSON_POWERUSAGE "\":%s,\"" D_JSON_POWERFACTOR "\":%s,\"" D_JSON_VOLTAGE "\":%s,\"" D_JSON_CURRENT "\":%s}"),
       mqtt_data, energy_total_chr, energy_yesterday_chr, energy_daily_chr, (show_energy_period) ? speriod : "", energy_power_chr, energy_power_factor_chr, energy_voltage_chr, energy_current_chr);
+    #endif // FEATURE_POWER_CHANGE_REPORT
 #ifdef USE_DOMOTICZ
     if (show_energy_period) {  // Only send if telemetry
       dtostrfd(energy_total * 1000, 1, energy_total_chr);
@@ -1059,7 +1143,12 @@ void EnergyShow(boolean json)
 #endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
   } else {
-    snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_ENERGY_SNS, mqtt_data, energy_voltage_chr, energy_current_chr, energy_power_chr, energy_power_factor_chr, energy_daily_chr, energy_yesterday_chr, energy_total_chr);
+    // MyCode
+    #if FEATURE_POWER_CHANGE_REPORT
+    snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_ENERGY_SNS, energy_voltage_chr, energy_current_chr, energy_power_chr, energy_power_factor_chr, kPowerWindows[current_power_window], energy_daily_chr, energy_yesterday_chr, energy_total_chr);
+    #else
+    snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_ENERGY_SNS, energy_voltage_chr, energy_current_chr, energy_power_chr, energy_power_factor_chr, energy_daily_chr, energy_yesterday_chr, energy_total_chr);
+    #endif // FEATURE_POWER_CHANGE_REPORT
 #endif  // USE_WEBSERVER
   }
 }
