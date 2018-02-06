@@ -44,14 +44,16 @@ void Tsl2561Detect()
 
   for (byte i = 0; i < sizeof(tsl2561_addresses); i++) {
     tsl2561_address = tsl2561_addresses[i];
-    tsl = new TSL2561(tsl2561_address);
-    if (tsl->begin()) {
-      tsl->setGain(TSL2561_GAIN_16X);
-      tsl->setTiming(TSL2561_INTEGRATIONTIME_101MS);
-      tsl2561_type = 1;
-      snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, "TSL2561", tsl2561_address);
-      AddLog(LOG_LEVEL_DEBUG);
-      break;
+    if (I2cDevice(tsl2561_address)) {
+      tsl = new TSL2561(tsl2561_address);
+      if (tsl->begin()) {
+        tsl->setGain(TSL2561_GAIN_16X);
+        tsl->setTiming(TSL2561_INTEGRATIONTIME_101MS);
+        tsl2561_type = 1;
+        snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, "TSL2561", tsl2561_address);
+        AddLog(LOG_LEVEL_DEBUG);
+        break;
+      }
     }
   }
 }
