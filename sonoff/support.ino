@@ -1405,6 +1405,7 @@ void AddLog(byte loglevel)
       memmove(web_log, it, WEB_LOG_SIZE -(it-web_log));  // Move buffer forward to remove oldest log line
     }
     snprintf_P(web_log, sizeof(web_log), PSTR("%s%c%s%s\1"), web_log, web_log_index++, mxtime, log_data);
+    if (!web_log_index) web_log_index++;   // Index 0 is not allowed as it is the end of char string
   }
 #endif  // USE_WEBSERVER
   if ((WL_CONNECTED == WiFi.status()) && (loglevel <= syslog_level)) {

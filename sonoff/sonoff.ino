@@ -131,7 +131,7 @@ int wifi_state_flag = WIFI_RESTART;         // Wifi state flag
 int uptime = 0;                             // Current uptime in hours
 boolean latest_uptime_flag = true;          // Signal latest uptime
 int tele_period = 0;                        // Tele period timer
-byte web_log_index = 0;                     // Index in Web log buffer
+byte web_log_index = 1;                     // Index in Web log buffer (should never be 0)
 byte reset_web_log_flag = 0;                // Reset web console log
 byte devices_present = 0;                   // Max number of devices supported
 int status_update_timer = 0;                // Refresh initial status
@@ -187,6 +187,7 @@ uint8_t energy_flg = 1;                     // Energy monitor configured
 uint8_t i2c_flg = 0;                        // I2C configured
 uint8_t spi_flg = 0;                        // SPI configured
 uint8_t light_type = 0;                     // Light types
+bool pwm_present = false;                   // Any PWM channel configured with SetOption15 0
 
 boolean mdns_begun = false;
 
@@ -1181,7 +1182,7 @@ void MqttDataCallback(char* topic, byte* data, unsigned int data_len)
       }
       mqtt_data[0] = '\0';
     }
-    else if ((CMND_PWM == command_code) && !light_type && (index > 0) && (index <= MAX_PWMS)) {
+    else if ((CMND_PWM == command_code) && pwm_present && (index > 0) && (index <= MAX_PWMS)) {
       if ((payload >= 0) && (payload <= Settings.pwm_range) && (pin[GPIO_PWM1 + index -1] < 99)) {
         Settings.pwm_value[index -1] = payload;
         analogWrite(pin[GPIO_PWM1 + index -1], bitRead(pwm_inverted, index -1) ? Settings.pwm_range - payload : payload);
@@ -1918,129 +1919,130 @@ void ButtonHandler()
   char scmnd[20];
 
   uint8_t maxdev = (devices_present > MAX_KEYS) ? MAX_KEYS : devices_present;
-  for (byte i = 0; i < maxdev; i++) {
+  for (byte button_index = 0; button_index < maxdev; button_index++) {
     button = NOT_PRESSED;
     button_present = 0;
 
-    if (!i && ((SONOFF_DUAL == Settings.module) || (CH4 == Settings.module))) {
+    if (!button_index && ((SONOFF_DUAL == Settings.module) || (CH4 == Settings.module))) {
       button_present = 1;
       if (dual_button_code) {
         snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION D_BUTTON " " D_CODE " %04X"), dual_button_code);
         AddLog(LOG_LEVEL_DEBUG);
         button = PRESSED;
         if (0xF500 == dual_button_code) {             // Button hold
-          holdbutton[i] = (Settings.param[P_HOLD_TIME] * (STATES / 10)) -1;
+          holdbutton[button_index] = (Settings.param[P_HOLD_TIME] * (STATES / 10)) -1;
         }
         dual_button_code = 0;
       }
     } else {
-      if ((pin[GPIO_KEY1 +i] < 99) && !blockgpio0) {
+      if ((pin[GPIO_KEY1 +button_index] < 99) && !blockgpio0) {
         button_present = 1;
-        button = digitalRead(pin[GPIO_KEY1 +i]);
+        button = digitalRead(pin[GPIO_KEY1 +button_index]);
       }
     }
 
     if (button_present) {
       if (SONOFF_4CHPRO == Settings.module) {
-        if (holdbutton[i]) {
-          holdbutton[i]--;
+        if (holdbutton[button_index]) {
+          holdbutton[button_index]--;
         }
+
         boolean button_pressed = false;
-        if ((PRESSED == button) && (NOT_PRESSED == lastbutton[i])) {
-          snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION D_BUTTON " %d " D_LEVEL_10), i +1);
+        if ((PRESSED == button) && (NOT_PRESSED == lastbutton[button_index])) {
+          snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION D_BUTTON "%d " D_LEVEL_10), button_index +1);
           AddLog(LOG_LEVEL_DEBUG);
-          holdbutton[i] = STATES;
+          holdbutton[button_index] = STATES;
           button_pressed = true;
         }
-        if ((NOT_PRESSED == button) && (PRESSED == lastbutton[i])) {
-          snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION D_BUTTON " %d " D_LEVEL_01), i +1);
+        if ((NOT_PRESSED == button) && (PRESSED == lastbutton[button_index])) {
+          snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION D_BUTTON "%d " D_LEVEL_01), button_index +1);
           AddLog(LOG_LEVEL_DEBUG);
-          if (!holdbutton[i]) {                       // Do not allow within 1 second
+          if (!holdbutton[button_index]) {                       // Do not allow within 1 second
             button_pressed = true;
           }
         }
         if (button_pressed) {
-          if (!send_button_power(0, i +1, 2)) {       // Execute Toggle command via MQTT if ButtonTopic is set
-            ExecuteCommandPower(i +1, POWER_TOGGLE);  // Execute Toggle command internally
+          if (!send_button_power(0, button_index +1, POWER_TOGGLE)) {  // Execute Toggle command via MQTT if ButtonTopic is set
+            ExecuteCommandPower(button_index +1, POWER_TOGGLE);  // Execute Toggle command internally
           }
         }
       } else {
-        if ((PRESSED == button) && (NOT_PRESSED == lastbutton[i])) {
+        if ((PRESSED == button) && (NOT_PRESSED == lastbutton[button_index])) {
           if (Settings.flag.button_single) {          // Allow only single button press for immediate action
-            snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION D_BUTTON " %d " D_IMMEDIATE), i +1);
+            snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION D_BUTTON "%d " D_IMMEDIATE), button_index +1);
             AddLog(LOG_LEVEL_DEBUG);
-            if (!send_button_power(0, i +1, 2)) {     // Execute Toggle command via MQTT if ButtonTopic is set
-              ExecuteCommandPower(i +1, POWER_TOGGLE);  // Execute Toggle command internally
+            if (!send_button_power(0, button_index +1, POWER_TOGGLE)) {  // Execute Toggle command via MQTT if ButtonTopic is set
+              ExecuteCommandPower(button_index +1, POWER_TOGGLE);  // Execute Toggle command internally
             }
           } else {
-            multipress[i] = (multiwindow[i]) ? multipress[i] +1 : 1;
-            snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION D_BUTTON " %d " D_MULTI_PRESS " %d"), i +1, multipress[i]);
+            multipress[button_index] = (multiwindow[button_index]) ? multipress[button_index] +1 : 1;
+            snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION D_BUTTON "%d " D_MULTI_PRESS " %d"), button_index +1, multipress[button_index]);
             AddLog(LOG_LEVEL_DEBUG);
-            multiwindow[i] = STATES /2;               // 0.5 second multi press window
+            multiwindow[button_index] = STATES /2;               // 0.5 second multi press window
           }
           blinks = 201;
         }
 
         if (NOT_PRESSED == button) {
-          holdbutton[i] = 0;
+          holdbutton[button_index] = 0;
         } else {
-          holdbutton[i]++;
+          holdbutton[button_index]++;
           if (Settings.flag.button_single) {          // Allow only single button press for immediate action
-            if (holdbutton[i] == Settings.param[P_HOLD_TIME] * (STATES / 10) * 4) {  // Button hold for four times longer
+            if (holdbutton[button_index] == Settings.param[P_HOLD_TIME] * (STATES / 10) * 4) {  // Button hold for four times longer
 //              Settings.flag.button_single = 0;
               snprintf_P(scmnd, sizeof(scmnd), PSTR(D_CMND_SETOPTION "13 0"));  // Disable single press only
               ExecuteCommand(scmnd);
             }
           } else {
-            if (holdbutton[i] == Settings.param[P_HOLD_TIME] * (STATES / 10)) {  // Button hold
-              multipress[i] = 0;
+            if (holdbutton[button_index] == Settings.param[P_HOLD_TIME] * (STATES / 10)) {  // Button hold
+              multipress[button_index] = 0;
               if (!Settings.flag.button_restrict) {   // No button restriction
                 snprintf_P(scmnd, sizeof(scmnd), PSTR(D_CMND_RESET " 1"));
                 ExecuteCommand(scmnd);
               } else {
-                send_button_power(0, i +1, 3);        // Execute Hold command via MQTT if ButtonTopic is set
+                send_button_power(0, button_index +1, 3);        // Execute Hold command via MQTT if ButtonTopic is set
               }
             }
           }
         }
 
         if (!Settings.flag.button_single) {           // Allow multi-press
-          if (multiwindow[i]) {
-            multiwindow[i]--;
+          if (multiwindow[button_index]) {
+            multiwindow[button_index]--;
           } else {
-            if (!restart_flag && !holdbutton[i] && (multipress[i] > 0) && (multipress[i] < MAX_BUTTON_COMMANDS +3)) {
+            if (!restart_flag && !holdbutton[button_index] && (multipress[button_index] > 0) && (multipress[button_index] < MAX_BUTTON_COMMANDS +3)) {
               boolean single_press = false;
-              if (multipress[i] < 3) {                // Single or Double press
+              if (multipress[button_index] < 3) {                // Single or Double press
                 if ((SONOFF_DUAL_R2 == Settings.module) || (SONOFF_DUAL == Settings.module) || (CH4 == Settings.module)) {
                   single_press = true;
                 } else  {
-                  single_press = (Settings.flag.button_swap +1 == multipress[i]);
-                  multipress[i] = 1;
+                  single_press = (Settings.flag.button_swap +1 == multipress[button_index]);
+                  multipress[button_index] = 1;
                 }
               }
-              if (single_press && send_button_power(0, i + multipress[i], 2)) {  // Execute Toggle command via MQTT if ButtonTopic is set
+              if (single_press && send_button_power(0, button_index + multipress[button_index], POWER_TOGGLE)) {  // Execute Toggle command via MQTT if ButtonTopic is set
                 // Success
               } else {
-                if (multipress[i] < 3) {              // Single or Double press
+                if (multipress[button_index] < 3) {              // Single or Double press
                   if (WifiState()) {                  // WPSconfig, Smartconfig or Wifimanager active
                     restart_flag = 1;
                   } else {
-                    ExecuteCommandPower(i + multipress[i], POWER_TOGGLE);  // Execute Toggle command internally
+                    ExecuteCommandPower(button_index + multipress[button_index], POWER_TOGGLE);  // Execute Toggle command internally
                   }
                 } else {                              // 3 - 7 press
                   if (!Settings.flag.button_restrict) {
-                    snprintf_P(scmnd, sizeof(scmnd), kCommands[multipress[i] -3]);
+                    snprintf_P(scmnd, sizeof(scmnd), kCommands[multipress[button_index] -3]);
                     ExecuteCommand(scmnd);
                   }
                 }
               }
-              multipress[i] = 0;
+              multipress[button_index] = 0;
             }
           }
         }
       }
     }
-    lastbutton[i] = button;
+    lastbutton[button_index] = button;
   }
 }
 
@@ -2643,6 +2645,7 @@ void GpioInit()
   if (!light_type) {
     for (byte i = 0; i < MAX_PWMS; i++) {     // Basic PWM control only
       if (pin[GPIO_PWM1 +i] < 99) {
+        pwm_present = true;
         pinMode(pin[GPIO_PWM1 +i], OUTPUT);
         analogWrite(pin[GPIO_PWM1 +i], bitRead(pwm_inverted, i) ? Settings.pwm_range - Settings.pwm_value[i] : Settings.pwm_value[i]);
       }
