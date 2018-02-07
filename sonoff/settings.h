@@ -270,6 +270,7 @@ struct TIME_T {
   char          name_of_month[4];
   uint16_t      day_of_year;
   uint16_t      year;
+  unsigned long days;
   unsigned long valid;
 } RtcTime;
 
