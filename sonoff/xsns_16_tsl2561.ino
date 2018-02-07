@@ -31,14 +31,13 @@
 
 uint8_t tsl2561_address;
 uint8_t tsl2561_addresses[] = { TSL2561_ADDR_LOW, TSL2561_ADDR_FLOAT, TSL2561_ADDR_HIGH };
-uint8_t tsl2561_type = 0;
 
 //TSL2561 tsl(TSL2561_ADDR_FLOAT);
-TSL2561 *tsl;
+TSL2561 *tsl = 0;
 
 void Tsl2561Detect()
 {
-  if (tsl2561_type) {
+  if (tsl) {
     return;
   }
 
@@ -49,10 +48,12 @@ void Tsl2561Detect()
       if (tsl->begin()) {
         tsl->setGain(TSL2561_GAIN_16X);
         tsl->setTiming(TSL2561_INTEGRATIONTIME_101MS);
-        tsl2561_type = 1;
         snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, "TSL2561", tsl2561_address);
         AddLog(LOG_LEVEL_DEBUG);
         break;
+      } else {
+        delete tsl;
+        tsl = 0;
       }
     }
   }
@@ -65,7 +66,7 @@ const char HTTP_SNS_TSL2561[] PROGMEM =
 
 void Tsl2561Show(boolean json)
 {
-  if (tsl2561_type) {
+  if (tsl) {
     uint16_t illuminance = tsl->getLuminosity(TSL2561_VISIBLE);
 
     if (json) {
