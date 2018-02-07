@@ -993,6 +993,7 @@ uint32_t standard_time = 0;
 uint32_t ntp_time = 0;
 uint32_t midnight = 1451602800;
 uint8_t  midnight_now = 0;
+uint8_t  ntp_sync_minute = 0;
 
 String GetBuildDateAndTime()
 {
@@ -1047,6 +1048,22 @@ String GetUtcDateAndTime()
   return String(dt);
 }
 
+String GetUptime()
+{
+  char dt[16];
+
+  TIME_T ut;
+  BreakTime(uptime, ut);
+
+  // "P128DT14H35M44S" - ISO8601:2004 - https://en.wikipedia.org/wiki/ISO_8601 Durations
+//  snprintf_P(dt, sizeof(dt), PSTR("P%dDT%02dH%02dM%02dS"), ut.days, ut.hour, ut.minute, ut.second);
+
+  // "128 14:35:44" - OpenVMS
+  // "128T14:35:44" - Tasmota
+  snprintf_P(dt, sizeof(dt), PSTR("%d" D_DATE_TIME_SEPARATOR "%02d" D_HOUR_MINUTE_SEPARATOR "%02d" D_MINUTE_SECOND_SEPARATOR "%02d"), ut.days, ut.hour, ut.minute, ut.second);
+  return String(dt);
+}
+
 void BreakTime(uint32_t time_input, TIME_T &tm)
 {
 // break the given time_input into time components
@@ -1066,6 +1083,7 @@ void BreakTime(uint32_t time_input, TIME_T &tm)
   time /= 60;                // now it is hours
   tm.hour = time % 24;
   time /= 24;                // now it is days
+  tm.days = time;
   tm.day_of_week = ((time + 4) % 7) + 1;  // Sunday is day 1
 
   year = 0;
@@ -1201,22 +1219,13 @@ boolean MidnightNow()
 
 void RtcSecond()
 {
-  byte ntpsync;
   uint32_t stdoffset;
   uint32_t dstoffset;
   TIME_T tmpTime;
 
-  ntpsync = 0;
-  if (RtcTime.year < 2016) {
-    if (WL_CONNECTED == WiFi.status()) {
-      ntpsync = 1;  // Initial NTP sync
-    }
-  } else {
-    if ((1 == RtcTime.minute) && (1 == RtcTime.second)) {
-      ntpsync = 1;  // Hourly NTP sync at xx:01:01
-    }
-  }
-  if (ntpsync) {
+  if ((ntp_sync_minute > 59) && (3 == RtcTime.minute)) ntp_sync_minute = 1;                // If sync prepare for a new cycle
+  uint8_t offset = (uptime < 30) ? RtcTime.second : (((ESP.getChipId() & 0xF) * 3) + 3) ;  // First try ASAP to sync. If fails try once every 60 seconds based on chip id
+  if ((WL_CONNECTED == WiFi.status()) && (offset == RtcTime.second) && ((RtcTime.year < 2016) || (ntp_sync_minute == RtcTime.minute))) {
     ntp_time = sntp_get_current_timestamp();
     if (ntp_time) {
       utc_time = ntp_time;
@@ -1230,6 +1239,9 @@ void RtcSecond()
       AddLog(LOG_LEVEL_DEBUG);
       snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION "(" D_STD_TIME ") %s"), GetTime(3).c_str());
       AddLog(LOG_LEVEL_DEBUG);
+      ntp_sync_minute = 60;  // Sync so block further requests
+    } else {
+      ntp_sync_minute++;     // Try again in next minute
     }
   }
   utc_time++;
