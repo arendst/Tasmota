@@ -82,8 +82,20 @@ void WifiWpsStatusCallback(wps_cb_status status);
 #ifdef USE_DHT
 #undef USE_DHT                              // Disable internal DHT sensor
 #endif
+#ifdef USE_DISPLAY
+#undef USE_DISPLAY                          // Disable Display support
+#endif
+#ifdef USE_MHZ19
+#undef USE_MHZ19                            // Disable support for MH-Z19 CO2 sensor
+#endif
+#ifdef USE_SENSEAIR
+#undef USE_SENSEAIR                         // Disable support for SenseAir K30, K70 and S8 CO2 sensor
+#endif
 #ifdef USE_IR_REMOTE
 #undef USE_IR_REMOTE                        // Disable IR driver
+#endif
+#ifdef USE_ARILUX_RF
+#undef USE_ARILUX_RF                        // Disable support for Arilux RF remote controller
 #endif
 #ifdef DEBUG_THEO
 #undef DEBUG_THEO                           // Disable debug code
