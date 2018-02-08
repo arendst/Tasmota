@@ -97,6 +97,92 @@ boolean (* const xsns_func_ptr[])(byte) PROGMEM = {  // Sensor Function Pointers
 #ifdef XSNS_20
   &Xsns20,
 #endif
+
+#ifdef XSNS_21
+  &Xsns21,
+#endif
+
+#ifdef XSNS_22
+  &Xsns22,
+#endif
+
+#ifdef XSNS_23
+  &Xsns23,
+#endif
+
+#ifdef XSNS_24
+  &Xsns24,
+#endif
+
+#ifdef XSNS_25
+  &Xsns25,
+#endif
+
+#ifdef XSNS_26
+  &Xsns26,
+#endif
+
+#ifdef XSNS_27
+  &Xsns27,
+#endif
+
+#ifdef XSNS_28
+  &Xsns28,
+#endif
+
+#ifdef XSNS_29
+  &Xsns29,
+#endif
+
+#ifdef XSNS_30
+  &Xsns30,
+#endif
+
+#ifdef XSNS_31
+  &Xsns31,
+#endif
+
+#ifdef XSNS_32
+  &Xsns32,
+#endif
+
+// Optional user defined sensors in range 91 - 99
+
+#ifdef XSNS_91
+  &Xsns91,
+#endif
+
+#ifdef XSNS_92
+  &Xsns92,
+#endif
+
+#ifdef XSNS_93
+  &Xsns93,
+#endif
+
+#ifdef XSNS_94
+  &Xsns94,
+#endif
+
+#ifdef XSNS_95
+  &Xsns95,
+#endif
+
+#ifdef XSNS_96
+  &Xsns96,
+#endif
+
+#ifdef XSNS_97
+  &Xsns97,
+#endif
+
+#ifdef XSNS_98
+  &Xsns98,
+#endif
+
+#ifdef XSNS_99
+  &Xsns99
+#endif
 };
 
 const uint8_t xsns_present = sizeof(xsns_func_ptr) / sizeof(xsns_func_ptr[0]);  // Number of External Sensors found

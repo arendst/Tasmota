@@ -1156,34 +1156,34 @@ uint32_t MakeTime(TIME_T &tm)
 
 uint32_t RuleToTime(TimeChangeRule r, int yr)
 {
-    TIME_T tm;
-    uint32_t t;
-    uint8_t m;
-    uint8_t w;            // temp copies of r.month and r.week
+  TIME_T tm;
+  uint32_t t;
+  uint8_t m;
+  uint8_t w;                // temp copies of r.month and r.week
 
-    m = r.month;
-    w = r.week;
-    if (0 == w) {         // Last week = 0
-      if (++m > 12) {     // for "Last", go to the next month
-        m = 1;
-        yr++;
-      }
-      w = 1;              // and treat as first week of next month, subtract 7 days later
+  m = r.month;
+  w = r.week;
+  if (0 == w) {             // Last week = 0
+    if (++m > 12) {         // for "Last", go to the next month
+      m = 1;
+      yr++;
     }
+    w = 1;                  // and treat as first week of next month, subtract 7 days later
+  }
 
-    tm.hour = r.hour;
-    tm.minute = 0;
-    tm.second = 0;
-    tm.day_of_month = 1;
-    tm.month = m;
-    tm.year = yr - 1970;
-    t = MakeTime(tm);        // First day of the month, or first day of next month for "Last" rules
-    BreakTime(t, tm);
-    t += (7 * (w - 1) + (r.dow - tm.day_of_week + 7) % 7) * SECS_PER_DAY;
-    if (0 == r.week) {
-      t -= 7 * SECS_PER_DAY;    //back up a week if this is a "Last" rule
-    }
-    return t;
+  tm.hour = r.hour;
+  tm.minute = 0;
+  tm.second = 0;
+  tm.day_of_month = 1;
+  tm.month = m;
+  tm.year = yr - 1970;
+  t = MakeTime(tm);         // First day of the month, or first day of next month for "Last" rules
+  BreakTime(t, tm);
+  t += (7 * (w - 1) + (r.dow - tm.day_of_week + 7) % 7) * SECS_PER_DAY;
+  if (0 == r.week) {
+    t -= 7 * SECS_PER_DAY;  // back up a week if this is a "Last" rule
+  }
+  return t;
 }
 
 String GetTime(int type)
@@ -1211,9 +1211,7 @@ uint32_t Midnight()
 boolean MidnightNow()
 {
   boolean mnflg = midnight_now;
-  if (mnflg) {
-    midnight_now = 0;
-  }
+  if (mnflg) midnight_now = 0;
   return mnflg;
 }
 
@@ -1229,19 +1227,16 @@ void RtcSecond()
     ntp_time = sntp_get_current_timestamp();
     if (ntp_time) {
       utc_time = ntp_time;
+      ntp_sync_minute = 60;  // Sync so block further requests
       BreakTime(utc_time, tmpTime);
       RtcTime.year = tmpTime.year + 1970;
       daylight_saving_time = RuleToTime(DaylightSavingTime, RtcTime.year);
       standard_time = RuleToTime(StandardTime, RtcTime.year);
-      snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION "(" D_UTC_TIME ") %s"), GetTime(0).c_str());
+      snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION "(" D_UTC_TIME ") %s, (" D_DST_TIME ") %s, (" D_STD_TIME ") %s"),
+        GetTime(0).c_str(), GetTime(2).c_str(), GetTime(3).c_str());
       AddLog(LOG_LEVEL_DEBUG);
-      snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION "(" D_DST_TIME ") %s"), GetTime(2).c_str());
-      AddLog(LOG_LEVEL_DEBUG);
-      snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION "(" D_STD_TIME ") %s"), GetTime(3).c_str());
-      AddLog(LOG_LEVEL_DEBUG);
-      ntp_sync_minute = 60;  // Sync so block further requests
     } else {
-      ntp_sync_minute++;     // Try again in next minute
+      ntp_sync_minute++;  // Try again in next minute
     }
   }
   utc_time++;
