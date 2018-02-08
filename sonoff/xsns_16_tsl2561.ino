@@ -67,7 +67,14 @@ const char HTTP_SNS_TSL2561[] PROGMEM =
 void Tsl2561Show(boolean json)
 {
   if (tsl) {
-    uint16_t illuminance = tsl->getLuminosity(TSL2561_VISIBLE);
+    union {
+      uint32_t full;
+      struct { uint16_t both, ir; };
+    } light;
+    light.full = tsl->getFullLuminosity();
+    uint32_t illuminance = tsl->calculateLux(light.both, light.ir);
+    snprintf(log_data, sizeof(log_data), "Luminance 0x%08lx = b 0x%04x, i 0x%04x -> %lu lx", light.full, light.both, light.ir, illuminance);
+    AddLog(LOG_LEVEL_DEBUG);
 
     if (json) {
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"TSL2561\":{\"" D_JSON_ILLUMINANCE "\":%d}"), mqtt_data, illuminance);
