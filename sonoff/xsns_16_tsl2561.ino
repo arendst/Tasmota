@@ -72,7 +72,15 @@ void Tsl2561Show(boolean json)
       struct { uint16_t both, ir; };
     } light;
     light.full = tsl->getFullLuminosity();
-    uint32_t illuminance = tsl->calculateLux(light.both, light.ir);
+    uint32_t illuminance = 0;
+    if ((light.full == 0 || light.full == 0xffffffff)) {
+      if (!I2cDevice(tsl2561_address)) {
+        delete tsl;
+        tsl = 0;
+      }
+    } else {
+      illuminance = tsl->calculateLux(light.both, light.ir);
+    }
     snprintf(log_data, sizeof(log_data), "Luminance 0x%08lx = b 0x%04x, i 0x%04x -> %lu lx", light.full, light.both, light.ir, illuminance);
     AddLog(LOG_LEVEL_DEBUG);
 
