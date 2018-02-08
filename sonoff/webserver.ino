@@ -1441,11 +1441,8 @@ void HandleHttpCommand()
   String message = F("{\"" D_RSLT_WARNING "\":\"");
   if (valid) {
     byte curridx = web_log_index;
-    char tmp[100];
-    WebGetArg("cmnd", tmp, sizeof(tmp));
-    if (strlen(tmp)) {
-//      snprintf_P(svalue, sizeof(svalue), tmp);  // Processes FullTopic %p
-      strlcpy(svalue, tmp, sizeof(svalue));       // Fixed 5.8.0b
+    WebGetArg("cmnd", svalue, sizeof(svalue));
+    if (strlen(svalue)) {
 //      byte syslog_now = syslog_level;
 //      syslog_level = 0;  // Disable UDP syslog to not trigger hardware WDT - Seems to work fine since 5.7.1d (global logging)
       ExecuteCommand(svalue);
@@ -1512,11 +1509,8 @@ void HandleAjaxConsoleRefresh()
   byte cflg = 1;
   byte counter = 0;                // Initial start, should never be 0 again
 
-  char tmp[100];
-  WebGetArg("c1", tmp, sizeof(tmp));
-  if (strlen(tmp)) {
-//    snprintf_P(svalue, sizeof(svalue), tmp);  // Processes FullTopic %p
-    strlcpy(svalue, tmp, sizeof(svalue));       // Fixed 5.8.0b
+  WebGetArg("c1", svalue, sizeof(svalue));
+  if (strlen(svalue)) {
     snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_COMMAND "%s"), svalue);
     AddLog(LOG_LEVEL_INFO);
 //    byte syslog_now = syslog_level;
@@ -1525,9 +1519,9 @@ void HandleAjaxConsoleRefresh()
 //    syslog_level = syslog_now;
   }
 
-  WebGetArg("c2", tmp, sizeof(tmp));
-  if (strlen(tmp)) {
-    counter = atoi(tmp);
+  WebGetArg("c2", svalue, sizeof(svalue));
+  if (strlen(svalue)) {
+    counter = atoi(svalue);
   }
 
   byte last_reset_web_log_flag = reset_web_log_flag;
@@ -1596,7 +1590,6 @@ void HandleInformation()
   func += F(D_PROGRAM_VERSION "}2"); func += my_version;
   func += F("}1" D_BUILD_DATE_AND_TIME "}2"); func += GetBuildDateAndTime();
   func += F("}1" D_CORE_AND_SDK_VERSION "}2" ARDUINO_ESP8266_RELEASE "/"); func += String(ESP.getSdkVersion());
-//  func += F("}1" D_UPTIME "}2"); func += String(uptime); func += F(" Seconds");
   func += F("}1" D_UPTIME "}2"); func += GetUptime();
   snprintf_P(stopic, sizeof(stopic), PSTR(" at %X"), GetSettingsAddress());
   func += F("}1" D_FLASH_WRITE_COUNT "}2"); func += String(Settings.save_flag); func += stopic;

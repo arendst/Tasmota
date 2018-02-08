@@ -3,6 +3,7 @@
  * Change uptime from hour to second resulting in a display of 123T13:45:21 where 123 is days
  * Fix Arilux RF induced exception by moving interrupt handler to iram on non esp/arduino lib v2.3.0
  * Add NTP sync based on chip id (#1773)
+ * Fix regression from 5.11.1h web console and http input max length from 100 to 254 characters (#1819)
  *
  * 5.11.1i
  * Update TasmotaSerial library to 1.1.0

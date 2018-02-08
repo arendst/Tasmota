@@ -82,7 +82,7 @@ typedef unsigned long power_t;              // Power (Relay) type
 #define SERIALLOG_TIMER        600          // Seconds to disable SerialLog
 #define OTA_ATTEMPTS           5            // Number of times to try fetching the new firmware
 
-#define INPUT_BUFFER_SIZE      250          // Max number of characters in (serial) command buffer
+#define INPUT_BUFFER_SIZE      255          // Max number of characters in (serial) command buffer
 #define CMDSZ                  24           // Max number of characters in command
 #define TOPSZ                  100          // Max number of characters in topic string
 #define LOGSZ                  400          // Max number of characters in log
