@@ -105,7 +105,7 @@ void SonoffScSerialInput(char *rcvstat)
 
 #ifdef USE_WEBSERVER
 const char HTTP_SNS_SCPLUS[] PROGMEM =
-  "%s{s}" D_LIGHT "{m}%d%{e}{s}" D_NOISE "{m}%d%{e}{s}" D_AIR_QUALITY "{m}%d%{e}";  // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
+  "%s{s}" D_LIGHT "{m}%d%%{e}{s}" D_NOISE "{m}%d%%{e}{s}" D_AIR_QUALITY "{m}%d%%{e}";  // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
 #endif  // USE_WEBSERVER
 
 void SonoffScShow(boolean json)

@@ -52,6 +52,9 @@ void WifiWpsStatusCallback(wps_cb_status status);
 #ifdef USE_DOMOTICZ
 #undef USE_DOMOTICZ                         // Disable Domoticz
 #endif
+#ifdef USE_HOME_ASSISTANT
+#undef USE_HOME_ASSISTANT                   // Disable Home Assistant
+#endif
 //#ifdef USE_WEBSERVER
 //#undef USE_WEBSERVER                        // Disable Webserver
 //#endif
@@ -79,8 +82,20 @@ void WifiWpsStatusCallback(wps_cb_status status);
 #ifdef USE_DHT
 #undef USE_DHT                              // Disable internal DHT sensor
 #endif
+#ifdef USE_DISPLAY
+#undef USE_DISPLAY                          // Disable Display support
+#endif
+#ifdef USE_MHZ19
+#undef USE_MHZ19                            // Disable support for MH-Z19 CO2 sensor
+#endif
+#ifdef USE_SENSEAIR
+#undef USE_SENSEAIR                         // Disable support for SenseAir K30, K70 and S8 CO2 sensor
+#endif
 #ifdef USE_IR_REMOTE
 #undef USE_IR_REMOTE                        // Disable IR driver
+#endif
+#ifdef USE_ARILUX_RF
+#undef USE_ARILUX_RF                        // Disable support for Arilux RF remote controller
 #endif
 #ifdef DEBUG_THEO
 #undef DEBUG_THEO                           // Disable debug code
@@ -100,10 +115,12 @@ void WifiWpsStatusCallback(wps_cb_status status);
 #endif
 
 #ifndef MESSZ
-#define MESSZ                  405          // Max number of characters in JSON message string (6 x DS18x20 sensors)
+//#define MESSZ                  405          // Max number of characters in JSON message string (6 x DS18x20 sensors)
+//#define MESSZ                  893          // Max number of characters in JSON message string (Hass discovery and nice MQTT_MAX_PACKET_SIZE = 1000)
+#define MESSZ                  (MQTT_MAX_PACKET_SIZE -TOPSZ -7)  // Max number of characters in JSON message string (6 x DS18x20 sensors)
 #endif
 
-#include <core_version.h>                   // Arduino_Esp8266 version information (ARDUINO_ESP8266_RELEASE and ARDUINO_ESP8266_RELEASE_2_3_0)
+//#include <core_version.h>                   // Arduino_Esp8266 version information (ARDUINO_ESP8266_RELEASE and ARDUINO_ESP8266_RELEASE_2_3_0)
 #ifndef ARDUINO_ESP8266_RELEASE
 #define ARDUINO_ESP8266_RELEASE "STAGED"
 #endif

@@ -31,27 +31,30 @@
 
 uint8_t tsl2561_address;
 uint8_t tsl2561_addresses[] = { TSL2561_ADDR_LOW, TSL2561_ADDR_FLOAT, TSL2561_ADDR_HIGH };
-uint8_t tsl2561_type = 0;
 
 //TSL2561 tsl(TSL2561_ADDR_FLOAT);
-TSL2561 *tsl;
+TSL2561 *tsl = 0;
 
 void Tsl2561Detect()
 {
-  if (tsl2561_type) {
+  if (tsl) {
     return;
   }
 
   for (byte i = 0; i < sizeof(tsl2561_addresses); i++) {
     tsl2561_address = tsl2561_addresses[i];
-    tsl = new TSL2561(tsl2561_address);
-    if (tsl->begin()) {
-      tsl->setGain(TSL2561_GAIN_16X);
-      tsl->setTiming(TSL2561_INTEGRATIONTIME_101MS);
-      tsl2561_type = 1;
-      snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, "TSL2561", tsl2561_address);
-      AddLog(LOG_LEVEL_DEBUG);
-      break;
+    if (I2cDevice(tsl2561_address)) {
+      tsl = new TSL2561(tsl2561_address);
+      if (tsl->begin()) {
+        tsl->setGain(TSL2561_GAIN_16X);
+        tsl->setTiming(TSL2561_INTEGRATIONTIME_101MS);
+        snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, "TSL2561", tsl2561_address);
+        AddLog(LOG_LEVEL_DEBUG);
+        break;
+      } else {
+        delete tsl;
+        tsl = 0;
+      }
     }
   }
 }
@@ -63,8 +66,23 @@ const char HTTP_SNS_TSL2561[] PROGMEM =
 
 void Tsl2561Show(boolean json)
 {
-  if (tsl2561_type) {
-    uint16_t illuminance = tsl->getLuminosity(TSL2561_VISIBLE);
+  if (tsl) {
+    union {
+      uint32_t full;
+      struct { uint16_t both, ir; };
+    } light;
+    light.full = tsl->getFullLuminosity();
+    uint32_t illuminance = 0;
+    if ((light.full == 0 || light.full == 0xffffffff)) {
+      if (!I2cDevice(tsl2561_address)) {
+        delete tsl;
+        tsl = 0;
+      }
+    } else {
+      illuminance = tsl->calculateLux(light.both, light.ir);
+    }
+    snprintf(log_data, sizeof(log_data), PSTR(D_ILLUMINANCE " 0x%08lx = b 0x%04x, i 0x%04x -> %lu " D_UNIT_LUX), light.full, light.both, light.ir, illuminance);
+    AddLog(LOG_LEVEL_DEBUG);
 
     if (json) {
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"TSL2561\":{\"" D_JSON_ILLUMINANCE "\":%d}"), mqtt_data, illuminance);

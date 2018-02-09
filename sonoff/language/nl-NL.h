@@ -30,6 +30,8 @@
  *
 \*********************************************************************/
 
+//#define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
+
 // "2017-03-07T11:08:02" - ISO8601:2004
 #define D_YEAR_MONTH_SEPARATOR "-"
 #define D_MONTH_DAY_SEPARATOR "-"
@@ -45,7 +47,7 @@
 
 // Common
 #define D_ADMIN "Admin"
-#define D_AIR_QUALITY "Lucht kwalitiet"
+#define D_AIR_QUALITY "Lucht kwaliteit"
 #define D_AP "AP"                    // Access Point
 #define D_AS "als"
 #define D_AUTO "AUTO"
@@ -149,6 +151,7 @@
 #define D_WEB_SERVER "Webserver"
 
 // sonoff.ino
+#define D_WARNING_MINIMAL_VERSION "WAARSCHUWING Deze versie bewaart geen instellingen"
 #define D_LEVEL_10 "niveau 1-0"
 #define D_LEVEL_01 "niveau 0-1"
 #define D_SERIAL_LOGGING_DISABLED "Serieel logging uitgeschakeld"
@@ -334,19 +337,6 @@
 #define D_HUE_POST_ARGS "Hue POST argumenten"
 #define D_3_RESPONSE_PACKETS_SENT "3 antwoord paketten verstuurd"
 
-// xdrv_02_irremote.ino
-#define D_JSON_INVALID_JSON "Ongeldig JSON"
-#define D_JSON_PROTOCOL_NOT_SUPPORTED "Protocol wordt niet ondersteund"
-#define D_JSON_IR_PROTOCOL "PROTOCOL"
-#define D_JSON_IR_BITS "BITS"
-#define D_JSON_IR_DATA "DATA"
-#define D_JSON_IRHVAC_VENDOR "VENDOR"
-#define D_JSON_IRHVAC_POWER "POWER"
-#define D_JSON_IRHVAC_MODE "MODE"
-#define D_JSON_IRHVAC_FANSPEED "FANSPEED"
-#define D_JSON_IRHVAC_TEMP "TEMP"
-#define D_JSON_IRRECEIVED "IrReceived"
-
 // xdrv_05_domoticz.ino
 #define D_DOMOTICZ_PARAMETERS "Domoticz parameters"
 #define D_DOMOTICZ_IDX "Idx"
@@ -364,7 +354,7 @@
   #define D_DOMOTICZ_AIRQUALITY "AirQuality"
 #define D_DOMOTICZ_UPDATE_TIMER "Bijwerk timer"
 
-// xsns_03_energy.ino
+// xdrv_03_energy.ino
 #define D_ENERGY_TODAY "Verbruik vandaag"
 #define D_ENERGY_YESTERDAY "Verbruik gisteren"
 #define D_ENERGY_TOTAL "Verbruik totaal"
@@ -385,8 +375,12 @@
 #define D_SENSOR_DID_NOT_ACK_COMMAND "Geen opdracht ACK van sensor"
 #define D_SHT1X_FOUND "SHT1X gevonden"
 
+// xsns_18_pms5003.ino
+#define D_STANDARD_CONCENTRATION "CF-1 PM"     // Standard Particle CF-1 Particle Matter
+#define D_ENVIRONMENTAL_CONCENTRATION "PM"     // Environmetal Particle Matter
+#define D_PARTICALS_BEYOND "Stofdeeltjes"
+
 // sonoff_template.h
-// Max string length is 8 characters including suffixes
 #define D_SENSOR_NONE     "Geen"
 #define D_SENSOR_DHT11    "DHT11"
 #define D_SENSOR_AM2301   "AM2301"
@@ -412,6 +406,7 @@
 #define D_SENSOR_SPI_CS   "SPI CS"
 #define D_SENSOR_SPI_DC   "SPI DC"
 #define D_SENSOR_BACKLIGHT "BkLight"
+#define D_SENSOR_PMS5003  "PMS5003"
 
 // Units
 #define D_UNIT_AMPERE "A"
@@ -419,11 +414,14 @@
 #define D_UNIT_KILOOHM "kOhm"
 #define D_UNIT_KILOWATTHOUR "kWh"
 #define D_UNIT_LUX "lx"
+#define D_UNIT_MICROGRAM_PER_CUBIC_METER "ug/m3"
+#define D_UNIT_MICROMETER "um"
 #define D_UNIT_MICROSECOND "us"
 #define D_UNIT_MILLIAMPERE "mA"
 #define D_UNIT_MILLISECOND "ms"
 #define D_UNIT_MINUTE "Min"
-#define D_UNIT_PPM "ppm"
+#define D_UNIT_PARTS_PER_DECILITER "ppd"
+#define D_UNIT_PARTS_PER_MILLION "ppm"
 #define D_UNIT_PRESSURE "hPa"
 #define D_UNIT_SECOND "sec"
 #define D_UNIT_SECTORS "sectoren"
