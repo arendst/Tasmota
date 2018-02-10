@@ -23,14 +23,63 @@
  * Peacefair PZEM-004T Energy monitor
  *
  *
- * library https://github.com/olehs/PZEM004T 
+ * library https://github.com/olehs/PZEM004T
 \*********************************************************************************************/
 
 #include "PZEM004T.h"
 
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
+
+#define OLED_RESET 0  // GPIO0
+
+Adafruit_SSD1306 * display = NULL;
+
 IPAddress PZEM004T_ip(192, 168, 1, 1);
 PZEM004T * pzem = NULL;
 
+void search_and_init_display() {
+    byte address = 0x3C;
+    byte error;
+
+    Wire.beginTransmission(address);
+    error = Wire.endTransmission();
+    if (0 == error) {
+        snprintf_P(log_data, sizeof(log_data), PSTR(" SSD1306 display found at: 0x%2x"), address);
+        AddLog(LOG_LEVEL_INFO);
+	display = new Adafruit_SSD1306(OLED_RESET);
+	if (display) {
+	    display->begin(SSD1306_SWITCHCAPVCC, address);
+	    display->clearDisplay();
+	    display->setCursor(0, 0);
+	    display->setTextColor(WHITE);
+	    display->setTextSize(2);
+	    display->printf(" Loaded \n");
+	    display->display();
+	}
+    } else {
+        snprintf_P(log_data, sizeof(log_data), PSTR(" SSD1306 display not found at: 0x%2x"), address);
+        AddLog(LOG_LEVEL_INFO);
+    }
+}
+
+void display_v_and_w(float v, float w){
+    if (!display) return;
+    display->clearDisplay();
+    display->setTextSize(1);
+    display->setCursor(0, 0);
+    display->setTextColor(WHITE);
+
+    display->println("V: ");
+    display->setTextSize(2);
+    display->printf("%.0f\n", v);
+
+    display->setTextSize(1);
+    display->println("W: ");
+    display->setTextSize(2);
+    display->printf("%.0f\n", w);
+    display->display();
+}
 bool PZEM004TInit() {
     return(PZEM_004T_flg != 0);
 }
@@ -57,6 +106,7 @@ boolean PZEM004TPrep() {
                     AddLog(LOG_LEVEL_INFO);
                 }
             }
+	    search_and_init_display();
         }
     }
     return(PZEM_004T_flg != 0);
@@ -96,7 +146,7 @@ bool PZEM004TRead(float * rvoltage, float * rcurrent, float * rpower, float * re
             delay(50);
             r = pzem->energy(PZEM004T_ip);
             if (r >= 0.0) {
-                energy = r;
+                energy = (r/1000.0);
             } else {
                 //AddLog_P(LOG_LEVEL_INFO, __FUNCTION__,"E4");
                 //break;
@@ -133,6 +183,7 @@ void PZEM004TShowJSON() {
             snprintf_P(mqtt_data, sizeof(mqtt_data),
                     PSTR("%s,\"PZEM004T\":{\"" D_TOTAL "\":%s,\"" D_POWERUSAGE "\":%s,\"" D_VOLTAGE "\":%s,\"" D_CURRENT "\":%s}"),
                     mqtt_data, senergy, spower, svoltage, scurrent);
+	    display_v_and_w(voltage, power);
         }
     }
 }
@@ -171,6 +222,7 @@ void PZEM004TShowWEB() {
             dtostrfd(voltage, Settings.flag2.voltage_resolution, svoltage);
             dtostrfd(current, Settings.flag2.current_resolution, scurrent);
             snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_ENERGY_PZEM004T, mqtt_data, svoltage, scurrent, spower, senergy);
+	    display_v_and_w(voltage, power);
         }
     }
 }

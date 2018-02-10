@@ -50,8 +50,8 @@
 
 #define STA_SSID1              "yt201"      	// [Ssid1] Wifi SSID
 #define STA_PASS1              "zhopa3600"  	// [Password1] Wifi password
-#define STA_SSID2              "indebuurt2"      // [Ssid2] Optional alternate AP Wifi SSID
-#define STA_PASS2              "VnsqrtnrsddbrN"  // [Password2] Optional alternate AP Wifi password
+#define STA_SSID2              "Z222"      	// [Ssid2] Optional alternate AP Wifi SSID
+#define STA_PASS2              "1977240072"	// [Password2] Optional alternate AP Wifi password
 #define WIFI_CONFIG_TOOL       WIFI_WPSCONFIG    // [WifiConfig] Default tool if wifi fails to connect
                                                  //   (WIFI_RESTART, WIFI_SMARTCONFIG, WIFI_MANAGER, WIFI_WPSCONFIG, WIFI_RETRY, WIFI_WAIT)
 
@@ -84,7 +84,7 @@
 #endif
 
 
-#define USE_PZEM_004T	       1                 //Serial Power monitor
+//#define USE_PZEM_004T	       1                 //Serial Power monitor
 
 #ifdef USE_PZEM_004T
 #define USE_SERIAL           1
@@ -174,22 +174,22 @@
 //#define USE_DS18x20                             // Optional using OneWire library for multiple DS18B20 and/or DS18S20 (+2k code)
 
 #define USE_I2C                                   // I2C using library wire (+10k code, 0.2k mem) - Disable by //
-  #define USE_GROVE_MGS                          // Add I2C code for Grove - Mutichanel Gas Sensor
-  #define MGS_SENSOR_ADDR     0x04               // default Mutichanel Gas Sensor i2c addr 0x04
+//  #define USE_GROVE_MGS                          // Add I2C code for Grove - Mutichanel Gas Sensor
+//  #define MGS_SENSOR_ADDR     0x04               // default Mutichanel Gas Sensor i2c addr 0x04
   #define USE_SHT3X                              // Add I2C code for WeMos SHT30 Shield
   #define SHT3X_SENSOR_ADDR   0x45               // default WeMos SHT30 Shield i2c addr 0x45
-  #define USE_BH1750                             // Add I2C code for BH1750 sensor
+//  #define USE_BH1750                             // Add I2C code for BH1750 sensor
 //  #define USE_VEML6070                           // Add I2C code for VEML6070 sensor (+0.5k code)
-  #define USE_BMP                                // Add I2C code for BMP/BME280 sensor
-  #define USE_HTU                                // Add I2C code for HTU21/SI7013/SI7020/SI7021 sensor
-  #define USE_SHT                                // Add I2C emulating code for SHT1X sensor
+//  #define USE_BMP                                // Add I2C code for BMP/BME280 sensor
+//  #define USE_HTU                                // Add I2C code for HTU21/SI7013/SI7020/SI7021 sensor
+//  #define USE_SHT                                // Add I2C emulating code for SHT1X sensor
 
-#define USE_IR_REMOTE                            // Send IR remote commands using library IRremoteESP8266 and ArduinoJson (+3k code, 0.3k mem)
+//#define USE_IR_REMOTE                            // Send IR remote commands using library IRremoteESP8266 and ArduinoJson (+3k code, 0.3k mem)
 //  #define USE_IR_HVAC                            // Support for HVAC system using IR (+2k code)
-  #define USE_IR_RECEIVE                         // Support for IR receiver (+4k code)
+//  #define USE_IR_RECEIVE                         // Support for IR receiver (+4k code)
 
-#define USE_WS2812                               // WS2812 Led string using library NeoPixelBus (+5k code, +1k mem) - Disable by //
-  #define USE_WS2812_CTYPE     1                 // WS2812 Color type (0 - RGB, 1 - GRB)
+//#define USE_WS2812                               // WS2812 Led string using library NeoPixelBus (+5k code, +1k mem) - Disable by //
+//  #define USE_WS2812_CTYPE     1                 // WS2812 Color type (0 - RGB, 1 - GRB)
 //  #define USE_WS2812_DMA                         // DMA supports only GPIO03 (= Serial RXD) (+1k mem). When USE_WS2812_DMA is enabled expect Exceptions on Pow
 
 /*********************************************************************************************\
