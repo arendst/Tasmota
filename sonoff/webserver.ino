@@ -88,7 +88,7 @@ const char HTTP_HEAD_STYLE[] PROGMEM =
   "textarea{resize:none;width:98%;height:318px;padding:5px;overflow:auto;}"
   "body{text-align:center;font-family:verdana;}"
   "td{padding:0px;}"
-  "button{cursor:pointer;border:0;border-radius:0.3rem;background-color:#1fa3ec;color:#fff;line-height:2.4rem;font-size:1.2rem;width:100%;-webkit-transition-duration:0.4s;transition-duration:0.4s;}"
+  "button{border:0;border-radius:0.3rem;background-color:#1fa3ec;color:#fff;line-height:2.4rem;font-size:1.2rem;width:100%;-webkit-transition-duration:0.4s;transition-duration:0.4s;cursor:pointer;}"
   "button:hover{background-color:#006cba;}"
   "a{text-decoration:none;}"
   ".p{float:left;text-align:left;}"
