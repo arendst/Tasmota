@@ -82,28 +82,23 @@ typedef unsigned long power_t;              // Power (Relay) type
 #define SERIALLOG_TIMER        600          // Seconds to disable SerialLog
 #define OTA_ATTEMPTS           5            // Number of times to try fetching the new firmware
 
-#define INPUT_BUFFER_SIZE      250          // Max number of characters in (serial) command buffer
+#define INPUT_BUFFER_SIZE      255          // Max number of characters in (serial) command buffer
 #define CMDSZ                  24           // Max number of characters in command
 #define TOPSZ                  100          // Max number of characters in topic string
 #define LOGSZ                  400          // Max number of characters in log
 #define MIN_MESSZ              893          // Min number of characters in MQTT message
+
 #ifdef USE_MQTT_TLS
-  #define MAX_LOG_LINES        10           // Max number of lines in weblog
+  #define WEB_LOG_SIZE         2000         // Max number of characters in weblog
 #else
-//  #ifdef ARDUINO_ESP8266_RELEASE_2_3_0
-    #define MAX_LOG_LINES      20           // Max number of lines in weblog
-//  #else
-//    #define MAX_LOG_LINES      13           // Max number of lines in weblog (less due to more memory usage which prohibits full webpage load)
-//  #endif
+  #define WEB_LOG_SIZE         4000         // Max number of characters in weblog
 #endif
+
 #define MAX_BACKLOG            16           // Max number of commands in backlog (chk backlog_index and backlog_pointer code)
 #define MIN_BACKLOG_DELAY      2            // Minimal backlog delay in 0.1 seconds
 
 #define APP_BAUDRATE           115200       // Default serial baudrate
 #define MAX_STATUS             11           // Max number of status lines
-
-#define XDRV_MAX               10           // Max number of allowed Xdrv drivers (Update xdrv_interface.ino if changed)
-#define XSNS_MAX               20           // Max number of allowed Xsns External Sensors (Update xsns_interface.ino if changed)
 
 /*
 // Removed from esp8266 core since 20171105

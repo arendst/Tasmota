@@ -134,12 +134,16 @@ lva.h - lva configuration overrides  for Sonoff-Tasmota
 
 
 #define LVA  // включить изменения LVA
+#define LVA_DEBUG // включить отладку LVA внимание быдлокод
 
 // нехочет рабатать
 //#define USE_DS18x20_LEGACY  // включили
 #define USE_DS18x20_LEGACY  // включили
 
 #define USE_ADS1115
+
+#define USE_MCP23017
+
 //#define USE_PCA9685
 
 //#define CFG_HOLDER             0x20161210

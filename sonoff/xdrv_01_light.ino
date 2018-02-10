@@ -108,7 +108,7 @@ uint16_t light_wakeup_counter = 0;
 
 uint8_t light_fixed_color_index = 1;
 
-unsigned long strip_timer_counter = 0;  // Bars and Gradient
+unsigned long strip_timer_counter = 0;    // Bars and Gradient
 
 #ifdef USE_ARILUX_RF
 /*********************************************************************************************\
@@ -133,9 +133,12 @@ unsigned int arilux_rf_repeat_count = 0;
 
 uint8_t arilux_rf_toggle = 0;
 
+
+#ifndef ARDUINO_ESP8266_RELEASE_2_3_0
 #ifndef USE_WS2812_DMA  // Collides with Neopixelbus but solves RF misses
-//void AriluxRfInterrupt() ICACHE_RAM_ATTR;  // As iram is tight and it works this way too
+void AriluxRfInterrupt() ICACHE_RAM_ATTR;  // As iram is tight and it works this way too
 #endif  // USE_WS2812_DMA
+#endif  // ARDUINO_ESP8266_RELEASE_2_3_0
 
 void AriluxRfInterrupt()
 {
@@ -366,13 +369,9 @@ void LightInit()
       }
     }
     if (pin[GPIO_ARIRFRCV] < 99) {
-#ifdef USE_ARILUX_RF
-      AriluxRfInit();
-#else
       if (pin[GPIO_LED2] < 99) {
         digitalWrite(pin[GPIO_LED2], bitRead(led_inverted, 1));  // Turn off RF
       }
-#endif  // USE_ARILUX_RF
     }
   }
 #ifdef USE_WS2812  // ************************************************************************
@@ -677,7 +676,7 @@ void LightSetPower()
 void LightAnimate()
 {
   uint8_t cur_col[5];
-  uint16_t light_still_on;
+  uint16_t light_still_on = 0;
 
   strip_timer_counter++;
   if (!light_power) {                   // Power Off
@@ -892,21 +891,6 @@ void LightHsbToRgb()
 }
 
 /********************************************************************************************/
-
-void LightReplaceHsb(String *response)
-{
-  if (light_subtype > LST_COLDWARM) {
-    LightRgbToHsb();
-    response->replace("{h}", String((uint16_t)(65535.0f * light_hue)));
-    response->replace("{s}", String((uint8_t)(254.0f * light_saturation)));
-    response->replace("{b}", String((uint8_t)(254.0f * light_brightness)));
-  } else {
-    response->replace("{h}", "0");
-    response->replace("{s}", "0");
-//    response->replace("{b}", String((uint8_t)(2.54f * (float)Settings.light_dimmer)));
-    response->replace("{b}", String((uint8_t)(0.01f * (float)Settings.light_dimmer)));
-  }
-}
 
 void LightGetHsb(float *hue, float *sat, float *bri)
 {
@@ -1240,11 +1224,14 @@ boolean Xdrv01(byte function)
       case FUNC_EVERY_50_MSECOND:
         LightAnimate();
 #ifdef USE_ARILUX_RF
-        if (pin[GPIO_ARIRFRCV] < 99) {
-          AriluxRfHandler();
-        }
+        if (pin[GPIO_ARIRFRCV] < 99) AriluxRfHandler();
 #endif  // USE_ARILUX_RF
         break;
+#ifdef USE_ARILUX_RF
+      case FUNC_EVERY_SECOND:
+        if (10 == uptime) AriluxRfInit();  // Needs rest before enabling RF interrupts
+        break;
+#endif  // USE_ARILUX_RF
       case FUNC_COMMAND:
         result = LightCommand();
         break;

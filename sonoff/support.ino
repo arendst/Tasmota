@@ -145,8 +145,52 @@ Decoding 14 results
 #endif  // DEBUG_THEO
 
 /*********************************************************************************************\
- * General
+ * Miscellaneous
 \*********************************************************************************************/
+
+#ifdef ARDUINO_ESP8266_RELEASE_2_3_0
+// Functions not available in 2.3.0
+
+// http://clc-wiki.net/wiki/C_standard_library:string.h:memchr
+void* memchr(const void* ptr, int value, size_t num)
+{
+  unsigned char *p = (unsigned char*)ptr;
+  while (num--) {
+    if (*p != (unsigned char)value) {
+      p++;
+    } else {
+      return p;
+    }
+  }
+  return 0;
+}
+
+// http://clc-wiki.net/wiki/C_standard_library:string.h:strspn
+// Get span until any character in string
+size_t strcspn(const char *str1, const char *str2)
+{
+  size_t ret = 0;
+  while (*str1) {
+    if (strchr(str2, *str1)) {  // Slow
+      return ret;
+    } else {
+      str1++;
+      ret++;
+    }
+  }
+  return ret;
+}
+#endif  // ARDUINO_ESP8266_RELEASE_2_3_0
+
+// Get span until single character in string
+size_t strchrspn(const char *str1, int character)
+{
+  size_t ret = 0;
+  char *start = (char*)str1;
+  char *end = strchr(str1, character);
+  if (end) ret = end - start;
+  return ret;
+}
 
 char* dtostrfd(double number, unsigned char prec, char *s)
 {
@@ -254,6 +298,122 @@ char* GetPowerDevice(char* dest, uint8_t idx, size_t size)
   return GetPowerDevice(dest, idx, size, 0);
 }
 
+float ConvertTemp(float c)
+{
+  float result = c;
+
+  if (!isnan(c) && Settings.flag.temperature_conversion) {
+    result = c * 1.8 + 32;  // Fahrenheit
+  }
+  return result;
+}
+
+char TempUnit()
+{
+  return (Settings.flag.temperature_conversion) ? 'F' : 'C';
+}
+
+double FastPrecisePow(double a, double b)
+{
+  // https://martin.ankerl.com/2012/01/25/optimized-approximative-pow-in-c-and-cpp/
+  // calculate approximation with fraction of the exponent
+  int e = (int)b;
+  union {
+    double d;
+    int x[2];
+  } u = { a };
+  u.x[1] = (int)((b - e) * (u.x[1] - 1072632447) + 1072632447);
+  u.x[0] = 0;
+  // exponentiation by squaring with the exponent's integer part
+  // double r = u.d makes everything much slower, not sure why
+  double r = 1.0;
+  while (e) {
+    if (e & 1) {
+      r *= a;
+    }
+    a *= a;
+    e >>= 1;
+  }
+  return r * u.d;
+}
+
+char* GetTextIndexed(char* destination, size_t destination_size, uint16_t index, const char* haystack)
+{
+  // Returns empty string if not found
+  // Returns text of found
+  char* write = destination;
+  const char* read = haystack;
+
+  index++;
+  while (index--) {
+    size_t size = destination_size -1;
+    write = destination;
+    char ch = '.';
+    while ((ch != '\0') && (ch != '|')) {
+      ch = pgm_read_byte(read++);
+      if (size && (ch != '|'))  {
+        *write++ = ch;
+        size--;
+      }
+    }
+    if (0 == ch) {
+      if (index) {
+        write = destination;
+      }
+      break;
+    }
+  }
+  *write = '\0';
+  return destination;
+}
+
+int GetCommandCode(char* destination, size_t destination_size, const char* needle, const char* haystack)
+{
+  // Returns -1 of not found
+  // Returns index and command if found
+  int result = -1;
+  const char* read = haystack;
+  char* write = destination;
+
+  while (true) {
+    result++;
+    size_t size = destination_size -1;
+    write = destination;
+    char ch = '.';
+    while ((ch != '\0') && (ch != '|')) {
+      ch = pgm_read_byte(read++);
+      if (size && (ch != '|'))  {
+        *write++ = ch;
+        size--;
+      }
+    }
+    *write = '\0';
+    if (!strcasecmp(needle, destination)) {
+      break;
+    }
+    if (0 == ch) {
+      result = -1;
+      break;
+    }
+  }
+  return result;
+}
+
+void SetSerialBaudrate(int baudrate)
+{
+  if (Serial.baudRate() != baudrate) {
+    if (seriallog_level) {
+      snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION D_SET_BAUDRATE_TO " %d"), baudrate);
+      AddLog(LOG_LEVEL_INFO);
+    }
+    delay(100);
+    Serial.flush();
+    Serial.begin(baudrate, serial_config);
+    delay(10);
+    Serial.println();
+  }
+}
+
 /*********************************************************************************************\
  * Wifi
 \*********************************************************************************************/
@@ -359,20 +519,20 @@ void WifiConfig(uint8_t type)
       restart_flag = 2;
     }
     else if (WIFI_SMARTCONFIG == wifi_config_type) {
-      AddLog_P(LOG_LEVEL_INFO, S_LOG_WIFI, PSTR(D_WCFG_1_SMARTCONFIG D_ACTIVE_FOR_3_MINUTES));
+      AddLog_P(LOG_LEVEL_INFO, S_LOG_WIFI, PSTR(D_WCFG_1_SMARTCONFIG " " D_ACTIVE_FOR_3_MINUTES));
       WiFi.beginSmartConfig();
     }
     else if (WIFI_WPSCONFIG == wifi_config_type) {
       if (WifiWpsConfigBegin()) {
-        AddLog_P(LOG_LEVEL_INFO, S_LOG_WIFI, PSTR(D_WCFG_3_WPSCONFIG D_ACTIVE_FOR_3_MINUTES));
+        AddLog_P(LOG_LEVEL_INFO, S_LOG_WIFI, PSTR(D_WCFG_3_WPSCONFIG " " D_ACTIVE_FOR_3_MINUTES));
       } else {
-        AddLog_P(LOG_LEVEL_INFO, S_LOG_WIFI, PSTR(D_WCFG_3_WPSCONFIG D_FAILED_TO_START));
+        AddLog_P(LOG_LEVEL_INFO, S_LOG_WIFI, PSTR(D_WCFG_3_WPSCONFIG " " D_FAILED_TO_START));
         wifi_config_counter = 3;
       }
     }
 #ifdef USE_WEBSERVER
     else if (WIFI_MANAGER == wifi_config_type) {
-      AddLog_P(LOG_LEVEL_INFO, S_LOG_WIFI, PSTR(D_WCFG_2_WIFIMANAGER D_ACTIVE_FOR_3_MINUTES));
+      AddLog_P(LOG_LEVEL_INFO, S_LOG_WIFI, PSTR(D_WCFG_2_WIFIMANAGER " " D_ACTIVE_FOR_3_MINUTES));
       WifiManagerBegin();
     }
 #endif  // USE_WEBSERVER
@@ -833,22 +993,21 @@ uint32_t standard_time = 0;
 uint32_t ntp_time = 0;
 uint32_t midnight = 1451602800;
 uint8_t  midnight_now = 0;
+uint8_t  ntp_sync_minute = 0;
 
 String GetBuildDateAndTime()
 {
   // "2017-03-07T11:08:02" - ISO8601:2004
   char bdt[21];
-  char *str;
   char *p;
-  char *smonth;
   char mdate[] = __DATE__;  // "Mar  7 2017"
-  int month;
-  int day;
-  int year;
+  char *smonth = mdate;
+  int day = 0;
+  int year = 0;
 
-//  sscanf(mdate, "%s %d %d", bdt, &day, &year);  // Not implemented in 2.3.0 and probably too many code
+  // sscanf(mdate, "%s %d %d", bdt, &day, &year);  // Not implemented in 2.3.0 and probably too much code
   byte i = 0;
-  for (str = strtok_r(mdate, " ", &p); str && i < 3; str = strtok_r(NULL, " ", &p)) {
+  for (char *str = strtok_r(mdate, " ", &p); str && i < 3; str = strtok_r(NULL, " ", &p)) {
     switch (i++) {
     case 0:  // Month
       smonth = str;
@@ -860,7 +1019,7 @@ String GetBuildDateAndTime()
       year = atoi(str);
     }
   }
-  month = (strstr(kMonthNamesEnglish, smonth) -kMonthNamesEnglish) /3 +1;
+  int month = (strstr(kMonthNamesEnglish, smonth) -kMonthNamesEnglish) /3 +1;
   snprintf_P(bdt, sizeof(bdt), PSTR("%d" D_YEAR_MONTH_SEPARATOR "%02d" D_MONTH_DAY_SEPARATOR "%02d" D_DATE_TIME_SEPARATOR "%s"), year, month, day, __TIME__);
   return String(bdt);
 }
@@ -889,6 +1048,22 @@ String GetUtcDateAndTime()
   return String(dt);
 }
 
+String GetUptime()
+{
+  char dt[16];
+
+  TIME_T ut;
+  BreakTime(uptime, ut);
+
+  // "P128DT14H35M44S" - ISO8601:2004 - https://en.wikipedia.org/wiki/ISO_8601 Durations
+//  snprintf_P(dt, sizeof(dt), PSTR("P%dDT%02dH%02dM%02dS"), ut.days, ut.hour, ut.minute, ut.second);
+
+  // "128 14:35:44" - OpenVMS
+  // "128T14:35:44" - Tasmota
+  snprintf_P(dt, sizeof(dt), PSTR("%d" D_DATE_TIME_SEPARATOR "%02d" D_HOUR_MINUTE_SEPARATOR "%02d" D_MINUTE_SECOND_SEPARATOR "%02d"), ut.days, ut.hour, ut.minute, ut.second);
+  return String(dt);
+}
+
 void BreakTime(uint32_t time_input, TIME_T &tm)
 {
 // break the given time_input into time components
@@ -908,6 +1083,7 @@ void BreakTime(uint32_t time_input, TIME_T &tm)
   time /= 60;                // now it is hours
   tm.hour = time % 24;
   time /= 24;                // now it is days
+  tm.days = time;
   tm.day_of_week = ((time + 4) % 7) + 1;  // Sunday is day 1
 
   year = 0;
@@ -980,34 +1156,34 @@ uint32_t MakeTime(TIME_T &tm)
 
 uint32_t RuleToTime(TimeChangeRule r, int yr)
 {
-    TIME_T tm;
-    uint32_t t;
-    uint8_t m;
-    uint8_t w;            // temp copies of r.month and r.week
+  TIME_T tm;
+  uint32_t t;
+  uint8_t m;
+  uint8_t w;                // temp copies of r.month and r.week
 
-    m = r.month;
-    w = r.week;
-    if (0 == w) {         // Last week = 0
-      if (++m > 12) {     // for "Last", go to the next month
-        m = 1;
-        yr++;
-      }
-      w = 1;              // and treat as first week of next month, subtract 7 days later
+  m = r.month;
+  w = r.week;
+  if (0 == w) {             // Last week = 0
+    if (++m > 12) {         // for "Last", go to the next month
+      m = 1;
+      yr++;
     }
+    w = 1;                  // and treat as first week of next month, subtract 7 days later
+  }
 
-    tm.hour = r.hour;
-    tm.minute = 0;
-    tm.second = 0;
-    tm.day_of_month = 1;
-    tm.month = m;
-    tm.year = yr - 1970;
-    t = MakeTime(tm);        // First day of the month, or first day of next month for "Last" rules
-    BreakTime(t, tm);
-    t += (7 * (w - 1) + (r.dow - tm.day_of_week + 7) % 7) * SECS_PER_DAY;
-    if (0 == r.week) {
-      t -= 7 * SECS_PER_DAY;    //back up a week if this is a "Last" rule
-    }
-    return t;
+  tm.hour = r.hour;
+  tm.minute = 0;
+  tm.second = 0;
+  tm.day_of_month = 1;
+  tm.month = m;
+  tm.year = yr - 1970;
+  t = MakeTime(tm);         // First day of the month, or first day of next month for "Last" rules
+  BreakTime(t, tm);
+  t += (7 * (w - 1) + (r.dow - tm.day_of_week + 7) % 7) * SECS_PER_DAY;
+  if (0 == r.week) {
+    t -= 7 * SECS_PER_DAY;  // back up a week if this is a "Last" rule
+  }
+  return t;
 }
 
 String GetTime(int type)
@@ -1035,43 +1211,32 @@ uint32_t Midnight()
 boolean MidnightNow()
 {
   boolean mnflg = midnight_now;
-  if (mnflg) {
-    midnight_now = 0;
-  }
+  if (mnflg) midnight_now = 0;
   return mnflg;
 }
 
 void RtcSecond()
 {
-  byte ntpsync;
   uint32_t stdoffset;
   uint32_t dstoffset;
   TIME_T tmpTime;
 
-  ntpsync = 0;
-  if (RtcTime.year < 2016) {
-    if (WL_CONNECTED == WiFi.status()) {
-      ntpsync = 1;  // Initial NTP sync
-    }
-  } else {
-    if ((1 == RtcTime.minute) && (1 == RtcTime.second)) {
-      ntpsync = 1;  // Hourly NTP sync at xx:01:01
-    }
-  }
-  if (ntpsync) {
+  if ((ntp_sync_minute > 59) && (3 == RtcTime.minute)) ntp_sync_minute = 1;                // If sync prepare for a new cycle
+  uint8_t offset = (uptime < 30) ? RtcTime.second : (((ESP.getChipId() & 0xF) * 3) + 3) ;  // First try ASAP to sync. If fails try once every 60 seconds based on chip id
+  if ((WL_CONNECTED == WiFi.status()) && (offset == RtcTime.second) && ((RtcTime.year < 2016) || (ntp_sync_minute == RtcTime.minute))) {
     ntp_time = sntp_get_current_timestamp();
     if (ntp_time) {
       utc_time = ntp_time;
+      ntp_sync_minute = 60;  // Sync so block further requests
       BreakTime(utc_time, tmpTime);
       RtcTime.year = tmpTime.year + 1970;
       daylight_saving_time = RuleToTime(DaylightSavingTime, RtcTime.year);
       standard_time = RuleToTime(StandardTime, RtcTime.year);
-      snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION "(" D_UTC_TIME ") %s"), GetTime(0).c_str());
+      snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION "(" D_UTC_TIME ") %s, (" D_DST_TIME ") %s, (" D_STD_TIME ") %s"),
+        GetTime(0).c_str(), GetTime(2).c_str(), GetTime(3).c_str());
       AddLog(LOG_LEVEL_DEBUG);
-      snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION "(" D_DST_TIME ") %s"), GetTime(2).c_str());
-      AddLog(LOG_LEVEL_DEBUG);
-      snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION "(" D_STD_TIME ") %s"), GetTime(3).c_str());
-      AddLog(LOG_LEVEL_DEBUG);
+    } else {
+      ntp_sync_minute++;  // Try again in next minute
     }
   }
   utc_time++;
@@ -1113,127 +1278,6 @@ void RtcInit()
   utc_time = 0;
   BreakTime(utc_time, RtcTime);
   TickerRtc.attach(1, RtcSecond);
-}
-
-/*********************************************************************************************\
- * Miscellaneous
-\*********************************************************************************************/
-
-float ConvertTemp(float c)
-{
-  float result = c;
-
-  if (!isnan(c) && Settings.flag.temperature_conversion) {
-    result = c * 1.8 + 32;  // Fahrenheit
-  }
-  return result;
-}
-
-char TempUnit()
-{
-  return (Settings.flag.temperature_conversion) ? 'F' : 'C';
-}
-
-double FastPrecisePow(double a, double b)
-{
-  // https://martin.ankerl.com/2012/01/25/optimized-approximative-pow-in-c-and-cpp/
-  // calculate approximation with fraction of the exponent
-  int e = (int)b;
-  union {
-    double d;
-    int x[2];
-  } u = { a };
-  u.x[1] = (int)((b - e) * (u.x[1] - 1072632447) + 1072632447);
-  u.x[0] = 0;
-  // exponentiation by squaring with the exponent's integer part
-  // double r = u.d makes everything much slower, not sure why
-  double r = 1.0;
-  while (e) {
-    if (e & 1) {
-      r *= a;
-    }
-    a *= a;
-    e >>= 1;
-  }
-  return r * u.d;
-}
-
-char* GetTextIndexed(char* destination, size_t destination_size, uint16_t index, const char* haystack)
-{
-  // Returns empty string if not found
-  // Returns text of found
-  char* write = destination;
-  const char* read = haystack;
-
-  index++;
-  while (index--) {
-    size_t size = destination_size -1;
-    write = destination;
-    char ch = '.';
-    while ((ch != '\0') && (ch != '|')) {
-      ch = pgm_read_byte(read++);
-      if (size && (ch != '|'))  {
-        *write++ = ch;
-        size--;
-      }
-    }
-    if (0 == ch) {
-      if (index) {
-        write = destination;
-      }
-      break;
-    }
-  }
-  *write = '\0';
-  return destination;
-}
-
-int GetCommandCode(char* destination, size_t destination_size, const char* needle, const char* haystack)
-{
-  // Returns -1 of not found
-  // Returns index and command if found
-  int result = -1;
-  const char* read = haystack;
-  char* write = destination;
-  size_t maxcopy = (strlen(needle) > destination_size) ? destination_size : strlen(needle);
-
-  while (true) {
-    result++;
-    size_t size = destination_size -1;
-    write = destination;
-    char ch = '.';
-    while ((ch != '\0') && (ch != '|')) {
-      ch = pgm_read_byte(read++);
-      if (size && (ch != '|'))  {
-        *write++ = ch;
-        size--;
-      }
-    }
-    *write = '\0';
-    if (!strcasecmp(needle, destination)) {
-      break;
-    }
-    if (0 == ch) {
-      result = -1;
-      break;
-    }
-  }
-  return result;
-}
-
-void SetSerialBaudrate(int baudrate)
-{
-  if (Serial.baudRate() != baudrate) {
-    if (seriallog_level) {
-      snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION D_SET_BAUDRATE_TO " %d"), baudrate);
-      AddLog(LOG_LEVEL_INFO);
-    }
-    delay(100);
-    Serial.flush();
-    Serial.begin(baudrate);
-    delay(10);
-    Serial.println();
-  }
 }
 
 #ifndef USE_ADC_VCC
@@ -1294,6 +1338,32 @@ boolean Xsns02(byte function)
  *
 \*********************************************************************************************/
 
+#ifdef USE_WEBSERVER
+void GetLog(byte idx, char** entry_pp, size_t* len_p)
+{
+  char* entry_p = NULL;
+  size_t len = 0;
+
+  if (idx) {
+    char* it = web_log;
+    do {
+      byte cur_idx = *it;
+      it++;
+      size_t tmp = strchrspn(it, '\1');
+      tmp++;                             // Skip terminating '\1'
+      if (cur_idx == idx) {              // Found the requested entry
+        len = tmp;
+        entry_p = it;
+        break;
+      }
+      it += tmp;
+    } while (it < web_log + WEB_LOG_SIZE && *it != '\0');
+  }
+  *entry_pp = entry_p;
+  *len_p = len;
+}
+#endif  // USE_WEBSERVER
+
 void Syslog()
 {
   // Destroys log_data
@@ -1320,20 +1390,29 @@ void Syslog()
 
 void AddLog(byte loglevel)
 {
-  char mxtime[9];  // 13:45:21
+  char mxtime[10];  // "13:45:21 "
 
-  snprintf_P(mxtime, sizeof(mxtime), PSTR("%02d" D_HOUR_MINUTE_SEPARATOR "%02d" D_MINUTE_SECOND_SEPARATOR "%02d"), RtcTime.hour, RtcTime.minute, RtcTime.second);
+  snprintf_P(mxtime, sizeof(mxtime), PSTR("%02d" D_HOUR_MINUTE_SEPARATOR "%02d" D_MINUTE_SECOND_SEPARATOR "%02d "), RtcTime.hour, RtcTime.minute, RtcTime.second);
 
   if (loglevel <= seriallog_level) {
-    Serial.printf("%s %s\n", mxtime, log_data);
+    Serial.printf("%s%s\n", mxtime, log_data);
   }
 #ifdef USE_WEBSERVER
   if (Settings.webserver && (loglevel <= Settings.weblog_level)) {
-    web_log[web_log_index] = String(mxtime) + " " + String(log_data);
-    web_log_index++;
-    if (web_log_index > MAX_LOG_LINES -1) {
-      web_log_index = 0;
+    // Delimited, zero-terminated buffer of log lines.
+    // Each entry has this format: [index][log data]['\1']
+    if (!web_log_index) web_log_index++;   // Index 0 is not allowed as it is the end of char string
+    while (web_log_index == web_log[0] ||  // If log already holds the next index, remove it
+           strlen(web_log) + strlen(log_data) + 13 > WEB_LOG_SIZE)  // 13 = web_log_index + mxtime + '\1' + '\0'
+    {
+      char* it = web_log;
+      it++;                                // Skip web_log_index
+      it += strchrspn(it, '\1');           // Skip log line
+      it++;                                // Skip delimiting "\1"
+      memmove(web_log, it, WEB_LOG_SIZE -(it-web_log));  // Move buffer forward to remove oldest log line
     }
+    snprintf_P(web_log, sizeof(web_log), PSTR("%s%c%s%s\1"), web_log, web_log_index++, mxtime, log_data);
+    if (!web_log_index) web_log_index++;   // Index 0 is not allowed as it is the end of char string
   }
 #endif  // USE_WEBSERVER
   if ((WL_CONNECTED == WiFi.status()) && (loglevel <= syslog_level)) {
@@ -1354,6 +1433,15 @@ void AddLog_P(byte loglevel, const char *formatP, const char *formatP2)
   snprintf_P(log_data, sizeof(log_data), formatP);
   snprintf_P(message, sizeof(message), formatP2);
   strncat(log_data, message, sizeof(log_data));
+  AddLog(loglevel);
+}
+
+void AddLogSerial(byte loglevel)
+{
+  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_SERIAL D_RECEIVED));
+  for (byte i = 0; i < serial_in_byte_counter; i++) {
+    snprintf_P(log_data, sizeof(log_data), PSTR("%s %02X"), log_data, serial_in_buffer[i]);
+  }
   AddLog(loglevel);
 }
 

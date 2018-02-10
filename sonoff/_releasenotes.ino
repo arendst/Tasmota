@@ -1,58 +1,58 @@
-/* 5.11.1g
- * Add support for PMS5003 and PMS7003 particle concentration sensor
- * Reinstate console weblog to 20 lines after some webpage rewrite
- * Add command SetOption20 to allow update of Dimmer/Color/Ct without turning power on (#1719)
- * Update language files nl-NL (#1723) and es-AR (#1722)
+/* 5.12.0a
+ * Change platformio option sonoff-ds18x20 to sonoff-xxl enabling ds18x20 and all other sensors in one image
+ * Fix providing web page configuratin option for Friendly Name when no device (relay or light) is configured (#1850)
+ * Change default paremeters in user_config.h to undefined for easy installation (#1851)
+ * Change max user configurable hold time from 10 to 25 seconds (#1851)
  *
- * 5.11.1f
- * Revert chunked webserver pages as it fails on many browsers due to chunks being too small (#1706)
- * Reduce initial console weblog from 20 to 13 lines due to memory constraints
- *
- * 5.11.1e
- * Replaced command Ina219Mode with command Sensor13
- * Add chunked webserver pages for large pages saving memory
- * Fix Non-English JSON temperature unit attachement
- * Add command Sensor15 2 to start MHZ19(B) Zero Point Calibration (#1643)
- * Fix Sonoff Pow Energy Today and Energy Total reading after restart (#1648)
- * Rewrite function pointers to save code space and memory (#1683)
- * Add option define HOME_ASSISTANT_DISCOVERY_ENABLE in user_config.h (#1685)
- * Fix SOnoff Pow Energy Period roll-over (#1688)
- *
- * 5.11.1d
- * Add locale Decimal Separator to Web sensor page
- * Add command State to retrieve device state information (same data as teleperiod state and status 11 in slightly different JSON format)
- * Extent state information with Light parameters
- * Fix IRSend parameter translation (#1636)
- * Add optional login to Webserver AP mode (#1587, #1635)
- * Fix BME680 teleperiod resistance measuring (#1647)
- *
- * 5.11.1c
- * Make command color parameter input less strict to ease Hass support
- * Add ColorTemperature to light status message
- * Change PubSubClient.h define MQTT_MAX_PACKET_SIZE from 512 to 1000 for Hass support
- * Make define MESSZ dependent on PubSubClient.h define MQTT_MAX_PACKET_SIZE
- * Fix logging line length around 400 characters
+ * 5.12.0 20180209
+ * Change library PubSubClient.h define MQTT_MAX_PACKET_SIZE from 512 to 1000 for Home Assistant  support
+ * Change relation of define MESSZ being dependent on PubSubClient.h define MQTT_MAX_PACKET_SIZE
+ * Change command color parameter input checks to less strict for Home Assistant support
+ * Change command Ina219Mode into command Sensor13
+ * Change commands HlwPCal, HlwUCal and HlwICal to PowerCal, VoltageCal and CurrentCal to be used for both Pow and S31 calibration
+ * Change commands HlwPSet, HlwUSet and HlwISet to PowerSet, VoltageSet and CurrentSet to be used for both Pow and S31 calibration
+ * Change uptime from hour to second resulting in a display of 123T13:45:21 where 123 is days
  * Change module name Wemos D1 mini into Generic (#1220)
- * Revert HTML change from width=100% to style=width:100% supporting HTML5 (#1358)
- * Add experimental (still Hass python exceptions) Home Assistant Discovery for switch and light to be enabled by command SetOption19 1 (#1534)
- * Updated French Translation (#1561)
- * Fix DS18B20 temperature JSON decimal dot (#1561)
- * Add Spanish language file (#1589)
- * Update Italian Language file (#1594)
- * Consolidate WIFI_MANAGER_SEC into WIFI_CONFIG_SEC (#1616)
- * Fix Energy JSON message (#1621)
- *
- * 5.11.1b
- * Add command PowerOnState option 5 which inverts PulseTime and allows for delayed always on after power on
- * Changed OSWATCH_RESET_TIME (Blocked loop) from 30 to 120 seconds to allow slow networks (#1556)
- * Add French language file (#1561)
+ * Change HTML from width=100% to style=width:100% supporting HTML5 (#1358)
+ * Change OSWATCH_RESET_TIME (Blocked loop) from 30 to 120 seconds to allow slow networks (#1556)
+ * Change WIFI_MANAGER_SEC into WIFI_CONFIG_SEC (#1616)
+ * Change function pointers code to save code space and memory (#1683)
+ * Change webserver argument processing gaining 5k code space (#1705)
+ * Change weblog memory usage (#1730, #1793, #1819)
+ * Update TasmotaSerial library to 1.1.0
+ * Update language files Italian (#1594), Dutch (#1723) and Spanish (#1722)
+ * Fix Non-English JSON temperature unit attachement
+ * Fix Arilux RF induced exception by moving interrupt handler to iram on non ESP8266/Arduino lib v2.3.0
  * Fix truncated command names and wrong response for DomoticzSwitchIdx (#1571)
- * Add HTTP Allow Cross Origin removed from ESP8266/Arduino 2.4.0 (#1572)
  * Fix %-sign issue as printf escape character in Humidity and Sonoff SC (#1579)
- *
- * 5.11.1a
+ * Fix DS18B20 temperature JSON decimal dot (#1561)
+ * Fix Energy JSON message (#1621)
+ * Fix IRSend parameter translation (#1636)
+ * Fix TSL2561 device detection (#1644, #1825)
+ * Fix BME680 teleperiod resistance measuring (#1647)
+ * Fix Energy Monitoring Energy Today and Energy Total reading after restart (#1648)
+ * Fix IRReceive Data value (#1663)
+ * Fix Energy Monitoring Energy Period roll-over (#1688)
+ * Fix compiler warnings (#1774)
+ * Fix command PWM response if no PWM channel is configured (#1783)
+ * Add locale Decimal Separator to Web sensor page
+ * Add ColorTemperature to light status message
+ * Add command PowerOnState option 5 which inverts PulseTime and allows for delayed always on after power on
  * Add OtaMagic two step Web server OTA upgrade using filename-minimal image if OTA free space is too small
- * Add chinese language file (#1551)
+ * Add support for PMS5003 and PMS7003 particle concentration sensor
+ * Add command SetOption21 1 to allow Energy Monitoring when power is off on Sonoff Pow and Sonoff S31 (#1420)
+ * Add Chinese language file (#1551)
+ * Add French language file (#1561)
+ * Add Spanish language file (#1589)
+ * Add HTTP Allow Cross Origin removed from ESP8266/Arduino lib v2.4.0 (#1572)
+ * Add Home Assistant MQTT Discovery for switch and light to be enabled by command SetOption19 1 (#1534) or define HOME_ASSISTANT_DISCOVERY_ENABLE in user_config.h (#1685)
+ * Add command State to retrieve device state information (same data as teleperiod state and status 11 in slightly different JSON format)
+ * Add optional login to Webserver AP mode (#1587, #1635)
+ * Add command Sensor15 2 to start MHZ19(B) Zero Point Calibration (#1643)
+ * Add support for Sonoff S31 Smart Socket with Power Consumption Detection (#1626)
+ * Add command SetOption20 to allow update of Dimmer/Color/Ct without turning power on (#1719, #1741)
+ * Add NTP sync time slot based on chip id (#1773)
+ * Add cursor pointer to web button (#1836)
  *
  * 5.11.1 20180107
  * Fix Sonoff Pow command handling (#1542)

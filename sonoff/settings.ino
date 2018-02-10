@@ -123,7 +123,7 @@ void RtcSettingsDump()
 
   for (row = 0; row < maxrow; row++) {
     idx = row * CFG_COLS;
-    snprintf_P(log_data, sizeof(log_data), PSTR("%04X:"), idx);
+    snprintf_P(log_data, sizeof(log_data), PSTR("%03X:"), idx);
     for (col = 0; col < CFG_COLS; col++) {
       if (!(col%4)) {
         snprintf_P(log_data, sizeof(log_data), PSTR("%s "), log_data);
@@ -378,7 +378,7 @@ void SettingsDump(char* parms)
 
   for (row = srow; row < maxrow; row++) {
     idx = row * CFG_COLS;
-    snprintf_P(log_data, sizeof(log_data), PSTR("%04X:"), idx);
+    snprintf_P(log_data, sizeof(log_data), PSTR("%03X:"), idx);
     for (col = 0; col < CFG_COLS; col++) {
       if (!(col%4)) {
         snprintf_P(log_data, sizeof(log_data), PSTR("%s "), log_data);
@@ -478,9 +478,9 @@ void SettingsDefaultSet2()
 //    Settings.domoticz_switch_idx[i] = 0;
   }
 
-  Settings.hlw_power_calibration = HLW_PREF_PULSE;
-  Settings.hlw_voltage_calibration = HLW_UREF_PULSE;
-  Settings.hlw_current_calibration = HLW_IREF_PULSE;
+  Settings.energy_power_calibration = HLW_PREF_PULSE;
+  Settings.energy_voltage_calibration = HLW_UREF_PULSE;
+  Settings.energy_current_calibration = HLW_IREF_PULSE;
 //  Settings.energy_kWhtoday = 0;
 //  Settings.energy_kWhyesterday = 0;
 //  Settings.energy_kWhdoy = 0;

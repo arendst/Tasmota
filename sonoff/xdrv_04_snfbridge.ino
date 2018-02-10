@@ -50,15 +50,9 @@ void SonoffBridgeReceived()
   uint16_t low_time = 0;
   uint16_t high_time = 0;
   uint32_t received_id = 0;
-  char svalue[90];
   char rfkey[8];
 
-  svalue[0] = '\0';
-  for (byte i = 0; i < serial_in_byte_counter; i++) {
-    snprintf_P(svalue, sizeof(svalue), PSTR("%s%02X "), svalue, serial_in_buffer[i]);
-  }
-  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_BRIDGE D_RECEIVED " %s"), svalue);
-  AddLog(LOG_LEVEL_DEBUG);
+  AddLogSerial(LOG_LEVEL_DEBUG);
 
   if (0xA2 == serial_in_buffer[0]) {       // Learn timeout
     SonoffBridgeLearnFailed();

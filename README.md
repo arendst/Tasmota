@@ -1,7 +1,7 @@
 ## Sonoff-Tasmota
 Provide ESP8266 based Sonoff by [iTead Studio](https://www.itead.cc/) and ElectroDragon IoT Relay with Serial, Web and MQTT control allowing 'Over the Air' or OTA firmware updates using Arduino IDE.
 
-Current version is **5.11.1g** - See [sonoff/_releasenotes.ino](https://github.com/arendst/Sonoff-Tasmota/blob/development/sonoff/_releasenotes.ino) for change information.
+Current version is **5.12.0a** - See [sonoff/_releasenotes.ino](https://github.com/arendst/Sonoff-Tasmota/blob/development/sonoff/_releasenotes.ino) for change information.
 
 ### ATTENTION All versions
 
@@ -43,6 +43,7 @@ The following devices are supported:
 - [iTead Sonoff 4CH Pro](https://www.itead.cc/smart-home/sonoff-4ch-pro.html)
 - [iTead S20 Smart Socket](https://www.itead.cc/smart-socket.html)
 - [Sonoff S22 Smart Socket](https://github.com/arendst/Sonoff-Tasmota/issues/627)
+- [iTead Sonoff S31 Smart Socket with Energy Monitoring](https://www.itead.cc/sonoff-s31.html)
 - [iTead Slampher](https://www.itead.cc/slampher.html)
 - [iTead Sonoff Touch](https://www.itead.cc/sonoff-touch.html)
 - [iTead Sonoff T1](https://www.itead.cc/sonoff-t1.html)

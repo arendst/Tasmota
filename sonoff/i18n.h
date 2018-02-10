@@ -278,12 +278,12 @@
 #define D_CMND_CURRENTLOW "CurrentLow"
 #define D_CMND_CURRENTHIGH "CurrentHigh"
 #define D_CMND_ENERGYRESET "EnergyReset"
-#define D_CMND_HLWPCAL "HlwPcal"
-#define D_CMND_HLWPSET "HlwPset"
-#define D_CMND_HLWUCAL "HlwUcal"
-#define D_CMND_HLWUSET "HlwUset"
-#define D_CMND_HLWICAL "HlwIcal"
-#define D_CMND_HLWISET "HlwIset"
+#define D_CMND_POWERCAL "PowerCal"
+#define D_CMND_POWERSET "PowerSet"
+#define D_CMND_VOLTAGECAL "VoltageCal"
+#define D_CMND_VOLTAGESET "VoltageSet"
+#define D_CMND_CURRENTCAL "CurrentCal"
+#define D_CMND_CURRENTSET "CurrentSet"
 #define D_CMND_MAXPOWER "MaxPower"
 #define D_CMND_MAXPOWERHOLD "MaxPowerHold"
 #define D_CMND_MAXPOWERWINDOW "MaxPowerWindow"
@@ -382,6 +382,7 @@ const char kUnitNames[] PROGMEM =
   D_UNIT_WATTHOUR ;
 
 const char S_JSON_COMMAND_NVALUE_SPACE_UNIT[] PROGMEM =       "{\"%s\":\"%d %s\"}";
+const char S_JSON_COMMAND_LVALUE_SPACE_UNIT[] PROGMEM =       "{\"%s\":\"%lu %s\"}";
 const char S_JSON_COMMAND_SVALUE_SPACE_UNIT[] PROGMEM =       "{\"%s\":\"%s %s\"}";
 const char S_JSON_COMMAND_NVALUE_UNIT[] PROGMEM =             "{\"%s\":\"%d%s\"}";
 const char S_JSON_COMMAND_NVALUE_UNIT_NVALUE_UNIT[] PROGMEM = "{\"%s\":\"%d%s (%d%s)\"}";
@@ -390,10 +391,12 @@ const char S_JSON_COMMAND_NVALUE_SVALUE[] PROGMEM =           "{\"%s\":\"%d (%s)
 const char S_JSON_COMMAND_NVALUE_ACTIVE_NVALUE[] PROGMEM =    "{\"%s\":\"%d (" D_JSON_ACTIVE " %d)\"}";
 
 const char S_JSON_COMMAND_NVALUE[] PROGMEM =                  "{\"%s\":%d}";
+const char S_JSON_COMMAND_LVALUE[] PROGMEM =                  "{\"%s\":%lu}";
 const char S_JSON_COMMAND_SVALUE[] PROGMEM =                  "{\"%s\":\"%s\"}";
 const char S_JSON_COMMAND_XVALUE[] PROGMEM =                  "{\"%s\":%s}";  // %s must provide quotes on non-number
 
 const char S_JSON_COMMAND_INDEX_NVALUE[] PROGMEM =            "{\"%s%d\":%d}";
+const char S_JSON_COMMAND_INDEX_LVALUE[] PROGMEM =            "{\"%s%d\":%lu}";
 const char S_JSON_COMMAND_INDEX_SVALUE[] PROGMEM =            "{\"%s%d\":\"%s\"}";
 const char S_JSON_COMMAND_INDEX_SVALUE_SVALUE[] PROGMEM =     "{\"%s%d\":\"%s%s\"}";
 
@@ -403,7 +406,11 @@ const char S_JSON_SENSOR_INDEX_SVALUE[] PROGMEM =            "{\"" D_CMND_SENSOR
 const char JSON_SNS_TEMPHUM[] PROGMEM = "%s,\"%s\":{\"" D_JSON_TEMPERATURE "\":%s,\"" D_JSON_HUMIDITY "\":%s}";
 
 const char S_LOG_I2C_FOUND_AT[] PROGMEM = D_LOG_I2C "%s " D_FOUND_AT " 0x%x";
-
+// <- LVA
+//#ifdef USE_MCP23017
+ //const char S_LOG_MCP23017[] PROGMEM = "MCP23017 ID  %d " D_PORT " %d";                              // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
+//#endif
+//  -> LVA
 const char S_LOG_HTTP[] PROGMEM = D_LOG_HTTP;
 const char S_LOG_WIFI[] PROGMEM = D_LOG_WIFI;
 const char S_LOG_MQTT[] PROGMEM = D_LOG_MQTT;
@@ -438,22 +445,32 @@ static const char kMonthNames[] = D_MONTH3LIST;
 
 // webserver.ino
 #ifdef USE_WEBSERVER
-#ifndef LVA // <- LVA
-  const char HTTP_SNS_TEMP[] PROGMEM = "%s{s}%s " D_TEMPERATURE "{m}%s&deg;%c{e}";                             // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
+// <- LVA
+#ifndef LVA
+const char HTTP_SNS_TEMP[] PROGMEM = "%s{s}%s " D_TEMPERATURE "{m}%s&deg;%c{e}";                             // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
 #else
   const char HTTP_SNS_TEMP[] PROGMEM = "%s{s}%s temp {m}%s&deg;%c{e}";                             // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
-#endif //  -> LVA
+  #endif
+//  -> LVA
 
 const char HTTP_SNS_HUM[] PROGMEM = "%s{s}%s " D_HUMIDITY "{m}%s%%{e}";                                      // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
 const char HTTP_SNS_PRESSURE[] PROGMEM = "%s{s}%s " D_PRESSURE "{m}%s " D_UNIT_PRESSURE "{e}";               // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
 const char HTTP_SNS_SEAPRESSURE[] PROGMEM = "%s{s}%s " D_PRESSUREATSEALEVEL "{m}%s " D_UNIT_PRESSURE "{e}";  // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
 #ifndef LVA // <- LVA
 const char HTTP_SNS_ANALOG[] PROGMEM = "%s{s}%s " D_ANALOG_INPUT "%d{m}%d{e}";                               // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
+
 #else
   const char HTTP_SNS_ANALOG[] PROGMEM = "%s{s}%s A%d{m}%d{e}";                               // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
 #endif //  -> LVA
 #if defined(USE_MHZ19) || defined(USE_SENSEAIR)
 const char HTTP_SNS_CO2[] PROGMEM = "%s{s}%s " D_CO2 "{m}%d " D_UNIT_PARTS_PER_MILLION "{e}";                              // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
+
+// <- LVA
+//#ifdef USE_MCP23017
+ const char HTTP_MCP_INPUT[] PROGMEM = "%s{s}%s IN:%d{m}%d{e}";                               // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
+//#endif
+//  -> LVA
+
 #endif  // USE_WEBSERVER
 
 const char S_MAIN_MENU[] PROGMEM = D_MAIN_MENU;
