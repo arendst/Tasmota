@@ -20,26 +20,27 @@ You can always enable what you need in the user_config.h
 
 Web Interface   
 - more width for desktop   
-- pointer cursor   
+- pointer cursor (in Tasmota since 5.12.0)   
 - translated current status (on/off)   
-   
-WeMo Emu fixed   
-   
-Echo 2G Type2 discover fixed    
+
+WeMo Emu fixed (in Tasmota since 5.10.xx)   
+
+Echo 2G Type2 discover fixed (in Tasmota since 5.10.xx)   
 - discovering with echo show still not working    
 
+Other
+- StatusPRM.StartupDateTimeUtc added in JSON Response
+   - saves the first NTP Time as StartUp DateTime to calculate correct Uptime by other Endpoints like [SonWEB](https://github.com/reloxx13/SonWEB)
+   - Fix for [#1842](https://github.com/arendst/Sonoff-Tasmota/issues/1842)
+- fix degree symbol
+   - Fix for [PR#1496](https://github.com/arendst/Sonoff-Tasmota/pull/1496)
 
 
 
 
 
 
-   
-   
-   
-   
-   
-   
+
 ## Sonoff-Tasmota
 Provide ESP8266 based Sonoff by [iTead Studio](https://www.itead.cc/) and ElectroDragon IoT Relay with Serial, Web and MQTT control allowing 'Over the Air' or OTA firmware updates using Arduino IDE.
 
