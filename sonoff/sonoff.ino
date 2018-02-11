@@ -215,11 +215,19 @@ void GetMqttClient(char* output, const char* input, byte size)
       token = strtok(NULL, "");
     }
     if (token != NULL) {
-      digits = atoi(token);
-      if (digits) {
-        snprintf_P(output, size, PSTR("%s%c0%dX"), output, '%', digits);
-        snprintf_P(output, size, output, ESP.getChipId());
+      if (strcmp(token, "06X") == 0) {  // %06X - full chip ID in hex
+        snprintf_P(output, size, PSTR("%s%06X"), output, ESP.getChipId());
+        digits = 6;
       }
+      else if (strcmp(token, "d") == 0) {  // %d - full chip ID in dec
+        snprintf_P(output, size, PSTR("%s%d"), output, ESP.getChipId());
+        digits = 8;
+      }
+      else if (strcmp(token, "04d") == 0) {  // %04d - short chip ID in dec, like in hostname
+        snprintf_P(output, size, PSTR("%s%04d"), output, ESP.getChipId() & 0x1fff);
+        digits = 4;
+      }
+
     }
   }
   if (!digits) {
@@ -2290,7 +2298,27 @@ void StateLoop()
 #endif  // BE_MINIMAL
           snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_UPLOAD "%s"), ota_url);
           AddLog(LOG_LEVEL_DEBUG);
-          ota_result = (HTTP_UPDATE_FAILED != ESPhttpUpdate.update(ota_url));
+
+          // code to insert ID into ota_url:
+          char * new_ota_url;
+
+          if (strstr(ota_url, "%d") != NULL || strstr(ota_url, "%04d") != NULL) {    // OTA url contains placeholder for chip ID
+            new_ota_url = (char*)malloc(strlen(ota_url) + 10);
+            snprintf_P(new_ota_url, strlen(ota_url) + 10, ota_url, ESP.getChipId() & 0x1fff);
+            snprintf_P(log_data, sizeof(log_data), "Found OTA url placeholder, will use %s", new_ota_url);
+            AddLog(LOG_LEVEL_DEBUG);
+          }
+          else if (strstr(ota_url, "%u") != NULL) {    // OTA url contains placeholder for chip ID
+            new_ota_url = (char*)malloc(strlen(ota_url) + 10);
+            snprintf_P(new_ota_url, strlen(ota_url) + 10, ota_url, ESP.getChipId());
+            snprintf_P(log_data, sizeof(log_data), "Found OTA url placeholder, will use %s", new_ota_url);
+            AddLog(LOG_LEVEL_DEBUG);
+          }
+          else {
+            new_ota_url = ota_url;
+          }
+
+          ota_result = (HTTP_UPDATE_FAILED != ESPhttpUpdate.update(new_ota_url));
           if (!ota_result) {
 #ifndef BE_MINIMAL
             int ota_error = ESPhttpUpdate.getLastError();
