@@ -1040,7 +1040,7 @@ void MqttDataCallback(char* topic, byte* data, unsigned int data_len)
         else {  // SetOption32 ..
           switch (index) {
             case P_HOLD_TIME:
-              if ((payload >= 1) && (payload <= 100)) {
+              if ((payload >= 1) && (payload <= 250)) {
                 Settings.param[P_HOLD_TIME] = payload;
               }
               break;

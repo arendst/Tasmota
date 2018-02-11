@@ -52,22 +52,22 @@
 #define WIFI_SUBNETMASK        "255.255.255.0"   // [IpAddress3] If not using DHCP set Network mask
 #define WIFI_DNS               "192.168.2.27"    // [IpAddress4] If not using DHCP set DNS IP address (might be equal to WIFI_GATEWAY)
 
-#define STA_SSID1              "indebuurt1"      // [Ssid1] Wifi SSID
-#define STA_PASS1              "VnsqrtnrsddbrN"  // [Password1] Wifi password
-#define STA_SSID2              "indebuurt2"      // [Ssid2] Optional alternate AP Wifi SSID
-#define STA_PASS2              "VnsqrtnrsddbrN"  // [Password2] Optional alternate AP Wifi password
+#define STA_SSID1              ""                // [Ssid1] Wifi SSID
+#define STA_PASS1              ""                // [Password1] Wifi password
+#define STA_SSID2              ""                // [Ssid2] Optional alternate AP Wifi SSID
+#define STA_PASS2              ""                // [Password2] Optional alternate AP Wifi password
 #define WIFI_CONFIG_TOOL       WIFI_WPSCONFIG    // [WifiConfig] Default tool if wifi fails to connect
                                                  //   (WIFI_RESTART, WIFI_SMARTCONFIG, WIFI_MANAGER, WIFI_WPSCONFIG, WIFI_RETRY, WIFI_WAIT)
 
 // -- Syslog --------------------------------------
-#define SYS_LOG_HOST           "domus1"          // [LogHost] (Linux) syslog host
+#define SYS_LOG_HOST           ""                // [LogHost] (Linux) syslog host
 #define SYS_LOG_PORT           514               // [LogPort] default syslog UDP port
 #define SYS_LOG_LEVEL          LOG_LEVEL_NONE    // [SysLog]
 #define SERIAL_LOG_LEVEL       LOG_LEVEL_INFO    // [SerialLog]
 #define WEB_LOG_LEVEL          LOG_LEVEL_INFO    // [WebLog]
 
 // -- Ota -----------------------------------------
-#define OTA_URL                "http://domus1:80/api/arduino/" PROJECT ".ino.bin"  // [OtaUrl]
+#define OTA_URL                "http://sonoff.maddox.co.uk/tasmota/sonoff.ino.bin"  // [OtaUrl]
 
 // -- MQTT ----------------------------------------
 #define MQTT_USE               1                 // [SetOption3] Select default MQTT use (0 = Off, 1 = On)
@@ -75,13 +75,14 @@
 //#define USE_MQTT_TLS                             // EXPERIMENTAL Use TLS for MQTT connection (+53k code, +20k mem) - Disable by //
                                                  //   Needs Fingerprint, TLS Port, UserId and Password
 #ifdef USE_MQTT_TLS
-  #define MQTT_HOST            "m20.cloudmqtt.com"  // [MqttHost]
+//  #define MQTT_HOST            "m20.cloudmqtt.com"  // [MqttHost]
+  #define MQTT_HOST            ""                   // [MqttHost]
   #define MQTT_FINGERPRINT     "A5 02 FF 13 99 9F 8B 39 8E F1 83 4F 11 23 65 0B 32 36 FC 07"  // [MqttFingerprint]
   #define MQTT_PORT            20123                // [MqttPort] MQTT TLS port
   #define MQTT_USER            "cloudmqttuser"      // [MqttUser] Mandatory user
   #define MQTT_PASS            "cloudmqttpassword"  // [MqttPassword] Mandatory password
 #else
-  #define MQTT_HOST            "domus1"          // [MqttHost]
+  #define MQTT_HOST            ""                // [MqttHost]
   #define MQTT_PORT            1883              // [MqttPort] MQTT port (10123 on CloudMQTT)
   #define MQTT_USER            "DVES_USER"       // [MqttUser] Optional user
   #define MQTT_PASS            "DVES_PASS"       // [MqttPassword] Optional password
@@ -211,6 +212,12 @@
 //  #define USE_WS2812_DMA                         // DMA supports only GPIO03 (= Serial RXD) (+1k mem). When USE_WS2812_DMA is enabled expect Exceptions on Pow
 
 #define USE_ARILUX_RF                            // Add support for Arilux RF remote controller (+0k8 code, 252 iram (non 2.3.0))
+
+/*********************************************************************************************\
+ * Select all sensors - overrides above undefines!!
+\*********************************************************************************************/
+
+//#define USE_ALL_SENSORS                          // Create sonoff-xxl with all sensors enabled (See sonoff_post.h for selected sensors)
 
 /*********************************************************************************************\
  * Compile a minimal version if upgrade memory gets tight ONLY TO BE USED FOR UPGRADE STEP 1!
