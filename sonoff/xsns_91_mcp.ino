@@ -1,7 +1,21 @@
 /*
 xsns_17mcp.ino  MCP23017 support driver
-version 0.0
+version 0.1
+
+
+
+Switch MCP23017_out8	{ mqtt=">[fms:cmnd/boiler/sensor17:command:*:8?${command}], <[fms:stat/boiler/RESULT:state:JSONPATH($.MCP23017.out8)]" }
+String MCP23017_in0 "[%d]"	{mqtt="<[fms:tele/boiler/SENSOR:state:JSONPATH($.MCP23017.in0)]"}
+String MCP23017_in1 "[%d]"	{mqtt="<[fms:tele/boiler/SENSOR:state:JSONPATH($.MCP23017.in1)]"}
+String MCP23017_in10 "[%d]"	 {mqtt="<[fms:tele/boiler/SENSOR:state:JSONPATH($.MCP23017.out10)]"}
+
+не доделано:
+- только однин расширительн портов
+- нельзя конфугурировать направление портов и их значение по умолчанию
+
 */
+
+#define XSNS_91 17
 
 #ifdef USE_I2C
 #ifdef USE_MCP23017
@@ -63,8 +77,8 @@ Connect pin #18 through a ~10kohm resistor to 5V (reset pin, active low)
 //#define MCP_DEV1_PINS 65535 // все входные 0 - in 1 - out старший разряд GPB младщий GPA
 #define PIN_ESP_INT 14 // Прерывания с MCP будут обрабатываться с помощью этого PIN-кода
 #define D_MCP23017 "MCP23017"
-#define D_OUTPUT "output"
-#define D_INPUT "input"
+#define D_OUTPUT "out"
+#define D_INPUT "in"
 
 
 
@@ -75,25 +89,29 @@ Connect pin #18 through a ~10kohm resistor to 5V (reset pin, active low)
   надо понять как грузит память
 */
 Adafruit_MCP23017 mcp0;
-Adafruit_MCP23017 mcp1;
-Adafruit_MCP23017 mcp2;
-Adafruit_MCP23017 mcp3;
-Adafruit_MCP23017 mcp4;
-Adafruit_MCP23017 mcp5;
-Adafruit_MCP23017 mcp6;
-Adafruit_MCP23017 mcp7;
+//Adafruit_MCP23017 mcp1;
+//Adafruit_MCP23017 mcp2;
+// Adafruit_MCP23017 mcp3;
+// Adafruit_MCP23017 mcp4;
+// Adafruit_MCP23017 mcp5;
+// Adafruit_MCP23017 mcp6;
+// Adafruit_MCP23017 mcp7;
 
 
 uint8_t mcp_devices;
 uint8_t mcp_addr[MAX_MCP_DEV]; //адресa устройств
-uint16_t mcp_pins[MAX_MCP_DEV]; // конфигурация потров
-boolean Interupt_flag; // флаг что сработало прерывание надо вызывать обработчик MqttFastChange
+uint16_t mcp_pins_direct[MAX_MCP_DEV]; // конфигурация потров
+uint16_t mcp_pins_default_status[MAX_MCP_DEV]; // значение по умолчанию потров
+
+uint8_t Interupt_count; // количество не опубликованных событий по прерыванию надо вызывать обработчик MqttFastChange
+uint8_t Interupt_pin[10];
+uint8_t Interupt_val[10];
 boolean mqqt_dsxflg;
 
 /****************************************************************************/
 void MCP23017Detect()
 {
-  Serial.println("Start mcp found...");
+  Serial.println("Start mcp Search...");
   Wire.begin();
   uint8_t error, aa;
   for(uint8_t addresses = 32; addresses < 40; addresses++ ) {
@@ -122,53 +140,57 @@ void MCP23017Detect()
     Adafruit_MCP23017 mcp0;
     mcp0.begin(mcp_addr[aa++]);
   }
-  if (mcp_devices > 1) {
-    Adafruit_MCP23017 mcp1;
-    mcp1.begin(mcp_addr[aa++]);
-  }
-  if (mcp_devices > 2) {
-    Adafruit_MCP23017 mcp1;
-    mcp2.begin(mcp_addr[aa++]);
-  }
-  if (mcp_devices > 3) {
-    Adafruit_MCP23017 mcp1;
-    mcp3.begin(mcp_addr[aa++]);
-  }
-  if (mcp_devices > 4) {
-    Adafruit_MCP23017 mcp1;
-    mcp4.begin(mcp_addr[aa++]);
-  }
-  if (mcp_devices > 5) {
-    Adafruit_MCP23017 mcp1;
-    mcp5.begin(mcp_addr[aa++]);
-  }
-  if (mcp_devices > 6) {
-    Adafruit_MCP23017 mcp1;
-    mcp6.begin(mcp_addr[aa++]);
-  }
-  if (mcp_devices > 7) {
-    Adafruit_MCP23017 mcp1;
-    mcp7.begin(mcp_addr[aa++]);
-  }
-  // не трбуется т.к вызывается средствамии Tasmota
-  //MCP23017Init();
+  // if (mcp_devices > 1) {
+  //   Adafruit_MCP23017 mcp1;
+  //   mcp1.begin(mcp_addr[aa++]);
+  // }
+  // if (mcp_devices > 2) {
+  //   Adafruit_MCP23017 mcp1;
+  //   mcp2.begin(mcp_addr[aa++]);
+  // }
+  // if (mcp_devices > 3) {
+  //   Adafruit_MCP23017 mcp1;
+  //   mcp3.begin(mcp_addr[aa++]);
+  // }
+  // if (mcp_devices > 4) {
+  //   Adafruit_MCP23017 mcp1;
+  //   mcp4.begin(mcp_addr[aa++]);
+  // }
+  // if (mcp_devices > 5) {
+  //   Adafruit_MCP23017 mcp1;
+  //   mcp5.begin(mcp_addr[aa++]);
+  // }
+  // if (mcp_devices > 6) {
+  //   Adafruit_MCP23017 mcp1;
+  //   mcp6.begin(mcp_addr[aa++]);
+  // }
+  // if (mcp_devices > 7) {
+  //   Adafruit_MCP23017 mcp1;
+  //   mcp7.begin(mcp_addr[aa++]);
+  // }
+
 }
 
 void MCP23017Init(){
   //mcp_pins[0]=0;//65535;
   int8_t d=0;
-
-  mcp_pins[d]=65280;
+  mcp_pins_direct[0]=65280;
+  mcp_pins_default_status[0]=0;
 
   for (int _bit=0; _bit<16; _bit++){
     //проверка установленного бита
     //boolean direct;
     //direct=mcp_pins[0]&1<<a;
     //Serial.print("Pin: "); Serial.print(_bit);
-    if (mcp_pins[d]&1<<_bit){
+    if (mcp_pins_direct[d]&1<<_bit){
       mcp0.pinMode(_bit, OUTPUT); //GB0 pin 1 on chip
       //mcp0.digitalWrite(_bit, LOW);
-      mcp0.digitalWrite(_bit, HIGH);
+      if (mcp_pins_default_status[d]&1<<_bit){
+        mcp0.digitalWrite(_bit, HIGH);
+      }
+      else {
+        mcp0.digitalWrite(_bit, LOW);
+      }
       //Serial.println("\tSet: OUTPUT");
       snprintf_P(log_data, sizeof(log_data), PSTR(D_MCP23017 " id:%d" D_PORT ": %d " D_OUTPUT), d, _bit);
       AddLog(LOG_LEVEL_INFO);
@@ -191,31 +213,46 @@ void MCP23017Init(){
 }
 
 void MCP_Interupt(){
-
   // Get more information from the MCP from the INT
-  uint8_t pin=mcp0.getLastInterruptPin();
-  uint8_t val=mcp0.getLastInterruptPinValue();
+//  MCP_MqttFastPublic(mcp0.getLastInterruptPin(),mcp0.getLastInterruptPinValue(), false);
+
+// если замыкается два пина, но приходит одно прерывание
+  Interupt_count++;
+  Interupt_pin[Interupt_count]=mcp0.getLastInterruptPin();
+  Interupt_val[Interupt_count]=mcp0.getLastInterruptPinValue();
+
+}
 
 
-  // snprintf_P(log_data, sizeof(log_data), PSTR(D_MCP23017 D_PORT": %d  %d"), pin, val);
-  // AddLog(LOG_LEVEL_INFO); // а теперь публикуем
-
+void MCP_MqttFastPublic(uint8_t pin, uint8_t val, boolean ending) {
   if (mqqt_dsxflg) {
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR(","), pin, val);
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR(","), pin, val);
   }
   else{
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_MCP23017 "\":{"));
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_MCP23017 "\":{"));
   }
-  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s\"in%d\":%d"), mqtt_data, pin, val);
-  ///AddLog(LOG_LEVEL_DEBUG);
-  //Serial.println(mqtt_data);tr
-  Interupt_flag=true;
-  //MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);
+  if (mcp_pins_direct[0]&1<<pin){
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s\"" D_OUTPUT "%d\":%d"), mqtt_data, pin, val);
+  }
+  else {
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s\"" D_INPUT "%d\":%d"), mqtt_data, pin, val);
+  }
+  if (ending) snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}}"), mqtt_data);
+
 
 
 }
 void MqttFastChange(){
-  if (Interupt_flag){
+  if (Interupt_count>0){
+    uint8_t curentc_count=0;
+    while (curentc_count < Interupt_count) {
+      curentc_count++;
+      MCP_MqttFastPublic(Interupt_pin[curentc_count],Interupt_val[curentc_count], false);
+      //mqqt_dsxflg=1;
+      /* code */
+    }
+    Interupt_count=0;
+    mqqt_dsxflg = 0;
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}}"), mqtt_data);
     // а теперь публикуем mqqt
     MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);
@@ -223,11 +260,7 @@ void MqttFastChange(){
 
     // snprintf_P(log_data, sizeof(mqtt_data), PSTR("%s"), mqtt_data);
     // AddLog(LOG_LEVEL_DEBUG); // а теперь публикуем log
-    mqqt_dsxflg = 0;
-
-
-    Interupt_flag=false;
-}
+  }
 }
 
 void MCP23017Show(boolean json){
@@ -235,8 +268,8 @@ void MCP23017Show(boolean json){
   char stemp[10];
 
   byte dsxflg = 0;
-  for (byte i = 0; i < 16; i++) {
-    int16_t mcp_value = mcp1.digitalRead(i);
+  for (byte _bit = 0; _bit < 16; _bit++) {
+    int16_t mcp_value = mcp0.digitalRead(_bit);
 ///
     if (json) {
       if (!dsxflg  ) {
@@ -244,12 +277,17 @@ void MCP23017Show(boolean json){
         stemp[0] = '\0';
       }
       dsxflg++;
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s%s\"IN%d\":%d"), mqtt_data, stemp, i, mcp_value);
+      if (mcp_pins_direct[0]&1<<_bit){
+        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s%s\"" D_OUTPUT "%d\":%d"), mqtt_data, stemp, _bit, mcp_value);
+      }
+      else {
+        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s%s\"" D_INPUT "%d\":%d"), mqtt_data, stemp, _bit, mcp_value);
+      }
       strcpy(stemp, ",");
   #ifdef USE_WEBSERVER
     } else {
       //snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_MCP_INPUT, mqtt_data, "MCP23017", i, mcp_value);
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_ANALOG, mqtt_data, D_MCP23017, i, mcp_value);
+      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_ANALOG, mqtt_data, D_MCP23017, _bit, mcp_value);
 
   #endif  // USE_WEBSERVER
     }
@@ -262,26 +300,76 @@ void MCP23017Show(boolean json){
   }
 }
 
+bool CommandMCP23017() {
+  boolean serviced = true;
+  int8_t d=0;
+  /*
+  Serial.println("run CommandMCP23017()");
+  Serial.print("  index: ");      Serial.print(XdrvMailbox.index);
+  Serial.print("  data_len: ");   Serial.print(XdrvMailbox.data_len);
+  Serial.print("  payload: ");    Serial.print(XdrvMailbox.payload);
+  Serial.print("  topic:");       Serial.print(XdrvMailbox.topic);
+  Serial.print("  data: ");       Serial.println(XdrvMailbox.data);
+*/
+  if (XdrvMailbox.data_len) {
+    char *value_command = strtok(XdrvMailbox.data, "?");
+    value_command = strtok(NULL, "?");
+    Serial.println("value_command"+ String(value_command));
+    uint8_t channal = (uint8_t) XdrvMailbox.payload;
+    if (mcp_pins_direct[d]&1<< channal) {
+          if (!strcasecmp(value_command, "ON")){
+            mcp0.digitalWrite(channal, HIGH);
+            //Serial.println("pin set to 1");
+            MCP_MqttFastPublic(channal, 1, true);
+
+            Interupt_count++;
+            Interupt_pin[Interupt_count]=channal;
+            Interupt_val[Interupt_count]=1;
+          }
+          else {
+            mcp0.digitalWrite(channal, LOW);
+            //Serial.println("pin set to 0");
+            MCP_MqttFastPublic(channal, 0, true);
+            Interupt_count++;
+            Interupt_pin[Interupt_count]=channal;
+            Interupt_val[Interupt_count]=0;
+
+          }
+
+    }
+    else {
+        serviced = false;
+        Serial.println("ERROR pin in");
+    }
+  }
+
+  return serviced;
+}
+
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
 
 
-#define XSNS_17
 
-boolean Xsns17(byte function) {
+boolean Xsns91(byte function) {
   boolean result = false;
+  //Serial.println("run Xsns17()");
 
   if (i2c_flg) {
     switch (function) {
+      case FUNC_EVERY_50_MSECOND:
+        MqttFastChange();
+        break;
       case FUNC_INIT:
         MCP23017Init();
         break;
-/*
-      case FUNC_PREP_BEFORE_TELEPERIOD:
-      //  Ads1115Detect();
+      case FUNC_COMMAND:
+        Serial.println("run Xsns17()");
+        if (XSNS_91 == XdrvMailbox.index) {
+            result = CommandMCP23017();
+        }
         break;
-*/
       case FUNC_JSON_APPEND:
         MCP23017Show(1);
         break;

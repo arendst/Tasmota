@@ -836,7 +836,7 @@ void MqttDataCallback(char* topic, byte* data, unsigned int data_len)
   grpflg = (strstr(topicBuf, Settings.mqtt_grptopic) != NULL);
   fallback_topic_flag = (strstr(topicBuf, mqtt_client) != NULL);
   type = strrchr(topicBuf, '/') +1;  // Last part of received topic is always the command (type)
-
+// lva выделяем топик и выделяем последние цифры как индекс
   index = 1;
   if (type != NULL) {
     for (i = 0; i < strlen(type); i++) {
@@ -2231,9 +2231,6 @@ void StateLoop()
   ButtonHandler();
   SwitchHandler();
 
-  //LVA <--
-  MqttFastChange();
-  // LVA -->
   XdrvCall(FUNC_EVERY_50_MSECOND);
   XsnsCall(FUNC_EVERY_50_MSECOND);
 

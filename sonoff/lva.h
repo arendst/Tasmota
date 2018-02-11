@@ -131,6 +131,7 @@ lva.h - lva configuration overrides  for Sonoff-Tasmota
   #undef USE_PMS5003                              // Add support for PMS5003 particle concentration sensor (+1k3 code)
   #undef USE_ARILUX_RF                            // Add support for Arilux RF remote controller (+0.8k code)
   #undef USE_DS18x20
+  #undef USE_SENSEAIR
 
 
 #define LVA  // включить изменения LVA

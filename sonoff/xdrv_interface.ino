@@ -148,14 +148,14 @@ boolean XdrvCommand(char *type, uint16_t index, char *dataBuf, uint16_t data_len
   XdrvMailbox.payload = payload;
   XdrvMailbox.topic = type;
   XdrvMailbox.data = dataBuf;
-  //    lva
+  /*    lva
   Serial.print("run XdrvCommand()");
   Serial.print("  index: ");      Serial.print(XdrvMailbox.index);
   Serial.print("  data_len: ");   Serial.print(XdrvMailbox.data_len);
   Serial.print("  payload: ");    Serial.print(XdrvMailbox.payload);
   Serial.print("  topic:");       Serial.print(XdrvMailbox.topic);
-  Serial.print("  data: ");       Serial.print(XdrvMailbox.data);
-
+  Serial.print("  data: ");       Serial.println(XdrvMailbox.data);
+  */
   return XdrvCall(FUNC_COMMAND);
 }
 
@@ -194,7 +194,6 @@ boolean XdrvMqttData(char *topicBuf, uint16_t stopicBuf, char *dataBuf, uint16_t
 boolean XdrvCall(byte Function)
 {
   boolean result = false;
-
   for (byte x = 0; x < xdrv_present; x++) {
     result = xdrv_func_ptr[x](Function);
     if (result) {
