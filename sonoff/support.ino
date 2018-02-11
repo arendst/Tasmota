@@ -1065,7 +1065,7 @@ String GetUptime()
   return String(dt);
 }
 
-String GetStartupDateTime()
+String GetStartupDateTimeUtc()
 {
   char dt[21];
 
@@ -1246,6 +1246,9 @@ void RtcSecond()
     ntp_time = sntp_get_current_timestamp();
     if (ntp_time) {
       utc_time = ntp_time;
+      if(booted_time == 0){
+        booted_time = utc_time; //save first ntp time as booted time
+      }
       ntp_sync_minute = 60;  // Sync so block further requests
       BreakTime(utc_time, tmpTime);
       RtcTime.year = tmpTime.year + 1970;
@@ -1276,9 +1279,6 @@ void RtcSecond()
       }
     } else {
       local_time += Settings.timezone * SECS_PER_HOUR;
-    }
-    if(booted_time == 0){
-      booted_time = local_time; //save first ntp time as booted time
     }
   }
   BreakTime(local_time, RtcTime);
