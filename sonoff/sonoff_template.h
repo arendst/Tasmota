@@ -733,9 +733,9 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
   { "Arilux LC11",     // Arilux AL-LC11 (ESP8266) - https://www.banggood.com/nl/ARILUX-AL-LC11-Super-Mini-LED-WIFI-APP-Controller-RF-Remote-Control-For-RGBWW-LED-Strip-DC9-28V-p-1085112.html
                        //  (PwmFrequency 540Hz)
      GPIO_KEY1,        // GPIO00 Optional Button
-     0,
+     GPIO_USER,        // GPIO01 Serial RXD and Optional sensor
      GPIO_LED2_INV,    // GPIO02 RF receiver control
-     0,
+     GPIO_USER,        // GPIO03 Serial TXD and Optional sensor
      GPIO_PWM2,        // GPIO04 RGB LED Green
      GPIO_PWM1,        // GPIO05 RGB LED Red
      0, 0, 0, 0, 0, 0, // Flash connection
