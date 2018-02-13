@@ -469,6 +469,8 @@ bool PzemRecieve(uint8_t resp, float *data)
     }
   }
 
+  AddLogSerial(LOG_LEVEL_DEBUG_MORE, buffer, len);
+
   if (len != sizeof(PZEMCommand)) {
 //    AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "Pzem comms timeout"));
     return false;
@@ -978,24 +980,28 @@ boolean EnergyCommand()
 void EnergyDrvInit()
 {
   energy_flg = ENERGY_NONE;
-  if ((pin[GPIO_HLW_SEL] < 99) && (pin[GPIO_HLW_CF1] < 99) && (pin[GPIO_HLW_CF] < 99)) {
+  if ((pin[GPIO_HLW_SEL] < 99) && (pin[GPIO_HLW_CF1] < 99) && (pin[GPIO_HLW_CF] < 99)) {  // Sonoff Pow
     energy_flg = ENERGY_HLW8012;
-  } else if (SONOFF_S31 == Settings.module) {
+  } else if (SONOFF_S31 == Settings.module) {  // Sonoff S31
     baudrate = 4800;
     serial_config = SERIAL_8E1;
     energy_flg = ENERGY_CSE7766;
 #ifdef USE_PZEM004T
-  } else if ((pin[GPIO_PZEM_RX] < 99) && (pin[GPIO_PZEM_TX])) {
-    if (PzemInit()) {
-      energy_flg = ENERGY_PZEM004T;
-    }
+  } else if ((pin[GPIO_PZEM_RX] < 99) && (pin[GPIO_PZEM_TX])) {  // Any device with a Pzem004T
+    energy_flg = ENERGY_PZEM004T;
 #endif  // USE_PZEM004T
   }
 }
 
-void EnergyInit()
+void EnergySnsInit()
 {
   if (ENERGY_HLW8012 == energy_flg) HlwInit();
+
+#ifdef USE_PZEM004T
+  if ((ENERGY_PZEM004T == energy_flg) && !PzemInit()) {  // PzemInit needs to be done here as earlier (serial) interrupts may lead to Exceptions
+    energy_flg = ENERGY_NONE;
+  }
+#endif  // USE_PZEM004T
 
   if (energy_flg) {
     energy_kWhtoday = (RtcSettingsValid()) ? RtcSettings.energy_kWhtoday : (RtcTime.day_of_year == Settings.energy_kWhdoy) ? Settings.energy_kWhtoday : 0;
@@ -1099,7 +1105,7 @@ boolean Xsns03(byte function)
   if (energy_flg) {
     switch (function) {
       case FUNC_INIT:
-        EnergyInit();
+        EnergySnsInit();
         break;
       case FUNC_EVERY_SECOND:
         EnergyMarginCheck();

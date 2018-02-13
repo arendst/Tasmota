@@ -56,6 +56,8 @@ boolean PmsReadData()
   PmsSerial->readBytes(buffer, 32);
   PmsSerial->flush();  // Make room for another burst
 
+  AddLogSerial(LOG_LEVEL_DEBUG_MORE, buffer, 32);
+
   // get checksum ready
   for (uint8_t i = 0; i < 30; i++) {
     sum += buffer[i];
