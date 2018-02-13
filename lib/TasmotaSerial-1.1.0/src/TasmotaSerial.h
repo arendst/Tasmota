@@ -20,24 +20,36 @@
 #ifndef TasmotaSerial_h
 #define TasmotaSerial_h
 /*********************************************************************************************\
- * TasmotaSerial supports 9600 baud with fixed buffer size of 20 bytes using optional no iram
+ * TasmotaSerial supports up to 9600 baud with fixed buffer size of 64 bytes using optional no iram
  *
  * Based on EspSoftwareSerial v3.3.1 by Peter Lerup (https://github.com/plerup/espsoftwareserial)
 \*********************************************************************************************/
 
-#define TM_SERIAL_BAUDRATE           9600
-#define TM_SERIAL_BUFFER_SIZE        20
-//#define TM_SERIAL_USE_IRAM                  // Enable to use iram (+368 bytes)
+#define TM_SERIAL_BAUDRATE           9600   // Max supported baudrate
+#define TM_SERIAL_BUFFER_SIZE        64     // Receive buffer size
 
-class TasmotaSerial {
+#include <core_version.h>                   // Arduino_Esp8266 version information (ARDUINO_ESP8266_RELEASE and ARDUINO_ESP8266_RELEASE_2_3_0)
+#ifndef ARDUINO_ESP8266_RELEASE_2_3_0
+  #define TM_SERIAL_USE_IRAM                // Enable to use iram (+368 bytes)
+#endif
+
+#include <Stream.h>
+
+class TasmotaSerial : public Stream {
   public:
     TasmotaSerial(int receive_pin, int transmit_pin);
+    bool begin(long speed);
     bool begin();
-    size_t write(const uint8_t *buffer, size_t size = 1);
-    int read();
-    int available();
+    int peek();
+
+    virtual size_t write(uint8_t byte);
+    virtual int read();
+    virtual int available();
+    virtual void flush();
 
     void rxRead();
+
+    using Print::write;
 
   private:
     bool isValidGPIOpin(int pin);
