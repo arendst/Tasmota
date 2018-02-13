@@ -25,14 +25,28 @@
 #define EMULATION              EMUL_NONE    // [Emulation] Select Belkin WeMo (single relay/light) or Hue Bridge emulation (multi relay/light) (EMUL_NONE, EMUL_WEMO or EMUL_HUE)
 #endif
 
-#ifndef USE_DISPLAY                         // Add Display Support for up to eigth Matrices
+#ifndef MTX_ADDRESS1                        // Add Display Support for up to eigth Matrices
 #define MTX_ADDRESS1           0
+#endif
+#ifndef MTX_ADDRESS2
 #define MTX_ADDRESS2           0
+#endif
+#ifndef MTX_ADDRESS3
 #define MTX_ADDRESS3           0
+#endif
+#ifndef MTX_ADDRESS4
 #define MTX_ADDRESS4           0
+#endif
+#ifndef MTX_ADDRESS5
 #define MTX_ADDRESS5           0
+#endif
+#ifndef MTX_ADDRESS6
 #define MTX_ADDRESS6           0
+#endif
+#ifndef MTX_ADDRESS7
 #define MTX_ADDRESS7           0
+#endif
+#ifndef MTX_ADDRESS8
 #define MTX_ADDRESS8           0
 #endif
 
@@ -109,7 +123,7 @@ void RtcSettingsDump()
 
   for (row = 0; row < maxrow; row++) {
     idx = row * CFG_COLS;
-    snprintf_P(log_data, sizeof(log_data), PSTR("%04X:"), idx);
+    snprintf_P(log_data, sizeof(log_data), PSTR("%03X:"), idx);
     for (col = 0; col < CFG_COLS; col++) {
       if (!(col%4)) {
         snprintf_P(log_data, sizeof(log_data), PSTR("%s "), log_data);
@@ -364,7 +378,7 @@ void SettingsDump(char* parms)
 
   for (row = srow; row < maxrow; row++) {
     idx = row * CFG_COLS;
-    snprintf_P(log_data, sizeof(log_data), PSTR("%04X:"), idx);
+    snprintf_P(log_data, sizeof(log_data), PSTR("%03X:"), idx);
     for (col = 0; col < CFG_COLS; col++) {
       if (!(col%4)) {
         snprintf_P(log_data, sizeof(log_data), PSTR("%s "), log_data);
@@ -416,6 +430,7 @@ void SettingsDefaultSet2()
   Settings.flag.mqtt_power_retain = MQTT_POWER_RETAIN;
   Settings.flag.mqtt_button_retain = MQTT_BUTTON_RETAIN;
   Settings.flag.mqtt_switch_retain = MQTT_SWITCH_RETAIN;
+  Settings.flag.hass_discovery = HOME_ASSISTANT_DISCOVERY_ENABLE;
 
   Settings.flag2.emulation = EMULATION;
 
@@ -463,9 +478,9 @@ void SettingsDefaultSet2()
 //    Settings.domoticz_switch_idx[i] = 0;
   }
 
-  Settings.hlw_power_calibration = HLW_PREF_PULSE;
-  Settings.hlw_voltage_calibration = HLW_UREF_PULSE;
-  Settings.hlw_current_calibration = HLW_IREF_PULSE;
+  Settings.energy_power_calibration = HLW_PREF_PULSE;
+  Settings.energy_voltage_calibration = HLW_UREF_PULSE;
+  Settings.energy_current_calibration = HLW_IREF_PULSE;
 //  Settings.energy_kWhtoday = 0;
 //  Settings.energy_kWhyesterday = 0;
 //  Settings.energy_kWhdoy = 0;
@@ -830,13 +845,17 @@ void SettingsDelta()
     if (Settings.version < 0x05090102) {
       Settings.flag2.data = Settings.flag.data;
       Settings.flag2.data &= 0xFFE80000;
-      Settings.flag2.voltage_resolution = Settings.flag.voltage_resolution;
+      Settings.flag2.voltage_resolution = Settings.flag.not_power_linked;
       Settings.flag2.current_resolution = 3;
       Settings.ina219_mode = 0;
     }
     if (Settings.version < 0x050A0009) {
       SettingsDefaultSet_5_10_1();
     }
+    if (Settings.version < 0x050B0107) {
+      Settings.flag.not_power_linked = 0;
+    }
+
 
     Settings.version = VERSION;
     SettingsSave(1);
