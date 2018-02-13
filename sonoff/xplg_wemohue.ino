@@ -24,6 +24,7 @@
 
 #define UDP_BUFFER_SIZE         200      // Max UDP buffer size needed for M-SEARCH message
 #define UDP_MSEARCH_SEND_DELAY  1500     // Delay in ms before M-Search response is send
+#define RESPONSE_SIZE           1800     // HTTP response size, enough for worstcase HueGlobalConfig with MAX_FRIENDLYNAMES=4 and length of friendlyname=33
 
 #include <Ticker.h>
 Ticker TickerMSearch;
@@ -547,38 +548,39 @@ int HueConfigResponse(char *output, int len)
 
 void HueConfig(String *path)
 {
-  char* cresponse = mqtt_data;
-  HueConfigResponse(cresponse, sizeof(mqtt_data));
+  char cresponse[RESPONSE_SIZE];
+  HueConfigResponse(cresponse, sizeof(cresponse));
   WebServer->send(200, FPSTR(HDR_CTYPE_JSON), cresponse);
 }
 
 void HueGlobalConfig(String *path)
 {
   //String response;
-  char* cresponse = mqtt_data;
+  char cresponse[RESPONSE_SIZE];
   uint8_t maxhue = (devices_present > MAX_FRIENDLYNAMES) ? MAX_FRIENDLYNAMES : devices_present;
 
   char *cpath = (char*)path->c_str();
 
   cpath++;                                           // skip leading / to get <id>
-  int tmpiter = 0;
-  tmpiter += snprintf_P(cresponse+tmpiter, sizeof(mqtt_data)-tmpiter, PSTR("{\"lights\":{"));
+  char* wp = cresponse;
+  char* end = &cresponse[RESPONSE_SIZE];
+  if (wp < end) wp += snprintf_P(wp, end-wp, PSTR("{\"lights\":{"));
   for (uint8_t i = 1; i <= maxhue; i++) {
-    tmpiter += snprintf_P(cresponse+tmpiter, sizeof(mqtt_data)-tmpiter, PSTR("\"%d\":{\"state\":"), i);
+    if (wp < end) wp += snprintf_P(wp, end-wp, PSTR("\"%d\":{\"state\":"), i);
     uint16_t hue=0; uint8_t sat=0; uint8_t bri=0;
     if (light_type) {
       LightGetHsbFixedPoint(&hue, &sat, &bri);
     }
-    tmpiter += snprintf_P(cresponse+tmpiter, sizeof(mqtt_data)-tmpiter, HueLightStatus_JSON, (power & (1 << (i-1))) ? "true" : "false", hue, sat, bri);
-    tmpiter += snprintf_P(cresponse+tmpiter, sizeof(mqtt_data)-tmpiter, HUE_LIGHTS_STATUS_JSON, Settings.friendlyname[i-1], GetHueDeviceId(i).c_str());
+    if (wp < end) wp += snprintf_P(wp, end-wp, HueLightStatus_JSON, (power & (1 << (i-1))) ? "true" : "false", hue, sat, bri);
+    if (wp < end) wp += snprintf_P(wp, end-wp, HUE_LIGHTS_STATUS_JSON, Settings.friendlyname[i-1], GetHueDeviceId(i).c_str());
     if (i < maxhue) {
-      tmpiter += snprintf_P(cresponse+tmpiter, sizeof(mqtt_data)-tmpiter, ",");
+      if (wp < end) wp += snprintf_P(wp, end-wp, PSTR(","));
     }
   }
-  tmpiter += snprintf_P(cresponse+tmpiter, sizeof(mqtt_data)-tmpiter, PSTR("},\"groups\":{},\"schedules\":{},\"config\":"));
-  tmpiter += HueConfigResponse(cresponse+tmpiter, sizeof(mqtt_data)-tmpiter);
+  if (wp < end) wp += snprintf_P(wp, end-wp, PSTR("},\"groups\":{},\"schedules\":{},\"config\":"));
+  if (wp < end) wp += HueConfigResponse(wp, end-wp);
 
-  tmpiter += snprintf_P(cresponse+tmpiter, sizeof(mqtt_data)-tmpiter, "}");
+  if (wp < end) wp += snprintf_P(wp, end-wp, PSTR("}"));
   WebServer->send(200, FPSTR(HDR_CTYPE_JSON), cresponse);
 }
 
@@ -596,10 +598,10 @@ static int endsWith(const char *str, const char *suffix)
     if (!str || !suffix)
         return 0;
     size_t lenstr = strlen(str);
-    size_t lensuffix = strlen(suffix);
+    size_t lensuffix = strlen_P(suffix);
     if (lensuffix >  lenstr)
         return 0;
-    return strncmp(str + lenstr - lensuffix, suffix, lensuffix) == 0;
+    return strncmp_P(str + lenstr - lensuffix, suffix, lensuffix) == 0;
 }
 
 void HueLights(String *path)
@@ -608,7 +610,7 @@ void HueLights(String *path)
  * http://sonoff/api/username/lights/1/state?1={"on":true,"hue":56100,"sat":254,"bri":254,"alert":"none","transitiontime":40}
  */
   //String response;
-  char* cresponse = mqtt_data;
+  char cresponse[RESPONSE_SIZE];
   uint8_t device = 1;
   uint16_t tmp = 0;
   int16_t pos = 0;
@@ -625,36 +627,37 @@ void HueLights(String *path)
 
   char *cpath = (char*)path->c_str();
 
-  cpath = strstr(cpath, "/lights");
-  if (endsWith(cpath, "/lights")) {                   // Got /lights
-    int tmpiter = 0;
-    tmpiter += snprintf_P(cresponse+tmpiter, sizeof(mqtt_data)-tmpiter, "{\"");
+  cpath = strstr_P(cpath, PSTR("/lights"));
+  if (endsWith(cpath, PSTR("/lights"))) {                   // Got /lights
+    char* wp = cresponse;
+    char* end = &cresponse[RESPONSE_SIZE];
+    if (wp < end) wp += snprintf_P(wp, end-wp, PSTR("{\""));
     for (uint8_t i = 1; i <= maxhue; i++) {
-      tmpiter += snprintf_P(cresponse+tmpiter, sizeof(mqtt_data)-tmpiter, PSTR("%d\":{\"state\":"), i);
+      if (wp < end) wp += snprintf_P(wp, end-wp, PSTR("%d\":{\"state\":"), i);
       uint16_t hue=0; uint8_t sat=0; uint8_t bri=0;
       if (light_type) {
         LightGetHsbFixedPoint(&hue, &sat, &bri);
       }
-      tmpiter += snprintf_P(cresponse+tmpiter, sizeof(mqtt_data)-tmpiter, HueLightStatus_JSON, (power & (1 << (i-1))) ? "true" : "false", hue, sat, bri);
-      tmpiter += snprintf_P(cresponse+tmpiter, sizeof(mqtt_data)-tmpiter, HUE_LIGHTS_STATUS_JSON, Settings.friendlyname[i-1], GetHueDeviceId(i).c_str());
+      if (wp < end) wp += snprintf_P(wp, end-wp, HueLightStatus_JSON, (power & (1 << (i-1))) ? "true" : "false", hue, sat, bri);
+      if (wp < end) wp += snprintf_P(wp, end-wp, HUE_LIGHTS_STATUS_JSON, Settings.friendlyname[i-1], GetHueDeviceId(i).c_str());
       if (i < maxhue) {
-        tmpiter += snprintf_P(cresponse+tmpiter, sizeof(mqtt_data)-tmpiter, ",\"");
+        if (wp < end) wp += snprintf_P(wp, end-wp, PSTR(",\""));
       }
 
     }
-    strncat(cresponse, "}", sizeof(mqtt_data));
+    if (wp < end) wp += snprintf_P(wp, end-wp, PSTR("}"));
     WebServer->send(200, FPSTR(HDR_CTYPE_JSON), cresponse);
   }
-  else if (endsWith(cpath, "/state")) {               // Got ID/state
-    int tmpiter = 0;
+  else if (endsWith(cpath, PSTR("/state"))) {               // Got ID/state
+    char* wp = cresponse;
+    char* end = &cresponse[RESPONSE_SIZE];
     cpath += 8;
-    device = atoi(cpath); //Not necessary to trime "/state", atoi will ignore trailing garbage
+    device = atoi(cpath); //Not necessary to trim "/state", atoi will ignore trailing garbage
     if ((device < 1) || (device > maxhue)) {
       device = 1;
     }
     if (1 == WebServer->args()) {
-      //response = "[";
-      tmpiter += snprintf_P(cresponse+tmpiter, sizeof(mqtt_data)-tmpiter, "[");
+      if (wp < end) wp += snprintf_P(wp, end-wp, PSTR("["));
 
       StaticJsonBuffer<400> jsonBuffer;
       JsonObject &hue_json = jsonBuffer.parseObject(WebServer->arg(0));
@@ -673,7 +676,7 @@ void HueLights(String *path)
           default    : re = (power & (1 << (device-1))) ? "true" : "false";
                        break;
         }
-        tmpiter += snprintf_P(cresponse+tmpiter, sizeof(mqtt_data)-tmpiter, HUE_LIGHT_RESPONSE_JSON, device, "on", re);
+        if (wp < end) wp += snprintf_P(wp, end-wp, HUE_LIGHT_RESPONSE_JSON, device, "on", re);
         resp = true;
       }
 
@@ -685,9 +688,9 @@ void HueLights(String *path)
         tmp = hue_json["bri"];
         bri = (float)tmp / 254.0f;
         if (resp) {
-          tmpiter += snprintf_P(cresponse+tmpiter, sizeof(mqtt_data)-tmpiter, ",");
+          if (wp < end) wp += snprintf_P(wp, end-wp, PSTR(","));
         }
-        tmpiter += snprintf_P(cresponse+tmpiter, sizeof(mqtt_data)-tmpiter, HUE_LIGHT_RESPONSE_JSON, device, "bri", String(tmp).c_str());
+        if (wp < end) wp += snprintf_P(wp, end-wp, HUE_LIGHT_RESPONSE_JSON, device, "bri", String(tmp).c_str());
         resp = true;
         change = true;
       }
@@ -695,9 +698,9 @@ void HueLights(String *path)
         tmp = hue_json["hue"];
         hue = (float)tmp / 65535.0f;
         if (resp) {
-          tmpiter += snprintf_P(cresponse+tmpiter, sizeof(mqtt_data)-tmpiter, ",");
+          if (wp < end) wp += snprintf_P(wp, end-wp, PSTR(","));
         }
-        tmpiter += snprintf_P(cresponse+tmpiter, sizeof(mqtt_data)-tmpiter, HUE_LIGHT_RESPONSE_JSON, device, "bri", String(tmp).c_str());
+        if (wp < end) wp += snprintf_P(wp, end-wp, HUE_LIGHT_RESPONSE_JSON, device, "hue", String(tmp).c_str());
         resp = true;
         change = true;
       }
@@ -705,26 +708,26 @@ void HueLights(String *path)
         tmp = hue_json["sat"];
         sat = (float)tmp / 254.0f;
         if (resp) {
-          tmpiter += snprintf_P(cresponse+tmpiter, sizeof(mqtt_data)-tmpiter, ",");
+          if (wp < end) wp += snprintf_P(wp, end-wp, PSTR(","));
         }
-        tmpiter += snprintf_P(cresponse+tmpiter, sizeof(mqtt_data)-tmpiter, HUE_LIGHT_RESPONSE_JSON, device, "sat", String(tmp).c_str());
+        if (wp < end) wp += snprintf_P(wp, end-wp, HUE_LIGHT_RESPONSE_JSON, device, "sat", String(tmp).c_str());
         change = true;
       }
       if (hue_json.containsKey("ct")) {              // Color temperature 153 (Cold) to 500 (Warm)
         ct = hue_json["ct"];
         if (resp) {
-          tmpiter += snprintf_P(cresponse+tmpiter, sizeof(mqtt_data)-tmpiter, ",");
+          if (wp < end) wp += snprintf_P(wp, end-wp, PSTR(","));
         }
-        tmpiter += snprintf_P(cresponse+tmpiter, sizeof(mqtt_data)-tmpiter, HUE_LIGHT_RESPONSE_JSON, device, "sat", String(tmp).c_str());
+        if (wp < end) wp += snprintf_P(wp, end-wp, HUE_LIGHT_RESPONSE_JSON, device, "ct", String(tmp).c_str());
         change = true;
       }
-      tmpiter += snprintf_P(cresponse+tmpiter, sizeof(mqtt_data)-tmpiter, "]");
+      if (wp < end) wp += snprintf_P(wp, end-wp, PSTR("]"));
       if (2 == strlen(cresponse)) {
-        snprintf_P(cresponse, sizeof(mqtt_data), HUE_ERROR_JSON);
+        if (wp < end) wp += snprintf_P(wp, end-wp, HUE_ERROR_JSON);
       }
     }
     else {
-      snprintf_P(cresponse, sizeof(mqtt_data), HUE_ERROR_JSON);
+      if (wp < end) wp += snprintf_P(wp, end-wp, HUE_ERROR_JSON);
     }
 
     // Do light commands
@@ -736,20 +739,21 @@ void HueLights(String *path)
     }
     if (changepower) ExecuteCommandPower(device, on);
   }
-  else if(strstr(cpath, "/lights/")) {          // Got /lights/ID
+  else if(strstr_P(cpath, PSTR("/lights/"))) {          // Got /lights/ID
     cpath+=8;                               // Remove /lights/
     device = atoi(cpath);
     if ((device < 1) || (device > maxhue)) {
       device = 1;
     }
-    int tmpiter = 0;
-    tmpiter += snprintf_P(cresponse+tmpiter, sizeof(mqtt_data)-tmpiter, PSTR("{\"state\":"));
+    char* wp = cresponse;
+    char* end = &cresponse[RESPONSE_SIZE];
+    if (wp < end) wp += snprintf_P(wp, end-wp, PSTR("{\"state\":"));
     uint16_t hue=0; uint8_t sat=0; uint8_t bri=0;
     if (light_type) {
       LightGetHsbFixedPoint(&hue, &sat, &bri);
     }
-    tmpiter += snprintf_P(cresponse+tmpiter, sizeof(mqtt_data)-tmpiter, HueLightStatus_JSON, (power & (1 << (device-1))) ? "true" : "false", hue,sat,bri);
-    tmpiter += snprintf_P(cresponse+tmpiter, sizeof(mqtt_data)-tmpiter, HUE_LIGHTS_STATUS_JSON, Settings.friendlyname[device-1], GetHueDeviceId(device).c_str());
+    if (wp < end) wp += snprintf_P(wp, end-wp, HueLightStatus_JSON, (power & (1 << (device-1))) ? "true" : "false", hue,sat,bri);
+    if (wp < end) wp += snprintf_P(wp, end-wp, HUE_LIGHTS_STATUS_JSON, Settings.friendlyname[device-1], GetHueDeviceId(device).c_str());
     WebServer->send(200, FPSTR(HDR_CTYPE_JSON), cresponse);
   }
   else {
@@ -762,24 +766,25 @@ void HueGroups(String *path)
 /*
  * http://sonoff/api/username/groups?1={"name":"Woonkamer","lights":[],"type":"Room","class":"Living room"})
  */
-  char* cresponse = (char*) "{}";
+  char cresponse[RESPONSE_SIZE];
+  sprintf(cresponse, "{}");
   uint8_t maxhue = (devices_present > MAX_FRIENDLYNAMES) ? MAX_FRIENDLYNAMES : devices_present;
   char *cpath = (char*)path->c_str();
 
-  if (endsWith(cpath, "/0")) {
-    int tmpiter = 0;
-    cresponse = mqtt_data;
+  if (endsWith(cpath, PSTR("/0"))) {
+    char* wp = cresponse;
+    char* end = &cresponse[RESPONSE_SIZE];
     String lights = F("\"1\"");
     for (uint8_t i = 2; i <= maxhue; i++) {
       lights += ",\"" + String(i) + "\"";
     }
-    tmpiter += snprintf_P(cresponse+tmpiter, sizeof(mqtt_data)-tmpiter, HUE_GROUP0_STATUS_JSON, lights.c_str());
+    if (wp < end) wp += snprintf_P(wp, end-wp, HUE_GROUP0_STATUS_JSON, lights.c_str());
     uint16_t hue=0; uint8_t sat=0; uint8_t bri=0;
     if (light_type) {
       LightGetHsbFixedPoint(&hue, &sat, &bri);
     }
-    tmpiter += snprintf_P(cresponse+tmpiter, sizeof(mqtt_data)-tmpiter, HueLightStatus_JSON, (power & (1 << (1-1))) ? "true" : "false", hue,sat,bri);
-    tmpiter += snprintf_P(cresponse+tmpiter, sizeof(mqtt_data)-tmpiter, PSTR("}"));
+    if (wp < end) wp += snprintf_P(wp, end-wp, HueLightStatus_JSON, (power & (1 << (1-1))) ? "true" : "false", hue,sat,bri);
+    if (wp < end) wp += snprintf_P(wp, end-wp, PSTR("}"));
   }
 
   WebServer->send(200, FPSTR(HDR_CTYPE_JSON), cresponse);
