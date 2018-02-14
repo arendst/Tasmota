@@ -16,7 +16,7 @@ lva.h - lva configuration overrides  for Sonoff-Tasmota
  *            - So I see no use in this but anyway, your on your own.
 \*****************************************************************************************************/
 
-#define LVA_DEBUG
+//#define LVA_DEBUG
 // Examples
 
 //не рабатает
@@ -135,7 +135,7 @@ lva.h - lva configuration overrides  for Sonoff-Tasmota
 
 
 #define LVA  // включить изменения LVA
-#define LVA_DEBUG // включить отладку LVA внимание быдлокод
+//#define LVA_DEBUG // включить отладку LVA внимание быдлокод
 
 // нехочет рабатать
 //#define USE_DS18x20_LEGACY  // включили
@@ -144,6 +144,7 @@ lva.h - lva configuration overrides  for Sonoff-Tasmota
 #define USE_ADS1115
 
 #define USE_MCP23017
+#define USE_PCA9685
 
 //#define USE_PCA9685
 

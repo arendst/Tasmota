@@ -1,6 +1,6 @@
 /*
-xsns_17mcp.ino  MCP23017 support driver
-version 0.1
+xsns_91mcp.ino  MCP23017 support driver
+version 0.1.1 updated debug
 
 
 
@@ -8,6 +8,12 @@ Switch MCP23017_out8	{ mqtt=">[fms:cmnd/boiler/sensor17:command:*:8?${command}],
 String MCP23017_in0 "[%d]"	{mqtt="<[fms:tele/boiler/SENSOR:state:JSONPATH($.MCP23017.in0)]"}
 String MCP23017_in1 "[%d]"	{mqtt="<[fms:tele/boiler/SENSOR:state:JSONPATH($.MCP23017.in1)]"}
 String MCP23017_in10 "[%d]"	 {mqtt="<[fms:tele/boiler/SENSOR:state:JSONPATH($.MCP23017.out10)]"}
+
+MQTT topic and value: "topic pin?Status"
+pin from 1 to 15
+status ON or "OFF"
+все что не  ON  интерпетируется как OFF
+"cmnd/boiler/sensor17 8?ON"
 
 не доделано:
 - только однин расширительн портов
@@ -314,8 +320,11 @@ bool CommandMCP23017() {
   if (XdrvMailbox.data_len) {
     char *value_command = strtok(XdrvMailbox.data, "?");
     value_command = strtok(NULL, "?");
-    Serial.println("value_command"+ String(value_command));
     uint8_t channal = (uint8_t) XdrvMailbox.payload;
+#ifdef LVA_DEBUG
+    Serial.println("channal: "+ String(channal));
+    Serial.println("value_command: "+ String(value_command));
+#endif
     if (mcp_pins_direct[d]&1<< channal) {
           if (!strcasecmp(value_command, "ON")){
             mcp0.digitalWrite(channal, HIGH);
@@ -365,7 +374,7 @@ boolean Xsns91(byte function) {
         MCP23017Init();
         break;
       case FUNC_COMMAND:
-        Serial.println("run Xsns17()");
+        //Serial.println("run Xsns17()");
         if (XSNS_91 == XdrvMailbox.index) {
             result = CommandMCP23017();
         }
