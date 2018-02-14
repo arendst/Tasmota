@@ -175,8 +175,9 @@
 
 #define USE_I2C                                   // I2C using library wire (+10k code, 0.2k mem) - Disable by //
 //  #define USE_GROVE_MGS                          // Add I2C code for Grove - Mutichanel Gas Sensor
-//  #define MGS_SENSOR_ADDR     0x04               // default Mutichanel Gas Sensor i2c addr 0x04
-  #define USE_SHT3X                              // Add I2C code for WeMos SHT30 Shield
+  #define MGS_SENSOR_ADDR     0x04               // default Mutichanel Gas Sensor i2c addr 0x04
+//  #define USE_SI1145                             // Add I2C code for seeed Sunlight Sensor  http://wiki.seeed.cc/Grove-Sunlight_Sensor/
+//  #define USE_SHT3X                              // Add I2C code for WeMos SHT30 Shield
   #define SHT3X_SENSOR_ADDR   0x45               // default WeMos SHT30 Shield i2c addr 0x45
 //  #define USE_BH1750                             // Add I2C code for BH1750 sensor
 //  #define USE_VEML6070                           // Add I2C code for VEML6070 sensor (+0.5k code)

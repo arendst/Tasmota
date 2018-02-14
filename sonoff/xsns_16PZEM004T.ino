@@ -39,7 +39,7 @@ IPAddress PZEM004T_ip(192, 168, 1, 1);
 PZEM004T * pzem = NULL;
 
 void search_and_init_display() {
-    byte address = 0x3C;
+    byte address = 0x3C; // Default SSD1306 i2c oled display address
     byte error;
 
     Wire.beginTransmission(address);
