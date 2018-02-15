@@ -27,6 +27,7 @@ WeMo Emu fixed (in Tasmota since 5.10.xx)
 
 Echo 2G Type2 discover fixed (in Tasmota since 5.10.xx)   
 - discovering with echo show still not working    
+- another try to fix show/sonos
 
 Other
 - StatusPRM.StartupDateTimeUtc added in JSON Response
