@@ -27,7 +27,7 @@
 
 #define VERSION                0x050C0002   // 5.12.0b
 
-#define MOD_VERSION_STRING         "modified-1.13.2"    // Would be great to have a macro that fills this from VERSION ...
+#define MOD_VERSION_STRING         "modified-1.14.2"    // Would be great to have a macro that fills this from VERSION ...
 
 // Location specific includes
 #include <core_version.h>                   // Arduino_Esp8266 version information (ARDUINO_ESP8266_RELEASE and ARDUINO_ESP8266_RELEASE_2_3_0)
