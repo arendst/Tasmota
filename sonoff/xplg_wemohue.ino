@@ -248,7 +248,7 @@ void PollUdp()
           }
           else if ((request.indexOf(F("upnp:rootdevice")) > 0) ||  // type2 Echo 2g (echo & echo plus)
                    (request.indexOf(F("ssdpsearch:all")) > 0) ||
-                   (request.indexOf(F("ssdp:discover")) > 0) ||
+                   (request.indexOf(F("ssdp:discover")) > 0) || //echo show
                    (request.indexOf(F("ssdp:all")) > 0)) {
             udp_response_mutex = true;
             TickerMSearch.attach_ms(UDP_MSEARCH_SEND_DELAY, WemoRespondToMSearch, 2);
@@ -258,7 +258,7 @@ void PollUdp()
                 ((request.indexOf(F("urn:schemas-upnp-org:device:basic:1")) > 0) ||
                  (request.indexOf(F("upnp:rootdevice")) > 0) ||
                  (request.indexOf(F("ssdpsearch:all")) > 0) ||
-                 (request.indexOf(F("ssdp:discover")) > 0) ||
+                 (request.indexOf(F("ssdp:discover")) > 0) || //echo show
                  (request.indexOf(F("ssdp:all")) > 0))) {
             udp_response_mutex = true;
             TickerMSearch.attach_ms(UDP_MSEARCH_SEND_DELAY, HueRespondToMSearch);
