@@ -90,7 +90,7 @@ void HAssDiscovery()
     is_light = ((i == devices_present) && (light_type));
 
     snprintf_P(sidx, sizeof(sidx), PSTR("_%d"), i);
-    snprintf_P(stopic, sizeof(stopic), PSTR(HOME_ASSISTANT_DISCOVERY_PREFIX "/%s/%s%s/config"), (is_light) ? "light" : "switch", Settings.mqtt_topic, (1 == devices_present) ? "" : sidx);
+    snprintf_P(stopic, sizeof(stopic), PSTR(HOME_ASSISTANT_DISCOVERY_PREFIX "/%s/%s%s/config"), (is_light) ? "light" : "switch", mqtt_topic, (1 == devices_present) ? "" : sidx);
 
     mqtt_data[0] = '\0';
     if (Settings.flag.hass_discovery) {
@@ -106,33 +106,33 @@ void HAssDiscovery()
         snprintf_P(name, sizeof(name), Settings.friendlyname[i -1]);
       }
       GetPowerDevice(value_template, i, sizeof(value_template));
-      GetTopic_P(command_topic, CMND, Settings.mqtt_topic, value_template);
-      GetTopic_P(state_topic, STAT, Settings.mqtt_topic, S_RSLT_RESULT);
-      GetTopic_P(availability_topic, TELE, Settings.mqtt_topic, S_LWT);
+      GetTopic_P(command_topic, CMND, mqtt_topic, value_template);
+      GetTopic_P(state_topic, STAT, mqtt_topic, S_RSLT_RESULT);
+      GetTopic_P(availability_topic, TELE, mqtt_topic, S_LWT);
       snprintf_P(mqtt_data, sizeof(mqtt_data), HASS_DISCOVER_SWITCH, name, command_topic, state_topic, value_template, Settings.state_text[0], Settings.state_text[1], availability_topic);
 
       if (is_light) {
         char brightness_command_topic[TOPSZ];
 
-        GetTopic_P(brightness_command_topic, CMND, Settings.mqtt_topic, D_CMND_DIMMER);
+        GetTopic_P(brightness_command_topic, CMND, mqtt_topic, D_CMND_DIMMER);
         snprintf_P(mqtt_data, sizeof(mqtt_data), HASS_DISCOVER_LIGHT_DIMMER, mqtt_data, brightness_command_topic, state_topic);
 
         if (light_subtype >= LST_RGB) {
           char rgb_command_topic[TOPSZ];
 
-          GetTopic_P(rgb_command_topic, CMND, Settings.mqtt_topic, D_CMND_COLOR);
+          GetTopic_P(rgb_command_topic, CMND, mqtt_topic, D_CMND_COLOR);
           snprintf_P(mqtt_data, sizeof(mqtt_data), HASS_DISCOVER_LIGHT_COLOR, mqtt_data, rgb_command_topic, state_topic);
 /*
           char effect_command_topic[TOPSZ];
 
-          GetTopic_P(effect_command_topic, CMND, Settings.mqtt_topic, D_CMND_SCHEME);
+          GetTopic_P(effect_command_topic, CMND, mqtt_topic, D_CMND_SCHEME);
           snprintf_P(mqtt_data, sizeof(mqtt_data), HASS_DISCOVER_LIGHT_SCHEME, mqtt_data, effect_command_topic, state_topic);
 */
         }
         if ((LST_COLDWARM == light_subtype) || (LST_RGBWC == light_subtype)) {
           char color_temp_command_topic[TOPSZ];
 
-          GetTopic_P(color_temp_command_topic, CMND, Settings.mqtt_topic, D_CMND_COLORTEMPERATURE);
+          GetTopic_P(color_temp_command_topic, CMND, mqtt_topic, D_CMND_COLORTEMPERATURE);
           snprintf_P(mqtt_data, sizeof(mqtt_data), HASS_DISCOVER_LIGHT_CT, mqtt_data, color_temp_command_topic, state_topic);
         }
       }
