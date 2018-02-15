@@ -1,4 +1,11 @@
-/* 5.12.0a
+/* 5.12.0b
+ * Add serial debug info
+ * Add optional usage of %d or %X suffices in MQTT client to append chipid (#1871)
+ * Add optional usage of %d or %X suffices in MQTT topic to append chipid (#1871)
+ * Add optional usage of %d or %04d in ota url to be replaced with chipid (#1871)
+ * Add user configurable serial GPIOs to MagicHome and Arilux modules (#1887)
+ *
+ * 5.12.0a
  * Change platformio option sonoff-ds18x20 to sonoff-xxl enabling ds18x20 and all other sensors in one image
  * Fix providing web page configuratin option for Friendly Name when no device (relay or light) is configured (#1850)
  * Change default paremeters in user_config.h to undefined for easy installation (#1851)
