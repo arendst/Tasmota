@@ -347,6 +347,7 @@ void StartWebserver(int type, IPAddress ipweb)
       WebServer->on("/up", HandleUpgradeFirmware);
       WebServer->on("/u1", HandleUpgradeFirmwareStart);  // OTA
       WebServer->on("/u2", HTTP_POST, HandleUploadDone, HandleUploadLoop);
+      WebServer->on("/u2", HTTP_OPTIONS, HandlePreflightRequest);
       WebServer->on("/cm", HandleHttpCommand);
       WebServer->on("/cs", HandleConsole);
       WebServer->on("/ax", HandleAjaxConsoleRefresh);
@@ -1415,6 +1416,14 @@ void HandleUploadLoop()
     }
   }
   delay(0);
+}
+
+void HandlePreflightRequest()
+{
+  WebServer->sendHeader(F("Access-Control-Allow-Origin"), F("*"));
+  WebServer->sendHeader(F("Access-Control-Allow-Methods"), F("GET, POST"));
+  WebServer->sendHeader(F("Access-Control-Allow-Headers"), F("authorization"));
+  WebServer->send(200, FPSTR(HDR_CTYPE_HTML), "");
 }
 
 void HandleHttpCommand()
