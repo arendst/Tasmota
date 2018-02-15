@@ -102,9 +102,13 @@ const char HTTP_HEAD_STYLE[] PROGMEM =
   "<div style='text-align:center;color:red;'><h3>" D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "</h3></div>"
 #endif
 #ifdef LANGUAGE_MODULE_NAME
-  "<div style='text-align:center;'><h3>" D_MODULE " {ha</h3><h2>{h}</h2></div>";
+"<div style='text-align:center;'><h3>" D_MODULE " {ha</h3><h2>{h}</h2></div>";
 #else
-  "<div style='text-align:center;'><h3>{ha " D_MODULE "</h3><h2>{h}</h2></div>";
+  #if MY_LANGUAGE == es-AR || MY_LANGUAGE == fr-FR || MY_LANGUAGE == it-IT
+    "<div style='text-align:center;'><h3>" D_MODULE " {ha</h3><h2>{h}</h2></div>";
+  #else
+    "<div style='text-align:center;'><h3>{ha " D_MODULE "</h3><h2>{h}</h2></div>";
+  #endif
 #endif
 const char HTTP_SCRIPT_CONSOL[] PROGMEM =
   "var sn=0;"                    // Scroll position
