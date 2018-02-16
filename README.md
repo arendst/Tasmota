@@ -62,7 +62,7 @@ The following devices are supported:
 - AriLux AL-LC01, AL-LC06 and AL-LC11 PWM LED controller
 - [Supla device - Espablo-inCan mod. for electrical Installation box](https://forum.supla.org/viewtopic.php?f=33&t=2188)
 - [Luani HVIO board](https://luani.de/projekte/esp8266-hvio/)
-- Wemos D1 mini and NodeMcu
+- Wemos D1 mini, NodeMcu and Ledunia
 
 ### License
 

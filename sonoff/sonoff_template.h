@@ -865,6 +865,22 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      0,
      GPIO_PWM4,        // GPIO15 RGBW LED White
      0, 0
+  }
+
+  { "Ledunia",         // Ledunia (ESP8266) - http://ledunia.de/
+     GPIO_USER,        // GPIO00 (D0)
+     GPIO_USER,        // GPIO01 (D7) Serial RXD
+     GPIO_USER,        // GPIO02 (D2)
+     GPIO_USER,        // GPIO03 (D8) Serial TXD
+     GPIO_USER,        // GPIO04 (D4) 4 x WS2812 Leds, (DOUT) Extents WS2812 string
+     GPIO_USER,        // GPIO05 (D5) Blue Led
+     0, 0, 0, 0, 0, 0, // Flash connection
+     GPIO_USER,        // GPIO12 (D12)
+     GPIO_USER,        // GPIO13 (D13)
+     GPIO_USER,        // GPIO14 (D14)
+     GPIO_USER,        // GPIO15 (D15)
+     GPIO_USER,        // GPIO16 (D16)
+     0                 // ADC0 Analog input (A0)
   },
 
 */

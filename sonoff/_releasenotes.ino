@@ -4,6 +4,9 @@
  * Add optional usage of %d or %X suffices in MQTT topic to append chipid (#1871)
  * Add optional usage of %d or %04d in ota url to be replaced with chipid (#1871)
  * Add user configurable serial GPIOs to MagicHome and Arilux modules (#1887)
+ * Add Russian language file (#1909)
+ * Add Webserver upload preflight request support (#1927)
+ * Add Home Assistant clear other device (#1931)
  *
  * 5.12.0a
  * Change platformio option sonoff-ds18x20 to sonoff-xxl enabling ds18x20 and all other sensors in one image
