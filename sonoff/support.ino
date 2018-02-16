@@ -578,10 +578,10 @@ void WifiBegin(uint8_t flag)
   if (Settings.ip_address[0]) {
     WiFi.config(Settings.ip_address[0], Settings.ip_address[1], Settings.ip_address[2], Settings.ip_address[3]);  // Set static IP
   }
-  WiFi.hostname(my_hostname);
+  WiFi.hostname(Settings.hostname);
   WiFi.begin(Settings.sta_ssid[Settings.sta_active], Settings.sta_pwd[Settings.sta_active]);
   snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_WIFI D_CONNECTING_TO_AP "%d %s " D_IN_MODE " 11%c " D_AS " %s..."),
-    Settings.sta_active +1, Settings.sta_ssid[Settings.sta_active], kWifiPhyMode[WiFi.getPhyMode() & 0x3], my_hostname);
+    Settings.sta_active +1, Settings.sta_ssid[Settings.sta_active], kWifiPhyMode[WiFi.getPhyMode() & 0x3], Settings.hostname);
   AddLog(LOG_LEVEL_INFO);
 }
 
@@ -705,7 +705,7 @@ void WifiCheck(uint8_t param)
 #endif  // BE_MINIMAL
 #ifdef USE_DISCOVERY
         if (!mdns_begun) {
-          mdns_begun = MDNS.begin(my_hostname);
+          mdns_begun = MDNS.begin(Settings.hostname);
           snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_MDNS "%s"), (mdns_begun) ? D_INITIALIZED : D_FAILED);
           AddLog(LOG_LEVEL_INFO);
         }
@@ -1374,7 +1374,7 @@ void Syslog()
     syslog_host_refresh = millis();
   }
   if (PortUdp.beginPacket(syslog_host_addr, Settings.syslog_port)) {
-    snprintf_P(syslog_preamble, sizeof(syslog_preamble), PSTR("%s ESP-"), my_hostname);
+    snprintf_P(syslog_preamble, sizeof(syslog_preamble), PSTR("%s ESP-"), Settings.hostname);
     memmove(log_data + strlen(syslog_preamble), log_data, sizeof(log_data) - strlen(syslog_preamble));
     log_data[sizeof(log_data) -1] = '\0';
     memcpy(log_data, syslog_preamble, strlen(syslog_preamble));

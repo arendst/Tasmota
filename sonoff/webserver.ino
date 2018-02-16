@@ -372,7 +372,7 @@ void StartWebserver(int type, IPAddress ipweb)
   }
   if (webserver_state != type) {
     snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_HTTP D_WEBSERVER_ACTIVE_ON " %s%s " D_WITH_IP_ADDRESS " %s"),
-      my_hostname, (mdns_begun) ? ".local" : "", ipweb.toString().c_str());
+      Settings.hostname, (mdns_begun) ? ".local" : "", ipweb.toString().c_str());
     AddLog(LOG_LEVEL_INFO);
   }
   if (type) {
@@ -403,7 +403,7 @@ void WifiManagerBegin()
   StopWebserver();
 
   DnsServer = new DNSServer();
-  WiFi.softAP(my_hostname);
+  WiFi.softAP(Settings.hostname);
   delay(500); // Without delay I've seen the IP address blank
   /* Setup the DNS server redirecting all the domains to the apIP */
   DnsServer->setErrorReplyCode(DNSReplyCode::NoError);
@@ -865,7 +865,7 @@ void HandleMqttConfiguration()
   page += FPSTR(HTTP_HEAD_STYLE);
   page += FPSTR(HTTP_FORM_MQTT);
   char str[sizeof(Settings.mqtt_client)];
-  page.replace(F("{m0"), GetMqttClient(str, MQTT_CLIENT_ID, sizeof(Settings.mqtt_client)));
+  page.replace(F("{m0"), AddSuffix(str, MQTT_CLIENT_ID, sizeof(Settings.mqtt_client)));
 //  page.replace(F("{m0"), str);
   page.replace(F("{m1"), Settings.mqtt_host);
   page.replace(F("{m2"), String(Settings.mqtt_port));
@@ -1603,7 +1603,7 @@ void HandleInformation()
   func += F("}1}2&nbsp;");  // Empty line
   func += F("}1" D_AP); func += String(Settings.sta_active +1);
     func += F(" " D_SSID " (" D_RSSI ")}2"); func += Settings.sta_ssid[Settings.sta_active]; func += F(" ("); func += WifiGetRssiAsQuality(WiFi.RSSI()); func += F("%)");
-  func += F("}1" D_HOSTNAME "}2"); func += my_hostname;
+  func += F("}1" D_HOSTNAME "}2"); func += Settings.hostname;
   if (static_cast<uint32_t>(WiFi.localIP()) != 0) {
     func += F("}1" D_IP_ADDRESS "}2"); func += WiFi.localIP().toString();
     func += F("}1" D_GATEWAY "}2"); func += IPAddress(Settings.ip_address[1]).toString();
@@ -1621,11 +1621,11 @@ void HandleInformation()
   if (Settings.flag.mqtt_enabled) {
     func += F("}1" D_MQTT_HOST "}2"); func += Settings.mqtt_host;
     func += F("}1" D_MQTT_PORT "}2"); func += String(Settings.mqtt_port);
-    func += F("}1" D_MQTT_CLIENT " &<br/>&nbsp;" D_FALLBACK_TOPIC "}2"); func += mqtt_client;
+    func += F("}1" D_MQTT_CLIENT " &<br/>&nbsp;" D_FALLBACK_TOPIC "}2"); func += Settings.mqtt_client;
     func += F("}1" D_MQTT_USER "}2"); func += Settings.mqtt_user;
     func += F("}1" D_MQTT_TOPIC "}2"); func += Settings.mqtt_topic;
     func += F("}1" D_MQTT_GROUP_TOPIC "}2"); func += Settings.mqtt_grptopic;
-    GetTopic_P(stopic, CMND, mqtt_topic, "");
+    GetTopic_P(stopic, CMND, Settings.mqtt_topic, "");
     func += F("}1" D_MQTT_FULL_TOPIC "}2"); func += stopic;
 
   } else {
