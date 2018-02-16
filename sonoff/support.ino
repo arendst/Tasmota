@@ -992,6 +992,7 @@ uint32_t daylight_saving_time = 0;
 uint32_t standard_time = 0;
 uint32_t ntp_time = 0;
 uint32_t midnight = 1451602800;
+uint32_t booted_time = 0;
 uint8_t  midnight_now = 0;
 uint8_t  ntp_sync_minute = 0;
 
@@ -1061,6 +1062,24 @@ String GetUptime()
   // "128 14:35:44" - OpenVMS
   // "128T14:35:44" - Tasmota
   snprintf_P(dt, sizeof(dt), PSTR("%d" D_DATE_TIME_SEPARATOR "%02d" D_HOUR_MINUTE_SEPARATOR "%02d" D_MINUTE_SECOND_SEPARATOR "%02d"), ut.days, ut.hour, ut.minute, ut.second);
+  return String(dt);
+}
+
+String GetStartupDateTimeUtc()
+{
+  char dt[21];
+
+  if(booted_time == 0){
+    return "";
+  }
+
+  TIME_T tmpTime;
+  BreakTime(booted_time, tmpTime);
+  tmpTime.year += 1970;
+
+  snprintf_P(dt, sizeof(dt), PSTR("%04d-%02d-%02d %02d:%02d:%02d"), //always use iso format
+    tmpTime.year, tmpTime.month, tmpTime.day_of_month, tmpTime.hour, tmpTime.minute, tmpTime.second);
+
   return String(dt);
 }
 
@@ -1227,6 +1246,9 @@ void RtcSecond()
     ntp_time = sntp_get_current_timestamp();
     if (ntp_time) {
       utc_time = ntp_time;
+      if(booted_time == 0){
+        booted_time = utc_time; //save first ntp time as booted time
+      }
       ntp_sync_minute = 60;  // Sync so block further requests
       BreakTime(utc_time, tmpTime);
       RtcTime.year = tmpTime.year + 1970;
