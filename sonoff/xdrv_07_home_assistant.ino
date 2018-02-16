@@ -89,10 +89,14 @@ void HAssDiscovery()
   for (int i = 1; i <= devices_present; i++) {
     is_light = ((i == devices_present) && (light_type));
 
+    mqtt_data[0] = '\0';
+
     snprintf_P(sidx, sizeof(sidx), PSTR("_%d"), i);
+    // Clear "other" topic first in case the device has been reconfigured
+    snprintf_P(stopic, sizeof(stopic), PSTR(HOME_ASSISTANT_DISCOVERY_PREFIX "/%s/%s%s/config"), (is_light) ? "switch" : "light", mqtt_topic, (1 == devices_present) ? "" : sidx);
+    MqttPublish(stopic, true);
     snprintf_P(stopic, sizeof(stopic), PSTR(HOME_ASSISTANT_DISCOVERY_PREFIX "/%s/%s%s/config"), (is_light) ? "light" : "switch", mqtt_topic, (1 == devices_present) ? "" : sidx);
 
-    mqtt_data[0] = '\0';
     if (Settings.flag.hass_discovery) {
       char name[33];
       char value_template[33];
