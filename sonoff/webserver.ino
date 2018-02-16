@@ -354,6 +354,7 @@ void StartWebserver(int type, IPAddress ipweb)
       WebServer->on("/up", HandleUpgradeFirmware);
       WebServer->on("/u1", HandleUpgradeFirmwareStart);  // OTA
       WebServer->on("/u2", HTTP_POST, HandleUploadDone, HandleUploadLoop);
+      WebServer->on("/u2", HTTP_OPTIONS, HandlePreflightRequest);
       WebServer->on("/cm", HandleHttpCommand);
       WebServer->on("/cs", HandleConsole);
       WebServer->on("/ax", HandleAjaxConsoleRefresh);
@@ -873,7 +874,6 @@ void HandleMqttConfiguration()
   page += FPSTR(HTTP_FORM_MQTT);
   char str[sizeof(Settings.mqtt_client)];
   page.replace(F("{m0"), GetMqttClient(str, MQTT_CLIENT_ID, sizeof(Settings.mqtt_client)));
-//  page.replace(F("{m0"), str);
   page.replace(F("{m1"), Settings.mqtt_host);
   page.replace(F("{m2"), String(Settings.mqtt_port));
   page.replace(F("{m3"), Settings.mqtt_client);
@@ -1423,6 +1423,14 @@ void HandleUploadLoop()
     }
   }
   delay(0);
+}
+
+void HandlePreflightRequest()
+{
+  WebServer->sendHeader(F("Access-Control-Allow-Origin"), F("*"));
+  WebServer->sendHeader(F("Access-Control-Allow-Methods"), F("GET, POST"));
+  WebServer->sendHeader(F("Access-Control-Allow-Headers"), F("authorization"));
+  WebServer->send(200, FPSTR(HDR_CTYPE_HTML), "");
 }
 
 void HandleHttpCommand()
