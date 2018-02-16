@@ -1287,9 +1287,6 @@ void RtcSecond()
     midnight_now = 1;
   }
   RtcTime.year += 1970;
-
-
-
 }
 
 void RtcInit()
@@ -1302,11 +1299,7 @@ void RtcInit()
   sntp_init();
   utc_time = 0;
   BreakTime(utc_time, RtcTime);
-
-
-
   TickerRtc.attach(1, RtcSecond);
-
 }
 
 #ifndef USE_ADC_VCC
