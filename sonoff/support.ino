@@ -1088,24 +1088,6 @@ String GetUptime()
   return String(dt);
 }
 
-String GetStartupDateTimeUtc()
-{
-  char dt[21];
-
-  if(booted_time == 0){
-    return "";
-  }
-
-  TIME_T tmpTime;
-  BreakTime(booted_time, tmpTime);
-  tmpTime.year += 1970;
-
-  snprintf_P(dt, sizeof(dt), PSTR("%04d-%02d-%02d %02d:%02d:%02d"), //always use iso format
-    tmpTime.year, tmpTime.month, tmpTime.day_of_month, tmpTime.hour, tmpTime.minute, tmpTime.second);
-
-  return String(dt);
-}
-
 void BreakTime(uint32_t time_input, TIME_T &tm)
 {
 // break the given time_input into time components
@@ -1269,9 +1251,6 @@ void RtcSecond()
     ntp_time = sntp_get_current_timestamp();
     if (ntp_time) {
       utc_time = ntp_time;
-      if(booted_time == 0){
-        booted_time = utc_time; //save first ntp time as booted time
-      }
       ntp_sync_minute = 60;  // Sync so block further requests
       if (restart_time == 0) {
         restart_time = utc_time - uptime;  // save first ntp time as restart time
@@ -1313,9 +1292,6 @@ void RtcSecond()
     midnight_now = 1;
   }
   RtcTime.year += 1970;
-
-
-
 }
 
 void RtcInit()
@@ -1328,11 +1304,7 @@ void RtcInit()
   sntp_init();
   utc_time = 0;
   BreakTime(utc_time, RtcTime);
-
-
-
   TickerRtc.attach(1, RtcSecond);
-
 }
 
 #ifndef USE_ADC_VCC
