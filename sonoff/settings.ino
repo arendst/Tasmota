@@ -434,9 +434,12 @@ void SettingsDefaultSet2()
   //Settings.flag.mqtt_response = 0;
   Settings.flag.mqtt_power_retain = MQTT_POWER_RETAIN;
   Settings.flag.mqtt_button_retain = MQTT_BUTTON_RETAIN;
-  Settings.flag.mqtt_switch_retain = MQTT_SWITCH_RETAIN;
+  Settings.flag.mqtt_switch_retain = MQTT_SWITCH_RETAIN; 
+#ifdef HOME_ASSISTANT_DISCOVERY_ENABLE
   Settings.flag.hass_discovery = HOME_ASSISTANT_DISCOVERY_ENABLE;
-
+#else
+  Settings.flag.hass_discovery = 0;
+#endif
   Settings.flag2.emulation = EMULATION;
 
   Settings.save_data = SAVE_DATA;
