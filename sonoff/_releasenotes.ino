@@ -7,6 +7,8 @@
  * Add Russian language file (#1909)
  * Add Webserver upload preflight request support (#1927)
  * Add Home Assistant clear other device (#1931)
+ * Add Restart time to Status 1 (#1938)
+ * Change Sonoff SC JSON format (#1939)
  *
  * 5.12.0a
  * Change platformio option sonoff-ds18x20 to sonoff-xxl enabling ds18x20 and all other sensors in one image
