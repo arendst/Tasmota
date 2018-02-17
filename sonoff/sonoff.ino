@@ -25,9 +25,9 @@
     - Select IDE Tools - Flash Size: "1M (no SPIFFS)"
   ====================================================*/
 
-#define VERSION                0x050C0002   // 5.12.0b
+#define VERSION              0x050C0002   // 5.12.0b
 
-#define MOD_VERSION_STRING         "modified-1.15.2"    // Would be great to have a macro that fills this from VERSION ...
+#define MOD_VERSION_STRING  "mod-1.15.2"    // Would be great to have a macro that fills this from VERSION ...
 
 // Location specific includes
 #include <core_version.h>                   // Arduino_Esp8266 version information (ARDUINO_ESP8266_RELEASE and ARDUINO_ESP8266_RELEASE_2_3_0)
@@ -2713,6 +2713,9 @@ void setup()
     my_version[idx] = 96 + (VERSION & 0x1f);
     my_version[idx +1] = 0;
   }
+
+  snprintf_P(my_version, sizeof(my_version), PSTR("%s-" MOD_VERSION_STRING), my_version);
+
 #ifdef BE_MINIMAL
   snprintf_P(my_version, sizeof(my_version), PSTR("%s-" D_JSON_MINIMAL), my_version);
 #endif  // BE_MINIMAL
