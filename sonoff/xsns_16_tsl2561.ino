@@ -17,9 +17,6 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <Arduino.h>
-#include "config.h"
-
 #ifdef USE_I2C
 #ifdef USE_TSL2561
 /*********************************************************************************************\
