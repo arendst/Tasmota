@@ -1,7 +1,7 @@
 ## Sonoff-Tasmota MODIFIED
 In this repo i will share some mods or fixes which did not get it into the [Sonoff-Tasmota Git from arendst](https://github.com/arendst/Sonoff-Tasmota/).
 
-The target group are home users which just want to use tasmota with their alexa and dont need every single device or a multi firmware.
+The target group of my mod are users which just want to use tasmota with their alexa and dont need every single device or a multi firmware.
 
 Ill try to hold it up-to-date with the orginal tasmota as much as i can.
 
@@ -13,21 +13,25 @@ Use [SonOTA Exe](https://github.com/mirko/SonOTA/releases) for first flash of yo
 
 ### Mods
 
-Default all sensors are disabled and MQTT Disabled, too.   
-This is for better responding with Alexa.   
-Default WIFI Setup is WIFI_MANAGER instead of WPS. I suggest to enter your wifi credentials in the user_config and change it to WIFI_RETRY to be sure your sonoff is connection back if your wifi fails.   
+- Default all sensors are disabled and MQTT Disabled, too.   
+- Sleep is set to default 150 insted of 0 for energy saving.
+- Default WIFI Setup is WIFI_MANAGER instead of WPS.
+   - I suggest to enter your wifi credentials in the user_config and change it to WIFI_RETRY to be sure your sonoff is connected back if your wifi fails.
+   - also fill both AP with same credentials for faster reconnect.  
+
 You can always enable what you need in the user_config.h   
+
 
 Web Interface   
 - more width for desktop   
 - pointer cursor (in Tasmota since 5.12.0)   
 - translated current status (on/off)   
 
-WeMo Emu fixed (in Tasmota since 5.10.xx)   
+- WeMo Emu fixed (in Tasmota since 5.10.xx)   
 
-Echo 2G Type2 discover fixed (in Tasmota since 5.10.xx)   
-- discovering with echo show still not working    
-- another try to fix show/sonos
+- Echo 2G Type2 discover fixed (in Tasmota since 5.10.xx)   
+   - discovering with echo show still not working    
+   - another try to fix show/sonos
 
 Other
 - StatusPRM.StartupDateTimeUtc added in JSON Response (in Tasmota since 5.12.0b)

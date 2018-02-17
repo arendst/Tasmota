@@ -1,4 +1,4 @@
-set version=5.12.0a-mod-1.15.1
+set version=5.12.0b-mod-1.15.2
 
 mkdir %version%
 
@@ -12,3 +12,4 @@ copy ..\.pioenvs\sonoff-IT\firmware.bin %version%\IT-firmware-%version%.bin
 copy ..\.pioenvs\sonoff-minimal\firmware.bin %version%\MINIMAL-firmware-%version%.bin
 copy ..\.pioenvs\sonoff-NL\firmware.bin %version%\NL-firmware-%version%.bin
 copy ..\.pioenvs\sonoff-PL\firmware.bin %version%\PL-firmware-%version%.bin
+copy ..\.pioenvs\sonoff-RU\firmware.bin %version%\RU-firmware-%version%.bin
