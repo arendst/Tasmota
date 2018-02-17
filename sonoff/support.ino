@@ -1027,16 +1027,12 @@ String GetBuildDateAndTime()
 
 String GetDateAndTime(byte time_type)
 {
-  /* 0 - Local Date and Time
-     1 - UTC Date and Time
-     2 - UTC Restart Date and Time
-     3 - Uptime
-  */
+  // enum GetDateAndTimeOptions { DT_LOCAL, DT_UTC, DT_RESTART, DT_UPTIME };
   // "2017-03-07T11:08:02" - ISO8601:2004
   char dt[21];
   TIME_T tmpTime;
 
-  if (3 == time_type) {
+  if (DT_UPTIME == time_type) {
     if (restart_time) {
       BreakTime(utc_time - restart_time, tmpTime);
     } else {
@@ -1050,11 +1046,11 @@ String GetDateAndTime(byte time_type)
       tmpTime.days, tmpTime.hour, tmpTime.minute, tmpTime.second);
   } else {
     switch (time_type) {
-      case 1:
+      case DT_UTC:
         BreakTime(utc_time, tmpTime);
         tmpTime.year += 1970;
         break;
-      case 2:
+      case DT_RESTART:
         if (restart_time == 0) {
           return "";
         }
