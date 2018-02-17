@@ -30,7 +30,7 @@ Echo 2G Type2 discover fixed (in Tasmota since 5.10.xx)
 - another try to fix show/sonos
 
 Other
-- StatusPRM.StartupDateTimeUtc added in JSON Response
+- StatusPRM.StartupDateTimeUtc added in JSON Response (in Tasmota since 5.12.0b)
    - saves the first NTP Time as StartUp DateTime to calculate correct Uptime by other Endpoints like [SonWEB](https://github.com/reloxx13/SonWEB)
    - Fix for [#1842](https://github.com/arendst/Sonoff-Tasmota/issues/1842)
 - fix degree symbol
