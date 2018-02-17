@@ -992,6 +992,7 @@ uint32_t daylight_saving_time = 0;
 uint32_t standard_time = 0;
 uint32_t ntp_time = 0;
 uint32_t midnight = 1451602800;
+uint32_t restart_time = 0;
 uint8_t  midnight_now = 0;
 uint8_t  ntp_sync_minute = 0;
 
@@ -1024,27 +1025,44 @@ String GetBuildDateAndTime()
   return String(bdt);
 }
 
-String GetDateAndTime()
+String GetDateAndTime(byte time_type)
 {
+  // enum GetDateAndTimeOptions { DT_LOCAL, DT_UTC, DT_RESTART, DT_UPTIME };
   // "2017-03-07T11:08:02" - ISO8601:2004
   char dt[21];
-
-  snprintf_P(dt, sizeof(dt), PSTR("%04d" D_YEAR_MONTH_SEPARATOR "%02d" D_MONTH_DAY_SEPARATOR "%02d" D_DATE_TIME_SEPARATOR "%02d" D_HOUR_MINUTE_SEPARATOR "%02d" D_MINUTE_SECOND_SEPARATOR "%02d"),
-    RtcTime.year, RtcTime.month, RtcTime.day_of_month, RtcTime.hour, RtcTime.minute, RtcTime.second);
-  return String(dt);
-}
-
-String GetUtcDateAndTime()
-{
-  // "2017-03-07T11:08:02" - ISO8601:2004
-  char dt[21];
-
   TIME_T tmpTime;
-  BreakTime(utc_time, tmpTime);
-  tmpTime.year += 1970;
 
-  snprintf_P(dt, sizeof(dt), PSTR("%04d" D_YEAR_MONTH_SEPARATOR "%02d" D_MONTH_DAY_SEPARATOR "%02d" D_DATE_TIME_SEPARATOR "%02d" D_HOUR_MINUTE_SEPARATOR "%02d" D_MINUTE_SECOND_SEPARATOR "%02d"),
-    tmpTime.year, tmpTime.month, tmpTime.day_of_month, tmpTime.hour, tmpTime.minute, tmpTime.second);
+  if (DT_UPTIME == time_type) {
+    if (restart_time) {
+      BreakTime(utc_time - restart_time, tmpTime);
+    } else {
+      BreakTime(uptime, tmpTime);
+    }
+    // "P128DT14H35M44S" - ISO8601:2004 - https://en.wikipedia.org/wiki/ISO_8601 Durations
+    // snprintf_P(dt, sizeof(dt), PSTR("P%dDT%02dH%02dM%02dS"), ut.days, ut.hour, ut.minute, ut.second);
+    // "128 14:35:44" - OpenVMS
+    // "128T14:35:44" - Tasmota
+    snprintf_P(dt, sizeof(dt), PSTR("%dT%02d:%02d:%02d"),
+      tmpTime.days, tmpTime.hour, tmpTime.minute, tmpTime.second);
+  } else {
+    switch (time_type) {
+      case DT_UTC:
+        BreakTime(utc_time, tmpTime);
+        tmpTime.year += 1970;
+        break;
+      case DT_RESTART:
+        if (restart_time == 0) {
+          return "";
+        }
+        BreakTime(restart_time, tmpTime);
+        tmpTime.year += 1970;
+        break;
+      default:
+        tmpTime = RtcTime;
+    }
+    snprintf_P(dt, sizeof(dt), PSTR("%04d-%02d-%02dT%02d:%02d:%02d"),
+      tmpTime.year, tmpTime.month, tmpTime.day_of_month, tmpTime.hour, tmpTime.minute, tmpTime.second);
+  }
   return String(dt);
 }
 
@@ -1053,14 +1071,20 @@ String GetUptime()
   char dt[16];
 
   TIME_T ut;
-  BreakTime(uptime, ut);
+
+  if (restart_time) {
+    BreakTime(utc_time - restart_time, ut);
+  } else {
+    BreakTime(uptime, ut);
+  }
 
   // "P128DT14H35M44S" - ISO8601:2004 - https://en.wikipedia.org/wiki/ISO_8601 Durations
 //  snprintf_P(dt, sizeof(dt), PSTR("P%dDT%02dH%02dM%02dS"), ut.days, ut.hour, ut.minute, ut.second);
 
   // "128 14:35:44" - OpenVMS
   // "128T14:35:44" - Tasmota
-  snprintf_P(dt, sizeof(dt), PSTR("%d" D_DATE_TIME_SEPARATOR "%02d" D_HOUR_MINUTE_SEPARATOR "%02d" D_MINUTE_SECOND_SEPARATOR "%02d"), ut.days, ut.hour, ut.minute, ut.second);
+  snprintf_P(dt, sizeof(dt), PSTR("%dT%02d:%02d:%02d"),
+    ut.days, ut.hour, ut.minute, ut.second);
   return String(dt);
 }
 
@@ -1228,6 +1252,9 @@ void RtcSecond()
     if (ntp_time) {
       utc_time = ntp_time;
       ntp_sync_minute = 60;  // Sync so block further requests
+      if (restart_time == 0) {
+        restart_time = utc_time - uptime;  // save first ntp time as restart time
+      }
       BreakTime(utc_time, tmpTime);
       RtcTime.year = tmpTime.year + 1970;
       daylight_saving_time = RuleToTime(DaylightSavingTime, RtcTime.year);

@@ -544,7 +544,7 @@ void HueConfigResponse(String *response)
   response->replace("{ms", WiFi.subnetMask().toString());
   response->replace("{gw", WiFi.gatewayIP().toString());
   response->replace("{br", HueBridgeId());
-  response->replace("{dt", GetUtcDateAndTime());
+  response->replace("{dt", GetDateAndTime(DT_UTC));
   response->replace("{id", GetHueUserId());
 }
 
