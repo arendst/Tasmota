@@ -50,6 +50,10 @@
 #define MTX_ADDRESS8           0
 #endif
 
+#ifndef HOME_ASSISTANT_DISCOVERY_ENABLE
+#define HOME_ASSISTANT_DISCOVERY_ENABLE 0
+#endif
+
 /*********************************************************************************************\
  * RTC memory
 \*********************************************************************************************/
