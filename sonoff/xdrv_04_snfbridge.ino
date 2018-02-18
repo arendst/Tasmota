@@ -263,6 +263,14 @@ boolean SonoffBridgeCommand()
         Settings.rf_code[XdrvMailbox.index][7] = (sonoff_bridge_last_send_code >> 8) & 0xff;
         Settings.rf_code[XdrvMailbox.index][8] = sonoff_bridge_last_send_code & 0xff;
         snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, XdrvMailbox.index, D_JSON_SAVED);
+      } else if (5 == XdrvMailbox.payload) {      // Show learnt RF code
+        uint16_t sync_time = (Settings.rf_code[XdrvMailbox.index][0] << 8) | (Settings.rf_code[XdrvMailbox.index][1] << 0);
+        uint16_t low_time = (Settings.rf_code[XdrvMailbox.index][2] << 8) | (Settings.rf_code[XdrvMailbox.index][3] << 0);
+        uint16_t high_time = (Settings.rf_code[XdrvMailbox.index][4] << 8) | (Settings.rf_code[XdrvMailbox.index][5] << 0);
+        uint32_t code = (Settings.rf_code[XdrvMailbox.index][6] << 16) | (Settings.rf_code[XdrvMailbox.index][7] << 8) | (Settings.rf_code[XdrvMailbox.index][8] << 0);
+
+        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"%s%d\":{\"" D_JSON_SYNC "\":%d,\"" D_JSON_LOW "\":%d,\"" D_JSON_HIGH "\":%d,\"" D_JSON_DATA "\":\"%06X\"}}"),
+                   command, XdrvMailbox.index, sync_time, low_time, high_time, code);
       } else {
         if ((1 == XdrvMailbox.payload) || (0 == Settings.rf_code[XdrvMailbox.index][0])) {
           SonoffBridgeSend(0, XdrvMailbox.index);  // Send default RF data
