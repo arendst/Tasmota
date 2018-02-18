@@ -3,6 +3,7 @@
  * Add optional usage of %d or %X suffices in MQTT client to append chipid (#1871)
  * Add optional usage of %d or %X suffices in MQTT topic to append chipid (#1871)
  * Add optional usage of %d or %04d in ota url to be replaced with chipid (#1871)
+ * Add Sonoff Bridge command RfKey<x> 5 to show current RF key values either default or learned (#1884)
  * Add user configurable serial GPIOs to MagicHome and Arilux modules (#1887)
  * Add Russian language file (#1909)
  * Add Webserver upload preflight request support (#1927)
