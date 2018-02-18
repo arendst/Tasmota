@@ -1,7 +1,7 @@
 
 /**************************************************************************/
 /*! 
-    @file     tsl2561.h
+    @file     Adafruit_TSL2561.h
     @author   K. Townsend (microBuilder.eu)
 
     @section LICENSE

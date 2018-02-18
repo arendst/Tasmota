@@ -1,6 +1,6 @@
 /**************************************************************************/
-/*! 
-    @file     tsl2561.c
+/*!
+    @file     Adafruit_TSL2561.c
     @author   K. Townsend (microBuilder.eu / adafruit.com)
 
     @section LICENSE
@@ -42,7 +42,7 @@
 #endif
 #include <stdlib.h>
 
-#include "TSL2561.h"
+#include "Adafruit_TSL2561.h"
 
 TSL2561::TSL2561(uint8_t addr) {
   _addr = addr;
@@ -109,7 +109,7 @@ void TSL2561::setGain(tsl2561Gain_t gain) {
 
   enable();
   _gain = gain;
-  write8(TSL2561_COMMAND_BIT | TSL2561_REGISTER_TIMING, _integration | _gain);  
+  write8(TSL2561_COMMAND_BIT | TSL2561_REGISTER_TIMING, _integration | _gain);
   disable();
 }
 
@@ -119,7 +119,7 @@ void TSL2561::setTiming(tsl2561IntegrationTime_t integration)
 
   enable();
   _integration = integration;
-  write8(TSL2561_COMMAND_BIT | TSL2561_REGISTER_TIMING, _integration | _gain);  
+  write8(TSL2561_COMMAND_BIT | TSL2561_REGISTER_TIMING, _integration | _gain);
   disable();
 }
 
@@ -254,7 +254,7 @@ uint16_t TSL2561::getLuminosity (uint8_t channel) {
     // Reads all and subtracts out just the visible!
     return ( (x & 0xFFFF) - (x >> 16));
   }
-  
+
   // unknown channel!
   return 0;
 }
