@@ -1,5 +1,6 @@
 /* 5.12.0b
  * Add serial debug info
+ * Add Multichannel Gas sensor using MultiChannel_Gas_Sensor library (#1245)
  * Add optional usage of %d or %X suffices in MQTT client to append chipid (#1871)
  * Add optional usage of %d or %X suffices in MQTT topic to append chipid (#1871)
  * Add optional usage of %d or %04d in ota url to be replaced with chipid (#1871)
