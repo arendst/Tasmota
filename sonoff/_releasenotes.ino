@@ -13,6 +13,7 @@
  * Change Sonoff SC JSON format (#1939)
  * Fix compile error when define HOME_ASSISTANT_DISCOVERY_ENABLE is not set (#1937)
  * Add optional TSL2561 driver using library Joba_Tsl2561 to be enabled in user_config.h with define USE_TSL2561_JOBA (#1951)
+ * Add support for sensor SHTC3 (#1967)
  *
  * 5.12.0a
  * Change platformio option sonoff-ds18x20 to sonoff-xxl enabling ds18x20 and all other sensors in one image
