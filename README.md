@@ -43,6 +43,7 @@ Other
 - Automatic order of words for Device Title (on compiling time) depending on the language chosen (#1) Thanks @ascillato   
 - Solve Security issue: MQTT Server Password is being sent to the config web page and can be seen using chrome ShowPassword Extension. (#1) Thanks @ascillato   
 - Add available options for Log Level on comments. (#1) Thanks @ascillato   
+- Add Check for lwIP version [PR#1940](https://github.com/arendst/Sonoff-Tasmota/pull/1940) by @ascillato
 
 
 

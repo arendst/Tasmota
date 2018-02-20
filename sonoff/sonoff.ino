@@ -27,7 +27,7 @@
 
 #define VERSION                0x050C0003   // 5.12.0c
 
-#define MOD_VERSION_STRING  "mod-1.15.2"    // Would be great to have a macro that fills this from VERSION ...
+#define MOD_VERSION_STRING  "mod-1.16.3"    // Would be great to have a macro that fills this from VERSION ...
 // Location specific includes
 #include <core_version.h>                   // Arduino_Esp8266 version information (ARDUINO_ESP8266_RELEASE and ARDUINO_ESP8266_RELEASE_2_3_0)
 #include "sonoff.h"                         // Enumeration used in user_config.h
@@ -36,16 +36,21 @@
 #include "i18n.h"                           // Language support configured by user_config.h
 #include "sonoff_template.h"                // Hardware configuration
 #include "sonoff_post.h"                    // Configuration overrides for all previous includes
+#include "lwip/init.h"
 
 // Libraries
 #include <PubSubClient.h>                   // MQTT
 
 // Max message size calculated by PubSubClient is (MQTT_MAX_PACKET_SIZE < 5 + 2 + strlen(topic) + plength)
-// Max message size calculated by PubSubClient is (MQTT_MAX_PACKET_SIZE < 5 + 2 + strlen(topic) + plength)
 #if (MQTT_MAX_PACKET_SIZE -TOPSZ -7) < MIN_MESSZ  // If the max message size is too small, throw a warning at compile time. See PubSubClient.cpp line 359
   #warning "MQTT_MAX_PACKET_SIZE is too small in libraries/PubSubClient/src/PubSubClient.h, increasing it to 1000"
   #undef MQTT_MAX_PACKET_SIZE
   #define MQTT_MAX_PACKET_SIZE 1000
+#endif
+
+// Check if the lwIP version is the stable one https://github.com/arendst/Sonoff-Tasmota/pull/1940
+#if LWIP_VERSION_MAJOR != 1
+  #error Please use lwIP v1.4
 #endif
 
 #include <Ticker.h>                         // RTC, Energy, OSWatch
