@@ -1,20 +1,28 @@
-/* 5.12.0b
+/* 5.12.0c
+ * Fix intermittent exception when dns lookup is used while sleep is enabled
+ *
+ * 5.12.0b
  * Add serial debug info
+ * Add Multichannel Gas sensor using MultiChannel_Gas_Sensor library (#1245)
  * Add optional usage of %d or %X suffices in MQTT client to append chipid (#1871)
  * Add optional usage of %d or %X suffices in MQTT topic to append chipid (#1871)
  * Add optional usage of %d or %04d in ota url to be replaced with chipid (#1871)
+ * Add Sonoff Bridge command RfKey<x> 5 to show current RF key values either default or learned (#1884)
  * Add user configurable serial GPIOs to MagicHome and Arilux modules (#1887)
  * Add Russian language file (#1909)
  * Add Webserver upload preflight request support (#1927)
  * Add Home Assistant clear other device (#1931)
  * Add Restart time to Status 1 (#1938)
+ * Change TSL2561 driver to joba library and delete Adafruit library (#1644)
  * Change Sonoff SC JSON format (#1939)
  * Fix compile error when define HOME_ASSISTANT_DISCOVERY_ENABLE is not set (#1937)
+ * Add optional TSL2561 driver using library Joba_Tsl2561 to be enabled in user_config.h with define USE_TSL2561_JOBA (#1951)
+ * Add support for sensor SHTC3 (#1967)
  *
  * 5.12.0a
  * Change platformio option sonoff-ds18x20 to sonoff-xxl enabling ds18x20 and all other sensors in one image
  * Fix providing web page configuratin option for Friendly Name when no device (relay or light) is configured (#1850)
- * Change default paremeters in user_config.h to undefined for easy installation (#1851)
+ * Change default parameters in user_config.h to undefined for easy installation (#1851)
  * Change max user configurable hold time from 10 to 25 seconds (#1851)
  *
  * 5.12.0 20180209

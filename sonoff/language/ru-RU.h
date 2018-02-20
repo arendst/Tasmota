@@ -210,18 +210,18 @@
 #define D_SECONDS "секунд"
 #define D_DEVICE_WILL_RESTART "Устройство будет перезапущено через несколько секунд"
 #define D_BUTTON_TOGGLE "Переключить"
-#define D_CONFIGURATION "Кофигурация"
+#define D_CONFIGURATION "Конфигурация"
 #define D_INFORMATION "Информация"
 #define D_FIRMWARE_UPGRADE "Обновление прошивки"
 #define D_CONSOLE "Консоль"
 #define D_CONFIRM_RESTART "Подтвердить перезагрузку"
 
-#define D_CONFIGURE_MODULE "Кофигурация Модуля"
-#define D_CONFIGURE_WIFI "Кофигурация WiFi"
-#define D_CONFIGURE_MQTT "Кофигурация MQTT"
-#define D_CONFIGURE_DOMOTICZ "Кофигурация Domoticz"
-#define D_CONFIGURE_LOGGING "Кофигурация Logging"
-#define D_CONFIGURE_OTHER "Кофигурация прочее"
+#define D_CONFIGURE_MODULE "Конфигурация Модуля"
+#define D_CONFIGURE_WIFI "Конфигурация WiFi"
+#define D_CONFIGURE_MQTT "Конфигурация MQTT"
+#define D_CONFIGURE_DOMOTICZ "Конфигурация Domoticz"
+#define D_CONFIGURE_LOGGING "Конфигурация Logging"
+#define D_CONFIGURE_OTHER "Конфигурация прочее"
 #define D_CONFIRM_RESET_CONFIGURATION "Подтвердить Сброс Конфигурации"
 #define D_RESET_CONFIGURATION "Сброс Конфигурации"
 #define D_BACKUP_CONFIGURATION "Резервное копирование Конфигурации"
@@ -293,7 +293,7 @@
 #define D_ESP_CHIP_ID "ID чипа ESP"
 #define D_FLASH_CHIP_ID "ID чипа Flash памяти"
 #define D_FLASH_CHIP_SIZE "Размер Flash памяти"
-#define D_FREE_PROGRAM_SPACE "Свободное пространство программы"
+#define D_FREE_PROGRAM_SPACE "Свободное пространство программ"
 
 #define D_UPGRADE_BY_WEBSERVER "Обновление через Веб-сервер"
 #define D_OTA_URL "OTA Url"
@@ -428,7 +428,7 @@
 #define D_UNIT_SECTORS "секторов"
 #define D_UNIT_VOLT "В"
 #define D_UNIT_WATT "Вт"
-#define D_UNIT_WATTHOUR "Вт.ч"
+#define D_UNIT_WATTHOUR "ВтЧ"
 
 // Log message prefix
 #define D_LOG_APPLICATION "APP: "  // Application
