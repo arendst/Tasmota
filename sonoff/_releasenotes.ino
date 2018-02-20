@@ -1,4 +1,7 @@
-/* 5.12.0b
+/* 5.12.0c
+ * Fix intermittent exception when dns lookup is used while sleep is enabled
+ *
+ * 5.12.0b
  * Add serial debug info
  * Add Multichannel Gas sensor using MultiChannel_Gas_Sensor library (#1245)
  * Add optional usage of %d or %X suffices in MQTT client to append chipid (#1871)
@@ -19,7 +22,7 @@
  * 5.12.0a
  * Change platformio option sonoff-ds18x20 to sonoff-xxl enabling ds18x20 and all other sensors in one image
  * Fix providing web page configuratin option for Friendly Name when no device (relay or light) is configured (#1850)
- * Change default paremeters in user_config.h to undefined for easy installation (#1851)
+ * Change default parameters in user_config.h to undefined for easy installation (#1851)
  * Change max user configurable hold time from 10 to 25 seconds (#1851)
  *
  * 5.12.0 20180209
