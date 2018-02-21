@@ -20,25 +20,69 @@
 #ifndef _USER_CONFIG_OVERRIDE_H_
 #define _USER_CONFIG_OVERRIDE_H_
 
-/*****************************************************************************************************\
- * ATTENTION: - Changes to most PARAMETER defines will only override flash settings if you change
- *              define CFG_HOLDER.
- *            - Expect compiler warnings when no ifdef/undef/endif sequence is used.
- *            - You still need to update user_config.h for major defines MODULE and USE_MQTT_TLS.
- *            - Changing MODULE defines are not being tested for validity as they are in user_config.h.
- *            - Most parameters can be changed online using commands via MQTT, WebConsole or serial.
- *            - So I see no use in this but anyway, your on your own.
-\*****************************************************************************************************/
+/**********************************************************************************************************\
+* USAGE:
+*     To modify the stock configuration without changing the user_config.h file :
+*     (1) rename this file to "user_config_override.h" (It will be ignored by Git)
+*     (2) define your own settings below 
+*     (3) define USE_CONFIG_OVER as a build flags. ie : export PLATFORMIO_BUILD_FLAGS='-DUSE_CONFIG_OVER' 	
+************************************************************************************************************
+ * ATTENTION: 
+ *     - Changes to most PARAMETER defines will only override flash settings if you change define CFG_HOLDER.
+ *     - Expect compiler warnings when no ifdef/undef/endif sequence is used.
+ *     - You still need to update user_config.h for major defines MODULE and USE_MQTT_TLS.
+ *     - Changing MODULE defines are not being tested for validity as they are in user_config.h.
+ *     - Most parameters can be changed online using commands via MQTT, WebConsole or serial.
+ *     - So I see no use in this but anyway, your on your own.
+\**********************************************************************************************************/
 
-// Examples
-//#ifdef CFG_HOLDER
-//#undef CFG_HOLDER
-//#endif
-//#define CFG_HOLDER             0x20161210
+/*
+Examples :
 
-//#ifdef STA_SSID1
-//#undef STA_SSID1
-//#endif
-//#define STA_SSID1              "yourssid1"
+// Change this value to load following default configuration parameters ----------------
+#undef  CFG_HOLDER
+#define CFG_HOLDER		0x20161210	// should be different to the one in user_config.h
+
+// Setup your own Wifi settings  -------------------------------------------------------
+#undef  STA_SSID1
+#define STA_SSID1		"YourSSID"					// [Ssid1] Wifi SSID
+
+#undef  STA_PASS1
+#define STA_PASS1		"YourWifiPassword"			// [Password1] Wifi password
+
+// Setup your own MQTT settings  -------------------------------------------------------
+#undef  MQTT_HOST
+#define MQTT_HOST		"your-mqtt-server.com"		// [MqttHost]
+
+#undef  MQTT_PORT
+#define MQTT_PORT		1883						// [MqttPort] MQTT port (10123 on CloudMQTT)
+
+#undef  MQTT_USER
+#define MQTT_USER		"YourMqttUser"				// [MqttUser] Optional user
+
+#undef  MQTT_PASS
+#define MQTT_PASS		"YourMqttPass"				// [MqttPassword] Optional password
+
+
+// You might even pass some parameters from the command line ---------------------------- 
+// Ie:  export PLATFORMIO_BUILD_FLAGS='-DUSE_CONFIG_OVER -DMY_IP="192.168.1.99" -DMY_GW="192.168.1.1" -DMY_DNS="192.168.1.1"'
+
+#ifdef MY_IP
+#undef  WIFI_IP_ADDRESS
+#define WIFI_IP_ADDRESS		MY_IP					// Set to 0.0.0.0 for using DHCP or IP address
+#endif
+
+#ifdef MY_GW
+#undef  WIFI_GATEWAY
+#define WIFI_GATEWAY		MY_GW					// if not using DHCP set Gateway IP address
+#endif
+
+#ifdef MY_DNS
+#undef  WIFI_DNS
+#define WIFI_DNS			MY_DNS					// If not using DHCP set DNS IP address (might be equal to WIFI_GATEWAY)
+#endif
+
+*/
+
 
 #endif  // _USER_CONFIG_OVERRIDE_H_
