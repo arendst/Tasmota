@@ -31,7 +31,9 @@
 #include <core_version.h>                   // Arduino_Esp8266 version information (ARDUINO_ESP8266_RELEASE and ARDUINO_ESP8266_RELEASE_2_3_0)
 #include "sonoff.h"                         // Enumeration used in user_config.h
 #include "user_config.h"                    // Fixed user configurable options
+#ifdef USE_CONFIG_OVER
 #include "user_config_override.h"           // Configuration overrides for user_config.h
+#endif
 #include "i18n.h"                           // Language support configured by user_config.h
 #include "sonoff_template.h"                // Hardware configuration
 #include "sonoff_post.h"                    // Configuration overrides for all previous includes
