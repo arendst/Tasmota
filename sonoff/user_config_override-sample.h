@@ -20,6 +20,9 @@
 #ifndef _USER_CONFIG_OVERRIDE_H_
 #define _USER_CONFIG_OVERRIDE_H_
 
+// force the compiler to show a warning to confirm that this file is inlcuded
+#warning "**** Using Settings from user_config_override.h File ***"
+
 /**********************************************************************************************************\
 * USAGE:
 *     To modify the stock configuration without changing the user_config.h file :
