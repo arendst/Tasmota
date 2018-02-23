@@ -42,9 +42,6 @@
 /*
 Examples :
 
-// Change this value to load following default configuration parameters ----------------
-#undef  CFG_HOLDER
-#define CFG_HOLDER		0x20161210	// should be different to the one in user_config.h
 
 // Setup your own Wifi settings  -------------------------------------------------------
 #undef  STA_SSID1
