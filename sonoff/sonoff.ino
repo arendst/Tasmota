@@ -65,14 +65,11 @@
 #endif  // USE_SPI
 
 
-
 #ifdef USE_ARDUINO_OTA
 #include <ArduinoOTA.h>
 #include <ESP8266mDNS.h>
 bool ArduinoOTAtriggered=false;
 #endif
-
-
 
 // Structs
 #include "settings.h"
@@ -2817,6 +2814,7 @@ void setup()
   RtcInit();
   XsnsCall(FUNC_INIT);
 
+
 #ifdef USE_ARDUINO_OTA
     ArduinoOTAInit();
 #endif
@@ -2865,12 +2863,10 @@ void loop()
 
 
 
-
-
 #ifdef USE_ARDUINO_OTA
 /********************************************************************************************\
   Allow updating via the Arduino OTA-protocol. (this allows you to upload directly from platformio)
-  \*********************************************************************************************/
+\*********************************************************************************************/
 
 void ArduinoOTAInit(){
 
@@ -2884,33 +2880,32 @@ void ArduinoOTAInit(){
 	ArduinoOTA.onStart([]() {
 		Serial.println("OTA: Start");
 		ArduinoOTAtriggered=true;
-		//SPIFFS.end(); //important, otherwise it fails
 	});
 
 	ArduinoOTA.onEnd([]() {
-		Serial.println("\nOTA: End");
-		Serial.println("OTA  : DO NOT RESET OR POWER OFF UNTIL BOOT+FLASH IS COMPLETE.");
+		//Serial.println("\nOTA: End");
+		//Serial.println("OTA  : DO NOT RESET OR POWER OFF UNTIL BOOT+FLASH IS COMPLETE.");
 		delay(100);
 		ESP.reset();
 	});
 	ArduinoOTA.onProgress([](unsigned int progress, unsigned int total) {
-		Serial.printf("OTA: Progress %u%%\r", (progress / (total / 100)));
+		//Serial.printf("OTA: Progress %u%%\r", (progress / (total / 100)));
 	});
 
 	ArduinoOTA.onError([](ota_error_t error) {
+		/*
 		Serial.print(F("\nOTA	 : Error (will reboot): "));
-		if (error == OTA_AUTH_ERROR) Serial.println(F("Auth Failed"));
-		else if (error == OTA_BEGIN_ERROR) Serial.println(F("Begin Failed"));
-		else if (error == OTA_CONNECT_ERROR) Serial.println(F("Connect Failed"));
-		else if (error == OTA_RECEIVE_ERROR) Serial.println(F("Receive Failed"));
-		else if (error == OTA_END_ERROR) Serial.println(F("End Failed"));
-
+		if (error == OTA_AUTH_ERROR) 		{Serial.println(F("Auth Failed"));}
+		else if (error == OTA_BEGIN_ERROR)	{Serial.println(F("Begin Failed"));}
+		else if (error == OTA_CONNECT_ERROR){Serial.println(F("Connect Failed"));}
+		else if (error == OTA_RECEIVE_ERROR){Serial.println(F("Receive Failed"));}
+		else if (error == OTA_END_ERROR)	{Serial.println(F("End Failed"));}
+		*/
 		delay(100);
 		ESP.reset();
 	});
 
 	ArduinoOTA.begin();
-
 	snprintf_P(log_data, sizeof(log_data), PSTR("OTA: Arduino OTA enabled on port 8266"));
 	AddLog(LOG_LEVEL_INFO);
 }
