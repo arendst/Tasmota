@@ -149,12 +149,6 @@
 #define D_VOLTAGE "Spanning"
 #define D_WARMLIGHT "Warm"
 #define D_WEB_SERVER "Webserver"
-//STB mod
-#define D_MOISTURE "Moisture"
-#define D_DISTANCE "Distance"
-#define D_CONFIGURE_PCF8574 "Configure PCF8574"
-#define D_CMND_COUNTERDEVIDER "CounterDevider"
-//end
 
 // sonoff.ino
 #define D_WARNING_MINIMAL_VERSION "WAARSCHUWING Deze versie bewaart geen instellingen"
@@ -394,7 +388,6 @@
 #define D_PARTICALS_BEYOND "Stofdeeltjes"
 
 // sonoff_template.h
-// Max string length is 8 characters including suffixes
 #define D_SENSOR_NONE     "Geen"
 #define D_SENSOR_DHT11    "DHT11"
 #define D_SENSOR_AM2301   "AM2301"

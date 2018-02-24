@@ -40,8 +40,8 @@ struct DHTSTRUCT {
   char     stype[12];
   uint32_t lastreadtime;
   uint8_t  lastresult;
-  float    t;
-  float    h = 0;
+  float    t = NAN;
+  float    h = NAN;
 } Dht[DHT_MAX_SENSORS];
 
 void DhtReadPrep()
@@ -56,7 +56,7 @@ int32_t DhtExpectPulse(byte sensor, bool level)
   int32_t count = 0;
 
   while (digitalRead(Dht[sensor].pin) == level) {
-    if (count++ >= dht_max_cycles) {
+    if (count++ >= (int32_t)dht_max_cycles) {
       return -1;  // Timeout
     }
   }
@@ -141,7 +141,7 @@ void DhtRead(byte sensor)
 
 boolean DhtReadTempHum(byte sensor, float &t, float &h)
 {
-  if (!Dht[sensor].h) {
+  if (NAN == Dht[sensor].h) {
     t = NAN;
     h = NAN;
   } else {
@@ -203,7 +203,7 @@ void DhtInit()
     pinMode(Dht[i].pin, INPUT_PULLUP);
     Dht[i].lastreadtime = 0;
     Dht[i].lastresult = 0;
-    strcpy_P(Dht[i].stype, kSensors[Dht[i].type]);
+    GetTextIndexed(Dht[i].stype, sizeof(Dht[i].stype), Dht[i].type, kSensorNames);
     if (dht_sensors > 1) {
       snprintf_P(Dht[i].stype, sizeof(Dht[i].stype), PSTR("%s-%02d"), Dht[i].stype, Dht[i].pin);
     }
@@ -214,11 +214,11 @@ void DhtShow(boolean json)
 {
   char temperature[10];
   char humidity[10];
-  float t;
-  float h;
 
   byte dsxflg = 0;
   for (byte i = 0; i < dht_sensors; i++) {
+    float t = NAN;
+    float h = NAN;
     if (DhtReadTempHum(i, t, h)) {     // Read temperature
       dtostrfd(t, Settings.flag2.temperature_resolution, temperature);
       dtostrfd(h, Settings.flag2.humidity_resolution, humidity);
