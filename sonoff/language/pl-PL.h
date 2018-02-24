@@ -369,7 +369,7 @@
 #define D_START_SIGNAL_LOW "sygnał startowy niski"
 #define D_START_SIGNAL_HIGH "sygnał startowy wysoki"
 #define D_PULSE "pulse"
-#define D_CHECKSUM_FAILURE "Bledna suma kontrolmna"
+#define D_CHECKSUM_FAILURE "Bledna suma kontrolna"
 
 // xsns_07_sht1x.ino
 #define D_SENSOR_DID_NOT_ACK_COMMAND "Czujnik nie otrzymal komendy ACK"
