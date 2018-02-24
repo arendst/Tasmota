@@ -4,3 +4,5 @@
 .gcc-flags.json
 .vscode
 sonoff/user_config_override.h
+.vscode/c_cpp_properties.json
+.vscode/launch.json

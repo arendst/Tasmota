@@ -558,10 +558,11 @@ void WifiBegin(uint8_t flag)
 
 #ifdef ARDUINO_ESP8266_RELEASE_2_3_0  // (!strncmp_P(ESP.getSdkVersion(),PSTR("1.5.3"),5))
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_WIFI, PSTR(D_PATCH_ISSUE_2186));
-  WiFi.mode(WIFI_OFF);    // See https://github.com/esp8266/Arduino/issues/2186
+  WiFi.mode(WIFI_OFF);      // See https://github.com/esp8266/Arduino/issues/2186
 #endif
 
-  WiFi.disconnect();
+  WiFi.disconnect(true);    // Delete SDK wifi config
+  delay(200);
   WiFi.mode(WIFI_STA);      // Disable AP mode
   if (Settings.sleep) {
     WiFi.setSleepMode(WIFI_LIGHT_SLEEP);  // Allow light sleep during idle times
@@ -697,6 +698,7 @@ void WifiCheck(uint8_t param)
         if (WIFI_SMARTCONFIG == wifi_config_type) {
           WiFi.stopSmartConfig();
         }
+        SettingsSdkErase();
         restart_flag = 2;
       }
     } else {

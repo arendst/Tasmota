@@ -160,7 +160,7 @@ void WifiWpsStatusCallback(wps_cb_status status);
 
 //#include <core_version.h>                   // Arduino_Esp8266 version information (ARDUINO_ESP8266_RELEASE and ARDUINO_ESP8266_RELEASE_2_3_0)
 #ifndef ARDUINO_ESP8266_RELEASE
-#define ARDUINO_ESP8266_RELEASE "STAGED"
+#define ARDUINO_ESP8266_RELEASE "STAGE"
 #endif
 
 #endif  // _SONOFF_POST_H_
