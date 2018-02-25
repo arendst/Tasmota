@@ -38,6 +38,7 @@
 //#define MY_LANGUAGE            pl-PL           // Polish in Poland
 //#define MY_LANGUAGE            ru-RU           // Russian in Russia
 //#define MY_LANGUAGE            zh-CN           // Chinese (Simplified) in China
+//#define MY_LANGUAGE            hu-HU           // Hungarian in Hungary
 
 // -- Project -------------------------------------
 #define PROJECT                "sonoff"          // PROJECT is used as the default topic delimiter and OTA file name
