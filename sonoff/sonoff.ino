@@ -179,7 +179,7 @@ uint8_t blinkstate = 0;                     // LED state
 
 uint8_t blockgpio0 = 4;                     // Block GPIO0 for 4 seconds after poweron to workaround Wemos D1 RTS circuit
 uint8_t lastbutton[MAX_KEYS] = { NOT_PRESSED, NOT_PRESSED, NOT_PRESSED, NOT_PRESSED };  // Last button states
-uint8_t holdbutton[MAX_KEYS] = { 0 };       // Timer for button hold
+uint16_t holdbutton[MAX_KEYS] = { 0 };      // Timer for button hold
 uint8_t multiwindow[MAX_KEYS] = { 0 };      // Max time between button presses to record press count
 uint8_t multipress[MAX_KEYS] = { 0 };       // Number of button presses within multiwindow
 uint8_t lastwallswitch[MAX_SWITCHES];       // Last wall switch states
@@ -1484,7 +1484,8 @@ void MqttDataCallback(char* topic, byte* data, unsigned int data_len)
         snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command , D_JSON_RESET_AND_RESTARTING);
         break;
       case 2:
-        restart_flag = 212;
+      case 3:
+        restart_flag = 210 + payload;
         snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_RESET "\":\"" D_JSON_ERASE ", " D_JSON_RESET_AND_RESTARTING "\"}"));
         break;
       default:
@@ -2379,9 +2380,12 @@ void StateLoop()
       }
     }
     if (restart_flag && (backlog_pointer == backlog_index)) {
-      if (212 == restart_flag) {
-        SettingsErase();
-        restart_flag--;
+      if (213 == restart_flag) {
+        SettingsSdkErase();  // Erase flash SDK parameters
+        restart_flag = 2;
+      } else if (212 == restart_flag) {
+        SettingsErase(0);    // Erase all flash from program end to end of physical flash
+        restart_flag = 211;
       }
       if (211 == restart_flag) {
         SettingsDefault();
