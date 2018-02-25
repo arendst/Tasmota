@@ -1,5 +1,7 @@
 /* 5.12.0c
  * Fix intermittent exception when dns lookup is used while sleep is enabled
+ * Fix 5.4.0 regression turning off single press after button hold during 4x hold time
+ * Fix possible wifi connection problem by erasing sdk configuration parameters
  *
  * 5.12.0b
  * Add serial debug info
