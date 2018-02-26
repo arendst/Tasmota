@@ -124,7 +124,7 @@
 // -- MQTT - Home Assistant Discovery -------------
 #define USE_HOME_ASSISTANT                       // Enable Home Assistant Discovery Support (+1k4 code)
   #define HOME_ASSISTANT_DISCOVERY_PREFIX "homeassistant"  // Home Assistant discovery prefix
-  #define HOME_ASSISTANT_DISCOVERY_ENABLE 0      // [SetOption19] Home Assistant Discovery (0 = Disable, 1 = Enable)
+  #define HOME_ASSISTANT_DISCOVERY_ENABLE 1      // [SetOption19] Home Assistant Discovery (0 = Disable, 1 = Enable)
 
 // -- HTTP ----------------------------------------
 #define USE_WEBSERVER                            // Enable web server and wifi manager (+66k code, +8k mem) - Disable by //

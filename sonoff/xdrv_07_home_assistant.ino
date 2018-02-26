@@ -85,7 +85,8 @@ void HAssDiscovery()
 //    Settings.light_scheme = 0;           // To just control color it needs to be Scheme 0
 //    strncpy_P(Settings.mqtt_fulltopic, PSTR("%prefix%/%topic%/"), sizeof(Settings.mqtt_fulltopic));  // Make MQTT topic as short as possible to make this process posible within MQTT_MAX_PACKET_SIZE
   }
-
+  snprintf_P(log_data, sizeof(log_data), PSTR("HAssDiscovery: start loop %d"), devices_present);
+  AddLog(LOG_LEVEL_DEBUG);
   for (int i = 1; i <= devices_present; i++) {
     is_light = ((i == devices_present) && (light_type));
 

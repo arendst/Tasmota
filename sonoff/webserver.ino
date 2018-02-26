@@ -457,17 +457,22 @@ void ShowPage(String &page, bool auth)
   if (auth && (Settings.web_password[0] != 0) && !WebServer->authenticate(WEB_USERNAME, Settings.web_password)) {
     return WebServer->requestAuthentication();
   }
-
-  page.replace(F("{ha"), my_module.name);
-  page.replace(F("{h}"), Settings.friendlyname[0]);
+  if (ESP.getFreeHeap() > 10000) {
+    page.replace(F("{ha"), my_module.name);
+    page.replace(F("{h}"), Settings.friendlyname[0]);
+  }
   if (HTTP_MANAGER == webserver_state) {
     if (WifiConfigCounter()) {
-      page.replace(F("<body>"), F("<body onload='u()'>"));
+      if (ESP.getFreeHeap() > 10000) {
+        page.replace(F("<body>"), F("<body onload='u()'>"));
+      }
       page += FPSTR(HTTP_COUNTER);
     }
   }
   page += FPSTR(HTTP_END);
-  page.replace(F("{mv"), my_version);
+  if (ESP.getFreeHeap() > 10000) {
+    page.replace(F("{mv"), my_version);
+  }
   SetHeader();
   WebServer->send(200, FPSTR(HDR_CTYPE_HTML), page);
 }
@@ -631,7 +636,9 @@ void HandleConfiguration()
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_CONFIGURATION);
 
   String page = FPSTR(HTTP_HEAD);
-  page.replace(F("{v}"), FPSTR(S_CONFIGURATION));
+  if (ESP.getFreeHeap() > 10000) {
+    page.replace(F("{v}"), FPSTR(S_CONFIGURATION));
+  }
   page += FPSTR(HTTP_HEAD_STYLE);
   page += FPSTR(HTTP_BTN_MENU2);
   if (Settings.flag.mqtt_enabled) {
@@ -750,10 +757,14 @@ void HandleModuleConfiguration()
   page += F("}");
 
   page += FPSTR(HTTP_HEAD_STYLE);
-  page.replace(F("<body>"), F("<body onload='sl()'>"));
+  if (ESP.getFreeHeap() > 10000) {
+    page.replace(F("<body>"), F("<body onload='sl()'>"));
+  }
   page += FPSTR(HTTP_FORM_MODULE);
   snprintf_P(stemp, sizeof(stemp), kModules[MODULE].name);
-  page.replace(F("{mt"), stemp);
+  if (ESP.getFreeHeap() > 10000) {
+    page.replace(F("{mt"), stemp);
+  }
   page += F("<br/><table>");
   for (byte i = 0; i < MAX_GPIO_PIN; i++) {
     if (GPIO_USER == cmodule.gp.io[i]) {
