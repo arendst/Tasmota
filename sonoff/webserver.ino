@@ -449,7 +449,7 @@ void ShowPage(String &page, bool auth)
   }
 
   page.replace(F("{ha"), my_module.name);
-  page.replace(F("{h}"), Settings.hostname);
+  page.replace(F("{h}"), my_hostname);
   if (HTTP_MANAGER == webserver_state) {
     if (WifiConfigCounter()) {
       page.replace(F("<body>"), F("<body onload='u()'>"));
