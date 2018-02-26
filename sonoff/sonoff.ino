@@ -558,7 +558,9 @@ void MqttReconnect()
     if (EspClient.verify(Settings.mqtt_fingerprint, Settings.mqtt_host)) {
       AddLog_P(LOG_LEVEL_INFO, S_LOG_MQTT, PSTR(D_VERIFIED));
     } else {
-      AddLog_P(LOG_LEVEL_DEBUG, S_LOG_MQTT, PSTR(D_INSECURE));
+      AddLog_P(LOG_LEVEL_INFO, S_LOG_MQTT, PSTR(D_INSECURE));
+      EspClient.stop();
+      return;
     }
     EspClient.stop();
     yield();
