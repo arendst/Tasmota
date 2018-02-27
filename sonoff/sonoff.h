@@ -25,7 +25,7 @@
 #define D_MODIFY_AUTHOR        "reloxx13"
 //#define D_WEBLINK              "https://github.com/arendst/Sonoff-Tasmota"
 #define D_WEBLINK              "https://bit.ly/tasmota"
-#define D_MODIFIED_WEBLINK     "https://github.com/reloxx13/Sonoff-Tasmota/tree/modified"
+#define D_MODIFIED_WEBLINK     "https://bit.ly/Tasmota-Mod"
 
 /*********************************************************************************************\
  * Power Type
