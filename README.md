@@ -39,11 +39,11 @@ Other
    - Fix for [#1842](https://github.com/arendst/Sonoff-Tasmota/issues/1842)
 - fix degree symbol
    - Fix for [PR#1496](https://github.com/arendst/Sonoff-Tasmota/pull/1496)
-- Automatic set of MQTT_MAX_PACKET_SIZE (on compiling time) so there is no need of modifying another library. (#1) Thanks @ascillato   
+- Automatic set of MQTT_MAX_PACKET_SIZE (on compiling time) so there is no need of modifying another library. (#1) Thanks @ascillato (in Tasmota since 5.12.0d, default to 1000)
 - Automatic order of words for Device Title (on compiling time) depending on the language chosen (#1) Thanks @ascillato   
 - Solve Security issue: MQTT Server Password is being sent to the config web page and can be seen using chrome ShowPassword Extension. (#1) Thanks @ascillato   
 - Add available options for Log Level on comments. (#1) Thanks @ascillato   
-- Add Check for lwIP version [PR#1940](https://github.com/arendst/Sonoff-Tasmota/pull/1940) by @ascillato
+- Add Check for lwIP version [PR#1940](https://github.com/arendst/Sonoff-Tasmota/pull/1940) by @ascillato (in Tasmota since 5.12.0d)
 
 
 
