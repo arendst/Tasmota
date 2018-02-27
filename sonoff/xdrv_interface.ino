@@ -18,6 +18,10 @@
 */
 
 boolean (* const xdrv_func_ptr[])(byte) PROGMEM = {   // Driver Function Pointers
+#ifdef XDRV_00
+  &Xdrv00,
+#endif
+
 #ifdef XDRV_01
   &Xdrv01,
 #endif
@@ -139,12 +143,14 @@ boolean (* const xdrv_func_ptr[])(byte) PROGMEM = {   // Driver Function Pointer
 
 const uint8_t xdrv_present = sizeof(xdrv_func_ptr) / sizeof(xdrv_func_ptr[0]);  // Number of drivers found
 
-boolean XdrvCommand(char *type, uint16_t index, char *dataBuf, uint16_t data_len, int16_t payload)
+boolean XdrvCommand(uint8_t grpflg, char *type, uint16_t index, char *dataBuf, uint16_t data_len, int16_t payload, uint16_t payload16)
 {
 //  XdrvMailbox.valid = 1;
   XdrvMailbox.index = index;
   XdrvMailbox.data_len = data_len;
+  XdrvMailbox.payload16 = payload16;
   XdrvMailbox.payload = payload;
+  XdrvMailbox.grpflg = grpflg;
   XdrvMailbox.topic = type;
   XdrvMailbox.data = dataBuf;
 
