@@ -33,6 +33,7 @@
 //#define MY_LANGUAGE            en-GB           // English in Great Britain. Enabled by Default
 //#define MY_LANGUAGE            es-AR           // Spanish in Argentina
 //#define MY_LANGUAGE            fr-FR           // French in France
+//#define MY_LANGUAGE            hu-HU           // Hungarian in Hungary
 //#define MY_LANGUAGE            it-IT           // Italian in Italy
 //#define MY_LANGUAGE            nl-NL           // Dutch in the Netherlands
 //#define MY_LANGUAGE            pl-PL           // Polish in Poland
@@ -73,7 +74,7 @@
 // -- MQTT ----------------------------------------
 #define MQTT_USE               1                 // [SetOption3] Select default MQTT use (0 = Off, 1 = On)
 // !!! TLS uses a LOT OF MEMORY (20k) so be careful to enable other options at the same time !!!
-//#define USE_MQTT_TLS                             // EXPERIMENTAL Use TLS for MQTT connection (+53k code, +20k mem) - Disable by //
+//#define USE_MQTT_TLS                             // EXPERIMENTAL Use TLS for MQTT connection (+53k code, +15k mem) - Disable by //
                                                  //   Needs Fingerprint, TLS Port, UserId and Password
 #ifdef USE_MQTT_TLS
 //  #define MQTT_HOST            "m20.cloudmqtt.com"  // [MqttHost]

@@ -1,7 +1,15 @@
-/* 5.12.0c
+/* 5.12.0d
+ * Prep for optional MQTT drivers by separating mqtt code from sonoff.ino to file xdrv_00_mqtt.ino
+ * Add compiler check for stable lwIP version v1.4 (#1940)
+ * Add diacritics to Polish language file (#2005)
+ * Add Hungarian language file (#2024)
+ * Fix MQTT TLS fingerprint validation (#2033)
+ *
+ * 5.12.0c
  * Fix intermittent exception when dns lookup is used while sleep is enabled
  * Fix 5.4.0 regression turning off single press after button hold during 4x hold time
  * Fix possible wifi connection problem by erasing sdk configuration parameters
+ * Change Polish language to using Diacritics (#2005)
  *
  * 5.12.0b
  * Add serial debug info
