@@ -291,7 +291,10 @@ struct XDRVMAILBOX {
   uint16_t      valid;
   uint16_t      index;
   uint16_t      data_len;
+  uint16_t      payload16;
   int16_t       payload;
+  uint8_t       grpflg;
+  uint8_t       notused;
   char         *topic;
   char         *data;
 } XdrvMailbox;

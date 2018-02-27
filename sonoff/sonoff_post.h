@@ -152,6 +152,13 @@ void WifiWpsStatusCallback(wps_cb_status status);
 #define WS2812_LEDS            30             // [Pixels] Number of LEDs
 #endif
 
+#ifndef MQTT_MAX_PACKET_SIZE
+#define MQTT_MAX_PACKET_SIZE   1000
+#endif
+#ifndef MQTT_KEEPALIVE
+#define MQTT_KEEPALIVE         15
+#endif
+
 #ifndef MESSZ
 //#define MESSZ                  405          // Max number of characters in JSON message string (6 x DS18x20 sensors)
 //#define MESSZ                  893          // Max number of characters in JSON message string (Hass discovery and nice MQTT_MAX_PACKET_SIZE = 1000)

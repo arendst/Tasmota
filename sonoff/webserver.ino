@@ -1262,7 +1262,7 @@ void HandleUploadDone()
 
   WifiConfigCounter();
   restart_flag = 0;
-  mqtt_retry_counter = 0;
+  MqttRetryCounter(0);
 
   String page = FPSTR(HTTP_HEAD);
   page.replace(F("{v}"), FPSTR(S_INFORMATION));
@@ -1324,16 +1324,14 @@ void HandleUploadLoop()
     snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_UPLOAD D_FILE " %s ..."), upload.filename.c_str());
     AddLog(LOG_LEVEL_INFO);
     if (!upload_file_type) {
-      mqtt_retry_counter = 60;
+      MqttRetryCounter(60);
 #ifdef USE_EMULATION
       UdpDisconnect();
 #endif  // USE_EMULATION
 #ifdef USE_ARILUX_RF
       AriluxRfDisable();  // Prevent restart exception on Arilux Interrupt routine
 #endif  // USE_ARILUX_RF
-      if (Settings.flag.mqtt_enabled) {
-        MqttClient.disconnect();
-      }
+      if (Settings.flag.mqtt_enabled) MqttDisconnect();
       uint32_t maxSketchSpace = (ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000;
       if (!Update.begin(maxSketchSpace)) {         //start with max available size
         upload_error = 2;
@@ -1409,7 +1407,7 @@ void HandleUploadLoop()
     }
   } else if (UPLOAD_FILE_ABORTED == upload.status) {
     restart_flag = 0;
-    mqtt_retry_counter = 0;
+    MqttRetryCounter(0);
     upload_error = 7;
     if (!upload_file_type) {
       Update.end();
