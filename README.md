@@ -15,7 +15,8 @@ Use [SonOTA Exe](https://github.com/mirko/SonOTA/releases) for first flash of yo
 
 - Default all sensors are disabled and MQTT Disabled, too.   
 - Sleep is set to default 150 insted of 0 for energy saving.
-- Default WIFI Setup is WIFI_MANAGER instead of WPS.
+- more unit decimals   
+- Default WIFI Setup is WIFI_MANAGER instead of WPS.   
    - I suggest to enter your wifi credentials in the user_config and change it to WIFI_RETRY to be sure your sonoff is connected back if your wifi fails.
    - also fill both AP with same credentials for faster reconnect.  
 
@@ -26,7 +27,9 @@ Web Interface
 - more width for desktop   
 - pointer cursor (in Tasmota since 5.12.0)   
 - translated current status (on/off)   
-
+- use hostname in web ui as headline instead of friendlyname1   
+   
+   
 - WeMo Emu fixed (in Tasmota since 5.10.xx)   
 
 - Echo 2G Type2 discover fixed (in Tasmota since 5.10.xx)   
