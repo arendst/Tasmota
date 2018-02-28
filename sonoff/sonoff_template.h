@@ -176,6 +176,8 @@ enum SupportedModules {
   SONOFF_DUAL_R2,
   ARILUX_LC06,
   SONOFF_S31,
+  LCTECH1,
+  LCTECH2,
   MAXMODULE };
 
 /********************************************************************************************/
@@ -234,7 +236,9 @@ const uint8_t kNiceList[MAXMODULE] PROGMEM = {
   KMC_70011,
   AILIGHT,
   WEMOS,
-  WITTY
+  WITTY,
+  LCTECH1,
+  LCTECH2
 };
 
 // Default module settings
@@ -785,6 +789,32 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_REL1,        // GPIO12 Red Led and Relay (0 = Off, 1 = On)
      GPIO_LED1_INV,    // GPIO13 Green Led (0 = On, 1 = Off)
      0, 0, 0, 0
+  },
+  { "LCTECH 1CH",     // LC Technology WiFi Relay 1CH
+     0,
+     GPIO_TXD,          // GPIO01 Relay control
+     0,
+     GPIO_RXD,          // GPIO03 Relay control
+     0,                 
+     0,
+     0, 0, 0, 0, 0, 0,  // Flash connection
+     0,
+     0,                
+     0,                
+     0, 0, 0
+  },
+  { "LCTECH 2CH",     // LC Technology WiFi Relay 2CH
+     0,
+     GPIO_TXD,          // GPIO01 Relay control
+     0,
+     GPIO_RXD,          // GPIO03 Relay control
+     0,                 
+     0,
+     0, 0, 0, 0, 0, 0,  // Flash connection
+     0,
+     0,                
+     0,                
+     0, 0, 0
   }
 };
 
