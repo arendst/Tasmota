@@ -82,7 +82,7 @@ typedef unsigned long power_t;              // Power (Relay) type
 #define SERIALLOG_TIMER        600          // Seconds to disable SerialLog
 #define OTA_ATTEMPTS           5            // Number of times to try fetching the new firmware
 
-#define INPUT_BUFFER_SIZE      250          // Max number of characters in (serial) command buffer
+#define INPUT_BUFFER_SIZE      255          // Max number of characters in (serial) command buffer
 #define CMDSZ                  24           // Max number of characters in command
 #define TOPSZ                  100          // Max number of characters in topic string
 #define LOGSZ                  400          // Max number of characters in log
@@ -100,9 +100,6 @@ typedef unsigned long power_t;              // Power (Relay) type
 #define APP_BAUDRATE           115200       // Default serial baudrate
 #define MAX_STATUS             11           // Max number of status lines
 
-#define XDRV_MAX               10           // Max number of allowed Xdrv drivers (Update xdrv_interface.ino if changed)
-#define XSNS_MAX               20           // Max number of allowed Xsns External Sensors (Update xsns_interface.ino if changed)
-
 /*
 // Removed from esp8266 core since 20171105
 #define min(a,b) ((a)<(b)?(a):(b))
@@ -117,6 +114,7 @@ enum WeekInMonthOptions {Last, First, Second, Third, Fourth};
 enum DayOfTheWeekOptions {Sun=1, Mon, Tue, Wed, Thu, Fri, Sat};
 enum MonthNamesOptions {Jan=1, Feb, Mar, Apr, May, Jun, Jul, Aug, Sep, Oct, Nov, Dec};
 enum HemisphereOptions {North, South};
+enum GetDateAndTimeOptions { DT_LOCAL, DT_UTC, DT_RESTART, DT_UPTIME };
 
 enum LoggingLevels {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG_MORE, LOG_LEVEL_ALL};
 
@@ -146,7 +144,7 @@ enum LightTypes {LT_BASIC, LT_PWM1, LT_PWM2, LT_PWM3, LT_PWM4, LT_PWM5, LT_PWM6,
 enum LichtSubtypes {LST_NONE, LST_SINGLE, LST_COLDWARM, LST_RGB, LST_RGBW, LST_RGBWC};
 enum LichtSchemes {LS_POWER, LS_WAKEUP, LS_CYCLEUP, LS_CYCLEDN, LS_RANDOM, LS_MAX};
 
-enum XsnsFunctions {FUNC_INIT, FUNC_EVERY_50_MSECOND, FUNC_EVERY_SECOND, FUNC_PREP_BEFORE_TELEPERIOD, FUNC_JSON_APPEND, FUNC_WEB_APPEND, FUNC_SAVE_BEFORE_RESTART,
+enum XsnsFunctions {FUNC_INIT, FUNC_LOOP, FUNC_EVERY_50_MSECOND, FUNC_EVERY_SECOND, FUNC_PREP_BEFORE_TELEPERIOD, FUNC_JSON_APPEND, FUNC_WEB_APPEND, FUNC_SAVE_BEFORE_RESTART,
                     FUNC_COMMAND, FUNC_MQTT_SUBSCRIBE, FUNC_MQTT_INIT, FUNC_MQTT_DATA, FUNC_SET_POWER, FUNC_SHOW_SENSOR};
 
 const uint8_t kDefaultRfCode[9] PROGMEM = { 0x21, 0x16, 0x01, 0x0E, 0x03, 0x48, 0x2E, 0x1A, 0x00 };

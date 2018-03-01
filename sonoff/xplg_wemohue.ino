@@ -544,7 +544,7 @@ void HueConfigResponse(String *response)
   response->replace("{ms", WiFi.subnetMask().toString());
   response->replace("{gw", WiFi.gatewayIP().toString());
   response->replace("{br", HueBridgeId());
-  response->replace("{dt", GetUtcDateAndTime());
+  response->replace("{dt", GetDateAndTime(DT_UTC));
   response->replace("{id", GetHueUserId());
 }
 
@@ -616,7 +616,6 @@ void HueLights(String *path)
   String response;
   uint8_t device = 1;
   uint16_t tmp = 0;
-  int16_t pos = 0;
   float bri = 0;
   float hue = 0;
   float sat = 0;
@@ -624,7 +623,6 @@ void HueLights(String *path)
   bool resp = false;
   bool on = false;
   bool change = false;
-  char id[4];
   uint8_t maxhue = (devices_present > MAX_FRIENDLYNAMES) ? MAX_FRIENDLYNAMES : devices_present;
 
   path->remove(0,path->indexOf("/lights"));          // Remove until /lights

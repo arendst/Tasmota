@@ -50,6 +50,10 @@
 #define MTX_ADDRESS8           0
 #endif
 
+#ifndef HOME_ASSISTANT_DISCOVERY_ENABLE
+#define HOME_ASSISTANT_DISCOVERY_ENABLE 0
+#endif
+
 /*********************************************************************************************\
  * RTC memory
 \*********************************************************************************************/
@@ -123,7 +127,7 @@ void RtcSettingsDump()
 
   for (row = 0; row < maxrow; row++) {
     idx = row * CFG_COLS;
-    snprintf_P(log_data, sizeof(log_data), PSTR("%04X:"), idx);
+    snprintf_P(log_data, sizeof(log_data), PSTR("%03X:"), idx);
     for (col = 0; col < CFG_COLS; col++) {
       if (!(col%4)) {
         snprintf_P(log_data, sizeof(log_data), PSTR("%s "), log_data);
@@ -154,6 +158,7 @@ extern "C" {
 
 extern "C" uint32_t _SPIFFS_end;
 
+// From libraries/EEPROM/EEPROM.cpp EEPROMClass
 #define SPIFFS_END          ((uint32_t)&_SPIFFS_end - 0x40200000) / SPI_FLASH_SEC_SIZE
 
 // Version 3.x config
@@ -180,14 +185,11 @@ void SetFlashModeDout()
   eboot_command_read(&ebcmd);
   address = ebcmd.args[0];
   _buffer = new uint8_t[FLASH_SECTOR_SIZE];
-  if (SPI_FLASH_RESULT_OK == spi_flash_read(address, (uint32_t*)_buffer, FLASH_SECTOR_SIZE)) {
+
+  if (ESP.flashRead(address, (uint32_t*)_buffer, FLASH_SECTOR_SIZE)) {
     if (_buffer[2] != 3) {  // DOUT
       _buffer[2] = 3;
-      noInterrupts();
-      if (SPI_FLASH_RESULT_OK == spi_flash_erase_sector(address / FLASH_SECTOR_SIZE)) {
-        spi_flash_write(address, (uint32_t*)_buffer, FLASH_SECTOR_SIZE);
-      }
-      interrupts();
+      if (ESP.flashEraseSector(address / FLASH_SECTOR_SIZE)) ESP.flashWrite(address, (uint32_t*)_buffer, FLASH_SECTOR_SIZE);
     }
   }
   delete[] _buffer;
@@ -251,15 +253,11 @@ void SettingsSave(byte rotate)
       }
     }
     Settings.save_flag++;
-    noInterrupts();
-    spi_flash_erase_sector(settings_location);
-    spi_flash_write(settings_location * SPI_FLASH_SEC_SIZE, (uint32*)&Settings, sizeof(SYSCFG));
-    interrupts();
+    ESP.flashEraseSector(settings_location);
+    ESP.flashWrite(settings_location * SPI_FLASH_SEC_SIZE, (uint32*)&Settings, sizeof(SYSCFG));
     if (!stop_flash_rotate && rotate) {
       for (byte i = 1; i < CFG_ROTATES; i++) {
-        noInterrupts();
-        spi_flash_erase_sector(settings_location -i);  // Delete previous configurations by resetting to 0xFF
-        interrupts();
+        ESP.flashEraseSector(settings_location -i);  // Delete previous configurations by resetting to 0xFF
         delay(1);
       }
     }
@@ -284,10 +282,8 @@ void SettingsLoad()
   settings_location = SETTINGS_LOCATION +1;
   for (byte i = 0; i < CFG_ROTATES; i++) {
     settings_location--;
-    noInterrupts();
-    spi_flash_read(settings_location * SPI_FLASH_SEC_SIZE, (uint32*)&Settings, sizeof(SYSCFG));
-    spi_flash_read((settings_location -1) * SPI_FLASH_SEC_SIZE, (uint32*)&_SettingsH, sizeof(SYSCFGH));
-    interrupts();
+    ESP.flashRead(settings_location * SPI_FLASH_SEC_SIZE, (uint32*)&Settings, sizeof(SYSCFG));
+    ESP.flashRead((settings_location -1) * SPI_FLASH_SEC_SIZE, (uint32*)&_SettingsH, sizeof(SYSCFGH));
 
 //  snprintf_P(log_data, sizeof(log_data), PSTR("Cnfg: Check at %X with count %d and holder %X"), settings_location -1, _SettingsH.save_flag, _SettingsH.cfg_holder);
 //  AddLog(LOG_LEVEL_DEBUG);
@@ -302,15 +298,10 @@ void SettingsLoad()
   AddLog(LOG_LEVEL_DEBUG);
   if (Settings.cfg_holder != CFG_HOLDER) {
     // Auto upgrade
-    noInterrupts();
-    spi_flash_read((SETTINGS_LOCATION_3) * SPI_FLASH_SEC_SIZE, (uint32*)&Settings, sizeof(SYSCFG));
-    spi_flash_read((SETTINGS_LOCATION_3 + 1) * SPI_FLASH_SEC_SIZE, (uint32*)&_SettingsH, sizeof(SYSCFGH));
-    if (Settings.save_flag < _SettingsH.save_flag)
-      spi_flash_read((SETTINGS_LOCATION_3 + 1) * SPI_FLASH_SEC_SIZE, (uint32*)&Settings, sizeof(SYSCFG));
-    interrupts();
-    if ((Settings.cfg_holder != CFG_HOLDER) || (Settings.version >= 0x04020000)) {
-      SettingsDefault();
-    }
+    ESP.flashRead((SETTINGS_LOCATION_3) * SPI_FLASH_SEC_SIZE, (uint32*)&Settings, sizeof(SYSCFG));
+    ESP.flashRead((SETTINGS_LOCATION_3 + 1) * SPI_FLASH_SEC_SIZE, (uint32*)&_SettingsH, sizeof(SYSCFGH));
+    if (Settings.save_flag < _SettingsH.save_flag) ESP.flashRead((SETTINGS_LOCATION_3 + 1) * SPI_FLASH_SEC_SIZE, (uint32*)&Settings, sizeof(SYSCFG));
+    if ((Settings.cfg_holder != CFG_HOLDER) || (Settings.version >= 0x04020000)) SettingsDefault();
   }
 
   settings_hash = GetSettingsHash();
@@ -318,25 +309,33 @@ void SettingsLoad()
   RtcSettingsLoad();
 }
 
-void SettingsErase()
+void SettingsErase(uint8_t type)
 {
-  SpiFlashOpResult result;
+  /*
+    0 = Erase from program end until end of physical flash
+    1 = Erase SDK parameter area at end of linker memory model (0x0FDxxx - 0x0FFFFF) solving possible wifi errors
+  */
+
+  bool result;
 
   uint32_t _sectorStart = (ESP.getSketchSize() / SPI_FLASH_SEC_SIZE) + 1;
   uint32_t _sectorEnd = ESP.getFlashChipRealSize() / SPI_FLASH_SEC_SIZE;
+  if (1 == type) {
+    _sectorStart = SETTINGS_LOCATION +2;  // SDK parameter area above EEPROM area (0x0FDxxx - 0x0FFFFF)
+    _sectorEnd = SETTINGS_LOCATION +5;
+  }
+
   boolean _serialoutput = (LOG_LEVEL_DEBUG_MORE <= seriallog_level);
 
   snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION D_ERASE " %d " D_UNIT_SECTORS), _sectorEnd - _sectorStart);
   AddLog(LOG_LEVEL_DEBUG);
 
   for (uint32_t _sector = _sectorStart; _sector < _sectorEnd; _sector++) {
-    noInterrupts();
-    result = spi_flash_erase_sector(_sector);
-    interrupts();
+    result = ESP.flashEraseSector(_sector);
     if (_serialoutput) {
       Serial.print(F(D_LOG_APPLICATION D_ERASED_SECTOR " "));
       Serial.print(_sector);
-      if (SPI_FLASH_RESULT_OK == result) {
+      if (result) {
         Serial.println(F(" " D_OK));
       } else {
         Serial.println(F(" " D_ERROR));
@@ -345,6 +344,27 @@ void SettingsErase()
     }
     OsWatchLoop();
   }
+}
+
+// Copied from 2.4.0 as 2.3.0 is incomplete
+bool SettingsEraseConfig(void) {
+  const size_t cfgSize = 0x4000;
+  size_t cfgAddr = ESP.getFlashChipSize() - cfgSize;
+
+  for (size_t offset = 0; offset < cfgSize; offset += SPI_FLASH_SEC_SIZE) {
+    if (!ESP.flashEraseSector((cfgAddr + offset) / SPI_FLASH_SEC_SIZE)) {
+      return false;
+    }
+  }
+  return true;
+}
+
+void SettingsSdkErase()
+{
+  WiFi.disconnect(true);    // Delete SDK wifi config
+  SettingsErase(1);
+  SettingsEraseConfig();
+  delay(1000);
 }
 
 void SettingsDump(char* parms)
@@ -378,7 +398,7 @@ void SettingsDump(char* parms)
 
   for (row = srow; row < maxrow; row++) {
     idx = row * CFG_COLS;
-    snprintf_P(log_data, sizeof(log_data), PSTR("%04X:"), idx);
+    snprintf_P(log_data, sizeof(log_data), PSTR("%03X:"), idx);
     for (col = 0; col < CFG_COLS; col++) {
       if (!(col%4)) {
         snprintf_P(log_data, sizeof(log_data), PSTR("%s "), log_data);
@@ -478,9 +498,9 @@ void SettingsDefaultSet2()
 //    Settings.domoticz_switch_idx[i] = 0;
   }
 
-  Settings.hlw_power_calibration = HLW_PREF_PULSE;
-  Settings.hlw_voltage_calibration = HLW_UREF_PULSE;
-  Settings.hlw_current_calibration = HLW_IREF_PULSE;
+  Settings.energy_power_calibration = HLW_PREF_PULSE;
+  Settings.energy_voltage_calibration = HLW_UREF_PULSE;
+  Settings.energy_current_calibration = HLW_IREF_PULSE;
 //  Settings.energy_kWhtoday = 0;
 //  Settings.energy_kWhyesterday = 0;
 //  Settings.energy_kWhdoy = 0;

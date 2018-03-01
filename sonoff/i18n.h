@@ -99,6 +99,7 @@
 #define D_JSON_SSID "SSId"
 #define D_JSON_STARTDST "StartDST"       // Start Daylight Savings Time
 #define D_JSON_STARTED "Started"
+#define D_JSON_STARTUPUTC "StartupUTC"
 #define D_JSON_SUBNETMASK "Subnetmask"
 #define D_JSON_SUCCESSFUL "Successful"
 #define D_JSON_SWITCH "Switch"
@@ -278,12 +279,12 @@
 #define D_CMND_CURRENTLOW "CurrentLow"
 #define D_CMND_CURRENTHIGH "CurrentHigh"
 #define D_CMND_ENERGYRESET "EnergyReset"
-#define D_CMND_HLWPCAL "HlwPcal"
-#define D_CMND_HLWPSET "HlwPset"
-#define D_CMND_HLWUCAL "HlwUcal"
-#define D_CMND_HLWUSET "HlwUset"
-#define D_CMND_HLWICAL "HlwIcal"
-#define D_CMND_HLWISET "HlwIset"
+#define D_CMND_POWERCAL "PowerCal"
+#define D_CMND_POWERSET "PowerSet"
+#define D_CMND_VOLTAGECAL "VoltageCal"
+#define D_CMND_VOLTAGESET "VoltageSet"
+#define D_CMND_CURRENTCAL "CurrentCal"
+#define D_CMND_CURRENTSET "CurrentSet"
 #define D_CMND_MAXPOWER "MaxPower"
 #define D_CMND_MAXPOWERHOLD "MaxPowerHold"
 #define D_CMND_MAXPOWERWINDOW "MaxPowerWindow"
@@ -382,6 +383,7 @@ const char kUnitNames[] PROGMEM =
   D_UNIT_WATTHOUR ;
 
 const char S_JSON_COMMAND_NVALUE_SPACE_UNIT[] PROGMEM =       "{\"%s\":\"%d %s\"}";
+const char S_JSON_COMMAND_LVALUE_SPACE_UNIT[] PROGMEM =       "{\"%s\":\"%lu %s\"}";
 const char S_JSON_COMMAND_SVALUE_SPACE_UNIT[] PROGMEM =       "{\"%s\":\"%s %s\"}";
 const char S_JSON_COMMAND_NVALUE_UNIT[] PROGMEM =             "{\"%s\":\"%d%s\"}";
 const char S_JSON_COMMAND_NVALUE_UNIT_NVALUE_UNIT[] PROGMEM = "{\"%s\":\"%d%s (%d%s)\"}";
@@ -390,10 +392,12 @@ const char S_JSON_COMMAND_NVALUE_SVALUE[] PROGMEM =           "{\"%s\":\"%d (%s)
 const char S_JSON_COMMAND_NVALUE_ACTIVE_NVALUE[] PROGMEM =    "{\"%s\":\"%d (" D_JSON_ACTIVE " %d)\"}";
 
 const char S_JSON_COMMAND_NVALUE[] PROGMEM =                  "{\"%s\":%d}";
+const char S_JSON_COMMAND_LVALUE[] PROGMEM =                  "{\"%s\":%lu}";
 const char S_JSON_COMMAND_SVALUE[] PROGMEM =                  "{\"%s\":\"%s\"}";
 const char S_JSON_COMMAND_XVALUE[] PROGMEM =                  "{\"%s\":%s}";  // %s must provide quotes on non-number
 
 const char S_JSON_COMMAND_INDEX_NVALUE[] PROGMEM =            "{\"%s%d\":%d}";
+const char S_JSON_COMMAND_INDEX_LVALUE[] PROGMEM =            "{\"%s%d\":%lu}";
 const char S_JSON_COMMAND_INDEX_SVALUE[] PROGMEM =            "{\"%s%d\":\"%s\"}";
 const char S_JSON_COMMAND_INDEX_SVALUE_SVALUE[] PROGMEM =     "{\"%s%d\":\"%s%s\"}";
 
@@ -445,7 +449,7 @@ const char HTTP_SNS_SEAPRESSURE[] PROGMEM = "%s{s}%s " D_PRESSUREATSEALEVEL "{m}
 const char HTTP_SNS_ANALOG[] PROGMEM = "%s{s}%s " D_ANALOG_INPUT "%d{m}%d{e}";                               // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
 
 #if defined(USE_MHZ19) || defined(USE_SENSEAIR)
-const char HTTP_SNS_CO2[] PROGMEM = "%s{s}%s " D_CO2 "{m}%d " D_UNIT_PARTS_PER_MILLION "{e}";                              // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
+const char HTTP_SNS_CO2[] PROGMEM = "%s{s}%s " D_CO2 "{m}%d " D_UNIT_PARTS_PER_MILLION "{e}";                // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
 #endif  // USE_WEBSERVER
 
 const char S_MAIN_MENU[] PROGMEM = D_MAIN_MENU;
