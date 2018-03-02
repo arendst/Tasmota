@@ -72,13 +72,23 @@
 // -- Ota -----------------------------------------
 #define OTA_URL                "http://sonoff.maddox.co.uk/tasmota/sonoff.ino.bin"  // [OtaUrl]
 
+/*********************************************************************************************\
+ * Select ONE of possible MQTT library types below
+\*********************************************************************************************/
+// Default MQTT driver for both non-TLS and TLS connections. Blocks network if MQTT server is unavailable.
+#define MQTT_LIBRARY_TYPE      1                 // Use PubSubClient library
+// Alternative MQTT driver does not block network when MQTT server is unavailable. No TLS support
+//#define MQTT_LIBRARY_TYPE      2                 // Use TasmotaMqtt library (+4k4 code, +4k mem) - non-TLS only
+// Alternative MQTT driver does not block network when MQTT server is unavailable. No TLS support
+//#define MQTT_LIBRARY_TYPE      3                 // Use (patched) esp-mqtt-arduino library (+4k8 code, +4k mem) - non-TLS only
+
 // -- MQTT ----------------------------------------
 #define MQTT_USE               1                 // [SetOption3] Select default MQTT use (0 = Off, 1 = On)
+
 // !!! TLS uses a LOT OF MEMORY (20k) so be careful to enable other options at the same time !!!
-//#define USE_MQTT_TLS                             // EXPERIMENTAL Use TLS for MQTT connection (+53k code, +15k mem) - Disable by //
+//#define USE_MQTT_TLS                             // Use TLS for MQTT connection (+53k code, +15k mem) - Disable by //
                                                  //   Needs Fingerprint, TLS Port, UserId and Password
 #ifdef USE_MQTT_TLS
-//  #define MQTT_HOST            "m20.cloudmqtt.com"  // [MqttHost]
   #define MQTT_HOST            ""                   // [MqttHost]
   #define MQTT_FINGERPRINT     "A5 02 FF 13 99 9F 8B 39 8E F1 83 4F 11 23 65 0B 32 36 FC 07"  // [MqttFingerprint]
   #define MQTT_PORT            20123                // [MqttPort] MQTT TLS port

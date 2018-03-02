@@ -1,5 +1,5 @@
 /* 5.12.0d
- * Prep for optional MQTT drivers by separating mqtt code from sonoff.ino to file xdrv_00_mqtt.ino
+ * Add support for optional MQTT drivers to be selected in user_config.h (#1992)
  * Add Portuguese language file
  * Add compiler check for stable lwIP version v1.4 (#1940)
  * Add diacritics to Polish language file (#2005)
