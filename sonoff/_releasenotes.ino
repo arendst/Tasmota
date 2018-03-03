@@ -4,6 +4,7 @@
  * Add compiler check for stable lwIP version v1.4 (#1940)
  * Add diacritics to Polish language file (#2005)
  * Add Hungarian language file (#2024)
+ * Add support for Nova Fitness SDS011 and possibly SDS021 particle concentration sensor (#2070)
  * Fix MQTT TLS fingerprint validation (#2033)
  *
  * 5.12.0c
