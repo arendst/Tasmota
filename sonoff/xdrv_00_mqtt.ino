@@ -154,12 +154,14 @@ void MqttDisconnectedCb()
   MqttDisconnected(MqttClient->getState());  // status codes are documented in file mqtt.h as tConnState
 }
 
-void MqttMyDataCb(const char* topic, uint32_t topic_len, const char *data, uint32_t data_len)
+void MqttMyDataCb(const char* topic, uint32_t topic_len, const char* data, uint32_t data_len)
 {
-	char topicCpy[topic_len];
-	memcpy(topicCpy, topic, topic_len);
-	topicCpy[topic_len] = 0;
-  MqttDataHandler((char*)topicCpy, (byte*)data, data_len);
+	char topic_copy[topic_len +1];
+
+	memcpy(topic_copy, topic, topic_len);
+	topic_copy[topic_len] = 0;
+  if (0 == data_len) data = (const char*)&topic_copy + topic_len;
+  MqttDataHandler((char*)topic_copy, (byte*)data, data_len);
 }
 
 void MqttSubscribeLib(char *topic)

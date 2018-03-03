@@ -185,9 +185,10 @@ bool TasmotaMqtt::Connected()
 
 void TasmotaMqtt::_onMqttDataCb(const char* topic, uint32_t topic_len, const char* data, uint32_t data_len)
 {
-  char topic_copy[topic_len];
+	char topic_copy[topic_len +1];
 
-  memcpy(topic_copy, topic, topic_len);
-  topic_copy[topic_len] = 0;
+	memcpy(topic_copy, topic, topic_len);
+	topic_copy[topic_len] = 0;
+  if (0 == data_len) data = (const char*)&topic_copy + topic_len;
   onMqttDataCb((char*)topic_copy, (byte*)data, data_len);
 }
