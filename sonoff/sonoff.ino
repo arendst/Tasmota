@@ -338,14 +338,18 @@ void SetDevicePower(power_t rpower)
   }
   else if ((LCTECH1 == Settings.module) || (LCTECH2 == Settings.module)) {
     for (byte i = 0; i < devices_present; i++) {
+      if (i>0) {
+        delay(20);
+      }
       state = rpower &1;
 
       Serial.write(0xA0);
       Serial.write(i+1);
       Serial.write(state);
       Serial.write(0xA0+i+1+state);
+      Serial.flush();
       
-      rpower >>= 1;   
+      rpower >>= 1;
     }    
   }    
   else if (EXS_RELAY == Settings.module) {
