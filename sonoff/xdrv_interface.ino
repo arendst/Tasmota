@@ -179,6 +179,7 @@ boolean XdrvMqttData(char *topicBuf, uint16_t stopicBuf, char *dataBuf, uint16_t
  * Function call to all xdrv
  *
  * FUNC_INIT
+ * FUNC_LOOP
  * FUNC_MQTT_SUBSCRIBE
  * FUNC_MQTT_INIT
  * return FUNC_MQTT_DATA
@@ -195,9 +196,7 @@ boolean XdrvCall(byte Function)
 
   for (byte x = 0; x < xdrv_present; x++) {
     result = xdrv_func_ptr[x](Function);
-    if (result) {
-      break;
-    }
+    if (result) break;
   }
 
   return result;
