@@ -339,7 +339,7 @@ void SetDevicePower(power_t rpower, int source)
 
   XdrvSetPower(rpower);
 
-  if ((SONOFF_DUAL == Settings.module) || (CH4 == Settings.module)) {
+  if ((SONOFF_DUAL == Settings.module) || (CH4 == Settings.module) || (FOXEL_DUAL_RF == Settings.module)) {
     Serial.write(0xA0);
     Serial.write(0x04);
     Serial.write(rpower &0xFF);
@@ -1606,7 +1606,11 @@ void ButtonHandler()
           holdbutton[button_index] = (Settings.param[P_HOLD_TIME] * (STATES / 10)) -1;
           hold_time_extent = 1;
         }
-        dual_button_code = 0;
+      }
+    } else if (FOXEL_DUAL_RF == Settings.module) {
+      button_present = 1;
+      if ((dual_button_code >> button_index) & 0x01) {
+        button = PRESSED;
       }
     } else {
       if ((pin[GPIO_KEY1 +button_index] < 99) && !blockgpio0) {
@@ -1717,6 +1721,9 @@ void ButtonHandler()
     }
     lastbutton[button_index] = button;
   }
+
+  // reset the code so that there will no multiple press
+  dual_button_code = 0;
 }
 
 /*********************************************************************************************\
@@ -2130,9 +2137,9 @@ void SerialInput()
     serial_in_byte = Serial.read();
 
 /*-------------------------------------------------------------------------------------------*\
- * Sonoff dual and ch4 19200 baud serial interface
+ * Sonoff dual, ch4 and foxel dual 19200 baud serial interface
 \*-------------------------------------------------------------------------------------------*/
-    if ((SONOFF_DUAL == Settings.module) || (CH4 == Settings.module)) {
+    if ((SONOFF_DUAL == Settings.module) || (CH4 == Settings.module) || (FOXEL_DUAL_RF == Settings.module)) {
       if (dual_hex_code) {
         dual_hex_code--;
         if (dual_hex_code) {
@@ -2344,6 +2351,10 @@ void GpioInit()
   else if (CH4 == Settings.module) {
     Settings.flag.mqtt_serial = 0;
     devices_present = 4;
+    baudrate = 19200;
+  }
+  else if (FOXEL_DUAL_RF == Settings.module) {
+    devices_present = 2;
     baudrate = 19200;
   }
   else if (SONOFF_SC == Settings.module) {
