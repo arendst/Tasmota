@@ -1,4 +1,12 @@
+## OS specific ########
+.DS_Store
+.fuse_hidden*
+
+
+## Project files ######
 .pioenvs
 .piolibdeps
 .clang_complete
 .gcc-flags.json
+.vscode
+sonoff/user_config_override.h
