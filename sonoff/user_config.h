@@ -29,6 +29,7 @@
 \*********************************************************************************************/
 
 // -- Localization --------------------------------
+//#define MY_LANGUAGE            cz-CZ           // Czech without fonetick in Czech
 //#define MY_LANGUAGE            de-DE           // German in Germany
 //#define MY_LANGUAGE            en-GB           // English in Great Britain. Enabled by Default
 //#define MY_LANGUAGE            es-AR           // Spanish in Argentina
@@ -40,6 +41,7 @@
 //#define MY_LANGUAGE            pt-PT           // Portuguese in Portugal
 //#define MY_LANGUAGE            ru-RU           // Russian in Russia
 //#define MY_LANGUAGE            zh-CN           // Chinese (Simplified) in China
+//#define MY_LANGUAGE            zh-TW           // Chinese (Traditional) in Taiwan
 
 // -- Project -------------------------------------
 #define PROJECT                "sonoff"          // PROJECT is used as the default topic delimiter and OTA file name
