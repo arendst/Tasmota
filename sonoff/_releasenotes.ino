@@ -2,11 +2,13 @@
  * Add support for optional MQTT drivers to be selected in user_config.h (#1992)
  * Add Portuguese language file
  * Add compiler check for stable lwIP version v1.4 (#1940)
+ * Add always suffix with device number in Mqtt discovery topic (#1962)
  * Add diacritics to Polish language file (#2005)
  * Add Hungarian language file (#2024)
  * Add Czech language file
  * Add Chinese (Traditional) in Taiwan language file (#2108)
  * Add support for Nova Fitness SDS011 and possibly SDS021 particle concentration sensor (#2070)
+ * Add single decimal precision to Nova Fitness SDS0x1 sensor values (#2093)
  * Fix MQTT TLS fingerprint validation (#2033)
  *
  * 5.12.0c
