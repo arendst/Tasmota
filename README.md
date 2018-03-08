@@ -1,6 +1,8 @@
 ## Sonoff-Tasmota (KNX_MOD)
 
--- WORK IN PROGRESS --
+-- WORK IN PROGRESS -- Using the KNX Libary [ascillato/ESP-KNX-IP_Lite](https://github.com/ascillato/ESP-KNX-IP_Lite)
+
+-----------------------------------------------------------------------------------------------------------------------------------
 
 Provide ESP8266 based Sonoff by [iTead Studio](https://www.itead.cc/) and ElectroDragon IoT Relay with Serial, Web and MQTT control allowing 'Over the Air' or OTA firmware updates using Arduino IDE.
 
