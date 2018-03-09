@@ -9,6 +9,7 @@
  * Add Chinese (Traditional) in Taiwan language file (#2108)
  * Add support for Nova Fitness SDS011 and possibly SDS021 particle concentration sensor (#2070)
  * Add single decimal precision to Nova Fitness SDS0x1 sensor values (#2093)
+ * Add support for multiple SHT3X sensors (#1949, #2110)
  * Fix MQTT TLS fingerprint validation (#2033)
  *
  * 5.12.0c
