@@ -1,4 +1,7 @@
-/* 5.12.0d
+/* 5.12.0e
+ * Add a second TLS fingerprint to allow switching keys in TLS mode (#2033, #2102)
+ *
+ * 5.12.0d
  * Add support for optional MQTT drivers to be selected in user_config.h (#1992)
  * Add Portuguese language file
  * Add compiler check for stable lwIP version v1.4 (#1940)

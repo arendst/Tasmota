@@ -165,7 +165,7 @@
 #define D_FINGERPRINT "Verify TLS fingerprint..."
 #define D_TLS_CONNECT_FAILED_TO "TLS Connect failed to"
 #define D_RETRY_IN "Retry in"
-#define D_VERIFIED "Verified"
+#define D_VERIFIED "Verified using Fingerprint"
 #define D_INSECURE "Insecure connection due to invalid Fingerprint"
 #define D_CONNECT_FAILED_TO "Connect failed to"
 

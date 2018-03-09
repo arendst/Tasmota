@@ -165,7 +165,7 @@
 #define D_FINGERPRINT "Verifikuj otisk TLS..."
 #define D_TLS_CONNECT_FAILED_TO "Nepripojeno TLS do"
 #define D_RETRY_IN "Zopakuji za"
-#define D_VERIFIED "Zverifikovano"
+#define D_VERIFIED "Zverifikovano otisk"
 #define D_INSECURE "Nespravne pripojeni z duvodu chybneho otisku TLS"
 #define D_CONNECT_FAILED_TO "Spojeni se nepodarilo navazat"
 

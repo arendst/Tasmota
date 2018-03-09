@@ -376,19 +376,33 @@ void MqttConnected()
 #ifdef USE_MQTT_TLS
 boolean MqttCheckTls()
 {
+  char fingerprint1[60];
+  char fingerprint2[60];
   boolean result = false;
+
+  fingerprint1[0] = '\0';
+  fingerprint2[0] = '\0';
+  for (byte i = 0; i < sizeof(Settings.mqtt_fingerprint[0]); i++) {
+    snprintf_P(fingerprint1, sizeof(fingerprint1), PSTR("%s%s%02X"), fingerprint1, (i) ? " " : "", Settings.mqtt_fingerprint[0][i]);
+    snprintf_P(fingerprint2, sizeof(fingerprint2), PSTR("%s%s%02X"), fingerprint2, (i) ? " " : "", Settings.mqtt_fingerprint[1][i]);
+  }
 
   AddLog_P(LOG_LEVEL_INFO, S_LOG_MQTT, PSTR(D_FINGERPRINT));
   if (!EspClient.connect(Settings.mqtt_host, Settings.mqtt_port)) {
     snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_MQTT D_TLS_CONNECT_FAILED_TO " %s:%d. " D_RETRY_IN " %d " D_UNIT_SECOND),
       Settings.mqtt_host, Settings.mqtt_port, mqtt_retry_counter);
     AddLog(LOG_LEVEL_DEBUG);
-  } else if (!EspClient.verify(Settings.mqtt_fingerprint, Settings.mqtt_host)) {
-    AddLog_P(LOG_LEVEL_INFO, S_LOG_MQTT, PSTR(D_INSECURE));
   } else {
-    AddLog_P(LOG_LEVEL_INFO, S_LOG_MQTT, PSTR(D_VERIFIED));
-    result = true;
+    if (EspClient.verify(fingerprint1, Settings.mqtt_host)) {
+      AddLog_P(LOG_LEVEL_INFO, S_LOG_MQTT, PSTR(D_VERIFIED "1"));
+      result = true;
+    }
+    else if (EspClient.verify(fingerprint2, Settings.mqtt_host)) {
+      AddLog_P(LOG_LEVEL_INFO, S_LOG_MQTT, PSTR(D_VERIFIED "2"));
+      result = true;
+    }
   }
+  if (!result) AddLog_P(LOG_LEVEL_INFO, S_LOG_MQTT, PSTR(D_FAILED));
   EspClient.stop();
   yield();
   return result;
@@ -534,12 +548,22 @@ bool MqttCommand()
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, index, GetStateText(index -1));
   }
 #ifdef USE_MQTT_TLS
-  else if (CMND_MQTTFINGERPRINT == command_code) {
-    if ((data_len > 0) && (data_len < sizeof(Settings.mqtt_fingerprint))) {
-      strlcpy(Settings.mqtt_fingerprint, (!strcmp(dataBuf,"0")) ? "" : (1 == payload) ? MQTT_FINGERPRINT : dataBuf, sizeof(Settings.mqtt_fingerprint));
+  else if ((CMND_MQTTFINGERPRINT == command_code) && (index > 0) && (index <= 2)) {
+    char fingerprint[60];
+    if ((data_len > 0) && (data_len < sizeof(fingerprint))) {
+      strlcpy(fingerprint, (!strcmp(dataBuf,"0")) ? "" : (1 == payload) ? (1 == index) ? MQTT_FINGERPRINT1 : MQTT_FINGERPRINT2 : dataBuf, sizeof(fingerprint));
+      char *p = fingerprint;
+      for (byte i = 0; i < 20; i++) {
+        Settings.mqtt_fingerprint[index -1][i] = strtol(p, &p, 16);
+      }
       restart_flag = 2;
     }
-    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, Settings.mqtt_fingerprint);
+
+    fingerprint[0] = '\0';
+    for (byte i = 0; i < sizeof(Settings.mqtt_fingerprint[index -1]); i++) {
+      snprintf_P(fingerprint, sizeof(fingerprint), PSTR("%s%s%02X"), fingerprint, (i) ? " " : "", Settings.mqtt_fingerprint[index -1][i]);
+    }
+    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, index, fingerprint);
   }
 #endif
   else if ((CMND_MQTTCLIENT == command_code) && !grpflg) {

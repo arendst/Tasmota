@@ -165,7 +165,7 @@
 #define D_FINGERPRINT "Verification empreinte TLS ..."
 #define D_TLS_CONNECT_FAILED_TO "Echec de connexion TLS à"
 #define D_RETRY_IN "Nouvelle tentative dans"
-#define D_VERIFIED "Verifié"
+#define D_VERIFIED "Verifié empreinte "
 #define D_INSECURE "Connexion non sécurisée car empreinte non vérifée"
 #define D_CONNECT_FAILED_TO "Echec de connexion à"
 
