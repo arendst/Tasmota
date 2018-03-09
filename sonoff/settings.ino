@@ -472,7 +472,8 @@ void SettingsDefaultSet2()
   Settings.webserver = WEB_SERVER;
   Settings.weblog_level = WEB_LOG_LEVEL;
 
-  strlcpy(Settings.mqtt_fingerprint, MQTT_FINGERPRINT, sizeof(Settings.mqtt_fingerprint));
+  strlcpy(Settings.mqtt_fingerprint[0], MQTT_FINGERPRINT1, sizeof(Settings.mqtt_fingerprint[0]));
+  strlcpy(Settings.mqtt_fingerprint[1], MQTT_FINGERPRINT2, sizeof(Settings.mqtt_fingerprint[1]));
   strlcpy(Settings.mqtt_host, MQTT_HOST, sizeof(Settings.mqtt_host));
   Settings.mqtt_port = MQTT_PORT;
   strlcpy(Settings.mqtt_client, MQTT_CLIENT_ID, sizeof(Settings.mqtt_client));

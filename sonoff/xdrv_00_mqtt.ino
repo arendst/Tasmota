@@ -383,11 +383,16 @@ boolean MqttCheckTls()
     snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_MQTT D_TLS_CONNECT_FAILED_TO " %s:%d. " D_RETRY_IN " %d " D_UNIT_SECOND),
       Settings.mqtt_host, Settings.mqtt_port, mqtt_retry_counter);
     AddLog(LOG_LEVEL_DEBUG);
-  } else if (!EspClient.verify(Settings.mqtt_fingerprint, Settings.mqtt_host)) {
-    AddLog_P(LOG_LEVEL_INFO, S_LOG_MQTT, PSTR(D_INSECURE));
-  } else {
-    AddLog_P(LOG_LEVEL_INFO, S_LOG_MQTT, PSTR(D_VERIFIED));
+  } else if (EspClient.verify(Settings.mqtt_fingerprint[0], Settings.mqtt_host)) {
+    snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_MQTT D_VERIFIED " %d."), 1);
+    AddLog(LOG_LEVEL_INFO);
     result = true;
+  } else if (EspClient.verify(Settings.mqtt_fingerprint[1], Settings.mqtt_host)) {
+    snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_MQTT D_VERIFIED " %d."), 2);
+    AddLog(LOG_LEVEL_INFO);
+    result = true;
+  } else {
+    AddLog_P(LOG_LEVEL_INFO, S_LOG_MQTT, PSTR(D_INSECURE));
   }
   EspClient.stop();
   yield();
@@ -534,12 +539,12 @@ bool MqttCommand()
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, index, GetStateText(index -1));
   }
 #ifdef USE_MQTT_TLS
-  else if (CMND_MQTTFINGERPRINT == command_code) {
-    if ((data_len > 0) && (data_len < sizeof(Settings.mqtt_fingerprint))) {
-      strlcpy(Settings.mqtt_fingerprint, (!strcmp(dataBuf,"0")) ? "" : (1 == payload) ? MQTT_FINGERPRINT : dataBuf, sizeof(Settings.mqtt_fingerprint));
+  else if ((CMND_MQTTFINGERPRINT == command_code) && (index > 0) && (index <= 2)) {
+    if ((data_len > 0) && (data_len < sizeof(Settings.mqtt_fingerprint[0]))) {
+      strlcpy(Settings.mqtt_fingerprint[index - 1], (!strcmp(dataBuf,"0")) ? "" : (1 == payload) ? (1 == index) ? MQTT_FINGERPRINT1 : MQTT_FINGERPRINT2 : dataBuf, sizeof(Settings.mqtt_fingerprint[0]));
       restart_flag = 2;
     }
-    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, Settings.mqtt_fingerprint);
+    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, Settings.mqtt_fingerprint[index -1]);
   }
 #endif
   else if ((CMND_MQTTCLIENT == command_code) && !grpflg) {

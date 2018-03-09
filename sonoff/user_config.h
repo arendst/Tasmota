@@ -92,7 +92,8 @@
                                                  //   Needs Fingerprint, TLS Port, UserId and Password
 #ifdef USE_MQTT_TLS
   #define MQTT_HOST            ""                   // [MqttHost]
-  #define MQTT_FINGERPRINT     "A5 02 FF 13 99 9F 8B 39 8E F1 83 4F 11 23 65 0B 32 36 FC 07"  // [MqttFingerprint]
+  #define MQTT_FINGERPRINT1    "A5 02 FF 13 99 9F 8B 39 8E F1 83 4F 11 23 65 0B 32 36 FC 07"  // [MqttFingerprint1]
+  #define MQTT_FINGERPRINT2    ""  // [MqttFingerprint2]
   #define MQTT_PORT            20123                // [MqttPort] MQTT TLS port
   #define MQTT_USER            "cloudmqttuser"      // [MqttUser] Mandatory user
   #define MQTT_PASS            "cloudmqttpassword"  // [MqttPassword] Mandatory password
