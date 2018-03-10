@@ -114,9 +114,7 @@ void Ws2812StripShow()
 int mod(int a, int b)
 {
    int ret = a % b;
-   if (ret < 0) {
-    ret += b;
-   }
+   if (ret < 0) ret += b;
    return ret;
 }
 
@@ -142,13 +140,15 @@ void Ws2812UpdatePixelColor(int position, struct WsColor hand_color, float offse
 
 void Ws2812UpdateHand(int position, uint8_t index)
 {
-  if (Settings.flag.ws_clock_reverse) {
-    position = Settings.light_pixels -position;
-  }
+  position = (position + Settings.light_rotation) % Settings.light_pixels;
+
+  if (Settings.flag.ws_clock_reverse) position = Settings.light_pixels -position;
   WsColor hand_color = { Settings.ws_color[index][WS_RED], Settings.ws_color[index][WS_GREEN], Settings.ws_color[index][WS_BLUE] };
 
   Ws2812UpdatePixelColor(position, hand_color, 1);
-  uint8_t range = ((Settings.ws_width[index] -1) / 2) +1;
+
+  uint8_t range = 1;
+  if (index < WS_MARKER) range = ((Settings.ws_width[index] -1) / 2) +1;
   for (uint8_t h = 1; h < range; h++) {
     float offset = (float)(range - h) / (float)range;
     Ws2812UpdatePixelColor(position -h, hand_color, offset);
@@ -160,9 +160,15 @@ void Ws2812Clock()
 {
   strip->ClearTo(0); // Reset strip
   int clksize = 60000 / (int)Settings.light_pixels;
+
   Ws2812UpdateHand((RtcTime.second * 1000) / clksize, WS_SECOND);
   Ws2812UpdateHand((RtcTime.minute * 1000) / clksize, WS_MINUTE);
   Ws2812UpdateHand(((RtcTime.hour % 12) * (5000 / clksize)) + ((RtcTime.minute * 1000) / (12 * clksize)), WS_HOUR);
+  if (Settings.ws_color[WS_MARKER][WS_RED] + Settings.ws_color[WS_MARKER][WS_GREEN] + Settings.ws_color[WS_MARKER][WS_BLUE]) {
+    for (byte i = 0; i < 12; i++) {
+      Ws2812UpdateHand((i * 5000) / clksize, WS_MARKER);
+    }
+  }
 
   Ws2812StripShow();
 }
@@ -207,9 +213,7 @@ void Ws2812Gradient(uint8_t schemenr)
 #endif
 
   ColorScheme scheme = kSchemes[schemenr];
-  if (scheme.count < 2) {
-    return;
-  }
+  if (scheme.count < 2) return;
 
   uint8_t repeat = kRepeat[Settings.light_width];  // number of scheme.count per ledcount
   uint16_t range = (uint16_t)ceil((float)Settings.light_pixels / (float)repeat);
@@ -260,9 +264,7 @@ void Ws2812Bars(uint8_t schemenr)
   ColorScheme scheme = kSchemes[schemenr];
 
   uint16_t maxSize = Settings.light_pixels / scheme.count;
-  if (kWidth[Settings.light_width] > maxSize) {
-    maxSize = 0;
-  }
+  if (kWidth[Settings.light_width] > maxSize) maxSize = 0;
 
   uint16_t speed = ((Settings.light_speed * 2) -1) * (STATES / 10);
   uint8_t offset = speed > 0 ? strip_timer_counter / speed : 0;
@@ -280,9 +282,7 @@ void Ws2812Bars(uint8_t schemenr)
   }
   uint8_t colorIndex = offset % scheme.count;
   for (i = 0; i < Settings.light_pixels; i++) {
-    if (maxSize) {
-      colorIndex = ((i + offset) % (scheme.count * kWidth[Settings.light_width])) / kWidth[Settings.light_width];
-    }
+    if (maxSize) colorIndex = ((i + offset) % (scheme.count * kWidth[Settings.light_width])) / kWidth[Settings.light_width];
     c.R = mcolor[colorIndex].red;
     c.G = mcolor[colorIndex].green;
     c.B = mcolor[colorIndex].blue;
