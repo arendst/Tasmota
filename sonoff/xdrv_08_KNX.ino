@@ -23,89 +23,26 @@
 
 #ifdef USE_KNX
 
-#define ROOT_PREFIX "/knx"  // [Default ""] This gets prepended to all webserver paths, default is empty string "". Set this to "/knx" if you want the config to be available on http://<ip>/knx
+#include <esp-knx-ip.h>     // Include KNX IP library
+                            // esp-knx-ip library modifications:
+                            //    esp-knx-ip.h -> Root_prefix "/knx"
+                            //                    debug off
+                            //    esp-knx-ip-send.cpp -> no checksum
+                            //    esp-knx-ip-webserver.cpp -> order and format
 
-#include <esp-knx-ip-lite.h>     // Include KNX IP Lite library
-
-config_id_t hostname_id;
-callback_id_t callback_id;
-config_id_t enable_sending_id;
-config_id_t update_rate_id;
-config_id_t status_ga_id;
-bool button_knx_state;
+address_t physaddr;
 
 void KNXStart()
 {
-
-  button_knx_state = false;
-
-  snprintf_P(log_data, sizeof(log_data), PSTR("KNX START"));
-  AddLog(LOG_LEVEL_DEBUG);
-  
-  // Set Physical KNX Address of ESP KNX
-  knx.physical_address_set(knx.GA_to_address(1,1,1));
-
-  // Register the config options
-  hostname_id = knx.config_register_string("Hostname", 20, String("sonoff_DHT11"));
-  //type_id = knx.config_register_options("Type", type_options, SONOFF_TYPE_BASIC);
-  enable_sending_id = knx.config_register_bool("Send on update", true);
-  update_rate_id = knx.config_register_int("Update rate (s)", 1);
-
-  // Register and Set Group Addresses to Write to
-  status_ga_id = knx.config_register_ga("Channel 1 Status GA");
-  knx.config_set_ga(status_ga_id, knx.GA_to_address(2,2,1));
-  //channels[1].status_ga_id = knx.config_register_ga("Channel 2 Status GA", is_4ch_or_4ch_pro);
-  //channels[2].status_ga_id = knx.config_register_ga("Channel 3 Status GA", is_4ch_or_4ch_pro);
-  //channels[3].status_ga_id = knx.config_register_ga("Channel 4 Status GA", is_4ch_or_4ch_pro);
-  //temp_ga = knx.config_register_ga("Temperature", show_periodic_options);
-  //knx.config_set_ga(temp_ga,4,1,1);
-  //hum_ga = knx.config_register_ga("Humidity", show_periodic_options);
-  //knx.config_set_ga(hum_ga,4,1,2);
-
-  // Register and set Group Addresses to Receive data from and execute callbacks
-//  callback_id = knx.callback_register("Channel 1", channel_cb, &button_knx_state);
-//  knx.callback_assign(callback_id, knx.GA_to_address(2,2,1));
-  //knx.callback_register("Channel 2", channel_cb, &channels[1], is_4ch_or_4ch_pro);
-  //knx.callback_register("Channel 3", channel_cb, &channels[2], is_4ch_or_4ch_pro);
-  //knx.callback_register("Channel 4", channel_cb, &channels[3], is_4ch_or_4ch_pro);
-  //knx.callback_register("Read Temperature", temp_cb);
-  //knx.callback_register("Read Humidity", hum_cb);
-
-  // Register data to be shown on the webserver
-  knx.feedback_register_bool("Channel 1 is on", &button_knx_state);
-  knx.feedback_register_action("Toogle channel 1", toggle_chan);
-  //knx.feedback_register_bool("Channel 2 is on", &(channels[1].state), is_4ch_or_4ch_pro);
-  //knx.feedback_register_action("Toogle channel 2", toggle_chan, &channels[1], is_4ch_or_4ch_pro);
-  //knx.feedback_register_bool("Channel 3 is on", &(channels[2].state), is_4ch_or_4ch_pro);
-  //knx.feedback_register_action("Toogle channel 3", toggle_chan, &channels[2], is_4ch_or_4ch_pro);
-  //knx.feedback_register_bool("Channel 4 is on", &(channels[3].state), is_4ch_or_4ch_pro);
-  //knx.feedback_register_action("Toogle channel 4", toggle_chan, &channels[3], is_4ch_or_4ch_pro);
-  //knx.feedback_register_float("Temperature (°C)", &last_temp);
-  //knx.feedback_register_float("Humidity (%)", &last_hum);
-
-
-
-
-  // Start knx
-  #ifdef USE_WEBSERVER
-    //knx.start(); // Start KNX with its own webserver
-    knx.start(WebServer); // Start KNX with a webserver already running on 'WebServer'
-                          // On this case you might want to change ROOT_PREFIX to
-                          // #define ROOT_PREFIX   "/knx"  before  #include <esp-knx-ip.h>
-    snprintf_P(log_data, sizeof(log_data), PSTR("KNX START WEBSERVER"));
-    AddLog(LOG_LEVEL_DEBUG);                       
-  #else
-    knx.start(nullptr); // Start KNX WITHOUT webserver
-    snprintf_P(log_data, sizeof(log_data), PSTR("KNX START WITHOUT WEBSERVER"));
-    AddLog(LOG_LEVEL_DEBUG);          
-  #endif  // USE_WEBSERVER
-  
+  knx.physical_address_set(knx.PA_to_address(1, 1, 1));  // Set Physical KNX Address of the device
 }
 
 
 void KNXLoop()
 {
+//  if (Settings.flag.knx_enabled) {
   knx.loop();  // Process knx events
+//  }   
 }
 
 /*
@@ -114,40 +51,42 @@ void KNX_EVERY_SECOND() {
 }
 */
 
-void toggle_chan(void *arg)
+void KNXSaveSettings()
 {
-//  sonoff_channel_t *chan = (sonoff_channel_t *)arg;
-  button_knx_state = !button_knx_state;
-//  digitalWrite(chan->pin, chan->state ? HIGH : LOW);
-//  digitalWrite(LED_PIN, chan->state ? LOW : HIGH);
-  knx.write_1bit(knx.config_get_ga(status_ga_id), button_knx_state);
-  snprintf_P(log_data, sizeof(log_data), PSTR("KNX TOGGLE"));
-  AddLog(LOG_LEVEL_DEBUG);  
-}
+  /*
+  char stemp[20];
+  char ssensor_indices[6 * MAX_DOMOTICZ_SNS_IDX];
+  char tmp[100];
 
-/*
-void channel_cb(message_t const &msg, void *arg)
-{
-//  sonoff_channel_t *chan = (sonoff_channel_t *)arg;
-  switch (msg.ct)
-  {
-    case KNX_CT_WRITE:
-//      chan->state = msg.data[0];
-//      Serial.println(chan->state ? "Toggle on" : "Toggle off");
-//      digitalWrite(chan->pin, chan->state ? HIGH : LOW);
-//      digitalWrite(LED_PIN, chan->state ? LOW : HIGH);
-      knx.write_1bit(knx.config_get_ga(status_ga_id), button_knx_state);
-      snprintf_P(log_data, sizeof(log_data), PSTR("KNX WRITE"));
-      AddLog(LOG_LEVEL_DEBUG);      
-      break;
-     case KNX_CT_READ:
-      knx.answer_1bit(msg.received_on, button_knx_state);
-      snprintf_P(log_data, sizeof(log_data), PSTR("KNX TELEGRAM RECEIVED"));
-      AddLog(LOG_LEVEL_DEBUG);         
-      break;
+  for (byte i = 0; i < MAX_DOMOTICZ_IDX; i++) {
+    snprintf_P(stemp, sizeof(stemp), PSTR("r%d"), i +1);
+    WebGetArg(stemp, tmp, sizeof(tmp));
+    Settings.domoticz_relay_idx[i] = (!strlen(tmp)) ? 0 : atoi(tmp);
+    snprintf_P(stemp, sizeof(stemp), PSTR("k%d"), i +1);
+    WebGetArg(stemp, tmp, sizeof(tmp));
+    Settings.domoticz_key_idx[i] = (!strlen(tmp)) ? 0 : atoi(tmp);
+    snprintf_P(stemp, sizeof(stemp), PSTR("s%d"), i +1);
+    WebGetArg(stemp, tmp, sizeof(tmp));
+    Settings.domoticz_switch_idx[i] = (!strlen(tmp)) ? 0 : atoi(tmp);
   }
+  ssensor_indices[0] = '\0';
+  for (byte i = 0; i < DZ_MAX_SENSORS; i++) {
+    snprintf_P(stemp, sizeof(stemp), PSTR("l%d"), i +1);
+    WebGetArg(stemp, tmp, sizeof(tmp));
+    Settings.domoticz_sensor_idx[i] = (!strlen(tmp)) ? 0 : atoi(tmp);
+    snprintf_P(ssensor_indices, sizeof(ssensor_indices), PSTR("%s%s%d"), ssensor_indices, (strlen(ssensor_indices)) ? "," : "",  Settings.domoticz_sensor_idx[i]);
+  }
+  WebGetArg("ut", tmp, sizeof(tmp));
+  Settings.domoticz_update_timer = (!strlen(tmp)) ? DOMOTICZ_UPDATE_TIMER : atoi(tmp);
+
+  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_DOMOTICZ D_CMND_IDX " %d,%d,%d,%d, " D_CMND_KEYIDX " %d,%d,%d,%d, " D_CMND_SWITCHIDX " %d,%d,%d,%d, " D_CMND_SENSORIDX " %s, " D_CMND_UPDATETIMER " %d"),
+    Settings.domoticz_relay_idx[0], Settings.domoticz_relay_idx[1], Settings.domoticz_relay_idx[2], Settings.domoticz_relay_idx[3],
+    Settings.domoticz_key_idx[0], Settings.domoticz_key_idx[1], Settings.domoticz_key_idx[2], Settings.domoticz_key_idx[3],
+    Settings.domoticz_switch_idx[0], Settings.domoticz_switch_idx[1], Settings.domoticz_switch_idx[2], Settings.domoticz_switch_idx[3],
+    ssensor_indices, Settings.domoticz_update_timer);
+  AddLog(LOG_LEVEL_INFO);
+  */
 }
-*/
 
 /*********************************************************************************************\
  * Interface
@@ -168,15 +107,7 @@ boolean Xdrv08(byte function)
         break;
 //      case FUNC_EVERY_SECOND;
 //        KNX_EVERY_SECOND();
-//        break;
-//#ifdef USE_WEBSERVER
-//      case FUNC_WEB_APPEND:
-//        EnergyShow(0);
-//        break;
-//#endif  // USE_WEBSERVER
-//      case FUNC_SAVE_BEFORE_RESTART:
-//        EnergySaveState();
-//        break;                   
+//        break;                 
 //      case FUNC_COMMAND:
 //        result = MqttCommand();
 //        break;
