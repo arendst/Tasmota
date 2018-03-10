@@ -192,6 +192,9 @@ const char HTTP_BTN_MENU3[] PROGMEM =
 #endif  // USE_DOMOTICZ
   "";
 const char HTTP_BTN_MENU4[] PROGMEM =
+#ifdef USE_KNX
+  "<br/><form action='knx' method='get'><button>" D_CONFIGURE_KNX "</button></form>"
+#endif  // USE_KNX  
   "<br/><form action='lg' method='get'><button>" D_CONFIGURE_LOGGING "</button></form>"
   "<br/><form action='co' method='get'><button>" D_CONFIGURE_OTHER "</button></form>"
   "<br/>"
