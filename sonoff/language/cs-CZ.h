@@ -1,5 +1,5 @@
 /*
-  cz-CZ.h - localization for Czech with fonetick - Czech for Sonoff-Tasmota
+  cz-CZ.h - localization for Czech with diacritics - Czech for Sonoff-Tasmota
 
   Copyright (C) 2018  Theo Arends (translated by vs)
 
@@ -17,8 +17,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef _LANGUAGE_CZ_CZ_H_
-#define _LANGUAGE_CZ_CZ_H_
+#ifndef _LANGUAGE_CS_CZ_H_
+#define _LANGUAGE_CS_CZ_H_
 
 /*************************** ATTENTION *******************************\
  *
@@ -31,6 +31,9 @@
 \*********************************************************************/
 
 //#define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
+
+// HTML (ISO 639-1) Language Code
+#define D_HTML_LANGUAGE "cs"
 
 // "2017-03-07T11:08:02" - ISO8601:2004
 #define D_YEAR_MONTH_SEPARATOR "-"
@@ -455,4 +458,4 @@
 #define D_LOG_UPNP "UPP: "         // UPnP
 #define D_LOG_WIFI "WIF: "         // Wifi
 
-#endif  // _LANGUAGE_CZ_CZ_H_
+#endif  // _LANGUAGE_CS_CZ_H_
