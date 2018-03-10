@@ -165,7 +165,7 @@
 #define D_FINGERPRINT "Проверка TLS Fingerprint..."
 #define D_TLS_CONNECT_FAILED_TO "Сбой подключения TLS к"
 #define D_RETRY_IN "Повторить"
-#define D_VERIFIED "Проверено"
+#define D_VERIFIED "Проверено Fingerprint"
 #define D_INSECURE "Небезопасное соединение, недействительный Fingerprint"
 #define D_CONNECT_FAILED_TO "Ошибка подключения к"
 

@@ -165,7 +165,7 @@
 #define D_FINGERPRINT "TLS-Fingerabdruck wird verifiziert..."
 #define D_TLS_CONNECT_FAILED_TO "TLS-Verbindung fehlgeschlagen an"
 #define D_RETRY_IN "Wiederversuch in"
-#define D_VERIFIED "verifiziert"
+#define D_VERIFIED "verifiziert mit Fingerabdruck"
 #define D_INSECURE "unsichere Verbindung aufgrund ungültigen Fingerabdrucks"
 #define D_CONNECT_FAILED_TO "Verbindung fehlgeschlagen aufgrund von"
 

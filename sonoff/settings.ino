@@ -472,7 +472,18 @@ void SettingsDefaultSet2()
   Settings.webserver = WEB_SERVER;
   Settings.weblog_level = WEB_LOG_LEVEL;
 
-  strlcpy(Settings.mqtt_fingerprint, MQTT_FINGERPRINT, sizeof(Settings.mqtt_fingerprint));
+  char fingerprint[60];
+  strlcpy(fingerprint, MQTT_FINGERPRINT1, sizeof(fingerprint));
+  char *p = fingerprint;
+  for (byte i = 0; i < 20; i++) {
+    Settings.mqtt_fingerprint[0][i] = strtol(p, &p, 16);
+  }
+  strlcpy(fingerprint, MQTT_FINGERPRINT2, sizeof(fingerprint));
+  p = fingerprint;
+  for (byte i = 0; i < 20; i++) {
+    Settings.mqtt_fingerprint[1][i] = strtol(p, &p, 16);
+  }
+
   strlcpy(Settings.mqtt_host, MQTT_HOST, sizeof(Settings.mqtt_host));
   Settings.mqtt_port = MQTT_PORT;
   strlcpy(Settings.mqtt_client, MQTT_CLIENT_ID, sizeof(Settings.mqtt_client));
@@ -875,7 +886,15 @@ void SettingsDelta()
     if (Settings.version < 0x050B0107) {
       Settings.flag.not_power_linked = 0;
     }
-
+    if (Settings.version < 0x050C0005) {
+      char fingerprint[60];
+      memcpy(fingerprint, Settings.mqtt_fingerprint, sizeof(fingerprint));
+      char *p = fingerprint;
+      for (byte i = 0; i < 20; i++) {
+        Settings.mqtt_fingerprint[0][i] = strtol(p, &p, 16);
+        Settings.mqtt_fingerprint[1][i] = Settings.mqtt_fingerprint[0][i];
+      }
+    }
 
     Settings.version = VERSION;
     SettingsSave(1);

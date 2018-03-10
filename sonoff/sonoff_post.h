@@ -145,8 +145,12 @@ void WifiWpsStatusCallback(wps_cb_status status);
 #define SWITCH_MODE            TOGGLE         // TOGGLE, FOLLOW or FOLLOW_INV (the wall switch state)
 #endif
 
-#ifndef MQTT_FINGERPRINT
-#define MQTT_FINGERPRINT       "A5 02 FF 13 99 9F 8B 39 8E F1 83 4F 11 23 65 0B 32 36 FC 07"
+#ifndef MQTT_FINGERPRINT1
+#define MQTT_FINGERPRINT1      "A5 02 FF 13 99 9F 8B 39 8E F1 83 4F 11 23 65 0B 32 36 FC 07"
+#endif
+
+#ifndef MQTT_FINGERPRINT2
+#define MQTT_FINGERPRINT2      "A5 02 FF 13 99 9F 8B 39 8E F1 83 4F 11 23 65 0B 32 36 FC 07"
 #endif
 
 #ifndef WS2812_LEDS

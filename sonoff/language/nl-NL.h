@@ -165,7 +165,7 @@
 #define D_FINGERPRINT "Controleer TLS vingerafdruk..."
 #define D_TLS_CONNECT_FAILED_TO "TLS Verbinding mislukt naar"
 #define D_RETRY_IN "Opnieuw proberen over"
-#define D_VERIFIED "Gecontroleerd"
+#define D_VERIFIED "Gecontroleerd met vingerafdruk"
 #define D_INSECURE "Door ongeldige vingerafdruk een onveilige verbinding"
 #define D_CONNECT_FAILED_TO "Verbinding mislukt naar"
 

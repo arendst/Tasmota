@@ -165,7 +165,7 @@
 #define D_FINGERPRINT "Verifique a impressão digital TLS..."
 #define D_TLS_CONNECT_FAILED_TO "TLS não conseguiu ligar"
 #define D_RETRY_IN "Tentativa em"
-#define D_VERIFIED "Verificado"
+#define D_VERIFIED "Verificado impressão digital "
 #define D_INSECURE "Ligação insegura devido à impressão digital inválida"
 #define D_CONNECT_FAILED_TO "A ligação falhou ao"
 

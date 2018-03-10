@@ -165,7 +165,7 @@
 #define D_FINGERPRINT "TLS fingerprint hitelesítése..."
 #define D_TLS_CONNECT_FAILED_TO "TLS Csatlakozás sikertelen a"
 #define D_RETRY_IN "Újrapróbálás"
-#define D_VERIFIED "Hitelesítve"
+#define D_VERIFIED "Hitelesítve Fingerprint"
 #define D_INSECURE "Nem biztonságos kapcsolat érvénytelen Fingerprint miatt"
 #define D_CONNECT_FAILED_TO "Sikertelen csatlakozás a"
 

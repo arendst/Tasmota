@@ -93,9 +93,9 @@ void HAssDiscovery()
 
     snprintf_P(sidx, sizeof(sidx), PSTR("_%d"), i);
     // Clear "other" topic first in case the device has been reconfigured
-    snprintf_P(stopic, sizeof(stopic), PSTR(HOME_ASSISTANT_DISCOVERY_PREFIX "/%s/%s%s/config"), (is_light) ? "switch" : "light", mqtt_topic, (1 == devices_present) ? "" : sidx);
+    snprintf_P(stopic, sizeof(stopic), PSTR(HOME_ASSISTANT_DISCOVERY_PREFIX "/%s/%s%s/config"), (is_light) ? "switch" : "light", mqtt_topic, sidx);
     MqttPublish(stopic, true);
-    snprintf_P(stopic, sizeof(stopic), PSTR(HOME_ASSISTANT_DISCOVERY_PREFIX "/%s/%s%s/config"), (is_light) ? "light" : "switch", mqtt_topic, (1 == devices_present) ? "" : sidx);
+    snprintf_P(stopic, sizeof(stopic), PSTR(HOME_ASSISTANT_DISCOVERY_PREFIX "/%s/%s%s/config"), (is_light) ? "light" : "switch", mqtt_topic, sidx);
 
     if (Settings.flag.hass_discovery) {
       char name[33];

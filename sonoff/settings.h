@@ -116,7 +116,12 @@ struct SYSCFG {
   byte          syslog_level;              // 1AA
   uint8_t       webserver;                 // 1AB
   byte          weblog_level;              // 1AC
-  char          mqtt_fingerprint[60];      // 1AD To be freed by binary fingerprint
+
+//  char          mqtt_fingerprint[60];      // 1AD
+  uint8_t       mqtt_fingerprint[2][20];   // 1AD
+
+  byte          free_1D5[20];              // 1D5
+
   char          mqtt_host[33];             // 1E9
   uint16_t      mqtt_port;                 // 20A
   char          mqtt_client[33];           // 20C
