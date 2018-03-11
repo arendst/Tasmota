@@ -4,6 +4,7 @@
  * Add additional time offset to Wifi Retry based on device mac address (#2089)
  * Add command Color6 RRGGBB for Clock hour marker color and command Rotation pixels for Clock rotation (#2092)
  * Add HTML language header in local language (#2123)
+ * Fix MAX31850 higher temperatures (#1269)
  *
  * 5.12.0d
  * Add support for optional MQTT drivers to be selected in user_config.h (#1992)
