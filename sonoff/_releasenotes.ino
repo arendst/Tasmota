@@ -1,4 +1,5 @@
 /* 5.12.0e
+ * Add additional time offset to Wifi Retry based on device mac address (#2089)
  * Add a second TLS fingerprint to allow switching keys in TLS mode (#2033, #2102)
  * Add HTML language header in local language (#2123)
  * Add commands Color6 RRGGBB for Clock marker color and Rotation pixels for Clock rotation (#2092)
