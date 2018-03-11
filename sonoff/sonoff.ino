@@ -513,7 +513,7 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
         Settings.pulse_timer[index -1] = payload16;  // 0 - 65535
         pulse_timer[index -1] = 0;
       }
-      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_NVALUE, command, index, Settings.pulse_timer[index -1]);
+      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_NVALUE_ACTIVE_NVALUE, command, index, Settings.pulse_timer[index -1], pulse_timer[index -1]);
     }
     else if (CMND_BLINKTIME == command_code) {
       if ((payload > 2) && (payload <= 3600)) {
