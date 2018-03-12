@@ -119,7 +119,7 @@ Decoding 14 results
 0x4021ffb4: snprintf_P(char*, unsigned int, char const*, ...) at C:\Data2\Arduino\arduino-1.8.1-esp-2.3.0\portable\packages\esp8266\hardware\esp8266\2.3.0\cores\esp8266/pgmspace.cpp line 146
 0x40201118: atol at C:\Data2\Arduino\arduino-1.8.1-esp-2.3.0\portable\packages\esp8266\hardware\esp8266\2.3.0\cores\esp8266/core_esp8266_noniso.c line 45
 0x40201128: atoi at C:\Data2\Arduino\arduino-1.8.1-esp-2.3.0\portable\packages\esp8266\hardware\esp8266\2.3.0\cores\esp8266/core_esp8266_noniso.c line 45
-0x4020fafb: MqttDataCallback(char*, unsigned char*, unsigned int) at R:\Arduino\Work-ESP8266\Theo\sonoff\sonoff-4\sonoff/sonoff.ino line 679 (discriminator 1)
+0x4020fafb: MqttDataHandler(char*, unsigned char*, unsigned int) at R:\Arduino\Work-ESP8266\Theo\sonoff\sonoff-4\sonoff/sonoff.ino line 679 (discriminator 1)
 0x4022321b: pp_attach at ?? line ?
 
 00:00:08 MQTT: tele/sonoff/INFO3 = {"Started":"Fatal exception:28 flag:2 (EXCEPTION) epc1:0x4000bf64 epc2:0x00000000 epc3:0x00000000 excvaddr:0x00000007 depc:0x00000000"}
@@ -427,11 +427,12 @@ uint32_t GetHash(const char *buffer, size_t size)
  * Wifi
 \*********************************************************************************************/
 
-#define WIFI_CONFIG_SEC   180  // seconds before restart
-#define WIFI_CHECK_SEC    20   // seconds
-#define WIFI_RETRY_SEC    30   // seconds
+#define WIFI_CONFIG_SEC        180  // seconds before restart
+#define WIFI_CHECK_SEC         20   // seconds
+#define WIFI_RETRY_OFFSET_SEC  20   // seconds
 
 uint8_t wifi_counter;
+uint8_t wifi_retry_init;
 uint8_t wifi_retry;
 uint8_t wifi_status;
 uint8_t wps_result;
@@ -599,7 +600,7 @@ void WifiCheckIp()
 {
   if ((WL_CONNECTED == WiFi.status()) && (static_cast<uint32_t>(WiFi.localIP()) != 0)) {
     wifi_counter = WIFI_CHECK_SEC;
-    wifi_retry = WIFI_RETRY_SEC;
+    wifi_retry = wifi_retry_init;
     AddLog_P((wifi_status != WL_CONNECTED) ? LOG_LEVEL_INFO : LOG_LEVEL_DEBUG_MORE, S_LOG_WIFI, PSTR(D_CONNECTED));
     if (wifi_status != WL_CONNECTED) {
 //      AddLog_P(LOG_LEVEL_INFO, PSTR("Wifi: Set IP addresses"));
@@ -614,15 +615,15 @@ void WifiCheckIp()
       case WL_CONNECTED:
         AddLog_P(LOG_LEVEL_INFO, S_LOG_WIFI, PSTR(D_CONNECT_FAILED_NO_IP_ADDRESS));
         wifi_status = 0;
-        wifi_retry = WIFI_RETRY_SEC;
+        wifi_retry = wifi_retry_init;
         break;
       case WL_NO_SSID_AVAIL:
         AddLog_P(LOG_LEVEL_INFO, S_LOG_WIFI, PSTR(D_CONNECT_FAILED_AP_NOT_REACHED));
         if (WIFI_WAIT == Settings.sta_config) {
-          wifi_retry = WIFI_RETRY_SEC;
+          wifi_retry = wifi_retry_init;
         } else {
-          if (wifi_retry > (WIFI_RETRY_SEC / 2)) {
-            wifi_retry = WIFI_RETRY_SEC / 2;
+          if (wifi_retry > (wifi_retry_init / 2)) {
+            wifi_retry = wifi_retry_init / 2;
           }
           else if (wifi_retry) {
             wifi_retry = 0;
@@ -631,25 +632,25 @@ void WifiCheckIp()
         break;
       case WL_CONNECT_FAILED:
         AddLog_P(LOG_LEVEL_INFO, S_LOG_WIFI, PSTR(D_CONNECT_FAILED_WRONG_PASSWORD));
-        if (wifi_retry > (WIFI_RETRY_SEC / 2)) {
-          wifi_retry = WIFI_RETRY_SEC / 2;
+        if (wifi_retry > (wifi_retry_init / 2)) {
+          wifi_retry = wifi_retry_init / 2;
         }
         else if (wifi_retry) {
           wifi_retry = 0;
         }
         break;
       default:  // WL_IDLE_STATUS and WL_DISCONNECTED
-        if (!wifi_retry || ((WIFI_RETRY_SEC / 2) == wifi_retry)) {
+        if (!wifi_retry || ((wifi_retry_init / 2) == wifi_retry)) {
           AddLog_P(LOG_LEVEL_INFO, S_LOG_WIFI, PSTR(D_CONNECT_FAILED_AP_TIMEOUT));
         } else {
           AddLog_P(LOG_LEVEL_DEBUG, S_LOG_WIFI, PSTR(D_ATTEMPTING_CONNECTION));
         }
     }
     if (wifi_retry) {
-      if (WIFI_RETRY_SEC == wifi_retry) {
+      if (wifi_retry_init == wifi_retry) {
         WifiBegin(3);  // Select default SSID
       }
-      if ((Settings.sta_config != WIFI_WAIT) && ((WIFI_RETRY_SEC / 2) == wifi_retry)) {
+      if ((Settings.sta_config != WIFI_WAIT) && ((wifi_retry_init / 2) == wifi_retry)) {
         WifiBegin(2);  // Select alternate SSID
       }
       wifi_counter = 1;
@@ -657,7 +658,7 @@ void WifiCheckIp()
     } else {
       WifiConfig(Settings.sta_config);
       wifi_counter = 1;
-      wifi_retry = WIFI_RETRY_SEC;
+      wifi_retry = wifi_retry_init;
     }
   }
 }
@@ -765,7 +766,8 @@ void WifiConnect()
 {
   WiFi.persistent(false);   // Solve possible wifi init errors
   wifi_status = 0;
-  wifi_retry = WIFI_RETRY_SEC;
+  wifi_retry_init = WIFI_RETRY_OFFSET_SEC + ((ESP.getChipId() & 0xF) * 2);
+  wifi_retry = wifi_retry_init;
   wifi_counter = 1;
 }
 

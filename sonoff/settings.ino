@@ -579,6 +579,7 @@ void SettingsDefaultSet2()
 
   // 5.8.0
   Settings.light_pixels = WS2812_LEDS;
+//  Settings.light_rotation = 0;
 
   // 5.8.1
 //  Settings.altitude = 0;
@@ -597,7 +598,6 @@ void SettingsDefaultSet2()
 
 void SettingsDefaultSet_3_2_4()
 {
-  Settings.ws_pixels = WS2812_LEDS;
   Settings.ws_red = 255;
   Settings.ws_green = 0;
   Settings.ws_blue = 0;
@@ -625,6 +625,7 @@ void SettingsDefaultSet_3_9_3()
   }
 
   Settings.light_pixels = WS2812_LEDS;
+  Settings.light_rotation = 0;
   for (byte i = 0; i < MAX_PWMS; i++) {
     Settings.light_color[i] = 255;
   }
@@ -835,7 +836,7 @@ void SettingsDelta()
         }
       }
       if (!Settings.light_pixels && cfg_wsflg) {
-        Settings.light_pixels = Settings.ws_pixels;
+        Settings.light_pixels = WS2812_LEDS;
         Settings.light_color[0] = Settings.ws_red;
         Settings.light_color[1] = Settings.ws_green;
         Settings.light_color[2] = Settings.ws_blue;
@@ -887,6 +888,7 @@ void SettingsDelta()
       Settings.flag.not_power_linked = 0;
     }
     if (Settings.version < 0x050C0005) {
+      Settings.light_rotation = 0;
       char fingerprint[60];
       memcpy(fingerprint, Settings.mqtt_fingerprint, sizeof(fingerprint));
       char *p = fingerprint;

@@ -116,11 +116,9 @@ struct SYSCFG {
   byte          syslog_level;              // 1AA
   uint8_t       webserver;                 // 1AB
   byte          weblog_level;              // 1AC
-
-//  char          mqtt_fingerprint[60];      // 1AD
   uint8_t       mqtt_fingerprint[2][20];   // 1AD
 
-  byte          free_1D5[20];              // 1D5
+  byte          free_1D5[20];              // 1D5  Free since 5.12.0e
 
   char          mqtt_host[33];             // 1E9
   uint16_t      mqtt_port;                 // 20A
@@ -186,7 +184,7 @@ struct SYSCFG {
 
   uint16_t      blinktime;                 // 39A
   uint16_t      blinkcount;                // 39C
-  uint16_t      ws_pixels;                 // 39E Not used since 5.8.0
+  uint16_t      light_rotation;            // 39E
   uint8_t       ws_red;                    // 3A0 Not used since 5.8.0
   uint8_t       ws_green;                  // 3A1 Not used since 5.8.0
   uint8_t       ws_blue;                   // 3A2 Not used since 5.8.0
