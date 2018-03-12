@@ -165,13 +165,6 @@
 #define D_DATA_SIZE "數據大小:"
 #define D_ANALOG_INPUT "Analog"
 
-#define D_FINGERPRINT "驗證 TLS 指紋..."
-#define D_TLS_CONNECT_FAILED_TO "TLS 連接失敗"
-#define D_RETRY_IN "重試倒計時:"
-#define D_VERIFIED "驗證成功"
-#define D_INSECURE "指紋無效導致連接不安全"
-#define D_CONNECT_FAILED_TO "連接失敗:"
-
 // support.ino
 #define D_OSWATCH "osWatch"
 #define D_BLOCKED_LOOP "Blocked Loop"
@@ -320,6 +313,14 @@
 #define D_ENABLE_WEBLOG_FOR_RESPONSE "如果預期響應，則啟用Weblog 2"
 #define D_NEED_USER_AND_PASSWORD "需要 user=<用戶名>&password=<密碼>"
 
+// xdrv_00_mqtt.ino
+#define D_FINGERPRINT "驗證 TLS 指紋..."
+#define D_TLS_CONNECT_FAILED_TO "TLS 連接失敗"
+#define D_RETRY_IN "重試倒計時:"
+#define D_VERIFIED "驗證成功"
+#define D_INSECURE "指紋無效導致連接不安全"
+#define D_CONNECT_FAILED_TO "連接失敗:"
+
 // xdrv_wemohue.ino
 #define D_MULTICAST_DISABLED "組播已禁用"
 #define D_MULTICAST_REJOINED "組播已(重新)加入"
@@ -351,9 +352,9 @@
   #define D_DOMOTICZ_TEMP_HUM_BARO "溫度,濕度,氣壓"
   #define D_DOMOTICZ_POWER_ENERGY "功率,電量"
   #define D_DOMOTICZ_ILLUMINANCE "照度"
-  #define D_DOMOTICZ_COUNT "數值"
-  #define D_DOMOTICZ_VOLTAGE "電壓"
-  #define D_DOMOTICZ_CURRENT "電流"
+  #define D_DOMOTICZ_COUNT "數值/PM1"
+  #define D_DOMOTICZ_VOLTAGE "電壓/PM2.5"
+  #define D_DOMOTICZ_CURRENT "電流/PM10"
   #define D_DOMOTICZ_AIRQUALITY "空氣品質"
 #define D_DOMOTICZ_UPDATE_TIMER "更新計時器"
 
