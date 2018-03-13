@@ -165,13 +165,6 @@
 #define D_DATA_SIZE "Data Size"
 #define D_ANALOG_INPUT "Analog"
 
-#define D_FINGERPRINT "Verify TLS fingerprint..."
-#define D_TLS_CONNECT_FAILED_TO "TLS Connect failed to"
-#define D_RETRY_IN "Retry in"
-#define D_VERIFIED "Verified using Fingerprint"
-#define D_INSECURE "Insecure connection due to invalid Fingerprint"
-#define D_CONNECT_FAILED_TO "Connect failed to"
-
 // support.ino
 #define D_OSWATCH "osWatch"
 #define D_BLOCKED_LOOP "Blocked Loop"
@@ -320,6 +313,14 @@
 #define D_ENABLE_WEBLOG_FOR_RESPONSE "Enable weblog 2 if response expected"
 #define D_NEED_USER_AND_PASSWORD "Need user=<username>&password=<password>"
 
+// xdrv_00_mqtt.ino
+#define D_FINGERPRINT "Verify TLS fingerprint..."
+#define D_TLS_CONNECT_FAILED_TO "TLS Connect failed to"
+#define D_RETRY_IN "Retry in"
+#define D_VERIFIED "Verified using Fingerprint"
+#define D_INSECURE "Insecure connection due to invalid Fingerprint"
+#define D_CONNECT_FAILED_TO "Connect failed to"
+
 // xdrv_wemohue.ino
 #define D_MULTICAST_DISABLED "Multicast disabled"
 #define D_MULTICAST_REJOINED "Multicast (re)joined"
@@ -351,9 +352,9 @@
   #define D_DOMOTICZ_TEMP_HUM_BARO "Temp,Hum,Baro"
   #define D_DOMOTICZ_POWER_ENERGY "Power,Energy"
   #define D_DOMOTICZ_ILLUMINANCE "Illuminance"
-  #define D_DOMOTICZ_COUNT "Count"
-  #define D_DOMOTICZ_VOLTAGE "Voltage"
-  #define D_DOMOTICZ_CURRENT "Current"
+  #define D_DOMOTICZ_COUNT "Count/PM1"
+  #define D_DOMOTICZ_VOLTAGE "Voltage/PM2.5"
+  #define D_DOMOTICZ_CURRENT "Current/PM10"
   #define D_DOMOTICZ_AIRQUALITY "AirQuality"
 #define D_DOMOTICZ_UPDATE_TIMER "Update timer"
 

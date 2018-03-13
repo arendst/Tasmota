@@ -140,12 +140,8 @@ boolean Ds18x20Read(uint8_t sensor, float &t)
       t = ConvertTemp(sign * temp12 * 0.0625);  // Divide by 16
       break;
     case MAX31850_CHIPID:
-      temp14 = (data[1] << 8) + (data[0] & 0xFC);
-      if (temp14 < 0) {
-        temp14 = (~temp14) +1;
-        sign = -1;
-      }
-      t = ConvertTemp(sign * temp14 * 0.0625);  // Divide by 16
+        temp14 = (data[1] << 8) + (data[0] & 0xFC);
+        t = ConvertTemp(temp14 * 0.0625);  // Divide by 16
       break;
     }
   }

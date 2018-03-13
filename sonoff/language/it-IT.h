@@ -165,13 +165,6 @@
 #define D_DATA_SIZE "Dimensione Dati"
 #define D_ANALOG_INPUT "Ingresso Analogico"
 
-#define D_FINGERPRINT "Verifica TLS fingerprint..."
-#define D_TLS_CONNECT_FAILED_TO "Connessione TLS fallita a"
-#define D_RETRY_IN "Nuovo tentativo in"
-#define D_VERIFIED "Verificato Fingerprint"
-#define D_INSECURE "Connessione insicura a causa di Fingerprint non valido"
-#define D_CONNECT_FAILED_TO "Connessione Fallita a"
-
 // support.ino
 #define D_OSWATCH "osWatch"
 #define D_BLOCKED_LOOP "Ciclo Bloccato"
@@ -320,6 +313,14 @@
 #define D_ENABLE_WEBLOG_FOR_RESPONSE "Abilitare weblog 2 se e' attesa una risposta"
 #define D_NEED_USER_AND_PASSWORD "Richiesto user=<username>&password=<password>"
 
+// xdrv_00_mqtt.ino
+#define D_FINGERPRINT "Verifica TLS fingerprint..."
+#define D_TLS_CONNECT_FAILED_TO "Connessione TLS fallita a"
+#define D_RETRY_IN "Nuovo tentativo in"
+#define D_VERIFIED "Verificato Fingerprint"
+#define D_INSECURE "Connessione insicura a causa di Fingerprint non valido"
+#define D_CONNECT_FAILED_TO "Connessione Fallita a"
+
 // xdrv_wemohue.ino
 #define D_MULTICAST_DISABLED "Multicast disabilitato"
 #define D_MULTICAST_REJOINED "Multicast (ri)associato"
@@ -351,9 +352,9 @@
   #define D_DOMOTICZ_TEMP_HUM_BARO "Temp,Hum,Baro"
   #define D_DOMOTICZ_POWER_ENERGY "Power,Energy"
   #define D_DOMOTICZ_ILLUMINANCE "Illuminance"
-  #define D_DOMOTICZ_COUNT "Count"
-  #define D_DOMOTICZ_VOLTAGE "Voltage"
-  #define D_DOMOTICZ_CURRENT "Current"
+  #define D_DOMOTICZ_COUNT "Count/PM1"
+  #define D_DOMOTICZ_VOLTAGE "Voltage/PM2.5"
+  #define D_DOMOTICZ_CURRENT "Current/PM10"
   #define D_DOMOTICZ_AIRQUALITY "AirQuality"
 #define D_DOMOTICZ_UPDATE_TIMER "Intervallo di aggiornamento"
 

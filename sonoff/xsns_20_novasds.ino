@@ -107,6 +107,10 @@ void NovaSdsShow(boolean json)
     dtostrfd(pm2_5f, 1, pm2_5);
     if (json) {
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"SDS0X1\":{\"PM2.5\":%s,\"PM10\":%s}"), mqtt_data, pm2_5, pm10);
+#ifdef USE_DOMOTICZ
+      DomoticzSensor(DZ_VOLTAGE, pm2_5);  // PM2.5
+      DomoticzSensor(DZ_CURRENT, pm10);   // PM10
+#endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
     } else {
       snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SDS0X1_SNS, mqtt_data, pm2_5, pm10);

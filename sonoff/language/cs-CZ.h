@@ -1,5 +1,5 @@
 /*
-  cz-CZ.h - localization for Czech with diacritics - Czech for Sonoff-Tasmota
+  cs-CZ.h - localization for Czech with diacritics - Czech for Sonoff-Tasmota
 
   Copyright (C) 2018  Theo Arends (translated by vs)
 
@@ -165,13 +165,6 @@
 #define D_DATA_SIZE "Velikost dat"
 #define D_ANALOG_INPUT "Analogový vstup"
 
-#define D_FINGERPRINT "Verifikuj otisk TLS..."
-#define D_TLS_CONNECT_FAILED_TO "Nepřipojeno TLS do"
-#define D_RETRY_IN "Zopakuji za"
-#define D_VERIFIED "Ověřeno otisk "
-#define D_INSECURE "Nesprávné připojení z důvodu chybného otisku TLS"
-#define D_CONNECT_FAILED_TO "Spojení se nepodařilo navázat"
-
 // support.ino
 #define D_OSWATCH "osWatch"
 #define D_BLOCKED_LOOP "Zablokování smyčky"
@@ -320,6 +313,14 @@
 #define D_ENABLE_WEBLOG_FOR_RESPONSE "Zapni úroveň 2 zápisu Weblog, pokud je očekávána odpověď"
 #define D_NEED_USER_AND_PASSWORD "Vyžadován uživatel=<username>&heslo=<password>"
 
+// xdrv_00_mqtt.ino
+#define D_FINGERPRINT "Verifikuj otisk TLS..."
+#define D_TLS_CONNECT_FAILED_TO "Nepřipojeno TLS do"
+#define D_RETRY_IN "Zopakuji za"
+#define D_VERIFIED "Ověřeno otisk "
+#define D_INSECURE "Nesprávné připojení z důvodu chybného otisku TLS"
+#define D_CONNECT_FAILED_TO "Spojení se nepodařilo navázat"
+
 // xdrv_wemohue.ino
 #define D_MULTICAST_DISABLED "Multicast je vypnutý"
 #define D_MULTICAST_REJOINED "Multicast opět připojený"
@@ -351,9 +352,9 @@
   #define D_DOMOTICZ_TEMP_HUM_BARO "Temp,Vlhk,Tlak"
   #define D_DOMOTICZ_POWER_ENERGY "Příkon,Energie"
   #define D_DOMOTICZ_ILLUMINANCE "Osvětlení"
-  #define D_DOMOTICZ_COUNT "Počítadlo"
-  #define D_DOMOTICZ_VOLTAGE "Napětí"
-  #define D_DOMOTICZ_CURRENT "Proud"
+  #define D_DOMOTICZ_COUNT "Počítadlo/PM1"
+  #define D_DOMOTICZ_VOLTAGE "Napětí/PM2,5"
+  #define D_DOMOTICZ_CURRENT "Proud/PM10"
   #define D_DOMOTICZ_AIRQUALITY "AirQuality"
 #define D_DOMOTICZ_UPDATE_TIMER "Aktualizace stopek"
 
