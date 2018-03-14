@@ -29,12 +29,14 @@
 enum EnergyHardware { ENERGY_NONE, ENERGY_HLW8012, ENERGY_CSE7766, ENERGY_PZEM004T };
 
 enum EnergyCommands {
+  CMND_POWERDELTA,
   CMND_POWERLOW, CMND_POWERHIGH, CMND_VOLTAGELOW, CMND_VOLTAGEHIGH, CMND_CURRENTLOW, CMND_CURRENTHIGH,
   CMND_POWERCAL, CMND_POWERSET, CMND_VOLTAGECAL, CMND_VOLTAGESET, CMND_CURRENTCAL, CMND_CURRENTSET,
   CMND_ENERGYRESET, CMND_MAXENERGY, CMND_MAXENERGYSTART,
   CMND_MAXPOWER, CMND_MAXPOWERHOLD, CMND_MAXPOWERWINDOW,
   CMND_SAFEPOWER, CMND_SAFEPOWERHOLD, CMND_SAFEPOWERWINDOW };
 const char kEnergyCommands[] PROGMEM =
+  D_CMND_POWERDELTA "|"
   D_CMND_POWERLOW "|" D_CMND_POWERHIGH "|" D_CMND_VOLTAGELOW "|" D_CMND_VOLTAGEHIGH "|" D_CMND_CURRENTLOW "|" D_CMND_CURRENTHIGH "|"
   D_CMND_POWERCAL "|" D_CMND_POWERSET "|" D_CMND_VOLTAGECAL "|" D_CMND_VOLTAGESET "|" D_CMND_CURRENTCAL "|" D_CMND_CURRENTSET "|"
   D_CMND_ENERGYRESET "|" D_CMND_MAXENERGY "|" D_CMND_MAXENERGYSTART "|"
@@ -44,6 +46,7 @@ const char kEnergyCommands[] PROGMEM =
 float energy_voltage = 0;         // 123.1 V
 float energy_current = 0;         // 123.123 A
 float energy_power = 0;           // 123.1 W
+float energy_power_last = 0;
 float energy_power_factor = 0;    // 0.12
 float energy_daily = 0;           // 12.123 kWh
 float energy_total = 0;           // 12345.12345 kWh
@@ -679,6 +682,13 @@ void EnergyMarginCheck()
     }
   }
 
+  if (!jsonflg && Settings.energy_power_delta) {
+    float diff = abs(energy_power_last - energy_power);
+    float max_power = (energy_power_last > energy_power) ? energy_power_last : energy_power;
+    energy_power_last = energy_power;
+    if (((diff / max_power) * 100) > Settings.energy_power_delta) EnergyMqttShow();
+  }
+
 #if FEATURE_POWER_LIMIT
   // Max Power
   if (Settings.energy_max_power_limit) {
@@ -768,7 +778,14 @@ boolean EnergyCommand()
   unsigned long nvalue = 0;
 
   int command_code = GetCommandCode(command, sizeof(command), XdrvMailbox.topic, kEnergyCommands);
-  if (CMND_POWERLOW == command_code) {
+  if (CMND_POWERDELTA == command_code) {
+    if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < 101)) {
+      Settings.energy_power_delta = (1 == XdrvMailbox.payload) ? DEFAULT_POWER_DELTA : XdrvMailbox.payload;
+    }
+    nvalue = Settings.energy_power_delta;
+    unit = UNIT_PERCENTAGE;
+  }
+  else if (CMND_POWERLOW == command_code) {
     if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < 3601)) {
       Settings.energy_min_power = XdrvMailbox.payload;
     }

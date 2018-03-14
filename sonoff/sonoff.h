@@ -71,11 +71,12 @@ typedef unsigned long power_t;              // Power (Relay) type
 //#define PWM_FREQ               910          // 100..1000 Hz led refresh (iTead value)
 #define PWM_FREQ               880          // 100..1000 Hz led refresh (BN-SZ01 value)
 
-#define MAX_POWER_HOLD         10           // Time in SECONDS to allow max agreed power (Pow)
-#define MAX_POWER_WINDOW       30           // Time in SECONDS to disable allow max agreed power (Pow)
-#define SAFE_POWER_HOLD        10           // Time in SECONDS to allow max unit safe power (Pow)
-#define SAFE_POWER_WINDOW      30           // Time in MINUTES to disable allow max unit safe power (Pow)
-#define MAX_POWER_RETRY        5            // Retry count allowing agreed power limit overflow (Pow)
+#define DEFAULT_POWER_DELTA    80           // Power change percentage
+#define MAX_POWER_HOLD         10           // Time in SECONDS to allow max agreed power
+#define MAX_POWER_WINDOW       30           // Time in SECONDS to disable allow max agreed power
+#define SAFE_POWER_HOLD        10           // Time in SECONDS to allow max unit safe power
+#define SAFE_POWER_WINDOW      30           // Time in MINUTES to disable allow max unit safe power
+#define MAX_POWER_RETRY        5            // Retry count allowing agreed power limit overflow
 
 #define STATES                 20           // State loops per second
 #define SYSLOG_TIMER           600          // Seconds to restore syslog_level
