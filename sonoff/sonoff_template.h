@@ -177,6 +177,7 @@ enum SupportedModules {
   SONOFF_DUAL_R2,
   ARILUX_LC06,
   SONOFF_S31,
+  LUXO,
   MAXMODULE };
 
 /********************************************************************************************/
@@ -235,7 +236,8 @@ const uint8_t kNiceList[MAXMODULE] PROGMEM = {
   KMC_70011,
   AILIGHT,
   WEMOS,
-  WITTY
+  WITTY,
+  LUXO
 };
 
 // Default module settings
@@ -786,6 +788,21 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_REL1,        // GPIO12 Red Led and Relay (0 = Off, 1 = On)
      GPIO_LED1_INV,    // GPIO13 Green Led (0 = On, 1 = Off)
      0, 0, 0, 0
+  },
+  { "LUXO Switch",     // Luxo switch (ESP8266) - http://luxo.io
+     GPIO_USER,        // GPIO00 Flash jumper \ optional sensor
+     0,                
+     GPIO_USER,        // GPIO02 Optional sensor (e.g. PIR/DHT22/DHT11)
+     0,        
+     GPIO_KEY1,        // GPIO04 Button 1
+     GPIO_REL1,        // GPIO05 Relay 1 (0 = Off, 1 = On)
+     0, 0, 0, 0, 0, 0, 
+     GPIO_USER,        // GPIO12 External input 1 (e.g. switch button)
+     GPIO_REL2,        // GPIO13 Relay 2 (0 = Off, 1 = On)
+     GPIO_USER,        // GPIO14 External input 2 (e.g. switch button)
+     GPIO_LED1,        // GPIO15 Led (1 = On, 0 = Off)
+     0,                
+     GPIO_ADC0         // ADC0 A0 Analog input
   }
 };
 
