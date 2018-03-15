@@ -459,4 +459,4 @@
 #define D_LOG_UPNP "UPP: "         // UPnP
 #define D_LOG_WIFI "WIF: "         // Wifi
 
-#endif  // _LANGUAGE_EN_GB_H_
+#endif  // _LANGUAGE_HU_HU_H_
