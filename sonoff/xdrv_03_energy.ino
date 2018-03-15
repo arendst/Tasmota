@@ -46,13 +46,15 @@ const char kEnergyCommands[] PROGMEM =
 float energy_voltage = 0;         // 123.1 V
 float energy_current = 0;         // 123.123 A
 float energy_power = 0;           // 123.1 W
-float energy_power_last = 0;
 float energy_power_factor = 0;    // 0.12
 float energy_daily = 0;           // 12.123 kWh
 float energy_total = 0;           // 12345.12345 kWh
 float energy_start = 0;           // 12345.12345 kWh total previous
 unsigned long energy_kWhtoday;    // 1212312345 Wh * 10^-5 (deca micro Watt hours) - 5763924 = 0.05763924 kWh = 0.058 kWh = energy_daily
 unsigned long energy_period = 0;  // 1212312345 Wh * 10^-5 (deca micro Watt hours) - 5763924 = 0.05763924 kWh = 0.058 kWh = energy_daily
+
+float energy_power_last[3] = { 0 };
+uint8_t energy_power_delta = 0;
 
 bool energy_power_on = true;
 
@@ -641,6 +643,20 @@ void EnergyMarginCheck()
     return;
   }
 
+  if (Settings.energy_power_delta) {
+    float delta = abs(energy_power_last[0] - energy_power);
+    // Any delta compared to minimal delta
+    float min_power = (energy_power_last[0] > energy_power) ? energy_power : energy_power_last[0];
+    if (((delta / min_power) * 100) > Settings.energy_power_delta) {
+      energy_power_delta = 1;
+      energy_power_last[1] = energy_power;  // We only want one report so reset history
+      energy_power_last[2] = energy_power;
+    }
+  }
+  energy_power_last[0] = energy_power_last[1];  // Shift in history every second allowing power changes to settle for up to three seconds
+  energy_power_last[1] = energy_power_last[2];
+  energy_power_last[2] = energy_power;
+
   if (energy_power_on && (Settings.energy_min_power || Settings.energy_max_power || Settings.energy_min_voltage || Settings.energy_max_voltage || Settings.energy_min_current || Settings.energy_max_current)) {
     energy_power_u = (uint16_t)(energy_power);
     energy_voltage_u = (uint16_t)(energy_voltage);
@@ -680,13 +696,6 @@ void EnergyMarginCheck()
       MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_MARGINS));
       EnergyMqttShow();
     }
-  }
-
-  if (!jsonflg && Settings.energy_power_delta) {
-    float diff = abs(energy_power_last - energy_power);
-    float max_power = (energy_power_last > energy_power) ? energy_power_last : energy_power;
-    energy_power_last = energy_power;
-    if (((diff / max_power) * 100) > Settings.energy_power_delta) EnergyMqttShow();
   }
 
 #if FEATURE_POWER_LIMIT
@@ -753,6 +762,8 @@ void EnergyMarginCheck()
     }
   }
 #endif  // FEATURE_POWER_LIMIT
+
+  if (energy_power_delta) EnergyMqttShow();
 }
 
 void EnergyMqttShow()
@@ -762,6 +773,7 @@ void EnergyMqttShow()
   EnergyShow(1);
   snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}"), mqtt_data);
   MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_ENERGY), Settings.flag.mqtt_sensor_retain);
+  energy_power_delta = 0;
 }
 
 /*********************************************************************************************\
