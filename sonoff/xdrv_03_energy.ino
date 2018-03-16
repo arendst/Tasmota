@@ -265,6 +265,7 @@ void HlwInit()
 #define CSE_UREF                    100
 
 uint8_t cse_receive_flag = 0;
+uint8_t cse_power_valid = 0;
 
 long voltage_cycle = 0;
 long current_cycle = 0;
@@ -330,9 +331,15 @@ void CseReceived()
       if ((header & 0xF2) == 0xF2) {  // Power cycle exceeds range
         energy_power = 0;
       } else {
-        energy_power = (float)(Settings.energy_power_calibration * CSE_PREF) / (float)power_cycle;
+        if (cse_power_valid < 16) {  // Skip first incomplete power_cycle
+          cse_power_valid++;
+          energy_power = 0;
+        } else {
+          energy_power = (float)(Settings.energy_power_calibration * CSE_PREF) / (float)power_cycle;
+        }
       }
     } else {
+      cse_power_valid = 0;
       energy_power = 0;  // Powered on but no load
     }
     if (adjustement & 0x20) {  // Current valid
