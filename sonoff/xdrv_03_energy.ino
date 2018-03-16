@@ -265,11 +265,11 @@ void HlwInit()
 #define CSE_UREF                    100
 
 uint8_t cse_receive_flag = 0;
-uint8_t cse_power_valid = 0;
 
 long voltage_cycle = 0;
 long current_cycle = 0;
 long power_cycle = 0;
+unsigned long power_cycle_first = 0;
 long cf_pulses = 0;
 long cf_pulses_last_time = CSE_PULSES_NOT_INITIALIZED;
 
@@ -320,9 +320,6 @@ void CseReceived()
   power_cycle = serial_in_buffer[17] << 16 | serial_in_buffer[18] << 8 | serial_in_buffer[19];
   cf_pulses = serial_in_buffer[21] << 8 | serial_in_buffer[22];
 
-//  if (adjustement & 0x80) {  // CF overflow
-//    cf_pulses += 0x10000;
-//  }
   if (energy_power_on) {  // Powered on
     if (adjustement & 0x40) {  // Voltage valid
       energy_voltage = (float)(Settings.energy_voltage_calibration * CSE_UREF) / (float)voltage_cycle;
@@ -331,15 +328,16 @@ void CseReceived()
       if ((header & 0xF2) == 0xF2) {  // Power cycle exceeds range
         energy_power = 0;
       } else {
-        if (cse_power_valid < 16) {  // Skip first incomplete power_cycle
-          cse_power_valid++;
-          energy_power = 0;
-        } else {
+        if (0 == power_cycle_first) power_cycle_first = power_cycle;  // Skip first incomplete power_cycle
+        if (power_cycle_first != power_cycle) {
+          power_cycle_first = -1;
           energy_power = (float)(Settings.energy_power_calibration * CSE_PREF) / (float)power_cycle;
+        } else {
+          energy_power = 0;
         }
       }
     } else {
-      cse_power_valid = 0;
+      power_cycle_first = 0;
       energy_power = 0;  // Powered on but no load
     }
     if (adjustement & 0x20) {  // Current valid
@@ -350,6 +348,7 @@ void CseReceived()
       }
     }
   } else {  // Powered off
+    power_cycle_first = 0;
     energy_voltage = 0;
     energy_power = 0;
     energy_current = 0;
