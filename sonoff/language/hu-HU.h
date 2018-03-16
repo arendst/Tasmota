@@ -59,7 +59,7 @@
 #define D_BOOT_COUNT "Bootolások száma"
 #define D_BRIGHTLIGHT "Max. fényerő"
 #define D_BUTTON "Gomb"
-#define D_BY "által"                    // Written by me
+#define D_BY "tőle:"                    // Written by me
 #define D_BYTES "Byte-ok"
 #define D_CELSIUS "Celsius"
 #define D_CO2 "Szén-dioxid"
@@ -71,7 +71,7 @@
 #define D_COUNTER "Számláló"
 #define D_CURRENT "Áram"          // As in Voltage and Current
 #define D_DATA "Adat"
-#define D_DARKLIGHT "Min. févnyerő"
+#define D_DARKLIGHT "Min. fényerő"
 #define D_DEBUG "Debug"
 #define D_DISABLED "Letiltva"
 #define D_DNS_SERVER "DNS Szerver"
@@ -210,7 +210,7 @@
 #define D_INFORMATION "Információ"
 #define D_FIRMWARE_UPGRADE "Firmware Frissítés"
 #define D_CONSOLE "Konzol"
-#define D_CONFIRM_RESTART "Újraindítés megerősítése"
+#define D_CONFIRM_RESTART "Újraindítás megerősítése"
 
 #define D_CONFIGURE_MODULE "Eszköz konfiguráció"
 #define D_CONFIGURE_WIFI "WiFi konfiguráció"
@@ -459,4 +459,4 @@
 #define D_LOG_UPNP "UPP: "         // UPnP
 #define D_LOG_WIFI "WIF: "         // Wifi
 
-#endif  // _LANGUAGE_EN_GB_H_
+#endif  // _LANGUAGE_HU_HU_H_
