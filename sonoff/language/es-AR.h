@@ -32,9 +32,6 @@
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
 
-// HTML (ISO 639-1) Language Code
-#define D_HTML_LANGUAGE "es"
-
 // "2017-03-07T11:08:02" - ISO8601:2004
 #define D_YEAR_MONTH_SEPARATOR "-"
 #define D_MONTH_DAY_SEPARATOR "-"
@@ -165,6 +162,13 @@
 #define D_DATA_SIZE "Tamaño de Datos"
 #define D_ANALOG_INPUT "Entrada Analógica"
 
+#define D_FINGERPRINT "Verificar TLS fingerprint..."
+#define D_TLS_CONNECT_FAILED_TO "Falló Conexión TLS a"
+#define D_RETRY_IN "Reintentando"
+#define D_VERIFIED "Verificado"
+#define D_INSECURE "Conexión insegura por Fingerprint no válido"
+#define D_CONNECT_FAILED_TO "Falló Conexión a"
+
 // support.ino
 #define D_OSWATCH "osWatch"
 #define D_BLOCKED_LOOP "Ciclo Bloqueado"
@@ -174,12 +178,12 @@
 #define D_PATCH_ISSUE_2186 "Patch issue 2186"
 #define D_CONNECTING_TO_AP "Connectando a AP"
 #define D_IN_MODE "en modo"
-#define D_CONNECT_FAILED_NO_IP_ADDRESS "Falló Conección, Dirección IP no recibida"
-#define D_CONNECT_FAILED_AP_NOT_REACHED "Falló Conección, AP no pudo ser contactado"
-#define D_CONNECT_FAILED_WRONG_PASSWORD "Falló Conección, clave de AP incorrecta"
-#define D_CONNECT_FAILED_AP_TIMEOUT "Falló Conección, timeout de AP"
+#define D_CONNECT_FAILED_NO_IP_ADDRESS "Falló Conexión, Dirección IP no recibida"
+#define D_CONNECT_FAILED_AP_NOT_REACHED "Falló Conexión, AP no pudo ser contactado"
+#define D_CONNECT_FAILED_WRONG_PASSWORD "Falló Conexión, clave de AP incorrecta"
+#define D_CONNECT_FAILED_AP_TIMEOUT "Falló Conexión, timeout de AP"
 #define D_ATTEMPTING_CONNECTION "Intentando conectar..."
-#define D_CHECKING_CONNECTION "Probando conección..."
+#define D_CHECKING_CONNECTION "Probando Conexión..."
 #define D_QUERY_DONE "Consulta lista. Servicio MQTT encontrado"
 #define D_MQTT_SERVICE_FOUND "Servicio MQTT encontrado en"
 #define D_FOUND_AT "encontrado en"
@@ -216,6 +220,7 @@
 #define D_CONFIGURE_WIFI "Configuración WiFi"
 #define D_CONFIGURE_MQTT "Configuración MQTT"
 #define D_CONFIGURE_DOMOTICZ "Configuración Domoticz"
+#define D_CONFIGURE_KNX "Configuración de KNX"
 #define D_CONFIGURE_LOGGING "Configuración Logging"
 #define D_CONFIGURE_OTHER "Configuración Extra"
 #define D_CONFIRM_RESET_CONFIGURATION "Confirmar Reset Configuración"
@@ -313,18 +318,10 @@
 #define D_ENABLE_WEBLOG_FOR_RESPONSE "Habilitar weblog 2 si desea respuesta"
 #define D_NEED_USER_AND_PASSWORD "Se necesita user=<username>&password=<password>"
 
-// xdrv_00_mqtt.ino
-#define D_FINGERPRINT "Verificar TLS fingerprint..."
-#define D_TLS_CONNECT_FAILED_TO "Falló Conección TLS a"
-#define D_RETRY_IN "Reintentando"
-#define D_VERIFIED "Verificado Fingerprint"
-#define D_INSECURE "Conección insegura por Fingerprint no válido"
-#define D_CONNECT_FAILED_TO "Falló Conección a"
-
 // xdrv_wemohue.ino
 #define D_MULTICAST_DISABLED "Multicast deshabilitado"
 #define D_MULTICAST_REJOINED "Multicast (re)conectado"
-#define D_MULTICAST_JOIN_FAILED "Conección Multicast fallida"
+#define D_MULTICAST_JOIN_FAILED "Conexión Multicast fallida"
 #define D_FAILED_TO_SEND_RESPONSE "Falla al enviar respuesta"
 
 #define D_WEMO "WeMo"
@@ -352,11 +349,24 @@
   #define D_DOMOTICZ_TEMP_HUM_BARO "Temp,Hum,Baro"
   #define D_DOMOTICZ_POWER_ENERGY "Potencia,Energía"
   #define D_DOMOTICZ_ILLUMINANCE "Luminancia"
-  #define D_DOMOTICZ_COUNT "Contador/PM1"
-  #define D_DOMOTICZ_VOLTAGE "Voltaje/PM2,5"
-  #define D_DOMOTICZ_CURRENT "Corriente/PM10"
+  #define D_DOMOTICZ_COUNT "Contador"
+  #define D_DOMOTICZ_VOLTAGE "Voltaje"
+  #define D_DOMOTICZ_CURRENT "Corriente"
   #define D_DOMOTICZ_AIRQUALITY "Calidad del Aire"
 #define D_DOMOTICZ_UPDATE_TIMER "Intervalo de refresco"
+
+// xdrv_08_KNX.ino
+#define D_KNX_PARAMETERS "Parámetros de KNX"
+#define D_KNX_GENERAL_CONFIG "General"
+#define D_KNX_PHYSICAL_ADDRESS "Dirección Física"
+#define D_KNX_SET "Establecer"
+#define D_KNX_ADD "Agregar"
+#define D_DELETE "Eliminar"
+#define D_KNX_PHYSICAL_ADDRESS_NOTE "(Debe ser única en la red KNX)"
+#define D_KNX_GROUP_ADDRESS_TO_WRITE "Enviar Datos a las Direcciones de Grupo"
+#define D_KNX_GROUP_ADDRESS_TO_READ "Recibir Datos de las Direcciones de Grupo"
+#define D_KNX_PARAMETER_TO_SEND "Parámetro a Enviar"
+#define D_KNX_UPDATE_INTERVAL "Enviar Valor de Sensores cada (seg)"
 
 // xdrv_03_energy.ino
 #define D_ENERGY_TODAY "Energía Hoy"
@@ -450,6 +460,7 @@
 #define D_LOG_MODULE "MOD: "       // Module
 #define D_LOG_MDNS "DNS: "         // mDNS
 #define D_LOG_MQTT "MQT: "         // MQTT
+#define D_LOG_KNX "KNX: "          // KNX
 #define D_LOG_OTHER "OTH: "        // Other
 #define D_LOG_RESULT "RSL: "       // Result
 #define D_LOG_RFR "RFR: "          // RF Received
