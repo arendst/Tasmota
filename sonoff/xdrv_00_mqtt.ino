@@ -18,23 +18,23 @@
 */
 
 /*********************************************************************************************\
- * Select ONE of possible MQTT libraries below
+ * Select ONE of possible MQTT library types below
 \*********************************************************************************************/
 // Default MQTT driver for both non-TLS and TLS connections. Blocks network if MQTT server is unavailable.
-//#define MQTT_LIBRARY_TYPE      1                 // Use PubSubClient library
+//#define MQTT_LIBRARY_TYPE      MQTT_PUBSUBCLIENT   // Use PubSubClient library
 // Alternative MQTT driver does not block network when MQTT server is unavailable. No TLS support
-//#define MQTT_LIBRARY_TYPE      2                 // Use TasmotaMqtt library (+4k4 code, +4k mem) - non-TLS only
+//#define MQTT_LIBRARY_TYPE      MQTT_TASMOTAMQTT    // Use TasmotaMqtt library (+4k4 code, +4k mem) - non-TLS only
 // Alternative MQTT driver does not block network when MQTT server is unavailable. No TLS support
-//#define MQTT_LIBRARY_TYPE      3                 // Use (patched) esp-mqtt-arduino library (+4k8 code, +4k mem) - non-TLS only
+//#define MQTT_LIBRARY_TYPE      MQTT_ESPMQTTARDUINO // Use (patched) esp-mqtt-arduino library (+4k8 code, +4k mem) - non-TLS only
 
 #ifdef USE_MQTT_TLS
 #ifdef MQTT_LIBRARY_TYPE
 #undef MQTT_LIBRARY_TYPE
 #endif
-#define MQTT_LIBRARY_TYPE        1               // Use PubSubClient library as it only supports TLS
+#define MQTT_LIBRARY_TYPE      MQTT_PUBSUBCLIENT   // Use PubSubClient library as it only supports TLS
 #else
 #ifndef MQTT_LIBRARY_TYPE
-#define MQTT_LIBRARY_TYPE        1               // Use PubSubClient library as default
+#define MQTT_LIBRARY_TYPE      MQTT_PUBSUBCLIENT   // Use PubSubClient library as default
 #endif
 #endif
 
@@ -63,7 +63,7 @@ bool mqtt_connected = false;                // MQTT virtual connection status
  * void MqttLoop()
 \*********************************************************************************************/
 
-#if (1 == MQTT_LIBRARY_TYPE)  /*****************************************************************/
+#if (MQTT_LIBRARY_TYPE == MQTT_PUBSUBCLIENT)  /***********************************************/
 
 #include <PubSubClient.h>
 
@@ -100,7 +100,7 @@ void MqttLoop()
   MqttClient.loop();
 }
 
-#elif (2 == MQTT_LIBRARY_TYPE)  /*****************************************************************/
+#elif (MQTT_LIBRARY_TYPE == MQTT_TASMOTAMQTT)  /**********************************************/
 
 #include <TasmotaMqtt.h>
 TasmotaMqtt MqttClient;
@@ -134,7 +134,7 @@ void MqttLoop()
 {
 }
 
-#elif (3 == MQTT_LIBRARY_TYPE)  /***************************************************************/
+#elif (MQTT_LIBRARY_TYPE == MQTT_ESPMQTTARDUINO)  /*******************************************/
 
 #include <MQTT.h>
 MQTT *MqttClient = NULL;
@@ -450,14 +450,14 @@ void MqttReconnect()
     if (!MqttCheckTls()) return;
 #endif  // USE_MQTT_TLS
 
-#if (2 == MQTT_LIBRARY_TYPE)
+#if (MQTT_LIBRARY_TYPE == MQTT_TASMOTAMQTT)
     MqttClient.InitConnection(Settings.mqtt_host, Settings.mqtt_port);
     MqttClient.InitClient(mqtt_client, mqtt_user, mqtt_pwd, MQTT_KEEPALIVE);
     MqttClient.InitLWT(stopic, mqtt_data, 1, true);
     MqttClient.OnConnected(MqttConnected);
     MqttClient.OnDisconnected(MqttDisconnectedCb);
     MqttClient.OnData(MqttDataHandler);
-#elif (3 == MQTT_LIBRARY_TYPE)
+#elif (MQTT_LIBRARY_TYPE == MQTT_ESPMQTTARDUINO)
     MqttClient = new MQTT(mqtt_client, Settings.mqtt_host, Settings.mqtt_port, stopic, 1, true, mqtt_data);
     MqttClient->setUserPwd(mqtt_user, mqtt_pwd);
     MqttClient->onConnected(MqttConnected);
@@ -468,7 +468,7 @@ void MqttReconnect()
     mqtt_initial_connection_state = 1;
   }
 
-#if (1 == MQTT_LIBRARY_TYPE)
+#if (MQTT_LIBRARY_TYPE == MQTT_PUBSUBCLIENT)
   MqttClient.setCallback(MqttDataHandler);
   MqttClient.setServer(Settings.mqtt_host, Settings.mqtt_port);
   if (MqttClient.connect(mqtt_client, mqtt_user, mqtt_pwd, stopic, 1, true, mqtt_data)) {
@@ -476,9 +476,9 @@ void MqttReconnect()
   } else {
     MqttDisconnected(MqttClient.state());  // status codes are documented here http://pubsubclient.knolleary.net/api.html#state
   }
-#elif (2 == MQTT_LIBRARY_TYPE)
+#elif (MQTT_LIBRARY_TYPE == MQTT_TASMOTAMQTT)
   MqttClient.Connect();
-#elif (3 == MQTT_LIBRARY_TYPE)
+#elif (MQTT_LIBRARY_TYPE == MQTT_ESPMQTTARDUINO)
   MqttClient->connect();
 #endif  // MQTT_LIBRARY_TYPE
 }
