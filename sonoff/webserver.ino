@@ -194,7 +194,7 @@ const char HTTP_BTN_MENU3[] PROGMEM =
 const char HTTP_BTN_MENU4[] PROGMEM =
 #ifdef USE_KNX
   "<br/><form action='knx' method='get'><button>" D_CONFIGURE_KNX "</button></form>"
-#endif  // USE_KNX  
+#endif  // USE_KNX 
   "<br/><form action='lg' method='get'><button>" D_CONFIGURE_LOGGING "</button></form>"
   "<br/><form action='co' method='get'><button>" D_CONFIGURE_OTHER "</button></form>"
   "<br/>"
@@ -376,7 +376,7 @@ void StartWebserver(int type, IPAddress ipweb)
       WebServer->onNotFound(HandleNotFound);
 #ifdef USE_KNX      
       knx.start(WebServer); // Start knx. The /knx link is automatically set inside the KNX library
-#endif // USE_KNX         
+#endif // USE_KNX       
     }
     reset_web_log_flag = 0;
     WebServer->begin(); // Web server start
@@ -881,7 +881,8 @@ void HandleMqttConfiguration()
   page.replace(F("{m2"), String(Settings.mqtt_port));
   page.replace(F("{m3"), Settings.mqtt_client);
   page.replace(F("{m4"), (Settings.mqtt_user[0] == '\0')?"0":Settings.mqtt_user);
-  page.replace(F("{m5"), (Settings.mqtt_pwd[0] == '\0')?"0":Settings.mqtt_pwd);
+  //page.replace(F("{m5"), (Settings.mqtt_pwd[0] == '\0')?"0":Settings.mqtt_pwd);
+  page.replace(F("{m5"), "**********");
   page.replace(F("{m6"), Settings.mqtt_topic);
   page.replace(F("{m7"), Settings.mqtt_fulltopic);
   page += FPSTR(HTTP_FORM_END);
@@ -1068,7 +1069,8 @@ void HandleSaveSettings()
     WebGetArg("mu", tmp, sizeof(tmp));
     strlcpy(Settings.mqtt_user, (!strlen(tmp)) ? MQTT_USER : (!strcmp(tmp,"0")) ? "" : tmp, sizeof(Settings.mqtt_user));
     WebGetArg("mp", tmp, sizeof(tmp));
-    strlcpy(Settings.mqtt_pwd, (!strlen(tmp)) ? MQTT_PASS : (!strcmp(tmp,"0")) ? "" : tmp, sizeof(Settings.mqtt_pwd));
+    //strlcpy(Settings.mqtt_pwd, (!strlen(tmp)) ? MQTT_PASS : (!strcmp(tmp,"0")) ? "" : tmp, sizeof(Settings.mqtt_pwd));
+    strlcpy(Settings.mqtt_pwd, (!strlen(tmp)) ? "" : (strchr(tmp,'*')) ? Settings.mqtt_pwd : tmp, sizeof(Settings.mqtt_pwd));
     snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_MQTT D_CMND_MQTTHOST " %s, " D_CMND_MQTTPORT " %d, " D_CMND_MQTTCLIENT " %s, " D_CMND_MQTTUSER " %s, " D_CMND_MQTTPASSWORD " %s, " D_CMND_TOPIC " %s, " D_CMND_FULLTOPIC " %s"),
       Settings.mqtt_host, Settings.mqtt_port, Settings.mqtt_client, Settings.mqtt_user, Settings.mqtt_pwd, Settings.mqtt_topic, Settings.mqtt_fulltopic);
     AddLog(LOG_LEVEL_INFO);
