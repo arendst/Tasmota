@@ -1,7 +1,4 @@
-/* 5.12.0f
- * Add support for WS2812 BRG led configuration to be defined as NEO_BRG in user_config.h (#1690)
- *
- * 5.12.0e
+/* 5.12.0e
  * Add Domoticz dust (custom) sensors to PMS5003 and NovaFitness SDS drivers as PM1, PM2.5 and PM10
  * Add a second TLS fingerprint to allow switching keys in TLS mode (#2033, #2102)
  * Add display of remaining pulse time to command PulseTime (#2085)

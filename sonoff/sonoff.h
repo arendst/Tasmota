@@ -107,18 +107,6 @@ typedef unsigned long power_t;              // Power (Relay) type
 #define max(a,b) ((a)>(b)?(a):(b))
 */
 
-//enum ws2812NeopixelbusFeature { NEO_RGB, NEO_GRB, NEO_BRG, NEO_4LED, NEO_RGBW, NEO_GRBW };  // Doesn't work
-#define NEO_RGB                0            // Neopixel RGB leds
-#define NEO_GRB                1            // Neopixel GRB leds
-#define NEO_BRG                2            // Neopixel BRG leds
-#define NEO_4LED               3            // Placeholder to test for 4 led types
-#define NEO_RGBW               4            // Neopixel RGBW leds
-#define NEO_GRBW               5            // Neopixel GRBW leds
-
-#define MQTT_PUBSUBCLIENT      1            // Mqtt PubSubClient library
-#define MQTT_TASMOTAMQTT       2            // Mqtt TasmotaMqtt library based on esp-mqtt-arduino
-#define MQTT_ESPMQTTARDUINO    3            // Mqtt esp-mqtt-arduino library by Ingo Randolf
-
 /*********************************************************************************************\
  * Enumeration
 \*********************************************************************************************/

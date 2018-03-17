@@ -78,11 +78,11 @@
  * Select ONE of possible MQTT library types below
 \*********************************************************************************************/
 // Default MQTT driver for both non-TLS and TLS connections. Blocks network if MQTT server is unavailable.
-#define MQTT_LIBRARY_TYPE      MQTT_PUBSUBCLIENT   // Use PubSubClient library
+#define MQTT_LIBRARY_TYPE      1                 // Use PubSubClient library
 // Alternative MQTT driver does not block network when MQTT server is unavailable. No TLS support
-//#define MQTT_LIBRARY_TYPE      MQTT_TASMOTAMQTT    // Use TasmotaMqtt library (+4k4 code, +4k mem) - non-TLS only
+//#define MQTT_LIBRARY_TYPE      2                 // Use TasmotaMqtt library (+4k4 code, +4k mem) - non-TLS only
 // Alternative MQTT driver does not block network when MQTT server is unavailable. No TLS support
-//#define MQTT_LIBRARY_TYPE      MQTT_ESPMQTTARDUINO // Use (patched) esp-mqtt-arduino library (+4k8 code, +4k mem) - non-TLS only
+//#define MQTT_LIBRARY_TYPE      3                 // Use (patched) esp-mqtt-arduino library (+4k8 code, +4k mem) - non-TLS only
 
 // -- MQTT ----------------------------------------
 #define MQTT_USE               1                 // [SetOption3] Select default MQTT use (0 = Off, 1 = On)
@@ -227,7 +227,7 @@
   #define USE_IR_RECEIVE                         // Support for IR receiver (+5k5 code, 264 iram)
 
 #define USE_WS2812                               // WS2812 Led string using library NeoPixelBus (+5k code, +1k mem, 232 iram) - Disable by //
-  #define USE_WS2812_CTYPE     NEO_GRB           // WS2812 Color type (NEO_RGB, NEO_GRB, NEO_BRG, NEO_RGBW, NEO_GRBW)
+  #define USE_WS2812_CTYPE     1                 // WS2812 Color type (0 - RGB, 1 - GRB, 2 - RGBW, 3 - GRBW)
 //  #define USE_WS2812_DMA                         // DMA supports only GPIO03 (= Serial RXD) (+1k mem). When USE_WS2812_DMA is enabled expect Exceptions on Pow
 
 #define USE_ARILUX_RF                            // Add support for Arilux RF remote controller (+0k8 code, 252 iram (non 2.3.0))
