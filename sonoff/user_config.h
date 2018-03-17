@@ -137,7 +137,7 @@
   #define DOMOTICZ_UPDATE_TIMER  0               // [DomoticzUpdateTimer] Send relay status (0 = disable, 1 - 3600 seconds) (Optional)
 
 // -- KNX IP Protocol -----------------------------
-#define USE_KNX                                  // Enable KNX IP Protocol Support  
+#define USE_KNX                                  // Enable KNX IP Protocol Support (+14.7k code)
 
 // -- MQTT - Home Assistant Discovery -------------
 #define USE_HOME_ASSISTANT                       // Enable Home Assistant Discovery Support (+1k4 code)
