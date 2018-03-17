@@ -68,10 +68,8 @@ bool mqtt_connected = false;                // MQTT virtual connection status
 #include <PubSubClient.h>
 
 // Max message size calculated by PubSubClient is (MQTT_MAX_PACKET_SIZE < 5 + 2 + strlen(topic) + plength)
-#if (MQTT_MAX_PACKET_SIZE -TOPSZ -7) < MIN_MESSZ  // If the max message size is too small, throw a warning at compile time. See PubSubClient.cpp line 359
-  #warning "MQTT_MAX_PACKET_SIZE is too small in libraries/PubSubClient/src/PubSubClient.h, increasing it to 1000"
-  #undef MQTT_MAX_PACKET_SIZE
-  #define MQTT_MAX_PACKET_SIZE 1000
+#if (MQTT_MAX_PACKET_SIZE -TOPSZ -7) < MIN_MESSZ  // If the max message size is too small, throw an error at compile time. See PubSubClient.cpp line 359
+  #error "MQTT_MAX_PACKET_SIZE is too small in libraries/PubSubClient/src/PubSubClient.h, increase it to at least 1000"
 #endif
 
 PubSubClient MqttClient(EspClient);
