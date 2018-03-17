@@ -275,6 +275,7 @@
 // Commands xdrv_03_energy.ino
 #define D_CMND_POWERLOW "PowerLow"
 #define D_CMND_POWERHIGH "PowerHigh"
+#define D_CMND_POWERDELTA "PowerDelta"
 #define D_CMND_VOLTAGELOW "VoltageLow"
 #define D_CMND_VOLTAGEHIGH "VoltageHigh"
 #define D_CMND_CURRENTLOW "CurrentLow"
@@ -359,6 +360,7 @@ enum UnitNames {
   UNIT_MILLISECOND,
   UNIT_MINUTE,
   UNIT_PPM,
+  UNIT_PERCENTAGE,
   UNIT_PRESSURE,
   UNIT_SECOND,
   UNIT_SECTORS,
@@ -376,6 +378,7 @@ const char kUnitNames[] PROGMEM =
   D_UNIT_MILLISECOND "|"
   D_UNIT_MINUTE "|"
   D_UNIT_PARTS_PER_MILLION "|"
+  "%|"
   D_UNIT_PRESSURE "|"
   D_UNIT_SECOND "|"
   D_UNIT_SECTORS "|"

@@ -509,6 +509,7 @@ void SettingsDefaultSet2()
 //    Settings.domoticz_switch_idx[i] = 0;
   }
 
+  Settings.energy_power_delta = 80;
   Settings.energy_power_calibration = HLW_PREF_PULSE;
   Settings.energy_voltage_calibration = HLW_UREF_PULSE;
   Settings.energy_current_calibration = HLW_IREF_PULSE;
@@ -889,6 +890,7 @@ void SettingsDelta()
     }
     if (Settings.version < 0x050C0005) {
       Settings.light_rotation = 0;
+      Settings.energy_power_delta = 80;
       char fingerprint[60];
       memcpy(fingerprint, Settings.mqtt_fingerprint, sizeof(fingerprint));
       char *p = fingerprint;

@@ -53,24 +53,7 @@ const char HASS_DISCOVER_LIGHT_SCHEME[] PROGMEM =
   "%s,\"effect_command_topic\":\"%s\","            // cmnd/led2/Scheme
   "\"effect_state_topic\":\"%s\","                 // stat/led2/RESULT
   "\"effect_value_template\":\"{{value_json." D_CMND_SCHEME "}}\","
-  "\"effect_list\":\"[0, 1, 2, 3, 4]\"";           // Needs to be a Python string list providing Scheme parameter values (Unable to get this functional)
-*/
-/*
-#1690 - investigate
-effect_list:
-- 0
-- 1
-- 2
-- 3
-- 4
-- 5
-- 6
-- 7
-- 8
-- 9
-- 10
-- 11
-- 12
+  "\"effect_list\":[\"0\",\"1\",\"2\",\"3\",\"4\"]";  // string list with reference to scheme parameter. Currently only supports numbers 0 to 11 as it make the mqtt string too long
 */
 void HAssDiscovery()
 {

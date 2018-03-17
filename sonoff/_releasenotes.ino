@@ -5,6 +5,8 @@
  * Add additional time offset to Wifi Retry based on device mac address (#2089)
  * Add command Color6 RRGGBB for Clock hour marker color and command Rotation pixels for Clock rotation (#2092)
  * Add HTML language header in local language (#2123)
+ * Add command PowerDelta 0..100 (percentage) to Energy monitoring devices to report on active power load change (#2157)
+ * Add Restart Reason to Status 1 report (#2161)
  * Fix MAX31850 higher temperatures (#1269)
  *
  * 5.12.0d

@@ -149,9 +149,7 @@ struct SYSCFG {
   uint8_t       ledstate;                  // 2FB
   uint8_t       param[PARAM8_SIZE];        // 2FC was domoticz_in_topic until 5.1.6
   char          state_text[4][11];         // 313
-
-  byte          free_33F[1];               // 33F
-
+  uint8_t       energy_power_delta;        // 33F
   uint16_t      domoticz_update_timer;     // 340
   uint16_t      pwm_range;                 // 342
 
