@@ -23,35 +23,242 @@
 
 #ifdef USE_KNX
 
+
 #include <esp-knx-ip.h>     // Include KNX IP library
-                            // esp-knx-ip library modifications:
-                            //    esp-knx-ip.h -> Root_prefix "/knx"
-                            //                    debug off
-                            //    esp-knx-ip-send.cpp -> no checksum
-                            //    esp-knx-ip-webserver.cpp -> order and format
+
+void relay_cb(message_t const &msg, void *arg);
 
 address_t physaddr;
+config_id_t enable_knx_id;
+config_id_t disable_knx_id;
+config_id_t ga_conf_id;
+config_id_t cb_conf_id;
+config_id_t update_rate_id;
+
+typedef struct __device_parameters
+{
+  const char *name;
+  config_id_t id;
+  bool show;
+} device_parameters_t;
+
+device_parameters_t device_param[] = {
+  { D_SENSOR_RELAY " 1", 0, true},
+  { D_SENSOR_RELAY " 2", 0, true},
+  { D_SENSOR_RELAY " 3", 0, true},
+  { D_SENSOR_RELAY " 4", 0, true},
+//  {"Send Temp", 5, true},
+//  {"BUTTON 1", 6, true},
+  {nullptr, 0}
+};
+
+// Translations
+config_webUI_t config_webUI = {
+  D_CONFIGURE_KNX,
+  D_KNX_PHYSICAL_ADDRESS,
+  D_KNX_SET,
+  D_KNX_ADD,
+  D_DELETE
+};
+
+int device_param_quantity = 4;
+bool flag_knx_enabled = true;
 
 void KNXStart()
 {
-  knx.physical_address_set(knx.PA_to_address(1, 1, 1));  // Set Physical KNX Address of the device
+
+// KNX WebPage Configuration
+// -------------------------
+
+// The order of the knx.***_register_*** code, is the order that is going to be shown on the web page.
+
+// Translations
+knx.config_web_UI(config_webUI);
+
+//knx.config_register_Title( D_KNX_PARAMETERS );
+
+//knx.config_register_line();
+
+//knx.config_register_SubTitle( D_KNX_GENERAL_CONFIG );
+
+//Set Physical KNX Address of the device
+knx.config_register_pa();
+//knx.physical_address_set(Settings.knx_physs_addr);
+knx.physical_address_set(knx.PA_to_address(1, 1, 1));
+
+//knx.config_register_label( D_KNX_PHYSICAL_ADDRESS_NOTE );
+
+//knx.config_register_blankspace();
+
+knx.feedback_register_action("KNX: " D_ON, knx_toggle_flag_enabled, D_STOP, nullptr, knx_status_enabled);
+knx.feedback_register_action("KNX: " D_OFF, knx_toggle_flag_enabled, D_START, nullptr, knx_status_disabled);
+
+//knx.config_register_line();
+
+//knx.config_register_SubTitle( D_KNX_GROUP_ADDRESS_TO_WRITE );
+
+// Register Group Addresses to Send Data to
+//for (int i = 0; i < Settings.knx_Registered_GA; ++i)
+for (int i = 0; i < 4; ++i)
+{
+  device_param[i].id = knx.config_register_ga(String(device_param[i].name));
+
+  //////buscar en la config el param para setearlo
+  //knx.config_set_ga(ga_conf, Settings.knx_GA_addr(i));
+
+  //knx.config_set_ga(device_param[i].id, knx.GA_to_address(2,2,1));
+}
+
+knx.config_set_ga(device_param[0].id, knx.GA_to_address(2,2,1));
+
+
+
+
+
+
+
+
+
+
+/* /////config
+Settings.knx.physs_addr = physical_address_get();
+Settings.knx.flag_knx_enabled
+
+k = 0
+for j = 0 to max cant items (relay1,2,3,etc)
+  for i = 0 to max cant items por param (cant de addr a relay 1)
+    address_t = knx.config_get_ga(device_param[j].id, i + 1);
+    if address_t then
+      settings.knx.paramGA(k) = j;
+      settings.knx.addressGA(k) = address_t
+      k++
+    end if
+  next i
+next j
+settings.knx.Registered_GA = k - 1
+
+settings.knx.update_rate = knx.config_get_int(update_rate_id)
+
+k = 0
+for j = 0 to max cant items (relay1,2,3,etc)
+  for i = 0 to max cant items por param (cant de addr a relay 1)
+    address_t = knx.config_get_cb(device_param[j].id, i + 1);
+    if address_t then
+      settings.knx.paramCB(k) = j;
+      settings.knx.addressCB(k) = address_t
+      k++
+    end if
+  next i
+next j
+settings.knx.Registered_CB = k - 1
+
+
+*/ //////
+
+
+
+
+
+
+
+
+
+//knx.config_register_blankspace();
+
+//update_rate_id = knx.config_register_int( D_KNX_UPDATE_INTERVAL , Settings.knx_update_rate);
+update_rate_id = knx.config_register_int( D_KNX_UPDATE_INTERVAL , 5);
+
+//knx.config_register_line();
+
+//knx.config_register_SubTitle( D_KNX_GROUP_ADDRESS_TO_READ );
+
+// Register Group Addresses to Receive data from and execute callbacks
+//for (int i = 0; i < Settings.knx_Registered_CB; ++i)
+for (int i = 0; i < 4; ++i)
+{
+  cb_conf_id = knx.callback_register(String(device_param[i].name), relay_cb, &device_param[i]);
+  //////cb_conf_id = knx.callback_register("Channel 1", relay_cb, &channels[i]);
+  //cb_conf_id = knx.callback_register(device_param[i].name, relay_cb, &device_param[i].id, &device_param[i].show, D_KNX_ADD);
+  //////buscar en la config el param para setearlo
+  //knx.callback_assign(ga_conf, Settings.knx_CB_addr(i));
+  knx.callback_assign(cb_conf_id, knx.GA_to_address(2,2,1));
+}
+
+//knx.config_register_line();
+
+knx.feedback_register_action("", KNXSaveSettings, D_SAVE); // Save Button
+
+knx.feedback_register_action("", KNX_Return_button, D_CONFIGURATION); // Save Button
+
+// END KNX WebPage Configuration
+
+
+
+
 }
 
 
 void KNXLoop()
 {
 //  if (Settings.flag.knx_enabled) {
-  knx.loop();  // Process knx events
-//  }   
+  if (flag_knx_enabled) {
+    knx.loop();  // Process knx events
+  }
+
 }
 
 /*
 void KNX_EVERY_SECOND() {
-  
+
 }
 */
 
-void KNXSaveSettings()
+void knx_toggle_flag_enabled(void *arg)
+{
+  flag_knx_enabled = !flag_knx_enabled;
+  // if flag_knx_enabled then knx.pause else knx.stop
+}
+
+bool knx_status_enabled()
+{
+  return flag_knx_enabled;
+}
+
+bool knx_status_disabled()
+{
+  return !flag_knx_enabled;
+}
+
+
+void relay_cb(message_t const &msg, void *arg)
+{
+  device_parameters_t *chan = (device_parameters_t *)arg;
+  switch (msg.ct)
+  {
+    case KNX_CT_WRITE:
+      ExecuteCommandPower(chan->id, msg.data[0]);
+      knx.write_1bit(knx.config_get_ga(chan->id), msg.data[0]);
+      break;
+     case KNX_CT_READ:
+      //knx.answer_1bit(msg.received_on, chan->state);
+      knx.answer_1bit(msg.received_on, false);
+  }
+}
+
+void KNXUpdatePowerState(byte device, power_t state)
+{
+  bool power = bitRead(state, device -1);
+  knx.write_1bit(knx.config_get_ga(device_param[device -1].id), power);
+}
+
+
+void KNX_Return_button(void *arg)
+{
+  WebServer->sendHeader(F("Location"),F("/cn"));
+  WebServer->send(302);
+}
+
+void KNXSaveSettings(void *arg)
 {
   /*
   char stemp[20];
@@ -105,14 +312,16 @@ boolean Xdrv08(byte function)
       case FUNC_LOOP:
         KNXLoop();
         break;
+//      case FUNC_SET_POWER:
+//        break;
 //      case FUNC_EVERY_SECOND;
 //        KNX_EVERY_SECOND();
-//        break;                 
+//        break;
 //      case FUNC_COMMAND:
 //        result = MqttCommand();
 //        break;
     }
-//  }    
+//  }
   return result;
 }
 
