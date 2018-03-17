@@ -376,7 +376,7 @@ void LightInit()
   }
 #ifdef USE_WS2812  // ************************************************************************
   else if (LT_WS2812 == light_type) {
-#if (USE_WS2812_CTYPE > 1)
+#if (USE_WS2812_CTYPE > NEO_3LED)
     light_subtype++;  // from RGB to RGBW
 #endif
     Ws2812Init();
