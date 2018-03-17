@@ -1,6 +1,8 @@
 ## Sonoff-Tasmota (KNX_MOD)
 
--- WORK IN PROGRESS -- Using the KNX Libary [ascillato/ESP-KNX-IP_Lite](https://github.com/ascillato/ESP-KNX-IP_Lite)
+Using the KNX Libary [ascillato/ESP-KNX-IP_Lite](https://github.com/ascillato/ESP-KNX-IP_Lite)
+
+Basic Functionality Available. Work in progress.
 
 -----------------------------------------------------------------------------------------------------------------------------------
 
