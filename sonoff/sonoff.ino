@@ -1092,6 +1092,9 @@ boolean send_button_power(byte key, byte device, byte state)
 #endif  // USE_DOMOTICZ
     result = true;
   }
+#ifdef USE_KNX
+  knx_send_button_power(key, device, state);
+#endif
   return result;
 }
 

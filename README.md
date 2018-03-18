@@ -1,8 +1,52 @@
-## Sonoff-Tasmota (KNX_MOD)
+# Sonoff-Tasmota (KNX_MOD)
 
-Using the KNX Libary [ascillato/ESP-KNX-IP_Lite](https://github.com/ascillato/ESP-KNX-IP_Lite)
+This is a [MOD](https://github.com/ascillato/Sonoff-Tasmota_KNX) for Sonoff-Tasmota to integrate KNX Protocol to its features.
 
-Basic Functionality Available. Work in progress.
+This MOD requires the KNX Library [ascillato/ESP-KNX-IP_Lite](https://github.com/ascillato/ESP-KNX-IP_Lite)
+
+Basic Functionality is Available. Work in progress.
+
+-----------------------------------------------------------------------------------------------------------------------------------
+## Road Map ##
+
+**For Sonoff-Tasmota_KNX:**
+- [x] Add Web Menu (uses the one provided by the library)
+- [x] Add Feature to Receive telegrams and modify Relay Status
+- [x] Add Feature to Receive telegrams from multiple Group Addresses to modify just one relay status (useful for scenes)
+- [x] Add Feature to Send telegrams of relay status change
+- [ ] Add Feature to Send telegrams of one relay status to multiple Group Addresses (useful for scenes)
+- [x] Add Feature to Send telegrams of button pressed
+- [x] Add Feature to receive telegrams to toggle relay status
+- [ ] Add Feature to send Temperature by a set interval
+- [ ] Add Feature to receive command to read temperature
+- [ ] Add Feature to recognice Tasmota config to show the same amount of relays, buttons, etc
+- [ ] Add Feature to Save Config
+- [ ] Add Feature to Load Config
+- [ ] Change Web Menu to a Tasmota one to save FLASH and RAM
+- [ ] Complete all the language files with keys
+- [ ] Optimize code to reduce Flash and RAM
+
+**For ESP_KNX_IP_LITE:**
+- [x] Add Functions to control library from code and not only by Web Menu
+- [ ] Complete needed functions for Tasmota
+- [ ] Add WebUI Functions
+- [ ] Change all *_id_t to config_id_t so as to have control over webpage order
+- [ ] Mod GA_Register function to be similar to CB_Register (needed for Send telegrams of one relay status to multiple Group Addresses)
+- [ ] Optimize code to reduce Flash and RAM
+
+-----------------------------------------------------------------------------------------------------------------------------------
+
+## Modifications to [Original Tasmota](https://github.com/arendst/Sonoff-Tasmota) ##
+
+* Adding the file _/sonoff/xdrv_08_KNX.ino_ 
+* Add the entry `#define USE_KNX` on _/sonoff/user_config.h_
+* Add entries to the file _/sonoff/webserver.ino_
+* Add entries to the file _/sonoff/sonoff.ino_
+* Add entries to language files
+
+Up to now, enabling KNX uses +14.7k of code
+
+There is **NO CONFLICT** with MQTT, Home Assistant, Web, etc. Tests show fast response of all features running at same time.
 
 -----------------------------------------------------------------------------------------------------------------------------------
 

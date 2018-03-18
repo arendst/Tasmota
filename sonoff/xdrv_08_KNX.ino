@@ -26,30 +26,59 @@
 
 #include <esp-knx-ip.h>     // Include KNX IP library
 
+#define KNX_Empty_ID 255
+
 void relay_cb(message_t const &msg, void *arg);
+void temp_cb(message_t const &msg, void *arg);
 
 address_t physaddr;
 config_id_t enable_knx_id;
 config_id_t disable_knx_id;
 config_id_t ga_conf_id;
 config_id_t cb_conf_id;
+config_id_t cb_temp_id;
 config_id_t update_rate_id;
 
 typedef struct __device_parameters
 {
   const char *name;
+  byte type;
   config_id_t id;
   bool show;
 } device_parameters_t;
 
 device_parameters_t device_param[] = {
-  { D_SENSOR_RELAY " 1", 0, true},
-  { D_SENSOR_RELAY " 2", 0, true},
-  { D_SENSOR_RELAY " 3", 0, true},
-  { D_SENSOR_RELAY " 4", 0, true},
-//  {"Send Temp", 5, true},
-//  {"BUTTON 1", 6, true},
-  {nullptr, 0}
+  { D_SENSOR_RELAY " 1",1 , 255, true}, // device_param[0] = Relay 1
+  { D_SENSOR_RELAY " 2",2 , 255, true}, // device_param[1] = Relay 2
+  { D_SENSOR_RELAY " 3",3 , 255, true},
+  { D_SENSOR_RELAY " 4",4 , 255, true},
+  { D_SENSOR_RELAY " 5",5 , 255, false},
+  { D_SENSOR_RELAY " 6",6 , 255, false},
+  { D_SENSOR_RELAY " 7",7 , 255, false}, // device_param[6] = Relay 7
+  { D_SENSOR_RELAY " 8",8 , 255, false}, // device_param[7] = Relay 8
+  { D_SENSOR_BUTTON " 1",9 , 255, true}, // device_param[8] = Button 1
+  { D_SENSOR_BUTTON " 2",10 , 255, true}, // device_param[9] = Button 2
+  { D_SENSOR_BUTTON " 3",11 , 255, true}, // device_param[10] = Button 3
+  { D_SENSOR_BUTTON " 4",12 , 255, true}, // device_param[11] = Button 4
+  { D_TEMPERATURE       ,13 , 255, true}, // device_param[12] = Temperature
+  {nullptr,0 , 255, false}
+};
+
+const char *device_param_cb[] = {
+  D_SENSOR_RELAY " 1",
+  D_SENSOR_RELAY " 2",
+  D_SENSOR_RELAY " 3",
+  D_SENSOR_RELAY " 4",
+  D_SENSOR_RELAY " 5",
+  D_SENSOR_RELAY " 6",
+  D_SENSOR_RELAY " 7",
+  D_SENSOR_RELAY " 8",
+  D_BUTTON_TOGGLE " " D_SENSOR_RELAY " 1",
+  D_BUTTON_TOGGLE " " D_SENSOR_RELAY " 2",
+  D_BUTTON_TOGGLE " " D_SENSOR_RELAY " 3",
+  D_BUTTON_TOGGLE " " D_SENSOR_RELAY " 4",
+  D_REPLY " " D_TEMPERATURE,
+  nullptr
 };
 
 // Translations
@@ -63,13 +92,43 @@ config_webUI_t config_webUI = {
 
 int device_param_quantity = 4;
 bool flag_knx_enabled = true;
+float last_temp = 0.0;
 
 void KNXStart()
 {
 
+// Check which relays, buttons and sensors where consigured for this device
+// for (int i = 0; i < MAX_GPIO_PIN; ++i)
+// {
+//   switch (GPIO(i))
+//     {
+//       case Relay:
+//       break;
+//       case Button:
+//       break;
+/*
+for (byte j = 0; j < GPIO_SENSOR_END; j++) {
+  if (!GetUsedInModule(j, cmodule.gp.io)) {
+    snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SCRIPT_MODULE2, j, j, GetTextIndexed(stemp, sizeof(stemp), j, kSensorNames));
+    page += mqtt_data;
+  }
+}
+*/
+
+//
+//   device_param[i].show = (GPIO[i] == Relay)
+// }
+// for (int i = 0; i < MAX_BUTTONS; ++i)
+// {
+//   device_param[i+7].show = (GPIO[i] == Button)
+// }
+// for (int i = 0; i < MAX_SENSOR; ++i)
+// {
+//   device_param[i+7].show = (GPIO[i] == Button)
+// }
+
 // KNX WebPage Configuration
 // -------------------------
-
 // The order of the knx.***_register_*** code, is the order that is going to be shown on the web page.
 
 // Translations
@@ -99,9 +158,13 @@ knx.feedback_register_action("KNX: " D_OFF, knx_toggle_flag_enabled, D_START, nu
 
 // Register Group Addresses to Send Data to
 //for (int i = 0; i < Settings.knx_Registered_GA; ++i)
-for (int i = 0; i < 4; ++i)
+for (int i = 0; i < 13; ++i)
 {
-  device_param[i].id = knx.config_register_ga(String(device_param[i].name));
+  if (device_param[i].show)
+  {
+    device_param[i].id = knx.config_register_ga(String(device_param[i].name));
+  }
+
 
   //////buscar en la config el param para setearlo
   //knx.config_set_ga(ga_conf, Settings.knx_GA_addr(i));
@@ -110,58 +173,6 @@ for (int i = 0; i < 4; ++i)
 }
 
 knx.config_set_ga(device_param[0].id, knx.GA_to_address(2,2,1));
-
-
-
-
-
-
-
-
-
-
-/* /////config
-Settings.knx.physs_addr = physical_address_get();
-Settings.knx.flag_knx_enabled
-
-k = 0
-for j = 0 to max cant items (relay1,2,3,etc)
-  for i = 0 to max cant items por param (cant de addr a relay 1)
-    address_t = knx.config_get_ga(device_param[j].id, i + 1);
-    if address_t then
-      settings.knx.paramGA(k) = j;
-      settings.knx.addressGA(k) = address_t
-      k++
-    end if
-  next i
-next j
-settings.knx.Registered_GA = k - 1
-
-settings.knx.update_rate = knx.config_get_int(update_rate_id)
-
-k = 0
-for j = 0 to max cant items (relay1,2,3,etc)
-  for i = 0 to max cant items por param (cant de addr a relay 1)
-    address_t = knx.config_get_cb(device_param[j].id, i + 1);
-    if address_t then
-      settings.knx.paramCB(k) = j;
-      settings.knx.addressCB(k) = address_t
-      k++
-    end if
-  next i
-next j
-settings.knx.Registered_CB = k - 1
-
-
-*/ //////
-
-
-
-
-
-
-
-
 
 //knx.config_register_blankspace();
 
@@ -174,14 +185,25 @@ update_rate_id = knx.config_register_int( D_KNX_UPDATE_INTERVAL , 5);
 
 // Register Group Addresses to Receive data from and execute callbacks
 //for (int i = 0; i < Settings.knx_Registered_CB; ++i)
-for (int i = 0; i < 4; ++i)
+for (int i = 0; i < 12; ++i)
 {
-  cb_conf_id = knx.callback_register(String(device_param[i].name), relay_cb, &device_param[i]);
-  //////cb_conf_id = knx.callback_register("Channel 1", relay_cb, &channels[i]);
-  //cb_conf_id = knx.callback_register(device_param[i].name, relay_cb, &device_param[i].id, &device_param[i].show, D_KNX_ADD);
-  //////buscar en la config el param para setearlo
-  //knx.callback_assign(ga_conf, Settings.knx_CB_addr(i));
-  knx.callback_assign(cb_conf_id, knx.GA_to_address(2,2,1));
+  if (device_param[i].show)
+  {
+    cb_conf_id = knx.callback_register( String( device_param_cb[i] ), relay_cb, &device_param[i]);
+    //////buscar en la config el param para setearlo
+    //knx.callback_assign(ga_conf, Settings.knx_CB_addr(i));
+    if (i==0)
+    {
+      knx.callback_assign(cb_conf_id, knx.GA_to_address(2,2,1));
+    }
+  }
+}
+
+// Temperature
+int j=12;
+if (device_param[j].show)
+{
+  cb_temp_id = knx.callback_register( String( device_param_cb[j] ), temp_cb, &device_param[j]);
 }
 
 //knx.config_register_line();
@@ -191,10 +213,6 @@ knx.feedback_register_action("", KNXSaveSettings, D_SAVE); // Save Button
 knx.feedback_register_action("", KNX_Return_button, D_CONFIGURATION); // Save Button
 
 // END KNX WebPage Configuration
-
-
-
-
 }
 
 
@@ -204,29 +222,15 @@ void KNXLoop()
   if (flag_knx_enabled) {
     knx.loop();  // Process knx events
   }
-
 }
 
-/*
+
 void KNX_EVERY_SECOND() {
+  //  if (Settings.flag.knx_enabled) {
+    if (flag_knx_enabled)
+    {
 
-}
-*/
-
-void knx_toggle_flag_enabled(void *arg)
-{
-  flag_knx_enabled = !flag_knx_enabled;
-  // if flag_knx_enabled then knx.pause else knx.stop
-}
-
-bool knx_status_enabled()
-{
-  return flag_knx_enabled;
-}
-
-bool knx_status_disabled()
-{
-  return !flag_knx_enabled;
+    }
 }
 
 
@@ -236,21 +240,77 @@ void relay_cb(message_t const &msg, void *arg)
   switch (msg.ct)
   {
     case KNX_CT_WRITE:
-      ExecuteCommandPower(chan->id, msg.data[0]);
-      knx.write_1bit(knx.config_get_ga(chan->id), msg.data[0]);
+      if (chan->type > 8)
+      {
+        ExecuteCommandPower(chan->id, 2);
+        knx.write_1bit(knx.config_get_ga(chan->id), msg.data[0]==0);
+      }
+      else
+      {
+        ExecuteCommandPower(chan->id, msg.data[0]);
+        knx.write_1bit(knx.config_get_ga(chan->id), msg.data[0]);
+      }
       break;
-     case KNX_CT_READ:
+    //case KNX_CT_READ:
       //knx.answer_1bit(msg.received_on, chan->state);
-      knx.answer_1bit(msg.received_on, false);
   }
 }
 
 void KNXUpdatePowerState(byte device, power_t state)
 {
-  bool power = bitRead(state, device -1);
-  knx.write_1bit(knx.config_get_ga(device_param[device -1].id), power);
+  if ( device_param[device -1].id != KNX_Empty_ID ) // Group Address configured? 255 = empty
+  {
+    bool power = bitRead(state, device -1);
+    knx.write_1bit(knx.config_get_ga(device_param[device -1].id), power);
+  }
 }
 
+void knx_send_button_power(byte key, byte device, byte state)
+{
+// key 0 = button_topic
+// key 1 = switch_topic
+// state 0 = off
+// state 1 = on
+// state 2 = toggle
+// state 3 = hold
+// state 9 = clear retain flag
+//  if (key)
+//  {
+    if (device_param[device+7].id)
+    {
+      knx.write_1bit(knx.config_get_ga(device_param[device+7].id), !(state == 0));
+    }
+//  }
+}
+
+void temp_cb(message_t const &msg, void *arg)
+{
+  switch (msg.ct)
+  {
+    case KNX_CT_READ:
+    {
+      knx.answer_2byte_float(msg.received_on, last_temp);
+      break;
+    }
+  }
+}
+
+void knx_toggle_flag_enabled(void *arg)
+{
+  flag_knx_enabled = !flag_knx_enabled;
+  /*if (Settings.flag.knx_enabled)
+  {
+    knx.pause();
+  }
+  else
+  {
+    knx.continue();
+  }*/
+}
+
+bool knx_status_enabled() { return flag_knx_enabled; }
+
+bool knx_status_disabled() { return !flag_knx_enabled; }
 
 void KNX_Return_button(void *arg)
 {
@@ -260,6 +320,45 @@ void KNX_Return_button(void *arg)
 
 void KNXSaveSettings(void *arg)
 {
+
+
+  /* /////config
+  Settings.knx.physs_addr = physical_address_get();
+  Settings.knx.flag_knx_enabled
+
+  k = 0
+  for j = 0 to max cant items (relay1,2,3,etc)
+    for i = 0 to max cant items por param (cant de addr a relay 1)
+      address_t = knx.config_get_ga(device_param[j].id, i + 1);
+      if address_t then
+        settings.knx.paramGA(k) = j;
+        settings.knx.addressGA(k) = address_t
+        k++
+      end if
+    next i
+  next j
+  settings.knx.Registered_GA = k - 1
+
+  settings.knx.update_rate = knx.config_get_int(update_rate_id)
+
+  k = 0
+  for j = 0 to max cant items (relay1,2,3,etc)
+    for i = 0 to max cant items por param (cant de addr a relay 1)
+      address_t = knx.config_get_cb(device_param[j].id, i + 1);
+      if address_t then
+        settings.knx.paramCB(k) = j;
+        settings.knx.addressCB(k) = address_t
+        k++
+      end if
+    next i
+  next j
+  settings.knx.Registered_CB = k - 1
+
+
+  */ //////
+
+
+
   /*
   char stemp[20];
   char ssensor_indices[6 * MAX_DOMOTICZ_SNS_IDX];
@@ -304,7 +403,6 @@ void KNXSaveSettings(void *arg)
 boolean Xdrv08(byte function)
 {
   boolean result = false;
-//  if (Settings.flag.knx_enabled) {
     switch (function) {
       case FUNC_INIT:
         KNXStart();
@@ -312,16 +410,15 @@ boolean Xdrv08(byte function)
       case FUNC_LOOP:
         KNXLoop();
         break;
-//      case FUNC_SET_POWER:
-//        break;
-//      case FUNC_EVERY_SECOND;
-//        KNX_EVERY_SECOND();
-//        break;
+      case FUNC_EVERY_SECOND:
+        KNX_EVERY_SECOND();
+        break;
 //      case FUNC_COMMAND:
 //        result = MqttCommand();
 //        break;
+//      case FUNC_SET_POWER:
+//        break;
     }
-//  }
   return result;
 }
 

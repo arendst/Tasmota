@@ -366,6 +366,7 @@
 #define D_KNX_SET "Establecer"
 #define D_KNX_ADD "Agregar"
 #define D_DELETE "Eliminar"
+#define D_REPLY "Responder"
 #define D_KNX_PHYSICAL_ADDRESS_NOTE "(Debe ser única en la red KNX)"
 #define D_KNX_GROUP_ADDRESS_TO_WRITE "Enviar Datos a las Direcciones de Grupo"
 #define D_KNX_GROUP_ADDRESS_TO_READ "Recibir Datos de las Direcciones de Grupo"
