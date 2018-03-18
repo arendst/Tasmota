@@ -548,6 +548,8 @@ void SettingsDefaultSet2()
   SettingsDefaultSet_4_0_4();
   Settings.pulse_timer[0] = APP_PULSETIME;
 
+  Settings.serial_br_baudrate_div4 = 9600;
+
   // 4.0.7
 //  for (byte i = 0; i < MAX_PWMS; i++) Settings.pwm_value[i] = 0;
 
@@ -902,6 +904,10 @@ void SettingsDelta()
     }
     if (Settings.version < 0x050C0007) {
       Settings.baudrate = APP_BAUDRATE / 1200;
+    }
+
+    if (Settings.version < 0x050C0008) {
+      Settings.serial_br_baudrate_div4 = 9600;
     }
 
     Settings.version = VERSION;

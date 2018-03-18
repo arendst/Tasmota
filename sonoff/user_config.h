@@ -220,7 +220,7 @@
 #define USE_PMS5003                              // Add support for PMS5003 and PMS7003 particle concentration sensor (+1k3 code)
 #define USE_NOVA_SDS                             // Add support for SDS011 and SDS021 particle concentration sensor (+0k7 code)
 #define USE_PZEM004T                             // Add support for PZEM004T Energy monitor (+2k code)
-#define USE_SERIAL_BRIDGE                        // Add support for Serial port MQTT bridge (+0k4 code, +0k1 mem)
+#define USE_SERIAL_BRIDGE                        // Add support for Serial port MQTT bridge (+0k5 code, +0k1 mem)
 
 // -- Low level interface devices -----------------
 #define USE_IR_REMOTE                            // Send IR remote commands using library IRremoteESP8266 and ArduinoJson (+4k code, 0k3 mem, 48 iram)
