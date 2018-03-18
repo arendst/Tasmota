@@ -46,7 +46,7 @@ void SerialBridge50ms()
     uint8_t sbuf[len+1];
     SerialBridgeSerial->readBytes(sbuf, len);
     sbuf[len] = '\0';
-    snprintf_P(mqtt_data, sizeof(mqtt_data), "%s", sbuf);
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s"), sbuf);
     MqttPublishPrefixTopic_P(STAT, PSTR("serialbr"), false);
   }
 }
@@ -78,6 +78,7 @@ boolean SerialBridgeCommand()
     uint32_t baud = strtol(XdrvMailbox.data, &p, 10);
     if ((baud >= 1200) && (baud <= 115200)) {
       Settings.serial_br_baudrate_div1200 = baud / 1200;
+      SerialBridgeSerial->begin(1200 * Settings.serial_br_baudrate_div1200); // Reinitialize serial port with new baud rate
     }
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_LVALUE, command, 1200 * Settings.serial_br_baudrate_div1200);
     return true;
