@@ -538,6 +538,8 @@ void LightState(uint8_t append)
 {
   char scolor[25];
   char scommand[33];
+  float hsb[3];
+  int16_t h,s,b;
 
   if (append) {
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,"), mqtt_data);
@@ -549,6 +551,13 @@ void LightState(uint8_t append)
     mqtt_data, scommand, GetStateText(light_power), Settings.light_dimmer);
   if (light_subtype > LST_SINGLE) {
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"" D_CMND_COLOR "\":\"%s\""), mqtt_data, LightGetColor(0, scolor));
+    //  Add status for HSB
+    LightGetHsb(&hsb[0],&hsb[1],&hsb[2]);
+    //  Scale these percentages up to the numbers expected byt he client
+    h = round(hsb[0] * 360);
+    s = round(hsb[1] * 100);
+    b = round(hsb[2] * 100);
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"" D_CMND_COLOR_HSB "\":\"%d,%d,%d\""), mqtt_data, h,s,b);
   }
   if ((LST_COLDWARM == light_subtype) || (LST_RGBWC == light_subtype)) {
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"" D_CMND_COLORTEMPERATURE "\":%d"), mqtt_data, LightGetColorTemp());
@@ -1057,7 +1066,7 @@ boolean LightCommand()
     }
   }
   else if ((CMND_CHANNEL == command_code) && (XdrvMailbox.index > 0) && (XdrvMailbox.index <= light_subtype ) ) {
-    //  Implement "Channel" command to allow for direct setting of each color channel
+    //  Set "Channel" directly - this allows Color and Direct PWM control to coexist
     if (XdrvMailbox.data_len > 0) {
       uint8_t level = atoi(XdrvMailbox.data);
       if ( level > 100 ) {
@@ -1072,7 +1081,7 @@ boolean LightCommand()
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, XdrvMailbox.index, scolor);
 
   }
-  else if ((CMND_CHANNEL == command_code) && light_subtype >= LST_RGB) {
+  else if ((CMND_COLOR_HSB == command_code)  && ( light_subtype >= LST_RGB)) {
     //  Implement method to "direct set" color by HSB (HSB is passed comma separated, 0<H<360 0<S<100 0<B<100 )
     if ( (XdrvMailbox.index == 1) ) {
        uint16_t HSB[3];
@@ -1097,16 +1106,15 @@ boolean LightCommand()
          //  Translate to fractional elements as required by LightHsbToRgb
          //  Keep the results <=1 in the event someone passes something
          //  out of range.
-         light_hue        = ( (HSB[0]>360) ? (HSB[0] % 360) : HSB[0] ) /360.0;
-         light_saturation = ( (HSB[1]>100) ? (HSB[1] % 100) : HSB[1] ) /100.0;
-         light_brightness = ( (HSB[2]>100) ? (HSB[2] % 100) : HSB[2] ) /100.0;
+         LightSetHsb(( (HSB[0]>360) ? (HSB[0] % 360) : HSB[0] ) /360.0,
+                     ( (HSB[1]>100) ? (HSB[1] % 100) : HSB[1] ) /100.0,
+                     ( (HSB[2]>100) ? (HSB[2] % 100) : HSB[2] ) /100.0,
+                    0);
 
-         LightHsbToRgb();
-         LightSetColor();
-         coldim = true;
+       } else {
+          LightState(0);
        }
     }
-
 }
 
 #ifdef USE_WS2812  //  ***********************************************************************
