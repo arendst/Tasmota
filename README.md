@@ -51,6 +51,14 @@ There is **NO CONFLICT** with MQTT, Home Assistant, Web, etc. Tests show fast re
 
 -----------------------------------------------------------------------------------------------------------------------------------
 
+## Contributors to this Project ##
+
+* Adrian Scillato [ascillato](https://github.com/ascillato)
+* Sisamiwe [sisamiwe](https://github.com/sisamiwe) - Thanks for the guide on using KNX.
+* Nico Weichbrodt [envy](https://github.com/envy) - Thanks for the patience and help with the modifications to ESP_KNX_IP.
+
+-----------------------------------------------------------------------------------------------------------------------------------
+
 ## Sonoff-Tasmota
 Provide ESP8266 based Sonoff by [iTead Studio](https://www.itead.cc/) and ElectroDragon IoT Relay with Serial, Web and MQTT control allowing 'Over the Air' or OTA firmware updates using Arduino IDE.
 
