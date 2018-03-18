@@ -340,6 +340,10 @@
 #define D_CMND_DISP_SIZE "Size"
 #define D_CMND_DISP_TEXT "Text"
 
+// Commands xdrv_08_serial_bridge.ino
+#define D_CMND_SET_SBR_BAUDRATE "SBrBaud"
+#define D_CMND_SET_SBR_DELIMITER "SBrDelim"
+
 /********************************************************************************************/
 
 #ifndef MY_LANGUAGE
