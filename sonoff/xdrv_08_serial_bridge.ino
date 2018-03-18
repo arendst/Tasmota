@@ -76,8 +76,8 @@ boolean SerialBridgeCommand()
   if (CMND_SET_SBR_BAUDRATE == command_code) {
     if ((XdrvMailbox.payload >= 300) && (XdrvMailbox.payload <= 28800)) {
       Settings.serial_br_baudrate_div4 = XdrvMailbox.payload;
-      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, Settings.serial_br_baudrate_div4);
     }
+    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, Settings.serial_br_baudrate_div4);
     return true;
   }
 
