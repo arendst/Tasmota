@@ -45,8 +45,9 @@ void SerialBridgeInit(void)
 
 void SerialBridge50ms()
 {
-#ifdef USE_SERIAL_BRIDGE_DELIMITER
   boolean transmit = false;
+
+#ifdef USE_SERIAL_BRIDGE_DELIMITER
   while (SerialBridgeSerial->available()) {
     if (Settings.serial_br_delimiter == 0xff) {
       // Delimiter disabled
@@ -65,22 +66,25 @@ void SerialBridge50ms()
       break;
     }
   }
-  if ((transmit) && (SerialBridgeBufferP > 0)) {
+  if (SerialBridgeBufferP == 0) {
+    transmit = false;
+  }
+#else
+  int SerialBridgeBufferP;
+  uint8_t SerialBridgeBuffer[SerialBridgeBufferP+1];
+  if (SerialBridgeSerial->available()) {
+    SerialBridgeBufferP = SerialBridgeSerial->available();
+    SerialBridgeSerial->readBytes(SerialBridgeBuffer, SerialBridgeBufferP);
+    transmit = true;
+  }
+#endif
+
+  if (transmit) {
     SerialBridgeBuffer[SerialBridgeBufferP] = '\0';
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s"), SerialBridgeBuffer);
     MqttPublishPrefixTopic_P(STAT, SerialBridgeTopic, false);
     SerialBridgeBufferP = 0;
   }
-#else
-  if (SerialBridgeSerial->available()) {
-    int len = SerialBridgeSerial->available();
-    uint8_t SerialBridgeBuffer[len+1];
-    SerialBridgeSerial->readBytes(SerialBridgeBuffer, len);
-    SerialBridgeBuffer[len] = '\0';
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s"), SerialBridgeBuffer);
-    MqttPublishPrefixTopic_P(STAT, SerialBridgeTopic, false);
-  }
-#endif
 }
 
 boolean SerialBridgeMqttData()
