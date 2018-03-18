@@ -32,6 +32,9 @@
 
 //#define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
 
+// HTML (ISO 639-1) Language Code
+#define D_HTML_LANGUAGE "de"
+
 // "2017-03-07T11:08:02" - ISO8601:2004
 #define D_YEAR_MONTH_SEPARATOR "."
 #define D_MONTH_DAY_SEPARATOR "."
@@ -161,13 +164,6 @@
 #define D_RECEIVED_TOPIC "empfangenes topic"
 #define D_DATA_SIZE "Datengröße"
 #define D_ANALOG_INPUT "Analog"
-
-#define D_FINGERPRINT "TLS-Fingerabdruck wird verifiziert..."
-#define D_TLS_CONNECT_FAILED_TO "TLS-Verbindung fehlgeschlagen an"
-#define D_RETRY_IN "Wiederversuch in"
-#define D_VERIFIED "verifiziert"
-#define D_INSECURE "unsichere Verbindung aufgrund ungültigen Fingerabdrucks"
-#define D_CONNECT_FAILED_TO "Verbindung fehlgeschlagen aufgrund von"
 
 // support.ino
 #define D_OSWATCH "osWatch"
@@ -317,6 +313,14 @@
 #define D_ENABLE_WEBLOG_FOR_RESPONSE "Aktivere Web Log Level 2 falls Reaktion erwartet"
 #define D_NEED_USER_AND_PASSWORD "Benutzer benötigt=<Benutzername>&password=<Passwort>"
 
+// xdrv_00_mqtt.ino
+#define D_FINGERPRINT "TLS-Fingerabdruck wird verifiziert..."
+#define D_TLS_CONNECT_FAILED_TO "TLS-Verbindung fehlgeschlagen an"
+#define D_RETRY_IN "Wiederversuch in"
+#define D_VERIFIED "verifiziert mit Fingerabdruck"
+#define D_INSECURE "unsichere Verbindung aufgrund ungültigen Fingerabdrucks"
+#define D_CONNECT_FAILED_TO "Verbindung fehlgeschlagen aufgrund von"
+
 // xdrv_wemohue.ino
 #define D_MULTICAST_DISABLED "Multicast deaktiviert"
 #define D_MULTICAST_REJOINED "Multicast (wieder-)verbunden"
@@ -348,9 +352,9 @@
   #define D_DOMOTICZ_TEMP_HUM_BARO "Temp,Hum,Baro"
   #define D_DOMOTICZ_POWER_ENERGY "Power,Energy"
   #define D_DOMOTICZ_ILLUMINANCE "Illuminance"
-  #define D_DOMOTICZ_COUNT "Count"
-  #define D_DOMOTICZ_VOLTAGE "Voltage"
-  #define D_DOMOTICZ_CURRENT "Current"
+  #define D_DOMOTICZ_COUNT "Count/PM1"
+  #define D_DOMOTICZ_VOLTAGE "Voltage/PM2.5"
+  #define D_DOMOTICZ_CURRENT "Current/PM10"
   #define D_DOMOTICZ_AIRQUALITY "AirQuality"
 #define D_DOMOTICZ_UPDATE_TIMER "Update timer"
 

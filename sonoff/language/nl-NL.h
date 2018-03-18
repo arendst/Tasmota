@@ -32,6 +32,9 @@
 
 //#define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
 
+// HTML (ISO 639-1) Language Code
+#define D_HTML_LANGUAGE "nl"
+
 // "2017-03-07T11:08:02" - ISO8601:2004
 #define D_YEAR_MONTH_SEPARATOR "-"
 #define D_MONTH_DAY_SEPARATOR "-"
@@ -161,13 +164,6 @@
 #define D_RECEIVED_TOPIC "Ontvangen topic"
 #define D_DATA_SIZE "Data lengte"
 #define D_ANALOG_INPUT "Analoog"
-
-#define D_FINGERPRINT "Controleer TLS vingerafdruk..."
-#define D_TLS_CONNECT_FAILED_TO "TLS Verbinding mislukt naar"
-#define D_RETRY_IN "Opnieuw proberen over"
-#define D_VERIFIED "Gecontroleerd"
-#define D_INSECURE "Door ongeldige vingerafdruk een onveilige verbinding"
-#define D_CONNECT_FAILED_TO "Verbinding mislukt naar"
 
 // support.ino
 #define D_OSWATCH "osWatch"
@@ -317,6 +313,14 @@
 #define D_ENABLE_WEBLOG_FOR_RESPONSE "Schakel weblog 2 in indien antwoord verwacht"
 #define D_NEED_USER_AND_PASSWORD "Benodig user=<gebruiker>&password=<webwachtwoord>"
 
+// xdrv_00_mqtt.ino
+#define D_FINGERPRINT "Controleer TLS vingerafdruk..."
+#define D_TLS_CONNECT_FAILED_TO "TLS Verbinding mislukt naar"
+#define D_RETRY_IN "Opnieuw proberen over"
+#define D_VERIFIED "Gecontroleerd met vingerafdruk"
+#define D_INSECURE "Door ongeldige vingerafdruk een onveilige verbinding"
+#define D_CONNECT_FAILED_TO "Verbinding mislukt naar"
+
 // xdrv_wemohue.ino
 #define D_MULTICAST_DISABLED "Multicast uitgeschakeld"
 #define D_MULTICAST_REJOINED "Multicast verbonden"
@@ -348,9 +352,9 @@
   #define D_DOMOTICZ_TEMP_HUM_BARO "Temp,Hum,Baro"
   #define D_DOMOTICZ_POWER_ENERGY "Power,Energy"
   #define D_DOMOTICZ_ILLUMINANCE "Illuminance"
-  #define D_DOMOTICZ_COUNT "Count"
-  #define D_DOMOTICZ_VOLTAGE "Spanning"
-  #define D_DOMOTICZ_CURRENT "Stroom"
+  #define D_DOMOTICZ_COUNT "Count/PM1"
+  #define D_DOMOTICZ_VOLTAGE "Spanning/PM2,5"
+  #define D_DOMOTICZ_CURRENT "Stroom/PM10"
   #define D_DOMOTICZ_AIRQUALITY "AirQuality"
 #define D_DOMOTICZ_UPDATE_TIMER "Bijwerk timer"
 

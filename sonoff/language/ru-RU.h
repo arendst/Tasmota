@@ -32,6 +32,9 @@
 
 //#define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
 
+// HTML (ISO 639-1) Language Code
+#define D_HTML_LANGUAGE "ru"
+
 // "2017-03-07T11:08:02" - ISO8601:2004
 #define D_YEAR_MONTH_SEPARATOR "-"
 #define D_MONTH_DAY_SEPARATOR "-"
@@ -161,13 +164,6 @@
 #define D_RECEIVED_TOPIC "Полученный Топик"
 #define D_DATA_SIZE "Размер данных"
 #define D_ANALOG_INPUT "Аналоговый вход"
-
-#define D_FINGERPRINT "Проверка TLS Fingerprint..."
-#define D_TLS_CONNECT_FAILED_TO "Сбой подключения TLS к"
-#define D_RETRY_IN "Повторить"
-#define D_VERIFIED "Проверено"
-#define D_INSECURE "Небезопасное соединение, недействительный Fingerprint"
-#define D_CONNECT_FAILED_TO "Ошибка подключения к"
 
 // support.ino
 #define D_OSWATCH "osWatch"
@@ -317,6 +313,14 @@
 #define D_ENABLE_WEBLOG_FOR_RESPONSE "Включить Веб лог уровня 2 если ожидается ответ"
 #define D_NEED_USER_AND_PASSWORD "Ожидается user=<username>&password=<password>"
 
+// xdrv_00_mqtt.ino
+#define D_FINGERPRINT "Проверка TLS Fingerprint..."
+#define D_TLS_CONNECT_FAILED_TO "Сбой подключения TLS к"
+#define D_RETRY_IN "Повторить"
+#define D_VERIFIED "Проверено Fingerprint"
+#define D_INSECURE "Небезопасное соединение, недействительный Fingerprint"
+#define D_CONNECT_FAILED_TO "Ошибка подключения к"
+
 // xdrv_wemohue.ino
 #define D_MULTICAST_DISABLED "Multicast отключен"
 #define D_MULTICAST_REJOINED "Multicast (ре)соединился"
@@ -348,9 +352,9 @@
   #define D_DOMOTICZ_TEMP_HUM_BARO "Temp,Hum,Baro"
   #define D_DOMOTICZ_POWER_ENERGY "Power,Energy"
   #define D_DOMOTICZ_ILLUMINANCE "Illuminance"
-  #define D_DOMOTICZ_COUNT "Count"
-  #define D_DOMOTICZ_VOLTAGE "Voltage"
-  #define D_DOMOTICZ_CURRENT "Current"
+  #define D_DOMOTICZ_COUNT "Count/PM1"
+  #define D_DOMOTICZ_VOLTAGE "Voltage/PM2,5"
+  #define D_DOMOTICZ_CURRENT "Current/PM10"
   #define D_DOMOTICZ_AIRQUALITY "AirQuality"
 #define D_DOMOTICZ_UPDATE_TIMER "Update timer"
 
@@ -381,7 +385,6 @@
 #define D_PARTICALS_BEYOND "Particals"
 
 // sonoff_template.h
-// Max string length is 8 characters including suffixes
 #define D_SENSOR_NONE     "-нет-"
 #define D_SENSOR_DHT11    "DHT11"
 #define D_SENSOR_AM2301   "AM2301"

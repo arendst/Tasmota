@@ -92,18 +92,28 @@ void NovaSdsInit()
 
 #ifdef USE_WEBSERVER
 const char HTTP_SDS0X1_SNS[] PROGMEM = "%s"
-  "{s}SDS0X1 " D_ENVIRONMENTAL_CONCENTRATION " 2.5 " D_UNIT_MICROMETER "{m}%d " D_UNIT_MICROGRAM_PER_CUBIC_METER "{e}"
-  "{s}SDS0X1 " D_ENVIRONMENTAL_CONCENTRATION " 10 " D_UNIT_MICROMETER "{m}%d " D_UNIT_MICROGRAM_PER_CUBIC_METER "{e}";      // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
+  "{s}SDS0X1 " D_ENVIRONMENTAL_CONCENTRATION " 2.5 " D_UNIT_MICROMETER "{m}%s " D_UNIT_MICROGRAM_PER_CUBIC_METER "{e}"
+  "{s}SDS0X1 " D_ENVIRONMENTAL_CONCENTRATION " 10 " D_UNIT_MICROMETER "{m}%s " D_UNIT_MICROGRAM_PER_CUBIC_METER "{e}";      // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
 #endif  // USE_WEBSERVER
 
 void NovaSdsShow(boolean json)
 {
   if (novasds_valid) {
+    char pm10[10];
+    char pm2_5[10];
+    float pm10f = (float)(novasds_data.pm100) / 10.0f;
+    float pm2_5f = (float)(novasds_data.pm25) / 10.0f;
+    dtostrfd(pm10f, 1, pm10);
+    dtostrfd(pm2_5f, 1, pm2_5);
     if (json) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"SDS0X1\":{\"PM2.5\":%d,\"PM10\":%d}"), mqtt_data, novasds_data.pm25, novasds_data.pm100);
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"SDS0X1\":{\"PM2.5\":%s,\"PM10\":%s}"), mqtt_data, pm2_5, pm10);
+#ifdef USE_DOMOTICZ
+      DomoticzSensor(DZ_VOLTAGE, pm2_5);  // PM2.5
+      DomoticzSensor(DZ_CURRENT, pm10);   // PM10
+#endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
     } else {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SDS0X1_SNS, mqtt_data, novasds_data.pm25/10, novasds_data.pm100/10);
+      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SDS0X1_SNS, mqtt_data, pm2_5, pm10);
 #endif  // USE_WEBSERVER
     }
   }

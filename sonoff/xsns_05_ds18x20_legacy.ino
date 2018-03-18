@@ -103,6 +103,8 @@ boolean Ds18x20Read(uint8_t sensor, float &t)
 {
   byte data[12];
   int8_t sign = 1;
+  uint16_t temp12 = 0;
+  int16_t temp14 = 0;
   float temp9 = 0.0;
   uint8_t present = 0;
 
@@ -117,7 +119,7 @@ boolean Ds18x20Read(uint8_t sensor, float &t)
   }
   if (OneWire::crc8(data, 8) == data[8]) {
     switch(ds18x20_address[ds18x20_index[sensor]][0]) {
-    case DS18S20_CHIPID:  // DS18S20
+    case DS18S20_CHIPID:
       if (data[1] > 0x80) {
         data[0] = (~data[0]) +1;
         sign = -1;  // App-Note fix possible sign error
@@ -129,14 +131,17 @@ boolean Ds18x20Read(uint8_t sensor, float &t)
       }
       t = ConvertTemp((temp9 - 0.25) + ((16.0 - data[6]) / 16.0));
       break;
-    case DS18B20_CHIPID:   // DS18B20
-    case MAX31850_CHIPID:  // MAX31850
-      uint16_t temp12 = (data[1] << 8) + data[0];
+    case DS18B20_CHIPID:
+      temp12 = (data[1] << 8) + data[0];
       if (temp12 > 2047) {
         temp12 = (~temp12) +1;
         sign = -1;
       }
-      t = ConvertTemp(sign * temp12 * 0.0625);
+      t = ConvertTemp(sign * temp12 * 0.0625);  // Divide by 16
+      break;
+    case MAX31850_CHIPID:
+        temp14 = (data[1] << 8) + (data[0] & 0xFC);
+        t = ConvertTemp(temp14 * 0.0625);  // Divide by 16
       break;
     }
   }

@@ -47,7 +47,7 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t hass_discovery : 1;           // bit 19 (v5.11.1a)
     uint32_t not_power_linked : 1;         // bit 20 (v5.11.1f)
     uint32_t no_power_on_check : 1;        // bit 21 (v5.11.1i)
-    uint32_t spare22 : 1;
+    uint32_t mqtt_serial : 1;              // bit 22 (v5.12.0f)
     uint32_t spare23 : 1;
     uint32_t spare24 : 1;
     uint32_t spare25 : 1;
@@ -99,9 +99,7 @@ struct SYSCFG {
   int8_t        timezone;                  // 016
   char          ota_url[101];              // 017
   char          mqtt_prefix[3][11];        // 07C
-
-  byte          free_09D[1];               // 09D
-
+  uint8_t       baudrate;                  // 09D
   byte          seriallog_level;           // 09E
   uint8_t       sta_config;                // 09F
   byte          sta_active;                // 0A0
@@ -116,7 +114,10 @@ struct SYSCFG {
   byte          syslog_level;              // 1AA
   uint8_t       webserver;                 // 1AB
   byte          weblog_level;              // 1AC
-  char          mqtt_fingerprint[60];      // 1AD To be freed by binary fingerprint
+  uint8_t       mqtt_fingerprint[2][20];   // 1AD
+
+  byte          free_1D5[20];              // 1D5  Free since 5.12.0e
+
   char          mqtt_host[33];             // 1E9
   uint16_t      mqtt_port;                 // 20A
   char          mqtt_client[33];           // 20C
@@ -125,7 +126,6 @@ struct SYSCFG {
   char          mqtt_topic[33];            // 26F
   char          button_topic[33];          // 290
   char          mqtt_grptopic[33];         // 2B1
-
   uint8_t       display_model;             // 2D2
   uint8_t       display_mode;              // 2D3
   uint8_t       display_refresh;           // 2D4
@@ -134,27 +134,23 @@ struct SYSCFG {
   uint8_t       display_address[8];        // 2D8
   uint8_t       display_dimmer;            // 2E0
   uint8_t       display_size;              // 2E1
+
   uint8_t       free_2E2[4];               // 2E2
 
   uint16_t      pwm_frequency;             // 2E6
   power_t       power;                     // 2E8
   uint16_t      pwm_value[MAX_PWMS];       // 2EC
-
   int16_t       altitude;                  // 2F6 Add since 5.8.0i
   uint16_t      tele_period;               // 2F8
   uint8_t       ex_power;                  // 2FA Not used since 5.8.0j
   uint8_t       ledstate;                  // 2FB
   uint8_t       param[PARAM8_SIZE];        // 2FC was domoticz_in_topic until 5.1.6
   char          state_text[4][11];         // 313
-
-  byte          free_33F[1];               // 33F
-
+  uint8_t       energy_power_delta;        // 33F
   uint16_t      domoticz_update_timer;     // 340
   uint16_t      pwm_range;                 // 342
-
   unsigned long domoticz_relay_idx[MAX_DOMOTICZ_IDX];  // 344
   unsigned long domoticz_key_idx[MAX_DOMOTICZ_IDX];    // 354
-
   unsigned long energy_power_calibration;  // 364
   unsigned long energy_voltage_calibration;  // 368
   unsigned long energy_current_calibration;  // 36C
@@ -178,10 +174,9 @@ struct SYSCFG {
   uint16_t      mqtt_retry;                // 396
   uint8_t       poweronstate;              // 398
   uint8_t       last_module;               // 399
-
   uint16_t      blinktime;                 // 39A
   uint16_t      blinkcount;                // 39C
-  uint16_t      ws_pixels;                 // 39E Not used since 5.8.0
+  uint16_t      light_rotation;            // 39E
   uint8_t       ws_red;                    // 3A0 Not used since 5.8.0
   uint8_t       ws_green;                  // 3A1 Not used since 5.8.0
   uint8_t       ws_blue;                   // 3A2 Not used since 5.8.0
@@ -204,10 +199,8 @@ struct SYSCFG {
   uint16_t      domoticz_switch_idx[MAX_DOMOTICZ_IDX];      // 454
   uint16_t      domoticz_sensor_idx[MAX_DOMOTICZ_SNS_IDX];  // 45C
   uint8_t       module;                    // 474
-
   uint8_t       ws_color[4][3];            // 475
   uint8_t       ws_width[3];               // 481
-
   myio          my_gp;                     // 484
   uint16_t      light_pixels;              // 496
   uint8_t       light_color[5];            // 498
@@ -230,9 +223,7 @@ struct SYSCFG {
   char          web_password[33];          // 4A9
   uint8_t       switchmode[MAX_SWITCHES];  // 4CA
   char          ntp_server[3][33];         // 4CE
-
   byte          ina219_mode;               // 531
-
   uint16_t      pulse_timer[MAX_PULSETIMERS]; // 532
 
   byte          free_542[2];               // 542
@@ -240,9 +231,7 @@ struct SYSCFG {
   uint32_t      ip_address[4];             // 544
   unsigned long energy_kWhtotal;              // 554
   char          mqtt_fulltopic[100];       // 558
-
   SysBitfield2  flag2;                     // 5BC Add flag2 since 5.9.2
-
   unsigned long pulse_counter[MAX_COUNTERS];  // 5C0
   uint16_t      pulse_counter_type;        // 5D0
   uint16_t      pulse_counter_debounce;    // 5D2

@@ -32,6 +32,9 @@
 
 //#define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
 
+// HTML (ISO 639-1) Language Code
+#define D_HTML_LANGUAGE "pl"
+
 // "2017-03-07T11:08:02" - ISO8601:2004
 #define D_YEAR_MONTH_SEPARATOR "-"
 #define D_MONTH_DAY_SEPARATOR "-"
@@ -161,13 +164,6 @@
 #define D_RECEIVED_TOPIC "Otrzymany temat"
 #define D_DATA_SIZE "Wielkość danych"
 #define D_ANALOG_INPUT "Wej_analogowe"
-
-#define D_FINGERPRINT "Weryfikuj odcisk TLS..."
-#define D_TLS_CONNECT_FAILED_TO "Nieudane połączenie TLS do"
-#define D_RETRY_IN "Spróbuj ponownie"
-#define D_VERIFIED "Zweryfikowano"
-#define D_INSECURE "Nieprawidłowe połączenie z powodu błędnego odcisku TLS"
-#define D_CONNECT_FAILED_TO "Nie udało się nawiązać połączenia"
 
 // support.ino
 #define D_OSWATCH "osWatch"
@@ -317,6 +313,14 @@
 #define D_ENABLE_WEBLOG_FOR_RESPONSE "Włącz poziom 2 zapisu Weblog, jeśli oczekiwana jest odpowiedź"
 #define D_NEED_USER_AND_PASSWORD "Wymagany użytkownik=<username>&hasło=<password>"
 
+// xdrv_00_mqtt.ino
+#define D_FINGERPRINT "Weryfikuj odcisk TLS..."
+#define D_TLS_CONNECT_FAILED_TO "Nieudane połączenie TLS do"
+#define D_RETRY_IN "Spróbuj ponownie"
+#define D_VERIFIED "Zweryfikowano odcisku"
+#define D_INSECURE "Nieprawidłowe połączenie z powodu błędnego odcisku TLS"
+#define D_CONNECT_FAILED_TO "Nie udało się nawiązać połączenia"
+
 // xdrv_wemohue.ino
 #define D_MULTICAST_DISABLED "Multicast jest wyłączony"
 #define D_MULTICAST_REJOINED "Multicast (re)dołączony"
@@ -348,9 +352,9 @@
   #define D_DOMOTICZ_TEMP_HUM_BARO "Temp,Wilg,Cis"
   #define D_DOMOTICZ_POWER_ENERGY "Moc,Energia"
   #define D_DOMOTICZ_ILLUMINANCE "Oświetl."
-  #define D_DOMOTICZ_COUNT "Licznik"
-  #define D_DOMOTICZ_VOLTAGE "Napięcie"
-  #define D_DOMOTICZ_CURRENT "Prąd"
+  #define D_DOMOTICZ_COUNT "Licznik/PM1"
+  #define D_DOMOTICZ_VOLTAGE "Napięcie/PM2,5"
+  #define D_DOMOTICZ_CURRENT "Prąd/PM10"
   #define D_DOMOTICZ_AIRQUALITY "AirQuality"
 #define D_DOMOTICZ_UPDATE_TIMER "Zaktualizuj czasomierz"
 

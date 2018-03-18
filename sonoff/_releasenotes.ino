@@ -1,10 +1,33 @@
-/* 5.12.0d
+/* 5.12.0g
+ * Add support for MQTT to hardware serial bridge using commands Baudrate and SerialSend. Currently supports 8N1 and text only (#2182)
+ *
+ * 5.12.0f
+ * Add compile time support for WS2812 BRG and RBG led configurations to be defined in user_config.h (#1690)
+ *
+ * 5.12.0e
+ * Add Domoticz dust (custom) sensors to PMS5003 and NovaFitness SDS drivers as PM1, PM2.5 and PM10
+ * Add a second TLS fingerprint to allow switching keys in TLS mode (#2033, #2102)
+ * Add display of remaining pulse time to command PulseTime (#2085)
+ * Add additional time offset to Wifi Retry based on device mac address (#2089)
+ * Add command Color6 RRGGBB for Clock hour marker color and command Rotation pixels for Clock rotation (#2092)
+ * Add HTML language header in local language (#2123)
+ * Add command PowerDelta 0..100 (percentage) to Energy monitoring devices to report on active power load change (#2157)
+ * Add Restart Reason to Status 1 report (#2161)
+ * Fix MAX31850 higher temperatures (#1269)
+ *
+ * 5.12.0d
  * Add support for optional MQTT drivers to be selected in user_config.h (#1992)
  * Add Portuguese language file
  * Add compiler check for stable lwIP version v1.4 (#1940)
+ * Add always suffix with device number in Mqtt discovery topic (#1962)
  * Add diacritics to Polish language file (#2005)
  * Add Hungarian language file (#2024)
+ * Add Czech language file
+ * Add Chinese (Traditional) in Taiwan language file (#2108)
  * Add support for Nova Fitness SDS011 and possibly SDS021 particle concentration sensor (#2070)
+ * Add single decimal precision to Nova Fitness SDS0x1 sensor values (#2093)
+ * Add support for multiple SHT3X sensors (#1949, #2110)
+ * Add Sonoff SC domoticz support for Sound level as Counter and Air quality (#2118)
  * Fix MQTT TLS fingerprint validation (#2033)
  *
  * 5.12.0c

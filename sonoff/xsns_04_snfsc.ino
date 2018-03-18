@@ -125,6 +125,8 @@ void SonoffScShow(boolean json)
 #ifdef USE_DOMOTICZ
       DomoticzTempHumSensor(temperature, humidity);
       DomoticzSensor(DZ_ILLUMINANCE, sc_value[2]);
+      DomoticzSensor(DZ_COUNT, sc_value[3]);
+      DomoticzSensor(DZ_AIRQUALITY, 500 + ((100 - sc_value[4]) * 20));
 #endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
     } else {

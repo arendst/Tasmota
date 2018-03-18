@@ -29,6 +29,7 @@
 \*********************************************************************************************/
 
 // -- Localization --------------------------------
+//#define MY_LANGUAGE            cs-CZ           // Czech in Czech
 //#define MY_LANGUAGE            de-DE           // German in Germany
 //#define MY_LANGUAGE            en-GB           // English in Great Britain. Enabled by Default
 //#define MY_LANGUAGE            es-AR           // Spanish in Argentina
@@ -40,6 +41,7 @@
 //#define MY_LANGUAGE            pt-PT           // Portuguese in Portugal
 //#define MY_LANGUAGE            ru-RU           // Russian in Russia
 //#define MY_LANGUAGE            zh-CN           // Chinese (Simplified) in China
+//#define MY_LANGUAGE            zh-TW           // Chinese (Traditional) in Taiwan
 
 // -- Project -------------------------------------
 #define PROJECT                "sonoff"          // PROJECT is used as the default topic delimiter and OTA file name
@@ -76,11 +78,11 @@
  * Select ONE of possible MQTT library types below
 \*********************************************************************************************/
 // Default MQTT driver for both non-TLS and TLS connections. Blocks network if MQTT server is unavailable.
-//#define MQTT_LIBRARY_TYPE      1                 // Use PubSubClient library
+//#define MQTT_LIBRARY_TYPE      MQTT_PUBSUBCLIENT   // Use PubSubClient library
 // Alternative MQTT driver does not block network when MQTT server is unavailable. No TLS support
-#define MQTT_LIBRARY_TYPE      2                 // Use TasmotaMqtt library (+4k4 code, +4k mem) - non-TLS only
+#define MQTT_LIBRARY_TYPE      MQTT_TASMOTAMQTT    // Use TasmotaMqtt library (+4k4 code, +4k mem) - non-TLS only
 // Alternative MQTT driver does not block network when MQTT server is unavailable. No TLS support
-//#define MQTT_LIBRARY_TYPE      3                 // Use (patched) esp-mqtt-arduino library (+4k8 code, +4k mem) - non-TLS only
+//#define MQTT_LIBRARY_TYPE      MQTT_ESPMQTTARDUINO // Use (patched) esp-mqtt-arduino library (+4k8 code, +4k mem) - non-TLS only
 
 // -- MQTT ----------------------------------------
 #define MQTT_USE               0                 // [SetOption3] Select default MQTT use (0 = Off, 1 = On)
@@ -90,7 +92,8 @@
                                                  //   Needs Fingerprint, TLS Port, UserId and Password
 #ifdef USE_MQTT_TLS
   #define MQTT_HOST            ""                   // [MqttHost]
-  #define MQTT_FINGERPRINT     "A5 02 FF 13 99 9F 8B 39 8E F1 83 4F 11 23 65 0B 32 36 FC 07"  // [MqttFingerprint]
+  #define MQTT_FINGERPRINT1    "A5 02 FF 13 99 9F 8B 39 8E F1 83 4F 11 23 65 0B 32 36 FC 07"  // [MqttFingerprint1]
+  #define MQTT_FINGERPRINT2    "A5 02 FF 13 99 9F 8B 39 8E F1 83 4F 11 23 65 0B 32 36 FC 07"  // [MqttFingerprint2]
   #define MQTT_PORT            20123                // [MqttPort] MQTT TLS port
   #define MQTT_USER            "cloudmqttuser"      // [MqttUser] Mandatory user
   #define MQTT_PASS            "cloudmqttpassword"  // [MqttPassword] Mandatory password
@@ -198,14 +201,14 @@
   #define USE_SHT3X                              // Add I2C code for SHT3x or SHTC3 sensor (+0k7 code)
   #define USE_HTU                                // Add I2C code for HTU21/SI7013/SI7020/SI7021 sensor (+1k5 code)
   #define USE_BMP                                // Add I2C code for BMP085/BMP180/BMP280/BME280 sensor (+4k code)
-//    #define USE_BME680                           // Add additional support for BME680 sensor using Adafruit Sensor and BME680 libraries (+6k code)
+    #define USE_BME680                           // Add additional support for BME680 sensor using Adafruit Sensor and BME680 libraries (+6k code)
   #define USE_BH1750                             // Add I2C code for BH1750 sensor (+0k5 code)
-//  #define USE_VEML6070                           // Add I2C code for VEML6070 sensor (+0k5 code)
-//  #define USE_TSL2561                            // Add I2C code for TSL2561 sensor using library Joba_Tsl2561 (+2k3 code)
-//  #define USE_ADS1115                            // Add I2C code for ADS1115 16 bit A/D converter based on Adafruit ADS1x15 library (no library needed) (+0k7 code)
-//  #define USE_ADS1115_I2CDEV                     // Add I2C code for ADS1115 16 bit A/D converter using library i2cdevlib-Core and i2cdevlib-ADS1115 (+2k code)
-//  #define USE_INA219                             // Add I2C code for INA219 Low voltage and current sensor (+1k code)
-//  #define USE_MGS                                // Add I2C code for Xadow and Grove Mutichannel Gas sensor using library Multichannel_Gas_Sensor (+10k code)
+  #define USE_VEML6070                           // Add I2C code for VEML6070 sensor (+0k5 code)
+  #define USE_TSL2561                            // Add I2C code for TSL2561 sensor using library Joba_Tsl2561 (+2k3 code)
+  #define USE_ADS1115                            // Add I2C code for ADS1115 16 bit A/D converter based on Adafruit ADS1x15 library (no library needed) (+0k7 code)
+  #define USE_ADS1115_I2CDEV                     // Add I2C code for ADS1115 16 bit A/D converter using library i2cdevlib-Core and i2cdevlib-ADS1115 (+2k code)
+  #define USE_INA219                             // Add I2C code for INA219 Low voltage and current sensor (+1k code)
+  #define USE_MGS                                // Add I2C code for Xadow and Grove Mutichannel Gas sensor using library Multichannel_Gas_Sensor (+10k code)
     #define MGS_SENSOR_ADDR    0x04              // Default Mutichannel Gas sensor i2c address
 #endif  // USE_I2C
 
@@ -224,7 +227,7 @@
   //#define USE_IR_RECEIVE                         // Support for IR receiver (+5k5 code, 264 iram)
 
 //#define USE_WS2812                               // WS2812 Led string using library NeoPixelBus (+5k code, +1k mem, 232 iram) - Disable by //
-  #define USE_WS2812_CTYPE     1                 // WS2812 Color type (0 - RGB, 1 - GRB, 2 - RGBW, 3 - GRBW)
+  #define USE_WS2812_CTYPE     NEO_GRB           // WS2812 Color type (NEO_RGB, NEO_GRB, NEO_BRG, NEO_RBG, NEO_RGBW, NEO_GRBW)
 //  #define USE_WS2812_DMA                         // DMA supports only GPIO03 (= Serial RXD) (+1k mem). When USE_WS2812_DMA is enabled expect Exceptions on Pow
 
 //#define USE_ARILUX_RF                            // Add support for Arilux RF remote controller (+0k8 code, 252 iram (non 2.3.0))
