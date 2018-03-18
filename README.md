@@ -45,6 +45,8 @@ Basic Functionality is Available. Work in progress.
 
 Up to now, enabling KNX uses +14.7k of code
 
+There is **NO CONFLICT** with MQTT, Home Assistant, Web, etc. Tests show fast response of all features running at same time.
+
 -----------------------------------------------------------------------------------------------------------------------------------
 
 ## Sonoff-Tasmota
