@@ -4,7 +4,7 @@ This is a [MOD](https://github.com/ascillato/Sonoff-Tasmota_KNX) for Sonoff-Tasm
 
 This MOD requires the KNX Library [ascillato/ESP-KNX-IP_Lite](https://github.com/ascillato/ESP-KNX-IP_Lite)
 
-Basic Functionality is Available. Work in progress.
+Basic Functionality is Available. **Work in progress**.
 
 -----------------------------------------------------------------------------------------------------------------------------------
 ## Road Map ##
