@@ -64,6 +64,7 @@
 #define D_JSON_HEAPSIZE "Heap"
 #define D_JSON_HIGH "High"
 #define D_JSON_HUMIDITY "Humidity"
+#define D_JSON_HSBCOLOR "HSBColor"
 #define D_JSON_I2CSCAN_DEVICES_FOUND_AT "Device(s) found at"
 #define D_JSON_I2CSCAN_UNKNOWN_ERROR_AT "Unknown error at"
 #define D_JSON_I2CSCAN_NO_DEVICES_FOUND "No devices found"
@@ -259,6 +260,8 @@
 #define D_CMND_WAKEUP "Wakeup"
 #define D_CMND_WAKEUPDURATION "WakeUpDuration"
 #define D_CMND_WIDTH "Width"
+#define D_CMND_CHANNEL "Channel"
+#define D_CMND_COLOR_HSB "HSBColor"
 
 // Commands xdrv_02_irremote.ino
 #define D_CMND_IRSEND "IRSend"
