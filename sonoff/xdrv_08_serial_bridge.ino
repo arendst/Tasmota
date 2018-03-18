@@ -34,7 +34,7 @@ void SerialBridgeInit(void)
   if ((pin[GPIO_SBR_RX] < 99) && (pin[GPIO_SBR_TX] < 99)) {
     GetTopic_P(SerialBridgeTopic, CMND, Settings.mqtt_topic, PSTR("serialbr"));
     SerialBridgeSerial = new TasmotaSerial(pin[GPIO_SBR_RX], pin[GPIO_SBR_TX]);
-    SerialBridgeSerial->begin(4 * Settings.serial_br_baudrate_div4); // Baud rate is stored div 4 so it fits into 2 bytes
+    SerialBridgeSerial->begin(1200 * Settings.serial_br_baudrate_div1200); // Baud rate is stored div 1200 so it fits into one byte
     SerialBridgeSerial->flush();
   }
 }
@@ -74,10 +74,12 @@ boolean SerialBridgeCommand()
   int command_code = GetCommandCode(command, sizeof(command), XdrvMailbox.topic, kSerialBridgeCommands);
 
   if (CMND_SET_SBR_BAUDRATE == command_code) {
-    if ((XdrvMailbox.payload >= 300) && (XdrvMailbox.payload <= 28800)) {
-      Settings.serial_br_baudrate_div4 = XdrvMailbox.payload;
+    char *p;
+    uint32_t baud = strtol(XdrvMailbox.data, &p, 10);
+    if ((baud >= 1200) && (baud <= 115200)) {
+      Settings.serial_br_baudrate_div1200 = baud / 1200;
     }
-    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, Settings.serial_br_baudrate_div4);
+    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_LVALUE, command, 1200 * Settings.serial_br_baudrate_div1200);
     return true;
   }
 
