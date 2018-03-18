@@ -17,8 +17,9 @@ Basic Functionality is Available. **Work in progress**.
 - [ ] Add Feature to Send telegrams of one relay status to multiple Group Addresses (useful for scenes)
 - [x] Add Feature to Send telegrams of button pressed
 - [x] Add Feature to receive telegrams to toggle relay status
-- [ ] Add Feature to send Temperature by a set interval
-- [ ] Add Feature to receive command to read temperature
+- [ ] Add Feature to read Temperature from Tasmota
+- [x] Add Feature to send Temperature by a set interval
+- [x] Add Feature to receive command to read temperature
 - [ ] Add Feature to recognice Tasmota config to show the same amount of relays, buttons, etc
 - [ ] Add Feature to Save Config
 - [ ] Add Feature to Load Config
