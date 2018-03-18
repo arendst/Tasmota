@@ -118,8 +118,8 @@ boolean SerialBridgeCommand()
     return true;
   }
   else if (CMND_SET_SBR_DELIMITER == command_code) {
-    if (XdrvMailbox.data_len > 0) {
-      Settings.serial_br_delimiter = XdrvMailbox.data[0];
+    if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 255)) {
+      Settings.serial_br_delimiter = XdrvMailbox.payload;
     }
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, Settings.serial_br_delimiter);
     return true;
