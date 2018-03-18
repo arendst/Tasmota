@@ -12,3 +12,4 @@ lib/readme.txt
 releases/*
 !releases/releases.bat
 user_config_my.h
+user_config_override.h
