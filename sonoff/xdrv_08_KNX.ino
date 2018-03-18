@@ -90,9 +90,10 @@ config_webUI_t config_webUI = {
   D_DELETE
 };
 
-int device_param_quantity = 4;
 bool flag_knx_enabled = true;
-float last_temp = 0.0;
+float last_temp = 25.0;
+int knx_update_rate = 5;
+unsigned long next_change = 0;
 
 void KNXStart()
 {
@@ -143,7 +144,7 @@ knx.config_web_UI(config_webUI);
 //Set Physical KNX Address of the device
 knx.config_register_pa();
 //knx.physical_address_set(Settings.knx_physs_addr);
-knx.physical_address_set(knx.PA_to_address(1, 1, 1));
+//knx.physical_address_set(knx.PA_to_address(1, 1, 1));
 
 //knx.config_register_label( D_KNX_PHYSICAL_ADDRESS_NOTE );
 
@@ -172,12 +173,13 @@ for (int i = 0; i < 13; ++i)
   //knx.config_set_ga(device_param[i].id, knx.GA_to_address(2,2,1));
 }
 
-knx.config_set_ga(device_param[0].id, knx.GA_to_address(2,2,1));
+//knx.config_set_ga(device_param[0].id, knx.GA_to_address(2,2,1));
+//knx.config_set_ga(device_param[12].id, knx.GA_to_address(4,1,1));
 
 //knx.config_register_blankspace();
 
 //update_rate_id = knx.config_register_int( D_KNX_UPDATE_INTERVAL , Settings.knx_update_rate);
-update_rate_id = knx.config_register_int( D_KNX_UPDATE_INTERVAL , 5);
+update_rate_id = knx.config_register_int( D_KNX_UPDATE_INTERVAL , knx_update_rate);
 
 //knx.config_register_line();
 
@@ -194,7 +196,7 @@ for (int i = 0; i < 12; ++i)
     //knx.callback_assign(ga_conf, Settings.knx_CB_addr(i));
     if (i==0)
     {
-      knx.callback_assign(cb_conf_id, knx.GA_to_address(2,2,1));
+      //knx.callback_assign(cb_conf_id, knx.GA_to_address(2,2,1));
     }
   }
 }
@@ -205,6 +207,7 @@ if (device_param[j].show)
 {
   cb_temp_id = knx.callback_register( String( device_param_cb[j] ), temp_cb, &device_param[j]);
 }
+//knx.callback_assign(cb_temp_id, knx.GA_to_address(4,1,1));
 
 //knx.config_register_line();
 
@@ -218,25 +221,33 @@ knx.feedback_register_action("", KNX_Return_button, D_CONFIGURATION); // Save Bu
 
 void KNXLoop()
 {
-//  if (Settings.flag.knx_enabled) {
-  if (flag_knx_enabled) {
-    knx.loop();  // Process knx events
-  }
+  knx.loop();  // Process knx events
 }
 
 
-void KNX_EVERY_SECOND() {
-  //  if (Settings.flag.knx_enabled) {
-    if (flag_knx_enabled)
+void KNX_EVERY_SECOND()
+{
+  if (!flag_knx_enabled) { return; }
+
+  if ( knx.config_get_int(update_rate_id) > 0 )
+  {
+    unsigned long now = millis();
+
+    if (next_change < now)
     {
+      next_change = now + 1000 * knx.config_get_int(update_rate_id);
+
+      knx.write_2byte_float(knx.config_get_ga(device_param[12].id), last_temp);
 
     }
+  }
 }
 
 
 void relay_cb(message_t const &msg, void *arg)
 {
   device_parameters_t *chan = (device_parameters_t *)arg;
+  if (!flag_knx_enabled) { return; }
   switch (msg.ct)
   {
     case KNX_CT_WRITE:
@@ -258,6 +269,7 @@ void relay_cb(message_t const &msg, void *arg)
 
 void KNXUpdatePowerState(byte device, power_t state)
 {
+  if (!flag_knx_enabled) { return; }
   if ( device_param[device -1].id != KNX_Empty_ID ) // Group Address configured? 255 = empty
   {
     bool power = bitRead(state, device -1);
@@ -276,15 +288,17 @@ void knx_send_button_power(byte key, byte device, byte state)
 // state 9 = clear retain flag
 //  if (key)
 //  {
-    if (device_param[device+7].id)
-    {
-      knx.write_1bit(knx.config_get_ga(device_param[device+7].id), !(state == 0));
-    }
+  if (!flag_knx_enabled) { return; }
+  if (device_param[device+7].id)
+  {
+    knx.write_1bit(knx.config_get_ga(device_param[device+7].id), !(state == 0));
+  }
 //  }
 }
 
 void temp_cb(message_t const &msg, void *arg)
 {
+  if (!flag_knx_enabled) { return; }
   switch (msg.ct)
   {
     case KNX_CT_READ:
