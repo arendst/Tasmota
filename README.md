@@ -20,7 +20,7 @@ Basic Functionality is Available. **Work in progress**.
 - [ ] Add Feature to read Temperature from Tasmota
 - [x] Add Feature to send Temperature by a set interval
 - [x] Add Feature to receive command to read temperature
-- [ ] Add Feature to recognice Tasmota config to show the same amount of relays, buttons, etc
+- [ ] Add Feature to recognize Tasmota config to show the same amount of relays, buttons, etc
 - [ ] Add Feature to Save Config
 - [ ] Add Feature to Load Config
 - [ ] Change Web Menu to a Tasmota one to save FLASH and RAM
