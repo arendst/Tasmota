@@ -23,6 +23,7 @@ Basic Functionality is Available. Work in progress.
 - [ ] Add Feature to Save Config
 - [ ] Add Feature to Load Config
 - [ ] Change Web Menu to a Tasmota one to save FLASH and RAM
+- [ ] Complete all the language files with keys
 - [ ] Optimize code to reduce Flash and RAM
 
 **For ESP_KNX_IP_LITE:**
