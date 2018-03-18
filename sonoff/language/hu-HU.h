@@ -412,6 +412,8 @@
 #define D_SENSOR_BACKLIGHT "Háttérvil"
 #define D_SENSOR_PMS5003  "PMS5003"
 #define D_SENSOR_SDS0X1   "SDS0X1"
+#define D_SENSOR_SBR_RX   "SerBr Rx"
+#define D_SENSOR_SBR_TX   "SerBr Tx"
 
 // Units
 #define D_UNIT_AMPERE "A"
