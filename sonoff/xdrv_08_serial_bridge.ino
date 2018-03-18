@@ -101,8 +101,38 @@ boolean SerialBridgeMqttData()
     return false;
   }
 
-  // Send data to serial
-  SerialBridgeSerial->write(XdrvMailbox.data, XdrvMailbox.data_len - 1);
+#ifdef USE_SERIAL_BRIDGE_ESCAPE_WS
+  uint8_t unesc_buffer[XdrvMailbox.data_len];
+  uint8_t p = 0;
+  boolean skip_next = false;
+
+  for (uint8_t i = 0; i < XdrvMailbox.data_len; ++i) {
+    if (skip_next) {
+      skip_next = false;
+      continue;
+    }
+
+    if (XdrvMailbox.data[i] != '\\') {
+      unesc_buffer[p++] = XdrvMailbox.data[i];
+      continue;
+    }
+
+    skip_next = true;
+    switch (XdrvMailbox.data[i + 1]) {
+      case 't':  unesc_buffer[p++] = '\t'; break;
+      case 'n':  unesc_buffer[p++] = '\n'; break;
+      case 'v':  unesc_buffer[p++] = '\v'; break;
+      case 'f':  unesc_buffer[p++] = '\f'; break;
+      case 'r':  unesc_buffer[p++] = '\r'; break;
+      case 's':  unesc_buffer[p++] = ' ';  break;
+      case '\\': unesc_buffer[p++] = '\\'; break;
+    }
+  }
+  SerialBridgeSerial->write(unesc_buffer, p - 1); // Send data to serial
+#else
+  SerialBridgeSerial->write(XdrvMailbox.data, XdrvMailbox.data_len - 1); // Send data to serial
+#endif
+
   return true;
 }
 
