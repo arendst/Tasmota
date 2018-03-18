@@ -13,6 +13,7 @@ copy ..\.pioenvs\sonoff-IT\firmware.bin %version%\IT-firmware-%version%.bin
 copy ..\.pioenvs\sonoff-minimal\firmware.bin %version%\MINIMAL-firmware-%version%.bin
 copy ..\.pioenvs\sonoff-NL\firmware.bin %version%\NL-firmware-%version%.bin
 copy ..\.pioenvs\sonoff-PL\firmware.bin %version%\PL-firmware-%version%.bin
+copy ..\.pioenvs\sonoff-PT\firmware.bin %version%\PT-firmware-%version%.bin
 copy ..\.pioenvs\sonoff-RU\firmware.bin %version%\RU-firmware-%version%.bin
 
 copy ..\.pioenvs\sonoff-DE-4MB\firmware.bin %version%\4MB-DE-firmware-%version%.bin
