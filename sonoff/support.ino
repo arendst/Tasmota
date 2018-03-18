@@ -401,6 +401,7 @@ int GetCommandCode(char* destination, size_t destination_size, const char* needl
 
 void SetSerialBaudrate(int baudrate)
 {
+  Settings.baudrate = baudrate / 1200;
   if (Serial.baudRate() != baudrate) {
     if (seriallog_level) {
       snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION D_SET_BAUDRATE_TO " %d"), baudrate);
@@ -1377,6 +1378,13 @@ boolean Xsns02(byte function)
  *   AddLog(LOG_LEVEL_DEBUG);
  *
 \*********************************************************************************************/
+
+void SetSeriallog(byte loglevel)
+{
+  Settings.seriallog_level = loglevel;
+  seriallog_level = loglevel;
+  seriallog_timer = 0;
+}
 
 #ifdef USE_WEBSERVER
 void GetLog(byte idx, char** entry_pp, size_t* len_p)
