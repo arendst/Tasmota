@@ -549,6 +549,7 @@ void SettingsDefaultSet2()
   Settings.pulse_timer[0] = APP_PULSETIME;
 
   Settings.serial_br_baudrate_div1200 = 32;
+  Settings.serial_br_delimiter = 0xff;
 
   // 4.0.7
 //  for (byte i = 0; i < MAX_PWMS; i++) Settings.pwm_value[i] = 0;
@@ -908,6 +909,7 @@ void SettingsDelta()
 
     if (Settings.version < 0x050C0008) {
       Settings.serial_br_baudrate_div1200 = 32;
+      Settings.serial_br_delimiter = 0xff;
     }
 
     Settings.version = VERSION;

@@ -342,6 +342,7 @@
 
 // Commands xdrv_08_serial_bridge.ino
 #define D_CMND_SET_SBR_BAUDRATE "SBrBaud"
+#define D_CMND_SET_SBR_DELIMITER "SBrDelim"
 
 /********************************************************************************************/
 

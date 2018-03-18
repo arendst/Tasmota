@@ -23,16 +23,20 @@
 \*********************************************************************************************/
 #include <TasmotaSerial.h>
 
-enum SerialBridgeCommands { CMND_SET_SBR_BAUDRATE };
-const char kSerialBridgeCommands[] PROGMEM = D_CMND_SET_SBR_BAUDRATE;
+enum SerialBridgeCommands { CMND_SET_SBR_BAUDRATE, CMND_SET_SBR_DELIMITER };
+const char kSerialBridgeCommands[] PROGMEM = D_CMND_SET_SBR_BAUDRATE "|" D_CMND_SET_SBR_DELIMITER;
+const char SerialBridgeTopic[] PROGMEM = "serialbr";
 
 TasmotaSerial *SerialBridgeSerial;
-char SerialBridgeTopic[TOPSZ];
+
+#ifdef USE_SERIAL_BRIDGE_DELIMITER
+char SerialBridgeBuffer[TM_SERIAL_BUFFER_SIZE * 2 + 1];
+uint8_t SerialBridgeBufferP = 0;
+#endif
 
 void SerialBridgeInit(void)
 {
   if ((pin[GPIO_SBR_RX] < 99) && (pin[GPIO_SBR_TX] < 99)) {
-    GetTopic_P(SerialBridgeTopic, CMND, Settings.mqtt_topic, PSTR("serialbr"));
     SerialBridgeSerial = new TasmotaSerial(pin[GPIO_SBR_RX], pin[GPIO_SBR_TX]);
     SerialBridgeSerial->begin(1200 * Settings.serial_br_baudrate_div1200); // Baud rate is stored div 1200 so it fits into one byte
     SerialBridgeSerial->flush();
@@ -41,20 +45,50 @@ void SerialBridgeInit(void)
 
 void SerialBridge50ms()
 {
-  if (SerialBridgeSerial->available()) {
-    size_t len = SerialBridgeSerial->available();
-    uint8_t sbuf[len+1];
-    SerialBridgeSerial->readBytes(sbuf, len);
-    sbuf[len] = '\0';
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s"), sbuf);
-    MqttPublishPrefixTopic_P(STAT, PSTR("serialbr"), false);
+#ifdef USE_SERIAL_BRIDGE_DELIMITER
+  boolean transmit = false;
+  while (SerialBridgeSerial->available()) {
+    if (Settings.serial_br_delimiter == 0xff) {
+      // Delimiter disabled
+      transmit = true;
+    }
+    else if (SerialBridgeSerial->peek() == Settings.serial_br_delimiter) {
+      SerialBridgeSerial->read();
+      transmit = true;
+      break;
+    }
+
+    SerialBridgeSerial->readBytes(SerialBridgeBuffer + SerialBridgeBufferP, 1);
+    ++SerialBridgeBufferP;
+    if (SerialBridgeBufferP == (TM_SERIAL_BUFFER_SIZE * 2)) {
+      transmit = true;
+      break;
+    }
   }
+  if ((transmit) && (SerialBridgeBufferP > 0)) {
+    SerialBridgeBuffer[SerialBridgeBufferP] = '\0';
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s"), SerialBridgeBuffer);
+    MqttPublishPrefixTopic_P(STAT, SerialBridgeTopic, false);
+    SerialBridgeBufferP = 0;
+  }
+#else
+  if (SerialBridgeSerial->available()) {
+    int len = SerialBridgeSerial->available();
+    uint8_t SerialBridgeBuffer[len+1];
+    SerialBridgeSerial->readBytes(SerialBridgeBuffer, len);
+    SerialBridgeBuffer[len] = '\0';
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s"), SerialBridgeBuffer);
+    MqttPublishPrefixTopic_P(STAT, SerialBridgeTopic, false);
+  }
+#endif
 }
 
 boolean SerialBridgeMqttData()
 {
   // Do not process irrelevant topics
-  if (strncmp(XdrvMailbox.topic, SerialBridgeTopic, strlen(SerialBridgeTopic))) {
+  char stopic[TOPSZ];
+  GetTopic_P(stopic, CMND, Settings.mqtt_topic, SerialBridgeTopic);
+  if (strncmp(XdrvMailbox.topic, stopic, strlen(stopic))) {
     return false;
   }
 
@@ -81,6 +115,13 @@ boolean SerialBridgeCommand()
       SerialBridgeSerial->begin(1200 * Settings.serial_br_baudrate_div1200); // Reinitialize serial port with new baud rate
     }
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_LVALUE, command, 1200 * Settings.serial_br_baudrate_div1200);
+    return true;
+  }
+  else if (CMND_SET_SBR_DELIMITER == command_code) {
+    if (XdrvMailbox.data_len > 0) {
+      Settings.serial_br_delimiter = XdrvMailbox.data[0];
+    }
+    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, Settings.serial_br_delimiter);
     return true;
   }
 

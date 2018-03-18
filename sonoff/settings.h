@@ -227,8 +227,7 @@ struct SYSCFG {
   uint16_t      pulse_timer[MAX_PULSETIMERS]; // 532
 
   uint8_t       serial_br_baudrate_div1200; // 542
-
-  byte          free_543[1];               // 543
+  char          serial_br_delimiter;       // 543
 
   uint32_t      ip_address[4];             // 544
   unsigned long energy_kWhtotal;              // 554
