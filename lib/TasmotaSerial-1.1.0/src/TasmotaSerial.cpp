@@ -111,6 +111,7 @@ bool TasmotaSerial::isValidGPIOpin(int pin)
 bool TasmotaSerial::begin(long speed) {
   // Use getCycleCount() loop to get as exact timing as possible
   m_bit_time = ESP.getCpuFreqMHz() *1000000 /speed;
+  m_high_speed = speed > 9600;
   return m_valid && (speed <= TM_SERIAL_BAUDRATE);
 }
 
@@ -149,7 +150,7 @@ int TasmotaSerial::available()
 }
 
 #ifdef TM_SERIAL_USE_IRAM
-#define TM_SERIAL_WAIT { while (ESP.getCycleCount()-start < wait) optimistic_yield(1); wait += m_bit_time; }  // Watchdog timeouts
+#define TM_SERIAL_WAIT { while (ESP.getCycleCount()-start < wait) if (!m_high_speed) optimistic_yield(1); wait += m_bit_time; } // Watchdog timeouts
 #else
 #define TM_SERIAL_WAIT { while (ESP.getCycleCount()-start < wait); wait += m_bit_time; }
 #endif
@@ -158,6 +159,9 @@ size_t TasmotaSerial::write(uint8_t b)
 {
   if (-1 == m_tx_pin) {
     return 0;
+  }
+  if (m_high_speed) {
+    cli(); // Disable interrupts in order to get a clean transmit
   }
   unsigned long wait = m_bit_time;
   digitalWrite(m_tx_pin, HIGH);
@@ -173,6 +177,9 @@ size_t TasmotaSerial::write(uint8_t b)
   // Stop bit
   digitalWrite(m_tx_pin, HIGH);
   TM_SERIAL_WAIT;
+  if (m_high_speed) {
+    sei();
+  }
   return 1;
 }
 
