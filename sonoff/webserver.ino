@@ -881,8 +881,7 @@ void HandleMqttConfiguration()
   page.replace(F("{m2"), String(Settings.mqtt_port));
   page.replace(F("{m3"), Settings.mqtt_client);
   page.replace(F("{m4"), (Settings.mqtt_user[0] == '\0')?"0":Settings.mqtt_user);
-  //page.replace(F("{m5"), (Settings.mqtt_pwd[0] == '\0')?"0":Settings.mqtt_pwd);
-  page.replace(F("{m5"), "**********");
+  page.replace(F("{m5"), (Settings.mqtt_pwd[0] == '\0')?"0":Settings.mqtt_pwd);
   page.replace(F("{m6"), Settings.mqtt_topic);
   page.replace(F("{m7"), Settings.mqtt_fulltopic);
   page += FPSTR(HTTP_FORM_END);
@@ -1069,8 +1068,7 @@ void HandleSaveSettings()
     WebGetArg("mu", tmp, sizeof(tmp));
     strlcpy(Settings.mqtt_user, (!strlen(tmp)) ? MQTT_USER : (!strcmp(tmp,"0")) ? "" : tmp, sizeof(Settings.mqtt_user));
     WebGetArg("mp", tmp, sizeof(tmp));
-    //strlcpy(Settings.mqtt_pwd, (!strlen(tmp)) ? MQTT_PASS : (!strcmp(tmp,"0")) ? "" : tmp, sizeof(Settings.mqtt_pwd));
-    strlcpy(Settings.mqtt_pwd, (!strlen(tmp)) ? "" : (strchr(tmp,'*')) ? Settings.mqtt_pwd : tmp, sizeof(Settings.mqtt_pwd));
+    strlcpy(Settings.mqtt_pwd, (!strlen(tmp)) ? MQTT_PASS : (!strcmp(tmp,"0")) ? "" : tmp, sizeof(Settings.mqtt_pwd));
     snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_MQTT D_CMND_MQTTHOST " %s, " D_CMND_MQTTPORT " %d, " D_CMND_MQTTCLIENT " %s, " D_CMND_MQTTUSER " %s, " D_CMND_MQTTPASSWORD " %s, " D_CMND_TOPIC " %s, " D_CMND_FULLTOPIC " %s"),
       Settings.mqtt_host, Settings.mqtt_port, Settings.mqtt_client, Settings.mqtt_user, Settings.mqtt_pwd, Settings.mqtt_topic, Settings.mqtt_fulltopic);
     AddLog(LOG_LEVEL_INFO);
