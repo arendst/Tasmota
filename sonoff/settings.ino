@@ -457,6 +457,7 @@ void SettingsDefaultSet2()
   Settings.save_data = SAVE_DATA;
   Settings.timezone = APP_TIMEZONE;
   strlcpy(Settings.ota_url, OTA_URL, sizeof(Settings.ota_url));
+  Settings.baudrate = APP_BAUDRATE / 1200;
 
   Settings.seriallog_level = SERIAL_LOG_LEVEL;
 //  Settings.sta_active = 0;
@@ -898,6 +899,9 @@ void SettingsDelta()
         Settings.mqtt_fingerprint[0][i] = strtol(p, &p, 16);
         Settings.mqtt_fingerprint[1][i] = Settings.mqtt_fingerprint[0][i];
       }
+    }
+    if (Settings.version < 0x050C0007) {
+      Settings.baudrate = APP_BAUDRATE / 1200;
     }
 
     Settings.version = VERSION;

@@ -96,6 +96,7 @@
 #define D_JSON_SAVESTATE "SaveState"
 #define D_JSON_SDKVERSION "SDK"
 #define D_JSON_SELECTED "selected"
+#define D_JSON_SERIALRECEIVED "SerialReceived"
 #define D_JSON_SSID "SSId"
 #define D_JSON_STARTDST "StartDST"       // Start Daylight Savings Time
 #define D_JSON_STARTED "Started"
@@ -240,6 +241,8 @@
 #define D_CMND_LEDSTATE "LedState"
 #define D_CMND_CFGDUMP "CfgDump"
 #define D_CMND_I2CSCAN "I2CScan"
+#define D_CMND_SERIALSEND "SerialSend"
+#define D_CMND_BAUDRATE "Baudrate"
 #define D_CMND_EXCEPTION "Exception"
 
 // Commands xdrv_01_light.ino

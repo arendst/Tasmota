@@ -99,6 +99,7 @@ typedef unsigned long power_t;              // Power (Relay) type
 #define MIN_BACKLOG_DELAY      2            // Minimal backlog delay in 0.1 seconds
 
 #define APP_BAUDRATE           115200       // Default serial baudrate
+#define SERIAL_POLLING         100          // Serial receive polling in ms
 #define MAX_STATUS             11           // Max number of status lines
 
 /*

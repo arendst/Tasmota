@@ -25,7 +25,7 @@
     - Select IDE Tools - Flash Size: "1M (no SPIFFS)"
   ====================================================*/
 
-#define VERSION                0x050C0006   // 5.12.0f
+#define VERSION                0x050C0007   // 5.12.0g
 
 // Location specific includes
 #include <core_version.h>                   // Arduino_Esp8266 version information (ARDUINO_ESP8266_RELEASE and ARDUINO_ESP8266_RELEASE_2_3_0)
@@ -76,7 +76,7 @@ enum TasmotaCommands {
   CMND_LOGHOST, CMND_LOGPORT, CMND_IPADDRESS, CMND_NTPSERVER, CMND_AP, CMND_SSID, CMND_PASSWORD, CMND_HOSTNAME,
   CMND_WIFICONFIG, CMND_FRIENDLYNAME, CMND_SWITCHMODE, CMND_WEBSERVER, CMND_WEBPASSWORD, CMND_WEBLOG, CMND_EMULATION,
   CMND_TELEPERIOD, CMND_RESTART, CMND_RESET, CMND_TIMEZONE, CMND_ALTITUDE, CMND_LEDPOWER, CMND_LEDSTATE,
-  CMND_CFGDUMP, CMND_I2CSCAN, CMND_EXCEPTION };
+  CMND_CFGDUMP, CMND_I2CSCAN, CMND_SERIALSEND, CMND_BAUDRATE, CMND_EXCEPTION };
 const char kTasmotaCommands[] PROGMEM =
   D_CMND_BACKLOG "|" D_CMND_DELAY "|" D_CMND_POWER "|" D_CMND_STATUS "|" D_CMND_STATE "|"  D_CMND_POWERONSTATE "|" D_CMND_PULSETIME "|"
   D_CMND_BLINKTIME "|" D_CMND_BLINKCOUNT "|" D_CMND_SENSOR "|" D_CMND_SAVEDATA "|" D_CMND_SETOPTION "|" D_CMND_TEMPERATURE_RESOLUTION "|" D_CMND_HUMIDITY_RESOLUTION "|"
@@ -86,7 +86,7 @@ const char kTasmotaCommands[] PROGMEM =
   D_CMND_LOGHOST "|" D_CMND_LOGPORT "|" D_CMND_IPADDRESS "|" D_CMND_NTPSERVER "|" D_CMND_AP "|" D_CMND_SSID "|" D_CMND_PASSWORD "|" D_CMND_HOSTNAME "|"
   D_CMND_WIFICONFIG "|" D_CMND_FRIENDLYNAME "|" D_CMND_SWITCHMODE "|" D_CMND_WEBSERVER "|" D_CMND_WEBPASSWORD "|" D_CMND_WEBLOG "|" D_CMND_EMULATION "|"
   D_CMND_TELEPERIOD "|" D_CMND_RESTART "|" D_CMND_RESET "|" D_CMND_TIMEZONE "|" D_CMND_ALTITUDE "|" D_CMND_LEDPOWER "|" D_CMND_LEDSTATE "|"
-  D_CMND_CFGDUMP "|" D_CMND_I2CSCAN
+  D_CMND_CFGDUMP "|" D_CMND_I2CSCAN "|" D_CMND_SERIALSEND "|" D_CMND_BAUDRATE
 #ifdef DEBUG_THEO
   "|" D_CMND_EXCEPTION
 #endif
@@ -102,6 +102,7 @@ const char kOptionBlinkOff[] PROGMEM = "BLINKOFF|" D_BLINKOFF ;
 int baudrate = APP_BAUDRATE;                // Serial interface baud rate
 SerialConfig serial_config = SERIAL_8N1;    // Serial interface configuration 8 data bits, No parity, 1 stop bit
 byte serial_in_byte;                        // Received byte
+unsigned long serial_polling_window = 0;    // Serial polling window
 int serial_in_byte_counter = 0;             // Index in receive buffer
 byte dual_hex_code = 0;                     // Sonoff dual input flag
 uint16_t dual_button_code = 0;              // Sonoff dual received code
@@ -422,10 +423,12 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
     if (!strcmp(dataBuf,"?")) data_len = 0;
     int16_t payload = -99;               // No payload
     uint16_t payload16 = 0;
-    long lnum = strtol(dataBuf, &p, 10);
+    long payload32 = strtol(dataBuf, &p, 10);
     if (p != dataBuf) {
-      payload = (int16_t) lnum;          // -32766 - 32767
-      payload16 = (uint16_t) lnum;       // 0 - 65535
+      payload = (int16_t) payload32;     // -32766 - 32767
+      payload16 = (uint16_t) payload32;  // 0 - 65535
+    } else {
+      payload32 = 0;
     }
     backlog_delay = MIN_BACKLOG_DELAY;   // Reset backlog delay
 
@@ -810,11 +813,27 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
         strlcpy(Settings.ota_url, (1 == payload) ? OTA_URL : dataBuf, sizeof(Settings.ota_url));
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, Settings.ota_url);
     }
+    else if (CMND_BAUDRATE == command_code) {
+      if (payload32 > 0) {
+        payload32 /= 1200;  // Make it a valid baudrate
+        baudrate = (1 == payload) ? APP_BAUDRATE : payload32 * 1200;
+        SetSerialBaudrate(baudrate);
+      }
+      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, Settings.baudrate * 1200);
+    }
+    else if ((CMND_SERIALSEND == command_code) && (index > 0) && (index <= 2)) {
+      SetSeriallog(LOG_LEVEL_NONE);
+      Settings.flag.mqtt_serial = 1;
+      if (data_len > 0) {
+        if (1 == index) Serial.printf("%s\n", dataBuf);
+        if (2 == index) Serial.printf("%s", dataBuf);
+        snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, D_JSON_DONE);
+      }
+    }
     else if (CMND_SERIALLOG == command_code) {
       if ((payload >= LOG_LEVEL_NONE) && (payload <= LOG_LEVEL_ALL)) {
-        Settings.seriallog_level = payload;
-        seriallog_level = payload;
-        seriallog_timer = 0;
+        Settings.flag.mqtt_serial = 0;
+        SetSeriallog(payload);
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE_ACTIVE_NVALUE, command, Settings.seriallog_level, seriallog_level);
     }
@@ -1016,7 +1035,7 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, GetStateText(bitRead(Settings.ledstate, 3)));
     }
-    else if (CMND_LEDSTATE ==command_code) {
+    else if (CMND_LEDSTATE == command_code) {
       if ((payload >= 0) && (payload < MAX_LED_OPTION)) {
         Settings.ledstate = payload;
         if (!Settings.ledstate) SetLedPower(0);
@@ -1908,40 +1927,72 @@ void SerialInput()
 
     if (serial_in_byte > 127) {                // binary data...
       serial_in_byte_counter = 0;
+      serial_polling_window = 0;
       Serial.flush();
       return;
     }
     if (isprint(serial_in_byte)) {
-      if (serial_in_byte_counter < INPUT_BUFFER_SIZE) {  // add char to string if it still fits
+      if (serial_in_byte_counter < INPUT_BUFFER_SIZE -1) {  // add char to string if it still fits
         serial_in_buffer[serial_in_byte_counter++] = serial_in_byte;
+        serial_polling_window = millis();
       } else {
         serial_in_byte_counter = 0;
+        serial_polling_window = 0;
       }
     }
 
 /*-------------------------------------------------------------------------------------------*\
  * Sonoff SC 19200 baud serial interface
 \*-------------------------------------------------------------------------------------------*/
-    if (serial_in_byte == '\x1B') {            // Sonoff SC status from ATMEGA328P
-      serial_in_buffer[serial_in_byte_counter] = 0;  // serial data completed
-      SonoffScSerialInput(serial_in_buffer);
-      serial_in_byte_counter = 0;
-      Serial.flush();
-      return;
+    if (SONOFF_SC == Settings.module) {
+      if (serial_in_byte == '\x1B') {            // Sonoff SC status from ATMEGA328P
+        serial_in_buffer[serial_in_byte_counter] = 0;  // serial data completed
+        SonoffScSerialInput(serial_in_buffer);
+        serial_in_byte_counter = 0;
+        Serial.flush();
+        return;
+      }
     }
 
 /*-------------------------------------------------------------------------------------------*/
-
+/*
     else if (serial_in_byte == '\n') {
+      serial_in_buffer[serial_in_byte_counter] = 0;  // serial data completed
+      if (!Settings.flag.mqtt_serial) {
+        seriallog_level = (Settings.seriallog_level < LOG_LEVEL_INFO) ? (byte)LOG_LEVEL_INFO : Settings.seriallog_level;
+        snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_COMMAND "%s"), serial_in_buffer);
+        AddLog(LOG_LEVEL_INFO);
+        ExecuteCommand(serial_in_buffer);
+      } else {
+        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_SERIALRECEIVED "\":\"%s\"}"), serial_in_buffer);
+        MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_SERIALRECEIVED));
+      }
+      serial_in_byte_counter = 0;
+      serial_polling_window = 0;
+      Serial.flush();
+      return;
+    }
+*/
+    else if (!Settings.flag.mqtt_serial && (serial_in_byte == '\n')) {
       serial_in_buffer[serial_in_byte_counter] = 0;  // serial data completed
       seriallog_level = (Settings.seriallog_level < LOG_LEVEL_INFO) ? (byte)LOG_LEVEL_INFO : Settings.seriallog_level;
       snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_COMMAND "%s"), serial_in_buffer);
       AddLog(LOG_LEVEL_INFO);
       ExecuteCommand(serial_in_buffer);
       serial_in_byte_counter = 0;
+      serial_polling_window = 0;
       Serial.flush();
       return;
     }
+  }
+
+  if (Settings.flag.mqtt_serial && serial_in_byte_counter && (millis() > (serial_polling_window + SERIAL_POLLING))) {
+    serial_in_buffer[serial_in_byte_counter] = 0;  // serial data completed
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_SERIALRECEIVED "\":\"%s\"}"), serial_in_buffer);
+    MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_SERIALRECEIVED));
+    serial_in_byte_counter = 0;
+    serial_polling_window = 0;
+    Serial.flush();
   }
 }
 
@@ -2039,18 +2090,22 @@ void GpioInit()
   }
 
   if (SONOFF_BRIDGE == Settings.module) {
+    Settings.flag.mqtt_serial = 0;
     baudrate = 19200;
   }
 
   if (SONOFF_DUAL == Settings.module) {
+    Settings.flag.mqtt_serial = 0;
     devices_present = 2;
     baudrate = 19200;
   }
   else if (CH4 == Settings.module) {
+    Settings.flag.mqtt_serial = 0;
     devices_present = 4;
     baudrate = 19200;
   }
   else if (SONOFF_SC == Settings.module) {
+    Settings.flag.mqtt_serial = 0;
     devices_present = 0;
     baudrate = 19200;
   }
@@ -2147,6 +2202,7 @@ void setup()
 
   OsWatchInit();
 
+  baudrate = Settings.baudrate * 1200;
   seriallog_level = Settings.seriallog_level;
   seriallog_timer = SERIALLOG_TIMER;
 #ifndef USE_EMULATION
@@ -2252,7 +2308,7 @@ void loop()
 
   if (millis() >= state_loop_timer) StateLoop();
 
-  if (Serial.available()) SerialInput();
+  SerialInput();
 
 //  yield();     // yield == delay(0), delay contains yield, auto yield in loop
   delay(sleep);  // https://github.com/esp8266/Arduino/issues/2021
