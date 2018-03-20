@@ -180,6 +180,7 @@ enum SupportedModules {
   SONOFF_DUAL_R2,
   ARILUX_LC06,
   SONOFF_S31,
+  LINGAN_SWA1,
   MAXMODULE };
 
 /********************************************************************************************/
@@ -226,6 +227,7 @@ const uint8_t kNiceList[MAXMODULE] PROGMEM = {
   ELECTRODRAGON,
   EXS_RELAY,
   SUPLA1,
+  LINGAN_SWA1,
   LUANIHVIO,
   YUNSHAN,
   WION,
@@ -789,6 +791,18 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_REL1,        // GPIO12 Red Led and Relay (0 = Off, 1 = On)
      GPIO_LED1_INV,    // GPIO13 Green Led (0 = On, 1 = Off)
      0, 0, 0, 0
+  },
+  { "Lingan SWA1",     // Lingan SWA1
+     0,                // GPIO00 Button
+     GPIO_USER,        // GPIO01 Serial RXD and Optional sensor
+     0,                // GPIO02
+     GPIO_USER,        // GPIO03 Serial TXD and Optional sensor
+     GPIO_LED1_INV,    // GPIO04 Blue Led (0 = On, 1 = Off)
+     GPIO_REL1,        // GPIO05 Red Led and Relay (0 = Off, 1 = On)
+     0, 0, 0, 0,       // GPIO06-GPIO09
+     0, 0, 0,          // GPIO10-GPIO12
+     GPIO_KEY1,        // GPIO13 Button
+     0, 0, 0, 0        // GPIO14-GPIO16
   }
 };
 
