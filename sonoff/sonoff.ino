@@ -2137,6 +2137,9 @@ void GpioInit()
   else if (SONOFF_B1 == Settings.module) {   // RGBWC led
     light_type = LT_RGBWC;
   }
+  else if (ZENGGE_ZF_WF017 == Settings.module) {   // RGB led
+    light_type = LT_PWM3;
+  }
   else {
     if (!light_type) devices_present = 0;
     for (byte i = 0; i < MAX_RELAYS; i++) {
