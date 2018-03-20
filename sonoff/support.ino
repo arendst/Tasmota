@@ -223,7 +223,7 @@ char* Unescape(char* buffer, uint16_t* size)
           case 'f': che = '\f'; break;   // 0C Formfeed
           case 'n': che = '\n'; break;   // 0A Linefeed (Newline)
           case 'r': che = '\r'; break;   // 0D Carriage return
-//          case 's': che = ' ';  break;   // 20 Space
+          case 's': che = ' ';  break;   // 20 Space
           case 't': che = '\t'; break;   // 09 Horizontal tab
           case 'v': che = '\v'; break;   // 0B Vertical tab
 //          case '?': che = '\?'; break;   // 3F Question mark

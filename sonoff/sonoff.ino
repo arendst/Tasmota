@@ -737,15 +737,9 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
         Settings.pwm_value[index -1] = payload;
         analogWrite(pin[GPIO_PWM1 + index -1], bitRead(pwm_inverted, index -1) ? Settings.pwm_range - payload : payload);
       }
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_PWM "\":{"));
-      bool first = true;
-      for (byte i = 0; i < MAX_PWMS; i++) {
-        if (pin[GPIO_PWM1 + i] < 99) {
-          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s%s\"" D_CMND_PWM "%d\":%d"), mqtt_data, first ? "" : ",", i+1, Settings.pwm_value[i]);
-          first = false;
-        }
-      }
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}}"),mqtt_data);
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{"));
+      MqttShowPWMState();  // Render the PWM status to MQTT
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}"), mqtt_data);
     }
     else if (CMND_PWMFREQUENCY == command_code) {
       if ((1 == payload) || ((payload >= 100) && (payload <= 4000))) {
@@ -1327,6 +1321,19 @@ void PublishStatus(uint8_t payload)
 
 }
 
+void MqttShowPWMState()
+{
+  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s\"" D_CMND_PWM "\":{"), mqtt_data);
+  bool first = true;
+  for (byte i = 0; i < MAX_PWMS; i++) {
+    if (pin[GPIO_PWM1 + i] < 99) {
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s%s\"" D_CMND_PWM "%d\":%d"), mqtt_data, first ? "" : ",", i+1, Settings.pwm_value[i]);
+      first = false;
+    }
+  }
+  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}"), mqtt_data);
+}
+
 void MqttShowState()
 {
   char stemp1[33];
@@ -1343,6 +1350,11 @@ void MqttShowState()
     } else {
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"%s\":\"%s\""), mqtt_data, GetPowerDevice(stemp1, i +1, sizeof(stemp1)), GetStateText(bitRead(power, i)));
     }
+  }
+
+  if (pwm_present) {
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,"), mqtt_data);
+    MqttShowPWMState();
   }
 
   snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"" D_JSON_WIFI "\":{\"" D_JSON_AP "\":%d,\"" D_JSON_SSID "\":\"%s\",\"" D_JSON_RSSI "\":%d,\"" D_JSON_APMAC_ADDRESS "\":\"%s\"}}"),
