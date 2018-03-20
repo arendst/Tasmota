@@ -89,6 +89,8 @@ enum UserSelectablePins {
   GPIO_BACKLIGHT,      // Display backlight control
   GPIO_PMS5003,        // Plantower PMS5003 Serial interface
   GPIO_SDS0X1,         // Nova Fitness SDS011 Serial interface
+  GPIO_SBR_TX,         // Serial Bridge Serial interface
+  GPIO_SBR_RX,         // Serial Bridge Serial interface
   GPIO_SENSOR_END };
 
 // Programmer selectable GPIO functionality offset by user selectable GPIOs
@@ -130,7 +132,8 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_PZEM_TX "|" D_SENSOR_PZEM_RX "|"
   D_SENSOR_SAIR_TX "|" D_SENSOR_SAIR_RX "|"
   D_SENSOR_SPI_CS "|" D_SENSOR_SPI_DC "|" D_SENSOR_BACKLIGHT "|"
-  D_SENSOR_PMS5003 "|" D_SENSOR_SDS0X1;
+  D_SENSOR_PMS5003 "|" D_SENSOR_SDS0X1 "|"
+  D_SENSOR_SBR_TX "|" D_SENSOR_SBR_RX;
 
 /********************************************************************************************/
 

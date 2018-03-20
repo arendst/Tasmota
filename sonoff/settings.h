@@ -192,9 +192,8 @@ struct SYSCFG {
   uint16_t      ws_wakeup;                 // 3AA Not used since 5.8.0
   char          friendlyname[MAX_FRIENDLYNAMES][33]; // 3AC
   char          switch_topic[33];          // 430
-
-  byte          free_451[2];               // 451
-
+  char          serial_delimiter;          // 451
+  uint8_t       sbaudrate;                 // 452
   uint8_t       sleep;                     // 453
   uint16_t      domoticz_switch_idx[MAX_DOMOTICZ_IDX];      // 454
   uint16_t      domoticz_sensor_idx[MAX_DOMOTICZ_SNS_IDX];  // 45C

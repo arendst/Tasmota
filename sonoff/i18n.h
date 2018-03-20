@@ -242,6 +242,7 @@
 #define D_CMND_CFGDUMP "CfgDump"
 #define D_CMND_I2CSCAN "I2CScan"
 #define D_CMND_SERIALSEND "SerialSend"
+#define D_CMND_SERIALDELIMITER "SerialDelimiter"
 #define D_CMND_BAUDRATE "Baudrate"
 #define D_CMND_EXCEPTION "Exception"
 
@@ -339,6 +340,11 @@
 #define D_CMND_DISP_ROWS "Rows"
 #define D_CMND_DISP_SIZE "Size"
 #define D_CMND_DISP_TEXT "Text"
+
+// Commands xdrv_08_serial_bridge.ino
+#define D_CMND_SSERIALSEND "SSerialSend"
+#define D_CMND_SBAUDRATE "SBaudrate"
+  #define D_JSON_SSERIALRECEIVED "SSerialReceived"
 
 /********************************************************************************************/
 

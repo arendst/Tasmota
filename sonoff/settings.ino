@@ -458,6 +458,8 @@ void SettingsDefaultSet2()
   Settings.timezone = APP_TIMEZONE;
   strlcpy(Settings.ota_url, OTA_URL, sizeof(Settings.ota_url));
   Settings.baudrate = APP_BAUDRATE / 1200;
+  Settings.sbaudrate = SOFT_BAUDRATE / 1200;
+  Settings.serial_delimiter = 0xff;
 
   Settings.seriallog_level = SERIAL_LOG_LEVEL;
 //  Settings.sta_active = 0;
@@ -902,6 +904,10 @@ void SettingsDelta()
     }
     if (Settings.version < 0x050C0007) {
       Settings.baudrate = APP_BAUDRATE / 1200;
+    }
+    if (Settings.version < 0x050C0008) {
+      Settings.sbaudrate = SOFT_BAUDRATE / 1200;
+      Settings.serial_delimiter = 0xff;
     }
 
     Settings.version = VERSION;
