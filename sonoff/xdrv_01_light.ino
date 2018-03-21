@@ -550,15 +550,19 @@ void LightState(uint8_t append)
     mqtt_data, scommand, GetStateText(light_power), Settings.light_dimmer);
   if (light_subtype > LST_SINGLE) {
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"" D_CMND_COLOR "\":\"%s\""), mqtt_data, LightGetColor(0, scolor));
-
-      //  Add status for HSB
+    //  Add status for HSB
     LightGetHsb(&hsb[0],&hsb[1],&hsb[2]);
     //  Scale these percentages up to the numbers expected byt he client
     h = round(hsb[0] * 360);
     s = round(hsb[1] * 100);
     b = round(hsb[2] * 100);
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"" D_CMND_HSBCOLOR "\":\"%d,%d,%d\""), mqtt_data, h,s,b);
-
+    // Add status for each channel
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"" D_CMND_CHANNEL "\":[" ), mqtt_data);
+    for (byte i = 0; i < light_subtype; i++) {
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s%s%d" ), mqtt_data, (i > 0 ? "," : ""), round(light_current_color[i]/2.55));
+    }
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s]" ), mqtt_data);
   }
   if ((LST_COLDWARM == light_subtype) || (LST_RGBWC == light_subtype)) {
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"" D_CMND_COLORTEMPERATURE "\":%d"), mqtt_data, LightGetColorTemp());
@@ -1074,8 +1078,7 @@ boolean LightCommand()
       LightSetColor();
       coldim = true;
     }
-    snprintf_P(scolor, 25, PSTR("%d"), round(light_current_color[XdrvMailbox.index -1] / 2.55));
-    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, XdrvMailbox.index, scolor);
+    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_NVALUE, command, XdrvMailbox.index, round(light_current_color[XdrvMailbox.index -1] / 2.55));
   }
   else if ((CMND_HSBCOLOR == command_code) && ( light_subtype >= LST_RGB)) {
     //  Implement method to "direct set" color by HSB (HSB is passed comma separated, 0<H<360 0<S<100 0<B<100 )
