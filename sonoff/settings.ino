@@ -450,6 +450,7 @@ void SettingsDefaultSet2()
   Settings.flag.mqtt_power_retain = MQTT_POWER_RETAIN;
   Settings.flag.mqtt_button_retain = MQTT_BUTTON_RETAIN;
   Settings.flag.mqtt_switch_retain = MQTT_SWITCH_RETAIN;
+  Settings.flag.pwm_control = 1;
   Settings.flag.hass_discovery = HOME_ASSISTANT_DISCOVERY_ENABLE;
 
   Settings.flag2.emulation = EMULATION;
@@ -525,14 +526,14 @@ void SettingsDefaultSet2()
 //  Settings.energy_max_voltage = 0;
 //  Settings.energy_min_current = 0;
 //  Settings.energy_max_current = 0;
-//  Settings.energy_max_power_limit = 0;                              // MaxPowerLimit
+//  Settings.energy_max_power_limit = 0;                            // MaxPowerLimit
   Settings.energy_max_power_limit_hold = MAX_POWER_HOLD;
   Settings.energy_max_power_limit_window = MAX_POWER_WINDOW;
-//  Settings.energy_max_power_safe_limit = 0;                             // MaxSafePowerLimit
+//  Settings.energy_max_power_safe_limit = 0;                       // MaxSafePowerLimit
   Settings.energy_max_power_safe_limit_hold = SAFE_POWER_HOLD;
   Settings.energy_max_power_safe_limit_window = SAFE_POWER_WINDOW;
-//  Settings.energy_max_energy = 0;                             // MaxEnergy
-//  Settings.energy_max_energy_start = 0;                            // MaxEnergyStart
+//  Settings.energy_max_energy = 0;                                 // MaxEnergy
+//  Settings.energy_max_energy_start = 0;                           // MaxEnergyStart
 
   SettingsDefaultSet_3_2_4();
 

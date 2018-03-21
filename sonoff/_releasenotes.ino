@@ -1,9 +1,11 @@
 /* 5.12.0h
  * Add support for Software Serial bridge using commands SerialDelimiter, SBaudrate and SSerialSend. Supports 8N1 and text only (#2190)
  * Add support for Hardware Serial bridge using commands SerialDelimiter, Baudrate and SerialSend. Supports 8N1 and text only (#2182)
+ * Add support for Zengge WF017 PWM Led strip controller (#2202)
  * Add PWM status to command State if PWM enabled (#2203)
  * Add command HSBColor Hue,Sat,Bri (#1642, #2203)
  * Add command Channel 0..100 to control dimmer value for individual color channels (#2111, #2203)
+ * Change default option SetOption15 from 0 to 1 providing better initial PWM experience
  *
  * 5.12.0f
  * Add compile time support for WS2812 BRG and RBG led configurations to be defined in user_config.h (#1690)
