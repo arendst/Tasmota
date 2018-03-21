@@ -1,6 +1,6 @@
 # TasmotaSerial
 
-Implementation of software serial library for the ESP8266 at 9600 baud
+Implementation of software serial library for the ESP8266
 
 Allows for several instances to be active at the same time.
 

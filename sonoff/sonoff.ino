@@ -25,7 +25,7 @@
     - Select IDE Tools - Flash Size: "1M (no SPIFFS)"
   ====================================================*/
 
-#define VERSION                0x050C0007   // 5.12.0g
+#define VERSION                0x050C0008   // 5.12.0h
 
 // Location specific includes
 #include <core_version.h>                   // Arduino_Esp8266 version information (ARDUINO_ESP8266_RELEASE and ARDUINO_ESP8266_RELEASE_2_3_0)
@@ -76,7 +76,7 @@ enum TasmotaCommands {
   CMND_LOGHOST, CMND_LOGPORT, CMND_IPADDRESS, CMND_NTPSERVER, CMND_AP, CMND_SSID, CMND_PASSWORD, CMND_HOSTNAME,
   CMND_WIFICONFIG, CMND_FRIENDLYNAME, CMND_SWITCHMODE, CMND_WEBSERVER, CMND_WEBPASSWORD, CMND_WEBLOG, CMND_EMULATION,
   CMND_TELEPERIOD, CMND_RESTART, CMND_RESET, CMND_TIMEZONE, CMND_ALTITUDE, CMND_LEDPOWER, CMND_LEDSTATE,
-  CMND_CFGDUMP, CMND_I2CSCAN, CMND_SERIALSEND, CMND_BAUDRATE, CMND_EXCEPTION };
+  CMND_CFGDUMP, CMND_I2CSCAN, CMND_SERIALSEND, CMND_BAUDRATE, CMND_SERIALDELIMITER, CMND_EXCEPTION };
 const char kTasmotaCommands[] PROGMEM =
   D_CMND_BACKLOG "|" D_CMND_DELAY "|" D_CMND_POWER "|" D_CMND_STATUS "|" D_CMND_STATE "|"  D_CMND_POWERONSTATE "|" D_CMND_PULSETIME "|"
   D_CMND_BLINKTIME "|" D_CMND_BLINKCOUNT "|" D_CMND_SENSOR "|" D_CMND_SAVEDATA "|" D_CMND_SETOPTION "|" D_CMND_TEMPERATURE_RESOLUTION "|" D_CMND_HUMIDITY_RESOLUTION "|"
@@ -86,7 +86,7 @@ const char kTasmotaCommands[] PROGMEM =
   D_CMND_LOGHOST "|" D_CMND_LOGPORT "|" D_CMND_IPADDRESS "|" D_CMND_NTPSERVER "|" D_CMND_AP "|" D_CMND_SSID "|" D_CMND_PASSWORD "|" D_CMND_HOSTNAME "|"
   D_CMND_WIFICONFIG "|" D_CMND_FRIENDLYNAME "|" D_CMND_SWITCHMODE "|" D_CMND_WEBSERVER "|" D_CMND_WEBPASSWORD "|" D_CMND_WEBLOG "|" D_CMND_EMULATION "|"
   D_CMND_TELEPERIOD "|" D_CMND_RESTART "|" D_CMND_RESET "|" D_CMND_TIMEZONE "|" D_CMND_ALTITUDE "|" D_CMND_LEDPOWER "|" D_CMND_LEDSTATE "|"
-  D_CMND_CFGDUMP "|" D_CMND_I2CSCAN "|" D_CMND_SERIALSEND "|" D_CMND_BAUDRATE
+  D_CMND_CFGDUMP "|" D_CMND_I2CSCAN "|" D_CMND_SERIALSEND "|" D_CMND_BAUDRATE "|" D_CMND_SERIALDELIMITER
 #ifdef DEBUG_THEO
   "|" D_CMND_EXCEPTION
 #endif
@@ -737,8 +737,9 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
         Settings.pwm_value[index -1] = payload;
         analogWrite(pin[GPIO_PWM1 + index -1], bitRead(pwm_inverted, index -1) ? Settings.pwm_range - payload : payload);
       }
-      // Render the PWM status to MQTT
-      MqttShowPWMState ();
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{"));
+      MqttShowPWMState();  // Render the PWM status to MQTT
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}"), mqtt_data);
     }
     else if (CMND_PWMFREQUENCY == command_code) {
       if ((1 == payload) || ((payload >= 100) && (payload <= 4000))) {
@@ -814,14 +815,34 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, Settings.baudrate * 1200);
     }
-    else if ((CMND_SERIALSEND == command_code) && (index > 0) && (index <= 2)) {
+    else if ((CMND_SERIALSEND == command_code) && (index > 0) && (index <= 3)) {
       SetSeriallog(LOG_LEVEL_NONE);
       Settings.flag.mqtt_serial = 1;
       if (data_len > 0) {
-        if (1 == index) Serial.printf("%s\n", dataBuf);
-        if (2 == index) Serial.printf("%s", dataBuf);
+        if (1 == index) {
+          Serial.printf("%s\n", dataBuf);
+        }
+        else if (2 == index) {
+          Serial.printf("%s", dataBuf);
+        }
+        else if (3 == index) {
+          uint16_t dat_len = data_len;
+          Serial.printf("%s", Unescape(dataBuf, &dat_len));
+        }
         snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, D_JSON_DONE);
       }
+    }
+    else if (CMND_SERIALDELIMITER == command_code) {
+      if ((data_len > 0) && (payload < 256)) {
+        if (payload > 0) {
+          Settings.serial_delimiter = payload;
+        } else {
+          uint16_t dat_len = data_len;
+          Unescape(dataBuf, &dat_len);
+          Settings.serial_delimiter = dataBuf[0];
+        }
+      }
+      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, Settings.serial_delimiter);
     }
     else if (CMND_SERIALLOG == command_code) {
       if ((payload >= LOG_LEVEL_NONE) && (payload <= LOG_LEVEL_ALL)) {
@@ -1300,11 +1321,9 @@ void PublishStatus(uint8_t payload)
 
 }
 
-
 void MqttShowPWMState()
 {
-
-  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"" D_CMND_PWM "\":{"), mqtt_data);
+  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s\"" D_CMND_PWM "\":{"), mqtt_data);
   bool first = true;
   for (byte i = 0; i < MAX_PWMS; i++) {
     if (pin[GPIO_PWM1 + i] < 99) {
@@ -1312,9 +1331,8 @@ void MqttShowPWMState()
       first = false;
     }
   }
-  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}"),mqtt_data);
+  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}"), mqtt_data);
 }
-
 
 void MqttShowState()
 {
@@ -1335,13 +1353,11 @@ void MqttShowState()
     }
   }
 
-  // Show PWM Data if pwms are present
-  if ( pwm_present ) {
-    MqttShowPWMState ();
+  if (pwm_present) {
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,"), mqtt_data);
+    MqttShowPWMState();
   }
 
-
-  // Show wifi info
   snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"" D_JSON_WIFI "\":{\"" D_JSON_AP "\":%d,\"" D_JSON_SSID "\":\"%s\",\"" D_JSON_RSSI "\":%d,\"" D_JSON_APMAC_ADDRESS "\":\"%s\"}}"),
     mqtt_data, Settings.sta_active +1, Settings.sta_ssid[Settings.sta_active], WifiGetRssiAsQuality(WiFi.RSSI()), WiFi.BSSIDstr().c_str());
 }
@@ -1938,17 +1954,26 @@ void SerialInput()
 
     if (serial_in_byte > 127) {                // binary data...
       serial_in_byte_counter = 0;
-      serial_polling_window = 0;
       Serial.flush();
       return;
     }
-    if (isprint(serial_in_byte)) {
-      if (serial_in_byte_counter < INPUT_BUFFER_SIZE -1) {  // add char to string if it still fits
-        serial_in_buffer[serial_in_byte_counter++] = serial_in_byte;
-        serial_polling_window = millis();
-      } else {
-        serial_in_byte_counter = 0;
-        serial_polling_window = 0;
+    if (!Settings.flag.mqtt_serial) {
+      if (isprint(serial_in_byte)) {
+        if (serial_in_byte_counter < INPUT_BUFFER_SIZE -1) {  // add char to string if it still fits
+          serial_in_buffer[serial_in_byte_counter++] = serial_in_byte;
+        } else {
+          serial_in_byte_counter = 0;
+        }
+      }
+    } else {
+      if (serial_in_byte) {
+        if ((serial_in_byte_counter < INPUT_BUFFER_SIZE -1) && (serial_in_byte != Settings.serial_delimiter)) {  // add char to string if it still fits
+          serial_in_buffer[serial_in_byte_counter++] = serial_in_byte;
+          serial_polling_window = millis();
+        } else {
+          serial_polling_window = 0;
+          break;
+        }
       }
     }
 
@@ -1966,24 +1991,7 @@ void SerialInput()
     }
 
 /*-------------------------------------------------------------------------------------------*/
-/*
-    else if (serial_in_byte == '\n') {
-      serial_in_buffer[serial_in_byte_counter] = 0;  // serial data completed
-      if (!Settings.flag.mqtt_serial) {
-        seriallog_level = (Settings.seriallog_level < LOG_LEVEL_INFO) ? (byte)LOG_LEVEL_INFO : Settings.seriallog_level;
-        snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_COMMAND "%s"), serial_in_buffer);
-        AddLog(LOG_LEVEL_INFO);
-        ExecuteCommand(serial_in_buffer);
-      } else {
-        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_SERIALRECEIVED "\":\"%s\"}"), serial_in_buffer);
-        MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_SERIALRECEIVED));
-      }
-      serial_in_byte_counter = 0;
-      serial_polling_window = 0;
-      Serial.flush();
-      return;
-    }
-*/
+
     else if (!Settings.flag.mqtt_serial && (serial_in_byte == '\n')) {
       serial_in_buffer[serial_in_byte_counter] = 0;  // serial data completed
       seriallog_level = (Settings.seriallog_level < LOG_LEVEL_INFO) ? (byte)LOG_LEVEL_INFO : Settings.seriallog_level;
@@ -2002,8 +2010,6 @@ void SerialInput()
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_SERIALRECEIVED "\":\"%s\"}"), serial_in_buffer);
     MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_SERIALRECEIVED));
     serial_in_byte_counter = 0;
-    serial_polling_window = 0;
-    Serial.flush();
   }
 }
 

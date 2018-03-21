@@ -63,6 +63,7 @@
 #define D_JSON_GATEWAY "Gateway"
 #define D_JSON_HEAPSIZE "Heap"
 #define D_JSON_HIGH "High"
+#define D_JSON_HSBCOLOR "HSBColor"
 #define D_JSON_HUMIDITY "Humidity"
 #define D_JSON_HSBCOLOR "HSBColor"
 #define D_JSON_I2CSCAN_DEVICES_FOUND_AT "Device(s) found at"
@@ -243,13 +244,16 @@
 #define D_CMND_CFGDUMP "CfgDump"
 #define D_CMND_I2CSCAN "I2CScan"
 #define D_CMND_SERIALSEND "SerialSend"
+#define D_CMND_SERIALDELIMITER "SerialDelimiter"
 #define D_CMND_BAUDRATE "Baudrate"
 #define D_CMND_EXCEPTION "Exception"
 
 // Commands xdrv_01_light.ino
+#define D_CMND_CHANNEL "Channel"
 #define D_CMND_COLOR "Color"
 #define D_CMND_COLORTEMPERATURE "CT"
 #define D_CMND_DIMMER "Dimmer"
+#define D_CMND_HSBCOLOR "HSBColor"
 #define D_CMND_LED "Led"
 #define D_CMND_LEDTABLE "LedTable"
 #define D_CMND_FADE "Fade"
@@ -342,6 +346,11 @@
 #define D_CMND_DISP_ROWS "Rows"
 #define D_CMND_DISP_SIZE "Size"
 #define D_CMND_DISP_TEXT "Text"
+
+// Commands xdrv_08_serial_bridge.ino
+#define D_CMND_SSERIALSEND "SSerialSend"
+#define D_CMND_SBAUDRATE "SBaudrate"
+  #define D_JSON_SSERIALRECEIVED "SSerialReceived"
 
 /********************************************************************************************/
 

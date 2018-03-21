@@ -197,6 +197,50 @@ char* dtostrfd(double number, unsigned char prec, char *s)
   return dtostrf(number, 1, prec, s);
 }
 
+char* Unescape(char* buffer, uint16_t* size)
+{
+  uint8_t* read = (uint8_t*)buffer;
+  uint8_t* write = (uint8_t*)buffer;
+  uint16_t start_size = *size;
+  uint16_t end_size = *size;
+  uint8_t che = 0;
+
+  while (start_size > 0) {
+    uint8_t ch = *read++;
+    start_size--;
+    if (ch != '\\') {
+      *write++ = ch;
+    } else {
+      if (start_size > 0) {
+        uint8_t chi = *read++;
+        start_size--;
+        end_size--;
+        switch (chi) {
+          case '\\': che = '\\'; break;  // 5C Backslash
+          case 'a': che = '\a'; break;   // 07 Bell (Alert)
+          case 'b': che = '\b'; break;   // 08 Backspace
+          case 'e': che = '\e'; break;   // 1B Escape
+          case 'f': che = '\f'; break;   // 0C Formfeed
+          case 'n': che = '\n'; break;   // 0A Linefeed (Newline)
+          case 'r': che = '\r'; break;   // 0D Carriage return
+          case 's': che = ' ';  break;   // 20 Space
+          case 't': che = '\t'; break;   // 09 Horizontal tab
+          case 'v': che = '\v'; break;   // 0B Vertical tab
+//          case '?': che = '\?'; break;   // 3F Question mark
+          default : {
+            che = chi;
+            *write++ = ch;
+            end_size++;
+          }
+        }
+        *write++ = che;
+      }
+    }
+  }
+  *size = end_size;
+  return buffer;
+}
+
 boolean ParseIp(uint32_t* addr, const char* str)
 {
   uint8_t *part = (uint8_t*)addr;
