@@ -6,6 +6,8 @@
  * Add command HSBColor Hue,Sat,Bri (#1642, #2203)
  * Add command Channel 0..100 to control dimmer value for individual color channels (#2111, #2203)
  * Add Channel status information (#2211)
+ * Add all FriendlyNames to Status information (#2208)
+ * Change status display of Ssid and SetOption
  * Change default option SetOption15 from 0 to 1 providing better initial PWM experience
  *
  * 5.12.0f
