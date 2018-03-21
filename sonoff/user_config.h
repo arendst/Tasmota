@@ -72,7 +72,8 @@
 #define WEB_LOG_LEVEL          LOG_LEVEL_INFO    // [WebLog]
 
 // -- Ota -----------------------------------------
-#define OTA_URL                "http://sonoff.maddox.co.uk/tasmota/sonoff.ino.bin"  // [OtaUrl]
+#define OTA_URL                "http://sonoff.maddox.co.uk/tasmota/sonoff.ino.bin"  // [OtaUrl] for OTA "pull" requests
+//#define USE_ARDUINO_OTA															//uncomment to listen to OTA "push" requests
 
 /*********************************************************************************************\
  * Select ONE of possible MQTT library types below
