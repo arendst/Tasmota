@@ -559,6 +559,13 @@ void LightState(uint8_t append)
     b = round(hsb[2] * 100);
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"" D_CMND_HSBCOLOR "\":\"%d,%d,%d\""), mqtt_data, h,s,b);
 
+    // Add status for each channel
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"" D_CMND_CHANNEL "\":{" ), mqtt_data);
+    for (byte i = 0; i < light_subtype; i++) {
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s%s\"" D_CMND_CHANNEL "%d\":\"%d\"" ), mqtt_data,(i>0?",":""), i+1, round(light_current_color[i]/2.55));
+    }
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}" ), mqtt_data);
+
   }
   if ((LST_COLDWARM == light_subtype) || (LST_RGBWC == light_subtype)) {
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"" D_CMND_COLORTEMPERATURE "\":%d"), mqtt_data, LightGetColorTemp());
