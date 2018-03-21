@@ -73,6 +73,7 @@
 
 // -- Ota -----------------------------------------
 #define OTA_URL                "http://sonoff.maddox.co.uk/tasmota/sonoff.ino.bin"  // [OtaUrl]
+//#define USE_ARDUINO_OTA                          // Add optional support for Arduino OTA (+4k5 code)
 
 /*********************************************************************************************\
  * Select ONE of possible MQTT library types below

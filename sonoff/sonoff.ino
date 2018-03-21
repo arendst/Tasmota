@@ -54,8 +54,14 @@
   #include <ESP8266WebServer.h>             // WifiManager, Webserver
   #include <DNSServer.h>                    // WifiManager
 #endif  // USE_WEBSERVER
+#ifdef USE_ARDUINO_OTA
+  #include <ArduinoOTA.h>                   // Arduino OTA
+  #ifndef USE_DISCOVERY
+  #define USE_DISCOVERY
+  #endif
+#endif  // USE_ARDUINO_OTA
 #ifdef USE_DISCOVERY
-  #include <ESP8266mDNS.h>                  // MQTT, Webserver
+  #include <ESP8266mDNS.h>                  // MQTT, Webserver, Arduino OTA
 #endif  // USE_DISCOVERY
 #ifdef USE_I2C
   #include <Wire.h>                         // I2C support library
@@ -176,7 +182,6 @@ uint8_t i2c_flg = 0;                        // I2C configured
 uint8_t spi_flg = 0;                        // SPI configured
 uint8_t light_type = 0;                     // Light types
 bool pwm_present = false;                   // Any PWM channel configured with SetOption15 0
-
 boolean mdns_begun = false;
 
 char my_version[33];                        // Composed version string
@@ -1903,6 +1908,86 @@ void StateLoop()
   }
 }
 
+#ifdef USE_ARDUINO_OTA
+/*********************************************************************************************\
+ * Allow updating via the Arduino OTA-protocol.
+ *
+ * - Once started disables current wifi clients and udp
+ * - Perform restart when done to re-init wifi clients
+\*********************************************************************************************/
+
+bool arduino_ota_triggered = false;
+uint16_t arduino_ota_progress_dot_count = 0;
+
+void ArduinoOTAInit()
+{
+  ArduinoOTA.setPort(8266);
+  ArduinoOTA.setHostname(Settings.hostname);
+  if (Settings.web_password[0] !=0) ArduinoOTA.setPassword(Settings.web_password);
+
+  ArduinoOTA.onStart([]()
+  {
+    SettingsSave(1);  // Free flash for OTA update
+#ifdef USE_WEBSERVER
+    if (Settings.webserver) StopWebserver();
+#endif  // USE_WEBSERVER
+#ifdef USE_ARILUX_RF
+    AriluxRfDisable();  // Prevent restart exception on Arilux Interrupt routine
+#endif  // USE_ARILUX_RF
+    if (Settings.flag.mqtt_enabled) MqttDisconnect();
+    snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_UPLOAD "Arduino OTA " D_UPLOAD_STARTED));
+    AddLog(LOG_LEVEL_INFO);
+    arduino_ota_triggered = true;
+    arduino_ota_progress_dot_count = 0;
+    delay(100);       // Allow time for message xfer
+  });
+
+  ArduinoOTA.onProgress([](unsigned int progress, unsigned int total)
+  {
+    if ((LOG_LEVEL_DEBUG <= seriallog_level)) {
+      arduino_ota_progress_dot_count++;
+      Serial.printf(".");
+      if (!(arduino_ota_progress_dot_count % 80)) Serial.println();
+    }
+  });
+
+  ArduinoOTA.onError([](ota_error_t error)
+  {
+    /*
+    From ArduinoOTA.h:
+    typedef enum { OTA_AUTH_ERROR, OTA_BEGIN_ERROR, OTA_CONNECT_ERROR, OTA_RECEIVE_ERROR, OTA_END_ERROR } ota_error_t;
+    */
+    char error_str[100];
+
+    if ((LOG_LEVEL_DEBUG <= seriallog_level) && arduino_ota_progress_dot_count) Serial.println();
+    switch (error) {
+      case OTA_BEGIN_ERROR: strncpy_P(error_str, PSTR(D_UPLOAD_ERR_2), sizeof(error_str)); break;
+      case OTA_RECEIVE_ERROR: strncpy_P(error_str, PSTR(D_UPLOAD_ERR_5), sizeof(error_str)); break;
+      case OTA_END_ERROR: strncpy_P(error_str, PSTR(D_UPLOAD_ERR_7), sizeof(error_str)); break;
+      default:
+        snprintf_P(error_str, sizeof(error_str), PSTR(D_UPLOAD_ERROR_CODE " %d"), error);
+    }
+    snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_UPLOAD "Arduino OTA  %s. " D_RESTARTING), error_str);
+    AddLog(LOG_LEVEL_INFO);
+    delay(100);       // Allow time for message xfer
+    ESP.restart();
+  });
+
+  ArduinoOTA.onEnd([]()
+  {
+    if ((LOG_LEVEL_DEBUG <= seriallog_level)) Serial.println();
+    snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_UPLOAD "Arduino OTA " D_SUCCESSFUL ". " D_RESTARTING));
+    AddLog(LOG_LEVEL_INFO);
+    delay(100);       // Allow time for message xfer
+    ESP.restart();
+	});
+
+  ArduinoOTA.begin();
+  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_UPLOAD "Arduino OTA " D_ENABLED " " D_PORT " 8266"));
+  AddLog(LOG_LEVEL_INFO);
+}
+#endif  // USE_ARDUINO_OTA
+
 /********************************************************************************************/
 
 void SerialInput()
@@ -2311,6 +2396,11 @@ void setup()
 #endif  // BE_MINIMAL
 
   RtcInit();
+
+#ifdef USE_ARDUINO_OTA
+  ArduinoOTAInit();
+#endif  // USE_ARDUINO_OTA
+
   XsnsCall(FUNC_INIT);
 }
 
@@ -2331,6 +2421,12 @@ void loop()
   if (millis() >= state_loop_timer) StateLoop();
 
   SerialInput();
+
+#ifdef USE_ARDUINO_OTA
+  ArduinoOTA.handle();
+  // Once OTA is triggered, only handle that and dont do other stuff. (otherwise it fails)
+  while (arduino_ota_triggered) ArduinoOTA.handle();
+#endif  // USE_ARDUINO_OTA
 
 //  yield();     // yield == delay(0), delay contains yield, auto yield in loop
   delay(sleep);  // https://github.com/esp8266/Arduino/issues/2021

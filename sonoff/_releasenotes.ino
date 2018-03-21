@@ -1,4 +1,5 @@
 /* 5.12.0h
+ * Add optional Arduino OTA support to be enabled in user_config.h (#1998)
  * Add support for Software Serial bridge using commands SerialDelimiter, SBaudrate and SSerialSend. Supports 8N1 and text only (#2190)
  * Add support for Hardware Serial bridge using commands SerialDelimiter, Baudrate and SerialSend. Supports 8N1 and text only (#2182)
  * Add support for Zengge WF017 PWM Led strip controller (#2202)
