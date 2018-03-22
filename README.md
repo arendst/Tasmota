@@ -39,7 +39,7 @@ Basic Functionality is Available. **Work in progress**.
 
 ## Modifications to [Original Tasmota](https://github.com/arendst/Sonoff-Tasmota) ##
 
-* Adding the file _/sonoff/xdrv_08_KNX.ino_ 
+* Adding the file _/sonoff/xdrv_10_KNX.ino_ 
 * Add the entry `#define USE_KNX` on _/sonoff/user_config.h_
 * Add entries to the file _/sonoff/webserver.ino_
 * Add entries to the file _/sonoff/sonoff.ino_
