@@ -412,9 +412,9 @@ void KNXSaveSettings(void *arg)
  * Interface
 \*********************************************************************************************/
 
-#define XDRV_08
+#define XDRV_10
 
-boolean Xdrv08(byte function)
+boolean Xdrv10(byte function)
 {
   boolean result = false;
     switch (function) {
