@@ -89,6 +89,20 @@ typedef union {
   };
 } SysBitfield2;
 
+typedef union {
+  uint32_t data;
+  struct {
+    uint32_t time : 11;                   // bits 0 - 10 = minutes in a day
+    uint32_t mday : 5;                    // bits 11 - 15 = optional day in a month
+    uint32_t days : 7;                    // bits 16 - 22 = week day mask
+    uint32_t device : 4;                  // bits 23 - 26 = 16 devices
+    uint32_t power : 2;                   // bits 27 - 28 = 4 power states - Off, On, Toggle
+    uint32_t repeat : 1;                  // bit 29
+    uint32_t arm : 1;                     // bit 30
+    uint32_t spare : 1;                   // bit 31
+  };
+} Timer;
+
 struct SYSCFG {
   unsigned long cfg_holder;                // 000
   unsigned long save_flag;                 // 004
@@ -192,9 +206,8 @@ struct SYSCFG {
   uint16_t      ws_wakeup;                 // 3AA Not used since 5.8.0
   char          friendlyname[MAX_FRIENDLYNAMES][33]; // 3AC
   char          switch_topic[33];          // 430
-
-  byte          free_451[2];               // 451
-
+  char          serial_delimiter;          // 451
+  uint8_t       sbaudrate;                 // 452
   uint8_t       sleep;                     // 453
   uint16_t      domoticz_switch_idx[MAX_DOMOTICZ_IDX];      // 454
   uint16_t      domoticz_sensor_idx[MAX_DOMOTICZ_SNS_IDX];  // 45C
@@ -237,6 +250,11 @@ struct SYSCFG {
   uint16_t      pulse_counter_debounce;    // 5D2
   uint8_t       rf_code[17][9];            // 5D4
 
+  byte          free_66d[3];               // 66D
+
+  Timer         timer[MAX_TIMERS];         // 670
+
+                                           // 6B0 - FFF free locations
 } Settings;
 
 struct RTCMEM {

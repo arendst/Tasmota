@@ -73,6 +73,7 @@
 
 // -- Ota -----------------------------------------
 #define OTA_URL                "http://sonoff.maddox.co.uk/tasmota/sonoff.ino.bin"  // [OtaUrl]
+//#define USE_ARDUINO_OTA                          // Add optional support for Arduino OTA (+4k5 code)
 
 /*********************************************************************************************\
  * Select ONE of possible MQTT library types below
@@ -161,6 +162,8 @@
 #define NTP_SERVER2            "nl.pool.ntp.org"    // [NtpServer2] Select second NTP server by name or IP address (5.39.184.5)
 #define NTP_SERVER3            "0.nl.pool.ntp.org"  // [NtpServer3] Select third NTP server by name or IP address (93.94.224.67)
 
+// #define USE_TIMERS                               // Add support for up to 16 timers (+2k2 code)
+
 // -- Time - Start Daylight Saving Time and timezone offset from UTC in minutes
 #define TIME_DST               North, Last, Sun, Mar, 2, +120  // Northern Hemisphere, Last sunday in march at 02:00 +120 minutes
 
@@ -197,18 +200,18 @@
 // -- I2C sensors ---------------------------------
 //#define USE_I2C                                  // I2C using library wire (+10k code, 0k2 mem, 124 iram)
 #ifdef USE_I2C
-  #define USE_SHT                                // Add I2C emulating code for SHT1X sensor (+1k4 code)
-  #define USE_SHT3X                              // Add I2C code for SHT3x or SHTC3 sensor (+0k7 code)
-  #define USE_HTU                                // Add I2C code for HTU21/SI7013/SI7020/SI7021 sensor (+1k5 code)
-  #define USE_BMP                                // Add I2C code for BMP085/BMP180/BMP280/BME280 sensor (+4k code)
-    #define USE_BME680                           // Add additional support for BME680 sensor using Adafruit Sensor and BME680 libraries (+6k code)
-  #define USE_BH1750                             // Add I2C code for BH1750 sensor (+0k5 code)
-  #define USE_VEML6070                           // Add I2C code for VEML6070 sensor (+0k5 code)
-  #define USE_TSL2561                            // Add I2C code for TSL2561 sensor using library Joba_Tsl2561 (+2k3 code)
-  #define USE_ADS1115                            // Add I2C code for ADS1115 16 bit A/D converter based on Adafruit ADS1x15 library (no library needed) (+0k7 code)
-  #define USE_ADS1115_I2CDEV                     // Add I2C code for ADS1115 16 bit A/D converter using library i2cdevlib-Core and i2cdevlib-ADS1115 (+2k code)
-  #define USE_INA219                             // Add I2C code for INA219 Low voltage and current sensor (+1k code)
-  #define USE_MGS                                // Add I2C code for Xadow and Grove Mutichannel Gas sensor using library Multichannel_Gas_Sensor (+10k code)
+  // #define USE_SHT                                // Add I2C emulating code for SHT1X sensor (+1k4 code)
+  // #define USE_SHT3X                              // Add I2C code for SHT3x or SHTC3 sensor (+0k7 code)
+  // #define USE_HTU                                // Add I2C code for HTU21/SI7013/SI7020/SI7021 sensor (+1k5 code)
+  // #define USE_BMP                                // Add I2C code for BMP085/BMP180/BMP280/BME280 sensor (+4k code)
+  //   #define USE_BME680                           // Add additional support for BME680 sensor using Adafruit Sensor and BME680 libraries (+6k code)
+  // #define USE_BH1750                             // Add I2C code for BH1750 sensor (+0k5 code)
+  // #define USE_VEML6070                           // Add I2C code for VEML6070 sensor (+0k5 code)
+  // #define USE_TSL2561                            // Add I2C code for TSL2561 sensor using library Joba_Tsl2561 (+2k3 code)
+  // #define USE_ADS1115                            // Add I2C code for ADS1115 16 bit A/D converter based on Adafruit ADS1x15 library (no library needed) (+0k7 code)
+  // #define USE_ADS1115_I2CDEV                     // Add I2C code for ADS1115 16 bit A/D converter using library i2cdevlib-Core and i2cdevlib-ADS1115 (+2k code)
+  // #define USE_INA219                             // Add I2C code for INA219 Low voltage and current sensor (+1k code)
+  // #define USE_MGS                                // Add I2C code for Xadow and Grove Mutichannel Gas sensor using library Multichannel_Gas_Sensor (+10k code)
     #define MGS_SENSOR_ADDR    0x04              // Default Mutichannel Gas sensor i2c address
 #endif  // USE_I2C
 
@@ -220,6 +223,7 @@
 // #define USE_PMS5003                              // Add support for PMS5003 and PMS7003 particle concentration sensor (+1k3 code)
 // #define USE_NOVA_SDS                             // Add support for SDS011 and SDS021 particle concentration sensor (+0k7 code)
 // #define USE_PZEM004T                             // Add support for PZEM004T Energy monitor (+2k code)
+// #define USE_SERIAL_BRIDGE                        // Add support for software Serial Bridge (+0k8 code)
 
 // -- Low level interface devices -----------------
 //#define USE_IR_REMOTE                            // Send IR remote commands using library IRremoteESP8266 and ArduinoJson (+4k code, 0k3 mem, 48 iram)

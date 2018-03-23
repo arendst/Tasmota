@@ -45,6 +45,7 @@ typedef unsigned long power_t;              // Power (Relay) type
 #define MAX_SWITCHES           4            // Max number of switches
 #define MAX_PWMS               5            // Max number of PWM channels
 #define MAX_COUNTERS           4            // Max number of counter sensors
+#define MAX_TIMERS             16           // Max number of Timers
 #define MAX_PULSETIMERS        8            // Max number of supported pulse timers
 #define MAX_FRIENDLYNAMES      4            // Max number of Friendly names
 #define MAX_DOMOTICZ_IDX       4            // Max number of Domoticz device, key and switch indices
@@ -100,6 +101,7 @@ typedef unsigned long power_t;              // Power (Relay) type
 #define MAX_BACKLOG            16           // Max number of commands in backlog (chk backlog_index and backlog_pointer code)
 #define MIN_BACKLOG_DELAY      2            // Minimal backlog delay in 0.1 seconds
 
+#define SOFT_BAUDRATE          9600         // Default software serial baudrate
 #define APP_BAUDRATE           115200       // Default serial baudrate
 #define SERIAL_POLLING         100          // Serial receive polling in ms
 #define MAX_STATUS             11           // Max number of status lines
