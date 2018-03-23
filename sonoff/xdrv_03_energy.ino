@@ -29,12 +29,14 @@
 enum EnergyHardware { ENERGY_NONE, ENERGY_HLW8012, ENERGY_CSE7766, ENERGY_PZEM004T };
 
 enum EnergyCommands {
+  CMND_POWERDELTA,
   CMND_POWERLOW, CMND_POWERHIGH, CMND_VOLTAGELOW, CMND_VOLTAGEHIGH, CMND_CURRENTLOW, CMND_CURRENTHIGH,
   CMND_POWERCAL, CMND_POWERSET, CMND_VOLTAGECAL, CMND_VOLTAGESET, CMND_CURRENTCAL, CMND_CURRENTSET,
   CMND_ENERGYRESET, CMND_MAXENERGY, CMND_MAXENERGYSTART,
   CMND_MAXPOWER, CMND_MAXPOWERHOLD, CMND_MAXPOWERWINDOW,
   CMND_SAFEPOWER, CMND_SAFEPOWERHOLD, CMND_SAFEPOWERWINDOW };
 const char kEnergyCommands[] PROGMEM =
+  D_CMND_POWERDELTA "|"
   D_CMND_POWERLOW "|" D_CMND_POWERHIGH "|" D_CMND_VOLTAGELOW "|" D_CMND_VOLTAGEHIGH "|" D_CMND_CURRENTLOW "|" D_CMND_CURRENTHIGH "|"
   D_CMND_POWERCAL "|" D_CMND_POWERSET "|" D_CMND_VOLTAGECAL "|" D_CMND_VOLTAGESET "|" D_CMND_CURRENTCAL "|" D_CMND_CURRENTSET "|"
   D_CMND_ENERGYRESET "|" D_CMND_MAXENERGY "|" D_CMND_MAXENERGYSTART "|"
@@ -50,6 +52,9 @@ float energy_total = 0;           // 12345.12345 kWh
 float energy_start = 0;           // 12345.12345 kWh total previous
 unsigned long energy_kWhtoday;    // 1212312345 Wh * 10^-5 (deca micro Watt hours) - 5763924 = 0.05763924 kWh = 0.058 kWh = energy_daily
 unsigned long energy_period = 0;  // 1212312345 Wh * 10^-5 (deca micro Watt hours) - 5763924 = 0.05763924 kWh = 0.058 kWh = energy_daily
+
+float energy_power_last[3] = { 0 };
+uint8_t energy_power_delta = 0;
 
 bool energy_power_on = true;
 
@@ -264,6 +269,7 @@ uint8_t cse_receive_flag = 0;
 long voltage_cycle = 0;
 long current_cycle = 0;
 long power_cycle = 0;
+unsigned long power_cycle_first = 0;
 long cf_pulses = 0;
 long cf_pulses_last_time = CSE_PULSES_NOT_INITIALIZED;
 
@@ -314,9 +320,6 @@ void CseReceived()
   power_cycle = serial_in_buffer[17] << 16 | serial_in_buffer[18] << 8 | serial_in_buffer[19];
   cf_pulses = serial_in_buffer[21] << 8 | serial_in_buffer[22];
 
-//  if (adjustement & 0x80) {  // CF overflow
-//    cf_pulses += 0x10000;
-//  }
   if (energy_power_on) {  // Powered on
     if (adjustement & 0x40) {  // Voltage valid
       energy_voltage = (float)(Settings.energy_voltage_calibration * CSE_UREF) / (float)voltage_cycle;
@@ -325,9 +328,16 @@ void CseReceived()
       if ((header & 0xF2) == 0xF2) {  // Power cycle exceeds range
         energy_power = 0;
       } else {
-        energy_power = (float)(Settings.energy_power_calibration * CSE_PREF) / (float)power_cycle;
+        if (0 == power_cycle_first) power_cycle_first = power_cycle;  // Skip first incomplete power_cycle
+        if (power_cycle_first != power_cycle) {
+          power_cycle_first = -1;
+          energy_power = (float)(Settings.energy_power_calibration * CSE_PREF) / (float)power_cycle;
+        } else {
+          energy_power = 0;
+        }
       }
     } else {
+      power_cycle_first = 0;
       energy_power = 0;  // Powered on but no load
     }
     if (adjustement & 0x20) {  // Current valid
@@ -338,6 +348,7 @@ void CseReceived()
       }
     }
   } else {  // Powered off
+    power_cycle_first = 0;
     energy_voltage = 0;
     energy_power = 0;
     energy_current = 0;
@@ -638,6 +649,20 @@ void EnergyMarginCheck()
     return;
   }
 
+  if (Settings.energy_power_delta) {
+    float delta = abs(energy_power_last[0] - energy_power);
+    // Any delta compared to minimal delta
+    float min_power = (energy_power_last[0] > energy_power) ? energy_power : energy_power_last[0];
+    if (((delta / min_power) * 100) > Settings.energy_power_delta) {
+      energy_power_delta = 1;
+      energy_power_last[1] = energy_power;  // We only want one report so reset history
+      energy_power_last[2] = energy_power;
+    }
+  }
+  energy_power_last[0] = energy_power_last[1];  // Shift in history every second allowing power changes to settle for up to three seconds
+  energy_power_last[1] = energy_power_last[2];
+  energy_power_last[2] = energy_power;
+
   if (energy_power_on && (Settings.energy_min_power || Settings.energy_max_power || Settings.energy_min_voltage || Settings.energy_max_voltage || Settings.energy_min_current || Settings.energy_max_current)) {
     energy_power_u = (uint16_t)(energy_power);
     energy_voltage_u = (uint16_t)(energy_voltage);
@@ -743,6 +768,8 @@ void EnergyMarginCheck()
     }
   }
 #endif  // FEATURE_POWER_LIMIT
+
+  if (energy_power_delta) EnergyMqttShow();
 }
 
 void EnergyMqttShow()
@@ -752,6 +779,7 @@ void EnergyMqttShow()
   EnergyShow(1);
   snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}"), mqtt_data);
   MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_ENERGY), Settings.flag.mqtt_sensor_retain);
+  energy_power_delta = 0;
 }
 
 /*********************************************************************************************\
@@ -768,7 +796,14 @@ boolean EnergyCommand()
   unsigned long nvalue = 0;
 
   int command_code = GetCommandCode(command, sizeof(command), XdrvMailbox.topic, kEnergyCommands);
-  if (CMND_POWERLOW == command_code) {
+  if (CMND_POWERDELTA == command_code) {
+    if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < 101)) {
+      Settings.energy_power_delta = (1 == XdrvMailbox.payload) ? DEFAULT_POWER_DELTA : XdrvMailbox.payload;
+    }
+    nvalue = Settings.energy_power_delta;
+    unit = UNIT_PERCENTAGE;
+  }
+  else if (CMND_POWERLOW == command_code) {
     if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < 3601)) {
       Settings.energy_min_power = XdrvMailbox.payload;
     }

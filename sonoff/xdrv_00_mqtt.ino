@@ -18,23 +18,23 @@
 */
 
 /*********************************************************************************************\
- * Select ONE of possible MQTT libraries below
+ * Select ONE of possible MQTT library types below
 \*********************************************************************************************/
 // Default MQTT driver for both non-TLS and TLS connections. Blocks network if MQTT server is unavailable.
-//#define MQTT_LIBRARY_TYPE      1                 // Use PubSubClient library
+//#define MQTT_LIBRARY_TYPE      MQTT_PUBSUBCLIENT   // Use PubSubClient library
 // Alternative MQTT driver does not block network when MQTT server is unavailable. No TLS support
-//#define MQTT_LIBRARY_TYPE      2                 // Use TasmotaMqtt library (+4k4 code, +4k mem) - non-TLS only
+//#define MQTT_LIBRARY_TYPE      MQTT_TASMOTAMQTT    // Use TasmotaMqtt library (+4k4 code, +4k mem) - non-TLS only
 // Alternative MQTT driver does not block network when MQTT server is unavailable. No TLS support
-//#define MQTT_LIBRARY_TYPE      3                 // Use (patched) esp-mqtt-arduino library (+4k8 code, +4k mem) - non-TLS only
+//#define MQTT_LIBRARY_TYPE      MQTT_ESPMQTTARDUINO // Use (patched) esp-mqtt-arduino library (+4k8 code, +4k mem) - non-TLS only
 
 #ifdef USE_MQTT_TLS
 #ifdef MQTT_LIBRARY_TYPE
 #undef MQTT_LIBRARY_TYPE
 #endif
-#define MQTT_LIBRARY_TYPE        1               // Use PubSubClient library as it only supports TLS
+#define MQTT_LIBRARY_TYPE      MQTT_PUBSUBCLIENT   // Use PubSubClient library as it only supports TLS
 #else
 #ifndef MQTT_LIBRARY_TYPE
-#define MQTT_LIBRARY_TYPE        1               // Use PubSubClient library as default
+#define MQTT_LIBRARY_TYPE      MQTT_PUBSUBCLIENT   // Use PubSubClient library as default
 #endif
 #endif
 
@@ -63,7 +63,7 @@ bool mqtt_connected = false;                // MQTT virtual connection status
  * void MqttLoop()
 \*********************************************************************************************/
 
-#if (1 == MQTT_LIBRARY_TYPE)  /*****************************************************************/
+#if (MQTT_LIBRARY_TYPE == MQTT_PUBSUBCLIENT)  /***********************************************/
 
 #include <PubSubClient.h>
 
@@ -100,7 +100,7 @@ void MqttLoop()
   MqttClient.loop();
 }
 
-#elif (2 == MQTT_LIBRARY_TYPE)  /*****************************************************************/
+#elif (MQTT_LIBRARY_TYPE == MQTT_TASMOTAMQTT)  /**********************************************/
 
 #include <TasmotaMqtt.h>
 TasmotaMqtt MqttClient;
@@ -134,7 +134,7 @@ void MqttLoop()
 {
 }
 
-#elif (3 == MQTT_LIBRARY_TYPE)  /***************************************************************/
+#elif (MQTT_LIBRARY_TYPE == MQTT_ESPMQTTARDUINO)  /*******************************************/
 
 #include <MQTT.h>
 MQTT *MqttClient = NULL;
@@ -376,19 +376,33 @@ void MqttConnected()
 #ifdef USE_MQTT_TLS
 boolean MqttCheckTls()
 {
+  char fingerprint1[60];
+  char fingerprint2[60];
   boolean result = false;
+
+  fingerprint1[0] = '\0';
+  fingerprint2[0] = '\0';
+  for (byte i = 0; i < sizeof(Settings.mqtt_fingerprint[0]); i++) {
+    snprintf_P(fingerprint1, sizeof(fingerprint1), PSTR("%s%s%02X"), fingerprint1, (i) ? " " : "", Settings.mqtt_fingerprint[0][i]);
+    snprintf_P(fingerprint2, sizeof(fingerprint2), PSTR("%s%s%02X"), fingerprint2, (i) ? " " : "", Settings.mqtt_fingerprint[1][i]);
+  }
 
   AddLog_P(LOG_LEVEL_INFO, S_LOG_MQTT, PSTR(D_FINGERPRINT));
   if (!EspClient.connect(Settings.mqtt_host, Settings.mqtt_port)) {
     snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_MQTT D_TLS_CONNECT_FAILED_TO " %s:%d. " D_RETRY_IN " %d " D_UNIT_SECOND),
       Settings.mqtt_host, Settings.mqtt_port, mqtt_retry_counter);
     AddLog(LOG_LEVEL_DEBUG);
-  } else if (!EspClient.verify(Settings.mqtt_fingerprint, Settings.mqtt_host)) {
-    AddLog_P(LOG_LEVEL_INFO, S_LOG_MQTT, PSTR(D_INSECURE));
   } else {
-    AddLog_P(LOG_LEVEL_INFO, S_LOG_MQTT, PSTR(D_VERIFIED));
-    result = true;
+    if (EspClient.verify(fingerprint1, Settings.mqtt_host)) {
+      AddLog_P(LOG_LEVEL_INFO, S_LOG_MQTT, PSTR(D_VERIFIED "1"));
+      result = true;
+    }
+    else if (EspClient.verify(fingerprint2, Settings.mqtt_host)) {
+      AddLog_P(LOG_LEVEL_INFO, S_LOG_MQTT, PSTR(D_VERIFIED "2"));
+      result = true;
+    }
   }
+  if (!result) AddLog_P(LOG_LEVEL_INFO, S_LOG_MQTT, PSTR(D_FAILED));
   EspClient.stop();
   yield();
   return result;
@@ -436,14 +450,14 @@ void MqttReconnect()
     if (!MqttCheckTls()) return;
 #endif  // USE_MQTT_TLS
 
-#if (2 == MQTT_LIBRARY_TYPE)
+#if (MQTT_LIBRARY_TYPE == MQTT_TASMOTAMQTT)
     MqttClient.InitConnection(Settings.mqtt_host, Settings.mqtt_port);
     MqttClient.InitClient(mqtt_client, mqtt_user, mqtt_pwd, MQTT_KEEPALIVE);
     MqttClient.InitLWT(stopic, mqtt_data, 1, true);
     MqttClient.OnConnected(MqttConnected);
     MqttClient.OnDisconnected(MqttDisconnectedCb);
     MqttClient.OnData(MqttDataHandler);
-#elif (3 == MQTT_LIBRARY_TYPE)
+#elif (MQTT_LIBRARY_TYPE == MQTT_ESPMQTTARDUINO)
     MqttClient = new MQTT(mqtt_client, Settings.mqtt_host, Settings.mqtt_port, stopic, 1, true, mqtt_data);
     MqttClient->setUserPwd(mqtt_user, mqtt_pwd);
     MqttClient->onConnected(MqttConnected);
@@ -454,7 +468,7 @@ void MqttReconnect()
     mqtt_initial_connection_state = 1;
   }
 
-#if (1 == MQTT_LIBRARY_TYPE)
+#if (MQTT_LIBRARY_TYPE == MQTT_PUBSUBCLIENT)
   MqttClient.setCallback(MqttDataHandler);
   MqttClient.setServer(Settings.mqtt_host, Settings.mqtt_port);
   if (MqttClient.connect(mqtt_client, mqtt_user, mqtt_pwd, stopic, 1, true, mqtt_data)) {
@@ -462,9 +476,9 @@ void MqttReconnect()
   } else {
     MqttDisconnected(MqttClient.state());  // status codes are documented here http://pubsubclient.knolleary.net/api.html#state
   }
-#elif (2 == MQTT_LIBRARY_TYPE)
+#elif (MQTT_LIBRARY_TYPE == MQTT_TASMOTAMQTT)
   MqttClient.Connect();
-#elif (3 == MQTT_LIBRARY_TYPE)
+#elif (MQTT_LIBRARY_TYPE == MQTT_ESPMQTTARDUINO)
   MqttClient->connect();
 #endif  // MQTT_LIBRARY_TYPE
 }
@@ -534,12 +548,22 @@ bool MqttCommand()
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, index, GetStateText(index -1));
   }
 #ifdef USE_MQTT_TLS
-  else if (CMND_MQTTFINGERPRINT == command_code) {
-    if ((data_len > 0) && (data_len < sizeof(Settings.mqtt_fingerprint))) {
-      strlcpy(Settings.mqtt_fingerprint, (!strcmp(dataBuf,"0")) ? "" : (1 == payload) ? MQTT_FINGERPRINT : dataBuf, sizeof(Settings.mqtt_fingerprint));
+  else if ((CMND_MQTTFINGERPRINT == command_code) && (index > 0) && (index <= 2)) {
+    char fingerprint[60];
+    if ((data_len > 0) && (data_len < sizeof(fingerprint))) {
+      strlcpy(fingerprint, (!strcmp(dataBuf,"0")) ? "" : (1 == payload) ? (1 == index) ? MQTT_FINGERPRINT1 : MQTT_FINGERPRINT2 : dataBuf, sizeof(fingerprint));
+      char *p = fingerprint;
+      for (byte i = 0; i < 20; i++) {
+        Settings.mqtt_fingerprint[index -1][i] = strtol(p, &p, 16);
+      }
       restart_flag = 2;
     }
-    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, Settings.mqtt_fingerprint);
+
+    fingerprint[0] = '\0';
+    for (byte i = 0; i < sizeof(Settings.mqtt_fingerprint[index -1]); i++) {
+      snprintf_P(fingerprint, sizeof(fingerprint), PSTR("%s%s%02X"), fingerprint, (i) ? " " : "", Settings.mqtt_fingerprint[index -1][i]);
+    }
+    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, index, fingerprint);
   }
 #endif
   else if ((CMND_MQTTCLIENT == command_code) && !grpflg) {

@@ -287,6 +287,8 @@ boolean Ds18x20Read(uint8_t sensor, float &t)
 {
   uint8_t data[9];
   int8_t sign = 1;
+  uint16_t temp12 = 0;
+  int16_t temp14 = 0;
   float temp9 = 0.0;
 
   t = NAN;
@@ -315,23 +317,26 @@ boolean Ds18x20Read(uint8_t sensor, float &t)
       case DS1822_CHIPID:
       case DS18B20_CHIPID:
         if (data[4] != 0x7F) {
-          data[4] = 0x7F;                // Set resolution to 12-bit
+          data[4] = 0x7F;                 // Set resolution to 12-bit
           OneWireReset();
           OneWireSelect(ds18x20_address[ds18x20_index[sensor]]);
           OneWireWrite(W1_WRITE_SCRATCHPAD);
-          OneWireWrite(data[2]);              // Th Register
-          OneWireWrite(data[3]);              // Tl Register
-          OneWireWrite(data[4]);              // Configuration Register
+          OneWireWrite(data[2]);          // Th Register
+          OneWireWrite(data[3]);          // Tl Register
+          OneWireWrite(data[4]);          // Configuration Register
           OneWireSelect(ds18x20_address[ds18x20_index[sensor]]);
-          OneWireWrite(W1_WRITE_EEPROM);      // Save scratchpad to EEPROM
+          OneWireWrite(W1_WRITE_EEPROM);  // Save scratchpad to EEPROM
         }
-      case MAX31850_CHIPID:
-        uint16_t temp12 = (data[1] << 8) + data[0];
+        temp12 = (data[1] << 8) + data[0];
         if (temp12 > 2047) {
           temp12 = (~temp12) +1;
           sign = -1;
         }
-        t = ConvertTemp(sign * temp12 * 0.0625);
+        t = ConvertTemp(sign * temp12 * 0.0625);  // Divide by 16
+        break;
+      case MAX31850_CHIPID:
+        temp14 = (data[1] << 8) + (data[0] & 0xFC);
+        t = ConvertTemp(temp14 * 0.0625);  // Divide by 16
         break;
       }
     }
@@ -404,8 +409,13 @@ boolean Xsns05(byte function)
       case FUNC_INIT:
         Ds18x20Init();
         break;
+//      case FUNC_EVERY_SECOND:
+//        if ((Settings.tele_period - tele_period) &3 == 3) {
+//          Ds18x20Convert();  // Start conversion every four seconds, takes up to one second
+//        }
+//        break;
       case FUNC_PREP_BEFORE_TELEPERIOD:
-        Ds18x20Convert();   // Start conversion, takes up to one second
+        Ds18x20Convert();    // Start conversion, takes up to one second
         break;
       case FUNC_JSON_APPEND:
         Ds18x20Show(1);
@@ -413,7 +423,7 @@ boolean Xsns05(byte function)
 #ifdef USE_WEBSERVER
       case FUNC_WEB_APPEND:
         Ds18x20Show(0);
-        Ds18x20Convert();   // Start conversion, takes up to one second
+        Ds18x20Convert();    // Start conversion, takes up to one second
         break;
 #endif  // USE_WEBSERVER
     }

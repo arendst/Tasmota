@@ -53,24 +53,7 @@ const char HASS_DISCOVER_LIGHT_SCHEME[] PROGMEM =
   "%s,\"effect_command_topic\":\"%s\","            // cmnd/led2/Scheme
   "\"effect_state_topic\":\"%s\","                 // stat/led2/RESULT
   "\"effect_value_template\":\"{{value_json." D_CMND_SCHEME "}}\","
-  "\"effect_list\":\"[0, 1, 2, 3, 4]\"";           // Needs to be a Python string list providing Scheme parameter values (Unable to get this functional)
-*/
-/*
-#1690 - investigate
-effect_list:
-- 0
-- 1
-- 2
-- 3
-- 4
-- 5
-- 6
-- 7
-- 8
-- 9
-- 10
-- 11
-- 12
+  "\"effect_list\":[\"0\",\"1\",\"2\",\"3\",\"4\"]";  // string list with reference to scheme parameter. Currently only supports numbers 0 to 11 as it make the mqtt string too long
 */
 void HAssDiscovery()
 {
@@ -93,9 +76,9 @@ void HAssDiscovery()
 
     snprintf_P(sidx, sizeof(sidx), PSTR("_%d"), i);
     // Clear "other" topic first in case the device has been reconfigured
-    snprintf_P(stopic, sizeof(stopic), PSTR(HOME_ASSISTANT_DISCOVERY_PREFIX "/%s/%s%s/config"), (is_light) ? "switch" : "light", mqtt_topic, (1 == devices_present) ? "" : sidx);
+    snprintf_P(stopic, sizeof(stopic), PSTR(HOME_ASSISTANT_DISCOVERY_PREFIX "/%s/%s%s/config"), (is_light) ? "switch" : "light", mqtt_topic, sidx);
     MqttPublish(stopic, true);
-    snprintf_P(stopic, sizeof(stopic), PSTR(HOME_ASSISTANT_DISCOVERY_PREFIX "/%s/%s%s/config"), (is_light) ? "light" : "switch", mqtt_topic, (1 == devices_present) ? "" : sidx);
+    snprintf_P(stopic, sizeof(stopic), PSTR(HOME_ASSISTANT_DISCOVERY_PREFIX "/%s/%s%s/config"), (is_light) ? "light" : "switch", mqtt_topic, sidx);
 
     if (Settings.flag.hass_discovery) {
       char name[33];
