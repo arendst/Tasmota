@@ -1,4 +1,7 @@
-/* 5.12.0h
+/* 5.12.0i
+ * Add 16 timers using commands Timer and Timers (#1091)
+ *
+ * 5.12.0h
  * Add optional Arduino OTA support to be enabled in user_config.h (#1998)
  * Add support for Software Serial bridge using commands SerialDelimiter, SBaudrate and SSerialSend. Supports 8N1 and text only (#2190)
  * Add support for Hardware Serial bridge using commands SerialDelimiter, Baudrate and SerialSend. Supports 8N1 and text only (#2182)
