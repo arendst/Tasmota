@@ -349,6 +349,16 @@
 #define D_CMND_SBAUDRATE "SBaudrate"
   #define D_JSON_SSERIALRECEIVED "SSerialReceived"
 
+// Commands xdrv_09_timers.ino
+#define D_CMND_TIMER "Timer"
+  #define D_JSON_TIMER_ARM "Arm"
+  #define D_JSON_TIMER_TIME "Time"
+  #define D_JSON_TIMER_DAYS "Days"
+  #define D_JSON_TIMER_REPEAT "Repeat"
+  #define D_JSON_TIMER_DEVICE "Device"
+  #define D_JSON_TIMER_POWER "Power"
+#define D_CMND_TIMERS "Timers"
+
 /********************************************************************************************/
 
 #ifndef MY_LANGUAGE

@@ -910,6 +910,9 @@ void SettingsDelta()
       Settings.sbaudrate = SOFT_BAUDRATE / 1200;
       Settings.serial_delimiter = 0xff;
     }
+    if (Settings.version < 0x050C0009) {
+      memset(&Settings.timer, 0x00, sizeof(Timer) * MAX_TIMERS);
+    }
 
     Settings.version = VERSION;
     SettingsSave(1);

@@ -165,6 +165,8 @@
 #define NTP_SERVER2            "nl.pool.ntp.org"    // [NtpServer2] Select second NTP server by name or IP address (5.39.184.5)
 #define NTP_SERVER3            "0.nl.pool.ntp.org"  // [NtpServer3] Select third NTP server by name or IP address (93.94.224.67)
 
+#define USE_TIMERS                               // Add support for up to 16 timers (+2k2 code)
+
 // -- Time - Start Daylight Saving Time and timezone offset from UTC in minutes
 #define TIME_DST               North, Last, Sun, Mar, 2, +120  // Northern Hemisphere, Last sunday in march at 02:00 +120 minutes
 

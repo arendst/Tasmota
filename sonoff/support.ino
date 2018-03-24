@@ -241,6 +241,32 @@ char* Unescape(char* buffer, uint16_t* size)
   return buffer;
 }
 
+char* UpperCase(char* dest, const char* source)
+{
+  char* write = dest;
+  const char* read = source;
+  char ch = '.';
+
+  while (ch != '\0') {
+    ch = *read++;
+    *write++ = toupper(ch);
+  }
+  return dest;
+}
+
+char* UpperCase_P(char* dest, const char* source)
+{
+  char* write = dest;
+  const char* read = source;
+  char ch = '.';
+
+  while (ch != '\0') {
+    ch = pgm_read_byte(read++);
+    *write++ = toupper(ch);
+  }
+  return dest;
+}
+
 boolean ParseIp(uint32_t* addr, const char* str)
 {
   uint8_t *part = (uint8_t*)addr;

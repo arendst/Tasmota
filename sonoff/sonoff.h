@@ -43,6 +43,7 @@ typedef unsigned long power_t;              // Power (Relay) type
 #define MAX_SWITCHES           4            // Max number of switches
 #define MAX_PWMS               5            // Max number of PWM channels
 #define MAX_COUNTERS           4            // Max number of counter sensors
+#define MAX_TIMERS             16           // Max number of Timers
 #define MAX_PULSETIMERS        8            // Max number of supported pulse timers
 #define MAX_FRIENDLYNAMES      4            // Max number of Friendly names
 #define MAX_DOMOTICZ_IDX       4            // Max number of Domoticz device, key and switch indices
