@@ -1,4 +1,4 @@
-set version=5.12.0g-mod-1.18.7
+set version=5.12.0i-mod-1.18.9
 
 mkdir %version%
 
