@@ -308,10 +308,10 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
   { "Sonoff Dual",     // Sonoff Dual (ESP8266)
      0,
      GPIO_TXD,         // GPIO01 Relay control
-     0,
+     GPIO_USER,        // GPIO02 Optional sensor
      GPIO_RXD,         // GPIO03 Relay control
      GPIO_USER,        // GPIO04 Optional sensor
-     0,
+     GPIO_USER,        // GPIO05 Optional sensor
      0, 0, 0, 0, 0, 0, // Flash connection
      0,
      GPIO_LED1_INV,    // GPIO13 Blue Led (0 = On, 1 = Off)
