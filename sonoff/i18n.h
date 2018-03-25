@@ -132,6 +132,11 @@
 #define D_RSLT_WARNING "WARNING"
 
 // Commands sonoff.ino
+
+//stb mode
+#define D_CMND_COUNTERDEVIDER "CounterDevider"
+#define D_CMND_MQTTENABLE "MqttEnable"
+// end
 #define D_CMND_MQTTHOST "MqttHost"
 #define D_CMND_MQTTPORT "MqttPort"
 #define D_CMND_MQTTRETRY "MqttRetry"

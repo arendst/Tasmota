@@ -462,6 +462,9 @@ void SettingsDefaultSet2()
   Settings.weblog_level = WEB_LOG_LEVEL;
 
   strlcpy(Settings.mqtt_fingerprint, MQTT_FINGERPRINT, sizeof(Settings.mqtt_fingerprint));
+  //STB mode
+  strlcpy(Settings.mqtt_fingerprint2, MQTT_FINGERPRINT2, sizeof(Settings.mqtt_fingerprint2));
+  //end
   strlcpy(Settings.mqtt_host, MQTT_HOST, sizeof(Settings.mqtt_host));
   Settings.mqtt_port = MQTT_PORT;
   strlcpy(Settings.mqtt_client, MQTT_CLIENT_ID, sizeof(Settings.mqtt_client));
@@ -569,7 +572,7 @@ void SettingsDefaultSet2()
 
   // 5.10.1
   SettingsDefaultSet_5_10_1();
-  
+
 //STB mod
   Settings.deepsleep = 0;
 //end
@@ -873,5 +876,3 @@ void SettingsDelta()
     SettingsSave(1);
   }
 }
-
-

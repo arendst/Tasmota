@@ -186,5 +186,26 @@ boolean pcf8574_detect()
   return success;
 }
 
+/*********************************************************************************************\
+ * Interface
+\*********************************************************************************************/
+
+#define XDRV_20
+
+boolean Xdrv20(byte function)
+{
+  boolean result = false;
+
+  if (Settings.flag.mqtt_enabled) {
+    switch (function) {
+      case FUNC_MQTT_INIT:
+         pcf8574_Init();
+        break;
+    }
+  }
+  return result;
+}
+
+
 #endif // USE_PCF8574
 #endif // USE_I2C

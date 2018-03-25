@@ -253,6 +253,7 @@ struct SYSCFG {
   uint8_t       all_relays_inverted;       // 672
   uint32_t      deepsleep;                 // 673
   uint16_t      pulse_devider[MAX_COUNTERS];     //677
+  char          mqtt_fingerprint2[60];      // 1AD To be freed by binary fingerprint
   //end
 } Settings;
 

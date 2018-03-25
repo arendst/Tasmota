@@ -972,28 +972,32 @@ void HandleOtherConfiguration()
   }
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_CONFIGURE_OTHER);
   char stemp[40];
+  String page2;
 
   String page = FPSTR(HTTP_HEAD);
   page.replace(F("{v}"), FPSTR(S_CONFIGURE_OTHER));
   page += FPSTR(HTTP_HEAD_STYLE);
-  page += FPSTR(HTTP_FORM_OTHER);
-  page.replace(F("{r1"), (Settings.flag.mqtt_enabled) ? F(" checked") : F(""));
+  page2 = FPSTR(HTTP_FORM_OTHER);
+  page2.replace(F("{r1"), (Settings.flag.mqtt_enabled) ? F(" checked") : F(""));
+  page += page2;
   uint8_t maxfn = (devices_present > MAX_FRIENDLYNAMES) ? MAX_FRIENDLYNAMES : (!devices_present) ? 1 : devices_present;
   for (byte i = 0; i < maxfn; i++) {
-    page += FPSTR(HTTP_FORM_OTHER2);
-    page.replace(F("{1"), String(i +1));
+    page2 = FPSTR(HTTP_FORM_OTHER2);
+    page2.replace(F("{1"), String(i +1));
     snprintf_P(stemp, sizeof(stemp), PSTR(FRIENDLY_NAME"%d"), i +1);
-    page.replace(F("{2"), (i) ? stemp : FRIENDLY_NAME);
-    page.replace(F("{3"), Settings.friendlyname[i]);
+    page2.replace(F("{2"), (i) ? stemp : FRIENDLY_NAME);
+    page2.replace(F("{3"), Settings.friendlyname[i]);
+    page += page2;
   }
 #ifdef USE_EMULATION
   page += FPSTR(HTTP_FORM_OTHER3a);
   for (byte i = 0; i < EMUL_MAX; i++) {
-    page += FPSTR(HTTP_FORM_OTHER3b);
-    page.replace(F("{1"), String(i));
-    page.replace(F("{2"), (i == Settings.flag2.emulation) ? F(" checked") : F(""));
-    page.replace(F("{3"), (i == EMUL_NONE) ? F(D_NONE) : (i == EMUL_WEMO) ? F(D_BELKIN_WEMO) : F(D_HUE_BRIDGE));
-    page.replace(F("{4"), (i == EMUL_NONE) ? F("") : (i == EMUL_WEMO) ? F(" " D_SINGLE_DEVICE) : F(" " D_MULTI_DEVICE));
+    page2 = FPSTR(HTTP_FORM_OTHER3b);
+    page2.replace(F("{1"), String(i));
+    page2.replace(F("{2"), (i == Settings.flag2.emulation) ? F(" checked") : F(""));
+    page2.replace(F("{3"), (i == EMUL_NONE) ? F(D_NONE) : (i == EMUL_WEMO) ? F(D_BELKIN_WEMO) : F(D_HUE_BRIDGE));
+    page2.replace(F("{4"), (i == EMUL_NONE) ? F("") : (i == EMUL_WEMO) ? F(" " D_SINGLE_DEVICE) : F(" " D_MULTI_DEVICE));
+    page += page2;
   }
   page += F("<br/>");
   page += F("<br/></fieldset>");

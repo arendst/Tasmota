@@ -200,7 +200,7 @@
 #define D_JSON_DISTANCE "Odleglosc"
 #define D_CONFIGURE_PCF8574 "Konfiguruj PCF8574"
 #define D_CMND_COUNTERDEVIDER "CounterDevider"
-#define D_CMND_MQTTCLIENT "MqttClient"
+#define D_CMND_MQTTENABLE "MqttEnable"
 //end
 
 // webserver.ino

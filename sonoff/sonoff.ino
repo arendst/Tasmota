@@ -72,7 +72,7 @@ enum TasmotaCommands {
   CMND_BLINKTIME, CMND_BLINKCOUNT, CMND_SENSOR, CMND_SAVEDATA, CMND_SETOPTION, CMND_TEMPERATURE_RESOLUTION, CMND_HUMIDITY_RESOLUTION,
   CMND_PRESSURE_RESOLUTION, CMND_POWER_RESOLUTION, CMND_VOLTAGE_RESOLUTION, CMND_CURRENT_RESOLUTION, CMND_ENERGY_RESOLUTION, CMND_MODULE, CMND_MODULES,
 //STB mod
-  CMND_GPIO, CMND_GPIOS, CMND_PWM, CMND_PWMFREQUENCY, CMND_PWMRANGE, CMND_COUNTER, CMND_COUNTERTYPE, CMND_COUNTERDEVIDER, CMD_MQTTCLIENT,
+  CMND_GPIO, CMND_GPIOS, CMND_PWM, CMND_PWMFREQUENCY, CMND_PWMRANGE, CMND_COUNTER, CMND_COUNTERTYPE, CMND_COUNTERDEVIDER, CMND_MQTTENABLE,
 //end
   CMND_COUNTERDEBOUNCE, CMND_SLEEP, CMND_UPGRADE, CMND_UPLOAD, CMND_OTAURL, CMND_SERIALLOG, CMND_SYSLOG,
   CMND_LOGHOST, CMND_LOGPORT, CMND_IPADDRESS, CMND_NTPSERVER, CMND_AP, CMND_SSID, CMND_PASSWORD, CMND_HOSTNAME,
@@ -84,7 +84,7 @@ const char kTasmotaCommands[] PROGMEM =
   D_CMND_BLINKTIME "|" D_CMND_BLINKCOUNT "|" D_CMND_SENSOR "|" D_CMND_SAVEDATA "|" D_CMND_SETOPTION "|" D_CMND_TEMPERATURE_RESOLUTION "|" D_CMND_HUMIDITY_RESOLUTION "|"
   D_CMND_PRESSURE_RESOLUTION "|" D_CMND_POWER_RESOLUTION "|" D_CMND_VOLTAGE_RESOLUTION "|" D_CMND_CURRENT_RESOLUTION "|" D_CMND_ENERGY_RESOLUTION "|" D_CMND_MODULE "|" D_CMND_MODULES "|"
   //STB mod
-  D_CMND_GPIO "|" D_CMND_GPIOS "|" D_CMND_PWM "|" D_CMND_PWMFREQUENCY "|" D_CMND_PWMRANGE "|" D_CMND_COUNTER "|"  D_CMND_COUNTERTYPE "|"   D_CMND_COUNTERDEVIDER "|" D_CMND_MQTTCLIENT "|"
+  D_CMND_GPIO "|" D_CMND_GPIOS "|" D_CMND_PWM "|" D_CMND_PWMFREQUENCY "|" D_CMND_PWMRANGE "|" D_CMND_COUNTER "|"  D_CMND_COUNTERTYPE "|"   D_CMND_COUNTERDEVIDER "|" D_CMND_MQTTENABLE "|"
   //end
   D_CMND_COUNTERDEBOUNCE "|" D_CMND_SLEEP "|" D_CMND_UPGRADE "|" D_CMND_UPLOAD "|" D_CMND_OTAURL "|" D_CMND_SERIALLOG "|" D_CMND_SYSLOG "|"
   D_CMND_LOGHOST "|" D_CMND_LOGPORT "|" D_CMND_IPADDRESS "|" D_CMND_NTPSERVER "|" D_CMND_AP "|" D_CMND_SSID "|" D_CMND_PASSWORD "|" D_CMND_HOSTNAME "|"
@@ -549,8 +549,9 @@ void MqttConnected()
     if (Settings.tele_period) {
 
     //STB mod
+      XsnsCall(FUNC_PREP_BEFORE_TELEPERIOD);
       if (LocalTime() > 100) {
-        tele_period = 8 ;
+        tele_period = 7 ;
       } else {
         tele_period = 1 ;
       }
@@ -595,7 +596,7 @@ void MqttReconnect()
       //end
       return;
     }
-    if (EspClient.verify(Settings.mqtt_fingerprint, Settings.mqtt_host)) {
+    if (EspClient.verify(Settings.mqtt_fingerprint, Settings.mqtt_host) || EspClient.verify(Settings.mqtt_fingerprint2, Settings.mqtt_host)) {
       AddLog_P(LOG_LEVEL_INFO, S_LOG_MQTT, PSTR(D_VERIFIED));
     } else {
       AddLog_P(LOG_LEVEL_DEBUG, S_LOG_MQTT, PSTR(D_INSECURE));
@@ -703,11 +704,15 @@ boolean MqttCommand(boolean grpflg, char *type, uint16_t index, char *dataBuf, u
   }
 #ifdef USE_MQTT_TLS
   else if (CMND_MQTTFINGERPRINT == command_code) {
-    if ((data_len > 0) && (data_len < sizeof(Settings.mqtt_fingerprint))) {
-      strlcpy(Settings.mqtt_fingerprint, (!strcmp(dataBuf,"0")) ? "" : (1 == payload) ? MQTT_FINGERPRINT : dataBuf, sizeof(Settings.mqtt_fingerprint));
+    if ((data_len > 0) && (data_len < sizeof(Settings.mqtt_fingerprint)) && (index > 0) && (index <= 2) ) {
+      if (1 == index) {
+        strlcpy(Settings.mqtt_fingerprint, (!strcmp(dataBuf,"0")) ? "" : (1 == payload) ? MQTT_FINGERPRINT : dataBuf, sizeof(Settings.mqtt_fingerprint));
+      } else {
+        strlcpy(Settings.mqtt_fingerprint2, (!strcmp(dataBuf,"0")) ? "" : (1 == payload) ? MQTT_FINGERPRINT : dataBuf, sizeof(Settings.mqtt_fingerprint2));
+      }
       restart_flag = 2;
     }
-    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, Settings.mqtt_fingerprint);
+    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, (1 == index) ?  Settings.mqtt_fingerprint : Settings.mqtt_fingerprint2);
   }
 #endif
   else if ((CMND_MQTTCLIENT == command_code) && !grpflg) {
@@ -1322,15 +1327,26 @@ void MqttDataCallback(char* topic, byte* data, unsigned int data_len)
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, Settings.pulse_counter_debounce);
     }
 //STB mod
-else if ((CMND_COUNTERDEVIDER == command_code) && (index > 0) && (index <= MAX_COUNTERS)) {
-  if (data_len > 0) {
-    unsigned long _counter;
-    _counter = RtcSettings.pulse_counter[index -1]/Settings.pulse_devider[index -1];
-    Settings.pulse_devider[index -1] = payload16;
-    RtcSettings.pulse_counter[index -1] = _counter * Settings.pulse_devider[index -1];
-  }
-  snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_NVALUE, command, index, Settings.pulse_devider[index -1]);
-}
+    else if ((CMND_COUNTERDEVIDER == command_code) && (index > 0) && (index <= MAX_COUNTERS)) {
+      if (data_len > 0) {
+        unsigned long _counter;
+        _counter = RtcSettings.pulse_counter[index -1]/Settings.pulse_devider[index -1];
+        Settings.pulse_devider[index -1] = payload16;
+        RtcSettings.pulse_counter[index -1] = _counter * Settings.pulse_devider[index -1];
+      }
+      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_NVALUE, command, index, Settings.pulse_devider[index -1]);
+    }
+    else if (CMND_MQTTENABLE == command_code) {
+      if ((payload >= 0) && (payload <= 1)) {
+        Settings.flag.mqtt_enabled = payload;
+        restart_flag = 2;
+        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_WEBSERVER "\":\"" D_JSON_ACTIVE_FOR " %s " D_JSON_ON_DEVICE " %s " D_JSON_WITH_IP_ADDRESS " %s\"}"),
+          (2 == Settings.webserver) ? D_ADMIN : D_USER, my_hostname, WiFi.localIP().toString().c_str());
+        if (Settings.webserver == 0 && Settings.flag.mqtt_enabled == 0) {
+          Settings.webserver = 2;
+        }
+      }
+    }
 //end
     else if (CMND_SLEEP == command_code) {
       if ((payload >= 0) && (payload < 251)) {
@@ -1507,19 +1523,6 @@ else if ((CMND_COUNTERDEVIDER == command_code) && (index > 0) && (index <= MAX_C
         snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, GetStateText(0));
       }
     }
-    //STB Mod
-    else if (CMND_MQTTCLIENT == command_code) {
-      if ((payload >= 0) && (payload <= 1)) {
-        Settings.flag.mqtt_enabled = payload;
-        if (Settings.webserver == 0 && Settings.flag.mqtt_enabled == 0) {
-          Settings.webserver = 2;
-          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_WEBSERVER "\":\"" D_JSON_ACTIVE_FOR " %s " D_JSON_ON_DEVICE " %s " D_JSON_WITH_IP_ADDRESS " %s\"}"),
-            (2 == Settings.webserver) ? D_ADMIN : D_USER, my_hostname, WiFi.localIP().toString().c_str());
-          restart_flag = 2;
-        }
-      }
-    }
-    //end
     else if (CMND_WEBPASSWORD == command_code) {
       if ((data_len > 0) && (data_len < sizeof(Settings.web_password))) {
         strlcpy(Settings.web_password, (!strcmp(dataBuf,"0")) ? "" : (1 == payload) ? WEB_PASSWORD : dataBuf, sizeof(Settings.web_password));
@@ -1627,7 +1630,11 @@ else if ((CMND_COUNTERDEVIDER == command_code) && (index > 0) && (index <= MAX_C
       I2cScan(mqtt_data, sizeof(mqtt_data));
     }
 #endif  // USE_I2C
-    else if (Settings.flag.mqtt_enabled && MqttCommand(grpflg, type, index, dataBuf, data_len, payload, payload16)) {
+//STB mode
+    //else if (Settings.flag.mqtt_enabled && MqttCommand(grpflg, type, index, dataBuf, data_len, payload, payload16)) {
+    // Comand must be executed in any case. else you cannot change MQTT settings if MQTT teporary offline
+    else if ( MqttCommand(grpflg, type, index, dataBuf, data_len, payload, payload16)) {
+//end
       // Serviced
     }
     else if (XdrvCommand(type, index, dataBuf, data_len, payload)) {
@@ -2031,6 +2038,8 @@ void PerformEverySecond()
         yield();
         if (Settings.deepsleep > MAX_DEEPSLEEP_CYCLE) {
           RtcSettings.ultradeepsleep = Settings.deepsleep;
+        } else {
+            RtcSettings.ultradeepsleep = 0;
         }
         snprintf_P(mqtt_data, sizeof(mqtt_data), S_OFFLINE);
         MqttPublishPrefixTopic_P(TELE, PSTR(D_LWT), false);  // Offline or remove previous retained topic
