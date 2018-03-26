@@ -135,9 +135,9 @@ void chirp_Show(boolean json)
  * Interface
 \*********************************************************************************************/
 
-#define XSNS_20
+#define XSNS_23
 
-boolean Xsns20(byte function)
+boolean Xsns23(byte function)
 {
   boolean result = false;
 

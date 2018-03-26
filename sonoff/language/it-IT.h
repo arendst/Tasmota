@@ -32,6 +32,9 @@
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
 
+// HTML (ISO 639-1) Language Code
+#define D_HTML_LANGUAGE "it"
+
 // "2017-03-07T11:08:02" - ISO8601:2004
 #define D_YEAR_MONTH_SEPARATOR "-"
 #define D_MONTH_DAY_SEPARATOR "-"
@@ -161,13 +164,6 @@
 #define D_RECEIVED_TOPIC "Topic Ricevuto"
 #define D_DATA_SIZE "Dimensione Dati"
 #define D_ANALOG_INPUT "Ingresso Analogico"
-
-#define D_FINGERPRINT "Verifica TLS fingerprint..."
-#define D_TLS_CONNECT_FAILED_TO "Connessione TLS fallita a"
-#define D_RETRY_IN "Nuovo tentativo in"
-#define D_VERIFIED "Verificato"
-#define D_INSECURE "Connessione insicura a causa di Fingerprint non valido"
-#define D_CONNECT_FAILED_TO "Connessione Fallita a"
 
 // support.ino
 #define D_OSWATCH "osWatch"
@@ -325,6 +321,14 @@
 #define D_ENABLE_WEBLOG_FOR_RESPONSE "Abilitare weblog 2 se e' attesa una risposta"
 #define D_NEED_USER_AND_PASSWORD "Richiesto user=<username>&password=<password>"
 
+// xdrv_00_mqtt.ino
+#define D_FINGERPRINT "Verifica TLS fingerprint..."
+#define D_TLS_CONNECT_FAILED_TO "Connessione TLS fallita a"
+#define D_RETRY_IN "Nuovo tentativo in"
+#define D_VERIFIED "Verificato Fingerprint"
+#define D_INSECURE "Connessione insicura a causa di Fingerprint non valido"
+#define D_CONNECT_FAILED_TO "Connessione Fallita a"
+
 // xdrv_wemohue.ino
 #define D_MULTICAST_DISABLED "Multicast disabilitato"
 #define D_MULTICAST_REJOINED "Multicast (ri)associato"
@@ -356,9 +360,9 @@
   #define D_DOMOTICZ_TEMP_HUM_BARO "Temp,Hum,Baro"
   #define D_DOMOTICZ_POWER_ENERGY "Power,Energy"
   #define D_DOMOTICZ_ILLUMINANCE "Illuminance"
-  #define D_DOMOTICZ_COUNT "Count"
-  #define D_DOMOTICZ_VOLTAGE "Voltage"
-  #define D_DOMOTICZ_CURRENT "Current"
+  #define D_DOMOTICZ_COUNT "Count/PM1"
+  #define D_DOMOTICZ_VOLTAGE "Voltage/PM2.5"
+  #define D_DOMOTICZ_CURRENT "Current/PM10"
   #define D_DOMOTICZ_AIRQUALITY "AirQuality"
 #define D_DOMOTICZ_UPDATE_TIMER "Intervallo di aggiornamento"
 
@@ -415,6 +419,9 @@
 #define D_SENSOR_SPI_DC   "SPI DC"
 #define D_SENSOR_BACKLIGHT "BkLight"
 #define D_SENSOR_PMS5003  "PMS5003"
+#define D_SENSOR_SDS0X1   "SDS0X1"
+#define D_SENSOR_SBR_RX   "SerBr Rx"
+#define D_SENSOR_SBR_TX   "SerBr Tx"
 
 // Units
 #define D_UNIT_AMPERE "A"

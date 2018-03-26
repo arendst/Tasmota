@@ -1,5 +1,53 @@
-/* 5.12.0c
+/* 5.12.0i
+ * Add 16 timers using commands Timer and Timers (#1091)
+ *
+ * 5.12.0h
+ * Add optional Arduino OTA support to be enabled in user_config.h (#1998)
+ * Add support for Software Serial bridge using commands SerialDelimiter, SBaudrate and SSerialSend. Supports 8N1 and text only (#2190)
+ * Add support for Hardware Serial bridge using commands SerialDelimiter, Baudrate and SerialSend. Supports 8N1 and text only (#2182)
+ * Add support for Zengge WF017 PWM Led strip controller (#2202)
+ * Add PWM status to command State if PWM enabled (#2203)
+ * Add command HSBColor Hue,Sat,Bri (#1642, #2203)
+ * Add command Channel 0..100 to control dimmer value for individual color channels (#2111, #2203)
+ * Add Channel status information (#2211)
+ * Add all FriendlyNames to Status information (#2208)
+ * Change status display of Ssid and SetOption
+ * Change default option SetOption15 from 0 to 1 providing better initial PWM experience
+ *
+ * 5.12.0f
+ * Add compile time support for WS2812 BRG and RBG led configurations to be defined in user_config.h (#1690)
+ *
+ * 5.12.0e
+ * Add Domoticz dust (custom) sensors to PMS5003 and NovaFitness SDS drivers as PM1, PM2.5 and PM10
+ * Add a second TLS fingerprint to allow switching keys in TLS mode (#2033, #2102)
+ * Add display of remaining pulse time to command PulseTime (#2085)
+ * Add additional time offset to Wifi Retry based on device mac address (#2089)
+ * Add command Color6 RRGGBB for Clock hour marker color and command Rotation pixels for Clock rotation (#2092)
+ * Add HTML language header in local language (#2123)
+ * Add command PowerDelta 0..100 (percentage) to Energy monitoring devices to report on active power load change (#2157)
+ * Add Restart Reason to Status 1 report (#2161)
+ * Fix MAX31850 higher temperatures (#1269)
+ *
+ * 5.12.0d
+ * Add support for optional MQTT drivers to be selected in user_config.h (#1992)
+ * Add Portuguese language file
+ * Add compiler check for stable lwIP version v1.4 (#1940)
+ * Add always suffix with device number in Mqtt discovery topic (#1962)
+ * Add diacritics to Polish language file (#2005)
+ * Add Hungarian language file (#2024)
+ * Add Czech language file
+ * Add Chinese (Traditional) in Taiwan language file (#2108)
+ * Add support for Nova Fitness SDS011 and possibly SDS021 particle concentration sensor (#2070)
+ * Add single decimal precision to Nova Fitness SDS0x1 sensor values (#2093)
+ * Add support for multiple SHT3X sensors (#1949, #2110)
+ * Add Sonoff SC domoticz support for Sound level as Counter and Air quality (#2118)
+ * Fix MQTT TLS fingerprint validation (#2033)
+ *
+ * 5.12.0c
  * Fix intermittent exception when dns lookup is used while sleep is enabled
+ * Fix 5.4.0 regression turning off single press after button hold during 4x hold time
+ * Fix possible wifi connection problem by erasing sdk configuration parameters
+ * Change Polish language to using Diacritics (#2005)
  *
  * 5.12.0b
  * Add serial debug info

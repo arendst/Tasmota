@@ -90,6 +90,9 @@ enum UserSelectablePins {
   GPIO_SPI_DC,         // SPI Data Direction
   GPIO_BACKLIGHT,      // Display backlight control
   GPIO_PMS5003,        // Plantower PMS5003 Serial interface
+  GPIO_SDS0X1,         // Nova Fitness SDS011 Serial interface
+  GPIO_SBR_TX,         // Serial Bridge Serial interface
+  GPIO_SBR_RX,         // Serial Bridge Serial interface
 
   //STB mod
   GPIO_SEN_TRIG,
@@ -142,6 +145,8 @@ const char kSensorNames[] PROGMEM =
   //end
   D_SENSOR_SAIR_TX "|" D_SENSOR_SAIR_RX "|"
   D_SENSOR_SPI_CS "|" D_SENSOR_SPI_DC "|" D_SENSOR_BACKLIGHT "|"
+  D_SENSOR_PMS5003 "|" D_SENSOR_SDS0X1 "|"
+  D_SENSOR_SBR_TX "|" D_SENSOR_SBR_RX "|"
   //STB mod
   D_SENSOR_PMS5003 "|SNS_TRIG|SNS_ECHO";
   //end
@@ -191,6 +196,7 @@ enum SupportedModules {
   SONOFF_DUAL_R2,
   ARILUX_LC06,
   SONOFF_S31,
+  ZENGGE_ZF_WF017,
   MAXMODULE };
 
 /********************************************************************************************/
@@ -245,6 +251,7 @@ const uint8_t kNiceList[MAXMODULE] PROGMEM = {
   ARILUX_LC01,
   ARILUX_LC06,
   ARILUX_LC11,
+  ZENGGE_ZF_WF017,
   HUAFAN_SS,
   KMC_70011,
   AILIGHT,
@@ -800,6 +807,19 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_REL1,        // GPIO12 Red Led and Relay (0 = Off, 1 = On)
      GPIO_LED1_INV,    // GPIO13 Green Led (0 = On, 1 = Off)
      0, 0, 0, 0
+  },
+  { "Zengge WF017",    // Zenggee ZJ-WF017-A (ESP12S)) - https://www.ebay.com/p/Smartphone-Android-IOS-WiFi-Music-Controller-for-RGB-5050-3528-LED-Strip-Light/534446632?_trksid=p2047675.l2644
+     GPIO_KEY1,        // GPIO00 Optional Button
+     0,
+     GPIO_USER,        // GPIO02 Empty pad
+     0,
+     GPIO_USER,        // GPIO04 W2 - PWM5
+     0,
+     0, 0, 0, 0, 0, 0, // Flash connection
+     GPIO_PWM2,        // GPIO12 RGB LED Green
+     GPIO_PWM1,        // GPIO13 RGB LED Red
+     GPIO_PWM3,        // GPIO14 RGB LED Blue
+     0, 0, 0
   }
 };
 
@@ -828,20 +848,6 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      0, 0,
      GPIO_LED1,        // GPIO15 Led (1 = On, 0 = Off)
      0, 0
-  }
-
-  { "Zengge WF017",    // Zenggee ZJ-WF017-A (ESP12S)) - https://www.ebay.com/p/Smartphone-Android-IOS-WiFi-Music-Controller-for-RGB-5050-3528-LED-Strip-Light/534446632?_trksid=p2047675.l2644
-     GPIO_KEY1,        // GPIO00 Optional Button
-     0,
-     GPIO_USER,        // GPIO02 Empty pad
-     0,
-     GPIO_USER,        // GPIO04 W2 - PWM5
-     0,
-     0, 0, 0, 0, 0, 0, // Flash connection
-     GPIO_PWM2,        // GPIO12 RGB LED Green
-     GPIO_PWM1,        // GPIO13 RGB LED Red
-     GPIO_PWM3,        // GPIO14 RGB LED Blue
-     0, 0, 0
   }
 
   { "SMPW701E",        // SM-PW701E WLAN Socket (#1190)

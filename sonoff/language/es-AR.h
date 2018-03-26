@@ -32,6 +32,9 @@
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
 
+// HTML (ISO 639-1) Language Code
+#define D_HTML_LANGUAGE "es"
+
 // "2017-03-07T11:08:02" - ISO8601:2004
 #define D_YEAR_MONTH_SEPARATOR "-"
 #define D_MONTH_DAY_SEPARATOR "-"
@@ -161,13 +164,6 @@
 #define D_RECEIVED_TOPIC "Topic Recibido"
 #define D_DATA_SIZE "Tamaño de Datos"
 #define D_ANALOG_INPUT "Entrada Analógica"
-
-#define D_FINGERPRINT "Verificar TLS fingerprint..."
-#define D_TLS_CONNECT_FAILED_TO "Falló Conección TLS a"
-#define D_RETRY_IN "Reintentando"
-#define D_VERIFIED "Verificado"
-#define D_INSECURE "Conección insegura por Fingerprint no válido"
-#define D_CONNECT_FAILED_TO "Falló Conección a"
 
 // support.ino
 #define D_OSWATCH "osWatch"
@@ -317,6 +313,14 @@
 #define D_ENABLE_WEBLOG_FOR_RESPONSE "Habilitar weblog 2 si desea respuesta"
 #define D_NEED_USER_AND_PASSWORD "Se necesita user=<username>&password=<password>"
 
+// xdrv_00_mqtt.ino
+#define D_FINGERPRINT "Verificar TLS fingerprint..."
+#define D_TLS_CONNECT_FAILED_TO "Falló Conección TLS a"
+#define D_RETRY_IN "Reintentando"
+#define D_VERIFIED "Verificado Fingerprint"
+#define D_INSECURE "Conección insegura por Fingerprint no válido"
+#define D_CONNECT_FAILED_TO "Falló Conección a"
+
 // xdrv_wemohue.ino
 #define D_MULTICAST_DISABLED "Multicast deshabilitado"
 #define D_MULTICAST_REJOINED "Multicast (re)conectado"
@@ -348,9 +352,9 @@
   #define D_DOMOTICZ_TEMP_HUM_BARO "Temp,Hum,Baro"
   #define D_DOMOTICZ_POWER_ENERGY "Potencia,Energía"
   #define D_DOMOTICZ_ILLUMINANCE "Luminancia"
-  #define D_DOMOTICZ_COUNT "Contador"
-  #define D_DOMOTICZ_VOLTAGE "Voltaje"
-  #define D_DOMOTICZ_CURRENT "Corriente"
+  #define D_DOMOTICZ_COUNT "Contador/PM1"
+  #define D_DOMOTICZ_VOLTAGE "Voltaje/PM2,5"
+  #define D_DOMOTICZ_CURRENT "Corriente/PM10"
   #define D_DOMOTICZ_AIRQUALITY "Calidad del Aire"
 #define D_DOMOTICZ_UPDATE_TIMER "Intervalo de refresco"
 
@@ -407,6 +411,9 @@
 #define D_SENSOR_SPI_DC   "SPI DC"
 #define D_SENSOR_BACKLIGHT "BkLight"
 #define D_SENSOR_PMS5003  "PMS5003"
+#define D_SENSOR_SDS0X1   "SDS0X1"
+#define D_SENSOR_SBR_RX   "SerBr Rx"
+#define D_SENSOR_SBR_TX   "SerBr Tx"
 
 // Units
 #define D_UNIT_AMPERE "A"
