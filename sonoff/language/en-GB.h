@@ -369,6 +369,7 @@
 #define D_TIMER_POWER "Power"
 
 // xdrv_10_KNX.ino
+#define D_CONFIGURE_KNX "Configure KNX"
 #define D_KNX_PARAMETERS "KNX parameters"
 #define D_KNX_GENERAL_CONFIG "General"
 #define D_KNX_PHYSICAL_ADDRESS "Physical Address"
@@ -476,6 +477,7 @@
 #define D_LOG_MODULE "MOD: "       // Module
 #define D_LOG_MDNS "DNS: "         // mDNS
 #define D_LOG_MQTT "MQT: "         // MQTT
+#define D_LOG_KNX "KNX: "          // KNX
 #define D_LOG_OTHER "OTH: "        // Other
 #define D_LOG_RESULT "RSL: "       // Result
 #define D_LOG_RFR "RFR: "          // RF Received
