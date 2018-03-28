@@ -22,7 +22,7 @@
 #ifdef USE_WEBSERVER
 const char HTTP_FORM_DOMOTICZ[] PROGMEM =
   "<fieldset><legend><b>&nbsp;" D_DOMOTICZ_PARAMETERS "&nbsp;</b></legend><form method='post' action='sv'>"
-  "<input id='w' name='w' value='4' hidden><input id='r' name='r' value='1' hidden>"
+  "<input id='w' name='w' value='4,1' hidden>"
   "<br/><table>";
 const char HTTP_FORM_DOMOTICZ_RELAY[] PROGMEM =
   "<tr><td style='width:260px'><b>" D_DOMOTICZ_IDX " {1</b></td><td style='width:70px'><input id='r{1' name='r{1' placeholder='0' value='{2'></td></tr>"
