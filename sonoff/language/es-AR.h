@@ -359,10 +359,20 @@
   #define D_DOMOTICZ_AIRQUALITY "Calidad del Aire"
 #define D_DOMOTICZ_UPDATE_TIMER "Intervalo de refresco"
 
-// xdrv_08_KNX.ino
+// xdrv_09_timers.ino
+#define D_CONFIGURE_TIMER "Configurar Temporizadores"
+#define D_TIMER_PARAMETERS "Parámetros de Temporizador"
+#define D_TIMER_ARM "Armado"
+#define D_TIMER_TIME "Tiempo"
+#define D_TIMER_DAYS "Días"
+#define D_TIMER_REPEAT "Repetir"
+#define D_TIMER_DEVICE "Dispositivo"
+#define D_TIMER_POWER "Encender"
+
+// xdrv_10_KNX.ino
 #define D_KNX_PARAMETERS "Parámetros de KNX"
 #define D_KNX_GENERAL_CONFIG "General"
-#define D_KNX_PHYSICAL_ADDRESS "Dirección Fí­sica"
+#define D_KNX_PHYSICAL_ADDRESS "Dirección Física"
 #define D_KNX_SET "Establecer"
 #define D_KNX_ADD "Agregar"
 #define D_DELETE "Eliminar"
