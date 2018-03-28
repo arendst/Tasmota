@@ -1,5 +1,8 @@
 /* 5.12.0i
  * Add 16 timers using commands Timer and Timers (#1091)
+ * Add commands Timer 0 to clear timer and Timer 1..16 to copy timer
+ * Add optional Timer configuration webpage to be enabled in user_config.h with define USE_TIMERS_WEB
+ * Change webpage parameter communication
  *
  * 5.12.0h
  * Add optional Arduino OTA support to be enabled in user_config.h (#1998)
