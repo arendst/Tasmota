@@ -125,6 +125,8 @@
                                                  //   May be named the same as PUB_PREFIX
 // %topic% token options (also ButtonTopic and SwitchTopic)
 #define MQTT_TOPIC             PROJECT           // [Topic] (unique) MQTT device topic
+#define MQTT_BUTTON_TOPIC      "0"               // [Topic] (unique) MQTT device topic
+#define MQTT_SWITCH_TOPIC      "0"               // [Topic] (unique) MQTT device topic
 #define MQTT_GRPTOPIC          "sonoffs"         // [GroupTopic] MQTT Group topic
 #define MQTT_CLIENT_ID         "DVES_%06X"       // [MqttClient] Also fall back topic using Chip Id = last 6 characters of MAC address
 

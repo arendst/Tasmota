@@ -1107,9 +1107,11 @@ boolean send_button_power(byte key, byte device, byte state)
 
   char stopic[TOPSZ];
   char scommand[CMDSZ];
+  char key_topic[33];
   boolean result = false;
 
-  char *key_topic = (key) ? Settings.switch_topic : Settings.button_topic;
+  char *tmp = (key) ? Settings.switch_topic : Settings.button_topic;
+  GetMqttClient(key_topic, tmp, sizeof(key_topic));
   if (Settings.flag.mqtt_enabled && MqttIsConnected() && (strlen(key_topic) != 0) && strcmp(key_topic, "0")) {
     if (!key && (device > devices_present)) device = 1;
     GetTopic_P(stopic, CMND, key_topic, GetPowerDevice(scommand, device, sizeof(scommand), key));
