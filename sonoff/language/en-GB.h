@@ -216,7 +216,6 @@
 #define D_CONFIGURE_WIFI "Configure WiFi"
 #define D_CONFIGURE_MQTT "Configure MQTT"
 #define D_CONFIGURE_DOMOTICZ "Configure Domoticz"
-#define D_CONFIGURE_KNX "Configure KNX"
 #define D_CONFIGURE_LOGGING "Configure Logging"
 #define D_CONFIGURE_OTHER "Configure Other"
 #define D_CONFIRM_RESET_CONFIGURATION "Confirm Reset Configuration"
@@ -369,20 +368,6 @@
 #define D_TIMER_DEVICE "Device"
 #define D_TIMER_POWER "Power"
 
-// xdrv_10_KNX.ino
-#define D_KNX_PARAMETERS "KNX parameters"
-#define D_KNX_GENERAL_CONFIG "General"
-#define D_KNX_PHYSICAL_ADDRESS "Physical Address"
-#define D_KNX_SET "Set"
-#define D_KNX_ADD "Add"
-#define D_DELETE "Delete"
-#define D_REPLY "Reply"
-#define D_KNX_PHYSICAL_ADDRESS_NOTE "(Must be unique on the KNX network)"
-#define D_KNX_GROUP_ADDRESS_TO_WRITE "Group Addresses to Send Data to"
-#define D_KNX_GROUP_ADDRESS_TO_READ "Group Addresses to Receive Data from"
-#define D_KNX_PARAMETER_TO_SEND "Parameter to Send"
-#define D_KNX_UPDATE_INTERVAL "Sensor Update Interval (sec)"
-
 // xdrv_03_energy.ino
 #define D_ENERGY_TODAY "Energy Today"
 #define D_ENERGY_YESTERDAY "Energy Yesterday"
@@ -477,7 +462,6 @@
 #define D_LOG_MODULE "MOD: "       // Module
 #define D_LOG_MDNS "DNS: "         // mDNS
 #define D_LOG_MQTT "MQT: "         // MQTT
-#define D_LOG_KNX "KNX: "          // KNX
 #define D_LOG_OTHER "OTH: "        // Other
 #define D_LOG_RESULT "RSL: "       // Result
 #define D_LOG_RFR "RFR: "          // RF Received
