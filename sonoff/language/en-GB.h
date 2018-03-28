@@ -368,6 +368,20 @@
 #define D_TIMER_DEVICE "Device"
 #define D_TIMER_POWER "Power"
 
+// xdrv_10_KNX.ino
+#define D_KNX_PARAMETERS "KNX parameters"
+#define D_KNX_GENERAL_CONFIG "General"
+#define D_KNX_PHYSICAL_ADDRESS "Physical Address"
+#define D_KNX_SET "Set"
+#define D_KNX_ADD "Add"
+#define D_DELETE "Delete"
+#define D_REPLY "Reply"
+#define D_KNX_PHYSICAL_ADDRESS_NOTE "(Must be unique on the KNX network)"
+#define D_KNX_GROUP_ADDRESS_TO_WRITE "Group Addresses to Send Data to"
+#define D_KNX_GROUP_ADDRESS_TO_READ "Group Addresses to Receive Data from"
+#define D_KNX_PARAMETER_TO_SEND "Parameter to Send"
+#define D_KNX_UPDATE_INTERVAL "Sensor Update Interval (sec)"
+
 // xdrv_03_energy.ino
 #define D_ENERGY_TODAY "Energy Today"
 #define D_ENERGY_YESTERDAY "Energy Yesterday"
