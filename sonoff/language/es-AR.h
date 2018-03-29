@@ -368,6 +368,22 @@
 #define D_TIMER_DEVICE "Salida"
 #define D_TIMER_POWER "Estado"
 
+// xdrv_10_KNX.ino
+#define D_CONFIGURE_KNX "Configuración de KNX"
+#define D_KNX_PARAMETERS "Parámetros de KNX"
+#define D_KNX_GENERAL_CONFIG "General"
+#define D_KNX_PHYSICAL_ADDRESS "Dirección Física"
+#define D_KNX_SET "Establecer"
+#define D_KNX_ADD "Agregar"
+#define D_DELETE "Eliminar"
+#define D_REPLY "Responder"
+#define D_KNX_PHYSICAL_ADDRESS_NOTE "(Debe ser única en la red KNX)"
+#define D_KNX_GROUP_ADDRESS_TO_WRITE "Enviar Datos a las Direcciones de Grupo"
+#define D_KNX_GROUP_ADDRESS_TO_READ "Recibir Datos de las Direcciones de Grupo"
+#define D_KNX_PARAMETER_TO_SEND "Parámetro a Enviar"
+#define D_KNX_UPDATE_INTERVAL "Enviar Valor de Sensores cada (seg)"
+#define D_LOG_KNX "KNX: "
+
 // xdrv_03_energy.ino
 #define D_ENERGY_TODAY "Energía Hoy"
 #define D_ENERGY_YESTERDAY "Energía Ayer"
