@@ -183,7 +183,7 @@ void HAssDiscoverButton()
   }
 }
 
-void HAssDiscovery()
+void HAssDiscovery(uint8_t mode)
 {
   // Configure Tasmota for default Home Assistant parameters to keep discovery message as short as possible
   if (Settings.flag.hass_discovery) {
@@ -193,15 +193,15 @@ void HAssDiscovery()
 //    strncpy_P(Settings.mqtt_fulltopic, PSTR("%prefix%/%topic%/"), sizeof(Settings.mqtt_fulltopic));  // Make MQTT topic as short as possible to make this process posible within MQTT_MAX_PACKET_SIZE
   }
 
-  // Send info about relays and lights
-  HAssDiscoverRelay();
+  if (Settings.flag.hass_discovery || (1 == mode)) {
+    // Send info about relays and lights
+    HAssDiscoverRelay();
+    // Send info about buttons
+    HAssDiscoverButton();
+    // TODO: Send info about switches
 
-  // Send info about buttons
-  HAssDiscoverButton();
-
-  // TODO: Send info about switches
-
-  // TODO: Send info about sensors
+    // TODO: Send info about sensors
+  }
 }
 
 /*********************************************************************************************\
@@ -217,7 +217,7 @@ boolean Xdrv07(byte function)
   if (Settings.flag.mqtt_enabled) {
     switch (function) {
       case FUNC_MQTT_INIT:
-        HAssDiscovery();
+        HAssDiscovery(0);
         break;
     }
   }
