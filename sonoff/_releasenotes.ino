@@ -1,5 +1,11 @@
 /* 5.12.0i
  * Add 16 timers using commands Timer and Timers (#1091)
+ * Add commands Timer 0 to clear timer and Timer 1..16 to copy timer
+ * Add optional Timer configuration webpage to be enabled in user_config.h with define USE_TIMERS_WEB
+ * Change MQTT response topic for Energy changes from ENERGY to SENSOR (#2229, #2251)
+ * Add Home Assistant MQTT Discovery for Buttons and change SetOption19 response (#2277)
+ * Change webpage parameter communication
+ * Change default Reset configuration time from 4 seconds to 40 seconds on Button hold (#2268)
  *
  * 5.12.0h
  * Add optional Arduino OTA support to be enabled in user_config.h (#1998)

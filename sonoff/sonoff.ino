@@ -31,7 +31,11 @@
 #include <core_version.h>                   // Arduino_Esp8266 version information (ARDUINO_ESP8266_RELEASE and ARDUINO_ESP8266_RELEASE_2_3_0)
 #include "sonoff.h"                         // Enumeration used in user_config.h
 #include "user_config.h"                    // Fixed user configurable options
-#include "user_config_override.h"           // Configuration overrides for user_config.h
+
+//#ifdef USE_CONFIG_OVERRIDE
+  #include "user_config_override.h"         // Configuration overrides for user_config.h
+//#endif
+
 #include "i18n.h"                           // Language support configured by user_config.h
 #include "sonoff_template.h"                // Hardware configuration
 #include "sonoff_post.h"                    // Configuration overrides for all previous includes
@@ -196,7 +200,7 @@ String backlog[MAX_BACKLOG];                // Command backlog
 
 /********************************************************************************************/
 
-char* GetMqttClient(char* output, const char* input, int size)
+char* Format(char* output, const char* input, int size)
 {
   char *token;
   uint8_t digits = 0;
@@ -572,7 +576,6 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
             switch (index) {
               case 3:   // mqtt
               case 15:  // pwm_control
-              case 19:  // hass_discovery
                 restart_flag = 2;
               case 0:   // save_state
               case 1:   // button_restrict
@@ -587,6 +590,7 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
               case 16:  // ws_clock_reverse
               case 17:  // decimal_text
               case 18:  // light_signal
+              case 19:  // hass_discovery
               case 20:  // not_power_linked
               case 21:  // no_power_on_check
                 bitWrite(Settings.flag.data, index, payload);
@@ -595,6 +599,11 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
               stop_flash_rotate = payload;
               SettingsSave(2);
             }
+#ifdef USE_HOME_ASSISTANT
+            if (19 == index) {  // hass_discovery
+              HAssDiscovery(1);
+            }
+#endif  // USE_HOME_ASSISTANT
           }
         }
         else {  // SetOption32 ..
@@ -1107,9 +1116,11 @@ boolean send_button_power(byte key, byte device, byte state)
 
   char stopic[TOPSZ];
   char scommand[CMDSZ];
+  char key_topic[sizeof(Settings.button_topic)];
   boolean result = false;
 
-  char *key_topic = (key) ? Settings.switch_topic : Settings.button_topic;
+  char *tmp = (key) ? Settings.switch_topic : Settings.button_topic;
+  Format(key_topic, tmp, sizeof(key_topic));
   if (Settings.flag.mqtt_enabled && MqttIsConnected() && (strlen(key_topic) != 0) && strcmp(key_topic, "0")) {
     if (!key && (device > devices_present)) device = 1;
     GetTopic_P(stopic, CMND, key_topic, GetPowerDevice(scommand, device, sizeof(scommand), key));
@@ -1470,6 +1481,7 @@ void ButtonHandler()
 {
   uint8_t button = NOT_PRESSED;
   uint8_t button_present = 0;
+  uint8_t hold_time_extent = IMMINENT_RESET_FACTOR;  // Extent hold time factor in case of iminnent Reset command
   char scmnd[20];
 
   uint8_t maxdev = (devices_present > MAX_KEYS) ? MAX_KEYS : devices_present;
@@ -1485,6 +1497,7 @@ void ButtonHandler()
         button = PRESSED;
         if (0xF500 == dual_button_code) {             // Button hold
           holdbutton[button_index] = (Settings.param[P_HOLD_TIME] * (STATES / 10)) -1;
+          hold_time_extent = 1;
         }
         dual_button_code = 0;
       }
@@ -1537,20 +1550,23 @@ void ButtonHandler()
           holdbutton[button_index] = 0;
         } else {
           holdbutton[button_index]++;
-          if (Settings.flag.button_single) {          // Allow only single button press for immediate action
-            if (holdbutton[button_index] == Settings.param[P_HOLD_TIME] * (STATES / 10) * 4) {  // Button hold for four times longer
+          if (Settings.flag.button_single) {        // Allow only single button press for immediate action
+            if (holdbutton[button_index] == Settings.param[P_HOLD_TIME] * (STATES / 10) * hold_time_extent) {  // Button held for factor times longer
 //              Settings.flag.button_single = 0;
               snprintf_P(scmnd, sizeof(scmnd), PSTR(D_CMND_SETOPTION "13 0"));  // Disable single press only
               ExecuteCommand(scmnd);
             }
           } else {
-            if (holdbutton[button_index] == Settings.param[P_HOLD_TIME] * (STATES / 10)) {  // Button hold
-              multipress[button_index] = 0;
-              if (!Settings.flag.button_restrict) {   // No button restriction
+            if (Settings.flag.button_restrict) {   // Button restriction
+              if (holdbutton[button_index] == Settings.param[P_HOLD_TIME] * (STATES / 10)) {  // Button hold
+                multipress[button_index] = 0;
+                send_button_power(0, button_index +1, 3);        // Execute Hold command via MQTT if ButtonTopic is set
+              }
+            } else {
+              if (holdbutton[button_index] == (Settings.param[P_HOLD_TIME] * (STATES / 10)) * hold_time_extent) {  // Button held for factor times longer
+                multipress[button_index] = 0;
                 snprintf_P(scmnd, sizeof(scmnd), PSTR(D_CMND_RESET " 1"));
                 ExecuteCommand(scmnd);
-              } else {
-                send_button_power(0, button_index +1, 3);        // Execute Hold command via MQTT if ButtonTopic is set
               }
             }
           }
@@ -2328,8 +2344,8 @@ void setup()
 
   SetSerialBaudrate(baudrate);
 
-  GetMqttClient(mqtt_client, Settings.mqtt_client, sizeof(mqtt_client));
-  GetMqttClient(mqtt_topic, Settings.mqtt_topic, sizeof(mqtt_topic));
+  Format(mqtt_client, Settings.mqtt_client, sizeof(mqtt_client));
+  Format(mqtt_topic, Settings.mqtt_topic, sizeof(mqtt_topic));
 
   if (strstr(Settings.hostname, "%")) {
     strlcpy(Settings.hostname, WIFI_HOSTNAME, sizeof(Settings.hostname));

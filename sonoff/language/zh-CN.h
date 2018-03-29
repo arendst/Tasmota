@@ -358,6 +358,16 @@
   #define D_DOMOTICZ_AIRQUALITY "空气质量"
 #define D_DOMOTICZ_UPDATE_TIMER "更新计时器"
 
+// xdrv_09_timers.ino
+#define D_CONFIGURE_TIMER "Configure Timer"
+#define D_TIMER_PARAMETERS "Timer parameters"
+#define D_TIMER_ARM "Arm"
+#define D_TIMER_TIME "Time"
+#define D_TIMER_DAYS "Days"
+#define D_TIMER_REPEAT "Repeat"
+#define D_TIMER_DEVICE "Device"
+#define D_TIMER_POWER "Power"
+
 // xdrv_03_energy.ino
 #define D_ENERGY_TODAY "今日用电量"
 #define D_ENERGY_YESTERDAY "昨日用电量"

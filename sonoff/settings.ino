@@ -494,7 +494,7 @@ void SettingsDefaultSet2()
   strlcpy(Settings.mqtt_user, MQTT_USER, sizeof(Settings.mqtt_user));
   strlcpy(Settings.mqtt_pwd, MQTT_PASS, sizeof(Settings.mqtt_pwd));
   strlcpy(Settings.mqtt_topic, MQTT_TOPIC, sizeof(Settings.mqtt_topic));
-  strlcpy(Settings.button_topic, "0", sizeof(Settings.button_topic));
+  strlcpy(Settings.button_topic, MQTT_BUTTON_TOPIC, sizeof(Settings.button_topic));
   strlcpy(Settings.mqtt_grptopic, MQTT_GRPTOPIC, sizeof(Settings.mqtt_grptopic));
   Settings.tele_period = TELE_PERIOD;
 
@@ -544,7 +544,7 @@ void SettingsDefaultSet2()
 
   SettingsDefaultSet_3_9_3();
 
-  strlcpy(Settings.switch_topic, "0", sizeof(Settings.switch_topic));
+  strlcpy(Settings.switch_topic, MQTT_SWITCH_TOPIC, sizeof(Settings.switch_topic));
 
   strlcpy(Settings.web_password, WEB_PASSWORD, sizeof(Settings.web_password));
 
@@ -744,7 +744,7 @@ void SettingsDelta()
       SettingsDefaultSet_3_2_4();
     }
     if (Settings.version < 0x03020500) {  // 3.2.5 - Add parameter
-      GetMqttClient(Settings.friendlyname[0], Settings.mqtt_client, sizeof(Settings.friendlyname[0]));
+      Format(Settings.friendlyname[0], Settings.mqtt_client, sizeof(Settings.friendlyname[0]));
       strlcpy(Settings.friendlyname[1], FRIENDLY_NAME"2", sizeof(Settings.friendlyname[1]));
       strlcpy(Settings.friendlyname[2], FRIENDLY_NAME"3", sizeof(Settings.friendlyname[2]));
       strlcpy(Settings.friendlyname[3], FRIENDLY_NAME"4", sizeof(Settings.friendlyname[3]));

@@ -39,16 +39,19 @@ const char HTTP_HEAD[] PROGMEM =
   "var cn,x,lt;"
   "cn=180;"
   "x=null;"                  // Allow for abortion
+  "function eb(s){"
+    "return document.getElementById(s);"  // Save code space
+  "}"
   "function u(){"
     "if(cn>=0){"
-      "document.getElementById('t').innerHTML='" D_RESTART_IN " '+cn+' " D_SECONDS "';"
+      "eb('t').innerHTML='" D_RESTART_IN " '+cn+' " D_SECONDS "';"
       "cn--;"
       "setTimeout(u,1000);"
     "}"
   "}"
   "function c(l){"
-    "document.getElementById('s1').value=l.innerText||l.textContent;"
-    "document.getElementById('p1').focus();"
+    "eb('s1').value=l.innerText||l.textContent;"
+    "eb('p1').focus();"
   "}"
   "function la(p){"
     "var a='';"
@@ -61,7 +64,7 @@ const char HTTP_HEAD[] PROGMEM =
     "x.onreadystatechange=function(){"
       "if(x.readyState==4&&x.status==200){"
         "var s=x.responseText.replace(/{t}/g,\"<table style='width:100%'>\").replace(/{s}/g,\"<tr><th>\").replace(/{m}/g,\"</th><td>\").replace(/{e}/g,\"</td></tr>\").replace(/{c}/g,\"%'><div style='text-align:center;font-weight:\");"
-        "document.getElementById('l1').innerHTML=s;"
+        "eb('l1').innerHTML=s;"
       "}"
     "};"
     "x.open('GET','ay'+a,true);"
@@ -110,9 +113,9 @@ const char HTTP_SCRIPT_CONSOL[] PROGMEM =
     "var c,o,t;"
     "clearTimeout(lt);"
     "o='';"
-    "t=document.getElementById('t1');"
+    "t=eb('t1');"
     "if(p==1){"
-      "c=document.getElementById('c1');"
+      "c=eb('c1');"
       "o='&c1='+encodeURIComponent(c.value);"
       "c.value='';"
       "t.scrollTop=sn;"
@@ -143,7 +146,7 @@ const char HTTP_SCRIPT_MODULE1[] PROGMEM =
   "var os;"
   "function sk(s,g){"
     "var o=os.replace(\"value='\"+s+\"'\",\"selected value='\"+s+\"'\");"
-    "document.getElementById('g'+g).innerHTML=o;"
+    "eb('g'+g).innerHTML=o;"
   "}"
   "function sl(){"
     "var o0=\"";
@@ -158,7 +161,7 @@ const char HTTP_SCRIPT_INFO_BEGIN[] PROGMEM =
 const char HTTP_SCRIPT_INFO_END[] PROGMEM =
     "\";"                   // "}1" and "}2" means do not use "}x" in Information text
     "s=o.replace(/}1/g,\"</td></tr><tr><th>\").replace(/}2/g,\"</th><td>\");"
-    "document.getElementById('i').innerHTML=s;"
+    "eb('i').innerHTML=s;"
   "}"
   "</script>";
 const char HTTP_MSG_SLIDER1[] PROGMEM =
@@ -180,6 +183,11 @@ const char HTTP_BTN_RSTRT[] PROGMEM =
   "<br/><form action='rb' method='get' onsubmit='return confirm(\"" D_CONFIRM_RESTART "\");'><button>" D_RESTART "</button></form>";
 const char HTTP_BTN_MENU2[] PROGMEM =
   "<br/><form action='md' method='get'><button>" D_CONFIGURE_MODULE "</button></form>"
+#ifdef USE_TIMERS
+#ifdef USE_TIMERS_WEB
+  "<br/><form action='tm' method='get'><button>" D_CONFIGURE_TIMER "</button></form>"
+#endif  // USE_TIMERS_WEB
+#endif  // USE_TIMERS
   "<br/><form action='w0' method='get'><button>" D_CONFIGURE_WIFI "</button></form>";
 const char HTTP_BTN_MENU3[] PROGMEM =
   "<br/><form action='mq' method='get'><button>" D_CONFIGURE_MQTT "</button></form>"
@@ -206,7 +214,7 @@ const char HTTP_BTN_CONF[] PROGMEM =
   "<br/><br/><form action='cn' method='get'><button>" D_CONFIGURATION "</button></form>";
 const char HTTP_FORM_MODULE[] PROGMEM =
   "<fieldset><legend><b>&nbsp;" D_MODULE_PARAMETERS "&nbsp;</b></legend><form method='get' action='sv'>"
-  "<input id='w' name='w' value='6' hidden><input id='r' name='r' value='1' hidden>"
+  "<input id='w' name='w' value='6,1' hidden>"
   "<br/><b>" D_MODULE_TYPE "</b> ({mt)<br/><select id='g99' name='g99'></select><br/>";
 const char HTTP_LNK_ITEM[] PROGMEM =
   "<div><a href='#p' onclick='c(this)'>{v}</a>&nbsp;<span class='q'>{i} {r}%</span></div>";
@@ -214,7 +222,7 @@ const char HTTP_LNK_SCAN[] PROGMEM =
   "<div><a href='/w1'>" D_SCAN_FOR_WIFI_NETWORKS "</a></div><br/>";
 const char HTTP_FORM_WIFI[] PROGMEM =
   "<fieldset><legend><b>&nbsp;" D_WIFI_PARAMETERS "&nbsp;</b></legend><form method='get' action='sv'>"
-  "<input id='w' name='w' value='1' hidden><input id='r' name='r' value='1' hidden>"
+  "<input id='w' name='w' value='1,1' hidden>"
   "<br/><b>" D_AP1_SSID "</b> (" STA_SSID1 ")<br/><input id='s1' name='s1' placeholder='" STA_SSID1 "' value='{s1'><br/>"
   "<br/><b>" D_AP1_PASSWORD "</b><br/><input id='p1' name='p1' type='password' placeholder='" D_AP1_PASSWORD "' value='********'><br/>"
   "<br/><b>" D_AP2_SSID "</b> (" STA_SSID2 ")<br/><input id='s2' name='s2' placeholder='" STA_SSID2 "' value='{s2'><br/>"
@@ -222,7 +230,7 @@ const char HTTP_FORM_WIFI[] PROGMEM =
   "<br/><b>" D_HOSTNAME "</b> (" WIFI_HOSTNAME ")<br/><input id='h' name='h' placeholder='" WIFI_HOSTNAME" ' value='{h1'><br/>";
 const char HTTP_FORM_MQTT[] PROGMEM =
   "<fieldset><legend><b>&nbsp;" D_MQTT_PARAMETERS "&nbsp;</b></legend><form method='get' action='sv'>"
-  "<input id='w' name='w' value='2' hidden><input id='r' name='r' value='1' hidden>"
+  "<input id='w' name='w' value='2,1' hidden>"
   "<br/><b>" D_HOST "</b> (" MQTT_HOST ")<br/><input id='mh' name='mh' placeholder='" MQTT_HOST" ' value='{m1'><br/>"
   "<br/><b>" D_PORT "</b> (" STR(MQTT_PORT) ")<br/><input id='ml' name='ml' placeholder='" STR(MQTT_PORT) "' value='{m2'><br/>"
   "<br/><b>" D_CLIENT "</b> ({m0)<br/><input id='mc' name='mc' placeholder='" MQTT_CLIENT_ID "' value='{m3'><br/>"
@@ -232,7 +240,7 @@ const char HTTP_FORM_MQTT[] PROGMEM =
   "<br/><b>" D_FULL_TOPIC "</b> (" MQTT_FULLTOPIC ")<br/><input id='mf' name='mf' placeholder='" MQTT_FULLTOPIC" ' value='{m7'><br/>";
 const char HTTP_FORM_LOG1[] PROGMEM =
   "<fieldset><legend><b>&nbsp;" D_LOGGING_PARAMETERS "&nbsp;</b></legend><form method='get' action='sv'>"
-  "<input id='w' name='w' value='3' hidden><input id='r' name='r' value='0' hidden>";
+  "<input id='w' name='w' value='3,0' hidden>";
 const char HTTP_FORM_LOG2[] PROGMEM =
   "<br/><b>{b0</b> ({b1)<br/><select id='{b2' name='{b2'>"
   "<option{a0value='0'>0 " D_NONE "</option>"
@@ -247,7 +255,7 @@ const char HTTP_FORM_LOG3[] PROGMEM =
   "<br/><b>" D_TELEMETRY_PERIOD "</b> (" STR(TELE_PERIOD) ")<br/><input id='lt' name='lt' placeholder='" STR(TELE_PERIOD) "' value='{l4'><br/>";
 const char HTTP_FORM_OTHER[] PROGMEM =
   "<fieldset><legend><b>&nbsp;" D_OTHER_PARAMETERS "&nbsp;</b></legend><form method='get' action='sv'>"
-  "<input id='w' name='w' value='5' hidden><input id='r' name='r' value='1' hidden>"
+  "<input id='w' name='w' value='5,1' hidden>"
   "<br/><b>" D_WEB_ADMIN_PASSWORD "</b><br/><input id='p1' name='p1' type='password' placeholder='" D_WEB_ADMIN_PASSWORD "' value='********'><br/>"
   "<br/><input style='width:10%;' id='b1' name='b1' type='checkbox'{r1><b>" D_MQTT_ENABLE "</b><br/>";
   const char HTTP_FORM_OTHER2[] PROGMEM =
@@ -274,7 +282,7 @@ const char HTTP_FORM_UPG[] PROGMEM =
 const char HTTP_FORM_RST_UPG[] PROGMEM =
   "<form method='post' action='u2' enctype='multipart/form-data'>"
   "<br/><input type='file' name='u2'><br/>"
-  "<br/><button type='submit' onclick='document.getElementById(\"f1\").style.display=\"none\";document.getElementById(\"f2\").style.display=\"block\";this.form.submit();'>" D_START " {r1</button></form>"
+  "<br/><button type='submit' onclick='eb(\"f1\").style.display=\"none\";eb(\"f2\").style.display=\"block\";this.form.submit();'>" D_START " {r1</button></form>"
   "</fieldset>"
   "</div>"
   "<div id='f2' name='f2' style='display:none;text-align:center;'><b>" D_UPLOAD_STARTED " ...</b></div>";
@@ -330,6 +338,11 @@ void StartWebserver(int type, IPAddress ipweb)
       WebServer->on("/", HandleRoot);
       WebServer->on("/cn", HandleConfiguration);
       WebServer->on("/md", HandleModuleConfiguration);
+#ifdef USE_TIMERS
+#ifdef USE_TIMERS_WEB
+      WebServer->on("/tm", HandleTimerConfiguration);
+#endif  // USE_TIMERS_WEB
+#endif  // USE_TIMERS
       WebServer->on("/w1", HandleWifiConfigurationWithScan);
       WebServer->on("/w0", HandleWifiConfiguration);
       if (Settings.flag.mqtt_enabled) {
@@ -866,7 +879,7 @@ void HandleMqttConfiguration()
   page += FPSTR(HTTP_HEAD_STYLE);
   page += FPSTR(HTTP_FORM_MQTT);
   char str[sizeof(Settings.mqtt_client)];
-  page.replace(F("{m0"), GetMqttClient(str, MQTT_CLIENT_ID, sizeof(Settings.mqtt_client)));
+  page.replace(F("{m0"), Format(str, MQTT_CLIENT_ID, sizeof(Settings.mqtt_client)));
   page.replace(F("{m1"), Settings.mqtt_host);
   page.replace(F("{m2"), String(Settings.mqtt_port));
   page.replace(F("{m3"), Settings.mqtt_client);
@@ -1001,17 +1014,16 @@ void HandleSaveSettings()
 
   char stemp[TOPSZ];
   char stemp2[TOPSZ];
-  byte what = 0;
-  byte restart;
   String result = "";
 
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_SAVE_CONFIGURATION);
 
   char tmp[100];
-  WebGetArg("w", tmp, sizeof(tmp));
-  if (strlen(tmp)) {
-    what = atoi(tmp);
-  }
+  WebGetArg("w", tmp, sizeof(tmp));  // Returns "5,1" where 5 is config type and 1 is restart flag
+  char *p = tmp;
+  uint8_t what = strtol(p, &p, 10);
+  p++;  // Skip comma
+  uint8_t restart = strtol(p, &p, 10);
   switch (what) {
   case 1:
     WebGetArg("h", tmp, sizeof(tmp));
@@ -1085,6 +1097,13 @@ void HandleSaveSettings()
       Settings.seriallog_level, Settings.weblog_level, Settings.syslog_level, Settings.syslog_host, Settings.syslog_port, Settings.tele_period);
     AddLog(LOG_LEVEL_INFO);
     break;
+#ifdef USE_TIMERS
+#ifdef USE_TIMERS_WEB
+  case 7:
+    TimerSaveSettings();
+    break;
+#endif  // USE_TIMERS_WEB
+#endif  // USE_TIMERS
 #ifdef USE_DOMOTICZ
   case 4:
     DomoticzSaveSettings();
@@ -1136,8 +1155,6 @@ void HandleSaveSettings()
     break;
   }
 
-  WebGetArg("r", tmp, sizeof(tmp));
-  restart = (!strlen(tmp)) ? 1 : atoi(tmp);
   if (restart) {
     String page = FPSTR(HTTP_HEAD);
     page.replace(F("{v}"), FPSTR(S_SAVE_CONFIGURATION));
