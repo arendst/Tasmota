@@ -2,7 +2,8 @@
  * Add 16 timers using commands Timer and Timers (#1091)
  * Add commands Timer 0 to clear timer and Timer 1..16 to copy timer
  * Add optional Timer configuration webpage to be enabled in user_config.h with define USE_TIMERS_WEB
- * Add Home Assistant MQTT Discovery for Buttons (#2277)
+ * Change MQTT response topic for Energy changes from ENERGY to SENSOR (#2229, #2251)
+ * Add Home Assistant MQTT Discovery for Buttons and change SetOption19 response (#2277)
  * Change webpage parameter communication
  *
  * 5.12.0h
