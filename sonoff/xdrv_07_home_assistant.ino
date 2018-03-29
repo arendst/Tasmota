@@ -31,6 +31,17 @@ const char HASS_DISCOVER_SWITCH[] PROGMEM =
   "\"payload_available\":\"" D_ONLINE "\","        // Online
   "\"payload_not_available\":\"" D_OFFLINE "\"";   // Offline
 
+const char HASS_DISCOVER_BUTTON[] PROGMEM =
+  "{\"name\":\"%s\","                              // dualr2 1
+  "\"state_topic\":\"%s\","                        // stat/dualr2/RESULT  (implies "\"optimistic\":\"false\",")
+//  "\"value_template\":\"{{value_json.%s}}\","      // POWER2
+//  "\"payload_off\":\"%s\","                        // OFF
+  "\"payload_on\":\"%s\","                         // ON
+//  "\"optimistic\":\"false\","                    // false is Hass default when state_topic is set
+  "\"availability_topic\":\"%s\","                 // tele/dualr2/LWT
+  "\"payload_available\":\"" D_ONLINE "\","        // Online
+  "\"payload_not_available\":\"" D_OFFLINE "\"";   // Offline
+
 const char HASS_DISCOVER_LIGHT_DIMMER[] PROGMEM =
   "%s,\"brightness_command_topic\":\"%s\","        // cmnd/led2/Dimmer
   "\"brightness_state_topic\":\"%s\","             // stat/led2/RESULT
@@ -69,7 +80,8 @@ void HAssDiscovery()
 //    strncpy_P(Settings.mqtt_fulltopic, PSTR("%prefix%/%topic%/"), sizeof(Settings.mqtt_fulltopic));  // Make MQTT topic as short as possible to make this process posible within MQTT_MAX_PACKET_SIZE
   }
 
-  for (int i = 1; i <= devices_present; i++) {
+  // Send info about relays / lights
+  for (int i = 1; i <= MAX_RELAYS; i++) {
     is_light = ((i == devices_present) && (light_type));
 
     mqtt_data[0] = '\0';
@@ -80,7 +92,7 @@ void HAssDiscovery()
     MqttPublish(stopic, true);
     snprintf_P(stopic, sizeof(stopic), PSTR(HOME_ASSISTANT_DISCOVERY_PREFIX "/%s/%s%s/config"), (is_light) ? "light" : "switch", mqtt_topic, sidx);
 
-    if (Settings.flag.hass_discovery) {
+    if (Settings.flag.hass_discovery && i <= devices_present) {
       char name[33];
       char value_template[33];
       char command_topic[TOPSZ];
@@ -127,6 +139,55 @@ void HAssDiscovery()
     }
     MqttPublish(stopic, true);
   }
+
+  // Send info about buttons
+  for (byte button_index = 0; button_index < MAX_KEYS; button_index++) {
+    uint8_t button_present = 0;
+
+    if (!button_index && ((SONOFF_DUAL == Settings.module) || (CH4 == Settings.module))) {
+      button_present = 1;
+    } else {
+      if (pin[GPIO_KEY1 + button_index] < 99) {
+        button_present = 1;
+      }
+    }
+
+    char key_topic[33];
+    mqtt_data[0] = '\0';
+
+    //char *tmp = (key) ? Settings.switch_topic : Settings.button_topic;
+    char *tmp = Settings.button_topic;
+    GetMqttClient(key_topic, tmp, sizeof(key_topic));
+
+    snprintf_P(sidx, sizeof(sidx), PSTR("_%d"), button_index+1);
+    snprintf_P(stopic, sizeof(stopic), PSTR(HOME_ASSISTANT_DISCOVERY_PREFIX "/%s/%s%s/config"), "binary_sensor", key_topic, sidx);
+
+    if ((strlen(key_topic) != 0) && strcmp(key_topic, "0")) {
+      if (Settings.flag.hass_discovery && button_present) {
+        char name[33];
+        char value_template[33];
+        char state_topic[TOPSZ];
+        char availability_topic[TOPSZ];
+
+        if (button_index+1 > MAX_FRIENDLYNAMES) {
+          snprintf_P(name, sizeof(name), PSTR("%s %d BTN"), Settings.friendlyname[0], button_index+1);
+        } else {
+          snprintf_P(name, sizeof(name), PSTR("%s BTN"), Settings.friendlyname[button_index]);
+        }
+        GetPowerDevice(value_template, button_index+1, sizeof(value_template));
+        GetTopic_P(state_topic, CMND, key_topic, value_template); // State of button is sent as CMND TOGGLE
+        GetTopic_P(availability_topic, TELE, mqtt_topic, S_LWT);
+        snprintf_P(mqtt_data, sizeof(mqtt_data), HASS_DISCOVER_BUTTON, name, state_topic, Settings.state_text[2], availability_topic);
+
+        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}"), mqtt_data);
+      }
+	  MqttPublish(stopic, true);
+    }
+  }
+
+  // TODO: Send info about switches
+
+  // TODO: Send info about sensors
 }
 
 /*********************************************************************************************\
