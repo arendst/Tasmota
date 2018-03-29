@@ -303,9 +303,9 @@ void measure(boolean json)
  * Interface
 \*********************************************************************************************/
 
-#define XSNS_25
+#define XSNS_94
 
-boolean Xsns25(byte function)
+boolean Xsns94(byte function)
 {
   boolean result = false;
 

@@ -254,9 +254,9 @@ struct SYSCFG {
   //STB mod
   byte          free_680[200];             // 680  give me some space to do configuration without override
   unsigned long uptime;                    // 748
-  uint8_t       pcf8574_config[8];         // 
-  uint8_t       all_relays_inverted;       // 
-  uint32_t      deepsleep;                 // 
+  uint8_t       pcf8574_config[8];         // 74B
+  uint8_t       all_relays_inverted;       //
+  uint32_t      deepsleep;                 //
   uint16_t      pulse_devider[MAX_COUNTERS];     //
   //end
                                            // 6B0 - FFF free locations

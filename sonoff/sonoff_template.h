@@ -80,9 +80,7 @@ enum UserSelectablePins {
   GPIO_LED4_INV,
   GPIO_MHZ_TXD,        // MH-Z19 Serial interface
   GPIO_MHZ_RXD,        // MH-Z19 Serial interface
-  GPIO_PZEM_TX1,        // PZEM004T Serial interface
-  GPIO_PZEM_TX2,        // PZEM004T Serial interface
-  GPIO_PZEM_TX3,        // PZEM004T Serial interface
+  GPIO_PZEM_TX,        // PZEM004T Serial interface
   GPIO_PZEM_RX,        // PZEM004T Serial interface
   GPIO_SAIR_TX,        // SenseAir Serial interface
   GPIO_SAIR_RX,        // SenseAir Serial interface
@@ -93,14 +91,9 @@ enum UserSelectablePins {
   GPIO_SDS0X1,         // Nova Fitness SDS011 Serial interface
   GPIO_SBR_TX,         // Serial Bridge Serial interface
   GPIO_SBR_RX,         // Serial Bridge Serial interface
-
   //STB mod
   GPIO_SEN_TRIG,
   GPIO_SEN_ECHO,
-  GPIO_REL1_TOG_A,
-  GPIO_REL1_TOG_B,
-  GPIO_REL2_TOG_A,
-  GPIO_REL2_TOG_B,
   //end
   GPIO_SENSOR_END };
 
@@ -140,15 +133,13 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_LED "1|" D_SENSOR_LED "2|" D_SENSOR_LED "3|" D_SENSOR_LED "4|"
   D_SENSOR_LED "1i|" D_SENSOR_LED "2i|" D_SENSOR_LED "3i|" D_SENSOR_LED "4i|"
   D_SENSOR_MHZ_TX "|" D_SENSOR_MHZ_RX "|"
-  //STB mod
-  D_SENSOR_PZEM_TX "1|"  D_SENSOR_PZEM_TX "2|"  D_SENSOR_PZEM_TX "3|" D_SENSOR_PZEM_RX "|"
-  //end
+  D_SENSOR_PZEM_TX "|"  D_SENSOR_PZEM_RX "|"
   D_SENSOR_SAIR_TX "|" D_SENSOR_SAIR_RX "|"
   D_SENSOR_SPI_CS "|" D_SENSOR_SPI_DC "|" D_SENSOR_BACKLIGHT "|"
   D_SENSOR_PMS5003 "|" D_SENSOR_SDS0X1 "|"
   D_SENSOR_SBR_TX "|" D_SENSOR_SBR_RX "|"
   //STB mod
-  D_SENSOR_PMS5003 "|SNS_TRIG|SNS_ECHO";
+  D_SENSOR_SR04_TRIG "|" D_SENSOR_SR04_ECHO;
   //end
 
 /********************************************************************************************/

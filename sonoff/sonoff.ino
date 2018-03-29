@@ -1427,12 +1427,12 @@ void MqttShowState()
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"%s\":\"%s\""), mqtt_data, GetPowerDevice(stemp1, i +1, sizeof(stemp1)), GetStateText(bitRead(power, i)));
     }
   }
-  
+
   if (pwm_present) {
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,"), mqtt_data);
     MqttShowPWMState();
   }
-  
+
   //STB mod
   snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s, \"" D_JSON_WIFI "\":{\"" D_JSON_AP "\":%d, \"" D_JSON_SSID "\":\"%s\", \"" D_JSON_RSSI "\":%d, \"" D_JSON_APMAC_ADDRESS "\":\"%s\"}, \"DeepSleep\":%d, \"" D_JSON_HEAPSIZE "\":%d}"),
     mqtt_data, Settings.sta_active +1, Settings.sta_ssid[Settings.sta_active], WifiGetRssiAsQuality(WiFi.RSSI()), WiFi.BSSIDstr().c_str() , Settings.deepsleep, ESP.getFreeHeap());
@@ -1522,7 +1522,7 @@ void PerformEverySecond()
 
       mqtt_data[0] = '\0';
       if (MqttShowSensor()) MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);
-      
+
       //STB mod
       if (Settings.deepsleep > 10 && Settings.deepsleep < 4294967295) {
         //TODO STEFAN
@@ -2385,12 +2385,10 @@ void GpioInit()
   SetLedPower(Settings.ledstate &8);
 
   XdrvCall(FUNC_INIT);
-//STB mod
   if ((pin[GPIO_SEN_TRIG] < 99) && (pin[GPIO_SEN_ECHO] < 99)) {
-    sr04_init();
     sr04_flg = 1;
   }
-
+  
 #ifdef USE_I2C
 #ifdef USE_PCF8574
   pcf8574_Init();

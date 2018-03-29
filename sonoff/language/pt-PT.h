@@ -414,6 +414,10 @@
 #define D_SENSOR_SDS0X1   "SDS0X1"
 #define D_SENSOR_SBR_RX   "SerBr Rx"
 #define D_SENSOR_SBR_TX   "SerBr Tx"
+//stb mod
+#define D_SENSOR_SR04_TRIG "SR04 Trigger"
+#define D_SENSOR_SR04_ECHO "SR04 Echo"
+// end
 
 // Units
 #define D_UNIT_AMPERE "A"

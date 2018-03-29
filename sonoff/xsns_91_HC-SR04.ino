@@ -28,7 +28,6 @@ void sr04_init()
 {
   pinMode(pin[GPIO_SEN_TRIG], OUTPUT);
   pinMode(pin[GPIO_SEN_ECHO], INPUT);
-  sr04_flg = 1;
   snprintf_P(log_data, sizeof(log_data), PSTR("HS-SR04: Device configured: Trig: %d Echo: %d"),pin[GPIO_SEN_TRIG],pin[GPIO_SEN_ECHO]);
   AddLog(LOG_LEVEL_DEBUG);
 }
@@ -59,8 +58,13 @@ String sr04_readDistance(void)
       sum = sum + duration;
       dtostrfd(duration, 2, stemp1);
       snprintf_P(log_data, sizeof(log_data), PSTR("HS-SR04 In Duration: %s"),stemp1);
-      AddLog(LOG_LEVEL_ALL);
+      AddLog(LOG_LEVEL_DEBUG_MORE);
       yield();
+      if (duration == 0) {
+        counter = 20;
+        snprintf_P(log_data, sizeof(log_data), PSTR("HS-SR04 Wires are twisted change ECHO <-> TRIG"));
+        AddLog(LOG_LEVEL_ERROR);
+      }
       counter++;
     }
     distance = (sum/(counter*2.0)) / 29.1;
@@ -70,6 +74,11 @@ String sr04_readDistance(void)
     snprintf_P(log_data, sizeof(log_data), PSTR("HS-SR04: Avg Distance measured: %s, loops: %s"),stemp1, stemp2);
     AddLog(LOG_LEVEL_DEBUG);
     _distance = (distance>_distance?min(distance,_distance+MAX_DEVIATION_BETWEEN_MEASURES):max(distance,_distance-MAX_DEVIATION_BETWEEN_MEASURES));
+    // recalculate MAX_DEVIATION_BETWEEN_MEASURES
+    MAX_DEVIATION_BETWEEN_MEASURES = (distance>_distance?(distance-_distance)/2.0:(_distance-distance)/2.0);
+    dtostrfd(MAX_DEVIATION_BETWEEN_MEASURES, 4, stemp1);
+    snprintf_P(log_data, sizeof(log_data), PSTR("HS-SR04: MAX_DEVIATION_BETWEEN_MEASURES: %s"),stemp1);
+    AddLog(LOG_LEVEL_DEBUG);
     dtostrfd(_distance, 2, stemp1);
     snprintf_P(log_data, sizeof(log_data), PSTR("HS-SR04: New Distance: %s"),stemp1);
     AddLog(LOG_LEVEL_DEBUG);
@@ -110,9 +119,9 @@ void sr04_Show(boolean json)
  * Interface
 \*********************************************************************************************/
 
-#define XSNS_19
+#define XSNS_91
 
-boolean Xsns19(byte function)
+boolean Xsns91(byte function)
 {
   boolean result = false;
 

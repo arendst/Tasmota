@@ -76,9 +76,9 @@ void measureVolt(boolean json)
  * Interface
 \*********************************************************************************************/
 
-#define XSNS_24
+#define XSNS_93
 
-boolean Xsns24(byte function)
+boolean Xsns93(byte function)
 {
   boolean result = false;
 

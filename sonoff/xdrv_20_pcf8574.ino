@@ -39,12 +39,15 @@ int _error;
 const char HTTP_FORM_I2C_PCF8574_1[] PROGMEM =
   "<fieldset><legend><b>&nbsp;PCF8674 parameters &nbsp;</b></legend><form method='post' action='sv'>"
   "<input id='w' name='w' value='7' hidden><input id='r' name='r' value='1' hidden>"
-  "<br/><input style='width:10%;float:left' id='b1' name='b1' type='checkbox'{r1}><b>Reverse Relays</b><br/>";
+  "<br/><input style='width:10%;float:left' id='b1' name='b1' type='checkbox'{r1><b>Reverse Relays</b><br/>";
 const char HTTP_FORM_I2C_PCF8574_2[] PROGMEM =
-  "<br/><b>{b0} IN/OUT</b> <br/><select id='{b2}' name='{b2}'>"
+  "<br/><b>{b0 IN/OUT</b> <br/><select id='{b2' name='{b2'>"
   "<option{a0value='0'>0 Input</option>"
   "<option{a1value='1'>1 Output</option>"
   "</select></br>";
+
+
+
 
 void handleI2C()
 {
@@ -53,15 +56,17 @@ void handleI2C()
 
   String page = FPSTR(HTTP_HEAD);
 
-  page.replace("{v}", D_CONFIGURE_PCF8574);
+  page.replace("{v", D_CONFIGURE_PCF8574);
+  page += FPSTR(HTTP_HEAD_STYLE);
   page += FPSTR(HTTP_FORM_I2C_PCF8574_1);
-  page.replace("{r1}", (Settings.all_relays_inverted) ? " checked" : "");
+  page.replace("{r1", (Settings.all_relays_inverted) ? " checked" : "");
+  AddLog(LOG_LEVEL_INFO);
   for (byte idx = 0; idx < max_pcf8574_devices; idx++) {
-    page.replace("{b1}", String(idx));
+    page.replace("{b1", String(idx));
     for (byte idx2 = 0; idx2 < 8; idx2++) {
       page += FPSTR(HTTP_FORM_I2C_PCF8574_2);
-      page.replace("{b0}", "Board: "+  String(idx) + "  I2C P" + String(idx2));
-      page.replace("{b2}", "i2cs" + String(idx2+8*idx));
+      page.replace("{b0", "Board: "+  String(idx) + "  I2C P" + String(idx2));
+      page.replace("{b2", "i2cs" + String(idx2+8*idx));
       for (byte i = 0; i < 2; i++) {
         byte helper = 1 << idx2;
         page.replace("{a" + String(i), ((helper & Settings.pcf8574_config[idx]) >> idx2 == i) ? " selected " : " ");
@@ -69,12 +74,7 @@ void handleI2C()
     }
   }
   page += FPSTR(HTTP_FORM_END);
-
-  if (webserver_state == HTTP_MANAGER) {
-    webserver_state = HTTP_ADMIN;
-  } else {
-    page += FPSTR(HTTP_BTN_CONF);
-  }
+  page += FPSTR(HTTP_BTN_CONF);
   ShowPage(page);
 }
 
@@ -137,16 +137,16 @@ void  pcf8574_Init()
   }
   if (max_pcf8574_devices==0 && (pin[GPIO_I2C_SCL] < 99) && (pin[GPIO_I2C_SDA] < 99)) {
     pcf8574_detect();
-  //  snprintf_P(log_data, sizeof(log_data), PSTR("RSLT: pcf8574 %d boards"), max_pcf8574_devices);
-  //  AddLog(LOG_LEVEL_INFO);
+    snprintf_P(log_data, sizeof(log_data), PSTR("RSLT: pcf8574 %d boards"), max_pcf8574_devices);
+    AddLog(LOG_LEVEL_INFO);
   }
   for (byte idx = 0; idx < max_pcf8574_devices; idx++) { // suport up to 8 boards PCF8574
-  //  snprintf_P(log_data, sizeof(log_data), PSTR("RSLT: I2C Config: %d"), Settings.pcf8574_config[idx]);
-  //  AddLog(LOG_LEVEL_DEBUG);
+   snprintf_P(log_data, sizeof(log_data), PSTR("RSLT: I2C Config: %d"), Settings.pcf8574_config[idx]);
+    AddLog(LOG_LEVEL_DEBUG);
     for (byte i = 0; i < 8; i++) {
       uint8_t _result = Settings.pcf8574_config[idx]>>i&1;
-  //    snprintf_P(log_data, sizeof(log_data), PSTR("RSLT: I2C shift i %d: %d. Powerstate: %d, devices_present: %d"), i,_result, Settings.power>>i&1, devices_present);
-  //    AddLog(LOG_LEVEL_DEBUG);
+      snprintf_P(log_data, sizeof(log_data), PSTR("RSLT: I2C shift i %d: %d. Powerstate: %d, devices_present: %d"), i,_result, Settings.power>>i&1, devices_present);
+      AddLog(LOG_LEVEL_DEBUG);
       if (_result > 0) {
         pcf8574_pin[devices_present] = i + 8*idx;
         bitWrite(rel_inverted, devices_present, Settings.all_relays_inverted);
@@ -155,8 +155,8 @@ void  pcf8574_Init()
       }
     }
   }
-//  snprintf_P(log_data, sizeof(log_data), PSTR("RSLT: Final max devices: %d, PCF8574 devices %d"), devices_present, max_pcf8574_connected_ports);
-//  AddLog(LOG_LEVEL_INFO);
+  snprintf_P(log_data, sizeof(log_data), PSTR("RSLT: Final max devices: %d, PCF8574 devices %d"), devices_present, max_pcf8574_connected_ports);
+  AddLog(LOG_LEVEL_INFO);
 }
 
 boolean pcf8574_detect()
