@@ -382,6 +382,7 @@
 #define D_KNX_GROUP_ADDRESS_TO_READ "Group Addresses to Receive Data from"
 #define D_KNX_PARAMETER_TO_SEND "Parameter to Send"
 #define D_KNX_UPDATE_INTERVAL "Sensor Update Interval (sec)"
+#define D_LOG_KNX "KNX: "
 
 // xdrv_03_energy.ino
 #define D_ENERGY_TODAY "Energy Today"
@@ -477,7 +478,6 @@
 #define D_LOG_MODULE "MOD: "       // Module
 #define D_LOG_MDNS "DNS: "         // mDNS
 #define D_LOG_MQTT "MQT: "         // MQTT
-#define D_LOG_KNX "KNX: "          // KNX
 #define D_LOG_OTHER "OTH: "        // Other
 #define D_LOG_RESULT "RSL: "       // Result
 #define D_LOG_RFR "RFR: "          // RF Received
