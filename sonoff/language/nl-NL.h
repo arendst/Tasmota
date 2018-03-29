@@ -110,7 +110,7 @@
 #define D_OFF "Uit"
 #define D_OFFLINE "Offline"
 #define D_OK "Ok"
-#define D_ON "Ann"
+#define D_ON "Aan"
 #define D_ONLINE "Online"
 #define D_PASSWORD "Wachtwoord"
 #define D_PORT "Poort"
@@ -357,6 +357,16 @@
   #define D_DOMOTICZ_CURRENT "Stroom/PM10"
   #define D_DOMOTICZ_AIRQUALITY "AirQuality"
 #define D_DOMOTICZ_UPDATE_TIMER "Bijwerk timer"
+
+// xdrv_09_timers.ino
+#define D_CONFIGURE_TIMER "Configureer Tijdschakelaar"
+#define D_TIMER_PARAMETERS "Tijdschakelaar parameters"
+#define D_TIMER_ARM "Actief"
+#define D_TIMER_TIME "Tijd"
+#define D_TIMER_DAYS "Dagen"
+#define D_TIMER_REPEAT "Herhaal"
+#define D_TIMER_DEVICE "Uitgang"
+#define D_TIMER_POWER "Actie"
 
 // xdrv_03_energy.ino
 #define D_ENERGY_TODAY "Verbruik vandaag"
