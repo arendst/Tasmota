@@ -310,5 +310,4 @@ struct XDRVMAILBOX {
 #ifdef USE_ADC_VCC
   ADC_MODE(ADC_VCC);                       // Set ADC input for Power Supply Voltage usage
 #endif
-
 #endif  // _SETTINGS_H_
