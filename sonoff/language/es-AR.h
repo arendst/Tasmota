@@ -361,27 +361,12 @@
 // xdrv_09_timers.ino
 #define D_CONFIGURE_TIMER "Configuración Temporizadores"
 #define D_TIMER_PARAMETERS "Parámetros de Temporizadores"
-#define D_TIMER_ARM "Arm"
-#define D_TIMER_TIME "Tiempo"
+#define D_TIMER_ARM "Activo"
+#define D_TIMER_TIME "Hora"
 #define D_TIMER_DAYS "Días"
 #define D_TIMER_REPEAT "Repetir"
-#define D_TIMER_DEVICE "Dispositivo"
-#define D_TIMER_POWER "Encendido"
-
-// xdrv_10_KNX.ino
-#define D_CONFIGURE_KNX "Configuración de KNX"
-#define D_KNX_PARAMETERS "Parámetros de KNX"
-#define D_KNX_GENERAL_CONFIG "General"
-#define D_KNX_PHYSICAL_ADDRESS "Dirección Física"
-#define D_KNX_SET "Establecer"
-#define D_KNX_ADD "Agregar"
-#define D_DELETE "Eliminar"
-#define D_REPLY "Responder"
-#define D_KNX_PHYSICAL_ADDRESS_NOTE "(Debe ser única en la red KNX)"
-#define D_KNX_GROUP_ADDRESS_TO_WRITE "Enviar Datos a las Direcciones de Grupo"
-#define D_KNX_GROUP_ADDRESS_TO_READ "Recibir Datos de las Direcciones de Grupo"
-#define D_KNX_PARAMETER_TO_SEND "Parámetro a Enviar"
-#define D_KNX_UPDATE_INTERVAL "Enviar Valor de Sensores cada (seg)"
+#define D_TIMER_DEVICE "Salida"
+#define D_TIMER_POWER "Estado"
 
 // xdrv_03_energy.ino
 #define D_ENERGY_TODAY "Energía Hoy"
@@ -477,7 +462,6 @@
 #define D_LOG_MODULE "MOD: "       // Module
 #define D_LOG_MDNS "DNS: "         // mDNS
 #define D_LOG_MQTT "MQT: "         // MQTT
-#define D_LOG_KNX "KNX: "          // KNX
 #define D_LOG_OTHER "OTH: "        // Other
 #define D_LOG_RESULT "RSL: "       // Result
 #define D_LOG_RFR "RFR: "          // RF Received
