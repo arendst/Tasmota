@@ -196,7 +196,7 @@ String backlog[MAX_BACKLOG];                // Command backlog
 
 /********************************************************************************************/
 
-char* GetMqttClient(char* output, const char* input, int size)
+char* Format(char* output, const char* input, int size)
 {
   char *token;
   uint8_t digits = 0;
@@ -572,7 +572,7 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
             switch (index) {
               case 3:   // mqtt
               case 15:  // pwm_control
-              case 19:  // hass_discovery
+//              case 19:  // hass_discovery
                 restart_flag = 2;
               case 0:   // save_state
               case 1:   // button_restrict
@@ -587,6 +587,7 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
               case 16:  // ws_clock_reverse
               case 17:  // decimal_text
               case 18:  // light_signal
+              case 19:  // hass_discovery
               case 20:  // not_power_linked
               case 21:  // no_power_on_check
                 bitWrite(Settings.flag.data, index, payload);
@@ -595,6 +596,11 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
               stop_flash_rotate = payload;
               SettingsSave(2);
             }
+#ifdef USE_HOME_ASSISTANT
+            if (19 == index) {  // hass_discovery
+              HAssDiscovery(1);
+            }
+#endif  // USE_HOME_ASSISTANT
           }
         }
         else {  // SetOption32 ..
@@ -1107,9 +1113,11 @@ boolean send_button_power(byte key, byte device, byte state)
 
   char stopic[TOPSZ];
   char scommand[CMDSZ];
+  char key_topic[sizeof(Settings.button_topic)];
   boolean result = false;
 
-  char *key_topic = (key) ? Settings.switch_topic : Settings.button_topic;
+  char *tmp = (key) ? Settings.switch_topic : Settings.button_topic;
+  Format(key_topic, tmp, sizeof(key_topic));
   if (Settings.flag.mqtt_enabled && MqttIsConnected() && (strlen(key_topic) != 0) && strcmp(key_topic, "0")) {
     if (!key && (device > devices_present)) device = 1;
     GetTopic_P(stopic, CMND, key_topic, GetPowerDevice(scommand, device, sizeof(scommand), key));
@@ -2334,8 +2342,8 @@ void setup()
 
   SetSerialBaudrate(baudrate);
 
-  GetMqttClient(mqtt_client, Settings.mqtt_client, sizeof(mqtt_client));
-  GetMqttClient(mqtt_topic, Settings.mqtt_topic, sizeof(mqtt_topic));
+  Format(mqtt_client, Settings.mqtt_client, sizeof(mqtt_client));
+  Format(mqtt_topic, Settings.mqtt_topic, sizeof(mqtt_topic));
 
   if (strstr(Settings.hostname, "%")) {
     strlcpy(Settings.hostname, WIFI_HOSTNAME, sizeof(Settings.hostname));
