@@ -1497,7 +1497,7 @@ void ButtonHandler()
         button = PRESSED;
         if (0xF500 == dual_button_code) {             // Button hold
           holdbutton[button_index] = (Settings.param[P_HOLD_TIME] * (STATES / 10)) -1;
-          hold_time_extent = 0;
+          hold_time_extent = 1;
         }
         dual_button_code = 0;
       }
