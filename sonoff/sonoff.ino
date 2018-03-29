@@ -31,7 +31,11 @@
 #include <core_version.h>                   // Arduino_Esp8266 version information (ARDUINO_ESP8266_RELEASE and ARDUINO_ESP8266_RELEASE_2_3_0)
 #include "sonoff.h"                         // Enumeration used in user_config.h
 #include "user_config.h"                    // Fixed user configurable options
-#include "user_config_override.h"           // Configuration overrides for user_config.h
+
+//#ifdef USE_CONFIG_OVERRIDE
+  #include "user_config_override.h"         // Configuration overrides for user_config.h
+//#endif
+
 #include "i18n.h"                           // Language support configured by user_config.h
 #include "sonoff_template.h"                // Hardware configuration
 #include "sonoff_post.h"                    // Configuration overrides for all previous includes
@@ -572,7 +576,6 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
             switch (index) {
               case 3:   // mqtt
               case 15:  // pwm_control
-//              case 19:  // hass_discovery
                 restart_flag = 2;
               case 0:   // save_state
               case 1:   // button_restrict
@@ -1478,6 +1481,7 @@ void ButtonHandler()
 {
   uint8_t button = NOT_PRESSED;
   uint8_t button_present = 0;
+  uint8_t hold_time_extent = IMMINENT_RESET_FACTOR;  // Extent hold time factor in case of iminnent Reset command
   char scmnd[20];
 
   uint8_t maxdev = (devices_present > MAX_KEYS) ? MAX_KEYS : devices_present;
@@ -1493,6 +1497,7 @@ void ButtonHandler()
         button = PRESSED;
         if (0xF500 == dual_button_code) {             // Button hold
           holdbutton[button_index] = (Settings.param[P_HOLD_TIME] * (STATES / 10)) -1;
+          hold_time_extent = 0;
         }
         dual_button_code = 0;
       }
@@ -1545,20 +1550,23 @@ void ButtonHandler()
           holdbutton[button_index] = 0;
         } else {
           holdbutton[button_index]++;
-          if (Settings.flag.button_single) {          // Allow only single button press for immediate action
-            if (holdbutton[button_index] == Settings.param[P_HOLD_TIME] * (STATES / 10) * 4) {  // Button hold for four times longer
+          if (Settings.flag.button_single) {        // Allow only single button press for immediate action
+            if (holdbutton[button_index] == Settings.param[P_HOLD_TIME] * (STATES / 10) * hold_time_extent) {  // Button held for factor times longer
 //              Settings.flag.button_single = 0;
               snprintf_P(scmnd, sizeof(scmnd), PSTR(D_CMND_SETOPTION "13 0"));  // Disable single press only
               ExecuteCommand(scmnd);
             }
           } else {
-            if (holdbutton[button_index] == Settings.param[P_HOLD_TIME] * (STATES / 10)) {  // Button hold
-              multipress[button_index] = 0;
-              if (!Settings.flag.button_restrict) {   // No button restriction
+            if (Settings.flag.button_restrict) {   // Button restriction
+              if (holdbutton[button_index] == Settings.param[P_HOLD_TIME] * (STATES / 10)) {  // Button hold
+                multipress[button_index] = 0;
+                send_button_power(0, button_index +1, 3);        // Execute Hold command via MQTT if ButtonTopic is set
+              }
+            } else {
+              if (holdbutton[button_index] == (Settings.param[P_HOLD_TIME] * (STATES / 10)) * hold_time_extent) {  // Button held for factor times longer
+                multipress[button_index] = 0;
                 snprintf_P(scmnd, sizeof(scmnd), PSTR(D_CMND_RESET " 1"));
                 ExecuteCommand(scmnd);
-              } else {
-                send_button_power(0, button_index +1, 3);        // Execute Hold command via MQTT if ButtonTopic is set
               }
             }
           }

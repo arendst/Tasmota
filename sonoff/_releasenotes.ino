@@ -5,6 +5,7 @@
  * Change MQTT response topic for Energy changes from ENERGY to SENSOR (#2229, #2251)
  * Add Home Assistant MQTT Discovery for Buttons and change SetOption19 response (#2277)
  * Change webpage parameter communication
+ * Change default Reset configuration time from 4 seconds to 40 seconds on Button hold (#2268)
  *
  * 5.12.0h
  * Add optional Arduino OTA support to be enabled in user_config.h (#1998)
