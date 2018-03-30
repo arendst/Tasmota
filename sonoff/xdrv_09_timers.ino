@@ -197,7 +197,7 @@ boolean TimerCommand()
 #ifdef USE_TIMERS_WEB
 const char HTTP_TIMER_SCRIPT[] PROGMEM =
   "var pt=[],ct=99;"
-  "function qs(s){"                                               // Save code space
+  "function qs(s){"                                               // Alias to save code space
     "return document.querySelector(s);"
   "}"
   "function ce(i,q){"                                             // Create select option
@@ -206,47 +206,48 @@ const char HTTP_TIMER_SCRIPT[] PROGMEM =
     "q.appendChild(o);"
   "}"
   "function st(){"                                                // Save parameters to hidden area
-    "var d,h,i,m,n,s,p;"
-    "h=qs('#ho');"
-    "m=qs('#mi');"
-    "d=qs('#d1');"
+    "var i,n,p,s;"
     "s=0;"
     "n=1<<30;if(eb('a0').checked){s|=n;}"                         // Get arm
     "n=1<<29;if(eb('r0').checked){s|=n;}"                         // Get repeat
     "for(i=0;i<7;i++){n=1<<(16+i);if(eb('w'+i).checked){s|=n;}}"  // Get weekdays
     "s|=(eb('p1').value<<27);"                                    // Get power
-    "s|=(d.selectedIndex<<23);"                                   // Get device
-    "s|=((h.selectedIndex*60)+m.selectedIndex)&0x7FF;"            // Get time
+    "s|=(qs('#d1').selectedIndex<<23);"                           // Get device
+    "s|=((qs('#ho').selectedIndex*60)+qs('#mi').selectedIndex)&0x7FF;"  // Get time
     "pt[ct]=s;"
     "eb('t0').value=pt.join();"                                   // Save parameters from array to hidden area
   "}"
-  "function ot(t,e){"
-    "var d,h,i,m,n,s,tl,p,q;"
-    "h=qs('#ho');"
-    "m=qs('#mi');"
-    "d=qs('#d1');"
-    "if(ct==99){"                                                 // Do this once
-      "pt=eb('t0').value.split(',').map(Number);"                 // Get parameters from hidden area to array
-      "for(i=0;i<=23;i++){ce((i<10)?('0'+i):i,h);}"               // Create hours select options
-      "for(i=0;i<=59;i++){ce((i<10)?('0'+i):i,m);}"               // Create minutes select options
-      "for(i=0;i<}1;i++){ce(i+1,d);}"                             // Create devices
-    "}else{"
+  "function ot(t,e){"                                             // Select tab and update elements
+    "var i,n,o,p,q,s;"
+    "if(ct<99){"
       "st();"                                                     // Save changes
     "}"
-    "tl=document.getElementsByClassName('tl');"                   // Remove the background color of all tablinks/buttons
-    "for(i=0;i<tl.length;i++){tl[i].style.cssText=\"background-color:#ccc;color:#fff;font-weight:normal;\"}"
-    // Add the specific color to the button used to open the tab content
-    "e.style.cssText=\"background-color:#fff;color:#000;font-weight:bold;\";"
+    "o=document.getElementsByClassName('tl');"                    // Restore style to all tabs/buttons
+    "for(i=0;i<o.length;i++){o[i].style.cssText=\"background-color:#ccc;color:#fff;font-weight:normal;\"}"
+    "e.style.cssText=\"background-color:#fff;color:#000;font-weight:bold;\";"  // Change style to tab/button used to open content
     "s=pt[t];"                                                    // Get parameters from array
     "p=s&0x7FF;"                                                  // Get time
-    "q=Math.floor(p/60);if(q<10){q='0'+q;}h.value=q;"             // Set hours
-    "q=p%60;if(q<10){q='0'+q;}m.value=q;"                         // Set minutes
+    "q=Math.floor(p/60);if(q<10){q='0'+q;}qs('#ho').value=q;"     // Set hours
+    "q=p%60;if(q<10){q='0'+q;}qs('#mi').value=q;"                 // Set minutes
     "for(i=0;i<7;i++){p=(s>>(16+i))&1;eb('w'+i).checked=p;}"      // Set weekdays
-    "p=(s>>23)&0xF;d.value=p+1;"                                  // Set device
+    "p=(s>>23)&0xF;qs('#d1').value=p+1;"                          // Set device
     "p=(s>>27)&3;eb('p1').value=p;"                               // Set power
     "p=(s>>29)&1;eb('r0').checked=p;"                             // Set repeat
     "p=(s>>30)&1;eb('a0').checked=p;"                             // Set arm
     "ct=t;"
+  "}"
+  "function it(){"                                                // Initialize elements and select first tab
+    "var b,i,o,s;"
+    "pt=eb('t0').value.split(',').map(Number);"                   // Get parameters from hidden area to array
+    "s='';for(i=0;i<" STR(MAX_TIMERS) ";i++){b='';if(0==i){b=\" id='dP'\";}s+=\"<button type='button' class='tl' onclick='ot(\"+i+\",this)'\"+b+\">\"+(i+1)+\"</button>\"}"
+    "eb('bt').innerHTML=s;"                                       // Create tabs
+    "o=qs('#ho');for(i=0;i<=23;i++){ce((i<10)?('0'+i):i,o);}"     // Create hours select options
+    "o=qs('#mi');for(i=0;i<=59;i++){ce((i<10)?('0'+i):i,o);}"     // Create minutes select options
+    "o=qs('#d1');for(i=0;i<}1;i++){ce(i+1,o);}"                   // Create devices
+    "var a='" D_DAY3LIST "';"
+    "s='';for(i=0;i<7;i++){s+=\"<input style='width:5%;' id='w\"+i+\"' name='w\"+i+\"' type='checkbox'><b>\"+a.substring(i*3,(i*3)+3)+\"</b>\"}"
+    "eb('ds').innerHTML=s;"                                       // Create weekdays
+    "eb('dP').click();"                                           // Get the element with id='dP' and click on it
   "}";
 const char HTTP_TIMER_STYLE[] PROGMEM =
   ".tl{float:left;border-radius:0;border:1px solid #fff;padding:1px;width:6.25%;}"
@@ -255,7 +256,7 @@ const char HTTP_FORM_TIMER[] PROGMEM =
   "<fieldset style='min-width:470px;text-align:center;'><legend style='text-align:left;'><b>&nbsp;" D_TIMER_PARAMETERS "&nbsp;</b></legend><form method='post' action='sv'>"
   "<input id='w' name='w' value='7,0' hidden><input id='t0' name='t0' value='";
 const char HTTP_FORM_TIMER1[] PROGMEM =
-  "</div><br/><br/><br/>"
+  "' hidden><div id='bt' name='bt'></div><br/><br/><br/>"
   "<div>"
   "<b>" D_TIMER_OUTPUT "</b>&nbsp;<span><select style='width:12%;' id='d1' name='d1'></select></span>&emsp;"
   "<b>" D_TIMER_POWER "</b>&nbsp;<select style='width:25%;' id='p1' name='p1'>"
@@ -267,11 +268,11 @@ const char HTTP_FORM_TIMER1[] PROGMEM =
   "</div><br/>"
   "<div>"
 //  "<b>Time</b>&nbsp;<input type='time' style='width:25%;' id='s1' name='s1' value='00:00' pattern='[0-9]{2}:[0-9]{2}'>&emsp;"
-  "<b>" D_TIMER_TIME "</b>&nbsp;<span><select style='width:12%;' id='ho' name='ho'></select></span>&nbsp;:&nbsp;<span><select style='width:12%;' id='mi' name='mi'></select></span>&emsp;"
+  "<b>" D_TIMER_TIME "</b>&nbsp;<span><select style='width:12%;' id='ho' name='ho'></select></span>&nbsp;" D_HOUR_MINUTE_SEPARATOR "&nbsp;<span><select style='width:12%;' id='mi' name='mi'></select></span>&emsp;"
   "<input style='width:5%;' id='a0' name='a0' type='checkbox'><b>" D_TIMER_ARM "</b>&emsp;"
   "<input style='width:5%;' id='r0' name='r0' type='checkbox'><b>" D_TIMER_REPEAT "</b>"
   "</div><br/>"
-  "<div>";
+  "<div id='ds' name='ds'></div>";
 const char HTTP_FORM_TIMER2[] PROGMEM =
   "type='submit' onclick='st();this.form.submit();'";
 
@@ -295,25 +296,11 @@ void HandleTimerConfiguration()
     if (i > 0) page += F(",");
     page += String(Settings.timer[i].data);
   }
-  page += F("' hidden><div>");
-  for (byte i = 0; i < MAX_TIMERS; i++) {
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("<button type='button' class='tl' onclick=\"ot(%d,this)\"%s>%d</button>"),
-      i, (0 == i) ? " id='dP'" : "", i +1);
-    page += mqtt_data;
-  }
   page += FPSTR(HTTP_FORM_TIMER1);
   page.replace(F("}1"), String(devices_present));
-  char day[4] = { 0 };
-  for (byte i = 0; i < 7; i++) {
-    strncpy_P(day, PSTR(D_DAY3LIST) + (i *3), 3);
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("<input style='width:5%%;' id='w%d' name='w%d' type='checkbox'><b>%s</b>"), i, i, day);
-    page += mqtt_data;
-  }
-  page += F("</div>");
-
   page += FPSTR(HTTP_FORM_END);
   page.replace(F("type='submit'"), FPSTR(HTTP_FORM_TIMER2));
-  page += F("<script>eb('dP').click();</script>");  // Get the element with id='defaultOpen' and click on it
+  page += F("<script>it();</script>");  // Init elements and select first tab/button
   page += FPSTR(HTTP_BTN_CONF);
   ShowPage(page);
 }
@@ -324,11 +311,14 @@ void TimerSaveSettings()
 
   WebGetArg("t0", tmp, sizeof(tmp));
   char *p = tmp;
+  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_MQTT D_CMND_TIMERS " "));
   for (byte i = 0; i < MAX_TIMERS; i++) {
     uint32_t data = strtol(p, &p, 10);
     p++;  // Skip comma
     if ((data & 0x7FF) < 1440) Settings.timer[i].data = data;
+    snprintf_P(log_data, sizeof(log_data), PSTR("%s%s0x%08X"), log_data, (i > 0)?",":"", Settings.timer[i].data);
   }
+  AddLog(LOG_LEVEL_DEBUG);
 }
 #endif  // USE_TIMERS_WEB
 #endif  // USE_WEBSERVER
