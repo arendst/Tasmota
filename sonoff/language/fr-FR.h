@@ -365,7 +365,7 @@
 #define D_TIMER_TIME "Time"
 #define D_TIMER_DAYS "Days"
 #define D_TIMER_REPEAT "Repeat"
-#define D_TIMER_DEVICE "Device"
+#define D_TIMER_OUTPUT "Device"
 #define D_TIMER_POWER "Power"
 
 // xsns_03_energy.ino

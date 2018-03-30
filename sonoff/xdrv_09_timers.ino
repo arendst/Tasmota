@@ -70,7 +70,7 @@ void PrepShowTimer(uint8_t index)
     uint8_t mask = 1 << i;
     snprintf(days, sizeof(days), "%s%d", days, ((Settings.timer[index].days & mask) > 0));
   }
-  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s\"" D_CMND_TIMER "%d\":{\"" D_JSON_TIMER_ARM "\":%d,\"" D_JSON_TIMER_TIME "\":\"%02d:%02d\",\"" D_JSON_TIMER_DAYS "\":\"%s\",\"" D_JSON_TIMER_REPEAT "\":%d,\"" D_JSON_TIMER_DEVICE "\":%d,\"" D_JSON_TIMER_POWER "\":%d}"),
+  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s\"" D_CMND_TIMER "%d\":{\"" D_JSON_TIMER_ARM "\":%d,\"" D_JSON_TIMER_TIME "\":\"%02d:%02d\",\"" D_JSON_TIMER_DAYS "\":\"%s\",\"" D_JSON_TIMER_REPEAT "\":%d,\"" D_JSON_TIMER_OUTPUT "\":%d,\"" D_JSON_TIMER_POWER "\":%d}"),
     mqtt_data, index +1, Settings.timer[index].arm, Settings.timer[index].time / 60, Settings.timer[index].time % 60, days, Settings.timer[index].repeat, Settings.timer[index].device +1, Settings.timer[index].power);
 }
 
@@ -146,7 +146,7 @@ boolean TimerCommand()
           if (root[UpperCase_P(parm_uc, PSTR(D_JSON_TIMER_REPEAT))].success()) {
             Settings.timer[index].repeat = (root[parm_uc] != 0);
           }
-          if (root[UpperCase_P(parm_uc, PSTR(D_JSON_TIMER_DEVICE))].success()) {
+          if (root[UpperCase_P(parm_uc, PSTR(D_JSON_TIMER_OUTPUT))].success()) {
             uint8_t device = ((uint8_t)root[parm_uc] -1) & 0x0F;
             Settings.timer[index].device = (device < devices_present) ? device : devices_present -1;
           }
@@ -257,7 +257,7 @@ const char HTTP_FORM_TIMER[] PROGMEM =
 const char HTTP_FORM_TIMER1[] PROGMEM =
   "</div><br/><br/><br/>"
   "<div>"
-  "<b>" D_TIMER_DEVICE "</b>&nbsp;<span><select style='width:12%;' id='d1' name='d1'></select></span>&emsp;"
+  "<b>" D_TIMER_OUTPUT "</b>&nbsp;<span><select style='width:12%;' id='d1' name='d1'></select></span>&emsp;"
   "<b>" D_TIMER_POWER "</b>&nbsp;<select style='width:25%;' id='p1' name='p1'>"
     "<option value='0'>" D_OFF "</option>"
     "<option value='1'>" D_ON "</option>"
