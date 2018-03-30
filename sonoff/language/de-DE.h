@@ -356,17 +356,17 @@
   #define D_DOMOTICZ_VOLTAGE "Voltage/PM2.5"
   #define D_DOMOTICZ_CURRENT "Current/PM10"
   #define D_DOMOTICZ_AIRQUALITY "AirQuality"
-#define D_DOMOTICZ_UPDATE_TIMER "Update timer"
+  #define D_DOMOTICZ_UPDATE_TIMER "Update Zeitplan"
 
 // xdrv_09_timers.ino
-#define D_CONFIGURE_TIMER "Configure Timer"
-#define D_TIMER_PARAMETERS "Timer parameters"
-#define D_TIMER_ARM "Arm"
-#define D_TIMER_TIME "Time"
-#define D_TIMER_DAYS "Days"
-#define D_TIMER_REPEAT "Repeat"
-#define D_TIMER_DEVICE "Device"
-#define D_TIMER_POWER "Power"
+#define D_CONFIGURE_TIMER "Zeitplan konfigurieren"
+#define D_TIMER_PARAMETERS "Zeitplan Einstellungen"
+#define D_TIMER_ARM "Aktiv"
+#define D_TIMER_TIME "Uhrzeit"
+#define D_TIMER_DAYS "Wochentage"
+#define D_TIMER_REPEAT "Wiederholen"
+#define D_TIMER_DEVICE "Gerät"
+#define D_TIMER_POWER "Aktion"
 
 // xdrv_03_energy.ino
 #define D_ENERGY_TODAY "Energie heute"
