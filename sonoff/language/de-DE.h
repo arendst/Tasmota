@@ -365,7 +365,7 @@
 #define D_TIMER_TIME "Uhrzeit"
 #define D_TIMER_DAYS "Wochentage"
 #define D_TIMER_REPEAT "Wiederholen"
-#define D_TIMER_DEVICE "Gerät"
+#define D_TIMER_OUTPUT "Ausgang"
 #define D_TIMER_POWER "Aktion"
 
 // xdrv_03_energy.ino
