@@ -744,7 +744,7 @@ void SettingsDelta()
       SettingsDefaultSet_3_2_4();
     }
     if (Settings.version < 0x03020500) {  // 3.2.5 - Add parameter
-      GetMqttClient(Settings.friendlyname[0], Settings.mqtt_client, sizeof(Settings.friendlyname[0]));
+      Format(Settings.friendlyname[0], Settings.mqtt_client, sizeof(Settings.friendlyname[0]));
       strlcpy(Settings.friendlyname[1], FRIENDLY_NAME"2", sizeof(Settings.friendlyname[1]));
       strlcpy(Settings.friendlyname[2], FRIENDLY_NAME"3", sizeof(Settings.friendlyname[2]));
       strlcpy(Settings.friendlyname[3], FRIENDLY_NAME"4", sizeof(Settings.friendlyname[3]));

@@ -359,14 +359,14 @@
 #define D_DOMOTICZ_UPDATE_TIMER "Intervalo de refresco"
 
 // xdrv_09_timers.ino
-#define D_CONFIGURE_TIMER "Configure Timer"
-#define D_TIMER_PARAMETERS "Timer parameters"
-#define D_TIMER_ARM "Arm"
-#define D_TIMER_TIME "Time"
-#define D_TIMER_DAYS "Days"
-#define D_TIMER_REPEAT "Repeat"
-#define D_TIMER_DEVICE "Device"
-#define D_TIMER_POWER "Power"
+#define D_CONFIGURE_TIMER "Configuración Temporizadores"
+#define D_TIMER_PARAMETERS "Parámetros de Temporizadores"
+#define D_TIMER_ARM "Activo"
+#define D_TIMER_TIME "Hora"
+#define D_TIMER_DAYS "Días"
+#define D_TIMER_REPEAT "Repetir"
+#define D_TIMER_OUTPUT "Salida"
+#define D_TIMER_POWER "Estado"
 
 // xdrv_03_energy.ino
 #define D_ENERGY_TODAY "Energía Hoy"
