@@ -97,7 +97,7 @@ typedef unsigned long power_t;              // Power (Relay) type
   #define WEB_LOG_SIZE         4000         // Max number of characters in weblog
 #endif
 
-#define MAX_BACKLOG            16           // Max number of commands in backlog (chk backlog_index and backlog_pointer code)
+#define MAX_BACKLOG            30           // Max number of commands in backlog
 #define MIN_BACKLOG_DELAY      2            // Minimal backlog delay in 0.1 seconds
 
 #define SOFT_BAUDRATE          9600         // Default software serial baudrate
