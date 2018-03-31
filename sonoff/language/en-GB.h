@@ -365,7 +365,7 @@
 #define D_TIMER_TIME "Time"
 #define D_TIMER_DAYS "Days"
 #define D_TIMER_REPEAT "Repeat"
-#define D_TIMER_DEVICE "Device"
+#define D_TIMER_OUTPUT "Output"
 #define D_TIMER_POWER "Power"
 
 // xdrv_10_KNX.ino

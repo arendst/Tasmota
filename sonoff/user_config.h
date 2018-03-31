@@ -126,8 +126,6 @@
 // %topic% token options (also ButtonTopic and SwitchTopic)
 #define MQTT_TOPIC             PROJECT           // [Topic] (unique) MQTT device topic
 #define MQTT_GRPTOPIC          "sonoffs"         // [GroupTopic] MQTT Group topic
-#define MQTT_BUTTON_TOPIC      "0"               // [ButtonTopic] MQTT button topic
-#define MQTT_SWITCH_TOPIC      "0"               // [SwitchTopic] MQTT switch topic
 #define MQTT_CLIENT_ID         "DVES_%06X"       // [MqttClient] Also fall back topic using Chip Id = last 6 characters of MAC address
 
 // -- MQTT - Telemetry ----------------------------
@@ -143,7 +141,7 @@
 #define USE_KNX                                  // Enable KNX IP Protocol Support (+14.7k code)
 
 // -- MQTT - Home Assistant Discovery -------------
-#define USE_HOME_ASSISTANT                       // Enable Home Assistant Discovery Support (+1k4 code)
+#define USE_HOME_ASSISTANT                       // Enable Home Assistant Discovery Support (+2k code)
   #define HOME_ASSISTANT_DISCOVERY_PREFIX "homeassistant"  // Home Assistant discovery prefix
   #define HOME_ASSISTANT_DISCOVERY_ENABLE 0      // [SetOption19] Home Assistant Discovery (0 = Disable, 1 = Enable)
 
