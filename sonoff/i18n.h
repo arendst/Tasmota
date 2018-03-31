@@ -355,7 +355,7 @@
   #define D_JSON_TIMER_TIME "Time"
   #define D_JSON_TIMER_DAYS "Days"
   #define D_JSON_TIMER_REPEAT "Repeat"
-  #define D_JSON_TIMER_DEVICE "Device"
+  #define D_JSON_TIMER_OUTPUT "Output"
   #define D_JSON_TIMER_POWER "Power"
 #define D_CMND_TIMERS "Timers"
 
