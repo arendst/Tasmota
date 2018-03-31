@@ -6,6 +6,7 @@
  * Add support for SGP30 gas and air quality sensor (#2307)
  * Change webpage parameter communication
  * Change Timer parameter Device to more obvious Output
+ * Change max number of commands in Backlog from 15 to 30
  * Change MQTT response topic for Energy changes from ENERGY to SENSOR (#2229, #2251)
  * Change default Reset configuration time from 4 seconds to 40 seconds on Button hold (#2268)
  *

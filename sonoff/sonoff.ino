@@ -463,16 +463,13 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
     int command_code = GetCommandCode(command, sizeof(command), type, kTasmotaCommands);
     if (CMND_BACKLOG == command_code) {
       if (data_len) {
+        uint8_t bl_pointer = (!backlog_pointer) ? MAX_BACKLOG -1 : backlog_pointer;
+        bl_pointer--;
         char *blcommand = strtok(dataBuf, ";");
-        while (blcommand != NULL) {
+        while ((blcommand != NULL) && (backlog_index != bl_pointer)) {
           backlog[backlog_index] = String(blcommand);
           backlog_index++;
-/*
-          if (backlog_index >= MAX_BACKLOG) {
-            backlog_index = 0;
-          }
-*/
-          backlog_index &= 0xF;
+          if (backlog_index >= MAX_BACKLOG) backlog_index = 0;
           blcommand = strtok(NULL, ";");
         }
         snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, D_JSON_APPENDED);
@@ -1756,12 +1753,7 @@ void StateLoop()
       ExecuteCommand((char*)backlog[backlog_pointer].c_str());
       backlog_mutex = 0;
       backlog_pointer++;
-/*
-    if (backlog_pointer >= MAX_BACKLOG) {
-      backlog_pointer = 0;
-    }
-*/
-      backlog_pointer &= 0xF;
+      if (backlog_pointer >= MAX_BACKLOG) backlog_pointer = 0;
     }
   }
 
