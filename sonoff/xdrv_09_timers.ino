@@ -97,65 +97,70 @@ boolean TimerCommand()
           Settings.timer[index -1].data = Settings.timer[XdrvMailbox.payload -1].data;  // Copy timer
         }
       } else {
-        StaticJsonBuffer<128> jsonBuffer;
-        JsonObject& root = jsonBuffer.parseObject(dataBufUc);
-        if (!root.success()) {
-          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_TIMER "%d\":\"" D_JSON_INVALID_JSON "\"}"), index); // JSON decode failed
-          error = 1;
-        }
-        else {
-          char parm_uc[10];
-          index--;
-          if (root[UpperCase_P(parm_uc, PSTR(D_JSON_TIMER_ARM))].success()) {
-            Settings.timer[index].arm = (root[parm_uc] != 0);
+        if (devices_present) {
+          StaticJsonBuffer<128> jsonBuffer;
+          JsonObject& root = jsonBuffer.parseObject(dataBufUc);
+          if (!root.success()) {
+            snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_TIMER "%d\":\"" D_JSON_INVALID_JSON "\"}"), index); // JSON decode failed
+            error = 1;
           }
-          if (root[UpperCase_P(parm_uc, PSTR(D_JSON_TIMER_TIME))].success()) {
-            uint16_t itime = 0;
-            uint8_t value = 0;
-            char time_str[10];
+          else {
+            char parm_uc[10];
+            index--;
+            if (root[UpperCase_P(parm_uc, PSTR(D_JSON_TIMER_ARM))].success()) {
+              Settings.timer[index].arm = (root[parm_uc] != 0);
+            }
+            if (root[UpperCase_P(parm_uc, PSTR(D_JSON_TIMER_TIME))].success()) {
+              uint16_t itime = 0;
+              uint8_t value = 0;
+              char time_str[10];
 
-            snprintf(time_str, sizeof(time_str), root[parm_uc]);
-            const char *substr = strtok(time_str, ":");
-            if (substr != NULL) {
-              value = atoi(substr);
-              if (value > 23) value = 23;
-              itime = value * 60;
-              substr = strtok(NULL, ":");
+              snprintf(time_str, sizeof(time_str), root[parm_uc]);
+              const char *substr = strtok(time_str, ":");
               if (substr != NULL) {
                 value = atoi(substr);
-                if (value > 59) value = 59;
-                itime += value;
+                if (value > 23) value = 23;
+                itime = value * 60;
+                substr = strtok(NULL, ":");
+                if (substr != NULL) {
+                  value = atoi(substr);
+                  if (value > 59) value = 59;
+                  itime += value;
+                }
+              }
+              Settings.timer[index].time = itime;
+            }
+            if (root[UpperCase_P(parm_uc, PSTR(D_JSON_TIMER_DAYS))].success()) {
+              // SMTWTFS = 1234567 = 0011001 = 00TW00S = --TW--S
+              Settings.timer[index].days = 0;
+              const char *tday = root[parm_uc];
+              char ch = '.';
+
+              uint8_t i = 0;
+              while ((ch != '\0') && (i < 7)) {
+                ch = *tday++;
+                if (ch == '-') ch = '0';
+                uint8_t mask = 1 << i++;
+                Settings.timer[index].days |= (ch == '0') ? 0 : mask;
               }
             }
-            Settings.timer[index].time = itime;
-          }
-          if (root[UpperCase_P(parm_uc, PSTR(D_JSON_TIMER_DAYS))].success()) {
-            // SMTWTFS = 1234567 = 0011001 = 00TW00S = --TW--S
-            Settings.timer[index].days = 0;
-            const char *tday = root[parm_uc];
-            char ch = '.';
-
-            uint8_t i = 0;
-            while ((ch != '\0') && (i < 7)) {
-              ch = *tday++;
-              if (ch == '-') ch = '0';
-              uint8_t mask = 1 << i++;
-              Settings.timer[index].days |= (ch == '0') ? 0 : mask;
+            if (root[UpperCase_P(parm_uc, PSTR(D_JSON_TIMER_REPEAT))].success()) {
+              Settings.timer[index].repeat = (root[parm_uc] != 0);
             }
-          }
-          if (root[UpperCase_P(parm_uc, PSTR(D_JSON_TIMER_REPEAT))].success()) {
-            Settings.timer[index].repeat = (root[parm_uc] != 0);
-          }
-          if (root[UpperCase_P(parm_uc, PSTR(D_JSON_TIMER_OUTPUT))].success()) {
-            uint8_t device = ((uint8_t)root[parm_uc] -1) & 0x0F;
-            Settings.timer[index].device = (device < devices_present) ? device : devices_present -1;
-          }
-          if (root[UpperCase_P(parm_uc, PSTR(D_JSON_TIMER_POWER))].success()) {
-            Settings.timer[index].power = (uint8_t)root[parm_uc] & 0x03;
-          }
-          if (Settings.timer[index].arm) bitClear(fired, index);
+            if (root[UpperCase_P(parm_uc, PSTR(D_JSON_TIMER_OUTPUT))].success()) {
+              uint8_t device = ((uint8_t)root[parm_uc] -1) & 0x0F;
+              Settings.timer[index].device = (device < devices_present) ? device : devices_present -1;
+            }
+            if (root[UpperCase_P(parm_uc, PSTR(D_JSON_TIMER_POWER))].success()) {
+              Settings.timer[index].power = (uint8_t)root[parm_uc] & 0x03;
+            }
+            if (Settings.timer[index].arm) bitClear(fired, index);
 
-          index++;
+            index++;
+          }
+        } else {
+          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_TIMER "%d\":\"" D_JSON_TIMER_NO_DEVICE "\"}"), index);  // No outputs defined so nothing to control
+          error = 1;
         }
       }
     }
