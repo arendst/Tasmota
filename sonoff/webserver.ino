@@ -181,15 +181,17 @@ const char HTTP_BTN_MENU1[] PROGMEM =
   "<br/><form action='cs' method='get'><button>" D_CONSOLE "</button></form>";
 const char HTTP_BTN_RSTRT[] PROGMEM =
   "<br/><form action='rb' method='get' onsubmit='return confirm(\"" D_CONFIRM_RESTART "\");'><button>" D_RESTART "</button></form>";
-const char HTTP_BTN_MENU2[] PROGMEM =
-  "<br/><form action='md' method='get'><button>" D_CONFIGURE_MODULE "</button></form>"
+const char HTTP_BTN_MENU_MODULE[] PROGMEM =
+  "<br/><form action='md' method='get'><button>" D_CONFIGURE_MODULE "</button></form>";
 #ifdef USE_TIMERS
 #ifdef USE_TIMERS_WEB
-  "<br/><form action='tm' method='get'><button>" D_CONFIGURE_TIMER "</button></form>"
+const char HTTP_BTN_MENU_TIMER[] PROGMEM =
+  "<br/><form action='tm' method='get'><button>" D_CONFIGURE_TIMER "</button></form>";
 #endif  // USE_TIMERS_WEB
 #endif  // USE_TIMERS
+const char HTTP_BTN_MENU_WIFI[] PROGMEM =
   "<br/><form action='w0' method='get'><button>" D_CONFIGURE_WIFI "</button></form>";
-const char HTTP_BTN_MENU3[] PROGMEM =
+const char HTTP_BTN_MENU_MQTT[] PROGMEM =
   "<br/><form action='mq' method='get'><button>" D_CONFIGURE_MQTT "</button></form>"
 #ifdef USE_DOMOTICZ
   "<br/><form action='dm' method='get'><button>" D_CONFIGURE_DOMOTICZ "</button></form>"
@@ -629,10 +631,14 @@ void HandleConfiguration()
   String page = FPSTR(HTTP_HEAD);
   page.replace(F("{v}"), FPSTR(S_CONFIGURATION));
   page += FPSTR(HTTP_HEAD_STYLE);
-  page += FPSTR(HTTP_BTN_MENU2);
-  if (Settings.flag.mqtt_enabled) {
-    page += FPSTR(HTTP_BTN_MENU3);
-  }
+  page += FPSTR(HTTP_BTN_MENU_MODULE);
+#ifdef USE_TIMERS
+#ifdef USE_TIMERS_WEB
+  if (devices_present) page += FPSTR(HTTP_BTN_MENU_TIMER);
+#endif  // USE_TIMERS_WEB
+#endif  // USE_TIMERS
+  page += FPSTR(HTTP_BTN_MENU_WIFI);
+  if (Settings.flag.mqtt_enabled) page += FPSTR(HTTP_BTN_MENU_MQTT);
   page += FPSTR(HTTP_BTN_MENU4);
   page += FPSTR(HTTP_BTN_MAIN);
   ShowPage(page);

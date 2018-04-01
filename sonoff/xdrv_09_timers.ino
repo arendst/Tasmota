@@ -105,11 +105,14 @@ void PrepShowTimer(uint8_t index)
     uint8_t mask = 1 << i;
     snprintf(days, sizeof(days), "%s%d", days, ((Settings.timer[index].days & mask) > 0));
   }
+<<<<<<< HEAD
 #ifdef USE_SUNRISE
   snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s\"" D_CMND_TIMER "%d\":{\"" D_JSON_TIMER_ARM "\":%d,\"" D_JSON_TIMER_TIME "\":\"%02d:%02d\",\"" D_JSON_TIMER_DAYS "\":\"%s\",\"" D_JSON_TIMER_REPEAT "\":%d,\"" D_JSON_TIMER_OUTPUT "\":%d,\"" D_JSON_TIMER_POWER "\":%d,\"" D_JSON_TIMER_MODE "\":%d}"),
   mqtt_data, index +1, Settings.timer[index].arm, Settings.timer[index].time / 60, Settings.timer[index].time % 60, days, Settings.timer[index].repeat, Settings.timer[index].device +1, Settings.timer[index].power,Settings.timer[index].mday);
 
 #else
+=======
+>>>>>>> arendst/development
   snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s\"" D_CMND_TIMER "%d\":{\"" D_JSON_TIMER_ARM "\":%d,\"" D_JSON_TIMER_TIME "\":\"%02d:%02d\",\"" D_JSON_TIMER_DAYS "\":\"%s\",\"" D_JSON_TIMER_REPEAT "\":%d,\"" D_JSON_TIMER_OUTPUT "\":%d,\"" D_JSON_TIMER_POWER "\":%d}"),
     mqtt_data, index +1, Settings.timer[index].arm, Settings.timer[index].time / 60, Settings.timer[index].time % 60, days, Settings.timer[index].repeat, Settings.timer[index].device +1, Settings.timer[index].power);
 #endif
@@ -306,51 +309,54 @@ boolean TimerCommand()
           Settings.timer[index -1].data = Settings.timer[XdrvMailbox.payload -1].data;  // Copy timer
         }
       } else {
-        StaticJsonBuffer<128> jsonBuffer;
-        JsonObject& root = jsonBuffer.parseObject(dataBufUc);
-        if (!root.success()) {
-          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_TIMER "%d\":\"" D_JSON_INVALID_JSON "\"}"), index); // JSON decode failed
-          error = 1;
-        }
-        else {
-          char parm_uc[10];
-          index--;
-          if (root[UpperCase_P(parm_uc, PSTR(D_JSON_TIMER_ARM))].success()) {
-            Settings.timer[index].arm = (root[parm_uc] != 0);
+        if (devices_present) {
+          StaticJsonBuffer<128> jsonBuffer;
+          JsonObject& root = jsonBuffer.parseObject(dataBufUc);
+          if (!root.success()) {
+            snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_TIMER "%d\":\"" D_JSON_INVALID_JSON "\"}"), index); // JSON decode failed
+            error = 1;
           }
-          if (root[UpperCase_P(parm_uc, PSTR(D_JSON_TIMER_TIME))].success()) {
-            uint16_t itime = 0;
-            uint8_t value = 0;
-            char time_str[10];
+          else {
+            char parm_uc[10];
+            index--;
+            if (root[UpperCase_P(parm_uc, PSTR(D_JSON_TIMER_ARM))].success()) {
+              Settings.timer[index].arm = (root[parm_uc] != 0);
+            }
+            if (root[UpperCase_P(parm_uc, PSTR(D_JSON_TIMER_TIME))].success()) {
+              uint16_t itime = 0;
+              uint8_t value = 0;
+              char time_str[10];
 
-            snprintf(time_str, sizeof(time_str), root[parm_uc]);
-            const char *substr = strtok(time_str, ":");
-            if (substr != NULL) {
-              value = atoi(substr);
-              if (value > 23) value = 23;
-              itime = value * 60;
-              substr = strtok(NULL, ":");
+              snprintf(time_str, sizeof(time_str), root[parm_uc]);
+              const char *substr = strtok(time_str, ":");
               if (substr != NULL) {
                 value = atoi(substr);
-                if (value > 59) value = 59;
-                itime += value;
+                if (value > 23) value = 23;
+                itime = value * 60;
+                substr = strtok(NULL, ":");
+                if (substr != NULL) {
+                  value = atoi(substr);
+                  if (value > 59) value = 59;
+                  itime += value;
+                }
+              }
+              Settings.timer[index].time = itime;
+            }
+            if (root[UpperCase_P(parm_uc, PSTR(D_JSON_TIMER_DAYS))].success()) {
+              // SMTWTFS = 1234567 = 0011001 = 00TW00S = --TW--S
+              Settings.timer[index].days = 0;
+              const char *tday = root[parm_uc];
+              char ch = '.';
+
+              uint8_t i = 0;
+              while ((ch != '\0') && (i < 7)) {
+                ch = *tday++;
+                if (ch == '-') ch = '0';
+                uint8_t mask = 1 << i++;
+                Settings.timer[index].days |= (ch == '0') ? 0 : mask;
               }
             }
-            Settings.timer[index].time = itime;
-          }
-          if (root[UpperCase_P(parm_uc, PSTR(D_JSON_TIMER_DAYS))].success()) {
-            // SMTWTFS = 1234567 = 0011001 = 00TW00S = --TW--S
-            Settings.timer[index].days = 0;
-            const char *tday = root[parm_uc];
-            char ch = '.';
-
-            uint8_t i = 0;
-            while ((ch != '\0') && (i < 7)) {
-              ch = *tday++;
-              if (ch == '-') ch = '0';
-              uint8_t mask = 1 << i++;
-              Settings.timer[index].days |= (ch == '0') ? 0 : mask;
-            }
+<<<<<<< HEAD
           }
           if (root[UpperCase_P(parm_uc, PSTR(D_JSON_TIMER_REPEAT))].success()) {
             Settings.timer[index].repeat = (root[parm_uc] != 0);
@@ -368,8 +374,25 @@ boolean TimerCommand()
           }
 #endif
           if (Settings.timer[index].arm) bitClear(fired, index);
+=======
+            if (root[UpperCase_P(parm_uc, PSTR(D_JSON_TIMER_REPEAT))].success()) {
+              Settings.timer[index].repeat = (root[parm_uc] != 0);
+            }
+            if (root[UpperCase_P(parm_uc, PSTR(D_JSON_TIMER_OUTPUT))].success()) {
+              uint8_t device = ((uint8_t)root[parm_uc] -1) & 0x0F;
+              Settings.timer[index].device = (device < devices_present) ? device : devices_present -1;
+            }
+            if (root[UpperCase_P(parm_uc, PSTR(D_JSON_TIMER_POWER))].success()) {
+              Settings.timer[index].power = (uint8_t)root[parm_uc] & 0x03;
+            }
+            if (Settings.timer[index].arm) bitClear(fired, index);
+>>>>>>> arendst/development
 
-          index++;
+            index++;
+          }
+        } else {
+          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_TIMER "%d\":\"" D_JSON_TIMER_NO_DEVICE "\"}"), index);  // No outputs defined so nothing to control
+          error = 1;
         }
       }
     }
@@ -442,9 +465,12 @@ const char HTTP_TIMER_SCRIPT[] PROGMEM =
     "for(i=0;i<7;i++){n=1<<(16+i);if(eb('w'+i).checked){s|=n;}}"  // Get weekdays
     "s|=(eb('p1').value<<27);"                                    // Get power
     "s|=(qs('#d1').selectedIndex<<23);"                           // Get device
+<<<<<<< HEAD
 #ifdef USE_SUNRISE
     "s|=(eb('o1').value<<11);"                                    // Get mode
 #endif
+=======
+>>>>>>> arendst/development
     "s|=((qs('#ho').selectedIndex*60)+qs('#mi').selectedIndex)&0x7FF;"  // Get time
     "pt[ct]=s;"
     "eb('t0').value=pt.join();"                                   // Save parameters from array to hidden area
@@ -560,7 +586,10 @@ void HandleTimerConfiguration()
     page += String(xtimer.data);
 #else
     page += String(Settings.timer[i].data);
+<<<<<<< HEAD
 #endif
+=======
+>>>>>>> arendst/development
   }
   page += FPSTR(HTTP_FORM_TIMER1);
   page.replace(F("}1"), String(devices_present));
@@ -602,7 +631,10 @@ void TimerSaveSettings()
     }
 #else
     if ((data & 0x7FF) < 1440) Settings.timer[i].data = data;
+<<<<<<< HEAD
 #endif
+=======
+>>>>>>> arendst/development
     snprintf_P(log_data, sizeof(log_data), PSTR("%s%s0x%08X"), log_data, (i > 0)?",":"", Settings.timer[i].data);
   }
   AddLog(LOG_LEVEL_DEBUG);

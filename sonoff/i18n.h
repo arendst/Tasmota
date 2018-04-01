@@ -111,6 +111,7 @@
 #define D_JSON_TIME "Time"
 #define D_JSON_TODAY "Today"
 #define D_JSON_TOTAL "Total"
+#define D_JSON_TVOC "TVOC"
 #define D_JSON_TYPE "Type"
 #define D_JSON_UPTIME "Uptime"
 #define D_JSON_UTC_TIME "UTC"
@@ -357,6 +358,7 @@
   #define D_JSON_TIMER_REPEAT "Repeat"
   #define D_JSON_TIMER_OUTPUT "Output"
   #define D_JSON_TIMER_POWER "Power"
+  #define D_JSON_TIMER_NO_DEVICE "No GPIO as output configured"
 #define D_CMND_TIMERS "Timers"
 
 /********************************************************************************************/
@@ -381,6 +383,8 @@ enum UnitNames {
   UNIT_MILLIAMPERE,
   UNIT_MILLISECOND,
   UNIT_MINUTE,
+  UNIT_PPB,
+  UNIT_PPD,
   UNIT_PPM,
   UNIT_PERCENTAGE,
   UNIT_PRESSURE,
@@ -399,6 +403,8 @@ const char kUnitNames[] PROGMEM =
   D_UNIT_MILLIAMPERE "|"
   D_UNIT_MILLISECOND "|"
   D_UNIT_MINUTE "|"
+  D_UNIT_PARTS_PER_BILLION "|"
+  D_UNIT_PARTS_PER_DECILITER "|"
   D_UNIT_PARTS_PER_MILLION "|"
   "%|"
   D_UNIT_PRESSURE "|"
@@ -475,7 +481,7 @@ const char HTTP_SNS_PRESSURE[] PROGMEM = "%s{s}%s " D_PRESSURE "{m}%s " D_UNIT_P
 const char HTTP_SNS_SEAPRESSURE[] PROGMEM = "%s{s}%s " D_PRESSUREATSEALEVEL "{m}%s " D_UNIT_PRESSURE "{e}";  // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
 const char HTTP_SNS_ANALOG[] PROGMEM = "%s{s}%s " D_ANALOG_INPUT "%d{m}%d{e}";                               // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
 
-#if defined(USE_MHZ19) || defined(USE_SENSEAIR)
+#if defined(USE_MHZ19) || defined(USE_SENSEAIR) || defined(USE_SGP30)
 const char HTTP_SNS_CO2[] PROGMEM = "%s{s}%s " D_CO2 "{m}%d " D_UNIT_PARTS_PER_MILLION "{e}";                // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
 #endif  // USE_WEBSERVER
 
