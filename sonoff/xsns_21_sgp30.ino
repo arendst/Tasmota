@@ -64,20 +64,21 @@ void Sgp30Update()  // Perform every second to ensure proper operation of the ba
   }
 }
 
-const char HTTP_SNS_TVOC[] PROGMEM = "%s{s}SGP30 " D_TVOC "{m}%d " D_UNIT_PARTS_PER_BILLION "{e}";
+const char HTTP_SNS_SGP30[] PROGMEM = "%s"
+  "{s}SGP30 " D_ECO2 "{m}%d " D_UNIT_PARTS_PER_MILLION "{e}"                // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
+  "{s}SGP30 " D_TVOC "{m}%d " D_UNIT_PARTS_PER_BILLION "{e}";
 
 void Sgp30Show(boolean json)
 {
   if (sgp30_ready) {
     if (json) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"SGP30\":{\"" D_JSON_CO2 "\":%d,\"" D_JSON_TVOC "\":%d}"), mqtt_data, sgp.eCO2, sgp.TVOC);
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"SGP30\":{\"" D_JSON_ECO2 "\":%d,\"" D_JSON_TVOC "\":%d}"), mqtt_data, sgp.eCO2, sgp.TVOC);
 #ifdef USE_DOMOTICZ
-    DomoticzSensor(DZ_AIRQUALITY, sgp.eCO2);
+      DomoticzSensor(DZ_AIRQUALITY, sgp.eCO2);
 #endif  // USE_DOMOTICZ
     } else {
 #ifdef USE_WEBSERVER
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_CO2, mqtt_data, "SGP30", sgp.eCO2);
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TVOC, mqtt_data, sgp.TVOC);
+      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_SGP30, mqtt_data, sgp.eCO2, sgp.TVOC);
 #endif
     }
   }
