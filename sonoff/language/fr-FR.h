@@ -77,6 +77,7 @@
 #define D_DNS_SERVER "Serveur DNS"
 #define D_DONE "Fait"
 #define D_DST_TIME "DST"
+#define D_ECO2 "eCO2"
 #define D_EMULATION "Emulation"
 #define D_ENABLED "Activé"
 #define D_ERASE "Effacer"

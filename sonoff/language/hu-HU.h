@@ -77,6 +77,7 @@
 #define D_DNS_SERVER "DNS Szerver"
 #define D_DONE "Kész"
 #define D_DST_TIME "DST"
+#define D_ECO2 "eCO2"
 #define D_EMULATION "Emuláció"
 #define D_ENABLED "Engedélyezve"
 #define D_ERASE "Törlés"

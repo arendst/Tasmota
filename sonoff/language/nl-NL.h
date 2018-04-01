@@ -77,6 +77,7 @@
 #define D_DNS_SERVER "DNS Server"
 #define D_DONE "Klaar"
 #define D_DST_TIME "ZT"
+#define D_ECO2 "eCO2"
 #define D_EMULATION "Emulatie"
 #define D_ENABLED "Geactiveerd"
 #define D_ERASE "Wissen"
