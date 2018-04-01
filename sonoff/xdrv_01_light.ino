@@ -1116,7 +1116,7 @@ boolean LightCommand()
     if (XdrvMailbox.data_len > 0) {
       char *p;
       uint16_t idx = XdrvMailbox.index;
-      for (char *color = strtok_r(XdrvMailbox.data, ".", &p); color; color = strtok_r(NULL, ".", &p)) {
+      for (char *color = strtok_r(XdrvMailbox.data, " ", &p); color; color = strtok_r(NULL, " ", &p)) {
         if (LightColorEntry(color, strlen(color))) {
           Ws2812SetColor(idx, light_entry_color[0], light_entry_color[1], light_entry_color[2], light_entry_color[3]);
           idx++;
