@@ -238,7 +238,6 @@ struct SYSCFG {
   char          ntp_server[3][33];         // 4CE
   byte          ina219_mode;               // 531
   uint16_t      pulse_timer[MAX_PULSETIMERS]; // 532
-
   byte          free_542[2];               // 542
 
   uint32_t      ip_address[4];             // 544
@@ -253,8 +252,10 @@ struct SYSCFG {
   byte          free_66d[3];               // 66D
 
   Timer         timer[MAX_TIMERS];         // 670
-
-                                           // 6B0 - FFF free locations
+#ifdef USE_SUNRISE
+  double        longitude;
+  double        latitude;
+#endif                                       // 6B0 - FFF free locations
 } Settings;
 
 struct RTCMEM {
