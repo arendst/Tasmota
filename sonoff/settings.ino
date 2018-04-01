@@ -597,6 +597,12 @@ void SettingsDefaultSet2()
 
   // 5.10.1
   SettingsDefaultSet_5_10_1();
+
+#ifdef USE_SUNRISE
+  Settings.latitude = 50.816667;
+  Settings.longitude = 6.766667;
+#endif
+
 }
 
 /********************************************************************************************/
@@ -918,5 +924,3 @@ void SettingsDelta()
     SettingsSave(1);
   }
 }
-
-
