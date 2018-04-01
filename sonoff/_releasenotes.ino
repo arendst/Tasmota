@@ -2,6 +2,7 @@
  * Add 16 timers using commands Timer and Timers (#1091)
  * Add commands Timer 0 to clear timer and Timer 1..16 to copy timer
  * Add optional Timer configuration webpage to be enabled in user_config.h with define USE_TIMERS_WEB
+ * Add Domoticz Battery and RSSI Quality (#1604)
  * Add Home Assistant MQTT Discovery for Buttons and change SetOption19 response (#2277)
  * Add support for SGP30 gas and air quality sensor (#2307)
  * Add multiple color entry support for command Led like Led2 120000 001200 000012 setting led2 as Red, Led3 as Green and Led4 as Blue (#2303)
