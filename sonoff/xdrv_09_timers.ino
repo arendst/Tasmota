@@ -34,9 +34,9 @@
 \*********************************************************************************************/
 #define USE_SUNRISE
 #define D_TIMER_MODE "Mode"
-#define D_GIVENTIME "angegebene Zeit"
-#define D_SUNRISE "Sonnenaufgang"
-#define D_SUNSET "Sonnenuntergang"
+#define D_GIVENTIME "given time"
+#define D_SUNRISE "sunrise"
+#define D_SUNSET "sunset"
 #define D_CMND_LONGITUDE "Longitude"
 #define D_CMND_LATITUDE "Latitude"
 #define D_JSON_TIMER_MODE "Mode"
@@ -105,14 +105,11 @@ void PrepShowTimer(uint8_t index)
     uint8_t mask = 1 << i;
     snprintf(days, sizeof(days), "%s%d", days, ((Settings.timer[index].days & mask) > 0));
   }
-<<<<<<< HEAD
+
 #ifdef USE_SUNRISE
   snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s\"" D_CMND_TIMER "%d\":{\"" D_JSON_TIMER_ARM "\":%d,\"" D_JSON_TIMER_TIME "\":\"%02d:%02d\",\"" D_JSON_TIMER_DAYS "\":\"%s\",\"" D_JSON_TIMER_REPEAT "\":%d,\"" D_JSON_TIMER_OUTPUT "\":%d,\"" D_JSON_TIMER_POWER "\":%d,\"" D_JSON_TIMER_MODE "\":%d}"),
   mqtt_data, index +1, Settings.timer[index].arm, Settings.timer[index].time / 60, Settings.timer[index].time % 60, days, Settings.timer[index].repeat, Settings.timer[index].device +1, Settings.timer[index].power,Settings.timer[index].mday);
-
 #else
-=======
->>>>>>> arendst/development
   snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s\"" D_CMND_TIMER "%d\":{\"" D_JSON_TIMER_ARM "\":%d,\"" D_JSON_TIMER_TIME "\":\"%02d:%02d\",\"" D_JSON_TIMER_DAYS "\":\"%s\",\"" D_JSON_TIMER_REPEAT "\":%d,\"" D_JSON_TIMER_OUTPUT "\":%d,\"" D_JSON_TIMER_POWER "\":%d}"),
     mqtt_data, index +1, Settings.timer[index].arm, Settings.timer[index].time / 60, Settings.timer[index].time % 60, days, Settings.timer[index].repeat, Settings.timer[index].device +1, Settings.timer[index].power);
 #endif
@@ -356,8 +353,8 @@ boolean TimerCommand()
                 Settings.timer[index].days |= (ch == '0') ? 0 : mask;
               }
             }
-<<<<<<< HEAD
-          }
+
+
           if (root[UpperCase_P(parm_uc, PSTR(D_JSON_TIMER_REPEAT))].success()) {
             Settings.timer[index].repeat = (root[parm_uc] != 0);
           }
@@ -374,7 +371,6 @@ boolean TimerCommand()
           }
 #endif
           if (Settings.timer[index].arm) bitClear(fired, index);
-=======
             if (root[UpperCase_P(parm_uc, PSTR(D_JSON_TIMER_REPEAT))].success()) {
               Settings.timer[index].repeat = (root[parm_uc] != 0);
             }
@@ -386,7 +382,6 @@ boolean TimerCommand()
               Settings.timer[index].power = (uint8_t)root[parm_uc] & 0x03;
             }
             if (Settings.timer[index].arm) bitClear(fired, index);
->>>>>>> arendst/development
 
             index++;
           }
@@ -420,6 +415,7 @@ boolean TimerCommand()
       }
     }
     mqtt_data[0] = '\0';
+#ifdef USE_SUNRISE
   } else if (CMND_LONGITUDE == command_code) {
     if (XdrvMailbox.data_len) {
       Settings.longitude = myatof(XdrvMailbox.data);
@@ -435,6 +431,7 @@ boolean TimerCommand()
     char lbuff[32];
     dtostrfd(Settings.latitude,6,lbuff);
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, lbuff);
+#endif
   }
   else serviced = false;
 
@@ -465,12 +462,11 @@ const char HTTP_TIMER_SCRIPT[] PROGMEM =
     "for(i=0;i<7;i++){n=1<<(16+i);if(eb('w'+i).checked){s|=n;}}"  // Get weekdays
     "s|=(eb('p1').value<<27);"                                    // Get power
     "s|=(qs('#d1').selectedIndex<<23);"                           // Get device
-<<<<<<< HEAD
+
 #ifdef USE_SUNRISE
     "s|=(eb('o1').value<<11);"                                    // Get mode
 #endif
-=======
->>>>>>> arendst/development
+
     "s|=((qs('#ho').selectedIndex*60)+qs('#mi').selectedIndex)&0x7FF;"  // Get time
     "pt[ct]=s;"
     "eb('t0').value=pt.join();"                                   // Save parameters from array to hidden area
@@ -586,10 +582,8 @@ void HandleTimerConfiguration()
     page += String(xtimer.data);
 #else
     page += String(Settings.timer[i].data);
-<<<<<<< HEAD
 #endif
-=======
->>>>>>> arendst/development
+
   }
   page += FPSTR(HTTP_FORM_TIMER1);
   page.replace(F("}1"), String(devices_present));
@@ -631,10 +625,7 @@ void TimerSaveSettings()
     }
 #else
     if ((data & 0x7FF) < 1440) Settings.timer[i].data = data;
-<<<<<<< HEAD
 #endif
-=======
->>>>>>> arendst/development
     snprintf_P(log_data, sizeof(log_data), PSTR("%s%s0x%08X"), log_data, (i > 0)?",":"", Settings.timer[i].data);
   }
   AddLog(LOG_LEVEL_DEBUG);
