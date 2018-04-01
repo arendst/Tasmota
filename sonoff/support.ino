@@ -197,6 +197,76 @@ char* dtostrfd(double number, unsigned char prec, char *s)
   return dtostrf(number, 1, prec, s);
 }
 
+char* Unescape(char* buffer, uint16_t* size)
+{
+  uint8_t* read = (uint8_t*)buffer;
+  uint8_t* write = (uint8_t*)buffer;
+  uint16_t start_size = *size;
+  uint16_t end_size = *size;
+  uint8_t che = 0;
+
+  while (start_size > 0) {
+    uint8_t ch = *read++;
+    start_size--;
+    if (ch != '\\') {
+      *write++ = ch;
+    } else {
+      if (start_size > 0) {
+        uint8_t chi = *read++;
+        start_size--;
+        end_size--;
+        switch (chi) {
+          case '\\': che = '\\'; break;  // 5C Backslash
+          case 'a': che = '\a'; break;   // 07 Bell (Alert)
+          case 'b': che = '\b'; break;   // 08 Backspace
+          case 'e': che = '\e'; break;   // 1B Escape
+          case 'f': che = '\f'; break;   // 0C Formfeed
+          case 'n': che = '\n'; break;   // 0A Linefeed (Newline)
+          case 'r': che = '\r'; break;   // 0D Carriage return
+          case 's': che = ' ';  break;   // 20 Space
+          case 't': che = '\t'; break;   // 09 Horizontal tab
+          case 'v': che = '\v'; break;   // 0B Vertical tab
+//          case '?': che = '\?'; break;   // 3F Question mark
+          default : {
+            che = chi;
+            *write++ = ch;
+            end_size++;
+          }
+        }
+        *write++ = che;
+      }
+    }
+  }
+  *size = end_size;
+  return buffer;
+}
+
+char* UpperCase(char* dest, const char* source)
+{
+  char* write = dest;
+  const char* read = source;
+  char ch = '.';
+
+  while (ch != '\0') {
+    ch = *read++;
+    *write++ = toupper(ch);
+  }
+  return dest;
+}
+
+char* UpperCase_P(char* dest, const char* source)
+{
+  char* write = dest;
+  const char* read = source;
+  char ch = '.';
+
+  while (ch != '\0') {
+    ch = pgm_read_byte(read++);
+    *write++ = toupper(ch);
+  }
+  return dest;
+}
+
 boolean ParseIp(uint32_t* addr, const char* str)
 {
   uint8_t *part = (uint8_t*)addr;
@@ -401,6 +471,7 @@ int GetCommandCode(char* destination, size_t destination_size, const char* needl
 
 void SetSerialBaudrate(int baudrate)
 {
+  Settings.baudrate = baudrate / 1200;
   if (Serial.baudRate() != baudrate) {
     if (seriallog_level) {
       snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION D_SET_BAUDRATE_TO " %d"), baudrate);
@@ -1377,6 +1448,13 @@ boolean Xsns02(byte function)
  *   AddLog(LOG_LEVEL_DEBUG);
  *
 \*********************************************************************************************/
+
+void SetSeriallog(byte loglevel)
+{
+  Settings.seriallog_level = loglevel;
+  seriallog_level = loglevel;
+  seriallog_timer = 0;
+}
 
 #ifdef USE_WEBSERVER
 void GetLog(byte idx, char** entry_pp, size_t* len_p)

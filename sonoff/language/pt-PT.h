@@ -142,6 +142,7 @@
 #define D_TOPIC "Tópico"
 #define D_TRANSMIT "Transmitir"
 #define D_TRUE "Verdadeiro"
+#define D_TVOC "TVOC"
 #define D_UPGRADE "Atualizar"
 #define D_UPLOAD "Enviar"
 #define D_UPTIME "Tempo de Atividade"
@@ -358,6 +359,16 @@
   #define D_DOMOTICZ_AIRQUALITY "Qualidade do Ar"
 #define D_DOMOTICZ_UPDATE_TIMER "Tempo de atualização"
 
+// xdrv_09_timers.ino
+#define D_CONFIGURE_TIMER "Configure Timer"
+#define D_TIMER_PARAMETERS "Timer parameters"
+#define D_TIMER_ARM "Arm"
+#define D_TIMER_TIME "Time"
+#define D_TIMER_DAYS "Days"
+#define D_TIMER_REPEAT "Repeat"
+#define D_TIMER_OUTPUT "Output"
+#define D_TIMER_POWER "Power"
+
 // xdrv_03_energy.ino
 #define D_ENERGY_TODAY "Consumo energético de hoje"
 #define D_ENERGY_YESTERDAY "Consumo energético de ontem"
@@ -412,6 +423,8 @@
 #define D_SENSOR_BACKLIGHT "Luz negra"
 #define D_SENSOR_PMS5003  "PMS5003"
 #define D_SENSOR_SDS0X1   "SDS0X1"
+#define D_SENSOR_SBR_RX   "SerBr Rx"
+#define D_SENSOR_SBR_TX   "SerBr Tx"
 
 // Units
 #define D_UNIT_AMPERE "A"
@@ -425,6 +438,7 @@
 #define D_UNIT_MILLIAMPERE "mA"
 #define D_UNIT_MILLISECOND "ms"
 #define D_UNIT_MINUTE "Min"
+#define D_UNIT_PARTS_PER_BILLION "ppb"
 #define D_UNIT_PARTS_PER_DECILITER "ppd"
 #define D_UNIT_PARTS_PER_MILLION "ppm"
 #define D_UNIT_PRESSURE "hPa"

@@ -450,6 +450,7 @@ void SettingsDefaultSet2()
   Settings.flag.mqtt_power_retain = MQTT_POWER_RETAIN;
   Settings.flag.mqtt_button_retain = MQTT_BUTTON_RETAIN;
   Settings.flag.mqtt_switch_retain = MQTT_SWITCH_RETAIN;
+  Settings.flag.pwm_control = 1;
   Settings.flag.hass_discovery = HOME_ASSISTANT_DISCOVERY_ENABLE;
 
   Settings.flag2.emulation = EMULATION;
@@ -457,6 +458,9 @@ void SettingsDefaultSet2()
   Settings.save_data = SAVE_DATA;
   Settings.timezone = APP_TIMEZONE;
   strlcpy(Settings.ota_url, OTA_URL, sizeof(Settings.ota_url));
+  Settings.baudrate = APP_BAUDRATE / 1200;
+  Settings.sbaudrate = SOFT_BAUDRATE / 1200;
+  Settings.serial_delimiter = 0xff;
 
   Settings.seriallog_level = SERIAL_LOG_LEVEL;
 //  Settings.sta_active = 0;
@@ -522,14 +526,14 @@ void SettingsDefaultSet2()
 //  Settings.energy_max_voltage = 0;
 //  Settings.energy_min_current = 0;
 //  Settings.energy_max_current = 0;
-//  Settings.energy_max_power_limit = 0;                              // MaxPowerLimit
+//  Settings.energy_max_power_limit = 0;                            // MaxPowerLimit
   Settings.energy_max_power_limit_hold = MAX_POWER_HOLD;
   Settings.energy_max_power_limit_window = MAX_POWER_WINDOW;
-//  Settings.energy_max_power_safe_limit = 0;                             // MaxSafePowerLimit
+//  Settings.energy_max_power_safe_limit = 0;                       // MaxSafePowerLimit
   Settings.energy_max_power_safe_limit_hold = SAFE_POWER_HOLD;
   Settings.energy_max_power_safe_limit_window = SAFE_POWER_WINDOW;
-//  Settings.energy_max_energy = 0;                             // MaxEnergy
-//  Settings.energy_max_energy_start = 0;                            // MaxEnergyStart
+//  Settings.energy_max_energy = 0;                                 // MaxEnergy
+//  Settings.energy_max_energy_start = 0;                           // MaxEnergyStart
 
   SettingsDefaultSet_3_2_4();
 
@@ -740,7 +744,7 @@ void SettingsDelta()
       SettingsDefaultSet_3_2_4();
     }
     if (Settings.version < 0x03020500) {  // 3.2.5 - Add parameter
-      GetMqttClient(Settings.friendlyname[0], Settings.mqtt_client, sizeof(Settings.friendlyname[0]));
+      Format(Settings.friendlyname[0], Settings.mqtt_client, sizeof(Settings.friendlyname[0]));
       strlcpy(Settings.friendlyname[1], FRIENDLY_NAME"2", sizeof(Settings.friendlyname[1]));
       strlcpy(Settings.friendlyname[2], FRIENDLY_NAME"3", sizeof(Settings.friendlyname[2]));
       strlcpy(Settings.friendlyname[3], FRIENDLY_NAME"4", sizeof(Settings.friendlyname[3]));
@@ -898,6 +902,16 @@ void SettingsDelta()
         Settings.mqtt_fingerprint[0][i] = strtol(p, &p, 16);
         Settings.mqtt_fingerprint[1][i] = Settings.mqtt_fingerprint[0][i];
       }
+    }
+    if (Settings.version < 0x050C0007) {
+      Settings.baudrate = APP_BAUDRATE / 1200;
+    }
+    if (Settings.version < 0x050C0008) {
+      Settings.sbaudrate = SOFT_BAUDRATE / 1200;
+      Settings.serial_delimiter = 0xff;
+    }
+    if (Settings.version < 0x050C0009) {
+      memset(&Settings.timer, 0x00, sizeof(Timer) * MAX_TIMERS);
     }
 
     Settings.version = VERSION;

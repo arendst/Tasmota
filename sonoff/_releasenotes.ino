@@ -1,4 +1,30 @@
-/* 5.12.0f
+/* 5.12.0i
+ * Add 16 timers using commands Timer and Timers (#1091)
+ * Add commands Timer 0 to clear timer and Timer 1..16 to copy timer
+ * Add optional Timer configuration webpage to be enabled in user_config.h with define USE_TIMERS_WEB
+ * Add Home Assistant MQTT Discovery for Buttons and change SetOption19 response (#2277)
+ * Add support for SGP30 gas and air quality sensor (#2307)
+ * Add multiple color entry support for command Led like Led2 120000 001200 000012 setting led2 as Red, Led3 as Green and Led4 as Blue (#2303)
+ * Change webpage parameter communication
+ * Change Timer parameter Device to more obvious Output
+ * Change max number of commands in Backlog from 15 to 30 and ignore commands overflowing
+ * Change MQTT response topic for Energy changes from ENERGY to SENSOR (#2229, #2251)
+ * Change default Reset configuration time from 4 seconds to 40 seconds on Button hold (#2268)
+ *
+ * 5.12.0h
+ * Add optional Arduino OTA support to be enabled in user_config.h (#1998)
+ * Add support for Software Serial bridge using commands SerialDelimiter, SBaudrate and SSerialSend. Supports 8N1 and text only (#2190)
+ * Add support for Hardware Serial bridge using commands SerialDelimiter, Baudrate and SerialSend. Supports 8N1 and text only (#2182)
+ * Add support for Zengge WF017 PWM Led strip controller (#2202)
+ * Add PWM status to command State if PWM enabled (#2203)
+ * Add command HSBColor Hue,Sat,Bri (#1642, #2203)
+ * Add command Channel 0..100 to control dimmer value for individual color channels (#2111, #2203)
+ * Add Channel status information (#2211)
+ * Add all FriendlyNames to Status information (#2208)
+ * Change status display of Ssid and SetOption
+ * Change default option SetOption15 from 0 to 1 providing better initial PWM experience
+ *
+ * 5.12.0f
  * Add compile time support for WS2812 BRG and RBG led configurations to be defined in user_config.h (#1690)
  *
  * 5.12.0e

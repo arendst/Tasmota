@@ -63,6 +63,7 @@
 #define D_JSON_GATEWAY "Gateway"
 #define D_JSON_HEAPSIZE "Heap"
 #define D_JSON_HIGH "High"
+#define D_JSON_HSBCOLOR "HSBColor"
 #define D_JSON_HUMIDITY "Humidity"
 #define D_JSON_I2CSCAN_DEVICES_FOUND_AT "Device(s) found at"
 #define D_JSON_I2CSCAN_UNKNOWN_ERROR_AT "Unknown error at"
@@ -96,6 +97,7 @@
 #define D_JSON_SAVESTATE "SaveState"
 #define D_JSON_SDKVERSION "SDK"
 #define D_JSON_SELECTED "selected"
+#define D_JSON_SERIALRECEIVED "SerialReceived"
 #define D_JSON_SSID "SSId"
 #define D_JSON_STARTDST "StartDST"       // Start Daylight Savings Time
 #define D_JSON_STARTED "Started"
@@ -109,6 +111,7 @@
 #define D_JSON_TIME "Time"
 #define D_JSON_TODAY "Today"
 #define D_JSON_TOTAL "Total"
+#define D_JSON_TVOC "TVOC"
 #define D_JSON_TYPE "Type"
 #define D_JSON_UPTIME "Uptime"
 #define D_JSON_UTC_TIME "UTC"
@@ -240,12 +243,17 @@
 #define D_CMND_LEDSTATE "LedState"
 #define D_CMND_CFGDUMP "CfgDump"
 #define D_CMND_I2CSCAN "I2CScan"
+#define D_CMND_SERIALSEND "SerialSend"
+#define D_CMND_SERIALDELIMITER "SerialDelimiter"
+#define D_CMND_BAUDRATE "Baudrate"
 #define D_CMND_EXCEPTION "Exception"
 
 // Commands xdrv_01_light.ino
+#define D_CMND_CHANNEL "Channel"
 #define D_CMND_COLOR "Color"
 #define D_CMND_COLORTEMPERATURE "CT"
 #define D_CMND_DIMMER "Dimmer"
+#define D_CMND_HSBCOLOR "HSBColor"
 #define D_CMND_LED "Led"
 #define D_CMND_LEDTABLE "LedTable"
 #define D_CMND_FADE "Fade"
@@ -337,6 +345,22 @@
 #define D_CMND_DISP_SIZE "Size"
 #define D_CMND_DISP_TEXT "Text"
 
+// Commands xdrv_08_serial_bridge.ino
+#define D_CMND_SSERIALSEND "SSerialSend"
+#define D_CMND_SBAUDRATE "SBaudrate"
+  #define D_JSON_SSERIALRECEIVED "SSerialReceived"
+
+// Commands xdrv_09_timers.ino
+#define D_CMND_TIMER "Timer"
+  #define D_JSON_TIMER_ARM "Arm"
+  #define D_JSON_TIMER_TIME "Time"
+  #define D_JSON_TIMER_DAYS "Days"
+  #define D_JSON_TIMER_REPEAT "Repeat"
+  #define D_JSON_TIMER_OUTPUT "Output"
+  #define D_JSON_TIMER_POWER "Power"
+  #define D_JSON_TIMER_NO_DEVICE "No GPIO as output configured"
+#define D_CMND_TIMERS "Timers"
+
 /********************************************************************************************/
 
 #ifndef MY_LANGUAGE
@@ -359,6 +383,8 @@ enum UnitNames {
   UNIT_MILLIAMPERE,
   UNIT_MILLISECOND,
   UNIT_MINUTE,
+  UNIT_PPB,
+  UNIT_PPD,
   UNIT_PPM,
   UNIT_PERCENTAGE,
   UNIT_PRESSURE,
@@ -377,6 +403,8 @@ const char kUnitNames[] PROGMEM =
   D_UNIT_MILLIAMPERE "|"
   D_UNIT_MILLISECOND "|"
   D_UNIT_MINUTE "|"
+  D_UNIT_PARTS_PER_BILLION "|"
+  D_UNIT_PARTS_PER_DECILITER "|"
   D_UNIT_PARTS_PER_MILLION "|"
   "%|"
   D_UNIT_PRESSURE "|"
@@ -453,7 +481,7 @@ const char HTTP_SNS_PRESSURE[] PROGMEM = "%s{s}%s " D_PRESSURE "{m}%s " D_UNIT_P
 const char HTTP_SNS_SEAPRESSURE[] PROGMEM = "%s{s}%s " D_PRESSUREATSEALEVEL "{m}%s " D_UNIT_PRESSURE "{e}";  // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
 const char HTTP_SNS_ANALOG[] PROGMEM = "%s{s}%s " D_ANALOG_INPUT "%d{m}%d{e}";                               // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
 
-#if defined(USE_MHZ19) || defined(USE_SENSEAIR)
+#if defined(USE_MHZ19) || defined(USE_SENSEAIR) || defined(USE_SGP30)
 const char HTTP_SNS_CO2[] PROGMEM = "%s{s}%s " D_CO2 "{m}%d " D_UNIT_PARTS_PER_MILLION "{e}";                // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
 #endif  // USE_WEBSERVER
 

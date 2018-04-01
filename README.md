@@ -17,9 +17,10 @@ Basic Functionality is Available. **Work in progress**.
 - [ ] Add Feature to Send telegrams of one relay status to multiple Group Addresses (useful for scenes)
 - [x] Add Feature to Send telegrams of button pressed
 - [x] Add Feature to receive telegrams to toggle relay status
-- [ ] Add Feature to send Temperature by a set interval
-- [ ] Add Feature to receive command to read temperature
-- [ ] Add Feature to recognice Tasmota config to show the same amount of relays, buttons, etc
+- [ ] Add Feature to read Temperature from Tasmota
+- [x] Add Feature to send Temperature by a set interval
+- [x] Add Feature to receive command to read temperature
+- [ ] Add Feature to recognize Tasmota config to show the same amount of relays, buttons, etc
 - [ ] Add Feature to Save Config
 - [ ] Add Feature to Load Config
 - [ ] Change Web Menu to a Tasmota one to save FLASH and RAM
@@ -38,7 +39,7 @@ Basic Functionality is Available. **Work in progress**.
 
 ## Modifications to [Original Tasmota](https://github.com/arendst/Sonoff-Tasmota) ##
 
-* Adding the file _/sonoff/xdrv_08_KNX.ino_ 
+* Adding the file _/sonoff/xdrv_10_KNX.ino_ 
 * Add the entry `#define USE_KNX` on _/sonoff/user_config.h_
 * Add entries to the file _/sonoff/webserver.ino_
 * Add entries to the file _/sonoff/sonoff.ino_
@@ -48,12 +49,22 @@ Up to now, enabling KNX uses +14.7k of code
 
 There is **NO CONFLICT** with MQTT, Home Assistant, Web, etc. Tests show fast response of all features running at same time.
 
+This version is kept in sync with the Original Sonoff-Tasmota
+
+-----------------------------------------------------------------------------------------------------------------------------------
+
+## Contributors to this Project ##
+
+* Adrian Scillato [ascillato](https://github.com/ascillato)
+* Sisamiwe [sisamiwe](https://github.com/sisamiwe) - Thanks for the guide on using KNX.
+* Nico Weichbrodt [envy](https://github.com/envy) - Thanks for the patience and help with the modifications to ESP_KNX_IP.
+
 -----------------------------------------------------------------------------------------------------------------------------------
 
 ## Sonoff-Tasmota
 Provide ESP8266 based Sonoff by [iTead Studio](https://www.itead.cc/) and ElectroDragon IoT Relay with Serial, Web and MQTT control allowing 'Over the Air' or OTA firmware updates using Arduino IDE.
 
-Current version is **5.12.0f** - See [sonoff/_releasenotes.ino](https://github.com/arendst/Sonoff-Tasmota/blob/development/sonoff/_releasenotes.ino) for change information.
+Current version is **5.12.0i** - See [sonoff/_releasenotes.ino](https://github.com/arendst/Sonoff-Tasmota/blob/development/sonoff/_releasenotes.ino) for change information.
 
 ### ATTENTION All versions
 

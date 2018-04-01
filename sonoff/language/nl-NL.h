@@ -110,7 +110,7 @@
 #define D_OFF "Uit"
 #define D_OFFLINE "Offline"
 #define D_OK "Ok"
-#define D_ON "Ann"
+#define D_ON "Aan"
 #define D_ONLINE "Online"
 #define D_PASSWORD "Wachtwoord"
 #define D_PORT "Poort"
@@ -142,6 +142,7 @@
 #define D_TOPIC "Topic"  // Onderwerp
 #define D_TRANSMIT "Verzend"
 #define D_TRUE "Waar"
+#define D_TVOC "TVOC"
 #define D_UPGRADE "opwaarderen"
 #define D_UPLOAD "Verzenden"
 #define D_UPTIME "Bedrijfstijd"
@@ -358,6 +359,16 @@
   #define D_DOMOTICZ_AIRQUALITY "AirQuality"
 #define D_DOMOTICZ_UPDATE_TIMER "Bijwerk timer"
 
+// xdrv_09_timers.ino
+#define D_CONFIGURE_TIMER "Configureer Tijdschakelaar"
+#define D_TIMER_PARAMETERS "Tijdschakelaar parameters"
+#define D_TIMER_ARM "Actief"
+#define D_TIMER_TIME "Tijd"
+#define D_TIMER_DAYS "Dagen"
+#define D_TIMER_REPEAT "Herhaal"
+#define D_TIMER_OUTPUT "Uitgang"
+#define D_TIMER_POWER "Actie"
+
 // xdrv_03_energy.ino
 #define D_ENERGY_TODAY "Verbruik vandaag"
 #define D_ENERGY_YESTERDAY "Verbruik gisteren"
@@ -412,6 +423,8 @@
 #define D_SENSOR_BACKLIGHT "BkLight"
 #define D_SENSOR_PMS5003  "PMS5003"
 #define D_SENSOR_SDS0X1   "SDS0X1"
+#define D_SENSOR_SBR_RX   "SerBr Rx"
+#define D_SENSOR_SBR_TX   "SerBr Tx"
 
 // Units
 #define D_UNIT_AMPERE "A"
@@ -425,6 +438,7 @@
 #define D_UNIT_MILLIAMPERE "mA"
 #define D_UNIT_MILLISECOND "ms"
 #define D_UNIT_MINUTE "Min"
+#define D_UNIT_PARTS_PER_BILLION "ppb"
 #define D_UNIT_PARTS_PER_DECILITER "ppd"
 #define D_UNIT_PARTS_PER_MILLION "ppm"
 #define D_UNIT_PRESSURE "hPa"

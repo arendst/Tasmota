@@ -142,6 +142,7 @@
 #define D_TOPIC "Topic"
 #define D_TRANSMIT "Transmit"
 #define D_TRUE "True"
+#define D_TVOC "TVOC"
 #define D_UPGRADE "upgrade"
 #define D_UPLOAD "Upload"
 #define D_UPTIME "Uptime"
@@ -216,7 +217,6 @@
 #define D_CONFIGURE_WIFI "Configure WiFi"
 #define D_CONFIGURE_MQTT "Configure MQTT"
 #define D_CONFIGURE_DOMOTICZ "Configure Domoticz"
-#define D_CONFIGURE_KNX "Configure KNX"
 #define D_CONFIGURE_LOGGING "Configure Logging"
 #define D_CONFIGURE_OTHER "Configure Other"
 #define D_CONFIRM_RESET_CONFIGURATION "Confirm Reset Configuration"
@@ -359,7 +359,18 @@
   #define D_DOMOTICZ_AIRQUALITY "AirQuality"
 #define D_DOMOTICZ_UPDATE_TIMER "Update timer"
 
-// xdrv_08_KNX.ino
+// xdrv_09_timers.ino
+#define D_CONFIGURE_TIMER "Configure Timer"
+#define D_TIMER_PARAMETERS "Timer parameters"
+#define D_TIMER_ARM "Arm"
+#define D_TIMER_TIME "Time"
+#define D_TIMER_DAYS "Days"
+#define D_TIMER_REPEAT "Repeat"
+#define D_TIMER_OUTPUT "Output"
+#define D_TIMER_POWER "Power"
+
+// xdrv_10_KNX.ino
+#define D_CONFIGURE_KNX "Configure KNX"
 #define D_KNX_PARAMETERS "KNX parameters"
 #define D_KNX_GENERAL_CONFIG "General"
 #define D_KNX_PHYSICAL_ADDRESS "Physical Address"
@@ -372,6 +383,7 @@
 #define D_KNX_GROUP_ADDRESS_TO_READ "Group Addresses to Receive Data from"
 #define D_KNX_PARAMETER_TO_SEND "Parameter to Send"
 #define D_KNX_UPDATE_INTERVAL "Sensor Update Interval (sec)"
+#define D_LOG_KNX "KNX: "
 
 // xdrv_03_energy.ino
 #define D_ENERGY_TODAY "Energy Today"
@@ -427,6 +439,8 @@
 #define D_SENSOR_BACKLIGHT "BkLight"
 #define D_SENSOR_PMS5003  "PMS5003"
 #define D_SENSOR_SDS0X1   "SDS0X1"
+#define D_SENSOR_SBR_RX   "SerBr Rx"
+#define D_SENSOR_SBR_TX   "SerBr Tx"
 
 // Units
 #define D_UNIT_AMPERE "A"
@@ -440,6 +454,7 @@
 #define D_UNIT_MILLIAMPERE "mA"
 #define D_UNIT_MILLISECOND "ms"
 #define D_UNIT_MINUTE "Min"
+#define D_UNIT_PARTS_PER_BILLION "ppb"
 #define D_UNIT_PARTS_PER_DECILITER "ppd"
 #define D_UNIT_PARTS_PER_MILLION "ppm"
 #define D_UNIT_PRESSURE "hPa"
@@ -465,7 +480,6 @@
 #define D_LOG_MODULE "MOD: "       // Module
 #define D_LOG_MDNS "DNS: "         // mDNS
 #define D_LOG_MQTT "MQT: "         // MQTT
-#define D_LOG_KNX "KNX: "          // KNX
 #define D_LOG_OTHER "OTH: "        // Other
 #define D_LOG_RESULT "RSL: "       // Result
 #define D_LOG_RFR "RFR: "          // RF Received

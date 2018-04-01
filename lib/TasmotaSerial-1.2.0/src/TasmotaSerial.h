@@ -20,12 +20,12 @@
 #ifndef TasmotaSerial_h
 #define TasmotaSerial_h
 /*********************************************************************************************\
- * TasmotaSerial supports up to 9600 baud with fixed buffer size of 64 bytes using optional no iram
+ * TasmotaSerial supports up to 115200 baud with fixed buffer size of 64 bytes using optional no iram
  *
  * Based on EspSoftwareSerial v3.3.1 by Peter Lerup (https://github.com/plerup/espsoftwareserial)
 \*********************************************************************************************/
 
-#define TM_SERIAL_BAUDRATE           9600   // Max supported baudrate
+#define TM_SERIAL_BAUDRATE           9600   // Default baudrate
 #define TM_SERIAL_BUFFER_SIZE        64     // Receive buffer size
 
 #include <core_version.h>                   // Arduino_Esp8266 version information (ARDUINO_ESP8266_RELEASE and ARDUINO_ESP8266_RELEASE_2_3_0)
@@ -57,6 +57,7 @@ class TasmotaSerial : public Stream {
 
     // Member variables
     bool m_valid;
+    bool m_high_speed;
     int m_rx_pin;
     int m_tx_pin;
     unsigned long m_bit_time;

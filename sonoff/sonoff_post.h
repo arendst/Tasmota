@@ -45,6 +45,7 @@ void WifiWpsStatusCallback(wps_cb_status status);
 #define USE_HTU                               // Add I2C code for HTU21/SI7013/SI7020/SI7021 sensor (+1k5 code)
 #define USE_BMP                               // Add I2C code for BMP085/BMP180/BMP280/BME280 sensor (+4k code)
   #define USE_BME680                          // Add additional support for BME680 sensor using Adafruit Sensor and BME680 libraries (+6k code)
+#define USE_SGP30                             // Add I2C code for SGP30 sensor (+1k1 code)
 #define USE_BH1750                            // Add I2C code for BH1750 sensor (+0k5 code)
 #define USE_VEML6070                          // Add I2C code for VEML6070 sensor (+0k5 code)
 #define USE_TSL2561                           // Add I2C code for TSL2561 sensor using library Adafruit TSL2561 Arduino (+1k2 code)
@@ -63,6 +64,7 @@ void WifiWpsStatusCallback(wps_cb_status status);
 #define USE_PMS5003                           // Add support for PMS5003 and PMS7003 particle concentration sensor (+1k3 code)
 #define USE_NOVA_SDS                          // Add support for SDS011 and SDS021 particle concentration sensor (+0k7 code)
 #define USE_PZEM004T                          // Add support for PZEM004T Energy monitor (+2k code)
+#define USE_SERIAL_BRIDGE                     // Add support for software Serial Bridge (+0k8 code)
 #define USE_IR_REMOTE                         // Send IR remote commands using library IRremoteESP8266 and ArduinoJson (+4k code, 0k3 mem, 48 iram)
   #define USE_IR_HVAC                         // Support for HVAC system using IR (+2k code)
   #define USE_IR_RECEIVE                      // Support for IR receiver (+5k5 code, 264 iram)
@@ -99,6 +101,9 @@ void WifiWpsStatusCallback(wps_cb_status status);
 //#endif
 #ifdef USE_EMULATION
 #undef USE_EMULATION                          // Disable Wemo or Hue emulation
+#endif
+#ifdef USE_TIMERS
+#undef USE_TIMERS                             // Disable support for up to 16 timers
 #endif
 #ifdef USE_PZEM004T
 #undef USE_PZEM004T                           // Disable PZEM004T energy sensor

@@ -142,6 +142,7 @@
 #define D_TOPIC "主題"
 #define D_TRANSMIT "發送"
 #define D_TRUE "True"
+#define D_TVOC "TVOC"
 #define D_UPGRADE "升級"
 #define D_UPLOAD "上傳"
 #define D_UPTIME "運行時間"
@@ -358,6 +359,16 @@
   #define D_DOMOTICZ_AIRQUALITY "空氣品質"
 #define D_DOMOTICZ_UPDATE_TIMER "更新計時器"
 
+// xdrv_09_timers.ino
+#define D_CONFIGURE_TIMER "Configure Timer"
+#define D_TIMER_PARAMETERS "Timer parameters"
+#define D_TIMER_ARM "Arm"
+#define D_TIMER_TIME "Time"
+#define D_TIMER_DAYS "Days"
+#define D_TIMER_REPEAT "Repeat"
+#define D_TIMER_OUTPUT "Output"
+#define D_TIMER_POWER "Power"
+
 // xdrv_03_energy.ino
 #define D_ENERGY_TODAY "今日用電量"
 #define D_ENERGY_YESTERDAY "昨日用電量"
@@ -412,6 +423,8 @@
 #define D_SENSOR_BACKLIGHT "BkLight"
 #define D_SENSOR_PMS5003  "PMS5003"
 #define D_SENSOR_SDS0X1   "SDS0X1"
+#define D_SENSOR_SBR_RX   "SerBr Rx"
+#define D_SENSOR_SBR_TX   "SerBr Tx"
 
 // Units
 #define D_UNIT_AMPERE "安"
@@ -425,6 +438,7 @@
 #define D_UNIT_MILLIAMPERE "毫安"
 #define D_UNIT_MILLISECOND "毫秒"
 #define D_UNIT_MINUTE "分"
+#define D_UNIT_PARTS_PER_BILLION "ppb"
 #define D_UNIT_PARTS_PER_DECILITER "每分升"
 #define D_UNIT_PARTS_PER_MILLION "ppm"
 #define D_UNIT_PRESSURE "百帕"

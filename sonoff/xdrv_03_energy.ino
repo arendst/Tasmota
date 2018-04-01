@@ -778,7 +778,7 @@ void EnergyMqttShow()
   snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_TIME "\":\"%s\""), GetDateAndTime(DT_LOCAL).c_str());
   EnergyShow(1);
   snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}"), mqtt_data);
-  MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_ENERGY), Settings.flag.mqtt_sensor_retain);
+  MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);
   energy_power_delta = 0;
 }
 
