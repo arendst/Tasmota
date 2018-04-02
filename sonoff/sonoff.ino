@@ -32,9 +32,9 @@
 #include "sonoff.h"                         // Enumeration used in user_config.h
 #include "user_config.h"                    // Fixed user configurable options
 
-//#ifdef USE_CONFIG_OVERRIDE
+#ifdef USE_CONFIG_OVERRIDE
   #include "user_config_override.h"         // Configuration overrides for user_config.h
-//#endif
+#endif
 
 #include "i18n.h"                           // Language support configured by user_config.h
 #include "sonoff_template.h"                // Hardware configuration
