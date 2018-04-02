@@ -67,8 +67,6 @@ Alternative Firmware for 'ESP8266 based Devices' like **Sonoff** by [iTead Studi
 
 [![GitHub version](https://img.shields.io/github/release/arendst/Sonoff-Tasmota.svg)](https://github.com/arendst/Sonoff-Tasmota/releases/latest)
 [![GitHub download](https://img.shields.io/github/downloads/arendst/Sonoff-Tasmota/total.svg)](https://github.com/arendst/Sonoff-Tasmota/releases/latest)
-[![GitHub stars](https://img.shields.io/github/stars/arendst/Sonoff-Tasmota.svg)](https://github.com/arendst/Sonoff-Tasmota/stargazers)
-[![Build Status](https://img.shields.io/travis/arendst/Sonoff-Tasmota.svg)](https://travis-ci.org/arendst/Sonoff-Tasmota)
 [![License](https://img.shields.io/github/license/arendst/Sonoff-Tasmota.svg)](https://github.com/arendst/Sonoff-Tasmota/blob/development/LICENSE.txt)
 
 If you like **Sonoff Tasmota** - give it a star, or fork it and contribute! 
@@ -76,6 +74,7 @@ If you like **Sonoff Tasmota** - give it a star, or fork it and contribute!
 [![GitHub forks](https://img.shields.io/github/forks/arendst/Sonoff-Tasmota.svg?style=social&label=Fork)](https://github.com/arendst/Sonoff-Tasmota/network)
 
 ### Development:
+[![Build Status](https://img.shields.io/travis/arendst/Sonoff-Tasmota.svg)](https://travis-ci.org/arendst/Sonoff-Tasmota)
 
 Current version is **5.12.0i** - See [sonoff/_releasenotes.ino](https://github.com/arendst/Sonoff-Tasmota/blob/development/sonoff/_releasenotes.ino) for change information.
 
