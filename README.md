@@ -69,7 +69,7 @@ Alternative Firmware for 'ESP8266 based Devices' like **Sonoff** by [iTead Studi
 [![GitHub download](https://img.shields.io/github/downloads/arendst/Sonoff-Tasmota/total.svg)](https://github.com/arendst/Sonoff-Tasmota/releases/latest)
 [![License](https://img.shields.io/github/license/arendst/Sonoff-Tasmota.svg)](https://github.com/arendst/Sonoff-Tasmota/blob/development/LICENSE.txt)
 
-If you like **Sonoff Tasmota** - give it a star, or fork it and contribute! 
+If you like **Sonoff Tasmota**, give it a star, or fork it and contribute! 
 [![GitHub stars](https://img.shields.io/github/stars/arendst/Sonoff-Tasmota.svg?style=social&label=Star)](https://github.com/arendst/Sonoff-Tasmota/stargazers) 
 [![GitHub forks](https://img.shields.io/github/forks/arendst/Sonoff-Tasmota.svg?style=social&label=Fork)](https://github.com/arendst/Sonoff-Tasmota/network)
 
