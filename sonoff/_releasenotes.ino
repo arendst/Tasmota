@@ -7,6 +7,7 @@
  * Add Home Assistant MQTT Discovery for Buttons and change SetOption19 response (#2277)
  * Add support for SGP30 gas and air quality sensor (#2307)
  * Add multiple color entry support for command Led like Led2 120000 001200 000012 setting led2 as Red, Led3 as Green and Led4 as Blue (#2303)
+ * Add hexadecimal RGB color entry on RGBCW leds (#2304)
  * Change webpage parameter communication
  * Change Timer parameter Device to more obvious Output
  * Change max number of commands in Backlog from 15 to 30 and ignore commands overflowing
