@@ -2,6 +2,7 @@
  * Add 16 timers using commands Timer and Timers (#1091)
  * Add commands Timer 0 to clear timer and Timer 1..16 to copy timer
  * Add optional Timer configuration webpage to be enabled in user_config.h with define USE_TIMERS_WEB
+ * Add hexadecimal Data entry to command IrSend using 0x notation (#1290, #2314)
  * Add Domoticz Battery and RSSI Quality (#1604)
  * Add Home Assistant MQTT Discovery for Buttons and change SetOption19 response (#2277)
  * Add support for SGP30 gas and air quality sensor (#2307)
@@ -9,6 +10,7 @@
  * Change webpage parameter communication
  * Change Timer parameter Device to more obvious Output
  * Change max number of commands in Backlog from 15 to 30 and ignore commands overflowing
+ * Change user_config_override usage by providing user_config_override_sample.h (#2228)
  * Change MQTT response topic for Energy changes from ENERGY to SENSOR (#2229, #2251)
  * Change default Reset configuration time from 4 seconds to 40 seconds on Button hold (#2268)
  *
