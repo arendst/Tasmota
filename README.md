@@ -61,10 +61,21 @@ This version is kept in sync with the Original Sonoff-Tasmota
 
 -----------------------------------------------------------------------------------------------------------------------------------
 
-## Sonoff-Tasmota
-Provide ESP8266 based Sonoff by [iTead Studio](https://www.itead.cc/) and ElectroDragon IoT Relay with Serial, Web and MQTT control allowing 'Over the Air' or OTA firmware updates using Arduino IDE.
+# Sonoff-Tasmota
 
-Current version is **5.12.0i** - See [sonoff/_releasenotes.ino](https://github.com/arendst/Sonoff-Tasmota/blob/development/sonoff/_releasenotes.ino) for change information.
+Alternative Firmware for 'ESP8266 based' **SONOFF** by [iTead Studio](https://www.itead.cc/) and for **ElectroDragon IoT Relay**, with _Serial_, _Web_, _KNX_ and _MQTT_ control, allowing 'Over the Air' (OTA) firmware updates. Firmware written using Arduino IDE and PlatformIO.
+
+[![GitHub version](https://img.shields.io/github/release/arendst/Sonoff-Tasmota.svg)](https://github.com/arendst/Sonoff-Tasmota/releases/latest)
+[![GitHub download](https://img.shields.io/github/downloads/arendst/Sonoff-Tasmota/total.svg)](https://github.com/arendst/Sonoff-Tasmota/releases/latest)
+[![GitHub stars](https://img.shields.io/github/stars/arendst/Sonoff-Tasmota.svg)](https://github.com/arendst/Sonoff-Tasmota/stargazers)
+[![Build Status](https://img.shields.io/travis/arendst/Sonoff-Tasmota.svg)](https://travis-ci.org/arendst/Sonoff-Tasmota)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/arendst/Sonoff-Tasmota/blob/master/LICENSE)
+
+Current Development Version is **5.12.0i** - See [sonoff/_releasenotes.ino](https://github.com/arendst/Sonoff-Tasmota/blob/development/sonoff/_releasenotes.ino) for change information.
+
+If you like **Sonoff Tasmota** - give it a star, or fork it and contribute! 
+[![GitHub stars](https://img.shields.io/github/stars/arendst/Sonoff-Tasmota.svg?style=social&label=Star)](https://github.com/arendst/Sonoff-Tasmota/stargazers) 
+[![GitHub forks](https://img.shields.io/github/forks/arendst/Sonoff-Tasmota.svg?style=social&label=Fork)](https://github.com/arendst/Sonoff-Tasmota/network)
 
 ### Quick install
 
