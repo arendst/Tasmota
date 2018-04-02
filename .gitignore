@@ -10,3 +10,4 @@
 .gcc-flags.json
 .vscode
 sonoff/user_config_override.h
+sonoff/user_config.h
