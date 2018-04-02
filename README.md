@@ -63,7 +63,7 @@ This version is kept in sync with the Original Sonoff-Tasmota
 
 ## Sonoff-Tasmota
 
-Alternative Firmware for 'ESP8266 based Devices' like **Sonoff** by [iTead Studio](https://www.itead.cc/) with _Serial_, _Web_, _KNX_ and _MQTT_ control, allowing 'Over the Air' (OTA) firmware updates. Written using Arduino IDE and PlatformIO.
+Alternative Firmware for 'ESP8266 based Devices' like **Sonoff** by [iTead Studio](https://www.itead.cc/), with control under _Serial_, _Web_, _KNX_ and _MQTT_, and allowing 'Over the Air' (OTA) firmware updates. Written using Arduino IDE and PlatformIO.
 
 [![GitHub version](https://img.shields.io/github/release/arendst/Sonoff-Tasmota.svg)](https://github.com/arendst/Sonoff-Tasmota/releases/latest)
 [![GitHub download](https://img.shields.io/github/downloads/arendst/Sonoff-Tasmota/total.svg)](https://github.com/arendst/Sonoff-Tasmota/releases/latest)
