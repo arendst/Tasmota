@@ -10,7 +10,7 @@ Basic Functionality is Available. **Work in progress**.
 ## Road Map ##
 
 **For Sonoff-Tasmota_KNX:**
-- [x] Add Web Menu (uses the one provided by the library)
+- [x] Add Web Menu (uses the one provided by the ESP KNX library)
 - [x] Add Feature to Receive telegrams and modify Relay Status
 - [x] Add Feature to Receive telegrams from multiple Group Addresses to modify just one relay status (useful for scenes)
 - [x] Add Feature to Send telegrams of relay status change
