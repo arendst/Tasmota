@@ -991,11 +991,10 @@ boolean LightColorEntry(char *buffer, uint8_t buffer_length)
         light_entry_color[i++] = atoi(str);
       }
     }
-//    entry_type = (light_subtype == i) ? 2 : 0;      // Decimal
     entry_type = 2;                                 // Decimal
   }
-  else if ((2 * light_subtype) == buffer_length) {  // Hexadecimal entry
-    for (byte i = 0; i < light_subtype; i++) {
+  else if (((2 * light_subtype) == buffer_length) || (buffer_length > 3)) {  // Hexadecimal entry
+    for (byte i = 0; i < buffer_length / 2; i++) {
       strlcpy(scolor, buffer + (i *2), 3);
       light_entry_color[i] = (uint8_t)strtol(scolor, &p, 16);
     }
@@ -1114,8 +1113,16 @@ boolean LightCommand()
 #ifdef USE_WS2812  //  ***********************************************************************
   else if ((CMND_LED == command_code) && (LT_WS2812 == light_type) && (XdrvMailbox.index > 0) && (XdrvMailbox.index <= Settings.light_pixels)) {
     if (XdrvMailbox.data_len > 0) {
-      if (LightColorEntry(XdrvMailbox.data, XdrvMailbox.data_len)) {
-        Ws2812SetColor(XdrvMailbox.index, light_entry_color[0], light_entry_color[1], light_entry_color[2], light_entry_color[3]);
+      char *p;
+      uint16_t idx = XdrvMailbox.index;
+      for (char *color = strtok_r(XdrvMailbox.data, " ", &p); color; color = strtok_r(NULL, " ", &p)) {
+        if (LightColorEntry(color, strlen(color))) {
+          Ws2812SetColor(idx, light_entry_color[0], light_entry_color[1], light_entry_color[2], light_entry_color[3]);
+          idx++;
+          if (idx >= Settings.light_pixels) break;
+        } else {
+          break;
+        }
       }
     }
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, XdrvMailbox.index, Ws2812GetColor(XdrvMailbox.index, scolor));
