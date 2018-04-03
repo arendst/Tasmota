@@ -257,10 +257,10 @@ struct SYSCFG {
   uint16_t      knx_physsical_addr;        // 6B0  (address_t is a uint16_t)
   byte          knx_GA_registered;         // 6B3  Number of Group Address to read
   byte          knx_CB_registered;         // 6B4  Number of Group Address to write
-  uint16_t      knx_GA_addr[KNX_max_GA];   // 6B5  (address_t is a uint16_t) x KNX_max_GA
-  uint16_t      knx_CB_addr[KNX_max_CB];   // 6C9  (address_t is a uint16_t) x KNX_max_CB
-  byte          knx_GA_param[KNX_max_GA];  // 6DD  Type of Input (relay changed, button pressed, sensor read <-teleperiod)
-  byte          knx_CB_param[KNX_max_GA];  // 6E7  Type of Output (set relay, toggle relay, reply sensor value)
+  uint16_t      knx_GA_addr[MAX_KNX_GA];   // 6B5  (address_t is a uint16_t) x KNX_max_GA
+  uint16_t      knx_CB_addr[MAX_KNX_CB];   // 6C9  (address_t is a uint16_t) x KNX_max_CB
+  byte          knx_GA_param[MAX_KNX_GA];  // 6DD  Type of Input (relay changed, button pressed, sensor read <-teleperiod)
+  byte          knx_CB_param[MAX_KNX_CB];  // 6E7  Type of Output (set relay, toggle relay, reply sensor value)
 
                                            // 6F1 - FFF free locations
 } Settings;
