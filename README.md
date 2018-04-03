@@ -43,6 +43,9 @@ Basic Functionality is Available. **Work in progress**.
 * Add the entry `#define USE_KNX` on _/sonoff/user_config.h_
 * Add entries to the file _/sonoff/webserver.ino_
 * Add entries to the file _/sonoff/sonoff.ino_
+* Add entries to the file _/sonoff/sonoff.h_
+* Add entries to the file _/sonoff/settings.h_
+* Add entries to sensor files
 * Add entries to language files
 
 Up to now, enabling KNX uses +14.7k of code
