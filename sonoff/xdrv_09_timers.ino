@@ -64,24 +64,25 @@ void TimerEverySecond()
 
         for (byte i = 0; i < MAX_TIMERS; i++) {
 #ifdef USE_SUNRISE
+          uint16_t xtime;
           if (Settings.timer[i].mday>0) {
             // sunrise,sunset mode
             uint8_t hour_up,minute_up,hour_down,minute_down;
             dusktilldawn(&hour_up,&minute_up,&hour_down,&minute_down);
             if (Settings.timer[i].mday==1) {
               // sunrise
-              time=(hour_up*60)+minute_up;
+              xtime=(hour_up*60)+minute_up;
             } else {
               // sunset
-              time=(hour_down*60)+minute_down;
+              xtime=(hour_down*60)+minute_down;
             }
           } else {
-             time = (RtcTime.hour * 60) + RtcTime.minute;
+             xtime = Settings.timer[i].time;
           }
 #endif
           if (Settings.timer[i].device >= devices_present) Settings.timer[i].data = 0;  // Reset timer due to change in devices present
           if (Settings.timer[i].arm) {
-            if (time == Settings.timer[i].time) {
+            if (time == xtime) {
               if (!bitRead(fired, i) && (Settings.timer[i].days & days)) {
                 bitSet(fired, i);
                 Settings.timer[i].arm = Settings.timer[i].repeat;
@@ -446,14 +447,17 @@ boolean TimerCommand()
 #ifdef USE_TIMERS_WEB
 const char HTTP_TIMER_SCRIPT[] PROGMEM =
   "var pt=[],ct=99;"
+
   "function qs(s){"                                               // Alias to save code space
     "return document.querySelector(s);"
   "}"
+
   "function ce(i,q){"                                             // Create select option
     "var o=document.createElement('option');"
     "o.textContent=i;"
     "q.appendChild(o);"
   "}"
+
   "function st(){"                                                // Save parameters to hidden area
     "var i,n,p,s;"
     "s=0;"
@@ -471,6 +475,7 @@ const char HTTP_TIMER_SCRIPT[] PROGMEM =
     "pt[ct]=s;"
     "eb('t0').value=pt.join();"                                   // Save parameters from array to hidden area
   "}"
+
   "function ot(t,e){"                                             // Select tab and update elements
     "var i,n,o,p,q,s;"
     "if(ct<99){"
@@ -493,13 +498,16 @@ const char HTTP_TIMER_SCRIPT[] PROGMEM =
     "p=(s>>30)&1;eb('a0').checked=p;"                             // Set arm
     "ct=t;"
   "}"
+
   "function it(){"                                                // Initialize elements and select first tab
     "var b,i,o,s;"
     "pt=eb('t0').value.split(',').map(Number);"                   // Get parameters from hidden area to array
     "s='';for(i=0;i<" STR(MAX_TIMERS) ";i++){b='';if(0==i){b=\" id='dP'\";}s+=\"<button type='button' class='tl' onclick='ot(\"+i+\",this)'\"+b+\">\"+(i+1)+\"</button>\"}"
     "eb('bt').innerHTML=s;"                                       // Create tabs
+
     "o=qs('#ho');for(i=0;i<=23;i++){ce((i<10)?('0'+i):i,o);}"     // Create hours select options
     "o=qs('#mi');for(i=0;i<=59;i++){ce((i<10)?('0'+i):i,o);}"     // Create minutes select options
+
     "o=qs('#d1');for(i=0;i<}1;i++){ce(i+1,o);}"                   // Create devices
     "var a='" D_DAY3LIST "';"
     "s='';for(i=0;i<7;i++){s+=\"<input style='width:5%;' id='w\"+i+\"' name='w\"+i+\"' type='checkbox'><b>\"+a.substring(i*3,(i*3)+3)+\"</b>\"}"
@@ -529,7 +537,7 @@ const char HTTP_FORM_TIMER1[] PROGMEM =
     "</select>"
 
 #ifdef USE_SUNRISE
-  "<b>" D_TIMER_MODE "</b>&nbsp;<select style='width:25%;' id='o1' name='o1'>"
+  "<b>" D_TIMER_MODE "</b>&nbsp;<select style='width:25%;' id='o1' name='o1' onchange='changedMode(this.value)' >"
       "<option value='0'>" D_GIVENTIME "</option>"
       "<option value='1'>" D_SUNRISE "</option>"
       "<option value='2'>" D_SUNSET "</option>"
