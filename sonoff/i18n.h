@@ -48,6 +48,7 @@
 #define D_JSON_DATA "Data"
 #define D_JSON_DNSSERVER "DNSServer"
 #define D_JSON_DONE "Done"
+#define D_JSON_ECO2 "eCO2"
 #define D_JSON_EMPTY "Empty"
 #define D_JSON_ENDDST "EndDST"           // End Daylight Savings Time
 #define D_JSON_ERASE "Erase"
@@ -111,6 +112,7 @@
 #define D_JSON_TIME "Time"
 #define D_JSON_TODAY "Today"
 #define D_JSON_TOTAL "Total"
+#define D_JSON_TVOC "TVOC"
 #define D_JSON_TYPE "Type"
 #define D_JSON_UPTIME "Uptime"
 #define D_JSON_UTC_TIME "UTC"
@@ -357,6 +359,7 @@
   #define D_JSON_TIMER_REPEAT "Repeat"
   #define D_JSON_TIMER_OUTPUT "Output"
   #define D_JSON_TIMER_POWER "Power"
+  #define D_JSON_TIMER_NO_DEVICE "No GPIO as output configured"
 #define D_CMND_TIMERS "Timers"
 
 /********************************************************************************************/
@@ -381,6 +384,8 @@ enum UnitNames {
   UNIT_MILLIAMPERE,
   UNIT_MILLISECOND,
   UNIT_MINUTE,
+  UNIT_PPB,
+  UNIT_PPD,
   UNIT_PPM,
   UNIT_PERCENTAGE,
   UNIT_PRESSURE,
@@ -399,6 +404,8 @@ const char kUnitNames[] PROGMEM =
   D_UNIT_MILLIAMPERE "|"
   D_UNIT_MILLISECOND "|"
   D_UNIT_MINUTE "|"
+  D_UNIT_PARTS_PER_BILLION "|"
+  D_UNIT_PARTS_PER_DECILITER "|"
   D_UNIT_PARTS_PER_MILLION "|"
   "%|"
   D_UNIT_PRESSURE "|"

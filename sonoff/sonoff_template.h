@@ -487,7 +487,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_USER,        // GPIO05 Optional sensor
      0, 0, 0, 0, 0, 0, // Flash connection
      GPIO_USER,        // GPIO12
-     GPIO_LED1_INV,    // GPIO13 BLUE LED
+     GPIO_USER,        // GPIO13 BLUE LED
      GPIO_USER,        // GPIO14 Optional sensor
      0,                // GPIO15
      0,                // GPIO16
