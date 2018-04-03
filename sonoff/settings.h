@@ -48,7 +48,7 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t not_power_linked : 1;         // bit 20 (v5.11.1f)
     uint32_t no_power_on_check : 1;        // bit 21 (v5.11.1i)
     uint32_t mqtt_serial : 1;              // bit 22 (v5.12.0f)
-    uint32_t spare23 : 1;
+    uint32_t knx_enabled : 1;              // bit 23 KNX
     uint32_t spare24 : 1;
     uint32_t spare25 : 1;
     uint32_t spare26 : 1;
@@ -254,7 +254,15 @@ struct SYSCFG {
 
   Timer         timer[MAX_TIMERS];         // 670
 
-                                           // 6B0 - FFF free locations
+  uint16_t      knx_physsical_addr;        // 6B0  (address_t is a uint16_t)
+  byte          knx_GA_registered;         // 6B3  Number of Group Address to read
+  byte          knx_CB_registered;         // 6B4  Number of Group Address to write
+  uint16_t      knx_GA_addr[KNX_max_GA];   // 6B5  (address_t is a uint16_t) x KNX_max_GA
+  uint16_t      knx_CB_addr[KNX_max_CB];   // 6C9  (address_t is a uint16_t) x KNX_max_CB
+  byte          knx_GA_param[KNX_max_GA];  // 6DD  Type of Input (relay changed, button pressed, sensor read <-teleperiod)
+  byte          knx_CB_param[KNX_max_GA];  // 6E7  Type of Output (set relay, toggle relay, reply sensor value)
+
+                                           // 6F1 - FFF free locations
 } Settings;
 
 struct RTCMEM {
