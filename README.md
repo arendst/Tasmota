@@ -18,9 +18,9 @@ So, for example, if 2 devices that are configured with the 1/2/5 for turning on/
 
 ## Requirements ##
 
-This MOD requires the KNX Library [ascillato/ESP-KNX-IP_Lite](https://github.com/ascillato/ESP-KNX-IP_Lite).
+This MOD requires only the KNX Library [ascillato/ESP-KNX-IP_Lite](https://github.com/ascillato/ESP-KNX-IP_Lite).
 
-Further development will change library and will require the KNX Library [envy/esp-knx-ip](https://github.com/envy/esp-knx-ip). Please, use the [async-udp](https://github.com/envy/esp-knx-ip/tree/async-udp) branch
+Further development will change the library to the KNX Library [envy/esp-knx-ip](https://github.com/envy/esp-knx-ip). Please, use the [async-udp](https://github.com/envy/esp-knx-ip/tree/async-udp) branch
 Also, it is needed to change on _esp-knx-ip.h_ file the following:
 ```
 #define MAX_CALLBACK_ASSIGNMENTS              20
