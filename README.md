@@ -9,9 +9,7 @@ _Sonoff-Tasmota_KNX development branch is kept in sync with the Original Sonoff-
 
 ## KNX Explanation ##
 
-The [KNX](https://www.knx.org/knx-en/knx/association/what-is-knx/index.php) IP Protocol is intended for smart home and smart bulding automation. It is a decentraliced system. Each device can talk
-directly to each other without the need of a central controller or server. Any panel or server is just for telesupervision
-and for sending requests.
+The [KNX](https://www.knx.org/knx-en/knx/association/what-is-knx/index.php) IP Protocol is intended for smart home and smart bulding automation. It is a decentraliced system. Each device can talk directly to each other without the need of a central controller or server. Any panel or server is just for telesupervision and for sending requests.
 
 Each device has a physical address (like a MAC) as 1.1.1 and that address is used for configuration purposes.
 
@@ -32,7 +30,9 @@ Also, it is needed to change on _esp-knx-ip.h_ file the following:
 ```
 The ESP KNX IP library also requires the [ESPAsyncUDP](https://github.com/me-no-dev/ESPAsyncUDP) library. Please, use ESPAsyncUDP library patched with the [PR #21](https://github.com/me-no-dev/ESPAsyncUDP/pull/21)
 
------------------------------------------------------------------------------------------------------------------------------------
+A copy of both libraries with modifications is available:
+* https://github.com/ascillato/Sonoff-Tasmota_KNX/tree/development/lib/esp-knx-ip
+* https://github.com/ascillato/Sonoff-Tasmota_KNX/tree/development/lib/ESPAsyncUDP
 
 ## Development Road Map ##
 
@@ -67,8 +67,6 @@ The ESP KNX IP library also requires the [ESPAsyncUDP](https://github.com/me-no-
 Up to now, enabling KNX uses +18k of code and +3k3 of memory.
 
 There is **NO CONFLICT** with MQTT, Home Assistant, Web, etc. Tests show fast response of all features running at same time.
-
------------------------------------------------------------------------------------------------------------------------------------
 
 ## Contributors to this MOD ##
 
