@@ -56,7 +56,7 @@ This version is kept in sync with the Original Sonoff-Tasmota
 
 -----------------------------------------------------------------------------------------------------------------------------------
 
-## Contributors to this Project ##
+## Contributors to this MOD ##
 
 * Adrian Scillato [ascillato](https://github.com/ascillato)
 * Sisamiwe [sisamiwe](https://github.com/sisamiwe) - Thanks for the guide on using KNX.
