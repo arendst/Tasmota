@@ -1,16 +1,43 @@
-# Sonoff-Tasmota (KNX_MOD)
+# Sonoff-Tasmota (KNX MOD)
 
-This is a [MOD](https://github.com/ascillato/Sonoff-Tasmota_KNX) for Sonoff-Tasmota to integrate KNX Protocol to its features.
+This is a MOD for [Sonoff-Tasmota](https://github.com/arendst/Sonoff-Tasmota) to integrate [KNX Protocol](https://www.knx.org/knx-en/index.php) to its features.
+Sonoff-Tasmota_KNX can be found [here](https://github.com/ascillato/Sonoff-Tasmota_KNX)
 
-This MOD requires the KNX Library [ascillato/ESP-KNX-IP_Lite](https://github.com/ascillato/ESP-KNX-IP_Lite)
+Basic KNX IP Functionality is Available. **( Work in progress )**
 
-Basic Functionality is Available. **Work in progress**.
+_Sonoff-Tasmota_KNX development branch is kept in sync with the Original Sonoff-Tasmota_
+
+## KNX Explanation ##
+
+The [KNX](https://www.knx.org/knx-en/knx/association/what-is-knx/index.php) IP Protocol is intended for smart home and smart bulding automation. It is a decentraliced system. Each device can talk
+directly to each other without the need of a central controller or server. Any panel or server is just for telesupervision
+and for sending requests.
+
+Each device has a physical address (like a MAC) as 1.1.1 and that address is used for configuration purposes.
+
+Each device can be configured with group addresses as 1/1/1 and that address can be used for sending/receiving commands.
+So, for example, if 2 devices that are configured with the 1/2/5 for turning on/off their outputs, and other device send _Turn ON_ command to 1/2/5, both devices will turn on their outputs.
+
+## Requirements ##
+
+This MOD requires the KNX Library [ascillato/ESP-KNX-IP_Lite](https://github.com/ascillato/ESP-KNX-IP_Lite).
+
+Further development will change library and will require the KNX Library [envy/esp-knx-ip](https://github.com/envy/esp-knx-ip). Please, use the [async-udp](https://github.com/envy/esp-knx-ip/tree/async-udp) branch
+Also, it is needed to change on _esp-knx-ip.h_ file the following:
+```
+#define MAX_CALLBACK_ASSIGNMENTS              20
+#define MAX_CALLBACKS                         20
+#define ALLOW_MULTIPLE_CALLBACKS_PER_ADDRESS   1
+//#define ESP_KNX_DEBUG                       <-- comment this line
+```
+The ESP KNX IP library also requires the [ESPAsyncUDP](https://github.com/me-no-dev/ESPAsyncUDP) library. Please, use ESPAsyncUDP library patched with the [PR #21](https://github.com/me-no-dev/ESPAsyncUDP/pull/21)
 
 -----------------------------------------------------------------------------------------------------------------------------------
-## Road Map ##
+
+## Development Road Map ##
 
 **For Sonoff-Tasmota_KNX:**
-- [x] Add Web Menu (uses the one provided by the ESP KNX library)
+- [x] Add Web Menu (need improvement)
 - [x] Add Feature to Receive telegrams and modify Relay Status
 - [x] Add Feature to Receive telegrams from multiple Group Addresses to modify just one relay status (useful for scenes)
 - [x] Add Feature to Send telegrams of relay status change
@@ -19,23 +46,12 @@ Basic Functionality is Available. **Work in progress**.
 - [x] Add Feature to receive telegrams to toggle relay status
 - [ ] Add Feature to read Temperature, Humidity from Tasmota
 - [x] Add Feature to send Temperature, Humidity by a set interval (tasmota teleperiod)
-- [x] Add Feature to receive command to read temperature
+- [x] Add Feature to receive command to read temperature, Humidity
 - [ ] Add Feature to recognize Tasmota config to show the same amount of relays, buttons, etc
 - [ ] Add Feature to Save Config
 - [ ] Add Feature to Load Config
-- [ ] Change Web Menu to a Tasmota one to save FLASH and RAM
 - [ ] Complete all the language files with keys
 - [ ] Optimize code to reduce Flash and RAM
-
-**For ESP_KNX_IP_LITE:**
-- [x] Add Functions to control library from code and not only by Web Menu
-- [ ] Complete needed functions for Tasmota
-- [ ] Add WebUI Functions
-- [ ] Change all *_id_t to config_id_t so as to have control over webpage order
-- [ ] Mod GA_Register function to be similar to CB_Register (needed for Send telegrams of one relay status to multiple Group Addresses)
-- [ ] Optimize code to reduce Flash and RAM
-
------------------------------------------------------------------------------------------------------------------------------------
 
 ## Modifications to [Original Tasmota](https://github.com/arendst/Sonoff-Tasmota) ##
 
@@ -48,11 +64,9 @@ Basic Functionality is Available. **Work in progress**.
 * Add entries to sensor files
 * Add entries to language files
 
-Up to now, enabling KNX uses +14.7k of code
+Up to now, enabling KNX uses +18k of code and +3k3 of memory.
 
 There is **NO CONFLICT** with MQTT, Home Assistant, Web, etc. Tests show fast response of all features running at same time.
-
-_Sonoff-Tasmota_KNX development branch is kept in sync with the Original Sonoff-Tasmota_
 
 -----------------------------------------------------------------------------------------------------------------------------------
 
