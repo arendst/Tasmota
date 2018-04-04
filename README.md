@@ -52,7 +52,7 @@ Up to now, enabling KNX uses +14.7k of code
 
 There is **NO CONFLICT** with MQTT, Home Assistant, Web, etc. Tests show fast response of all features running at same time.
 
-This version is kept in sync with the Original Sonoff-Tasmota
+_Sonoff-Tasmota_KNX development branch is kept in sync with the Original Sonoff-Tasmota_
 
 -----------------------------------------------------------------------------------------------------------------------------------
 
