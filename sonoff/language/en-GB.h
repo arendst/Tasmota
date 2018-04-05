@@ -371,7 +371,7 @@
 
 // xdrv_10_KNX.ino
 #define D_CONFIGURE_KNX "Configure KNX"
-#define D_KNX_PARAMETERS "KNX parameters"
+#define D_KNX_PARAMETERS "KNX Parameters"
 #define D_KNX_GENERAL_CONFIG "General"
 #define D_KNX_PHYSICAL_ADDRESS "Physical Address"
 #define D_KNX_PHYSICAL_ADDRESS_NOTE "( Must be unique on the KNX network )"
