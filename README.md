@@ -50,7 +50,7 @@ A copy of both libraries with modifications is available:
 - [ ] Add Feature to recognize Tasmota config to show the same amount of relays, buttons, etc
 - [ ] Add Feature to Save Config
 - [ ] Add Feature to Load Config
-- [ ] Complete all the language files with keys
+- [x] Complete all the language files with keys
 - [ ] Optimize code to reduce Flash and RAM
 
 ## Modifications to [Original Tasmota](https://github.com/arendst/Sonoff-Tasmota) ##
