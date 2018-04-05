@@ -242,6 +242,7 @@ void SML_Poll(void) {
             sml_set_timeout();
           }
 
+          tpower_curr=OBIS_C_in-OBIS_C_out;
 
         } else {
           // check for  EHZ sml binary
@@ -270,7 +271,7 @@ void SML_Poll(void) {
 
 
 const char JSON_SML[] PROGMEM = "%s,\"%s\":{\"" "Total_in" "\":%d,\"" "Total_out" "\":%d,\"" "Power_curr" "\":%d }";
-const char JSON_OBIS[] PROGMEM = "%s,\"%s\":{\"" "Total_out" "\":%s,\"" "Power_curr" "\":%d }";
+
 
 const char SML_BIN[] PROGMEM = "%s"
   "{s}SML " "Total-In: " "{m}%d " "KWh" "{e}"
@@ -286,9 +287,11 @@ void SML_Show(boolean json) {
   if (json) {
     if (obis!=0xff) {
       if (obis) {
-        char tpowstr[32];
-        dtostrfd(OBIS_T_out,4,tpowstr);
-        snprintf_P(mqtt_data, sizeof(mqtt_data), JSON_OBIS, mqtt_data, "OBIS", tpowstr,OBIS_C_out);
+        char tpowstr1[32];
+        char tpowstr2[32];
+        dtostrfd(OBIS_T_in,4,tpowstr1);
+        dtostrfd(OBIS_T_out,4,tpowstr2);
+        snprintf_P(mqtt_data, sizeof(mqtt_data), JSON_SML, mqtt_data, "OBIS", tpowstr1,tpowstr2,tpower_curr);
       } else {
         snprintf_P(mqtt_data, sizeof(mqtt_data), JSON_SML, mqtt_data, "SML", tpower_in,tpower_out,tpower_curr);
       }
@@ -297,9 +300,11 @@ void SML_Show(boolean json) {
 #ifdef USE_WEBSERVER
     // web interface
     if (obis==1) {
-      char tpowstr[32];
-      dtostrfd(OBIS_T_out,4,tpowstr);
-      snprintf_P(mqtt_data, sizeof(mqtt_data), SML_ASCI, mqtt_data,tpowstr, OBIS_C_out);
+      char tpowstr1[32];
+      char tpowstr2[32];
+      dtostrfd(OBIS_T_in,4,tpowstr1);
+      dtostrfd(OBIS_T_out,4,tpowstr2);
+      snprintf_P(mqtt_data, sizeof(mqtt_data), SML_ASCI, mqtt_data,tpowstr1,tpowstr2,tpower_curr);
     } else {
       snprintf_P(mqtt_data, sizeof(mqtt_data), SML_BIN, mqtt_data,tpower_in, tpower_out, tpower_curr);
     }

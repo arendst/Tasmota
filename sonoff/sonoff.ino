@@ -2431,7 +2431,14 @@ void loop()
 
   if (millis() >= state_loop_timer) StateLoop();
 
+#ifdef USE_SML
+  if (pin[GPIO_SML]>=99) {
+    SerialInput();
+  }
+#else
   SerialInput();
+#endif
+
 
 #ifdef USE_ARDUINO_OTA
   ArduinoOTA.handle();
