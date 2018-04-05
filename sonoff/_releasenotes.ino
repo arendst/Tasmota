@@ -1,4 +1,7 @@
-/* 5.12.0i
+/* 5.12.0j
+ * Add optional Sunrise and Sunset timers with commands Latitide and Longitude to be enabled with define USE_SUNRISE in user_config.h (#2317)
+ *
+ * 5.12.0i
  * Add 16 timers using commands Timer and Timers (#1091)
  * Add commands Timer 0 to clear timer and Timer 1..16 to copy timer
  * Add optional Timer configuration webpage to be enabled in user_config.h with define USE_TIMERS_WEB
