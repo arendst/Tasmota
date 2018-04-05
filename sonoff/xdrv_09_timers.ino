@@ -32,7 +32,7 @@
  * Power  0 = Off, 1 = On, 2 = Toggle, 3 = Blink
  *
 \*********************************************************************************************/
-#define USE_SUNRISE
+//#define USE_SUNRISE
 #define D_TIMER_MODE "Mode"
 #define D_GIVENTIME "given time"
 #define D_SUNRISE "sunrise"
@@ -63,8 +63,8 @@ void TimerEverySecond()
         uint8_t days = 1 << (RtcTime.day_of_week -1);
 
         for (byte i = 0; i < MAX_TIMERS; i++) {
-#ifdef USE_SUNRISE
           uint16_t xtime;
+#ifdef USE_SUNRISE
           if (Settings.timer[i].mday>0) {
             // sunrise,sunset mode
             uint8_t hour_up,minute_up,hour_down,minute_down;
@@ -79,6 +79,8 @@ void TimerEverySecond()
           } else {
              xtime = Settings.timer[i].time;
           }
+#else
+          xtime = Settings.timer[i].time;
 #endif
           if (Settings.timer[i].device >= devices_present) Settings.timer[i].data = 0;  // Reset timer due to change in devices present
           if (Settings.timer[i].arm) {
