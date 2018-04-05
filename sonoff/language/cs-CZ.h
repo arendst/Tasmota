@@ -137,6 +137,8 @@
 #define D_SUBNET_MASK "Maska podsítě"
 #define D_SUBSCRIBE_TO "Přihlaš se do"
 #define D_SUCCESSFUL "úspěšné."
+#define D_SUNRISE "Sunrise"
+#define D_SUNSET "Sunset"
 #define D_TEMPERATURE "Teplota"
 #define D_TO "do"
 #define D_TOGGLE "Přepni"

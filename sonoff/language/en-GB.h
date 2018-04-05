@@ -137,6 +137,8 @@
 #define D_SUBNET_MASK "Subnet Mask"
 #define D_SUBSCRIBE_TO "Subscribe to"
 #define D_SUCCESSFUL "Successful"
+#define D_SUNRISE "Sunrise"
+#define D_SUNSET "Sunset"
 #define D_TEMPERATURE "Temperature"
 #define D_TO "to"
 #define D_TOGGLE "Toggle"

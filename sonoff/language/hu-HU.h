@@ -137,6 +137,8 @@
 #define D_SUBNET_MASK "Subnet Mask"
 #define D_SUBSCRIBE_TO "Feliratkozás a"
 #define D_SUCCESSFUL "Sikeres"
+#define D_SUNRISE "Sunrise"
+#define D_SUNSET "Sunset"
 #define D_TEMPERATURE "Hőmérséklet"
 #define D_TO "-nak"
 #define D_TOGGLE "Toggle"

@@ -93,7 +93,7 @@ typedef union {
   uint32_t data;
   struct {
     uint32_t time : 11;                   // bits 0 - 10 = minutes in a day
-    uint32_t mday : 5;                    // bits 11 - 15 = 32 days in a month
+    uint32_t mode : 5;                    // bits 11 - 15 = timer modes - Scheduler, Sunrise, Sunset
     uint32_t days : 7;                    // bits 16 - 22 = week day mask
     uint32_t device : 4;                  // bits 23 - 26 = 16 devices
     uint32_t power : 2;                   // bits 27 - 28 = 4 power states - Off, On, Toggle, Blink
@@ -253,8 +253,9 @@ struct SYSCFG {
   byte          free_66d[3];               // 66D
 
   Timer         timer[MAX_TIMERS];         // 670
-
-                                           // 6B0 - FFF free locations
+  int           latitude;                  // 6B0
+  int           longitude;                 // 6B4
+                                           // 6B8 - FFF free locations
 } Settings;
 
 struct RTCMEM {

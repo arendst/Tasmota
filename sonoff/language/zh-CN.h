@@ -137,6 +137,8 @@
 #define D_SUBNET_MASK "子网掩码"
 #define D_SUBSCRIBE_TO "订阅"
 #define D_SUCCESSFUL "成功"
+#define D_SUNRISE "Sunrise"
+#define D_SUNSET "Sunset"
 #define D_TEMPERATURE "温度"
 #define D_TO "to"
 #define D_TOGGLE "切换"
