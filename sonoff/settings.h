@@ -93,7 +93,7 @@ typedef union {
   uint32_t data;
   struct {
     uint32_t time : 11;                   // bits 0 - 10 = minutes in a day
-    uint32_t mday : 5;                    // bits 11 - 15 = 32 days in a month
+    uint32_t mode : 5;                    // bits 11 - 15 = timer modes - Scheduler, Sunrise, Sunset
     uint32_t days : 7;                    // bits 16 - 22 = week day mask
     uint32_t device : 4;                  // bits 23 - 26 = 16 devices
     uint32_t power : 2;                   // bits 27 - 28 = 4 power states - Off, On, Toggle, Blink
@@ -253,16 +253,18 @@ struct SYSCFG {
   byte          free_66d[3];               // 66D
 
   Timer         timer[MAX_TIMERS];         // 670
+  int           latitude;                  // 6B0
+  int           longitude;                 // 6B4
+  
+  uint16_t      knx_physsical_addr;        // 6B8  (address_t is a uint16_t)
+  byte          knx_GA_registered;         // 6BB  Number of Group Address to read
+  byte          knx_CB_registered;         // 6BC  Number of Group Address to write
+  uint16_t      knx_GA_addr[MAX_KNX_GA];   // 6BD  (address_t is a uint16_t) x KNX_max_GA
+  uint16_t      knx_CB_addr[MAX_KNX_CB];   // 6D1  (address_t is a uint16_t) x KNX_max_CB
+  byte          knx_GA_param[MAX_KNX_GA];  // 6E5  Type of Input (relay changed, button pressed, sensor read <-teleperiod)
+  byte          knx_CB_param[MAX_KNX_CB];  // 6EF  Type of Output (set relay, toggle relay, reply sensor value)
 
-  uint16_t      knx_physsical_addr;        // 6B0  (address_t is a uint16_t)
-  byte          knx_GA_registered;         // 6B3  Number of Group Address to read
-  byte          knx_CB_registered;         // 6B4  Number of Group Address to write
-  uint16_t      knx_GA_addr[MAX_KNX_GA];   // 6B5  (address_t is a uint16_t) x KNX_max_GA
-  uint16_t      knx_CB_addr[MAX_KNX_CB];   // 6C9  (address_t is a uint16_t) x KNX_max_CB
-  byte          knx_GA_param[MAX_KNX_GA];  // 6DD  Type of Input (relay changed, button pressed, sensor read <-teleperiod)
-  byte          knx_CB_param[MAX_KNX_CB];  // 6E7  Type of Output (set relay, toggle relay, reply sensor value)
-
-                                           // 6F1 - FFF free locations
+                                           // 6F9 - FFF free locations
 } Settings;
 
 struct RTCMEM {

@@ -137,6 +137,8 @@
 #define D_SUBNET_MASK "Maschera sottorete"
 #define D_SUBSCRIBE_TO "Sottoscrivi a"
 #define D_SUCCESSFUL "Riuscito"
+#define D_SUNRISE "Sunrise"
+#define D_SUNSET "Sunset"
 #define D_TEMPERATURE "Temperatura"
 #define D_TO "a"
 #define D_TOGGLE "Toggle"
@@ -369,6 +371,20 @@
 #define D_TIMER_REPEAT "Repeat"
 #define D_TIMER_OUTPUT "Output"
 #define D_TIMER_POWER "Power"
+
+// xdrv_10_KNX.ino
+#define D_CONFIGURE_KNX "Configure KNX"
+#define D_KNX_PARAMETERS "KNX parameters"
+#define D_KNX_GENERAL_CONFIG "General"
+#define D_KNX_PHYSICAL_ADDRESS "Physical Address"
+#define D_KNX_PHYSICAL_ADDRESS_NOTE "( Must be unique on the KNX network )"
+#define D_KNX_ENABLE "Enable KNX"
+#define D_KNX_GROUP_ADDRESS_TO_WRITE "Data to Send to Group Addresses"
+#define D_KNX_ADD "Add"
+#define D_DELETE "Delete"
+#define D_REPLY "Reply"
+#define D_KNX_GROUP_ADDRESS_TO_READ "Group Addresses to Receive Data from"
+#define D_LOG_KNX "KNX: "
 
 // xdrv_03_energy.ino
 #define D_ENERGY_TODAY "Energia Oggi"
