@@ -192,6 +192,35 @@ size_t strchrspn(const char *str1, int character)
   return ret;
 }
 
+double AtoD(char *str)
+{
+  // simple ascii to double, because atof or strtod are too large
+  char strbuf[24];
+
+  strcpy(strbuf, str);
+  char *pt;
+  double left = atoi(strbuf);
+  double right = 0;
+  short len = 0;
+  pt = strtok (strbuf, ".");
+  if (pt) {
+    pt = strtok (NULL, ".");
+    if (pt) {
+      right = atoi(pt);
+      len = strlen(pt);
+      double fac = 1;
+      while (len) {
+        fac /= 10.0;
+        len--;
+      }
+      // pow is also very large
+      //double fac=pow(10,-len);
+      right *= fac;
+    }
+  }
+  return left + right;
+}
+
 char* dtostrfd(double number, unsigned char prec, char *s)
 {
   return dtostrf(number, 1, prec, s);
@@ -1077,6 +1106,7 @@ uint32_t standard_time = 0;
 uint32_t ntp_time = 0;
 uint32_t midnight = 1451602800;
 uint32_t restart_time = 0;
+int16_t  time_timezone = 0;  // Timezone * 10
 uint8_t  midnight_now = 0;
 uint8_t  ntp_sync_minute = 0;
 
@@ -1325,8 +1355,8 @@ boolean MidnightNow()
 
 void RtcSecond()
 {
-  uint32_t stdoffset;
-  uint32_t dstoffset;
+  int32_t stdoffset;
+  int32_t dstoffset;
   TIME_T tmpTime;
 
   if ((ntp_sync_minute > 59) && (RtcTime.minute > 2)) ntp_sync_minute = 1;                 // If sync prepare for a new cycle
@@ -1353,6 +1383,7 @@ void RtcSecond()
   utc_time++;
   local_time = utc_time;
   if (local_time > 1451602800) {  // 2016-01-01
+    int32_t time_offset = Settings.timezone * SECS_PER_HOUR;
     if (99 == Settings.timezone) {
       if (DaylightSavingTime.hemis) {
         dstoffset = StandardTime.offset * SECS_PER_MIN;  // Southern hemisphere
@@ -1362,13 +1393,13 @@ void RtcSecond()
         stdoffset = StandardTime.offset * SECS_PER_MIN;
       }
       if ((utc_time >= (daylight_saving_time - stdoffset)) && (utc_time < (standard_time - dstoffset))) {
-        local_time += dstoffset;  // Daylight Saving Time
+        time_offset = dstoffset;  // Daylight Saving Time
       } else {
-        local_time += stdoffset;  // Standard Time
+        time_offset = stdoffset;  // Standard Time
       }
-    } else {
-      local_time += Settings.timezone * SECS_PER_HOUR;
     }
+    local_time += time_offset;
+    time_timezone = time_offset / (SECS_PER_HOUR / 10);
   }
   BreakTime(local_time, RtcTime);
   if (!RtcTime.hour && !RtcTime.minute && !RtcTime.second && RtcTime.valid) {

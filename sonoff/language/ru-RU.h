@@ -137,6 +137,8 @@
 #define D_SUBNET_MASK "Маска Подсети"
 #define D_SUBSCRIBE_TO "Подписаться на"
 #define D_SUCCESSFUL "Успешно"
+#define D_SUNRISE "Sunrise"
+#define D_SUNSET "Sunset"
 #define D_TEMPERATURE "Температура"
 #define D_TO "до"
 #define D_TOGGLE "Переключить"

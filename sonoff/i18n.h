@@ -105,6 +105,8 @@
 #define D_JSON_STARTUPUTC "StartupUTC"
 #define D_JSON_SUBNETMASK "Subnetmask"
 #define D_JSON_SUCCESSFUL "Successful"
+#define D_JSON_SUNRISE "Sunrise"
+#define D_JSON_SUNSET "Sunset"
 #define D_JSON_SWITCH "Switch"
 #define D_JSON_SYNC "Sync"
 #define D_JSON_TEMPERATURE "Temperature"
@@ -270,9 +272,9 @@
 #define D_CMND_IRSEND "IRSend"
   #define D_JSON_INVALID_JSON "Invalid JSON"
   #define D_JSON_PROTOCOL_NOT_SUPPORTED "Protocol not supported"
-  #define D_JSON_IR_PROTOCOL "PROTOCOL"
-  #define D_JSON_IR_BITS "BITS"
-  #define D_JSON_IR_DATA "DATA"
+  #define D_JSON_IR_PROTOCOL "Protocol"
+  #define D_JSON_IR_BITS "Bits"
+  #define D_JSON_IR_DATA "Data"
 #define D_CMND_IRHVAC "IRHVAC"
   #define D_JSON_IRHVAC_VENDOR "VENDOR"
   #define D_JSON_IRHVAC_POWER "POWER"
@@ -354,6 +356,7 @@
 // Commands xdrv_09_timers.ino
 #define D_CMND_TIMER "Timer"
   #define D_JSON_TIMER_ARM "Arm"
+  #define D_JSON_TIMER_MODE "Mode"
   #define D_JSON_TIMER_TIME "Time"
   #define D_JSON_TIMER_DAYS "Days"
   #define D_JSON_TIMER_REPEAT "Repeat"
@@ -361,6 +364,8 @@
   #define D_JSON_TIMER_POWER "Power"
   #define D_JSON_TIMER_NO_DEVICE "No GPIO as output configured"
 #define D_CMND_TIMERS "Timers"
+#define D_CMND_LATITUDE "Latitude"
+#define D_CMND_LONGITUDE "Longitude"
 
 /********************************************************************************************/
 

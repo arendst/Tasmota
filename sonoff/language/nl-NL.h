@@ -137,6 +137,8 @@
 #define D_SUBNET_MASK "Subnet Masker"
 #define D_SUBSCRIBE_TO "Abonneer op"
 #define D_SUCCESSFUL "Gelukt"
+#define D_SUNRISE "Zonsopgang"
+#define D_SUNSET "Zonsondergang"
 #define D_TEMPERATURE "Temperatuur"
 #define D_TO "naar"
 #define D_TOGGLE "Toggle"  // Wissel, Tuimel
