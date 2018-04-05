@@ -105,6 +105,9 @@ void WifiWpsStatusCallback(wps_cb_status status);
 #ifdef USE_TIMERS
 #undef USE_TIMERS                             // Disable support for up to 16 timers
 #endif
+#ifdef USE_SUNRISE
+#undef USE_SUNRISE                            // Disable support for Sunrise and sunset tools
+#endif
 #ifdef USE_PZEM004T
 #undef USE_PZEM004T                           // Disable PZEM004T energy sensor
 #endif
