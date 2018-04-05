@@ -1,4 +1,4 @@
-# Sonoff-Tasmota (KNX MOD)
+# Sonoff-Tasmota ( KNX MOD )
 
 This is a MOD for [Sonoff-Tasmota](https://github.com/arendst/Sonoff-Tasmota) to integrate [KNX Protocol](https://www.knx.org/knx-en/index.php) to its features.
 Sonoff-Tasmota_KNX can be found [here](https://github.com/ascillato/Sonoff-Tasmota_KNX)
@@ -11,7 +11,7 @@ _Sonoff-Tasmota_KNX development branch is kept in sync with the Original Sonoff-
 
 The [KNX](https://www.knx.org/knx-en/knx/association/what-is-knx/index.php) IP Protocol is intended for smart home and smart bulding automation. It is a decentraliced system. Each device can talk directly to each other without the need of a central controller or server. Any panel or server is just for telesupervision and for sending requests.
 
-Each device has a physical address (like a MAC) as 1.1.1 and that address is used for configuration purposes.
+Each device has a physical address ( like a MAC ) as 1.1.1 and that address is used for configuration purposes.
 
 Each device can be configured with group addresses as 1/1/1 and that address can be used for sending/receiving commands.
 So, for example, if 2 devices that are configured with the 1/2/5 for turning on/off their outputs, and other device send _Turn ON_ command to 1/2/5, both devices will turn on their outputs.
