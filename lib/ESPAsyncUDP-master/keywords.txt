@@ -1,0 +1,33 @@
+#######################################
+# Syntax Coloring Map For Ultrasound
+#######################################
+
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+
+AsyncUDP	KEYWORD1
+AsyncUDPPacket	KEYWORD1
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+
+connect	KEYWORD2
+connected	KEYWORD2
+listen	KEYWORD2
+listenMulticast	KEYWORD2
+close	KEYWORD2
+write	KEYWORD2
+broadcast	KEYWORD2
+onPacket	KEYWORD2
+data	KEYWORD2
+length	KEYWORD2
+localIP	KEYWORD2
+localPort	KEYWORD2
+remoteIP	KEYWORD2
+remotePort	KEYWORD2
+
+#######################################
+# Constants (LITERAL1)
+#######################################
