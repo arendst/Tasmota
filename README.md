@@ -20,8 +20,7 @@ So, for example, if 2 devices that are configured with the 1/2/5 for turning on/
 
 This MOD requires only the KNX Library [ascillato/ESP-KNX-IP_Lite](https://github.com/ascillato/ESP-KNX-IP_Lite).
 
-Further development will change the library to the KNX Library [envy/esp-knx-ip](https://github.com/envy/esp-knx-ip). Please, use the [async-udp](https://github.com/envy/esp-knx-ip/tree/async-udp) branch
-Also, it is needed to change on _esp-knx-ip.h_ file the following:
+Further development will change the library to the KNX Library [envy/esp-knx-ip](https://github.com/envy/esp-knx-ip). Please, use the [async-udp](https://github.com/envy/esp-knx-ip/tree/async-udp) branch. Also, it is needed to change on the _esp-knx-ip.h_ file the following:
 ```
 #define MAX_CALLBACK_ASSIGNMENTS              20
 #define MAX_CALLBACKS                         20
@@ -30,7 +29,7 @@ Also, it is needed to change on _esp-knx-ip.h_ file the following:
 ```
 The ESP KNX IP library also requires the [ESPAsyncUDP](https://github.com/me-no-dev/ESPAsyncUDP) library. Please, use ESPAsyncUDP library patched with the [PR #21](https://github.com/me-no-dev/ESPAsyncUDP/pull/21)
 
-A copy of both libraries with modifications is available:
+Copy of both libraries with the modifications needed are available at:
 * https://github.com/ascillato/Sonoff-Tasmota_KNX/tree/development/lib/esp-knx-ip
 * https://github.com/ascillato/Sonoff-Tasmota_KNX/tree/development/lib/ESPAsyncUDP
 
