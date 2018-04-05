@@ -16,6 +16,12 @@ Each device has a physical address ( like a MAC ) as 1.1.0 and that address is u
 Each device can be configured with group addresses as 2/2/1 and that address can be used for sending/receiving commands.
 So, for example, if 2 devices that are configured with the 2/2/1 for turning on/off their outputs, and other device send _Turn ON_ command to 2/2/1, both devices will turn on their outputs.
 
+## Next Version Menu ##
+
+<img src="https://github.com/ascillato/Sonoff-Tasmota_KNX/blob/development/.github/Config_Menu.jpg" />
+
+<img src="https://github.com/ascillato/Sonoff-Tasmota_KNX/blob/development/.github/KNX_menu.jpg" />
+
 ## Requirements ##
 
 This MOD requires only the KNX Library [ascillato/ESP-KNX-IP_Lite](https://github.com/ascillato/ESP-KNX-IP_Lite).
