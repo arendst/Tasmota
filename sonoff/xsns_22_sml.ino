@@ -329,7 +329,11 @@ static void sml_set_timeout() {
 
 
 void SML_Init(void) {
+#ifdef USE_OBIS
+  obis=1;
+#else
   obis=0; // set asci=1 or binary=0
+#endif
   sec_cnt=0;
   SetSerialBaudrate(9600);
   /// led to OUTPUT
