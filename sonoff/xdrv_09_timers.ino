@@ -176,6 +176,44 @@ void DuskTillDawn(uint8_t *hour_up,uint8_t *minute_up, uint8_t *hour_down, uint8
   *minute_down = UntergangMinuten;
 }
 
+void ApplyTimerOffsets(Timer stored, Timer *duskdawn) {
+    
+    // replace hours, minutes by sunrise
+    uint8_t hour_up,minute_up,hour_down,minute_down;
+    DuskTillDawn(&hour_up,&minute_up,&hour_down,&minute_down);
+    if (duskdawn->mode==1) {
+        // sunrise
+        duskdawn->time=(hour_up*60)+minute_up;
+    } else {
+        // sunset     
+        duskdawn->time=(hour_down*60)+minute_down;   
+    }
+    // apply offsets, check for over- and underflows
+    uint16_t timeBuffer;
+    if ((uint16_t)stored.time > 720) {
+        // negative offset, time after 12am
+        timeBuffer = (uint16_t)stored.time - 720;
+        // check for underflow
+        if (timeBuffer > (uint16_t)duskdawn->time) {
+            timeBuffer = 1440 - (timeBuffer - (uint16_t)duskdawn->time);
+            duskdawn->days = duskdawn->days >> 1;
+            duskdawn->days = duskdawn->days |= (stored.days << 6);
+        } else {
+            timeBuffer = (uint16_t)duskdawn->time - timeBuffer;            
+        }
+    } else {
+        // positive offset
+        timeBuffer = (uint16_t)duskdawn->time + (uint16_t)stored.time;
+        // check for overflow
+        if (timeBuffer > 1440) {
+            timeBuffer -= 1440;
+            duskdawn->days = duskdawn->days << 1;
+            duskdawn->days = duskdawn->days |= (stored.days >> 6);
+        }
+    }
+    duskdawn->time = timeBuffer;
+}
+
 String GetSun(byte dawn)
 {
   char stime[6];
@@ -214,14 +252,16 @@ void TimerEverySecond()
       for (byte i = 0; i < MAX_TIMERS; i++) {
         if (Settings.timer[i].device >= devices_present) Settings.timer[i].data = 0;  // Reset timer due to change in devices present
         uint16_t set_time = Settings.timer[i].time;
+        Timer xtimer=Settings.timer[i];
 #ifdef USE_SUNRISE
         if ((1 == Settings.timer[i].mode) || (2 == Settings.timer[i].mode)) {  // Sunrise or Sunset
-          set_time = GetSunMinutes(Settings.timer[i].mode -1);
+          ApplyTimerOffsets(Settings.timer[i], &xtimer);
+          set_time = xtimer.time;          
         }
 #endif
         if (Settings.timer[i].arm) {
           if (time == set_time) {
-            if (!bitRead(timer_fired, i) && (Settings.timer[i].days & days)) {
+            if (!bitRead(timer_fired, i) && (xtimer.days & days)) {
               bitSet(timer_fired, i);
               Settings.timer[i].arm = Settings.timer[i].repeat;
               ExecuteCommandPower(Settings.timer[i].device +1, Settings.timer[i].power);
@@ -416,25 +456,46 @@ const char HTTP_TIMER_SCRIPT[] PROGMEM =
   "function gt(){"                                                // Set hours and minutas according to mode
     "var m,p,q;"
     "m=qs('input[name=\"rd\"]:checked').value;"                   // Get mode
-    "if(m==0){p=pt[ct]&0x7FF;}"                                   // Schedule time
+    "if(m==0){p=pt[ct]&0x7FF;so(0);}"                             // Schedule time, hide offset span
     "if(m==1){p=pt[" STR(MAX_TIMERS) "];}"                        // Sunrise
     "if(m==2){p=pt[" STR(MAX_TIMERS +1) "];}"                     // Sunset
     "q=Math.floor(p/60);if(q<10){q='0'+q;}qs('#ho').value=q;"     // Set hours
     "q=p%60;if(q<10){q='0'+q;}qs('#mi').value=q;"                 // Set minutes
+    "if((m==1)||(m==2)){"                                         // Sunrise or sunset is set
+      "p=pt[ct]&0x7FF;"                                           // Load stored time for offset calculation
+      "q=Math.floor(p/60);"                                       // Parse hours
+      "if(q>12){q-=12;qs('#odr').selectedIndex=1;}"               // Negative offset
+        "else{qs('#odr').selectedIndex=0;}"
+      "if(q<10){q='0'+q;}qs('#oho').value=q;"                     // Set offset hours
+      "q=p%60;if(q<10){q='0'+q;}qs('#omi').value=q;"              // Set offset minutes
+      "so(1);"                                                    // Show offset span
+    "}"
+  "}"
+  "function so(b){"                                               // Hide or show offset items
+    "if(b==1){qs('#ofs').style='';}"
+    "else{qs('#ofs').style='display:none;';}"
   "}"
 #endif
   "function st(){"                                                // Save parameters to hidden area
-    "var i,n,p,s;"
-    "s=0;"
+    "var i,l,m,n,p,s;"
+    "m=0;s=0;"
     "n=1<<30;if(eb('a0').checked){s|=n;}"                         // Get arm
     "n=1<<29;if(eb('r0').checked){s|=n;}"                         // Get repeat
     "for(i=0;i<7;i++){n=1<<(16+i);if(eb('w'+i).checked){s|=n;}}"  // Get weekdays
 #ifdef USE_SUNRISE
+    "m=qs('input[name=\"rd\"]:checked').value;"                   // Check mode    
     "s|=(qs('input[name=\"rd\"]:checked').value<<11);"            // Get mode
 #endif
     "s|=(eb('p1').value<<27);"                                    // Get power
     "s|=(qs('#d1').selectedIndex<<23);"                           // Get device
-    "s|=((qs('#ho').selectedIndex*60)+qs('#mi').selectedIndex)&0x7FF;"  // Get time
+    "if(m==0){s|=((qs('#ho').selectedIndex*60)+qs('#mi').selectedIndex)&0x7FF;}"  // Get time    
+#ifdef USE_SUNRISE
+    "if((m==1)||(m==2)){"
+      "l=((qs('#oho').selectedIndex*60)+qs('#omi').selectedIndex);" // Buffer offset time
+      "if(qs('#odr').selectedIndex>0){l+=720;}"                     // If negative offset, add 12h to given offset time
+      "s|=l&0x7FF;"                                                 // Save offset instead of time
+    "}"
+#endif
     "pt[ct]=s;"
     "eb('t0').value=pt.join();"                                   // Save parameters from array to hidden area
   "}"
@@ -467,6 +528,11 @@ const char HTTP_TIMER_SCRIPT[] PROGMEM =
     "eb('bt').innerHTML=s;"                                       // Create tabs
     "o=qs('#ho');for(i=0;i<=23;i++){ce((i<10)?('0'+i):i,o);}"     // Create hours select options
     "o=qs('#mi');for(i=0;i<=59;i++){ce((i<10)?('0'+i):i,o);}"     // Create minutes select options
+#ifdef USE_SUNRISE                                                // NEW: Create offset options (+/- up to 11h, 59m)
+    "o=qs('#odr');ce('+',o);ce('-',o);"                           // Create offset direction select options
+    "o=qs('#oho');for(i=0;i<=11;i++){ce((i<10)?('0'+i):i,o);}"    // Create offset hours select options
+    "o=qs('#omi');for(i=0;i<=59;i++){ce((i<10)?('0'+i):i,o);}"    // Create offset minutes select options
+#endif
     "o=qs('#d1');for(i=0;i<}1;i++){ce(i+1,o);}"                   // Create devices
     "var a='" D_DAY3LIST "';"
     "s='';for(i=0;i<7;i++){s+=\"<input style='width:5%;' id='w\"+i+\"' name='w\"+i+\"' type='checkbox'><b>\"+a.substring(i*3,(i*3)+3)+\"</b>\"}"
@@ -502,11 +568,19 @@ const char HTTP_FORM_TIMER1[] PROGMEM =
 #ifdef USE_SUNRISE
   "<fieldset style='width:299px;margin:auto;text-align:left;border:0;'>"
   "<input id='b0' name='rd' type='radio' value='0' onclick='gt();'><b>" D_TIMER_TIME "</b>&nbsp;"
-                                                  "<span><select style='width:60px;' id='ho' name='ho' onclick='eb(\"b0\").checked=1;'></select></span>"
+                                                  "<span><select style='width:60px;' id='ho' name='ho' onclick='eb(\"b0\").checked=1;so(0);'></select></span>"
                                                   "&nbsp;" D_HOUR_MINUTE_SEPARATOR "&nbsp;"
-                                                  "<span><select style='width:60px;' id='mi' name='mi' onclick='eb(\"b0\").checked=1;'></select></span><br/>"
-  "<input id='b1' name='rd' type='radio' value='1' onclick='gt();'><b>" D_SUNRISE "</b><br/>"
+                                                  "<span><select style='width:60px;' id='mi' name='mi' onclick='eb(\"b0\").checked=1;so(0);'></select></span><br/>"                                                
+  "<input id='b1' name='rd' type='radio' value='1' onclick='gt();'><b>" D_SUNRISE "</b><br/>"   
   "<input id='b2' name='rd' type='radio' value='2' onclick='gt();'><b>" D_SUNSET "</b><br/>"
+//NEW: sunrise timer offset options
+  "<span id='ofs' style='display:none;'>"
+    "<span><select style='width:40px;' id='odr' name='odr'></select></span>"
+    "&nbsp;&nbsp;"
+    "<span><select style='width:60px;' id='oho' name='oho'></select></span>"
+    "&nbsp;" D_HOUR_MINUTE_SEPARATOR "&nbsp;"
+    "<span><select style='width:60px;' id='omi' name='omi'></select></span>"
+  "</span><br/>"
   "</fieldset>"
 #else
   "<b>" D_TIMER_TIME "</b>&nbsp;"
@@ -537,6 +611,16 @@ void HandleTimerConfiguration()
   page += FPSTR(HTTP_FORM_TIMER);
   for (byte i = 0; i < MAX_TIMERS; i++) {
     if (i > 0) page += F(",");
+//REMOVE:
+// #ifdef USE_SUNRISE
+//     Timer xtimer=Settings.timer[i];
+//     if (xtimer.mode>0) {
+//       ApplyTimerOffsets(Settings.timer[i], &xtimer);
+//     }
+//     page += String(xtimer.data);
+// #else
+//     page += String(Settings.timer[i].data);
+// #endif
     page += String(Settings.timer[i].data);
   }
 #ifdef USE_SUNRISE
@@ -567,11 +651,27 @@ void TimerSaveSettings()
     timer.data = strtol(p, &p, 10);
     p++;  // Skip comma
     if (timer.time < 1440) {
-#ifdef USE_SUNRISE
-      if ((1 == timer.mode) || (2 == timer.mode)) timer.time = Settings.timer[i].time;  // Do not save time on Sunrise or Sunset
-#endif
+//REMOVE:
+// #ifdef USE_SUNRISE
+//       if (timer.mode>0) {
+//         // calculate offset timer for comparison
+//         Timer offsetTimer = Settings.timer[i];
+//         ApplyTimerOffsets(Settings.timer[i], &offsetTimer);
+//         if (timer.time!=offsetTimer.time) {
+//             Settings.timer[i].time=timer.time;     // save time for offset
+//         }
+//         Settings.timer[i].mode=timer.mode;
+//         if (timer.days!=offsetTimer.days) {
+//             Settings.timer[i].days=timer.days;     // days changed, save
+//         }
+//         Settings.timer[i].device=timer.device;
+//         Settings.timer[i].power=timer.power;
+//         Settings.timer[i].repeat=timer.repeat;
+//         Settings.timer[i].arm=timer.arm;
+//       }
+// #endif      
       Settings.timer[i].data = timer.data;
-    }
+    }  
     snprintf_P(log_data, sizeof(log_data), PSTR("%s%s0x%08X"), log_data, (i > 0)?",":"", Settings.timer[i].data);
   }
   AddLog(LOG_LEVEL_DEBUG);
