@@ -150,12 +150,12 @@ int32_t cmpseq(unsigned char *cp,const unsigned char *ccp,char *found,short size
     }
 }
 
-static double OBIS_T_out;
-static double OBIS_T_outl;
-static uint16_t OBIS_C_out;
-static double OBIS_T_in;
-static double OBIS_T_inl;
-static uint16_t OBIS_C_in;
+static double OBIS_T_out=0;
+static double OBIS_T_outl=0;
+static uint16_t OBIS_C_out=0;
+static double OBIS_T_in=0;
+static double OBIS_T_inl=0;
+static uint16_t OBIS_C_in=0;
 
 static uint8_t sec_cnt;
 uint32_t last_millis;
@@ -202,7 +202,7 @@ void SML_Poll(void) {
             }
             // scan double value kwh
             cp+=sizeof(seqin);
-            OBIS_T_in=atof((const char *)cp);
+            OBIS_T_in=AtoD((char *)cp);
             //SOLAR_C=sec_cnt;
             if (sec_cnt>=10) {
               sec_cnt=0;
@@ -227,7 +227,7 @@ void SML_Poll(void) {
             }
             // scan double value kwh
             cp+=sizeof(seqout);
-            OBIS_T_out=atof((const char *)cp);
+            OBIS_T_out=AtoD((char *)cp);
             //SOLAR_C=sec_cnt;
             if (sec_cnt>=10) {
               sec_cnt=0;
@@ -271,6 +271,7 @@ void SML_Poll(void) {
 
 
 const char JSON_SML[] PROGMEM = "%s,\"%s\":{\"" "Total_in" "\":%d,\"" "Total_out" "\":%d,\"" "Power_curr" "\":%d }";
+const char JSON_OBIS[] PROGMEM = "%s,\"%s\":{\"" "Total_in" "\":%s,\"" "Total_out" "\":%s,\"" "Power_curr" "\":%d }";
 
 
 const char SML_BIN[] PROGMEM = "%s"
@@ -279,8 +280,8 @@ const char SML_BIN[] PROGMEM = "%s"
   "{s}SML " "Current-In/Out: " "{m}%d " "W" "{e}";
 
   const char SML_ASCI[] PROGMEM = "%s"
-  "{s}OBIS " "Total-In: " "{m}%d " "KWh" "{e}"
-  "{s}OBIS " "Total-Out: " "{m}%d " "KWh" "{e}"
+  "{s}OBIS " "Total-In: " "{m}%s " "KWh" "{e}"
+  "{s}OBIS " "Total-Out: " "{m}%s " "KWh" "{e}"
   "{s}OBIS " "Current-In/Out: " "{m}%d " "W" "{e}";
 
 void SML_Show(boolean json) {
@@ -291,7 +292,7 @@ void SML_Show(boolean json) {
         char tpowstr2[32];
         dtostrfd(OBIS_T_in,4,tpowstr1);
         dtostrfd(OBIS_T_out,4,tpowstr2);
-        snprintf_P(mqtt_data, sizeof(mqtt_data), JSON_SML, mqtt_data, "OBIS", tpowstr1,tpowstr2,tpower_curr);
+        snprintf_P(mqtt_data, sizeof(mqtt_data), JSON_OBIS, mqtt_data, "OBIS", tpowstr1,tpowstr2,tpower_curr);
       } else {
         snprintf_P(mqtt_data, sizeof(mqtt_data), JSON_SML, mqtt_data, "SML", tpower_in,tpower_out,tpower_curr);
       }
@@ -322,7 +323,7 @@ unsigned char sml_time_cnt;
 static void sml_set_timeout() {
   sml_time_cnt=SML_TIMEOUT;
   // led on
-#if LEDPIN>0
+#if LEDPIN>=0
   digitalWrite(LEDPIN,HIGH);
 #endif
 }
@@ -337,7 +338,7 @@ void SML_Init(void) {
   sec_cnt=0;
   SetSerialBaudrate(9600);
   /// led to OUTPUT
-#if LEDPIN>0
+#if LEDPIN>=0
   pinMode(LEDPIN,OUTPUT);
   digitalWrite(LEDPIN,LOW);
 #endif
@@ -362,7 +363,7 @@ boolean Xsns91(byte function) {
           sml_time_cnt-=1;
           if (sml_time_cnt==0) {
             // timed out
-            OBIS_C_out=0;
+            tpower_curr=0;
             // led off
 #if LEDPIN>0
             digitalWrite(LEDPIN,LOW);
