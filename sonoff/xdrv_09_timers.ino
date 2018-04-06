@@ -611,16 +611,6 @@ void HandleTimerConfiguration()
   page += FPSTR(HTTP_FORM_TIMER);
   for (byte i = 0; i < MAX_TIMERS; i++) {
     if (i > 0) page += F(",");
-//REMOVE:
-// #ifdef USE_SUNRISE
-//     Timer xtimer=Settings.timer[i];
-//     if (xtimer.mode>0) {
-//       ApplyTimerOffsets(Settings.timer[i], &xtimer);
-//     }
-//     page += String(xtimer.data);
-// #else
-//     page += String(Settings.timer[i].data);
-// #endif
     page += String(Settings.timer[i].data);
   }
 #ifdef USE_SUNRISE
@@ -650,26 +640,7 @@ void TimerSaveSettings()
   for (byte i = 0; i < MAX_TIMERS; i++) {
     timer.data = strtol(p, &p, 10);
     p++;  // Skip comma
-    if (timer.time < 1440) {
-//REMOVE:
-// #ifdef USE_SUNRISE
-//       if (timer.mode>0) {
-//         // calculate offset timer for comparison
-//         Timer offsetTimer = Settings.timer[i];
-//         ApplyTimerOffsets(Settings.timer[i], &offsetTimer);
-//         if (timer.time!=offsetTimer.time) {
-//             Settings.timer[i].time=timer.time;     // save time for offset
-//         }
-//         Settings.timer[i].mode=timer.mode;
-//         if (timer.days!=offsetTimer.days) {
-//             Settings.timer[i].days=timer.days;     // days changed, save
-//         }
-//         Settings.timer[i].device=timer.device;
-//         Settings.timer[i].power=timer.power;
-//         Settings.timer[i].repeat=timer.repeat;
-//         Settings.timer[i].arm=timer.arm;
-//       }
-// #endif      
+    if (timer.time < 1440) {    
       Settings.timer[i].data = timer.data;
     }  
     snprintf_P(log_data, sizeof(log_data), PSTR("%s%s0x%08X"), log_data, (i > 0)?",":"", Settings.timer[i].data);
