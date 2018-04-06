@@ -35,7 +35,7 @@ Further development will change the library to the KNX Library [envy/esp-knx-ip]
 ```
 The ESP KNX IP library (async-udp branch) also requires the [ESPAsyncUDP](https://github.com/me-no-dev/ESPAsyncUDP) library. Please, use ESPAsyncUDP library patched with the [PR #21](https://github.com/me-no-dev/ESPAsyncUDP/pull/21)
 
-Copy of both libraries with the modifications needed are available at:
+A copy of both libraries with the modifications needed are available at:
 * https://github.com/ascillato/Sonoff-Tasmota_KNX/tree/development/lib/esp-knx-ip
 * https://github.com/ascillato/Sonoff-Tasmota_KNX/tree/development/lib/ESPAsyncUDP
 
