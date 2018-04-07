@@ -21,7 +21,7 @@ Several home automation systems have KNX support. For example, [Home Assistant](
 
 ## Requirements ##
 
-This MOD requires the KNX Library [envy/esp-knx-ip](https://github.com/envy/esp-knx-ip). Please, use the [async-udp](https://github.com/envy/esp-knx-ip/tree/async-udp) branch. Also, it is needed to change the following parameters in the _esp-knx-ip.h_ file:
+This MOD requires the ESP8266 KNX Library [envy/esp-knx-ip](https://github.com/envy/esp-knx-ip). Please, use the [async-udp](https://github.com/envy/esp-knx-ip/tree/async-udp) branch. Also, it is needed to change the following parameters in the _esp-knx-ip.h_ file:
 ```
 #define ALLOW_MULTIPLE_CALLBACKS_PER_ADDRESS   1
 
