@@ -8,7 +8,7 @@ _Sonoff-Tasmota_KNX is kept updated with the Original Sonoff-Tasmota_
 
 ## KNX Explanation ##
 
-The [KNX](https://www.knx.org/knx-en/knx/association/what-is-knx/index.php) IP Protocol is intended for smart home and smart bulding automation. It is a decentraliced system. Each device can talk directly to each other without the need of a central controller or server. Any panel or server is just for telesupervision and for sending requests. KNX IP Protocol uses a UDP multicast on 224.0.23.12:3671.
+The [KNX](https://www.knx.org/knx-en/knx/association/what-is-knx/index.php) IP Protocol is intended for smart home and smart bulding automation. It is a decentraliced system. Each device can talk directly to each other without the need of a central controller or server. Any panel or server is just for telesupervision and for sending requests. KNX IP Protocol uses a UDP multicast on _224.0.23.12:3671_.
 
 Each device has a physical address ( like a MAC ) as **1 . 1 . 0** and that address is used for configuration purposes.
 
