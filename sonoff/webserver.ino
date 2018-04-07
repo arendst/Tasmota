@@ -25,10 +25,10 @@
  * Based on source by AlexT (https://github.com/tzapu)
 \*********************************************************************************************/
 
-#ifdef USE_KNX	
-#include <esp-knx-ip.h>     // Include KNX IP library	
+#ifdef USE_KNX
+#include <esp-knx-ip.h>     // Include KNX IP library
 #endif // USE_KNX
-  
+
 #define STR_HELPER(x) #x
 #define STR(x) STR_HELPER(x)
 
@@ -202,9 +202,9 @@ const char HTTP_BTN_MENU_MQTT[] PROGMEM =
 #endif  // USE_DOMOTICZ
   "";
 const char HTTP_BTN_MENU4[] PROGMEM =
-#ifdef USE_KNX	
-  "<br/><form action='knx' method='get'><button>" D_CONFIGURE_KNX "</button></form>"	
-#endif  // USE_KNX  
+#ifdef USE_KNX
+  "<br/><form action='knx' method='get'><button>" D_CONFIGURE_KNX "</button></form>"
+#endif  // USE_KNX
   "<br/><form action='lg' method='get'><button>" D_CONFIGURE_LOGGING "</button></form>"
   "<br/><form action='co' method='get'><button>" D_CONFIGURE_OTHER "</button></form>"
   "<br/>"
@@ -360,6 +360,9 @@ void StartWebserver(int type, IPAddress ipweb)
         WebServer->on("/dm", HandleDomoticzConfiguration);
 #endif  // USE_DOMOTICZ
       }
+#ifdef USE_KNX
+      WebServer->on("/kn", HandleKNXConfiguration);
+#endif // USE_KNX
       WebServer->on("/lg", HandleLoggingConfiguration);
       WebServer->on("/co", HandleOtherConfiguration);
       WebServer->on("/dl", HandleBackupConfiguration);
@@ -389,9 +392,9 @@ void StartWebserver(int type, IPAddress ipweb)
       }
 #endif  // USE_EMULATION
       WebServer->onNotFound(HandleNotFound);
-#ifdef USE_KNX      	
-      knx.start(WebServer); // Start knx. The /knx link is automatically set inside the KNX library	
-#endif // USE_KNX      
+#ifdef USE_KNX
+      knx.start(WebServer); // Start knx. The /knx link is automatically set inside the KNX library
+#endif // USE_KNX
     }
     reset_web_log_flag = 0;
     WebServer->begin(); // Web server start
