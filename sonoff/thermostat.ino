@@ -216,7 +216,7 @@ void ThermoFunction (int tele_period)
                 }
             }
             snprintf_P(log_data, sizeof(log_data), PSTR("Thermo Cntr %d | State %d | SP %d | Temp %d"), Settings.temp_control_mode, thermo_state, Settings.temp_control_setpoint, temperature);
-            AddLog(LOG_LEVEL_INFO);
+            AddLog(LOG_LEVEL_DEBUG);
             temperature_check = 0;
         }
         else
