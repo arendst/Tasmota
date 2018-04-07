@@ -1,9 +1,9 @@
-# Sonoff-Tasmota ( KNX MOD )
+# ( Work In Progress ) Sonoff-Tasmota KNX MOD
 
 This is a MOD for [Sonoff-Tasmota](https://github.com/arendst/Sonoff-Tasmota) to integrate [KNX Protocol](https://www.knx.org/knx-en/index.php) to its features.
 Sonoff-Tasmota_KNX can be found [here](https://github.com/ascillato/Sonoff-Tasmota_KNX)
 
-Basic KNX IP Functionality is Available. **( Work in progress )**
+Basic KNX IP Functionality is Available.
 
 _Sonoff-Tasmota_KNX development branch is kept in sync with the Original Sonoff-Tasmota_
 
@@ -18,19 +18,10 @@ So, for example, if 2 devices that are configured with the **2 / 2 / 1** for tur
 
 ## Requirements ##
 
-This MOD requires only the KNX Library [ascillato/ESP-KNX-IP_Lite](https://github.com/ascillato/ESP-KNX-IP_Lite).
-
-## Next Version Menu ##
-
-<img src="https://github.com/ascillato/Sonoff-Tasmota_KNX/blob/development/.github/Config_Menu.jpg" />
-
-<img src="https://github.com/ascillato/Sonoff-Tasmota_KNX/blob/development/.github/KNX_menu.jpg" />
-
-Further development will change the library to the KNX Library [envy/esp-knx-ip](https://github.com/envy/esp-knx-ip). Please, use the [async-udp](https://github.com/envy/esp-knx-ip/tree/async-udp) branch. Also, it is needed to change on the _esp-knx-ip.h_ file the following:
+This MOD requires the KNX Library [envy/esp-knx-ip](https://github.com/envy/esp-knx-ip). Please, use the [async-udp](https://github.com/envy/esp-knx-ip/tree/async-udp) branch. Also, it is needed to change on the _esp-knx-ip.h_ file the following:
 ```
-#define MAX_CALLBACK_ASSIGNMENTS              20
-#define MAX_CALLBACKS                         20
 #define ALLOW_MULTIPLE_CALLBACKS_PER_ADDRESS   1
+
 //#define ESP_KNX_DEBUG                       <-- comment this line
 ```
 The ESP KNX IP library (async-udp branch) also requires the [ESPAsyncUDP](https://github.com/me-no-dev/ESPAsyncUDP) library. Please, use ESPAsyncUDP library patched with the [PR #21](https://github.com/me-no-dev/ESPAsyncUDP/pull/21)
@@ -39,10 +30,16 @@ A copy of both libraries with the modifications needed are available at:
 * https://github.com/ascillato/Sonoff-Tasmota_KNX/tree/development/lib/esp-knx-ip
 * https://github.com/ascillato/Sonoff-Tasmota_KNX/tree/development/lib/ESPAsyncUDP
 
+## Next Version Menu ##
+
+<img src="https://github.com/ascillato/Sonoff-Tasmota_KNX/blob/development/.github/Config_Menu.jpg" />
+
+<img src="https://github.com/ascillato/Sonoff-Tasmota_KNX/blob/development/.github/KNX_menu.jpg" />
+
 ## Development Road Map ##
 
 **For Sonoff-Tasmota_KNX:**
-- [x] Add Web Menu (need improvement)
+- [x] Add Web Menu
 - [x] Add Feature to Receive telegrams and modify Relay Status
 - [x] Add Feature to Receive telegrams from multiple Group Addresses to modify just one relay status (useful for scenes)
 - [x] Add Feature to Send telegrams of relay status change
