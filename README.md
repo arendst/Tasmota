@@ -1,3 +1,83 @@
+# ( Work In Progress ) Sonoff-Tasmota KNX MOD
+
+This is a MOD for [Sonoff-Tasmota](https://github.com/arendst/Sonoff-Tasmota) to integrate [KNX Protocol](https://www.knx.org/knx-en/index.php) to its features.
+Sonoff-Tasmota_KNX can be found [here](https://github.com/ascillato/Sonoff-Tasmota_KNX)
+
+Basic KNX IP Functionality is Available.
+
+_Sonoff-Tasmota_KNX development branch is kept in sync with the Original Sonoff-Tasmota_
+
+## KNX Explanation ##
+
+The [KNX](https://www.knx.org/knx-en/knx/association/what-is-knx/index.php) IP Protocol is intended for smart home and smart bulding automation. It is a decentraliced system. Each device can talk directly to each other without the need of a central controller or server. Any panel or server is just for telesupervision and for sending requests.
+
+Each device has a physical address ( like a MAC ) as **1 . 1 . 0** and that address is used for configuration purposes.
+
+Each device can be configured with group addresses as **2 / 2 / 1** and that address can be used for sending/receiving commands.
+So, for example, if 2 devices that are configured with the **2 / 2 / 1** for turning on/off their outputs, and other device send _Turn ON_ command to **2 / 2 / 1**, both devices will turn on their outputs.
+
+## Requirements ##
+
+This MOD requires the KNX Library [envy/esp-knx-ip](https://github.com/envy/esp-knx-ip). Please, use the [async-udp](https://github.com/envy/esp-knx-ip/tree/async-udp) branch. Also, it is needed to change on the _esp-knx-ip.h_ file the following:
+```
+#define ALLOW_MULTIPLE_CALLBACKS_PER_ADDRESS   1
+
+//#define ESP_KNX_DEBUG                       <-- comment this line
+```
+The ESP KNX IP library (async-udp branch) also requires the [ESPAsyncUDP](https://github.com/me-no-dev/ESPAsyncUDP) library. Please, use ESPAsyncUDP library patched with the [PR #21](https://github.com/me-no-dev/ESPAsyncUDP/pull/21)
+
+A copy of both libraries with the modifications needed are available at:
+* https://github.com/ascillato/Sonoff-Tasmota_KNX/tree/development/lib/esp-knx-ip
+* https://github.com/ascillato/Sonoff-Tasmota_KNX/tree/development/lib/ESPAsyncUDP
+
+## Next Version Menu ##
+
+<img src="https://github.com/ascillato/Sonoff-Tasmota_KNX/blob/development/.github/Config_Menu.jpg" />
+
+<img src="https://github.com/ascillato/Sonoff-Tasmota_KNX/blob/development/.github/KNX_menu.jpg" />
+
+## Development Road Map ##
+
+**For Sonoff-Tasmota_KNX:**
+- [x] Add Web Menu ( soon the next version of menu )
+- [x] Add Feature to Receive telegrams and modify Relay Status
+- [x] Add Feature to Receive telegrams from multiple Group Addresses to modify just one relay status (useful for scenes)
+- [x] Add Feature to Send telegrams of relay status change
+- [ ] Add Feature to Send telegrams of one relay status to multiple Group Addresses (useful for scenes)
+- [x] Add Feature to Send telegrams of button pressed
+- [x] Add Feature to receive telegrams to toggle relay status
+- [ ] Add Feature to read Temperature, Humidity from Tasmota
+- [ ] Add Feature to send Temperature, Humidity by a set interval (tasmota teleperiod)
+- [ ] Add Feature to receive command to read temperature, Humidity
+- [ ] Add Feature to recognize Tasmota config to show the same amount of relays, buttons, etc
+- [ ] Add Feature to Save Config
+- [ ] Add Feature to Load Config
+- [x] Complete all the language files with keys
+- [ ] Optimize code to reduce Flash and RAM
+
+## Modifications to [Original Tasmota](https://github.com/arendst/Sonoff-Tasmota) ##
+
+* Adding the file _/sonoff/xdrv_10_KNX.ino_ 
+* Add the entry `#define USE_KNX` on _/sonoff/user_config.h_
+* Add entries to the file _/sonoff/webserver.ino_
+* Add entries to the file _/sonoff/sonoff.ino_
+* Add entries to the file _/sonoff/sonoff.h_
+* Add entries to the file _/sonoff/settings.h_
+* Add entries to sensor files
+* Add entries to language files
+
+Up to now, enabling KNX uses +18k of code and +3k3 of memory.
+
+There is **NO CONFLICT** with MQTT, Home Assistant, Web, etc. Tests show fast response of all features running at same time.
+
+## Contributors to this MOD ##
+
+* Adrian Scillato [ascillato](https://github.com/ascillato)
+* Sisamiwe [sisamiwe](https://github.com/sisamiwe) - Thanks for the guide on using KNX.
+* Nico Weichbrodt [envy](https://github.com/envy) - Thanks for the patience and help with the modifications to ESP_KNX_IP.
+
+-----------------------------------------------------------------------------------------------------------------------------------
+
 ## Sonoff-Tasmota
 
 Alternative firmware for _ESP8266 based devices_ like [iTead](https://www.itead.cc/) _**Sonoff**_, with **web**, **timers**, 'Over The Air' (**OTA**) firmware updates and **sensors support**, allowing control under **serial**, **HTTP**, **KNX** and **MQTT**, so as to be used on **Smart Home Systems**. Written for Arduino IDE and PlatformIO.
