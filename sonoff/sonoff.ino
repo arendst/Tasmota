@@ -1137,7 +1137,7 @@ boolean send_button_power(byte key, byte device, byte state)
     result = true;
   }
 #ifdef USE_KNX
-  knx_send_button_power(key, device, state);
+  KNX_Send_Button_Power(key, device, state);
 #endif
   return result;
 }
@@ -1190,7 +1190,7 @@ void ExecuteCommandPower(byte device, byte state)
     DomoticzUpdatePowerState(device);
 #endif  // USE_DOMOTICZ
 #ifdef USE_KNX
-    KNXUpdatePowerState(device, power);
+    KNX_Update_Power_State(device, power);
 #endif  // USE_KNX    
     if (device <= MAX_PULSETIMERS) {
 //      pulse_timer[(device -1)] = (power & mask) ? Settings.pulse_timer[(device -1)] : 0;
