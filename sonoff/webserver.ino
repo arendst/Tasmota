@@ -169,6 +169,8 @@ const char HTTP_MSG_SLIDER2[] PROGMEM =
     "<div><input type='range' min='1' max='100' value='%d' onchange='lb(value)'></div>";
 const char HTTP_MSG_RSTRT[] PROGMEM =
     "<br/><div style='text-align:center;'>" D_DEVICE_WILL_RESTART "</div><br/>";
+const char HTTP_BTN_MENU5[] PROGMEM =
+    "<br/><form action='tc' method='get'><button>" D_THERMOSTAT "</button></form>";
 const char HTTP_BTN_MENU1[] PROGMEM =
 #ifndef BE_MINIMAL
     "<br/><form action='cn' method='get'><button>" D_CONFIGURATION "</button></form>"
@@ -208,6 +210,16 @@ const char HTTP_FORM_MODULE[] PROGMEM =
     "<fieldset><legend><b>&nbsp;" D_MODULE_PARAMETERS "&nbsp;</b></legend><form method='get' action='sv'>"
     "<input id='w' name='w' value='6' hidden><input id='r' name='r' value='1' hidden>"
     "<br/><b>" D_MODULE_TYPE "</b> ({mt)<br/><select id='g99' name='g99'></select><br/>";
+const char HTTP_FORM_TEMP_CONTROL[] PROGMEM =
+    "<fieldset><legend><b>&nbsp;" D_THERMOSTAT_PARAMETERS "&nbsp;</b></legend><form method='get' action='sv'>"
+    "<input id='w' name='w' value='7' hidden><input id='r' name='r' value='2' hidden>"
+    "<br/><b>" D_MODULE_TEMP_CONTROL "</b><br/><select id='g98' name='g98'></select><br/>";
+const char HTTP_FORM_TEMP_SETPOINT[] PROGMEM =
+    "<br/><b>" D_MODULE_TEMP_SETPOINT "</b><br/><input id='g97' name='g97' placeholder='{mt1' value='{mt1'><br/>";
+const char HTTP_FORM_TEMP_HYSTERESIS[] PROGMEM =
+    "<br/><b>" D_MODULE_TEMP_HYSTERESIS "</b><br/><input id='g96' name='g96' placeholder='{mt2' value='{mt2'><br/>";
+const char HTTP_FORM_TEMP_OFFTIMEMIN[] PROGMEM =
+    "<br/><b>" D_MODULE_TEMP_OFFTIMEMIN "</b><br/><input id='g95' name='g95' placeholder='{mt3' value='{mt3'><br/>";
 const char HTTP_LNK_ITEM[] PROGMEM =
     "<div><a href='#p' onclick='c(this)'>{v}</a>&nbsp;<span class='q'>{i} {r}%</span></div>";
 const char HTTP_LNK_SCAN[] PROGMEM =
@@ -336,6 +348,9 @@ void StartWebserver(int type, IPAddress ipweb)
     {
       WebServer = new ESP8266WebServer((HTTP_MANAGER == type) ? 80 : WEB_PORT);
       WebServer->on("/", HandleRoot);
+#ifdef THERMOSTAT
+      WebServer->on("/tc", HandleThermostatControl);
+#endif
       WebServer->on("/cn", HandleConfiguration);
       WebServer->on("/md", HandleModuleConfiguration);
       WebServer->on("/w1", HandleWifiConfigurationWithScan);
@@ -412,7 +427,7 @@ void WifiManagerBegin()
     WiFi.mode(WIFI_AP_STA);
     AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_WIFI D_WIFIMANAGER_SET_ACCESSPOINT_AND_STATION));
   }
-  else
+  else 
   {
     WiFi.mode(WIFI_AP);
     AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_WIFI D_WIFIMANAGER_SET_ACCESSPOINT));
@@ -583,11 +598,55 @@ void HandleRoot()
 
     if (HTTP_ADMIN == webserver_state)
     {
+#ifdef THERMOSTAT
+      if ((Settings.module == SONOFF_TH) && ((Settings.my_gp.io[14] == GPIO_DHT11) || (Settings.my_gp.io[14] == GPIO_DHT22) || (Settings.my_gp.io[14] == GPIO_SI7021) || (Settings.my_gp.io[14] == GPIO_DSB)))
+      {
+        page += FPSTR(HTTP_BTN_MENU5);
+      }
+#endif
       page += FPSTR(HTTP_BTN_MENU1);
       page += FPSTR(HTTP_BTN_RSTRT);
     }
     ShowPage(page);
   }
+}
+
+void HandleThermostatControl()
+{
+  if (HttpUser())
+  {
+    return;
+  }
+  char stemp[20];
+  uint8_t midx;
+
+  AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_CONFIGURE_THERMOSTAT);
+
+  String page = FPSTR(HTTP_HEAD);
+  page.replace(F("{v}"), FPSTR(S_CONFIGURE_THERMOSTAT));
+  page += FPSTR(HTTP_SCRIPT_MODULE1);
+  for (byte j = 0; j < TEMP_CONTROL_END; j++)
+  {
+    snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SCRIPT_MODULE2, j, j, GetTextIndexed(stemp, sizeof(stemp), j, kTempControlNames));
+    page += mqtt_data;
+  }
+  page += FPSTR(HTTP_SCRIPT_MODULE3);
+  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("sk(%d,98);"), Settings.temp_control_mode); // g98
+  page += mqtt_data;
+  page += F("}");
+
+  page += FPSTR(HTTP_HEAD_STYLE);
+  page.replace(F("<body>"), F("<body onload='sl()'>"));
+  page += FPSTR(HTTP_FORM_TEMP_CONTROL);
+  page += FPSTR(HTTP_FORM_TEMP_SETPOINT);
+  page += FPSTR(HTTP_FORM_TEMP_HYSTERESIS);
+  page += FPSTR(HTTP_FORM_TEMP_OFFTIMEMIN);
+  page.replace(F("{mt1"), String((Settings.temp_control_setpoint/100)));
+  page.replace(F("{mt2"), String((Settings.temp_control_hysteresis/100)));
+  page.replace(F("{mt3"), String(Settings.temp_control_offtimemin));
+  page += FPSTR(HTTP_FORM_END);
+  page += FPSTR(HTTP_BTN_MAIN);
+  ShowPage(page);
 }
 
 void HandleAjaxStatusRefresh()
@@ -1128,142 +1187,169 @@ void HandleSaveSettings()
   switch (what)
   {
   case 1:
-    WebGetArg("h", tmp, sizeof(tmp));
-    strlcpy(Settings.hostname, (!strlen(tmp)) ? WIFI_HOSTNAME : tmp, sizeof(Settings.hostname));
-    if (strstr(Settings.hostname, "%"))
     {
-      strlcpy(Settings.hostname, WIFI_HOSTNAME, sizeof(Settings.hostname));
+      WebGetArg("h", tmp, sizeof(tmp));
+      strlcpy(Settings.hostname, (!strlen(tmp)) ? WIFI_HOSTNAME : tmp, sizeof(Settings.hostname));
+      if (strstr(Settings.hostname, "%"))
+      {
+        strlcpy(Settings.hostname, WIFI_HOSTNAME, sizeof(Settings.hostname));
+      }
+      WebGetArg("s1", tmp, sizeof(tmp));
+      strlcpy(Settings.sta_ssid[0], (!strlen(tmp)) ? STA_SSID1 : tmp, sizeof(Settings.sta_ssid[0]));
+      WebGetArg("s2", tmp, sizeof(tmp));
+      strlcpy(Settings.sta_ssid[1], (!strlen(tmp)) ? STA_SSID2 : tmp, sizeof(Settings.sta_ssid[1]));
+      //    WebGetArg("s1", tmp, sizeof(tmp));
+      //    strlcpy(Settings.sta_ssid[0], (!strlen(tmp)) ? "" : tmp, sizeof(Settings.sta_ssid[0]));
+      //    WebGetArg("s2", tmp, sizeof(tmp));
+      //    strlcpy(Settings.sta_ssid[1], (!strlen(tmp)) ? "" : tmp, sizeof(Settings.sta_ssid[1]));
+      WebGetArg("p1", tmp, sizeof(tmp));
+      strlcpy(Settings.sta_pwd[0], (!strlen(tmp)) ? "" : (strchr(tmp, '*')) ? Settings.sta_pwd[0] : tmp, sizeof(Settings.sta_pwd[0]));
+      WebGetArg("p2", tmp, sizeof(tmp));
+      strlcpy(Settings.sta_pwd[1], (!strlen(tmp)) ? "" : (strchr(tmp, '*')) ? Settings.sta_pwd[1] : tmp, sizeof(Settings.sta_pwd[1]));
+      snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_WIFI D_CMND_HOSTNAME " %s, " D_CMND_SSID "1 %s, " D_CMND_PASSWORD "1 %s, " D_CMND_SSID "2 %s, " D_CMND_PASSWORD "2 %s"),
+                Settings.hostname, Settings.sta_ssid[0], Settings.sta_pwd[0], Settings.sta_ssid[1], Settings.sta_pwd[1]);
+      AddLog(LOG_LEVEL_INFO);
+      result += F("<br/>" D_TRYING_TO_CONNECT "<br/>");
+      break;
     }
-    WebGetArg("s1", tmp, sizeof(tmp));
-    strlcpy(Settings.sta_ssid[0], (!strlen(tmp)) ? STA_SSID1 : tmp, sizeof(Settings.sta_ssid[0]));
-    WebGetArg("s2", tmp, sizeof(tmp));
-    strlcpy(Settings.sta_ssid[1], (!strlen(tmp)) ? STA_SSID2 : tmp, sizeof(Settings.sta_ssid[1]));
-    //    WebGetArg("s1", tmp, sizeof(tmp));
-    //    strlcpy(Settings.sta_ssid[0], (!strlen(tmp)) ? "" : tmp, sizeof(Settings.sta_ssid[0]));
-    //    WebGetArg("s2", tmp, sizeof(tmp));
-    //    strlcpy(Settings.sta_ssid[1], (!strlen(tmp)) ? "" : tmp, sizeof(Settings.sta_ssid[1]));
-    WebGetArg("p1", tmp, sizeof(tmp));
-    strlcpy(Settings.sta_pwd[0], (!strlen(tmp)) ? "" : (strchr(tmp, '*')) ? Settings.sta_pwd[0] : tmp, sizeof(Settings.sta_pwd[0]));
-    WebGetArg("p2", tmp, sizeof(tmp));
-    strlcpy(Settings.sta_pwd[1], (!strlen(tmp)) ? "" : (strchr(tmp, '*')) ? Settings.sta_pwd[1] : tmp, sizeof(Settings.sta_pwd[1]));
-    snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_WIFI D_CMND_HOSTNAME " %s, " D_CMND_SSID "1 %s, " D_CMND_PASSWORD "1 %s, " D_CMND_SSID "2 %s, " D_CMND_PASSWORD "2 %s"),
-               Settings.hostname, Settings.sta_ssid[0], Settings.sta_pwd[0], Settings.sta_ssid[1], Settings.sta_pwd[1]);
-    AddLog(LOG_LEVEL_INFO);
-    result += F("<br/>" D_TRYING_TO_CONNECT "<br/>");
-    break;
   case 2:
-    WebGetArg("mt", tmp, sizeof(tmp));
-    strlcpy(stemp, (!strlen(tmp)) ? MQTT_TOPIC : tmp, sizeof(stemp));
-    MakeValidMqtt(0, stemp);
-    WebGetArg("mf", tmp, sizeof(tmp));
-    strlcpy(stemp2, (!strlen(tmp)) ? MQTT_FULLTOPIC : tmp, sizeof(stemp2));
-    MakeValidMqtt(1, stemp2);
-    if ((strcmp(stemp, Settings.mqtt_topic)) || (strcmp(stemp2, Settings.mqtt_fulltopic)))
     {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), (Settings.flag.mqtt_offline) ? S_OFFLINE : "");
-      MqttPublishPrefixTopic_P(TELE, S_LWT, true); // Offline or remove previous retained topic
+      WebGetArg("mt", tmp, sizeof(tmp));
+      strlcpy(stemp, (!strlen(tmp)) ? MQTT_TOPIC : tmp, sizeof(stemp));
+      MakeValidMqtt(0, stemp);
+      WebGetArg("mf", tmp, sizeof(tmp));
+      strlcpy(stemp2, (!strlen(tmp)) ? MQTT_FULLTOPIC : tmp, sizeof(stemp2));
+      MakeValidMqtt(1, stemp2);
+      if ((strcmp(stemp, Settings.mqtt_topic)) || (strcmp(stemp2, Settings.mqtt_fulltopic)))
+      {
+        snprintf_P(mqtt_data, sizeof(mqtt_data), (Settings.flag.mqtt_offline) ? S_OFFLINE : "");
+        MqttPublishPrefixTopic_P(TELE, S_LWT, true); // Offline or remove previous retained topic
+      }
+      strlcpy(Settings.mqtt_topic, stemp, sizeof(Settings.mqtt_topic));
+      strlcpy(Settings.mqtt_fulltopic, stemp2, sizeof(Settings.mqtt_fulltopic));
+      WebGetArg("mh", tmp, sizeof(tmp));
+      strlcpy(Settings.mqtt_host, (!strlen(tmp)) ? MQTT_HOST : (!strcmp(tmp, "0")) ? "" : tmp, sizeof(Settings.mqtt_host));
+      WebGetArg("ml", tmp, sizeof(tmp));
+      Settings.mqtt_port = (!strlen(tmp)) ? MQTT_PORT : atoi(tmp);
+      WebGetArg("mc", tmp, sizeof(tmp));
+      strlcpy(Settings.mqtt_client, (!strlen(tmp)) ? MQTT_CLIENT_ID : tmp, sizeof(Settings.mqtt_client));
+      WebGetArg("mu", tmp, sizeof(tmp));
+      strlcpy(Settings.mqtt_user, (!strlen(tmp)) ? MQTT_USER : (!strcmp(tmp, "0")) ? "" : tmp, sizeof(Settings.mqtt_user));
+      WebGetArg("mp", tmp, sizeof(tmp));
+      strlcpy(Settings.mqtt_pwd, (!strlen(tmp)) ? MQTT_PASS : (!strcmp(tmp, "0")) ? "" : tmp, sizeof(Settings.mqtt_pwd));
+      snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_MQTT D_CMND_MQTTHOST " %s, " D_CMND_MQTTPORT " %d, " D_CMND_MQTTCLIENT " %s, " D_CMND_MQTTUSER " %s, " D_CMND_MQTTPASSWORD " %s, " D_CMND_TOPIC " %s, " D_CMND_FULLTOPIC " %s"),
+                Settings.mqtt_host, Settings.mqtt_port, Settings.mqtt_client, Settings.mqtt_user, Settings.mqtt_pwd, Settings.mqtt_topic, Settings.mqtt_fulltopic);
+      AddLog(LOG_LEVEL_INFO);
+      break;
     }
-    strlcpy(Settings.mqtt_topic, stemp, sizeof(Settings.mqtt_topic));
-    strlcpy(Settings.mqtt_fulltopic, stemp2, sizeof(Settings.mqtt_fulltopic));
-    WebGetArg("mh", tmp, sizeof(tmp));
-    strlcpy(Settings.mqtt_host, (!strlen(tmp)) ? MQTT_HOST : (!strcmp(tmp, "0")) ? "" : tmp, sizeof(Settings.mqtt_host));
-    WebGetArg("ml", tmp, sizeof(tmp));
-    Settings.mqtt_port = (!strlen(tmp)) ? MQTT_PORT : atoi(tmp);
-    WebGetArg("mc", tmp, sizeof(tmp));
-    strlcpy(Settings.mqtt_client, (!strlen(tmp)) ? MQTT_CLIENT_ID : tmp, sizeof(Settings.mqtt_client));
-    WebGetArg("mu", tmp, sizeof(tmp));
-    strlcpy(Settings.mqtt_user, (!strlen(tmp)) ? MQTT_USER : (!strcmp(tmp, "0")) ? "" : tmp, sizeof(Settings.mqtt_user));
-    WebGetArg("mp", tmp, sizeof(tmp));
-    strlcpy(Settings.mqtt_pwd, (!strlen(tmp)) ? MQTT_PASS : (!strcmp(tmp, "0")) ? "" : tmp, sizeof(Settings.mqtt_pwd));
-    snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_MQTT D_CMND_MQTTHOST " %s, " D_CMND_MQTTPORT " %d, " D_CMND_MQTTCLIENT " %s, " D_CMND_MQTTUSER " %s, " D_CMND_MQTTPASSWORD " %s, " D_CMND_TOPIC " %s, " D_CMND_FULLTOPIC " %s"),
-               Settings.mqtt_host, Settings.mqtt_port, Settings.mqtt_client, Settings.mqtt_user, Settings.mqtt_pwd, Settings.mqtt_topic, Settings.mqtt_fulltopic);
-    AddLog(LOG_LEVEL_INFO);
-    break;
   case 3:
-    WebGetArg("ls", tmp, sizeof(tmp));
-    Settings.seriallog_level = (!strlen(tmp)) ? SERIAL_LOG_LEVEL : atoi(tmp);
-    WebGetArg("lw", tmp, sizeof(tmp));
-    Settings.weblog_level = (!strlen(tmp)) ? WEB_LOG_LEVEL : atoi(tmp);
-    WebGetArg("ll", tmp, sizeof(tmp));
-    Settings.syslog_level = (!strlen(tmp)) ? SYS_LOG_LEVEL : atoi(tmp);
-    syslog_level = Settings.syslog_level;
-    syslog_timer = 0;
-    WebGetArg("lh", tmp, sizeof(tmp));
-    strlcpy(Settings.syslog_host, (!strlen(tmp)) ? SYS_LOG_HOST : tmp, sizeof(Settings.syslog_host));
-    WebGetArg("lp", tmp, sizeof(tmp));
-    Settings.syslog_port = (!strlen(tmp)) ? SYS_LOG_PORT : atoi(tmp);
-    WebGetArg("lt", tmp, sizeof(tmp));
-    Settings.tele_period = (!strlen(tmp)) ? TELE_PERIOD : atoi(tmp);
-    if ((Settings.tele_period > 0) && (Settings.tele_period < 10))
     {
-      Settings.tele_period = 10; // Do not allow periods < 10 seconds
+      WebGetArg("ls", tmp, sizeof(tmp));
+      Settings.seriallog_level = (!strlen(tmp)) ? SERIAL_LOG_LEVEL : atoi(tmp);
+      WebGetArg("lw", tmp, sizeof(tmp));
+      Settings.weblog_level = (!strlen(tmp)) ? WEB_LOG_LEVEL : atoi(tmp);
+      WebGetArg("ll", tmp, sizeof(tmp));
+      Settings.syslog_level = (!strlen(tmp)) ? SYS_LOG_LEVEL : atoi(tmp);
+      syslog_level = Settings.syslog_level;
+      syslog_timer = 0;
+      WebGetArg("lh", tmp, sizeof(tmp));
+      strlcpy(Settings.syslog_host, (!strlen(tmp)) ? SYS_LOG_HOST : tmp, sizeof(Settings.syslog_host));
+      WebGetArg("lp", tmp, sizeof(tmp));
+      Settings.syslog_port = (!strlen(tmp)) ? SYS_LOG_PORT : atoi(tmp);
+      WebGetArg("lt", tmp, sizeof(tmp));
+      Settings.tele_period = (!strlen(tmp)) ? TELE_PERIOD : atoi(tmp);
+      if ((Settings.tele_period > 0) && (Settings.tele_period < 10))
+      {
+        Settings.tele_period = 10; // Do not allow periods < 10 seconds
+      }
+      snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_LOG D_CMND_SERIALLOG " %d, " D_CMND_WEBLOG " %d, " D_CMND_SYSLOG " %d, " D_CMND_LOGHOST " %s, " D_CMND_LOGPORT " %d, " D_CMND_TELEPERIOD " %d"),
+                Settings.seriallog_level, Settings.weblog_level, Settings.syslog_level, Settings.syslog_host, Settings.syslog_port, Settings.tele_period);
+      AddLog(LOG_LEVEL_INFO);
+      break;
     }
-    snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_LOG D_CMND_SERIALLOG " %d, " D_CMND_WEBLOG " %d, " D_CMND_SYSLOG " %d, " D_CMND_LOGHOST " %s, " D_CMND_LOGPORT " %d, " D_CMND_TELEPERIOD " %d"),
-               Settings.seriallog_level, Settings.weblog_level, Settings.syslog_level, Settings.syslog_host, Settings.syslog_port, Settings.tele_period);
-    AddLog(LOG_LEVEL_INFO);
-    break;
 #ifdef USE_DOMOTICZ
   case 4:
-    DomoticzSaveSettings();
-    break;
+    {
+      DomoticzSaveSettings();
+      break;
+    }
 #endif // USE_DOMOTICZ
   case 5:
-    WebGetArg("p1", tmp, sizeof(tmp));
-    strlcpy(Settings.web_password, (!strlen(tmp)) ? "" : (strchr(tmp, '*')) ? Settings.web_password : tmp, sizeof(Settings.web_password));
-    Settings.flag.mqtt_enabled = WebServer->hasArg("b1");
-#ifdef USE_EMULATION
-    WebGetArg("b2", tmp, sizeof(tmp));
-    Settings.flag2.emulation = (!strlen(tmp)) ? 0 : atoi(tmp);
-#endif // USE_EMULATION
-    WebGetArg("a1", tmp, sizeof(tmp));
-    strlcpy(Settings.friendlyname[0], (!strlen(tmp)) ? FRIENDLY_NAME : tmp, sizeof(Settings.friendlyname[0]));
-    WebGetArg("a2", tmp, sizeof(tmp));
-    strlcpy(Settings.friendlyname[1], (!strlen(tmp)) ? FRIENDLY_NAME "2" : tmp, sizeof(Settings.friendlyname[1]));
-    WebGetArg("a3", tmp, sizeof(tmp));
-    strlcpy(Settings.friendlyname[2], (!strlen(tmp)) ? FRIENDLY_NAME "3" : tmp, sizeof(Settings.friendlyname[2]));
-    WebGetArg("a4", tmp, sizeof(tmp));
-    strlcpy(Settings.friendlyname[3], (!strlen(tmp)) ? FRIENDLY_NAME "4" : tmp, sizeof(Settings.friendlyname[3]));
-    snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_OTHER D_MQTT_ENABLE " %s, " D_CMND_EMULATION " %d, " D_CMND_FRIENDLYNAME " %s, %s, %s, %s"),
-               GetStateText(Settings.flag.mqtt_enabled), Settings.flag2.emulation, Settings.friendlyname[0], Settings.friendlyname[1], Settings.friendlyname[2], Settings.friendlyname[3]);
-    AddLog(LOG_LEVEL_INFO);
-    break;
-  case 6:
-    WebGetArg("g99", tmp, sizeof(tmp));
-    byte new_module = (!strlen(tmp)) ? MODULE : atoi(tmp);
-    Settings.last_module = Settings.module;
-    Settings.module = new_module;
-    mytmplt cmodule;
-    memcpy_P(&cmodule, &kModules[Settings.module], sizeof(cmodule));
-    String gpios = "";
-    for (byte i = 0; i < MAX_GPIO_PIN; i++)
     {
-      if (Settings.last_module != new_module)
+      WebGetArg("p1", tmp, sizeof(tmp));
+      strlcpy(Settings.web_password, (!strlen(tmp)) ? "" : (strchr(tmp, '*')) ? Settings.web_password : tmp, sizeof(Settings.web_password));
+      Settings.flag.mqtt_enabled = WebServer->hasArg("b1");
+  #ifdef USE_EMULATION
+      WebGetArg("b2", tmp, sizeof(tmp));
+      Settings.flag2.emulation = (!strlen(tmp)) ? 0 : atoi(tmp);
+  #endif // USE_EMULATION
+      WebGetArg("a1", tmp, sizeof(tmp));
+      strlcpy(Settings.friendlyname[0], (!strlen(tmp)) ? FRIENDLY_NAME : tmp, sizeof(Settings.friendlyname[0]));
+      WebGetArg("a2", tmp, sizeof(tmp));
+      strlcpy(Settings.friendlyname[1], (!strlen(tmp)) ? FRIENDLY_NAME "2" : tmp, sizeof(Settings.friendlyname[1]));
+      WebGetArg("a3", tmp, sizeof(tmp));
+      strlcpy(Settings.friendlyname[2], (!strlen(tmp)) ? FRIENDLY_NAME "3" : tmp, sizeof(Settings.friendlyname[2]));
+      WebGetArg("a4", tmp, sizeof(tmp));
+      strlcpy(Settings.friendlyname[3], (!strlen(tmp)) ? FRIENDLY_NAME "4" : tmp, sizeof(Settings.friendlyname[3]));
+      snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_OTHER D_MQTT_ENABLE " %s, " D_CMND_EMULATION " %d, " D_CMND_FRIENDLYNAME " %s, %s, %s, %s"),
+                GetStateText(Settings.flag.mqtt_enabled), Settings.flag2.emulation, Settings.friendlyname[0], Settings.friendlyname[1], Settings.friendlyname[2], Settings.friendlyname[3]);
+      AddLog(LOG_LEVEL_INFO);
+      break;
+    }
+  case 6:
+    {
+      WebGetArg("g99", tmp, sizeof(tmp));
+      byte new_module = (!strlen(tmp)) ? MODULE : atoi(tmp);
+      Settings.last_module = Settings.module;
+      Settings.module = new_module;
+      mytmplt cmodule;
+      memcpy_P(&cmodule, &kModules[Settings.module], sizeof(cmodule));
+      String gpios = "";
+      for (byte i = 0; i < MAX_GPIO_PIN; i++)
       {
-        Settings.my_gp.io[i] = 0;
-      }
-      else
-      {
-        if (GPIO_USER == cmodule.gp.io[i])
+        if (Settings.last_module != new_module)
         {
-          snprintf_P(stemp, sizeof(stemp), PSTR("g%d"), i);
-          WebGetArg(stemp, tmp, sizeof(tmp));
-          Settings.my_gp.io[i] = (!strlen(tmp)) ? 0 : atoi(tmp);
-          gpios += F(", " D_GPIO);
-          gpios += String(i);
-          gpios += F(" ");
-          gpios += String(Settings.my_gp.io[i]);
+          Settings.my_gp.io[i] = 0;
+        }
+        else
+        {
+          if (GPIO_USER == cmodule.gp.io[i])
+          {
+            snprintf_P(stemp, sizeof(stemp), PSTR("g%d"), i);
+            WebGetArg(stemp, tmp, sizeof(tmp));
+            Settings.my_gp.io[i] = (!strlen(tmp)) ? 0 : atoi(tmp);
+            gpios += F(", " D_GPIO);
+            gpios += String(i);
+            gpios += F(" ");
+            gpios += String(Settings.my_gp.io[i]);
+          }
         }
       }
+      snprintf_P(stemp, sizeof(stemp), kModules[Settings.module].name);
+      snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_MODULE "%s " D_CMND_MODULE "%s"), stemp, gpios.c_str());
+      AddLog(LOG_LEVEL_INFO);
+      break;
     }
-    snprintf_P(stemp, sizeof(stemp), kModules[Settings.module].name);
-    snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_MODULE "%s " D_CMND_MODULE "%s"), stemp, gpios.c_str());
-    AddLog(LOG_LEVEL_INFO);
-    break;
+  case 7:
+    {
+      if (SONOFF_TH == Settings.module)
+      {
+        WebGetArg(PSTR("g98"), tmp, sizeof(tmp));
+        Settings.temp_control_mode = (!strlen(tmp)) ? 0 : atoi(tmp);
+        WebGetArg(PSTR("g97"), tmp, sizeof(tmp));
+        Settings.temp_control_setpoint = (!strlen(tmp)) ? 0 : (atoi(tmp) * 100);
+        WebGetArg(PSTR("g96"), tmp, sizeof(tmp));
+        Settings.temp_control_hysteresis = (!strlen(tmp)) ? 0 : (atoi(tmp) * 100);
+        WebGetArg(PSTR("g95"), tmp, sizeof(tmp));
+        Settings.temp_control_offtimemin = (!strlen(tmp)) ? 0 : atoi(tmp);
+      }
+      break;
+    }
   }
 
   WebGetArg("r", tmp, sizeof(tmp));
   restart = (!strlen(tmp)) ? 1 : atoi(tmp);
-  if (restart)
+  if (restart == 1)
   {
     String page = FPSTR(HTTP_HEAD);
     page.replace(F("{v}"), FPSTR(S_SAVE_CONFIGURATION));
@@ -1283,6 +1369,10 @@ void HandleSaveSettings()
     ShowPage(page);
 
     restart_flag = 2;
+  }
+  else if (restart == 2)
+  {
+    HandleThermostatControl();
   }
   else
   {

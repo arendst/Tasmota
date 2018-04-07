@@ -108,7 +108,7 @@ struct SYSCFG {
   char          hostname[33];              // 165
   char          syslog_host[33];           // 186
 
-  byte          free_1A7[1];               // 1A7
+  uint8_t       temp_control_mode;         // 1A7
 
   uint16_t      syslog_port;               // 1A8
   byte          syslog_level;              // 1AA
@@ -135,7 +135,8 @@ struct SYSCFG {
   uint8_t       display_dimmer;            // 2E0
   uint8_t       display_size;              // 2E1
 
-  uint8_t       free_2E2[4];               // 2E2
+  int16_t       temp_control_setpoint;     // 2E2
+  int16_t       temp_control_hysteresis;   // 2E4
 
   uint16_t      pwm_frequency;             // 2E6
   power_t       power;                     // 2E8
@@ -187,7 +188,7 @@ struct SYSCFG {
   uint8_t       ws_scheme;                 // 3A7 Not used since 5.8.0
   uint8_t       ex_ws_width;               // 3A8 Not used since 5.8.0
 
-  byte          free_3A9[1];               // 3A9
+  uint16_t      temp_control_offtimemin;   // 3A9
 
   uint16_t      ws_wakeup;                 // 3AA Not used since 5.8.0
   char          friendlyname[MAX_FRIENDLYNAMES][33]; // 3AC

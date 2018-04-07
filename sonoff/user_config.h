@@ -31,7 +31,7 @@
 // -- Localization --------------------------------
 //#define MY_LANGUAGE            cs-CZ           // Czech in Czech
 //#define MY_LANGUAGE            de-DE           // German in Germany
-//#define MY_LANGUAGE            en-GB           // English in Great Britain. Enabled by Default
+#define MY_LANGUAGE            en-GB           // English in Great Britain. Enabled by Default
 //#define MY_LANGUAGE            es-AR           // Spanish in Argentina
 //#define MY_LANGUAGE            fr-FR           // French in France
 //#define MY_LANGUAGE            hu-HU           // Hungarian in Hungary
@@ -69,7 +69,7 @@
 #define SYS_LOG_PORT           514               // [LogPort] default syslog UDP port
 #define SYS_LOG_LEVEL          LOG_LEVEL_NONE    // [SysLog]
 #define SERIAL_LOG_LEVEL       LOG_LEVEL_INFO    // [SerialLog]
-#define WEB_LOG_LEVEL          LOG_LEVEL_INFO    // [WebLog]
+#define WEB_LOG_LEVEL          LOG_LEVEL_INFO    // [WebLog] 
 
 // -- Ota -----------------------------------------
 #define OTA_URL                "http://sonoff.maddox.co.uk/tasmota/sonoff.ino.bin"  // [OtaUrl]
@@ -213,21 +213,23 @@
 #endif  // USE_I2C
 
 // -- Serial sensors ------------------------------
-#define USE_MHZ19                                // Add support for MH-Z19 CO2 sensor (+2k code)
-#define USE_SENSEAIR                             // Add support for SenseAir K30, K70 and S8 CO2 sensor (+2k3 code)
-  #define CO2_LOW              800               // Below this CO2 value show green light (needs PWM or WS2812 RG(B) led and enable with SetOption18 1)
-  #define CO2_HIGH             1200              // Above this CO2 value show red light (needs PWM or WS2812 RG(B) led and enable with SetOption18 1)
-#define USE_PMS5003                              // Add support for PMS5003 and PMS7003 particle concentration sensor (+1k3 code)
-#define USE_NOVA_SDS                             // Add support for SDS011 and SDS021 particle concentration sensor (+0k7 code)
-#define USE_PZEM004T                             // Add support for PZEM004T Energy monitor (+2k code)
+//  #define USE_MHZ19                                // Add support for MH-Z19 CO2 sensor (+2k code)
+//  #define USE_SENSEAIR                             // Add support for SenseAir K30, K70 and S8 CO2 sensor (+2k3 code)
+  //  #define CO2_LOW              800               // Below this CO2 value show green light (needs PWM or WS2812 RG(B) led and enable with SetOption18 1)
+  //  #define CO2_HIGH             1200              // Above this CO2 value show red light (needs PWM or WS2812 RG(B) led and enable with SetOption18 1)
+//  #define USE_PMS5003                              // Add support for PMS5003 and PMS7003 particle concentration sensor (+1k3 code)
+//  #define USE_NOVA_SDS                             // Add support for SDS011 and SDS021 particle concentration sensor (+0k7 code)
+//  #define USE_PZEM004T                             // Add support for PZEM004T Energy monitor (+2k code)
 
 // -- Low level interface devices -----------------
 #define USE_IR_REMOTE                            // Send IR remote commands using library IRremoteESP8266 and ArduinoJson (+4k code, 0k3 mem, 48 iram)
 //  #define USE_IR_HVAC                            // Support for HVAC system using IR (+2k code)
   #define USE_IR_RECEIVE                         // Support for IR receiver (+5k5 code, 264 iram)
 
-#define USE_WS2812                               // WS2812 Led string using library NeoPixelBus (+5k code, +1k mem, 232 iram) - Disable by //
-  #define USE_WS2812_CTYPE     NEO_GRB           // WS2812 Color type (NEO_RGB, NEO_GRB, NEO_BRG, NEO_RBG, NEO_RGBW, NEO_GRBW)
+#define THERMOSTAT                               // Uses Standalone Thermostat Module
+
+//  #define USE_WS2812                               // WS2812 Led string using library NeoPixelBus (+5k code, +1k mem, 232 iram) - Disable by //
+  //  #define USE_WS2812_CTYPE     NEO_GRB           // WS2812 Color type (NEO_RGB, NEO_GRB, NEO_BRG, NEO_RBG, NEO_RGBW, NEO_GRBW)
 //  #define USE_WS2812_DMA                         // DMA supports only GPIO03 (= Serial RXD) (+1k mem). When USE_WS2812_DMA is enabled expect Exceptions on Pow
 
 #define USE_ARILUX_RF                            // Add support for Arilux RF remote controller (+0k8 code, 252 iram (non 2.3.0))
