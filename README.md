@@ -30,8 +30,8 @@ This MOD requires the ESP8266 KNX Library [envy/esp-knx-ip](https://github.com/e
 The ESP KNX IP library (async-udp branch) requires the [ESPAsyncUDP](https://github.com/me-no-dev/ESPAsyncUDP) library. Please, use ESPAsyncUDP library patched with the [PR #21](https://github.com/me-no-dev/ESPAsyncUDP/pull/21)
 
 A copy of both libraries with the modifications needed are available at:
-* https://github.com/ascillato/Sonoff-Tasmota_KNX/tree/development/lib/esp-knx-ip
-* https://github.com/ascillato/Sonoff-Tasmota_KNX/tree/development/lib/ESPAsyncUDP
+* https://github.com/ascillato/Sonoff-Tasmota_KNX/tree/development/lib/esp-knx-ip-async-udpp
+* https://github.com/ascillato/Sonoff-Tasmota_KNX/tree/development/lib/ESPAsyncUDP-master
 
 ## Next Version Menu Screenshots ##
 
