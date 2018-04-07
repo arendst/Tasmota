@@ -33,7 +33,7 @@ A copy of both libraries with the modifications needed are available at:
 * https://github.com/ascillato/Sonoff-Tasmota_KNX/tree/development/lib/esp-knx-ip
 * https://github.com/ascillato/Sonoff-Tasmota_KNX/tree/development/lib/ESPAsyncUDP
 
-## Next Version Menu ##
+## Next Version Menu Screenshots ##
 
 <img src="https://github.com/ascillato/Sonoff-Tasmota_KNX/blob/development/.github/Config_Menu.jpg" />
 
@@ -55,6 +55,7 @@ A copy of both libraries with the modifications needed are available at:
 - [ ] Add Feature to recognize Tasmota config to show the same amount of relays, buttons, etc
 - [ ] Add Feature to Save Config
 - [ ] Add Feature to Load Config
+- [ ] Add Log Info
 - [x] Complete all the language files with keys
 - [ ] Optimize code to reduce Flash and RAM
 
