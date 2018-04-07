@@ -1,18 +1,18 @@
 /*
   user_config.h - user specific configuration for Sonoff-Tasmota
-  
+
   Copyright (C) 2018  Theo Arends
-  
+
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
   the Free Software Foundation, either version 3 of the License, or
   (at your option) any later version.
-  
+
   This program is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
   GNU General Public License for more details.
-  
+
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
@@ -62,7 +62,7 @@
 #define STA_PASS1              ""                // [Password1] Wifi password
 #define STA_SSID2              ""                // [Ssid2] Optional alternate AP Wifi SSID
 #define STA_PASS2              ""                // [Password2] Optional alternate AP Wifi password
-#define WIFI_CONFIG_TOOL       WIFI_MANAGER      // [WifiConfig] Default tool if wifi fails to connect
+#define WIFI_CONFIG_TOOL       WIFI_WPSCONFIG    // [WifiConfig] Default tool if wifi fails to connect
                                                  //   (WIFI_RESTART, WIFI_SMARTCONFIG, WIFI_MANAGER, WIFI_WPSCONFIG, WIFI_RETRY, WIFI_WAIT)
 
 // -- Syslog --------------------------------------
@@ -183,9 +183,9 @@
  * Select ONE of possible three MQTT library types below
 \*-------------------------------------------------------------------------------------------*/
   // Default MQTT driver for both non-TLS and TLS connections. Blocks network if MQTT server is unavailable.
-//#define MQTT_LIBRARY_TYPE      MQTT_PUBSUBCLIENT   // Use PubSubClient library
+#define MQTT_LIBRARY_TYPE      MQTT_PUBSUBCLIENT   // Use PubSubClient library
   // Alternative MQTT driver does not block network when MQTT server is unavailable. No TLS support
-#define MQTT_LIBRARY_TYPE      MQTT_TASMOTAMQTT    // Use TasmotaMqtt library (+4k4 code, +4k mem) - non-TLS only
+//#define MQTT_LIBRARY_TYPE      MQTT_TASMOTAMQTT    // Use TasmotaMqtt library (+4k4 code, +4k mem) - non-TLS only
   // Alternative MQTT driver does not block network when MQTT server is unavailable. No TLS support
 //#define MQTT_LIBRARY_TYPE      MQTT_ESPMQTTARDUINO // Use (patched) esp-mqtt-arduino library (+4k8 code, +4k mem) - non-TLS only
 
