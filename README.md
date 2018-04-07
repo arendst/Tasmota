@@ -1,20 +1,23 @@
 # ( Work In Progress ) Sonoff-Tasmota KNX MOD
 
-This is a MOD for [Sonoff-Tasmota](https://github.com/arendst/Sonoff-Tasmota) to integrate [KNX Protocol](https://www.knx.org/knx-en/index.php) to its features.
+This is a MOD for [Sonoff-Tasmota](https://github.com/arendst/Sonoff-Tasmota) to add basic functionality of the [KNX IP Protocol](https://www.knx.org/knx-en/index.php).
+
 Sonoff-Tasmota_KNX can be found [here](https://github.com/ascillato/Sonoff-Tasmota_KNX)
 
-Basic KNX IP Functionality is Available.
-
-_Sonoff-Tasmota_KNX development branch is kept in sync with the Original Sonoff-Tasmota_
+_Sonoff-Tasmota_KNX is kept updated with the Original Sonoff-Tasmota_
 
 ## KNX Explanation ##
 
-The [KNX](https://www.knx.org/knx-en/knx/association/what-is-knx/index.php) IP Protocol is intended for smart home and smart bulding automation. It is a decentraliced system. Each device can talk directly to each other without the need of a central controller or server. Any panel or server is just for telesupervision and for sending requests.
+The [KNX](https://www.knx.org/knx-en/knx/association/what-is-knx/index.php) IP Protocol is intended for smart home and smart bulding automation. It is a decentraliced system. Each device can talk directly to each other without the need of a central controller or server. Any panel or server is just for telesupervision and for sending requests. KNX IP Protocol uses a UDP multicast on 224.0.23.12:3671.
 
 Each device has a physical address ( like a MAC ) as **1 . 1 . 0** and that address is used for configuration purposes.
 
 Each device can be configured with group addresses as **2 / 2 / 1** and that address can be used for sending/receiving commands.
 So, for example, if 2 devices that are configured with the **2 / 2 / 1** for turning on/off their outputs, and other device send _Turn ON_ command to **2 / 2 / 1**, both devices will turn on their outputs.
+
+## Integration ##
+
+Several home automation systems have KNX support. For example, [Home Assistant](https://github.com/home-assistant/home-assistant) has a [XKNX Python Library](https://github.com/XKNX/xknx) to connect to KNX devices using a KNX Router. If you don't have a **KNX Router**, you can use a **Software KNX Router** like [KNXd](https://github.com/knxd/knxd) on the same Raspberry Pi than Home Assistant. KNXd is used by Home Assistant for reading this UDP Multicast, although KNXd has other cool features that need extra hardware like connect to KNX devices by Twister Pair, Power Line or RF.
 
 ## Requirements ##
 
