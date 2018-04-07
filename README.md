@@ -18,13 +18,13 @@ So, for example, if 2 devices that are configured with the **2 / 2 / 1** for tur
 
 ## Requirements ##
 
-This MOD requires the KNX Library [envy/esp-knx-ip](https://github.com/envy/esp-knx-ip). Please, use the [async-udp](https://github.com/envy/esp-knx-ip/tree/async-udp) branch. Also, it is needed to change on the _esp-knx-ip.h_ file the following:
+This MOD requires the KNX Library [envy/esp-knx-ip](https://github.com/envy/esp-knx-ip). Please, use the [async-udp](https://github.com/envy/esp-knx-ip/tree/async-udp) branch. Also, it is needed to change the following parameters in the _esp-knx-ip.h_ file:
 ```
 #define ALLOW_MULTIPLE_CALLBACKS_PER_ADDRESS   1
 
 //#define ESP_KNX_DEBUG                       <-- comment this line
 ```
-The ESP KNX IP library (async-udp branch) also requires the [ESPAsyncUDP](https://github.com/me-no-dev/ESPAsyncUDP) library. Please, use ESPAsyncUDP library patched with the [PR #21](https://github.com/me-no-dev/ESPAsyncUDP/pull/21)
+The ESP KNX IP library (async-udp branch) requires the [ESPAsyncUDP](https://github.com/me-no-dev/ESPAsyncUDP) library. Please, use ESPAsyncUDP library patched with the [PR #21](https://github.com/me-no-dev/ESPAsyncUDP/pull/21)
 
 A copy of both libraries with the modifications needed are available at:
 * https://github.com/ascillato/Sonoff-Tasmota_KNX/tree/development/lib/esp-knx-ip
