@@ -388,7 +388,6 @@
 #define D_KNX_COMMAND_WRITE "Write"
 #define D_KNX_COMMAND_READ "Read"
 #define D_KNX_COMMAND_OTHER "Other"
-#define D_TO "to"
 #define D_SENT_TO "sent to"
 
 // xdrv_03_energy.ino
