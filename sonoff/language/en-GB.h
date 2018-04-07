@@ -379,11 +379,17 @@
 #define D_KNX_PHYSICAL_ADDRESS_NOTE "( Must be unique on the KNX network )"
 #define D_KNX_ENABLE "Enable KNX"
 #define D_KNX_GROUP_ADDRESS_TO_WRITE "Data to Send to Group Addresses"
-#define D_KNX_ADD "Add"
+#define D_ADD "Add"
 #define D_DELETE "Delete"
 #define D_REPLY "Reply"
 #define D_KNX_GROUP_ADDRESS_TO_READ "Group Addresses to Receive Data from"
 #define D_LOG_KNX "KNX: "
+#define D_RECEIVED_FROM "Received from"
+#define D_KNX_COMMAND_WRITE "Write"
+#define D_KNX_COMMAND_READ "Read"
+#define D_KNX_COMMAND_OTHER "Other"
+#define D_TO "to"
+#define D_SENT_TO "sent to"
 
 // xdrv_03_energy.ino
 #define D_ENERGY_TODAY "Energy Today"
