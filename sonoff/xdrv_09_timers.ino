@@ -464,7 +464,7 @@ const char HTTP_TIMER_SCRIPT[] PROGMEM =
     "if((m==1)||(m==2)){"                                         // Sunrise or sunset is set
       "p=pt[ct]&0x7FF;"                                           // Load stored time for offset calculation
       "q=Math.floor(p/60);"                                       // Parse hours
-      "if(q>12){q-=12;qs('#odr').selectedIndex=1;}"               // Negative offset
+      "if(q>=12){q-=12;qs('#odr').selectedIndex=1;}"               // Negative offset
         "else{qs('#odr').selectedIndex=0;}"
       "if(q<10){q='0'+q;}qs('#oho').value=q;"                     // Set offset hours
       "q=p%60;if(q<10){q='0'+q;}qs('#omi').value=q;"              // Set offset minutes
