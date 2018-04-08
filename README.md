@@ -21,7 +21,7 @@ Several home automation systems have KNX support. For example, [Home Assistant](
 
 * ESP8266 KNX IP Library [envy/esp-knx-ip async-udp branch](https://github.com/envy/esp-knx-ip/tree/async-udp) with the modifications requested on [PR#48](https://github.com/envy/esp-knx-ip/pull/48) and [PR#52](https://github.com/envy/esp-knx-ip/pull/52)
 
-* [ESPAsyncUDP](https://github.com/me-no-dev/ESPAsyncUDP) Library, used by ESP KNX IP library async-udp branch). Please, use ESPAsyncUDP library patched with the [PR #21](https://github.com/me-no-dev/ESPAsyncUDP/pull/21)
+* [ESPAsyncUDP](https://github.com/me-no-dev/ESPAsyncUDP) Library, used by ESP KNX IP library async-udp branch. Please, use ESPAsyncUDP library patched with the [PR #21](https://github.com/me-no-dev/ESPAsyncUDP/pull/21)
 
 A copy of both libraries with the modifications needed is available at:
 * https://github.com/ascillato/Sonoff-Tasmota_KNX/tree/development/lib/esp-knx-ip-async-udp
