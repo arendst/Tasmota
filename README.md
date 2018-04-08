@@ -21,19 +21,15 @@ Several home automation systems have KNX support. For example, [Home Assistant](
 
 ## Requirements ##
 
-This MOD requires the ESP8266 KNX Library [envy/esp-knx-ip](https://github.com/envy/esp-knx-ip). Please, use the [async-udp](https://github.com/envy/esp-knx-ip/tree/async-udp) branch. Also, it is needed to change the following parameters in the _esp-knx-ip.h_ file:
-```
-#define ALLOW_MULTIPLE_CALLBACKS_PER_ADDRESS   1
+This MOD requires the ESP8266 KNX IP Library [envy/esp-knx-ip async-udp branch](https://github.com/envy/esp-knx-ip/tree/async-udp) with the modifications requested on [PR#48](https://github.com/envy/esp-knx-ip/pull/48) and [PR#52](https://github.com/envy/esp-knx-ip/pull/52)
 
-//#define ESP_KNX_DEBUG                       <-- comment this line
-```
 The ESP KNX IP library (async-udp branch) requires the [ESPAsyncUDP](https://github.com/me-no-dev/ESPAsyncUDP) library. Please, use ESPAsyncUDP library patched with the [PR #21](https://github.com/me-no-dev/ESPAsyncUDP/pull/21)
 
 A copy of both libraries with the modifications needed are available at:
 * https://github.com/ascillato/Sonoff-Tasmota_KNX/tree/development/lib/esp-knx-ip-async-udp
 * https://github.com/ascillato/Sonoff-Tasmota_KNX/tree/development/lib/ESPAsyncUDP-master
 
-## Next Version Menu Screenshots ##
+## Screenshots of the KNX Configuration Menu ##
 
 <img src="https://github.com/ascillato/Sonoff-Tasmota_KNX/blob/development/.github/Config_Menu.jpg" />
 
@@ -42,20 +38,20 @@ A copy of both libraries with the modifications needed are available at:
 ## Development Road Map ##
 
 **For Sonoff-Tasmota_KNX:**
-- [x] Add Web Menu ( soon the next version of menu )
+- [x] Add Web Menu
 - [x] Add Feature to Receive telegrams and modify Relay Status
 - [x] Add Feature to Receive telegrams from multiple Group Addresses to modify just one relay status (useful for scenes)
 - [x] Add Feature to Send telegrams of relay status change
-- [ ] Add Feature to Send telegrams of one relay status to multiple Group Addresses (useful for scenes)
+- [x] Add Feature to Send telegrams of one relay status to multiple Group Addresses (useful for scenes)
 - [x] Add Feature to Send telegrams of button pressed
 - [x] Add Feature to receive telegrams to toggle relay status
 - [ ] Add Feature to read Temperature, Humidity from Tasmota
 - [ ] Add Feature to send Temperature, Humidity by a set interval (tasmota teleperiod)
-- [ ] Add Feature to receive command to read temperature, Humidity
+- [x] Add Feature to receive command to read temperature, Humidity
 - [ ] Add Feature to recognize Tasmota config to show the same amount of relays, buttons, etc
 - [ ] Add Feature to Save Config
 - [ ] Add Feature to Load Config
-- [ ] Add Log Info
+- [x] Add Log Info
 - [x] Complete all the language files with keys
 - [ ] Optimize code to reduce Flash and RAM
 
