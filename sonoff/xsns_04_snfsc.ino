@@ -128,6 +128,12 @@ void SonoffScShow(boolean json)
       DomoticzSensor(DZ_COUNT, sc_value[3]);
       DomoticzSensor(DZ_AIRQUALITY, 500 + ((100 - sc_value[4]) * 20));
 #endif  // USE_DOMOTICZ
+
+#ifdef USE_KNX
+        KNX_Sensor(KNX_temperature, t);
+        KNX_Sensor(KNX_humidity, h);
+#endif  // USE_KNX
+
 #ifdef USE_WEBSERVER
     } else {
       snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TEMP, mqtt_data, "", temperature, TempUnit());

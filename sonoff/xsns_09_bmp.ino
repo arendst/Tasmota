@@ -467,6 +467,12 @@ void BmpShow(boolean json)
 #ifdef USE_DOMOTICZ
       DomoticzTempHumPressureSensor(temperature, humidity, pressure);
 #endif // USE_DOMOTICZ
+
+#ifdef USE_KNX
+        KNX_Sensor(KNX_temperature, t);
+        KNX_Sensor(KNX_humidity, h);
+#endif  // USE_KNX
+
 #ifdef USE_WEBSERVER
     } else {
       snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TEMP, mqtt_data, bmp_name, temperature, TempUnit());

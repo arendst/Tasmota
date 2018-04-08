@@ -87,24 +87,24 @@ typedef struct __device_parameters
 
 // device parameters (information that can be sent)
 device_parameters_t device_param[] = {
-  {  1, true, false, KNX_Empty }, // device_param[ 0] = Relay 1
-  {  2, true, false, KNX_Empty }, // device_param[ 1] = Relay 2
+  {  1, false, false, KNX_Empty }, // device_param[ 0] = Relay 1
+  {  2, false, false, KNX_Empty }, // device_param[ 1] = Relay 2
   {  3, false, false, KNX_Empty }, // device_param[ 2] = Relay 3
   {  4, false, false, KNX_Empty }, // device_param[ 3] = Relay 4
   {  5, false, false, KNX_Empty }, // device_param[ 4] = Relay 5
   {  6, false, false, KNX_Empty }, // device_param[ 5] = Relay 6
   {  7, false, false, KNX_Empty }, // device_param[ 6] = Relay 7
   {  8, false, false, KNX_Empty }, // device_param[ 7] = Relay 8
-  {  9, true, false, KNX_Empty }, // device_param[ 8] = Button 1
-  { 10, true, false, KNX_Empty }, // device_param[ 9] = Button 2
+  {  9, false, false, KNX_Empty }, // device_param[ 8] = Button 1
+  { 10, false, false, KNX_Empty }, // device_param[ 9] = Button 2
   { 11, false, false, KNX_Empty }, // device_param[10] = Button 3
   { 12, false, false, KNX_Empty }, // device_param[11] = Button 4
   { 13, false, false, KNX_Empty }, // device_param[12] = Button 5
   { 14, false, false, KNX_Empty }, // device_param[13] = Button 6
   { 15, false, false, KNX_Empty }, // device_param[14] = Button 7
   { 16, false, false, KNX_Empty }, // device_param[15] = Button 8
-  { KNX_temperature, true, false, KNX_Empty }, // device_param[16] = Temperature
-  { KNX_humidity   , true, false, KNX_Empty }, // device_param[17] = humidity
+  { KNX_temperature, false, false, KNX_Empty }, // device_param[16] = Temperature
+  { KNX_humidity   , false, false, KNX_Empty }, // device_param[17] = humidity
   { KNX_Empty, false, false, KNX_Empty}
 };
 
@@ -183,42 +183,44 @@ void KNXStart()
   knx.start(WebServer, false); // Start knx and pass the webserver object to be used by UDP. False is for not showing the library webpage.
 #endif
 
-  
-  
-  
+// Read Configuration
+//   Check which relays, buttons and sensors where configured for this device
+//   and activate options according to the hardware
+  for (int i = GPIO_REL1; i < GPIO_REL8 + 1; ++i)
+  {
+    if (GetUsedInModule(i, my_module.gp.io)) { device_param[i - GPIO_REL1].show = true; }
+  }
+  for (int i = GPIO_REL1_INV; i < GPIO_REL8_INV + 1; ++i)
+  {
+    if (GetUsedInModule(i, my_module.gp.io)) { device_param[i - GPIO_REL1_INV].show = true; }
+  }
+  for (int i = GPIO_SWT1; i < GPIO_SWT4 + 1; ++i)
+  {
+    if (GetUsedInModule(i, my_module.gp.io)) { device_param[i - GPIO_SWT1 + 8].show = true; }
+  }
+  for (int i = GPIO_KEY1; i < GPIO_KEY4 + 1; ++i)
+  {
+    if (GetUsedInModule(i, my_module.gp.io)) { device_param[i - GPIO_KEY1 + 8].show = true; }
+  }
+  if (GetUsedInModule(GPIO_DHT11, my_module.gp.io)) { device_param[KNX_temperature-1].show = true; }
+  if (GetUsedInModule(GPIO_DHT22, my_module.gp.io)) { device_param[KNX_temperature-1].show = true; }
+  if (GetUsedInModule(GPIO_SI7021, my_module.gp.io)) { device_param[KNX_temperature-1].show = true; }
+  if (GetUsedInModule(GPIO_DHT11, my_module.gp.io)) { device_param[KNX_humidity-1].show = true; }
+  if (GetUsedInModule(GPIO_DHT22, my_module.gp.io)) { device_param[KNX_humidity-1].show = true; }
+  if (GetUsedInModule(GPIO_SI7021, my_module.gp.io)) { device_param[KNX_humidity-1].show = true; }
 
-  Settings.flag.knx_enabled =  true;
-
-  KNX_physs_addr.pa.area = 1;
-  KNX_physs_addr.pa.line = 1;
-  KNX_physs_addr.pa.member = 0;
-  Settings.knx_physsical_addr = KNX_physs_addr.value;
-
-  Settings.knx_GA_registered = 2;
-
-  Settings.knx_GA_param[0] = 1;
-  KNX_addr.ga.area = 2;
-  KNX_addr.ga.line = 2;
-  KNX_addr.ga.member = 1;
-  Settings.knx_GA_addr[0] = KNX_addr.value;
-
-  Settings.knx_GA_param[1] = KNX_temperature;
-  KNX_addr.ga.area = 4;
-  KNX_addr.ga.line = 1;
-  KNX_addr.ga.member = 1;
-  Settings.knx_GA_addr[1] = KNX_addr.value;
-
-  Settings.knx_CB_registered = 1;
-
-  Settings.knx_CB_param[0] = 1;
-  KNX_addr.ga.area = 2;
-  KNX_addr.ga.line = 2;
-  KNX_addr.ga.member = 1;
-  Settings.knx_CB_addr[0] = KNX_addr.value;
-
-
-
-
+  // Delete from KNX settings any configuration that is not anymore related to this device
+  byte j;
+  for (int i = 0; i < Settings.knx_GA_registered; ++i)
+  {
+    j = Settings.knx_GA_param[i];
+    if ( !device_param[j-1].show ) { Settings.knx_GA_param[i] = 0; }
+  }
+  for (int i = 0; i < Settings.knx_CB_registered; ++i)
+  {
+    j = Settings.knx_CB_param[i];
+    if ( !device_param[j-1].show ) { Settings.knx_CB_param[i] = 0; }
+  }
 
   // Set Physical KNX Address of the device
   KNX_physs_addr.value = Settings.knx_physsical_addr;
@@ -229,7 +231,7 @@ void KNXStart()
   //     If there is, register the group address on the KNX_IP Library to Receive data for Executing Callbacks
   for (byte i = 0; i < Settings.knx_CB_registered; ++i)
   {
-    byte j = Settings.knx_CB_param[i];
+    j = Settings.knx_CB_param[i];
     if ( j > 0 )
     {
       device_param[j-1].CB_id = knx.callback_register("", KNX_CB_Action, &device_param[j-1]); // KNX IP Library requires a parameter
@@ -285,6 +287,7 @@ void KNX_CB_Action(message_t const &msg, void *arg)
       break;
   }
 }
+
 
 void KNX_Update_Power_State(byte device, power_t state)
 {
@@ -506,9 +509,7 @@ void HandleKNXConfiguration()
 
 void KNX_Save_Settings()
 {
-  // Read all data from the webpage
-  // Write to settings.knx
-  // Write to ESP_KNX_IP library
+
 }
 #endif  // USE_WEBSERVER
 
