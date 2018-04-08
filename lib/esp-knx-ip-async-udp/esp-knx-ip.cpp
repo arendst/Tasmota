@@ -27,61 +27,63 @@ void ESPKNXIP::load()
   restore_from_eeprom();
 }
 
-void ESPKNXIP::start(ESP8266WebServer *srv)
+void ESPKNXIP::start(ESP8266WebServer *srv, bool espknxip_webpage)
 {
   server = srv;
+  if (espknxip_webpage) { __start_espknxip_webpage(); }
   __start();
 }
 
 void ESPKNXIP::start()
 {
   server = new ESP8266WebServer(80);
+  __start_espknxip_webpage();
   __start();
+}
+
+void ESPKNXIP::__start_espknxip_webpage()
+{
+  server->on(ROOT_PREFIX, [this](){
+    __handle_root();
+  });
+  server->on(__ROOT_PATH, [this](){
+    __handle_root();
+  });
+  server->on(__REGISTER_PATH, [this](){
+    __handle_register();
+  });
+  server->on(__DELETE_PATH, [this](){
+    __handle_delete();
+  });
+  server->on(__PHYS_PATH, [this](){
+    __handle_set();
+  });
+#if !DISABLE_EEPROM_BUTTONS
+  server->on(__EEPROM_PATH, [this](){
+    __handle_eeprom();
+  });
+#endif
+  server->on(__CONFIG_PATH, [this](){
+    __handle_config();
+  });
+  server->on(__FEEDBACK_PATH, [this](){
+    __handle_feedback();
+  });
+#if !DISABLE_RESTORE_BUTTON
+  server->on(__RESTORE_PATH, [this](){
+    __handle_restore();
+  });
+#endif
+#if !DISABLE_REBOOT_BUTTON
+  server->on(__REBOOT_PATH, [this](){
+    __handle_reboot();
+  });
+#endif
+  server->begin();
 }
 
 void ESPKNXIP::__start()
 {
-  if (server != nullptr)
-  {
-    server->on(ROOT_PREFIX, [this](){
-      __handle_root();
-    });
-    server->on(__ROOT_PATH, [this](){
-      __handle_root();
-    });
-    server->on(__REGISTER_PATH, [this](){
-      __handle_register();
-    });
-    server->on(__DELETE_PATH, [this](){
-      __handle_delete();
-    });
-    server->on(__PHYS_PATH, [this](){
-      __handle_set();
-    });
-#if !DISABLE_EEPROM_BUTTONS
-    server->on(__EEPROM_PATH, [this](){
-      __handle_eeprom();
-    });
-#endif
-    server->on(__CONFIG_PATH, [this](){
-      __handle_config();
-    });
-    server->on(__FEEDBACK_PATH, [this](){
-      __handle_feedback();
-    });
-#if !DISABLE_RESTORE_BUTTON
-    server->on(__RESTORE_PATH, [this](){
-      __handle_restore();
-    });
-#endif
-#if !DISABLE_REBOOT_BUTTON
-    server->on(__REBOOT_PATH, [this](){
-      __handle_reboot();
-    });
-#endif
-    server->begin();
-  }
-
   udp.listenMulticast(MULTICAST_IP, MULTICAST_PORT);
   udp.onPacket([this](AsyncUDPPacket &packet) { __loop_knx(packet); });
 }
