@@ -390,6 +390,7 @@
 #define D_KNX_COMMAND_READ "Read"
 #define D_KNX_COMMAND_OTHER "Other"
 #define D_SENT_TO "sent to"
+#define D_KNX_WARNING "The group address ( 0 / 0 / 0 ) is reserved and can not be used."
 
 // xdrv_03_energy.ino
 #define D_ENERGY_TODAY "今日用電量"
