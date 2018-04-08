@@ -21,9 +21,9 @@ Several home automation systems have KNX support. For example, [Home Assistant](
 
 ## Requirements ##
 
-This MOD requires the ESP8266 KNX IP Library [envy/esp-knx-ip async-udp branch](https://github.com/envy/esp-knx-ip/tree/async-udp) with the modifications requested on [PR#48](https://github.com/envy/esp-knx-ip/pull/48) and [PR#52](https://github.com/envy/esp-knx-ip/pull/52)
+* ESP8266 KNX IP Library [envy/esp-knx-ip async-udp branch](https://github.com/envy/esp-knx-ip/tree/async-udp) with the modifications requested on [PR#48](https://github.com/envy/esp-knx-ip/pull/48) and [PR#52](https://github.com/envy/esp-knx-ip/pull/52)
 
-The ESP KNX IP library (async-udp branch) requires the [ESPAsyncUDP](https://github.com/me-no-dev/ESPAsyncUDP) library. Please, use ESPAsyncUDP library patched with the [PR #21](https://github.com/me-no-dev/ESPAsyncUDP/pull/21)
+* [ESPAsyncUDP](https://github.com/me-no-dev/ESPAsyncUDP) Library, used by ESP KNX IP library async-udp branch). Please, use ESPAsyncUDP library patched with the [PR #21](https://github.com/me-no-dev/ESPAsyncUDP/pull/21)
 
 A copy of both libraries with the modifications needed are available at:
 * https://github.com/ascillato/Sonoff-Tasmota_KNX/tree/development/lib/esp-knx-ip-async-udp
@@ -47,10 +47,10 @@ A copy of both libraries with the modifications needed are available at:
 - [x] Add Feature to receive telegrams to toggle relay status
 - [ ] Add Feature to read Temperature, Humidity from Tasmota
 - [ ] Add Feature to send Temperature, Humidity by a set interval (tasmota teleperiod)
-- [x] Add Feature to receive command to read temperature, Humidity
+- [ ] Add Feature to receive command to read temperature, Humidity
 - [ ] Add Feature to recognize Tasmota config to show the same amount of relays, buttons, etc
 - [ ] Add Feature to Save Config
-- [ ] Add Feature to Load Config
+- [x] Add Feature to Load Config
 - [x] Add Log Info
 - [x] Complete all the language files with keys
 - [ ] Optimize code to reduce Flash and RAM
