@@ -264,6 +264,12 @@ void HtuShow(boolean json)
 #ifdef USE_DOMOTICZ
       DomoticzTempHumSensor(temperature, humidity);
 #endif  // USE_DOMOTICZ
+
+#ifdef USE_KNX
+        KNX_Sensor(KNX_temperature, t);
+        KNX_Sensor(KNX_humidity, h);
+#endif  // USE_KNX
+
 #ifdef USE_WEBSERVER
     } else {
       snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TEMP, mqtt_data, htu_types, temperature, TempUnit());
@@ -303,4 +309,3 @@ boolean Xsns08(byte function)
 
 #endif  // USE_HTU
 #endif  // USE_I2C
-
