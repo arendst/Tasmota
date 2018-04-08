@@ -1,6 +1,6 @@
-# ( Work In Progress ) Sonoff-Tasmota KNX MOD
+# ( Work In Progress ) Sonoff-Tasmota KNX
 
-This is a MOD for [Sonoff-Tasmota](https://github.com/arendst/Sonoff-Tasmota) to add basic functionality of the [KNX IP Protocol](https://www.knx.org/knx-en/index.php).
+Modification for [Sonoff-Tasmota](https://github.com/arendst/Sonoff-Tasmota) to add basic functionality of the [KNX IP Protocol](https://www.knx.org/knx-en/index.php).
 
 Sonoff-Tasmota_KNX can be found [here](https://github.com/ascillato/Sonoff-Tasmota_KNX)
 
@@ -70,7 +70,7 @@ Up to now, enabling KNX uses +18k of code and +3k3 of memory.
 
 There is **NO CONFLICT** with MQTT, Home Assistant, Web, etc. Tests show fast response of all features running at same time.
 
-## Contributors to this MOD ##
+## Contributors ##
 
 * Adrian Scillato [ascillato](https://github.com/ascillato)
 * Sisamiwe [sisamiwe](https://github.com/sisamiwe) - Thanks for the guide on using KNX.
