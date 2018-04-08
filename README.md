@@ -25,7 +25,7 @@ Several home automation systems have KNX support. For example, [Home Assistant](
 
 * [ESPAsyncUDP](https://github.com/me-no-dev/ESPAsyncUDP) Library, used by ESP KNX IP library async-udp branch). Please, use ESPAsyncUDP library patched with the [PR #21](https://github.com/me-no-dev/ESPAsyncUDP/pull/21)
 
-A copy of both libraries with the modifications needed are available at:
+A copy of both libraries with the modifications needed is available at:
 * https://github.com/ascillato/Sonoff-Tasmota_KNX/tree/development/lib/esp-knx-ip-async-udp
 * https://github.com/ascillato/Sonoff-Tasmota_KNX/tree/development/lib/ESPAsyncUDP-master
 
