@@ -203,7 +203,7 @@ const char HTTP_BTN_MENU_MQTT[] PROGMEM =
   "";
 const char HTTP_BTN_MENU4[] PROGMEM =
 #ifdef USE_KNX
-  "<br/><form action='knx' method='get'><button>" D_CONFIGURE_KNX "</button></form>"
+  "<br/><form action='kn' method='get'><button>" D_CONFIGURE_KNX "</button></form>"
 #endif  // USE_KNX
   "<br/><form action='lg' method='get'><button>" D_CONFIGURE_LOGGING "</button></form>"
   "<br/><form action='co' method='get'><button>" D_CONFIGURE_OTHER "</button></form>"
@@ -393,7 +393,7 @@ void StartWebserver(int type, IPAddress ipweb)
 #endif  // USE_EMULATION
       WebServer->onNotFound(HandleNotFound);
 #ifdef USE_KNX
-      knx.start(WebServer); // Start knx. The /knx link is automatically set inside the KNX library
+      knx.start(WebServer, false); // Start knx and pass the webserver object to be used by UDP. False is for not showing the library webpage.
 #endif // USE_KNX
     }
     reset_web_log_flag = 0;
@@ -1123,6 +1123,11 @@ void HandleSaveSettings()
     break;
 #endif  // USE_TIMERS_WEB
 #endif  // USE_TIMERS
+#ifdef USE_KNX
+  case 8:
+    KNX_Save_Settings();
+    break;
+#endif  // USE_KNX
 #ifdef USE_DOMOTICZ
   case 4:
     DomoticzSaveSettings();
