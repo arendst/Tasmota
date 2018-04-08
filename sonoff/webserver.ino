@@ -1123,11 +1123,6 @@ void HandleSaveSettings()
     break;
 #endif  // USE_TIMERS_WEB
 #endif  // USE_TIMERS
-#ifdef USE_KNX
-  case 8:
-    KNX_Save_Settings();
-    break;
-#endif  // USE_KNX
 #ifdef USE_DOMOTICZ
   case 4:
     DomoticzSaveSettings();
