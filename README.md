@@ -45,9 +45,9 @@ A copy of both libraries with the modifications needed is available at:
 - [x] Add Feature to Send telegrams of one relay status to multiple Group Addresses (useful for scenes)
 - [x] Add Feature to Send telegrams of button pressed
 - [x] Add Feature to receive telegrams to toggle relay status
-- [ ] Add Feature to read Temperature, Humidity from Tasmota
-- [ ] Add Feature to send Temperature, Humidity by a set interval (tasmota teleperiod)
-- [ ] Add Feature to receive command to read temperature, Humidity
+- [x] Add Feature to read Temperature, Humidity from Tasmota
+- [x] Add Feature to send Temperature, Humidity by a set interval (tasmota teleperiod)
+- [x] Add Feature to receive command to read temperature, Humidity
 - [ ] Add Feature to recognize Tasmota config to show the same amount of relays, buttons, etc
 - [ ] Add Feature to Save Config
 - [x] Add Feature to Load Config
