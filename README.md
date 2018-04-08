@@ -2,9 +2,7 @@
 
 Modification for [Sonoff-Tasmota](https://github.com/arendst/Sonoff-Tasmota) to add basic functionality of the [KNX IP Protocol](https://www.knx.org/knx-en/index.php).
 
-Sonoff-Tasmota_KNX can be found [here](https://github.com/ascillato/Sonoff-Tasmota_KNX)
-
-_Sonoff-Tasmota_KNX is kept updated with the Original Sonoff-Tasmota_
+Sonoff-Tasmota_KNX is kept updated with the Original Sonoff-Tasmota and can be found [here](https://github.com/ascillato/Sonoff-Tasmota_KNX)
 
 ## KNX Explanation ##
 
