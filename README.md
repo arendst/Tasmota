@@ -1,6 +1,6 @@
 # ( Work In Progress ) Sonoff-Tasmota KNX
 
-Modification for [Sonoff-Tasmota](https://github.com/arendst/Sonoff-Tasmota) to add basic functionality of the [KNX IP Protocol](https://www.knx.org/knx-en/index.php).
+Sonoff-Tasmota_KNX is a modification for [Sonoff-Tasmota](https://github.com/arendst/Sonoff-Tasmota) to add basic functionality of the [KNX IP Protocol](https://www.knx.org/knx-en/index.php) to its features.
 
 Sonoff-Tasmota_KNX is kept updated with the Original Sonoff-Tasmota and can be found [here](https://github.com/ascillato/Sonoff-Tasmota_KNX)
 
@@ -53,7 +53,7 @@ A copy of both libraries with the modifications needed is available at:
 - [x] Complete all the language files with keys
 - [ ] Optimize code to reduce Flash and RAM
 
-## Modifications to [Original Tasmota](https://github.com/arendst/Sonoff-Tasmota) ##
+## Modifications to Sonoff-Tasmota ##
 
 * Adding the file _/sonoff/xdrv_10_KNX.ino_ 
 * Add the entry `#define USE_KNX` on _/sonoff/user_config.h_
