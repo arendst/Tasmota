@@ -22,8 +22,11 @@
 
 #include <esp-knx-ip.h>     // Include ESP KNX IP library (https://github.com/envy/esp-knx-ip)
                             //    use the async-udp branch (https://github.com/envy/esp-knx-ip/tree/async-udp)
-                            //    use the library patched with https://github.com/envy/esp-knx-ip/pull/48
-                            //    and with https://github.com/envy/esp-knx-ip/pull/52
+                            //    use the library patched with
+                            //       https://github.com/envy/esp-knx-ip/pull/48
+                            //       https://github.com/envy/esp-knx-ip/pull/52
+                            //       https://github.com/envy/esp-knx-ip/pull/54
+                            //       https://github.com/envy/esp-knx-ip/pull/55                                                        
                             // The ESP KNX IP library calls ESPAsyncUDP library (https://github.com/me-no-dev/ESPAsyncUDP)
                             //    use ESPAsyncUDP library patched with the PR #21 (https://github.com/me-no-dev/ESPAsyncUDP/pull/21)
                             //
@@ -345,8 +348,8 @@ void KNX_DEL_CB( byte CBnum )
 
   // Check if there is no other assigment to that callback. If there is not. delete that callback register
   if ( KNX_CB_Search( oldparam ) == KNX_Empty ) {
-    knx.callback_delete_register( device_param[oldparam].CB_id );
-    device_param[oldparam].CB_id =  KNX_Empty;
+    knx.callback_delete_register( device_param[oldparam-1].CB_id );
+    device_param[oldparam-1].CB_id =  KNX_Empty;
   }
 
   snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_KNX D_DELETE " CB #%d"), CBnum );
