@@ -357,6 +357,24 @@ void KNX_DEL_CB( byte CBnum )
 }
 
 
+bool KNX_CONFIG_NOT_MATCH()
+{
+  for (int i = 0; i < KNX_MAX_device_param; ++i)
+  {
+    if ( !device_param[i].show ) { // device has this parameter ?
+      // if not, search for all registered group address to this parameter for deletion
+      if ( KNX_GA_Search(i+1) != KNX_Empty ) { return true; }
+      if ( (i < 8) || (i > 15) ) // check relays and sensors (i from 8 to 16 are toggle relays parameters)
+      {
+        if ( KNX_CB_Search(i+1) != KNX_Empty ) { return true; }
+        if ( KNX_CB_Search(i+8) != KNX_Empty ) { return true; }
+
+      }
+    }
+  }
+}
+
+
 void KNXStart()
 {
 
@@ -399,38 +417,16 @@ void KNXStart()
   if (GetUsedInModule(GPIO_DHT22, my_module.gp.io)) { device_param[KNX_humidity-1].show = true; }
   if (GetUsedInModule(GPIO_SI7021, my_module.gp.io)) { device_param[KNX_humidity-1].show = true; }
 
-  // Delete from KNX settings any configuration that is not anymore related to this device
-  byte j;
-  for (int i = 0; i < KNX_MAX_device_param; ++i)
-  {
-    if ( !device_param[i].show ) { // device has this parameter ?
-      j = KNX_GA_Search(i+1); // if not, search for all registered group address to this parameter and delete them
-      while ( j != KNX_Empty ) {
-        KNX_DEL_GA(j);
-        j = KNX_GA_Search(i+1, j + 1);
-      }
-      if ( (i < 8) || (i > 15) ) // check relays and sensors (i from 8 to 16 are toggle relays parameters)
-      {
-        j = KNX_CB_Search(i+1); // if not, search for all registered group address to this parameter and delete them
-        while ( j != KNX_Empty ) {
-          KNX_DEL_CB(j);
-          j = KNX_CB_Search(i+1, j + 1);
-        }
-        if (i < 8) // when checking if relays are available, also change for toggle relays parameters
-        {
-          j = KNX_CB_Search(i+8); // if not, search for all registered group address to this parameter and delete them
-          while ( j != KNX_Empty ) {
-            KNX_DEL_CB(j);
-            j = KNX_CB_Search(i+8, j + 1);
-          }
-        }
-      }
-    }
+  // Delete from KNX settings all configuration is not anymore related to this device
+  if (KNX_CONFIG_NOT_MATCH()) {
+    Settings.knx_GA_registered = 0;
+    Settings.knx_CB_registered = 0;
   }
 
   // Register Group Addresses to listen to
   //     Search on the settings if there is a group address set for receive KNX messages for the type: device_param[j].type
   //     If there is, register the group address on the KNX_IP Library to Receive data for Executing Callbacks
+  byte j;
   for (byte i = 0; i < Settings.knx_CB_registered; ++i)
   {
     j = Settings.knx_CB_param[i];
