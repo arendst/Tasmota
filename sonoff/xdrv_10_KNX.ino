@@ -372,6 +372,7 @@ bool KNX_CONFIG_NOT_MATCH()
       }
     }
   }
+  return false;
 }
 
 
@@ -421,6 +422,8 @@ void KNXStart()
   if (KNX_CONFIG_NOT_MATCH()) {
     Settings.knx_GA_registered = 0;
     Settings.knx_CB_registered = 0;
+    snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_KNX D_DELETE " " D_KNX_PARAMETERS ));
+    AddLog(LOG_LEVEL_DEBUG);
   }
 
   // Register Group Addresses to listen to
