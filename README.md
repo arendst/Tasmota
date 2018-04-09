@@ -44,9 +44,11 @@ We can set one of the group address to be the same in all the devices so as to t
 In this case, so as to inform the status of all the relays to the Automation System, just one of the devices have to be configured as the responder. If you use the same Group Address for sending and receiving, you have to take into account not to make loops.
 
 DEVICE 1
+
 <img src="https://github.com/ascillato/Sonoff-Tasmota_KNX/blob/development/.github/1.jpg" />
 
 DEVICE 2
+
 <img src="https://github.com/ascillato/Sonoff-Tasmota_KNX/blob/development/.github/2.jpg" />
 
 **2) Setting 2 Sonoff to be linked as stair lights:**
@@ -54,9 +56,11 @@ DEVICE 2
 We can set one device to send the status of its output and another to read that and follow. And the second device can send the status of its button and the first device will toggle. With this configuration we can avoid to make a loop.
 
 DEVICE 1
+
 <img src="https://github.com/ascillato/Sonoff-Tasmota_KNX/blob/development/.github/3.jpg" />
 
 DEVICE 2
+
 <img src="https://github.com/ascillato/Sonoff-Tasmota_KNX/blob/development/.github/4.jpg" />
 
 **3) Setting a button as initiator of a scene:**
@@ -64,9 +68,11 @@ DEVICE 2
 Just setting one device to send the push of a button, and the rest just use that value to turn them on. In this case, there is no toggle. Every time the button is pushed, the turn on command is sent.
 
 DEVICE 1
+
 <img src="https://github.com/ascillato/Sonoff-Tasmota_KNX/blob/development/.github/5.jpg" />
 
 DEVICE 2
+
 <img src="https://github.com/ascillato/Sonoff-Tasmota_KNX/blob/development/.github/6.jpg" />
 
 **4) Setting a Temperature sensor:**
