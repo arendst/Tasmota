@@ -1,4 +1,4 @@
-# ( Work In Progress ) Sonoff-Tasmota KNX
+# Sonoff-Tasmota KNX
 
 [Sonoff-Tasmota_KNX](https://github.com/ascillato/Sonoff-Tasmota_KNX) is a modification for [Sonoff-Tasmota](https://github.com/arendst/Sonoff-Tasmota) to add a basic functionality of the [KNX IP Protocol](https://www.knx.org/knx-en/index.php).
 
@@ -21,7 +21,7 @@ Several home automation systems have KNX support. For example, [Home Assistant](
 
 ## Requirements ##
 
-* [ESP KNX IP Library (async-udp branch)](https://github.com/envy/esp-knx-ip/tree/async-udp) with the modifications requested on [PR#48](https://github.com/envy/esp-knx-ip/pull/48) and [PR#52](https://github.com/envy/esp-knx-ip/pull/52)
+* [ESP KNX IP Library (async-udp branch)](https://github.com/envy/esp-knx-ip/tree/async-udp) with the modifications requested on [PR#48](https://github.com/envy/esp-knx-ip/pull/48), [PR#52](https://github.com/envy/esp-knx-ip/pull/52)
 
 * [ESPAsyncUDP Library](https://github.com/me-no-dev/ESPAsyncUDP) with the modifications requested on [PR #21](https://github.com/me-no-dev/ESPAsyncUDP/pull/21). This Library is used by ESP KNX IP Library. 
 
@@ -49,7 +49,7 @@ A copy of both libraries with the modifications needed is available at:
 - [x] Add Feature to send Temperature, Humidity by a set interval (tasmota teleperiod)
 - [x] Add Feature to receive command to read temperature, Humidity
 - [x] Add Feature to recognize Tasmota config to show the same amount of relays, buttons, etc
-- [ ] Add Feature to Save Config
+- [x] Add Feature to Save Config
 - [x] Add Feature to Load Config
 - [x] Add Log Info
 - [x] Complete all the language files with keys
