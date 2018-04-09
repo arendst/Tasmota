@@ -49,7 +49,7 @@ Constants in sonoff.h
 
 #define MAX_KNX_GA             10            Max number of KNX Group Addresses to read that can be set
 #define MAX_KNX_CB             10            Max number of KNX Group Addresses to write that can be set
-                                             If you change MAX_KNX_CB you also have to change on esp-knx-ip.h file the following:
+                                             If you change MAX_KNX_CB you also have to change on the esp-knx-ip.h file the following:
                                                        #define MAX_CALLBACK_ASSIGNMENTS  10
                                                        #define MAX_CALLBACKS             10
                                              Both to MAX_KNX_CB
@@ -178,73 +178,181 @@ byte KNX_GA_Search( byte param, byte start = 0 )
 }
 
 
+byte KNX_CB_Search( byte param, byte start = 0 )
+{
+  for (byte i = start; i < Settings.knx_CB_registered; ++i)
+  {
+    if ( Settings.knx_CB_param[i] == param )
+    {
+      if ( Settings.knx_CB_addr[i] != 0 )
+      {
+         if ( i >= start ) { return i; }
+      }
+    }
+  }
+  return KNX_Empty;
+}
+
+
 void KNX_ADD_GA( byte GAop, byte GA_FNUM, byte GA_AREA, byte GA_FDEF )
 {
-  //Check if all GA were assigned. If yes-> return
-  //assign a GA to that address
+  // Check if all GA were assigned. If yes-> return
+  if ( Settings.knx_GA_registered >= MAX_KNX_GA ) { return; }
+  if ( GA_FNUM == 0 && GA_AREA == 0 && GA_FDEF == 0 ) { return; }
 
+  // Assign a GA to that address
+  Settings.knx_GA_param[Settings.knx_GA_registered] = GAop;
+  KNX_addr.ga.area = GA_FNUM;
+  KNX_addr.ga.line = GA_AREA;
+  KNX_addr.ga.member = GA_FDEF;
+  Settings.knx_GA_addr[Settings.knx_GA_registered] = KNX_addr.value;
 
+  Settings.knx_GA_registered++;
 
-  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_KNX "ADD GA: %d, to %d/%d/%d"),
-   GAop, GA_FNUM, GA_AREA, GA_FDEF );
-  AddLog(LOG_LEVEL_INFO);
-
+  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_KNX D_ADD " GA #%d: %s " D_TO " %d/%d/%d"),
+   Settings.knx_GA_registered,
+   device_param_ga[GAop-1],
+   GA_FNUM, GA_AREA, GA_FDEF );
+  AddLog(LOG_LEVEL_DEBUG);
 }
 
 
 void KNX_DEL_GA( byte GAnum )
 {
 
+  byte dest_offset = 0;
+  byte src_offset = 0;
+  byte len = 0;
 
-  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_KNX "DEL GA %d"),
+  // Delete GA
+  Settings.knx_GA_param[GAnum-1] = 0;
+
+  if (GAnum == 1)
+  {
+    // start of array, so delete first entry
+    src_offset = 1;
+    // Settings.knx_GA_registered will be 1 in case of only one entry
+    // Settings.knx_GA_registered will be 2 in case of two entries, etc..
+    // so only copy anything, if there is it at least more then one element
+    len = (Settings.knx_GA_registered - 1);
+  }
+  else if (GAnum == Settings.knx_GA_registered)
+  {
+    // last element, don't do anything, simply decrement counter
+  }
+  else
+  {
+    // somewhere in the middle
+    // need to calc offsets
+
+    // skip all prev elements
+    dest_offset = GAnum -1 ; // GAnum -1 is equal to how many element are in front of it
+    src_offset = dest_offset + 1; // start after the current element
+    len = (Settings.knx_GA_registered - GAnum);
+  }
+
+  if (len > 0)
+  {
+    memmove(Settings.knx_GA_param + dest_offset, Settings.knx_GA_param + src_offset, len * sizeof(byte));
+    memmove(Settings.knx_GA_addr + dest_offset, Settings.knx_GA_addr + src_offset, len * sizeof(uint16_t));
+  }
+
+  Settings.knx_GA_registered--;
+
+  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_KNX D_DELETE " GA #%d"),
     GAnum );
-  AddLog(LOG_LEVEL_INFO);
+  AddLog(LOG_LEVEL_DEBUG);
 }
 
 
 void KNX_ADD_CB( byte CBop, byte CB_FNUM, byte CB_AREA, byte CB_FDEF )
 {
-  //Check if all callbacks were assigned. If yes-> return
-  //check if a CB for CBop was registered on the ESP-KNX-IP Library
-  //if no, register the CB for CBop
-  //assign a callback to CB address
+  // Check if all callbacks were assigned. If yes-> return
+  if ( Settings.knx_CB_registered >= MAX_KNX_CB ) { return; }
+  if ( CB_FNUM == 0 && CB_AREA == 0 && CB_FDEF == 0 ) { return; }
 
-
-/*
-for (byte i = 0; i < Settings.knx_CB_registered; ++i)
-{
-  j = Settings.knx_CB_param[i];
-  if ( j > 0 )
+  // Check if a CB for CBop was registered on the ESP-KNX-IP Library
+  if ( device_param[CBop-1].CB_id == KNX_Empty )
   {
-    device_param[j-1].CB_id = knx.callback_register("", KNX_CB_Action, &device_param[j-1]); // KNX IP Library requires a parameter
-                                                                                                 // to identify which action was requested on the KNX network
-                                                                                                 // to be performed on this device (set relay, etc.)
-                                                                                                 // Is going to be used device_param[j].type that stores the type number (1: relay 1, etc)
-    KNX_addr.value = Settings.knx_CB_addr[i];
-    knx.callback_assign( device_param[j-1].CB_id, KNX_addr );
+    // if no, register the CB for CBop
+    device_param[CBop-1].CB_id = knx.callback_register("", KNX_CB_Action, &device_param[CBop-1]);
+      // KNX IP Library requires a parameter
+      // to identify which action was requested on the KNX network
+      // to be performed on this device (set relay, etc.)
+      // Is going to be used device_param[j].type that stores the type number (1: relay 1, etc)
   }
-}
-*/
+  // Assign a callback to CB address
+  Settings.knx_CB_param[Settings.knx_CB_registered] = CBop;
+  KNX_addr.ga.area = CB_FNUM;
+  KNX_addr.ga.line = CB_AREA;
+  KNX_addr.ga.member = CB_FDEF;
+  Settings.knx_CB_addr[Settings.knx_CB_registered] = KNX_addr.value;
 
+  knx.callback_assign( device_param[CBop-1].CB_id, KNX_addr );
 
+  Settings.knx_CB_registered++;
 
-  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_KNX "ADD CB: %d/%d/%d to %d"),
-   CBop, CB_FNUM, CB_AREA, CB_FDEF );
-  AddLog(LOG_LEVEL_INFO);
-
+  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_KNX D_ADD " CB #%d: %d/%d/%d " D_TO " %s"),
+   Settings.knx_CB_registered,
+   CB_FNUM, CB_AREA, CB_FDEF,
+   device_param_cb[CBop-1] );
+  AddLog(LOG_LEVEL_DEBUG);
 }
 
 
 void KNX_DEL_CB( byte CBnum )
 {
-  //delete assigment
-  //check if there is no other assigment to that callback. If there is not. delete that callback register
+  byte oldparam = Settings.knx_CB_param[CBnum-1];
+  byte dest_offset = 0;
+  byte src_offset = 0;
+  byte len = 0;
 
-  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_KNX "DEL CB %d"),
-    CBnum );
-  AddLog(LOG_LEVEL_INFO);
+  // Delete assigment
+  knx.callback_delete_assignment(CBnum-1);
+  Settings.knx_CB_param[CBnum-1] = 0;
 
+  if (CBnum == 1)
+  {
+    // start of array, so delete first entry
+    src_offset = 1;
+    // Settings.knx_CB_registered will be 1 in case of only one entry
+    // Settings.knx_CB_registered will be 2 in case of two entries, etc..
+    // so only copy anything, if there is it at least more then one element
+    len = (Settings.knx_CB_registered - 1);
+  }
+  else if (CBnum == Settings.knx_CB_registered)
+  {
+    // last element, don't do anything, simply decrement counter
+  }
+  else
+  {
+    // somewhere in the middle
+    // need to calc offsets
+
+    // skip all prev elements
+    dest_offset = CBnum -1 ; // GAnum -1 is equal to how many element are in front of it
+    src_offset = dest_offset + 1; // start after the current element
+    len = (Settings.knx_CB_registered - CBnum);
+  }
+
+  if (len > 0)
+  {
+    memmove(Settings.knx_CB_param + dest_offset, Settings.knx_CB_param + src_offset, len * sizeof(byte));
+    memmove(Settings.knx_CB_addr + dest_offset, Settings.knx_CB_addr + src_offset, len * sizeof(uint16_t));
+  }
+
+  Settings.knx_CB_registered--;
+
+  // Check if there is no other assigment to that callback. If there is not. delete that callback register
+  if ( KNX_CB_Search( oldparam ) == KNX_Empty ) {
+    knx.callback_delete_register( device_param[oldparam].CB_id );
+    device_param[oldparam].CB_id =  KNX_Empty;
+  }
+
+  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_KNX D_DELETE " CB #%d"), CBnum );
+  AddLog(LOG_LEVEL_DEBUG);
 }
+
 
 void KNXStart()
 {
@@ -253,6 +361,10 @@ void KNXStart()
   WebServer = new ESP8266WebServer(80);
   knx.start(WebServer, false); // Start knx and pass the webserver object to be used by UDP. False is for not showing the library webpage.
 #endif
+
+  // Check for incompatible config
+  if (Settings.knx_GA_registered > MAX_KNX_GA) { Settings.knx_GA_registered = MAX_KNX_GA; }
+  if (Settings.knx_CB_registered > MAX_KNX_CB) { Settings.knx_CB_registered = MAX_KNX_CB; }
 
   // Set Physical KNX Address of the device
   KNX_physs_addr.value = Settings.knx_physsical_addr;
@@ -537,7 +649,7 @@ void HandleKNXConfiguration()
         stmp = WebServer->arg("CB_FDEF");
         byte CB_FDEF = stmp.toInt();
 
-        KNX_ADD_CB( CB_FNUM, CB_AREA, CB_FDEF, CBop );
+        KNX_ADD_CB( CBop, CB_FNUM, CB_AREA, CB_FDEF );
 
       }
     }
@@ -599,12 +711,12 @@ void HandleKNXConfiguration()
       page.replace(F("btndis"), F("disabled"));
     }
     page.replace(F("fncbtnadd"), F("GAwarning"));
-    for (byte i = 0; i < Settings.knx_GA_registered ; i++)
+    for (byte i = 0; i < Settings.knx_GA_registered ; ++i)
     {
       if ( Settings.knx_GA_param[i] )
       {
         page += FPSTR(HTTP_FORM_KNX_ADD_TABLE_ROW);
-        page.replace(F("{opval}"), String(Settings.knx_GA_param[i]));
+        page.replace(F("{opval}"), String(i+1));
         page.replace(F("{optex}"), String(device_param_ga[Settings.knx_GA_param[i]-1]));
         KNX_addr.value = Settings.knx_GA_addr[i];
         page.replace(F("GAfnum"), String(KNX_addr.ga.area));
@@ -641,12 +753,12 @@ void HandleKNXConfiguration()
       page.replace(F("btndis"), F("disabled"));
     }
     page.replace(F("fncbtnadd"), F("CBwarning"));
-    for (byte i = 0; i < Settings.knx_CB_registered ; i++)
+    for (byte i = 0; i < Settings.knx_CB_registered ; ++i)
     {
       if ( Settings.knx_CB_param[i] )
       {
         page += FPSTR(HTTP_FORM_KNX_ADD_TABLE_ROW2);
-        page.replace(F("{opval}"), String(Settings.knx_CB_param[i]));
+        page.replace(F("{opval}"), String(i+1));
         page.replace(F("{optex}"), String(device_param_cb[Settings.knx_CB_param[i]-1]));
         KNX_addr.value = Settings.knx_CB_addr[i];
         page.replace(F("GAfnum"), String(KNX_addr.ga.area));
@@ -687,28 +799,50 @@ void HandleKNXConfiguration()
 void KNX_Save_Settings()
 {
   String stmp;
-  address_t KNX_physs_addr;
+  address_t KNX_addr;
+  byte i;
 
   Settings.flag.knx_enabled = WebServer->hasArg("b1");
+  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_KNX D_ENABLED ": %d "),
+   Settings.flag.knx_enabled);
+  AddLog(LOG_LEVEL_DEBUG);
 
   stmp = WebServer->arg("area");
-  KNX_physs_addr.pa.area = stmp.toInt();
+  KNX_addr.pa.area = stmp.toInt();
   stmp = WebServer->arg("line");
-  KNX_physs_addr.pa.line = stmp.toInt();
+  KNX_addr.pa.line = stmp.toInt();
   stmp = WebServer->arg("member");
-  KNX_physs_addr.pa.member = stmp.toInt();
+  KNX_addr.pa.member = stmp.toInt();
+  Settings.knx_physsical_addr = KNX_addr.value;
+  knx.physical_address_set( KNX_addr ); // Set Physical KNX Address of the device
+  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_KNX D_KNX_PHYSICAL_ADDRESS ": %d.%d.%d "),
+   KNX_addr.pa.area, KNX_addr.pa.line, KNX_addr.pa.member );
+  AddLog(LOG_LEVEL_DEBUG);
 
-  Settings.knx_physsical_addr = KNX_physs_addr.value;
-  // Set Physical KNX Address of the device
-  knx.physical_address_set( KNX_physs_addr );
+  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_KNX "GA: %d"),
+   Settings.knx_GA_registered );
+  AddLog(LOG_LEVEL_DEBUG);
+  for (i = 0; i < Settings.knx_GA_registered ; ++i)
+  {
+    KNX_addr.value = Settings.knx_GA_addr[i];
+    snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_KNX "GA #%d: %s " D_TO " %d/%d/%d"),
+     i+1, device_param_ga[Settings.knx_GA_param[i]-1],
+     KNX_addr.ga.area, KNX_addr.ga.line, KNX_addr.ga.member );
+    AddLog(LOG_LEVEL_DEBUG);
+  }
 
-  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_KNX "KNX_ENABLED: %d "),
-   Settings.flag.knx_enabled);
-  AddLog(LOG_LEVEL_INFO);
-
-  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_KNX "KNX_PHYSADDR: %d.%d.%d "),
-   KNX_physs_addr.pa.area, KNX_physs_addr.pa.line, KNX_physs_addr.pa.member );
-  AddLog(LOG_LEVEL_INFO);
+  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_KNX "CB: %d"),
+   Settings.knx_CB_registered );
+  AddLog(LOG_LEVEL_DEBUG);
+  for (i = 0; i < Settings.knx_CB_registered ; ++i)
+  {
+    KNX_addr.value = Settings.knx_CB_addr[i];
+    snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_KNX "CB #%d: %d/%d/%d " D_TO " %s"),
+     i+1,
+     KNX_addr.ga.area, KNX_addr.ga.line, KNX_addr.ga.member,
+     device_param_cb[Settings.knx_CB_param[i]-1] );
+    AddLog(LOG_LEVEL_DEBUG);
+  }
 }
 
 #endif  // USE_WEBSERVER
