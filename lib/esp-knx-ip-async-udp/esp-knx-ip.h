@@ -26,10 +26,10 @@
 
 // Webserver related
 #define USE_BOOTSTRAP             1 // [Default 1] Set to 1 to enable use of bootstrap CSS for nicer webconfig. CSS is loaded from bootstrapcdn.com. Set to 0 to disable
-#define ROOT_PREFIX               ""  // [Default ""] This gets prepended to all webserver paths, default is empty string "". Set this to "/knx" if you want the config to be available on http://<ip>/knx
-#define DISABLE_EEPROM_BUTTONS    0 // [Default 0] Set to 1 to disable the EEPROM buttons in the web ui.
-#define DISABLE_REBOOT_BUTTON     0 // [Default 0] Set to 1 to disable the reboot button in the web ui.
-#define DISABLE_RESTORE_BUTTON    0 // [Default 0] Set to 1 to disable the "restore defaults" button in the web ui.
+#define ROOT_PREFIX               "/knx"  // [Default ""] This gets prepended to all webserver paths, default is empty string "". Set this to "/knx" if you want the config to be available on http://<ip>/knx
+#define DISABLE_EEPROM_BUTTONS    1 // [Default 0] Set to 1 to disable the EEPROM buttons in the web ui.
+#define DISABLE_REBOOT_BUTTON     1 // [Default 0] Set to 1 to disable the reboot button in the web ui.
+#define DISABLE_RESTORE_BUTTON    1 // [Default 0] Set to 1 to disable the "restore defaults" button in the web ui.
 
 // These values normally don't need adjustment
 #define MULTICAST_PORT            3671 // [Default 3671]
@@ -366,6 +366,9 @@ class ESPKNXIP {
 
     callback_id_t callback_register(String name, callback_fptr_t cb, void *arg = nullptr, enable_condition_t cond = nullptr);
     void          callback_assign(callback_id_t id, address_t val);
+
+    void          callback_delete_register(callback_id_t id);
+    void          callback_delete_assignment(callback_assignment_id_t id);
 
     void          physical_address_set(address_t const &addr);
     address_t     physical_address_get();
