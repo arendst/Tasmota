@@ -29,11 +29,42 @@ A copy of both libraries with the modifications needed is available at:
 * https://github.com/ascillato/Sonoff-Tasmota_KNX/tree/development/lib/esp-knx-ip-async-udp
 * https://github.com/ascillato/Sonoff-Tasmota_KNX/tree/development/lib/ESPAsyncUDP-master
 
-## Screenshots of the KNX Configuration Menu ##
+## Usage Examples ##
+
+There are multiple possible configurations. Here are explained just a few as example. The options for selecting relays, buttons, sensors, etc. are only available if were configured on _Configure Module Menu_.
+
+To configure KNX, enter on the Configuration Menu of Sonoff-Tasmota and select Configure KNX.
 
 <img src="https://github.com/ascillato/Sonoff-Tasmota_KNX/blob/development/.github/Config_Menu.jpg" />
-
 <img src="https://github.com/ascillato/Sonoff-Tasmota_KNX/blob/development/.github/KNX_menu.jpg" />
+
+**1) Setting Several Sonoff to be controlled as one by a Home Automation System:**
+
+We can set one of the group address to be the same in all the devices so as to turn them on or off at the same time.
+In this case, so as to inform the status of all the relays to the Automation System, just one of the devices have to be configured as the responder. If you use the same Group Address for sending and receiving, you have to take into account not to make loops.
+
+<img src="https://github.com/ascillato/Sonoff-Tasmota_KNX/blob/development/.github/1.jpg" />
+<img src="https://github.com/ascillato/Sonoff-Tasmota_KNX/blob/development/.github/2.jpg" />
+
+**2) Setting 2 Sonoff to be linked as stair lights:**
+
+We can set one device to send the status of its output and another to read that and follow. And the second device can send the status of its button and the first device will toggle. With this configuration we can avoid to make a loop.
+
+<img src="https://github.com/ascillato/Sonoff-Tasmota_KNX/blob/development/.github/3.jpg" />
+<img src="https://github.com/ascillato/Sonoff-Tasmota_KNX/blob/development/.github/4.jpg" />
+
+**3) Setting a button as initiator of a scene:**
+
+Just setting one device to send the push of a button, and the rest just use that value to turn them on. In this case, there is no toggle. Every time the button is pushed, the turn on command is sent.
+
+<img src="https://github.com/ascillato/Sonoff-Tasmota_KNX/blob/development/.github/5.jpg" />
+<img src="https://github.com/ascillato/Sonoff-Tasmota_KNX/blob/development/.github/6.jpg" />
+
+**4) Setting a Temperature sensor:**
+
+We can configure to send the value of temperature or humidity every teleperiod. This teleperiod can be configured. See Sonoff Tasmota [wiki](https://github.com/arendst/Sonoff-Tasmota/wiki/Commands). It is recommended also to set the reply temperature address.
+
+<img src="https://github.com/ascillato/Sonoff-Tasmota_KNX/blob/development/.github/7.jpg" />
 
 ## Development Road Map ##
 
