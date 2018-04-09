@@ -147,7 +147,7 @@ void ESPKNXIP::restore_from_eeprom()
     address += sizeof(callback_id_t);
   }
   EEPROM.get(address, physaddr);
-  address += sizeof(address_t); 
+  address += sizeof(address_t);
 
   //EEPROM.get(address, custom_config_data);
   //address += sizeof(custom_config_data);
@@ -193,7 +193,63 @@ callback_assignment_id_t ESPKNXIP::__callback_register_assignment(address_t addr
   callback_assignments[aid].address = address;
   callback_assignments[aid].callback_id = id;
   registered_callback_assignments++;
+
+  DEBUG_PRINT("Assigned callback id >");
+  DEBUG_PRINT(id);
+  DEBUG_PRINT("/ga[");
+  DEBUG_PRINT(address.ga.area);
+  DEBUG_PRINT("/");
+  DEBUG_PRINT(address.ga.line);
+  DEBUG_PRINT("/");
+  DEBUG_PRINT(address.ga.member);
+  DEBUG_PRINTLN("]");
+
   return aid;
+}
+
+void ESPKNXIP::callback_delete_register(callback_id_t id)
+{
+  /*if (id >= registered_callback_assignments)
+    return;
+
+  uint32_t dest_offset = 0;
+  uint32_t src_offset = 0;
+  uint32_t len = 0;
+  if (id == 0)
+  {
+    // start of array, so delete first entry
+    src_offset = 1;
+    // registered_ga_callbacks will be 1 in case of only one entry
+    // registered_ga_callbacks will be 2 in case of two entries, etc..
+    // so only copy anything, if there is it at least more then one element
+    len = (registered_callback_assignments - 1);
+  }
+  else if (id == registered_callback_assignments - 1)
+  {
+    // last element, don't do anything, simply decrement counter
+  }
+  else
+  {
+    // somewhere in the middle
+    // need to calc offsets
+
+    // skip all prev elements
+    dest_offset = id; // id is equal to how many element are in front of it
+    src_offset = dest_offset + 1; // start after the current element
+    len = (registered_callback_assignments - 1 - id);
+  }
+
+  if (len > 0)
+  {
+    memmove(callback_assignments + dest_offset, callback_assignments + src_offset, len * sizeof(callback_assignment_t));
+  }
+
+  registered_callback_assignments--;*/
+}
+
+void ESPKNXIP::callback_delete_assignment(callback_assignment_id_t id)
+{
+  __callback_delete_assignment(id);
 }
 
 void ESPKNXIP::__callback_delete_assignment(callback_assignment_id_t id)
@@ -248,6 +304,12 @@ callback_id_t ESPKNXIP::callback_register(String name, callback_fptr_t cb, void 
   callbacks[id].cond = cond;
   callbacks[id].arg = arg;
   registered_callbacks++;
+
+  DEBUG_PRINT("Registered callback >");
+  DEBUG_PRINT(name);
+  DEBUG_PRINT("< @ ");
+  DEBUG_PRINTLN(id);
+
   return id;
 }
 
