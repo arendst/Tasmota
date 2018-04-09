@@ -66,7 +66,7 @@ A copy of both libraries with the modifications needed is available at:
 * Add entries to sensor files
 * Add entries to language files
 
-Up to now, enabling KNX uses +22k of code and +3k3 of memory.
+Up to now, enabling KNX uses +23k of code and +3k3 of memory.
 
 There is **NO CONFLICT** with MQTT, Home Assistant, Web, etc. Tests show fast response of all features running at same time.
 
