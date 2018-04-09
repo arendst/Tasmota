@@ -26,7 +26,7 @@
                             //       https://github.com/envy/esp-knx-ip/pull/48
                             //       https://github.com/envy/esp-knx-ip/pull/52
                             //       https://github.com/envy/esp-knx-ip/pull/54
-                            //       https://github.com/envy/esp-knx-ip/pull/55                                                        
+                            //       https://github.com/envy/esp-knx-ip/pull/55
                             // The ESP KNX IP library calls ESPAsyncUDP library (https://github.com/me-no-dev/ESPAsyncUDP)
                             //    use ESPAsyncUDP library patched with the PR #21 (https://github.com/me-no-dev/ESPAsyncUDP/pull/21)
                             //
@@ -401,15 +401,31 @@ void KNXStart()
 
   // Delete from KNX settings any configuration that is not anymore related to this device
   byte j;
-  for (int i = 0; i < Settings.knx_GA_registered; ++i)
+  for (int i = 0; i < KNX_MAX_device_param; ++i)
   {
-    j = Settings.knx_GA_param[i];
-    if ( !device_param[j-1].show ) { Settings.knx_GA_param[i] = 0; }
-  }
-  for (int i = 0; i < Settings.knx_CB_registered; ++i)
-  {
-    j = Settings.knx_CB_param[i];
-    if ( !device_param[j-1].show ) { Settings.knx_CB_param[i] = 0; }
+    if ( !device_param[i].show ) { // device has this parameter ?
+      j = KNX_GA_Search(i+1); // if not, search for all registered group address to this parameter and delete them
+      while ( j != KNX_Empty ) {
+        KNX_DEL_GA(j);
+        j = KNX_GA_Search(i+1, j + 1);
+      }
+      if ( (i < 8) || (i > 15) ) // check relays and sensors (i from 8 to 16 are toggle relays parameters)
+      {
+        j = KNX_CB_Search(i+1); // if not, search for all registered group address to this parameter and delete them
+        while ( j != KNX_Empty ) {
+          KNX_DEL_CB(j);
+          j = KNX_CB_Search(i+1, j + 1);
+        }
+        if (i < 8) // when checking if relays are available, also change for toggle relays parameters
+        {
+          j = KNX_CB_Search(i+8); // if not, search for all registered group address to this parameter and delete them
+          while ( j != KNX_Empty ) {
+            KNX_DEL_CB(j);
+            j = KNX_CB_Search(i+8, j + 1);
+          }
+        }
+      }
+    }
   }
 
   // Register Group Addresses to listen to
@@ -511,17 +527,17 @@ void KNX_Send_Button_Power(byte key, byte device, byte state)
 //  {
 
 // Search all the registered GA that has that output (variable: device) as parameter
-  byte i = KNX_GA_Search(device + 7);
+  byte i = KNX_GA_Search(device + 8);
   while ( i != KNX_Empty ) {
     KNX_addr.value = Settings.knx_GA_addr[i];
     knx.write_1bit(KNX_addr, !(state == 0));
 
     snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_KNX "%s = %d " D_SENT_TO " %d.%d.%d"),
-     device_param_ga[device + 7], !(state == 0),
+     device_param_ga[device + 8], !(state == 0),
      KNX_addr.ga.area, KNX_addr.ga.line, KNX_addr.ga.member);
     AddLog(LOG_LEVEL_INFO);
 
-    i = KNX_GA_Search(device + 7, i + 1);
+    i = KNX_GA_Search(device + 8, i + 1);
   }
 //  }
 }
