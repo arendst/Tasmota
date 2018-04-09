@@ -28,7 +28,8 @@
  ESP wemeos D1 - devider has  max 3.3v input A0,
  For module without devider you have to count new values for adding devider to ADC
  D1 wemeos that has 330kohm sumarised value of devider - need to be replaced or added additional resistor for double devider
- For 5V you have to use only one serial imput A0 resistor 165kohm betwen output of MQ sensor and imput A0
+ For 5V you have to use only one serial imput A0 resistwebserver
+ utput of MQ sensor and imput A0
  it gives 3.299 V for A0.
  See https://escapequotes.net/wp-content/uploads/2017/06/esp8266-wemos-d1-mini-pro-schematics.png
  https://electronics.stackexchange.com/questions/197105/multiple-voltage-dividers

@@ -423,6 +423,7 @@
 //stb mod
 #define D_SENSOR_SR04_TRIG "SR04 Trigger"
 #define D_SENSOR_SR04_ECHO "SR04 Echo"
+#define D_SENSOR_DEEPSLEEP "DeepSleep Switch"
 // end
 
 // Units

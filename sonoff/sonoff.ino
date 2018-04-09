@@ -1524,7 +1524,11 @@ void PerformEverySecond()
       if (MqttShowSensor()) MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);
 
       //STB mod
-      if (Settings.deepsleep > 10 && Settings.deepsleep < 4294967295) {
+      uint8 disbale_deepsleep_switch = 0;
+      if (pin[GPIO_SEN_SLEEP] < 99) {
+        disbale_deepsleep_switch = !digitalRead(pin[GPIO_SEN_SLEEP]);
+      }
+      if (Settings.deepsleep > 10 && Settings.deepsleep < 4294967295 && !disbale_deepsleep_switch) {
         //TODO STEFAN
         yield();
         if (Settings.deepsleep > MAX_DEEPSLEEP_CYCLE) {
@@ -2388,7 +2392,7 @@ void GpioInit()
   if ((pin[GPIO_SEN_TRIG] < 99) && (pin[GPIO_SEN_ECHO] < 99)) {
     sr04_flg = 1;
   }
-  
+
 #ifdef USE_I2C
 #ifdef USE_PCF8574
   pcf8574_Init();
@@ -2425,6 +2429,13 @@ void setup()
   SettingsDelta();
 
   //STB mod
+  uint8 disbale_deepsleep_switch = 0;
+  if (pin[GPIO_SEN_SLEEP] < 99) {
+    disbale_deepsleep_switch = !digitalRead(pin[GPIO_SEN_SLEEP]);
+    if (disbale_deepsleep_switch) {
+      RtcSettings.ultradeepsleep = 0;
+    }
+  }
   if (RtcSettings.ultradeepsleep > 0 && RtcSettings.ultradeepsleep < 4294967295) {
      RtcSettings.ultradeepsleep = RtcSettings.ultradeepsleep - MAX_DEEPSLEEP_CYCLE;
      snprintf_P(log_data, sizeof(log_data), PSTR("APP: Remain DeepSleep %d"), RtcSettings.ultradeepsleep);

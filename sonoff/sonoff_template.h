@@ -94,6 +94,7 @@ enum UserSelectablePins {
   //STB mod
   GPIO_SEN_TRIG,
   GPIO_SEN_ECHO,
+  GPIO_SEN_SLEEP,
   //end
   GPIO_SENSOR_END };
 
@@ -139,7 +140,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_PMS5003 "|" D_SENSOR_SDS0X1 "|"
   D_SENSOR_SBR_TX "|" D_SENSOR_SBR_RX "|"
   //STB mod
-  D_SENSOR_SR04_TRIG "|" D_SENSOR_SR04_ECHO;
+  D_SENSOR_SR04_TRIG "|" D_SENSOR_SR04_ECHO "|" D_SENSOR_DEEPSLEEP;
   //end
 
 /********************************************************************************************/

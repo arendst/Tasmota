@@ -45,12 +45,11 @@ String sr04_readDistance(void)
     int  duration = 0, counter = 0, sum = 0;
     float distance = 0;
     while ( counter < 20 && sum < 200000) {
-      digitalWrite(pin[GPIO_SEN_TRIG], LOW);  // Added this line
-      delayMicroseconds(3000); // Added this line
       noInterrupts();
+      digitalWrite(pin[GPIO_SEN_TRIG], LOW);  // Added this line
+      delayMicroseconds(50000); // Added this line
       digitalWrite(pin[GPIO_SEN_TRIG], HIGH);
-      //  delayMicroseconds(1000); - Removed this line
-      delayMicroseconds(10); // Added this line
+      delayMicroseconds(15); // Added this line
       digitalWrite(pin[GPIO_SEN_TRIG], LOW);
       duration = pulseIn(pin[GPIO_SEN_ECHO], HIGH);
       interrupts();
