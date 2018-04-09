@@ -26,7 +26,7 @@
                             //       https://github.com/envy/esp-knx-ip/pull/48
                             //       https://github.com/envy/esp-knx-ip/pull/52
                             //       https://github.com/envy/esp-knx-ip/pull/54
-                            //       https://github.com/envy/esp-knx-ip/pull/55                                                        
+                            //       https://github.com/envy/esp-knx-ip/pull/55
                             // The ESP KNX IP library calls ESPAsyncUDP library (https://github.com/me-no-dev/ESPAsyncUDP)
                             //    use ESPAsyncUDP library patched with the PR #21 (https://github.com/me-no-dev/ESPAsyncUDP/pull/21)
                             //
@@ -357,6 +357,24 @@ void KNX_DEL_CB( byte CBnum )
 }
 
 
+bool KNX_CONFIG_NOT_MATCH()
+{
+  for (int i = 0; i < KNX_MAX_device_param; ++i)
+  {
+    if ( !device_param[i].show ) { // device has this parameter ?
+      // if not, search for all registered group address to this parameter for deletion
+      if ( KNX_GA_Search(i+1) != KNX_Empty ) { return true; }
+      if ( (i < 8) || (i > 15) ) // check relays and sensors (i from 8 to 16 are toggle relays parameters)
+      {
+        if ( KNX_CB_Search(i+1) != KNX_Empty ) { return true; }
+        if ( KNX_CB_Search(i+8) != KNX_Empty ) { return true; }
+
+      }
+    }
+  }
+}
+
+
 void KNXStart()
 {
 
@@ -399,22 +417,16 @@ void KNXStart()
   if (GetUsedInModule(GPIO_DHT22, my_module.gp.io)) { device_param[KNX_humidity-1].show = true; }
   if (GetUsedInModule(GPIO_SI7021, my_module.gp.io)) { device_param[KNX_humidity-1].show = true; }
 
-  // Delete from KNX settings any configuration that is not anymore related to this device
-  byte j;
-  for (int i = 0; i < Settings.knx_GA_registered; ++i)
-  {
-    j = Settings.knx_GA_param[i];
-    if ( !device_param[j-1].show ) { Settings.knx_GA_param[i] = 0; }
-  }
-  for (int i = 0; i < Settings.knx_CB_registered; ++i)
-  {
-    j = Settings.knx_CB_param[i];
-    if ( !device_param[j-1].show ) { Settings.knx_CB_param[i] = 0; }
+  // Delete from KNX settings all configuration is not anymore related to this device
+  if (KNX_CONFIG_NOT_MATCH()) {
+    Settings.knx_GA_registered = 0;
+    Settings.knx_CB_registered = 0;
   }
 
   // Register Group Addresses to listen to
   //     Search on the settings if there is a group address set for receive KNX messages for the type: device_param[j].type
   //     If there is, register the group address on the KNX_IP Library to Receive data for Executing Callbacks
+  byte j;
   for (byte i = 0; i < Settings.knx_CB_registered; ++i)
   {
     j = Settings.knx_CB_param[i];
@@ -511,17 +523,17 @@ void KNX_Send_Button_Power(byte key, byte device, byte state)
 //  {
 
 // Search all the registered GA that has that output (variable: device) as parameter
-  byte i = KNX_GA_Search(device + 7);
+  byte i = KNX_GA_Search(device + 8);
   while ( i != KNX_Empty ) {
     KNX_addr.value = Settings.knx_GA_addr[i];
     knx.write_1bit(KNX_addr, !(state == 0));
 
     snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_KNX "%s = %d " D_SENT_TO " %d.%d.%d"),
-     device_param_ga[device + 7], !(state == 0),
+     device_param_ga[device + 8], !(state == 0),
      KNX_addr.ga.area, KNX_addr.ga.line, KNX_addr.ga.member);
     AddLog(LOG_LEVEL_INFO);
 
-    i = KNX_GA_Search(device + 7, i + 1);
+    i = KNX_GA_Search(device + 8, i + 1);
   }
 //  }
 }
