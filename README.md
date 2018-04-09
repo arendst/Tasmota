@@ -8,9 +8,9 @@ This repository is kept updated with the Original Sonoff-Tasmota.
 
 [<img src="https://www.knx.org/wGlobal/wGlobal/layout/images/knx-logo.png" />](https://www.knx.org/knx-en/knx/association/what-is-knx/index.php)
 
-The [KNX IP Protocol](https://www.knx.org/knx-en/knx/association/what-is-knx/index.php) is an _international open standard_ for smart homes and smart buldings automation. It is a decentralized system. Each device can talk directly to each other without the need of a central controller or server. Any panel or server is just for telesupervision and for sending requests. KNX IP Protocol uses a UDP multicast on _224.0.23.12 : 3671_.
+The [KNX IP Protocol](https://www.knx.org/knx-en/knx/association/what-is-knx/index.php) is an _international open standard_ for smart homes and smart buildings automation. It is a decentralized system. Each device can talk directly to each other without the need of a central controller or server. Any panel or server is just for telesupervision and for sending requests. KNX IP Protocol uses a UDP multicast on _224.0.23.12 : 3671_.
 
-Each device has a physical address ( like a MAC ) as **1 . 1 . 0** and that address is used for configuration purposes.
+Each device has a physical address (like a MAC) as **1 . 1 . 0** and that address is used for configuration purposes.
 
 Each device can be configured with group addresses as **2 / 2 / 1** and that address can be used for sending/receiving commands.
 So, for example, if 2 devices that are configured with the **2 / 2 / 1** for turning on/off their outputs, and other device send _Turn ON_ command to **2 / 2 / 1**, both devices will turn on their outputs.
@@ -48,7 +48,7 @@ A copy of both libraries with the modifications needed is available at:
 - [x] Add Feature to read Temperature, Humidity from Tasmota
 - [x] Add Feature to send Temperature, Humidity by a set interval (tasmota teleperiod)
 - [x] Add Feature to receive command to read temperature, Humidity
-- [x] Add Feature to recognize Tasmota config to show the same amount of relays, buttons, etc
+- [x] Add Feature to recognize Tasmota config to show the same number of relays, buttons, etc.
 - [x] Add Feature to Save Config
 - [x] Add Feature to Load Config
 - [x] Add Log Info
