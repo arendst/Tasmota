@@ -2,7 +2,7 @@
 
 [Sonoff-Tasmota_KNX](https://github.com/ascillato/Sonoff-Tasmota_KNX) is a modification for [Sonoff-Tasmota](https://github.com/arendst/Sonoff-Tasmota) to add a basic functionality of the [KNX IP Protocol](https://www.knx.org/knx-en/index.php).
 
-Latest release can be found [here](https://github.com/ascillato/Sonoff-Tasmota_KNX/releases)
+[![GitHub version](https://img.shields.io/github/release/ascillato/Sonoff-Tasmota_KNX.svg)](https://github.com/ascillato/Sonoff-Tasmota_KNX/releases/latest) [![License](https://img.shields.io/github/license/ascillato/Sonoff-Tasmota_KNX.svg)](https://github.com/ascillato/Sonoff-Tasmota_KNX/blob/development/LICENSE.txt)
 
 This repository is kept updated with the Original Sonoff-Tasmota.
 
