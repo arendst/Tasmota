@@ -6,7 +6,7 @@
 
 If you like **Sonoff Tasmota KNX**, give it a star, or fork it and contribute!
 
-_( This repository is kept updated with the Original Sonoff-Tasmota )_
+_(This repository is kept updated with the Original Sonoff-Tasmota)_
 
 ## KNX Explanation ##
 
