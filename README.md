@@ -4,6 +4,8 @@
 
 [![GitHub version](https://img.shields.io/github/release/ascillato/Sonoff-Tasmota_KNX.svg)](https://github.com/ascillato/Sonoff-Tasmota_KNX/releases/latest) [![License](https://img.shields.io/github/license/ascillato/Sonoff-Tasmota_KNX.svg)](https://github.com/ascillato/Sonoff-Tasmota_KNX/blob/development/LICENSE.txt)
 
+If you like **Sonoff Tasmota KNX**, give it a star, or fork it and contribute!
+
 _This repository is kept updated with the Original Sonoff-Tasmota._
 
 ## KNX Explanation ##
