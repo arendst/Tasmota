@@ -41,7 +41,9 @@ void ESPKNXIP::__handle_root()
           break;
         case FEEDBACK_TYPE_FLOAT:
           m += F("<span class='input-group-text'>");
+          m += feedbacks[i].options.float_options.prefix;
           m += String(*(float *)feedbacks[i].data, feedbacks[i].options.float_options.precision);
+          m += feedbacks[i].options.float_options.suffix;
           m += F("</span>");
           break;
         case FEEDBACK_TYPE_BOOL:
@@ -52,7 +54,9 @@ void ESPKNXIP::__handle_root()
         case FEEDBACK_TYPE_ACTION:
           m += F("<input class='form-control' type='hidden' name='id' value='");
           m += i;
-          m += F("' /><div class='input-group-append'><button type='submit' class='btn btn-primary'>Do this</button></div>");
+          m += F("' /><div class='input-group-append'><button type='submit' class='btn btn-primary'>");
+          m += feedbacks[i].options.action_options.btn_text;
+          m += F("</button></div>");
           break;
       }
       m += F("</div></div></div>");
@@ -67,6 +71,12 @@ void ESPKNXIP::__handle_root()
   {
     for (uint8_t i = 0; i < registered_callback_assignments; ++i)
     {
+      // Skip empty slots
+      if ((callback_assignments[i].slot_flags & SLOT_FLAGS_USED) == 0)
+      {
+        continue;
+      }
+      // Skip disabled callbacks
       if (callbacks[callback_assignments[i].callback_id].cond && !callbacks[callback_assignments[i].callback_id].cond())
       {
         continue;
@@ -105,6 +115,12 @@ void ESPKNXIP::__handle_root()
     m += F("<select class='form-control' name='cb'>");
     for (callback_id_t i = 0; i < registered_callbacks; ++i)
     {
+      // Skip empty slots
+      if ((callbacks[i].slot_flags & SLOT_FLAGS_USED) == 0)
+      {
+        continue;
+      }
+      // Skip disabled callbacks
       if (callbacks[i].cond && !callbacks[i].cond())
       {
         continue;
@@ -295,7 +311,7 @@ void ESPKNXIP::__handle_register()
       goto end;
     }
 
-    if (cb >= registered_callbacks)
+    if (!__callback_is_id_valid(cb))
     {
       DEBUG_PRINTLN(F("Invalid callback id"));
       goto end;
@@ -319,7 +335,7 @@ void ESPKNXIP::__handle_delete()
     DEBUG_PRINT(id);
     DEBUG_PRINTLN(F(""));
 
-    if (id >= registered_callback_assignments)
+    if (id >= registered_callback_assignments || (callback_assignments[id].slot_flags & SLOT_FLAGS_USED) == 0)
     {
       DEBUG_PRINTLN(F("ID wrong"));
       goto end;
