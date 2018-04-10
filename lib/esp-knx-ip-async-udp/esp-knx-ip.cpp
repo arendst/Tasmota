@@ -97,7 +97,9 @@ void ESPKNXIP::__start()
   }
 
   udp.listenMulticast(MULTICAST_IP, MULTICAST_PORT);
-  udp.onPacket([this](AsyncUDPPacket &packet) { __loop_knx(packet); });
+  udp.onPacket([this](AsyncUDPPacket &packet) {
+    DEBUG_PRINTLN("got packet");
+    __loop_knx(packet); });
 }
 
 void ESPKNXIP::save_to_eeprom()
