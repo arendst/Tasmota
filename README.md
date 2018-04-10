@@ -14,7 +14,7 @@ _(This repository is kept updated with the Original Sonoff-Tasmota)_
 
 The [KNX IP Protocol](https://www.knx.org/knx-en/knx/association/what-is-knx/index.php) is an _international open standard_ for smart homes and smart buildings automation. It is a decentralized system. Each device can talk directly to each other without the need of a central controller or server. Any panel or server is just for telesupervision and for sending requests. KNX IP Protocol uses a UDP multicast on _224.0.23.12 : 3671_.
 
-Each device has a physical address (like a MAC) as **1 . 1 . 0** and that address is used for configuration purposes.
+Each device has a physical address (like a fixed IP) as **1 . 1 . 0** and that address is used for configuration purposes.
 
 Each device can be configured with group addresses as **2 / 2 / 1** and that address can be used for sending/receiving commands.
 So, for example, if 2 devices that are configured with the **2 / 2 / 1** for turning on/off their outputs, and other device send _Turn ON_ command to **2 / 2 / 1**, both devices will turn on their outputs.
