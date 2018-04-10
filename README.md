@@ -2,6 +2,8 @@
 
 [Sonoff-Tasmota_KNX](https://github.com/ascillato/Sonoff-Tasmota_KNX) is a modification for [Sonoff-Tasmota](https://github.com/arendst/Sonoff-Tasmota) to add a basic functionality of the [KNX IP Protocol](https://www.knx.org/knx-en/index.php).
 
+Latest release can be found [here](https://github.com/ascillato/Sonoff-Tasmota_KNX/releases)
+
 This repository is kept updated with the Original Sonoff-Tasmota.
 
 ## KNX Explanation ##
@@ -21,11 +23,10 @@ Several home automation systems have KNX support. For example, [Home Assistant](
 
 ## Requirements ##
 
-* [ESP KNX IP Library (async-udp branch)](https://github.com/envy/esp-knx-ip/tree/async-udp) with the modifications requested on [PR #48](https://github.com/envy/esp-knx-ip/pull/48), [PR #52](https://github.com/envy/esp-knx-ip/pull/52), [PR #54](https://github.com/envy/esp-knx-ip/pull/54) and [PR #55](https://github.com/envy/esp-knx-ip/pull/55)
+* [ESP KNX IP Library (async-udp branch)](https://github.com/envy/esp-knx-ip/tree/async-udp)
+* [ESPAsyncUDP Library](https://github.com/me-no-dev/ESPAsyncUDP). This Library is used by ESP KNX IP Library. 
 
-* [ESPAsyncUDP Library](https://github.com/me-no-dev/ESPAsyncUDP) with the modifications requested on [PR #21](https://github.com/me-no-dev/ESPAsyncUDP/pull/21). This Library is used by ESP KNX IP Library. 
-
-A copy of both libraries with the modifications needed is available at:
+A copy of both libraries is also available at:
 * https://github.com/ascillato/Sonoff-Tasmota_KNX/tree/development/lib/esp-knx-ip-async-udp
 * https://github.com/ascillato/Sonoff-Tasmota_KNX/tree/development/lib/ESPAsyncUDP-master
 
