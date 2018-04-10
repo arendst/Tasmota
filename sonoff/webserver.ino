@@ -25,10 +25,6 @@
  * Based on source by AlexT (https://github.com/tzapu)
 \*********************************************************************************************/
 
-#ifdef USE_KNX
-#include <esp-knx-ip.h>     // Include KNX IP library
-#endif // USE_KNX
-
 #define STR_HELPER(x) #x
 #define STR(x) STR_HELPER(x)
 
@@ -393,7 +389,7 @@ void StartWebserver(int type, IPAddress ipweb)
 #endif  // USE_EMULATION
       WebServer->onNotFound(HandleNotFound);
 #ifdef USE_KNX
-      knx.start(WebServer, false); // Start knx and pass the webserver object to be used by UDP. False is for not showing the library webpage.
+      KNXStart();
 #endif // USE_KNX
     }
     reset_web_log_flag = 0;
