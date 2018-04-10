@@ -20,17 +20,10 @@
 #ifdef USE_KNX
 
 
-#include <esp-knx-ip.h>     // Include ESP KNX IP library (https://github.com/envy/esp-knx-ip)
-                            //    use the async-udp branch (https://github.com/envy/esp-knx-ip/tree/async-udp)
-                            //    use the library patched with
-                            //       https://github.com/envy/esp-knx-ip/pull/48
-                            //       https://github.com/envy/esp-knx-ip/pull/52
-                            //       https://github.com/envy/esp-knx-ip/pull/54
-                            //       https://github.com/envy/esp-knx-ip/pull/55
-                            // The ESP KNX IP library calls ESPAsyncUDP library (https://github.com/me-no-dev/ESPAsyncUDP)
-                            //    use ESPAsyncUDP library patched with the PR #21 (https://github.com/me-no-dev/ESPAsyncUDP/pull/21)
+#include <esp-knx-ip.h>     // Include ESP KNX IP library (async-udp branch) (https://github.com/envy/esp-knx-ip/tree/async-udp)
+                            //     The ESP KNX IP library requires also ESPAsyncUDP library (https://github.com/me-no-dev/ESPAsyncUDP)
                             //
-                            // A copy of both libraries with the modifications needed is available at:
+                            // A copy of both libraries is available also at:
                             //    https://github.com/ascillato/Sonoff-Tasmota_KNX/tree/development/lib/esp-knx-ip-async-udp
                             //    https://github.com/ascillato/Sonoff-Tasmota_KNX/tree/development/lib/ESPAsyncUDP-master
 
@@ -159,10 +152,6 @@ const char *device_param_cb[] = {
   D_REPLY " " D_HUMIDITY,    // Reply Humidity
   nullptr
 };
-
-#ifndef USE_WEBSERVER
-  ESP8266WebServer *WebServer;
-#endif
 
 
 byte KNX_GA_Search( byte param, byte start = 0 )
@@ -311,7 +300,7 @@ void KNX_DEL_CB( byte CBnum )
   byte len = 0;
 
   // Delete assigment
-  knx.callback_delete_assignment(CBnum-1);
+  knx.callback_unassign(CBnum-1);
   Settings.knx_CB_param[CBnum-1] = 0;
 
   if (CBnum == 1)
@@ -348,7 +337,7 @@ void KNX_DEL_CB( byte CBnum )
 
   // Check if there is no other assigment to that callback. If there is not. delete that callback register
   if ( KNX_CB_Search( oldparam ) == KNX_Empty ) {
-    knx.callback_delete_register( device_param[oldparam-1].CB_id );
+    knx.callback_deregister( device_param[oldparam-1].CB_id );
     device_param[oldparam-1].CB_id =  KNX_Empty;
   }
 
@@ -368,7 +357,6 @@ bool KNX_CONFIG_NOT_MATCH()
       {
         if ( KNX_CB_Search(i+1) != KNX_Empty ) { return true; }
         if ( KNX_CB_Search(i+8) != KNX_Empty ) { return true; }
-
       }
     }
   }
@@ -378,12 +366,14 @@ bool KNX_CONFIG_NOT_MATCH()
 
 void KNXStart()
 {
+  knx.start(nullptr);
+  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_KNX D_START));
+  AddLog(LOG_LEVEL_DEBUG);
+}
 
-#ifndef USE_WEBSERVER
-  WebServer = new ESP8266WebServer(80);
-  knx.start(WebServer, false); // Start knx and pass the webserver object to be used by UDP. False is for not showing the library webpage.
-#endif
 
+void KNX_INIT()
+{
   // Check for incompatible config
   if (Settings.knx_GA_registered > MAX_KNX_GA) { Settings.knx_GA_registered = MAX_KNX_GA; }
   if (Settings.knx_CB_registered > MAX_KNX_CB) { Settings.knx_CB_registered = MAX_KNX_CB; }
@@ -436,14 +426,13 @@ void KNXStart()
     if ( j > 0 )
     {
       device_param[j-1].CB_id = knx.callback_register("", KNX_CB_Action, &device_param[j-1]); // KNX IP Library requires a parameter
-                                                                                                   // to identify which action was requested on the KNX network
-                                                                                                   // to be performed on this device (set relay, etc.)
-                                                                                                   // Is going to be used device_param[j].type that stores the type number (1: relay 1, etc)
+                                                                                              // to identify which action was requested on the KNX network
+                                                                                              // to be performed on this device (set relay, etc.)
+                                                                                              // Is going to be used device_param[j].type that stores the type number (1: relay 1, etc)
       KNX_addr.value = Settings.knx_CB_addr[i];
       knx.callback_assign( device_param[j-1].CB_id, KNX_addr );
     }
   }
-
 }
 
 
@@ -877,7 +866,7 @@ boolean Xdrv10(byte function)
   boolean result = false;
     switch (function) {
       case FUNC_INIT:
-        KNXStart();
+        KNX_INIT();
         break;
       case FUNC_LOOP:
         knx.loop();  // Process knx events
