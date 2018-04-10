@@ -617,7 +617,7 @@ void WifiConfig(uint8_t type)
     if (type >= WIFI_RETRY) {  // WIFI_RETRY and WIFI_WAIT
       return;
     }
-#ifdef USE_EMULATION
+#if defined(USE_WEBSERVER) && defined(USE_EMULATION)
     UdpDisconnect();
 #endif  // USE_EMULATION
     WiFi.disconnect();        // Solve possible Wifi hangs
@@ -653,7 +653,7 @@ void WifiBegin(uint8_t flag)
 {
   const char kWifiPhyMode[] = " BGN";
 
-#ifdef USE_EMULATION
+#if defined(USE_WEBSERVER) && defined(USE_EMULATION)
   UdpDisconnect();
 #endif  // USE_EMULATION
 
@@ -840,7 +840,7 @@ void WifiCheck(uint8_t param)
 #endif  // USE_EMULATION
 #endif  // USE_WEBSERVER
       } else {
-#ifdef USE_EMULATION
+#if defined(USE_WEBSERVER) && defined(USE_EMULATION)
         UdpDisconnect();
 #endif  // USE_EMULATION
         mdns_begun = false;
