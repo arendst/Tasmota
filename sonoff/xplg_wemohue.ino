@@ -23,7 +23,7 @@
 \*********************************************************************************************/
 
 #define UDP_BUFFER_SIZE         200      // Max UDP buffer size needed for M-SEARCH message
-#define UDP_MSEARCH_SEND_DELAY  1500     // Delay in ms before M-Search response is send
+#define UDP_MSEARCH_SEND_DELAY  50     // Delay in ms before M-Search response is send
 
 #include <Ticker.h>
 Ticker TickerMSearch;
@@ -229,15 +229,15 @@ void PollUdp()
       }
       String request = packet_buffer;
 
-//      AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("UDP: Packet received"));
-//      AddLog_P(LOG_LEVEL_DEBUG_MORE, packet_buffer);
+     AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("UDP: Packet received"));
+     AddLog_P(LOG_LEVEL_DEBUG_MORE, packet_buffer);
 
       if (request.indexOf("M-SEARCH") >= 0) {
         request.toLowerCase();
         request.replace(" ", "");
 
-//        AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("UDP: M-SEARCH Packet received"));
-//        AddLog_P(LOG_LEVEL_DEBUG_MORE, request.c_str());
+       AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("UDP: M-SEARCH Packet received"));
+       AddLog_P(LOG_LEVEL_DEBUG_MORE, request.c_str());
 
         udp_remote_ip = PortUdp.remoteIP();
         udp_remote_port = PortUdp.remotePort();
