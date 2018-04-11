@@ -258,7 +258,7 @@ struct SYSCFG {
 
   byte          free_6b8[72];              // 6B8
 
-  char          rules[256];                // 700
+  char          rules[MAX_RULE_SIZE];      // 700
 
                                            // 800 - FFF free locations
 } Settings;

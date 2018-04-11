@@ -42,7 +42,7 @@
 #define D_HOUR_MINUTE_SEPARATOR ":"
 #define D_MINUTE_SECOND_SEPARATOR ":"
 
-#define D_DAY3LIST "SonMonDieMitDonFriSam"
+#define D_DAY3LIST "So Mo Di Mi Do Fr Sa "
 #define D_MONTH3LIST "JanFebMärAprMaiJunJulAugSepOktNovDez"
 
 // Non JSON decimal separator

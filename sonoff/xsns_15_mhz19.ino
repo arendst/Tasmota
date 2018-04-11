@@ -265,7 +265,7 @@ void MhzShow(boolean json)
   if (json) {
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"%s\":{\"" D_JSON_CO2 "\":%d,\"" D_JSON_TEMPERATURE "\":%s}"), mqtt_data, mhz_types, mhz_last_ppm, temperature);
 #ifdef USE_DOMOTICZ
-    DomoticzSensor(DZ_AIRQUALITY, mhz_last_ppm);
+    if (0 == tele_period) DomoticzSensor(DZ_AIRQUALITY, mhz_last_ppm);
 #endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
   } else {
