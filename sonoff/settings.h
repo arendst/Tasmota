@@ -48,7 +48,7 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t not_power_linked : 1;         // bit 20 (v5.11.1f)
     uint32_t no_power_on_check : 1;        // bit 21 (v5.11.1i)
     uint32_t mqtt_serial : 1;              // bit 22 (v5.12.0f)
-    uint32_t spare23 : 1;
+    uint32_t rules_enabled : 1;            // bit 23 (v5.12.0j)
     uint32_t spare24 : 1;
     uint32_t spare25 : 1;
     uint32_t spare26 : 1;
@@ -255,7 +255,12 @@ struct SYSCFG {
   Timer         timer[MAX_TIMERS];         // 670
   int           latitude;                  // 6B0
   int           longitude;                 // 6B4
-                                           // 6B8 - FFF free locations
+
+  byte          free_6b8[72];              // 6B8
+
+  char          rules[MAX_RULE_SIZE];      // 700
+
+                                           // 800 - FFF free locations
 } Settings;
 
 struct RTCMEM {

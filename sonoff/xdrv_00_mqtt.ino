@@ -316,6 +316,8 @@ void MqttDisconnected(int state)
   snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_MQTT D_CONNECT_FAILED_TO " %s:%d, rc %d. " D_RETRY_IN " %d " D_UNIT_SECOND),
     Settings.mqtt_host, Settings.mqtt_port, state, mqtt_retry_counter);
   AddLog(LOG_LEVEL_INFO);
+
+  XdrvCall(FUNC_MQTT_DISCONNECTED);
 }
 
 void MqttConnected()
@@ -371,6 +373,8 @@ void MqttConnected()
     XdrvCall(FUNC_MQTT_INIT);
   }
   mqtt_initial_connection_state = 0;
+
+  XdrvCall(FUNC_MQTT_CONNECTED);
 }
 
 #ifdef USE_MQTT_TLS
@@ -418,7 +422,7 @@ void MqttReconnect()
     return;
   }
 
-#ifdef USE_EMULATION
+#if defined(USE_WEBSERVER) && defined(USE_EMULATION)
   UdpDisconnect();
 #endif  // USE_EMULATION
 

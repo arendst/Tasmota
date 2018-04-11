@@ -199,7 +199,7 @@ void ShtShow(boolean json)
       if (json) {
         snprintf_P(mqtt_data, sizeof(mqtt_data), JSON_SNS_TEMPHUM, mqtt_data, "SHT1X", temperature, humidity);
 #ifdef USE_DOMOTICZ
-        DomoticzTempHumSensor(temperature, humidity);
+        if (0 == tele_period) DomoticzTempHumSensor(temperature, humidity);
 #endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
       } else {
