@@ -1,4 +1,9 @@
-/* 5.12.0j
+/* 5.12.0k
+ * Prepare for simple rules by enlarging Settings area to now 2048 bytes
+ * Fix freeing more code space when emulation is disabled (#1592)
+ * Fix compile error when not defined USE_TIMERS (#2400)
+ *
+ * 5.12.0j
  * Add optional Sunrise and Sunset timers with commands Latitide and Longitude to be enabled with define USE_SUNRISE in user_config.h (#2317)
  *
  * 5.12.0i

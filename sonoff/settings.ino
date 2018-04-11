@@ -927,6 +927,10 @@ void SettingsDelta()
       Settings.latitude = (int)((double)LATITUDE * 1000000);
       Settings.longitude = (int)((double)LONGITUDE * 1000000);
     }
+    if (Settings.version < 0x050C000B) {
+      memset(&Settings.free_6b8, 0x00, sizeof(Settings.free_6b8));
+      memset(&Settings.rules, 0x00, sizeof(Settings.rules));
+    }
 
     Settings.version = VERSION;
     SettingsSave(1);
