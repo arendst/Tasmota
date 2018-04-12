@@ -128,6 +128,7 @@
 #define D_RESTART_REASON "重啟原因"
 #define D_RESTORE "恢覆"
 #define D_RETAINED "已保留"
+#define D_RULE "Rule"
 #define D_SAVE "存檔"
 #define D_SENSOR "感測器"
 #define D_SSID "名稱"
@@ -370,7 +371,7 @@
 #define D_TIMER_DAYS "Days"
 #define D_TIMER_REPEAT "Repeat"
 #define D_TIMER_OUTPUT "Output"
-#define D_TIMER_POWER "Power"
+#define D_TIMER_ACTION "Action"
 
 // xdrv_03_energy.ino
 #define D_ENERGY_TODAY "今日用電量"
