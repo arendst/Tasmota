@@ -197,7 +197,7 @@ void Ds18b20Show(boolean json)
     if(json) {
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"DS18B20\":{\"" D_JSON_TEMPERATURE "\":%s}"), mqtt_data, temperature);
 #ifdef USE_DOMOTICZ
-      DomoticzSensor(DZ_TEMP, temperature);
+      if (0 == tele_period) DomoticzSensor(DZ_TEMP, temperature);
 #endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
     } else {
