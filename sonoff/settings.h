@@ -258,7 +258,7 @@ struct SYSCFG {
   
   byte          free_6b8[72];              // 6B8
 
-  char          rules[256];                // 700
+  char          rules[MAX_RULE_SIZE];      // 700
   
   uint16_t      knx_physsical_addr;        // 800  (address_t is a uint16_t)
   byte          knx_GA_registered;         // 802  Number of Group Address to read
