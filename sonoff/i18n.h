@@ -362,7 +362,7 @@
   #define D_JSON_TIMER_DAYS "Days"
   #define D_JSON_TIMER_REPEAT "Repeat"
   #define D_JSON_TIMER_OUTPUT "Output"
-  #define D_JSON_TIMER_POWER "Power"
+  #define D_JSON_TIMER_ACTION "Action"
   #define D_JSON_TIMER_NO_DEVICE "No GPIO as output configured"
 #define D_CMND_TIMERS "Timers"
 #define D_CMND_LATITUDE "Latitude"

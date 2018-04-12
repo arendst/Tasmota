@@ -128,6 +128,7 @@
 #define D_RESTART_REASON "Příčina restartu"
 #define D_RESTORE "Obnovit"
 #define D_RETAINED "Zachováno"
+#define D_RULE "Rule"
 #define D_SAVE "Ulož"
 #define D_SENSOR "Sensor"
 #define D_SSID "SSID"
@@ -370,7 +371,7 @@
 #define D_TIMER_DAYS "Dny"
 #define D_TIMER_REPEAT "Opakovat"
 #define D_TIMER_OUTPUT "Výstup"
-#define D_TIMER_POWER "Napájení"
+#define D_TIMER_ACTION "Napájení"
 
 // xdrv_03_energy.ino
 #define D_ENERGY_TODAY "Spotřeba Dnes"
