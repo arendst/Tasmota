@@ -192,7 +192,7 @@ size_t strchrspn(const char *str1, int character)
   return ret;
 }
 
-double AtoD(char *str)
+double CharToDouble(char *str)
 {
   // simple ascii to double, because atof or strtod are too large
   char strbuf[24];
@@ -1377,8 +1377,8 @@ void RtcSecond()
         GetTime(0).c_str(), GetTime(2).c_str(), GetTime(3).c_str());
       AddLog(LOG_LEVEL_DEBUG);
 
-      if (local_time < 1451602800) {
-        XdrvCall(FUNC_NTP_SET);
+      if (local_time < 1451602800) {  // 2016-01-01
+        XdrvCall(FUNC_NTP_INIT);
       } else {
         XdrvCall(FUNC_NTP_SET);
       }

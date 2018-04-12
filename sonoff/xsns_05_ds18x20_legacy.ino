@@ -204,12 +204,9 @@ void Ds18x20Show(boolean json)
     if (dsxflg) {
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}"), mqtt_data);
     }
-#ifdef USE_WEBSERVER
-  } else {
-    Ds18x20Search();      // Check for changes in sensors number
-    Ds18x20Convert();     // Start Conversion, takes up to one second
-#endif  // USE_WEBSERVER
   }
+  Ds18x20Search();      // Check for changes in sensors number
+  Ds18x20Convert();     // Start Conversion, takes up to one second
 }
 
 /*********************************************************************************************\
