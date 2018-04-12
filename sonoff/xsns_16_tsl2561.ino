@@ -71,7 +71,7 @@ void Tsl2561Show(boolean json)
           snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"TSL2561\":{\"" D_JSON_ILLUMINANCE "\":%u.%03u}"),
             mqtt_data, milliLux/1000, milliLux%1000);
 #ifdef USE_DOMOTICZ
-          DomoticzSensor(DZ_ILLUMINANCE, (milliLux+500)/1000);
+          if (0 == tele_period) DomoticzSensor(DZ_ILLUMINANCE, (milliLux+500)/1000);
 #endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
         } else {

@@ -107,7 +107,7 @@ void Sht3xShow(boolean json)
         if (json) {
           snprintf_P(mqtt_data, sizeof(mqtt_data), JSON_SNS_TEMPHUM, mqtt_data, types, temperature, humidity);
 #ifdef USE_DOMOTICZ
-          if (0 == i) {  // We want the same first sensor to report to Domoticz in case a read is missed
+          if ((0 == tele_period) && (0 == i)) {  // We want the same first sensor to report to Domoticz in case a read is missed
             DomoticzTempHumSensor(temperature, humidity);
           }
 #endif  // USE_DOMOTICZ
