@@ -128,6 +128,7 @@
 #define D_RESTART_REASON "Причина перезагрузки"
 #define D_RESTORE "восстановление"
 #define D_RETAINED "нераспред."
+#define D_RULE "Rule"
 #define D_SAVE "Сохранить"
 #define D_SENSOR "Датчик"
 #define D_SSID "SSId"
@@ -370,7 +371,7 @@
 #define D_TIMER_DAYS "Days"
 #define D_TIMER_REPEAT "Repeat"
 #define D_TIMER_OUTPUT "Output"
-#define D_TIMER_POWER "Power"
+#define D_TIMER_ACTION "Action"
 
 // xdrv_03_energy.ino
 #define D_ENERGY_TODAY "Энергия Сегодня"

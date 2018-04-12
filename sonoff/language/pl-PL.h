@@ -128,6 +128,7 @@
 #define D_RESTART_REASON "Przyczyna restartu"
 #define D_RESTORE "Przywracanie"
 #define D_RETAINED "Zachowane"
+#define D_RULE "Rule"
 #define D_SAVE "Zapisz"
 #define D_SENSOR "Czujnik"
 #define D_SSID "SSID"
@@ -370,7 +371,7 @@
 #define D_TIMER_DAYS "Days"
 #define D_TIMER_REPEAT "Repeat"
 #define D_TIMER_OUTPUT "Output"
-#define D_TIMER_POWER "Power"
+#define D_TIMER_ACTION "Action"
 
 // xdrv_03_energy.ino
 #define D_ENERGY_TODAY "Energia Dzisiaj"

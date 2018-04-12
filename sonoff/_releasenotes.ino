@@ -1,6 +1,8 @@
 /* 5.12.0k
  * Prepare for simple rules by enlarging Settings area to now 2048 bytes
+ * Change Timer parameter name from Power to Action
  * Fix freeing more code space when emulation is disabled (#1592)
+ * Fix update temperature on DS18x20 drivers (#2328)
  * Fix compile error when not defined USE_TIMERS (#2400)
  *
  * 5.12.0j

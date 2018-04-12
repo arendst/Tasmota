@@ -186,6 +186,7 @@ boolean (* const xsns_func_ptr[])(byte) PROGMEM = {  // Sensor Function Pointers
 };
 
 const uint8_t xsns_present = sizeof(xsns_func_ptr) / sizeof(xsns_func_ptr[0]);  // Number of External Sensors found
+uint8_t xsns_index = 0;
 
 /*********************************************************************************************\
  * Function call to all xsns
@@ -199,6 +200,18 @@ const uint8_t xsns_present = sizeof(xsns_func_ptr) / sizeof(xsns_func_ptr[0]);  
  * FUNC_EVERY_SECOND
  * FUNC_EVERY_50_MSECOND
 \*********************************************************************************************/
+
+uint8_t XsnsPresent()
+{
+  return xsns_present;
+}
+
+boolean XsnsNextCall(byte Function)
+{
+  xsns_index++;
+  if (xsns_index == xsns_present) xsns_index = 0;
+  return xsns_func_ptr[xsns_index](Function);
+}
 
 boolean XsnsCall(byte Function)
 {
