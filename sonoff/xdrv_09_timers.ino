@@ -22,15 +22,15 @@
  * Timers
  *
  * Arm a timer using one or all of the following JSON values:
- * {"Arm":1,"Mode":0,"Time":"09:23","Days":"--TW--S","Repeat":1,"Device":1,"Power":1}
+ * {"Arm":1,"Mode":0,"Time":"09:23","Days":"--TW--S","Repeat":1,"Output":1,"Action":1}
  *
- * Arm    0 = Off, 1 = On
- * Mode   0 = Schedule, 1 = Sunrise, 2 = Sunset
- * Time   hours:minutes
- * Days   7 day character mask starting with Sunday (SMTWTFS). 0 or - = Off, any other value = On
- * Repeat 0 = Execute once, 1 = Execute again
- * Device 1..16
- * Power  0 = Off, 1 = On, 2 = Toggle, 3 = Blink
+ * Arm     0 = Off, 1 = On
+ * Mode    0 = Schedule, 1 = Sunrise, 2 = Sunset
+ * Time    hours:minutes
+ * Days    7 day character mask starting with Sunday (SMTWTFS). 0 or - = Off, any other value = On
+ * Repeat  0 = Execute once, 1 = Execute again
+ * Output  1..16
+ * Action  0 = Off, 1 = On, 2 = Toggle, 3 = Blink or Rule if USE_RULES enabled
  *
 \*********************************************************************************************/
 
@@ -45,7 +45,6 @@ const char kTimerCommands[] PROGMEM = D_CMND_TIMER "|" D_CMND_TIMERS
 #endif
 ;
 
-uint16_t timer_fired = 0;
 uint16_t timer_last_minute = 60;
 
 #ifdef USE_SUNRISE
@@ -206,7 +205,7 @@ uint16_t GetSunMinutes(byte dawn)
 void TimerEverySecond()
 {
   if (RtcTime.valid) {
-    if (RtcTime.minute != timer_last_minute) {  // Execute every minute
+    if (RtcTime.minute != timer_last_minute) {  // Execute every minute only once
       timer_last_minute = RtcTime.minute;
       uint16_t time = (RtcTime.hour *60) + RtcTime.minute;
       uint8_t days = 1 << (RtcTime.day_of_week -1);
@@ -221,13 +220,16 @@ void TimerEverySecond()
 #endif
         if (Settings.timer[i].arm) {
           if (time == set_time) {
-            if (!bitRead(timer_fired, i) && (Settings.timer[i].days & days)) {
-              bitSet(timer_fired, i);
+            if (Settings.timer[i].days & days) {
               Settings.timer[i].arm = Settings.timer[i].repeat;
-              ExecuteCommandPower(Settings.timer[i].device +1, Settings.timer[i].power);
+#ifdef USE_RULES
+              if (3 == Settings.timer[i].power) {  // Blink becomes Rule disregarding device and allowing use of Backlog commands
+                XdrvMailbox.index = i;
+                XdrvCall(FUNC_CLOCK_TIMER);
+              } else
+#endif
+                ExecuteCommandPower(Settings.timer[i].device +1, Settings.timer[i].power);
             }
-          } else {
-            bitClear(timer_fired, i);
           }
         }
       }
@@ -245,10 +247,10 @@ void PrepShowTimer(uint8_t index)
     snprintf(days, sizeof(days), "%s%d", days, ((Settings.timer[index].days & mask) > 0));
   }
 #ifdef USE_SUNRISE
-  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s\"" D_CMND_TIMER "%d\":{\"" D_JSON_TIMER_ARM "\":%d,\"" D_JSON_TIMER_MODE "\":%d,\"" D_JSON_TIMER_TIME "\":\"%02d:%02d\",\"" D_JSON_TIMER_DAYS "\":\"%s\",\"" D_JSON_TIMER_REPEAT "\":%d,\"" D_JSON_TIMER_OUTPUT "\":%d,\"" D_JSON_TIMER_POWER "\":%d}"),
+  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s\"" D_CMND_TIMER "%d\":{\"" D_JSON_TIMER_ARM "\":%d,\"" D_JSON_TIMER_MODE "\":%d,\"" D_JSON_TIMER_TIME "\":\"%02d:%02d\",\"" D_JSON_TIMER_DAYS "\":\"%s\",\"" D_JSON_TIMER_REPEAT "\":%d,\"" D_JSON_TIMER_OUTPUT "\":%d,\"" D_JSON_TIMER_ACTION "\":%d}"),
     mqtt_data, index +1, Settings.timer[index].arm, Settings.timer[index].mode, Settings.timer[index].time / 60, Settings.timer[index].time % 60, days, Settings.timer[index].repeat, Settings.timer[index].device +1, Settings.timer[index].power);
 #else
-  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s\"" D_CMND_TIMER "%d\":{\"" D_JSON_TIMER_ARM "\":%d,\"" D_JSON_TIMER_TIME "\":\"%02d:%02d\",\"" D_JSON_TIMER_DAYS "\":\"%s\",\"" D_JSON_TIMER_REPEAT "\":%d,\"" D_JSON_TIMER_OUTPUT "\":%d,\"" D_JSON_TIMER_POWER "\":%d}"),
+  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s\"" D_CMND_TIMER "%d\":{\"" D_JSON_TIMER_ARM "\":%d,\"" D_JSON_TIMER_TIME "\":\"%02d:%02d\",\"" D_JSON_TIMER_DAYS "\":\"%s\",\"" D_JSON_TIMER_REPEAT "\":%d,\"" D_JSON_TIMER_OUTPUT "\":%d,\"" D_JSON_TIMER_ACTION "\":%d}"),
     mqtt_data, index +1, Settings.timer[index].arm, Settings.timer[index].time / 60, Settings.timer[index].time % 60, days, Settings.timer[index].repeat, Settings.timer[index].device +1, Settings.timer[index].power);
 #endif  // USE_SUNRISE
 }
@@ -259,7 +261,7 @@ void PrepShowTimer(uint8_t index)
 
 boolean TimerCommand()
 {
-  char command [CMDSZ];
+  char command[CMDSZ];
   char dataBufUc[XdrvMailbox.data_len];
   boolean serviced = true;
   uint8_t index = XdrvMailbox.index;
@@ -335,10 +337,9 @@ boolean TimerCommand()
               uint8_t device = ((uint8_t)root[parm_uc] -1) & 0x0F;
               Settings.timer[index].device = (device < devices_present) ? device : devices_present -1;
             }
-            if (root[UpperCase_P(parm_uc, PSTR(D_JSON_TIMER_POWER))].success()) {
+            if (root[UpperCase_P(parm_uc, PSTR(D_JSON_TIMER_ACTION))].success()) {
               Settings.timer[index].power = (uint8_t)root[parm_uc] & 0x03;
             }
-            if (Settings.timer[index].arm) bitClear(timer_fired, index);
 
             index++;
           }
@@ -376,7 +377,7 @@ boolean TimerCommand()
 #ifdef USE_SUNRISE
   else if (CMND_LONGITUDE == command_code) {
     if (XdrvMailbox.data_len) {
-      Settings.longitude = (int)(AtoD(XdrvMailbox.data) *1000000);
+      Settings.longitude = (int)(CharToDouble(XdrvMailbox.data) *1000000);
     }
     char lbuff[32];
     dtostrfd(((double)Settings.longitude) /1000000, 6, lbuff);
@@ -384,7 +385,7 @@ boolean TimerCommand()
   }
   else if (CMND_LATITUDE == command_code) {
     if (XdrvMailbox.data_len) {
-      Settings.latitude = (int)(AtoD(XdrvMailbox.data) *1000000);
+      Settings.latitude = (int)(CharToDouble(XdrvMailbox.data) *1000000);
     }
     char lbuff[32];
     dtostrfd(((double)Settings.latitude) /1000000, 6, lbuff);
@@ -486,11 +487,15 @@ const char HTTP_FORM_TIMER1[] PROGMEM =
   "' hidden><div id='bt' name='bt'></div><br/><br/><br/>"
   "<div>"
   "<b>" D_TIMER_OUTPUT "</b>&nbsp;<span><select style='width:60px;' id='d1' name='d1'></select></span>&emsp;"
-  "<b>" D_TIMER_POWER "</b>&nbsp;<select style='width:99px;' id='p1' name='p1'>"
+  "<b>" D_TIMER_ACTION "</b>&nbsp;<select style='width:99px;' id='p1' name='p1'>"
     "<option value='0'>" D_OFF "</option>"
     "<option value='1'>" D_ON "</option>"
     "<option value='2'>" D_TOGGLE "</option>"
+#ifdef USE_RULES
+    "<option value='3'>" D_RULE "</option>"
+#else
     "<option value='3'>" D_BLINK "</option>"
+#endif
   "</select>"
   "</div><br/>"
   "<div>"

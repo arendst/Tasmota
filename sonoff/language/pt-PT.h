@@ -128,6 +128,7 @@
 #define D_RESTART_REASON "Razão do reinicio"
 #define D_RESTORE "Restauro"
 #define D_RETAINED "Manter"
+#define D_RULE "Rule"
 #define D_SAVE "Salvar"
 #define D_SENSOR "Sensor"
 #define D_SSID "SSId"
@@ -370,7 +371,7 @@
 #define D_TIMER_DAYS "Days"
 #define D_TIMER_REPEAT "Repeat"
 #define D_TIMER_OUTPUT "Output"
-#define D_TIMER_POWER "Power"
+#define D_TIMER_ACTION "Action"
 
 // xdrv_10_KNX.ino
 #define D_CONFIGURE_KNX "Configure KNX"

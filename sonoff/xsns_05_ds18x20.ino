@@ -392,6 +392,7 @@ void Ds18x20Show(boolean json)
       }
     }
   }
+  Ds18x20Convert();    // Start conversion, takes up to one second
 }
 
 /*********************************************************************************************\
@@ -409,11 +410,6 @@ boolean Xsns05(byte function)
       case FUNC_INIT:
         Ds18x20Init();
         break;
-//      case FUNC_EVERY_SECOND:
-//        if ((Settings.tele_period - tele_period) &3 == 3) {
-//          Ds18x20Convert();  // Start conversion every four seconds, takes up to one second
-//        }
-//        break;
       case FUNC_PREP_BEFORE_TELEPERIOD:
         Ds18x20Convert();    // Start conversion, takes up to one second
         break;
@@ -423,7 +419,6 @@ boolean Xsns05(byte function)
 #ifdef USE_WEBSERVER
       case FUNC_WEB_APPEND:
         Ds18x20Show(0);
-        Ds18x20Convert();    // Start conversion, takes up to one second
         break;
 #endif  // USE_WEBSERVER
     }
