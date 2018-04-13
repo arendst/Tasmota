@@ -182,17 +182,12 @@ boolean XdrvMqttData(char *topicBuf, uint16_t stopicBuf, char *dataBuf, uint16_t
  * FUNC_LOOP
  * FUNC_MQTT_SUBSCRIBE
  * FUNC_MQTT_INIT
- * FUNC_MQTT_DISCONNECTED
- * FUNC_MQTT_CONNECTED
  * return FUNC_MQTT_DATA
  * return FUNC_COMMAND
  * FUNC_SET_POWER
  * FUNC_SHOW_SENSOR
  * FUNC_EVERY_SECOND
  * FUNC_EVERY_50_MSECOND
- * FUNC_NTP_INIT
- * FUNC_NTP_SET
- * FUNC_CLOCK_TIMER
 \*********************************************************************************************/
 
 boolean XdrvCall(byte Function)
