@@ -224,6 +224,9 @@
   #define USE_TIMERS_WEB                         // Add timer webpage support (+4k5 code)
   #define USE_SUNRISE                            // Add support for Sunrise and sunset tools (+16k)
 
+// -- Rules ---------------------------------------
+#define USE_RULES                                // Add support for rules (+4k4 code)
+
 // -- Internal Analog input -----------------------
 #define USE_ADC_VCC                              // Display Vcc in Power status. Disable for use as Analog input on selected devices
 

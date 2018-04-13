@@ -224,10 +224,10 @@ void TimerEverySecond()
               Settings.timer[i].arm = Settings.timer[i].repeat;
 #ifdef USE_RULES
               if (3 == Settings.timer[i].power) {  // Blink becomes Rule disregarding device and allowing use of Backlog commands
-                XdrvMailbox.index = i;
-                XdrvCall(FUNC_CLOCK_TIMER);
+                snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"Clock\":{\"Timer\":%d}}"), i +1);
+                RulesProcess();
               } else
-#endif
+#endif  // USE_RULES
                 ExecuteCommandPower(Settings.timer[i].device +1, Settings.timer[i].power);
             }
           }

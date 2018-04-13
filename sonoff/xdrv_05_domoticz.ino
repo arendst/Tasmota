@@ -265,7 +265,7 @@ boolean DomoticzCommand()
   return serviced;
 }
 
-boolean DomoticzButton(byte key, byte device, byte state, byte svalflg)
+boolean DomoticzSendKey(byte key, byte device, byte state, byte svalflg)
 {
   if ((Settings.domoticz_key_idx[device -1] || Settings.domoticz_switch_idx[device -1]) && (svalflg)) {
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"command\":\"switchlight\",\"idx\":%d,\"switchcmd\":\"%s\"}"),

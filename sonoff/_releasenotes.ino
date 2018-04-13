@@ -1,6 +1,7 @@
 /* 5.12.0k
- * Prepare for simple rules by enlarging Settings area to now 2048 bytes
+ * Prepare for simple rules of up to 255 characters by enlarging Settings area to now 2048 bytes
  * Change Timer parameter name from Power to Action
+ * Add commands Publish, Rule, RuleTimer and Event. See Wiki about Rule restriction, usage and examples
  * Fix freeing more code space when emulation is disabled (#1592)
  * Fix update temperature on DS18x20 drivers (#2328)
  * Fix compile error when not defined USE_TIMERS (#2400)
