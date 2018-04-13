@@ -49,7 +49,7 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t no_power_on_check : 1;        // bit 21 (v5.11.1i)
     uint32_t mqtt_serial : 1;              // bit 22 (v5.12.0f)
     uint32_t rules_enabled : 1;            // bit 23 (v5.12.0j)
-    uint32_t spare24 : 1;
+    uint32_t rules_once : 1;               // bit 23 (v5.12.0k)
     uint32_t spare25 : 1;
     uint32_t spare26 : 1;
     uint32_t spare27 : 1;
