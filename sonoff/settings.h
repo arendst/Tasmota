@@ -49,8 +49,8 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t no_power_on_check : 1;        // bit 21 (v5.11.1i)
     uint32_t mqtt_serial : 1;              // bit 22 (v5.12.0f)
     uint32_t rules_enabled : 1;            // bit 23 (v5.12.0j)
-    uint32_t knx_enabled : 1;              // bit 24 KNX
-    uint32_t spare25 : 1;
+    uint32_t rules_once : 1;               // bit 24 (v5.12.0k)
+    uint32_t knx_enabled : 1;              // bit 25 KNX
     uint32_t spare26 : 1;
     uint32_t spare27 : 1;
     uint32_t spare28 : 1;
@@ -255,11 +255,11 @@ struct SYSCFG {
   Timer         timer[MAX_TIMERS];         // 670
   int           latitude;                  // 6B0
   int           longitude;                 // 6B4
-  
+
   byte          free_6b8[72];              // 6B8
 
   char          rules[MAX_RULE_SIZE];      // 700
-  
+
   uint16_t      knx_physsical_addr;        // 800  (address_t is a uint16_t)
   byte          knx_GA_registered;         // 802  Number of Group Address to read
   byte          knx_CB_registered;         // 803  Number of Group Address to write
