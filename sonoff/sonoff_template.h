@@ -88,6 +88,8 @@ enum UserSelectablePins {
   GPIO_SPI_DC,         // SPI Data Direction
   GPIO_BACKLIGHT,      // Display backlight control
   GPIO_PMS5003,        // Plantower PMS5003 Serial interface
+  GPIO_SR04_TRIG,      // SR04 Trigger pin
+  GPIO_SR04_ECHO,      // SR04 Echo pin
   GPIO_SENSOR_END };
 
 // Programmer selectable GPIO functionality offset by user selectable GPIOs
@@ -129,7 +131,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_PZEM_TX "|" D_SENSOR_PZEM_RX "|"
   D_SENSOR_SAIR_TX "|" D_SENSOR_SAIR_RX "|"
   D_SENSOR_SPI_CS "|" D_SENSOR_SPI_DC "|" D_SENSOR_BACKLIGHT "|"
-  D_SENSOR_PMS5003;
+  D_SENSOR_PMS5003 "|" D_SENSOR_SR04_TRIG "|" D_SENSOR_SR04_ECHO;
 
 /********************************************************************************************/
 
