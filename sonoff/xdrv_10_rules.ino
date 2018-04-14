@@ -40,10 +40,10 @@
  *   on rules#timer=1 do color 080800 endon
  *   on mqtt#connected do color 000010 endon on mqtt#disconnected do color 001010 endon on time#initialized do color 001000 endon on time#set do backlog color 000810;ruletimer1 10 endon on rules#timer=1 do color 080800 endon
  *   on event#anyname do color 100000 endon
- *   on event#anyname do color %eventvalue% endon
+ *   on event#anyname do color %value% endon
  *   on power1#state=1 do color 001000 endon
- *   on button1#state do publish cmnd/ring2/power %eventvalue% endon on button2#state do publish cmnd/strip1/power %eventvalue% endon
- *   on switch1#state do power2 %eventvalue% endon
+ *   on button1#state do publish cmnd/ring2/power %value% endon on button2#state do publish cmnd/strip1/power %value% endon
+ *   on switch1#state do power2 %value% endon
  *
  * Notes:
  *   Spaces after <on>, around <do> and before <endon> are mandatory
@@ -185,7 +185,7 @@ bool RulesRuleMatch(String &event, String &rule)
   if (!root[rule_task][rule_name].success()) return false;
   // No value but rule_name is ok
 
-  rules_event_value = str_value;                       // Prepare %eventvalue%
+  rules_event_value = str_value;                       // Prepare %value%
 
   // Step 3: Compare rule (value)
   if (str_value) {
@@ -260,7 +260,7 @@ bool RulesProcess()
     rules_event_value = "";
     String event = event_saved;
     if (RulesRuleMatch(event, event_trigger)) {
-      commands.replace(F("%eventvalue%"), rules_event_value);
+      commands.replace(F("%value%"), rules_event_value);
       char command[commands.length() +1];
       snprintf(command, sizeof(command), commands.c_str());
 

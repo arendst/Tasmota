@@ -48,7 +48,7 @@ typedef unsigned long power_t;              // Power (Relay) type
 #define MAX_FRIENDLYNAMES      4            // Max number of Friendly names
 #define MAX_DOMOTICZ_IDX       4            // Max number of Domoticz device, key and switch indices
 #define MAX_DOMOTICZ_SNS_IDX   12           // Max number of Domoticz sensors indices
-#define MAX_RULE_SIZE          256          // Max number of characters in rules
+#define MAX_RULE_SIZE          512          // Max number of characters in rules
 
 #define MODULE                 SONOFF_BASIC // [Module] Select default model
 
@@ -86,10 +86,10 @@ typedef unsigned long power_t;              // Power (Relay) type
 #define SERIALLOG_TIMER        600          // Seconds to disable SerialLog
 #define OTA_ATTEMPTS           5            // Number of times to try fetching the new firmware
 
-#define INPUT_BUFFER_SIZE      255          // Max number of characters in (serial) command buffer
+#define INPUT_BUFFER_SIZE      512          // Max number of characters in (serial and http) command buffer
 #define CMDSZ                  24           // Max number of characters in command
 #define TOPSZ                  100          // Max number of characters in topic string
-#define LOGSZ                  400          // Max number of characters in log
+#define LOGSZ                  512          // Max number of characters in log
 #define MIN_MESSZ              893          // Min number of characters in MQTT message
 
 #ifdef USE_MQTT_TLS

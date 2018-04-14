@@ -1,4 +1,8 @@
-/* 5.12.0k
+/* 5.12.0l
+ * Release rules up to 511 characters
+ * Prepare for feature release - call on translators to update their language files
+ *
+ * 5.12.0k
  * Prepare for simple rules of up to 255 characters by enlarging Settings area to now 2048 bytes
  * Change Timer parameter name from Power to Action
  * Add commands Publish, Rule, RuleTimer and Event. See Wiki about Rule restriction, usage and examples
