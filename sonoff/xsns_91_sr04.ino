@@ -90,29 +90,29 @@ uint16_t Sr04Ping(uint16_t max_cm_distance)
 }
 
 uint16_t Sr04GetSamples(uint8_t it, uint16_t max_cm_distance) {
-	uint16_t uS[it], last;
-	uint8_t j, i = 0;
-	uint16_t t;
-	uS[0] = 0;
+  uint16_t uS[it], last;
+  uint8_t j, i = 0;
+  uint16_t t;
+  uS[0] = 0;
 
-	while (i < it) {
-		t = micros();
-		last = Sr04Ping(max_cm_distance);
+  while (i < it) {
+    t = micros();
+    last = Sr04Ping(max_cm_distance);
 
-		if (last != 0) {
-			if (i > 0) {
-				for (j = i; j > 0 && uS[j - 1] < last; j--)
-					uS[j] = uS[j - 1];
-			} else j = 0;
-			uS[j] = last;
-			i++;
-		} else it--;
+    if (last != 0) {
+      if (i > 0) {
+        for (j = i; j > 0 && uS[j - 1] < last; j--)
+          uS[j] = uS[j - 1];
+      } else j = 0;
+      uS[j] = last;
+      i++;
+    } else it--;
 
-		if (i < it && micros() - t < PING_MEDIAN_DELAY)
-			delay((PING_MEDIAN_DELAY + t - micros()) / 1000);
-	}
+    if (i < it && micros() - t < PING_MEDIAN_DELAY)
+      delay((PING_MEDIAN_DELAY + t - micros()) / 1000);
+  }
 
-	return (uS[1]); // Return the ping distance from the 2nd highest reading
+  return (uS[1]); // Return the ping distance from the 2nd highest reading
 }
 
 #ifdef USE_WEBSERVER
