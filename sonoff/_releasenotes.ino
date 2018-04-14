@@ -1,6 +1,7 @@
 /* 5.12.0l
  * Release rules up to 511 characters
  * Prepare for feature release - call on translators to update their language files
+ * Add timer sunrise and sunset offset (#2378)
  *
  * 5.12.0k
  * Prepare for simple rules of up to 255 characters by enlarging Settings area to now 2048 bytes
