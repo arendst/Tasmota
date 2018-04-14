@@ -32,6 +32,9 @@
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
 
+// HTML (ISO 639-1) Language Code
+#define D_HTML_LANGUAGE "es"
+
 // "2017-03-07T11:08:02" - ISO8601:2004
 #define D_YEAR_MONTH_SEPARATOR "-"
 #define D_MONTH_DAY_SEPARATOR "-"
@@ -74,6 +77,7 @@
 #define D_DNS_SERVER "DNS Server"
 #define D_DONE "Listo"
 #define D_DST_TIME "DST"
+#define D_ECO2 "eCO2"
 #define D_EMULATION "Emulación"
 #define D_ENABLED "Habilitado"
 #define D_ERASE "Borrar"
@@ -124,6 +128,7 @@
 #define D_RESTART_REASON "Causa Reinicio"
 #define D_RESTORE "Restauración"
 #define D_RETAINED "Grabado"
+#define D_RULE "Rule"
 #define D_SAVE "Grabar"
 #define D_SENSOR "Sensor"
 #define D_SSID "SSId"
@@ -133,12 +138,15 @@
 #define D_SUBNET_MASK "Máscara Subred"
 #define D_SUBSCRIBE_TO "Suscribir a"
 #define D_SUCCESSFUL "Exitosa"
+#define D_SUNRISE "Salida del Sol"
+#define D_SUNSET "Puesta del Sol"
 #define D_TEMPERATURE "Temperatura"
 #define D_TO "a"
 #define D_TOGGLE "Conmutar"
 #define D_TOPIC "Topic"
 #define D_TRANSMIT "Transmitir"
 #define D_TRUE "Verdadero"
+#define D_TVOC "TVOC"
 #define D_UPGRADE "Actualización"
 #define D_UPLOAD "Carga"
 #define D_UPTIME "Tiempo Encendido"
@@ -161,13 +169,6 @@
 #define D_RECEIVED_TOPIC "Topic Recibido"
 #define D_DATA_SIZE "Tamaño de Datos"
 #define D_ANALOG_INPUT "Entrada Analógica"
-
-#define D_FINGERPRINT "Verificar TLS fingerprint..."
-#define D_TLS_CONNECT_FAILED_TO "Falló Conección TLS a"
-#define D_RETRY_IN "Reintentando"
-#define D_VERIFIED "Verificado"
-#define D_INSECURE "Conección insegura por Fingerprint no válido"
-#define D_CONNECT_FAILED_TO "Falló Conección a"
 
 // support.ino
 #define D_OSWATCH "osWatch"
@@ -317,6 +318,14 @@
 #define D_ENABLE_WEBLOG_FOR_RESPONSE "Habilitar weblog 2 si desea respuesta"
 #define D_NEED_USER_AND_PASSWORD "Se necesita user=<username>&password=<password>"
 
+// xdrv_00_mqtt.ino
+#define D_FINGERPRINT "Verificar TLS fingerprint..."
+#define D_TLS_CONNECT_FAILED_TO "Falló Conección TLS a"
+#define D_RETRY_IN "Reintentando"
+#define D_VERIFIED "Verificado Fingerprint"
+#define D_INSECURE "Conección insegura por Fingerprint no válido"
+#define D_CONNECT_FAILED_TO "Falló Conección a"
+
 // xdrv_wemohue.ino
 #define D_MULTICAST_DISABLED "Multicast deshabilitado"
 #define D_MULTICAST_REJOINED "Multicast (re)conectado"
@@ -348,11 +357,21 @@
   #define D_DOMOTICZ_TEMP_HUM_BARO "Temp,Hum,Baro"
   #define D_DOMOTICZ_POWER_ENERGY "Potencia,Energía"
   #define D_DOMOTICZ_ILLUMINANCE "Luminancia"
-  #define D_DOMOTICZ_COUNT "Contador"
-  #define D_DOMOTICZ_VOLTAGE "Voltaje"
-  #define D_DOMOTICZ_CURRENT "Corriente"
+  #define D_DOMOTICZ_COUNT "Contador/PM1"
+  #define D_DOMOTICZ_VOLTAGE "Voltaje/PM2,5"
+  #define D_DOMOTICZ_CURRENT "Corriente/PM10"
   #define D_DOMOTICZ_AIRQUALITY "Calidad del Aire"
 #define D_DOMOTICZ_UPDATE_TIMER "Intervalo de refresco"
+
+// xdrv_09_timers.ino
+#define D_CONFIGURE_TIMER "Configuración Temporizadores"
+#define D_TIMER_PARAMETERS "Parámetros de Temporizadores"
+#define D_TIMER_ARM "Activo"
+#define D_TIMER_TIME "Hora"
+#define D_TIMER_DAYS "Días"
+#define D_TIMER_REPEAT "Repetir"
+#define D_TIMER_OUTPUT "Salida"
+#define D_TIMER_ACTION "Estado"
 
 // xdrv_03_energy.ino
 #define D_ENERGY_TODAY "Energía Hoy"
@@ -407,6 +426,9 @@
 #define D_SENSOR_SPI_DC   "SPI DC"
 #define D_SENSOR_BACKLIGHT "BkLight"
 #define D_SENSOR_PMS5003  "PMS5003"
+#define D_SENSOR_SDS0X1   "SDS0X1"
+#define D_SENSOR_SBR_RX   "SerBr Rx"
+#define D_SENSOR_SBR_TX   "SerBr Tx"
 
 // Units
 #define D_UNIT_AMPERE "A"
@@ -420,6 +442,7 @@
 #define D_UNIT_MILLIAMPERE "mA"
 #define D_UNIT_MILLISECOND "ms"
 #define D_UNIT_MINUTE "Min"
+#define D_UNIT_PARTS_PER_BILLION "ppb"
 #define D_UNIT_PARTS_PER_DECILITER "ppd"
 #define D_UNIT_PARTS_PER_MILLION "ppm"
 #define D_UNIT_PRESSURE "hPa"

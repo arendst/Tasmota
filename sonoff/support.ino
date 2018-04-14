@@ -119,7 +119,7 @@ Decoding 14 results
 0x4021ffb4: snprintf_P(char*, unsigned int, char const*, ...) at C:\Data2\Arduino\arduino-1.8.1-esp-2.3.0\portable\packages\esp8266\hardware\esp8266\2.3.0\cores\esp8266/pgmspace.cpp line 146
 0x40201118: atol at C:\Data2\Arduino\arduino-1.8.1-esp-2.3.0\portable\packages\esp8266\hardware\esp8266\2.3.0\cores\esp8266/core_esp8266_noniso.c line 45
 0x40201128: atoi at C:\Data2\Arduino\arduino-1.8.1-esp-2.3.0\portable\packages\esp8266\hardware\esp8266\2.3.0\cores\esp8266/core_esp8266_noniso.c line 45
-0x4020fafb: MqttDataCallback(char*, unsigned char*, unsigned int) at R:\Arduino\Work-ESP8266\Theo\sonoff\sonoff-4\sonoff/sonoff.ino line 679 (discriminator 1)
+0x4020fafb: MqttDataHandler(char*, unsigned char*, unsigned int) at R:\Arduino\Work-ESP8266\Theo\sonoff\sonoff-4\sonoff/sonoff.ino line 679 (discriminator 1)
 0x4022321b: pp_attach at ?? line ?
 
 00:00:08 MQTT: tele/sonoff/INFO3 = {"Started":"Fatal exception:28 flag:2 (EXCEPTION) epc1:0x4000bf64 epc2:0x00000000 epc3:0x00000000 excvaddr:0x00000007 depc:0x00000000"}
@@ -192,9 +192,108 @@ size_t strchrspn(const char *str1, int character)
   return ret;
 }
 
+double CharToDouble(char *str)
+{
+  // simple ascii to double, because atof or strtod are too large
+  char strbuf[24];
+
+  strcpy(strbuf, str);
+  char *pt;
+  double left = atoi(strbuf);
+  double right = 0;
+  short len = 0;
+  pt = strtok (strbuf, ".");
+  if (pt) {
+    pt = strtok (NULL, ".");
+    if (pt) {
+      right = atoi(pt);
+      len = strlen(pt);
+      double fac = 1;
+      while (len) {
+        fac /= 10.0;
+        len--;
+      }
+      // pow is also very large
+      //double fac=pow(10,-len);
+      right *= fac;
+    }
+  }
+  return left + right;
+}
+
 char* dtostrfd(double number, unsigned char prec, char *s)
 {
   return dtostrf(number, 1, prec, s);
+}
+
+char* Unescape(char* buffer, uint16_t* size)
+{
+  uint8_t* read = (uint8_t*)buffer;
+  uint8_t* write = (uint8_t*)buffer;
+  uint16_t start_size = *size;
+  uint16_t end_size = *size;
+  uint8_t che = 0;
+
+  while (start_size > 0) {
+    uint8_t ch = *read++;
+    start_size--;
+    if (ch != '\\') {
+      *write++ = ch;
+    } else {
+      if (start_size > 0) {
+        uint8_t chi = *read++;
+        start_size--;
+        end_size--;
+        switch (chi) {
+          case '\\': che = '\\'; break;  // 5C Backslash
+          case 'a': che = '\a'; break;   // 07 Bell (Alert)
+          case 'b': che = '\b'; break;   // 08 Backspace
+          case 'e': che = '\e'; break;   // 1B Escape
+          case 'f': che = '\f'; break;   // 0C Formfeed
+          case 'n': che = '\n'; break;   // 0A Linefeed (Newline)
+          case 'r': che = '\r'; break;   // 0D Carriage return
+          case 's': che = ' ';  break;   // 20 Space
+          case 't': che = '\t'; break;   // 09 Horizontal tab
+          case 'v': che = '\v'; break;   // 0B Vertical tab
+//          case '?': che = '\?'; break;   // 3F Question mark
+          default : {
+            che = chi;
+            *write++ = ch;
+            end_size++;
+          }
+        }
+        *write++ = che;
+      }
+    }
+  }
+  *size = end_size;
+  return buffer;
+}
+
+char* UpperCase(char* dest, const char* source)
+{
+  char* write = dest;
+  const char* read = source;
+  char ch = '.';
+
+  while (ch != '\0') {
+    ch = *read++;
+    *write++ = toupper(ch);
+  }
+  return dest;
+}
+
+char* UpperCase_P(char* dest, const char* source)
+{
+  char* write = dest;
+  const char* read = source;
+  char ch = '.';
+
+  while (ch != '\0') {
+    ch = pgm_read_byte(read++);
+    *write++ = toupper(ch);
+  }
+  return dest;
 }
 
 boolean ParseIp(uint32_t* addr, const char* str)
@@ -401,6 +500,7 @@ int GetCommandCode(char* destination, size_t destination_size, const char* needl
 
 void SetSerialBaudrate(int baudrate)
 {
+  Settings.baudrate = baudrate / 1200;
   if (Serial.baudRate() != baudrate) {
     if (seriallog_level) {
       snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION D_SET_BAUDRATE_TO " %d"), baudrate);
@@ -427,11 +527,12 @@ uint32_t GetHash(const char *buffer, size_t size)
  * Wifi
 \*********************************************************************************************/
 
-#define WIFI_CONFIG_SEC   180  // seconds before restart
-#define WIFI_CHECK_SEC    20   // seconds
-#define WIFI_RETRY_SEC    30   // seconds
+#define WIFI_CONFIG_SEC        180  // seconds before restart
+#define WIFI_CHECK_SEC         20   // seconds
+#define WIFI_RETRY_OFFSET_SEC  20   // seconds
 
 uint8_t wifi_counter;
+uint8_t wifi_retry_init;
 uint8_t wifi_retry;
 uint8_t wifi_status;
 uint8_t wps_result;
@@ -516,7 +617,7 @@ void WifiConfig(uint8_t type)
     if (type >= WIFI_RETRY) {  // WIFI_RETRY and WIFI_WAIT
       return;
     }
-#ifdef USE_EMULATION
+#if defined(USE_WEBSERVER) && defined(USE_EMULATION)
     UdpDisconnect();
 #endif  // USE_EMULATION
     WiFi.disconnect();        // Solve possible Wifi hangs
@@ -552,16 +653,17 @@ void WifiBegin(uint8_t flag)
 {
   const char kWifiPhyMode[] = " BGN";
 
-#ifdef USE_EMULATION
+#if defined(USE_WEBSERVER) && defined(USE_EMULATION)
   UdpDisconnect();
 #endif  // USE_EMULATION
 
 #ifdef ARDUINO_ESP8266_RELEASE_2_3_0  // (!strncmp_P(ESP.getSdkVersion(),PSTR("1.5.3"),5))
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_WIFI, PSTR(D_PATCH_ISSUE_2186));
-  WiFi.mode(WIFI_OFF);    // See https://github.com/esp8266/Arduino/issues/2186
+  WiFi.mode(WIFI_OFF);      // See https://github.com/esp8266/Arduino/issues/2186
 #endif
 
-  WiFi.disconnect();
+  WiFi.disconnect(true);    // Delete SDK wifi config
+  delay(200);
   WiFi.mode(WIFI_STA);      // Disable AP mode
   if (Settings.sleep) {
     WiFi.setSleepMode(WIFI_LIGHT_SLEEP);  // Allow light sleep during idle times
@@ -598,7 +700,7 @@ void WifiCheckIp()
 {
   if ((WL_CONNECTED == WiFi.status()) && (static_cast<uint32_t>(WiFi.localIP()) != 0)) {
     wifi_counter = WIFI_CHECK_SEC;
-    wifi_retry = WIFI_RETRY_SEC;
+    wifi_retry = wifi_retry_init;
     AddLog_P((wifi_status != WL_CONNECTED) ? LOG_LEVEL_INFO : LOG_LEVEL_DEBUG_MORE, S_LOG_WIFI, PSTR(D_CONNECTED));
     if (wifi_status != WL_CONNECTED) {
 //      AddLog_P(LOG_LEVEL_INFO, PSTR("Wifi: Set IP addresses"));
@@ -613,15 +715,15 @@ void WifiCheckIp()
       case WL_CONNECTED:
         AddLog_P(LOG_LEVEL_INFO, S_LOG_WIFI, PSTR(D_CONNECT_FAILED_NO_IP_ADDRESS));
         wifi_status = 0;
-        wifi_retry = WIFI_RETRY_SEC;
+        wifi_retry = wifi_retry_init;
         break;
       case WL_NO_SSID_AVAIL:
         AddLog_P(LOG_LEVEL_INFO, S_LOG_WIFI, PSTR(D_CONNECT_FAILED_AP_NOT_REACHED));
         if (WIFI_WAIT == Settings.sta_config) {
-          wifi_retry = WIFI_RETRY_SEC;
+          wifi_retry = wifi_retry_init;
         } else {
-          if (wifi_retry > (WIFI_RETRY_SEC / 2)) {
-            wifi_retry = WIFI_RETRY_SEC / 2;
+          if (wifi_retry > (wifi_retry_init / 2)) {
+            wifi_retry = wifi_retry_init / 2;
           }
           else if (wifi_retry) {
             wifi_retry = 0;
@@ -630,25 +732,25 @@ void WifiCheckIp()
         break;
       case WL_CONNECT_FAILED:
         AddLog_P(LOG_LEVEL_INFO, S_LOG_WIFI, PSTR(D_CONNECT_FAILED_WRONG_PASSWORD));
-        if (wifi_retry > (WIFI_RETRY_SEC / 2)) {
-          wifi_retry = WIFI_RETRY_SEC / 2;
+        if (wifi_retry > (wifi_retry_init / 2)) {
+          wifi_retry = wifi_retry_init / 2;
         }
         else if (wifi_retry) {
           wifi_retry = 0;
         }
         break;
       default:  // WL_IDLE_STATUS and WL_DISCONNECTED
-        if (!wifi_retry || ((WIFI_RETRY_SEC / 2) == wifi_retry)) {
+        if (!wifi_retry || ((wifi_retry_init / 2) == wifi_retry)) {
           AddLog_P(LOG_LEVEL_INFO, S_LOG_WIFI, PSTR(D_CONNECT_FAILED_AP_TIMEOUT));
         } else {
           AddLog_P(LOG_LEVEL_DEBUG, S_LOG_WIFI, PSTR(D_ATTEMPTING_CONNECTION));
         }
     }
     if (wifi_retry) {
-      if (WIFI_RETRY_SEC == wifi_retry) {
+      if (wifi_retry_init == wifi_retry) {
         WifiBegin(3);  // Select default SSID
       }
-      if ((Settings.sta_config != WIFI_WAIT) && ((WIFI_RETRY_SEC / 2) == wifi_retry)) {
+      if ((Settings.sta_config != WIFI_WAIT) && ((wifi_retry_init / 2) == wifi_retry)) {
         WifiBegin(2);  // Select alternate SSID
       }
       wifi_counter = 1;
@@ -656,7 +758,7 @@ void WifiCheckIp()
     } else {
       WifiConfig(Settings.sta_config);
       wifi_counter = 1;
-      wifi_retry = WIFI_RETRY_SEC;
+      wifi_retry = wifi_retry_init;
     }
   }
 }
@@ -697,6 +799,7 @@ void WifiCheck(uint8_t param)
         if (WIFI_SMARTCONFIG == wifi_config_type) {
           WiFi.stopSmartConfig();
         }
+        SettingsSdkErase();
         restart_flag = 2;
       }
     } else {
@@ -737,7 +840,7 @@ void WifiCheck(uint8_t param)
 #endif  // USE_EMULATION
 #endif  // USE_WEBSERVER
       } else {
-#ifdef USE_EMULATION
+#if defined(USE_WEBSERVER) && defined(USE_EMULATION)
         UdpDisconnect();
 #endif  // USE_EMULATION
         mdns_begun = false;
@@ -763,7 +866,8 @@ void WifiConnect()
 {
   WiFi.persistent(false);   // Solve possible wifi init errors
   wifi_status = 0;
-  wifi_retry = WIFI_RETRY_SEC;
+  wifi_retry_init = WIFI_RETRY_OFFSET_SEC + ((ESP.getChipId() & 0xF) * 2);
+  wifi_retry = wifi_retry_init;
   wifi_counter = 1;
 }
 
@@ -1002,6 +1106,7 @@ uint32_t standard_time = 0;
 uint32_t ntp_time = 0;
 uint32_t midnight = 1451602800;
 uint32_t restart_time = 0;
+int16_t  time_timezone = 0;  // Timezone * 10
 uint8_t  midnight_now = 0;
 uint8_t  ntp_sync_minute = 0;
 
@@ -1250,8 +1355,8 @@ boolean MidnightNow()
 
 void RtcSecond()
 {
-  uint32_t stdoffset;
-  uint32_t dstoffset;
+  int32_t stdoffset;
+  int32_t dstoffset;
   TIME_T tmpTime;
 
   if ((ntp_sync_minute > 59) && (RtcTime.minute > 2)) ntp_sync_minute = 1;                 // If sync prepare for a new cycle
@@ -1271,6 +1376,14 @@ void RtcSecond()
       snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION "(" D_UTC_TIME ") %s, (" D_DST_TIME ") %s, (" D_STD_TIME ") %s"),
         GetTime(0).c_str(), GetTime(2).c_str(), GetTime(3).c_str());
       AddLog(LOG_LEVEL_DEBUG);
+#ifdef USE_RULES
+      if (local_time < 1451602800) {  // 2016-01-01
+        strncpy_P(mqtt_data, PSTR("{\"Time\":{\"Initialized\":1}}"), sizeof(mqtt_data));
+      } else {
+        strncpy_P(mqtt_data, PSTR("{\"Time\":{\"Set\":1}}"), sizeof(mqtt_data));
+      }
+      RulesProcess();
+#endif  // USE_RULES
     } else {
       ntp_sync_minute++;  // Try again in next minute
     }
@@ -1278,6 +1391,7 @@ void RtcSecond()
   utc_time++;
   local_time = utc_time;
   if (local_time > 1451602800) {  // 2016-01-01
+    int32_t time_offset = Settings.timezone * SECS_PER_HOUR;
     if (99 == Settings.timezone) {
       if (DaylightSavingTime.hemis) {
         dstoffset = StandardTime.offset * SECS_PER_MIN;  // Southern hemisphere
@@ -1287,13 +1401,13 @@ void RtcSecond()
         stdoffset = StandardTime.offset * SECS_PER_MIN;
       }
       if ((utc_time >= (daylight_saving_time - stdoffset)) && (utc_time < (standard_time - dstoffset))) {
-        local_time += dstoffset;  // Daylight Saving Time
+        time_offset = dstoffset;  // Daylight Saving Time
       } else {
-        local_time += stdoffset;  // Standard Time
+        time_offset = stdoffset;  // Standard Time
       }
-    } else {
-      local_time += Settings.timezone * SECS_PER_HOUR;
     }
+    local_time += time_offset;
+    time_timezone = time_offset / (SECS_PER_HOUR / 10);
   }
   BreakTime(local_time, RtcTime);
   if (!RtcTime.hour && !RtcTime.minute && !RtcTime.second && RtcTime.valid) {
@@ -1373,6 +1487,13 @@ boolean Xsns02(byte function)
  *   AddLog(LOG_LEVEL_DEBUG);
  *
 \*********************************************************************************************/
+
+void SetSeriallog(byte loglevel)
+{
+  Settings.seriallog_level = loglevel;
+  seriallog_level = loglevel;
+  seriallog_timer = 0;
+}
 
 #ifdef USE_WEBSERVER
 void GetLog(byte idx, char** entry_pp, size_t* len_p)
@@ -1472,10 +1593,10 @@ void AddLog_P(byte loglevel, const char *formatP, const char *formatP2)
   AddLog(loglevel);
 }
 
-void AddLogSerial(byte loglevel, uint8_t *buffer, byte count)
+void AddLogSerial(byte loglevel, uint8_t *buffer, int count)
 {
   snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_SERIAL D_RECEIVED));
-  for (byte i = 0; i < count; i++) {
+  for (int i = 0; i < count; i++) {
     snprintf_P(log_data, sizeof(log_data), PSTR("%s %02X"), log_data, *(buffer++));
   }
   AddLog(loglevel);
