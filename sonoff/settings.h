@@ -50,7 +50,7 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t mqtt_serial : 1;              // bit 22 (v5.12.0f)
     uint32_t rules_enabled : 1;            // bit 23 (v5.12.0j)
     uint32_t rules_once : 1;               // bit 24 (v5.12.0k)
-    uint32_t knx_enabled : 1;              // bit 25 KNX
+    uint32_t spare25 : 1;
     uint32_t spare26 : 1;
     uint32_t spare27 : 1;
     uint32_t spare28 : 1;
@@ -258,17 +258,9 @@ struct SYSCFG {
 
   byte          free_6b8[72];              // 6B8
 
-  char          rules[MAX_RULE_SIZE];      // 700
+  char          rules[MAX_RULE_SIZE];      // 700 uses 512 bytes in v5.12.0l
 
-  uint16_t      knx_physsical_addr;        // 800  (address_t is a uint16_t)
-  byte          knx_GA_registered;         // 802  Number of Group Address to read
-  byte          knx_CB_registered;         // 803  Number of Group Address to write
-  uint16_t      knx_GA_addr[MAX_KNX_GA];   // 817  (address_t is a uint16_t) x KNX_max_GA
-  uint16_t      knx_CB_addr[MAX_KNX_CB];   // 82B  (address_t is a uint16_t) x KNX_max_CB
-  byte          knx_GA_param[MAX_KNX_GA];  // 82C  Type of Input (relay changed, button pressed, sensor read <-teleperiod)
-  byte          knx_CB_param[MAX_KNX_CB];  // 82D  Type of Output (set relay, toggle relay, reply sensor value)
-
-                                           // 82E - FFF free locations
+                                           // 900 - FFF free locations
 } Settings;
 
 struct RTCMEM {
