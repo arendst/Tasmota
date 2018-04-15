@@ -256,6 +256,8 @@
 #define D_MQTT_PARAMETERS "Nastavení MQTT"
 #define D_CLIENT "Klient"
 #define D_FULL_TOPIC "Celý topic"
+#define D_HASS_DISCOVERY "Home-Assistant discovery enabled"
+#define D_HASS_FORCELIGHT "Home-Assistant force light"
 
 #define D_LOGGING_PARAMETERS "Volba logování"
 #define D_SERIAL_LOG_LEVEL "Seriová úroveň logu"

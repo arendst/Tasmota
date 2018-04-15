@@ -256,6 +256,8 @@
 #define D_MQTT_PARAMETERS "Paramètres MQTT"
 #define D_CLIENT "Client"
 #define D_FULL_TOPIC "topic complet"
+#define D_HASS_DISCOVERY "Home-Assistant discovery enabled"
+#define D_HASS_FORCELIGHT "Home-Assistant force light"
 
 #define D_LOGGING_PARAMETERS "Paramètres du journal"
 #define D_SERIAL_LOG_LEVEL "Niveau de journalisation série"

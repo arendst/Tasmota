@@ -79,10 +79,10 @@ void HAssDiscoverRelay()
 
     snprintf_P(sidx, sizeof(sidx), PSTR("_%d"), i);
     // Clear "other" topic first in case the device has been reconfigured
-    snprintf_P(stopic, sizeof(stopic), PSTR(HOME_ASSISTANT_DISCOVERY_PREFIX "/%s/%s%s/config"), (is_light) ? "switch" : "light", mqtt_topic, sidx);
+    snprintf_P(stopic, sizeof(stopic), PSTR(HOME_ASSISTANT_DISCOVERY_PREFIX "/%s/%s%s/config"), (Settings.flag.hass_forcelight || is_light) ? "switch" : "light", mqtt_topic, sidx);
     MqttPublish(stopic, true);
     // Clear or Set topic
-    snprintf_P(stopic, sizeof(stopic), PSTR(HOME_ASSISTANT_DISCOVERY_PREFIX "/%s/%s%s/config"), (is_light) ? "light" : "switch", mqtt_topic, sidx);
+    snprintf_P(stopic, sizeof(stopic), PSTR(HOME_ASSISTANT_DISCOVERY_PREFIX "/%s/%s%s/config"), (Settings.flag.hass_forcelight || is_light) ? "light" : "switch", mqtt_topic, sidx);
 
     if (Settings.flag.hass_discovery && (i <= devices_present)) {
       char name[33];

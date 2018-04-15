@@ -256,6 +256,8 @@
 #define D_MQTT_PARAMETERS "MQTT parameters"
 #define D_CLIENT "Client"
 #define D_FULL_TOPIC "Full Topic"
+#define D_HASS_DISCOVERY "Home-Assistant discovery enabled"
+#define D_HASS_FORCELIGHT "Home-Assistant force light"
 
 #define D_LOGGING_PARAMETERS "Logging parameters"
 #define D_SERIAL_LOG_LEVEL "Serial log level"

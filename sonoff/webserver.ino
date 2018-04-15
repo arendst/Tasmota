@@ -241,6 +241,11 @@ const char HTTP_FORM_MQTT[] PROGMEM =
   "<br/><b>" D_PASSWORD "</b><br/><input id='mp' name='mp' type='password' placeholder='" MQTT_PASS "' value='{m5'><br/>"
   "<br/><b>" D_TOPIC "</b> = %topic% (" MQTT_TOPIC ")<br/><input id='mt' name='mt' placeholder='" MQTT_TOPIC" ' value='{m6'><br/>"
   "<br/><b>" D_FULL_TOPIC "</b> (" MQTT_FULLTOPIC ")<br/><input id='mf' name='mf' placeholder='" MQTT_FULLTOPIC" ' value='{m7'><br/>";
+#ifdef HOME_ASSISTANT_DISCOVERY_ENABLE
+  const char HTTP_FORM_MQTT2[] PROGMEM =
+    "<br/><input style='width:10%;' id='h1' name='h1' type='checkbox'{h1><b>" D_HASS_DISCOVERY "</b><br/>"
+    "<br/><input style='width:10%;' id='h2' name='h2' type='checkbox'{h2><b>" D_HASS_FORCELIGHT "</b><br/>";
+#endif //HOME_ASSISTANT_DISCOVERY_ENABLE
 const char HTTP_FORM_LOG1[] PROGMEM =
   "<fieldset><legend><b>&nbsp;" D_LOGGING_PARAMETERS "&nbsp;</b></legend><form method='get' action='sv'>"
   "<input id='w' name='w' value='3,0' hidden>";
@@ -862,6 +867,11 @@ void HandleMqttConfiguration()
   page.replace(F("{m5"), (Settings.mqtt_pwd[0] == '\0')?"0":Settings.mqtt_pwd);
   page.replace(F("{m6"), Settings.mqtt_topic);
   page.replace(F("{m7"), Settings.mqtt_fulltopic);
+#ifdef HOME_ASSISTANT_DISCOVERY_ENABLE
+  page += FPSTR(HTTP_FORM_MQTT2);
+  page.replace(F("{h1"), Settings.flag.hass_discovery ? F(" checked") : F(" "));
+  page.replace(F("{h2"), Settings.flag.hass_forcelight ? F(" checked") : F(" "));
+#endif //HOME_ASSISTANT_DISCOVERY_ENABLE
   page += FPSTR(HTTP_FORM_END);
   page += FPSTR(HTTP_BTN_CONF);
   ShowPage(page);
@@ -1039,8 +1049,12 @@ void HandleSaveSettings()
     strlcpy(Settings.mqtt_user, (!strlen(tmp)) ? MQTT_USER : (!strcmp(tmp,"0")) ? "" : tmp, sizeof(Settings.mqtt_user));
     WebGetArg("mp", tmp, sizeof(tmp));
     strlcpy(Settings.mqtt_pwd, (!strlen(tmp)) ? MQTT_PASS : (!strcmp(tmp,"0")) ? "" : tmp, sizeof(Settings.mqtt_pwd));
-    snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_MQTT D_CMND_MQTTHOST " %s, " D_CMND_MQTTPORT " %d, " D_CMND_MQTTCLIENT " %s, " D_CMND_MQTTUSER " %s, " D_CMND_MQTTPASSWORD " %s, " D_CMND_TOPIC " %s, " D_CMND_FULLTOPIC " %s"),
-      Settings.mqtt_host, Settings.mqtt_port, Settings.mqtt_client, Settings.mqtt_user, Settings.mqtt_pwd, Settings.mqtt_topic, Settings.mqtt_fulltopic);
+    WebGetArg("h1", tmp, sizeof(tmp));
+    Settings.flag.hass_discovery = strcmp(tmp, "on") == 0;
+    WebGetArg("h2", tmp, sizeof(tmp));
+    Settings.flag.hass_forcelight = strcmp(tmp, "on") == 0;
+    snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_MQTT D_CMND_MQTTHOST " %s, " D_CMND_MQTTPORT " %d, " D_CMND_MQTTCLIENT " %s, " D_CMND_MQTTUSER " %s, " D_CMND_MQTTPASSWORD " %s, " D_CMND_TOPIC " %s, " D_CMND_FULLTOPIC " %s, " D_CMND_HASS_DISCOVERY "%d, " D_CMND_HASS_FORCELIGHT "%d"),
+      Settings.mqtt_host, Settings.mqtt_port, Settings.mqtt_client, Settings.mqtt_user, Settings.mqtt_pwd, Settings.mqtt_topic, Settings.mqtt_fulltopic, Settings.flag.hass_discovery, Settings.flag.hass_forcelight);
     AddLog(LOG_LEVEL_INFO);
     break;
   case 3:
