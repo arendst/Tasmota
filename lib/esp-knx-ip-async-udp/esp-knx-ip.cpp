@@ -181,7 +181,7 @@ void ESPKNXIP::restore_from_eeprom()
     address += sizeof(callback_id_t);
   }
   EEPROM.get(address, physaddr);
-  address += sizeof(address_t); 
+  address += sizeof(address_t);
 
   //EEPROM.get(address, custom_config_data);
   //address += sizeof(custom_config_data);
