@@ -32,6 +32,9 @@
 
 //#define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
 
+// HTML (ISO 639-1) Language Code
+#define D_HTML_LANGUAGE "hu"
+
 // "2017-03-07T11:08:02" - ISO8601:2004
 #define D_YEAR_MONTH_SEPARATOR "."
 #define D_MONTH_DAY_SEPARATOR "."
@@ -56,7 +59,7 @@
 #define D_BOOT_COUNT "Bootolások száma"
 #define D_BRIGHTLIGHT "Max. fényerő"
 #define D_BUTTON "Gomb"
-#define D_BY "által"                    // Written by me
+#define D_BY "tőle:"                    // Written by me
 #define D_BYTES "Byte-ok"
 #define D_CELSIUS "Celsius"
 #define D_CO2 "Szén-dioxid"
@@ -68,12 +71,13 @@
 #define D_COUNTER "Számláló"
 #define D_CURRENT "Áram"          // As in Voltage and Current
 #define D_DATA "Adat"
-#define D_DARKLIGHT "Min. févnyerő"
+#define D_DARKLIGHT "Min. fényerő"
 #define D_DEBUG "Debug"
 #define D_DISABLED "Letiltva"
 #define D_DNS_SERVER "DNS Szerver"
 #define D_DONE "Kész"
 #define D_DST_TIME "DST"
+#define D_ECO2 "eCO2"
 #define D_EMULATION "Emuláció"
 #define D_ENABLED "Engedélyezve"
 #define D_ERASE "Törlés"
@@ -124,6 +128,7 @@
 #define D_RESTART_REASON "Újraindítás oka:"
 #define D_RESTORE "Visszaállítás"
 #define D_RETAINED "mentve"
+#define D_RULE "Rule"
 #define D_SAVE "Mentés"
 #define D_SENSOR "Szenzor"
 #define D_SSID "SSId"
@@ -133,12 +138,15 @@
 #define D_SUBNET_MASK "Subnet Mask"
 #define D_SUBSCRIBE_TO "Feliratkozás a"
 #define D_SUCCESSFUL "Sikeres"
+#define D_SUNRISE "Sunrise"
+#define D_SUNSET "Sunset"
 #define D_TEMPERATURE "Hőmérséklet"
 #define D_TO "-nak"
 #define D_TOGGLE "Toggle"
 #define D_TOPIC "Téma"
 #define D_TRANSMIT "Továbbít"
 #define D_TRUE "Igaz"
+#define D_TVOC "TVOC"
 #define D_UPGRADE "frissítés"
 #define D_UPLOAD "Feltöltés"
 #define D_UPTIME "Üzemidő"
@@ -161,13 +169,6 @@
 #define D_RECEIVED_TOPIC "Érkezett Téma"
 #define D_DATA_SIZE "Adat Méret"
 #define D_ANALOG_INPUT "Analóg"
-
-#define D_FINGERPRINT "TLS fingerprint hitelesítése..."
-#define D_TLS_CONNECT_FAILED_TO "TLS Csatlakozás sikertelen a"
-#define D_RETRY_IN "Újrapróbálás"
-#define D_VERIFIED "Hitelesítve"
-#define D_INSECURE "Nem biztonságos kapcsolat érvénytelen Fingerprint miatt"
-#define D_CONNECT_FAILED_TO "Sikertelen csatlakozás a"
 
 // support.ino
 #define D_OSWATCH "osWatch"
@@ -214,7 +215,7 @@
 #define D_INFORMATION "Információ"
 #define D_FIRMWARE_UPGRADE "Firmware Frissítés"
 #define D_CONSOLE "Konzol"
-#define D_CONFIRM_RESTART "Újraindítés megerősítése"
+#define D_CONFIRM_RESTART "Újraindítás megerősítése"
 
 #define D_CONFIGURE_MODULE "Eszköz konfiguráció"
 #define D_CONFIGURE_WIFI "WiFi konfiguráció"
@@ -317,6 +318,14 @@
 #define D_ENABLE_WEBLOG_FOR_RESPONSE "Engedélyezz 2-es weblogolást több információért"
 #define D_NEED_USER_AND_PASSWORD "Kell felhasználó=<felhasználónév>&jelszó=<jelszó>"
 
+// xdrv_00_mqtt.ino
+#define D_FINGERPRINT "TLS fingerprint hitelesítése..."
+#define D_TLS_CONNECT_FAILED_TO "TLS Csatlakozás sikertelen a"
+#define D_RETRY_IN "Újrapróbálás"
+#define D_VERIFIED "Hitelesítve Fingerprint"
+#define D_INSECURE "Nem biztonságos kapcsolat érvénytelen Fingerprint miatt"
+#define D_CONNECT_FAILED_TO "Sikertelen csatlakozás a"
+
 // xdrv_wemohue.ino
 #define D_MULTICAST_DISABLED "Multicast kikapcsolva"
 #define D_MULTICAST_REJOINED "Multicast (újra)csatlakozás"
@@ -348,11 +357,21 @@
   #define D_DOMOTICZ_TEMP_HUM_BARO "Hőm,Párat,Légny"
   #define D_DOMOTICZ_POWER_ENERGY "Teljesítmény,Energia"
   #define D_DOMOTICZ_ILLUMINANCE "Fényerő"
-  #define D_DOMOTICZ_COUNT "Szám"
-  #define D_DOMOTICZ_VOLTAGE "Feszültség"
-  #define D_DOMOTICZ_CURRENT "Áram"
+  #define D_DOMOTICZ_COUNT "Szám/PM1"
+  #define D_DOMOTICZ_VOLTAGE "Feszültség/PM2.5"
+  #define D_DOMOTICZ_CURRENT "Áram/PM10"
   #define D_DOMOTICZ_AIRQUALITY "Légminőség"
 #define D_DOMOTICZ_UPDATE_TIMER "Update időzítő"
+
+// xdrv_09_timers.ino
+#define D_CONFIGURE_TIMER "Configure Timer"
+#define D_TIMER_PARAMETERS "Timer parameters"
+#define D_TIMER_ARM "Arm"
+#define D_TIMER_TIME "Time"
+#define D_TIMER_DAYS "Days"
+#define D_TIMER_REPEAT "Repeat"
+#define D_TIMER_OUTPUT "Output"
+#define D_TIMER_ACTION "Action"
 
 // xdrv_03_energy.ino
 #define D_ENERGY_TODAY "Mai Energia"
@@ -408,6 +427,8 @@
 #define D_SENSOR_BACKLIGHT "Háttérvil"
 #define D_SENSOR_PMS5003  "PMS5003"
 #define D_SENSOR_SDS0X1   "SDS0X1"
+#define D_SENSOR_SBR_RX   "SerBr Rx"
+#define D_SENSOR_SBR_TX   "SerBr Tx"
 
 // Units
 #define D_UNIT_AMPERE "A"
@@ -421,6 +442,7 @@
 #define D_UNIT_MILLIAMPERE "mA"
 #define D_UNIT_MILLISECOND "ms"
 #define D_UNIT_MINUTE "p"
+#define D_UNIT_PARTS_PER_BILLION "ppb"
 #define D_UNIT_PARTS_PER_DECILITER "ppd"
 #define D_UNIT_PARTS_PER_MILLION "ppm"
 #define D_UNIT_PRESSURE "hPa"
@@ -455,4 +477,4 @@
 #define D_LOG_UPNP "UPP: "         // UPnP
 #define D_LOG_WIFI "WIF: "         // Wifi
 
-#endif  // _LANGUAGE_EN_GB_H_
+#endif  // _LANGUAGE_HU_HU_H_

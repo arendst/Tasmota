@@ -45,6 +45,7 @@ void WifiWpsStatusCallback(wps_cb_status status);
 #define USE_HTU                               // Add I2C code for HTU21/SI7013/SI7020/SI7021 sensor (+1k5 code)
 #define USE_BMP                               // Add I2C code for BMP085/BMP180/BMP280/BME280 sensor (+4k code)
   #define USE_BME680                          // Add additional support for BME680 sensor using Adafruit Sensor and BME680 libraries (+6k code)
+#define USE_SGP30                             // Add I2C code for SGP30 sensor (+1k1 code)
 #define USE_BH1750                            // Add I2C code for BH1750 sensor (+0k5 code)
 #define USE_VEML6070                          // Add I2C code for VEML6070 sensor (+0k5 code)
 #define USE_TSL2561                           // Add I2C code for TSL2561 sensor using library Adafruit TSL2561 Arduino (+1k2 code)
@@ -63,12 +64,13 @@ void WifiWpsStatusCallback(wps_cb_status status);
 #define USE_PMS5003                           // Add support for PMS5003 and PMS7003 particle concentration sensor (+1k3 code)
 #define USE_NOVA_SDS                          // Add support for SDS011 and SDS021 particle concentration sensor (+0k7 code)
 #define USE_PZEM004T                          // Add support for PZEM004T Energy monitor (+2k code)
+#define USE_SERIAL_BRIDGE                     // Add support for software Serial Bridge (+0k8 code)
 #define USE_IR_REMOTE                         // Send IR remote commands using library IRremoteESP8266 and ArduinoJson (+4k code, 0k3 mem, 48 iram)
   #define USE_IR_HVAC                         // Support for HVAC system using IR (+2k code)
   #define USE_IR_RECEIVE                      // Support for IR receiver (+5k5 code, 264 iram)
 #define USE_WS2812                            // WS2812 Led string using library NeoPixelBus (+5k code, +1k mem, 232 iram) - Disable by //
 #ifndef USE_WS2812_CTYPE
-  #define USE_WS2812_CTYPE     1              // WS2812 Color type (0 - RGB, 1 - GRB, 2 - RGBW, 3 - GRBW)
+  #define USE_WS2812_CTYPE     NEO_GRB        // WS2812 Color type (NEO_RGB, NEO_GRB, NEO_BRG, NEO_RBG, NEO_RGBW, NEO_GRBW)
 #endif
 //  #define USE_WS2812_DMA                      // DMA supports only GPIO03 (= Serial RXD) (+1k mem). When USE_WS2812_DMA is enabled expect Exceptions on Pow
 #define USE_ARILUX_RF                         // Add support for Arilux RF remote controller (+0k8 code, 252 iram (non 2.3.0))
@@ -99,6 +101,12 @@ void WifiWpsStatusCallback(wps_cb_status status);
 //#endif
 #ifdef USE_EMULATION
 #undef USE_EMULATION                          // Disable Wemo or Hue emulation
+#endif
+#ifdef USE_TIMERS
+#undef USE_TIMERS                             // Disable support for up to 16 timers
+#endif
+#ifdef USE_SUNRISE
+#undef USE_SUNRISE                            // Disable support for Sunrise and sunset tools
 #endif
 #ifdef USE_PZEM004T
 #undef USE_PZEM004T                           // Disable PZEM004T energy sensor
@@ -145,8 +153,12 @@ void WifiWpsStatusCallback(wps_cb_status status);
 #define SWITCH_MODE            TOGGLE         // TOGGLE, FOLLOW or FOLLOW_INV (the wall switch state)
 #endif
 
-#ifndef MQTT_FINGERPRINT
-#define MQTT_FINGERPRINT       "A5 02 FF 13 99 9F 8B 39 8E F1 83 4F 11 23 65 0B 32 36 FC 07"
+#ifndef MQTT_FINGERPRINT1
+#define MQTT_FINGERPRINT1      "A5 02 FF 13 99 9F 8B 39 8E F1 83 4F 11 23 65 0B 32 36 FC 07"
+#endif
+
+#ifndef MQTT_FINGERPRINT2
+#define MQTT_FINGERPRINT2      "A5 02 FF 13 99 9F 8B 39 8E F1 83 4F 11 23 65 0B 32 36 FC 07"
 #endif
 
 #ifndef WS2812_LEDS
