@@ -306,7 +306,7 @@
 #define D_UPLOAD_ERR_1 "Aucun fichier sélectionné"
 #define D_UPLOAD_ERR_2 "Espace insuffisant"
 #define D_UPLOAD_ERR_3 "Magic byte n'est pas 0xE9"
-#define D_UPLOAD_ERR_4 "La taille du programme a flashé est plus grande que la taille réelle de la mémoire flash"
+#define D_UPLOAD_ERR_4 "La taille du programme à flasher est plus grande que la taille réelle de la mémoire flash"
 #define D_UPLOAD_ERR_5 "Erreur comparaison buffer de téléchargement"
 #define D_UPLOAD_ERR_6 "Téléchargement échoué. Activation logging 3"
 #define D_UPLOAD_ERR_7 "Téléchargement annulé"
