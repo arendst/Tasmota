@@ -156,7 +156,7 @@
 #define D_VERSION "Έκδοση"
 #define D_VOLTAGE "Τάση"
 #define D_WARMLIGHT "Ζεστό"
-#define D_WEB_SERVER "Web Server"
+#define D_WEB_SERVER "Web διακομιστής"
 
 // sonoff.ino
 #define D_WARNING_MINIMAL_VERSION "ΠΡΟΕΙΔΟΠΟΙΗΣΗ Αυτή η έκδοση δεν αποθηκεύει τις ρυθμίσεις"
@@ -191,21 +191,21 @@
 #define D_SYSLOG_HOST_NOT_FOUND "Syslog Host not found"
 
 // settings.ino
-#define D_SAVED_TO_FLASH_AT "Saved to flash at"
-#define D_LOADED_FROM_FLASH_AT "Loaded from flash at"
-#define D_USE_DEFAULTS "Use defaults"
-#define D_ERASED_SECTOR "Erased sector"
+#define D_SAVED_TO_FLASH_AT "Εγινε flash στην θέση"
+#define D_LOADED_FROM_FLASH_AT "Φορτώθηκε από την flash στην θέση"
+#define D_USE_DEFAULTS "Χρήση προεπιλογών"
+#define D_ERASED_SECTOR "Διαγραμμένος τομέας"
 
 // webserver.ino
-#define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "MINIMAL firmware - please upgrade"
-#define D_WEBSERVER_ACTIVE_ON "Web server active on"
-#define D_WITH_IP_ADDRESS "with IP address"
-#define D_WEBSERVER_STOPPED "Web server stopped"
-#define D_FILE_NOT_FOUND "File Not Found"
-#define D_REDIRECTED "Redirected to captive portal"
+#define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "MINIMAL firmware - παρακαλώ αναβαθμήστε"
+#define D_WEBSERVER_ACTIVE_ON "Web διακομιστής ενεργός"
+#define D_WITH_IP_ADDRESS "με διεύθυνση IP"
+#define D_WEBSERVER_STOPPED "Web διακομιστής σταμάτησε"
+#define D_FILE_NOT_FOUND "Το αρχείο δεν βρέθηκε"
+#define D_REDIRECTED "Ανακατεύθυνση σε captive portal"
 #define D_WIFIMANAGER_SET_ACCESSPOINT_AND_STATION "Wifimanager set AccessPoint and keep Station"
 #define D_WIFIMANAGER_SET_ACCESSPOINT "Wifimanager set AccessPoint"
-#define D_TRYING_TO_CONNECT "Trying to connect device to network"
+#define D_TRYING_TO_CONNECT "Προσπάθεια σύνδεσης της συσκευής στο δίκτυο"
 
 #define D_RESTART_IN "Restart in"
 #define D_SECONDS "seconds"
