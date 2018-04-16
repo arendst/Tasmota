@@ -42,11 +42,11 @@
 
 enum MqttCommands {
   CMND_MQTTHOST, CMND_MQTTPORT, CMND_MQTTRETRY, CMND_STATETEXT, CMND_MQTTFINGERPRINT, CMND_MQTTCLIENT,
-  CMND_MQTTUSER, CMND_MQTTPASSWORD, CMND_FULLTOPIC, CMND_PREFIX, CMND_GROUPTOPIC, CMND_TOPIC,
+  CMND_MQTTUSER, CMND_MQTTPASSWORD, CMND_FULLTOPIC, CMND_PREFIX, CMND_GROUPTOPIC, CMND_TOPIC, CMND_PUBLISH,
   CMND_BUTTONTOPIC, CMND_SWITCHTOPIC, CMND_BUTTONRETAIN, CMND_SWITCHRETAIN, CMND_POWERRETAIN, CMND_SENSORRETAIN };
 const char kMqttCommands[] PROGMEM =
   D_CMND_MQTTHOST "|" D_CMND_MQTTPORT "|" D_CMND_MQTTRETRY "|" D_CMND_STATETEXT "|" D_CMND_MQTTFINGERPRINT "|" D_CMND_MQTTCLIENT "|"
-  D_CMND_MQTTUSER "|" D_CMND_MQTTPASSWORD "|" D_CMND_FULLTOPIC "|" D_CMND_PREFIX "|" D_CMND_GROUPTOPIC "|" D_CMND_TOPIC "|"
+  D_CMND_MQTTUSER "|" D_CMND_MQTTPASSWORD "|" D_CMND_FULLTOPIC "|" D_CMND_PREFIX "|" D_CMND_GROUPTOPIC "|" D_CMND_TOPIC "|" D_CMND_PUBLISH "|"
   D_CMND_BUTTONTOPIC "|" D_CMND_SWITCHTOPIC "|" D_CMND_BUTTONRETAIN "|" D_CMND_SWITCHRETAIN "|" D_CMND_POWERRETAIN "|" D_CMND_SENSORRETAIN ;
 
 uint8_t mqtt_retry_counter = 1;             // MQTT connection retry counter
@@ -316,6 +316,10 @@ void MqttDisconnected(int state)
   snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_MQTT D_CONNECT_FAILED_TO " %s:%d, rc %d. " D_RETRY_IN " %d " D_UNIT_SECOND),
     Settings.mqtt_host, Settings.mqtt_port, state, mqtt_retry_counter);
   AddLog(LOG_LEVEL_INFO);
+#ifdef USE_RULES
+  strncpy_P(mqtt_data, PSTR("{\"MQTT\":{\"Disconnected\":1}}"), sizeof(mqtt_data));
+  RulesProcess();
+#endif  // USE_RULES
 }
 
 void MqttConnected()
@@ -367,10 +371,17 @@ void MqttConnected()
       tele_period = Settings.tele_period -9;
     }
     status_update_timer = 2;
-
+#ifdef USE_RULES
+    strncpy_P(mqtt_data, PSTR("{\"System\":{\"Boot\":1}}"), sizeof(mqtt_data));
+    RulesProcess();
+#endif  // USE_RULES
     XdrvCall(FUNC_MQTT_INIT);
   }
   mqtt_initial_connection_state = 0;
+#ifdef USE_RULES
+  strncpy_P(mqtt_data, PSTR("{\"MQTT\":{\"Connected\":1}}"), sizeof(mqtt_data));
+  RulesProcess();
+#endif  // USE_RULES
 }
 
 #ifdef USE_MQTT_TLS
@@ -418,7 +429,7 @@ void MqttReconnect()
     return;
   }
 
-#ifdef USE_EMULATION
+#if defined(USE_WEBSERVER) && defined(USE_EMULATION)
   UdpDisconnect();
 #endif  // USE_EMULATION
 
@@ -610,6 +621,22 @@ bool MqttCommand()
     }
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, index, Settings.mqtt_prefix[index -1]);
   }
+  else if (CMND_PUBLISH == command_code) {
+    if (data_len > 0) {
+      char *mqtt_part = strtok(dataBuf, " ");
+      if (mqtt_part) {
+        snprintf(stemp1, sizeof(stemp1), mqtt_part);
+        mqtt_part = strtok(NULL, " ");
+        if (mqtt_part) {
+          snprintf(mqtt_data, sizeof(mqtt_data), mqtt_part);
+        } else {
+          mqtt_data[0] = '\0';
+        }
+        MqttPublishDirect(stemp1, false);
+        snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, D_JSON_DONE);
+      }
+    }
+  }
   else if (CMND_GROUPTOPIC == command_code) {
     if ((data_len > 0) && (data_len < sizeof(Settings.mqtt_grptopic))) {
       MakeValidMqtt(0, dataBuf);
@@ -654,7 +681,7 @@ bool MqttCommand()
       strlcpy(Settings.button_topic, mqtt_topic, sizeof(Settings.button_topic));
       if (!payload) {
         for(i = 1; i <= MAX_KEYS; i++) {
-          send_button_power(0, i, 9);  // Clear MQTT retain in broker
+          SendKey(0, i, 9);  // Clear MQTT retain in broker
         }
       }
       Settings.flag.mqtt_button_retain = payload;
@@ -666,7 +693,7 @@ bool MqttCommand()
       strlcpy(Settings.button_topic, mqtt_topic, sizeof(Settings.button_topic));
       if (!payload) {
         for(i = 1; i <= MAX_SWITCHES; i++) {
-          send_button_power(1, i, 9);  // Clear MQTT retain in broker
+          SendKey(1, i, 9);  // Clear MQTT retain in broker
         }
       }
       Settings.flag.mqtt_switch_retain = payload;

@@ -25,7 +25,7 @@
     - Select IDE Tools - Flash Size: "1M (no SPIFFS)"
   ====================================================*/
 
-#define VERSION                0x050C000A   // 5.12.0j
+#define VERSION                0x050C000C   // 5.12.0l
 
 // Location specific includes
 #include <core_version.h>                   // Arduino_Esp8266 version information (ARDUINO_ESP8266_RELEASE and ARDUINO_ESP8266_RELEASE_2_3_0)
@@ -588,6 +588,8 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
               case 19:  // hass_discovery
               case 20:  // not_power_linked
               case 21:  // no_power_on_check
+//              case 22:  // mqtt_serial - use commands SerialSend and SerialLog
+//              case 23:  // rules_enabled - use command Rule
                 bitWrite(Settings.flag.data, index, payload);
             }
             if (12 == index) {  // stop_flash_rotate
@@ -1099,7 +1101,7 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
 
 /********************************************************************************************/
 
-boolean send_button_power(byte key, byte device, byte state)
+boolean SendKey(byte key, byte device, byte state)
 {
 // key 0 = button_topic
 // key 1 = switch_topic
@@ -1128,13 +1130,18 @@ boolean send_button_power(byte key, byte device, byte state)
       snprintf_P(mqtt_data, sizeof(mqtt_data), GetStateText(state));
     }
 #ifdef USE_DOMOTICZ
-    if (!(DomoticzButton(key, device, state, strlen(mqtt_data)))) {
+    if (!(DomoticzSendKey(key, device, state, strlen(mqtt_data)))) {
       MqttPublishDirect(stopic, (key) ? Settings.flag.mqtt_switch_retain : Settings.flag.mqtt_button_retain);
     }
 #else
     MqttPublishDirect(stopic, (key) ? Settings.flag.mqtt_switch_retain : Settings.flag.mqtt_button_retain);
 #endif  // USE_DOMOTICZ
     result = true;
+#ifdef USE_RULES
+  } else {
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"%s%d\":{\"State\":%d}}"), (key) ? "Switch" : "Button", device, state);
+    result = RulesProcess();
+#endif  // USE_RULES
   }
   return result;
 }
@@ -1257,7 +1264,7 @@ void PublishStatus(uint8_t payload)
   if (!energy_flg && (9 == payload)) payload = 99;
 
   if ((0 == payload) || (99 == payload)) {
-    uint8_t maxfn = (devices_present > MAX_FRIENDLYNAMES) ? MAX_FRIENDLYNAMES : devices_present;
+    uint8_t maxfn = (devices_present > MAX_FRIENDLYNAMES) ? MAX_FRIENDLYNAMES : (!devices_present) ? 1 : devices_present;
     stemp[0] = '\0';
     for (byte i = 0; i < maxfn; i++) {
       snprintf_P(stemp, sizeof(stemp), PSTR("%s%s\"%s\"" ), stemp, (i > 0 ? "," : ""), Settings.friendlyname[i]);
@@ -1305,13 +1312,13 @@ void PublishStatus(uint8_t payload)
   }
 
   if ((0 == payload) || (7 == payload)) {
-#ifdef USE_SUNRISE
+#if defined(USE_TIMERS) && defined(USE_SUNRISE)
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_STATUS D_STATUS7_TIME "\":{\"" D_JSON_UTC_TIME "\":\"%s\",\"" D_JSON_LOCAL_TIME "\":\"%s\",\"" D_JSON_STARTDST "\":\"%s\",\"" D_JSON_ENDDST "\":\"%s\",\"" D_CMND_TIMEZONE "\":%d,\"" D_JSON_SUNRISE "\":\"%s\",\"" D_JSON_SUNSET "\":\"%s\"}}"),
       GetTime(0).c_str(), GetTime(1).c_str(), GetTime(2).c_str(), GetTime(3).c_str(), Settings.timezone, GetSun(0).c_str(), GetSun(1).c_str());
 #else
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_STATUS D_STATUS7_TIME "\":{\"" D_JSON_UTC_TIME "\":\"%s\",\"" D_JSON_LOCAL_TIME "\":\"%s\",\"" D_JSON_STARTDST "\":\"%s\",\"" D_JSON_ENDDST "\":\"%s\",\"" D_CMND_TIMEZONE "\":%d}}"),
       GetTime(0).c_str(), GetTime(1).c_str(), GetTime(2).c_str(), GetTime(3).c_str(), Settings.timezone);
-#endif  // USE_SUNRISE
+#endif  // USE_TIMERS and USE_SUNRISE
     MqttPublishPrefixTopic_P(option, PSTR(D_CMND_STATUS "7"));
   }
 
@@ -1525,7 +1532,7 @@ void ButtonHandler()
           if (!holdbutton[button_index]) button_pressed = true;        // Do not allow within 1 second
         }
         if (button_pressed) {
-          if (!send_button_power(0, button_index +1, POWER_TOGGLE)) {  // Execute Toggle command via MQTT if ButtonTopic is set
+          if (!SendKey(0, button_index +1, POWER_TOGGLE)) {  // Execute Toggle command via MQTT if ButtonTopic is set
             ExecuteCommandPower(button_index +1, POWER_TOGGLE);  // Execute Toggle command internally
           }
         }
@@ -1534,7 +1541,7 @@ void ButtonHandler()
           if (Settings.flag.button_single) {          // Allow only single button press for immediate action
             snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION D_BUTTON "%d " D_IMMEDIATE), button_index +1);
             AddLog(LOG_LEVEL_DEBUG);
-            if (!send_button_power(0, button_index +1, POWER_TOGGLE)) {  // Execute Toggle command via MQTT if ButtonTopic is set
+            if (!SendKey(0, button_index +1, POWER_TOGGLE)) {  // Execute Toggle command via MQTT if ButtonTopic is set
               ExecuteCommandPower(button_index +1, POWER_TOGGLE);  // Execute Toggle command internally
             }
           } else {
@@ -1560,7 +1567,7 @@ void ButtonHandler()
             if (Settings.flag.button_restrict) {   // Button restriction
               if (holdbutton[button_index] == Settings.param[P_HOLD_TIME] * (STATES / 10)) {  // Button hold
                 multipress[button_index] = 0;
-                send_button_power(0, button_index +1, 3);        // Execute Hold command via MQTT if ButtonTopic is set
+                SendKey(0, button_index +1, 3);        // Execute Hold command via MQTT if ButtonTopic is set
               }
             } else {
               if (holdbutton[button_index] == (Settings.param[P_HOLD_TIME] * (STATES / 10)) * hold_time_extent) {  // Button held for factor times longer
@@ -1586,7 +1593,7 @@ void ButtonHandler()
                   multipress[button_index] = 1;
                 }
               }
-              if (single_press && send_button_power(0, button_index + multipress[button_index], POWER_TOGGLE)) {  // Execute Toggle command via MQTT if ButtonTopic is set
+              if (single_press && SendKey(0, button_index + multipress[button_index], POWER_TOGGLE)) {  // Execute Toggle command via MQTT if ButtonTopic is set
                 // Success
               } else {
                 if (multipress[button_index] < 3) {              // Single or Double press
@@ -1627,7 +1634,7 @@ void SwitchHandler()
       if (holdwallswitch[i]) {
         holdwallswitch[i]--;
         if (0 == holdwallswitch[i]) {
-          send_button_power(1, i +1, 3);         // Execute command via MQTT
+          SendKey(1, i +1, 3);         // Execute command via MQTT
         }
       }
 
@@ -1680,7 +1687,7 @@ void SwitchHandler()
         }
 
         if (switchflag < 3) {
-          if (!send_button_power(1, i +1, switchflag)) {  // Execute command via MQTT
+          if (!SendKey(1, i +1, switchflag)) {  // Execute command via MQTT
             ExecuteCommandPower(i +1, switchflag);        // Execute command internally (if i < devices_present)
           }
         }
@@ -2423,11 +2430,10 @@ void loop()
 
 #ifdef USE_WEBSERVER
   PollDnsWebserver();
-#endif  // USE_WEBSERVER
-
 #ifdef USE_EMULATION
   if (Settings.flag2.emulation) PollUdp();
 #endif  // USE_EMULATION
+#endif  // USE_WEBSERVER
 
   if (millis() >= state_loop_timer) StateLoop();
 

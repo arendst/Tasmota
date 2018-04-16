@@ -465,7 +465,7 @@ void BmpShow(boolean json)
         mqtt_data, bmp_name, temperature, (bmp_model >= 2) ? json_humidity : "", pressure, (Settings.altitude != 0) ? json_sealevel : "");
 #endif  // USE_BME680
 #ifdef USE_DOMOTICZ
-      DomoticzTempHumPressureSensor(temperature, humidity, pressure);
+      if (0 == tele_period) DomoticzTempHumPressureSensor(temperature, humidity, pressure);
 #endif // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
     } else {

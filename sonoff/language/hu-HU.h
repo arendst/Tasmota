@@ -128,6 +128,7 @@
 #define D_RESTART_REASON "Újraindítás oka:"
 #define D_RESTORE "Visszaállítás"
 #define D_RETAINED "mentve"
+#define D_RULE "Rule"
 #define D_SAVE "Mentés"
 #define D_SENSOR "Szenzor"
 #define D_SSID "SSId"
@@ -370,7 +371,7 @@
 #define D_TIMER_DAYS "Days"
 #define D_TIMER_REPEAT "Repeat"
 #define D_TIMER_OUTPUT "Output"
-#define D_TIMER_POWER "Power"
+#define D_TIMER_ACTION "Action"
 
 // xdrv_03_energy.ino
 #define D_ENERGY_TODAY "Mai Energia"

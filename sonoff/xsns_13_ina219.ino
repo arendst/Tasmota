@@ -216,8 +216,10 @@ void Ina219Show(boolean json)
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"INA219\":{\"" D_JSON_VOLTAGE "\":%s,\"" D_JSON_CURRENT "\":%s,\"" D_JSON_POWERUSAGE "\":%s}"),
         mqtt_data, voltage, current, power);
 #ifdef USE_DOMOTICZ
-      DomoticzSensor(DZ_VOLTAGE, voltage);
-      DomoticzSensor(DZ_CURRENT, current);
+      if (0 == tele_period) {
+        DomoticzSensor(DZ_VOLTAGE, voltage);
+        DomoticzSensor(DZ_CURRENT, current);
+      }
 #endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
     } else {

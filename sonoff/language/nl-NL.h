@@ -128,6 +128,7 @@
 #define D_RESTART_REASON "Reden herstart"
 #define D_RESTORE "herstellen"
 #define D_RETAINED "retained"
+#define D_RULE "Regel"
 #define D_SAVE "Opslaan"
 #define D_SENSOR "Sensor"
 #define D_SSID "SSId"
@@ -370,7 +371,7 @@
 #define D_TIMER_DAYS "Dagen"
 #define D_TIMER_REPEAT "Herhaal"
 #define D_TIMER_OUTPUT "Uitgang"
-#define D_TIMER_POWER "Actie"
+#define D_TIMER_ACTION "Actie"
 
 // xdrv_03_energy.ino
 #define D_ENERGY_TODAY "Verbruik vandaag"

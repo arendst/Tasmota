@@ -192,7 +192,7 @@ size_t strchrspn(const char *str1, int character)
   return ret;
 }
 
-double AtoD(char *str)
+double CharToDouble(char *str)
 {
   // simple ascii to double, because atof or strtod are too large
   char strbuf[24];
@@ -617,7 +617,7 @@ void WifiConfig(uint8_t type)
     if (type >= WIFI_RETRY) {  // WIFI_RETRY and WIFI_WAIT
       return;
     }
-#ifdef USE_EMULATION
+#if defined(USE_WEBSERVER) && defined(USE_EMULATION)
     UdpDisconnect();
 #endif  // USE_EMULATION
     WiFi.disconnect();        // Solve possible Wifi hangs
@@ -653,7 +653,7 @@ void WifiBegin(uint8_t flag)
 {
   const char kWifiPhyMode[] = " BGN";
 
-#ifdef USE_EMULATION
+#if defined(USE_WEBSERVER) && defined(USE_EMULATION)
   UdpDisconnect();
 #endif  // USE_EMULATION
 
@@ -840,7 +840,7 @@ void WifiCheck(uint8_t param)
 #endif  // USE_EMULATION
 #endif  // USE_WEBSERVER
       } else {
-#ifdef USE_EMULATION
+#if defined(USE_WEBSERVER) && defined(USE_EMULATION)
         UdpDisconnect();
 #endif  // USE_EMULATION
         mdns_begun = false;
@@ -1376,6 +1376,14 @@ void RtcSecond()
       snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION "(" D_UTC_TIME ") %s, (" D_DST_TIME ") %s, (" D_STD_TIME ") %s"),
         GetTime(0).c_str(), GetTime(2).c_str(), GetTime(3).c_str());
       AddLog(LOG_LEVEL_DEBUG);
+#ifdef USE_RULES
+      if (local_time < 1451602800) {  // 2016-01-01
+        strncpy_P(mqtt_data, PSTR("{\"Time\":{\"Initialized\":1}}"), sizeof(mqtt_data));
+      } else {
+        strncpy_P(mqtt_data, PSTR("{\"Time\":{\"Set\":1}}"), sizeof(mqtt_data));
+      }
+      RulesProcess();
+#endif  // USE_RULES
     } else {
       ntp_sync_minute++;  // Try again in next minute
     }
@@ -1585,10 +1593,10 @@ void AddLog_P(byte loglevel, const char *formatP, const char *formatP2)
   AddLog(loglevel);
 }
 
-void AddLogSerial(byte loglevel, uint8_t *buffer, byte count)
+void AddLogSerial(byte loglevel, uint8_t *buffer, int count)
 {
   snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_SERIAL D_RECEIVED));
-  for (byte i = 0; i < count; i++) {
+  for (int i = 0; i < count; i++) {
     snprintf_P(log_data, sizeof(log_data), PSTR("%s %02X"), log_data, *(buffer++));
   }
   AddLog(loglevel);
