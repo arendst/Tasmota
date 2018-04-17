@@ -374,6 +374,26 @@
 #define D_TIMER_OUTPUT "Salida"
 #define D_TIMER_ACTION "Estado"
 
+// xdrv_10_KNX.ino
+#define D_CONFIGURE_KNX "Configuración de KNX"
+#define D_KNX_PARAMETERS "Parámetros de KNX"
+#define D_KNX_GENERAL_CONFIG "General"
+#define D_KNX_PHYSICAL_ADDRESS "Dirección Física"
+#define D_KNX_PHYSICAL_ADDRESS_NOTE "( Debe ser única en la red KNX )"
+#define D_KNX_ENABLE "Habilitar KNX"
+#define D_KNX_GROUP_ADDRESS_TO_WRITE "Datos a Enviar a las Direcciones de Grupo"
+#define D_ADD "Agregar"
+#define D_DELETE "Eliminar"
+#define D_REPLY "Responder"
+#define D_KNX_GROUP_ADDRESS_TO_READ "Direcciones de Grupo para Recibir Datos"
+#define D_LOG_KNX "KNX: "
+#define D_RECEIVED_FROM "Recibido desde"
+#define D_KNX_COMMAND_WRITE "Escribir"
+#define D_KNX_COMMAND_READ "Leer"
+#define D_KNX_COMMAND_OTHER "Otro"
+#define D_SENT_TO "enviada a"
+#define D_KNX_WARNING "La dirección de grupo ( 0 / 0 / 0 ) está reservada y no puede ser utilizada."
+
 // xdrv_03_energy.ino
 #define D_ENERGY_TODAY "Energía Hoy"
 #define D_ENERGY_YESTERDAY "Energía Ayer"

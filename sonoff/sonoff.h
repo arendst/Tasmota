@@ -51,6 +51,8 @@ typedef unsigned long power_t;              // Power (Relay) type
 #define MAX_KNX_GA             10           // Max number of KNX Group Addresses to read that can be set
 #define MAX_KNX_CB             10           // Max number of KNX Group Addresses to write that can be set
 #define MAX_RULE_SIZE          512          // Max number of characters in rules
+#define MAX_KNX_GA             10           // Max number of KNX Group Addresses to read that can be set
+#define MAX_KNX_CB             10           // Max number of KNX Group Addresses to write that can be set
 
 #define MODULE                 SONOFF_BASIC // [Module] Select default model
 

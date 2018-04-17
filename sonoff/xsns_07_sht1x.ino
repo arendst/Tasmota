@@ -201,6 +201,12 @@ void ShtShow(boolean json)
 #ifdef USE_DOMOTICZ
         if (0 == tele_period) DomoticzTempHumSensor(temperature, humidity);
 #endif  // USE_DOMOTICZ
+
+#ifdef USE_KNX
+        KNX_Sensor(KNX_temperature, t);
+        KNX_Sensor(KNX_humidity, h);
+#endif  // USE_KNX
+
 #ifdef USE_WEBSERVER
       } else {
         snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TEMP, mqtt_data, "SHT1X", temperature, TempUnit());
