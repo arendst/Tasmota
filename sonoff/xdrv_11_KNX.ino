@@ -49,10 +49,10 @@ Constants in sonoff.h
                                                        #define MAX_CALLBACK_ASSIGNMENTS  10
                                                        #define MAX_CALLBACKS             10
                                              Both to MAX_KNX_CB
-*/
 
 void KNX_CB_Action(message_t const &msg, void *arg); // Define function (action callback) to be called by the KNX_IP Library
                                                      // when an action is requested by another KNX Device
+*/
 
 address_t KNX_physs_addr; // Physical KNX address of this device
 address_t KNX_addr;       // KNX Address converter variable
@@ -479,7 +479,7 @@ void KNX_CB_Action(message_t const &msg, void *arg)
 }
 
 
-void KNX_Update_Power_State(byte device, power_t state)
+void KnxUpdatePowerState(byte device, power_t state)
 {
   if (!(Settings.flag.knx_enabled)) { return; }
 
@@ -501,7 +501,7 @@ void KNX_Update_Power_State(byte device, power_t state)
 }
 
 
-void KNX_Send_Button_Power(byte key, byte device, byte state)
+void KnxSendButtonPower(byte key, byte device, byte state)
 {
 // key 0 = button_topic
 // key 1 = switch_topic
@@ -859,9 +859,9 @@ void KNX_Save_Settings()
  * Interface
 \*********************************************************************************************/
 
-#define XDRV_10
+#define XDRV_11
 
-boolean Xdrv10(byte function)
+boolean Xdrv11(byte function)
 {
   boolean result = false;
     switch (function) {

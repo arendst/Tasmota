@@ -185,6 +185,7 @@ uint8_t spi_flg = 0;                        // SPI configured
 uint8_t light_type = 0;                     // Light types
 bool pwm_present = false;                   // Any PWM channel configured with SetOption15 0
 boolean mdns_begun = false;
+unsigned long features = 0UL;
 
 char my_version[33];                        // Composed version string
 char my_hostname[33];                       // Composed Wifi hostname
@@ -1144,8 +1145,8 @@ boolean SendKey(byte key, byte device, byte state)
 #endif  // USE_RULES
   }
 #ifdef USE_KNX
-  KNX_Send_Button_Power(key, device, state);
-#endif
+  KnxSendButtonPower(key, device, state);
+#endif  // USE_KNX
   return result;
 }
 
@@ -1197,8 +1198,8 @@ void ExecuteCommandPower(byte device, byte state)
     DomoticzUpdatePowerState(device);
 #endif  // USE_DOMOTICZ
 #ifdef USE_KNX
-    KNX_Update_Power_State(device, power);
-#endif  // USE_KNX    
+    KnxUpdatePowerState(device, power);
+#endif  // USE_KNX
     if (device <= MAX_PULSETIMERS) {
 //      pulse_timer[(device -1)] = (power & mask) ? Settings.pulse_timer[(device -1)] : 0;
       pulse_timer[(device -1)] = (((POWER_ALL_OFF_PULSETIME_ON == Settings.poweronstate) ? ~power : power) & mask) ? Settings.pulse_timer[(device -1)] : 0;
