@@ -218,7 +218,9 @@ double CharToDouble(char *str)
       right *= fac;
     }
   }
-  return left + right;
+  double result = left + right;
+  if (left < 0) { result = left - right; }
+  return result;
 }
 
 char* dtostrfd(double number, unsigned char prec, char *s)
@@ -1407,7 +1409,7 @@ void RtcSecond()
       }
     }
     local_time += time_offset;
-    time_timezone = time_offset / (SECS_PER_HOUR / 10);
+    time_timezone = time_offset / 360;  // (SECS_PER_HOUR / 10) fails as it is defined as UL
   }
   BreakTime(local_time, RtcTime);
   if (!RtcTime.hour && !RtcTime.minute && !RtcTime.second && RtcTime.valid) {
