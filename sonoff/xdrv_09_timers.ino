@@ -289,7 +289,7 @@ void PrepShowTimer(uint8_t index)
 #ifdef USE_SUNRISE
   int16_t hour = xtimer.time / 60;
   if ((1 == xtimer.mode) || (2 == xtimer.mode)) {  // Sunrise or Sunset
-    if (hour > 11) hour = (hour -12) * -1;
+    if (hour > 11) { hour = (hour -12) * -1; }
   }
   snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s\"" D_CMND_TIMER "%d\":{\"" D_JSON_TIMER_ARM "\":%d,\"" D_JSON_TIMER_MODE "\":%d,\"" D_JSON_TIMER_TIME "\":\"%02d:%02d\",\"" D_JSON_TIMER_DAYS "\":\"%s\",\"" D_JSON_TIMER_REPEAT "\":%d,\"" D_JSON_TIMER_OUTPUT "\":%d,\"" D_JSON_TIMER_ACTION "\":%d}"),
     mqtt_data, index, xtimer.arm, xtimer.mode, hour, xtimer.time % 60, days, xtimer.repeat, xtimer.device +1, xtimer.power);
@@ -349,14 +349,14 @@ boolean TimerCommand()
               const char *substr = strtok(time_str, ":");
               if (substr != NULL) {
                 value = atoi(substr);
-                if (value < 0) value = abs(value) +12;  // Allow entering timer offset from -11:59 to -00:01 converted to 12:01 to 23:59
-                if (value > 23) value = 23;
+                if (value < 0) { value = abs(value) +12; }  // Allow entering timer offset from -11:59 to -00:01 converted to 12:01 to 23:59
+                if (value > 23) { value = 23; }
                 itime = value * 60;
                 substr = strtok(NULL, ":");
                 if (substr != NULL) {
                   value = atoi(substr);
-                  if (value < 0) value = 0;
-                  if (value > 59) value = 59;
+                  if (value < 0) { value = 0; }
+                  if (value > 59) { value = 59; }
                   itime += value;
                 }
               }
@@ -371,7 +371,7 @@ boolean TimerCommand()
               uint8_t i = 0;
               while ((ch != '\0') && (i < 7)) {
                 ch = *tday++;
-                if (ch == '-') ch = '0';
+                if (ch == '-') { ch = '0'; }
                 uint8_t mask = 1 << i++;
                 Settings.timer[index].days |= (ch == '0') ? 0 : mask;
               }
@@ -626,7 +626,7 @@ void HandleTimerConfiguration()
   page.replace(F("</style>"), FPSTR(HTTP_TIMER_STYLE));
   page += FPSTR(HTTP_FORM_TIMER);
   for (byte i = 0; i < MAX_TIMERS; i++) {
-    if (i > 0) page += F(",");
+    if (i > 0) { page += F(","); }
     page += String(Settings.timer[i].data);
   }
 #ifdef USE_SUNRISE
@@ -656,12 +656,7 @@ void TimerSaveSettings()
   for (byte i = 0; i < MAX_TIMERS; i++) {
     timer.data = strtol(p, &p, 10);
     p++;  // Skip comma
-    if (timer.time < 1440) {
-#ifdef USE_SUNRISE
-//      if ((1 == timer.mode) || (2 == timer.mode)) timer.time = Settings.timer[i].time;  // Do not save time on Sunrise or Sunset
-#endif
-      Settings.timer[i].data = timer.data;
-    }
+    if (timer.time < 1440) { Settings.timer[i].data = timer.data; }
     snprintf_P(log_data, sizeof(log_data), PSTR("%s%s0x%08X"), log_data, (i > 0)?",":"", Settings.timer[i].data);
   }
   AddLog(LOG_LEVEL_DEBUG);

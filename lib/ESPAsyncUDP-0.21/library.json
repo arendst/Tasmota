@@ -1,0 +1,17 @@
+{
+  "name":"ESPAsyncUDP",
+  "description":"Asynchronous UDP Library for ESP8266",
+  "keywords":"async,udp,server,client,multicast,broadcast",
+  "authors":
+  {
+    "name": "Hristo Gochkov",
+    "maintainer": true
+  },
+  "repository":
+  {
+    "type": "git",
+    "url": "https://github.com/me-no-dev/ESPAsyncUDP.git"
+  },
+  "frameworks": "arduino",
+  "platforms":"espressif"
+}

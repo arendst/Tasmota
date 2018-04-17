@@ -50,7 +50,7 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t mqtt_serial : 1;              // bit 22 (v5.12.0f)
     uint32_t rules_enabled : 1;            // bit 23 (v5.12.0j)
     uint32_t rules_once : 1;               // bit 24 (v5.12.0k)
-    uint32_t spare25 : 1;
+    uint32_t knx_enabled : 1;              // bit 25 (v5.12.0l) KNX
     uint32_t spare26 : 1;
     uint32_t spare27 : 1;
     uint32_t spare28 : 1;
@@ -226,13 +226,9 @@ struct SYSCFG {
   uint8_t       light_speed;               // 4A2
   uint8_t       light_scheme;              // 4A3
   uint8_t       light_width;               // 4A4
-
-  byte          free_4A5[1];               // 4A5
-
+  byte          knx_GA_registered;         // 4A5  Number of Group Address to read
   uint16_t      light_wakeup;              // 4A6
-
-  byte          free_4A8[1];               // 4A8
-
+  byte          knx_CB_registered;         // 4A8  Number of Group Address to write
   char          web_password[33];          // 4A9
   uint8_t       switchmode[MAX_SWITCHES];  // 4CA
   char          ntp_server[3][33];         // 4CE
@@ -256,7 +252,13 @@ struct SYSCFG {
   int           latitude;                  // 6B0
   int           longitude;                 // 6B4
 
-  byte          free_6b8[72];              // 6B8
+  uint16_t      knx_physsical_addr;        // 6B8  (address_t is a uint16_t)
+  uint16_t      knx_GA_addr[MAX_KNX_GA];   // 6BA  (address_t is a uint16_t) x KNX_max_GA
+  uint16_t      knx_CB_addr[MAX_KNX_CB];   // 6CE  (address_t is a uint16_t) x KNX_max_CB
+  byte          knx_GA_param[MAX_KNX_GA];  // 6E2  Type of Input (relay changed, button pressed, sensor read <-teleperiod)
+  byte          knx_CB_param[MAX_KNX_CB];  // 6EC  Type of Output (set relay, toggle relay, reply sensor value)
+
+  byte          free_6b8[10];              // 6F6
 
   char          rules[MAX_RULE_SIZE];      // 700 uses 512 bytes in v5.12.0l
 

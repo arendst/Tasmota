@@ -218,7 +218,9 @@ double CharToDouble(char *str)
       right *= fac;
     }
   }
-  return left + right;
+  double result = left + right;
+  if (left < 0) { result = left - right; }
+  return result;
 }
 
 char* dtostrfd(double number, unsigned char prec, char *s)
