@@ -49,10 +49,10 @@ Constants in sonoff.h
                                                        #define MAX_CALLBACK_ASSIGNMENTS  10
                                                        #define MAX_CALLBACKS             10
                                              Both to MAX_KNX_CB
-*/
 
 void KNX_CB_Action(message_t const &msg, void *arg); // Define function (action callback) to be called by the KNX_IP Library
                                                      // when an action is requested by another KNX Device
+*/
 
 address_t KNX_physs_addr; // Physical KNX address of this device
 address_t KNX_addr;       // KNX Address converter variable
