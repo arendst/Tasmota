@@ -479,7 +479,7 @@ void KNX_CB_Action(message_t const &msg, void *arg)
 }
 
 
-void KNX_Update_Power_State(byte device, power_t state)
+void KnxUpdatePowerState(byte device, power_t state)
 {
   if (!(Settings.flag.knx_enabled)) { return; }
 
@@ -501,7 +501,7 @@ void KNX_Update_Power_State(byte device, power_t state)
 }
 
 
-void KNX_Send_Button_Power(byte key, byte device, byte state)
+void KnxSendButtonPower(byte key, byte device, byte state)
 {
 // key 0 = button_topic
 // key 1 = switch_topic
