@@ -131,7 +131,7 @@ There is **NO CONFLICT** with MQTT, Home Assistant, Web, etc. Tests show fast re
 
 -----------------------------------------------------------------------------------------------------------------------------------
 
-[![Donate](https://img.shields.io/badge/paypal-donate-yellow.svg)](https://www.paypal.me/ascillato)
+[<img src="https://github.com/ascillato/Sonoff-Tasmota_KNX/blob/development/.github/donate.jpg" width="250" />](https://www.paypal.me/ascillato)
 
 -----------------------------------------------------------------------------------------------------------------------------------
 
