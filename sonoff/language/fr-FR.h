@@ -30,7 +30,7 @@
  *
  * Updated until v5.12.0l
 \*********************************************************************/
-
+//	Uptodate with v5.12.0l
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
 
 // HTML (ISO 639-1) Language Code
