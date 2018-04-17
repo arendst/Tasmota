@@ -123,9 +123,12 @@ void DuskTillDawn(uint8_t *hour_up,uint8_t *minute_up, uint8_t *hour_down, uint8
   h (D) = -18.0 astronomische Dämmerung
   */
   double h = -50/60.0*RAD;
-  double B = ((double)Settings.latitude/1000000) * RAD; // geographische Breite
-  double GeographischeLaenge = (double)Settings.longitude/1000000;
-  double Zeitzone = (double)time_timezone / 10;
+  double B = (((double)Settings.latitude)/1000000) * RAD; // geographische Breite
+  double GeographischeLaenge = ((double)Settings.longitude)/1000000;
+//  double Zeitzone = 0; //Weltzeit
+//  double Zeitzone = 1; //Winterzeit
+//  double Zeitzone = 2.0;   //Sommerzeit
+  double Zeitzone = ((double)time_timezone) / 10;
   double Zeitgleichung = BerechneZeitgleichung(&DK, T);
   double Minuten = Zeitgleichung * 60.0;
   double Zeitdifferenz = 12.0*acos((sin(h) - sin(B)*sin(DK)) / (cos(B)*cos(DK)))/pi;
