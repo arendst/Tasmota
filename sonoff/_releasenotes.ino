@@ -1,4 +1,9 @@
-/* 5.12.0l
+/* 5.12.0m
+ * Reinit timers to accomodate random window (#2447)
+ * Add random window to timers (#2447)
+ * Add optional KNX IP Protocol Support (#2402)
+ *
+ * 5.12.0l
  * Release rules up to 511 characters
  * Prepare for feature release - call on translators to update their language files
  * Add timer sunrise and sunset offset (#2378)

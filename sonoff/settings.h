@@ -92,14 +92,14 @@ typedef union {
 typedef union {
   uint32_t data;
   struct {
-    uint32_t time : 11;                   // bits 0 - 10 = minutes in a day
-    uint32_t mode : 5;                    // bits 11 - 15 = timer modes - Scheduler, Sunrise, Sunset
-    uint32_t days : 7;                    // bits 16 - 22 = week day mask
-    uint32_t device : 4;                  // bits 23 - 26 = 16 devices
-    uint32_t power : 2;                   // bits 27 - 28 = 4 power states - Off, On, Toggle, Blink
-    uint32_t repeat : 1;                  // bit 29
-    uint32_t arm : 1;                     // bit 30
-    uint32_t spare : 1;                   // bit 31
+    uint32_t time : 11;                    // bits 0 - 10 = minutes in a day
+    uint32_t window : 4;                   // bits 11 - 14 = minutes random window
+    uint32_t repeat : 1;                   // bit 15
+    uint32_t days : 7;                     // bits 16 - 22 = week day mask
+    uint32_t device : 4;                   // bits 23 - 26 = 16 devices
+    uint32_t power : 2;                    // bits 27 - 28 = 4 power states - Off, On, Toggle, Blink or Rule
+    uint32_t mode : 2;                     // bits 29 - 30 = timer modes - Scheduler, Sunrise, Sunset
+    uint32_t arm : 1;                      // bit 31
   };
 } Timer;
 
@@ -258,11 +258,11 @@ struct SYSCFG {
   byte          knx_GA_param[MAX_KNX_GA];  // 6E2  Type of Input (relay changed, button pressed, sensor read <-teleperiod)
   byte          knx_CB_param[MAX_KNX_CB];  // 6EC  Type of Output (set relay, toggle relay, reply sensor value)
 
-  byte          free_6b8[10];              // 6F6
+  byte          free_6f6[266];             // 6F6
 
-  char          rules[MAX_RULE_SIZE];      // 700 uses 512 bytes in v5.12.0l
+  char          rules[MAX_RULE_SIZE];      // 800 uses 512 bytes in v5.12.0m
 
-                                           // 900 - FFF free locations
+                                           // A00 - FFF free locations
 } Settings;
 
 struct RTCMEM {
