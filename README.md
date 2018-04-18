@@ -28,8 +28,8 @@ Web Interface
 - pointer cursor (in Tasmota since 5.12.0)   
 - translated current status (on/off)   
 - use hostname in web ui as headline instead of friendlyname1   
-   
-   
+- more device info on web ui (Thx @jonatanolofsson, PR#1006, https://github.com/jonatanolofsson/Sonoff-Tasmota/commit/e7437b678700e219944255bbfb9d2f394a3bbd62)
+
 - WeMo Emu fixed (in Tasmota since 5.10.xx)   
 
 - Echo 2G Type2 discover fixed (in Tasmota since 5.10.xx)   

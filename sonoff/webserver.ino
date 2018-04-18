@@ -104,9 +104,9 @@ const char HTTP_HEAD_STYLE[] PROGMEM =
   "<div style='text-align:center;color:red;'><h3>" D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "</h3></div>"
 #endif
 #ifdef LANGUAGE_MODULE_NAME
-  "<div style='text-align:center;'><h3>" D_MODULE " {ha</h3><h2>{h}</h2></div>";
+  "<div style='text-align:center;'><h3>" D_MODULE " {ha</h3><h2>{h}</h2><h3>{hn.local ({ip)</h3></div>";
 #else
-  "<div style='text-align:center;'><h3>{ha " D_MODULE "</h3><h2>{h}</h2></div>";
+  "<div style='text-align:center;'><h3>{ha " D_MODULE "</h3><h2>{h}</h2><h3>{hn.local ({ip)</h3></div>";
 #endif
 const char HTTP_SCRIPT_CONSOL[] PROGMEM =
   "var sn=0;"                    // Scroll position
@@ -464,7 +464,9 @@ void ShowPage(String &page, bool auth)
   }
 
   page.replace(F("{ha"), my_module.name);
-  page.replace(F("{h}"), my_hostname);
+  page.replace(F("{hn"), my_hostname);
+  page.replace(F("{ip"), WiFi.localIP().toString());
+  page.replace(F("{h}"), Settings.friendlyname[0]);
   if (HTTP_MANAGER == webserver_state) {
     if (WifiConfigCounter()) {
       page.replace(F("<body>"), F("<body onload='u()'>"));
