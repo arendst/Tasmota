@@ -123,11 +123,21 @@ void SonoffScShow(boolean json)
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"SonoffSC\":{\"" D_JSON_TEMPERATURE "\":%s,\"" D_JSON_HUMIDITY "\":%s,\"" D_JSON_LIGHT "\":%d,\"" D_JSON_NOISE "\":%d,\"" D_JSON_AIRQUALITY "\":%d}"),
         mqtt_data, temperature, humidity, sc_value[2], sc_value[3], sc_value[4]);
 #ifdef USE_DOMOTICZ
-      DomoticzTempHumSensor(temperature, humidity);
-      DomoticzSensor(DZ_ILLUMINANCE, sc_value[2]);
-      DomoticzSensor(DZ_COUNT, sc_value[3]);
-      DomoticzSensor(DZ_AIRQUALITY, 500 + ((100 - sc_value[4]) * 20));
+      if (0 == tele_period) {
+        DomoticzTempHumSensor(temperature, humidity);
+        DomoticzSensor(DZ_ILLUMINANCE, sc_value[2]);
+        DomoticzSensor(DZ_COUNT, sc_value[3]);
+        DomoticzSensor(DZ_AIRQUALITY, 500 + ((100 - sc_value[4]) * 20));
+      }
 #endif  // USE_DOMOTICZ
+
+#ifdef USE_KNX
+      if (0 == tele_period) {
+        KnxSensor(KNX_TEMPERATURE, t);
+        KnxSensor(KNX_HUMIDITY, h);
+      }
+#endif  // USE_KNX
+
 #ifdef USE_WEBSERVER
     } else {
       snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TEMP, mqtt_data, "", temperature, TempUnit());

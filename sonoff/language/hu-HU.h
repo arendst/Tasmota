@@ -28,6 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
+ * Updated until v5.12.0e
 \*********************************************************************/
 
 //#define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -128,6 +129,7 @@
 #define D_RESTART_REASON "Újraindítás oka:"
 #define D_RESTORE "Visszaállítás"
 #define D_RETAINED "mentve"
+#define D_RULE "Rule"
 #define D_SAVE "Mentés"
 #define D_SENSOR "Szenzor"
 #define D_SSID "SSId"
@@ -370,7 +372,27 @@
 #define D_TIMER_DAYS "Days"
 #define D_TIMER_REPEAT "Repeat"
 #define D_TIMER_OUTPUT "Output"
-#define D_TIMER_POWER "Power"
+#define D_TIMER_ACTION "Action"
+
+// xdrv_10_knx.ino
+#define D_CONFIGURE_KNX "Configure KNX"
+#define D_KNX_PARAMETERS "KNX Parameters"
+#define D_KNX_GENERAL_CONFIG "General"
+#define D_KNX_PHYSICAL_ADDRESS "Physical Address"
+#define D_KNX_PHYSICAL_ADDRESS_NOTE "( Must be unique on the KNX network )"
+#define D_KNX_ENABLE "Enable KNX"
+#define D_KNX_GROUP_ADDRESS_TO_WRITE "Data to Send to Group Addresses"
+#define D_ADD "Add"
+#define D_DELETE "Delete"
+#define D_REPLY "Reply"
+#define D_KNX_GROUP_ADDRESS_TO_READ "Group Addresses to Receive Data from"
+#define D_LOG_KNX "KNX: "
+#define D_RECEIVED_FROM "Received from"
+#define D_KNX_COMMAND_WRITE "Write"
+#define D_KNX_COMMAND_READ "Read"
+#define D_KNX_COMMAND_OTHER "Other"
+#define D_SENT_TO "sent to"
+#define D_KNX_WARNING "The group address ( 0 / 0 / 0 ) is reserved and can not be used."
 
 // xdrv_03_energy.ino
 #define D_ENERGY_TODAY "Mai Energia"

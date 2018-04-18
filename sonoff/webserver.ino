@@ -183,12 +183,10 @@ const char HTTP_BTN_RSTRT[] PROGMEM =
   "<br/><form action='rb' method='get' onsubmit='return confirm(\"" D_CONFIRM_RESTART "\");'><button>" D_RESTART "</button></form>";
 const char HTTP_BTN_MENU_MODULE[] PROGMEM =
   "<br/><form action='md' method='get'><button>" D_CONFIGURE_MODULE "</button></form>";
-#ifdef USE_TIMERS
-#ifdef USE_TIMERS_WEB
+#if defined(USE_TIMERS) && defined(USE_TIMERS_WEB)
 const char HTTP_BTN_MENU_TIMER[] PROGMEM =
   "<br/><form action='tm' method='get'><button>" D_CONFIGURE_TIMER "</button></form>";
-#endif  // USE_TIMERS_WEB
-#endif  // USE_TIMERS
+#endif  // USE_TIMERS and USE_TIMERS_WEB
 const char HTTP_BTN_MENU_WIFI[] PROGMEM =
   "<br/><form action='w0' method='get'><button>" D_CONFIGURE_WIFI "</button></form>";
 const char HTTP_BTN_MENU_MQTT[] PROGMEM =
@@ -198,6 +196,9 @@ const char HTTP_BTN_MENU_MQTT[] PROGMEM =
 #endif  // USE_DOMOTICZ
   "";
 const char HTTP_BTN_MENU4[] PROGMEM =
+#ifdef USE_KNX
+  "<br/><form action='kn' method='get'><button>" D_CONFIGURE_KNX "</button></form>"
+#endif  // USE_KNX
   "<br/><form action='lg' method='get'><button>" D_CONFIGURE_LOGGING "</button></form>"
   "<br/><form action='co' method='get'><button>" D_CONFIGURE_OTHER "</button></form>"
   "<br/>"
@@ -340,11 +341,9 @@ void StartWebserver(int type, IPAddress ipweb)
       WebServer->on("/", HandleRoot);
       WebServer->on("/cn", HandleConfiguration);
       WebServer->on("/md", HandleModuleConfiguration);
-#ifdef USE_TIMERS
-#ifdef USE_TIMERS_WEB
+#if defined(USE_TIMERS) && defined(USE_TIMERS_WEB)
       WebServer->on("/tm", HandleTimerConfiguration);
-#endif  // USE_TIMERS_WEB
-#endif  // USE_TIMERS
+#endif  // USE_TIMERS and USE_TIMERS_WEB
       WebServer->on("/w1", HandleWifiConfigurationWithScan);
       WebServer->on("/w0", HandleWifiConfiguration);
       if (Settings.flag.mqtt_enabled) {
@@ -353,6 +352,9 @@ void StartWebserver(int type, IPAddress ipweb)
         WebServer->on("/dm", HandleDomoticzConfiguration);
 #endif  // USE_DOMOTICZ
       }
+#ifdef USE_KNX
+      WebServer->on("/kn", HandleKNXConfiguration);
+#endif // USE_KNX
       WebServer->on("/lg", HandleLoggingConfiguration);
       WebServer->on("/co", HandleOtherConfiguration);
       WebServer->on("/dl", HandleBackupConfiguration);
@@ -382,6 +384,9 @@ void StartWebserver(int type, IPAddress ipweb)
       }
 #endif  // USE_EMULATION
       WebServer->onNotFound(HandleNotFound);
+#ifdef USE_KNX
+      KNXStart();
+#endif // USE_KNX
     }
     reset_web_log_flag = 0;
     WebServer->begin(); // Web server start
@@ -632,11 +637,9 @@ void HandleConfiguration()
   page.replace(F("{v}"), FPSTR(S_CONFIGURATION));
   page += FPSTR(HTTP_HEAD_STYLE);
   page += FPSTR(HTTP_BTN_MENU_MODULE);
-#ifdef USE_TIMERS
-#ifdef USE_TIMERS_WEB
+#if defined(USE_TIMERS) && defined(USE_TIMERS_WEB)
   if (devices_present) page += FPSTR(HTTP_BTN_MENU_TIMER);
-#endif  // USE_TIMERS_WEB
-#endif  // USE_TIMERS
+#endif  // USE_TIMERS and USE_TIMERS_WEB
   page += FPSTR(HTTP_BTN_MENU_WIFI);
   if (Settings.flag.mqtt_enabled) page += FPSTR(HTTP_BTN_MENU_MQTT);
   page += FPSTR(HTTP_BTN_MENU4);
@@ -1103,13 +1106,11 @@ void HandleSaveSettings()
       Settings.seriallog_level, Settings.weblog_level, Settings.syslog_level, Settings.syslog_host, Settings.syslog_port, Settings.tele_period);
     AddLog(LOG_LEVEL_INFO);
     break;
-#ifdef USE_TIMERS
-#ifdef USE_TIMERS_WEB
+#if defined(USE_TIMERS) && defined(USE_TIMERS_WEB)
   case 7:
     TimerSaveSettings();
     break;
-#endif  // USE_TIMERS_WEB
-#endif  // USE_TIMERS
+#endif  // USE_TIMERS and USE_TIMERS_WEB
 #ifdef USE_DOMOTICZ
   case 4:
     DomoticzSaveSettings();

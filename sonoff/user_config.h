@@ -68,9 +68,9 @@
 // -- Syslog --------------------------------------
 #define SYS_LOG_HOST           ""                // [LogHost] (Linux) syslog host
 #define SYS_LOG_PORT           514               // [LogPort] default syslog UDP port
-#define SYS_LOG_LEVEL          LOG_LEVEL_NONE    // [SysLog]
-#define SERIAL_LOG_LEVEL       LOG_LEVEL_INFO    // [SerialLog]
-#define WEB_LOG_LEVEL          LOG_LEVEL_INFO    // [WebLog]
+#define SYS_LOG_LEVEL          LOG_LEVEL_NONE    // [SysLog] (LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG_MORE)
+#define SERIAL_LOG_LEVEL       LOG_LEVEL_INFO    // [SerialLog] (LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG_MORE)
+#define WEB_LOG_LEVEL          LOG_LEVEL_INFO    // [WebLog] (LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG_MORE)
 
 // -- Ota -----------------------------------------
 #define OTA_URL                "http://sonoff.maddox.co.uk/tasmota/sonoff.ino.bin"  // [OtaUrl]
@@ -202,6 +202,9 @@
   // !!! TLS uses a LOT OF MEMORY so be careful to enable other options at the same time !!!
 //#define USE_MQTT_TLS                             // Use TLS for MQTT connection (+53k code, +15k mem)
 
+// -- KNX IP Protocol -----------------------------
+//#define USE_KNX                                  // Enable KNX IP Protocol Support (+23k code, +3k3 mem)
+
 // -- HTTP ----------------------------------------
 #define USE_WEBSERVER                            // Enable web server and wifi manager (+66k code, +8k mem)
   #define WEB_PORT             80                // Web server Port for User and Admin mode
@@ -223,6 +226,9 @@
 #define USE_TIMERS                               // Add support for up to 16 timers (+2k2 code)
   #define USE_TIMERS_WEB                         // Add timer webpage support (+4k5 code)
   #define USE_SUNRISE                            // Add support for Sunrise and sunset tools (+16k)
+
+// -- Rules ---------------------------------------
+#define USE_RULES                                // Add support for rules (+4k4 code)
 
 // -- Internal Analog input -----------------------
 #define USE_ADC_VCC                              // Display Vcc in Power status. Disable for use as Analog input on selected devices
