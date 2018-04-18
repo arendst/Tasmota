@@ -137,6 +137,7 @@
 #define D_SUBSCRIBE_TO "subscribe to"
 #define D_SUCCESSFUL "erfolgreich"
 #define D_TEMPERATURE "Temperatur"
+#define D_TEMPERATURE_UNIT "TempEinheit"
 #define D_TO "zu"
 #define D_TOGGLE "An/Aus"
 #define D_TOPIC "topic"
