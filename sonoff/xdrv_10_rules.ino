@@ -141,7 +141,7 @@ bool RulesRuleMatch(String &event, String &rule)
 
   // Step1: Analyse rule
   int pos = rule.indexOf('#');
-  if (pos == -1) return false;                         // No # sign in rule
+  if (pos == -1) { return false; }                     // No # sign in rule
 
   String rule_task = rule.substring(0, pos);           // "INA219" or "SYSTEM"
   String rule_name = rule.substring(pos +1);           // "CURRENT>0.100" or "BOOT"
@@ -173,7 +173,7 @@ bool RulesRuleMatch(String &event, String &rule)
   // Step2: Search rule_task and rule_name
   StaticJsonBuffer<400> jsonBuf;
   JsonObject &root = jsonBuf.parseObject(event);
-  if (!root.success()) return false;                   // No valid JSON data
+  if (!root.success()) { return false; }               // No valid JSON data
 
   double value = 0;
   const char* str_value = root[rule_task][rule_name];
@@ -182,7 +182,7 @@ bool RulesRuleMatch(String &event, String &rule)
 //    rule_task.c_str(), rule_name.c_str(), tmp_value.c_str(), rules_trigger_count, bitRead(rules_triggers, rules_trigger_count), event.c_str(), (str_value) ? str_value : "none");
 //  AddLog(LOG_LEVEL_DEBUG);
 
-  if (!root[rule_task][rule_name].success()) return false;
+  if (!root[rule_task][rule_name].success()) { return false; }
   // No value but rule_name is ok
 
   rules_event_value = str_value;                       // Prepare %value%
@@ -227,8 +227,8 @@ bool RulesProcess()
 {
   bool serviced = false;
 
-  if (!Settings.flag.rules_enabled) return serviced;   // Not enabled
-  if (!strlen(Settings.rules)) return serviced;        // No rules
+  if (!Settings.flag.rules_enabled) { return serviced; }  // Not enabled
+  if (!strlen(Settings.rules)) { return serviced; }       // No rules
 
   String event_saved = mqtt_data;
   event_saved.toUpperCase();
@@ -237,21 +237,21 @@ bool RulesProcess()
   rules_trigger_count = 0;
   int plen = 0;
   while (true) {
-    rules = rules.substring(plen);                     // Select relative to last rule
+    rules = rules.substring(plen);                        // Select relative to last rule
     rules.trim();
-    if (!rules.length()) return serviced;              // No more rules
+    if (!rules.length()) { return serviced; }             // No more rules
 
     String rule = rules;
-    rule.toUpperCase();                                // "ON INA219#CURRENT>0.100 DO BACKLOG DIMMER 10;COLOR 100000 ENDON"
-    if (!rule.startsWith("ON ")) return serviced;      // Bad syntax - Nothing to start on
+    rule.toUpperCase();                                   // "ON INA219#CURRENT>0.100 DO BACKLOG DIMMER 10;COLOR 100000 ENDON"
+    if (!rule.startsWith("ON ")) { return serviced; }     // Bad syntax - Nothing to start on
 
     int pevt = rule.indexOf(" DO ");
-    if (pevt == -1) return serviced;                   // Bad syntax - Nothing to do
-    String event_trigger = rule.substring(3, pevt);    // "INA219#CURRENT>0.100"
+    if (pevt == -1) { return serviced; }                  // Bad syntax - Nothing to do
+    String event_trigger = rule.substring(3, pevt);       // "INA219#CURRENT>0.100"
 
     plen = rule.indexOf(" ENDON");
-    if (plen == -1) return serviced;                   // Bad syntax - No endon
-    String commands = rules.substring(pevt +4, plen);  // "Backlog Dimmer 10;Color 100000"
+    if (plen == -1) { return serviced; }                  // Bad syntax - No endon
+    String commands = rules.substring(pevt +4, plen);     // "Backlog Dimmer 10;Color 100000"
     plen += 6;
 
 //    snprintf_P(log_data, sizeof(log_data), PSTR("RUL: Trigger |%s|, Commands |%s|"), event_trigger.c_str(), commands.c_str());
@@ -375,7 +375,7 @@ boolean RulesCommand()
         String uc_command = command;
         uc_command += " ";    // Distuingish from RuleTimer
         uc_command.toUpperCase();
-        if (!uc_data.indexOf(uc_command)) strlcpy(Settings.rules, XdrvMailbox.data, sizeof(Settings.rules));
+        if (!uc_data.indexOf(uc_command)) { strlcpy(Settings.rules, XdrvMailbox.data, sizeof(Settings.rules)); }
 */
         strlcpy(Settings.rules, XdrvMailbox.data, sizeof(Settings.rules));
       }
