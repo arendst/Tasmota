@@ -108,6 +108,13 @@ enum ProgramSelectablePins {
   GPIO_USER,           // User configurable
   GPIO_MAX };
 
+// Temperature Control Types
+enum TemperatureControlTypes {
+  TEMP_CONTROL_DISABLED,  // Temperature Control Disabled
+  TEMP_CONTROL_COOLING,   // Temperature Control Cooling Mode
+  TEMP_CONTROL_HEATING,   // Temperature Control Heating Mode
+  TEMP_CONTROL_END };
+
 // Text in webpage Module Parameters and commands GPIOS and GPIO
 const char kSensorNames[] PROGMEM =
   D_SENSOR_NONE "|"
@@ -131,6 +138,12 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_SAIR_TX "|" D_SENSOR_SAIR_RX "|"
   D_SENSOR_SPI_CS "|" D_SENSOR_SPI_DC "|" D_SENSOR_BACKLIGHT "|"
   D_SENSOR_PMS5003 "|" D_SENSOR_SDS0X1;
+
+/********************************************************************************************/
+
+// Text in webpage Module Parameters for Temperature Control
+const char kTempControlNames[] PROGMEM =
+  D_MODULE_TEMP_CONTROL_DISABLED "|" D_MODULE_TEMP_CONTROL_COOLING "|" D_MODULE_TEMP_CONTROL_HEATING;
 
 /********************************************************************************************/
 

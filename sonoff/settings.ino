@@ -903,6 +903,12 @@ void SettingsDelta()
     if (Settings.version < 0x050C0007) {
       Settings.baudrate = APP_BAUDRATE / 1200;
     }
+    if (Settings.version < 0x050C0008) {
+      Settings.temp_control_mode = TEMP_CONTROL_DISABLED;
+      Settings.temp_control_setpoint = -30000;
+      Settings.temp_control_hysteresis = 0;
+      Settings.temp_control_offtimemin = 300;
+    }
 
     Settings.version = VERSION;
     SettingsSave(1);

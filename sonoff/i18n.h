@@ -340,6 +340,12 @@
 #define D_CMND_DISP_SIZE "Size"
 #define D_CMND_DISP_TEXT "Text"
 
+// Commands thermostat.ino
+#define D_CMND_TEMP_CONTROL "TCMODE"
+#define D_CMND_TEMP_SETPOINT "TCSP"
+#define D_CMND_TEMP_HYSTERESIS "TCHYS"
+#define D_CMND_TEMP_OFFTIMEMIN "TCOT"
+
 /********************************************************************************************/
 
 #ifndef MY_LANGUAGE
@@ -471,6 +477,7 @@ const char S_CONFIGURE_OTHER[] PROGMEM = D_CONFIGURE_OTHER;
 const char S_SAVE_CONFIGURATION[] PROGMEM = D_SAVE_CONFIGURATION;
 const char S_RESET_CONFIGURATION[] PROGMEM = D_RESET_CONFIGURATION;
 const char S_RESTORE_CONFIGURATION[] PROGMEM = D_RESTORE_CONFIGURATION;
+const char S_CONFIGURE_THERMOSTAT[] PROGMEM = D_THERMOSTAT;
 const char S_FIRMWARE_UPGRADE[] PROGMEM = D_FIRMWARE_UPGRADE;
 const char S_CONSOLE[] PROGMEM = D_CONSOLE;
 const char S_INFORMATION[] PROGMEM = D_INFORMATION;

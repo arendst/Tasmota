@@ -25,7 +25,7 @@
     - Select IDE Tools - Flash Size: "1M (no SPIFFS)"
   ====================================================*/
 
-#define VERSION                0x050C0007   // 5.12.0g
+#define VERSION                0x050C000B   // 5.12.0k
 
 // Location specific includes
 #include <core_version.h>                   // Arduino_Esp8266 version information (ARDUINO_ESP8266_RELEASE and ARDUINO_ESP8266_RELEASE_2_3_0)
@@ -1060,6 +1060,11 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, D_JSON_DONE);
     }
 #endif  // DEBUG_THEO
+#ifdef THERMOSTAT
+    else if (ThermoCommand(type, index, dataBuf, data_len, payload)) {
+      // Serviced
+    }
+#endif  // Hard Thermostat
     else {
       type = NULL;
     }
@@ -1410,6 +1415,10 @@ void PerformEverySecond()
 
   XdrvCall(FUNC_EVERY_SECOND);
   XsnsCall(FUNC_EVERY_SECOND);
+
+#ifdef THERMOSTAT
+  ThermoFunction(tele_period);
+#endif // Thermostat
 
   if ((2 == RtcTime.minute) && latest_uptime_flag) {
     latest_uptime_flag = false;
@@ -2019,8 +2028,8 @@ void GpioInit()
   for (byte i = 0; i < MAX_GPIO_PIN; i++) {
     mpin = my_module.gp.io[i];
 
-//  snprintf_P(log_data, sizeof(log_data), PSTR("DBG: gpio pin %d, mpin %d"), i, mpin);
-//  AddLog(LOG_LEVEL_DEBUG);
+  // snprintf_P(log_data, sizeof(log_data), PSTR("DBG: gpio pin %d, mpin %d"), i, mpin);
+  // AddLog(LOG_LEVEL_DEBUG);
 
     if (mpin) {
       if ((mpin >= GPIO_REL1_INV) && (mpin < (GPIO_REL1_INV + MAX_RELAYS))) {
