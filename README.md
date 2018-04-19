@@ -32,6 +32,8 @@ If you use the ETS (KNX Configurator Software) you can add any Sonoff Tasmota KN
 
 A copy of the library is also available [here](https://github.com/ascillato/Sonoff-Tasmota_KNX/tree/development/lib/esp-knx-ip-0.5.0)
 
+It is recommended to compile with version 2.3.0 of the esp8266 board libraries. With v2.4.0 and v2.4.1 there are some issues related to sleep command.
+
 ## Usage Examples ##
 
 There are multiple possible configurations. Here are explained just a few as example. The options for selecting relays, buttons, sensors, etc. are only available if were configured on _Configure Module Menu_.
