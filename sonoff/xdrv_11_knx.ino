@@ -21,9 +21,8 @@
 /*********************************************************************************************\
  * KNX support
  *
- * Using libraries:
- *   ESP KNX IP library (async-udp branch) (https://github.com/envy/esp-knx-ip/tree/async-udp)
- *   ESPAsyncUDP library (https://github.com/me-no-dev/ESPAsyncUDP)
+ * Using library:
+ *   ESP KNX IP library (https://github.com/envy/esp-knx-ip)
 
 Constants in sonoff.h
 -----------------------
@@ -870,8 +869,6 @@ boolean Xdrv11(byte function)
         break;
       case FUNC_LOOP:
         knx.loop();  // Process knx events
-                     //    It is not used by the actual config of asyncUDP branch of ESP-KNX-IP Library,
-                     //    but is left here for compatibility with upcoming features of ESP-KNX-IP Library
         break;
 //      case FUNC_COMMAND:
 //        result = KNXCommand();
