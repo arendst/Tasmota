@@ -21,9 +21,8 @@
 /*********************************************************************************************\
  * KNX support
  *
- * Using libraries:
- *   ESP KNX IP library (async-udp branch) (https://github.com/envy/esp-knx-ip/tree/async-udp)
- *   ESPAsyncUDP library (https://github.com/me-no-dev/ESPAsyncUDP)
+ * Using library:
+ *   ESP KNX IP library (https://github.com/envy/esp-knx-ip)
 
 Constants in sonoff.h
 -----------------------
