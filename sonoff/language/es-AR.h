@@ -374,7 +374,7 @@
 #define D_TIMER_OUTPUT "Salida"
 #define D_TIMER_ACTION "Estado"
 
-// xdrv_10_KNX.ino
+// xdrv_10_knx.ino
 #define D_CONFIGURE_KNX "Configuración de KNX"
 #define D_KNX_PARAMETERS "Parámetros de KNX"
 #define D_KNX_GENERAL_CONFIG "General"
