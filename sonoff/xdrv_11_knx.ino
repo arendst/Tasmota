@@ -21,7 +21,7 @@
 /*********************************************************************************************\
  * KNX support
  *
- * Using library:
+ * Using libraries:
  *   ESP KNX IP library (https://github.com/envy/esp-knx-ip)
 
 Constants in sonoff.h
