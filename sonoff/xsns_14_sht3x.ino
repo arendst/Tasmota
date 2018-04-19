@@ -113,8 +113,10 @@ void Sht3xShow(boolean json)
 #endif  // USE_DOMOTICZ
 
 #ifdef USE_KNX
-        KNX_Sensor(KNX_temperature, t);
-        KNX_Sensor(KNX_humidity, h);
+        if (0 == tele_period) {
+          KnxSensor(KNX_TEMPERATURE, t);
+          KnxSensor(KNX_HUMIDITY, h);
+        }
 #endif  // USE_KNX
 
 #ifdef USE_WEBSERVER
