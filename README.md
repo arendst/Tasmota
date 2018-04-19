@@ -26,14 +26,11 @@ Several home automation systems have KNX support. For example, [Home Assistant](
 
 If you use the ETS (KNX Configurator Software) you can add any Sonoff Tasmota KNX as a dummy device.
 
-## Requirements ##
+## Requirement ##
 
-* [ESP KNX IP Library (async-udp branch)](https://github.com/envy/esp-knx-ip/tree/async-udp)
-* [ESPAsyncUDP Library](https://github.com/me-no-dev/ESPAsyncUDP). This Library is used by ESP KNX IP Library.
+* [ESP KNX IP Library](https://github.com/envy/esp-knx-ip)
 
-A copy of both libraries is also available at:
-* https://github.com/ascillato/Sonoff-Tasmota_KNX/tree/development/lib/esp-knx-ip-async-udp
-* https://github.com/ascillato/Sonoff-Tasmota_KNX/tree/development/lib/ESPAsyncUDP-master
+A copy of the library is also available [here](https://github.com/ascillato/Sonoff-Tasmota_KNX/tree/development/lib/esp-knx-ip-0.5.0)
 
 ## Usage Examples ##
 
