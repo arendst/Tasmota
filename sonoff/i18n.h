@@ -361,6 +361,7 @@
   #define D_JSON_TIMER_ARM "Arm"
   #define D_JSON_TIMER_MODE "Mode"
   #define D_JSON_TIMER_TIME "Time"
+  #define D_JSON_TIMER_WINDOW "Window"
   #define D_JSON_TIMER_DAYS "Days"
   #define D_JSON_TIMER_REPEAT "Repeat"
   #define D_JSON_TIMER_OUTPUT "Output"
