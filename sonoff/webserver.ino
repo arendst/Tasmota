@@ -1001,7 +1001,8 @@ void HandleBackupConfiguration()
   WebServer->setContentLength(sizeof(buffer));
 
   char attachment[100];
-  snprintf_P(attachment, sizeof(attachment), PSTR("attachment; filename=Config_%s_%s.dmp"), Settings.friendlyname[0], my_version);
+  char friendlyname[sizeof(Settings.friendlyname[0])];
+  snprintf_P(attachment, sizeof(attachment), PSTR("attachment; filename=Config_%s_%s.dmp"), SpaceToUnderscore(friendlyname, Settings.friendlyname[0]), my_version);
   WebServer->sendHeader(F("Content-Disposition"), attachment);
   WebServer->send(200, FPSTR(HDR_CTYPE_STREAM), "");
   memcpy(buffer, &Settings, sizeof(buffer));
