@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v5.12.0l
+ * Updated until v5.12.0m
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -133,14 +133,14 @@
 #define D_SAVE "Enregistrer"
 #define D_SENSOR "Capteur"
 #define D_SSID "SSID"
-#define D_START "Départ"
+#define D_START "Lancer"	 // "Lancer la mise à jour"
 #define D_STD_TIME "STD"
 #define D_STOP "Stop"
 #define D_SUBNET_MASK "Masque sous-réseau"
 #define D_SUBSCRIBE_TO "Souscrire à"
 #define D_SUCCESSFUL "Réussi"
-#define D_SUNRISE "Jour"     // "Lever du soleil" <- maybe too long?
-#define D_SUNSET "Nuit"      // "Coucher du soleil" <- maybe too long?
+#define D_SUNRISE "Lever du jour"
+#define D_SUNSET "Tombée de la nuit"
 #define D_TEMPERATURE "Température"
 #define D_TO "à"
 #define D_TOGGLE "Inverser"
@@ -148,7 +148,7 @@
 #define D_TRANSMIT "Transmettre"
 #define D_TRUE "Vrai"
 #define D_TVOC "TVOC"
-#define D_UPGRADE "mise à jour"
+#define D_UPGRADE "la mise à jour" 	 // "Lancer la mise à jour"
 #define D_UPLOAD "Upload"    // Not better in french 
 #define D_UPTIME "Durée d'activité"
 #define D_USER "Utilisateur"
@@ -214,24 +214,24 @@
 #define D_BUTTON_TOGGLE "on/off"
 #define D_CONFIGURATION "Configuration"
 #define D_INFORMATION "Information"
-#define D_FIRMWARE_UPGRADE "Mise à jour Firmware"
+#define D_FIRMWARE_UPGRADE "Mise à jour du Firmware"
 #define D_CONSOLE "Console"
 #define D_CONFIRM_RESTART "Confirmer redémarrage"
 
-#define D_CONFIGURE_MODULE "Configuration Module"
+#define D_CONFIGURE_MODULE "Configuration du Module"
 #define D_CONFIGURE_WIFI "Configuration WiFi"
 #define D_CONFIGURE_MQTT "Configuration MQTT"
 #define D_CONFIGURE_DOMOTICZ "Configuration Domoticz"
-#define D_CONFIGURE_LOGGING "Configuration Logging"
+#define D_CONFIGURE_LOGGING "Configuration du journal"
 #define D_CONFIGURE_OTHER "Autre configuration"
 #define D_CONFIRM_RESET_CONFIGURATION "Confirmer réinitialisation configuration"
-#define D_RESET_CONFIGURATION "Réinitialisation Configuration"
-#define D_BACKUP_CONFIGURATION "Sauvegarde Configuration"
-#define D_RESTORE_CONFIGURATION "Restauration Configuration"
+#define D_RESET_CONFIGURATION "Configuration par défaut"
+#define D_BACKUP_CONFIGURATION "Sauvegarde de la config."
+#define D_RESTORE_CONFIGURATION "Restauration de la config."
 #define D_MAIN_MENU "Menu principal"
 
 #define D_MODULE_PARAMETERS "Paramètres module"
-#define D_MODULE_TYPE "Type module"
+#define D_MODULE_TYPE "Type de module"
 #define D_GPIO "GPIO"
 #define D_SERIAL_IN "Serial In"
 #define D_SERIAL_OUT "Serial Out"
@@ -241,8 +241,8 @@
 #define D_SCAN_DONE "Scan terminé"
 #define D_NO_NETWORKS_FOUND "Aucun réseau trouvé"
 #define D_REFRESH_TO_SCAN_AGAIN "Rafraîchir pour scanner à nouveau"
-#define D_DUPLICATE_ACCESSPOINT "AccessPoint dupliqué"
-#define D_SKIPPING_LOW_QUALITY "Passe car mauvaise qualité"
+#define D_DUPLICATE_ACCESSPOINT "Point d'Accès dupliqué"
+#define D_SKIPPING_LOW_QUALITY "Évité car de mauvaise qualité"
 #define D_RSSI "RSSI"
 #define D_WEP "WEP"
 #define D_WPA_PSK "WPA PSK"
@@ -256,13 +256,13 @@
 #define D_CLIENT "Client"
 #define D_FULL_TOPIC "topic complet"
 
-#define D_LOGGING_PARAMETERS "Paramètres journalisation"
+#define D_LOGGING_PARAMETERS "Paramètres du journal"
 #define D_SERIAL_LOG_LEVEL "Niveau de journalisation série"
 #define D_WEB_LOG_LEVEL "Niveau de journalisation web"
-#define D_SYS_LOG_LEVEL "Niveau syslog"
+#define D_SYS_LOG_LEVEL "Niveau Syslog"
 #define D_MORE_DEBUG "Plus de debug"
-#define D_SYSLOG_HOST "Hôte syslog"
-#define D_SYSLOG_PORT "Port syslog"
+#define D_SYSLOG_HOST "Hôte Syslog"
+#define D_SYSLOG_PORT "Port Syslog"
 #define D_TELEMETRY_PERIOD "Période télémétrie"
 
 #define D_OTHER_PARAMETERS "Autres paramètres"
@@ -274,11 +274,11 @@
 #define D_SINGLE_DEVICE "module unique"
 #define D_MULTI_DEVICE "multi module"
 
-#define D_SAVE_CONFIGURATION "Enregistrer configuration"
+#define D_SAVE_CONFIGURATION "Enregistrer la configuration"
 #define D_CONFIGURATION_SAVED "Configuration enregistrée"
 #define D_CONFIGURATION_RESET "Configuration réinitialisée"
 
-#define D_PROGRAM_VERSION "Version Programme"
+#define D_PROGRAM_VERSION "Version du programme"
 #define D_BUILD_DATE_AND_TIME "Date & Heure de build"
 #define D_CORE_AND_SDK_VERSION "Version Core/SDK"
 #define D_FLASH_WRITE_COUNT "Compteur écriture flash"
@@ -306,21 +306,21 @@
 #define D_UPLOAD_DONE "Téléchargement terminé"
 #define D_UPLOAD_ERR_1 "Aucun fichier sélectionné"
 #define D_UPLOAD_ERR_2 "Espace insuffisant"
-#define D_UPLOAD_ERR_3 "Magic byte n'est pas 0xE9"
+#define D_UPLOAD_ERR_3 "L'octet magique n'est pas 0xE9"
 #define D_UPLOAD_ERR_4 "La taille du programme à flasher est plus grande que la taille réelle de la mémoire flash"
-#define D_UPLOAD_ERR_5 "Erreur comparaison buffer de téléchargement"
+#define D_UPLOAD_ERR_5 "Erreur de comparaison du buffer de téléchargement"
 #define D_UPLOAD_ERR_6 "Téléchargement échoué. Activation logging 3"
 #define D_UPLOAD_ERR_7 "Téléchargement annulé"
 #define D_UPLOAD_ERR_8 "Fichier invalide"
 #define D_UPLOAD_ERR_9 "Fichier trop grand"
 #define D_UPLOAD_ERROR_CODE "Code d'erreur téléchargement"
 
-#define D_ENTER_COMMAND "Saisir commande"
+#define D_ENTER_COMMAND "Saisir une commande"
 #define D_ENABLE_WEBLOG_FOR_RESPONSE "Activer weblog 2 si response attendue"
 #define D_NEED_USER_AND_PASSWORD "Nécessite utilisateur=<username>&password=<password>"
 
 // xdrv_00_mqtt.ino
-#define D_FINGERPRINT "Vérification empreinte TLS ..."
+#define D_FINGERPRINT "Vérification d'empreinte TLS ..."
 #define D_TLS_CONNECT_FAILED_TO "Échec de connexion TLS à"
 #define D_RETRY_IN "Nouvelle tentative dans"
 #define D_VERIFIED "Vérifié par empreinte "
@@ -345,7 +345,7 @@
 #define D_HUE_API_NOT_IMPLEMENTED "API Hue non implémentée"
 #define D_HUE_API "Hue API"
 #define D_HUE_POST_ARGS "Hue POST args"
-#define D_3_RESPONSE_PACKETS_SENT "3 paquets response envoyés"
+#define D_3_RESPONSE_PACKETS_SENT "3 paquets Response envoyés"
 
 // xdrv_05_domoticz.ino
 #define D_DOMOTICZ_PARAMETERS "Paramètres Domoticz"
@@ -365,7 +365,7 @@
 #define D_DOMOTICZ_UPDATE_TIMER "Durée de rafraichissement"
 
 // xdrv_09_timers.ino
-#define D_CONFIGURE_TIMER "Configuration Timer"
+#define D_CONFIGURE_TIMER "Configuration des Timers"
 #define D_TIMER_PARAMETERS "Paramètres Timer"
 #define D_TIMER_ARM "Armer"
 #define D_TIMER_TIME "Temps"
@@ -375,24 +375,24 @@
 #define D_TIMER_ACTION "Action"
 
 // xdrv_10_knx.ino
-#define D_CONFIGURE_KNX "Configure KNX"
-#define D_KNX_PARAMETERS "KNX Parameters"
-#define D_KNX_GENERAL_CONFIG "General"
-#define D_KNX_PHYSICAL_ADDRESS "Physical Address"
-#define D_KNX_PHYSICAL_ADDRESS_NOTE "( Must be unique on the KNX network )"
-#define D_KNX_ENABLE "Enable KNX"
-#define D_KNX_GROUP_ADDRESS_TO_WRITE "Data to Send to Group Addresses"
-#define D_ADD "Add"
-#define D_DELETE "Delete"
-#define D_REPLY "Reply"
-#define D_KNX_GROUP_ADDRESS_TO_READ "Group Addresses to Receive Data from"
+#define D_CONFIGURE_KNX "Configuration de KNX"
+#define D_KNX_PARAMETERS "Paramètres KNX"
+#define D_KNX_GENERAL_CONFIG "Général"
+#define D_KNX_PHYSICAL_ADDRESS "Adresse individuelle"				// Backbone/Line/Device -> Zone/Ligne/Participant
+#define D_KNX_PHYSICAL_ADDRESS_NOTE "(Doit être unique sur le réseau KNX)"
+#define D_KNX_ENABLE "Activer KNX"
+#define D_KNX_GROUP_ADDRESS_TO_WRITE "Données à envoyer à  les Adresses de Groupe"
+#define D_ADD "Ajoûter"
+#define D_DELETE "Supprimer"
+#define D_REPLY "Répondre"
+#define D_KNX_GROUP_ADDRESS_TO_READ "Données à recevoir des Adresses de Groupe"
 #define D_LOG_KNX "KNX: "
-#define D_RECEIVED_FROM "Received from"
-#define D_KNX_COMMAND_WRITE "Write"
-#define D_KNX_COMMAND_READ "Read"
-#define D_KNX_COMMAND_OTHER "Other"
-#define D_SENT_TO "sent to"
-#define D_KNX_WARNING "The group address ( 0 / 0 / 0 ) is reserved and can not be used."
+#define D_RECEIVED_FROM "Reçu de"
+#define D_KNX_COMMAND_WRITE "Écrire"
+#define D_KNX_COMMAND_READ "Lire"
+#define D_KNX_COMMAND_OTHER "Autre"
+#define D_SENT_TO "envoyé à"
+#define D_KNX_WARNING "L'Adresse de Groupe ( 0 / 0 / 0 ) est réservée et ne peut être utilisée."
 
 // xsns_03_energy.ino
 #define D_ENERGY_TODAY "Énergie aujourd'hui"
@@ -412,7 +412,7 @@
 #define D_CHECKSUM_FAILURE "Erreur checksum"
 
 // xsns_07_sht1x.ino
-#define D_SENSOR_DID_NOT_ACK_COMMAND "Le capteur n'a pas ACK la commande"
+#define D_SENSOR_DID_NOT_ACK_COMMAND "Le capteur n'a pas acquitté la commande"
 #define D_SHT1X_FOUND "SHT1X found"
 
 // xsns_18_pms5003.ino
@@ -454,12 +454,12 @@
 // Units
 #define D_UNIT_AMPERE "A"
 #define D_UNIT_HOUR "h"
-#define D_UNIT_KILOOHM "kOhm"
+#define D_UNIT_KILOOHM "kΩ"
 #define D_UNIT_KILOWATTHOUR "kWh"
 #define D_UNIT_LUX "lx"
-#define D_UNIT_MICROGRAM_PER_CUBIC_METER "ug/m3"
-#define D_UNIT_MICROMETER "um"
-#define D_UNIT_MICROSECOND "us"
+#define D_UNIT_MICROGRAM_PER_CUBIC_METER "µg/m3"
+#define D_UNIT_MICROMETER "µm"
+#define D_UNIT_MICROSECOND "µs"
 #define D_UNIT_MILLIAMPERE "mA"
 #define D_UNIT_MILLISECOND "ms"
 #define D_UNIT_MINUTE "Min"

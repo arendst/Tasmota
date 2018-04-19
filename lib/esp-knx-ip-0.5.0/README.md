@@ -3,19 +3,6 @@
 This is a library for the ESP8266 to enable KNXnet/IP communication. It uses UDP multicast on 224.0.23.12:3671.
 It is intended to be used with the Arduino platform for the ESP8266.
 
-## Prerequisities / Dependencies ##
-
-* You need version 2.4.0 of the esp8266 board libraries.
-  * I only tested with lwip v1.4. v2 might work, you need to test yourself.
-* You need the [ESPAsyncUDP](https://github.com/me-no-dev/ESPAsyncUDP) library.
-* You need a KNXnet/IP **router**. A gateway will **not** work. Alternatively use [knxd](https://github.com/knxd/knxd).
-
-## Caveats ##
-
-Receiving packets should work immediately.
-
-Sending sometimes only works after a substantial amount of time (max 5 minutes in my experiments). In my case, this was fixed by disabling IGMP snooping on the switch(es).
-
 ## How to use ##
 
 The library is under development. API may change multiple times in the future.
