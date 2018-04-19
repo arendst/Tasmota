@@ -870,8 +870,6 @@ boolean Xdrv11(byte function)
         break;
       case FUNC_LOOP:
         knx.loop();  // Process knx events
-                     //    It is not used by the actual config of asyncUDP branch of ESP-KNX-IP Library,
-                     //    but is left here for compatibility with upcoming features of ESP-KNX-IP Library
         break;
 //      case FUNC_COMMAND:
 //        result = KNXCommand();
