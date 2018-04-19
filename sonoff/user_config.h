@@ -203,7 +203,7 @@
 //#define USE_MQTT_TLS                             // Use TLS for MQTT connection (+53k code, +15k mem)
 
 // -- KNX IP Protocol -----------------------------
-//#define USE_KNX                                  // Enable KNX IP Protocol Support (+23k code, +3k3 mem)
+#define USE_KNX                                  // Enable KNX IP Protocol Support (+23k code, +3k3 mem)
 
 // -- HTTP ----------------------------------------
 #define USE_WEBSERVER                            // Enable web server and wifi manager (+66k code, +8k mem)
