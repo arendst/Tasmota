@@ -109,7 +109,7 @@ We can configure to send the value of temperature or humidity every teleperiod. 
 
 ## Modifications to Sonoff-Tasmota ##
 
-* Adding the file _/sonoff/xdrv_10_KNX.ino_
+* Adding the file _/sonoff/xdrv_11_KNX.ino_
 * Add the entry `#define USE_KNX` on _/sonoff/user_config.h_
 * Add entries to the file _/sonoff/webserver.ino_
 * Add entries to the file _/sonoff/sonoff.ino_
