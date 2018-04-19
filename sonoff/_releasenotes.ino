@@ -2,6 +2,7 @@
  * Reinit timers to accomodate random window (#2447)
  * Add random window to timers (#2447)
  * Add optional KNX IP Protocol Support (#2402)
+ * Fix compile error when using ESP/Arduino library v2.3.0 by reverting KNX async UDP library to default UDP library (#2488,#2492,#2493)
  *
  * 5.12.0l
  * Release rules up to 511 characters
