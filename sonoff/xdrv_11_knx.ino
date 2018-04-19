@@ -20,9 +20,6 @@
 #ifdef USE_KNX
 /*********************************************************************************************\
  * KNX support
- *
- * Using libraries:
- *   ESP KNX IP library (https://github.com/envy/esp-knx-ip)
 
 Constants in sonoff.h
 -----------------------
@@ -33,7 +30,6 @@ Constants in sonoff.h
                                                        #define MAX_CALLBACK_ASSIGNMENTS  10
                                                        #define MAX_CALLBACKS             10
                                              Both to MAX_KNX_CB
-
 Variables in settings.h
 -----------------------
 
@@ -46,12 +42,12 @@ uint16_t      Settings.knx_CB_addr[MAX_KNX_CB]      Group address to write
 byte          Settings.knx_GA_param[MAX_KNX_GA]     Type of Input (relay changed, button pressed, sensor read)
 byte          Settings.knx_CB_param[MAX_KNX_CB]     Type of Output (set relay, toggle relay, reply sensor value)
 
+//void KNX_CB_Action(message_t const &msg, void *arg);  // Define function (action callback) to be called by the KNX_IP Library
+                                                        // when an action is requested by another KNX Device
+
 \*********************************************************************************************/
 
-#include <esp-knx-ip.h>
-
-//void KNX_CB_Action(message_t const &msg, void *arg);  // Define function (action callback) to be called by the KNX_IP Library
-                                                      // when an action is requested by another KNX Device
+#include <esp-knx-ip.h> // ESP KNX IP library (https://github.com/envy/esp-knx-ip)
 
 address_t KNX_physs_addr;  // Physical KNX address of this device
 address_t KNX_addr;        // KNX Address converter variable
