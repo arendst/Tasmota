@@ -2,6 +2,7 @@
  * Reinit timers to accomodate random window (#2447)
  * Add random window to timers (#2447)
  * Add optional KNX IP Protocol Support (#2402)
+ * Add Greek language file (#2491)
  * Fix compile error when using ESP/Arduino library v2.3.0 by reverting KNX async UDP library to default UDP library (#2488,#2492,#2493)
  * Fix configuration filename truncation when it contains spaces (#2484, #2490)
  *
