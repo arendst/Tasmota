@@ -266,8 +266,10 @@ void HtuShow(boolean json)
 #endif  // USE_DOMOTICZ
 
 #ifdef USE_KNX
-        KNX_Sensor(KNX_temperature, t);
-        KNX_Sensor(KNX_humidity, h);
+      if (0 == tele_period) {
+        KnxSensor(KNX_TEMPERATURE, t);
+        KnxSensor(KNX_HUMIDITY, h);
+      }
 #endif  // USE_KNX
 
 #ifdef USE_WEBSERVER
@@ -309,3 +311,4 @@ boolean Xsns08(byte function)
 
 #endif  // USE_HTU
 #endif  // USE_I2C
+
