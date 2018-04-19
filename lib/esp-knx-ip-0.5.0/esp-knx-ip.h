@@ -45,7 +45,7 @@
 #include "Arduino.h"
 #include <EEPROM.h>
 #include <ESP8266WiFi.h>
-#include <ESPAsyncUDP.h>
+#include <WiFiUdp.h>
 #include <ESP8266WebServer.h>
 
 #include "DPT.h"
@@ -509,7 +509,7 @@ class ESPKNXIP {
 
   private:
     void __start();
-    void __loop_knx(AsyncUDPPacket &packet);
+    void __loop_knx();
 
     // Webserver functions
     void __loop_webserver();
@@ -544,7 +544,7 @@ class ESPKNXIP {
 
     ESP8266WebServer *server;
     address_t physaddr;
-    AsyncUDP udp;
+    WiFiUDP udp;
 
     callback_assignment_id_t registered_callback_assignments;
     callback_assignment_id_t free_callback_assignment_slots;

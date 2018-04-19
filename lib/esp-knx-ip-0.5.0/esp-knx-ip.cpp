@@ -96,10 +96,7 @@ void ESPKNXIP::__start()
     server->begin();
   }
 
-  udp.listenMulticast(MULTICAST_IP, MULTICAST_PORT);
-  udp.onPacket([this](AsyncUDPPacket &packet) {
-    DEBUG_PRINTLN("got packet");
-    __loop_knx(packet); });
+  udp.beginMulticast(WiFi.localIP(),  MULTICAST_IP, MULTICAST_PORT);
 }
 
 void ESPKNXIP::save_to_eeprom()
@@ -514,6 +511,7 @@ feedback_id_t ESPKNXIP::feedback_register_action(String name, feedback_action_fp
 
 void ESPKNXIP::loop()
 {
+  __loop_knx();
   if (server != nullptr)
   {
     __loop_webserver();
@@ -525,9 +523,9 @@ void ESPKNXIP::__loop_webserver()
   server->handleClient();
 }
 
-void ESPKNXIP::__loop_knx(AsyncUDPPacket &packet)
+void ESPKNXIP::__loop_knx()
 {
-  size_t read = packet.length();
+  int read = udp.parsePacket();
   if (!read)
   {
     return;
@@ -536,11 +534,14 @@ void ESPKNXIP::__loop_knx(AsyncUDPPacket &packet)
   DEBUG_PRINT(F("LEN: "));
   DEBUG_PRINTLN(read);
 
-  uint8_t *buf = packet.data();
+  uint8_t buf[read];
+
+  udp.read(buf, read);
+  udp.flush();
 
   DEBUG_PRINT(F("Got packet:"));
 #ifdef ESP_KNX_DEBUG
-  for (size_t i = 0; i < read; ++i)
+  for (int i = 0; i < read; ++i)
   {
     DEBUG_PRINT(F(" 0x"));
     DEBUG_PRINT(buf[i], 16);
