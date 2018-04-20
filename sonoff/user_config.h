@@ -165,8 +165,10 @@
 
 // -- Localization --------------------------------
   // If non selected the default en-GB will be used
+//#define MY_LANGUAGE            bg-BG           // Bulgarian in Bulgaria
 //#define MY_LANGUAGE            cs-CZ           // Czech in Czech
 //#define MY_LANGUAGE            de-DE           // German in Germany
+//#define MY_LANGUAGE            el-GR           // Greek in Greece
 //#define MY_LANGUAGE            en-GB           // English in Great Britain. Enabled by Default
 //#define MY_LANGUAGE            es-AR           // Spanish in Argentina
 //#define MY_LANGUAGE            fr-FR           // French in France
@@ -283,6 +285,8 @@
 //  #define USE_WS2812_DMA                         // DMA supports only GPIO03 (= Serial RXD) (+1k mem). When USE_WS2812_DMA is enabled expect Exceptions on Pow
 
 // #define USE_ARILUX_RF                            // Add support for Arilux RF remote controller (+0k8 code, 252 iram (non 2.3.0))
+
+#define USE_SR04                                 // Add support for HC-SR04 ultrasonic devices (+1k code)
 
 /*********************************************************************************************\
  * Select all sensors - overrides above undefines!!

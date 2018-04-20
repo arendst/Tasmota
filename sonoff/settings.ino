@@ -119,41 +119,6 @@ boolean RtcSettingsValid()
   return (RTC_MEM_VALID == RtcSettings.valid);
 }
 
-#ifdef DEBUG_THEO
-void RtcSettingsDump()
-{
-  #define CFG_COLS 16
-
-  uint16_t idx;
-  uint16_t maxrow;
-  uint16_t row;
-  uint16_t col;
-
-  uint8_t *buffer = (uint8_t *) &RtcSettings;
-  maxrow = ((sizeof(RTCMEM)+CFG_COLS)/CFG_COLS);
-
-  for (row = 0; row < maxrow; row++) {
-    idx = row * CFG_COLS;
-    snprintf_P(log_data, sizeof(log_data), PSTR("%03X:"), idx);
-    for (col = 0; col < CFG_COLS; col++) {
-      if (!(col%4)) {
-        snprintf_P(log_data, sizeof(log_data), PSTR("%s "), log_data);
-      }
-      snprintf_P(log_data, sizeof(log_data), PSTR("%s %02X"), log_data, buffer[idx + col]);
-    }
-    snprintf_P(log_data, sizeof(log_data), PSTR("%s |"), log_data);
-    for (col = 0; col < CFG_COLS; col++) {
-//      if (!(col%4)) {
-//        snprintf_P(log_data, sizeof(log_data), PSTR("%s "), log_data);
-//      }
-      snprintf_P(log_data, sizeof(log_data), PSTR("%s%c"), log_data, ((buffer[idx + col] > 0x20) && (buffer[idx + col] < 0x7F)) ? (char)buffer[idx + col] : ' ');
-    }
-    snprintf_P(log_data, sizeof(log_data), PSTR("%s|"), log_data);
-    AddLog(LOG_LEVEL_INFO);
-  }
-}
-#endif  // DEBUG_THEO
-
 /*********************************************************************************************\
  * Config - Flash
 \*********************************************************************************************/
@@ -372,57 +337,6 @@ void SettingsSdkErase()
   SettingsErase(1);
   SettingsEraseConfig();
   delay(1000);
-}
-
-void SettingsDump(char* parms)
-{
-  #define CFG_COLS 16
-
-  uint16_t idx;
-  uint16_t maxrow;
-  uint16_t row;
-  uint16_t col;
-  char *p;
-
-  uint8_t *buffer = (uint8_t *) &Settings;
-  maxrow = ((sizeof(SYSCFG)+CFG_COLS)/CFG_COLS);
-
-  uint16_t srow = strtol(parms, &p, 16) / CFG_COLS;
-  uint16_t mrow = strtol(p, &p, 10);
-
-//  snprintf_P(log_data, sizeof(log_data), PSTR("Cnfg: Parms %s, Start row %d, rows %d"), parms, srow, mrow);
-//  AddLog(LOG_LEVEL_DEBUG);
-
-  if (0 == mrow) {  // Default only 8 lines
-    mrow = 8;
-  }
-  if (srow > maxrow) {
-    srow = maxrow - mrow;
-  }
-  if (mrow < (maxrow - srow)) {
-    maxrow = srow + mrow;
-  }
-
-  for (row = srow; row < maxrow; row++) {
-    idx = row * CFG_COLS;
-    snprintf_P(log_data, sizeof(log_data), PSTR("%03X:"), idx);
-    for (col = 0; col < CFG_COLS; col++) {
-      if (!(col%4)) {
-        snprintf_P(log_data, sizeof(log_data), PSTR("%s "), log_data);
-      }
-      snprintf_P(log_data, sizeof(log_data), PSTR("%s %02X"), log_data, buffer[idx + col]);
-    }
-    snprintf_P(log_data, sizeof(log_data), PSTR("%s |"), log_data);
-    for (col = 0; col < CFG_COLS; col++) {
-//      if (!(col%4)) {
-//        snprintf_P(log_data, sizeof(log_data), PSTR("%s "), log_data);
-//      }
-      snprintf_P(log_data, sizeof(log_data), PSTR("%s%c"), log_data, ((buffer[idx + col] > 0x20) && (buffer[idx + col] < 0x7F)) ? (char)buffer[idx + col] : ' ');
-    }
-    snprintf_P(log_data, sizeof(log_data), PSTR("%s|"), log_data);
-    AddLog(LOG_LEVEL_INFO);
-    delay(1);
-  }
 }
 
 /********************************************************************************************/
