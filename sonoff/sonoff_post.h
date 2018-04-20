@@ -79,6 +79,7 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #endif
 //  #define USE_WS2812_DMA                      // DMA supports only GPIO03 (= Serial RXD) (+1k mem). When USE_WS2812_DMA is enabled expect Exceptions on Pow
 #define USE_ARILUX_RF                         // Add support for Arilux RF remote controller (+0k8 code, 252 iram (non 2.3.0))
+#define USE_SR04                              // Add support for ultrasonic SR04x sensors (+xxk code)
 #endif  // USE_ALL_SENSORS =====================
 
 #if defined(USE_DS18x20) || defined(USE_DS18x20_LEGACY)
@@ -152,6 +153,9 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #endif
 #ifdef DEBUG_THEO
 #undef DEBUG_THEO                             // Disable debug code
+#endif
+#ifdef USE_SR04
+#undef USE_SR04                               // Disable SR04 support
 #endif
 #endif  // BE_MINIMAL ==========================
 

@@ -126,6 +126,7 @@
 #define D_JSON_WRONG "Wrong"
 #define D_JSON_YESTERDAY "Yesterday"
 #define D_JSON_ZERO_POINT_CALIBRATION "Zero Point Calibration"
+#define D_JSON_DISTANCE "Distance"
 
 #define D_RSLT_ENERGY "ENERGY"
 #define D_RSLT_INFO "INFO"

@@ -158,6 +158,7 @@
 #define D_VOLTAGE "Voltage"
 #define D_WARMLIGHT "Warm"
 #define D_WEB_SERVER "Web Server"
+#define D_DISTANCE "Distance"
 
 // sonoff.ino
 #define D_WARNING_MINIMAL_VERSION "WARNING This version does not support persistent settings"
@@ -450,6 +451,8 @@
 #define D_SENSOR_SDS0X1   "SDS0X1"
 #define D_SENSOR_SBR_RX   "SerBr Rx"
 #define D_SENSOR_SBR_TX   "SerBr Tx"
+#define D_SENSOR_SR04_TRIG "SR04 Trig" 
+#define D_SENSOR_SR04_ECHO "SR04 Echo"
 
 // Units
 #define D_UNIT_AMPERE "A"
@@ -459,6 +462,7 @@
 #define D_UNIT_LUX "lx"
 #define D_UNIT_MICROGRAM_PER_CUBIC_METER "ug/m3"
 #define D_UNIT_MICROMETER "um"
+#define D_UNIT_CENTIMETER "cm"
 #define D_UNIT_MICROSECOND "us"
 #define D_UNIT_MILLIAMPERE "mA"
 #define D_UNIT_MILLISECOND "ms"

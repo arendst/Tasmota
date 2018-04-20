@@ -662,6 +662,14 @@ boolean GetUsedInModule(byte val, uint8_t *arr)
     return true;
   }
 #endif
+#ifndef USE_SR04
+  if (GPIO_SR04_TRIG == val) {
+    return true;
+  }
+  if (GPIO_SR04_ECHO == val) {
+    return true;
+  }
+#endif
 #ifndef USE_WS2812
   if (GPIO_WS2812 == val) {
     return true;
