@@ -1,14 +1,15 @@
-set version=5.12.0m-mod-1.18.13
+set version=5.12.0m-mod-1.19.13
 
 mkdir %version%
 
 copy ..\.pioenvs\sonoff\firmware.bin %version%\EN-firmware-%version%.bin
+copy ..\.pioenvs\sonoff-BG\firmware.bin %version%\BG-firmware-%version%.bin
 copy ..\.pioenvs\sonoff-CN\firmware.bin %version%\CN-firmware-%version%.bin
 copy ..\.pioenvs\sonoff-CZ\firmware.bin %version%\CZ-firmware-%version%.bin
 copy ..\.pioenvs\sonoff-DE\firmware.bin %version%\DE-firmware-%version%.bin
-copy ..\.pioenvs\sonoff-ds18x20\firmware.bin %version%\DS18X20-firmware-%version%.bin
 copy ..\.pioenvs\sonoff-ES\firmware.bin %version%\ES-firmware-%version%.bin
 copy ..\.pioenvs\sonoff-FR\firmware.bin %version%\FR-firmware-%version%.bin
+copy ..\.pioenvs\sonoff-GR\firmware.bin %version%\GR-firmware-%version%.bin
 copy ..\.pioenvs\sonoff-HU\firmware.bin %version%\HU-firmware-%version%.bin
 copy ..\.pioenvs\sonoff-IT\firmware.bin %version%\IT-firmware-%version%.bin
 copy ..\.pioenvs\sonoff-minimal\firmware.bin %version%\MINIMAL-firmware-%version%.bin
