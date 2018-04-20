@@ -181,6 +181,7 @@ enum SupportedModules {
   ARILUX_LC06,
   SONOFF_S31,
   ZENGGE_ZF_WF017,
+  SMART_HOME,
   MAXMODULE };
 
 /********************************************************************************************/
@@ -240,7 +241,8 @@ const uint8_t kNiceList[MAXMODULE] PROGMEM = {
   KMC_70011,
   AILIGHT,
   WEMOS,
-  WITTY
+  WITTY,
+  SMART_HOME
 };
 
 // Default module settings
@@ -804,7 +806,16 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_PWM1,        // GPIO13 RGB LED Red
      GPIO_PWM3,        // GPIO14 RGB LED Blue
      0, 0, 0
-  }
+  },
+  {"Smart Home",      // Smart Home Switch (ESP8285 Sonoff Basic Clone)      
+     0, 0, 0, 0,
+     GPIO_REL1,       // GPIO04 Relais
+     0, 0, 0, 0, 0, 0, 0,
+     GPIO_KEY1,       // GPIO12 Button on casing
+     GPIO_LED2,       // GPIO13 Red Led
+     0,
+     GPIO_LED1,       // GPIO15 Blue LED
+     0, 0}
 };
 
 /*
