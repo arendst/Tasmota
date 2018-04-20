@@ -46,6 +46,7 @@
 #define D_JSON_COUNTER "Counter"
 #define D_JSON_CURRENT "Current"         // As in Voltage and Current
 #define D_JSON_DATA "Data"
+#define D_JSON_DISTANCE "Distance"
 #define D_JSON_DNSSERVER "DNSServer"
 #define D_JSON_DONE "Done"
 #define D_JSON_ECO2 "eCO2"
