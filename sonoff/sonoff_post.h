@@ -86,8 +86,6 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #define USE_DS18B20                           // Default DS18B20 sensor needs no external library
 #endif
 
-//#define DEBUG_THEO                            // Add debug code
-
 #ifdef BE_MINIMAL  // ========================== Configure sonoff-minimal.bin =====================
 #ifdef USE_MQTT_TLS
 #undef USE_MQTT_TLS                           // Disable TLS support won't work as the MQTTHost is not set
@@ -112,6 +110,9 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #endif
 #ifdef USE_SUNRISE
 #undef USE_SUNRISE                            // Disable support for Sunrise and sunset tools
+#endif
+#ifdef USE_KNX
+#undef USE_KNX                                // Disable KNX IP Protocol Support
 #endif
 #ifdef USE_PZEM004T
 #undef USE_PZEM004T                           // Disable PZEM004T energy sensor
