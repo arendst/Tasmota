@@ -252,7 +252,7 @@ void HlwInit()
 }
 
 /*********************************************************************************************\
- * CSE7766 - Energy (Sonoff S31)
+ * CSE7766 - Energy (Sonoff S31 and Sonoff Pow R2)
  *
  * Based on datasheet from http://www.chipsea.com/UploadFiles/2017/08/11144342F01B5662.pdf
 \*********************************************************************************************/
@@ -1015,9 +1015,9 @@ boolean EnergyCommand()
 void EnergyDrvInit()
 {
   energy_flg = ENERGY_NONE;
-  if ((pin[GPIO_HLW_SEL] < 99) && (pin[GPIO_HLW_CF1] < 99) && (pin[GPIO_HLW_CF] < 99)) {  // Sonoff Pow
+  if ((pin[GPIO_HLW_SEL] < 99) && (pin[GPIO_HLW_CF1] < 99) && (pin[GPIO_HLW_CF] < 99)) {  // Sonoff Pow or any HLW8012 based device
     energy_flg = ENERGY_HLW8012;
-  } else if (SONOFF_S31 == Settings.module) {  // Sonoff S31
+  } else if ((SONOFF_S31 == Settings.module) || (SONOFF_POW_R2 == Settings.module)) {     // Sonoff S31 or Sonoff Pow R2
     baudrate = 4800;
     serial_config = SERIAL_8E1;
     energy_flg = ENERGY_CSE7766;

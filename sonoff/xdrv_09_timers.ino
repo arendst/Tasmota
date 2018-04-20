@@ -491,17 +491,17 @@ const char HTTP_TIMER_SCRIPT[] PROGMEM =
     "m=qs('input[name=\"rd\"]:checked').value;"                   // Get mode
     "p=pt[ct]&0x7FF;"                                             // Get time
     "if(m==0){"                                                   // Time is set
+      "so(0);"                                                    // Hide offset span and allow Hour 00..23
       "q=Math.floor(p/60);if(q<10){q='0'+q;}qs('#ho').value=q;"   // Set hours
       "q=p%60;if(q<10){q='0'+q;}qs('#mi').value=q;"               // Set minutes
-      "so(0);"                                                    // Schedule time, hide offset span
     "}"
     "if((m==1)||(m==2)){"                                         // Sunrise or sunset is set
+      "so(1);"                                                    // Show offset span and allow Hour 00..11
       "q=Math.floor(p/60);"                                       // Parse hours
       "if(q>=12){q-=12;qs('#dr').selectedIndex=1;}"               // Negative offset
         "else{qs('#dr').selectedIndex=0;}"
       "if(q<10){q='0'+q;}qs('#ho').value=q;"                      // Set offset hours
       "q=p%60;if(q<10){q='0'+q;}qs('#mi').value=q;"               // Set offset minutes
-      "so(1);"                                                    // Show offset span
     "}"
   "}"
   "function so(b){"                                               // Hide or show offset items
@@ -536,7 +536,7 @@ const char HTTP_TIMER_SCRIPT[] PROGMEM =
       "s|=l&0x7FF;"                                               // Save offset instead of time
     "}"
 #endif
-    "s|=((qs('#mw').selectedIndex)&0x0F)<<11;"                      // Get window minutes
+    "s|=((qs('#mw').selectedIndex)&0x0F)<<11;"                    // Get window minutes
     "pt[ct]=s;"
     "eb('t0').value=pt.join();"                                   // Save parameters from array to hidden area
   "}"
@@ -568,7 +568,7 @@ const char HTTP_TIMER_SCRIPT[] PROGMEM =
     "pt=eb('t0').value.split(',').map(Number);"                   // Get parameters from hidden area to array
     "s='';for(i=0;i<" STR(MAX_TIMERS) ";i++){b='';if(0==i){b=\" id='dP'\";}s+=\"<button type='button' class='tl' onclick='ot(\"+i+\",this)'\"+b+\">\"+(i+1)+\"</button>\"}"
     "eb('bt').innerHTML=s;"                                       // Create tabs
-#ifdef USE_SUNRISE                                                // NEW: Create offset options (+/- up to 11h, 59m)
+#ifdef USE_SUNRISE
     "o=qs('#dr');ce('+',o);ce('-',o);"                            // Create offset direction select options
 #endif
     "o=qs('#ho');for(i=0;i<=23;i++){ce((i<10)?('0'+i):i,o);}"     // Create hours select options

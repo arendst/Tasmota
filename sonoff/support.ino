@@ -232,7 +232,7 @@ char* UpperCase_P(char* dest, const char* source)
   return dest;
 }
 
-char* SpaceToUnderscore(char* dest, const char* source)
+char* NoAlNumToUnderscore(char* dest, const char* source)
 {
   char* write = dest;
   const char* read = source;
@@ -240,7 +240,7 @@ char* SpaceToUnderscore(char* dest, const char* source)
 
   while (ch != '\0') {
     ch = *read++;
-    *write++ = (ch == ' ') ? '_' : ch;
+    *write++ = (isalnum(ch) || ('\0' == ch)) ? ch : '_';
   }
   return dest;
 }

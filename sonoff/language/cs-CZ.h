@@ -1,7 +1,7 @@
 /*
   cs-CZ.h - localization for Czech with diacritics - Czech for Sonoff-Tasmota
 
-  Copyright (C) 2018  Theo Arends (translated by vs)
+  Copyright (C) 2018  Vladimír Synekl
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v5.12.0k
+ * Updated until v5.12.0m
 \*********************************************************************/
 
 //#define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -57,7 +57,7 @@
 #define D_AUTO "AUTO"
 #define D_BLINK "Blikání"
 #define D_BLINKOFF "BlikáníVyp"
-#define D_BOOT_COUNT "Počitadlo spuštění"
+#define D_BOOT_COUNT "Počítadlo spuštění"
 #define D_BRIGHTLIGHT "Světlý"
 #define D_BUTTON "Tlačítko"
 #define D_BY "by"                    // Written by me
@@ -69,12 +69,13 @@
 #define D_COMMAND "Příkaz"
 #define D_CONNECTED "...připojeno"
 #define D_COUNT "Počítej"
-#define D_COUNTER "Počitadlo"
+#define D_COUNTER "Počítadlo"
 #define D_CURRENT "Proud"          // As in Voltage and Current
 #define D_DATA "Data"
 #define D_DARKLIGHT "Tmavý"
 #define D_DEBUG "Debug"
 #define D_DISABLED "Zablokováno"
+#define D_DISTANCE "Distance"
 #define D_DNS_SERVER "Server DNS"
 #define D_DONE "Provedeno"
 #define D_DST_TIME "DST"
@@ -116,7 +117,7 @@
 #define D_ONLINE "Aktivní"
 #define D_PASSWORD "Heslo"
 #define D_PORT "Port"
-#define D_POWER_FACTOR "Součinitel příkonu"
+#define D_POWER_FACTOR "Účiník"
 #define D_POWERUSAGE "Příkon"
 #define D_PRESSURE "Tlak"
 #define D_PRESSUREATSEALEVEL "Tlak na úrovni hladiny moře"
@@ -375,24 +376,24 @@
 #define D_TIMER_ACTION "Napájení"
 
 // xdrv_10_knx.ino
-#define D_CONFIGURE_KNX "Configure KNX"
-#define D_KNX_PARAMETERS "KNX Parameters"
-#define D_KNX_GENERAL_CONFIG "General"
-#define D_KNX_PHYSICAL_ADDRESS "Physical Address"
-#define D_KNX_PHYSICAL_ADDRESS_NOTE "( Must be unique on the KNX network )"
-#define D_KNX_ENABLE "Enable KNX"
-#define D_KNX_GROUP_ADDRESS_TO_WRITE "Data to Send to Group Addresses"
-#define D_ADD "Add"
-#define D_DELETE "Delete"
-#define D_REPLY "Reply"
-#define D_KNX_GROUP_ADDRESS_TO_READ "Group Addresses to Receive Data from"
+#define D_CONFIGURE_KNX "Nastavení KNX"
+#define D_KNX_PARAMETERS "KNX parametry"
+#define D_KNX_GENERAL_CONFIG "Obecné"
+#define D_KNX_PHYSICAL_ADDRESS "Fyzická adresa"
+#define D_KNX_PHYSICAL_ADDRESS_NOTE "( Musí být jedinečná v síti KNX )"
+#define D_KNX_ENABLE "Povol KNX"
+#define D_KNX_GROUP_ADDRESS_TO_WRITE "Data k odeslání na skupinové adresy"
+#define D_ADD "Přidej"
+#define D_DELETE "Smaž"
+#define D_REPLY "Odpověď"
+#define D_KNX_GROUP_ADDRESS_TO_READ "Skupinové adresy pro příjem dat z"
 #define D_LOG_KNX "KNX: "
-#define D_RECEIVED_FROM "Received from"
-#define D_KNX_COMMAND_WRITE "Write"
-#define D_KNX_COMMAND_READ "Read"
-#define D_KNX_COMMAND_OTHER "Other"
-#define D_SENT_TO "sent to"
-#define D_KNX_WARNING "The group address ( 0 / 0 / 0 ) is reserved and can not be used."
+#define D_RECEIVED_FROM "Přijato z"
+#define D_KNX_COMMAND_WRITE "Zapiš"
+#define D_KNX_COMMAND_READ "Čti"
+#define D_KNX_COMMAND_OTHER "Jiné"
+#define D_SENT_TO "pošli"
+#define D_KNX_WARNING "Skupinová adresa ( 0 / 0 / 0 ) je rezervována a nemůže být použita."
 
 // xdrv_03_energy.ino
 #define D_ENERGY_TODAY "Spotřeba Dnes"
@@ -435,7 +436,7 @@
 #define D_SENSOR_RELAY    "Relé"    // Suffix "1i"
 #define D_SENSOR_LED      "Led"      // Suffix "1i"
 #define D_SENSOR_PWM      "PWM"      // Suffix "1",
-#define D_SENSOR_COUNTER  "Počitadlo"  // Suffix "1"
+#define D_SENSOR_COUNTER  "Počítadlo"  // Suffix "1"
 #define D_SENSOR_IRRECV   "IRrecv"
 #define D_SENSOR_MHZ_RX   "MHZ Rx"
 #define D_SENSOR_MHZ_TX   "MHZ Tx"
@@ -450,9 +451,12 @@
 #define D_SENSOR_SDS0X1   "SDS0X1"
 #define D_SENSOR_SBR_RX   "SerBr Rx"
 #define D_SENSOR_SBR_TX   "SerBr Tx"
+#define D_SENSOR_SR04_TRIG "SR04 Tri"
+#define D_SENSOR_SR04_ECHO "SR04 Ech"
 
 // Units
 #define D_UNIT_AMPERE "A"
+#define D_UNIT_CENTIMETER "cm"
 #define D_UNIT_HOUR "hod"
 #define D_UNIT_KILOOHM "kOhm"
 #define D_UNIT_KILOWATTHOUR "kWh"
