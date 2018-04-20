@@ -184,6 +184,7 @@ enum SupportedModules {
   ARILUX_LC06,
   SONOFF_S31,
   ZENGGE_ZF_WF017,
+  SONOFF_POW_R2,
   MAXMODULE };
 
 /********************************************************************************************/
@@ -208,6 +209,7 @@ const uint8_t kNiceList[MAXMODULE] PROGMEM = {
   SONOFF_DUAL,
   SONOFF_DUAL_R2,
   SONOFF_POW,
+  SONOFF_POW_R2,
   SONOFF_S31,
   SONOFF_4CH,
   SONOFF_4CHPRO,
@@ -321,7 +323,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_USER,        // GPIO14 Optional sensor
      0, 0, 0
   },
-  { "Sonoff Pow",      // Sonoff Pow (ESP8266)
+  { "Sonoff Pow",      // Sonoff Pow (ESP8266 - HLW8012)
      GPIO_KEY1,        // GPIO00 Button
      0, 0, 0, 0,
      GPIO_HLW_SEL,     // GPIO05 HLW8012 Sel output
@@ -329,7 +331,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_REL1,        // GPIO12 Red Led and Relay (0 = Off, 1 = On)
      GPIO_HLW_CF1,     // GPIO13 HLW8012 CF1 voltage / current
      GPIO_HLW_CF,      // GPIO14 HLW8012 CF power
-     GPIO_LED1,        // GPIO15 Green Led (0 = On, 1 = Off)
+     GPIO_LED1,        // GPIO15 Blue Led (0 = On, 1 = Off)
      0, 0
   },
   { "Sonoff 4CH",      // Sonoff 4CH (ESP8285)
@@ -784,7 +786,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_USER,        // GPIO15 RGBW LED White
      0, 0
   },
-  { "Sonoff S31",      // Sonoff S31 (ESP8266)
+  { "Sonoff S31",      // Sonoff S31 (ESP8266 - CSE7766)
      GPIO_KEY1,        // GPIO00 Button
      0,                // GPIO01 Serial RXD 4800 baud 8E1 CSE7766 energy sensor
      0,
@@ -807,6 +809,17 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_PWM1,        // GPIO13 RGB LED Red
      GPIO_PWM3,        // GPIO14 RGB LED Blue
      0, 0, 0
+  },
+  { "Sonoff Pow R2",   // Sonoff Pow R2 (ESP8285 - CSE7766)
+     GPIO_KEY1,        // GPIO00 Button
+     0,                // GPIO01 Serial RXD 4800 baud 8E1 CSE7766 energy sensor
+     0,
+     0,                // GPIO03 Serial TXD
+     0, 0,
+     0, 0, 0, 0, 0, 0, // Flash connection
+     GPIO_REL1,        // GPIO12 Red Led and Relay (0 = Off, 1 = On)
+     GPIO_LED1_INV,    // GPIO13 Blue Led (0 = On, 1 = Off)
+     0, 0, 0, 0
   }
 };
 

@@ -2041,9 +2041,9 @@ void SerialInput()
     }
 
 /*-------------------------------------------------------------------------------------------*\
- * Sonoff S31 4800 baud serial interface
+ * Sonoff S31 and Sonoff Pow R2 4800 baud serial interface
 \*-------------------------------------------------------------------------------------------*/
-    if (SONOFF_S31 == Settings.module) {
+    if ((SONOFF_S31 == Settings.module) || (SONOFF_POW_R2 == Settings.module)) {
       if (CseSerialInput()) {
         serial_in_byte_counter = 0;
         Serial.flush();

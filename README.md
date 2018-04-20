@@ -45,6 +45,7 @@ The following devices are supported:
 - [iTead Sonoff TH10/TH16 with temperature sensor](https://www.itead.cc/smart-home/sonoff-th.html)
 - [iTead Sonoff Dual (R2)](https://www.itead.cc/smart-home/sonoff-dual.html)
 - [iTead Sonoff Pow](https://www.itead.cc/smart-home/sonoff-pow.html)
+- [iTead Sonoff Pow R2](https://www.itead.cc/sonoff-pow-r2.html)
 - [iTead Sonoff 4CH](https://www.itead.cc/smart-home/sonoff-4ch.html)
 - [iTead Sonoff 4CH Pro](https://www.itead.cc/smart-home/sonoff-4ch-pro.html)
 - [iTead S20 Smart Socket](https://www.itead.cc/smart-socket.html)
