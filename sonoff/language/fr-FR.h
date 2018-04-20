@@ -149,7 +149,7 @@
 #define D_TRUE "Vrai"
 #define D_TVOC "TVOC"
 #define D_UPGRADE "la mise à jour" 	 // "Lancer la mise à jour"
-#define D_UPLOAD "Upload"    // Not better in french 
+#define D_UPLOAD "Upload"    // Not better in french
 #define D_UPTIME "Durée d'activité"
 #define D_USER "Utilisateur"
 #define D_UTC_TIME "UTC"
@@ -309,14 +309,14 @@
 #define D_UPLOAD_ERR_3 "L'octet magique n'est pas 0xE9"
 #define D_UPLOAD_ERR_4 "La taille du programme à flasher est plus grande que la taille réelle de la mémoire flash"
 #define D_UPLOAD_ERR_5 "Erreur de comparaison du buffer de téléchargement"
-#define D_UPLOAD_ERR_6 "Téléchargement échoué. Activation logging 3"
+#define D_UPLOAD_ERR_6 "Téléchargement échoué. Activer Weblog 3"
 #define D_UPLOAD_ERR_7 "Téléchargement annulé"
 #define D_UPLOAD_ERR_8 "Fichier invalide"
 #define D_UPLOAD_ERR_9 "Fichier trop grand"
 #define D_UPLOAD_ERROR_CODE "Code d'erreur téléchargement"
 
 #define D_ENTER_COMMAND "Saisir une commande"
-#define D_ENABLE_WEBLOG_FOR_RESPONSE "Activer weblog 2 si response attendue"
+#define D_ENABLE_WEBLOG_FOR_RESPONSE "Activer Weblog 2 si une réponse est attendue"
 #define D_NEED_USER_AND_PASSWORD "Nécessite utilisateur=<username>&password=<password>"
 
 // xdrv_00_mqtt.ino
@@ -345,7 +345,7 @@
 #define D_HUE_API_NOT_IMPLEMENTED "API Hue non implémentée"
 #define D_HUE_API "Hue API"
 #define D_HUE_POST_ARGS "Hue POST args"
-#define D_3_RESPONSE_PACKETS_SENT "3 paquets Response envoyés"
+#define D_3_RESPONSE_PACKETS_SENT "3 paquets de réponse envoyés"
 
 // xdrv_05_domoticz.ino
 #define D_DOMOTICZ_PARAMETERS "Paramètres Domoticz"
@@ -381,7 +381,7 @@
 #define D_KNX_PHYSICAL_ADDRESS "Adresse individuelle"				// Backbone/Line/Device -> Zone/Ligne/Participant
 #define D_KNX_PHYSICAL_ADDRESS_NOTE "(Doit être unique sur le réseau KNX)"
 #define D_KNX_ENABLE "Activer KNX"
-#define D_KNX_GROUP_ADDRESS_TO_WRITE "Données à envoyer à  les Adresses de Groupe"
+#define D_KNX_GROUP_ADDRESS_TO_WRITE "Données à envoyer aux Adresses de Groupe"
 #define D_ADD "Ajoûter"
 #define D_DELETE "Supprimer"
 #define D_REPLY "Répondre"
