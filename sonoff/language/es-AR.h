@@ -75,7 +75,7 @@
 #define D_DARKLIGHT "Oscura"
 #define D_DEBUG "Debug"
 #define D_DISABLED "Deshabilitado"
-#define D_DISTANCE "Distance"
+#define D_DISTANCE "Distancia"
 #define D_DNS_SERVER "DNS Server"
 #define D_DONE "Listo"
 #define D_DST_TIME "DST"
