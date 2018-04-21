@@ -234,6 +234,9 @@
 
 // -- Internal Analog input -----------------------
 #define USE_ADC_VCC                              // Display Vcc in Power status. Disable for use as Analog input on selected devices
+#ifndef USE_ADC_VCC
+  #define USE_ADC_PWM                            // Map ADC value to a PWM output (+0k5 code)
+#endif
 
 // -- One wire sensors ----------------------------
                                                  // WARNING: Select none for default one DS18B20 sensor or enable one of the following two options for multiple sensors

@@ -258,7 +258,11 @@ struct SYSCFG {
   byte          knx_GA_param[MAX_KNX_GA];  // 6E2  Type of Input (relay changed, button pressed, sensor read <-teleperiod)
   byte          knx_CB_param[MAX_KNX_CB];  // 6EC  Type of Output (set relay, toggle relay, reply sensor value)
 
-  byte          free_6f6[266];             // 6F6
+  uint8_t       adc_pwm_target;            // 6F6
+  int16_t       adc_pwm_map_lo;            // 6F7
+  int16_t       adc_pwm_map_hi;            // 6F9
+
+  byte          free_6fb[261];             // 6FB
 
   char          rules[MAX_RULE_SIZE];      // 800 uses 512 bytes in v5.12.0m
 

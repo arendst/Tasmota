@@ -370,6 +370,9 @@
 #define D_CMND_LATITUDE "Latitude"
 #define D_CMND_LONGITUDE "Longitude"
 
+// Commands xdrv_12_adc.ino
+#define D_CMND_ADCPWM "AdcPwm"
+
 /********************************************************************************************/
 
 #ifndef MY_LANGUAGE

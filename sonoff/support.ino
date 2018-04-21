@@ -1379,55 +1379,6 @@ void RtcInit()
   TickerRtc.attach(1, RtcSecond);
 }
 
-#ifndef USE_ADC_VCC
-/*********************************************************************************************\
- * ADC support
-\*********************************************************************************************/
-
-void AdcShow(boolean json)
-{
-  uint16_t analog = 0;
-  for (byte i = 0; i < 32; i++) {
-    analog += analogRead(A0);
-    delay(1);
-  }
-  analog >>= 5;
-
-  if (json) {
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"" D_JSON_ANALOG_INPUT "0\":%d"), mqtt_data, analog);
-#ifdef USE_WEBSERVER
-  } else {
-    snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_ANALOG, mqtt_data, "", 0, analog);
-#endif  // USE_WEBSERVER
-  }
-}
-
-/*********************************************************************************************\
- * Interface
-\*********************************************************************************************/
-
-#define XSNS_02
-
-boolean Xsns02(byte function)
-{
-  boolean result = false;
-
-  if (pin[GPIO_ADC0] < 99) {
-    switch (function) {
-      case FUNC_JSON_APPEND:
-        AdcShow(1);
-        break;
-#ifdef USE_WEBSERVER
-      case FUNC_WEB_APPEND:
-        AdcShow(0);
-        break;
-#endif  // USE_WEBSERVER
-    }
-  }
-  return result;
-}
-#endif  // USE_ADC_VCC
-
 /*********************************************************************************************\
  * Syslog
  *

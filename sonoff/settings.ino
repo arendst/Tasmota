@@ -521,6 +521,11 @@ void SettingsDefaultSet2()
 
   Settings.latitude = (int)((double)LATITUDE * 1000000);
   Settings.longitude = (int)((double)LONGITUDE * 1000000);
+
+  // 5.12.0n
+  //Settings.adc_pwm_targe = 0;
+  //Settings.adc_pwm_map_lo = 0;
+  Settings.adc_pwm_map_hi = 1023;
 }
 
 /********************************************************************************************/
@@ -850,6 +855,11 @@ void SettingsDelta()
       Settings.knx_GA_registered = 0;
       Settings.knx_CB_registered = 0;
       memset(&Settings.knx_physsical_addr, 0x00, 0x800 - 0x6b8);  // Reset until 0x800 for future use
+    }
+    if (Settings.version < 0x050C000E) {
+      //Settings.adc_pwm_targe = 0;
+      //Settings.adc_pwm_map_lo = 0;
+      Settings.adc_pwm_map_hi = 1023;
     }
 
     Settings.version = VERSION;
