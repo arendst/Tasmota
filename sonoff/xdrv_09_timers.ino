@@ -345,7 +345,7 @@ boolean TimerCommand()
         }
       } else {
         if (devices_present) {
-          StaticJsonBuffer<128> jsonBuffer;
+          StaticJsonBuffer<200> jsonBuffer;
           JsonObject& root = jsonBuffer.parseObject(dataBufUc);
           if (!root.success()) {
             snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_TIMER "%d\":\"" D_JSON_INVALID_JSON "\"}"), index); // JSON decode failed

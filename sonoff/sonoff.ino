@@ -922,8 +922,10 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
         strlcpy(Settings.sta_pwd[index -1], (1 == payload) ? (1 == index) ? STA_PASS1 : STA_PASS2 : dataBuf, sizeof(Settings.sta_pwd[0]));
         Settings.sta_active = index -1;
         restart_flag = 2;
+        snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, index, Settings.sta_pwd[index -1]);
+      } else {
+        snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_ASTERIX, command, index);
       }
-      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, index, Settings.sta_pwd[index -1]);
     }
     else if ((CMND_HOSTNAME == command_code) && !grpflg) {
       if ((data_len > 0) && (data_len < sizeof(Settings.hostname))) {
@@ -978,8 +980,10 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
     else if (CMND_WEBPASSWORD == command_code) {
       if ((data_len > 0) && (data_len < sizeof(Settings.web_password))) {
         strlcpy(Settings.web_password, (!strcmp(dataBuf,"0")) ? "" : (1 == payload) ? WEB_PASSWORD : dataBuf, sizeof(Settings.web_password));
+        snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, Settings.web_password);
+      } else {
+        snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_ASTERIX, command);
       }
-      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, Settings.web_password);
     }
     else if (CMND_WEBLOG == command_code) {
       if ((payload >= LOG_LEVEL_NONE) && (payload <= LOG_LEVEL_ALL)) Settings.weblog_level = payload;
