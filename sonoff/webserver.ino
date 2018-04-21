@@ -227,9 +227,9 @@ const char HTTP_FORM_WIFI[] PROGMEM =
   "<fieldset><legend><b>&nbsp;" D_WIFI_PARAMETERS "&nbsp;</b></legend><form method='get' action='sv'>"
   "<input id='w' name='w' value='1,1' hidden>"
   "<br/><b>" D_AP1_SSID "</b> (" STA_SSID1 ")<br/><input id='s1' name='s1' placeholder='" STA_SSID1 "' value='{s1'><br/>"
-  "<br/><b>" D_AP1_PASSWORD "</b><br/><input id='p1' name='p1' type='password' placeholder='" D_AP1_PASSWORD "' value='********'><br/>"
+  "<br/><b>" D_AP1_PASSWORD "</b><br/><input id='p1' name='p1' type='password' placeholder='" D_AP1_PASSWORD "' value='" D_ASTERIX "'><br/>"
   "<br/><b>" D_AP2_SSID "</b> (" STA_SSID2 ")<br/><input id='s2' name='s2' placeholder='" STA_SSID2 "' value='{s2'><br/>"
-  "<br/><b>" D_AP2_PASSWORD "</b><br/><input id='p2' name='p2' type='password' placeholder='" D_AP2_PASSWORD "' value='********'><br/>"
+  "<br/><b>" D_AP2_PASSWORD "</b><br/><input id='p2' name='p2' type='password' placeholder='" D_AP2_PASSWORD "' value='" D_ASTERIX "'><br/>"
   "<br/><b>" D_HOSTNAME "</b> (" WIFI_HOSTNAME ")<br/><input id='h' name='h' placeholder='" WIFI_HOSTNAME" ' value='{h1'><br/>";
 const char HTTP_FORM_MQTT[] PROGMEM =
   "<fieldset><legend><b>&nbsp;" D_MQTT_PARAMETERS "&nbsp;</b></legend><form method='get' action='sv'>"
@@ -259,7 +259,7 @@ const char HTTP_FORM_LOG3[] PROGMEM =
 const char HTTP_FORM_OTHER[] PROGMEM =
   "<fieldset><legend><b>&nbsp;" D_OTHER_PARAMETERS "&nbsp;</b></legend><form method='get' action='sv'>"
   "<input id='w' name='w' value='5,1' hidden>"
-  "<br/><b>" D_WEB_ADMIN_PASSWORD "</b><br/><input id='p1' name='p1' type='password' placeholder='" D_WEB_ADMIN_PASSWORD "' value='********'><br/>"
+  "<br/><b>" D_WEB_ADMIN_PASSWORD "</b><br/><input id='p1' name='p1' type='password' placeholder='" D_WEB_ADMIN_PASSWORD "' value='" D_ASTERIX "'><br/>"
   "<br/><input style='width:10%;' id='b1' name='b1' type='checkbox'{r1><b>" D_MQTT_ENABLE "</b><br/>";
   const char HTTP_FORM_OTHER2[] PROGMEM =
   "<br/><b>" D_FRIENDLY_NAME " {1</b> ({2)<br/><input id='a{1' name='a{1' placeholder='{2' value='{3'><br/>";
@@ -396,9 +396,7 @@ void StartWebserver(int type, IPAddress ipweb)
       my_hostname, (mdns_begun) ? ".local" : "", ipweb.toString().c_str());
     AddLog(LOG_LEVEL_INFO);
   }
-  if (type) {
-    webserver_state = type;
-  }
+  if (type) { webserver_state = type; }
 }
 
 void StopWebserver()
@@ -435,12 +433,8 @@ void WifiManagerBegin()
 
 void PollDnsWebserver()
 {
-  if (DnsServer) {
-    DnsServer->processNextRequest();
-  }
-  if (WebServer) {
-    WebServer->handleClient();
-  }
+  if (DnsServer) { DnsServer->processNextRequest(); }
+  if (WebServer) { WebServer->handleClient(); }
 }
 
 /*********************************************************************************************/
@@ -495,9 +489,7 @@ void HandleRoot()
 {
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_MAIN_MENU);
 
-  if (CaptivePortal()) { // If captive portal redirect instead of displaying the page.
-    return;
-  }
+  if (CaptivePortal()) { return; }  // If captive portal redirect instead of displaying the page.
 
   if (HTTP_MANAGER == webserver_state) {
     if ((Settings.web_password[0] != 0) && !(WebServer->hasArg("USER1")) && !(WebServer->hasArg("PASS1"))) {
@@ -549,9 +541,7 @@ void HandleRoot()
       page += F("<tr>");
       byte idx = 0;
       for (byte i = 0; i < 4; i++) {
-        if (idx > 0) {
-          page += F("</tr><tr>");
-        }
+        if (idx > 0) { page += F("</tr><tr>"); }
         for (byte j = 0; j < 4; j++) {
           idx++;
           snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("<td style='width:25%'><button onclick='la(\"?k=%d\");'>%d</button></td>"), idx, idx);
@@ -620,17 +610,13 @@ void HandleAjaxStatusRefresh()
 boolean HttpUser()
 {
   boolean status = (HTTP_USER == webserver_state);
-  if (status) {
-    HandleRoot();
-  }
+  if (status) { HandleRoot(); }
   return status;
 }
 
 void HandleConfiguration()
 {
-  if (HttpUser()) {
-    return;
-  }
+  if (HttpUser()) { return; }
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_CONFIGURATION);
 
   String page = FPSTR(HTTP_HEAD);
@@ -638,10 +624,10 @@ void HandleConfiguration()
   page += FPSTR(HTTP_HEAD_STYLE);
   page += FPSTR(HTTP_BTN_MENU_MODULE);
 #if defined(USE_TIMERS) && defined(USE_TIMERS_WEB)
-  if (devices_present) page += FPSTR(HTTP_BTN_MENU_TIMER);
+  if (devices_present) { page += FPSTR(HTTP_BTN_MENU_TIMER); }
 #endif  // USE_TIMERS and USE_TIMERS_WEB
   page += FPSTR(HTTP_BTN_MENU_WIFI);
-  if (Settings.flag.mqtt_enabled) page += FPSTR(HTTP_BTN_MENU_MQTT);
+  if (Settings.flag.mqtt_enabled) { page += FPSTR(HTTP_BTN_MENU_MQTT); }
   page += FPSTR(HTTP_BTN_MENU4);
   page += FPSTR(HTTP_BTN_MAIN);
   ShowPage(page);
@@ -651,26 +637,20 @@ boolean GetUsedInModule(byte val, uint8_t *arr)
 {
   int offset = 0;
 
-  if (!val) {
-    return false;  // None
-  }
+  if (!val) { return false; }  // None
 #ifndef USE_I2C
-  if (GPIO_I2C_SCL == val) {
-    return true;
-  }
-  if (GPIO_I2C_SDA == val) {
-    return true;
-  }
+  if (GPIO_I2C_SCL == val) { return true; }
+  if (GPIO_I2C_SDA == val) { return true; }
+#endif
+#ifndef USE_SR04
+  if (GPIO_SR04_TRIG == val) { return true; }
+  if (GPIO_SR04_ECHO == val) { return true; }
 #endif
 #ifndef USE_WS2812
-  if (GPIO_WS2812 == val) {
-    return true;
-  }
+  if (GPIO_WS2812 == val) { return true; }
 #endif
 #ifndef USE_IR_REMOTE
-  if (GPIO_IRSEND == val) {
-    return true;
-  }
+  if (GPIO_IRSEND == val) { return true; }
 #endif
   if ((val >= GPIO_REL1) && (val < GPIO_REL1 + MAX_RELAYS)) {
     offset = (GPIO_REL1_INV - GPIO_REL1);
@@ -693,21 +673,15 @@ boolean GetUsedInModule(byte val, uint8_t *arr)
     offset = -(GPIO_PWM1_INV - GPIO_PWM1);
   }
   for (byte i = 0; i < MAX_GPIO_PIN; i++) {
-    if (arr[i] == val) {
-      return true;
-    }
-    if (arr[i] == val + offset) {
-      return true;
-    }
+    if (arr[i] == val) { return true; }
+    if (arr[i] == val + offset) { return true; }
   }
   return false;
 }
 
 void HandleModuleConfiguration()
 {
-  if (HttpUser()) {
-    return;
-  }
+  if (HttpUser()) { return; }
   char stemp[20];
   uint8_t midx;
 
@@ -777,9 +751,7 @@ void HandleWifiConfiguration()
 
 void HandleWifi(boolean scan)
 {
-  if (HttpUser()) {
-    return;
-  }
+  if (HttpUser()) { return; }
 
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_CONFIGURE_WIFI);
 
@@ -818,15 +790,13 @@ void HandleWifi(boolean scan)
       if (remove_duplicate_access_points) {
         String cssid;
         for (int i = 0; i < n; i++) {
-          if (-1 == indices[i]) {
-            continue;
-          }
+          if (-1 == indices[i]) { continue; }
           cssid = WiFi.SSID(indices[i]);
           for (int j = i + 1; j < n; j++) {
             if (cssid == WiFi.SSID(indices[j])) {
               snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_WIFI D_DUPLICATE_ACCESSPOINT " %s"), WiFi.SSID(indices[j]).c_str());
               AddLog(LOG_LEVEL_DEBUG);
-              indices[j] = -1; // set dup aps to index -1
+              indices[j] = -1;  // set dup aps to index -1
             }
           }
         }
@@ -834,9 +804,7 @@ void HandleWifi(boolean scan)
 
       //display networks in page
       for (int i = 0; i < n; i++) {
-        if (-1 == indices[i]) {
-          continue; // skip dups
-        }
+        if (-1 == indices[i]) { continue; }  // skip dups
         snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_WIFI D_SSID " %s, " D_RSSI " %d"), WiFi.SSID(indices[i]).c_str(), WiFi.RSSI(indices[i]));
         AddLog(LOG_LEVEL_DEBUG);
         int quality = WifiGetRssiAsQuality(WiFi.RSSI(indices[i]));
@@ -878,9 +846,7 @@ void HandleWifi(boolean scan)
 
 void HandleMqttConfiguration()
 {
-  if (HttpUser()) {
-    return;
-  }
+  if (HttpUser()) { return; }
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_CONFIGURE_MQTT);
 
   String page = FPSTR(HTTP_HEAD);
@@ -903,9 +869,7 @@ void HandleMqttConfiguration()
 
 void HandleLoggingConfiguration()
 {
-  if (HttpUser()) {
-    return;
-  }
+  if (HttpUser()) { return; }
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_CONFIGURE_LOGGING);
 
   String page = FPSTR(HTTP_HEAD);
@@ -952,9 +916,7 @@ void HandleLoggingConfiguration()
 
 void HandleOtherConfiguration()
 {
-  if (HttpUser()) {
-    return;
-  }
+  if (HttpUser()) { return; }
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_CONFIGURE_OTHER);
   char stemp[40];
 
@@ -990,9 +952,7 @@ void HandleOtherConfiguration()
 
 void HandleBackupConfiguration()
 {
-  if (HttpUser()) {
-    return;
-  }
+  if (HttpUser()) { return; }
   AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_BACKUP_CONFIGURATION));
 
   uint8_t buffer[sizeof(Settings)];
@@ -1001,7 +961,8 @@ void HandleBackupConfiguration()
   WebServer->setContentLength(sizeof(buffer));
 
   char attachment[100];
-  snprintf_P(attachment, sizeof(attachment), PSTR("attachment; filename=Config_%s_%s.dmp"), Settings.friendlyname[0], my_version);
+  char friendlyname[sizeof(Settings.friendlyname[0])];
+  snprintf_P(attachment, sizeof(attachment), PSTR("attachment; filename=Config_%s_%s.dmp"), NoAlNumToUnderscore(friendlyname, Settings.friendlyname[0]), my_version);
   WebServer->sendHeader(F("Content-Disposition"), attachment);
   WebServer->send(200, FPSTR(HDR_CTYPE_STREAM), "");
   memcpy(buffer, &Settings, sizeof(buffer));
@@ -1017,9 +978,7 @@ void HandleBackupConfiguration()
 
 void HandleSaveSettings()
 {
-  if (HttpUser()) {
-    return;
-  }
+  if (HttpUser()) { return; }
 
   char stemp[TOPSZ];
   char stemp2[TOPSZ];
@@ -1052,8 +1011,8 @@ void HandleSaveSettings()
     strlcpy(Settings.sta_pwd[0], (!strlen(tmp)) ? "" : (strchr(tmp,'*')) ? Settings.sta_pwd[0] : tmp, sizeof(Settings.sta_pwd[0]));
     WebGetArg("p2", tmp, sizeof(tmp));
     strlcpy(Settings.sta_pwd[1], (!strlen(tmp)) ? "" : (strchr(tmp,'*')) ? Settings.sta_pwd[1] : tmp, sizeof(Settings.sta_pwd[1]));
-    snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_WIFI D_CMND_HOSTNAME " %s, " D_CMND_SSID "1 %s, " D_CMND_PASSWORD "1 %s, " D_CMND_SSID "2 %s, " D_CMND_PASSWORD "2 %s"),
-      Settings.hostname, Settings.sta_ssid[0], Settings.sta_pwd[0], Settings.sta_ssid[1], Settings.sta_pwd[1]);
+    snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_WIFI D_CMND_HOSTNAME " %s, " D_CMND_SSID "1 %s, " D_CMND_SSID "2 %s"),
+      Settings.hostname, Settings.sta_ssid[0], Settings.sta_ssid[1]);
     AddLog(LOG_LEVEL_INFO);
     result += F("<br/>" D_TRYING_TO_CONNECT "<br/>");
     break;
@@ -1185,9 +1144,7 @@ void HandleSaveSettings()
 
 void HandleResetConfiguration()
 {
-  if (HttpUser()) {
-    return;
-  }
+  if (HttpUser()) { return; }
 
   char svalue[33];
 
@@ -1207,9 +1164,7 @@ void HandleResetConfiguration()
 
 void HandleRestoreConfiguration()
 {
-  if (HttpUser()) {
-    return;
-  }
+  if (HttpUser()) { return; }
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_RESTORE_CONFIGURATION);
 
   String page = FPSTR(HTTP_HEAD);
@@ -1227,9 +1182,7 @@ void HandleRestoreConfiguration()
 
 void HandleUpgradeFirmware()
 {
-  if (HttpUser()) {
-    return;
-  }
+  if (HttpUser()) { return; }
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_FIRMWARE_UPGRADE);
 
   String page = FPSTR(HTTP_HEAD);
@@ -1248,9 +1201,7 @@ void HandleUpgradeFirmware()
 
 void HandleUpgradeFirmwareStart()
 {
-  if (HttpUser()) {
-    return;
-  }
+  if (HttpUser()) { return; }
   char svalue[100];
 
   AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_UPGRADE_STARTED));
@@ -1277,9 +1228,7 @@ void HandleUpgradeFirmwareStart()
 
 void HandleUploadDone()
 {
-  if (HttpUser()) {
-    return;
-  }
+  if (HttpUser()) { return; }
   AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_UPLOAD_DONE));
 
   char error[100];
@@ -1326,13 +1275,9 @@ void HandleUploadLoop()
   // Based on ESP8266HTTPUpdateServer.cpp uses ESP8266WebServer Parsing.cpp and Cores Updater.cpp (Update)
   boolean _serialoutput = (LOG_LEVEL_DEBUG <= seriallog_level);
 
-  if (HTTP_USER == webserver_state) {
-    return;
-  }
+  if (HTTP_USER == webserver_state) { return; }
   if (upload_error) {
-    if (!upload_file_type) {
-      Update.end();
-    }
+    if (!upload_file_type) { Update.end(); }
     return;
   }
 
@@ -1407,9 +1352,7 @@ void HandleUploadLoop()
       if (_serialoutput) {
         Serial.printf(".");
         upload_progress_dot_count++;
-        if (!(upload_progress_dot_count % 80)) {
-          Serial.println();
-        }
+        if (!(upload_progress_dot_count % 80)) { Serial.println(); }
       }
     }
   } else if(!upload_error && (UPLOAD_FILE_END == upload.status)) {
@@ -1418,9 +1361,7 @@ void HandleUploadLoop()
     }
     if (!upload_file_type) {
       if (!Update.end(true)) { // true to set the size to the current progress
-        if (_serialoutput) {
-          Update.printError(Serial);
-        }
+        if (_serialoutput) { Update.printError(Serial); }
         upload_error = 6;
         return;
       }
@@ -1433,9 +1374,7 @@ void HandleUploadLoop()
     restart_flag = 0;
     MqttRetryCounter(0);
     upload_error = 7;
-    if (!upload_file_type) {
-      Update.end();
-    }
+    if (!upload_file_type) { Update.end(); }
   }
   delay(0);
 }
@@ -1450,9 +1389,7 @@ void HandlePreflightRequest()
 
 void HandleHttpCommand()
 {
-  if (HttpUser()) {
-    return;
-  }
+  if (HttpUser()) { return; }
   char svalue[INPUT_BUFFER_SIZE];  // big to serve Backlog
 
   AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_COMMAND));
@@ -1472,12 +1409,7 @@ void HandleHttpCommand()
   if (valid) {
     byte curridx = web_log_index;
     WebGetArg("cmnd", svalue, sizeof(svalue));
-    if (strlen(svalue)) {
-//      byte syslog_now = syslog_level;
-//      syslog_level = 0;  // Disable UDP syslog to not trigger hardware WDT - Seems to work fine since 5.7.1d (global logging)
-      ExecuteCommand(svalue);
-//      syslog_level = syslog_now;
-    }
+    if (strlen(svalue)) { ExecuteCommand(svalue); }
 
     if (web_log_index != curridx) {
       byte counter = curridx;
@@ -1490,9 +1422,7 @@ void HandleHttpCommand()
           // [14:49:36 MQTT: stat/wemos5/RESULT = {"POWER":"OFF"}] > [{"POWER":"OFF"}]
           char* JSON = (char*)memchr(tmp, '{', len);
           if (JSON) { // Is it a JSON message (and not only [15:26:08 MQT: stat/wemos5/POWER = O])
-            if (message.length() > 1) {
-              message += F(",");
-            }
+            if (message.length() > 1) { message += F(","); }
             size_t JSONlen = len - (JSON - tmp);
             strlcpy(mqtt_data, JSON +1, JSONlen -2);
             message += mqtt_data;
@@ -1514,10 +1444,7 @@ void HandleHttpCommand()
 
 void HandleConsole()
 {
-  if (HttpUser()) {
-    return;
-  }
-
+  if (HttpUser()) { return; }
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_CONSOLE);
 
   String page = FPSTR(HTTP_HEAD);
@@ -1532,9 +1459,7 @@ void HandleConsole()
 
 void HandleAjaxConsoleRefresh()
 {
-  if (HttpUser()) {
-    return;
-  }
+  if (HttpUser()) { return; }
   char svalue[INPUT_BUFFER_SIZE];  // big to serve Backlog
   byte cflg = 1;
   byte counter = 0;                // Initial start, should never be 0 again
@@ -1543,16 +1468,11 @@ void HandleAjaxConsoleRefresh()
   if (strlen(svalue)) {
     snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_COMMAND "%s"), svalue);
     AddLog(LOG_LEVEL_INFO);
-//    byte syslog_now = syslog_level;
-//    syslog_level = 0;  // Disable UDP syslog to not trigger hardware WDT - Seems to work fine since 5.7.1d (global logging)
     ExecuteCommand(svalue);
-//    syslog_level = syslog_now;
   }
 
   WebGetArg("c2", svalue, sizeof(svalue));
-  if (strlen(svalue)) {
-    counter = atoi(svalue);
-  }
+  if (strlen(svalue)) { counter = atoi(svalue); }
 
   byte last_reset_web_log_flag = reset_web_log_flag;
   String message = F("}9");  // Cannot load mqtt_data here as <> will be encoded by replacements below
@@ -1579,7 +1499,7 @@ void HandleAjaxConsoleRefresh()
         message += mqtt_data;
       }
       counter++;
-      if (!counter) counter++;  // Skip 0 as it is not allowed
+      if (!counter) { counter++; } // Skip 0 as it is not allowed
     } while (counter != web_log_index);
     // XML encoding to fix blank console log in concert with javascript decodeURIComponent
     message.replace(F("%"), F("%25"));  // Needs to be done first as otherwise the % in %26 will also be converted
@@ -1595,9 +1515,7 @@ void HandleAjaxConsoleRefresh()
 
 void HandleInformation()
 {
-  if (HttpUser()) {
-    return;
-  }
+  if (HttpUser()) { return; }
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_INFORMATION);
 
   char stopic[TOPSZ];
@@ -1711,9 +1629,7 @@ void HandleInformation()
 
 void HandleRestart()
 {
-  if (HttpUser()) {
-    return;
-  }
+  if (HttpUser()) { return; }
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_RESTART);
 
   String page = FPSTR(HTTP_HEAD);
@@ -1737,9 +1653,7 @@ void HandleNotFound()
 //  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_HTTP "Not fount (%s)"), WebServer->uri().c_str());
 //  AddLog(LOG_LEVEL_DEBUG);
 
-  if (CaptivePortal()) { // If captive portal redirect instead of displaying the error page.
-    return;
-  }
+  if (CaptivePortal()) { return; }  // If captive portal redirect instead of displaying the error page.
 
 #ifdef USE_EMULATION
   String path = WebServer->uri();
@@ -1777,9 +1691,7 @@ boolean ValidIpAddress(String str)
 {
   for (uint16_t i = 0; i < str.length(); i++) {
     int c = str.charAt(i);
-    if (c != '.' && (c < '0' || c > '9')) {
-      return false;
-    }
+    if (c != '.' && (c < '0' || c > '9')) { return false; }
   }
   return true;
 }
