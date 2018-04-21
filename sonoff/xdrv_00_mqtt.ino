@@ -595,8 +595,11 @@ bool MqttCommand()
     if ((data_len > 0) && (data_len < sizeof(Settings.mqtt_pwd))) {
       strlcpy(Settings.mqtt_pwd, (!strcmp(dataBuf,"0")) ? "" : (1 == payload) ? MQTT_PASS : dataBuf, sizeof(Settings.mqtt_pwd));
       restart_flag = 2;
+      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, Settings.mqtt_pwd);
     }
-    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, Settings.mqtt_pwd);
+    else {
+      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, (const char *)"***");
+    }
   }
   else if (CMND_FULLTOPIC == command_code) {
     if ((data_len > 0) && (data_len < sizeof(Settings.mqtt_fulltopic))) {
