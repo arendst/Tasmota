@@ -1,7 +1,7 @@
 /*
   cs-CZ.h - localization for Czech with diacritics - Czech for Sonoff-Tasmota
 
-  Copyright (C) 2018  Vladimír Synekl
+  Copyright (C) 2018  Vladimír Synek
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -368,7 +368,7 @@
 // xdrv_09_timers.ino
 #define D_CONFIGURE_TIMER "Nastavení Časovače"
 #define D_TIMER_PARAMETERS "Časovač"
-#define D_TIMER_ARM "Zajistit"
+#define D_TIMER_ARM "Aktivní"
 #define D_TIMER_TIME "Čas"
 #define D_TIMER_DAYS "Dny"
 #define D_TIMER_REPEAT "Opakovat"

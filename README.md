@@ -179,8 +179,8 @@ The following devices are supported:
 - [iTead Sonoff Dual (R2)](https://www.itead.cc/smart-home/sonoff-dual.html)
 - [iTead Sonoff Pow with Energy Monitoring](https://www.itead.cc/smart-home/sonoff-pow.html)
 - [iTead Sonoff Pow R2 with Energy Monitoring](https://www.itead.cc/sonoff-pow-r2.html)
-- [iTead Sonoff 4CH](https://www.itead.cc/smart-home/sonoff-4ch.html)
-- [iTead Sonoff 4CH Pro](https://www.itead.cc/smart-home/sonoff-4ch-pro.html)
+- [iTead Sonoff 4CH (R2)](https://www.itead.cc/smart-home/sonoff-4ch.html)
+- [iTead Sonoff 4CH Pro (R2)](https://www.itead.cc/smart-home/sonoff-4ch-pro.html)
 - [iTead S20 Smart Socket](https://www.itead.cc/smart-socket.html)
 - [Sonoff S22 Smart Socket](https://github.com/arendst/Sonoff-Tasmota/issues/627)
 - [iTead Sonoff S31 Smart Socket with Energy Monitoring](https://www.itead.cc/sonoff-s31.html)
@@ -188,7 +188,7 @@ The following devices are supported:
 - [iTead Sonoff Touch](https://www.itead.cc/sonoff-touch.html)
 - [iTead Sonoff T1](https://www.itead.cc/sonoff-t1.html)
 - [iTead Sonoff SC](https://www.itead.cc/sonoff-sc.html)
-- [iTead Sonoff Led](https://www.itead.cc/sonoff-led.html)<img src="https://github.com/arendst/arendst.github.io/blob/master/media/sonoff4ch.jpg" height="250" align="right" />
+- [iTead Sonoff Led](https://www.itead.cc/sonoff-led.html)<img src="https://github.com/arendst/arendst.github.io/blob/master/media/sonoff4chpror2.jpg" height="250" align="right" />
 - [iTead Sonoff BN-SZ01 Ceiling Led](https://www.itead.cc/bn-sz01.html)
 - [iTead Sonoff B1](https://www.itead.cc/sonoff-b1.html)
 - [iTead Sonoff RF Bridge 433](https://www.itead.cc/sonoff-rf-bridge-433.html)
@@ -209,7 +209,7 @@ The following devices are supported:
 You can contribute to Sonoff-Tasmota by
 - providing Pull Requests (Features, Proof of Concepts, Language files or Fixes)
 - testing new released features and report issues
-- donating to acquire hardware for testing and implementating or out of gratitude
+- donating to acquire hardware for testing and implementing or out of gratitude
 
 [![donate](https://img.shields.io/badge/donate-PayPal-blue.svg)](https://paypal.me/tasmota)
 
