@@ -76,7 +76,7 @@ The following devices are supported:
 You can contribute to Sonoff-Tasmota by
 - providing Pull Requests (Features, Proof of Concepts, Language files or Fixes)
 - testing new released features and report issues
-- donating to acquire hardware for testing and implementating or out of gratitude
+- donating to acquire hardware for testing and implementing or out of gratitude
 
 [![donate](https://img.shields.io/badge/donate-PayPal-blue.svg)](https://paypal.me/tasmota)
 
