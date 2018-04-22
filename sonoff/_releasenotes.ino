@@ -1,6 +1,20 @@
-/* 5.12.0l
+/* 5.12.0m
+ * Reinit timers to accomodate random window (#2447)
+ * Add random window to timers (#2447)
+ * Add optional KNX IP Protocol Support (#2402)
+ * Add Greek language file (#2491)
+ * Add Bulgarian language file
+ * Add support for sensor HC-SR04 ultrasonic (#113, #1964, #2444)
+ * Add support for Sonoff Pow R2 (#2340)
+ * Fix compile error when using ESP/Arduino library v2.3.0 by reverting KNX async UDP library to default UDP library (#2488, #2492, #2493)
+ * Fix configuration filename truncation when it contains spaces (#2484, #2490)
+ *
+ * 5.12.0l
  * Release rules up to 511 characters
  * Prepare for feature release - call on translators to update their language files
+ * Add timer sunrise and sunset offset (#2378)
+ * Fix negative Latitude and Longitude value entry (#2461)
+ * Fix sunrise and sunset calculation (#2461)
  *
  * 5.12.0k
  * Prepare for simple rules of up to 255 characters by enlarging Settings area to now 2048 bytes

@@ -28,6 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
+ * Updated until v5.12.0m
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -74,6 +75,7 @@
 #define D_DARKLIGHT "Oscura"
 #define D_DEBUG "Debug"
 #define D_DISABLED "Deshabilitado"
+#define D_DISTANCE "Distancia"
 #define D_DNS_SERVER "DNS Server"
 #define D_DONE "Listo"
 #define D_DST_TIME "DST"
@@ -373,6 +375,26 @@
 #define D_TIMER_OUTPUT "Salida"
 #define D_TIMER_ACTION "Estado"
 
+// xdrv_10_knx.ino
+#define D_CONFIGURE_KNX "Configuración de KNX"
+#define D_KNX_PARAMETERS "Parámetros de KNX"
+#define D_KNX_GENERAL_CONFIG "General"
+#define D_KNX_PHYSICAL_ADDRESS "Dirección Física"
+#define D_KNX_PHYSICAL_ADDRESS_NOTE "( Debe ser única en la red KNX )"
+#define D_KNX_ENABLE "Habilitar KNX"
+#define D_KNX_GROUP_ADDRESS_TO_WRITE "Datos a Enviar a las Direcciones de Grupo"
+#define D_ADD "Agregar"
+#define D_DELETE "Eliminar"
+#define D_REPLY "Responder"
+#define D_KNX_GROUP_ADDRESS_TO_READ "Direcciones de Grupo para Recibir Datos"
+#define D_LOG_KNX "KNX: "
+#define D_RECEIVED_FROM "Recibido desde"
+#define D_KNX_COMMAND_WRITE "Escribir"
+#define D_KNX_COMMAND_READ "Leer"
+#define D_KNX_COMMAND_OTHER "Otro"
+#define D_SENT_TO "enviada a"
+#define D_KNX_WARNING "La dirección de grupo ( 0 / 0 / 0 ) está reservada y no puede ser utilizada."
+
 // xdrv_03_energy.ino
 #define D_ENERGY_TODAY "Energía Hoy"
 #define D_ENERGY_YESTERDAY "Energía Ayer"
@@ -429,9 +451,12 @@
 #define D_SENSOR_SDS0X1   "SDS0X1"
 #define D_SENSOR_SBR_RX   "SerBr Rx"
 #define D_SENSOR_SBR_TX   "SerBr Tx"
+#define D_SENSOR_SR04_TRIG "SR04 Tri"
+#define D_SENSOR_SR04_ECHO "SR04 Ech"
 
 // Units
 #define D_UNIT_AMPERE "A"
+#define D_UNIT_CENTIMETER "cm"
 #define D_UNIT_HOUR "Hr"
 #define D_UNIT_KILOOHM "kOhm"
 #define D_UNIT_KILOWATTHOUR "kWh"

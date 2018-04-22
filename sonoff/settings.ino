@@ -119,41 +119,6 @@ boolean RtcSettingsValid()
   return (RTC_MEM_VALID == RtcSettings.valid);
 }
 
-#ifdef DEBUG_THEO
-void RtcSettingsDump()
-{
-  #define CFG_COLS 16
-
-  uint16_t idx;
-  uint16_t maxrow;
-  uint16_t row;
-  uint16_t col;
-
-  uint8_t *buffer = (uint8_t *) &RtcSettings;
-  maxrow = ((sizeof(RTCMEM)+CFG_COLS)/CFG_COLS);
-
-  for (row = 0; row < maxrow; row++) {
-    idx = row * CFG_COLS;
-    snprintf_P(log_data, sizeof(log_data), PSTR("%03X:"), idx);
-    for (col = 0; col < CFG_COLS; col++) {
-      if (!(col%4)) {
-        snprintf_P(log_data, sizeof(log_data), PSTR("%s "), log_data);
-      }
-      snprintf_P(log_data, sizeof(log_data), PSTR("%s %02X"), log_data, buffer[idx + col]);
-    }
-    snprintf_P(log_data, sizeof(log_data), PSTR("%s |"), log_data);
-    for (col = 0; col < CFG_COLS; col++) {
-//      if (!(col%4)) {
-//        snprintf_P(log_data, sizeof(log_data), PSTR("%s "), log_data);
-//      }
-      snprintf_P(log_data, sizeof(log_data), PSTR("%s%c"), log_data, ((buffer[idx + col] > 0x20) && (buffer[idx + col] < 0x7F)) ? (char)buffer[idx + col] : ' ');
-    }
-    snprintf_P(log_data, sizeof(log_data), PSTR("%s|"), log_data);
-    AddLog(LOG_LEVEL_INFO);
-  }
-}
-#endif  // DEBUG_THEO
-
 /*********************************************************************************************\
  * Config - Flash
 \*********************************************************************************************/
@@ -372,57 +337,6 @@ void SettingsSdkErase()
   SettingsErase(1);
   SettingsEraseConfig();
   delay(1000);
-}
-
-void SettingsDump(char* parms)
-{
-  #define CFG_COLS 16
-
-  uint16_t idx;
-  uint16_t maxrow;
-  uint16_t row;
-  uint16_t col;
-  char *p;
-
-  uint8_t *buffer = (uint8_t *) &Settings;
-  maxrow = ((sizeof(SYSCFG)+CFG_COLS)/CFG_COLS);
-
-  uint16_t srow = strtol(parms, &p, 16) / CFG_COLS;
-  uint16_t mrow = strtol(p, &p, 10);
-
-//  snprintf_P(log_data, sizeof(log_data), PSTR("Cnfg: Parms %s, Start row %d, rows %d"), parms, srow, mrow);
-//  AddLog(LOG_LEVEL_DEBUG);
-
-  if (0 == mrow) {  // Default only 8 lines
-    mrow = 8;
-  }
-  if (srow > maxrow) {
-    srow = maxrow - mrow;
-  }
-  if (mrow < (maxrow - srow)) {
-    maxrow = srow + mrow;
-  }
-
-  for (row = srow; row < maxrow; row++) {
-    idx = row * CFG_COLS;
-    snprintf_P(log_data, sizeof(log_data), PSTR("%03X:"), idx);
-    for (col = 0; col < CFG_COLS; col++) {
-      if (!(col%4)) {
-        snprintf_P(log_data, sizeof(log_data), PSTR("%s "), log_data);
-      }
-      snprintf_P(log_data, sizeof(log_data), PSTR("%s %02X"), log_data, buffer[idx + col]);
-    }
-    snprintf_P(log_data, sizeof(log_data), PSTR("%s |"), log_data);
-    for (col = 0; col < CFG_COLS; col++) {
-//      if (!(col%4)) {
-//        snprintf_P(log_data, sizeof(log_data), PSTR("%s "), log_data);
-//      }
-      snprintf_P(log_data, sizeof(log_data), PSTR("%s%c"), log_data, ((buffer[idx + col] > 0x20) && (buffer[idx + col] < 0x7F)) ? (char)buffer[idx + col] : ' ');
-    }
-    snprintf_P(log_data, sizeof(log_data), PSTR("%s|"), log_data);
-    AddLog(LOG_LEVEL_INFO);
-    delay(1);
-  }
 }
 
 /********************************************************************************************/
@@ -920,21 +834,25 @@ void SettingsDelta()
       Settings.sbaudrate = SOFT_BAUDRATE / 1200;
       Settings.serial_delimiter = 0xff;
     }
-    if (Settings.version < 0x050C0009) {
-      memset(&Settings.timer, 0x00, sizeof(Timer) * MAX_TIMERS);
-    }
+//    if (Settings.version < 0x050C0009) {
+//      memset(&Settings.timer, 0x00, sizeof(Timer) * MAX_TIMERS);
+//    }
     if (Settings.version < 0x050C000A) {
       Settings.latitude = (int)((double)LATITUDE * 1000000);
       Settings.longitude = (int)((double)LONGITUDE * 1000000);
     }
     if (Settings.version < 0x050C000B) {
-      memset(&Settings.free_6b8, 0x00, sizeof(Settings.free_6b8));
       memset(&Settings.rules, 0x00, sizeof(Settings.rules));
+    }
+    if (Settings.version < 0x050C000D) {
+      memmove(Settings.rules, Settings.rules -256, sizeof(Settings.rules));  // move rules up by 256 bytes
+      memset(&Settings.timer, 0x00, sizeof(Timer) * MAX_TIMERS);  // Reset timers as layout has changed from v5.12.0i
+      Settings.knx_GA_registered = 0;
+      Settings.knx_CB_registered = 0;
+      memset(&Settings.knx_physsical_addr, 0x00, 0x800 - 0x6b8);  // Reset until 0x800 for future use
     }
 
     Settings.version = VERSION;
     SettingsSave(1);
   }
 }
-
-

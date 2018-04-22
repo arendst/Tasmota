@@ -78,72 +78,6 @@ String GetResetReason()
   }
 }
 
-#ifdef DEBUG_THEO
-void ExceptionTest(byte type)
-{
-/*
-Exception (28):
-epc1=0x4000bf64 epc2=0x00000000 epc3=0x00000000 excvaddr=0x00000007 depc=0x00000000
-
-ctx: cont
-sp: 3fff1f30 end: 3fff2840 offset: 01a0
-
->>>stack>>>
-3fff20d0:  202c3573 756f7247 2c302070 646e4920
-3fff20e0:  40236a6e 7954202c 45206570 00454358
-3fff20f0:  00000010 00000007 00000000 3fff2180
-3fff2100:  3fff2190 40107bfc 3fff3e4c 3fff22c0
-3fff2110:  40261934 000000f0 3fff22c0 401004d8
-3fff2120:  40238fcf 00000050 3fff2100 4021fc10
-3fff2130:  3fff32bc 4021680c 3ffeade1 4021ff7d
-3fff2140:  3fff2190 3fff2180 0000000c 7fffffff
-3fff2150:  00000019 00000000 00000000 3fff21c0
-3fff2160:  3fff23f3 3ffe8e08 00000000 4021ffb4
-3fff2170:  3fff2190 3fff2180 0000000c 40201118
-3fff2180:  3fff21c0 0000003c 3ffef840 00000007
-3fff2190:  00000000 00000000 00000000 40201128
-3fff21a0:  3fff23f3 000000f1 3fff23ec 4020fafb
-3fff21b0:  3fff23f3 3fff21c0 3fff21d0 3fff23f6
-3fff21c0:  00000000 3fff23fb 4022321b 00000000
-
-Exception 28: LoadProhibited: A load referenced a page mapped with an attribute that does not permit loads
-Decoding 14 results
-0x40236a6e: ets_vsnprintf at ?? line ?
-0x40107bfc: vsnprintf at C:\Data2\Arduino\arduino-1.8.1-esp-2.3.0\portable\packages\esp8266\hardware\esp8266\2.3.0\cores\esp8266/libc_replacements.c line 387
-0x40261934: bignum_exptmod at ?? line ?
-0x401004d8: malloc at C:\Data2\Arduino\arduino-1.8.1-esp-2.3.0\portable\packages\esp8266\hardware\esp8266\2.3.0\cores\esp8266\umm_malloc/umm_malloc.c line 1664
-0x40238fcf: wifi_station_get_connect_status at ?? line ?
-0x4021fc10: operator new[](unsigned int) at C:\Data2\Arduino\arduino-1.8.1-esp-2.3.0\portable\packages\esp8266\hardware\esp8266\2.3.0\cores\esp8266/abi.cpp line 57
-0x4021680c: ESP8266WiFiSTAClass::status() at C:\Data2\Arduino\arduino-1.8.1-esp-2.3.0\portable\packages\esp8266\hardware\esp8266\2.3.0\libraries\ESP8266WiFi\src/ESP8266WiFiSTA.cpp line 569
-0x4021ff7d: vsnprintf_P(char*, unsigned int, char const*, __va_list_tag) at C:\Data2\Arduino\arduino-1.8.1-esp-2.3.0\portable\packages\esp8266\hardware\esp8266\2.3.0\cores\esp8266/pgmspace.cpp line 146
-0x4021ffb4: snprintf_P(char*, unsigned int, char const*, ...) at C:\Data2\Arduino\arduino-1.8.1-esp-2.3.0\portable\packages\esp8266\hardware\esp8266\2.3.0\cores\esp8266/pgmspace.cpp line 146
-0x40201118: atol at C:\Data2\Arduino\arduino-1.8.1-esp-2.3.0\portable\packages\esp8266\hardware\esp8266\2.3.0\cores\esp8266/core_esp8266_noniso.c line 45
-0x40201128: atoi at C:\Data2\Arduino\arduino-1.8.1-esp-2.3.0\portable\packages\esp8266\hardware\esp8266\2.3.0\cores\esp8266/core_esp8266_noniso.c line 45
-0x4020fafb: MqttDataHandler(char*, unsigned char*, unsigned int) at R:\Arduino\Work-ESP8266\Theo\sonoff\sonoff-4\sonoff/sonoff.ino line 679 (discriminator 1)
-0x4022321b: pp_attach at ?? line ?
-
-00:00:08 MQTT: tele/sonoff/INFO3 = {"Started":"Fatal exception:28 flag:2 (EXCEPTION) epc1:0x4000bf64 epc2:0x00000000 epc3:0x00000000 excvaddr:0x00000007 depc:0x00000000"}
-*/
-  if (1 == type) {
-    char svalue[10];
-    snprintf_P(svalue, sizeof(svalue), PSTR("%s"), 7);  // Exception 28 as number in string (7 in excvaddr)
-  }
-/*
-14:50:52 osWatch: FreeRam 25896, rssi 68, last_run 0
-14:51:02 osWatch: FreeRam 25896, rssi 58, last_run 0
-14:51:03 CMND: exception 2
-14:51:12 osWatch: FreeRam 25360, rssi 60, last_run 8771
-14:51:22 osWatch: FreeRam 25360, rssi 62, last_run 18771
-14:51:32 osWatch: FreeRam 25360, rssi 62, last_run 28771
-14:51:42 osWatch: FreeRam 25360, rssi 62, last_run 38771
-14:51:42 osWatch: Warning, loop blocked. Restart now
-*/
-  if (2 == type) {
-    while(1) delay(1000);  // this will trigger the os watch
-  }
-}
-#endif  // DEBUG_THEO
-
 /*********************************************************************************************\
  * Miscellaneous
 \*********************************************************************************************/
@@ -218,7 +152,9 @@ double CharToDouble(char *str)
       right *= fac;
     }
   }
-  return left + right;
+  double result = left + right;
+  if (left < 0) { result = left - right; }
+  return result;
 }
 
 char* dtostrfd(double number, unsigned char prec, char *s)
@@ -292,6 +228,19 @@ char* UpperCase_P(char* dest, const char* source)
   while (ch != '\0') {
     ch = pgm_read_byte(read++);
     *write++ = toupper(ch);
+  }
+  return dest;
+}
+
+char* NoAlNumToUnderscore(char* dest, const char* source)
+{
+  char* write = dest;
+  const char* read = source;
+  char ch = '.';
+
+  while (ch != '\0') {
+    ch = *read++;
+    *write++ = (isalnum(ch) || ('\0' == ch)) ? ch : '_';
   }
   return dest;
 }
@@ -791,7 +740,7 @@ void WifiCheck(uint8_t param)
             strlcpy(Settings.sta_pwd[0], WiFi.psk().c_str(), sizeof(Settings.sta_pwd[0]));
           }
           Settings.sta_active = 0;
-          snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_WIFI D_WCFG_1_SMARTCONFIG D_CMND_SSID "1 %s, " D_CMND_PASSWORD "1 %s"), Settings.sta_ssid[0], Settings.sta_pwd[0]);
+          snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_WIFI D_WCFG_1_SMARTCONFIG D_CMND_SSID "1 %s"), Settings.sta_ssid[0]);
           AddLog(LOG_LEVEL_INFO);
         }
       }
@@ -1407,7 +1356,7 @@ void RtcSecond()
       }
     }
     local_time += time_offset;
-    time_timezone = time_offset / (SECS_PER_HOUR / 10);
+    time_timezone = time_offset / 360;  // (SECS_PER_HOUR / 10) fails as it is defined as UL
   }
   BreakTime(local_time, RtcTime);
   if (!RtcTime.hour && !RtcTime.minute && !RtcTime.second && RtcTime.valid) {

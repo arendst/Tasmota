@@ -33,6 +33,11 @@ void WifiWpsStatusCallback(wps_cb_status status);
 }
 #endif
 
+//#ifdef USE_KNX  // Enabling this will fail compilation. It has no impact if not used. (20180417)
+#include <esp-knx-ip.h>
+void KNX_CB_Action(message_t const &msg, void *arg);
+//#endif  // USE_KNX
+
 #define USE_DHT                               // Default DHT11 sensor needs no external library
 
 #ifdef USE_ALL_SENSORS  // ===================== Configure sonoff-xxl.bin =========================
@@ -74,14 +79,13 @@ void WifiWpsStatusCallback(wps_cb_status status);
 #endif
 //  #define USE_WS2812_DMA                      // DMA supports only GPIO03 (= Serial RXD) (+1k mem). When USE_WS2812_DMA is enabled expect Exceptions on Pow
 #define USE_ARILUX_RF                         // Add support for Arilux RF remote controller (+0k8 code, 252 iram (non 2.3.0))
+#define USE_SR04                              // Add support for HC-SR04 ultrasonic devices (+1k code)
 #endif  // USE_ALL_SENSORS =====================
 
 #if defined(USE_DS18x20) || defined(USE_DS18x20_LEGACY)
 #else
 #define USE_DS18B20                           // Default DS18B20 sensor needs no external library
 #endif
-
-//#define DEBUG_THEO                            // Add debug code
 
 #ifdef BE_MINIMAL  // ========================== Configure sonoff-minimal.bin =====================
 #ifdef USE_MQTT_TLS
@@ -96,6 +100,9 @@ void WifiWpsStatusCallback(wps_cb_status status);
 #ifdef USE_HOME_ASSISTANT
 #undef USE_HOME_ASSISTANT                     // Disable Home Assistant
 #endif
+#ifdef USE_KNX
+#undef USE_KNX                                // Disable KNX IP Protocol Support
+#endif
 //#ifdef USE_WEBSERVER
 //#undef USE_WEBSERVER                          // Disable Webserver
 //#endif
@@ -108,26 +115,23 @@ void WifiWpsStatusCallback(wps_cb_status status);
 #ifdef USE_SUNRISE
 #undef USE_SUNRISE                            // Disable support for Sunrise and sunset tools
 #endif
-#ifdef USE_PZEM004T
-#undef USE_PZEM004T                           // Disable PZEM004T energy sensor
+#ifdef USE_RULES
+#undef USE_RULES                              // Disable support for rules
+#endif
+#ifdef USE_DHT
+#undef USE_DHT                                // Disable internal DHT sensor
 #endif
 #ifdef USE_DS18x20
 #undef USE_DS18x20                            // Disable DS18x20 sensor
+#endif
+#ifdef USE_DS18B20
+#undef USE_DS18B20                            // Disable internal DS18B20 sensor
 #endif
 #ifdef USE_I2C
 #undef USE_I2C                                // Disable all I2C sensors and devices
 #endif
 #ifdef USE_SPI
 #undef USE_SPI                                // Disable all SPI devices
-#endif
-#ifdef USE_WS2812
-#undef USE_WS2812                             // Disable WS2812 Led string
-#endif
-#ifdef USE_DS18B20
-#undef USE_DS18B20                            // Disable internal DS18B20 sensor
-#endif
-#ifdef USE_DHT
-#undef USE_DHT                                // Disable internal DHT sensor
 #endif
 #ifdef USE_DISPLAY
 #undef USE_DISPLAY                            // Disable Display support
@@ -138,11 +142,29 @@ void WifiWpsStatusCallback(wps_cb_status status);
 #ifdef USE_SENSEAIR
 #undef USE_SENSEAIR                           // Disable support for SenseAir K30, K70 and S8 CO2 sensor
 #endif
+#ifdef USE_PMS5003
+#undef USE_PMS5003                            // Disable support for PMS5003 and PMS7003 particle concentration sensor
+#endif
+#ifdef USE_NOVA_SDS
+#undef USE_NOVA_SDS                           // Disable support for SDS011 and SDS021 particle concentration sensor
+#endif
+#ifdef USE_PZEM004T
+#undef USE_PZEM004T                           // Disable PZEM004T energy sensor
+#endif
+#ifdef USE_SERIAL_BRIDGE
+#undef USE_SERIAL_BRIDGE                      // Disable support for software Serial Bridge
+#endif
 #ifdef USE_IR_REMOTE
 #undef USE_IR_REMOTE                          // Disable IR driver
 #endif
+#ifdef USE_WS2812
+#undef USE_WS2812                             // Disable WS2812 Led string
+#endif
 #ifdef USE_ARILUX_RF
 #undef USE_ARILUX_RF                          // Disable support for Arilux RF remote controller
+#endif
+#ifdef USE_SR04
+#undef USE_SR04                               // Disable support for for HC-SR04 ultrasonic devices
 #endif
 #ifdef DEBUG_THEO
 #undef DEBUG_THEO                             // Disable debug code
