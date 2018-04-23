@@ -17,7 +17,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifdef USE_EMULATION
+#if defined(USE_WEBSERVER) && defined(USE_EMULATION)
 /*********************************************************************************************\
  * Belkin WeMo and Philips Hue bridge emulation
 \*********************************************************************************************/
@@ -266,7 +266,6 @@ void PollUdp()
   }
 }
 
-#ifdef USE_WEBSERVER
 /*********************************************************************************************\
  * Wemo web server additions
 \*********************************************************************************************/
@@ -544,7 +543,7 @@ void HueConfigResponse(String *response)
   response->replace("{ms", WiFi.subnetMask().toString());
   response->replace("{gw", WiFi.gatewayIP().toString());
   response->replace("{br", HueBridgeId());
-  response->replace("{dt", GetUtcDateAndTime());
+  response->replace("{dt", GetDateAndTime(DT_UTC));
   response->replace("{id", GetHueUserId());
 }
 
@@ -814,6 +813,4 @@ void HandleHueApi(String *path)
   else if (path->endsWith("/rules")) HueNotImplemented(path);
   else HueGlobalConfig(path);
 }
-#endif  // USE_WEBSERVER
-#endif  // USE_EMULATION
-
+#endif  // USE_WEBSERVER && USE_EMULATION

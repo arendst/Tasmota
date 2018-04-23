@@ -197,7 +197,7 @@ void Ds18b20Show(boolean json)
     if(json) {
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"DS18B20\":{\"" D_JSON_TEMPERATURE "\":%s}"), mqtt_data, temperature);
 #ifdef USE_DOMOTICZ
-      DomoticzSensor(DZ_TEMP, temperature);
+      if (0 == tele_period) DomoticzSensor(DZ_TEMP, temperature);
 #endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
     } else {
@@ -205,6 +205,7 @@ void Ds18b20Show(boolean json)
 #endif  // USE_WEBSERVER
     }
   }
+  Ds18x20Convert();   // Start conversion, takes up to one second
 }
 
 /*********************************************************************************************\
@@ -231,7 +232,6 @@ boolean Xsns05(byte function)
 #ifdef USE_WEBSERVER
       case FUNC_WEB_APPEND:
         Ds18b20Show(0);
-        Ds18x20Convert();   // Start conversion, takes up to one second
         break;
 #endif  // USE_WEBSERVER
     }

@@ -28,9 +28,13 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
+ * Updated until v5.12.0l
 \*********************************************************************/
 
 //#define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
+
+// HTML (ISO 639-1) Language Code
+#define D_HTML_LANGUAGE "nl"
 
 // "2017-03-07T11:08:02" - ISO8601:2004
 #define D_YEAR_MONTH_SEPARATOR "-"
@@ -71,9 +75,11 @@
 #define D_DARKLIGHT "Donker"
 #define D_DEBUG "Debug"
 #define D_DISABLED "Uitgeschakeld"
+#define D_DISTANCE "Afstand"
 #define D_DNS_SERVER "DNS Server"
 #define D_DONE "Klaar"
 #define D_DST_TIME "ZT"
+#define D_ECO2 "eCO2"
 #define D_EMULATION "Emulatie"
 #define D_ENABLED "Geactiveerd"
 #define D_ERASE "Wissen"
@@ -107,7 +113,7 @@
 #define D_OFF "Uit"
 #define D_OFFLINE "Offline"
 #define D_OK "Ok"
-#define D_ON "Ann"
+#define D_ON "Aan"
 #define D_ONLINE "Online"
 #define D_PASSWORD "Wachtwoord"
 #define D_PORT "Poort"
@@ -124,6 +130,7 @@
 #define D_RESTART_REASON "Reden herstart"
 #define D_RESTORE "herstellen"
 #define D_RETAINED "retained"
+#define D_RULE "Regel"
 #define D_SAVE "Opslaan"
 #define D_SENSOR "Sensor"
 #define D_SSID "SSId"
@@ -133,12 +140,15 @@
 #define D_SUBNET_MASK "Subnet Masker"
 #define D_SUBSCRIBE_TO "Abonneer op"
 #define D_SUCCESSFUL "Gelukt"
+#define D_SUNRISE "Zonsopgang"
+#define D_SUNSET "Zonsondergang"
 #define D_TEMPERATURE "Temperatuur"
 #define D_TO "naar"
 #define D_TOGGLE "Toggle"  // Wissel, Tuimel
 #define D_TOPIC "Topic"  // Onderwerp
 #define D_TRANSMIT "Verzend"
 #define D_TRUE "Waar"
+#define D_TVOC "TVOC"
 #define D_UPGRADE "opwaarderen"
 #define D_UPLOAD "Verzenden"
 #define D_UPTIME "Bedrijfstijd"
@@ -161,13 +171,6 @@
 #define D_RECEIVED_TOPIC "Ontvangen topic"
 #define D_DATA_SIZE "Data lengte"
 #define D_ANALOG_INPUT "Analoog"
-
-#define D_FINGERPRINT "Controleer TLS vingerafdruk..."
-#define D_TLS_CONNECT_FAILED_TO "TLS Verbinding mislukt naar"
-#define D_RETRY_IN "Opnieuw proberen over"
-#define D_VERIFIED "Gecontroleerd"
-#define D_INSECURE "Door ongeldige vingerafdruk een onveilige verbinding"
-#define D_CONNECT_FAILED_TO "Verbinding mislukt naar"
 
 // support.ino
 #define D_OSWATCH "osWatch"
@@ -317,6 +320,14 @@
 #define D_ENABLE_WEBLOG_FOR_RESPONSE "Schakel weblog 2 in indien antwoord verwacht"
 #define D_NEED_USER_AND_PASSWORD "Benodig user=<gebruiker>&password=<webwachtwoord>"
 
+// xdrv_00_mqtt.ino
+#define D_FINGERPRINT "Controleer TLS vingerafdruk..."
+#define D_TLS_CONNECT_FAILED_TO "TLS Verbinding mislukt naar"
+#define D_RETRY_IN "Opnieuw proberen over"
+#define D_VERIFIED "Gecontroleerd met vingerafdruk"
+#define D_INSECURE "Door ongeldige vingerafdruk een onveilige verbinding"
+#define D_CONNECT_FAILED_TO "Verbinding mislukt naar"
+
 // xdrv_wemohue.ino
 #define D_MULTICAST_DISABLED "Multicast uitgeschakeld"
 #define D_MULTICAST_REJOINED "Multicast verbonden"
@@ -348,11 +359,41 @@
   #define D_DOMOTICZ_TEMP_HUM_BARO "Temp,Hum,Baro"
   #define D_DOMOTICZ_POWER_ENERGY "Power,Energy"
   #define D_DOMOTICZ_ILLUMINANCE "Illuminance"
-  #define D_DOMOTICZ_COUNT "Count"
-  #define D_DOMOTICZ_VOLTAGE "Spanning"
-  #define D_DOMOTICZ_CURRENT "Stroom"
+  #define D_DOMOTICZ_COUNT "Count/PM1"
+  #define D_DOMOTICZ_VOLTAGE "Spanning/PM2,5"
+  #define D_DOMOTICZ_CURRENT "Stroom/PM10"
   #define D_DOMOTICZ_AIRQUALITY "AirQuality"
 #define D_DOMOTICZ_UPDATE_TIMER "Bijwerk timer"
+
+// xdrv_09_timers.ino
+#define D_CONFIGURE_TIMER "Configureer Tijdschakelaar"
+#define D_TIMER_PARAMETERS "Tijdschakelaar parameters"
+#define D_TIMER_ARM "Actief"
+#define D_TIMER_TIME "Tijd"
+#define D_TIMER_DAYS "Dagen"
+#define D_TIMER_REPEAT "Herhaal"
+#define D_TIMER_OUTPUT "Uitgang"
+#define D_TIMER_ACTION "Actie"
+
+// xdrv_10_knx.ino
+#define D_CONFIGURE_KNX "Configure KNX"
+#define D_KNX_PARAMETERS "KNX Parameters"
+#define D_KNX_GENERAL_CONFIG "General"
+#define D_KNX_PHYSICAL_ADDRESS "Physical Address"
+#define D_KNX_PHYSICAL_ADDRESS_NOTE "( Must be unique on the KNX network )"
+#define D_KNX_ENABLE "Enable KNX"
+#define D_KNX_GROUP_ADDRESS_TO_WRITE "Data to Send to Group Addresses"
+#define D_ADD "Add"
+#define D_DELETE "Delete"
+#define D_REPLY "Reply"
+#define D_KNX_GROUP_ADDRESS_TO_READ "Group Addresses to Receive Data from"
+#define D_LOG_KNX "KNX: "
+#define D_RECEIVED_FROM "Received from"
+#define D_KNX_COMMAND_WRITE "Write"
+#define D_KNX_COMMAND_READ "Read"
+#define D_KNX_COMMAND_OTHER "Other"
+#define D_SENT_TO "sent to"
+#define D_KNX_WARNING "The group address ( 0 / 0 / 0 ) is reserved and can not be used."
 
 // xdrv_03_energy.ino
 #define D_ENERGY_TODAY "Verbruik vandaag"
@@ -407,9 +448,15 @@
 #define D_SENSOR_SPI_DC   "SPI DC"
 #define D_SENSOR_BACKLIGHT "BkLight"
 #define D_SENSOR_PMS5003  "PMS5003"
+#define D_SENSOR_SDS0X1   "SDS0X1"
+#define D_SENSOR_SBR_RX   "SerBr Rx"
+#define D_SENSOR_SBR_TX   "SerBr Tx"
+#define D_SENSOR_SR04_TRIG "SR04 Tri"
+#define D_SENSOR_SR04_ECHO "SR04 Ech"
 
 // Units
 #define D_UNIT_AMPERE "A"
+#define D_UNIT_CENTIMETER "cm"
 #define D_UNIT_HOUR "h"
 #define D_UNIT_KILOOHM "kOhm"
 #define D_UNIT_KILOWATTHOUR "kWh"
@@ -420,6 +467,7 @@
 #define D_UNIT_MILLIAMPERE "mA"
 #define D_UNIT_MILLISECOND "ms"
 #define D_UNIT_MINUTE "Min"
+#define D_UNIT_PARTS_PER_BILLION "ppb"
 #define D_UNIT_PARTS_PER_DECILITER "ppd"
 #define D_UNIT_PARTS_PER_MILLION "ppm"
 #define D_UNIT_PRESSURE "hPa"

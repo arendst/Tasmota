@@ -109,15 +109,15 @@ boolean SonoffBridgeSerialInput()
 {
   // iTead Rf Universal Transceiver Module Serial Protocol Version 1.0 (20170420)
   if (sonoff_bridge_receive_flag) {
-    if (!((serial_in_byte_counter == 0) && (serial_in_byte == 0))) {  // Skip leading 0
-      if (!serial_in_byte_counter) {
+    if (!((0 == serial_in_byte_counter) && (0 == serial_in_byte))) {  // Skip leading 0
+      if (0 == serial_in_byte_counter) {
         sonoff_bridge_expected_bytes = 2;     // 0xA0, 0xA1, 0xA2
         if (serial_in_byte >= 0xA3) {
           sonoff_bridge_expected_bytes = 11;  // 0xA3, 0xA4, 0xA5
         }
       }
       serial_in_buffer[serial_in_byte_counter++] = serial_in_byte;
-      if  ((sonoff_bridge_expected_bytes == serial_in_byte_counter) && (0x55 == serial_in_byte)) {  // 0x55 - End of text
+      if ((sonoff_bridge_expected_bytes == serial_in_byte_counter) && (0x55 == serial_in_byte)) {  // 0x55 - End of text
         SonoffBridgeReceived();
         sonoff_bridge_receive_flag = 0;
         return 1;
@@ -252,7 +252,7 @@ boolean SonoffBridgeCommand()
         snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, XdrvMailbox.index, D_JSON_START_LEARNING);
       }
       else if (3 == XdrvMailbox.payload) {         // Unlearn RF data
-        Settings.rf_code[XdrvMailbox.index][0] = 0;
+        Settings.rf_code[XdrvMailbox.index][0] = 0;  // Reset sync_time MSB
         snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, XdrvMailbox.index, D_JSON_SET_TO_DEFAULT);
       }
       else if (4 == XdrvMailbox.payload) {         // Save RF data provided by RFSync, RfLow, RfHigh and last RfCode
@@ -263,8 +263,23 @@ boolean SonoffBridgeCommand()
         Settings.rf_code[XdrvMailbox.index][7] = (sonoff_bridge_last_send_code >> 8) & 0xff;
         Settings.rf_code[XdrvMailbox.index][8] = sonoff_bridge_last_send_code & 0xff;
         snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, XdrvMailbox.index, D_JSON_SAVED);
+      } else if (5 == XdrvMailbox.payload) {      // Show default or learned RF data
+        uint8_t key = XdrvMailbox.index;
+        uint8_t index = (0 == Settings.rf_code[key][0]) ? 0 : key;  // Use default if sync_time MSB = 0
+        uint16_t sync_time = (Settings.rf_code[index][0] << 8) | Settings.rf_code[index][1];
+        uint16_t low_time = (Settings.rf_code[index][2] << 8) | Settings.rf_code[index][3];
+        uint16_t high_time = (Settings.rf_code[index][4] << 8) | Settings.rf_code[index][5];
+        uint32_t code = (Settings.rf_code[index][6] << 16) | (Settings.rf_code[index][7] << 8);
+        if (0 == index) {
+          key--;
+          code |= (uint8_t)((0x10 << (key >> 2)) | (1 << (key & 3)));
+        } else {
+          code |= Settings.rf_code[index][8];
+        }
+        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"%s%d\":{\"" D_JSON_SYNC "\":%d,\"" D_JSON_LOW "\":%d,\"" D_JSON_HIGH "\":%d,\"" D_JSON_DATA "\":\"%06X\"}}"),
+                   command, XdrvMailbox.index, sync_time, low_time, high_time, code);
       } else {
-        if ((1 == XdrvMailbox.payload) || (0 == Settings.rf_code[XdrvMailbox.index][0])) {
+        if ((1 == XdrvMailbox.payload) || (0 == Settings.rf_code[XdrvMailbox.index][0])) {  // Test sync_time MSB
           SonoffBridgeSend(0, XdrvMailbox.index);  // Send default RF data
           snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, XdrvMailbox.index, D_JSON_DEFAULT_SENT);
         } else {
