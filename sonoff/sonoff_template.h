@@ -91,14 +91,11 @@ enum UserSelectablePins {
   GPIO_SDS0X1,         // Nova Fitness SDS011 Serial interface
   GPIO_SBR_TX,         // Serial Bridge Serial interface
   GPIO_SBR_RX,         // Serial Bridge Serial interface
-<<<<<<< HEAD
-#ifdef USE_SML
-  GPIO_SML,
-#endif
-=======
   GPIO_SR04_TRIG,      // SR04 Trigger pin
   GPIO_SR04_ECHO,      // SR04 Echo pin
->>>>>>> arendst/development
+  #ifdef USE_SML
+    GPIO_SML,
+  #endif
   GPIO_SENSOR_END };
 
 // Programmer selectable GPIO functionality offset by user selectable GPIOs
@@ -141,16 +138,12 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_SAIR_TX "|" D_SENSOR_SAIR_RX "|"
   D_SENSOR_SPI_CS "|" D_SENSOR_SPI_DC "|" D_SENSOR_BACKLIGHT "|"
   D_SENSOR_PMS5003 "|" D_SENSOR_SDS0X1 "|"
-<<<<<<< HEAD
-  D_SENSOR_SBR_TX "|" D_SENSOR_SBR_RX
+  D_SENSOR_SBR_TX "|" D_SENSOR_SBR_RX "|"
+  D_SENSOR_SR04_TRIG "|" D_SENSOR_SR04_ECHO
 #ifdef USE_SML
    "|" "SML"
 #endif
    ;
-=======
-  D_SENSOR_SBR_TX "|" D_SENSOR_SBR_RX "|"
-  D_SENSOR_SR04_TRIG "|" D_SENSOR_SR04_ECHO;
->>>>>>> arendst/development
 
 /********************************************************************************************/
 
