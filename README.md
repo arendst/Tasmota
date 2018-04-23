@@ -144,6 +144,8 @@ You can contribute to Sonoff-Tasmota by
 [![donate](https://img.shields.io/badge/donate-PayPal-blue.svg)](https://paypal.me/tasmota)
 
 ### Credits
+
+#### Libraries used
 Libraries used with Sonoff-Tasmota are:
 - [ESP8266 core for Arduino](https://github.com/esp8266/Arduino)
 - [Adafruit BME680](https://github.com/adafruit/Adafruit_BME680)
@@ -161,6 +163,7 @@ Libraries used with Sonoff-Tasmota are:
 - [OneWire](https://github.com/PaulStoffregen/OneWire)
 - [PubSubClient](https://github.com/knolleary/pubsubclient)
 
+#### People inspiring me
 People helping to keep the show on the road:
 - David Lang for providing initial issue resolution and code optimizations
 - Heiko Krupp for his IRSend, HTU21, SI70xx and Wemo/Hue emulation drivers
