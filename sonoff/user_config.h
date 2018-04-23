@@ -228,6 +228,7 @@
 #define USE_TIMERS                               // Add support for up to 16 timers (+2k2 code)
   #define USE_TIMERS_WEB                         // Add timer webpage support (+4k5 code)
   #define USE_SUNRISE                            // Add support for Sunrise and sunset tools (+16k)
+    #define SUNRISE_DAWN_ANGLE DAWN_NORMAL       // Select desired Dawn Angle from (DAWN_NORMAL, DAWN_CIVIL, DAWN_NAUTIC, DAWN_ASTRONOMIC)
 
 // -- Rules ---------------------------------------
 #define USE_RULES                                // Add support for rules (+4k4 code)
@@ -289,10 +290,22 @@
 #define USE_SR04                                 // Add support for HC-SR04 ultrasonic devices (+1k code)
 
 /*********************************************************************************************\
+ * Select features and sensors enabled in previous version saving space
+\*********************************************************************************************/
+
+//#define USE_CLASSIC                             // Create sonoff-classic (See sonoff_post.h for selected features)
+
+/*********************************************************************************************\
  * Select all sensors - overrides above undefines!!
 \*********************************************************************************************/
 
-//#define USE_ALL_SENSORS                          // Create sonoff-xxl with all sensors enabled (See sonoff_post.h for selected sensors)
+//#define USE_ALL_SENSORS                          // Create sonoff-allsensors with all sensors enabled (See sonoff_post.h for selected sensors)
+
+/*********************************************************************************************\
+ * Select KNX without Emulation to save space
+\*********************************************************************************************/
+
+//#define USE_KNX_NO_EMULATION                     // Create sonoff-knx with KNX but without Emulation (See sonoff_post.h)
 
 /*********************************************************************************************\
  * Compile a minimal version if upgrade memory gets tight ONLY TO BE USED FOR UPGRADE STEP 1!

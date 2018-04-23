@@ -89,7 +89,11 @@ const char HTTP_HEAD_STYLE[] PROGMEM =
   "body{text-align:center;font-family:verdana;}"
   "td{padding:0px;}"
   "button{border:0;border-radius:0.3rem;background-color:#1fa3ec;color:#fff;line-height:2.4rem;font-size:1.2rem;width:100%;-webkit-transition-duration:0.4s;transition-duration:0.4s;cursor:pointer;}"
-  "button:hover{background-color:#006cba;}"
+  "button:hover{background-color:#0e70a4;}"
+  ".bred{background-color:#d43535;}"
+  ".bred:hover{background-color:#931f1f;}"
+  ".bgrn{background-color:#47c266;}"
+  ".bgrn:hover{background-color:#5aaf6f;}"
   "a{text-decoration:none;}"
   ".p{float:left;text-align:left;}"
   ".q{float:right;text-align:right;}"
@@ -180,7 +184,7 @@ const char HTTP_BTN_MENU1[] PROGMEM =
   "<br/><form action='up' method='get'><button>" D_FIRMWARE_UPGRADE "</button></form>"
   "<br/><form action='cs' method='get'><button>" D_CONSOLE "</button></form>";
 const char HTTP_BTN_RSTRT[] PROGMEM =
-  "<br/><form action='rb' method='get' onsubmit='return confirm(\"" D_CONFIRM_RESTART "\");'><button>" D_RESTART "</button></form>";
+  "<br/><form action='rb' method='get' onsubmit='return confirm(\"" D_CONFIRM_RESTART "\");'><button class='button bred'>" D_RESTART "</button></form>";
 const char HTTP_BTN_MENU_MODULE[] PROGMEM =
   "<br/><form action='md' method='get'><button>" D_CONFIGURE_MODULE "</button></form>";
 #if defined(USE_TIMERS) && defined(USE_TIMERS_WEB)
@@ -202,7 +206,7 @@ const char HTTP_BTN_MENU4[] PROGMEM =
   "<br/><form action='lg' method='get'><button>" D_CONFIGURE_LOGGING "</button></form>"
   "<br/><form action='co' method='get'><button>" D_CONFIGURE_OTHER "</button></form>"
   "<br/>"
-  "<br/><form action='rt' method='get' onsubmit='return confirm(\"" D_CONFIRM_RESET_CONFIGURATION "\");'><button>" D_RESET_CONFIGURATION "</button></form>"
+  "<br/><form action='rt' method='get' onsubmit='return confirm(\"" D_CONFIRM_RESET_CONFIGURATION "\");'><button class='button bred'>" D_RESET_CONFIGURATION "</button></form>"
   "<br/><form action='dl' method='get'><button>" D_BACKUP_CONFIGURATION "</button></form>"
   "<br/><form action='rs' method='get'><button>" D_RESTORE_CONFIGURATION "</button></form>";
 const char HTTP_BTN_MAIN[] PROGMEM =
@@ -270,7 +274,7 @@ const char HTTP_FORM_OTHER3b[] PROGMEM =
   "<br/><input style='width:10%;' id='r{1' name='b2' type='radio' value='{1'{2><b>{3</b>{4";  // Different id only used for labels
 #endif  // USE_EMULATION
 const char HTTP_FORM_END[] PROGMEM =
-  "<br/><button type='submit'>" D_SAVE "</button></form></fieldset>";
+  "<br/><button type='submit' class='button bgrn'>" D_SAVE "</button></form></fieldset>";
 const char HTTP_FORM_RST[] PROGMEM =
   "<div id='f1' name='f1' style='display:block;'>"
   "<fieldset><legend><b>&nbsp;" D_RESTORE_CONFIGURATION "&nbsp;</b></legend>";

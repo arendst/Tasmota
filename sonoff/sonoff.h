@@ -127,6 +127,12 @@ typedef unsigned long power_t;              // Power (Relay) type
 #define MQTT_TASMOTAMQTT       2            // Mqtt TasmotaMqtt library based on esp-mqtt-arduino
 #define MQTT_ESPMQTTARDUINO    3            // Mqtt esp-mqtt-arduino library by Ingo Randolf
 
+// Sunrise and Sunset DawnType
+#define DAWN_NORMAL            -0.8333
+#define DAWN_CIVIL             -6.0
+#define DAWN_NAUTIC            -12.0
+#define DAWN_ASTRONOMIC        -18.0
+
 /*********************************************************************************************\
  * Enumeration
 \*********************************************************************************************/
