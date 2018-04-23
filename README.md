@@ -74,13 +74,17 @@ Different firmware images are released based on Features and Sensors selection g
 - The Minimal version allows intermediate OTA uploads to support larger versions and does NOT change any persistent parameter.
 - The Classic version allows single OTA uploads as did the previous Sonoff-Tasmota versions.
 
-| Typical file size              | sonoff | classic | minimal | knx  | allsensors |
+#### Typical file size.
+
+| ESP/Arduino library version    | sonoff | classic | minimal | knx  | allsensors |
 |--------------------------------|--------|---------|---------|------|------------|
 | ESP/Arduino lib v2.3.0         | 526k   | 488k    | 427k    | 535k | 549k       |
 | ESP/Arduino lib v2.4.0         | 531k   | 496k    | 435k    | 540k | 552k       |
 | ESP/Arduino lib v2.4.1         | 533k   | 498k    | 436k    | 542k | 554k       |
 
-| Feature                        | sonoff | classic | minimal | knx | allsensors |
+#### Available Features and Sensors.
+
+| Feature or Sensor              | sonoff | classic | minimal | knx | allsensors |
 |--------------------------------|--------|---------|---------|-----|------------|
 | MY_LANGUAGE en-GB              | x | x | x | x | x |
 | MQTT_LIBRARY_TYPE PUBSUBCLIENT | x | x | x | x | x |
@@ -97,9 +101,7 @@ Different firmware images are released based on Features and Sensors selection g
 | USE_TIMERS_WEB                 | x | - | - | x | x |
 | USE_SUNRISE                    | x | - | - | x | x |
 | USE_RULES                      | x | - | - | x | x |
-
-| Sensor                         | sonoff | classic | minimal | knx | allsensors |
-|--------------------------------|--------|---------|---------|-----|------------|
+|                                |   |   |   |   |   |
 | USE_ADC_VCC                    | x | x | x | x | x |
 | USE_DS18B20                    | x | x | - | x | - |
 | USE_DS18x20                    | - | - | - | - | x |
@@ -132,6 +134,7 @@ Different firmware images are released based on Features and Sensors selection g
 | USE_WS2812_DMA                 | - | - | - | - | - |
 | USE_ARILUX_RF                  | x | x | - | x | x |
 | USE_SR04                       | x | - | - | x | x |
+|                                | sonoff | classic | minimal | knx | allsensors |
 
 ### Contribute
 You can contribute to Sonoff-Tasmota by
@@ -164,7 +167,7 @@ People helping to keep the show on the road:
 - Heiko Krupp for his IRSend, HTU21, SI70xx and Wemo/Hue emulation drivers
 - Wiktor Schmidt for Travis CI implementation
 - Thom Dietrich for PlatformIO optimizations
-- Marinus van den Broek for his EspEasy based inspiration
+- Marinus van den Broek for his EspEasy inspiration
 - Pete Ba for more user friendly energy monitor calibration
 - Lobradov providing compile optimization tips
 - Flexiti for his initial timer implementation
