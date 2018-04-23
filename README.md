@@ -74,14 +74,6 @@ Different firmware images are released based on Features and Sensors selection g
 - The Minimal version allows intermediate OTA uploads to support larger versions and does NOT change any persistent parameter.
 - The Classic version allows single OTA uploads as did the previous Sonoff-Tasmota versions.
 
-#### Typical file size.
-
-| ESP/Arduino library version    | sonoff | classic | minimal | knx  | allsensors |
-|--------------------------------|--------|---------|---------|------|------------|
-| ESP/Arduino lib v2.3.0         | 526k   | 488k    | 427k    | 535k | 549k       |
-| ESP/Arduino lib v2.4.0         | 531k   | 496k    | 435k    | 540k | 552k       |
-| ESP/Arduino lib v2.4.1         | 533k   | 498k    | 436k    | 542k | 554k       |
-
 #### Available Features and Sensors.
 
 | Feature or Sensor              | sonoff | classic | minimal | knx | allsensors |
@@ -134,7 +126,14 @@ Different firmware images are released based on Features and Sensors selection g
 | USE_WS2812_DMA                 | - | - | - | - | - |
 | USE_ARILUX_RF                  | x | x | - | x | x |
 | USE_SR04                       | x | - | - | x | x |
-|                                | sonoff | classic | minimal | knx | allsensors |
+
+#### Typical file size.
+
+| ESP/Arduino library version    | sonoff | classic | minimal | knx  | allsensors |
+|--------------------------------|--------|---------|---------|------|------------|
+| ESP/Arduino lib v2.3.0         | 526k   | 488k    | 427k    | 535k | 549k       |
+| ESP/Arduino lib v2.4.0         | 531k   | 496k    | 435k    | 540k | 552k       |
+| ESP/Arduino lib v2.4.1         | 533k   | 498k    | 436k    | 542k | 554k       |
 
 ### Contribute
 You can contribute to Sonoff-Tasmota by
