@@ -74,7 +74,7 @@ Different firmware images are released based on Features and Sensors selection g
 - The Minimal version allows intermediate OTA uploads to support larger versions and does NOT change any persistent parameter.
 - The Classic version allows single OTA uploads as did the previous Sonoff-Tasmota versions.
 
-#### Available Features and Sensors.
+#### Available Features and Sensors
 
 | Feature or Sensor              | sonoff | classic | minimal | knx | allsensors |
 |--------------------------------|--------|---------|---------|-----|------------|
@@ -127,7 +127,7 @@ Different firmware images are released based on Features and Sensors selection g
 | USE_ARILUX_RF                  | x | x | - | x | x |
 | USE_SR04                       | x | - | - | x | x |
 
-#### Typical file size.
+#### Typical file size
 
 | ESP/Arduino library version    | sonoff | classic | minimal | knx  | allsensors |
 |--------------------------------|--------|---------|---------|------|------------|
@@ -165,11 +165,11 @@ Libraries used with Sonoff-Tasmota are:
 
 #### People inspiring me
 People helping to keep the show on the road:
-- David Lang for providing initial issue resolution and code optimizations
+- David Lang providing initial issue resolution and code optimizations
 - Heiko Krupp for his IRSend, HTU21, SI70xx and Wemo/Hue emulation drivers
 - Wiktor Schmidt for Travis CI implementation
 - Thom Dietrich for PlatformIO optimizations
-- Marinus van den Broek for his EspEasy inspiration
+- Marinus van den Broek for his EspEasy groundwork
 - Pete Ba for more user friendly energy monitor calibration
 - Lobradov providing compile optimization tips
 - Flexiti for his initial timer implementation
@@ -178,7 +178,7 @@ People helping to keep the show on the road:
 - Gijs Noorlander for his MHZ19 and SenseAir drivers
 - Emontnemery for his HomeAssistant Discovery concept and many code tuning tips
 - Aidan Mountford for his HSB support
-- Daniel Ztolnai for his inspiring Serial Bridge implementation
+- Daniel Ztolnai for his Serial Bridge implementation
 - Gerhard Mutz for his SGP30 and Sunrise/Sunset driver
 - Nuno Ferreira for his HC-SR04 driver
 - Adrian Scillato for his (security)fixes and implementing and maintaining KNX
