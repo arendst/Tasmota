@@ -124,7 +124,8 @@ void DuskTillDawn(uint8_t *hour_up,uint8_t *minute_up, uint8_t *hour_down, uint8
   h (D) = -12.0 nautische Dämmerung
   h (D) = -18.0 astronomische Dämmerung
   */
-  double h = -50/60.0*RAD;
+//  double h = -50/60.0*RAD;
+  double h = SUNRISE_DAWN_ANGLE *RAD;
   double B = (((double)Settings.latitude)/1000000) * RAD; // geographische Breite
   double GeographischeLaenge = ((double)Settings.longitude)/1000000;
 //  double Zeitzone = 0; //Weltzeit

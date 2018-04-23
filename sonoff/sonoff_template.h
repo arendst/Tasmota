@@ -608,7 +608,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
   { "Sonoff T1 1CH",   // Sonoff T1 1CH (ESP8285)
      GPIO_KEY1,        // GPIO00 Button 1
      GPIO_USER,        // GPIO01 Serial RXD and Optional sensor
-     0,
+     GPIO_USER,        // GPIO02 Optional Sensor (J3 Pin 5)
      GPIO_USER,        // GPIO03 Serial TXD and Optional sensor
      0, 0,
      0, 0, 0,          // Flash connection
@@ -621,7 +621,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
   { "Sonoff T1 2CH",   // Sonoff T1 2CH (ESP8285)
      GPIO_KEY1,        // GPIO00 Button 1
      GPIO_USER,        // GPIO01 Serial RXD and Optional sensor
-     0,
+     GPIO_USER,        // GPIO02 Optional Sensor (J3 Pin 5)
      GPIO_USER,        // GPIO03 Serial TXD and Optional sensor
      0,
      GPIO_REL2,        // GPIO05 Blue Led and Relay 2 (0 = Off, 1 = On)
@@ -636,7 +636,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
   { "Sonoff T1 3CH",   // Sonoff T1 3CH (ESP8285)
      GPIO_KEY1,        // GPIO00 Button 1
      GPIO_USER,        // GPIO01 Serial RXD and Optional sensor
-     0,
+     GPIO_USER,        // GPIO02 Optional Sensor (J3 Pin 5)
      GPIO_USER,        // GPIO03 Serial TXD and Optional sensor
      GPIO_REL3,        // GPIO04 Blue Led and Relay 3 (0 = Off, 1 = On)
      GPIO_REL2,        // GPIO05 Blue Led and Relay 2 (0 = Off, 1 = On)
