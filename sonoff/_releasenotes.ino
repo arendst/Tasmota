@@ -1,11 +1,16 @@
 /* 5.12.0m
  * Reinit timers to accomodate random window (#2447)
+ * Remove sonoff-xxl
+ * Add sonoff-classic, sonoff-allsensors and sonoff-knx
+ * Add some coloring to important web buttons
+ * Add user selectable defines for Sunrise/set Dawn option (#2378)
  * Add random window to timers (#2447)
  * Add optional KNX IP Protocol Support (#2402)
  * Add Greek language file (#2491)
  * Add Bulgarian language file
  * Add support for sensor HC-SR04 ultrasonic (#113, #1964, #2444)
  * Add support for Sonoff Pow R2 (#2340)
+ * Add GPIO_User to GPIO02 for all Sonoff T1 (#2524)
  * Fix compile error when using ESP/Arduino library v2.3.0 by reverting KNX async UDP library to default UDP library (#2488, #2492, #2493)
  * Fix configuration filename truncation when it contains spaces (#2484, #2490)
  *
@@ -111,7 +116,7 @@
  * Add support for sensor SHTC3 (#1967)
  *
  * 5.12.0a
- * Change platformio option sonoff-ds18x20 to sonoff-xxl enabling ds18x20 and all other sensors in one image
+ * Change platformio option sonoff-ds18x20 to sonoff-allsensors enabling ds18x20 and all other sensors in one image
  * Fix providing web page configuratin option for Friendly Name when no device (relay or light) is configured (#1850)
  * Change default parameters in user_config.h to undefined for easy installation (#1851)
  * Change max user configurable hold time from 10 to 25 seconds (#1851)

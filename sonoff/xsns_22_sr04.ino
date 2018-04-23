@@ -26,6 +26,7 @@
  * - https://www.dfrobot.com/wiki/index.php/Weather-proof_Ultrasonic_Sensor_SKU_:_SEN0207
 \*********************************************************************************************/
 #define max(a,b) ((a)>(b)?(a):(b))
+#define min(a,b) ((a)<(b)?(a):(b))
 
 uint8_t sr04_echo_pin = 0;
 uint8_t sr04_trig_pin = 0;
@@ -71,7 +72,7 @@ boolean Sr04Read(uint16_t *distance)
 uint16_t Sr04Ping(uint16_t max_cm_distance)
 {
   uint16_t duration = 0;
-  uint16_t maxEchoTime, maxTime;
+  uint16_t maxEchoTime;
 
   maxEchoTime = min(max_cm_distance + 1, (uint16_t) MAX_SENSOR_DISTANCE + 1) * US_ROUNDTRIP_CM;
 
@@ -89,7 +90,8 @@ uint16_t Sr04Ping(uint16_t max_cm_distance)
   return (duration > maxEchoTime) ? 0 : duration;
 }
 
-uint16_t Sr04GetSamples(uint8_t it, uint16_t max_cm_distance) {
+uint16_t Sr04GetSamples(uint8_t it, uint16_t max_cm_distance)
+{
   uint16_t uS[it];
   uint16_t last;
   uint8_t j;
