@@ -63,7 +63,9 @@
 
 #define MAX_RULE_TIMERS        8
 
+#ifndef ULONG_MAX
 #define ULONG_MAX              0xffffffffUL
+#endif
 
 #define D_CMND_RULE "Rule"
 #define D_CMND_RULETIMER "RuleTimer"

@@ -628,7 +628,11 @@ void HandleConfiguration()
   page += FPSTR(HTTP_HEAD_STYLE);
   page += FPSTR(HTTP_BTN_MENU_MODULE);
 #if defined(USE_TIMERS) && defined(USE_TIMERS_WEB)
+#ifdef USE_RULES
+  page += FPSTR(HTTP_BTN_MENU_TIMER);
+#else
   if (devices_present) { page += FPSTR(HTTP_BTN_MENU_TIMER); }
+#endif  // USE_RULES
 #endif  // USE_TIMERS and USE_TIMERS_WEB
   page += FPSTR(HTTP_BTN_MENU_WIFI);
   if (Settings.flag.mqtt_enabled) { page += FPSTR(HTTP_BTN_MENU_MQTT); }

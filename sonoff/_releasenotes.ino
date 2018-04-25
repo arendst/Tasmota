@@ -3,6 +3,7 @@
  * Remove sonoff-xxl
  * Add sonoff-classic, sonoff-allsensors and sonoff-knx
  * Add some coloring to important web buttons
+ * Add define MQTT_TELE_RETAIN compile option default set to 0 (#1071)
  * Add user selectable defines for Sunrise/set Dawn option (#2378)
  * Add random window to timers (#2447)
  * Add optional KNX IP Protocol Support (#2402)

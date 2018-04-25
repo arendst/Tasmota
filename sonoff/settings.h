@@ -98,7 +98,7 @@ typedef union {
     uint32_t days : 7;                     // bits 16 - 22 = week day mask
     uint32_t device : 4;                   // bits 23 - 26 = 16 devices
     uint32_t power : 2;                    // bits 27 - 28 = 4 power states - Off, On, Toggle, Blink or Rule
-    uint32_t mode : 2;                     // bits 29 - 30 = timer modes - Scheduler, Sunrise, Sunset
+    uint32_t mode : 2;                     // bits 29 - 30 = timer modes - 0 = Scheduler, 1 = Sunrise, 2 = Sunset
     uint32_t arm : 1;                      // bit 31
   };
 } Timer;
