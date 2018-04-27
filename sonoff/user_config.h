@@ -253,6 +253,7 @@
   #define USE_BMP                                // Add I2C code for BMP085/BMP180/BMP280/BME280 sensor (+4k code)
 //    #define USE_BME680                           // Add additional support for BME680 sensor using Adafruit Sensor and BME680 libraries (+6k code)
   #define USE_SGP30                              // Add I2C code for SGP30 sensor (+1k1 code)
+  #define USE_CCS811                              // Add I2C code for CCS811 sensor (+1k1 code)
   #define USE_BH1750                             // Add I2C code for BH1750 sensor (+0k5 code)
 //  #define USE_VEML6070                           // Add I2C code for VEML6070 sensor (+0k5 code)
 //  #define USE_TSL2561                            // Add I2C code for TSL2561 sensor using library Joba_Tsl2561 (+2k3 code)
