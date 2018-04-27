@@ -40,7 +40,7 @@ uint16_t TVOC;
 
 void CCS811Update()  // Perform every second to ensure proper operation of the baseline compensation algorithm
 {
-  CCS811_ready = 1;
+  CCS811_ready = 0;
   if (!CCS811_type) {
     sint8_t res=ccs.begin(CCS811_ADDRESS);
     if (!res) {
