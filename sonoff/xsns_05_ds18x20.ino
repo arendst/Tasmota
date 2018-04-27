@@ -247,7 +247,7 @@ void Ds18x20Init()
 
   ds18x20_pin = pin[GPIO_DSB];
   OneWireResetSearch();
-  for (ds18x20_sensors = 0; ds18x20_sensors < DS18X20_MAX_SENSORS; ds18x20_sensors) {
+  for (ds18x20_sensors = 0; ds18x20_sensors < DS18X20_MAX_SENSORS; ds18x20_sensors++) {
     if (!OneWireSearch(ds18x20_address[ds18x20_sensors])) {
       break;
     }
@@ -261,7 +261,10 @@ void Ds18x20Init()
       for (uint8_t j = 6; j > 0; j--) {
         ids[ds18x20_sensors] = ids[ds18x20_sensors] << 8 | ds18x20_address[ds18x20_sensors][j];
       }
-      ds18x20_sensors++;
+//      ds18x20_sensors++;
+    }
+    else {
+        break; //fix for endless loop on bad_CHIPID
     }
   }
   for (uint8_t i = 0; i < ds18x20_sensors; i++) {
