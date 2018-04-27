@@ -1462,7 +1462,12 @@ void PerformEverySecond()
       MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_STATE), MQTT_TELE_RETAIN);
 
       mqtt_data[0] = '\0';
-      if (MqttShowSensor()) { MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain); }
+      if (MqttShowSensor()) {
+        MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);
+#ifdef USE_RULES
+        RulesTeleperiod();  // Allow rule based HA messages
+#endif  // USE_RULES
+      }
     }
   }
 

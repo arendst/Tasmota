@@ -201,7 +201,7 @@ void ApplyTimerOffsets(Timer *duskdawn)
     if (timeBuffer > (uint16_t)duskdawn->time) {
       timeBuffer = 1440 - (timeBuffer - (uint16_t)duskdawn->time);
       duskdawn->days = duskdawn->days >> 1;
-      duskdawn->days = duskdawn->days |= (stored.days << 6);
+      duskdawn->days |= (stored.days << 6);
     } else {
       timeBuffer = (uint16_t)duskdawn->time - timeBuffer;
     }
@@ -212,7 +212,7 @@ void ApplyTimerOffsets(Timer *duskdawn)
     if (timeBuffer > 1440) {
       timeBuffer -= 1440;
       duskdawn->days = duskdawn->days << 1;
-      duskdawn->days = duskdawn->days |= (stored.days >> 6);
+      duskdawn->days |= (stored.days >> 6);
     }
   }
   duskdawn->time = timeBuffer;
@@ -279,8 +279,8 @@ void TimerEverySecond()
 #endif
         if (xtimer.arm) {
           set_time += timer_window[i];                // Add random time offset
-          if (set_time < 0) { set_time == 0; }        // Stay today;
-          if (set_time > 1439) { set_time == 1439; }
+          if (set_time < 0) { set_time = 0; }         // Stay today;
+          if (set_time > 1439) { set_time = 1439; }
           if (time == set_time) {
             if (xtimer.days & days) {
               Settings.timer[i].arm = xtimer.repeat;

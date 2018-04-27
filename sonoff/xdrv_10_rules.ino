@@ -62,6 +62,7 @@
 \*********************************************************************************************/
 
 #define MAX_RULE_TIMERS        8
+#define RULES_MAX_VARS         5
 
 #ifndef ULONG_MAX
 #define ULONG_MAX              0xffffffffUL
@@ -83,6 +84,7 @@ long rules_power = -1;
 
 uint32_t rules_triggers = 0;
 uint8_t rules_trigger_count = 0;
+uint8_t rules_teleperiod = 0;
 
 /*******************************************************************************************/
 
@@ -146,6 +148,12 @@ bool RulesRuleMatch(String &event, String &rule)
   if (pos == -1) { return false; }                     // No # sign in rule
 
   String rule_task = rule.substring(0, pos);           // "INA219" or "SYSTEM"
+  if (rules_teleperiod) {
+    int ppos = rule_task.indexOf("TELE-");             // "TELE-INA219" or "INA219"
+    if (ppos == -1) { return false; }                  // No pre-amble in rule
+    rule_task = rule.substring(5, pos);                // "INA219" or "SYSTEM"
+  }
+
   String rule_name = rule.substring(pos +1);           // "CURRENT>0.100" or "BOOT"
 
   char compare = ' ';
@@ -228,6 +236,8 @@ bool RulesRuleMatch(String &event, String &rule)
 bool RulesProcess()
 {
   bool serviced = false;
+  char vars[RULES_MAX_VARS][10] = { 0 };
+  char stemp[10];
 
   if (!Settings.flag.rules_enabled) { return serviced; }  // Not enabled
   if (!strlen(Settings.rules)) { return serviced; }       // No rules
@@ -262,17 +272,32 @@ bool RulesProcess()
     rules_event_value = "";
     String event = event_saved;
     if (RulesRuleMatch(event, event_trigger)) {
-      commands.replace(F("%value%"), rules_event_value);
-      char command[commands.length() +1];
-      snprintf(command, sizeof(command), commands.c_str());
+      commands.trim();
+      String ucommand = commands;
+      ucommand.toUpperCase();
+      if (ucommand.startsWith("VAR")) {
+        uint8_t idx = ucommand.charAt(3) - '1';
+//        idx -= '1';
+        if ((idx >= 0) && (idx < RULES_MAX_VARS)) { snprintf(vars[idx], sizeof(vars[idx]), rules_event_value.c_str()); }
+      } else {
+        commands.replace(F("%value%"), rules_event_value);
+        for (byte i = 0; i < RULES_MAX_VARS; i++) {
+          if (strlen(vars[i])) {
+            snprintf_P(stemp, sizeof(stemp), PSTR("%%var%d%%"), i +1);
+            commands.replace(stemp, vars[i]);
+          }
+        }
+        char command[commands.length() +1];
+        snprintf(command, sizeof(command), commands.c_str());
 
-      snprintf_P(log_data, sizeof(log_data), PSTR("RUL: %s performs \"%s\""), event_trigger.c_str(), command);
-      AddLog(LOG_LEVEL_INFO);
+        snprintf_P(log_data, sizeof(log_data), PSTR("RUL: %s performs \"%s\""), event_trigger.c_str(), command);
+        AddLog(LOG_LEVEL_INFO);
 
-//      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, D_CMND_RULE, D_JSON_INITIATED);
-//      MqttPublishPrefixTopic_P(RESULT_OR_STAT, PSTR(D_CMND_RULE));
+//        snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, D_CMND_RULE, D_JSON_INITIATED);
+//        MqttPublishPrefixTopic_P(RESULT_OR_STAT, PSTR(D_CMND_RULE));
 
-      ExecuteCommand(command);
+        ExecuteCommand(command);
+      }
       serviced = true;
     }
     rules_trigger_count++;
@@ -288,6 +313,7 @@ void RulesInit()
     Settings.flag.rules_enabled = 0;
     Settings.flag.rules_once = 0;
   }
+  rules_teleperiod = 0;
 }
 
 void RulesSetPower()
@@ -342,6 +368,13 @@ void RulesEverySecond()
       }
     }
   }
+}
+
+void RulesTeleperiod()
+{
+  rules_teleperiod = 1;
+  RulesProcess();
+  rules_teleperiod = 0;
 }
 
 boolean RulesCommand()
