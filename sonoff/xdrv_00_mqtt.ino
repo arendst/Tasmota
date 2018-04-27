@@ -399,6 +399,11 @@ boolean MqttCheckTls()
   }
 
   AddLog_P(LOG_LEVEL_INFO, S_LOG_MQTT, PSTR(D_FINGERPRINT));
+
+//#ifdef ARDUINO_ESP8266_RELEASE_2_4_1
+  EspClient = WiFiClientSecure();               // Wifi Secure Client reconnect issue 4497 (https://github.com/esp8266/Arduino/issues/4497)
+//#endif
+
   if (!EspClient.connect(Settings.mqtt_host, Settings.mqtt_port)) {
     snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_MQTT D_TLS_CONNECT_FAILED_TO " %s:%d. " D_RETRY_IN " %d " D_UNIT_SECOND),
       Settings.mqtt_host, Settings.mqtt_port, mqtt_retry_counter);
@@ -478,6 +483,14 @@ void MqttReconnect()
 
     mqtt_initial_connection_state = 1;
   }
+
+//#ifdef ARDUINO_ESP8266_RELEASE_2_4_1
+#ifdef USE_MQTT_TLS
+  EspClient = WiFiClientSecure();         // Wifi Secure Client reconnect issue 4497 (https://github.com/esp8266/Arduino/issues/4497)
+#else
+  EspClient = WiFiClient();               // Wifi Client reconnect issue 4497 (https://github.com/esp8266/Arduino/issues/4497)
+#endif
+//#endif
 
 #if (MQTT_LIBRARY_TYPE == MQTT_PUBSUBCLIENT)
   MqttClient.setCallback(MqttDataHandler);
@@ -594,9 +607,11 @@ bool MqttCommand()
   else if (CMND_MQTTPASSWORD == command_code) {
     if ((data_len > 0) && (data_len < sizeof(Settings.mqtt_pwd))) {
       strlcpy(Settings.mqtt_pwd, (!strcmp(dataBuf,"0")) ? "" : (1 == payload) ? MQTT_PASS : dataBuf, sizeof(Settings.mqtt_pwd));
+      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, Settings.mqtt_pwd);
       restart_flag = 2;
+    } else {
+      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_ASTERIX, command);
     }
-    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, Settings.mqtt_pwd);
   }
   else if (CMND_FULLTOPIC == command_code) {
     if ((data_len > 0) && (data_len < sizeof(Settings.mqtt_fulltopic))) {

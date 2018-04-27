@@ -165,8 +165,10 @@
 
 // -- Localization --------------------------------
   // If non selected the default en-GB will be used
+//#define MY_LANGUAGE            bg-BG           // Bulgarian in Bulgaria
 //#define MY_LANGUAGE            cs-CZ           // Czech in Czech
 //#define MY_LANGUAGE            de-DE           // German in Germany
+//#define MY_LANGUAGE            el-GR           // Greek in Greece
 //#define MY_LANGUAGE            en-GB           // English in Great Britain. Enabled by Default
 //#define MY_LANGUAGE            es-AR           // Spanish in Argentina
 //#define MY_LANGUAGE            fr-FR           // French in France
@@ -188,6 +190,9 @@
 //#define MQTT_LIBRARY_TYPE      MQTT_TASMOTAMQTT    // Use TasmotaMqtt library (+4k4 code, +4k mem) - non-TLS only
   // Alternative MQTT driver does not block network when MQTT server is unavailable. No TLS support
 //#define MQTT_LIBRARY_TYPE      MQTT_ESPMQTTARDUINO // Use (patched) esp-mqtt-arduino library (+4k8 code, +4k mem) - non-TLS only
+
+// -- MQTT ----------------------------------------
+#define MQTT_TELE_RETAIN     0                   // Tele messages may send retain flag (0 = off, 1 = on)
 
 // -- MQTT - Domoticz -----------------------------
 #define USE_DOMOTICZ                             // Enable Domoticz (+6k code, +0.3k mem)
@@ -226,6 +231,7 @@
 #define USE_TIMERS                               // Add support for up to 16 timers (+2k2 code)
   #define USE_TIMERS_WEB                         // Add timer webpage support (+4k5 code)
   #define USE_SUNRISE                            // Add support for Sunrise and sunset tools (+16k)
+    #define SUNRISE_DAWN_ANGLE DAWN_NORMAL       // Select desired Dawn Angle from (DAWN_NORMAL, DAWN_CIVIL, DAWN_NAUTIC, DAWN_ASTRONOMIC)
 
 // -- Rules ---------------------------------------
 #define USE_RULES                                // Add support for rules (+4k4 code)
@@ -284,11 +290,25 @@
 
 #define USE_ARILUX_RF                            // Add support for Arilux RF remote controller (+0k8 code, 252 iram (non 2.3.0))
 
+#define USE_SR04                                 // Add support for HC-SR04 ultrasonic devices (+1k code)
+
+/*********************************************************************************************\
+ * Select features and sensors enabled in previous version saving space
+\*********************************************************************************************/
+
+//#define USE_CLASSIC                             // Create sonoff-classic (See sonoff_post.h for selected features)
+
 /*********************************************************************************************\
  * Select all sensors - overrides above undefines!!
 \*********************************************************************************************/
 
-//#define USE_ALL_SENSORS                          // Create sonoff-xxl with all sensors enabled (See sonoff_post.h for selected sensors)
+//#define USE_ALL_SENSORS                          // Create sonoff-allsensors with all sensors enabled (See sonoff_post.h for selected sensors)
+
+/*********************************************************************************************\
+ * Select KNX without Emulation to save space
+\*********************************************************************************************/
+
+//#define USE_KNX_NO_EMULATION                     // Create sonoff-knx with KNX but without Emulation (See sonoff_post.h)
 
 /*********************************************************************************************\
  * Compile a minimal version if upgrade memory gets tight ONLY TO BE USED FOR UPGRADE STEP 1!

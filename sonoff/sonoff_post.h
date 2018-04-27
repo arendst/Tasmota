@@ -20,6 +20,10 @@
 #ifndef _SONOFF_POST_H_
 #define _SONOFF_POST_H_
 
+/*********************************************************************************************\
+ * Function declarations
+\*********************************************************************************************/
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -38,9 +42,18 @@ void WifiWpsStatusCallback(wps_cb_status status);
 void KNX_CB_Action(message_t const &msg, void *arg);
 //#endif  // USE_KNX
 
+/*********************************************************************************************\
+ * Default global defines
+\*********************************************************************************************/
+
 #define USE_DHT                               // Default DHT11 sensor needs no external library
 
-#ifdef USE_ALL_SENSORS  // ===================== Configure sonoff-xxl.bin =========================
+/*********************************************************************************************\
+ * [sonoff-allsensors.bin]
+ * Provide an image with all supported sensors enabled
+\*********************************************************************************************/
+
+#ifdef USE_ALL_SENSORS
 #define USE_ADC_VCC                           // Display Vcc in Power status. Disable for use as Analog input on selected devices
 #define USE_DS18x20                           // For more than one DS18x20 sensors with id sort, single scan and read retry (+1k3 code)
 //#define USE_DS18x20_LEGACY                     // For more than one DS18x20 sensors with dynamic scan using library OneWire (+1k5 code)
@@ -79,16 +92,76 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #endif
 //  #define USE_WS2812_DMA                      // DMA supports only GPIO03 (= Serial RXD) (+1k mem). When USE_WS2812_DMA is enabled expect Exceptions on Pow
 #define USE_ARILUX_RF                         // Add support for Arilux RF remote controller (+0k8 code, 252 iram (non 2.3.0))
-#endif  // USE_ALL_SENSORS =====================
+#define USE_SR04                              // Add support for HC-SR04 ultrasonic devices (+1k code)
+#endif  // USE_ALL_SENSORS
+
+/*********************************************************************************************\
+ * [sonoff-classic.bin]
+ * Provide an image close to version 5.12.0 but still within 499k program space to allow one time OTA
+\*********************************************************************************************/
+
+#ifdef USE_CLASSIC
+#ifdef USE_KNX
+#undef USE_KNX
+#endif
+#ifdef USE_TIMERS
+#undef USE_TIMERS
+#endif
+#ifdef USE_TIMERS_WEB
+#undef USE_TIMERS_WEB
+#endif
+#ifdef USE_SUNRISE
+#undef USE_SUNRISE
+#endif
+#ifdef USE_RULES
+#undef USE_RULES
+#endif
+#ifdef USE_SGP30
+#undef USE_SGP30
+#endif
+#ifdef USE_NOVA_SDS
+#undef USE_NOVA_SDS
+#endif
+#ifdef USE_IR_RECEIVE
+#undef USE_IR_RECEIVE
+#endif
+#ifdef USE_SERIAL_BRIDGE
+#undef USE_SERIAL_BRIDGE
+#endif
+#ifdef USE_SR04
+#undef USE_SR04
+#endif
+#endif  // USE_CLASSIC
+
+/*********************************************************************************************\
+ * [sonoff-knx.bin]
+ * Provide a dedicated KNX image allowing enough code and memory space
+\*********************************************************************************************/
+
+#ifdef USE_KNX_NO_EMULATION
+#ifndef USE_KNX
+#define USE_KNX                               // Enable KNX IP Protocol Support (+23k code, +3k3 mem)
+#endif
+#ifdef USE_EMULATION
+#undef USE_EMULATION                          // Disable Belkin WeMo and Hue Bridge emulation for Alexa (-16k code, -2k mem)
+#endif
+#endif  // USE_KNX_NO_EMULATION
+
+/*********************************************************************************************\
+ * Mandatory define for DS18x20 if changed by above image selections
+\*********************************************************************************************/
 
 #if defined(USE_DS18x20) || defined(USE_DS18x20_LEGACY)
 #else
 #define USE_DS18B20                           // Default DS18B20 sensor needs no external library
 #endif
 
-//#define DEBUG_THEO                            // Add debug code
+/*********************************************************************************************\
+ * [sonoff-minimal.bin]
+ * Provide the smallest image possible while still enabling a webserver for intermediate image load
+\*********************************************************************************************/
 
-#ifdef BE_MINIMAL  // ========================== Configure sonoff-minimal.bin =====================
+#ifdef BE_MINIMAL
 #ifdef USE_MQTT_TLS
 #undef USE_MQTT_TLS                           // Disable TLS support won't work as the MQTTHost is not set
 #endif
@@ -100,6 +173,9 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #endif
 #ifdef USE_HOME_ASSISTANT
 #undef USE_HOME_ASSISTANT                     // Disable Home Assistant
+#endif
+#ifdef USE_KNX
+#undef USE_KNX                                // Disable KNX IP Protocol Support
 #endif
 //#ifdef USE_WEBSERVER
 //#undef USE_WEBSERVER                          // Disable Webserver
@@ -113,26 +189,23 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #ifdef USE_SUNRISE
 #undef USE_SUNRISE                            // Disable support for Sunrise and sunset tools
 #endif
-#ifdef USE_PZEM004T
-#undef USE_PZEM004T                           // Disable PZEM004T energy sensor
+#ifdef USE_RULES
+#undef USE_RULES                              // Disable support for rules
+#endif
+#ifdef USE_DHT
+#undef USE_DHT                                // Disable internal DHT sensor
 #endif
 #ifdef USE_DS18x20
 #undef USE_DS18x20                            // Disable DS18x20 sensor
+#endif
+#ifdef USE_DS18B20
+#undef USE_DS18B20                            // Disable internal DS18B20 sensor
 #endif
 #ifdef USE_I2C
 #undef USE_I2C                                // Disable all I2C sensors and devices
 #endif
 #ifdef USE_SPI
 #undef USE_SPI                                // Disable all SPI devices
-#endif
-#ifdef USE_WS2812
-#undef USE_WS2812                             // Disable WS2812 Led string
-#endif
-#ifdef USE_DS18B20
-#undef USE_DS18B20                            // Disable internal DS18B20 sensor
-#endif
-#ifdef USE_DHT
-#undef USE_DHT                                // Disable internal DHT sensor
 #endif
 #ifdef USE_DISPLAY
 #undef USE_DISPLAY                            // Disable Display support
@@ -143,16 +216,38 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #ifdef USE_SENSEAIR
 #undef USE_SENSEAIR                           // Disable support for SenseAir K30, K70 and S8 CO2 sensor
 #endif
+#ifdef USE_PMS5003
+#undef USE_PMS5003                            // Disable support for PMS5003 and PMS7003 particle concentration sensor
+#endif
+#ifdef USE_NOVA_SDS
+#undef USE_NOVA_SDS                           // Disable support for SDS011 and SDS021 particle concentration sensor
+#endif
+#ifdef USE_PZEM004T
+#undef USE_PZEM004T                           // Disable PZEM004T energy sensor
+#endif
+#ifdef USE_SERIAL_BRIDGE
+#undef USE_SERIAL_BRIDGE                      // Disable support for software Serial Bridge
+#endif
 #ifdef USE_IR_REMOTE
 #undef USE_IR_REMOTE                          // Disable IR driver
+#endif
+#ifdef USE_WS2812
+#undef USE_WS2812                             // Disable WS2812 Led string
 #endif
 #ifdef USE_ARILUX_RF
 #undef USE_ARILUX_RF                          // Disable support for Arilux RF remote controller
 #endif
+#ifdef USE_SR04
+#undef USE_SR04                               // Disable support for for HC-SR04 ultrasonic devices
+#endif
 #ifdef DEBUG_THEO
 #undef DEBUG_THEO                             // Disable debug code
 #endif
-#endif  // BE_MINIMAL ==========================
+#endif  // BE_MINIMAL
+
+/*********************************************************************************************\
+ * Mandatory defines satisfying possible disabled defines
+\*********************************************************************************************/
 
 #ifndef SWITCH_MODE
 #define SWITCH_MODE            TOGGLE         // TOGGLE, FOLLOW or FOLLOW_INV (the wall switch state)

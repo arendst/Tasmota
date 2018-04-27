@@ -22,8 +22,7 @@
  * KNX support
  *
  * Using libraries:
- *   ESP KNX IP library (async-udp branch) (https://github.com/envy/esp-knx-ip/tree/async-udp)
- *   ESPAsyncUDP library (https://github.com/me-no-dev/ESPAsyncUDP)
+ *   ESP KNX IP library (https://github.com/envy/esp-knx-ip)
 
 Constants in sonoff.h
 -----------------------
@@ -597,7 +596,8 @@ const char HTTP_FORM_KNX_ADD_BTN[] PROGMEM =
 
 const char HTTP_FORM_KNX_ADD_TABLE_ROW[] PROGMEM =
   "<tr><td><b>{optex} -> GAfnum / GAarea / GAfdef </b></td>"
-  "<td><button type='submit' name='btn_del_ga' value='{opval}' style='background-color: #f44336;'> " D_DELETE " </button></td></tr>";
+//  "<td><button type='submit' name='btn_del_ga' value='{opval}' style='background-color: #eb1e1e;'> " D_DELETE " </button></td></tr>";
+  "<td><button type='submit' name='btn_del_ga' value='{opval}' class='button bred'> " D_DELETE " </button></td></tr>";
 
 const char HTTP_FORM_KNX3[] PROGMEM =
   "</table></center></fieldset><br/>"
@@ -609,7 +609,8 @@ const char HTTP_FORM_KNX4[] PROGMEM =
 
 const char HTTP_FORM_KNX_ADD_TABLE_ROW2[] PROGMEM =
   "<tr><td><b>GAfnum / GAarea / GAfdef -> {optex}</b></td>"
-  "<td><button type='submit' name='btn_del_cb' value='{opval}' style='background-color: #f44336;'> " D_DELETE " </button></td></tr>";
+//  "<td><button type='submit' name='btn_del_cb' value='{opval}' style='background-color: #eb1e1e;'> " D_DELETE " </button></td></tr>";
+  "<td><button type='submit' name='btn_del_cb' value='{opval}' class='button bred'> " D_DELETE " </button></td></tr>";
 
 
 void HandleKNXConfiguration()
@@ -870,8 +871,6 @@ boolean Xdrv11(byte function)
         break;
       case FUNC_LOOP:
         knx.loop();  // Process knx events
-                     //    It is not used by the actual config of asyncUDP branch of ESP-KNX-IP Library,
-                     //    but is left here for compatibility with upcoming features of ESP-KNX-IP Library
         break;
 //      case FUNC_COMMAND:
 //        result = KNXCommand();
