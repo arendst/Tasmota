@@ -1,6 +1,7 @@
 /* 5.12.0m
  * Reinit timers to accomodate random window (#2447)
  * Remove sonoff-xxl
+ * Disable sleep when using Esp/Arduino core 2.4.1 (#2559)
  * Add sonoff-classic, sonoff-allsensors and sonoff-knx
  * Add some coloring to important web buttons
  * Add rule variables and teleperiod trigger to accomodate user HA messages

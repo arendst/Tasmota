@@ -615,7 +615,9 @@ void WifiBegin(uint8_t flag)
   delay(200);
   WiFi.mode(WIFI_STA);      // Disable AP mode
   if (Settings.sleep) {
+#ifndef ARDUINO_ESP8266_RELEASE_2_4_1     // See https://github.com/arendst/Sonoff-Tasmota/issues/2559
     WiFi.setSleepMode(WIFI_LIGHT_SLEEP);  // Allow light sleep during idle times
+#endif
   }
 //  if (WiFi.getPhyMode() != WIFI_PHY_MODE_11N) {
 //    WiFi.setPhyMode(WIFI_PHY_MODE_11N);
