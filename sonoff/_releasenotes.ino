@@ -1,4 +1,9 @@
-/* 5.12.0m
+/* 5.12.0n
+ * Change ESP8266 Analog JSON message from {"Analog0:123"} to {"ANALOG":{"A0:123"}} to accomodate rules (#2560)
+ * Change Counter JSON message from {"Counter1":0,"Counter3":0} to {"COUNTER":{"C1":0,"C3":0}} to accomodate rules
+ * Change ADS1115 JSON message from {"ADS1115":{"Analog0":123,"Analog1":123}} to {"ADS1115":{"A0":123,"A1":123}}
+ *
+ * 5.12.0m
  * Reinit timers to accomodate random window (#2447)
  * Remove sonoff-xxl
  * Disable sleep when using Esp/Arduino core 2.4.1 (#2559)
