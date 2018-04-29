@@ -163,7 +163,7 @@ boolean ShtReadTempHum(float &t, float &h)
 
 #ifdef USE_CCS811
   glob_humidity=h;
-  glob_temperature=t;
+  glob_temperature=(t*4);
 #endif
 
   return (!isnan(t) && !isnan(h));

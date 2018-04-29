@@ -445,6 +445,13 @@ void BmpShow(boolean json)
     dtostrfd(bmp_sealevel, Settings.flag2.pressure_resolution, sea_pressure);
     char humidity[10];
     dtostrfd(h, Settings.flag2.humidity_resolution, humidity);
+
+#ifdef USE_CCS811
+    glob_humidity=h;
+    glob_temperature=(t*4);
+#endif
+
+
 #ifdef USE_BME680
     char gas_resistance[10];
     dtostrfd(g, 2, gas_resistance);

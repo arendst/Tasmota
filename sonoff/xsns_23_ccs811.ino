@@ -57,8 +57,8 @@ void CCS811Update()  // Perform every second to ensure proper operation of the b
         TVOC=ccs.getTVOC();
         eCO2=ccs.geteCO2();
         CCS811_ready = 1;
-        if (glob_humidity!=0 && glob_temperature!=-99) {
-          ccs.setEnvironmentalData(glob_humidity,glob_temperature);
+        if (glob_humidity!=0 && glob_temperature!=-9999) {
+          ccs.setEnvironmentalData(glob_humidity,((double)glob_temperature/4));
         }
       }
     }

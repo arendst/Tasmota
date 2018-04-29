@@ -195,7 +195,7 @@ String backlog[MAX_BACKLOG];                // Command backlog
 
 #ifdef USE_CCS811
 uint8_t glob_humidity=0;
-sint8_t glob_temperature=-99;
+sint16_t glob_temperature=-9999;
 #endif
 
 /********************************************************************************************/
