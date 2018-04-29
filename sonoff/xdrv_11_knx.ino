@@ -548,7 +548,7 @@ void KnxSensor(byte sensor_type, float value)
     knx.write_2byte_float(KNX_addr, value);
 
     snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_KNX "%s " D_SENT_TO " %d.%d.%d "),
-     device_param_ga[sensor_type],
+     device_param_ga[sensor_type -1],
      KNX_addr.ga.area, KNX_addr.ga.line, KNX_addr.ga.member);
     AddLog(LOG_LEVEL_INFO);
 
@@ -741,9 +741,13 @@ void HandleKNXConfiguration()
     page.replace(F("GAarea"), F("CB_AREA"));
     page.replace(F("GAfdef"), F("CB_FDEF"));
     page += FPSTR(HTTP_FORM_KNX4);
+    byte j;
     for (byte i = 0; i < KNX_MAX_device_param ; i++)
     {
-      if ( device_param[i].show )
+      // Check How many Relays are available and add: RelayX and TogleRelayX
+      if ( (i > 8) && (i < 16) ) { j=i-8; } else { j=i; }
+      if ( i == 8 ) { j = 0; }
+      if ( device_param[j].show )
       {
         page += FPSTR(HTTP_FORM_KNX_OPT);
         page.replace(F("{vop}"), String(device_param[i].type));
