@@ -20,6 +20,9 @@
 #ifdef USE_KNX
 /*********************************************************************************************\
  * KNX support
+ *
+ * Using libraries:
+ *   ESP KNX IP library (https://github.com/envy/esp-knx-ip)
 
 Constants in sonoff.h
 -----------------------
@@ -30,6 +33,7 @@ Constants in sonoff.h
                                                        #define MAX_CALLBACK_ASSIGNMENTS  10
                                                        #define MAX_CALLBACKS             10
                                              Both to MAX_KNX_CB
+
 Variables in settings.h
 -----------------------
 
@@ -42,12 +46,12 @@ uint16_t      Settings.knx_CB_addr[MAX_KNX_CB]      Group address to write
 byte          Settings.knx_GA_param[MAX_KNX_GA]     Type of Input (relay changed, button pressed, sensor read)
 byte          Settings.knx_CB_param[MAX_KNX_CB]     Type of Output (set relay, toggle relay, reply sensor value)
 
-//void KNX_CB_Action(message_t const &msg, void *arg);  // Define function (action callback) to be called by the KNX_IP Library
-                                                        // when an action is requested by another KNX Device
-
 \*********************************************************************************************/
 
-#include <esp-knx-ip.h> // ESP KNX IP library (https://github.com/envy/esp-knx-ip)
+#include <esp-knx-ip.h>
+
+//void KNX_CB_Action(message_t const &msg, void *arg);  // Define function (action callback) to be called by the KNX_IP Library
+                                                      // when an action is requested by another KNX Device
 
 address_t KNX_physs_addr;  // Physical KNX address of this device
 address_t KNX_addr;        // KNX Address converter variable
@@ -544,7 +548,7 @@ void KnxSensor(byte sensor_type, float value)
     knx.write_2byte_float(KNX_addr, value);
 
     snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_KNX "%s " D_SENT_TO " %d.%d.%d "),
-     device_param_ga[sensor_type-1],
+     device_param_ga[sensor_type -1],
      KNX_addr.ga.area, KNX_addr.ga.line, KNX_addr.ga.member);
     AddLog(LOG_LEVEL_INFO);
 
@@ -737,14 +741,12 @@ void HandleKNXConfiguration()
     page.replace(F("GAarea"), F("CB_AREA"));
     page.replace(F("GAfdef"), F("CB_FDEF"));
     page += FPSTR(HTTP_FORM_KNX4);
-
     byte j;
     for (byte i = 0; i < KNX_MAX_device_param ; i++)
     {
       // Check How many Relays are available and add: RelayX and TogleRelayX
-      if ( (i > 8) && (i < 16) ) { j=i-8; } else { j=i; } 
+      if ( (i > 8) && (i < 16) ) { j=i-8; } else { j=i; }
       if ( i == 8 ) { j = 0; }
-
       if ( device_param[j].show )
       {
         page += FPSTR(HTTP_FORM_KNX_OPT);
