@@ -741,9 +741,15 @@ void HandleKNXConfiguration()
     page.replace(F("GAarea"), F("CB_AREA"));
     page.replace(F("GAfdef"), F("CB_FDEF"));
     page += FPSTR(HTTP_FORM_KNX4);
+
+    byte j;
     for (byte i = 0; i < KNX_MAX_device_param ; i++)
     {
-      if ( device_param[i].show )
+      // Check How many Relays are available and add: RelayX and TogleRelayX
+      if ( (i > 8) && (i < 16) ) { j=i-8; } else { j=i; } 
+      if ( i == 8 ) { j = 0; }
+
+      if ( device_param[j].show )
       {
         page += FPSTR(HTTP_FORM_KNX_OPT);
         page.replace(F("{vop}"), String(device_param[i].type));
