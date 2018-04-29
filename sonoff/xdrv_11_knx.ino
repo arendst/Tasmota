@@ -548,7 +548,7 @@ void KnxSensor(byte sensor_type, float value)
     knx.write_2byte_float(KNX_addr, value);
 
     snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_KNX "%s " D_SENT_TO " %d.%d.%d "),
-     device_param_ga[sensor_type],
+     device_param_ga[sensor_type-1],
      KNX_addr.ga.area, KNX_addr.ga.line, KNX_addr.ga.member);
     AddLog(LOG_LEVEL_INFO);
 
