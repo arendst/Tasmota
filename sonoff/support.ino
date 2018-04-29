@@ -615,7 +615,9 @@ void WifiBegin(uint8_t flag)
   delay(200);
   WiFi.mode(WIFI_STA);      // Disable AP mode
   if (Settings.sleep) {
+#ifndef ARDUINO_ESP8266_RELEASE_2_4_1     // See https://github.com/arendst/Sonoff-Tasmota/issues/2559
     WiFi.setSleepMode(WIFI_LIGHT_SLEEP);  // Allow light sleep during idle times
+#endif
   }
 //  if (WiFi.getPhyMode() != WIFI_PHY_MODE_11N) {
 //    WiFi.setPhyMode(WIFI_PHY_MODE_11N);
@@ -1384,7 +1386,10 @@ void RtcInit()
  * ADC support
 \*********************************************************************************************/
 
-void AdcShow(boolean json)
+uint8_t adc_counter = 0;
+uint16_t adc_last_value = 0;
+
+uint16_t AdcRead()
 {
   uint16_t analog = 0;
   for (byte i = 0; i < 32; i++) {
@@ -1392,9 +1397,29 @@ void AdcShow(boolean json)
     delay(1);
   }
   analog >>= 5;
+  return analog;
+}
+
+void AdcEvery50ms()
+{
+  adc_counter++;
+  if (!(adc_counter % 4)) {
+    uint16_t new_value = AdcRead();
+    if ((new_value < adc_last_value -10) || (new_value > adc_last_value +10)) {
+      adc_last_value = new_value;
+      uint16_t value = adc_last_value / 10;
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"ANALOG\":{\"A0div10\":%d}}"), (0 == value) ? 1 : (value > 99) ? 100 : value);
+      RulesProcess();
+    }
+  }
+}
+
+void AdcShow(boolean json)
+{
+  uint16_t analog = AdcRead();
 
   if (json) {
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"" D_JSON_ANALOG_INPUT "0\":%d"), mqtt_data, analog);
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"ANALOG\":{\"A0\":%d}"), mqtt_data, analog);
 #ifdef USE_WEBSERVER
   } else {
     snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_ANALOG, mqtt_data, "", 0, analog);
@@ -1414,6 +1439,9 @@ boolean Xsns02(byte function)
 
   if (pin[GPIO_ADC0] < 99) {
     switch (function) {
+      case FUNC_EVERY_50_MSECOND:
+        AdcEvery50ms();
+        break;
       case FUNC_JSON_APPEND:
         AdcShow(1);
         break;

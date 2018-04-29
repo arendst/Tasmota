@@ -146,7 +146,7 @@ If you like **Sonoff-Tasmota**, give it a star, or fork it and contribute!
 ### Development:
 [![Build Status](https://img.shields.io/travis/arendst/Sonoff-Tasmota.svg)](https://travis-ci.org/arendst/Sonoff-Tasmota)
 
-Current version is **5.12.0m** - See [sonoff/_releasenotes.ino](https://github.com/arendst/Sonoff-Tasmota/blob/development/sonoff/_releasenotes.ino) for change information.
+Current version is **5.12.0n** - See [sonoff/_releasenotes.ino](https://github.com/arendst/Sonoff-Tasmota/blob/development/sonoff/_releasenotes.ino) for change information.
 
 ### Quick install
 Download one of the released binaries from https://github.com/arendst/Sonoff-Tasmota/releases and flash it to your hardware as documented in the wiki.
@@ -266,7 +266,7 @@ Different firmware images are released based on Features and Sensors selection g
 |--------------------------------|--------|---------|---------|------|------------|
 | ESP/Arduino lib v2.3.0         | 526k   | 488k    | 427k    | 535k | 549k       |
 | ESP/Arduino lib v2.4.0         | 531k   | 496k    | 435k    | 540k | 552k       |
-| ESP/Arduino lib v2.4.1         | 533k   | 498k    | 436k    | 542k | 554k       |
+| ESP/Arduino lib v2.4.1         | 534k   | 499k    | 437k    | 543k | 555k       |
 
 ### Contribute
 You can contribute to Sonoff-Tasmota by
