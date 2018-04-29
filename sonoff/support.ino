@@ -1408,7 +1408,7 @@ void AdcEvery50ms()
     if ((new_value < adc_last_value -10) || (new_value > adc_last_value +10)) {
       adc_last_value = new_value;
       uint16_t value = adc_last_value / 10;
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"ANALOG\":{\"A0div10\":%d}}"), (0 == value) ? 1 : (value > 99) ? 100 : value);
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"ANALOG\":{\"A0div10\":%d}}"), (value > 99) ? 100 : value);
       RulesProcess();
     }
   }
