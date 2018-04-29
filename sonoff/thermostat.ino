@@ -215,6 +215,20 @@ void ThermoFunction (int tele_period)
                     }
                 }
             }
+            else
+            {
+                if (bitRead(power, 0))
+                {
+                    ExecuteCommandPower(1, POWER_OFF);
+                    thermo_state = STATE_OFF_DELAY;
+                    thermo_timer = 0;
+                }
+                else if (thermo_timer > Settings.temp_control_offtimemin) 
+                {
+                    thermo_state = STATE_OFF;
+                    thermo_timer = 0;
+                }
+            }
             snprintf_P(log_data, sizeof(log_data), PSTR("Thermo Cntr %d | State %d | SP %d | Temp %d"), Settings.temp_control_mode, thermo_state, Settings.temp_control_setpoint, temperature);
             AddLog(LOG_LEVEL_DEBUG);
             temperature_check = 0;
