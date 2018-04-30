@@ -46,8 +46,10 @@
 #define D_JSON_COUNTER "Counter"
 #define D_JSON_CURRENT "Current"         // As in Voltage and Current
 #define D_JSON_DATA "Data"
+#define D_JSON_DISTANCE "Distance"
 #define D_JSON_DNSSERVER "DNSServer"
 #define D_JSON_DONE "Done"
+#define D_JSON_ECO2 "eCO2"
 #define D_JSON_EMPTY "Empty"
 #define D_JSON_ENDDST "EndDST"           // End Daylight Savings Time
 #define D_JSON_ERASE "Erase"
@@ -63,6 +65,7 @@
 #define D_JSON_GATEWAY "Gateway"
 #define D_JSON_HEAPSIZE "Heap"
 #define D_JSON_HIGH "High"
+#define D_JSON_HSBCOLOR "HSBColor"
 #define D_JSON_HUMIDITY "Humidity"
 #define D_JSON_I2CSCAN_DEVICES_FOUND_AT "Device(s) found at"
 #define D_JSON_I2CSCAN_UNKNOWN_ERROR_AT "Unknown error at"
@@ -96,11 +99,15 @@
 #define D_JSON_SAVESTATE "SaveState"
 #define D_JSON_SDKVERSION "SDK"
 #define D_JSON_SELECTED "selected"
+#define D_JSON_SERIALRECEIVED "SerialReceived"
 #define D_JSON_SSID "SSId"
 #define D_JSON_STARTDST "StartDST"       // Start Daylight Savings Time
 #define D_JSON_STARTED "Started"
+#define D_JSON_STARTUPUTC "StartupUTC"
 #define D_JSON_SUBNETMASK "Subnetmask"
 #define D_JSON_SUCCESSFUL "Successful"
+#define D_JSON_SUNRISE "Sunrise"
+#define D_JSON_SUNSET "Sunset"
 #define D_JSON_SWITCH "Switch"
 #define D_JSON_SYNC "Sync"
 #define D_JSON_TEMPERATURE "Temperature"
@@ -108,6 +115,7 @@
 #define D_JSON_TIME "Time"
 #define D_JSON_TODAY "Today"
 #define D_JSON_TOTAL "Total"
+#define D_JSON_TVOC "TVOC"
 #define D_JSON_TYPE "Type"
 #define D_JSON_UPTIME "Uptime"
 #define D_JSON_UTC_TIME "UTC"
@@ -131,28 +139,6 @@
 #define D_RSLT_WARNING "WARNING"
 
 // Commands sonoff.ino
-#define D_CMND_MQTTHOST "MqttHost"
-#define D_CMND_MQTTPORT "MqttPort"
-#define D_CMND_MQTTRETRY "MqttRetry"
-#define D_CMND_STATETEXT "StateText"
-#define D_CMND_MQTTFINGERPRINT "MqttFingerprint"
-#define D_CMND_MQTTCLIENT "MqttClient"
-#define D_CMND_MQTTUSER "MqttUser"
-#define D_CMND_MQTTPASSWORD "MqttPassword"
-#define D_CMND_FULLTOPIC "FullTopic"
-#define D_CMND_PREFIX "Prefix"
-  #define PRFX_MAX_STRING_LENGTH 5
-  #define D_CMND "cmnd"
-  #define D_STAT "stat"
-  #define D_TELE "tele"
-#define D_CMND_GROUPTOPIC "GroupTopic"
-#define D_CMND_TOPIC "Topic"
-#define D_CMND_BUTTONTOPIC "ButtonTopic"
-#define D_CMND_SWITCHTOPIC "SwitchTopic"
-#define D_CMND_BUTTONRETAIN "ButtonRetain"
-#define D_CMND_SWITCHRETAIN "SwitchRetain"
-#define D_CMND_POWERRETAIN "PowerRetain"
-#define D_CMND_SENSORRETAIN "SensorRetain"
 #define D_CMND_BACKLOG "Backlog"
 #define D_CMND_DELAY "Delay"
 #define D_CMND_STATUS "Status"
@@ -237,18 +223,47 @@
 #define D_CMND_ALTITUDE "Altitude"
 #define D_CMND_LEDPOWER "LedPower"
 #define D_CMND_LEDSTATE "LedState"
-#define D_CMND_CFGDUMP "CfgDump"
 #define D_CMND_I2CSCAN "I2CScan"
-#define D_CMND_EXCEPTION "Exception"
+#define D_CMND_SERIALSEND "SerialSend"
+#define D_CMND_SERIALDELIMITER "SerialDelimiter"
+#define D_CMND_BAUDRATE "Baudrate"
+
+// Commands xdrv_00_mqtt.ino
+#define D_CMND_MQTTHOST "MqttHost"
+#define D_CMND_MQTTPORT "MqttPort"
+#define D_CMND_MQTTRETRY "MqttRetry"
+#define D_CMND_STATETEXT "StateText"
+#define D_CMND_MQTTFINGERPRINT "MqttFingerprint"
+#define D_CMND_MQTTCLIENT "MqttClient"
+#define D_CMND_MQTTUSER "MqttUser"
+#define D_CMND_MQTTPASSWORD "MqttPassword"
+#define D_CMND_FULLTOPIC "FullTopic"
+#define D_CMND_PREFIX "Prefix"
+  #define PRFX_MAX_STRING_LENGTH 5
+  #define D_CMND "cmnd"
+  #define D_STAT "stat"
+  #define D_TELE "tele"
+#define D_CMND_GROUPTOPIC "GroupTopic"
+#define D_CMND_TOPIC "Topic"
+#define D_CMND_BUTTONTOPIC "ButtonTopic"
+#define D_CMND_SWITCHTOPIC "SwitchTopic"
+#define D_CMND_BUTTONRETAIN "ButtonRetain"
+#define D_CMND_SWITCHRETAIN "SwitchRetain"
+#define D_CMND_POWERRETAIN "PowerRetain"
+#define D_CMND_SENSORRETAIN "SensorRetain"
+#define D_CMND_PUBLISH "Publish"
 
 // Commands xdrv_01_light.ino
+#define D_CMND_CHANNEL "Channel"
 #define D_CMND_COLOR "Color"
 #define D_CMND_COLORTEMPERATURE "CT"
 #define D_CMND_DIMMER "Dimmer"
+#define D_CMND_HSBCOLOR "HSBColor"
 #define D_CMND_LED "Led"
 #define D_CMND_LEDTABLE "LedTable"
 #define D_CMND_FADE "Fade"
 #define D_CMND_PIXELS "Pixels"
+#define D_CMND_ROTATION "Rotation"
 #define D_CMND_SCHEME "Scheme"
 #define D_CMND_SPEED "Speed"
 #define D_CMND_WAKEUP "Wakeup"
@@ -259,9 +274,9 @@
 #define D_CMND_IRSEND "IRSend"
   #define D_JSON_INVALID_JSON "Invalid JSON"
   #define D_JSON_PROTOCOL_NOT_SUPPORTED "Protocol not supported"
-  #define D_JSON_IR_PROTOCOL "PROTOCOL"
-  #define D_JSON_IR_BITS "BITS"
-  #define D_JSON_IR_DATA "DATA"
+  #define D_JSON_IR_PROTOCOL "Protocol"
+  #define D_JSON_IR_BITS "Bits"
+  #define D_JSON_IR_DATA "Data"
 #define D_CMND_IRHVAC "IRHVAC"
   #define D_JSON_IRHVAC_VENDOR "VENDOR"
   #define D_JSON_IRHVAC_POWER "POWER"
@@ -273,6 +288,7 @@
 // Commands xdrv_03_energy.ino
 #define D_CMND_POWERLOW "PowerLow"
 #define D_CMND_POWERHIGH "PowerHigh"
+#define D_CMND_POWERDELTA "PowerDelta"
 #define D_CMND_VOLTAGELOW "VoltageLow"
 #define D_CMND_VOLTAGEHIGH "VoltageHigh"
 #define D_CMND_CURRENTLOW "CurrentLow"
@@ -334,7 +350,29 @@
 #define D_CMND_DISP_SIZE "Size"
 #define D_CMND_DISP_TEXT "Text"
 
+// Commands xdrv_08_serial_bridge.ino
+#define D_CMND_SSERIALSEND "SSerialSend"
+#define D_CMND_SBAUDRATE "SBaudrate"
+  #define D_JSON_SSERIALRECEIVED "SSerialReceived"
+
+// Commands xdrv_09_timers.ino
+#define D_CMND_TIMER "Timer"
+  #define D_JSON_TIMER_ARM "Arm"
+  #define D_JSON_TIMER_MODE "Mode"
+  #define D_JSON_TIMER_TIME "Time"
+  #define D_JSON_TIMER_WINDOW "Window"
+  #define D_JSON_TIMER_DAYS "Days"
+  #define D_JSON_TIMER_REPEAT "Repeat"
+  #define D_JSON_TIMER_OUTPUT "Output"
+  #define D_JSON_TIMER_ACTION "Action"
+  #define D_JSON_TIMER_NO_DEVICE "No GPIO as output configured"
+#define D_CMND_TIMERS "Timers"
+#define D_CMND_LATITUDE "Latitude"
+#define D_CMND_LONGITUDE "Longitude"
+
 /********************************************************************************************/
+
+#define D_ASTERIX "********"
 
 #ifndef MY_LANGUAGE
   #include "language/en-GB.h"
@@ -356,7 +394,10 @@ enum UnitNames {
   UNIT_MILLIAMPERE,
   UNIT_MILLISECOND,
   UNIT_MINUTE,
+  UNIT_PPB,
+  UNIT_PPD,
   UNIT_PPM,
+  UNIT_PERCENTAGE,
   UNIT_PRESSURE,
   UNIT_SECOND,
   UNIT_SECTORS,
@@ -373,7 +414,10 @@ const char kUnitNames[] PROGMEM =
   D_UNIT_MILLIAMPERE "|"
   D_UNIT_MILLISECOND "|"
   D_UNIT_MINUTE "|"
+  D_UNIT_PARTS_PER_BILLION "|"
+  D_UNIT_PARTS_PER_DECILITER "|"
   D_UNIT_PARTS_PER_MILLION "|"
+  "%|"
   D_UNIT_PRESSURE "|"
   D_UNIT_SECOND "|"
   D_UNIT_SECTORS "|"
@@ -393,12 +437,15 @@ const char S_JSON_COMMAND_NVALUE_ACTIVE_NVALUE[] PROGMEM =    "{\"%s\":\"%d (" D
 const char S_JSON_COMMAND_NVALUE[] PROGMEM =                  "{\"%s\":%d}";
 const char S_JSON_COMMAND_LVALUE[] PROGMEM =                  "{\"%s\":%lu}";
 const char S_JSON_COMMAND_SVALUE[] PROGMEM =                  "{\"%s\":\"%s\"}";
+const char S_JSON_COMMAND_ASTERIX[] PROGMEM =                 "{\"%s\":\"" D_ASTERIX "\"}";
 const char S_JSON_COMMAND_XVALUE[] PROGMEM =                  "{\"%s\":%s}";  // %s must provide quotes on non-number
 
 const char S_JSON_COMMAND_INDEX_NVALUE[] PROGMEM =            "{\"%s%d\":%d}";
 const char S_JSON_COMMAND_INDEX_LVALUE[] PROGMEM =            "{\"%s%d\":%lu}";
 const char S_JSON_COMMAND_INDEX_SVALUE[] PROGMEM =            "{\"%s%d\":\"%s\"}";
+const char S_JSON_COMMAND_INDEX_ASTERIX[] PROGMEM =           "{\"%s%d\":\"" D_ASTERIX "\"}";
 const char S_JSON_COMMAND_INDEX_SVALUE_SVALUE[] PROGMEM =     "{\"%s%d\":\"%s%s\"}";
+const char S_JSON_COMMAND_INDEX_NVALUE_ACTIVE_NVALUE[] PROGMEM = "{\"%s%d\":\"%d (" D_JSON_ACTIVE " %d)\"}";
 
 const char S_JSON_SENSOR_INDEX_NVALUE[] PROGMEM =            "{\"" D_CMND_SENSOR "%d\":%d}";
 const char S_JSON_SENSOR_INDEX_SVALUE[] PROGMEM =            "{\"" D_CMND_SENSOR "%d\":\"%s\"}";
@@ -448,7 +495,7 @@ const char HTTP_SNS_SEAPRESSURE[] PROGMEM = "%s{s}%s " D_PRESSUREATSEALEVEL "{m}
 const char HTTP_SNS_ANALOG[] PROGMEM = "%s{s}%s " D_ANALOG_INPUT "%d{m}%d{e}";                               // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
 
 #if defined(USE_MHZ19) || defined(USE_SENSEAIR)
-const char HTTP_SNS_CO2[] PROGMEM = "%s{s}%s " D_CO2 "{m}%d " D_UNIT_PARTS_PER_MILLION "{e}";                              // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
+const char HTTP_SNS_CO2[] PROGMEM = "%s{s}%s " D_CO2 "{m}%d " D_UNIT_PARTS_PER_MILLION "{e}";                // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
 #endif  // USE_WEBSERVER
 
 const char S_MAIN_MENU[] PROGMEM = D_MAIN_MENU;

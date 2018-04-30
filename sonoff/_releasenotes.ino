@@ -1,4 +1,100 @@
-/* 5.12.0 20180209
+/* 5.13.0 20180430
+ * Change platformio option sonoff-ds18x20 to sonoff-allsensors enabling ds18x20 and all other sensors in one image
+ * Change status display of Ssid and SetOption
+ * Change default option SetOption15 from 0 to 1 providing better initial PWM experience
+ * Change webpage parameter communication
+ * Change max number of commands in Backlog from 15 to 30 and ignore commands overflowing
+ * Change TSL2561 driver to joba library and delete Adafruit library (#1644)
+ * Change default parameters in user_config.h to undefined for easy installation (#1851)
+ * Change max user configurable hold time from 10 to 25 seconds (#1851)
+ * Change Sonoff SC JSON format (#1939)
+ * Change Polish language to using Diacritics (#2005)
+ * Change user_config_override usage by providing user_config_override_sample.h (#2228)
+ * Change MQTT response topic for Energy changes from ENERGY to SENSOR (#2229, #2251)
+ * Change default Reset configuration time from 4 seconds to 40 seconds on Button hold (#2268)
+ * Change ESP8266 Analog JSON message from {"Analog0:123"} to {"ANALOG":{"A0:123"}} to accomodate rules (#2560)
+ * Change Counter JSON message from {"Counter1":0,"Counter3":0} to {"COUNTER":{"C1":0,"C3":0}} to accomodate rules
+ * Change ADS1115 JSON message from {"ADS1115":{"Analog0":123,"Analog1":123}} to {"ADS1115":{"A0":123,"A1":123}}
+ * Fix intermittent exception when dns lookup is used while sleep is enabled
+ * Fix 5.4.0 regression turning off single press after button hold during 4x hold time
+ * Fix possible wifi connection problem by erasing sdk configuration parameters
+ * Fix NTP sync to Thu Jan 01 08:00:10 1970 results in uptime 17651+ days (core2.4.1/sdk2.2.1)
+ * Fix MAX31850 higher temperatures (#1269)
+ * Fix freeing more code space when emulation is disabled (#1592)
+ * Fix providing web page configuratin option for Friendly Name when no device (relay or light) is configured (#1850)
+ * Fix compile error when define HOME_ASSISTANT_DISCOVERY_ENABLE is not set (#1937)
+ * Fix MQTT TLS fingerprint validation (#2033)
+ * Fix update temperature on DS18x20 drivers (#2328)
+ * Fix compile error when not defined USE_TIMERS (#2400)
+ * Fix configuration filename truncation when it contains spaces (#2484, #2490)
+ * Fix Energy Today and Yesterday overflow (#2543)
+ * Add serial debug info
+ * Add Portuguese language file
+ * Add Czech language file
+ * Add Bulgarian language file
+ * Add Domoticz dust (custom) sensors to PMS5003 and NovaFitness SDS drivers as PM1, PM2.5 and PM10
+ * Add commands Publish, Rule, RuleTimer and Event. See Wiki about Rule restriction, usage and examples
+ * Add sonoff-classic, sonoff-allsensors and sonoff-knx
+ * Add some coloring to important web buttons
+ * Add support for sensor HC-SR04 ultrasonic (#113, #1964, #2444)
+ * Add define MQTT_TELE_RETAIN compile option default set to 0 (#1071)
+ * Add 16 timers using commands Timer and Timers (#1091)
+ * Add optional Timer configuration webpage to be enabled in user_config.h with define USE_TIMERS_WEB
+ * Add Multichannel Gas sensor using MultiChannel_Gas_Sensor library (#1245)
+ * Add Domoticz Battery and RSSI Quality (#1604)
+ * Add command HSBColor Hue,Sat,Bri (#1642, #2203)
+ * Add compile time support for WS2812 BRG and RBG led configurations to be defined in user_config.h (#1690)
+ * Add optional usage of %d or %X suffices in MQTT client to append chipid (#1871)
+ * Add optional usage of %d or %X suffices in MQTT topic to append chipid (#1871)
+ * Add optional usage of %d or %04d in ota url to be replaced with chipid (#1871)
+ * Add Sonoff Bridge command RfKey<x> 5 to show current RF key values either default or learned (#1884)
+ * Add user configurable serial GPIOs to MagicHome and Arilux modules (#1887)
+ * Add Russian language file (#1909)
+ * Add Webserver upload preflight request support (#1927)
+ * Add Home Assistant clear other device (#1931)
+ * Add Restart time to Status 1 (#1938)
+ * Add optional TSL2561 driver using library Joba_Tsl2561 to be enabled in user_config.h with define USE_TSL2561_JOBA (#1951)
+ * Add support for sensor SHTC3 (#1967)
+ * Add compiler check for stable lwIP version v1.4 (#1940)
+ * Add support for multiple SHT3X sensors (#1949, #2110)
+ * Add always suffix with device number in Mqtt discovery topic (#1962)
+ * Add support for optional MQTT drivers to be selected in user_config.h (#1992)
+ * Add optional Arduino OTA support to be enabled in user_config.h (#1998)
+ * Add diacritics to Polish language file (#2005)
+ * Add Hungarian language file (#2024)
+ * Add support for Nova Fitness SDS011 and possibly SDS021 particle concentration sensor (#2070)
+ * Add single decimal precision to Nova Fitness SDS0x1 sensor values (#2093)
+ * Add Chinese (Traditional) in Taiwan language file (#2108)
+ * Add Sonoff SC domoticz support for Sound level as Counter and Air quality (#2118)
+ * Add a second TLS fingerprint to allow switching keys in TLS mode (#2033, #2102)
+ * Add display of remaining pulse time to command PulseTime (#2085)
+ * Add additional time offset to Wifi Retry based on device mac address (#2089)
+ * Add command Color6 RRGGBB for Clock hour marker color and command Rotation pixels for Clock rotation (#2092)
+ * Add HTML language header in local language (#2123)
+ * Add command PowerDelta 0..100 (percentage) to Energy monitoring devices to report on active power load change (#2157)
+ * Add Restart Reason to Status 1 report (#2161)
+ * Add command Channel 0..100 to control dimmer value for individual color channels (#2111, #2203)
+ * Add support for Hardware Serial bridge using commands SerialDelimiter, Baudrate and SerialSend. Supports 8N1 and text only (#2182)
+ * Add support for Software Serial bridge using commands SerialDelimiter, SBaudrate and SSerialSend. Supports 8N1 and text only (#2190)
+ * Add support for Zengge WF017 PWM Led strip controller (#2202)
+ * Add PWM status to command State if PWM enabled (#2203)
+ * Add all FriendlyNames to Status information (#2208)
+ * Add Channel status information (#2211)
+ * Add hexadecimal Data entry to command IrSend using 0x notation (#1290, #2314)
+ * Add Home Assistant MQTT Discovery for Buttons and change SetOption19 response (#2277)
+ * Add multiple color entry support for command Led like Led2 120000 001200 000012 setting led2 as Red, Led3 as Green and Led4 as Blue (#2303)
+ * Add hexadecimal RGB color entry on RGBCW leds (#2304)
+ * Add support for SGP30 gas and air quality sensor (#2307)
+ * Add optional Sunrise and Sunset timers with commands Latitide and Longitude to be enabled with define USE_SUNRISE in user_config.h (#2317)
+ * Add timer sunrise and sunset offset (#2378)
+ * Add user selectable defines for Sunrise/set Dawn option (#2378)
+ * Add optional KNX IP Protocol Support (#2402)
+ * Add random window to timers (#2447)
+ * Add Greek language file (#2491)
+ * Add support for Sonoff Pow R2 (#2340)
+ * Add GPIO_User to GPIO02 for all Sonoff T1 (#2524)
+ *
+ * 5.12.0 20180209
  * Change library PubSubClient.h define MQTT_MAX_PACKET_SIZE from 512 to 1000 for Home Assistant  support
  * Change relation of define MESSZ being dependent on PubSubClient.h define MQTT_MAX_PACKET_SIZE
  * Change command color parameter input checks to less strict for Home Assistant support

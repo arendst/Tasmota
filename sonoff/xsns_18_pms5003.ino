@@ -56,6 +56,8 @@ boolean PmsReadData()
   PmsSerial->readBytes(buffer, 32);
   PmsSerial->flush();  // Make room for another burst
 
+  AddLogSerial(LOG_LEVEL_DEBUG_MORE, buffer, 32);
+
   // get checksum ready
   for (uint8_t i = 0; i < 30; i++) {
     sum += buffer[i];
@@ -128,6 +130,13 @@ void PmsShow(boolean json)
         pms_data.pm10_standard, pms_data.pm25_standard, pms_data.pm100_standard,
         pms_data.pm10_env, pms_data.pm25_env, pms_data.pm100_env,
         pms_data.particles_03um, pms_data.particles_05um, pms_data.particles_10um, pms_data.particles_25um, pms_data.particles_50um, pms_data.particles_100um);
+#ifdef USE_DOMOTICZ
+      if (0 == tele_period) {
+        DomoticzSensor(DZ_COUNT, pms_data.pm10_env);     // PM1
+        DomoticzSensor(DZ_VOLTAGE, pms_data.pm25_env);   // PM2.5
+        DomoticzSensor(DZ_CURRENT, pms_data.pm100_env);  // PM10
+      }
+#endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
     } else {
       snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_PMS5003_SNS, mqtt_data,

@@ -96,6 +96,9 @@ uint8_t ModbusReceive(uint16_t *value)
       }
     }
   }
+
+  AddLogSerial(LOG_LEVEL_DEBUG_MORE, buffer, len);
+
   if (len != sizeof(buffer)) {
     return 9;                  // 9 = Unexpected result
   }
@@ -210,7 +213,7 @@ void SenseairShow(boolean json)
     }
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}"), mqtt_data);
 #ifdef USE_DOMOTICZ
-    DomoticzSensor(DZ_AIRQUALITY, senseair_co2);
+    if (0 == tele_period) DomoticzSensor(DZ_AIRQUALITY, senseair_co2);
 #endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
   } else {

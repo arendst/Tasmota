@@ -43,10 +43,14 @@ typedef unsigned long power_t;              // Power (Relay) type
 #define MAX_SWITCHES           4            // Max number of switches
 #define MAX_PWMS               5            // Max number of PWM channels
 #define MAX_COUNTERS           4            // Max number of counter sensors
+#define MAX_TIMERS             16           // Max number of Timers
 #define MAX_PULSETIMERS        8            // Max number of supported pulse timers
 #define MAX_FRIENDLYNAMES      4            // Max number of Friendly names
 #define MAX_DOMOTICZ_IDX       4            // Max number of Domoticz device, key and switch indices
 #define MAX_DOMOTICZ_SNS_IDX   12           // Max number of Domoticz sensors indices
+#define MAX_KNX_GA             10           // Max number of KNX Group Addresses to read that can be set
+#define MAX_KNX_CB             10           // Max number of KNX Group Addresses to write that can be set
+#define MAX_RULE_SIZE          512          // Max number of characters in rules
 
 #define MODULE                 SONOFF_BASIC // [Module] Select default model
 
@@ -71,21 +75,23 @@ typedef unsigned long power_t;              // Power (Relay) type
 //#define PWM_FREQ               910          // 100..1000 Hz led refresh (iTead value)
 #define PWM_FREQ               880          // 100..1000 Hz led refresh (BN-SZ01 value)
 
-#define MAX_POWER_HOLD         10           // Time in SECONDS to allow max agreed power (Pow)
-#define MAX_POWER_WINDOW       30           // Time in SECONDS to disable allow max agreed power (Pow)
-#define SAFE_POWER_HOLD        10           // Time in SECONDS to allow max unit safe power (Pow)
-#define SAFE_POWER_WINDOW      30           // Time in MINUTES to disable allow max unit safe power (Pow)
-#define MAX_POWER_RETRY        5            // Retry count allowing agreed power limit overflow (Pow)
+#define DEFAULT_POWER_DELTA    80           // Power change percentage
+#define MAX_POWER_HOLD         10           // Time in SECONDS to allow max agreed power
+#define MAX_POWER_WINDOW       30           // Time in SECONDS to disable allow max agreed power
+#define SAFE_POWER_HOLD        10           // Time in SECONDS to allow max unit safe power
+#define SAFE_POWER_WINDOW      30           // Time in MINUTES to disable allow max unit safe power
+#define MAX_POWER_RETRY        5            // Retry count allowing agreed power limit overflow
 
 #define STATES                 20           // State loops per second
+#define IMMINENT_RESET_FACTOR  10           // Factor to extent button hold time for imminent Reset to default 40 seconds using KEY_HOLD_TIME of 40
 #define SYSLOG_TIMER           600          // Seconds to restore syslog_level
 #define SERIALLOG_TIMER        600          // Seconds to disable SerialLog
 #define OTA_ATTEMPTS           5            // Number of times to try fetching the new firmware
 
-#define INPUT_BUFFER_SIZE      255          // Max number of characters in (serial) command buffer
+#define INPUT_BUFFER_SIZE      512          // Max number of characters in (serial and http) command buffer
 #define CMDSZ                  24           // Max number of characters in command
 #define TOPSZ                  100          // Max number of characters in topic string
-#define LOGSZ                  400          // Max number of characters in log
+#define LOGSZ                  512          // Max number of characters in log
 #define MIN_MESSZ              893          // Min number of characters in MQTT message
 
 #ifdef USE_MQTT_TLS
@@ -94,10 +100,12 @@ typedef unsigned long power_t;              // Power (Relay) type
   #define WEB_LOG_SIZE         4000         // Max number of characters in weblog
 #endif
 
-#define MAX_BACKLOG            16           // Max number of commands in backlog (chk backlog_index and backlog_pointer code)
+#define MAX_BACKLOG            30           // Max number of commands in backlog
 #define MIN_BACKLOG_DELAY      2            // Minimal backlog delay in 0.1 seconds
 
+#define SOFT_BAUDRATE          9600         // Default software serial baudrate
 #define APP_BAUDRATE           115200       // Default serial baudrate
+#define SERIAL_POLLING         100          // Serial receive polling in ms
 #define MAX_STATUS             11           // Max number of status lines
 
 /*
@@ -105,6 +113,25 @@ typedef unsigned long power_t;              // Power (Relay) type
 #define min(a,b) ((a)<(b)?(a):(b))
 #define max(a,b) ((a)>(b)?(a):(b))
 */
+
+//enum ws2812NeopixelbusFeature { NEO_RGB, NEO_GRB, NEO_BRG, NEO_RBG, NEO_3LED, NEO_RGBW, NEO_GRBW };  // Doesn't work
+#define NEO_RGB                0            // Neopixel RGB leds
+#define NEO_GRB                1            // Neopixel GRB leds
+#define NEO_BRG                2            // Neopixel BRG leds
+#define NEO_RBG                3            // Neopixel RBG leds
+#define NEO_3LED               4            // Placeholder to test for 4 led types
+#define NEO_RGBW               5            // Neopixel RGBW leds
+#define NEO_GRBW               6            // Neopixel GRBW leds
+
+#define MQTT_PUBSUBCLIENT      1            // Mqtt PubSubClient library
+#define MQTT_TASMOTAMQTT       2            // Mqtt TasmotaMqtt library based on esp-mqtt-arduino
+#define MQTT_ESPMQTTARDUINO    3            // Mqtt esp-mqtt-arduino library by Ingo Randolf
+
+// Sunrise and Sunset DawnType
+#define DAWN_NORMAL            -0.8333
+#define DAWN_CIVIL             -6.0
+#define DAWN_NAUTIC            -12.0
+#define DAWN_ASTRONOMIC        -18.0
 
 /*********************************************************************************************\
  * Enumeration
@@ -114,6 +141,7 @@ enum WeekInMonthOptions {Last, First, Second, Third, Fourth};
 enum DayOfTheWeekOptions {Sun=1, Mon, Tue, Wed, Thu, Fri, Sat};
 enum MonthNamesOptions {Jan=1, Feb, Mar, Apr, May, Jun, Jul, Aug, Sep, Oct, Nov, Dec};
 enum HemisphereOptions {North, South};
+enum GetDateAndTimeOptions { DT_LOCAL, DT_UTC, DT_RESTART, DT_UPTIME };
 
 enum LoggingLevels {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG_MORE, LOG_LEVEL_ALL};
 
@@ -137,13 +165,13 @@ enum SettingsParmaIndex {P_HOLD_TIME, P_MAX_POWER_RETRY, P_MAX_PARAM8};
 
 enum DomoticzSensors {DZ_TEMP, DZ_TEMP_HUM, DZ_TEMP_HUM_BARO, DZ_POWER_ENERGY, DZ_ILLUMINANCE, DZ_COUNT, DZ_VOLTAGE, DZ_CURRENT, DZ_AIRQUALITY, DZ_MAX_SENSORS};
 
-enum Ws2812ClockIndex {WS_SECOND, WS_MINUTE, WS_HOUR};
-enum Ws2812Color {WS_RED, WS_GREEN, WS_BLUE};
+enum Ws2812ClockIndex { WS_SECOND, WS_MINUTE, WS_HOUR, WS_MARKER };
+enum Ws2812Color { WS_RED, WS_GREEN, WS_BLUE };
 enum LightTypes {LT_BASIC, LT_PWM1, LT_PWM2, LT_PWM3, LT_PWM4, LT_PWM5, LT_PWM6, LT_PWM7, LT_NU8, LT_NU9, LT_NU10, LT_WS2812, LT_RGBW, LT_RGBWC};
 enum LichtSubtypes {LST_NONE, LST_SINGLE, LST_COLDWARM, LST_RGB, LST_RGBW, LST_RGBWC};
 enum LichtSchemes {LS_POWER, LS_WAKEUP, LS_CYCLEUP, LS_CYCLEDN, LS_RANDOM, LS_MAX};
 
-enum XsnsFunctions {FUNC_INIT, FUNC_EVERY_50_MSECOND, FUNC_EVERY_SECOND, FUNC_PREP_BEFORE_TELEPERIOD, FUNC_JSON_APPEND, FUNC_WEB_APPEND, FUNC_SAVE_BEFORE_RESTART,
+enum XsnsFunctions {FUNC_INIT, FUNC_LOOP, FUNC_EVERY_50_MSECOND, FUNC_EVERY_SECOND, FUNC_PREP_BEFORE_TELEPERIOD, FUNC_JSON_APPEND, FUNC_WEB_APPEND, FUNC_SAVE_BEFORE_RESTART,
                     FUNC_COMMAND, FUNC_MQTT_SUBSCRIBE, FUNC_MQTT_INIT, FUNC_MQTT_DATA, FUNC_SET_POWER, FUNC_SHOW_SENSOR};
 
 const uint8_t kDefaultRfCode[9] PROGMEM = { 0x21, 0x16, 0x01, 0x0E, 0x03, 0x48, 0x2E, 0x1A, 0x00 };
