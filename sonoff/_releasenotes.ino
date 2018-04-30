@@ -1,5 +1,6 @@
 /* 5.12.0o
  * Fix Energy Today and Yesterday overflow (#2543)
+ * Fix NTP sync to Thu Jan 01 08:00:10 1970 results in uptime 17651+ days (core2.4.1/sdk2.2.1)
  *
  * 5.12.0n
  * Change ESP8266 Analog JSON message from {"Analog0:123"} to {"ANALOG":{"A0:123"}} to accomodate rules (#2560)
