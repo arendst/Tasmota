@@ -1,4 +1,7 @@
-/* 5.12.0n
+/* 5.12.0o
+ * Fix Energy Today and Yesterday overflow (#2543)
+ *
+ * 5.12.0n
  * Change ESP8266 Analog JSON message from {"Analog0:123"} to {"ANALOG":{"A0:123"}} to accomodate rules (#2560)
  * Change Counter JSON message from {"Counter1":0,"Counter3":0} to {"COUNTER":{"C1":0,"C3":0}} to accomodate rules
  * Change ADS1115 JSON message from {"ADS1115":{"Analog0":123,"Analog1":123}} to {"ADS1115":{"A0":123,"A1":123}}
