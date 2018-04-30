@@ -35,30 +35,36 @@ uint8_t CCS811_ready;
 uint8_t CCS811_type;
 uint16_t eCO2;
 uint16_t TVOC;
+uint8_t tcnt;
 
 /********************************************************************************************/
+#define EVERYNSECONDS 5
 
-void CCS811Update()  // Perform every second to ensure proper operation of the baseline compensation algorithm
+void CCS811Update()  // Perform every n second
 {
-  CCS811_ready = 0;
-  if (!CCS811_type) {
-    sint8_t res=ccs.begin(CCS811_ADDRESS);
-    if (!res) {
-      CCS811_type = 1;
-      snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, "CCS811", 0x5A);
-      AddLog(LOG_LEVEL_DEBUG);
+  tcnt+=1;
+  if (tcnt>=EVERYNSECONDS) {
+    tcnt=0;
+    CCS811_ready = 0;
+    if (!CCS811_type) {
+      sint8_t res=ccs.begin(CCS811_ADDRESS);
+      if (!res) {
+        CCS811_type = 1;
+        snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, "CCS811", 0x5A);
+        AddLog(LOG_LEVEL_DEBUG);
+      } else {
+        //snprintf_P(log_data, sizeof(log_data), "CCS811 init failed: %d",res);
+        //AddLog(LOG_LEVEL_DEBUG);
+      }
     } else {
-      //snprintf_P(log_data, sizeof(log_data), "CCS811 init failed: %d",res);
-      //AddLog(LOG_LEVEL_DEBUG);
-    }
-  } else {
-    if (ccs.available()) {
-      if (!ccs.readData()){
-        TVOC=ccs.getTVOC();
-        eCO2=ccs.geteCO2();
-        CCS811_ready = 1;
-        if (glob_humidity!=0 && glob_temperature!=-9999) {
-          ccs.setEnvironmentalData(glob_humidity,((double)glob_temperature/4));
+      if (ccs.available()) {
+        if (!ccs.readData()){
+          TVOC=ccs.getTVOC();
+          eCO2=ccs.geteCO2();
+          CCS811_ready = 1;
+          if (glob_humidity!=0 && glob_temperature!=-9999) {
+            ccs.setEnvironmentalData(glob_humidity,(((double)glob_temperature)/4));
+          }
         }
       }
     }
