@@ -50,9 +50,9 @@ float energy_power_factor = 0;    // 0.12
 float energy_daily = 0;           // 123.123 kWh
 float energy_total = 0;           // 12345.12345 kWh
 float energy_start = 0;           // 12345.12345 kWh total previous
+unsigned long energy_kWhtoday_delta = 0;  // 1212312345 Wh 10^-5 (deca micro Watt hours) - Overflows to energy_kWhtoday (HLW and CSE only)
 unsigned long energy_kWhtoday;    // 12312312 Wh * 10^-2 (deca milli Watt hours) - 5764 = 0.05764 kWh = 0.058 kWh = energy_daily
 unsigned long energy_period = 0;  // 12312312 Wh * 10^-2 (deca milli Watt hours) - 5764 = 0.05764 kWh = 0.058 kWh = energy_daily
-
 
 float energy_power_last[3] = { 0 };
 uint8_t energy_power_delta = 0;
@@ -82,6 +82,11 @@ Ticker ticker_energy;
 
 void EnergyUpdateToday()
 {
+  if (energy_kWhtoday_delta > 1000) {
+    unsigned long delta = energy_kWhtoday_delta / 1000;
+    energy_kWhtoday_delta -= (delta * 1000);
+    energy_kWhtoday += delta;
+  }
   RtcSettings.energy_kWhtoday = energy_kWhtoday;
   energy_daily = (float)energy_kWhtoday / 100000;
   energy_total = (float)(RtcSettings.energy_kWhtotal + energy_kWhtoday) / 100000;
@@ -157,7 +162,7 @@ void HlwEverySecond()
     hlw_len = 10000 / hlw_energy_period_counter;
     hlw_energy_period_counter = 0;
     if (hlw_len) {
-      energy_kWhtoday += ((HLW_PREF * Settings.energy_power_calibration) / hlw_len) / 36000;
+      energy_kWhtoday_delta += ((HLW_PREF * Settings.energy_power_calibration) / hlw_len) / 36;
       EnergyUpdateToday();
     }
   }
@@ -391,7 +396,7 @@ void CseEverySecond()
     }
     if (cf_frequency && energy_power)  {
       cf_pulses_last_time = cf_pulses;
-      energy_kWhtoday += (cf_frequency * Settings.energy_power_calibration) / 36000;
+      energy_kWhtoday_delta += (cf_frequency * Settings.energy_power_calibration) / 36;
       EnergyUpdateToday();
     }
   }
@@ -583,6 +588,7 @@ void Energy200ms()
         Settings.energy_kWhtotal += energy_kWhtoday;
         RtcSettings.energy_kWhtotal = Settings.energy_kWhtotal;
         energy_kWhtoday = 0;
+        energy_kWhtoday_delta = 0;
         energy_period = energy_kWhtoday;
         EnergyUpdateToday();
         energy_max_energy_state = 3;
@@ -853,6 +859,7 @@ boolean EnergyCommand()
       switch (XdrvMailbox.index) {
       case 1:
         energy_kWhtoday = lnum *100;
+        energy_kWhtoday_delta = 0;
         energy_period = energy_kWhtoday;
         Settings.energy_kWhtoday = energy_kWhtoday;
         RtcSettings.energy_kWhtoday = energy_kWhtoday;
@@ -1041,6 +1048,7 @@ void EnergySnsInit()
 
   if (energy_flg) {
     energy_kWhtoday = (RtcSettingsValid()) ? RtcSettings.energy_kWhtoday : (RtcTime.day_of_year == Settings.energy_kWhdoy) ? Settings.energy_kWhtoday : 0;
+    energy_kWhtoday_delta = 0;
     energy_period = energy_kWhtoday;
     EnergyUpdateToday();
     ticker_energy.attach_ms(200, Energy200ms);
