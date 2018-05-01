@@ -52,8 +52,6 @@ typedef unsigned long power_t;              // Power (Relay) type
 #define MAX_KNX_CB             10           // Max number of KNX Group Addresses to write that can be set
 #define MAX_RULE_SIZE          512          // Max number of characters in rules
 
-#define MODULE                 SONOFF_BASIC // [Module] Select default model
-
 #define MQTT_TOKEN_PREFIX      "%prefix%"   // To be substituted by mqtt_prefix[x]
 #define MQTT_TOKEN_TOPIC       "%topic%"    // To be substituted by mqtt_topic, mqtt_grptopic, mqtt_buttontopic, mqtt_switchtopic
 
