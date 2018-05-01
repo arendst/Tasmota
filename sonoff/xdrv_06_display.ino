@@ -640,7 +640,7 @@ void DisplayAnalyzeJson(char *topic, char *json)
   const char *tempunit;
 
   strlcpy(jsonStr, json, sizeof(jsonStr));  // Save original before destruction by JsonObject
-  StaticJsonBuffer<400> jsonBuf;
+  StaticJsonBuffer<1024> jsonBuf;
   JsonObject &root = jsonBuf.parseObject(jsonStr);
   if (root.success()) {
 

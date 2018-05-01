@@ -2,6 +2,9 @@
 
 **Proof of Concept demonstrating use of Displays without ANY support**
 
+### Development
+Current version is **5.13.0a** - See [sonoff/_releasenotes.ino](https://github.com/arendst/Sonoff-Tasmota/blob/development_display/sonoff/_releasenotes.ino) for change information.
+
 ### Usage
 See file xdrv_06-display for available commands
 
