@@ -1,4 +1,9 @@
-/* 5.13.0 20180430
+/* 5.13.1 20180501
+ * Fix JSON buffers size too small for execution in some situations (#2580)
+ * Fix configuration restore (#2591)
+ * Add define MODULE for user selecting default model although it preferably should not be changed (#569, #2589)
+ *
+ * 5.13.0 20180430
  * Change platformio option sonoff-ds18x20 to sonoff-allsensors enabling ds18x20 and all other sensors in one image
  * Change status display of Ssid and SetOption
  * Change default option SetOption15 from 0 to 1 providing better initial PWM experience
