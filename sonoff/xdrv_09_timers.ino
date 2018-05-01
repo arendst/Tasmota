@@ -354,7 +354,7 @@ boolean TimerCommand()
 #ifndef USE_RULES
         if (devices_present) {
 #endif
-          StaticJsonBuffer<200> jsonBuffer;
+          StaticJsonBuffer<256> jsonBuffer;
           JsonObject& root = jsonBuffer.parseObject(dataBufUc);
           if (!root.success()) {
             snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_TIMER "%d\":\"" D_JSON_INVALID_JSON "\"}"), index); // JSON decode failed
