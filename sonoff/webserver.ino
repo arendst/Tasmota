@@ -328,6 +328,8 @@ uint8_t webserver_state = HTTP_OFF;
 uint8_t upload_error = 0;
 uint8_t upload_file_type;
 uint8_t upload_progress_dot_count;
+uint8_t config_block_count = 0;
+uint8_t config_xor_on = 0;
 
 // Helper function to avoid code duplication (saves 4k Flash)
 static void WebGetArg(const char* arg, char* out, size_t max)
@@ -1317,17 +1319,14 @@ void HandleUploadLoop()
     }
     upload_progress_dot_count = 0;
   } else if (!upload_error && (UPLOAD_FILE_WRITE == upload.status)) {
-    if (0 == upload.totalSize)
-    {
+    if (0 == upload.totalSize) {
       if (upload_file_type) {
         if (upload.buf[0] != CONFIG_FILE_SIGN) {
           upload_error = 8;
           return;
         }
-        if (upload.currentSize > sizeof(Settings)) {
-          upload_error = 9;
-          return;
-        }
+        config_xor_on = upload.buf[1];
+        config_block_count = 0;
       } else {
         if (upload.buf[0] != 0xE9) {
           upload_error = 3;
@@ -1343,14 +1342,24 @@ void HandleUploadLoop()
     }
     if (upload_file_type) { // config
       if (!upload_error) {
-        if (upload.buf[1]) {
+        if (upload.currentSize > (sizeof(Settings) - (config_block_count * HTTP_UPLOAD_BUFLEN))) {
+          if (config_block_count) { SettingsDefault(); }
+          upload_error = 9;
+          return;
+        }
+        if (config_xor_on) {
           for (uint16_t i = 2; i < upload.currentSize; i++) {
             upload.buf[i] ^= (CONFIG_FILE_XOR +i);
           }
         }
-        SettingsDefaultSet2();
-        memcpy((char*)&Settings +16, upload.buf +16, upload.currentSize -16);
-        memcpy((char*)&Settings +8, upload.buf +8, 4);  // Restore version and auto upgrade
+        if (0 == config_block_count) {
+          SettingsDefaultSet2();
+          memcpy((char*)&Settings +16, upload.buf +16, upload.currentSize -16);
+          memcpy((char*)&Settings +8, upload.buf +8, 4);  // Restore version and auto upgrade
+        } else {
+          memcpy((char*)&Settings +(config_block_count * HTTP_UPLOAD_BUFLEN), upload.buf, upload.currentSize);
+        }
+        config_block_count++;
       }
     } else {  // firmware
       if (!upload_error && (Update.write(upload.buf, upload.currentSize) != upload.currentSize)) {
