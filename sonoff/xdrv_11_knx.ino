@@ -355,7 +355,7 @@ bool KNX_CONFIG_NOT_MATCH()
       if ( (i < 8) || (i > 15) ) // check relays and sensors (i from 8 to 16 are toggle relays parameters)
       {
         if ( KNX_CB_Search(i+1) != KNX_Empty ) { return true; }
-        if ( KNX_CB_Search(i+8) != KNX_Empty ) { return true; }
+        if ( KNX_CB_Search(i+9) != KNX_Empty ) { return true; }
       }
     }
   }
@@ -520,7 +520,7 @@ void KnxSendButtonPower(byte key, byte device, byte state)
     knx.write_1bit(KNX_addr, !(state == 0));
 
     snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_KNX "%s = %d " D_SENT_TO " %d.%d.%d"),
-     device_param_ga[device + 8], !(state == 0),
+     device_param_ga[device + 7], !(state == 0),
      KNX_addr.ga.area, KNX_addr.ga.line, KNX_addr.ga.member);
     AddLog(LOG_LEVEL_INFO);
 
