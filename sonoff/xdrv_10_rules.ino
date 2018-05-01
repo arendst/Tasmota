@@ -181,7 +181,7 @@ bool RulesRuleMatch(String &event, String &rule)
   }
 
   // Step2: Search rule_task and rule_name
-  StaticJsonBuffer<400> jsonBuf;
+  StaticJsonBuffer<1024> jsonBuf;
   JsonObject &root = jsonBuf.parseObject(event);
   if (!root.success()) { return false; }               // No valid JSON data
 
