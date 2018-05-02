@@ -11,3 +11,5 @@
 lib/readme.txt
 sonoff/user_config_override.h
 sonoff/user_config_my.h
+releases/*
+!releases/releases.bat
