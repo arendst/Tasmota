@@ -102,6 +102,8 @@ We can configure to send the value of temperature or humidity every teleperiod. 
 - [x] Add Feature to Load Config
 - [x] Add Log Info
 - [x] Complete all the language files with keys
+- [ ] Add support for Neo Pixel
+- [ ] Add support for other devices supported by Tasmota
 - [ ] Optimize code to reduce Flash and RAM
 
 ## Modifications to Sonoff-Tasmota ##
