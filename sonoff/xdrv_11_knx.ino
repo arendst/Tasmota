@@ -347,7 +347,7 @@ void KNX_DEL_CB( byte CBnum )
 
 bool KNX_CONFIG_NOT_MATCH()
 {
-  for (int i = 0; i < KNX_MAX_device_param; ++i)
+  for (byte i = 0; i < KNX_MAX_device_param; ++i)
   {
     if ( !device_param[i].show ) { // device has this parameter ?
       // if not, search for all registered group address to this parameter for deletion
@@ -732,6 +732,7 @@ void HandleKNXConfiguration()
         page.replace(F("GAfdef"), String(KNX_addr.ga.member));
       }
     }
+
     page += FPSTR(HTTP_FORM_KNX3);
     page += FPSTR(HTTP_FORM_KNX_GA);
     page.replace(F("GAfnum"), F("CB_FNUM"));
@@ -765,6 +766,7 @@ void HandleKNXConfiguration()
       page.replace(F("btndis"), F("disabled"));
     }
     page.replace(F("fncbtnadd"), F("CBwarning"));
+
     for (byte i = 0; i < Settings.knx_CB_registered ; ++i)
     {
       if ( Settings.knx_CB_param[i] )
@@ -812,7 +814,6 @@ void KNX_Save_Settings()
 {
   String stmp;
   address_t KNX_addr;
-  byte i;
 
   Settings.flag.knx_enabled = WebServer->hasArg("b1");
   snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_KNX D_ENABLED ": %d "),
@@ -834,7 +835,7 @@ void KNX_Save_Settings()
   snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_KNX "GA: %d"),
    Settings.knx_GA_registered );
   AddLog(LOG_LEVEL_DEBUG);
-  for (i = 0; i < Settings.knx_GA_registered ; ++i)
+  for (byte i = 0; i < Settings.knx_GA_registered ; ++i)
   {
     KNX_addr.value = Settings.knx_GA_addr[i];
     snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_KNX "GA #%d: %s " D_TO " %d/%d/%d"),
@@ -846,7 +847,7 @@ void KNX_Save_Settings()
   snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_KNX "CB: %d"),
    Settings.knx_CB_registered );
   AddLog(LOG_LEVEL_DEBUG);
-  for (i = 0; i < Settings.knx_CB_registered ; ++i)
+  for (byte i = 0; i < Settings.knx_CB_registered ; ++i)
   {
     KNX_addr.value = Settings.knx_CB_addr[i];
     snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_KNX "CB #%d: %d/%d/%d " D_TO " %s"),
