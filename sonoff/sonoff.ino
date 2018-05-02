@@ -793,10 +793,12 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
     }
     else if ((CMND_COUNTER == command_code) && (index > 0) && (index <= MAX_COUNTERS)) {
       if ((data_len > 0) && (pin[GPIO_CNTR1 + index -1] < 99)) {
-        RtcSettings.pulse_counter[index -1] = payload16;
-        Settings.pulse_counter[index -1] = payload16;
+        //STB mode
+        RtcSettings.pulse_counter[index -1] = payload32 * Settings.pulse_devider[index -1];
+        Settings.pulse_counter[index -1] = payload32 * Settings.pulse_devider[index -1];
       }
-      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_LVALUE, command, index, RtcSettings.pulse_counter[index -1]);
+      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_LVALUE, command, index, RtcSettings.pulse_counter[index -1]/Settings.pulse_devider[index -1]);
+      //end
     }
     else if ((CMND_COUNTERTYPE == command_code) && (index > 0) && (index <= MAX_COUNTERS)) {
       if ((payload >= 0) && (payload <= 1) && (pin[GPIO_CNTR1 + index -1] < 99)) {
