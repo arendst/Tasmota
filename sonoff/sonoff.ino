@@ -25,7 +25,7 @@
     - Select IDE Tools - Flash Size: "1M (no SPIFFS)"
   ====================================================*/
 
-#define VERSION                0x050C000D   // 5.12.0m
+#define VERSION                0x050D0101   // 5.13.1a
 
 #define MOD_VERSION_STRING  "mod-1.20.13"    // Would be great to have a macro that fills this from VERSION ...
 // Location specific includes
@@ -1463,7 +1463,12 @@ void PerformEverySecond()
       MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_STATE), MQTT_TELE_RETAIN);
 
       mqtt_data[0] = '\0';
-      if (MqttShowSensor()) { MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain); }
+      if (MqttShowSensor()) {
+        MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);
+#ifdef USE_RULES
+        RulesTeleperiod();  // Allow rule based HA messages
+#endif  // USE_RULES
+      }
     }
   }
 
