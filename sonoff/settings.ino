@@ -851,7 +851,11 @@ void SettingsDelta()
       Settings.knx_CB_registered = 0;
       memset(&Settings.knx_physsical_addr, 0x00, 0x800 - 0x6b8);  // Reset until 0x800 for future use
     }
-
+    if (Settings.version < 0x050C000F) {
+        Settings.energy_kWhtoday /= 1000;
+        Settings.energy_kWhyesterday /= 1000;
+        RtcSettings.energy_kWhtoday /= 1000;
+    }
     Settings.version = VERSION;
     SettingsSave(1);
   }
