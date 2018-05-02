@@ -48,8 +48,9 @@ typedef unsigned long power_t;              // Power (Relay) type
 #define MAX_FRIENDLYNAMES      4            // Max number of Friendly names
 #define MAX_DOMOTICZ_IDX       4            // Max number of Domoticz device, key and switch indices
 #define MAX_DOMOTICZ_SNS_IDX   12           // Max number of Domoticz sensors indices
-
-#define MODULE                 SONOFF_BASIC // [Module] Select default model
+#define MAX_KNX_GA             10           // Max number of KNX Group Addresses to read that can be set
+#define MAX_KNX_CB             10           // Max number of KNX Group Addresses to write that can be set
+#define MAX_RULE_SIZE          512          // Max number of characters in rules
 
 #define MQTT_TOKEN_PREFIX      "%prefix%"   // To be substituted by mqtt_prefix[x]
 #define MQTT_TOKEN_TOPIC       "%topic%"    // To be substituted by mqtt_topic, mqtt_grptopic, mqtt_buttontopic, mqtt_switchtopic
@@ -80,14 +81,15 @@ typedef unsigned long power_t;              // Power (Relay) type
 #define MAX_POWER_RETRY        5            // Retry count allowing agreed power limit overflow
 
 #define STATES                 20           // State loops per second
+#define IMMINENT_RESET_FACTOR  10           // Factor to extent button hold time for imminent Reset to default 40 seconds using KEY_HOLD_TIME of 40
 #define SYSLOG_TIMER           600          // Seconds to restore syslog_level
 #define SERIALLOG_TIMER        600          // Seconds to disable SerialLog
 #define OTA_ATTEMPTS           5            // Number of times to try fetching the new firmware
 
-#define INPUT_BUFFER_SIZE      255          // Max number of characters in (serial) command buffer
+#define INPUT_BUFFER_SIZE      512          // Max number of characters in (serial and http) command buffer
 #define CMDSZ                  24           // Max number of characters in command
 #define TOPSZ                  100          // Max number of characters in topic string
-#define LOGSZ                  400          // Max number of characters in log
+#define LOGSZ                  512          // Max number of characters in log
 #define MIN_MESSZ              893          // Min number of characters in MQTT message
 
 #ifdef USE_MQTT_TLS
@@ -96,7 +98,7 @@ typedef unsigned long power_t;              // Power (Relay) type
   #define WEB_LOG_SIZE         4000         // Max number of characters in weblog
 #endif
 
-#define MAX_BACKLOG            16           // Max number of commands in backlog (chk backlog_index and backlog_pointer code)
+#define MAX_BACKLOG            30           // Max number of commands in backlog
 #define MIN_BACKLOG_DELAY      2            // Minimal backlog delay in 0.1 seconds
 
 #define SOFT_BAUDRATE          9600         // Default software serial baudrate
@@ -122,6 +124,13 @@ typedef unsigned long power_t;              // Power (Relay) type
 #define MQTT_PUBSUBCLIENT      1            // Mqtt PubSubClient library
 #define MQTT_TASMOTAMQTT       2            // Mqtt TasmotaMqtt library based on esp-mqtt-arduino
 #define MQTT_ESPMQTTARDUINO    3            // Mqtt esp-mqtt-arduino library by Ingo Randolf
+
+// Sunrise and Sunset DawnType
+#define DAWN_NORMAL            -0.8333
+#define DAWN_CIVIL             -6.0
+#define DAWN_NAUTIC            -12.0
+#define DAWN_ASTRONOMIC        -18.0
+
 //STB mod
 #define MAX_DEEPSLEEP_CYCLE    3600         // Maximum time for a deepsleep
 //end

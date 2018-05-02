@@ -67,12 +67,6 @@ boolean chirp_detect()
 
   Wire.write(TWI_MEASURE_LIGHT);
   status = Wire.endTransmission();
-  if (chirpaddr == 4) {
-      I2cWrite(chirpaddr, TWI_SET_ADDRESS, 0x20, 1);
-      I2cWrite(chirpaddr, TWI_RESET, 0, 0);
-      snprintf_P(log_data, sizeof(log_data), PSTR("chirp_detect: reset address"));
-      AddLog(LOG_LEVEL_DEBUG);
-  }
   if (!status) {
     success = true;
     chirptype = 1;

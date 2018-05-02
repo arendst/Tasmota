@@ -47,11 +47,12 @@ float energy_voltage = 0;         // 123.1 V
 float energy_current = 0;         // 123.123 A
 float energy_power = 0;           // 123.1 W
 float energy_power_factor = 0;    // 0.12
-float energy_daily = 0;           // 12.123 kWh
+float energy_daily = 0;           // 123.123 kWh
 float energy_total = 0;           // 12345.12345 kWh
 float energy_start = 0;           // 12345.12345 kWh total previous
-unsigned long energy_kWhtoday;    // 1212312345 Wh * 10^-5 (deca micro Watt hours) - 5763924 = 0.05763924 kWh = 0.058 kWh = energy_daily
-unsigned long energy_period = 0;  // 1212312345 Wh * 10^-5 (deca micro Watt hours) - 5763924 = 0.05763924 kWh = 0.058 kWh = energy_daily
+unsigned long energy_kWhtoday_delta = 0;  // 1212312345 Wh 10^-5 (deca micro Watt hours) - Overflows to energy_kWhtoday (HLW and CSE only)
+unsigned long energy_kWhtoday;    // 12312312 Wh * 10^-2 (deca milli Watt hours) - 5764 = 0.05764 kWh = 0.058 kWh = energy_daily
+unsigned long energy_period = 0;  // 12312312 Wh * 10^-2 (deca milli Watt hours) - 5764 = 0.05764 kWh = 0.058 kWh = energy_daily
 
 float energy_power_last[3] = { 0 };
 uint8_t energy_power_delta = 0;
@@ -81,9 +82,14 @@ Ticker ticker_energy;
 
 void EnergyUpdateToday()
 {
+  if (energy_kWhtoday_delta > 1000) {
+    unsigned long delta = energy_kWhtoday_delta / 1000;
+    energy_kWhtoday_delta -= (delta * 1000);
+    energy_kWhtoday += delta;
+  }
   RtcSettings.energy_kWhtoday = energy_kWhtoday;
-  energy_daily = (float)energy_kWhtoday / 100000000;
-  energy_total = (float)(RtcSettings.energy_kWhtotal + (energy_kWhtoday / 1000)) / 100000;
+  energy_daily = (float)energy_kWhtoday / 100000;
+  energy_total = (float)(RtcSettings.energy_kWhtotal + energy_kWhtoday) / 100000;
 }
 
 /*********************************************************************************************\
@@ -156,7 +162,7 @@ void HlwEverySecond()
     hlw_len = 10000 / hlw_energy_period_counter;
     hlw_energy_period_counter = 0;
     if (hlw_len) {
-      energy_kWhtoday += ((HLW_PREF * Settings.energy_power_calibration) / hlw_len) / 36;
+      energy_kWhtoday_delta += ((HLW_PREF * Settings.energy_power_calibration) / hlw_len) / 36;
       EnergyUpdateToday();
     }
   }
@@ -252,7 +258,7 @@ void HlwInit()
 }
 
 /*********************************************************************************************\
- * CSE7766 - Energy (Sonoff S31)
+ * CSE7766 - Energy (Sonoff S31 and Sonoff Pow R2)
  *
  * Based on datasheet from http://www.chipsea.com/UploadFiles/2017/08/11144342F01B5662.pdf
 \*********************************************************************************************/
@@ -390,7 +396,7 @@ void CseEverySecond()
     }
     if (cf_frequency && energy_power)  {
       cf_pulses_last_time = cf_pulses;
-      energy_kWhtoday += (cf_frequency * Settings.energy_power_calibration) / 36;
+      energy_kWhtoday_delta += (cf_frequency * Settings.energy_power_calibration) / 36;
       EnergyUpdateToday();
     }
   }
@@ -539,7 +545,7 @@ void PzemEvery200ms()
           break;
         case 4:  // Total energy as 99999Wh
           if (!energy_start || (value < energy_start)) energy_start = value;  // Init after restart and hanlde roll-over if any
-          energy_kWhtoday += (value - energy_start) * 100000;
+          energy_kWhtoday += (value - energy_start) * 100;
           energy_start = value;
           EnergyUpdateToday();
           break;
@@ -579,9 +585,10 @@ void Energy200ms()
     if (RtcTime.valid) {
       if (LocalTime() == Midnight()) {
         Settings.energy_kWhyesterday = energy_kWhtoday;
-        Settings.energy_kWhtotal += (energy_kWhtoday / 1000);
+        Settings.energy_kWhtotal += energy_kWhtoday;
         RtcSettings.energy_kWhtotal = Settings.energy_kWhtotal;
         energy_kWhtoday = 0;
+        energy_kWhtoday_delta = 0;
         energy_period = energy_kWhtoday;
         EnergyUpdateToday();
         energy_max_energy_state = 3;
@@ -778,7 +785,7 @@ void EnergyMqttShow()
   snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_TIME "\":\"%s\""), GetDateAndTime(DT_LOCAL).c_str());
   EnergyShow(1);
   snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}"), mqtt_data);
-  MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_ENERGY), Settings.flag.mqtt_sensor_retain);
+  MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);
   energy_power_delta = 0;
 }
 
@@ -851,14 +858,15 @@ boolean EnergyCommand()
     if (p != XdrvMailbox.data) {
       switch (XdrvMailbox.index) {
       case 1:
-        energy_kWhtoday = lnum *100000;
+        energy_kWhtoday = lnum *100;
+        energy_kWhtoday_delta = 0;
         energy_period = energy_kWhtoday;
         Settings.energy_kWhtoday = energy_kWhtoday;
         RtcSettings.energy_kWhtoday = energy_kWhtoday;
-        energy_daily = (float)energy_kWhtoday / 100000000;
+        energy_daily = (float)energy_kWhtoday / 100000;
         break;
       case 2:
-        Settings.energy_kWhyesterday = lnum *100000;
+        Settings.energy_kWhyesterday = lnum *100;
         break;
       case 3:
         RtcSettings.energy_kWhtotal = lnum *100;
@@ -869,9 +877,9 @@ boolean EnergyCommand()
     char energy_yesterday_chr[10];
     char stoday_energy[10];
     char energy_total_chr[10];
-    dtostrfd((float)Settings.energy_kWhyesterday / 100000000, Settings.flag2.energy_resolution, energy_yesterday_chr);
-    dtostrfd((float)RtcSettings.energy_kWhtoday / 100000000, Settings.flag2.energy_resolution, stoday_energy);
-    dtostrfd((float)(RtcSettings.energy_kWhtotal + (energy_kWhtoday / 1000)) / 100000, Settings.flag2.energy_resolution, energy_total_chr);
+    dtostrfd((float)Settings.energy_kWhyesterday / 100000, Settings.flag2.energy_resolution, energy_yesterday_chr);
+    dtostrfd((float)RtcSettings.energy_kWhtoday / 100000, Settings.flag2.energy_resolution, stoday_energy);
+    dtostrfd((float)(RtcSettings.energy_kWhtotal + energy_kWhtoday) / 100000, Settings.flag2.energy_resolution, energy_total_chr);
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"%s\":{\"" D_JSON_TOTAL "\":%s,\"" D_JSON_YESTERDAY "\":%s,\"" D_JSON_TODAY "\":%s}}"),
       command, energy_total_chr, energy_yesterday_chr, stoday_energy);
     status_flag = 1;
@@ -1015,9 +1023,9 @@ boolean EnergyCommand()
 void EnergyDrvInit()
 {
   energy_flg = ENERGY_NONE;
-  if ((pin[GPIO_HLW_SEL] < 99) && (pin[GPIO_HLW_CF1] < 99) && (pin[GPIO_HLW_CF] < 99)) {  // Sonoff Pow
+  if ((pin[GPIO_HLW_SEL] < 99) && (pin[GPIO_HLW_CF1] < 99) && (pin[GPIO_HLW_CF] < 99)) {  // Sonoff Pow or any HLW8012 based device
     energy_flg = ENERGY_HLW8012;
-  } else if (SONOFF_S31 == Settings.module) {  // Sonoff S31
+  } else if ((SONOFF_S31 == Settings.module) || (SONOFF_POW_R2 == Settings.module)) {     // Sonoff S31 or Sonoff Pow R2
     baudrate = 4800;
     serial_config = SERIAL_8E1;
     energy_flg = ENERGY_CSE7766;
@@ -1040,6 +1048,7 @@ void EnergySnsInit()
 
   if (energy_flg) {
     energy_kWhtoday = (RtcSettingsValid()) ? RtcSettings.energy_kWhtoday : (RtcTime.day_of_year == Settings.energy_kWhdoy) ? Settings.energy_kWhtoday : 0;
+    energy_kWhtoday_delta = 0;
     energy_period = energy_kWhtoday;
     EnergyUpdateToday();
     ticker_energy.attach_ms(200, Energy200ms);
@@ -1073,7 +1082,7 @@ void EnergyShow(boolean json)
 
   float energy = 0;
   if (show_energy_period) {
-    if (energy_period) energy = (float)(energy_kWhtoday - energy_period) / 100000;
+    if (energy_period) energy = (float)(energy_kWhtoday - energy_period) / 100;
     energy_period = energy_kWhtoday;
   }
 
@@ -1084,7 +1093,7 @@ void EnergyShow(boolean json)
   dtostrfd(energy_voltage, Settings.flag2.voltage_resolution, energy_voltage_chr);
   dtostrfd(energy_current, Settings.flag2.current_resolution, energy_current_chr);
   dtostrfd(energy_power_factor, 2, energy_power_factor_chr);
-  dtostrfd((float)Settings.energy_kWhyesterday / 100000000, Settings.flag2.energy_resolution, energy_yesterday_chr);
+  dtostrfd((float)Settings.energy_kWhyesterday / 100000, Settings.flag2.energy_resolution, energy_yesterday_chr);
 
   if (json) {
     snprintf_P(speriod, sizeof(speriod), PSTR(",\"" D_JSON_PERIOD "\":%s"), energy_period_chr);

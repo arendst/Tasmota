@@ -46,8 +46,10 @@
 #define D_JSON_COUNTER "Counter"
 #define D_JSON_CURRENT "Current"         // As in Voltage and Current
 #define D_JSON_DATA "Data"
+#define D_JSON_DISTANCE "Distance"
 #define D_JSON_DNSSERVER "DNSServer"
 #define D_JSON_DONE "Done"
+#define D_JSON_ECO2 "eCO2"
 #define D_JSON_EMPTY "Empty"
 #define D_JSON_ENDDST "EndDST"           // End Daylight Savings Time
 #define D_JSON_ERASE "Erase"
@@ -104,6 +106,8 @@
 #define D_JSON_STARTUPUTC "StartupUTC"
 #define D_JSON_SUBNETMASK "Subnetmask"
 #define D_JSON_SUCCESSFUL "Successful"
+#define D_JSON_SUNRISE "Sunrise"
+#define D_JSON_SUNSET "Sunset"
 #define D_JSON_SWITCH "Switch"
 #define D_JSON_SYNC "Sync"
 #define D_JSON_TEMPERATURE "Temperature"
@@ -111,6 +115,7 @@
 #define D_JSON_TIME "Time"
 #define D_JSON_TODAY "Today"
 #define D_JSON_TOTAL "Total"
+#define D_JSON_TVOC "TVOC"
 #define D_JSON_TYPE "Type"
 #define D_JSON_UPTIME "Uptime"
 #define D_JSON_UTC_TIME "UTC"
@@ -139,28 +144,7 @@
 #define D_CMND_COUNTERDEVIDER "CounterDevider"
 #define D_CMND_MQTTENABLE "MqttEnable"
 // end
-#define D_CMND_MQTTHOST "MqttHost"
-#define D_CMND_MQTTPORT "MqttPort"
-#define D_CMND_MQTTRETRY "MqttRetry"
-#define D_CMND_STATETEXT "StateText"
-#define D_CMND_MQTTFINGERPRINT "MqttFingerprint"
-#define D_CMND_MQTTCLIENT "MqttClient"
-#define D_CMND_MQTTUSER "MqttUser"
-#define D_CMND_MQTTPASSWORD "MqttPassword"
-#define D_CMND_FULLTOPIC "FullTopic"
-#define D_CMND_PREFIX "Prefix"
-  #define PRFX_MAX_STRING_LENGTH 5
-  #define D_CMND "cmnd"
-  #define D_STAT "stat"
-  #define D_TELE "tele"
-#define D_CMND_GROUPTOPIC "GroupTopic"
-#define D_CMND_TOPIC "Topic"
-#define D_CMND_BUTTONTOPIC "ButtonTopic"
-#define D_CMND_SWITCHTOPIC "SwitchTopic"
-#define D_CMND_BUTTONRETAIN "ButtonRetain"
-#define D_CMND_SWITCHRETAIN "SwitchRetain"
-#define D_CMND_POWERRETAIN "PowerRetain"
-#define D_CMND_SENSORRETAIN "SensorRetain"
+
 #define D_CMND_BACKLOG "Backlog"
 #define D_CMND_DELAY "Delay"
 #define D_CMND_STATUS "Status"
@@ -245,12 +229,35 @@
 #define D_CMND_ALTITUDE "Altitude"
 #define D_CMND_LEDPOWER "LedPower"
 #define D_CMND_LEDSTATE "LedState"
-#define D_CMND_CFGDUMP "CfgDump"
 #define D_CMND_I2CSCAN "I2CScan"
 #define D_CMND_SERIALSEND "SerialSend"
 #define D_CMND_SERIALDELIMITER "SerialDelimiter"
 #define D_CMND_BAUDRATE "Baudrate"
-#define D_CMND_EXCEPTION "Exception"
+
+// Commands xdrv_00_mqtt.ino
+#define D_CMND_MQTTHOST "MqttHost"
+#define D_CMND_MQTTPORT "MqttPort"
+#define D_CMND_MQTTRETRY "MqttRetry"
+#define D_CMND_STATETEXT "StateText"
+#define D_CMND_MQTTFINGERPRINT "MqttFingerprint"
+#define D_CMND_MQTTCLIENT "MqttClient"
+#define D_CMND_MQTTUSER "MqttUser"
+#define D_CMND_MQTTPASSWORD "MqttPassword"
+#define D_CMND_FULLTOPIC "FullTopic"
+#define D_CMND_PREFIX "Prefix"
+  #define PRFX_MAX_STRING_LENGTH 5
+  #define D_CMND "cmnd"
+  #define D_STAT "stat"
+  #define D_TELE "tele"
+#define D_CMND_GROUPTOPIC "GroupTopic"
+#define D_CMND_TOPIC "Topic"
+#define D_CMND_BUTTONTOPIC "ButtonTopic"
+#define D_CMND_SWITCHTOPIC "SwitchTopic"
+#define D_CMND_BUTTONRETAIN "ButtonRetain"
+#define D_CMND_SWITCHRETAIN "SwitchRetain"
+#define D_CMND_POWERRETAIN "PowerRetain"
+#define D_CMND_SENSORRETAIN "SensorRetain"
+#define D_CMND_PUBLISH "Publish"
 
 // Commands xdrv_01_light.ino
 #define D_CMND_CHANNEL "Channel"
@@ -273,9 +280,9 @@
 #define D_CMND_IRSEND "IRSend"
   #define D_JSON_INVALID_JSON "Invalid JSON"
   #define D_JSON_PROTOCOL_NOT_SUPPORTED "Protocol not supported"
-  #define D_JSON_IR_PROTOCOL "PROTOCOL"
-  #define D_JSON_IR_BITS "BITS"
-  #define D_JSON_IR_DATA "DATA"
+  #define D_JSON_IR_PROTOCOL "Protocol"
+  #define D_JSON_IR_BITS "Bits"
+  #define D_JSON_IR_DATA "Data"
 #define D_CMND_IRHVAC "IRHVAC"
   #define D_JSON_IRHVAC_VENDOR "VENDOR"
   #define D_JSON_IRHVAC_POWER "POWER"
@@ -357,14 +364,21 @@
 // Commands xdrv_09_timers.ino
 #define D_CMND_TIMER "Timer"
   #define D_JSON_TIMER_ARM "Arm"
+  #define D_JSON_TIMER_MODE "Mode"
   #define D_JSON_TIMER_TIME "Time"
+  #define D_JSON_TIMER_WINDOW "Window"
   #define D_JSON_TIMER_DAYS "Days"
   #define D_JSON_TIMER_REPEAT "Repeat"
-  #define D_JSON_TIMER_DEVICE "Device"
-  #define D_JSON_TIMER_POWER "Power"
+  #define D_JSON_TIMER_OUTPUT "Output"
+  #define D_JSON_TIMER_ACTION "Action"
+  #define D_JSON_TIMER_NO_DEVICE "No GPIO as output configured"
 #define D_CMND_TIMERS "Timers"
+#define D_CMND_LATITUDE "Latitude"
+#define D_CMND_LONGITUDE "Longitude"
 
 /********************************************************************************************/
+
+#define D_ASTERIX "********"
 
 #ifndef MY_LANGUAGE
   #include "language/en-GB.h"
@@ -386,6 +400,8 @@ enum UnitNames {
   UNIT_MILLIAMPERE,
   UNIT_MILLISECOND,
   UNIT_MINUTE,
+  UNIT_PPB,
+  UNIT_PPD,
   UNIT_PPM,
   UNIT_PERCENTAGE,
   UNIT_PRESSURE,
@@ -404,6 +420,8 @@ const char kUnitNames[] PROGMEM =
   D_UNIT_MILLIAMPERE "|"
   D_UNIT_MILLISECOND "|"
   D_UNIT_MINUTE "|"
+  D_UNIT_PARTS_PER_BILLION "|"
+  D_UNIT_PARTS_PER_DECILITER "|"
   D_UNIT_PARTS_PER_MILLION "|"
   "%|"
   D_UNIT_PRESSURE "|"
@@ -425,11 +443,13 @@ const char S_JSON_COMMAND_NVALUE_ACTIVE_NVALUE[] PROGMEM =    "{\"%s\":\"%d (" D
 const char S_JSON_COMMAND_NVALUE[] PROGMEM =                  "{\"%s\":%d}";
 const char S_JSON_COMMAND_LVALUE[] PROGMEM =                  "{\"%s\":%lu}";
 const char S_JSON_COMMAND_SVALUE[] PROGMEM =                  "{\"%s\":\"%s\"}";
+const char S_JSON_COMMAND_ASTERIX[] PROGMEM =                 "{\"%s\":\"" D_ASTERIX "\"}";
 const char S_JSON_COMMAND_XVALUE[] PROGMEM =                  "{\"%s\":%s}";  // %s must provide quotes on non-number
 
 const char S_JSON_COMMAND_INDEX_NVALUE[] PROGMEM =            "{\"%s%d\":%d}";
 const char S_JSON_COMMAND_INDEX_LVALUE[] PROGMEM =            "{\"%s%d\":%lu}";
 const char S_JSON_COMMAND_INDEX_SVALUE[] PROGMEM =            "{\"%s%d\":\"%s\"}";
+const char S_JSON_COMMAND_INDEX_ASTERIX[] PROGMEM =           "{\"%s%d\":\"" D_ASTERIX "\"}";
 const char S_JSON_COMMAND_INDEX_SVALUE_SVALUE[] PROGMEM =     "{\"%s%d\":\"%s%s\"}";
 const char S_JSON_COMMAND_INDEX_NVALUE_ACTIVE_NVALUE[] PROGMEM = "{\"%s%d\":\"%d (" D_JSON_ACTIVE " %d)\"}";
 

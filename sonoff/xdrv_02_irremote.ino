@@ -284,26 +284,25 @@ boolean IrSendCommand()
   uint32_t bits = 0;
   uint32_t data = 0;
 
-  for (uint16_t i = 0; i <= sizeof(dataBufUc); i++) {
-    dataBufUc[i] = toupper(XdrvMailbox.data[i]);
-  }
+  UpperCase(dataBufUc, XdrvMailbox.data);
   if (!strcasecmp_P(XdrvMailbox.topic, PSTR(D_CMND_IRSEND))) {
     if (XdrvMailbox.data_len) {
       StaticJsonBuffer<128> jsonBuf;
-      JsonObject &ir_json = jsonBuf.parseObject(dataBufUc);
-      if (!ir_json.success()) {
+      JsonObject &root = jsonBuf.parseObject(dataBufUc);
+      if (!root.success()) {
         snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_IRSEND "\":\"" D_JSON_INVALID_JSON "\"}")); // JSON decode failed
       }
       else {
         snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_IRSEND "\":\"" D_JSON_DONE "\"}"));
-        protocol = ir_json[D_JSON_IR_PROTOCOL];
-        bits = ir_json[D_JSON_IR_BITS];
-        data = ir_json[D_JSON_IR_DATA];
+        char parm_uc[10];
+        protocol = root[UpperCase_P(parm_uc, PSTR(D_JSON_IR_PROTOCOL))];
+        bits = root[UpperCase_P(parm_uc, PSTR(D_JSON_IR_BITS))];
+        data = strtoul(root[UpperCase_P(parm_uc, PSTR(D_JSON_IR_DATA))], NULL, 0);
         if (protocol && bits && data) {
           int protocol_code = GetCommandCode(protocol_text, sizeof(protocol_text), protocol, kIrRemoteProtocols);
 
-          snprintf_P(log_data, sizeof(log_data), PSTR("IRS: protocol_text %s, protocol %s, bits %d, data %d, protocol_code %d"),
-            protocol_text, protocol, bits, data, protocol_code);
+          snprintf_P(log_data, sizeof(log_data), PSTR("IRS: protocol_text %s, protocol %s, bits %d, data %u (0x%lX), protocol_code %d"),
+            protocol_text, protocol, bits, data, data, protocol_code);
           AddLog(LOG_LEVEL_DEBUG);
 
           switch (protocol_code) {

@@ -22,7 +22,7 @@
 #ifdef USE_WEBSERVER
 const char HTTP_FORM_DOMOTICZ[] PROGMEM =
   "<fieldset><legend><b>&nbsp;" D_DOMOTICZ_PARAMETERS "&nbsp;</b></legend><form method='post' action='sv'>"
-  "<input id='w' name='w' value='4' hidden><input id='r' name='r' value='1' hidden>"
+  "<input id='w' name='w' value='4,1' hidden>"
   "<br/><table>";
 const char HTTP_FORM_DOMOTICZ_RELAY[] PROGMEM =
   "<tr><td style='width:260px'><b>" D_DOMOTICZ_IDX " {1</b></td><td style='width:70px'><input id='r{1' name='r{1' placeholder='0' value='{2'></td></tr>"
@@ -34,6 +34,8 @@ const char HTTP_FORM_DOMOTICZ_SENSOR[] PROGMEM =
 const char HTTP_FORM_DOMOTICZ_TIMER[] PROGMEM =
   "<tr><td style='width:260px'><b>" D_DOMOTICZ_UPDATE_TIMER "</b> (" STR(DOMOTICZ_UPDATE_TIMER) ")</td><td style='width:70px'><input id='ut' name='ut' placeholder='" STR(DOMOTICZ_UPDATE_TIMER) "' value='{6'</td></tr>";
 #endif  // USE_WEBSERVER
+
+const char DOMOTICZ_MESSAGE[] PROGMEM = "{\"idx\":%d,\"nvalue\":%d,\"svalue\":\"%s\",\"Battery\":%d,\"RSSI\":%d}";
 
 enum DomoticzCommands { CMND_IDX, CMND_KEYIDX, CMND_SWITCHIDX, CMND_SENSORIDX, CMND_UPDATETIMER };
 const char kDomoticzCommands[] PROGMEM = D_CMND_IDX "|" D_CMND_KEYIDX "|" D_CMND_SWITCHIDX "|" D_CMND_SENSORIDX "|" D_CMND_UPDATETIMER ;
@@ -57,6 +59,32 @@ boolean domoticz_subscribe = false;
 int domoticz_update_timer = 0;
 byte domoticz_update_flag = 1;
 
+int DomoticzBatteryQuality()
+{
+  // Battery 0%: ESP 2.6V (minimum operating voltage is 2.5)
+  // Battery 100%: ESP 3.6V (maximum operating voltage is 3.6)
+  // Battery 101% to 200%: ESP over 3.6V (means over maximum operating voltage)
+
+  int quality = 0;	// Voltage range from 2,6V > 0%  to 3,6V > 100%
+
+  uint16_t voltage = ESP.getVcc();
+  if (voltage <= 2600) {
+    quality = 0;
+  } else if (voltage >= 4600) {
+    quality = 200;
+  } else {
+    quality = (voltage - 2600) / 10;
+  }
+  return quality;
+}
+
+int DomoticzRssiQuality()
+{
+  // RSSI range: 0% to 10% (12 means disable RSSI in Domoticz)
+
+  return WifiGetRssiAsQuality(WiFi.RSSI()) / 10;
+}
+
 void MqttPublishDomoticzPowerState(byte device)
 {
   char sdimmer[8];
@@ -66,8 +94,8 @@ void MqttPublishDomoticzPowerState(byte device)
   }
   if (Settings.flag.mqtt_enabled && Settings.domoticz_relay_idx[device -1]) {
     snprintf_P(sdimmer, sizeof(sdimmer), PSTR("%d"), Settings.light_dimmer);
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"idx\":%d,\"nvalue\":%d,\"svalue\":\"%s\"}"),
-      Settings.domoticz_relay_idx[device -1], (power & (1 << (device -1))) ? 1 : 0, (light_type) ? sdimmer : "");
+    snprintf_P(mqtt_data, sizeof(mqtt_data), DOMOTICZ_MESSAGE,
+      Settings.domoticz_relay_idx[device -1], (power & (1 << (device -1))) ? 1 : 0, (light_type) ? sdimmer : "", DomoticzBatteryQuality(), DomoticzRssiQuality());
     MqttPublish(domoticz_in_topic);
   }
 }
@@ -237,7 +265,7 @@ boolean DomoticzCommand()
   return serviced;
 }
 
-boolean DomoticzButton(byte key, byte device, byte state, byte svalflg)
+boolean DomoticzSendKey(byte key, byte device, byte state, byte svalflg)
 {
   if ((Settings.domoticz_key_idx[device -1] || Settings.domoticz_switch_idx[device -1]) && (svalflg)) {
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"command\":\"switchlight\",\"idx\":%d,\"switchcmd\":\"%s\"}"),
@@ -275,13 +303,15 @@ uint8_t DomoticzHumidityState(char *hum)
 void DomoticzSensor(byte idx, char *data)
 {
   if (Settings.domoticz_sensor_idx[idx]) {
-    char dmess[64];
+    char dmess[90];
 
     memcpy(dmess, mqtt_data, sizeof(dmess));
     if (DZ_AIRQUALITY == idx) {
-      snprintf_P(mqtt_data, sizeof(dmess), PSTR("{\"idx\":%d,\"nvalue\":%s}"), Settings.domoticz_sensor_idx[idx], data);
+      snprintf_P(mqtt_data, sizeof(dmess), PSTR("{\"idx\":%d,\"nvalue\":%s,\"Battery\":%d,\"RSSI\":%d}"),
+        Settings.domoticz_sensor_idx[idx], data, DomoticzBatteryQuality(), DomoticzRssiQuality());
     } else {
-      snprintf_P(mqtt_data, sizeof(dmess), PSTR("{\"idx\":%d,\"nvalue\":0,\"svalue\":\"%s\"}"), Settings.domoticz_sensor_idx[idx], data);
+      snprintf_P(mqtt_data, sizeof(dmess), DOMOTICZ_MESSAGE,
+        Settings.domoticz_sensor_idx[idx], 0, data, DomoticzBatteryQuality(), DomoticzRssiQuality());
     }
     MqttPublish(domoticz_in_topic);
     memcpy(mqtt_data, dmess, sizeof(dmess));

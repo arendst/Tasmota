@@ -48,9 +48,9 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t not_power_linked : 1;         // bit 20 (v5.11.1f)
     uint32_t no_power_on_check : 1;        // bit 21 (v5.11.1i)
     uint32_t mqtt_serial : 1;              // bit 22 (v5.12.0f)
-    uint32_t spare23 : 1;
-    uint32_t spare24 : 1;
-    uint32_t spare25 : 1;
+    uint32_t rules_enabled : 1;            // bit 23 (v5.12.0j)
+    uint32_t rules_once : 1;               // bit 24 (v5.12.0k)
+    uint32_t knx_enabled : 1;              // bit 25 (v5.12.0l) KNX
     uint32_t spare26 : 1;
     uint32_t spare27 : 1;
     uint32_t spare28 : 1;
@@ -92,14 +92,14 @@ typedef union {
 typedef union {
   uint32_t data;
   struct {
-    uint32_t time : 11;                   // bits 0 - 10 = minutes in a day
-    uint32_t mday : 5;                    // bits 11 - 15 = optional day in a month
-    uint32_t days : 7;                    // bits 16 - 22 = week day mask
-    uint32_t device : 4;                  // bits 23 - 26 = 16 devices
-    uint32_t power : 2;                   // bits 27 - 28 = 4 power states - Off, On, Toggle
-    uint32_t repeat : 1;                  // bit 29
-    uint32_t arm : 1;                     // bit 30
-    uint32_t spare : 1;                   // bit 31
+    uint32_t time : 11;                    // bits 0 - 10 = minutes in a day
+    uint32_t window : 4;                   // bits 11 - 14 = minutes random window
+    uint32_t repeat : 1;                   // bit 15
+    uint32_t days : 7;                     // bits 16 - 22 = week day mask
+    uint32_t device : 4;                   // bits 23 - 26 = 16 devices
+    uint32_t power : 2;                    // bits 27 - 28 = 4 power states - Off, On, Toggle, Blink or Rule
+    uint32_t mode : 2;                     // bits 29 - 30 = timer modes - 0 = Scheduler, 1 = Sunrise, 2 = Sunset
+    uint32_t arm : 1;                      // bit 31
   };
 } Timer;
 
@@ -226,13 +226,9 @@ struct SYSCFG {
   uint8_t       light_speed;               // 4A2
   uint8_t       light_scheme;              // 4A3
   uint8_t       light_width;               // 4A4
-
-  byte          free_4A5[1];               // 4A5
-
+  byte          knx_GA_registered;         // 4A5  Number of Group Address to read
   uint16_t      light_wakeup;              // 4A6
-
-  byte          free_4A8[1];               // 4A8
-
+  byte          knx_CB_registered;         // 4A8  Number of Group Address to write
   char          web_password[33];          // 4A9
   uint8_t       switchmode[MAX_SWITCHES];  // 4CA
   char          ntp_server[3][33];         // 4CE
@@ -249,10 +245,24 @@ struct SYSCFG {
   uint16_t      pulse_counter_type;        // 5D0
   uint16_t      pulse_counter_debounce;    // 5D2
   uint8_t       rf_code[17][9];            // 5D4
+
   byte          free_66d[3];               // 66D
+
   Timer         timer[MAX_TIMERS];         // 670
+  int           latitude;                  // 6B0
+  int           longitude;                 // 6B4
+
+  uint16_t      knx_physsical_addr;        // 6B8  (address_t is a uint16_t)
+  uint16_t      knx_GA_addr[MAX_KNX_GA];   // 6BA  (address_t is a uint16_t) x KNX_max_GA
+  uint16_t      knx_CB_addr[MAX_KNX_CB];   // 6CE  (address_t is a uint16_t) x KNX_max_CB
+  byte          knx_GA_param[MAX_KNX_GA];  // 6E2  Type of Input (relay changed, button pressed, sensor read <-teleperiod)
+  byte          knx_CB_param[MAX_KNX_CB];  // 6EC  Type of Output (set relay, toggle relay, reply sensor value)
+
+  byte          free_6f6[266];             // 6F6
+
+  char          rules[MAX_RULE_SIZE];      // 800 uses 512 bytes in v5.12.0m
   //STB mod
-  byte          free_680[200];             // 680  give me some space to do configuration without override
+  byte          free_680[200];             // A80  give me some space to do configuration without override
   unsigned long uptime;                    // 748
   uint8_t       pcf8574_config[8];         // 74B
   uint8_t       all_relays_inverted;       //

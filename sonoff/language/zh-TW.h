@@ -28,6 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
+ * Updated until v5.12.0d
 \*********************************************************************/
 
 //#define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -74,9 +75,11 @@
 #define D_DARKLIGHT "Dark"
 #define D_DEBUG "除錯"
 #define D_DISABLED "停用"
+#define D_DISTANCE "Distance"
 #define D_DNS_SERVER "DNS伺服器"
 #define D_DONE "完成"
 #define D_DST_TIME "DST"
+#define D_ECO2 "eCO2"
 #define D_EMULATION "設備模擬"
 #define D_ENABLED "啟用"
 #define D_ERASE "刪除"
@@ -127,6 +130,7 @@
 #define D_RESTART_REASON "重啟原因"
 #define D_RESTORE "恢覆"
 #define D_RETAINED "已保留"
+#define D_RULE "Rule"
 #define D_SAVE "存檔"
 #define D_SENSOR "感測器"
 #define D_SSID "名稱"
@@ -136,12 +140,15 @@
 #define D_SUBNET_MASK "子網遮罩"
 #define D_SUBSCRIBE_TO "訂閱"
 #define D_SUCCESSFUL "成功"
+#define D_SUNRISE "Sunrise"
+#define D_SUNSET "Sunset"
 #define D_TEMPERATURE "溫度"
 #define D_TO "to"
 #define D_TOGGLE "切換"
 #define D_TOPIC "主題"
 #define D_TRANSMIT "發送"
 #define D_TRUE "True"
+#define D_TVOC "TVOC"
 #define D_UPGRADE "升級"
 #define D_UPLOAD "上傳"
 #define D_UPTIME "運行時間"
@@ -358,6 +365,36 @@
   #define D_DOMOTICZ_AIRQUALITY "空氣品質"
 #define D_DOMOTICZ_UPDATE_TIMER "更新計時器"
 
+// xdrv_09_timers.ino
+#define D_CONFIGURE_TIMER "Configure Timer"
+#define D_TIMER_PARAMETERS "Timer parameters"
+#define D_TIMER_ARM "Arm"
+#define D_TIMER_TIME "Time"
+#define D_TIMER_DAYS "Days"
+#define D_TIMER_REPEAT "Repeat"
+#define D_TIMER_OUTPUT "Output"
+#define D_TIMER_ACTION "Action"
+
+// xdrv_10_knx.ino
+#define D_CONFIGURE_KNX "Configure KNX"
+#define D_KNX_PARAMETERS "KNX Parameters"
+#define D_KNX_GENERAL_CONFIG "General"
+#define D_KNX_PHYSICAL_ADDRESS "Physical Address"
+#define D_KNX_PHYSICAL_ADDRESS_NOTE "( Must be unique on the KNX network )"
+#define D_KNX_ENABLE "Enable KNX"
+#define D_KNX_GROUP_ADDRESS_TO_WRITE "Data to Send to Group Addresses"
+#define D_ADD "Add"
+#define D_DELETE "Delete"
+#define D_REPLY "Reply"
+#define D_KNX_GROUP_ADDRESS_TO_READ "Group Addresses to Receive Data from"
+#define D_LOG_KNX "KNX: "
+#define D_RECEIVED_FROM "Received from"
+#define D_KNX_COMMAND_WRITE "Write"
+#define D_KNX_COMMAND_READ "Read"
+#define D_KNX_COMMAND_OTHER "Other"
+#define D_SENT_TO "sent to"
+#define D_KNX_WARNING "The group address ( 0 / 0 / 0 ) is reserved and can not be used."
+
 // xdrv_03_energy.ino
 #define D_ENERGY_TODAY "今日用電量"
 #define D_ENERGY_YESTERDAY "昨日用電量"
@@ -414,14 +451,15 @@
 #define D_SENSOR_SDS0X1   "SDS0X1"
 #define D_SENSOR_SBR_RX   "SerBr Rx"
 #define D_SENSOR_SBR_TX   "SerBr Tx"
+#define D_SENSOR_SR04_TRIG "SR04 Tri"
+#define D_SENSOR_SR04_ECHO "SR04 Ech"
 //stb mod
-#define D_SENSOR_SR04_TRIG "SR04 Trigger"
-#define D_SENSOR_SR04_ECHO "SR04 Echo"
 #define D_SENSOR_DEEPSLEEP "DeepSleep Switch"
 // end
 
 // Units
 #define D_UNIT_AMPERE "安"
+#define D_UNIT_CENTIMETER "cm"
 #define D_UNIT_HOUR "時"
 #define D_UNIT_KILOOHM "千歐"
 #define D_UNIT_KILOWATTHOUR "千瓦時"
@@ -432,6 +470,7 @@
 #define D_UNIT_MILLIAMPERE "毫安"
 #define D_UNIT_MILLISECOND "毫秒"
 #define D_UNIT_MINUTE "分"
+#define D_UNIT_PARTS_PER_BILLION "ppb"
 #define D_UNIT_PARTS_PER_DECILITER "每分升"
 #define D_UNIT_PARTS_PER_MILLION "ppm"
 #define D_UNIT_PRESSURE "百帕"

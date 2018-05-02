@@ -28,6 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
+ * Updated until v5.12.0n
 \*********************************************************************/
 
 //#define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -42,8 +43,8 @@
 #define D_HOUR_MINUTE_SEPARATOR ":"
 #define D_MINUTE_SECOND_SEPARATOR ":"
 
-#define D_DAY3LIST "PonÚteStřČtvPátSobNed"
-#define D_MONTH3LIST "LedÚnoBřeDubKvěČerČevSrpZářŘíjLisPro"
+#define D_DAY3LIST "Ne Po Út St Čt Pá So "
+#define D_MONTH3LIST "LedÚnoBřeDubKvěČvnČvcSrpZářŘíjLisPro"
 
 // Non JSON decimal separator
 #define D_DECIMAL_SEPARATOR ","
@@ -60,11 +61,11 @@
 #define D_BRIGHTLIGHT "Světlý"
 #define D_BUTTON "Tlačítko"
 #define D_BY "by"                    // Written by me
-#define D_BYTES "Bytu"
-#define D_CELSIUS "Celsia"
-#define D_CO2 "Kysličníku uhličitého"
+#define D_BYTES "Bytů"
+#define D_CELSIUS "°C"
+#define D_CO2 "CO2"
 #define D_CODE "kód"                 // Button code
-#define D_COLDLIGHT "Studený"
+#define D_COLDLIGHT "Studené světlo"
 #define D_COMMAND "Příkaz"
 #define D_CONNECTED "...připojeno"
 #define D_COUNT "Počítej"
@@ -74,9 +75,11 @@
 #define D_DARKLIGHT "Tmavý"
 #define D_DEBUG "Debug"
 #define D_DISABLED "Zablokováno"
+#define D_DISTANCE "Distance"
 #define D_DNS_SERVER "Server DNS"
 #define D_DONE "Provedeno"
 #define D_DST_TIME "DST"
+#define D_ECO2 "eCO2"
 #define D_EMULATION "Emulace"
 #define D_ENABLED "Otevřený"
 #define D_ERASE "Smaž"
@@ -88,14 +91,14 @@
 #define D_FALSE "Nepravda"
 #define D_FILE "Soubor"
 #define D_FREE_MEMORY "Volná paměť"
-#define D_GAS "Gas"
+#define D_GAS "Plyn"
 #define D_GATEWAY "Výchozí brána"
 #define D_GROUP "Skupina"
 #define D_HOST "Server"
 #define D_HOSTNAME "Název serveru"
 #define D_HUMIDITY "Vlhkost"
 #define D_ILLUMINANCE "Osvětlení"
-#define D_IMMEDIATE "Mžikové"      // Button immediate
+#define D_IMMEDIATE "Okamžité"      // Button immediate
 #define D_INDEX "Index"
 #define D_INFO "Informace"
 #define D_INITIALIZED "Inicializovaný"
@@ -106,27 +109,28 @@
 #define D_MQTT "MQTT"
 #define D_MULTI_PRESS "několikeré-stisknutí"
 #define D_NOISE "Hluk"
-#define D_NONE "Není"
-#define D_OFF "Vypnutý"
+#define D_NONE "Žádný"
+#define D_OFF "Vyp."
 #define D_OFFLINE "Neaktivní"
 #define D_OK "OK"
-#define D_ON "Sepnutý"
+#define D_ON "Zap."
 #define D_ONLINE "Aktivní"
 #define D_PASSWORD "Heslo"
 #define D_PORT "Port"
-#define D_POWER_FACTOR "Součinitel příkonu"
+#define D_POWER_FACTOR "Účiník"
 #define D_POWERUSAGE "Příkon"
 #define D_PRESSURE "Tlak"
 #define D_PRESSUREATSEALEVEL "Tlak na úrovni hladiny moře"
-#define D_PROGRAM_FLASH_SIZE "Velikost flash programu"
+#define D_PROGRAM_FLASH_SIZE "Velikost paměti flash"
 #define D_PROGRAM_SIZE "Velikost programu"
 #define D_PROJECT "Projekt"
-#define D_RECEIVED "Obdržený"
+#define D_RECEIVED "Přijatý"
 #define D_RESTART "Restart"
 #define D_RESTARTING "Restartování"
 #define D_RESTART_REASON "Příčina restartu"
-#define D_RESTORE "Načtený"
-#define D_RETAINED "Uloženo"
+#define D_RESTORE "Obnovit"
+#define D_RETAINED "Zachováno"
+#define D_RULE "Rule"
 #define D_SAVE "Ulož"
 #define D_SENSOR "Sensor"
 #define D_SSID "SSID"
@@ -136,12 +140,15 @@
 #define D_SUBNET_MASK "Maska podsítě"
 #define D_SUBSCRIBE_TO "Přihlaš se do"
 #define D_SUCCESSFUL "úspěšné."
+#define D_SUNRISE "Svítání"
+#define D_SUNSET "Soumrak"
 #define D_TEMPERATURE "Teplota"
 #define D_TO "do"
 #define D_TOGGLE "Přepni"
 #define D_TOPIC "Topic"
 #define D_TRANSMIT "Odešli"
 #define D_TRUE "Pravda"
+#define D_TVOC "TVOC"
 #define D_UPGRADE "aktualizace"
 #define D_UPLOAD "Nahrání..."
 #define D_UPTIME "Uptime"
@@ -150,18 +157,18 @@
 #define D_UV_LEVEL "úroveň UV"
 #define D_VERSION "Verze"
 #define D_VOLTAGE "Napětí"
-#define D_WARMLIGHT "Ohřev"
+#define D_WARMLIGHT "Teplé světlo"
 #define D_WEB_SERVER "Web Server"
 
 // sonoff.ino
-#define D_WARNING_MINIMAL_VERSION "WARNING Tato verze nepodporuje trvalé nastavení"
+#define D_WARNING_MINIMAL_VERSION "UPOZORNĚNÍ Tato verze nepodporuje trvalé nastavení"
 #define D_LEVEL_10 "úroveň 1-0"
 #define D_LEVEL_01 "úroveň 0-1"
 #define D_SERIAL_LOGGING_DISABLED "Logování na sériovém portu ukončeno"
 #define D_SYSLOG_LOGGING_REENABLED "Obnoven zápis do Syslog"
 
 #define D_SET_BAUDRATE_TO "Nastavení rychlosti přenosu na"
-#define D_RECEIVED_TOPIC "Obdržený topic"
+#define D_RECEIVED_TOPIC "Přijatý topic"
 #define D_DATA_SIZE "Velikost dat"
 #define D_ANALOG_INPUT "Analogový vstup"
 
@@ -224,13 +231,13 @@
 #define D_RESTORE_CONFIGURATION "Obnovení nastavení"
 #define D_MAIN_MENU "Hlavní menu"
 
-#define D_MODULE_PARAMETERS "Parametry modulu"
+#define D_MODULE_PARAMETERS "Nastavení modulu"
 #define D_MODULE_TYPE "Typ modulu"
 #define D_GPIO "GPIO"
 #define D_SERIAL_IN "Serial In"
 #define D_SERIAL_OUT "Serial Out"
 
-#define D_WIFI_PARAMETERS "Parametry WiFi"
+#define D_WIFI_PARAMETERS "Nastavení WiFi"
 #define D_SCAN_FOR_WIFI_NETWORKS "Scan sítí WiFi"
 #define D_SCAN_DONE "Scan dokončen"
 #define D_NO_NETWORKS_FOUND "Síť nebyla nalezena"
@@ -246,11 +253,11 @@
 #define D_AP2_SSID "AP2 SSID"
 #define D_AP2_PASSWORD "Heslo AP2"
 
-#define D_MQTT_PARAMETERS "Parametry MQTT"
+#define D_MQTT_PARAMETERS "Nastavení MQTT"
 #define D_CLIENT "Klient"
 #define D_FULL_TOPIC "Celý topic"
 
-#define D_LOGGING_PARAMETERS "Volby logování"
+#define D_LOGGING_PARAMETERS "Volba logování"
 #define D_SERIAL_LOG_LEVEL "Seriová úroveň logu"
 #define D_WEB_LOG_LEVEL "Webová úroveň logu"
 #define D_SYS_LOG_LEVEL "Systemová úroveň logu"
@@ -259,7 +266,7 @@
 #define D_SYSLOG_PORT "Syslog port"
 #define D_TELEMETRY_PERIOD "Interval telemetrie"
 
-#define D_OTHER_PARAMETERS "Jiné parametry"
+#define D_OTHER_PARAMETERS "Další nastavení"
 #define D_WEB_ADMIN_PASSWORD "Heslo Web administrátora"
 #define D_MQTT_ENABLE "MQTT aktivní"
 #define D_FRIENDLY_NAME "Friendly Name"
@@ -342,7 +349,7 @@
 #define D_3_RESPONSE_PACKETS_SENT "3 pakety odpovědi odeslány"
 
 // xdrv_05_domoticz.ino
-#define D_DOMOTICZ_PARAMETERS "Parametry Domoticz"
+#define D_DOMOTICZ_PARAMETERS "Nastavení Domoticz"
 #define D_DOMOTICZ_IDX "Idx"
 #define D_DOMOTICZ_KEY_IDX "Key idx"
 #define D_DOMOTICZ_SWITCH_IDX "Spinac idx"
@@ -358,10 +365,40 @@
   #define D_DOMOTICZ_AIRQUALITY "AirQuality"
 #define D_DOMOTICZ_UPDATE_TIMER "Aktualizace stopek"
 
+// xdrv_09_timers.ino
+#define D_CONFIGURE_TIMER "Nastavení Časovače"
+#define D_TIMER_PARAMETERS "Časovač"
+#define D_TIMER_ARM "Aktivní"
+#define D_TIMER_TIME "Čas"
+#define D_TIMER_DAYS "Dny"
+#define D_TIMER_REPEAT "Opakovat"
+#define D_TIMER_OUTPUT "Výstup"
+#define D_TIMER_ACTION "Napájení"
+
+// xdrv_10_knx.ino
+#define D_CONFIGURE_KNX "Nastavení KNX"
+#define D_KNX_PARAMETERS "KNX parametry"
+#define D_KNX_GENERAL_CONFIG "Obecné"
+#define D_KNX_PHYSICAL_ADDRESS "Fyzická adresa"
+#define D_KNX_PHYSICAL_ADDRESS_NOTE "( Musí být jedinečná v síti KNX )"
+#define D_KNX_ENABLE "Povol KNX"
+#define D_KNX_GROUP_ADDRESS_TO_WRITE "Data k odeslání na skupinové adresy"
+#define D_ADD "Přidej"
+#define D_DELETE "Smaž"
+#define D_REPLY "Odpověď"
+#define D_KNX_GROUP_ADDRESS_TO_READ "Skupinové adresy pro příjem dat z"
+#define D_LOG_KNX "KNX: "
+#define D_RECEIVED_FROM "Přijato z"
+#define D_KNX_COMMAND_WRITE "Zapiš"
+#define D_KNX_COMMAND_READ "Čti"
+#define D_KNX_COMMAND_OTHER "Jiné"
+#define D_SENT_TO "pošli"
+#define D_KNX_WARNING "Skupinová adresa ( 0 / 0 / 0 ) je rezervována a nemůže být použita."
+
 // xdrv_03_energy.ino
-#define D_ENERGY_TODAY "Energie Dnes"
-#define D_ENERGY_YESTERDAY "Energie Včera"
-#define D_ENERGY_TOTAL "Energie Součet"
+#define D_ENERGY_TODAY "Spotřeba Dnes"
+#define D_ENERGY_YESTERDAY "Spotřeba Včera"
+#define D_ENERGY_TOTAL "Celková spotřeba"
 
 // xsns_05_ds18b20.ino
 #define D_SENSOR_BUSY "Sensor DS18x20 obsazen"
@@ -370,19 +407,19 @@
 
 // xsns_06_dht.ino
 #define D_TIMEOUT_WAITING_FOR "Čekání na"
-#define D_START_SIGNAL_LOW "signál, startovní nízký"
-#define D_START_SIGNAL_HIGH "signál, startovní vysoký"
-#define D_PULSE "puls"
+#define D_START_SIGNAL_LOW "nízký startovní signál"
+#define D_START_SIGNAL_HIGH "vysoký startovní signál"
+#define D_PULSE "impuls"
 #define D_CHECKSUM_FAILURE "Chybný kontrolní součet"
 
 // xsns_07_sht1x.ino
-#define D_SENSOR_DID_NOT_ACK_COMMAND "Sensor neobdržel pžíkaz ACK"
+#define D_SENSOR_DID_NOT_ACK_COMMAND "Sensor neobdržel příkaz ACK"
 #define D_SHT1X_FOUND "SHT1X nalezen"
 
 // xsns_18_pms5003.ino
 #define D_STANDARD_CONCENTRATION "CF-1 PM"     // Standard Particle CF-1 Particle Matter
 #define D_ENVIRONMENTAL_CONCENTRATION "PM"     // Environmetal Particle Matter
-#define D_PARTICALS_BEYOND "Particals"
+#define D_PARTICALS_BEYOND "částic"
 
 // sonoff_template.h
 #define D_SENSOR_NONE     "Není"
@@ -395,11 +432,11 @@
 #define D_SENSOR_WS2812   "WS2812"
 #define D_SENSOR_IRSEND   "IRsend"
 #define D_SENSOR_SWITCH   "Spínač"   // Suffix "1"
-#define D_SENSOR_BUTTON   "Tlačít"   // Suffix "1"
+#define D_SENSOR_BUTTON   "Tlačítko"   // Suffix "1"
 #define D_SENSOR_RELAY    "Relé"    // Suffix "1i"
 #define D_SENSOR_LED      "Led"      // Suffix "1i"
 #define D_SENSOR_PWM      "PWM"      // Suffix "1",
-#define D_SENSOR_COUNTER  "Počíta"  // Suffix "1"
+#define D_SENSOR_COUNTER  "Počítadlo"  // Suffix "1"
 #define D_SENSOR_IRRECV   "IRrecv"
 #define D_SENSOR_MHZ_RX   "MHZ Rx"
 #define D_SENSOR_MHZ_TX   "MHZ Tx"
@@ -414,15 +451,16 @@
 #define D_SENSOR_SDS0X1   "SDS0X1"
 #define D_SENSOR_SBR_RX   "SerBr Rx"
 #define D_SENSOR_SBR_TX   "SerBr Tx"
+#define D_SENSOR_SR04_TRIG "SR04 Tri"
+#define D_SENSOR_SR04_ECHO "SR04 Ech"
 //stb mod
-#define D_SENSOR_SR04_TRIG "SR04 Trigger"
-#define D_SENSOR_SR04_ECHO "SR04 Echo"
 #define D_SENSOR_DEEPSLEEP "DeepSleep Switch"
 // end
 
 // Units
 #define D_UNIT_AMPERE "A"
-#define D_UNIT_HOUR "Hod"
+#define D_UNIT_CENTIMETER "cm"
+#define D_UNIT_HOUR "hod"
 #define D_UNIT_KILOOHM "kOhm"
 #define D_UNIT_KILOWATTHOUR "kWh"
 #define D_UNIT_LUX "lx"
@@ -431,7 +469,8 @@
 #define D_UNIT_MICROSECOND "us"
 #define D_UNIT_MILLIAMPERE "mA"
 #define D_UNIT_MILLISECOND "ms"
-#define D_UNIT_MINUTE "Min"
+#define D_UNIT_MINUTE "min"
+#define D_UNIT_PARTS_PER_BILLION "ppb"
 #define D_UNIT_PARTS_PER_DECILITER "ppd"
 #define D_UNIT_PARTS_PER_MILLION "ppm"
 #define D_UNIT_PRESSURE "hPa"

@@ -188,7 +188,7 @@ void Ds18x20Show(boolean json)
           mqtt_data, stemp, i +1, ds18x20_types, Ds18x20Addresses(i).c_str(), temperature);
         strcpy(stemp, ",");
 #ifdef USE_DOMOTICZ
-        if (1 == dsxflg) {
+        if ((0 == tele_period) && (1 == dsxflg)) {
           DomoticzSensor(DZ_TEMP, temperature);
         }
 #endif  // USE_DOMOTICZ
@@ -204,12 +204,9 @@ void Ds18x20Show(boolean json)
     if (dsxflg) {
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}"), mqtt_data);
     }
-#ifdef USE_WEBSERVER
-  } else {
-    Ds18x20Search();      // Check for changes in sensors number
-    Ds18x20Convert();     // Start Conversion, takes up to one second
-#endif  // USE_WEBSERVER
   }
+  Ds18x20Search();      // Check for changes in sensors number
+  Ds18x20Convert();     // Start Conversion, takes up to one second
 }
 
 /*********************************************************************************************\

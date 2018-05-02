@@ -28,6 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
+ * Updated until v5.12.0b
 \*********************************************************************/
 
 //#define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -74,9 +75,11 @@
 #define D_DARKLIGHT "Темный"
 #define D_DEBUG "Отладка"
 #define D_DISABLED "Блокирован"
+#define D_DISTANCE "Distance"
 #define D_DNS_SERVER "DNS Сервер"
 #define D_DONE "Выполнено"
 #define D_DST_TIME "DST"
+#define D_ECO2 "eCO2"
 #define D_EMULATION "Эмуляция"
 #define D_ENABLED "Активно"
 #define D_ERASE "Стирать"
@@ -127,6 +130,7 @@
 #define D_RESTART_REASON "Причина перезагрузки"
 #define D_RESTORE "восстановление"
 #define D_RETAINED "нераспред."
+#define D_RULE "Rule"
 #define D_SAVE "Сохранить"
 #define D_SENSOR "Датчик"
 #define D_SSID "SSId"
@@ -136,12 +140,15 @@
 #define D_SUBNET_MASK "Маска Подсети"
 #define D_SUBSCRIBE_TO "Подписаться на"
 #define D_SUCCESSFUL "Успешно"
+#define D_SUNRISE "Sunrise"
+#define D_SUNSET "Sunset"
 #define D_TEMPERATURE "Температура"
 #define D_TO "до"
 #define D_TOGGLE "Переключить"
 #define D_TOPIC "Топик"
 #define D_TRANSMIT "Передать"
 #define D_TRUE "Истина"
+#define D_TVOC "TVOC"
 #define D_UPGRADE "обновление"
 #define D_UPLOAD "Загрузить"
 #define D_UPTIME "Uptime"
@@ -366,6 +373,36 @@
   #define D_DOMOTICZ_AIRQUALITY "AirQuality"
 #define D_DOMOTICZ_UPDATE_TIMER "Update timer"
 
+// xdrv_09_timers.ino
+#define D_CONFIGURE_TIMER "Configure Timer"
+#define D_TIMER_PARAMETERS "Timer parameters"
+#define D_TIMER_ARM "Arm"
+#define D_TIMER_TIME "Time"
+#define D_TIMER_DAYS "Days"
+#define D_TIMER_REPEAT "Repeat"
+#define D_TIMER_OUTPUT "Output"
+#define D_TIMER_ACTION "Action"
+
+// xdrv_10_knx.ino
+#define D_CONFIGURE_KNX "Configure KNX"
+#define D_KNX_PARAMETERS "KNX Parameters"
+#define D_KNX_GENERAL_CONFIG "General"
+#define D_KNX_PHYSICAL_ADDRESS "Physical Address"
+#define D_KNX_PHYSICAL_ADDRESS_NOTE "( Must be unique on the KNX network )"
+#define D_KNX_ENABLE "Enable KNX"
+#define D_KNX_GROUP_ADDRESS_TO_WRITE "Data to Send to Group Addresses"
+#define D_ADD "Add"
+#define D_DELETE "Delete"
+#define D_REPLY "Reply"
+#define D_KNX_GROUP_ADDRESS_TO_READ "Group Addresses to Receive Data from"
+#define D_LOG_KNX "KNX: "
+#define D_RECEIVED_FROM "Received from"
+#define D_KNX_COMMAND_WRITE "Write"
+#define D_KNX_COMMAND_READ "Read"
+#define D_KNX_COMMAND_OTHER "Other"
+#define D_SENT_TO "sent to"
+#define D_KNX_WARNING "The group address ( 0 / 0 / 0 ) is reserved and can not be used."
+
 // xdrv_03_energy.ino
 #define D_ENERGY_TODAY "Энергия Сегодня"
 #define D_ENERGY_YESTERDAY "Энергия Вчера"
@@ -422,14 +459,15 @@
 #define D_SENSOR_SDS0X1   "SDS0X1"
 #define D_SENSOR_SBR_RX   "SerBr Rx"
 #define D_SENSOR_SBR_TX   "SerBr Tx"
+#define D_SENSOR_SR04_TRIG "SR04 Tri"
+#define D_SENSOR_SR04_ECHO "SR04 Ech"
 //stb mod
-#define D_SENSOR_SR04_TRIG "SR04 Trigger"
-#define D_SENSOR_SR04_ECHO "SR04 Echo"
 #define D_SENSOR_DEEPSLEEP "DeepSleep Switch"
 // end
 
 // Units
 #define D_UNIT_AMPERE "А"
+#define D_UNIT_CENTIMETER "cm"
 #define D_UNIT_HOUR "Ч"
 #define D_UNIT_KILOOHM "кОм"
 #define D_UNIT_KILOWATTHOUR "кВт"
@@ -440,6 +478,7 @@
 #define D_UNIT_MILLIAMPERE "мА"
 #define D_UNIT_MILLISECOND "мс"
 #define D_UNIT_MINUTE "мин"
+#define D_UNIT_PARTS_PER_BILLION "ppb"
 #define D_UNIT_PARTS_PER_DECILITER "ppd"
 #define D_UNIT_PARTS_PER_MILLION "ppm"
 #define D_UNIT_PRESSURE "гПа"
