@@ -51,7 +51,7 @@
 
 // Common
 #define D_ADMIN "Admin"
-#define D_AIR_QUALITY "Qualita' dell'aria"
+#define D_AIR_QUALITY "Qualità dell'aria"
 #define D_AP "AP"                    // Access Point
 #define D_AS "come"
 #define D_AUTO "AUTO"
@@ -96,7 +96,7 @@
 #define D_GROUP "Gruppo"
 #define D_HOST "Host"
 #define D_HOSTNAME "Nome Host"
-#define D_HUMIDITY "Umidita'"
+#define D_HUMIDITY "Umidità"
 #define D_ILLUMINANCE "Illuminazione"
 #define D_IMMEDIATE "immediato"      // Button immediate
 #define D_INDEX "Indice"
@@ -180,7 +180,7 @@
 #define D_FAILED_TO_START "partenza fallita"
 #define D_PATCH_ISSUE_2186 "Patch issue 2186"
 #define D_CONNECTING_TO_AP "Connessione ad AP"
-#define D_IN_MODE "in modalita'"
+#define D_IN_MODE "in modalità"
 #define D_CONNECT_FAILED_NO_IP_ADDRESS "Connessione fallita, indirizzo IP non ricevuto"
 #define D_CONNECT_FAILED_AP_NOT_REACHED "Connessione fallita, AP non raggiungibile"
 #define D_CONNECT_FAILED_WRONG_PASSWORD "Connessione fallita, password AP non corretta"
@@ -211,7 +211,7 @@
 
 #define D_RESTART_IN "Riavvio in"
 #define D_SECONDS "secondi"
-#define D_DEVICE_WILL_RESTART "Il dispositivo verra' riavviato tra pochi secondi"
+#define D_DEVICE_WILL_RESTART "Il dispositivo verrà riavviato tra pochi secondi"
 #define D_BUTTON_TOGGLE "On/Off"
 #define D_CONFIGURATION "Configurazione"
 #define D_INFORMATION "Informazioni"
@@ -229,7 +229,7 @@
 #define D_RESET_CONFIGURATION "Reset Configurazione"
 #define D_BACKUP_CONFIGURATION "Backup Configurazione"
 #define D_RESTORE_CONFIGURATION "Ripristino Configurazione"
-#define D_MAIN_MENU "Menu' Principale"
+#define D_MAIN_MENU "Menu Principale"
 
 #define D_MODULE_PARAMETERS "Parametri del modulo"
 #define D_MODULE_TYPE "Tipo modulo"
@@ -243,7 +243,7 @@
 #define D_NO_NETWORKS_FOUND "Nessuna rete trovata"
 #define D_REFRESH_TO_SCAN_AGAIN "Ricarica per nuova scansione"
 #define D_DUPLICATE_ACCESSPOINT "AccessPoint duplicato"
-#define D_SKIPPING_LOW_QUALITY "Ignorato a causa di bassa qualita'"
+#define D_SKIPPING_LOW_QUALITY "Ignorato a causa di bassa qualità"
 #define D_RSSI "RSSI"
 #define D_WEP "WEP"
 #define D_WPA_PSK "WPA PSK"
@@ -317,7 +317,7 @@
 #define D_UPLOAD_ERROR_CODE "Codice errore invio"
 
 #define D_ENTER_COMMAND "Inserire comando"
-#define D_ENABLE_WEBLOG_FOR_RESPONSE "Abilitare weblog 2 se e' attesa una risposta"
+#define D_ENABLE_WEBLOG_FOR_RESPONSE "Abilitare weblog 2 se è attesa una risposta"
 #define D_NEED_USER_AND_PASSWORD "Richiesto user=<username>&password=<password>"
 
 // xdrv_00_mqtt.ino
