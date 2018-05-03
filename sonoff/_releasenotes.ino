@@ -1,5 +1,6 @@
 /* 5.13.1a
  * Change user_config.h otaurl to http://sonoff.maddox.co.uk/tasmota/sonoff.bin (#2588, #2602)
+ * Fix compile error when ADC is enabled and Rules are disabled (#2608)
  *
  * 5.13.1 20180501
  * Fix JSON buffers size too small for execution in some situations (#2580)
