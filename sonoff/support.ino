@@ -1400,6 +1400,7 @@ uint16_t AdcRead()
   return analog;
 }
 
+#ifdef USE_RULES
 void AdcEvery50ms()
 {
   adc_counter++;
@@ -1413,6 +1414,7 @@ void AdcEvery50ms()
     }
   }
 }
+#endif  // USE_RULES
 
 void AdcShow(boolean json)
 {
@@ -1439,9 +1441,11 @@ boolean Xsns02(byte function)
 
   if (pin[GPIO_ADC0] < 99) {
     switch (function) {
+#ifdef USE_RULES
       case FUNC_EVERY_50_MSECOND:
         AdcEvery50ms();
         break;
+#endif  // USE_RULES
       case FUNC_JSON_APPEND:
         AdcShow(1);
         break;
