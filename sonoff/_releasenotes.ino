@@ -1,4 +1,7 @@
-/* 5.13.0a
+/* 5.13.1a
+ * Change user_config.h otaurl to http://sonoff.maddox.co.uk/tasmota/sonoff.bin (#2588, #2602)
+ *
+ * 5.13.1 20180501
  * Fix JSON buffers size too small for execution in some situations (#2580)
  * Add define MODULE for user selecting default model although it preferably should not be changed (#569, #2589)
  * Fix configuration restore (#2591)
