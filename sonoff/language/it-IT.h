@@ -1,7 +1,7 @@
 /*
   it-IT.h - localization for Italian - Italy for Sonoff-Tasmota
 
-  Copyright (C) 2018 Gennaro Tortone
+  Copyright (C) 2018 Gennaro Tortone - some mods by Antonio Fragola
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v5.12.0
+ * Updated until v5.13.0
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -366,34 +366,34 @@
 #define D_DOMOTICZ_UPDATE_TIMER "Intervallo di aggiornamento"
 
 // xdrv_09_timers.ino
-#define D_CONFIGURE_TIMER "Configure Timer"
-#define D_TIMER_PARAMETERS "Timer parameters"
-#define D_TIMER_ARM "Arm"
-#define D_TIMER_TIME "Time"
-#define D_TIMER_DAYS "Days"
-#define D_TIMER_REPEAT "Repeat"
+#define D_CONFIGURE_TIMER "Configura Timer"
+#define D_TIMER_PARAMETERS "Parametri Timer"
+#define D_TIMER_ARM "Attiva"
+#define D_TIMER_TIME "Ora"
+#define D_TIMER_DAYS "Giorni"
+#define D_TIMER_REPEAT "Ripeti"
 #define D_TIMER_OUTPUT "Output"
-#define D_TIMER_ACTION "Action"
+#define D_TIMER_ACTION "Azione"
 
 // xdrv_10_knx.ino
-#define D_CONFIGURE_KNX "Configure KNX"
-#define D_KNX_PARAMETERS "KNX Parameters"
-#define D_KNX_GENERAL_CONFIG "General"
-#define D_KNX_PHYSICAL_ADDRESS "Physical Address"
-#define D_KNX_PHYSICAL_ADDRESS_NOTE "( Must be unique on the KNX network )"
-#define D_KNX_ENABLE "Enable KNX"
-#define D_KNX_GROUP_ADDRESS_TO_WRITE "Data to Send to Group Addresses"
-#define D_ADD "Add"
-#define D_DELETE "Delete"
-#define D_REPLY "Reply"
-#define D_KNX_GROUP_ADDRESS_TO_READ "Group Addresses to Receive Data from"
+#define D_CONFIGURE_KNX "Configura KNX"
+#define D_KNX_PARAMETERS "Parametri KNX"
+#define D_KNX_GENERAL_CONFIG "Generale"
+#define D_KNX_PHYSICAL_ADDRESS "Indirizzo Fisico"
+#define D_KNX_PHYSICAL_ADDRESS_NOTE "( Deve essere univoco nella rete KNX )"
+#define D_KNX_ENABLE "Abilita KNX"
+#define D_KNX_GROUP_ADDRESS_TO_WRITE "Dati da Inviare al Gruppo di Indirizzi"
+#define D_ADD "Aggiungi"
+#define D_DELETE "Elimina"
+#define D_REPLY "Rispondi"
+#define D_KNX_GROUP_ADDRESS_TO_READ "Gruppo di Indirizzi da cui Ricevere Dati"
 #define D_LOG_KNX "KNX: "
-#define D_RECEIVED_FROM "Received from"
-#define D_KNX_COMMAND_WRITE "Write"
-#define D_KNX_COMMAND_READ "Read"
-#define D_KNX_COMMAND_OTHER "Other"
-#define D_SENT_TO "sent to"
-#define D_KNX_WARNING "The group address ( 0 / 0 / 0 ) is reserved and can not be used."
+#define D_RECEIVED_FROM "Ricevuto Da"
+#define D_KNX_COMMAND_WRITE "Scrivi"
+#define D_KNX_COMMAND_READ "Leggi"
+#define D_KNX_COMMAND_OTHER "Altro"
+#define D_SENT_TO "invia a"
+#define D_KNX_WARNING "L'indirizzo del gruppo ( 0 / 0 / 0 ) è riservato e non può essere usato."
 
 // xdrv_03_energy.ino
 #define D_ENERGY_TODAY "Energia Oggi"
@@ -422,7 +422,7 @@
 #define D_PARTICALS_BEYOND "Particelle"
 
 // sonoff_template.h
-#define D_SENSOR_NONE     "None"
+#define D_SENSOR_NONE     "Nessuno"
 #define D_SENSOR_DHT11    "DHT11"
 #define D_SENSOR_AM2301   "AM2301"
 #define D_SENSOR_SI7021   "SI7021"
