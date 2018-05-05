@@ -2,6 +2,7 @@
  * Change user_config.h otaurl to http://sonoff.maddox.co.uk/tasmota/sonoff.bin (#2588, #2602)
  * Fix compile error when ADC is enabled and Rules are disabled (#2608)
  * Fix several timer data input and output errors (#2597, #2620)
+ * Fix KNX config error (#2628)
  * Add Portuguese in Brazil language file
  * Updated Italian language file (#2618)
  *
