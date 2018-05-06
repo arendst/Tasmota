@@ -1407,7 +1407,7 @@ void HandlePreflightRequest()
 void HandleHttpCommand()
 {
   if (HttpUser()) { return; }
-  char svalue[INPUT_BUFFER_SIZE];  // big to serve Backlog
+  char svalue[INPUT_BUFFER_SIZE];  // Large to serve Backlog
 
   AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_COMMAND));
 
@@ -1477,7 +1477,7 @@ void HandleConsole()
 void HandleAjaxConsoleRefresh()
 {
   if (HttpUser()) { return; }
-  char svalue[INPUT_BUFFER_SIZE];  // big to serve Backlog
+  char svalue[INPUT_BUFFER_SIZE];  // Large to serve Backlog
   byte cflg = 1;
   byte counter = 0;                // Initial start, should never be 0 again
 

@@ -447,6 +447,29 @@ int GetCommandCode(char* destination, size_t destination_size, const char* needl
   return result;
 }
 
+int GetStateNumber(char *state_text)
+{
+  char command[CMDSZ];
+  int state_number = -1;
+
+  if ((GetCommandCode(command, sizeof(command), state_text, kOptionOff) >= 0) || !strcasecmp(state_text, Settings.state_text[0])) {
+    state_number = 0;
+  }
+  else if ((GetCommandCode(command, sizeof(command), state_text, kOptionOn) >= 0) || !strcasecmp(state_text, Settings.state_text[1])) {
+    state_number = 1;
+  }
+  else if ((GetCommandCode(command, sizeof(command), state_text, kOptionToggle) >= 0) || !strcasecmp(state_text, Settings.state_text[2])) {
+    state_number = 2;
+  }
+  else if (GetCommandCode(command, sizeof(command), state_text, kOptionBlink) >= 0) {
+    state_number = 3;
+  }
+  else if (GetCommandCode(command, sizeof(command), state_text, kOptionBlinkOff) >= 0) {
+    state_number = 4;
+  }
+  return state_number;
+}
+
 void SetSerialBaudrate(int baudrate)
 {
   Settings.baudrate = baudrate / 1200;

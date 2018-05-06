@@ -1,8 +1,11 @@
 /* 5.13.1a
  * Change user_config.h otaurl to http://sonoff.maddox.co.uk/tasmota/sonoff.bin (#2588, #2602)
  * Fix compile error when ADC is enabled and Rules are disabled (#2608)
+ * Fix rule power trigger when no backlog command is used (#2613)
  * Fix several timer data input and output errors (#2597, #2620)
+ * Fix KNX config error (#2628)
  * Add Portuguese in Brazil language file
+ * Add rule state test for On/Off in addition to 0/1 (#2613)
  * Updated Italian language file (#2618)
  *
  * 5.13.1 20180501
