@@ -1,5 +1,6 @@
 /* 5.13.1a
  * Change user_config.h otaurl to http://sonoff.maddox.co.uk/tasmota/sonoff.bin (#2588, #2602)
+ * Fix configuration restore regression from 5.13.1
  * Fix compile error when ADC is enabled and Rules are disabled (#2608)
  * Fix rule power trigger when no backlog command is used (#2613)
  * Fix several timer data input and output errors (#2597, #2620)
