@@ -1,10 +1,10 @@
 {
     "name": "TasmotaSerial",
-    "version": "1.0.0",
+    "version": "1.2.0",
     "keywords": [
       "serial", "io", "TasmotaSerial"
     ],
-    "description": "Implementation of software serial for ESP8266 at 9600 baud.",
+    "description": "Implementation of software serial for ESP8266.",
     "repository":
     {
         "type": "git",

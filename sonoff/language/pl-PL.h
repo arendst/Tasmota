@@ -28,9 +28,13 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
+ * Updated until v5.12.0d
 \*********************************************************************/
 
 //#define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
+
+// HTML (ISO 639-1) Language Code
+#define D_HTML_LANGUAGE "pl"
 
 // "2017-03-07T11:08:02" - ISO8601:2004
 #define D_YEAR_MONTH_SEPARATOR "-"
@@ -71,9 +75,11 @@
 #define D_DARKLIGHT "Ciemny"
 #define D_DEBUG "Debug"
 #define D_DISABLED "Zablokowany"
+#define D_DISTANCE "Distance"
 #define D_DNS_SERVER "Server DNS"
 #define D_DONE "Wykonane"
 #define D_DST_TIME "DST"
+#define D_ECO2 "eCO2"
 #define D_EMULATION "Emulacja"
 #define D_ENABLED "Otwarty"
 #define D_ERASE "Nadpisz"
@@ -124,6 +130,7 @@
 #define D_RESTART_REASON "Przyczyna restartu"
 #define D_RESTORE "Przywracanie"
 #define D_RETAINED "Zachowane"
+#define D_RULE "Rule"
 #define D_SAVE "Zapisz"
 #define D_SENSOR "Czujnik"
 #define D_SSID "SSID"
@@ -133,12 +140,15 @@
 #define D_SUBNET_MASK "Maska podsieci"
 #define D_SUBSCRIBE_TO "Subskrybuj do"
 #define D_SUCCESSFUL "Powodzenie"
+#define D_SUNRISE "Sunrise"
+#define D_SUNSET "Sunset"
 #define D_TEMPERATURE "Temperatura"
 #define D_TO "do"
 #define D_TOGGLE "Przełącz"
 #define D_TOPIC "Temat"
 #define D_TRANSMIT "Wyślij"
 #define D_TRUE "Prawda"
+#define D_TVOC "TVOC"
 #define D_UPGRADE "aktualizacji"
 #define D_UPLOAD "Wgraj"
 #define D_UPTIME "Uptime"
@@ -161,13 +171,6 @@
 #define D_RECEIVED_TOPIC "Otrzymany temat"
 #define D_DATA_SIZE "Wielkość danych"
 #define D_ANALOG_INPUT "Wej_analogowe"
-
-#define D_FINGERPRINT "Weryfikuj odcisk TLS..."
-#define D_TLS_CONNECT_FAILED_TO "Nieudane połączenie TLS do"
-#define D_RETRY_IN "Spróbuj ponownie"
-#define D_VERIFIED "Zweryfikowano"
-#define D_INSECURE "Nieprawidłowe połączenie z powodu błędnego odcisku TLS"
-#define D_CONNECT_FAILED_TO "Nie udało się nawiązać połączenia"
 
 // support.ino
 #define D_OSWATCH "osWatch"
@@ -317,6 +320,14 @@
 #define D_ENABLE_WEBLOG_FOR_RESPONSE "Włącz poziom 2 zapisu Weblog, jeśli oczekiwana jest odpowiedź"
 #define D_NEED_USER_AND_PASSWORD "Wymagany użytkownik=<username>&hasło=<password>"
 
+// xdrv_00_mqtt.ino
+#define D_FINGERPRINT "Weryfikuj odcisk TLS..."
+#define D_TLS_CONNECT_FAILED_TO "Nieudane połączenie TLS do"
+#define D_RETRY_IN "Spróbuj ponownie"
+#define D_VERIFIED "Zweryfikowano odcisku"
+#define D_INSECURE "Nieprawidłowe połączenie z powodu błędnego odcisku TLS"
+#define D_CONNECT_FAILED_TO "Nie udało się nawiązać połączenia"
+
 // xdrv_wemohue.ino
 #define D_MULTICAST_DISABLED "Multicast jest wyłączony"
 #define D_MULTICAST_REJOINED "Multicast (re)dołączony"
@@ -348,11 +359,41 @@
   #define D_DOMOTICZ_TEMP_HUM_BARO "Temp,Wilg,Cis"
   #define D_DOMOTICZ_POWER_ENERGY "Moc,Energia"
   #define D_DOMOTICZ_ILLUMINANCE "Oświetl."
-  #define D_DOMOTICZ_COUNT "Licznik"
-  #define D_DOMOTICZ_VOLTAGE "Napięcie"
-  #define D_DOMOTICZ_CURRENT "Prąd"
+  #define D_DOMOTICZ_COUNT "Licznik/PM1"
+  #define D_DOMOTICZ_VOLTAGE "Napięcie/PM2,5"
+  #define D_DOMOTICZ_CURRENT "Prąd/PM10"
   #define D_DOMOTICZ_AIRQUALITY "AirQuality"
 #define D_DOMOTICZ_UPDATE_TIMER "Zaktualizuj czasomierz"
+
+// xdrv_09_timers.ino
+#define D_CONFIGURE_TIMER "Configure Timer"
+#define D_TIMER_PARAMETERS "Timer parameters"
+#define D_TIMER_ARM "Arm"
+#define D_TIMER_TIME "Time"
+#define D_TIMER_DAYS "Days"
+#define D_TIMER_REPEAT "Repeat"
+#define D_TIMER_OUTPUT "Output"
+#define D_TIMER_ACTION "Action"
+
+// xdrv_10_knx.ino
+#define D_CONFIGURE_KNX "Configure KNX"
+#define D_KNX_PARAMETERS "KNX Parameters"
+#define D_KNX_GENERAL_CONFIG "General"
+#define D_KNX_PHYSICAL_ADDRESS "Physical Address"
+#define D_KNX_PHYSICAL_ADDRESS_NOTE "( Must be unique on the KNX network )"
+#define D_KNX_ENABLE "Enable KNX"
+#define D_KNX_GROUP_ADDRESS_TO_WRITE "Data to Send to Group Addresses"
+#define D_ADD "Add"
+#define D_DELETE "Delete"
+#define D_REPLY "Reply"
+#define D_KNX_GROUP_ADDRESS_TO_READ "Group Addresses to Receive Data from"
+#define D_LOG_KNX "KNX: "
+#define D_RECEIVED_FROM "Received from"
+#define D_KNX_COMMAND_WRITE "Write"
+#define D_KNX_COMMAND_READ "Read"
+#define D_KNX_COMMAND_OTHER "Other"
+#define D_SENT_TO "sent to"
+#define D_KNX_WARNING "The group address ( 0 / 0 / 0 ) is reserved and can not be used."
 
 // xdrv_03_energy.ino
 #define D_ENERGY_TODAY "Energia Dzisiaj"
@@ -407,9 +448,15 @@
 #define D_SENSOR_SPI_DC   "SPI DC"
 #define D_SENSOR_BACKLIGHT "BkLight"
 #define D_SENSOR_PMS5003  "PMS5003"
+#define D_SENSOR_SDS0X1   "SDS0X1"
+#define D_SENSOR_SBR_RX   "SerBr Rx"
+#define D_SENSOR_SBR_TX   "SerBr Tx"
+#define D_SENSOR_SR04_TRIG "SR04 Tri"
+#define D_SENSOR_SR04_ECHO "SR04 Ech"
 
 // Units
 #define D_UNIT_AMPERE "A"
+#define D_UNIT_CENTIMETER "cm"
 #define D_UNIT_HOUR "Godz"
 #define D_UNIT_KILOOHM "kOhm"
 #define D_UNIT_KILOWATTHOUR "kWh"
@@ -420,6 +467,7 @@
 #define D_UNIT_MILLIAMPERE "mA"
 #define D_UNIT_MILLISECOND "ms"
 #define D_UNIT_MINUTE "Min"
+#define D_UNIT_PARTS_PER_BILLION "ppb"
 #define D_UNIT_PARTS_PER_DECILITER "ppd"
 #define D_UNIT_PARTS_PER_MILLION "ppm"
 #define D_UNIT_PRESSURE "hPa"

@@ -54,6 +54,13 @@
 #define HOME_ASSISTANT_DISCOVERY_ENABLE 0
 #endif
 
+#ifndef LATITUDE
+#define LATITUDE               48.858360         // [Latitude] Your location to be used with sunrise and sunset
+#endif
+#ifndef LONGITUDE
+#define LONGITUDE              2.294442          // [Longitude] Your location to be used with sunrise and sunset
+#endif
+
 /*********************************************************************************************\
  * RTC memory
 \*********************************************************************************************/
@@ -111,41 +118,6 @@ boolean RtcSettingsValid()
 {
   return (RTC_MEM_VALID == RtcSettings.valid);
 }
-
-#ifdef DEBUG_THEO
-void RtcSettingsDump()
-{
-  #define CFG_COLS 16
-
-  uint16_t idx;
-  uint16_t maxrow;
-  uint16_t row;
-  uint16_t col;
-
-  uint8_t *buffer = (uint8_t *) &RtcSettings;
-  maxrow = ((sizeof(RTCMEM)+CFG_COLS)/CFG_COLS);
-
-  for (row = 0; row < maxrow; row++) {
-    idx = row * CFG_COLS;
-    snprintf_P(log_data, sizeof(log_data), PSTR("%03X:"), idx);
-    for (col = 0; col < CFG_COLS; col++) {
-      if (!(col%4)) {
-        snprintf_P(log_data, sizeof(log_data), PSTR("%s "), log_data);
-      }
-      snprintf_P(log_data, sizeof(log_data), PSTR("%s %02X"), log_data, buffer[idx + col]);
-    }
-    snprintf_P(log_data, sizeof(log_data), PSTR("%s |"), log_data);
-    for (col = 0; col < CFG_COLS; col++) {
-//      if (!(col%4)) {
-//        snprintf_P(log_data, sizeof(log_data), PSTR("%s "), log_data);
-//      }
-      snprintf_P(log_data, sizeof(log_data), PSTR("%s%c"), log_data, ((buffer[idx + col] > 0x20) && (buffer[idx + col] < 0x7F)) ? (char)buffer[idx + col] : ' ');
-    }
-    snprintf_P(log_data, sizeof(log_data), PSTR("%s|"), log_data);
-    AddLog(LOG_LEVEL_INFO);
-  }
-}
-#endif  // DEBUG_THEO
 
 /*********************************************************************************************\
  * Config - Flash
@@ -367,57 +339,6 @@ void SettingsSdkErase()
   delay(1000);
 }
 
-void SettingsDump(char* parms)
-{
-  #define CFG_COLS 16
-
-  uint16_t idx;
-  uint16_t maxrow;
-  uint16_t row;
-  uint16_t col;
-  char *p;
-
-  uint8_t *buffer = (uint8_t *) &Settings;
-  maxrow = ((sizeof(SYSCFG)+CFG_COLS)/CFG_COLS);
-
-  uint16_t srow = strtol(parms, &p, 16) / CFG_COLS;
-  uint16_t mrow = strtol(p, &p, 10);
-
-//  snprintf_P(log_data, sizeof(log_data), PSTR("Cnfg: Parms %s, Start row %d, rows %d"), parms, srow, mrow);
-//  AddLog(LOG_LEVEL_DEBUG);
-
-  if (0 == mrow) {  // Default only 8 lines
-    mrow = 8;
-  }
-  if (srow > maxrow) {
-    srow = maxrow - mrow;
-  }
-  if (mrow < (maxrow - srow)) {
-    maxrow = srow + mrow;
-  }
-
-  for (row = srow; row < maxrow; row++) {
-    idx = row * CFG_COLS;
-    snprintf_P(log_data, sizeof(log_data), PSTR("%03X:"), idx);
-    for (col = 0; col < CFG_COLS; col++) {
-      if (!(col%4)) {
-        snprintf_P(log_data, sizeof(log_data), PSTR("%s "), log_data);
-      }
-      snprintf_P(log_data, sizeof(log_data), PSTR("%s %02X"), log_data, buffer[idx + col]);
-    }
-    snprintf_P(log_data, sizeof(log_data), PSTR("%s |"), log_data);
-    for (col = 0; col < CFG_COLS; col++) {
-//      if (!(col%4)) {
-//        snprintf_P(log_data, sizeof(log_data), PSTR("%s "), log_data);
-//      }
-      snprintf_P(log_data, sizeof(log_data), PSTR("%s%c"), log_data, ((buffer[idx + col] > 0x20) && (buffer[idx + col] < 0x7F)) ? (char)buffer[idx + col] : ' ');
-    }
-    snprintf_P(log_data, sizeof(log_data), PSTR("%s|"), log_data);
-    AddLog(LOG_LEVEL_INFO);
-    delay(1);
-  }
-}
-
 /********************************************************************************************/
 
 void SettingsDefault()
@@ -450,6 +371,7 @@ void SettingsDefaultSet2()
   Settings.flag.mqtt_power_retain = MQTT_POWER_RETAIN;
   Settings.flag.mqtt_button_retain = MQTT_BUTTON_RETAIN;
   Settings.flag.mqtt_switch_retain = MQTT_SWITCH_RETAIN;
+  Settings.flag.pwm_control = 1;
   Settings.flag.hass_discovery = HOME_ASSISTANT_DISCOVERY_ENABLE;
 
   Settings.flag2.emulation = EMULATION;
@@ -457,6 +379,9 @@ void SettingsDefaultSet2()
   Settings.save_data = SAVE_DATA;
   Settings.timezone = APP_TIMEZONE;
   strlcpy(Settings.ota_url, OTA_URL, sizeof(Settings.ota_url));
+  Settings.baudrate = APP_BAUDRATE / 1200;
+  Settings.sbaudrate = SOFT_BAUDRATE / 1200;
+  Settings.serial_delimiter = 0xff;
 
   Settings.seriallog_level = SERIAL_LOG_LEVEL;
 //  Settings.sta_active = 0;
@@ -472,7 +397,18 @@ void SettingsDefaultSet2()
   Settings.webserver = WEB_SERVER;
   Settings.weblog_level = WEB_LOG_LEVEL;
 
-  strlcpy(Settings.mqtt_fingerprint, MQTT_FINGERPRINT, sizeof(Settings.mqtt_fingerprint));
+  char fingerprint[60];
+  strlcpy(fingerprint, MQTT_FINGERPRINT1, sizeof(fingerprint));
+  char *p = fingerprint;
+  for (byte i = 0; i < 20; i++) {
+    Settings.mqtt_fingerprint[0][i] = strtol(p, &p, 16);
+  }
+  strlcpy(fingerprint, MQTT_FINGERPRINT2, sizeof(fingerprint));
+  p = fingerprint;
+  for (byte i = 0; i < 20; i++) {
+    Settings.mqtt_fingerprint[1][i] = strtol(p, &p, 16);
+  }
+
   strlcpy(Settings.mqtt_host, MQTT_HOST, sizeof(Settings.mqtt_host));
   Settings.mqtt_port = MQTT_PORT;
   strlcpy(Settings.mqtt_client, MQTT_CLIENT_ID, sizeof(Settings.mqtt_client));
@@ -498,6 +434,7 @@ void SettingsDefaultSet2()
 //    Settings.domoticz_switch_idx[i] = 0;
   }
 
+  Settings.energy_power_delta = DEFAULT_POWER_DELTA;
   Settings.energy_power_calibration = HLW_PREF_PULSE;
   Settings.energy_voltage_calibration = HLW_UREF_PULSE;
   Settings.energy_current_calibration = HLW_IREF_PULSE;
@@ -510,14 +447,14 @@ void SettingsDefaultSet2()
 //  Settings.energy_max_voltage = 0;
 //  Settings.energy_min_current = 0;
 //  Settings.energy_max_current = 0;
-//  Settings.energy_max_power_limit = 0;                              // MaxPowerLimit
+//  Settings.energy_max_power_limit = 0;                            // MaxPowerLimit
   Settings.energy_max_power_limit_hold = MAX_POWER_HOLD;
   Settings.energy_max_power_limit_window = MAX_POWER_WINDOW;
-//  Settings.energy_max_power_safe_limit = 0;                             // MaxSafePowerLimit
+//  Settings.energy_max_power_safe_limit = 0;                       // MaxSafePowerLimit
   Settings.energy_max_power_safe_limit_hold = SAFE_POWER_HOLD;
   Settings.energy_max_power_safe_limit_window = SAFE_POWER_WINDOW;
-//  Settings.energy_max_energy = 0;                             // MaxEnergy
-//  Settings.energy_max_energy_start = 0;                            // MaxEnergyStart
+//  Settings.energy_max_energy = 0;                                 // MaxEnergy
+//  Settings.energy_max_energy_start = 0;                           // MaxEnergyStart
 
   SettingsDefaultSet_3_2_4();
 
@@ -568,6 +505,7 @@ void SettingsDefaultSet2()
 
   // 5.8.0
   Settings.light_pixels = WS2812_LEDS;
+//  Settings.light_rotation = 0;
 
   // 5.8.1
 //  Settings.altitude = 0;
@@ -580,13 +518,15 @@ void SettingsDefaultSet2()
 
   // 5.10.1
   SettingsDefaultSet_5_10_1();
+
+  Settings.latitude = (int)((double)LATITUDE * 1000000);
+  Settings.longitude = (int)((double)LONGITUDE * 1000000);
 }
 
 /********************************************************************************************/
 
 void SettingsDefaultSet_3_2_4()
 {
-  Settings.ws_pixels = WS2812_LEDS;
   Settings.ws_red = 255;
   Settings.ws_green = 0;
   Settings.ws_blue = 0;
@@ -614,6 +554,7 @@ void SettingsDefaultSet_3_9_3()
   }
 
   Settings.light_pixels = WS2812_LEDS;
+  Settings.light_rotation = 0;
   for (byte i = 0; i < MAX_PWMS; i++) {
     Settings.light_color[i] = 255;
   }
@@ -727,7 +668,7 @@ void SettingsDelta()
       SettingsDefaultSet_3_2_4();
     }
     if (Settings.version < 0x03020500) {  // 3.2.5 - Add parameter
-      GetMqttClient(Settings.friendlyname[0], Settings.mqtt_client, sizeof(Settings.friendlyname[0]));
+      Format(Settings.friendlyname[0], Settings.mqtt_client, sizeof(Settings.friendlyname[0]));
       strlcpy(Settings.friendlyname[1], FRIENDLY_NAME"2", sizeof(Settings.friendlyname[1]));
       strlcpy(Settings.friendlyname[2], FRIENDLY_NAME"3", sizeof(Settings.friendlyname[2]));
       strlcpy(Settings.friendlyname[3], FRIENDLY_NAME"4", sizeof(Settings.friendlyname[3]));
@@ -824,7 +765,7 @@ void SettingsDelta()
         }
       }
       if (!Settings.light_pixels && cfg_wsflg) {
-        Settings.light_pixels = Settings.ws_pixels;
+        Settings.light_pixels = WS2812_LEDS;
         Settings.light_color[0] = Settings.ws_red;
         Settings.light_color[1] = Settings.ws_green;
         Settings.light_color[2] = Settings.ws_blue;
@@ -875,11 +816,47 @@ void SettingsDelta()
     if (Settings.version < 0x050B0107) {
       Settings.flag.not_power_linked = 0;
     }
-
-
+    if (Settings.version < 0x050C0005) {
+      Settings.light_rotation = 0;
+      Settings.energy_power_delta = DEFAULT_POWER_DELTA;
+      char fingerprint[60];
+      memcpy(fingerprint, Settings.mqtt_fingerprint, sizeof(fingerprint));
+      char *p = fingerprint;
+      for (byte i = 0; i < 20; i++) {
+        Settings.mqtt_fingerprint[0][i] = strtol(p, &p, 16);
+        Settings.mqtt_fingerprint[1][i] = Settings.mqtt_fingerprint[0][i];
+      }
+    }
+    if (Settings.version < 0x050C0007) {
+      Settings.baudrate = APP_BAUDRATE / 1200;
+    }
+    if (Settings.version < 0x050C0008) {
+      Settings.sbaudrate = SOFT_BAUDRATE / 1200;
+      Settings.serial_delimiter = 0xff;
+    }
+//    if (Settings.version < 0x050C0009) {
+//      memset(&Settings.timer, 0x00, sizeof(Timer) * MAX_TIMERS);
+//    }
+    if (Settings.version < 0x050C000A) {
+      Settings.latitude = (int)((double)LATITUDE * 1000000);
+      Settings.longitude = (int)((double)LONGITUDE * 1000000);
+    }
+    if (Settings.version < 0x050C000B) {
+      memset(&Settings.rules, 0x00, sizeof(Settings.rules));
+    }
+    if (Settings.version < 0x050C000D) {
+      memmove(Settings.rules, Settings.rules -256, sizeof(Settings.rules));  // move rules up by 256 bytes
+      memset(&Settings.timer, 0x00, sizeof(Timer) * MAX_TIMERS);  // Reset timers as layout has changed from v5.12.0i
+      Settings.knx_GA_registered = 0;
+      Settings.knx_CB_registered = 0;
+      memset(&Settings.knx_physsical_addr, 0x00, 0x800 - 0x6b8);  // Reset until 0x800 for future use
+    }
+    if (Settings.version < 0x050C000F) {
+        Settings.energy_kWhtoday /= 1000;
+        Settings.energy_kWhyesterday /= 1000;
+        RtcSettings.energy_kWhtoday /= 1000;
+    }
     Settings.version = VERSION;
     SettingsSave(1);
   }
 }
-
-

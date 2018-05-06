@@ -18,31 +18,40 @@
 */
 
 /*********************************************************************************************\
- * Select only ONE of the defines below - Not supported yet
+ * Select ONE of possible MQTT library types below
 \*********************************************************************************************/
-
 // Default MQTT driver for both non-TLS and TLS connections. Blocks network if MQTT server is unavailable.
-#define USE_MQTT_CLIENT        1              // Use PubSubClient library
+//#define MQTT_LIBRARY_TYPE      MQTT_PUBSUBCLIENT   // Use PubSubClient library
+// Alternative MQTT driver does not block network when MQTT server is unavailable. No TLS support
+//#define MQTT_LIBRARY_TYPE      MQTT_TASMOTAMQTT    // Use TasmotaMqtt library (+4k4 code, +4k mem) - non-TLS only
+// Alternative MQTT driver does not block network when MQTT server is unavailable. No TLS support
+//#define MQTT_LIBRARY_TYPE      MQTT_ESPMQTTARDUINO // Use (patched) esp-mqtt-arduino library (+4k8 code, +4k mem) - non-TLS only
 
-// Replaces PubSubClient solving network hangs when MQTT server is unavailable. No TLS support
-//#define USE_MQTT_CLIENT        2              // Use (patched) esp-mqtt-arduino library (+4k8 code) - non-TLS only
-
-// Only TLS support. Unstable due to lack of memory
-//#define USE_MQTT_CLIENT        3              // Use ESP8266MQTTClient library (+52k code, +15k mem) - TLS only and unstable
+#ifdef USE_MQTT_TLS
+#ifdef MQTT_LIBRARY_TYPE
+#undef MQTT_LIBRARY_TYPE
+#endif
+#define MQTT_LIBRARY_TYPE      MQTT_PUBSUBCLIENT   // Use PubSubClient library as it only supports TLS
+#else
+#ifndef MQTT_LIBRARY_TYPE
+#define MQTT_LIBRARY_TYPE      MQTT_PUBSUBCLIENT   // Use PubSubClient library as default
+#endif
+#endif
 
 /*********************************************************************************************/
 
 enum MqttCommands {
   CMND_MQTTHOST, CMND_MQTTPORT, CMND_MQTTRETRY, CMND_STATETEXT, CMND_MQTTFINGERPRINT, CMND_MQTTCLIENT,
-  CMND_MQTTUSER, CMND_MQTTPASSWORD, CMND_FULLTOPIC, CMND_PREFIX, CMND_GROUPTOPIC, CMND_TOPIC,
+  CMND_MQTTUSER, CMND_MQTTPASSWORD, CMND_FULLTOPIC, CMND_PREFIX, CMND_GROUPTOPIC, CMND_TOPIC, CMND_PUBLISH,
   CMND_BUTTONTOPIC, CMND_SWITCHTOPIC, CMND_BUTTONRETAIN, CMND_SWITCHRETAIN, CMND_POWERRETAIN, CMND_SENSORRETAIN };
 const char kMqttCommands[] PROGMEM =
   D_CMND_MQTTHOST "|" D_CMND_MQTTPORT "|" D_CMND_MQTTRETRY "|" D_CMND_STATETEXT "|" D_CMND_MQTTFINGERPRINT "|" D_CMND_MQTTCLIENT "|"
-  D_CMND_MQTTUSER "|" D_CMND_MQTTPASSWORD "|" D_CMND_FULLTOPIC "|" D_CMND_PREFIX "|" D_CMND_GROUPTOPIC "|" D_CMND_TOPIC "|"
+  D_CMND_MQTTUSER "|" D_CMND_MQTTPASSWORD "|" D_CMND_FULLTOPIC "|" D_CMND_PREFIX "|" D_CMND_GROUPTOPIC "|" D_CMND_TOPIC "|" D_CMND_PUBLISH "|"
   D_CMND_BUTTONTOPIC "|" D_CMND_SWITCHTOPIC "|" D_CMND_BUTTONRETAIN "|" D_CMND_SWITCHRETAIN "|" D_CMND_POWERRETAIN "|" D_CMND_SENSORRETAIN ;
 
-uint8_t mqtt_retry_counter = 0;             // MQTT connection retry counter
-uint8_t mqtt_connection_flag = 2;           // MQTT connection messages flag
+uint8_t mqtt_retry_counter = 1;             // MQTT connection retry counter
+uint8_t mqtt_initial_connection_state = 2;  // MQTT connection messages state
+bool mqtt_connected = false;                // MQTT virtual connection status
 
 /*********************************************************************************************\
  * MQTT driver specific code need to provide the following functions:
@@ -51,11 +60,10 @@ uint8_t mqtt_connection_flag = 2;           // MQTT connection messages flag
  * void MqttDisconnect()
  * void MqttSubscribeLib(char *topic)
  * bool MqttPublishLib(const char* topic, boolean retained)
- * void MqttCheckConnection()
  * void MqttLoop()
 \*********************************************************************************************/
 
-#if (1 == USE_MQTT_CLIENT)  /*****************************************************************/
+#if (MQTT_LIBRARY_TYPE == MQTT_PUBSUBCLIENT)  /***********************************************/
 
 #include <PubSubClient.h>
 
@@ -87,38 +95,53 @@ bool MqttPublishLib(const char* topic, boolean retained)
   return MqttClient.publish(topic, mqtt_data, retained);
 }
 
-void MqttCheckConnection()
-{
-  if (Settings.flag.mqtt_enabled) {
-    if (!MqttIsConnected()) {
-      if (!mqtt_retry_counter) {
-        MqttReconnect();
-      } else {
-        mqtt_retry_counter--;
-      }
-    }
-  } else {
-    if (!mqtt_retry_counter) {
-      MqttReconnect();
-    }
-  }
-}
-
 void MqttLoop()
 {
   MqttClient.loop();
 }
 
-#elif (2 == USE_MQTT_CLIENT)  /***************************************************************/
+#elif (MQTT_LIBRARY_TYPE == MQTT_TASMOTAMQTT)  /**********************************************/
+
+#include <TasmotaMqtt.h>
+TasmotaMqtt MqttClient;
+
+bool MqttIsConnected()
+{
+  return mqtt_connected;
+}
+
+void MqttDisconnect()
+{
+  MqttClient.Disconnect();
+}
+
+void MqttDisconnectedCb()
+{
+  MqttDisconnected(MqttClient.State());  // status codes are documented in file mqtt.h as tConnState
+}
+
+void MqttSubscribeLib(char *topic)
+{
+  MqttClient.Subscribe(topic, 0);
+}
+
+bool MqttPublishLib(const char* topic, boolean retained)
+{
+  return MqttClient.Publish(topic, mqtt_data, strlen(mqtt_data), 0, retained);
+}
+
+void MqttLoop()
+{
+}
+
+#elif (MQTT_LIBRARY_TYPE == MQTT_ESPMQTTARDUINO)  /*******************************************/
 
 #include <MQTT.h>
 MQTT *MqttClient = NULL;
 
 bool MqttIsConnected()
 {
-  bool result = false;
-  if (MqttClient) result = (MqttClient->isConnected() && !mqtt_retry_counter);
-  return result;
+  return mqtt_connected;
 }
 
 void MqttDisconnect()
@@ -126,17 +149,19 @@ void MqttDisconnect()
   if (MqttClient) MqttClient->disconnect();
 }
 
-void MqttMyDataCb(const char* topic, uint32_t topic_len, const char *data, uint32_t data_len)
+void MqttDisconnectedCb()
 {
-	char topicCpy[topic_len];
-	memcpy(topicCpy, topic, topic_len);
-	topicCpy[topic_len] = 0;
-  MqttDataHandler((char*)topicCpy, (byte*)data, data_len);
+  MqttDisconnected(MqttClient->getState());  // status codes are documented in file mqtt.h as tConnState
 }
 
-void MqttMyNoneCb()
+void MqttMyDataCb(const char* topic, uint32_t topic_len, const char* data, uint32_t data_len)
 {
-  // Do nothing
+	char topic_copy[topic_len +1];
+
+	memcpy(topic_copy, topic, topic_len);
+	topic_copy[topic_len] = 0;
+  if (0 == data_len) data = (const char*)&topic_copy + topic_len;
+  MqttDataHandler((char*)topic_copy, (byte*)data, data_len);
 }
 
 void MqttSubscribeLib(char *topic)
@@ -149,73 +174,18 @@ bool MqttPublishLib(const char* topic, boolean retained)
   return MqttClient->publish(topic, mqtt_data, strlen(mqtt_data), 0, retained);
 }
 
-void MqttCheckConnection()
-{
-  if (Settings.flag.mqtt_enabled) {
-    if (!MqttIsConnected()) {
-      if (!mqtt_retry_counter) {
-        MqttReconnect();
-      } else {
-        mqtt_retry_counter--;
-      }
-    }
-    MqttReconnect();
-  } else {
-    if (!mqtt_retry_counter) {
-      MqttReconnect();
-    }
-  }
-}
-
 void MqttLoop()
 {
-  // No action
 }
 
-#elif (3 == USE_MQTT_CLIENT)  /***************************************************************/
-
-#include <ESP8266MQTTClient.h>
-MQTTClient MqttClient;
-
-bool MqttIsConnected()
-{
-  return true;
-}
-
-void MqttDisconnect()
-{
-  // No action
-}
-
-void MqttSubscribeLib(char *topic)
-{
-  MqttClient.subscribe(topic, 0);
-}
-
-bool MqttPublishLib(const char* topic, boolean retained)
-{
-  return MqttClient.publish(topic, mqtt_data, 0, retained);
-}
-
-void MqttCheckConnection()
-{
-  if (Settings.flag.mqtt_enabled) {
-    MqttReconnect();
-  } else {
-    if (!mqtt_retry_counter) {
-      MqttReconnect();
-    }
-  }
-}
-
-void MqttLoop()
-{
-  MqttClient.handle();
-}
-
-#endif  // USE_MQTT_CLIENT
+#endif  // MQTT_LIBRARY_TYPE
 
 /*********************************************************************************************/
+
+int MqttLibraryType()
+{
+  return (int)MQTT_LIBRARY_TYPE;
+}
 
 void MqttRetryCounter(uint8_t value)
 {
@@ -238,10 +208,12 @@ void MqttPublishDirect(const char* topic, boolean retained)
   snprintf_P(slog_type, sizeof(slog_type), PSTR(D_LOG_RESULT));
 
   if (Settings.flag.mqtt_enabled) {
-    if (MqttPublishLib(topic, retained)) {
-      snprintf_P(slog_type, sizeof(slog_type), PSTR(D_LOG_MQTT));
-      if (retained) {
-        snprintf_P(sretained, sizeof(sretained), PSTR(" (" D_RETAINED ")"));
+    if (MqttIsConnected()) {
+      if (MqttPublishLib(topic, retained)) {
+        snprintf_P(slog_type, sizeof(slog_type), PSTR(D_LOG_MQTT));
+        if (retained) {
+          snprintf_P(sretained, sizeof(sretained), PSTR(" (" D_RETAINED ")"));
+        }
       }
     }
   }
@@ -336,11 +308,32 @@ void MqttPublishPowerBlinkState(byte device)
 
 /*********************************************************************************************/
 
+void MqttDisconnected(int state)
+{
+  mqtt_connected = false;
+  mqtt_retry_counter = Settings.mqtt_retry;
+
+  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_MQTT D_CONNECT_FAILED_TO " %s:%d, rc %d. " D_RETRY_IN " %d " D_UNIT_SECOND),
+    Settings.mqtt_host, Settings.mqtt_port, state, mqtt_retry_counter);
+  AddLog(LOG_LEVEL_INFO);
+#ifdef USE_RULES
+  strncpy_P(mqtt_data, PSTR("{\"MQTT\":{\"Disconnected\":1}}"), sizeof(mqtt_data));
+  RulesProcess();
+#endif  // USE_RULES
+}
+
 void MqttConnected()
 {
   char stopic[TOPSZ];
 
   if (Settings.flag.mqtt_enabled) {
+    AddLog_P(LOG_LEVEL_INFO, S_LOG_MQTT, PSTR(D_CONNECTED));
+    mqtt_connected = true;
+    mqtt_retry_counter = 0;
+
+    GetTopic_P(stopic, TELE, mqtt_topic, S_LWT);
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR(D_ONLINE));
+    MqttPublish(stopic, true);
 
     // Satisfy iobroker (#299)
     mqtt_data[0] = '\0';
@@ -360,7 +353,7 @@ void MqttConnected()
     XdrvCall(FUNC_MQTT_SUBSCRIBE);
   }
 
-  if (mqtt_connection_flag) {
+  if (mqtt_initial_connection_state) {
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_MODULE "\":\"%s\",\"" D_JSON_VERSION "\":\"%s\",\"" D_JSON_FALLBACKTOPIC "\":\"%s\",\"" D_CMND_GROUPTOPIC "\":\"%s\"}"),
       my_module.name, my_version, mqtt_client, Settings.mqtt_grptopic);
     MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_INFO "1"));
@@ -378,51 +371,78 @@ void MqttConnected()
       tele_period = Settings.tele_period -9;
     }
     status_update_timer = 2;
-
+#ifdef USE_RULES
+    strncpy_P(mqtt_data, PSTR("{\"System\":{\"Boot\":1}}"), sizeof(mqtt_data));
+    RulesProcess();
+#endif  // USE_RULES
     XdrvCall(FUNC_MQTT_INIT);
   }
-  mqtt_connection_flag = 0;
+  mqtt_initial_connection_state = 0;
+#ifdef USE_RULES
+  strncpy_P(mqtt_data, PSTR("{\"MQTT\":{\"Connected\":1}}"), sizeof(mqtt_data));
+  RulesProcess();
+#endif  // USE_RULES
 }
+
+#ifdef USE_MQTT_TLS
+boolean MqttCheckTls()
+{
+  char fingerprint1[60];
+  char fingerprint2[60];
+  boolean result = false;
+
+  fingerprint1[0] = '\0';
+  fingerprint2[0] = '\0';
+  for (byte i = 0; i < sizeof(Settings.mqtt_fingerprint[0]); i++) {
+    snprintf_P(fingerprint1, sizeof(fingerprint1), PSTR("%s%s%02X"), fingerprint1, (i) ? " " : "", Settings.mqtt_fingerprint[0][i]);
+    snprintf_P(fingerprint2, sizeof(fingerprint2), PSTR("%s%s%02X"), fingerprint2, (i) ? " " : "", Settings.mqtt_fingerprint[1][i]);
+  }
+
+  AddLog_P(LOG_LEVEL_INFO, S_LOG_MQTT, PSTR(D_FINGERPRINT));
+
+//#ifdef ARDUINO_ESP8266_RELEASE_2_4_1
+  EspClient = WiFiClientSecure();               // Wifi Secure Client reconnect issue 4497 (https://github.com/esp8266/Arduino/issues/4497)
+//#endif
+
+  if (!EspClient.connect(Settings.mqtt_host, Settings.mqtt_port)) {
+    snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_MQTT D_TLS_CONNECT_FAILED_TO " %s:%d. " D_RETRY_IN " %d " D_UNIT_SECOND),
+      Settings.mqtt_host, Settings.mqtt_port, mqtt_retry_counter);
+    AddLog(LOG_LEVEL_DEBUG);
+  } else {
+    if (EspClient.verify(fingerprint1, Settings.mqtt_host)) {
+      AddLog_P(LOG_LEVEL_INFO, S_LOG_MQTT, PSTR(D_VERIFIED "1"));
+      result = true;
+    }
+    else if (EspClient.verify(fingerprint2, Settings.mqtt_host)) {
+      AddLog_P(LOG_LEVEL_INFO, S_LOG_MQTT, PSTR(D_VERIFIED "2"));
+      result = true;
+    }
+  }
+  if (!result) AddLog_P(LOG_LEVEL_INFO, S_LOG_MQTT, PSTR(D_FAILED));
+  EspClient.stop();
+  yield();
+  return result;
+}
+#endif  // USE_MQTT_TLS
 
 void MqttReconnect()
 {
   char stopic[TOPSZ];
 
-  mqtt_retry_counter = Settings.mqtt_retry;
-
   if (!Settings.flag.mqtt_enabled) {
     MqttConnected();
     return;
   }
-#ifdef USE_EMULATION
+
+#if defined(USE_WEBSERVER) && defined(USE_EMULATION)
   UdpDisconnect();
 #endif  // USE_EMULATION
-  if (mqtt_connection_flag > 1) {  // Executed once just after power on and wifi is connected - Initial TLS check
-#ifdef USE_MQTT_TLS
-    AddLog_P(LOG_LEVEL_INFO, S_LOG_MQTT, PSTR(D_FINGERPRINT));
-    if (!EspClient.connect(Settings.mqtt_host, Settings.mqtt_port)) {
-      snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_MQTT D_TLS_CONNECT_FAILED_TO " %s:%d. " D_RETRY_IN " %d " D_UNIT_SECOND),
-        Settings.mqtt_host, Settings.mqtt_port, mqtt_retry_counter);
-      AddLog(LOG_LEVEL_DEBUG);
-      EspClient.stop();
-      return;
-    }
-    if (EspClient.verify(Settings.mqtt_fingerprint, Settings.mqtt_host)) {
-      AddLog_P(LOG_LEVEL_INFO, S_LOG_MQTT, PSTR(D_VERIFIED));
-    } else {
-      AddLog_P(LOG_LEVEL_INFO, S_LOG_MQTT, PSTR(D_INSECURE));
-      EspClient.stop();
-      return;
-    }
-    EspClient.stop();
-    yield();
-#endif  // USE_MQTT_TLS
-    mqtt_connection_flag = 1;
-//    mqtt_retry_counter = 1;
-//    return;
-  }
 
   AddLog_P(LOG_LEVEL_INFO, S_LOG_MQTT, PSTR(D_ATTEMPTING_CONNECTION));
+
+  mqtt_connected = false;
+  mqtt_retry_counter = Settings.mqtt_retry;
+
 #ifndef USE_MQTT_TLS
 #ifdef USE_DISCOVERY
 #ifdef MQTT_HOST_DISCOVERY
@@ -441,63 +461,65 @@ void MqttReconnect()
   GetTopic_P(stopic, TELE, mqtt_topic, S_LWT);
   snprintf_P(mqtt_data, sizeof(mqtt_data), S_OFFLINE);
 
-#if (1 == USE_MQTT_CLIENT)
+  if (2 == mqtt_initial_connection_state) {  // Executed once just after power on and wifi is connected
+#ifdef USE_MQTT_TLS
+    if (!MqttCheckTls()) return;
+#endif  // USE_MQTT_TLS
+
+#if (MQTT_LIBRARY_TYPE == MQTT_TASMOTAMQTT)
+    MqttClient.InitConnection(Settings.mqtt_host, Settings.mqtt_port);
+    MqttClient.InitClient(mqtt_client, mqtt_user, mqtt_pwd, MQTT_KEEPALIVE);
+    MqttClient.InitLWT(stopic, mqtt_data, 1, true);
+    MqttClient.OnConnected(MqttConnected);
+    MqttClient.OnDisconnected(MqttDisconnectedCb);
+    MqttClient.OnData(MqttDataHandler);
+#elif (MQTT_LIBRARY_TYPE == MQTT_ESPMQTTARDUINO)
+    MqttClient = new MQTT(mqtt_client, Settings.mqtt_host, Settings.mqtt_port, stopic, 1, true, mqtt_data);
+    MqttClient->setUserPwd(mqtt_user, mqtt_pwd);
+    MqttClient->onConnected(MqttConnected);
+    MqttClient->onDisconnected(MqttDisconnectedCb);
+    MqttClient->onData(MqttMyDataCb);
+#endif
+
+    mqtt_initial_connection_state = 1;
+  }
+
+//#ifdef ARDUINO_ESP8266_RELEASE_2_4_1
+#ifdef USE_MQTT_TLS
+  EspClient = WiFiClientSecure();         // Wifi Secure Client reconnect issue 4497 (https://github.com/esp8266/Arduino/issues/4497)
+#else
+  EspClient = WiFiClient();               // Wifi Client reconnect issue 4497 (https://github.com/esp8266/Arduino/issues/4497)
+#endif
+//#endif
+
+#if (MQTT_LIBRARY_TYPE == MQTT_PUBSUBCLIENT)
   MqttClient.setCallback(MqttDataHandler);
   MqttClient.setServer(Settings.mqtt_host, Settings.mqtt_port);
   if (MqttClient.connect(mqtt_client, mqtt_user, mqtt_pwd, stopic, 1, true, mqtt_data)) {
-    AddLog_P(LOG_LEVEL_INFO, S_LOG_MQTT, PSTR(D_CONNECTED));
-    mqtt_retry_counter = 0;
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR(D_ONLINE));
-    MqttPublish(stopic, true);
     MqttConnected();
   } else {
-    snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_MQTT D_CONNECT_FAILED_TO " %s:%d, rc %d. " D_RETRY_IN " %d " D_UNIT_SECOND),
-      Settings.mqtt_host, Settings.mqtt_port, MqttClient.state(), mqtt_retry_counter);  //status codes are documented here http://pubsubclient.knolleary.net/api.html#state
-    AddLog(LOG_LEVEL_INFO);
+    MqttDisconnected(MqttClient.state());  // status codes are documented here http://pubsubclient.knolleary.net/api.html#state
   }
-#elif (2 == USE_MQTT_CLIENT)
-  if (!MqttClient) {
-    MqttClient = new MQTT(mqtt_client, Settings.mqtt_host, Settings.mqtt_port, stopic, 1, true, mqtt_data);
-//    MqttClient->onConnected(MqttMyNoneCb);
-//    MqttClient->onDisconnected(MqttMyNoneCb);
-//    MqttClient->onPublished(MqttMyNoneCb);
-    MqttClient->onData(MqttMyDataCb);
-    MqttClient->setUserPwd(mqtt_user, mqtt_pwd);
-  }
+#elif (MQTT_LIBRARY_TYPE == MQTT_TASMOTAMQTT)
+  MqttClient.Connect();
+#elif (MQTT_LIBRARY_TYPE == MQTT_ESPMQTTARDUINO)
   MqttClient->connect();
-  uint16_t mqtt_timeout = 50;
-  while (!MqttClient->isConnected() && mqtt_timeout--) delay(1);
-  if (MqttClient->isConnected()) {
-    AddLog_P(LOG_LEVEL_INFO, S_LOG_MQTT, PSTR(D_CONNECTED));
-    mqtt_retry_counter = 0;
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR(D_ONLINE));
-    MqttPublish(stopic, true);
-    MqttConnected();
-  } else {
-    snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_MQTT D_CONNECT_FAILED_TO " %s:%d. " D_RETRY_IN " %d " D_UNIT_SECOND),
-      Settings.mqtt_host, Settings.mqtt_port, mqtt_retry_counter);
-    AddLog(LOG_LEVEL_INFO);
-  }
-#elif (3 == USE_MQTT_CLIENT)
-  //topic, data, data is continuing
-  MqttClient.onData([](String topic, String data, bool cont) {
-    MqttDataHandler((char*)topic.c_str(), (byte*)data.c_str(), strlen(data.c_str()));
-  });
-  char uri[200];
-  snprintf_P(uri, sizeof(uri), PSTR("mqtt://%s:%s@%s:%d#%s"), mqtt_user, mqtt_pwd, Settings.mqtt_host, Settings.mqtt_port, mqtt_client);
+#endif  // MQTT_LIBRARY_TYPE
+}
 
-  if (MqttClient.begin(String(uri), {.lwtTopic = stopic, .lwtMsg = mqtt_data, .lwtQos = 1, .lwtRetain = 1}, MQTT_KEEPALIVE, true)) {
-    AddLog_P(LOG_LEVEL_INFO, S_LOG_MQTT, PSTR(D_CONNECTED));
-    mqtt_retry_counter = 0;
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR(D_ONLINE));
-    MqttPublish(stopic, true);
-    MqttConnected();
+void MqttCheck()
+{
+  if (Settings.flag.mqtt_enabled) {
+    if (!MqttIsConnected()) {
+      if (!mqtt_retry_counter) {
+        MqttReconnect();
+      } else {
+        mqtt_retry_counter--;
+      }
+    }
   } else {
-    snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_MQTT D_CONNECT_FAILED_TO " %s:%d. " D_RETRY_IN " %d " D_UNIT_SECOND),
-      Settings.mqtt_host, Settings.mqtt_port, mqtt_retry_counter);  //status codes are documented here http://pubsubclient.knolleary.net/api.html#state
-    AddLog(LOG_LEVEL_INFO);
+    if (mqtt_initial_connection_state) MqttReconnect();
   }
-#endif  // USE_MQTT_CLIENT
 }
 
 /*********************************************************************************************/
@@ -543,21 +565,29 @@ bool MqttCommand()
   else if ((CMND_STATETEXT == command_code) && (index > 0) && (index <= 4)) {
     if ((data_len > 0) && (data_len < sizeof(Settings.state_text[0]))) {
       for(i = 0; i <= data_len; i++) {
-        if (dataBuf[i] == ' ') {
-          dataBuf[i] = '_';
-        }
+        if (dataBuf[i] == ' ') dataBuf[i] = '_';
       }
       strlcpy(Settings.state_text[index -1], dataBuf, sizeof(Settings.state_text[0]));
     }
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, index, GetStateText(index -1));
   }
 #ifdef USE_MQTT_TLS
-  else if (CMND_MQTTFINGERPRINT == command_code) {
-    if ((data_len > 0) && (data_len < sizeof(Settings.mqtt_fingerprint))) {
-      strlcpy(Settings.mqtt_fingerprint, (!strcmp(dataBuf,"0")) ? "" : (1 == payload) ? MQTT_FINGERPRINT : dataBuf, sizeof(Settings.mqtt_fingerprint));
+  else if ((CMND_MQTTFINGERPRINT == command_code) && (index > 0) && (index <= 2)) {
+    char fingerprint[60];
+    if ((data_len > 0) && (data_len < sizeof(fingerprint))) {
+      strlcpy(fingerprint, (!strcmp(dataBuf,"0")) ? "" : (1 == payload) ? (1 == index) ? MQTT_FINGERPRINT1 : MQTT_FINGERPRINT2 : dataBuf, sizeof(fingerprint));
+      char *p = fingerprint;
+      for (byte i = 0; i < 20; i++) {
+        Settings.mqtt_fingerprint[index -1][i] = strtol(p, &p, 16);
+      }
       restart_flag = 2;
     }
-    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, Settings.mqtt_fingerprint);
+
+    fingerprint[0] = '\0';
+    for (byte i = 0; i < sizeof(Settings.mqtt_fingerprint[index -1]); i++) {
+      snprintf_P(fingerprint, sizeof(fingerprint), PSTR("%s%s%02X"), fingerprint, (i) ? " " : "", Settings.mqtt_fingerprint[index -1][i]);
+    }
+    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, index, fingerprint);
   }
 #endif
   else if ((CMND_MQTTCLIENT == command_code) && !grpflg) {
@@ -577,16 +607,16 @@ bool MqttCommand()
   else if (CMND_MQTTPASSWORD == command_code) {
     if ((data_len > 0) && (data_len < sizeof(Settings.mqtt_pwd))) {
       strlcpy(Settings.mqtt_pwd, (!strcmp(dataBuf,"0")) ? "" : (1 == payload) ? MQTT_PASS : dataBuf, sizeof(Settings.mqtt_pwd));
+      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, Settings.mqtt_pwd);
       restart_flag = 2;
+    } else {
+      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_ASTERIX, command);
     }
-    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, Settings.mqtt_pwd);
   }
   else if (CMND_FULLTOPIC == command_code) {
     if ((data_len > 0) && (data_len < sizeof(Settings.mqtt_fulltopic))) {
       MakeValidMqtt(1, dataBuf);
-      if (!strcmp(dataBuf, mqtt_client)) {
-        payload = 1;
-      }
+      if (!strcmp(dataBuf, mqtt_client)) payload = 1;
       strlcpy(stemp1, (1 == payload) ? MQTT_FULLTOPIC : dataBuf, sizeof(stemp1));
       if (strcmp(stemp1, Settings.mqtt_fulltopic)) {
         snprintf_P(mqtt_data, sizeof(mqtt_data), (Settings.flag.mqtt_offline) ? S_OFFLINE : "");
@@ -606,12 +636,27 @@ bool MqttCommand()
     }
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, index, Settings.mqtt_prefix[index -1]);
   }
+  else if (CMND_PUBLISH == command_code) {
+    if (data_len > 0) {
+      char *mqtt_part = strtok(dataBuf, " ");
+      if (mqtt_part) {
+        snprintf(stemp1, sizeof(stemp1), mqtt_part);
+        mqtt_part = strtok(NULL, " ");
+        if (mqtt_part) {
+          snprintf(mqtt_data, sizeof(mqtt_data), mqtt_part);
+        } else {
+          mqtt_data[0] = '\0';
+        }
+        MqttPublishDirect(stemp1, false);
+//        snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, D_JSON_DONE);
+        mqtt_data[0] = '\0';
+      }
+    }
+  }
   else if (CMND_GROUPTOPIC == command_code) {
     if ((data_len > 0) && (data_len < sizeof(Settings.mqtt_grptopic))) {
       MakeValidMqtt(0, dataBuf);
-      if (!strcmp(dataBuf, mqtt_client)) {
-        payload = 1;
-      }
+      if (!strcmp(dataBuf, mqtt_client)) payload = 1;
       strlcpy(Settings.mqtt_grptopic, (1 == payload) ? MQTT_GRPTOPIC : dataBuf, sizeof(Settings.mqtt_grptopic));
       restart_flag = 2;
     }
@@ -620,9 +665,7 @@ bool MqttCommand()
   else if ((CMND_TOPIC == command_code) && !grpflg) {
     if ((data_len > 0) && (data_len < sizeof(Settings.mqtt_topic))) {
       MakeValidMqtt(0, dataBuf);
-      if (!strcmp(dataBuf, mqtt_client)) {
-        payload = 1;
-      }
+      if (!strcmp(dataBuf, mqtt_client)) payload = 1;
       strlcpy(stemp1, (1 == payload) ? MQTT_TOPIC : dataBuf, sizeof(stemp1));
       if (strcmp(stemp1, Settings.mqtt_topic)) {
         snprintf_P(mqtt_data, sizeof(mqtt_data), (Settings.flag.mqtt_offline) ? S_OFFLINE : "");
@@ -636,9 +679,7 @@ bool MqttCommand()
   else if ((CMND_BUTTONTOPIC == command_code) && !grpflg) {
     if ((data_len > 0) && (data_len < sizeof(Settings.button_topic))) {
       MakeValidMqtt(0, dataBuf);
-      if (!strcmp(dataBuf, mqtt_client)) {
-        payload = 1;
-      }
+      if (!strcmp(dataBuf, mqtt_client)) payload = 1;
       strlcpy(Settings.button_topic, (!strcmp(dataBuf,"0")) ? "" : (1 == payload) ? mqtt_topic : dataBuf, sizeof(Settings.button_topic));
     }
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, Settings.button_topic);
@@ -646,9 +687,7 @@ bool MqttCommand()
   else if (CMND_SWITCHTOPIC == command_code) {
     if ((data_len > 0) && (data_len < sizeof(Settings.switch_topic))) {
       MakeValidMqtt(0, dataBuf);
-      if (!strcmp(dataBuf, mqtt_client)) {
-        payload = 1;
-      }
+      if (!strcmp(dataBuf, mqtt_client)) payload = 1;
       strlcpy(Settings.switch_topic, (!strcmp(dataBuf,"0")) ? "" : (1 == payload) ? mqtt_topic : dataBuf, sizeof(Settings.switch_topic));
     }
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, Settings.switch_topic);
@@ -658,7 +697,7 @@ bool MqttCommand()
       strlcpy(Settings.button_topic, mqtt_topic, sizeof(Settings.button_topic));
       if (!payload) {
         for(i = 1; i <= MAX_KEYS; i++) {
-          send_button_power(0, i, 9);  // Clear MQTT retain in broker
+          SendKey(0, i, 9);  // Clear MQTT retain in broker
         }
       }
       Settings.flag.mqtt_button_retain = payload;
@@ -670,7 +709,7 @@ bool MqttCommand()
       strlcpy(Settings.button_topic, mqtt_topic, sizeof(Settings.button_topic));
       if (!payload) {
         for(i = 1; i <= MAX_SWITCHES; i++) {
-          send_button_power(1, i, 9);  // Clear MQTT retain in broker
+          SendKey(1, i, 9);  // Clear MQTT retain in broker
         }
       }
       Settings.flag.mqtt_switch_retain = payload;
@@ -715,16 +754,15 @@ boolean Xdrv00(byte function)
 {
   boolean result = false;
 
-  switch (function) {
-    case FUNC_LOOP:
-      if (Settings.flag.mqtt_enabled) MqttLoop();
-      break;
-    case FUNC_EVERY_SECOND:
-      if (WL_CONNECTED == WiFi.status()) MqttCheckConnection();
-      break;
-    case FUNC_COMMAND:
-      if (Settings.flag.mqtt_enabled) result = MqttCommand();
-      break;
+  if (Settings.flag.mqtt_enabled) {
+    switch (function) {
+      case FUNC_LOOP:
+        MqttLoop();
+        break;
+      case FUNC_COMMAND:
+        result = MqttCommand();
+        break;
+    }
   }
   return result;
 }
