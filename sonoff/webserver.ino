@@ -1360,7 +1360,6 @@ void HandleUploadLoop()
     if (upload_file_type) { // config
       if (!upload_error) {
         if (upload.currentSize > (sizeof(Settings) - (config_block_count * HTTP_UPLOAD_BUFLEN))) {
-          if (config_block_count) { SettingsDefault(); }
           upload_error = 9;
           return;
         }
