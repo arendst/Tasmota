@@ -302,10 +302,7 @@ void TimerEverySecond()
 void PrepShowTimer(uint8_t index)
 {
   char days[8] = { 0 };
-<<<<<<< HEAD
-=======
   char sign[2] = { 0 };
->>>>>>> arendst/development
   char soutput[80];
 
   Timer xtimer = Settings.timer[index -1];
@@ -327,13 +324,8 @@ void PrepShowTimer(uint8_t index)
       sign[0] = '-';
     }
   }
-<<<<<<< HEAD
-  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s\"" D_CMND_TIMER "%d\":{\"" D_JSON_TIMER_ARM "\":%d,\"" D_JSON_TIMER_MODE "\":%d,\"" D_JSON_TIMER_TIME "\":\"%02d:%02d\",\"" D_JSON_TIMER_WINDOW "\":%d,\"" D_JSON_TIMER_DAYS "\":\"%s\",\"" D_JSON_TIMER_REPEAT "\":%d%s,\"" D_JSON_TIMER_ACTION "\":%d}"),
-    mqtt_data, index, xtimer.arm, xtimer.mode, hour, xtimer.time % 60, xtimer.window, days, xtimer.repeat, soutput, xtimer.power);
-=======
   snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s\"" D_CMND_TIMER "%d\":{\"" D_JSON_TIMER_ARM "\":%d,\"" D_JSON_TIMER_MODE "\":%d,\"" D_JSON_TIMER_TIME "\":\"%s%02d:%02d\",\"" D_JSON_TIMER_WINDOW "\":%d,\"" D_JSON_TIMER_DAYS "\":\"%s\",\"" D_JSON_TIMER_REPEAT "\":%d%s,\"" D_JSON_TIMER_ACTION "\":%d}"),
     mqtt_data, index, xtimer.arm, xtimer.mode, sign, hour, xtimer.time % 60, xtimer.window, days, xtimer.repeat, soutput, xtimer.power);
->>>>>>> arendst/development
 #else
   snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s\"" D_CMND_TIMER "%d\":{\"" D_JSON_TIMER_ARM "\":%d,\"" D_JSON_TIMER_TIME "\":\"%02d:%02d\",\"" D_JSON_TIMER_WINDOW "\":%d,\"" D_JSON_TIMER_DAYS "\":\"%s\",\"" D_JSON_TIMER_REPEAT "\":%d%s,\"" D_JSON_TIMER_ACTION "\":%d}"),
     mqtt_data, index, xtimer.arm, xtimer.time / 60, xtimer.time % 60, xtimer.window, days, xtimer.repeat, soutput, xtimer.power);
@@ -366,11 +358,7 @@ boolean TimerCommand()
 #ifndef USE_RULES
         if (devices_present) {
 #endif
-<<<<<<< HEAD
-          StaticJsonBuffer<200> jsonBuffer;
-=======
           StaticJsonBuffer<256> jsonBuffer;
->>>>>>> arendst/development
           JsonObject& root = jsonBuffer.parseObject(dataBufUc);
           if (!root.success()) {
             snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_TIMER "%d\":\"" D_JSON_INVALID_JSON "\"}"), index); // JSON decode failed
@@ -439,11 +427,7 @@ boolean TimerCommand()
               Settings.timer[index].device = (device < devices_present) ? device : 0;
             }
             if (root[UpperCase_P(parm_uc, PSTR(D_JSON_TIMER_ACTION))].success()) {
-<<<<<<< HEAD
-              uint8_t action = ((uint8_t)root[parm_uc] -1) & 0x03;
-=======
               uint8_t action = (uint8_t)root[parm_uc] & 0x03;
->>>>>>> arendst/development
               Settings.timer[index].power = (devices_present) ? action : 3;  // If no devices than only allow rules
             }
 
