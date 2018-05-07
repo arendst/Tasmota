@@ -90,9 +90,11 @@ const char HTTP_SNS_COUNTER[] PROGMEM =
 
 void CounterShow(boolean json)
 {
+  char stemp[10];
   char counter[16];
 
   byte dsxflg = 0;
+  byte header = 0;
   for (byte i = 0; i < MAX_COUNTERS; i++) {
     if (pin[GPIO_CNTR1 +i] < 99) {
       if (bitRead(Settings.pulse_counter_type, i)) {
@@ -103,7 +105,13 @@ void CounterShow(boolean json)
       }
 
       if (json) {
-        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"" D_JSON_COUNTER "%d\":%s"), mqtt_data, i +1, counter);
+        if (!header) {
+          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"COUNTER\":{"), mqtt_data);
+          stemp[0] = '\0';
+        }
+        header++;
+        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s%s\"C%d\":%s"), mqtt_data, stemp, i +1, counter);
+        strcpy(stemp, ",");
 #ifdef USE_DOMOTICZ
         if ((0 == tele_period) && (1 == dsxflg)) {
           DomoticzSensor(DZ_COUNT, RtcSettings.pulse_counter[i]);
@@ -115,6 +123,11 @@ void CounterShow(boolean json)
         snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_COUNTER, mqtt_data, i +1, counter, (bitRead(Settings.pulse_counter_type, i)) ? " " D_UNIT_SECOND : "");
 #endif  // USE_WEBSERVER
       }
+    }
+  }
+  if (json) {
+    if (header) {
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}"), mqtt_data);
     }
   }
 }

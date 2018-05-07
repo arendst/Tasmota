@@ -447,6 +447,29 @@ int GetCommandCode(char* destination, size_t destination_size, const char* needl
   return result;
 }
 
+int GetStateNumber(char *state_text)
+{
+  char command[CMDSZ];
+  int state_number = -1;
+
+  if ((GetCommandCode(command, sizeof(command), state_text, kOptionOff) >= 0) || !strcasecmp(state_text, Settings.state_text[0])) {
+    state_number = 0;
+  }
+  else if ((GetCommandCode(command, sizeof(command), state_text, kOptionOn) >= 0) || !strcasecmp(state_text, Settings.state_text[1])) {
+    state_number = 1;
+  }
+  else if ((GetCommandCode(command, sizeof(command), state_text, kOptionToggle) >= 0) || !strcasecmp(state_text, Settings.state_text[2])) {
+    state_number = 2;
+  }
+  else if (GetCommandCode(command, sizeof(command), state_text, kOptionBlink) >= 0) {
+    state_number = 3;
+  }
+  else if (GetCommandCode(command, sizeof(command), state_text, kOptionBlinkOff) >= 0) {
+    state_number = 4;
+  }
+  return state_number;
+}
+
 void SetSerialBaudrate(int baudrate)
 {
   Settings.baudrate = baudrate / 1200;
@@ -615,7 +638,9 @@ void WifiBegin(uint8_t flag)
   delay(200);
   WiFi.mode(WIFI_STA);      // Disable AP mode
   if (Settings.sleep) {
+#ifndef ARDUINO_ESP8266_RELEASE_2_4_1     // See https://github.com/arendst/Sonoff-Tasmota/issues/2559
     WiFi.setSleepMode(WIFI_LIGHT_SLEEP);  // Allow light sleep during idle times
+#endif
   }
 //  if (WiFi.getPhyMode() != WIFI_PHY_MODE_11N) {
 //    WiFi.setPhyMode(WIFI_PHY_MODE_11N);
@@ -1312,7 +1337,7 @@ void RtcSecond()
   uint8_t offset = (uptime < 30) ? RtcTime.second : (((ESP.getChipId() & 0xF) * 3) + 3) ;  // First try ASAP to sync. If fails try once every 60 seconds based on chip id
   if ((WL_CONNECTED == WiFi.status()) && (offset == RtcTime.second) && ((RtcTime.year < 2016) || (ntp_sync_minute == RtcTime.minute))) {
     ntp_time = sntp_get_current_timestamp();
-    if (ntp_time) {
+    if (ntp_time > 1451602800) {  // Fix NTP bug in core 2.4.1/SDK 2.2.1 (returns Thu Jan 01 08:00:10 1970 after power on)
       utc_time = ntp_time;
       ntp_sync_minute = 60;  // Sync so block further requests
       if (restart_time == 0) {
@@ -1384,7 +1409,10 @@ void RtcInit()
  * ADC support
 \*********************************************************************************************/
 
-void AdcShow(boolean json)
+uint8_t adc_counter = 0;
+uint16_t adc_last_value = 0;
+
+uint16_t AdcRead()
 {
   uint16_t analog = 0;
   for (byte i = 0; i < 32; i++) {
@@ -1392,9 +1420,31 @@ void AdcShow(boolean json)
     delay(1);
   }
   analog >>= 5;
+  return analog;
+}
+
+#ifdef USE_RULES
+void AdcEvery50ms()
+{
+  adc_counter++;
+  if (!(adc_counter % 4)) {
+    uint16_t new_value = AdcRead();
+    if ((new_value < adc_last_value -10) || (new_value > adc_last_value +10)) {
+      adc_last_value = new_value;
+      uint16_t value = adc_last_value / 10;
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"ANALOG\":{\"A0div10\":%d}}"), (value > 99) ? 100 : value);
+      RulesProcess();
+    }
+  }
+}
+#endif  // USE_RULES
+
+void AdcShow(boolean json)
+{
+  uint16_t analog = AdcRead();
 
   if (json) {
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"" D_JSON_ANALOG_INPUT "0\":%d"), mqtt_data, analog);
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"ANALOG\":{\"A0\":%d}"), mqtt_data, analog);
 #ifdef USE_WEBSERVER
   } else {
     snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_ANALOG, mqtt_data, "", 0, analog);
@@ -1414,6 +1464,11 @@ boolean Xsns02(byte function)
 
   if (pin[GPIO_ADC0] < 99) {
     switch (function) {
+#ifdef USE_RULES
+      case FUNC_EVERY_50_MSECOND:
+        AdcEvery50ms();
+        break;
+#endif  // USE_RULES
       case FUNC_JSON_APPEND:
         AdcShow(1);
         break;

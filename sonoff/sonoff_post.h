@@ -46,6 +46,13 @@ void KNX_CB_Action(message_t const &msg, void *arg);
  * Default global defines
 \*********************************************************************************************/
 
+<<<<<<< HEAD
+=======
+#ifndef MODULE
+#define MODULE                 SONOFF_BASIC   // [Module] Select default model
+#endif
+
+>>>>>>> arendst/development
 #define USE_DHT                               // Default DHT11 sensor needs no external library
 
 /*********************************************************************************************\

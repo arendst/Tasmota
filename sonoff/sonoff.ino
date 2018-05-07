@@ -25,7 +25,7 @@
     - Select IDE Tools - Flash Size: "1M (no SPIFFS)"
   ====================================================*/
 
-#define VERSION                0x050C000D   // 5.12.0m
+#define VERSION                0x050D0101   // 5.13.1a
 
 // Location specific includes
 #include <core_version.h>                   // Arduino_Esp8266 version information (ARDUINO_ESP8266_RELEASE and ARDUINO_ESP8266_RELEASE_2_3_0)
@@ -95,12 +95,15 @@ const char kTasmotaCommands[] PROGMEM =
   D_CMND_WIFICONFIG "|" D_CMND_FRIENDLYNAME "|" D_CMND_SWITCHMODE "|" D_CMND_WEBSERVER "|" D_CMND_WEBPASSWORD "|" D_CMND_WEBLOG "|" D_CMND_EMULATION "|"
   D_CMND_TELEPERIOD "|" D_CMND_RESTART "|" D_CMND_RESET "|" D_CMND_TIMEZONE "|" D_CMND_ALTITUDE "|" D_CMND_LEDPOWER "|" D_CMND_LEDSTATE "|"
   D_CMND_I2CSCAN "|" D_CMND_SERIALSEND "|" D_CMND_BAUDRATE "|" D_CMND_SERIALDELIMITER;
+<<<<<<< HEAD
 
 const char kOptionOff[] PROGMEM = "OFF|" D_OFF "|" D_FALSE "|" D_STOP "|" D_CELSIUS ;
 const char kOptionOn[] PROGMEM = "ON|" D_ON "|" D_TRUE "|" D_START "|" D_FAHRENHEIT "|" D_USER ;
 const char kOptionToggle[] PROGMEM = "TOGGLE|" D_TOGGLE "|" D_ADMIN ;
 const char kOptionBlink[] PROGMEM = "BLINK|" D_BLINK ;
 const char kOptionBlinkOff[] PROGMEM = "BLINKOFF|" D_BLINKOFF ;
+=======
+>>>>>>> arendst/development
 
 // Global variables
 int baudrate = APP_BAUDRATE;                // Serial interface baud rate
@@ -436,21 +439,8 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
     }
     backlog_delay = MIN_BACKLOG_DELAY;   // Reset backlog delay
 
-    if ((GetCommandCode(command, sizeof(command), dataBuf, kOptionOff) >= 0) || !strcasecmp(dataBuf, Settings.state_text[0])) {
-      payload = 0;
-    }
-    if ((GetCommandCode(command, sizeof(command), dataBuf, kOptionOn) >= 0) || !strcasecmp(dataBuf, Settings.state_text[1])) {
-      payload = 1;
-    }
-    if ((GetCommandCode(command, sizeof(command), dataBuf, kOptionToggle) >= 0) || !strcasecmp(dataBuf, Settings.state_text[2])) {
-      payload = 2;
-    }
-    if (GetCommandCode(command, sizeof(command), dataBuf, kOptionBlink) >= 0) {
-      payload = 3;
-    }
-    if (GetCommandCode(command, sizeof(command), dataBuf, kOptionBlinkOff) >= 0) {
-      payload = 4;
-    }
+    int temp_payload = GetStateNumber(dataBuf);
+    if (temp_payload > -1) { payload = temp_payload; }
 
 //    snprintf_P(log_data, sizeof(log_data), PSTR("RSLT: Payload %d, Payload16 %d"), payload, payload16);
 //    AddLog(LOG_LEVEL_DEBUG);
@@ -462,12 +452,23 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
         bl_pointer--;
         char *blcommand = strtok(dataBuf, ";");
         while ((blcommand != NULL) && (backlog_index != bl_pointer)) {
-          backlog[backlog_index] = String(blcommand);
-          backlog_index++;
-          if (backlog_index >= MAX_BACKLOG) backlog_index = 0;
+          while(true) {
+            while ((*blcommand != '\0') && (isblank(*blcommand))) { blcommand++; }  // Trim leading spaces
+            if (!strncasecmp_P(blcommand, PSTR(D_CMND_BACKLOG), strlen(D_CMND_BACKLOG))) {
+              blcommand += strlen(D_CMND_BACKLOG);                                  // Skip unnecessary command Backlog
+            } else {
+              break;
+            }
+          }
+          if (*blcommand != '\0') {
+            backlog[backlog_index] = String(blcommand);
+            backlog_index++;
+            if (backlog_index >= MAX_BACKLOG) backlog_index = 0;
+          }
           blcommand = strtok(NULL, ";");
         }
-        snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, D_JSON_APPENDED);
+//        snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, D_JSON_APPENDED);
+        mqtt_data[0] = '\0';
       } else {
         uint8_t blflag = (backlog_pointer == backlog_index);
         backlog_pointer = backlog_index;
@@ -1462,7 +1463,16 @@ void PerformEverySecond()
       MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_STATE), MQTT_TELE_RETAIN);
 
       mqtt_data[0] = '\0';
+<<<<<<< HEAD
       if (MqttShowSensor()) { MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain); }
+=======
+      if (MqttShowSensor()) {
+        MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);
+#ifdef USE_RULES
+        RulesTeleperiod();  // Allow rule based HA messages
+#endif  // USE_RULES
+      }
+>>>>>>> arendst/development
     }
   }
 

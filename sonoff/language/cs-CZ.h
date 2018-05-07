@@ -28,7 +28,11 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
+<<<<<<< HEAD
  * Updated until v5.12.0m
+=======
+ * Updated until v5.12.0n
+>>>>>>> arendst/development
 \*********************************************************************/
 
 //#define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -43,7 +47,7 @@
 #define D_HOUR_MINUTE_SEPARATOR ":"
 #define D_MINUTE_SECOND_SEPARATOR ":"
 
-#define D_DAY3LIST "Po Út St Čt Pá So Ne "
+#define D_DAY3LIST "Ne Po Út St Čt Pá So "
 #define D_MONTH3LIST "LedÚnoBřeDubKvěČvnČvcSrpZářŘíjLisPro"
 
 // Non JSON decimal separator

@@ -201,7 +201,7 @@ void ApplyTimerOffsets(Timer *duskdawn)
     if (timeBuffer > (uint16_t)duskdawn->time) {
       timeBuffer = 1440 - (timeBuffer - (uint16_t)duskdawn->time);
       duskdawn->days = duskdawn->days >> 1;
-      duskdawn->days = duskdawn->days |= (stored.days << 6);
+      duskdawn->days |= (stored.days << 6);
     } else {
       timeBuffer = (uint16_t)duskdawn->time - timeBuffer;
     }
@@ -212,7 +212,7 @@ void ApplyTimerOffsets(Timer *duskdawn)
     if (timeBuffer > 1440) {
       timeBuffer -= 1440;
       duskdawn->days = duskdawn->days << 1;
-      duskdawn->days = duskdawn->days |= (stored.days >> 6);
+      duskdawn->days |= (stored.days >> 6);
     }
   }
   duskdawn->time = timeBuffer;
@@ -279,8 +279,8 @@ void TimerEverySecond()
 #endif
         if (xtimer.arm) {
           set_time += timer_window[i];                // Add random time offset
-          if (set_time < 0) { set_time == 0; }        // Stay today;
-          if (set_time > 1439) { set_time == 1439; }
+          if (set_time < 0) { set_time = 0; }         // Stay today;
+          if (set_time > 1439) { set_time = 1439; }
           if (time == set_time) {
             if (xtimer.days & days) {
               Settings.timer[i].arm = xtimer.repeat;
@@ -302,6 +302,10 @@ void TimerEverySecond()
 void PrepShowTimer(uint8_t index)
 {
   char days[8] = { 0 };
+<<<<<<< HEAD
+=======
+  char sign[2] = { 0 };
+>>>>>>> arendst/development
   char soutput[80];
 
   Timer xtimer = Settings.timer[index -1];
@@ -318,10 +322,18 @@ void PrepShowTimer(uint8_t index)
 #ifdef USE_SUNRISE
   int16_t hour = xtimer.time / 60;
   if ((1 == xtimer.mode) || (2 == xtimer.mode)) {  // Sunrise or Sunset
-    if (hour > 11) { hour = (hour -12) * -1; }
+    if (hour > 11) {
+      hour -= 12;
+      sign[0] = '-';
+    }
   }
+<<<<<<< HEAD
   snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s\"" D_CMND_TIMER "%d\":{\"" D_JSON_TIMER_ARM "\":%d,\"" D_JSON_TIMER_MODE "\":%d,\"" D_JSON_TIMER_TIME "\":\"%02d:%02d\",\"" D_JSON_TIMER_WINDOW "\":%d,\"" D_JSON_TIMER_DAYS "\":\"%s\",\"" D_JSON_TIMER_REPEAT "\":%d%s,\"" D_JSON_TIMER_ACTION "\":%d}"),
     mqtt_data, index, xtimer.arm, xtimer.mode, hour, xtimer.time % 60, xtimer.window, days, xtimer.repeat, soutput, xtimer.power);
+=======
+  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s\"" D_CMND_TIMER "%d\":{\"" D_JSON_TIMER_ARM "\":%d,\"" D_JSON_TIMER_MODE "\":%d,\"" D_JSON_TIMER_TIME "\":\"%s%02d:%02d\",\"" D_JSON_TIMER_WINDOW "\":%d,\"" D_JSON_TIMER_DAYS "\":\"%s\",\"" D_JSON_TIMER_REPEAT "\":%d%s,\"" D_JSON_TIMER_ACTION "\":%d}"),
+    mqtt_data, index, xtimer.arm, xtimer.mode, sign, hour, xtimer.time % 60, xtimer.window, days, xtimer.repeat, soutput, xtimer.power);
+>>>>>>> arendst/development
 #else
   snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s\"" D_CMND_TIMER "%d\":{\"" D_JSON_TIMER_ARM "\":%d,\"" D_JSON_TIMER_TIME "\":\"%02d:%02d\",\"" D_JSON_TIMER_WINDOW "\":%d,\"" D_JSON_TIMER_DAYS "\":\"%s\",\"" D_JSON_TIMER_REPEAT "\":%d%s,\"" D_JSON_TIMER_ACTION "\":%d}"),
     mqtt_data, index, xtimer.arm, xtimer.time / 60, xtimer.time % 60, xtimer.window, days, xtimer.repeat, soutput, xtimer.power);
@@ -354,7 +366,11 @@ boolean TimerCommand()
 #ifndef USE_RULES
         if (devices_present) {
 #endif
+<<<<<<< HEAD
           StaticJsonBuffer<200> jsonBuffer;
+=======
+          StaticJsonBuffer<256> jsonBuffer;
+>>>>>>> arendst/development
           JsonObject& root = jsonBuffer.parseObject(dataBufUc);
           if (!root.success()) {
             snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_TIMER "%d\":\"" D_JSON_INVALID_JSON "\"}"), index); // JSON decode failed
@@ -374,13 +390,18 @@ boolean TimerCommand()
             if (root[UpperCase_P(parm_uc, PSTR(D_JSON_TIMER_TIME))].success()) {
               uint16_t itime = 0;
               int8_t value = 0;
+              uint8_t sign = 0;
               char time_str[10];
 
               snprintf(time_str, sizeof(time_str), root[parm_uc]);
               const char *substr = strtok(time_str, ":");
               if (substr != NULL) {
+                if (strchr(substr, '-')) {
+                  sign = 1;
+                  substr++;
+                }
                 value = atoi(substr);
-                if (value < 0) { value = abs(value) +12; }  // Allow entering timer offset from -11:59 to -00:01 converted to 12:01 to 23:59
+                if (sign) { value += 12; }  // Allow entering timer offset from -11:59 to -00:01 converted to 12:01 to 23:59
                 if (value > 23) { value = 23; }
                 itime = value * 60;
                 substr = strtok(NULL, ":");
@@ -401,14 +422,13 @@ boolean TimerCommand()
               // SMTWTFS = 1234567 = 0011001 = 00TW00S = --TW--S
               Settings.timer[index].days = 0;
               const char *tday = root[parm_uc];
-              char ch = '.';
-
               uint8_t i = 0;
+              char ch = *tday++;
               while ((ch != '\0') && (i < 7)) {
-                ch = *tday++;
                 if (ch == '-') { ch = '0'; }
                 uint8_t mask = 1 << i++;
                 Settings.timer[index].days |= (ch == '0') ? 0 : mask;
+                ch = *tday++;
               }
             }
             if (root[UpperCase_P(parm_uc, PSTR(D_JSON_TIMER_REPEAT))].success()) {
@@ -419,7 +439,11 @@ boolean TimerCommand()
               Settings.timer[index].device = (device < devices_present) ? device : 0;
             }
             if (root[UpperCase_P(parm_uc, PSTR(D_JSON_TIMER_ACTION))].success()) {
+<<<<<<< HEAD
               uint8_t action = ((uint8_t)root[parm_uc] -1) & 0x03;
+=======
+              uint8_t action = (uint8_t)root[parm_uc] & 0x03;
+>>>>>>> arendst/development
               Settings.timer[index].power = (devices_present) ? action : 3;  // If no devices than only allow rules
             }
 
