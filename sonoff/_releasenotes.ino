@@ -1,50 +1,3 @@
-<<<<<<< HEAD
-/* 5.12.0m
- * Reinit timers to accomodate random window (#2447)
- * Remove sonoff-xxl
- * Add sonoff-classic, sonoff-allsensors and sonoff-knx
- * Add some coloring to important web buttons
- * Add define MQTT_TELE_RETAIN compile option default set to 0 (#1071)
- * Add user selectable defines for Sunrise/set Dawn option (#2378)
- * Add random window to timers (#2447)
- * Add optional KNX IP Protocol Support (#2402)
- * Add Greek language file (#2491)
- * Add Bulgarian language file
- * Add support for sensor HC-SR04 ultrasonic (#113, #1964, #2444)
- * Add support for Sonoff Pow R2 (#2340)
- * Add GPIO_User to GPIO02 for all Sonoff T1 (#2524)
- * Fix compile error when using ESP/Arduino library v2.3.0 by reverting KNX async UDP library to default UDP library (#2488, #2492, #2493)
- * Fix configuration filename truncation when it contains spaces (#2484, #2490)
- *
- * 5.12.0l
- * Release rules up to 511 characters
- * Prepare for feature release - call on translators to update their language files
- * Add timer sunrise and sunset offset (#2378)
- * Fix negative Latitude and Longitude value entry (#2461)
- * Fix sunrise and sunset calculation (#2461)
- *
- * 5.12.0k
- * Prepare for simple rules of up to 255 characters by enlarging Settings area to now 2048 bytes
- * Change Timer parameter name from Power to Action
- * Add commands Publish, Rule, RuleTimer and Event. See Wiki about Rule restriction, usage and examples
- * Fix freeing more code space when emulation is disabled (#1592)
- * Fix update temperature on DS18x20 drivers (#2328)
- * Fix compile error when not defined USE_TIMERS (#2400)
- *
- * 5.12.0j
- * Add optional Sunrise and Sunset timers with commands Latitide and Longitude to be enabled with define USE_SUNRISE in user_config.h (#2317)
- *
- * 5.12.0i
- * Add 16 timers using commands Timer and Timers (#1091)
- * Add commands Timer 0 to clear timer and Timer 1..16 to copy timer
- * Add optional Timer configuration webpage to be enabled in user_config.h with define USE_TIMERS_WEB
- * Add hexadecimal Data entry to command IrSend using 0x notation (#1290, #2314)
- * Add Domoticz Battery and RSSI Quality (#1604)
- * Add Home Assistant MQTT Discovery for Buttons and change SetOption19 response (#2277)
- * Add support for SGP30 gas and air quality sensor (#2307)
- * Add multiple color entry support for command Led like Led2 120000 001200 000012 setting led2 as Red, Led3 as Green and Led4 as Blue (#2303)
- * Add hexadecimal RGB color entry on RGBCW leds (#2304)
-=======
 /* 5.13.1a
  * Change user_config.h otaurl to http://sonoff.maddox.co.uk/tasmota/sonoff.bin (#2588, #2602)
  * Fix configuration restore regression from 5.13.1
@@ -65,7 +18,6 @@
  * Change platformio option sonoff-ds18x20 to sonoff-allsensors enabling ds18x20 and all other sensors in one image
  * Change status display of Ssid and SetOption
  * Change default option SetOption15 from 0 to 1 providing better initial PWM experience
->>>>>>> arendst/development
  * Change webpage parameter communication
  * Change max number of commands in Backlog from 15 to 30 and ignore commands overflowing
  * Change TSL2561 driver to joba library and delete Adafruit library (#1644)
@@ -119,14 +71,6 @@
  * Add Restart time to Status 1 (#1938)
  * Add optional TSL2561 driver using library Joba_Tsl2561 to be enabled in user_config.h with define USE_TSL2561_JOBA (#1951)
  * Add support for sensor SHTC3 (#1967)
-<<<<<<< HEAD
- *
- * 5.12.0a
- * Change platformio option sonoff-ds18x20 to sonoff-allsensors enabling ds18x20 and all other sensors in one image
- * Fix providing web page configuratin option for Friendly Name when no device (relay or light) is configured (#1850)
- * Change default parameters in user_config.h to undefined for easy installation (#1851)
- * Change max user configurable hold time from 10 to 25 seconds (#1851)
-=======
  * Add compiler check for stable lwIP version v1.4 (#1940)
  * Add support for multiple SHT3X sensors (#1949, #2110)
  * Add always suffix with device number in Mqtt discovery topic (#1962)
@@ -165,7 +109,6 @@
  * Add Greek language file (#2491)
  * Add support for Sonoff Pow R2 (#2340)
  * Add GPIO_User to GPIO02 for all Sonoff T1 (#2524)
->>>>>>> arendst/development
  *
  * 5.12.0 20180209
  * Change library PubSubClient.h define MQTT_MAX_PACKET_SIZE from 512 to 1000 for Home Assistant  support

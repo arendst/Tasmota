@@ -1240,8 +1240,6 @@ void HandleUpgradeFirmwareStart()
 
 void SettingsNewFree()
 {
-<<<<<<< HEAD
-=======
   if (settings_new != NULL) {
     free(settings_new);
     settings_new = NULL;
@@ -1250,7 +1248,6 @@ void SettingsNewFree()
 
 void HandleUploadDone()
 {
->>>>>>> arendst/development
   if (HttpUser()) { return; }
   AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_UPLOAD_DONE));
 
@@ -1384,9 +1381,6 @@ void HandleUploadLoop()
     if (_serialoutput && (upload_progress_dot_count % 80)) {
       Serial.println();
     }
-<<<<<<< HEAD
-    if (!upload_file_type) {
-=======
     if (upload_file_type) {
       if (config_xor_on) {
         for (uint16_t i = 2; i < sizeof(Settings); i++) {
@@ -1398,7 +1392,6 @@ void HandleUploadLoop()
       memcpy((char*)&Settings +8, settings_new +8, 4);  // Restore version and auto upgrade
       SettingsNewFree();
     } else {
->>>>>>> arendst/development
       if (!Update.end(true)) { // true to set the size to the current progress
         if (_serialoutput) { Update.printError(Serial); }
         upload_error = 6;
@@ -1429,11 +1422,7 @@ void HandlePreflightRequest()
 void HandleHttpCommand()
 {
   if (HttpUser()) { return; }
-<<<<<<< HEAD
-  char svalue[INPUT_BUFFER_SIZE];  // big to serve Backlog
-=======
   char svalue[INPUT_BUFFER_SIZE];  // Large to serve Backlog
->>>>>>> arendst/development
 
   AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_COMMAND));
 
@@ -1503,11 +1492,7 @@ void HandleConsole()
 void HandleAjaxConsoleRefresh()
 {
   if (HttpUser()) { return; }
-<<<<<<< HEAD
-  char svalue[INPUT_BUFFER_SIZE];  // big to serve Backlog
-=======
   char svalue[INPUT_BUFFER_SIZE];  // Large to serve Backlog
->>>>>>> arendst/development
   byte cflg = 1;
   byte counter = 0;                // Initial start, should never be 0 again
 
