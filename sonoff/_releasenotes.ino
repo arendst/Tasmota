@@ -5,6 +5,7 @@
  * Fix rule power trigger when no backlog command is used (#2613)
  * Fix several timer data input and output errors (#2597, #2620)
  * Fix KNX config error (#2628)
+ * Fix sensor MHZ-19 vanishing data over time (#2659)
  * Add Portuguese in Brazil language file
  * Add rule state test for On/Off in addition to 0/1 (#2613)
  * Updated Italian language file (#2618)
