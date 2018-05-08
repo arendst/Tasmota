@@ -228,6 +228,7 @@
 #define D_CMND_SERIALSEND "SerialSend"
 #define D_CMND_SERIALDELIMITER "SerialDelimiter"
 #define D_CMND_BAUDRATE "Baudrate"
+#define D_CMND_TELEREFRESH "TelemetryRefresh"
 
 // Commands xdrv_00_mqtt.ino
 #define D_CMND_MQTTHOST "MqttHost"
