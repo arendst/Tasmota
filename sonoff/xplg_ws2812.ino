@@ -345,7 +345,7 @@ void Ws2812Clear()
   ws_show_next = 1;
 }
 
-void Ws2812SetColor(uint16_t led, uint8_t red, uint8_t green, uint8_t blue, uint8_t white)
+void Ws2812SetColor(uint16_t led, uint8_t red, uint8_t green, uint8_t blue, uint8_t white,bool show)
 {
 #if (USE_WS2812_CTYPE > NEO_3LED)
   RgbwColor lcolor;
@@ -365,7 +365,9 @@ void Ws2812SetColor(uint16_t led, uint8_t red, uint8_t green, uint8_t blue, uint
       strip->SetPixelColor(i, lcolor);
     }
   }
-  strip->Show();
+  if (show) {
+    strip->Show();
+  }
   ws_show_next = 1;
 }
 
