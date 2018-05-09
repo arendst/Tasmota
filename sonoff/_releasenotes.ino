@@ -8,7 +8,9 @@
  * Fix sensor MHZ-19 vanishing data over time (#2659)
  * Add Portuguese in Brazil language file
  * Add rule state test for On/Off in addition to 0/1 (#2613)
+ * Add hardware serial option to MHZ-19 sensor (#2659)
  * Updated Italian language file (#2618)
+ * Optimize command handling
  *
  * 5.13.1 20180501
  * Fix JSON buffers size too small for execution in some situations (#2580)

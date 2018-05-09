@@ -228,7 +228,10 @@ boolean DomoticzCommand()
 
   if (!strncasecmp_P(XdrvMailbox.topic, PSTR(D_CMND_DOMOTICZ), dmtcz_len)) {  // Prefix
     int command_code = GetCommandCode(command, sizeof(command), XdrvMailbox.topic +dmtcz_len, kDomoticzCommands);
-    if ((CMND_IDX == command_code) && (XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_DOMOTICZ_IDX)) {
+    if (-1 == command_code) {
+      serviced = false;  // Unknown command
+    }
+    else if ((CMND_IDX == command_code) && (XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_DOMOTICZ_IDX)) {
       if (XdrvMailbox.payload >= 0) {
         Settings.domoticz_relay_idx[XdrvMailbox.index -1] = XdrvMailbox.payload;
         restart_flag = 2;
@@ -259,9 +262,10 @@ boolean DomoticzCommand()
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_DOMOTICZ "%s\":%d}"), command, Settings.domoticz_update_timer);
     }
-    else serviced = false;
+    else serviced = false;  // Unknown command
   }
-  else serviced = false;
+  else serviced = false;  // Unknown command
+  
   return serviced;
 }
 
