@@ -1145,6 +1145,8 @@ boolean LightCommand()
       uint8_t steps=(Settings.light_pixels/2)/5;
       uint16_t pixel;
 
+      if (!light_power) {
+
       for (pixel=0; pixel<Settings.light_pixels/2; pixel++) {
           // red
         Ws2812SetColor(pixel+1,red,tick,0,0,false);
@@ -1167,18 +1169,28 @@ boolean LightCommand()
         }
       }
       ledbarval=XdrvMailbox.payload;
-      uint16_t actpos=((double)abs(ledbarval)/500.0)*(double)(Settings.light_pixels/2);
+      if (ledbarval<-500) ledbarval=-500;
+      if (ledbarval>500) ledbarval=500;
+      sint16_t actpos=((double)ledbarval/500.0)*(double)(Settings.light_pixels/2);
       if (ledbarval==0) {
         Ws2812SetColor(Settings.light_pixels/2+1,0,0,16,0,true);
         Ws2812SetColor(Settings.light_pixels/2,0,0,16,0,true);
       } else {
+        uint16_t pos;
         if (ledbarval>0) {
-          Ws2812SetColor(Settings.light_pixels/2+actpos+1,0,0,64,0,true);
+          // starts with 30
+          pos=Settings.light_pixels/2+actpos;
+          if (pos>Settings.light_pixels-1) pos=Settings.light_pixels-1;
         } else {
-          Ws2812SetColor(Settings.light_pixels/2-actpos+1,0,0,64,0,true);
+          // starts with 29
+          pos=Settings.light_pixels/2-1+actpos;
+          if (pos>Settings.light_pixels-1) pos=0;
         }
+
+        Ws2812SetColor(pos+1,0,0,64,0,true);
       }
-    } 
+      }
+    }
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, ledbarval);
   }
 #endif
