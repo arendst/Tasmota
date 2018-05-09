@@ -100,6 +100,7 @@ const char kTasmotaCommands[] PROGMEM =
 int baudrate = APP_BAUDRATE;                // Serial interface baud rate
 SerialConfig serial_config = SERIAL_8N1;    // Serial interface configuration 8 data bits, No parity, 1 stop bit
 byte serial_in_byte;                        // Received byte
+uint8_t serial_local = 0;                   // Handle serial locally;
 unsigned long serial_polling_window = 0;    // Serial polling window
 int serial_in_byte_counter = 0;             // Index in receive buffer
 byte dual_hex_code = 0;                     // Sonoff dual input flag
@@ -2431,7 +2432,7 @@ void loop()
 
   if (millis() >= state_loop_timer) StateLoop();
 
-  SerialInput();
+  if (!serial_local) SerialInput();
 
 #ifdef USE_ARDUINO_OTA
   ArduinoOTA.handle();

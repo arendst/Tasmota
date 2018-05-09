@@ -91,6 +91,46 @@ uint8_t mhz_retry = MHZ19_RETRY_COUNT;
 uint8_t mhz_received = 0;
 uint8_t mhz_state = 0;
 
+uint8_t mhz_hard_serial = 0;
+
+/*********************************************************************************************/
+
+size_t MhzSerialAvailable()
+{
+  if (mhz_hard_serial) {
+    return Serial.available();
+  } else {
+    return MhzSerial->available();
+  }
+}
+
+void MhzSerialFlush()
+{
+  if (mhz_hard_serial) {
+    Serial.flush();
+  } else {
+    MhzSerial->flush();
+  }
+}
+
+size_t MhzSerialWrite(byte *array, size_t size)
+{
+  if (mhz_hard_serial) {
+    return Serial.write(array, size);
+  } else {
+    return MhzSerial->write(array, size);
+  }
+}
+
+int MhzSerialRead()
+{
+  if (mhz_hard_serial) {
+    return Serial.read();
+  } else {
+    return MhzSerial->read();
+  }
+}
+
 /*********************************************************************************************/
 
 byte MhzCalculateChecksum(byte *array)
@@ -117,7 +157,8 @@ size_t MhzSendCmd(byte command_id)
   mhz_send[7] = 0x00;
 */
   mhz_send[8] = MhzCalculateChecksum(mhz_send);
-  return MhzSerial->write(mhz_send, sizeof(mhz_send));
+
+  return MhzSerialWrite(mhz_send, sizeof(mhz_send));
 }
 
 /*********************************************************************************************/
@@ -160,7 +201,7 @@ bool MhzCheckAndApplyFilter(uint16_t ppm, uint8_t s)
 void MhzEverySecond()
 {
   mhz_state++;
-  if (8 == mhz_state) {                    // Every 8 sec start a MH-Z19 measuring cycle (which takes 1005 +5% ms)
+  if (8 == mhz_state) {                   // Every 8 sec start a MH-Z19 measuring cycle (which takes 1005 +5% ms)
     mhz_state = 0;
 
     if (mhz_retry) {
@@ -171,7 +212,7 @@ void MhzEverySecond()
       }
     }
 
-    MhzSerial->flush();                    // Sync reception
+    MhzSerialFlush();                    // Sync reception
     MhzSendCmd(MHZ_CMND_READPPM);
     mhz_received = 0;
   }
@@ -182,8 +223,8 @@ void MhzEverySecond()
     unsigned long start = millis();
     uint8_t counter = 0;
     while (((millis() - start) < MHZ19_READ_TIMEOUT) && (counter < 9)) {
-      if (MhzSerial->available() > 0) {
-        mhz_response[counter++] = MhzSerial->read();
+      if (MhzSerialAvailable() > 0) {
+        mhz_response[counter++] = MhzSerialRead();
       } else {
         delay(5);
       }
@@ -281,9 +322,19 @@ void MhzInit()
 {
   mhz_type = 0;
   if ((pin[GPIO_MHZ_RXD] < 99) && (pin[GPIO_MHZ_TXD] < 99)) {
-    MhzSerial = new TasmotaSerial(pin[GPIO_MHZ_RXD], pin[GPIO_MHZ_TXD]);
-    if (MhzSerial->begin(9600)) {
+    if ((1 == pin[GPIO_MHZ_RXD]) && (3 == pin[GPIO_MHZ_TXD])) {
+      AddLog_P(LOG_LEVEL_DEBUG, PSTR("MHZ: Hardware serial"));
+      baudrate = 9600;
+      SetSerialBaudrate(baudrate);
+      SetSerialLocal(true);
+      mhz_hard_serial = 1;
       mhz_type = 1;
+    } else {
+      MhzSerial = new TasmotaSerial(pin[GPIO_MHZ_RXD], pin[GPIO_MHZ_TXD]);
+      if (MhzSerial->begin(9600)) {
+        AddLog_P(LOG_LEVEL_DEBUG, PSTR("MHZ: Software serial"));
+        mhz_type = 1;
+      }
     }
   }
 }
