@@ -437,7 +437,12 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
 //    AddLog(LOG_LEVEL_DEBUG);
 
     int command_code = GetCommandCode(command, sizeof(command), type, kTasmotaCommands);
-    if (CMND_BACKLOG == command_code) {
+    if (-1 == command_code) {
+      if (!XdrvCommand(grpflg, type, index, dataBuf, data_len, payload, payload16)) {
+        type = NULL;  // Unknown command
+      }
+    }
+    else if (CMND_BACKLOG == command_code) {
       if (data_len) {
         uint8_t bl_pointer = (!backlog_pointer) ? MAX_BACKLOG -1 : backlog_pointer;
         bl_pointer--;
@@ -1065,12 +1070,7 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
       I2cScan(mqtt_data, sizeof(mqtt_data));
     }
 #endif  // USE_I2C
-    else if (XdrvCommand(grpflg, type, index, dataBuf, data_len, payload, payload16)) {
-      // Serviced
-    }
-    else {
-      type = NULL;
-    }
+    else type = NULL;  // Unknown command
   }
   if (type == NULL) {
     blinks = 201;

@@ -803,7 +803,10 @@ boolean EnergyCommand()
   unsigned long nvalue = 0;
 
   int command_code = GetCommandCode(command, sizeof(command), XdrvMailbox.topic, kEnergyCommands);
-  if (CMND_POWERDELTA == command_code) {
+  if (-1 == command_code) {
+    serviced = false;  // Unknown command
+  }
+  else if (CMND_POWERDELTA == command_code) {
     if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < 101)) {
       Settings.energy_power_delta = (1 == XdrvMailbox.payload) ? DEFAULT_POWER_DELTA : XdrvMailbox.payload;
     }
@@ -1005,16 +1008,16 @@ boolean EnergyCommand()
     unit = UNIT_HOUR;
   }
 #endif  // FEATURE_POWER_LIMIT
-  else {
-    serviced = false;
-  }
-  if (!status_flag) {
+  else serviced = false;  // Unknown command
+
+  if (serviced && !status_flag) {
     if (Settings.flag.value_units) {
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_LVALUE_SPACE_UNIT, command, nvalue, GetTextIndexed(sunit, sizeof(sunit), unit, kUnitNames));
     } else {
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_LVALUE, command, nvalue);
     }
   }
+
   return serviced;
 }
 
