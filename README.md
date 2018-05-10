@@ -128,10 +128,10 @@ There is **NO CONFLICT** with MQTT, Home Assistant, Web, etc. Tests show fast re
 * [ascillato](https://github.com/ascillato) ( Adrian Scillato )
 * [sisamiwe](https://github.com/sisamiwe) - Thanks for the guide on using KNX.
 * [envy](https://github.com/envy) ( Nico Weichbrodt ) - Thanks for the patience and help with the modifications to ESP_KNX_IP.
-* [arendst](https://github.com/arendst) ( Theo Arends )
-* [johannesbonn](https://github.com/johannesbonn)
-* [RocketSience](https://github.com/RocketSience)
-* [jeylites](https://github.com/jeylites)
+* [arendst](https://github.com/arendst) ( Theo Arends ) - Thanks for the guide on Tasmota and for the ideas.
+* [johannesbonn](https://github.com/johannesbonn) - Thanks for the patience on bug resolutions
+* [RocketSience](https://github.com/RocketSience) - Thanks for the patience on bug resolutions
+* [jeylites](https://github.com/jeylites) - Thanks for the patience on bug resolutions
 
 -----------------------------------------------------------------------------------------------------------------------------------
 
