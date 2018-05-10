@@ -29,51 +29,51 @@ extern "C" {
 
 // As the Arduino attachInterrupt has no parameter, lists of objects
 // and callbacks corresponding to each possible GPIO pins have to be defined
-TasmotaSerial *ObjList[16];
+TasmotaSerial *tms_obj_list[16];
 
 #ifdef TM_SERIAL_USE_IRAM
-void ICACHE_RAM_ATTR sws_isr_0() { ObjList[0]->rxRead(); };
-void ICACHE_RAM_ATTR sws_isr_1() { ObjList[1]->rxRead(); };
-void ICACHE_RAM_ATTR sws_isr_2() { ObjList[2]->rxRead(); };
-void ICACHE_RAM_ATTR sws_isr_3() { ObjList[3]->rxRead(); };
-void ICACHE_RAM_ATTR sws_isr_4() { ObjList[4]->rxRead(); };
-void ICACHE_RAM_ATTR sws_isr_5() { ObjList[5]->rxRead(); };
+void ICACHE_RAM_ATTR tms_isr_0() { tms_obj_list[0]->rxRead(); };
+void ICACHE_RAM_ATTR tms_isr_1() { tms_obj_list[1]->rxRead(); };
+void ICACHE_RAM_ATTR tms_isr_2() { tms_obj_list[2]->rxRead(); };
+void ICACHE_RAM_ATTR tms_isr_3() { tms_obj_list[3]->rxRead(); };
+void ICACHE_RAM_ATTR tms_isr_4() { tms_obj_list[4]->rxRead(); };
+void ICACHE_RAM_ATTR tms_isr_5() { tms_obj_list[5]->rxRead(); };
 // Pin 6 to 11 can not be used
-void ICACHE_RAM_ATTR sws_isr_12() { ObjList[12]->rxRead(); };
-void ICACHE_RAM_ATTR sws_isr_13() { ObjList[13]->rxRead(); };
-void ICACHE_RAM_ATTR sws_isr_14() { ObjList[14]->rxRead(); };
-void ICACHE_RAM_ATTR sws_isr_15() { ObjList[15]->rxRead(); };
+void ICACHE_RAM_ATTR tms_isr_12() { tms_obj_list[12]->rxRead(); };
+void ICACHE_RAM_ATTR tms_isr_13() { tms_obj_list[13]->rxRead(); };
+void ICACHE_RAM_ATTR tms_isr_14() { tms_obj_list[14]->rxRead(); };
+void ICACHE_RAM_ATTR tms_isr_15() { tms_obj_list[15]->rxRead(); };
 #else
-void sws_isr_0() { ObjList[0]->rxRead(); };
-void sws_isr_1() { ObjList[1]->rxRead(); };
-void sws_isr_2() { ObjList[2]->rxRead(); };
-void sws_isr_3() { ObjList[3]->rxRead(); };
-void sws_isr_4() { ObjList[4]->rxRead(); };
-void sws_isr_5() { ObjList[5]->rxRead(); };
+void tms_isr_0() { tms_obj_list[0]->rxRead(); };
+void tms_isr_1() { tms_obj_list[1]->rxRead(); };
+void tms_isr_2() { tms_obj_list[2]->rxRead(); };
+void tms_isr_3() { tms_obj_list[3]->rxRead(); };
+void tms_isr_4() { tms_obj_list[4]->rxRead(); };
+void tms_isr_5() { tms_obj_list[5]->rxRead(); };
 // Pin 6 to 11 can not be used
-void sws_isr_12() { ObjList[12]->rxRead(); };
-void sws_isr_13() { ObjList[13]->rxRead(); };
-void sws_isr_14() { ObjList[14]->rxRead(); };
-void sws_isr_15() { ObjList[15]->rxRead(); };
+void tms_isr_12() { tms_obj_list[12]->rxRead(); };
+void tms_isr_13() { tms_obj_list[13]->rxRead(); };
+void tms_isr_14() { tms_obj_list[14]->rxRead(); };
+void tms_isr_15() { tms_obj_list[15]->rxRead(); };
 #endif  // TM_SERIAL_USE_IRAM
 
 static void (*ISRList[16])() = {
-      sws_isr_0,
-      sws_isr_1,
-      sws_isr_2,
-      sws_isr_3,
-      sws_isr_4,
-      sws_isr_5,
+      tms_isr_0,
+      tms_isr_1,
+      tms_isr_2,
+      tms_isr_3,
+      tms_isr_4,
+      tms_isr_5,
       NULL,
       NULL,
       NULL,
       NULL,
       NULL,
       NULL,
-      sws_isr_12,
-      sws_isr_13,
-      sws_isr_14,
-      sws_isr_15
+      tms_isr_12,
+      tms_isr_13,
+      tms_isr_14,
+      tms_isr_15
 };
 
 TasmotaSerial::TasmotaSerial(int receive_pin, int transmit_pin)
@@ -91,7 +91,7 @@ TasmotaSerial::TasmotaSerial(int receive_pin, int transmit_pin)
     // Use getCycleCount() loop to get as exact timing as possible
     m_bit_time = ESP.getCpuFreqMHz() *1000000 /TM_SERIAL_BAUDRATE;
     pinMode(m_rx_pin, INPUT);
-    ObjList[m_rx_pin] = this;
+    tms_obj_list[m_rx_pin] = this;
     attachInterrupt(m_rx_pin, ISRList[m_rx_pin], FALLING);
   }
   if (m_tx_pin > -1) {

@@ -486,6 +486,14 @@ void SetSerialBaudrate(int baudrate)
   }
 }
 
+void SetSerialLocal(bool slocal)
+{
+  serial_local = slocal;
+  if (slocal) {
+    SetSeriallog(LOG_LEVEL_NONE);
+  }
+}
+
 uint32_t GetHash(const char *buffer, size_t size)
 {
   uint32_t hash = 0;
