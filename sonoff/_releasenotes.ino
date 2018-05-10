@@ -10,6 +10,7 @@
  * Add rule state test for On/Off in addition to 0/1 (#2613)
  * Add hardware serial option to MHZ-19 sensor (#2659)
  * Updated Italian language file (#2618)
+ * Update TasmotaSerial to 2.0.0 allowing Hardware Serial Fallback when correct connection are configured
  * Optimize command handling
  *
  * 5.13.1 20180501

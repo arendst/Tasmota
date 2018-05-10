@@ -25,6 +25,8 @@
  * MH-Z19 - CO2 sensor
  *
  * Adapted from EspEasy plugin P049 by Dmitry (rel22 ___ inbox.ru)
+ *
+ * Hardware Serial will be selected if GPIO1 = [MHZ Rx] and GPIO3 = [MHZ Tx]
  **********************************************************************************************
  * Filter usage
  *
@@ -91,46 +93,6 @@ uint8_t mhz_retry = MHZ19_RETRY_COUNT;
 uint8_t mhz_received = 0;
 uint8_t mhz_state = 0;
 
-uint8_t mhz_hard_serial = 0;
-
-/*********************************************************************************************/
-
-size_t MhzSerialAvailable()
-{
-  if (mhz_hard_serial) {
-    return Serial.available();
-  } else {
-    return MhzSerial->available();
-  }
-}
-
-void MhzSerialFlush()
-{
-  if (mhz_hard_serial) {
-    Serial.flush();
-  } else {
-    MhzSerial->flush();
-  }
-}
-
-size_t MhzSerialWrite(byte *array, size_t size)
-{
-  if (mhz_hard_serial) {
-    return Serial.write(array, size);
-  } else {
-    return MhzSerial->write(array, size);
-  }
-}
-
-int MhzSerialRead()
-{
-  if (mhz_hard_serial) {
-    return Serial.read();
-  } else {
-    return MhzSerial->read();
-  }
-}
-
 /*********************************************************************************************/
 
 byte MhzCalculateChecksum(byte *array)
@@ -158,7 +120,7 @@ size_t MhzSendCmd(byte command_id)
 */
   mhz_send[8] = MhzCalculateChecksum(mhz_send);
 
-  return MhzSerialWrite(mhz_send, sizeof(mhz_send));
+  return MhzSerial->write(mhz_send, sizeof(mhz_send));
 }
 
 /*********************************************************************************************/
@@ -212,7 +174,7 @@ void MhzEverySecond()
       }
     }
 
-    MhzSerialFlush();                    // Sync reception
+    MhzSerial->flush();                    // Sync reception
     MhzSendCmd(MHZ_CMND_READPPM);
     mhz_received = 0;
   }
@@ -223,8 +185,8 @@ void MhzEverySecond()
     unsigned long start = millis();
     uint8_t counter = 0;
     while (((millis() - start) < MHZ19_READ_TIMEOUT) && (counter < 9)) {
-      if (MhzSerialAvailable() > 0) {
-        mhz_response[counter++] = MhzSerialRead();
+      if (MhzSerial->available() > 0) {
+        mhz_response[counter++] = MhzSerial->read();
       } else {
         delay(5);
       }
@@ -322,20 +284,12 @@ void MhzInit()
 {
   mhz_type = 0;
   if ((pin[GPIO_MHZ_RXD] < 99) && (pin[GPIO_MHZ_TXD] < 99)) {
-    if ((1 == pin[GPIO_MHZ_RXD]) && (3 == pin[GPIO_MHZ_TXD])) {
-      AddLog_P(LOG_LEVEL_DEBUG, PSTR("MHZ: Hardware serial"));
-      baudrate = 9600;
-      SetSerialBaudrate(baudrate);
-      SetSerialLocal(true);
-      mhz_hard_serial = 1;
+    MhzSerial = new TasmotaSerial(pin[GPIO_MHZ_RXD], pin[GPIO_MHZ_TXD], 1);
+    if (MhzSerial->begin(9600)) {
+      if (MhzSerial->hardwareSerial()) { ClaimSerial(); }
       mhz_type = 1;
-    } else {
-      MhzSerial = new TasmotaSerial(pin[GPIO_MHZ_RXD], pin[GPIO_MHZ_TXD]);
-      if (MhzSerial->begin(9600)) {
-        AddLog_P(LOG_LEVEL_DEBUG, PSTR("MHZ: Software serial"));
-        mhz_type = 1;
-      }
     }
+
   }
 }
 
