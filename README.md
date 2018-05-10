@@ -102,6 +102,7 @@ We can configure to send the value of temperature or humidity every teleperiod. 
 - [x] Add Feature to Load Config
 - [x] Add Log Info
 - [x] Complete all the language files with keys
+- [ ] Add option for changing default Multicast KNX IP and PORT
 - [ ] Add options for increase communication reliability 
 - [ ] Add support for Neo Pixel
 - [ ] Add support for other devices supported by Tasmota
