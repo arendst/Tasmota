@@ -9,6 +9,8 @@ If you like **Sonoff Tasmota KNX**, give it a star, or fork it and contribute!
 [![GitHub stars](https://img.shields.io/github/stars/ascillato/Sonoff-Tasmota_KNX.svg?style=social&label=Star)](https://github.com/ascillato/Sonoff-Tasmota_KNX/stargazers)
 [![GitHub forks](https://img.shields.io/github/forks/ascillato/Sonoff-Tasmota_KNX.svg?style=social&label=Fork)](https://github.com/ascillato/Sonoff-Tasmota_KNX/network)
 
+Any help is very welcome.
+
 ## KNX Explanation ##
 
 [<img src="https://www.knx.org/wGlobal/wGlobal/layout/images/knx-logo.png" />](https://www.knx.org/knx-en/knx/association/what-is-knx/index.php)
@@ -105,6 +107,8 @@ We can configure to send the value of temperature or humidity every teleperiod. 
 - [ ] Add option for changing default Multicast KNX IP and PORT
 - [ ] Add options for increase communication reliability (re send telegrams, check for ack)
 - [ ] Add options for multicast forced reconnection (needed for some routers that have IGMP conflict with actual esp8266 lib v2.3.0 to v2.4.1, and lwIP v1.4 to v2.0)
+- [ ] Add option to repeat all KNX multicast broadcast (Tasmota to Tasmota communications) to KNX-IP Tunneling
+- [ ] Add option to support ETS Programming
 - [ ] Add support for Neo Pixel
 - [ ] Add support for other devices supported by Tasmota
 - [ ] Optimize code to reduce Flash and RAM
@@ -117,6 +121,7 @@ We can configure to send the value of temperature or humidity every teleperiod. 
 * Add entries to the file _/sonoff/sonoff.ino_
 * Add entries to the file _/sonoff/sonoff.h_
 * Add entries to the file _/sonoff/settings.h_
+* Add entries to the file _/sonoff/support.ino_
 * Add entries to sensor files
 * Add entries to language files
 
