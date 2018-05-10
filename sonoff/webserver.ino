@@ -25,6 +25,14 @@
  * Based on source by AlexT (https://github.com/tzapu)
 \*********************************************************************************************/
 
+#ifdef USE_RF_FLASH
+#include <c2.h>
+#include <ihx.h>
+
+#define EFM8BB1_MAX_SZ 8192
+uint8_t *efm8bb1_update = NULL;
+#endif
+
 #define STR_HELPER(x) #x
 #define STR(x) STR_HELPER(x)
 
@@ -293,6 +301,7 @@ const char HTTP_FORM_RST_UPG[] PROGMEM =
   "</fieldset>"
   "</div>"
   "<div id='f2' name='f2' style='display:none;text-align:center;'><b>" D_UPLOAD_STARTED " ...</b></div>";
+
 const char HTTP_FORM_CMND[] PROGMEM =
   "<br/><textarea readonly id='t1' name='t1' cols='340' wrap='off'></textarea><br/><br/>"
   "<form method='get' onsubmit='return l(1);'>"
@@ -1186,7 +1195,10 @@ void HandleRestoreConfiguration()
   ShowPage(page);
 
   upload_error = 0;
-  upload_file_type = 1;
+  #define ESP8266_FW_FILE 0
+  #define ESP8266_CFG_FILE 1
+  #define EFM8BB1_RF_FW_FILE 2
+  upload_file_type = ESP8266_CFG_FILE;
 }
 
 void HandleUpgradeFirmware()
@@ -1205,7 +1217,7 @@ void HandleUpgradeFirmware()
   ShowPage(page);
 
   upload_error = 0;
-  upload_file_type = 0;
+  upload_file_type = ESP8266_FW_FILE;
 }
 
 void HandleUpgradeFirmwareStart()
@@ -1270,6 +1282,10 @@ void HandleUploadDone()
       case 7: strncpy_P(error, PSTR(D_UPLOAD_ERR_7), sizeof(error)); break;
       case 8: strncpy_P(error, PSTR(D_UPLOAD_ERR_8), sizeof(error)); break;
       case 9: strncpy_P(error, PSTR(D_UPLOAD_ERR_9), sizeof(error)); break;
+      case 10: strncpy_P(error, PSTR(D_UPLOAD_ERR_10), sizeof(error)); break;
+      case 11: strncpy_P(error, PSTR(D_UPLOAD_ERR_11), sizeof(error)); break;
+      case 12: strncpy_P(error, PSTR(D_UPLOAD_ERR_12), sizeof(error)); break;
+      case 13: strncpy_P(error, PSTR(D_UPLOAD_ERR_13), sizeof(error)); break;
       default:
         snprintf_P(error, sizeof(error), PSTR(D_UPLOAD_ERROR_CODE " %d"), upload_error);
     }
@@ -1280,7 +1296,12 @@ void HandleUploadDone()
   } else {
     page += F("green'>" D_SUCCESSFUL "</font></b><br/>");
     page += FPSTR(HTTP_MSG_RSTRT);
-    restart_flag = 2;
+
+    // FIXME: Check this
+    // No need to restart ESP8266 when flashing the RF
+    if (upload_file_type != EFM8BB1_RF_FW_FILE) {
+      restart_flag = 2;
+    }
   }
   SettingsNewFree();
   page += F("</div><br/>");
@@ -1325,16 +1346,17 @@ void HandleUploadLoop()
       AriluxRfDisable();  // Prevent restart exception on Arilux Interrupt routine
 #endif  // USE_ARILUX_RF
       if (Settings.flag.mqtt_enabled) MqttDisconnect();
-      uint32_t maxSketchSpace = (ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000;
-      if (!Update.begin(maxSketchSpace)) {         //start with max available size
-        upload_error = 2;
-        return;
-      }
+      // uint32_t maxSketchSpace = (ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000;
+      // if (!Update.begin(maxSketchSpace)) {         //start with max available size
+      //   upload_error = 2;
+      //   return;
+      //}
     }
     upload_progress_dot_count = 0;
   } else if (!upload_error && (UPLOAD_FILE_WRITE == upload.status)) {
-    if (0 == upload.totalSize) {
-      if (upload_file_type) {
+    if (0 == upload.totalSize)
+    {
+      if (upload_file_type == ESP8266_CFG_FILE) {
         if (upload.buf[0] != CONFIG_FILE_SIGN) {
           upload_error = 8;
           return;
@@ -1342,19 +1364,34 @@ void HandleUploadLoop()
         config_xor_on = upload.buf[1];
         config_block_count = 0;
       } else {
-        if (upload.buf[0] != 0xE9) {
-          upload_error = 3;
-          return;
+        uint8_t err;
+        // Check if this is a RF bridge DW file
+        if (upload.buf[0] == ':') {
+          upload_file_type = EFM8BB1_RF_FW_FILE;
+          efm8bb1_update = (uint8_t *) malloc(EFM8BB1_MAX_SZ);
+
+          if (efm8bb1_update == NULL) {
+            //FIXME: Use better error
+            upload_error = 2;
+            return;
+          }
+        } else {
+          // Is this an ESP8266 firmware?
+          if (upload.buf[0] != 0xE9) {
+            upload_error = 3;
+            return;
+          } else {
+            uint32_t bin_flash_size = ESP.magicFlashChipSize((upload.buf[3] & 0xf0) >> 4);
+            if (bin_flash_size > ESP.getFlashChipRealSize()) {
+              upload_error = 4;
+              return;
+            }
+            upload.buf[2] = 3;  // Force DOUT - ESP8285
+          }
         }
-        uint32_t bin_flash_size = ESP.magicFlashChipSize((upload.buf[3] & 0xf0) >> 4);
-        if(bin_flash_size > ESP.getFlashChipRealSize()) {
-          upload_error = 4;
-          return;
-        }
-        upload.buf[2] = 3;  // Force DOUT - ESP8285
       }
     }
-    if (upload_file_type) { // config
+    if (upload_file_type == ESP8266_CFG_FILE) { // config
       if (!upload_error) {
         if (upload.currentSize > (sizeof(Settings) - (config_block_count * HTTP_UPLOAD_BUFLEN))) {
           upload_error = 9;
@@ -1363,6 +1400,18 @@ void HandleUploadLoop()
         memcpy(settings_new + (config_block_count * HTTP_UPLOAD_BUFLEN), upload.buf, upload.currentSize);
         config_block_count++;
       }
+    } else if (upload_file_type == EFM8BB1_RF_FW_FILE) {
+      //FIXME: is totalSize ever != 0 at this point?
+      if ((upload.totalSize > EFM8BB1_MAX_SZ) || (upload.currentSize > EFM8BB1_MAX_SZ)) {
+        upload_error = 9;
+        free(efm8bb1_update);
+        efm8bb1_update = NULL;
+        return;
+      }
+
+      memcpy(efm8bb1_update, upload.buf, upload.currentSize);
+      efm8bb1_update += upload.currentSize;
+
     } else {  // firmware
       if (!upload_error && (Update.write(upload.buf, upload.currentSize) != upload.currentSize)) {
         upload_error = 5;
@@ -1378,6 +1427,7 @@ void HandleUploadLoop()
     if (_serialoutput && (upload_progress_dot_count % 80)) {
       Serial.println();
     }
+
     if (upload_file_type) {
       if (config_xor_on) {
         for (uint16_t i = 2; i < sizeof(Settings); i++) {
@@ -1389,12 +1439,99 @@ void HandleUploadLoop()
       memcpy((char*)&Settings +8, settings_new +8, 4);  // Restore version and auto upgrade
       SettingsNewFree();
     } else {
+    if (upload_file_type == EFM8BB1_RF_FW_FILE) {
+      uint8_t err;
+
+      if ((upload.totalSize > EFM8BB1_MAX_SZ) || (upload.currentSize > EFM8BB1_MAX_SZ)) {
+        upload_error = 9;
+        free(efm8bb1_update);
+        efm8bb1_update = NULL;
+        return;
+      }
+
+      // Rewind to start of buffer
+      efm8bb1_update -= upload.totalSize;
+
+      pinMode(PIN_C2CK, OUTPUT);
+      pinMode(PIN_C2D,  INPUT);
+
+      err = c2_programming_init();
+      if (err != C2_SUCCESS) {
+        upload_error = 10;
+        free(efm8bb1_update);
+        efm8bb1_update = NULL;
+        return;
+      }
+
+      err = c2_device_erase();
+      Serial.printf("RF erase result: %s\n", c2_print_status_by_name(err));
+      if (err != C2_SUCCESS) {
+        upload_error = 11;
+        free(efm8bb1_update);
+        efm8bb1_update = NULL;
+        return;
+      }
+
+      // Binary contains a set of commands, decode and program each one
+      uint16_t cmd_start = 0;
+      uint16_t cmd_end;
+
+      // Skip first byte, we already know if is ':' of the first command
+      for (int i = 1; i < upload.totalSize; i++) {
+        // Find start of command
+        if ((efm8bb1_update[i] == ':')|| (i == (upload.totalSize - 1))) {
+          // Found start of next command or end of fw
+          cmd_end = i - 1;
+
+          err = ihx_decode(efm8bb1_update + cmd_start, cmd_end - cmd_start);
+          if (err != IHX_SUCCESS) {
+            Serial.printf("Hex decoding failed with error %d\n", err);
+            free(efm8bb1_update);
+            efm8bb1_update = NULL;
+
+            upload_error = 13;
+            return;
+          } else {
+            ihx_t *h = (ihx_t*) (efm8bb1_update + cmd_start);
+
+            if (h->record_type == IHX_RT_DATA) {
+              int retries = 5;
+              uint16_t address = h->address_high * 0x100 + h->address_low;
+
+              do {
+                err = c2_programming_init();
+                err = c2_block_write(address, h->data, h->len);
+              } while (err != C2_SUCCESS && retries--);
+            } else if (h->record_type == IHX_RT_END_OF_FILE) {
+              Serial.println("RF firmware upgrade done, restarting RF chip");
+              err = c2_reset();
+            }
+
+            if (err != C2_SUCCESS) {
+              upload_error = 12;
+              free(efm8bb1_update);
+              efm8bb1_update = NULL;
+              return;
+            }
+
+            // Set start of next command
+            cmd_start = i;
+          }
+        }
+      }
+
+      // RF FW flash done
+      free(efm8bb1_update);
+      efm8bb1_update = NULL;
+
+    } else if (!upload_file_type) {
       if (!Update.end(true)) { // true to set the size to the current progress
         if (_serialoutput) { Update.printError(Serial); }
         upload_error = 6;
         return;
       }
     }
+
     if (!upload_error) {
       snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_UPLOAD D_SUCCESSFUL " %u bytes. " D_RESTARTING), upload.totalSize);
       AddLog(LOG_LEVEL_INFO);
