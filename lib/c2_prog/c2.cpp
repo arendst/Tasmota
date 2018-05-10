@@ -21,9 +21,10 @@ static bool c2_bit(bool b) {
 
 // Layer 1: C2D Register read/write
 void c2_address_write(uint8_t address) {
+#ifdef C2_DEBUG
   Serial.print("AW");
   Serial.println(address, HEX);
-
+#endif
   // start
   c2_bit(true);
   C2D_enable(true);
@@ -66,16 +67,18 @@ uint8_t c2_address_read() {
   }
 
   // Stop is implied
-
+#ifdef C2_DEBUG
   Serial.print("AR");
   Serial.println(a, HEX);
-
+#endif
   return a;
 }
 
 uint8_t c2_data_write(uint32_t d, uint8_t bytes) {
+#ifdef C2_DEBUG
   Serial.print("DW");
   Serial.println(d, HEX);
+#endif
 
   // start
   c2_bit(true);
@@ -145,9 +148,10 @@ uint8_t c2_data_read(uint32_t &d, uint8_t bytes) {
   }
 
   // Stop is implied
-
+#ifdef C2D_DEBUG
   Serial.print("DR");
   Serial.println(d, HEX);
+#endif
   return C2_SUCCESS;
 }
 
