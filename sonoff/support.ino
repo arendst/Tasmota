@@ -821,6 +821,9 @@ void WifiCheck(uint8_t param)
         }
 #endif  // USE_EMULATION
 #endif  // USE_WEBSERVER
+#ifdef USE_KNX
+      KNXStart();
+#endif // USE_KNX        
       } else {
 #if defined(USE_WEBSERVER) && defined(USE_EMULATION)
         UdpDisconnect();
