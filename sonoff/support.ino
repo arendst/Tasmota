@@ -490,12 +490,13 @@ void SetSerialBaudrate(int baudrate)
   }
 }
 
-void SetSerialLocal(bool slocal)
+void ClaimSerial()
 {
-  serial_local = slocal;
-  if (slocal) {
-    SetSeriallog(LOG_LEVEL_NONE);
-  }
+  serial_local = 1;
+  AddLog_P(LOG_LEVEL_INFO, PSTR("SNS: Hardware Serial"));
+  SetSeriallog(LOG_LEVEL_NONE);
+  baudrate = Serial.baudRate();
+  Settings.baudrate = baudrate / 1200;
 }
 
 uint32_t GetHash(const char *buffer, size_t size)

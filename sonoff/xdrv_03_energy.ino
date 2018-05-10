@@ -408,6 +408,8 @@ void CseEverySecond()
  *
  * Source: Victor Ferrer https://github.com/vicfergar/Sonoff-MQTT-OTA-Arduino
  * Based on: PZEM004T library https://github.com/olehs/PZEM004T
+ *
+ * Hardware Serial will be selected if GPIO1 = [PZEM Rx] and [GPIO3 = PZEM Tx]
 \*********************************************************************************************/
 
 #include <TasmotaSerial.h>
@@ -433,6 +435,8 @@ TasmotaSerial *PzemSerial;
 #define RESP_POWER_ALARM (uint8_t)0xA5
 
 #define PZEM_DEFAULT_READ_TIMEOUT 500
+
+/*********************************************************************************************/
 
 struct PZEMCommand {
   uint8_t command;
@@ -562,12 +566,6 @@ void PzemEvery200ms()
   else {
     pzem_sendRetry--;
   }
-}
-
-bool PzemInit()
-{
-  PzemSerial = new TasmotaSerial(pin[GPIO_PZEM_RX], pin[GPIO_PZEM_TX]);
-  return PzemSerial->begin();
 }
 
 /********************************************************************************************/
@@ -1033,7 +1031,7 @@ void EnergyDrvInit()
     serial_config = SERIAL_8E1;
     energy_flg = ENERGY_CSE7766;
 #ifdef USE_PZEM004T
-  } else if ((pin[GPIO_PZEM_RX] < 99) && (pin[GPIO_PZEM_TX])) {  // Any device with a Pzem004T
+  } else if ((pin[GPIO_PZEM_RX] < 99) && (pin[GPIO_PZEM_TX] < 99)) {  // Any device with a Pzem004T
     energy_flg = ENERGY_PZEM004T;
 #endif  // USE_PZEM004T
   }
@@ -1044,8 +1042,13 @@ void EnergySnsInit()
   if (ENERGY_HLW8012 == energy_flg) HlwInit();
 
 #ifdef USE_PZEM004T
-  if ((ENERGY_PZEM004T == energy_flg) && !PzemInit()) {  // PzemInit needs to be done here as earlier (serial) interrupts may lead to Exceptions
-    energy_flg = ENERGY_NONE;
+  if (ENERGY_PZEM004T == energy_flg) {  // Software serial init needs to be done here as earlier (serial) interrupts may lead to Exceptions
+    PzemSerial = new TasmotaSerial(pin[GPIO_PZEM_RX], pin[GPIO_PZEM_TX], 1);
+    if (PzemSerial->begin(9600)) {
+      if (PzemSerial->hardwareSerial()) { ClaimSerial(); }
+    } else {
+      energy_flg = ENERGY_NONE;
+    }
   }
 #endif  // USE_PZEM004T
 

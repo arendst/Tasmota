@@ -37,9 +37,10 @@
 
 class TasmotaSerial : public Stream {
   public:
-    TasmotaSerial(int receive_pin, int transmit_pin);
+    TasmotaSerial(int receive_pin, int transmit_pin, bool hardware_fallback = false);
     bool begin(long speed);
     bool begin();
+    bool hardwareSerial();
     int peek();
 
     virtual size_t write(uint8_t byte);
@@ -57,6 +58,7 @@ class TasmotaSerial : public Stream {
 
     // Member variables
     bool m_valid;
+    bool m_hardserial;
     bool m_high_speed;
     int m_rx_pin;
     int m_tx_pin;
