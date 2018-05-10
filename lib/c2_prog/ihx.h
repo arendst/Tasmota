@@ -31,7 +31,7 @@ struct ihx_t {
 #define IHX_SUCCESS 0x00
 #define IHX_ERROR   0xFF
 
-extern uint8_t ihx_decode(uint8_t *buff);
+extern uint8_t ihx_decode(uint8_t *buff, uint16_t slen);
 
 #endif // IHX_H
 
