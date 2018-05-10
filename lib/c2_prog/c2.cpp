@@ -634,5 +634,16 @@ uint8_t c2_sfr_read_paged(uint8_t address, uint8_t &v) {
   return C2_SUCCESS;
 }
 
+const char *c2_print_status_by_name(uint8_t ch) {
+  switch (ch) {
+    case C2_SUCCESS:       return "Success";
+    case C2_SHIFT_TIMEOUT: return "Shift wait timeout error";
+    case C2_POLL_TIMEOUT:  return "Register poll timeout error";
+    case C2_CMD_ERROR:     return "In-command error";
+    case C2_BROKEN_LINK:   return "Broken link, address read failed";
+    default:               return "unknownl error";
+  }
+}
+
 // This is to enforce arduino-like formatting in kate
 // kate: space-indent on; indent-width 2; mixed-indent off; indent-mode cstyle;

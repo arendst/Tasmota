@@ -136,4 +136,6 @@ uint8_t c2_sfr_write_paged(uint8_t address, uint8_t data);
 uint8_t c2_sfr_read_non_paged(uint8_t address, uint8_t &data);
 uint8_t c2_sfr_read_paged(uint8_t address, uint8_t &data);
 
+const char *c2_print_status_by_name(uint8_t ch);
+
 #endif // C2_H
