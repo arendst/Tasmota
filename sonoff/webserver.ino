@@ -1282,10 +1282,14 @@ void HandleUploadDone()
       case 7: strncpy_P(error, PSTR(D_UPLOAD_ERR_7), sizeof(error)); break;
       case 8: strncpy_P(error, PSTR(D_UPLOAD_ERR_8), sizeof(error)); break;
       case 9: strncpy_P(error, PSTR(D_UPLOAD_ERR_9), sizeof(error)); break;
+#ifdef USE_RF_FLASH
       case 10: strncpy_P(error, PSTR(D_UPLOAD_ERR_10), sizeof(error)); break;
       case 11: strncpy_P(error, PSTR(D_UPLOAD_ERR_11), sizeof(error)); break;
       case 12: strncpy_P(error, PSTR(D_UPLOAD_ERR_12), sizeof(error)); break;
       case 13: strncpy_P(error, PSTR(D_UPLOAD_ERR_13), sizeof(error)); break;
+      case 14: strncpy_P(error, PSTR(D_UPLOAD_ERR_14), sizeof(error)); break;
+      case 15: strncpy_P(error, PSTR(D_UPLOAD_ERR_15), sizeof(error)); break;
+#endif
       default:
         snprintf_P(error, sizeof(error), PSTR(D_UPLOAD_ERROR_CODE " %d"), upload_error);
     }
@@ -1367,14 +1371,19 @@ void HandleUploadLoop()
         uint8_t err;
         // Check if this is a RF bridge DW file
         if (upload.buf[0] == ':') {
+#ifdef USE_RF_FLASH
           upload_file_type = EFM8BB1_RF_FW_FILE;
           efm8bb1_update = (uint8_t *) malloc(EFM8BB1_MAX_SZ);
 
           if (efm8bb1_update == NULL) {
-            //FIXME: Use better error
-            upload_error = 2;
+            upload_error = 15;
             return;
           }
+#endif
+#ifndef USE_RF_FLASH
+          upload_error = 14;
+          return;
+#endif
         } else {
           // Is this an ESP8266 firmware?
           if (upload.buf[0] != 0xE9) {
@@ -1401,6 +1410,7 @@ void HandleUploadLoop()
         config_block_count++;
       }
     } else if (upload_file_type == EFM8BB1_RF_FW_FILE) {
+#ifdef USE_RF_FLASH
       //FIXME: is totalSize ever != 0 at this point?
       if ((upload.totalSize > EFM8BB1_MAX_SZ) || (upload.currentSize > EFM8BB1_MAX_SZ)) {
         upload_error = 9;
@@ -1411,6 +1421,7 @@ void HandleUploadLoop()
 
       memcpy(efm8bb1_update, upload.buf, upload.currentSize);
       efm8bb1_update += upload.currentSize;
+#endif
 
     } else {  // firmware
       if (!upload_error && (Update.write(upload.buf, upload.currentSize) != upload.currentSize)) {
@@ -1440,6 +1451,7 @@ void HandleUploadLoop()
       SettingsNewFree();
     } else {
     if (upload_file_type == EFM8BB1_RF_FW_FILE) {
+#ifdef USE_RF_FLASH
       uint8_t err;
 
       if ((upload.totalSize > EFM8BB1_MAX_SZ) || (upload.currentSize > EFM8BB1_MAX_SZ)) {
@@ -1523,6 +1535,7 @@ void HandleUploadLoop()
       // RF FW flash done
       free(efm8bb1_update);
       efm8bb1_update = NULL;
+#endif
 
     } else if (!upload_file_type) {
       if (!Update.end(true)) { // true to set the size to the current progress
