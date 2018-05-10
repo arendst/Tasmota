@@ -198,7 +198,10 @@ boolean SonoffBridgeCommand()
   boolean serviced = true;
 
   int command_code = GetCommandCode(command, sizeof(command), XdrvMailbox.topic, kSonoffBridgeCommands);
-  if ((command_code >= CMND_RFSYNC) && (command_code <= CMND_RFCODE)) {  // RfSync, RfLow, RfHigh, RfHost and RfCode
+  if (-1 == command_code) {
+    serviced = false;  // Unknown command
+  }
+  else if ((command_code >= CMND_RFSYNC) && (command_code <= CMND_RFCODE)) {  // RfSync, RfLow, RfHigh, RfHost and RfCode
     char *p;
     char stemp [10];
     uint32_t code = 0;
@@ -290,7 +293,8 @@ boolean SonoffBridgeCommand()
     } else {
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, sonoff_bridge_learn_key, D_JSON_LEARNING_ACTIVE);
     }
-  } else serviced = false;
+  } else serviced = false;  // Unknown command
+  
   return serviced;
 }
 

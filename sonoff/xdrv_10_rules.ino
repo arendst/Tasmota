@@ -391,7 +391,10 @@ boolean RulesCommand()
   uint8_t index = XdrvMailbox.index;
 
   int command_code = GetCommandCode(command, sizeof(command), XdrvMailbox.topic, kRulesCommands);
-  if (CMND_RULE == command_code) {
+  if (-1 == command_code) {
+    serviced = false;  // Unknown command
+  }
+  else if (CMND_RULE == command_code) {
     if ((XdrvMailbox.data_len > 0) && (XdrvMailbox.data_len < sizeof(Settings.rules))) {
       if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 6)) {
         switch (XdrvMailbox.payload) {
@@ -447,7 +450,7 @@ boolean RulesCommand()
     }
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, D_JSON_DONE);
   }
-  else serviced = false;
+  else serviced = false;  // Unknown command
 
   return serviced;
 }

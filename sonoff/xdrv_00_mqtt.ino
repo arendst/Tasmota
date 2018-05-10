@@ -541,7 +541,10 @@ bool MqttCommand()
   char *dataBuf = XdrvMailbox.data;
 
   int command_code = GetCommandCode(command, sizeof(command), type, kMqttCommands);
-  if (CMND_MQTTHOST == command_code) {
+  if (-1 == command_code) {
+    serviced = false;  // Unknown command
+  }
+  else if (CMND_MQTTHOST == command_code) {
     if ((data_len > 0) && (data_len < sizeof(Settings.mqtt_host))) {
       strlcpy(Settings.mqtt_host, (!strcmp(dataBuf,"0")) ? "" : (1 == payload) ? MQTT_HOST : dataBuf, sizeof(Settings.mqtt_host));
       restart_flag = 2;
@@ -740,7 +743,8 @@ bool MqttCommand()
     }
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, GetStateText(Settings.flag.mqtt_sensor_retain));
   }
-  else serviced = false;
+  else serviced = false;  // Unknown command
+  
   return serviced;
 }
 
