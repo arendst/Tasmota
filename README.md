@@ -125,9 +125,13 @@ There is **NO CONFLICT** with MQTT, Home Assistant, Web, etc. Tests show fast re
 
 ## Contributors ##
 
-* Adrian Scillato [ascillato](https://github.com/ascillato)
-* Sisamiwe [sisamiwe](https://github.com/sisamiwe) - Thanks for the guide on using KNX.
-* Nico Weichbrodt [envy](https://github.com/envy) - Thanks for the patience and help with the modifications to ESP_KNX_IP.
+* [ascillato](https://github.com/ascillato) ( Adrian Scillato )
+* [sisamiwe](https://github.com/sisamiwe) - Thanks for the guide on using KNX.
+* [envy](https://github.com/envy) ( Nico Weichbrodt ) - Thanks for the patience and help with the modifications to ESP_KNX_IP.
+* [arendst](https://github.com/arendst) ( Theo Arends )
+* [johannesbonn](https://github.com/johannesbonn)
+* [RocketSience](https://github.com/RocketSience)
+* [jeylites](https://github.com/jeylites)
 
 -----------------------------------------------------------------------------------------------------------------------------------
 
