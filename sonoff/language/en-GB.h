@@ -324,6 +324,8 @@
 #define D_UPLOAD_ERR_11 "Failed to erase RF chip"
 #define D_UPLOAD_ERR_12 "Failed to write to RF chip"
 #define D_UPLOAD_ERR_13 "Failed to decode RF firmware"
+#define D_UPLOAD_ERR_14 "This tasmota firmware does not support upgrade of RF chip"
+#define D_UPLOAD_ERR_15 "Unable to allocate memory to store new RF firmware"
 
 #define D_UPLOAD_ERROR_CODE "Upload error code"
 
