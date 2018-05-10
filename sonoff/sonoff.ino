@@ -100,6 +100,7 @@ const char kTasmotaCommands[] PROGMEM =
 int baudrate = APP_BAUDRATE;                // Serial interface baud rate
 SerialConfig serial_config = SERIAL_8N1;    // Serial interface configuration 8 data bits, No parity, 1 stop bit
 byte serial_in_byte;                        // Received byte
+uint8_t serial_local = 0;                   // Handle serial locally;
 unsigned long serial_polling_window = 0;    // Serial polling window
 int serial_in_byte_counter = 0;             // Index in receive buffer
 byte dual_hex_code = 0;                     // Sonoff dual input flag
@@ -437,7 +438,12 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
 //    AddLog(LOG_LEVEL_DEBUG);
 
     int command_code = GetCommandCode(command, sizeof(command), type, kTasmotaCommands);
-    if (CMND_BACKLOG == command_code) {
+    if (-1 == command_code) {
+      if (!XdrvCommand(grpflg, type, index, dataBuf, data_len, payload, payload16)) {
+        type = NULL;  // Unknown command
+      }
+    }
+    else if (CMND_BACKLOG == command_code) {
       if (data_len) {
         uint8_t bl_pointer = (!backlog_pointer) ? MAX_BACKLOG -1 : backlog_pointer;
         bl_pointer--;
@@ -1065,12 +1071,7 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
       I2cScan(mqtt_data, sizeof(mqtt_data));
     }
 #endif  // USE_I2C
-    else if (XdrvCommand(grpflg, type, index, dataBuf, data_len, payload, payload16)) {
-      // Serviced
-    }
-    else {
-      type = NULL;
-    }
+    else type = NULL;  // Unknown command
   }
   if (type == NULL) {
     blinks = 201;
@@ -2431,7 +2432,7 @@ void loop()
 
   if (millis() >= state_loop_timer) StateLoop();
 
-  SerialInput();
+  if (!serial_local) SerialInput();
 
 #ifdef USE_ARDUINO_OTA
   ArduinoOTA.handle();

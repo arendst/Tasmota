@@ -345,7 +345,10 @@ boolean TimerCommand()
 
   UpperCase(dataBufUc, XdrvMailbox.data);
   int command_code = GetCommandCode(command, sizeof(command), XdrvMailbox.topic, kTimerCommands);
-  if ((CMND_TIMER == command_code) && (index > 0) && (index <= MAX_TIMERS)) {
+  if (-1 == command_code) {
+    serviced = false;  // Unknown command
+  }
+  else if ((CMND_TIMER == command_code) && (index > 0) && (index <= MAX_TIMERS)) {
     uint8_t error = 0;
     if (XdrvMailbox.data_len) {
       if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= MAX_TIMERS)) {
@@ -484,7 +487,7 @@ boolean TimerCommand()
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, lbuff);
   }
 #endif
-  else serviced = false;
+  else serviced = false;  // Unknown command
 
   return serviced;
 }

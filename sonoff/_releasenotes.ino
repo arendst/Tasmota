@@ -1,12 +1,16 @@
 /* 5.13.1a
  * Change user_config.h otaurl to http://sonoff.maddox.co.uk/tasmota/sonoff.bin (#2588, #2602)
+ * Fix configuration restore regression from 5.13.1
  * Fix compile error when ADC is enabled and Rules are disabled (#2608)
  * Fix rule power trigger when no backlog command is used (#2613)
  * Fix several timer data input and output errors (#2597, #2620)
  * Fix KNX config error (#2628)
+ * Fix sensor MHZ-19 vanishing data over time (#2659)
  * Add Portuguese in Brazil language file
  * Add rule state test for On/Off in addition to 0/1 (#2613)
+ * Add hardware serial option to MHZ-19 sensor (#2659)
  * Updated Italian language file (#2618)
+ * Optimize command handling
  *
  * 5.13.1 20180501
  * Fix JSON buffers size too small for execution in some situations (#2580)
