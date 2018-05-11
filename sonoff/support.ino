@@ -35,6 +35,10 @@ byte oswatch_blocked_loop = 0;
 //void OsWatchTicker() ICACHE_RAM_ATTR;
 #endif  // USE_WS2812_DMA
 
+#ifdef USE_KNX
+bool knx_started = false;
+#endif  // USE_KNX
+
 void OsWatchTicker()
 {
   unsigned long t = millis();
@@ -822,11 +826,20 @@ void WifiCheck(uint8_t param)
         }
 #endif  // USE_EMULATION
 #endif  // USE_WEBSERVER
+#ifdef USE_KNX
+        if (!knx_started && Settings.flag.knx_enabled) {
+          KNXStart();
+          knx_started = true;
+        }
+#endif  // USE_KNX
       } else {
 #if defined(USE_WEBSERVER) && defined(USE_EMULATION)
         UdpDisconnect();
 #endif  // USE_EMULATION
         mdns_begun = false;
+#ifdef USE_KNX
+        knx_started = false;
+#endif  // USE_KNX
       }
     }
   }

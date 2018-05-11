@@ -6,11 +6,13 @@
  * Fix several timer data input and output errors (#2597, #2620)
  * Fix KNX config error (#2628)
  * Fix sensor MHZ-19 vanishing data over time (#2659)
+ * Fix KNX reconnection issue (#2679)
  * Add Portuguese in Brazil language file
  * Add rule state test for On/Off in addition to 0/1 (#2613)
  * Add hardware serial option to MHZ-19 sensor (#2659)
+ * Add Eastron SDM120 energy meter (#2694)
  * Updated Italian language file (#2618)
- * Update TasmotaSerial to 2.0.0 allowing Hardware Serial Fallback when correct connection are configured
+ * Update TasmotaSerial to 2.0.0 allowing Hardware Serial Fallback when correct connections are configured
  * Optimize command handling
  *
  * 5.13.1 20180501

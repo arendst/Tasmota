@@ -280,3 +280,4 @@ boolean Xsns23(byte function)
 }
 
 #endif   // USE_SDM120
+
