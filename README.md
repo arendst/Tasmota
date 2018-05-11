@@ -13,14 +13,14 @@ Any help is very welcome.
 
 ## Table of Contents
 
-* [KNX Explanation](#KNX-Explanation)
-* [Integration](#Integration)
-* [Requirement](#Requirement)
-* [Usage Examples](#Usage-Examples)
-* [Development Road Map](#Development-Road-Map)
-* [Modifications to Sonoff-Tasmota](#Modifications-to-Sonoff-Tasmota)
-* [Contributors](#Contributors)
-* [Sonoff-Tasmota](#Sonoff-Tasmota)
+* [KNX Explanation](#knx-explanation)
+* [Integration](#integration)
+* [Requirement](#requirement)
+* [Usage Examples](#usage-examples)
+* [Development Road Map](#development-road-map)
+* [Modifications to Sonoff-Tasmota](#modifications-to-sonoff-tasmota)
+* [Contributors](#contributors)
+* [Sonoff-Tasmota](#sonoff-tasmota)
 
 ## KNX Explanation ##
 
