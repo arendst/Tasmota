@@ -91,6 +91,7 @@
 #define D_FALSE "False"
 #define D_FILE "文件:"
 #define D_FREE_MEMORY "空闲内存"
+#define D_FREQUENCY "Frequency"
 #define D_GAS "气体"
 #define D_GATEWAY "网关"
 #define D_GROUP "组:"
@@ -453,10 +454,13 @@
 #define D_SENSOR_SBR_TX   "SerBr Tx"
 #define D_SENSOR_SR04_TRIG "SR04 Tri"
 #define D_SENSOR_SR04_ECHO "SR04 Ech"
+#define D_SENSOR_SDM120_TX "SDM120 Tx"
+#define D_SENSOR_SDM120_RX "SDM120 Rx"
 
 // Units
 #define D_UNIT_AMPERE "安"
 #define D_UNIT_CENTIMETER "cm"
+#define D_UNIT_HERTZ "Hz"
 #define D_UNIT_HOUR "时"
 #define D_UNIT_KILOOHM "千欧"
 #define D_UNIT_KILOWATTHOUR "千瓦时"

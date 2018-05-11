@@ -91,6 +91,7 @@
 #define D_FALSE "Hamis"
 #define D_FILE "File"
 #define D_FREE_MEMORY "Szabad Memória"
+#define D_FREQUENCY "Frequency"
 #define D_GAS "Gáz"
 #define D_GATEWAY "Gateway"
 #define D_GROUP "Csoport"
@@ -453,10 +454,13 @@
 #define D_SENSOR_SBR_TX   "SerBr Tx"
 #define D_SENSOR_SR04_TRIG "SR04 Tri"
 #define D_SENSOR_SR04_ECHO "SR04 Ech"
+#define D_SENSOR_SDM120_TX "SDM120 Tx"
+#define D_SENSOR_SDM120_RX "SDM120 Rx"
 
 // Units
 #define D_UNIT_AMPERE "A"
 #define D_UNIT_CENTIMETER "cm"
+#define D_UNIT_HERTZ "Hz"
 #define D_UNIT_HOUR "ó"
 #define D_UNIT_KILOOHM "kOhm"
 #define D_UNIT_KILOWATTHOUR "kWh"
