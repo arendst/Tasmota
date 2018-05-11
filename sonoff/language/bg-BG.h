@@ -91,6 +91,7 @@
 #define D_FALSE "Невярно"
 #define D_FILE "Файл"
 #define D_FREE_MEMORY "Свободна памет"
+#define D_FREQUENCY "Frequency"
 #define D_GAS "Газ"
 #define D_GATEWAY "Шлюз"
 #define D_GROUP "Група"
@@ -453,10 +454,13 @@
 #define D_SENSOR_SBR_TX   "SerBr Tx"
 #define D_SENSOR_SR04_TRIG "SR04 Tri"
 #define D_SENSOR_SR04_ECHO "SR04 Ech"
+#define D_SENSOR_SDM120_TX "SDM120 Tx"
+#define D_SENSOR_SDM120_RX "SDM120 Rx"
 
 // Units
 #define D_UNIT_AMPERE "А"
 #define D_UNIT_CENTIMETER "см"
+#define D_UNIT_HERTZ "Hz"
 #define D_UNIT_HOUR "ч"
 #define D_UNIT_KILOOHM "кОм"
 #define D_UNIT_KILOWATTHOUR "кВт/ч"
