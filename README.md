@@ -11,6 +11,17 @@ If you like **Sonoff Tasmota KNX**, give it a star, or fork it and contribute!
 
 Any help is very welcome.
 
+## Table of Contents
+
+* [KNX Explanation](#KNX-Explanation)
+* [Integration](#Integration)
+* [Requirement](#Requirement)
+* [Usage Examples](#Usage-Examples)
+* [Development Road Map](#Development-Road-Map)
+* [Modifications to Sonoff-Tasmota](#Modifications-to-Sonoff-Tasmota)
+* [Contributors](#Contributors)
+* [Sonoff-Tasmota](#Sonoff-Tasmota)
+
 ## KNX Explanation ##
 
 [<img src="https://www.knx.org/wGlobal/wGlobal/layout/images/knx-logo.png" />](https://www.knx.org/knx-en/knx/association/what-is-knx/index.php)
