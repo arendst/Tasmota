@@ -462,9 +462,7 @@
 #define D_SENSOR_SR04_ECHO "SR04 Ech"
 #define D_SENSOR_SDM120_TX "SDM120 Tx"
 #define D_SENSOR_SDM120_RX "SDM120 Rx"
-//STB mod
-#define D_SENSOR_DEEPSLEEP "DeepSleep SW"
-//end
+
 
 
 
@@ -494,7 +492,6 @@
 #define D_UNIT_VOLT "V"
 #define D_UNIT_WATT "W"
 #define D_UNIT_WATTHOUR "Wh"
-#define D_UNIT_HERTZ "Hz"
 
 // Log message prefix
 #define D_LOG_APPLICATION "APP: "  // Application

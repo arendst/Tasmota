@@ -70,7 +70,7 @@
 #define D_CONNECTED "Połączony"
 #define D_COUNT "Licz"
 #define D_COUNTER "Licznik"
-#define D_CURRENT "Bieżący"          // As in Voltage and Current
+#define D_CURRENT "Prąd"          // As in Voltage and Current
 #define D_DATA "Data"
 #define D_DARKLIGHT "Ciemny"
 #define D_DEBUG "Debug"
@@ -91,7 +91,6 @@
 #define D_FALSE "Fałsz"
 #define D_FILE "Plik"
 #define D_FREE_MEMORY "Wolna pamięć"
-#define D_FREQUENCY "Frequency"
 #define D_GAS "Gas"
 #define D_GATEWAY "Brama"
 #define D_GROUP "Grupa"
@@ -198,6 +197,14 @@
 #define D_LOADED_FROM_FLASH_AT "Wczytane z pamięci flash z"
 #define D_USE_DEFAULTS "Użyj domyślnych"
 #define D_ERASED_SECTOR "Wymazany sektor"
+
+//STB mod
+#define D_JSON_MOISTURE "Wilgoc"
+//#define D_JSON_DISTANCE "Odleglosc"
+#define D_CONFIGURE_PCF8574 "Konfiguruj PCF8574"
+#define D_CMND_COUNTERDEVIDER "CounterDevider"
+#define D_CMND_MQTTENABLE "MqttEnable"
+//end
 
 // webserver.ino
 #define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "Oprogramowanie MINIMAL - proszę uaktualnić"
@@ -364,17 +371,17 @@
   #define D_DOMOTICZ_VOLTAGE "Napięcie/PM2,5"
   #define D_DOMOTICZ_CURRENT "Prąd/PM10"
   #define D_DOMOTICZ_AIRQUALITY "AirQuality"
-#define D_DOMOTICZ_UPDATE_TIMER "Zaktualizuj czasomierz"
+#define D_DOMOTICZ_UPDATE_TIMER "Zaktualizuj Timer"
 
 // xdrv_09_timers.ino
-#define D_CONFIGURE_TIMER "Configure Timer"
-#define D_TIMER_PARAMETERS "Timer parameters"
-#define D_TIMER_ARM "Arm"
+#define D_CONFIGURE_TIMER "Ustaw Timer"
+#define D_TIMER_PARAMETERS "Timer wartości"
+#define D_TIMER_ARM "Uzbrojenie"
 #define D_TIMER_TIME "Time"
 #define D_TIMER_DAYS "Days"
-#define D_TIMER_REPEAT "Repeat"
-#define D_TIMER_OUTPUT "Output"
-#define D_TIMER_ACTION "Action"
+#define D_TIMER_REPEAT "Powtórz"
+#define D_TIMER_OUTPUT "Wyjście"
+#define D_TIMER_ACTION "Akcja"
 
 // xdrv_10_knx.ino
 #define D_CONFIGURE_KNX "Configure KNX"
@@ -384,9 +391,9 @@
 #define D_KNX_PHYSICAL_ADDRESS_NOTE "( Must be unique on the KNX network )"
 #define D_KNX_ENABLE "Enable KNX"
 #define D_KNX_GROUP_ADDRESS_TO_WRITE "Data to Send to Group Addresses"
-#define D_ADD "Add"
-#define D_DELETE "Delete"
-#define D_REPLY "Reply"
+#define D_ADD "Dodaj"
+#define D_DELETE "Usuń"
+#define D_REPLY "Powtrz"
 #define D_KNX_GROUP_ADDRESS_TO_READ "Group Addresses to Receive Data from"
 #define D_LOG_KNX "KNX: "
 #define D_RECEIVED_FROM "Received from"
@@ -432,7 +439,7 @@
 #define D_SENSOR_I2C_SDA  "I2C SDA"
 #define D_SENSOR_WS2812   "WS2812"
 #define D_SENSOR_IRSEND   "IRsend"
-#define D_SENSOR_SWITCH   "Przełącznik"   // Suffix "1"
+#define D_SENSOR_SWITCH   "Przelącznik"   // Suffix "1"
 #define D_SENSOR_BUTTON   "Przycisk"   // Suffix "1"
 #define D_SENSOR_RELAY    "Przekaźnik"    // Suffix "1i"
 #define D_SENSOR_LED      "Led"      // Suffix "1i"
@@ -454,15 +461,13 @@
 #define D_SENSOR_SBR_TX   "SerBr Tx"
 #define D_SENSOR_SR04_TRIG "SR04 Tri"
 #define D_SENSOR_SR04_ECHO "SR04 Ech"
-#define D_SENSOR_SDM120_TX "SDM120 Tx"
-#define D_SENSOR_SDM120_RX "SDM120 Rx"
-//STB mod
-#define D_SENSOR_DEEPSLEEP "DeepSleep SW"
-//end
+//stb mod
+#define D_SENSOR_DEEPSLEEP "DeepSleep Prz"
+// end
+
 // Units
 #define D_UNIT_AMPERE "A"
 #define D_UNIT_CENTIMETER "cm"
-#define D_UNIT_HERTZ "Hz"
 #define D_UNIT_HOUR "Godz"
 #define D_UNIT_KILOOHM "kOhm"
 #define D_UNIT_KILOWATTHOUR "kWh"
