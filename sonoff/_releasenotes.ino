@@ -11,6 +11,7 @@
  * Add rule state test for On/Off in addition to 0/1 (#2613)
  * Add hardware serial option to MHZ-19 sensor (#2659)
  * Add Eastron SDM120 energy meter (#2694)
+ * Add support for sensor SI1145 UV Index / IR / Visible light (#2496)
  * Updated Italian language file (#2618)
  * Update TasmotaSerial to 2.0.0 allowing Hardware Serial Fallback when correct connections are configured
  * Optimize command handling

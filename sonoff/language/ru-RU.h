@@ -102,6 +102,7 @@
 #define D_IMMEDIATE "немедленно"      // Button immediate
 #define D_INDEX "Индекс"
 #define D_INFO "Инфо"
+#define D_INFRARED "Infrared"
 #define D_INITIALIZED "Инициализировано"
 #define D_IP_ADDRESS "IP Адрес"
 #define D_LIGHT "Свет"
@@ -155,6 +156,7 @@
 #define D_UPTIME "Uptime"
 #define D_USER "Пользователь"
 #define D_UTC_TIME "UTC"
+#define D_UV_INDEX "UV Index"
 #define D_UV_LEVEL "УФ уровень"
 #define D_VERSION "Версия"
 #define D_VOLTAGE "Напряжение"

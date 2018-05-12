@@ -102,6 +102,7 @@
 #define D_IMMEDIATE "Okamžité"      // Button immediate
 #define D_INDEX "Index"
 #define D_INFO "Informace"
+#define D_INFRARED "Infrared"
 #define D_INITIALIZED "Inicializovaný"
 #define D_IP_ADDRESS "Adresa IP"
 #define D_LIGHT "Světlo"
@@ -155,6 +156,7 @@
 #define D_UPTIME "Uptime"
 #define D_USER "Uživatel"
 #define D_UTC_TIME "UTC"
+#define D_UV_INDEX "UV Index"
 #define D_UV_LEVEL "úroveň UV"
 #define D_VERSION "Verze"
 #define D_VOLTAGE "Napětí"

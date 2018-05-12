@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v5.13.0
+ * Updated until v5.13.1a
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -102,6 +102,7 @@
 #define D_IMMEDIATE "immediato"      // Button immediate
 #define D_INDEX "Indice"
 #define D_INFO "Info"
+#define D_INFRARED "Infrared"
 #define D_INITIALIZED "Inizializzato"
 #define D_IP_ADDRESS "Indirizzo IP"
 #define D_LIGHT "Luce"
@@ -155,6 +156,7 @@
 #define D_UPTIME "Uptime"
 #define D_USER "Utente"
 #define D_UTC_TIME "UTC"
+#define D_UV_INDEX "Indice UV"
 #define D_UV_LEVEL "Livello UV"
 #define D_VERSION "Versione"
 #define D_VOLTAGE "Tensione"
