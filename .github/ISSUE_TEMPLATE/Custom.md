@@ -1,6 +1,6 @@
 ---
 name: Troubleshooting
-about: Troubleshooting Help
+about: Users Troubleshooting Help
 
 ---
 
