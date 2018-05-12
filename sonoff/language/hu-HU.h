@@ -102,6 +102,7 @@
 #define D_IMMEDIATE "azonnali"      // Button immediate
 #define D_INDEX "Index"
 #define D_INFO "Info"
+#define D_INFRARED "Infrared"
 #define D_INITIALIZED "Inicializálva"
 #define D_IP_ADDRESS "IP Cím"
 #define D_LIGHT "Fény"
@@ -155,6 +156,7 @@
 #define D_UPTIME "Üzemidő"
 #define D_USER "Felhasználó"
 #define D_UTC_TIME "UTC"
+#define D_UV_INDEX "UV Index"
 #define D_UV_LEVEL "UV Szint"
 #define D_VERSION "Verzió"
 #define D_VOLTAGE "Feszültség"

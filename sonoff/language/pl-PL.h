@@ -102,6 +102,7 @@
 #define D_IMMEDIATE "Natychmiastowe"      // Button immediate
 #define D_INDEX "Indeks"
 #define D_INFO "Informacja"
+#define D_INFRARED "Infrared"
 #define D_INITIALIZED "Zainicjowany"
 #define D_IP_ADDRESS "Adres IP"
 #define D_LIGHT "Światło"
@@ -155,6 +156,7 @@
 #define D_UPTIME "Uptime"
 #define D_USER "Użytkownik"
 #define D_UTC_TIME "UTC"
+#define D_UV_INDEX "UV Index"
 #define D_UV_LEVEL "Poziom UV"
 #define D_VERSION "Wersja"
 #define D_VOLTAGE "Napięcie"
