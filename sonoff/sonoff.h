@@ -131,6 +131,10 @@ typedef unsigned long power_t;              // Power (Relay) type
 #define DAWN_NAUTIC            -12.0
 #define DAWN_ASTRONOMIC        -18.0
 
+//STB mod
+#define MAX_DEEPSLEEP_CYCLE    3600         // Maximum time for a deepsleep
+//end
+
 /*********************************************************************************************\
  * Enumeration
 \*********************************************************************************************/

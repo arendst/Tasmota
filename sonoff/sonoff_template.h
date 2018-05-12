@@ -95,6 +95,9 @@ enum UserSelectablePins {
   GPIO_SR04_ECHO,      // SR04 Echo pin
   GPIO_SDM120_TX,      // SDM120 Serial interface
   GPIO_SDM120_RX,      // SDM120 Serial interface
+  //STB mod
+  GPIO_SEN_SLEEP,
+  //end
   GPIO_SENSOR_END };
 
 // Programmer selectable GPIO functionality offset by user selectable GPIOs
@@ -139,7 +142,8 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_PMS5003 "|" D_SENSOR_SDS0X1 "|"
   D_SENSOR_SBR_TX "|" D_SENSOR_SBR_RX "|"
   D_SENSOR_SR04_TRIG "|" D_SENSOR_SR04_ECHO "|"
-  D_SENSOR_SDM120_TX "|" D_SENSOR_SDM120_RX;
+  D_SENSOR_SDM120_TX "|" D_SENSOR_SDM120_RX "|" D_SENSOR_DEEPSLEEP;
+  //end
 
 /********************************************************************************************/
 
@@ -163,6 +167,7 @@ enum SupportedModules {
   EXS_RELAY,
   WION,
   WEMOS,
+  WEMOSRL,
   SONOFF_DEV,
   H801,
   SONOFF_SC,
@@ -176,6 +181,8 @@ enum SupportedModules {
   SONOFF_T12,
   SONOFF_T13,
   SUPLA1,
+  SONOFF_4CHPRO_RL,
+  TASMOTA_RLPB,
   WITTY,
   YUNSHAN,
   MAGICHOME,
@@ -235,6 +242,8 @@ const uint8_t kNiceList[MAXMODULE] PROGMEM = {
   ELECTRODRAGON,
   EXS_RELAY,
   SUPLA1,
+  SONOFF_4CHPRO_RL,
+  TASMOTA_RLPB,
   LUANIHVIO,
   YUNSHAN,
   WION,
@@ -248,6 +257,7 @@ const uint8_t kNiceList[MAXMODULE] PROGMEM = {
   KMC_70011,
   AILIGHT,
   WEMOS,
+  WEMOSRL,
   WITTY
 };
 
@@ -486,6 +496,21 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_USER,        // GPIO16 D0 Wemos Wake
      GPIO_ADC0         // ADC0   A0 Analog input
   },
+  { "GenericRL",         // Any ESP8266/ESP8285 device like WeMos and NodeMCU hardware (ESP8266)
+     GPIO_USER,        // GPIO00 D3 Wemos Button Shield
+     GPIO_USER,        // GPIO01 TX Serial RXD
+     GPIO_USER,        // GPIO02 D4 Wemos DHT Shield
+     GPIO_USER,        // GPIO03 RX Serial TXD and Optional sensor
+     GPIO_USER,        // GPIO04 D2 Wemos I2C SDA
+     GPIO_USER,        // GPIO05 D1 Wemos I2C SCL / Wemos Relay Shield (0 = Off, 1 = On) / Wemos WS2812B RGB led Shield
+     0, 0, 0, 0, 0, 0, // Flash connection
+     GPIO_USER,        // GPIO12 D6
+     GPIO_USER,        // GPIO13 D7
+     GPIO_USER,        // GPIO14 D5
+     GPIO_USER,        // GPIO15 D8
+     GPIO_USER,        // GPIO16 D0 Wemos Wake
+     0 //GPIO_ADC0         // ADC0   A0 Analog input
+  },
   { "Sonoff Dev",      // Sonoff Dev (ESP8266)
      GPIO_KEY1,        // GPIO00 E-FW Button
      GPIO_USER,        // GPIO01 TX Serial RXD and Optional sensor
@@ -664,7 +689,43 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_USER,        // GPIO14 Optional sensor
      0,
      GPIO_LED1,        // GPIO16 Led (1 = On, 0 = Off)
-     GPIO_ADC0         // ADC0 A0 Analog input
+     GPIO_ADC0         // ADC0 A0 Light sensor / Requires USE_ADC_VCC in user_config.h to be disabled
+  },
+  { "4ch-Pro-RL",   // RL_PB_TASMOTA hardware (ESP8266)
+
+     GPIO_KEY1,        // GPIO00 Button 1
+     GPIO_USER,        // GPIO01 Serial RXD and Optional sensor
+     GPIO_USER,        // GPIO02 Optional sensor
+     GPIO_USER,        // GPIO03 Serial TXD and Optional sensor
+     GPIO_REL3,        // GPIO04 Sonoff 4CH Red Led and Relay 3 (0 = Off, 1 = On)
+     GPIO_REL2,        // GPIO05 Sonoff 4CH Red Led and Relay 2 (0 = Off, 1 = On)
+     0, 0, 0,          // Flash connection
+     GPIO_KEY2,        // GPIO09 Button 2
+     GPIO_KEY3,        // GPIO10 Button 3
+     0,                // Flash connection
+     GPIO_REL1,        // GPIO12 Red Led and Relay 1 (0 = Off, 1 = On)
+     GPIO_LED1_INV,    // GPIO13 Blue Led (0 = On, 1 = Off)
+     GPIO_KEY4,        // GPIO14 Button 4
+     GPIO_REL4,        // GPIO15 Red Led and Relay 4 (0 = Off, 1 = On)
+     GPIO_USER,        // GPIO16 Optional sensor not working for all sensors
+     //GPIO_ADC0         // ADC0 A0 Light sensor / Requires USE_ADC_VCC in user_config.h to be disabled
+     0                 // ADC0 A0 Light sensor / Requires USE_ADC_VCC in user_config.h to be disabled
+  },
+  { "TasSupla-RLPB",   // RL_PB_TASMOTA hardware (ESP8266)
+
+     0,                // GPIO00 Flash jumper
+     0,                // GPIO01 Serial RXD and Optional sensor
+     GPIO_DSB,         // GPIO02 DS18B20 sensor
+     0,                // GPIO03 Serial TXD and Optional sensor
+     GPIO_KEY1,        // GPIO04 Button 1
+     GPIO_REL1,        // GPIO05 Relay 1 (0 = Off, 1 = On)
+     0, 0, 0, 0, 0, 0, // Flash connection
+     GPIO_USER,        // GPIO12 Optional sensor Switch 2
+     GPIO_REL2,        // GPIO13 Relay 2 (0 = Off, 1 = On)
+     GPIO_USER,        // GPIO12 Optional sensor Switch 1
+     0,                // GPIO15 D8
+     GPIO_LED1,        // GPIO16 Led (1 = On, 0 = Off)
+     GPIO_ADC0         // ADC0 A0 Light sensor / Requires USE_ADC_VCC in user_config.h to be disabled
   },
   { "Witty Cloud",     // Witty Cloud Dev Board (ESP8266) - https://www.aliexpress.com/item/ESP8266-serial-WIFI-Witty-cloud-Development-Board-ESP-12F-module-MINI-nodemcu/32643464555.html
      GPIO_USER,        // GPIO00 D3 flash push button on interface board

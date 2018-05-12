@@ -261,8 +261,15 @@ struct SYSCFG {
   byte          free_6f6[266];             // 6F6
 
   char          rules[MAX_RULE_SIZE];      // 800 uses 512 bytes in v5.12.0m
-
-                                           // A00 - FFF free locations
+  //STB mod
+  byte          free_680[200];             // A80  give me some space to do configuration without override
+  unsigned long uptime;                    // 748
+  uint8_t       pcf8574_config[8];         // 74B
+  uint8_t       all_relays_inverted;       //
+  uint32_t      deepsleep;                 //
+  uint16_t      pulse_devider[MAX_COUNTERS];     //
+  //end
+                                           // 6B0 - FFF free locations
 } Settings;
 
 struct RTCMEM {
@@ -273,6 +280,10 @@ struct RTCMEM {
   unsigned long energy_kWhtotal;              // 008
   unsigned long pulse_counter[MAX_COUNTERS];  // 00C
   power_t       power;                     // 01C
+  //STB mod
+  unsigned long uptime;
+  uint32_t      ultradeepsleep;
+  //end
 } RtcSettings;
 
 struct TIME_T {
