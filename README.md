@@ -1,3 +1,20 @@
+## Sonoff-Tasmota by RL
+
+<img src="https://github.com/roblad/media/blob/master/podlewaczka.jpg" width="250" align="right" />
+
+<img src="https://github.com/roblad/media/blob/master/woda.jpg" width="250" align="right" />
+
+## Added
+
+- MQ sensor
+- Voltage measure
+- Moisure Sensor
+- Water Sensor
+- Switch Status display
+-NODE bridge throug softserial according to NODES https://github.com/artekw/sensmon
+### And Stefan mode extensions like deepsleep and counter devider etc.
+https://github.com/stefanbode/Sonoff-Tasmota
+
 ## Sonoff-Tasmota
 
 Alternative firmware for _ESP8266 based devices_ like [iTead](https://www.itead.cc/) _**Sonoff**_ with **web**, **timers**, 'Over The Air' (**OTA**) firmware updates and **sensors support**, allowing control under **Serial**, **HTTP**, **MQTT** and **KNX**, so as to be used on **Smart Home Systems**. Written for Arduino IDE and PlatformIO.
