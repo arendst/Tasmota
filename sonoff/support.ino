@@ -714,6 +714,11 @@ void WifiCheckIp()
           }
           else if (wifi_retry) {
             wifi_retry = 0;
+      //STB mod
+            if (Settings.deepsleep > 10) {
+                ESP.deepSleep(1000000 * Settings.deepsleep, WAKE_RF_DEFAULT);
+            }
+      //end
           }
         }
         break;
@@ -729,6 +734,12 @@ void WifiCheckIp()
       default:  // WL_IDLE_STATUS and WL_DISCONNECTED
         if (!wifi_retry || ((wifi_retry_init / 2) == wifi_retry)) {
           AddLog_P(LOG_LEVEL_INFO, S_LOG_WIFI, PSTR(D_CONNECT_FAILED_AP_TIMEOUT));
+
+	  //STB mod
+          if (Settings.deepsleep > 10) {
+              ESP.deepSleep(1000000 * Settings.deepsleep, WAKE_RF_DEFAULT);
+          }
+	  //end
         } else {
           AddLog_P(LOG_LEVEL_DEBUG, S_LOG_WIFI, PSTR(D_ATTEMPTING_CONNECTION));
         }
@@ -761,7 +772,13 @@ void WifiCheck(uint8_t param)
     break;
   default:
     if (wifi_config_counter) {
-      wifi_config_counter--;
+    //STB mod
+      if (wifi_config_counter < 255) {
+        wifi_config_counter--;
+        snprintf_P(log_data, sizeof(log_data), PSTR( "Config counter reboot: %d"), wifi_config_counter);
+        AddLog(LOG_LEVEL_INFO);
+      }
+      //end
       wifi_counter = wifi_config_counter +5;
       if (wifi_config_counter) {
         if ((WIFI_SMARTCONFIG == wifi_config_type) && WiFi.smartConfigDone()) {
@@ -1380,6 +1397,11 @@ void RtcSecond()
       }
       RulesProcess();
 #endif  // USE_RULES
+//STB mod
+      if (Settings.tele_period == 10) {
+        tele_period = Settings.tele_period ;
+      }
+//end
     } else {
       ntp_sync_minute++;  // Try again in next minute
     }

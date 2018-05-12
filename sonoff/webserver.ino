@@ -199,6 +199,14 @@ const char HTTP_BTN_MENU_MQTT[] PROGMEM =
   "<br/><form action='dm' method='get'><button>" D_CONFIGURE_DOMOTICZ "</button></form>"
 #endif  // USE_DOMOTICZ
   "";
+  //STB mod
+  #ifdef USE_I2C
+  #ifdef USE_PCF8574
+  const char HTTP_BTN_PCF[] PROGMEM =
+    "<br/><form action='i2c' method='get'><button>" D_CONFIGURE_PCF8574 "</button></form>";
+  #endif // USE_PCF8574
+  #endif
+  //end
 const char HTTP_BTN_MENU4[] PROGMEM =
 #ifdef USE_KNX
   "<br/><form action='kn' method='get'><button>" D_CONFIGURE_KNX "</button></form>"
@@ -380,6 +388,15 @@ void StartWebserver(int type, IPAddress ipweb)
       WebServer->on("/in", HandleInformation);
       WebServer->on("/rb", HandleRestart);
       WebServer->on("/fwlink", HandleRoot);  // Microsoft captive portal. Maybe not needed. Might be handled by notFound handler.
+//STB mod
+#ifdef USE_I2C
+#ifdef USE_PCF8574
+      if (max_pcf8574_devices > 0) {
+        WebServer->on("/i2c", handleI2C);
+      }
+#endif
+#endif
+//end
 #ifdef USE_EMULATION
       if (EMUL_WEMO == Settings.flag2.emulation) {
         WebServer->on("/upnp/control/basicevent1", HTTP_POST, HandleUpnpEvent);
@@ -637,6 +654,17 @@ void HandleConfiguration()
 #endif  // USE_TIMERS and USE_TIMERS_WEB
   page += FPSTR(HTTP_BTN_MENU_WIFI);
   if (Settings.flag.mqtt_enabled) { page += FPSTR(HTTP_BTN_MENU_MQTT); }
+
+  
+//STB mod
+#ifdef USE_I2C
+#ifdef USE_PCF8574
+  if (max_pcf8574_devices) {
+    page += FPSTR(HTTP_BTN_PCF);
+  }
+#endif
+#endif
+  //end
   page += FPSTR(HTTP_BTN_MENU4);
   page += FPSTR(HTTP_BTN_MAIN);
   ShowPage(page);
@@ -737,8 +765,8 @@ void HandleModuleConfiguration()
   for (byte i = 0; i < MAX_GPIO_PIN; i++) {
     if (GPIO_USER == cmodule.gp.io[i]) {
       snprintf_P(stemp, 3, PINS_WEMOS +i*2);
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("<tr><td style='width:190px'>%s <b>" D_GPIO "%d</b> %s</td><td style='width:146px'><select id='g%d' name='g%d'></select></td></tr>"),
-        (WEMOS==Settings.module)?stemp:"", i, (0==i)? D_SENSOR_BUTTON "1":(1==i)? D_SERIAL_OUT :(3==i)? D_SERIAL_IN :(12==i)? D_SENSOR_RELAY "1":(13==i)? D_SENSOR_LED "1i":(14==i)? D_SENSOR :"", i, i);
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("<tr><td style='width:190px'>%s <b>" D_GPIO "%d</b> %s</td><td style='width:126px'><select id='g%d' name='g%d'></select></td></tr>"),
+        (WEMOS==Settings.module )?stemp:((WEMOSRL==Settings.module )?stemp:""), i, (0==i)? D_SENSOR_BUTTON "1":(1==i)? D_SERIAL_OUT :(3==i)? D_SERIAL_IN :(12==i)? D_SENSOR_RELAY "1":(13==i)? D_SENSOR_LED "1i":(14==i)? D_SENSOR :"", i, i);
       page += mqtt_data;
     }
   }
@@ -1104,6 +1132,15 @@ void HandleSaveSettings()
       GetStateText(Settings.flag.mqtt_enabled), Settings.flag2.emulation, Settings.friendlyname[0], Settings.friendlyname[1], Settings.friendlyname[2], Settings.friendlyname[3]);
     AddLog(LOG_LEVEL_INFO);
     break;
+//STB mod
+  #ifdef USE_I2C
+  #ifdef USE_PCF8574
+  case 7:
+      pcf8574_saveSettings();
+    break;
+  #endif  // USE_PCF8574
+  #endif
+///end
   case 6:
     WebGetArg("g99", tmp, sizeof(tmp));
     byte new_module = (!strlen(tmp)) ? MODULE : atoi(tmp);

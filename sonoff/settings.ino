@@ -103,6 +103,10 @@ void RtcSettingsLoad()
   if (RtcSettings.valid != RTC_MEM_VALID) {
     memset(&RtcSettings, 0, sizeof(RTCMEM));
     RtcSettings.valid = RTC_MEM_VALID;
+    //STB mod
+    RtcSettings.uptime = Settings.uptime;
+    RtcSettings.ultradeepsleep = 0;
+    //end
     RtcSettings.energy_kWhtoday = Settings.energy_kWhtoday;
     RtcSettings.energy_kWhtotal = Settings.energy_kWhtotal;
     for (byte i = 0; i < MAX_COUNTERS; i++) {
@@ -521,6 +525,10 @@ void SettingsDefaultSet2()
 
   Settings.latitude = (int)((double)LATITUDE * 1000000);
   Settings.longitude = (int)((double)LONGITUDE * 1000000);
+  
+//STB mod
+  Settings.deepsleep = 0;
+//end
 }
 
 /********************************************************************************************/

@@ -79,6 +79,12 @@ void CounterInit()
     if (pin[GPIO_CNTR1 +i] < 99) {
       pinMode(pin[GPIO_CNTR1 +i], INPUT_PULLUP);
       attachInterrupt(pin[GPIO_CNTR1 +i], counter_callbacks[i], FALLING);
+// STB mode
+      //avoid DIV 0 on unitiialized
+      if (Settings.pulse_devider[i] == 0 || Settings.pulse_devider[i] == 65535 ) {
+        Settings.pulse_devider[i] = COUNTERDEVIDER;
+      }
+// end
     }
   }
 }
@@ -101,7 +107,9 @@ void CounterShow(boolean json)
         dtostrfd((double)RtcSettings.pulse_counter[i] / 1000, 3, counter);
       } else {
         dsxflg++;
-        dtostrfd(RtcSettings.pulse_counter[i], 0, counter);
+	//STB mode
+        dtostrfd(RtcSettings.pulse_counter[i]/Settings.pulse_devider[i], 0, counter);
+	//end
       }
 
       if (json) {
@@ -114,7 +122,10 @@ void CounterShow(boolean json)
         strcpy(stemp, ",");
 #ifdef USE_DOMOTICZ
         if ((0 == tele_period) && (1 == dsxflg)) {
-          DomoticzSensor(DZ_COUNT, RtcSettings.pulse_counter[i]);
+
+	  //STB mod
+          DomoticzSensor(DZ_COUNT, RtcSettings.pulse_counter[i]/Settings.pulse_devider[i]);
+	  //end
           dsxflg++;
         }
 #endif  // USE_DOMOTICZ

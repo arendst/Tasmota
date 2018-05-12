@@ -20,16 +20,14 @@
 #ifndef _USER_CONFIG_H_
 #define _USER_CONFIG_H_
 
-//MODULERL 1 //SONOFF_4CHPRO_RL-ds18x20-PL
-//MODULERL 2 //sonoff-ds18x20-PL
-//MODULERL 3 //soil-wemeos-PL
-//MODULERL 4 //wemeos-d1-watter-PL
-#define MODULERL 4
+#define MODULERL 1 //SONOFF_4CHPRO_RL-ds18x20-PL
+//#define MODULERL 2 //sonoff-ds18x20-PL
+//#define MODULERL 3 //soil-wemeos-PL
 /*********************************************************************************************\
  * This file consists of TWO sections.
  *
  * SECTION 1:
- * The first section contains PARAMETERS overriding flash settings if define * * CFG_HOLDER is CHANGED.
+ * The first section contains PARAMETERS overriding flash settings if define CFG_HOLDER is CHANGED.
  * All parameters can be persistent changed online using commands via MQTT, WebConsole or Serial.
  *   Corresponding MQTT/Serial/Console commands are shown in [brackets]
  *
@@ -40,50 +38,21 @@
  * ATTENTION:
  * Users are advised to use the user_config_override.h file for most changes.
 \*********************************************************************************************/
-#define USE_CONFIG_OVERRIDE                      // Uncomment to use user_config_override.h file. See README.md
-
-// -- Project -------------------------------------
-#if MODULERL == 1
-#define PROJECT                "podlewaczka"          // PROJECT is used as the default topic delimiter and OTA file name
-#elif MODULERL == 2
-#define PROJECT                "tasmota"          // PROJECT is used as the default topic delimiter and OTA file name
-#elif MODULERL == 3
-#define PROJECT                "zewnetrzne"          // PROJECT is used as the default topic delimiter and OTA
-#elif MODULERL == 4
-#define PROJECT                "woda"          // PROJECT is used as the default topic delimiter and OTA file name
-
-#else
-
-#define PROJECT                "sonoff"          // PROJECT is used as the default topic delimiter and OTA file name
-
-#endif
-#if MODULERL == 1
-#define MODULE                 SONOFF_4CHPRO_RL      // [Module] SONOFF_4CHPRO_RL-ds18x20-PL
-#elif MODULERL == 2
-#define MODULE                 TASMOTA_RLPB         // [Module] sonoff-ds18x20-PL
-#elif MODULERL == 3
-#define MODULE                 WEMOSRL              // [Module]    soil-wemeos-PL
-#elif MODULERL == 4
-#define MODULE                 WEMOSRL              // [Module]  wemeos-d1-watter-PL
-#else
-#define MODULE                 SONOFF_BASIC      // [Module] Select default
-                                                 //model from sonoff_template.h (Should not be changed)
-#endif
-
-
-//#define ENV ENV_NAME
-//const char* value = "wemeos-d1-watter-PL";
-//#if ENV_NAME == value
-
-//#define USE_DS18x20
-
-//#endif
-
-
-                                            //   As an IDE restriction it needs to be the same as the main .ino file
 //#define USE_CONFIG_OVERRIDE                      // Uncomment to use user_config_override.h file. See README.md
 
+// -- Project -------------------------------------
+#if MODULERL == 1 || MODULERL == 2
+#define PROJECT                "tasmota"          // PROJECT is used as the default topic delimiter and OTA file name
+//#elif MODULERL == sonoff-ds18x20-PL
+//#define PROJECT                "tasmota"          // PROJECT is used as the default topic delimiter and OTA file name
+#elif MODULERL == 3
+#define PROJECT                "wemos"          // PROJECT is used as the default topic delimiter and OTA file name
 
+#else
+
+#define PROJECT                "wemos"          // PROJECT is used as the default topic delimiter and OTA file name
+
+#endif                                             //   As an IDE restriction it needs to be the same as the main .ino file
 
 /*********************************************************************************************\
  * SECTION 1
@@ -91,7 +60,7 @@
 \*********************************************************************************************/
 
 // -- Master parameter control --------------------
-#define CFG_HOLDER           0x20161209//0x20180428//0x20161209//  //0x20161209//0x20161209//0x20180428//0x20161209 //0x20180421 //0x20161209 //0x20180421 //0x20170615 //0x20161209        // [Reset 1] Change this value to load following default configuration parameters
+#define CFG_HOLDER             0x20161209 //0x20180421 //0x20170615 //0x20161209        // [Reset 1] Change this value to load following default configuration parameters
 #define SAVE_DATA              1                 // [SaveData] Save changed parameters to Flash (0 = disable, 1 - 3600 seconds)
 #define SAVE_STATE             1                 // [SetOption0] Save changed power state to Flash (0 = disable, 1 = enable)
 
@@ -101,10 +70,10 @@
 #define WIFI_SUBNETMASK        "255.255.255.0"   // [IpAddress3] If not using DHCP set Network mask
 #define WIFI_DNS               "192.168.100.100"    // [IpAddress4] If not using DHCP set DNS IP address (might be equal to WIFI_GATEWAY)
 
-#define STA_SSID1              ""      // [Ssid1] Wifi SSID
-#define STA_PASS1              ""  // [Password1] Wifi password
-#define STA_SSID2              ""      // [Ssid2] Optional alternate AP Wifi SSID
-#define STA_PASS2              ""  // [Password2] Optional alternate AP Wifi password
+#define STA_SSID1              "robert_private"      // [Ssid1] Wifi SSID
+#define STA_PASS1              "spierdalac2010"  // [Password1] Wifi password
+#define STA_SSID2              "robert_private2"      // [Ssid2] Optional alternate AP Wifi SSID
+#define STA_PASS2              "spierdalac2010"  // [Password2] Optional alternate AP Wifi password
 #define WIFI_CONFIG_TOOL       WIFI_MANAGER    // [WifiConfig] Default tool if wifi fails to connect
                                                  //   (WIFI_RESTART, WIFI_SMARTCONFIG, WIFI_MANAGER, WIFI_WPSCONFIG, WIFI_RETRY, WIFI_WAIT)
 
@@ -123,10 +92,8 @@
 #define OTA_URL                  "http://192.168.100.113/sonoff-ds18x20-PL.bin" // [OtaUrl]
 #elif MODULERL == 3
 #define OTA_URL                  "http://192.168.100.113/soil-wemeos-PL.bin" // [OtaUrl]
-#elif MODULERL == 4
-#define OTA_URL                  "http://192.168.100.113/wemeos-d1-watter-PL" // [OtaUrl]
 #else
-#define OTA_URL                  "http://192.168.100.113/sonoff.bin" // [OtaUrl]
+#define OTA_URL                  "http://192.168.100.113/wemeos-d1-pro-PL.bin" // [OtaUrl]
 #endif
 //#define USE_ARDUINO_OTA                          // Add optional support for Arduino OTA (+4k5 code)
 
@@ -186,25 +153,21 @@
 // -- MQTT - Telemetry ----------------------------
 #if MODULERL == 3
 #define TELE_PERIOD            15               // [TelePeriod] Telemetry (0 = disable, 10 - 3600 seconds)
-
-#elif MODULERL == 4
-#define TELE_PERIOD            60               // [TelePeriod] Telemetry (0 = disable, 10 - 3600 seconds)
 #else
-
 #define TELE_PERIOD            300               // [TelePeriod] Telemetry (0 = disable, 10 - 3600 seconds)
 #endif
-// -- MQTT - Domoticz -----------------------------
-#define DOMOTICZ_UPDATE_TIMER  0                 // [DomoticzUpdateTimer] Send relay status (0 = disable, 1 - 3600 seconds)
+
+
 
 // -- MQTT - Home Assistant Discovery -------------
 #define HOME_ASSISTANT_DISCOVERY_ENABLE   0      // [SetOption19] Home Assistant Discovery (0 = Disable, 1 = Enable)
 
 // -- HTTP ----------------------------------------
-//#define USE_WEBSERVER                            // Enable web server and wifi manager (+66k code, +8k mem) - Disable by //
+#define USE_WEBSERVER                            // Enable web server and wifi manager (+66k code, +8k mem) - Disable by //
 #define WEB_SERVER             2                 // [WebServer] Web server (0 = Off, 1 = Start as User, 2 = Start as Admin)
 #define WEB_PASSWORD           ""                // [WebPassword] Web server Admin mode Password for WEB_USERNAME (empty string = Disable)
 //  #define FRIENDLY_NAME        "Sonoff"          // [FriendlyName] Friendlyname up to 32 characters used by webpages and Alexa
-#if MODULERL == 3 || MODULERL == 4
+#if MODULERL == 3
   #define FRIENDLY_NAME        "Wemos"          // [FriendlyName] Friendlyname up to 32 characters used by webpages and Alexa
 #else
   #define FRIENDLY_NAME        "Tasmota"          // [FriendlyName] Friendlyname up to 32 characters used by webpages and Alexa
@@ -222,10 +185,10 @@
 #define LONGITUDE              21.043517          // [Longitude] Your location to be used with sunrise and sunset
 
 // -- Application ---------------------------------
-#define APP_TIMEZONE           2                 // [Timezone] +1 hour (Amsterdam) (-13 .. 14 = hours from UTC, 99 = use TIME_DST/TIME_STD)
+#define APP_TIMEZONE           1                 // [Timezone] +1 hour (Amsterdam) (-13 .. 14 = hours from UTC, 99 = use TIME_DST/TIME_STD)
 #define APP_LEDSTATE           LED_POWER_MQTT         // [LedState] Function of led (LED_OFF, LED_POWER, LED_MQTTSUB, LED_POWER_MQTTSUB, LED_MQTTPUB, LED_POWER_MQTTPUB, LED_MQTT, LED_POWER_MQTT)
 #define APP_PULSETIME          0                 // [PulseTime] Time in 0.1 Sec to turn off power for relay 1 (0 = disabled)
-#define APP_POWERON_STATE      POWER_ALL_OFF   // [PowerOnState] Power On Relay state
+#define APP_POWERON_STATE      POWER_ALL_SAVED   // [PowerOnState] Power On Relay state
                                                  //   (POWER_ALL_OFF, POWER_ALL_ON, POWER_ALL_SAVED_TOGGLE, POWER_ALL_SAVED, POWER_ALL_ALWAYS_ON, POWER_ALL_OFF_PULSETIME_ON)
 #define APP_BLINKTIME          10                // [BlinkTime] Time in 0.1 Sec to blink/toggle power for relay 1
 #define APP_BLINKCOUNT         10                // [BlinkCount] Number of blinks (0 = 32000)
@@ -242,12 +205,7 @@
 #define ENERGY_RESOLUTION      3                 // [EnergyRes] Maximum number of decimals (0 - 5) showing energy usage in kWh
 //STB mod
 //#define CMND_COUNTERDEVIDER    1                 // counter divider or set CounterDevider 1-4
-#if MODULERL == 4
-#define COUNTERDEVIDER 4100
-#else
-#define COUNTERDEVIDER 1
-#endif
-
+//#define COUNTERDEVIDER 1
 #ifdef D_WEBLINK
 #undef D_WEBLINK
 #define D_WEBLINK              "https://github.com/stefanbode/Sonoff-Tasmota"
@@ -266,10 +224,8 @@
 
 // -- Localization --------------------------------
   // If non selected the default en-GB will be used
-//#define MY_LANGUAGE            bg-BG           // Bulgarian in Bulgaria
 //#define MY_LANGUAGE            cs-CZ           // Czech in Czech
 //#define MY_LANGUAGE            de-DE           // German in Germany
-//#define MY_LANGUAGE            el-GR           // Greek in Greece
 //#define MY_LANGUAGE            en-GB           // English in Great Britain. Enabled by Default
 //#define MY_LANGUAGE            es-AR           // Spanish in Argentina
 //#define MY_LANGUAGE            fr-FR           // French in France
@@ -292,30 +248,24 @@
   // Alternative MQTT driver does not block network when MQTT server is unavailable. No TLS support
 //#define MQTT_LIBRARY_TYPE      MQTT_ESPMQTTARDUINO // Use (patched) esp-mqtt-arduino library (+4k8 code, +4k mem) - non-TLS only
 
-// -- MQTT ----------------------------------------
-#define MQTT_TELE_RETAIN     1                   // Tele messages may send retain flag (0 = off, 1 = on)
-
 // -- MQTT - Domoticz -----------------------------
 #define USE_DOMOTICZ                             // Enable Domoticz (+6k code, +0.3k mem)
   #define DOMOTICZ_IN_TOPIC    "domoticz/in"     // Domoticz Input Topic
   #define DOMOTICZ_OUT_TOPIC   "domoticz/out"    // Domoticz Output Topic
 
 // -- MQTT - Home Assistant Discovery -------------
-//#define USE_HOME_ASSISTANT                       // Enable Home Assistant Discovery Support (+2k code)
+#define USE_HOME_ASSISTANT                       // Enable Home Assistant Discovery Support (+2k code)
   #define HOME_ASSISTANT_DISCOVERY_PREFIX "homeassistant"  // Home Assistant discovery prefix
 
 // -- MQTT - TLS ----------------------------------
   // !!! TLS uses a LOT OF MEMORY so be careful to enable other options at the same time !!!
 //#define USE_MQTT_TLS                             // Use TLS for MQTT connection (+53k code, +15k mem)
 
-// -- KNX IP Protocol -----------------------------
-//#define USE_KNX                                  // Enable KNX IP Protocol Support (+23k code, +3k3 mem)
-
 // -- HTTP ----------------------------------------
 #define USE_WEBSERVER                            // Enable web server and wifi manager (+66k code, +8k mem)
   #define WEB_PORT             80                // Web server Port for User and Admin mode
   #define WEB_USERNAME         "admin"           // Web server Admin mode user name
-//  #define USE_EMULATION                          // Enable Belkin WeMo and Hue Bridge emulation for Alexa (+16k code, +2k mem)
+  #define USE_EMULATION                          // Enable Belkin WeMo and Hue Bridge emulation for Alexa (+16k code, +2k mem)
 
 // -- mDNS ----------------------------------------
 #define USE_DISCOVERY                            // Enable mDNS for the following services (+8k code, +0.3k mem)
@@ -331,15 +281,7 @@
 // -- Time ----------------------------------------
 #define USE_TIMERS                               // Add support for up to 16 timers (+2k2 code)
   #define USE_TIMERS_WEB                         // Add timer webpage support (+4k5 code)
-#if MODULERL != 1 || MODULERL != 4 || MODULERL != 3
-  //#define USE_SUNRISE                            // Add support for Sunrise and sunset tools (+16k)
-    //#define SUNRISE_DAWN_ANGLE DAWN_NORMAL       // Select desired Dawn Angle from (DAWN_NORMAL, DAWN_CIVIL, DAWN_NAUTIC, DAWN_ASTRONOMIC)
-
-#endif
-// -- Rules ---------------------------------------
-#define USE_RULES                                // Add support for rules (+4k4 code)
-
-
+//  #define USE_SUNRISE                            // Add support for Sunrise and sunset tools (+16k)
 
 // -- Internal Analog input -----------------------
 #define USE_ADC_VCC
@@ -352,9 +294,7 @@
 //#if MODULERL == 1  //RL mod
 // -- One wire sensors ----------------------------
                                                  // WARNING: Select none for default one DS18B20 sensor or enable one of the following two options for multiple sensors
-#if MODULERL != 4 || MODULERL != 3
 #define USE_DS18x20                              // Optional for more than one DS18x20 sensors with id sort, single scan and read retry (+1k3 code)
-#endif
 //#define USE_DS18x20_LEGACY                       // Optional for more than one DS18x20 sensors with dynamic scan using library OneWire (+1k5 code)
 //#endif
 // -- I2C sensors ---------------------------------
@@ -366,17 +306,13 @@
 
 #endif
 //end RL
-
-#if MODULERL == 4 || MODULERL == 3 //RL mod
-
+#if MODULERL == 3
 #undef USE_MQ_SENSOR
 #undef USE_ADC_VCC
 #define USE_VOLTAGE
 
-#endif
-//#define USE_SERIAL_HTTP
-//#define USE_SDM120
-// -- I2C sensors ---------------------------------
+#define USE_SERIAL_HTTP
+
 #define USE_I2C                                  // I2C using library wire (+10k code, 0k2 mem, 124 iram)
 #ifdef USE_I2C
 
@@ -388,15 +324,7 @@
 //  #define USE_SHT                                // Add I2C emulating code for SHT1X sensor (+1k4 code)
 //  #define USE_SHT3X                              // Add I2C code for SHT3x or SHTC3 sensor (+0k7 code)
 //  #define USE_HTU                                // Add I2C code for HTU21/SI7013/SI7020/SI7021 sensor (+1k5 code)
-#if MODULERL == 4  //RL mod
-  #define USE_BMP                                // Add I2C code for BMP085/BMP180/BMP280/BME280 sensor (+4k code)
-#define  SWITCH_STATE_SHOW
-#define COUNTER_WATER
-#endif
-
-#if MODULERL == 3  //RL mod
-  #define USE_CHIRP
-#endif
+//  #define USE_BMP                                // Add I2C code for BMP085/BMP180/BMP280/BME280 sensor (+4k code)
 //    #define USE_BME680                           // Add additional support for BME680 sensor using Adafruit Sensor and BME680 libraries (+6k code)
 //  #define USE_SGP30                              // Add I2C code for SGP30 sensor (+1k1 code)
 //  #define USE_BH1750                             // Add I2C code for BH1750 sensor (+0k5 code)
@@ -408,7 +336,7 @@
 //  #define USE_MGS                                // Add I2C code for Xadow and Grove Mutichannel Gas sensor using library Multichannel_Gas_Sensor (+10k code)
 //    #define MGS_SENSOR_ADDR    0x04              // Default Mutichannel Gas sensor i2c address
 #endif  // USE_I2C
-//#endif  //END RL mod
+#endif  //END RL mod
 
 // -- SPI sensors ---------------------------------
 //#define USE_SPI                                  // SPI using default library
@@ -425,9 +353,7 @@
 //#define USE_NOVA_SDS                             // Add support for SDS011 and SDS021 particle concentration sensor (+0k7 code)
 //#define USE_PZEM004T                             // Add support for PZEM004T Energy monitor (+2k code)
 //#define USE_SERIAL_BRIDGE                        // Add support for software Serial Bridge (+0k8 code)
-#if MODULERL == 4  //RL mod
-#define USE_NODE_BRIDGE
-#endif
+
 // -- Low level interface devices -----------------
 //#define USE_IR_REMOTE                            // Send IR remote commands using library IRremoteESP8266 and ArduinoJson (+4k code, 0k3 mem, 48 iram)
 //  #define USE_IR_HVAC                            // Support for HVAC system using IR (+2k code)
@@ -439,25 +365,11 @@
 
 //#define USE_ARILUX_RF                            // Add support for Arilux RF remote controller (+0k8 code, 252 iram (non 2.3.0))
 
-//#define USE_SR04                                 // Add support for HC-SR04 ultrasonic devices (+1k code)
-
-/*********************************************************************************************\
- * Select features and sensors enabled in previous version saving space
-\*********************************************************************************************/
-
-//#define USE_CLASSIC                             // Create sonoff-classic (See sonoff_post.h for selected features)
-
 /*********************************************************************************************\
  * Select all sensors - overrides above undefines!!
 \*********************************************************************************************/
 
-//#define USE_ALL_SENSORS                          // Create sonoff-allsensors with all sensors enabled (See sonoff_post.h for selected sensors)
-
-/*********************************************************************************************\
- * Select KNX without Emulation to save space
-\*********************************************************************************************/
-
-//#define USE_KNX_NO_EMULATION                     // Create sonoff-knx with KNX but without Emulation (See sonoff_post.h)
+//#define USE_ALL_SENSORS                          // Create sonoff-xxl with all sensors enabled (See sonoff_post.h for selected sensors)
 
 /*********************************************************************************************\
  * Compile a minimal version if upgrade memory gets tight ONLY TO BE USED FOR UPGRADE STEP 1!
