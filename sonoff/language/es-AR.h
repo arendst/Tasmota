@@ -102,7 +102,7 @@
 #define D_IMMEDIATE "inmediato"      // Button immediate
 #define D_INDEX "Índice"
 #define D_INFO "Información"
-#define D_INFRARED "Infrared"
+#define D_INFRARED "Infrarrojo"
 #define D_INITIALIZED "Inicializado"
 #define D_IP_ADDRESS "Dirección IP"
 #define D_LIGHT "Luz"
