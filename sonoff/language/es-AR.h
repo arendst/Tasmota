@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v5.12.0m
+ * Updated until v5.13.1a
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -91,7 +91,7 @@
 #define D_FALSE "Falso"
 #define D_FILE "Archivo"
 #define D_FREE_MEMORY "Memoria Libre"
-#define D_FREQUENCY "Frequency"
+#define D_FREQUENCY "Frecuencia"
 #define D_GAS "Gas"
 #define D_GATEWAY "Gateway"
 #define D_GROUP "Grupo"
@@ -131,7 +131,7 @@
 #define D_RESTART_REASON "Causa Reinicio"
 #define D_RESTORE "Restauración"
 #define D_RETAINED "Grabado"
-#define D_RULE "Rule"
+#define D_RULE "Regla"
 #define D_SAVE "Grabar"
 #define D_SENSOR "Sensor"
 #define D_SSID "SSId"
@@ -200,7 +200,7 @@
 #define D_ERASED_SECTOR "Sector borrado"
 
 // webserver.ino
-#define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "firmware MÍNIMO - actualice por favor"
+#define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "Firmware MÍNIMO - actualice por favor"
 #define D_WEBSERVER_ACTIVE_ON "Servidor web activo en"
 #define D_WITH_IP_ADDRESS "con dirección IP"
 #define D_WEBSERVER_STOPPED "Servidor web detenido"
