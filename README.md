@@ -115,14 +115,14 @@ We can configure to send the value of temperature or humidity every teleperiod. 
 - [x] Add Feature to Load Config
 - [x] Add Log Info
 - [x] Complete all the language files with keys
+- [ ] Add support for Neo Pixel
+- [ ] Add support for other devices supported by Tasmota
 - [ ] Add option for changing default Multicast KNX IP and PORT
 - [ ] Add options for increase communication reliability (re send telegrams, check for ack)
 - [ ] Add options for multicast forced reconnection (needed for some routers that have IGMP conflict with actual esp8266 lib v2.3.0 to v2.4.1, and lwIP v1.4 to v2.0 - Send a telegram to itself. If it is received, multicast is ok)
 - [ ] Add option to support KNX Snooping to debug KNX Network
 - [ ] Add option to repeat all KNX multicast broadcast (Tasmota to Tasmota communications) to KNX-IP Tunneling
 - [ ] Add option to support ETS Programming
-- [ ] Add support for Neo Pixel
-- [ ] Add support for other devices supported by Tasmota
 - [ ] Optimize code to reduce Flash and RAM
 
 ## Modifications to Sonoff-Tasmota ##
