@@ -3,6 +3,7 @@ name: Feature request
 about: Suggest an idea for this project
 
 ---
+**Have you look for the feature request in other issues and in the wiki?**
 
 **Is your feature request related to a problem? Please describe.**
 A clear and concise description of what the problem is.
