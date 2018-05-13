@@ -60,6 +60,7 @@
 #define D_JSON_FLASHMODE "FlashMode"
 #define D_JSON_FLASHSIZE "FlashSize"
 #define D_JSON_FREEMEMORY "Free"
+#define D_JSON_FREQUENCY "Frequency"
 #define D_JSON_FROM "from"
 #define D_JSON_GAS "Gas"
 #define D_JSON_GATEWAY "Gateway"
@@ -72,6 +73,7 @@
 #define D_JSON_I2CSCAN_NO_DEVICES_FOUND "No devices found"
 #define D_JSON_ID "Id"
 #define D_JSON_ILLUMINANCE "Illuminance"
+#define D_JSON_INFRARED "Infrared"
 #define D_JSON_UNKNOWN "Unknown"
 #define D_JSON_LIGHT "Light"
 #define D_JSON_LOCAL_TIME "Local"
@@ -90,6 +92,7 @@
 #define D_JSON_PRESSUREATSEALEVEL "SeaPressure"
 #define D_JSON_PROGRAMFLASHSIZE "ProgramFlashSize"
 #define D_JSON_PROGRAMSIZE "ProgramSize"
+#define D_JSON_RESET "Reset"
 #define D_JSON_RESTARTING "Restarting"
 #define D_JSON_RESTARTREASON "RestartReason"
 #define D_JSON_RSSI "RSSI"
@@ -119,6 +122,7 @@
 #define D_JSON_TYPE "Type"
 #define D_JSON_UPTIME "Uptime"
 #define D_JSON_UTC_TIME "UTC"
+#define D_JSON_UVINDEX "UvIndex"
 #define D_JSON_UV_LEVEL "UvLevel"
 #define D_JSON_VCC "Vcc"
 #define D_JSON_VERSION "Version"
@@ -485,6 +489,12 @@ const char kPrefixes[3][PRFX_MAX_STRING_LENGTH] PROGMEM = {
 
 // support.ino
 static const char kMonthNames[] = D_MONTH3LIST;
+
+const char kOptionOff[] PROGMEM = "OFF|" D_OFF "|" D_FALSE "|" D_STOP "|" D_CELSIUS ;
+const char kOptionOn[] PROGMEM = "ON|" D_ON "|" D_TRUE "|" D_START "|" D_FAHRENHEIT "|" D_USER ;
+const char kOptionToggle[] PROGMEM = "TOGGLE|" D_TOGGLE "|" D_ADMIN ;
+const char kOptionBlink[] PROGMEM = "BLINK|" D_BLINK ;
+const char kOptionBlinkOff[] PROGMEM = "BLINKOFF|" D_BLINKOFF ;
 
 // webserver.ino
 #ifdef USE_WEBSERVER

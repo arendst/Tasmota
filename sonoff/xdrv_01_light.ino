@@ -545,7 +545,7 @@ void LightState(uint8_t append)
   } else {
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{"));
   }
-  GetPowerDevice(scommand, light_device, sizeof(scommand));
+  GetPowerDevice(scommand, light_device, sizeof(scommand), Settings.flag.device_index_enable);
   snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s\"%s\":\"%s\",\"" D_CMND_DIMMER "\":%d"),
     mqtt_data, scommand, GetStateText(light_power), Settings.light_dimmer);
   if (light_subtype > LST_SINGLE) {
@@ -1034,7 +1034,10 @@ boolean LightCommand()
   char option = (1 == XdrvMailbox.data_len) ? XdrvMailbox.data[0] : '\0';
 
   int command_code = GetCommandCode(command, sizeof(command), XdrvMailbox.topic, kLightCommands);
-  if ((CMND_COLOR == command_code) && (light_subtype > LST_SINGLE) && (XdrvMailbox.index > 0) && (XdrvMailbox.index <= 6)) {
+  if (-1 == command_code) {
+    serviced = false;  // Unknown command
+  }
+  else if ((CMND_COLOR == command_code) && (light_subtype > LST_SINGLE) && (XdrvMailbox.index > 0) && (XdrvMailbox.index <= 6)) {
     if (XdrvMailbox.data_len > 0) {
       valid_entry = LightColorEntry(XdrvMailbox.data, XdrvMailbox.data_len);
       if (valid_entry) {
@@ -1272,9 +1275,11 @@ boolean LightCommand()
   else {
     serviced = false;  // Unknown command
   }
+
   if (coldim) {
     LightPreparePower();
   }
+  
   return serviced;
 }
 
