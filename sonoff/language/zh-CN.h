@@ -91,6 +91,7 @@
 #define D_FALSE "False"
 #define D_FILE "文件:"
 #define D_FREE_MEMORY "空闲内存"
+#define D_FREQUENCY "Frequency"
 #define D_GAS "气体"
 #define D_GATEWAY "网关"
 #define D_GROUP "组:"
@@ -101,6 +102,7 @@
 #define D_IMMEDIATE "immediate"      // Button immediate
 #define D_INDEX "索引:"
 #define D_INFO "信息"
+#define D_INFRARED "Infrared"
 #define D_INITIALIZED "初始化完成"
 #define D_IP_ADDRESS "IP地址"
 #define D_LIGHT "灯"
@@ -154,6 +156,7 @@
 #define D_UPTIME "运行时间"
 #define D_USER "用户名"
 #define D_UTC_TIME "UTC"
+#define D_UV_INDEX "UV Index"
 #define D_UV_LEVEL "紫外线水平"
 #define D_VERSION "版本"
 #define D_VOLTAGE "电压"
@@ -453,10 +456,13 @@
 #define D_SENSOR_SBR_TX   "SerBr Tx"
 #define D_SENSOR_SR04_TRIG "SR04 Tri"
 #define D_SENSOR_SR04_ECHO "SR04 Ech"
+#define D_SENSOR_SDM120_TX "SDM120 Tx"
+#define D_SENSOR_SDM120_RX "SDM120 Rx"
 
 // Units
 #define D_UNIT_AMPERE "安"
 #define D_UNIT_CENTIMETER "cm"
+#define D_UNIT_HERTZ "Hz"
 #define D_UNIT_HOUR "时"
 #define D_UNIT_KILOOHM "千欧"
 #define D_UNIT_KILOWATTHOUR "千瓦时"

@@ -91,6 +91,7 @@
 #define D_FALSE "Λάθος"
 #define D_FILE "Αρχείο"
 #define D_FREE_MEMORY "Ελεύθερη Μνήμη"
+#define D_FREQUENCY "Frequency"
 #define D_GAS "Γκάζι"
 #define D_GATEWAY "Πύλη"
 #define D_GROUP "Ομάδα"
@@ -101,6 +102,7 @@
 #define D_IMMEDIATE "Φωτεινότητα"      // Button immediate
 #define D_INDEX "Κατάλογος"
 #define D_INFO "Πληροφορίες"
+#define D_INFRARED "Infrared"
 #define D_INITIALIZED "Αρχικό"
 #define D_IP_ADDRESS "IP Address"
 #define D_LIGHT "Light"
@@ -154,6 +156,7 @@
 #define D_UPTIME "Uptime"
 #define D_USER "Χρήστης"
 #define D_UTC_TIME "UTC"
+#define D_UV_INDEX "UV Index"
 #define D_UV_LEVEL "Επίπεδο UV"
 #define D_VERSION "Έκδοση"
 #define D_VOLTAGE "Τάση"
@@ -453,10 +456,13 @@
 #define D_SENSOR_SBR_TX   "SerBr Tx"
 #define D_SENSOR_SR04_TRIG "SR04 Tri"
 #define D_SENSOR_SR04_ECHO "SR04 Ech"
+#define D_SENSOR_SDM120_TX "SDM120 Tx"
+#define D_SENSOR_SDM120_RX "SDM120 Rx"
 
 // Units
 #define D_UNIT_AMPERE "A"
 #define D_UNIT_CENTIMETER "cm"
+#define D_UNIT_HERTZ "Hz"
 #define D_UNIT_HOUR "Hr"
 #define D_UNIT_KILOOHM "kOhm"
 #define D_UNIT_KILOWATTHOUR "kWh"

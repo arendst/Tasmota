@@ -22,6 +22,8 @@
  * SenseAir K30, K70 and S8 - CO2 sensor
  *
  * Adapted from EspEasy plugin P052 by Mikael Trieb (mikael__AT__triebconsulting.se)
+ *
+ * Hardware Serial will be selected if GPIO1 = [SAir Rx] and GPIO3 = [SAir Tx]
 \*********************************************************************************************/
 
 #include <TasmotaSerial.h>
@@ -191,8 +193,9 @@ void SenseairInit()
 {
   senseair_type = 0;
   if ((pin[GPIO_SAIR_RX] < 99) && (pin[GPIO_SAIR_TX] < 99)) {
-    SensairSerial = new TasmotaSerial(pin[GPIO_SAIR_RX], pin[GPIO_SAIR_TX]);
-    if (SensairSerial->begin()) {
+    SensairSerial = new TasmotaSerial(pin[GPIO_SAIR_RX], pin[GPIO_SAIR_TX], 1);
+    if (SensairSerial->begin(9600)) {
+      if (SensairSerial->hardwareSerial()) { ClaimSerial(); }
       senseair_type = 1;
     }
   }

@@ -44,6 +44,7 @@
  *   on power1#state=1 do color 001000 endon
  *   on button1#state do publish cmnd/ring2/power %value% endon on button2#state do publish cmnd/strip1/power %value% endon
  *   on switch1#state do power2 %value% endon
+ *   on analog#a0div10 do publish cmnd/ring2/dimmer %value% endon
  *
  * Notes:
  *   Spaces after <on>, around <do> and before <endon> are mandatory
@@ -80,7 +81,8 @@ const char kRulesCommands[] PROGMEM = D_CMND_RULE "|" D_CMND_RULETIMER "|" D_CMN
 String rules_event_value;
 unsigned long rules_timer[MAX_RULE_TIMERS] = { 0 };
 uint8_t rules_quota = 0;
-long rules_power = -1;
+long rules_new_power = -1;
+long rules_old_power = -1;
 
 uint32_t rules_triggers = 0;
 uint8_t rules_trigger_count = 0;
@@ -172,11 +174,16 @@ bool RulesRuleMatch(String &event, String &rule)
     }
   }
 
-  String tmp_value = "none";
+  char tmp_value[CMDSZ] = { 0 };
   double rule_value = 0;
   if (pos > 0) {
-    tmp_value = rule_name.substring(pos + 1);          // "0.100"
-    rule_value = CharToDouble((char*)tmp_value.c_str());  // 0.1      - This saves 9k code over toFLoat()!
+    snprintf(tmp_value, sizeof(tmp_value), rule_name.substring(pos + 1).c_str());
+    int temp_value = GetStateNumber(tmp_value);
+    if (temp_value > -1) {
+      rule_value = temp_value;
+    } else {
+      rule_value = CharToDouble((char*)tmp_value);     // 0.1      - This saves 9k code over toFLoat()!
+    }
     rule_name = rule_name.substring(0, pos);           // "CURRENT"
   }
 
@@ -188,9 +195,9 @@ bool RulesRuleMatch(String &event, String &rule)
   double value = 0;
   const char* str_value = root[rule_task][rule_name];
 
-//  snprintf_P(log_data, sizeof(log_data), PSTR("RUL: Task %s, Name %s, Value %s, TrigCnt %d, TrigSt %d, Source %s, Json %s"),
-//    rule_task.c_str(), rule_name.c_str(), tmp_value.c_str(), rules_trigger_count, bitRead(rules_triggers, rules_trigger_count), event.c_str(), (str_value) ? str_value : "none");
-//  AddLog(LOG_LEVEL_DEBUG);
+//snprintf_P(log_data, sizeof(log_data), PSTR("RUL: Task %s, Name %s, Value |%s|, TrigCnt %d, TrigSt %d, Source %s, Json %s"),
+//  rule_task.c_str(), rule_name.c_str(), tmp_value, rules_trigger_count, bitRead(rules_triggers, rules_trigger_count), event.c_str(), (str_value) ? str_value : "none");
+//AddLog(LOG_LEVEL_DEBUG);
 
   if (!root[rule_task][rule_name].success()) { return false; }
   // No value but rule_name is ok
@@ -239,6 +246,11 @@ bool RulesProcess()
   char vars[RULES_MAX_VARS][10] = { 0 };
   char stemp[10];
 
+  delay(0);                                               // Prohibit possible loop software watchdog
+
+//snprintf_P(log_data, sizeof(log_data), PSTR("RUL: Event = %s, Rule = %s"), mqtt_data, Settings.rules);
+//AddLog(LOG_LEVEL_DEBUG);
+
   if (!Settings.flag.rules_enabled) { return serviced; }  // Not enabled
   if (!strlen(Settings.rules)) { return serviced; }       // No rules
 
@@ -265,21 +277,21 @@ bool RulesProcess()
     if (plen == -1) { return serviced; }                  // Bad syntax - No endon
     String commands = rules.substring(pevt +4, plen);     // "Backlog Dimmer 10;Color 100000"
     plen += 6;
-
-//    snprintf_P(log_data, sizeof(log_data), PSTR("RUL: Trigger |%s|, Commands |%s|"), event_trigger.c_str(), commands.c_str());
-//    AddLog(LOG_LEVEL_DEBUG);
-
     rules_event_value = "";
     String event = event_saved;
+
+//snprintf_P(log_data, sizeof(log_data), PSTR("RUL: Event |%s|, Rule |%s|, Command(s) |%s|"), event.c_str(), event_trigger.c_str(), commands.c_str());
+//AddLog(LOG_LEVEL_DEBUG);
+
     if (RulesRuleMatch(event, event_trigger)) {
       commands.trim();
       String ucommand = commands;
       ucommand.toUpperCase();
       if (ucommand.startsWith("VAR")) {
         uint8_t idx = ucommand.charAt(3) - '1';
-//        idx -= '1';
         if ((idx >= 0) && (idx < RULES_MAX_VARS)) { snprintf(vars[idx], sizeof(vars[idx]), rules_event_value.c_str()); }
       } else {
+//        if (!ucommand.startsWith("BACKLOG")) { commands = "backlog " + commands; }  // Always use Backlog to prevent power race condition
         commands.replace(F("%value%"), rules_event_value);
         for (byte i = 0; i < RULES_MAX_VARS; i++) {
           if (strlen(vars[i])) {
@@ -316,40 +328,33 @@ void RulesInit()
   rules_teleperiod = 0;
 }
 
-void RulesSetPower()
-{
-  if (Settings.flag.rules_enabled) {
-    uint16_t new_power = XdrvMailbox.index;
-    if (rules_power == -1) rules_power = new_power;
-    uint16_t old_power = rules_power;
-    rules_power = new_power;
-    for (byte i = 0; i < devices_present; i++) {
-      uint8_t new_state = new_power &1;
-      uint8_t old_state = old_power &1;
-      if (new_state != old_state) {
-        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"Power%d\":{\"State\":%d}}"), i +1, new_state);
-        RulesProcess();
-      }
-      new_power >>= 1;
-      old_power >>= 1;
-    }
-  }
-}
-
 void RulesEvery50ms()
 {
   if (Settings.flag.rules_enabled) {
-    rules_quota++;
-    if (rules_quota &1) {              // Every 100 ms
-      mqtt_data[0] = '\0';
-      uint16_t tele_period_save = tele_period;
-      tele_period = 2;                 // Do not allow HA updates during next function call
-      XsnsNextCall(FUNC_JSON_APPEND);  // ,"INA219":{"Voltage":4.494,"Current":0.020,"Power":0.089}
-      tele_period = tele_period_save;
-      if (strlen(mqtt_data)) {
-        mqtt_data[0] = '{';            // {"INA219":{"Voltage":4.494,"Current":0.020,"Power":0.089}
-        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}"), mqtt_data);
-        RulesProcess();
+    if (rules_new_power != rules_old_power) {
+      if (rules_old_power != -1) {
+        for (byte i = 0; i < devices_present; i++) {
+          uint8_t new_state = (rules_new_power >> i) &1;
+          if (new_state != ((rules_old_power >> i) &1)) {
+            snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"Power%d\":{\"State\":%d}}"), i +1, new_state);
+            RulesProcess();
+          }
+        }
+      }
+      rules_old_power = rules_new_power;
+    } else {
+      rules_quota++;
+      if (rules_quota &1) {              // Every 100 ms
+        mqtt_data[0] = '\0';
+        uint16_t tele_period_save = tele_period;
+        tele_period = 2;                 // Do not allow HA updates during next function call
+        XsnsNextCall(FUNC_JSON_APPEND);  // ,"INA219":{"Voltage":4.494,"Current":0.020,"Power":0.089}
+        tele_period = tele_period_save;
+        if (strlen(mqtt_data)) {
+          mqtt_data[0] = '{';            // {"INA219":{"Voltage":4.494,"Current":0.020,"Power":0.089}
+          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}"), mqtt_data);
+          RulesProcess();
+        }
       }
     }
   }
@@ -370,6 +375,11 @@ void RulesEverySecond()
   }
 }
 
+void RulesSetPower()
+{
+  rules_new_power = XdrvMailbox.index;
+}
+
 void RulesTeleperiod()
 {
   rules_teleperiod = 1;
@@ -384,7 +394,10 @@ boolean RulesCommand()
   uint8_t index = XdrvMailbox.index;
 
   int command_code = GetCommandCode(command, sizeof(command), XdrvMailbox.topic, kRulesCommands);
-  if (CMND_RULE == command_code) {
+  if (-1 == command_code) {
+    serviced = false;  // Unknown command
+  }
+  else if (CMND_RULE == command_code) {
     if ((XdrvMailbox.data_len > 0) && (XdrvMailbox.data_len < sizeof(Settings.rules))) {
       if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 6)) {
         switch (XdrvMailbox.payload) {
@@ -440,7 +453,7 @@ boolean RulesCommand()
     }
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, D_JSON_DONE);
   }
-  else serviced = false;
+  else serviced = false;  // Unknown command
 
   return serviced;
 }
@@ -459,14 +472,14 @@ boolean Xdrv10(byte function)
     case FUNC_INIT:
       RulesInit();
       break;
-    case FUNC_SET_POWER:
-      RulesSetPower();
-      break;
     case FUNC_EVERY_50_MSECOND:
       RulesEvery50ms();
       break;
     case FUNC_EVERY_SECOND:
       RulesEverySecond();
+      break;
+    case FUNC_SET_POWER:
+      RulesSetPower();
       break;
     case FUNC_COMMAND:
       result = RulesCommand();

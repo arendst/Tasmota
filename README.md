@@ -65,7 +65,7 @@ If you like **Sonoff-Tasmota**, give it a star, or fork it and contribute!
 ### Development
 [![Build Status](https://img.shields.io/travis/arendst/Sonoff-Tasmota.svg)](https://travis-ci.org/arendst/Sonoff-Tasmota)
 
-Current version is **5.13.1a** - See [sonoff/_releasenotes.ino](https://github.com/arendst/Sonoff-Tasmota/blob/development/sonoff/_releasenotes.ino) for change information.
+Current version is **5.13.1b** - See [sonoff/_releasenotes.ino](https://github.com/arendst/Sonoff-Tasmota/blob/development/sonoff/_releasenotes.ino) for change information.
 
 ### Quick install
 Download one of the released binaries from https://github.com/arendst/Sonoff-Tasmota/releases and flash it to your hardware as documented in the wiki.
@@ -234,6 +234,7 @@ People helping to keep the show on the road:
 - Gerhard Mutz for his SGP30 and Sunrise/Sunset driver
 - Nuno Ferreira for his HC-SR04 driver
 - Adrian Scillato for his (security)fixes and implementing and maintaining KNX
+- Gennaro Tortone for his Eastron SDM120 driver
 - Raymond Mouthaan for managing Wemos Wiki information
 - Norbert Richter, Frogmore42 and Jason2866 for providing many issue answers
 - Many more providing Tips, Pocs or PRs
