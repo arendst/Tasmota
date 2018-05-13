@@ -456,6 +456,7 @@
 #define D_SENSOR_SR04_ECHO "SR04 Ech"
 #define D_SENSOR_SDM120_TX "SDM120 Tx"
 #define D_SENSOR_SDM120_RX "SDM120 Rx"
+#define D_SENSOR_RCSWITCH "RCSWITCH"
 
 // Units
 #define D_UNIT_AMPERE "А"
