@@ -259,6 +259,8 @@
 #define D_MQTT_PARAMETERS "MQTT設置"
 #define D_CLIENT "客戶端"
 #define D_FULL_TOPIC "完整主題"
+#define D_HASS_DISCOVERY "Home-Assistant discovery enabled"
+#define D_HASS_FORCELIGHT "Home-Assistant force light"
 
 #define D_LOGGING_PARAMETERS "日志設置"
 #define D_SERIAL_LOG_LEVEL "串口日志級別"

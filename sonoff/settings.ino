@@ -373,6 +373,7 @@ void SettingsDefaultSet2()
   Settings.flag.mqtt_switch_retain = MQTT_SWITCH_RETAIN;
   Settings.flag.pwm_control = 1;
   Settings.flag.hass_discovery = HOME_ASSISTANT_DISCOVERY_ENABLE;
+  Settings.flag.hass_forcelight = 0;
 
   Settings.flag2.emulation = EMULATION;
 

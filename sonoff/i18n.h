@@ -257,6 +257,9 @@
 #define D_CMND_SENSORRETAIN "SensorRetain"
 #define D_CMND_PUBLISH "Publish"
 
+#define D_CMND_HASS_DISCOVERY "HassDiscovery"
+#define D_CMND_HASS_FORCELIGHT "HassForceLight"
+
 // Commands xdrv_01_light.ino
 #define D_CMND_CHANNEL "Channel"
 #define D_CMND_COLOR "Color"

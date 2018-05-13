@@ -259,6 +259,8 @@
 #define D_MQTT_PARAMETERS "Параметри на MQTT"
 #define D_CLIENT "Клиент"
 #define D_FULL_TOPIC "Пълен топик"
+#define D_HASS_DISCOVERY "Home-Assistant discovery enabled"
+#define D_HASS_FORCELIGHT "Home-Assistant force light"
 
 #define D_LOGGING_PARAMETERS "Параметри на логинга"
 #define D_SERIAL_LOG_LEVEL "Степен на серийния лог"
