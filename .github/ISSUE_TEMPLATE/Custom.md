@@ -1,6 +1,6 @@
 ---
 name: Troubleshooting
-about: Troubleshooting Help
+about: Users Troubleshooting Help
 
 ---
 
@@ -13,4 +13,4 @@ Make sure these boxes are checked [x] before submitting your issue - Thank you!
 - [ ] Hardware used : 
 - [ ] Provide the output of command ``status 0`` :
 
-**Please, remember to close the issue when the problem has been addressed.**
+**(Please, remember to close the issue when the problem has been addressed)**
