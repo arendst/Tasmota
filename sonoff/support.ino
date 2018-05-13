@@ -1288,7 +1288,7 @@ uint32_t MakeTime(TIME_T &tm)
   return seconds;
 }
 
-uint32_t RuleToTime(TimeChangeRule r, int yr)
+uint32_t RuleToTime(TimeRule r, int yr)
 {
   TIME_T tm;
   uint32_t t;
@@ -1367,8 +1367,8 @@ void RtcSecond()
       }
       BreakTime(utc_time, tmpTime);
       RtcTime.year = tmpTime.year + 1970;
-      daylight_saving_time = RuleToTime(DaylightSavingTime, RtcTime.year);
-      standard_time = RuleToTime(StandardTime, RtcTime.year);
+      daylight_saving_time = RuleToTime(Settings.dst_flags, RtcTime.year);
+      standard_time = RuleToTime(Settings.std_flags, RtcTime.year);
       snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION "(" D_UTC_TIME ") %s, (" D_DST_TIME ") %s, (" D_STD_TIME ") %s"),
         GetTime(0).c_str(), GetTime(2).c_str(), GetTime(3).c_str());
       AddLog(LOG_LEVEL_DEBUG);
@@ -1389,22 +1389,22 @@ void RtcSecond()
   if (local_time > 1451602800) {  // 2016-01-01
     int32_t time_offset = Settings.timezone * SECS_PER_HOUR;
     if (99 == Settings.timezone) {
-      dstoffset = DaylightSavingTime.offset * SECS_PER_MIN;
-      stdoffset = StandardTime.offset * SECS_PER_MIN;
-      if (DaylightSavingTime.hemis) {
+      dstoffset = Settings.dst_offset * SECS_PER_MIN;
+      stdoffset = Settings.std_offset * SECS_PER_MIN;
+      if (Settings.dst_flags.hemis) {
         // Southern hemisphere
         if ((utc_time >= (standard_time - dstoffset)) && (utc_time < (daylight_saving_time - stdoffset))) {
           time_offset = stdoffset;  // Standard Time
         } else {
           time_offset = dstoffset;  // Daylight Saving Time
-        }        
+        }
       } else {
         // Northern hemisphere
         if ((utc_time >= (daylight_saving_time - stdoffset)) && (utc_time < (standard_time - dstoffset))) {
           time_offset = dstoffset;  // Daylight Saving Time
         } else {
           time_offset = stdoffset;  // Standard Time
-        }        
+        }
       }
     }
     local_time += time_offset;

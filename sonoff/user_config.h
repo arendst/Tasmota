@@ -129,6 +129,22 @@
 #define NTP_SERVER2            "nl.pool.ntp.org"    // [NtpServer2] Select second NTP server by name or IP address (5.39.184.5)
 #define NTP_SERVER3            "0.nl.pool.ntp.org"  // [NtpServer3] Select third NTP server by name or IP address (93.94.224.67)
 
+// -- Time - Start Daylight Saving Time and timezone offset from UTC in minutes
+#define TIME_DST_HEMISPHERE    North              // Northern Hemisphere
+#define TIME_DST_WEEK          Last
+#define TIME_DST_DAY           Sun
+#define TIME_DST_MONTH         Mar                // Last sunday in march
+#define TIME_DST_HOUR          2                  // at 02:00
+#define TIME_DST_OFFSET        +120               // +120 minutes
+
+// -- Time - Start Standard Time and timezone offset from UTC in minutes
+#define TIME_STD_HEMISPHERE    North              // Northern Hemisphere
+#define TIME_STD_WEEK          Last
+#define TIME_STD_DAY           Sun
+#define TIME_STD_MONTH         Oct                // Last sunday in october
+#define TIME_STD_HOUR          3                  // at 03:00
+#define TIME_STD_OFFSET        +60                // +60 minutes
+
 // -- Location ------------------------------------
 #define LATITUDE               48.858360         // [Latitude] Your location to be used with sunrise and sunset
 #define LONGITUDE              2.294442          // [Longitude] Your location to be used with sunrise and sunset
@@ -222,12 +238,6 @@
 #define USE_DISCOVERY                            // Enable mDNS for the following services (+8k code, +0.3k mem)
   #define WEBSERVER_ADVERTISE                    // Provide access to webserver by name <Hostname>.local/
   #define MQTT_HOST_DISCOVERY                    // Find MQTT host server (overrides MQTT_HOST if found)
-
-// -- Time - Start Daylight Saving Time and timezone offset from UTC in minutes
-#define TIME_DST  North, Last, Sun, Mar, 2, +120  // Northern Hemisphere, Last sunday in march at 02:00 +120 minutes
-
-// -- Time - Start Standard Time and timezone offset from UTC in minutes
-#define TIME_STD  North, Last, Sun, Oct, 3, +60   // Northern Hemisphere, Last sunday in october 02:00 +60 minutes
 
 // -- Time ----------------------------------------
 #define USE_TIMERS                               // Add support for up to 16 timers (+2k2 code)

@@ -298,19 +298,6 @@ struct TIME_T {
   unsigned long valid;
 } RtcTime;
 
-struct TimeChangeRule
-{
-  uint8_t       hemis;                     // 0-Northern, 1=Southern Hemisphere (=Opposite DST/STD)
-  uint8_t       week;                      // 1=First, 2=Second, 3=Third, 4=Fourth, or 0=Last week of the month
-  uint8_t       dow;                       // day of week, 1=Sun, 2=Mon, ... 7=Sat
-  uint8_t       month;                     // 1=Jan, 2=Feb, ... 12=Dec
-  uint8_t       hour;                      // 0-23
-  int           offset;                    // offset from UTC in minutes
-};
-
-TimeChangeRule DaylightSavingTime = { TIME_DST }; // Daylight Saving Time
-TimeChangeRule StandardTime = { TIME_STD }; // Standard Time
-
 struct XDRVMAILBOX {
   uint16_t      valid;
   uint16_t      index;
