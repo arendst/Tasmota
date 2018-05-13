@@ -1,4 +1,7 @@
-/* 5.13.1a
+/* 5.13.1b
+ * Prep for user entry DST/STD (#2721)
+ *
+ * 5.13.1a
  * Change user_config.h otaurl to http://sonoff.maddox.co.uk/tasmota/sonoff.bin (#2588, #2602)
  * Fix configuration restore regression from 5.13.1
  * Fix compile error when ADC is enabled and Rules are disabled (#2608)
