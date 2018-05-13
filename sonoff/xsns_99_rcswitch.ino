@@ -137,65 +137,51 @@ boolean Xsns99(byte function)
 {
   boolean result = false;
 
-  switch (function) {
-    case FUNC_INIT:
-      //CounterInit();
-      Serial.println("99 INIT");
-      mySwitch.enableReceive(14);
-      snprintf_P(log_data, sizeof(log_data), "99 INIT" );
-      AddLog(LOG_LEVEL_INFO);
-      break;
-    case FUNC_PREP_BEFORE_TELEPERIOD:
-      Serial.println("99 PREP");
-      snprintf_P(log_data, sizeof(log_data), "99 PREP" );
-      AddLog(LOG_LEVEL_INFO);
-      break;
-case FUNC_EVERY_50_MSECOND:
-      thisTime = millis();
-      if(thisTime - lastRXTime > 1000)
-      {
-        if (mySwitch.available()) {
-          lastRXTime = thisTime;
-          int value = mySwitch.getReceivedValue();
-        
-          if (value == 0) {
-            Serial.print("Unknown encoding");
-          } else {
-            //Serial.print("Received ");
-            //Serial.print( mySwitch.getReceivedValue() );
-            //Serial.print(" / ");
-            //Serial.print( mySwitch.getReceivedBitlength() );
-            //Serial.print("bit ");
-            //Serial.print("Protocol: ");
-            //Serial.println( mySwitch.getReceivedProtocol() );
-            mqtt_data[0] = '\0';
-            snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%d"), value);
-            Serial.println(mqtt_data);
-            MqttPublishPrefixTopic_P(STAT, "RCSWITCH");
-          }
-    
-          mySwitch.resetAvailable();
-        }
-      }
-      break;
+  if (pin[GPIO_RCSWITCH] < 99) {
+
+    switch (function) {
+      case FUNC_INIT:
+        //CounterInit();
+        mySwitch.enableReceive(pin[GPIO_RCSWITCH]);
+        snprintf_P(log_data, sizeof(log_data), "RCSWITCH INIT on pin %d", pin[GPIO_RCSWITCH] );
+        AddLog(LOG_LEVEL_INFO);
+        break;
+      case FUNC_PREP_BEFORE_TELEPERIOD:
+        break;
+     case FUNC_EVERY_50_MSECOND:
+        thisTime = millis();
+        if(thisTime - lastRXTime > 1000)
+        {
+          if (mySwitch.available()) {
+            lastRXTime = thisTime;
+            int value = mySwitch.getReceivedValue();
+          
+            if (value == 0) {
+              Serial.print("Unknown encoding");
+            } else {
+              mqtt_data[0] = '\0';
+              snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%d"), value);
+              Serial.println(mqtt_data);
+              MqttPublishPrefixTopic_P(STAT, "RCSWITCH");
+            }
       
-    case FUNC_JSON_APPEND:
-      //CounterShow(1);
-      Serial.println("99 JSON APPEND");
-      snprintf_P(log_data, sizeof(log_data), "99 JSON" );
-      AddLog(LOG_LEVEL_INFO);
-
-      break;
-#ifdef USE_WEBSERVER
-    case FUNC_WEB_APPEND:
-    Serial.println("99 WEB");
-          snprintf_P(log_data, sizeof(log_data), "99 WEB" );
-      AddLog(LOG_LEVEL_INFO);
-
-
-      //CounterShow(0);
-      break;
-#endif  // USE_WEBSERVER
+            mySwitch.resetAvailable();
+          }
+        }
+        break;
+        
+      case FUNC_JSON_APPEND:
+        //CounterShow(1);
+      
+        break;
+  #ifdef USE_WEBSERVER
+      case FUNC_WEB_APPEND:
+      
+  
+        //CounterShow(0);
+        break;
+  #endif  // USE_WEBSERVER
+    }
   }
   return result;
 }

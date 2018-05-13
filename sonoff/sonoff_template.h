@@ -95,7 +95,7 @@ enum UserSelectablePins {
   GPIO_SR04_ECHO,      // SR04 Echo pin
   GPIO_SDM120_TX,      // SDM120 Serial interface
   GPIO_SDM120_RX,      // SDM120 Serial interface
-  GPIO_RCCWITCH,
+  GPIO_RCSWITCH,       // An RF Receiver
   GPIO_SENSOR_END };
 
 // Programmer selectable GPIO functionality offset by user selectable GPIOs
