@@ -1389,17 +1389,22 @@ void RtcSecond()
   if (local_time > 1451602800) {  // 2016-01-01
     int32_t time_offset = Settings.timezone * SECS_PER_HOUR;
     if (99 == Settings.timezone) {
+      dstoffset = DaylightSavingTime.offset * SECS_PER_MIN;
+      stdoffset = StandardTime.offset * SECS_PER_MIN;
       if (DaylightSavingTime.hemis) {
-        dstoffset = StandardTime.offset * SECS_PER_MIN;  // Southern hemisphere
-        stdoffset = DaylightSavingTime.offset * SECS_PER_MIN;
+        // Southern hemisphere
+        if ((utc_time >= (standard_time - dstoffset)) && (utc_time < (daylight_saving_time - stdoffset))) {
+          time_offset = stdoffset;  // Standard Time
+        } else {
+          time_offset = dstoffset;  // Daylight Saving Time
+        }        
       } else {
-        dstoffset = DaylightSavingTime.offset * SECS_PER_MIN;  // Northern hemisphere
-        stdoffset = StandardTime.offset * SECS_PER_MIN;
-      }
-      if ((utc_time >= (daylight_saving_time - stdoffset)) && (utc_time < (standard_time - dstoffset))) {
-        time_offset = dstoffset;  // Daylight Saving Time
-      } else {
-        time_offset = stdoffset;  // Standard Time
+        // Northern hemisphere
+        if ((utc_time >= (daylight_saving_time - stdoffset)) && (utc_time < (standard_time - dstoffset))) {
+          time_offset = dstoffset;  // Daylight Saving Time
+        } else {
+          time_offset = stdoffset;  // Standard Time
+        }        
       }
     }
     local_time += time_offset;
