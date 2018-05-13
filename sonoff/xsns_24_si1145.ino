@@ -210,6 +210,11 @@ uint8_t Si1145WriteParamData(uint8_t p, uint8_t v)
 
 /********************************************************************************************/
 
+bool Si1145Present()
+{
+  return (Si1145ReadByte(SI114X_PART_ID) == 0X45);
+}
+
 void Si1145Reset()
 {
   Si1145WriteByte(SI114X_MEAS_RATE0, 0);
@@ -234,19 +239,19 @@ void Si1145DeInit()
   Si1145WriteByte(SI114X_UCOEFF1, 0x89);
   Si1145WriteByte(SI114X_UCOEFF2, 0x02);
   Si1145WriteByte(SI114X_UCOEFF3, 0x00);
-  Si1145WriteParamData(SI114X_CHLIST, SI114X_CHLIST_ENUV |SI114X_CHLIST_ENALSIR | SI114X_CHLIST_ENALSVIS |SI114X_CHLIST_ENPS1);
+  Si1145WriteParamData(SI114X_CHLIST, SI114X_CHLIST_ENUV | SI114X_CHLIST_ENALSIR | SI114X_CHLIST_ENALSVIS | SI114X_CHLIST_ENPS1);
   //
   //set LED1 CURRENT(22.4mA)(It is a normal value for many LED)
   //
   Si1145WriteParamData(SI114X_PS1_ADCMUX, SI114X_ADCMUX_LARGE_IR);
   Si1145WriteByte(SI114X_PS_LED21, SI114X_LED_CURRENT_22MA);
-  Si1145WriteParamData(SI114X_PSLED12_SELECT, SI114X_PSLED12_SELECT_PS1_LED1); //
+  Si1145WriteParamData(SI114X_PSLED12_SELECT, SI114X_PSLED12_SELECT_PS1_LED1);
   //
   //PS ADC SETTING
   //
   Si1145WriteParamData(SI114X_PS_ADC_GAIN, SI114X_ADC_GAIN_DIV1);
   Si1145WriteParamData(SI114X_PS_ADC_COUNTER, SI114X_ADC_COUNTER_511ADCCLK);
-  Si1145WriteParamData(SI114X_PS_ADC_MISC, SI114X_ADC_MISC_HIGHRANGE|SI114X_ADC_MISC_ADC_RAWADC);
+  Si1145WriteParamData(SI114X_PS_ADC_MISC, SI114X_ADC_MISC_HIGHRANGE | SI114X_ADC_MISC_ADC_RAWADC);
   //
   //VIS ADC SETTING
   //
@@ -273,7 +278,7 @@ void Si1145DeInit()
 
 boolean Si1145Begin()
 {
-  if (Si1145ReadByte(SI114X_PART_ID) != 0X45) { return false; }
+  if (!Si1145Present()) { return false; }
 
   Si1145Reset();
   Si1145DeInit();
@@ -320,7 +325,7 @@ const char HTTP_SNS_SI1145[] PROGMEM = "%s"
 
 void Si1145Show(boolean json)
 {
-  if (si1145_type) {
+  if (si1145_type && Si1145Present()) {
     uint16_t visible = Si1145ReadVisible();
     uint16_t infrared = Si1145ReadIR();
     uint16_t uvindex = Si1145ReadUV();
@@ -335,6 +340,8 @@ void Si1145Show(boolean json)
       snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_SI1145, mqtt_data, visible, infrared, uvindex /100, uvindex %100);
 #endif
     }
+  } else {
+    si1145_type = 0;
   }
 }
 

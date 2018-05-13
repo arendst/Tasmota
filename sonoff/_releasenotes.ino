@@ -7,6 +7,8 @@
  * Fix KNX config error (#2628)
  * Fix sensor MHZ-19 vanishing data over time (#2659)
  * Fix KNX reconnection issue (#2679)
+ * Fix DST and STD time for Southern Hemisphere (#2684, #2714)
+ * Add SetOption26 to enforce use of indexes even when only one relay is present (#1055)
  * Add Portuguese in Brazil language file
  * Add rule state test for On/Off in addition to 0/1 (#2613)
  * Add hardware serial option to MHZ-19 sensor (#2659)

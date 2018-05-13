@@ -545,7 +545,7 @@ void LightState(uint8_t append)
   } else {
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{"));
   }
-  GetPowerDevice(scommand, light_device, sizeof(scommand));
+  GetPowerDevice(scommand, light_device, sizeof(scommand), Settings.flag.device_index_enable);
   snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s\"%s\":\"%s\",\"" D_CMND_DIMMER "\":%d"),
     mqtt_data, scommand, GetStateText(light_power), Settings.light_dimmer);
   if (light_subtype > LST_SINGLE) {
