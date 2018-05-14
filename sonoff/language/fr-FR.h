@@ -91,6 +91,7 @@
 #define D_FALSE "Faux"
 #define D_FILE "Fichier"
 #define D_FREE_MEMORY "Mémoire libre"
+#define D_FREQUENCY "Frequency"
 #define D_GAS "Gaz"
 #define D_GATEWAY "Passerelle"
 #define D_GROUP "Groupe"
@@ -101,6 +102,7 @@
 #define D_IMMEDIATE "immédiat"      // Button immediate
 #define D_INDEX "Index"
 #define D_INFO "Info"
+#define D_INFRARED "Infrared"
 #define D_INITIALIZED "Initialisé"
 #define D_IP_ADDRESS "Adresse IP"
 #define D_LIGHT "Lumière"
@@ -154,6 +156,7 @@
 #define D_UPTIME "Durée d'activité"
 #define D_USER "Utilisateur"
 #define D_UTC_TIME "UTC"
+#define D_UV_INDEX "Index UV"
 #define D_UV_LEVEL "Niveau UV"
 #define D_VERSION "Version"
 #define D_VOLTAGE "Tension"
@@ -453,10 +456,13 @@
 #define D_SENSOR_SBR_TX   "SerBr Tx"
 #define D_SENSOR_SR04_TRIG "SR04 Tri"
 #define D_SENSOR_SR04_ECHO "SR04 Ech"
+#define D_SENSOR_SDM120_TX "SDM120 Tx"
+#define D_SENSOR_SDM120_RX "SDM120 Rx"
 
 // Units
 #define D_UNIT_AMPERE "A"
 #define D_UNIT_CENTIMETER "cm"
+#define D_UNIT_HERTZ "Hz"
 #define D_UNIT_HOUR "h"
 #define D_UNIT_KILOOHM "kΩ"
 #define D_UNIT_KILOWATTHOUR "kWh"

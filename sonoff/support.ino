@@ -35,6 +35,10 @@ byte oswatch_blocked_loop = 0;
 //void OsWatchTicker() ICACHE_RAM_ATTR;
 #endif  // USE_WS2812_DMA
 
+#ifdef USE_KNX
+bool knx_started = false;
+#endif  // USE_KNX
+
 void OsWatchTicker()
 {
   unsigned long t = millis();
@@ -486,12 +490,13 @@ void SetSerialBaudrate(int baudrate)
   }
 }
 
-void SetSerialLocal(bool slocal)
+void ClaimSerial()
 {
-  serial_local = slocal;
-  if (slocal) {
-    SetSeriallog(LOG_LEVEL_NONE);
-  }
+  serial_local = 1;
+  AddLog_P(LOG_LEVEL_INFO, PSTR("SNS: Hardware Serial"));
+  SetSeriallog(LOG_LEVEL_NONE);
+  baudrate = Serial.baudRate();
+  Settings.baudrate = baudrate / 1200;
 }
 
 uint32_t GetHash(const char *buffer, size_t size)
@@ -821,11 +826,20 @@ void WifiCheck(uint8_t param)
         }
 #endif  // USE_EMULATION
 #endif  // USE_WEBSERVER
+#ifdef USE_KNX
+        if (!knx_started && Settings.flag.knx_enabled) {
+          KNXStart();
+          knx_started = true;
+        }
+#endif  // USE_KNX
       } else {
 #if defined(USE_WEBSERVER) && defined(USE_EMULATION)
         UdpDisconnect();
 #endif  // USE_EMULATION
         mdns_begun = false;
+#ifdef USE_KNX
+        knx_started = false;
+#endif  // USE_KNX
       }
     }
   }
@@ -1274,7 +1288,7 @@ uint32_t MakeTime(TIME_T &tm)
   return seconds;
 }
 
-uint32_t RuleToTime(TimeChangeRule r, int yr)
+uint32_t RuleToTime(TimeRule r, int yr)
 {
   TIME_T tm;
   uint32_t t;
@@ -1353,8 +1367,8 @@ void RtcSecond()
       }
       BreakTime(utc_time, tmpTime);
       RtcTime.year = tmpTime.year + 1970;
-      daylight_saving_time = RuleToTime(DaylightSavingTime, RtcTime.year);
-      standard_time = RuleToTime(StandardTime, RtcTime.year);
+      daylight_saving_time = RuleToTime(Settings.dst_flags, RtcTime.year);
+      standard_time = RuleToTime(Settings.std_flags, RtcTime.year);
       snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION "(" D_UTC_TIME ") %s, (" D_DST_TIME ") %s, (" D_STD_TIME ") %s"),
         GetTime(0).c_str(), GetTime(2).c_str(), GetTime(3).c_str());
       AddLog(LOG_LEVEL_DEBUG);
@@ -1375,17 +1389,22 @@ void RtcSecond()
   if (local_time > 1451602800) {  // 2016-01-01
     int32_t time_offset = Settings.timezone * SECS_PER_HOUR;
     if (99 == Settings.timezone) {
-      if (DaylightSavingTime.hemis) {
-        dstoffset = StandardTime.offset * SECS_PER_MIN;  // Southern hemisphere
-        stdoffset = DaylightSavingTime.offset * SECS_PER_MIN;
+      dstoffset = Settings.dst_offset * SECS_PER_MIN;
+      stdoffset = Settings.std_offset * SECS_PER_MIN;
+      if (Settings.dst_flags.hemis) {
+        // Southern hemisphere
+        if ((utc_time >= (standard_time - dstoffset)) && (utc_time < (daylight_saving_time - stdoffset))) {
+          time_offset = stdoffset;  // Standard Time
+        } else {
+          time_offset = dstoffset;  // Daylight Saving Time
+        }
       } else {
-        dstoffset = DaylightSavingTime.offset * SECS_PER_MIN;  // Northern hemisphere
-        stdoffset = StandardTime.offset * SECS_PER_MIN;
-      }
-      if ((utc_time >= (daylight_saving_time - stdoffset)) && (utc_time < (standard_time - dstoffset))) {
-        time_offset = dstoffset;  // Daylight Saving Time
-      } else {
-        time_offset = stdoffset;  // Standard Time
+        // Northern hemisphere
+        if ((utc_time >= (daylight_saving_time - stdoffset)) && (utc_time < (standard_time - dstoffset))) {
+          time_offset = dstoffset;  // Daylight Saving Time
+        } else {
+          time_offset = stdoffset;  // Standard Time
+        }
       }
     }
     local_time += time_offset;

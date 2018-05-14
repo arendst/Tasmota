@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v5.13.0
+ * Updated until v5.13.1a
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -91,6 +91,7 @@
 #define D_FALSE "Falso"
 #define D_FILE "File"
 #define D_FREE_MEMORY "Memoria Libera"
+#define D_FREQUENCY "Frequenza"
 #define D_GAS "Gas"
 #define D_GATEWAY "Gateway"
 #define D_GROUP "Gruppo"
@@ -101,6 +102,7 @@
 #define D_IMMEDIATE "immediato"      // Button immediate
 #define D_INDEX "Indice"
 #define D_INFO "Info"
+#define D_INFRARED "Infrared"
 #define D_INITIALIZED "Inizializzato"
 #define D_IP_ADDRESS "Indirizzo IP"
 #define D_LIGHT "Luce"
@@ -154,6 +156,7 @@
 #define D_UPTIME "Uptime"
 #define D_USER "Utente"
 #define D_UTC_TIME "UTC"
+#define D_UV_INDEX "Indice UV"
 #define D_UV_LEVEL "Livello UV"
 #define D_VERSION "Versione"
 #define D_VOLTAGE "Tensione"
@@ -453,10 +456,13 @@
 #define D_SENSOR_SBR_TX   "SerBr Tx"
 #define D_SENSOR_SR04_TRIG "SR04 Tri"
 #define D_SENSOR_SR04_ECHO "SR04 Ech"
+#define D_SENSOR_SDM120_TX "SDM120 Tx"
+#define D_SENSOR_SDM120_RX "SDM120 Rx"
 
 // Units
 #define D_UNIT_AMPERE "A"
 #define D_UNIT_CENTIMETER "cm"
+#define D_UNIT_HERTZ "Hz"
 #define D_UNIT_HOUR "Hr"
 #define D_UNIT_KILOOHM "kOhm"
 #define D_UNIT_KILOWATTHOUR "kWh"

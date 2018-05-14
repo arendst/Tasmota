@@ -129,6 +129,22 @@
 #define NTP_SERVER2            "nl.pool.ntp.org"    // [NtpServer2] Select second NTP server by name or IP address (5.39.184.5)
 #define NTP_SERVER3            "0.nl.pool.ntp.org"  // [NtpServer3] Select third NTP server by name or IP address (93.94.224.67)
 
+// -- Time - Start Daylight Saving Time and timezone offset from UTC in minutes
+#define TIME_DST_HEMISPHERE    North              // Northern Hemisphere
+#define TIME_DST_WEEK          Last
+#define TIME_DST_DAY           Sun
+#define TIME_DST_MONTH         Mar                // Last sunday in march
+#define TIME_DST_HOUR          2                  // at 02:00
+#define TIME_DST_OFFSET        +120               // +120 minutes
+
+// -- Time - Start Standard Time and timezone offset from UTC in minutes
+#define TIME_STD_HEMISPHERE    North              // Northern Hemisphere
+#define TIME_STD_WEEK          Last
+#define TIME_STD_DAY           Sun
+#define TIME_STD_MONTH         Oct                // Last sunday in october
+#define TIME_STD_HOUR          3                  // at 03:00
+#define TIME_STD_OFFSET        +60                // +60 minutes
+
 // -- Location ------------------------------------
 #define LATITUDE               48.858360         // [Latitude] Your location to be used with sunrise and sunset
 #define LONGITUDE              2.294442          // [Longitude] Your location to be used with sunrise and sunset
@@ -223,12 +239,6 @@
   #define WEBSERVER_ADVERTISE                    // Provide access to webserver by name <Hostname>.local/
   #define MQTT_HOST_DISCOVERY                    // Find MQTT host server (overrides MQTT_HOST if found)
 
-// -- Time - Start Daylight Saving Time and timezone offset from UTC in minutes
-#define TIME_DST  North, Last, Sun, Mar, 2, +120  // Northern Hemisphere, Last sunday in march at 02:00 +120 minutes
-
-// -- Time - Start Standard Time and timezone offset from UTC in minutes
-#define TIME_STD  North, Last, Sun, Oct, 3, +60   // Northern Hemisphere, Last sunday in october 02:00 +60 minutes
-
 // -- Time ----------------------------------------
 #define USE_TIMERS                               // Add support for up to 16 timers (+2k2 code)
   #define USE_TIMERS_WEB                         // Add timer webpage support (+4k5 code)
@@ -258,6 +268,7 @@
   #define USE_BH1750                             // Add I2C code for BH1750 sensor (+0k5 code)
 //  #define USE_VEML6070                           // Add I2C code for VEML6070 sensor (+0k5 code)
 //  #define USE_TSL2561                            // Add I2C code for TSL2561 sensor using library Joba_Tsl2561 (+2k3 code)
+  #define USE_SI1145                             // Add I2C code for SI1145/46/47 sensor (+1k code)
 //  #define USE_ADS1115                            // Add I2C code for ADS1115 16 bit A/D converter based on Adafruit ADS1x15 library (no library needed) (+0k7 code)
 //  #define USE_ADS1115_I2CDEV                     // Add I2C code for ADS1115 16 bit A/D converter using library i2cdevlib-Core and i2cdevlib-ADS1115 (+2k code)
 //  #define USE_INA219                             // Add I2C code for INA219 Low voltage and current sensor (+1k code)
@@ -280,6 +291,7 @@
 #define USE_NOVA_SDS                             // Add support for SDS011 and SDS021 particle concentration sensor (+0k7 code)
 #define USE_PZEM004T                             // Add support for PZEM004T Energy monitor (+2k code)
 #define USE_SERIAL_BRIDGE                        // Add support for software Serial Bridge (+0k8 code)
+#define USE_SDM120                               // Add support for Eastron SDM120-Modbus energy meter (+1k2 code)
 
 // -- Low level interface devices -----------------
 #define USE_IR_REMOTE                            // Send IR remote commands using library IRremoteESP8266 and ArduinoJson (+4k code, 0k3 mem, 48 iram)
