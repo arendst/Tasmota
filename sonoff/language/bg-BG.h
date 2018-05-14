@@ -91,6 +91,7 @@
 #define D_FALSE "Невярно"
 #define D_FILE "Файл"
 #define D_FREE_MEMORY "Свободна памет"
+#define D_FREQUENCY "Frequency"
 #define D_GAS "Газ"
 #define D_GATEWAY "Шлюз"
 #define D_GROUP "Група"
@@ -101,6 +102,7 @@
 #define D_IMMEDIATE "моментален"      // Button immediate
 #define D_INDEX "Индекс"
 #define D_INFO "Информация"
+#define D_INFRARED "Infrared"
 #define D_INITIALIZED "Инициализирано"
 #define D_IP_ADDRESS "IP адрес"
 #define D_LIGHT "Светлина"
@@ -154,6 +156,7 @@
 #define D_UPTIME "Време от стартирането"
 #define D_USER "Потребител"
 #define D_UTC_TIME "UTC"
+#define D_UV_INDEX "UV Index"
 #define D_UV_LEVEL "Ниво на ултравиолетово излъчване"
 #define D_VERSION "Версия"
 #define D_VOLTAGE "Напрежение"
@@ -453,10 +456,13 @@
 #define D_SENSOR_SBR_TX   "SerBr Tx"
 #define D_SENSOR_SR04_TRIG "SR04 Tri"
 #define D_SENSOR_SR04_ECHO "SR04 Ech"
+#define D_SENSOR_SDM120_TX "SDM120 Tx"
+#define D_SENSOR_SDM120_RX "SDM120 Rx"
 
 // Units
 #define D_UNIT_AMPERE "А"
 #define D_UNIT_CENTIMETER "см"
+#define D_UNIT_HERTZ "Hz"
 #define D_UNIT_HOUR "ч"
 #define D_UNIT_KILOOHM "кОм"
 #define D_UNIT_KILOWATTHOUR "кВт/ч"

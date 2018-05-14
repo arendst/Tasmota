@@ -25,7 +25,7 @@
     - Select IDE Tools - Flash Size: "1M (no SPIFFS)"
   ====================================================*/
 
-#define VERSION                0x050D0101   // 5.13.1a
+#define VERSION                0x050D0102   // 5.13.1b
 
 // Location specific includes
 #include <core_version.h>                   // Arduino_Esp8266 version information (ARDUINO_ESP8266_RELEASE and ARDUINO_ESP8266_RELEASE_2_3_0)
@@ -376,6 +376,7 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
   byte jsflg = 0;
   byte lines = 1;
   uint8_t grpflg = 0;
+//  uint8_t user_append_index = 0;
   uint16_t i = 0;
   uint16_t index;
   uint32_t address;
@@ -407,7 +408,10 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
     while (isdigit(type[i-1])) {
       i--;
     }
-    if (i < strlen(type)) index = atoi(type +i);
+    if (i < strlen(type)) {
+      index = atoi(type +i);
+//      user_append_index = 1;
+    }
     type[i] = '\0';
   }
 
@@ -478,6 +482,7 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
     }
     else if ((CMND_POWER == command_code) && (index > 0) && (index <= devices_present)) {
       if ((payload < 0) || (payload > 4)) payload = 9;
+//      Settings.flag.device_index_enable = user_append_index;
       ExecuteCommandPower(index, payload);
       fallback_topic_flag = 0;
       return;
@@ -553,7 +558,7 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
       XsnsCall(FUNC_COMMAND);
 //      if (!XsnsCall(FUNC_COMMAND)) type = NULL;
     }
-    else if ((CMND_SETOPTION == command_code) && ((index <= 21) || ((index > 31) && (index <= P_MAX_PARAM8 + 31)))) {
+    else if ((CMND_SETOPTION == command_code) && ((index <= 26) || ((index > 31) && (index <= P_MAX_PARAM8 + 31)))) {
       if (index <= 31) {
         ptype = 0;   // SetOption0 .. 31
       } else {
@@ -585,6 +590,9 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
               case 21:  // no_power_on_check
 //              case 22:  // mqtt_serial - use commands SerialSend and SerialLog
 //              case 23:  // rules_enabled - use command Rule
+//              case 24:  // rules_once
+//              case 25:  // knx_enabled
+              case 26:  // device_index_enable
                 bitWrite(Settings.flag.data, index, payload);
             }
             if (12 == index) {  // stop_flash_rotate
@@ -1367,7 +1375,7 @@ void MqttShowState()
     if (i == light_device -1) {
       LightState(1);
     } else {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"%s\":\"%s\""), mqtt_data, GetPowerDevice(stemp1, i +1, sizeof(stemp1)), GetStateText(bitRead(power, i)));
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"%s\":\"%s\""), mqtt_data, GetPowerDevice(stemp1, i +1, sizeof(stemp1), Settings.flag.device_index_enable), GetStateText(bitRead(power, i)));
     }
   }
 

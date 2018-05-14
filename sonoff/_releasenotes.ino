@@ -1,4 +1,7 @@
-/* 5.13.1a
+/* 5.13.1b
+ * Prep for user entry DST/STD (#2721)
+ *
+ * 5.13.1a
  * Change user_config.h otaurl to http://sonoff.maddox.co.uk/tasmota/sonoff.bin (#2588, #2602)
  * Fix configuration restore regression from 5.13.1
  * Fix compile error when ADC is enabled and Rules are disabled (#2608)
@@ -6,10 +9,16 @@
  * Fix several timer data input and output errors (#2597, #2620)
  * Fix KNX config error (#2628)
  * Fix sensor MHZ-19 vanishing data over time (#2659)
+ * Fix KNX reconnection issue (#2679)
+ * Fix DST and STD time for Southern Hemisphere (#2684, #2714)
+ * Add SetOption26 to enforce use of indexes even when only one relay is present (#1055)
  * Add Portuguese in Brazil language file
  * Add rule state test for On/Off in addition to 0/1 (#2613)
  * Add hardware serial option to MHZ-19 sensor (#2659)
+ * Add Eastron SDM120 energy meter (#2694)
+ * Add support for sensor SI1145 UV Index / IR / Visible light (#2496)
  * Updated Italian language file (#2618)
+ * Update TasmotaSerial to 2.0.0 allowing Hardware Serial Fallback when correct connections are configured
  * Optimize command handling
  *
  * 5.13.1 20180501

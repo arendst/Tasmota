@@ -96,7 +96,7 @@ void HAssDiscoverRelay()
       } else {
         snprintf_P(name, sizeof(name), Settings.friendlyname[i -1]);
       }
-      GetPowerDevice(value_template, i, sizeof(value_template));
+      GetPowerDevice(value_template, i, sizeof(value_template), Settings.flag.device_index_enable);
       GetTopic_P(command_topic, CMND, mqtt_topic, value_template);
       GetTopic_P(state_topic, STAT, mqtt_topic, S_RSLT_RESULT);
       GetTopic_P(availability_topic, TELE, mqtt_topic, S_LWT);
@@ -171,7 +171,7 @@ void HAssDiscoverButton()
         } else {
           snprintf_P(name, sizeof(name), PSTR("%s BTN"), Settings.friendlyname[button_index]);
         }
-        GetPowerDevice(value_template, button_index+1, sizeof(value_template));
+        GetPowerDevice(value_template, button_index+1, sizeof(value_template), Settings.flag.device_index_enable);
         GetTopic_P(state_topic, CMND, key_topic, value_template); // State of button is sent as CMND TOGGLE
         GetTopic_P(availability_topic, TELE, mqtt_topic, S_LWT);
         snprintf_P(mqtt_data, sizeof(mqtt_data), HASS_DISCOVER_BUTTON, name, state_topic, Settings.state_text[2], availability_topic);
