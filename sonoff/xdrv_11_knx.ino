@@ -108,14 +108,14 @@ device_parameters_t device_param[] = {
 
 // device parameters (information that can be sent)
 const char * device_param_ga[] = {
-  D_SENSOR_RELAY  " 1",   // Relay 1
-  D_SENSOR_RELAY  " 2",   // Relay 2
-  D_SENSOR_RELAY  " 3",   // Relay 3
-  D_SENSOR_RELAY  " 4",   // Relay 4
-  D_SENSOR_RELAY  " 5",   // Relay 5
-  D_SENSOR_RELAY  " 6",   // Relay 6
-  D_SENSOR_RELAY  " 7",   // Relay 7
-  D_SENSOR_RELAY  " 8",   // Relay 8
+  D_TIMER_OUTPUT  " 1",   // Relay 1
+  D_TIMER_OUTPUT  " 2",   // Relay 2
+  D_TIMER_OUTPUT  " 3",   // Relay 3
+  D_TIMER_OUTPUT  " 4",   // Relay 4
+  D_TIMER_OUTPUT  " 5",   // Relay 5
+  D_TIMER_OUTPUT  " 6",   // Relay 6
+  D_TIMER_OUTPUT  " 7",   // Relay 7
+  D_TIMER_OUTPUT  " 8",   // Relay 8
   D_SENSOR_BUTTON " 1",   // Button 1
   D_SENSOR_BUTTON " 2",   // Button 2
   D_SENSOR_BUTTON " 3",   // Button 3
@@ -131,22 +131,22 @@ const char * device_param_ga[] = {
 
 // device actions (posible actions to be performed on the device)
 const char *device_param_cb[] = {
-  D_SENSOR_RELAY " 1", // Set Relay 1 (1-On or 0-OFF)
-  D_SENSOR_RELAY " 2",
-  D_SENSOR_RELAY " 3",
-  D_SENSOR_RELAY " 4",
-  D_SENSOR_RELAY " 5",
-  D_SENSOR_RELAY " 6",
-  D_SENSOR_RELAY " 7",
-  D_SENSOR_RELAY " 8",
-  D_SENSOR_RELAY " 1 " D_BUTTON_TOGGLE, // Relay 1 Toggle (1 or 0 will toggle)
-  D_SENSOR_RELAY " 2 " D_BUTTON_TOGGLE,
-  D_SENSOR_RELAY " 3 " D_BUTTON_TOGGLE,
-  D_SENSOR_RELAY " 4 " D_BUTTON_TOGGLE,
-  D_SENSOR_RELAY " 5 " D_BUTTON_TOGGLE,
-  D_SENSOR_RELAY " 6 " D_BUTTON_TOGGLE,
-  D_SENSOR_RELAY " 7 " D_BUTTON_TOGGLE,
-  D_SENSOR_RELAY " 8 " D_BUTTON_TOGGLE,
+  D_TIMER_OUTPUT " 1", // Set Relay 1 (1-On or 0-OFF)
+  D_TIMER_OUTPUT " 2",
+  D_TIMER_OUTPUT " 3",
+  D_TIMER_OUTPUT " 4",
+  D_TIMER_OUTPUT " 5",
+  D_TIMER_OUTPUT " 6",
+  D_TIMER_OUTPUT " 7",
+  D_TIMER_OUTPUT " 8",
+  D_TIMER_OUTPUT " 1 " D_BUTTON_TOGGLE, // Relay 1 Toggle (1 or 0 will toggle)
+  D_TIMER_OUTPUT " 2 " D_BUTTON_TOGGLE,
+  D_TIMER_OUTPUT " 3 " D_BUTTON_TOGGLE,
+  D_TIMER_OUTPUT " 4 " D_BUTTON_TOGGLE,
+  D_TIMER_OUTPUT " 5 " D_BUTTON_TOGGLE,
+  D_TIMER_OUTPUT " 6 " D_BUTTON_TOGGLE,
+  D_TIMER_OUTPUT " 7 " D_BUTTON_TOGGLE,
+  D_TIMER_OUTPUT " 8 " D_BUTTON_TOGGLE,
   D_REPLY " " D_TEMPERATURE, // Reply Temperature
   D_REPLY " " D_HUMIDITY,    // Reply Humidity
   nullptr
@@ -384,13 +384,17 @@ void KNX_INIT()
   // Read Configuration
   //   Check which relays, buttons and sensors where configured for this device
   //   and activate options according to the hardware
-  for (int i = GPIO_REL1; i < GPIO_REL8 + 1; ++i)
+  /*for (int i = GPIO_REL1; i < GPIO_REL8 + 1; ++i)
   {
     if (GetUsedInModule(i, my_module.gp.io)) { device_param[i - GPIO_REL1].show = true; }
   }
   for (int i = GPIO_REL1_INV; i < GPIO_REL8_INV + 1; ++i)
   {
     if (GetUsedInModule(i, my_module.gp.io)) { device_param[i - GPIO_REL1_INV].show = true; }
+  }*/
+  for (int i = 0; i < devices_present; ++i)
+  {
+    device_param[i].show = true;
   }
   for (int i = GPIO_SWT1; i < GPIO_SWT4 + 1; ++i)
   {
@@ -642,8 +646,9 @@ void HandleKNXConfiguration()
         stmp = WebServer->arg("GA_FDEF");
         byte GA_FDEF = stmp.toInt();
 
-        KNX_ADD_GA( GAop, GA_FNUM, GA_AREA, GA_FDEF );
-
+        if (GAop) {
+          KNX_ADD_GA( GAop, GA_FNUM, GA_AREA, GA_FDEF );
+        }
       }
       else
       {
@@ -657,8 +662,9 @@ void HandleKNXConfiguration()
         stmp = WebServer->arg("CB_FDEF");
         byte CB_FDEF = stmp.toInt();
 
-        KNX_ADD_CB( CBop, CB_FNUM, CB_AREA, CB_FDEF );
-
+        if (CBop) {
+          KNX_ADD_CB( CBop, CB_FNUM, CB_AREA, CB_FDEF );
+        }
       }
     }
     else if ( WebServer->hasArg("btn_del_ga") )
