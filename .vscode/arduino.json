@@ -1,7 +1,0 @@
-{
-    "board": "esp8266:esp8266:generic",
-    "configuration": "CpuFrequency=80,ResetMethod=ck,CrystalFreq=26,FlashFreq=40,FlashMode=dout,FlashSize=1M0,LwIPVariant=Prebuilt,Debug=Disabled,DebugLevel=None____,UploadSpeed=115200",
-    "port": "/dev/ttyUSB0",
-    "sketch": "sonoff/sonoff.ino",
-    "output": "build"
-}
