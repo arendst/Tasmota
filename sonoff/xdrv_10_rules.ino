@@ -248,6 +248,9 @@ bool RulesProcess()
 
   delay(0);                                               // Prohibit possible loop software watchdog
 
+//snprintf_P(log_data, sizeof(log_data), PSTR("RUL: Event = %s, Rule = %s"), mqtt_data, Settings.rules);
+//AddLog(LOG_LEVEL_DEBUG);
+
   if (!Settings.flag.rules_enabled) { return serviced; }  // Not enabled
   if (!strlen(Settings.rules)) { return serviced; }       // No rules
 
@@ -274,12 +277,12 @@ bool RulesProcess()
     if (plen == -1) { return serviced; }                  // Bad syntax - No endon
     String commands = rules.substring(pevt +4, plen);     // "Backlog Dimmer 10;Color 100000"
     plen += 6;
-
-//snprintf_P(log_data, sizeof(log_data), PSTR("RUL: Trigger |%s|, Commands |%s|"), event_trigger.c_str(), commands.c_str());
-//AddLog(LOG_LEVEL_DEBUG);
-
     rules_event_value = "";
     String event = event_saved;
+
+//snprintf_P(log_data, sizeof(log_data), PSTR("RUL: Event |%s|, Rule |%s|, Command(s) |%s|"), event.c_str(), event_trigger.c_str(), commands.c_str());
+//AddLog(LOG_LEVEL_DEBUG);
+
     if (RulesRuleMatch(event, event_trigger)) {
       commands.trim();
       String ucommand = commands;

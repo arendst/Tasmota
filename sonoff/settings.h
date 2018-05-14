@@ -51,7 +51,7 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t rules_enabled : 1;            // bit 23 (v5.12.0j)
     uint32_t rules_once : 1;               // bit 24 (v5.12.0k)
     uint32_t knx_enabled : 1;              // bit 25 (v5.12.0l) KNX
-    uint32_t spare26 : 1;
+    uint32_t device_index_enable : 1;      // bit 26 (v5.13.1a)
     uint32_t spare27 : 1;
     uint32_t spare28 : 1;
     uint32_t spare29 : 1;
@@ -88,6 +88,17 @@ typedef union {
     uint32_t temperature_resolution : 2;
   };
 } SysBitfield2;
+
+typedef union {
+  uint16_t data;
+  struct {
+    uint16_t hemis : 1;                    // bit 0        = 0=Northern, 1=Southern Hemisphere (=Opposite DST/STD)
+    uint16_t week : 3;                     // bits 1 - 3   = 0=Last week of the month, 1=First, 2=Second, 3=Third, 4=Fourth
+    uint16_t month : 4;                    // bits 4 - 7   = 1=Jan, 2=Feb, ... 12=Dec
+    uint16_t dow : 3;                      // bits 8 - 10  = day of week, 1=Sun, 2=Mon, ... 7=Sat
+    uint16_t hour : 5;                     // bits 11 - 15 = 0-23
+  };
+} TimeRule;
 
 typedef union {
   uint32_t data;
@@ -148,9 +159,8 @@ struct SYSCFG {
   uint8_t       display_address[8];        // 2D8
   uint8_t       display_dimmer;            // 2E0
   uint8_t       display_size;              // 2E1
-
-  uint8_t       free_2E2[4];               // 2E2
-
+  TimeRule      std_flags;                 // 2E2
+  int16_t       std_offset;                // 2E4 offset from UTC in minutes
   uint16_t      pwm_frequency;             // 2E6
   power_t       power;                     // 2E8
   uint16_t      pwm_value[MAX_PWMS];       // 2EC
@@ -234,9 +244,7 @@ struct SYSCFG {
   char          ntp_server[3][33];         // 4CE
   byte          ina219_mode;               // 531
   uint16_t      pulse_timer[MAX_PULSETIMERS]; // 532
-
-  byte          free_542[2];               // 542
-
+  TimeRule      dst_flags;                 // 542
   uint32_t      ip_address[4];             // 544
   unsigned long energy_kWhtotal;              // 554
   char          mqtt_fulltopic[100];       // 558
@@ -246,8 +254,9 @@ struct SYSCFG {
   uint16_t      pulse_counter_debounce;    // 5D2
   uint8_t       rf_code[17][9];            // 5D4
 
-  byte          free_66d[3];               // 66D
+  byte          free_66d[1];               // 66D
 
+  int16_t       dst_offset;                // 66E
   Timer         timer[MAX_TIMERS];         // 670
   int           latitude;                  // 6B0
   int           longitude;                 // 6B4
@@ -288,19 +297,6 @@ struct TIME_T {
   unsigned long days;
   unsigned long valid;
 } RtcTime;
-
-struct TimeChangeRule
-{
-  uint8_t       hemis;                     // 0-Northern, 1=Southern Hemisphere (=Opposite DST/STD)
-  uint8_t       week;                      // 1=First, 2=Second, 3=Third, 4=Fourth, or 0=Last week of the month
-  uint8_t       dow;                       // day of week, 1=Sun, 2=Mon, ... 7=Sat
-  uint8_t       month;                     // 1=Jan, 2=Feb, ... 12=Dec
-  uint8_t       hour;                      // 0-23
-  int           offset;                    // offset from UTC in minutes
-};
-
-TimeChangeRule DaylightSavingTime = { TIME_DST }; // Daylight Saving Time
-TimeChangeRule StandardTime = { TIME_STD }; // Standard Time
 
 struct XDRVMAILBOX {
   uint16_t      valid;

@@ -102,6 +102,7 @@
 #define D_IMMEDIATE "Φωτεινότητα"      // Button immediate
 #define D_INDEX "Κατάλογος"
 #define D_INFO "Πληροφορίες"
+#define D_INFRARED "Infrared"
 #define D_INITIALIZED "Αρχικό"
 #define D_IP_ADDRESS "IP Address"
 #define D_LIGHT "Light"
@@ -155,6 +156,7 @@
 #define D_UPTIME "Uptime"
 #define D_USER "Χρήστης"
 #define D_UTC_TIME "UTC"
+#define D_UV_INDEX "UV Index"
 #define D_UV_LEVEL "Επίπεδο UV"
 #define D_VERSION "Έκδοση"
 #define D_VOLTAGE "Τάση"
