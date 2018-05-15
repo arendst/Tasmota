@@ -130,20 +130,20 @@
 #define NTP_SERVER3            "0.nl.pool.ntp.org"  // [NtpServer3] Select third NTP server by name or IP address (93.94.224.67)
 
 // -- Time - Start Daylight Saving Time and timezone offset from UTC in minutes
-#define TIME_DST_HEMISPHERE    North              // Northern Hemisphere
-#define TIME_DST_WEEK          Last
-#define TIME_DST_DAY           Sun
-#define TIME_DST_MONTH         Mar                // Last sunday in march
-#define TIME_DST_HOUR          2                  // at 02:00
-#define TIME_DST_OFFSET        +120               // +120 minutes
+#define TIME_DST_HEMISPHERE    North              // [TimeDst] Hemisphere (0 or North, 1 or South)
+#define TIME_DST_WEEK          Last               // Week of month (0 or Last, 1 or First, 2 or Second, 3 or Third, 4 or Fourth)
+#define TIME_DST_DAY           Sun                // Day of week (1 or Sun, 2 or Mon, 3 or Tue, 4 or Wed, 5 or Thu, 6 or Fri, 7 or Sat)
+#define TIME_DST_MONTH         Mar                // Month (1 or Jan, 2 or Feb, 3 or Mar, 4 or Apr, 5 or May, 6 or Jun, 7 or Jul, 8 or Aug, 9 or Sep, 10 or Oct, 11 or Nov, 12 or Dec)
+#define TIME_DST_HOUR          2                  // Hour (0 to 23)
+#define TIME_DST_OFFSET        +120               // Offset from UTC in minutes (-780 to +780)
 
 // -- Time - Start Standard Time and timezone offset from UTC in minutes
-#define TIME_STD_HEMISPHERE    North              // Northern Hemisphere
-#define TIME_STD_WEEK          Last
-#define TIME_STD_DAY           Sun
-#define TIME_STD_MONTH         Oct                // Last sunday in october
-#define TIME_STD_HOUR          3                  // at 03:00
-#define TIME_STD_OFFSET        +60                // +60 minutes
+#define TIME_STD_HEMISPHERE    North              // [TimeStd] Hemisphere (0 or North, 1 or South)
+#define TIME_STD_WEEK          Last               // Week of month (0 or Last, 1 or First, 2 or Second, 3 or Third, 4 or Fourth)
+#define TIME_STD_DAY           Sun                // Day of week (1 or Sun, 2 or Mon, 3 or Tue, 4 or Wed, 5 or Thu, 6 or Fri, 7 or Sat)
+#define TIME_STD_MONTH         Oct                // Month (1 or Jan, 2 or Feb, 3 or Mar, 4 or Apr, 5 or May, 6 or Jun, 7 or Jul, 8 or Aug, 9 or Sep, 10 or Oct, 11 or Nov, 12 or Dec)
+#define TIME_STD_HOUR          3                  // Hour (0 to 23)
+#define TIME_STD_OFFSET        +60                // Offset from UTC in minutes (-780 to +780)
 
 // -- Location ------------------------------------
 #define LATITUDE               48.858360         // [Latitude] Your location to be used with sunrise and sunset
@@ -287,12 +287,12 @@
 // #define USE_SENSEAIR                             // Add support for SenseAir K30, K70 and S8 CO2 sensor (+2k3 code)
   #define CO2_LOW              800               // Below this CO2 value show green light (needs PWM or WS2812 RG(B) led and enable with SetOption18 1)
   #define CO2_HIGH             1200              // Above this CO2 value show red light (needs PWM or WS2812 RG(B) led and enable with SetOption18 1)
-
-  // #define USE_PMS5003                              // Add support for PMS5003 and PMS7003 particle concentration sensor (+1k3 code)
-  // #define USE_NOVA_SDS                             // Add support for SDS011 and SDS021 particle concentration sensor (+0k7 code)
-  // #define USE_PZEM004T                             // Add support for PZEM004T Energy monitor (+2k code)
-  // #define USE_SERIAL_BRIDGE                        // Add support for software Serial Bridge (+0k8 code)
-  // #define USE_SDM120                               // Add support for Eastron SDM120-Modbus energy meter (+1k2 code)
+// #define USE_PMS5003                              // Add support for PMS5003 and PMS7003 particle concentration sensor (+1k3 code)
+// #define USE_NOVA_SDS                             // Add support for SDS011 and SDS021 particle concentration sensor (+0k7 code)
+// #define USE_PZEM004T                             // Add support for PZEM004T Energy monitor (+2k code)
+// #define USE_SERIAL_BRIDGE                        // Add support for software Serial Bridge (+0k8 code)
+// #define USE_SDM120                               // Add support for Eastron SDM120-Modbus energy meter (+1k7 code)
+  #define SDM120_SPEED         9600              // SDM120-Modbus RS485 serial speed (default: 2400 baud)
 
 // -- Low level interface devices -----------------
 // #define USE_IR_REMOTE                            // Send IR remote commands using library IRremoteESP8266 and ArduinoJson (+4k code, 0k3 mem, 48 iram)

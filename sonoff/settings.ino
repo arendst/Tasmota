@@ -522,7 +522,7 @@ void SettingsDefaultSet2()
   Settings.latitude = (int)((double)LATITUDE * 1000000);
   Settings.longitude = (int)((double)LONGITUDE * 1000000);
 
-  SettingsDefaultSet_5_13_1a();
+  SettingsDefaultSet_5_13_1c();
 }
 
 /********************************************************************************************/
@@ -654,20 +654,30 @@ void SettingsDefaultSet_5_10_1()
   Settings.display_size = 1;
 }
 
-void SettingsDefaultSet_5_13_1a()
+void SettingsResetStd()
 {
-  Settings.dst_flags.hemis = TIME_DST_HEMISPHERE;
-  Settings.dst_flags.week = TIME_DST_WEEK;
-  Settings.dst_flags.dow = TIME_DST_DAY;
-  Settings.dst_flags.month = TIME_DST_MONTH;
-  Settings.dst_flags.hour = TIME_DST_HOUR;
-  Settings.dst_offset = TIME_DST_OFFSET;
-  Settings.std_flags.hemis = TIME_STD_HEMISPHERE;
-  Settings.std_flags.week = TIME_STD_WEEK;
-  Settings.std_flags.dow = TIME_STD_DAY;
-  Settings.std_flags.month = TIME_STD_MONTH;
-  Settings.std_flags.hour = TIME_STD_HOUR;
-  Settings.std_offset = TIME_STD_OFFSET;
+  Settings.tflag[0].hemis = TIME_STD_HEMISPHERE;
+  Settings.tflag[0].week = TIME_STD_WEEK;
+  Settings.tflag[0].dow = TIME_STD_DAY;
+  Settings.tflag[0].month = TIME_STD_MONTH;
+  Settings.tflag[0].hour = TIME_STD_HOUR;
+  Settings.toffset[0] = TIME_STD_OFFSET;
+}
+
+void SettingsResetDst()
+{
+  Settings.tflag[1].hemis = TIME_DST_HEMISPHERE;
+  Settings.tflag[1].week = TIME_DST_WEEK;
+  Settings.tflag[1].dow = TIME_DST_DAY;
+  Settings.tflag[1].month = TIME_DST_MONTH;
+  Settings.tflag[1].hour = TIME_DST_HOUR;
+  Settings.toffset[1] = TIME_DST_OFFSET;
+}
+
+void SettingsDefaultSet_5_13_1c()
+{
+  SettingsResetStd();
+  SettingsResetDst();
 }
 
 /********************************************************************************************/
@@ -874,8 +884,8 @@ void SettingsDelta()
       Settings.energy_kWhyesterday /= 1000;
       RtcSettings.energy_kWhtoday /= 1000;
     }
-    if (Settings.version < 0x050D0102) {
-      SettingsDefaultSet_5_13_1a();
+    if (Settings.version < 0x050D0103) {
+      SettingsDefaultSet_5_13_1c();
     }
 
     Settings.version = VERSION;
