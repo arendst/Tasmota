@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v5.12.0n
+ * Updated until v5.14.0
 \*********************************************************************/
 
 //#define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -91,6 +91,7 @@
 #define D_FALSE "False"
 #define D_FILE "File"
 #define D_FREE_MEMORY "Free Memory"
+#define D_FREQUENCY "Frequency"
 #define D_GAS "Gas"
 #define D_GATEWAY "Gateway"
 #define D_GROUP "Group"
@@ -101,6 +102,7 @@
 #define D_IMMEDIATE "immediate"      // Button immediate
 #define D_INDEX "Index"
 #define D_INFO "Info"
+#define D_INFRARED "Infrared"
 #define D_INITIALIZED "Initialized"
 #define D_IP_ADDRESS "IP Address"
 #define D_LIGHT "Light"
@@ -119,6 +121,9 @@
 #define D_PORT "Port"
 #define D_POWER_FACTOR "Power Factor"
 #define D_POWERUSAGE "Power"
+#define D_POWERUSAGE_ACTIVE "Active Power"
+#define D_POWERUSAGE_APPARENT "Apparent Power"
+#define D_POWERUSAGE_REACTIVE "Reactive Power"
 #define D_PRESSURE "Pressure"
 #define D_PRESSUREATSEALEVEL "SeaPressure"
 #define D_PROGRAM_FLASH_SIZE "Program Flash Size"
@@ -154,6 +159,7 @@
 #define D_UPTIME "Uptime"
 #define D_USER "User"
 #define D_UTC_TIME "UTC"
+#define D_UV_INDEX "UV Index"
 #define D_UV_LEVEL "UV Level"
 #define D_VERSION "Version"
 #define D_VOLTAGE "Voltage"
@@ -453,6 +459,8 @@
 #define D_SENSOR_SBR_TX   "SerBr Tx"
 #define D_SENSOR_SR04_TRIG "SR04 Tri"
 #define D_SENSOR_SR04_ECHO "SR04 Ech"
+#define D_SENSOR_SDM120_TX "SDM120 Tx"
+#define D_SENSOR_SDM120_RX "SDM120 Rx"
 
 // Units
 #define D_UNIT_AMPERE "A"
@@ -473,9 +481,12 @@
 #define D_UNIT_PRESSURE "hPa"
 #define D_UNIT_SECOND "sec"
 #define D_UNIT_SECTORS "sectors"
+#define D_UNIT_VA "VA"
+#define D_UNIT_VAR "VAr"
 #define D_UNIT_VOLT "V"
 #define D_UNIT_WATT "W"
 #define D_UNIT_WATTHOUR "Wh"
+#define D_UNIT_HERTZ "Hz"
 
 // Log message prefix
 #define D_LOG_APPLICATION "APP: "  // Application

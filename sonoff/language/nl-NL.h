@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v5.12.0l
+ * Updated until v5.14.0
 \*********************************************************************/
 
 //#define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -91,6 +91,7 @@
 #define D_FALSE "Onwaar"
 #define D_FILE "Bestand"
 #define D_FREE_MEMORY "Vrij geheugen"
+#define D_FREQUENCY "Frequentie"
 #define D_GAS "Gas"
 #define D_GATEWAY "Gateway"
 #define D_GROUP "Groep"
@@ -101,6 +102,7 @@
 #define D_IMMEDIATE "onmiddelijk"      // Button immediate
 #define D_INDEX "Index"
 #define D_INFO "Info"
+#define D_INFRARED "Infrarood"
 #define D_INITIALIZED "Geinitialiseerd"
 #define D_IP_ADDRESS "IP Adres"
 #define D_LIGHT "Licht"
@@ -119,6 +121,9 @@
 #define D_PORT "Poort"
 #define D_POWER_FACTOR "Arbeidsfactor"
 #define D_POWERUSAGE "Vermogen"
+#define D_POWERUSAGE_ACTIVE "Werkelijk vermogen"
+#define D_POWERUSAGE_APPARENT "Schijnbaar vermogen"
+#define D_POWERUSAGE_REACTIVE "Blindvermogen"
 #define D_PRESSURE "Luchtdruk"
 #define D_PRESSUREATSEALEVEL "ZeeLuchtdruk"
 #define D_PROGRAM_FLASH_SIZE "Programma Flash Grootte"
@@ -154,6 +159,7 @@
 #define D_UPTIME "Bedrijfstijd"
 #define D_USER "Gebruiker"
 #define D_UTC_TIME "UTC"
+#define D_UV_INDEX "UV-index"
 #define D_UV_LEVEL "UV niveau"
 #define D_VERSION "Versie"
 #define D_VOLTAGE "Spanning"
@@ -376,24 +382,24 @@
 #define D_TIMER_ACTION "Actie"
 
 // xdrv_10_knx.ino
-#define D_CONFIGURE_KNX "Configure KNX"
+#define D_CONFIGURE_KNX "Configureer KNX"
 #define D_KNX_PARAMETERS "KNX Parameters"
-#define D_KNX_GENERAL_CONFIG "General"
-#define D_KNX_PHYSICAL_ADDRESS "Physical Address"
-#define D_KNX_PHYSICAL_ADDRESS_NOTE "( Must be unique on the KNX network )"
-#define D_KNX_ENABLE "Enable KNX"
-#define D_KNX_GROUP_ADDRESS_TO_WRITE "Data to Send to Group Addresses"
-#define D_ADD "Add"
-#define D_DELETE "Delete"
-#define D_REPLY "Reply"
-#define D_KNX_GROUP_ADDRESS_TO_READ "Group Addresses to Receive Data from"
+#define D_KNX_GENERAL_CONFIG "Algemeen"
+#define D_KNX_PHYSICAL_ADDRESS "Eigen adres"
+#define D_KNX_PHYSICAL_ADDRESS_NOTE "(Moet uniek zijn op het KNX netwerk)"
+#define D_KNX_ENABLE "KNX inschakelen"
+#define D_KNX_GROUP_ADDRESS_TO_WRITE "Stuur gegevens naar groep adressen"
+#define D_ADD "Toevoegen"
+#define D_DELETE "Verwijder"
+#define D_REPLY "Antwoord"
+#define D_KNX_GROUP_ADDRESS_TO_READ "Ontvang gegevens van groep adressen"
 #define D_LOG_KNX "KNX: "
-#define D_RECEIVED_FROM "Received from"
-#define D_KNX_COMMAND_WRITE "Write"
-#define D_KNX_COMMAND_READ "Read"
-#define D_KNX_COMMAND_OTHER "Other"
-#define D_SENT_TO "sent to"
-#define D_KNX_WARNING "The group address ( 0 / 0 / 0 ) is reserved and can not be used."
+#define D_RECEIVED_FROM "Ontvangen van"
+#define D_KNX_COMMAND_WRITE "Schrijven"
+#define D_KNX_COMMAND_READ "Lezen"
+#define D_KNX_COMMAND_OTHER "Overige"
+#define D_SENT_TO "verzend naar"
+#define D_KNX_WARNING "Groep adres (0/0/0) is gereserveerd en mag niet worden gebruikt."
 
 // xdrv_03_energy.ino
 #define D_ENERGY_TODAY "Verbruik vandaag"
@@ -453,10 +459,13 @@
 #define D_SENSOR_SBR_TX   "SerBr Tx"
 #define D_SENSOR_SR04_TRIG "SR04 Tri"
 #define D_SENSOR_SR04_ECHO "SR04 Ech"
+#define D_SENSOR_SDM120_TX "SDM120 Tx"
+#define D_SENSOR_SDM120_RX "SDM120 Rx"
 
 // Units
 #define D_UNIT_AMPERE "A"
 #define D_UNIT_CENTIMETER "cm"
+#define D_UNIT_HERTZ "Hz"
 #define D_UNIT_HOUR "h"
 #define D_UNIT_KILOOHM "kOhm"
 #define D_UNIT_KILOWATTHOUR "kWh"
@@ -473,6 +482,8 @@
 #define D_UNIT_PRESSURE "hPa"
 #define D_UNIT_SECOND "sec"
 #define D_UNIT_SECTORS "sectoren"
+#define D_UNIT_VA "VA"
+#define D_UNIT_VAR "VAr"
 #define D_UNIT_VOLT "V"
 #define D_UNIT_WATT "W"
 #define D_UNIT_WATTHOUR "Wh"

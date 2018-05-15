@@ -89,7 +89,10 @@ boolean SerialBridgeCommand()
   boolean serviced = true;
 
   int command_code = GetCommandCode(command, sizeof(command), XdrvMailbox.topic, kSerialBridgeCommands);
-  if ((CMND_SSERIALSEND == command_code) && (XdrvMailbox.index > 0) && (XdrvMailbox.index <= 3)) {
+  if (-1 == command_code) {
+    serviced = false;  // Unknown command
+  }
+  else if ((CMND_SSERIALSEND == command_code) && (XdrvMailbox.index > 0) && (XdrvMailbox.index <= 3)) {
     if (XdrvMailbox.data_len > 0) {
       if (1 == XdrvMailbox.index) {
         SerialBridgeSerial->write(XdrvMailbox.data, XdrvMailbox.data_len);
@@ -114,9 +117,8 @@ boolean SerialBridgeCommand()
     }
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_LVALUE, command, Settings.sbaudrate * 1200);
   }
-  else {
-    serviced = false;  // Unknown command
-  }
+  else serviced = false;  // Unknown command
+  
   return serviced;
 }
 

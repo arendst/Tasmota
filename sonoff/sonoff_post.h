@@ -71,6 +71,7 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #define USE_BH1750                            // Add I2C code for BH1750 sensor (+0k5 code)
 #define USE_VEML6070                          // Add I2C code for VEML6070 sensor (+0k5 code)
 #define USE_TSL2561                           // Add I2C code for TSL2561 sensor using library Adafruit TSL2561 Arduino (+1k2 code)
+#define USE_SI1145                            // Add I2C code for SI1145/46/47 sensor (+1k code)
 #define USE_ADS1115                           // Add I2C code for ADS1115 16 bit A/D converter based on Adafruit ADS1x15 library (no library needed) (+0k7 code)
 //#define USE_ADS1115_I2CDEV                    // Add I2C code for ADS1115 16 bit A/D converter using library i2cdevlib-Core and i2cdevlib-ADS1115 (+2k code)
 #define USE_INA219                            // Add I2C code for INA219 Low voltage and current sensor (+1k code)
@@ -87,6 +88,7 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #define USE_NOVA_SDS                          // Add support for SDS011 and SDS021 particle concentration sensor (+0k7 code)
 #define USE_PZEM004T                          // Add support for PZEM004T Energy monitor (+2k code)
 #define USE_SERIAL_BRIDGE                     // Add support for software Serial Bridge (+0k8 code)
+#define USE_SDM120                            // Add support for Eastron SDM120-Modbus energy meter (+1k7 code)
 #define USE_IR_REMOTE                         // Send IR remote commands using library IRremoteESP8266 and ArduinoJson (+4k code, 0k3 mem, 48 iram)
   #define USE_IR_HVAC                         // Support for HVAC system using IR (+2k code)
   #define USE_IR_RECEIVE                      // Support for IR receiver (+5k5 code, 264 iram)
@@ -231,6 +233,9 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #endif
 #ifdef USE_SERIAL_BRIDGE
 #undef USE_SERIAL_BRIDGE                      // Disable support for software Serial Bridge
+#endif
+#ifdef USE_SDM120
+#undef USE_SDM120                             // Disable support for SDM120
 #endif
 #ifdef USE_IR_REMOTE
 #undef USE_IR_REMOTE                          // Disable IR driver

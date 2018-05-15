@@ -108,14 +108,14 @@ device_parameters_t device_param[] = {
 
 // device parameters (information that can be sent)
 const char * device_param_ga[] = {
-  D_SENSOR_RELAY  " 1",   // Relay 1
-  D_SENSOR_RELAY  " 2",   // Relay 2
-  D_SENSOR_RELAY  " 3",   // Relay 3
-  D_SENSOR_RELAY  " 4",   // Relay 4
-  D_SENSOR_RELAY  " 5",   // Relay 5
-  D_SENSOR_RELAY  " 6",   // Relay 6
-  D_SENSOR_RELAY  " 7",   // Relay 7
-  D_SENSOR_RELAY  " 8",   // Relay 8
+  D_TIMER_OUTPUT  " 1",   // Relay 1
+  D_TIMER_OUTPUT  " 2",   // Relay 2
+  D_TIMER_OUTPUT  " 3",   // Relay 3
+  D_TIMER_OUTPUT  " 4",   // Relay 4
+  D_TIMER_OUTPUT  " 5",   // Relay 5
+  D_TIMER_OUTPUT  " 6",   // Relay 6
+  D_TIMER_OUTPUT  " 7",   // Relay 7
+  D_TIMER_OUTPUT  " 8",   // Relay 8
   D_SENSOR_BUTTON " 1",   // Button 1
   D_SENSOR_BUTTON " 2",   // Button 2
   D_SENSOR_BUTTON " 3",   // Button 3
@@ -131,22 +131,22 @@ const char * device_param_ga[] = {
 
 // device actions (posible actions to be performed on the device)
 const char *device_param_cb[] = {
-  D_SENSOR_RELAY " 1", // Set Relay 1 (1-On or 0-OFF)
-  D_SENSOR_RELAY " 2",
-  D_SENSOR_RELAY " 3",
-  D_SENSOR_RELAY " 4",
-  D_SENSOR_RELAY " 5",
-  D_SENSOR_RELAY " 6",
-  D_SENSOR_RELAY " 7",
-  D_SENSOR_RELAY " 8",
-  D_SENSOR_RELAY " 1 " D_BUTTON_TOGGLE, // Relay 1 Toggle (1 or 0 will toggle)
-  D_SENSOR_RELAY " 2 " D_BUTTON_TOGGLE,
-  D_SENSOR_RELAY " 3 " D_BUTTON_TOGGLE,
-  D_SENSOR_RELAY " 4 " D_BUTTON_TOGGLE,
-  D_SENSOR_RELAY " 5 " D_BUTTON_TOGGLE,
-  D_SENSOR_RELAY " 6 " D_BUTTON_TOGGLE,
-  D_SENSOR_RELAY " 7 " D_BUTTON_TOGGLE,
-  D_SENSOR_RELAY " 8 " D_BUTTON_TOGGLE,
+  D_TIMER_OUTPUT " 1", // Set Relay 1 (1-On or 0-OFF)
+  D_TIMER_OUTPUT " 2",
+  D_TIMER_OUTPUT " 3",
+  D_TIMER_OUTPUT " 4",
+  D_TIMER_OUTPUT " 5",
+  D_TIMER_OUTPUT " 6",
+  D_TIMER_OUTPUT " 7",
+  D_TIMER_OUTPUT " 8",
+  D_TIMER_OUTPUT " 1 " D_BUTTON_TOGGLE, // Relay 1 Toggle (1 or 0 will toggle)
+  D_TIMER_OUTPUT " 2 " D_BUTTON_TOGGLE,
+  D_TIMER_OUTPUT " 3 " D_BUTTON_TOGGLE,
+  D_TIMER_OUTPUT " 4 " D_BUTTON_TOGGLE,
+  D_TIMER_OUTPUT " 5 " D_BUTTON_TOGGLE,
+  D_TIMER_OUTPUT " 6 " D_BUTTON_TOGGLE,
+  D_TIMER_OUTPUT " 7 " D_BUTTON_TOGGLE,
+  D_TIMER_OUTPUT " 8 " D_BUTTON_TOGGLE,
   D_REPLY " " D_TEMPERATURE, // Reply Temperature
   D_REPLY " " D_HUMIDITY,    // Reply Humidity
   nullptr
@@ -347,7 +347,7 @@ void KNX_DEL_CB( byte CBnum )
 
 bool KNX_CONFIG_NOT_MATCH()
 {
-  for (int i = 0; i < KNX_MAX_device_param; ++i)
+  for (byte i = 0; i < KNX_MAX_device_param; ++i)
   {
     if ( !device_param[i].show ) { // device has this parameter ?
       // if not, search for all registered group address to this parameter for deletion
@@ -355,7 +355,7 @@ bool KNX_CONFIG_NOT_MATCH()
       if ( (i < 8) || (i > 15) ) // check relays and sensors (i from 8 to 16 are toggle relays parameters)
       {
         if ( KNX_CB_Search(i+1) != KNX_Empty ) { return true; }
-        if ( KNX_CB_Search(i+8) != KNX_Empty ) { return true; }
+        if ( KNX_CB_Search(i+9) != KNX_Empty ) { return true; }
       }
     }
   }
@@ -384,13 +384,17 @@ void KNX_INIT()
   // Read Configuration
   //   Check which relays, buttons and sensors where configured for this device
   //   and activate options according to the hardware
-  for (int i = GPIO_REL1; i < GPIO_REL8 + 1; ++i)
+  /*for (int i = GPIO_REL1; i < GPIO_REL8 + 1; ++i)
   {
     if (GetUsedInModule(i, my_module.gp.io)) { device_param[i - GPIO_REL1].show = true; }
   }
   for (int i = GPIO_REL1_INV; i < GPIO_REL8_INV + 1; ++i)
   {
     if (GetUsedInModule(i, my_module.gp.io)) { device_param[i - GPIO_REL1_INV].show = true; }
+  }*/
+  for (int i = 0; i < devices_present; ++i)
+  {
+    device_param[i].show = true;
   }
   for (int i = GPIO_SWT1; i < GPIO_SWT4 + 1; ++i)
   {
@@ -520,7 +524,7 @@ void KnxSendButtonPower(byte key, byte device, byte state)
     knx.write_1bit(KNX_addr, !(state == 0));
 
     snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_KNX "%s = %d " D_SENT_TO " %d.%d.%d"),
-     device_param_ga[device + 8], !(state == 0),
+     device_param_ga[device + 7], !(state == 0),
      KNX_addr.ga.area, KNX_addr.ga.line, KNX_addr.ga.member);
     AddLog(LOG_LEVEL_INFO);
 
@@ -642,8 +646,9 @@ void HandleKNXConfiguration()
         stmp = WebServer->arg("GA_FDEF");
         byte GA_FDEF = stmp.toInt();
 
-        KNX_ADD_GA( GAop, GA_FNUM, GA_AREA, GA_FDEF );
-
+        if (GAop) {
+          KNX_ADD_GA( GAop, GA_FNUM, GA_AREA, GA_FDEF );
+        }
       }
       else
       {
@@ -657,8 +662,9 @@ void HandleKNXConfiguration()
         stmp = WebServer->arg("CB_FDEF");
         byte CB_FDEF = stmp.toInt();
 
-        KNX_ADD_CB( CBop, CB_FNUM, CB_AREA, CB_FDEF );
-
+        if (CBop) {
+          KNX_ADD_CB( CBop, CB_FNUM, CB_AREA, CB_FDEF );
+        }
       }
     }
     else if ( WebServer->hasArg("btn_del_ga") )
@@ -732,6 +738,7 @@ void HandleKNXConfiguration()
         page.replace(F("GAfdef"), String(KNX_addr.ga.member));
       }
     }
+
     page += FPSTR(HTTP_FORM_KNX3);
     page += FPSTR(HTTP_FORM_KNX_GA);
     page.replace(F("GAfnum"), F("CB_FNUM"));
@@ -765,6 +772,7 @@ void HandleKNXConfiguration()
       page.replace(F("btndis"), F("disabled"));
     }
     page.replace(F("fncbtnadd"), F("CBwarning"));
+
     for (byte i = 0; i < Settings.knx_CB_registered ; ++i)
     {
       if ( Settings.knx_CB_param[i] )
@@ -812,7 +820,6 @@ void KNX_Save_Settings()
 {
   String stmp;
   address_t KNX_addr;
-  byte i;
 
   Settings.flag.knx_enabled = WebServer->hasArg("b1");
   snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_KNX D_ENABLED ": %d "),
@@ -834,7 +841,7 @@ void KNX_Save_Settings()
   snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_KNX "GA: %d"),
    Settings.knx_GA_registered );
   AddLog(LOG_LEVEL_DEBUG);
-  for (i = 0; i < Settings.knx_GA_registered ; ++i)
+  for (byte i = 0; i < Settings.knx_GA_registered ; ++i)
   {
     KNX_addr.value = Settings.knx_GA_addr[i];
     snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_KNX "GA #%d: %s " D_TO " %d/%d/%d"),
@@ -846,7 +853,7 @@ void KNX_Save_Settings()
   snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_KNX "CB: %d"),
    Settings.knx_CB_registered );
   AddLog(LOG_LEVEL_DEBUG);
-  for (i = 0; i < Settings.knx_CB_registered ; ++i)
+  for (byte i = 0; i < Settings.knx_CB_registered ; ++i)
   {
     KNX_addr.value = Settings.knx_CB_addr[i];
     snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_KNX "CB #%d: %d/%d/%d " D_TO " %s"),

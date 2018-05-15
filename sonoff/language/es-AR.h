@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v5.12.0m
+ * Updated until v5.14.0
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -91,6 +91,7 @@
 #define D_FALSE "Falso"
 #define D_FILE "Archivo"
 #define D_FREE_MEMORY "Memoria Libre"
+#define D_FREQUENCY "Frecuencia"
 #define D_GAS "Gas"
 #define D_GATEWAY "Gateway"
 #define D_GROUP "Grupo"
@@ -101,6 +102,7 @@
 #define D_IMMEDIATE "inmediato"      // Button immediate
 #define D_INDEX "Índice"
 #define D_INFO "Información"
+#define D_INFRARED "Infrarrojo"
 #define D_INITIALIZED "Inicializado"
 #define D_IP_ADDRESS "Dirección IP"
 #define D_LIGHT "Luz"
@@ -119,6 +121,9 @@
 #define D_PORT "Puerto"
 #define D_POWER_FACTOR "Factor de Potencia"
 #define D_POWERUSAGE "Potencia"
+#define D_POWERUSAGE_ACTIVE "Potencia Activa"
+#define D_POWERUSAGE_APPARENT "Potencia Aparente"
+#define D_POWERUSAGE_REACTIVE "Potencia Reactiva"
 #define D_PRESSURE "Presión"
 #define D_PRESSUREATSEALEVEL "Presión al nivel del mar"
 #define D_PROGRAM_FLASH_SIZE "Tamaño de Flash de Programa"
@@ -130,7 +135,7 @@
 #define D_RESTART_REASON "Causa Reinicio"
 #define D_RESTORE "Restauración"
 #define D_RETAINED "Grabado"
-#define D_RULE "Rule"
+#define D_RULE "Regla"
 #define D_SAVE "Grabar"
 #define D_SENSOR "Sensor"
 #define D_SSID "SSId"
@@ -154,6 +159,7 @@
 #define D_UPTIME "Tiempo Encendido"
 #define D_USER "Usuario"
 #define D_UTC_TIME "UTC"
+#define D_UV_INDEX "Índice UV"
 #define D_UV_LEVEL "Nivel UV"
 #define D_VERSION "Versión"
 #define D_VOLTAGE "Tensión"
@@ -199,7 +205,7 @@
 #define D_ERASED_SECTOR "Sector borrado"
 
 // webserver.ino
-#define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "firmware MÍNIMO - actualice por favor"
+#define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "Firmware MÍNIMO - actualice por favor"
 #define D_WEBSERVER_ACTIVE_ON "Servidor web activo en"
 #define D_WITH_IP_ADDRESS "con dirección IP"
 #define D_WEBSERVER_STOPPED "Servidor web detenido"
@@ -453,10 +459,13 @@
 #define D_SENSOR_SBR_TX   "SerBr Tx"
 #define D_SENSOR_SR04_TRIG "SR04 Tri"
 #define D_SENSOR_SR04_ECHO "SR04 Ech"
+#define D_SENSOR_SDM120_TX "SDM120 Tx"
+#define D_SENSOR_SDM120_RX "SDM120 Rx"
 
 // Units
 #define D_UNIT_AMPERE "A"
 #define D_UNIT_CENTIMETER "cm"
+#define D_UNIT_HERTZ "Hz"
 #define D_UNIT_HOUR "Hr"
 #define D_UNIT_KILOOHM "kOhm"
 #define D_UNIT_KILOWATTHOUR "kWh"
@@ -473,6 +482,8 @@
 #define D_UNIT_PRESSURE "hPa"
 #define D_UNIT_SECOND "seg"
 #define D_UNIT_SECTORS "sectores"
+#define D_UNIT_VA "VA"
+#define D_UNIT_VAR "VAr"
 #define D_UNIT_VOLT "V"
 #define D_UNIT_WATT "W"
 #define D_UNIT_WATTHOUR "Wh"

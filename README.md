@@ -108,6 +108,7 @@ Different firmware images are released based on Features and Sensors selection g
 | USE_BH1750                     | x | x | - | x | x |
 | USE_VEML6070                   | - | - | - | - | x |
 | USE_TSL2561                    | - | - | - | - | x |
+| USE_SI1145                     | - | - | - | - | x |
 | USE_ADS1115                    | - | - | - | - | x |
 | USE_ADS1115_I2CDEV             | - | - | - | - | - |
 | USE_INA219                     | - | - | - | - | x |
@@ -119,6 +120,7 @@ Different firmware images are released based on Features and Sensors selection g
 | USE_NOVA_SDS                   | x | - | - | x | x |
 | USE_PZEM004T                   | x | x | - | x | x |
 | USE_SERIAL_BRIDGE              | x | - | - | x | x |
+| USE_SDM120                     | - | - | - | - | x |
 | USE_IR_REMOTE                  | x | x | - | x | x |
 | USE_IR_HVAC                    | - | - | - | - | x |
 | USE_IR_RECEIVE                 | x | - | - | x | x |
@@ -129,11 +131,11 @@ Different firmware images are released based on Features and Sensors selection g
 
 #### Typical file size
 
-| ESP/Arduino library version    | sonoff | classic | minimal | knx  | allsensors |
-|--------------------------------|--------|---------|---------|------|------------|
-| ESP/Arduino lib v2.3.0         | 526k   | 488k    | 427k    | 535k | 549k       |
-| ESP/Arduino lib v2.4.0         | 531k   | 496k    | 435k    | 540k | 552k       |
-| ESP/Arduino lib v2.4.1         | 534k   | 499k    | 437k    | 543k | 555k       |
+| ESP/Arduino library version | sonoff | classic | minimal | knx  | allsensors |
+|-----------------------------|--------|---------|---------|------|------------|
+| ESP/Arduino lib v2.3.0      | 529k   | 490k    | 429k    | 538k | 554k       |
+| ESP/Arduino lib v2.4.0      | 534k   | 498k    | 436k    | 542k | 558k       |
+| ESP/Arduino lib v2.4.1      | 536k   | 501k    | 439k    | 545k | 560k       |
 
 ### Contribute
 You can contribute to Sonoff-Tasmota by
@@ -182,6 +184,7 @@ People helping to keep the show on the road:
 - Gerhard Mutz for his SGP30 and Sunrise/Sunset driver
 - Nuno Ferreira for his HC-SR04 driver
 - Adrian Scillato for his (security)fixes and implementing and maintaining KNX
+- Gennaro Tortone for implementing and maintaining Eastron drivers
 - Raymond Mouthaan for managing Wemos Wiki information
 - Norbert Richter, Frogmore42 and Jason2866 for providing many issue answers
 - Many more providing Tips, Pocs or PRs

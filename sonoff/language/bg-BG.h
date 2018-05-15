@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v5.12.0m
+ * Updated until v5.14.0
 \*********************************************************************/
 
 //#define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -61,7 +61,7 @@
 #define D_BRIGHTLIGHT "Яркост"
 #define D_BUTTON "Бутон"
 #define D_BY "от"                    // Written by me
-#define D_BYTES "Байт"
+#define D_BYTES "Байта"
 #define D_CELSIUS "Целзий"
 #define D_CO2 "Въглероден диоксид"
 #define D_CODE "код"                // Button code
@@ -75,7 +75,7 @@
 #define D_DARKLIGHT "Тъмна"
 #define D_DEBUG "Дебъгване"
 #define D_DISABLED "Деактивиран"
-#define D_DISTANCE "Distance"
+#define D_DISTANCE "Разстояние"
 #define D_DNS_SERVER "DNS Сървър"
 #define D_DONE "Изпълнено"
 #define D_DST_TIME "DST"
@@ -86,11 +86,12 @@
 #define D_ERROR "Грешка"
 #define D_FAHRENHEIT "Фаренхайт"
 #define D_FAILED "Неуспешно"
-#define D_FALLBACK "Обратна връзка"
-#define D_FALLBACK_TOPIC "Топик на обратната връзка"
+#define D_FALLBACK "Помощен"
+#define D_FALLBACK_TOPIC "Помощен топик"
 #define D_FALSE "Невярно"
 #define D_FILE "Файл"
 #define D_FREE_MEMORY "Свободна памет"
+#define D_FREQUENCY "Честота"
 #define D_GAS "Газ"
 #define D_GATEWAY "Шлюз"
 #define D_GROUP "Група"
@@ -98,9 +99,10 @@
 #define D_HOSTNAME "Име на хоста"
 #define D_HUMIDITY "Влажност"
 #define D_ILLUMINANCE "Осветеност"
-#define D_IMMEDIATE "моментален"      // Button immediate
+#define D_IMMEDIATE "Моментен"      // Button immediate
 #define D_INDEX "Индекс"
 #define D_INFO "Информация"
+#define D_INFRARED "Инфрачервен"
 #define D_INITIALIZED "Инициализирано"
 #define D_IP_ADDRESS "IP адрес"
 #define D_LIGHT "Светлина"
@@ -119,6 +121,9 @@
 #define D_PORT "Порт"
 #define D_POWER_FACTOR "Фактор на мощността"
 #define D_POWERUSAGE "Мощност"
+#define D_POWERUSAGE_ACTIVE "Активна мощност"
+#define D_POWERUSAGE_APPARENT "Пълна мощност"
+#define D_POWERUSAGE_REACTIVE "Реактивна мощност"
 #define D_PRESSURE "Налягане"
 #define D_PRESSUREATSEALEVEL "Налягане на морското ниво"
 #define D_PROGRAM_FLASH_SIZE "Размер на флаш паметта за програми"
@@ -154,6 +159,7 @@
 #define D_UPTIME "Време от стартирането"
 #define D_USER "Потребител"
 #define D_UTC_TIME "UTC"
+#define D_UV_INDEX "UV индекс"
 #define D_UV_LEVEL "Ниво на ултравиолетово излъчване"
 #define D_VERSION "Версия"
 #define D_VOLTAGE "Напрежение"
@@ -199,7 +205,7 @@
 #define D_ERASED_SECTOR "Изтрит сектор"
 
 // webserver.ino
-#define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "Фърмуеър MINIMAL - моля надградете го"
+#define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "Минимаен фърмуеър - моля надградете го"
 #define D_WEBSERVER_ACTIVE_ON "Уеб сървърът е активен на"
 #define D_WITH_IP_ADDRESS "с IP адрес"
 #define D_WEBSERVER_STOPPED "Уеб сървърът е спрян"
@@ -268,12 +274,12 @@
 
 #define D_OTHER_PARAMETERS "Други параметри"
 #define D_WEB_ADMIN_PASSWORD "Парола на уеб администратора"
-#define D_MQTT_ENABLE "активиране на MQTT"
-#define D_FRIENDLY_NAME "приятелско име"
+#define D_MQTT_ENABLE "Активиране на MQTT"
+#define D_FRIENDLY_NAME "Приятелско име"
 #define D_BELKIN_WEMO "Belkin WeMo"
 #define D_HUE_BRIDGE "Hue Bridge"
-#define D_SINGLE_DEVICE "единично"
-#define D_MULTI_DEVICE "мулти"
+#define D_SINGLE_DEVICE "Единично"
+#define D_MULTI_DEVICE "Мулти"
 
 #define D_SAVE_CONFIGURATION "Запазване на конфигурацията"
 #define D_CONFIGURATION_SAVED "Конфигурацията е запазена"
@@ -293,7 +299,7 @@
 #define D_MQTT_FULL_TOPIC "MQTT пълен топик"
 #define D_MDNS_DISCOVERY "mDNS откриване"
 #define D_MDNS_ADVERTISE "mDNS транслация"
-#define D_ESP_CHIP_ID "ID на чипа ESP"
+#define D_ESP_CHIP_ID "ID на ESP чипа"
 #define D_FLASH_CHIP_ID "ID на чипа на флаш паметта"
 #define D_FLASH_CHIP_SIZE "Размер на флаш паметта"
 #define D_FREE_PROGRAM_SPACE "Свободно пространство за програми"
@@ -310,7 +316,7 @@
 #define D_UPLOAD_ERR_3 "Magic байтът не е 0xE9"
 #define D_UPLOAD_ERR_4 "Размерът на програмата е по-голям от реалния размер на флаш паметта"
 #define D_UPLOAD_ERR_5 "Грешка при зареждането в буфера"
-#define D_UPLOAD_ERR_6 "Грешка пр зареждането. Включено е ниво 3 на лога"
+#define D_UPLOAD_ERR_6 "Грешка при зареждането. Включено е ниво 3 на лога"
 #define D_UPLOAD_ERR_7 "Зареждането е прекъснато"
 #define D_UPLOAD_ERR_8 "Файлът е невалиден"
 #define D_UPLOAD_ERR_9 "Файлът е прекалено голям"
@@ -342,7 +348,7 @@
 #define D_RESPONSE_SENT "Отговорът е изпратен"
 
 #define D_HUE "Hue"
-#define D_HUE_BRIDGE_SETUP "Hue мост настройка"
+#define D_HUE_BRIDGE_SETUP "Настройка на Hue bridge"
 #define D_HUE_API_NOT_IMPLEMENTED "Hue API не е внедрено"
 #define D_HUE_API "Hue API"
 #define D_HUE_POST_ARGS "Hue POST аргументи"
@@ -407,9 +413,9 @@
 
 // xsns_06_dht.ino
 #define D_TIMEOUT_WAITING_FOR "Изтекло време за очакване на"
-#define D_START_SIGNAL_LOW "стартов сигнал нисък"
-#define D_START_SIGNAL_HIGH "стартов сигнал висок"
-#define D_PULSE "импулс"
+#define D_START_SIGNAL_LOW "Нисък стартов сигнал"
+#define D_START_SIGNAL_HIGH "Висок стартов сигнал"
+#define D_PULSE "Импулс"
 #define D_CHECKSUM_FAILURE "Грешка в контролната сума"
 
 // xsns_07_sht1x.ino
@@ -419,10 +425,10 @@
 // xsns_18_pms5003.ino
 #define D_STANDARD_CONCENTRATION "CF-1 PM"     // Standard Particle CF-1 Particle Matter
 #define D_ENVIRONMENTAL_CONCENTRATION "PM"     // Environmetal Particle Matter
-#define D_PARTICALS_BEYOND "Particals"
+#define D_PARTICALS_BEYOND "Частици"
 
 // sonoff_template.h
-#define D_SENSOR_NONE     "няма"
+#define D_SENSOR_NONE     "Няма"
 #define D_SENSOR_DHT11    "DHT11"
 #define D_SENSOR_AM2301   "AM2301"
 #define D_SENSOR_SI7021   "SI7021"
@@ -453,29 +459,34 @@
 #define D_SENSOR_SBR_TX   "SerBr Tx"
 #define D_SENSOR_SR04_TRIG "SR04 Tri"
 #define D_SENSOR_SR04_ECHO "SR04 Ech"
+#define D_SENSOR_SDM120_TX "SDM120 Tx"
+#define D_SENSOR_SDM120_RX "SDM120 Rx"
 
 // Units
-#define D_UNIT_AMPERE "А"
-#define D_UNIT_CENTIMETER "см"
-#define D_UNIT_HOUR "ч"
-#define D_UNIT_KILOOHM "кОм"
-#define D_UNIT_KILOWATTHOUR "кВт/ч"
-#define D_UNIT_LUX "лукс"
-#define D_UNIT_MICROGRAM_PER_CUBIC_METER "микрограм/м3"
-#define D_UNIT_MICROMETER "микрометър"
-#define D_UNIT_MICROSECOND "микросек"
-#define D_UNIT_MILLIAMPERE "мА"
-#define D_UNIT_MILLISECOND "мсек"
-#define D_UNIT_MINUTE "мин"
+#define D_UNIT_AMPERE "A"
+#define D_UNIT_CENTIMETER "cm"
+#define D_UNIT_HERTZ "Hz"
+#define D_UNIT_HOUR "h"
+#define D_UNIT_KILOOHM "kΩ"
+#define D_UNIT_KILOWATTHOUR "kWh"
+#define D_UNIT_LUX "lx"
+#define D_UNIT_MICROGRAM_PER_CUBIC_METER "µg/m3"
+#define D_UNIT_MICROMETER "µm"
+#define D_UNIT_MICROSECOND "µs"
+#define D_UNIT_MILLIAMPERE "mA"
+#define D_UNIT_MILLISECOND "ms"
+#define D_UNIT_MINUTE "min"
 #define D_UNIT_PARTS_PER_BILLION "ppb"
 #define D_UNIT_PARTS_PER_DECILITER "ppd"
 #define D_UNIT_PARTS_PER_MILLION "ppm"
-#define D_UNIT_PRESSURE "хПа"
-#define D_UNIT_SECOND "сек"
+#define D_UNIT_PRESSURE "hPa"
+#define D_UNIT_SECOND "s"
 #define D_UNIT_SECTORS "сектори"
-#define D_UNIT_VOLT "В"
-#define D_UNIT_WATT "Вт"
-#define D_UNIT_WATTHOUR "Вт/ч"
+#define D_UNIT_VA "VA"
+#define D_UNIT_VAR "VAr"
+#define D_UNIT_VOLT "V"
+#define D_UNIT_WATT "W"
+#define D_UNIT_WATTHOUR "Wh"
 
 // Log message prefix
 #define D_LOG_APPLICATION "APP: "  // Application

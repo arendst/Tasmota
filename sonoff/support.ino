@@ -35,6 +35,10 @@ byte oswatch_blocked_loop = 0;
 //void OsWatchTicker() ICACHE_RAM_ATTR;
 #endif  // USE_WS2812_DMA
 
+#ifdef USE_KNX
+bool knx_started = false;
+#endif  // USE_KNX
+
 void OsWatchTicker()
 {
   unsigned long t = millis();
@@ -230,6 +234,14 @@ char* UpperCase_P(char* dest, const char* source)
     *write++ = toupper(ch);
   }
   return dest;
+}
+
+char* LTrim(char* p)
+{
+  while ((*p != '\0') && (isblank(*p))) {
+    p++;                                     // Trim leading spaces
+  }
+  return p;
 }
 
 char* NoAlNumToUnderscore(char* dest, const char* source)
@@ -447,6 +459,29 @@ int GetCommandCode(char* destination, size_t destination_size, const char* needl
   return result;
 }
 
+int GetStateNumber(char *state_text)
+{
+  char command[CMDSZ];
+  int state_number = -1;
+
+  if ((GetCommandCode(command, sizeof(command), state_text, kOptionOff) >= 0) || !strcasecmp(state_text, Settings.state_text[0])) {
+    state_number = 0;
+  }
+  else if ((GetCommandCode(command, sizeof(command), state_text, kOptionOn) >= 0) || !strcasecmp(state_text, Settings.state_text[1])) {
+    state_number = 1;
+  }
+  else if ((GetCommandCode(command, sizeof(command), state_text, kOptionToggle) >= 0) || !strcasecmp(state_text, Settings.state_text[2])) {
+    state_number = 2;
+  }
+  else if (GetCommandCode(command, sizeof(command), state_text, kOptionBlink) >= 0) {
+    state_number = 3;
+  }
+  else if (GetCommandCode(command, sizeof(command), state_text, kOptionBlinkOff) >= 0) {
+    state_number = 4;
+  }
+  return state_number;
+}
+
 void SetSerialBaudrate(int baudrate)
 {
   Settings.baudrate = baudrate / 1200;
@@ -461,6 +496,15 @@ void SetSerialBaudrate(int baudrate)
     delay(10);
     Serial.println();
   }
+}
+
+void ClaimSerial()
+{
+  serial_local = 1;
+  AddLog_P(LOG_LEVEL_INFO, PSTR("SNS: Hardware Serial"));
+  SetSeriallog(LOG_LEVEL_NONE);
+  baudrate = Serial.baudRate();
+  Settings.baudrate = baudrate / 1200;
 }
 
 uint32_t GetHash(const char *buffer, size_t size)
@@ -790,11 +834,20 @@ void WifiCheck(uint8_t param)
         }
 #endif  // USE_EMULATION
 #endif  // USE_WEBSERVER
+#ifdef USE_KNX
+        if (!knx_started && Settings.flag.knx_enabled) {
+          KNXStart();
+          knx_started = true;
+        }
+#endif  // USE_KNX
       } else {
 #if defined(USE_WEBSERVER) && defined(USE_EMULATION)
         UdpDisconnect();
 #endif  // USE_EMULATION
         mdns_begun = false;
+#ifdef USE_KNX
+        knx_started = false;
+#endif  // USE_KNX
       }
     }
   }
@@ -1243,7 +1296,7 @@ uint32_t MakeTime(TIME_T &tm)
   return seconds;
 }
 
-uint32_t RuleToTime(TimeChangeRule r, int yr)
+uint32_t RuleToTime(TimeRule r, int yr)
 {
   TIME_T tm;
   uint32_t t;
@@ -1312,9 +1365,10 @@ void RtcSecond()
 
   if ((ntp_sync_minute > 59) && (RtcTime.minute > 2)) ntp_sync_minute = 1;                 // If sync prepare for a new cycle
   uint8_t offset = (uptime < 30) ? RtcTime.second : (((ESP.getChipId() & 0xF) * 3) + 3) ;  // First try ASAP to sync. If fails try once every 60 seconds based on chip id
-  if ((WL_CONNECTED == WiFi.status()) && (offset == RtcTime.second) && ((RtcTime.year < 2016) || (ntp_sync_minute == RtcTime.minute))) {
+  if ((WL_CONNECTED == WiFi.status()) && (offset == RtcTime.second) && ((RtcTime.year < 2016) || (ntp_sync_minute == RtcTime.minute) || ntp_force_sync)) {
     ntp_time = sntp_get_current_timestamp();
     if (ntp_time > 1451602800) {  // Fix NTP bug in core 2.4.1/SDK 2.2.1 (returns Thu Jan 01 08:00:10 1970 after power on)
+      ntp_force_sync = 0;
       utc_time = ntp_time;
       ntp_sync_minute = 60;  // Sync so block further requests
       if (restart_time == 0) {
@@ -1322,8 +1376,8 @@ void RtcSecond()
       }
       BreakTime(utc_time, tmpTime);
       RtcTime.year = tmpTime.year + 1970;
-      daylight_saving_time = RuleToTime(DaylightSavingTime, RtcTime.year);
-      standard_time = RuleToTime(StandardTime, RtcTime.year);
+      daylight_saving_time = RuleToTime(Settings.tflag[1], RtcTime.year);
+      standard_time = RuleToTime(Settings.tflag[0], RtcTime.year);
       snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION "(" D_UTC_TIME ") %s, (" D_DST_TIME ") %s, (" D_STD_TIME ") %s"),
         GetTime(0).c_str(), GetTime(2).c_str(), GetTime(3).c_str());
       AddLog(LOG_LEVEL_DEBUG);
@@ -1344,17 +1398,22 @@ void RtcSecond()
   if (local_time > 1451602800) {  // 2016-01-01
     int32_t time_offset = Settings.timezone * SECS_PER_HOUR;
     if (99 == Settings.timezone) {
-      if (DaylightSavingTime.hemis) {
-        dstoffset = StandardTime.offset * SECS_PER_MIN;  // Southern hemisphere
-        stdoffset = DaylightSavingTime.offset * SECS_PER_MIN;
+      dstoffset = Settings.toffset[1] * SECS_PER_MIN;
+      stdoffset = Settings.toffset[0] * SECS_PER_MIN;
+      if (Settings.tflag[1].hemis) {
+        // Southern hemisphere
+        if ((utc_time >= (standard_time - dstoffset)) && (utc_time < (daylight_saving_time - stdoffset))) {
+          time_offset = stdoffset;  // Standard Time
+        } else {
+          time_offset = dstoffset;  // Daylight Saving Time
+        }
       } else {
-        dstoffset = DaylightSavingTime.offset * SECS_PER_MIN;  // Northern hemisphere
-        stdoffset = StandardTime.offset * SECS_PER_MIN;
-      }
-      if ((utc_time >= (daylight_saving_time - stdoffset)) && (utc_time < (standard_time - dstoffset))) {
-        time_offset = dstoffset;  // Daylight Saving Time
-      } else {
-        time_offset = stdoffset;  // Standard Time
+        // Northern hemisphere
+        if ((utc_time >= (daylight_saving_time - stdoffset)) && (utc_time < (standard_time - dstoffset))) {
+          time_offset = dstoffset;  // Daylight Saving Time
+        } else {
+          time_offset = stdoffset;  // Standard Time
+        }
       }
     }
     local_time += time_offset;
@@ -1400,6 +1459,7 @@ uint16_t AdcRead()
   return analog;
 }
 
+#ifdef USE_RULES
 void AdcEvery50ms()
 {
   adc_counter++;
@@ -1413,6 +1473,7 @@ void AdcEvery50ms()
     }
   }
 }
+#endif  // USE_RULES
 
 void AdcShow(boolean json)
 {
@@ -1439,9 +1500,11 @@ boolean Xsns02(byte function)
 
   if (pin[GPIO_ADC0] < 99) {
     switch (function) {
+#ifdef USE_RULES
       case FUNC_EVERY_50_MSECOND:
         AdcEvery50ms();
         break;
+#endif  // USE_RULES
       case FUNC_JSON_APPEND:
         AdcShow(1);
         break;

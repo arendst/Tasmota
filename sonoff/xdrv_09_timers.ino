@@ -302,6 +302,7 @@ void TimerEverySecond()
 void PrepShowTimer(uint8_t index)
 {
   char days[8] = { 0 };
+  char sign[2] = { 0 };
   char soutput[80];
 
   Timer xtimer = Settings.timer[index -1];
@@ -318,10 +319,13 @@ void PrepShowTimer(uint8_t index)
 #ifdef USE_SUNRISE
   int16_t hour = xtimer.time / 60;
   if ((1 == xtimer.mode) || (2 == xtimer.mode)) {  // Sunrise or Sunset
-    if (hour > 11) { hour = (hour -12) * -1; }
+    if (hour > 11) {
+      hour -= 12;
+      sign[0] = '-';
+    }
   }
-  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s\"" D_CMND_TIMER "%d\":{\"" D_JSON_TIMER_ARM "\":%d,\"" D_JSON_TIMER_MODE "\":%d,\"" D_JSON_TIMER_TIME "\":\"%02d:%02d\",\"" D_JSON_TIMER_WINDOW "\":%d,\"" D_JSON_TIMER_DAYS "\":\"%s\",\"" D_JSON_TIMER_REPEAT "\":%d%s,\"" D_JSON_TIMER_ACTION "\":%d}"),
-    mqtt_data, index, xtimer.arm, xtimer.mode, hour, xtimer.time % 60, xtimer.window, days, xtimer.repeat, soutput, xtimer.power);
+  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s\"" D_CMND_TIMER "%d\":{\"" D_JSON_TIMER_ARM "\":%d,\"" D_JSON_TIMER_MODE "\":%d,\"" D_JSON_TIMER_TIME "\":\"%s%02d:%02d\",\"" D_JSON_TIMER_WINDOW "\":%d,\"" D_JSON_TIMER_DAYS "\":\"%s\",\"" D_JSON_TIMER_REPEAT "\":%d%s,\"" D_JSON_TIMER_ACTION "\":%d}"),
+    mqtt_data, index, xtimer.arm, xtimer.mode, sign, hour, xtimer.time % 60, xtimer.window, days, xtimer.repeat, soutput, xtimer.power);
 #else
   snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s\"" D_CMND_TIMER "%d\":{\"" D_JSON_TIMER_ARM "\":%d,\"" D_JSON_TIMER_TIME "\":\"%02d:%02d\",\"" D_JSON_TIMER_WINDOW "\":%d,\"" D_JSON_TIMER_DAYS "\":\"%s\",\"" D_JSON_TIMER_REPEAT "\":%d%s,\"" D_JSON_TIMER_ACTION "\":%d}"),
     mqtt_data, index, xtimer.arm, xtimer.time / 60, xtimer.time % 60, xtimer.window, days, xtimer.repeat, soutput, xtimer.power);
@@ -341,7 +345,10 @@ boolean TimerCommand()
 
   UpperCase(dataBufUc, XdrvMailbox.data);
   int command_code = GetCommandCode(command, sizeof(command), XdrvMailbox.topic, kTimerCommands);
-  if ((CMND_TIMER == command_code) && (index > 0) && (index <= MAX_TIMERS)) {
+  if (-1 == command_code) {
+    serviced = false;  // Unknown command
+  }
+  else if ((CMND_TIMER == command_code) && (index > 0) && (index <= MAX_TIMERS)) {
     uint8_t error = 0;
     if (XdrvMailbox.data_len) {
       if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= MAX_TIMERS)) {
@@ -374,13 +381,18 @@ boolean TimerCommand()
             if (root[UpperCase_P(parm_uc, PSTR(D_JSON_TIMER_TIME))].success()) {
               uint16_t itime = 0;
               int8_t value = 0;
+              uint8_t sign = 0;
               char time_str[10];
 
               snprintf(time_str, sizeof(time_str), root[parm_uc]);
               const char *substr = strtok(time_str, ":");
               if (substr != NULL) {
+                if (strchr(substr, '-')) {
+                  sign = 1;
+                  substr++;
+                }
                 value = atoi(substr);
-                if (value < 0) { value = abs(value) +12; }  // Allow entering timer offset from -11:59 to -00:01 converted to 12:01 to 23:59
+                if (sign) { value += 12; }  // Allow entering timer offset from -11:59 to -00:01 converted to 12:01 to 23:59
                 if (value > 23) { value = 23; }
                 itime = value * 60;
                 substr = strtok(NULL, ":");
@@ -401,14 +413,13 @@ boolean TimerCommand()
               // SMTWTFS = 1234567 = 0011001 = 00TW00S = --TW--S
               Settings.timer[index].days = 0;
               const char *tday = root[parm_uc];
-              char ch = '.';
-
               uint8_t i = 0;
+              char ch = *tday++;
               while ((ch != '\0') && (i < 7)) {
-                ch = *tday++;
                 if (ch == '-') { ch = '0'; }
                 uint8_t mask = 1 << i++;
                 Settings.timer[index].days |= (ch == '0') ? 0 : mask;
+                ch = *tday++;
               }
             }
             if (root[UpperCase_P(parm_uc, PSTR(D_JSON_TIMER_REPEAT))].success()) {
@@ -419,7 +430,7 @@ boolean TimerCommand()
               Settings.timer[index].device = (device < devices_present) ? device : 0;
             }
             if (root[UpperCase_P(parm_uc, PSTR(D_JSON_TIMER_ACTION))].success()) {
-              uint8_t action = ((uint8_t)root[parm_uc] -1) & 0x03;
+              uint8_t action = (uint8_t)root[parm_uc] & 0x03;
               Settings.timer[index].power = (devices_present) ? action : 3;  // If no devices than only allow rules
             }
 
@@ -476,7 +487,7 @@ boolean TimerCommand()
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, lbuff);
   }
 #endif
-  else serviced = false;
+  else serviced = false;  // Unknown command
 
   return serviced;
 }
