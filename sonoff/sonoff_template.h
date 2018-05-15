@@ -95,6 +95,8 @@ enum UserSelectablePins {
   GPIO_SR04_ECHO,      // SR04 Echo pin
   GPIO_SDM120_TX,      // SDM120 Serial interface
   GPIO_SDM120_RX,      // SDM120 Serial interface
+  GPIO_SDM630_TX,      // SDM630 Serial interface
+  GPIO_SDM630_RX,      // SDM630 Serial interface
   GPIO_SENSOR_END };
 
 // Programmer selectable GPIO functionality offset by user selectable GPIOs
@@ -139,7 +141,8 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_PMS5003 "|" D_SENSOR_SDS0X1 "|"
   D_SENSOR_SBR_TX "|" D_SENSOR_SBR_RX "|"
   D_SENSOR_SR04_TRIG "|" D_SENSOR_SR04_ECHO "|"
-  D_SENSOR_SDM120_TX "|" D_SENSOR_SDM120_RX;
+  D_SENSOR_SDM120_TX "|" D_SENSOR_SDM120_RX "|"
+  D_SENSOR_SDM630_TX "|" D_SENSOR_SDM630_RX;
 
 /********************************************************************************************/
 
