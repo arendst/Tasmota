@@ -148,7 +148,7 @@ There is **NO CONFLICT** with MQTT, Home Assistant, Web, etc. Tests show fast re
 * [johannesbonn](https://github.com/johannesbonn) - Thanks for the patience on bug resolutions
 * [RocketSience](https://github.com/RocketSience) - Thanks for the patience on bug resolutions
 * [jeylites](https://github.com/jeylites) - Thanks for the patience on bug resolutions
-* [smurfix](https://github.com/smurfix) ( Matthias Urlichs ) - Thanks for the KNX guiding and [KNXD](https://github.com/knxd/knxd) use.
+* [smurfix](https://github.com/smurfix) ( Matthias Urlichs ) - Thanks for the KNX guiding and [KNXd](https://github.com/knxd/knxd) use.
 * And many others providing testing, bug reporting and feature requests.
 
 -----------------------------------------------------------------------------------------------------------------------------------
