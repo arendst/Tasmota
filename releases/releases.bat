@@ -4,6 +4,7 @@ mkdir %version%
 
 copy ..\.pioenvs\sonoff\firmware.bin %version%\EN-firmware-%version%.bin
 copy ..\.pioenvs\sonoff-BG\firmware.bin %version%\BG-firmware-%version%.bin
+copy ..\.pioenvs\sonoff-BR\firmware.bin %version%\BR-firmware-%version%.bin
 copy ..\.pioenvs\sonoff-CN\firmware.bin %version%\CN-firmware-%version%.bin
 copy ..\.pioenvs\sonoff-CZ\firmware.bin %version%\CZ-firmware-%version%.bin
 copy ..\.pioenvs\sonoff-DE\firmware.bin %version%\DE-firmware-%version%.bin
