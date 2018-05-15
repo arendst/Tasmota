@@ -455,7 +455,7 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
         char *blcommand = strtok(dataBuf, ";");
         while ((blcommand != NULL) && (backlog_index != bl_pointer)) {
           while(true) {
-            while ((*blcommand != '\0') && (isblank(*blcommand))) { blcommand++; }  // Trim leading spaces
+            blcommand = LTrim(blcommand);
             if (!strncasecmp_P(blcommand, PSTR(D_CMND_BACKLOG), strlen(D_CMND_BACKLOG))) {
               blcommand += strlen(D_CMND_BACKLOG);                                  // Skip unnecessary command Backlog
             } else {
@@ -1052,19 +1052,26 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
       uint8_t ts = 0;
       if (CMND_TIMEDST == command_code) { ts = 1; }
       if (data_len > 0) {
-        if (strstr(dataBuf, ",")) {                        // Parameter entry
-          uint8_t tpos = 0;
-          int value = strtol(dataBuf, &p, 10);
+        if (strstr(dataBuf, ",")) {              // Process parameter entry
+          uint8_t tpos = 0;                      // Parameter index
+          int value = 0;
+          p = dataBuf;                           // Parameters like "1, 2,3 , 4 ,5, -120" or ",,,,,+240"
+          char *q = p;                           // Value entered flag
           while (p && (tpos < 7)) {
-            tpos++;
-            if (1 == tpos) { Settings.tflag[ts].hemis = value &1; }
-            if (2 == tpos) { Settings.tflag[ts].week = (value < 0) ? 0 : (value > 4) ? 4 : value; }
-            if (3 == tpos) { Settings.tflag[ts].month = (value < 1) ? 1 : (value > 12) ? 12 : value; }
-            if (4 == tpos) { Settings.tflag[ts].dow = (value < 1) ? 1 : (value > 7) ? 7 : value; }
-            if (5 == tpos) { Settings.tflag[ts].hour = (value < 0) ? 0 : (value > 23) ? 23 : value; }
-            if (6 == tpos) { Settings.toffset[ts] = (value < -900) ? -900 : (value > 900) ? 900 : value; }
-            p++;  // Skip comma
+            if (p > q) {                         // Any value entered
+              if (1 == tpos) { Settings.tflag[ts].hemis = value &1; }
+              if (2 == tpos) { Settings.tflag[ts].week = (value < 0) ? 0 : (value > 4) ? 4 : value; }
+              if (3 == tpos) { Settings.tflag[ts].month = (value < 1) ? 1 : (value > 12) ? 12 : value; }
+              if (4 == tpos) { Settings.tflag[ts].dow = (value < 1) ? 1 : (value > 7) ? 7 : value; }
+              if (5 == tpos) { Settings.tflag[ts].hour = (value < 0) ? 0 : (value > 23) ? 23 : value; }
+              if (6 == tpos) { Settings.toffset[ts] = (value < -900) ? -900 : (value > 900) ? 900 : value; }
+            }
+            p = LTrim(p);                        // Skip spaces
+            if (tpos && (*p == ',')) { p++; }    // Skip separator
+            p = LTrim(p);                        // Skip spaces
+            q = p;                               // Reset any value entered flag
             value = strtol(p, &p, 10);
+            tpos++;                              // Next parameter
           }
           ntp_force_sync = 1;
         } else {
