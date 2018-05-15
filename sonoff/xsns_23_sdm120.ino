@@ -92,9 +92,9 @@ uint8_t SDM120_ModbusReceive(float *value)
         ((uint8_t*)value)[2] = buffer[4];
         ((uint8_t*)value)[1] = buffer[5];
         ((uint8_t*)value)[0] = buffer[6];
-      
+
       } else return 1; // SDM_ERR_CRC_ERROR
-    
+
     } else return 2;  // SDM_ERR_WRONG_BYTES
   }
 
@@ -135,7 +135,7 @@ const uint16_t sdm120_start_addresses[] {
 uint8_t sdm120_read_state = 0;
 uint8_t sdm120_send_retry = 0;
 
-void SDM12050ms()              // Every 50 mSec            
+void SDM12050ms()              // Every 50 mSec
 {
   sdm120_state++;
   if (6 == sdm120_state) {     // Every 300 mSec
@@ -253,10 +253,10 @@ void SDM120Show(boolean json)
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"" D_RSLT_ENERGY "\":{\"" D_JSON_TOTAL "\":%s,\"" D_JSON_ACTIVE_POWERUSAGE "\":%s,\"" D_JSON_APPARENT_POWERUSAGE "\":%s,\"" D_JSON_REACTIVE_POWERUSAGE "\":%s,\"" D_JSON_FREQUENCY "\":%s,\"" D_JSON_POWERFACTOR "\":%s,\"" D_JSON_VOLTAGE "\":%s,\"" D_JSON_CURRENT "\":%s}"),
       mqtt_data, energy_total, active_power, apparent_power, reactive_power, frequency, power_factor, voltage, current);
 #ifdef USE_DOMOTICZ
-    if (0 == tele_period) { 
+    if (0 == tele_period) {
       DomoticzSensor(DZ_VOLTAGE, voltage);
       DomoticzSensor(DZ_CURRENT, current);
-      DomoticzSensorPowerEnergy((uint16_t)sdm120_active_power, energy_total); 
+      DomoticzSensorPowerEnergy((uint16_t)sdm120_active_power, energy_total);
     }
 #endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
@@ -298,4 +298,3 @@ boolean Xsns23(byte function)
 }
 
 #endif   // USE_SDM120
-

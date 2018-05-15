@@ -236,6 +236,14 @@ char* UpperCase_P(char* dest, const char* source)
   return dest;
 }
 
+char* LTrim(char* p)
+{
+  while ((*p != '\0') && (isblank(*p))) {
+    p++;                                     // Trim leading spaces
+  }
+  return p;
+}
+
 char* NoAlNumToUnderscore(char* dest, const char* source)
 {
   char* write = dest;
@@ -1357,9 +1365,10 @@ void RtcSecond()
 
   if ((ntp_sync_minute > 59) && (RtcTime.minute > 2)) ntp_sync_minute = 1;                 // If sync prepare for a new cycle
   uint8_t offset = (uptime < 30) ? RtcTime.second : (((ESP.getChipId() & 0xF) * 3) + 3) ;  // First try ASAP to sync. If fails try once every 60 seconds based on chip id
-  if ((WL_CONNECTED == WiFi.status()) && (offset == RtcTime.second) && ((RtcTime.year < 2016) || (ntp_sync_minute == RtcTime.minute))) {
+  if ((WL_CONNECTED == WiFi.status()) && (offset == RtcTime.second) && ((RtcTime.year < 2016) || (ntp_sync_minute == RtcTime.minute) || ntp_force_sync)) {
     ntp_time = sntp_get_current_timestamp();
     if (ntp_time > 1451602800) {  // Fix NTP bug in core 2.4.1/SDK 2.2.1 (returns Thu Jan 01 08:00:10 1970 after power on)
+      ntp_force_sync = 0;
       utc_time = ntp_time;
       ntp_sync_minute = 60;  // Sync so block further requests
       if (restart_time == 0) {
@@ -1367,8 +1376,8 @@ void RtcSecond()
       }
       BreakTime(utc_time, tmpTime);
       RtcTime.year = tmpTime.year + 1970;
-      daylight_saving_time = RuleToTime(Settings.dst_flags, RtcTime.year);
-      standard_time = RuleToTime(Settings.std_flags, RtcTime.year);
+      daylight_saving_time = RuleToTime(Settings.tflag[1], RtcTime.year);
+      standard_time = RuleToTime(Settings.tflag[0], RtcTime.year);
       snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION "(" D_UTC_TIME ") %s, (" D_DST_TIME ") %s, (" D_STD_TIME ") %s"),
         GetTime(0).c_str(), GetTime(2).c_str(), GetTime(3).c_str());
       AddLog(LOG_LEVEL_DEBUG);
@@ -1389,9 +1398,9 @@ void RtcSecond()
   if (local_time > 1451602800) {  // 2016-01-01
     int32_t time_offset = Settings.timezone * SECS_PER_HOUR;
     if (99 == Settings.timezone) {
-      dstoffset = Settings.dst_offset * SECS_PER_MIN;
-      stdoffset = Settings.std_offset * SECS_PER_MIN;
-      if (Settings.dst_flags.hemis) {
+      dstoffset = Settings.toffset[1] * SECS_PER_MIN;
+      stdoffset = Settings.toffset[0] * SECS_PER_MIN;
+      if (Settings.tflag[1].hemis) {
         // Southern hemisphere
         if ((utc_time >= (standard_time - dstoffset)) && (utc_time < (daylight_saving_time - stdoffset))) {
           time_offset = stdoffset;  // Standard Time

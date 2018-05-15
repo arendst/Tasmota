@@ -227,6 +227,8 @@
   #define D_JSON_RESET_AND_RESTARTING "Reset and Restarting"
   #define D_JSON_ONE_TO_RESET "1 to reset"
 #define D_CMND_TIMEZONE "Timezone"
+#define D_CMND_TIMESTD "TimeStd"
+#define D_CMND_TIMEDST "TimeDst"
 #define D_CMND_ALTITUDE "Altitude"
 #define D_CMND_LEDPOWER "LedPower"
 #define D_CMND_LEDSTATE "LedState"

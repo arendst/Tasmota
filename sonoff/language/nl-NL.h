@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v5.13.1a
+ * Updated until v5.13.1c
 \*********************************************************************/
 
 //#define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -121,9 +121,9 @@
 #define D_PORT "Poort"
 #define D_POWER_FACTOR "Arbeidsfactor"
 #define D_POWERUSAGE "Vermogen"
-#define D_POWERUSAGE_ACTIVE "Active Power"
-#define D_POWERUSAGE_APPARENT "Apparent Power"
-#define D_POWERUSAGE_REACTIVE "Reactive Power"
+#define D_POWERUSAGE_ACTIVE "Werkelijk vermogen"
+#define D_POWERUSAGE_APPARENT "Schijnbaar vermogen"
+#define D_POWERUSAGE_REACTIVE "Blindvermogen"
 #define D_PRESSURE "Luchtdruk"
 #define D_PRESSUREATSEALEVEL "ZeeLuchtdruk"
 #define D_PROGRAM_FLASH_SIZE "Programma Flash Grootte"
