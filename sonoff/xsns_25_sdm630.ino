@@ -256,12 +256,12 @@ void SDM630Init()
 }
 
 #ifdef USE_WEBSERVER
-const char HTTP_SNS_sdm630_DATA[] PROGMEM = "%s"
+const char HTTP_SNS_SDM630_DATA[] PROGMEM = "%s"
   "{s}SDM630 " D_VOLTAGE "{m}%s/%s/%s " D_UNIT_VOLT "{e}"
   "{s}SDM630 " D_CURRENT "{m}%s/%s/%s " D_UNIT_AMPERE "{e}"
   "{s}SDM630 " D_POWERUSAGE_ACTIVE "{m}%s/%s/%s " D_UNIT_WATT "{e}"
   "{s}SDM630 " D_POWERUSAGE_REACTIVE "{m}%s/%s/%s " D_UNIT_VAR "{e}"
-  "{s}SDM630 " D_POWER_FACTOR "{m}%s{e}"
+  "{s}SDM630 " D_POWER_FACTOR "{m}%s/%s/%s{e}"
   "{s}SDM630 " D_ENERGY_TOTAL "{m}%s " D_UNIT_KILOWATTHOUR "{e}";
 #endif  // USE_WEBSERVER
 
@@ -312,7 +312,7 @@ void SDM630Show(boolean json)
       current_l1, current_l2, current_l3);
 #ifdef USE_WEBSERVER
   } else {
-    snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_sdm630_DATA, mqtt_data, 
+    snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_SDM630_DATA, mqtt_data, 
     voltage_l1, voltage_l2, voltage_l3, current_l1, current_l2, current_l3,
     active_power_l1, active_power_l2, active_power_l3, 
     reactive_power_l1, reactive_power_l2, reactive_power_l3,
