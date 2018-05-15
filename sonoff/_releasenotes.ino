@@ -1,5 +1,5 @@
-/* 5.13.1b
- * Prep for user entry DST/STD (#2721)
+/* 5.13.1c
+ * Add user entry DST/STD using commands TimeStd and TimeDst with options like 0,0,3,1,2,120 (#2721)
  *
  * 5.13.1a
  * Change user_config.h otaurl to http://sonoff.maddox.co.uk/tasmota/sonoff.bin (#2588, #2602)

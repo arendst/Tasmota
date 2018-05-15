@@ -34,7 +34,9 @@ uint8_t sdm120_state = 0;
 
 float sdm120_voltage = 0;
 float sdm120_current = 0;
-float sdm120_power = 0;
+float sdm120_active_power = 0;
+float sdm120_apparent_power = 0;
+float sdm120_reactive_power = 0;
 float sdm120_power_factor = 0;
 float sdm120_frequency = 0;
 float sdm120_energy_total = 0;
@@ -123,8 +125,8 @@ const uint16_t sdm_start_addresses[] {
   0x0000,   // SDM120C_VOLTAGE  [V]
   0x0006,   // SDM120C_CURRENT  [A]
   0x000C,   // SDM120C_POWER    [W]
-  0x0012,   // SDM120C_ACTIVE_APPARENT_POWER  [VA]
-  0x0018,   // SDM120C_REACTIVE_APPARENT_POWER  [VAR]
+  0x0012,   // SDM120C_APPARENT_POWER  [VA]
+  0x0018,   // SDM120C_REACTIVE_POWER  [VAR]
   0x001E,   // SDM120C_POWER_FACTOR
   0x0046,   // SDM120C_FREQUENCY  [Hz]
   0x0048,   // SDM120C_IMPORT_ACTIVE_ENERGY [Wh]
@@ -160,7 +162,15 @@ void SDM12050ms()              // Every 50 mSec
             break;
 
           case 2:
-            sdm120_power = value;
+            sdm120_active_power = value;
+            break;
+
+          case 3:
+            sdm120_apparent_power = value;
+            break;
+
+          case 4:
+            sdm120_reactive_power = value;
             break;
 
           case 5:
@@ -198,7 +208,11 @@ void SDM120Init()
   sdm120_type = 0;
   if ((pin[GPIO_SDM120_RX] < 99) && (pin[GPIO_SDM120_TX] < 99)) {
     SDM120Serial = new TasmotaSerial(pin[GPIO_SDM120_RX], pin[GPIO_SDM120_TX], 1);
-    if (SDM120Serial->begin(9600)) {
+#ifdef SDM120_SPEED
+    if (SDM120Serial->begin(SDM120_SPEED)) {
+#else
+    if (SDM120Serial->begin(2400)) {
+#endif
       if (SDM120Serial->hardwareSerial()) { ClaimSerial(); }
       sdm120_type = 1;
     }
@@ -209,7 +223,9 @@ void SDM120Init()
 const char HTTP_SNS_SDM120_DATA[] PROGMEM = "%s"
   "{s}SDM120 " D_VOLTAGE "{m}%s " D_UNIT_VOLT "{e}"
   "{s}SDM120 " D_CURRENT "{m}%s " D_UNIT_AMPERE "{e}"
-  "{s}SDM120 " D_POWERUSAGE "{m}%s " D_UNIT_WATT "{e}"
+  "{s}SDM120 " D_POWERUSAGE_ACTIVE "{m}%s " D_UNIT_WATT "{e}"
+  "{s}SDM120 " D_POWERUSAGE_APPARENT "{m}%s " D_UNIT_VA "{e}"
+  "{s}SDM120 " D_POWERUSAGE_REACTIVE "{m}%s " D_UNIT_VAR "{e}"
   "{s}SDM120 " D_POWER_FACTOR "{m}%s{e}"
   "{s}SDM120 " D_FREQUENCY "{m}%s " D_UNIT_HERTZ "{e}"
   "{s}SDM120 " D_ENERGY_TOTAL "{m}%s " D_UNIT_KILOWATTHOUR "{e}";
@@ -219,31 +235,35 @@ void SDM120Show(boolean json)
 {
   char voltage[10];
   char current[10];
-  char power[10];
+  char active_power[10];
+  char apparent_power[10];
+  char reactive_power[10];
   char power_factor[10];
   char frequency[10];
   char energy_total[10];
 
   dtostrfd(sdm120_voltage, Settings.flag2.voltage_resolution, voltage);
   dtostrfd(sdm120_current, Settings.flag2.current_resolution, current);
-  dtostrfd(sdm120_power, Settings.flag2.wattage_resolution, power);
+  dtostrfd(sdm120_active_power, Settings.flag2.wattage_resolution, active_power);
+  dtostrfd(sdm120_apparent_power, Settings.flag2.wattage_resolution, apparent_power);
+  dtostrfd(sdm120_reactive_power, Settings.flag2.wattage_resolution, reactive_power);
   dtostrfd(sdm120_power_factor, 2, power_factor);
   dtostrfd(sdm120_frequency, 2, frequency);
   dtostrfd(sdm120_energy_total, Settings.flag2.energy_resolution, energy_total);
 
   if (json) {
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"" D_RSLT_ENERGY "\":{\"" D_JSON_TOTAL "\":%s,\"" D_JSON_POWERUSAGE "\":%s,\"" D_JSON_FREQUENCY "\":%s,\"" D_JSON_POWERFACTOR "\":%s,\"" D_JSON_VOLTAGE "\":%s,\"" D_JSON_CURRENT "\":%s}"),
-      mqtt_data, energy_total, power, frequency, power_factor, voltage, current);
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"" D_RSLT_ENERGY "\":{\"" D_JSON_TOTAL "\":%s,\"" D_JSON_ACTIVE_POWERUSAGE "\":%s,\"" D_JSON_APPARENT_POWERUSAGE "\":%s,\"" D_JSON_REACTIVE_POWERUSAGE "\":%s,\"" D_JSON_FREQUENCY "\":%s,\"" D_JSON_POWERFACTOR "\":%s,\"" D_JSON_VOLTAGE "\":%s,\"" D_JSON_CURRENT "\":%s}"),
+      mqtt_data, energy_total, active_power, apparent_power, reactive_power, frequency, power_factor, voltage, current);
 #ifdef USE_DOMOTICZ
     if (0 == tele_period) { 
       DomoticzSensor(DZ_VOLTAGE, voltage);
       DomoticzSensor(DZ_CURRENT, current);
-      DomoticzSensorPowerEnergy((uint16_t)sdm120_power, energy_total); 
+      DomoticzSensorPowerEnergy((uint16_t)sdm120_active_power, energy_total); 
     }
 #endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
   } else {
-    snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_SDM120_DATA, mqtt_data, voltage, current, power, power_factor, frequency, energy_total);
+    snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_SDM120_DATA, mqtt_data, voltage, current, active_power, apparent_power, reactive_power, power_factor, frequency, energy_total);
   }
 #endif  // USE_WEBSERVER
 }
@@ -280,3 +300,4 @@ boolean Xsns23(byte function)
 }
 
 #endif   // USE_SDM120
+
