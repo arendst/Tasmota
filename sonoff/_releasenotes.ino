@@ -1,8 +1,12 @@
-/* 5.13.1b
- * Prep for user entry DST/STD (#2721)
+/* 5.14.0a
+ * Updated to latest release
  *
- * 5.13.1a
- * Change user_config.h otaurl to http://sonoff.maddox.co.uk/tasmota/sonoff.bin (#2588, #2602)
+ * 5.14.0 20180515
+ * Update language files
+ * Update TasmotaSerial to 2.0.0 allowing Hardware Serial Fallback when correct connections are configured
+ * Change command handling
+ * Change user_config(_override).h defines TIME_STD and TIME_DST
+ * Change user_config(_override).h otaurl to http://sonoff.maddox.co.uk/tasmota/sonoff.bin (#2588, #2602)
  * Fix configuration restore regression from 5.13.1
  * Fix compile error when ADC is enabled and Rules are disabled (#2608)
  * Fix rule power trigger when no backlog command is used (#2613)
@@ -11,20 +15,18 @@
  * Fix sensor MHZ-19 vanishing data over time (#2659)
  * Fix KNX reconnection issue (#2679)
  * Fix DST and STD time for Southern Hemisphere (#2684, #2714)
- * Add SetOption26 to enforce use of indexes even when only one relay is present (#1055)
  * Add Portuguese in Brazil language file
+ * Add SetOption26 to enforce use of indexes even when only one relay is present (#1055)
+ * Add support for sensor SI1145 UV Index / IR / Visible light (#2496)
  * Add rule state test for On/Off in addition to 0/1 (#2613)
  * Add hardware serial option to MHZ-19 sensor (#2659)
  * Add Eastron SDM120 energy meter (#2694)
- * Add support for sensor SI1145 UV Index / IR / Visible light (#2496)
- * Updated Italian language file (#2618)
- * Update TasmotaSerial to 2.0.0 allowing Hardware Serial Fallback when correct connections are configured
- * Optimize command handling
+ * Add user entry DST/STD using commands TimeStd and TimeDst (See wiki for parameter syntax) (#2721)
  *
  * 5.13.1 20180501
  * Fix JSON buffers size too small for execution in some situations (#2580)
- * Add define MODULE for user selecting default model although it preferably should not be changed (#569, #2589)
  * Fix configuration restore (#2591)
+ * Add define MODULE for user selecting default model although it preferably should not be changed (#569, #2589)
  *
  * 5.13.0 20180430
  * Change platformio option sonoff-ds18x20 to sonoff-allsensors enabling ds18x20 and all other sensors in one image

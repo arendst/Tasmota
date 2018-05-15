@@ -20,7 +20,7 @@
 #ifndef _SETTINGS_H_
 #define _SETTINGS_H_
 
-#define PARAM8_SIZE  23                    // Number of param bytes
+#define PARAM8_SIZE  18                    // Number of param bytes
 
 typedef union {                            // Restricted by MISRA-C Rule 18.4 but so usefull...
   uint32_t data;                           // Allow bit manipulation using SetOption
@@ -159,8 +159,7 @@ struct SYSCFG {
   uint8_t       display_address[8];        // 2D8
   uint8_t       display_dimmer;            // 2E0
   uint8_t       display_size;              // 2E1
-  TimeRule      std_flags;                 // 2E2
-  int16_t       std_offset;                // 2E4 offset from UTC in minutes
+  TimeRule      tflag[2];                  // 2E2
   uint16_t      pwm_frequency;             // 2E6
   power_t       power;                     // 2E8
   uint16_t      pwm_value[MAX_PWMS];       // 2EC
@@ -169,6 +168,10 @@ struct SYSCFG {
   uint8_t       ex_power;                  // 2FA Not used since 5.8.0j
   uint8_t       ledstate;                  // 2FB
   uint8_t       param[PARAM8_SIZE];        // 2FC was domoticz_in_topic until 5.1.6
+  int16_t       toffset[2];                // 30E
+
+  byte          free_312[1];               // 312
+
   char          state_text[4][11];         // 313
   uint8_t       energy_power_delta;        // 33F
   uint16_t      domoticz_update_timer;     // 340
@@ -244,7 +247,9 @@ struct SYSCFG {
   char          ntp_server[3][33];         // 4CE
   byte          ina219_mode;               // 531
   uint16_t      pulse_timer[MAX_PULSETIMERS]; // 532
-  TimeRule      dst_flags;                 // 542
+
+  byte          free_542[2];               // 542
+
   uint32_t      ip_address[4];             // 544
   unsigned long energy_kWhtotal;              // 554
   char          mqtt_fulltopic[100];       // 558
@@ -254,9 +259,8 @@ struct SYSCFG {
   uint16_t      pulse_counter_debounce;    // 5D2
   uint8_t       rf_code[17][9];            // 5D4
 
-  byte          free_66d[1];               // 66D
+  byte          free_66d[3];               // 66D
 
-  int16_t       dst_offset;                // 66E
   Timer         timer[MAX_TIMERS];         // 670
   int           latitude;                  // 6B0
   int           longitude;                 // 6B4

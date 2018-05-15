@@ -2,12 +2,13 @@
 .DS_Store
 .fuse_hidden*
 
-
 ## Project files ######
 .pioenvs
 .piolibdeps
 .clang_complete
 .gcc-flags.json
-lib/readme.txt
 sonoff/user_config_override.h
-sonoff/user_config_my.h
+build
+
+## Visual Studio Code specific ######
+.vscode
