@@ -521,6 +521,8 @@ void SettingsDefaultSet2()
 
   Settings.latitude = (int)((double)LATITUDE * 1000000);
   Settings.longitude = (int)((double)LONGITUDE * 1000000);
+
+  SettingsDefaultSet_5_13_1c();
 }
 
 /********************************************************************************************/
@@ -650,6 +652,32 @@ void SettingsDefaultSet_5_10_1()
 //#endif  // USE_DISPLAY
   Settings.display_dimmer = 1;
   Settings.display_size = 1;
+}
+
+void SettingsResetStd()
+{
+  Settings.tflag[0].hemis = TIME_STD_HEMISPHERE;
+  Settings.tflag[0].week = TIME_STD_WEEK;
+  Settings.tflag[0].dow = TIME_STD_DAY;
+  Settings.tflag[0].month = TIME_STD_MONTH;
+  Settings.tflag[0].hour = TIME_STD_HOUR;
+  Settings.toffset[0] = TIME_STD_OFFSET;
+}
+
+void SettingsResetDst()
+{
+  Settings.tflag[1].hemis = TIME_DST_HEMISPHERE;
+  Settings.tflag[1].week = TIME_DST_WEEK;
+  Settings.tflag[1].dow = TIME_DST_DAY;
+  Settings.tflag[1].month = TIME_DST_MONTH;
+  Settings.tflag[1].hour = TIME_DST_HOUR;
+  Settings.toffset[1] = TIME_DST_OFFSET;
+}
+
+void SettingsDefaultSet_5_13_1c()
+{
+  SettingsResetStd();
+  SettingsResetDst();
 }
 
 /********************************************************************************************/
@@ -852,10 +880,14 @@ void SettingsDelta()
       memset(&Settings.knx_physsical_addr, 0x00, 0x800 - 0x6b8);  // Reset until 0x800 for future use
     }
     if (Settings.version < 0x050C000F) {
-        Settings.energy_kWhtoday /= 1000;
-        Settings.energy_kWhyesterday /= 1000;
-        RtcSettings.energy_kWhtoday /= 1000;
+      Settings.energy_kWhtoday /= 1000;
+      Settings.energy_kWhyesterday /= 1000;
+      RtcSettings.energy_kWhtoday /= 1000;
     }
+    if (Settings.version < 0x050D0103) {
+      SettingsDefaultSet_5_13_1c();
+    }
+
     Settings.version = VERSION;
     SettingsSave(1);
   }

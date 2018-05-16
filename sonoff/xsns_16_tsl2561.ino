@@ -22,9 +22,9 @@
 /*********************************************************************************************\
  * TSL2561 - Light Intensity
  *
- * I2C Addresses: 0x29 (low), 0x39 (float) or 0x49 (high)
- *
  * Using library https://github.com/joba-1/Joba_Tsl2561
+ *
+ * I2C Addresses: 0x29 (low), 0x39 (float) or 0x49 (high)
 \*********************************************************************************************/
 
 #include <Tsl2561Util.h>
@@ -112,5 +112,5 @@ boolean Xsns16(byte function)
   return result;
 }
 
-#endif  // USE_TSL2561_JOBA
+#endif  // USE_TSL2561
 #endif  // USE_I2C

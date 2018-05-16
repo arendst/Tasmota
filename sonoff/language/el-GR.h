@@ -102,6 +102,7 @@
 #define D_IMMEDIATE "Φωτεινότητα"      // Button immediate
 #define D_INDEX "Κατάλογος"
 #define D_INFO "Πληροφορίες"
+#define D_INFRARED "Infrared"
 #define D_INITIALIZED "Αρχικό"
 #define D_IP_ADDRESS "IP Address"
 #define D_LIGHT "Light"
@@ -120,6 +121,9 @@
 #define D_PORT "Πόρτα"
 #define D_POWER_FACTOR "Παράγοντας ισχύος"
 #define D_POWERUSAGE "Ισχύης"
+#define D_POWERUSAGE_ACTIVE "Active Power"
+#define D_POWERUSAGE_APPARENT "Apparent Power"
+#define D_POWERUSAGE_REACTIVE "Reactive Power"
 #define D_PRESSURE "Πίεση"
 #define D_PRESSUREATSEALEVEL "Πίεση στην επιφάνεια της Θάλασσας"
 #define D_PROGRAM_FLASH_SIZE "Μέγεθος Προγράμματος Flash"
@@ -155,6 +159,7 @@
 #define D_UPTIME "Uptime"
 #define D_USER "Χρήστης"
 #define D_UTC_TIME "UTC"
+#define D_UV_INDEX "UV Index"
 #define D_UV_LEVEL "Επίπεδο UV"
 #define D_VERSION "Έκδοση"
 #define D_VOLTAGE "Τάση"
@@ -395,6 +400,7 @@
 #define D_KNX_COMMAND_OTHER "Αλλο"
 #define D_SENT_TO "αποστολή σε"
 #define D_KNX_WARNING "Η Ομάδα Διευθύνσεων ( 0 / 0 / 0 ) είναι δεσμευμένη και δεν μπορεί να χρησιμοποιηθεί."
+#define D_KNX_ENHANCEMENT "Communication Enhancement"
 
 // xdrv_03_energy.ino
 #define D_ENERGY_TODAY "Energy Σήμερα"
@@ -457,6 +463,8 @@
 #define D_SENSOR_SDM120_TX "SDM120 Tx"
 #define D_SENSOR_SDM120_RX "SDM120 Rx"
 #define D_SENSOR_RCSWITCH "RCSWITCH"
+#define D_SENSOR_SDM630_TX "SDM630 Tx"
+#define D_SENSOR_SDM630_RX "SDM630 Rx"
 
 // Units
 #define D_UNIT_AMPERE "A"
@@ -478,6 +486,8 @@
 #define D_UNIT_PRESSURE "hPa"
 #define D_UNIT_SECOND "sec"
 #define D_UNIT_SECTORS "sectors"
+#define D_UNIT_VA "VA"
+#define D_UNIT_VAR "VAr"
 #define D_UNIT_VOLT "V"
 #define D_UNIT_WATT "W"
 #define D_UNIT_WATTHOUR "Wh"

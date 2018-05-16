@@ -102,6 +102,7 @@
 #define D_IMMEDIATE "Immediato"      // Button immediate
 #define D_INDEX "Indíce"
 #define D_INFO "Info"
+#define D_INFRARED "Infrared"
 #define D_INITIALIZED "Inicializado"
 #define D_IP_ADDRESS "Endereço IP"
 #define D_LIGHT "Luz"
@@ -120,6 +121,9 @@
 #define D_PORT "Porta"
 #define D_POWER_FACTOR "Factor de Potência"
 #define D_POWERUSAGE "Potência"
+#define D_POWERUSAGE_ACTIVE "Active Power"
+#define D_POWERUSAGE_APPARENT "Apparent Power"
+#define D_POWERUSAGE_REACTIVE "Reactive Power"
 #define D_PRESSURE "Pressão"
 #define D_PRESSUREATSEALEVEL "Pressão ao nível do Mar"
 #define D_PROGRAM_FLASH_SIZE "Tamanho do Programa na Flash"
@@ -155,6 +159,7 @@
 #define D_UPTIME "Tempo de Atividade"
 #define D_USER "Utilizador"
 #define D_UTC_TIME "UTC"
+#define D_UV_INDEX "Indíce UV"
 #define D_UV_LEVEL "Nível UV"
 #define D_VERSION "Versão"
 #define D_VOLTAGE "Voltagem"
@@ -395,6 +400,7 @@
 #define D_KNX_COMMAND_OTHER "Other"
 #define D_SENT_TO "sent to"
 #define D_KNX_WARNING "The group address ( 0 / 0 / 0 ) is reserved and can not be used."
+#define D_KNX_ENHANCEMENT "Communication Enhancement"
 
 // xdrv_03_energy.ino
 #define D_ENERGY_TODAY "Consumo energético de hoje"
@@ -457,6 +463,8 @@
 #define D_SENSOR_SDM120_TX "SDM120 Tx"
 #define D_SENSOR_SDM120_RX "SDM120 Rx"
 #define D_SENSOR_RCSWITCH "RCSWITCH"
+#define D_SENSOR_SDM630_TX "SDM630 Tx"
+#define D_SENSOR_SDM630_RX "SDM630 Rx"
 
 // Units
 #define D_UNIT_AMPERE "A"
@@ -478,6 +486,8 @@
 #define D_UNIT_PRESSURE "hPa"
 #define D_UNIT_SECOND "sec"
 #define D_UNIT_SECTORS "sectors"
+#define D_UNIT_VA "VA"
+#define D_UNIT_VAR "VAr"
 #define D_UNIT_VOLT "V"
 #define D_UNIT_WATT "W"
 #define D_UNIT_WATTHOUR "Wh"

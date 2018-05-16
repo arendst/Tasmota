@@ -280,10 +280,9 @@ void MqttPublishPowerState(byte device)
   char stopic[TOPSZ];
   char scommand[33];
 
-  if ((device < 1) || (device > devices_present)) {
-    device = 1;
-  }
-  GetPowerDevice(scommand, device, sizeof(scommand));
+  if ((device < 1) || (device > devices_present)) { device = 1; }
+  GetPowerDevice(scommand, device, sizeof(scommand), Settings.flag.device_index_enable);
+
   GetTopic_P(stopic, STAT, mqtt_topic, (Settings.flag.mqtt_response) ? scommand : S_RSLT_RESULT);
   snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, scommand, GetStateText(bitRead(power, device -1)));
   MqttPublish(stopic);
@@ -301,7 +300,7 @@ void MqttPublishPowerBlinkState(byte device)
     device = 1;
   }
   snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"%s\":\"" D_JSON_BLINK " %s\"}"),
-    GetPowerDevice(scommand, device, sizeof(scommand)), GetStateText(bitRead(blink_mask, device -1)));
+    GetPowerDevice(scommand, device, sizeof(scommand), Settings.flag.device_index_enable), GetStateText(bitRead(blink_mask, device -1)));
 
   MqttPublishPrefixTopic_P(RESULT_OR_STAT, S_RSLT_POWER);
 }
@@ -723,7 +722,7 @@ bool MqttCommand()
     if ((payload >= 0) && (payload <= 1)) {
       if (!payload) {
         for(i = 1; i <= devices_present; i++) {  // Clear MQTT retain in broker
-          GetTopic_P(stemp1, STAT, mqtt_topic, GetPowerDevice(scommand, i, sizeof(scommand)));
+          GetTopic_P(stemp1, STAT, mqtt_topic, GetPowerDevice(scommand, i, sizeof(scommand), Settings.flag.device_index_enable));
           mqtt_data[0] = '\0';
           MqttPublish(stemp1, Settings.flag.mqtt_power_retain);
         }
@@ -744,7 +743,7 @@ bool MqttCommand()
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, GetStateText(Settings.flag.mqtt_sensor_retain));
   }
   else serviced = false;  // Unknown command
-  
+
   return serviced;
 }
 

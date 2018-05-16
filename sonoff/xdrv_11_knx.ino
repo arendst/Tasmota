@@ -60,9 +60,11 @@ address_t KNX_addr;        // KNX Address converter variable
 #define KNX_TEMPERATURE 17
 #define KNX_HUMIDITY 18
 #define KNX_MAX_device_param 18
+#define TOGGLE_INHIBIT_TIME 10 // 10*50mseg = 500mseg
 
 float last_temp;
 float last_hum;
+byte toggle_inhibit;
 
 typedef struct __device_parameters
 {
@@ -108,14 +110,14 @@ device_parameters_t device_param[] = {
 
 // device parameters (information that can be sent)
 const char * device_param_ga[] = {
-  D_SENSOR_RELAY  " 1",   // Relay 1
-  D_SENSOR_RELAY  " 2",   // Relay 2
-  D_SENSOR_RELAY  " 3",   // Relay 3
-  D_SENSOR_RELAY  " 4",   // Relay 4
-  D_SENSOR_RELAY  " 5",   // Relay 5
-  D_SENSOR_RELAY  " 6",   // Relay 6
-  D_SENSOR_RELAY  " 7",   // Relay 7
-  D_SENSOR_RELAY  " 8",   // Relay 8
+  D_TIMER_OUTPUT  " 1",   // Relay 1
+  D_TIMER_OUTPUT  " 2",   // Relay 2
+  D_TIMER_OUTPUT  " 3",   // Relay 3
+  D_TIMER_OUTPUT  " 4",   // Relay 4
+  D_TIMER_OUTPUT  " 5",   // Relay 5
+  D_TIMER_OUTPUT  " 6",   // Relay 6
+  D_TIMER_OUTPUT  " 7",   // Relay 7
+  D_TIMER_OUTPUT  " 8",   // Relay 8
   D_SENSOR_BUTTON " 1",   // Button 1
   D_SENSOR_BUTTON " 2",   // Button 2
   D_SENSOR_BUTTON " 3",   // Button 3
@@ -131,22 +133,22 @@ const char * device_param_ga[] = {
 
 // device actions (posible actions to be performed on the device)
 const char *device_param_cb[] = {
-  D_SENSOR_RELAY " 1", // Set Relay 1 (1-On or 0-OFF)
-  D_SENSOR_RELAY " 2",
-  D_SENSOR_RELAY " 3",
-  D_SENSOR_RELAY " 4",
-  D_SENSOR_RELAY " 5",
-  D_SENSOR_RELAY " 6",
-  D_SENSOR_RELAY " 7",
-  D_SENSOR_RELAY " 8",
-  D_SENSOR_RELAY " 1 " D_BUTTON_TOGGLE, // Relay 1 Toggle (1 or 0 will toggle)
-  D_SENSOR_RELAY " 2 " D_BUTTON_TOGGLE,
-  D_SENSOR_RELAY " 3 " D_BUTTON_TOGGLE,
-  D_SENSOR_RELAY " 4 " D_BUTTON_TOGGLE,
-  D_SENSOR_RELAY " 5 " D_BUTTON_TOGGLE,
-  D_SENSOR_RELAY " 6 " D_BUTTON_TOGGLE,
-  D_SENSOR_RELAY " 7 " D_BUTTON_TOGGLE,
-  D_SENSOR_RELAY " 8 " D_BUTTON_TOGGLE,
+  D_TIMER_OUTPUT " 1", // Set Relay 1 (1-On or 0-OFF)
+  D_TIMER_OUTPUT " 2",
+  D_TIMER_OUTPUT " 3",
+  D_TIMER_OUTPUT " 4",
+  D_TIMER_OUTPUT " 5",
+  D_TIMER_OUTPUT " 6",
+  D_TIMER_OUTPUT " 7",
+  D_TIMER_OUTPUT " 8",
+  D_TIMER_OUTPUT " 1 " D_BUTTON_TOGGLE, // Relay 1 Toggle (1 or 0 will toggle)
+  D_TIMER_OUTPUT " 2 " D_BUTTON_TOGGLE,
+  D_TIMER_OUTPUT " 3 " D_BUTTON_TOGGLE,
+  D_TIMER_OUTPUT " 4 " D_BUTTON_TOGGLE,
+  D_TIMER_OUTPUT " 5 " D_BUTTON_TOGGLE,
+  D_TIMER_OUTPUT " 6 " D_BUTTON_TOGGLE,
+  D_TIMER_OUTPUT " 7 " D_BUTTON_TOGGLE,
+  D_TIMER_OUTPUT " 8 " D_BUTTON_TOGGLE,
   D_REPLY " " D_TEMPERATURE, // Reply Temperature
   D_REPLY " " D_HUMIDITY,    // Reply Humidity
   nullptr
@@ -384,13 +386,17 @@ void KNX_INIT()
   // Read Configuration
   //   Check which relays, buttons and sensors where configured for this device
   //   and activate options according to the hardware
-  for (int i = GPIO_REL1; i < GPIO_REL8 + 1; ++i)
+  /*for (int i = GPIO_REL1; i < GPIO_REL8 + 1; ++i)
   {
     if (GetUsedInModule(i, my_module.gp.io)) { device_param[i - GPIO_REL1].show = true; }
   }
   for (int i = GPIO_REL1_INV; i < GPIO_REL8_INV + 1; ++i)
   {
     if (GetUsedInModule(i, my_module.gp.io)) { device_param[i - GPIO_REL1_INV].show = true; }
+  }*/
+  for (int i = 0; i < devices_present; ++i)
+  {
+    device_param[i].show = true;
   }
   for (int i = GPIO_SWT1; i < GPIO_SWT4 + 1; ++i)
   {
@@ -457,21 +463,38 @@ void KNX_CB_Action(message_t const &msg, void *arg)
       }
       else if (chan->type < 17) // Toggle Relays
       {
-        ExecuteCommandPower((chan->type) -8, 2);
+        if (!toggle_inhibit) {
+          ExecuteCommandPower((chan->type) -8, 2);
+          if (Settings.flag.knx_enable_enhancement) {
+            toggle_inhibit = TOGGLE_INHIBIT_TIME;
+          }
+        }
       }
       break;
     case KNX_CT_READ:
       if (chan->type < 9) // reply Relays status
       {
         knx.answer_1bit(msg.received_on, chan->last_state);
+        if (Settings.flag.knx_enable_enhancement) {
+          knx.answer_1bit(msg.received_on, chan->last_state);
+          knx.answer_1bit(msg.received_on, chan->last_state);
+        }
       }
       else if (chan->type = KNX_TEMPERATURE) // Reply Temperature
       {
         knx.answer_2byte_float(msg.received_on, last_temp);
+        if (Settings.flag.knx_enable_enhancement) {
+          knx.answer_2byte_float(msg.received_on, last_temp);
+          knx.answer_2byte_float(msg.received_on, last_temp);
+        }
       }
       else if (chan->type = KNX_HUMIDITY) // Reply Humidity
       {
         knx.answer_2byte_float(msg.received_on, last_hum);
+        if (Settings.flag.knx_enable_enhancement) {
+          knx.answer_2byte_float(msg.received_on, last_hum);
+          knx.answer_2byte_float(msg.received_on, last_hum);
+        }
       }
       break;
   }
@@ -489,6 +512,10 @@ void KnxUpdatePowerState(byte device, power_t state)
   while ( i != KNX_Empty ) {
     KNX_addr.value = Settings.knx_GA_addr[i];
     knx.write_1bit(KNX_addr, device_param[device -1].last_state);
+    if (Settings.flag.knx_enable_enhancement) {
+      knx.write_1bit(KNX_addr, device_param[device -1].last_state);
+      knx.write_1bit(KNX_addr, device_param[device -1].last_state);
+    }
 
     snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_KNX "%s = %d " D_SENT_TO " %d.%d.%d"),
      device_param_ga[device -1], device_param[device -1].last_state,
@@ -518,6 +545,10 @@ void KnxSendButtonPower(byte key, byte device, byte state)
   while ( i != KNX_Empty ) {
     KNX_addr.value = Settings.knx_GA_addr[i];
     knx.write_1bit(KNX_addr, !(state == 0));
+    if (Settings.flag.knx_enable_enhancement) {
+      knx.write_1bit(KNX_addr, !(state == 0));
+      knx.write_1bit(KNX_addr, !(state == 0));
+    }
 
     snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_KNX "%s = %d " D_SENT_TO " %d.%d.%d"),
      device_param_ga[device + 7], !(state == 0),
@@ -546,6 +577,10 @@ void KnxSensor(byte sensor_type, float value)
   while ( i != KNX_Empty ) {
     KNX_addr.value = Settings.knx_GA_addr[i];
     knx.write_2byte_float(KNX_addr, value);
+    if (Settings.flag.knx_enable_enhancement) {
+      knx.write_2byte_float(KNX_addr, value);
+      knx.write_2byte_float(KNX_addr, value);
+    }
 
     snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_KNX "%s " D_SENT_TO " %d.%d.%d "),
      device_param_ga[sensor_type -1],
@@ -574,8 +609,11 @@ const char HTTP_FORM_KNX[] PROGMEM =
   "<br/><br/>" D_KNX_PHYSICAL_ADDRESS_NOTE "<br/><br/>"
   "<input style='width:10%;' id='b1' name='b1' type='checkbox'";
 
+const char HTTP_FORM_KNX1[] PROGMEM =
+  "><b>" D_KNX_ENABLE "   </b><input style='width:10%;' id='b2' name='b2' type='checkbox'";
+
 const char HTTP_FORM_KNX2[] PROGMEM =
-  "><b>" D_KNX_ENABLE "</b><br/></center><br/>"
+  "><b>" D_KNX_ENHANCEMENT "</b><br/></center><br/>"
 
   "<fieldset><center>"
   "<b>" D_KNX_GROUP_ADDRESS_TO_WRITE "</b><hr>"
@@ -642,8 +680,9 @@ void HandleKNXConfiguration()
         stmp = WebServer->arg("GA_FDEF");
         byte GA_FDEF = stmp.toInt();
 
-        KNX_ADD_GA( GAop, GA_FNUM, GA_AREA, GA_FDEF );
-
+        if (GAop) {
+          KNX_ADD_GA( GAop, GA_FNUM, GA_AREA, GA_FDEF );
+        }
       }
       else
       {
@@ -657,8 +696,9 @@ void HandleKNXConfiguration()
         stmp = WebServer->arg("CB_FDEF");
         byte CB_FDEF = stmp.toInt();
 
-        KNX_ADD_CB( CBop, CB_FNUM, CB_AREA, CB_FDEF );
-
+        if (CBop) {
+          KNX_ADD_CB( CBop, CB_FNUM, CB_AREA, CB_FDEF );
+        }
       }
     }
     else if ( WebServer->hasArg("btn_del_ga") )
@@ -690,6 +730,8 @@ void HandleKNXConfiguration()
     page.replace(F("{knl"), String(KNX_physs_addr.pa.line));
     page.replace(F("{knm"), String(KNX_physs_addr.pa.member));
     if ( Settings.flag.knx_enabled ) { page += F(" checked"); }
+    page += FPSTR(HTTP_FORM_KNX1);
+    if ( Settings.flag.knx_enable_enhancement ) { page += F(" checked"); }
 
     page += FPSTR(HTTP_FORM_KNX2);
     for (byte i = 0; i < KNX_MAX_device_param ; i++)
@@ -816,8 +858,9 @@ void KNX_Save_Settings()
   address_t KNX_addr;
 
   Settings.flag.knx_enabled = WebServer->hasArg("b1");
-  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_KNX D_ENABLED ": %d "),
-   Settings.flag.knx_enabled);
+  Settings.flag.knx_enable_enhancement = WebServer->hasArg("b2");
+  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_KNX D_ENABLED ": %d, " D_KNX_ENHANCEMENT ": %d"),
+   Settings.flag.knx_enabled, Settings.flag.knx_enable_enhancement );
   AddLog(LOG_LEVEL_DEBUG);
 
   stmp = WebServer->arg("area");
@@ -876,6 +919,11 @@ boolean Xdrv11(byte function)
         break;
       case FUNC_LOOP:
         knx.loop();  // Process knx events
+        break;
+      case FUNC_EVERY_50_MSECOND:
+        if (toggle_inhibit) {
+          toggle_inhibit--;
+        }
         break;
 //      case FUNC_COMMAND:
 //        result = KNXCommand();
