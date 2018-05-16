@@ -1,5 +1,5 @@
 /* 5.14.0a
- * Updated to latest release
+ * Add Eastron SDM630 energy meter (#2735)
  *
  * 5.14.0 20180515
  * Update language files
