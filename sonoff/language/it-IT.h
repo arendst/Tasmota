@@ -400,6 +400,7 @@
 #define D_KNX_COMMAND_OTHER "Altro"
 #define D_SENT_TO "invia a"
 #define D_KNX_WARNING "L'indirizzo del gruppo ( 0 / 0 / 0 ) è riservato e non può essere usato."
+#define D_KNX_ENHANCEMENT "Communication Enhancement"
 
 // xdrv_03_energy.ino
 #define D_ENERGY_TODAY "Energia Oggi"

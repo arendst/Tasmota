@@ -52,7 +52,7 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t rules_once : 1;               // bit 24 (v5.12.0k)
     uint32_t knx_enabled : 1;              // bit 25 (v5.12.0l) KNX
     uint32_t device_index_enable : 1;      // bit 26 (v5.13.1a)
-    uint32_t spare27 : 1;
+    uint32_t knx_enable_enhancement : 1;   // bit 27 (v5.14.0a) KNX
     uint32_t spare28 : 1;
     uint32_t spare29 : 1;
     uint32_t spare30 : 1;

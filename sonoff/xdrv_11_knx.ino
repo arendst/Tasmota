@@ -60,9 +60,11 @@ address_t KNX_addr;        // KNX Address converter variable
 #define KNX_TEMPERATURE 17
 #define KNX_HUMIDITY 18
 #define KNX_MAX_device_param 18
+#define TOGGLE_INHIBIT_TIME 10 // 10*50mseg = 500mseg
 
 float last_temp;
 float last_hum;
+byte toggle_inhibit;
 
 typedef struct __device_parameters
 {
@@ -461,21 +463,38 @@ void KNX_CB_Action(message_t const &msg, void *arg)
       }
       else if (chan->type < 17) // Toggle Relays
       {
-        ExecuteCommandPower((chan->type) -8, 2);
+        if (!toggle_inhibit) {
+          ExecuteCommandPower((chan->type) -8, 2);
+          if (Settings.flag.knx_enable_enhancement) {
+            toggle_inhibit = TOGGLE_INHIBIT_TIME;
+          }
+        }
       }
       break;
     case KNX_CT_READ:
       if (chan->type < 9) // reply Relays status
       {
         knx.answer_1bit(msg.received_on, chan->last_state);
+        if (Settings.flag.knx_enable_enhancement) {
+          knx.answer_1bit(msg.received_on, chan->last_state);
+          knx.answer_1bit(msg.received_on, chan->last_state);
+        }
       }
       else if (chan->type = KNX_TEMPERATURE) // Reply Temperature
       {
         knx.answer_2byte_float(msg.received_on, last_temp);
+        if (Settings.flag.knx_enable_enhancement) {
+          knx.answer_2byte_float(msg.received_on, last_temp);
+          knx.answer_2byte_float(msg.received_on, last_temp);
+        }
       }
       else if (chan->type = KNX_HUMIDITY) // Reply Humidity
       {
         knx.answer_2byte_float(msg.received_on, last_hum);
+        if (Settings.flag.knx_enable_enhancement) {
+          knx.answer_2byte_float(msg.received_on, last_hum);
+          knx.answer_2byte_float(msg.received_on, last_hum);
+        }
       }
       break;
   }
@@ -493,6 +512,10 @@ void KnxUpdatePowerState(byte device, power_t state)
   while ( i != KNX_Empty ) {
     KNX_addr.value = Settings.knx_GA_addr[i];
     knx.write_1bit(KNX_addr, device_param[device -1].last_state);
+    if (Settings.flag.knx_enable_enhancement) {
+      knx.write_1bit(KNX_addr, device_param[device -1].last_state);
+      knx.write_1bit(KNX_addr, device_param[device -1].last_state);
+    }
 
     snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_KNX "%s = %d " D_SENT_TO " %d.%d.%d"),
      device_param_ga[device -1], device_param[device -1].last_state,
@@ -522,6 +545,10 @@ void KnxSendButtonPower(byte key, byte device, byte state)
   while ( i != KNX_Empty ) {
     KNX_addr.value = Settings.knx_GA_addr[i];
     knx.write_1bit(KNX_addr, !(state == 0));
+    if (Settings.flag.knx_enable_enhancement) {
+      knx.write_1bit(KNX_addr, !(state == 0));
+      knx.write_1bit(KNX_addr, !(state == 0));
+    }
 
     snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_KNX "%s = %d " D_SENT_TO " %d.%d.%d"),
      device_param_ga[device + 7], !(state == 0),
@@ -550,6 +577,10 @@ void KnxSensor(byte sensor_type, float value)
   while ( i != KNX_Empty ) {
     KNX_addr.value = Settings.knx_GA_addr[i];
     knx.write_2byte_float(KNX_addr, value);
+    if (Settings.flag.knx_enable_enhancement) {
+      knx.write_2byte_float(KNX_addr, value);
+      knx.write_2byte_float(KNX_addr, value);
+    }
 
     snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_KNX "%s " D_SENT_TO " %d.%d.%d "),
      device_param_ga[sensor_type -1],
@@ -578,8 +609,11 @@ const char HTTP_FORM_KNX[] PROGMEM =
   "<br/><br/>" D_KNX_PHYSICAL_ADDRESS_NOTE "<br/><br/>"
   "<input style='width:10%;' id='b1' name='b1' type='checkbox'";
 
+const char HTTP_FORM_KNX1[] PROGMEM =
+  "><b>" D_KNX_ENABLE "   </b><input style='width:10%;' id='b2' name='b2' type='checkbox'";
+
 const char HTTP_FORM_KNX2[] PROGMEM =
-  "><b>" D_KNX_ENABLE "</b><br/></center><br/>"
+  "><b>" D_KNX_ENHANCEMENT "</b><br/></center><br/>"
 
   "<fieldset><center>"
   "<b>" D_KNX_GROUP_ADDRESS_TO_WRITE "</b><hr>"
@@ -696,6 +730,8 @@ void HandleKNXConfiguration()
     page.replace(F("{knl"), String(KNX_physs_addr.pa.line));
     page.replace(F("{knm"), String(KNX_physs_addr.pa.member));
     if ( Settings.flag.knx_enabled ) { page += F(" checked"); }
+    page += FPSTR(HTTP_FORM_KNX1);
+    if ( Settings.flag.knx_enable_enhancement ) { page += F(" checked"); }
 
     page += FPSTR(HTTP_FORM_KNX2);
     for (byte i = 0; i < KNX_MAX_device_param ; i++)
@@ -822,8 +858,9 @@ void KNX_Save_Settings()
   address_t KNX_addr;
 
   Settings.flag.knx_enabled = WebServer->hasArg("b1");
-  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_KNX D_ENABLED ": %d "),
-   Settings.flag.knx_enabled);
+  Settings.flag.knx_enable_enhancement = WebServer->hasArg("b2");
+  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_KNX D_ENABLED ": %d, " D_KNX_ENHANCEMENT ": %d"),
+   Settings.flag.knx_enabled, Settings.flag.knx_enable_enhancement );
   AddLog(LOG_LEVEL_DEBUG);
 
   stmp = WebServer->arg("area");
@@ -882,6 +919,11 @@ boolean Xdrv11(byte function)
         break;
       case FUNC_LOOP:
         knx.loop();  // Process knx events
+        break;
+      case FUNC_EVERY_50_MSECOND:
+        if (toggle_inhibit) {
+          toggle_inhibit--;
+        }
         break;
 //      case FUNC_COMMAND:
 //        result = KNXCommand();

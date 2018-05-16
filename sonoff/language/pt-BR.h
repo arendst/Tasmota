@@ -400,6 +400,7 @@
 #define D_KNX_COMMAND_OTHER "Outros"
 #define D_SENT_TO "Enviar para"
 #define D_KNX_WARNING "O endereço ( 0 / 0 / 0 ) é reservado e não pode ser usado."
+#define D_KNX_ENHANCEMENT "Communication Enhancement"
 
 // xdrv_03_energy.ino
 #define D_ENERGY_TODAY "Consumo energético de hoje"
