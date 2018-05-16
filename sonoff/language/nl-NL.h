@@ -400,6 +400,7 @@
 #define D_KNX_COMMAND_OTHER "Overige"
 #define D_SENT_TO "verzend naar"
 #define D_KNX_WARNING "Groep adres (0/0/0) is gereserveerd en mag niet worden gebruikt."
+#define D_KNX_ENHANCEMENT "Communication Enhancement"
 
 // xdrv_03_energy.ino
 #define D_ENERGY_TODAY "Verbruik vandaag"

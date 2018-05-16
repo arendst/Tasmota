@@ -400,6 +400,7 @@
 #define D_KNX_COMMAND_OTHER "Otro"
 #define D_SENT_TO "enviada a"
 #define D_KNX_WARNING "La dirección de grupo ( 0 / 0 / 0 ) está reservada y no puede ser utilizada."
+#define D_KNX_ENHANCEMENT "Mejora de Comunicación"
 
 // xdrv_03_energy.ino
 #define D_ENERGY_TODAY "Energía Hoy"

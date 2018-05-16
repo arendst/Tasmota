@@ -400,6 +400,7 @@
 #define D_KNX_COMMAND_OTHER "Друго"
 #define D_SENT_TO "изпратен до"
 #define D_KNX_WARNING "Груповият адрес ( 0 / 0 / 0 ) е резервиран и не може да бъде използван."
+#define D_KNX_ENHANCEMENT "Communication Enhancement"
 
 // xdrv_03_energy.ino
 #define D_ENERGY_TODAY "Използвана енергия днес"
