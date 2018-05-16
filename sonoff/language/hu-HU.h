@@ -102,6 +102,7 @@
 #define D_IMMEDIATE "azonnali"      // Button immediate
 #define D_INDEX "Index"
 #define D_INFO "Info"
+#define D_INFRARED "Infrared"
 #define D_INITIALIZED "Inicializálva"
 #define D_IP_ADDRESS "IP Cím"
 #define D_LIGHT "Fény"
@@ -120,6 +121,9 @@
 #define D_PORT "Port"
 #define D_POWER_FACTOR "Teljesítmény tényező"
 #define D_POWERUSAGE "Energiafelhasználás"
+#define D_POWERUSAGE_ACTIVE "Active Power"
+#define D_POWERUSAGE_APPARENT "Apparent Power"
+#define D_POWERUSAGE_REACTIVE "Reactive Power"
 #define D_PRESSURE "Nyomás"
 #define D_PRESSUREATSEALEVEL "Tengerszinti nyomás"
 #define D_PROGRAM_FLASH_SIZE "Program Flash Méret"
@@ -155,6 +159,7 @@
 #define D_UPTIME "Üzemidő"
 #define D_USER "Felhasználó"
 #define D_UTC_TIME "UTC"
+#define D_UV_INDEX "UV Index"
 #define D_UV_LEVEL "UV Szint"
 #define D_VERSION "Verzió"
 #define D_VOLTAGE "Feszültség"
@@ -395,6 +400,7 @@
 #define D_KNX_COMMAND_OTHER "Other"
 #define D_SENT_TO "sent to"
 #define D_KNX_WARNING "The group address ( 0 / 0 / 0 ) is reserved and can not be used."
+#define D_KNX_ENHANCEMENT "Communication Enhancement"
 
 // xdrv_03_energy.ino
 #define D_ENERGY_TODAY "Mai Energia"
@@ -456,6 +462,8 @@
 #define D_SENSOR_SR04_ECHO "SR04 Ech"
 #define D_SENSOR_SDM120_TX "SDM120 Tx"
 #define D_SENSOR_SDM120_RX "SDM120 Rx"
+#define D_SENSOR_SDM630_TX "SDM630 Tx"
+#define D_SENSOR_SDM630_RX "SDM630 Rx"
 
 // Units
 #define D_UNIT_AMPERE "A"
@@ -477,6 +485,8 @@
 #define D_UNIT_PRESSURE "hPa"
 #define D_UNIT_SECOND "m"
 #define D_UNIT_SECTORS "szektorok"
+#define D_UNIT_VA "VA"
+#define D_UNIT_VAR "VAr"
 #define D_UNIT_VOLT "V"
 #define D_UNIT_WATT "W"
 #define D_UNIT_WATTHOUR "Wh"

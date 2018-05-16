@@ -102,6 +102,7 @@
 #define D_IMMEDIATE "immediate"      // Button immediate
 #define D_INDEX "索引:"
 #define D_INFO "信息"
+#define D_INFRARED "Infrared"
 #define D_INITIALIZED "初始化完成"
 #define D_IP_ADDRESS "IP地址"
 #define D_LIGHT "燈"
@@ -120,6 +121,9 @@
 #define D_PORT "端口"
 #define D_POWER_FACTOR "功率因數"
 #define D_POWERUSAGE "功率"
+#define D_POWERUSAGE_ACTIVE "Active Power"
+#define D_POWERUSAGE_APPARENT "Apparent Power"
+#define D_POWERUSAGE_REACTIVE "Reactive Power"
 #define D_PRESSURE "氣壓"
 #define D_PRESSUREATSEALEVEL "海平面氣壓"
 #define D_PROGRAM_FLASH_SIZE "韌體 Flash 大小"
@@ -155,6 +159,7 @@
 #define D_UPTIME "運行時間"
 #define D_USER "用戶名"
 #define D_UTC_TIME "UTC"
+#define D_UV_INDEX "UV Index"
 #define D_UV_LEVEL "紫外線等級"
 #define D_VERSION "版本"
 #define D_VOLTAGE "電壓"
@@ -395,6 +400,7 @@
 #define D_KNX_COMMAND_OTHER "Other"
 #define D_SENT_TO "sent to"
 #define D_KNX_WARNING "The group address ( 0 / 0 / 0 ) is reserved and can not be used."
+#define D_KNX_ENHANCEMENT "Communication Enhancement"
 
 // xdrv_03_energy.ino
 #define D_ENERGY_TODAY "今日用電量"
@@ -456,6 +462,8 @@
 #define D_SENSOR_SR04_ECHO "SR04 Ech"
 #define D_SENSOR_SDM120_TX "SDM120 Tx"
 #define D_SENSOR_SDM120_RX "SDM120 Rx"
+#define D_SENSOR_SDM630_TX "SDM630 Tx"
+#define D_SENSOR_SDM630_RX "SDM630 Rx"
 
 // Units
 #define D_UNIT_AMPERE "安"
@@ -477,6 +485,8 @@
 #define D_UNIT_PRESSURE "百帕"
 #define D_UNIT_SECOND "秒"
 #define D_UNIT_SECTORS "扇區"
+#define D_UNIT_VA "VA"
+#define D_UNIT_VAR "VAr"
 #define D_UNIT_VOLT "伏"
 #define D_UNIT_WATT "瓦"
 #define D_UNIT_WATTHOUR "瓦時"

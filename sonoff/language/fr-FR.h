@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v5.12.0m
+ * Updated until v5.14.0a
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -91,7 +91,7 @@
 #define D_FALSE "Faux"
 #define D_FILE "Fichier"
 #define D_FREE_MEMORY "Mémoire libre"
-#define D_FREQUENCY "Frequency"
+#define D_FREQUENCY "Fréquence"
 #define D_GAS "Gaz"
 #define D_GATEWAY "Passerelle"
 #define D_GROUP "Groupe"
@@ -102,6 +102,7 @@
 #define D_IMMEDIATE "immédiat"      // Button immediate
 #define D_INDEX "Index"
 #define D_INFO "Info"
+#define D_INFRARED "Infra-rouge"
 #define D_INITIALIZED "Initialisé"
 #define D_IP_ADDRESS "Adresse IP"
 #define D_LIGHT "Lumière"
@@ -120,6 +121,9 @@
 #define D_PORT "Port"
 #define D_POWER_FACTOR "Facteur de puissance"
 #define D_POWERUSAGE "Puissance"
+#define D_POWERUSAGE_ACTIVE "Puissance Active"
+#define D_POWERUSAGE_APPARENT "Puissance Apparente"
+#define D_POWERUSAGE_REACTIVE "Puissance Réactive"
 #define D_PRESSURE "Pression"
 #define D_PRESSUREATSEALEVEL "PressionMer"
 #define D_PROGRAM_FLASH_SIZE "Taille Flash Programme"
@@ -155,6 +159,7 @@
 #define D_UPTIME "Durée d'activité"
 #define D_USER "Utilisateur"
 #define D_UTC_TIME "UTC"
+#define D_UV_INDEX "Indice UV"
 #define D_UV_LEVEL "Niveau UV"
 #define D_VERSION "Version"
 #define D_VOLTAGE "Tension"
@@ -215,7 +220,7 @@
 #define D_DEVICE_WILL_RESTART "Le module va redémarrer dans quelques secondes"
 #define D_BUTTON_TOGGLE "on/off"
 #define D_CONFIGURATION "Configuration"
-#define D_INFORMATION "Information"
+#define D_INFORMATION "Informations"
 #define D_FIRMWARE_UPGRADE "Mise à jour du Firmware"
 #define D_CONSOLE "Console"
 #define D_CONFIRM_RESTART "Confirmer redémarrage"
@@ -395,6 +400,7 @@
 #define D_KNX_COMMAND_OTHER "Autre"
 #define D_SENT_TO "envoyé à"
 #define D_KNX_WARNING "L'Adresse de Groupe ( 0 / 0 / 0 ) est réservée et ne peut être utilisée."
+#define D_KNX_ENHANCEMENT "Communication Enhancement"
 
 // xsns_03_energy.ino
 #define D_ENERGY_TODAY "Énergie aujourd'hui"
@@ -456,6 +462,8 @@
 #define D_SENSOR_SR04_ECHO "SR04 Ech"
 #define D_SENSOR_SDM120_TX "SDM120 Tx"
 #define D_SENSOR_SDM120_RX "SDM120 Rx"
+#define D_SENSOR_SDM630_TX "SDM630 Tx"
+#define D_SENSOR_SDM630_RX "SDM630 Rx"
 
 // Units
 #define D_UNIT_AMPERE "A"
@@ -477,6 +485,8 @@
 #define D_UNIT_PRESSURE "hPa"
 #define D_UNIT_SECOND "sec"
 #define D_UNIT_SECTORS "secteurs"
+#define D_UNIT_VA "VA"
+#define D_UNIT_VAR "VAr"
 #define D_UNIT_VOLT "V"
 #define D_UNIT_WATT "W"
 #define D_UNIT_WATTHOUR "Wh"
