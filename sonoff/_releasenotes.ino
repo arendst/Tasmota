@@ -1,5 +1,7 @@
 /* 5.14.0a
  * Add Eastron SDM630 energy meter (#2735)
+ * Add KNX communication enhancement (#2742)
+ * Fix timer re-trigger within one minute after restart (#2744)
  *
  * 5.14.0 20180515
  * Update language files
