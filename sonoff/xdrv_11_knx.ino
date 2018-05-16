@@ -50,8 +50,6 @@ byte          Settings.knx_CB_param[MAX_KNX_CB]     Type of Output (set relay, t
 
 #include <esp-knx-ip.h>
 
-//#include <ESPAsyncUDP.h>
-
 //void KNX_CB_Action(message_t const &msg, void *arg);  // Define function (action callback) to be called by the KNX_IP Library
                                                       // when an action is requested by another KNX Device
 
