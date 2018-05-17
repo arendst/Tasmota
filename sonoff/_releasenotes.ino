@@ -1,7 +1,10 @@
 /* 5.14.0a
  * Add Eastron SDM630 energy meter (#2735)
  * Add KNX communication enhancement (#2742)
+ * Add KNX energy data (#2750)
+ * Fix display selection of un-available GPIO options in Module Configuration webpage (#2718)
  * Fix timer re-trigger within one minute after restart (#2744)
+ * Fix IRSend not accepting data value of 0 (#2751)
  *
  * 5.14.0 20180515
  * Update language files
