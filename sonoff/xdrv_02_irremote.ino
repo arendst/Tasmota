@@ -384,7 +384,7 @@ boolean IrSendCommand()
   }
 #endif // USE_IR_HVAC
   else serviced = false; // Unknown command
-  
+
   return serviced;
 }
 
