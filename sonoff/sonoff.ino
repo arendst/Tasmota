@@ -97,6 +97,10 @@ const char kTasmotaCommands[] PROGMEM =
   D_CMND_I2CSCAN "|" D_CMND_SERIALSEND "|" D_CMND_BAUDRATE "|" D_CMND_SERIALDELIMITER;
 
 // Global variables
+unsigned long feature_drv1;                 // Compiled driver feature map
+unsigned long feature_drv2;                 // Compiled driver feature map
+unsigned long feature_sns1;                 // Compiled sensor feature map
+unsigned long feature_sns2;                 // Compiled sensor feature map
 int baudrate = APP_BAUDRATE;                // Serial interface baud rate
 SerialConfig serial_config = SERIAL_8N1;    // Serial interface configuration 8 data bits, No parity, 1 stop bit
 byte serial_in_byte;                        // Received byte
@@ -176,7 +180,6 @@ uint8_t spi_flg = 0;                        // SPI configured
 uint8_t light_type = 0;                     // Light types
 bool pwm_present = false;                   // Any PWM channel configured with SetOption15 0
 boolean mdns_begun = false;
-unsigned long features = 0UL;
 uint8_t ntp_force_sync = 0;                 // Force NTP sync
 
 char my_version[33];                        // Composed version string
@@ -1333,8 +1336,8 @@ void PublishStatus(uint8_t payload)
   }
 
   if ((0 == payload) || (4 == payload)) {
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_STATUS D_STATUS4_MEMORY "\":{\"" D_JSON_PROGRAMSIZE "\":%d,\"" D_JSON_FREEMEMORY "\":%d,\"" D_JSON_HEAPSIZE "\":%d,\"" D_JSON_PROGRAMFLASHSIZE "\":%d,\"" D_JSON_FLASHSIZE "\":%d,\"" D_JSON_FLASHMODE "\":%d}}"),
-      ESP.getSketchSize()/1024, ESP.getFreeSketchSpace()/1024, ESP.getFreeHeap()/1024, ESP.getFlashChipSize()/1024, ESP.getFlashChipRealSize()/1024, ESP.getFlashChipMode());
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_STATUS D_STATUS4_MEMORY "\":{\"" D_JSON_PROGRAMSIZE "\":%d,\"" D_JSON_FREEMEMORY "\":%d,\"" D_JSON_HEAPSIZE "\":%d,\"" D_JSON_PROGRAMFLASHSIZE "\":%d,\"" D_JSON_FLASHSIZE "\":%d,\"" D_JSON_FLASHMODE "\":%d,\"" D_JSON_FEATURES "\":[\"%08X\",\"%08X\",\"%08X\",\"%08X\",\"%08X\"]}}"),
+      ESP.getSketchSize()/1024, ESP.getFreeSketchSpace()/1024, ESP.getFreeHeap()/1024, ESP.getFlashChipSize()/1024, ESP.getFlashChipRealSize()/1024, ESP.getFlashChipMode(), LANGUAGE_LCID, feature_drv1, feature_drv2, feature_sns1, feature_sns2);
     MqttPublishPrefixTopic_P(option, PSTR(D_CMND_STATUS "4"));
   }
 
@@ -2371,6 +2374,8 @@ void setup()
   SettingsDelta();
 
   OsWatchInit();
+
+  GetFeatures();
 
   baudrate = Settings.baudrate * 1200;
   seriallog_level = Settings.seriallog_level;
