@@ -25,9 +25,6 @@
  * Based on source by AlexT (https://github.com/tzapu)
 \*********************************************************************************************/
 
-#define STR_HELPER(x) #x
-#define STR(x) STR_HELPER(x)
-
 const char HTTP_HEAD[] PROGMEM =
   "<!DOCTYPE html><html lang=\"" D_HTML_LANGUAGE "\" class=\"\">"
   "<head>"
