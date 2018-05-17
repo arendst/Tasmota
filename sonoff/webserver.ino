@@ -1442,7 +1442,7 @@ void HandleUploadLoop()
       Serial.println();
     }
 
-    if (upload_file_type) {
+    if (upload_file_type == ESP8266_CFG_FILE) {
       if (config_xor_on) {
         for (uint16_t i = 2; i < sizeof(Settings); i++) {
           settings_new[i] ^= (config_xor_on_set +i);
@@ -1452,8 +1452,7 @@ void HandleUploadLoop()
       memcpy((char*)&Settings +16, settings_new +16, sizeof(Settings) -16);
       memcpy((char*)&Settings +8, settings_new +8, 4);  // Restore version and auto upgrade
       SettingsNewFree();
-    } else {
-    if (upload_file_type == EFM8BB1_RF_FW_FILE) {
+    } else if (upload_file_type == EFM8BB1_RF_FW_FILE) {
 #ifdef USE_RF_FLASH
       uint8_t err;
 
