@@ -116,7 +116,7 @@ We can configure to send the value of temperature or humidity every teleperiod. 
 - [x] Add Log Info
 - [x] Complete all the language files with keys
 - [x] Add support for other output devices supported by Tasmota
-- [ ] Add options for increase communication reliability (re send telegrams, check for ack)
+- [x] Add options for increase communication reliability (re send telegrams)
 - [ ] Add options for multicast forced reconnection (needed for some routers that have IGMP conflict with actual esp8266 lib v2.3.0 to v2.4.1, and lwIP v1.4 to v2.0 - Send a telegram to itself. If it is received, multicast is ok)
 - [ ] Add option to support KNX Snooping to debug KNX Network
 - [ ] Add option to repeat all KNX multicast broadcast (Tasmota to Tasmota communications) to KNX-IP Tunneling
@@ -125,15 +125,15 @@ We can configure to send the value of temperature or humidity every teleperiod. 
 
 ## Modifications to Sonoff-Tasmota ##
 
-* Adding the file _/sonoff/xdrv_11_KNX.ino_
-* Add the entry `#define USE_KNX` on _/sonoff/user_config.h_
-* Add entries to the file _/sonoff/webserver.ino_
-* Add entries to the file _/sonoff/sonoff.ino_
-* Add entries to the file _/sonoff/sonoff.h_
-* Add entries to the file _/sonoff/settings.h_
-* Add entries to the file _/sonoff/support.ino_
-* Add entries to sensor files
-* Add entries to language files
+* Added the file _/sonoff/xdrv_11_KNX.ino_
+* Added the entry `#define USE_KNX` on _/sonoff/user_config.h_
+* Added entries to the file _/sonoff/webserver.ino_
+* Added entries to the file _/sonoff/sonoff.ino_
+* Added entries to the file _/sonoff/sonoff.h_
+* Added entries to the file _/sonoff/settings.h_
+* Added entries to the file _/sonoff/support.ino_
+* Added entries to sensor files
+* Added entries to language files
 
 Up to now, enabling KNX uses +23k of code and +3k3 of memory.
 
