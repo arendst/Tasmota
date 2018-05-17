@@ -37,7 +37,7 @@ So, for example, if 2 devices that are configured with the **2 / 2 / 1** for tur
 
 Several home automation systems have KNX support. For example, [Home Assistant](https://github.com/home-assistant/home-assistant) has a [XKNX Python Library](https://github.com/XKNX/xknx) to connect to KNX devices using a KNX Router. If you don't have a **KNX Router**, you can use a **Software KNX Router** like [KNXd](https://github.com/knxd/knxd) on the same Raspberry Pi than Home Assistant. KNXd is used by Home Assistant for reading this UDP Multicast, although KNXd has other cool features that need extra hardware like connect to KNX devices by Twister Pair, Power Line or RF.
 
-If you use the ETS (KNX Configurator Software) you can add any Sonoff Tasmota KNX as a dummy device.
+If you use the ETS (KNX Configurator Software) you can add any Sonoff-Tasmota_KNX as a dummy device.
 
 ## Requirement ##
 
@@ -116,10 +116,12 @@ We can configure to send the value of temperature or humidity every teleperiod. 
 - [x] Add Log Info
 - [x] Complete all the language files with keys
 - [x] Add support for other output devices supported by Tasmota
+- [x] Add support for other sensors supported by Tasmota (TEMP, HUM, ENERGY)
 - [x] Add options for increase communication reliability (re send telegrams)
-- [ ] Add options for multicast forced reconnection (needed for some routers that have IGMP conflict with actual esp8266 lib v2.3.0 to v2.4.1, and lwIP v1.4 to v2.0 - Send a telegram to itself. If it is received, multicast is ok)
+- [ ] Add options for multicast forced reconnection (needed for some routers that have IGMP conflict with actual esp8266 lib v2.3.0 to v2.4.1, and lwIP v1.4 to v2.0 - Send a telegram to itself. If it is received, multicast is ok, if not, reconnect)
 - [ ] Add option to support KNX Snooping to debug KNX Network
-- [ ] Add option to repeat all KNX multicast broadcast (Tasmota to Tasmota communications) to KNX-IP Tunneling
+- [ ] Add option for KNXnet/IP Tunneling
+- [ ] Add option to repeat all KNX multicast broadcast (Tasmota to Tasmota communications) to KNXnet/IP Tunneling
 - [ ] Add option to support ETS Programming
 - [ ] Optimize code to reduce Flash and RAM
 
