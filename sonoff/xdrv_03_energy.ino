@@ -1113,6 +1113,17 @@ void EnergyShow(boolean json)
       DomoticzSensor(DZ_CURRENT, energy_current_chr);  // Current
     }
 #endif  // USE_DOMOTICZ
+#ifdef USE_KNX
+    if (show_energy_period) {
+      KnxSensor(KNX_ENERGY_VOLTAGE, energy_voltage);
+      KnxSensor(KNX_ENERGY_CURRENT, energy_current);
+      KnxSensor(KNX_ENERGY_POWER, energy_power);
+      KnxSensor(KNX_ENERGY_POWERFACTOR, energy_power_factor);
+      KnxSensor(KNX_ENERGY_DAILY, energy_daily);
+      KnxSensor(KNX_ENERGY_TOTAL, energy_total);
+      KnxSensor(KNX_ENERGY_START, energy_start);
+    }
+#endif  // USE_KNX
 #ifdef USE_WEBSERVER
   } else {
     snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_ENERGY_SNS, mqtt_data, energy_voltage_chr, energy_current_chr, energy_power_chr, energy_power_factor_chr, energy_daily_chr, energy_yesterday_chr, energy_total_chr);
