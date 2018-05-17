@@ -6,7 +6,7 @@ echo                  Copying Firmwares for Release
 echo:
 echo ***************************************************************
 
-cd %systemdrive%\users\%username%\Desktop\Sonoff-Tasmota-development\.pioenvs
+cd %USERPROFILE%\Documents\GitHub\Sonoff-Tasmota_KNX\.pioenvs
 
 copy sonoff-BG\firmware.bin sonoff_KNX-BG.bin
 copy sonoff-BR\firmware.bin sonoff_KNX-BR.bin
