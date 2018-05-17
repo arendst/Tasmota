@@ -57,10 +57,8 @@ address_t KNX_physs_addr;  // Physical KNX address of this device
 address_t KNX_addr;        // KNX Address converter variable
 
 #define KNX_Empty 255
-#define KNX_TEMPERATURE 17
-#define KNX_HUMIDITY 18
-#define KNX_MAX_device_param 18
-#define TOGGLE_INHIBIT_TIME 10 // 10*50mseg = 500mseg
+
+#define TOGGLE_INHIBIT_TIME 10 // 10*50mseg = 500mseg (inhibit time for not toggling again relays)
 
 float last_temp;
 float last_hum;
@@ -105,6 +103,13 @@ device_parameters_t device_param[] = {
   { 16, false, false, KNX_Empty }, // device_param[15] = Button 8
   { KNX_TEMPERATURE, false, false, KNX_Empty }, // device_param[16] = Temperature
   { KNX_HUMIDITY   , false, false, KNX_Empty }, // device_param[17] = humidity
+  { KNX_ENERGY_VOLTAGE   , false, false, KNX_Empty },
+  { KNX_ENERGY_CURRENT   , false, false, KNX_Empty },
+  { KNX_ENERGY_POWER   , false, false, KNX_Empty },
+  { KNX_ENERGY_POWERFACTOR   , false, false, KNX_Empty },
+  { KNX_ENERGY_DAILY   , false, false, KNX_Empty },
+  { KNX_ENERGY_START   , false, false, KNX_Empty },
+  { KNX_ENERGY_TOTAL   , false, false, KNX_Empty },
   { KNX_Empty, false, false, KNX_Empty}
 };
 
@@ -128,6 +133,13 @@ const char * device_param_ga[] = {
   D_SENSOR_BUTTON " 8",   // Button 8
   D_TEMPERATURE       ,   // Temperature
   D_HUMIDITY          ,   // Humidity
+  D_VOLTAGE           ,
+  D_CURRENT           ,
+  D_POWERUSAGE        ,
+  D_POWER_FACTOR      ,
+  D_ENERGY_TODAY      ,
+  D_ENERGY_YESTERDAY  ,
+  D_ENERGY_TOTAL      ,
   nullptr
 };
 
@@ -151,6 +163,13 @@ const char *device_param_cb[] = {
   D_TIMER_OUTPUT " 8 " D_BUTTON_TOGGLE,
   D_REPLY " " D_TEMPERATURE, // Reply Temperature
   D_REPLY " " D_HUMIDITY,    // Reply Humidity
+  D_REPLY " " D_VOLTAGE           ,
+  D_REPLY " " D_CURRENT           ,
+  D_REPLY " " D_POWERUSAGE        ,
+  D_REPLY " " D_POWER_FACTOR      ,
+  D_REPLY " " D_ENERGY_TODAY      ,
+  D_REPLY " " D_ENERGY_YESTERDAY  ,
+  D_REPLY " " D_ENERGY_TOTAL      ,
   nullptr
 };
 
@@ -412,6 +431,21 @@ void KNX_INIT()
   if (GetUsedInModule(GPIO_DHT11, my_module.gp.io)) { device_param[KNX_HUMIDITY-1].show = true; }
   if (GetUsedInModule(GPIO_DHT22, my_module.gp.io)) { device_param[KNX_HUMIDITY-1].show = true; }
   if (GetUsedInModule(GPIO_SI7021, my_module.gp.io)) { device_param[KNX_HUMIDITY-1].show = true; }
+
+  // Sonoff 31 or Sonoff Pow or any HLW8012 based device or Sonoff POW R2 or Any device with a Pzem004T
+  if ( ( SONOFF_S31 == Settings.module ) ||
+       ( (GetUsedInModule(GPIO_HLW_SEL, my_module.gp.io)) && (GetUsedInModule(GPIO_HLW_CF1, my_module.gp.io)) && (GetUsedInModule(GPIO_HLW_CF, my_module.gp.io)) ) ||
+       ( SONOFF_POW_R2 == Settings.module ) ||
+       ( (GetUsedInModule(GPIO_PZEM_RX, my_module.gp.io)) && (GetUsedInModule(GPIO_PZEM_TX, my_module.gp.io)) ) )
+  {
+    device_param[KNX_ENERGY_POWER-1].show = true;
+    device_param[KNX_ENERGY_DAILY-1].show = true;
+    device_param[KNX_ENERGY_START-1].show = true;
+    device_param[KNX_ENERGY_TOTAL-1].show = true;
+    device_param[KNX_ENERGY_VOLTAGE-1].show = true;
+    device_param[KNX_ENERGY_CURRENT-1].show = true;
+    device_param[KNX_ENERGY_POWERFACTOR-1].show = true;
+  }
 
   // Delete from KNX settings all configuration is not anymore related to this device
   if (KNX_CONFIG_NOT_MATCH()) {
