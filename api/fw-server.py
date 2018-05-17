@@ -33,9 +33,13 @@ Instructions:
 
 Usage:
    ./fw-server.py -d <net_iface>   (default: eth0)
+		or
+	./fw-server.py -i <ip_address>
 
 Example:
-    ./fw-server.py -d wlan0
+	./fw-server.py -d wlan0
+		or
+	./fw-server.py -i 192.168.1.10
 """
 
 import io
@@ -45,16 +49,23 @@ from flask import Flask, send_file
 from optparse import OptionParser
 import netifaces as ni
 
-parser = OptionParser()
+
+usage = "usage: fw-server {-d | -i} arg"
+parser = OptionParser(usage)
 parser.add_option("-d", "--dev", action="store", type="string",
                   dest="netdev", default="eth0", help="network interface (default: eth0)")
+parser.add_option("-i", "--ip", action="store", type="string",
+                  dest="ip", help="IP address to bind")
 (options, args) = parser.parse_args()
 
-try:
-    netip = ni.ifaddresses(options.netdev)[ni.AF_INET][0]['addr']
-except Exception as e:
-    print("E: network interface error - {}".format(e))
-    exit(1)
+if options.ip is None:
+	try:
+		netip = ni.ifaddresses(options.netdev)[ni.AF_INET][0]['addr']
+	except Exception as e:
+		print("E: network interface error - {}".format(e))
+		exit(1)
+else:
+	netip = options.ip
 
 app = Flask(__name__)
 
