@@ -63,7 +63,7 @@ address_t KNX_addr;        // KNX Address converter variable
 
 #define KNX_Empty 255
 
-#define TOGGLE_INHIBIT_TIME 10 // 10*50mseg = 500mseg (inhibit time for not toggling again relays)
+#define TOGGLE_INHIBIT_TIME 15 // 15*50mseg = 750mseg (inhibit time for not toggling again relays by a KNX toggle command)
 
 float last_temp;
 float last_hum;
@@ -438,11 +438,7 @@ void KNX_INIT()
   if (GetUsedInModule(GPIO_SI7021, my_module.gp.io)) { device_param[KNX_HUMIDITY-1].show = true; }
 
   // Sonoff 31 or Sonoff Pow or any HLW8012 based device or Sonoff POW R2 or Any device with a Pzem004T
-  if ( ( SONOFF_S31 == Settings.module ) ||
-       ( (GetUsedInModule(GPIO_HLW_SEL, my_module.gp.io)) && (GetUsedInModule(GPIO_HLW_CF1, my_module.gp.io)) && (GetUsedInModule(GPIO_HLW_CF, my_module.gp.io)) ) ||
-       ( SONOFF_POW_R2 == Settings.module ) ||
-       ( (GetUsedInModule(GPIO_PZEM_RX, my_module.gp.io)) && (GetUsedInModule(GPIO_PZEM_TX, my_module.gp.io)) ) )
-  {
+  if ( ( SONOFF_S31 == Settings.module ) || ( SONOFF_POW_R2 == Settings.module ) || ( energy_flg != ENERGY_NONE ) ) {
     device_param[KNX_ENERGY_POWER-1].show = true;
     device_param[KNX_ENERGY_DAILY-1].show = true;
     device_param[KNX_ENERGY_START-1].show = true;
