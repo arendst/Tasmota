@@ -7,6 +7,14 @@
 #ifndef ESP_KNX_IP_H
 #define ESP_KNX_IP_H
 
+//#define USE_ASYNC_UDP     // UDP WIFI Library Selection for Multicast
+                          //   If commented out, the esp-knx-ip library will use WIFI_UDP Library that is compatible with ESP8266 Library Version 2.3.0 and up
+                          //   If not commented out, the esp-knx-ip library will use ESPAsyncUDP Library that is compatible with ESP8266 Library Version 2.4.0 and up
+                          //     The ESPAsyncUDP Library have a more reliable multicast communication
+                          //     Please Use it with Patch (https://github.com/me-no-dev/ESPAsyncUDP/pull/21) )
+                          //     check line 57 on esp-knx-ip.h file is uncommented: #include <ESPAsyncUDP.h>
+                          //       Comment out that line when using UDP WIFI to avoid compiling issues on PlatformIO with ESP8266 Library Version 2.3.0
+
 /**
  * CONFIG
  * All MAX_ values must not exceed 255 (1 byte, except MAC_CONFIG_SPACE which can go up to 2 bytes, so 0xffff in theory) and must not be negative!
@@ -25,8 +33,8 @@
 #define ALLOW_MULTIPLE_CALLBACKS_PER_ADDRESS  1 // [Default 0] Set to 1 to always test all assigned callbacks. This allows for multiple callbacks being assigned to the same address. If disabled, only the first assigned will be called.
 
 // Webserver related
-#define USE_BOOTSTRAP             1 // [Default 1] Set to 1 to enable use of bootstrap CSS for nicer webconfig. CSS is loaded from bootstrapcdn.com. Set to 0 to disable
-#define ROOT_PREFIX               ""  // [Default ""] This gets prepended to all webserver paths, default is empty string "". Set this to "/knx" if you want the config to be available on http://<ip>/knx
+#define USE_BOOTSTRAP             0 // [Default 1] Set to 1 to enable use of bootstrap CSS for nicer webconfig. CSS is loaded from bootstrapcdn.com. Set to 0 to disable
+#define ROOT_PREFIX               "/knx"  // [Default ""] This gets prepended to all webserver paths, default is empty string "". Set this to "/knx" if you want the config to be available on http://<ip>/knx
 #define DISABLE_EEPROM_BUTTONS    1 // [Default 0] Set to 1 to disable the EEPROM buttons in the web ui.
 #define DISABLE_REBOOT_BUTTON     1 // [Default 0] Set to 1 to disable the reboot button in the web ui.
 #define DISABLE_RESTORE_BUTTON    1 // [Default 0] Set to 1 to disable the "restore defaults" button in the web ui.
@@ -45,7 +53,13 @@
 #include "Arduino.h"
 #include <EEPROM.h>
 #include <ESP8266WiFi.h>
+
+#ifdef USE_ASYNC_UDP
+//#include <ESPAsyncUDP.h>
+#else
 #include <WiFiUdp.h>
+#endif
+
 #include <ESP8266WebServer.h>
 
 #include "DPT.h"
@@ -158,6 +172,14 @@ typedef enum __knx_communication_type {
 } knx_communication_type_t;
 
 /**
+ * acpi for KNX_COT_NCD
+ */
+typedef enum __knx_cot_ncd_ack_type {
+  KNX_COT_NCD_ACK = 0x10, // Inform positively reception of the Previouly received telegram
+  KNX_COT_NCD_NACK = 0x11, // Inform negatively reception of the Previouly received telegram
+} knx_cot_ncd_ack_type_t;
+
+/**
  * KNX/IP header
  */
 typedef struct __knx_ip_pkt
@@ -217,7 +239,7 @@ typedef struct __cemi_service
       uint8_t ack:1; // 0 = no ack, 1 = ack
       uint8_t priority:2; // 0 = system, 1 = high, 2 = urgent/alarm, 3 = normal
       uint8_t system_broadcast:1; // 0 = system broadcast, 1 = broadcast
-      uint8_t repeat:1; // 0 = repeat on error, 1 = do not repeat
+      uint8_t repeat:1; // 0 = repeated telegram, 1 = not repeated telegram
       uint8_t reserved:1; // always zero
       uint8_t frame_type:1; // 0 = extended, 1 = standard
     } bits;
@@ -509,7 +531,12 @@ class ESPKNXIP {
 
   private:
     void __start();
+
+#ifdef USE_ASYNC_UDP
+    void __loop_knx(AsyncUDPPacket &packet);
+#else
     void __loop_knx();
+#endif
 
     // Webserver functions
     void __loop_webserver();
@@ -544,7 +571,12 @@ class ESPKNXIP {
 
     ESP8266WebServer *server;
     address_t physaddr;
+
+#ifdef USE_ASYNC_UDP
+    AsyncUDP udp;
+#else
     WiFiUDP udp;
+#endif
 
     callback_assignment_id_t registered_callback_assignments;
     callback_assignment_id_t free_callback_assignment_slots;
