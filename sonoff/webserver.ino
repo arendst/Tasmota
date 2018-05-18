@@ -1383,27 +1383,9 @@ void HandleUploadLoop()
           pinMode(PIN_C2CK, OUTPUT);
           pinMode(PIN_C2D,  INPUT);
 
-          // FIXME: Try multiple times as it sometimes fails (unclear why)
-          for (int i = 0; i < 4; i++) {
-            err = c2_programming_init();
-            if (err != C2_SUCCESS) {
-              upload_error = 10;
-              return;
-            }
-
-            err = c2_device_erase();
-            if (err != C2_SUCCESS) {
-              Serial.printf("RF erase result: %s\n", c2_print_status_by_name(err));
-              if (i < 3) {
-                // Reset RF chip and try again
-                c2_reset();
-              } else {
-                upload_error = 11;
-                return;
-              }
-            } else {
-              break;
-            }
+          upload_error = rf_erase_flash();
+          if (upload_error != 0) {
+            return;
           }
           
           efm8bb1_update = (uint8_t *) malloc(EFM8BB1_MAX_SZ);
@@ -1495,7 +1477,7 @@ void HandleUploadLoop()
       // Rewind to start of buffer
       efm8bb1_update -= upload.totalSize;
       
-      ssize_t result = search_and_flash(efm8bb1_update, upload.totalSize);
+      ssize_t result = rf_search_and_write(efm8bb1_update, upload.totalSize);
       if (result < 0) {
         upload_error = abs(result);
         Serial.printf("Result is %d\n", result);
