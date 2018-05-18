@@ -28,6 +28,7 @@
 #ifdef USE_RF_FLASH
 #include <c2.h>
 #include <ihx.h>
+#include <firmware.h>
 
 #define EFM8BB1_MAX_SZ 8192
 uint8_t *efm8bb1_update = NULL;
@@ -1374,10 +1375,37 @@ void HandleUploadLoop()
         uint8_t err;
         // Check if this is a RF bridge FW file
         if (upload.buf[0] == ':') {
-          // End current update session
+          // End esp8266 update session
           Update.end();
 #ifdef USE_RF_FLASH
           upload_file_type = EFM8BB1_RF_FW_FILE;
+          
+          pinMode(PIN_C2CK, OUTPUT);
+          pinMode(PIN_C2D,  INPUT);
+
+          // FIXME: Try multiple times as it sometimes fails (unclear why)
+          for (int i = 0; i < 4; i++) {
+            err = c2_programming_init();
+            if (err != C2_SUCCESS) {
+              upload_error = 10;
+              return;
+            }
+
+            err = c2_device_erase();
+            if (err != C2_SUCCESS) {
+              Serial.printf("RF erase result: %s\n", c2_print_status_by_name(err));
+              if (i < 3) {
+                // Reset RF chip and try again
+                c2_reset();
+              } else {
+                upload_error = 11;
+                return;
+              }
+            } else {
+              break;
+            }
+          }
+          
           efm8bb1_update = (uint8_t *) malloc(EFM8BB1_MAX_SZ);
 
           if (efm8bb1_update == NULL) {
@@ -1405,6 +1433,7 @@ void HandleUploadLoop()
         }
       }
     }
+
     if (upload_file_type == ESP8266_CFG_FILE) { // config
       if (!upload_error) {
         if (upload.currentSize > (sizeof(Settings) - (config_block_count * HTTP_UPLOAD_BUFLEN))) {
@@ -1465,80 +1494,14 @@ void HandleUploadLoop()
 
       // Rewind to start of buffer
       efm8bb1_update -= upload.totalSize;
-
-      pinMode(PIN_C2CK, OUTPUT);
-      pinMode(PIN_C2D,  INPUT);
-
-      for (int i = 0; i < 4; i++) {
-        err = c2_programming_init();
-        if (err != C2_SUCCESS) {
-          upload_error = 10;
-          free(efm8bb1_update);
-          efm8bb1_update = NULL;
-          return;
-        }
-
-        err = c2_device_erase();
-        if (err != C2_SUCCESS) {
-          Serial.printf("RF erase result: %s\n", c2_print_status_by_name(err));
-          if (i < 3) {
-            // Reset RF chip and try again
-            c2_reset();
-          } else {
-            upload_error = 11;
-            free(efm8bb1_update);
-            efm8bb1_update = NULL;
-            return;
-          }
-        }
-      }
-
-      // Binary contains a set of commands, decode and program each one
-      uint16_t cmd_start = 0;
-      uint16_t cmd_end;
-
-      // Skip first byte, we already know if is ':' of the first command
-      for (int i = 1; i < upload.totalSize; i++) {
-        // Find start of command
-        if ((efm8bb1_update[i] == ':')|| (i == (upload.totalSize - 1))) {
-          // Found start of next command or end of fw
-          cmd_end = i - 1;
-
-          err = ihx_decode(efm8bb1_update + cmd_start, cmd_end - cmd_start);
-          if (err != IHX_SUCCESS) {
-            Serial.printf("Hex decoding failed with error %d\n", err);
-            free(efm8bb1_update);
-            efm8bb1_update = NULL;
-
-            upload_error = 13;
-            return;
-          } else {
-            ihx_t *h = (ihx_t*) (efm8bb1_update + cmd_start);
-
-            if (h->record_type == IHX_RT_DATA) {
-              int retries = 5;
-              uint16_t address = h->address_high * 0x100 + h->address_low;
-
-              do {
-                err = c2_programming_init();
-                err = c2_block_write(address, h->data, h->len);
-              } while (err != C2_SUCCESS && retries--);
-            } else if (h->record_type == IHX_RT_END_OF_FILE) {
-              Serial.println("RF firmware upgrade done, restarting RF chip");
-              err = c2_reset();
-            }
-
-            if (err != C2_SUCCESS) {
-              upload_error = 12;
-              free(efm8bb1_update);
-              efm8bb1_update = NULL;
-              return;
-            }
-
-            // Set start of next command
-            cmd_start = i;
-          }
-        }
+      
+      ssize_t result = search_and_flash(efm8bb1_update, upload.totalSize);
+      if (result < 0) {
+        upload_error = abs(result);
+        Serial.printf("Result is %d\n", result);
+        free(efm8bb1_update);
+        efm8bb1_update = NULL;
+        return;
       }
 
       // RF FW flash done
