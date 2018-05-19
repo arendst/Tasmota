@@ -48,9 +48,14 @@ byte          Settings.knx_CB_param[MAX_KNX_CB]     Type of Output (set relay, t
 
 \*********************************************************************************************/
 
-#include <esp-knx-ip.h>
+#include <esp-knx-ip.h>         // KNX Library
+                                //   Note: Inside the <esp-knx-ip.h> file there is a //#define USE_ASYNC_UDP    // UDP WIFI Library Selection for Multicast
+                                //         If commented out, the esp-knx-ip library will use WIFI_UDP Library that is compatible with ESP8266 Library Version 2.3.0 and up
+                                //         If not commented out, the esp-knx-ip library will use ESPAsyncUDP Library that is compatible with ESP8266 Library Version 2.4.0 and up
+                                //            The ESPAsyncUDP Library have a more reliable multicast communication
+                                //            Please Use it with Patch (https://github.com/me-no-dev/ESPAsyncUDP/pull/21) )
 
-//void KNX_CB_Action(message_t const &msg, void *arg);  // Define function (action callback) to be called by the KNX_IP Library
+//void KNX_CB_Action(message_t const &msg, void *arg);  // Define function (action callback) to be called by the Esp-KNX-IP Library
                                                       // when an action is requested by another KNX Device
 
 address_t KNX_physs_addr;  // Physical KNX address of this device
@@ -58,7 +63,7 @@ address_t KNX_addr;        // KNX Address converter variable
 
 #define KNX_Empty 255
 
-#define TOGGLE_INHIBIT_TIME 10 // 10*50mseg = 500mseg (inhibit time for not toggling again relays)
+#define TOGGLE_INHIBIT_TIME 15 // 15*50mseg = 750mseg (inhibit time for not toggling again relays by a KNX toggle command)
 
 float last_temp;
 float last_hum;
@@ -433,11 +438,7 @@ void KNX_INIT()
   if (GetUsedInModule(GPIO_SI7021, my_module.gp.io)) { device_param[KNX_HUMIDITY-1].show = true; }
 
   // Sonoff 31 or Sonoff Pow or any HLW8012 based device or Sonoff POW R2 or Any device with a Pzem004T
-  if ( ( SONOFF_S31 == Settings.module ) ||
-       ( (GetUsedInModule(GPIO_HLW_SEL, my_module.gp.io)) && (GetUsedInModule(GPIO_HLW_CF1, my_module.gp.io)) && (GetUsedInModule(GPIO_HLW_CF, my_module.gp.io)) ) ||
-       ( SONOFF_POW_R2 == Settings.module ) ||
-       ( (GetUsedInModule(GPIO_PZEM_RX, my_module.gp.io)) && (GetUsedInModule(GPIO_PZEM_TX, my_module.gp.io)) ) )
-  {
+  if ( ( SONOFF_S31 == Settings.module ) || ( SONOFF_POW_R2 == Settings.module ) || ( energy_flg != ENERGY_NONE ) ) {
     device_param[KNX_ENERGY_POWER-1].show = true;
     device_param[KNX_ENERGY_DAILY-1].show = true;
     device_param[KNX_ENERGY_START-1].show = true;
