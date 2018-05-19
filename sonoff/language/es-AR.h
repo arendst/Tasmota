@@ -28,11 +28,12 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v5.13.1a
+ * Updated until v5.14.0a
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
 
+#define LANGUAGE_LCID 11274
 // HTML (ISO 639-1) Language Code
 #define D_HTML_LANGUAGE "es"
 
@@ -121,6 +122,9 @@
 #define D_PORT "Puerto"
 #define D_POWER_FACTOR "Factor de Potencia"
 #define D_POWERUSAGE "Potencia"
+#define D_POWERUSAGE_ACTIVE "Potencia Activa"
+#define D_POWERUSAGE_APPARENT "Potencia Aparente"
+#define D_POWERUSAGE_REACTIVE "Potencia Reactiva"
 #define D_PRESSURE "Presión"
 #define D_PRESSUREATSEALEVEL "Presión al nivel del mar"
 #define D_PROGRAM_FLASH_SIZE "Tamaño de Flash de Programa"
@@ -397,6 +401,7 @@
 #define D_KNX_COMMAND_OTHER "Otro"
 #define D_SENT_TO "enviada a"
 #define D_KNX_WARNING "La dirección de grupo ( 0 / 0 / 0 ) está reservada y no puede ser utilizada."
+#define D_KNX_ENHANCEMENT "Mejora de Comunicación"
 
 // xdrv_03_energy.ino
 #define D_ENERGY_TODAY "Energía Hoy"
@@ -458,6 +463,8 @@
 #define D_SENSOR_SR04_ECHO "SR04 Ech"
 #define D_SENSOR_SDM120_TX "SDM120 Tx"
 #define D_SENSOR_SDM120_RX "SDM120 Rx"
+#define D_SENSOR_SDM630_TX "SDM630 Tx"
+#define D_SENSOR_SDM630_RX "SDM630 Rx"
 
 // Units
 #define D_UNIT_AMPERE "A"
@@ -479,6 +486,8 @@
 #define D_UNIT_PRESSURE "hPa"
 #define D_UNIT_SECOND "seg"
 #define D_UNIT_SECTORS "sectores"
+#define D_UNIT_VA "VA"
+#define D_UNIT_VAR "VAr"
 #define D_UNIT_VOLT "V"
 #define D_UNIT_WATT "W"
 #define D_UNIT_WATTHOUR "Wh"

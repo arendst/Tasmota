@@ -33,10 +33,11 @@ void ESPKNXIP::send(address_t const &receiver, knx_command_type_t ct, uint8_t da
 	cemi_msg->additional_info_len = 0;
 	cemi_service_t *cemi_data = &cemi_msg->data.service_information;
 	cemi_data->control_1.bits.confirm = 0;
-	cemi_data->control_1.bits.ack = 0;
+//cemi_data->control_1.bits.ack = 1;
+	cemi_data->control_1.bits.ack = 0; // ask for ACK? 0-no 1-yes
 	cemi_data->control_1.bits.priority = B11;
 	cemi_data->control_1.bits.system_broadcast = 0x01;
-	cemi_data->control_1.bits.repeat = 0x01;
+	cemi_data->control_1.bits.repeat = 0x01; // 0 = repeated telegram, 1 = not repeated telegram
 	cemi_data->control_1.bits.reserved = 0;
 	cemi_data->control_1.bits.frame_type = 0x01;
 	cemi_data->control_2.bits.extended_frame_format = 0x00;
@@ -47,10 +48,13 @@ void ESPKNXIP::send(address_t const &receiver, knx_command_type_t ct, uint8_t da
 	//cemi_data->destination.bytes.high = (area << 3) | line;
 	//cemi_data->destination.bytes.low = member;
 	cemi_data->data_len = data_len;
-	cemi_data->pci.apci = (ct & 0x0C) >> 2;
-	cemi_data->pci.tpci_seq_number = 0x00; // ???
-	cemi_data->pci.tpci_comm_type = KNX_COT_UDP; // ???
+  cemi_data->pci.apci = (ct & 0x0C) >> 2;
+//cemi_data->pci.apci = KNX_COT_NCD_ACK;
+	cemi_data->pci.tpci_seq_number = 0x00;
+	cemi_data->pci.tpci_comm_type = KNX_COT_UDP; // Type of communication: DATA PACKAGE or CONTROL DATA
+//cemi_data->pci.tpci_comm_type = KNX_COT_NCD; // Type of communication: DATA PACKAGE or CONTROL DATA
 	memcpy(cemi_data->data, data, data_len);
+//cemi_data->data[0] = (cemi_data->data[0] & 0x3F) | ((KNX_COT_NCD_ACK & 0x03) << 6);
 	cemi_data->data[0] = (cemi_data->data[0] & 0x3F) | ((ct & 0x03) << 6);
 
 #if SEND_CHECKSUM
@@ -73,9 +77,13 @@ void ESPKNXIP::send(address_t const &receiver, knx_command_type_t ct, uint8_t da
 	DEBUG_PRINTLN(F(""));
 #endif
 
+#ifdef USE_ASYNC_UDP
+  udp.writeTo(buf, len, MULTICAST_IP, MULTICAST_PORT);
+#else
 	udp.beginPacketMulticast(MULTICAST_IP, MULTICAST_PORT, WiFi.localIP());
 	udp.write(buf, len);
  	udp.endPacket();
+#endif
 }
 
 void ESPKNXIP::send_1bit(address_t const &receiver, knx_command_type_t ct, uint8_t bit)

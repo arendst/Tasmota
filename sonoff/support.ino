@@ -236,6 +236,14 @@ char* UpperCase_P(char* dest, const char* source)
   return dest;
 }
 
+char* LTrim(char* p)
+{
+  while ((*p != '\0') && (isblank(*p))) {
+    p++;                                     // Trim leading spaces
+  }
+  return p;
+}
+
 char* NoAlNumToUnderscore(char* dest, const char* source)
 {
   char* write = dest;
@@ -506,6 +514,235 @@ uint32_t GetHash(const char *buffer, size_t size)
     hash += (uint8_t)*buffer++ * (i +1);
   }
   return hash;
+}
+
+/*********************************************************************************************\
+ * Fill feature list
+\*********************************************************************************************/
+
+void GetFeatures()
+{
+  feature_drv1 = 0x00000000;   // xdrv_00_mqtt.ino, xdrv_01_light.ino, xdrv_04_snfbridge.ino
+
+//  feature_drv1 |= 0x00000001;
+//  feature_drv1 |= 0x00000002;
+
+#ifdef USE_I2C
+  feature_drv1 |= 0x00000004;  // sonoff.ino
+#endif
+#ifdef USE_SPI
+  feature_drv1 |= 0x00000008;  // sonoff.ino
+#endif
+#ifdef USE_DISCOVERY
+  feature_drv1 |= 0x00000010;  // sonoff.ino
+#endif
+#ifdef USE_ARDUINO_OTA
+  feature_drv1 |= 0x00000020;  // sonoff.ino
+#endif
+#ifdef USE_MQTT_TLS
+  feature_drv1 |= 0x00000040;  // sonoff.ino
+#endif
+#ifdef USE_WEBSERVER
+  feature_drv1 |= 0x00000080;  // webserver.ino
+#endif
+#ifdef WEBSERVER_ADVERTISE
+  feature_drv1 |= 0x00000100;  // webserver.ino
+#endif
+#ifdef USE_EMULATION
+  feature_drv1 |= 0x00000200;  // xplg_wemohue.ino
+#endif
+#if (MQTT_LIBRARY_TYPE == MQTT_PUBSUBCLIENT)
+  feature_drv1 |= 0x00000400;  // xdrv_00_mqtt.ino
+#endif
+#if (MQTT_LIBRARY_TYPE == MQTT_TASMOTAMQTT)
+  feature_drv1 |= 0x00000800;  // xdrv_00_mqtt.ino
+#endif
+#if (MQTT_LIBRARY_TYPE == MQTT_ESPMQTTARDUINO)
+  feature_drv1 |= 0x00001000;  // xdrv_00_mqtt.ino
+#endif
+#ifdef MQTT_HOST_DISCOVERY
+  feature_drv1 |= 0x00002000;  // xdrv_00_mqtt.ino
+#endif
+#ifdef USE_ARILUX_RF
+  feature_drv1 |= 0x00004000;  // xdrv_01_light.ino
+#endif
+#ifdef USE_WS2812
+  feature_drv1 |= 0x00008000;  // xdrv_01_light.ino
+#endif
+#ifdef USE_WS2812_DMA
+  feature_drv1 |= 0x00010000;  // xdrv_01_light.ino
+#endif
+#ifdef USE_IR_REMOTE
+  feature_drv1 |= 0x00020000;  // xdrv_02_irremote.ino
+#endif
+#ifdef USE_IR_HVAC
+  feature_drv1 |= 0x00040000;  // xdrv_02_irremote.ino
+#endif
+#ifdef USE_IR_RECEIVE
+  feature_drv1 |= 0x00080000;  // xdrv_02_irremote.ino
+#endif
+#ifdef USE_DOMOTICZ
+  feature_drv1 |= 0x00100000;  // xdrv_05_domoticz.ino
+#endif
+#ifdef USE_DISPLAY
+  feature_drv1 |= 0x00200000;  // xdrv_06_display.ino
+#endif
+#ifdef USE_HOME_ASSISTANT
+  feature_drv1 |= 0x00400000;  // xdrv_07_home_assistant.ino
+#endif
+#ifdef USE_SERIAL_BRIDGE
+  feature_drv1 |= 0x00800000;  // xdrv_08_serial_bridge.ino
+#endif
+#ifdef USE_TIMERS
+  feature_drv1 |= 0x01000000;  // xdrv_09_timers.ino
+#endif
+#ifdef USE_SUNRISE
+  feature_drv1 |= 0x02000000;  // xdrv_09_timers.ino
+#endif
+#ifdef USE_TIMERS_WEB
+  feature_drv1 |= 0x04000000;  // xdrv_09_timers.ino
+#endif
+#ifdef USE_RULES
+  feature_drv1 |= 0x08000000;  // xdrv_10_rules.ino
+#endif
+#ifdef USE_KNX
+  feature_drv1 |= 0x10000000;  // xdrv_11_knx.ino
+#endif
+
+/*********************************************************************************************/
+
+  feature_drv2 = 0x00000000;
+
+#ifdef USE_CONFIG_OVERRIDE
+  feature_drv2 |= 0x00000001;  // user_config(_override).h
+#endif
+#ifdef BE_MINIMAL
+  feature_drv2 |= 0x00000002;  // user_config(_override).h
+#endif
+#ifdef USE_ALL_SENSORS
+  feature_drv2 |= 0x00000004;  // user_config(_override).h
+#endif
+#ifdef USE_CLASSIC
+  feature_drv2 |= 0x00000008;  // user_config(_override).h
+#endif
+#ifdef USE_KNX_NO_EMULATION
+  feature_drv2 |= 0x00000010;  // user_config(_override).h
+#endif
+
+
+#ifdef VTABLES_IN_FLASH
+  feature_drv2 |= 0x04000000;  // platformio.ini
+#endif
+#ifdef PIO_FRAMEWORK_ARDUINO_LWIP_HIGHER_BANDWIDTH
+  feature_drv2 |= 0x08000000;  // platformio.ini
+#endif
+#ifdef PIO_FRAMEWORK_ARDUINO_LWIP2_LOW_MEMORY
+  feature_drv2 |= 0x10000000;  // platformio.ini
+#endif
+#ifdef PIO_FRAMEWORK_ARDUINO_LWIP2_HIGHER_BANDWIDTH
+  feature_drv2 |= 0x20000000;  // platformio.ini
+#endif
+#ifdef DEBUG_THEO
+  feature_drv2 |= 0x40000000;  // xdrv_99_debug.ino
+#endif
+#ifdef USE_DEBUG_DRIVER
+  feature_drv2 |= 0x80000000;  // xdrv_99_debug.ino
+#endif
+
+/*********************************************************************************************/
+
+  feature_sns1 = 0x00000000;   // xsns_01_counter.ino, xsns_04_snfsc.ino
+
+//  feature_sns1 |= 0x00000001;
+
+#ifndef USE_ADC_VCC
+  feature_sns1 |= 0x00000002;  // support.ino (ADC)
+#endif
+#ifdef USE_ENERGY_SENSOR
+  feature_sns1 |= 0x00000004;  // xdrv_03_energy.ino
+#endif
+#ifdef USE_PZEM004T
+  feature_sns1 |= 0x00000008;  // xdrv_03_energy.ino
+#endif
+#ifdef USE_DS18B20
+  feature_sns1 |= 0x00000010;  // xsns_05_ds18b20.ino
+#endif
+#ifdef USE_DS18x20_LEGACY
+  feature_sns1 |= 0x00000020;  // xsns_05_ds18x20_legacy.ino
+#endif
+#ifdef USE_DS18x20
+  feature_sns1 |= 0x00000040;  // xsns_05_ds18x20.ino
+#endif
+#ifdef USE_DHT
+  feature_sns1 |= 0x00000080;  // xsns_06_dht.ino
+#endif
+#ifdef USE_SHT
+  feature_sns1 |= 0x00000100;  // xsns_07_sht1x.ino
+#endif
+#ifdef USE_HTU
+  feature_sns1 |= 0x00000200;  // xsns_08_htu21.ino
+#endif
+#ifdef USE_BMP
+  feature_sns1 |= 0x00000400;  // xsns_09_bmp.ino
+#endif
+#ifdef USE_BME680
+  feature_sns1 |= 0x00000800;  // xsns_09_bmp.ino - BME680
+#endif
+#ifdef USE_BH1750
+  feature_sns1 |= 0x00001000;  // xsns_10_bh1750.ino
+#endif
+#ifdef USE_VEML6070
+  feature_sns1 |= 0x00002000;  // xsns_11_veml6070.ino
+#endif
+#ifdef USE_ADS1115_I2CDEV
+  feature_sns1 |= 0x00004000;  // xsns_12_ads1115_i2cdev.ino
+#endif
+#ifdef USE_ADS1115
+  feature_sns1 |= 0x00008000;  // xsns_12_ads1115.ino
+#endif
+#ifdef USE_INA219
+  feature_sns1 |= 0x00010000;  // xsns_13_ina219.ino
+#endif
+#ifdef USE_SHT3X
+  feature_sns1 |= 0x00020000;  // xsns_14_sht3x.ino
+#endif
+#ifdef USE_MHZ19
+  feature_sns1 |= 0x00040000;  // xsns_15_mhz19.ino
+#endif
+#ifdef USE_TSL2561
+  feature_sns1 |= 0x00080000;  // xsns_16_tsl2561.ino
+#endif
+#ifdef USE_SENSEAIR
+  feature_sns1 |= 0x00100000;  // xsns_17_senseair.ino
+#endif
+#ifdef USE_PMS5003
+  feature_sns1 |= 0x00200000;  // xsns_18_pms5003.ino
+#endif
+#ifdef USE_MGS
+  feature_sns1 |= 0x00400000;  // xsns_19_mgs.ino
+#endif
+#ifdef USE_NOVA_SDS
+  feature_sns1 |= 0x00800000;  // xsns_20_novasds.ino
+#endif
+#ifdef USE_SGP30
+  feature_sns1 |= 0x01000000;  // xsns_21_sgp30.ino
+#endif
+#ifdef USE_SR04
+  feature_sns1 |= 0x02000000;  // xsns_22_sr04.ino
+#endif
+#ifdef USE_SDM120
+  feature_sns1 |= 0x04000000;  // xsns_23_sdm120.ino
+#endif
+#ifdef USE_SI1145
+  feature_sns1 |= 0x08000000;  // xsns_24_si1145.ino
+#endif
+#ifdef USE_SDM630
+  feature_sns1 |= 0x10000000;  // xsns_25_sdm630.ino
+#endif
+
+/*********************************************************************************************/
+
+  feature_sns2 = 0x00000000;
 }
 
 /*********************************************************************************************\
@@ -1357,9 +1594,10 @@ void RtcSecond()
 
   if ((ntp_sync_minute > 59) && (RtcTime.minute > 2)) ntp_sync_minute = 1;                 // If sync prepare for a new cycle
   uint8_t offset = (uptime < 30) ? RtcTime.second : (((ESP.getChipId() & 0xF) * 3) + 3) ;  // First try ASAP to sync. If fails try once every 60 seconds based on chip id
-  if ((WL_CONNECTED == WiFi.status()) && (offset == RtcTime.second) && ((RtcTime.year < 2016) || (ntp_sync_minute == RtcTime.minute))) {
+  if ((WL_CONNECTED == WiFi.status()) && (offset == RtcTime.second) && ((RtcTime.year < 2016) || (ntp_sync_minute == RtcTime.minute) || ntp_force_sync)) {
     ntp_time = sntp_get_current_timestamp();
     if (ntp_time > 1451602800) {  // Fix NTP bug in core 2.4.1/SDK 2.2.1 (returns Thu Jan 01 08:00:10 1970 after power on)
+      ntp_force_sync = 0;
       utc_time = ntp_time;
       ntp_sync_minute = 60;  // Sync so block further requests
       if (restart_time == 0) {
@@ -1367,8 +1605,8 @@ void RtcSecond()
       }
       BreakTime(utc_time, tmpTime);
       RtcTime.year = tmpTime.year + 1970;
-      daylight_saving_time = RuleToTime(Settings.dst_flags, RtcTime.year);
-      standard_time = RuleToTime(Settings.std_flags, RtcTime.year);
+      daylight_saving_time = RuleToTime(Settings.tflag[1], RtcTime.year);
+      standard_time = RuleToTime(Settings.tflag[0], RtcTime.year);
       snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION "(" D_UTC_TIME ") %s, (" D_DST_TIME ") %s, (" D_STD_TIME ") %s"),
         GetTime(0).c_str(), GetTime(2).c_str(), GetTime(3).c_str());
       AddLog(LOG_LEVEL_DEBUG);
@@ -1389,9 +1627,9 @@ void RtcSecond()
   if (local_time > 1451602800) {  // 2016-01-01
     int32_t time_offset = Settings.timezone * SECS_PER_HOUR;
     if (99 == Settings.timezone) {
-      dstoffset = Settings.dst_offset * SECS_PER_MIN;
-      stdoffset = Settings.std_offset * SECS_PER_MIN;
-      if (Settings.dst_flags.hemis) {
+      dstoffset = Settings.toffset[1] * SECS_PER_MIN;
+      stdoffset = Settings.toffset[0] * SECS_PER_MIN;
+      if (Settings.tflag[1].hemis) {
         // Southern hemisphere
         if ((utc_time >= (standard_time - dstoffset)) && (utc_time < (daylight_saving_time - stdoffset))) {
           time_offset = stdoffset;  // Standard Time
