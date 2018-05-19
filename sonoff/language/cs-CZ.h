@@ -28,11 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
-<<<<<<< HEAD
- * Updated until v5.12.0m
-=======
  * Updated until v5.12.0n
->>>>>>> arendst/development
 \*********************************************************************/
 
 //#define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)

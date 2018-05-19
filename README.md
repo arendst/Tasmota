@@ -131,23 +131,13 @@ Different firmware images are released based on Features and Sensors selection g
 
 #### Typical file size
 
-<<<<<<< HEAD
-| ESP/Arduino library version    | sonoff | classic | minimal | knx  | allsensors |
-|--------------------------------|--------|---------|---------|------|------------|
-| ESP/Arduino lib v2.3.0         | 526k   | 488k    | 427k    | 535k | 549k       |
-| ESP/Arduino lib v2.4.0         | 531k   | 496k    | 435k    | 540k | 552k       |
-<<<<<<< HEAD
-| ESP/Arduino lib v2.4.1         | 533k   | 498k    | 436k    | 542k | 554k       |
-=======
-| ESP/Arduino lib v2.4.1         | 534k   | 499k    | 437k    | 543k | 555k       |
->>>>>>> arendst/development
-=======
+
 | ESP/Arduino library version | sonoff | classic | minimal | knx  | allsensors |
 |-----------------------------|--------|---------|---------|------|------------|
 | ESP/Arduino lib v2.3.0      | 529k   | 490k    | 429k    | 538k | 554k       |
 | ESP/Arduino lib v2.4.0      | 534k   | 498k    | 436k    | 542k | 558k       |
 | ESP/Arduino lib v2.4.1      | 536k   | 501k    | 439k    | 545k | 560k       |
->>>>>>> arendst/development
+
 
 ### Contribute
 You can contribute to Sonoff-Tasmota by
