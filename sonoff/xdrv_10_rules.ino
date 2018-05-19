@@ -88,6 +88,8 @@ uint32_t rules_triggers = 0;
 uint8_t rules_trigger_count = 0;
 uint8_t rules_teleperiod = 0;
 
+char vars[RULES_MAX_VARS][10] = { 0 };
+
 /*******************************************************************************************/
 
 long TimeDifference(unsigned long prev, unsigned long next)
@@ -243,7 +245,6 @@ bool RulesRuleMatch(String &event, String &rule)
 bool RulesProcess()
 {
   bool serviced = false;
-  char vars[RULES_MAX_VARS][10] = { 0 };
   char stemp[10];
 
   delay(0);                                               // Prohibit possible loop software watchdog
