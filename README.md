@@ -13,7 +13,7 @@ If you like **Sonoff-Tasmota**, give it a star, or fork it and contribute!
 ### Development
 [![Build Status](https://img.shields.io/travis/arendst/Sonoff-Tasmota.svg)](https://travis-ci.org/arendst/Sonoff-Tasmota)
 
-Current version is **5.13.1b** - See [sonoff/_releasenotes.ino](https://github.com/arendst/Sonoff-Tasmota/blob/development/sonoff/_releasenotes.ino) for change information.
+Current version is **5.14.0a** - See [sonoff/_releasenotes.ino](https://github.com/arendst/Sonoff-Tasmota/blob/development/sonoff/_releasenotes.ino) for change information.
 
 ### Quick install
 Download one of the released binaries from https://github.com/arendst/Sonoff-Tasmota/releases and flash it to your hardware as documented in the wiki.
@@ -108,6 +108,7 @@ Different firmware images are released based on Features and Sensors selection g
 | USE_BH1750                     | x | x | - | x | x |
 | USE_VEML6070                   | - | - | - | - | x |
 | USE_TSL2561                    | - | - | - | - | x |
+| USE_SI1145                     | - | - | - | - | x |
 | USE_ADS1115                    | - | - | - | - | x |
 | USE_ADS1115_I2CDEV             | - | - | - | - | - |
 | USE_INA219                     | - | - | - | - | x |
@@ -119,6 +120,7 @@ Different firmware images are released based on Features and Sensors selection g
 | USE_NOVA_SDS                   | x | - | - | x | x |
 | USE_PZEM004T                   | x | x | - | x | x |
 | USE_SERIAL_BRIDGE              | x | - | - | x | x |
+| USE_SDM120                     | - | - | - | - | x |
 | USE_IR_REMOTE                  | x | x | - | x | x |
 | USE_IR_HVAC                    | - | - | - | - | x |
 | USE_IR_RECEIVE                 | x | - | - | x | x |
@@ -129,6 +131,7 @@ Different firmware images are released based on Features and Sensors selection g
 
 #### Typical file size
 
+<<<<<<< HEAD
 | ESP/Arduino library version    | sonoff | classic | minimal | knx  | allsensors |
 |--------------------------------|--------|---------|---------|------|------------|
 | ESP/Arduino lib v2.3.0         | 526k   | 488k    | 427k    | 535k | 549k       |
@@ -137,6 +140,13 @@ Different firmware images are released based on Features and Sensors selection g
 | ESP/Arduino lib v2.4.1         | 533k   | 498k    | 436k    | 542k | 554k       |
 =======
 | ESP/Arduino lib v2.4.1         | 534k   | 499k    | 437k    | 543k | 555k       |
+>>>>>>> arendst/development
+=======
+| ESP/Arduino library version | sonoff | classic | minimal | knx  | allsensors |
+|-----------------------------|--------|---------|---------|------|------------|
+| ESP/Arduino lib v2.3.0      | 529k   | 490k    | 429k    | 538k | 554k       |
+| ESP/Arduino lib v2.4.0      | 534k   | 498k    | 436k    | 542k | 558k       |
+| ESP/Arduino lib v2.4.1      | 536k   | 501k    | 439k    | 545k | 560k       |
 >>>>>>> arendst/development
 
 ### Contribute
@@ -186,7 +196,7 @@ People helping to keep the show on the road:
 - Gerhard Mutz for his SGP30 and Sunrise/Sunset driver
 - Nuno Ferreira for his HC-SR04 driver
 - Adrian Scillato for his (security)fixes and implementing and maintaining KNX
-- Gennaro Tortone for his Eastron SDM120 driver
+- Gennaro Tortone for implementing and maintaining Eastron drivers
 - Raymond Mouthaan for managing Wemos Wiki information
 - Norbert Richter, Frogmore42 and Jason2866 for providing many issue answers
 - Many more providing Tips, Pocs or PRs

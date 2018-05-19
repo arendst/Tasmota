@@ -57,6 +57,7 @@
 #define D_JSON_EVERY "Every"
 #define D_JSON_FAILED "Failed"
 #define D_JSON_FALLBACKTOPIC "FallbackTopic"
+#define D_JSON_FEATURES "Features"
 #define D_JSON_FLASHMODE "FlashMode"
 #define D_JSON_FLASHSIZE "FlashSize"
 #define D_JSON_FREEMEMORY "Free"
@@ -88,6 +89,9 @@
 #define D_JSON_PERIOD "Period"
 #define D_JSON_POWERFACTOR "Factor"
 #define D_JSON_POWERUSAGE "Power"
+#define D_JSON_ACTIVE_POWERUSAGE "ActivePower"
+#define D_JSON_APPARENT_POWERUSAGE "ApparentPower"
+#define D_JSON_REACTIVE_POWERUSAGE "ReactivePower"
 #define D_JSON_PRESSURE "Pressure"
 #define D_JSON_PRESSUREATSEALEVEL "SeaPressure"
 #define D_JSON_PROGRAMFLASHSIZE "ProgramFlashSize"
@@ -224,6 +228,8 @@
   #define D_JSON_RESET_AND_RESTARTING "Reset and Restarting"
   #define D_JSON_ONE_TO_RESET "1 to reset"
 #define D_CMND_TIMEZONE "Timezone"
+#define D_CMND_TIMESTD "TimeStd"
+#define D_CMND_TIMEDST "TimeDst"
 #define D_CMND_ALTITUDE "Altitude"
 #define D_CMND_LEDPOWER "LedPower"
 #define D_CMND_LEDSTATE "LedState"
@@ -385,6 +391,9 @@
   #define QUOTEME_1(x) #x
   #define INCLUDE_FILE(x) QUOTEME(language/x.h)
   #include INCLUDE_FILE(MY_LANGUAGE)
+#endif
+#ifndef LANGUAGE_LCID
+  #define LANGUAGE_LCID 2057  // en-GB
 #endif
 
 // Common

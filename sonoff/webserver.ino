@@ -25,9 +25,6 @@
  * Based on source by AlexT (https://github.com/tzapu)
 \*********************************************************************************************/
 
-#define STR_HELPER(x) #x
-#define STR(x) STR_HELPER(x)
-
 const char HTTP_HEAD[] PROGMEM =
   "<!DOCTYPE html><html lang=\"" D_HTML_LANGUAGE "\" class=\"\">"
   "<head>"
@@ -660,6 +657,50 @@ boolean GetUsedInModule(byte val, uint8_t *arr)
 #endif
 #ifndef USE_IR_REMOTE
   if (GPIO_IRSEND == val) { return true; }
+#ifndef USE_IR_RECEIVE
+  if (GPIO_IRRECV == val) { return true; }
+#endif
+#endif
+#ifndef USE_MHZ19
+  if (GPIO_MHZ_TXD == val) { return true; }
+  if (GPIO_MHZ_RXD == val) { return true; }
+#endif
+#ifndef USE_PZEM004T
+  if (GPIO_PZEM_TX == val) { return true; }
+  if (GPIO_PZEM_RX == val) { return true; }
+#endif
+#ifndef USE_SENSEAIR
+  if (GPIO_SAIR_TX == val) { return true; }
+  if (GPIO_SAIR_RX == val) { return true; }
+#endif
+#ifndef USE_SPI
+  if (GPIO_SPI_CS == val) { return true; }
+  if (GPIO_SPI_DC == val) { return true; }
+#endif
+#ifndef USE_DISPLAY
+  if (GPIO_BACKLIGHT == val) { return true; }
+#endif
+#ifndef USE_PMS5003
+  if (GPIO_PMS5003 == val) { return true; }
+#endif
+#ifndef USE_NOVA_SDS
+  if (GPIO_SDS0X1 == val) { return true; }
+#endif
+#ifndef USE_SERIAL_BRIDGE
+  if (GPIO_SBR_TX == val) { return true; }
+  if (GPIO_SBR_RX == val) { return true; }
+#endif
+#ifndef USE_SR04
+  if (GPIO_SR04_TRIG == val) { return true; }
+  if (GPIO_SR04_ECHO == val) { return true; }
+#endif
+#ifndef USE_SDM120
+  if (GPIO_SDM120_TX == val) { return true; }
+  if (GPIO_SDM120_RX == val) { return true; }
+#endif
+#ifndef USE_SDM630
+  if (GPIO_SDM630_TX == val) { return true; }
+  if (GPIO_SDM630_RX == val) { return true; }
 #endif
   if ((val >= GPIO_REL1) && (val < GPIO_REL1 + MAX_RELAYS)) {
     offset = (GPIO_REL1_INV - GPIO_REL1);
