@@ -1,11 +1,15 @@
 /* 5.14.0a
+ * Add feature information to Status 4
+ * Add tools folder with python script decode-status.py for decoding some status fields like SetOption and Features
  * Add Eastron SDM630 energy meter (#2735)
  * Add KNX communication enhancement (#2742)
  * Add KNX energy data (#2750)
- * Add compiled feature information to Status 4
+ * Add python script fw-server.py in tools folder to create a simple OTA server (#2759)
  * Fix display selection of un-available GPIO options in Module Configuration webpage (#2718)
  * Fix timer re-trigger within one minute after restart (#2744)
  * Fix IRSend not accepting data value of 0 (#2751)
+ * Fix vars on rules (#2769)
+ * Fix bug in KNX menu (#2770)
  *
  * 5.14.0 20180515
  * Update language files
