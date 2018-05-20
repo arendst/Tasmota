@@ -271,8 +271,9 @@ struct SYSCFG {
   byte          knx_GA_param[MAX_KNX_GA];  // 6E2  Type of Input (relay changed, button pressed, sensor read <-teleperiod)
   byte          knx_CB_param[MAX_KNX_CB];  // 6EC  Type of Output (set relay, toggle relay, reply sensor value)
 
-  byte          free_6f6[266];             // 6F6
+  byte          free_6f6[216];             // 6F6
 
+  char          mems[RULES_MAX_MEMS][10];  // 7CE
   char          rules[MAX_RULE_SIZE];      // 800 uses 512 bytes in v5.12.0m
 
                                            // A00 - FFF free locations
@@ -286,6 +287,7 @@ struct RTCMEM {
   unsigned long energy_kWhtotal;              // 008
   unsigned long pulse_counter[MAX_COUNTERS];  // 00C
   power_t       power;                     // 01C
+                                           // 020 next free location
 } RtcSettings;
 
 struct TIME_T {

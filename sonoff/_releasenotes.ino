@@ -5,11 +5,14 @@
  * Add KNX communication enhancement (#2742)
  * Add KNX energy data (#2750)
  * Add python script fw-server.py in tools folder to create a simple OTA server (#2759)
+ * Add rules %mem1% to %mem5% variable names storing data in flash (#2780)
+ * Add rules test on %varx% or %memx% (#2780)
  * Fix display selection of un-available GPIO options in Module Configuration webpage (#2718)
  * Fix timer re-trigger within one minute after restart (#2744)
  * Fix IRSend not accepting data value of 0 (#2751)
  * Fix vars on rules (#2769)
  * Fix bug in KNX menu (#2770)
+ * Fix anomalies in rules (#2778)
  *
  * 5.14.0 20180515
  * Update language files
