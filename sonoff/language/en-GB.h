@@ -476,7 +476,9 @@
 #define D_SENSOR_BACKLIGHT "BLight"
 #define D_SENSOR_SERIAL_TX "Ser TX"
 #define D_SENSOR_SERIAL_RX "Ser RX"
-
+#define D_SENSOR_MHZ_RX   "MHZ Rx"
+#define D_SENSOR_MHZ_TX   "MHZ Tx"
+#define D_CO2 "Carbon dioxide"
 
 // Units
 #define D_UNIT_AMPERE "A"
@@ -493,6 +495,7 @@
 #define D_UNIT_VOLT "V"
 #define D_UNIT_WATT "W"
 #define D_UNIT_WATTHOUR "Wh"
+#define D_UNIT_PARTS_PER_MILLION "ppm"
 
 // Log message prefix
 #define D_LOG_APPLICATION "APP: "  // Application

@@ -48,10 +48,10 @@
 #define WIFI_SUBNETMASK        "255.255.255.0"   // [IpAddress3] If not using DHCP set Network mask
 #define WIFI_DNS               "192.168.2.27"    // [IpAddress4] If not using DHCP set DNS IP address (might be equal to WIFI_GATEWAY)
 
-#define STA_SSID1              "yt201"      	// [Ssid1] Wifi SSID
-#define STA_PASS1              "zhopa3600"  	// [Password1] Wifi password
-#define STA_SSID2              "Z222"      	// [Ssid2] Optional alternate AP Wifi SSID
-#define STA_PASS2              "1977240072"	// [Password2] Optional alternate AP Wifi password
+#define STA_SSID1              "indebuurt1"    	 // [Ssid1] Wifi SSID
+#define STA_PASS1              "VnsqrtnrsddbrN"	 // [Password1] Wifi password
+#define STA_SSID2              "Z222"      	 // [Ssid2] Optional alternate AP Wifi SSID
+#define STA_PASS2              "1977240072"	 // [Password2] Optional alternate AP Wifi password
 #define WIFI_CONFIG_TOOL       WIFI_WPSCONFIG    // [WifiConfig] Default tool if wifi fails to connect
                                                  //   (WIFI_RESTART, WIFI_SMARTCONFIG, WIFI_MANAGER, WIFI_WPSCONFIG, WIFI_RETRY, WIFI_WAIT)
 
@@ -184,6 +184,18 @@
 //  #define USE_BMP                                // Add I2C code for BMP/BME280 sensor
 //  #define USE_HTU                                // Add I2C code for HTU21/SI7013/SI7020/SI7021 sensor
 //  #define USE_SHT                                // Add I2C emulating code for SHT1X sensor
+
+//#define USE_MHZ19                                // Add support for MH-Z19 CO2 sensor (+2k code)
+
+//#define USE_AS3935		    1	     // as3935 lightning sensor http://www.playingwithfusion.com/productview.php?pdid=22
+
+#define AS3935_SI_PIN               0xff        //
+#define AS3935_IRQ_PIN              0xff        // digital pins 2 and 3 are available for interrupt capability
+#define AS3935_ADDR          0x03            	// x03 - standard PWF SEN-39001-R01 config
+#define AS3935_CAPACITANCE   40              	// <-- SET THIS VALUE TO THE NUMBER LISTED ON YOUR BOARD 
+#define AS3935_OUTDOORS      1
+#define AS3935_DIST_DIS      0
+#define AS3935_DIST_EN       1
 
 //#define USE_IR_REMOTE                            // Send IR remote commands using library IRremoteESP8266 and ArduinoJson (+3k code, 0.3k mem)
 //  #define USE_IR_HVAC                            // Support for HVAC system using IR (+2k code)

@@ -1896,6 +1896,8 @@ void PerformEverySecond()
     HlwMarginCheck();
   }
 
+  XsnsCall(FUNC_XSNS_EVERY_SECOND);
+
   if ((2 == RtcTime.minute) && latest_uptime_flag) {
     latest_uptime_flag = false;
     uptime++;

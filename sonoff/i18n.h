@@ -78,7 +78,6 @@ const char S_JSON_COMMAND_INDEX_SVALUE[] PROGMEM =            "{\"%s%d\":\"%s\"}
 const char S_JSON_COMMAND_INDEX_SVALUE_SVALUE[] PROGMEM =     "{\"%s%d\":\"%s%s\"}";
 
 const char JSON_SNS_TEMPHUM[] PROGMEM = "%s,\"%s\":{\"" D_TEMPERATURE "\":%s,\"" D_HUMIDITY "\":%s}";
-
 const char S_LOG_I2C_FOUND_AT[] PROGMEM = D_LOG_I2C "%s " D_FOUND_AT " 0x%x";
 
 const char S_LOG_HTTP[] PROGMEM = D_LOG_HTTP;
@@ -90,6 +89,8 @@ const char S_RSLT_WARNING[] PROGMEM = D_RSLT_WARNING;
 const char S_LWT[] PROGMEM = D_LWT;
 const char S_OFFLINE[] PROGMEM = D_OFFLINE;
 
+#define D_JSON_CO2 "CarbonDioxide"
+#define D_JSON_TEMPERATURE "Temperature"
 // sonoff.ino
 #define MAX_BUTTON_COMMANDS  5  // Max number of button commands supported
 const char kCommands[MAX_BUTTON_COMMANDS][14] PROGMEM = {
@@ -136,6 +137,11 @@ const char S_FIRMWARE_UPGRADE[] PROGMEM = D_FIRMWARE_UPGRADE;
 const char S_CONSOLE[] PROGMEM = D_CONSOLE;
 const char S_INFORMATION[] PROGMEM = D_INFORMATION;
 const char S_RESTART[] PROGMEM = D_RESTART;
+#if defined(USE_MHZ19) || defined(USE_SENSEAIR)
+const char HTTP_SNS_CO2[] PROGMEM = "%s{s}%s " D_CO2 "{m}%d " D_UNIT_PARTS_PER_MILLION "{e}";                // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
+#endif  // USE_MHZ19
+
+
 #endif  // USE_WEBSERVER
 
 #endif  // _I18N_H_

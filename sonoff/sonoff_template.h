@@ -80,6 +80,8 @@ enum UserSelectablePins {
   GPIO_LED4_INV,
   GPIO_PZEM004T_TX,
   GPIO_PZEM004T_RX,
+  GPIO_MHZ_TXD,
+  GPIO_MHZ_RXD,
   GPIO_SENSOR_END };
 
 // Text in webpage Module Parameters and commands GPIOS and GPIO
@@ -141,7 +143,9 @@ const char kSensors[GPIO_SENSOR_END][9] PROGMEM = {
   D_SENSOR_LED "3i",
   D_SENSOR_LED "4i",
   D_SENSOR_SERIAL_TX,
-  D_SENSOR_SERIAL_RX
+  D_SENSOR_SERIAL_RX,
+  D_SENSOR_MHZ_TX,
+  D_SENSOR_MHZ_RX
 };
 
 // Programmer selectable GPIO functionality offset by user selectable GPIOs
