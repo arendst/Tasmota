@@ -489,7 +489,7 @@ const char HueConfigResponse_JSON[] PROGMEM =
      "\"last use date\":\"{dt\","
      "\"create date\":\"{dt\","
      "\"name\":\"Remote\"}},"
-   "\"swversion\":\"01039019\","
+   "\"swversion\":\"01041302\","
    "\"apiversion\":\"1.17.0\","
    "\"swupdate\":{\"updatestate\":0,\"url\":\"\",\"text\":\"\",\"notify\": false},"
    "\"linkbutton\":false,"
