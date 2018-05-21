@@ -269,6 +269,12 @@ void GetTopic_P(char *stopic, byte prefix, char *topic, const char* subtopic)
     }
     fulltopic.replace(F(MQTT_TOKEN_PREFIX), Settings.mqtt_prefix[prefix]);
     fulltopic.replace(F(MQTT_TOKEN_TOPIC), topic);
+
+    uint8_t mac[6];
+    char macStr[13] = { 0 };
+    WiFi.macAddress(mac);
+    snprintf_P(macStr, sizeof macStr, PSTR("%02x%02x%02x%02x%02x%02x"), mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+    fulltopic.replace(F(MQTT_TOKEN_ID), macStr);
   }
   fulltopic.replace(F("#"), "");
   fulltopic.replace(F("//"), "/");
