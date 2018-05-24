@@ -889,7 +889,6 @@ void SettingsDelta()
       Settings.longitude = (int)((double)LONGITUDE * 1000000);
     }
     if (Settings.version < 0x050C000B) {
-//      memset(&Settings.rules, 0x00, sizeof(Settings.rules));
       Settings.rules[0][0] = '\0';
     }
     if (Settings.version < 0x050C000D) {

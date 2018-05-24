@@ -1,5 +1,6 @@
 /* 5.14.0b
- * Increase rule storage space to 3 rule sets of 512 characters using commands rule1, rule2 and rule3
+ * Add two rule sets of 511 characters using commands rule1, rule2 and rule3
+ * Add rule support for IrReceive and RfReceive (#2758)
  *
  * 5.14.0a
  * Add feature information to Status 4

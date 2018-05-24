@@ -97,6 +97,7 @@ void SonoffBridgeReceived()
         snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_RFRECEIVED "\":{\"" D_JSON_SYNC "\":%d,\"" D_JSON_LOW "\":%d,\"" D_JSON_HIGH "\":%d,\"" D_JSON_DATA "\":\"%06X\",\"" D_CMND_RFKEY "\":%s}}"),
           sync_time, low_time, high_time, received_id, rfkey);
         MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_RFRECEIVED));
+        XdrvRulesProcess();
   #ifdef USE_DOMOTICZ
         DomoticzSensor(DZ_COUNT, received_id);  // Send rid as Domoticz Counter value
   #endif  // USE_DOMOTICZ

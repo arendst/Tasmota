@@ -80,8 +80,6 @@
 enum RulesCommands { CMND_RULE, CMND_RULETIMER, CMND_EVENT, CMND_VAR, CMND_MEM };
 const char kRulesCommands[] PROGMEM = D_CMND_RULE "|" D_CMND_RULETIMER "|" D_CMND_EVENT "|" D_CMND_VAR "|" D_CMND_MEM ;
 
-char rules[MAX_RULE_SIZE];
-
 String rules_event_value;
 unsigned long rules_timer[MAX_RULE_TIMERS] = { 0 };
 uint8_t rules_quota = 0;
@@ -436,20 +434,16 @@ boolean RulesCommand()
         switch (XdrvMailbox.payload) {
         case 0: // Off
         case 1: // On
-//          Settings.flag.rules_enabled = XdrvMailbox.payload;
           bitWrite(Settings.rule_enabled, index -1, XdrvMailbox.payload);
           break;
         case 2: // Toggle
-//          Settings.flag.rules_enabled ^= 1;
           bitWrite(Settings.rule_enabled, index -1, bitRead(Settings.rule_enabled, index -1) ^1);
           break;
         case 4: // Off
         case 5: // On
-//          Settings.flag.rules_once = XdrvMailbox.payload &1;
           bitWrite(Settings.rule_once, index -1, XdrvMailbox.payload &1);
           break;
         case 6: // Toggle
-//          Settings.flag.rules_once ^= 1;
           bitWrite(Settings.rule_once, index -1, bitRead(Settings.rule_once, index -1) ^1);
           break;
         }
@@ -525,6 +519,9 @@ boolean Xdrv10(byte function)
       break;
     case FUNC_COMMAND:
       result = RulesCommand();
+      break;
+    case FUNC_RULES_PROCESS:
+      result = RulesProcess();
       break;
   }
   return result;

@@ -1700,14 +1700,12 @@ void RtcSecond()
       snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION "(" D_UTC_TIME ") %s, (" D_DST_TIME ") %s, (" D_STD_TIME ") %s"),
         GetTime(0).c_str(), GetTime(2).c_str(), GetTime(3).c_str());
       AddLog(LOG_LEVEL_DEBUG);
-#ifdef USE_RULES
       if (local_time < 1451602800) {  // 2016-01-01
         strncpy_P(mqtt_data, PSTR("{\"Time\":{\"Initialized\":1}}"), sizeof(mqtt_data));
       } else {
         strncpy_P(mqtt_data, PSTR("{\"Time\":{\"Set\":1}}"), sizeof(mqtt_data));
       }
-      RulesProcess();
-#endif  // USE_RULES
+      XdrvRulesProcess();
     } else {
       ntp_sync_minute++;  // Try again in next minute
     }
@@ -1788,7 +1786,7 @@ void AdcEvery50ms()
       adc_last_value = new_value;
       uint16_t value = adc_last_value / 10;
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"ANALOG\":{\"A0div10\":%d}}"), (value > 99) ? 100 : value);
-      RulesProcess();
+      XdrvRulesProcess();
     }
   }
 }
