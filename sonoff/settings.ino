@@ -907,7 +907,7 @@ void SettingsDelta()
       SettingsDefaultSet_5_13_1c();
     }
     if (Settings.version < 0x050E0002) {
-      for (byte i = 1; i < MAX_RULE_SETS -1; i++) {
+      for (byte i = 1; i < MAX_RULE_SETS; i++) {
         Settings.rules[i][0] = '\0';
       }
       Settings.rule_enabled = Settings.flag.rules_enabled;
