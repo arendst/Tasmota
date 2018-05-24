@@ -48,8 +48,8 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t not_power_linked : 1;         // bit 20 (v5.11.1f)
     uint32_t no_power_on_check : 1;        // bit 21 (v5.11.1i)
     uint32_t mqtt_serial : 1;              // bit 22 (v5.12.0f)
-    uint32_t rules_enabled : 1;            // bit 23 (v5.12.0j)
-    uint32_t rules_once : 1;               // bit 24 (v5.12.0k)
+    uint32_t rules_enabled : 1;            // bit 23 (v5.12.0j) - free since v5.14.0b
+    uint32_t rules_once : 1;               // bit 24 (v5.12.0k) - free since v5.14.0b
     uint32_t knx_enabled : 1;              // bit 25 (v5.12.0l) KNX
     uint32_t device_index_enable : 1;      // bit 26 (v5.13.1a)
     uint32_t knx_enable_enhancement : 1;   // bit 27 (v5.14.0a) KNX
@@ -232,9 +232,8 @@ struct SYSCFG {
   uint8_t       light_color[5];            // 498
   uint8_t       light_correction;          // 49D
   uint8_t       light_dimmer;              // 49E
-
-  byte          free_49F[2];               // 49F
-
+  uint8_t       rule_enabled;              // 49F
+  uint8_t       rule_once;                 // 4A0
   uint8_t       light_fade;                // 4A1
   uint8_t       light_speed;               // 4A2
   uint8_t       light_scheme;              // 4A3
@@ -274,9 +273,11 @@ struct SYSCFG {
   byte          free_6f6[216];             // 6F6
 
   char          mems[RULES_MAX_MEMS][10];  // 7CE
-  char          rules[MAX_RULE_SIZE];      // 800 uses 512 bytes in v5.12.0m
+                                           // 800 Full - no more free locations
 
-                                           // A00 - FFF free locations
+  char          rules[MAX_RULE_SETS][MAX_RULE_SIZE]; // 800 uses 512 bytes in v5.12.0m, 3 x 512 bytes in v5.14.0b
+
+                                           // E00 - FFF free locations
 } Settings;
 
 struct RTCMEM {

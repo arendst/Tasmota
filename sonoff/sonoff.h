@@ -51,6 +51,7 @@ typedef unsigned long power_t;              // Power (Relay) type
 #define MAX_KNX_GA             10           // Max number of KNX Group Addresses to read that can be set
 #define MAX_KNX_CB             10           // Max number of KNX Group Addresses to write that can be set
 #define RULES_MAX_MEMS         5            // Max number of saved vars
+#define MAX_RULE_SETS          3            // Max number of rule sets of size 512 characters
 #define MAX_RULE_SIZE          512          // Max number of characters in rules
 
 #define MQTT_TOKEN_PREFIX      "%prefix%"   // To be substituted by mqtt_prefix[x]
@@ -88,7 +89,7 @@ typedef unsigned long power_t;              // Power (Relay) type
 #define SERIALLOG_TIMER        600          // Seconds to disable SerialLog
 #define OTA_ATTEMPTS           5            // Number of times to try fetching the new firmware
 
-#define INPUT_BUFFER_SIZE      512          // Max number of characters in (serial and http) command buffer
+#define INPUT_BUFFER_SIZE      520          // Max number of characters in (serial and http) command buffer
 #define CMDSZ                  24           // Max number of characters in command
 #define TOPSZ                  100          // Max number of characters in topic string
 #define LOGSZ                  512          // Max number of characters in log
