@@ -482,6 +482,96 @@ int GetStateNumber(char *state_text)
   return state_number;
 }
 
+boolean GetUsedInModule(byte val, uint8_t *arr)
+{
+  int offset = 0;
+
+  if (!val) { return false; }  // None
+#ifndef USE_I2C
+  if (GPIO_I2C_SCL == val) { return true; }
+  if (GPIO_I2C_SDA == val) { return true; }
+#endif
+#ifndef USE_SR04
+  if (GPIO_SR04_TRIG == val) { return true; }
+  if (GPIO_SR04_ECHO == val) { return true; }
+#endif
+#ifndef USE_WS2812
+  if (GPIO_WS2812 == val) { return true; }
+#endif
+#ifndef USE_IR_REMOTE
+  if (GPIO_IRSEND == val) { return true; }
+#ifndef USE_IR_RECEIVE
+  if (GPIO_IRRECV == val) { return true; }
+#endif
+#endif
+#ifndef USE_MHZ19
+  if (GPIO_MHZ_TXD == val) { return true; }
+  if (GPIO_MHZ_RXD == val) { return true; }
+#endif
+#ifndef USE_PZEM004T
+  if (GPIO_PZEM_TX == val) { return true; }
+  if (GPIO_PZEM_RX == val) { return true; }
+#endif
+#ifndef USE_SENSEAIR
+  if (GPIO_SAIR_TX == val) { return true; }
+  if (GPIO_SAIR_RX == val) { return true; }
+#endif
+#ifndef USE_SPI
+  if (GPIO_SPI_CS == val) { return true; }
+  if (GPIO_SPI_DC == val) { return true; }
+#endif
+#ifndef USE_DISPLAY
+  if (GPIO_BACKLIGHT == val) { return true; }
+#endif
+#ifndef USE_PMS5003
+  if (GPIO_PMS5003 == val) { return true; }
+#endif
+#ifndef USE_NOVA_SDS
+  if (GPIO_SDS0X1 == val) { return true; }
+#endif
+#ifndef USE_SERIAL_BRIDGE
+  if (GPIO_SBR_TX == val) { return true; }
+  if (GPIO_SBR_RX == val) { return true; }
+#endif
+#ifndef USE_SR04
+  if (GPIO_SR04_TRIG == val) { return true; }
+  if (GPIO_SR04_ECHO == val) { return true; }
+#endif
+#ifndef USE_SDM120
+  if (GPIO_SDM120_TX == val) { return true; }
+  if (GPIO_SDM120_RX == val) { return true; }
+#endif
+#ifndef USE_SDM630
+  if (GPIO_SDM630_TX == val) { return true; }
+  if (GPIO_SDM630_RX == val) { return true; }
+#endif
+  if ((val >= GPIO_REL1) && (val < GPIO_REL1 + MAX_RELAYS)) {
+    offset = (GPIO_REL1_INV - GPIO_REL1);
+  }
+  if ((val >= GPIO_REL1_INV) && (val < GPIO_REL1_INV + MAX_RELAYS)) {
+    offset = -(GPIO_REL1_INV - GPIO_REL1);
+  }
+
+  if ((val >= GPIO_LED1) && (val < GPIO_LED1 + MAX_LEDS)) {
+    offset = (GPIO_LED1_INV - GPIO_LED1);
+  }
+  if ((val >= GPIO_LED1_INV) && (val < GPIO_LED1_INV + MAX_LEDS)) {
+    offset = -(GPIO_LED1_INV - GPIO_LED1);
+  }
+
+  if ((val >= GPIO_PWM1) && (val < GPIO_PWM1 + MAX_PWMS)) {
+    offset = (GPIO_PWM1_INV - GPIO_PWM1);
+  }
+  if ((val >= GPIO_PWM1_INV) && (val < GPIO_PWM1_INV + MAX_PWMS)) {
+    offset = -(GPIO_PWM1_INV - GPIO_PWM1);
+  }
+  for (byte i = 0; i < MAX_GPIO_PIN; i++) {
+    if (arr[i] == val) { return true; }
+    if (arr[i] == val + offset) { return true; }
+  }
+  return false;
+}
+
 void SetSerialBaudrate(int baudrate)
 {
   Settings.baudrate = baudrate / 1200;
@@ -1610,14 +1700,12 @@ void RtcSecond()
       snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION "(" D_UTC_TIME ") %s, (" D_DST_TIME ") %s, (" D_STD_TIME ") %s"),
         GetTime(0).c_str(), GetTime(2).c_str(), GetTime(3).c_str());
       AddLog(LOG_LEVEL_DEBUG);
-#ifdef USE_RULES
       if (local_time < 1451602800) {  // 2016-01-01
         strncpy_P(mqtt_data, PSTR("{\"Time\":{\"Initialized\":1}}"), sizeof(mqtt_data));
       } else {
         strncpy_P(mqtt_data, PSTR("{\"Time\":{\"Set\":1}}"), sizeof(mqtt_data));
       }
-      RulesProcess();
-#endif  // USE_RULES
+      XdrvRulesProcess();
     } else {
       ntp_sync_minute++;  // Try again in next minute
     }
@@ -1698,7 +1786,7 @@ void AdcEvery50ms()
       adc_last_value = new_value;
       uint16_t value = adc_last_value / 10;
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"ANALOG\":{\"A0div10\":%d}}"), (value > 99) ? 100 : value);
-      RulesProcess();
+      XdrvRulesProcess();
     }
   }
 }

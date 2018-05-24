@@ -86,8 +86,8 @@ uint8_t rules_quota = 0;
 long rules_new_power = -1;
 long rules_old_power = -1;
 
-uint32_t rules_triggers = 0;
-uint8_t rules_trigger_count = 0;
+uint32_t rules_triggers[MAX_RULE_SETS] = { 0 };
+uint8_t rules_trigger_count[MAX_RULE_SETS] = { 0 };
 uint8_t rules_teleperiod = 0;
 
 char vars[RULES_MAX_VARS][10] = { 0 };
@@ -141,7 +141,7 @@ bool TimeReached(unsigned long timer)
 
 /*******************************************************************************************/
 
-bool RulesRuleMatch(String &event, String &rule)
+bool RulesRuleMatch(byte rule_set, String &event, String &rule)
 {
   // event = {"INA219":{"Voltage":4.494,"Current":0.020,"Power":0.089}}
   // event = {"System":{"Boot":1}}
@@ -179,7 +179,7 @@ bool RulesRuleMatch(String &event, String &rule)
     }
   }
 
-  char tmp_value[CMDSZ] = { 0 };
+  char rule_svalue[CMDSZ] = { 0 };
   double rule_value = 0;
   if (pos > 0) {
     String rule_param = rule_name.substring(pos + 1);
@@ -198,13 +198,13 @@ bool RulesRuleMatch(String &event, String &rule)
       }
     }
     rule_param.toUpperCase();
-    snprintf(tmp_value, sizeof(tmp_value), rule_param.c_str());
+    snprintf(rule_svalue, sizeof(rule_svalue), rule_param.c_str());
 
-    int temp_value = GetStateNumber(tmp_value);
+    int temp_value = GetStateNumber(rule_svalue);
     if (temp_value > -1) {
       rule_value = temp_value;
     } else {
-      rule_value = CharToDouble((char*)tmp_value);     // 0.1      - This saves 9k code over toFLoat()!
+      rule_value = CharToDouble((char*)rule_svalue);   // 0.1      - This saves 9k code over toFLoat()!
     }
     rule_name = rule_name.substring(0, pos);           // "CURRENT"
   }
@@ -218,7 +218,7 @@ bool RulesRuleMatch(String &event, String &rule)
   const char* str_value = root[rule_task][rule_name];
 
 //snprintf_P(log_data, sizeof(log_data), PSTR("RUL: Task %s, Name %s, Value |%s|, TrigCnt %d, TrigSt %d, Source %s, Json %s"),
-//  rule_task.c_str(), rule_name.c_str(), tmp_value, rules_trigger_count, bitRead(rules_triggers, rules_trigger_count), event.c_str(), (str_value) ? str_value : "none");
+//  rule_task.c_str(), rule_name.c_str(), rule_svalue, rules_trigger_count[rule_set], bitRead(rules_triggers[rule_set], rules_trigger_count[rule_set]), event.c_str(), (str_value) ? str_value : "none");
 //AddLog(LOG_LEVEL_DEBUG);
 
   if (!root[rule_task][rule_name].success()) { return false; }
@@ -231,13 +231,14 @@ bool RulesRuleMatch(String &event, String &rule)
     value = CharToDouble((char*)str_value);
     switch (compare) {
       case '>':
-        if (value > rule_value) match = true;
+        if (value > rule_value) { match = true; }
         break;
       case '<':
-        if (value < rule_value) match = true;
+        if (value < rule_value) { match = true; }
         break;
       case '=':
-        if (value == rule_value) match = true;
+//        if (value == rule_value) { match = true; }     // Compare values - only decimals or partly hexadecimals
+        if (!strcasecmp(str_value, rule_svalue)) { match = true; }  // Compare strings - this also works for hexadecimals
         break;
       case ' ':
         match = true;                                  // Json value but not needed
@@ -247,13 +248,13 @@ bool RulesRuleMatch(String &event, String &rule)
 
   if (Settings.flag.rules_once) {
     if (match) {                                       // Only allow match state changes
-      if (!bitRead(rules_triggers, rules_trigger_count)) {
-        bitSet(rules_triggers, rules_trigger_count);
+      if (!bitRead(rules_triggers[rule_set], rules_trigger_count[rule_set])) {
+        bitSet(rules_triggers[rule_set], rules_trigger_count[rule_set]);
       } else {
         match = false;
       }
     } else {
-      bitClear(rules_triggers, rules_trigger_count);
+      bitClear(rules_triggers[rule_set], rules_trigger_count[rule_set]);
     }
   }
 
@@ -262,24 +263,19 @@ bool RulesRuleMatch(String &event, String &rule)
 
 /*******************************************************************************************/
 
-bool RulesProcess()
+bool RuleSetProcess(byte rule_set, String &event_saved)
 {
   bool serviced = false;
   char stemp[10];
 
   delay(0);                                               // Prohibit possible loop software watchdog
 
-//snprintf_P(log_data, sizeof(log_data), PSTR("RUL: Event = %s, Rule = %s"), mqtt_data, Settings.rules);
+//snprintf_P(log_data, sizeof(log_data), PSTR("RUL: Event = %s, Rule = %s"), event_saved.c_str(), Settings.rules[rule_set]);
 //AddLog(LOG_LEVEL_DEBUG);
 
-  if (!Settings.flag.rules_enabled) { return serviced; }  // Not enabled
-  if (!strlen(Settings.rules)) { return serviced; }       // No rules
+  String rules = Settings.rules[rule_set];
 
-  String event_saved = mqtt_data;
-  event_saved.toUpperCase();
-  String rules = Settings.rules;
-
-  rules_trigger_count = 0;
+  rules_trigger_count[rule_set] = 0;
   int plen = 0;
   while (true) {
     rules = rules.substring(plen);                        // Select relative to last rule
@@ -304,7 +300,7 @@ bool RulesProcess()
 //snprintf_P(log_data, sizeof(log_data), PSTR("RUL: Event |%s|, Rule |%s|, Command(s) |%s|"), event.c_str(), event_trigger.c_str(), commands.c_str());
 //AddLog(LOG_LEVEL_DEBUG);
 
-    if (RulesRuleMatch(event, event_trigger)) {
+    if (RulesRuleMatch(rule_set, event, event_trigger)) {
       commands.trim();
       String ucommand = commands;
       ucommand.toUpperCase();
@@ -331,25 +327,42 @@ bool RulesProcess()
       ExecuteCommand(command);
       serviced = true;
     }
-    rules_trigger_count++;
+    rules_trigger_count[rule_set]++;
   }
   return serviced;
 }
 
 /*******************************************************************************************/
 
+bool RulesProcess()
+{
+  bool serviced = false;
+
+  String event_saved = mqtt_data;
+  event_saved.toUpperCase();
+
+  for (byte i = 0; i < MAX_RULE_SETS; i++) {
+    if (strlen(Settings.rules[i]) && bitRead(Settings.rule_enabled, i)) {
+      if (RuleSetProcess(i, event_saved)) { serviced = true; }
+    }
+  }
+  return serviced;
+}
+
 void RulesInit()
 {
-  if (Settings.rules[0] == '\0') {
-    Settings.flag.rules_enabled = 0;
-    Settings.flag.rules_once = 0;
+  for (byte i = 0; i < MAX_RULE_SETS; i++) {
+    if (Settings.rules[i][0] == '\0') {
+      bitWrite(Settings.rule_enabled, i, 0);
+      bitWrite(Settings.rule_once, i, 0);
+    }
   }
   rules_teleperiod = 0;
 }
 
 void RulesEvery50ms()
 {
-  if (Settings.flag.rules_enabled) {
+  if (Settings.rule_enabled) {  // Any rule enabled
     if (rules_new_power != rules_old_power) {
       if (rules_old_power != -1) {
         for (byte i = 0; i < devices_present; i++) {
@@ -381,7 +394,7 @@ void RulesEvery50ms()
 
 void RulesEverySecond()
 {
-  if (Settings.flag.rules_enabled) {
+  if (Settings.rule_enabled) {  // Any rule enabled
     for (byte i = 0; i < MAX_RULE_TIMERS; i++) {
       if (rules_timer[i] != 0L) {           // Timer active?
         if (TimeReached(rules_timer[i])) {  // Timer finished?
@@ -416,39 +429,32 @@ boolean RulesCommand()
   if (-1 == command_code) {
     serviced = false;  // Unknown command
   }
-  else if (CMND_RULE == command_code) {
-    if ((XdrvMailbox.data_len > 0) && (XdrvMailbox.data_len < sizeof(Settings.rules))) {
+  else if ((CMND_RULE == command_code) && (index > 0) && (index <= MAX_RULE_SETS)) {
+    if ((XdrvMailbox.data_len > 0) && (XdrvMailbox.data_len < sizeof(Settings.rules[index -1]))) {
       if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 6)) {
         switch (XdrvMailbox.payload) {
         case 0: // Off
         case 1: // On
-          Settings.flag.rules_enabled = XdrvMailbox.payload;
+          bitWrite(Settings.rule_enabled, index -1, XdrvMailbox.payload);
           break;
         case 2: // Toggle
-          Settings.flag.rules_enabled ^= 1;
+          bitWrite(Settings.rule_enabled, index -1, bitRead(Settings.rule_enabled, index -1) ^1);
           break;
         case 4: // Off
         case 5: // On
-          Settings.flag.rules_once = XdrvMailbox.payload &1;
+          bitWrite(Settings.rule_once, index -1, XdrvMailbox.payload &1);
           break;
         case 6: // Toggle
-          Settings.flag.rules_once ^= 1;
+          bitWrite(Settings.rule_once, index -1, bitRead(Settings.rule_once, index -1) ^1);
           break;
         }
       } else {
-/*
-        String uc_data = XdrvMailbox.data;  // Do not allow Rule to be used within a rule
-        uc_data.toUpperCase();
-        String uc_command = command;
-        uc_command += " ";    // Distuingish from RuleTimer
-        uc_command.toUpperCase();
-        if (!uc_data.indexOf(uc_command)) { strlcpy(Settings.rules, XdrvMailbox.data, sizeof(Settings.rules)); }
-*/
-        strlcpy(Settings.rules, XdrvMailbox.data, sizeof(Settings.rules));
+        strlcpy(Settings.rules[index -1], ('"' == XdrvMailbox.data[0]) ? "" : XdrvMailbox.data, sizeof(Settings.rules[index -1]));
       }
-      rules_triggers = 0;  // Reset once flag
+      rules_triggers[index -1] = 0;  // Reset once flag
     }
-    snprintf_P (mqtt_data, sizeof(mqtt_data), PSTR("{\"%s\":\"%s\",\"Once\":\"%s\",\"Rules\":\"%s\"}"), command, GetStateText(Settings.flag.rules_enabled), GetStateText(Settings.flag.rules_once), Settings.rules);
+    snprintf_P (mqtt_data, sizeof(mqtt_data), PSTR("{\"%s%d\":\"%s\",\"Once\":\"%s\",\"Free\":%d,\"Rules\":\"%s\"}"),
+      command, index, GetStateText(bitRead(Settings.rule_enabled, index -1)), GetStateText(bitRead(Settings.rule_once, index -1)), sizeof(Settings.rules[index -1]) - strlen(Settings.rules[index -1]) -1, Settings.rules[index -1]);
   }
   else if ((CMND_RULETIMER == command_code) && (index > 0) && (index <= MAX_RULE_TIMERS)) {
     if (XdrvMailbox.data_len > 0) {
@@ -514,6 +520,9 @@ boolean Xdrv10(byte function)
       break;
     case FUNC_COMMAND:
       result = RulesCommand();
+      break;
+    case FUNC_RULES_PROCESS:
+      result = RulesProcess();
       break;
   }
   return result;

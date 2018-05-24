@@ -1,4 +1,8 @@
-/* 5.14.0a
+/* 5.14.0b
+ * Add two rule sets of 511 characters using commands rule1, rule2 and rule3
+ * Add rule support for IrReceive and RfReceive (#2758)
+ *
+ * 5.14.0a
  * Add feature information to Status 4
  * Add tools folder with python script decode-status.py for decoding some status fields like SetOption and Features
  * Add Eastron SDM630 energy meter by Gennaro Tortone (#2735)
@@ -7,7 +11,7 @@
  * Add python script fw-server.py in tools folder to create a simple OTA server by Gennaro Tortone (#2759)
  * Add rules %mem1% to %mem5% variable names storing data in flash (#2780)
  * Add rules test on %varx% or %memx% (#2780)
- * Add optional token %id% substituting the unique MAC address for topic names by Michael Graf (#2794)
+ * Add optional token %id% substituting the unique MAC address to fulltopic by Michael Graf (#2794)
  * Fix display selection of un-available GPIO options in Module Configuration webpage (#2718)
  * Fix timer re-trigger within one minute after restart (#2744)
  * Fix IRSend not accepting data value of 0 by David Conran (#2751)
