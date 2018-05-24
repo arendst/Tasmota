@@ -179,7 +179,7 @@ bool RulesRuleMatch(byte rule_set, String &event, String &rule)
     }
   }
 
-  char tmp_value[CMDSZ] = { 0 };
+  char rule_svalue[CMDSZ] = { 0 };
   double rule_value = 0;
   if (pos > 0) {
     String rule_param = rule_name.substring(pos + 1);
@@ -198,13 +198,13 @@ bool RulesRuleMatch(byte rule_set, String &event, String &rule)
       }
     }
     rule_param.toUpperCase();
-    snprintf(tmp_value, sizeof(tmp_value), rule_param.c_str());
+    snprintf(rule_svalue, sizeof(rule_svalue), rule_param.c_str());
 
-    int temp_value = GetStateNumber(tmp_value);
+    int temp_value = GetStateNumber(rule_svalue);
     if (temp_value > -1) {
       rule_value = temp_value;
     } else {
-      rule_value = CharToDouble((char*)tmp_value);     // 0.1      - This saves 9k code over toFLoat()!
+      rule_value = CharToDouble((char*)rule_svalue);   // 0.1      - This saves 9k code over toFLoat()!
     }
     rule_name = rule_name.substring(0, pos);           // "CURRENT"
   }
@@ -218,7 +218,7 @@ bool RulesRuleMatch(byte rule_set, String &event, String &rule)
   const char* str_value = root[rule_task][rule_name];
 
 //snprintf_P(log_data, sizeof(log_data), PSTR("RUL: Task %s, Name %s, Value |%s|, TrigCnt %d, TrigSt %d, Source %s, Json %s"),
-//  rule_task.c_str(), rule_name.c_str(), tmp_value, rules_trigger_count[rule_set], bitRead(rules_triggers[rule_set], rules_trigger_count[rule_set]), event.c_str(), (str_value) ? str_value : "none");
+//  rule_task.c_str(), rule_name.c_str(), rule_svalue, rules_trigger_count[rule_set], bitRead(rules_triggers[rule_set], rules_trigger_count[rule_set]), event.c_str(), (str_value) ? str_value : "none");
 //AddLog(LOG_LEVEL_DEBUG);
 
   if (!root[rule_task][rule_name].success()) { return false; }
@@ -231,13 +231,14 @@ bool RulesRuleMatch(byte rule_set, String &event, String &rule)
     value = CharToDouble((char*)str_value);
     switch (compare) {
       case '>':
-        if (value > rule_value) match = true;
+        if (value > rule_value) { match = true; }
         break;
       case '<':
-        if (value < rule_value) match = true;
+        if (value < rule_value) { match = true; }
         break;
       case '=':
-        if (value == rule_value) match = true;
+//        if (value == rule_value) { match = true; }     // Compare values - only decimals or partly hexadecimals
+        if (!strcasecmp(str_value, rule_svalue)) { match = true; }  // Compare strings - this also works for hexadecimals
         break;
       case ' ':
         match = true;                                  // Json value but not needed
