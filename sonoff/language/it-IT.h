@@ -28,11 +28,12 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v5.13.1a
+ * Updated until v5.14.0
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
 
+#define LANGUAGE_LCID 1040
 // HTML (ISO 639-1) Language Code
 #define D_HTML_LANGUAGE "it"
 
@@ -75,7 +76,7 @@
 #define D_DARKLIGHT "Scuro"
 #define D_DEBUG "Debug"
 #define D_DISABLED "Disabilitato"
-#define D_DISTANCE "Distance"
+#define D_DISTANCE "Distanza"
 #define D_DNS_SERVER "DNS Server"
 #define D_DONE "Fatto"
 #define D_DST_TIME "DST"
@@ -145,14 +146,14 @@
 #define D_SUBNET_MASK "Maschera sottorete"
 #define D_SUBSCRIBE_TO "Sottoscrivi a"
 #define D_SUCCESSFUL "Riuscito"
-#define D_SUNRISE "Sunrise"
-#define D_SUNSET "Sunset"
+#define D_SUNRISE "Alba"
+#define D_SUNSET "Tramonto"
 #define D_TEMPERATURE "Temperatura"
 #define D_TO "a"
 #define D_TOGGLE "Toggle"
 #define D_TOPIC "Topic"
 #define D_TRANSMIT "Trasmesso"
-#define D_TRUE "True"
+#define D_TRUE "Vero"
 #define D_TVOC "TVOC"
 #define D_UPGRADE "aggiornamento"
 #define D_UPLOAD "Invio"
@@ -400,6 +401,7 @@
 #define D_KNX_COMMAND_OTHER "Altro"
 #define D_SENT_TO "invia a"
 #define D_KNX_WARNING "L'indirizzo del gruppo ( 0 / 0 / 0 ) è riservato e non può essere usato."
+#define D_KNX_ENHANCEMENT "Miglioramento Comunicazione"
 
 // xdrv_03_energy.ino
 #define D_ENERGY_TODAY "Energia Oggi"
@@ -461,6 +463,8 @@
 #define D_SENSOR_SR04_ECHO "SR04 Ech"
 #define D_SENSOR_SDM120_TX "SDM120 Tx"
 #define D_SENSOR_SDM120_RX "SDM120 Rx"
+#define D_SENSOR_SDM630_TX "SDM630 Tx"
+#define D_SENSOR_SDM630_RX "SDM630 Rx"
 
 // Units
 #define D_UNIT_AMPERE "A"

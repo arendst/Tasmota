@@ -28,11 +28,12 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v5.13.1c
+ * Updated until v5.14.0a
 \*********************************************************************/
 
 //#define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
 
+#define LANGUAGE_LCID 1026
 // HTML (ISO 639-1) Language Code
 #define D_HTML_LANGUAGE "bg"
 
@@ -109,7 +110,7 @@
 #define D_LWT "LWT"
 #define D_MODULE "Модул"
 #define D_MQTT "MQTT"
-#define D_MULTI_PRESS "многократно натискане"
+#define D_MULTI_PRESS "множествено натискане"
 #define D_NOISE "Шум"
 #define D_NONE "Няма"
 #define D_OFF "Изкл."
@@ -400,6 +401,7 @@
 #define D_KNX_COMMAND_OTHER "Друго"
 #define D_SENT_TO "изпратен до"
 #define D_KNX_WARNING "Груповият адрес ( 0 / 0 / 0 ) е резервиран и не може да бъде използван."
+#define D_KNX_ENHANCEMENT "Подобрена комуникация"
 
 // xdrv_03_energy.ino
 #define D_ENERGY_TODAY "Използвана енергия днес"
@@ -461,6 +463,8 @@
 #define D_SENSOR_SR04_ECHO "SR04 Ech"
 #define D_SENSOR_SDM120_TX "SDM120 Tx"
 #define D_SENSOR_SDM120_RX "SDM120 Rx"
+#define D_SENSOR_SDM630_TX "SDM630 Tx"
+#define D_SENSOR_SDM630_RX "SDM630 Rx"
 
 // Units
 #define D_UNIT_AMPERE "A"

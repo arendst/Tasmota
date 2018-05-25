@@ -72,11 +72,13 @@
 #define D_CMND_RULE "Rule"
 #define D_CMND_RULETIMER "RuleTimer"
 #define D_CMND_EVENT "Event"
+#define D_CMND_VAR "Var"
+#define D_CMND_MEM "Mem"
 
 #define D_JSON_INITIATED "Initiated"
 
-enum RulesCommands { CMND_RULE, CMND_RULETIMER, CMND_EVENT };
-const char kRulesCommands[] PROGMEM = D_CMND_RULE "|" D_CMND_RULETIMER "|" D_CMND_EVENT ;
+enum RulesCommands { CMND_RULE, CMND_RULETIMER, CMND_EVENT, CMND_VAR, CMND_MEM };
+const char kRulesCommands[] PROGMEM = D_CMND_RULE "|" D_CMND_RULETIMER "|" D_CMND_EVENT "|" D_CMND_VAR "|" D_CMND_MEM ;
 
 String rules_event_value;
 unsigned long rules_timer[MAX_RULE_TIMERS] = { 0 };
@@ -84,9 +86,11 @@ uint8_t rules_quota = 0;
 long rules_new_power = -1;
 long rules_old_power = -1;
 
-uint32_t rules_triggers = 0;
-uint8_t rules_trigger_count = 0;
+uint32_t rules_triggers[MAX_RULE_SETS] = { 0 };
+uint8_t rules_trigger_count[MAX_RULE_SETS] = { 0 };
 uint8_t rules_teleperiod = 0;
+
+char vars[RULES_MAX_VARS][10] = { 0 };
 
 /*******************************************************************************************/
 
@@ -137,13 +141,14 @@ bool TimeReached(unsigned long timer)
 
 /*******************************************************************************************/
 
-bool RulesRuleMatch(String &event, String &rule)
+bool RulesRuleMatch(byte rule_set, String &event, String &rule)
 {
   // event = {"INA219":{"Voltage":4.494,"Current":0.020,"Power":0.089}}
   // event = {"System":{"Boot":1}}
   // rule = "INA219#CURRENT>0.100"
 
   bool match = false;
+  char stemp[10];
 
   // Step1: Analyse rule
   int pos = rule.indexOf('#');
@@ -174,15 +179,32 @@ bool RulesRuleMatch(String &event, String &rule)
     }
   }
 
-  char tmp_value[CMDSZ] = { 0 };
+  char rule_svalue[CMDSZ] = { 0 };
   double rule_value = 0;
   if (pos > 0) {
-    snprintf(tmp_value, sizeof(tmp_value), rule_name.substring(pos + 1).c_str());
-    int temp_value = GetStateNumber(tmp_value);
+    String rule_param = rule_name.substring(pos + 1);
+    for (byte i = 0; i < RULES_MAX_VARS; i++) {
+      snprintf_P(stemp, sizeof(stemp), PSTR("%%VAR%d%%"), i +1);
+      if (rule_param.startsWith(stemp)) {
+        rule_param = vars[i];
+        break;
+      }
+    }
+    for (byte i = 0; i < RULES_MAX_MEMS; i++) {
+      snprintf_P(stemp, sizeof(stemp), PSTR("%%MEM%d%%"), i +1);
+      if (rule_param.startsWith(stemp)) {
+        rule_param = Settings.mems[i];
+        break;
+      }
+    }
+    rule_param.toUpperCase();
+    snprintf(rule_svalue, sizeof(rule_svalue), rule_param.c_str());
+
+    int temp_value = GetStateNumber(rule_svalue);
     if (temp_value > -1) {
       rule_value = temp_value;
     } else {
-      rule_value = CharToDouble((char*)tmp_value);     // 0.1      - This saves 9k code over toFLoat()!
+      rule_value = CharToDouble((char*)rule_svalue);   // 0.1      - This saves 9k code over toFLoat()!
     }
     rule_name = rule_name.substring(0, pos);           // "CURRENT"
   }
@@ -196,7 +218,7 @@ bool RulesRuleMatch(String &event, String &rule)
   const char* str_value = root[rule_task][rule_name];
 
 //snprintf_P(log_data, sizeof(log_data), PSTR("RUL: Task %s, Name %s, Value |%s|, TrigCnt %d, TrigSt %d, Source %s, Json %s"),
-//  rule_task.c_str(), rule_name.c_str(), tmp_value, rules_trigger_count, bitRead(rules_triggers, rules_trigger_count), event.c_str(), (str_value) ? str_value : "none");
+//  rule_task.c_str(), rule_name.c_str(), rule_svalue, rules_trigger_count[rule_set], bitRead(rules_triggers[rule_set], rules_trigger_count[rule_set]), event.c_str(), (str_value) ? str_value : "none");
 //AddLog(LOG_LEVEL_DEBUG);
 
   if (!root[rule_task][rule_name].success()) { return false; }
@@ -209,13 +231,14 @@ bool RulesRuleMatch(String &event, String &rule)
     value = CharToDouble((char*)str_value);
     switch (compare) {
       case '>':
-        if (value > rule_value) match = true;
+        if (value > rule_value) { match = true; }
         break;
       case '<':
-        if (value < rule_value) match = true;
+        if (value < rule_value) { match = true; }
         break;
       case '=':
-        if (value == rule_value) match = true;
+//        if (value == rule_value) { match = true; }     // Compare values - only decimals or partly hexadecimals
+        if (!strcasecmp(str_value, rule_svalue)) { match = true; }  // Compare strings - this also works for hexadecimals
         break;
       case ' ':
         match = true;                                  // Json value but not needed
@@ -225,13 +248,13 @@ bool RulesRuleMatch(String &event, String &rule)
 
   if (Settings.flag.rules_once) {
     if (match) {                                       // Only allow match state changes
-      if (!bitRead(rules_triggers, rules_trigger_count)) {
-        bitSet(rules_triggers, rules_trigger_count);
+      if (!bitRead(rules_triggers[rule_set], rules_trigger_count[rule_set])) {
+        bitSet(rules_triggers[rule_set], rules_trigger_count[rule_set]);
       } else {
         match = false;
       }
     } else {
-      bitClear(rules_triggers, rules_trigger_count);
+      bitClear(rules_triggers[rule_set], rules_trigger_count[rule_set]);
     }
   }
 
@@ -240,25 +263,19 @@ bool RulesRuleMatch(String &event, String &rule)
 
 /*******************************************************************************************/
 
-bool RulesProcess()
+bool RuleSetProcess(byte rule_set, String &event_saved)
 {
   bool serviced = false;
-  char vars[RULES_MAX_VARS][10] = { 0 };
   char stemp[10];
 
   delay(0);                                               // Prohibit possible loop software watchdog
 
-//snprintf_P(log_data, sizeof(log_data), PSTR("RUL: Event = %s, Rule = %s"), mqtt_data, Settings.rules);
+//snprintf_P(log_data, sizeof(log_data), PSTR("RUL: Event = %s, Rule = %s"), event_saved.c_str(), Settings.rules[rule_set]);
 //AddLog(LOG_LEVEL_DEBUG);
 
-  if (!Settings.flag.rules_enabled) { return serviced; }  // Not enabled
-  if (!strlen(Settings.rules)) { return serviced; }       // No rules
+  String rules = Settings.rules[rule_set];
 
-  String event_saved = mqtt_data;
-  event_saved.toUpperCase();
-  String rules = Settings.rules;
-
-  rules_trigger_count = 0;
+  rules_trigger_count[rule_set] = 0;
   int plen = 0;
   while (true) {
     rules = rules.substring(plen);                        // Select relative to last rule
@@ -283,54 +300,69 @@ bool RulesProcess()
 //snprintf_P(log_data, sizeof(log_data), PSTR("RUL: Event |%s|, Rule |%s|, Command(s) |%s|"), event.c_str(), event_trigger.c_str(), commands.c_str());
 //AddLog(LOG_LEVEL_DEBUG);
 
-    if (RulesRuleMatch(event, event_trigger)) {
+    if (RulesRuleMatch(rule_set, event, event_trigger)) {
       commands.trim();
       String ucommand = commands;
       ucommand.toUpperCase();
-      if (ucommand.startsWith("VAR")) {
-        uint8_t idx = ucommand.charAt(3) - '1';
-        if ((idx >= 0) && (idx < RULES_MAX_VARS)) { snprintf(vars[idx], sizeof(vars[idx]), rules_event_value.c_str()); }
-      } else {
-//        if (!ucommand.startsWith("BACKLOG")) { commands = "backlog " + commands; }  // Always use Backlog to prevent power race condition
-        commands.replace(F("%value%"), rules_event_value);
-        for (byte i = 0; i < RULES_MAX_VARS; i++) {
-          if (strlen(vars[i])) {
-            snprintf_P(stemp, sizeof(stemp), PSTR("%%var%d%%"), i +1);
-            commands.replace(stemp, vars[i]);
-          }
-        }
-        char command[commands.length() +1];
-        snprintf(command, sizeof(command), commands.c_str());
-
-        snprintf_P(log_data, sizeof(log_data), PSTR("RUL: %s performs \"%s\""), event_trigger.c_str(), command);
-        AddLog(LOG_LEVEL_INFO);
-
-//        snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, D_CMND_RULE, D_JSON_INITIATED);
-//        MqttPublishPrefixTopic_P(RESULT_OR_STAT, PSTR(D_CMND_RULE));
-
-        ExecuteCommand(command);
+//      if (!ucommand.startsWith("BACKLOG")) { commands = "backlog " + commands; }  // Always use Backlog to prevent power race exception
+      if (ucommand.indexOf("EVENT ") != -1) { commands = "backlog " + commands; }  // Always use Backlog with event to prevent rule event loop exception
+      commands.replace(F("%value%"), rules_event_value);
+      for (byte i = 0; i < RULES_MAX_VARS; i++) {
+        snprintf_P(stemp, sizeof(stemp), PSTR("%%var%d%%"), i +1);
+        commands.replace(stemp, vars[i]);
       }
+      for (byte i = 0; i < RULES_MAX_MEMS; i++) {
+        snprintf_P(stemp, sizeof(stemp), PSTR("%%mem%d%%"), i +1);
+        commands.replace(stemp, Settings.mems[i]);
+      }
+      char command[commands.length() +1];
+      snprintf(command, sizeof(command), commands.c_str());
+
+      snprintf_P(log_data, sizeof(log_data), PSTR("RUL: %s performs \"%s\""), event_trigger.c_str(), command);
+      AddLog(LOG_LEVEL_INFO);
+
+//      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, D_CMND_RULE, D_JSON_INITIATED);
+//      MqttPublishPrefixTopic_P(RESULT_OR_STAT, PSTR(D_CMND_RULE));
+
+      ExecuteCommand(command);
       serviced = true;
     }
-    rules_trigger_count++;
+    rules_trigger_count[rule_set]++;
   }
   return serviced;
 }
 
 /*******************************************************************************************/
 
+bool RulesProcess()
+{
+  bool serviced = false;
+
+  String event_saved = mqtt_data;
+  event_saved.toUpperCase();
+
+  for (byte i = 0; i < MAX_RULE_SETS; i++) {
+    if (strlen(Settings.rules[i]) && bitRead(Settings.rule_enabled, i)) {
+      if (RuleSetProcess(i, event_saved)) { serviced = true; }
+    }
+  }
+  return serviced;
+}
+
 void RulesInit()
 {
-  if (Settings.rules[0] == '\0') {
-    Settings.flag.rules_enabled = 0;
-    Settings.flag.rules_once = 0;
+  for (byte i = 0; i < MAX_RULE_SETS; i++) {
+    if (Settings.rules[i][0] == '\0') {
+      bitWrite(Settings.rule_enabled, i, 0);
+      bitWrite(Settings.rule_once, i, 0);
+    }
   }
   rules_teleperiod = 0;
 }
 
 void RulesEvery50ms()
 {
-  if (Settings.flag.rules_enabled) {
+  if (Settings.rule_enabled) {  // Any rule enabled
     if (rules_new_power != rules_old_power) {
       if (rules_old_power != -1) {
         for (byte i = 0; i < devices_present; i++) {
@@ -362,7 +394,7 @@ void RulesEvery50ms()
 
 void RulesEverySecond()
 {
-  if (Settings.flag.rules_enabled) {
+  if (Settings.rule_enabled) {  // Any rule enabled
     for (byte i = 0; i < MAX_RULE_TIMERS; i++) {
       if (rules_timer[i] != 0L) {           // Timer active?
         if (TimeReached(rules_timer[i])) {  // Timer finished?
@@ -397,39 +429,32 @@ boolean RulesCommand()
   if (-1 == command_code) {
     serviced = false;  // Unknown command
   }
-  else if (CMND_RULE == command_code) {
-    if ((XdrvMailbox.data_len > 0) && (XdrvMailbox.data_len < sizeof(Settings.rules))) {
+  else if ((CMND_RULE == command_code) && (index > 0) && (index <= MAX_RULE_SETS)) {
+    if ((XdrvMailbox.data_len > 0) && (XdrvMailbox.data_len < sizeof(Settings.rules[index -1]))) {
       if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 6)) {
         switch (XdrvMailbox.payload) {
         case 0: // Off
         case 1: // On
-          Settings.flag.rules_enabled = XdrvMailbox.payload;
+          bitWrite(Settings.rule_enabled, index -1, XdrvMailbox.payload);
           break;
         case 2: // Toggle
-          Settings.flag.rules_enabled ^= 1;
+          bitWrite(Settings.rule_enabled, index -1, bitRead(Settings.rule_enabled, index -1) ^1);
           break;
         case 4: // Off
         case 5: // On
-          Settings.flag.rules_once = XdrvMailbox.payload &1;
+          bitWrite(Settings.rule_once, index -1, XdrvMailbox.payload &1);
           break;
         case 6: // Toggle
-          Settings.flag.rules_once ^= 1;
+          bitWrite(Settings.rule_once, index -1, bitRead(Settings.rule_once, index -1) ^1);
           break;
         }
       } else {
-/*
-        String uc_data = XdrvMailbox.data;  // Do not allow Rule to be used within a rule
-        uc_data.toUpperCase();
-        String uc_command = command;
-        uc_command += " ";    // Distuingish from RuleTimer
-        uc_command.toUpperCase();
-        if (!uc_data.indexOf(uc_command)) { strlcpy(Settings.rules, XdrvMailbox.data, sizeof(Settings.rules)); }
-*/
-        strlcpy(Settings.rules, XdrvMailbox.data, sizeof(Settings.rules));
+        strlcpy(Settings.rules[index -1], ('"' == XdrvMailbox.data[0]) ? "" : XdrvMailbox.data, sizeof(Settings.rules[index -1]));
       }
-      rules_triggers = 0;  // Reset once flag
+      rules_triggers[index -1] = 0;  // Reset once flag
     }
-    snprintf_P (mqtt_data, sizeof(mqtt_data), PSTR("{\"%s\":\"%s\",\"Once\":\"%s\",\"Rules\":\"%s\"}"), command, GetStateText(Settings.flag.rules_enabled), GetStateText(Settings.flag.rules_once), Settings.rules);
+    snprintf_P (mqtt_data, sizeof(mqtt_data), PSTR("{\"%s%d\":\"%s\",\"Once\":\"%s\",\"Free\":%d,\"Rules\":\"%s\"}"),
+      command, index, GetStateText(bitRead(Settings.rule_enabled, index -1)), GetStateText(bitRead(Settings.rule_once, index -1)), sizeof(Settings.rules[index -1]) - strlen(Settings.rules[index -1]) -1, Settings.rules[index -1]);
   }
   else if ((CMND_RULETIMER == command_code) && (index > 0) && (index <= MAX_RULE_TIMERS)) {
     if (XdrvMailbox.data_len > 0) {
@@ -452,6 +477,18 @@ boolean RulesCommand()
       RulesProcess();
     }
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, D_JSON_DONE);
+  }
+  else if ((CMND_VAR == command_code) && (index > 0) && (index <= RULES_MAX_VARS)) {
+    if (XdrvMailbox.data_len > 0) {
+      strlcpy(vars[index -1], ('"' == XdrvMailbox.data[0]) ? "" : XdrvMailbox.data, sizeof(vars[index -1]));
+    }
+    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, index, vars[index -1]);
+  }
+  else if ((CMND_MEM == command_code) && (index > 0) && (index <= RULES_MAX_MEMS)) {
+    if (XdrvMailbox.data_len > 0) {
+      strlcpy(Settings.mems[index -1], ('"' == XdrvMailbox.data[0]) ? "" : XdrvMailbox.data, sizeof(Settings.mems[index -1]));
+    }
+    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, index, Settings.mems[index -1]);
   }
   else serviced = false;  // Unknown command
 
@@ -483,6 +520,9 @@ boolean Xdrv10(byte function)
       break;
     case FUNC_COMMAND:
       result = RulesCommand();
+      break;
+    case FUNC_RULES_PROCESS:
+      result = RulesProcess();
       break;
   }
   return result;

@@ -57,6 +57,7 @@
 #define D_JSON_EVERY "Every"
 #define D_JSON_FAILED "Failed"
 #define D_JSON_FALLBACKTOPIC "FallbackTopic"
+#define D_JSON_FEATURES "Features"
 #define D_JSON_FLASHMODE "FlashMode"
 #define D_JSON_FLASHSIZE "FlashSize"
 #define D_JSON_FREEMEMORY "Free"
@@ -390,6 +391,9 @@
   #define QUOTEME_1(x) #x
   #define INCLUDE_FILE(x) QUOTEME(language/x.h)
   #include INCLUDE_FILE(MY_LANGUAGE)
+#endif
+#ifndef LANGUAGE_LCID
+  #define LANGUAGE_LCID 2057  // en-GB
 #endif
 
 // Common
