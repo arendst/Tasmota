@@ -1,0 +1,37 @@
+sudo: false
+language: bash
+os:
+  - linux
+
+script:
+  - /sbin/start-stop-daemon --start --quiet --pidfile /tmp/custom_xvfb_1.pid --make-pidfile --background --exec /usr/bin/Xvfb -- :1 -ac -screen 0 1280x1024x16
+  - sleep 3
+  - export DISPLAY=:1.0
+  - wget http://downloads.arduino.cc/arduino-1.6.5-linux64.tar.xz
+  - tar xf arduino-1.6.5-linux64.tar.xz
+  - mv arduino-1.6.5 $HOME/arduino_ide
+  - export PATH="$HOME/arduino_ide:$PATH"
+  - which arduino
+  - mkdir -p $HOME/Arduino/libraries
+  - cp -r $TRAVIS_BUILD_DIR $HOME/Arduino/libraries/ESPAsyncUDP
+  - cd $HOME/arduino_ide/hardware
+  - mkdir esp8266com
+  - cd esp8266com
+  - git clone https://github.com/esp8266/Arduino.git esp8266
+  - cd esp8266/tools
+  - python get.py
+  - source $TRAVIS_BUILD_DIR/travis/common.sh
+  - arduino --board esp8266com:esp8266:generic --save-prefs
+  - arduino --get-pref sketchbook.path
+  - build_sketches arduino $HOME/Arduino/libraries/ESPAsyncUDP esp8266
+
+notifications:
+  email:
+    on_success: change
+    on_failure: change
+  webhooks:
+    urls:
+      - https://webhooks.gitter.im/e/60e65d0c78ea0a920347
+    on_success: change  # options: [always|never|change] default: always
+    on_failure: always  # options: [always|never|change] default: always
+    on_start: false     # default: false

@@ -110,6 +110,7 @@ void IrReceiveCheck()
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_IRRECEIVED "\":{\"" D_JSON_IR_PROTOCOL "\":\"%s\",\"" D_JSON_IR_BITS "\":%d,\"" D_JSON_IR_DATA "\":\"%lX\"}}"),
         GetTextIndexed(sirtype, sizeof(sirtype), iridx, kIrRemoteProtocols), results.bits, (uint32_t)results.value);
       MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_IRRECEIVED));
+      XdrvRulesProcess();
 #ifdef USE_DOMOTICZ
       unsigned long value = results.value | (iridx << 28);  // [Protocol:4, Data:28]
       DomoticzSensor(DZ_COUNT, value);                      // Send data as Domoticz Counter value
@@ -298,7 +299,7 @@ boolean IrSendCommand()
         protocol = root[UpperCase_P(parm_uc, PSTR(D_JSON_IR_PROTOCOL))];
         bits = root[UpperCase_P(parm_uc, PSTR(D_JSON_IR_BITS))];
         data = strtoul(root[UpperCase_P(parm_uc, PSTR(D_JSON_IR_DATA))], NULL, 0);
-        if (protocol && bits && data) {
+        if (protocol && bits) {
           int protocol_code = GetCommandCode(protocol_text, sizeof(protocol_text), protocol, kIrRemoteProtocols);
 
           snprintf_P(log_data, sizeof(log_data), PSTR("IRS: protocol_text %s, protocol %s, bits %d, data %u (0x%lX), protocol_code %d"),
@@ -384,7 +385,7 @@ boolean IrSendCommand()
   }
 #endif // USE_IR_HVAC
   else serviced = false; // Unknown command
-  
+
   return serviced;
 }
 

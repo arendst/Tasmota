@@ -143,6 +143,7 @@ extern "C" uint32_t _SPIFFS_end;
 
 uint32_t settings_hash = 0;
 uint32_t settings_location = SETTINGS_LOCATION;
+uint8_t *settings_buffer = NULL;
 
 /********************************************************************************************/
 /*
@@ -165,6 +166,24 @@ void SetFlashModeDout()
     }
   }
   delete[] _buffer;
+}
+
+void SettingsBufferFree()
+{
+  if (settings_buffer != NULL) {
+    free(settings_buffer);
+    settings_buffer = NULL;
+  }
+}
+
+bool SettingsBufferAlloc()
+{
+  SettingsBufferFree();
+  if (!(settings_buffer = (uint8_t *)malloc(sizeof(Settings)))) {
+    AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_UPLOAD_ERR_2));  // Not enough (memory) space
+    return false;
+  }
+  return true;
 }
 
 uint32_t GetSettingsHash()
@@ -870,7 +889,7 @@ void SettingsDelta()
       Settings.longitude = (int)((double)LONGITUDE * 1000000);
     }
     if (Settings.version < 0x050C000B) {
-      memset(&Settings.rules, 0x00, sizeof(Settings.rules));
+      Settings.rules[0][0] = '\0';
     }
     if (Settings.version < 0x050C000D) {
       memmove(Settings.rules, Settings.rules -256, sizeof(Settings.rules));  // move rules up by 256 bytes
@@ -886,6 +905,13 @@ void SettingsDelta()
     }
     if (Settings.version < 0x050D0103) {
       SettingsDefaultSet_5_13_1c();
+    }
+    if (Settings.version < 0x050E0002) {
+      for (byte i = 1; i < MAX_RULE_SETS; i++) {
+        Settings.rules[i][0] = '\0';
+      }
+      Settings.rule_enabled = Settings.flag.rules_enabled;
+      Settings.rule_once = Settings.flag.rules_once;
     }
 
     Settings.version = VERSION;

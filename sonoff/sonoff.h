@@ -52,10 +52,13 @@ typedef unsigned long power_t;              // Power (Relay) type
 #define MAX_DOMOTICZ_SNS_IDX   12           // Max number of Domoticz sensors indices
 #define MAX_KNX_GA             10           // Max number of KNX Group Addresses to read that can be set
 #define MAX_KNX_CB             10           // Max number of KNX Group Addresses to write that can be set
+#define RULES_MAX_MEMS         5            // Max number of saved vars
+#define MAX_RULE_SETS          3            // Max number of rule sets of size 512 characters
 #define MAX_RULE_SIZE          512          // Max number of characters in rules
 
 #define MQTT_TOKEN_PREFIX      "%prefix%"   // To be substituted by mqtt_prefix[x]
 #define MQTT_TOKEN_TOPIC       "%topic%"    // To be substituted by mqtt_topic, mqtt_grptopic, mqtt_buttontopic, mqtt_switchtopic
+#define MQTT_TOKEN_ID          "%id%"       // To be substituted by mqtt_topic, mqtt_grptopic, mqtt_buttontopic, mqtt_switchtopic
 
 #define WIFI_HOSTNAME          "%s-%04d"    // Expands to <MQTT_TOPIC>-<last 4 decimal chars of MAC address>
 
@@ -88,7 +91,7 @@ typedef unsigned long power_t;              // Power (Relay) type
 #define SERIALLOG_TIMER        600          // Seconds to disable SerialLog
 #define OTA_ATTEMPTS           5            // Number of times to try fetching the new firmware
 
-#define INPUT_BUFFER_SIZE      512          // Max number of characters in (serial and http) command buffer
+#define INPUT_BUFFER_SIZE      520          // Max number of characters in (serial and http) command buffer
 #define CMDSZ                  24           // Max number of characters in command
 #define TOPSZ                  100          // Max number of characters in topic string
 #define LOGSZ                  512          // Max number of characters in log
@@ -114,6 +117,9 @@ typedef unsigned long power_t;              // Power (Relay) type
 #define max(a,b) ((a)>(b)?(a):(b))
 */
 
+#define STR_HELPER(x) #x
+#define STR(x) STR_HELPER(x)
+
 //enum ws2812NeopixelbusFeature { NEO_RGB, NEO_GRB, NEO_BRG, NEO_RBG, NEO_3LED, NEO_RGBW, NEO_GRBW };  // Doesn't work
 #define NEO_RGB                0            // Neopixel RGB leds
 #define NEO_GRB                1            // Neopixel GRB leds
@@ -132,6 +138,18 @@ typedef unsigned long power_t;              // Power (Relay) type
 #define DAWN_CIVIL             -6.0
 #define DAWN_NAUTIC            -12.0
 #define DAWN_ASTRONOMIC        -18.0
+
+// Sensor definition for KNX Driver
+#define KNX_TEMPERATURE        17
+#define KNX_HUMIDITY           18
+#define KNX_ENERGY_VOLTAGE     19
+#define KNX_ENERGY_CURRENT     20
+#define KNX_ENERGY_POWER       21
+#define KNX_ENERGY_POWERFACTOR 22
+#define KNX_ENERGY_DAILY       23
+#define KNX_ENERGY_START       24
+#define KNX_ENERGY_TOTAL       25
+#define KNX_MAX_device_param   25
 
 /*********************************************************************************************\
  * Enumeration
@@ -172,7 +190,7 @@ enum LichtSubtypes {LST_NONE, LST_SINGLE, LST_COLDWARM, LST_RGB, LST_RGBW, LST_R
 enum LichtSchemes {LS_POWER, LS_WAKEUP, LS_CYCLEUP, LS_CYCLEDN, LS_RANDOM, LS_MAX};
 
 enum XsnsFunctions {FUNC_INIT, FUNC_LOOP, FUNC_EVERY_50_MSECOND, FUNC_EVERY_SECOND, FUNC_PREP_BEFORE_TELEPERIOD, FUNC_JSON_APPEND, FUNC_WEB_APPEND, FUNC_SAVE_BEFORE_RESTART,
-                    FUNC_COMMAND, FUNC_MQTT_SUBSCRIBE, FUNC_MQTT_INIT, FUNC_MQTT_DATA, FUNC_SET_POWER, FUNC_SHOW_SENSOR};
+                    FUNC_COMMAND, FUNC_MQTT_SUBSCRIBE, FUNC_MQTT_INIT, FUNC_MQTT_DATA, FUNC_SET_POWER, FUNC_SHOW_SENSOR, FUNC_RULES_PROCESS};
 
 const uint8_t kDefaultRfCode[9] PROGMEM = { 0x21, 0x16, 0x01, 0x0E, 0x03, 0x48, 0x2E, 0x1A, 0x00 };
 
