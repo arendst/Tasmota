@@ -94,6 +94,26 @@ void NovaSdsInit()
   }
 }
 
+void NovaSdsStart()
+{
+  AddLog_P(LOG_LEVEL_DEBUG, "SDS: start");
+  const uint8_t novasds_start_cmd[] = {0xAA, 0xB4, 0x06, 0x01, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0x06, 0xAB};
+  NovaSdsSerial->write(novasds_start_cmd, sizeof(novasds_start_cmd));
+  NovaSdsSerial->flush();
+}
+
+void NovaSdsStop()
+{
+  AddLog_P(LOG_LEVEL_DEBUG, "SDS: stop");
+  const uint8_t novasds_stop_cmd[] = {0xAA, 0xB4, 0x06, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0x05, 0xAB};
+  NovaSdsSerial->write(novasds_stop_cmd, sizeof(novasds_stop_cmd));
+  NovaSdsSerial->flush();
+  // drain any old data
+  while (NovaSdsSerial->available()) {
+		NovaSdsSerial->read();
+	}
+}
+
 #ifdef USE_WEBSERVER
 const char HTTP_SDS0X1_SNS[] PROGMEM = "%s"
   "{s}SDS0X1 " D_ENVIRONMENTAL_CONCENTRATION " 2.5 " D_UNIT_MICROMETER "{m}%s " D_UNIT_MICROGRAM_PER_CUBIC_METER "{e}"
