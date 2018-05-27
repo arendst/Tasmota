@@ -37,7 +37,8 @@ struct sds011data {
   uint16_t pm25;
 } novasds_data;
 
-bool NovaSdsReadData()
+
+bool NovaSdsReadData(bool publish)
 {
   if (! NovaSdsSerial->available()) return false;
 
@@ -51,7 +52,9 @@ bool NovaSdsReadData()
   NovaSdsSerial->flush();
 
   AddLogSerial(LOG_LEVEL_DEBUG_MORE, d, 8);
-
+  if (!publish){
+    return false;
+  }
   if (d[7] == ((d[1] + d[2] + d[3] + d[4] + d[5] + d[6]) & 0xFF)) {
     novasds_data.pm25 = (d[1] + 256 * d[2]);
     novasds_data.pm100 = (d[3] + 256 * d[4]);
@@ -59,9 +62,6 @@ bool NovaSdsReadData()
     AddLog_P(LOG_LEVEL_DEBUG, PSTR("SDS: " D_CHECKSUM_FAILURE));
     return false;
   }
-
-  novasds_valid = 10;
-
   return true;
 }
 
