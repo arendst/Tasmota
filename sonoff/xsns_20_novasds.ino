@@ -31,6 +31,10 @@ TasmotaSerial *NovaSdsSerial;
 
 uint8_t novasds_type = 1;
 uint8_t novasds_valid = 0;
+uint8_t novasds_running = 1;
+uint8_t novasds_read_tick = 30;
+uint8_t novasds_wakup_tick = 179;
+uint8_t novasds_ticker = 0;
 
 struct sds011data {
   uint16_t pm100;
@@ -69,12 +73,35 @@ bool NovaSdsReadData(bool publish)
 
 void NovaSdsSecond()                 // Every second
 {
-  if (NovaSdsReadData()) {
-    novasds_valid = 10;
-  } else {
-    if (novasds_valid) {
-      novasds_valid--;
+  if (novasds_ticker < novasds_read_tick) {
+    // wake up the sensor and wait read ticks to stabalize the sensor
+    if (!novasds_running) {
+      NovaSdsStart();
+      novasds_running = 1;
     }
+
+    // drain the serial without publishing data
+    NovaSdsReadData(false);
+    novasds_ticker++;
+
+  } else if (novasds_ticker == novasds_read_tick) {
+
+    // try to take a single stable reading and sleep the sensor
+    if (NovaSdsReadData(true)) {
+      novasds_valid = 1;
+      NovaSdsStop();
+      novasds_running = 0;
+      novasds_ticker++;
+    } else {
+      novasds_valid = 0;
+    }
+
+  } else if (novasds_ticker >= novasds_wakup_tick) {
+    // reset the counter
+    novasds_ticker = 0;
+  } else {
+    // sensor is sleeping keep waiting
+    novasds_ticker++;
   }
 }
 
