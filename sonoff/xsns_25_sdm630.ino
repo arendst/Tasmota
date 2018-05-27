@@ -317,8 +317,8 @@ void SDM630Show(boolean json)
     active_power_l1, active_power_l2, active_power_l3,
     reactive_power_l1, reactive_power_l2, reactive_power_l3,
     power_factor_l1, power_factor_l2, power_factor_l3, energy_total);
-  }
 #endif  // USE_WEBSERVER
+  }
 }
 
 /*********************************************************************************************\

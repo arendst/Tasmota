@@ -328,7 +328,6 @@ uint8_t upload_progress_dot_count;
 uint8_t config_block_count = 0;
 uint8_t config_xor_on = 0;
 uint8_t config_xor_on_set = CONFIG_FILE_XOR;
-uint8_t *settings_new = NULL;
 
 // Helper function to avoid code duplication (saves 4k Flash)
 static void WebGetArg(const char* arg, char* out, size_t max)
@@ -639,96 +638,6 @@ void HandleConfiguration()
   ShowPage(page);
 }
 
-boolean GetUsedInModule(byte val, uint8_t *arr)
-{
-  int offset = 0;
-
-  if (!val) { return false; }  // None
-#ifndef USE_I2C
-  if (GPIO_I2C_SCL == val) { return true; }
-  if (GPIO_I2C_SDA == val) { return true; }
-#endif
-#ifndef USE_SR04
-  if (GPIO_SR04_TRIG == val) { return true; }
-  if (GPIO_SR04_ECHO == val) { return true; }
-#endif
-#ifndef USE_WS2812
-  if (GPIO_WS2812 == val) { return true; }
-#endif
-#ifndef USE_IR_REMOTE
-  if (GPIO_IRSEND == val) { return true; }
-#ifndef USE_IR_RECEIVE
-  if (GPIO_IRRECV == val) { return true; }
-#endif
-#endif
-#ifndef USE_MHZ19
-  if (GPIO_MHZ_TXD == val) { return true; }
-  if (GPIO_MHZ_RXD == val) { return true; }
-#endif
-#ifndef USE_PZEM004T
-  if (GPIO_PZEM_TX == val) { return true; }
-  if (GPIO_PZEM_RX == val) { return true; }
-#endif
-#ifndef USE_SENSEAIR
-  if (GPIO_SAIR_TX == val) { return true; }
-  if (GPIO_SAIR_RX == val) { return true; }
-#endif
-#ifndef USE_SPI
-  if (GPIO_SPI_CS == val) { return true; }
-  if (GPIO_SPI_DC == val) { return true; }
-#endif
-#ifndef USE_DISPLAY
-  if (GPIO_BACKLIGHT == val) { return true; }
-#endif
-#ifndef USE_PMS5003
-  if (GPIO_PMS5003 == val) { return true; }
-#endif
-#ifndef USE_NOVA_SDS
-  if (GPIO_SDS0X1 == val) { return true; }
-#endif
-#ifndef USE_SERIAL_BRIDGE
-  if (GPIO_SBR_TX == val) { return true; }
-  if (GPIO_SBR_RX == val) { return true; }
-#endif
-#ifndef USE_SR04
-  if (GPIO_SR04_TRIG == val) { return true; }
-  if (GPIO_SR04_ECHO == val) { return true; }
-#endif
-#ifndef USE_SDM120
-  if (GPIO_SDM120_TX == val) { return true; }
-  if (GPIO_SDM120_RX == val) { return true; }
-#endif
-#ifndef USE_SDM630
-  if (GPIO_SDM630_TX == val) { return true; }
-  if (GPIO_SDM630_RX == val) { return true; }
-#endif
-  if ((val >= GPIO_REL1) && (val < GPIO_REL1 + MAX_RELAYS)) {
-    offset = (GPIO_REL1_INV - GPIO_REL1);
-  }
-  if ((val >= GPIO_REL1_INV) && (val < GPIO_REL1_INV + MAX_RELAYS)) {
-    offset = -(GPIO_REL1_INV - GPIO_REL1);
-  }
-
-  if ((val >= GPIO_LED1) && (val < GPIO_LED1 + MAX_LEDS)) {
-    offset = (GPIO_LED1_INV - GPIO_LED1);
-  }
-  if ((val >= GPIO_LED1_INV) && (val < GPIO_LED1_INV + MAX_LEDS)) {
-    offset = -(GPIO_LED1_INV - GPIO_LED1);
-  }
-
-  if ((val >= GPIO_PWM1) && (val < GPIO_PWM1 + MAX_PWMS)) {
-    offset = (GPIO_PWM1_INV - GPIO_PWM1);
-  }
-  if ((val >= GPIO_PWM1_INV) && (val < GPIO_PWM1_INV + MAX_PWMS)) {
-    offset = -(GPIO_PWM1_INV - GPIO_PWM1);
-  }
-  for (byte i = 0; i < MAX_GPIO_PIN; i++) {
-    if (arr[i] == val) { return true; }
-    if (arr[i] == val + offset) { return true; }
-  }
-  return false;
-}
-
 void HandleModuleConfiguration()
 {
   if (HttpUser()) { return; }
@@ -1005,25 +914,36 @@ void HandleBackupConfiguration()
   if (HttpUser()) { return; }
   AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_BACKUP_CONFIGURATION));
 
-  uint8_t buffer[sizeof(Settings)];
+  if (!SettingsBufferAlloc()) { return; }
 
   WiFiClient myClient = WebServer->client();
-  WebServer->setContentLength(sizeof(buffer));
+  WebServer->setContentLength(sizeof(Settings));
 
   char attachment[100];
   char friendlyname[sizeof(Settings.friendlyname[0])];
   snprintf_P(attachment, sizeof(attachment), PSTR("attachment; filename=Config_%s_%s.dmp"), NoAlNumToUnderscore(friendlyname, Settings.friendlyname[0]), my_version);
   WebServer->sendHeader(F("Content-Disposition"), attachment);
+
   WebServer->send(200, FPSTR(HDR_CTYPE_STREAM), "");
-  memcpy(buffer, &Settings, sizeof(buffer));
-  buffer[0] = CONFIG_FILE_SIGN;
-  buffer[1] = (!config_xor_on_set) ? 0 : 1;
-  if (buffer[1]) {
-    for (uint16_t i = 2; i < sizeof(buffer); i++) {
-      buffer[i] ^= (config_xor_on_set +i);
+  memcpy(settings_buffer, &Settings, sizeof(Settings));
+  settings_buffer[0] = CONFIG_FILE_SIGN;
+  settings_buffer[1] = (!config_xor_on_set) ? 0 : 1;
+  if (settings_buffer[1]) {
+    for (uint16_t i = 2; i < sizeof(Settings); i++) {
+      settings_buffer[i] ^= (config_xor_on_set +i);
     }
   }
-  myClient.write((const char*)buffer, sizeof(buffer));
+
+#ifdef ARDUINO_ESP8266_RELEASE_2_3_0
+  size_t written = myClient.write((const char*)settings_buffer, sizeof(Settings));
+  if (written < sizeof(Settings)) {  // https://github.com/esp8266/Arduino/issues/3218
+    myClient.write((const char*)settings_buffer +written, sizeof(Settings) -written);
+  }
+#else
+  myClient.write((const char*)settings_buffer, sizeof(Settings));
+#endif
+
+  SettingsBufferFree();
 }
 
 void HandleSaveSettings()
@@ -1276,14 +1196,6 @@ void HandleUpgradeFirmwareStart()
   ExecuteCommand(svalue);
 }
 
-void SettingsNewFree()
-{
-  if (settings_new != NULL) {
-    free(settings_new);
-    settings_new = NULL;
-  }
-}
-
 void HandleUploadDone()
 {
   if (HttpUser()) { return; }
@@ -1323,7 +1235,7 @@ void HandleUploadDone()
     page += FPSTR(HTTP_MSG_RSTRT);
     restart_flag = 2;
   }
-  SettingsNewFree();
+  SettingsBufferFree();
   page += F("</div><br/>");
   page += FPSTR(HTTP_BTN_MAIN);
   ShowPage(page);
@@ -1352,8 +1264,7 @@ void HandleUploadLoop()
     snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_UPLOAD D_FILE " %s ..."), upload.filename.c_str());
     AddLog(LOG_LEVEL_INFO);
     if (upload_file_type) {
-      SettingsNewFree();
-      if (!(settings_new = (uint8_t *)malloc(sizeof(Settings)))) {
+      if (!SettingsBufferAlloc()) {
         upload_error = 2;
         return;
       }
@@ -1401,7 +1312,7 @@ void HandleUploadLoop()
           upload_error = 9;
           return;
         }
-        memcpy(settings_new + (config_block_count * HTTP_UPLOAD_BUFLEN), upload.buf, upload.currentSize);
+        memcpy(settings_buffer + (config_block_count * HTTP_UPLOAD_BUFLEN), upload.buf, upload.currentSize);
         config_block_count++;
       }
     } else {  // firmware
@@ -1422,13 +1333,13 @@ void HandleUploadLoop()
     if (upload_file_type) {
       if (config_xor_on) {
         for (uint16_t i = 2; i < sizeof(Settings); i++) {
-          settings_new[i] ^= (config_xor_on_set +i);
+          settings_buffer[i] ^= (config_xor_on_set +i);
         }
       }
       SettingsDefaultSet2();
-      memcpy((char*)&Settings +16, settings_new +16, sizeof(Settings) -16);
-      memcpy((char*)&Settings +8, settings_new +8, 4);  // Restore version and auto upgrade
-      SettingsNewFree();
+      memcpy((char*)&Settings +16, settings_buffer +16, sizeof(Settings) -16);
+      memcpy((char*)&Settings +8, settings_buffer +8, 4);  // Restore version and auto upgrade
+      SettingsBufferFree();
     } else {
       if (!Update.end(true)) { // true to set the size to the current progress
         if (_serialoutput) { Update.printError(Serial); }

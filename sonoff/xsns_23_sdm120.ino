@@ -262,8 +262,8 @@ void SDM120Show(boolean json)
 #ifdef USE_WEBSERVER
   } else {
     snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_SDM120_DATA, mqtt_data, voltage, current, active_power, apparent_power, reactive_power, power_factor, frequency, energy_total);
-  }
 #endif  // USE_WEBSERVER
+  }
 }
 
 /*********************************************************************************************\
