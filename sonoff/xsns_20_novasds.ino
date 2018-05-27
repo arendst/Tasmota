@@ -114,7 +114,9 @@ void NovaSdsInit()
     NovaSdsSerial = new TasmotaSerial(pin[GPIO_SDS0X1_RX], pin[GPIO_SDS0X1_TX], 1);
 
     if (NovaSdsSerial->begin(9600)) {
-      if (NovaSdsSerial->hardwareSerial()) ClaimSerial();
+      if (NovaSdsSerial->hardwareSerial()) {
+        ClaimSerial();
+      }
       novasds_type = 1;
     }
 
@@ -137,8 +139,8 @@ void NovaSdsStop()
   NovaSdsSerial->flush();
   // drain any old data
   while (NovaSdsSerial->available()) {
-		NovaSdsSerial->read();
-	}
+    NovaSdsSerial->read();
+  }
 }
 
 #ifdef USE_WEBSERVER
