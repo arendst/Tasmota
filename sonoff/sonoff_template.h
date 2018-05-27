@@ -316,6 +316,9 @@ enum SupportedModules {
   SP10,
   WAGA,
   SYF05,
+=======
+  MSDM_DAC,
+>>>>>>> ad6a3eee... feature: add MSDM DAC Light
   MAXMODULE };
 
 #define USER_MODULE        255
@@ -1429,6 +1432,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_LED1_INV,    // GPIO13 Blue Led (0 = On, 1 = Off) - Link and Power status
      0, 0, 0, 0
   },
+<<<<<<< HEAD
   { "Sonoff iFan02",   // Sonoff iFan02 (ESP8285)
      GPIO_KEY1,        // GPIO00 WIFI_KEY0 Virtual button 1 as feedback from RC
      GPIO_USER,        // GPIO01 ESP_TXD Serial RXD and Optional sensor
@@ -1919,6 +1923,21 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      0,                // GPIO15 wired to GND
      GPIO_USER,        // GPIO16 N.C.
      GPIO_FLAG_ADC0    // ADC0 A0 Analog input
+  },
+  { "MSDM with DAC",         // Any ESP8266/ESP8285 device like WeMos and NodeMCU hardware (ESP8266)
+     GPIO_USER,        // GPIO00 D3 Wemos Button Shield
+     GPIO_USER,        // GPIO01 TX Serial RXD
+     GPIO_USER,        // GPIO02 D4 Wemos DHT Shield
+     GPIO_USER,        // GPIO03 RX Serial TXD and Optional sensor
+     GPIO_I2C_SDA,        // GPIO04 D2 Wemos I2C SDA
+     GPIO_I2C_SCL,        // GPIO05 D1 Wemos I2C SCL / Wemos Relay Shield (0 = Off, 1 = On) / Wemos WS2812B RGB led Shield
+     0, 0, 0, 0, 0, 0, // Flash connection
+     GPIO_USER,        // GPIO12 D6
+     GPIO_USER,        // GPIO13 D7
+     GPIO_USER,        // GPIO14 D5
+     GPIO_USER,        // GPIO15 D8
+     GPIO_REL1,        // GPIO16 D0 Wemos Wake
+     GPIO_ADC0         // ADC0   A0 Analog input
   }
 };
 

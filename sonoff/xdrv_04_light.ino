@@ -464,7 +464,32 @@ void SM16716_Init(void)
 
 /********************************************************************************************/
 
-void LightInit(void)
+void LightDACDuty(uint8_t duty)
+{
+#ifdef USE_I2C
+
+uint16_t output = duty * 16;
+#ifdef TWBR
+  uint8_t twbrback = TWBR;
+  TWBR = ((F_CPU / 400000L) - 16) / 2; // Set I2C frequency to 400kHz
+#endif
+  Wire.beginTransmission(0x60); //address of DAC
+  Wire.write(0x40); //write data to DAC
+  Wire.write(output / 16);                   // Upper data bits          (D11.D10.D9.D8.D7.D6.D5.D4)
+  Wire.write((output % 16) << 4);            // Lower data bits          (D3.D2.D1.D0.x.x.x.x)
+  Wire.endTransmission();
+#ifdef TWBR
+  TWBR = twbrback;
+#endif
+#endif //USE_I2C
+}
+
+
+/********************************************************************************************/
+
+
+
+void LightInit()
 {
   uint8_t max_scheme = LS_MAX -1;
 
@@ -536,6 +561,9 @@ void LightInit(void)
     }
   }
 #endif  // ifdef USE_SM16716
+  else if (LT_DAC == light_type) {
+
+  }
   else {
     light_pdi_pin = pin[GPIO_DI];
     light_pdcki_pin = pin[GPIO_DCKI];
@@ -1041,6 +1069,10 @@ void LightAnimate(void)
       }
       XdrvMailbox.data = tmp_data;
       XdrvMailbox.data_len = tmp_data_len;
+
+      if (light_type == LT_DAC) {
+        LightDACDuty(cur_col[0]);
+      }
     }
   }
 }
