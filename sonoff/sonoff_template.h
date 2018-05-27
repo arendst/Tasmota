@@ -316,9 +316,7 @@ enum SupportedModules {
   SP10,
   WAGA,
   SYF05,
-=======
   MSDM_DAC,
->>>>>>> ad6a3eee... feature: add MSDM DAC Light
   MAXMODULE };
 
 #define USER_MODULE        255
@@ -659,7 +657,8 @@ const uint8_t kModuleNiceList[MAXMODULE] PROGMEM = {
   SYF05,
   YTF_IR_BRIDGE,
   WITTY,               // Development Devices
-  WEMOS
+  WEMOS,
+  MSDM_DAC
 };
 
 // Default module settings
@@ -1937,7 +1936,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_USER,        // GPIO14 D5
      GPIO_USER,        // GPIO15 D8
      GPIO_REL1,        // GPIO16 D0 Wemos Wake
-     GPIO_ADC0         // ADC0   A0 Analog input
+     GPIO_FLAG_ADC0    // ADC0   A0 Analog input
   }
 };
 
