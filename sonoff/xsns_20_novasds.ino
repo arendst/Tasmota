@@ -83,12 +83,14 @@ void NovaSdsSecond()                 // Every second
 void NovaSdsInit()
 {
   novasds_type = 0;
-  if (pin[GPIO_SDS0X1] < 99) {
-    NovaSdsSerial = new TasmotaSerial(pin[GPIO_SDS0X1], -1, 1);
+  if (pin[GPIO_SDS0X1_RX] < 99 && pin[GPIO_SDS0X1_TX] < 99) {
+    NovaSdsSerial = new TasmotaSerial(pin[GPIO_SDS0X1_RX], pin[GPIO_SDS0X1_TX], 1);
+
     if (NovaSdsSerial->begin(9600)) {
-      if (NovaSdsSerial->hardwareSerial()) { ClaimSerial(); }
+      if (NovaSdsSerial->hardwareSerial()) ClaimSerial();
       novasds_type = 1;
     }
+
   }
 }
 
