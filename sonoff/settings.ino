@@ -905,8 +905,7 @@ void SettingsDelta()
     }
     if (Settings.version < 0x050D0103) {
       SettingsDefaultSet_5_13_1c();
-<<<<<<< HEAD
-=======
+
     }
     if (Settings.version < 0x050E0002) {
       for (byte i = 1; i < MAX_RULE_SETS; i++) {
@@ -914,7 +913,6 @@ void SettingsDelta()
       }
       Settings.rule_enabled = Settings.flag.rules_enabled;
       Settings.rule_once = Settings.flag.rules_once;
->>>>>>> arendst/development
     }
 
     Settings.version = VERSION;

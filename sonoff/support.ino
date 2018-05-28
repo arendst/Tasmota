@@ -745,11 +745,8 @@ void GetFeatures()
 
 //  feature_sns1 |= 0x00000001;
 
-<<<<<<< HEAD
-#ifndef USE_ADC_VCC
-=======
+
 #ifdef USE_ADC_VCC
->>>>>>> arendst/development
   feature_sns1 |= 0x00000002;  // support.ino (ADC)
 #endif
 #ifdef USE_ENERGY_SENSOR
