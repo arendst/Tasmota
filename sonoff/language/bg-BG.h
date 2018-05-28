@@ -28,7 +28,11 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
+<<<<<<< HEAD
  * Updated until v5.14.0
+=======
+ * Updated until v5.14.0a
+>>>>>>> arendst/development
 \*********************************************************************/
 
 //#define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -110,7 +114,7 @@
 #define D_LWT "LWT"
 #define D_MODULE "Модул"
 #define D_MQTT "MQTT"
-#define D_MULTI_PRESS "многократно натискане"
+#define D_MULTI_PRESS "множествено натискане"
 #define D_NOISE "Шум"
 #define D_NONE "Няма"
 #define D_OFF "Изкл."
@@ -401,7 +405,11 @@
 #define D_KNX_COMMAND_OTHER "Друго"
 #define D_SENT_TO "изпратен до"
 #define D_KNX_WARNING "Груповият адрес ( 0 / 0 / 0 ) е резервиран и не може да бъде използван."
+<<<<<<< HEAD
 #define D_KNX_ENHANCEMENT "Communication Enhancement"
+=======
+#define D_KNX_ENHANCEMENT "Подобрена комуникация"
+>>>>>>> arendst/development
 
 // xdrv_03_energy.ino
 #define D_ENERGY_TODAY "Използвана енергия днес"

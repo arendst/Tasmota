@@ -175,6 +175,11 @@ boolean XdrvMqttData(char *topicBuf, uint16_t stopicBuf, char *dataBuf, uint16_t
   return XdrvCall(FUNC_MQTT_DATA);
 }
 
+boolean XdrvRulesProcess()
+{
+  return XdrvCall(FUNC_RULES_PROCESS);
+}
+
 /*********************************************************************************************\
  * Function call to all xdrv
  *
@@ -188,6 +193,7 @@ boolean XdrvMqttData(char *topicBuf, uint16_t stopicBuf, char *dataBuf, uint16_t
  * FUNC_SHOW_SENSOR
  * FUNC_EVERY_SECOND
  * FUNC_EVERY_50_MSECOND
+ * FUNC_RULES_PROCESS
 \*********************************************************************************************/
 
 boolean XdrvCall(byte Function)

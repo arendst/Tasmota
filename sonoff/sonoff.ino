@@ -25,7 +25,11 @@
     - Select IDE Tools - Flash Size: "1M (no SPIFFS)"
   ====================================================*/
 
+<<<<<<< HEAD
 #define VERSION                0x050E0001   // 5.14.0a
+=======
+#define VERSION                0x050E0002   // 5.14.0b
+>>>>>>> arendst/development
 
 // Location specific includes
 #include <core_version.h>                   // Arduino_Esp8266 version information (ARDUINO_ESP8266_RELEASE and ARDUINO_ESP8266_RELEASE_2_3_0)
@@ -269,6 +273,9 @@ void GetTopic_P(char *stopic, byte prefix, char *topic, const char* subtopic)
     }
     fulltopic.replace(F(MQTT_TOKEN_PREFIX), Settings.mqtt_prefix[prefix]);
     fulltopic.replace(F(MQTT_TOKEN_TOPIC), topic);
+    String token_id = WiFi.macAddress();
+    token_id.replace(":", "");
+    fulltopic.replace(F(MQTT_TOKEN_ID), token_id);
   }
   fulltopic.replace(F("#"), "");
   fulltopic.replace(F("//"), "/");
@@ -1174,11 +1181,9 @@ boolean SendKey(byte key, byte device, byte state)
     MqttPublishDirect(stopic, (key) ? Settings.flag.mqtt_switch_retain : Settings.flag.mqtt_button_retain);
 #endif  // USE_DOMOTICZ
     result = true;
-#ifdef USE_RULES
   } else {
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"%s%d\":{\"State\":%d}}"), (key) ? "Switch" : "Button", device, state);
-    result = RulesProcess();
-#endif  // USE_RULES
+    result = XdrvRulesProcess();
   }
 #ifdef USE_KNX
   KnxSendButtonPower(key, device, state);
@@ -1297,11 +1302,11 @@ void ExecuteCommand(char *cmnd)
 
 void PublishStatus(uint8_t payload)
 {
-  uint8_t option = 1;
+  uint8_t option = STAT;
   char stemp[MAX_FRIENDLYNAMES * (sizeof(Settings.friendlyname[0]) +4)];
 
   // Workaround MQTT - TCP/IP stack queueing when SUB_PREFIX = PUB_PREFIX
-  if (!strcmp(Settings.mqtt_prefix[0],Settings.mqtt_prefix[1]) && (!payload)) option++;
+  if (!strcmp(Settings.mqtt_prefix[0],Settings.mqtt_prefix[1]) && (!payload)) option++;  // TELE
 
   if ((!Settings.flag.mqtt_enabled) && (6 == payload)) payload = 99;
   if (!energy_flg && (9 == payload)) payload = 99;
@@ -2165,6 +2170,7 @@ void SerialInput()
     serial_in_buffer[serial_in_byte_counter] = 0;  // serial data completed
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_SERIALRECEIVED "\":\"%s\"}"), serial_in_buffer);
     MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_SERIALRECEIVED));
+//    XdrvRulesProcess();
     serial_in_byte_counter = 0;
   }
 }
