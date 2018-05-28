@@ -76,8 +76,8 @@ void Sgp30Show(boolean json)
 #ifdef USE_DOMOTICZ
       if (0 == tele_period) DomoticzSensor(DZ_AIRQUALITY, sgp.eCO2);
 #endif  // USE_DOMOTICZ
-    } else {
 #ifdef USE_WEBSERVER
+    } else {
       snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_SGP30, mqtt_data, sgp.eCO2, sgp.TVOC);
 #endif
     }

@@ -335,8 +335,8 @@ void Si1145Show(boolean json)
 #ifdef USE_DOMOTICZ
       if (0 == tele_period) DomoticzSensor(DZ_ILLUMINANCE, visible);
 #endif  // USE_DOMOTICZ
-    } else {
 #ifdef USE_WEBSERVER
+    } else {
       snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_SI1145, mqtt_data, visible, infrared, uvindex /100, uvindex %100);
 #endif
     }

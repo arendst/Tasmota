@@ -606,6 +606,15 @@ uint32_t GetHash(const char *buffer, size_t size)
   return hash;
 }
 
+void ShowSource(int source)
+{
+  if ((source > 0) && (source < SRC_MAX)) {
+    char stemp1[20];
+    snprintf_P(log_data, sizeof(log_data), PSTR("SRC: %s"), GetTextIndexed(stemp1, sizeof(stemp1), source, kCommandSource));
+    AddLog(LOG_LEVEL_DEBUG);
+  }
+}
+
 /*********************************************************************************************\
  * Fill feature list
 \*********************************************************************************************/
@@ -633,52 +642,52 @@ void GetFeatures()
   feature_drv1 |= 0x00000040;  // sonoff.ino
 #endif
 #ifdef USE_WEBSERVER
-  feature_drv1 |= 0x00000080;  // webserver.ino
+  feature_drv1 |= 0x00000080;  // xdrv_02_webserver.ino
 #endif
 #ifdef WEBSERVER_ADVERTISE
-  feature_drv1 |= 0x00000100;  // webserver.ino
+  feature_drv1 |= 0x00000100;  // xdrv_02_webserver.ino
 #endif
 #ifdef USE_EMULATION
   feature_drv1 |= 0x00000200;  // xplg_wemohue.ino
 #endif
 #if (MQTT_LIBRARY_TYPE == MQTT_PUBSUBCLIENT)
-  feature_drv1 |= 0x00000400;  // xdrv_00_mqtt.ino
+  feature_drv1 |= 0x00000400;  // xdrv_01_mqtt.ino
 #endif
 #if (MQTT_LIBRARY_TYPE == MQTT_TASMOTAMQTT)
-  feature_drv1 |= 0x00000800;  // xdrv_00_mqtt.ino
+  feature_drv1 |= 0x00000800;  // xdrv_01_mqtt.ino
 #endif
 #if (MQTT_LIBRARY_TYPE == MQTT_ESPMQTTARDUINO)
-  feature_drv1 |= 0x00001000;  // xdrv_00_mqtt.ino
+  feature_drv1 |= 0x00001000;  // xdrv_01_mqtt.ino
 #endif
 #ifdef MQTT_HOST_DISCOVERY
-  feature_drv1 |= 0x00002000;  // xdrv_00_mqtt.ino
+  feature_drv1 |= 0x00002000;  // xdrv_01_mqtt.ino
 #endif
 #ifdef USE_ARILUX_RF
-  feature_drv1 |= 0x00004000;  // xdrv_01_light.ino
+  feature_drv1 |= 0x00004000;  // xdrv_04_light.ino
 #endif
 #ifdef USE_WS2812
-  feature_drv1 |= 0x00008000;  // xdrv_01_light.ino
+  feature_drv1 |= 0x00008000;  // xdrv_04_light.ino
 #endif
 #ifdef USE_WS2812_DMA
-  feature_drv1 |= 0x00010000;  // xdrv_01_light.ino
+  feature_drv1 |= 0x00010000;  // xdrv_04_light.ino
 #endif
 #ifdef USE_IR_REMOTE
-  feature_drv1 |= 0x00020000;  // xdrv_02_irremote.ino
+  feature_drv1 |= 0x00020000;  // xdrv_05_irremote.ino
 #endif
 #ifdef USE_IR_HVAC
-  feature_drv1 |= 0x00040000;  // xdrv_02_irremote.ino
+  feature_drv1 |= 0x00040000;  // xdrv_05_irremote.ino
 #endif
 #ifdef USE_IR_RECEIVE
-  feature_drv1 |= 0x00080000;  // xdrv_02_irremote.ino
+  feature_drv1 |= 0x00080000;  // xdrv_05_irremote.ino
 #endif
 #ifdef USE_DOMOTICZ
-  feature_drv1 |= 0x00100000;  // xdrv_05_domoticz.ino
+  feature_drv1 |= 0x00100000;  // xdrv_07_domoticz.ino
 #endif
 #ifdef USE_DISPLAY
-  feature_drv1 |= 0x00200000;  // xdrv_06_display.ino
+  feature_drv1 |= 0x00200000;  // xdrv_98_display.ino
 #endif
 #ifdef USE_HOME_ASSISTANT
-  feature_drv1 |= 0x00400000;  // xdrv_07_home_assistant.ino
+  feature_drv1 |= 0x00400000;  // xdrv_12_home_assistant.ino
 #endif
 #ifdef USE_SERIAL_BRIDGE
   feature_drv1 |= 0x00800000;  // xdrv_08_serial_bridge.ino
@@ -1141,7 +1150,7 @@ void WifiCheck(uint8_t param)
           StartWebserver(Settings.webserver, WiFi.localIP());
 #ifdef USE_DISCOVERY
 #ifdef WEBSERVER_ADVERTISE
-          MDNS.addService("http", "tcp", 80);
+          MDNS.addService("http", "tcp", WEB_PORT);
 #endif  // WEBSERVER_ADVERTISE
 #endif  // USE_DISCOVERY
         } else {

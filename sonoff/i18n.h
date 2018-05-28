@@ -42,6 +42,7 @@
 #define D_JSON_BUILDDATETIME "BuildDateTime"
 #define D_JSON_CO2 "CarbonDioxide"
 #define D_JSON_COMMAND "Command"
+#define D_JSON_CONNECT_FAILED "Connect failed"
 #define D_JSON_COREVERSION "Core"
 #define D_JSON_COUNTER "Counter"
 #define D_JSON_CURRENT "Current"         // As in Voltage and Current
@@ -67,6 +68,7 @@
 #define D_JSON_GATEWAY "Gateway"
 #define D_JSON_HEAPSIZE "Heap"
 #define D_JSON_HIGH "High"
+#define D_JSON_HOST_NOT_FOUND "Host not found"
 #define D_JSON_HSBCOLOR "HSBColor"
 #define D_JSON_HUMIDITY "Humidity"
 #define D_JSON_I2CSCAN_DEVICES_FOUND_AT "Device(s) found at"
@@ -133,6 +135,7 @@
 #define D_JSON_VOLTAGE "Voltage"
 #define D_JSON_WIFI "Wifi"
 #define D_JSON_WRONG "Wrong"
+#define D_JSON_WRONG_PARAMETERS "Wrong parameters"
 #define D_JSON_YESTERDAY "Yesterday"
 #define D_JSON_ZERO_POINT_CALIBRATION "Zero Point Calibration"
 
@@ -213,14 +216,6 @@
   #define D_WCFG_5_WAIT "Wait"
 #define D_CMND_FRIENDLYNAME "FriendlyName"
 #define D_CMND_SWITCHMODE "SwitchMode"
-#define D_CMND_WEBSERVER "Webserver"
-  #define D_JSON_WEBSERVER_MODE "WebServerMode"
-  #define D_JSON_ACTIVE_FOR "Active for"
-  #define D_JSON_ON_DEVICE "on"
-  #define D_JSON_WITH_IP_ADDRESS "with IP address"
-#define D_CMND_WEBPASSWORD "WebPassword"
-#define D_CMND_WEBLOG "WebLog"
-#define D_CMND_EMULATION "Emulation"
 #define D_CMND_TELEPERIOD "TelePeriod"
 #define D_CMND_RESTART "Restart"
   #define D_JSON_ONE_TO_RESTART "1 to restart"
@@ -238,7 +233,7 @@
 #define D_CMND_SERIALDELIMITER "SerialDelimiter"
 #define D_CMND_BAUDRATE "Baudrate"
 
-// Commands xdrv_00_mqtt.ino
+// Commands xdrv_01_mqtt.ino
 #define D_CMND_MQTTHOST "MqttHost"
 #define D_CMND_MQTTPORT "MqttPort"
 #define D_CMND_MQTTRETRY "MqttRetry"
@@ -263,37 +258,16 @@
 #define D_CMND_SENSORRETAIN "SensorRetain"
 #define D_CMND_PUBLISH "Publish"
 
-// Commands xdrv_01_light.ino
-#define D_CMND_CHANNEL "Channel"
-#define D_CMND_COLOR "Color"
-#define D_CMND_COLORTEMPERATURE "CT"
-#define D_CMND_DIMMER "Dimmer"
-#define D_CMND_HSBCOLOR "HSBColor"
-#define D_CMND_LED "Led"
-#define D_CMND_LEDTABLE "LedTable"
-#define D_CMND_FADE "Fade"
-#define D_CMND_PIXELS "Pixels"
-#define D_CMND_ROTATION "Rotation"
-#define D_CMND_SCHEME "Scheme"
-#define D_CMND_SPEED "Speed"
-#define D_CMND_WAKEUP "Wakeup"
-#define D_CMND_WAKEUPDURATION "WakeUpDuration"
-#define D_CMND_WIDTH "Width"
-
-// Commands xdrv_02_irremote.ino
-#define D_CMND_IRSEND "IRSend"
-  #define D_JSON_INVALID_JSON "Invalid JSON"
-  #define D_JSON_PROTOCOL_NOT_SUPPORTED "Protocol not supported"
-  #define D_JSON_IR_PROTOCOL "Protocol"
-  #define D_JSON_IR_BITS "Bits"
-  #define D_JSON_IR_DATA "Data"
-#define D_CMND_IRHVAC "IRHVAC"
-  #define D_JSON_IRHVAC_VENDOR "VENDOR"
-  #define D_JSON_IRHVAC_POWER "POWER"
-  #define D_JSON_IRHVAC_MODE "MODE"
-  #define D_JSON_IRHVAC_FANSPEED "FANSPEED"
-  #define D_JSON_IRHVAC_TEMP "TEMP"
-#define D_JSON_IRRECEIVED "IrReceived"
+// Commands xdrv_02_webserver.ino
+#define D_CMND_WEBSERVER "Webserver"
+  #define D_JSON_WEBSERVER_MODE "WebServerMode"
+  #define D_JSON_ACTIVE_FOR "Active for"
+  #define D_JSON_ON_DEVICE "on"
+  #define D_JSON_WITH_IP_ADDRESS "with IP address"
+#define D_CMND_WEBPASSWORD "WebPassword"
+#define D_CMND_WEBLOG "WebLog"
+#define D_CMND_WEBSEND "WebSend"
+#define D_CMND_EMULATION "Emulation"
 
 // Commands xdrv_03_energy.ino
 #define D_CMND_POWERLOW "PowerLow"
@@ -324,7 +298,39 @@
   #define D_JSON_ENERGYMONITOR "EnergyMonitor"
   #define D_JSON_MAXENERGYREACHED "MaxEnergyReached"
 
-// Commands xdrv_04_snfbridge.ino
+// Commands xdrv_04_light.ino
+#define D_CMND_CHANNEL "Channel"
+#define D_CMND_COLOR "Color"
+#define D_CMND_COLORTEMPERATURE "CT"
+#define D_CMND_DIMMER "Dimmer"
+#define D_CMND_HSBCOLOR "HSBColor"
+#define D_CMND_LED "Led"
+#define D_CMND_LEDTABLE "LedTable"
+#define D_CMND_FADE "Fade"
+#define D_CMND_PIXELS "Pixels"
+#define D_CMND_ROTATION "Rotation"
+#define D_CMND_SCHEME "Scheme"
+#define D_CMND_SPEED "Speed"
+#define D_CMND_WAKEUP "Wakeup"
+#define D_CMND_WAKEUPDURATION "WakeUpDuration"
+#define D_CMND_WIDTH "Width"
+
+// Commands xdrv_05_irremote.ino
+#define D_CMND_IRSEND "IRSend"
+  #define D_JSON_INVALID_JSON "Invalid JSON"
+  #define D_JSON_PROTOCOL_NOT_SUPPORTED "Protocol not supported"
+  #define D_JSON_IR_PROTOCOL "Protocol"
+  #define D_JSON_IR_BITS "Bits"
+  #define D_JSON_IR_DATA "Data"
+#define D_CMND_IRHVAC "IRHVAC"
+  #define D_JSON_IRHVAC_VENDOR "VENDOR"
+  #define D_JSON_IRHVAC_POWER "POWER"
+  #define D_JSON_IRHVAC_MODE "MODE"
+  #define D_JSON_IRHVAC_FANSPEED "FANSPEED"
+  #define D_JSON_IRHVAC_TEMP "TEMP"
+#define D_JSON_IRRECEIVED "IrReceived"
+
+// Commands xdrv_06_snfbridge.ino
 #define D_CMND_RFCODE "RfCode"
 #define D_CMND_RFHIGH "RfHigh"
 #define D_CMND_RFHOST "RfHost"
@@ -340,25 +346,13 @@
 #define D_CMND_RFSYNC "RfSync"
   #define D_JSON_RFRECEIVED "RfReceived"
 
-// Commands xdrv_05_domoticz.ino
+// Commands xdrv_07_domoticz.ino
 #define D_CMND_DOMOTICZ "Domoticz"
 #define D_CMND_IDX "Idx"
 #define D_CMND_KEYIDX "KeyIdx"
 #define D_CMND_SWITCHIDX "SwitchIdx"
 #define D_CMND_SENSORIDX "SensorIdx"
 #define D_CMND_UPDATETIMER "UpdateTimer"
-
-// Commands xdrv_06_display.ino
-#define D_CMND_DISPLAY "Display"
-#define D_CMND_DISP_ADDRESS "Address"
-#define D_CMND_DISP_COLS "Cols"
-#define D_CMND_DISP_DIMMER "Dimmer"
-#define D_CMND_DISP_MODE "Mode"
-#define D_CMND_DISP_MODEL "Model"
-#define D_CMND_DISP_REFRESH "Refresh"
-#define D_CMND_DISP_ROWS "Rows"
-#define D_CMND_DISP_SIZE "Size"
-#define D_CMND_DISP_TEXT "Text"
 
 // Commands xdrv_08_serial_bridge.ino
 #define D_CMND_SSERIALSEND "SSerialSend"
@@ -379,6 +373,18 @@
 #define D_CMND_TIMERS "Timers"
 #define D_CMND_LATITUDE "Latitude"
 #define D_CMND_LONGITUDE "Longitude"
+
+// Commands xdrv_98_display.ino
+#define D_CMND_DISPLAY "Display"
+#define D_CMND_DISP_ADDRESS "Address"
+#define D_CMND_DISP_COLS "Cols"
+#define D_CMND_DISP_DIMMER "Dimmer"
+#define D_CMND_DISP_MODE "Mode"
+#define D_CMND_DISP_MODEL "Model"
+#define D_CMND_DISP_REFRESH "Refresh"
+#define D_CMND_DISP_ROWS "Rows"
+#define D_CMND_DISP_SIZE "Size"
+#define D_CMND_DISP_TEXT "Text"
 
 /********************************************************************************************/
 

@@ -324,7 +324,7 @@ bool RuleSetProcess(byte rule_set, String &event_saved)
 //      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, D_CMND_RULE, D_JSON_INITIATED);
 //      MqttPublishPrefixTopic_P(RESULT_OR_STAT, PSTR(D_CMND_RULE));
 
-      ExecuteCommand(command);
+      ExecuteCommand(command, SRC_RULE);
       serviced = true;
     }
     rules_trigger_count[rule_set]++;
