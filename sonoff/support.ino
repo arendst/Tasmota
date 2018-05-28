@@ -606,6 +606,15 @@ uint32_t GetHash(const char *buffer, size_t size)
   return hash;
 }
 
+void ShowSource(int source)
+{
+  if ((source > 0) && (source < SRC_MAX)) {
+    char stemp1[20];
+    snprintf_P(log_data, sizeof(log_data), PSTR("SRC: %s"), GetTextIndexed(stemp1, sizeof(stemp1), source, kCommandSource));
+    AddLog(LOG_LEVEL_DEBUG);
+  }
+}
+
 /*********************************************************************************************\
  * Fill feature list
 \*********************************************************************************************/
