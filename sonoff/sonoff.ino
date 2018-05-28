@@ -25,9 +25,7 @@
     - Select IDE Tools - Flash Size: "1M (no SPIFFS)"
   ====================================================*/
 
-
 #define VERSION                0x050E0002   // 5.14.0b
-
 
 // Location specific includes
 #include <core_version.h>                   // Arduino_Esp8266 version information (ARDUINO_ESP8266_RELEASE and ARDUINO_ESP8266_RELEASE_2_3_0)
@@ -84,7 +82,7 @@ enum TasmotaCommands {
   CMND_GPIO, CMND_GPIOS, CMND_PWM, CMND_PWMFREQUENCY, CMND_PWMRANGE, CMND_COUNTER, CMND_COUNTERTYPE,
   CMND_COUNTERDEBOUNCE, CMND_SLEEP, CMND_UPGRADE, CMND_UPLOAD, CMND_OTAURL, CMND_SERIALLOG, CMND_SYSLOG,
   CMND_LOGHOST, CMND_LOGPORT, CMND_IPADDRESS, CMND_NTPSERVER, CMND_AP, CMND_SSID, CMND_PASSWORD, CMND_HOSTNAME,
-  CMND_WIFICONFIG, CMND_FRIENDLYNAME, CMND_SWITCHMODE, CMND_WEBSERVER, CMND_WEBPASSWORD, CMND_WEBLOG, CMND_EMULATION,
+  CMND_WIFICONFIG, CMND_FRIENDLYNAME, CMND_SWITCHMODE,
   CMND_TELEPERIOD, CMND_RESTART, CMND_RESET, CMND_TIMEZONE, CMND_TIMESTD, CMND_TIMEDST, CMND_ALTITUDE, CMND_LEDPOWER, CMND_LEDSTATE,
   CMND_I2CSCAN, CMND_SERIALSEND, CMND_BAUDRATE, CMND_SERIALDELIMITER };
 const char kTasmotaCommands[] PROGMEM =
@@ -94,7 +92,7 @@ const char kTasmotaCommands[] PROGMEM =
   D_CMND_GPIO "|" D_CMND_GPIOS "|" D_CMND_PWM "|" D_CMND_PWMFREQUENCY "|" D_CMND_PWMRANGE "|" D_CMND_COUNTER "|"  D_CMND_COUNTERTYPE "|"
   D_CMND_COUNTERDEBOUNCE "|" D_CMND_SLEEP "|" D_CMND_UPGRADE "|" D_CMND_UPLOAD "|" D_CMND_OTAURL "|" D_CMND_SERIALLOG "|" D_CMND_SYSLOG "|"
   D_CMND_LOGHOST "|" D_CMND_LOGPORT "|" D_CMND_IPADDRESS "|" D_CMND_NTPSERVER "|" D_CMND_AP "|" D_CMND_SSID "|" D_CMND_PASSWORD "|" D_CMND_HOSTNAME "|"
-  D_CMND_WIFICONFIG "|" D_CMND_FRIENDLYNAME "|" D_CMND_SWITCHMODE "|" D_CMND_WEBSERVER "|" D_CMND_WEBPASSWORD "|" D_CMND_WEBLOG "|" D_CMND_EMULATION "|"
+  D_CMND_WIFICONFIG "|" D_CMND_FRIENDLYNAME "|" D_CMND_SWITCHMODE "|"
   D_CMND_TELEPERIOD "|" D_CMND_RESTART "|" D_CMND_RESET "|" D_CMND_TIMEZONE "|" D_CMND_TIMESTD "|" D_CMND_TIMEDST "|" D_CMND_ALTITUDE "|" D_CMND_LEDPOWER "|" D_CMND_LEDSTATE "|"
   D_CMND_I2CSCAN "|" D_CMND_SERIALSEND "|" D_CMND_BAUDRATE "|" D_CMND_SERIALDELIMITER;
 
@@ -982,38 +980,6 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
       if ((payload >= 0) && (payload < MAX_SWITCH_OPTION)) Settings.switchmode[index -1] = payload;
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_NVALUE, command, index, Settings.switchmode[index-1]);
     }
-#ifdef USE_WEBSERVER
-    else if (CMND_WEBSERVER == command_code) {
-      if ((payload >= 0) && (payload <= 2)) Settings.webserver = payload;
-      if (Settings.webserver) {
-        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_WEBSERVER "\":\"" D_JSON_ACTIVE_FOR " %s " D_JSON_ON_DEVICE " %s " D_JSON_WITH_IP_ADDRESS " %s\"}"),
-          (2 == Settings.webserver) ? D_ADMIN : D_USER, my_hostname, WiFi.localIP().toString().c_str());
-      } else {
-        snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, GetStateText(0));
-      }
-    }
-    else if (CMND_WEBPASSWORD == command_code) {
-      if ((data_len > 0) && (data_len < sizeof(Settings.web_password))) {
-        strlcpy(Settings.web_password, (!strcmp(dataBuf,"0")) ? "" : (1 == payload) ? WEB_PASSWORD : dataBuf, sizeof(Settings.web_password));
-        snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, Settings.web_password);
-      } else {
-        snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_ASTERIX, command);
-      }
-    }
-    else if (CMND_WEBLOG == command_code) {
-      if ((payload >= LOG_LEVEL_NONE) && (payload <= LOG_LEVEL_ALL)) Settings.weblog_level = payload;
-      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, Settings.weblog_level);
-    }
-#ifdef USE_EMULATION
-    else if (CMND_EMULATION == command_code) {
-      if ((payload >= EMUL_NONE) && (payload < EMUL_MAX)) {
-        Settings.flag2.emulation = payload;
-        restart_flag = 2;
-      }
-      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, Settings.flag2.emulation);
-    }
-#endif  // USE_EMULATION
-#endif  // USE_WEBSERVER
     else if (CMND_TELEPERIOD == command_code) {
       if ((payload >= 0) && (payload < 3601)) {
         Settings.tele_period = (1 == payload) ? TELE_PERIOD : payload;
@@ -2481,13 +2447,6 @@ void loop()
   XdrvCall(FUNC_LOOP);
 
   OsWatchLoop();
-
-#ifdef USE_WEBSERVER
-  PollDnsWebserver();
-#ifdef USE_EMULATION
-  if (Settings.flag2.emulation) PollUdp();
-#endif  // USE_EMULATION
-#endif  // USE_WEBSERVER
 
   if (millis() >= state_loop_timer) StateLoop();
 
