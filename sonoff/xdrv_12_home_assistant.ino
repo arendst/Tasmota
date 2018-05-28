@@ -1,5 +1,5 @@
 /*
-  xdrv_07_home_assistant.ino - home assistant support for Sonoff-Tasmota
+  xdrv_12_home_assistant.ino - home assistant support for Sonoff-Tasmota
 
   Copyright (C) 2018  Theo Arends
 
@@ -208,9 +208,9 @@ void HAssDiscovery(uint8_t mode)
  * Interface
 \*********************************************************************************************/
 
-#define XDRV_07
+#define XDRV_12
 
-boolean Xdrv07(byte function)
+boolean Xdrv12(byte function)
 {
   boolean result = false;
 

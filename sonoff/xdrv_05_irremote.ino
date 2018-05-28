@@ -1,5 +1,5 @@
 /*
-  xdrv_02_irremote.ino - infra red support for Sonoff-Tasmota
+  xdrv_05_irremote.ino - infra red support for Sonoff-Tasmota
 
   Copyright (C) 2018  Heiko Krupp, Lazar Obradovic and Theo Arends
 
@@ -393,9 +393,9 @@ boolean IrSendCommand()
  * Interface
 \*********************************************************************************************/
 
-#define XDRV_02
+#define XDRV_05
 
-boolean Xdrv02(byte function)
+boolean Xdrv05(byte function)
 {
   boolean result = false;
 

@@ -1,5 +1,5 @@
 /*
-  xdrv_04_snfbridge.ino - sonoff RF bridge 433 support for Sonoff-Tasmota
+  xdrv_06_snfbridge.ino - sonoff RF bridge 433 support for Sonoff-Tasmota
 
   Copyright (C) 2018  Theo Arends
 
@@ -295,7 +295,7 @@ boolean SonoffBridgeCommand()
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, sonoff_bridge_learn_key, D_JSON_LEARNING_ACTIVE);
     }
   } else serviced = false;  // Unknown command
-  
+
   return serviced;
 }
 
@@ -303,9 +303,9 @@ boolean SonoffBridgeCommand()
  * Interface
 \*********************************************************************************************/
 
-#define XDRV_04
+#define XDRV_06
 
-boolean Xdrv04(byte function)
+boolean Xdrv06(byte function)
 {
   boolean result = false;
 
