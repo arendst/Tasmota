@@ -1,5 +1,5 @@
 /*
-  xdrv_01_light.ino - PWM, WS2812 and sonoff led support for Sonoff-Tasmota
+  xdrv_04_light.ino - PWM, WS2812 and sonoff led support for Sonoff-Tasmota
 
   Copyright (C) 2018  Theo Arends
 
@@ -1346,7 +1346,7 @@ boolean LightCommand()
   if (coldim) {
     LightPreparePower();
   }
-  
+
   return serviced;
 }
 
@@ -1354,9 +1354,9 @@ boolean LightCommand()
  * Interface
 \*********************************************************************************************/
 
-#define XDRV_01
+#define XDRV_04
 
-boolean Xdrv01(byte function)
+boolean Xdrv04(byte function)
 {
   boolean result = false;
 

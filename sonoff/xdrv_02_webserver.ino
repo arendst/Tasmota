@@ -1,5 +1,5 @@
 /*
-  webserver.ino - webserver for Sonoff-Tasmota
+  xdrv_02_webserver.ino - webserver for Sonoff-Tasmota
 
   Copyright (C) 2018  Theo Arends
 
@@ -1675,5 +1675,203 @@ boolean ValidIpAddress(String str)
     if (c != '.' && (c < '0' || c > '9')) { return false; }
   }
   return true;
+}
+
+/*********************************************************************************************/
+
+String UrlEncode(const String& text)
+{
+  const char hex[] = "0123456789ABCDEF";
+
+	String encoded = "";
+	int len = text.length();
+	int i = 0;
+	while (i < len)	{
+		char decodedChar = text.charAt(i++);
+
+/*
+    if (('a' <= decodedChar && decodedChar <= 'z') ||
+        ('A' <= decodedChar && decodedChar <= 'Z') ||
+        ('0' <= decodedChar && decodedChar <= '9') ||
+        ('=' == decodedChar)) {
+      encoded += decodedChar;
+		} else {
+      encoded += '%';
+			encoded += hex[decodedChar >> 4];
+			encoded += hex[decodedChar & 0xF];
+    }
+*/
+    if (' ' == decodedChar) {
+      encoded += '%';
+			encoded += hex[decodedChar >> 4];
+			encoded += hex[decodedChar & 0xF];
+    } else {
+      encoded += decodedChar;
+    }
+
+	}
+	return encoded;
+}
+
+int WebSend(char *buffer)
+{
+  // http://192.168.178.86:80/cm?user=admin&password=joker&cmnd=POWER1 ON
+  // http://192.168.178.86:80/cm?cmnd=POWER1 ON
+  // [192.168.178.86:80,admin:joker] POWER1 ON
+
+  char *host;
+  char *port;
+  char *user;
+  char *password;
+  char *command;
+  uint16_t nport = 80;
+  int status = 1;                             // Wrong parameters
+
+  host = strtok_r(buffer, "]", &command);     // buffer = [192.168.178.86:80,admin:joker] POWER1 ON
+  if (host && command) {
+    host = LTrim(host);
+    host++;  // Skip [
+    host = strtok_r(host, ",", &user);        // host = 192.168.178.86:80,admin:joker > 192.168.178.86:80
+    host = strtok_r(host, ":", &port);        // host = 192.168.178.86:80 > 192.168.178.86
+    if (user) {
+      user = strtok_r(user, ":", &password);  // user = admin:joker > admin
+    }
+
+//snprintf_P(log_data, sizeof(log_data), PSTR("DBG: Buffer |%X|, Host |%X|, Port |%X|, User |%X|, Password |%X|, Command |%X|"), buffer, host, port, user, password, command);
+//AddLog(LOG_LEVEL_DEBUG);
+
+    if (port) { nport = atoi(port); }
+
+    String nuri = "";
+    if (user && password) {
+      nuri += F("user=");
+      nuri += user;
+      nuri += F("&password=");
+      nuri += password;
+      nuri += F("&");
+    }
+    nuri += F("cmnd=");
+    nuri += LTrim(command);
+    String uri = UrlEncode(nuri);
+
+    IPAddress host_ip;
+    if (WiFi.hostByName(host, host_ip)) {
+      WiFiClient client;
+
+      bool connected = false;
+      byte retry = 2;
+      while ((retry > 0) && !connected) {
+        --retry;
+        connected = client.connect(host_ip, nport);
+        if (connected) break;
+      }
+
+      if (connected) {
+        String url = F("GET /cm?");
+        url += uri;
+        url += F(" HTTP/1.1\r\n Host: ");
+        url += IPAddress(host_ip).toString();
+        if (port) {
+          url += F(" \r\n Port: ");
+          url += port;
+        }
+        url += F(" \r\n Connection: close\r\n\r\n");
+
+//snprintf_P(log_data, sizeof(log_data), PSTR("DBG: Url |%s|"), url.c_str());
+//AddLog(LOG_LEVEL_DEBUG);
+
+        client.print(url.c_str());
+        client.flush();
+        client.stop();
+        status = 0;                           // No error - Done
+      } else {
+        status = 2;                           // Connection failed
+      }
+    } else {
+      status = 3;                             // Host not found
+    }
+  }
+  return status;
+}
+
+/*********************************************************************************************/
+
+enum WebCommands { CMND_WEBSERVER, CMND_WEBPASSWORD, CMND_WEBLOG, CMND_WEBSEND, CMND_EMULATION };
+const char kWebCommands[] PROGMEM = D_CMND_WEBSERVER "|" D_CMND_WEBPASSWORD "|" D_CMND_WEBLOG "|"  D_CMND_WEBSEND "|" D_CMND_EMULATION ;
+const char kWebSendStatus[] PROGMEM = D_JSON_DONE "|" D_JSON_WRONG_PARAMETERS "|" D_JSON_CONNECT_FAILED "|" D_JSON_HOST_NOT_FOUND ;
+
+bool WebCommand()
+{
+  char command[CMDSZ];
+  bool serviced = true;
+
+  int command_code = GetCommandCode(command, sizeof(command), XdrvMailbox.topic, kWebCommands);
+  if (-1 == command_code) {
+    serviced = false;  // Unknown command
+  }
+  if (CMND_WEBSERVER == command_code) {
+    if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 2)) { Settings.webserver = XdrvMailbox.payload; }
+    if (Settings.webserver) {
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_WEBSERVER "\":\"" D_JSON_ACTIVE_FOR " %s " D_JSON_ON_DEVICE " %s " D_JSON_WITH_IP_ADDRESS " %s\"}"),
+        (2 == Settings.webserver) ? D_ADMIN : D_USER, my_hostname, WiFi.localIP().toString().c_str());
+    } else {
+      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, GetStateText(0));
+    }
+  }
+  else if (CMND_WEBPASSWORD == command_code) {
+    if ((XdrvMailbox.data_len > 0) && (XdrvMailbox.data_len < sizeof(Settings.web_password))) {
+      strlcpy(Settings.web_password, (!strcmp(XdrvMailbox.data,"0")) ? "" : (1 == XdrvMailbox.payload) ? WEB_PASSWORD : XdrvMailbox.data, sizeof(Settings.web_password));
+      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, Settings.web_password);
+    } else {
+      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_ASTERIX, command);
+    }
+  }
+  else if (CMND_WEBLOG == command_code) {
+    if ((XdrvMailbox.payload >= LOG_LEVEL_NONE) && (XdrvMailbox.payload <= LOG_LEVEL_ALL)) { Settings.weblog_level = XdrvMailbox.payload; }
+    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, Settings.weblog_level);
+  }
+  else if (CMND_WEBSEND == command_code) {
+    if (XdrvMailbox.data_len > 0) {
+      uint8_t result = WebSend(XdrvMailbox.data);
+      char stemp1[20];
+      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, GetTextIndexed(stemp1, sizeof(stemp1), result, kWebSendStatus));
+    }
+  }
+#ifdef USE_EMULATION
+  else if (CMND_EMULATION == command_code) {
+    if ((XdrvMailbox.payload >= EMUL_NONE) && (XdrvMailbox.payload < EMUL_MAX)) {
+      Settings.flag2.emulation = XdrvMailbox.payload;
+      restart_flag = 2;
+    }
+    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, Settings.flag2.emulation);
+  }
+#endif  // USE_EMULATION
+  else serviced = false;  // Unknown command
+
+  return serviced;
+}
+
+/*********************************************************************************************\
+ * Interface
+\*********************************************************************************************/
+
+#define XDRV_02
+
+boolean Xdrv02(byte function)
+{
+  boolean result = false;
+
+  switch (function) {
+    case FUNC_LOOP:
+      PollDnsWebserver();
+#ifdef USE_EMULATION
+      if (Settings.flag2.emulation) PollUdp();
+#endif  // USE_EMULATION
+      break;
+    case FUNC_COMMAND:
+      result = WebCommand();
+      break;
+  }
+  return result;
 }
 #endif  // USE_WEBSERVER

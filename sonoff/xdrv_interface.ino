@@ -18,10 +18,6 @@
 */
 
 boolean (* const xdrv_func_ptr[])(byte) PROGMEM = {   // Driver Function Pointers
-#ifdef XDRV_00
-  &Xdrv00,
-#endif
-
 #ifdef XDRV_01
   &Xdrv01,
 #endif
