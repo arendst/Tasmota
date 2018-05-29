@@ -526,6 +526,11 @@ void SettingsDefaultSet2()
   Settings.light_pixels = WS2812_LEDS;
 //  Settings.light_rotation = 0;
 
+#ifdef USE_LEDBAR
+  Settings.ledbar_range = 5000;
+  Settings.ledbar_steps = 5;
+#endif
+
   // 5.8.1
 //  Settings.altitude = 0;
   Settings.pwm_frequency = PWM_FREQ;
