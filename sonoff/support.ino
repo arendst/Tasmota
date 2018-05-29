@@ -244,6 +244,29 @@ char* LTrim(char* p)
   return p;
 }
 
+char* RTrim(char* p)
+{
+  char* q = p + strlen(p) -1;
+  while ((q >= p) && (isblank(*q))) {
+    q--;                                     // Trim trailing spaces
+  }
+  q++;
+  *q = '\0';
+  return p;
+}
+
+char* Trim(char* p)
+{
+  if (*p == '\0') { return p; }
+  while (isspace(*p)) { p++; }            // Trim leading spaces
+  if (*p == '\0') { return p; }
+  char* q = p + strlen(p) -1;
+  while (isspace(*q) && q >= p) { q--; }  // Trim trailing spaces
+  q++;
+  *q = '\0';
+  return p;
+}
+
 char* NoAlNumToUnderscore(char* dest, const char* source)
 {
   char* write = dest;

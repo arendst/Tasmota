@@ -90,6 +90,7 @@ uint32_t rules_triggers[MAX_RULE_SETS] = { 0 };
 uint8_t rules_trigger_count[MAX_RULE_SETS] = { 0 };
 uint8_t rules_teleperiod = 0;
 
+char event_data[100];
 char vars[RULES_MAX_VARS][10] = { 0 };
 
 /*******************************************************************************************/
@@ -374,7 +375,26 @@ void RulesEvery50ms()
         }
       }
       rules_old_power = rules_new_power;
-    } else {
+    }
+    else if(event_data[0]) {
+      char *event;
+      char *parameter;
+      event = strtok_r(event_data, "=", &parameter);     // event_data = fanspeed=10
+      if (event) {
+        event = Trim(event);
+        if (parameter) {
+          parameter = Trim(parameter);
+        } else {
+          parameter = event + strlen(event);  // '\0'
+        }
+        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"Event\":{\"%s\":\"%s\"}}"), event, parameter);
+        event_data[0] ='\0';
+        RulesProcess();
+      } else {
+        event_data[0] ='\0';
+      }
+    }
+    else {
       rules_quota++;
       if (rules_quota &1) {              // Every 100 ms
         mqtt_data[0] = '\0';
@@ -464,17 +484,7 @@ boolean RulesCommand()
   }
   else if (CMND_EVENT == command_code) {
     if (XdrvMailbox.data_len > 0) {
-      String event = XdrvMailbox.data;
-      String parameter = "";
-      int pos = event.indexOf('=');
-      if (pos > 0) {
-        parameter = event.substring(pos +1);
-        parameter.trim();
-        event = event.substring(0, pos);
-      }
-      event.trim();
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"Event\":{\"%s\":\"%s\"}}"), event.c_str(), parameter.c_str());
-      RulesProcess();
+      strlcpy(event_data, XdrvMailbox.data, sizeof(event_data));
     }
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, D_JSON_DONE);
   }

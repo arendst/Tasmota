@@ -1,9 +1,11 @@
 /* 5.14.0b
  * Add two rule sets of 511 characters using commands rule1, rule2 and rule3
+ * Add Ukranian language file
  * Add rule support for IrReceive and RfReceive (#2758)
  * Add command WebSend [<host>(:<port>,<user>:<password>)] <command> (#2821)
  * Add source information to command execution to be shown with logging option 3 (#2843)
  * Fix some Pow R2 and S31 checksum errors (#1907)
+ * Fix Hardware Watchdog restart when using event command (#2853)
  *
  * 5.14.0a
  * Add feature information to Status 4
