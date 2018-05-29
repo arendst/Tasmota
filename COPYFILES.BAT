@@ -28,6 +28,7 @@ copy sonoff-PL\firmware.bin sonoff_KNX-PL.bin
 copy sonoff-PT\firmware.bin sonoff_KNX-PT.bin
 copy sonoff-RU\firmware.bin sonoff_KNX-RU.bin
 copy sonoff-TW\firmware.bin sonoff_KNX-TW.bin
+copy sonoff-UK\firmware.bin sonoff_KNX-UK.bin
 
 echo:
 echo:
