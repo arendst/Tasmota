@@ -205,7 +205,7 @@
 #define D_USE_DEFAULTS "Usar valores por defecto"
 #define D_ERASED_SECTOR "Sector borrado"
 
-// webserver.ino
+// xdrv_02_webserver.ino
 #define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "Firmware MÍNIMO - actualice por favor"
 #define D_WEBSERVER_ACTIVE_ON "Servidor web activo en"
 #define D_WITH_IP_ADDRESS "con dirección IP"
@@ -327,7 +327,7 @@
 #define D_ENABLE_WEBLOG_FOR_RESPONSE "Habilitar weblog 2 si desea respuesta"
 #define D_NEED_USER_AND_PASSWORD "Se necesita user=<username>&password=<password>"
 
-// xdrv_00_mqtt.ino
+// xdrv_01_mqtt.ino
 #define D_FINGERPRINT "Verificar TLS fingerprint..."
 #define D_TLS_CONNECT_FAILED_TO "Falló Conección TLS a"
 #define D_RETRY_IN "Reintentando"
@@ -335,7 +335,7 @@
 #define D_INSECURE "Conección insegura por Fingerprint no válido"
 #define D_CONNECT_FAILED_TO "Falló Conección a"
 
-// xdrv_wemohue.ino
+// xplg_wemohue.ino
 #define D_MULTICAST_DISABLED "Multicast deshabilitado"
 #define D_MULTICAST_REJOINED "Multicast (re)conectado"
 #define D_MULTICAST_JOIN_FAILED "Conección Multicast fallida"
@@ -355,7 +355,7 @@
 #define D_HUE_POST_ARGS "Hue POST args"
 #define D_3_RESPONSE_PACKETS_SENT "3 paquetes de respuesta enviados"
 
-// xdrv_05_domoticz.ino
+// xdrv_07_domoticz.ino
 #define D_DOMOTICZ_PARAMETERS "Parámetros Domoticz"
 #define D_DOMOTICZ_IDX "Idx"
 #define D_DOMOTICZ_KEY_IDX "Key idx"

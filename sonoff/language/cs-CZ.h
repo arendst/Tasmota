@@ -205,7 +205,7 @@
 #define D_USE_DEFAULTS "Použij defaultní hodnoty"
 #define D_ERASED_SECTOR "Smazaný sektor"
 
-// webserver.ino
+// xdrv_02_webserver.ino
 #define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "Firmware MINIMÁLNÍ - prosím zaktualizujte"
 #define D_WEBSERVER_ACTIVE_ON "Aktivní Web server"
 #define D_WITH_IP_ADDRESS "na IP adrese"
@@ -327,7 +327,7 @@
 #define D_ENABLE_WEBLOG_FOR_RESPONSE "Zapni úroveň 2 zápisu Weblog, pokud je očekávána odpověď"
 #define D_NEED_USER_AND_PASSWORD "Vyžadován uživatel=<username>&heslo=<password>"
 
-// xdrv_00_mqtt.ino
+// xdrv_01_mqtt.ino
 #define D_FINGERPRINT "Verifikuj otisk TLS..."
 #define D_TLS_CONNECT_FAILED_TO "Nepřipojeno TLS do"
 #define D_RETRY_IN "Zopakuji za"
@@ -335,7 +335,7 @@
 #define D_INSECURE "Nesprávné připojení z důvodu chybného otisku TLS"
 #define D_CONNECT_FAILED_TO "Spojení se nepodařilo navázat"
 
-// xdrv_wemohue.ino
+// xplg_wemohue.ino
 #define D_MULTICAST_DISABLED "Multicast je vypnutý"
 #define D_MULTICAST_REJOINED "Multicast opět připojený"
 #define D_MULTICAST_JOIN_FAILED "Multicast neúspěšný"
@@ -355,7 +355,7 @@
 #define D_HUE_POST_ARGS "Hue POST args"
 #define D_3_RESPONSE_PACKETS_SENT "3 pakety odpovědi odeslány"
 
-// xdrv_05_domoticz.ino
+// xdrv_07_domoticz.ino
 #define D_DOMOTICZ_PARAMETERS "Nastavení Domoticz"
 #define D_DOMOTICZ_IDX "Idx"
 #define D_DOMOTICZ_KEY_IDX "Key idx"

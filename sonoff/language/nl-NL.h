@@ -205,7 +205,7 @@
 #define D_USE_DEFAULTS "Gebruik standaardwaarden"
 #define D_ERASED_SECTOR "Wis sector"
 
-// webserver.ino
+// xdrv_02_webserver.ino
 #define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "MINIMAL firmware - opwaarderen"
 #define D_WEBSERVER_ACTIVE_ON "Webserver actief op"
 #define D_WITH_IP_ADDRESS "met IP adres"
@@ -327,7 +327,7 @@
 #define D_ENABLE_WEBLOG_FOR_RESPONSE "Schakel weblog 2 in indien antwoord verwacht"
 #define D_NEED_USER_AND_PASSWORD "Benodig user=<gebruiker>&password=<webwachtwoord>"
 
-// xdrv_00_mqtt.ino
+// xdrv_01_mqtt.ino
 #define D_FINGERPRINT "Controleer TLS vingerafdruk..."
 #define D_TLS_CONNECT_FAILED_TO "TLS Verbinding mislukt naar"
 #define D_RETRY_IN "Opnieuw proberen over"
@@ -335,7 +335,7 @@
 #define D_INSECURE "Door ongeldige vingerafdruk een onveilige verbinding"
 #define D_CONNECT_FAILED_TO "Verbinding mislukt naar"
 
-// xdrv_wemohue.ino
+// xplg_wemohue.ino
 #define D_MULTICAST_DISABLED "Multicast uitgeschakeld"
 #define D_MULTICAST_REJOINED "Multicast verbonden"
 #define D_MULTICAST_JOIN_FAILED "Multicast verbinding mislukt"
@@ -355,7 +355,7 @@
 #define D_HUE_POST_ARGS "Hue POST argumenten"
 #define D_3_RESPONSE_PACKETS_SENT "3 antwoord paketten verstuurd"
 
-// xdrv_05_domoticz.ino
+// xdrv_07_domoticz.ino
 #define D_DOMOTICZ_PARAMETERS "Domoticz parameters"
 #define D_DOMOTICZ_IDX "Idx"
 #define D_DOMOTICZ_KEY_IDX "Toets idx"

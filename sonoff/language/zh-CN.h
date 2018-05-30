@@ -205,7 +205,7 @@
 #define D_USE_DEFAULTS "使用默认设置"
 #define D_ERASED_SECTOR "擦除删除"
 
-// webserver.ino
+// xdrv_02_webserver.ino
 #define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "固件版本过低 - 请升级"
 #define D_WEBSERVER_ACTIVE_ON "Web服务器:"
 #define D_WITH_IP_ADDRESS "IP地址:"
@@ -327,7 +327,7 @@
 #define D_ENABLE_WEBLOG_FOR_RESPONSE "如果预期响应，则启用Weblog 2"
 #define D_NEED_USER_AND_PASSWORD "需要 user=<用户名>&password=<密码>"
 
-// xdrv_00_mqtt.ino
+// xdrv_01_mqtt.ino
 #define D_FINGERPRINT "验证 TLS 指纹..."
 #define D_TLS_CONNECT_FAILED_TO "TLS 连接失败"
 #define D_RETRY_IN "重试倒计时:"
@@ -335,7 +335,7 @@
 #define D_INSECURE "指纹无效导致连接不安全"
 #define D_CONNECT_FAILED_TO "连接失败:"
 
-// xdrv_wemohue.ino
+// xplg_wemohue.ino
 #define D_MULTICAST_DISABLED "组播已禁用"
 #define D_MULTICAST_REJOINED "组播已(重新)加入"
 #define D_MULTICAST_JOIN_FAILED "组播加入失败"
@@ -355,7 +355,7 @@
 #define D_HUE_POST_ARGS "Hue POST 参数"
 #define D_3_RESPONSE_PACKETS_SENT "3 请求包发送"
 
-// xdrv_05_domoticz.ino
+// xdrv_07_domoticz.ino
 #define D_DOMOTICZ_PARAMETERS "Domoticz 设置"
 #define D_DOMOTICZ_IDX "Idx"
 #define D_DOMOTICZ_KEY_IDX "Key idx"

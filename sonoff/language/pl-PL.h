@@ -205,7 +205,7 @@
 #define D_USE_DEFAULTS "Użyj domyślnych"
 #define D_ERASED_SECTOR "Wymazany sektor"
 
-// webserver.ino
+// xdrv_02_webserver.ino
 #define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "Oprogramowanie MINIMAL - proszę uaktualnić"
 #define D_WEBSERVER_ACTIVE_ON "Aktywny serwer Web"
 #define D_WITH_IP_ADDRESS "z adresem IP"
@@ -327,7 +327,7 @@
 #define D_ENABLE_WEBLOG_FOR_RESPONSE "Włącz poziom 2 zapisu Weblog, jeśli oczekiwana jest odpowiedź"
 #define D_NEED_USER_AND_PASSWORD "Wymagany użytkownik=<username>&hasło=<password>"
 
-// xdrv_00_mqtt.ino
+// xdrv_01_mqtt.ino
 #define D_FINGERPRINT "Weryfikuj odcisk TLS..."
 #define D_TLS_CONNECT_FAILED_TO "Nieudane połączenie TLS do"
 #define D_RETRY_IN "Spróbuj ponownie"
@@ -335,7 +335,7 @@
 #define D_INSECURE "Nieprawidłowe połączenie z powodu błędnego odcisku TLS"
 #define D_CONNECT_FAILED_TO "Nie udało się nawiązać połączenia"
 
-// xdrv_wemohue.ino
+// xplg_wemohue.ino
 #define D_MULTICAST_DISABLED "Multicast jest wyłączony"
 #define D_MULTICAST_REJOINED "Multicast (re)dołączony"
 #define D_MULTICAST_JOIN_FAILED "Multicast nie powiodło się"
@@ -355,7 +355,7 @@
 #define D_HUE_POST_ARGS "Hue POST args"
 #define D_3_RESPONSE_PACKETS_SENT "3 pakiety odpowiedzi wysyłane"
 
-// xdrv_05_domoticz.ino
+// xdrv_07_domoticz.ino
 #define D_DOMOTICZ_PARAMETERS "Parametry Domoticz"
 #define D_DOMOTICZ_IDX "Idx"
 #define D_DOMOTICZ_KEY_IDX "Key idx"

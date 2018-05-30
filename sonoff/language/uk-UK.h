@@ -205,7 +205,7 @@
 #define D_USE_DEFAULTS "Використовувати значення за замовчуванням"
 #define D_ERASED_SECTOR "Стерти сектор"
 
-// webserver.ino
+// xdrv_02_webserver.ino
 #define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "Прошивка MINIMAL - будь-ласка оновіть"
 #define D_WEBSERVER_ACTIVE_ON "Веб-сервер активний"
 #define D_WITH_IP_ADDRESS "з IP-адресом"
@@ -327,7 +327,7 @@
 #define D_ENABLE_WEBLOG_FOR_RESPONSE "Увімкніть Веб лог рівня 2 якщо очікуєте відповідь"
 #define D_NEED_USER_AND_PASSWORD "Очікується user=<username>&password=<password>"
 
-// xdrv_00_mqtt.ino
+// xdrv_01_mqtt.ino
 #define D_FINGERPRINT "Перевірка TLS відбитка..."
 #define D_TLS_CONNECT_FAILED_TO "Збій підключення TLS до"
 #define D_RETRY_IN "Повторити"
@@ -335,7 +335,7 @@
 #define D_INSECURE "Небезпечне з'єднання, недійсний відбиток "
 #define D_CONNECT_FAILED_TO "Помилка підключення до"
 
-// xdrv_wemohue.ino
+// xplg_wemohue.ino
 #define D_MULTICAST_DISABLED "Multicast вимкнений"
 #define D_MULTICAST_REJOINED "Multicast (пере)під'єднався"
 #define D_MULTICAST_JOIN_FAILED "Multicast помилка з'єднання"
@@ -355,7 +355,7 @@
 #define D_HUE_POST_ARGS "Hue POST args"
 #define D_3_RESPONSE_PACKETS_SENT "3 пакету відповіді  отримано"
 
-// xdrv_05_domoticz.ino
+// xdrv_07_domoticz.ino
 #define D_DOMOTICZ_PARAMETERS "Domoticz налаштування"
 #define D_DOMOTICZ_IDX "Idx"
 #define D_DOMOTICZ_KEY_IDX "Ключ idx"
