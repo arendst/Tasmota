@@ -230,7 +230,7 @@ void AriluxRfHandler()
         }
       }
       if (strlen(command)) {
-        ExecuteCommand(command);
+        ExecuteCommand(command, SRC_LIGHT);
       }
     }
   }
@@ -529,7 +529,7 @@ char* LightGetColor(uint8_t type, char* scolor)
 void LightPowerOn()
 {
   if (Settings.light_dimmer && !(light_power)) {
-    ExecuteCommandPower(light_device, POWER_ON);
+    ExecuteCommandPower(light_device, POWER_ON, SRC_LIGHT);
   }
 }
 
@@ -585,11 +585,11 @@ void LightPreparePower()
 {
   if (Settings.light_dimmer && !(light_power)) {
     if (!Settings.flag.not_power_linked) {
-      ExecuteCommandPower(light_device, POWER_ON_NO_STATE);
+      ExecuteCommandPower(light_device, POWER_ON_NO_STATE, SRC_LIGHT);
     }
   }
   else if (!Settings.light_dimmer && light_power) {
-    ExecuteCommandPower(light_device, POWER_OFF_NO_STATE);
+    ExecuteCommandPower(light_device, POWER_OFF_NO_STATE, SRC_LIGHT);
   }
 #ifdef USE_DOMOTICZ
   DomoticzUpdatePowerState(light_device);

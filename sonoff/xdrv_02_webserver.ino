@@ -337,6 +337,21 @@ static void WebGetArg(const char* arg, char* out, size_t max)
   out[max-1] = '\0';  // Ensure terminating NUL
 }
 
+void ShowWebSource(int source)
+{
+  if ((source > 0) && (source < SRC_MAX)) {
+    char stemp1[20];
+    snprintf_P(log_data, sizeof(log_data), PSTR("SRC: %s from %s"), GetTextIndexed(stemp1, sizeof(stemp1), source, kCommandSource), WebServer->client().remoteIP().toString().c_str());
+    AddLog(LOG_LEVEL_DEBUG);
+  }
+}
+
+void ExecuteWebCommand(char* svalue, int source)
+{
+  ShowWebSource(source);
+  ExecuteCommand(svalue, SRC_IGNORE);
+}
+
 void StartWebserver(int type, IPAddress ipweb)
 {
   if (!webserver_state) {
@@ -567,22 +582,23 @@ void HandleAjaxStatusRefresh()
 
   WebGetArg("o", tmp, sizeof(tmp));
   if (strlen(tmp)) {
-    ExecuteCommandPower(atoi(tmp), POWER_TOGGLE);
+    ShowWebSource(SRC_WEBGUI);
+    ExecuteCommandPower(atoi(tmp), POWER_TOGGLE, SRC_IGNORE);
   }
   WebGetArg("d", tmp, sizeof(tmp));
   if (strlen(tmp)) {
     snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_DIMMER " %s"), tmp);
-    ExecuteCommand(svalue);
+    ExecuteWebCommand(svalue, SRC_WEBGUI);
   }
   WebGetArg("t", tmp, sizeof(tmp));
   if (strlen(tmp)) {
     snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_COLORTEMPERATURE " %s"), tmp);
-    ExecuteCommand(svalue);
+    ExecuteWebCommand(svalue, SRC_WEBGUI);
   }
   WebGetArg("k", tmp, sizeof(tmp));
   if (strlen(tmp)) {
     snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_RFKEY "%s"), tmp);
-    ExecuteCommand(svalue);
+    ExecuteWebCommand(svalue, SRC_WEBGUI);
   }
 
   snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{t}"));
@@ -1106,6 +1122,7 @@ void HandleSaveSettings()
     }
     ShowPage(page);
 
+    ShowWebSource(SRC_WEBGUI);
     restart_flag = 2;
   } else {
     HandleConfiguration();
@@ -1129,7 +1146,7 @@ void HandleResetConfiguration()
   ShowPage(page);
 
   snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_RESET " 1"));
-  ExecuteCommand(svalue);
+  ExecuteWebCommand(svalue, SRC_WEBGUI);
 }
 
 void HandleRestoreConfiguration()
@@ -1181,7 +1198,7 @@ void HandleUpgradeFirmwareStart()
   WebGetArg("o", tmp, sizeof(tmp));
   if (strlen(tmp)) {
     snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_OTAURL " %s"), tmp);
-    ExecuteCommand(svalue);
+    ExecuteWebCommand(svalue, SRC_WEBGUI);
   }
 
   String page = FPSTR(HTTP_HEAD);
@@ -1193,7 +1210,7 @@ void HandleUpgradeFirmwareStart()
   ShowPage(page);
 
   snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_UPGRADE " 1"));
-  ExecuteCommand(svalue);
+  ExecuteWebCommand(svalue, SRC_WEBGUI);
 }
 
 void HandleUploadDone()
@@ -1233,6 +1250,8 @@ void HandleUploadDone()
   } else {
     page += F("green'>" D_SUCCESSFUL "</font></b><br/>");
     page += FPSTR(HTTP_MSG_RSTRT);
+
+    ShowWebSource(SRC_WEBGUI);
     restart_flag = 2;
   }
   SettingsBufferFree();
@@ -1381,16 +1400,16 @@ void HandleHttpCommand()
     WebGetArg("user", tmp1, sizeof(tmp1));
     char tmp2[100];
     WebGetArg("password", tmp2, sizeof(tmp2));
-    if (!(!strcmp(tmp1, WEB_USERNAME) && !strcmp(tmp2, Settings.web_password))) {
-      valid = 0;
-    }
+    if (!(!strcmp(tmp1, WEB_USERNAME) && !strcmp(tmp2, Settings.web_password))) { valid = 0; }
   }
 
   String message = F("{\"" D_RSLT_WARNING "\":\"");
   if (valid) {
     byte curridx = web_log_index;
     WebGetArg("cmnd", svalue, sizeof(svalue));
-    if (strlen(svalue)) { ExecuteCommand(svalue); }
+    if (strlen(svalue)) {
+      ExecuteWebCommand(svalue, SRC_WEBCOMMAND);
+    }
 
     if (web_log_index != curridx) {
       byte counter = curridx;
@@ -1449,7 +1468,7 @@ void HandleAjaxConsoleRefresh()
   if (strlen(svalue)) {
     snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_COMMAND "%s"), svalue);
     AddLog(LOG_LEVEL_INFO);
-    ExecuteCommand(svalue);
+    ExecuteWebCommand(svalue, SRC_WEBCONSOLE);
   }
 
   WebGetArg("c2", svalue, sizeof(svalue));
@@ -1624,6 +1643,7 @@ void HandleRestart()
   }
   ShowPage(page);
 
+  ShowWebSource(SRC_WEBGUI);
   restart_flag = 2;
 }
 

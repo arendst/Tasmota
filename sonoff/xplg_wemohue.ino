@@ -387,10 +387,10 @@ void HandleUpnpEvent()
   //differentiate get and set state
   if (request.indexOf(F("SetBinaryState")) > 0) {
     if (request.indexOf(F("State>1</Binary")) > 0) {
-      ExecuteCommandPower(devices_present, POWER_ON);
+      ExecuteCommandPower(devices_present, POWER_ON, SRC_WEMO);
     }
     else if (request.indexOf(F("State>0</Binary")) > 0) {
-      ExecuteCommandPower(devices_present, POWER_OFF);
+      ExecuteCommandPower(devices_present, POWER_OFF, SRC_WEMO);
     }
   }
   else if(request.indexOf(F("GetBinaryState")) > 0){
@@ -660,10 +660,10 @@ void HueLights(String *path)
         on = hue_json["on"];
         switch(on)
         {
-          case false : ExecuteCommandPower(device, POWER_OFF);
+          case false : ExecuteCommandPower(device, POWER_OFF, SRC_HUE);
                        response.replace("{re", "false");
                        break;
-          case true  : ExecuteCommandPower(device, POWER_ON);
+          case true  : ExecuteCommandPower(device, POWER_ON, SRC_HUE);
                        response.replace("{re", "true");
                        break;
           default    : response.replace("{re", (power & (1 << (device-1))) ? "true" : "false");
