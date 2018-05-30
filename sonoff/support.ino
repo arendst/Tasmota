@@ -244,6 +244,29 @@ char* LTrim(char* p)
   return p;
 }
 
+char* RTrim(char* p)
+{
+  char* q = p + strlen(p) -1;
+  while ((q >= p) && (isblank(*q))) {
+    q--;                                     // Trim trailing spaces
+  }
+  q++;
+  *q = '\0';
+  return p;
+}
+
+char* Trim(char* p)
+{
+  if (*p == '\0') { return p; }
+  while (isspace(*p)) { p++; }            // Trim leading spaces
+  if (*p == '\0') { return p; }
+  char* q = p + strlen(p) -1;
+  while (isspace(*q) && q >= p) { q--; }  // Trim trailing spaces
+  q++;
+  *q = '\0';
+  return p;
+}
+
 char* NoAlNumToUnderscore(char* dest, const char* source)
 {
   char* write = dest;
@@ -604,6 +627,15 @@ uint32_t GetHash(const char *buffer, size_t size)
     hash += (uint8_t)*buffer++ * (i +1);
   }
   return hash;
+}
+
+void ShowSource(int source)
+{
+  if ((source > 0) && (source < SRC_MAX)) {
+    char stemp1[20];
+    snprintf_P(log_data, sizeof(log_data), PSTR("SRC: %s"), GetTextIndexed(stemp1, sizeof(stemp1), source, kCommandSource));
+    AddLog(LOG_LEVEL_DEBUG);
+  }
 }
 
 /*********************************************************************************************\

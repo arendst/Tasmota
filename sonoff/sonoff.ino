@@ -304,9 +304,11 @@ void SetLatchingRelay(power_t power, uint8_t state)
   }
 }
 
-void SetDevicePower(power_t rpower)
+void SetDevicePower(power_t rpower, int source)
 {
   uint8_t state;
+
+  ShowSource(source);
 
   if (POWER_ALL_ALWAYS_ON == Settings.poweronstate) {  // All on and stay on
     power = (1 << devices_present) -1;
@@ -395,6 +397,8 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
   data_len -= i;
   memcpy(dataBuf, data +i, sizeof(dataBuf));
   dataBuf[sizeof(dataBuf)-1] = 0;
+
+  if (topicBuf[0] != '/') { ShowSource(SRC_MQTT); }
 
   snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_RESULT D_RECEIVED_TOPIC " %s, " D_DATA_SIZE " %d, " D_DATA " %s"),
     topicBuf, data_len, dataBuf);
@@ -490,7 +494,7 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
     else if ((CMND_POWER == command_code) && (index > 0) && (index <= devices_present)) {
       if ((payload < 0) || (payload > 4)) payload = 9;
 //      Settings.flag.device_index_enable = user_append_index;
-      ExecuteCommandPower(index, payload);
+      ExecuteCommandPower(index, payload, SRC_IGNORE);
       fallback_topic_flag = 0;
       return;
     }
@@ -516,7 +520,7 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
         Settings.poweronstate = payload;
         if (POWER_ALL_ALWAYS_ON == Settings.poweronstate) {
           for (byte i = 1; i <= devices_present; i++) {
-            ExecuteCommandPower(i, POWER_ON);
+            ExecuteCommandPower(i, POWER_ON, SRC_IGNORE);
           }
         }
       }
@@ -1155,7 +1159,7 @@ boolean SendKey(byte key, byte device, byte state)
   return result;
 }
 
-void ExecuteCommandPower(byte device, byte state)
+void ExecuteCommandPower(byte device, byte state, int source)
 {
 // device  = Relay number 1 and up
 // state 0 = Relay Off
@@ -1166,6 +1170,8 @@ void ExecuteCommandPower(byte device, byte state)
 // state 6 = Relay Off and no publishPowerState
 // state 7 = Relay On and no publishPowerState
 // state 9 = Show power state
+
+//  ShowSource(source);
 
   uint8_t publish_power = 1;
   if ((POWER_OFF_NO_STATE == state) || (POWER_ON_NO_STATE == state)) {
@@ -1184,7 +1190,7 @@ void ExecuteCommandPower(byte device, byte state)
       interlock_mutex = 1;
       for (byte i = 0; i < devices_present; i++) {
         power_t imask = 1 << i;
-        if ((power & imask) && (mask != imask)) ExecuteCommandPower(i +1, POWER_OFF);
+        if ((power & imask) && (mask != imask)) ExecuteCommandPower(i +1, POWER_OFF, SRC_IGNORE);
       }
       interlock_mutex = 0;
     }
@@ -1198,7 +1204,7 @@ void ExecuteCommandPower(byte device, byte state)
     case POWER_TOGGLE:
       power ^= mask;
     }
-    SetDevicePower(power);
+    SetDevicePower(power, source);
 #ifdef USE_DOMOTICZ
     DomoticzUpdatePowerState(device);
 #endif  // USE_DOMOTICZ
@@ -1225,7 +1231,7 @@ void ExecuteCommandPower(byte device, byte state)
     byte flag = (blink_mask & mask);
     blink_mask &= (POWER_MASK ^ mask);  // Clear device mask
     MqttPublishPowerBlinkState(device);
-    if (flag) ExecuteCommandPower(device, (blink_powersave >> (device -1))&1);  // Restore state
+    if (flag) ExecuteCommandPower(device, (blink_powersave >> (device -1))&1, SRC_IGNORE);  // Restore state
     return;
   }
   if (publish_power) MqttPublishPowerState(device);
@@ -1240,17 +1246,19 @@ void StopAllPowerBlink()
     if (blink_mask & mask) {
       blink_mask &= (POWER_MASK ^ mask);  // Clear device mask
       MqttPublishPowerBlinkState(i);
-      ExecuteCommandPower(i, (blink_powersave >> (i -1))&1);  // Restore state
+      ExecuteCommandPower(i, (blink_powersave >> (i -1))&1, SRC_IGNORE);  // Restore state
     }
   }
 }
 
-void ExecuteCommand(char *cmnd)
+void ExecuteCommand(char *cmnd, int source)
 {
   char stopic[CMDSZ];
   char svalue[INPUT_BUFFER_SIZE];
   char *start;
   char *token;
+
+  ShowSource(source);
 
   token = strtok(cmnd, " ");
   if (token != NULL) {
@@ -1550,7 +1558,7 @@ void ButtonHandler()
         }
         if (button_pressed) {
           if (!SendKey(0, button_index +1, POWER_TOGGLE)) {  // Execute Toggle command via MQTT if ButtonTopic is set
-            ExecuteCommandPower(button_index +1, POWER_TOGGLE);  // Execute Toggle command internally
+            ExecuteCommandPower(button_index +1, POWER_TOGGLE, SRC_BUTTON);  // Execute Toggle command internally
           }
         }
       } else {
@@ -1559,7 +1567,7 @@ void ButtonHandler()
             snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION D_BUTTON "%d " D_IMMEDIATE), button_index +1);
             AddLog(LOG_LEVEL_DEBUG);
             if (!SendKey(0, button_index +1, POWER_TOGGLE)) {  // Execute Toggle command via MQTT if ButtonTopic is set
-              ExecuteCommandPower(button_index +1, POWER_TOGGLE);  // Execute Toggle command internally
+              ExecuteCommandPower(button_index +1, POWER_TOGGLE, SRC_BUTTON);  // Execute Toggle command internally
             }
           } else {
             multipress[button_index] = (multiwindow[button_index]) ? multipress[button_index] +1 : 1;
@@ -1578,7 +1586,7 @@ void ButtonHandler()
             if (holdbutton[button_index] == Settings.param[P_HOLD_TIME] * (STATES / 10) * hold_time_extent) {  // Button held for factor times longer
 //              Settings.flag.button_single = 0;
               snprintf_P(scmnd, sizeof(scmnd), PSTR(D_CMND_SETOPTION "13 0"));  // Disable single press only
-              ExecuteCommand(scmnd);
+              ExecuteCommand(scmnd, SRC_BUTTON);
             }
           } else {
             if (Settings.flag.button_restrict) {   // Button restriction
@@ -1590,7 +1598,7 @@ void ButtonHandler()
               if (holdbutton[button_index] == (Settings.param[P_HOLD_TIME] * (STATES / 10)) * hold_time_extent) {  // Button held for factor times longer
                 multipress[button_index] = 0;
                 snprintf_P(scmnd, sizeof(scmnd), PSTR(D_CMND_RESET " 1"));
-                ExecuteCommand(scmnd);
+                ExecuteCommand(scmnd, SRC_BUTTON);
               }
             }
           }
@@ -1617,12 +1625,12 @@ void ButtonHandler()
                   if (WifiState()) {                  // WPSconfig, Smartconfig or Wifimanager active
                     restart_flag = 1;
                   } else {
-                    ExecuteCommandPower(button_index + multipress[button_index], POWER_TOGGLE);  // Execute Toggle command internally
+                    ExecuteCommandPower(button_index + multipress[button_index], POWER_TOGGLE, SRC_BUTTON);  // Execute Toggle command internally
                   }
                 } else {                              // 3 - 7 press
                   if (!Settings.flag.button_restrict) {
                     snprintf_P(scmnd, sizeof(scmnd), kCommands[multipress[button_index] -3]);
-                    ExecuteCommand(scmnd);
+                    ExecuteCommand(scmnd, SRC_BUTTON);
                   }
                 }
               }
@@ -1705,7 +1713,7 @@ void SwitchHandler()
 
         if (switchflag < 3) {
           if (!SendKey(1, i +1, switchflag)) {  // Execute command via MQTT
-            ExecuteCommandPower(i +1, switchflag);        // Execute command internally (if i < devices_present)
+            ExecuteCommandPower(i +1, switchflag, SRC_SWITCH);        // Execute command internally (if i < devices_present)
           }
         }
 
@@ -1752,8 +1760,8 @@ void StateLoop()
       if ((pulse_timer[i] > 0) && (pulse_timer[i] < 112)) {
         pulse_timer[i]--;
         if (!pulse_timer[i]) {
-//          ExecuteCommandPower(i +1, POWER_OFF);
-          ExecuteCommandPower(i +1, (POWER_ALL_OFF_PULSETIME_ON == Settings.poweronstate) ? POWER_ON : POWER_OFF);
+//          ExecuteCommandPower(i +1, POWER_OFF, SRC_PULSETIMER);
+          ExecuteCommandPower(i +1, (POWER_ALL_OFF_PULSETIME_ON == Settings.poweronstate) ? POWER_ON : POWER_OFF, SRC_PULSETIMER);
         }
       }
     }
@@ -1768,7 +1776,7 @@ void StateLoop()
         } else {
           blink_power ^= 1;
           power_now = (power & (POWER_MASK ^ blink_mask)) | ((blink_power) ? blink_mask : 0);
-          SetDevicePower(power_now);
+          SetDevicePower(power_now, SRC_IGNORE);
         }
       }
     }
@@ -1777,7 +1785,7 @@ void StateLoop()
     if (backlog_delay) backlog_delay--;
     if ((backlog_pointer != backlog_index) && !backlog_delay && !backlog_mutex) {
       backlog_mutex = 1;
-      ExecuteCommand((char*)backlog[backlog_pointer].c_str());
+      ExecuteCommand((char*)backlog[backlog_pointer].c_str(), SRC_BACKLOG);
       backlog_mutex = 0;
       backlog_pointer++;
       if (backlog_pointer >= MAX_BACKLOG) backlog_pointer = 0;
@@ -2122,7 +2130,7 @@ void SerialInput()
       seriallog_level = (Settings.seriallog_level < LOG_LEVEL_INFO) ? (byte)LOG_LEVEL_INFO : Settings.seriallog_level;
       snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_COMMAND "%s"), serial_in_buffer);
       AddLog(LOG_LEVEL_INFO);
-      ExecuteCommand(serial_in_buffer);
+      ExecuteCommand(serial_in_buffer, SRC_SERIAL);
       serial_in_byte_counter = 0;
       serial_polling_window = 0;
       Serial.flush();
@@ -2379,36 +2387,36 @@ void setup()
 
   if (MOTOR == Settings.module) Settings.poweronstate = POWER_ALL_ON;  // Needs always on else in limbo!
   if (POWER_ALL_ALWAYS_ON == Settings.poweronstate) {
-    SetDevicePower(1);
+    SetDevicePower(1, SRC_RESTART);
   } else {
     if ((resetInfo.reason == REASON_DEFAULT_RST) || (resetInfo.reason == REASON_EXT_SYS_RST)) {
       switch (Settings.poweronstate) {
       case POWER_ALL_OFF:
       case POWER_ALL_OFF_PULSETIME_ON:
         power = 0;
-        SetDevicePower(power);
+        SetDevicePower(power, SRC_RESTART);
         break;
       case POWER_ALL_ON:  // All on
         power = (1 << devices_present) -1;
-        SetDevicePower(power);
+        SetDevicePower(power, SRC_RESTART);
         break;
       case POWER_ALL_SAVED_TOGGLE:
         power = (Settings.power & ((1 << devices_present) -1)) ^ POWER_MASK;
         if (Settings.flag.save_state) {
-          SetDevicePower(power);
+          SetDevicePower(power, SRC_RESTART);
         }
         break;
       case POWER_ALL_SAVED:
         power = Settings.power & ((1 << devices_present) -1);
         if (Settings.flag.save_state) {
-          SetDevicePower(power);
+          SetDevicePower(power, SRC_RESTART);
         }
         break;
       }
     } else {
       power = Settings.power & ((1 << devices_present) -1);
       if (Settings.flag.save_state) {
-        SetDevicePower(power);
+        SetDevicePower(power, SRC_RESTART);
       }
     }
   }

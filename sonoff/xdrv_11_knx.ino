@@ -494,12 +494,12 @@ void KNX_CB_Action(message_t const &msg, void *arg)
     case KNX_CT_WRITE:
       if (chan->type < 9) // Set Relays
       {
-        ExecuteCommandPower(chan->type, msg.data[0]);
+        ExecuteCommandPower(chan->type, msg.data[0], SRC_KNX);
       }
       else if (chan->type < 17) // Toggle Relays
       {
         if (!toggle_inhibit) {
-          ExecuteCommandPower((chan->type) -8, 2);
+          ExecuteCommandPower((chan->type) -8, 2, SRC_KNX);
           if (Settings.flag.knx_enable_enhancement) {
             toggle_inhibit = TOGGLE_INHIBIT_TIME;
           }
