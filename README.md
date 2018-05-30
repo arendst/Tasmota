@@ -178,7 +178,7 @@ If you like **Sonoff-Tasmota**, give it a star, or fork it and contribute!
 
 Current version is **5.14.0b** - See [sonoff/_releasenotes.ino](https://github.com/arendst/Sonoff-Tasmota/blob/development/sonoff/_releasenotes.ino) for change information.
 
-### Quick install
+### Quick Install
 Download one of the released binaries from https://github.com/arendst/Sonoff-Tasmota/releases and flash it to your hardware as documented in the wiki.
 
 ### Important User Compilation Information
@@ -231,7 +231,7 @@ The following devices are supported:
 - [Luani HVIO board](https://luani.de/projekte/esp8266-hvio/)
 - Wemos D1 mini, NodeMcu and Ledunia
 
-### Firmware release information
+### Firmware Release Information
 Different firmware images are released based on Features and Sensors selection guided by code and memory usage.
 
 - The Minimal version allows intermediate OTA uploads to support larger versions and does NOT change any persistent parameter.
@@ -292,7 +292,7 @@ Different firmware images are released based on Features and Sensors selection g
 | USE_ARILUX_RF                  | x | x | - | x | x |
 | USE_SR04                       | x | - | - | x | x |
 
-#### Typical file size
+#### Typical File Size
 
 | ESP/Arduino library version | sonoff | classic | minimal | knx  | allsensors |
 |-----------------------------|--------|---------|---------|------|------------|
@@ -310,7 +310,7 @@ You can contribute to Sonoff-Tasmota by
 
 ### Credits
 
-#### Libraries used
+#### Libraries Used
 Libraries used with Sonoff-Tasmota are:
 - [ESP8266 core for Arduino](https://github.com/esp8266/Arduino)
 - [Adafruit BME680](https://github.com/adafruit/Adafruit_BME680)
