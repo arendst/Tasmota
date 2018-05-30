@@ -147,7 +147,12 @@ typedef unsigned long power_t;              // Power (Relay) type
 #define KNX_ENERGY_DAILY       23
 #define KNX_ENERGY_START       24
 #define KNX_ENERGY_TOTAL       25
-#define KNX_MAX_device_param   25
+#define KNX_SLOT1              26
+#define KNX_SLOT2              27
+#define KNX_SLOT3              28
+#define KNX_SLOT4              29
+#define KNX_SLOT5              30
+#define KNX_MAX_device_param   30
 
 /*********************************************************************************************\
  * Enumeration
