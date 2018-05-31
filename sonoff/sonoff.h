@@ -137,7 +137,7 @@ typedef unsigned long power_t;              // Power (Relay) type
 #define DAWN_NAUTIC            -12.0
 #define DAWN_ASTRONOMIC        -18.0
 
-// Sensor definition for KNX Driver
+// Sensor and Commands definition for KNX Driver
 #define KNX_TEMPERATURE        17
 #define KNX_HUMIDITY           18
 #define KNX_ENERGY_VOLTAGE     19
@@ -147,7 +147,13 @@ typedef unsigned long power_t;              // Power (Relay) type
 #define KNX_ENERGY_DAILY       23
 #define KNX_ENERGY_START       24
 #define KNX_ENERGY_TOTAL       25
-#define KNX_MAX_device_param   25
+#define KNX_SLOT1              26
+#define KNX_SLOT2              27
+#define KNX_SLOT3              28
+#define KNX_SLOT4              29
+#define KNX_SLOT5              30
+#define KNX_MAX_device_param   30
+#define MAX_KNXTX_CMNDS        5
 
 /*********************************************************************************************\
  * Enumeration
