@@ -1379,19 +1379,12 @@ void HandleUploadLoop()
           Update.end();
 #ifdef USE_RF_FLASH
           upload_file_type = EFM8BB1_RF_FW_FILE;
-          
+
           pinMode(PIN_C2CK, OUTPUT);
-          pinMode(PIN_C2D,  INPUT);
+          pinMode(PIN_C2D, INPUT);
 
           upload_error = rf_erase_flash();
           if (upload_error != 0) {
-            return;
-          }
-          
-          efm8bb1_update = (uint8_t *) malloc(EFM8BB1_MAX_SZ);
-
-          if (efm8bb1_update == NULL) {
-            upload_error = 15;
             return;
           }
 #endif
@@ -1427,15 +1420,40 @@ void HandleUploadLoop()
       }
     } else if (upload_file_type == EFM8BB1_RF_FW_FILE) {
 #ifdef USE_RF_FLASH
-      if ((upload.totalSize > EFM8BB1_MAX_SZ) || (upload.currentSize > EFM8BB1_MAX_SZ)) {
-        upload_error = 9;
+      // We have carry over data since last write, i. e. a start but not an end
+      if (efm8bb1_update != NULL) {
+        ssize_t result = rf_glue_remnant_with_new_data_and_write(efm8bb1_update, upload.buf, upload.currentSize);
         free(efm8bb1_update);
         efm8bb1_update = NULL;
-        return;
+        if (result != 0) {
+          upload_error = result;
+          return;
+        }
       }
 
-      memcpy(efm8bb1_update, upload.buf, upload.currentSize);
-      efm8bb1_update += upload.currentSize;
+      ssize_t result = rf_search_and_write(upload.buf, upload.currentSize);
+      if (result < 0) {
+        upload_error = abs(result);
+        return;
+      } else if (result > 0) {
+        if (result > upload.currentSize) {
+          //Offset is larger than the buffer supplied, this should not happen
+          //FIXME: Fix error
+          upload_error = 23;
+          return;
+        }
+        // A remnant has been detected, allocate data for it plus a null termination byte
+        size_t remnant_sz = upload.currentSize - result;
+        efm8bb1_update = (uint8_t *) malloc(remnant_sz + 1);
+        if (efm8bb1_update == NULL) {
+          // FIXME: Set correct error code
+          upload_error = 23;
+          return;
+        }
+        memcpy(efm8bb1_update, upload.buf + result, remnant_sz);
+        // Add null termination at the end of of remnant buffer
+        efm8bb1_update[remnant_sz] = '\0';
+      }
 #endif
     } else {  // firmware
       if (!upload_error && (Update.write(upload.buf, upload.currentSize) != upload.currentSize)) {
@@ -1465,30 +1483,14 @@ void HandleUploadLoop()
       SettingsNewFree();
     } else if (upload_file_type == EFM8BB1_RF_FW_FILE) {
 #ifdef USE_RF_FLASH
-      uint8_t err;
 
-      if ((upload.totalSize > EFM8BB1_MAX_SZ) || (upload.currentSize > EFM8BB1_MAX_SZ)) {
-        upload_error = 9;
-        free(efm8bb1_update);
-        efm8bb1_update = NULL;
+      // FIXME: Is this called one extra time at the end or is the last upload segment only called here?
+      if (efm8bb1_update != NULL) {
+        // FIXME: Bail out here
+        upload_error = 25;
         return;
       }
-
-      // Rewind to start of buffer
-      efm8bb1_update -= upload.totalSize;
-      
-      ssize_t result = rf_search_and_write(efm8bb1_update, upload.totalSize);
-      if (result < 0) {
-        upload_error = abs(result);
-        Serial.printf("Result is %d\n", result);
-        free(efm8bb1_update);
-        efm8bb1_update = NULL;
-        return;
-      }
-
       // RF FW flash done
-      free(efm8bb1_update);
-      efm8bb1_update = NULL;
 #endif
 
     } else if (!upload_file_type) {
