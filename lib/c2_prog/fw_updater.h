@@ -3,7 +3,7 @@
 
 #define RF_RECORD_NO_START_FOUND -1
 #define RF_RECORD_NO_END_FOUND -2
-#define RF_RECORD_START_AND_END_FOUND -3
+#define RF_RECORD_START_AND_END_FOUND 0
 
 ssize_t rf_find_hex_record_start(uint8_t *buf, size_t size);
 ssize_t rf_find_hex_record_end(uint8_t *buf, size_t size);
