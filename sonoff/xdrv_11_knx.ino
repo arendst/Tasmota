@@ -115,6 +115,11 @@ device_parameters_t device_param[] = {
   { KNX_ENERGY_DAILY   , false, false, KNX_Empty },
   { KNX_ENERGY_START   , false, false, KNX_Empty },
   { KNX_ENERGY_TOTAL   , false, false, KNX_Empty },
+  { KNX_SLOT1 , false, false, KNX_Empty },
+  { KNX_SLOT2 , false, false, KNX_Empty },
+  { KNX_SLOT3 , false, false, KNX_Empty },
+  { KNX_SLOT4 , false, false, KNX_Empty },
+  { KNX_SLOT5 , false, false, KNX_Empty },
   { KNX_Empty, false, false, KNX_Empty}
 };
 
@@ -145,6 +150,11 @@ const char * device_param_ga[] = {
   D_ENERGY_TODAY      ,
   D_ENERGY_YESTERDAY  ,
   D_ENERGY_TOTAL      ,
+  D_KNX_TX_SLOT   " 1",
+  D_KNX_TX_SLOT   " 2",
+  D_KNX_TX_SLOT   " 3",
+  D_KNX_TX_SLOT   " 4",
+  D_KNX_TX_SLOT   " 5",
   nullptr
 };
 
@@ -175,8 +185,19 @@ const char *device_param_cb[] = {
   D_REPLY " " D_ENERGY_TODAY      ,
   D_REPLY " " D_ENERGY_YESTERDAY  ,
   D_REPLY " " D_ENERGY_TOTAL      ,
+  D_KNX_RX_SLOT   " 1",
+  D_KNX_RX_SLOT   " 2",
+  D_KNX_RX_SLOT   " 3",
+  D_KNX_RX_SLOT   " 4",
+  D_KNX_RX_SLOT   " 5",
   nullptr
 };
+
+// Commands
+#define D_CMND_KNXTXCMND "KnxTx_Cmnd"
+#define D_CMND_KNXTXVAL "KnxTx_Val"
+enum KnxCommands { CMND_KNXTXCMND, CMND_KNXTXVAL };
+const char kKnxCommands[] PROGMEM = D_CMND_KNXTXCMND "|" D_CMND_KNXTXVAL ;
 
 
 byte KNX_GA_Search( byte param, byte start = 0 )
@@ -377,11 +398,19 @@ bool KNX_CONFIG_NOT_MATCH()
   {
     if ( !device_param[i].show ) { // device has this parameter ?
       // if not, search for all registered group address to this parameter for deletion
+
+      // Checks all GA
       if ( KNX_GA_Search(i+1) != KNX_Empty ) { return true; }
-      if ( (i < 8) || (i > 15) ) // check relays and sensors (i from 8 to 16 are toggle relays parameters)
+
+      // Check all CB
+      if ( i < 8 ) // check relays (i from 8 to 15 are toggle relays parameters)
       {
         if ( KNX_CB_Search(i+1) != KNX_Empty ) { return true; }
         if ( KNX_CB_Search(i+9) != KNX_Empty ) { return true; }
+      }
+      if ( i > 15 ) // check sensors and others
+      {
+        if ( KNX_CB_Search(i+1) != KNX_Empty ) { return true; }
       }
     }
   }
@@ -448,6 +477,14 @@ void KNX_INIT()
     device_param[KNX_ENERGY_POWERFACTOR-1].show = true;
   }
 
+#ifdef USE_RULES
+  device_param[KNX_SLOT1-1].show = true;
+  device_param[KNX_SLOT2-1].show = true;
+  device_param[KNX_SLOT3-1].show = true;
+  device_param[KNX_SLOT4-1].show = true;
+  device_param[KNX_SLOT5-1].show = true;
+#endif
+
   // Delete from KNX settings all configuration is not anymore related to this device
   if (KNX_CONFIG_NOT_MATCH()) {
     Settings.knx_GA_registered = 0;
@@ -505,7 +542,21 @@ void KNX_CB_Action(message_t const &msg, void *arg)
           }
         }
       }
+#ifdef USE_RULES
+      else if ((chan->type >= KNX_SLOT1) && (chan->type <= KNX_SLOT5)) // KNX RX SLOTs (write command)
+      {
+        if (!toggle_inhibit) {
+          char command[25];
+          snprintf_P(command, sizeof(command), PSTR("event KNXRX_VAL%d=%d"), ((chan->type) - KNX_SLOT1 + 1 ), msg.data[0]);
+          ExecuteCommand(command, SRC_KNX);
+          if (Settings.flag.knx_enable_enhancement) {
+            toggle_inhibit = TOGGLE_INHIBIT_TIME;
+          }
+        }
+      }
+#endif
       break;
+
     case KNX_CT_READ:
       if (chan->type < 9) // reply Relays status
       {
@@ -531,6 +582,19 @@ void KNX_CB_Action(message_t const &msg, void *arg)
           knx.answer_2byte_float(msg.received_on, last_hum);
         }
       }
+#ifdef USE_RULES
+      else if ((chan->type >= KNX_SLOT1) && (chan->type <= KNX_SLOT5)) // KNX RX SLOTs (read command)
+      {
+        if (!toggle_inhibit) {
+          char command[25];
+          snprintf_P(command, sizeof(command), PSTR("event KNXRX_REQ%d"), ((chan->type) - KNX_SLOT1 + 1 ) );
+          ExecuteCommand(command, SRC_KNX);
+          if (Settings.flag.knx_enable_enhancement) {
+            toggle_inhibit = TOGGLE_INHIBIT_TIME;
+          }
+        }
+      }
+#endif
       break;
   }
 }
@@ -939,6 +1003,71 @@ void KNX_Save_Settings()
 #endif  // USE_WEBSERVER
 
 
+boolean KnxCommand()
+{
+  char command[CMDSZ];
+  uint8_t index = XdrvMailbox.index;
+  int command_code = GetCommandCode(command, sizeof(command), XdrvMailbox.topic, kKnxCommands);
+
+  if (!(Settings.flag.knx_enabled)) { return false; }
+
+  if (-1 == command_code) { return false; } // Unknown command
+
+  else if ((CMND_KNXTXCMND == command_code) && (index > 0) && (index <= MAX_KNXTX_CMNDS) && (XdrvMailbox.data_len > 0)) {
+    // index <- KNX SLOT to use
+    // XdrvMailbox.payload <- data to send
+
+    // Search all the registered GA that has that output (variable: KNX SLOTx) as parameter
+    byte i = KNX_GA_Search(index + KNX_SLOT1 -1);
+    while ( i != KNX_Empty ) {
+      KNX_addr.value = Settings.knx_GA_addr[i];
+      knx.write_1bit(KNX_addr, !(XdrvMailbox.payload == 0));
+      if (Settings.flag.knx_enable_enhancement) {
+        knx.write_1bit(KNX_addr, !(XdrvMailbox.payload == 0));
+        knx.write_1bit(KNX_addr, !(XdrvMailbox.payload == 0));
+      }
+
+      snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_KNX "%s = %d " D_SENT_TO " %d.%d.%d"),
+       device_param_ga[index + KNX_SLOT1 -2], !(XdrvMailbox.payload == 0),
+       KNX_addr.ga.area, KNX_addr.ga.line, KNX_addr.ga.member);
+      AddLog(LOG_LEVEL_INFO);
+
+      i = KNX_GA_Search(index + KNX_SLOT1 -1, i + 1);
+    }
+  }
+
+  else if ((CMND_KNXTXVAL == command_code) && (index > 0) && (index <= MAX_KNXTX_CMNDS) && (XdrvMailbox.data_len > 0)) {
+    // index <- KNX SLOT to use
+    // XdrvMailbox.payload <- data to send
+
+    // Search all the registered GA that has that output (variable: KNX SLOTx) as parameter
+    byte i = KNX_GA_Search(index + KNX_SLOT1 -1);
+    while ( i != KNX_Empty ) {
+      KNX_addr.value = Settings.knx_GA_addr[i];
+      knx.write_2byte_float(KNX_addr, XdrvMailbox.payload);
+      if (Settings.flag.knx_enable_enhancement) {
+        knx.write_2byte_float(KNX_addr, XdrvMailbox.payload);
+        knx.write_2byte_float(KNX_addr, XdrvMailbox.payload);
+      }
+
+      snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_KNX "%s = %d " D_SENT_TO " %d.%d.%d"),
+       device_param_ga[index + KNX_SLOT1 -2], XdrvMailbox.payload,
+       KNX_addr.ga.area, KNX_addr.ga.line, KNX_addr.ga.member);
+      AddLog(LOG_LEVEL_INFO);
+
+      i = KNX_GA_Search(index + KNX_SLOT1 -1, i + 1);
+    }
+  }
+
+  else { return false; }  // Incomplete command
+
+  snprintf_P (mqtt_data, sizeof(mqtt_data), PSTR("{\"%s%d\":\"%d\"}"),
+    command, index, XdrvMailbox.payload );
+
+  return true;
+}
+
+
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
@@ -960,9 +1089,9 @@ boolean Xdrv11(byte function)
           toggle_inhibit--;
         }
         break;
-//      case FUNC_COMMAND:
-//        result = KNXCommand();
-//        break;
+      case FUNC_COMMAND:
+        result = KnxCommand();
+        break;
 //      case FUNC_SET_POWER:
 //        break;
     }
