@@ -315,13 +315,11 @@
  * DISPLAY
 \*********************************************************************************************/
 
-//#define USE_DISPLAY                            // Add I2C Display Support for LCD, Oled and up to eigth Matrices (+19k code)
-
-//#define DISPLAY_CONFIG                         // Display Support for LCD, Oled
-#ifdef DISPLAY_CONFIG
-
-#ifdef USE_I2C
-  #define USE_DISPLAY                            // Add I2C Display Support for LCD, Oled and up to eigth Matrices (+19k code)
+//#define USE_DISPLAY                              // Add Display Support for LCD, Oled and up to eigth Matrices (+19k code)
+                                                 //   Required USE_I2C to be defined for I2C Display Support
+                                                 //   Required USE_SPI to be defined for SPI Display Support using library TasmotaTFT for 320x240 and 480x320 TFT
+#ifdef USE_DISPLAY
+#ifdef USE_I2C                                   // For I2C Display Support. Not required if using SPI
     #define MTX_ADDRESS1       0x71              // [DisplayAddress[1]] I2C address of first 8x8 matrix module
     #define MTX_ADDRESS2       0x74              // [DisplayAddress[2]] I2C address of second 8x8 matrix module
     #define MTX_ADDRESS3       0x75              // [DisplayAddress[3]] I2C address of third 8x8 matrix module
@@ -331,14 +329,7 @@
     #define MTX_ADDRESS7       0x00              // [DisplayAddress[7]] I2C address of seventh 8x8 matrix module
     #define MTX_ADDRESS8       0x00              // [DisplayAddress[8]] I2C address of eigth 8x8 matrix module
 #endif  // USE_I2C
-
-#ifdef USE_SPI                                   // SPI using library TasmotaTFT
-  #ifndef USE_DISPLAY
-  #define USE_DISPLAY                            // Add SPI Display support for 320x240 and 480x320 TFT, using library TasmotaTFT
-  #endif
-#endif  // USE_SPI
-
-#endif  // DISPLAY_CONFIG
+#endif  // USE_DISPLAY
 
 /*********************************************************************************************\
  * TIME PROPORTIONAL CONTROLLER
