@@ -117,8 +117,8 @@ We can configure to send the value of temperature or humidity every teleperiod. 
 - [x] Complete all the language files with keys
 - [x] Add support for other output devices supported by Tasmota
 - [x] Add support for other sensors supported by Tasmota (TEMP, HUM, ENERGY)
-- [ ] Add option for saving values received from KNX to MEM and VAR for Tasmota's rules
-- [ ] Add command for rules to send values by KNX
+- [x] Add command for rules to send values and commands by KNX
+- [x] Add events for rules when receiving data from KNX and read requests
 - [x] Add option for increase communication reliability (re send telegrams)
 - [ ] Add option for multicast forced reconnection (needed for some routers that have IGMP conflict with actual esp8266 lib v2.3.0 to v2.4.1, and lwIP v1.4 to v2.0 - Send a telegram to itself. If it is received, multicast is ok, if not, reconnect)
 - [ ] Add option to support KNX Snooping to debug KNX Network
