@@ -402,6 +402,8 @@
 #define D_SENT_TO "надіслати до"
 #define D_KNX_WARNING "Адреса групи (0/0/0) зарезервована і не може бути використана."
 #define D_KNX_ENHANCEMENT "Підвищення зв'язку"
+#define D_KNX_TX_SLOT "KNX TX"
+#define D_KNX_RX_SLOT "KNX RX"
 
 // xdrv_03_energy.ino
 #define D_ENERGY_TODAY "Енергія Сьогодні"

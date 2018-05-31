@@ -402,6 +402,8 @@
 #define D_SENT_TO "изпратен до"
 #define D_KNX_WARNING "Груповият адрес ( 0 / 0 / 0 ) е резервиран и не може да бъде използван."
 #define D_KNX_ENHANCEMENT "Подобрена комуникация"
+#define D_KNX_TX_SLOT "KNX TX"
+#define D_KNX_RX_SLOT "KNX RX"
 
 // xdrv_03_energy.ino
 #define D_ENERGY_TODAY "Използвана енергия днес"

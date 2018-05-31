@@ -1,4 +1,22 @@
 /* 5.14.0b
+* Added Console Commands to send KNX Commands
+  usage: KnxTx_Cmnd[slot] command
+  where [slot] is any of the 5 slots on the KNX Menu and command is 0 or 1
+  example: KnxTx_Cmnd1 0
+* Added Console Commands to send KNX Values
+  usage: KnxTx_Val[slot] value
+  where [slot] is any of the 5 slots on the KNX Menu and value is a number
+  example: KnxTx_Val1 35
+* Added Slots on the KNX Web Menu to select Group Addess to send data from console commands
+* Added Events to trigger rules when received data from KNX
+  usage on rules as: event#KnxRx_Val[slot]
+  where [slot] is any of the 5 slots on the KNX Menu
+  example: rule on event#KnxRx_Val1 do VAR1 %value% endon
+* Added Events to trigger rules when received read requests from KNX
+  usage on rules as: event#KnxRx_Req[slot]
+  where [slot] is any of the 5 slots on the KNX Menu
+  example: rule on event#KnxRx_Req1 do KnxTx_Val1 35 endon
+ * Added Slots on the KNX Web Menu to select Group Addess to receive data to trigger rules
  * Add two rule sets of 511 characters using commands rule1, rule2 and rule3
  * Add Ukranian language file
  * Add rule support for IrReceive and RfReceive (#2758)
