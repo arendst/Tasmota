@@ -28,7 +28,7 @@
 #ifdef USE_RF_FLASH
 #include <c2.h>
 #include <ihx.h>
-#include <firmware.h>
+#include <fw_updater.h>
 
 #define EFM8BB1_MAX_SZ 8192
 uint8_t *efm8bb1_update = NULL;
@@ -1290,6 +1290,7 @@ void HandleUploadDone()
       case 13: strncpy_P(error, PSTR(D_UPLOAD_ERR_13), sizeof(error)); break;
       case 14: strncpy_P(error, PSTR(D_UPLOAD_ERR_14), sizeof(error)); break;
       case 15: strncpy_P(error, PSTR(D_UPLOAD_ERR_15), sizeof(error)); break;
+      case 16: strncpy_P(error, PSTR(D_UPLOAD_ERR_16), sizeof(error)); break;
 #endif
       default:
         snprintf_P(error, sizeof(error), PSTR(D_UPLOAD_ERROR_CODE " %d"), upload_error);
@@ -1426,7 +1427,7 @@ void HandleUploadLoop()
         free(efm8bb1_update);
         efm8bb1_update = NULL;
         if (result != 0) {
-          upload_error = result;
+          upload_error = abs(result);
           return;
         }
       }
@@ -1438,16 +1439,14 @@ void HandleUploadLoop()
       } else if (result > 0) {
         if (result > upload.currentSize) {
           //Offset is larger than the buffer supplied, this should not happen
-          //FIXME: Fix error
-          upload_error = 23;
+          upload_error = 13;
           return;
         }
         // A remnant has been detected, allocate data for it plus a null termination byte
         size_t remnant_sz = upload.currentSize - result;
         efm8bb1_update = (uint8_t *) malloc(remnant_sz + 1);
         if (efm8bb1_update == NULL) {
-          // FIXME: Set correct error code
-          upload_error = 23;
+          upload_error = 15;
           return;
         }
         memcpy(efm8bb1_update, upload.buf + result, remnant_sz);
@@ -1483,13 +1482,6 @@ void HandleUploadLoop()
       SettingsNewFree();
     } else if (upload_file_type == EFM8BB1_RF_FW_FILE) {
 #ifdef USE_RF_FLASH
-
-      // FIXME: Is this called one extra time at the end or is the last upload segment only called here?
-      if (efm8bb1_update != NULL) {
-        // FIXME: Bail out here
-        upload_error = 25;
-        return;
-      }
       // RF FW flash done
 #endif
 
