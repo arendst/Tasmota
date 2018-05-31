@@ -1,4 +1,4 @@
-#include "firmware.h"
+#include "fw_updater.h"
 #include "ihx.h"
 #include "c2.h"
 
