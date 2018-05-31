@@ -22,25 +22,25 @@ uint8_t ihx_decode(uint8_t *buff, uint16_t slen) {
 
   // Remove strayline terminators at the end of the file
   while (buff[slen - 1] == '\n' || buff[slen - 1] == '\r') slen--;
-  
+
   // Length must be odd: start followed by hex pairs
   if (slen < 11) {
-    Serial.println("IHX: Short read: " + slen);  
+    Serial.printf("IHX: Short read: %u\n", slen);
     return IHX_ERROR;
   }
 
   if (slen % 2 != 1) {
-    Serial.println("IHX: Length not odd");
+    Serial.printf("IHX: Length not odd (%u)\n", slen);
     return IHX_ERROR;
   }
-  
+
   // Decode
   uint8_t cs = 0;
   for (int i = 0; i < (slen - 1) / 2; ++i) {
     buff[i] = (value_of_hex(buff[2 * i + 1]) << 4) | value_of_hex(buff[2 * i + 2]);
     cs += buff[i];
   }
-  
+
   // Validate checksum
   if (cs) {
     Serial.print("IHX: Bad checksum: ");
@@ -57,3 +57,5 @@ uint8_t ihx_decode(uint8_t *buff, uint16_t slen) {
 
   return IHX_SUCCESS;
 }
+
+
