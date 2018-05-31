@@ -402,6 +402,8 @@
 #define D_SENT_TO "envoyé à"
 #define D_KNX_WARNING "L'Adresse de Groupe ( 0 / 0 / 0 ) est réservée et ne peut être utilisée."
 #define D_KNX_ENHANCEMENT "Communication Enhancement"
+#define D_KNX_TX_SLOT "KNX TX"
+#define D_KNX_RX_SLOT "KNX RX"
 
 // xsns_03_energy.ino
 #define D_ENERGY_TODAY "Énergie aujourd'hui"
