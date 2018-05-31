@@ -28,11 +28,10 @@ ssize_t rf_glue_remnant_with_new_data_and_write(const uint8_t *remnant_data, uin
   
   if (remnant_data[0] != ':') {
     Serial.printf("RF Remnant data did not start with a start token\n");
-    //FIXME: Set correct upload error
-    return -20;
+    return -16;
   }
   
-  //Find end token in new data
+  // Find end token in new data
   record_end = rf_find_hex_record_end(new_data, new_data_len);
   record_start = rf_find_hex_record_start(new_data, new_data_len);
   
@@ -41,16 +40,14 @@ ssize_t rf_glue_remnant_with_new_data_and_write(const uint8_t *remnant_data, uin
   // in the last upload part
   if ((record_start != RF_RECORD_NO_START_FOUND) && (record_start < record_end)) {
     Serial.println("Unexpected RF start marker found before RF end marker");
-    //FIXME: Set correct upload error
-    return -21;
+    return -16;
   }
   
   glue_record_sz = strlen((const char *) remnant_data) + record_end;
   
   glue_buf = (uint8_t *) malloc(glue_record_sz);
   if (glue_buf == NULL) {
-    // FIXME: Set correct upload error
-    return -22;
+    return -15;
   }
   
   // Assemble new glue buffer
@@ -68,8 +65,6 @@ ssize_t rf_decode_and_write(uint8_t *record, size_t size) {
   err = ihx_decode(record, size);
   if (err != IHX_SUCCESS) {
     Serial.printf("Hex decoding failed with error %d\n", err);
-
-    //FIXME: Error code
     return -13;
   } else {
     ihx_t *h = (ihx_t *) record;
@@ -88,7 +83,6 @@ ssize_t rf_decode_and_write(uint8_t *record, size_t size) {
     }
     
     if (err != C2_SUCCESS) {
-      // FIXME: Error code
       return -12;
     }
   }
