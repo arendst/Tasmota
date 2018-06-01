@@ -40,7 +40,7 @@ typedef unsigned long power_t;              // Power (Relay) type
 #define MAX_RELAYS             8            // Max number of relays
 #define MAX_LEDS               4            // Max number of leds
 #define MAX_KEYS               4            // Max number of keys or buttons
-#define MAX_SWITCHES           4            // Max number of switches
+#define MAX_SWITCHES           8            // Max number of switches
 #define MAX_PWMS               5            // Max number of PWM channels
 #define MAX_COUNTERS           4            // Max number of counter sensors
 #define MAX_TIMERS             16           // Max number of Timers
