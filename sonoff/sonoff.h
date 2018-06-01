@@ -137,7 +137,7 @@ typedef unsigned long power_t;              // Power (Relay) type
 #define DAWN_NAUTIC            -12.0
 #define DAWN_ASTRONOMIC        -18.0
 
-// Sensor definition for KNX Driver
+// Sensor and Commands definition for KNX Driver
 #define KNX_TEMPERATURE        17
 #define KNX_HUMIDITY           18
 #define KNX_ENERGY_VOLTAGE     19
@@ -147,7 +147,13 @@ typedef unsigned long power_t;              // Power (Relay) type
 #define KNX_ENERGY_DAILY       23
 #define KNX_ENERGY_START       24
 #define KNX_ENERGY_TOTAL       25
-#define KNX_MAX_device_param   25
+#define KNX_SLOT1              26
+#define KNX_SLOT2              27
+#define KNX_SLOT3              28
+#define KNX_SLOT4              29
+#define KNX_SLOT5              30
+#define KNX_MAX_device_param   30
+#define MAX_KNXTX_CMNDS        5
 
 /*********************************************************************************************\
  * Enumeration
@@ -191,6 +197,10 @@ enum XsnsFunctions {FUNC_INIT, FUNC_LOOP, FUNC_EVERY_50_MSECOND, FUNC_EVERY_SECO
                     FUNC_COMMAND, FUNC_MQTT_SUBSCRIBE, FUNC_MQTT_INIT, FUNC_MQTT_DATA, FUNC_SET_POWER, FUNC_SHOW_SENSOR, FUNC_RULES_PROCESS};
 
 const uint8_t kDefaultRfCode[9] PROGMEM = { 0x21, 0x16, 0x01, 0x0E, 0x03, 0x48, 0x2E, 0x1A, 0x00 };
+
+enum CommandSource { SRC_IGNORE, SRC_MQTT, SRC_RESTART, SRC_BUTTON, SRC_SWITCH, SRC_BACKLOG, SRC_SERIAL, SRC_WEBGUI, SRC_WEBCOMMAND, SRC_WEBCONSOLE, SRC_PULSETIMER,
+                     SRC_TIMER, SRC_RULE, SRC_MAXPOWER, SRC_MAXENERGY, SRC_LIGHT, SRC_KNX, SRC_DISPLAY, SRC_WEMO, SRC_HUE, SRC_MAX };
+const char kCommandSource[] PROGMEM = "I|MQTT|Restart|Button|Switch|Backlog|Serial|WebGui|WebCommand|WebConsole|PulseTimer|Timer|Rule|MaxPower|MaxEnergy|Light|Knx|Display|Wemo|Hue";
 
 /*********************************************************************************************\
  * Extern global variables
