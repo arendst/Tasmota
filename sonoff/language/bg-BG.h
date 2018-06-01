@@ -205,7 +205,7 @@
 #define D_USE_DEFAULTS "Използване на параметри по подразбиране"
 #define D_ERASED_SECTOR "Изтрит сектор"
 
-// webserver.ino
+// xdrv_02_webserver.ino
 #define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "Минимаен фърмуеър - моля надградете го"
 #define D_WEBSERVER_ACTIVE_ON "Уеб сървърът е активен на"
 #define D_WITH_IP_ADDRESS "с IP адрес"
@@ -327,7 +327,7 @@
 #define D_ENABLE_WEBLOG_FOR_RESPONSE "Включете ниво 2 на лога, ако очаквате отговор"
 #define D_NEED_USER_AND_PASSWORD "Очаква user=<username>&password=<password>"
 
-// xdrv_00_mqtt.ino
+// xdrv_01_mqtt.ino
 #define D_FINGERPRINT "Проверка на TLS отпечатък..."
 #define D_TLS_CONNECT_FAILED_TO "Неуспешно TLS свързване към"
 #define D_RETRY_IN "Повторно след"
@@ -335,7 +335,7 @@
 #define D_INSECURE "Нешифрована връзка, недействителен отпечатък"
 #define D_CONNECT_FAILED_TO "Грешка при свързването към"
 
-// xdrv_wemohue.ino
+// xplg_wemohue.ino
 #define D_MULTICAST_DISABLED "Multicast е изключен"
 #define D_MULTICAST_REJOINED "Multicast е повторно съединен"
 #define D_MULTICAST_JOIN_FAILED "Multicast грешка при присъединяването"
@@ -355,7 +355,7 @@
 #define D_HUE_POST_ARGS "Hue POST аргументи"
 #define D_3_RESPONSE_PACKETS_SENT "Изпратени са 3 пакета за отговор"
 
-// xdrv_05_domoticz.ino
+// xdrv_07_domoticz.ino
 #define D_DOMOTICZ_PARAMETERS "Domoticz параметри"
 #define D_DOMOTICZ_IDX "Idx"
 #define D_DOMOTICZ_KEY_IDX "Key idx"
@@ -402,6 +402,8 @@
 #define D_SENT_TO "изпратен до"
 #define D_KNX_WARNING "Груповият адрес ( 0 / 0 / 0 ) е резервиран и не може да бъде използван."
 #define D_KNX_ENHANCEMENT "Подобрена комуникация"
+#define D_KNX_TX_SLOT "KNX TX"
+#define D_KNX_RX_SLOT "KNX RX"
 
 // xdrv_03_energy.ino
 #define D_ENERGY_TODAY "Използвана енергия днес"

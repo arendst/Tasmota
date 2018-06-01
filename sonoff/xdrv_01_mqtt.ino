@@ -1,5 +1,5 @@
 /*
-  xdrv_00_mqtt.ino - mqtt support for Sonoff-Tasmota
+  xdrv_01_mqtt.ino - mqtt support for Sonoff-Tasmota
 
   Copyright (C) 2018  Theo Arends
 
@@ -745,9 +745,9 @@ bool MqttCommand()
  * Interface
 \*********************************************************************************************/
 
-#define XDRV_00
+#define XDRV_01
 
-boolean Xdrv00(byte function)
+boolean Xdrv01(byte function)
 {
   boolean result = false;
 

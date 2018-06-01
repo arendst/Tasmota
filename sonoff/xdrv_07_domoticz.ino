@@ -1,5 +1,5 @@
 /*
-  xdrv_05_domoticz.ino - domoticz support for Sonoff-Tasmota
+  xdrv_07_domoticz.ino - domoticz support for Sonoff-Tasmota
 
   Copyright (C) 2018  Theo Arends
 
@@ -265,7 +265,7 @@ boolean DomoticzCommand()
     else serviced = false;  // Unknown command
   }
   else serviced = false;  // Unknown command
-  
+
   return serviced;
 }
 
@@ -437,9 +437,9 @@ void DomoticzSaveSettings()
  * Interface
 \*********************************************************************************************/
 
-#define XDRV_05
+#define XDRV_07
 
-boolean Xdrv05(byte function)
+boolean Xdrv07(byte function)
 {
   boolean result = false;
 

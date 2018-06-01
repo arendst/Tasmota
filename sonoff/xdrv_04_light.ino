@@ -1,5 +1,5 @@
 /*
-  xdrv_01_light.ino - PWM, WS2812 and sonoff led support for Sonoff-Tasmota
+  xdrv_04_light.ino - PWM, WS2812 and sonoff led support for Sonoff-Tasmota
 
   Copyright (C) 2018  Theo Arends
 
@@ -230,7 +230,7 @@ void AriluxRfHandler()
         }
       }
       if (strlen(command)) {
-        ExecuteCommand(command);
+        ExecuteCommand(command, SRC_LIGHT);
       }
     }
   }
@@ -529,7 +529,7 @@ char* LightGetColor(uint8_t type, char* scolor)
 void LightPowerOn()
 {
   if (Settings.light_dimmer && !(light_power)) {
-    ExecuteCommandPower(light_device, POWER_ON);
+    ExecuteCommandPower(light_device, POWER_ON, SRC_LIGHT);
   }
 }
 
@@ -585,11 +585,11 @@ void LightPreparePower()
 {
   if (Settings.light_dimmer && !(light_power)) {
     if (!Settings.flag.not_power_linked) {
-      ExecuteCommandPower(light_device, POWER_ON_NO_STATE);
+      ExecuteCommandPower(light_device, POWER_ON_NO_STATE, SRC_LIGHT);
     }
   }
   else if (!Settings.light_dimmer && light_power) {
-    ExecuteCommandPower(light_device, POWER_OFF_NO_STATE);
+    ExecuteCommandPower(light_device, POWER_OFF_NO_STATE, SRC_LIGHT);
   }
 #ifdef USE_DOMOTICZ
   DomoticzUpdatePowerState(light_device);
@@ -1279,7 +1279,7 @@ boolean LightCommand()
   if (coldim) {
     LightPreparePower();
   }
-  
+
   return serviced;
 }
 
@@ -1287,9 +1287,9 @@ boolean LightCommand()
  * Interface
 \*********************************************************************************************/
 
-#define XDRV_01
+#define XDRV_04
 
-boolean Xdrv01(byte function)
+boolean Xdrv04(byte function)
 {
   boolean result = false;
 
