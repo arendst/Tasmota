@@ -17,6 +17,7 @@ copy ..\.pioenvs\sonoff-NL\firmware.bin %version%\NL-firmware-%version%.bin
 copy ..\.pioenvs\sonoff-PL\firmware.bin %version%\PL-firmware-%version%.bin
 copy ..\.pioenvs\sonoff-PT\firmware.bin %version%\PT-firmware-%version%.bin
 copy ..\.pioenvs\sonoff-RU\firmware.bin %version%\RU-firmware-%version%.bin
+copy ..\.pioenvs\sonoff-UK\firmware.bin %version%\UK-firmware-%version%.bin
 copy ..\.pioenvs\sonoff-TW\firmware.bin %version%\TW-firmware-%version%.bin
 
 copy ..\.pioenvs\sonoff-minimal\firmware.bin %version%\MINIMAL-firmware-%version%.bin
