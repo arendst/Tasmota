@@ -30,7 +30,6 @@
 #include <ihx.h>
 #include <fw_updater.h>
 
-#define EFM8BB1_MAX_SZ 8192
 uint8_t *efm8bb1_update = NULL;
 #endif
 
@@ -1483,6 +1482,7 @@ void HandleUploadLoop()
     } else if (upload_file_type == EFM8BB1_RF_FW_FILE) {
 #ifdef USE_RF_FLASH
       // RF FW flash done
+      upload_file_type = ESP8266_FW_FILE;
 #endif
 
     } else if (!upload_file_type) {
