@@ -1353,9 +1353,10 @@ void HandleUploadLoop()
       uint32_t maxSketchSpace = (ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000;
       if (!Update.begin(maxSketchSpace)) {         //start with max available size
         if (_serialoutput) Update.printError(Serial);
-        if (Update.getError() == UPDATE_ERROR_BOOTSTRAP) {
-          if (_serialoutput) Serial.println("Device still in UART update mode, perform powercycle");
-        }
+        // Only works with certain versions of esp8266 lib
+        // if (Update.getError() == UPDATE_ERROR_BOOTSTRAP) {
+        //   if (_serialoutput) Serial.println("Device still in UART update mode, perform powercycle");
+        // }
         upload_error = 2;
         return;
       }
