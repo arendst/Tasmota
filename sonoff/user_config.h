@@ -44,7 +44,7 @@
 \*********************************************************************************************/
 
 // -- Master parameter control --------------------
-#define CFG_HOLDER             0x20161209        // [Reset 1] Change this value to load SECTION1 configuration parameters to flash
+#define CFG_HOLDER             4617              // [Reset 1] Change this value to load SECTION1 configuration parameters to flash
 
 // -- Project -------------------------------------
 #define PROJECT                "sonoff"          // PROJECT is used as the default topic delimiter
