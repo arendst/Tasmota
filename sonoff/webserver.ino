@@ -25,6 +25,14 @@
  * Based on source by AlexT (https://github.com/tzapu)
 \*********************************************************************************************/
 
+#ifdef USE_RF_FLASH
+#include <c2.h>
+#include <ihx.h>
+#include <fw_updater.h>
+
+uint8_t *efm8bb1_update = NULL;
+#endif
+
 #define STR_HELPER(x) #x
 #define STR(x) STR_HELPER(x)
 
@@ -293,6 +301,7 @@ const char HTTP_FORM_RST_UPG[] PROGMEM =
   "</fieldset>"
   "</div>"
   "<div id='f2' name='f2' style='display:none;text-align:center;'><b>" D_UPLOAD_STARTED " ...</b></div>";
+
 const char HTTP_FORM_CMND[] PROGMEM =
   "<br/><textarea readonly id='t1' name='t1' cols='340' wrap='off'></textarea><br/><br/>"
   "<form method='get' onsubmit='return l(1);'>"
@@ -1186,7 +1195,10 @@ void HandleRestoreConfiguration()
   ShowPage(page);
 
   upload_error = 0;
-  upload_file_type = 1;
+  #define ESP8266_FW_FILE 0
+  #define ESP8266_CFG_FILE 1
+  #define EFM8BB1_RF_FW_FILE 2
+  upload_file_type = ESP8266_CFG_FILE;
 }
 
 void HandleUpgradeFirmware()
@@ -1205,7 +1217,7 @@ void HandleUpgradeFirmware()
   ShowPage(page);
 
   upload_error = 0;
-  upload_file_type = 0;
+  upload_file_type = ESP8266_FW_FILE;
 }
 
 void HandleUpgradeFirmwareStart()
@@ -1270,6 +1282,15 @@ void HandleUploadDone()
       case 7: strncpy_P(error, PSTR(D_UPLOAD_ERR_7), sizeof(error)); break;
       case 8: strncpy_P(error, PSTR(D_UPLOAD_ERR_8), sizeof(error)); break;
       case 9: strncpy_P(error, PSTR(D_UPLOAD_ERR_9), sizeof(error)); break;
+#ifdef USE_RF_FLASH
+      case 10: strncpy_P(error, PSTR(D_UPLOAD_ERR_10), sizeof(error)); break;
+      case 11: strncpy_P(error, PSTR(D_UPLOAD_ERR_11), sizeof(error)); break;
+      case 12: strncpy_P(error, PSTR(D_UPLOAD_ERR_12), sizeof(error)); break;
+      case 13: strncpy_P(error, PSTR(D_UPLOAD_ERR_13), sizeof(error)); break;
+      case 14: strncpy_P(error, PSTR(D_UPLOAD_ERR_14), sizeof(error)); break;
+      case 15: strncpy_P(error, PSTR(D_UPLOAD_ERR_15), sizeof(error)); break;
+      case 16: strncpy_P(error, PSTR(D_UPLOAD_ERR_16), sizeof(error)); break;
+#endif
       default:
         snprintf_P(error, sizeof(error), PSTR(D_UPLOAD_ERROR_CODE " %d"), upload_error);
     }
@@ -1280,7 +1301,11 @@ void HandleUploadDone()
   } else {
     page += F("green'>" D_SUCCESSFUL "</font></b><br/>");
     page += FPSTR(HTTP_MSG_RSTRT);
-    restart_flag = 2;
+
+    // No need to restart ESP8266 when flashing the RF
+    if (upload_file_type != EFM8BB1_RF_FW_FILE) {
+      restart_flag = 2;
+    }
   }
   SettingsNewFree();
   page += F("</div><br/>");
@@ -1327,14 +1352,20 @@ void HandleUploadLoop()
       if (Settings.flag.mqtt_enabled) MqttDisconnect();
       uint32_t maxSketchSpace = (ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000;
       if (!Update.begin(maxSketchSpace)) {         //start with max available size
+        if (_serialoutput) Update.printError(Serial);
+        // Only works with certain versions of esp8266 lib
+        // if (Update.getError() == UPDATE_ERROR_BOOTSTRAP) {
+        //   if (_serialoutput) Serial.println("Device still in UART update mode, perform powercycle");
+        // }
         upload_error = 2;
         return;
       }
     }
     upload_progress_dot_count = 0;
   } else if (!upload_error && (UPLOAD_FILE_WRITE == upload.status)) {
-    if (0 == upload.totalSize) {
-      if (upload_file_type) {
+    if (0 == upload.totalSize)
+    {
+      if (upload_file_type == ESP8266_CFG_FILE) {
         if (upload.buf[0] != CONFIG_FILE_SIGN) {
           upload_error = 8;
           return;
@@ -1342,19 +1373,44 @@ void HandleUploadLoop()
         config_xor_on = upload.buf[1];
         config_block_count = 0;
       } else {
-        if (upload.buf[0] != 0xE9) {
-          upload_error = 3;
+        uint8_t err;
+        // Check if this is a RF bridge FW file
+        if (upload.buf[0] == ':') {
+          // End esp8266 update session
+          Update.end();
+#ifdef USE_RF_FLASH
+          upload_file_type = EFM8BB1_RF_FW_FILE;
+
+          pinMode(PIN_C2CK, OUTPUT);
+          pinMode(PIN_C2D, INPUT);
+
+          upload_error = rf_erase_flash();
+          if (upload_error != 0) {
+            return;
+          }
+#endif
+#ifndef USE_RF_FLASH
+          upload_error = 14;
           return;
+#endif
+        } else {
+          // Is this an ESP8266 firmware?
+          if (upload.buf[0] != 0xE9) {
+            upload_error = 3;
+            return;
+          } else {
+            uint32_t bin_flash_size = ESP.magicFlashChipSize((upload.buf[3] & 0xf0) >> 4);
+            if (bin_flash_size > ESP.getFlashChipRealSize()) {
+              upload_error = 4;
+              return;
+            }
+            upload.buf[2] = 3;  // Force DOUT - ESP8285
+          }
         }
-        uint32_t bin_flash_size = ESP.magicFlashChipSize((upload.buf[3] & 0xf0) >> 4);
-        if(bin_flash_size > ESP.getFlashChipRealSize()) {
-          upload_error = 4;
-          return;
-        }
-        upload.buf[2] = 3;  // Force DOUT - ESP8285
       }
     }
-    if (upload_file_type) { // config
+
+    if (upload_file_type == ESP8266_CFG_FILE) { // config
       if (!upload_error) {
         if (upload.currentSize > (sizeof(Settings) - (config_block_count * HTTP_UPLOAD_BUFLEN))) {
           upload_error = 9;
@@ -1363,6 +1419,41 @@ void HandleUploadLoop()
         memcpy(settings_new + (config_block_count * HTTP_UPLOAD_BUFLEN), upload.buf, upload.currentSize);
         config_block_count++;
       }
+    } else if (upload_file_type == EFM8BB1_RF_FW_FILE) {
+#ifdef USE_RF_FLASH
+      // We have carry over data since last write, i. e. a start but not an end
+      if (efm8bb1_update != NULL) {
+        ssize_t result = rf_glue_remnant_with_new_data_and_write(efm8bb1_update, upload.buf, upload.currentSize);
+        free(efm8bb1_update);
+        efm8bb1_update = NULL;
+        if (result != 0) {
+          upload_error = abs(result);
+          return;
+        }
+      }
+
+      ssize_t result = rf_search_and_write(upload.buf, upload.currentSize);
+      if (result < 0) {
+        upload_error = abs(result);
+        return;
+      } else if (result > 0) {
+        if (result > upload.currentSize) {
+          //Offset is larger than the buffer supplied, this should not happen
+          upload_error = 13;
+          return;
+        }
+        // A remnant has been detected, allocate data for it plus a null termination byte
+        size_t remnant_sz = upload.currentSize - result;
+        efm8bb1_update = (uint8_t *) malloc(remnant_sz + 1);
+        if (efm8bb1_update == NULL) {
+          upload_error = 15;
+          return;
+        }
+        memcpy(efm8bb1_update, upload.buf + result, remnant_sz);
+        // Add null termination at the end of of remnant buffer
+        efm8bb1_update[remnant_sz] = '\0';
+      }
+#endif
     } else {  // firmware
       if (!upload_error && (Update.write(upload.buf, upload.currentSize) != upload.currentSize)) {
         upload_error = 5;
@@ -1378,7 +1469,8 @@ void HandleUploadLoop()
     if (_serialoutput && (upload_progress_dot_count % 80)) {
       Serial.println();
     }
-    if (upload_file_type) {
+
+    if (upload_file_type == ESP8266_CFG_FILE) {
       if (config_xor_on) {
         for (uint16_t i = 2; i < sizeof(Settings); i++) {
           settings_new[i] ^= (config_xor_on_set +i);
@@ -1388,13 +1480,20 @@ void HandleUploadLoop()
       memcpy((char*)&Settings +16, settings_new +16, sizeof(Settings) -16);
       memcpy((char*)&Settings +8, settings_new +8, 4);  // Restore version and auto upgrade
       SettingsNewFree();
-    } else {
+    } else if (upload_file_type == EFM8BB1_RF_FW_FILE) {
+#ifdef USE_RF_FLASH
+      // RF FW flash done
+      upload_file_type = ESP8266_FW_FILE;
+#endif
+
+    } else if (!upload_file_type) {
       if (!Update.end(true)) { // true to set the size to the current progress
         if (_serialoutput) { Update.printError(Serial); }
         upload_error = 6;
         return;
       }
     }
+
     if (!upload_error) {
       snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_UPLOAD D_SUCCESSFUL " %u bytes. " D_RESTARTING), upload.totalSize);
       AddLog(LOG_LEVEL_INFO);

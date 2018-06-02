@@ -320,6 +320,14 @@
 #define D_UPLOAD_ERR_7 "Upload aborted"
 #define D_UPLOAD_ERR_8 "File invalid"
 #define D_UPLOAD_ERR_9 "File too large"
+#define D_UPLOAD_ERR_10 "Failed to init RF chip"
+#define D_UPLOAD_ERR_11 "Failed to erase RF chip"
+#define D_UPLOAD_ERR_12 "Failed to write to RF chip"
+#define D_UPLOAD_ERR_13 "Failed to decode RF firmware"
+#define D_UPLOAD_ERR_14 "This tasmota firmware does not support upgrade of RF chip"
+#define D_UPLOAD_ERR_15 "Unable to allocate memory to store new RF firmware"
+#define D_UPLOAD_ERR_16 "Failed to handle rf firmware transfer"
+
 #define D_UPLOAD_ERROR_CODE "Upload error code"
 
 #define D_ENTER_COMMAND "Enter command"
