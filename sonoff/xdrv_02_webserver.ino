@@ -942,9 +942,7 @@ void HandleBackupConfiguration()
 
   WebServer->send(200, FPSTR(HDR_CTYPE_STREAM), "");
   memcpy(settings_buffer, &Settings, sizeof(Settings));
-  settings_buffer[0] = CONFIG_FILE_SIGN;
-  settings_buffer[1] = (!config_xor_on_set) ? 0 : 1;
-  if (settings_buffer[1]) {
+  if (config_xor_on_set) {
     for (uint16_t i = 2; i < sizeof(Settings); i++) {
       settings_buffer[i] ^= (config_xor_on_set +i);
     }
@@ -1276,7 +1274,7 @@ void HandleUploadLoop()
   if (UPLOAD_FILE_START == upload.status) {
     restart_flag = 60;
     if (0 == upload.filename.c_str()[0]) {
-      upload_error = 1;
+      upload_error = 1;  // No file selected
       return;
     }
     SettingsSave(1);  // Free flash for upload
@@ -1284,7 +1282,7 @@ void HandleUploadLoop()
     AddLog(LOG_LEVEL_INFO);
     if (upload_file_type) {
       if (!SettingsBufferAlloc()) {
-        upload_error = 2;
+        upload_error = 2;  // Not enough space
         return;
       }
     } else {
@@ -1298,7 +1296,7 @@ void HandleUploadLoop()
       if (Settings.flag.mqtt_enabled) MqttDisconnect();
       uint32_t maxSketchSpace = (ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000;
       if (!Update.begin(maxSketchSpace)) {         //start with max available size
-        upload_error = 2;
+        upload_error = 2;  // Not enough space
         return;
       }
     }
@@ -1306,20 +1304,15 @@ void HandleUploadLoop()
   } else if (!upload_error && (UPLOAD_FILE_WRITE == upload.status)) {
     if (0 == upload.totalSize) {
       if (upload_file_type) {
-        if (upload.buf[0] != CONFIG_FILE_SIGN) {
-          upload_error = 8;
-          return;
-        }
-        config_xor_on = upload.buf[1];
         config_block_count = 0;
       } else {
         if (upload.buf[0] != 0xE9) {
-          upload_error = 3;
+          upload_error = 3;  // Magic byte is not 0xE9
           return;
         }
         uint32_t bin_flash_size = ESP.magicFlashChipSize((upload.buf[3] & 0xf0) >> 4);
         if(bin_flash_size > ESP.getFlashChipRealSize()) {
-          upload_error = 4;
+          upload_error = 4;  // Program flash size is larger than real flash size
           return;
         }
         upload.buf[2] = 3;  // Force DOUT - ESP8285
@@ -1328,7 +1321,7 @@ void HandleUploadLoop()
     if (upload_file_type) { // config
       if (!upload_error) {
         if (upload.currentSize > (sizeof(Settings) - (config_block_count * HTTP_UPLOAD_BUFLEN))) {
-          upload_error = 9;
+          upload_error = 9;  // File too large
           return;
         }
         memcpy(settings_buffer + (config_block_count * HTTP_UPLOAD_BUFLEN), upload.buf, upload.currentSize);
@@ -1336,7 +1329,7 @@ void HandleUploadLoop()
       }
     } else {  // firmware
       if (!upload_error && (Update.write(upload.buf, upload.currentSize) != upload.currentSize)) {
-        upload_error = 5;
+        upload_error = 5;  // Upload buffer miscompare
         return;
       }
       if (_serialoutput) {
@@ -1350,19 +1343,37 @@ void HandleUploadLoop()
       Serial.println();
     }
     if (upload_file_type) {
-      if (config_xor_on) {
+      if (config_xor_on_set) {
         for (uint16_t i = 2; i < sizeof(Settings); i++) {
           settings_buffer[i] ^= (config_xor_on_set +i);
         }
       }
-      SettingsDefaultSet2();
-      memcpy((char*)&Settings +16, settings_buffer +16, sizeof(Settings) -16);
-      memcpy((char*)&Settings +8, settings_buffer +8, 4);  // Restore version and auto upgrade
-      SettingsBufferFree();
+      bool valid_settings = false;
+      unsigned long buffer_version = settings_buffer[11] << 24 | settings_buffer[10] << 16 | settings_buffer[9] << 8 | settings_buffer[8];
+      if (buffer_version > 0x06000000) {
+        uint16_t buffer_size = settings_buffer[3] << 8 | settings_buffer[2];
+        uint16_t buffer_crc = settings_buffer[15] << 8 | settings_buffer[14];
+        uint16_t crc = 0;
+        for (uint16_t i = 0; i < buffer_size; i++) {
+          if ((i < 14) || (i > 15)) { crc += settings_buffer[i]*(i+1); }  // Skip crc
+        }
+        valid_settings = (buffer_crc == crc);
+      } else {
+        valid_settings = (settings_buffer[0] == CONFIG_FILE_SIGN);
+      }
+      if (valid_settings) {
+        SettingsDefaultSet2();
+        memcpy((char*)&Settings +16, settings_buffer +16, sizeof(Settings) -16);
+        Settings.version = buffer_version;  // Restore version and auto upgrade after restart
+        SettingsBufferFree();
+      } else {
+        upload_error = 8;  // File invalid
+        return;
+      }
     } else {
       if (!Update.end(true)) { // true to set the size to the current progress
         if (_serialoutput) { Update.printError(Serial); }
-        upload_error = 6;
+        upload_error = 6;  // Upload failed. Enable logging 3
         return;
       }
     }
@@ -1373,7 +1384,7 @@ void HandleUploadLoop()
   } else if (UPLOAD_FILE_ABORTED == upload.status) {
     restart_flag = 0;
     MqttRetryCounter(0);
-    upload_error = 7;
+    upload_error = 7;  // Upload aborted
     if (!upload_file_type) { Update.end(); }
   }
   delay(0);

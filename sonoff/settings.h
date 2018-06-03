@@ -114,12 +114,21 @@ typedef union {
   };
 } Timer;
 
+/*
 struct SYSCFG {
-  unsigned long cfg_holder;                // 000
+  unsigned long cfg_holder;                // 000 Pre v6 header
   unsigned long save_flag;                 // 004
   unsigned long version;                   // 008
   unsigned long bootcount;                 // 00C
-  SysBitfield   flag;                      // 010 Add flag since 5.0.2
+*/
+struct SYSCFG {
+  uint16_t cfg_holder;                     // 000 v6 header
+  uint16_t cfg_size;                       // 002
+  unsigned long save_flag;                 // 004
+  unsigned long version;                   // 008
+  uint16_t bootcount;                      // 00C
+  uint16_t cfg_crc;                        // 00E
+  SysBitfield   flag;                      // 010
   int16_t       save_data;                 // 014
   int8_t        timezone;                  // 016
   char          ota_url[101];              // 017
@@ -163,11 +172,13 @@ struct SYSCFG {
   uint16_t      pwm_frequency;             // 2E6
   power_t       power;                     // 2E8
   uint16_t      pwm_value[MAX_PWMS];       // 2EC
-  int16_t       altitude;                  // 2F6 Add since 5.8.0i
+  int16_t       altitude;                  // 2F6
   uint16_t      tele_period;               // 2F8
-  uint8_t       ex_power;                  // 2FA Not used since 5.8.0j
+
+  byte          free_2fa[1];               // 2FA
+
   uint8_t       ledstate;                  // 2FB
-  uint8_t       param[PARAM8_SIZE];        // 2FC was domoticz_in_topic until 5.1.6
+  uint8_t       param[PARAM8_SIZE];        // 2FC
   int16_t       toffset[2];                // 30E
 
   byte          free_312[1];               // 312
@@ -204,19 +215,9 @@ struct SYSCFG {
   uint16_t      blinktime;                 // 39A
   uint16_t      blinkcount;                // 39C
   uint16_t      light_rotation;            // 39E
-  uint8_t       ws_red;                    // 3A0 Not used since 5.8.0
-  uint8_t       ws_green;                  // 3A1 Not used since 5.8.0
-  uint8_t       ws_blue;                   // 3A2 Not used since 5.8.0
-  uint8_t       ws_ledtable;               // 3A3 Not used since 5.8.0
-  uint8_t       ws_dimmer;                 // 3A4 Not used since 5.8.0
-  uint8_t       ws_fade;                   // 3A5 Not used since 5.8.0
-  uint8_t       ws_speed;                  // 3A6 Not used since 5.8.0
-  uint8_t       ws_scheme;                 // 3A7 Not used since 5.8.0
-  uint8_t       ex_ws_width;               // 3A8 Not used since 5.8.0
 
-  byte          free_3A9[1];               // 3A9
+  byte          free_3A0[12];              // 3A9
 
-  uint16_t      ws_wakeup;                 // 3AA Not used since 5.8.0
   char          friendlyname[MAX_FRIENDLYNAMES][33]; // 3AC
   char          switch_topic[33];          // 430
   char          serial_delimiter;          // 451
@@ -250,9 +251,9 @@ struct SYSCFG {
   byte          free_542[2];               // 542
 
   uint32_t      ip_address[4];             // 544
-  unsigned long energy_kWhtotal;              // 554
+  unsigned long energy_kWhtotal;           // 554
   char          mqtt_fulltopic[100];       // 558
-  SysBitfield2  flag2;                     // 5BC Add flag2 since 5.9.2
+  SysBitfield2  flag2;                     // 5BC
   unsigned long pulse_counter[MAX_COUNTERS];  // 5C0
   uint16_t      pulse_counter_type;        // 5D0
   uint16_t      pulse_counter_debounce;    // 5D2

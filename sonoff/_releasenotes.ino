@@ -1,22 +1,28 @@
-/* 5.14.0b
-* Added Console Commands to send KNX Commands
-  usage: KnxTx_Cmnd[slot] command
-  where [slot] is any of the 5 slots on the KNX Menu and command is 0 or 1
-  example: KnxTx_Cmnd1 0
-* Added Console Commands to send KNX Values
-  usage: KnxTx_Val[slot] value
-  where [slot] is any of the 5 slots on the KNX Menu and value is a number
-  example: KnxTx_Val1 35
-* Added Slots on the KNX Web Menu to select Group Addess to send data from console commands
-* Added Events to trigger rules when received data from KNX
-  usage on rules as: event#KnxRx_Val[slot]
-  where [slot] is any of the 5 slots on the KNX Menu
-  example: rule on event#KnxRx_Val1 do VAR1 %value% endon
-* Added Events to trigger rules when received read requests from KNX
-  usage on rules as: event#KnxRx_Req[slot]
-  where [slot] is any of the 5 slots on the KNX Menu
-  example: rule on event#KnxRx_Req1 do KnxTx_Val1 35 endon
- * Added Slots on the KNX Web Menu to select Group Addess to receive data to trigger rules
+/* 6.0.0a
+ * Add CRC to Settings making future upgrades more fail-safe
+ * Remove version 3, 4 and pre 5.2 settings auto-upgrade. See https://github.com/arendst/Sonoff-Tasmota/wiki/Upgrade#migration-path
+ * Change default CFG_HOLDER from 0x20161209 to 4617 (=0x1209) - no impact on default upgrades
+ * Fix Pzem004T checksum error
+ *
+ * 5.14.0b
+ * Add Console Commands to send KNX Commands
+   usage: KnxTx_Cmnd[slot] command
+   where [slot] is any of the 5 slots on the KNX Menu and command is 0 or 1
+   example: KnxTx_Cmnd1 0
+ * Add Console Commands to send KNX Values
+   usage: KnxTx_Val[slot] value
+   where [slot] is any of the 5 slots on the KNX Menu and value is a number
+   example: KnxTx_Val1 35
+ * Add Slots on the KNX Web Menu to select Group Addess to send data from console commands
+ * Add Events to trigger rules when received data from KNX
+   usage on rules as: event#KnxRx_Val[slot]
+   where [slot] is any of the 5 slots on the KNX Menu
+   example: rule on event#KnxRx_Val1 do VAR1 %value% endon
+ * Add Events to trigger rules when received read requests from KNX
+   usage on rules as: event#KnxRx_Req[slot]
+   where [slot] is any of the 5 slots on the KNX Menu
+   example: rule on event#KnxRx_Req1 do KnxTx_Val1 35 endon
+ * Add Slots on the KNX Web Menu to select Group Addess to receive data to trigger rules
  * Add two rule sets of 511 characters using commands rule1, rule2 and rule3
  * Add Ukranian language file
  * Add rule support for IrReceive and RfReceive (#2758)
