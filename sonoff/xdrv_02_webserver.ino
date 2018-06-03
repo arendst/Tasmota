@@ -942,15 +942,6 @@ void HandleBackupConfiguration()
 
   WebServer->send(200, FPSTR(HDR_CTYPE_STREAM), "");
   memcpy(settings_buffer, &Settings, sizeof(Settings));
-/*
-  settings_buffer[0] = CONFIG_FILE_SIGN;
-  settings_buffer[1] = (!config_xor_on_set) ? 0 : 1;
-  if (settings_buffer[1]) {
-    for (uint16_t i = 2; i < sizeof(Settings); i++) {
-      settings_buffer[i] ^= (config_xor_on_set +i);
-    }
-  }
-*/
   if (config_xor_on_set) {
     for (uint16_t i = 2; i < sizeof(Settings); i++) {
       settings_buffer[i] ^= (config_xor_on_set +i);

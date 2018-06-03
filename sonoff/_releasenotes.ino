@@ -2,6 +2,7 @@
  * Add CRC to Settings making future upgrades more fail-safe
  * Remove version 3, 4 and pre 5.2 settings auto-upgrade. See https://github.com/arendst/Sonoff-Tasmota/wiki/Upgrade#migration-path
  * Change default CFG_HOLDER from 0x20161209 to 4617 (=0x1209) - no impact on default upgrades
+ * Fix Pzem004T checksum error
  *
  * 5.14.0b
  * Add Console Commands to send KNX Commands
