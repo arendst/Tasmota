@@ -516,7 +516,7 @@ boolean Xdrv10(byte function)
   boolean result = false;
 
   switch (function) {
-    case FUNC_INIT:
+    case FUNC_PRE_INIT:
       RulesInit();
       break;
     case FUNC_EVERY_50_MSECOND:

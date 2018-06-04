@@ -25,6 +25,12 @@
  * Based on source by AlexT (https://github.com/tzapu)
 \*********************************************************************************************/
 
+#ifdef USE_RF_FLASH
+uint8_t *efm8bb1_update = NULL;
+#endif  // USE_RF_FLASH
+
+enum UploadTypes { UPL_TASMOTA, UPL_SETTINGS, UPL_EFM8BB1 };
+
 const char HTTP_HEAD[] PROGMEM =
   "<!DOCTYPE html><html lang=\"" D_HTML_LANGUAGE "\" class=\"\">"
   "<head>"
@@ -1162,7 +1168,7 @@ void HandleRestoreConfiguration()
   ShowPage(page);
 
   upload_error = 0;
-  upload_file_type = 1;
+  upload_file_type = UPL_SETTINGS;
 }
 
 void HandleUpgradeFirmware()
@@ -1181,7 +1187,7 @@ void HandleUpgradeFirmware()
   ShowPage(page);
 
   upload_error = 0;
-  upload_file_type = 0;
+  upload_file_type = UPL_TASMOTA;
 }
 
 void HandleUpgradeFirmwareStart()
@@ -1238,6 +1244,12 @@ void HandleUploadDone()
       case 7: strncpy_P(error, PSTR(D_UPLOAD_ERR_7), sizeof(error)); break;
       case 8: strncpy_P(error, PSTR(D_UPLOAD_ERR_8), sizeof(error)); break;
       case 9: strncpy_P(error, PSTR(D_UPLOAD_ERR_9), sizeof(error)); break;
+#ifdef USE_RF_FLASH
+      case 10: strncpy_P(error, PSTR(D_UPLOAD_ERR_10), sizeof(error)); break;
+      case 11: strncpy_P(error, PSTR(D_UPLOAD_ERR_11), sizeof(error)); break;
+      case 12: strncpy_P(error, PSTR(D_UPLOAD_ERR_12), sizeof(error)); break;
+      case 13: strncpy_P(error, PSTR(D_UPLOAD_ERR_13), sizeof(error)); break;
+#endif
       default:
         snprintf_P(error, sizeof(error), PSTR(D_UPLOAD_ERROR_CODE " %d"), upload_error);
     }
@@ -1248,9 +1260,8 @@ void HandleUploadDone()
   } else {
     page += F("green'>" D_SUCCESSFUL "</font></b><br/>");
     page += FPSTR(HTTP_MSG_RSTRT);
-
     ShowWebSource(SRC_WEBGUI);
-    restart_flag = 2;
+    restart_flag = 2;  // Always restart to re-enable disabled features during update
   }
   SettingsBufferFree();
   page += F("</div><br/>");
@@ -1265,7 +1276,7 @@ void HandleUploadLoop()
 
   if (HTTP_USER == webserver_state) { return; }
   if (upload_error) {
-    if (!upload_file_type) { Update.end(); }
+    if (UPL_TASMOTA == upload_file_type) { Update.end(); }
     return;
   }
 
@@ -1280,7 +1291,7 @@ void HandleUploadLoop()
     SettingsSave(1);  // Free flash for upload
     snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_UPLOAD D_FILE " %s ..."), upload.filename.c_str());
     AddLog(LOG_LEVEL_INFO);
-    if (upload_file_type) {
+    if (UPL_SETTINGS == upload_file_type) {
       if (!SettingsBufferAlloc()) {
         upload_error = 2;  // Not enough space
         return;
@@ -1296,6 +1307,12 @@ void HandleUploadLoop()
       if (Settings.flag.mqtt_enabled) MqttDisconnect();
       uint32_t maxSketchSpace = (ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000;
       if (!Update.begin(maxSketchSpace)) {         //start with max available size
+
+//        if (_serialoutput) Update.printError(Serial);
+//        if (Update.getError() == UPDATE_ERROR_BOOTSTRAP) {
+//          if (_serialoutput) Serial.println("Device still in UART update mode, perform powercycle");
+//        }
+
         upload_error = 2;  // Not enough space
         return;
       }
@@ -1303,22 +1320,34 @@ void HandleUploadLoop()
     upload_progress_dot_count = 0;
   } else if (!upload_error && (UPLOAD_FILE_WRITE == upload.status)) {
     if (0 == upload.totalSize) {
-      if (upload_file_type) {
+      if (UPL_SETTINGS == upload_file_type) {
         config_block_count = 0;
-      } else {
-        if (upload.buf[0] != 0xE9) {
-          upload_error = 3;  // Magic byte is not 0xE9
-          return;
+      }
+      else {
+#ifdef USE_RF_FLASH
+        if ((SONOFF_BRIDGE == Settings.module) && (upload.buf[0] == ':')) {  // Check if this is a RF bridge FW file
+          Update.end();              // End esp8266 update session
+          upload_file_type = UPL_EFM8BB1;
+
+          upload_error = SnfBrUpdateInit();
+          if (upload_error != 0) { return; }
+        } else
+#endif  // USE_RF_FLASH
+        {
+          if (upload.buf[0] != 0xE9) {
+            upload_error = 3;  // Magic byte is not 0xE9
+            return;
+          }
+          uint32_t bin_flash_size = ESP.magicFlashChipSize((upload.buf[3] & 0xf0) >> 4);
+          if(bin_flash_size > ESP.getFlashChipRealSize()) {
+            upload_error = 4;  // Program flash size is larger than real flash size
+            return;
+          }
+          upload.buf[2] = 3;  // Force DOUT - ESP8285
         }
-        uint32_t bin_flash_size = ESP.magicFlashChipSize((upload.buf[3] & 0xf0) >> 4);
-        if(bin_flash_size > ESP.getFlashChipRealSize()) {
-          upload_error = 4;  // Program flash size is larger than real flash size
-          return;
-        }
-        upload.buf[2] = 3;  // Force DOUT - ESP8285
       }
     }
-    if (upload_file_type) { // config
+    if (UPL_SETTINGS == upload_file_type) {
       if (!upload_error) {
         if (upload.currentSize > (sizeof(Settings) - (config_block_count * HTTP_UPLOAD_BUFLEN))) {
           upload_error = 9;  // File too large
@@ -1327,7 +1356,42 @@ void HandleUploadLoop()
         memcpy(settings_buffer + (config_block_count * HTTP_UPLOAD_BUFLEN), upload.buf, upload.currentSize);
         config_block_count++;
       }
-    } else {  // firmware
+    }
+#ifdef USE_RF_FLASH
+    else if (UPL_EFM8BB1 == upload_file_type) {
+      if (efm8bb1_update != NULL) {    // We have carry over data since last write, i. e. a start but not an end
+        ssize_t result = rf_glue_remnant_with_new_data_and_write(efm8bb1_update, upload.buf, upload.currentSize);
+        free(efm8bb1_update);
+        efm8bb1_update = NULL;
+        if (result != 0) {
+          upload_error = abs(result);  // 2 = Not enough space, 8 = File invalid
+          return;
+        }
+      }
+      ssize_t result = rf_search_and_write(upload.buf, upload.currentSize);
+      if (result < 0) {
+        upload_error = abs(result);
+        return;
+      } else if (result > 0) {
+        if (result > upload.currentSize) {
+          // Offset is larger than the buffer supplied, this should not happen
+          upload_error = 9;  // File too large - Failed to decode RF firmware
+          return;
+        }
+        // A remnant has been detected, allocate data for it plus a null termination byte
+        size_t remnant_sz = upload.currentSize - result;
+        efm8bb1_update = (uint8_t *) malloc(remnant_sz + 1);
+        if (efm8bb1_update == NULL) {
+          upload_error = 2;  // Not enough space - Unable to allocate memory to store new RF firmware
+          return;
+        }
+        memcpy(efm8bb1_update, upload.buf + result, remnant_sz);
+        // Add null termination at the end of of remnant buffer
+        efm8bb1_update[remnant_sz] = '\0';
+      }
+    }
+#endif  // USE_RF_FLASH
+    else {  // firmware
       if (!upload_error && (Update.write(upload.buf, upload.currentSize) != upload.currentSize)) {
         upload_error = 5;  // Upload buffer miscompare
         return;
@@ -1342,7 +1406,7 @@ void HandleUploadLoop()
     if (_serialoutput && (upload_progress_dot_count % 80)) {
       Serial.println();
     }
-    if (upload_file_type) {
+    if (UPL_SETTINGS == upload_file_type) {
       if (config_xor_on_set) {
         for (uint16_t i = 2; i < sizeof(Settings); i++) {
           settings_buffer[i] ^= (config_xor_on_set +i);
@@ -1370,7 +1434,14 @@ void HandleUploadLoop()
         upload_error = 8;  // File invalid
         return;
       }
-    } else {
+    }
+#ifdef USE_RF_FLASH
+    else if (UPL_EFM8BB1 == upload_file_type) {
+      // RF FW flash done
+      upload_file_type = UPL_TASMOTA;
+    }
+#endif  // USE_RF_FLASH
+    else {
       if (!Update.end(true)) { // true to set the size to the current progress
         if (_serialoutput) { Update.printError(Serial); }
         upload_error = 6;  // Upload failed. Enable logging 3
@@ -1385,7 +1456,7 @@ void HandleUploadLoop()
     restart_flag = 0;
     MqttRetryCounter(0);
     upload_error = 7;  // Upload aborted
-    if (!upload_file_type) { Update.end(); }
+    if (UPL_TASMOTA == upload_file_type) { Update.end(); }
   }
   delay(0);
 }
