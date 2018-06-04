@@ -179,6 +179,7 @@ boolean XdrvRulesProcess()
 /*********************************************************************************************\
  * Function call to all xdrv
  *
+ * FUNC_PRE_INIT
  * FUNC_INIT
  * FUNC_LOOP
  * FUNC_MQTT_SUBSCRIBE

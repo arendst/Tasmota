@@ -1295,7 +1295,7 @@ boolean Xdrv04(byte function)
 
   if (light_type) {
     switch (function) {
-      case FUNC_INIT:
+      case FUNC_PRE_INIT:
         LightInit();
         break;
       case FUNC_EVERY_50_MSECOND:

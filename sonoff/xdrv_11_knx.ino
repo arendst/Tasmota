@@ -1078,7 +1078,7 @@ boolean Xdrv11(byte function)
 {
   boolean result = false;
     switch (function) {
-      case FUNC_INIT:
+      case FUNC_PRE_INIT:
         KNX_INIT();
         break;
       case FUNC_LOOP:

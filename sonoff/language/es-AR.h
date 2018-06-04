@@ -321,6 +321,10 @@
 #define D_UPLOAD_ERR_7 "Carga cancelada"
 #define D_UPLOAD_ERR_8 "Archivo no válido"
 #define D_UPLOAD_ERR_9 "Archivo muy grande"
+#define D_UPLOAD_ERR_10 "Failed to init RF chip"
+#define D_UPLOAD_ERR_11 "Failed to erase RF chip"
+#define D_UPLOAD_ERR_12 "Failed to write to RF chip"
+#define D_UPLOAD_ERR_13 "Failed to decode RF firmware"
 #define D_UPLOAD_ERROR_CODE "Código de error de carga"
 
 #define D_ENTER_COMMAND "Ingresar comando"

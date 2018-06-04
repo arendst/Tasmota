@@ -2324,7 +2324,7 @@ void GpioInit()
   }
   SetLedPower(Settings.ledstate &8);
 
-  XdrvCall(FUNC_INIT);
+  XdrvCall(FUNC_PRE_INIT);
 }
 
 extern "C" {
@@ -2449,6 +2449,7 @@ void setup()
   ArduinoOTAInit();
 #endif  // USE_ARDUINO_OTA
 
+  XdrvCall(FUNC_INIT);
   XsnsCall(FUNC_INIT);
 }
 

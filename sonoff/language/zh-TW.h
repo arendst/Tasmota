@@ -321,6 +321,10 @@
 #define D_UPLOAD_ERR_7 "上傳取消"
 #define D_UPLOAD_ERR_8 "錯誤的固件"
 #define D_UPLOAD_ERR_9 "固件太大"
+#define D_UPLOAD_ERR_10 "Failed to init RF chip"
+#define D_UPLOAD_ERR_11 "Failed to erase RF chip"
+#define D_UPLOAD_ERR_12 "Failed to write to RF chip"
+#define D_UPLOAD_ERR_13 "Failed to decode RF firmware"
 #define D_UPLOAD_ERROR_CODE "上傳錯誤代碼"
 
 #define D_ENTER_COMMAND "輸入命令"

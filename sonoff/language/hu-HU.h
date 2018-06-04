@@ -321,6 +321,10 @@
 #define D_UPLOAD_ERR_7 "Feltöltés megszakítva"
 #define D_UPLOAD_ERR_8 "Érvénytelen file"
 #define D_UPLOAD_ERR_9 "File túl nagy"
+#define D_UPLOAD_ERR_10 "Failed to init RF chip"
+#define D_UPLOAD_ERR_11 "Failed to erase RF chip"
+#define D_UPLOAD_ERR_12 "Failed to write to RF chip"
+#define D_UPLOAD_ERR_13 "Failed to decode RF firmware"
 #define D_UPLOAD_ERROR_CODE "Feltöltés hiba kód"
 
 #define D_ENTER_COMMAND "Parancsolj"
