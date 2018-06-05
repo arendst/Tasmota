@@ -533,6 +533,7 @@ boolean SonoffBridgeCommand()
         case 169:  // 0xA9 - Start learning predefined protocols
         case 176:  // 0xB0 - Stop sniffing
         case 177:  // 0xB1 - Start sniffing
+        case 255:  // 0xFF - Show firmware version
           SonoffBridgeSendCommand(XdrvMailbox.payload);
           sonoff_bridge_receive_raw_flag = 1;
           break;
