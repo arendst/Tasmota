@@ -46,18 +46,12 @@ uint8_t lm75ad_type = 0;
 uint8_t lm75ad_address;
 uint8_t lm75ad_addresses[] = { LM75AD_ADDRESS1, LM75AD_ADDRESS2, LM75AD_ADDRESS3, LM75AD_ADDRESS4, LM75AD_ADDRESS5, LM75AD_ADDRESS6, LM75AD_ADDRESS7, LM75AD_ADDRESS8 };
 
-int16_t LM75ADGetTempRegister(void)
-{
-  uint16_t res = I2cRead16(lm75ad_address, LM75_TEMP_REGISTER);
-  return (int16_t)res;
-}
-
 void LM75ADDetect()
 {
   uint8_t buffer;
-  if (lm75ad_type) {
-    return;
-  }
+
+  if (lm75ad_type) { return; }
+
   for (byte i = 0; i < sizeof(lm75ad_addresses); i++) {
     lm75ad_address = lm75ad_addresses[i];
     if (I2cValidRead8(&buffer, lm75ad_address, LM75_CONF_REGISTER)) {
@@ -69,18 +63,16 @@ void LM75ADDetect()
   }
 }
 
-float LM75ADConvertTemp(uint16_t t) {
-  float tmpt;
-
+float LM75ADGetTemp() {
   int16_t sign = 1;
+
+  uint16_t t = I2cRead16(lm75ad_address, LM75_TEMP_REGISTER);
   if (t & 0x8000) { // we are getting a negative temperature value
     t = (~t) +0x20;
     sign = -1;
   }
   t = t >> 5; // shift value into place (5 LSB not used)
-  tmpt = ConvertTemp(sign * t * 0.125);
-
-  return tmpt;
+  return ConvertTemp(sign * t * 0.125);
 }
 
 void LM75ADShow(boolean json)
@@ -88,8 +80,7 @@ void LM75ADShow(boolean json)
   if (lm75ad_type) {
     char temperature[10];
 
-    uint16_t lm75ad_value = LM75ADGetTempRegister();
-    float t = LM75ADConvertTemp(lm75ad_value);
+    float t = LM75ADGetTemp();
     dtostrfd(t, Settings.flag2.temperature_resolution, temperature);
 
     if (json) {
