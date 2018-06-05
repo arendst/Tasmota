@@ -25,7 +25,7 @@
     - Select IDE Tools - Flash Size: "1M (no SPIFFS)"
   ====================================================*/
 
-#define VERSION                0x050E0002   // 5.14.0b
+#define VERSION                0x06000001   // 6.0.0a
 
 // Location specific includes
 #include <core_version.h>                   // Arduino_Esp8266 version information (ARDUINO_ESP8266_RELEASE and ARDUINO_ESP8266_RELEASE_2_3_0)
@@ -740,6 +740,8 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
       }
     }
     else if (CMND_GPIOS == command_code) {
+      mytmplt cmodule;
+      memcpy_P(&cmodule, &kModules[Settings.module], sizeof(cmodule));
       for (byte i = 0; i < GPIO_SENSOR_END; i++) {
         if (!jsflg) {
           snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_GPIOS "%d\":["), lines);
@@ -747,12 +749,14 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
           snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,"), mqtt_data);
         }
         jsflg = 1;
-        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s\"%d (%s)\""), mqtt_data, i, GetTextIndexed(stemp1, sizeof(stemp1), i, kSensorNames));
-        if ((strlen(mqtt_data) > (LOGSZ - TOPSZ)) || (i == GPIO_SENSOR_END -1)) {
-          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s]}"), mqtt_data);
-          MqttPublishPrefixTopic_P(RESULT_OR_STAT, type);
-          jsflg = 0;
-          lines++;
+        if (!GetUsedInModule(i, cmodule.gp.io)) {
+          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s\"%d (%s)\""), mqtt_data, i, GetTextIndexed(stemp1, sizeof(stemp1), i, kSensorNames));
+          if ((strlen(mqtt_data) > (LOGSZ - TOPSZ)) || (i == GPIO_SENSOR_END -1)) {
+            snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s]}"), mqtt_data);
+            MqttPublishPrefixTopic_P(RESULT_OR_STAT, type);
+            jsflg = 0;
+            lines++;
+          }
         }
       }
       mqtt_data[0] = '\0';
@@ -1000,7 +1004,7 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
         break;
       case 99:
         AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_APPLICATION D_RESTARTING));
-        ESP.restart();
+        EspRestart();
         break;
       default:
         snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, D_JSON_ONE_TO_RESTART);
@@ -1937,7 +1941,7 @@ void StateLoop()
       restart_flag--;
       if (restart_flag <= 0) {
         AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_APPLICATION D_RESTARTING));
-        ESP.restart();
+        EspRestart();
       }
     }
     break;
@@ -2012,8 +2016,7 @@ void ArduinoOTAInit()
     }
     snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_UPLOAD "Arduino OTA  %s. " D_RESTARTING), error_str);
     AddLog(LOG_LEVEL_INFO);
-    delay(100);       // Allow time for message xfer
-    ESP.restart();
+    EspRestart();
   });
 
   ArduinoOTA.onEnd([]()
@@ -2021,8 +2024,7 @@ void ArduinoOTAInit()
     if ((LOG_LEVEL_DEBUG <= seriallog_level)) Serial.println();
     snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_UPLOAD "Arduino OTA " D_SUCCESSFUL ". " D_RESTARTING));
     AddLog(LOG_LEVEL_INFO);
-    delay(100);       // Allow time for message xfer
-    ESP.restart();
+    EspRestart();
 	});
 
   ArduinoOTA.begin();
@@ -2322,7 +2324,7 @@ void GpioInit()
   }
   SetLedPower(Settings.ledstate &8);
 
-  XdrvCall(FUNC_INIT);
+  XdrvCall(FUNC_PRE_INIT);
 }
 
 extern "C" {
@@ -2447,6 +2449,7 @@ void setup()
   ArduinoOTAInit();
 #endif  // USE_ARDUINO_OTA
 
+  XdrvCall(FUNC_INIT);
   XsnsCall(FUNC_INIT);
 }
 

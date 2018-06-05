@@ -644,7 +644,7 @@ void ShowSource(int source)
 
 void GetFeatures()
 {
-  feature_drv1 = 0x00000000;   // xdrv_00_mqtt.ino, xdrv_01_light.ino, xdrv_04_snfbridge.ino
+  feature_drv1 = 0x00000000;   // xdrv_01_mqtt.ino, xdrv_01_light.ino, xdrv_04_snfbridge.ino
 
 //  feature_drv1 |= 0x00000001;
 //  feature_drv1 |= 0x00000002;
@@ -1006,6 +1006,7 @@ void WifiBegin(uint8_t flag)
   WiFi.mode(WIFI_OFF);      // See https://github.com/esp8266/Arduino/issues/2186
 #endif
 
+  WiFi.persistent(false);   // Solve possible wifi init errors
   WiFi.disconnect(true);    // Delete SDK wifi config
   delay(200);
   WiFi.mode(WIFI_STA);      // Disable AP mode
@@ -1219,11 +1220,28 @@ int WifiState()
 
 void WifiConnect()
 {
-  WiFi.persistent(false);   // Solve possible wifi init errors
+  WiFi.persistent(false);    // Solve possible wifi init errors
   wifi_status = 0;
   wifi_retry_init = WIFI_RETRY_OFFSET_SEC + ((ESP.getChipId() & 0xF) * 2);
   wifi_retry = wifi_retry_init;
   wifi_counter = 1;
+}
+
+void WifiDisconnect()
+{
+  // Courtesy of EspEasy
+  WiFi.persistent(true);      // use SDK storage of SSID/WPA parameters
+  ETS_UART_INTR_DISABLE();
+  wifi_station_disconnect();  // this will store empty ssid/wpa into sdk storage
+  ETS_UART_INTR_ENABLE();
+  WiFi.persistent(false);     // Do not use SDK storage of SSID/WPA parameters
+}
+
+void EspRestart()
+{
+  delay(100);                 // Allow time for message xfer
+  WifiDisconnect();
+  ESP.restart();
 }
 
 #ifdef USE_DISCOVERY
