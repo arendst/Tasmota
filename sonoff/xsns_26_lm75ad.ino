@@ -1,5 +1,5 @@
 /*
-  xdrv_26_lm75ad.ino - Support for I2C LM75AD Temperature Sensor
+  xsns_26_lm75ad.ino - Support for I2C LM75AD Temperature Sensor
 
   Copyright (C) 2018  Theo Arends
 
