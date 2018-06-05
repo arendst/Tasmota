@@ -276,6 +276,7 @@
 //  #define USE_INA219                             // Add I2C code for INA219 Low voltage and current sensor (+1k code)
 //  #define USE_MGS                                // Add I2C code for Xadow and Grove Mutichannel Gas sensor using library Multichannel_Gas_Sensor (+10k code)
     #define MGS_SENSOR_ADDR    0x04              // Default Mutichannel Gas sensor i2c address
+//    #define USE_LM75AD                           // Add I2C code for LM75AD Temperature Sensor (+0k6 code)
 #endif  // USE_I2C
 
 // -- SPI sensors ---------------------------------
