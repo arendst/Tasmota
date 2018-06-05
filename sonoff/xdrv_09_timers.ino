@@ -287,10 +287,10 @@ void TimerEverySecond()
 #ifdef USE_RULES
               if (3 == xtimer.power) {  // Blink becomes Rule disregarding device and allowing use of Backlog commands
                 snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"Clock\":{\"Timer\":%d}}"), i +1);
-                RulesProcess();
+                XdrvRulesProcess();
               } else
 #endif  // USE_RULES
-                if (devices_present) { ExecuteCommandPower(xtimer.device +1, xtimer.power); }
+                if (devices_present) { ExecuteCommandPower(xtimer.device +1, xtimer.power, SRC_TIMER); }
             }
           }
         }
@@ -726,7 +726,7 @@ boolean Xdrv09(byte function)
   boolean result = false;
 
   switch (function) {
-    case FUNC_INIT:
+    case FUNC_PRE_INIT:
       TimerSetRandomWindows();
       break;
     case FUNC_EVERY_SECOND:

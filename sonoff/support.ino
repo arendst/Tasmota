@@ -244,6 +244,29 @@ char* LTrim(char* p)
   return p;
 }
 
+char* RTrim(char* p)
+{
+  char* q = p + strlen(p) -1;
+  while ((q >= p) && (isblank(*q))) {
+    q--;                                     // Trim trailing spaces
+  }
+  q++;
+  *q = '\0';
+  return p;
+}
+
+char* Trim(char* p)
+{
+  if (*p == '\0') { return p; }
+  while (isspace(*p)) { p++; }            // Trim leading spaces
+  if (*p == '\0') { return p; }
+  char* q = p + strlen(p) -1;
+  while (isspace(*q) && q >= p) { q--; }  // Trim trailing spaces
+  q++;
+  *q = '\0';
+  return p;
+}
+
 char* NoAlNumToUnderscore(char* dest, const char* source)
 {
   char* write = dest;
@@ -482,6 +505,96 @@ int GetStateNumber(char *state_text)
   return state_number;
 }
 
+boolean GetUsedInModule(byte val, uint8_t *arr)
+{
+  int offset = 0;
+
+  if (!val) { return false; }  // None
+#ifndef USE_I2C
+  if (GPIO_I2C_SCL == val) { return true; }
+  if (GPIO_I2C_SDA == val) { return true; }
+#endif
+#ifndef USE_SR04
+  if (GPIO_SR04_TRIG == val) { return true; }
+  if (GPIO_SR04_ECHO == val) { return true; }
+#endif
+#ifndef USE_WS2812
+  if (GPIO_WS2812 == val) { return true; }
+#endif
+#ifndef USE_IR_REMOTE
+  if (GPIO_IRSEND == val) { return true; }
+#ifndef USE_IR_RECEIVE
+  if (GPIO_IRRECV == val) { return true; }
+#endif
+#endif
+#ifndef USE_MHZ19
+  if (GPIO_MHZ_TXD == val) { return true; }
+  if (GPIO_MHZ_RXD == val) { return true; }
+#endif
+#ifndef USE_PZEM004T
+  if (GPIO_PZEM_TX == val) { return true; }
+  if (GPIO_PZEM_RX == val) { return true; }
+#endif
+#ifndef USE_SENSEAIR
+  if (GPIO_SAIR_TX == val) { return true; }
+  if (GPIO_SAIR_RX == val) { return true; }
+#endif
+#ifndef USE_SPI
+  if (GPIO_SPI_CS == val) { return true; }
+  if (GPIO_SPI_DC == val) { return true; }
+#endif
+#ifndef USE_DISPLAY
+  if (GPIO_BACKLIGHT == val) { return true; }
+#endif
+#ifndef USE_PMS5003
+  if (GPIO_PMS5003 == val) { return true; }
+#endif
+#ifndef USE_NOVA_SDS
+  if (GPIO_SDS0X1 == val) { return true; }
+#endif
+#ifndef USE_SERIAL_BRIDGE
+  if (GPIO_SBR_TX == val) { return true; }
+  if (GPIO_SBR_RX == val) { return true; }
+#endif
+#ifndef USE_SR04
+  if (GPIO_SR04_TRIG == val) { return true; }
+  if (GPIO_SR04_ECHO == val) { return true; }
+#endif
+#ifndef USE_SDM120
+  if (GPIO_SDM120_TX == val) { return true; }
+  if (GPIO_SDM120_RX == val) { return true; }
+#endif
+#ifndef USE_SDM630
+  if (GPIO_SDM630_TX == val) { return true; }
+  if (GPIO_SDM630_RX == val) { return true; }
+#endif
+  if ((val >= GPIO_REL1) && (val < GPIO_REL1 + MAX_RELAYS)) {
+    offset = (GPIO_REL1_INV - GPIO_REL1);
+  }
+  if ((val >= GPIO_REL1_INV) && (val < GPIO_REL1_INV + MAX_RELAYS)) {
+    offset = -(GPIO_REL1_INV - GPIO_REL1);
+  }
+
+  if ((val >= GPIO_LED1) && (val < GPIO_LED1 + MAX_LEDS)) {
+    offset = (GPIO_LED1_INV - GPIO_LED1);
+  }
+  if ((val >= GPIO_LED1_INV) && (val < GPIO_LED1_INV + MAX_LEDS)) {
+    offset = -(GPIO_LED1_INV - GPIO_LED1);
+  }
+
+  if ((val >= GPIO_PWM1) && (val < GPIO_PWM1 + MAX_PWMS)) {
+    offset = (GPIO_PWM1_INV - GPIO_PWM1);
+  }
+  if ((val >= GPIO_PWM1_INV) && (val < GPIO_PWM1_INV + MAX_PWMS)) {
+    offset = -(GPIO_PWM1_INV - GPIO_PWM1);
+  }
+  for (byte i = 0; i < MAX_GPIO_PIN; i++) {
+    if (arr[i] == val) { return true; }
+    if (arr[i] == val + offset) { return true; }
+  }
+  return false;
+}
+
 void SetSerialBaudrate(int baudrate)
 {
   Settings.baudrate = baudrate / 1200;
@@ -516,13 +629,22 @@ uint32_t GetHash(const char *buffer, size_t size)
   return hash;
 }
 
+void ShowSource(int source)
+{
+  if ((source > 0) && (source < SRC_MAX)) {
+    char stemp1[20];
+    snprintf_P(log_data, sizeof(log_data), PSTR("SRC: %s"), GetTextIndexed(stemp1, sizeof(stemp1), source, kCommandSource));
+    AddLog(LOG_LEVEL_DEBUG);
+  }
+}
+
 /*********************************************************************************************\
  * Fill feature list
 \*********************************************************************************************/
 
 void GetFeatures()
 {
-  feature_drv1 = 0x00000000;   // xdrv_00_mqtt.ino, xdrv_01_light.ino, xdrv_04_snfbridge.ino
+  feature_drv1 = 0x00000000;   // xdrv_01_mqtt.ino, xdrv_01_light.ino, xdrv_04_snfbridge.ino
 
 //  feature_drv1 |= 0x00000001;
 //  feature_drv1 |= 0x00000002;
@@ -543,52 +665,52 @@ void GetFeatures()
   feature_drv1 |= 0x00000040;  // sonoff.ino
 #endif
 #ifdef USE_WEBSERVER
-  feature_drv1 |= 0x00000080;  // webserver.ino
+  feature_drv1 |= 0x00000080;  // xdrv_02_webserver.ino
 #endif
 #ifdef WEBSERVER_ADVERTISE
-  feature_drv1 |= 0x00000100;  // webserver.ino
+  feature_drv1 |= 0x00000100;  // xdrv_02_webserver.ino
 #endif
 #ifdef USE_EMULATION
   feature_drv1 |= 0x00000200;  // xplg_wemohue.ino
 #endif
 #if (MQTT_LIBRARY_TYPE == MQTT_PUBSUBCLIENT)
-  feature_drv1 |= 0x00000400;  // xdrv_00_mqtt.ino
+  feature_drv1 |= 0x00000400;  // xdrv_01_mqtt.ino
 #endif
 #if (MQTT_LIBRARY_TYPE == MQTT_TASMOTAMQTT)
-  feature_drv1 |= 0x00000800;  // xdrv_00_mqtt.ino
+  feature_drv1 |= 0x00000800;  // xdrv_01_mqtt.ino
 #endif
 #if (MQTT_LIBRARY_TYPE == MQTT_ESPMQTTARDUINO)
-  feature_drv1 |= 0x00001000;  // xdrv_00_mqtt.ino
+  feature_drv1 |= 0x00001000;  // xdrv_01_mqtt.ino
 #endif
 #ifdef MQTT_HOST_DISCOVERY
-  feature_drv1 |= 0x00002000;  // xdrv_00_mqtt.ino
+  feature_drv1 |= 0x00002000;  // xdrv_01_mqtt.ino
 #endif
 #ifdef USE_ARILUX_RF
-  feature_drv1 |= 0x00004000;  // xdrv_01_light.ino
+  feature_drv1 |= 0x00004000;  // xdrv_04_light.ino
 #endif
 #ifdef USE_WS2812
-  feature_drv1 |= 0x00008000;  // xdrv_01_light.ino
+  feature_drv1 |= 0x00008000;  // xdrv_04_light.ino
 #endif
 #ifdef USE_WS2812_DMA
-  feature_drv1 |= 0x00010000;  // xdrv_01_light.ino
+  feature_drv1 |= 0x00010000;  // xdrv_04_light.ino
 #endif
 #ifdef USE_IR_REMOTE
-  feature_drv1 |= 0x00020000;  // xdrv_02_irremote.ino
+  feature_drv1 |= 0x00020000;  // xdrv_05_irremote.ino
 #endif
 #ifdef USE_IR_HVAC
-  feature_drv1 |= 0x00040000;  // xdrv_02_irremote.ino
+  feature_drv1 |= 0x00040000;  // xdrv_05_irremote.ino
 #endif
 #ifdef USE_IR_RECEIVE
-  feature_drv1 |= 0x00080000;  // xdrv_02_irremote.ino
+  feature_drv1 |= 0x00080000;  // xdrv_05_irremote.ino
 #endif
 #ifdef USE_DOMOTICZ
-  feature_drv1 |= 0x00100000;  // xdrv_05_domoticz.ino
+  feature_drv1 |= 0x00100000;  // xdrv_07_domoticz.ino
 #endif
 #ifdef USE_DISPLAY
-  feature_drv1 |= 0x00200000;  // xdrv_06_display.ino
+  feature_drv1 |= 0x00200000;  // xdrv_98_display.ino
 #endif
 #ifdef USE_HOME_ASSISTANT
-  feature_drv1 |= 0x00400000;  // xdrv_07_home_assistant.ino
+  feature_drv1 |= 0x00400000;  // xdrv_12_home_assistant.ino
 #endif
 #ifdef USE_SERIAL_BRIDGE
   feature_drv1 |= 0x00800000;  // xdrv_08_serial_bridge.ino
@@ -884,6 +1006,7 @@ void WifiBegin(uint8_t flag)
   WiFi.mode(WIFI_OFF);      // See https://github.com/esp8266/Arduino/issues/2186
 #endif
 
+  WiFi.persistent(false);   // Solve possible wifi init errors
   WiFi.disconnect(true);    // Delete SDK wifi config
   delay(200);
   WiFi.mode(WIFI_STA);      // Disable AP mode
@@ -1051,7 +1174,7 @@ void WifiCheck(uint8_t param)
           StartWebserver(Settings.webserver, WiFi.localIP());
 #ifdef USE_DISCOVERY
 #ifdef WEBSERVER_ADVERTISE
-          MDNS.addService("http", "tcp", 80);
+          MDNS.addService("http", "tcp", WEB_PORT);
 #endif  // WEBSERVER_ADVERTISE
 #endif  // USE_DISCOVERY
         } else {
@@ -1097,11 +1220,28 @@ int WifiState()
 
 void WifiConnect()
 {
-  WiFi.persistent(false);   // Solve possible wifi init errors
+  WiFi.persistent(false);    // Solve possible wifi init errors
   wifi_status = 0;
   wifi_retry_init = WIFI_RETRY_OFFSET_SEC + ((ESP.getChipId() & 0xF) * 2);
   wifi_retry = wifi_retry_init;
   wifi_counter = 1;
+}
+
+void WifiDisconnect()
+{
+  // Courtesy of EspEasy
+  WiFi.persistent(true);      // use SDK storage of SSID/WPA parameters
+  ETS_UART_INTR_DISABLE();
+  wifi_station_disconnect();  // this will store empty ssid/wpa into sdk storage
+  ETS_UART_INTR_ENABLE();
+  WiFi.persistent(false);     // Do not use SDK storage of SSID/WPA parameters
+}
+
+void EspRestart()
+{
+  delay(100);                 // Allow time for message xfer
+  WifiDisconnect();
+  ESP.restart();
 }
 
 #ifdef USE_DISCOVERY
@@ -1610,14 +1750,12 @@ void RtcSecond()
       snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION "(" D_UTC_TIME ") %s, (" D_DST_TIME ") %s, (" D_STD_TIME ") %s"),
         GetTime(0).c_str(), GetTime(2).c_str(), GetTime(3).c_str());
       AddLog(LOG_LEVEL_DEBUG);
-#ifdef USE_RULES
       if (local_time < 1451602800) {  // 2016-01-01
         strncpy_P(mqtt_data, PSTR("{\"Time\":{\"Initialized\":1}}"), sizeof(mqtt_data));
       } else {
         strncpy_P(mqtt_data, PSTR("{\"Time\":{\"Set\":1}}"), sizeof(mqtt_data));
       }
-      RulesProcess();
-#endif  // USE_RULES
+      XdrvRulesProcess();
     } else {
       ntp_sync_minute++;  // Try again in next minute
     }
@@ -1698,7 +1836,7 @@ void AdcEvery50ms()
       adc_last_value = new_value;
       uint16_t value = adc_last_value / 10;
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"ANALOG\":{\"A0div10\":%d}}"), (value > 99) ? 100 : value);
-      RulesProcess();
+      XdrvRulesProcess();
     }
   }
 }

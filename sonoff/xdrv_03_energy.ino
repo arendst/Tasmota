@@ -281,6 +281,9 @@ long cf_pulses_last_time = CSE_PULSES_NOT_INITIALIZED;
 
 void CseReceived()
 {
+  //  0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23
+  // 55 5A 02 F7 60 00 03 AB 00 40 10 02 60 5D 51 A6 58 03 E9 EF 71 0B 7A 36
+  // Hd Id VCal---- Voltage- ICal---- Current- PCal---- Power--- Ad CF--- Ck
   AddLogSerial(LOG_LEVEL_DEBUG_MORE);
 
   uint8_t header = serial_in_buffer[0];
@@ -371,7 +374,12 @@ bool CseSerialInput()
       return 1;
     }
   } else {
-    if (0x5A == serial_in_byte) {             // 0x5A - Packet header 2
+    if ((0x5A == serial_in_byte) && (serial_in_byte_counter)) {  // 0x5A - Packet header 2
+      if (serial_in_byte_counter > 1) {       // Sync buffer with data (issue #1907)
+        serial_in_buffer[0] = serial_in_buffer[--serial_in_byte_counter];
+        serial_in_byte_counter = 1;
+        AddLog_P(LOG_LEVEL_DEBUG, PSTR("CSE: Fixed out-of-sync"));
+      }
       cse_receive_flag = 1;
     } else {
       serial_in_byte_counter = 0;
@@ -476,7 +484,17 @@ bool PzemReceiveReady()
 
 bool PzemRecieve(uint8_t resp, float *data)
 {
-  uint8_t buffer[sizeof(PZEMCommand)];
+  //  0  1  2  3  4  5  6
+  // A4 00 00 00 00 00 A4 - Set address
+  // A0 00 D4 07 00 00 7B - Voltage (212.7V)
+  // A1 00 00 0A 00 00 AB - Current (0.1A)
+  // A1 00 00 00 00 00 A1 - No current
+  // A2 00 16 00 00 00 B8 - Power (22W)
+  // A2 00 00 00 00 00 A2 - No power
+  // A3 00 08 A4 00 00 4F - Energy (2.212kWh)
+  // A3 01 86 9F 00 00 C9 - Energy (99.999kWh)
+
+  uint8_t buffer[sizeof(PZEMCommand)] = { 0 };
 
   unsigned long start = millis();
   uint8_t len = 0;
@@ -485,6 +503,10 @@ bool PzemRecieve(uint8_t resp, float *data)
       uint8_t c = (uint8_t)PzemSerial->read();
       if (!c && !len) {
         continue;  // skip 0 at startup
+      }
+      if ((1 == len) && (buffer[0] == c)) {
+        len--;
+        continue;  // fix skewed data
       }
       buffer[len++] = c;
     }
@@ -721,7 +743,7 @@ void EnergyMarginCheck()
           snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_MAXPOWERREACHED "\":\"%d%s\"}"), energy_power_u, (Settings.flag.value_units) ? " " D_UNIT_WATT : "");
           MqttPublishPrefixTopic_P(STAT, S_RSLT_WARNING);
           EnergyMqttShow();
-          ExecuteCommandPower(1, POWER_OFF);
+          ExecuteCommandPower(1, POWER_OFF, SRC_MAXPOWER);
           if (!energy_mplr_counter) {
             energy_mplr_counter = Settings.param[P_MAX_POWER_RETRY] +1;
           }
@@ -743,7 +765,7 @@ void EnergyMarginCheck()
           if (energy_mplr_counter) {
             snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_POWERMONITOR "\":\"%s\"}"), GetStateText(1));
             MqttPublishPrefixTopic_P(RESULT_OR_STAT, PSTR(D_JSON_POWERMONITOR));
-            ExecuteCommandPower(1, POWER_ON);
+            ExecuteCommandPower(1, POWER_ON, SRC_MAXPOWER);
           } else {
             snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_MAXPOWERREACHEDRETRY "\":\"%s\"}"), GetStateText(0));
             MqttPublishPrefixTopic_P(STAT, S_RSLT_WARNING);
@@ -761,7 +783,7 @@ void EnergyMarginCheck()
       energy_max_energy_state = 1;
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_ENERGYMONITOR "\":\"%s\"}"), GetStateText(1));
       MqttPublishPrefixTopic_P(RESULT_OR_STAT, PSTR(D_JSON_ENERGYMONITOR));
-      ExecuteCommandPower(1, POWER_ON);
+      ExecuteCommandPower(1, POWER_ON, SRC_MAXENERGY);
     }
     else if ((1 == energy_max_energy_state) && (energy_daily_u >= Settings.energy_max_energy)) {
       energy_max_energy_state = 2;
@@ -769,7 +791,7 @@ void EnergyMarginCheck()
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_MAXENERGYREACHED "\":\"%s%s\"}"), mqtt_data, (Settings.flag.value_units) ? " " D_UNIT_KILOWATTHOUR : "");
       MqttPublishPrefixTopic_P(STAT, S_RSLT_WARNING);
       EnergyMqttShow();
-      ExecuteCommandPower(1, POWER_OFF);
+      ExecuteCommandPower(1, POWER_OFF, SRC_MAXENERGY);
     }
   }
 #endif  // FEATURE_POWER_LIMIT
@@ -1143,7 +1165,7 @@ boolean Xdrv03(byte function)
 
   if (energy_flg) {
     switch (function) {
-      case FUNC_INIT:
+      case FUNC_PRE_INIT:
         EnergyDrvInit();
         break;
       case FUNC_COMMAND:

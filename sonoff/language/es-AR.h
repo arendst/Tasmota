@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v5.14.0a
+ * Updated until v6.0.0a
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -205,7 +205,7 @@
 #define D_USE_DEFAULTS "Usar valores por defecto"
 #define D_ERASED_SECTOR "Sector borrado"
 
-// webserver.ino
+// xdrv_02_webserver.ino
 #define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "Firmware MÍNIMO - actualice por favor"
 #define D_WEBSERVER_ACTIVE_ON "Servidor web activo en"
 #define D_WITH_IP_ADDRESS "con dirección IP"
@@ -321,13 +321,17 @@
 #define D_UPLOAD_ERR_7 "Carga cancelada"
 #define D_UPLOAD_ERR_8 "Archivo no válido"
 #define D_UPLOAD_ERR_9 "Archivo muy grande"
+#define D_UPLOAD_ERR_10 "No inició chip RF"
+#define D_UPLOAD_ERR_11 "No se pudo borrar en el chip RF"
+#define D_UPLOAD_ERR_12 "No se puedo escribir en el chip RF"
+#define D_UPLOAD_ERR_13 "No se pudo decodificar firmware RF"
 #define D_UPLOAD_ERROR_CODE "Código de error de carga"
 
 #define D_ENTER_COMMAND "Ingresar comando"
 #define D_ENABLE_WEBLOG_FOR_RESPONSE "Habilitar weblog 2 si desea respuesta"
 #define D_NEED_USER_AND_PASSWORD "Se necesita user=<username>&password=<password>"
 
-// xdrv_00_mqtt.ino
+// xdrv_01_mqtt.ino
 #define D_FINGERPRINT "Verificar TLS fingerprint..."
 #define D_TLS_CONNECT_FAILED_TO "Falló Conección TLS a"
 #define D_RETRY_IN "Reintentando"
@@ -335,7 +339,7 @@
 #define D_INSECURE "Conección insegura por Fingerprint no válido"
 #define D_CONNECT_FAILED_TO "Falló Conección a"
 
-// xdrv_wemohue.ino
+// xplg_wemohue.ino
 #define D_MULTICAST_DISABLED "Multicast deshabilitado"
 #define D_MULTICAST_REJOINED "Multicast (re)conectado"
 #define D_MULTICAST_JOIN_FAILED "Conección Multicast fallida"
@@ -355,7 +359,7 @@
 #define D_HUE_POST_ARGS "Hue POST args"
 #define D_3_RESPONSE_PACKETS_SENT "3 paquetes de respuesta enviados"
 
-// xdrv_05_domoticz.ino
+// xdrv_07_domoticz.ino
 #define D_DOMOTICZ_PARAMETERS "Parámetros Domoticz"
 #define D_DOMOTICZ_IDX "Idx"
 #define D_DOMOTICZ_KEY_IDX "Key idx"
@@ -402,6 +406,8 @@
 #define D_SENT_TO "enviada a"
 #define D_KNX_WARNING "La dirección de grupo ( 0 / 0 / 0 ) está reservada y no puede ser utilizada."
 #define D_KNX_ENHANCEMENT "Mejora de Comunicación"
+#define D_KNX_TX_SLOT "KNX TX"
+#define D_KNX_RX_SLOT "KNX RX"
 
 // xdrv_03_energy.ino
 #define D_ENERGY_TODAY "Energía Hoy"
