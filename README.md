@@ -1,3 +1,166 @@
+# Sonoff-Tasmota KNX (Development Repository)
+## Now integrated in [Sonoff-Tasmota](https://github.com/arendst/Sonoff-Tasmota)!
+
+[Sonoff-Tasmota_KNX](https://github.com/ascillato/Sonoff-Tasmota_KNX) is a modification for [Sonoff-Tasmota](https://github.com/arendst/Sonoff-Tasmota) to add a basic functionality of the [KNX IP Protocol](https://www.knx.org/knx-en/index.php).
+
+[![GitHub version](https://img.shields.io/github/release/ascillato/Sonoff-Tasmota_KNX.svg)](https://github.com/ascillato/Sonoff-Tasmota_KNX/releases/latest) [![GitHub download](https://img.shields.io/github/downloads/ascillato/Sonoff-Tasmota_KNX/total.svg)](https://github.com/ascillato/Sonoff-Tasmota_KNX/releases/latest) [![License](https://img.shields.io/github/license/ascillato/Sonoff-Tasmota_KNX.svg)](https://github.com/ascillato/Sonoff-Tasmota_KNX/blob/development/LICENSE.txt)
+
+If you like **Sonoff Tasmota KNX**, give it a star, or fork it and contribute!
+[![GitHub stars](https://img.shields.io/github/stars/ascillato/Sonoff-Tasmota_KNX.svg?style=social&label=Star)](https://github.com/ascillato/Sonoff-Tasmota_KNX/stargazers)
+[![GitHub forks](https://img.shields.io/github/forks/ascillato/Sonoff-Tasmota_KNX.svg?style=social&label=Fork)](https://github.com/ascillato/Sonoff-Tasmota_KNX/network)
+
+Any help or comment is very welcome.
+
+## Table of Contents
+
+* [KNX Explanation](#knx-explanation)
+* [Integration](#integration)
+* [Requirement](#requirement)
+* [Usage Examples](#usage-examples)
+* [Development Road Map](#development-road-map)
+* [Modifications to Sonoff-Tasmota](#modifications-to-sonoff-tasmota)
+* [Contributors](#contributors)
+* [Sonoff-Tasmota](#sonoff-tasmota)
+
+## KNX Explanation ##
+
+[<img src="https://www.knx.org/wGlobal/wGlobal/layout/images/knx-logo.png" />](https://www.knx.org/knx-en/knx/association/what-is-knx/index.php)
+
+The [KNX IP Protocol](https://www.knx.org/knx-en/knx/association/what-is-knx/index.php) is an _international open standard_ for smart homes and smart buildings automation. It is a decentralized system. Each device can talk directly to each other without the need of a central controller or server. Any panel or server is just for telesupervision and for sending requests. KNX IP Protocol uses a UDP multicast on _224.0.23.12 : 3671_, so there is no need for a KNX Router unless you want to communicate to KNX Devices that are not in the WIFI Network (Twisted Pair, RF, Powerline).
+
+Each device has a physical address (like a fixed IP) as **1 . 1 . 0** and that address is used for configuration purposes.
+
+Each device can be configured with group addresses as **2 / 2 / 1** and that address can be used for sending/receiving commands.
+So, for example, if 2 devices that are configured with the **2 / 2 / 1** for turning on/off their outputs, and other device send _Turn ON_ command to **2 / 2 / 1**, both devices will turn on their outputs.
+
+## Integration ##
+
+Several home automation systems have KNX support. For example, [Home Assistant](https://github.com/home-assistant/home-assistant) has a [XKNX Python Library](https://github.com/XKNX/xknx) to connect to KNX devices using a KNX Router. If you don't have a **KNX Router**, you can use a **Software KNX Router** like [KNXd](https://github.com/knxd/knxd) on the same Raspberry Pi than Home Assistant. KNXd is used by Home Assistant for reading this UDP Multicast, although KNXd has other cool features that need extra hardware like connect to KNX devices by Twister Pair, Power Line or RF.
+
+If you use the ETS (KNX Configurator Software) you can add any Sonoff-Tasmota_KNX as a dummy device.
+
+## Requirement ##
+
+* [ESP KNX IP Library](https://github.com/envy/esp-knx-ip). A copy of the library is also available [here](https://github.com/ascillato/Sonoff-Tasmota_KNX/tree/development/lib/esp-knx-ip-0.5.0).
+
+It is recommended to compile with version 2.3.0 of the esp8266 board libraries. With v2.4.0 and v2.4.1 there are some issues related to sleep command.
+
+## Usage Examples ##
+
+There are multiple possible configurations. Here are explained just a few as example. The options for selecting relays, buttons, sensors, etc. are only available if were configured on _Configure Module Menu_.
+
+To configure KNX, enter on the Configuration Menu of Sonoff-Tasmota and select Configure KNX.
+
+<img src="https://github.com/ascillato/Sonoff-Tasmota_KNX/blob/development/.github/Config_Menu.jpg" />
+<img src="https://github.com/ascillato/Sonoff-Tasmota_KNX/blob/development/.github/KNX_menu.jpg" />
+
+**1) Setting Several Sonoff to be controlled as one by a Home Automation System:**
+
+We can set one of the group address to be the same in all the devices so as to turn them on or off at the same time.
+In this case, so as to inform the status of all the relays to the Automation System, just one of the devices have to be configured as the responder. If you use the same Group Address for sending and receiving, you have to take into account not to make loops.
+
+DEVICE 1
+
+<img src="https://github.com/ascillato/Sonoff-Tasmota_KNX/blob/development/.github/1.jpg" />
+
+DEVICE 2
+
+<img src="https://github.com/ascillato/Sonoff-Tasmota_KNX/blob/development/.github/2.jpg" />
+
+**2) Setting 2 Sonoff to be linked as stair lights:**
+
+We can set one device to send the status of its output and another to read that and follow. And the second device can send the status of its button and the first device will toggle. With this configuration we can avoid to make a loop.
+
+DEVICE 1
+
+<img src="https://github.com/ascillato/Sonoff-Tasmota_KNX/blob/development/.github/3.jpg" />
+
+DEVICE 2
+
+<img src="https://github.com/ascillato/Sonoff-Tasmota_KNX/blob/development/.github/4.jpg" />
+
+**3) Setting a button as initiator of a scene:**
+
+Just setting one device to send the push of a button, and the rest just use that value to turn them on. In this case, there is no toggle. Every time the button is pushed, the turn on command is sent.
+
+DEVICE 1
+
+<img src="https://github.com/ascillato/Sonoff-Tasmota_KNX/blob/development/.github/5.jpg" />
+
+DEVICE 2
+
+<img src="https://github.com/ascillato/Sonoff-Tasmota_KNX/blob/development/.github/6.jpg" />
+
+**4) Setting a Temperature sensor:**
+
+We can configure to send the value of temperature or humidity every teleperiod. This teleperiod can be configured. See Sonoff Tasmota [wiki](https://github.com/arendst/Sonoff-Tasmota/wiki/Commands). It is recommended also to set the reply temperature address.
+
+<img src="https://github.com/ascillato/Sonoff-Tasmota_KNX/blob/development/.github/7.jpg" />
+
+## Development Road Map ##
+
+**For Sonoff-Tasmota_KNX:**
+- [x] Add Web Menu
+- [x] Add Feature to Receive telegrams and modify Relay Status
+- [x] Add Feature to Receive telegrams from multiple Group Addresses to modify just one relay status (useful for scenes)
+- [x] Add Feature to Send telegrams of relay status change
+- [x] Add Feature to Send telegrams of one relay status to multiple Group Addresses (useful for scenes)
+- [x] Add Feature to Send telegrams of button pressed
+- [x] Add Feature to receive telegrams to toggle relay status
+- [x] Add Feature to read Temperature, Humidity from Tasmota
+- [x] Add Feature to send Temperature, Humidity by a set interval (tasmota teleperiod)
+- [x] Add Feature to receive command to read temperature, Humidity
+- [x] Add Feature to recognize Tasmota config to show the same number of relays, buttons, etc.
+- [x] Add Feature to Save Config
+- [x] Add Feature to Load Config
+- [x] Add Log Info
+- [x] Complete all the language files with keys
+- [x] Add support for other output devices supported by Tasmota
+- [x] Add support for other sensors supported by Tasmota (TEMP, HUM, ENERGY)
+- [x] Add command for rules to send values and commands by KNX
+- [x] Add events for rules when receiving data from KNX and read requests
+- [x] Add option for increase communication reliability (re send telegrams)
+- [ ] Add option for multicast forced reconnection (needed for some routers that have IGMP conflict with actual esp8266 lib v2.3.0 to v2.4.1, and lwIP v1.4 to v2.0 - Send a telegram to itself. If it is received, multicast is ok, if not, reconnect)
+- [ ] Add option to support KNX Snooping to debug KNX Network
+- [ ] Add option for KNXnet/IP Tunneling
+- [ ] Add option to repeat all KNX multicast broadcast (Tasmota to Tasmota communications) to KNXnet/IP Tunneling
+- [ ] Add option to support ETS Programming
+- [ ] Optimize code to reduce Flash and RAM
+
+## Modifications to Sonoff-Tasmota ##
+
+* Added the file _/sonoff/xdrv_11_KNX.ino_
+* Added the entry `#define USE_KNX` on _/sonoff/user_config.h_
+* Added entries to the file _/sonoff/webserver.ino_
+* Added entries to the file _/sonoff/sonoff.ino_
+* Added entries to the file _/sonoff/sonoff.h_
+* Added entries to the file _/sonoff/settings.h_
+* Added entries to the file _/sonoff/support.ino_
+* Added entries to sensor files
+* Added entries to language files
+
+Up to now, enabling KNX uses +23k of code and +3k3 of memory.
+
+There is **NO CONFLICT** with MQTT, Home Assistant, Web, etc. Tests show fast response of all features running at same time.
+
+## Contributors ##
+
+* [ascillato](https://github.com/ascillato) ( Adrian Scillato )
+* [sisamiwe](https://github.com/sisamiwe) - Thanks for the guide on using KNX.
+* [envy](https://github.com/envy) ( Nico Weichbrodt ) - Thanks for the patience and help with the modifications to ESP_KNX_IP.
+* [arendst](https://github.com/arendst) ( Theo Arends ) - Thanks for the guide on Tasmota and for the ideas.
+* [johannesbonn](https://github.com/johannesbonn) - Thanks for the patience on bug resolutions
+* [RocketSience](https://github.com/RocketSience) - Thanks for the patience on bug resolutions
+* [jeylites](https://github.com/jeylites) - Thanks for the patience on bug resolutions
+* [smurfix](https://github.com/smurfix) ( Matthias Urlichs ) - Thanks for the KNX guiding and [KNXd](https://github.com/knxd/knxd) use.
+* And many others providing testing, bug reporting and feature requests.
+
+-----------------------------------------------------------------------------------------------------------------------------------
+
+[<img src="https://github.com/ascillato/Sonoff-Tasmota_KNX/blob/development/.github/donate.jpg" width="250" />](https://www.paypal.me/ascillato)
+
+-----------------------------------------------------------------------------------------------------------------------------------
+
 ## Sonoff-Tasmota
 
 Alternative firmware for _ESP8266 based devices_ like [iTead](https://www.itead.cc/) _**Sonoff**_ with **web**, **timers**, 'Over The Air' (**OTA**) firmware updates and **sensors support**, allowing control under **Serial**, **HTTP**, **MQTT** and **KNX**, so as to be used on **Smart Home Systems**. Written for Arduino IDE and PlatformIO.
