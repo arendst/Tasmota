@@ -44,7 +44,7 @@
 \*********************************************************************************************/
 
 // -- Master parameter control --------------------
-#define CFG_HOLDER             0x20161209        // [Reset 1] Change this value to load SECTION1 configuration parameters to flash
+#define CFG_HOLDER             4617              // [Reset 1] Change this value to load SECTION1 configuration parameters to flash
 
 // -- Project -------------------------------------
 #define PROJECT                "sonoff"          // PROJECT is used as the default topic delimiter
@@ -178,7 +178,7 @@
  * - Disable a feature by preceding it with //
 \*********************************************************************************************/
 
-//#define USE_ARDUINO_OTA                          // Add optional support for Arduino OTA (+4k5 code)
+//#define USE_ARDUINO_OTA                          // Add optional support for Arduino OTA (+13k code)
 
 // -- Localization --------------------------------
   // If non selected the default en-GB will be used
@@ -309,6 +309,8 @@
 #define USE_ARILUX_RF                            // Add support for Arilux RF remote controller (+0k8 code, 252 iram (non 2.3.0))
 
 #define USE_SR04                                 // Add support for HC-SR04 ultrasonic devices (+1k code)
+
+#define USE_RF_FLASH                             // Add support for flashing the EFM8BB1 chip on the Sonoff RF Bridge. C2CK must be connected to GPIO4, C2D to GPIO5 on the PCB
 
 /*********************************************************************************************\
  * Select features and sensors enabled in previous version saving space

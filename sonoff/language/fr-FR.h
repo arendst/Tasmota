@@ -205,7 +205,7 @@
 #define D_USE_DEFAULTS "Utiliser par défaut"
 #define D_ERASED_SECTOR "Secteur effacé"
 
-// webserver.ino
+// xdrv_02_webserver.ino
 #define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "Firmware MINIMAL - merci de mettre à jour"
 #define D_WEBSERVER_ACTIVE_ON "Serveur web actif sur"
 #define D_WITH_IP_ADDRESS "avec l'adresse IP"
@@ -321,13 +321,17 @@
 #define D_UPLOAD_ERR_7 "Téléchargement annulé"
 #define D_UPLOAD_ERR_8 "Fichier invalide"
 #define D_UPLOAD_ERR_9 "Fichier trop grand"
+#define D_UPLOAD_ERR_10 "Failed to init RF chip"
+#define D_UPLOAD_ERR_11 "Failed to erase RF chip"
+#define D_UPLOAD_ERR_12 "Failed to write to RF chip"
+#define D_UPLOAD_ERR_13 "Failed to decode RF firmware"
 #define D_UPLOAD_ERROR_CODE "Code d'erreur téléchargement"
 
 #define D_ENTER_COMMAND "Saisir une commande"
 #define D_ENABLE_WEBLOG_FOR_RESPONSE "Activer Weblog 2 si une réponse est attendue"
 #define D_NEED_USER_AND_PASSWORD "Nécessite utilisateur=<username>&password=<password>"
 
-// xdrv_00_mqtt.ino
+// xdrv_01_mqtt.ino
 #define D_FINGERPRINT "Vérification d'empreinte TLS ..."
 #define D_TLS_CONNECT_FAILED_TO "Échec de connexion TLS à"
 #define D_RETRY_IN "Nouvelle tentative dans"
@@ -335,7 +339,7 @@
 #define D_INSECURE "Connexion non sécurisée car empreinte non vérifiée"
 #define D_CONNECT_FAILED_TO "Échec de connexion à"
 
-// xdrv_wemohue.ino
+// xplg_wemohue.ino
 #define D_MULTICAST_DISABLED "Multicast désactivé"
 #define D_MULTICAST_REJOINED "Multicast (re)joint"
 #define D_MULTICAST_JOIN_FAILED "Multicast échec abonnement"
@@ -355,7 +359,7 @@
 #define D_HUE_POST_ARGS "Hue POST args"
 #define D_3_RESPONSE_PACKETS_SENT "3 paquets de réponse envoyés"
 
-// xdrv_05_domoticz.ino
+// xdrv_07_domoticz.ino
 #define D_DOMOTICZ_PARAMETERS "Paramètres Domoticz"
 #define D_DOMOTICZ_IDX "Idx"
 #define D_DOMOTICZ_KEY_IDX "Key idx"
@@ -402,6 +406,8 @@
 #define D_SENT_TO "envoyé à"
 #define D_KNX_WARNING "L'Adresse de Groupe ( 0 / 0 / 0 ) est réservée et ne peut être utilisée."
 #define D_KNX_ENHANCEMENT "Communication Enhancement"
+#define D_KNX_TX_SLOT "KNX TX"
+#define D_KNX_RX_SLOT "KNX RX"
 
 // xsns_03_energy.ino
 #define D_ENERGY_TODAY "Énergie aujourd'hui"

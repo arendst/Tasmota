@@ -205,7 +205,7 @@
 #define D_USE_DEFAULTS "Використовувати значення за замовчуванням"
 #define D_ERASED_SECTOR "Стерти сектор"
 
-// webserver.ino
+// xdrv_02_webserver.ino
 #define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "Прошивка MINIMAL - будь-ласка оновіть"
 #define D_WEBSERVER_ACTIVE_ON "Веб-сервер активний"
 #define D_WITH_IP_ADDRESS "з IP-адресом"
@@ -321,13 +321,17 @@
 #define D_UPLOAD_ERR_7 "Завантаження перервано"
 #define D_UPLOAD_ERR_8 "Файл невірний"
 #define D_UPLOAD_ERR_9 "Занадто великий файл"
+#define D_UPLOAD_ERR_10 "Failed to init RF chip"
+#define D_UPLOAD_ERR_11 "Failed to erase RF chip"
+#define D_UPLOAD_ERR_12 "Failed to write to RF chip"
+#define D_UPLOAD_ERR_13 "Failed to decode RF firmware"
 #define D_UPLOAD_ERROR_CODE "Код помилки завантаження"
 
 #define D_ENTER_COMMAND "Уведіть команду"
 #define D_ENABLE_WEBLOG_FOR_RESPONSE "Увімкніть Веб лог рівня 2 якщо очікуєте відповідь"
 #define D_NEED_USER_AND_PASSWORD "Очікується user=<username>&password=<password>"
 
-// xdrv_00_mqtt.ino
+// xdrv_01_mqtt.ino
 #define D_FINGERPRINT "Перевірка TLS відбитка..."
 #define D_TLS_CONNECT_FAILED_TO "Збій підключення TLS до"
 #define D_RETRY_IN "Повторити"
@@ -335,7 +339,7 @@
 #define D_INSECURE "Небезпечне з'єднання, недійсний відбиток "
 #define D_CONNECT_FAILED_TO "Помилка підключення до"
 
-// xdrv_wemohue.ino
+// xplg_wemohue.ino
 #define D_MULTICAST_DISABLED "Multicast вимкнений"
 #define D_MULTICAST_REJOINED "Multicast (пере)під'єднався"
 #define D_MULTICAST_JOIN_FAILED "Multicast помилка з'єднання"
@@ -355,7 +359,7 @@
 #define D_HUE_POST_ARGS "Hue POST args"
 #define D_3_RESPONSE_PACKETS_SENT "3 пакету відповіді  отримано"
 
-// xdrv_05_domoticz.ino
+// xdrv_07_domoticz.ino
 #define D_DOMOTICZ_PARAMETERS "Domoticz налаштування"
 #define D_DOMOTICZ_IDX "Idx"
 #define D_DOMOTICZ_KEY_IDX "Ключ idx"
@@ -402,6 +406,8 @@
 #define D_SENT_TO "надіслати до"
 #define D_KNX_WARNING "Адреса групи (0/0/0) зарезервована і не може бути використана."
 #define D_KNX_ENHANCEMENT "Підвищення зв'язку"
+#define D_KNX_TX_SLOT "KNX TX"
+#define D_KNX_RX_SLOT "KNX RX"
 
 // xdrv_03_energy.ino
 #define D_ENERGY_TODAY "Енергія Сьогодні"

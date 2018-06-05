@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v5.14.0a
+ * Updated until v6.0.0a
 \*********************************************************************/
 
 //#define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -205,7 +205,7 @@
 #define D_USE_DEFAULTS "Gebruik standaardwaarden"
 #define D_ERASED_SECTOR "Wis sector"
 
-// webserver.ino
+// xdrv_02_webserver.ino
 #define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "MINIMAL firmware - opwaarderen"
 #define D_WEBSERVER_ACTIVE_ON "Webserver actief op"
 #define D_WITH_IP_ADDRESS "met IP adres"
@@ -321,13 +321,17 @@
 #define D_UPLOAD_ERR_7 "Opwaarderen afgebroken"
 #define D_UPLOAD_ERR_8 "Ongeldig bestand"
 #define D_UPLOAD_ERR_9 "Bestand is te groot"
+#define D_UPLOAD_ERR_10 "Init RF chip mislukt"
+#define D_UPLOAD_ERR_11 "Wissen RF chip mislukt"
+#define D_UPLOAD_ERR_12 "Opwaarderen RF chip mislukt"
+#define D_UPLOAD_ERR_13 "Decoderen RF bestand mislukt"
 #define D_UPLOAD_ERROR_CODE "Opwaardeer foutcode"
 
 #define D_ENTER_COMMAND "Geef opdracht"
 #define D_ENABLE_WEBLOG_FOR_RESPONSE "Schakel weblog 2 in indien antwoord verwacht"
 #define D_NEED_USER_AND_PASSWORD "Benodig user=<gebruiker>&password=<webwachtwoord>"
 
-// xdrv_00_mqtt.ino
+// xdrv_01_mqtt.ino
 #define D_FINGERPRINT "Controleer TLS vingerafdruk..."
 #define D_TLS_CONNECT_FAILED_TO "TLS Verbinding mislukt naar"
 #define D_RETRY_IN "Opnieuw proberen over"
@@ -335,7 +339,7 @@
 #define D_INSECURE "Door ongeldige vingerafdruk een onveilige verbinding"
 #define D_CONNECT_FAILED_TO "Verbinding mislukt naar"
 
-// xdrv_wemohue.ino
+// xplg_wemohue.ino
 #define D_MULTICAST_DISABLED "Multicast uitgeschakeld"
 #define D_MULTICAST_REJOINED "Multicast verbonden"
 #define D_MULTICAST_JOIN_FAILED "Multicast verbinding mislukt"
@@ -355,7 +359,7 @@
 #define D_HUE_POST_ARGS "Hue POST argumenten"
 #define D_3_RESPONSE_PACKETS_SENT "3 antwoord paketten verstuurd"
 
-// xdrv_05_domoticz.ino
+// xdrv_07_domoticz.ino
 #define D_DOMOTICZ_PARAMETERS "Domoticz parameters"
 #define D_DOMOTICZ_IDX "Idx"
 #define D_DOMOTICZ_KEY_IDX "Toets idx"
@@ -402,6 +406,8 @@
 #define D_SENT_TO "verzend naar"
 #define D_KNX_WARNING "Groep adres (0/0/0) is gereserveerd en mag niet worden gebruikt."
 #define D_KNX_ENHANCEMENT "Verbeter verbinding"
+#define D_KNX_TX_SLOT "KNX TX"
+#define D_KNX_RX_SLOT "KNX RX"
 
 // xdrv_03_energy.ino
 #define D_ENERGY_TODAY "Verbruik vandaag"

@@ -401,7 +401,7 @@ boolean Xdrv05(byte function)
 
   if ((pin[GPIO_IRSEND] < 99) || (pin[GPIO_IRRECV] < 99)) {
     switch (function) {
-      case FUNC_INIT:
+      case FUNC_PRE_INIT:
         if (pin[GPIO_IRSEND] < 99) {
           IrSendInit();
         }
