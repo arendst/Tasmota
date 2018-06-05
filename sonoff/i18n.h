@@ -375,7 +375,7 @@
 #define D_CMND_LATITUDE "Latitude"
 #define D_CMND_LONGITUDE "Longitude"
 
-// Commands xdrv_14_display.ino
+// Commands xdrv_98_display.ino
 #define D_CMND_DISPLAY "Display"
 #define D_CMND_DISP_ADDRESS "Address"
 #define D_CMND_DISP_COLS "Cols"
