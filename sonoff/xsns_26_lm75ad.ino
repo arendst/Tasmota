@@ -1,7 +1,7 @@
 /*
-  xdrv_26_lm75ad.ino - Support for I2C LM75AD Temperature Sensor
+  xsns_26_lm75ad.ino - Support for I2C LM75AD Temperature Sensor
 
-  Copyright (C) 2018  Theo Arends
+  Copyright (C) 2018  Andre Thomas and Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -21,7 +21,11 @@
 #ifdef USE_LM75AD
 
 /*********************************************************************************************\
- * LM75AD
+ * LM75AD - Temperature
+ *
+ * Docs at https://www.nxp.com/docs/en/data-sheet/LM75A.pdf
+ *
+ * I2C Address: 0x48 - 0x4F
 \*********************************************************************************************/
 
 #define LM75AD_ADDRESS1					0x48
@@ -56,7 +60,7 @@ void LM75ADDetect()
   }
   for (byte i = 0; i < sizeof(lm75ad_addresses); i++) {
     lm75ad_address = lm75ad_addresses[i];
-    if (I2cValidRead8(&buffer,lm75ad_address,LM75_CONF_REGISTER)) {
+    if (I2cValidRead8(&buffer, lm75ad_address, LM75_CONF_REGISTER)) {
       lm75ad_type = 1;
       snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, "LM75AD", lm75ad_address);
       AddLog(LOG_LEVEL_DEBUG);
@@ -67,34 +71,37 @@ void LM75ADDetect()
 
 float LM75ADConvertTemp(uint16_t t) {
   float tmpt;
+
+  int16_t sign = 1;
   if (t & 0x8000) { // we are getting a negative temperature value
-    t=t<<1; // shift out the MSB
-    t=t>>6; // shift value into place (5 LSB not used + the MSB we shifted out to make it zero)
-    tmpt=t*0.125*-1;
-  } else { // we're getting a positive value
-    t=t>>5; // shift value into place (5 LSB not used)
-    tmpt=t*0.125;
+    t = (~t) +0x20;
+    sign = -1;
   }
-  if (!isnan(tmpt) && Settings.flag.temperature_conversion) {
-    tmpt = tmpt * 1.8 + 32;  // Fahrenheit
-  }
+  t = t >> 5; // shift value into place (5 LSB not used)
+  tmpt = ConvertTemp(sign * t * 0.125);
+
   return tmpt;
 }
 
 void LM75ADShow(boolean json)
 {
   if (lm75ad_type) {
-      char temperature[10];
-      uint16_t lm75ad_value = LM75ADGetTempRegister();
-      float t=LM75ADConvertTemp(lm75ad_value);
-      dtostrfd(t, Settings.flag2.temperature_resolution, temperature);
-      if (json) {
-        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"LM75AD\":{\"" D_JSON_TEMPERATURE "\":%s}"), mqtt_data, temperature);
+    char temperature[10];
+
+    uint16_t lm75ad_value = LM75ADGetTempRegister();
+    float t = LM75ADConvertTemp(lm75ad_value);
+    dtostrfd(t, Settings.flag2.temperature_resolution, temperature);
+
+    if (json) {
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"LM75AD\":{\"" D_JSON_TEMPERATURE "\":%s}"), mqtt_data, temperature);
+#ifdef USE_DOMOTICZ
+      if (0 == tele_period) DomoticzSensor(DZ_TEMP, temperature);
+#endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
-      } else {
-        snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TEMP, mqtt_data, "LM75AD", temperature, TempUnit());
+    } else {
+      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TEMP, mqtt_data, "LM75AD", temperature, TempUnit());
 #endif  // USE_WEBSERVER
-      }
+    }
   }
 }
 
