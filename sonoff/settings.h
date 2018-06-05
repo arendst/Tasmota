@@ -271,7 +271,7 @@ struct SYSCFG {
   byte          knx_CB_param[MAX_KNX_CB];  // 6EC  Type of Output (set relay, toggle relay, reply sensor value)
 
 #ifdef USE_LEDBAR
-  uint16_t      ledbar_range;
+  sint16_t      ledbar_range;
   uint8_t       ledbar_steps;
 #endif
 

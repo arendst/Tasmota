@@ -527,7 +527,7 @@ void SettingsDefaultSet2()
 //  Settings.light_rotation = 0;
 
 #ifdef USE_LEDBAR
-  Settings.ledbar_range = 5000;
+  Settings.ledbar_range = -5000;
   Settings.ledbar_steps = 5;
 #endif
 

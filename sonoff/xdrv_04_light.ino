@@ -1190,17 +1190,19 @@ boolean LightCommand()
             }
           }
           ledbarval=XdrvMailbox.payload;
-          sint16_t ledbar_max=Settings.ledbar_range;
-          sint16_t ledbar_min=-Settings.ledbar_range;
-          if (ledbarval<ledbar_min) ledbarval=ledbar_min;
-          if (ledbarval>ledbar_max) ledbarval=ledbar_max;
-          sint16_t actpos=((double)ledbarval/(double)ledbar_max)*(double)(Settings.light_pixels/2);
-          if (ledbarval==0) {
+          sint16_t bval=ledbarval;
+          if (Settings.ledbar_range<0) bval=-bval;
+          sint16_t ledbar_max=abs(Settings.ledbar_range);
+          sint16_t ledbar_min=-abs(Settings.ledbar_range);
+          if (bval<ledbar_min) bval=ledbar_min;
+          if (bval>ledbar_max) bval=ledbar_max;
+          sint16_t actpos=((double)bval/(double)ledbar_max)*(double)(Settings.light_pixels/2);
+          if (bval==0) {
             Ws2812SetColor(Settings.light_pixels/2+1,0,0,16,0,true);
             Ws2812SetColor(Settings.light_pixels/2,0,0,16,0,true);
           } else {
             uint16_t pos;
-            if (ledbarval>0) {
+            if (bval>0) {
               // starts with 30
               pos=Settings.light_pixels/2+actpos;
               if (pos>Settings.light_pixels-1) pos=Settings.light_pixels-1;
