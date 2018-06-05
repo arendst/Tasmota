@@ -75,6 +75,9 @@ float LM75ADConvertTemp(uint16_t t) {
     t=t>>5; // shift value into place (5 LSB not used)
     tmpt=t*0.125;
   }
+  if (!isnan(tmpt) && Settings.flag.temperature_conversion) {
+    tmpt = tmpt * 1.8 + 32;  // Fahrenheit
+  }
   return tmpt;
 }
 
