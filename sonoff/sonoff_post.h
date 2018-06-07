@@ -52,6 +52,8 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 
 #define USE_DHT                               // Default DHT11 sensor needs no external library
 
+#define USE_SML
+
 /*********************************************************************************************\
  * [sonoff-allsensors.bin]
  * Provide an image with all supported sensors enabled

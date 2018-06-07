@@ -93,16 +93,14 @@ enum UserSelectablePins {
   GPIO_SBR_RX,         // Serial Bridge Serial interface
   GPIO_SR04_TRIG,      // SR04 Trigger pin
   GPIO_SR04_ECHO,      // SR04 Echo pin
-<<<<<<< HEAD
-  #ifdef USE_SML
-    GPIO_SML,
-  #endif
-=======
   GPIO_SDM120_TX,      // SDM120 Serial interface
   GPIO_SDM120_RX,      // SDM120 Serial interface
   GPIO_SDM630_TX,      // SDM630 Serial interface
   GPIO_SDM630_RX,      // SDM630 Serial interface
->>>>>>> arendst/development
+
+#ifdef USE_SML
+  GPIO_SML,
+#endif
   GPIO_SENSOR_END };
 
 // Programmer selectable GPIO functionality offset by user selectable GPIOs
@@ -146,17 +144,14 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_SPI_CS "|" D_SENSOR_SPI_DC "|" D_SENSOR_BACKLIGHT "|"
   D_SENSOR_PMS5003 "|" D_SENSOR_SDS0X1 "|"
   D_SENSOR_SBR_TX "|" D_SENSOR_SBR_RX "|"
-<<<<<<< HEAD
-  D_SENSOR_SR04_TRIG "|" D_SENSOR_SR04_ECHO
-#ifdef USE_SML
-   "|" "SML"
-#endif
-   ;
-=======
   D_SENSOR_SR04_TRIG "|" D_SENSOR_SR04_ECHO "|"
   D_SENSOR_SDM120_TX "|" D_SENSOR_SDM120_RX "|"
-  D_SENSOR_SDM630_TX "|" D_SENSOR_SDM630_RX;
->>>>>>> arendst/development
+  D_SENSOR_SDM630_TX "|" D_SENSOR_SDM630_RX
+  #ifdef USE_SML
+     "|" "SML"
+  #endif
+  ;
+
 
 /********************************************************************************************/
 

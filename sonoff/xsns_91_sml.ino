@@ -1,5 +1,5 @@
 /*
-  xsns_22_sml.ino - SML smart meter interface for Sonoff-Tasmota
+  xsns_91_sml.ino - SML smart meter interface for Sonoff-Tasmota
 
   Created by Gerhard Mutz on 07.10.11.
   adapted for Tasmota
@@ -202,7 +202,7 @@ void SML_Poll(void) {
             }
             // scan double value kwh
             cp+=sizeof(seqin);
-            OBIS_T_in=AtoD((char *)cp);
+            OBIS_T_in=CharToDouble((char *)cp);
             //SOLAR_C=sec_cnt;
             if (sec_cnt>=10) {
               sec_cnt=0;
@@ -227,7 +227,7 @@ void SML_Poll(void) {
             }
             // scan double value kwh
             cp+=sizeof(seqout);
-            OBIS_T_out=AtoD((char *)cp);
+            OBIS_T_out=CharToDouble((char *)cp);
             //SOLAR_C=sec_cnt;
             if (sec_cnt>=10) {
               sec_cnt=0;
@@ -343,6 +343,7 @@ void SML_Init(void) {
   digitalWrite(LEDPIN,LOW);
 #endif
   sml_time_cnt=SML_TIMEOUT;
+  serial_local=1;
 }
 
 /*********************************************************************************************\
