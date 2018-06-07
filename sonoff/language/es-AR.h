@@ -28,11 +28,12 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v5.12.0m
+ * Updated until v6.0.0a
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
 
+#define LANGUAGE_LCID 11274
 // HTML (ISO 639-1) Language Code
 #define D_HTML_LANGUAGE "es"
 
@@ -91,6 +92,7 @@
 #define D_FALSE "Falso"
 #define D_FILE "Archivo"
 #define D_FREE_MEMORY "Memoria Libre"
+#define D_FREQUENCY "Frecuencia"
 #define D_GAS "Gas"
 #define D_GATEWAY "Gateway"
 #define D_GROUP "Grupo"
@@ -101,6 +103,7 @@
 #define D_IMMEDIATE "inmediato"      // Button immediate
 #define D_INDEX "Índice"
 #define D_INFO "Información"
+#define D_INFRARED "Infrarrojo"
 #define D_INITIALIZED "Inicializado"
 #define D_IP_ADDRESS "Dirección IP"
 #define D_LIGHT "Luz"
@@ -119,6 +122,9 @@
 #define D_PORT "Puerto"
 #define D_POWER_FACTOR "Factor de Potencia"
 #define D_POWERUSAGE "Potencia"
+#define D_POWERUSAGE_ACTIVE "Potencia Activa"
+#define D_POWERUSAGE_APPARENT "Potencia Aparente"
+#define D_POWERUSAGE_REACTIVE "Potencia Reactiva"
 #define D_PRESSURE "Presión"
 #define D_PRESSUREATSEALEVEL "Presión al nivel del mar"
 #define D_PROGRAM_FLASH_SIZE "Tamaño de Flash de Programa"
@@ -130,7 +136,7 @@
 #define D_RESTART_REASON "Causa Reinicio"
 #define D_RESTORE "Restauración"
 #define D_RETAINED "Grabado"
-#define D_RULE "Rule"
+#define D_RULE "Regla"
 #define D_SAVE "Grabar"
 #define D_SENSOR "Sensor"
 #define D_SSID "SSId"
@@ -154,6 +160,7 @@
 #define D_UPTIME "Tiempo Encendido"
 #define D_USER "Usuario"
 #define D_UTC_TIME "UTC"
+#define D_UV_INDEX "Índice UV"
 #define D_UV_LEVEL "Nivel UV"
 #define D_VERSION "Versión"
 #define D_VOLTAGE "Tensión"
@@ -198,8 +205,8 @@
 #define D_USE_DEFAULTS "Usar valores por defecto"
 #define D_ERASED_SECTOR "Sector borrado"
 
-// webserver.ino
-#define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "firmware MÍNIMO - actualice por favor"
+// xdrv_02_webserver.ino
+#define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "Firmware MÍNIMO - actualice por favor"
 #define D_WEBSERVER_ACTIVE_ON "Servidor web activo en"
 #define D_WITH_IP_ADDRESS "con dirección IP"
 #define D_WEBSERVER_STOPPED "Servidor web detenido"
@@ -314,13 +321,17 @@
 #define D_UPLOAD_ERR_7 "Carga cancelada"
 #define D_UPLOAD_ERR_8 "Archivo no válido"
 #define D_UPLOAD_ERR_9 "Archivo muy grande"
+#define D_UPLOAD_ERR_10 "No inició chip RF"
+#define D_UPLOAD_ERR_11 "No se pudo borrar en el chip RF"
+#define D_UPLOAD_ERR_12 "No se puedo escribir en el chip RF"
+#define D_UPLOAD_ERR_13 "No se pudo decodificar firmware RF"
 #define D_UPLOAD_ERROR_CODE "Código de error de carga"
 
 #define D_ENTER_COMMAND "Ingresar comando"
 #define D_ENABLE_WEBLOG_FOR_RESPONSE "Habilitar weblog 2 si desea respuesta"
 #define D_NEED_USER_AND_PASSWORD "Se necesita user=<username>&password=<password>"
 
-// xdrv_00_mqtt.ino
+// xdrv_01_mqtt.ino
 #define D_FINGERPRINT "Verificar TLS fingerprint..."
 #define D_TLS_CONNECT_FAILED_TO "Falló Conección TLS a"
 #define D_RETRY_IN "Reintentando"
@@ -328,7 +339,7 @@
 #define D_INSECURE "Conección insegura por Fingerprint no válido"
 #define D_CONNECT_FAILED_TO "Falló Conección a"
 
-// xdrv_wemohue.ino
+// xplg_wemohue.ino
 #define D_MULTICAST_DISABLED "Multicast deshabilitado"
 #define D_MULTICAST_REJOINED "Multicast (re)conectado"
 #define D_MULTICAST_JOIN_FAILED "Conección Multicast fallida"
@@ -348,7 +359,7 @@
 #define D_HUE_POST_ARGS "Hue POST args"
 #define D_3_RESPONSE_PACKETS_SENT "3 paquetes de respuesta enviados"
 
-// xdrv_05_domoticz.ino
+// xdrv_07_domoticz.ino
 #define D_DOMOTICZ_PARAMETERS "Parámetros Domoticz"
 #define D_DOMOTICZ_IDX "Idx"
 #define D_DOMOTICZ_KEY_IDX "Key idx"
@@ -394,6 +405,9 @@
 #define D_KNX_COMMAND_OTHER "Otro"
 #define D_SENT_TO "enviada a"
 #define D_KNX_WARNING "La dirección de grupo ( 0 / 0 / 0 ) está reservada y no puede ser utilizada."
+#define D_KNX_ENHANCEMENT "Mejora de Comunicación"
+#define D_KNX_TX_SLOT "KNX TX"
+#define D_KNX_RX_SLOT "KNX RX"
 
 // xdrv_03_energy.ino
 #define D_ENERGY_TODAY "Energía Hoy"
@@ -453,10 +467,15 @@
 #define D_SENSOR_SBR_TX   "SerBr Tx"
 #define D_SENSOR_SR04_TRIG "SR04 Tri"
 #define D_SENSOR_SR04_ECHO "SR04 Ech"
+#define D_SENSOR_SDM120_TX "SDM120 Tx"
+#define D_SENSOR_SDM120_RX "SDM120 Rx"
+#define D_SENSOR_SDM630_TX "SDM630 Tx"
+#define D_SENSOR_SDM630_RX "SDM630 Rx"
 
 // Units
 #define D_UNIT_AMPERE "A"
 #define D_UNIT_CENTIMETER "cm"
+#define D_UNIT_HERTZ "Hz"
 #define D_UNIT_HOUR "Hr"
 #define D_UNIT_KILOOHM "kOhm"
 #define D_UNIT_KILOWATTHOUR "kWh"
@@ -473,6 +492,8 @@
 #define D_UNIT_PRESSURE "hPa"
 #define D_UNIT_SECOND "seg"
 #define D_UNIT_SECTORS "sectores"
+#define D_UNIT_VA "VA"
+#define D_UNIT_VAR "VAr"
 #define D_UNIT_VOLT "V"
 #define D_UNIT_WATT "W"
 #define D_UNIT_WATTHOUR "Wh"

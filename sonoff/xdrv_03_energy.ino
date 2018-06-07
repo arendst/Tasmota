@@ -47,11 +47,12 @@ float energy_voltage = 0;         // 123.1 V
 float energy_current = 0;         // 123.123 A
 float energy_power = 0;           // 123.1 W
 float energy_power_factor = 0;    // 0.12
-float energy_daily = 0;           // 12.123 kWh
+float energy_daily = 0;           // 123.123 kWh
 float energy_total = 0;           // 12345.12345 kWh
 float energy_start = 0;           // 12345.12345 kWh total previous
-unsigned long energy_kWhtoday;    // 1212312345 Wh * 10^-5 (deca micro Watt hours) - 5763924 = 0.05763924 kWh = 0.058 kWh = energy_daily
-unsigned long energy_period = 0;  // 1212312345 Wh * 10^-5 (deca micro Watt hours) - 5763924 = 0.05763924 kWh = 0.058 kWh = energy_daily
+unsigned long energy_kWhtoday_delta = 0;  // 1212312345 Wh 10^-5 (deca micro Watt hours) - Overflows to energy_kWhtoday (HLW and CSE only)
+unsigned long energy_kWhtoday;    // 12312312 Wh * 10^-2 (deca milli Watt hours) - 5764 = 0.05764 kWh = 0.058 kWh = energy_daily
+unsigned long energy_period = 0;  // 12312312 Wh * 10^-2 (deca milli Watt hours) - 5764 = 0.05764 kWh = 0.058 kWh = energy_daily
 
 float energy_power_last[3] = { 0 };
 uint8_t energy_power_delta = 0;
@@ -81,9 +82,14 @@ Ticker ticker_energy;
 
 void EnergyUpdateToday()
 {
+  if (energy_kWhtoday_delta > 1000) {
+    unsigned long delta = energy_kWhtoday_delta / 1000;
+    energy_kWhtoday_delta -= (delta * 1000);
+    energy_kWhtoday += delta;
+  }
   RtcSettings.energy_kWhtoday = energy_kWhtoday;
-  energy_daily = (float)energy_kWhtoday / 100000000;
-  energy_total = (float)(RtcSettings.energy_kWhtotal + (energy_kWhtoday / 1000)) / 100000;
+  energy_daily = (float)energy_kWhtoday / 100000;
+  energy_total = (float)(RtcSettings.energy_kWhtotal + energy_kWhtoday) / 100000;
 }
 
 /*********************************************************************************************\
@@ -156,7 +162,7 @@ void HlwEverySecond()
     hlw_len = 10000 / hlw_energy_period_counter;
     hlw_energy_period_counter = 0;
     if (hlw_len) {
-      energy_kWhtoday += ((HLW_PREF * Settings.energy_power_calibration) / hlw_len) / 36;
+      energy_kWhtoday_delta += ((HLW_PREF * Settings.energy_power_calibration) / hlw_len) / 36;
       EnergyUpdateToday();
     }
   }
@@ -275,6 +281,9 @@ long cf_pulses_last_time = CSE_PULSES_NOT_INITIALIZED;
 
 void CseReceived()
 {
+  //  0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23
+  // 55 5A 02 F7 60 00 03 AB 00 40 10 02 60 5D 51 A6 58 03 E9 EF 71 0B 7A 36
+  // Hd Id VCal---- Voltage- ICal---- Current- PCal---- Power--- Ad CF--- Ck
   AddLogSerial(LOG_LEVEL_DEBUG_MORE);
 
   uint8_t header = serial_in_buffer[0];
@@ -365,7 +374,12 @@ bool CseSerialInput()
       return 1;
     }
   } else {
-    if (0x5A == serial_in_byte) {             // 0x5A - Packet header 2
+    if ((0x5A == serial_in_byte) && (serial_in_byte_counter)) {  // 0x5A - Packet header 2
+      if (serial_in_byte_counter > 1) {       // Sync buffer with data (issue #1907)
+        serial_in_buffer[0] = serial_in_buffer[--serial_in_byte_counter];
+        serial_in_byte_counter = 1;
+        AddLog_P(LOG_LEVEL_DEBUG, PSTR("CSE: Fixed out-of-sync"));
+      }
       cse_receive_flag = 1;
     } else {
       serial_in_byte_counter = 0;
@@ -390,7 +404,7 @@ void CseEverySecond()
     }
     if (cf_frequency && energy_power)  {
       cf_pulses_last_time = cf_pulses;
-      energy_kWhtoday += (cf_frequency * Settings.energy_power_calibration) / 36;
+      energy_kWhtoday_delta += (cf_frequency * Settings.energy_power_calibration) / 36;
       EnergyUpdateToday();
     }
   }
@@ -402,6 +416,8 @@ void CseEverySecond()
  *
  * Source: Victor Ferrer https://github.com/vicfergar/Sonoff-MQTT-OTA-Arduino
  * Based on: PZEM004T library https://github.com/olehs/PZEM004T
+ *
+ * Hardware Serial will be selected if GPIO1 = [PZEM Rx] and [GPIO3 = PZEM Tx]
 \*********************************************************************************************/
 
 #include <TasmotaSerial.h>
@@ -427,6 +443,8 @@ TasmotaSerial *PzemSerial;
 #define RESP_POWER_ALARM (uint8_t)0xA5
 
 #define PZEM_DEFAULT_READ_TIMEOUT 500
+
+/*********************************************************************************************/
 
 struct PZEMCommand {
   uint8_t command;
@@ -466,7 +484,17 @@ bool PzemReceiveReady()
 
 bool PzemRecieve(uint8_t resp, float *data)
 {
-  uint8_t buffer[sizeof(PZEMCommand)];
+  //  0  1  2  3  4  5  6
+  // A4 00 00 00 00 00 A4 - Set address
+  // A0 00 D4 07 00 00 7B - Voltage (212.7V)
+  // A1 00 00 0A 00 00 AB - Current (0.1A)
+  // A1 00 00 00 00 00 A1 - No current
+  // A2 00 16 00 00 00 B8 - Power (22W)
+  // A2 00 00 00 00 00 A2 - No power
+  // A3 00 08 A4 00 00 4F - Energy (2.212kWh)
+  // A3 01 86 9F 00 00 C9 - Energy (99.999kWh)
+
+  uint8_t buffer[sizeof(PZEMCommand)] = { 0 };
 
   unsigned long start = millis();
   uint8_t len = 0;
@@ -475,6 +503,10 @@ bool PzemRecieve(uint8_t resp, float *data)
       uint8_t c = (uint8_t)PzemSerial->read();
       if (!c && !len) {
         continue;  // skip 0 at startup
+      }
+      if ((1 == len) && (buffer[0] == c)) {
+        len--;
+        continue;  // fix skewed data
       }
       buffer[len++] = c;
     }
@@ -539,7 +571,7 @@ void PzemEvery200ms()
           break;
         case 4:  // Total energy as 99999Wh
           if (!energy_start || (value < energy_start)) energy_start = value;  // Init after restart and hanlde roll-over if any
-          energy_kWhtoday += (value - energy_start) * 100000;
+          energy_kWhtoday += (value - energy_start) * 100;
           energy_start = value;
           EnergyUpdateToday();
           break;
@@ -558,12 +590,6 @@ void PzemEvery200ms()
   }
 }
 
-bool PzemInit()
-{
-  PzemSerial = new TasmotaSerial(pin[GPIO_PZEM_RX], pin[GPIO_PZEM_TX]);
-  return PzemSerial->begin();
-}
-
 /********************************************************************************************/
 #endif  // USE_PZEM004T
 
@@ -579,9 +605,10 @@ void Energy200ms()
     if (RtcTime.valid) {
       if (LocalTime() == Midnight()) {
         Settings.energy_kWhyesterday = energy_kWhtoday;
-        Settings.energy_kWhtotal += (energy_kWhtoday / 1000);
+        Settings.energy_kWhtotal += energy_kWhtoday;
         RtcSettings.energy_kWhtotal = Settings.energy_kWhtotal;
         energy_kWhtoday = 0;
+        energy_kWhtoday_delta = 0;
         energy_period = energy_kWhtoday;
         EnergyUpdateToday();
         energy_max_energy_state = 3;
@@ -716,7 +743,7 @@ void EnergyMarginCheck()
           snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_MAXPOWERREACHED "\":\"%d%s\"}"), energy_power_u, (Settings.flag.value_units) ? " " D_UNIT_WATT : "");
           MqttPublishPrefixTopic_P(STAT, S_RSLT_WARNING);
           EnergyMqttShow();
-          ExecuteCommandPower(1, POWER_OFF);
+          ExecuteCommandPower(1, POWER_OFF, SRC_MAXPOWER);
           if (!energy_mplr_counter) {
             energy_mplr_counter = Settings.param[P_MAX_POWER_RETRY] +1;
           }
@@ -738,7 +765,7 @@ void EnergyMarginCheck()
           if (energy_mplr_counter) {
             snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_POWERMONITOR "\":\"%s\"}"), GetStateText(1));
             MqttPublishPrefixTopic_P(RESULT_OR_STAT, PSTR(D_JSON_POWERMONITOR));
-            ExecuteCommandPower(1, POWER_ON);
+            ExecuteCommandPower(1, POWER_ON, SRC_MAXPOWER);
           } else {
             snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_MAXPOWERREACHEDRETRY "\":\"%s\"}"), GetStateText(0));
             MqttPublishPrefixTopic_P(STAT, S_RSLT_WARNING);
@@ -756,7 +783,7 @@ void EnergyMarginCheck()
       energy_max_energy_state = 1;
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_ENERGYMONITOR "\":\"%s\"}"), GetStateText(1));
       MqttPublishPrefixTopic_P(RESULT_OR_STAT, PSTR(D_JSON_ENERGYMONITOR));
-      ExecuteCommandPower(1, POWER_ON);
+      ExecuteCommandPower(1, POWER_ON, SRC_MAXENERGY);
     }
     else if ((1 == energy_max_energy_state) && (energy_daily_u >= Settings.energy_max_energy)) {
       energy_max_energy_state = 2;
@@ -764,7 +791,7 @@ void EnergyMarginCheck()
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_MAXENERGYREACHED "\":\"%s%s\"}"), mqtt_data, (Settings.flag.value_units) ? " " D_UNIT_KILOWATTHOUR : "");
       MqttPublishPrefixTopic_P(STAT, S_RSLT_WARNING);
       EnergyMqttShow();
-      ExecuteCommandPower(1, POWER_OFF);
+      ExecuteCommandPower(1, POWER_OFF, SRC_MAXENERGY);
     }
   }
 #endif  // FEATURE_POWER_LIMIT
@@ -796,7 +823,10 @@ boolean EnergyCommand()
   unsigned long nvalue = 0;
 
   int command_code = GetCommandCode(command, sizeof(command), XdrvMailbox.topic, kEnergyCommands);
-  if (CMND_POWERDELTA == command_code) {
+  if (-1 == command_code) {
+    serviced = false;  // Unknown command
+  }
+  else if (CMND_POWERDELTA == command_code) {
     if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < 101)) {
       Settings.energy_power_delta = (1 == XdrvMailbox.payload) ? DEFAULT_POWER_DELTA : XdrvMailbox.payload;
     }
@@ -851,14 +881,15 @@ boolean EnergyCommand()
     if (p != XdrvMailbox.data) {
       switch (XdrvMailbox.index) {
       case 1:
-        energy_kWhtoday = lnum *100000;
+        energy_kWhtoday = lnum *100;
+        energy_kWhtoday_delta = 0;
         energy_period = energy_kWhtoday;
         Settings.energy_kWhtoday = energy_kWhtoday;
         RtcSettings.energy_kWhtoday = energy_kWhtoday;
-        energy_daily = (float)energy_kWhtoday / 100000000;
+        energy_daily = (float)energy_kWhtoday / 100000;
         break;
       case 2:
-        Settings.energy_kWhyesterday = lnum *100000;
+        Settings.energy_kWhyesterday = lnum *100;
         break;
       case 3:
         RtcSettings.energy_kWhtotal = lnum *100;
@@ -869,9 +900,9 @@ boolean EnergyCommand()
     char energy_yesterday_chr[10];
     char stoday_energy[10];
     char energy_total_chr[10];
-    dtostrfd((float)Settings.energy_kWhyesterday / 100000000, Settings.flag2.energy_resolution, energy_yesterday_chr);
-    dtostrfd((float)RtcSettings.energy_kWhtoday / 100000000, Settings.flag2.energy_resolution, stoday_energy);
-    dtostrfd((float)(RtcSettings.energy_kWhtotal + (energy_kWhtoday / 1000)) / 100000, Settings.flag2.energy_resolution, energy_total_chr);
+    dtostrfd((float)Settings.energy_kWhyesterday / 100000, Settings.flag2.energy_resolution, energy_yesterday_chr);
+    dtostrfd((float)RtcSettings.energy_kWhtoday / 100000, Settings.flag2.energy_resolution, stoday_energy);
+    dtostrfd((float)(RtcSettings.energy_kWhtotal + energy_kWhtoday) / 100000, Settings.flag2.energy_resolution, energy_total_chr);
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"%s\":{\"" D_JSON_TOTAL "\":%s,\"" D_JSON_YESTERDAY "\":%s,\"" D_JSON_TODAY "\":%s}}"),
       command, energy_total_chr, energy_yesterday_chr, stoday_energy);
     status_flag = 1;
@@ -997,16 +1028,16 @@ boolean EnergyCommand()
     unit = UNIT_HOUR;
   }
 #endif  // FEATURE_POWER_LIMIT
-  else {
-    serviced = false;
-  }
-  if (!status_flag) {
+  else serviced = false;  // Unknown command
+
+  if (serviced && !status_flag) {
     if (Settings.flag.value_units) {
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_LVALUE_SPACE_UNIT, command, nvalue, GetTextIndexed(sunit, sizeof(sunit), unit, kUnitNames));
     } else {
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_LVALUE, command, nvalue);
     }
   }
+
   return serviced;
 }
 
@@ -1022,7 +1053,7 @@ void EnergyDrvInit()
     serial_config = SERIAL_8E1;
     energy_flg = ENERGY_CSE7766;
 #ifdef USE_PZEM004T
-  } else if ((pin[GPIO_PZEM_RX] < 99) && (pin[GPIO_PZEM_TX])) {  // Any device with a Pzem004T
+  } else if ((pin[GPIO_PZEM_RX] < 99) && (pin[GPIO_PZEM_TX] < 99)) {  // Any device with a Pzem004T
     energy_flg = ENERGY_PZEM004T;
 #endif  // USE_PZEM004T
   }
@@ -1033,13 +1064,19 @@ void EnergySnsInit()
   if (ENERGY_HLW8012 == energy_flg) HlwInit();
 
 #ifdef USE_PZEM004T
-  if ((ENERGY_PZEM004T == energy_flg) && !PzemInit()) {  // PzemInit needs to be done here as earlier (serial) interrupts may lead to Exceptions
-    energy_flg = ENERGY_NONE;
+  if (ENERGY_PZEM004T == energy_flg) {  // Software serial init needs to be done here as earlier (serial) interrupts may lead to Exceptions
+    PzemSerial = new TasmotaSerial(pin[GPIO_PZEM_RX], pin[GPIO_PZEM_TX], 1);
+    if (PzemSerial->begin(9600)) {
+      if (PzemSerial->hardwareSerial()) { ClaimSerial(); }
+    } else {
+      energy_flg = ENERGY_NONE;
+    }
   }
 #endif  // USE_PZEM004T
 
   if (energy_flg) {
     energy_kWhtoday = (RtcSettingsValid()) ? RtcSettings.energy_kWhtoday : (RtcTime.day_of_year == Settings.energy_kWhdoy) ? Settings.energy_kWhtoday : 0;
+    energy_kWhtoday_delta = 0;
     energy_period = energy_kWhtoday;
     EnergyUpdateToday();
     ticker_energy.attach_ms(200, Energy200ms);
@@ -1073,7 +1110,7 @@ void EnergyShow(boolean json)
 
   float energy = 0;
   if (show_energy_period) {
-    if (energy_period) energy = (float)(energy_kWhtoday - energy_period) / 100000;
+    if (energy_period) energy = (float)(energy_kWhtoday - energy_period) / 100;
     energy_period = energy_kWhtoday;
   }
 
@@ -1084,7 +1121,7 @@ void EnergyShow(boolean json)
   dtostrfd(energy_voltage, Settings.flag2.voltage_resolution, energy_voltage_chr);
   dtostrfd(energy_current, Settings.flag2.current_resolution, energy_current_chr);
   dtostrfd(energy_power_factor, 2, energy_power_factor_chr);
-  dtostrfd((float)Settings.energy_kWhyesterday / 100000000, Settings.flag2.energy_resolution, energy_yesterday_chr);
+  dtostrfd((float)Settings.energy_kWhyesterday / 100000, Settings.flag2.energy_resolution, energy_yesterday_chr);
 
   if (json) {
     snprintf_P(speriod, sizeof(speriod), PSTR(",\"" D_JSON_PERIOD "\":%s"), energy_period_chr);
@@ -1098,6 +1135,17 @@ void EnergyShow(boolean json)
       DomoticzSensor(DZ_CURRENT, energy_current_chr);  // Current
     }
 #endif  // USE_DOMOTICZ
+#ifdef USE_KNX
+    if (show_energy_period) {
+      KnxSensor(KNX_ENERGY_VOLTAGE, energy_voltage);
+      KnxSensor(KNX_ENERGY_CURRENT, energy_current);
+      KnxSensor(KNX_ENERGY_POWER, energy_power);
+      KnxSensor(KNX_ENERGY_POWERFACTOR, energy_power_factor);
+      KnxSensor(KNX_ENERGY_DAILY, energy_daily);
+      KnxSensor(KNX_ENERGY_TOTAL, energy_total);
+      KnxSensor(KNX_ENERGY_START, energy_start);
+    }
+#endif  // USE_KNX
 #ifdef USE_WEBSERVER
   } else {
     snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_ENERGY_SNS, mqtt_data, energy_voltage_chr, energy_current_chr, energy_power_chr, energy_power_factor_chr, energy_daily_chr, energy_yesterday_chr, energy_total_chr);
@@ -1117,7 +1165,7 @@ boolean Xdrv03(byte function)
 
   if (energy_flg) {
     switch (function) {
-      case FUNC_INIT:
+      case FUNC_PRE_INIT:
         EnergyDrvInit();
         break;
       case FUNC_COMMAND:

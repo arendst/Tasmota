@@ -10,19 +10,19 @@ If you like **Sonoff-Tasmota**, give it a star, or fork it and contribute!
 [![GitHub stars](https://img.shields.io/github/stars/arendst/Sonoff-Tasmota.svg?style=social&label=Star)](https://github.com/arendst/Sonoff-Tasmota/stargazers)
 [![GitHub forks](https://img.shields.io/github/forks/arendst/Sonoff-Tasmota.svg?style=social&label=Fork)](https://github.com/arendst/Sonoff-Tasmota/network)
 
-### Development:
+### Development
 [![Build Status](https://img.shields.io/travis/arendst/Sonoff-Tasmota.svg)](https://travis-ci.org/arendst/Sonoff-Tasmota)
 
-Current version is **5.12.0m** - See [sonoff/_releasenotes.ino](https://github.com/arendst/Sonoff-Tasmota/blob/development/sonoff/_releasenotes.ino) for change information.
+Current version is **6.0.0a** - See [sonoff/_releasenotes.ino](https://github.com/arendst/Sonoff-Tasmota/blob/development/sonoff/_releasenotes.ino) for change information.
 
-### Quick install
+### Quick Install
 Download one of the released binaries from https://github.com/arendst/Sonoff-Tasmota/releases and flash it to your hardware as documented in the wiki.
 
 ### Important User Compilation Information
 If you want to compile Sonoff-Tasmota yourself keep in mind the following:
 
 - Only Flash Mode **DOUT** is supported. Do not use Flash Mode DIO / QIO / QOUT as it might seem to brick your device. See [Wiki](https://github.com/arendst/Sonoff-Tasmota/wiki/Theo's-Tasmota-Tips) for background information.
-- Sonoff-Tasmota uses a 1M linker script WITHOUT spiffs for optimal code space. If you compile using ESP/Arduino library 2.3.0 then download the provided new linker script to your Arduino IDE or Platformio base folder. Later version of ESP/Arduino library already contain the correct linker script. See [Wiki > Prerequisite](https://github.com/arendst/Sonoff-Tasmota/wiki/Prerequisite).
+- Sonoff-Tasmota uses a 1M linker script WITHOUT spiffs **1M (no SPIFFS)** for optimal code space. If you compile using ESP/Arduino library 2.3.0 then download the provided new linker script to your Arduino IDE or Platformio base folder. Later version of ESP/Arduino library already contain the correct linker script. See [Wiki > Prerequisite](https://github.com/arendst/Sonoff-Tasmota/wiki/Prerequisite).
 - To make compile time changes to Sonoff-Tasmota it can use the ``user_config_override.h`` file. It assures keeping your settings when you download and compile a new version. To use ``user_config.override.h`` you will have to make a copy of the provided ``user_config.override_sample.h`` file and add your setting overrides. To enable the override file you will need to use a compile define as documented in the ``user_config_override_sample.h`` file.
 
 ### Version Information
@@ -68,7 +68,7 @@ The following devices are supported:
 - [Luani HVIO board](https://luani.de/projekte/esp8266-hvio/)
 - Wemos D1 mini, NodeMcu and Ledunia
 
-### Firmware release information
+### Firmware Release Information
 Different firmware images are released based on Features and Sensors selection guided by code and memory usage.
 
 - The Minimal version allows intermediate OTA uploads to support larger versions and does NOT change any persistent parameter.
@@ -108,6 +108,7 @@ Different firmware images are released based on Features and Sensors selection g
 | USE_BH1750                     | x | x | - | x | x |
 | USE_VEML6070                   | - | - | - | - | x |
 | USE_TSL2561                    | - | - | - | - | x |
+| USE_SI1145                     | - | - | - | - | x |
 | USE_ADS1115                    | - | - | - | - | x |
 | USE_ADS1115_I2CDEV             | - | - | - | - | - |
 | USE_INA219                     | - | - | - | - | x |
@@ -119,6 +120,7 @@ Different firmware images are released based on Features and Sensors selection g
 | USE_NOVA_SDS                   | x | - | - | x | x |
 | USE_PZEM004T                   | x | x | - | x | x |
 | USE_SERIAL_BRIDGE              | x | - | - | x | x |
+| USE_SDM120                     | - | - | - | - | x |
 | USE_IR_REMOTE                  | x | x | - | x | x |
 | USE_IR_HVAC                    | - | - | - | - | x |
 | USE_IR_RECEIVE                 | x | - | - | x | x |
@@ -127,13 +129,13 @@ Different firmware images are released based on Features and Sensors selection g
 | USE_ARILUX_RF                  | x | x | - | x | x |
 | USE_SR04                       | x | - | - | x | x |
 
-#### Typical file size
+#### Typical File Size
 
-| ESP/Arduino library version    | sonoff | classic | minimal | knx  | allsensors |
-|--------------------------------|--------|---------|---------|------|------------|
-| ESP/Arduino lib v2.3.0         | 526k   | 488k    | 427k    | 535k | 549k       |
-| ESP/Arduino lib v2.4.0         | 531k   | 496k    | 435k    | 540k | 552k       |
-| ESP/Arduino lib v2.4.1         | 533k   | 498k    | 436k    | 542k | 554k       |
+| ESP/Arduino library version | sonoff | classic | minimal | knx  | allsensors |
+|-----------------------------|--------|---------|---------|------|------------|
+| ESP/Arduino lib v2.3.0      | 529k   | 490k    | 429k    | 538k | 554k       |
+| ESP/Arduino lib v2.4.0      | 534k   | 498k    | 436k    | 542k | 558k       |
+| ESP/Arduino lib v2.4.1      | 536k   | 501k    | 439k    | 545k | 560k       |
 
 ### Contribute
 You can contribute to Sonoff-Tasmota by
@@ -145,7 +147,7 @@ You can contribute to Sonoff-Tasmota by
 
 ### Credits
 
-#### Libraries used
+#### Libraries Used
 Libraries used with Sonoff-Tasmota are:
 - [ESP8266 core for Arduino](https://github.com/esp8266/Arduino)
 - [Adafruit BME680](https://github.com/adafruit/Adafruit_BME680)
@@ -182,6 +184,7 @@ People helping to keep the show on the road:
 - Gerhard Mutz for his SGP30 and Sunrise/Sunset driver
 - Nuno Ferreira for his HC-SR04 driver
 - Adrian Scillato for his (security)fixes and implementing and maintaining KNX
+- Gennaro Tortone for implementing and maintaining Eastron drivers
 - Raymond Mouthaan for managing Wemos Wiki information
 - Norbert Richter, Frogmore42 and Jason2866 for providing many issue answers
 - Many more providing Tips, Pocs or PRs
