@@ -193,6 +193,10 @@ void ShtShow(boolean json)
       char temperature[10];
       char humidity[10];
 
+      // set values for compensation of TVOC
+      glob_temperature=t;
+      glob_humidity=h;
+
       dtostrfd(t, Settings.flag2.temperature_resolution, temperature);
       dtostrfd(h, Settings.flag2.humidity_resolution, humidity);
 

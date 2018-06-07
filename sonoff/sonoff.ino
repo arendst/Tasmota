@@ -141,6 +141,8 @@ uint8_t backlog_pointer = 0;                // Command backlog pointer
 uint8_t backlog_mutex = 0;                  // Command backlog pending
 uint16_t backlog_delay = 0;                 // Command backlog delay
 uint8_t interlock_mutex = 0;                // Interlock power command pending
+uint8_t glob_humidity = 0;                       // used for TVOC compensation
+sint8_t glob_temperature = 0;                    // used for TVOC compensation
 
 #ifdef USE_MQTT_TLS
   WiFiClientSecure EspClient;               // Wifi Secure Client
