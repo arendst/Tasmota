@@ -566,7 +566,7 @@ void KNX_CB_Action(message_t const &msg, void *arg)
           knx.answer_1bit(msg.received_on, chan->last_state);
         }
       }
-      else if (chan->type = KNX_TEMPERATURE) // Reply Temperature
+      else if (chan->type == KNX_TEMPERATURE) // Reply Temperature
       {
         knx.answer_2byte_float(msg.received_on, last_temp);
         if (Settings.flag.knx_enable_enhancement) {
@@ -574,7 +574,7 @@ void KNX_CB_Action(message_t const &msg, void *arg)
           knx.answer_2byte_float(msg.received_on, last_temp);
         }
       }
-      else if (chan->type = KNX_HUMIDITY) // Reply Humidity
+      else if (chan->type == KNX_HUMIDITY) // Reply Humidity
       {
         knx.answer_2byte_float(msg.received_on, last_hum);
         if (Settings.flag.knx_enable_enhancement) {
