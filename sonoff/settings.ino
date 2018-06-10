@@ -526,20 +526,19 @@ void SettingsDefaultSet2()
 //    Settings.domoticz_sensor_idx[i] = 0;
 //  }
 
-<<<<<<< HEAD
+
 #ifdef USE_LEDBAR
   Settings.ledbar_range = -5000;
   Settings.ledbar_steps = 5;
 #endif
 
-  // 5.8.1
-=======
+
   // Sensor
   Settings.flag.temperature_conversion = TEMP_CONVERSION;
   Settings.flag2.pressure_resolution = PRESSURE_RESOLUTION;
   Settings.flag2.humidity_resolution = HUMIDITY_RESOLUTION;
   Settings.flag2.temperature_resolution = TEMP_RESOLUTION;
->>>>>>> arendst/development
+
 //  Settings.altitude = 0;
 
   // Rules

@@ -1,7 +1,4 @@
-<<<<<<< HEAD
 
-/* 5.14.0b
-=======
 /* 6.0.0a
  * Add CRC to Settings making future upgrades more fail-safe
  * Add support for uploading Sonoff Bridge firmware found in tools/fw_efm8bb1 folder build by Portisch using Web Gui File Upload (#2886)
