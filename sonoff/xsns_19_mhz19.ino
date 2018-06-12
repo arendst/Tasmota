@@ -197,7 +197,7 @@ void MhzEverySecond()
     }
 
     if (counter < 9) {
-//      AddLog_P(LOG_LEVEL_ERROR, PSTR(D_LOG_DEBUG "MH-Z19 comms timeout"));
+      AddLog_P(LOG_LEVEL_ERROR, PSTR(D_LOG_DEBUG "MH-Z19 comms timeout"));
       return;
     }
 
