@@ -1,4 +1,6 @@
 /* 6.0.0a
+ * KNX: Support for DS18S20 Temperature sensor
+ * KNX: Fixed Bug when doing reply of sensors values
  * Add CRC to Settings making future upgrades more fail-safe
  * Add support for uploading Sonoff Bridge firmware found in tools/fw_efm8bb1 folder build by Portisch using Web Gui File Upload (#2886)
  * Add support for I2C temperature sensor LM75AD (#2909)
@@ -17,10 +19,11 @@
    where [slot] is any of the 5 slots on the KNX Menu and value is a number
    example: KnxTx_Val1 35
  * Add Slots on the KNX Web Menu to select Group Addess to send data from console commands
- * Add Events to trigger rules when received data from KNX
-   usage on rules as: event#KnxRx_Val[slot]
+ * Add Events to trigger rules when a command is received from KNX
+   usage on rules as: event#KnxRx_Cmnd[slot]
    where [slot] is any of the 5 slots on the KNX Menu
-   example: rule on event#KnxRx_Val1 do VAR1 %value% endon
+   example: rule on event#KnxRx_Cmnd1 do VAR1 %value% endon
+   (where %value% can be 0 or 1)
  * Add Events to trigger rules when received read requests from KNX
    usage on rules as: event#KnxRx_Req[slot]
    where [slot] is any of the 5 slots on the KNX Menu
