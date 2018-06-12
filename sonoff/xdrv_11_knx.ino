@@ -462,6 +462,7 @@ void KNX_INIT()
   if (GetUsedInModule(GPIO_DHT11, my_module.gp.io)) { device_param[KNX_TEMPERATURE-1].show = true; }
   if (GetUsedInModule(GPIO_DHT22, my_module.gp.io)) { device_param[KNX_TEMPERATURE-1].show = true; }
   if (GetUsedInModule(GPIO_SI7021, my_module.gp.io)) { device_param[KNX_TEMPERATURE-1].show = true; }
+  if (GetUsedInModule(GPIO_DSB, my_module.gp.io)) { device_param[KNX_TEMPERATURE-1].show = true; }
   if (GetUsedInModule(GPIO_DHT11, my_module.gp.io)) { device_param[KNX_HUMIDITY-1].show = true; }
   if (GetUsedInModule(GPIO_DHT22, my_module.gp.io)) { device_param[KNX_HUMIDITY-1].show = true; }
   if (GetUsedInModule(GPIO_SI7021, my_module.gp.io)) { device_param[KNX_HUMIDITY-1].show = true; }
@@ -547,7 +548,7 @@ void KNX_CB_Action(message_t const &msg, void *arg)
       {
         if (!toggle_inhibit) {
           char command[25];
-          snprintf_P(command, sizeof(command), PSTR("event KNXRX_VAL%d=%d"), ((chan->type) - KNX_SLOT1 + 1 ), msg.data[0]);
+          snprintf_P(command, sizeof(command), PSTR("event KNXRX_CMND%d=%d"), ((chan->type) - KNX_SLOT1 + 1 ), msg.data[0]);
           ExecuteCommand(command, SRC_KNX);
           if (Settings.flag.knx_enable_enhancement) {
             toggle_inhibit = TOGGLE_INHIBIT_TIME;
