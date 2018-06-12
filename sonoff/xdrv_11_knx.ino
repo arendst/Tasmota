@@ -547,7 +547,7 @@ void KNX_CB_Action(message_t const &msg, void *arg)
       {
         if (!toggle_inhibit) {
           char command[25];
-          snprintf_P(command, sizeof(command), PSTR("event KNXRX_VAL%d=%d"), ((chan->type) - KNX_SLOT1 + 1 ), msg.data[0]);
+          snprintf_P(command, sizeof(command), PSTR("event KNXRX_CMND%d=%d"), ((chan->type) - KNX_SLOT1 + 1 ), msg.data[0]);
           ExecuteCommand(command, SRC_KNX);
           if (Settings.flag.knx_enable_enhancement) {
             toggle_inhibit = TOGGLE_INHIBIT_TIME;
