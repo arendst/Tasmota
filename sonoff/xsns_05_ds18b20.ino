@@ -199,6 +199,11 @@ void Ds18b20Show(boolean json)
 #ifdef USE_DOMOTICZ
       if (0 == tele_period) DomoticzSensor(DZ_TEMP, temperature);
 #endif  // USE_DOMOTICZ
+#ifdef USE_KNX
+      if (0 == tele_period) {
+        KnxSensor(KNX_TEMPERATURE, t);
+      }
+#endif  // USE_KNX
 #ifdef USE_WEBSERVER
     } else {
       snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TEMP, mqtt_data, "DS18B20", temperature, TempUnit());
