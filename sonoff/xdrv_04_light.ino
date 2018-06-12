@@ -463,21 +463,23 @@ void SM16716_Init(void)
 #endif  // ifdef USE_SM16716
 
 /********************************************************************************************/
-
 void LightDACDuty(uint8_t duty)
 {
 #ifdef USE_I2C
 
-uint16_t output = duty * 16;
+uint16_t output = (uint16_t) map((255-duty), 0, 255, 2100, 3350);
 #ifdef TWBR
   uint8_t twbrback = TWBR;
   TWBR = ((F_CPU / 400000L) - 16) / 2; // Set I2C frequency to 400kHz
 #endif
   Wire.beginTransmission(0x60); //address of DAC
   Wire.write(0x40); //write data to DAC
-  Wire.write(output / 16);                   // Upper data bits          (D11.D10.D9.D8.D7.D6.D5.D4)
-  Wire.write((output % 16) << 4);            // Lower data bits          (D3.D2.D1.D0.x.x.x.x)
+  Wire.write(output >> 4);                   // Upper data bits          (D11.D10.D9.D8.D7.D6.D5.D4)
+  Wire.write((output & 15) << 4);            // Lower data bits          (D3.D2.D1.D0.x.x.x.x)
+
   Wire.endTransmission();
+  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION "output %d"), output);
+  AddLog(LOG_LEVEL_DEBUG);
 #ifdef TWBR
   TWBR = twbrback;
 #endif
@@ -488,8 +490,7 @@ uint16_t output = duty * 16;
 /********************************************************************************************/
 
 
-
-void LightInit()
+void LightInit(void)
 {
   uint8_t max_scheme = LS_MAX -1;
 
@@ -505,6 +506,9 @@ void LightInit()
       if (pin[GPIO_PWM1 +i] < 99) {
         pinMode(pin[GPIO_PWM1 +i], OUTPUT);
       }
+    }
+    if (LT_DAC == light_type) {
+      Settings.light_color[0] = 255;    // One PWM channel only supports Dimmer but needs max color
     }
     if (SONOFF_LED == my_module_type) { // Fix Sonoff Led instabilities
       if (!my_module.io[4]) {
@@ -562,7 +566,7 @@ void LightInit()
   }
 #endif  // ifdef USE_SM16716
   else if (LT_DAC == light_type) {
-
+    light_subtype = LST_SINGLE;
   }
   else {
     light_pdi_pin = pin[GPIO_DI];
@@ -680,7 +684,7 @@ void LightSetDimmer(uint8_t myDimmer)
     light_current_color[1] = (uint8_t)temp;
     return;
   }
-  if (LT_PWM1 == light_type) {
+  if (LT_PWM1 == light_type || LT_DAC == light_type) {
     Settings.light_color[0] = 255;    // One PWM channel only supports Dimmer but needs max color
   }
   float dimmer = 100 / (float)myDimmer;

@@ -2480,6 +2480,7 @@ void GpioInit(void)
   }
   else if (MSDM_DAC == Settings.module) {   // DAC Dimmer
     light_type = LT_DAC;
+    pinMode(pin[GPIO_REL1], OUTPUT);
   }
   else {
     if (!light_type) { devices_present = 0; }

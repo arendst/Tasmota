@@ -1431,7 +1431,6 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_LED1_INV,    // GPIO13 Blue Led (0 = On, 1 = Off) - Link and Power status
      0, 0, 0, 0
   },
-<<<<<<< HEAD
   { "Sonoff iFan02",   // Sonoff iFan02 (ESP8285)
      GPIO_KEY1,        // GPIO00 WIFI_KEY0 Virtual button 1 as feedback from RC
      GPIO_USER,        // GPIO01 ESP_TXD Serial RXD and Optional sensor
