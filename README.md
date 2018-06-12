@@ -37,13 +37,33 @@ So, for example, if 2 devices that are configured with the **2 / 2 / 1** for tur
 
 Several home automation systems have KNX support. For example, [Home Assistant](https://github.com/home-assistant/home-assistant) has a [XKNX Python Library](https://github.com/XKNX/xknx) to connect to KNX devices using a KNX Router. If you don't have a **KNX Router**, you can use a **Software KNX Router** like [KNXd](https://github.com/knxd/knxd) on the same Raspberry Pi than Home Assistant. KNXd is used by Home Assistant for reading this UDP Multicast, although KNXd has other cool features that need extra hardware like connect to KNX devices by Twister Pair, Power Line or RF.
 
-If you use the ETS (KNX Configurator Software) you can add any Sonoff-Tasmota_KNX as a dummy device.
+If you use the ETS (KNX Configurator Software) you can add any Sonoff Tasmota KNX as a dummy device.
 
 ## Requirement ##
 
 * [ESP KNX IP Library](https://github.com/envy/esp-knx-ip). A copy of the library is also available [here](https://github.com/ascillato/Sonoff-Tasmota_KNX/tree/development/lib/esp-knx-ip-0.5.0).
 
 It is recommended to compile with version 2.3.0 of the esp8266 board libraries. With v2.4.0 and v2.4.1 there are some issues related to sleep command.
+
+## Implemented Features ##
+
+The implemented features, up to now, in KNX for Tasmota are:
+
+General:
+* buttons (just push)
+* relays (on/off/toggle)
+* lights (led strips, etc. but just on/off)
+
+Sensor lists that you can use in KNX is (only one sensor per type):
+* Temperature
+* Humidity
+* Energy (v, i, power)
+
+For using rules:
+* send KNX command (on/off)
+* receive KNX command (on/off)
+* send values by KNX (any float type, temperature for example)
+* receive a KNX read request
 
 ## Usage Examples ##
 
@@ -53,6 +73,8 @@ To configure KNX, enter on the Configuration Menu of Sonoff-Tasmota and select C
 
 <img src="https://github.com/ascillato/Sonoff-Tasmota_KNX/blob/development/.github/Config_Menu.jpg" />
 <img src="https://github.com/ascillato/Sonoff-Tasmota_KNX/blob/development/.github/KNX_menu.jpg" />
+
+_Note on KNX communication enhancement option: As Wifi Multicast communication is not reliable in some wifi router due to IGMP problems or Snooping, an enhancement was implemented. This option increase the reliability by reducing the chances of losing telegrams, sending the same telegram 3 times. In practice it works really good and it is enough for normal home use. When this option is on, Tasmota will ignore toggle commands by KNX if those are sent more than 1 toggle per second. Just 1 toggle per second is working fine._
 
 **1) Setting Several Sonoff to be controlled as one by a Home Automation System:**
 
@@ -96,6 +118,23 @@ DEVICE 2
 We can configure to send the value of temperature or humidity every teleperiod. This teleperiod can be configured. See Sonoff Tasmota [wiki](https://github.com/arendst/Sonoff-Tasmota/wiki/Commands). It is recommended also to set the reply temperature address.
 
 <img src="https://github.com/ascillato/Sonoff-Tasmota_KNX/blob/development/.github/7.jpg" />
+
+**5) Using rules:**
+
+More functionality can be added to Tasmota using rules.
+
+* In the KNX Menu, can be set a Group Address to send data or commands by rules, as **KNX TX1** to **KNX TX5**
+
+In rules we can use the command ``KnxTx_Cmnd1 1`` to send an ON state command to the group address set in **KNX TX1** slot of the KNX menu.
+Also, we can use the command ``KnxTx_Val1 15`` to send a 15 value to the group address set in **KNX TX1** slot of the KNX menu.
+
+* In the KNX Menu can be set a Group Address to receive commands by rules as **KNX RX1** to **KNX RX5**
+
+In rules we can use the events to catch the reception from KNX to those RX Slots.
+
+Example: ``rule on event#knxrx_cmnd1 do var1 %value%`` to store the command receive in the variable VAR1
+
+Also, if a Read request is received from KNX Network, we can use that in a rule as for example: ``rule on event#knxrx_req1 do knxtx_val1 %var3%``
 
 ## Development Road Map ##
 
@@ -146,13 +185,14 @@ There is **NO CONFLICT** with MQTT, Home Assistant, Web, etc. Tests show fast re
 ## Contributors ##
 
 * [ascillato](https://github.com/ascillato) ( Adrian Scillato )
-* [sisamiwe](https://github.com/sisamiwe) - Thanks for the guide on using KNX.
+* [sisamiwe](https://github.com/sisamiwe) - Thanks for the guide on using KNX and software testing and support
 * [envy](https://github.com/envy) ( Nico Weichbrodt ) - Thanks for the patience and help with the modifications to ESP_KNX_IP.
 * [arendst](https://github.com/arendst) ( Theo Arends ) - Thanks for the guide on Tasmota and for the ideas.
 * [johannesbonn](https://github.com/johannesbonn) - Thanks for the patience on bug resolutions
 * [RocketSience](https://github.com/RocketSience) - Thanks for the patience on bug resolutions
 * [jeylites](https://github.com/jeylites) - Thanks for the patience on bug resolutions
 * [Winni66](https://github.com/Winni66) - Thanks for the patience on bug resolutions
+* [misc2000](https://github.com/misc2000) - Thanks for the testing on bug resolutions
 * [smurfix](https://github.com/smurfix) ( Matthias Urlichs ) - Thanks for the KNX guiding and [KNXd](https://github.com/knxd/knxd) use.
 * And many others providing testing, bug reporting and feature requests.
 
