@@ -82,6 +82,7 @@ float Ro = R0; //Ro is initialized, when calibration of sensor is done.
 //Restart module in clean air the calibration will be set automaticaly in module init phase.
 
 char gastype[11];
+int ppm=0;
 // nask for printf
 const char HTTP_GAS[] PROGMEM = "%s{s}" D_GAS " %s{m} %d" D_UNIT_PARTS_PER_MILLION "{e}";
 const char JSON_SNS_GAS[] PROGMEM = "%s,\"" D_GAS "\":{\"Type\":\"%s\",\"ppm\":%d}";
@@ -145,6 +146,7 @@ float MQRead(int mq_pin)
   for (i=0;i<READ_SAMPLE_TIMES;i++) {
     rs += MQResistanceCalculation(analogRead(mq_pin));
     delayMicroseconds(READ_SAMPLE_INTERVAL);
+
   }
 
   rs = rs/READ_SAMPLE_TIMES;
@@ -159,6 +161,7 @@ uint16_t readvalue() {
   for (byte i = 0; i < 32; i++) {
     inputadc += analogRead(MQ5PIN);
     delayMicroseconds(500);
+
   }
   inputadc >>= 5;
   return inputadc;
@@ -173,7 +176,7 @@ int getppm (float ratio){
 
    int getvalue = 0;
      //dym zaczyna sie od 600 ppm
-     if  (ratio >= 5.8 ) {
+     if  (ratio >= 5.4 ) {
 
       getvalue = 0;
       strcpy(gastype,"CLEANAIR");
@@ -181,7 +184,7 @@ int getppm (float ratio){
       //return 0 ppm;
     } else if //SMOG
 
-    (ratio < 5.8 && ratio >= 3.8 ) {
+    (ratio < 5.4 && ratio >= 3.8 ) {
 
       getvalue = MQGetGasPercentage(MQRead(MQ5PIN)/Ro,GAS_SMOG);
       getvalue = constrain (getvalue,200,10000);
@@ -193,6 +196,7 @@ int getppm (float ratio){
     (ratio < 3.8 &&  ratio >= 2.35) {
 
      getvalue = MQGetGasPercentage(MQRead(MQ5PIN)/Ro,GAS_CARBON_MONOXIDE);
+
      getvalue = constrain (getvalue,200,10000);
      strcpy(gastype,"CO");
      return getvalue;
@@ -202,6 +206,7 @@ int getppm (float ratio){
    (ratio  < 2.35 &&  ratio >= 1.65) {
 
     getvalue = MQGetGasPercentage(MQRead(MQ5PIN)/Ro,GAS_ALCOHOL);
+
     getvalue = constrain (getvalue,200,10000);
     strcpy(gastype,"ALC");
     return getvalue;
@@ -211,6 +216,7 @@ int getppm (float ratio){
    (ratio  < 1.65 &&  ratio >= 0.99) {
 
     getvalue = MQGetGasPercentage(MQRead(MQ5PIN)/Ro,GAS_HYDROGEN);
+
     getvalue = constrain (getvalue,200,10000);
     strcpy(gastype,"H2");
     return getvalue;
@@ -220,8 +226,10 @@ int getppm (float ratio){
      (ratio  < 0.99 &&  ratio >= 0.14) {
 
       getvalue = MQGetGasPercentage(MQRead(MQ5PIN)/Ro,GAS_METHANE);
+
       if (ratio  < 0.22 && ratio >= 0.14)  {
         getvalue = MQGetGasPercentage(MQRead(MQ5PIN)/Ro,GAS_LPG);
+
         strcpy(gastype,"LPG");
       } else {
         strcpy(gastype,"CH4");
@@ -289,11 +297,22 @@ int MQGetGasPercentage(float rs_ro_ratio, int gas_id)
 void measure(boolean json)
 {
 
+ ppm=getppm(MQRead(MQ5PIN)/Ro);
+
   if (json) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), JSON_SNS_GAS, mqtt_data, gastype, getppm(MQRead(MQ5PIN)/Ro));
+      snprintf_P(mqtt_data, sizeof(mqtt_data), JSON_SNS_GAS, mqtt_data, gastype, ppm);
+
+  #ifdef USE_DOMOTICZ
+          if (0 == tele_period) {
+            DomoticzSensor(DZ_POWER_ENERGY,gastype);
+            DomoticzSensor(DZ_AIRQUALITY,ppm );
+
+            }
+  #endif  // USE_DOMOTICZ
+  
   #ifdef USE_WEBSERVER
     } else {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_GAS, mqtt_data,gastype, getppm(MQRead(MQ5PIN)/Ro));
+      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_GAS, mqtt_data,gastype, ppm);
 
   #endif  // USE_WEBSERVER
     }
@@ -321,7 +340,7 @@ boolean Xsns94(byte function)
         #endif
         break;
       case FUNC_PREP_BEFORE_TELEPERIOD:
-
+        measure(1);
         break;
       case FUNC_JSON_APPEND:
         measure(1);

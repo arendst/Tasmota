@@ -19,6 +19,7 @@
 #if !defined USE_ADC_VCC || !defined USE_MQ_SENSOR
 #ifdef USE_VOLTAGE
 #define VCC_MEASUR 5.0 // value could be betwen for voltage divider ADC in A0 need to be measured as max when 1023
+#define VCC_MEASUR_CORRECTION (0) //for 1Mohm/250k A0 wemeos -7 is correction - ADC is pure in ESP
 /*********************************************************************************************\
  * sensor supply is 5V the additional voltage devider measurment is needed, and separate supply
  for ESP by i.e. voltage converter 3.3 => 5v
@@ -37,7 +38,7 @@
 
 
 
-const char HTTP_SNS_ANALOG2[] PROGMEM = "%s{s} " "Pomiar napiecia ADC" "{m}%dmV{e}";                       // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
+const char HTTP_SNS_ANALOG2[] PROGMEM = "%s{s} " "Napiecie zasilania" "{m}%sV{e}";                       // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
 
 
 
@@ -51,7 +52,7 @@ uint32_t Voltage()
   }
   analog >>= 5;
   delayMicroseconds(1000);
-  analog = (((VCC_MEASUR / 1023) * analog)*1000)-187; //for 1Mohm/250k A0 wemeos -187 is correction - ADC is pure in ESP
+  analog = (((VCC_MEASUR / 1023) * analog)*1000) + VCC_MEASUR_CORRECTION;
   delayMicroseconds(500);
   return analog;
 }
@@ -61,12 +62,23 @@ uint32_t Voltage()
 void measureVolt(boolean json)
 {
 
+char volt[6];
+dtostrf(((float)Voltage()/1000),5,3,volt);
   if (json) {
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"" D_JSON_VCC "\":%d"), mqtt_data, Voltage());
+    snprintf_P(mqtt_data, sizeof(mqtt_data),PSTR("%s,\"" D_JSON_VCC "\":{\"A0\":%s}"), mqtt_data, volt);
+    //PSTR("%s,\"" D_JSON_VCC "\":%d"), mqtt_data, volt);
+
+    #ifdef USE_DOMOTICZ
+            if (0 == tele_period) {
+              DomoticzSensor(DZ_VOLTAGE, volt);  // Voltage
+
+            }
+    #endif  // USE_DOMOTICZ
+
   #ifdef USE_WEBSERVER
   } else {
 
-    snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_ANALOG2, mqtt_data, Voltage());
+    snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_ANALOG2, mqtt_data, volt);
   #endif  // USE_WEBSERVER
   }
 }

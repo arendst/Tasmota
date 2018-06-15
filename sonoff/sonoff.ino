@@ -131,6 +131,9 @@ int wifi_state_flag = WIFI_RESTART;         // Wifi state flag
 uint32_t uptime = 0;                        // Counting every second until 4294967295 = 130 year
 boolean latest_uptime_flag = true;          // Signal latest uptime
 int tele_period = 0;                        // Tele period timer
+//STB mode
+int prep_called = 0;                // additional flag to detect a proper start of initialize sensors.
+//end
 byte web_log_index = 1;                     // Index in Web log buffer (should never be 0)
 byte reset_web_log_flag = 0;                // Reset web console log
 byte devices_present = 0;                   // Max number of devices supported
@@ -1526,12 +1529,15 @@ void PerformEverySecond()
 
   if (Settings.tele_period) {
     tele_period++;
-    if (tele_period == Settings.tele_period -1) {
+    if (tele_period >= Settings.tele_period -1 && prep_called == 0) {
       XsnsCall(FUNC_PREP_BEFORE_TELEPERIOD);
+      //STB mode
+      prep_called = 1;
+      // end stb mod
     }
     if (tele_period >= Settings.tele_period) {
       tele_period = 0;
-
+      prep_called = 0;
       mqtt_data[0] = '\0';
       MqttShowState();
       MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_STATE), MQTT_TELE_RETAIN);

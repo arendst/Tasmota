@@ -36,12 +36,45 @@
 
 #define CHIRP_ADDR1         0x20
 
+#define CHIRP_LIGHT_CALIB 65535  //calibrate darknes value for light sensor
+#define CHIRP_CAPACITANCE_MIN 235  //calibrate CAPACITANCE min value
+#define CHIRP_CAPACITANCE_MAX 750  //c0calibrate CAPACITANCE max value
+#define CHIRP_TEMP_CAL (0)  //calibrate TEMP value
 
 #define CHIRP_CONTINUOUS_HIGH_RES_MODE 0x10 // Start measurement at 1lx resolution. Measurement time is approx 120ms.
+/*********************************************************************************************\
+ * global
+\*********************************************************************************************/
 
-uint8_t chirpaddr;
+uint8_t chirpaddr = CHIRP_ADDR1;
 uint8_t chirptype = 0;
+uint16_t light = 0;
+boolean success = false;
+float readmoisture = 0;
+float readtemperature = 0;
+char temperature[5];
+char moisture[5];
+char * light_read;
+uint8_t ver = 0;
 char chirpstype[7];
+byte count = 0;
+
+/*********************************************************************************************\
+ * Presentation
+\*********************************************************************************************/
+#ifdef USE_WEBSERVER
+ #ifndef USE_BH1750  // avoid duplicate definition
+  const char HTTP_SNS_ILLUMINANCE[] PROGMEM =  "%s{s}%s " D_ILLUMINANCE "{m}%d%%{e}";
+ #endif //USE_BH1750
+  const char HTTP_SNS_MOISTURE[] PROGMEM = "%s{s}%s " D_JSON_MOISTURE "{m}%s%{e}";
+  //const char HTTP_SNS_CHIRPTEMP[] PROGMEM = "%s{s}%s " D_JSON_TEMPERATURE ": {m}%s&deg;C{e}";
+  const char HTTP_SNS_VER[] PROGMEM =  "%s{s}%s Firmware ver {m}0x%2x{e}";
+#endif // USE_WEBSERVER
+const char JSON_SNS_LIGHTMOISTTEMP[] PROGMEM = "%s,\"%s\":{\"" D_JSON_LIGHT "\":%d,\"" D_JSON_MOISTURE "\":%s,\"" D_JSON_TEMPERATURE "\":%s}";
+
+/*********************************************************************************************\
+ * Functions
+\*********************************************************************************************/
 
 uint16_t chirp_readLux(void)
 {
@@ -138,16 +171,25 @@ boolean Xsns92(byte function)
   if (i2c_flg) {
     switch (function) {
       case FUNC_INIT:
+       Wire.setClockStretchLimit(2500);
         chirp_detect();
+        //yield();
+        delay(500);
         break;
       case FUNC_PREP_BEFORE_TELEPERIOD:
-        chirp_detect();
+
+        if (!I2cDevice(chirpaddr) ) {
+           chirp_detect();
+           //yield();
+           delay(500);
+         }
         break;
       case FUNC_JSON_APPEND:
         chirp_Show(1);
         break;
 #ifdef USE_WEBSERVER
       case FUNC_WEB_APPEND:
+
         chirp_Show(0);
         break;
 #endif // USE_WEBSERVER
