@@ -295,8 +295,12 @@ void SonoffBridgeReceived()
             }
           }
         }
-        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_RFRECEIVED "\":{\"" D_JSON_SYNC "\":%d,\"" D_JSON_LOW "\":%d,\"" D_JSON_HIGH "\":%d,\"" D_JSON_DATA "\":\"%06X\",\"" D_CMND_RFKEY "\":%s}}"),
-          sync_time, low_time, high_time, received_id, rfkey);
+        if(Settings.flag.rf_receive_dec == 1){
+          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_RFRECEIVED "\":{\"" D_JSON_SYNC "\":%d,\"" D_JSON_LOW "\":%d,\"" D_JSON_HIGH "\":%d,\"" D_JSON_DATA "\":%d,\"" D_CMND_RFKEY "\":%s}}"), sync_time, low_time, high_time, received_id, rfkey);
+        }
+        else if(Settings.flag.rf_receive_dec == 0){
+          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_RFRECEIVED "\":{\"" D_JSON_SYNC "\":%d,\"" D_JSON_LOW "\":%d,\"" D_JSON_HIGH "\":%d,\"" D_JSON_DATA "\":\"%06X\",\"" D_CMND_RFKEY "\":%s}}"), sync_time, low_time, high_time, received_id, rfkey);
+        }
         MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_RFRECEIVED));
         XdrvRulesProcess();
   #ifdef USE_DOMOTICZ
@@ -583,4 +587,3 @@ boolean Xdrv06(byte function)
   }
   return result;
 }
-
