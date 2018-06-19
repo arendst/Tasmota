@@ -33,6 +33,7 @@
 
 //#define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
 
+#define LANGUAGE_LCID 2052
 // HTML (ISO 639-1) Language Code
 #define D_HTML_LANGUAGE "zh"
 
@@ -91,6 +92,7 @@
 #define D_FALSE "False"
 #define D_FILE "文件:"
 #define D_FREE_MEMORY "空闲内存"
+#define D_FREQUENCY "Frequency"
 #define D_GAS "气体"
 #define D_GATEWAY "网关"
 #define D_GROUP "组:"
@@ -101,6 +103,7 @@
 #define D_IMMEDIATE "immediate"      // Button immediate
 #define D_INDEX "索引:"
 #define D_INFO "信息"
+#define D_INFRARED "Infrared"
 #define D_INITIALIZED "初始化完成"
 #define D_IP_ADDRESS "IP地址"
 #define D_LIGHT "灯"
@@ -119,6 +122,9 @@
 #define D_PORT "端口"
 #define D_POWER_FACTOR "功率因数"
 #define D_POWERUSAGE "功率"
+#define D_POWERUSAGE_ACTIVE "Active Power"
+#define D_POWERUSAGE_APPARENT "Apparent Power"
+#define D_POWERUSAGE_REACTIVE "Reactive Power"
 #define D_PRESSURE "气压"
 #define D_PRESSUREATSEALEVEL "海平面气压"
 #define D_PROGRAM_FLASH_SIZE "固件 Flash 大小"
@@ -154,6 +160,7 @@
 #define D_UPTIME "运行时间"
 #define D_USER "用户名"
 #define D_UTC_TIME "UTC"
+#define D_UV_INDEX "UV Index"
 #define D_UV_LEVEL "紫外线水平"
 #define D_VERSION "版本"
 #define D_VOLTAGE "电压"
@@ -192,21 +199,13 @@
 #define D_FOUND_AT "found at"
 #define D_SYSLOG_HOST_NOT_FOUND "Syslog主机未找到"
 
-//STB mod
-#define D_JSON_MOISTURE "Moisture"
-#define D_JSON_DISTANCE "Distance"
-#define D_CONFIGURE_PCF8574 "Configure PCF8574"
-#define D_CMND_COUNTERDEVIDER "CounterDevider"
-#define D_CMND_MQTTENABLE "MqttEnable"
-//end
-
 // settings.ino
 #define D_SAVED_TO_FLASH_AT "保存到 flash:"
 #define D_LOADED_FROM_FLASH_AT "从 flash 载入"
 #define D_USE_DEFAULTS "使用默认设置"
 #define D_ERASED_SECTOR "擦除删除"
 
-// webserver.ino
+// xdrv_02_webserver.ino
 #define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "固件版本过低 - 请升级"
 #define D_WEBSERVER_ACTIVE_ON "Web服务器:"
 #define D_WITH_IP_ADDRESS "IP地址:"
@@ -322,13 +321,17 @@
 #define D_UPLOAD_ERR_7 "上传取消"
 #define D_UPLOAD_ERR_8 "错误的固件"
 #define D_UPLOAD_ERR_9 "固件太大"
+#define D_UPLOAD_ERR_10 "Failed to init RF chip"
+#define D_UPLOAD_ERR_11 "Failed to erase RF chip"
+#define D_UPLOAD_ERR_12 "Failed to write to RF chip"
+#define D_UPLOAD_ERR_13 "Failed to decode RF firmware"
 #define D_UPLOAD_ERROR_CODE "上传错误代码"
 
 #define D_ENTER_COMMAND "输入命令"
 #define D_ENABLE_WEBLOG_FOR_RESPONSE "如果预期响应，则启用Weblog 2"
 #define D_NEED_USER_AND_PASSWORD "需要 user=<用户名>&password=<密码>"
 
-// xdrv_00_mqtt.ino
+// xdrv_01_mqtt.ino
 #define D_FINGERPRINT "验证 TLS 指纹..."
 #define D_TLS_CONNECT_FAILED_TO "TLS 连接失败"
 #define D_RETRY_IN "重试倒计时:"
@@ -336,7 +339,7 @@
 #define D_INSECURE "指纹无效导致连接不安全"
 #define D_CONNECT_FAILED_TO "连接失败:"
 
-// xdrv_wemohue.ino
+// xplg_wemohue.ino
 #define D_MULTICAST_DISABLED "组播已禁用"
 #define D_MULTICAST_REJOINED "组播已(重新)加入"
 #define D_MULTICAST_JOIN_FAILED "组播加入失败"
@@ -356,7 +359,7 @@
 #define D_HUE_POST_ARGS "Hue POST 参数"
 #define D_3_RESPONSE_PACKETS_SENT "3 请求包发送"
 
-// xdrv_05_domoticz.ino
+// xdrv_07_domoticz.ino
 #define D_DOMOTICZ_PARAMETERS "Domoticz 设置"
 #define D_DOMOTICZ_IDX "Idx"
 #define D_DOMOTICZ_KEY_IDX "Key idx"
@@ -402,6 +405,9 @@
 #define D_KNX_COMMAND_OTHER "Other"
 #define D_SENT_TO "sent to"
 #define D_KNX_WARNING "The group address ( 0 / 0 / 0 ) is reserved and can not be used."
+#define D_KNX_ENHANCEMENT "Communication Enhancement"
+#define D_KNX_TX_SLOT "KNX TX"
+#define D_KNX_RX_SLOT "KNX RX"
 
 // xdrv_03_energy.ino
 #define D_ENERGY_TODAY "今日用电量"
@@ -461,13 +467,15 @@
 #define D_SENSOR_SBR_TX   "SerBr Tx"
 #define D_SENSOR_SR04_TRIG "SR04 Tri"
 #define D_SENSOR_SR04_ECHO "SR04 Ech"
-//stb mod
-#define D_SENSOR_DEEPSLEEP "DeepSleep Switch"
-// end
+#define D_SENSOR_SDM120_TX "SDM120 Tx"
+#define D_SENSOR_SDM120_RX "SDM120 Rx"
+#define D_SENSOR_SDM630_TX "SDM630 Tx"
+#define D_SENSOR_SDM630_RX "SDM630 Rx"
 
 // Units
 #define D_UNIT_AMPERE "安"
 #define D_UNIT_CENTIMETER "cm"
+#define D_UNIT_HERTZ "Hz"
 #define D_UNIT_HOUR "时"
 #define D_UNIT_KILOOHM "千欧"
 #define D_UNIT_KILOWATTHOUR "千瓦时"
@@ -484,6 +492,8 @@
 #define D_UNIT_PRESSURE "百帕"
 #define D_UNIT_SECOND "秒"
 #define D_UNIT_SECTORS "扇区"
+#define D_UNIT_VA "VA"
+#define D_UNIT_VAR "VAr"
 #define D_UNIT_VOLT "伏"
 #define D_UNIT_WATT "瓦"
 #define D_UNIT_WATTHOUR "瓦时"
@@ -512,5 +522,12 @@
 #define D_LOG_UPLOAD "UPL: "       // Upload
 #define D_LOG_UPNP "UPP: "         // UPnP
 #define D_LOG_WIFI "WIF: "         // Wifi
-
+//STB mod
+#define D_JSON_MOISTURE "Moisture"
+#define D_JSON_DISTANCE "Distance"
+#define D_CONFIGURE_PCF8574 "Configure PCF8574"
+#define D_CMND_COUNTERDEVIDER "CounterDevider"
+#define D_CMND_MQTTENABLE "MqttEnable"
+#define D_SENSOR_DEEPSLEEP "DeepSleep Switch"
+//end
 #endif  // _LANGUAGE_ZH_CN_H_

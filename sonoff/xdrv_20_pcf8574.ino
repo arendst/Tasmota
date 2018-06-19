@@ -38,7 +38,7 @@ int _error;
 #ifdef USE_WEBSERVER
 const char HTTP_FORM_I2C_PCF8574_1[] PROGMEM =
   "<fieldset><legend><b>&nbsp;PCF8674 parameters &nbsp;</b></legend><form method='post' action='sv'>"
-  "<input id='w' name='w' value='7' hidden><input id='r' name='r' value='1' hidden>"
+  "<input id='w' name='w' value='8' hidden><input id='r' name='r' value='1' hidden>"
   "<br/><input style='width:10%;float:left' id='b1' name='b1' type='checkbox'{r1><b>Reverse Relays</b><br/>";
 const char HTTP_FORM_I2C_PCF8574_2[] PROGMEM =
   "<br/><b>{b0 IN/OUT</b> <br/><select id='{b2' name='{b2'>"
@@ -113,11 +113,14 @@ void pcf8574_saveSettings()
 
 void pcf8574_switchrelay(byte i, uint8_t state)
 {
+  //snprintf_P(log_data, sizeof(log_data), PSTR("RSLT: max_pcf8574_devices %d requested pin %d"), max_pcf8574_devices,pcf8574_pin[i]);
+  //AddLog(LOG_LEVEL_DEBUG);
   if (max_pcf8574_devices > 0 && pcf8574_pin[i] < 99) {
     uint8_t board = pcf8574_pin[i]>>3;
     uint8_t oldpinmask = _pcf8574pinMask[board];
     uint8_t _val = bitRead(rel_inverted, i) ? !state : state;
-
+    //snprintf_P(log_data, sizeof(log_data), PSTR("RSLT: pcf8574_switchrelay %d on pin %d"), i,state);
+    //AddLog(LOG_LEVEL_DEBUG);
     if(_val) _pcf8574pinMask[board] |= _val << (pcf8574_pin[i]&0x7);
     else _pcf8574pinMask[board] &= ~(1 << (pcf8574_pin[i]&0x7));
     if (oldpinmask != _pcf8574pinMask[board]) {
@@ -140,13 +143,15 @@ void  pcf8574_Init()
     snprintf_P(log_data, sizeof(log_data), PSTR("RSLT: pcf8574 %d boards"), max_pcf8574_devices);
     AddLog(LOG_LEVEL_INFO);
   }
+  devices_present = devices_present - max_pcf8574_connected_ports; // reset no of devices to avoid duplicate ports on duplicate init.
+  max_pcf8574_connected_ports = 0;  // reset no of devices to avoid duplicate ports on duplicate init.
   for (byte idx = 0; idx < max_pcf8574_devices; idx++) { // suport up to 8 boards PCF8574
    snprintf_P(log_data, sizeof(log_data), PSTR("RSLT: I2C Config: %d"), Settings.pcf8574_config[idx]);
     AddLog(LOG_LEVEL_DEBUG);
     for (byte i = 0; i < 8; i++) {
       uint8_t _result = Settings.pcf8574_config[idx]>>i&1;
-      snprintf_P(log_data, sizeof(log_data), PSTR("RSLT: I2C shift i %d: %d. Powerstate: %d, devices_present: %d"), i,_result, Settings.power>>i&1, devices_present);
-      AddLog(LOG_LEVEL_DEBUG);
+      //snprintf_P(log_data, sizeof(log_data), PSTR("RSLT: I2C shift i %d: %d. Powerstate: %d, devices_present: %d"), i,_result, Settings.power>>i&1, devices_present);
+      //AddLog(LOG_LEVEL_DEBUG);
       if (_result > 0) {
         pcf8574_pin[devices_present] = i + 8*idx;
         bitWrite(rel_inverted, devices_present, Settings.all_relays_inverted);
@@ -173,7 +178,7 @@ boolean pcf8574_detect()
     if (val != -1 && !success) {
       success = true;
       pcf8574type = 1;
-      strcpy(pcf8574stype, "PFC8574");
+      strcpy(pcf8574stype, "PCF8574");
     }
     if (!val) {
       pcf8574addr[max_pcf8574_devices] = PFC8574_ADDR1 + i;
@@ -198,7 +203,7 @@ boolean Xdrv20(byte function)
 
   if (Settings.flag.mqtt_enabled) {
     switch (function) {
-      case FUNC_MQTT_INIT:
+      case FUNC_PRE_INIT:
          pcf8574_Init();
         break;
     }

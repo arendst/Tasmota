@@ -33,6 +33,7 @@
 
 //#define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
 
+#define LANGUAGE_LCID 1038
 // HTML (ISO 639-1) Language Code
 #define D_HTML_LANGUAGE "hu"
 
@@ -91,6 +92,7 @@
 #define D_FALSE "Hamis"
 #define D_FILE "File"
 #define D_FREE_MEMORY "Szabad Memória"
+#define D_FREQUENCY "Frequency"
 #define D_GAS "Gáz"
 #define D_GATEWAY "Gateway"
 #define D_GROUP "Csoport"
@@ -101,6 +103,7 @@
 #define D_IMMEDIATE "azonnali"      // Button immediate
 #define D_INDEX "Index"
 #define D_INFO "Info"
+#define D_INFRARED "Infrared"
 #define D_INITIALIZED "Inicializálva"
 #define D_IP_ADDRESS "IP Cím"
 #define D_LIGHT "Fény"
@@ -119,6 +122,9 @@
 #define D_PORT "Port"
 #define D_POWER_FACTOR "Teljesítmény tényező"
 #define D_POWERUSAGE "Energiafelhasználás"
+#define D_POWERUSAGE_ACTIVE "Active Power"
+#define D_POWERUSAGE_APPARENT "Apparent Power"
+#define D_POWERUSAGE_REACTIVE "Reactive Power"
 #define D_PRESSURE "Nyomás"
 #define D_PRESSUREATSEALEVEL "Tengerszinti nyomás"
 #define D_PROGRAM_FLASH_SIZE "Program Flash Méret"
@@ -154,6 +160,7 @@
 #define D_UPTIME "Üzemidő"
 #define D_USER "Felhasználó"
 #define D_UTC_TIME "UTC"
+#define D_UV_INDEX "UV Index"
 #define D_UV_LEVEL "UV Szint"
 #define D_VERSION "Verzió"
 #define D_VOLTAGE "Feszültség"
@@ -198,7 +205,7 @@
 #define D_USE_DEFAULTS "Alapértelmezett beáll. használata"
 #define D_ERASED_SECTOR "Szektor törlése"
 
-// webserver.ino
+// xdrv_02_webserver.ino
 #define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "MINIMAL firmware - frissítsd!"
 #define D_WEBSERVER_ACTIVE_ON "Web szerver aktív a"
 #define D_WITH_IP_ADDRESS "IP címe:"
@@ -314,13 +321,17 @@
 #define D_UPLOAD_ERR_7 "Feltöltés megszakítva"
 #define D_UPLOAD_ERR_8 "Érvénytelen file"
 #define D_UPLOAD_ERR_9 "File túl nagy"
+#define D_UPLOAD_ERR_10 "Failed to init RF chip"
+#define D_UPLOAD_ERR_11 "Failed to erase RF chip"
+#define D_UPLOAD_ERR_12 "Failed to write to RF chip"
+#define D_UPLOAD_ERR_13 "Failed to decode RF firmware"
 #define D_UPLOAD_ERROR_CODE "Feltöltés hiba kód"
 
 #define D_ENTER_COMMAND "Parancsolj"
 #define D_ENABLE_WEBLOG_FOR_RESPONSE "Engedélyezz 2-es weblogolást több információért"
 #define D_NEED_USER_AND_PASSWORD "Kell felhasználó=<felhasználónév>&jelszó=<jelszó>"
 
-// xdrv_00_mqtt.ino
+// xdrv_01_mqtt.ino
 #define D_FINGERPRINT "TLS fingerprint hitelesítése..."
 #define D_TLS_CONNECT_FAILED_TO "TLS Csatlakozás sikertelen a"
 #define D_RETRY_IN "Újrapróbálás"
@@ -328,7 +339,7 @@
 #define D_INSECURE "Nem biztonságos kapcsolat érvénytelen Fingerprint miatt"
 #define D_CONNECT_FAILED_TO "Sikertelen csatlakozás a"
 
-// xdrv_wemohue.ino
+// xplg_wemohue.ino
 #define D_MULTICAST_DISABLED "Multicast kikapcsolva"
 #define D_MULTICAST_REJOINED "Multicast (újra)csatlakozás"
 #define D_MULTICAST_JOIN_FAILED "Multicast csatlakozás sikertelen"
@@ -348,7 +359,7 @@
 #define D_HUE_POST_ARGS "Hue POST args"
 #define D_3_RESPONSE_PACKETS_SENT "3 válaszcsomagok elküldve"
 
-// xdrv_05_domoticz.ino
+// xdrv_07_domoticz.ino
 #define D_DOMOTICZ_PARAMETERS "Domoticz paraméterek"
 #define D_DOMOTICZ_IDX "Idx"
 #define D_DOMOTICZ_KEY_IDX "Key idx"
@@ -394,6 +405,9 @@
 #define D_KNX_COMMAND_OTHER "Other"
 #define D_SENT_TO "sent to"
 #define D_KNX_WARNING "The group address ( 0 / 0 / 0 ) is reserved and can not be used."
+#define D_KNX_ENHANCEMENT "Communication Enhancement"
+#define D_KNX_TX_SLOT "KNX TX"
+#define D_KNX_RX_SLOT "KNX RX"
 
 // xdrv_03_energy.ino
 #define D_ENERGY_TODAY "Mai Energia"
@@ -453,13 +467,15 @@
 #define D_SENSOR_SBR_TX   "SerBr Tx"
 #define D_SENSOR_SR04_TRIG "SR04 Tri"
 #define D_SENSOR_SR04_ECHO "SR04 Ech"
-//stb mod
-#define D_SENSOR_DEEPSLEEP "DeepSleep Switch"
-// end
+#define D_SENSOR_SDM120_TX "SDM120 Tx"
+#define D_SENSOR_SDM120_RX "SDM120 Rx"
+#define D_SENSOR_SDM630_TX "SDM630 Tx"
+#define D_SENSOR_SDM630_RX "SDM630 Rx"
 
 // Units
 #define D_UNIT_AMPERE "A"
 #define D_UNIT_CENTIMETER "cm"
+#define D_UNIT_HERTZ "Hz"
 #define D_UNIT_HOUR "ó"
 #define D_UNIT_KILOOHM "kOhm"
 #define D_UNIT_KILOWATTHOUR "kWh"
@@ -476,6 +492,8 @@
 #define D_UNIT_PRESSURE "hPa"
 #define D_UNIT_SECOND "m"
 #define D_UNIT_SECTORS "szektorok"
+#define D_UNIT_VA "VA"
+#define D_UNIT_VAR "VAr"
 #define D_UNIT_VOLT "V"
 #define D_UNIT_WATT "W"
 #define D_UNIT_WATTHOUR "Wh"
@@ -504,5 +522,12 @@
 #define D_LOG_UPLOAD "UPL: "       // Upload
 #define D_LOG_UPNP "UPP: "         // UPnP
 #define D_LOG_WIFI "WIF: "         // Wifi
-
+//STB mod
+#define D_JSON_MOISTURE "Moisture"
+#define D_JSON_DISTANCE "Distance"
+#define D_CONFIGURE_PCF8574 "Configure PCF8574"
+#define D_CMND_COUNTERDEVIDER "CounterDevider"
+#define D_CMND_MQTTENABLE "MqttEnable"
+#define D_SENSOR_DEEPSLEEP "DeepSleep Switch"
+//end
 #endif  // _LANGUAGE_HU_HU_H_

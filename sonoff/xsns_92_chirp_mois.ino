@@ -64,7 +64,7 @@ byte count = 0;
 \*********************************************************************************************/
 #ifdef USE_WEBSERVER
  #ifndef USE_BH1750  // avoid duplicate definition
-  const char HTTP_SNS_ILLUMINANCE[] PROGMEM =  "%s{s}%s " D_ILLUMINANCE "{m}%d%%{e}";
+  const char HTTP_SNS_ILLUMINANCE2[] PROGMEM =  "%s{s}%s " D_ILLUMINANCE "{m}%d%%{e}";
  #endif //USE_BH1750
   const char HTTP_SNS_MOISTURE[] PROGMEM = "%s{s}%s " D_JSON_MOISTURE "{m}%s%{e}";
   //const char HTTP_SNS_CHIRPTEMP[] PROGMEM = "%s{s}%s " D_JSON_TEMPERATURE ": {m}%s&deg;C{e}";
@@ -114,17 +114,6 @@ boolean chirp_detect()
   return success;
 }
 
-/*********************************************************************************************\
- * Presentation
-\*********************************************************************************************/
-#ifdef USE_WEBSERVER
- #ifndef USE_BH1750  // avoid duplicate definition
-  const char HTTP_SNS_ILLUMINANCE[] PROGMEM =  "%s{s}%s " D_ILLUMINANCE "{m}%d%{e}";
- #endif //USE_BH1750
-  const char HTTP_SNS_MOISTURE[] PROGMEM = "%s{s}%s " D_JSON_MOISTURE "{m}%s%{e}";
-#endif // USE_WEBSERVER
-
-const char JSON_SNS_LIGHTMOISTTEMP[] PROGMEM = "%s,\"%s\":{\"" D_JSON_LIGHT "\":%d,\"" D_JSON_MOISTURE "\":%s,\"" D_JSON_TEMPERATURE "\":%s}";
 
 void chirp_Show(boolean json)
 {
@@ -150,7 +139,7 @@ void chirp_Show(boolean json)
 
   #ifdef USE_WEBSERVER
      } else {
-       snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_ILLUMINANCE, mqtt_data, chirpstype, light);
+       snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_ILLUMINANCE2, mqtt_data, chirpstype, light);
        snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_MOISTURE, mqtt_data, chirpstype, moisture);
        snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TEMP, mqtt_data, chirpstype, temperature, TempUnit());
   #endif // USE_WEBSERVER

@@ -472,7 +472,7 @@ boolean Xsns96(byte function)
 
 
     switch (function) {
-      case FUNC_INIT:
+      case FUNC_FUNC_INIT:
 
         break;
       case FUNC_EVERY_SECOND:
