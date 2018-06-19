@@ -162,12 +162,10 @@ bool MhzCheckAndApplyFilter(uint16_t ppm, uint8_t s)
 
 void MhzEverySecond()
 {
-//  AddLog_P(LOG_LEVEL_ERROR, PSTR(D_LOG_DEBUG "MhzEverySecond"));
   if (0 == mhz_type) return;
 
   mhz_state++;
-  if (8 == mhz_state) {                   // Every 8 sec start a MH-Z19 measuring cycle (which takes 1005 +5% ms)
-//    AddLog_P(LOG_LEVEL_ERROR, PSTR(D_LOG_DEBUG "TRY MH-Z19"));
+  if (10 == mhz_state) {                   // Every 10 sec start a MH-Z19 measuring cycle (which takes 1005 +5% ms)
     mhz_state = 0;
 
     if (mhz_retry) {
@@ -197,7 +195,8 @@ void MhzEverySecond()
     }
 
     if (counter < 9) {
-      AddLog_P(LOG_LEVEL_ERROR, PSTR(D_LOG_DEBUG "MH-Z19 comms timeout"));
+      snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_DEBUG "MH-Z19 comms timeout. Readed %d bytes"), counter);
+      AddLog(LOG_LEVEL_ERROR);
       return;
     }
 
@@ -206,6 +205,7 @@ void MhzEverySecond()
       AddLog_P(LOG_LEVEL_ERROR, PSTR(D_LOG_DEBUG "MH-Z19 crc error"));
       return;
     }
+
     if (0xFF != mhz_response[0] || 0x86 != mhz_response[1]) {
       AddLog_P(LOG_LEVEL_ERROR, PSTR(D_LOG_DEBUG "MH-Z19 bad response"));
       return;
@@ -224,8 +224,8 @@ void MhzEverySecond()
       uint16_t ppm = (mhz_response[2] << 8) | mhz_response[3];
       mhz_temperature = ConvertTemp((float)mhz_response[4] - 40);
 
-      char temperature[10];
-      dtostrfd(mhz_temperature, Settings.flag2.temperature_resolution, temperature);
+//      char temperature[10];
+//      dtostrfd(mhz_temperature, Settings.flag2.temperature_resolution, temperature);
 //      snprintf_P(log_data, sizeof(log_data), PSTR("A ppm: %d temp: %s"),ppm, temperature);
 //      AddLog(LOG_LEVEL_ERROR);
 
@@ -233,14 +233,15 @@ void MhzEverySecond()
       mhz_type = (s) ? 1 : 2;
       if (MhzCheckAndApplyFilter(ppm, s)) {
         mhz_retry = MHZ19_RETRY_COUNT;
-//        LightSetSignal(CO2_LOW, CO2_HIGH, mhz_last_ppm);
 
         if (0 == s || 64 == s) {  // Reading is stable.
           if (mhz_abc_must_apply) {
             mhz_abc_must_apply = false;
             if (mhz_abc_enable) {
+              AddLog_P(LOG_LEVEL_ERROR, PSTR(D_LOG_DEBUG "MH-Z19 ABCENABLE"));
               MhzSendCmd(MHZ_CMND_ABCENABLE);
             } else {
+              AddLog_P(LOG_LEVEL_ERROR, PSTR(D_LOG_DEBUG "MH-Z19 ABCDISABLE"));
               MhzSendCmd(MHZ_CMND_ABCDISABLE);
             }
           }
@@ -300,6 +301,8 @@ void MhzInit()
       //if (MhzSerial->hardwareSerial()) { ClaimSerial(); }
       mhz_type = 1;
 //      TickerMhz.attach(1, MhzEverySecond);
+      AddLog_P(LOG_LEVEL_ERROR, PSTR(D_LOG_DEBUG "MH-Z19 RESET"));
+      MhzSendCmd(MHZ_CMND_RESET);
     }
 
   }

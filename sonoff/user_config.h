@@ -88,7 +88,6 @@
 
 #ifdef USE_PZEM_004T
 #define USE_SERIAL           1
-#include "SoftwareSerial.h"
 #endif //USE_PZEM_004T
 
 #define MQTT_BUTTON_RETAIN     1                 // [ButtonRetain] Button may send retain flag (0 = off, 1 = on)
