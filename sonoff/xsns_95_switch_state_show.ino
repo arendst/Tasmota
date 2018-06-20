@@ -26,12 +26,12 @@
  F = [8.1Q-5] ±10%,F dla wartość chwilowa impulsu (HZ), Q dla przemijające przepływu (L/min) 4100 pulses for 10L
  *https://pl.aliexpress.com/item/Free-Shipping-Copper-G3-4-Water-Flow-Hall-Sensor-Switch-Flow-Meter-Flowmeter-Counter-2-45L/32223530631.html?spm=a2g17.search0104.3.2.231673f9tGvynE&ws_ab_test=searchweb0_0,searchweb201602_1_10152_10151_10065_10068_10344_10342_10343_10340_10341_10698_10696_10084_10083_10618_10304_10307_10301_10059_308_100031_10103_10624_10623_10622_10621_10620,searchweb201603_2,ppcSwitch_5&algo_expid=67cdaaff-761b-4abc-a822-6508e3fddd68-0&algo_pvid=67cdaaff-761b-4abc-a822-6508e3fddd68&priceBeautifyAB=0
 \*********************************************************************************************/
-// stb
+//stb
 #ifdef SWITCH_STATE_SHOW
 
 #ifdef USE_WEBSERVER
 
-const char HTTP_SWITCH_STATE[] PROGMEM = "%s{s}" D_JSON_SWITCH "%d{m} %s{e}";
+const char HTTP_SWITCH_STATE[] PROGMEM = "%s{s}" D_SENSOR_SWITCH "%d{m} %s{e}";
 
 
 #endif  // USE_WEBSERVER
@@ -42,6 +42,17 @@ void SwitchStateShow(boolean json)
 {
 
       if (json) {
+
+  for (byte i = 0; i < MAX_SWITCHES; i++) {
+    if (pin[GPIO_SWT1 +i] < 99) {
+         boolean swm = ((FOLLOW_INV == Settings.switchmode[i]) || (PUSHBUTTON_INV == Settings.switchmode[i]) || (PUSHBUTTONHOLD_INV == Settings.switchmode[i]));
+          char topic[25];
+          snprintf_P(topic,sizeof(topic),PSTR("stat/%s/SWITCH%d"),Settings.switch_topic,i+1);
+          char *test=GetStateText(swm ^ lastwallswitch[i]);
+          MqttClient.publish(topic,test,true);
+        }
+    }
+
 
 #ifdef USE_WEBSERVER
       } else {
@@ -69,11 +80,9 @@ boolean Xsns95(byte function)
   boolean result = false;
 
   switch (function) {
-    case FUNC_INIT:
-      //hz43wb_CounterInit();
-      break;
+
     case FUNC_JSON_APPEND:
-      //hz43wb_CounterShow(1);
+      SwitchStateShow(1);
       break;
 #ifdef USE_WEBSERVER
     case FUNC_WEB_APPEND:

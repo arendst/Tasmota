@@ -154,6 +154,7 @@
 //stb mode
 #define D_CMND_COUNTERDEVIDER "CounterDevider"
 #define D_CMND_MQTTENABLE "MqttEnable"
+#define D_CMND_DEEPSLEEP "DeepSleep"
 // end
 
 #define D_CMND_BACKLOG "Backlog"

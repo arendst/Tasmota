@@ -36,46 +36,20 @@
 
 #define CHIRP_ADDR1         0x20
 
-#define CHIRP_LIGHT_CALIB 65535  //calibrate darknes value for light sensor
-#define CHIRP_CAPACITANCE_MIN 235  //calibrate CAPACITANCE min value
-#define CHIRP_CAPACITANCE_MAX 750  //c0calibrate CAPACITANCE max value
-#define CHIRP_TEMP_CAL (0)  //calibrate TEMP value
 
-#define CHIRP_CONTINUOUS_HIGH_RES_MODE 0x10 // Start measurement at 1lx resolution. Measurement time is approx 120ms.
-/*********************************************************************************************\
- * global
-\*********************************************************************************************/
-
-uint8_t chirpaddr = CHIRP_ADDR1;
+//#define CHIRP_CONTINUOUS_HIGH_RES_MODE 0x10 // Start measurement at 1lx //resolution. Measurement time is approx 120ms.
+#define D_JSON_MOISTURE "Moisture"
+#define CHIRP_CAPACITANCE_MIN 230  //calibrate CAPACITANCE min value
+#define CHIRP_CAPACITANCE_MAX 750  //calibrate CAPACITANCE max value
+#define CHIRP_LIGHT_CALIB 65535 //calibrate LIGHT max value
+#define D_MOISTURE "Wilgoć"
+uint8_t chirpaddr;
 uint8_t chirptype = 0;
-uint16_t light = 0;
-boolean success = false;
-float readmoisture = 0;
-float readtemperature = 0;
-char temperature[5];
-char moisture[5];
-char * light_read;
-uint8_t ver = 0;
 char chirpstype[7];
-byte count = 0;
-
-/*********************************************************************************************\
- * Presentation
-\*********************************************************************************************/
-#ifdef USE_WEBSERVER
- #ifndef USE_BH1750  // avoid duplicate definition
-  const char HTTP_SNS_ILLUMINANCE2[] PROGMEM =  "%s{s}%s " D_ILLUMINANCE "{m}%d%%{e}";
- #endif //USE_BH1750
-  const char HTTP_SNS_MOISTURE[] PROGMEM = "%s{s}%s " D_JSON_MOISTURE "{m}%s%{e}";
-  //const char HTTP_SNS_CHIRPTEMP[] PROGMEM = "%s{s}%s " D_JSON_TEMPERATURE ": {m}%s&deg;C{e}";
-  const char HTTP_SNS_VER[] PROGMEM =  "%s{s}%s Firmware ver {m}0x%2x{e}";
-#endif // USE_WEBSERVER
-const char JSON_SNS_LIGHTMOISTTEMP[] PROGMEM = "%s,\"%s\":{\"" D_JSON_LIGHT "\":%d,\"" D_JSON_MOISTURE "\":%s,\"" D_JSON_TEMPERATURE "\":%s}";
-
-/*********************************************************************************************\
- * Functions
-\*********************************************************************************************/
-
+uint16_t light;
+char temperature[6];
+char moisture[6];
+boolean test = false;
 uint16_t chirp_readLux(void)
 {
   uint8_t counter = 0;
@@ -85,8 +59,11 @@ uint16_t chirp_readLux(void)
     delay(100);
     counter++;
   }
-  return I2cRead16(chirpaddr, TWI_GET_LIGHT);
+  //return I2cRead16(chirpaddr, TWI_GET_LIGHT);
+  uint16_t get = I2cRead16(chirpaddr, TWI_GET_LIGHT);
+  return (map(((get) > 58000  ? CHIRP_LIGHT_CALIB : get),CHIRP_LIGHT_CALIB,0,0,100));
 }
+
 
 boolean chirp_detect()
 {
@@ -97,8 +74,11 @@ boolean chirp_detect()
   boolean success = false;
   chirpaddr = CHIRP_ADDR1;
   Wire.beginTransmission(chirpaddr);
-
+  I2cRead8(chirpaddr,TWI_GET_VERSION);
+  delay(50);
   Wire.write(TWI_MEASURE_LIGHT);
+  yield();
+  delay(2000);
   status = Wire.endTransmission();
   if (!status) {
     success = true;
@@ -114,38 +94,80 @@ boolean chirp_detect()
   return success;
 }
 
+/*********************************************************************************************\
+ * Presentation
+\*********************************************************************************************/
+#ifdef USE_WEBSERVER
+ #ifndef USE_BH1750  // avoid duplicate definition
+  const char HTTP_SNS_ILLUMINANCE[] PROGMEM =  "%s{s}%s " D_ILLUMINANCE "{m}%d%%{e}";
+ #endif //USE_BH1750
+
+  const char HTTP_SNS_MOISTURE[] PROGMEM = "%s{s}%s " D_MOISTURE "{m}%s%%{e}";
+#endif // USE_WEBSERVER
+
+const char JSON_SNS_LIGHTMOISTTEMP[] PROGMEM = "%s,\"%s\":{\"" D_JSON_LIGHT "\":%d,\"" D_JSON_MOISTURE "\":%s,\"" D_JSON_TEMPERATURE "\":%s}";
+
+
+void chirp_Get() {
+
+ if (chirptype) {
+   //https://www.tindie.com/products/miceuz/i2c-soil-moisture-sensor/
+
+   dtostrfd(I2cReadS16(chirpaddr, TWI_GET_TEMPERATURE)/10.0 , Settings.flag2.temperature_resolution-1, temperature);
+   while (I2cRead8(chirpaddr, TWI_GET_BUSY) ) { yield();  delay(50);}
+   dtostrfd(I2cReadS16(chirpaddr, TWI_GET_TEMPERATURE)/10.0 , Settings.flag2.temperature_resolution-1, temperature);
+   //delay(100);
+   dtostrfd((map(I2cRead16(chirpaddr, TWI_GET_CAPACITANCE),CHIRP_CAPACITANCE_MIN,CHIRP_CAPACITANCE_MAX,0,1000)/10.0), Settings.flag2.humidity_resolution, moisture);
+   while (I2cRead8(chirpaddr, TWI_GET_BUSY) ) { yield();  delay(50);}
+   dtostrfd((map(I2cRead16(chirpaddr, TWI_GET_CAPACITANCE),CHIRP_CAPACITANCE_MIN,CHIRP_CAPACITANCE_MAX,0,1000)/10.0), Settings.flag2.humidity_resolution, moisture);
+   //delay(100);
+ if (!I2cRead8(chirpaddr, TWI_GET_BUSY)) {
+   //delay(100);
+   light = chirp_readLux();
+
+  } else {
+  // Report old value. Do not wait for new value.
+
+  uint16_t get = I2cRead16(chirpaddr, TWI_GET_LIGHT);
+  light = (map(((get) > 58000  ? CHIRP_LIGHT_CALIB : get),CHIRP_LIGHT_CALIB,0,0,100));
+  }
+  test=true;
+ } else {
+
+  test=false;
+ }
+
+}
 
 void chirp_Show(boolean json)
 {
-  if (chirptype) {
-    char temperature[Settings.flag2.temperature_resolution+3];
-    char moisture[Settings.flag2.humidity_resolution+4];
-    uint16_t light;
-    if (!I2cRead8(chirpaddr, TWI_GET_BUSY)) {
-      light = chirp_readLux();
-    } else {
-      // Report old value. Do not wait for new value.
-      light = I2cRead16(chirpaddr, TWI_GET_LIGHT);
-    }
+  if (test) {
 
-    dtostrfd(I2cRead16(chirpaddr, TWI_GET_CAPACITANCE), Settings.flag2.humidity_resolution, moisture);
-    dtostrfd(I2cRead16(chirpaddr, TWI_GET_TEMPERATURE)/10.0 , Settings.flag2.temperature_resolution, temperature);
      if (json) {
        snprintf_P(mqtt_data, sizeof(mqtt_data), JSON_SNS_LIGHTMOISTTEMP, mqtt_data, chirpstype, light, moisture,temperature);
-       #ifdef USE_DOMOTICZ
-         DomoticzTempHumSensor(temperature, moisture);
-         DomoticzSensor(DZ_ILLUMINANCE,light);
-       #endif  // USE_DOMOTICZ
+
+
+      #ifdef USE_DOMOTICZ
+      if (0 == tele_period ){
+        char data[12];
+        snprintf_P(data, sizeof(data), PSTR("%s;%s;5"), temperature, moisture);
+        //temp humi baro sensor usage
+        DomoticzSensor(DZ_TEMP_HUM_BARO, data);
+        delay(50);
+        DomoticzSensor(DZ_ILLUMINANCE,light);
+      }
+      #endif  // USE_DOMOTICZ
 
   #ifdef USE_WEBSERVER
      } else {
-       snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_ILLUMINANCE2, mqtt_data, chirpstype, light);
+       snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_ILLUMINANCE, mqtt_data, chirpstype, light);
        snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_MOISTURE, mqtt_data, chirpstype, moisture);
        snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TEMP, mqtt_data, chirpstype, temperature, TempUnit());
   #endif // USE_WEBSERVER
      }
   }
 }
+
 
 /*********************************************************************************************\
  * Interface
@@ -160,25 +182,18 @@ boolean Xsns92(byte function)
   if (i2c_flg) {
     switch (function) {
       case FUNC_INIT:
-       Wire.setClockStretchLimit(2500);
         chirp_detect();
-        //yield();
-        delay(500);
         break;
       case FUNC_PREP_BEFORE_TELEPERIOD:
-
-        if (!I2cDevice(chirpaddr) ) {
-           chirp_detect();
-           //yield();
-           delay(500);
-         }
+        chirp_detect();
         break;
       case FUNC_JSON_APPEND:
+        chirp_Get();
         chirp_Show(1);
+
         break;
 #ifdef USE_WEBSERVER
       case FUNC_WEB_APPEND:
-
         chirp_Show(0);
         break;
 #endif // USE_WEBSERVER

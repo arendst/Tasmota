@@ -83,6 +83,7 @@ float Ro = R0; //Ro is initialized, when calibration of sensor is done.
 
 char gastype[11];
 int ppm=0;
+byte counter_measure=0;
 // nask for printf
 const char HTTP_GAS[] PROGMEM = "%s{s}" D_GAS " %s{m} %d" D_UNIT_PARTS_PER_MILLION "{e}";
 const char JSON_SNS_GAS[] PROGMEM = "%s,\"" D_GAS "\":{\"Type\":\"%s\",\"ppm\":%d}";
@@ -296,9 +297,11 @@ int MQGetGasPercentage(float rs_ro_ratio, int gas_id)
 
 void measure(boolean json)
 {
-
+counter_measure++;
+if (counter_measure == 20) {
  ppm=getppm(MQRead(MQ5PIN)/Ro);
-
+ counter_measure=0;
+}
   if (json) {
       snprintf_P(mqtt_data, sizeof(mqtt_data), JSON_SNS_GAS, mqtt_data, gastype, ppm);
 
@@ -309,7 +312,7 @@ void measure(boolean json)
 
             }
   #endif  // USE_DOMOTICZ
-  
+
   #ifdef USE_WEBSERVER
     } else {
       snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_GAS, mqtt_data,gastype, ppm);
@@ -340,13 +343,16 @@ boolean Xsns94(byte function)
         #endif
         break;
       case FUNC_PREP_BEFORE_TELEPERIOD:
-        measure(1);
+        //measure(0);
+
         break;
       case FUNC_JSON_APPEND:
+
         measure(1);
         break;
 #ifdef USE_WEBSERVER
       case FUNC_WEB_APPEND:
+
         measure(0);
         break;
 #endif // USE_WEBSERVER

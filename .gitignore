@@ -5,3 +5,4 @@
 .vscode/c_cpp_properties.json
 sonoff/config.h
 sonoff/user_config_override.h
+sonoff/user_config_override.h
