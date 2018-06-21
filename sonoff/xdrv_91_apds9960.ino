@@ -23,15 +23,13 @@
  POSSIBILITY OF SUCH DAMAGE.
 */
 
-// #define USE_APDS9960  // uncomment to enable the sensor
+//#define USE_APDS9960  // uncomment to enable the sensor
 
 
 #ifdef USE_I2C
 #ifdef USE_APDS9960
 
-#define GPIO_IRQ pin[GPIO_DSB]  // "steal the gpio for the interrupt -> dirty hack
-#undef USE_DS18B20
-#undef USE_SHT
+#undef USE_SHT // SHT-Driver blocks gesture sensor
 
 enum GestureCommands {
   CMND_GESTURE };
@@ -1486,8 +1484,8 @@ int16_t readGesture()
     /* Keep looping as long as gesture data is valid */
     while(1) {
         if (gesture_loop_counter == APDS9960_MAX_GESTURE_CYCLES){ // We will escape after a few loops
-          disableGestureSensor();   // stop the sensor to prevent problems with power consumption and return to the main loop
-          APDS9960_overload = true;
+          disableGestureSensor();   // stop the sensor to prevent problems with power consumption/blocking  and return to the main loop
+          APDS9960_overload = true; // we report this as "long"-gesture
           char log[LOGSZ];
           snprintf_P(log, sizeof(log), PSTR("Sensor overload"));
           AddLog_P(LOG_LEVEL_DEBUG, log);
@@ -1980,52 +1978,47 @@ bool decodeGesture()
     return true;
 }
 
-void ICACHE_RAM_ATTR interruptRoutine() {
-  isr_flag = 1;
-}
-
 void handleGesture() {
     if (isGestureAvailable() ) {
     char log[LOGSZ];
-    char svalue[TOPSZ];
     switch (readGesture()) {
       case DIR_UP:
         snprintf_P(log, sizeof(log), PSTR("UP"));
-        snprintf_P(svalue, sizeof(svalue), PSTR("{\"Gesture\":\"Up\"}"));
+        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"Gesture\":\"Up\"}"));
         break;
       case DIR_DOWN:
         snprintf_P(log, sizeof(log), PSTR("DOWN"));
-        snprintf_P(svalue, sizeof(svalue), PSTR("{\"Gesture\":\"Down\"}"));
+        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"Gesture\":\"Down\"}"));
         break;
       case DIR_LEFT:
         snprintf_P(log, sizeof(log), PSTR("LEFT"));
-        snprintf_P(svalue, sizeof(svalue), PSTR("{\"Gesture\":\"Left\"}"));
+        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"Gesture\":\"Left\"}"));
         break;
       case DIR_RIGHT:
         snprintf_P(log, sizeof(log), PSTR("RIGHT"));
-        snprintf_P(svalue, sizeof(svalue), PSTR("{\"Gesture\":\"Right\"}"));
+        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"Gesture\":\"Right\"}"));
         break;
       case DIR_NEAR:
         snprintf_P(log, sizeof(log), PSTR("NEAR"));
-        snprintf_P(svalue, sizeof(svalue), PSTR("{\"Gesture\":\"Near\"}"));
+        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"Gesture\":\"Near\"}"));
         break;
       case DIR_FAR:
         snprintf_P(log, sizeof(log), PSTR("FAR"));
-        snprintf_P(svalue, sizeof(svalue), PSTR("{\"Gesture\":\"Far\"}"));
+        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"Gesture\":\"Far\"}"));
         break;
       default:
       if(APDS9960_overload)
       {
-        snprintf_P(log, sizeof(log), PSTR("OVERLOAD"));
-        snprintf_P(svalue, sizeof(svalue), PSTR("{\"Gesture\":\"Overload\"}"));
+        snprintf_P(log, sizeof(log), PSTR("LONG"));
+        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"Gesture\":\"Long\"}"));
       }
       else{
         snprintf_P(log, sizeof(log), PSTR("NONE"));
-        snprintf_P(svalue, sizeof(svalue), PSTR("{\"Gesture\":\"None\"}"));
+        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"Gesture\":\"None\"}"));
       }
     }
     AddLog_P(LOG_LEVEL_DEBUG, log);
-    MqttPublishPrefixTopic_P(2, svalue);
+    MqttPublishPrefixTopic_P(RESULT_OR_TELE, mqtt_data);
   }
 }
 
@@ -2036,47 +2029,26 @@ void APDS9960_loop()
     recovery_loop_counter -= 1;
   }
   if (recovery_loop_counter == 1 && APDS9960_overload){  //restart sensor just before the end of recovery
-
-    attachInterrupt(GPIO_IRQ, interruptRoutine, FALLING);
-    enableGestureSensor(true);
-    char svalue[TOPSZ];
+    enableGestureSensor(false);
     APDS9960_overload = false;
-    snprintf_P(svalue, sizeof(svalue), PSTR("{\"Gesture\":\"On\"}"));
-    MqttPublishPrefixTopic_P(2, svalue); // only after the long break we report, that we are online again
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"Gesture\":\"On\"}"));
+    MqttPublishPrefixTopic_P(RESULT_OR_TELE, mqtt_data); // only after the long break we report, that we are online again
     gesture_mode = true;
 
   }
 
-  if (isr_flag == 1){
-    detachInterrupt(GPIO_IRQ);
-    isr_flag = 0;
-    if (gesture_mode) {
+  if (gesture_mode) {
       if (recovery_loop_counter == 0){
       handleGesture();
-      attachInterrupt(GPIO_IRQ, interruptRoutine, FALLING);
-
-      uint8_t fifo_level; // we must be sure, that the FIFO is empty
-      fifo_level = I2cRead8(APDS9960_I2C_ADDR,APDS9960_GFLVL) ; // otherwise no interrupt will be triggered
-      if (fifo_level > 0){
-        disableGestureSensor();
-        char stemp[10];
-        sprintf (stemp, "%u", fifo_level);
-        char log[LOGSZ];
-        snprintf_P(log, sizeof(log), PSTR("restart sensor because FIFO_level is %s"), stemp);
-        AddLog_P(LOG_LEVEL_DEBUG, log);
-        enableGestureSensor(true);
-      }
 
       if (APDS9960_overload)
       {
         disableGestureSensor();
-        recovery_loop_counter = APDS9960_LONG_RECOVERY;  // long pause after overload - number of stateloops
-        char svalue[TOPSZ];
-        snprintf_P(svalue, sizeof(svalue), PSTR("{\"Gesture\":\"Off\"}"));
-        MqttPublishPrefixTopic_P(2, svalue);
+        recovery_loop_counter = APDS9960_LONG_RECOVERY;  // long pause after overload/long press - number of stateloops
+        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"Gesture\":\"Off\"}"));
+        MqttPublishPrefixTopic_P(RESULT_OR_TELE, mqtt_data);
         gesture_mode = false;
       }
-    }
     }
   }
 }
@@ -2104,11 +2076,7 @@ bool APDS9960_detect(void)
       success = true;
       snprintf_P(log, sizeof(log), PSTR("APDS9960 initialized"));
       AddLog_P(LOG_LEVEL_DEBUG, log);
-      if (GPIO_IRQ < 99) {
-        pinMode(GPIO_IRQ, INPUT);
-        attachInterrupt(GPIO_IRQ, interruptRoutine, FALLING);
-        enableGestureSensor(true);
-        }
+      enableGestureSensor(false);
       }
     else {
       snprintf_P(log, sizeof(log), PSTR("APDS9960 not initialized"));
@@ -2159,7 +2127,7 @@ readProximity(val_prox);
 sprintf (prox_chr, "%u", val_prox );
 
 if (json) {
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,:{\"Red\":%s, \"Green\":%s, \"Blue\":%s, \"Ambient\":%s, \"Proximity\":%s}"),
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s:{\"Red\":%s, \"Green\":%s, \"Blue\":%s, \"Ambient\":%s, \"Proximity\":%s}"),
       mqtt_data, red_chr, green_chr, blue_chr, ambient_chr, prox_chr);
 }
 
@@ -2177,24 +2145,15 @@ snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_APDS_9960_SNS, mqtt_data, red_chr,
 boolean apds9960_command()
 {
   char command [CMDSZ];
-  //char sunit[CMDSZ];
   boolean serviced = true;
-  //uint8_t status_flag = 0;
-  //uint8_t unit = 0;
-  //unsigned long nvalue = 0;
 
   int command_code = GetCommandCode(command, sizeof(command), XdrvMailbox.topic, kGestureCommands);
-  if (-1 == command_code) { // Unknown command ... let's see ...
+  if (-1 == command_code) {
     serviced = false;  // Unknown command
     return serviced;
   }
-//  if (!strcmp_P(XdrvMailbox.topic,PSTR("GESTURE"))) {
+
   if (CMND_GESTURE == command_code) {
-    if ((XdrvMailbox.payload == 0) || (XdrvMailbox.payload == 1)) {
-      isr_flag = 0;
-      if (GPIO_IRQ < 99) {
-        detachInterrupt(GPIO_IRQ);
-      }
       switch (XdrvMailbox.payload) {
       case 0: // Off
           disableGestureSensor();
@@ -2204,16 +2163,14 @@ boolean apds9960_command()
           enableProximitySensor(false);
           break;
       case 1: // On
-        if (GPIO_IRQ < 99) {
+        if (APDS9960type) {
           disableLightSensor();
           disableProximitySensor();
-          pinMode(GPIO_IRQ, INPUT);
-          attachInterrupt(GPIO_IRQ, interruptRoutine, FALLING);
-          enableGestureSensor(true);
+          enableGestureSensor(false);
           snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"Gesture\":\"on\"}"));
           gesture_mode = true;
           }
-      default:
+      default: // get status
         if(gesture_mode){
         snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"Gesture\":\"on\"}"));
         }
@@ -2221,7 +2178,6 @@ boolean apds9960_command()
         snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"Gesture\":\"Off\"}"));
           }
       }
-    }
   }
   else {
     serviced = false;  // Unknown command
@@ -2238,7 +2194,7 @@ boolean Xdrv91(byte function)
 {
   boolean result = false;
 
-  if (GPIO_IRQ < 99 && i2c_flg) {
+  if (i2c_flg) {
     switch (function) {
         case FUNC_INIT:
         APDS9960_detect();
