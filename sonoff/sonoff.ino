@@ -337,8 +337,13 @@ void SetDevicePower(power_t rpower, int source)
   if (Settings.flag.interlock) {
     if (Settings.flag.paired_interlock) {
       for (byte i = 0; i < devices_present; i=i+2) {
+        snprintf_P(log_data, sizeof(log_data), "Before: rpower %ld, power %ld, i: %d, status %d", rpower, power, i, bitRead(rpower, i));
+        AddLog(LOG_LEVEL_INFO);
         bitWrite(rpower, i+1, !bitRead(rpower, i));
+        snprintf_P(log_data, sizeof(log_data), "After: rpower %ld, power %ld, i: %d, status %d", rpower, power, i, bitRead(rpower, i));
+        AddLog(LOG_LEVEL_INFO);
       }
+      power = rpower;
     } else {
       power_t mask = 1;
       uint8_t count = 0;
@@ -352,7 +357,7 @@ void SetDevicePower(power_t rpower, int source)
       }
     }
   }
-
+//end
   XdrvSetPower(rpower);
 
   if ((SONOFF_DUAL == Settings.module) || (CH4 == Settings.module)) {
@@ -1254,7 +1259,9 @@ void ExecuteCommandPower(byte device, byte state, int source)
       blink_mask &= (POWER_MASK ^ mask);  // Clear device mask
       MqttPublishPowerBlinkState(device);
     }
-    if (Settings.flag.interlock && !interlock_mutex) {  // Clear all but masked relay
+    //stb mod
+    if (Settings.flag.interlock && !interlock_mutex && !Settings.flag.paired_interlock) {  // Clear all but masked relay
+    //end
       interlock_mutex = 1;
       for (byte i = 0; i < devices_present; i++) {
         power_t imask = 1 << i;
