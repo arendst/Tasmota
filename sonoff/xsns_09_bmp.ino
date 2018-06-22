@@ -98,16 +98,16 @@ boolean Bmp180Calibration()
     return false;
   }
 
-  if ((cal_ac1 == 0xFFFF) |
-      (cal_ac2 == 0xFFFF) |
-      (cal_ac3 == 0xFFFF) |
+  if ((cal_ac1 == (int16_t)0xFFFF) |
+      (cal_ac2 == (int16_t)0xFFFF) |
+      (cal_ac3 == (int16_t)0xFFFF) |
       (cal_ac4 == 0xFFFF) |
       (cal_ac5 == 0xFFFF) |
       (cal_ac6 == 0xFFFF) |
-      (cal_b1 == 0xFFFF) |
-      (cal_b2 == 0xFFFF) |
-      (cal_mc == 0xFFFF) |
-      (cal_md == 0xFFFF)) {
+      (cal_b1 == (int16_t)0xFFFF) |
+      (cal_b2 == (int16_t)0xFFFF) |
+      (cal_mc == (int16_t)0xFFFF) |
+      (cal_md == (int16_t)0xFFFF)) {
     return false;
   }
   return true;
@@ -128,9 +128,6 @@ double Bmp180ReadTemperature()
 double Bmp180ReadPressure()
 {
   int32_t p;
-  uint8_t msb;
-  uint8_t lsb;
-  uint8_t xlsb;
 
   I2cWrite8(bmp_address, BMP180_REG_CONTROL, BMP180_PRESSURE3); // Highest resolution
   delay(2 + (4 << BMP180_OSS));                                 // 26ms conversion time at ultra high resolution
@@ -468,8 +465,21 @@ void BmpShow(boolean json)
         mqtt_data, bmp_name, temperature, (bmp_model >= 2) ? json_humidity : "", pressure, (Settings.altitude != 0) ? json_sealevel : "");
 #endif  // USE_BME680
 #ifdef USE_DOMOTICZ
-      DomoticzTempHumPressureSensor(temperature, humidity, pressure);
+      if (0 == tele_period) {
+        DomoticzTempHumPressureSensor(temperature, humidity, pressure);
+#ifdef USE_BME680
+        if (bmp_model >= 3) { DomoticzSensor(DZ_AIRQUALITY, (uint32_t)g); }
+#endif  // USE_BME680
+      }
 #endif // USE_DOMOTICZ
+
+#ifdef USE_KNX
+      if (0 == tele_period) {
+        KnxSensor(KNX_TEMPERATURE, t);
+        KnxSensor(KNX_HUMIDITY, h);
+      }
+#endif  // USE_KNX
+
 #ifdef USE_WEBSERVER
     } else {
       snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TEMP, mqtt_data, bmp_name, temperature, TempUnit());
@@ -504,8 +514,14 @@ boolean Xsns09(byte function)
     switch (function) {
       case FUNC_PREP_BEFORE_TELEPERIOD:
         BmpDetect();
+        break;
+      case FUNC_EVERY_SECOND:
 #ifdef USE_BME680
-        Bme680PerformReading();
+        if ((Settings.tele_period - tele_period) < 300) {  // 5 minute stabilization time
+          if (tele_period &1) {
+            Bme680PerformReading();  // Keep BME680 busy every two seconds
+          }
+        }
 #endif  // USE_BME680
         break;
       case FUNC_JSON_APPEND:

@@ -22,6 +22,8 @@
  * SenseAir K30, K70 and S8 - CO2 sensor
  *
  * Adapted from EspEasy plugin P052 by Mikael Trieb (mikael__AT__triebconsulting.se)
+ *
+ * Hardware Serial will be selected if GPIO1 = [SAir Rx] and GPIO3 = [SAir Tx]
 \*********************************************************************************************/
 
 #include <TasmotaSerial.h>
@@ -74,6 +76,7 @@ void ModbusSend(uint8_t function_code, uint16_t start_address, uint16_t register
   frame[7] = (uint8_t)((crc >> 8) & 0xFF);
   frame[6] = (uint8_t)(crc & 0xFF);
 
+  SensairSerial->flush();
   SensairSerial->write(frame, sizeof(frame));
 }
 
@@ -95,6 +98,9 @@ uint8_t ModbusReceive(uint16_t *value)
       }
     }
   }
+
+  AddLogSerial(LOG_LEVEL_DEBUG_MORE, buffer, len);
+
   if (len != sizeof(buffer)) {
     return 9;                  // 9 = Unexpected result
   }
@@ -187,8 +193,9 @@ void SenseairInit()
 {
   senseair_type = 0;
   if ((pin[GPIO_SAIR_RX] < 99) && (pin[GPIO_SAIR_TX] < 99)) {
-    SensairSerial = new TasmotaSerial(pin[GPIO_SAIR_RX], pin[GPIO_SAIR_TX]);
-    if (SensairSerial->begin()) {
+    SensairSerial = new TasmotaSerial(pin[GPIO_SAIR_RX], pin[GPIO_SAIR_TX], 1);
+    if (SensairSerial->begin(9600)) {
+      if (SensairSerial->hardwareSerial()) { ClaimSerial(); }
       senseair_type = 1;
     }
   }
@@ -209,7 +216,7 @@ void SenseairShow(boolean json)
     }
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}"), mqtt_data);
 #ifdef USE_DOMOTICZ
-    DomoticzSensor(DZ_AIRQUALITY, senseair_co2);
+    if (0 == tele_period) DomoticzSensor(DZ_AIRQUALITY, senseair_co2);
 #endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
   } else {

@@ -82,7 +82,7 @@ void Veml6070Show(boolean json)
     if (json) {
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"VEML6070\":{\"" D_JSON_UV_LEVEL "\":%d}"), mqtt_data, uvlevel);
 #ifdef USE_DOMOTICZ
-      DomoticzSensor(DZ_ILLUMINANCE, uvlevel);
+      if (0 == tele_period) DomoticzSensor(DZ_ILLUMINANCE, uvlevel);
 #endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
     } else {

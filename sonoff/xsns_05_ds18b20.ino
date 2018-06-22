@@ -192,19 +192,25 @@ void Ds18b20Show(boolean json)
   if (Ds18b20Read(t)) {                // Check if read failed
     char temperature[10];
 
-    dtostrfi(t, Settings.flag2.temperature_resolution, temperature);
+    dtostrfd(t, Settings.flag2.temperature_resolution, temperature);
 
     if(json) {
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"DS18B20\":{\"" D_JSON_TEMPERATURE "\":%s}"), mqtt_data, temperature);
 #ifdef USE_DOMOTICZ
-      DomoticzSensor(DZ_TEMP, temperature);
+      if (0 == tele_period) DomoticzSensor(DZ_TEMP, temperature);
 #endif  // USE_DOMOTICZ
+#ifdef USE_KNX
+      if (0 == tele_period) {
+        KnxSensor(KNX_TEMPERATURE, t);
+      }
+#endif  // USE_KNX
 #ifdef USE_WEBSERVER
     } else {
       snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TEMP, mqtt_data, "DS18B20", temperature, TempUnit());
 #endif  // USE_WEBSERVER
     }
   }
+  Ds18x20Convert();   // Start conversion, takes up to one second
 }
 
 /*********************************************************************************************\
@@ -231,7 +237,6 @@ boolean Xsns05(byte function)
 #ifdef USE_WEBSERVER
       case FUNC_WEB_APPEND:
         Ds18b20Show(0);
-        Ds18x20Convert();   // Start conversion, takes up to one second
         break;
 #endif  // USE_WEBSERVER
     }

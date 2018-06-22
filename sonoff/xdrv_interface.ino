@@ -17,72 +17,143 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-void XDrvInit()
-{
-  for (byte i = 0; i < XDRV_MAX; i++) {
-    xdrv_func_ptr[i] = NULL;
-  }
-  xdrv_present = 0;
-
+boolean (* const xdrv_func_ptr[])(byte) PROGMEM = {   // Driver Function Pointers
 #ifdef XDRV_01
-  xdrv_func_ptr[xdrv_present++] = &Xdrv01;
+  &Xdrv01,
 #endif
 
 #ifdef XDRV_02
-  xdrv_func_ptr[xdrv_present++] = &Xdrv02;
+  &Xdrv02,
 #endif
 
 #ifdef XDRV_03
-  xdrv_func_ptr[xdrv_present++] = &Xdrv03;
+  &Xdrv03,
 #endif
 
 #ifdef XDRV_04
-  xdrv_func_ptr[xdrv_present++] = &Xdrv04;
+  &Xdrv04,
 #endif
 
 #ifdef XDRV_05
-  xdrv_func_ptr[xdrv_present++] = &Xdrv05;
+  &Xdrv05,
 #endif
 
 #ifdef XDRV_06
-  xdrv_func_ptr[xdrv_present++] = &Xdrv06;
+  &Xdrv06,
 #endif
 
 #ifdef XDRV_07
-  xdrv_func_ptr[xdrv_present++] = &Xdrv07;
+  &Xdrv07,
 #endif
 
 #ifdef XDRV_08
-  xdrv_func_ptr[xdrv_present++] = &Xdrv08;
+  &Xdrv08,
 #endif
 
 #ifdef XDRV_09
-  xdrv_func_ptr[xdrv_present++] = &Xdrv09;
+  &Xdrv09,
 #endif
 
 #ifdef XDRV_10
-  xdrv_func_ptr[xdrv_present++] = &Xdrv10;
+  &Xdrv10,
 #endif
 
-//  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_DEBUG "Drivers %d"), xdrv_present);
-//  AddLog(LOG_LEVEL_DEBUG);
+#ifdef XDRV_11
+  &Xdrv11,
+#endif
 
-  XdrvCall(FUNC_INIT);
-}
+#ifdef XDRV_12
+  &Xdrv12,
+#endif
 
-boolean XdrvCommand(char *type, uint16_t index, char *dataBuf, uint16_t data_len, int16_t payload)
+#ifdef XDRV_13
+  &Xdrv13,
+#endif
+
+#ifdef XDRV_14
+  &Xdrv14,
+#endif
+
+#ifdef XDRV_15
+  &Xdrv15,
+#endif
+
+#ifdef XDRV_16
+  &Xdrv16,
+#endif
+
+#ifdef XDRV_17
+  &Xdrv17,
+#endif
+
+#ifdef XDRV_18
+  &Xdrv18,
+#endif
+
+#ifdef XDRV_19
+  &Xdrv19,
+#endif
+
+#ifdef XDRV_20
+  &Xdrv20,
+#endif
+
+// Optional user defined drivers in range 91 - 99
+
+#ifdef XDRV_91
+  &Xdrv91,
+#endif
+
+#ifdef XDRV_92
+  &Xdrv92,
+#endif
+
+#ifdef XDRV_93
+  &Xdrv93,
+#endif
+
+#ifdef XDRV_94
+  &Xdrv94,
+#endif
+
+#ifdef XDRV_95
+  &Xdrv95,
+#endif
+
+#ifdef XDRV_96
+  &Xdrv96,
+#endif
+
+#ifdef XDRV_97
+  &Xdrv97,
+#endif
+
+#ifdef XDRV_98
+  &Xdrv98,
+#endif
+
+#ifdef XDRV_99
+  &Xdrv99
+#endif
+};
+
+const uint8_t xdrv_present = sizeof(xdrv_func_ptr) / sizeof(xdrv_func_ptr[0]);  // Number of drivers found
+
+boolean XdrvCommand(uint8_t grpflg, char *type, uint16_t index, char *dataBuf, uint16_t data_len, int16_t payload, uint16_t payload16)
 {
 //  XdrvMailbox.valid = 1;
   XdrvMailbox.index = index;
   XdrvMailbox.data_len = data_len;
+  XdrvMailbox.payload16 = payload16;
   XdrvMailbox.payload = payload;
+  XdrvMailbox.grpflg = grpflg;
   XdrvMailbox.topic = type;
   XdrvMailbox.data = dataBuf;
 
   return XdrvCall(FUNC_COMMAND);
 }
 
-void XdrvSetPower(uint8_t mpower)
+void XdrvSetPower(power_t mpower)
 {
 //  XdrvMailbox.valid = 1;
   XdrvMailbox.index = mpower;
@@ -100,8 +171,26 @@ boolean XdrvMqttData(char *topicBuf, uint16_t stopicBuf, char *dataBuf, uint16_t
   return XdrvCall(FUNC_MQTT_DATA);
 }
 
+boolean XdrvRulesProcess()
+{
+  return XdrvCall(FUNC_RULES_PROCESS);
+}
+
 /*********************************************************************************************\
  * Function call to all xdrv
+ *
+ * FUNC_PRE_INIT
+ * FUNC_INIT
+ * FUNC_LOOP
+ * FUNC_MQTT_SUBSCRIBE
+ * FUNC_MQTT_INIT
+ * return FUNC_MQTT_DATA
+ * return FUNC_COMMAND
+ * FUNC_SET_POWER
+ * FUNC_SHOW_SENSOR
+ * FUNC_EVERY_SECOND
+ * FUNC_EVERY_50_MSECOND
+ * FUNC_RULES_PROCESS
 \*********************************************************************************************/
 
 boolean XdrvCall(byte Function)
@@ -110,9 +199,7 @@ boolean XdrvCall(byte Function)
 
   for (byte x = 0; x < xdrv_present; x++) {
     result = xdrv_func_ptr[x](Function);
-    if (result) {
-      break;
-    }
+    if (result) break;
   }
 
   return result;
