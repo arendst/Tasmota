@@ -111,25 +111,30 @@ void pcf8574_saveSettings()
 #endif // USE_WEBSERVER
 
 
-void pcf8574_switchrelay(byte i, uint8_t state)
+void pcf8574_switchrelay()
 {
-  //snprintf_P(log_data, sizeof(log_data), PSTR("RSLT: max_pcf8574_devices %d requested pin %d"), max_pcf8574_devices,pcf8574_pin[i]);
-  //AddLog(LOG_LEVEL_DEBUG);
-  if (max_pcf8574_devices > 0 && pcf8574_pin[i] < 99) {
-    uint8_t board = pcf8574_pin[i]>>3;
-    uint8_t oldpinmask = _pcf8574pinMask[board];
-    uint8_t _val = bitRead(rel_inverted, i) ? !state : state;
-    //snprintf_P(log_data, sizeof(log_data), PSTR("RSLT: pcf8574_switchrelay %d on pin %d"), i,state);
-    //AddLog(LOG_LEVEL_DEBUG);
-    if(_val) _pcf8574pinMask[board] |= _val << (pcf8574_pin[i]&0x7);
-    else _pcf8574pinMask[board] &= ~(1 << (pcf8574_pin[i]&0x7));
-    if (oldpinmask != _pcf8574pinMask[board]) {
-      Wire.beginTransmission(pcf8574addr[board]);
-      Wire.write(_pcf8574pinMask[board]);
-      _error = Wire.endTransmission();
-    }
+  uint8_t relay_state;
 
-    //pcf8574.write(pcf8574_pin[i]&0x7, rel_inverted[i] ? !state : state);
+  for (byte i = 0; i < devices_present; i++) {
+    relay_state = bitRead(XdrvMailbox.index, i);
+    //snprintf_P(log_data, sizeof(log_data), PSTR("RSLT: max_pcf8574_devices %d requested pin %d"), max_pcf8574_devices,pcf8574_pin[i]);
+    //AddLog(LOG_LEVEL_DEBUG);
+    if (max_pcf8574_devices > 0 && pcf8574_pin[i] < 99) {
+      uint8_t board = pcf8574_pin[i]>>3;
+      uint8_t oldpinmask = _pcf8574pinMask[board];
+      uint8_t _val = bitRead(rel_inverted, i) ? !relay_state : relay_state;
+      //snprintf_P(log_data, sizeof(log_data), PSTR("RSLT: pcf8574_switchrelay %d on pin %d"), i,state);
+      //AddLog(LOG_LEVEL_DEBUG);
+      if(_val) _pcf8574pinMask[board] |= _val << (pcf8574_pin[i]&0x7);
+      else _pcf8574pinMask[board] &= ~(1 << (pcf8574_pin[i]&0x7));
+      if (oldpinmask != _pcf8574pinMask[board]) {
+        Wire.beginTransmission(pcf8574addr[board]);
+        Wire.write(_pcf8574pinMask[board]);
+        _error = Wire.endTransmission();
+      }
+
+      //pcf8574.write(pcf8574_pin[i]&0x7, rel_inverted[i] ? !state : state);
+    }
   }
 }
 
@@ -206,6 +211,9 @@ boolean Xdrv20(byte function)
       case FUNC_PRE_INIT:
          pcf8574_Init();
         break;
+      case FUNC_SET_POWER:
+          pcf8574_switchrelay();
+          break;
     }
   }
   return result;

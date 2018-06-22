@@ -318,7 +318,7 @@ struct TIME_T {
 
 struct XDRVMAILBOX {
   uint16_t      valid;
-  uint16_t      index;
+  power_t      index;
   uint16_t      data_len;
   uint16_t      payload16;
   int16_t       payload;

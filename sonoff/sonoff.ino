@@ -365,13 +365,6 @@ void SetDevicePower(power_t rpower, int source)
       if ((i < MAX_RELAYS) && (pin[GPIO_REL1 +i] < 99)) {
         digitalWrite(pin[GPIO_REL1 +i], bitRead(rel_inverted, i) ? !state : state);
       }
-//STB mod
-#ifdef USE_I2C
-#ifdef USE_PCF8574
-      pcf8574_switchrelay(i, state);
-#endif
-#endif
-//end
       rpower >>= 1;
     }
   }
@@ -2435,14 +2428,6 @@ void GpioInit()
   SetLedPower(Settings.ledstate &8);
 
   XdrvCall(FUNC_PRE_INIT);
-
-//STB mod
-#ifdef USE_I2C
-#ifdef USE_PCF8574
-  pcf8574_Init();
-#endif  // USE_PCF8574
-#endif
-//end
 
 }
 
