@@ -333,16 +333,23 @@ void SetDevicePower(power_t rpower, int source)
     power = (1 << devices_present) -1;
     rpower = power;
   }
-  if (Settings.flag.interlock) {     // Allow only one or no relay set
-    power_t mask = 1;
-    uint8_t count = 0;
-    for (byte i = 0; i < devices_present; i++) {
-      if (rpower & mask) count++;
-      mask <<= 1;
-    }
-    if (count > 1) {
-      power = 0;
-      rpower = 0;
+  //STB mode
+  if (Settings.flag.interlock) {
+    if (Settings.flag.paired_interlock) {
+      for (byte i = 0; i < devices_present; i=i+2) {
+        bitWrite(rpower, i+1, !bitRead(rpower, i));
+      }
+    } else {
+      power_t mask = 1;
+      uint8_t count = 0;
+      for (byte i = 0; i < devices_present; i++) {
+        if (rpower & mask) count++;
+        mask <<= 1;
+      }
+      if (count > 1) {
+        power = 0;
+        rpower = 0;
+      }
     }
   }
 
@@ -588,7 +595,9 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
       XsnsCall(FUNC_COMMAND);
 //      if (!XsnsCall(FUNC_COMMAND)) type = NULL;
     }
-    else if ((CMND_SETOPTION == command_code) && ((index <= 26) || ((index > 31) && (index <= P_MAX_PARAM8 + 31)))) {
+  //STB mod
+    else if ((CMND_SETOPTION == command_code) && ((index <= 32) || ((index > 31) && (index <= P_MAX_PARAM8 + 31)))) {
+  //end
       if (index <= 31) {
         ptype = 0;   // SetOption0 .. 31
       } else {
@@ -624,6 +633,10 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
 //              case 25:  // knx_enabled
               case 26:  // device_index_enable
                 bitWrite(Settings.flag.data, index, payload);
+              //stb mod
+              case 31:  // device_index_enable
+                bitWrite(Settings.flag.data, index, payload);
+              //end
             }
             if (12 == index) {  // stop_flash_rotate
               stop_flash_rotate = payload;
