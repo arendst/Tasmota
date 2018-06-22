@@ -337,11 +337,7 @@ void SetDevicePower(power_t rpower, int source)
   if (Settings.flag.interlock) {
     if (Settings.flag.paired_interlock) {
       for (byte i = 0; i < devices_present; i=i+2) {
-        snprintf_P(log_data, sizeof(log_data), "Before: rpower %ld, power %ld, i: %d, status %d", rpower, power, i, bitRead(rpower, i));
-        AddLog(LOG_LEVEL_INFO);
         bitWrite(rpower, i+1, !bitRead(rpower, i));
-        snprintf_P(log_data, sizeof(log_data), "After: rpower %ld, power %ld, i: %d, status %d", rpower, power, i, bitRead(rpower, i));
-        AddLog(LOG_LEVEL_INFO);
       }
       power = rpower;
     } else {
