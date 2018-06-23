@@ -23,7 +23,7 @@
  POSSIBILITY OF SUCH DAMAGE.
 */
 
-// #define USE_APDS9960    // uncomment to enable the sensor
+//#define USE_APDS9960    // uncomment to enable the sensor
 // !!!!!!  turn off conflicting drivers !!!!
 #if defined(USE_SHT) || defined(USE_VEML6070)
  #warning I will turn off conflicting drivers (SHT and VEML6070) !!!
@@ -39,13 +39,6 @@ enum GestureCommands {
 
 const char kGestureCommands[] PROGMEM =
   "Gesture" ;
-
-#define UP                    1
-#define RIGHT                 2
-#define DOWN                  3
-#define LEFT                  4
-#define LONG                  5
-#define NONE                  6
 
 /*********************************************************************************************\
  * APDS9960
@@ -69,7 +62,7 @@ const char kGestureCommands[] PROGMEM =
 uint8_t APDS9960addr;
 uint8_t APDS9960type = 0;
 char APDS9960stype[7];
-uint8_t currentGesture = NONE;
+char currentGesture[6];
 bool gesture_mode = true;
 
 
@@ -1924,29 +1917,29 @@ void handleGesture() {
     switch (readGesture()) {
       case DIR_UP:
         snprintf_P(log, sizeof(log), PSTR("UP"));
-        currentGesture = UP;
+        snprintf_P(currentGesture, sizeof(currentGesture), PSTR("Up"));
         break;
       case DIR_DOWN:
         snprintf_P(log, sizeof(log), PSTR("DOWN"));
-        currentGesture = DOWN;
+        snprintf_P(currentGesture, sizeof(currentGesture), PSTR("Down"));
         break;
       case DIR_LEFT:
         snprintf_P(log, sizeof(log), PSTR("LEFT"));
-        currentGesture = LEFT;
+          snprintf_P(currentGesture, sizeof(currentGesture), PSTR("Left"));
         break;
       case DIR_RIGHT:
         snprintf_P(log, sizeof(log), PSTR("RIGHT"));
-        currentGesture = RIGHT;
+          snprintf_P(currentGesture, sizeof(currentGesture), PSTR("Right"));
         break;
       default:
       if(APDS9960_overload)
       {
         snprintf_P(log, sizeof(log), PSTR("LONG"));
-        currentGesture = LONG;
+        snprintf_P(currentGesture, sizeof(currentGesture), PSTR("Long"));
       }
       else{
         snprintf_P(log, sizeof(log), PSTR("NONE"));
-        currentGesture = NONE;
+        snprintf_P(currentGesture, sizeof(currentGesture), PSTR("None"));
       }
     }
     AddLog_P(LOG_LEVEL_DEBUG, log);
@@ -2020,6 +2013,7 @@ bool APDS9960_detect(void)
    snprintf_P(log, sizeof(log), PSTR("APDS9960 not found at address 0x%x"), APDS9960_I2C_ADDR);
    AddLog_P(LOG_LEVEL_DEBUG, log);
   }
+  currentGesture[0] = '\0';
   return success;
 }
 
@@ -2070,10 +2064,9 @@ void APDS9960_show(boolean json)
       #endif  // USE_WEBSERVER
     }
     else{
-      if (json && currentGesture) {
-        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"%s\":{\"Gesture\":%x}"),
-        mqtt_data, APDS9960stype ,currentGesture);
-        currentGesture = 0;
+      if (json && (currentGesture[0] != '\0' )) {
+        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"%s\":{\"%s\":1}"), mqtt_data, APDS9960stype, currentGesture);
+        currentGesture[0] = '\0';
       }
 }
 }
