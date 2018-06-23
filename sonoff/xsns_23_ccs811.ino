@@ -35,7 +35,7 @@ uint8_t CCS811_ready;
 uint8_t CCS811_type;
 uint16_t eCO2;
 uint16_t TVOC;
-uint8_t tcnt;
+uint8_t tcnt,ecnt;
 
 /********************************************************************************************/
 #define EVERYNSECONDS 5
@@ -66,6 +66,14 @@ void CCS811Update()  // Perform every n second
             double gtmp=glob_temperature;
             ccs.setEnvironmentalData(glob_humidity,gtmp/4);
           }
+          ecnt=0;
+        }
+      } else {
+        // failed, count up
+        ecnt+=1;
+        if (ecnt>6) {
+          // after 30 seconds, restart
+          ccs.begin(CCS811_ADDRESS);
         }
       }
     }

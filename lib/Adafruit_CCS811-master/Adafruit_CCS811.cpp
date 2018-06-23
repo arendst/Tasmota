@@ -246,7 +246,7 @@ void Adafruit_CCS811::_i2c_init()
 {
 	Wire.begin();
 	#ifdef ESP8266
-	Wire.setClockStretchLimit(500);
+	Wire.setClockStretchLimit(1000);
 	#endif
 }
 

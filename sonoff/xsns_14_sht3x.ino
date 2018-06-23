@@ -106,6 +106,10 @@ void Sht3xShow(boolean json)
         snprintf_P(types, sizeof(types), PSTR("%s-0x%02X"), sht3x_sensors[i].types, sht3x_sensors[i].address);  // "SHT3X-0xXX"
         if (json) {
           snprintf_P(mqtt_data, sizeof(mqtt_data), JSON_SNS_TEMPHUM, mqtt_data, types, temperature, humidity);
+#ifdef USE_CCS811
+          glob_humidity=h;
+          glob_temperature=(t*4);
+#endif
 #ifdef USE_DOMOTICZ
           if ((0 == tele_period) && (0 == i)) {  // We want the same first sensor to report to Domoticz in case a read is missed
             DomoticzTempHumSensor(temperature, humidity);

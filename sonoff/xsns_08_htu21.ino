@@ -104,17 +104,23 @@ uint16_t SHT21::readSHT21(uint8_t command)
     Wire.beginTransmission(SHT21_ADDRESS);
     Wire.write(command);
     Wire.endTransmission();
-	delay(100);
+
+    if (command==TRIGGER_TEMP_MEASURE_NOHOLD) delay(90);
+    else delay(35);
 
     Wire.requestFrom(SHT21_ADDRESS, 3);
+    if (Wire.available()<3) {
+      return 0;
+    }
+    /*
     while(Wire.available() < 3) {
       delay(1);
-    }
+    }*/
 
     // return result
     result = ((Wire.read()) << 8);
     result += Wire.read();
-	result &= ~0x0003;   // clear two low bits (status bits)
+	  result &= ~0x0003;   // clear two low bits (status bits)
     return result;
 }
 
