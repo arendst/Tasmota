@@ -23,10 +23,13 @@
  POSSIBILITY OF SUCH DAMAGE.
 */
 
-//#define USE_APDS9960    // uncomment to enable the sensor
+// #define USE_APDS9960    // uncomment to enable the sensor
 // !!!!!!  turn off conflicting drivers !!!!
-#undef USE_SHT          // SHT-Driver blocks gesture sensor
-#undef USE_VEML6070     // address conflict on the I2C-bus
+#if defined(USE_SHT) || defined(USE_VEML6070)
+ #warning I will turn off conflicting drivers (SHT and VEML6070) !!!
+ #undef USE_SHT          // SHT-Driver blocks gesture sensor
+ #undef USE_VEML6070     // address conflict on the I2C-bus
+#endif
 
 #ifdef USE_I2C
 #ifdef USE_APDS9960
@@ -67,8 +70,10 @@ uint8_t APDS9960addr;
 uint8_t APDS9960type = 0;
 char APDS9960stype[7];
 uint8_t currentGesture = NONE;
+bool gesture_mode = true;
 
-volatile uint8_t recovery_loop_counter = 0;  //count number of stateloops to switch the sensor of for some time
+
+volatile uint8_t recovery_loop_counter = 0;  //count number of stateloops to switch the sensor off, if needed
 #define APDS9960_LONG_RECOVERY           50 //long pause after sensor overload in loops
 #define APDS9960_MAX_GESTURE_CYCLES      50  //how many FIFO-reads are allowed to prevent crash
 bool APDS9960_overload = false;
@@ -246,16 +251,12 @@ enum {
   DIR_RIGHT,
   DIR_UP,
   DIR_DOWN,
-  //DIR_NEAR,
-  //DIR_FAR,
   DIR_ALL
 };
 
 /* State definitions*/
 enum {
   APDS9960_NA_STATE,
-  //APDS9960_NEAR_STATE,
-  //APDS9960_FAR_STATE,
   APDS9960_ALL_STATE
 };
 
@@ -278,12 +279,8 @@ typedef struct gesture_data_type {
  int16_t gesture_lr_delta_ = 0;
  int16_t gesture_ud_count_ = 0;
  int16_t gesture_lr_count_ = 0;
- //int16_t gesture_near_count_ = 0;
- //int16_t gesture_far_count_ = 0;
  int16_t gesture_state_ = 0;
  int16_t gesture_motion_ = DIR_NONE;
-
- bool gesture_mode = true;
 
 
 
@@ -1276,18 +1273,7 @@ bool APDS9960_init()
 
     setGestureIntEnable(DEFAULT_GIEN);
 
-    boolean success = true;
-    /*
-    // Now make a small test
-    uint16_t test_val;
-    enableLightSensor(false);
-    readRedLight(test_val);  // test something ... for instance red
-    if(test_val){
-      disableLightSensor();
-      success = true;
-    }*/
-
-    return success;
+    return true;
 }
 /*******************************************************************************
  * Public methods for controlling the APDS-9960
@@ -1719,9 +1705,6 @@ void resetGestureParameters()
     gesture_ud_count_ = 0;
     gesture_lr_count_ = 0;
 
-    //gesture_near_count_ = 0;
-    //gesture_far_count_ = 0;
-
     gesture_state_ = 0;
     gesture_motion_ = DIR_NONE;
 }
@@ -1876,43 +1859,6 @@ bool processGestureData()
         gesture_lr_count_ = 0;
     }
 
-    /* Determine Near/Far gesture */
-  /*  if( (gesture_ud_count_ == 0) && (gesture_lr_count_ == 0) ) {
-        if( (abs(ud_delta) < GESTURE_SENSITIVITY_2) && \
-            (abs(lr_delta) < GESTURE_SENSITIVITY_2) ) {
-
-            if( (ud_delta == 0) && (lr_delta == 0) ) {
-                gesture_near_count_++;
-            } else if( (ud_delta != 0) || (lr_delta != 0) ) {
-                gesture_far_count_++;
-            }
-
-            if( (gesture_near_count_ >= 10) && (gesture_far_count_ >= 2) ) {
-                if( (ud_delta == 0) && (lr_delta == 0) ) {
-                    gesture_state_ = APDS9960_NEAR_STATE;
-                } else if( (ud_delta != 0) && (lr_delta != 0) ) {
-                    gesture_state_ = APDS9960_FAR_STATE;
-                }
-                return true;
-            }
-        }
-    } else {
-        if( (abs(ud_delta) < GESTURE_SENSITIVITY_2) && \
-            (abs(lr_delta) < GESTURE_SENSITIVITY_2) ) {
-
-            if( (ud_delta == 0) && (lr_delta == 0) ) {
-                gesture_near_count_++;
-            }
-
-            if( gesture_near_count_ >= 10 ) {
-                gesture_ud_count_ = 0;
-                gesture_lr_count_ = 0;
-                gesture_ud_delta_ = 0;
-                gesture_lr_delta_ = 0;
-            }
-        }
-    }*/
-
 #if DEBUG
     Serial.print("UD_CT: ");
     Serial.print(gesture_ud_count_);
@@ -1931,14 +1877,6 @@ bool processGestureData()
  */
 bool decodeGesture()
 {
-    /* Return if near or far event is detected */
-  /*  if( gesture_state_ == APDS9960_NEAR_STATE ) {
-        gesture_motion_ = DIR_NEAR;
-        return true;
-    } else if ( gesture_state_ == APDS9960_FAR_STATE ) {
-        gesture_motion_ = DIR_FAR;
-        return true;
-    }*/
 
     /* Determine swipe direction */
     if( (gesture_ud_count_ == -1) && (gesture_lr_count_ == 0) ) {
@@ -2029,28 +1967,27 @@ void APDS9960_loop()
   if (recovery_loop_counter > 0){
     recovery_loop_counter -= 1;
   }
-  if (recovery_loop_counter == 1 && APDS9960_overload){  //restart sensor just before the end of recovery
+  if (recovery_loop_counter == 1 && APDS9960_overload){  //restart sensor just before the end of recovery from long press
     enableGestureSensor(false);
     APDS9960_overload = false;
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"Gesture\":\"On\"}"));
     MqttPublishPrefixTopic_P(RESULT_OR_TELE, mqtt_data); // only after the long break we report, that we are online again
     gesture_mode = true;
-
   }
 
   if (gesture_mode) {
       if (recovery_loop_counter == 0){
       handleGesture();
 
-      if (APDS9960_overload)
-      {
+        if (APDS9960_overload)
+        {
         disableGestureSensor();
         recovery_loop_counter = APDS9960_LONG_RECOVERY;  // long pause after overload/long press - number of stateloops
         snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"Gesture\":\"Off\"}"));
         MqttPublishPrefixTopic_P(RESULT_OR_TELE, mqtt_data);
         gesture_mode = false;
+        }
       }
-    }
   }
 }
 
@@ -2063,9 +2000,7 @@ bool APDS9960_detect(void)
   }
 
   boolean success = false;
-
   char log[LOGSZ];
-
   APDS9960type = I2cRead8(APDS9960_I2C_ADDR, APDS9960_ID);
 
   if (APDS9960type ==  APDS9960_CHIPID_1 || APDS9960type ==  APDS9960_CHIPID_2)
@@ -2079,11 +2014,6 @@ bool APDS9960_detect(void)
       AddLog_P(LOG_LEVEL_DEBUG, log);
       enableGestureSensor(false);
       }
-    else {
-      snprintf_P(log, sizeof(log), PSTR("APDS9960 not initialized"));
-      AddLog_P(LOG_LEVEL_DEBUG, log);
-      APDS9960type = 0;
-    }
   }
   else
   {
@@ -2106,45 +2036,45 @@ void APDS9960_show(boolean json)
     return;
   }
   if (!gesture_mode)
-  {
-  char red_chr[10];
-  char green_chr[10];
-  char blue_chr[10];
-  char ambient_chr[10];
-  char prox_chr[10];
-  uint16_t val;
-  uint8_t val_prox;
+    {
+      char red_chr[10];
+      char green_chr[10];
+      char blue_chr[10];
+      char ambient_chr[10];
+      char prox_chr[10];
+      uint16_t val;
+      uint8_t val_prox;
 
 
-readRedLight(val);
-sprintf (red_chr, "%u", val);
-readGreenLight(val);
-sprintf (green_chr, "%u", val);
-readBlueLight(val);
-sprintf (blue_chr, "%u", val );
-readAmbientLight(val);
-sprintf (ambient_chr, "%u", val );
+      readRedLight(val);
+      sprintf (red_chr, "%u", val);
+      readGreenLight(val);
+      sprintf (green_chr, "%u", val);
+      readBlueLight(val);
+      sprintf (blue_chr, "%u", val );
+      readAmbientLight(val);
+      sprintf (ambient_chr, "%u", val );
 
-readProximity(val_prox);
-sprintf (prox_chr, "%u", val_prox );
+      readProximity(val_prox);
+      sprintf (prox_chr, "%u", val_prox );
 
-if (json) {
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"APDS9960\":{\"Red\":%s, \"Green\":%s, \"Blue\":%s, \"Ambient\":%s, \"Proximity\":%s}"),
-      mqtt_data, red_chr, green_chr, blue_chr, ambient_chr, prox_chr);
-}
+      if (json) {
+        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"%s\":{\"Red\":%s, \"Green\":%s, \"Blue\":%s, \"Ambient\":%s, \"Proximity\":%s}"),
+      mqtt_data, APDS9960stype, red_chr, green_chr, blue_chr, ambient_chr, prox_chr);
+      }
 
-#ifdef USE_WEBSERVER
-else{
-snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_APDS_9960_SNS, mqtt_data, red_chr, green_chr, blue_chr, ambient_chr, prox_chr );
-}
-#endif  // USE_WEBSERVER
-}
-else{
-  if (json && currentGesture) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"APDS9960\":{\"Gesture\":%x}"),
-        mqtt_data, currentGesture);
-      currentGesture = 0;
-  }
+      #ifdef USE_WEBSERVER
+      else{
+      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_APDS_9960_SNS, mqtt_data, red_chr, green_chr, blue_chr, ambient_chr, prox_chr );
+        }
+      #endif  // USE_WEBSERVER
+    }
+    else{
+      if (json && currentGesture) {
+        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"%s\":{\"Gesture\":%x}"),
+        mqtt_data, APDS9960stype ,currentGesture);
+        currentGesture = 0;
+      }
 }
 }
 /*********************************************************************************************\
@@ -2180,12 +2110,12 @@ boolean apds9960_command()
           gesture_mode = true;
           }
       default: // get status
-        if(gesture_mode){
-        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"Gesture\":\"on\"}"));
-        }
-        else{
-        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"Gesture\":\"Off\"}"));
-          }
+          if(gesture_mode){
+            snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"Gesture\":\"on\"}"));
+            }
+            else{
+              snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"Gesture\":\"Off\"}"));
+            }
       }
   }
   else {
