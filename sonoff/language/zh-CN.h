@@ -28,15 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
-<<<<<<< HEAD
-<<<<<<< HEAD
  * Updated until v5.14.0b
-=======
-\*********************************************************************/
-
-=======
- * Updated until v5.12.0d
->>>>>>> parent of 70a331a... update of zh-CN language
 \*********************************************************************/
 
 //#define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -45,14 +37,6 @@
 // HTML (ISO 639-1) Language Code
 #define D_HTML_LANGUAGE "zh"
 
-<<<<<<< HEAD
-=======
-\*********************************************************************/
-
->>>>>>> parent of 16840c6... Merge remote-tracking branch 'upstream/development' into development
-=======
->>>>>>> upstream/development
->>>>>>> parent of 70a331a... update of zh-CN language
 // "2017-03-07T11:08:02" - ISO8601:2004
 #define D_YEAR_MONTH_SEPARATOR "-"
 #define D_MONTH_DAY_SEPARATOR "-"
@@ -60,8 +44,8 @@
 #define D_HOUR_MINUTE_SEPARATOR ":"
 #define D_MINUTE_SECOND_SEPARATOR ":"
 
-#define D_DAY3LIST "SunMonTueWedThuFriSat"
-#define D_MONTH3LIST "JanFebMarAprMayJunJulAugSepOctNovDec"
+#define D_DAY3LIST "日  一  二  三  四  五  六  "
+#define D_MONTH3LIST "1月 2月 3月 4月 5月 6月 7月 8月 9月 10月11月12月"
 
 // Non JSON decimal separator
 #define D_DECIMAL_SEPARATOR "."
@@ -75,13 +59,9 @@
 #define D_BLINK "闪烁"
 #define D_BLINKOFF "闪烁关"
 #define D_BOOT_COUNT "启动次数"
-<<<<<<< HEAD
 #define D_BRIGHTLIGHT "亮"
-=======
-#define D_BRIGHTLIGHT "亮度"
->>>>>>> upstream/development
 #define D_BUTTON "按钮"
-#define D_BY "by"                    // Written by me
+#define D_BY "汉化: killadm 作者:"                    // Written by me
 #define D_BYTES "大小:"
 #define D_CELSIUS "摄氏"
 #define D_CO2 "二氧化碳"
@@ -90,69 +70,29 @@
 #define D_COMMAND "命令:"
 #define D_CONNECTED "已连接"
 #define D_COUNT "数量:"
-<<<<<<< HEAD
 #define D_COUNTER "计数器"
 #define D_CURRENT "电流"          // As in Voltage and Current
 #define D_DATA "数据:"
 #define D_DARKLIGHT "暗"
 #define D_DEBUG "调试"
 #define D_DISABLED "禁用"
-<<<<<<< HEAD
-<<<<<<< HEAD
 #define D_DISTANCE "距离"
-=======
-#define D_DNS_SERVER "DNS服务器"
-#define D_DONE "完成"
-#define D_DST_TIME "DST"
-=======
-#define D_COUNTER "Counter"
-#define D_CURRENT "电流"          // As in Voltage and Current
-#define D_DATA "数据:"
-#define D_DARKLIGHT "Dark"
-#define D_DEBUG "调试"
-#define D_DISABLED "禁用"
-#define D_DISTANCE "Distance"
->>>>>>> parent of 70a331a... update of zh-CN language
 #define D_DNS_SERVER "DNS服务器"
 #define D_DONE "完成"
 #define D_DST_TIME "DST"
 #define D_ECO2 "eCO2"
-<<<<<<< HEAD
-=======
-#define D_DNS_SERVER "DNS服务器"
-#define D_DONE "完成"
-#define D_DST_TIME "DST"
->>>>>>> parent of 16840c6... Merge remote-tracking branch 'upstream/development' into development
-=======
->>>>>>> upstream/development
->>>>>>> parent of 70a331a... update of zh-CN language
 #define D_EMULATION "设备模拟"
 #define D_ENABLED "启用"
 #define D_ERASE "擦除"
 #define D_ERROR "错误"
 #define D_FAHRENHEIT "华氏"
 #define D_FAILED "失败"
-<<<<<<< HEAD
 #define D_FALLBACK "回退"
 #define D_FALLBACK_TOPIC "回退主题"
 #define D_FALSE "False"
 #define D_FILE "文件:"
 #define D_FREE_MEMORY "空闲内存"
-<<<<<<< HEAD
-<<<<<<< HEAD
 #define D_FREQUENCY "频率"
-=======
->>>>>>> parent of 16840c6... Merge remote-tracking branch 'upstream/development' into development
-=======
-=======
-#define D_FALLBACK "Fallback"
-#define D_FALLBACK_TOPIC "Fallback Topic"
-#define D_FALSE "False"
-#define D_FILE "文件:"
-#define D_FREE_MEMORY "空闲内存"
-#define D_FREQUENCY "Frequency"
->>>>>>> upstream/development
->>>>>>> parent of 70a331a... update of zh-CN language
 #define D_GAS "气体"
 #define D_GATEWAY "网关"
 #define D_GROUP "组:"
@@ -160,23 +100,10 @@
 #define D_HOSTNAME "主机名"
 #define D_HUMIDITY "湿度"
 #define D_ILLUMINANCE "照度"
-<<<<<<< HEAD
 #define D_IMMEDIATE "单次按键"      // Button immediate
 #define D_INDEX "索引:"
 #define D_INFO "信息"
-<<<<<<< HEAD
-<<<<<<< HEAD
 #define D_INFRARED "红外线"
-=======
->>>>>>> parent of 16840c6... Merge remote-tracking branch 'upstream/development' into development
-=======
-=======
-#define D_IMMEDIATE "immediate"      // Button immediate
-#define D_INDEX "索引:"
-#define D_INFO "信息"
-#define D_INFRARED "Infrared"
->>>>>>> upstream/development
->>>>>>> parent of 70a331a... update of zh-CN language
 #define D_INITIALIZED "初始化完成"
 #define D_IP_ADDRESS "IP地址"
 #define D_LIGHT "灯"
@@ -195,20 +122,9 @@
 #define D_PORT "端口"
 #define D_POWER_FACTOR "功率因数"
 #define D_POWERUSAGE "功率"
-<<<<<<< HEAD
-<<<<<<< HEAD
 #define D_POWERUSAGE_ACTIVE "有功功率"
 #define D_POWERUSAGE_APPARENT "视在功率"
 #define D_POWERUSAGE_REACTIVE "无功功率"
-=======
->>>>>>> parent of 16840c6... Merge remote-tracking branch 'upstream/development' into development
-=======
-=======
-#define D_POWERUSAGE_ACTIVE "Active Power"
-#define D_POWERUSAGE_APPARENT "Apparent Power"
-#define D_POWERUSAGE_REACTIVE "Reactive Power"
->>>>>>> upstream/development
->>>>>>> parent of 70a331a... update of zh-CN language
 #define D_PRESSURE "气压"
 #define D_PRESSUREATSEALEVEL "海平面气压"
 #define D_PROGRAM_FLASH_SIZE "固件 Flash 大小"
@@ -220,16 +136,7 @@
 #define D_RESTART_REASON "重启原因"
 #define D_RESTORE "恢复"
 #define D_RETAINED "已保留"
-<<<<<<< HEAD
-<<<<<<< HEAD
 #define D_RULE "规则"
-=======
->>>>>>> parent of 16840c6... Merge remote-tracking branch 'upstream/development' into development
-=======
-=======
-#define D_RULE "Rule"
->>>>>>> upstream/development
->>>>>>> parent of 70a331a... update of zh-CN language
 #define D_SAVE "保存"
 #define D_SENSOR "传感器"
 #define D_SSID "名称"
@@ -239,49 +146,21 @@
 #define D_SUBNET_MASK "子网掩码"
 #define D_SUBSCRIBE_TO "订阅"
 #define D_SUCCESSFUL "成功"
-<<<<<<< HEAD
-<<<<<<< HEAD
 #define D_SUNRISE "日出"
 #define D_SUNSET "日落"
-=======
->>>>>>> parent of 16840c6... Merge remote-tracking branch 'upstream/development' into development
-=======
-=======
-#define D_SUNRISE "Sunrise"
-#define D_SUNSET "Sunset"
->>>>>>> upstream/development
->>>>>>> parent of 70a331a... update of zh-CN language
 #define D_TEMPERATURE "温度"
 #define D_TO "to"
 #define D_TOGGLE "切换"
 #define D_TOPIC "主题"
 #define D_TRANSMIT "发送"
 #define D_TRUE "True"
-<<<<<<< HEAD
-<<<<<<< HEAD
 #define D_TVOC "TVOC"
-=======
->>>>>>> parent of 16840c6... Merge remote-tracking branch 'upstream/development' into development
-=======
-=======
-#define D_TVOC "TVOC"
->>>>>>> upstream/development
->>>>>>> parent of 70a331a... update of zh-CN language
 #define D_UPGRADE "升级"
 #define D_UPLOAD "上传"
 #define D_UPTIME "运行时间"
 #define D_USER "用户名"
 #define D_UTC_TIME "UTC"
-<<<<<<< HEAD
-<<<<<<< HEAD
 #define D_UV_INDEX "紫外线指数"
-=======
->>>>>>> parent of 16840c6... Merge remote-tracking branch 'upstream/development' into development
-=======
-=======
-#define D_UV_INDEX "UV Index"
->>>>>>> upstream/development
->>>>>>> parent of 70a331a... update of zh-CN language
 #define D_UV_LEVEL "紫外线水平"
 #define D_VERSION "版本"
 #define D_VOLTAGE "电压"
@@ -289,16 +168,7 @@
 #define D_WEB_SERVER "Web Server"
 
 // sonoff.ino
-<<<<<<< HEAD
-<<<<<<< HEAD
 #define D_WARNING_MINIMAL_VERSION "警告：精简固件不支持配置持久化保存"
-=======
->>>>>>> parent of 16840c6... Merge remote-tracking branch 'upstream/development' into development
-=======
-=======
-#define D_WARNING_MINIMAL_VERSION "警告：精简固件不支持配置持久化保存"
->>>>>>> upstream/development
->>>>>>> parent of 70a331a... update of zh-CN language
 #define D_LEVEL_10 "level 1-0"
 #define D_LEVEL_01 "level 0-1"
 #define D_SERIAL_LOGGING_DISABLED "串口日志已禁用"
@@ -309,119 +179,46 @@
 #define D_DATA_SIZE "数据大小:"
 #define D_ANALOG_INPUT "Analog"
 
-<<<<<<< HEAD
-<<<<<<< HEAD
 // support.ino
 #define D_OSWATCH "osWatch"
 #define D_BLOCKED_LOOP "Blocked Loop"
 #define D_WPS_FAILED_WITH_STATUS "WPS 配置失败，状态:"
 #define D_ACTIVE_FOR_3_MINUTES "激活 3 分钟"
-=======
-#define D_FINGERPRINT "验证 TLS 指纹..."
-#define D_TLS_CONNECT_FAILED_TO "TLS 连接失败"
-#define D_RETRY_IN "重试倒计时:"
-#define D_VERIFIED "验证成功"
-#define D_INSECURE "指纹无效导致连接不安全"
-#define D_CONNECT_FAILED_TO "连接失败:"
-
-// support.ino
-#define D_OSWATCH "osWatch"
-#define D_BLOCKED_LOOP "Blocked Loop"
-#define D_WPS_FAILED_WITH_STATUS "WPS配置失败，状态:"
-#define D_ACTIVE_FOR_3_MINUTES "active for 3 minutes"
->>>>>>> parent of 16840c6... Merge remote-tracking branch 'upstream/development' into development
-=======
-#define D_FINGERPRINT "验证 TLS 指纹..."
-#define D_TLS_CONNECT_FAILED_TO "TLS 连接失败"
-#define D_RETRY_IN "重试倒计时:"
-#define D_VERIFIED "验证成功"
-#define D_INSECURE "指纹无效导致连接不安全"
-#define D_CONNECT_FAILED_TO "连接失败:"
-
-// support.ino
-#define D_OSWATCH "osWatch"
-#define D_BLOCKED_LOOP "Blocked Loop"
-#define D_WPS_FAILED_WITH_STATUS "WPS配置失败，状态:"
-=======
-// support.ino
-#define D_OSWATCH "osWatch"
-#define D_BLOCKED_LOOP "Blocked Loop"
-#define D_WPS_FAILED_WITH_STATUS "WPSconfig FAILED with status"
->>>>>>> upstream/development
-#define D_ACTIVE_FOR_3_MINUTES "active for 3 minutes"
->>>>>>> parent of 70a331a... update of zh-CN language
 #define D_FAILED_TO_START "未能启动"
 #define D_PATCH_ISSUE_2186 "Patch issue 2186"
 #define D_CONNECTING_TO_AP "连接到 AP"
 #define D_IN_MODE "模式:"
-#define D_CONNECT_FAILED_NO_IP_ADDRESS "连接失败，因为没有获取到IP地址"
-#define D_CONNECT_FAILED_AP_NOT_REACHED "连接失败，无法连接AP"
-#define D_CONNECT_FAILED_WRONG_PASSWORD "连接失败，AP密码不正确"
-#define D_CONNECT_FAILED_AP_TIMEOUT "连接失败，AP超时"
+#define D_CONNECT_FAILED_NO_IP_ADDRESS "连接失败，因为没有获取到 IP 地址"
+#define D_CONNECT_FAILED_AP_NOT_REACHED "连接失败，无法连接 AP"
+#define D_CONNECT_FAILED_WRONG_PASSWORD "连接失败，AP 密码不正确"
+#define D_CONNECT_FAILED_AP_TIMEOUT "连接失败，AP 超时"
 #define D_ATTEMPTING_CONNECTION "尝试连接..."
 #define D_CHECKING_CONNECTION "检查连接..."
-<<<<<<< HEAD
-<<<<<<< HEAD
 #define D_QUERY_DONE "查询完成。 发现 MQTT 服务"
 #define D_MQTT_SERVICE_FOUND "发现 MQTT 服务:"
 #define D_FOUND_AT "发现:"
 #define D_SYSLOG_HOST_NOT_FOUND "Syslog 主机未找到"
-=======
-#define D_QUERY_DONE "查询完成。 发现MQTT服务"
-#define D_MQTT_SERVICE_FOUND "发现MQTT服务:"
-#define D_FOUND_AT "发现:"
-#define D_SYSLOG_HOST_NOT_FOUND "Syslog主机未找到"
->>>>>>> parent of 16840c6... Merge remote-tracking branch 'upstream/development' into development
-=======
-#define D_QUERY_DONE "查询完成。 发现MQTT服务"
-#define D_MQTT_SERVICE_FOUND "发现MQTT服务:"
-<<<<<<< HEAD
-#define D_FOUND_AT "发现:"
-=======
-#define D_FOUND_AT "found at"
->>>>>>> upstream/development
-#define D_SYSLOG_HOST_NOT_FOUND "Syslog主机未找到"
->>>>>>> parent of 70a331a... update of zh-CN language
 
 // settings.ino
 #define D_SAVED_TO_FLASH_AT "保存到 flash:"
-<<<<<<< HEAD
 #define D_LOADED_FROM_FLASH_AT "从 flash 载入:"
 #define D_USE_DEFAULTS "使用默认设置"
 #define D_ERASED_SECTOR "擦除扇区"
 
 // webserver.ino
 #define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "当前是精简版固件 - 请升级"
-#define D_WEBSERVER_ACTIVE_ON "Web服务器:"
-#define D_WITH_IP_ADDRESS "IP地址:"
+#define D_WEBSERVER_ACTIVE_ON "Web 服务器地址:"
+#define D_WITH_IP_ADDRESS "IP 地址:"
 #define D_WEBSERVER_STOPPED "Web 服务已停止"
 #define D_FILE_NOT_FOUND "文件未找到"
 #define D_REDIRECTED "重定向到认证页面"
 #define D_WIFIMANAGER_SET_ACCESSPOINT_AND_STATION "Wifimanager 设置无线操作模式"
-=======
-#define D_LOADED_FROM_FLASH_AT "从 flash 载入"
-#define D_USE_DEFAULTS "使用默认设置"
-#define D_ERASED_SECTOR "擦除删除"
-
-// xdrv_02_webserver.ino
-#define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "固件版本过低 - 请升级"
-#define D_WEBSERVER_ACTIVE_ON "Web服务器:"
-#define D_WITH_IP_ADDRESS "IP地址:"
-#define D_WEBSERVER_STOPPED "Web 服务器已停止"
-#define D_FILE_NOT_FOUND "文件未找到"
-#define D_REDIRECTED "重定向到认证页面"
-#define D_WIFIMANAGER_SET_ACCESSPOINT_AND_STATION "Wifimanager set AccessPoint and keep Station"
->>>>>>> upstream/development
 #define D_WIFIMANAGER_SET_ACCESSPOINT "Wifimanager 设置接入点"
 #define D_TRYING_TO_CONNECT "尝试将设备连接到网络"
 
 #define D_RESTART_IN "重启需要"
 #define D_SECONDS "秒"
-<<<<<<< HEAD
 #define D_DEVICE_WILL_RESTART "设备将在几秒钟内重启"
-=======
-#define D_DEVICE_WILL_RESTART "设备将在几分钟内重启"
->>>>>>> upstream/development
 #define D_BUTTON_TOGGLE "状态切换"
 #define D_CONFIGURATION "设置"
 #define D_INFORMATION "信息"
@@ -439,18 +236,7 @@
 #define D_RESET_CONFIGURATION "重置配置"
 #define D_BACKUP_CONFIGURATION "备份配置"
 #define D_RESTORE_CONFIGURATION "还原配置"
-<<<<<<< HEAD
-<<<<<<< HEAD
 #define D_MAIN_MENU "主菜单"
-=======
-#define D_MAIN_MENU "返回主菜单"
->>>>>>> parent of 16840c6... Merge remote-tracking branch 'upstream/development' into development
-=======
-#define D_MAIN_MENU "返回主菜单"
-=======
-#define D_MAIN_MENU "主菜单"
->>>>>>> upstream/development
->>>>>>> parent of 70a331a... update of zh-CN language
 
 #define D_MODULE_PARAMETERS "模块设置"
 #define D_MODULE_TYPE "模块类型"
@@ -474,7 +260,7 @@
 #define D_AP2_SSID "AP2 名称"
 #define D_AP2_PASSWORD "AP2 密码"
 
-#define D_MQTT_PARAMETERS "MQTT设置"
+#define D_MQTT_PARAMETERS "MQTT 设置"
 #define D_CLIENT "客户端"
 #define D_FULL_TOPIC "完整主题"
 
@@ -488,7 +274,7 @@
 #define D_TELEMETRY_PERIOD "上报周期"
 
 #define D_OTHER_PARAMETERS "其他设置"
-#define D_WEB_ADMIN_PASSWORD "WEB管理密码"
+#define D_WEB_ADMIN_PASSWORD "WEB 管理密码"
 #define D_MQTT_ENABLE "启用MQTT"
 #define D_FRIENDLY_NAME "昵称"
 #define D_BELKIN_WEMO "贝尔金 WeMo"
@@ -502,134 +288,58 @@
 
 #define D_PROGRAM_VERSION "固件版本"
 #define D_BUILD_DATE_AND_TIME "编译时间"
-<<<<<<< HEAD
-<<<<<<< HEAD
 #define D_CORE_AND_SDK_VERSION "内核和 SDK 版本"
-=======
-#define D_CORE_AND_SDK_VERSION "内核和SDK版本"
->>>>>>> parent of 16840c6... Merge remote-tracking branch 'upstream/development' into development
-=======
-#define D_CORE_AND_SDK_VERSION "内核和SDK版本"
->>>>>>> parent of 70a331a... update of zh-CN language
 #define D_FLASH_WRITE_COUNT "Flash 写入次数"
 #define D_MAC_ADDRESS "MAC 地址"
 #define D_MQTT_HOST "MQTT 主机"
 #define D_MQTT_PORT "MQTT 端口"
 #define D_MQTT_CLIENT "MQTT 客户端"
 #define D_MQTT_USER "MQTT 用户名"
-<<<<<<< HEAD
-<<<<<<< HEAD
 #define D_MQTT_TOPIC "MQTT 主题"
 #define D_MQTT_GROUP_TOPIC "MQTT 主题组"
 #define D_MQTT_FULL_TOPIC "MQTT 完整主题"
-=======
-#define D_MQTT_TOPIC "MQTT 主题(Topic)"
-#define D_MQTT_GROUP_TOPIC "MQTT 主题组(Group Topic)"
-#define D_MQTT_FULL_TOPIC "MQTT 完整主题(Full Topic)"
->>>>>>> parent of 16840c6... Merge remote-tracking branch 'upstream/development' into development
-=======
-=======
-#define D_CORE_AND_SDK_VERSION "内核版本"
-#define D_FLASH_WRITE_COUNT "刷机次数"
-#define D_MAC_ADDRESS "MAC地址"
-#define D_MQTT_HOST "MQTT主机"
-#define D_MQTT_PORT "MQTT端口"
-#define D_MQTT_CLIENT "MQTT客户端"
-#define D_MQTT_USER "MQTT用户名"
->>>>>>> upstream/development
-#define D_MQTT_TOPIC "MQTT 主题(Topic)"
-#define D_MQTT_GROUP_TOPIC "MQTT 主题组(Group Topic)"
-#define D_MQTT_FULL_TOPIC "MQTT 完整主题(Full Topic)"
->>>>>>> parent of 70a331a... update of zh-CN language
 #define D_MDNS_DISCOVERY "mDNS 发现"
 #define D_MDNS_ADVERTISE "mDNS 广播"
-<<<<<<< HEAD
 #define D_ESP_CHIP_ID "ESP 芯片 ID"
 #define D_FLASH_CHIP_ID "Flash 芯片 ID"
 #define D_FLASH_CHIP_SIZE "Flash 大小"
 #define D_FREE_PROGRAM_SPACE "空闲程序空间"
-<<<<<<< HEAD
-<<<<<<< HEAD
 
 #define D_UPGRADE_BY_WEBSERVER "通过 Web 升级"
 #define D_OTA_URL "OTA 地址"
-=======
-#define D_UPGRADE_BY_WEBSERVER "通过 Web 升级"
-#define D_OTA_URL "OTA地址"
->>>>>>> parent of 16840c6... Merge remote-tracking branch 'upstream/development' into development
-=======
-#define D_UPGRADE_BY_WEBSERVER "通过 Web 升级"
-=======
-#define D_ESP_CHIP_ID "ESP芯片ID"
-#define D_FLASH_CHIP_ID "Flash芯片ID"
-#define D_FLASH_CHIP_SIZE "Flash大小"
-#define D_FREE_PROGRAM_SPACE "空闲程序空间"
-
-#define D_UPGRADE_BY_WEBSERVER "通过Web升级"
->>>>>>> upstream/development
-#define D_OTA_URL "OTA地址"
->>>>>>> parent of 70a331a... update of zh-CN language
 #define D_START_UPGRADE "开始升级"
 #define D_UPGRADE_BY_FILE_UPLOAD "通过文件升级"
 #define D_UPLOAD_STARTED "开始上传"
 #define D_UPGRADE_STARTED "开始升级"
 #define D_UPLOAD_DONE "上传完成"
-#define D_UPLOAD_ERR_1 "没有选择文件"
+#define D_UPLOAD_ERR_1 "没有选择任何文件"
 #define D_UPLOAD_ERR_2 "没有足够空间"
 #define D_UPLOAD_ERR_3 "固件头不是 0xE9"
-<<<<<<< HEAD
 #define D_UPLOAD_ERR_4 "固件大小超过 flash 容量"
 #define D_UPLOAD_ERR_5 "上传缓冲区不足，请先刷入精简固件再升级"
 #define D_UPLOAD_ERR_6 "上传失败。 启用日志级别 3 调试"
 #define D_UPLOAD_ERR_7 "上传取消"
 #define D_UPLOAD_ERR_8 "错误的固件"
 #define D_UPLOAD_ERR_9 "固件太大"
+#define D_UPLOAD_ERR_10 "初始化 RF 芯片失败"
+#define D_UPLOAD_ERR_11 "擦除 RF 芯片失败"
+#define D_UPLOAD_ERR_12 "写入 RF 芯片失败"
+#define D_UPLOAD_ERR_13 "解码 RF 固件失败"
 #define D_UPLOAD_ERROR_CODE "上传错误代码"
 
 #define D_ENTER_COMMAND "输入命令"
 #define D_ENABLE_WEBLOG_FOR_RESPONSE "如果想得到预期响应，请调整日志级别至: 2 信息"
 #define D_NEED_USER_AND_PASSWORD "需要 user=<用户名>&password=<密码>"
 
-<<<<<<< HEAD
-<<<<<<< HEAD
 // xdrv_00_mqtt.ino
-=======
-#define D_WARNING_MINIMAL_VERSION "警告：精简固件不支持配置持久化保存"
-#define D_USE_MINIMAL_AS_LOADER "使用 -minimal 加载"
-
-// xdrv_wemohue.ino
-=======
-#define D_UPLOAD_ERR_4 "固件太大"
-#define D_UPLOAD_ERR_5 "上传缓冲区不匹配"
-#define D_UPLOAD_ERR_6 "上传失败。 启用日志记录 3"
-#define D_UPLOAD_ERR_7 "上传取消"
-#define D_UPLOAD_ERR_8 "错误的固件"
-#define D_UPLOAD_ERR_9 "固件太大"
-#define D_UPLOAD_ERR_10 "Failed to init RF chip"
-#define D_UPLOAD_ERR_11 "Failed to erase RF chip"
-#define D_UPLOAD_ERR_12 "Failed to write to RF chip"
-#define D_UPLOAD_ERR_13 "Failed to decode RF firmware"
-#define D_UPLOAD_ERROR_CODE "上传错误代码"
-
-#define D_ENTER_COMMAND "输入命令"
-#define D_ENABLE_WEBLOG_FOR_RESPONSE "如果预期响应，则启用Weblog 2"
-#define D_NEED_USER_AND_PASSWORD "需要 user=<用户名>&password=<密码>"
-
-// xdrv_01_mqtt.ino
->>>>>>> parent of 70a331a... update of zh-CN language
 #define D_FINGERPRINT "验证 TLS 指纹..."
 #define D_TLS_CONNECT_FAILED_TO "TLS 连接失败"
 #define D_RETRY_IN "重试倒计时:"
 #define D_VERIFIED "验证成功"
 #define D_INSECURE "指纹无效导致连接不安全"
 #define D_CONNECT_FAILED_TO "连接失败:"
-=======
-#define D_WARNING_MINIMAL_VERSION "警告：精简固件不支持配置持久化保存"
-#define D_USE_MINIMAL_AS_LOADER "使用 -minimal 加载"
->>>>>>> parent of 16840c6... Merge remote-tracking branch 'upstream/development' into development
 
-// xplg_wemohue.ino
->>>>>>> upstream/development
+// xdrv_wemohue.ino
 #define D_MULTICAST_DISABLED "组播已禁用"
 #define D_MULTICAST_REJOINED "组播已(重新)加入"
 #define D_MULTICAST_JOIN_FAILED "组播加入失败"
@@ -649,32 +359,7 @@
 #define D_HUE_POST_ARGS "Hue POST 参数"
 #define D_3_RESPONSE_PACKETS_SENT "3 请求包发送"
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-=======
->>>>>>> parent of 70a331a... update of zh-CN language
-// xdrv_02_irremote.ino
-#define D_JSON_INVALID_JSON "无效的JSON"
-#define D_JSON_PROTOCOL_NOT_SUPPORTED "协议不支持"
-#define D_JSON_IR_PROTOCOL "PROTOCOL"
-#define D_JSON_IR_BITS "BITS"
-#define D_JSON_IR_DATA "DATA"
-#define D_JSON_IRHVAC_VENDOR "VENDOR"
-#define D_JSON_IRHVAC_POWER "POWER"
-#define D_JSON_IRHVAC_MODE "MODE"
-#define D_JSON_IRHVAC_FANSPEED "FANSPEED"
-#define D_JSON_IRHVAC_TEMP "TEMP"
-#define D_JSON_IRRECEIVED "IrReceived"
-
-<<<<<<< HEAD
->>>>>>> parent of 16840c6... Merge remote-tracking branch 'upstream/development' into development
-=======
->>>>>>> parent of 70a331a... update of zh-CN language
 // xdrv_05_domoticz.ino
-=======
-// xdrv_07_domoticz.ino
->>>>>>> upstream/development
 #define D_DOMOTICZ_PARAMETERS "Domoticz 设置"
 #define D_DOMOTICZ_IDX "Idx"
 #define D_DOMOTICZ_KEY_IDX "Key idx"
@@ -685,17 +370,6 @@
   #define D_DOMOTICZ_TEMP_HUM_BARO "温度,湿度,气压"
   #define D_DOMOTICZ_POWER_ENERGY "功率,电量"
   #define D_DOMOTICZ_ILLUMINANCE "照度"
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-  #define D_DOMOTICZ_COUNT "数值"
-  #define D_DOMOTICZ_VOLTAGE "电压"
-  #define D_DOMOTICZ_CURRENT "电流"
-  #define D_DOMOTICZ_AIRQUALITY "空气质量"
-#define D_DOMOTICZ_UPDATE_TIMER "更新计时器"
-
-=======
->>>>>>> parent of 70a331a... update of zh-CN language
   #define D_DOMOTICZ_COUNT "数值/PM1"
   #define D_DOMOTICZ_VOLTAGE "电压/PM2.5"
   #define D_DOMOTICZ_CURRENT "电流/PM10"
@@ -703,50 +377,38 @@
 #define D_DOMOTICZ_UPDATE_TIMER "更新计时器"
 
 // xdrv_09_timers.ino
-#define D_CONFIGURE_TIMER "Configure Timer"
-#define D_TIMER_PARAMETERS "Timer parameters"
-#define D_TIMER_ARM "Arm"
-#define D_TIMER_TIME "Time"
-#define D_TIMER_DAYS "Days"
-#define D_TIMER_REPEAT "Repeat"
-#define D_TIMER_OUTPUT "Output"
-#define D_TIMER_ACTION "Action"
+#define D_CONFIGURE_TIMER "定时器设置"
+#define D_TIMER_PARAMETERS "定时器参数"
+#define D_TIMER_ARM "启用"
+#define D_TIMER_TIME "时间"
+#define D_TIMER_DAYS "天"
+#define D_TIMER_REPEAT "重复"
+#define D_TIMER_OUTPUT "输出"
+#define D_TIMER_ACTION "动作"
 
 // xdrv_10_knx.ino
-#define D_CONFIGURE_KNX "Configure KNX"
-#define D_KNX_PARAMETERS "KNX Parameters"
-#define D_KNX_GENERAL_CONFIG "General"
-#define D_KNX_PHYSICAL_ADDRESS "Physical Address"
-#define D_KNX_PHYSICAL_ADDRESS_NOTE "( Must be unique on the KNX network )"
-#define D_KNX_ENABLE "Enable KNX"
-#define D_KNX_GROUP_ADDRESS_TO_WRITE "Data to Send to Group Addresses"
-#define D_ADD "Add"
-#define D_DELETE "Delete"
-#define D_REPLY "Reply"
-#define D_KNX_GROUP_ADDRESS_TO_READ "Group Addresses to Receive Data from"
+#define D_CONFIGURE_KNX "KNX 配置"
+#define D_KNX_PARAMETERS "KNX 参数"
+#define D_KNX_GENERAL_CONFIG "同用"
+#define D_KNX_PHYSICAL_ADDRESS "物理地址"
+#define D_KNX_PHYSICAL_ADDRESS_NOTE "( 在 KNX 网络上必须是唯一的 )"
+#define D_KNX_ENABLE "启用 KNX"
+#define D_KNX_GROUP_ADDRESS_TO_WRITE "要发送到组地址的数据"
+#define D_ADD "添加"
+#define D_DELETE "删除"
+#define D_REPLY "回复"
+#define D_KNX_GROUP_ADDRESS_TO_READ "用来接收数据的组地址"
 #define D_LOG_KNX "KNX: "
-#define D_RECEIVED_FROM "Received from"
-#define D_KNX_COMMAND_WRITE "Write"
-#define D_KNX_COMMAND_READ "Read"
-#define D_KNX_COMMAND_OTHER "Other"
-#define D_SENT_TO "sent to"
-#define D_KNX_WARNING "The group address ( 0 / 0 / 0 ) is reserved and can not be used."
-#define D_KNX_ENHANCEMENT "Communication Enhancement"
+#define D_RECEIVED_FROM "接收自"
+#define D_KNX_COMMAND_WRITE "写"
+#define D_KNX_COMMAND_READ "读"
+#define D_KNX_COMMAND_OTHER "其他"
+#define D_SENT_TO "发送到"
+#define D_KNX_WARNING "组地址（0/0/0）被保留，不能使用。"
+#define D_KNX_ENHANCEMENT "通讯增强"
 #define D_KNX_TX_SLOT "KNX TX"
 #define D_KNX_RX_SLOT "KNX RX"
 
-<<<<<<< HEAD
-=======
-  #define D_DOMOTICZ_COUNT "数值"
-  #define D_DOMOTICZ_VOLTAGE "电压"
-  #define D_DOMOTICZ_CURRENT "电流"
-  #define D_DOMOTICZ_AIRQUALITY "空气质量"
-#define D_DOMOTICZ_UPDATE_TIMER "更新计时器"
-
->>>>>>> parent of 16840c6... Merge remote-tracking branch 'upstream/development' into development
-=======
->>>>>>> upstream/development
->>>>>>> parent of 70a331a... update of zh-CN language
 // xdrv_03_energy.ino
 #define D_ENERGY_TODAY "今日用电量"
 #define D_ENERGY_YESTERDAY "昨日用电量"
@@ -769,43 +431,12 @@
 #define D_SHT1X_FOUND "发现 SHT1X 传感器"
 
 // xsns_18_pms5003.ino
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-#define D_STANDARD_CONCENTRATION "标准颗粒物浓度"
-#define D_ENVIRONMENTAL_CONCENTRATION "大气环境下浓度"
-#define D_PARTICALS_BEYOND "颗粒物直径大于"
-#define D_UNIT_MICROGRAM_PER_CUBIC_METER "微克/立方米"
-#define D_UNIT_MICROMETER "微米"
-#define D_UNIT_PARTS_PER_DECILITER "每分升"
-
-// sonoff_template.h
-// Max string length is 8 characters including suffixes
-#define D_SENSOR_NONE     "无"
-=======
->>>>>>> parent of 70a331a... update of zh-CN language
 #define D_STANDARD_CONCENTRATION "CF-1 PM"     // Standard Particle CF-1 Particle Matter
 #define D_ENVIRONMENTAL_CONCENTRATION "PM"     // Environmetal Particle Matter
 #define D_PARTICALS_BEYOND "颗粒物直径大于"
 
 // sonoff_template.h
-<<<<<<< HEAD
-=======
-#define D_STANDARD_CONCENTRATION "标准颗粒物浓度"
-#define D_ENVIRONMENTAL_CONCENTRATION "大气环境下浓度"
-#define D_PARTICALS_BEYOND "颗粒物直径大于"
-#define D_UNIT_MICROGRAM_PER_CUBIC_METER "微克/立方米"
-#define D_UNIT_MICROMETER "微米"
-#define D_UNIT_PARTS_PER_DECILITER "每分升"
-
-// sonoff_template.h
-// Max string length is 8 characters including suffixes
->>>>>>> parent of 16840c6... Merge remote-tracking branch 'upstream/development' into development
 #define D_SENSOR_NONE     "无"
-=======
-#define D_SENSOR_NONE     "None"
->>>>>>> upstream/development
->>>>>>> parent of 70a331a... update of zh-CN language
 #define D_SENSOR_DHT11    "DHT11"
 #define D_SENSOR_AM2301   "AM2301"
 #define D_SENSOR_SI7021   "SI7021"
@@ -831,14 +462,6 @@
 #define D_SENSOR_SPI_DC   "SPI DC"
 #define D_SENSOR_BACKLIGHT "BkLight"
 #define D_SENSOR_PMS5003  "PMS5003"
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-
-// Units
-#define D_UNIT_AMPERE "安"
-=======
->>>>>>> parent of 70a331a... update of zh-CN language
 #define D_SENSOR_SDS0X1   "SDS0X1"
 #define D_SENSOR_SBR_RX   "SerBr Rx"
 #define D_SENSOR_SBR_TX   "SerBr Tx"
@@ -851,47 +474,17 @@
 
 // Units
 #define D_UNIT_AMPERE "安"
-<<<<<<< HEAD
 #define D_UNIT_CENTIMETER "厘米"
-=======
-
-// Units
-#define D_UNIT_AMPERE "安"
->>>>>>> parent of 16840c6... Merge remote-tracking branch 'upstream/development' into development
-=======
-#define D_UNIT_CENTIMETER "cm"
-#define D_UNIT_HERTZ "Hz"
->>>>>>> upstream/development
->>>>>>> parent of 70a331a... update of zh-CN language
 #define D_UNIT_HOUR "时"
 #define D_UNIT_KILOOHM "千欧"
 #define D_UNIT_KILOWATTHOUR "千瓦时"
 #define D_UNIT_LUX "勒克斯"
-<<<<<<< HEAD
-<<<<<<< HEAD
 #define D_UNIT_MICROGRAM_PER_CUBIC_METER "微克/立方米"
 #define D_UNIT_MICROMETER "微米"
-=======
->>>>>>> parent of 16840c6... Merge remote-tracking branch 'upstream/development' into development
-=======
-=======
-#define D_UNIT_MICROGRAM_PER_CUBIC_METER "微克/立方米"
-#define D_UNIT_MICROMETER "微米"
->>>>>>> upstream/development
->>>>>>> parent of 70a331a... update of zh-CN language
 #define D_UNIT_MICROSECOND "微秒"
 #define D_UNIT_MILLIAMPERE "毫安"
 #define D_UNIT_MILLISECOND "毫秒"
 #define D_UNIT_MINUTE "分"
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-#define D_UNIT_PPM "ppm"
-#define D_UNIT_PRESSURE "百帕"
-#define D_UNIT_SECOND "秒"
-#define D_UNIT_SECTORS "扇区"
-=======
->>>>>>> parent of 70a331a... update of zh-CN language
 #define D_UNIT_PARTS_PER_BILLION "ppb"
 #define D_UNIT_PARTS_PER_DECILITER "每分升"
 #define D_UNIT_PARTS_PER_MILLION "ppm"
@@ -900,19 +493,10 @@
 #define D_UNIT_SECTORS "扇区"
 #define D_UNIT_VA "VA"
 #define D_UNIT_VAR "VAr"
-<<<<<<< HEAD
-=======
-#define D_UNIT_PPM "ppm"
-#define D_UNIT_PRESSURE "百帕"
-#define D_UNIT_SECOND "秒"
-#define D_UNIT_SECTORS "扇区"
->>>>>>> parent of 16840c6... Merge remote-tracking branch 'upstream/development' into development
-=======
->>>>>>> upstream/development
->>>>>>> parent of 70a331a... update of zh-CN language
 #define D_UNIT_VOLT "伏"
 #define D_UNIT_WATT "瓦"
 #define D_UNIT_WATTHOUR "瓦时"
+#define D_UNIT_HERTZ "赫兹"
 
 // Log message prefix
 #define D_LOG_APPLICATION "APP: "  // Application
@@ -939,12 +523,4 @@
 #define D_LOG_UPNP "UPP: "         // UPnP
 #define D_LOG_WIFI "WIF: "         // Wifi
 
-<<<<<<< HEAD
 #endif  // _LANGUAGE_ZH_CN_H_
-=======
-#endif  // _LANGUAGE_ZH_CN_H_
-<<<<<<< HEAD
->>>>>>> parent of 16840c6... Merge remote-tracking branch 'upstream/development' into development
-=======
->>>>>>> upstream/development
->>>>>>> parent of 70a331a... update of zh-CN language
