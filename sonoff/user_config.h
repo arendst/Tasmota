@@ -314,10 +314,16 @@
 #define USE_RF_FLASH                             // Add support for flashing the EFM8BB1 chip on the Sonoff RF Bridge. C2CK must be connected to GPIO4, C2D to GPIO5 on the PCB
 
 /*********************************************************************************************\
+ * Debug features are only supported in development branch
+\*********************************************************************************************/
+
+//#define USE_DEBUG_DRIVER                         // Use xdrv_99_debug.ino providing commands CpuChk, CfgXor, CfgDump, CfgPeek and CfgPoke
+
+/*********************************************************************************************\
  * Select features and sensors enabled in previous version saving space
 \*********************************************************************************************/
 
-//#define USE_CLASSIC                             // Create sonoff-classic (See sonoff_post.h for selected features)
+//#define USE_CLASSIC                              // Create sonoff-classic (See sonoff_post.h for selected features)
 
 /*********************************************************************************************\
  * Select all sensors - overrides above undefines!!

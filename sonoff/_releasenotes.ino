@@ -1,6 +1,6 @@
 /* 6.0.0a
- * KNX: Support for DS18S20 Temperature sensor
- * KNX: Fixed Bug when doing reply of sensors values
+ * Add debug facilities using optional xdrv_99_debug.ino to enable in user_config.h
+ * Add KNX support for DS18S20 Temperature sensor
  * Add CRC to Settings making future upgrades more fail-safe
  * Add support for uploading Sonoff Bridge firmware found in tools/fw_efm8bb1 folder build by Portisch using Web Gui File Upload (#2886)
  * Add support for I2C temperature sensor LM75AD (#2909)
@@ -8,6 +8,7 @@
  * Remove version 3, 4 and pre 5.2 settings auto-upgrade. See https://github.com/arendst/Sonoff-Tasmota/wiki/Upgrade#migration-path
  * Change default CFG_HOLDER from 0x20161209 to 4617 (=0x1209) - no impact on default upgrades
  * Fix Pzem004T checksum error
+ * Fix KNX bug when doing reply of sensors values
  *
  * 5.14.0b
  * Add Console Commands to send KNX Commands

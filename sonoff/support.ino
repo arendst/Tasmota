@@ -861,6 +861,9 @@ void GetFeatures()
 #ifdef USE_SDM630
   feature_sns1 |= 0x10000000;  // xsns_25_sdm630.ino
 #endif
+#ifdef USE_LM75AD
+  feature_sns1 |= 0x20000000;  // xsns_26_lm75ad.ino
+#endif
 
 /*********************************************************************************************/
 
