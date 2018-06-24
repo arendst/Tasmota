@@ -20,6 +20,11 @@
 IPAddress syslog_host_addr;      // Syslog host IP address
 uint32_t syslog_host_hash = 0;   // Syslog host name hash
 
+#ifdef USE_CPU_LOAD
+uint32_t CPU_loops = 0;         // CPU Load
+uint32_t CPU_last_millis = 0;   // CPU Load
+#endif // USE_CPU_LOAD
+
 /*********************************************************************************************\
  * Watchdog extension (https://github.com/esp8266/Arduino/issues/1532)
 \*********************************************************************************************/
@@ -63,12 +68,34 @@ void OsWatchInit()
   RtcSettings.oswatch_blocked_loop = 0;
   oswatch_last_loop_time = millis();
   tickerOSWatch.attach_ms(((OSWATCH_RESET_TIME / 3) * 1000), OsWatchTicker);
+#ifdef USE_CPU_LOAD
+  CPU_last_millis = millis();
+#endif // USE_CPU_LOAD
 }
 
 void OsWatchLoop()
 {
   oswatch_last_loop_time = millis();
 //  while(1) delay(1000);  // this will trigger the os watch
+  
+#ifdef USE_CPU_LOAD
+  CPU_loops ++;
+  if ((CPU_last_millis + (CPU_LOAD_CHECK*1000)) <= oswatch_last_loop_time ) {
+#if defined(F_CPU) && (F_CPU == 160000000L)
+    int CPU_LOAD = 100 - ( (CPU_loops*(1 + 30*sleep)) / (CPU_LOAD_CHECK*800) );
+    CPU_loops = CPU_loops / CPU_LOAD_CHECK;
+    snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION D_OSWATCH " FreeRam %d, rssi %d, CPU %d%%(160MHz), Loops/sec %d"), ESP.getFreeHeap(), WifiGetRssiAsQuality(WiFi.RSSI()), CPU_LOAD, CPU_loops);
+#else
+    int CPU_LOAD = 100 - ( (CPU_loops*(1 + 30*sleep)) / (CPU_LOAD_CHECK*400) );
+    CPU_loops = CPU_loops / CPU_LOAD_CHECK;
+    snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION D_OSWATCH " FreeRam %d, rssi %d, CPU %d%%(80MHz), Loops/sec %d"), ESP.getFreeHeap(), WifiGetRssiAsQuality(WiFi.RSSI()), CPU_LOAD, CPU_loops);
+#endif
+    AddLog(LOG_LEVEL_DEBUG);
+    CPU_last_millis = oswatch_last_loop_time;
+    CPU_loops = 0;
+  }
+#endif // USE_CPU_LOAD
+  
 }
 
 String GetResetReason()
