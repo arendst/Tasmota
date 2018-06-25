@@ -12,6 +12,7 @@
  * Change default CFG_HOLDER from 0x20161209 to 4617 (=0x1209) - no impact on default upgrades
  * Fix Pzem004T checksum error
  * Fix KNX bug when doing reply of sensors values
+ * Fix rules induced LWT message
  *
  * 5.14.0b
  * Add Console Commands to send KNX Commands

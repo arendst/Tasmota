@@ -181,6 +181,7 @@ uint8_t light_type = 0;                     // Light types
 bool pwm_present = false;                   // Any PWM channel configured with SetOption15 0
 boolean mdns_begun = false;
 uint8_t ntp_force_sync = 0;                 // Force NTP sync
+RulesBitfield rules_flag;
 
 char my_version[33];                        // Composed version string
 char my_hostname[33];                       // Composed Wifi hostname

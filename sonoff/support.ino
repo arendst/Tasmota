@@ -1754,11 +1754,10 @@ void RtcSecond()
         GetTime(0).c_str(), GetTime(2).c_str(), GetTime(3).c_str());
       AddLog(LOG_LEVEL_DEBUG);
       if (local_time < 1451602800) {  // 2016-01-01
-        strncpy_P(mqtt_data, PSTR("{\"Time\":{\"Initialized\":1}}"), sizeof(mqtt_data));
+        rules_flag.time_init = 1;
       } else {
-        strncpy_P(mqtt_data, PSTR("{\"Time\":{\"Set\":1}}"), sizeof(mqtt_data));
+        rules_flag.time_set = 1;
       }
-      XdrvRulesProcess();
     } else {
       ntp_sync_minute++;  // Try again in next minute
     }
