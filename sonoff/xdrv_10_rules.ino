@@ -74,11 +74,15 @@
 #define D_CMND_EVENT "Event"
 #define D_CMND_VAR "Var"
 #define D_CMND_MEM "Mem"
+#define D_CMND_ADD "Add"
+#define D_CMND_SUB "Sub"
+#define D_CMND_MULT "Mult"
+#define D_CMND_SCALE "Scale"
 
 #define D_JSON_INITIATED "Initiated"
 
-enum RulesCommands { CMND_RULE, CMND_RULETIMER, CMND_EVENT, CMND_VAR, CMND_MEM };
-const char kRulesCommands[] PROGMEM = D_CMND_RULE "|" D_CMND_RULETIMER "|" D_CMND_EVENT "|" D_CMND_VAR "|" D_CMND_MEM ;
+enum RulesCommands { CMND_RULE, CMND_RULETIMER, CMND_EVENT, CMND_VAR, CMND_MEM, CMND_ADD, CMND_SUB, CMND_MULT, CMND_SCALE };
+const char kRulesCommands[] PROGMEM = D_CMND_RULE "|" D_CMND_RULETIMER "|" D_CMND_EVENT "|" D_CMND_VAR "|" D_CMND_MEM "|" D_CMND_ADD "|" D_CMND_SUB "|" D_CMND_MULT "|" D_CMND_SCALE ;
 
 String rules_event_value;
 unsigned long rules_timer[MAX_RULE_TIMERS] = { 0 };
@@ -499,6 +503,60 @@ boolean RulesCommand()
       strlcpy(Settings.mems[index -1], ('"' == XdrvMailbox.data[0]) ? "" : XdrvMailbox.data, sizeof(Settings.mems[index -1]));
     }
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, index, Settings.mems[index -1]);
+  }
+  else if ((CMND_ADD == command_code) && (index > 0) && (index <= RULES_MAX_VARS)) {
+    if ( (XdrvMailbox.data_len > 0) && (XdrvMailbox.payload >= 0) ){
+      int16_t tempvar = atol(vars[index -1]) + XdrvMailbox.payload;
+      snprintf_P(vars[index -1], sizeof(vars[index -1]), PSTR("%d"), tempvar );
+    }
+    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, index, vars[index -1]);
+  }
+  else if ((CMND_SUB == command_code) && (index > 0) && (index <= RULES_MAX_VARS)) {
+    if ( (XdrvMailbox.data_len > 0) && (XdrvMailbox.payload >= 0) ){
+      int16_t tempvar = atol(vars[index -1]) - XdrvMailbox.payload;
+      snprintf_P(vars[index -1], sizeof(vars[index -1]), PSTR("%d"), tempvar );
+    }
+    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, index, vars[index -1]);
+  }
+  else if ((CMND_MULT == command_code) && (index > 0) && (index <= RULES_MAX_VARS)) {
+    if ( (XdrvMailbox.data_len > 0) && (XdrvMailbox.payload >= 0) ){
+      int16_t tempvar = atol(vars[index -1]) * XdrvMailbox.payload;
+      snprintf_P(vars[index -1], sizeof(vars[index -1]), PSTR("%d"), tempvar );
+    }
+    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, index, vars[index -1]);
+  }
+  else if ((CMND_SCALE == command_code) && (index > 0) && (index <= RULES_MAX_VARS)) {
+    if ( XdrvMailbox.data_len > 0 ) {
+      if (strstr(XdrvMailbox.data, ",")) {     // Process parameter entry
+        uint8_t tpos = 0;                      // Parameter index
+        int16_t value = 0;
+        int16_t valueIN = 0;
+        int16_t fromLow = 0;
+        int16_t fromHigh = 0;
+        int16_t toLow = 0;
+        int16_t toHigh = 0;
+        char *p = XdrvMailbox.data;            // Parameters like "1, 2, 3, 4"
+        char *q = p;                           // Value entered flag
+        while (p && (tpos < 6)) {
+          if (p > q) {                         // Any value entered
+            if (1 == tpos) { valueIN = value; }
+            if (2 == tpos) { fromLow = value; }
+            if (3 == tpos) { fromHigh = value; }
+            if (4 == tpos) { toLow = value; }
+            if (5 == tpos) { toHigh = value; }
+          }
+          p = LTrim(p);                        // Skip spaces
+          if (tpos && (*p == ',')) { p++; }    // Skip separator
+          p = LTrim(p);                        // Skip spaces
+          q = p;                               // Reset any value entered flag
+          value = strtol(p, &p, 10);
+          tpos++;                              // Next parameter
+        }
+        value = map(valueIN, fromLow, fromHigh, toLow, toHigh);
+        snprintf_P(vars[index -1], sizeof(vars[index -1]), PSTR("%d"), value );
+      }
+    }
+    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, index, vars[index -1]);
   }
   else serviced = false;  // Unknown command
 
