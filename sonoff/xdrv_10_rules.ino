@@ -339,11 +339,11 @@ bool RuleSetProcess(byte rule_set, String &event_saved)
 
 /*******************************************************************************************/
 
-bool RulesProcess()
+bool RulesProcessEvent(char *json_event)
 {
   bool serviced = false;
 
-  String event_saved = mqtt_data;
+  String event_saved = json_event;
   event_saved.toUpperCase();
 
   for (byte i = 0; i < MAX_RULE_SETS; i++) {
@@ -354,8 +354,14 @@ bool RulesProcess()
   return serviced;
 }
 
+bool RulesProcess()
+{
+  return RulesProcessEvent(mqtt_data);
+}
+
 void RulesInit()
 {
+  rules_flag.data = 0;
   for (byte i = 0; i < MAX_RULE_SETS; i++) {
     if (Settings.rules[i][0] == '\0') {
       bitWrite(Settings.rule_enabled, i, 0);
@@ -368,19 +374,21 @@ void RulesInit()
 void RulesEvery50ms()
 {
   if (Settings.rule_enabled) {  // Any rule enabled
+    char json_event[120];
+
     if (rules_new_power != rules_old_power) {
       if (rules_old_power != -1) {
         for (byte i = 0; i < devices_present; i++) {
           uint8_t new_state = (rules_new_power >> i) &1;
           if (new_state != ((rules_old_power >> i) &1)) {
-            snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"Power%d\":{\"State\":%d}}"), i +1, new_state);
-            RulesProcess();
+            snprintf_P(json_event, sizeof(json_event), PSTR("{\"Power%d\":{\"State\":%d}}"), i +1, new_state);
+            RulesProcessEvent(json_event);
           }
         }
       }
       rules_old_power = rules_new_power;
     }
-    else if(event_data[0]) {
+    else if (event_data[0]) {
       char *event;
       char *parameter;
       event = strtok_r(event_data, "=", &parameter);     // event_data = fanspeed=10
@@ -391,11 +399,32 @@ void RulesEvery50ms()
         } else {
           parameter = event + strlen(event);  // '\0'
         }
-        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"Event\":{\"%s\":\"%s\"}}"), event, parameter);
+        snprintf_P(json_event, sizeof(json_event), PSTR("{\"Event\":{\"%s\":\"%s\"}}"), event, parameter);
         event_data[0] ='\0';
-        RulesProcess();
+        RulesProcessEvent(json_event);
       } else {
         event_data[0] ='\0';
+      }
+    }
+    else if (rules_flag.data) {
+      uint16_t mask = 1;
+      for (byte i = 0; i < MAX_RULES_FLAG; i++) {
+        if (rules_flag.data & mask) {
+          rules_flag.data ^= mask;
+          json_event[0] = '\0';
+          switch (i) {
+            case 0: strncpy_P(json_event, PSTR("{\"System\":{\"Boot\":1}}"), sizeof(json_event)); break;
+            case 1: strncpy_P(json_event, PSTR("{\"Time\":{\"Initialized\":1}}"), sizeof(json_event)); break;
+            case 2: strncpy_P(json_event, PSTR("{\"Time\":{\"Set\":1}}"), sizeof(json_event)); break;
+            case 3: strncpy_P(json_event, PSTR("{\"MQTT\":{\"Connected\":1}}"), sizeof(json_event)); break;
+            case 4: strncpy_P(json_event, PSTR("{\"MQTT\":{\"Disconnected\":1}}"), sizeof(json_event)); break;
+          }
+          if (json_event[0]) {
+            RulesProcessEvent(json_event);
+            break;                       // Only service one event within 50mS
+          }
+        }
+        mask <<= 1;
       }
     }
     else {
@@ -419,12 +448,14 @@ void RulesEvery50ms()
 void RulesEverySecond()
 {
   if (Settings.rule_enabled) {  // Any rule enabled
+    char json_event[120];
+
     for (byte i = 0; i < MAX_RULE_TIMERS; i++) {
       if (rules_timer[i] != 0L) {           // Timer active?
         if (TimeReached(rules_timer[i])) {  // Timer finished?
           rules_timer[i] = 0L;              // Turn off this timer
-          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"Rules\":{\"Timer\":%d}}"), i +1);
-          RulesProcess();
+          snprintf_P(json_event, sizeof(json_event), PSTR("{\"Rules\":{\"Timer\":%d}}"), i +1);
+          RulesProcessEvent(json_event);
         }
       }
     }

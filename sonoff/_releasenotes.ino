@@ -1,4 +1,7 @@
 /* 6.0.0a
+ * Add command SetOption28 to switch between hex or decimal Sonoff Bridge RF received data format (#3008)
+ * Add command SetOption29 to switch between hex or decimal IR received data format
+ * Add performance improvement when updating multiple individual WS2812 pixels (#3007)
  * Add debug facilities using optional xdrv_99_debug.ino to enable in user_config.h
  * Add KNX support for DS18S20 Temperature sensor
  * Add CRC to Settings making future upgrades more fail-safe
@@ -9,6 +12,7 @@
  * Change default CFG_HOLDER from 0x20161209 to 4617 (=0x1209) - no impact on default upgrades
  * Fix Pzem004T checksum error
  * Fix KNX bug when doing reply of sensors values
+ * Fix rules induced LWT message
  *
  * 5.14.0b
  * Add Console Commands to send KNX Commands

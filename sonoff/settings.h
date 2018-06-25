@@ -53,8 +53,8 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t knx_enabled : 1;              // bit 25 (v5.12.0l) KNX
     uint32_t device_index_enable : 1;      // bit 26 (v5.13.1a)
     uint32_t knx_enable_enhancement : 1;   // bit 27 (v5.14.0a) KNX
-    uint32_t spare28 : 1;
-    uint32_t spare29 : 1;
+    uint32_t rf_receive_decimal : 1;       // bit 28 (v6.0.0a)
+    uint32_t ir_receive_decimal : 1;       // bit 29 (v6.0.0a)
     uint32_t spare30 : 1;
     uint32_t spare31 : 1;
   };
@@ -317,6 +317,29 @@ struct XDRVMAILBOX {
   char         *topic;
   char         *data;
 } XdrvMailbox;
+
+#define MAX_RULES_FLAG  5                  // Number of bits used in RulesBitfield (tricky I know...)
+typedef union {                            // Restricted by MISRA-C Rule 18.4 but so usefull...
+  uint16_t data;                           // Allow bit manipulation
+  struct {
+    uint16_t system_boot : 1;
+    uint16_t time_init : 1;
+    uint16_t time_set : 1;
+    uint16_t mqtt_connected : 1;
+    uint16_t mqtt_disconnected : 1;
+    uint16_t spare05 : 1;
+    uint16_t spare06 : 1;
+    uint16_t spare07 : 1;
+    uint16_t spare08 : 1;
+    uint16_t spare09 : 1;
+    uint16_t spare10 : 1;
+    uint16_t spare11 : 1;
+    uint16_t spare12 : 1;
+    uint16_t spare13 : 1;
+    uint16_t spare14 : 1;
+    uint16_t spare15 : 1;
+  };
+} RulesBitfield;
 
 // See issue https://github.com/esp8266/Arduino/issues/2913
 #ifdef USE_ADC_VCC
