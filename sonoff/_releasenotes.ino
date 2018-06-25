@@ -1,4 +1,7 @@
 /* 6.0.0a
+ * Add command SetOption28 to switch between hex or decimal Sonoff Bridge RF received data format (#3008)
+ * Add command SetOption29 to switch between hex or decimal IR received data format
+ * Add performance improvement when updating multiple individual WS2812 pixels (#3007)
  * Add debug facilities using optional xdrv_99_debug.ino to enable in user_config.h
  * Add KNX support for DS18S20 Temperature sensor
  * Add CRC to Settings making future upgrades more fail-safe
