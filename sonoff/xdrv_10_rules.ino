@@ -343,6 +343,8 @@ bool RulesProcessEvent(char *json_event)
 {
   bool serviced = false;
 
+  ShowFreeMem(PSTR("RulesProcessEvent"));
+
   String event_saved = json_event;
   event_saved.toUpperCase();
 

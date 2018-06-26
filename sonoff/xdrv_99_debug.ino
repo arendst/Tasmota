@@ -165,17 +165,37 @@ void CpuLoadLoop()
 #if defined(F_CPU) && (F_CPU == 160000000L)
       int CPU_load = 100 - ( (CPU_loops*(1 + 30*sleep)) / (CPU_load_check *800) );
       CPU_loops = CPU_loops / CPU_load_check;
-      snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION "FreeRam %d, CPU %d%%(160MHz), Loops/sec %d"), ESP.getFreeHeap(), CPU_load, CPU_loops);
+      snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_DEBUG "FreeRam %d, CPU %d%%(160MHz), Loops/sec %d"), ESP.getFreeHeap(), CPU_load, CPU_loops);
 #else
       int CPU_load = 100 - ( (CPU_loops*(1 + 30*sleep)) / (CPU_load_check *400) );
       CPU_loops = CPU_loops / CPU_load_check;
-      snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION "FreeRam %d, CPU %d%%(80MHz), Loops/sec %d"), ESP.getFreeHeap(), CPU_load, CPU_loops);
+      snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_DEBUG "FreeRam %d, CPU %d%%(80MHz), Loops/sec %d"), ESP.getFreeHeap(), CPU_load, CPU_loops);
 #endif
       AddLog(LOG_LEVEL_DEBUG);
       CPU_last_millis = CPU_last_loop_time;
       CPU_loops = 0;
     }
   }
+}
+
+/*******************************************************************************************/
+
+extern "C" {
+#include <cont.h>
+  extern cont_t g_cont;
+}
+
+void DebugFreeMem()
+{
+//  https://github.com/esp8266/Arduino/issues/2557
+  register uint32_t *sp asm("a1");
+
+//  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_DEBUG "FreeRam %d, FreeStack %d, UnmodifiedStack %d (%s)"),
+//    ESP.getFreeHeap(), 4 * (sp - g_cont.stack), cont_get_free_stack(&g_cont), XdrvMailbox.data);
+
+  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_DEBUG "FreeRam %d, FreeStack %d (%s)"),
+    ESP.getFreeHeap(), 4 * (sp - g_cont.stack), XdrvMailbox.data);
+  AddLog(LOG_LEVEL_DEBUG);
 }
 
 /*******************************************************************************************/
@@ -346,6 +366,9 @@ boolean Xdrv99(byte function)
       break;
     case FUNC_COMMAND:
       result = DebugCommand();
+      break;
+    case FUNC_FREE_MEM:
+      DebugFreeMem();
       break;
   }
   return result;

@@ -1,4 +1,5 @@
 /* 6.0.0a
+ * Add heap and stack debug information
  * Add command SetOption28 to switch between hex or decimal Sonoff Bridge RF received data format (#3008)
  * Add command SetOption29 to switch between hex or decimal IR received data format
  * Add performance improvement when updating multiple individual WS2812 pixels (#3007)

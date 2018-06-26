@@ -391,6 +391,8 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
   uint16_t index;
   uint32_t address;
 
+  ShowFreeMem(PSTR("MqttDataHandler"));
+
   strncpy(topicBuf, topic, sizeof(topicBuf));
   for (i = 0; i < data_len; i++) {
     if (!isspace(data[i])) break;
@@ -1266,6 +1268,7 @@ void ExecuteCommand(char *cmnd, int source)
   char *start;
   char *token;
 
+  ShowFreeMem(PSTR("ExecuteCommand"));
   ShowSource(source);
 
   token = strtok(cmnd, " ");

@@ -204,6 +204,8 @@ void MqttPublishDirect(const char* topic, boolean retained)
   char sretained[CMDSZ];
   char slog_type[10];
 
+  ShowFreeMem(PSTR("MqttPublishDirect"));
+
   sretained[0] = '\0';
   snprintf_P(slog_type, sizeof(slog_type), PSTR(D_LOG_RESULT));
 
