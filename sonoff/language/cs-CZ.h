@@ -321,6 +321,10 @@
 #define D_UPLOAD_ERR_7 "Nahrávání přerušeno"
 #define D_UPLOAD_ERR_8 "Špatný soubor"
 #define D_UPLOAD_ERR_9 "Soubor je příliš velký"
+#define D_UPLOAD_ERR_10 "Failed to init RF chip"
+#define D_UPLOAD_ERR_11 "Failed to erase RF chip"
+#define D_UPLOAD_ERR_12 "Failed to write to RF chip"
+#define D_UPLOAD_ERR_13 "Failed to decode RF firmware"
 #define D_UPLOAD_ERROR_CODE "Chyba nahrávání"
 
 #define D_ENTER_COMMAND "Vlož příkaz"

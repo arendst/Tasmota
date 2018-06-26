@@ -135,7 +135,7 @@ boolean Xdrv08(byte function)
 
   if (serial_bridge_active) {
     switch (function) {
-      case FUNC_INIT:
+      case FUNC_PRE_INIT:
         SerialBridgeInit();
         break;
       case FUNC_LOOP:

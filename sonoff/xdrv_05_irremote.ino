@@ -89,6 +89,7 @@ void IrReceiveInit(void)
 void IrReceiveCheck()
 {
   char sirtype[14];  // Max is AIWA_RC_T501
+  char stemp[16];
   int8_t iridx = 0;
 
   decode_results results;
@@ -107,8 +108,15 @@ void IrReceiveCheck()
       if ((iridx < 0) || (iridx > 14)) {
         iridx = 0;
       }
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_IRRECEIVED "\":{\"" D_JSON_IR_PROTOCOL "\":\"%s\",\"" D_JSON_IR_BITS "\":%d,\"" D_JSON_IR_DATA "\":\"%lX\"}}"),
-        GetTextIndexed(sirtype, sizeof(sirtype), iridx, kIrRemoteProtocols), results.bits, (uint32_t)results.value);
+
+      if (Settings.flag.ir_receive_decimal) {
+        snprintf_P(stemp, sizeof(stemp), PSTR("%u"), (uint32_t)results.value);
+      } else {
+        snprintf_P(stemp, sizeof(stemp), PSTR("\"%lX\""), (uint32_t)results.value);
+      }
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_IRRECEIVED "\":{\"" D_JSON_IR_PROTOCOL "\":\"%s\",\"" D_JSON_IR_BITS "\":%d,\"" D_JSON_IR_DATA "\":%s}}"),
+        GetTextIndexed(sirtype, sizeof(sirtype), iridx, kIrRemoteProtocols), results.bits, stemp);
+
       MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_IRRECEIVED));
       XdrvRulesProcess();
 #ifdef USE_DOMOTICZ
@@ -401,7 +409,7 @@ boolean Xdrv05(byte function)
 
   if ((pin[GPIO_IRSEND] < 99) || (pin[GPIO_IRRECV] < 99)) {
     switch (function) {
-      case FUNC_INIT:
+      case FUNC_PRE_INIT:
         if (pin[GPIO_IRSEND] < 99) {
           IrSendInit();
         }

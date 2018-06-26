@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v5.14.0a
+ * Updated until v6.0.0a
 \*********************************************************************/
 
 //#define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -321,6 +321,10 @@
 #define D_UPLOAD_ERR_7 "Opwaarderen afgebroken"
 #define D_UPLOAD_ERR_8 "Ongeldig bestand"
 #define D_UPLOAD_ERR_9 "Bestand is te groot"
+#define D_UPLOAD_ERR_10 "Init RF chip mislukt"
+#define D_UPLOAD_ERR_11 "Wissen RF chip mislukt"
+#define D_UPLOAD_ERR_12 "Opwaarderen RF chip mislukt"
+#define D_UPLOAD_ERR_13 "Decoderen RF bestand mislukt"
 #define D_UPLOAD_ERROR_CODE "Opwaardeer foutcode"
 
 #define D_ENTER_COMMAND "Geef opdracht"

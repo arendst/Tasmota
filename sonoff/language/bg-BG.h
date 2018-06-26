@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v5.14.0a
+ * Updated until v6.0.0a
 \*********************************************************************/
 
 //#define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -206,7 +206,7 @@
 #define D_ERASED_SECTOR "Изтрит сектор"
 
 // xdrv_02_webserver.ino
-#define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "Минимаен фърмуеър - моля надградете го"
+#define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "Минимален фърмуеър - моля надградете го"
 #define D_WEBSERVER_ACTIVE_ON "Уеб сървърът е активен на"
 #define D_WITH_IP_ADDRESS "с IP адрес"
 #define D_WEBSERVER_STOPPED "Уеб сървърът е спрян"
@@ -321,6 +321,10 @@
 #define D_UPLOAD_ERR_7 "Зареждането е прекъснато"
 #define D_UPLOAD_ERR_8 "Файлът е невалиден"
 #define D_UPLOAD_ERR_9 "Файлът е прекалено голям"
+#define D_UPLOAD_ERR_10 "Грешка при инициализация на RF чипа"
+#define D_UPLOAD_ERR_11 "Грешка при изтриване на RF чипа"
+#define D_UPLOAD_ERR_12 "Грешка при записване в RF чипа"
+#define D_UPLOAD_ERR_13 "Грешка при декодиране на RF фирмуера"
 #define D_UPLOAD_ERROR_CODE "Код на грешка при зареждането"
 
 #define D_ENTER_COMMAND "Въвеждане на команда"

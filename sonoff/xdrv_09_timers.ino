@@ -451,6 +451,11 @@ boolean TimerCommand()
     }
   }
   else if (CMND_TIMERS == command_code) {
+    if (XdrvMailbox.data_len && (XdrvMailbox.payload == 0)) {
+      for (byte i = 0; i < MAX_TIMERS; i++) {
+        Settings.timer[i].arm = 0;  // Disable all timers
+      }
+    }
     byte jsflg = 0;
     byte lines = 1;
     for (byte i = 0; i < MAX_TIMERS; i++) {
@@ -726,7 +731,7 @@ boolean Xdrv09(byte function)
   boolean result = false;
 
   switch (function) {
-    case FUNC_INIT:
+    case FUNC_PRE_INIT:
       TimerSetRandomWindows();
       break;
     case FUNC_EVERY_SECOND:

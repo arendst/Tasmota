@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v5.14.0b
+ * Updated until v6.0.0a
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -321,6 +321,10 @@
 #define D_UPLOAD_ERR_7 "Carga cancelada"
 #define D_UPLOAD_ERR_8 "Archivo no válido"
 #define D_UPLOAD_ERR_9 "Archivo muy grande"
+#define D_UPLOAD_ERR_10 "No inició chip RF"
+#define D_UPLOAD_ERR_11 "No se pudo borrar en el chip RF"
+#define D_UPLOAD_ERR_12 "No se puedo escribir en el chip RF"
+#define D_UPLOAD_ERR_13 "No se pudo decodificar firmware RF"
 #define D_UPLOAD_ERROR_CODE "Código de error de carga"
 
 #define D_ENTER_COMMAND "Ingresar comando"

@@ -182,6 +182,7 @@ uint8_t light_type = 0;                     // Light types
 bool pwm_present = false;                   // Any PWM channel configured with SetOption15 0
 boolean mdns_begun = false;
 uint8_t ntp_force_sync = 0;                 // Force NTP sync
+RulesBitfield rules_flag;
 
 char my_version[33];                        // Composed version string
 char my_hostname[33];                       // Composed Wifi hostname
@@ -391,6 +392,8 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
   uint16_t index;
   uint32_t address;
 
+  ShowFreeMem(PSTR("MqttDataHandler"));
+
   strncpy(topicBuf, topic, sizeof(topicBuf));
   for (i = 0; i < data_len; i++) {
     if (!isspace(data[i])) break;
@@ -570,7 +573,7 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
       XsnsCall(FUNC_COMMAND);
 //      if (!XsnsCall(FUNC_COMMAND)) type = NULL;
     }
-    else if ((CMND_SETOPTION == command_code) && ((index <= 26) || ((index > 31) && (index <= P_MAX_PARAM8 + 31)))) {
+    else if ((CMND_SETOPTION == command_code) && ((index <= 29) || ((index > 31) && (index <= P_MAX_PARAM8 + 31)))) {
       if (index <= 31) {
         ptype = 0;   // SetOption0 .. 31
       } else {
@@ -605,6 +608,9 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
 //              case 24:  // rules_once
 //              case 25:  // knx_enabled
               case 26:  // device_index_enable
+//              case 27:  // knx_enable_enhancement
+              case 28:  // rf_receive_decimal
+              case 29:  // ir_receive_decimal
                 bitWrite(Settings.flag.data, index, payload);
             }
             if (12 == index) {  // stop_flash_rotate
@@ -741,6 +747,8 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
       }
     }
     else if (CMND_GPIOS == command_code) {
+      mytmplt cmodule;
+      memcpy_P(&cmodule, &kModules[Settings.module], sizeof(cmodule));
       for (byte i = 0; i < GPIO_SENSOR_END; i++) {
         if (!jsflg) {
           snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_GPIOS "%d\":["), lines);
@@ -748,12 +756,14 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
           snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,"), mqtt_data);
         }
         jsflg = 1;
-        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s\"%d (%s)\""), mqtt_data, i, GetTextIndexed(stemp1, sizeof(stemp1), i, kSensorNames));
-        if ((strlen(mqtt_data) > (LOGSZ - TOPSZ)) || (i == GPIO_SENSOR_END -1)) {
-          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s]}"), mqtt_data);
-          MqttPublishPrefixTopic_P(RESULT_OR_STAT, type);
-          jsflg = 0;
-          lines++;
+        if (!GetUsedInModule(i, cmodule.gp.io)) {
+          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s\"%d (%s)\""), mqtt_data, i, GetTextIndexed(stemp1, sizeof(stemp1), i, kSensorNames));
+          if ((strlen(mqtt_data) > (LOGSZ - TOPSZ)) || (i == GPIO_SENSOR_END -1)) {
+            snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s]}"), mqtt_data);
+            MqttPublishPrefixTopic_P(RESULT_OR_STAT, type);
+            jsflg = 0;
+            lines++;
+          }
         }
       }
       mqtt_data[0] = '\0';
@@ -1001,7 +1011,7 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
         break;
       case 99:
         AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_APPLICATION D_RESTARTING));
-        ESP.restart();
+        EspRestart();
         break;
       default:
         snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, D_JSON_ONE_TO_RESTART);
@@ -1259,6 +1269,7 @@ void ExecuteCommand(char *cmnd, int source)
   char *start;
   char *token;
 
+  ShowFreeMem(PSTR("ExecuteCommand"));
   ShowSource(source);
 
   token = strtok(cmnd, " ");
@@ -1938,7 +1949,7 @@ void StateLoop()
       restart_flag--;
       if (restart_flag <= 0) {
         AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_APPLICATION D_RESTARTING));
-        ESP.restart();
+        EspRestart();
       }
     }
     break;
@@ -2013,8 +2024,7 @@ void ArduinoOTAInit()
     }
     snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_UPLOAD "Arduino OTA  %s. " D_RESTARTING), error_str);
     AddLog(LOG_LEVEL_INFO);
-    delay(100);       // Allow time for message xfer
-    ESP.restart();
+    EspRestart();
   });
 
   ArduinoOTA.onEnd([]()
@@ -2022,8 +2032,7 @@ void ArduinoOTAInit()
     if ((LOG_LEVEL_DEBUG <= seriallog_level)) Serial.println();
     snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_UPLOAD "Arduino OTA " D_SUCCESSFUL ". " D_RESTARTING));
     AddLog(LOG_LEVEL_INFO);
-    delay(100);       // Allow time for message xfer
-    ESP.restart();
+    EspRestart();
 	});
 
   ArduinoOTA.begin();
@@ -2323,7 +2332,7 @@ void GpioInit()
   }
   SetLedPower(Settings.ledstate &8);
 
-  XdrvCall(FUNC_INIT);
+  XdrvCall(FUNC_PRE_INIT);
 }
 
 extern "C" {
@@ -2451,6 +2460,7 @@ void setup()
   ArduinoOTAInit();
 #endif  // USE_ARDUINO_OTA
 
+  XdrvCall(FUNC_INIT);
   XsnsCall(FUNC_INIT);
 }
 
