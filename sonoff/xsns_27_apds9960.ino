@@ -1,5 +1,5 @@
 /*
-  xdrv_13_apds9960.ino - Support for I2C APDS9960 Proximity Sensor for Sonoff-Tasmota
+  xsns_27_apds9960.ino - Support for I2C APDS9960 Proximity Sensor for Sonoff-Tasmota
 
   Copyright (C) 2018  Shawn Hymel/Sparkfun and Theo Arends
 
@@ -27,6 +27,9 @@
 
 #ifdef USE_I2C
 #ifdef USE_APDS9960
+
+#define XSNS_27 27
+
 /*********************************************************************************************\
  * APDS9960 - Digital Proximity Ambient Light RGB and Gesture Sensor
  *
@@ -43,8 +46,7 @@
   #endif
   #ifdef USE_VEML6070
   #undef USE_VEML6070     // address conflict on the I2C-bus
-#endif
-
+  #endif
 #endif
 
 #define APDS9960_I2C_ADDR         0x39
@@ -57,17 +59,11 @@
 #define GESTURE_SENSITIVITY_1   50
 #define GESTURE_SENSITIVITY_2   20
 
-enum GestureCommands {
-  CMND_GESTURE };
-
-const char kGestureCommands[] PROGMEM =
-  "Gesture" ;
-
 uint8_t APDS9960addr;
 uint8_t APDS9960type = 0;
 char APDS9960stype[7];
 char currentGesture[6];
-bool gesture_mode = true;
+uint8_t gesture_mode = 1;
 
 volatile uint8_t recovery_loop_counter = 0;  //count number of stateloops to switch the sensor off, if needed
 #define APDS9960_LONG_RECOVERY           50 //long pause after sensor overload in loops
@@ -1963,7 +1959,7 @@ void APDS9960_loop()
     APDS9960_overload = false;
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"Gesture\":\"On\"}"));
     MqttPublishPrefixTopic_P(RESULT_OR_TELE, mqtt_data); // only after the long break we report, that we are online again
-    gesture_mode = true;
+    gesture_mode = 1;
   }
 
   if (gesture_mode) {
@@ -1976,47 +1972,37 @@ void APDS9960_loop()
         recovery_loop_counter = APDS9960_LONG_RECOVERY;  // long pause after overload/long press - number of stateloops
         snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"Gesture\":\"Off\"}"));
         MqttPublishPrefixTopic_P(RESULT_OR_TELE, mqtt_data);
-        gesture_mode = false;
+        gesture_mode = 0;
         }
       }
   }
 }
 
-
 bool APDS9960_detect(void)
 {
-
   if (APDS9960type) {
     return true;
   }
 
   boolean success = false;
-  char log[LOGSZ];
   APDS9960type = I2cRead8(APDS9960_I2C_ADDR, APDS9960_ID);
 
-  if (APDS9960type ==  APDS9960_CHIPID_1 || APDS9960type ==  APDS9960_CHIPID_2)
-  {
+  if (APDS9960type == APDS9960_CHIPID_1 || APDS9960type == APDS9960_CHIPID_2) {
     strcpy_P(APDS9960stype, PSTR("APDS9960"));
-    snprintf_P(log, sizeof(log), PSTR("I2C: %s found at address 0x%x"), APDS9960stype, APDS9960_I2C_ADDR);
-    AddLog_P(LOG_LEVEL_DEBUG, log);
-    if (APDS9960_init()){
+    snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, APDS9960stype, APDS9960_I2C_ADDR);
+    AddLog(LOG_LEVEL_DEBUG);
+    if (APDS9960_init()) {
       success = true;
-      snprintf_P(log, sizeof(log), PSTR("APDS9960 initialized"));
-      AddLog_P(LOG_LEVEL_DEBUG, log);
+      AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "APDS9960 initialized"));
       enableGestureSensor(false);
-      }
-  }
-  else
-  {
-   snprintf_P(log, sizeof(log), PSTR("APDS9960 not found at address 0x%x"), APDS9960_I2C_ADDR);
-   AddLog_P(LOG_LEVEL_DEBUG, log);
+    }
+  } else {
+    snprintf_P(log_data, sizeof(log_data), PSTR("APDS9960 not found at address 0x%x"), APDS9960_I2C_ADDR);
+    AddLog(LOG_LEVEL_DEBUG);
   }
   currentGesture[0] = '\0';
   return success;
 }
-
-
-
 
 /*********************************************************************************************\
  * Presentation
@@ -2027,135 +2013,108 @@ void APDS9960_show(boolean json)
   if (!APDS9960type) {
     return;
   }
-  if (!gesture_mode)
-    {
-      char red_chr[10];
-      char green_chr[10];
-      char blue_chr[10];
-      char ambient_chr[10];
-      char prox_chr[10];
-      uint16_t val;
-      uint8_t val_prox;
+  if (!gesture_mode) {
+    char red_chr[10];
+    char green_chr[10];
+    char blue_chr[10];
+    char ambient_chr[10];
+    char prox_chr[10];
+    uint16_t val;
+    uint8_t val_prox;
 
+    readRedLight(val);
+    sprintf (red_chr, "%u", val);
+    readGreenLight(val);
+    sprintf (green_chr, "%u", val);
+    readBlueLight(val);
+    sprintf (blue_chr, "%u", val );
+    readAmbientLight(val);
+    sprintf (ambient_chr, "%u", val);
 
-      readRedLight(val);
-      sprintf (red_chr, "%u", val);
-      readGreenLight(val);
-      sprintf (green_chr, "%u", val);
-      readBlueLight(val);
-      sprintf (blue_chr, "%u", val );
-      readAmbientLight(val);
-      sprintf (ambient_chr, "%u", val );
+    readProximity(val_prox);
+    sprintf (prox_chr, "%u", val_prox );
 
-      readProximity(val_prox);
-      sprintf (prox_chr, "%u", val_prox );
-
-      if (json) {
-        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"%s\":{\"Red\":%s, \"Green\":%s, \"Blue\":%s, \"Ambient\":%s, \"Proximity\":%s}"),
-      mqtt_data, APDS9960stype, red_chr, green_chr, blue_chr, ambient_chr, prox_chr);
-      }
-
-      #ifdef USE_WEBSERVER
-      else{
+    if (json) {
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"%s\":{\"Red\":%s,\"Green\":%s,\"Blue\":%s,\"Ambient\":%s,\"Proximity\":%s}"),
+        mqtt_data, APDS9960stype, red_chr, green_chr, blue_chr, ambient_chr, prox_chr);
+#ifdef USE_WEBSERVER
+    } else {
       snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_APDS_9960_SNS, mqtt_data, red_chr, green_chr, blue_chr, ambient_chr, prox_chr );
-        }
-      #endif  // USE_WEBSERVER
+#endif  // USE_WEBSERVER
     }
-    else{
-      if (json && (currentGesture[0] != '\0' )) {
-        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"%s\":{\"%s\":1}"), mqtt_data, APDS9960stype, currentGesture);
-        currentGesture[0] = '\0';
-      }
-}
-}
-/*********************************************************************************************\
- * Commands
-\*********************************************************************************************/
-
-boolean apds9960_command()
-{
-  char command [CMDSZ];
-  boolean serviced = true;
-
-  int command_code = GetCommandCode(command, sizeof(command), XdrvMailbox.topic, kGestureCommands);
-  if (-1 == command_code) {
-    serviced = false;  // Unknown command
-    return serviced;
-  }
-
-  if (CMND_GESTURE == command_code) {
-      switch (XdrvMailbox.payload) {
-      case 0: // Off
-          disableGestureSensor();
-          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"Gesture\":\"Off\"}"));
-          gesture_mode = false;
-          enableLightSensor(false);
-          enableProximitySensor(false);
-          break;
-      case 1: // On
-        if (APDS9960type) {
-          disableLightSensor();
-          disableProximitySensor();
-          enableGestureSensor(false);
-          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"Gesture\":\"on\"}"));
-          gesture_mode = true;
-          }
-      default: // get status
-          if(gesture_mode){
-            snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"Gesture\":\"on\"}"));
-            }
-            else{
-              snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"Gesture\":\"Off\"}"));
-            }
-      }
   }
   else {
-    serviced = false;  // Unknown command
+    if (json && (currentGesture[0] != '\0' )) {
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"%s\":{\"%s\":1}"), mqtt_data, APDS9960stype, currentGesture);
+      currentGesture[0] = '\0';
+    }
   }
+}
+
+/*********************************************************************************************\
+ * Command Sensor27
+ *
+ * Command  | Payload | Description
+ * ---------|---------|--------------------------
+ * Sensor27 |         | Show current gesture mode
+ * Sensor27 | 0 / Off | Disable gesture mode
+ * Sensor27 | 1 / On  | Enable gesture mode
+\*********************************************************************************************/
+
+bool APDS9960CommandSensor()
+{
+  boolean serviced = true;
+
+  switch (XdrvMailbox.payload) {
+    case 0: // Off
+      disableGestureSensor();
+      gesture_mode = 0;
+      enableLightSensor(false);
+      enableProximitySensor(false);
+      break;
+    case 1: // On
+      if (APDS9960type) {
+        disableLightSensor();
+        disableProximitySensor();
+        enableGestureSensor(false);
+        gesture_mode = 1;
+      }
+  }
+  snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_SENSOR_INDEX_SVALUE, XSNS_27, GetStateText(gesture_mode));
+
   return serviced;
 }
+
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
 
-#define XDRV_91
-
-boolean Xdrv91(byte function)
+boolean Xsns27(byte function)
 {
   boolean result = false;
 
   if (i2c_flg) {
-    switch (function) {
-        case FUNC_INIT:
-        APDS9960_detect();
-        break;
+    if (FUNC_INIT == function) {
+      APDS9960_detect();
+    } else if (APDS9960type) {
+      switch (function) {
+        case FUNC_EVERY_50_MSECOND:
+            APDS9960_loop();
+            break;
         case FUNC_COMMAND:
-        result = apds9960_command();
-        break;
-    }
-  }
-  return result;
-}
-
-#define XSNS_91
-
-boolean Xsns91(byte function)
-{
-  boolean result = false;
-
-  if (APDS9960type) {
-    switch (function) {
-      case FUNC_EVERY_50_MSECOND:
-        APDS9960_loop();
-        break;
-      case FUNC_JSON_APPEND:
-        APDS9960_show(1);
-        break;
+            if (XSNS_27 == XdrvMailbox.index) {
+            result = APDS9960CommandSensor();
+            }
+            break;
+        case FUNC_JSON_APPEND:
+            APDS9960_show(1);
+            break;
 #ifdef USE_WEBSERVER
-      case FUNC_WEB_APPEND:
-        APDS9960_show(0);
-        break;
+        case FUNC_WEB_APPEND:
+          APDS9960_show(0);
+          break;
 #endif  // USE_WEBSERVER
+      }
     }
   }
   return result;
