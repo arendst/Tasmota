@@ -333,14 +333,7 @@ void SetDevicePower(power_t rpower, int source)
     power = (1 << devices_present) -1;
     rpower = power;
   }
-  //STB mode
-  if (Settings.flag.interlock) {
-    if (Settings.flag.paired_interlock) {
-      for (byte i = 0; i < devices_present; i=i+2) {
-        bitWrite(rpower, i+1, !bitRead(rpower, i));
-      }
-      power = rpower;
-    } else {
+  if (Settings.flag.interlock && !Settings.flag.paired_interlock) {
       power_t mask = 1;
       uint8_t count = 0;
       for (byte i = 0; i < devices_present; i++) {
@@ -351,9 +344,8 @@ void SetDevicePower(power_t rpower, int source)
         power = 0;
         rpower = 0;
       }
-    }
   }
-//end
+
   XdrvSetPower(rpower);
 
   if ((SONOFF_DUAL == Settings.module) || (CH4 == Settings.module)) {
@@ -1255,14 +1247,22 @@ void ExecuteCommandPower(byte device, byte state, int source)
       blink_mask &= (POWER_MASK ^ mask);  // Clear device mask
       MqttPublishPowerBlinkState(device);
     }
-    //stb mod
-    if (Settings.flag.interlock && !interlock_mutex && !Settings.flag.paired_interlock) {  // Clear all but masked relay
-    //end
+    if (Settings.flag.interlock && !interlock_mutex ) {  // Clear all but masked relay
       interlock_mutex = 1;
-      for (byte i = 0; i < devices_present; i++) {
-        power_t imask = 1 << i;
-        if ((power & imask) && (mask != imask)) ExecuteCommandPower(i +1, POWER_OFF, SRC_IGNORE);
+    //stb mod
+      if (Settings.flag.paired_interlock) {
+        byte  temp = 2* !(device%2);
+        power_t imask = 1 << (device- temp);
+        //snprintf_P(log_data, sizeof(log_data), PSTR("SRC0: device %d, state: %d, source %d, devicebin: %d, power: %ld, mask: %ld, imask %ld"),device,state,source, device%2 ,power, mask, imask);
+        //AddLog(LOG_LEVEL_DEBUG);
+        if (power & imask) ExecuteCommandPower(device +1-temp , POWER_OFF, SRC_IGNORE);
+      } else {
+        for (byte i = 0; i < devices_present; i++) {
+          power_t imask = 1 << i;
+          if ((power & imask) && (mask != imask)) ExecuteCommandPower(i +1, POWER_OFF, SRC_IGNORE);
+        }
       }
+      //end
       interlock_mutex = 0;
     }
     switch (state) {
