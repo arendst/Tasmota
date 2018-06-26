@@ -281,6 +281,9 @@ long cf_pulses_last_time = CSE_PULSES_NOT_INITIALIZED;
 
 void CseReceived()
 {
+  //  0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23
+  // 55 5A 02 F7 60 00 03 AB 00 40 10 02 60 5D 51 A6 58 03 E9 EF 71 0B 7A 36
+  // Hd Id VCal---- Voltage- ICal---- Current- PCal---- Power--- Ad CF--- Ck
   AddLogSerial(LOG_LEVEL_DEBUG_MORE);
 
   uint8_t header = serial_in_buffer[0];
@@ -371,7 +374,12 @@ bool CseSerialInput()
       return 1;
     }
   } else {
-    if (0x5A == serial_in_byte) {             // 0x5A - Packet header 2
+    if ((0x5A == serial_in_byte) && (serial_in_byte_counter)) {  // 0x5A - Packet header 2
+      if (serial_in_byte_counter > 1) {       // Sync buffer with data (issue #1907)
+        serial_in_buffer[0] = serial_in_buffer[--serial_in_byte_counter];
+        serial_in_byte_counter = 1;
+        AddLog_P(LOG_LEVEL_DEBUG, PSTR("CSE: Fixed out-of-sync"));
+      }
       cse_receive_flag = 1;
     } else {
       serial_in_byte_counter = 0;
@@ -408,6 +416,8 @@ void CseEverySecond()
  *
  * Source: Victor Ferrer https://github.com/vicfergar/Sonoff-MQTT-OTA-Arduino
  * Based on: PZEM004T library https://github.com/olehs/PZEM004T
+ *
+ * Hardware Serial will be selected if GPIO1 = [PZEM Rx] and [GPIO3 = PZEM Tx]
 \*********************************************************************************************/
 
 #include <TasmotaSerial.h>
@@ -433,6 +443,8 @@ TasmotaSerial *PzemSerial;
 #define RESP_POWER_ALARM (uint8_t)0xA5
 
 #define PZEM_DEFAULT_READ_TIMEOUT 500
+
+/*********************************************************************************************/
 
 struct PZEMCommand {
   uint8_t command;
@@ -472,7 +484,17 @@ bool PzemReceiveReady()
 
 bool PzemRecieve(uint8_t resp, float *data)
 {
-  uint8_t buffer[sizeof(PZEMCommand)];
+  //  0  1  2  3  4  5  6
+  // A4 00 00 00 00 00 A4 - Set address
+  // A0 00 D4 07 00 00 7B - Voltage (212.7V)
+  // A1 00 00 0A 00 00 AB - Current (0.1A)
+  // A1 00 00 00 00 00 A1 - No current
+  // A2 00 16 00 00 00 B8 - Power (22W)
+  // A2 00 00 00 00 00 A2 - No power
+  // A3 00 08 A4 00 00 4F - Energy (2.212kWh)
+  // A3 01 86 9F 00 00 C9 - Energy (99.999kWh)
+
+  uint8_t buffer[sizeof(PZEMCommand)] = { 0 };
 
   unsigned long start = millis();
   uint8_t len = 0;
@@ -481,6 +503,10 @@ bool PzemRecieve(uint8_t resp, float *data)
       uint8_t c = (uint8_t)PzemSerial->read();
       if (!c && !len) {
         continue;  // skip 0 at startup
+      }
+      if ((1 == len) && (buffer[0] == c)) {
+        len--;
+        continue;  // fix skewed data
       }
       buffer[len++] = c;
     }
@@ -562,12 +588,6 @@ void PzemEvery200ms()
   else {
     pzem_sendRetry--;
   }
-}
-
-bool PzemInit()
-{
-  PzemSerial = new TasmotaSerial(pin[GPIO_PZEM_RX], pin[GPIO_PZEM_TX]);
-  return PzemSerial->begin();
 }
 
 /********************************************************************************************/
@@ -723,7 +743,7 @@ void EnergyMarginCheck()
           snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_MAXPOWERREACHED "\":\"%d%s\"}"), energy_power_u, (Settings.flag.value_units) ? " " D_UNIT_WATT : "");
           MqttPublishPrefixTopic_P(STAT, S_RSLT_WARNING);
           EnergyMqttShow();
-          ExecuteCommandPower(1, POWER_OFF);
+          ExecuteCommandPower(1, POWER_OFF, SRC_MAXPOWER);
           if (!energy_mplr_counter) {
             energy_mplr_counter = Settings.param[P_MAX_POWER_RETRY] +1;
           }
@@ -745,7 +765,7 @@ void EnergyMarginCheck()
           if (energy_mplr_counter) {
             snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_POWERMONITOR "\":\"%s\"}"), GetStateText(1));
             MqttPublishPrefixTopic_P(RESULT_OR_STAT, PSTR(D_JSON_POWERMONITOR));
-            ExecuteCommandPower(1, POWER_ON);
+            ExecuteCommandPower(1, POWER_ON, SRC_MAXPOWER);
           } else {
             snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_MAXPOWERREACHEDRETRY "\":\"%s\"}"), GetStateText(0));
             MqttPublishPrefixTopic_P(STAT, S_RSLT_WARNING);
@@ -763,7 +783,7 @@ void EnergyMarginCheck()
       energy_max_energy_state = 1;
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_ENERGYMONITOR "\":\"%s\"}"), GetStateText(1));
       MqttPublishPrefixTopic_P(RESULT_OR_STAT, PSTR(D_JSON_ENERGYMONITOR));
-      ExecuteCommandPower(1, POWER_ON);
+      ExecuteCommandPower(1, POWER_ON, SRC_MAXENERGY);
     }
     else if ((1 == energy_max_energy_state) && (energy_daily_u >= Settings.energy_max_energy)) {
       energy_max_energy_state = 2;
@@ -771,7 +791,7 @@ void EnergyMarginCheck()
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_MAXENERGYREACHED "\":\"%s%s\"}"), mqtt_data, (Settings.flag.value_units) ? " " D_UNIT_KILOWATTHOUR : "");
       MqttPublishPrefixTopic_P(STAT, S_RSLT_WARNING);
       EnergyMqttShow();
-      ExecuteCommandPower(1, POWER_OFF);
+      ExecuteCommandPower(1, POWER_OFF, SRC_MAXENERGY);
     }
   }
 #endif  // FEATURE_POWER_LIMIT
@@ -803,7 +823,10 @@ boolean EnergyCommand()
   unsigned long nvalue = 0;
 
   int command_code = GetCommandCode(command, sizeof(command), XdrvMailbox.topic, kEnergyCommands);
-  if (CMND_POWERDELTA == command_code) {
+  if (-1 == command_code) {
+    serviced = false;  // Unknown command
+  }
+  else if (CMND_POWERDELTA == command_code) {
     if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < 101)) {
       Settings.energy_power_delta = (1 == XdrvMailbox.payload) ? DEFAULT_POWER_DELTA : XdrvMailbox.payload;
     }
@@ -1005,16 +1028,16 @@ boolean EnergyCommand()
     unit = UNIT_HOUR;
   }
 #endif  // FEATURE_POWER_LIMIT
-  else {
-    serviced = false;
-  }
-  if (!status_flag) {
+  else serviced = false;  // Unknown command
+
+  if (serviced && !status_flag) {
     if (Settings.flag.value_units) {
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_LVALUE_SPACE_UNIT, command, nvalue, GetTextIndexed(sunit, sizeof(sunit), unit, kUnitNames));
     } else {
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_LVALUE, command, nvalue);
     }
   }
+
   return serviced;
 }
 
@@ -1030,7 +1053,7 @@ void EnergyDrvInit()
     serial_config = SERIAL_8E1;
     energy_flg = ENERGY_CSE7766;
 #ifdef USE_PZEM004T
-  } else if ((pin[GPIO_PZEM_RX] < 99) && (pin[GPIO_PZEM_TX])) {  // Any device with a Pzem004T
+  } else if ((pin[GPIO_PZEM_RX] < 99) && (pin[GPIO_PZEM_TX] < 99)) {  // Any device with a Pzem004T
     energy_flg = ENERGY_PZEM004T;
 #endif  // USE_PZEM004T
   }
@@ -1041,8 +1064,13 @@ void EnergySnsInit()
   if (ENERGY_HLW8012 == energy_flg) HlwInit();
 
 #ifdef USE_PZEM004T
-  if ((ENERGY_PZEM004T == energy_flg) && !PzemInit()) {  // PzemInit needs to be done here as earlier (serial) interrupts may lead to Exceptions
-    energy_flg = ENERGY_NONE;
+  if (ENERGY_PZEM004T == energy_flg) {  // Software serial init needs to be done here as earlier (serial) interrupts may lead to Exceptions
+    PzemSerial = new TasmotaSerial(pin[GPIO_PZEM_RX], pin[GPIO_PZEM_TX], 1);
+    if (PzemSerial->begin(9600)) {
+      if (PzemSerial->hardwareSerial()) { ClaimSerial(); }
+    } else {
+      energy_flg = ENERGY_NONE;
+    }
   }
 #endif  // USE_PZEM004T
 
@@ -1107,6 +1135,17 @@ void EnergyShow(boolean json)
       DomoticzSensor(DZ_CURRENT, energy_current_chr);  // Current
     }
 #endif  // USE_DOMOTICZ
+#ifdef USE_KNX
+    if (show_energy_period) {
+      KnxSensor(KNX_ENERGY_VOLTAGE, energy_voltage);
+      KnxSensor(KNX_ENERGY_CURRENT, energy_current);
+      KnxSensor(KNX_ENERGY_POWER, energy_power);
+      KnxSensor(KNX_ENERGY_POWERFACTOR, energy_power_factor);
+      KnxSensor(KNX_ENERGY_DAILY, energy_daily);
+      KnxSensor(KNX_ENERGY_TOTAL, energy_total);
+      KnxSensor(KNX_ENERGY_START, energy_start);
+    }
+#endif  // USE_KNX
 #ifdef USE_WEBSERVER
   } else {
     snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_ENERGY_SNS, mqtt_data, energy_voltage_chr, energy_current_chr, energy_power_chr, energy_power_factor_chr, energy_daily_chr, energy_yesterday_chr, energy_total_chr);
@@ -1126,7 +1165,7 @@ boolean Xdrv03(byte function)
 
   if (energy_flg) {
     switch (function) {
-      case FUNC_INIT:
+      case FUNC_PRE_INIT:
         EnergyDrvInit();
         break;
       case FUNC_COMMAND:

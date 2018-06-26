@@ -42,6 +42,7 @@
 #define D_JSON_BUILDDATETIME "BuildDateTime"
 #define D_JSON_CO2 "CarbonDioxide"
 #define D_JSON_COMMAND "Command"
+#define D_JSON_CONNECT_FAILED "Connect failed"
 #define D_JSON_COREVERSION "Core"
 #define D_JSON_COUNTER "Counter"
 #define D_JSON_CURRENT "Current"         // As in Voltage and Current
@@ -57,14 +58,17 @@
 #define D_JSON_EVERY "Every"
 #define D_JSON_FAILED "Failed"
 #define D_JSON_FALLBACKTOPIC "FallbackTopic"
+#define D_JSON_FEATURES "Features"
 #define D_JSON_FLASHMODE "FlashMode"
 #define D_JSON_FLASHSIZE "FlashSize"
 #define D_JSON_FREEMEMORY "Free"
+#define D_JSON_FREQUENCY "Frequency"
 #define D_JSON_FROM "from"
 #define D_JSON_GAS "Gas"
 #define D_JSON_GATEWAY "Gateway"
 #define D_JSON_HEAPSIZE "Heap"
 #define D_JSON_HIGH "High"
+#define D_JSON_HOST_NOT_FOUND "Host not found"
 #define D_JSON_HSBCOLOR "HSBColor"
 #define D_JSON_HUMIDITY "Humidity"
 #define D_JSON_I2CSCAN_DEVICES_FOUND_AT "Device(s) found at"
@@ -72,6 +76,7 @@
 #define D_JSON_I2CSCAN_NO_DEVICES_FOUND "No devices found"
 #define D_JSON_ID "Id"
 #define D_JSON_ILLUMINANCE "Illuminance"
+#define D_JSON_INFRARED "Infrared"
 #define D_JSON_UNKNOWN "Unknown"
 #define D_JSON_LIGHT "Light"
 #define D_JSON_LOCAL_TIME "Local"
@@ -86,10 +91,14 @@
 #define D_JSON_PERIOD "Period"
 #define D_JSON_POWERFACTOR "Factor"
 #define D_JSON_POWERUSAGE "Power"
+#define D_JSON_ACTIVE_POWERUSAGE "ActivePower"
+#define D_JSON_APPARENT_POWERUSAGE "ApparentPower"
+#define D_JSON_REACTIVE_POWERUSAGE "ReactivePower"
 #define D_JSON_PRESSURE "Pressure"
 #define D_JSON_PRESSUREATSEALEVEL "SeaPressure"
 #define D_JSON_PROGRAMFLASHSIZE "ProgramFlashSize"
 #define D_JSON_PROGRAMSIZE "ProgramSize"
+#define D_JSON_RESET "Reset"
 #define D_JSON_RESTARTING "Restarting"
 #define D_JSON_RESTARTREASON "RestartReason"
 #define D_JSON_RSSI "RSSI"
@@ -119,12 +128,14 @@
 #define D_JSON_TYPE "Type"
 #define D_JSON_UPTIME "Uptime"
 #define D_JSON_UTC_TIME "UTC"
+#define D_JSON_UVINDEX "UvIndex"
 #define D_JSON_UV_LEVEL "UvLevel"
 #define D_JSON_VCC "Vcc"
 #define D_JSON_VERSION "Version"
 #define D_JSON_VOLTAGE "Voltage"
 #define D_JSON_WIFI "Wifi"
 #define D_JSON_WRONG "Wrong"
+#define D_JSON_WRONG_PARAMETERS "Wrong parameters"
 #define D_JSON_YESTERDAY "Yesterday"
 #define D_JSON_ZERO_POINT_CALIBRATION "Zero Point Calibration"
 
@@ -205,14 +216,6 @@
   #define D_WCFG_5_WAIT "Wait"
 #define D_CMND_FRIENDLYNAME "FriendlyName"
 #define D_CMND_SWITCHMODE "SwitchMode"
-#define D_CMND_WEBSERVER "Webserver"
-  #define D_JSON_WEBSERVER_MODE "WebServerMode"
-  #define D_JSON_ACTIVE_FOR "Active for"
-  #define D_JSON_ON_DEVICE "on"
-  #define D_JSON_WITH_IP_ADDRESS "with IP address"
-#define D_CMND_WEBPASSWORD "WebPassword"
-#define D_CMND_WEBLOG "WebLog"
-#define D_CMND_EMULATION "Emulation"
 #define D_CMND_TELEPERIOD "TelePeriod"
 #define D_CMND_RESTART "Restart"
   #define D_JSON_ONE_TO_RESTART "1 to restart"
@@ -220,6 +223,8 @@
   #define D_JSON_RESET_AND_RESTARTING "Reset and Restarting"
   #define D_JSON_ONE_TO_RESET "1 to reset"
 #define D_CMND_TIMEZONE "Timezone"
+#define D_CMND_TIMESTD "TimeStd"
+#define D_CMND_TIMEDST "TimeDst"
 #define D_CMND_ALTITUDE "Altitude"
 #define D_CMND_LEDPOWER "LedPower"
 #define D_CMND_LEDSTATE "LedState"
@@ -228,7 +233,7 @@
 #define D_CMND_SERIALDELIMITER "SerialDelimiter"
 #define D_CMND_BAUDRATE "Baudrate"
 
-// Commands xdrv_00_mqtt.ino
+// Commands xdrv_01_mqtt.ino
 #define D_CMND_MQTTHOST "MqttHost"
 #define D_CMND_MQTTPORT "MqttPort"
 #define D_CMND_MQTTRETRY "MqttRetry"
@@ -253,37 +258,16 @@
 #define D_CMND_SENSORRETAIN "SensorRetain"
 #define D_CMND_PUBLISH "Publish"
 
-// Commands xdrv_01_light.ino
-#define D_CMND_CHANNEL "Channel"
-#define D_CMND_COLOR "Color"
-#define D_CMND_COLORTEMPERATURE "CT"
-#define D_CMND_DIMMER "Dimmer"
-#define D_CMND_HSBCOLOR "HSBColor"
-#define D_CMND_LED "Led"
-#define D_CMND_LEDTABLE "LedTable"
-#define D_CMND_FADE "Fade"
-#define D_CMND_PIXELS "Pixels"
-#define D_CMND_ROTATION "Rotation"
-#define D_CMND_SCHEME "Scheme"
-#define D_CMND_SPEED "Speed"
-#define D_CMND_WAKEUP "Wakeup"
-#define D_CMND_WAKEUPDURATION "WakeUpDuration"
-#define D_CMND_WIDTH "Width"
-
-// Commands xdrv_02_irremote.ino
-#define D_CMND_IRSEND "IRSend"
-  #define D_JSON_INVALID_JSON "Invalid JSON"
-  #define D_JSON_PROTOCOL_NOT_SUPPORTED "Protocol not supported"
-  #define D_JSON_IR_PROTOCOL "Protocol"
-  #define D_JSON_IR_BITS "Bits"
-  #define D_JSON_IR_DATA "Data"
-#define D_CMND_IRHVAC "IRHVAC"
-  #define D_JSON_IRHVAC_VENDOR "VENDOR"
-  #define D_JSON_IRHVAC_POWER "POWER"
-  #define D_JSON_IRHVAC_MODE "MODE"
-  #define D_JSON_IRHVAC_FANSPEED "FANSPEED"
-  #define D_JSON_IRHVAC_TEMP "TEMP"
-#define D_JSON_IRRECEIVED "IrReceived"
+// Commands xdrv_02_webserver.ino
+#define D_CMND_WEBSERVER "Webserver"
+  #define D_JSON_WEBSERVER_MODE "WebServerMode"
+  #define D_JSON_ACTIVE_FOR "Active for"
+  #define D_JSON_ON_DEVICE "on"
+  #define D_JSON_WITH_IP_ADDRESS "with IP address"
+#define D_CMND_WEBPASSWORD "WebPassword"
+#define D_CMND_WEBLOG "WebLog"
+#define D_CMND_WEBSEND "WebSend"
+#define D_CMND_EMULATION "Emulation"
 
 // Commands xdrv_03_energy.ino
 #define D_CMND_POWERLOW "PowerLow"
@@ -314,7 +298,39 @@
   #define D_JSON_ENERGYMONITOR "EnergyMonitor"
   #define D_JSON_MAXENERGYREACHED "MaxEnergyReached"
 
-// Commands xdrv_04_snfbridge.ino
+// Commands xdrv_04_light.ino
+#define D_CMND_CHANNEL "Channel"
+#define D_CMND_COLOR "Color"
+#define D_CMND_COLORTEMPERATURE "CT"
+#define D_CMND_DIMMER "Dimmer"
+#define D_CMND_HSBCOLOR "HSBColor"
+#define D_CMND_LED "Led"
+#define D_CMND_LEDTABLE "LedTable"
+#define D_CMND_FADE "Fade"
+#define D_CMND_PIXELS "Pixels"
+#define D_CMND_ROTATION "Rotation"
+#define D_CMND_SCHEME "Scheme"
+#define D_CMND_SPEED "Speed"
+#define D_CMND_WAKEUP "Wakeup"
+#define D_CMND_WAKEUPDURATION "WakeUpDuration"
+#define D_CMND_WIDTH "Width"
+
+// Commands xdrv_05_irremote.ino
+#define D_CMND_IRSEND "IRSend"
+  #define D_JSON_INVALID_JSON "Invalid JSON"
+  #define D_JSON_PROTOCOL_NOT_SUPPORTED "Protocol not supported"
+  #define D_JSON_IR_PROTOCOL "Protocol"
+  #define D_JSON_IR_BITS "Bits"
+  #define D_JSON_IR_DATA "Data"
+#define D_CMND_IRHVAC "IRHVAC"
+  #define D_JSON_IRHVAC_VENDOR "VENDOR"
+  #define D_JSON_IRHVAC_POWER "POWER"
+  #define D_JSON_IRHVAC_MODE "MODE"
+  #define D_JSON_IRHVAC_FANSPEED "FANSPEED"
+  #define D_JSON_IRHVAC_TEMP "TEMP"
+#define D_JSON_IRRECEIVED "IrReceived"
+
+// Commands xdrv_06_snfbridge.ino
 #define D_CMND_RFCODE "RfCode"
 #define D_CMND_RFHIGH "RfHigh"
 #define D_CMND_RFHOST "RfHost"
@@ -329,26 +345,15 @@
 #define D_CMND_RFLOW "RfLow"
 #define D_CMND_RFSYNC "RfSync"
   #define D_JSON_RFRECEIVED "RfReceived"
+#define D_CMND_RFRAW "RfRaw"
 
-// Commands xdrv_05_domoticz.ino
+// Commands xdrv_07_domoticz.ino
 #define D_CMND_DOMOTICZ "Domoticz"
 #define D_CMND_IDX "Idx"
 #define D_CMND_KEYIDX "KeyIdx"
 #define D_CMND_SWITCHIDX "SwitchIdx"
 #define D_CMND_SENSORIDX "SensorIdx"
 #define D_CMND_UPDATETIMER "UpdateTimer"
-
-// Commands xdrv_06_display.ino
-#define D_CMND_DISPLAY "Display"
-#define D_CMND_DISP_ADDRESS "Address"
-#define D_CMND_DISP_COLS "Cols"
-#define D_CMND_DISP_DIMMER "Dimmer"
-#define D_CMND_DISP_MODE "Mode"
-#define D_CMND_DISP_MODEL "Model"
-#define D_CMND_DISP_REFRESH "Refresh"
-#define D_CMND_DISP_ROWS "Rows"
-#define D_CMND_DISP_SIZE "Size"
-#define D_CMND_DISP_TEXT "Text"
 
 // Commands xdrv_08_serial_bridge.ino
 #define D_CMND_SSERIALSEND "SSerialSend"
@@ -370,6 +375,18 @@
 #define D_CMND_LATITUDE "Latitude"
 #define D_CMND_LONGITUDE "Longitude"
 
+// Commands xdrv_98_display.ino
+#define D_CMND_DISPLAY "Display"
+#define D_CMND_DISP_ADDRESS "Address"
+#define D_CMND_DISP_COLS "Cols"
+#define D_CMND_DISP_DIMMER "Dimmer"
+#define D_CMND_DISP_MODE "Mode"
+#define D_CMND_DISP_MODEL "Model"
+#define D_CMND_DISP_REFRESH "Refresh"
+#define D_CMND_DISP_ROWS "Rows"
+#define D_CMND_DISP_SIZE "Size"
+#define D_CMND_DISP_TEXT "Text"
+
 /********************************************************************************************/
 
 #define D_ASTERIX "********"
@@ -381,6 +398,9 @@
   #define QUOTEME_1(x) #x
   #define INCLUDE_FILE(x) QUOTEME(language/x.h)
   #include INCLUDE_FILE(MY_LANGUAGE)
+#endif
+#ifndef LANGUAGE_LCID
+  #define LANGUAGE_LCID 2057  // en-GB
 #endif
 
 // Common
@@ -486,7 +506,13 @@ const char kPrefixes[3][PRFX_MAX_STRING_LENGTH] PROGMEM = {
 // support.ino
 static const char kMonthNames[] = D_MONTH3LIST;
 
-// webserver.ino
+const char kOptionOff[] PROGMEM = "OFF|" D_OFF "|" D_FALSE "|" D_STOP "|" D_CELSIUS ;
+const char kOptionOn[] PROGMEM = "ON|" D_ON "|" D_TRUE "|" D_START "|" D_FAHRENHEIT "|" D_USER ;
+const char kOptionToggle[] PROGMEM = "TOGGLE|" D_TOGGLE "|" D_ADMIN ;
+const char kOptionBlink[] PROGMEM = "BLINK|" D_BLINK ;
+const char kOptionBlinkOff[] PROGMEM = "BLINKOFF|" D_BLINKOFF ;
+
+// xdrv_02_webserver.ino
 #ifdef USE_WEBSERVER
 const char HTTP_SNS_TEMP[] PROGMEM = "%s{s}%s " D_TEMPERATURE "{m}%s&deg;%c{e}";                             // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
 const char HTTP_SNS_HUM[] PROGMEM = "%s{s}%s " D_HUMIDITY "{m}%s%%{e}";                                      // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>

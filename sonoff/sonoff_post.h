@@ -46,6 +46,10 @@ void KNX_CB_Action(message_t const &msg, void *arg);
  * Default global defines
 \*********************************************************************************************/
 
+#ifndef MODULE
+#define MODULE                 SONOFF_BASIC   // [Module] Select default model
+#endif
+
 #define USE_DHT                               // Default DHT11 sensor needs no external library
 
 /*********************************************************************************************\
@@ -242,6 +246,9 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #endif
 #ifdef DEBUG_THEO
 #undef DEBUG_THEO                             // Disable debug code
+#endif
+#ifdef USE_DEBUG_DRIVER
+#undef USE_DEBUG_DRIVER                       // Disable debug code
 #endif
 #endif  // BE_MINIMAL
 

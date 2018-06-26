@@ -385,6 +385,11 @@ void Ds18x20Show(boolean json)
           domoticz_flag = false;
         }
 #endif  // USE_DOMOTICZ
+#ifdef USE_KNX
+        if ((0 == tele_period) && (0 == i)) {
+          KnxSensor(KNX_TEMPERATURE, t);
+        }
+#endif  // USE_KNX
 #ifdef USE_WEBSERVER
       } else {
         snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TEMP, mqtt_data, (1 == ds18x20_sensors) ? ds18x20_types : stemp, temperature, TempUnit());

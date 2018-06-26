@@ -1,5 +1,92 @@
-/* 5.13.0a
+/* 6.0.0a
+ * Add heap and stack debug information
+ * Add command SetOption28 to switch between hex or decimal Sonoff Bridge RF received data format (#3008)
+ * Add command SetOption29 to switch between hex or decimal IR received data format
+ * Add performance improvement when updating multiple individual WS2812 pixels (#3007)
+ * Add debug facilities using optional xdrv_99_debug.ino to enable in user_config.h
+ * Add KNX support for DS18S20 Temperature sensor
+ * Add CRC to Settings making future upgrades more fail-safe
+ * Add support for uploading Sonoff Bridge firmware found in tools/fw_efm8bb1 folder build by Portisch using Web Gui File Upload (#2886)
+ * Add support for I2C temperature sensor LM75AD (#2909)
+ * Add command RfRaw to control Portisch firmware features
+ * Remove version 3, 4 and pre 5.2 settings auto-upgrade. See https://github.com/arendst/Sonoff-Tasmota/wiki/Upgrade#migration-path
+ * Change default CFG_HOLDER from 0x20161209 to 4617 (=0x1209) - no impact on default upgrades
+ * Fix Pzem004T checksum error
+ * Fix KNX bug when doing reply of sensors values
+ * Fix rules induced LWT message
+ *
+ * 5.14.0b
+ * Add Console Commands to send KNX Commands
+   usage: KnxTx_Cmnd[slot] command
+   where [slot] is any of the 5 slots on the KNX Menu and command is 0 or 1
+   example: KnxTx_Cmnd1 0
+ * Add Console Commands to send KNX Values
+   usage: KnxTx_Val[slot] value
+   where [slot] is any of the 5 slots on the KNX Menu and value is a number
+   example: KnxTx_Val1 35
+ * Add Slots on the KNX Web Menu to select Group Addess to send data from console commands
+ * Add Events to trigger rules when a command is received from KNX
+   usage on rules as: event#KnxRx_Cmnd[slot]
+   where [slot] is any of the 5 slots on the KNX Menu
+   example: rule on event#KnxRx_Cmnd1 do VAR1 %value% endon
+   (where %value% can be 0 or 1)
+ * Add Events to trigger rules when received read requests from KNX
+   usage on rules as: event#KnxRx_Req[slot]
+   where [slot] is any of the 5 slots on the KNX Menu
+   example: rule on event#KnxRx_Req1 do KnxTx_Val1 35 endon
+ * Add Slots on the KNX Web Menu to select Group Addess to receive data to trigger rules
+ * Add two rule sets of 511 characters using commands rule1, rule2 and rule3
+ * Add Ukranian language file
+ * Add rule support for IrReceive and RfReceive (#2758)
+ * Add command WebSend [<host>(:<port>,<user>:<password>)] <command> (#2821)
+ * Add source information to command execution to be shown with logging option 3 (#2843)
+ * Fix some Pow R2 and S31 checksum errors (#1907)
+ * Fix Hardware Watchdog restart when using event command (#2853)
+ *
+ * 5.14.0a
+ * Add feature information to Status 4
+ * Add tools folder with python script decode-status.py for decoding some status fields like SetOption and Features
+ * Add Eastron SDM630 energy meter by Gennaro Tortone (#2735)
+ * Add KNX communication enhancement by Adrian Scillato (#2742)
+ * Add KNX energy data by Adrian Scillato (#2750)
+ * Add python script fw-server.py in tools folder to create a simple OTA server by Gennaro Tortone (#2759)
+ * Add rules %mem1% to %mem5% variable names storing data in flash (#2780)
+ * Add rules test on %varx% or %memx% (#2780)
+ * Add optional token %id% substituting the unique MAC address to fulltopic by Michael Graf (#2794)
+ * Fix display selection of un-available GPIO options in Module Configuration webpage (#2718)
+ * Fix timer re-trigger within one minute after restart (#2744)
+ * Fix IRSend not accepting data value of 0 by David Conran (#2751)
+ * Fix vars on rules by Adrian Scillato (#2769)
+ * Fix bug in KNX menu by Adrian Scillato (#2770)
+ * Fix anomalies in rules (#2778)
+ * Fix HUE bridge V1 software version by Heiko Krupp (#2788)
+ *
+ * 5.14.0 20180515
+ * Update language files
+ * Update TasmotaSerial to 2.0.0 allowing Hardware Serial Fallback when correct connections are configured
+ * Change command handling
+ * Change user_config(_override).h defines TIME_STD and TIME_DST
+ * Change user_config(_override).h otaurl to http://sonoff.maddox.co.uk/tasmota/sonoff.bin (#2588, #2602)
+ * Fix configuration restore regression from 5.13.1
+ * Fix compile error when ADC is enabled and Rules are disabled (#2608)
+ * Fix rule power trigger when no backlog command is used (#2613)
+ * Fix several timer data input and output errors (#2597, #2620)
+ * Fix KNX config error (#2628)
+ * Fix sensor MHZ-19 vanishing data over time (#2659)
+ * Fix KNX reconnection issue (#2679)
+ * Fix DST and STD time for Southern Hemisphere by Adrian Scillato (#2684, #2714)
+ * Add Portuguese in Brazil language file
+ * Add SetOption26 to enforce use of indexes even when only one relay is present (#1055)
+ * Add support for sensor SI1145 UV Index / IR / Visible light (#2496)
+ * Add rule state test for On/Off in addition to 0/1 (#2613)
+ * Add hardware serial option to MHZ-19 sensor (#2659)
+ * Add Eastron SDM120 energy meter by Gennaro Tortone (#2694)
+ * Add user entry DST/STD using commands TimeStd and TimeDst (See wiki for parameter syntax) (#2721)
+ *
+ * 5.13.1 20180501
  * Fix JSON buffers size too small for execution in some situations (#2580)
+ * Fix configuration restore (#2591)
+ * Add define MODULE for user selecting default model although it preferably should not be changed (#569, #2589)
  *
  * 5.13.0 20180430
  * Change platformio option sonoff-ds18x20 to sonoff-allsensors enabling ds18x20 and all other sensors in one image

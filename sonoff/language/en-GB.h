@@ -28,11 +28,12 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v5.12.0l
+ * Updated until v5.14.0b
 \*********************************************************************/
 
 //#define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
 
+#define LANGUAGE_LCID 2057
 // HTML (ISO 639-1) Language Code
 #define D_HTML_LANGUAGE "en"
 
@@ -91,6 +92,7 @@
 #define D_FALSE "False"
 #define D_FILE "File"
 #define D_FREE_MEMORY "Free Memory"
+#define D_FREQUENCY "Frequency"
 #define D_GAS "Gas"
 #define D_GATEWAY "Gateway"
 #define D_GROUP "Group"
@@ -101,6 +103,7 @@
 #define D_IMMEDIATE "immediate"      // Button immediate
 #define D_INDEX "Index"
 #define D_INFO "Info"
+#define D_INFRARED "Infrared"
 #define D_INITIALIZED "Initialized"
 #define D_IP_ADDRESS "IP Address"
 #define D_LIGHT "Light"
@@ -119,6 +122,9 @@
 #define D_PORT "Port"
 #define D_POWER_FACTOR "Power Factor"
 #define D_POWERUSAGE "Power"
+#define D_POWERUSAGE_ACTIVE "Active Power"
+#define D_POWERUSAGE_APPARENT "Apparent Power"
+#define D_POWERUSAGE_REACTIVE "Reactive Power"
 #define D_PRESSURE "Pressure"
 #define D_PRESSUREATSEALEVEL "SeaPressure"
 #define D_PROGRAM_FLASH_SIZE "Program Flash Size"
@@ -154,6 +160,7 @@
 #define D_UPTIME "Uptime"
 #define D_USER "User"
 #define D_UTC_TIME "UTC"
+#define D_UV_INDEX "UV Index"
 #define D_UV_LEVEL "UV Level"
 #define D_VERSION "Version"
 #define D_VOLTAGE "Voltage"
@@ -198,7 +205,7 @@
 #define D_USE_DEFAULTS "Use defaults"
 #define D_ERASED_SECTOR "Erased sector"
 
-// webserver.ino
+// xdrv_02_webserver.ino
 #define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "MINIMAL firmware - please upgrade"
 #define D_WEBSERVER_ACTIVE_ON "Web server active on"
 #define D_WITH_IP_ADDRESS "with IP address"
@@ -314,13 +321,17 @@
 #define D_UPLOAD_ERR_7 "Upload aborted"
 #define D_UPLOAD_ERR_8 "File invalid"
 #define D_UPLOAD_ERR_9 "File too large"
+#define D_UPLOAD_ERR_10 "Failed to init RF chip"
+#define D_UPLOAD_ERR_11 "Failed to erase RF chip"
+#define D_UPLOAD_ERR_12 "Failed to write to RF chip"
+#define D_UPLOAD_ERR_13 "Failed to decode RF firmware"
 #define D_UPLOAD_ERROR_CODE "Upload error code"
 
 #define D_ENTER_COMMAND "Enter command"
 #define D_ENABLE_WEBLOG_FOR_RESPONSE "Enable weblog 2 if response expected"
 #define D_NEED_USER_AND_PASSWORD "Need user=<username>&password=<password>"
 
-// xdrv_00_mqtt.ino
+// xdrv_01_mqtt.ino
 #define D_FINGERPRINT "Verify TLS fingerprint..."
 #define D_TLS_CONNECT_FAILED_TO "TLS Connect failed to"
 #define D_RETRY_IN "Retry in"
@@ -328,7 +339,7 @@
 #define D_INSECURE "Insecure connection due to invalid Fingerprint"
 #define D_CONNECT_FAILED_TO "Connect failed to"
 
-// xdrv_wemohue.ino
+// xplg_wemohue.ino
 #define D_MULTICAST_DISABLED "Multicast disabled"
 #define D_MULTICAST_REJOINED "Multicast (re)joined"
 #define D_MULTICAST_JOIN_FAILED "Multicast join failed"
@@ -348,7 +359,7 @@
 #define D_HUE_POST_ARGS "Hue POST args"
 #define D_3_RESPONSE_PACKETS_SENT "3 response packets sent"
 
-// xdrv_05_domoticz.ino
+// xdrv_07_domoticz.ino
 #define D_DOMOTICZ_PARAMETERS "Domoticz parameters"
 #define D_DOMOTICZ_IDX "Idx"
 #define D_DOMOTICZ_KEY_IDX "Key idx"
@@ -394,6 +405,9 @@
 #define D_KNX_COMMAND_OTHER "Other"
 #define D_SENT_TO "sent to"
 #define D_KNX_WARNING "The group address ( 0 / 0 / 0 ) is reserved and can not be used."
+#define D_KNX_ENHANCEMENT "Communication Enhancement"
+#define D_KNX_TX_SLOT "KNX TX"
+#define D_KNX_RX_SLOT "KNX RX"
 
 // xdrv_03_energy.ino
 #define D_ENERGY_TODAY "Energy Today"
@@ -453,6 +467,10 @@
 #define D_SENSOR_SBR_TX   "SerBr Tx"
 #define D_SENSOR_SR04_TRIG "SR04 Tri"
 #define D_SENSOR_SR04_ECHO "SR04 Ech"
+#define D_SENSOR_SDM120_TX "SDM120 Tx"
+#define D_SENSOR_SDM120_RX "SDM120 Rx"
+#define D_SENSOR_SDM630_TX "SDM630 Tx"
+#define D_SENSOR_SDM630_RX "SDM630 Rx"
 
 // Units
 #define D_UNIT_AMPERE "A"
@@ -473,9 +491,12 @@
 #define D_UNIT_PRESSURE "hPa"
 #define D_UNIT_SECOND "sec"
 #define D_UNIT_SECTORS "sectors"
+#define D_UNIT_VA "VA"
+#define D_UNIT_VAR "VAr"
 #define D_UNIT_VOLT "V"
 #define D_UNIT_WATT "W"
 #define D_UNIT_WATTHOUR "Wh"
+#define D_UNIT_HERTZ "Hz"
 
 // Log message prefix
 #define D_LOG_APPLICATION "APP: "  // Application

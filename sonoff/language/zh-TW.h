@@ -33,6 +33,7 @@
 
 //#define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
 
+#define LANGUAGE_LCID 1028
 // HTML (ISO 639-1) Language Code
 #define D_HTML_LANGUAGE "zh"
 
@@ -91,6 +92,7 @@
 #define D_FALSE "False"
 #define D_FILE "文件:"
 #define D_FREE_MEMORY "可用記憶體"
+#define D_FREQUENCY "Frequency"
 #define D_GAS "氣體"
 #define D_GATEWAY "網關"
 #define D_GROUP "組:"
@@ -101,6 +103,7 @@
 #define D_IMMEDIATE "immediate"      // Button immediate
 #define D_INDEX "索引:"
 #define D_INFO "信息"
+#define D_INFRARED "Infrared"
 #define D_INITIALIZED "初始化完成"
 #define D_IP_ADDRESS "IP地址"
 #define D_LIGHT "燈"
@@ -119,6 +122,9 @@
 #define D_PORT "端口"
 #define D_POWER_FACTOR "功率因數"
 #define D_POWERUSAGE "功率"
+#define D_POWERUSAGE_ACTIVE "Active Power"
+#define D_POWERUSAGE_APPARENT "Apparent Power"
+#define D_POWERUSAGE_REACTIVE "Reactive Power"
 #define D_PRESSURE "氣壓"
 #define D_PRESSUREATSEALEVEL "海平面氣壓"
 #define D_PROGRAM_FLASH_SIZE "韌體 Flash 大小"
@@ -154,6 +160,7 @@
 #define D_UPTIME "運行時間"
 #define D_USER "用戶名"
 #define D_UTC_TIME "UTC"
+#define D_UV_INDEX "UV Index"
 #define D_UV_LEVEL "紫外線等級"
 #define D_VERSION "版本"
 #define D_VOLTAGE "電壓"
@@ -198,7 +205,7 @@
 #define D_USE_DEFAULTS "使用默認設置"
 #define D_ERASED_SECTOR "擦除刪除"
 
-// webserver.ino
+// xdrv_02_webserver.ino
 #define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "固件版本過低 - 請升級"
 #define D_WEBSERVER_ACTIVE_ON "Web服務器:"
 #define D_WITH_IP_ADDRESS "IP地址:"
@@ -314,13 +321,17 @@
 #define D_UPLOAD_ERR_7 "上傳取消"
 #define D_UPLOAD_ERR_8 "錯誤的固件"
 #define D_UPLOAD_ERR_9 "固件太大"
+#define D_UPLOAD_ERR_10 "Failed to init RF chip"
+#define D_UPLOAD_ERR_11 "Failed to erase RF chip"
+#define D_UPLOAD_ERR_12 "Failed to write to RF chip"
+#define D_UPLOAD_ERR_13 "Failed to decode RF firmware"
 #define D_UPLOAD_ERROR_CODE "上傳錯誤代碼"
 
 #define D_ENTER_COMMAND "輸入命令"
 #define D_ENABLE_WEBLOG_FOR_RESPONSE "如果預期響應，則啟用Weblog 2"
 #define D_NEED_USER_AND_PASSWORD "需要 user=<用戶名>&password=<密碼>"
 
-// xdrv_00_mqtt.ino
+// xdrv_01_mqtt.ino
 #define D_FINGERPRINT "驗證 TLS 指紋..."
 #define D_TLS_CONNECT_FAILED_TO "TLS 連接失敗"
 #define D_RETRY_IN "重試倒計時:"
@@ -328,7 +339,7 @@
 #define D_INSECURE "指紋無效導致連接不安全"
 #define D_CONNECT_FAILED_TO "連接失敗:"
 
-// xdrv_wemohue.ino
+// xplg_wemohue.ino
 #define D_MULTICAST_DISABLED "組播已禁用"
 #define D_MULTICAST_REJOINED "組播已(重新)加入"
 #define D_MULTICAST_JOIN_FAILED "組播加入失敗"
@@ -348,7 +359,7 @@
 #define D_HUE_POST_ARGS "Hue POST 參數"
 #define D_3_RESPONSE_PACKETS_SENT "3 請求包發送"
 
-// xdrv_05_domoticz.ino
+// xdrv_07_domoticz.ino
 #define D_DOMOTICZ_PARAMETERS "Domoticz 設置"
 #define D_DOMOTICZ_IDX "Idx"
 #define D_DOMOTICZ_KEY_IDX "Key idx"
@@ -394,6 +405,9 @@
 #define D_KNX_COMMAND_OTHER "Other"
 #define D_SENT_TO "sent to"
 #define D_KNX_WARNING "The group address ( 0 / 0 / 0 ) is reserved and can not be used."
+#define D_KNX_ENHANCEMENT "Communication Enhancement"
+#define D_KNX_TX_SLOT "KNX TX"
+#define D_KNX_RX_SLOT "KNX RX"
 
 // xdrv_03_energy.ino
 #define D_ENERGY_TODAY "今日用電量"
@@ -453,10 +467,15 @@
 #define D_SENSOR_SBR_TX   "SerBr Tx"
 #define D_SENSOR_SR04_TRIG "SR04 Tri"
 #define D_SENSOR_SR04_ECHO "SR04 Ech"
+#define D_SENSOR_SDM120_TX "SDM120 Tx"
+#define D_SENSOR_SDM120_RX "SDM120 Rx"
+#define D_SENSOR_SDM630_TX "SDM630 Tx"
+#define D_SENSOR_SDM630_RX "SDM630 Rx"
 
 // Units
 #define D_UNIT_AMPERE "安"
 #define D_UNIT_CENTIMETER "cm"
+#define D_UNIT_HERTZ "Hz"
 #define D_UNIT_HOUR "時"
 #define D_UNIT_KILOOHM "千歐"
 #define D_UNIT_KILOWATTHOUR "千瓦時"
@@ -473,6 +492,8 @@
 #define D_UNIT_PRESSURE "百帕"
 #define D_UNIT_SECOND "秒"
 #define D_UNIT_SECTORS "扇區"
+#define D_UNIT_VA "VA"
+#define D_UNIT_VAR "VAr"
 #define D_UNIT_VOLT "伏"
 #define D_UNIT_WATT "瓦"
 #define D_UNIT_WATTHOUR "瓦時"
