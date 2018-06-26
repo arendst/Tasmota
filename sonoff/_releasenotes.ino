@@ -1,4 +1,5 @@
 /* 6.0.0a
+ * Add increment and decrement value to command Counter (#2838)
  * Add option 0 to command Timers disarming all timers (#2962)
  * Add time in minutes to rule Time#Initialized, Time#set and Time#Minute (#2669)
  * Add rule variables %time% for minutes since midnight, %uptime%, %sunrise% and %sunset% giving time in minutes (#2669)
