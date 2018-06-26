@@ -1,51 +1,51 @@
 /*
- Copyright (c) 2017 Shawn Hymel/Sparkfun and Theo Arends.  All rights reserved.
+  xdrv_13_apds9960.ino - Support for I2C APDS9960 Proximity Sensor for Sonoff-Tasmota
 
- Redistribution and use in source and binary forms, with or without
- modification, are permitted provided that the following conditions are met:
+  Copyright (C) 2018  Shawn Hymel/Sparkfun and Theo Arends
 
- - Redistributions of source code must retain the above copyright notice,
-   this list of conditions and the following disclaimer.
- - Redistributions in binary form must reproduce the above copyright notice,
-   this list of conditions and the following disclaimer in the documentation
-   and/or other materials provided with the distribution.
+  Redistribution and use in source and binary forms, with or without
+  modification, are permitted provided that the following conditions are met:
 
- THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
- LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- POSSIBILITY OF SUCH DAMAGE.
+  - Redistributions of source code must retain the above copyright notice,
+    this list of conditions and the following disclaimer.
+  - Redistributions in binary form must reproduce the above copyright notice,
+    this list of conditions and the following disclaimer in the documentation
+    and/or other materials provided with the distribution.
+
+  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+  ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+  LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+  SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+  CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+  POSSIBILITY OF SUCH DAMAGE.
 */
-
-//#define USE_APDS9960    // uncomment to enable the sensor
-// !!!!!!  turn off conflicting drivers !!!!
-#if defined(USE_SHT) || defined(USE_VEML6070)
- #warning I will turn off conflicting drivers (SHT and VEML6070) !!!
- #undef USE_SHT          // SHT-Driver blocks gesture sensor
- #undef USE_VEML6070     // address conflict on the I2C-bus
-#endif
 
 #ifdef USE_I2C
 #ifdef USE_APDS9960
-
-enum GestureCommands {
-  CMND_GESTURE };
-
-const char kGestureCommands[] PROGMEM =
-  "Gesture" ;
-
 /*********************************************************************************************\
- * APDS9960
+ * APDS9960 - Digital Proximity Ambient Light RGB and Gesture Sensor
  *
  * Source: Shawn Hymel (SparkFun Electronics)
  * Adaption for TASMOTA: Christian Baars
+ *
+ * I2C Address: 0x39
 \*********************************************************************************************/
+
+#if defined(USE_SHT) || defined(USE_VEML6070)
+  #warning **** Turned off conflicting drivers SHT and VEML6070 ****
+  #ifdef USE_SHT
+  #undef USE_SHT          // SHT-Driver blocks gesture sensor
+  #endif
+  #ifdef USE_VEML6070
+  #undef USE_VEML6070     // address conflict on the I2C-bus
+#endif
+
+#endif
 
 #define APDS9960_I2C_ADDR         0x39
 
@@ -57,14 +57,17 @@ const char kGestureCommands[] PROGMEM =
 #define GESTURE_SENSITIVITY_1   50
 #define GESTURE_SENSITIVITY_2   20
 
+enum GestureCommands {
+  CMND_GESTURE };
 
+const char kGestureCommands[] PROGMEM =
+  "Gesture" ;
 
 uint8_t APDS9960addr;
 uint8_t APDS9960type = 0;
 char APDS9960stype[7];
 char currentGesture[6];
 bool gesture_mode = true;
-
 
 volatile uint8_t recovery_loop_counter = 0;  //count number of stateloops to switch the sensor off, if needed
 #define APDS9960_LONG_RECOVERY           50 //long pause after sensor overload in loops
@@ -80,13 +83,11 @@ const char HTTP_APDS_9960_SNS[] PROGMEM = "%s"
   "{s}" "Proximity"  "{m}%s{e}";      // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
 #endif  // USE_WEBSERVER
 
-
 /*********************************************************************************************\
  * APDS9960
  *
  * Programmer : APDS9960 Datasheet and Sparkfun
 \*********************************************************************************************/
-
 
 /* Misc parameters */
 #define FIFO_PAUSE_TIME         30      // Wait period (ms) between FIFO reads
@@ -253,7 +254,6 @@ enum {
   APDS9960_ALL_STATE
 };
 
-
 /* Container for gesture data */
 typedef struct gesture_data_type {
     uint8_t u_data[32];
@@ -274,8 +274,6 @@ typedef struct gesture_data_type {
  int16_t gesture_lr_count_ = 0;
  int16_t gesture_state_ = 0;
  int16_t gesture_motion_ = DIR_NONE;
-
-
 
  /*******************************************************************************
   * Helper functions
