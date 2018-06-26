@@ -1006,7 +1006,7 @@ void WifiBegin(uint8_t flag)
   WiFi.mode(WIFI_OFF);      // See https://github.com/esp8266/Arduino/issues/2186
 #endif
 
-  WiFi.persistent(false);   // Solve possible wifi init errors
+  //WiFi.persistent(false);   // Solve possible wifi init errors
   WiFi.disconnect(true);    // Delete SDK wifi config
   delay(200);
   WiFi.mode(WIFI_STA);      // Disable AP mode
@@ -1773,7 +1773,7 @@ void RtcSecond()
         strncpy_P(mqtt_data, PSTR("{\"Time\":{\"Set\":1}}"), sizeof(mqtt_data));
       }
       XdrvRulesProcess();
- 
+
 //STB mod
       if (Settings.tele_period == 10) {
         tele_period = Settings.tele_period ;
