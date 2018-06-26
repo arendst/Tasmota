@@ -35,6 +35,7 @@
  *   on mqtt#connected do color 000010 endon
  *   on mqtt#disconnected do color 00100C endon
  *   on time#initialized do color 001000 endon
+ *   on time#initialized>120 do color 001000 endon
  *   on time#set do color 001008 endon
  *   on clock#timer=3 do color 080800 endon
  *   on rules#timer=1 do color 080800 endon
@@ -91,6 +92,7 @@ long rules_new_power = -1;
 long rules_old_power = -1;
 
 uint32_t rules_triggers[MAX_RULE_SETS] = { 0 };
+uint16_t rules_last_minute = 60;
 uint8_t rules_trigger_count[MAX_RULE_SETS] = { 0 };
 uint8_t rules_teleperiod = 0;
 
@@ -166,7 +168,7 @@ bool RulesRuleMatch(byte rule_set, String &event, String &rule)
     rule_task = rule.substring(5, pos);                // "INA219" or "SYSTEM"
   }
 
-  String rule_name = rule.substring(pos +1);           // "CURRENT>0.100" or "BOOT"
+  String rule_name = rule.substring(pos +1);           // "CURRENT>0.100" or "BOOT" or "%var1%"
 
   char compare = ' ';
   pos = rule_name.indexOf(">");
@@ -320,6 +322,13 @@ bool RuleSetProcess(byte rule_set, String &event_saved)
         snprintf_P(stemp, sizeof(stemp), PSTR("%%mem%d%%"), i +1);
         commands.replace(stemp, Settings.mems[i]);
       }
+      commands.replace(F("%time%"), String(GetMinutesPastMidnight()));
+      commands.replace(F("%uptime%"), String(GetMinutesUptime()));
+#if defined(USE_TIMERS) && defined(USE_SUNRISE)
+      commands.replace(F("%sunrise%"), String(GetSunMinutes(0)));
+      commands.replace(F("%sunset%"), String(GetSunMinutes(1)));
+#endif  // USE_TIMERS and USE_SUNRISE
+
       char command[commands.length() +1];
       snprintf(command, sizeof(command), commands.c_str());
 
@@ -416,8 +425,8 @@ void RulesEvery50ms()
           json_event[0] = '\0';
           switch (i) {
             case 0: strncpy_P(json_event, PSTR("{\"System\":{\"Boot\":1}}"), sizeof(json_event)); break;
-            case 1: strncpy_P(json_event, PSTR("{\"Time\":{\"Initialized\":1}}"), sizeof(json_event)); break;
-            case 2: strncpy_P(json_event, PSTR("{\"Time\":{\"Set\":1}}"), sizeof(json_event)); break;
+            case 1: snprintf_P(json_event, sizeof(json_event), PSTR("{\"Time\":{\"Initialized\":%d}}"), GetMinutesPastMidnight()); break;
+            case 2: snprintf_P(json_event, sizeof(json_event), PSTR("{\"Time\":{\"Set\":%d}}"), GetMinutesPastMidnight()); break;
             case 3: strncpy_P(json_event, PSTR("{\"MQTT\":{\"Connected\":1}}"), sizeof(json_event)); break;
             case 4: strncpy_P(json_event, PSTR("{\"MQTT\":{\"Disconnected\":1}}"), sizeof(json_event)); break;
           }
@@ -452,6 +461,13 @@ void RulesEverySecond()
   if (Settings.rule_enabled) {  // Any rule enabled
     char json_event[120];
 
+    if (RtcTime.valid) {
+      if ((uptime > 60) && (RtcTime.minute != rules_last_minute)) {  // Execute from one minute after restart every minute only once
+        rules_last_minute = RtcTime.minute;
+        snprintf_P(json_event, sizeof(json_event), PSTR("{\"Time\":{\"Minute\":%d}}"), GetMinutesPastMidnight());
+        RulesProcessEvent(json_event);
+      }
+    }
     for (byte i = 0; i < MAX_RULE_TIMERS; i++) {
       if (rules_timer[i] != 0L) {           // Timer active?
         if (TimeReached(rules_timer[i])) {  // Timer finished?

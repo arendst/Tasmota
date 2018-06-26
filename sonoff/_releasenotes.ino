@@ -1,4 +1,6 @@
 /* 6.0.0a
+ * Add time in minutes to rule Time#Initialized, Time#set and Time#Minute (#2669)
+ * Add rule variables %time% for minutes since midnight, %uptime%, %sunrise% and %sunset% giving time in minutes (#2669)
  * Add heap and stack debug information
  * Add command SetOption28 to switch between hex or decimal Sonoff Bridge RF received data format (#3008)
  * Add command SetOption29 to switch between hex or decimal IR received data format

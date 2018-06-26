@@ -1578,6 +1578,29 @@ String GetUptime()
   return String(dt);
 }
 
+uint32_t GetMinutesUptime()
+{
+  TIME_T ut;
+
+  if (restart_time) {
+    BreakTime(utc_time - restart_time, ut);
+  } else {
+    BreakTime(uptime, ut);
+  }
+
+  return (ut.days *1440) + (ut.hour *60) + ut.minute;
+}
+
+uint32_t GetMinutesPastMidnight()
+{
+  uint32_t minutes = 0;
+
+  if (RtcTime.valid) {
+    minutes = (RtcTime.hour *60) + RtcTime.minute;
+  }
+  return minutes;
+}
+
 void BreakTime(uint32_t time_input, TIME_T &tm)
 {
 // break the given time_input into time components
