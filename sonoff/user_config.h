@@ -178,7 +178,7 @@
  * - Disable a feature by preceding it with //
 \*********************************************************************************************/
 
-//#define USE_ARDUINO_OTA                          // Add optional support for Arduino OTA (+4k5 code)
+//#define USE_ARDUINO_OTA                          // Add optional support for Arduino OTA (+13k code)
 
 // -- Localization --------------------------------
   // If non selected the default en-GB will be used
@@ -263,6 +263,7 @@
   #define USE_SHT                                // Add I2C emulating code for SHT1X sensor (+1k4 code)
   #define USE_SHT3X                              // Add I2C code for SHT3x or SHTC3 sensor (+0k7 code)
   #define USE_HTU                                // Add I2C code for HTU21/SI7013/SI7020/SI7021 sensor (+1k5 code)
+  #define USE_LM75AD                             // Add I2C code for LM75AD sensor (+0k5 code)
   #define USE_BMP                                // Add I2C code for BMP085/BMP180/BMP280/BME280 sensor (+4k code)
 //    #define USE_BME680                           // Add additional support for BME680 sensor using Adafruit Sensor and BME680 libraries (+6k code)
   #define USE_SGP30                              // Add I2C code for SGP30 sensor (+1k1 code)
@@ -310,11 +311,19 @@
 
 #define USE_SR04                                 // Add support for HC-SR04 ultrasonic devices (+1k code)
 
+#define USE_RF_FLASH                             // Add support for flashing the EFM8BB1 chip on the Sonoff RF Bridge. C2CK must be connected to GPIO4, C2D to GPIO5 on the PCB
+
+/*********************************************************************************************\
+ * Debug features are only supported in development branch
+\*********************************************************************************************/
+
+//#define USE_DEBUG_DRIVER                         // Use xdrv_99_debug.ino providing commands CpuChk, CfgXor, CfgDump, CfgPeek and CfgPoke
+
 /*********************************************************************************************\
  * Select features and sensors enabled in previous version saving space
 \*********************************************************************************************/
 
-//#define USE_CLASSIC                             // Create sonoff-classic (See sonoff_post.h for selected features)
+//#define USE_CLASSIC                              // Create sonoff-classic (See sonoff_post.h for selected features)
 
 /*********************************************************************************************\
  * Select all sensors - overrides above undefines!!

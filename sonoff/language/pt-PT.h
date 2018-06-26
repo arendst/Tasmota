@@ -321,6 +321,10 @@
 #define D_UPLOAD_ERR_7 "Envio cancelado"
 #define D_UPLOAD_ERR_8 "Ficheiro inválido"
 #define D_UPLOAD_ERR_9 "Ficheiro demasiado grande"
+#define D_UPLOAD_ERR_10 "Failed to init RF chip"
+#define D_UPLOAD_ERR_11 "Failed to erase RF chip"
+#define D_UPLOAD_ERR_12 "Failed to write to RF chip"
+#define D_UPLOAD_ERR_13 "Failed to decode RF firmware"
 #define D_UPLOAD_ERROR_CODE "Código de erro do envio"
 
 #define D_ENTER_COMMAND "Inserir comando"

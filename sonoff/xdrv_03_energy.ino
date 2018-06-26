@@ -281,6 +281,9 @@ long cf_pulses_last_time = CSE_PULSES_NOT_INITIALIZED;
 
 void CseReceived()
 {
+  //  0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23
+  // 55 5A 02 F7 60 00 03 AB 00 40 10 02 60 5D 51 A6 58 03 E9 EF 71 0B 7A 36
+  // Hd Id VCal---- Voltage- ICal---- Current- PCal---- Power--- Ad CF--- Ck
   AddLogSerial(LOG_LEVEL_DEBUG_MORE);
 
   uint8_t header = serial_in_buffer[0];
@@ -481,7 +484,17 @@ bool PzemReceiveReady()
 
 bool PzemRecieve(uint8_t resp, float *data)
 {
-  uint8_t buffer[sizeof(PZEMCommand)];
+  //  0  1  2  3  4  5  6
+  // A4 00 00 00 00 00 A4 - Set address
+  // A0 00 D4 07 00 00 7B - Voltage (212.7V)
+  // A1 00 00 0A 00 00 AB - Current (0.1A)
+  // A1 00 00 00 00 00 A1 - No current
+  // A2 00 16 00 00 00 B8 - Power (22W)
+  // A2 00 00 00 00 00 A2 - No power
+  // A3 00 08 A4 00 00 4F - Energy (2.212kWh)
+  // A3 01 86 9F 00 00 C9 - Energy (99.999kWh)
+
+  uint8_t buffer[sizeof(PZEMCommand)] = { 0 };
 
   unsigned long start = millis();
   uint8_t len = 0;
@@ -490,6 +503,10 @@ bool PzemRecieve(uint8_t resp, float *data)
       uint8_t c = (uint8_t)PzemSerial->read();
       if (!c && !len) {
         continue;  // skip 0 at startup
+      }
+      if ((1 == len) && (buffer[0] == c)) {
+        len--;
+        continue;  // fix skewed data
       }
       buffer[len++] = c;
     }
@@ -1148,7 +1165,7 @@ boolean Xdrv03(byte function)
 
   if (energy_flg) {
     switch (function) {
-      case FUNC_INIT:
+      case FUNC_PRE_INIT:
         EnergyDrvInit();
         break;
       case FUNC_COMMAND:

@@ -1,7 +1,7 @@
 /*
   xdrv_06_snfbridge.ino - sonoff RF bridge 433 support for Sonoff-Tasmota
 
-  Copyright (C) 2018  Theo Arends
+  Copyright (C) 2018  Theo Arends and Erik Andrén Zachrisson (fw update)
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -24,11 +24,12 @@
 #define SFB_TIME_AVOID_DUPLICATE  2000  // Milliseconds
 
 enum SonoffBridgeCommands {
-    CMND_RFSYNC,      CMND_RFLOW,      CMND_RFHIGH,      CMND_RFHOST,      CMND_RFCODE,      CMND_RFKEY };
+    CMND_RFSYNC,      CMND_RFLOW,      CMND_RFHIGH,      CMND_RFHOST,      CMND_RFCODE,      CMND_RFKEY,      CMND_RFRAW };
 const char kSonoffBridgeCommands[] PROGMEM =
-  D_CMND_RFSYNC "|" D_CMND_RFLOW "|" D_CMND_RFHIGH "|" D_CMND_RFHOST "|" D_CMND_RFCODE "|" D_CMND_RFKEY ;
+  D_CMND_RFSYNC "|" D_CMND_RFLOW "|" D_CMND_RFHIGH "|" D_CMND_RFHOST "|" D_CMND_RFCODE "|" D_CMND_RFKEY "|" D_CMND_RFRAW;
 
 uint8_t sonoff_bridge_receive_flag = 0;
+uint8_t sonoff_bridge_receive_raw_flag = 0;
 uint8_t sonoff_bridge_learn_key = 1;
 uint8_t sonoff_bridge_learn_active = 0;
 uint8_t sonoff_bridge_expected_bytes = 0;
@@ -36,6 +37,206 @@ uint32_t sonoff_bridge_last_received_id = 0;
 uint32_t sonoff_bridge_last_send_code = 0;
 unsigned long sonoff_bridge_last_time = 0;
 unsigned long sonoff_bridge_last_learn_time = 0;
+
+#ifdef USE_RF_FLASH
+/*********************************************************************************************\
+ * EFM8BB1 RF microcontroller in-situ firmware update
+ *
+ * Enables upload of EFM8BB1 firmware provided by https://github.com/Portisch/RF-Bridge-EFM8BB1 using the web gui.
+ * Based on source by Erik Andrén Zachrisson (https://github.com/arendst/Sonoff-Tasmota/pull/2886)
+\*********************************************************************************************/
+
+#include "ihx.h"
+#include "c2.h"
+
+#define RF_RECORD_NO_START_FOUND -1
+#define RF_RECORD_NO_END_FOUND -2
+
+ssize_t rf_find_hex_record_start(uint8_t *buf, size_t size)
+{
+  for (int i = 0; i < size; i++) {
+    if (buf[i] == ':') {
+      return i;
+    }
+  }
+  return RF_RECORD_NO_START_FOUND;
+}
+
+ssize_t rf_find_hex_record_end(uint8_t *buf, size_t size)
+{
+  for (ssize_t i = 0; i < size; i++) {
+    if (buf[i] == '\n') {
+      return i;
+    }
+  }
+  return RF_RECORD_NO_END_FOUND;
+}
+
+ssize_t rf_glue_remnant_with_new_data_and_write(const uint8_t *remnant_data, uint8_t *new_data, size_t new_data_len)
+{
+  ssize_t record_start;
+  ssize_t record_end;
+  ssize_t glue_record_sz;
+  uint8_t *glue_buf;
+  ssize_t result;
+
+  if (remnant_data[0] != ':') { return -8; }  // File invalid - RF Remnant data did not start with a start token
+
+  // Find end token in new data
+  record_end = rf_find_hex_record_end(new_data, new_data_len);
+  record_start = rf_find_hex_record_start(new_data, new_data_len);
+
+  // Be paranoid and check that there is no start marker before the end record
+  // If so this implies that there was something wrong with the last start marker saved
+  // in the last upload part
+  if ((record_start != RF_RECORD_NO_START_FOUND) && (record_start < record_end)) {
+    return -8;  // File invalid - Unexpected RF start marker found before RF end marker
+  }
+
+  glue_record_sz = strlen((const char *) remnant_data) + record_end;
+
+  glue_buf = (uint8_t *) malloc(glue_record_sz);
+  if (glue_buf == NULL) { return -2; }  // Not enough space
+
+  // Assemble new glue buffer
+  memcpy(glue_buf, remnant_data, strlen((const char *) remnant_data));
+  memcpy(glue_buf + strlen((const char *) remnant_data), new_data, record_end);
+
+  result = rf_decode_and_write(glue_buf, glue_record_sz);
+  free(glue_buf);
+  return result;
+}
+
+ssize_t rf_decode_and_write(uint8_t *record, size_t size)
+{
+  uint8_t err = ihx_decode(record, size);
+  if (err != IHX_SUCCESS) { return -13; }  // Failed to decode RF firmware
+
+  ihx_t *h = (ihx_t *) record;
+  if (h->record_type == IHX_RT_DATA) {
+    int retries = 5;
+    uint16_t address = h->address_high * 0x100 + h->address_low;
+
+    do {
+      err = c2_programming_init();
+      err = c2_block_write(address, h->data, h->len);
+    } while (err != C2_SUCCESS && retries--);
+  } else if (h->record_type == IHX_RT_END_OF_FILE) {
+    // RF firmware upgrade done, restarting RF chip
+    err = c2_reset();
+  }
+
+  if (err != C2_SUCCESS) { return -12; }  // Failed to write to RF chip
+
+  return 0;
+}
+
+ssize_t rf_search_and_write(uint8_t *buf, size_t size)
+{
+  // Binary contains a set of commands, decode and program each one
+  ssize_t rec_end;
+  ssize_t rec_start;
+  ssize_t err;
+
+  for (size_t i = 0; i < size; i++) {
+    // Find starts and ends of commands
+    rec_start = rf_find_hex_record_start(buf + i, size - i);
+    if (rec_start == RF_RECORD_NO_START_FOUND) {
+      // There is nothing left to save in this buffer
+      return -8;  // File invalid
+    }
+
+    // Translate rec_start from local buffer position to chunk position
+    rec_start += i;
+    rec_end = rf_find_hex_record_end(buf + rec_start, size - rec_start);
+    if (rec_end == RF_RECORD_NO_END_FOUND) {
+      // We have found a start but not an end, save remnant
+      return rec_start;
+    }
+
+    // Translate rec_end from local buffer position to chunk position
+    rec_end += rec_start;
+
+    err = rf_decode_and_write(buf + rec_start, rec_end - rec_start);
+    if (err < 0) { return err; }
+    i = rec_end;
+  }
+  // Buffer was perfectly aligned, start and end found without any remaining trailing characters
+  return 0;
+}
+
+uint8_t rf_erase_flash()
+{
+  uint8_t err;
+
+  for (int i = 0; i < 4; i++) {  // HACK: Try multiple times as the command sometimes fails (unclear why)
+    err = c2_programming_init();
+    if (err != C2_SUCCESS) {
+      return 10;                 // Failed to init RF chip
+    }
+    err = c2_device_erase();
+    if (err != C2_SUCCESS) {
+      if (i < 3) {
+        c2_reset();              // Reset RF chip and try again
+      } else {
+        return 11;               // Failed to erase RF chip
+      }
+    } else {
+      break;
+    }
+  }
+  return 0;
+}
+
+uint8_t SnfBrUpdateInit()
+{
+  pinMode(PIN_C2CK, OUTPUT);
+  pinMode(PIN_C2D, INPUT);
+
+  return rf_erase_flash();  // 10, 11
+}
+#endif  // USE_RF_FLASH
+
+/********************************************************************************************/
+
+void SonoffBridgeSendRaw(char *codes, int size)
+{
+  char *p;
+  char stemp[3];
+  uint8_t code;
+
+  while (size > 0) {
+    snprintf(stemp, sizeof(stemp), codes);
+    code = strtol(stemp, &p, 16);
+    Serial.write(code);
+    size -= 2;
+    codes += 2;
+  }
+}
+
+void SonoffBridgeReceivedRaw()
+{
+  // Decoding according to https://github.com/Portisch/RF-Bridge-EFM8BB1
+  uint8_t buckets = 0;
+
+  if (0xB1 == serial_in_buffer[1]) { buckets = serial_in_buffer[2] << 1; }  // Bucket sniffing
+
+  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_RFRAW "\":{\"" D_JSON_DATA "\":\""));
+  for (int i = 0; i < serial_in_byte_counter; i++) {
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s%02X"), mqtt_data, serial_in_buffer[i]);
+    if (0xB1 == serial_in_buffer[1]) {
+      if ((i > 3) && buckets) { buckets--; }
+      if ((i < 3) || (buckets % 2) || (i == serial_in_byte_counter -2)) {
+        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s "), mqtt_data);
+      }
+    }
+  }
+  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s\"}}"), mqtt_data);
+  MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_CMND_RFRAW));
+  XdrvRulesProcess();
+}
+
+/********************************************************************************************/
 
 void SonoffBridgeLearnFailed()
 {
@@ -51,6 +252,7 @@ void SonoffBridgeReceived()
   uint16_t high_time = 0;
   uint32_t received_id = 0;
   char rfkey[8];
+  char stemp[16];
 
   AddLogSerial(LOG_LEVEL_DEBUG);
 
@@ -94,8 +296,13 @@ void SonoffBridgeReceived()
             }
           }
         }
-        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_RFRECEIVED "\":{\"" D_JSON_SYNC "\":%d,\"" D_JSON_LOW "\":%d,\"" D_JSON_HIGH "\":%d,\"" D_JSON_DATA "\":\"%06X\",\"" D_CMND_RFKEY "\":%s}}"),
-          sync_time, low_time, high_time, received_id, rfkey);
+        if (Settings.flag.rf_receive_decimal) {
+          snprintf_P(stemp, sizeof(stemp), PSTR("%u"), received_id);
+        } else {
+          snprintf_P(stemp, sizeof(stemp), PSTR("\"%06X\""), received_id);
+        }
+        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_RFRECEIVED "\":{\"" D_JSON_SYNC "\":%d,\"" D_JSON_LOW "\":%d,\"" D_JSON_HIGH "\":%d,\"" D_JSON_DATA "\":%s,\"" D_CMND_RFKEY "\":%s}}"),
+          sync_time, low_time, high_time, stemp, rfkey);
         MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_RFRECEIVED));
         XdrvRulesProcess();
   #ifdef USE_DOMOTICZ
@@ -110,11 +317,27 @@ boolean SonoffBridgeSerialInput()
 {
   // iTead Rf Universal Transceiver Module Serial Protocol Version 1.0 (20170420)
   if (sonoff_bridge_receive_flag) {
-    if (!((0 == serial_in_byte_counter) && (0 == serial_in_byte))) {  // Skip leading 0
+    if (sonoff_bridge_receive_raw_flag) {
+      if (!serial_in_byte_counter) {
+        serial_in_buffer[serial_in_byte_counter++] = 0xAA;
+      }
+      serial_in_buffer[serial_in_byte_counter++] = serial_in_byte;
+      if (0x55 == serial_in_byte) {  // 0x55 - End of text
+        SonoffBridgeReceivedRaw();
+        sonoff_bridge_receive_flag = 0;
+        return 1;
+      }
+    }
+    else if (!((0 == serial_in_byte_counter) && (0 == serial_in_byte))) {  // Skip leading 0
       if (0 == serial_in_byte_counter) {
         sonoff_bridge_expected_bytes = 2;     // 0xA0, 0xA1, 0xA2
         if (serial_in_byte >= 0xA3) {
           sonoff_bridge_expected_bytes = 11;  // 0xA3, 0xA4, 0xA5
+        }
+        if (serial_in_byte == 0xA6) {
+          sonoff_bridge_expected_bytes = 0;   // 0xA6 and up supported by Portisch firmware only
+          serial_in_buffer[serial_in_byte_counter++] = 0xAA;
+          sonoff_bridge_receive_raw_flag = 1;
         }
       }
       serial_in_buffer[serial_in_byte_counter++] = serial_in_byte;
@@ -132,6 +355,13 @@ boolean SonoffBridgeSerialInput()
     sonoff_bridge_receive_flag = 1;
   }
   return 0;
+}
+
+void SonoffBridgeSendCommand(byte code)
+{
+  Serial.write(0xAA);  // Start of Text
+  Serial.write(code);  // Command or Acknowledge
+  Serial.write(0x55);  // End of Text
 }
 
 void SonoffBridgeSendAck()
@@ -294,9 +524,47 @@ boolean SonoffBridgeCommand()
     } else {
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, sonoff_bridge_learn_key, D_JSON_LEARNING_ACTIVE);
     }
+  }
+  else if (CMND_RFRAW == command_code) {
+    if (XdrvMailbox.data_len) {
+      if (XdrvMailbox.data_len < 6) {  // On, Off
+        switch (XdrvMailbox.payload) {
+        case 0:    // Receive Raw Off
+          SonoffBridgeSendCommand(0xA7);  // Stop reading RF signals enabling iTead default RF handling
+        case 1:    // Receive Raw On
+          sonoff_bridge_receive_raw_flag = XdrvMailbox.payload;
+          break;
+        case 166:  // 0xA6 - Start reading RF signals disabling iTead default RF handling
+        case 167:  // 0xA7 - Stop reading RF signals enabling iTead default RF handling
+        case 169:  // 0xA9 - Start learning predefined protocols
+        case 176:  // 0xB0 - Stop sniffing
+        case 177:  // 0xB1 - Start sniffing
+        case 255:  // 0xFF - Show firmware version
+          SonoffBridgeSendCommand(XdrvMailbox.payload);
+          sonoff_bridge_receive_raw_flag = 1;
+          break;
+        case 192:  // 0xC0 - Beep
+          char beep[] = "AAC000C055";
+          SonoffBridgeSendRaw(beep, sizeof(beep));
+          break;
+        }
+      } else {
+        SonoffBridgeSendRaw(XdrvMailbox.data, XdrvMailbox.data_len);
+        sonoff_bridge_receive_raw_flag = 1;
+      }
+    }
+    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, GetStateText(sonoff_bridge_receive_raw_flag));
   } else serviced = false;  // Unknown command
 
   return serviced;
+}
+
+/*********************************************************************************************/
+
+void SonoffBridgeInit()
+{
+  sonoff_bridge_receive_raw_flag = 0;
+  SonoffBridgeSendCommand(0xA7);  // Stop reading RF signals enabling iTead default RF handling
 }
 
 /*********************************************************************************************\
@@ -311,6 +579,9 @@ boolean Xdrv06(byte function)
 
   if (SONOFF_BRIDGE == Settings.module) {
     switch (function) {
+      case FUNC_INIT:
+        SonoffBridgeInit();
+        break;
       case FUNC_COMMAND:
         result = SonoffBridgeCommand();
         break;

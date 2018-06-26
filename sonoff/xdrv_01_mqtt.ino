@@ -204,6 +204,8 @@ void MqttPublishDirect(const char* topic, boolean retained)
   char sretained[CMDSZ];
   char slog_type[10];
 
+  ShowFreeMem(PSTR("MqttPublishDirect"));
+
   sretained[0] = '\0';
   snprintf_P(slog_type, sizeof(slog_type), PSTR(D_LOG_RESULT));
 
@@ -315,8 +317,7 @@ void MqttDisconnected(int state)
   snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_MQTT D_CONNECT_FAILED_TO " %s:%d, rc %d. " D_RETRY_IN " %d " D_UNIT_SECOND),
     Settings.mqtt_host, Settings.mqtt_port, state, mqtt_retry_counter);
   AddLog(LOG_LEVEL_INFO);
-  strncpy_P(mqtt_data, PSTR("{\"MQTT\":{\"Disconnected\":1}}"), sizeof(mqtt_data));
-  XdrvRulesProcess();
+  rules_flag.mqtt_disconnected = 1;
 }
 
 void MqttConnected()
@@ -368,13 +369,11 @@ void MqttConnected()
       tele_period = Settings.tele_period -9;
     }
     status_update_timer = 2;
-    strncpy_P(mqtt_data, PSTR("{\"System\":{\"Boot\":1}}"), sizeof(mqtt_data));
-    XdrvRulesProcess();
+    rules_flag.system_boot = 1;
     XdrvCall(FUNC_MQTT_INIT);
   }
   mqtt_initial_connection_state = 0;
-  strncpy_P(mqtt_data, PSTR("{\"MQTT\":{\"Connected\":1}}"), sizeof(mqtt_data));
-  XdrvRulesProcess();
+  rules_flag.mqtt_connected = 1;
 }
 
 #ifdef USE_MQTT_TLS

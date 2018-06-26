@@ -1118,6 +1118,7 @@ boolean LightCommand()
     if (XdrvMailbox.data_len > 0) {
       char *p;
       uint16_t idx = XdrvMailbox.index;
+      Ws2812ForceSuspend();
       for (char *color = strtok_r(XdrvMailbox.data, " ", &p); color; color = strtok_r(NULL, " ", &p)) {
         if (LightColorEntry(color, strlen(color))) {
           Ws2812SetColor(idx, light_entry_color[0], light_entry_color[1], light_entry_color[2], light_entry_color[3]);
@@ -1127,6 +1128,8 @@ boolean LightCommand()
           break;
         }
       }
+
+      Ws2812ForceUpdate();
     }
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, XdrvMailbox.index, Ws2812GetColor(XdrvMailbox.index, scolor));
   }
@@ -1295,7 +1298,7 @@ boolean Xdrv04(byte function)
 
   if (light_type) {
     switch (function) {
-      case FUNC_INIT:
+      case FUNC_PRE_INIT:
         LightInit();
         break;
       case FUNC_EVERY_50_MSECOND:

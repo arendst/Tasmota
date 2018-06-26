@@ -12,5 +12,8 @@ Make sure these boxes are checked [x] before submitting your issue - Thank you!
 - [ ] Searched the problem in the discussion group (https://groups.google.com/d/forum/sonoffusers)
 - [ ] Hardware used : 
 - [ ] Provide the output of command ``status 0`` :
+```
+STATUS 0 OUTPUT HERE
+```
 
 **(Please, remember to close the issue when the problem has been addressed)**
