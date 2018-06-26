@@ -37,6 +37,8 @@ So, for example, if 2 devices that are configured with the **2 / 2 / 1** for tur
 
 Several home automation systems have KNX support. For example, [Home Assistant](https://github.com/home-assistant/home-assistant) has a [XKNX Python Library](https://github.com/XKNX/xknx) to connect to KNX devices using a KNX Router. If you don't have a **KNX Router**, you can use a **Software KNX Router** like [KNXd](https://github.com/knxd/knxd) on the same Raspberry Pi than Home Assistant. KNXd is used by Home Assistant for reading this UDP Multicast, although KNXd has other cool features that need extra hardware like connect to KNX devices by Twister Pair, Power Line or RF.
 
+If using the Home Assistant distribution called **Hassio**, everything for KNX is already included by default.
+
 If you use the ETS (KNX Configurator Software) you can add any Sonoff Tasmota KNX as a dummy device.
 
 ## Requirement ##
