@@ -391,6 +391,8 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
   uint16_t index;
   uint32_t address;
 
+  ShowFreeMem(PSTR("MqttDataHandler"));
+
   strncpy(topicBuf, topic, sizeof(topicBuf));
   for (i = 0; i < data_len; i++) {
     if (!isspace(data[i])) break;
@@ -795,18 +797,13 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
     }
     else if ((CMND_COUNTER == command_code) && (index > 0) && (index <= MAX_COUNTERS)) {
       if ((data_len > 0) && (pin[GPIO_CNTR1 + index -1] < 99)) {
-	if(p[0] == '+') {
-           RtcSettings.pulse_counter[index -1] += payload16;
-           Settings.pulse_counter[index -1] += payload16;
-         }
-         else if(p[0] == '-') {
-           RtcSettings.pulse_counter[index -1] -= payload16;
-           Settings.pulse_counter[index -1] -= payload16;
-         }
-         else {
-           RtcSettings.pulse_counter[index -1] = payload16;
-          Settings.pulse_counter[index -1] = payload16;
-	 }
+        if ((dataBuf[0] == '-') || (dataBuf[0] == '+')) {
+          RtcSettings.pulse_counter[index -1] += payload32;
+          Settings.pulse_counter[index -1] += payload32;
+        } else {
+          RtcSettings.pulse_counter[index -1] = payload32;
+          Settings.pulse_counter[index -1] = payload32;
+        }
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_LVALUE, command, index, RtcSettings.pulse_counter[index -1]);
     }
@@ -1276,6 +1273,7 @@ void ExecuteCommand(char *cmnd, int source)
   char *start;
   char *token;
 
+  ShowFreeMem(PSTR("ExecuteCommand"));
   ShowSource(source);
 
   token = strtok(cmnd, " ");
