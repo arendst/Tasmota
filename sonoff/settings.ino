@@ -763,6 +763,20 @@ void SettingsDelta()
       Settings.cfg_size = sizeof(SYSCFG);
       Settings.cfg_crc = GetSettingsCrc();
     }
+    if (Settings.version < 0x06000002) {
+      for (byte i = 0; i < MAX_SWITCHES; i++) {
+        if (i < 4) {
+          Settings.switchmode[i] = Settings.ex_switchmode[i];
+        } else {
+          Settings.switchmode[i] = SWITCH_MODE;
+        }
+      }
+      for (byte i = 0; i < MAX_GPIO_PIN; i++) {
+        if (Settings.my_gp.io[i] >= GPIO_SWT5) {  // Move up from GPIO_SWT5 to GPIO_KEY1
+          Settings.my_gp.io[i] += 4;
+        }
+      }
+    }
 
     Settings.version = VERSION;
     SettingsSave(1);

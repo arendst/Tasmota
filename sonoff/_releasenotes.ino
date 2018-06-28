@@ -1,4 +1,7 @@
-/* 6.0.0a
+/* 6.0.0b
+ * Change number of switches from 4 to 8 (#2885, #3086)
+ *
+ * 6.0.0a
  * Add support for APDS9960 proximity sensor (#3051)
  * Add increment and decrement value to command Counter (#2838)
  * Add option 0 to command Timers disarming all timers (#2962)
