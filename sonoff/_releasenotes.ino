@@ -1,4 +1,8 @@
-/* 6.0.0a
+/* 6.0.0b
+ * Add experimental (untested) TM1638 switch support (#2226)
+ * Change number of switches from 4 to 8 (#2885, #3086)
+ *
+ * 6.0.0a
  * Add support for APDS9960 proximity sensor (#3051)
  * Add increment and decrement value to command Counter (#2838)
  * Add option 0 to command Timers disarming all timers (#2962)
@@ -19,6 +23,7 @@
  * Fix Pzem004T checksum error
  * Fix KNX bug when doing reply of sensors values
  * Fix rules induced LWT message
+ * Fix possible wifi connection problem (#1366)
  *
  * 5.14.0b
  * Add Console Commands to send KNX Commands

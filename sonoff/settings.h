@@ -216,8 +216,9 @@ struct SYSCFG {
   uint16_t      blinkcount;                // 39C
   uint16_t      light_rotation;            // 39E
 
-  byte          free_3A0[12];              // 3A9
+  byte          free_3A0[4];               // 3A0
 
+  uint8_t       switchmode[MAX_SWITCHES];  // 3A4  (6.0.0b - moved from 0x4CA)
   char          friendlyname[MAX_FRIENDLYNAMES][33]; // 3AC
   char          switch_topic[33];          // 430
   char          serial_delimiter;          // 451
@@ -243,7 +244,9 @@ struct SYSCFG {
   uint16_t      light_wakeup;              // 4A6
   byte          knx_CB_registered;         // 4A8  Number of Group Address to write
   char          web_password[33];          // 4A9
-  uint8_t       switchmode[MAX_SWITCHES];  // 4CA
+
+  uint8_t       ex_switchmode[4];          // 4CA  Free since 6.0.0a
+
   char          ntp_server[3][33];         // 4CE
   byte          ina219_mode;               // 531
   uint16_t      pulse_timer[MAX_PULSETIMERS]; // 532
