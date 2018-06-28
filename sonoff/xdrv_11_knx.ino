@@ -1045,14 +1045,18 @@ boolean KnxCommand()
     byte i = KNX_GA_Search(index + KNX_SLOT1 -1);
     while ( i != KNX_Empty ) {
       KNX_addr.value = Settings.knx_GA_addr[i];
-      knx.write_2byte_float(KNX_addr, XdrvMailbox.payload);
+
+      float tempvar = CharToDouble(XdrvMailbox.data);
+      dtostrfd(tempvar,2,XdrvMailbox.data);
+
+      knx.write_2byte_float(KNX_addr, tempvar);
       if (Settings.flag.knx_enable_enhancement) {
-        knx.write_2byte_float(KNX_addr, XdrvMailbox.payload);
-        knx.write_2byte_float(KNX_addr, XdrvMailbox.payload);
+        knx.write_2byte_float(KNX_addr, tempvar);
+        knx.write_2byte_float(KNX_addr, tempvar);
       }
 
-      snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_KNX "%s = %d " D_SENT_TO " %d.%d.%d"),
-       device_param_ga[index + KNX_SLOT1 -2], XdrvMailbox.payload,
+      snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_KNX "%s = %s " D_SENT_TO " %d.%d.%d"),
+       device_param_ga[index + KNX_SLOT1 -2], XdrvMailbox.data,
        KNX_addr.ga.area, KNX_addr.ga.line, KNX_addr.ga.member);
       AddLog(LOG_LEVEL_INFO);
 
@@ -1062,8 +1066,8 @@ boolean KnxCommand()
 
   else { return false; }  // Incomplete command
 
-  snprintf_P (mqtt_data, sizeof(mqtt_data), PSTR("{\"%s%d\":\"%d\"}"),
-    command, index, XdrvMailbox.payload );
+  snprintf_P (mqtt_data, sizeof(mqtt_data), PSTR("{\"%s%d\":\"%s\"}"),
+    command, index, XdrvMailbox.data );
 
   return true;
 }
