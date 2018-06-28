@@ -311,7 +311,7 @@
 
 //#define USE_ARILUX_RF                            // Add support for Arilux RF remote controller (+0k8 code, 252 iram (non 2.3.0))
 
-//#define USE_SR04                                 // Add support for HC-SR04 ultrasonic devices (+1k code)
+#define USE_SR04                                 // Add support for HC-SR04 ultrasonic devices (+1k code)
 
 /*********************************************************************************************\
  * DISPLAY
