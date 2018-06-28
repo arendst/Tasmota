@@ -1,4 +1,5 @@
 /* 6.0.0b
+ * Add experimental (untested) TM1638 switch support (#2226)
  * Change number of switches from 4 to 8 (#2885, #3086)
  *
  * 6.0.0a

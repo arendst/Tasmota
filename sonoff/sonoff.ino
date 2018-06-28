@@ -167,6 +167,7 @@ uint8_t multiwindow[MAX_KEYS] = { 0 };      // Max time between button presses t
 uint8_t multipress[MAX_KEYS] = { 0 };       // Number of button presses within multiwindow
 uint8_t lastwallswitch[MAX_SWITCHES];       // Last wall switch states
 uint8_t holdwallswitch[MAX_SWITCHES] = { 0 };  // Timer for wallswitch push button hold
+uint8_t virtualswitch[MAX_SWITCHES] = { 0 };   // Virtual switch states
 
 mytmplt my_module;                          // Active copy of Module name and GPIOs
 uint8_t pin[GPIO_MAX];                      // Possible pin configurations
@@ -1431,7 +1432,11 @@ boolean MqttShowSensor()
   snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s{\"" D_JSON_TIME "\":\"%s\""), mqtt_data, GetDateAndTime(DT_LOCAL).c_str());
   int json_data_start = strlen(mqtt_data);
   for (byte i = 0; i < MAX_SWITCHES; i++) {
+#ifdef USE_TM1638
+    if ((pin[GPIO_SWT1 +i] < 99) || ((pin[GPIO_TM16CLK] < 99) && (pin[GPIO_TM16DIO] < 99) && (pin[GPIO_TM16STB] < 99))) {
+#else
     if (pin[GPIO_SWT1 +i] < 99) {
+#endif  // USE_TM1638
       boolean swm = ((FOLLOW_INV == Settings.switchmode[i]) || (PUSHBUTTON_INV == Settings.switchmode[i]) || (PUSHBUTTONHOLD_INV == Settings.switchmode[i]));
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"" D_JSON_SWITCH "%d\":\"%s\""), mqtt_data, i +1, GetStateText(swm ^ lastwallswitch[i]));
     }
@@ -1664,7 +1669,7 @@ void ButtonHandler()
  * Switch handler
 \*********************************************************************************************/
 
-void SwitchHandler()
+void SwitchHandler(byte mode)
 {
   uint8_t button = NOT_PRESSED;
   uint8_t switchflag;
@@ -1679,7 +1684,12 @@ void SwitchHandler()
         }
       }
 
-      button = digitalRead(pin[GPIO_SWT1 +i]);
+      if (mode) {
+        button = virtualswitch[i];
+      } else {
+        button = digitalRead(pin[GPIO_SWT1 +i]);
+      }
+
       if (button != lastwallswitch[i]) {
         switchflag = 3;
         switch (Settings.switchmode[i]) {
@@ -1813,7 +1823,7 @@ void StateLoop()
 \*-------------------------------------------------------------------------------------------*/
 
   ButtonHandler();
-  SwitchHandler();
+  SwitchHandler(0);
 
   XdrvCall(FUNC_EVERY_50_MSECOND);
   XsnsCall(FUNC_EVERY_50_MSECOND);
