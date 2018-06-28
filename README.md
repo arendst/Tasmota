@@ -182,7 +182,7 @@ People helping to keep the show on the road:
 - Pete Ba for more user friendly energy monitor calibration
 - Lobradov providing compile optimization tips
 - Flexiti for his initial timer implementation
-- reloxx13 for his [SonWeb](https://github.com/reloxx13/SonWEB) management tool
+- reloxx13 for his [TasmoAdmin](https://github.com/reloxx13/TasmoAdmin) management tool
 - Joachim Banzhaf for his TSL2561 library and driver
 - Gijs Noorlander for his MHZ19 and SenseAir drivers
 - Emontnemery for his HomeAssistant Discovery concept and many code tuning tips
