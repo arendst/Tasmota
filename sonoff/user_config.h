@@ -481,7 +481,7 @@
  * Select KNX without Emulation to save space
 \*********************************************************************************************/
 
-//#define USE_KNX_NO_EMULATION                     // Create sonoff-knx with KNX but without Emulation (See sonoff_post.h)
+#define USE_KNX_NO_EMULATION                     // Create sonoff-knx with KNX but without Emulation (See sonoff_post.h)
 
 /*********************************************************************************************\
  * Compile a minimal version if upgrade memory gets tight ONLY TO BE USED FOR UPGRADE STEP 1!
