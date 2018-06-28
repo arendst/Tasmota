@@ -488,6 +488,9 @@ void ShowPage(String &page, bool auth)
   page += FPSTR(HTTP_END);
   page.replace(F("{mv"), my_version);
   SetHeader();
+
+  ShowFreeMem(PSTR("ShowPage"));
+
   WebServer->send(200, FPSTR(HDR_CTYPE_HTML), page);
 }
 

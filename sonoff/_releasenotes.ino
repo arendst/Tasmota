@@ -19,6 +19,7 @@
  * Fix Pzem004T checksum error
  * Fix KNX bug when doing reply of sensors values
  * Fix rules induced LWT message
+ * Fix possible wifi connection problem (#1366)
  *
  * 5.14.0b
  * Add Console Commands to send KNX Commands

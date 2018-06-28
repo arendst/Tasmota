@@ -357,6 +357,9 @@ bool RulesProcessEvent(char *json_event)
   String event_saved = json_event;
   event_saved.toUpperCase();
 
+//snprintf_P(log_data, sizeof(log_data), PSTR("RUL: Event %s"), event_saved.c_str());
+//AddLog(LOG_LEVEL_DEBUG);
+
   for (byte i = 0; i < MAX_RULE_SETS; i++) {
     if (strlen(Settings.rules[i]) && bitRead(Settings.rule_enabled, i)) {
       if (RuleSetProcess(i, event_saved)) { serviced = true; }

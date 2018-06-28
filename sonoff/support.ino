@@ -368,10 +368,10 @@ char* GetPowerDevice(char* dest, uint8_t idx, size_t size, uint8_t option)
 {
   char sidx[8];
 
-  strncpy_P(dest, S_RSLT_POWER, size);
+  strncpy_P(dest, S_RSLT_POWER, size);                // POWER
   if ((devices_present + option) > 1) {
-    snprintf_P(sidx, sizeof(sidx), PSTR("%d"), idx);
-    strncat(dest, sidx, size);
+    snprintf_P(sidx, sizeof(sidx), PSTR("%d"), idx);  // x
+    strncat(dest, sidx, size);                        // POWERx
   }
   return dest;
 }
@@ -1009,7 +1009,6 @@ void WifiBegin(uint8_t flag)
   WiFi.mode(WIFI_OFF);      // See https://github.com/esp8266/Arduino/issues/2186
 #endif
 
-  WiFi.persistent(false);   // Solve possible wifi init errors
   WiFi.disconnect(true);    // Delete SDK wifi config
   delay(200);
   WiFi.mode(WIFI_STA);      // Disable AP mode

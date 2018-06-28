@@ -1146,8 +1146,8 @@ boolean SendKey(byte key, byte device, byte state)
   char *tmp = (key) ? Settings.switch_topic : Settings.button_topic;
   Format(key_topic, tmp, sizeof(key_topic));
   if (Settings.flag.mqtt_enabled && MqttIsConnected() && (strlen(key_topic) != 0) && strcmp(key_topic, "0")) {
-    if (!key && (device > devices_present)) device = 1;
-    GetTopic_P(stopic, CMND, key_topic, GetPowerDevice(scommand, device, sizeof(scommand), key));
+    if (!key && (device > devices_present)) device = 1;                                             // Only allow number of buttons up to number of devices
+    GetTopic_P(stopic, CMND, key_topic, GetPowerDevice(scommand, device, sizeof(scommand), key));   // cmnd/switchtopic/POWERx
     if (9 == state) {
       mqtt_data[0] = '\0';
     } else {
