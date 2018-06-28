@@ -557,55 +557,44 @@ boolean RulesCommand()
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, index, Settings.mems[index -1]);
   }
   else if ((CMND_ADD == command_code) && (index > 0) && (index <= RULES_MAX_VARS)) {
-    if ( (XdrvMailbox.data_len > 0) && (XdrvMailbox.payload >= 0) ){
-      int16_t tempvar = atol(vars[index -1]) + XdrvMailbox.payload;
-      snprintf_P(vars[index -1], sizeof(vars[index -1]), PSTR("%d"), tempvar );
+    if ( XdrvMailbox.data_len > 0 ) {
+      double tempvar = CharToDouble(vars[index -1]) + CharToDouble(XdrvMailbox.data);
+      dtostrfd(tempvar,2,vars[index -1]);
     }
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, index, vars[index -1]);
   }
   else if ((CMND_SUB == command_code) && (index > 0) && (index <= RULES_MAX_VARS)) {
-    if ( (XdrvMailbox.data_len > 0) && (XdrvMailbox.payload >= 0) ){
-      int16_t tempvar = atol(vars[index -1]) - XdrvMailbox.payload;
-      snprintf_P(vars[index -1], sizeof(vars[index -1]), PSTR("%d"), tempvar );
+    if ( XdrvMailbox.data_len > 0 ){
+      double tempvar = CharToDouble(vars[index -1]) - CharToDouble(XdrvMailbox.data);
+      dtostrfd(tempvar,2,vars[index -1]);
     }
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, index, vars[index -1]);
   }
   else if ((CMND_MULT == command_code) && (index > 0) && (index <= RULES_MAX_VARS)) {
-    if ( (XdrvMailbox.data_len > 0) && (XdrvMailbox.payload >= 0) ){
-      int16_t tempvar = atol(vars[index -1]) * XdrvMailbox.payload;
-      snprintf_P(vars[index -1], sizeof(vars[index -1]), PSTR("%d"), tempvar );
+    if ( XdrvMailbox.data_len > 0 ){
+      double tempvar = CharToDouble(vars[index -1]) * CharToDouble(XdrvMailbox.data);
+      dtostrfd(tempvar,2,vars[index -1]);
     }
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, index, vars[index -1]);
   }
   else if ((CMND_SCALE == command_code) && (index > 0) && (index <= RULES_MAX_VARS)) {
     if ( XdrvMailbox.data_len > 0 ) {
       if (strstr(XdrvMailbox.data, ",")) {     // Process parameter entry
-        uint8_t tpos = 0;                      // Parameter index
-        int16_t value = 0;
-        int16_t valueIN = 0;
-        int16_t fromLow = 0;
-        int16_t fromHigh = 0;
-        int16_t toLow = 0;
-        int16_t toHigh = 0;
-        char *p = XdrvMailbox.data;            // Parameters like "1, 2, 3, 4"
-        char *q = p;                           // Value entered flag
-        while (p && (tpos < 6)) {
-          if (p > q) {                         // Any value entered
-            if (1 == tpos) { valueIN = value; }
-            if (2 == tpos) { fromLow = value; }
-            if (3 == tpos) { fromHigh = value; }
-            if (4 == tpos) { toLow = value; }
-            if (5 == tpos) { toHigh = value; }
-          }
-          p = LTrim(p);                        // Skip spaces
-          if (tpos && (*p == ',')) { p++; }    // Skip separator
-          p = LTrim(p);                        // Skip spaces
-          q = p;                               // Reset any value entered flag
-          value = strtol(p, &p, 10);
-          tpos++;                              // Next parameter
-        }
-        value = map(valueIN, fromLow, fromHigh, toLow, toHigh);
-        snprintf_P(vars[index -1], sizeof(vars[index -1]), PSTR("%d"), value );
+        double value = 0;
+        double valueIN = 0;
+        double fromLow = 0;
+        double fromHigh = 0;
+        double toLow = 0;
+        double toHigh = 0;
+
+        valueIN = CharToDouble(subStr(XdrvMailbox.data, ",", 1));
+        fromLow = CharToDouble(subStr(XdrvMailbox.data, ",", 2));
+        fromHigh = CharToDouble(subStr(XdrvMailbox.data, ",", 3));
+        toLow = CharToDouble(subStr(XdrvMailbox.data, ",", 4));
+        toHigh = CharToDouble(subStr(XdrvMailbox.data, ",", 5));
+
+        value = map_double(valueIN, fromLow, fromHigh, toLow, toHigh);
+        dtostrfd(value,2,vars[index -1]);
       }
     }
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, index, vars[index -1]);
@@ -614,6 +603,30 @@ boolean RulesCommand()
 
   return serviced;
 }
+
+double map_double(double x, double in_min, double in_max, double out_min, double out_max)
+{
+ return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+}
+
+// Function to return a substring defined by a delimiter at an index
+char* subStr (char* str, const char *delim, int index) {
+  char *act, *sub, *ptr;
+  static char copy[10];
+  int i;
+
+  // Since strtok consumes the first arg, make a copy
+  strcpy(copy, str);
+
+  for (i = 1, act = copy; i <= index; i++, act = NULL) {
+     sub = strtok_r(act, delim, &ptr);
+     if (sub == NULL) break;
+  }
+  sub = LTrim(sub);
+  sub = RTrim(sub);
+  return sub;
+}
+
 
 /*********************************************************************************************\
  * Interface
