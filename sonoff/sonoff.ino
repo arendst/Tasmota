@@ -573,7 +573,7 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
       XsnsCall(FUNC_COMMAND);
 //      if (!XsnsCall(FUNC_COMMAND)) type = NULL;
     }
-    else if ((CMND_SETOPTION == command_code) && ((index <= 29) || ((index > 31) && (index <= P_MAX_PARAM8 + 31)))) {
+    else if ((CMND_SETOPTION == command_code) && (index <= P_MAX_PARAM8 + 31)) {
       if (index <= 31) {
         ptype = 0;   // SetOption0 .. 31
       } else {
@@ -611,6 +611,7 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
 //              case 27:  // knx_enable_enhancement
               case 28:  // rf_receive_decimal
               case 29:  // ir_receive_decimal
+              case 30:  // hass_light
                 bitWrite(Settings.flag.data, index, payload);
             }
             if (12 == index) {  // stop_flash_rotate
@@ -618,7 +619,7 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
               SettingsSave(2);
             }
 #ifdef USE_HOME_ASSISTANT
-            if (19 == index) {  // hass_discovery
+            if ((19 == index) || (30 == index)) {  // hass_discovery or hass_light
               HAssDiscovery(1);
             }
 #endif  // USE_HOME_ASSISTANT

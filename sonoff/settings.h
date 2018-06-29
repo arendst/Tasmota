@@ -55,7 +55,7 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t knx_enable_enhancement : 1;   // bit 27 (v5.14.0a) KNX
     uint32_t rf_receive_decimal : 1;       // bit 28 (v6.0.0a)
     uint32_t ir_receive_decimal : 1;       // bit 29 (v6.0.0a)
-    uint32_t spare30 : 1;
+    uint32_t hass_light : 1;               // bit 30 (v6.0.0b)
     uint32_t spare31 : 1;
   };
 } SysBitfield;

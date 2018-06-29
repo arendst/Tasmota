@@ -72,14 +72,14 @@ a_setoption = [
     "Do not control Power with Dimmer",
     "Energy monitoring while powered off",
     "MQTT serial",
-    "Rules",
-    "Rules once mode",
+    "Rules until 5.14.0b",
+    "Rules once mode until 5.14.0b",
     "KNX",
     "Use Power device index on single relay devices",
     "KNX enhancement",
     "RF receive decimal",
     "IR receive decimal",
-    "",""]
+    "Enforce HASS light group",""]
 
 a_features = [[
     "","","USE_I2C","USE_SPI",
@@ -107,7 +107,7 @@ a_features = [[
     "USE_INA219","USE_SHT3X","USE_MHZ19","USE_TSL2561",
     "USE_SENSEAIR","USE_PMS5003","USE_MGS","USE_NOVA_SDS",
     "USE_SGP30","USE_SR04","USE_SDM120","USE_SI1145",
-    "USE_SDM630","USE_LM75AD","",""
+    "USE_SDM630","USE_LM75AD","USE_APDS9960","USE_TM1638"
     ],[
     "","","","",
     "","","","",

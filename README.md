@@ -219,7 +219,7 @@ If you like **Sonoff-Tasmota**, give it a star, or fork it and contribute!
 ### Development
 [![Build Status](https://img.shields.io/travis/arendst/Sonoff-Tasmota.svg)](https://travis-ci.org/arendst/Sonoff-Tasmota)
 
-Current version is **6.0.0a** - See [sonoff/_releasenotes.ino](https://github.com/arendst/Sonoff-Tasmota/blob/development/sonoff/_releasenotes.ino) for change information.
+Current version is **6.0.0b** - See [sonoff/_releasenotes.ino](https://github.com/arendst/Sonoff-Tasmota/blob/development/sonoff/_releasenotes.ino) for change information.
 
 ### Disclaimer
 :warning: **DANGER OF ELECTROCUTION** :warning:
@@ -258,8 +258,9 @@ The following devices are supported:
 - [iTead Sonoff Pow R2 with Energy Monitoring](https://www.itead.cc/sonoff-pow-r2.html)
 - [iTead Sonoff 4CH (R2)](https://www.itead.cc/smart-home/sonoff-4ch.html)
 - [iTead Sonoff 4CH Pro (R2)](https://www.itead.cc/smart-home/sonoff-4ch-pro.html)
-- [iTead S20 Smart Socket](https://www.itead.cc/smart-socket.html)
+- [iTead Sonoff S20 Smart Socket](https://www.itead.cc/smart-socket.html)
 - [Sonoff S22 Smart Socket](https://github.com/arendst/Sonoff-Tasmota/issues/627)
+- [iTead Sonoff S26 Smart Socket](https://www.itead.cc/sonoff-s26-wifi-smart-plug.html)
 - [iTead Sonoff S31 Smart Socket with Energy Monitoring](https://www.itead.cc/sonoff-s31.html)
 - [iTead Slampher](https://www.itead.cc/slampher.html)
 - [iTead Sonoff Touch](https://www.itead.cc/sonoff-touch.html)
