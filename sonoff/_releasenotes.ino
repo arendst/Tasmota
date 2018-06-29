@@ -1,4 +1,6 @@
 /* 6.0.0b
+ * Add command SetOption30 to enforce Hass discovery as light group (#1784)
+ * Add decimal values support for commands ADD, SUB, MULT and SCALE (#3083, #3089)
  * Add experimental (untested) TM1638 switch support (#2226)
  * Change number of switches from 4 to 8 (#2885, #3086)
  *
