@@ -119,11 +119,6 @@ void MCP23008_Detect()
 void MCP23008Show(boolean json)
 {
   if (mcp23008_type) {
-    char temperature[10];
-
-    float t = 0;
-    dtostrfd(t, Settings.flag2.temperature_resolution, temperature);
-
     if (json) {
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"MCP23008\":{\"D0\":%i, \"D1\":%i, \"D2\":%i, \"D3\":%i, \"D4\":%i, \"D5\":%i, \"D6\":%i, \"D7\":%i }"),
                           mqtt_data, MCP23008_digitalRead(0), MCP23008_digitalRead(1), MCP23008_digitalRead(2), MCP23008_digitalRead(3), MCP23008_digitalRead(4), MCP23008_digitalRead(5), MCP23008_digitalRead(6), MCP23008_digitalRead(7));
