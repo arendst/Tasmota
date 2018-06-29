@@ -1,4 +1,5 @@
 /* 6.0.0b
+ * Add support for Sonoff S26 Smart Socket (#2808)
  * Add command SetOption30 to enforce Hass discovery as light group (#1784)
  * Add decimal values support for commands ADD, SUB, MULT and SCALE (#3083, #3089)
  * Add experimental (untested) TM1638 switch support (#2226)

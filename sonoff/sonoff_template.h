@@ -163,7 +163,7 @@ enum SupportedModules {
   SONOFF_DUAL,
   SONOFF_POW,
   SONOFF_4CH,
-  S20,
+  SONOFF_S2X,
   SLAMPHER,
   SONOFF_TOUCH,
   SONOFF_LED,
@@ -229,7 +229,7 @@ const uint8_t kNiceList[MAXMODULE] PROGMEM = {
   SONOFF_4CHPRO,
   SONOFF_SV,
   SONOFF_DEV,
-  S20,
+  SONOFF_S2X,
   SLAMPHER,
   SONOFF_TOUCH,
   SONOFF_T11,
@@ -365,15 +365,15 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_REL4,        // GPIO15 Red Led and Relay 4 (0 = Off, 1 = On)
      0, 0
   },
-  { "S20 Socket",      // S20 Smart Socket (ESP8266)
+  { "Sonoff S2X",      // Sonoff S20, S22 and S26 Smart Socket (ESP8266)
      GPIO_KEY1,        // GPIO00 Button
      GPIO_USER,        // GPIO01 Serial RXD and Optional sensor
-     0,
+     GPIO_USER,        // GPIO02 Optional sensor
      GPIO_USER,        // GPIO03 Serial TXD and Optional sensor
      0, 0,
      0, 0, 0, 0, 0, 0, // Flash connection
      GPIO_REL1,        // GPIO12 Red Led and Relay (0 = Off, 1 = On)
-     GPIO_LED1_INV,    // GPIO13 Green Led (0 = On, 1 = Off)
+     GPIO_LED1_INV,    // GPIO13 Green/Blue Led (0 = On, 1 = Off)
      0, 0, 0, 0
   },
   { "Slampher",        // Slampher (ESP8266)
