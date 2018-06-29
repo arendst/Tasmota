@@ -51,9 +51,11 @@ bool Tmp112Show(boolean json) {
     Wire.endTransmission();
 
     // Data conversion in raw values
-    int rawtmp = msb << 8 | lsb;
-    int value = rawtmp >> 4;
-    t = value * 0.0625;
+    int temp = (msb * 256 + lsb) / 16;
+		if(temp > 2047)
+      temp -= 4096;
+		
+    t = ConvertTemp(temp * 0.0625);
     dtostrfd(t, Settings.flag2.temperature_resolution, temperature);
 
     if (json) {
