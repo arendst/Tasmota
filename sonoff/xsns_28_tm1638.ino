@@ -28,6 +28,8 @@
 #define TM1638_COLOR_RED    1
 #define TM1638_COLOR_GREEN  2
 
+#define TM1638_CLOCK_DELAY  1  // uSec
+
 uint8_t tm1638_type = 1;
 uint8_t tm1638_clock_pin = 0;
 uint8_t tm1638_data_pin = 0;
@@ -44,6 +46,7 @@ void Tm16XXSend(byte data)
 {
   for (int i = 0; i < 8; i++) {
     digitalWrite(tm1638_clock_pin, LOW);
+    delayMicroseconds(TM1638_CLOCK_DELAY);
     digitalWrite(tm1638_data_pin, data & 1 ? HIGH : LOW);
     data >>= 1;
     digitalWrite(tm1638_clock_pin, HIGH);
@@ -77,6 +80,7 @@ byte Tm16XXReceive()
   for (int i = 0; i < 8; i++) {
     temp >>= 1;
     digitalWrite(tm1638_clock_pin, LOW);
+    delayMicroseconds(TM1638_CLOCK_DELAY);
     if (digitalRead(tm1638_data_pin)) {
       temp |= 0x80;
     }
