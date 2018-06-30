@@ -46,9 +46,9 @@ void Tm16XXSend(byte data)
 {
   for (int i = 0; i < 8; i++) {
     digitalWrite(tm1638_clock_pin, LOW);
-    delayMicroseconds(TM1638_CLOCK_DELAY);
     digitalWrite(tm1638_data_pin, data & 1 ? HIGH : LOW);
     data >>= 1;
+    delayMicroseconds(TM1638_CLOCK_DELAY);
     digitalWrite(tm1638_clock_pin, HIGH);
   }
 }
@@ -81,9 +81,7 @@ byte Tm16XXReceive()
     temp >>= 1;
     digitalWrite(tm1638_clock_pin, LOW);
     delayMicroseconds(TM1638_CLOCK_DELAY);
-    if (digitalRead(tm1638_data_pin)) {
-      temp |= 0x80;
-    }
+    if (digitalRead(tm1638_data_pin)) { temp |= 0x80; }
     digitalWrite(tm1638_clock_pin, HIGH);
   }
 
