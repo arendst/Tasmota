@@ -199,6 +199,7 @@ enum SupportedModules {
   SONOFF_S31,
   ZENGGE_ZF_WF017,
   SONOFF_POW_R2,
+  SONOFF_IFAN02,
   MAXMODULE };
 
 /********************************************************************************************/
@@ -239,6 +240,7 @@ const uint8_t kNiceList[MAXMODULE] PROGMEM = {
   SONOFF_B1,
   SONOFF_LED,
   SONOFF_BN,
+  SONOFF_IFAN02,
   SONOFF_BRIDGE,
   CH1,
   CH4,
@@ -834,6 +836,23 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_REL1,        // GPIO12 Red Led and Relay (0 = Off, 1 = On)
      GPIO_LED1_INV,    // GPIO13 Blue Led (0 = On, 1 = Off)
      0, 0, 0, 0
+  },
+  { "Sonoff iFan02",   // Sonoff iFan02 (ESP8285)
+     GPIO_KEY1,        // GPIO00 Virtual button 1
+     GPIO_USER,        // GPIO01 Serial RXD and Optional sensor
+     0,                // GPIO02 Optional sensor
+     GPIO_USER,        // GPIO03 Serial TXD and Optional sensor
+     GPIO_REL3,        // GPIO04 Relay 3 (0 = Off, 1 = On)
+     GPIO_REL2,        // GPIO05 Relay 2 (0 = Off, 1 = On)
+     0, 0, 0,          // Flash connection
+     GPIO_KEY2,        // GPIO09 Virtual button 2
+     GPIO_KEY3,        // GPIO10 Virtual button 3
+     0,                // Flash connection
+     GPIO_REL1,        // GPIO12 Relay 1 (0 = Off, 1 = On)
+     GPIO_LED1_INV,    // GPIO13 Blue Led on PCA (0 = On, 1 = Off)
+     GPIO_KEY4,        // GPIO14 Virtual button 4
+     GPIO_REL4,        // GPIO15 Relay 4 (0 = Off, 1 = On)
+     0, 0
   }
 };
 
