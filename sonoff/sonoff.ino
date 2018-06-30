@@ -506,7 +506,7 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
       fallback_topic_flag = 0;
       return;
     }
-    else if (CMND_FANSPEED == command_code) {
+    else if ((CMND_FANSPEED == command_code) && (SONOFF_IFAN02 == Settings.module)) {
       uint8_t fanspeed = (uint8_t)(power &0xF) >> 1;
       if (fanspeed) { fanspeed = (fanspeed >> 1) +1; }
       if ((payload >= 0) && (payload <= 3) && (payload != fanspeed)) {
