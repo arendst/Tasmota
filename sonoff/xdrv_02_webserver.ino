@@ -592,7 +592,11 @@ void HandleAjaxStatusRefresh()
   WebGetArg("o", tmp, sizeof(tmp));
   if (strlen(tmp)) {
     ShowWebSource(SRC_WEBGUI);
-    ExecuteCommandPower(atoi(tmp), POWER_TOGGLE, SRC_IGNORE);
+    if (SONOFF_IFAN02 == Settings.module) {  // QandD
+      ExecuteCommandPower(1, POWER_TOGGLE, SRC_IGNORE);
+    } else {
+      ExecuteCommandPower(atoi(tmp), POWER_TOGGLE, SRC_IGNORE);
+    }
   }
   WebGetArg("d", tmp, sizeof(tmp));
   if (strlen(tmp)) {

@@ -97,8 +97,8 @@ const char kTasmotaCommands[] PROGMEM =
   D_CMND_I2CSCAN "|" D_CMND_SERIALSEND "|" D_CMND_BAUDRATE "|" D_CMND_SERIALDELIMITER;
 
 //const uint8_t kIFan02Speed[4][3] = {{0,0,0}, {1,0,0}, {1,1,0}, {1,0,1}};
-//const uint8_t kIFan02Speed[4][3] = {{6,6,6}, {7,6,6}, {7,7,6}, {7,6,7}};
-const uint8_t kIFan02Speed[4][3] = {{16,16,16}, {17,16,16}, {17,17,16}, {17,16,17}};
+const uint8_t kIFan02Speed[4][3] = {{6,6,6}, {7,6,6}, {7,7,6}, {7,6,7}};
+//const uint8_t kIFan02Speed[4][3] = {{16,16,16}, {17,16,16}, {17,17,16}, {17,16,17}};
 
 // Global variables
 unsigned long feature_drv1;                 // Compiled driver feature map
@@ -1207,6 +1207,7 @@ void ExecuteCommandPower(byte device, byte state, int source)
 
 //  ShowSource(source);
 
+/*
   if (SONOFF_IFAN02 == Settings.module) {
     if (state > 15) {    // Only allow Fanspeed control over relay 2..4
       state -= 10;
@@ -1219,7 +1220,7 @@ void ExecuteCommandPower(byte device, byte state, int source)
       device = 1;         // Only allow user control over light
     }
   }
-
+*/
   uint8_t publish_power = 1;
   if ((POWER_OFF_NO_STATE == state) || (POWER_ON_NO_STATE == state)) {
     state &= 1;
