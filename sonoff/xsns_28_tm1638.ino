@@ -28,6 +28,8 @@
 #define TM1638_COLOR_RED    1
 #define TM1638_COLOR_GREEN  2
 
+#define TM1638_CLOCK_DELAY  1  // uSec
+
 uint8_t tm1638_type = 1;
 uint8_t tm1638_clock_pin = 0;
 uint8_t tm1638_data_pin = 0;
@@ -46,6 +48,7 @@ void Tm16XXSend(byte data)
     digitalWrite(tm1638_clock_pin, LOW);
     digitalWrite(tm1638_data_pin, data & 1 ? HIGH : LOW);
     data >>= 1;
+    delayMicroseconds(TM1638_CLOCK_DELAY);
     digitalWrite(tm1638_clock_pin, HIGH);
   }
 }
@@ -77,9 +80,8 @@ byte Tm16XXReceive()
   for (int i = 0; i < 8; i++) {
     temp >>= 1;
     digitalWrite(tm1638_clock_pin, LOW);
-    if (digitalRead(tm1638_data_pin)) {
-      temp |= 0x80;
-    }
+    delayMicroseconds(TM1638_CLOCK_DELAY);
+    if (digitalRead(tm1638_data_pin)) { temp |= 0x80; }
     digitalWrite(tm1638_clock_pin, HIGH);
   }
 
@@ -169,9 +171,9 @@ void TmInit()
 void TmLoop()
 {
   byte buttons = Tm1638GetButtons();
-  for (byte i = 0; i < 8; i++) {
+  for (byte i = 0; i < MAX_SWITCHES; i++) {
     virtualswitch[i] = buttons &1;
-    byte color = virtualswitch[i] ? TM1638_COLOR_RED : TM1638_COLOR_NONE;
+    byte color = (virtualswitch[i]) ? TM1638_COLOR_RED : TM1638_COLOR_NONE;
     Tm1638SetLED(color, i);
     buttons >>= 1;
   }
