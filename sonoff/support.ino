@@ -869,6 +869,12 @@ void GetFeatures()
 #ifdef USE_LM75AD
   feature_sns1 |= 0x20000000;  // xsns_26_lm75ad.ino
 #endif
+#ifdef USE_APDS9960
+  feature_sns1 |= 0x40000000;  // xsns_27_apds9960.ino
+#endif
+#ifdef USE_TM1638
+  feature_sns1 |= 0x80000000;  // xsns_28_tm1638.ino
+#endif
 
 /*********************************************************************************************/
 

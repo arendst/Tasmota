@@ -76,7 +76,7 @@
 #include "settings.h"
 
 enum TasmotaCommands {
-  CMND_BACKLOG, CMND_DELAY, CMND_POWER, CMND_STATUS, CMND_STATE, CMND_POWERONSTATE, CMND_PULSETIME,
+  CMND_BACKLOG, CMND_DELAY, CMND_POWER, CMND_FANSPEED, CMND_STATUS, CMND_STATE, CMND_POWERONSTATE, CMND_PULSETIME,
   CMND_BLINKTIME, CMND_BLINKCOUNT, CMND_SENSOR, CMND_SAVEDATA, CMND_SETOPTION, CMND_TEMPERATURE_RESOLUTION, CMND_HUMIDITY_RESOLUTION,
   CMND_PRESSURE_RESOLUTION, CMND_POWER_RESOLUTION, CMND_VOLTAGE_RESOLUTION, CMND_CURRENT_RESOLUTION, CMND_ENERGY_RESOLUTION, CMND_MODULE, CMND_MODULES,
   CMND_GPIO, CMND_GPIOS, CMND_PWM, CMND_PWMFREQUENCY, CMND_PWMRANGE, CMND_COUNTER, CMND_COUNTERTYPE,
@@ -86,7 +86,7 @@ enum TasmotaCommands {
   CMND_TELEPERIOD, CMND_RESTART, CMND_RESET, CMND_TIMEZONE, CMND_TIMESTD, CMND_TIMEDST, CMND_ALTITUDE, CMND_LEDPOWER, CMND_LEDSTATE,
   CMND_I2CSCAN, CMND_SERIALSEND, CMND_BAUDRATE, CMND_SERIALDELIMITER };
 const char kTasmotaCommands[] PROGMEM =
-  D_CMND_BACKLOG "|" D_CMND_DELAY "|" D_CMND_POWER "|" D_CMND_STATUS "|" D_CMND_STATE "|"  D_CMND_POWERONSTATE "|" D_CMND_PULSETIME "|"
+  D_CMND_BACKLOG "|" D_CMND_DELAY "|" D_CMND_POWER "|" D_CMND_FANSPEED "|" D_CMND_STATUS "|" D_CMND_STATE "|"  D_CMND_POWERONSTATE "|" D_CMND_PULSETIME "|"
   D_CMND_BLINKTIME "|" D_CMND_BLINKCOUNT "|" D_CMND_SENSOR "|" D_CMND_SAVEDATA "|" D_CMND_SETOPTION "|" D_CMND_TEMPERATURE_RESOLUTION "|" D_CMND_HUMIDITY_RESOLUTION "|"
   D_CMND_PRESSURE_RESOLUTION "|" D_CMND_POWER_RESOLUTION "|" D_CMND_VOLTAGE_RESOLUTION "|" D_CMND_CURRENT_RESOLUTION "|" D_CMND_ENERGY_RESOLUTION "|" D_CMND_MODULE "|" D_CMND_MODULES "|"
   D_CMND_GPIO "|" D_CMND_GPIOS "|" D_CMND_PWM "|" D_CMND_PWMFREQUENCY "|" D_CMND_PWMRANGE "|" D_CMND_COUNTER "|"  D_CMND_COUNTERTYPE "|"
@@ -95,6 +95,10 @@ const char kTasmotaCommands[] PROGMEM =
   D_CMND_WIFICONFIG "|" D_CMND_FRIENDLYNAME "|" D_CMND_SWITCHMODE "|"
   D_CMND_TELEPERIOD "|" D_CMND_RESTART "|" D_CMND_RESET "|" D_CMND_TIMEZONE "|" D_CMND_TIMESTD "|" D_CMND_TIMEDST "|" D_CMND_ALTITUDE "|" D_CMND_LEDPOWER "|" D_CMND_LEDSTATE "|"
   D_CMND_I2CSCAN "|" D_CMND_SERIALSEND "|" D_CMND_BAUDRATE "|" D_CMND_SERIALDELIMITER;
+
+//const uint8_t kIFan02Speed[4][3] = {{0,0,0}, {1,0,0}, {1,1,0}, {1,0,1}};
+const uint8_t kIFan02Speed[4][3] = {{6,6,6}, {7,6,6}, {7,7,6}, {7,6,7}};
+//const uint8_t kIFan02Speed[4][3] = {{16,16,16}, {17,16,16}, {17,17,16}, {17,16,17}};
 
 // Global variables
 unsigned long feature_drv1;                 // Compiled driver feature map
@@ -502,6 +506,19 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
       fallback_topic_flag = 0;
       return;
     }
+    else if ((CMND_FANSPEED == command_code) && (SONOFF_IFAN02 == Settings.module)) {
+      uint8_t fanspeed = (uint8_t)(power &0xF) >> 1;
+      if (fanspeed) { fanspeed = (fanspeed >> 1) +1; }
+      if ((payload >= 0) && (payload <= 3) && (payload != fanspeed)) {
+        fanspeed = payload;
+        for (byte i = 0; i < 3; i++) {
+          uint8_t state = kIFan02Speed[fanspeed][i];
+//          uint8_t state = pgm_read_byte(kIFan02Speed +(fanspeed *3) +i);
+          ExecuteCommandPower(i +2, state, SRC_IGNORE);
+        }
+      }
+      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, fanspeed);
+    }
     else if (CMND_STATUS == command_code) {
       if ((payload < 0) || (payload > MAX_STATUS)) payload = 99;
       PublishStatus(payload);
@@ -573,7 +590,7 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
       XsnsCall(FUNC_COMMAND);
 //      if (!XsnsCall(FUNC_COMMAND)) type = NULL;
     }
-    else if ((CMND_SETOPTION == command_code) && ((index <= 29) || ((index > 31) && (index <= P_MAX_PARAM8 + 31)))) {
+    else if ((CMND_SETOPTION == command_code) && (index <= P_MAX_PARAM8 + 31)) {
       if (index <= 31) {
         ptype = 0;   // SetOption0 .. 31
       } else {
@@ -611,6 +628,7 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
 //              case 27:  // knx_enable_enhancement
               case 28:  // rf_receive_decimal
               case 29:  // ir_receive_decimal
+              case 30:  // hass_light
                 bitWrite(Settings.flag.data, index, payload);
             }
             if (12 == index) {  // stop_flash_rotate
@@ -618,7 +636,7 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
               SettingsSave(2);
             }
 #ifdef USE_HOME_ASSISTANT
-            if (19 == index) {  // hass_discovery
+            if ((19 == index) || (30 == index)) {  // hass_discovery or hass_light
               HAssDiscovery(1);
             }
 #endif  // USE_HOME_ASSISTANT
@@ -985,7 +1003,7 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
         snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE_SVALUE, command, Settings.sta_config, stemp1);
       }
     }
-    else if ((CMND_FRIENDLYNAME == command_code) && (index > 0) && (index <= 4)) {
+    else if ((CMND_FRIENDLYNAME == command_code) && (index > 0) && (index <= MAX_FRIENDLYNAMES)) {
       if ((data_len > 0) && (data_len < sizeof(Settings.friendlyname[0]))) {
         if (1 == index) {
           snprintf_P(stemp1, sizeof(stemp1), PSTR(FRIENDLY_NAME));
@@ -1189,6 +1207,20 @@ void ExecuteCommandPower(byte device, byte state, int source)
 
 //  ShowSource(source);
 
+/*
+  if (SONOFF_IFAN02 == Settings.module) {
+    if (state > 15) {    // Only allow Fanspeed control over relay 2..4
+      state -= 10;
+      blink_mask &= 1;
+      Settings.flag.interlock = 0;
+      Settings.pulse_timer[1] = 0;
+      Settings.pulse_timer[2] = 0;
+      Settings.pulse_timer[3] = 0;
+    } else {
+      device = 1;         // Only allow user control over light
+    }
+  }
+*/
   uint8_t publish_power = 1;
   if ((POWER_OFF_NO_STATE == state) || (POWER_ON_NO_STATE == state)) {
     state &= 1;
@@ -1292,7 +1324,7 @@ void ExecuteCommand(char *cmnd, int source)
 void PublishStatus(uint8_t payload)
 {
   uint8_t option = STAT;
-  char stemp[MAX_FRIENDLYNAMES * (sizeof(Settings.friendlyname[0]) +4)];
+  char stemp[MAX_FRIENDLYNAMES * (sizeof(Settings.friendlyname[0]) +MAX_FRIENDLYNAMES)];
 
   // Workaround MQTT - TCP/IP stack queueing when SUB_PREFIX = PUB_PREFIX
   if (!strcmp(Settings.mqtt_prefix[0],Settings.mqtt_prefix[1]) && (!payload)) option++;  // TELE
