@@ -284,8 +284,8 @@ void MqttPublishPowerState(byte device)
 
   if ((device < 1) || (device > devices_present)) { device = 1; }
 
-  if ((SONOFF_IFAN02 == Settings.module) && (device > 1)) {    // Do not report status of fan relays
-    if (GetFanspeed() < 4) {
+  if ((SONOFF_IFAN02 == Settings.module) && (device > 1)) {
+    if (GetFanspeed() < 4) {  // 4 occurs when fanspeed is 3 and RC button 2 is pressed
       snprintf_P(scommand, sizeof(scommand), PSTR(D_CMND_FANSPEED));
       GetTopic_P(stopic, STAT, mqtt_topic, (Settings.flag.mqtt_response) ? scommand : S_RSLT_RESULT);
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, scommand, GetFanspeed());
