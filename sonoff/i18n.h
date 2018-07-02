@@ -166,6 +166,7 @@
   #define D_STATUS11_STATUS "STS"
 #define D_CMND_STATE "State"
 #define D_CMND_POWER "Power"
+#define D_CMND_FANSPEED "FanSpeed"
 #define D_CMND_POWERONSTATE "PowerOnState"
 #define D_CMND_PULSETIME "PulseTime"
 #define D_CMND_BLINKTIME "BlinkTime"

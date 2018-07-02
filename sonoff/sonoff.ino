@@ -76,7 +76,7 @@
 #include "settings.h"
 
 enum TasmotaCommands {
-  CMND_BACKLOG, CMND_DELAY, CMND_POWER, CMND_STATUS, CMND_STATE, CMND_POWERONSTATE, CMND_PULSETIME,
+  CMND_BACKLOG, CMND_DELAY, CMND_POWER, CMND_FANSPEED, CMND_STATUS, CMND_STATE, CMND_POWERONSTATE, CMND_PULSETIME,
   CMND_BLINKTIME, CMND_BLINKCOUNT, CMND_SENSOR, CMND_SAVEDATA, CMND_SETOPTION, CMND_TEMPERATURE_RESOLUTION, CMND_HUMIDITY_RESOLUTION,
   CMND_PRESSURE_RESOLUTION, CMND_POWER_RESOLUTION, CMND_VOLTAGE_RESOLUTION, CMND_CURRENT_RESOLUTION, CMND_ENERGY_RESOLUTION, CMND_MODULE, CMND_MODULES,
   CMND_GPIO, CMND_GPIOS, CMND_PWM, CMND_PWMFREQUENCY, CMND_PWMRANGE, CMND_COUNTER, CMND_COUNTERTYPE,
@@ -86,7 +86,7 @@ enum TasmotaCommands {
   CMND_TELEPERIOD, CMND_RESTART, CMND_RESET, CMND_TIMEZONE, CMND_TIMESTD, CMND_TIMEDST, CMND_ALTITUDE, CMND_LEDPOWER, CMND_LEDSTATE,
   CMND_I2CSCAN, CMND_SERIALSEND, CMND_BAUDRATE, CMND_SERIALDELIMITER };
 const char kTasmotaCommands[] PROGMEM =
-  D_CMND_BACKLOG "|" D_CMND_DELAY "|" D_CMND_POWER "|" D_CMND_STATUS "|" D_CMND_STATE "|"  D_CMND_POWERONSTATE "|" D_CMND_PULSETIME "|"
+  D_CMND_BACKLOG "|" D_CMND_DELAY "|" D_CMND_POWER "|" D_CMND_FANSPEED "|" D_CMND_STATUS "|" D_CMND_STATE "|"  D_CMND_POWERONSTATE "|" D_CMND_PULSETIME "|"
   D_CMND_BLINKTIME "|" D_CMND_BLINKCOUNT "|" D_CMND_SENSOR "|" D_CMND_SAVEDATA "|" D_CMND_SETOPTION "|" D_CMND_TEMPERATURE_RESOLUTION "|" D_CMND_HUMIDITY_RESOLUTION "|"
   D_CMND_PRESSURE_RESOLUTION "|" D_CMND_POWER_RESOLUTION "|" D_CMND_VOLTAGE_RESOLUTION "|" D_CMND_CURRENT_RESOLUTION "|" D_CMND_ENERGY_RESOLUTION "|" D_CMND_MODULE "|" D_CMND_MODULES "|"
   D_CMND_GPIO "|" D_CMND_GPIOS "|" D_CMND_PWM "|" D_CMND_PWMFREQUENCY "|" D_CMND_PWMRANGE "|" D_CMND_COUNTER "|"  D_CMND_COUNTERTYPE "|"
@@ -95,6 +95,8 @@ const char kTasmotaCommands[] PROGMEM =
   D_CMND_WIFICONFIG "|" D_CMND_FRIENDLYNAME "|" D_CMND_SWITCHMODE "|"
   D_CMND_TELEPERIOD "|" D_CMND_RESTART "|" D_CMND_RESET "|" D_CMND_TIMEZONE "|" D_CMND_TIMESTD "|" D_CMND_TIMEDST "|" D_CMND_ALTITUDE "|" D_CMND_LEDPOWER "|" D_CMND_LEDSTATE "|"
   D_CMND_I2CSCAN "|" D_CMND_SERIALSEND "|" D_CMND_BAUDRATE "|" D_CMND_SERIALDELIMITER;
+
+const uint8_t kIFan02Speed[4][3] = {{6,6,6}, {7,6,6}, {7,7,6}, {7,6,7}};
 
 // Global variables
 unsigned long feature_drv1;                 // Compiled driver feature map
@@ -359,6 +361,23 @@ void SetLedPower(uint8_t state)
   digitalWrite(pin[GPIO_LED1], (bitRead(led_inverted, 0)) ? !state : state);
 }
 
+uint8_t GetFanspeed()
+{
+  uint8_t fanspeed = 0;
+
+//  if (SONOFF_IFAN02 == Settings.module) {
+    /* Fanspeed is controlled by relay 2, 3 and 4 as in Sonoff 4CH.
+       000x = 0
+       001x = 1
+       011x = 2
+       101x = 3
+    */
+    fanspeed = (uint8_t)(power &0xF) >> 1;
+    if (fanspeed) { fanspeed = (fanspeed >> 1) +1; }
+//  }
+  return fanspeed;
+}
+
 /********************************************************************************************/
 
 void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
@@ -501,6 +520,16 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
       ExecuteCommandPower(index, payload, SRC_IGNORE);
       fallback_topic_flag = 0;
       return;
+    }
+    else if ((CMND_FANSPEED == command_code) && (SONOFF_IFAN02 == Settings.module)) {
+      if ((payload >= 0) && (payload <= 3) && (payload != GetFanspeed())) {
+        for (byte i = 0; i < 3; i++) {
+          uint8_t state = kIFan02Speed[payload][i];
+//          uint8_t state = pgm_read_byte(kIFan02Speed +(payload *3) +i);
+          ExecuteCommandPower(i +2, state, SRC_IGNORE);  // Use relay 2, 3 and 4
+        }
+      }
+      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, GetFanspeed());
     }
     else if (CMND_STATUS == command_code) {
       if ((payload < 0) || (payload > MAX_STATUS)) payload = 99;
@@ -986,7 +1015,7 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
         snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE_SVALUE, command, Settings.sta_config, stemp1);
       }
     }
-    else if ((CMND_FRIENDLYNAME == command_code) && (index > 0) && (index <= 4)) {
+    else if ((CMND_FRIENDLYNAME == command_code) && (index > 0) && (index <= MAX_FRIENDLYNAMES)) {
       if ((data_len > 0) && (data_len < sizeof(Settings.friendlyname[0]))) {
         if (1 == index) {
           snprintf_P(stemp1, sizeof(stemp1), PSTR(FRIENDLY_NAME));
@@ -1190,6 +1219,14 @@ void ExecuteCommandPower(byte device, byte state, int source)
 
 //  ShowSource(source);
 
+  if (SONOFF_IFAN02 == Settings.module) {
+    blink_mask &= 1;                 // No blinking on the fan relays
+    Settings.flag.interlock = 0;     // No interlock mode as it is already done by the microcontroller
+    Settings.pulse_timer[1] = 0;     // No pulsetimers on the fan relays
+    Settings.pulse_timer[2] = 0;
+    Settings.pulse_timer[3] = 0;
+  }
+
   uint8_t publish_power = 1;
   if ((POWER_OFF_NO_STATE == state) || (POWER_ON_NO_STATE == state)) {
     state &= 1;
@@ -1293,7 +1330,7 @@ void ExecuteCommand(char *cmnd, int source)
 void PublishStatus(uint8_t payload)
 {
   uint8_t option = STAT;
-  char stemp[MAX_FRIENDLYNAMES * (sizeof(Settings.friendlyname[0]) +4)];
+  char stemp[MAX_FRIENDLYNAMES * (sizeof(Settings.friendlyname[0]) +MAX_FRIENDLYNAMES)];
 
   // Workaround MQTT - TCP/IP stack queueing when SUB_PREFIX = PUB_PREFIX
   if (!strcmp(Settings.mqtt_prefix[0],Settings.mqtt_prefix[1]) && (!payload)) option++;  // TELE
@@ -1303,6 +1340,7 @@ void PublishStatus(uint8_t payload)
 
   if ((0 == payload) || (99 == payload)) {
     uint8_t maxfn = (devices_present > MAX_FRIENDLYNAMES) ? MAX_FRIENDLYNAMES : (!devices_present) ? 1 : devices_present;
+    if (SONOFF_IFAN02 == Settings.module) { maxfn = 1; }
     stemp[0] = '\0';
     for (byte i = 0; i < maxfn; i++) {
       snprintf_P(stemp, sizeof(stemp), PSTR("%s%s\"%s\"" ), stemp, (i > 0 ? "," : ""), Settings.friendlyname[i]);
@@ -1416,6 +1454,10 @@ void MqttShowState()
       LightState(1);
     } else {
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"%s\":\"%s\""), mqtt_data, GetPowerDevice(stemp1, i +1, sizeof(stemp1), Settings.flag.device_index_enable), GetStateText(bitRead(power, i)));
+      if (SONOFF_IFAN02 == Settings.module) {
+        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"" D_CMND_FANSPEED "\":%d"), mqtt_data, GetFanspeed());
+        break;
+      }
     }
   }
 
@@ -1490,6 +1532,7 @@ void PerformEverySecond()
     if (!status_update_timer) {
       for (byte i = 1; i <= devices_present; i++) {
         MqttPublishPowerState(i);
+        if (SONOFF_IFAN02 == Settings.module) { break; }  // Only report status of light relay
       }
     }
   }

@@ -1,4 +1,6 @@
 /* 6.0.0b
+ * Add support for BlitzWolf BW-SHP2 (and Homecube, Gosund SP1) Energy Monitoring Smart Socket (#2223)
+ * Add support for Sonoff iFan02 as module 44 introducing command FanSpeed 0..3 (#2839)
  * Add support for Sonoff S26 Smart Socket (#2808)
  * Add command SetOption30 to enforce Hass discovery as light group (#1784)
  * Add decimal values support for commands ADD, SUB, MULT and SCALE (#3083, #3089)
