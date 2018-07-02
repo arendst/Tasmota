@@ -114,6 +114,20 @@ typedef union {
   };
 } Timer;
 
+typedef union {
+  uint8_t data;
+  struct {
+    uint8_t enable : 1;                    // Enable INPUT
+    uint8_t pullup : 1;                    // Enable internal weak pull-up resistor
+    uint8_t inten : 1;                     // Enable Interrupt on PIN
+    uint8_t intmode : 1;                   // Change on STATE or match COMPARATOR
+    uint8_t intcomp : 1;                   // Interrupt COMPARATOR
+    uint8_t b5 : 1;
+    uint8_t b6 : 1;
+    uint8_t b7 : 1;
+  };
+} Mcp230xxCfg;
+
 /*
 struct SYSCFG {
   unsigned long cfg_holder;                // 000 Pre v6 header
@@ -267,14 +281,14 @@ struct SYSCFG {
   Timer         timer[MAX_TIMERS];         // 670
   int           latitude;                  // 6B0
   int           longitude;                 // 6B4
-
   uint16_t      knx_physsical_addr;        // 6B8  (address_t is a uint16_t)
   uint16_t      knx_GA_addr[MAX_KNX_GA];   // 6BA  (address_t is a uint16_t) x KNX_max_GA
   uint16_t      knx_CB_addr[MAX_KNX_CB];   // 6CE  (address_t is a uint16_t) x KNX_max_CB
   byte          knx_GA_param[MAX_KNX_GA];  // 6E2  Type of Input (relay changed, button pressed, sensor read <-teleperiod)
   byte          knx_CB_param[MAX_KNX_CB];  // 6EC  Type of Output (set relay, toggle relay, reply sensor value)
+  Mcp230xxCfg   mcp230xx_config[16];       // 6F6
 
-  byte          free_6f6[216];             // 6F6
+  byte          free_6f6[200];             // 706
 
   char          mems[RULES_MAX_MEMS][10];  // 7CE
                                            // 800 Full - no more free locations
