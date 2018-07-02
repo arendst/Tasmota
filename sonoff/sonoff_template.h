@@ -200,6 +200,7 @@ enum SupportedModules {
   ZENGGE_ZF_WF017,
   SONOFF_POW_R2,
   SONOFF_IFAN02,
+  BLITZWOLF_BWSHP2,
   MAXMODULE };
 
 /********************************************************************************************/
@@ -251,6 +252,7 @@ const uint8_t kNiceList[MAXMODULE] PROGMEM = {
   LUANIHVIO,
   YUNSHAN,
   WION,
+  BLITZWOLF_BWSHP2,
   H801,
   MAGICHOME,
   ARILUX_LC01,
@@ -456,7 +458,8 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_LED1,        // GPIO16 Green/Blue Led (1 = On, 0 = Off)
      GPIO_ADC0         // ADC0   A0 Analog input
   },
-  { "EXS Relay",       // Latching relay https://ex-store.de/ESP8266-WiFi-Relay-V31 (ESP8266)
+  { "EXS Relay",       // Latching relay (ESP8266)
+                       // https://ex-store.de/ESP8266-WiFi-Relay-V31
                        //   Module Pin 1 VCC 3V3, Module Pin 6 GND
      GPIO_KEY1,        // GPIO00 Module Pin 8 - Button (firmware flash)
      GPIO_USER,        // GPIO01 Module Pin 2 = UART0_TXD
@@ -472,7 +475,8 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_USER,        // GPIO16 Module Pin 4
      0
   },
-  { "WiOn",            // Indoor Tap https://www.amazon.com/gp/product/B00ZYLUBJU/ref=s9_acsd_al_bw_c_x_3_w (ESP8266)
+  { "WiOn",            // Indoor Tap (ESP8266)
+                       // https://www.amazon.com/gp/product/B00ZYLUBJU/ref=s9_acsd_al_bw_c_x_3_w
      GPIO_USER,        // GPIO00 Optional sensor (pm clock)
      0,
      GPIO_LED1,        // GPIO02 Green Led (1 = On, 0 = Off)
@@ -664,7 +668,8 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_LED1_INV,    // GPIO13 Blue Led (0 = On, 1 = Off)
      0, 0, 0, 0
   },
-  { "Supla Espablo",   // Supla Espablo (ESP8266) - http://www.wykop.pl/ramka/3325399/diy-supla-do-puszki-instalacyjnej-podtynkowej-supla-org/
+  { "Supla Espablo",   // Supla Espablo (ESP8266)
+                       // http://www.wykop.pl/ramka/3325399/diy-supla-do-puszki-instalacyjnej-podtynkowej-supla-org/
      0,                // GPIO00 Flash jumper
      GPIO_USER,        // GPIO01 Serial RXD and Optional sensor
      GPIO_DSB,         // GPIO02 DS18B20 sensor
@@ -679,7 +684,8 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_LED1,        // GPIO16 Led (1 = On, 0 = Off)
      GPIO_ADC0         // ADC0 A0 Analog input
   },
-  { "Witty Cloud",     // Witty Cloud Dev Board (ESP8266) - https://www.aliexpress.com/item/ESP8266-serial-WIFI-Witty-cloud-Development-Board-ESP-12F-module-MINI-nodemcu/32643464555.html
+  { "Witty Cloud",     // Witty Cloud Dev Board (ESP8266)
+                       // https://www.aliexpress.com/item/ESP8266-serial-WIFI-Witty-cloud-Development-Board-ESP-12F-module-MINI-nodemcu/32643464555.html
      GPIO_USER,        // GPIO00 D3 flash push button on interface board
      GPIO_USER,        // GPIO01 Serial RXD and Optional sensor
      GPIO_LED1_INV,    // GPIO02 D4 Blue Led (0 = On, 1 = Off) on ESP-12F
@@ -694,7 +700,8 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_USER,        // GPIO16 D0 optional sensor
      GPIO_ADC0         // ADC0 A0 Light sensor / Requires USE_ADC_VCC in user_config.h to be disabled
   },
-  { "Yunshan Relay",   // Yunshan Wifi Relay (ESP8266) - https://www.ebay.com/p/Esp8266-220v-10a-Network-Relay-WiFi-Module/1369583381
+  { "Yunshan Relay",   // Yunshan Wifi Relay (ESP8266)
+                       // https://www.ebay.com/p/Esp8266-220v-10a-Network-Relay-WiFi-Module/1369583381
                        // Schematics and Info https://ucexperiment.wordpress.com/2016/12/18/yunshan-esp8266-250v-15a-acdc-network-wifi-relay-module/
      0,                // GPIO00 Flash jumper - Module Pin 8
      GPIO_USER,        // GPIO01 Serial RXD and Optional sensor - Module Pin 2
@@ -705,7 +712,8 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      0, 0, 0, 0, 0, 0, // Flash connection
      0, 0, 0, 0, 0
   },
-  { "MagicHome",       // Magic Home (aka Flux-light) (ESP8266) - https://www.aliexpress.com/item/Magic-Home-Mini-RGB-RGBW-Wifi-Controller-For-Led-Strip-Panel-light-Timing-Function-16million-colors/32686853650.html
+  { "MagicHome",       // Magic Home (aka Flux-light) (ESP8266)
+                       // https://www.aliexpress.com/item/Magic-Home-Mini-RGB-RGBW-Wifi-Controller-For-Led-Strip-Panel-light-Timing-Function-16million-colors/32686853650.html
      0,
      GPIO_USER,        // GPIO01 Serial RXD and Optional sensor
      GPIO_LED1_INV,    // GPIO02 Blue onboard LED
@@ -718,7 +726,8 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_PWM1,        // GPIO14 RGB LED Red
      0, 0, 0
   },
-  { "Luani HVIO",      // ESP8266_HVIO - https://luani.de/projekte/esp8266-hvio/
+  { "Luani HVIO",      // ESP8266_HVIO
+                       // https://luani.de/projekte/esp8266-hvio/
      0,                // GPIO00 Flash jumper
      GPIO_USER,        // GPIO01 Serial RXD and Optional sensor
      GPIO_USER,        // GPIO02 Optional sensor / I2C SDA pad
@@ -733,7 +742,8 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      0,
      GPIO_ADC0         // ADC0 A0 Analog input
   },
-  { "KMC 70011",       // KMC 70011 (https://www.amazon.com/KMC-Timing-Monitoring-Network-125V-240V/dp/B06XRX2GTQ)
+  { "KMC 70011",       // KMC 70011
+                       // https://www.amazon.com/KMC-Timing-Monitoring-Network-125V-240V/dp/B06XRX2GTQ
      GPIO_KEY1,        // GPIO00 Button
      0, 0, 0,
      GPIO_HLW_CF,      // GPIO04 HLW8012 CF
@@ -744,7 +754,8 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_REL1,        // GPIO14 Relay
      0, 0, 0
   },
-  { "Arilux LC01",     // Arilux AL-LC01 (ESP8285) - https://www.banggood.com/nl/ARILUX-AL-LC01-Super-Mini-LED-WIFI-Smart-RGB-Controller-For-RGB-LED-Strip-Light-DC-9-12V-p-1058603.html
+  { "Arilux LC01",     // Arilux AL-LC01 (ESP8285)
+                       // https://www.banggood.com/nl/ARILUX-AL-LC01-Super-Mini-LED-WIFI-Smart-RGB-Controller-For-RGB-LED-Strip-Light-DC-9-12V-p-1058603.html
                        //  (PwmFrequency 1111Hz)
      GPIO_KEY1,        // GPIO00 Optional Button
      GPIO_USER,        // GPIO01 Serial RXD and Optional sensor
@@ -758,7 +769,8 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_USER,        // GPIO14 RGBW LED White (optional - set to PWM4 for Cold White or Warm White)
      0, 0, 0
   },
-  { "Arilux LC11",     // Arilux AL-LC11 (ESP8266) - https://www.banggood.com/nl/ARILUX-AL-LC11-Super-Mini-LED-WIFI-APP-Controller-RF-Remote-Control-For-RGBWW-LED-Strip-DC9-28V-p-1085112.html
+  { "Arilux LC11",     // Arilux AL-LC11 (ESP8266)
+                       // https://www.banggood.com/nl/ARILUX-AL-LC11-Super-Mini-LED-WIFI-APP-Controller-RF-Remote-Control-For-RGBWW-LED-Strip-DC9-28V-p-1085112.html
                        //  (PwmFrequency 540Hz)
      GPIO_KEY1,        // GPIO00 Optional Button
      GPIO_USER,        // GPIO01 Serial RXD and Optional sensor
@@ -788,7 +800,8 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_LED1_INV,    // GPIO13 Blue Led (0 = On, 1 = Off)
      0, 0, 0, 0
   },
-  { "Arilux LC06",     // Arilux AL-LC06 (ESP8285) - https://www.banggood.com/ARILUX-AL-LC06-LED-WIFI-Smartphone-Controller-Romote-5-Channels-DC12-24V-For-RGBWW-Strip-light-p-1061476.html
+  { "Arilux LC06",     // Arilux AL-LC06 (ESP8285)
+                       // https://www.banggood.com/ARILUX-AL-LC06-LED-WIFI-Smartphone-Controller-Romote-5-Channels-DC12-24V-For-RGBWW-Strip-light-p-1061476.html
      GPIO_KEY1,        // GPIO00 Optional Button
      GPIO_USER,        // GPIO01 Serial RXD and Optional sensor
      GPIO_USER,        // GPIO02 Empty pad
@@ -813,7 +826,8 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_LED1_INV,    // GPIO13 Green Led (0 = On, 1 = Off)
      0, 0, 0, 0
   },
-  { "Zengge WF017",    // Zenggee ZJ-WF017-A (ESP12S)) - https://www.ebay.com/p/Smartphone-Android-IOS-WiFi-Music-Controller-for-RGB-5050-3528-LED-Strip-Light/534446632?_trksid=p2047675.l2644
+  { "Zengge WF017",    // Zenggee ZJ-WF017-A (ESP12S))
+                       // https://www.ebay.com/p/Smartphone-Android-IOS-WiFi-Music-Controller-for-RGB-5050-3528-LED-Strip-Light/534446632?_trksid=p2047675.l2644
      GPIO_KEY1,        // GPIO00 Optional Button
      0,
      GPIO_USER,        // GPIO02 Empty pad
@@ -852,6 +866,23 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_LED1_INV,    // GPIO13 Blue Led on PCA (0 = On, 1 = Off)
      GPIO_KEY4,        // GPIO14 Virtual button 4 as feedback from RC
      GPIO_REL4,        // GPIO15 Relay 4 (0 = Off, 1 = On) controlling the fan
+     0, 0
+  },
+  { "BlitzWolf SHP2",  // BlitzWolf BW-SHP2 (ESP8285 - BL0937 or HJL-01 Energy Monitoring)
+                       // https://www.banggood.com/BlitzWolf-BW-SHP2-Smart-WIFI-Socket-EU-Plug-220V-16A-Work-with-Amazon-Alexa-Google-Assistant-p-1292899.html
+                       // https://www.amazon.de/Steckdose-Homecube-intelligente-Verbrauchsanzeige-funktioniert/dp/B076Q2LKHG/ref=sr_1_fkmr0_1
+                       // https://www.amazon.de/Intelligente-Stromverbrauch-Fernsteurung-Schaltbare-Energieklasse/dp/B076WZQS4S/ref=sr_1_1
+     GPIO_LED2_INV,    // GPIO00 Red Led (1 = On, 0 = Off)
+     GPIO_USER,        // GPIO01 Serial RXD and Optional sensor
+     GPIO_LED1_INV,    // GPIO02 Blue Led (1 = On, 0 = Off)
+     GPIO_USER,        // GPIO03 Serial TXD and Optional sensor
+     0,
+     GPIO_HLW_CF,      // GPIO05 BL0937 or HJL-01 CF power
+     0, 0, 0, 0, 0, 0, // Flash connection
+     GPIO_HLW_SEL,     // GPIO12 BL0937 or HJL-01 Sel output
+     GPIO_KEY1,        // GPIO13 Button
+     GPIO_HLW_CF1,     // GPIO14 BL0937 or HJL-01 CF1 voltage / current
+     GPIO_REL1,        // GPIO15 Relay (0 = Off, 1 = On)
      0, 0
   }
 };
