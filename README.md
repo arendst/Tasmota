@@ -7,8 +7,9 @@ Additional features:
 - Support for I2C 8-channel DIO extension board PCF-8574 (large extension to support 32 relays and pulsetimers on 8 relays (can be changed by changing constant MAX_PULSETIMER).
 - Support CHIRP moisture sensor.
 - Report total UPTIME (seconds) between two deepsleep cycle. This allows to see uptime, even if connect was not successfull or there was a reboot. Using RTC memory to ensure correct uptime
-- Added support of "counterdevider[1..MAX_COUNTERS]" (serial and MQTT command), to count only the 1 count every counterdeviderX impulses (max 65.000 impulses = 1 count, default 1s). 
+- Added support of "counterdevider[1..MAX_COUNTERS]" (serial and MQTT command), to count only the 1 count every counterdeviderX impulses (max 65.000 impulses = 1 count, default 1s).
 - Added Support for Shutter use-Case. In this case two relays are paired into one switch. Based on the value on the first relay the second relay will set automatically. Use Setoption14 and Setoption31 to set it. See Wiki
+- Added more support for the shutter Use-Case. The Setoption31 is required, if someone changes the target position if the shutter is still operating. Please see Shutter wiki for more details.
 
 **Note that deep sleep on ESP-01 is not possible without hardware modifications because it's required to connect GPIO16 to RST, see https://github.com/stefanbode/Sonoff-Tasmota/issues/40. The same applies most likely to other modules like ESP-02, ESP-04 etc**
 

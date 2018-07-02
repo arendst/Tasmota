@@ -630,6 +630,8 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
               //stb mod
               case 30:  // device_index_enable
                 bitWrite(Settings.flag.data, index, payload);
+                bitWrite(Settings.flag.data, 31, 1);
+                bitWrite(Settings.flag.data, 14, 1);
               case 31:  // device_index_enable
                 bitWrite(Settings.flag.data, index, payload);
               //end

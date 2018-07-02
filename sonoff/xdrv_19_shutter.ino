@@ -86,12 +86,14 @@ boolean ShutterCommand()
   else if (CMND_OPEN == command_code) {
     Shutter_Direction = 1;
     Shutter_Target_Position = Shutter_Open_Max;
+    Settings.shutter_position = 100;
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, 1);
     ExecuteCommandPower(Settings.shutter_startrelay, 1, SRC_SHUTTER);
   }
   else if (CMND_CLOSE == command_code) {
     Shutter_Direction = -1;
     Shutter_Target_Position = 0;
+    Settings.shutter_position = 0;
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, 1);
     ExecuteCommandPower(Settings.shutter_startrelay+1, 1, SRC_SHUTTER);
   }
