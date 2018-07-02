@@ -195,7 +195,8 @@ uint8_t spi_flg = 0;                        // SPI configured
 uint8_t light_type = 0;                     // Light types
 bool pwm_present = false;                   // Any PWM channel configured with SetOption15 0
 //STB  mod
-byte max_pcf8574_devices = 0;         // Max numbers of PCF8574 modules
+byte max_pcf8574_devices = 0;               // Max numbers of PCF8574 modules
+uint8_t shutter_type = 1;                     // shutter types
 //end
 
 boolean mdns_begun = false;
@@ -627,6 +628,8 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
               case 26:  // device_index_enable
                 bitWrite(Settings.flag.data, index, payload);
               //stb mod
+              case 30:  // device_index_enable
+                bitWrite(Settings.flag.data, index, payload);
               case 31:  // device_index_enable
                 bitWrite(Settings.flag.data, index, payload);
               //end
@@ -1255,7 +1258,10 @@ void ExecuteCommandPower(byte device, byte state, int source)
         power_t imask = 1 << (device- temp);
         //snprintf_P(log_data, sizeof(log_data), PSTR("SRC0: device %d, state: %d, source %d, devicebin: %d, power: %ld, mask: %ld, imask %ld"),device,state,source, device%2 ,power, mask, imask);
         //AddLog(LOG_LEVEL_DEBUG);
-        if (power & imask) ExecuteCommandPower(device +1-temp , POWER_OFF, SRC_IGNORE);
+        if (power & imask) {
+          ExecuteCommandPower(device +1-temp , POWER_OFF, SRC_IGNORE);
+          delay(500); //quite long delay to ensure physical switch off of the relay
+        }
       } else {
         for (byte i = 0; i < devices_present; i++) {
           power_t imask = 1 << i;

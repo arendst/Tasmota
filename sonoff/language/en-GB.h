@@ -529,5 +529,14 @@
 #define D_CMND_COUNTERDEVIDER "CounterDevider"
 #define D_CMND_MQTTENABLE "MqttEnable"
 #define D_SENSOR_DEEPSLEEP "DeepSleep Switch"
+#define D_CMND_OPEN "shutteropen"
+#define D_CMND_CLOSE "shutterclose"
+#define D_CMND_STOP "shutterstop"
+#define D_CMND_POSITION "shutterposition"
+#define D_CMND_OPENTIME "shutteropenduration"
+#define D_CMND_CLOSETIME "shuttercloseduration"
+#define D_CMND_SHUTTERRELAY "shutterrelay"
+#define D_OPEN "Open"
+#define D_CLOSE "Close"
 //end
 #endif  // _LANGUAGE_EN_GB_H_

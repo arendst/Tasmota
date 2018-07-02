@@ -55,7 +55,7 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t knx_enable_enhancement : 1;   // bit 27 (v5.14.0a) KNX
     uint32_t spare28 : 1;
     uint32_t spare29 : 1;
-    uint32_t spare30 : 1;
+    uint32_t shutter_mode : 1;
     uint32_t paired_interlock : 1;
   };
 } SysBitfield;
@@ -278,7 +278,11 @@ struct SYSCFG {
 
   char          rules[MAX_RULE_SETS][MAX_RULE_SIZE]; // 800 uses 512 bytes in v5.12.0m, 3 x 512 bytes in v5.14.0b
   //STB mod
-  byte          free_680[200];             // A80  give me some space to do configuration without override
+  byte          free_680[196];             // A80  give me some space to do configuration without override
+  uint8_t       shutter_startrelay;
+  uint8_t       shutter_opentime;
+  uint8_t       shutter_closetime;
+  uint8_t       shutter_position;              // 49E
   unsigned long uptime;                    // 748
   uint8_t       pcf8574_config[8];         // 74B
   uint8_t       all_relays_inverted;       //

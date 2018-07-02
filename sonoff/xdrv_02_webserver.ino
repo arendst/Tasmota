@@ -77,6 +77,11 @@ const char HTTP_HEAD[] PROGMEM =
   "function lb(p){"
     "la('?d='+p);"
   "}"
+  //stb nod
+  "function ld(p){"
+    "la('?u='+p);"
+  "}"
+  //end
   "function lc(p){"
     "la('?t='+p);"
   "}";
@@ -177,6 +182,11 @@ const char HTTP_MSG_SLIDER1[] PROGMEM =
 const char HTTP_MSG_SLIDER2[] PROGMEM =
   "<div><span class='p'>" D_DARKLIGHT "</span><span class='q'>" D_BRIGHTLIGHT "</span></div>"
   "<div><input type='range' min='1' max='100' value='%d' onchange='lb(value)'></div>";
+//stb mod
+const char HTTP_MSG_SLIDER3[] PROGMEM =
+  "<div><span class='p'>" D_CLOSE "</span><span class='q'>" D_OPEN "</span></div>"
+  "<div><input type='range' min='0' max='100' value='%d' onchange='ld(value)'></div>";
+//
 const char HTTP_MSG_RSTRT[] PROGMEM =
   "<br/><div style='text-align:center;'>" D_DEVICE_WILL_RESTART "</div><br/>";
 const char HTTP_BTN_MENU1[] PROGMEM =
@@ -379,12 +389,14 @@ void StartWebserver(int type, IPAddress ipweb)
 #endif  // USE_TIMERS and USE_TIMERS_WEB
       WebServer->on("/w1", HandleWifiConfigurationWithScan);
       WebServer->on("/w0", HandleWifiConfiguration);
-      if (Settings.flag.mqtt_enabled) {
-        WebServer->on("/mq", HandleMqttConfiguration);
+      //stb mod
+  //    if (Settings.flag.mqtt_enabled) {
+      WebServer->on("/mq", HandleMqttConfiguration);
 #ifdef USE_DOMOTICZ
-        WebServer->on("/dm", HandleDomoticzConfiguration);
+      WebServer->on("/dm", HandleDomoticzConfiguration);
 #endif  // USE_DOMOTICZ
-      }
+  //    }
+  // end
 #ifdef USE_KNX
       WebServer->on("/kn", HandleKNXConfiguration);
 #endif // USE_KNX
@@ -565,6 +577,12 @@ void HandleRoot()
         snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_MSG_SLIDER2, Settings.light_dimmer);
         page += mqtt_data;
       }
+      // stb mod
+      if (Settings.flag.shutter_mode) {
+        snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_MSG_SLIDER3, Settings.shutter_position);
+        page += mqtt_data;
+      }
+      //end
       page += FPSTR(HTTP_TABLE100);
       page += F("<tr>");
       for (byte idx = 1; idx <= devices_present; idx++) {
@@ -618,6 +636,13 @@ void HandleAjaxStatusRefresh()
     snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_COLORTEMPERATURE " %s"), tmp);
     ExecuteWebCommand(svalue, SRC_WEBGUI);
   }
+  //stb mod
+  WebGetArg("u", tmp, sizeof(tmp));
+  if (strlen(tmp)) {
+    snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_POSITION " %s"), tmp);
+    ExecuteWebCommand(svalue, SRC_WEBGUI);
+  }
+  // end
   WebGetArg("k", tmp, sizeof(tmp));
   if (strlen(tmp)) {
     snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_RFKEY "%s"), tmp);
