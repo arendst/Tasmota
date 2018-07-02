@@ -7,8 +7,10 @@ Alternative firmware for _ESP8266 based devices_ like [iTead](https://www.itead.
 [![License](https://img.shields.io/github/license/arendst/Sonoff-Tasmota.svg)](https://github.com/arendst/Sonoff-Tasmota/blob/development/LICENSE.txt)
 
 If you like **Sonoff-Tasmota**, give it a star, or fork it and contribute!
+
 [![GitHub stars](https://img.shields.io/github/stars/arendst/Sonoff-Tasmota.svg?style=social&label=Star)](https://github.com/arendst/Sonoff-Tasmota/stargazers)
 [![GitHub forks](https://img.shields.io/github/forks/arendst/Sonoff-Tasmota.svg?style=social&label=Fork)](https://github.com/arendst/Sonoff-Tasmota/network)
+[![donate](https://img.shields.io/badge/donate-PayPal-blue.svg)](https://paypal.me/tasmota)
 
 ### Development
 [![Build Status](https://img.shields.io/travis/arendst/Sonoff-Tasmota.svg)](https://travis-ci.org/arendst/Sonoff-Tasmota)
@@ -37,6 +39,15 @@ If you want to compile Sonoff-Tasmota yourself keep in mind the following:
 - Once uploaded select module using the configuration webpage or the commands ```Modules``` and ```Module```.
 - After reboot select config menu again or use commands ```GPIOs``` and ```GPIO``` to change GPIO with desired sensor.
 
+### Migration Instructions
+See [wiki migration path](https://github.com/arendst/Sonoff-Tasmota/wiki/Upgrade#migration-path) for instructions how to migrate to a major version. Pay attention to the following version breaks due to dynamic settings updates:
+
+1. Migrate to **Sonoff-Tasmota 3.9.x**
+2. Migrate to **Sonoff-Tasmota 4.x**
+3. Migrate to **Sonoff-Tasmota 5.14**
+4. Migrate to **Sonoff-Tasmota 6.x**
+
+### Support Information
 <img src="https://github.com/arendst/arendst.github.io/blob/master/media/sonoffbasic.jpg" width="250" align="right" />
 
 See [Wiki](https://github.com/arendst/Sonoff-Tasmota/wiki) for more information.<br />
