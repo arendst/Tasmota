@@ -200,10 +200,6 @@ There is **NO CONFLICT** with MQTT, Home Assistant, Web, etc. Tests show fast re
 
 -----------------------------------------------------------------------------------------------------------------------------------
 
-[<img src="https://github.com/ascillato/Sonoff-Tasmota_KNX/blob/development/.github/donate.jpg" width="250" />](https://www.paypal.me/ascillato)
-
------------------------------------------------------------------------------------------------------------------------------------
-
 ## Sonoff-Tasmota
 
 Alternative firmware for _ESP8266 based devices_ like [iTead](https://www.itead.cc/) _**Sonoff**_ with **web**, **timers**, 'Over The Air' (**OTA**) firmware updates and **sensors support**, allowing control under **Serial**, **HTTP**, **MQTT** and **KNX**, so as to be used on **Smart Home Systems**. Written for Arduino IDE and PlatformIO.
