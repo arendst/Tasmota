@@ -3,11 +3,11 @@
 
 [Sonoff-Tasmota_KNX](https://github.com/ascillato/Sonoff-Tasmota_KNX) is a modification for [Sonoff-Tasmota](https://github.com/arendst/Sonoff-Tasmota) to add a basic functionality of the [KNX IP Protocol](https://www.knx.org/knx-en/index.php).
 
-[![GitHub version](https://img.shields.io/github/release/ascillato/Sonoff-Tasmota_KNX.svg)](https://github.com/ascillato/Sonoff-Tasmota_KNX/releases/latest) [![GitHub download](https://img.shields.io/github/downloads/ascillato/Sonoff-Tasmota_KNX/total.svg)](https://github.com/ascillato/Sonoff-Tasmota_KNX/releases/latest) [![License](https://img.shields.io/github/license/ascillato/Sonoff-Tasmota_KNX.svg)](https://github.com/ascillato/Sonoff-Tasmota_KNX/blob/development/LICENSE.txt)
+[![GitHub version](https://img.shields.io/github/release/ascillato/Sonoff-Tasmota_KNX.svg)](https://github.com/ascillato/Sonoff-Tasmota_KNX/releases/latest) [![GitHub download](https://img.shields.io/github/downloads/ascillato/Sonoff-Tasmota_KNX/total.svg)](https://github.com/ascillato/Sonoff-Tasmota_KNX/releases/latest) [![License](https://img.shields.io/github/license/ascillato/Sonoff-Tasmota_KNX.svg)](https://github.com/ascillato/Sonoff-Tasmota_KNX/blob/development/LICENSE.txt) [![donate](https://img.shields.io/badge/donate-PayPal-blue.svg)](https://www.paypal.me/ascillato)
 
-If you like **Sonoff Tasmota KNX**, give it a star, fork it and contribute or Donate
+If you like **Sonoff Tasmota KNX**, give it a star or fork it and contribute!
 [![GitHub stars](https://img.shields.io/github/stars/ascillato/Sonoff-Tasmota_KNX.svg?style=social&label=Star)](https://github.com/ascillato/Sonoff-Tasmota_KNX/stargazers)
-[![GitHub forks](https://img.shields.io/github/forks/ascillato/Sonoff-Tasmota_KNX.svg?style=social&label=Fork)](https://github.com/ascillato/Sonoff-Tasmota_KNX/network) [![donate](https://img.shields.io/badge/donate-PayPal-blue.svg)](https://www.paypal.me/ascillato)
+[![GitHub forks](https://img.shields.io/github/forks/ascillato/Sonoff-Tasmota_KNX.svg?style=social&label=Fork)](https://github.com/ascillato/Sonoff-Tasmota_KNX/network)
 
 Any help or comment is very welcome.
 
