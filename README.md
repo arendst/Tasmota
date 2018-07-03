@@ -15,7 +15,7 @@ If you like **Sonoff-Tasmota**, give it a star, or fork it and contribute!
 ### Development
 [![Build Status](https://img.shields.io/travis/arendst/Sonoff-Tasmota.svg)](https://travis-ci.org/arendst/Sonoff-Tasmota)
 
-Current version is **6.0.0b** - See [sonoff/_releasenotes.ino](https://github.com/arendst/Sonoff-Tasmota/blob/development/sonoff/_releasenotes.ino) for change information.
+Current version is **6.0.0c** - See [sonoff/_releasenotes.ino](https://github.com/arendst/Sonoff-Tasmota/blob/development/sonoff/_releasenotes.ino) for change information.
 
 ### Disclaimer
 :warning: **DANGER OF ELECTROCUTION** :warning:
@@ -123,6 +123,7 @@ Different firmware images are released based on Features and Sensors selection g
 | USE_SHT                        | x | x | - | x | x |
 | USE_SHT3X                      | x | x | - | x | x |
 | USE_HTU                        | x | x | - | x | x |
+| USE_LM75AD                     | x | - | - | x | x |
 | USE_BMP                        | x | x | - | x | x |
 | USE_BME680                     | - | - | - | - | x |
 | USE_SGP30                      | x | - | - | x | x |
@@ -133,6 +134,7 @@ Different firmware images are released based on Features and Sensors selection g
 | USE_ADS1115                    | - | - | - | - | x |
 | USE_ADS1115_I2CDEV             | - | - | - | - | - |
 | USE_INA219                     | - | - | - | - | x |
+| USE_APDS9960                   | - | - | - | - | - |
 | USE_MGS                        | - | - | - | - | x |
 | USE_SPI                        | - | - | - | - | - |
 | USE_MHZ19                      | x | x | - | x | x |
@@ -141,7 +143,8 @@ Different firmware images are released based on Features and Sensors selection g
 | USE_NOVA_SDS                   | x | - | - | x | x |
 | USE_PZEM004T                   | x | x | - | x | x |
 | USE_SERIAL_BRIDGE              | x | - | - | x | x |
-| USE_SDM120                     | - | - | - | - | x |
+| USE_SDM120                     | x | - | - | - | x |
+| USE_SDM630                     | x | - | - | - | x |
 | USE_IR_REMOTE                  | x | x | - | x | x |
 | USE_IR_HVAC                    | - | - | - | - | x |
 | USE_IR_RECEIVE                 | x | - | - | x | x |
@@ -149,6 +152,8 @@ Different firmware images are released based on Features and Sensors selection g
 | USE_WS2812_DMA                 | - | - | - | - | - |
 | USE_ARILUX_RF                  | x | x | - | x | x |
 | USE_SR04                       | x | - | - | x | x |
+| USE_TM1638                     | - | - | - | - | - |
+| USE_RF_FLASH                   | x | - | - | x | x |
 
 #### Typical File Size
 

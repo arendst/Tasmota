@@ -20,21 +20,21 @@
 #ifndef _SETTINGS_H_
 #define _SETTINGS_H_
 
-#define PARAM8_SIZE  18                    // Number of param bytes
+#define PARAM8_SIZE  18                    // Number of param bytes (SetOption)
 
 typedef union {                            // Restricted by MISRA-C Rule 18.4 but so usefull...
   uint32_t data;                           // Allow bit manipulation using SetOption
-  struct {
+  struct {                                 // SetOption0 .. SetOption31
     uint32_t save_state : 1;               // bit 0
     uint32_t button_restrict : 1;          // bit 1
     uint32_t value_units : 1;              // bit 2
     uint32_t mqtt_enabled : 1;             // bit 3
     uint32_t mqtt_response : 1;            // bit 4
-    uint32_t mqtt_power_retain : 1;
-    uint32_t mqtt_button_retain : 1;
-    uint32_t mqtt_switch_retain : 1;
+    uint32_t mqtt_power_retain : 1;        // CMND_POWERRETAIN
+    uint32_t mqtt_button_retain : 1;       // CMND_BUTTONRETAIN
+    uint32_t mqtt_switch_retain : 1;       // CMND_SWITCHRETAIN
     uint32_t temperature_conversion : 1;   // bit 8
-    uint32_t mqtt_sensor_retain : 1;
+    uint32_t mqtt_sensor_retain : 1;       // CMND_SENSORRETAIN
     uint32_t mqtt_offline : 1;             // bit 10
     uint32_t button_swap : 1;              // bit 11 (v5.1.6)
     uint32_t stop_flash_rotate : 1;        // bit 12 (v5.2.0)
@@ -60,8 +60,46 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
   };
 } SysBitfield;
 
-typedef union {
+typedef union {                            // Restricted by MISRA-C Rule 18.4 but so usefull...
   uint32_t data;                           // Allow bit manipulation using SetOption
+  struct {                                 // SetOption50 .. SetOption81
+    uint32_t spare00 : 1;
+    uint32_t spare01 : 1;
+    uint32_t spare02 : 1;
+    uint32_t spare03 : 1;
+    uint32_t spare04 : 1;
+    uint32_t spare05 : 1;
+    uint32_t spare06 : 1;
+    uint32_t spare07 : 1;
+    uint32_t spare08 : 1;
+    uint32_t spare09 : 1;
+    uint32_t spare10 : 1;
+    uint32_t spare11 : 1;
+    uint32_t spare12 : 1;
+    uint32_t spare13 : 1;
+    uint32_t spare14 : 1;
+    uint32_t spare15 : 1;
+    uint32_t spare16 : 1;
+    uint32_t spare17 : 1;
+    uint32_t spare18 : 1;
+    uint32_t spare19 : 1;
+    uint32_t spare20 : 1;
+    uint32_t spare21 : 1;
+    uint32_t spare22 : 1;
+    uint32_t spare23 : 1;
+    uint32_t spare24 : 1;
+    uint32_t spare25 : 1;
+    uint32_t spare26 : 1;
+    uint32_t spare27 : 1;
+    uint32_t spare28 : 1;
+    uint32_t spare29 : 1;
+    uint32_t spare30 : 1;
+    uint32_t spare31 : 1;
+  };
+} SysBitfield3;
+
+typedef union {
+  uint32_t data;                           // Allow bit manipulation
   struct {
     uint32_t spare00 : 1;
     uint32_t spare01 : 1;
@@ -192,7 +230,7 @@ struct SYSCFG {
   byte          free_2fa[1];               // 2FA
 
   uint8_t       ledstate;                  // 2FB
-  uint8_t       param[PARAM8_SIZE];        // 2FC
+  uint8_t       param[PARAM8_SIZE];        // 2FC  SetOption32 .. SetOption49
   int16_t       toffset[2];                // 30E
 
   byte          free_312[1];               // 312
@@ -229,9 +267,7 @@ struct SYSCFG {
   uint16_t      blinktime;                 // 39A
   uint16_t      blinkcount;                // 39C
   uint16_t      light_rotation;            // 39E
-
-  byte          free_3A0[4];               // 3A0
-
+  SysBitfield3  flag3;                     // 3A0
   uint8_t       switchmode[MAX_SWITCHES];  // 3A4  (6.0.0b - moved from 0x4CA)
   char          friendlyname[MAX_FRIENDLYNAMES][33]; // 3AC
   char          switch_topic[33];          // 430

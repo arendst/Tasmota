@@ -1,4 +1,7 @@
-/* 6.0.0b
+/* 6.0.0c
+ * Add support for bitflags SetOption50 .. SetOption81 (#3118)
+ *
+ * 6.0.0b
  * Add support for BlitzWolf BW-SHP2 (and Homecube, Gosund SP1) Energy Monitoring Smart Socket (#2223)
  * Add support for Sonoff iFan02 as module 44 introducing command FanSpeed 0..3 (#2839)
  * Add support for Sonoff S26 Smart Socket (#2808)
