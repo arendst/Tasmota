@@ -29,7 +29,7 @@ uint8_t Shutter_Open_Time = 0;               // duration to open the shutter
 uint8_t Shutter_Close_Time = 0;              // duratin to close the shutter
 uint8_t Shutter_Open_Velocity = 100;
 uint32_t Shutter_Open_Max = 0;               // max value on maximum open calculated
-uint16_t Shutter_Target_Position = 0;        // position to go to
+uint32_t Shutter_Target_Position = 0;        // position to go to
 uint16_t Shutter_Close_Velocity =0;          // in relation to open velocity. higher value = faster
 int8_t  Shutter_Direction = 0;               // 1 == UP , 0 == stop; -1 == down
 uint32_t Shutter_Real_Position = 0;          // value between 0 and Shutter_Open_Max
@@ -79,7 +79,7 @@ boolean ShutterCommand()
   boolean serviced = true;
   boolean valid_entry = false;
 
-  snprintf_P(log_data, sizeof(log_data), PSTR("Shutter: Command Code: '%s'"), XdrvMailbox.topic);
+  snprintf_P(log_data, sizeof(log_data), PSTR("Shutter: Command Code: '%s', Payload: %d"), XdrvMailbox.topic, XdrvMailbox.payload);
   AddLog(LOG_LEVEL_DEBUG);
   int command_code = GetCommandCode(command, sizeof(command), XdrvMailbox.topic, kShutterCommands);
   if (-1 == command_code) {
@@ -107,7 +107,7 @@ boolean ShutterCommand()
   }
   else if (CMND_POSITION == command_code) {
     if ( (XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 100)) {
-      Shutter_Target_Position = Shutter_Open_Max / 100 * XdrvMailbox.payload;
+      Shutter_Target_Position =  XdrvMailbox.payload * Shutter_Open_Max / 100;
       Settings.shutter_position = XdrvMailbox.payload;
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, XdrvMailbox.payload);
       Shutter_Direction =  (Shutter_Real_Position < Shutter_Target_Position ? 1 : -1);
