@@ -28,11 +28,11 @@ const char JSON_SHUTTER_POS[] PROGMEM = "%s,\"%s\":%d";                         
 uint8_t Shutter_Open_Time = 0;               // duration to open the shutter
 uint8_t Shutter_Close_Time = 0;              // duratin to close the shutter
 uint8_t Shutter_Open_Velocity = 100;
-uint32_t Shutter_Open_Max = 0;               // max value on maximum open calculated
-uint32_t Shutter_Target_Position = 0;        // position to go to
+int32_t Shutter_Open_Max = 0;               // max value on maximum open calculated
+int32_t Shutter_Target_Position = 0;        // position to go to
 uint16_t Shutter_Close_Velocity =0;          // in relation to open velocity. higher value = faster
 int8_t  Shutter_Direction = 0;               // 1 == UP , 0 == stop; -1 == down
-uint32_t Shutter_Real_Position = 0;          // value between 0 and Shutter_Open_Max
+int32_t Shutter_Real_Position = 0;          // value between 0 and Shutter_Open_Max
 
 
 void ShutterInit()
@@ -52,21 +52,14 @@ void ShutterInit()
 
 void Schutter_Update_Position()
 {
-  if (Shutter_Direction > 0) {
-    Shutter_Real_Position = Shutter_Real_Position + Shutter_Direction * Shutter_Open_Velocity;
-    if (Shutter_Real_Position > Shutter_Target_Position)  {
-      Shutter_Direction=0;
-      snprintf_P(log_data, sizeof(log_data), PSTR("Shutter: Opened Position %d"), Shutter_Real_Position);
+  if (Shutter_Direction != 0) {
+    Shutter_Real_Position = Shutter_Real_Position + (Shutter_Direction > 0 ? Shutter_Open_Velocity : -Shutter_Close_Velocity);
+    if (Shutter_Real_Position * Shutter_Direction > Shutter_Target_Position * Shutter_Direction || Shutter_Real_Position < Shutter_Close_Velocity) {
+      snprintf_P(log_data, sizeof(log_data), PSTR("NEW Shutter: Stopped Position %d"), Shutter_Real_Position);
       AddLog(LOG_LEVEL_DEBUG);
-      ExecuteCommandPower(Settings.shutter_startrelay, 0, SRC_SHUTTER);
-    }
-  } else if (Shutter_Direction < 0){
-    Shutter_Real_Position = Shutter_Real_Position + Shutter_Direction * Shutter_Close_Velocity;
-    if (Shutter_Real_Position < Shutter_Target_Position || Shutter_Real_Position < Shutter_Close_Velocity) {
+      ExecuteCommandPower(Settings.shutter_startrelay + (Shutter_Direction == 1 ? 0 : 1), 0, SRC_SHUTTER);
       Shutter_Direction=0;
-      snprintf_P(log_data, sizeof(log_data), PSTR("Shutter: Closed Position %d"), Shutter_Real_Position);
-      AddLog(LOG_LEVEL_DEBUG);
-      ExecuteCommandPower(Settings.shutter_startrelay+1, 0, SRC_SHUTTER);
+      Settings.shutter_position = Shutter_Real_Position  *100 / Shutter_Open_Max;
     }
   }
 }
@@ -88,34 +81,25 @@ boolean ShutterCommand()
   else if (CMND_OPEN == command_code) {
     Shutter_Direction = 1;
     Shutter_Target_Position = Shutter_Open_Max;
-    Settings.shutter_position = 100;
-    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, 1);
     ExecuteCommandPower(Settings.shutter_startrelay, 1, SRC_SHUTTER);
+    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, 1);
   }
   else if (CMND_CLOSE == command_code) {
     Shutter_Direction = -1;
     Shutter_Target_Position = 0;
-    Settings.shutter_position = 0;
-    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, 1);
     ExecuteCommandPower(Settings.shutter_startrelay+1, 1, SRC_SHUTTER);
+    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, 1);
   }
   else if (CMND_STOP == command_code) {
-    Shutter_Direction = 0;
-    Settings.shutter_position = Shutter_Real_Position  *100 / Shutter_Open_Max;
+    Shutter_Target_Position = Shutter_Real_Position;
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, 1);
-    ExecuteCommandPower(Settings.shutter_startrelay, 0, SRC_SHUTTER);
   }
   else if (CMND_POSITION == command_code) {
     if ( (XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 100)) {
       Shutter_Target_Position =  XdrvMailbox.payload * Shutter_Open_Max / 100;
-      Settings.shutter_position = XdrvMailbox.payload;
-      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, XdrvMailbox.payload);
       Shutter_Direction =  (Shutter_Real_Position < Shutter_Target_Position ? 1 : -1);
-      if (Shutter_Direction == 1) {
-        ExecuteCommandPower(Settings.shutter_startrelay, 1, SRC_SHUTTER);
-      } else {
-        ExecuteCommandPower(Settings.shutter_startrelay+1, 1, SRC_SHUTTER);
-      }
+      ExecuteCommandPower(Settings.shutter_startrelay + (Shutter_Direction == 1 ? 0 : 1), 1, SRC_SHUTTER);
+      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, XdrvMailbox.payload);
     } else {
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, Settings.shutter_position);
     }
