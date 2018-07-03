@@ -539,5 +539,8 @@
 #define D_OPEN "Open"
 #define D_CLOSE "Close"
 #define D_SHUTTER "SHUTTER"
+#define D_CMND_INTERLOCKMASK "INTERLOCKMASK"
+
+
 //end
 #endif  // _LANGUAGE_EN_GB_H_
