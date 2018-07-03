@@ -7,13 +7,15 @@ Alternative firmware for _ESP8266 based devices_ like [iTead](https://www.itead.
 [![License](https://img.shields.io/github/license/arendst/Sonoff-Tasmota.svg)](https://github.com/arendst/Sonoff-Tasmota/blob/development/LICENSE.txt)
 
 If you like **Sonoff-Tasmota**, give it a star, or fork it and contribute!
+
 [![GitHub stars](https://img.shields.io/github/stars/arendst/Sonoff-Tasmota.svg?style=social&label=Star)](https://github.com/arendst/Sonoff-Tasmota/stargazers)
 [![GitHub forks](https://img.shields.io/github/forks/arendst/Sonoff-Tasmota.svg?style=social&label=Fork)](https://github.com/arendst/Sonoff-Tasmota/network)
+[![donate](https://img.shields.io/badge/donate-PayPal-blue.svg)](https://paypal.me/tasmota)
 
 ### Development
 [![Build Status](https://img.shields.io/travis/arendst/Sonoff-Tasmota.svg)](https://travis-ci.org/arendst/Sonoff-Tasmota)
 
-Current version is **6.0.0b** - See [sonoff/_releasenotes.ino](https://github.com/arendst/Sonoff-Tasmota/blob/development/sonoff/_releasenotes.ino) for change information.
+Current version is **6.0.0c** - See [sonoff/_releasenotes.ino](https://github.com/arendst/Sonoff-Tasmota/blob/development/sonoff/_releasenotes.ino) for change information.
 
 ### Disclaimer
 :warning: **DANGER OF ELECTROCUTION** :warning:
@@ -37,6 +39,15 @@ If you want to compile Sonoff-Tasmota yourself keep in mind the following:
 - Once uploaded select module using the configuration webpage or the commands ```Modules``` and ```Module```.
 - After reboot select config menu again or use commands ```GPIOs``` and ```GPIO``` to change GPIO with desired sensor.
 
+### Migration Instructions
+See [wiki migration path](https://github.com/arendst/Sonoff-Tasmota/wiki/Upgrade#migration-path) for instructions how to migrate to a major version. Pay attention to the following version breaks due to dynamic settings updates:
+
+1. Migrate to **Sonoff-Tasmota 3.9.x**
+2. Migrate to **Sonoff-Tasmota 4.x**
+3. Migrate to **Sonoff-Tasmota 5.14**
+4. Migrate to **Sonoff-Tasmota 6.x**
+
+### Support Information
 <img src="https://github.com/arendst/arendst.github.io/blob/master/media/sonoffbasic.jpg" width="250" align="right" />
 
 See [Wiki](https://github.com/arendst/Sonoff-Tasmota/wiki) for more information.<br />
@@ -74,6 +85,7 @@ The following devices are supported:
 - [MagicHome PWM LED controller](https://github.com/arendst/Sonoff-Tasmota/wiki/MagicHome-LED-strip-controller)
 - AriLux AL-LC01, AL-LC06 and AL-LC11 PWM LED controller
 - [Supla device - Espablo-inCan mod. for electrical Installation box](https://forum.supla.org/viewtopic.php?f=33&t=2188)
+- [BlitzWolf BW-SHP2 Smart Socket with Energy Monitoring](https://www.banggood.com/BlitzWolf-BW-SHP2-Smart-WIFI-Socket-EU-Plug-220V-16A-Work-with-Amazon-Alexa-Google-Assistant-p-1292899.html)
 - [Luani HVIO board](https://luani.de/projekte/esp8266-hvio/)
 - Wemos D1 mini, NodeMcu and Ledunia
 
@@ -111,6 +123,7 @@ Different firmware images are released based on Features and Sensors selection g
 | USE_SHT                        | x | x | - | x | x |
 | USE_SHT3X                      | x | x | - | x | x |
 | USE_HTU                        | x | x | - | x | x |
+| USE_LM75AD                     | x | - | - | x | x |
 | USE_BMP                        | x | x | - | x | x |
 | USE_BME680                     | - | - | - | - | x |
 | USE_SGP30                      | x | - | - | x | x |
@@ -121,6 +134,7 @@ Different firmware images are released based on Features and Sensors selection g
 | USE_ADS1115                    | - | - | - | - | x |
 | USE_ADS1115_I2CDEV             | - | - | - | - | - |
 | USE_INA219                     | - | - | - | - | x |
+| USE_APDS9960                   | - | - | - | - | - |
 | USE_MGS                        | - | - | - | - | x |
 | USE_SPI                        | - | - | - | - | - |
 | USE_MHZ19                      | x | x | - | x | x |
@@ -129,7 +143,8 @@ Different firmware images are released based on Features and Sensors selection g
 | USE_NOVA_SDS                   | x | - | - | x | x |
 | USE_PZEM004T                   | x | x | - | x | x |
 | USE_SERIAL_BRIDGE              | x | - | - | x | x |
-| USE_SDM120                     | - | - | - | - | x |
+| USE_SDM120                     | x | - | - | - | x |
+| USE_SDM630                     | x | - | - | - | x |
 | USE_IR_REMOTE                  | x | x | - | x | x |
 | USE_IR_HVAC                    | - | - | - | - | x |
 | USE_IR_RECEIVE                 | x | - | - | x | x |
@@ -137,6 +152,8 @@ Different firmware images are released based on Features and Sensors selection g
 | USE_WS2812_DMA                 | - | - | - | - | - |
 | USE_ARILUX_RF                  | x | x | - | x | x |
 | USE_SR04                       | x | - | - | x | x |
+| USE_TM1638                     | - | - | - | - | - |
+| USE_RF_FLASH                   | x | - | - | x | x |
 
 #### Typical File Size
 
