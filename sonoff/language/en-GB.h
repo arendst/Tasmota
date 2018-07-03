@@ -538,5 +538,6 @@
 #define D_CMND_SHUTTERRELAY "shutterrelay"
 #define D_OPEN "Open"
 #define D_CLOSE "Close"
+#define D_SHUTTER "SHUTTER"
 //end
 #endif  // _LANGUAGE_EN_GB_H_

@@ -23,6 +23,8 @@ const char kShutterCommands[] PROGMEM =
   D_CMND_OPEN "|" D_CMND_CLOSE "|" D_CMND_STOP "|" D_CMND_POSITION  "|" D_CMND_OPENTIME "|" D_CMND_CLOSETIME "|" D_CMND_SHUTTERRELAY;
 
 
+const char JSON_SHUTTER_POS[] PROGMEM = "%s,\"%s\":%d";                                  // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
+
 uint8_t Shutter_Open_Time = 0;               // duration to open the shutter
 uint8_t Shutter_Close_Time = 0;              // duratin to close the shutter
 uint8_t Shutter_Open_Velocity = 100;
@@ -142,7 +144,6 @@ boolean ShutterCommand()
   return serviced;
 }
 
-
 void Schutter_Report_Position()
 {
   if (Shutter_Direction != 0) {
@@ -151,13 +152,14 @@ void Schutter_Report_Position()
     //Settings.shutter_position = Shutter_Open_Max *100 / Shutter_Real_Position;
   }
 }
+
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
 
-#define XDRV_19
+#define XDRV_97
 
-boolean Xdrv19(byte function)
+boolean Xdrv97(byte function)
 {
   boolean result = false;
 
@@ -169,11 +171,14 @@ boolean Xdrv19(byte function)
       case FUNC_EVERY_50_MSECOND:
         Schutter_Update_Position();
         break;
-        case FUNC_EVERY_SECOND:
-          Schutter_Report_Position();
-          break;
+      case FUNC_EVERY_SECOND:
+        Schutter_Report_Position();
+        break;
       case FUNC_COMMAND:
         result = ShutterCommand();
+        break;
+      case FUNC_JSON_APPEND:
+        snprintf_P(mqtt_data, sizeof(mqtt_data), JSON_SHUTTER_POS, mqtt_data, D_SHUTTER, Shutter_Real_Position * 100 / Shutter_Open_Max);
         break;
     }
   }
