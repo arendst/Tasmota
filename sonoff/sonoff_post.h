@@ -247,6 +247,9 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #ifdef DEBUG_THEO
 #undef DEBUG_THEO                             // Disable debug code
 #endif
+#ifdef USE_DEBUG_DRIVER
+#undef USE_DEBUG_DRIVER                       // Disable debug code
+#endif
 #endif  // BE_MINIMAL
 
 /*********************************************************************************************\

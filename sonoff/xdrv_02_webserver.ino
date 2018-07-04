@@ -331,6 +331,9 @@ const char HTTP_END[] PROGMEM =
   "</body>"
   "</html>";
 
+const char HTTP_DEVICE_CONTROL[] PROGMEM = "<td style='width:%d%%'><button onclick='la(\"?o=%d\");'>%s%s</button></td>";
+const char HTTP_DEVICE_STATE[] PROGMEM = "%s<td style='width:%d{c}%s;font-size:%dpx'>%s</div></td>";  // {c} = %'><div style='text-align:center;font-weight:
+
 const char HDR_CTYPE_PLAIN[] PROGMEM = "text/plain";
 const char HDR_CTYPE_HTML[] PROGMEM = "text/html";
 const char HDR_CTYPE_XML[] PROGMEM = "text/xml";
@@ -517,6 +520,9 @@ void ShowPage(String &page, bool auth)
   page += FPSTR(HTTP_END);
   page.replace(F("{mv"), my_version);
   SetHeader();
+
+  ShowFreeMem(PSTR("ShowPage"));
+
   WebServer->send(200, FPSTR(HDR_CTYPE_HTML), page);
 }
 
@@ -577,19 +583,29 @@ void HandleRoot()
         snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_MSG_SLIDER2, Settings.light_dimmer);
         page += mqtt_data;
       }
+      page += FPSTR(HTTP_TABLE100);
+      page += F("<tr>");
       // stb mod
-      if (Settings.flag.shutter_mode) {
+      if (Settings.flag3.shutter_mode) {
         snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_MSG_SLIDER3, Settings.shutter_position);
         page += mqtt_data;
       }
       //end
-      page += FPSTR(HTTP_TABLE100);
-      page += F("<tr>");
-      for (byte idx = 1; idx <= devices_present; idx++) {
-        snprintf_P(stemp, sizeof(stemp), PSTR(" %d"), idx);
-        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("<td style='width:%d%'><button onclick='la(\"?o=%d\");'>%s%s</button></td>"),
-          100 / devices_present, idx, (devices_present < 5) ? D_BUTTON_TOGGLE : "", (devices_present > 1) ? stemp : "");
+      if (SONOFF_IFAN02 == Settings.module) {
+        snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_DEVICE_CONTROL, 36, 1, D_BUTTON_TOGGLE, "");
         page += mqtt_data;
+        for (byte i = 0; i < 4; i++) {
+          snprintf_P(stemp, sizeof(stemp), PSTR("%d"), i);
+          snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_DEVICE_CONTROL, 16, i +2, stemp, "");
+          page += mqtt_data;
+        }
+      } else {
+        for (byte idx = 1; idx <= devices_present; idx++) {
+          snprintf_P(stemp, sizeof(stemp), PSTR(" %d"), idx);
+          snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_DEVICE_CONTROL,
+            100 / devices_present, idx, (devices_present < 5) ? D_BUTTON_TOGGLE : "", (devices_present > 1) ? stemp : "");
+          page += mqtt_data;
+        }
       }
       page += F("</tr></table>");
     }
@@ -624,7 +640,17 @@ void HandleAjaxStatusRefresh()
   WebGetArg("o", tmp, sizeof(tmp));
   if (strlen(tmp)) {
     ShowWebSource(SRC_WEBGUI);
-    ExecuteCommandPower(atoi(tmp), POWER_TOGGLE, SRC_IGNORE);
+    uint8_t device = atoi(tmp);
+    if (SONOFF_IFAN02 == Settings.module) {
+      if (device < 2) {
+        ExecuteCommandPower(1, POWER_TOGGLE, SRC_IGNORE);
+      } else {
+        snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_FANSPEED " %d"), device -2);
+        ExecuteCommand(svalue, SRC_WEBGUI);
+      }
+    } else {
+      ExecuteCommandPower(device, POWER_TOGGLE, SRC_IGNORE);
+    }
   }
   WebGetArg("d", tmp, sizeof(tmp));
   if (strlen(tmp)) {
@@ -662,10 +688,19 @@ void HandleAjaxStatusRefresh()
   if (devices_present) {
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s{t}<tr>"), mqtt_data);
     uint8_t fsize = (devices_present < 5) ? 70 - (devices_present * 8) : 32;
-    for (byte idx = 1; idx <= devices_present; idx++) {
-      snprintf_P(svalue, sizeof(svalue), PSTR("%d"), bitRead(power, idx -1));
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s<td style='width:%d{c}%s;font-size:%dpx'>%s</div></td>"),  // {c} = %'><div style='text-align:center;font-weight:
-        mqtt_data, 100 / devices_present, (bitRead(power, idx -1)) ? "bold" : "normal", fsize, (devices_present < 5) ? GetStateText(bitRead(power, idx -1)) : svalue);
+    if (SONOFF_IFAN02 == Settings.module) {
+      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_DEVICE_STATE,
+        mqtt_data, 36, (bitRead(power, 0)) ? "bold" : "normal", 54, GetStateText(bitRead(power, 0)));
+      uint8_t fanspeed = GetFanspeed();
+      snprintf_P(svalue, sizeof(svalue), PSTR("%d"), fanspeed);
+      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_DEVICE_STATE,
+        mqtt_data, 64, (fanspeed) ? "bold" : "normal", 54, (fanspeed) ? svalue : GetStateText(0));
+    } else {
+      for (byte idx = 1; idx <= devices_present; idx++) {
+        snprintf_P(svalue, sizeof(svalue), PSTR("%d"), bitRead(power, idx -1));
+        snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_DEVICE_STATE,
+          mqtt_data, 100 / devices_present, (bitRead(power, idx -1)) ? "bold" : "normal", fsize, (devices_present < 5) ? GetStateText(bitRead(power, idx -1)) : svalue);
+      }
     }
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s</tr></table>"), mqtt_data);
   }
@@ -960,6 +995,7 @@ void HandleOtherConfiguration()
   page += FPSTR(HTTP_FORM_OTHER);
   page.replace(F("{r1"), (Settings.flag.mqtt_enabled) ? F(" checked") : F(""));
   uint8_t maxfn = (devices_present > MAX_FRIENDLYNAMES) ? MAX_FRIENDLYNAMES : (!devices_present) ? 1 : devices_present;
+  if (SONOFF_IFAN02 == Settings.module) { maxfn = 1; }
   for (byte i = 0; i < maxfn; i++) {
     page += FPSTR(HTTP_FORM_OTHER2);
     page.replace(F("{1"), String(i +1));
@@ -1126,16 +1162,14 @@ void HandleSaveSettings()
     WebGetArg("b2", tmp, sizeof(tmp));
     Settings.flag2.emulation = (!strlen(tmp)) ? 0 : atoi(tmp);
 #endif  // USE_EMULATION
-    WebGetArg("a1", tmp, sizeof(tmp));
-    strlcpy(Settings.friendlyname[0], (!strlen(tmp)) ? FRIENDLY_NAME : tmp, sizeof(Settings.friendlyname[0]));
-    WebGetArg("a2", tmp, sizeof(tmp));
-    strlcpy(Settings.friendlyname[1], (!strlen(tmp)) ? FRIENDLY_NAME"2" : tmp, sizeof(Settings.friendlyname[1]));
-    WebGetArg("a3", tmp, sizeof(tmp));
-    strlcpy(Settings.friendlyname[2], (!strlen(tmp)) ? FRIENDLY_NAME"3" : tmp, sizeof(Settings.friendlyname[2]));
-    WebGetArg("a4", tmp, sizeof(tmp));
-    strlcpy(Settings.friendlyname[3], (!strlen(tmp)) ? FRIENDLY_NAME"4" : tmp, sizeof(Settings.friendlyname[3]));
-    snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_OTHER D_MQTT_ENABLE " %s, " D_CMND_EMULATION " %d, " D_CMND_FRIENDLYNAME " %s, %s, %s, %s"),
-      GetStateText(Settings.flag.mqtt_enabled), Settings.flag2.emulation, Settings.friendlyname[0], Settings.friendlyname[1], Settings.friendlyname[2], Settings.friendlyname[3]);
+    snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_OTHER D_MQTT_ENABLE " %s, " D_CMND_EMULATION " %d, " D_CMND_FRIENDLYNAME), GetStateText(Settings.flag.mqtt_enabled), Settings.flag2.emulation);
+    for (byte i = 0; i < MAX_FRIENDLYNAMES; i++) {
+      snprintf_P(stemp, sizeof(stemp), PSTR("a%d"), i +1);
+      WebGetArg(stemp, tmp, sizeof(tmp));
+      snprintf_P(stemp2, sizeof(stemp2), PSTR(FRIENDLY_NAME"%d"), i +1);
+      strlcpy(Settings.friendlyname[i], (!strlen(tmp)) ? (i) ? stemp2 : FRIENDLY_NAME : tmp, sizeof(Settings.friendlyname[i]));
+      snprintf_P(log_data, sizeof(log_data), PSTR("%s%s %s"), log_data, (i) ? "," : "", Settings.friendlyname[i]);
+    }
     AddLog(LOG_LEVEL_INFO);
     break;
 //STB mod
@@ -1688,6 +1722,7 @@ void HandleInformation()
   func += F("}1" D_BOOT_COUNT "}2"); func += String(Settings.bootcount);
   func += F("}1" D_RESTART_REASON "}2"); func += GetResetReason();
   uint8_t maxfn = (devices_present > MAX_FRIENDLYNAMES) ? MAX_FRIENDLYNAMES : devices_present;
+  if (SONOFF_IFAN02 == Settings.module) { maxfn = 1; }
   for (byte i = 0; i < maxfn; i++) {
     func += F("}1" D_FRIENDLY_NAME " "); func += i +1; func += F("}2"); func += Settings.friendlyname[i];
   }

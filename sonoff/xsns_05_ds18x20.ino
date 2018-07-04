@@ -340,7 +340,9 @@ boolean Ds18x20Read(uint8_t sensor, float &t)
         break;
       }
     }
+    //stb mod avoid wrong 85C redaings
     if (!isnan(t) && t < 84) {
+    //end
       return true;
     }
   }

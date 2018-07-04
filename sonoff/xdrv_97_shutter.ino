@@ -147,7 +147,7 @@ boolean Xdrv97(byte function)
 {
   boolean result = false;
 
-  if (Settings.flag.shutter_mode) {
+  if (Settings.flag3.shutter_mode) {
     switch (function) {
       case FUNC_PRE_INIT:
         ShutterInit();

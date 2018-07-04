@@ -280,6 +280,7 @@
 //  #define USE_INA219                             // Add I2C code for INA219 Low voltage and current sensor (+1k code)
 //  #define USE_MGS                                // Add I2C code for Xadow and Grove Mutichannel Gas sensor using library Multichannel_Gas_Sensor (+10k code)
     #define MGS_SENSOR_ADDR    0x04              // Default Mutichannel Gas sensor i2c address
+//  #define USE_APDS9960                           // Add I2C code for APDS9960 Proximity Sensor. Disables SHT and VEML6070 (+4k7 code)
 #endif  // USE_I2C
 
 // -- SPI sensors ---------------------------------
@@ -315,13 +316,21 @@
 
 #define USE_SR04                                 // Add support for HC-SR04 ultrasonic devices (+1k code)
 
+//#define USE_TM1638                               // Add support for TM1638 switches copying Switch1 .. Switch8 (+1k code)
+
 #define USE_RF_FLASH                             // Add support for flashing the EFM8BB1 chip on the Sonoff RF Bridge. C2CK must be connected to GPIO4, C2D to GPIO5 on the PCB
+
+/*********************************************************************************************\
+ * Debug features are only supported in development branch
+\*********************************************************************************************/
+
+//#define USE_DEBUG_DRIVER                         // Use xdrv_99_debug.ino providing commands CpuChk, CfgXor, CfgDump, CfgPeek and CfgPoke
 
 /*********************************************************************************************\
  * Select features and sensors enabled in previous version saving space
 \*********************************************************************************************/
 
-//#define USE_CLASSIC                             // Create sonoff-classic (See sonoff_post.h for selected features)
+//#define USE_CLASSIC                              // Create sonoff-classic (See sonoff_post.h for selected features)
 
 /*********************************************************************************************\
  * Select all sensors - overrides above undefines!!

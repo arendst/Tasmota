@@ -471,6 +471,9 @@
 #define D_SENSOR_SDM120_RX "SDM120 Rx"
 #define D_SENSOR_SDM630_TX "SDM630 Tx"
 #define D_SENSOR_SDM630_RX "SDM630 Rx"
+#define D_SENSOR_TM1638_CLK "TM16 CLK"
+#define D_SENSOR_TM1638_DIO "TM16 DIO"
+#define D_SENSOR_TM1638_STB "TM16 STB"
 
 // Units
 #define D_UNIT_AMPERE "А"
@@ -529,5 +532,18 @@
 #define D_CMND_COUNTERDEVIDER "CounterDevider"
 #define D_CMND_MQTTENABLE "MqttEnable"
 #define D_SENSOR_DEEPSLEEP "DeepSleep Switch"
+#define D_CMND_OPEN "shutteropen"
+#define D_CMND_CLOSE "shutterclose"
+#define D_CMND_STOP "shutterstop"
+#define D_CMND_POSITION "shutterposition"
+#define D_CMND_OPENTIME "shutteropenduration"
+#define D_CMND_CLOSETIME "shuttercloseduration"
+#define D_CMND_SHUTTERRELAY "shutterrelay"
+#define D_OPEN "Open"
+#define D_CLOSE "Close"
+#define D_SHUTTER "SHUTTER"
+#define D_CMND_INTERLOCKMASK "INTERLOCKMASK"
+
+
 //end
 #endif // _LANGUAGE_UK_UK_H_
