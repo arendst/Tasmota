@@ -625,6 +625,8 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
               case 7:            // mqtt_switch_retain (CMND_SWITCHRETAIN)
               case 9:            // mqtt_sensor_retain (CMND_SENSORRETAIN)
               case 22:           // mqtt_serial (SerialSend and SerialLog)
+              case 25:           // knx_enabled (Web config)
+              case 27:           // knx_enable_enhancement (Web config)
                 ptype = 99;      // Command Error
                 break;           // Ignore command SetOption
               case 3:            // mqtt
