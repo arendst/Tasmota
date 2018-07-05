@@ -344,12 +344,14 @@ void SetDevicePower(power_t rpower, int source)
       power_t mask = 1;
       uint8_t count = 0;
       for (byte i = 0; i < devices_present; i++) {
-        if (rpower & mask) count++;
+        //StB mod
+        // only count ON relays that fit to the MASK
+        if ((rpower & mask) && (mask & Settings.interlock_mask)) count++;
         mask <<= 1;
       }
       if (count > 1) {
-        power = 0;
-        rpower = 0;
+        power &= !Settings.interlock_mask;
+        rpower = power;
       }
   }
 
@@ -1321,7 +1323,9 @@ void ExecuteCommandPower(byte device, byte state, int source)
       } else {
         for (byte i = 0; i < devices_present; i++) {
           power_t imask = 1 << i;
-          if ((power & imask) && (mask != imask)) ExecuteCommandPower(i +1, POWER_OFF, SRC_IGNORE);
+          //stb mod
+          if ((power & imask) && (mask != imask) && (imask & Settings.interlock_mask)) ExecuteCommandPower(i +1, POWER_OFF, SRC_IGNORE);
+          //end
         }
       }
       //end
