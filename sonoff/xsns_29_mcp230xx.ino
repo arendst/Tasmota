@@ -195,14 +195,6 @@ uint8_t MCP230xx_readGPIO(uint8_t port) {
   return I2cRead8(mcp230xx_address, MCP230xx_GPIO + port);
 }
 
-uint8_t MCP230xx_digitalRead(uint8_t pin) {
-  if (pin < 8) {
-    return (MCP230xx_readGPIO(0) >> pin) & 0x01;
-  } else {
-    return (MCP230xx_readGPIO(1) >> pin - 8) & 0x01;
-  }
-}
-
 void MCP230xx_ApplySettings(void) {
   uint8_t reg_gppu = 0;
   uint8_t reg_gpinten = 0;
