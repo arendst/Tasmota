@@ -1,4 +1,5 @@
 /* 6.0.0c
+ * Rewrite BME680 driver now using latest Bosch BME680 library (#2969)
  * Add support for bitflags SetOption50 .. SetOption81 (#3118)
  *
  * 6.0.0b

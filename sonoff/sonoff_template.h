@@ -852,20 +852,20 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      0, 0, 0, 0
   },
   { "Sonoff iFan02",   // Sonoff iFan02 (ESP8285)
-     GPIO_KEY1,        // GPIO00 Virtual button 1 as feedback from RC
-     GPIO_USER,        // GPIO01 Serial RXD and Optional sensor
-     0,                // GPIO02 Optional sensor
-     GPIO_USER,        // GPIO03 Serial TXD and Optional sensor
-     GPIO_REL3,        // GPIO04 Relay 3 (0 = Off, 1 = On) controlling the fan
-     GPIO_REL2,        // GPIO05 Relay 2 (0 = Off, 1 = On) controlling the fan
+     GPIO_KEY1,        // GPIO00 WIFI_KEY0 Virtual button 1 as feedback from RC
+     GPIO_USER,        // GPIO01 ESP_TXD Serial RXD and Optional sensor
+     0,                // GPIO02 ESP_LOG
+     GPIO_USER,        // GPIO03 ESP_RXD Serial TXD and Optional sensor
+     GPIO_REL3,        // GPIO04 WIFI_O2 Relay 3 (0 = Off, 1 = On) controlling the fan
+     GPIO_REL2,        // GPIO05 WIFI_O1 Relay 2 (0 = Off, 1 = On) controlling the fan
      0, 0, 0,          // Flash connection
-     GPIO_KEY2,        // GPIO09 Virtual button 2 as feedback from RC
-     GPIO_KEY3,        // GPIO10 Virtual button 3 as feedback from RC
+     GPIO_KEY2,        // GPIO09 WIFI_KEY1 Virtual button 2 as feedback from RC
+     GPIO_KEY3,        // GPIO10 WIFI_KEY2 Virtual button 3 as feedback from RC
      0,                // Flash connection
-     GPIO_REL1,        // GPIO12 Relay 1 (0 = Off, 1 = On) controlling the light
-     GPIO_LED1_INV,    // GPIO13 Blue Led on PCA (0 = On, 1 = Off)
-     GPIO_KEY4,        // GPIO14 Virtual button 4 as feedback from RC
-     GPIO_REL4,        // GPIO15 Relay 4 (0 = Off, 1 = On) controlling the fan
+     GPIO_REL1,        // GPIO12 WIFI_O0 Relay 1 (0 = Off, 1 = On) controlling the light
+     GPIO_LED1_INV,    // GPIO13 WIFI_CHK Blue Led on PCA (0 = On, 1 = Off)
+     GPIO_KEY4,        // GPIO14 WIFI_KEY3 Virtual button 4 as feedback from RC
+     GPIO_REL4,        // GPIO15 WIFI_O3 Relay 4 (0 = Off, 1 = On) controlling the fan
      0, 0
   },
   { "BlitzWolf SHP2",  // BlitzWolf BW-SHP2 (ESP8285 - BL0937 or HJL-01 Energy Monitoring)
