@@ -52,6 +52,7 @@ uint8_t MCP230xx_GPIO           = 0x09;
 uint8_t mcp230xx_type = 0;
 uint8_t mcp230xx_address;
 uint8_t mcp230xx_addresses[] = { MCP230xx_ADDRESS1, MCP230xx_ADDRESS2, MCP230xx_ADDRESS3, MCP230xx_ADDRESS4, MCP230xx_ADDRESS5, MCP230xx_ADDRESS6, MCP230xx_ADDRESS7, MCP230xx_ADDRESS8 };
+uint8_t mcp280xx_pincount = 0;
 
 #ifdef USE_WEBSERVER
 const char HTTP_SNS_MCP230xx_GPIO[] PROGMEM = "%s{s}%s MCP230XX D%d{m}%d{e}";                               // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
@@ -73,8 +74,6 @@ const char HTTP_FORM_I2C_MCP230XX[] PROGMEM =
   "<td nowrap>Enable Pullup</td>"
   "<td nowrap><input type=checkbox name=epu{b1 value=1{b2></input></td>"
   "</tr>";
-
-uint8_t mcp280xx_pincount = 0;
 
 void handleMCP230xx()
 {
