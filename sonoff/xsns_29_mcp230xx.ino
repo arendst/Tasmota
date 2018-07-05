@@ -1,5 +1,5 @@
 /*
-  xsns_29_mcp23008.ino - Support for I2C GPIO Expander (INPUT ONLY!)
+  xsns_29_mcp230xx.ino - Support for I2C MCP23008/MCP23017 GPIO Expander (INPUT ONLY!)
 
   Copyright (C) 2018  Andre Thomas and Theo Arends
 
