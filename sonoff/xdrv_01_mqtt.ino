@@ -283,15 +283,24 @@ void MqttPublishPowerState(byte device)
   char scommand[33];
 
   if ((device < 1) || (device > devices_present)) { device = 1; }
-  GetPowerDevice(scommand, device, sizeof(scommand), Settings.flag.device_index_enable);
 
-  GetTopic_P(stopic, STAT, mqtt_topic, (Settings.flag.mqtt_response) ? scommand : S_RSLT_RESULT);
-  snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, scommand, GetStateText(bitRead(power, device -1)));
-  MqttPublish(stopic);
+  if ((SONOFF_IFAN02 == Settings.module) && (device > 1)) {
+    if (GetFanspeed() < 4) {  // 4 occurs when fanspeed is 3 and RC button 2 is pressed
+      snprintf_P(scommand, sizeof(scommand), PSTR(D_CMND_FANSPEED));
+      GetTopic_P(stopic, STAT, mqtt_topic, (Settings.flag.mqtt_response) ? scommand : S_RSLT_RESULT);
+      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, scommand, GetFanspeed());
+      MqttPublish(stopic);
+    }
+  } else {
+    GetPowerDevice(scommand, device, sizeof(scommand), Settings.flag.device_index_enable);
+    GetTopic_P(stopic, STAT, mqtt_topic, (Settings.flag.mqtt_response) ? scommand : S_RSLT_RESULT);
+    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, scommand, GetStateText(bitRead(power, device -1)));
+    MqttPublish(stopic);
 
-  GetTopic_P(stopic, STAT, mqtt_topic, scommand);
-  snprintf_P(mqtt_data, sizeof(mqtt_data), GetStateText(bitRead(power, device -1)));
-  MqttPublish(stopic, Settings.flag.mqtt_power_retain);
+    GetTopic_P(stopic, STAT, mqtt_topic, scommand);
+    snprintf_P(mqtt_data, sizeof(mqtt_data), GetStateText(bitRead(power, device -1)));
+    MqttPublish(stopic, Settings.flag.mqtt_power_retain);
+  }
 }
 
 void MqttPublishPowerBlinkState(byte device)

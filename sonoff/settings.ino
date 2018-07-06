@@ -777,6 +777,11 @@ void SettingsDelta()
         }
       }
     }
+    if (Settings.version < 0x06000003) {
+      Settings.flag.rules_enabled = 0;
+      Settings.flag.rules_once = 0;
+      Settings.flag3.data = 0;
+    }
 
     Settings.version = VERSION;
     SettingsSave(1);

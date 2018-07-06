@@ -44,7 +44,7 @@
 \*********************************************************************************************/
 
 // -- Master parameter control --------------------
-#define CFG_HOLDER             4617              // [Reset 1] Change this value to load SECTION1 configuration parameters to flash
+#define CFG_HOLDER             4617              // [Reset 1] Change this value (max 32000) to load SECTION1 configuration parameters to flash
 
 // -- Project -------------------------------------
 #define PROJECT                "sonoff"          // PROJECT is used as the default topic delimiter
@@ -260,14 +260,14 @@
 // -- I2C sensors ---------------------------------
 // #define USE_I2C                                  // I2C using library wire (+10k code, 0k2 mem, 124 iram)
 #ifdef USE_I2C
-// #define USE_SHT                                // Add I2C emulating code for SHT1X sensor (+1k4 code)
-// #define USE_SHT3X                              // Add I2C code for SHT3x or SHTC3 sensor (+0k7 code)
-// #define USE_HTU                                // Add I2C code for HTU21/SI7013/SI7020/SI7021 sensor (+1k5 code)
-// #define USE_LM75AD                             // Add I2C code for LM75AD sensor (+0k5 code)
-// #define USE_BMP                                // Add I2C code for BMP085/BMP180/BMP280/BME280 sensor (+4k code)
-//    #define USE_BME680                           // Add additional support for BME680 sensor using Adafruit Sensor and BME680 libraries (+6k code)
-// #define USE_SGP30                              // Add I2C code for SGP30 sensor (+1k1 code)
-// #define USE_BH1750                             // Add I2C code for BH1750 sensor (+0k5 code)
+//  #define USE_SHT                                // Add I2C emulating code for SHT1X sensor (+1k4 code)
+//  #define USE_SHT3X                              // Add I2C code for SHT3x or SHTC3 sensor (+0k7 code)
+//  #define USE_HTU                                // Add I2C code for HTU21/SI7013/SI7020/SI7021 sensor (+1k5 code)
+//  #define USE_LM75AD                             // Add I2C code for LM75AD sensor (+0k5 code)
+//  #define USE_BMP                                // Add I2C code for BMP085/BMP180/BMP280/BME280 sensor (+4k code)
+//    #define USE_BME680                           // Add additional support for BME680 sensor using Bosch BME680 library (+4k code)
+//  #define USE_SGP30                              // Add I2C code for SGP30 sensor (+1k1 code)
+//  #define USE_BH1750                             // Add I2C code for BH1750 sensor (+0k5 code)
 //  #define USE_VEML6070                           // Add I2C code for VEML6070 sensor (+0k5 code)
 //  #define USE_TSL2561                            // Add I2C code for TSL2561 sensor using library Joba_Tsl2561 (+2k3 code)
   // #define USE_SI1145                             // Add I2C code for SI1145/46/47 sensor (+1k code)
