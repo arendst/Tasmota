@@ -462,6 +462,28 @@
 #define D_HX_CAL_DONE "Calibrated"
 #define D_HX_CAL_FAIL "Calibration failed"
 
+//xsns_91_tx20
+#define D_TX20_NORTH "N"
+#define D_TX20_NORTH_NORTH_EAST "NNE"
+#define D_TX20_NORTH_EAST "NE"
+#define D_TX20_EAST_NORTH_EAST "ENE"
+#define D_TX20_EAST "E"
+#define D_TX20_EAST_SOUTH_EAST "ESE"
+#define D_TX20_SOUTH_EAST "SE"
+#define D_TX20_SOUTH_SOUTH_EAST "SSE"
+#define D_TX20_SOUTH "S"
+#define D_TX20_SOUTH_SOUTH_WEST "SSW"
+#define D_TX20_SOUTH_WEST "SW"
+#define D_TX20_WEST_SOUTH_WEST "WSW"
+#define D_TX20_WEST "W"
+#define D_TX20_WEST_NORTH_WEST "WNW"
+
+#define D_TX20_NORTH_WEST "NW"
+#define D_TX20_NORTH_NORTH_WEST "NNW"
+#define D_TX20_WIND_DIRECTION "Wind Direction"
+#define D_TX20_WIND_SPEED_AVG "Wind Speed Avg"
+#define D_TX20_WIND_SPEED_MAX "Wind Speed Max"
+
 // sonoff_template.h
 #define D_SENSOR_NONE     "Nessuno"
 #define D_SENSOR_DHT11    "DHT11"
@@ -502,6 +524,7 @@
 #define D_SENSOR_SDM120_RX "SDM120 Rx"
 #define D_SENSOR_SDM630_TX "SDM630 Tx"
 #define D_SENSOR_SDM630_RX "SDM630 Rx"
+#define D_SENSOR_TX20_TX "TX20 TxD (Black)"
 #define D_SENSOR_TM1638_CLK "TM16 CLK"
 #define D_SENSOR_TM1638_DIO "TM16 DIO"
 #define D_SENSOR_TM1638_STB "TM16 STB"
@@ -536,6 +559,7 @@
 #define D_UNIT_WATT "W"
 #define D_UNIT_WATTHOUR "Wh"
 #define D_UNIT_WATT_METER_QUADRAT "W/m²"
+#define D_UNIT_KMH "kpH"
 
 // Log message prefix
 #define D_LOG_APPLICATION "APP: "  // Application
