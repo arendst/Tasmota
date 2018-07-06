@@ -43,6 +43,10 @@ uint8_t ds18x20_index[DS18X20_MAX_SENSORS] = { 0 };
 uint8_t ds18x20_sensors = 0;
 uint8_t ds18x20_pin = 0;
 char ds18x20_types[9];
+#ifdef W1_PARASITE_POWER
+uint8_t ds18x20_sensors_curr = 0;
+unsigned long w1_power_until = 0;
+#endif
 
 /*********************************************************************************************\
  * Embedded tuned OneWire library
@@ -278,9 +282,17 @@ void Ds18x20Init()
 void Ds18x20Convert()
 {
   OneWireReset();
+#ifdef W1_PARASITE_POWER
+  OneWireSelect(ds18x20_address[ds18x20_index[ds18x20_sensors_curr]]);
+  if (++ds18x20_sensors_curr >= ds18x20_sensors)
+    ds18x20_sensors_curr = 0;
+#else
   OneWireWrite(W1_SKIP_ROM);           // Address all Sensors on Bus
+#endif
   OneWireWrite(W1_CONVERT_TEMP);       // start conversion, no parasite power on at the end
-//  delay(750);                          // 750ms should be enough for 12bit conv
+#ifdef W1_PARASITE_POWER
+  w1_power_until = millis() + 750;     // 750ms should be enough for 12bit conv
+#endif
 }
 
 boolean Ds18x20Read(uint8_t sensor, float &t)
@@ -290,6 +302,12 @@ boolean Ds18x20Read(uint8_t sensor, float &t)
   uint16_t temp12 = 0;
   int16_t temp14 = 0;
   float temp9 = 0.0;
+
+#ifdef W1_PARASITE_POWER
+  unsigned long now = millis();
+  if (now < w1_power_until)
+    delay(w1_power_until - now);
+#endif
 
   t = NAN;
 
@@ -326,6 +344,9 @@ boolean Ds18x20Read(uint8_t sensor, float &t)
           OneWireWrite(data[4]);          // Configuration Register
           OneWireSelect(ds18x20_address[ds18x20_index[sensor]]);
           OneWireWrite(W1_WRITE_EEPROM);  // Save scratchpad to EEPROM
+#ifdef W1_PARASITE_POWER
+          delay(10);                      // 10ms specified duration for EEPROM write
+#endif
         }
         temp12 = (data[1] << 8) + data[0];
         if (temp12 > 2047) {
@@ -397,7 +418,9 @@ void Ds18x20Show(boolean json)
       }
     }
   }
+#ifndef W1_PARASITE_POWER
   Ds18x20Convert();    // Start conversion, takes up to one second
+#endif
 }
 
 /*********************************************************************************************\
@@ -415,7 +438,11 @@ boolean Xsns05(byte function)
       case FUNC_INIT:
         Ds18x20Init();
         break;
+#ifdef W1_PARASITE_POWER
+      case FUNC_EVERY_SECOND:
+#else
       case FUNC_PREP_BEFORE_TELEPERIOD:
+#endif
         Ds18x20Convert();    // Start conversion, takes up to one second
         break;
       case FUNC_JSON_APPEND:
