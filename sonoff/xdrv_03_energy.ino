@@ -17,8 +17,6 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#define USE_ENERGY_SENSOR
-
 #ifdef USE_ENERGY_SENSOR
 /*********************************************************************************************\
  * HLW8012 and PZEM004T - Energy
@@ -93,18 +91,18 @@ void EnergyUpdateToday()
 }
 
 /*********************************************************************************************\
- * HLW8012, BL0937 or HJL-01 - Energy (Sonoff Pow)
+ * HLW8012, BL0937 or HJL-01 - Energy (Sonoff Pow, HuaFan, KMC70011, BlitzWolf)
  *
  * Based on Source: Shenzhen Heli Technology Co., Ltd
 \*********************************************************************************************/
 
-// HLW8012 based (Sonoff Pow, KMC70011)
+// HLW8012 based (Sonoff Pow, KMC70011, HuaFan)
 #define HLW_PREF            10000    // 1000.0W
 #define HLW_UREF             2200    // 220.0V
 #define HLW_IREF             4545    // 4.545A
 #define HLW_SEL_VOLTAGE         1
 
-// HJL-01 based (Homecube, BlitzWolf)
+// HJL-01 based (BlitzWolf, Homecube, Gosund)
 #define HJL_PREF             1362
 #define HJL_UREF              822
 #define HJL_IREF             3300
