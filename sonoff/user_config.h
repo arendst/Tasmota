@@ -44,7 +44,7 @@
 \*********************************************************************************************/
 
 // -- Master parameter control --------------------
-#define CFG_HOLDER             4617              // [Reset 1] Change this value to load SECTION1 configuration parameters to flash
+#define CFG_HOLDER             4617              // [Reset 1] Change this value (max 32000) to load SECTION1 configuration parameters to flash
 
 // -- Project -------------------------------------
 #define PROJECT                "sonoff"          // PROJECT is used as the default topic delimiter
@@ -265,7 +265,7 @@
   #define USE_HTU                                // Add I2C code for HTU21/SI7013/SI7020/SI7021 sensor (+1k5 code)
   #define USE_LM75AD                             // Add I2C code for LM75AD sensor (+0k5 code)
   #define USE_BMP                                // Add I2C code for BMP085/BMP180/BMP280/BME280 sensor (+4k code)
-//    #define USE_BME680                           // Add additional support for BME680 sensor using Adafruit Sensor and BME680 libraries (+6k code)
+//    #define USE_BME680                           // Add additional support for BME680 sensor using Bosch BME680 library (+4k code)
   #define USE_SGP30                              // Add I2C code for SGP30 sensor (+1k1 code)
   #define USE_BH1750                             // Add I2C code for BH1750 sensor (+0k5 code)
 //  #define USE_VEML6070                           // Add I2C code for VEML6070 sensor (+0k5 code)

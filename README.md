@@ -15,7 +15,7 @@ If you like **Sonoff-Tasmota**, give it a star, or fork it and contribute!
 ### Development
 [![Build Status](https://img.shields.io/travis/arendst/Sonoff-Tasmota.svg)](https://travis-ci.org/arendst/Sonoff-Tasmota)
 
-Current version is **6.0.0c** - See [sonoff/_releasenotes.ino](https://github.com/arendst/Sonoff-Tasmota/blob/development/sonoff/_releasenotes.ino) for change information.
+Current version is **6.1.0a** - See [sonoff/_releasenotes.ino](https://github.com/arendst/Sonoff-Tasmota/blob/development/sonoff/_releasenotes.ino) for change information.
 
 ### Disclaimer
 :warning: **DANGER OF ELECTROCUTION** :warning:
@@ -39,7 +39,7 @@ If you want to compile Sonoff-Tasmota yourself keep in mind the following:
 - Once uploaded select module using the configuration webpage or the commands ```Modules``` and ```Module```.
 - After reboot select config menu again or use commands ```GPIOs``` and ```GPIO``` to change GPIO with desired sensor.
 
-### Migration Instructions
+### Migration Information
 See [wiki migration path](https://github.com/arendst/Sonoff-Tasmota/wiki/Upgrade#migration-path) for instructions how to migrate to a major version. Pay attention to the following version breaks due to dynamic settings updates:
 
 1. Migrate to **Sonoff-Tasmota 3.9.x**
@@ -134,34 +134,34 @@ Different firmware images are released based on Features and Sensors selection g
 | USE_ADS1115                    | - | - | - | - | x |
 | USE_ADS1115_I2CDEV             | - | - | - | - | - |
 | USE_INA219                     | - | - | - | - | x |
-| USE_APDS9960                   | - | - | - | - | - |
 | USE_MGS                        | - | - | - | - | x |
 | USE_SPI                        | - | - | - | - | - |
 | USE_MHZ19                      | x | x | - | x | x |
-| USE_SENSEAIR                   | x | x | - | x | x |
-| USE_PMS5003                    | x | x | - | x | x |
+| USE_SENSEAIR                   | x | - | - | x | x |
+| USE_PMS5003                    | x | - | - | x | x |
 | USE_NOVA_SDS                   | x | - | - | x | x |
-| USE_PZEM004T                   | x | x | - | x | x |
+| USE_PZEM004T                   | x | - | - | x | x |
 | USE_SERIAL_BRIDGE              | x | - | - | x | x |
-| USE_SDM120                     | x | - | - | - | x |
-| USE_SDM630                     | x | - | - | - | x |
+| USE_SDM120                     | - | - | - | - | x |
+| USE_SDM630                     | - | - | - | - | x |
 | USE_IR_REMOTE                  | x | x | - | x | x |
 | USE_IR_HVAC                    | - | - | - | - | x |
 | USE_IR_RECEIVE                 | x | - | - | x | x |
 | USE_WS2812                     | x | x | - | x | x |
 | USE_WS2812_DMA                 | - | - | - | - | - |
-| USE_ARILUX_RF                  | x | x | - | x | x |
+| USE_ARILUX_RF                  | x | - | - | x | x |
 | USE_SR04                       | x | - | - | x | x |
-| USE_TM1638                     | - | - | - | - | - |
 | USE_RF_FLASH                   | x | - | - | x | x |
 
-#### Typical File Size
+#### Typical file size
 
 | ESP/Arduino library version | sonoff | classic | minimal | knx  | allsensors |
 |-----------------------------|--------|---------|---------|------|------------|
-| ESP/Arduino lib v2.3.0      | 529k   | 490k    | 429k    | 538k | 554k       |
-| ESP/Arduino lib v2.4.0      | 534k   | 498k    | 436k    | 542k | 558k       |
-| ESP/Arduino lib v2.4.1      | 536k   | 501k    | 439k    | 545k | 560k       |
+| ESP/Arduino lib v2.3.0      | 538k   | 490k    | 399k    | 548k | 562k       |
+| ESP/Arduino lib v2.4.0      | 543k   | 498k    | 406k    | 553k | 565k       |
+| ESP/Arduino lib v2.4.1      | 544k   | 500k    | 408k    | 555k | 567k       |
+
+See [Tasmota ESP/Arduino library version related issues](https://github.com/arendst/Sonoff-Tasmota/wiki/Theo's-Tasmota-Tips#20180523---relation-tasmota-and-esp8266arduino-core-version) for more information.
 
 ### Contribute
 You can contribute to Sonoff-Tasmota by
@@ -176,13 +176,14 @@ You can contribute to Sonoff-Tasmota by
 #### Libraries Used
 Libraries used with Sonoff-Tasmota are:
 - [ESP8266 core for Arduino](https://github.com/esp8266/Arduino)
-- [Adafruit BME680](https://github.com/adafruit/Adafruit_BME680)
-- [Adafruit Sensor](https://github.com/adafruit/Adafruit_Sensor)
 - [Adafruit SGP30](https://github.com/adafruit/Adafruit_SGP30)
 - [ArduinoJson](https://arduinojson.org/)
+- [Bosch BME680](https://github.com/BoschSensortec/BME680_driver)
+- [C2 Programmer](http://app.cear.ufpb.br/~lucas.hartmann/tag/efm8bb1/)
 - [Esp8266MqttClient](https://github.com/tuanpmt/ESP8266MQTTClient)
 - [esp-knx-ip](https://github.com/envy/esp-knx-ip)
 - [esp-mqtt-arduino](https://github.com/i-n-g-o/esp-mqtt-arduino)
+- [ESPAsyncUDP](https://github.com/me-no-dev/ESPAsyncUDP)
 - [I2Cdevlib](https://github.com/jrowberg/i2cdevlib)
 - [IRremoteEsp8266](https://github.com/markszabo/IRremoteESP8266)
 - [JobaTsl2561](https://github.com/joba-1/Joba_Tsl2561)
