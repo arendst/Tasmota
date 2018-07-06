@@ -28,11 +28,12 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v5.14.0
+ * Updated until v6.0.0a
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
 
+#define LANGUAGE_LCID 1040
 // HTML (ISO 639-1) Language Code
 #define D_HTML_LANGUAGE "it"
 
@@ -75,7 +76,7 @@
 #define D_DARKLIGHT "Scuro"
 #define D_DEBUG "Debug"
 #define D_DISABLED "Disabilitato"
-#define D_DISTANCE "Distance"
+#define D_DISTANCE "Distanza"
 #define D_DNS_SERVER "DNS Server"
 #define D_DONE "Fatto"
 #define D_DST_TIME "DST"
@@ -145,14 +146,14 @@
 #define D_SUBNET_MASK "Maschera sottorete"
 #define D_SUBSCRIBE_TO "Sottoscrivi a"
 #define D_SUCCESSFUL "Riuscito"
-#define D_SUNRISE "Sunrise"
-#define D_SUNSET "Sunset"
+#define D_SUNRISE "Alba"
+#define D_SUNSET "Tramonto"
 #define D_TEMPERATURE "Temperatura"
 #define D_TO "a"
 #define D_TOGGLE "Toggle"
 #define D_TOPIC "Topic"
 #define D_TRANSMIT "Trasmesso"
-#define D_TRUE "True"
+#define D_TRUE "Vero"
 #define D_TVOC "TVOC"
 #define D_UPGRADE "aggiornamento"
 #define D_UPLOAD "Invio"
@@ -204,7 +205,7 @@
 #define D_USE_DEFAULTS "Utilizzo valori default"
 #define D_ERASED_SECTOR "Settore cancellato"
 
-// webserver.ino
+// xdrv_02_webserver.ino
 #define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "MINIMAL firmware - effettuare aggiornamento"
 #define D_WEBSERVER_ACTIVE_ON "Web server attivo su"
 #define D_WITH_IP_ADDRESS "con indirizzo IP"
@@ -320,13 +321,17 @@
 #define D_UPLOAD_ERR_7 "Invio annullato"
 #define D_UPLOAD_ERR_8 "File non valido"
 #define D_UPLOAD_ERR_9 "File troppo grande"
+#define D_UPLOAD_ERR_10 "Inizializzazione fallita del chip RF"
+#define D_UPLOAD_ERR_11 "Cancellazione fallita del chip RF"
+#define D_UPLOAD_ERR_12 "Scrittura fallita del chip RF"
+#define D_UPLOAD_ERR_13 "Decodifica fallita del firmware RF"
 #define D_UPLOAD_ERROR_CODE "Codice errore invio"
 
 #define D_ENTER_COMMAND "Inserire comando"
 #define D_ENABLE_WEBLOG_FOR_RESPONSE "Abilitare weblog 2 se è attesa una risposta"
 #define D_NEED_USER_AND_PASSWORD "Richiesto user=<username>&password=<password>"
 
-// xdrv_00_mqtt.ino
+// xdrv_01_mqtt.ino
 #define D_FINGERPRINT "Verifica TLS fingerprint..."
 #define D_TLS_CONNECT_FAILED_TO "Connessione TLS fallita a"
 #define D_RETRY_IN "Nuovo tentativo in"
@@ -334,7 +339,7 @@
 #define D_INSECURE "Connessione insicura a causa di Fingerprint non valido"
 #define D_CONNECT_FAILED_TO "Connessione Fallita a"
 
-// xdrv_wemohue.ino
+// xplg_wemohue.ino
 #define D_MULTICAST_DISABLED "Multicast disabilitato"
 #define D_MULTICAST_REJOINED "Multicast (ri)associato"
 #define D_MULTICAST_JOIN_FAILED "Associazione Multicast fallita"
@@ -354,7 +359,7 @@
 #define D_HUE_POST_ARGS "Hue POST argomenti"
 #define D_3_RESPONSE_PACKETS_SENT "3 pacchetti di risposta inviati"
 
-// xdrv_05_domoticz.ino
+// xdrv_07_domoticz.ino
 #define D_DOMOTICZ_PARAMETERS "Parametri Domoticz"
 #define D_DOMOTICZ_IDX "Idx"
 #define D_DOMOTICZ_KEY_IDX "Key idx"
@@ -400,6 +405,9 @@
 #define D_KNX_COMMAND_OTHER "Altro"
 #define D_SENT_TO "invia a"
 #define D_KNX_WARNING "L'indirizzo del gruppo ( 0 / 0 / 0 ) è riservato e non può essere usato."
+#define D_KNX_ENHANCEMENT "Miglioramento Comunicazione"
+#define D_KNX_TX_SLOT "KNX TX"
+#define D_KNX_RX_SLOT "KNX RX"
 
 // xdrv_03_energy.ino
 #define D_ENERGY_TODAY "Energia Oggi"
@@ -461,6 +469,11 @@
 #define D_SENSOR_SR04_ECHO "SR04 Ech"
 #define D_SENSOR_SDM120_TX "SDM120 Tx"
 #define D_SENSOR_SDM120_RX "SDM120 Rx"
+#define D_SENSOR_SDM630_TX "SDM630 Tx"
+#define D_SENSOR_SDM630_RX "SDM630 Rx"
+#define D_SENSOR_TM1638_CLK "TM16 CLK"
+#define D_SENSOR_TM1638_DIO "TM16 DIO"
+#define D_SENSOR_TM1638_STB "TM16 STB"
 
 // Units
 #define D_UNIT_AMPERE "A"

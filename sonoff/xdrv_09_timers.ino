@@ -262,7 +262,7 @@ void TimerEverySecond()
 {
   if (RtcTime.valid) {
     if (!RtcTime.hour && !RtcTime.minute && !RtcTime.second) { TimerSetRandomWindows(); }  // Midnight
-    if (RtcTime.minute != timer_last_minute) {  // Execute every minute only once
+    if ((uptime > 60) && (RtcTime.minute != timer_last_minute)) {  // Execute from one minute after restart every minute only once
       timer_last_minute = RtcTime.minute;
       int16_t time = (RtcTime.hour *60) + RtcTime.minute;
       uint8_t days = 1 << (RtcTime.day_of_week -1);
@@ -287,10 +287,10 @@ void TimerEverySecond()
 #ifdef USE_RULES
               if (3 == xtimer.power) {  // Blink becomes Rule disregarding device and allowing use of Backlog commands
                 snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"Clock\":{\"Timer\":%d}}"), i +1);
-                RulesProcess();
+                XdrvRulesProcess();
               } else
 #endif  // USE_RULES
-                if (devices_present) { ExecuteCommandPower(xtimer.device +1, xtimer.power); }
+                if (devices_present) { ExecuteCommandPower(xtimer.device +1, xtimer.power, SRC_TIMER); }
             }
           }
         }
@@ -451,6 +451,11 @@ boolean TimerCommand()
     }
   }
   else if (CMND_TIMERS == command_code) {
+    if (XdrvMailbox.data_len && (XdrvMailbox.payload == 0)) {
+      for (byte i = 0; i < MAX_TIMERS; i++) {
+        Settings.timer[i].arm = 0;  // Disable all timers
+      }
+    }
     byte jsflg = 0;
     byte lines = 1;
     for (byte i = 0; i < MAX_TIMERS; i++) {
@@ -726,7 +731,7 @@ boolean Xdrv09(byte function)
   boolean result = false;
 
   switch (function) {
-    case FUNC_INIT:
+    case FUNC_PRE_INIT:
       TimerSetRandomWindows();
       break;
     case FUNC_EVERY_SECOND:

@@ -33,6 +33,7 @@
 
 //#define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
 
+#define LANGUAGE_LCID 1045
 // HTML (ISO 639-1) Language Code
 #define D_HTML_LANGUAGE "pl"
 
@@ -204,7 +205,7 @@
 #define D_USE_DEFAULTS "Użyj domyślnych"
 #define D_ERASED_SECTOR "Wymazany sektor"
 
-// webserver.ino
+// xdrv_02_webserver.ino
 #define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "Oprogramowanie MINIMAL - proszę uaktualnić"
 #define D_WEBSERVER_ACTIVE_ON "Aktywny serwer Web"
 #define D_WITH_IP_ADDRESS "z adresem IP"
@@ -320,13 +321,17 @@
 #define D_UPLOAD_ERR_7 "Wgrywanie przerwane"
 #define D_UPLOAD_ERR_8 "Błędny plik"
 #define D_UPLOAD_ERR_9 "Plik jest za duży"
+#define D_UPLOAD_ERR_10 "Failed to init RF chip"
+#define D_UPLOAD_ERR_11 "Failed to erase RF chip"
+#define D_UPLOAD_ERR_12 "Failed to write to RF chip"
+#define D_UPLOAD_ERR_13 "Failed to decode RF firmware"
 #define D_UPLOAD_ERROR_CODE "Błąd wgrywania"
 
 #define D_ENTER_COMMAND "Wprowadź polecenie"
 #define D_ENABLE_WEBLOG_FOR_RESPONSE "Włącz poziom 2 zapisu Weblog, jeśli oczekiwana jest odpowiedź"
 #define D_NEED_USER_AND_PASSWORD "Wymagany użytkownik=<username>&hasło=<password>"
 
-// xdrv_00_mqtt.ino
+// xdrv_01_mqtt.ino
 #define D_FINGERPRINT "Weryfikuj odcisk TLS..."
 #define D_TLS_CONNECT_FAILED_TO "Nieudane połączenie TLS do"
 #define D_RETRY_IN "Spróbuj ponownie"
@@ -334,7 +339,7 @@
 #define D_INSECURE "Nieprawidłowe połączenie z powodu błędnego odcisku TLS"
 #define D_CONNECT_FAILED_TO "Nie udało się nawiązać połączenia"
 
-// xdrv_wemohue.ino
+// xplg_wemohue.ino
 #define D_MULTICAST_DISABLED "Multicast jest wyłączony"
 #define D_MULTICAST_REJOINED "Multicast (re)dołączony"
 #define D_MULTICAST_JOIN_FAILED "Multicast nie powiodło się"
@@ -354,7 +359,7 @@
 #define D_HUE_POST_ARGS "Hue POST args"
 #define D_3_RESPONSE_PACKETS_SENT "3 pakiety odpowiedzi wysyłane"
 
-// xdrv_05_domoticz.ino
+// xdrv_07_domoticz.ino
 #define D_DOMOTICZ_PARAMETERS "Parametry Domoticz"
 #define D_DOMOTICZ_IDX "Idx"
 #define D_DOMOTICZ_KEY_IDX "Key idx"
@@ -400,6 +405,9 @@
 #define D_KNX_COMMAND_OTHER "Other"
 #define D_SENT_TO "sent to"
 #define D_KNX_WARNING "The group address ( 0 / 0 / 0 ) is reserved and can not be used."
+#define D_KNX_ENHANCEMENT "Communication Enhancement"
+#define D_KNX_TX_SLOT "KNX TX"
+#define D_KNX_RX_SLOT "KNX RX"
 
 // xdrv_03_energy.ino
 #define D_ENERGY_TODAY "Energia Dzisiaj"
@@ -461,6 +469,11 @@
 #define D_SENSOR_SR04_ECHO "SR04 Ech"
 #define D_SENSOR_SDM120_TX "SDM120 Tx"
 #define D_SENSOR_SDM120_RX "SDM120 Rx"
+#define D_SENSOR_SDM630_TX "SDM630 Tx"
+#define D_SENSOR_SDM630_RX "SDM630 Rx"
+#define D_SENSOR_TM1638_CLK "TM16 CLK"
+#define D_SENSOR_TM1638_DIO "TM16 DIO"
+#define D_SENSOR_TM1638_STB "TM16 STB"
 
 // Units
 #define D_UNIT_AMPERE "A"

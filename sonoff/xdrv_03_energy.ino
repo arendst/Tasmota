@@ -17,8 +17,6 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#define USE_ENERGY_SENSOR
-
 #ifdef USE_ENERGY_SENSOR
 /*********************************************************************************************\
  * HLW8012 and PZEM004T - Energy
@@ -93,18 +91,27 @@ void EnergyUpdateToday()
 }
 
 /*********************************************************************************************\
- * HLW8012 - Energy (Sonoff Pow)
+ * HLW8012, BL0937 or HJL-01 - Energy (Sonoff Pow, HuaFan, KMC70011, BlitzWolf)
  *
  * Based on Source: Shenzhen Heli Technology Co., Ltd
 \*********************************************************************************************/
 
+// HLW8012 based (Sonoff Pow, KMC70011, HuaFan)
 #define HLW_PREF            10000    // 1000.0W
 #define HLW_UREF             2200    // 220.0V
 #define HLW_IREF             4545    // 4.545A
+#define HLW_SEL_VOLTAGE         1
+
+// HJL-01 based (BlitzWolf, Homecube, Gosund)
+#define HJL_PREF             1362
+#define HJL_UREF              822
+#define HJL_IREF             3300
+#define HJL_SEL_VOLTAGE         0
 
 #define HLW_POWER_PROBE_TIME   10    // Number of seconds to probe for power before deciding none used
 
 byte hlw_select_ui_flag;
+byte hlw_ui_flag = 1;
 byte hlw_load_off;
 byte hlw_cf1_timer;
 unsigned long hlw_cf_pulse_length;
@@ -116,6 +123,10 @@ unsigned long hlw_cf1_pulse_counter;
 unsigned long hlw_cf1_voltage_pulse_length;
 unsigned long hlw_cf1_current_pulse_length;
 unsigned long hlw_energy_period_counter;
+
+unsigned long hlw_power_ratio = 0;
+unsigned long hlw_voltage_ratio = 0;
+unsigned long hlw_current_ratio = 0;
 
 unsigned long hlw_cf1_voltage_max_pulse_counter;
 unsigned long hlw_cf1_current_max_pulse_counter;
@@ -162,7 +173,7 @@ void HlwEverySecond()
     hlw_len = 10000 / hlw_energy_period_counter;
     hlw_energy_period_counter = 0;
     if (hlw_len) {
-      energy_kWhtoday_delta += ((HLW_PREF * Settings.energy_power_calibration) / hlw_len) / 36;
+      energy_kWhtoday_delta += ((hlw_power_ratio * Settings.energy_power_calibration) / hlw_len) / 36;
       EnergyUpdateToday();
     }
   }
@@ -180,7 +191,7 @@ void HlwEvery200ms()
   }
 
   if (hlw_cf_pulse_length && energy_power_on && !hlw_load_off) {
-    hlw_w = (HLW_PREF * Settings.energy_power_calibration) / hlw_cf_pulse_length;
+    hlw_w = (hlw_power_ratio * Settings.energy_power_calibration) / hlw_cf_pulse_length;
     energy_power = (float)hlw_w / 10;
   } else {
     energy_power = 0;
@@ -197,12 +208,12 @@ void HlwEvery200ms()
     } else {
       hlw_cf1_pulse_length = 0;
     }
-    if (hlw_select_ui_flag) {
+    if (hlw_select_ui_flag == hlw_ui_flag) {
       hlw_cf1_voltage_pulse_length = hlw_cf1_pulse_length;
       hlw_cf1_voltage_max_pulse_counter = hlw_cf1_pulse_counter;
 
       if (hlw_cf1_voltage_pulse_length && energy_power_on) {     // If powered on always provide voltage
-        hlw_u = (HLW_UREF * Settings.energy_voltage_calibration) / hlw_cf1_voltage_pulse_length;
+        hlw_u = (hlw_voltage_ratio * Settings.energy_voltage_calibration) / hlw_cf1_voltage_pulse_length;
         energy_voltage = (float)hlw_u / 10;
       } else {
         energy_voltage = 0;
@@ -213,7 +224,7 @@ void HlwEvery200ms()
       hlw_cf1_current_max_pulse_counter = hlw_cf1_pulse_counter;
 
       if (hlw_cf1_current_pulse_length && energy_power) {   // No current if no power being consumed
-        hlw_i = (HLW_IREF * Settings.energy_current_calibration) / hlw_cf1_current_pulse_length;
+        hlw_i = (hlw_current_ratio * Settings.energy_current_calibration) / hlw_cf1_current_pulse_length;
         energy_current = (float)hlw_i / 1000;
       } else {
         energy_current = 0;
@@ -231,6 +242,18 @@ void HlwInit()
     Settings.energy_power_calibration = HLW_PREF_PULSE;
     Settings.energy_voltage_calibration = HLW_UREF_PULSE;
     Settings.energy_current_calibration = HLW_IREF_PULSE;
+  }
+
+  if (BLITZWOLF_BWSHP2 == Settings.module) {
+    hlw_power_ratio = HJL_PREF;
+    hlw_voltage_ratio = HJL_UREF;
+    hlw_current_ratio = HJL_IREF;
+    hlw_ui_flag = HJL_SEL_VOLTAGE;
+  } else {
+    hlw_power_ratio = HLW_PREF;
+    hlw_voltage_ratio = HLW_UREF;
+    hlw_current_ratio = HLW_IREF;
+    hlw_ui_flag = HLW_SEL_VOLTAGE;
   }
 
   hlw_cf_pulse_length = 0;
@@ -281,6 +304,9 @@ long cf_pulses_last_time = CSE_PULSES_NOT_INITIALIZED;
 
 void CseReceived()
 {
+  //  0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23
+  // 55 5A 02 F7 60 00 03 AB 00 40 10 02 60 5D 51 A6 58 03 E9 EF 71 0B 7A 36
+  // Hd Id VCal---- Voltage- ICal---- Current- PCal---- Power--- Ad CF--- Ck
   AddLogSerial(LOG_LEVEL_DEBUG_MORE);
 
   uint8_t header = serial_in_buffer[0];
@@ -371,7 +397,12 @@ bool CseSerialInput()
       return 1;
     }
   } else {
-    if (0x5A == serial_in_byte) {             // 0x5A - Packet header 2
+    if ((0x5A == serial_in_byte) && (serial_in_byte_counter)) {  // 0x5A - Packet header 2
+      if (serial_in_byte_counter > 1) {       // Sync buffer with data (issue #1907)
+        serial_in_buffer[0] = serial_in_buffer[--serial_in_byte_counter];
+        serial_in_byte_counter = 1;
+        AddLog_P(LOG_LEVEL_DEBUG, PSTR("CSE: Fixed out-of-sync"));
+      }
       cse_receive_flag = 1;
     } else {
       serial_in_byte_counter = 0;
@@ -476,7 +507,17 @@ bool PzemReceiveReady()
 
 bool PzemRecieve(uint8_t resp, float *data)
 {
-  uint8_t buffer[sizeof(PZEMCommand)];
+  //  0  1  2  3  4  5  6
+  // A4 00 00 00 00 00 A4 - Set address
+  // A0 00 D4 07 00 00 7B - Voltage (212.7V)
+  // A1 00 00 0A 00 00 AB - Current (0.1A)
+  // A1 00 00 00 00 00 A1 - No current
+  // A2 00 16 00 00 00 B8 - Power (22W)
+  // A2 00 00 00 00 00 A2 - No power
+  // A3 00 08 A4 00 00 4F - Energy (2.212kWh)
+  // A3 01 86 9F 00 00 C9 - Energy (99.999kWh)
+
+  uint8_t buffer[sizeof(PZEMCommand)] = { 0 };
 
   unsigned long start = millis();
   uint8_t len = 0;
@@ -485,6 +526,10 @@ bool PzemRecieve(uint8_t resp, float *data)
       uint8_t c = (uint8_t)PzemSerial->read();
       if (!c && !len) {
         continue;  // skip 0 at startup
+      }
+      if ((1 == len) && (buffer[0] == c)) {
+        len--;
+        continue;  // fix skewed data
       }
       buffer[len++] = c;
     }
@@ -721,7 +766,7 @@ void EnergyMarginCheck()
           snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_MAXPOWERREACHED "\":\"%d%s\"}"), energy_power_u, (Settings.flag.value_units) ? " " D_UNIT_WATT : "");
           MqttPublishPrefixTopic_P(STAT, S_RSLT_WARNING);
           EnergyMqttShow();
-          ExecuteCommandPower(1, POWER_OFF);
+          ExecuteCommandPower(1, POWER_OFF, SRC_MAXPOWER);
           if (!energy_mplr_counter) {
             energy_mplr_counter = Settings.param[P_MAX_POWER_RETRY] +1;
           }
@@ -743,7 +788,7 @@ void EnergyMarginCheck()
           if (energy_mplr_counter) {
             snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_POWERMONITOR "\":\"%s\"}"), GetStateText(1));
             MqttPublishPrefixTopic_P(RESULT_OR_STAT, PSTR(D_JSON_POWERMONITOR));
-            ExecuteCommandPower(1, POWER_ON);
+            ExecuteCommandPower(1, POWER_ON, SRC_MAXPOWER);
           } else {
             snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_MAXPOWERREACHEDRETRY "\":\"%s\"}"), GetStateText(0));
             MqttPublishPrefixTopic_P(STAT, S_RSLT_WARNING);
@@ -761,7 +806,7 @@ void EnergyMarginCheck()
       energy_max_energy_state = 1;
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_ENERGYMONITOR "\":\"%s\"}"), GetStateText(1));
       MqttPublishPrefixTopic_P(RESULT_OR_STAT, PSTR(D_JSON_ENERGYMONITOR));
-      ExecuteCommandPower(1, POWER_ON);
+      ExecuteCommandPower(1, POWER_ON, SRC_MAXENERGY);
     }
     else if ((1 == energy_max_energy_state) && (energy_daily_u >= Settings.energy_max_energy)) {
       energy_max_energy_state = 2;
@@ -769,7 +814,7 @@ void EnergyMarginCheck()
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_MAXENERGYREACHED "\":\"%s%s\"}"), mqtt_data, (Settings.flag.value_units) ? " " D_UNIT_KILOWATTHOUR : "");
       MqttPublishPrefixTopic_P(STAT, S_RSLT_WARNING);
       EnergyMqttShow();
-      ExecuteCommandPower(1, POWER_OFF);
+      ExecuteCommandPower(1, POWER_OFF, SRC_MAXENERGY);
     }
   }
 #endif  // FEATURE_POWER_LIMIT
@@ -896,7 +941,7 @@ boolean EnergyCommand()
   else if (((ENERGY_HLW8012 == energy_flg) || (ENERGY_CSE7766 == energy_flg)) && (CMND_POWERSET == command_code)) {  // Watt
     if ((XdrvMailbox.payload > 0) && (XdrvMailbox.payload < 3601)) {
       if ((ENERGY_HLW8012 == energy_flg) && hlw_cf_pulse_length) {
-        Settings.energy_power_calibration = (XdrvMailbox.payload * 10 * hlw_cf_pulse_length) / HLW_PREF;
+        Settings.energy_power_calibration = (XdrvMailbox.payload * 10 * hlw_cf_pulse_length) / hlw_power_ratio;
       }
       else if ((ENERGY_CSE7766 == energy_flg) && power_cycle) {
         Settings.energy_power_calibration = (XdrvMailbox.payload * power_cycle) / CSE_PREF;
@@ -916,7 +961,7 @@ boolean EnergyCommand()
   else if (((ENERGY_HLW8012 == energy_flg) || (ENERGY_CSE7766 == energy_flg)) && (CMND_VOLTAGESET == command_code)) {  // Volt
     if ((XdrvMailbox.payload > 0) && (XdrvMailbox.payload < 501)) {
       if ((ENERGY_HLW8012 == energy_flg) && hlw_cf1_voltage_pulse_length) {
-        Settings.energy_voltage_calibration = (XdrvMailbox.payload * 10 * hlw_cf1_voltage_pulse_length) / HLW_UREF;
+        Settings.energy_voltage_calibration = (XdrvMailbox.payload * 10 * hlw_cf1_voltage_pulse_length) / hlw_voltage_ratio;
       }
       else if ((ENERGY_CSE7766 == energy_flg) && voltage_cycle) {
         Settings.energy_voltage_calibration = (XdrvMailbox.payload * voltage_cycle) / CSE_UREF;
@@ -936,7 +981,7 @@ boolean EnergyCommand()
   else if (((ENERGY_HLW8012 == energy_flg) || (ENERGY_CSE7766 == energy_flg)) && (CMND_CURRENTSET == command_code)) {  // milliAmpere
     if ((XdrvMailbox.payload > 0) && (XdrvMailbox.payload < 16001)) {
       if ((ENERGY_HLW8012 == energy_flg) && hlw_cf1_current_pulse_length) {
-        Settings.energy_current_calibration = (XdrvMailbox.payload * hlw_cf1_current_pulse_length) / HLW_IREF;
+        Settings.energy_current_calibration = (XdrvMailbox.payload * hlw_cf1_current_pulse_length) / hlw_current_ratio;
       }
       else if ((ENERGY_CSE7766 == energy_flg) && current_cycle) {
         Settings.energy_current_calibration = (XdrvMailbox.payload * current_cycle) / 1000;
@@ -1113,6 +1158,17 @@ void EnergyShow(boolean json)
       DomoticzSensor(DZ_CURRENT, energy_current_chr);  // Current
     }
 #endif  // USE_DOMOTICZ
+#ifdef USE_KNX
+    if (show_energy_period) {
+      KnxSensor(KNX_ENERGY_VOLTAGE, energy_voltage);
+      KnxSensor(KNX_ENERGY_CURRENT, energy_current);
+      KnxSensor(KNX_ENERGY_POWER, energy_power);
+      KnxSensor(KNX_ENERGY_POWERFACTOR, energy_power_factor);
+      KnxSensor(KNX_ENERGY_DAILY, energy_daily);
+      KnxSensor(KNX_ENERGY_TOTAL, energy_total);
+      KnxSensor(KNX_ENERGY_START, energy_start);
+    }
+#endif  // USE_KNX
 #ifdef USE_WEBSERVER
   } else {
     snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_ENERGY_SNS, mqtt_data, energy_voltage_chr, energy_current_chr, energy_power_chr, energy_power_factor_chr, energy_daily_chr, energy_yesterday_chr, energy_total_chr);
@@ -1132,7 +1188,7 @@ boolean Xdrv03(byte function)
 
   if (energy_flg) {
     switch (function) {
-      case FUNC_INIT:
+      case FUNC_PRE_INIT:
         EnergyDrvInit();
         break;
       case FUNC_COMMAND:

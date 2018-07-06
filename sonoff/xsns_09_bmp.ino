@@ -338,17 +338,104 @@ double Bme280ReadHumidity(void)
 
 #ifdef USE_BME680
 /*********************************************************************************************\
- * BME680
+ * BME680 support by Bosch https://github.com/BoschSensortec/BME680_driver
 \*********************************************************************************************/
 
-#include <Adafruit_BME680.h>
-Adafruit_BME680 bme680;
+#include <bme680.h>
+
+struct bme680_dev gas_sensor;
+
+static void BmeDelayMs(uint32_t ms)
+{
+  delay(ms);
+}
+
+uint8_t bme680_state = 0;
+float bme680_temperature;
+float bme680_pressure;
+float bme680_humidity;
+float bme680_gas_resistance;
+
+boolean Bme680Init()
+{
+  gas_sensor.dev_id = bmp_address;
+  gas_sensor.intf = BME680_I2C_INTF;
+  gas_sensor.read = &I2cReadBuffer;
+  gas_sensor.write = &I2cWriteBuffer;
+  gas_sensor.delay_ms = BmeDelayMs;
+  /* amb_temp can be set to 25 prior to configuring the gas sensor
+   * or by performing a few temperature readings without operating the gas sensor.
+   */
+  gas_sensor.amb_temp = 25;
+
+  int8_t rslt = BME680_OK;
+  rslt = bme680_init(&gas_sensor);
+  if (rslt != BME680_OK) { return false; }
+
+  /* Set the temperature, pressure and humidity settings */
+  gas_sensor.tph_sett.os_hum = BME680_OS_2X;
+  gas_sensor.tph_sett.os_pres = BME680_OS_4X;
+  gas_sensor.tph_sett.os_temp = BME680_OS_8X;
+  gas_sensor.tph_sett.filter = BME680_FILTER_SIZE_3;
+
+  /* Set the remaining gas sensor settings and link the heating profile */
+  gas_sensor.gas_sett.run_gas = BME680_ENABLE_GAS_MEAS;
+  /* Create a ramp heat waveform in 3 steps */
+  gas_sensor.gas_sett.heatr_temp = 320; /* degree Celsius */
+  gas_sensor.gas_sett.heatr_dur = 150; /* milliseconds */
+
+  /* Select the power mode */
+  /* Must be set before writing the sensor configuration */
+  gas_sensor.power_mode = BME680_FORCED_MODE;
+
+  /* Set the required sensor settings needed */
+  uint8_t set_required_settings = BME680_OST_SEL | BME680_OSP_SEL | BME680_OSH_SEL | BME680_FILTER_SEL | BME680_GAS_SENSOR_SEL;
+
+  /* Set the desired sensor configuration */
+  rslt = bme680_set_sensor_settings(set_required_settings,&gas_sensor);
+  if (rslt != BME680_OK) { return false; }
+
+  bme680_state = 0;
+
+  return true;
+}
 
 void Bme680PerformReading()
 {
+  int8_t rslt = BME680_OK;
+
   if (BME680_CHIPID == bmp_type) {
-    bme680.performReading();
+    if (0 == bme680_state) {
+      /* Trigger the next measurement if you would like to read data out continuously */
+      rslt = bme680_set_sensor_mode(&gas_sensor);
+      if (rslt != BME680_OK) { return; }
+
+      /* Get the total measurement duration so as to sleep or wait till the
+       * measurement is complete */
+//      uint16_t meas_period;
+//      bme680_get_profile_dur(&meas_period, &gas_sensor);
+//      delay(meas_period); /* Delay till the measurement is ready */  // 183 mSec - we'll wait a second
+
+      bme680_state = 1;
+    } else {
+      bme680_state = 0;
+
+      struct bme680_field_data data;
+      rslt = bme680_get_sensor_data(&data, &gas_sensor);
+      if (rslt != BME680_OK) { return; }
+
+      bme680_temperature = data.temperature / 100.0;
+      bme680_humidity = data.humidity / 1000.0;
+      bme680_pressure = data.pressure;
+      /* Avoid using measurements from an unstable heating setup */
+      if (data.status & BME680_GASM_VALID_MSK) {
+        bme680_gas_resistance = data.gas_resistance;
+      } else {
+        bme680_gas_resistance = 0;
+      }
+    }
   }
+  return;
 }
 
 #endif  // USE_BME680
@@ -385,7 +472,7 @@ void BmpDetect()
 #ifdef USE_BME680
       case BME680_CHIPID:
         bmp_model = 3;  // 2
-        success = bme680.begin(bmp_address);
+        success = Bme680Init();
         break;
 #endif  // USE_BME680
     }
@@ -422,10 +509,10 @@ void BmpShow(boolean json)
         break;
 #ifdef USE_BME680
       case BME680_CHIPID:
-        t = bme680.temperature;
-        p = bme680.pressure / 100.0;
-        h = bme680.humidity;
-        g = bme680.gas_resistance / 1000.0;
+        t = bme680_temperature;
+        p = bme680_pressure / 100.0;
+        h = bme680_humidity;
+        g = bme680_gas_resistance / 1000.0;
         break;
 #endif  // USE_BME680
     }
@@ -512,16 +599,12 @@ boolean Xsns09(byte function)
 
   if (i2c_flg) {
     switch (function) {
-      case FUNC_PREP_BEFORE_TELEPERIOD:
-        BmpDetect();
-        break;
       case FUNC_EVERY_SECOND:
-#ifdef USE_BME680
-        if ((Settings.tele_period - tele_period) < 300) {  // 5 minute stabilization time
-          if (tele_period &1) {
-            Bme680PerformReading();  // Keep BME680 busy every two seconds
-          }
+        if (tele_period == Settings.tele_period -2) {  // Allow 2 seconds to prepare BME680 readings
+          BmpDetect();
         }
+#ifdef USE_BME680
+        Bme680PerformReading();
 #endif  // USE_BME680
         break;
       case FUNC_JSON_APPEND:
@@ -530,9 +613,6 @@ boolean Xsns09(byte function)
 #ifdef USE_WEBSERVER
       case FUNC_WEB_APPEND:
         BmpShow(0);
-#ifdef USE_BME680
-        Bme680PerformReading();
-#endif  // USE_BME680
         break;
 #endif // USE_WEBSERVER
     }

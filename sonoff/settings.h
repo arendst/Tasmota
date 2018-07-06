@@ -20,21 +20,21 @@
 #ifndef _SETTINGS_H_
 #define _SETTINGS_H_
 
-#define PARAM8_SIZE  18                    // Number of param bytes
+#define PARAM8_SIZE  18                    // Number of param bytes (SetOption)
 
 typedef union {                            // Restricted by MISRA-C Rule 18.4 but so usefull...
   uint32_t data;                           // Allow bit manipulation using SetOption
-  struct {
+  struct {                                 // SetOption0 .. SetOption31
     uint32_t save_state : 1;               // bit 0
     uint32_t button_restrict : 1;          // bit 1
     uint32_t value_units : 1;              // bit 2
     uint32_t mqtt_enabled : 1;             // bit 3
     uint32_t mqtt_response : 1;            // bit 4
-    uint32_t mqtt_power_retain : 1;
-    uint32_t mqtt_button_retain : 1;
-    uint32_t mqtt_switch_retain : 1;
+    uint32_t mqtt_power_retain : 1;        // CMND_POWERRETAIN
+    uint32_t mqtt_button_retain : 1;       // CMND_BUTTONRETAIN
+    uint32_t mqtt_switch_retain : 1;       // CMND_SWITCHRETAIN
     uint32_t temperature_conversion : 1;   // bit 8
-    uint32_t mqtt_sensor_retain : 1;
+    uint32_t mqtt_sensor_retain : 1;       // CMND_SENSORRETAIN
     uint32_t mqtt_offline : 1;             // bit 10
     uint32_t button_swap : 1;              // bit 11 (v5.1.6)
     uint32_t stop_flash_rotate : 1;        // bit 12 (v5.2.0)
@@ -48,20 +48,58 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t not_power_linked : 1;         // bit 20 (v5.11.1f)
     uint32_t no_power_on_check : 1;        // bit 21 (v5.11.1i)
     uint32_t mqtt_serial : 1;              // bit 22 (v5.12.0f)
-    uint32_t rules_enabled : 1;            // bit 23 (v5.12.0j)
-    uint32_t rules_once : 1;               // bit 24 (v5.12.0k)
+    uint32_t rules_enabled : 1;            // bit 23 (v5.12.0j) - free since v5.14.0b
+    uint32_t rules_once : 1;               // bit 24 (v5.12.0k) - free since v5.14.0b
     uint32_t knx_enabled : 1;              // bit 25 (v5.12.0l) KNX
     uint32_t device_index_enable : 1;      // bit 26 (v5.13.1a)
+    uint32_t knx_enable_enhancement : 1;   // bit 27 (v5.14.0a) KNX
+    uint32_t rf_receive_decimal : 1;       // bit 28 (v6.0.0a)
+    uint32_t ir_receive_decimal : 1;       // bit 29 (v6.0.0a)
+    uint32_t hass_light : 1;               // bit 30 (v6.0.0b)
+    uint32_t spare31 : 1;
+  };
+} SysBitfield;
+
+typedef union {                            // Restricted by MISRA-C Rule 18.4 but so usefull...
+  uint32_t data;                           // Allow bit manipulation using SetOption
+  struct {                                 // SetOption50 .. SetOption81
+    uint32_t spare00 : 1;
+    uint32_t spare01 : 1;
+    uint32_t spare02 : 1;
+    uint32_t spare03 : 1;
+    uint32_t spare04 : 1;
+    uint32_t spare05 : 1;
+    uint32_t spare06 : 1;
+    uint32_t spare07 : 1;
+    uint32_t spare08 : 1;
+    uint32_t spare09 : 1;
+    uint32_t spare10 : 1;
+    uint32_t spare11 : 1;
+    uint32_t spare12 : 1;
+    uint32_t spare13 : 1;
+    uint32_t spare14 : 1;
+    uint32_t spare15 : 1;
+    uint32_t spare16 : 1;
+    uint32_t spare17 : 1;
+    uint32_t spare18 : 1;
+    uint32_t spare19 : 1;
+    uint32_t spare20 : 1;
+    uint32_t spare21 : 1;
+    uint32_t spare22 : 1;
+    uint32_t spare23 : 1;
+    uint32_t spare24 : 1;
+    uint32_t spare25 : 1;
+    uint32_t spare26 : 1;
     uint32_t spare27 : 1;
     uint32_t spare28 : 1;
     uint32_t spare29 : 1;
     uint32_t spare30 : 1;
     uint32_t spare31 : 1;
   };
-} SysBitfield;
+} SysBitfield3;
 
 typedef union {
-  uint32_t data;                           // Allow bit manipulation using SetOption
+  uint32_t data;                           // Allow bit manipulation
   struct {
     uint32_t spare00 : 1;
     uint32_t spare01 : 1;
@@ -114,12 +152,35 @@ typedef union {
   };
 } Timer;
 
+typedef union {
+  uint8_t data;
+  struct {
+    uint8_t enable : 1;                    // Enable INPUT
+    uint8_t pullup : 1;                    // Enable internal weak pull-up resistor
+    uint8_t inten : 1;                     // Enable Interrupt on PIN
+    uint8_t intmode : 1;                   // Change on STATE or match COMPARATOR
+    uint8_t intcomp : 1;                   // Interrupt COMPARATOR
+    uint8_t b5 : 1;
+    uint8_t b6 : 1;
+    uint8_t b7 : 1;
+  };
+} Mcp230xxCfg;
+
+/*
 struct SYSCFG {
-  unsigned long cfg_holder;                // 000
+  unsigned long cfg_holder;                // 000 Pre v6 header
   unsigned long save_flag;                 // 004
   unsigned long version;                   // 008
   unsigned long bootcount;                 // 00C
-  SysBitfield   flag;                      // 010 Add flag since 5.0.2
+*/
+struct SYSCFG {
+  uint16_t cfg_holder;                     // 000 v6 header
+  uint16_t cfg_size;                       // 002
+  unsigned long save_flag;                 // 004
+  unsigned long version;                   // 008
+  uint16_t bootcount;                      // 00C
+  uint16_t cfg_crc;                        // 00E
+  SysBitfield   flag;                      // 010
   int16_t       save_data;                 // 014
   int8_t        timezone;                  // 016
   char          ota_url[101];              // 017
@@ -163,11 +224,13 @@ struct SYSCFG {
   uint16_t      pwm_frequency;             // 2E6
   power_t       power;                     // 2E8
   uint16_t      pwm_value[MAX_PWMS];       // 2EC
-  int16_t       altitude;                  // 2F6 Add since 5.8.0i
+  int16_t       altitude;                  // 2F6
   uint16_t      tele_period;               // 2F8
-  uint8_t       ex_power;                  // 2FA Not used since 5.8.0j
+
+  byte          free_2fa[1];               // 2FA
+
   uint8_t       ledstate;                  // 2FB
-  uint8_t       param[PARAM8_SIZE];        // 2FC was domoticz_in_topic until 5.1.6
+  uint8_t       param[PARAM8_SIZE];        // 2FC  SetOption32 .. SetOption49
   int16_t       toffset[2];                // 30E
 
   byte          free_312[1];               // 312
@@ -204,19 +267,8 @@ struct SYSCFG {
   uint16_t      blinktime;                 // 39A
   uint16_t      blinkcount;                // 39C
   uint16_t      light_rotation;            // 39E
-  uint8_t       ws_red;                    // 3A0 Not used since 5.8.0
-  uint8_t       ws_green;                  // 3A1 Not used since 5.8.0
-  uint8_t       ws_blue;                   // 3A2 Not used since 5.8.0
-  uint8_t       ws_ledtable;               // 3A3 Not used since 5.8.0
-  uint8_t       ws_dimmer;                 // 3A4 Not used since 5.8.0
-  uint8_t       ws_fade;                   // 3A5 Not used since 5.8.0
-  uint8_t       ws_speed;                  // 3A6 Not used since 5.8.0
-  uint8_t       ws_scheme;                 // 3A7 Not used since 5.8.0
-  uint8_t       ex_ws_width;               // 3A8 Not used since 5.8.0
-
-  byte          free_3A9[1];               // 3A9
-
-  uint16_t      ws_wakeup;                 // 3AA Not used since 5.8.0
+  SysBitfield3  flag3;                     // 3A0
+  uint8_t       switchmode[MAX_SWITCHES];  // 3A4  (6.0.0b - moved from 0x4CA)
   char          friendlyname[MAX_FRIENDLYNAMES][33]; // 3AC
   char          switch_topic[33];          // 430
   char          serial_delimiter;          // 451
@@ -232,9 +284,8 @@ struct SYSCFG {
   uint8_t       light_color[5];            // 498
   uint8_t       light_correction;          // 49D
   uint8_t       light_dimmer;              // 49E
-
-  byte          free_49F[2];               // 49F
-
+  uint8_t       rule_enabled;              // 49F
+  uint8_t       rule_once;                 // 4A0
   uint8_t       light_fade;                // 4A1
   uint8_t       light_speed;               // 4A2
   uint8_t       light_scheme;              // 4A3
@@ -243,7 +294,9 @@ struct SYSCFG {
   uint16_t      light_wakeup;              // 4A6
   byte          knx_CB_registered;         // 4A8  Number of Group Address to write
   char          web_password[33];          // 4A9
-  uint8_t       switchmode[MAX_SWITCHES];  // 4CA
+
+  uint8_t       ex_switchmode[4];          // 4CA  Free since 6.0.0a
+
   char          ntp_server[3][33];         // 4CE
   byte          ina219_mode;               // 531
   uint16_t      pulse_timer[MAX_PULSETIMERS]; // 532
@@ -251,9 +304,9 @@ struct SYSCFG {
   byte          free_542[2];               // 542
 
   uint32_t      ip_address[4];             // 544
-  unsigned long energy_kWhtotal;              // 554
+  unsigned long energy_kWhtotal;           // 554
   char          mqtt_fulltopic[100];       // 558
-  SysBitfield2  flag2;                     // 5BC Add flag2 since 5.9.2
+  SysBitfield2  flag2;                     // 5BC
   unsigned long pulse_counter[MAX_COUNTERS];  // 5C0
   uint16_t      pulse_counter_type;        // 5D0
   uint16_t      pulse_counter_debounce;    // 5D2
@@ -264,18 +317,21 @@ struct SYSCFG {
   Timer         timer[MAX_TIMERS];         // 670
   int           latitude;                  // 6B0
   int           longitude;                 // 6B4
-
   uint16_t      knx_physsical_addr;        // 6B8  (address_t is a uint16_t)
   uint16_t      knx_GA_addr[MAX_KNX_GA];   // 6BA  (address_t is a uint16_t) x KNX_max_GA
   uint16_t      knx_CB_addr[MAX_KNX_CB];   // 6CE  (address_t is a uint16_t) x KNX_max_CB
   byte          knx_GA_param[MAX_KNX_GA];  // 6E2  Type of Input (relay changed, button pressed, sensor read <-teleperiod)
   byte          knx_CB_param[MAX_KNX_CB];  // 6EC  Type of Output (set relay, toggle relay, reply sensor value)
+  Mcp230xxCfg   mcp230xx_config[16];       // 6F6
 
-  byte          free_6f6[266];             // 6F6
+  byte          free_6f6[200];             // 706
 
-  char          rules[MAX_RULE_SIZE];      // 800 uses 512 bytes in v5.12.0m
+  char          mems[RULES_MAX_MEMS][10];  // 7CE
+                                           // 800 Full - no more free locations
 
-                                           // A00 - FFF free locations
+  char          rules[MAX_RULE_SETS][MAX_RULE_SIZE]; // 800 uses 512 bytes in v5.12.0m, 3 x 512 bytes in v5.14.0b
+
+                                           // E00 - FFF free locations
 } Settings;
 
 struct RTCMEM {
@@ -286,6 +342,7 @@ struct RTCMEM {
   unsigned long energy_kWhtotal;              // 008
   unsigned long pulse_counter[MAX_COUNTERS];  // 00C
   power_t       power;                     // 01C
+                                           // 020 next free location
 } RtcSettings;
 
 struct TIME_T {
@@ -313,6 +370,29 @@ struct XDRVMAILBOX {
   char         *topic;
   char         *data;
 } XdrvMailbox;
+
+#define MAX_RULES_FLAG  5                  // Number of bits used in RulesBitfield (tricky I know...)
+typedef union {                            // Restricted by MISRA-C Rule 18.4 but so usefull...
+  uint16_t data;                           // Allow bit manipulation
+  struct {
+    uint16_t system_boot : 1;
+    uint16_t time_init : 1;
+    uint16_t time_set : 1;
+    uint16_t mqtt_connected : 1;
+    uint16_t mqtt_disconnected : 1;
+    uint16_t spare05 : 1;
+    uint16_t spare06 : 1;
+    uint16_t spare07 : 1;
+    uint16_t spare08 : 1;
+    uint16_t spare09 : 1;
+    uint16_t spare10 : 1;
+    uint16_t spare11 : 1;
+    uint16_t spare12 : 1;
+    uint16_t spare13 : 1;
+    uint16_t spare14 : 1;
+    uint16_t spare15 : 1;
+  };
+} RulesBitfield;
 
 // See issue https://github.com/esp8266/Arduino/issues/2913
 #ifdef USE_ADC_VCC

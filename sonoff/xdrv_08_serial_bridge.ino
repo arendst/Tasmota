@@ -61,6 +61,7 @@ void SerialBridgeInput()
     serial_bridge_buffer[serial_bridge_in_byte_counter] = 0;  // serial data completed
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_SSERIALRECEIVED "\":\"%s\"}"), serial_bridge_buffer);
     MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_SSERIALRECEIVED));
+//    XdrvRulesProcess();
     serial_bridge_in_byte_counter = 0;
   }
 }
@@ -134,7 +135,7 @@ boolean Xdrv08(byte function)
 
   if (serial_bridge_active) {
     switch (function) {
-      case FUNC_INIT:
+      case FUNC_PRE_INIT:
         SerialBridgeInit();
         break;
       case FUNC_LOOP:

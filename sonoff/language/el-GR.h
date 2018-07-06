@@ -33,6 +33,7 @@
 
 //#define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
 
+#define LANGUAGE_LCID 1032
 // HTML (ISO 639-1) Language Code
 #define D_HTML_LANGUAGE "el"
 
@@ -204,7 +205,7 @@
 #define D_USE_DEFAULTS "Χρήση προεπιλογών"
 #define D_ERASED_SECTOR "Διαγραμμένος τομέας"
 
-// webserver.ino
+// xdrv_02_webserver.ino
 #define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "MINIMAL firmware - παρακαλώ αναβαθμήστε"
 #define D_WEBSERVER_ACTIVE_ON "Web διακομιστής ενεργός"
 #define D_WITH_IP_ADDRESS "με διεύθυνση IP"
@@ -320,13 +321,17 @@
 #define D_UPLOAD_ERR_7 "Το ανεβάσμα διακόπηκε"
 #define D_UPLOAD_ERR_8 "Μη έγκυρο αρχείο"
 #define D_UPLOAD_ERR_9 "Το αρχείο είναι πολύ μεγάλο"
+#define D_UPLOAD_ERR_10 "Failed to init RF chip"
+#define D_UPLOAD_ERR_11 "Failed to erase RF chip"
+#define D_UPLOAD_ERR_12 "Failed to write to RF chip"
+#define D_UPLOAD_ERR_13 "Failed to decode RF firmware"
 #define D_UPLOAD_ERROR_CODE "Κωδικός λάθους ανεβάσματος"
 
 #define D_ENTER_COMMAND "Εισαγωγή εντολής"
 #define D_ENABLE_WEBLOG_FOR_RESPONSE "Ενεργοποιήστε το weblog 2 αν περιμένετε απάντηση"
 #define D_NEED_USER_AND_PASSWORD "Χρειάζεστε user=<όνομα χρήστη>&password=<κωδικό χρήστη>"
 
-// xdrv_00_mqtt.ino
+// xdrv_01_mqtt.ino
 #define D_FINGERPRINT "Επαλήθευση TLS fingerprint..."
 #define D_TLS_CONNECT_FAILED_TO "Αποτυχία TLS σύνδεσης"
 #define D_RETRY_IN "Επανάληψη σε"
@@ -334,7 +339,7 @@
 #define D_INSECURE "Μη ασφαλής σύνδεση λόγο ακατάλληλου Fingerprint"
 #define D_CONNECT_FAILED_TO "Αποτυχία σύνδεσης στο"
 
-// xdrv_wemohue.ino
+// xplg_wemohue.ino
 #define D_MULTICAST_DISABLED "Multicast απενεργοποιημένο"
 #define D_MULTICAST_REJOINED "Multicast επανασύνδεση"
 #define D_MULTICAST_JOIN_FAILED "Αποτυχία σύνδεσης Multicast"
@@ -354,7 +359,7 @@
 #define D_HUE_POST_ARGS "Hue POST args"
 #define D_3_RESPONSE_PACKETS_SENT "3πλο πακέτο απάντησεης στάλθηκε"
 
-// xdrv_05_domoticz.ino
+// xdrv_07_domoticz.ino
 #define D_DOMOTICZ_PARAMETERS "Domoticz παράμετροι"
 #define D_DOMOTICZ_IDX "Idx"
 #define D_DOMOTICZ_KEY_IDX "Key idx"
@@ -400,6 +405,9 @@
 #define D_KNX_COMMAND_OTHER "Αλλο"
 #define D_SENT_TO "αποστολή σε"
 #define D_KNX_WARNING "Η Ομάδα Διευθύνσεων ( 0 / 0 / 0 ) είναι δεσμευμένη και δεν μπορεί να χρησιμοποιηθεί."
+#define D_KNX_ENHANCEMENT "Communication Enhancement"
+#define D_KNX_TX_SLOT "KNX TX"
+#define D_KNX_RX_SLOT "KNX RX"
 
 // xdrv_03_energy.ino
 #define D_ENERGY_TODAY "Energy Σήμερα"
@@ -461,6 +469,11 @@
 #define D_SENSOR_SR04_ECHO "SR04 Ech"
 #define D_SENSOR_SDM120_TX "SDM120 Tx"
 #define D_SENSOR_SDM120_RX "SDM120 Rx"
+#define D_SENSOR_SDM630_TX "SDM630 Tx"
+#define D_SENSOR_SDM630_RX "SDM630 Rx"
+#define D_SENSOR_TM1638_CLK "TM16 CLK"
+#define D_SENSOR_TM1638_DIO "TM16 DIO"
+#define D_SENSOR_TM1638_STB "TM16 STB"
 
 // Units
 #define D_UNIT_AMPERE "A"
