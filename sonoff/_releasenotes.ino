@@ -1,33 +1,37 @@
-/* 6.0.0b
- * Add initial support for Sonoff iFan02 - Module 44 - Command FanSpeed 0..3 - Webpage will only allow Toggle1 (#2839)
- * Add support for Sonoff S26 Smart Socket (#2808)
- * Add command SetOption30 to enforce Hass discovery as light group (#1784)
- * Add decimal values support for commands ADD, SUB, MULT and SCALE (#3083, #3089)
+/* 6.1.0a
  * Add experimental (untested) TM1638 switch support (#2226)
- * Change number of switches from 4 to 8 (#2885, #3086)
- *
- * 6.0.0a
  * Add support for APDS9960 proximity sensor (#3051)
- * Add increment and decrement value to command Counter (#2838)
- * Add option 0 to command Timers disarming all timers (#2962)
- * Add time in minutes to rule Time#Initialized, Time#set and Time#Minute (#2669)
- * Add rule variables %time% for minutes since midnight, %uptime%, %sunrise% and %sunset% giving time in minutes (#2669)
  * Add heap and stack debug information
- * Add command SetOption28 to switch between hex or decimal Sonoff Bridge RF received data format (#3008)
- * Add command SetOption29 to switch between hex or decimal IR received data format
- * Add performance improvement when updating multiple individual WS2812 pixels (#3007)
  * Add debug facilities using optional xdrv_99_debug.ino to enable in user_config.h
- * Add KNX support for DS18S20 Temperature sensor
- * Add CRC to Settings making future upgrades more fail-safe
- * Add support for uploading Sonoff Bridge firmware found in tools/fw_efm8bb1 folder build by Portisch using Web Gui File Upload (#2886)
- * Add support for I2C temperature sensor LM75AD (#2909)
- * Add command RfRaw to control Portisch firmware features
+ *
+ * 6.1.0 20180706
  * Remove version 3, 4 and pre 5.2 settings auto-upgrade. See https://github.com/arendst/Sonoff-Tasmota/wiki/Upgrade#migration-path
  * Change default CFG_HOLDER from 0x20161209 to 4617 (=0x1209) - no impact on default upgrades
+ * Change number of supported switches from 4 to 8 (#2885, #3086)
+ * Change BME680 driver from Adafruit to Bosch BME680 library (#2969)
  * Fix Pzem004T checksum error
  * Fix KNX bug when doing reply of sensors values
  * Fix rules induced LWT message
  * Fix possible wifi connection problem (#1366)
+ * Add Ukrainian language file
+ * Add KNX support for DS18S20 Temperature sensor
+ * Add CRC to Settings making future upgrades more fail-safe
+ * Add command SetOption30 to enforce Hass discovery as light group (#1784)
+ * Add support for BlitzWolf BW-SHP2 (and Homecube, Gosund SP1) Energy Monitoring Smart Socket (#2223)
+ * Add time in minutes to rule Time#Initialized, Time#set and Time#Minute (#2669)
+ * Add rule variables %time% for minutes since midnight, %uptime%, %sunrise% and %sunset% giving time in minutes (#2669)
+ * Add support for Sonoff S26 Smart Socket (#2808)
+ * Add increment and decrement value to command Counter (#2838)
+ * Add support for Sonoff iFan02 as module 44 introducing command FanSpeed 0..3 (#2839)
+ * Add support for uploading Sonoff Bridge firmware found in tools/fw_efm8bb1 folder build by Portisch using Web Gui File Upload (#2886)
+ * Add command RfRaw to control Portisch firmware features
+ * Add support for I2C temperature sensor LM75AD (#2909)
+ * Add option 0 to command Timers disarming all timers (#2962)
+ * Add performance improvement when updating multiple individual WS2812 pixels (#3007)
+ * Add command SetOption28 to switch between hex or decimal Sonoff Bridge RF received data format (#3008)
+ * Add command SetOption29 to switch between hex or decimal IR received data format
+ * Add decimal values support for commands ADD, SUB, MULT and SCALE (#3083, #3089)
+ * Add support for bitflags SetOption50 .. SetOption81 (#3118)
  *
  * 5.14.0b
  * Add Console Commands to send KNX Commands
