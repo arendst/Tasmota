@@ -168,6 +168,7 @@ uint8_t stop_flash_rotate = 0;              // Allow flash configuration rotatio
 
 int blinks = 201;                           // Number of LED blinks
 uint8_t blinkstate = 0;                     // LED state
+uint8_t blinkspeed = 1;                     // LED blink rate
 
 uint8_t blockgpio0 = 4;                     // Block GPIO0 for 4 seconds after poweron to workaround Wemos D1 RTS circuit
 uint8_t lastbutton[MAX_KEYS] = { NOT_PRESSED, NOT_PRESSED, NOT_PRESSED, NOT_PRESSED };  // Last button states
@@ -191,6 +192,7 @@ uint8_t light_type = 0;                     // Light types
 bool pwm_present = false;                   // Any PWM channel configured with SetOption15 0
 boolean mdns_begun = false;
 uint8_t ntp_force_sync = 0;                 // Force NTP sync
+StateBitfield global_state;
 RulesBitfield rules_flag;
 
 char my_version[33];                        // Composed version string
@@ -1813,6 +1815,7 @@ void SwitchHandler(byte mode)
 void StateLoop()
 {
   power_t power_now;
+  uint8_t blinkinterval = 1;
 
   state_loop_timer = millis() + (1000 / STATES);
   state++;
@@ -1890,27 +1893,38 @@ void StateLoop()
 \*-------------------------------------------------------------------------------------------*/
 
   if (!(state % ((STATES/10)*2))) {
+    if (!Settings.flag.global_state) {                      // Problem blinkyblinky enabled
+      if (global_state.data) {                              // Any problem
+        if (global_state.mqtt_down) { blinkinterval = 9; }  // MQTT problem so blink every 2 seconds (slowest)
+        if (global_state.wifi_down) { blinkinterval = 4; }  // Wifi problem so blink every second (slow)
+        blinks = 201;                                       // Allow only a single blink in case the problem is solved
+      }
+    }
     if (blinks || restart_flag || ota_state_flag) {
-      if (restart_flag || ota_state_flag) {
-        blinkstate = 1;   // Stay lit
+      if (restart_flag || ota_state_flag) {                 // Overrule blinks and keep led lit
+        blinkstate = 1;                                     // Stay lit
       } else {
-        blinkstate ^= 1;  // Blink
+        blinkspeed--;
+        if (!blinkspeed) {
+          blinkspeed = blinkinterval;                       // Set interval to 0.2 (default), 1 or 2 seconds
+          blinkstate ^= 1;                                  // Blink
+        }
       }
       if ((!(Settings.ledstate &0x08)) && ((Settings.ledstate &0x06) || (blinks > 200) || (blinkstate))) {
-        SetLedPower(blinkstate);
+//      if ( (!Settings.flag.global_state && global_state.data) || ((!(Settings.ledstate &0x08)) && ((Settings.ledstate &0x06) || (blinks > 200) || (blinkstate))) ) {
+        SetLedPower(blinkstate);                            // Set led on or off
       }
       if (!blinkstate) {
         blinks--;
-        if (200 == blinks) blinks = 0;
+        if (200 == blinks) blinks = 0;                      // Disable blink
       }
-    } else {
-      if (Settings.ledstate &1) {
-        boolean tstate = power;
-        if ((SONOFF_TOUCH == Settings.module) || (SONOFF_T11 == Settings.module) || (SONOFF_T12 == Settings.module) || (SONOFF_T13 == Settings.module)) {
-          tstate = (!power) ? 1 : 0;
-        }
-        SetLedPower(tstate);
+    }
+    else if (Settings.ledstate &1) {
+      boolean tstate = power;
+      if ((SONOFF_TOUCH == Settings.module) || (SONOFF_T11 == Settings.module) || (SONOFF_T12 == Settings.module) || (SONOFF_T13 == Settings.module)) {
+        tstate = (!power) ? 1 : 0;                          // As requested invert signal for Touch devices to find them in the dark
       }
+      SetLedPower(tstate);
     }
   }
 
