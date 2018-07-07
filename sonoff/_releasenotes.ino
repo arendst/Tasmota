@@ -1,8 +1,10 @@
 /* 6.1.0a
+ * Add wifi and mqtt status led blinkyblinky to be disabled by SetOption31 1. Does not work when LedPower is On (deliberate) (#871, #2230, #3114, #3155)
  * Add experimental (untested) TM1638 switch support (#2226)
  * Add support for APDS9960 proximity sensor (#3051)
  * Add heap and stack debug information
  * Add debug facilities using optional xdrv_99_debug.ino to enable in user_config.h
+ * Remove not needed functionality from Sonoff-minimal to save space
  *
  * 6.1.0 20180706
  * Remove version 3, 4 and pre 5.2 settings auto-upgrade. See https://github.com/arendst/Sonoff-Tasmota/wiki/Upgrade#migration-path
