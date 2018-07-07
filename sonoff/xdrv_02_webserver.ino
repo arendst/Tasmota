@@ -379,6 +379,8 @@ void StartWebserver(int type, IPAddress ipweb)
       WebServer->on("/cs", HandleConsole);
       WebServer->on("/ax", HandleAjaxConsoleRefresh);
       WebServer->on("/ay", HandleAjaxStatusRefresh);
+      WebServer->on("/u2", HTTP_OPTIONS, HandlePreflightRequest);
+      WebServer->on("/cm", HandleHttpCommand);
       WebServer->on("/rb", HandleRestart);
 #ifndef BE_MINIMAL
       WebServer->on("/cn", HandleConfiguration);
@@ -403,8 +405,6 @@ void StartWebserver(int type, IPAddress ipweb)
       WebServer->on("/sv", HandleSaveSettings);
       WebServer->on("/rs", HandleRestoreConfiguration);
       WebServer->on("/rt", HandleResetConfiguration);
-      WebServer->on("/u2", HTTP_OPTIONS, HandlePreflightRequest);
-      WebServer->on("/cm", HandleHttpCommand);
       WebServer->on("/in", HandleInformation);
       WebServer->on("/rb", HandleRestart);
       WebServer->on("/fwlink", HandleRoot);  // Microsoft captive portal. Maybe not needed. Might be handled by notFound handler.
