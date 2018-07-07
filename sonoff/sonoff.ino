@@ -340,11 +340,9 @@ void SetDevicePower(power_t rpower, int source)
   }
   //stb mod
   if (Settings.flag.interlock && !Settings.flag3.paired_interlock) {
-  //end
       power_t mask = 1;
       uint8_t count = 0;
       for (byte i = 0; i < devices_present; i++) {
-        //StB mod
         // only count ON relays that fit to the MASK
         if ((rpower & mask) && (mask & Settings.interlock_mask)) count++;
         mask <<= 1;
@@ -354,6 +352,7 @@ void SetDevicePower(power_t rpower, int source)
         rpower = power;
       }
   }
+  //end
 
   XdrvSetPower(rpower);
 
@@ -1321,11 +1320,13 @@ void ExecuteCommandPower(byte device, byte state, int source)
           delay(500); //quite long delay to ensure physical switch off of the relay
         }
       } else {
-        for (byte i = 0; i < devices_present; i++) {
-          power_t imask = 1 << i;
-          //stb mod
-          if ((power & imask) && (mask != imask) && (imask & Settings.interlock_mask)) ExecuteCommandPower(i +1, POWER_OFF, SRC_IGNORE);
-          //end
+        if (mask & Settings.interlock_mask) {
+          for (byte i = 0; i < devices_present; i++) {
+            power_t imask = 1 << i;
+            //stb mod
+            if ((power & imask) && (mask != imask) && (imask & Settings.interlock_mask) ) ExecuteCommandPower(i +1, POWER_OFF, SRC_IGNORE);
+            //end
+          }
         }
       }
       //end
