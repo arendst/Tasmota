@@ -55,9 +55,9 @@ void Schutter_Update_Position()
   if (Shutter_Direction != 0) {
     Shutter_Real_Position = Shutter_Real_Position + (Shutter_Direction > 0 ? Shutter_Open_Velocity : -Shutter_Close_Velocity);
     if (Shutter_Real_Position * Shutter_Direction > Shutter_Target_Position * Shutter_Direction || Shutter_Real_Position < Shutter_Close_Velocity) {
-      snprintf_P(log_data, sizeof(log_data), PSTR("NEW Shutter: Stopped Position %d"), Shutter_Real_Position);
+      snprintf_P(log_data, sizeof(log_data), PSTR("NEW Shutter: Stopped Position %d, relay: %d, pulsetimer: %d"), Shutter_Real_Position, (Settings.shutter_startrelay + (Shutter_Direction == 1 ? 0 : 1) -1), Settings.pulse_timer[(Settings.shutter_startrelay + (Shutter_Direction == 1 ? 0 : 1) -1)]);
       AddLog(LOG_LEVEL_DEBUG);
-      if (Settings.flag3.momentary_switch) {
+      if (Settings.pulse_timer[(Settings.shutter_startrelay + (Shutter_Direction == 1 ? 0 : 1) -1)] > 0) {
         ExecuteCommandPower(Settings.shutter_startrelay + (Shutter_Direction == 1 ? 0 : 1), 1, SRC_SHUTTER);
       } else {
         ExecuteCommandPower(Settings.shutter_startrelay + (Shutter_Direction == 1 ? 0 : 1), 0, SRC_SHUTTER);
