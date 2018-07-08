@@ -1323,9 +1323,7 @@ void ExecuteCommandPower(byte device, byte state, int source)
         if (mask & Settings.interlock_mask) {
           for (byte i = 0; i < devices_present; i++) {
             power_t imask = 1 << i;
-            //stb mod
             if ((power & imask) && (mask != imask) && (imask & Settings.interlock_mask) ) ExecuteCommandPower(i +1, POWER_OFF, SRC_IGNORE);
-            //end
           }
         }
       }
