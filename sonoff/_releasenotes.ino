@@ -1,4 +1,10 @@
 /* 6.1.0a
+ * Fix DHT driver mixing values for different sensors (#1797)
+ * Change DHT driver to provide better instant results and add decimals to DHT11 (#3164)
+ * Change DS18x20 driver to provide better instant results (#3169)
+ * Change DS18B20 driver to provide better instant results
+ * Remove TSL2561 debug message and update library (#2415)
+ * Change SHT1x sensor initialization from pre-teleperiod to once during restart to fix I2C interference
  * Add wifi and mqtt status led blinkyblinky to be disabled by SetOption31 1. Does not work when LedPower is On (deliberate) (#871, #2230, #3114, #3155)
  * Add experimental (untested) TM1638 switch support (#2226)
  * Add support for APDS9960 proximity sensor (#3051)
