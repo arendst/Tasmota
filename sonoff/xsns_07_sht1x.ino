@@ -231,7 +231,8 @@ boolean Xsns07(byte function)
 
   if (i2c_flg) {
     switch (function) {
-      case FUNC_PREP_BEFORE_TELEPERIOD:
+//      case FUNC_PREP_BEFORE_TELEPERIOD:  // As this is not a real I2C device it may interfere with other sensors
+      case FUNC_INIT:                      // Move detection to restart only removing interference
         ShtDetect();
         break;
       case FUNC_JSON_APPEND:
