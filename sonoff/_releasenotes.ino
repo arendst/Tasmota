@@ -1,4 +1,5 @@
 /* 6.1.0a
+ * Fix DHT driver mixing values for different sensors (#1797)
  * Change DHT driver to provide better instant results and add decimals to DHT11 (#3164)
  * Change DS18x20 driver to provide better instant results (#3169)
  * Change DS18B20 driver to provide better instant results

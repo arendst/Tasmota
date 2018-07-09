@@ -28,7 +28,6 @@
 
 #define DHT_MAX_SENSORS  3
 #define DHT_MAX_RETRY    8
-#define MIN_INTERVAL     2000
 
 uint32_t dht_max_cycles;
 uint8_t dht_data[5];
@@ -63,15 +62,10 @@ int32_t DhtExpectPulse(byte sensor, bool level)
   return count;
 }
 
-void DhtRead(byte sensor)
+boolean DhtRead(byte sensor)
 {
   int32_t cycles[80];
-  uint32_t currenttime = millis();
-
-  if ((currenttime - Dht[sensor].lastreadtime) < MIN_INTERVAL) {
-    return;
-  }
-  Dht[sensor].lastreadtime = currenttime;
+  uint8_t error = 0;
 
   dht_data[0] = dht_data[1] = dht_data[2] = dht_data[3] = dht_data[4] = 0;
 
@@ -99,27 +93,27 @@ void DhtRead(byte sensor)
   delayMicroseconds(10);
   if (-1 == DhtExpectPulse(sensor, LOW)) {
     AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DHT D_TIMEOUT_WAITING_FOR " " D_START_SIGNAL_LOW " " D_PULSE));
-    Dht[sensor].lastresult++;
-    return;
+    error = 1;
   }
-  if (-1 == DhtExpectPulse(sensor, HIGH)) {
+  else if (-1 == DhtExpectPulse(sensor, HIGH)) {
     AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DHT D_TIMEOUT_WAITING_FOR " " D_START_SIGNAL_HIGH " " D_PULSE));
-    Dht[sensor].lastresult++;
-    return;
+    error = 1;
   }
-  for (int i = 0; i < 80; i += 2) {
-    cycles[i]   = DhtExpectPulse(sensor, LOW);
-    cycles[i+1] = DhtExpectPulse(sensor, HIGH);
+  else {
+    for (int i = 0; i < 80; i += 2) {
+      cycles[i]   = DhtExpectPulse(sensor, LOW);
+      cycles[i+1] = DhtExpectPulse(sensor, HIGH);
+    }
   }
   interrupts();
+  if (error) { return false; }
 
   for (int i = 0; i < 40; ++i) {
     int32_t lowCycles  = cycles[2*i];
     int32_t highCycles = cycles[2*i+1];
     if ((-1 == lowCycles) || (-1 == highCycles)) {
       AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DHT D_TIMEOUT_WAITING_FOR " " D_PULSE));
-      Dht[sensor].lastresult++;
-      return;
+      return false;
     }
     dht_data[i/8] <<= 1;
     if (highCycles > lowCycles) {
@@ -131,12 +125,12 @@ void DhtRead(byte sensor)
     dht_data[0], dht_data[1], dht_data[2], dht_data[3], dht_data[4], (dht_data[0] + dht_data[1] + dht_data[2] + dht_data[3]) & 0xFF);
   AddLog(LOG_LEVEL_DEBUG);
 
-  if (dht_data[4] == ((dht_data[0] + dht_data[1] + dht_data[2] + dht_data[3]) & 0xFF)) {
-    Dht[sensor].lastresult = 0;
-  } else {
+  if (dht_data[4] != ((dht_data[0] + dht_data[1] + dht_data[2] + dht_data[3]) & 0xFF)) {
     AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DHT D_CHECKSUM_FAILURE));
-    Dht[sensor].lastresult++;
+    return false;
   }
+
+  return true;
 }
 
 void DhtReadTempHum(byte sensor)
@@ -145,8 +139,7 @@ void DhtReadTempHum(byte sensor)
     Dht[sensor].t = NAN;
     Dht[sensor].h = NAN;
   }
-  DhtRead(sensor);
-  if (!Dht[sensor].lastresult) {
+  if (DhtRead(sensor)) {
     switch (Dht[sensor].type) {
     case GPIO_DHT11:
       Dht[sensor].h = dht_data[0];
@@ -162,6 +155,9 @@ void DhtReadTempHum(byte sensor)
       break;
     }
     Dht[sensor].t = ConvertTemp(Dht[sensor].t);
+    Dht[sensor].lastresult = 0;
+  } else {
+    Dht[sensor].lastresult++;
   }
 }
 
@@ -211,7 +207,6 @@ void DhtShow(boolean json)
   char temperature[10];
   char humidity[10];
 
-  byte dsxflg = 0;
   for (byte i = 0; i < dht_sensors; i++) {
     dtostrfd(Dht[i].t, Settings.flag2.temperature_resolution, temperature);
     dtostrfd(Dht[i].h, Settings.flag2.humidity_resolution, humidity);
@@ -219,19 +214,16 @@ void DhtShow(boolean json)
     if (json) {
       snprintf_P(mqtt_data, sizeof(mqtt_data), JSON_SNS_TEMPHUM, mqtt_data, Dht[i].stype, temperature, humidity);
 #ifdef USE_DOMOTICZ
-      if ((0 == tele_period) && !dsxflg) {
+      if ((0 == tele_period) && (0 == i)) {
         DomoticzTempHumSensor(temperature, humidity);
-        dsxflg++;
       }
 #endif  // USE_DOMOTICZ
-
 #ifdef USE_KNX
-      if (0 == tele_period) {
+      if ((0 == tele_period) && (0 == i)) {
         KnxSensor(KNX_TEMPERATURE, Dht[i].t);
         KnxSensor(KNX_HUMIDITY, Dht[i].h);
       }
 #endif  // USE_KNX
-
 #ifdef USE_WEBSERVER
     } else {
       snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TEMP, mqtt_data, Dht[i].stype, temperature, TempUnit());
