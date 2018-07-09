@@ -22,11 +22,22 @@ This file is part of the Joba_Tsl2561 Library.
 
 #include <Tsl2561.h>
 
+// to mimic Serial.printf() of esp8266 core for other platforms
+char *format( const char *fmt, ... ) {
+  static char buf[128];
+  va_list arg;
+  va_start(arg, fmt);
+  vsnprintf(buf, sizeof(buf), fmt, arg);
+  buf[sizeof(buf)-1] = '\0';
+  va_end(arg);
+  return buf;
+}
+
 Tsl2561 Tsl(Wire);
 
 void showError( Tsl2561 &tsl ) {
   Tsl2561::status_t status = tsl.status();
-  Serial.printf("Error was %u: ", status);
+  Serial.print(format("Error was %u: ", status));
   switch( status ) {
     case Tsl2561::ERR_OK: Serial.println("None"); break;
     case Tsl2561::ERR_RW: Serial.println("Read/Write"); break;
@@ -40,7 +51,7 @@ void showError( Tsl2561 &tsl ) {
 void testSensitivity( Tsl2561 &tsl, bool newGain, Tsl2561::exposure_t newExp ) {
   if( tsl.on() ) {
     uint32_t start = millis();
-    Serial.printf("Chip powered on at %u\n", start);
+    Serial.print(format("Chip powered on at %lu\n", (unsigned long)start));
 
     bool chipGain;
     Tsl2561::exposure_t chipExp;
@@ -58,7 +69,7 @@ void testSensitivity( Tsl2561 &tsl, bool newGain, Tsl2561::exposure_t newExp ) {
     bool check = true;
     if( change ) {
       if( tsl.setSensitivity(newGain, newExp) ) {
-        Serial.printf("New gain = %d, exposure = 0x%02x\n", newGain, newExp);
+        Serial.print(format("New gain = %d, exposure = 0x%02x\n", newGain, newExp));
       }
       else {
         check = false;
@@ -69,6 +80,7 @@ void testSensitivity( Tsl2561 &tsl, bool newGain, Tsl2561::exposure_t newExp ) {
 
     if( check ) {
       uint16_t ir, full = 0;
+
       while( !full && millis() - start < 1000 ) {
         if( !tsl.fullLuminosity(full) ) {
           Serial.print("Check full luminosity failed. ");
@@ -89,7 +101,7 @@ void testSensitivity( Tsl2561 &tsl, bool newGain, Tsl2561::exposure_t newExp ) {
         Serial.println("No luminosity reading after 1s. Too dark?");
       }
       else {
-        Serial.printf("Got luminosity after %d ms. Full spectrum is %d and IR only is %d\n", millis() - start, full, ir);
+        Serial.print(format("Got luminosity after %lu ms. Full spectrum is %u and IR only is %u\n", (unsigned long)millis() - start, full, ir));
       }
     }
 
@@ -107,7 +119,7 @@ void testSensitivity( Tsl2561 &tsl, bool newGain, Tsl2561::exposure_t newExp ) {
 bool testPackage( Tsl2561 &tsl ) {
   uint8_t id;
   if( tsl.id(id) ) {
-    Serial.printf("Chip has type %02x and revision %x\n", Tsl2561::type(id), Tsl2561::revision(id) );
+    Serial.print(format("Chip has type %02x and revision %x\n", Tsl2561::type(id), Tsl2561::revision(id)));
     if( Tsl2561::packageT_FN_CL(id) ) {
       Serial.println("Chip is a T, FN or CL type package");
     }
@@ -128,7 +140,7 @@ bool testPackage( Tsl2561 &tsl ) {
 
 void test( Tsl2561 &tsl ) {
   bool ok = tsl.available();
-  Serial.printf("\nTesting Tsl2561 at address %02x: %sfound\n", tsl.address(), ok ? "" : "NOT ");
+  Serial.print(format("\nTesting Tsl2561 at address %02x: %sfound\n", tsl.address(), ok ? "" : "NOT "));
   if( ok ) {
     if( testPackage(tsl) ) {
       testSensitivity(tsl, Tsl2561::GAIN_OFF, Tsl2561::EXP_402);
@@ -160,4 +172,3 @@ void loop() {
   Serial.println("\nNext test in 5s\n");
   delay(5000);
 }
-

@@ -21,6 +21,17 @@ This file is part of the Joba_Tsl2561 Library.
 
 #include <Tsl2561Util.h>
 
+// to mimic Serial.printf() of esp8266 core for other platforms
+char *format( const char *fmt, ... ) {
+  static char buf[128];
+  va_list arg;
+  va_start(arg, fmt);
+  vsnprintf(buf, sizeof(buf), fmt, arg);
+  buf[sizeof(buf)-1] = '\0';
+  va_end(arg);
+  return buf;
+}
+
 Tsl2561 Tsl(Wire);
 uint8_t id;
 
@@ -35,31 +46,30 @@ void setup() {
 }
 
 void loop() {
-  uint16_t scaledFull = ~0, scaledIr = ~0;
-  uint32_t full = ~0, ir = ~0, milliLux = ~0;
+  uint16_t scaledFull = 0xffff, scaledIr = 0xffff;
+  uint32_t full = 0xffffffff, ir = 0xffffffff, milliLux = 0xffffffff;
   bool gain = false;
   Tsl2561::exposure_t exposure = Tsl2561::EXP_OFF;
 
   if( Tsl2561Util::autoGain(Tsl, gain, exposure, scaledFull, scaledIr) ) {
     if( Tsl2561Util::normalizedLuminosity(gain, exposure, full = scaledFull, ir = scaledIr) ) {
-      if( Tsl2561Util::milliLux(full, ir, milliLux, Tsl2561::packageCS(id)) ) {
-        Serial.printf("Tsl2561 addr: 0x%02x, id: 0x%02x, sfull: %5u, sir: %5u, full: %5u, ir: %5u, gain: %d, exp: %d, lux: %5u.%03u\n", 
-          Tsl.address(), id, scaledFull, scaledIr, full, ir, gain, exposure, milliLux/1000, milliLux%1000);
+      if( Tsl2561Util::milliLux(full, ir, milliLux, Tsl2561::packageCS(id), 5) ) {
+        Serial.print(format("Tsl2561 addr: 0x%02x, id: 0x%02x, sfull: %5u, sir: %5u, full: %7lu, ir: %7lu, gain: %d, exp: %d, lux: %5lu.%03lu\n",
+          Tsl.address(), id, scaledFull, scaledIr, (unsigned long)full, (unsigned long)ir, gain, exposure, (unsigned long)milliLux/1000, (unsigned long)milliLux%1000));
       }
       else {
-        Serial.printf("Tsl2561Util::milliLux(full=%u, ir=%u) error\n", full, ir);
+        Serial.print(format("Tsl2561Util::milliLux(full=%lu, ir=%lu) error\n", (unsigned long)full, (unsigned long)ir));
       }
     }
     else {
-      Serial.printf("Tsl2561Util::normalizedLuminosity(gain=%u, exposure=%u, sfull=%u, sir=%u, full=%u, ir=%u) error\n", 
-        gain, exposure, scaledFull, scaledIr, full, ir);
+      Serial.print(format("Tsl2561Util::normalizedLuminosity(gain=%u, exposure=%u, sfull=%u, sir=%u, full=%lu, ir=%lu) error\n",
+        gain, exposure, scaledFull, scaledIr, (unsigned long)full, (unsigned long)ir));
     }
   }
   else {
-    Serial.printf("Tsl2561Util::autoGain(gain=%u, exposure=%u, sfull=%u, sir=%u) error\n", 
-      gain, exposure, scaledFull, scaledIr);
+    Serial.print(format("Tsl2561Util::autoGain(gain=%u, exposure=%u, sfull=%u, sir=%u) error\n",
+      gain, exposure, scaledFull, scaledIr));
   }
 
   delay(1000);
 }
-
