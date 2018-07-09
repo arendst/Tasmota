@@ -139,45 +139,30 @@ void DhtRead(byte sensor)
   }
 }
 
-boolean DhtReadTempHum(byte sensor, float &t, float &h)
+void DhtReadTempHum(byte sensor)
 {
-  if (NAN == Dht[sensor].h) {
-    t = NAN;
-    h = NAN;
-  } else {
-    if (Dht[sensor].lastresult > DHT_MAX_RETRY) {  // Reset after 8 misses
-      Dht[sensor].t = NAN;
-      Dht[sensor].h = NAN;
-    }
-    t = Dht[sensor].t;
-    h = Dht[sensor].h;
+  if ((NAN == Dht[sensor].h) || (Dht[sensor].lastresult > DHT_MAX_RETRY)) {  // Reset after 8 misses
+    Dht[sensor].t = NAN;
+    Dht[sensor].h = NAN;
   }
-
   DhtRead(sensor);
   if (!Dht[sensor].lastresult) {
     switch (Dht[sensor].type) {
     case GPIO_DHT11:
-      h = dht_data[0];
-      t = dht_data[2];
+      Dht[sensor].h = dht_data[0];
+      Dht[sensor].t = dht_data[2] + ((float)dht_data[3] * 0.1f);  // Issue #3164
       break;
     case GPIO_DHT22:
     case GPIO_SI7021:
-      h = ((dht_data[0] << 8) | dht_data[1]) * 0.1;
-      t = (((dht_data[2] & 0x7F) << 8 ) | dht_data[3]) * 0.1;
+      Dht[sensor].h = ((dht_data[0] << 8) | dht_data[1]) * 0.1;
+      Dht[sensor].t = (((dht_data[2] & 0x7F) << 8 ) | dht_data[3]) * 0.1;
       if (dht_data[2] & 0x80) {
-        t *= -1;
+        Dht[sensor].t *= -1;
       }
       break;
     }
-    t = ConvertTemp(t);
-    if (!isnan(t)) {
-      Dht[sensor].t = t;
-    }
-    if (!isnan(h)) {
-      Dht[sensor].h = h;
-    }
+    Dht[sensor].t = ConvertTemp(Dht[sensor].t);
   }
-  return (!isnan(t) && !isnan(h));
 }
 
 boolean DhtSetup(byte pin, byte type)
@@ -210,6 +195,17 @@ void DhtInit()
   }
 }
 
+void DhtEverySecond()
+{
+  if (uptime &1) {
+    DhtReadPrep();
+  } else {
+    for (byte i = 0; i < dht_sensors; i++) {
+      DhtReadTempHum(i);
+    }
+  }
+}
+
 void DhtShow(boolean json)
 {
   char temperature[10];
@@ -217,34 +213,30 @@ void DhtShow(boolean json)
 
   byte dsxflg = 0;
   for (byte i = 0; i < dht_sensors; i++) {
-    float t = NAN;
-    float h = NAN;
-    if (DhtReadTempHum(i, t, h)) {     // Read temperature
-      dtostrfd(t, Settings.flag2.temperature_resolution, temperature);
-      dtostrfd(h, Settings.flag2.humidity_resolution, humidity);
+    dtostrfd(Dht[i].t, Settings.flag2.temperature_resolution, temperature);
+    dtostrfd(Dht[i].h, Settings.flag2.humidity_resolution, humidity);
 
-      if (json) {
-        snprintf_P(mqtt_data, sizeof(mqtt_data), JSON_SNS_TEMPHUM, mqtt_data, Dht[i].stype, temperature, humidity);
+    if (json) {
+      snprintf_P(mqtt_data, sizeof(mqtt_data), JSON_SNS_TEMPHUM, mqtt_data, Dht[i].stype, temperature, humidity);
 #ifdef USE_DOMOTICZ
-        if ((0 == tele_period) && !dsxflg) {
-          DomoticzTempHumSensor(temperature, humidity);
-          dsxflg++;
-        }
+      if ((0 == tele_period) && !dsxflg) {
+        DomoticzTempHumSensor(temperature, humidity);
+        dsxflg++;
+      }
 #endif  // USE_DOMOTICZ
 
 #ifdef USE_KNX
-        if (0 == tele_period) {
-          KnxSensor(KNX_TEMPERATURE, t);
-          KnxSensor(KNX_HUMIDITY, h);
-        }
+      if (0 == tele_period) {
+        KnxSensor(KNX_TEMPERATURE, Dht[i].t);
+        KnxSensor(KNX_HUMIDITY, Dht[i].h);
+      }
 #endif  // USE_KNX
 
 #ifdef USE_WEBSERVER
-      } else {
-        snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TEMP, mqtt_data, Dht[i].stype, temperature, TempUnit());
-        snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_HUM, mqtt_data, Dht[i].stype, humidity);
+    } else {
+      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TEMP, mqtt_data, Dht[i].stype, temperature, TempUnit());
+      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_HUM, mqtt_data, Dht[i].stype, humidity);
 #endif  // USE_WEBSERVER
-      }
     }
   }
 }
@@ -264,8 +256,8 @@ boolean Xsns06(byte function)
       case FUNC_INIT:
         DhtInit();
         break;
-      case FUNC_PREP_BEFORE_TELEPERIOD:
-        DhtReadPrep();
+      case FUNC_EVERY_SECOND:
+        DhtEverySecond();
         break;
       case FUNC_JSON_APPEND:
         DhtShow(1);

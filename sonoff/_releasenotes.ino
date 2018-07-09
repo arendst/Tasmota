@@ -1,4 +1,5 @@
 /* 6.1.0a
+ * Change DHT driver to provide better instant results and add decimals to DHT11 (#3164)
  * Change DS18x20 driver to provide better instant results (#3169)
  * Change DS18B20 driver to provide better instant results
  * Remove TSL2561 debug message and update library (#2415)

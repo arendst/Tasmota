@@ -36,21 +36,18 @@
 #define DS18X20_MAX_MISS     5
 #define DS18X20_MAX_SENSORS  8
 
-typedef struct DS18X20SENSORS {
-  uint8_t address[8];
-  uint8_t index;
-  uint8_t result;
-  float   temperature;
-} Ds18x20Sensor;
-
 const char kDs18x20Types[] PROGMEM = "DS18x20|DS18S20|DS1822|DS18B20|MAX31850";
 
 uint8_t ds18x20_chipids[] = { 0, DS18S20_CHIPID, DS1822_CHIPID, DS18B20_CHIPID, MAX31850_CHIPID };
 
-Ds18x20Sensor ds18x20_sensor[DS18X20_MAX_SENSORS];
+struct DS18X20STRUCT {
+  uint8_t address[8];
+  uint8_t index;
+  uint8_t result;
+  float   temperature;
+} ds18x20_sensor[DS18X20_MAX_SENSORS];
 uint8_t ds18x20_sensors = 0;
 uint8_t ds18x20_pin = 0;
-uint8_t ds18x20_second = 0;
 char ds18x20_types[9];
 
 /*********************************************************************************************\
@@ -360,8 +357,7 @@ void Ds18x20Read(uint8_t sensor)
 
 void Ds18x20EverySecond()
 {
-  ds18x20_second++;
-  if (ds18x20_second &1) {
+  if (uptime &1) {
     Ds18x20Convert();          // Start conversion, takes up to one second
   } else {
     for (uint8_t i = 0; i < ds18x20_sensors; i++) {

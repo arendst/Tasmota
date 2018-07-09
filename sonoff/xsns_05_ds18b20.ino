@@ -29,9 +29,8 @@
 #define DS18B20_MAX_MISS     5
 
 float ds18b20_temperature = 0;
-uint16_t ds18b20_last_result = 0;
+uint8_t ds18b20_last_result = 0;
 uint8_t ds18x20_pin = 0;
-uint8_t ds18b20_second = 0;
 
 /*********************************************************************************************\
  * Embedded stripped and tuned OneWire library
@@ -175,8 +174,7 @@ void Ds18b20Read()
 void Ds18b20EverySecond()
 {
   ds18x20_pin = pin[GPIO_DSB];
-  ds18b20_second++;
-  if (ds18b20_second &1) {
+  if (uptime &1) {
     Ds18b20Convert();          // Start conversion, takes up to one second
   } else {
     Ds18b20Read();             // Read temperature
