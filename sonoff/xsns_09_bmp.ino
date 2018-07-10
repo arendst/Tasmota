@@ -537,6 +537,12 @@ void BmpShow(boolean json)
     dtostrfd(g, 2, gas_resistance);
 #endif  // USE_BME680
 
+
+#ifdef USE_CCS811
+    glob_humidity=h;
+    glob_temperature=(t*4);
+#endif
+
     if (json) {
       char json_humidity[40];
       snprintf_P(json_humidity, sizeof(json_humidity), PSTR(",\"" D_JSON_HUMIDITY "\":%s"), humidity);

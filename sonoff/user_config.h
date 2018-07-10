@@ -36,7 +36,7 @@
  * Users are advised to use the user_config_override.h file for most changes.
 \*********************************************************************************************/
 
-//#define USE_CONFIG_OVERRIDE                      // Uncomment to use user_config_override.h file. See README.md
+#define USE_CONFIG_OVERRIDE                      // Uncomment to use user_config_override.h file. See README.md
 
 /*********************************************************************************************\
  * SECTION 1
