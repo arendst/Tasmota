@@ -324,16 +324,14 @@ struct SYSCFG {
   byte          knx_CB_param[MAX_KNX_CB];  // 6EC  Type of Output (set relay, toggle relay, reply sensor value)
   Mcp230xxCfg   mcp230xx_config[16];       // 6F6
 
-<<<<<<< HEAD
+
 #ifdef USE_LEDBAR
   sint16_t      ledbar_range;
   uint8_t       ledbar_steps;
 #endif
 
   byte          free_6f6[214];             // 6F6
-=======
-  byte          free_6f6[200];             // 706
->>>>>>> arendst/development
+
 
   char          mems[RULES_MAX_MEMS][10];  // 7CE
                                            // 800 Full - no more free locations

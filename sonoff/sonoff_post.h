@@ -60,7 +60,7 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 
 #ifdef USE_ALL_SENSORS
 
-#define USE_ADC_VCC                           // Display Vcc in Power status. Disable for use as Analog input on selected devices
+//#define USE_ADC_VCC                           // Display Vcc in Power status. Disable for use as Analog input on selected devices
 #define USE_DS18x20                           // For more than one DS18x20 sensors with id sort, single scan and read retry (+1k3 code)
 //#define USE_DS18x20_LEGACY                     // For more than one DS18x20 sensors with dynamic scan using library OneWire (+1k5 code)
 #define USE_I2C                               // I2C using library wire (+10k code, 0k2 mem, 124 iram)
