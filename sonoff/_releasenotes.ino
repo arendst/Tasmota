@@ -1,4 +1,5 @@
 /* 6.1.0a
+ * Add read sensor retry to DS18B20, DS18x20, DHT, SHT1X and HTU21
  * Change SHT1x driver to provide better instant results
  * Fix DHT driver mixing values for different sensors (#1797)
  * Change DHT driver to provide better instant results and add decimals to DHT11 (#3164)
