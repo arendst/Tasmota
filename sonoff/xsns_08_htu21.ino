@@ -54,79 +54,7 @@
 
 #define HTU21_CRC8_POLYNOM  0x13100
 
-#define SHT21_ADDRESS 0x40  //I2C address for the sensor
-
-#define TRIGGER_TEMP_MEASURE_NOHOLD  0xF3
-#define TRIGGER_HUMD_MEASURE_NOHOLD  0xF5
-
-
-// SHT21 by Markus Ulsass, Hamburg, Germany => https://github.com/markbeee/SHT21
-
-class SHT21 {
-
-public:
-  SHT21();
-
-  void begin();
-  float getHumidity(void);
-  float getTemperature(void);
-
-private:
-
-  uint16_t readSHT21(uint8_t command);
-
-};
-
-
-SHT21::SHT21 () {}
-
-void SHT21::begin(void){
-
-		Wire.begin();
-
-	}
-
-float SHT21::getHumidity(void)
-
-{
-	return (-6.0 + 125.0 / 65536.0 * (float)(readSHT21(TRIGGER_HUMD_MEASURE_NOHOLD)));
-}
-
-float SHT21::getTemperature(void)
-{
-	return (-46.85 + 175.72 / 65536.0 * (float)(readSHT21(TRIGGER_TEMP_MEASURE_NOHOLD)));
-}
-
-uint16_t SHT21::readSHT21(uint8_t command)
-{
-    uint16_t result;
-
-    Wire.beginTransmission(SHT21_ADDRESS);
-    Wire.write(command);
-    Wire.endTransmission();
-
-    if (command==TRIGGER_TEMP_MEASURE_NOHOLD) delay(90);
-    else delay(35);
-
-    Wire.requestFrom(SHT21_ADDRESS, 3);
-    if (Wire.available()<3) {
-      return 0;
-    }
-    /*
-    while(Wire.available() < 3) {
-      delay(1);
-    }*/
-
-    // return result
-    result = ((Wire.read()) << 8);
-    result += Wire.read();
-	  result &= ~0x0003;   // clear two low bits (status bits)
-    return result;
-}
-
-SHT21 SHT21;
-
-const char kHtuTypes[] PROGMEM = "HTU21|SI7013|SI7020|SI7021|SHT21";
+const char kHtuTypes[] PROGMEM = "HTU21|SI7013|SI7020|SI7021|T/RH?";
 
 uint8_t htu_address;
 uint8_t htu_type = 0;
@@ -262,8 +190,6 @@ float HtuReadTemperature()
     sensorval |= Wire.read();             // LSB
     checksum = Wire.read();
   }
-
-
   if (HtuCheckCrc8(sensorval) != checksum) {
     return 0.0; // Checksum mismatch
   }
@@ -311,11 +237,9 @@ void HtuDetect()
         delay_humidity = 23;
         break;
       default:
-        htu_type=255;
         index = 4;
-        delay_temp = 85;
-        delay_humidity = 35;
-        SHT21.begin();
+        delay_temp = 50;
+        delay_humidity = 23;
     }
     GetTextIndexed(htu_types, sizeof(htu_types), index, kHtuTypes);
     snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, htu_types, htu_address);
@@ -329,22 +253,9 @@ void HtuShow(boolean json)
     char temperature[10];
     char humidity[10];
 
-    float t,h;
-
-    if (htu_type==255) {
-      t = SHT21.getTemperature();
-      h = SHT21.getHumidity();
-    } else {
-      t = HtuReadTemperature();
-      h = HtuReadHumidity();
-      h = HtuCompensatedHumidity(h, t);
-    }
-
-#ifdef USE_CCS811
-    glob_humidity=h;
-    glob_temperature=(t*4);
-#endif
-
+    float t = HtuReadTemperature();
+    float h = HtuReadHumidity();
+    h = HtuCompensatedHumidity(h, t);
     dtostrfd(t, Settings.flag2.temperature_resolution, temperature);
     dtostrfd(h, Settings.flag2.humidity_resolution, humidity);
 
@@ -400,3 +311,4 @@ boolean Xsns08(byte function)
 
 #endif  // USE_HTU
 #endif  // USE_I2C
+

@@ -1,5 +1,5 @@
 /*
-  xdrv_01_light.ino - PWM, WS2812 and sonoff led support for Sonoff-Tasmota
+  xdrv_04_light.ino - PWM, WS2812 and sonoff led support for Sonoff-Tasmota
 
   Copyright (C) 2018  Theo Arends
 
@@ -230,7 +230,7 @@ void AriluxRfHandler()
         }
       }
       if (strlen(command)) {
-        ExecuteCommand(command);
+        ExecuteCommand(command, SRC_LIGHT);
       }
     }
   }
@@ -529,7 +529,7 @@ char* LightGetColor(uint8_t type, char* scolor)
 void LightPowerOn()
 {
   if (Settings.light_dimmer && !(light_power)) {
-    ExecuteCommandPower(light_device, POWER_ON);
+    ExecuteCommandPower(light_device, POWER_ON, SRC_LIGHT);
   }
 }
 
@@ -545,7 +545,7 @@ void LightState(uint8_t append)
   } else {
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{"));
   }
-  GetPowerDevice(scommand, light_device, sizeof(scommand));
+  GetPowerDevice(scommand, light_device, sizeof(scommand), Settings.flag.device_index_enable);
   snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s\"%s\":\"%s\",\"" D_CMND_DIMMER "\":%d"),
     mqtt_data, scommand, GetStateText(light_power), Settings.light_dimmer);
   if (light_subtype > LST_SINGLE) {
@@ -585,11 +585,11 @@ void LightPreparePower()
 {
   if (Settings.light_dimmer && !(light_power)) {
     if (!Settings.flag.not_power_linked) {
-      ExecuteCommandPower(light_device, POWER_ON_NO_STATE);
+      ExecuteCommandPower(light_device, POWER_ON_NO_STATE, SRC_LIGHT);
     }
   }
   else if (!Settings.light_dimmer && light_power) {
-    ExecuteCommandPower(light_device, POWER_OFF_NO_STATE);
+    ExecuteCommandPower(light_device, POWER_OFF_NO_STATE, SRC_LIGHT);
   }
 #ifdef USE_DOMOTICZ
   DomoticzUpdatePowerState(light_device);
@@ -1034,7 +1034,10 @@ boolean LightCommand()
   char option = (1 == XdrvMailbox.data_len) ? XdrvMailbox.data[0] : '\0';
 
   int command_code = GetCommandCode(command, sizeof(command), XdrvMailbox.topic, kLightCommands);
-  if ((CMND_COLOR == command_code) && (light_subtype > LST_SINGLE) && (XdrvMailbox.index > 0) && (XdrvMailbox.index <= 6)) {
+  if (-1 == command_code) {
+    serviced = false;  // Unknown command
+  }
+  else if ((CMND_COLOR == command_code) && (light_subtype > LST_SINGLE) && (XdrvMailbox.index > 0) && (XdrvMailbox.index <= 6)) {
     if (XdrvMailbox.data_len > 0) {
       valid_entry = LightColorEntry(XdrvMailbox.data, XdrvMailbox.data_len);
       if (valid_entry) {
@@ -1115,6 +1118,7 @@ boolean LightCommand()
     if (XdrvMailbox.data_len > 0) {
       char *p;
       uint16_t idx = XdrvMailbox.index;
+      Ws2812ForceSuspend();
       for (char *color = strtok_r(XdrvMailbox.data, " ", &p); color; color = strtok_r(NULL, " ", &p)) {
         if (LightColorEntry(color, strlen(color))) {
           Ws2812SetColor(idx, light_entry_color[0], light_entry_color[1], light_entry_color[2], light_entry_color[3]);
@@ -1124,6 +1128,8 @@ boolean LightCommand()
           break;
         }
       }
+
+      Ws2812ForceUpdate();
     }
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, XdrvMailbox.index, Ws2812GetColor(XdrvMailbox.index, scolor));
   }
@@ -1272,9 +1278,11 @@ boolean LightCommand()
   else {
     serviced = false;  // Unknown command
   }
+
   if (coldim) {
     LightPreparePower();
   }
+
   return serviced;
 }
 
@@ -1282,15 +1290,15 @@ boolean LightCommand()
  * Interface
 \*********************************************************************************************/
 
-#define XDRV_01
+#define XDRV_04
 
-boolean Xdrv01(byte function)
+boolean Xdrv04(byte function)
 {
   boolean result = false;
 
   if (light_type) {
     switch (function) {
-      case FUNC_INIT:
+      case FUNC_PRE_INIT:
         LightInit();
         break;
       case FUNC_EVERY_50_MSECOND:

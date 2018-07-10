@@ -192,6 +192,11 @@ void Ds18x20Show(boolean json)
           DomoticzSensor(DZ_TEMP, temperature);
         }
 #endif  // USE_DOMOTICZ
+#ifdef USE_KNX
+        if ((0 == tele_period) && (1 == dsxflg)) {
+          KnxSensor(KNX_TEMPERATURE, t);
+        }
+#endif  // USE_KNX
 #ifdef USE_WEBSERVER
       } else {
         snprintf_P(stemp, sizeof(stemp), PSTR("%s-%d"), ds18x20_types, i +1);

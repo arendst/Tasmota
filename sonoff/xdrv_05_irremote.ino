@@ -1,5 +1,5 @@
 /*
-  xdrv_02_irremote.ino - infra red support for Sonoff-Tasmota
+  xdrv_05_irremote.ino - infra red support for Sonoff-Tasmota
 
   Copyright (C) 2018  Heiko Krupp, Lazar Obradovic and Theo Arends
 
@@ -89,6 +89,7 @@ void IrReceiveInit(void)
 void IrReceiveCheck()
 {
   char sirtype[14];  // Max is AIWA_RC_T501
+  char stemp[16];
   int8_t iridx = 0;
 
   decode_results results;
@@ -107,9 +108,17 @@ void IrReceiveCheck()
       if ((iridx < 0) || (iridx > 14)) {
         iridx = 0;
       }
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_IRRECEIVED "\":{\"" D_JSON_IR_PROTOCOL "\":\"%s\",\"" D_JSON_IR_BITS "\":%d,\"" D_JSON_IR_DATA "\":\"%lX\"}}"),
-        GetTextIndexed(sirtype, sizeof(sirtype), iridx, kIrRemoteProtocols), results.bits, (uint32_t)results.value);
+
+      if (Settings.flag.ir_receive_decimal) {
+        snprintf_P(stemp, sizeof(stemp), PSTR("%u"), (uint32_t)results.value);
+      } else {
+        snprintf_P(stemp, sizeof(stemp), PSTR("\"%lX\""), (uint32_t)results.value);
+      }
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_IRRECEIVED "\":{\"" D_JSON_IR_PROTOCOL "\":\"%s\",\"" D_JSON_IR_BITS "\":%d,\"" D_JSON_IR_DATA "\":%s}}"),
+        GetTextIndexed(sirtype, sizeof(sirtype), iridx, kIrRemoteProtocols), results.bits, stemp);
+
       MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_IRRECEIVED));
+      XdrvRulesProcess();
 #ifdef USE_DOMOTICZ
       unsigned long value = results.value | (iridx << 28);  // [Protocol:4, Data:28]
       DomoticzSensor(DZ_COUNT, value);                      // Send data as Domoticz Counter value
@@ -298,7 +307,7 @@ boolean IrSendCommand()
         protocol = root[UpperCase_P(parm_uc, PSTR(D_JSON_IR_PROTOCOL))];
         bits = root[UpperCase_P(parm_uc, PSTR(D_JSON_IR_BITS))];
         data = strtoul(root[UpperCase_P(parm_uc, PSTR(D_JSON_IR_DATA))], NULL, 0);
-        if (protocol && bits && data) {
+        if (protocol && bits) {
           int protocol_code = GetCommandCode(protocol_text, sizeof(protocol_text), protocol, kIrRemoteProtocols);
 
           snprintf_P(log_data, sizeof(log_data), PSTR("IRS: protocol_text %s, protocol %s, bits %d, data %u (0x%lX), protocol_code %d"),
@@ -384,6 +393,7 @@ boolean IrSendCommand()
   }
 #endif // USE_IR_HVAC
   else serviced = false; // Unknown command
+
   return serviced;
 }
 
@@ -391,15 +401,15 @@ boolean IrSendCommand()
  * Interface
 \*********************************************************************************************/
 
-#define XDRV_02
+#define XDRV_05
 
-boolean Xdrv02(byte function)
+boolean Xdrv05(byte function)
 {
   boolean result = false;
 
   if ((pin[GPIO_IRSEND] < 99) || (pin[GPIO_IRRECV] < 99)) {
     switch (function) {
-      case FUNC_INIT:
+      case FUNC_PRE_INIT:
         if (pin[GPIO_IRSEND] < 99) {
           IrSendInit();
         }

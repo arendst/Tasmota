@@ -1,5 +1,5 @@
 /*
-  webserver.ino - webserver for Sonoff-Tasmota
+  xdrv_02_webserver.ino - webserver for Sonoff-Tasmota
 
   Copyright (C) 2018  Theo Arends
 
@@ -25,8 +25,11 @@
  * Based on source by AlexT (https://github.com/tzapu)
 \*********************************************************************************************/
 
-#define STR_HELPER(x) #x
-#define STR(x) STR_HELPER(x)
+#ifdef USE_RF_FLASH
+uint8_t *efm8bb1_update = NULL;
+#endif  // USE_RF_FLASH
+
+enum UploadTypes { UPL_TASMOTA, UPL_SETTINGS, UPL_EFM8BB1 };
 
 const char HTTP_HEAD[] PROGMEM =
   "<!DOCTYPE html><html lang=\"" D_HTML_LANGUAGE "\" class=\"\">"
@@ -310,6 +313,9 @@ const char HTTP_END[] PROGMEM =
   "</body>"
   "</html>";
 
+const char HTTP_DEVICE_CONTROL[] PROGMEM = "<td style='width:%d%%'><button onclick='la(\"?o=%d\");'>%s%s</button></td>";
+const char HTTP_DEVICE_STATE[] PROGMEM = "%s<td style='width:%d{c}%s;font-size:%dpx'>%s</div></td>";  // {c} = %'><div style='text-align:center;font-weight:
+
 const char HDR_CTYPE_PLAIN[] PROGMEM = "text/plain";
 const char HDR_CTYPE_HTML[] PROGMEM = "text/html";
 const char HDR_CTYPE_XML[] PROGMEM = "text/xml";
@@ -328,6 +334,9 @@ uint8_t webserver_state = HTTP_OFF;
 uint8_t upload_error = 0;
 uint8_t upload_file_type;
 uint8_t upload_progress_dot_count;
+uint8_t config_block_count = 0;
+uint8_t config_xor_on = 0;
+uint8_t config_xor_on_set = CONFIG_FILE_XOR;
 
 // Helper function to avoid code duplication (saves 4k Flash)
 static void WebGetArg(const char* arg, char* out, size_t max)
@@ -337,12 +346,37 @@ static void WebGetArg(const char* arg, char* out, size_t max)
   out[max-1] = '\0';  // Ensure terminating NUL
 }
 
+void ShowWebSource(int source)
+{
+  if ((source > 0) && (source < SRC_MAX)) {
+    char stemp1[20];
+    snprintf_P(log_data, sizeof(log_data), PSTR("SRC: %s from %s"), GetTextIndexed(stemp1, sizeof(stemp1), source, kCommandSource), WebServer->client().remoteIP().toString().c_str());
+    AddLog(LOG_LEVEL_DEBUG);
+  }
+}
+
+void ExecuteWebCommand(char* svalue, int source)
+{
+  ShowWebSource(source);
+  ExecuteCommand(svalue, SRC_IGNORE);
+}
+
 void StartWebserver(int type, IPAddress ipweb)
 {
   if (!webserver_state) {
     if (!WebServer) {
       WebServer = new ESP8266WebServer((HTTP_MANAGER==type) ? 80 : WEB_PORT);
       WebServer->on("/", HandleRoot);
+      WebServer->on("/up", HandleUpgradeFirmware);
+      WebServer->on("/u1", HandleUpgradeFirmwareStart);  // OTA
+      WebServer->on("/u2", HTTP_POST, HandleUploadDone, HandleUploadLoop);
+      WebServer->on("/cs", HandleConsole);
+      WebServer->on("/ax", HandleAjaxConsoleRefresh);
+      WebServer->on("/ay", HandleAjaxStatusRefresh);
+      WebServer->on("/u2", HTTP_OPTIONS, HandlePreflightRequest);
+      WebServer->on("/cm", HandleHttpCommand);
+      WebServer->on("/rb", HandleRestart);
+#ifndef BE_MINIMAL
       WebServer->on("/cn", HandleConfiguration);
       WebServer->on("/md", HandleModuleConfiguration);
 #if defined(USE_TIMERS) && defined(USE_TIMERS_WEB)
@@ -365,17 +399,7 @@ void StartWebserver(int type, IPAddress ipweb)
       WebServer->on("/sv", HandleSaveSettings);
       WebServer->on("/rs", HandleRestoreConfiguration);
       WebServer->on("/rt", HandleResetConfiguration);
-      WebServer->on("/up", HandleUpgradeFirmware);
-      WebServer->on("/u1", HandleUpgradeFirmwareStart);  // OTA
-      WebServer->on("/u2", HTTP_POST, HandleUploadDone, HandleUploadLoop);
-      WebServer->on("/u2", HTTP_OPTIONS, HandlePreflightRequest);
-      WebServer->on("/cm", HandleHttpCommand);
-      WebServer->on("/cs", HandleConsole);
-      WebServer->on("/ax", HandleAjaxConsoleRefresh);
-      WebServer->on("/ay", HandleAjaxStatusRefresh);
       WebServer->on("/in", HandleInformation);
-      WebServer->on("/rb", HandleRestart);
-      WebServer->on("/fwlink", HandleRoot);  // Microsoft captive portal. Maybe not needed. Might be handled by notFound handler.
 #ifdef USE_EMULATION
       if (EMUL_WEMO == Settings.flag2.emulation) {
         WebServer->on("/upnp/control/basicevent1", HTTP_POST, HandleUpnpEvent);
@@ -387,10 +411,9 @@ void StartWebserver(int type, IPAddress ipweb)
         WebServer->on("/description.xml", HandleUpnpSetupHue);
       }
 #endif  // USE_EMULATION
+#endif  // Not BE_MINIMAL
+      WebServer->on("/fwlink", HandleRoot);  // Microsoft captive portal. Maybe not needed. Might be handled by notFound handler.
       WebServer->onNotFound(HandleNotFound);
-#ifdef USE_KNX
-      KNXStart();
-#endif // USE_KNX
     }
     reset_web_log_flag = 0;
     WebServer->begin(); // Web server start
@@ -470,6 +493,9 @@ void ShowPage(String &page, bool auth)
   page += FPSTR(HTTP_END);
   page.replace(F("{mv"), my_version);
   SetHeader();
+
+  ShowFreeMem(PSTR("ShowPage"));
+
   WebServer->send(200, FPSTR(HDR_CTYPE_HTML), page);
 }
 
@@ -496,6 +522,7 @@ void HandleRoot()
   if (CaptivePortal()) { return; }  // If captive portal redirect instead of displaying the page.
 
   if (HTTP_MANAGER == webserver_state) {
+#ifndef BE_MINIMAL
     if ((Settings.web_password[0] != 0) && !(WebServer->hasArg("USER1")) && !(WebServer->hasArg("PASS1"))) {
       HandleWifiLogin();
     } else {
@@ -513,6 +540,7 @@ void HandleRoot()
         HandleWifiLogin();
       }
     }
+#endif  // Not BE_MINIMAL
   } else {
     char stemp[10];
     String page = FPSTR(HTTP_HEAD);
@@ -532,11 +560,21 @@ void HandleRoot()
       }
       page += FPSTR(HTTP_TABLE100);
       page += F("<tr>");
-      for (byte idx = 1; idx <= devices_present; idx++) {
-        snprintf_P(stemp, sizeof(stemp), PSTR(" %d"), idx);
-        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("<td style='width:%d%'><button onclick='la(\"?o=%d\");'>%s%s</button></td>"),
-          100 / devices_present, idx, (devices_present < 5) ? D_BUTTON_TOGGLE : "", (devices_present > 1) ? stemp : "");
+      if (SONOFF_IFAN02 == Settings.module) {
+        snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_DEVICE_CONTROL, 36, 1, D_BUTTON_TOGGLE, "");
         page += mqtt_data;
+        for (byte i = 0; i < 4; i++) {
+          snprintf_P(stemp, sizeof(stemp), PSTR("%d"), i);
+          snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_DEVICE_CONTROL, 16, i +2, stemp, "");
+          page += mqtt_data;
+        }
+      } else {
+        for (byte idx = 1; idx <= devices_present; idx++) {
+          snprintf_P(stemp, sizeof(stemp), PSTR(" %d"), idx);
+          snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_DEVICE_CONTROL,
+            100 / devices_present, idx, (devices_present < 5) ? D_BUTTON_TOGGLE : "", (devices_present > 1) ? stemp : "");
+          page += mqtt_data;
+        }
       }
       page += F("</tr></table>");
     }
@@ -570,22 +608,33 @@ void HandleAjaxStatusRefresh()
 
   WebGetArg("o", tmp, sizeof(tmp));
   if (strlen(tmp)) {
-    ExecuteCommandPower(atoi(tmp), POWER_TOGGLE);
+    ShowWebSource(SRC_WEBGUI);
+    uint8_t device = atoi(tmp);
+    if (SONOFF_IFAN02 == Settings.module) {
+      if (device < 2) {
+        ExecuteCommandPower(1, POWER_TOGGLE, SRC_IGNORE);
+      } else {
+        snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_FANSPEED " %d"), device -2);
+        ExecuteCommand(svalue, SRC_WEBGUI);
+      }
+    } else {
+      ExecuteCommandPower(device, POWER_TOGGLE, SRC_IGNORE);
+    }
   }
   WebGetArg("d", tmp, sizeof(tmp));
   if (strlen(tmp)) {
     snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_DIMMER " %s"), tmp);
-    ExecuteCommand(svalue);
+    ExecuteWebCommand(svalue, SRC_WEBGUI);
   }
   WebGetArg("t", tmp, sizeof(tmp));
   if (strlen(tmp)) {
     snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_COLORTEMPERATURE " %s"), tmp);
-    ExecuteCommand(svalue);
+    ExecuteWebCommand(svalue, SRC_WEBGUI);
   }
   WebGetArg("k", tmp, sizeof(tmp));
   if (strlen(tmp)) {
     snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_RFKEY "%s"), tmp);
-    ExecuteCommand(svalue);
+    ExecuteWebCommand(svalue, SRC_WEBGUI);
   }
 
   snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{t}"));
@@ -601,10 +650,19 @@ void HandleAjaxStatusRefresh()
   if (devices_present) {
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s{t}<tr>"), mqtt_data);
     uint8_t fsize = (devices_present < 5) ? 70 - (devices_present * 8) : 32;
-    for (byte idx = 1; idx <= devices_present; idx++) {
-      snprintf_P(svalue, sizeof(svalue), PSTR("%d"), bitRead(power, idx -1));
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s<td style='width:%d{c}%s;font-size:%dpx'>%s</div></td>"),  // {c} = %'><div style='text-align:center;font-weight:
-        mqtt_data, 100 / devices_present, (bitRead(power, idx -1)) ? "bold" : "normal", fsize, (devices_present < 5) ? GetStateText(bitRead(power, idx -1)) : svalue);
+    if (SONOFF_IFAN02 == Settings.module) {
+      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_DEVICE_STATE,
+        mqtt_data, 36, (bitRead(power, 0)) ? "bold" : "normal", 54, GetStateText(bitRead(power, 0)));
+      uint8_t fanspeed = GetFanspeed();
+      snprintf_P(svalue, sizeof(svalue), PSTR("%d"), fanspeed);
+      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_DEVICE_STATE,
+        mqtt_data, 64, (fanspeed) ? "bold" : "normal", 54, (fanspeed) ? svalue : GetStateText(0));
+    } else {
+      for (byte idx = 1; idx <= devices_present; idx++) {
+        snprintf_P(svalue, sizeof(svalue), PSTR("%d"), bitRead(power, idx -1));
+        snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_DEVICE_STATE,
+          mqtt_data, 100 / devices_present, (bitRead(power, idx -1)) ? "bold" : "normal", fsize, (devices_present < 5) ? GetStateText(bitRead(power, idx -1)) : svalue);
+      }
     }
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s</tr></table>"), mqtt_data);
   }
@@ -618,6 +676,7 @@ boolean HttpUser()
   return status;
 }
 
+#ifndef BE_MINIMAL
 void HandleConfiguration()
 {
   if (HttpUser()) { return; }
@@ -639,52 +698,6 @@ void HandleConfiguration()
   page += FPSTR(HTTP_BTN_MENU4);
   page += FPSTR(HTTP_BTN_MAIN);
   ShowPage(page);
-}
-
-boolean GetUsedInModule(byte val, uint8_t *arr)
-{
-  int offset = 0;
-
-  if (!val) { return false; }  // None
-#ifndef USE_I2C
-  if (GPIO_I2C_SCL == val) { return true; }
-  if (GPIO_I2C_SDA == val) { return true; }
-#endif
-#ifndef USE_SR04
-  if (GPIO_SR04_TRIG == val) { return true; }
-  if (GPIO_SR04_ECHO == val) { return true; }
-#endif
-#ifndef USE_WS2812
-  if (GPIO_WS2812 == val) { return true; }
-#endif
-#ifndef USE_IR_REMOTE
-  if (GPIO_IRSEND == val) { return true; }
-#endif
-  if ((val >= GPIO_REL1) && (val < GPIO_REL1 + MAX_RELAYS)) {
-    offset = (GPIO_REL1_INV - GPIO_REL1);
-  }
-  if ((val >= GPIO_REL1_INV) && (val < GPIO_REL1_INV + MAX_RELAYS)) {
-    offset = -(GPIO_REL1_INV - GPIO_REL1);
-  }
-
-  if ((val >= GPIO_LED1) && (val < GPIO_LED1 + MAX_LEDS)) {
-    offset = (GPIO_LED1_INV - GPIO_LED1);
-  }
-  if ((val >= GPIO_LED1_INV) && (val < GPIO_LED1_INV + MAX_LEDS)) {
-    offset = -(GPIO_LED1_INV - GPIO_LED1);
-  }
-
-  if ((val >= GPIO_PWM1) && (val < GPIO_PWM1 + MAX_PWMS)) {
-    offset = (GPIO_PWM1_INV - GPIO_PWM1);
-  }
-  if ((val >= GPIO_PWM1_INV) && (val < GPIO_PWM1_INV + MAX_PWMS)) {
-    offset = -(GPIO_PWM1_INV - GPIO_PWM1);
-  }
-  for (byte i = 0; i < MAX_GPIO_PIN; i++) {
-    if (arr[i] == val) { return true; }
-    if (arr[i] == val + offset) { return true; }
-  }
-  return false;
 }
 
 void HandleModuleConfiguration()
@@ -736,7 +749,7 @@ void HandleModuleConfiguration()
   for (byte i = 0; i < MAX_GPIO_PIN; i++) {
     if (GPIO_USER == cmodule.gp.io[i]) {
       snprintf_P(stemp, 3, PINS_WEMOS +i*2);
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("<tr><td style='width:190px'>%s <b>" D_GPIO "%d</b> %s</td><td style='width:126px'><select id='g%d' name='g%d'></select></td></tr>"),
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("<tr><td style='width:190px'>%s <b>" D_GPIO "%d</b> %s</td><td style='width:146px'><select id='g%d' name='g%d'></select></td></tr>"),
         (WEMOS==Settings.module)?stemp:"", i, (0==i)? D_SENSOR_BUTTON "1":(1==i)? D_SERIAL_OUT :(3==i)? D_SERIAL_IN :(12==i)? D_SENSOR_RELAY "1":(13==i)? D_SENSOR_LED "1i":(14==i)? D_SENSOR :"", i, i);
       page += mqtt_data;
     }
@@ -934,6 +947,7 @@ void HandleOtherConfiguration()
   page += FPSTR(HTTP_FORM_OTHER);
   page.replace(F("{r1"), (Settings.flag.mqtt_enabled) ? F(" checked") : F(""));
   uint8_t maxfn = (devices_present > MAX_FRIENDLYNAMES) ? MAX_FRIENDLYNAMES : (!devices_present) ? 1 : devices_present;
+  if (SONOFF_IFAN02 == Settings.module) { maxfn = 1; }
   for (byte i = 0; i < maxfn; i++) {
     page += FPSTR(HTTP_FORM_OTHER2);
     page.replace(F("{1"), String(i +1));
@@ -963,25 +977,34 @@ void HandleBackupConfiguration()
   if (HttpUser()) { return; }
   AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_BACKUP_CONFIGURATION));
 
-  uint8_t buffer[sizeof(Settings)];
+  if (!SettingsBufferAlloc()) { return; }
 
   WiFiClient myClient = WebServer->client();
-  WebServer->setContentLength(sizeof(buffer));
+  WebServer->setContentLength(sizeof(Settings));
 
   char attachment[100];
   char friendlyname[sizeof(Settings.friendlyname[0])];
   snprintf_P(attachment, sizeof(attachment), PSTR("attachment; filename=Config_%s_%s.dmp"), NoAlNumToUnderscore(friendlyname, Settings.friendlyname[0]), my_version);
   WebServer->sendHeader(F("Content-Disposition"), attachment);
+
   WebServer->send(200, FPSTR(HDR_CTYPE_STREAM), "");
-  memcpy(buffer, &Settings, sizeof(buffer));
-  buffer[0] = CONFIG_FILE_SIGN;
-  buffer[1] = (!CONFIG_FILE_XOR)?0:1;
-  if (buffer[1]) {
-    for (uint16_t i = 2; i < sizeof(buffer); i++) {
-      buffer[i] ^= (CONFIG_FILE_XOR +i);
+  memcpy(settings_buffer, &Settings, sizeof(Settings));
+  if (config_xor_on_set) {
+    for (uint16_t i = 2; i < sizeof(Settings); i++) {
+      settings_buffer[i] ^= (config_xor_on_set +i);
     }
   }
-  myClient.write((const char*)buffer, sizeof(buffer));
+
+#ifdef ARDUINO_ESP8266_RELEASE_2_3_0
+  size_t written = myClient.write((const char*)settings_buffer, sizeof(Settings));
+  if (written < sizeof(Settings)) {  // https://github.com/esp8266/Arduino/issues/3218
+    myClient.write((const char*)settings_buffer +written, sizeof(Settings) -written);
+  }
+#else
+  myClient.write((const char*)settings_buffer, sizeof(Settings));
+#endif
+
+  SettingsBufferFree();
 }
 
 void HandleSaveSettings()
@@ -1091,16 +1114,14 @@ void HandleSaveSettings()
     WebGetArg("b2", tmp, sizeof(tmp));
     Settings.flag2.emulation = (!strlen(tmp)) ? 0 : atoi(tmp);
 #endif  // USE_EMULATION
-    WebGetArg("a1", tmp, sizeof(tmp));
-    strlcpy(Settings.friendlyname[0], (!strlen(tmp)) ? FRIENDLY_NAME : tmp, sizeof(Settings.friendlyname[0]));
-    WebGetArg("a2", tmp, sizeof(tmp));
-    strlcpy(Settings.friendlyname[1], (!strlen(tmp)) ? FRIENDLY_NAME"2" : tmp, sizeof(Settings.friendlyname[1]));
-    WebGetArg("a3", tmp, sizeof(tmp));
-    strlcpy(Settings.friendlyname[2], (!strlen(tmp)) ? FRIENDLY_NAME"3" : tmp, sizeof(Settings.friendlyname[2]));
-    WebGetArg("a4", tmp, sizeof(tmp));
-    strlcpy(Settings.friendlyname[3], (!strlen(tmp)) ? FRIENDLY_NAME"4" : tmp, sizeof(Settings.friendlyname[3]));
-    snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_OTHER D_MQTT_ENABLE " %s, " D_CMND_EMULATION " %d, " D_CMND_FRIENDLYNAME " %s, %s, %s, %s"),
-      GetStateText(Settings.flag.mqtt_enabled), Settings.flag2.emulation, Settings.friendlyname[0], Settings.friendlyname[1], Settings.friendlyname[2], Settings.friendlyname[3]);
+    snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_OTHER D_MQTT_ENABLE " %s, " D_CMND_EMULATION " %d, " D_CMND_FRIENDLYNAME), GetStateText(Settings.flag.mqtt_enabled), Settings.flag2.emulation);
+    for (byte i = 0; i < MAX_FRIENDLYNAMES; i++) {
+      snprintf_P(stemp, sizeof(stemp), PSTR("a%d"), i +1);
+      WebGetArg(stemp, tmp, sizeof(tmp));
+      snprintf_P(stemp2, sizeof(stemp2), PSTR(FRIENDLY_NAME"%d"), i +1);
+      strlcpy(Settings.friendlyname[i], (!strlen(tmp)) ? (i) ? stemp2 : FRIENDLY_NAME : tmp, sizeof(Settings.friendlyname[i]));
+      snprintf_P(log_data, sizeof(log_data), PSTR("%s%s %s"), log_data, (i) ? "," : "", Settings.friendlyname[i]);
+    }
     AddLog(LOG_LEVEL_INFO);
     break;
   case 6:
@@ -1144,6 +1165,7 @@ void HandleSaveSettings()
     }
     ShowPage(page);
 
+    ShowWebSource(SRC_WEBGUI);
     restart_flag = 2;
   } else {
     HandleConfiguration();
@@ -1167,7 +1189,7 @@ void HandleResetConfiguration()
   ShowPage(page);
 
   snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_RESET " 1"));
-  ExecuteCommand(svalue);
+  ExecuteWebCommand(svalue, SRC_WEBGUI);
 }
 
 void HandleRestoreConfiguration()
@@ -1185,340 +1207,7 @@ void HandleRestoreConfiguration()
   ShowPage(page);
 
   upload_error = 0;
-  upload_file_type = 1;
-}
-
-void HandleUpgradeFirmware()
-{
-  if (HttpUser()) { return; }
-  AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_FIRMWARE_UPGRADE);
-
-  String page = FPSTR(HTTP_HEAD);
-  page.replace(F("{v}"), FPSTR(S_FIRMWARE_UPGRADE));
-  page += FPSTR(HTTP_HEAD_STYLE);
-  page += FPSTR(HTTP_FORM_UPG);
-  page.replace(F("{o1"), Settings.ota_url);
-  page += FPSTR(HTTP_FORM_RST_UPG);
-  page.replace(F("{r1"), F(D_UPGRADE));
-  page += FPSTR(HTTP_BTN_MAIN);
-  ShowPage(page);
-
-  upload_error = 0;
-  upload_file_type = 0;
-}
-
-void HandleUpgradeFirmwareStart()
-{
-  if (HttpUser()) { return; }
-  char svalue[100];
-
-  AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_UPGRADE_STARTED));
-  WifiConfigCounter();
-
-  char tmp[100];
-  WebGetArg("o", tmp, sizeof(tmp));
-  if (strlen(tmp)) {
-    snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_OTAURL " %s"), tmp);
-    ExecuteCommand(svalue);
-  }
-
-  String page = FPSTR(HTTP_HEAD);
-  page.replace(F("{v}"), FPSTR(S_INFORMATION));
-  page += FPSTR(HTTP_HEAD_STYLE);
-  page += F("<div style='text-align:center;'><b>" D_UPGRADE_STARTED " ...</b></div>");
-  page += FPSTR(HTTP_MSG_RSTRT);
-  page += FPSTR(HTTP_BTN_MAIN);
-  ShowPage(page);
-
-  snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_UPGRADE " 1"));
-  ExecuteCommand(svalue);
-}
-
-void HandleUploadDone()
-{
-  if (HttpUser()) { return; }
-  AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_UPLOAD_DONE));
-
-  char error[100];
-
-  WifiConfigCounter();
-  restart_flag = 0;
-  MqttRetryCounter(0);
-
-  String page = FPSTR(HTTP_HEAD);
-  page.replace(F("{v}"), FPSTR(S_INFORMATION));
-  page += FPSTR(HTTP_HEAD_STYLE);
-  page += F("<div style='text-align:center;'><b>" D_UPLOAD " <font color='");
-  if (upload_error) {
-    page += F("red'>" D_FAILED "</font></b><br/><br/>");
-    switch (upload_error) {
-      case 1: strncpy_P(error, PSTR(D_UPLOAD_ERR_1), sizeof(error)); break;
-      case 2: strncpy_P(error, PSTR(D_UPLOAD_ERR_2), sizeof(error)); break;
-      case 3: strncpy_P(error, PSTR(D_UPLOAD_ERR_3), sizeof(error)); break;
-      case 4: strncpy_P(error, PSTR(D_UPLOAD_ERR_4), sizeof(error)); break;
-      case 5: strncpy_P(error, PSTR(D_UPLOAD_ERR_5), sizeof(error)); break;
-      case 6: strncpy_P(error, PSTR(D_UPLOAD_ERR_6), sizeof(error)); break;
-      case 7: strncpy_P(error, PSTR(D_UPLOAD_ERR_7), sizeof(error)); break;
-      case 8: strncpy_P(error, PSTR(D_UPLOAD_ERR_8), sizeof(error)); break;
-      case 9: strncpy_P(error, PSTR(D_UPLOAD_ERR_9), sizeof(error)); break;
-      default:
-        snprintf_P(error, sizeof(error), PSTR(D_UPLOAD_ERROR_CODE " %d"), upload_error);
-    }
-    page += error;
-    snprintf_P(log_data, sizeof(log_data), PSTR(D_UPLOAD ": %s"), error);
-    AddLog(LOG_LEVEL_DEBUG);
-    stop_flash_rotate = Settings.flag.stop_flash_rotate;
-  } else {
-    page += F("green'>" D_SUCCESSFUL "</font></b><br/>");
-    page += FPSTR(HTTP_MSG_RSTRT);
-    restart_flag = 2;
-  }
-  page += F("</div><br/>");
-  page += FPSTR(HTTP_BTN_MAIN);
-  ShowPage(page);
-}
-
-void HandleUploadLoop()
-{
-  // Based on ESP8266HTTPUpdateServer.cpp uses ESP8266WebServer Parsing.cpp and Cores Updater.cpp (Update)
-  boolean _serialoutput = (LOG_LEVEL_DEBUG <= seriallog_level);
-
-  if (HTTP_USER == webserver_state) { return; }
-  if (upload_error) {
-    if (!upload_file_type) { Update.end(); }
-    return;
-  }
-
-  HTTPUpload& upload = WebServer->upload();
-
-  if (UPLOAD_FILE_START == upload.status) {
-    restart_flag = 60;
-    if (0 == upload.filename.c_str()[0]) {
-      upload_error = 1;
-      return;
-    }
-    SettingsSave(1);  // Free flash for upload
-    snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_UPLOAD D_FILE " %s ..."), upload.filename.c_str());
-    AddLog(LOG_LEVEL_INFO);
-    if (!upload_file_type) {
-      MqttRetryCounter(60);
-#ifdef USE_EMULATION
-      UdpDisconnect();
-#endif  // USE_EMULATION
-#ifdef USE_ARILUX_RF
-      AriluxRfDisable();  // Prevent restart exception on Arilux Interrupt routine
-#endif  // USE_ARILUX_RF
-      if (Settings.flag.mqtt_enabled) MqttDisconnect();
-      uint32_t maxSketchSpace = (ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000;
-      if (!Update.begin(maxSketchSpace)) {         //start with max available size
-        upload_error = 2;
-        return;
-      }
-    }
-    upload_progress_dot_count = 0;
-  } else if (!upload_error && (UPLOAD_FILE_WRITE == upload.status)) {
-    if (0 == upload.totalSize)
-    {
-      if (upload_file_type) {
-        if (upload.buf[0] != CONFIG_FILE_SIGN) {
-          upload_error = 8;
-          return;
-        }
-        if (upload.currentSize > sizeof(Settings)) {
-          upload_error = 9;
-          return;
-        }
-      } else {
-        if (upload.buf[0] != 0xE9) {
-          upload_error = 3;
-          return;
-        }
-        uint32_t bin_flash_size = ESP.magicFlashChipSize((upload.buf[3] & 0xf0) >> 4);
-        if(bin_flash_size > ESP.getFlashChipRealSize()) {
-          upload_error = 4;
-          return;
-        }
-        upload.buf[2] = 3;  // Force DOUT - ESP8285
-      }
-    }
-    if (upload_file_type) { // config
-      if (!upload_error) {
-        if (upload.buf[1]) {
-          for (uint16_t i = 2; i < upload.currentSize; i++) {
-            upload.buf[i] ^= (CONFIG_FILE_XOR +i);
-          }
-        }
-        SettingsDefaultSet2();
-        memcpy((char*)&Settings +16, upload.buf +16, upload.currentSize -16);
-        memcpy((char*)&Settings +8, upload.buf +8, 4);  // Restore version and auto upgrade
-      }
-    } else {  // firmware
-      if (!upload_error && (Update.write(upload.buf, upload.currentSize) != upload.currentSize)) {
-        upload_error = 5;
-        return;
-      }
-      if (_serialoutput) {
-        Serial.printf(".");
-        upload_progress_dot_count++;
-        if (!(upload_progress_dot_count % 80)) { Serial.println(); }
-      }
-    }
-  } else if(!upload_error && (UPLOAD_FILE_END == upload.status)) {
-    if (_serialoutput && (upload_progress_dot_count % 80)) {
-      Serial.println();
-    }
-    if (!upload_file_type) {
-      if (!Update.end(true)) { // true to set the size to the current progress
-        if (_serialoutput) { Update.printError(Serial); }
-        upload_error = 6;
-        return;
-      }
-    }
-    if (!upload_error) {
-      snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_UPLOAD D_SUCCESSFUL " %u bytes. " D_RESTARTING), upload.totalSize);
-      AddLog(LOG_LEVEL_INFO);
-    }
-  } else if (UPLOAD_FILE_ABORTED == upload.status) {
-    restart_flag = 0;
-    MqttRetryCounter(0);
-    upload_error = 7;
-    if (!upload_file_type) { Update.end(); }
-  }
-  delay(0);
-}
-
-void HandlePreflightRequest()
-{
-  WebServer->sendHeader(F("Access-Control-Allow-Origin"), F("*"));
-  WebServer->sendHeader(F("Access-Control-Allow-Methods"), F("GET, POST"));
-  WebServer->sendHeader(F("Access-Control-Allow-Headers"), F("authorization"));
-  WebServer->send(200, FPSTR(HDR_CTYPE_HTML), "");
-}
-
-void HandleHttpCommand()
-{
-  if (HttpUser()) { return; }
-  char svalue[INPUT_BUFFER_SIZE];  // big to serve Backlog
-
-  AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_COMMAND));
-
-  uint8_t valid = 1;
-  if (Settings.web_password[0] != 0) {
-    char tmp1[100];
-    WebGetArg("user", tmp1, sizeof(tmp1));
-    char tmp2[100];
-    WebGetArg("password", tmp2, sizeof(tmp2));
-    if (!(!strcmp(tmp1, WEB_USERNAME) && !strcmp(tmp2, Settings.web_password))) {
-      valid = 0;
-    }
-  }
-
-  String message = F("{\"" D_RSLT_WARNING "\":\"");
-  if (valid) {
-    byte curridx = web_log_index;
-    WebGetArg("cmnd", svalue, sizeof(svalue));
-    if (strlen(svalue)) { ExecuteCommand(svalue); }
-
-    if (web_log_index != curridx) {
-      byte counter = curridx;
-      message = F("{");
-      do {
-        char* tmp;
-        size_t len;
-        GetLog(counter, &tmp, &len);
-        if (len) {
-          // [14:49:36 MQTT: stat/wemos5/RESULT = {"POWER":"OFF"}] > [{"POWER":"OFF"}]
-          char* JSON = (char*)memchr(tmp, '{', len);
-          if (JSON) { // Is it a JSON message (and not only [15:26:08 MQT: stat/wemos5/POWER = O])
-            if (message.length() > 1) { message += F(","); }
-            size_t JSONlen = len - (JSON - tmp);
-            strlcpy(mqtt_data, JSON +1, JSONlen -2);
-            message += mqtt_data;
-          }
-        }
-        counter++;
-        if (!counter) counter++;  // Skip 0 as it is not allowed
-      } while (counter != web_log_index);
-      message += F("}");
-    } else {
-      message += F(D_ENABLE_WEBLOG_FOR_RESPONSE "\"}");
-    }
-  } else {
-    message += F(D_NEED_USER_AND_PASSWORD "\"}");
-  }
-  SetHeader();
-  WebServer->send(200, FPSTR(HDR_CTYPE_JSON), message);
-}
-
-void HandleConsole()
-{
-  if (HttpUser()) { return; }
-  AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_CONSOLE);
-
-  String page = FPSTR(HTTP_HEAD);
-  page.replace(F("{v}"), FPSTR(S_CONSOLE));
-  page += FPSTR(HTTP_HEAD_STYLE);
-  page.replace(F("</script>"), FPSTR(HTTP_SCRIPT_CONSOL));
-  page.replace(F("<body>"), F("<body onload='l()'>"));
-  page += FPSTR(HTTP_FORM_CMND);
-  page += FPSTR(HTTP_BTN_MAIN);
-  ShowPage(page);
-}
-
-void HandleAjaxConsoleRefresh()
-{
-  if (HttpUser()) { return; }
-  char svalue[INPUT_BUFFER_SIZE];  // big to serve Backlog
-  byte cflg = 1;
-  byte counter = 0;                // Initial start, should never be 0 again
-
-  WebGetArg("c1", svalue, sizeof(svalue));
-  if (strlen(svalue)) {
-    snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_COMMAND "%s"), svalue);
-    AddLog(LOG_LEVEL_INFO);
-    ExecuteCommand(svalue);
-  }
-
-  WebGetArg("c2", svalue, sizeof(svalue));
-  if (strlen(svalue)) { counter = atoi(svalue); }
-
-  byte last_reset_web_log_flag = reset_web_log_flag;
-  String message = F("}9");  // Cannot load mqtt_data here as <> will be encoded by replacements below
-  if (!reset_web_log_flag) {
-    counter = 0;
-    reset_web_log_flag = 1;
-  }
-  if (counter != web_log_index) {
-    if (!counter) {
-      counter = web_log_index;
-      cflg = 0;
-    }
-    do {
-      char* tmp;
-      size_t len;
-      GetLog(counter, &tmp, &len);
-      if (len) {
-        if (cflg) {
-          message += F("\n");
-        } else {
-          cflg = 1;
-        }
-        strlcpy(mqtt_data, tmp, len);
-        message += mqtt_data;
-      }
-      counter++;
-      if (!counter) { counter++; } // Skip 0 as it is not allowed
-    } while (counter != web_log_index);
-    // XML encoding to fix blank console log in concert with javascript decodeURIComponent
-    message.replace(F("%"), F("%25"));  // Needs to be done first as otherwise the % in %26 will also be converted
-    message.replace(F("&"), F("%26"));
-    message.replace(F("<"), F("%3C"));
-    message.replace(F(">"), F("%3E"));
-  }
-  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("<r><i>%d</i><j>%d</j><l>"), web_log_index, last_reset_web_log_flag);
-  message.replace(F("}9"), mqtt_data);  // Save to load here
-  message += F("</l></r>");
-  WebServer->send(200, FPSTR(HDR_CTYPE_XML), message);
+  upload_file_type = UPL_SETTINGS;
 }
 
 void HandleInformation()
@@ -1552,6 +1241,7 @@ void HandleInformation()
   func += F("}1" D_BOOT_COUNT "}2"); func += String(Settings.bootcount);
   func += F("}1" D_RESTART_REASON "}2"); func += GetResetReason();
   uint8_t maxfn = (devices_present > MAX_FRIENDLYNAMES) ? MAX_FRIENDLYNAMES : devices_present;
+  if (SONOFF_IFAN02 == Settings.module) { maxfn = 1; }
   for (byte i = 0; i < maxfn; i++) {
     func += F("}1" D_FRIENDLY_NAME " "); func += i +1; func += F("}2"); func += Settings.friendlyname[i];
   }
@@ -1634,6 +1324,431 @@ void HandleInformation()
   page += FPSTR(HTTP_BTN_MAIN);
   ShowPage(page);
 }
+#endif  // Not BE_MINIMAL
+
+void HandleUpgradeFirmware()
+{
+  if (HttpUser()) { return; }
+  AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_FIRMWARE_UPGRADE);
+
+  String page = FPSTR(HTTP_HEAD);
+  page.replace(F("{v}"), FPSTR(S_FIRMWARE_UPGRADE));
+  page += FPSTR(HTTP_HEAD_STYLE);
+  page += FPSTR(HTTP_FORM_UPG);
+  page.replace(F("{o1"), Settings.ota_url);
+  page += FPSTR(HTTP_FORM_RST_UPG);
+  page.replace(F("{r1"), F(D_UPGRADE));
+  page += FPSTR(HTTP_BTN_MAIN);
+  ShowPage(page);
+
+  upload_error = 0;
+  upload_file_type = UPL_TASMOTA;
+}
+
+void HandleUpgradeFirmwareStart()
+{
+  if (HttpUser()) { return; }
+  char svalue[100];
+
+  AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_UPGRADE_STARTED));
+  WifiConfigCounter();
+
+  char tmp[100];
+  WebGetArg("o", tmp, sizeof(tmp));
+  if (strlen(tmp)) {
+    snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_OTAURL " %s"), tmp);
+    ExecuteWebCommand(svalue, SRC_WEBGUI);
+  }
+
+  String page = FPSTR(HTTP_HEAD);
+  page.replace(F("{v}"), FPSTR(S_INFORMATION));
+  page += FPSTR(HTTP_HEAD_STYLE);
+  page += F("<div style='text-align:center;'><b>" D_UPGRADE_STARTED " ...</b></div>");
+  page += FPSTR(HTTP_MSG_RSTRT);
+  page += FPSTR(HTTP_BTN_MAIN);
+  ShowPage(page);
+
+  snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_UPGRADE " 1"));
+  ExecuteWebCommand(svalue, SRC_WEBGUI);
+}
+
+void HandleUploadDone()
+{
+  if (HttpUser()) { return; }
+  AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_UPLOAD_DONE));
+
+  char error[100];
+
+  WifiConfigCounter();
+  restart_flag = 0;
+  MqttRetryCounter(0);
+
+  String page = FPSTR(HTTP_HEAD);
+  page.replace(F("{v}"), FPSTR(S_INFORMATION));
+  page += FPSTR(HTTP_HEAD_STYLE);
+  page += F("<div style='text-align:center;'><b>" D_UPLOAD " <font color='");
+  if (upload_error) {
+    page += F("red'>" D_FAILED "</font></b><br/><br/>");
+    switch (upload_error) {
+      case 1: strncpy_P(error, PSTR(D_UPLOAD_ERR_1), sizeof(error)); break;
+      case 2: strncpy_P(error, PSTR(D_UPLOAD_ERR_2), sizeof(error)); break;
+      case 3: strncpy_P(error, PSTR(D_UPLOAD_ERR_3), sizeof(error)); break;
+      case 4: strncpy_P(error, PSTR(D_UPLOAD_ERR_4), sizeof(error)); break;
+      case 5: strncpy_P(error, PSTR(D_UPLOAD_ERR_5), sizeof(error)); break;
+      case 6: strncpy_P(error, PSTR(D_UPLOAD_ERR_6), sizeof(error)); break;
+      case 7: strncpy_P(error, PSTR(D_UPLOAD_ERR_7), sizeof(error)); break;
+      case 8: strncpy_P(error, PSTR(D_UPLOAD_ERR_8), sizeof(error)); break;
+      case 9: strncpy_P(error, PSTR(D_UPLOAD_ERR_9), sizeof(error)); break;
+#ifdef USE_RF_FLASH
+      case 10: strncpy_P(error, PSTR(D_UPLOAD_ERR_10), sizeof(error)); break;
+      case 11: strncpy_P(error, PSTR(D_UPLOAD_ERR_11), sizeof(error)); break;
+      case 12: strncpy_P(error, PSTR(D_UPLOAD_ERR_12), sizeof(error)); break;
+      case 13: strncpy_P(error, PSTR(D_UPLOAD_ERR_13), sizeof(error)); break;
+#endif
+      default:
+        snprintf_P(error, sizeof(error), PSTR(D_UPLOAD_ERROR_CODE " %d"), upload_error);
+    }
+    page += error;
+    snprintf_P(log_data, sizeof(log_data), PSTR(D_UPLOAD ": %s"), error);
+    AddLog(LOG_LEVEL_DEBUG);
+    stop_flash_rotate = Settings.flag.stop_flash_rotate;
+  } else {
+    page += F("green'>" D_SUCCESSFUL "</font></b><br/>");
+    page += FPSTR(HTTP_MSG_RSTRT);
+    ShowWebSource(SRC_WEBGUI);
+    restart_flag = 2;  // Always restart to re-enable disabled features during update
+  }
+  SettingsBufferFree();
+  page += F("</div><br/>");
+  page += FPSTR(HTTP_BTN_MAIN);
+  ShowPage(page);
+}
+
+void HandleUploadLoop()
+{
+  // Based on ESP8266HTTPUpdateServer.cpp uses ESP8266WebServer Parsing.cpp and Cores Updater.cpp (Update)
+  boolean _serialoutput = (LOG_LEVEL_DEBUG <= seriallog_level);
+
+  if (HTTP_USER == webserver_state) { return; }
+  if (upload_error) {
+    if (UPL_TASMOTA == upload_file_type) { Update.end(); }
+    return;
+  }
+
+  HTTPUpload& upload = WebServer->upload();
+
+  if (UPLOAD_FILE_START == upload.status) {
+    restart_flag = 60;
+    if (0 == upload.filename.c_str()[0]) {
+      upload_error = 1;  // No file selected
+      return;
+    }
+    SettingsSave(1);  // Free flash for upload
+    snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_UPLOAD D_FILE " %s ..."), upload.filename.c_str());
+    AddLog(LOG_LEVEL_INFO);
+    if (UPL_SETTINGS == upload_file_type) {
+      if (!SettingsBufferAlloc()) {
+        upload_error = 2;  // Not enough space
+        return;
+      }
+    } else {
+      MqttRetryCounter(60);
+#ifdef USE_EMULATION
+      UdpDisconnect();
+#endif  // USE_EMULATION
+#ifdef USE_ARILUX_RF
+      AriluxRfDisable();  // Prevent restart exception on Arilux Interrupt routine
+#endif  // USE_ARILUX_RF
+      if (Settings.flag.mqtt_enabled) MqttDisconnect();
+      uint32_t maxSketchSpace = (ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000;
+      if (!Update.begin(maxSketchSpace)) {         //start with max available size
+
+//        if (_serialoutput) Update.printError(Serial);
+//        if (Update.getError() == UPDATE_ERROR_BOOTSTRAP) {
+//          if (_serialoutput) Serial.println("Device still in UART update mode, perform powercycle");
+//        }
+
+        upload_error = 2;  // Not enough space
+        return;
+      }
+    }
+    upload_progress_dot_count = 0;
+  } else if (!upload_error && (UPLOAD_FILE_WRITE == upload.status)) {
+    if (0 == upload.totalSize) {
+      if (UPL_SETTINGS == upload_file_type) {
+        config_block_count = 0;
+      }
+      else {
+#ifdef USE_RF_FLASH
+        if ((SONOFF_BRIDGE == Settings.module) && (upload.buf[0] == ':')) {  // Check if this is a RF bridge FW file
+          Update.end();              // End esp8266 update session
+          upload_file_type = UPL_EFM8BB1;
+
+          upload_error = SnfBrUpdateInit();
+          if (upload_error != 0) { return; }
+        } else
+#endif  // USE_RF_FLASH
+        {
+          if (upload.buf[0] != 0xE9) {
+            upload_error = 3;  // Magic byte is not 0xE9
+            return;
+          }
+          uint32_t bin_flash_size = ESP.magicFlashChipSize((upload.buf[3] & 0xf0) >> 4);
+          if(bin_flash_size > ESP.getFlashChipRealSize()) {
+            upload_error = 4;  // Program flash size is larger than real flash size
+            return;
+          }
+          upload.buf[2] = 3;  // Force DOUT - ESP8285
+        }
+      }
+    }
+    if (UPL_SETTINGS == upload_file_type) {
+      if (!upload_error) {
+        if (upload.currentSize > (sizeof(Settings) - (config_block_count * HTTP_UPLOAD_BUFLEN))) {
+          upload_error = 9;  // File too large
+          return;
+        }
+        memcpy(settings_buffer + (config_block_count * HTTP_UPLOAD_BUFLEN), upload.buf, upload.currentSize);
+        config_block_count++;
+      }
+    }
+#ifdef USE_RF_FLASH
+    else if (UPL_EFM8BB1 == upload_file_type) {
+      if (efm8bb1_update != NULL) {    // We have carry over data since last write, i. e. a start but not an end
+        ssize_t result = rf_glue_remnant_with_new_data_and_write(efm8bb1_update, upload.buf, upload.currentSize);
+        free(efm8bb1_update);
+        efm8bb1_update = NULL;
+        if (result != 0) {
+          upload_error = abs(result);  // 2 = Not enough space, 8 = File invalid
+          return;
+        }
+      }
+      ssize_t result = rf_search_and_write(upload.buf, upload.currentSize);
+      if (result < 0) {
+        upload_error = abs(result);
+        return;
+      } else if (result > 0) {
+        if (result > upload.currentSize) {
+          // Offset is larger than the buffer supplied, this should not happen
+          upload_error = 9;  // File too large - Failed to decode RF firmware
+          return;
+        }
+        // A remnant has been detected, allocate data for it plus a null termination byte
+        size_t remnant_sz = upload.currentSize - result;
+        efm8bb1_update = (uint8_t *) malloc(remnant_sz + 1);
+        if (efm8bb1_update == NULL) {
+          upload_error = 2;  // Not enough space - Unable to allocate memory to store new RF firmware
+          return;
+        }
+        memcpy(efm8bb1_update, upload.buf + result, remnant_sz);
+        // Add null termination at the end of of remnant buffer
+        efm8bb1_update[remnant_sz] = '\0';
+      }
+    }
+#endif  // USE_RF_FLASH
+    else {  // firmware
+      if (!upload_error && (Update.write(upload.buf, upload.currentSize) != upload.currentSize)) {
+        upload_error = 5;  // Upload buffer miscompare
+        return;
+      }
+      if (_serialoutput) {
+        Serial.printf(".");
+        upload_progress_dot_count++;
+        if (!(upload_progress_dot_count % 80)) { Serial.println(); }
+      }
+    }
+  } else if(!upload_error && (UPLOAD_FILE_END == upload.status)) {
+    if (_serialoutput && (upload_progress_dot_count % 80)) {
+      Serial.println();
+    }
+    if (UPL_SETTINGS == upload_file_type) {
+      if (config_xor_on_set) {
+        for (uint16_t i = 2; i < sizeof(Settings); i++) {
+          settings_buffer[i] ^= (config_xor_on_set +i);
+        }
+      }
+      bool valid_settings = false;
+      unsigned long buffer_version = settings_buffer[11] << 24 | settings_buffer[10] << 16 | settings_buffer[9] << 8 | settings_buffer[8];
+      if (buffer_version > 0x06000000) {
+        uint16_t buffer_size = settings_buffer[3] << 8 | settings_buffer[2];
+        uint16_t buffer_crc = settings_buffer[15] << 8 | settings_buffer[14];
+        uint16_t crc = 0;
+        for (uint16_t i = 0; i < buffer_size; i++) {
+          if ((i < 14) || (i > 15)) { crc += settings_buffer[i]*(i+1); }  // Skip crc
+        }
+        valid_settings = (buffer_crc == crc);
+      } else {
+        valid_settings = (settings_buffer[0] == CONFIG_FILE_SIGN);
+      }
+      if (valid_settings) {
+        SettingsDefaultSet2();
+        memcpy((char*)&Settings +16, settings_buffer +16, sizeof(Settings) -16);
+        Settings.version = buffer_version;  // Restore version and auto upgrade after restart
+        SettingsBufferFree();
+      } else {
+        upload_error = 8;  // File invalid
+        return;
+      }
+    }
+#ifdef USE_RF_FLASH
+    else if (UPL_EFM8BB1 == upload_file_type) {
+      // RF FW flash done
+      upload_file_type = UPL_TASMOTA;
+    }
+#endif  // USE_RF_FLASH
+    else {
+      if (!Update.end(true)) { // true to set the size to the current progress
+        if (_serialoutput) { Update.printError(Serial); }
+        upload_error = 6;  // Upload failed. Enable logging 3
+        return;
+      }
+    }
+    if (!upload_error) {
+      snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_UPLOAD D_SUCCESSFUL " %u bytes. " D_RESTARTING), upload.totalSize);
+      AddLog(LOG_LEVEL_INFO);
+    }
+  } else if (UPLOAD_FILE_ABORTED == upload.status) {
+    restart_flag = 0;
+    MqttRetryCounter(0);
+    upload_error = 7;  // Upload aborted
+    if (UPL_TASMOTA == upload_file_type) { Update.end(); }
+  }
+  delay(0);
+}
+
+void HandlePreflightRequest()
+{
+  WebServer->sendHeader(F("Access-Control-Allow-Origin"), F("*"));
+  WebServer->sendHeader(F("Access-Control-Allow-Methods"), F("GET, POST"));
+  WebServer->sendHeader(F("Access-Control-Allow-Headers"), F("authorization"));
+  WebServer->send(200, FPSTR(HDR_CTYPE_HTML), "");
+}
+
+void HandleHttpCommand()
+{
+  if (HttpUser()) { return; }
+  char svalue[INPUT_BUFFER_SIZE];  // Large to serve Backlog
+
+  AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_COMMAND));
+
+  uint8_t valid = 1;
+  if (Settings.web_password[0] != 0) {
+    char tmp1[100];
+    WebGetArg("user", tmp1, sizeof(tmp1));
+    char tmp2[100];
+    WebGetArg("password", tmp2, sizeof(tmp2));
+    if (!(!strcmp(tmp1, WEB_USERNAME) && !strcmp(tmp2, Settings.web_password))) { valid = 0; }
+  }
+
+  String message = F("{\"" D_RSLT_WARNING "\":\"");
+  if (valid) {
+    byte curridx = web_log_index;
+    WebGetArg("cmnd", svalue, sizeof(svalue));
+    if (strlen(svalue)) {
+      ExecuteWebCommand(svalue, SRC_WEBCOMMAND);
+    }
+
+    if (web_log_index != curridx) {
+      byte counter = curridx;
+      message = F("{");
+      do {
+        char* tmp;
+        size_t len;
+        GetLog(counter, &tmp, &len);
+        if (len) {
+          // [14:49:36 MQTT: stat/wemos5/RESULT = {"POWER":"OFF"}] > [{"POWER":"OFF"}]
+          char* JSON = (char*)memchr(tmp, '{', len);
+          if (JSON) { // Is it a JSON message (and not only [15:26:08 MQT: stat/wemos5/POWER = O])
+            if (message.length() > 1) { message += F(","); }
+            size_t JSONlen = len - (JSON - tmp);
+            strlcpy(mqtt_data, JSON +1, JSONlen -2);
+            message += mqtt_data;
+          }
+        }
+        counter++;
+        if (!counter) counter++;  // Skip 0 as it is not allowed
+      } while (counter != web_log_index);
+      message += F("}");
+    } else {
+      message += F(D_ENABLE_WEBLOG_FOR_RESPONSE "\"}");
+    }
+  } else {
+    message += F(D_NEED_USER_AND_PASSWORD "\"}");
+  }
+  SetHeader();
+  WebServer->send(200, FPSTR(HDR_CTYPE_JSON), message);
+}
+
+void HandleConsole()
+{
+  if (HttpUser()) { return; }
+  AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_CONSOLE);
+
+  String page = FPSTR(HTTP_HEAD);
+  page.replace(F("{v}"), FPSTR(S_CONSOLE));
+  page += FPSTR(HTTP_HEAD_STYLE);
+  page.replace(F("</script>"), FPSTR(HTTP_SCRIPT_CONSOL));
+  page.replace(F("<body>"), F("<body onload='l()'>"));
+  page += FPSTR(HTTP_FORM_CMND);
+  page += FPSTR(HTTP_BTN_MAIN);
+  ShowPage(page);
+}
+
+void HandleAjaxConsoleRefresh()
+{
+  if (HttpUser()) { return; }
+  char svalue[INPUT_BUFFER_SIZE];  // Large to serve Backlog
+  byte cflg = 1;
+  byte counter = 0;                // Initial start, should never be 0 again
+
+  WebGetArg("c1", svalue, sizeof(svalue));
+  if (strlen(svalue)) {
+    snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_COMMAND "%s"), svalue);
+    AddLog(LOG_LEVEL_INFO);
+    ExecuteWebCommand(svalue, SRC_WEBCONSOLE);
+  }
+
+  WebGetArg("c2", svalue, sizeof(svalue));
+  if (strlen(svalue)) { counter = atoi(svalue); }
+
+  byte last_reset_web_log_flag = reset_web_log_flag;
+  String message = F("}9");  // Cannot load mqtt_data here as <> will be encoded by replacements below
+  if (!reset_web_log_flag) {
+    counter = 0;
+    reset_web_log_flag = 1;
+  }
+  if (counter != web_log_index) {
+    if (!counter) {
+      counter = web_log_index;
+      cflg = 0;
+    }
+    do {
+      char* tmp;
+      size_t len;
+      GetLog(counter, &tmp, &len);
+      if (len) {
+        if (cflg) {
+          message += F("\n");
+        } else {
+          cflg = 1;
+        }
+        strlcpy(mqtt_data, tmp, len);
+        message += mqtt_data;
+      }
+      counter++;
+      if (!counter) { counter++; } // Skip 0 as it is not allowed
+    } while (counter != web_log_index);
+    // XML encoding to fix blank console log in concert with javascript decodeURIComponent
+    message.replace(F("%"), F("%25"));  // Needs to be done first as otherwise the % in %26 will also be converted
+    message.replace(F("&"), F("%26"));
+    message.replace(F("<"), F("%3C"));
+    message.replace(F(">"), F("%3E"));
+  }
+  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("<r><i>%d</i><j>%d</j><l>"), web_log_index, last_reset_web_log_flag);
+  message.replace(F("}9"), mqtt_data);  // Save to load here
+  message += F("</l></r>");
+  WebServer->send(200, FPSTR(HDR_CTYPE_XML), message);
+}
 
 void HandleRestart()
 {
@@ -1651,6 +1766,7 @@ void HandleRestart()
   }
   ShowPage(page);
 
+  ShowWebSource(SRC_WEBGUI);
   restart_flag = 2;
 }
 
@@ -1702,5 +1818,203 @@ boolean ValidIpAddress(String str)
     if (c != '.' && (c < '0' || c > '9')) { return false; }
   }
   return true;
+}
+
+/*********************************************************************************************/
+
+String UrlEncode(const String& text)
+{
+  const char hex[] = "0123456789ABCDEF";
+
+	String encoded = "";
+	int len = text.length();
+	int i = 0;
+	while (i < len)	{
+		char decodedChar = text.charAt(i++);
+
+/*
+    if (('a' <= decodedChar && decodedChar <= 'z') ||
+        ('A' <= decodedChar && decodedChar <= 'Z') ||
+        ('0' <= decodedChar && decodedChar <= '9') ||
+        ('=' == decodedChar)) {
+      encoded += decodedChar;
+		} else {
+      encoded += '%';
+			encoded += hex[decodedChar >> 4];
+			encoded += hex[decodedChar & 0xF];
+    }
+*/
+    if (' ' == decodedChar) {
+      encoded += '%';
+			encoded += hex[decodedChar >> 4];
+			encoded += hex[decodedChar & 0xF];
+    } else {
+      encoded += decodedChar;
+    }
+
+	}
+	return encoded;
+}
+
+int WebSend(char *buffer)
+{
+  // http://192.168.178.86:80/cm?user=admin&password=joker&cmnd=POWER1 ON
+  // http://192.168.178.86:80/cm?cmnd=POWER1 ON
+  // [192.168.178.86:80,admin:joker] POWER1 ON
+
+  char *host;
+  char *port;
+  char *user;
+  char *password;
+  char *command;
+  uint16_t nport = 80;
+  int status = 1;                             // Wrong parameters
+
+  host = strtok_r(buffer, "]", &command);     // buffer = [192.168.178.86:80,admin:joker] POWER1 ON
+  if (host && command) {
+    host = LTrim(host);
+    host++;  // Skip [
+    host = strtok_r(host, ",", &user);        // host = 192.168.178.86:80,admin:joker > 192.168.178.86:80
+    host = strtok_r(host, ":", &port);        // host = 192.168.178.86:80 > 192.168.178.86
+    if (user) {
+      user = strtok_r(user, ":", &password);  // user = admin:joker > admin
+    }
+
+//snprintf_P(log_data, sizeof(log_data), PSTR("DBG: Buffer |%X|, Host |%X|, Port |%X|, User |%X|, Password |%X|, Command |%X|"), buffer, host, port, user, password, command);
+//AddLog(LOG_LEVEL_DEBUG);
+
+    if (port) { nport = atoi(port); }
+
+    String nuri = "";
+    if (user && password) {
+      nuri += F("user=");
+      nuri += user;
+      nuri += F("&password=");
+      nuri += password;
+      nuri += F("&");
+    }
+    nuri += F("cmnd=");
+    nuri += LTrim(command);
+    String uri = UrlEncode(nuri);
+
+    IPAddress host_ip;
+    if (WiFi.hostByName(host, host_ip)) {
+      WiFiClient client;
+
+      bool connected = false;
+      byte retry = 2;
+      while ((retry > 0) && !connected) {
+        --retry;
+        connected = client.connect(host_ip, nport);
+        if (connected) break;
+      }
+
+      if (connected) {
+        String url = F("GET /cm?");
+        url += uri;
+        url += F(" HTTP/1.1\r\n Host: ");
+        url += IPAddress(host_ip).toString();
+        if (port) {
+          url += F(" \r\n Port: ");
+          url += port;
+        }
+        url += F(" \r\n Connection: close\r\n\r\n");
+
+//snprintf_P(log_data, sizeof(log_data), PSTR("DBG: Url |%s|"), url.c_str());
+//AddLog(LOG_LEVEL_DEBUG);
+
+        client.print(url.c_str());
+        client.flush();
+        client.stop();
+        status = 0;                           // No error - Done
+      } else {
+        status = 2;                           // Connection failed
+      }
+    } else {
+      status = 3;                             // Host not found
+    }
+  }
+  return status;
+}
+
+/*********************************************************************************************/
+
+enum WebCommands { CMND_WEBSERVER, CMND_WEBPASSWORD, CMND_WEBLOG, CMND_WEBSEND, CMND_EMULATION };
+const char kWebCommands[] PROGMEM = D_CMND_WEBSERVER "|" D_CMND_WEBPASSWORD "|" D_CMND_WEBLOG "|"  D_CMND_WEBSEND "|" D_CMND_EMULATION ;
+const char kWebSendStatus[] PROGMEM = D_JSON_DONE "|" D_JSON_WRONG_PARAMETERS "|" D_JSON_CONNECT_FAILED "|" D_JSON_HOST_NOT_FOUND ;
+
+bool WebCommand()
+{
+  char command[CMDSZ];
+  bool serviced = true;
+
+  int command_code = GetCommandCode(command, sizeof(command), XdrvMailbox.topic, kWebCommands);
+  if (-1 == command_code) {
+    serviced = false;  // Unknown command
+  }
+  if (CMND_WEBSERVER == command_code) {
+    if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 2)) { Settings.webserver = XdrvMailbox.payload; }
+    if (Settings.webserver) {
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_WEBSERVER "\":\"" D_JSON_ACTIVE_FOR " %s " D_JSON_ON_DEVICE " %s " D_JSON_WITH_IP_ADDRESS " %s\"}"),
+        (2 == Settings.webserver) ? D_ADMIN : D_USER, my_hostname, WiFi.localIP().toString().c_str());
+    } else {
+      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, GetStateText(0));
+    }
+  }
+  else if (CMND_WEBPASSWORD == command_code) {
+    if ((XdrvMailbox.data_len > 0) && (XdrvMailbox.data_len < sizeof(Settings.web_password))) {
+      strlcpy(Settings.web_password, (!strcmp(XdrvMailbox.data,"0")) ? "" : (1 == XdrvMailbox.payload) ? WEB_PASSWORD : XdrvMailbox.data, sizeof(Settings.web_password));
+      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, Settings.web_password);
+    } else {
+      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_ASTERIX, command);
+    }
+  }
+  else if (CMND_WEBLOG == command_code) {
+    if ((XdrvMailbox.payload >= LOG_LEVEL_NONE) && (XdrvMailbox.payload <= LOG_LEVEL_ALL)) { Settings.weblog_level = XdrvMailbox.payload; }
+    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, Settings.weblog_level);
+  }
+  else if (CMND_WEBSEND == command_code) {
+    if (XdrvMailbox.data_len > 0) {
+      uint8_t result = WebSend(XdrvMailbox.data);
+      char stemp1[20];
+      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, GetTextIndexed(stemp1, sizeof(stemp1), result, kWebSendStatus));
+    }
+  }
+#ifdef USE_EMULATION
+  else if (CMND_EMULATION == command_code) {
+    if ((XdrvMailbox.payload >= EMUL_NONE) && (XdrvMailbox.payload < EMUL_MAX)) {
+      Settings.flag2.emulation = XdrvMailbox.payload;
+      restart_flag = 2;
+    }
+    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, Settings.flag2.emulation);
+  }
+#endif  // USE_EMULATION
+  else serviced = false;  // Unknown command
+
+  return serviced;
+}
+
+/*********************************************************************************************\
+ * Interface
+\*********************************************************************************************/
+
+#define XDRV_02
+
+boolean Xdrv02(byte function)
+{
+  boolean result = false;
+
+  switch (function) {
+    case FUNC_LOOP:
+      PollDnsWebserver();
+#ifdef USE_EMULATION
+      if (Settings.flag2.emulation) PollUdp();
+#endif  // USE_EMULATION
+      break;
+    case FUNC_COMMAND:
+      result = WebCommand();
+      break;
+  }
+  return result;
 }
 #endif  // USE_WEBSERVER

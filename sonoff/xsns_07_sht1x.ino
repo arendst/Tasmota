@@ -137,8 +137,6 @@ boolean ShtReadTempHum(float &t, float &h)
   if (!ShtAwaitResult()) {
     return false;
   }
-
-
   tempRaw = ShtReadData();
   // Temperature conversion coefficients from SHT1X datasheet for version 4
   const float d1 = -39.7;  // 3.5V
@@ -160,12 +158,6 @@ boolean ShtReadTempHum(float &t, float &h)
   rhLinear = c1 + c2 * humRaw + c3 * humRaw * humRaw;
   h = (t - 25) * (t1 + t2 * humRaw) + rhLinear;
   t = ConvertTemp(t);
-
-#ifdef USE_CCS811
-  glob_humidity=h;
-  glob_temperature=(t*4);
-#endif
-
   return (!isnan(t) && !isnan(h));
 }
 
@@ -239,7 +231,8 @@ boolean Xsns07(byte function)
 
   if (i2c_flg) {
     switch (function) {
-      case FUNC_PREP_BEFORE_TELEPERIOD:
+//      case FUNC_PREP_BEFORE_TELEPERIOD:  // As this is not a real I2C device it may interfere with other sensors
+      case FUNC_INIT:                      // Move detection to restart only removing interference
         ShtDetect();
         break;
       case FUNC_JSON_APPEND:
