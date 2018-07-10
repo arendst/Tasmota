@@ -204,6 +204,8 @@ void MqttPublishDirect(const char* topic, boolean retained)
   char sretained[CMDSZ];
   char slog_type[10];
 
+  ShowFreeMem(PSTR("MqttPublishDirect"));
+
   sretained[0] = '\0';
   snprintf_P(slog_type, sizeof(slog_type), PSTR(D_LOG_RESULT));
 
@@ -281,15 +283,24 @@ void MqttPublishPowerState(byte device)
   char scommand[33];
 
   if ((device < 1) || (device > devices_present)) { device = 1; }
-  GetPowerDevice(scommand, device, sizeof(scommand), Settings.flag.device_index_enable);
 
-  GetTopic_P(stopic, STAT, mqtt_topic, (Settings.flag.mqtt_response) ? scommand : S_RSLT_RESULT);
-  snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, scommand, GetStateText(bitRead(power, device -1)));
-  MqttPublish(stopic);
+  if ((SONOFF_IFAN02 == Settings.module) && (device > 1)) {
+    if (GetFanspeed() < 4) {  // 4 occurs when fanspeed is 3 and RC button 2 is pressed
+      snprintf_P(scommand, sizeof(scommand), PSTR(D_CMND_FANSPEED));
+      GetTopic_P(stopic, STAT, mqtt_topic, (Settings.flag.mqtt_response) ? scommand : S_RSLT_RESULT);
+      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, scommand, GetFanspeed());
+      MqttPublish(stopic);
+    }
+  } else {
+    GetPowerDevice(scommand, device, sizeof(scommand), Settings.flag.device_index_enable);
+    GetTopic_P(stopic, STAT, mqtt_topic, (Settings.flag.mqtt_response) ? scommand : S_RSLT_RESULT);
+    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, scommand, GetStateText(bitRead(power, device -1)));
+    MqttPublish(stopic);
 
-  GetTopic_P(stopic, STAT, mqtt_topic, scommand);
-  snprintf_P(mqtt_data, sizeof(mqtt_data), GetStateText(bitRead(power, device -1)));
-  MqttPublish(stopic, Settings.flag.mqtt_power_retain);
+    GetTopic_P(stopic, STAT, mqtt_topic, scommand);
+    snprintf_P(mqtt_data, sizeof(mqtt_data), GetStateText(bitRead(power, device -1)));
+    MqttPublish(stopic, Settings.flag.mqtt_power_retain);
+  }
 }
 
 void MqttPublishPowerBlinkState(byte device)
@@ -315,8 +326,7 @@ void MqttDisconnected(int state)
   snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_MQTT D_CONNECT_FAILED_TO " %s:%d, rc %d. " D_RETRY_IN " %d " D_UNIT_SECOND),
     Settings.mqtt_host, Settings.mqtt_port, state, mqtt_retry_counter);
   AddLog(LOG_LEVEL_INFO);
-  strncpy_P(mqtt_data, PSTR("{\"MQTT\":{\"Disconnected\":1}}"), sizeof(mqtt_data));
-  XdrvRulesProcess();
+  rules_flag.mqtt_disconnected = 1;
 }
 
 void MqttConnected()
@@ -368,13 +378,12 @@ void MqttConnected()
       tele_period = Settings.tele_period -9;
     }
     status_update_timer = 2;
-    strncpy_P(mqtt_data, PSTR("{\"System\":{\"Boot\":1}}"), sizeof(mqtt_data));
-    XdrvRulesProcess();
+    rules_flag.system_boot = 1;
     XdrvCall(FUNC_MQTT_INIT);
   }
   mqtt_initial_connection_state = 0;
-  strncpy_P(mqtt_data, PSTR("{\"MQTT\":{\"Connected\":1}}"), sizeof(mqtt_data));
-  XdrvRulesProcess();
+  rules_flag.mqtt_connected = 1;
+  global_state.mqtt_down = 0;
 }
 
 #ifdef USE_MQTT_TLS
@@ -435,6 +444,7 @@ void MqttReconnect()
 
   mqtt_connected = false;
   mqtt_retry_counter = Settings.mqtt_retry;
+  global_state.mqtt_down = 1;
 
 #ifndef USE_MQTT_TLS
 #ifdef USE_DISCOVERY
@@ -504,13 +514,17 @@ void MqttCheck()
 {
   if (Settings.flag.mqtt_enabled) {
     if (!MqttIsConnected()) {
+      global_state.mqtt_down = 1;
       if (!mqtt_retry_counter) {
         MqttReconnect();
       } else {
         mqtt_retry_counter--;
       }
+    } else {
+      global_state.mqtt_down = 0;
     }
   } else {
+    global_state.mqtt_down = 0;
     if (mqtt_initial_connection_state) MqttReconnect();
   }
 }
