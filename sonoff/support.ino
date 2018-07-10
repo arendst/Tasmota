@@ -2080,6 +2080,12 @@ void AddLogSerial(byte loglevel)
   AddLogSerial(loglevel, (uint8_t*)serial_in_buffer, serial_in_byte_counter);
 }
 
+void AddLogMissed(char *sensor, uint8_t misses)
+{
+  snprintf_P(log_data, sizeof(log_data), PSTR("SNS: %s missed %d"), sensor, SENSOR_MAX_MISS - misses);
+  AddLog(LOG_LEVEL_DEBUG);
+}
+
 /*********************************************************************************************\
  *
 \*********************************************************************************************/

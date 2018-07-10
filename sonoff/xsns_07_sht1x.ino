@@ -34,11 +34,10 @@ enum {
   SHT1X_CMD_SOFT_RESET    = B00011110
 };
 
-#define SHT_MAX_MISS        5
-
 uint8_t sht_sda_pin;
 uint8_t sht_scl_pin;
 uint8_t sht_type = 0;
+char sht_types[] = "SHT1X";
 uint8_t sht_valid = 0;
 float sht_temperature = 0;
 float sht_humidity = 0;
@@ -148,7 +147,7 @@ boolean ShtRead()
   sht_humidity = (sht_temperature - 25) * (t1 + t2 * humRaw) + rhLinear;
   sht_temperature = ConvertTemp(sht_temperature);
 
-  sht_valid = SHT_MAX_MISS;
+  sht_valid = SENSOR_MAX_MISS;
   return true;
 }
 
@@ -173,36 +172,40 @@ void ShtDetect()
 
 void ShtEverySecond()
 {
-  if (!(uptime %3)) { ShtRead(); }  // Update every 3 seconds
+  if (sht_type && !(uptime %3)) {  // Update every 3 seconds
+    if (!ShtRead()) {
+      AddLogMissed(sht_types, sht_valid);
+    }
+  }
 }
 
 void ShtShow(boolean json)
 {
-  if (sht_type) {
-    if (sht_valid) {
-      char temperature[10];
-      char humidity[10];
+  if (sht_type && sht_valid) {
+    char temperature[10];
+    char humidity[10];
 
-      dtostrfd(sht_temperature, Settings.flag2.temperature_resolution, temperature);
-      dtostrfd(sht_humidity, Settings.flag2.humidity_resolution, humidity);
+    dtostrfd(sht_temperature, Settings.flag2.temperature_resolution, temperature);
+    dtostrfd(sht_humidity, Settings.flag2.humidity_resolution, humidity);
 
-      if (json) {
-        snprintf_P(mqtt_data, sizeof(mqtt_data), JSON_SNS_TEMPHUM, mqtt_data, "SHT1X", temperature, humidity);
+    if (json) {
+      snprintf_P(mqtt_data, sizeof(mqtt_data), JSON_SNS_TEMPHUM, mqtt_data, sht_types, temperature, humidity);
 #ifdef USE_DOMOTICZ
-        if (0 == tele_period) DomoticzTempHumSensor(temperature, humidity);
+      if (0 == tele_period) {
+        DomoticzTempHumSensor(temperature, humidity);
+      }
 #endif  // USE_DOMOTICZ
 #ifdef USE_KNX
-        if (0 == tele_period) {
-          KnxSensor(KNX_TEMPERATURE, sht_temperature);
-          KnxSensor(KNX_HUMIDITY, sht_humidity);
-        }
+      if (0 == tele_period) {
+        KnxSensor(KNX_TEMPERATURE, sht_temperature);
+        KnxSensor(KNX_HUMIDITY, sht_humidity);
+      }
 #endif  // USE_KNX
 #ifdef USE_WEBSERVER
-      } else {
-        snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TEMP, mqtt_data, "SHT1X", temperature, TempUnit());
-        snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_HUM, mqtt_data, "SHT1X", humidity);
+    } else {
+      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TEMP, mqtt_data, sht_types, temperature, TempUnit());
+      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_HUM, mqtt_data, sht_types, humidity);
 #endif  // USE_WEBSERVER
-      }
     }
   }
 }
