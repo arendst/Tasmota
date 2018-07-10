@@ -20,6 +20,10 @@
 
 #ifdef USE_SML
 
+// SML is default
+//#define USE_OBIS
+
+
 #define SML_BSIZ 28
 
 static uint8_t smltbuf1[SML_BSIZ];
