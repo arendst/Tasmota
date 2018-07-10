@@ -367,13 +367,10 @@ void Ws2812SetColor(uint16_t led, uint8_t red, uint8_t green, uint8_t blue, uint
   }
 
   if (show) {
-    strip->Show();
-  }
-
-
-  if (!ws_suspend_update) {
-    strip->Show();
-    ws_show_next = 1;
+    if (!ws_suspend_update) {
+      strip->Show();
+      ws_show_next = 1;
+    }
   }
 }
 
