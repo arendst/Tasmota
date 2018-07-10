@@ -29,9 +29,13 @@
  * Use online command Prefix to translate cmnd, stat and tele.
  *
 <<<<<<< HEAD
+<<<<<<< HEAD
  * Updated until v5.14.0
 =======
  * Updated until v5.14.0a
+>>>>>>> arendst/development
+=======
+ * Updated until v6.0.0a
 >>>>>>> arendst/development
 \*********************************************************************/
 
@@ -210,7 +214,7 @@
 #define D_ERASED_SECTOR "Изтрит сектор"
 
 // xdrv_02_webserver.ino
-#define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "Минимаен фърмуеър - моля надградете го"
+#define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "Минимален фърмуеър - моля надградете го"
 #define D_WEBSERVER_ACTIVE_ON "Уеб сървърът е активен на"
 #define D_WITH_IP_ADDRESS "с IP адрес"
 #define D_WEBSERVER_STOPPED "Уеб сървърът е спрян"
@@ -325,10 +329,10 @@
 #define D_UPLOAD_ERR_7 "Зареждането е прекъснато"
 #define D_UPLOAD_ERR_8 "Файлът е невалиден"
 #define D_UPLOAD_ERR_9 "Файлът е прекалено голям"
-#define D_UPLOAD_ERR_10 "Failed to init RF chip"
-#define D_UPLOAD_ERR_11 "Failed to erase RF chip"
-#define D_UPLOAD_ERR_12 "Failed to write to RF chip"
-#define D_UPLOAD_ERR_13 "Failed to decode RF firmware"
+#define D_UPLOAD_ERR_10 "Грешка при инициализация на RF чипа"
+#define D_UPLOAD_ERR_11 "Грешка при изтриване на RF чипа"
+#define D_UPLOAD_ERR_12 "Грешка при записване в RF чипа"
+#define D_UPLOAD_ERR_13 "Грешка при декодиране на RF фирмуера"
 #define D_UPLOAD_ERROR_CODE "Код на грешка при зареждането"
 
 #define D_ENTER_COMMAND "Въвеждане на команда"
@@ -482,6 +486,9 @@
 #define D_SENSOR_SDM120_RX "SDM120 Rx"
 #define D_SENSOR_SDM630_TX "SDM630 Tx"
 #define D_SENSOR_SDM630_RX "SDM630 Rx"
+#define D_SENSOR_TM1638_CLK "TM16 CLK"
+#define D_SENSOR_TM1638_DIO "TM16 DIO"
+#define D_SENSOR_TM1638_STB "TM16 STB"
 
 // Units
 #define D_UNIT_AMPERE "A"

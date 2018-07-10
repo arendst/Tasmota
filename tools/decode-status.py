@@ -72,12 +72,14 @@ a_setoption = [
     "Do not control Power with Dimmer",
     "Energy monitoring while powered off",
     "MQTT serial",
-    "Rules",
-    "Rules once mode",
+    "Rules until 5.14.0b",
+    "Rules once mode until 5.14.0b",
     "KNX",
     "Use Power device index on single relay devices",
     "KNX enhancement",
-    "","","",""]
+    "RF receive decimal",
+    "IR receive decimal",
+    "Enforce HASS light group",""]
 
 a_features = [[
     "","","USE_I2C","USE_SPI",
@@ -87,7 +89,8 @@ a_features = [[
     "USE_WS2812_DMA","USE_IR_REMOTE","USE_IR_HVAC","USE_IR_RECEIVE",
     "USE_DOMOTICZ","USE_DISPLAY","USE_HOME_ASSISTANT","USE_SERIAL_BRIDGE",
     "USE_TIMERS","USE_SUNRISE","USE_TIMERS_WEB","USE_RULES",
-    "USE_KNX","","",""],[
+    "USE_KNX","","",""
+    ],[
     "USE_CONFIG_OVERRIDE","BE_MINIMAL","USE_ALL_SENSORS","USE_CLASSIC",
     "USE_KNX_NO_EMULATION","","","",
     "","","","",
@@ -95,7 +98,8 @@ a_features = [[
     "","","","",
     "","","","",
     "","","VTABLES_IN_FLASH","PIO_FRAMEWORK_ARDUINO_LWIP_HIGHER_BANDWIDTH",
-    "PIO_FRAMEWORK_ARDUINO_LWIP2_LOW_MEMORY","PIO_FRAMEWORK_ARDUINO_LWIP2_HIGHER_BANDWIDTH","DEBUG_THEO","USE_DEBUG_DRIVER"],[
+    "PIO_FRAMEWORK_ARDUINO_LWIP2_LOW_MEMORY","PIO_FRAMEWORK_ARDUINO_LWIP2_HIGHER_BANDWIDTH","DEBUG_THEO","USE_DEBUG_DRIVER"
+    ],[
     "","USE_ADC_VCC","USE_ENERGY_SENSOR","USE_PZEM004T",
     "USE_DS18B20","USE_DS18x20_LEGACY","USE_DS18x20","USE_DHT",
     "USE_SHT","USE_HTU","USE_BMP","USE_BME680",
@@ -103,7 +107,8 @@ a_features = [[
     "USE_INA219","USE_SHT3X","USE_MHZ19","USE_TSL2561",
     "USE_SENSEAIR","USE_PMS5003","USE_MGS","USE_NOVA_SDS",
     "USE_SGP30","USE_SR04","USE_SDM120","USE_SI1145",
-    "USE_SDM630","","",""],[
+    "USE_SDM630","USE_LM75AD","USE_APDS9960","USE_TM1638"
+    ],[
     "","","","",
     "","","","",
     "","","","",

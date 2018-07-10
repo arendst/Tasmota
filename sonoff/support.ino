@@ -368,10 +368,10 @@ char* GetPowerDevice(char* dest, uint8_t idx, size_t size, uint8_t option)
 {
   char sidx[8];
 
-  strncpy_P(dest, S_RSLT_POWER, size);
+  strncpy_P(dest, S_RSLT_POWER, size);                // POWER
   if ((devices_present + option) > 1) {
-    snprintf_P(sidx, sizeof(sidx), PSTR("%d"), idx);
-    strncat(dest, sidx, size);
+    snprintf_P(sidx, sizeof(sidx), PSTR("%d"), idx);  // x
+    strncat(dest, sidx, size);                        // POWERx
   }
   return dest;
 }
@@ -567,6 +567,11 @@ boolean GetUsedInModule(byte val, uint8_t *arr)
 #ifndef USE_SDM630
   if (GPIO_SDM630_TX == val) { return true; }
   if (GPIO_SDM630_RX == val) { return true; }
+#endif
+#ifndef USE_TM1638
+  if (GPIO_TM16CLK == val) { return true; }
+  if (GPIO_TM16DIO == val) { return true; }
+  if (GPIO_TM16STB == val) { return true; }
 #endif
   if ((val >= GPIO_REL1) && (val < GPIO_REL1 + MAX_RELAYS)) {
     offset = (GPIO_REL1_INV - GPIO_REL1);
@@ -862,6 +867,15 @@ void GetFeatures()
 #ifdef USE_SDM630
   feature_sns1 |= 0x10000000;  // xsns_25_sdm630.ino
 #endif
+#ifdef USE_LM75AD
+  feature_sns1 |= 0x20000000;  // xsns_26_lm75ad.ino
+#endif
+#ifdef USE_APDS9960
+  feature_sns1 |= 0x40000000;  // xsns_27_apds9960.ino
+#endif
+#ifdef USE_TM1638
+  feature_sns1 |= 0x80000000;  // xsns_28_tm1638.ino
+#endif
 
 /*********************************************************************************************/
 
@@ -1007,7 +1021,6 @@ void WifiBegin(uint8_t flag)
   WiFi.mode(WIFI_OFF);      // See https://github.com/esp8266/Arduino/issues/2186
 #endif
 
-  WiFi.persistent(false);   // Solve possible wifi init errors
   WiFi.disconnect(true);    // Delete SDK wifi config
   delay(200);
   WiFi.mode(WIFI_STA);      // Disable AP mode
@@ -1047,6 +1060,7 @@ void WifiBegin(uint8_t flag)
 void WifiCheckIp()
 {
   if ((WL_CONNECTED == WiFi.status()) && (static_cast<uint32_t>(WiFi.localIP()) != 0)) {
+    global_state.wifi_down = 0;
     wifi_counter = WIFI_CHECK_SEC;
     wifi_retry = wifi_retry_init;
     AddLog_P((wifi_status != WL_CONNECTED) ? LOG_LEVEL_INFO : LOG_LEVEL_DEBUG_MORE, S_LOG_WIFI, PSTR(D_CONNECTED));
@@ -1058,6 +1072,7 @@ void WifiCheckIp()
     }
     wifi_status = WL_CONNECTED;
   } else {
+    global_state.wifi_down = 1;
     wifi_status = WiFi.status();
     switch (wifi_status) {
       case WL_CONNECTED:
@@ -1157,6 +1172,7 @@ void WifiCheck(uint8_t param)
         WifiCheckIp();
       }
       if ((WL_CONNECTED == WiFi.status()) && (static_cast<uint32_t>(WiFi.localIP()) != 0) && !wifi_config_type) {
+        global_state.wifi_down = 0;
 #ifdef BE_MINIMAL
         if (1 == RtcSettings.ota_loader) {
           RtcSettings.ota_loader = 0;
@@ -1194,6 +1210,7 @@ void WifiCheck(uint8_t param)
         }
 #endif  // USE_KNX
       } else {
+        global_state.wifi_down = 1;
 #if defined(USE_WEBSERVER) && defined(USE_EMULATION)
         UdpDisconnect();
 #endif  // USE_EMULATION
@@ -1413,6 +1430,33 @@ bool I2cWrite16(uint8_t addr, uint8_t reg, uint16_t val)
    return I2cWrite(addr, reg, val, 2);
 }
 
+int8_t I2cReadBuffer(uint8_t addr, uint8_t reg, uint8_t *reg_data, uint16_t len)
+{
+  Wire.beginTransmission((uint8_t)addr);
+  Wire.write((uint8_t)reg);
+  Wire.endTransmission();
+  if (len != Wire.requestFrom((uint8_t)addr, (byte)len)) {
+    return 1;
+  }
+  while (len--) {
+    *reg_data = (uint8_t)Wire.read();
+    reg_data++;
+  }
+  return 0;
+}
+
+int8_t I2cWriteBuffer(uint8_t addr, uint8_t reg, uint8_t *reg_data, uint16_t len)
+{
+  Wire.beginTransmission((uint8_t)addr);
+  Wire.write((uint8_t)reg);
+  while (len--) {
+    Wire.write(*reg_data);
+    reg_data++;
+  }
+  Wire.endTransmission();
+  return 0;
+}
+
 void I2cScan(char *devs, unsigned int devs_len)
 {
   byte error;
@@ -1574,6 +1618,29 @@ String GetUptime()
   snprintf_P(dt, sizeof(dt), PSTR("%dT%02d:%02d:%02d"),
     ut.days, ut.hour, ut.minute, ut.second);
   return String(dt);
+}
+
+uint32_t GetMinutesUptime()
+{
+  TIME_T ut;
+
+  if (restart_time) {
+    BreakTime(utc_time - restart_time, ut);
+  } else {
+    BreakTime(uptime, ut);
+  }
+
+  return (ut.days *1440) + (ut.hour *60) + ut.minute;
+}
+
+uint32_t GetMinutesPastMidnight()
+{
+  uint32_t minutes = 0;
+
+  if (RtcTime.valid) {
+    minutes = (RtcTime.hour *60) + RtcTime.minute;
+  }
+  return minutes;
 }
 
 void BreakTime(uint32_t time_input, TIME_T &tm)
@@ -1752,11 +1819,10 @@ void RtcSecond()
         GetTime(0).c_str(), GetTime(2).c_str(), GetTime(3).c_str());
       AddLog(LOG_LEVEL_DEBUG);
       if (local_time < 1451602800) {  // 2016-01-01
-        strncpy_P(mqtt_data, PSTR("{\"Time\":{\"Initialized\":1}}"), sizeof(mqtt_data));
+        rules_flag.time_init = 1;
       } else {
-        strncpy_P(mqtt_data, PSTR("{\"Time\":{\"Set\":1}}"), sizeof(mqtt_data));
+        rules_flag.time_set = 1;
       }
-      XdrvRulesProcess();
     } else {
       ntp_sync_minute++;  // Try again in next minute
     }

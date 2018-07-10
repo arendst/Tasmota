@@ -93,7 +93,7 @@ uint8_t kRepeat[5] = {
     1 };   // All
 
 uint8_t ws_show_next = 1;
-
+bool ws_suspend_update = false;
 /********************************************************************************************/
 
 void Ws2812StripShow()
@@ -365,9 +365,26 @@ void Ws2812SetColor(uint16_t led, uint8_t red, uint8_t green, uint8_t blue, uint
       strip->SetPixelColor(i, lcolor);
     }
   }
+<<<<<<< HEAD
   if (show) {
     strip->Show();
   }
+=======
+
+  if (!ws_suspend_update) {
+    strip->Show();
+    ws_show_next = 1;
+  }
+}
+
+void Ws2812ForceSuspend () {
+  ws_suspend_update = true;
+}
+
+void Ws2812ForceUpdate () {
+  ws_suspend_update = false;
+  strip->Show();
+>>>>>>> arendst/development
   ws_show_next = 1;
 }
 

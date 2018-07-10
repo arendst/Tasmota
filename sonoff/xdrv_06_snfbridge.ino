@@ -252,6 +252,7 @@ void SonoffBridgeReceived()
   uint16_t high_time = 0;
   uint32_t received_id = 0;
   char rfkey[8];
+  char stemp[16];
 
   AddLogSerial(LOG_LEVEL_DEBUG);
 
@@ -295,8 +296,13 @@ void SonoffBridgeReceived()
             }
           }
         }
-        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_RFRECEIVED "\":{\"" D_JSON_SYNC "\":%d,\"" D_JSON_LOW "\":%d,\"" D_JSON_HIGH "\":%d,\"" D_JSON_DATA "\":\"%06X\",\"" D_CMND_RFKEY "\":%s}}"),
-          sync_time, low_time, high_time, received_id, rfkey);
+        if (Settings.flag.rf_receive_decimal) {
+          snprintf_P(stemp, sizeof(stemp), PSTR("%u"), received_id);
+        } else {
+          snprintf_P(stemp, sizeof(stemp), PSTR("\"%06X\""), received_id);
+        }
+        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_RFRECEIVED "\":{\"" D_JSON_SYNC "\":%d,\"" D_JSON_LOW "\":%d,\"" D_JSON_HIGH "\":%d,\"" D_JSON_DATA "\":%s,\"" D_CMND_RFKEY "\":%s}}"),
+          sync_time, low_time, high_time, stemp, rfkey);
         MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_RFRECEIVED));
         XdrvRulesProcess();
   #ifdef USE_DOMOTICZ
@@ -533,6 +539,7 @@ boolean SonoffBridgeCommand()
         case 169:  // 0xA9 - Start learning predefined protocols
         case 176:  // 0xB0 - Stop sniffing
         case 177:  // 0xB1 - Start sniffing
+        case 255:  // 0xFF - Show firmware version
           SonoffBridgeSendCommand(XdrvMailbox.payload);
           sonoff_bridge_receive_raw_flag = 1;
           break;

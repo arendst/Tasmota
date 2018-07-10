@@ -1,11 +1,53 @@
+<<<<<<< HEAD
 
 /* 6.0.0a
  * Add CRC to Settings making future upgrades more fail-safe
  * Add support for uploading Sonoff Bridge firmware found in tools/fw_efm8bb1 folder build by Portisch using Web Gui File Upload (#2886)
  * Add command RfRaw to control Portisch firmware features
+=======
+/* 6.1.0a
+ * Fix DHT driver mixing values for different sensors (#1797)
+ * Change DHT driver to provide better instant results and add decimals to DHT11 (#3164)
+ * Change DS18x20 driver to provide better instant results (#3169)
+ * Change DS18B20 driver to provide better instant results
+ * Remove TSL2561 debug message and update library (#2415)
+ * Change SHT1x sensor initialization from pre-teleperiod to once during restart to fix I2C interference
+ * Add wifi and mqtt status led blinkyblinky to be disabled by SetOption31 1. Does not work when LedPower is On (deliberate) (#871, #2230, #3114, #3155)
+ * Add experimental (untested) TM1638 switch support (#2226)
+ * Add support for APDS9960 proximity sensor (#3051)
+ * Add heap and stack debug information
+ * Add debug facilities using optional xdrv_99_debug.ino to enable in user_config.h
+ * Remove not needed functionality from Sonoff-minimal to save space
+ *
+ * 6.1.0 20180706
+>>>>>>> arendst/development
  * Remove version 3, 4 and pre 5.2 settings auto-upgrade. See https://github.com/arendst/Sonoff-Tasmota/wiki/Upgrade#migration-path
  * Change default CFG_HOLDER from 0x20161209 to 4617 (=0x1209) - no impact on default upgrades
+ * Change number of supported switches from 4 to 8 (#2885, #3086)
+ * Change BME680 driver from Adafruit to Bosch BME680 library (#2969)
  * Fix Pzem004T checksum error
+ * Fix KNX bug when doing reply of sensors values
+ * Fix rules induced LWT message
+ * Fix possible wifi connection problem (#1366)
+ * Add Ukrainian language file
+ * Add KNX support for DS18S20 Temperature sensor
+ * Add CRC to Settings making future upgrades more fail-safe
+ * Add command SetOption30 to enforce Hass discovery as light group (#1784)
+ * Add support for BlitzWolf BW-SHP2 (and Homecube, Gosund SP1) Energy Monitoring Smart Socket (#2223)
+ * Add time in minutes to rule Time#Initialized, Time#set and Time#Minute (#2669)
+ * Add rule variables %time% for minutes since midnight, %uptime%, %sunrise% and %sunset% giving time in minutes (#2669)
+ * Add support for Sonoff S26 Smart Socket (#2808)
+ * Add increment and decrement value to command Counter (#2838)
+ * Add support for Sonoff iFan02 as module 44 introducing command FanSpeed 0..3 (#2839)
+ * Add support for uploading Sonoff Bridge firmware found in tools/fw_efm8bb1 folder build by Portisch using Web Gui File Upload (#2886)
+ * Add command RfRaw to control Portisch firmware features
+ * Add support for I2C temperature sensor LM75AD (#2909)
+ * Add option 0 to command Timers disarming all timers (#2962)
+ * Add performance improvement when updating multiple individual WS2812 pixels (#3007)
+ * Add command SetOption28 to switch between hex or decimal Sonoff Bridge RF received data format (#3008)
+ * Add command SetOption29 to switch between hex or decimal IR received data format
+ * Add decimal values support for commands ADD, SUB, MULT and SCALE (#3083, #3089)
+ * Add support for bitflags SetOption50 .. SetOption81 (#3118)
  *
  * 5.14.0b
  * Add Console Commands to send KNX Commands
@@ -17,10 +59,11 @@
    where [slot] is any of the 5 slots on the KNX Menu and value is a number
    example: KnxTx_Val1 35
  * Add Slots on the KNX Web Menu to select Group Addess to send data from console commands
- * Add Events to trigger rules when received data from KNX
-   usage on rules as: event#KnxRx_Val[slot]
+ * Add Events to trigger rules when a command is received from KNX
+   usage on rules as: event#KnxRx_Cmnd[slot]
    where [slot] is any of the 5 slots on the KNX Menu
-   example: rule on event#KnxRx_Val1 do VAR1 %value% endon
+   example: rule on event#KnxRx_Cmnd1 do VAR1 %value% endon
+   (where %value% can be 0 or 1)
  * Add Events to trigger rules when received read requests from KNX
    usage on rules as: event#KnxRx_Req[slot]
    where [slot] is any of the 5 slots on the KNX Menu
