@@ -44,7 +44,7 @@
 \*********************************************************************************************/
 
 // -- Master parameter control --------------------
-#define CFG_HOLDER             4617              // [Reset 1] Change this value to load SECTION1 configuration parameters to flash
+#define CFG_HOLDER             4617              // [Reset 1] Change this value (max 32000) to load SECTION1 configuration parameters to flash
 
 // -- Project -------------------------------------
 #define PROJECT                "sonoff"          // PROJECT is used as the default topic delimiter
@@ -265,7 +265,7 @@
   #define USE_HTU                                // Add I2C code for HTU21/SI7013/SI7020/SI7021 sensor (+1k5 code)
   #define USE_LM75AD                             // Add I2C code for LM75AD sensor (+0k5 code)
   #define USE_BMP                                // Add I2C code for BMP085/BMP180/BMP280/BME280 sensor (+4k code)
-//    #define USE_BME680                           // Add additional support for BME680 sensor using Adafruit Sensor and BME680 libraries (+6k code)
+//    #define USE_BME680                           // Add additional support for BME680 sensor using Bosch BME680 library (+4k code)
   #define USE_SGP30                              // Add I2C code for SGP30 sensor (+1k1 code)
   #define USE_BH1750                             // Add I2C code for BH1750 sensor (+0k5 code)
 //  #define USE_VEML6070                           // Add I2C code for VEML6070 sensor (+0k5 code)
@@ -276,6 +276,7 @@
 //  #define USE_INA219                             // Add I2C code for INA219 Low voltage and current sensor (+1k code)
 //  #define USE_MGS                                // Add I2C code for Xadow and Grove Mutichannel Gas sensor using library Multichannel_Gas_Sensor (+10k code)
     #define MGS_SENSOR_ADDR    0x04              // Default Mutichannel Gas sensor i2c address
+//  #define USE_APDS9960                           // Add I2C code for APDS9960 Proximity Sensor. Disables SHT and VEML6070 (+4k7 code)
 #endif  // USE_I2C
 
 // -- SPI sensors ---------------------------------
@@ -311,13 +312,21 @@
 
 #define USE_SR04                                 // Add support for HC-SR04 ultrasonic devices (+1k code)
 
+//#define USE_TM1638                               // Add support for TM1638 switches copying Switch1 .. Switch8 (+1k code)
+
 #define USE_RF_FLASH                             // Add support for flashing the EFM8BB1 chip on the Sonoff RF Bridge. C2CK must be connected to GPIO4, C2D to GPIO5 on the PCB
+
+/*********************************************************************************************\
+ * Debug features are only supported in development branch
+\*********************************************************************************************/
+
+//#define USE_DEBUG_DRIVER                         // Use xdrv_99_debug.ino providing commands CpuChk, CfgXor, CfgDump, CfgPeek and CfgPoke
 
 /*********************************************************************************************\
  * Select features and sensors enabled in previous version saving space
 \*********************************************************************************************/
 
-//#define USE_CLASSIC                             // Create sonoff-classic (See sonoff_post.h for selected features)
+//#define USE_CLASSIC                              // Create sonoff-classic (See sonoff_post.h for selected features)
 
 /*********************************************************************************************\
  * Select all sensors - overrides above undefines!!

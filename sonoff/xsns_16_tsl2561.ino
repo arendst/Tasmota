@@ -63,9 +63,9 @@ void Tsl2561Show(boolean json)
        && Tsl2561Util::normalizedLuminosity(gain, exposure, full = scaledFull, ir = scaledIr)
        && Tsl2561Util::milliLux(full, ir, milliLux, Tsl2561::packageCS(id))) {
 
-        snprintf_P(log_data, sizeof(log_data), PSTR(D_ILLUMINANCE " g:%d, e:%d, f:%u, i:%u -> %u.%03u " D_UNIT_LUX),
-          gain, exposure, full, ir, milliLux/1000, milliLux%1000);
-        AddLog(LOG_LEVEL_DEBUG);
+//        snprintf_P(log_data, sizeof(log_data), PSTR(D_ILLUMINANCE " g:%d, e:%d, f:%u, i:%u -> %u.%03u " D_UNIT_LUX),
+//          gain, exposure, full, ir, milliLux/1000, milliLux%1000);
+//        AddLog(LOG_LEVEL_DEBUG);
 
         if (json) {
           snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"TSL2561\":{\"" D_JSON_ILLUMINANCE "\":%u.%03u}"),

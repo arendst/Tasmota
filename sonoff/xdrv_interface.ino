@@ -176,6 +176,14 @@ boolean XdrvRulesProcess()
   return XdrvCall(FUNC_RULES_PROCESS);
 }
 
+void ShowFreeMem(const char *where)
+{
+  char stemp[20];
+  snprintf_P(stemp, sizeof(stemp), where);
+  XdrvMailbox.data = stemp;
+  XdrvCall(FUNC_FREE_MEM);
+}
+
 /*********************************************************************************************\
  * Function call to all xdrv
  *
@@ -191,6 +199,7 @@ boolean XdrvRulesProcess()
  * FUNC_EVERY_SECOND
  * FUNC_EVERY_50_MSECOND
  * FUNC_RULES_PROCESS
+ * FUNC_FREE_MEM
 \*********************************************************************************************/
 
 boolean XdrvCall(byte Function)

@@ -462,6 +462,7 @@ void KNX_INIT()
   if (GetUsedInModule(GPIO_DHT11, my_module.gp.io)) { device_param[KNX_TEMPERATURE-1].show = true; }
   if (GetUsedInModule(GPIO_DHT22, my_module.gp.io)) { device_param[KNX_TEMPERATURE-1].show = true; }
   if (GetUsedInModule(GPIO_SI7021, my_module.gp.io)) { device_param[KNX_TEMPERATURE-1].show = true; }
+  if (GetUsedInModule(GPIO_DSB, my_module.gp.io)) { device_param[KNX_TEMPERATURE-1].show = true; }
   if (GetUsedInModule(GPIO_DHT11, my_module.gp.io)) { device_param[KNX_HUMIDITY-1].show = true; }
   if (GetUsedInModule(GPIO_DHT22, my_module.gp.io)) { device_param[KNX_HUMIDITY-1].show = true; }
   if (GetUsedInModule(GPIO_SI7021, my_module.gp.io)) { device_param[KNX_HUMIDITY-1].show = true; }
@@ -547,7 +548,7 @@ void KNX_CB_Action(message_t const &msg, void *arg)
       {
         if (!toggle_inhibit) {
           char command[25];
-          snprintf_P(command, sizeof(command), PSTR("event KNXRX_VAL%d=%d"), ((chan->type) - KNX_SLOT1 + 1 ), msg.data[0]);
+          snprintf_P(command, sizeof(command), PSTR("event KNXRX_CMND%d=%d"), ((chan->type) - KNX_SLOT1 + 1 ), msg.data[0]);
           ExecuteCommand(command, SRC_KNX);
           if (Settings.flag.knx_enable_enhancement) {
             toggle_inhibit = TOGGLE_INHIBIT_TIME;
@@ -566,7 +567,7 @@ void KNX_CB_Action(message_t const &msg, void *arg)
           knx.answer_1bit(msg.received_on, chan->last_state);
         }
       }
-      else if (chan->type = KNX_TEMPERATURE) // Reply Temperature
+      else if (chan->type == KNX_TEMPERATURE) // Reply Temperature
       {
         knx.answer_2byte_float(msg.received_on, last_temp);
         if (Settings.flag.knx_enable_enhancement) {
@@ -574,7 +575,7 @@ void KNX_CB_Action(message_t const &msg, void *arg)
           knx.answer_2byte_float(msg.received_on, last_temp);
         }
       }
-      else if (chan->type = KNX_HUMIDITY) // Reply Humidity
+      else if (chan->type == KNX_HUMIDITY) // Reply Humidity
       {
         knx.answer_2byte_float(msg.received_on, last_hum);
         if (Settings.flag.knx_enable_enhancement) {
@@ -1044,14 +1045,18 @@ boolean KnxCommand()
     byte i = KNX_GA_Search(index + KNX_SLOT1 -1);
     while ( i != KNX_Empty ) {
       KNX_addr.value = Settings.knx_GA_addr[i];
-      knx.write_2byte_float(KNX_addr, XdrvMailbox.payload);
+
+      float tempvar = CharToDouble(XdrvMailbox.data);
+      dtostrfd(tempvar,2,XdrvMailbox.data);
+
+      knx.write_2byte_float(KNX_addr, tempvar);
       if (Settings.flag.knx_enable_enhancement) {
-        knx.write_2byte_float(KNX_addr, XdrvMailbox.payload);
-        knx.write_2byte_float(KNX_addr, XdrvMailbox.payload);
+        knx.write_2byte_float(KNX_addr, tempvar);
+        knx.write_2byte_float(KNX_addr, tempvar);
       }
 
-      snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_KNX "%s = %d " D_SENT_TO " %d.%d.%d"),
-       device_param_ga[index + KNX_SLOT1 -2], XdrvMailbox.payload,
+      snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_KNX "%s = %s " D_SENT_TO " %d.%d.%d"),
+       device_param_ga[index + KNX_SLOT1 -2], XdrvMailbox.data,
        KNX_addr.ga.area, KNX_addr.ga.line, KNX_addr.ga.member);
       AddLog(LOG_LEVEL_INFO);
 
@@ -1061,8 +1066,8 @@ boolean KnxCommand()
 
   else { return false; }  // Incomplete command
 
-  snprintf_P (mqtt_data, sizeof(mqtt_data), PSTR("{\"%s%d\":\"%d\"}"),
-    command, index, XdrvMailbox.payload );
+  snprintf_P (mqtt_data, sizeof(mqtt_data), PSTR("{\"%s%d\":\"%s\"}"),
+    command, index, XdrvMailbox.data );
 
   return true;
 }
