@@ -34,9 +34,14 @@ enum {
   SHT1X_CMD_SOFT_RESET    = B00011110
 };
 
+#define SHT_MAX_MISS        5
+
 uint8_t sht_sda_pin;
 uint8_t sht_scl_pin;
 uint8_t sht_type = 0;
+uint8_t sht_valid = 0;
+float sht_temperature = 0;
+float sht_humidity = 0;
 
 boolean ShtReset()
 {
@@ -119,46 +124,32 @@ int ShtReadData()
   return val;
 }
 
-boolean ShtReadTempHum(float &t, float &h)
+boolean ShtRead()
 {
-  float tempRaw;
-  float humRaw;
-  float rhLinear;
+  if (sht_valid) { sht_valid--; }
+  if (!ShtReset()) { return false; }
+  if (!ShtSendCommand(SHT1X_CMD_MEASURE_TEMP)) { return false; }
+  if (!ShtAwaitResult()) { return false; }
+  float tempRaw = ShtReadData();
+  if (!ShtSendCommand(SHT1X_CMD_MEASURE_RH)) { return false; }
+  if (!ShtAwaitResult()) { return false; }
+  float humRaw = ShtReadData();
 
-  t = NAN;
-  h = NAN;
-
-  if (!ShtReset()) {
-    return false;
-  }
-  if (!ShtSendCommand(SHT1X_CMD_MEASURE_TEMP)) {
-    return false;
-  }
-  if (!ShtAwaitResult()) {
-    return false;
-  }
-  tempRaw = ShtReadData();
   // Temperature conversion coefficients from SHT1X datasheet for version 4
   const float d1 = -39.7;  // 3.5V
   const float d2 = 0.01;   // 14-bit
-  t = d1 + (tempRaw * d2);
-  if (!ShtSendCommand(SHT1X_CMD_MEASURE_RH)) {
-    return false;
-  }
-  if (!ShtAwaitResult()) {
-    return false;
-  }
-  humRaw = ShtReadData();
-  // Temperature conversion coefficients from SHT1X datasheet for version 4
+  sht_temperature = d1 + (tempRaw * d2);
   const float c1 = -2.0468;
   const float c2 = 0.0367;
   const float c3 = -1.5955E-6;
   const float t1 = 0.01;
   const float t2 = 0.00008;
-  rhLinear = c1 + c2 * humRaw + c3 * humRaw * humRaw;
-  h = (t - 25) * (t1 + t2 * humRaw) + rhLinear;
-  t = ConvertTemp(t);
-  return (!isnan(t) && !isnan(h));
+  float rhLinear = c1 + c2 * humRaw + c3 * humRaw * humRaw;
+  sht_humidity = (sht_temperature - 25) * (t1 + t2 * humRaw) + rhLinear;
+  sht_temperature = ConvertTemp(sht_temperature);
+
+  sht_valid = SHT_MAX_MISS;
+  return true;
 }
 
 /********************************************************************************************/
@@ -169,12 +160,9 @@ void ShtDetect()
     return;
   }
 
-  float t;
-  float h;
-
   sht_sda_pin = pin[GPIO_I2C_SDA];
   sht_scl_pin = pin[GPIO_I2C_SCL];
-  if (ShtReadTempHum(t, h)) {
+  if (ShtRead()) {
     sht_type = 1;
     AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_I2C D_SHT1X_FOUND));
   } else {
@@ -183,32 +171,32 @@ void ShtDetect()
   }
 }
 
+void ShtEverySecond()
+{
+  if (!(uptime %3)) { ShtRead(); }  // Update every 3 seconds
+}
+
 void ShtShow(boolean json)
 {
   if (sht_type) {
-    float t;
-    float h;
-
-    if (ShtReadTempHum(t, h)) {
+    if (sht_valid) {
       char temperature[10];
       char humidity[10];
 
-      dtostrfd(t, Settings.flag2.temperature_resolution, temperature);
-      dtostrfd(h, Settings.flag2.humidity_resolution, humidity);
+      dtostrfd(sht_temperature, Settings.flag2.temperature_resolution, temperature);
+      dtostrfd(sht_humidity, Settings.flag2.humidity_resolution, humidity);
 
       if (json) {
         snprintf_P(mqtt_data, sizeof(mqtt_data), JSON_SNS_TEMPHUM, mqtt_data, "SHT1X", temperature, humidity);
 #ifdef USE_DOMOTICZ
         if (0 == tele_period) DomoticzTempHumSensor(temperature, humidity);
 #endif  // USE_DOMOTICZ
-
 #ifdef USE_KNX
         if (0 == tele_period) {
-          KnxSensor(KNX_TEMPERATURE, t);
-          KnxSensor(KNX_HUMIDITY, h);
+          KnxSensor(KNX_TEMPERATURE, sht_temperature);
+          KnxSensor(KNX_HUMIDITY, sht_humidity);
         }
 #endif  // USE_KNX
-
 #ifdef USE_WEBSERVER
       } else {
         snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TEMP, mqtt_data, "SHT1X", temperature, TempUnit());
@@ -234,6 +222,9 @@ boolean Xsns07(byte function)
 //      case FUNC_PREP_BEFORE_TELEPERIOD:  // As this is not a real I2C device it may interfere with other sensors
       case FUNC_INIT:                      // Move detection to restart only removing interference
         ShtDetect();
+        break;
+      case FUNC_EVERY_SECOND:
+        ShtEverySecond();
         break;
       case FUNC_JSON_APPEND:
         ShtShow(1);
