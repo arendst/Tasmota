@@ -33,7 +33,6 @@
 #define W1_WRITE_SCRATCHPAD  0x4E
 #define W1_READ_SCRATCHPAD   0xBE
 
-#define DS18X20_MAX_MISS     5
 #define DS18X20_MAX_SENSORS  8
 
 const char kDs18x20Types[] PROGMEM = "DS18x20|DS18S20|DS1822|DS18B20|MAX31850";
@@ -43,12 +42,12 @@ uint8_t ds18x20_chipids[] = { 0, DS18S20_CHIPID, DS1822_CHIPID, DS18B20_CHIPID, 
 struct DS18X20STRUCT {
   uint8_t address[8];
   uint8_t index;
-  uint8_t result;
+  uint8_t valid;
   float   temperature;
 } ds18x20_sensor[DS18X20_MAX_SENSORS];
 uint8_t ds18x20_sensors = 0;
 uint8_t ds18x20_pin = 0;
-char ds18x20_types[9];
+char ds18x20_types[12];
 
 /*********************************************************************************************\
  * Embedded tuned OneWire library
@@ -289,7 +288,7 @@ void Ds18x20Convert()
 //  delay(750);                          // 750ms should be enough for 12bit conv
 }
 
-void Ds18x20Read(uint8_t sensor)
+bool Ds18x20Read(uint8_t sensor)
 {
   uint8_t data[9];
   int8_t sign = 1;
@@ -298,7 +297,7 @@ void Ds18x20Read(uint8_t sensor)
   float temp9 = 0.0;
 
   uint8_t index = ds18x20_sensor[sensor].index;
-  if (ds18x20_sensor[index].result) { ds18x20_sensor[index].result--; }
+  if (ds18x20_sensor[index].valid) { ds18x20_sensor[index].valid--; }
   for (uint8_t retry = 0; retry < 3; retry++) {
     OneWireReset();
     OneWireSelect(ds18x20_sensor[index].address);
@@ -319,8 +318,8 @@ void Ds18x20Read(uint8_t sensor)
           temp9 = (data[0] >> 1) * sign;
         }
         ds18x20_sensor[index].temperature = ConvertTemp((temp9 - 0.25) + ((16.0 - data[6]) / 16.0));
-        ds18x20_sensor[index].result = DS18X20_MAX_MISS;
-        return;
+        ds18x20_sensor[index].valid = SENSOR_MAX_MISS;
+        return true;
       case DS1822_CHIPID:
       case DS18B20_CHIPID:
         if (data[4] != 0x7F) {
@@ -340,17 +339,33 @@ void Ds18x20Read(uint8_t sensor)
           sign = -1;
         }
         ds18x20_sensor[index].temperature = ConvertTemp(sign * temp12 * 0.0625);  // Divide by 16
-        ds18x20_sensor[index].result = DS18X20_MAX_MISS;
-        return;
+        ds18x20_sensor[index].valid = SENSOR_MAX_MISS;
+        return true;
       case MAX31850_CHIPID:
         temp14 = (data[1] << 8) + (data[0] & 0xFC);
         ds18x20_sensor[index].temperature = ConvertTemp(temp14 * 0.0625);  // Divide by 16
-        ds18x20_sensor[index].result = DS18X20_MAX_MISS;
-        return;
+        ds18x20_sensor[index].valid = SENSOR_MAX_MISS;
+        return true;
       }
     }
   }
   AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DSB D_SENSOR_CRC_ERROR));
+  return false;
+}
+
+void Ds18x20Name(uint8_t sensor)
+{
+  uint8_t index = sizeof(ds18x20_chipids);
+  while (index) {
+    if (ds18x20_sensor[ds18x20_sensor[sensor].index].address[0] == ds18x20_chipids[index]) {
+      break;
+    }
+    index--;
+  }
+  GetTextIndexed(ds18x20_types, sizeof(ds18x20_types), index, kDs18x20Types);
+  if (ds18x20_sensors > 1) {
+    snprintf_P(ds18x20_types, sizeof(ds18x20_types), PSTR("%s-%d"), ds18x20_types, sensor +1);
+  }
 }
 
 /********************************************************************************************/
@@ -361,7 +376,10 @@ void Ds18x20EverySecond()
     Ds18x20Convert();          // Start conversion, takes up to one second
   } else {
     for (uint8_t i = 0; i < ds18x20_sensors; i++) {
-      Ds18x20Read(i);          // Read temperature
+      if (!Ds18x20Read(i)) {   // Read temperature
+        Ds18x20Name(i);
+        AddLogMissed(ds18x20_types, ds18x20_sensor[ds18x20_sensor[i].index].valid);
+      }
     }
   }
 }
@@ -369,25 +387,15 @@ void Ds18x20EverySecond()
 void Ds18x20Show(boolean json)
 {
   char temperature[10];
-  char stemp[12];
-  bool domoticz_flag = true;
 
   for (uint8_t i = 0; i < ds18x20_sensors; i++) {
     uint8_t index = ds18x20_sensor[i].index;
 
-    if (ds18x20_sensor[index].result) {   // Check for valid temperature
+    if (ds18x20_sensor[index].valid) {   // Check for valid temperature
       dtostrfd(ds18x20_sensor[index].temperature, Settings.flag2.temperature_resolution, temperature);
 
-      uint8_t idx = sizeof(ds18x20_chipids);
-      while (idx) {
-        if (ds18x20_sensor[ds18x20_sensor[idx].index].address[0] == ds18x20_chipids[idx]) {
-          break;
-        }
-        idx--;
-      }
-      GetTextIndexed(ds18x20_types, sizeof(ds18x20_types), idx, kDs18x20Types);
+      Ds18x20Name(i);
 
-      snprintf_P(stemp, sizeof(stemp), PSTR("%s-%d"), ds18x20_types, i +1);
       if (json) {
         if (1 == ds18x20_sensors) {
           snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"%s\":{\"" D_JSON_TEMPERATURE "\":%s}"), mqtt_data, ds18x20_types, temperature);
@@ -396,12 +404,11 @@ void Ds18x20Show(boolean json)
           for (byte j = 0; j < 6; j++) {
             sprintf(address+2*j, "%02X", ds18x20_sensor[index].address[6-j]);  // Skip sensor type and crc
           }
-          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"%s\":{\"" D_JSON_ID "\":\"%s\",\"" D_JSON_TEMPERATURE "\":%s}"), mqtt_data, stemp, address, temperature);
+          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"%s\":{\"" D_JSON_ID "\":\"%s\",\"" D_JSON_TEMPERATURE "\":%s}"), mqtt_data, ds18x20_types, address, temperature);
         }
 #ifdef USE_DOMOTICZ
-        if ((0 == tele_period) && domoticz_flag) {
+        if ((0 == tele_period) && (0 == i)) {
           DomoticzSensor(DZ_TEMP, temperature);
-          domoticz_flag = false;
         }
 #endif  // USE_DOMOTICZ
 #ifdef USE_KNX
@@ -411,7 +418,7 @@ void Ds18x20Show(boolean json)
 #endif  // USE_KNX
 #ifdef USE_WEBSERVER
       } else {
-        snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TEMP, mqtt_data, (1 == ds18x20_sensors) ? ds18x20_types : stemp, temperature, TempUnit());
+        snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TEMP, mqtt_data, ds18x20_types, temperature, TempUnit());
 #endif  // USE_WEBSERVER
       }
     }
