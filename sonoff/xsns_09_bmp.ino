@@ -83,7 +83,6 @@ int16_t  cal_md;
 uint16_t cal_ac4;
 uint16_t cal_ac5;
 uint16_t cal_ac6;
-int32_t  bmp180_b5 = 0;
 
 boolean Bmp180Calibration()
 {
@@ -125,7 +124,7 @@ void Bmp180Read()
   int ut = I2cRead16(bmp_address, BMP180_REG_RESULT);
   int32_t xt1 = (ut - (int32_t)cal_ac6) * ((int32_t)cal_ac5) >> 15;
   int32_t xt2 = ((int32_t)cal_mc << 11) / (xt1 + (int32_t)cal_md);
-  bmp180_b5 = xt1 + xt2;
+  int32_t bmp180_b5 = xt1 + xt2;
   bmp_temperature = ((bmp180_b5 + 8) >> 4) / 10.0;
 
   I2cWrite8(bmp_address, BMP180_REG_CONTROL, BMP180_PRESSURE3); // Highest resolution
@@ -156,7 +155,7 @@ void Bmp180Read()
   x1 = (x1 * 3038) >> 16;
   x2 = (-7357 * p) >> 16;
   p += ((x1 + x2 + (int32_t)3791) >> 4);
-  bmp_pressure = p / 100.0;  // convert to mbar
+  bmp_pressure = (float)p / 100.0;  // convert to mbar
 }
 
 /*********************************************************************************************\
@@ -229,20 +228,6 @@ boolean Bmx280Calibrate()
   Bme280CalibrationData.dig_P7 = I2cReadS16_LE(bmp_address, BME280_REGISTER_DIG_P7);
   Bme280CalibrationData.dig_P8 = I2cReadS16_LE(bmp_address, BME280_REGISTER_DIG_P8);
   Bme280CalibrationData.dig_P9 = I2cReadS16_LE(bmp_address, BME280_REGISTER_DIG_P9);
-/*
-  if (BME280_CHIPID == bmp_type) {
-    Bme280CalibrationData.dig_H1 = I2cRead8(bmp_address, BME280_REGISTER_DIG_H1);
-    Bme280CalibrationData.dig_H2 = I2cReadS16_LE(bmp_address, BME280_REGISTER_DIG_H2);
-    Bme280CalibrationData.dig_H3 = I2cRead8(bmp_address, BME280_REGISTER_DIG_H3);
-    Bme280CalibrationData.dig_H4 = (I2cRead8(bmp_address, BME280_REGISTER_DIG_H4) << 4) | (I2cRead8(bmp_address, BME280_REGISTER_DIG_H4 + 1) & 0xF);
-    Bme280CalibrationData.dig_H5 = (I2cRead8(bmp_address, BME280_REGISTER_DIG_H5 + 1) << 4) | (I2cRead8(bmp_address, BME280_REGISTER_DIG_H5) >> 4);
-    Bme280CalibrationData.dig_H6 = (int8_t)I2cRead8(bmp_address, BME280_REGISTER_DIG_H6);
-
-    // Set before CONTROL_meas (DS 5.4.3)
-    I2cWrite8(bmp_address, BME280_REGISTER_CONTROLHUMID, 0x05); // 16x oversampling (Adafruit)
-  }
-  I2cWrite8(bmp_address, BME280_REGISTER_CONTROL, 0xB7);      // 16x oversampling, normal mode (Adafruit)
-*/
   if (BME280_CHIPID == bmp_type) {  // #1051
     Bme280CalibrationData.dig_H1 = I2cRead8(bmp_address, BME280_REGISTER_DIG_H1);
     Bme280CalibrationData.dig_H2 = I2cReadS16_LE(bmp_address, BME280_REGISTER_DIG_H2);
@@ -272,7 +257,7 @@ void Bme280Read(void)
   int32_t vart2 = (((((adc_T >> 4) - ((int32_t)Bme280CalibrationData.dig_T1)) * ((adc_T >> 4) - ((int32_t)Bme280CalibrationData.dig_T1))) >> 12) *
     ((int32_t)Bme280CalibrationData.dig_T3)) >> 14;
   int32_t t_fine = vart1 + vart2;
-  double T = (t_fine * 5 + 128) >> 8;
+  float T = (t_fine * 5 + 128) >> 8;
   bmp_temperature = T / 100.0;
 
   int32_t adc_P = I2cRead24(bmp_address, BME280_REGISTER_PRESSUREDATA);
@@ -296,10 +281,9 @@ void Bme280Read(void)
 
   if (BMP280_CHIPID == bmp_type) { return; }
 
-  int32_t v_x1_u32r;
-
   int32_t adc_H = I2cRead16(bmp_address, BME280_REGISTER_HUMIDDATA);
-  v_x1_u32r = (t_fine - ((int32_t)76800));
+
+  int32_t v_x1_u32r = (t_fine - ((int32_t)76800));
   v_x1_u32r = (((((adc_H << 14) - (((int32_t)Bme280CalibrationData.dig_H4) << 20) -
     (((int32_t)Bme280CalibrationData.dig_H5) * v_x1_u32r)) + ((int32_t)16384)) >> 15) *
     (((((((v_x1_u32r * ((int32_t)Bme280CalibrationData.dig_H6)) >> 10) *
