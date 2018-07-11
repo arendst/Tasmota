@@ -281,22 +281,3 @@ boolean Xsns08(byte function)
 
   if (i2c_flg) {
     switch (function) {
-      case FUNC_EVERY_SECOND:
-        HtuEverySecond();
-        break;
-      case FUNC_JSON_APPEND:
-        HtuShow(1);
-        break;
-#ifdef USE_WEBSERVER
-      case FUNC_WEB_APPEND:
-        HtuShow(0);
-        break;
-#endif  // USE_WEBSERVER
-    }
-  }
-  return result;
-}
-
-#endif  // USE_HTU
-#endif  // USE_I2C
-
