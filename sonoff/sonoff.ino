@@ -118,10 +118,6 @@ uint16_t dual_button_code = 0;              // Sonoff dual received code
 int16_t save_data_counter;                  // Counter and flag for config save to Flash
 uint8_t fallback_topic_flag = 0;            // Use Topic or FallbackTopic
 unsigned long state_loop_timer = 0;         // State loop timer
-
-//STB mod
-unsigned long last_save_uptime = 0;   // Loop timer to calculate ontime
-//end
 int state = 0;                              // State per second flag
 int ota_state_flag = 0;                     // OTA state flag
 int ota_result = 0;                         // OTA result
@@ -132,16 +128,9 @@ int wifi_state_flag = WIFI_RESTART;         // Wifi state flag
 uint32_t uptime = 0;                        // Counting every second until 4294967295 = 130 year
 boolean latest_uptime_flag = true;          // Signal latest uptime
 int tele_period = 0;                        // Tele period timer
-//STB mode
-int prep_called = 0;                // additional flag to detect a proper start of initialize sensors.
-//end
 byte web_log_index = 1;                     // Index in Web log buffer (should never be 0)
 byte reset_web_log_flag = 0;                // Reset web console log
 byte devices_present = 0;                   // Max number of devices supported
-
-//STB mod
-byte max_pcf8574_connected_ports = 0;         // Max numbers of devices comming from PCF8574 modules
-//end
 int status_update_timer = 0;                // Refresh initial status
 uint16_t pulse_timer[MAX_PULSETIMERS] = { 0 }; // Power off timer
 uint16_t blink_timer = 0;                   // Power cycle timer
@@ -157,6 +146,16 @@ uint8_t backlog_pointer = 0;                // Command backlog pointer
 uint8_t backlog_mutex = 0;                  // Command backlog pending
 uint16_t backlog_delay = 0;                 // Command backlog delay
 uint8_t interlock_mutex = 0;                // Interlock power command pending
+
+
+//STB mod
+byte max_pcf8574_connected_ports = 0;         // Max numbers of devices comming from PCF8574 modules
+int prep_called = 0;                // additional flag to detect a proper start of initialize sensors.
+unsigned long last_save_uptime = 0;   // Loop timer to calculate ontime
+uint8_t last_source = 0;
+byte max_pcf8574_devices = 0;               // Max numbers of PCF8574 modules
+uint8_t shutter_type = 1;                     // shutter types
+//end
 
 #ifdef USE_MQTT_TLS
   WiFiClientSecure EspClient;               // Wifi Secure Client
@@ -197,10 +196,7 @@ uint8_t i2c_flg = 0;                        // I2C configured
 uint8_t spi_flg = 0;                        // SPI configured
 uint8_t light_type = 0;                     // Light types
 bool pwm_present = false;                   // Any PWM channel configured with SetOption15 0
-//STB  mod
-byte max_pcf8574_devices = 0;               // Max numbers of PCF8574 modules
-uint8_t shutter_type = 1;                     // shutter types
-//end
+
 
 boolean mdns_begun = false;
 uint8_t ntp_force_sync = 0;                 // Force NTP sync
@@ -333,6 +329,10 @@ void SetDevicePower(power_t rpower, int source)
   uint8_t state;
 
   ShowSource(source);
+
+  //STB mod
+  last_source = source;
+  //END
 
   if (POWER_ALL_ALWAYS_ON == Settings.poweronstate) {  // All on and stay on
     power = (1 << devices_present) -1;

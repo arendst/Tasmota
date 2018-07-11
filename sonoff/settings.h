@@ -92,7 +92,7 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t spare26 : 1;
     uint32_t spare27 : 1;
     uint32_t spare28 : 1;
-    uint32_t momentary_switch : 1;
+    uint32_t spare29 : 1;
     uint32_t shutter_mode : 1;
     uint32_t paired_interlock : 1;
   };
