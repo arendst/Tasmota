@@ -312,7 +312,6 @@ void Bme680Read()
     return;
   }
         bmp_model++;  // 1
-=======
     I2cWrite8(bmp_address, BME280_REGISTER_CONTROL, 0x00);      // sleep mode since writes to config can be ignored in normal mode (Datasheet 5.4.5/6 page 27)
     // Set before CONTROL_meas (DS 5.4.3)
     I2cWrite8(bmp_address, BME280_REGISTER_CONTROLHUMID, 0x01); // 1x oversampling
