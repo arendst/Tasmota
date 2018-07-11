@@ -141,6 +141,7 @@ boolean ShutterCommand()
       if (Shutter_Direction && (Shutter_Direction !=  new_shutterdirection) ) {
         // direction need to be changed. on momentary switches first stop the Shutter
         ExecuteCommandPower(Settings.shutter_startrelay + (Shutter_Direction == 1 ? 0 : 1), 1, SRC_SHUTTER);
+        delay(500);
       }
       if (Shutter_Direction !=  new_shutterdirection ) {
         Shutter_Direction = new_shutterdirection;
