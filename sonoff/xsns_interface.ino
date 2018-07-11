@@ -146,3 +146,115 @@ boolean (* const xsns_func_ptr[])(byte) PROGMEM = {  // Sensor Function Pointers
   &Xsns32,
 #endif
 
+=======
+#ifdef XSNS_33
+  &Xsns33,
+#endif
+
+#ifdef XSNS_34
+  &Xsns34,
+#endif
+
+#ifdef XSNS_35
+  &Xsns35,
+#endif
+
+#ifdef XSNS_36
+  &Xsns36,
+#endif
+
+#ifdef XSNS_37
+  &Xsns37,
+#endif
+
+#ifdef XSNS_38
+  &Xsns38,
+#endif
+
+#ifdef XSNS_39
+  &Xsns39,
+#endif
+
+#ifdef XSNS_40
+  &Xsns40,
+#endif
+
+// Optional user defined sensors in range 91 - 99
+
+#ifdef XSNS_91
+  &Xsns91,
+#endif
+
+#ifdef XSNS_92
+  &Xsns92,
+#endif
+
+#ifdef XSNS_93
+  &Xsns93,
+#endif
+
+#ifdef XSNS_94
+  &Xsns94,
+#endif
+
+#ifdef XSNS_95
+  &Xsns95,
+#endif
+
+#ifdef XSNS_96
+  &Xsns96,
+#endif
+
+#ifdef XSNS_97
+  &Xsns97,
+#endif
+
+#ifdef XSNS_98
+  &Xsns98,
+#endif
+
+#ifdef XSNS_99
+  &Xsns99
+#endif
+};
+
+const uint8_t xsns_present = sizeof(xsns_func_ptr) / sizeof(xsns_func_ptr[0]);  // Number of External Sensors found
+uint8_t xsns_index = 0;
+
+/*********************************************************************************************\
+ * Function call to all xsns
+ *
+ * FUNC_INIT
+ * FUNC_PREP_BEFORE_TELEPERIOD
+ * FUNC_SAVE_BEFORE_RESTART
+ * FUNC_JSON_APPEND
+ * FUNC_WEB_APPEND
+ * return FUNC_COMMAND
+ * FUNC_EVERY_SECOND
+ * FUNC_EVERY_50_MSECOND
+\*********************************************************************************************/
+
+uint8_t XsnsPresent()
+{
+  return xsns_present;
+}
+
+boolean XsnsNextCall(byte Function)
+{
+  xsns_index++;
+  if (xsns_index == xsns_present) xsns_index = 0;
+  return xsns_func_ptr[xsns_index](Function);
+}
+
+boolean XsnsCall(byte Function)
+{
+  boolean result = false;
+
+  for (byte x = 0; x < xsns_present; x++) {
+    result = xsns_func_ptr[x](Function);
+    if (result) break;
+  }
+
+  return result;
+}
+
