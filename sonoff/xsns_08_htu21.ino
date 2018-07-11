@@ -304,4 +304,3 @@ boolean Xsns08(byte function)
 
 #endif  // USE_HTU
 #endif  // USE_I2C
-

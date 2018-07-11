@@ -45,6 +45,26 @@ uint8_t bmp_type = 0;
 uint8_t bmp_model = 0;
 char bmp_name[7];
 
+int32_t  bmp180_b5 = 0;
+void Bmp180Read()
+  int32_t xt1 = (ut - (int32_t)cal_ac6) * ((int32_t)cal_ac5) >> 15;
+  int32_t xt2 = ((int32_t)cal_mc << 11) / (xt1 + (int32_t)cal_md);
+  int32_t bmp180_b5 = xt1 + xt2;
+
+  bmp_temperature = ((bmp180_b5 + 8) >> 4) / 10.0;
+}
+
+double Bmp180ReadPressure()
+{
+  int32_t p;
+
+
+  bmp_pressure = (float)p / 100.0;  // convert to mbar
+int32_t t_fine;
+
+/*
+  if (BME280_CHIPID == bmp_type) {
+=======
 uint8_t bmp_valid = 0;
 float bmp_temperature = 0.0;
 float bmp_pressure = 0.0;
@@ -236,6 +256,62 @@ boolean Bmx280Calibrate()
     Bme280CalibrationData.dig_H5 = (I2cRead8(bmp_address, BME280_REGISTER_DIG_H5 + 1) << 4) | (I2cRead8(bmp_address, BME280_REGISTER_DIG_H5) >> 4);
     Bme280CalibrationData.dig_H6 = (int8_t)I2cRead8(bmp_address, BME280_REGISTER_DIG_H6);
 
+    // Set before CONTROL_meas (DS 5.4.3)
+    I2cWrite8(bmp_address, BME280_REGISTER_CONTROLHUMID, 0x05); // 16x oversampling (Adafruit)
+  }
+  I2cWrite8(bmp_address, BME280_REGISTER_CONTROL, 0xB7);      // 16x oversampling, normal mode (Adafruit)
+*/
+void Bme280Read(void)
+  int32_t var1;
+  int32_t var2;
+
+  int32_t vart1 = ((((adc_T >> 3) - ((int32_t)Bme280CalibrationData.dig_T1 << 1))) * ((int32_t)Bme280CalibrationData.dig_T2)) >> 11;
+  int32_t vart2 = (((((adc_T >> 4) - ((int32_t)Bme280CalibrationData.dig_T1)) * ((adc_T >> 4) - ((int32_t)Bme280CalibrationData.dig_T1))) >> 12) *
+  int32_t t_fine = vart1 + vart2;
+  float T = (t_fine * 5 + 128) >> 8;
+  bmp_temperature = T / 100.0;
+}
+double Bme280ReadPressure(void)
+{
+  int64_t var1;
+  int64_t var2;
+  int64_t p;
+
+  // Must be done first to get the t_fine variable set up
+  //  Bme280ReadTemperature();
+
+  int64_t var1 = ((int64_t)t_fine) - 128000;
+  int64_t var2 = var1 * var1 * (int64_t)Bme280CalibrationData.dig_P6;
+    return; // avoid exception caused by division by zero
+  int64_t p = 1048576 - adc_P;
+  bmp_pressure = (float)p / 25600.0;
+}
+double Bme280ReadHumidity(void)
+{
+  int32_t v_x1_u32r;
+
+  // Must be done first to get the t_fine variable set up
+  //  Bme280ReadTemperature();
+  int32_t v_x1_u32r = (t_fine - ((int32_t)76800));
+
+  float h = (v_x1_u32r >> 12);
+  bmp_humidity = h / 1024.0;
+
+uint8_t bme680_state = 0;
+float bme680_temperature;
+float bme680_pressure;
+float bme680_humidity;
+float bme680_gas_resistance;
+void Bme680Read()
+      bmp_temperature = data.temperature / 100.0;
+      bmp_humidity = data.humidity / 1000.0;
+      bmp_pressure = data.pressure / 100.0;
+        bmp_gas_resistance = data.gas_resistance / 1000.0;
+        bmp_gas_resistance = 0;
+  if (bmp_type) { return; }
+    return;
+  }
+        bmp_model++;  // 1
     I2cWrite8(bmp_address, BME280_REGISTER_CONTROL, 0x00);      // sleep mode since writes to config can be ignored in normal mode (Datasheet 5.4.5/6 page 27)
     // Set before CONTROL_meas (DS 5.4.3)
     I2cWrite8(bmp_address, BME280_REGISTER_CONTROLHUMID, 0x01); // 1x oversampling
@@ -424,6 +500,41 @@ void BmpDetect()
         bmp_model++;  // 1
         success = Bmx280Calibrate();
         break;
+        bmp_model = 3;  // 3
+void BmpRead()
+  if (bmp_type) {
+    float t = 0.0;
+    float p = 0.0;
+    float h = 0.0;
+    float g = 0.0;
+    float bmp_sealevel = 0.0;
+
+        t = Bmp180ReadTemperature();
+      Bmp180Read();
+      Bme280Read();
+      case BMP280_CHIPID:
+        t = Bme280ReadTemperature();
+        p = Bme280ReadPressure();
+      Bme680Read();
+        p = bme680_pressure / 100.0;
+        h = bme680_humidity;
+        g = bme680_gas_resistance / 1000.0;
+    if (t != 0.0) {
+    BmpDetect();
+  else if (uptime &1) {
+    BmpRead();
+  }
+    dtostrfd(t, Settings.flag2.temperature_resolution, temperature);
+    dtostrfd(p, Settings.flag2.pressure_resolution, pressure);
+    char humidity[10];
+    dtostrfd(bmp_humidity, Settings.flag2.humidity_resolution, humidity);
+    dtostrfd(bmp_gas_resistance, 2, gas_resistance);
+        if (bmp_model >= 3) { DomoticzSensor(DZ_AIRQUALITY, (uint32_t)bmp_gas_resistance); }
+        KnxSensor(KNX_TEMPERATURE, bmp_temperature);
+        KnxSensor(KNX_HUMIDITY, bmp_humidity);
+      case FUNC_INIT:
+        if (tele_period == Settings.tele_period -2) {  // Allow 2 seconds to prepare BME680 readings
+=======
 #ifdef USE_BME680
       case BME680_CHIPID:
         bmp_model = 3;  // 3
@@ -564,15 +675,6 @@ boolean Xsns09(byte function)
       case FUNC_JSON_APPEND:
         BmpShow(1);
         break;
-#ifdef USE_WEBSERVER
-      case FUNC_WEB_APPEND:
-        BmpShow(0);
-        break;
-#endif // USE_WEBSERVER
-    }
-  }
-  return result;
-}
-
-#endif // USE_BMP
-#endif // USE_I2C
+      case FUNC_EVERY_SECOND:
+        BmpEverySecond();
+#endif  // USE_BME680
