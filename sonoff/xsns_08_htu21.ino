@@ -234,6 +234,7 @@ void HtuEverySecond()
     if (htu_type) {
       if (!HtuRead()) {
         AddLogMissed(htu_types, htu_valid);
+//        if (!htu_valid) { htu_type = 0; }
       }
     }
   }
@@ -241,7 +242,7 @@ void HtuEverySecond()
 
 void HtuShow(boolean json)
 {
-  if (htu_type && htu_valid) {
+  if (htu_valid) {
     char temperature[10];
     char humidity[10];
 

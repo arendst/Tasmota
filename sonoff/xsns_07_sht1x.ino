@@ -175,13 +175,14 @@ void ShtEverySecond()
   if (sht_type && !(uptime %3)) {  // Update every 3 seconds
     if (!ShtRead()) {
       AddLogMissed(sht_types, sht_valid);
+//      if (!sht_valid) { sht_type = 0; }
     }
   }
 }
 
 void ShtShow(boolean json)
 {
-  if (sht_type && sht_valid) {
+  if (sht_valid) {
     char temperature[10];
     char humidity[10];
 
