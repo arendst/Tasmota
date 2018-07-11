@@ -54,20 +54,16 @@ void ShutterInit()
 void Schutter_Update_Position()
 {
   if (Shutter_Direction != 0) {
+    //uint8_t powerstate = (1 << (Settings.shutter_startrelay + (Shutter_Direction == 1 ? -1 : 0))) & power;
+    uint8_t powerstate = (3 << (Settings.shutter_startrelay -1) ) & power;
+    //char stemp1[20];
     Shutter_Real_Position = Shutter_Real_Position + (Shutter_Direction > 0 ? Shutter_Open_Velocity : -Shutter_Close_Velocity);
     // check if corresponding relay if OFF. Then stop movement.
-    //snprintf_P(log_data, sizeof(log_data), PSTR("Debug: Powerstate: %d, Source: %d"), ((1 << (Settings.shutter_startrelay + (Shutter_Direction == 1 ? -1 : 0))) & power), last_source);
+    //snprintf_P(log_data, sizeof(log_data), PSTR("Debug: Powerstate: %d, Source: %s"),powerstate, GetTextIndexed(stemp1, sizeof(stemp1), last_source, kCommandSource) );
     //AddLog(LOG_LEVEL_DEBUG);
-    if ( (((1 << (Settings.shutter_startrelay + (Shutter_Direction == 1 ? -1 : 0))) & power) == 0)  && SRC_PULSETIMER != last_source) {
+    if ( (!powerstate  && SRC_PULSETIMER != last_source ) || (  powerstate  && SRC_SHUTTER != last_source  )) {
       Shutter_Target_Position = Shutter_Real_Position;
-      snprintf_P(log_data, sizeof(log_data), PSTR("Switch OFF motors. Target: %ld"), Shutter_Target_Position);
-      AddLog(LOG_LEVEL_DEBUG);
-    }
-    if ( (((1 << (Settings.shutter_startrelay + (Shutter_Direction == 1 ? -1 : 0))) & power) > 0)  && SRC_SHUTTER != last_source) {
-      // someone else switches ON the relas during movement. Normally only possible during MOMENTARY Mode
-      // shutter in movement. need to stop the Shutter
-      Shutter_Target_Position = Shutter_Real_Position;
-      snprintf_P(log_data, sizeof(log_data), PSTR("Switch momentary motors OFF. Target: %ld"), Shutter_Target_Position);
+      snprintf_P(log_data, sizeof(log_data), PSTR("Switch OFF motors. Target: %ld, source: %d"), Shutter_Target_Position, last_source);
       AddLog(LOG_LEVEL_DEBUG);
     }
     if (Shutter_Real_Position * Shutter_Direction >= Shutter_Target_Position * Shutter_Direction || Shutter_Real_Position < Shutter_Close_Velocity) {
@@ -75,7 +71,7 @@ void Schutter_Update_Position()
       AddLog(LOG_LEVEL_DEBUG);
       if (Settings.pulse_timer[(Settings.shutter_startrelay + (Shutter_Direction == 1 ? 0 : 1) -1)] > 0) {
         // we have a momentary switch here
-        if (SRC_PULSETIMER == last_source) {
+        if (SRC_PULSETIMER == last_source || SRC_SHUTTER == last_source) {
           ExecuteCommandPower(Settings.shutter_startrelay + (Shutter_Direction == 1 ? 0 : 1), 1, SRC_SHUTTER);
         } else {
           last_source = SRC_SHUTTER;
@@ -83,8 +79,8 @@ void Schutter_Update_Position()
       } else {
         ExecuteCommandPower(Settings.shutter_startrelay + (Shutter_Direction == 1 ? 0 : 1), 0, SRC_SHUTTER);
       }
-      Shutter_Direction=0;
-      Settings.shutter_position = Shutter_Real_Position  *100 / Shutter_Open_Max;
+      Shutter_Direction = 0;
+      Settings.shutter_position = Shutter_Real_Position  * 100 / Shutter_Open_Max;
     }
   } else {
     // no movement or manual movement
@@ -121,13 +117,13 @@ boolean ShutterCommand()
   if (-1 == command_code) {
     serviced = false;  // Unknown command
   }
-  else if (CMND_OPEN == command_code) {
+  else if ( CMND_OPEN == command_code) {
     Shutter_Direction = 1;
     Shutter_Target_Position = Shutter_Open_Max;
     ExecuteCommandPower(Settings.shutter_startrelay, 1, SRC_SHUTTER);
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, 1);
   }
-  else if (CMND_CLOSE == command_code) {
+  else if ( CMND_CLOSE == command_code ) {
     Shutter_Direction = -1;
     Shutter_Target_Position = 0;
     ExecuteCommandPower(Settings.shutter_startrelay+1, 1, SRC_SHUTTER);
@@ -140,8 +136,16 @@ boolean ShutterCommand()
   else if (CMND_POSITION == command_code) {
     if ( (XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 100)) {
       Shutter_Target_Position =  XdrvMailbox.payload * Shutter_Open_Max / 100;
-      Shutter_Direction =  (Shutter_Real_Position < Shutter_Target_Position ? 1 : -1);
-      ExecuteCommandPower(Settings.shutter_startrelay + (Shutter_Direction == 1 ? 0 : 1), 1, SRC_SHUTTER);
+      int8_t new_shutterdirection = Shutter_Real_Position < Shutter_Target_Position ? 1 : -1;
+
+      if (Shutter_Direction && (Shutter_Direction !=  new_shutterdirection) ) {
+        // direction need to be changed. on momentary switches first stop the Shutter
+        ExecuteCommandPower(Settings.shutter_startrelay + (Shutter_Direction == 1 ? 0 : 1), 1, SRC_SHUTTER);
+      }
+      if (Shutter_Direction !=  new_shutterdirection ) {
+        Shutter_Direction = new_shutterdirection;
+        ExecuteCommandPower(Settings.shutter_startrelay + (Shutter_Direction == 1 ? 0 : 1), 1, SRC_SHUTTER);
+      }
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, XdrvMailbox.payload);
     } else {
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, Settings.shutter_position);
@@ -175,9 +179,9 @@ boolean ShutterCommand()
 void Schutter_Report_Position()
 {
   if (Shutter_Direction != 0) {
-    snprintf_P(log_data, sizeof(log_data), PSTR("Shutter: Real Position %d, Target %d, Close Velocity %d"), Shutter_Real_Position, Shutter_Target_Position, Shutter_Close_Velocity);
-    AddLog(LOG_LEVEL_DEBUG_MORE);
-    //Settings.shutter_position = Shutter_Open_Max *100 / Shutter_Real_Position;
+    char stemp1[20];
+    snprintf_P(log_data, sizeof(log_data), PSTR("Shutter: Real Position %d, Target %d, source: %s"), Shutter_Real_Position, Shutter_Target_Position, GetTextIndexed(stemp1, sizeof(stemp1), last_source, kCommandSource) );
+    AddLog(LOG_LEVEL_INFO);
   }
 }
 
