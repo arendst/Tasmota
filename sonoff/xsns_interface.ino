@@ -146,6 +146,7 @@ boolean (* const xsns_func_ptr[])(byte) PROGMEM = {  // Sensor Function Pointers
   &Xsns32,
 #endif
 
+=======
 #ifdef XSNS_33
   &Xsns33,
 #endif
@@ -256,3 +257,4 @@ boolean XsnsCall(byte Function)
 
   return result;
 }
+

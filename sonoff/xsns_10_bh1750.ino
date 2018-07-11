@@ -37,6 +37,20 @@ uint8_t bh1750_valid = 0;
 uint16_t bh1750_illuminance = 0;
 char bh1750_types[] = "BH1750";
 
+uint16_t Bh1750ReadLux()
+  if (2 != Wire.requestFrom(bh1750_address, (uint8_t)2)) { return false; }
+  bh1750_illuminance = ((msb << 8) | lsb) / 1.2;
+  return true;
+      snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, bh1750_types, bh1750_address);
+  "%s{s}%s " D_ILLUMINANCE "{m}%d " D_UNIT_LUX "{e}";  // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
+  if (bh1750_valid) {
+    uint16_t illuminance = Bh1750ReadLux();
+
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"%s\":{\"" D_JSON_ILLUMINANCE "\":%d}"), mqtt_data, bh1750_types, bh1750_illuminance);
+        DomoticzSensor(DZ_ILLUMINANCE, bh1750_illuminance);
+      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_ILLUMINANCE, mqtt_data, bh1750_types, bh1750_illuminance);
+      case FUNC_INIT:
+=======
 bool Bh1750Read()
 {
   if (bh1750_valid) { bh1750_valid--; }
@@ -141,3 +155,4 @@ boolean Xsns10(byte function)
 
 #endif  // USE_BH1750
 #endif  // USE_I2C
+
