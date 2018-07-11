@@ -202,6 +202,12 @@ const char HTTP_BTN_MENU_MQTT[] PROGMEM =
   "<br/><form action='dm' method='get'><button>" D_CONFIGURE_DOMOTICZ "</button></form>"
 #endif  // USE_DOMOTICZ
   "";
+#ifdef USE_I2C
+#ifdef USE_MCP230xx
+  const char HTTP_BTN_MCP230XX[] PROGMEM =
+    "<br/><form action='mcp230xx' method='get'><button>" D_CONFIGURE_MCP230XX "</button></form>";
+#endif // USE_MCP230xx
+#endif // USE_I2C
 const char HTTP_BTN_MENU4[] PROGMEM =
 #ifdef USE_KNX
   "<br/><form action='kn' method='get'><button>" D_CONFIGURE_KNX "</button></form>"
@@ -376,6 +382,11 @@ void StartWebserver(int type, IPAddress ipweb)
       WebServer->on("/u2", HTTP_OPTIONS, HandlePreflightRequest);
       WebServer->on("/cm", HandleHttpCommand);
       WebServer->on("/rb", HandleRestart);
+#ifdef USE_I2C
+#ifdef USE_MCP230xx
+       WebServer->on("/mcp230xx", handleMCP230xx);
+#endif // USE_MCP230xx
+#endif // USE_I2C	  
 #ifndef BE_MINIMAL
       WebServer->on("/cn", HandleConfiguration);
       WebServer->on("/md", HandleModuleConfiguration);
@@ -695,6 +706,13 @@ void HandleConfiguration()
 #endif  // USE_TIMERS and USE_TIMERS_WEB
   page += FPSTR(HTTP_BTN_MENU_WIFI);
   if (Settings.flag.mqtt_enabled) { page += FPSTR(HTTP_BTN_MENU_MQTT); }
+#ifdef USE_I2C
+#ifdef USE_MCP230xx
+  if (MCP230xx_Type()) {	// Configuration button will only show if MCP23008/MCP23017 was detected on I2C
+    page += FPSTR(HTTP_BTN_MCP230XX);
+  }
+#endif // USE_MCP230xx
+#endif // USE_I2C  
   page += FPSTR(HTTP_BTN_MENU4);
   page += FPSTR(HTTP_BTN_MAIN);
   ShowPage(page);
@@ -1124,6 +1142,13 @@ void HandleSaveSettings()
     }
     AddLog(LOG_LEVEL_INFO);
     break;
+#ifdef USE_I2C
+#ifdef USE_MCP230xx  
+  case 8: // MCP230xx_SaveSettings
+    MCP230xx_SaveSettings();
+    break;
+#endif // USE_MCP230xx
+#endif // USE_I2C   	
   case 6:
     WebGetArg("g99", tmp, sizeof(tmp));
     byte new_module = (!strlen(tmp)) ? MODULE : atoi(tmp);
