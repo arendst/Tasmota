@@ -146,6 +146,38 @@ boolean (* const xsns_func_ptr[])(byte) PROGMEM = {  // Sensor Function Pointers
   &Xsns32,
 #endif
 
+#ifdef XSNS_33
+  &Xsns33,
+#endif
+
+#ifdef XSNS_34
+  &Xsns34,
+#endif
+
+#ifdef XSNS_35
+  &Xsns35,
+#endif
+
+#ifdef XSNS_36
+  &Xsns36,
+#endif
+
+#ifdef XSNS_37
+  &Xsns37,
+#endif
+
+#ifdef XSNS_38
+  &Xsns38,
+#endif
+
+#ifdef XSNS_39
+  &Xsns39,
+#endif
+
+#ifdef XSNS_40
+  &Xsns40,
+#endif
+
 // Optional user defined sensors in range 91 - 99
 
 #ifdef XSNS_91

@@ -227,9 +227,10 @@ void HtuDetect()
 
 void HtuEverySecond()
 {
-  if (uptime &1) {
+  if (92 == (uptime %100)) {
     HtuDetect();
-  } else {
+  }
+  else if (uptime &1) {
     if (htu_type) {
       if (!HtuRead()) {
         AddLogMissed(htu_types, htu_valid);
@@ -281,6 +282,9 @@ boolean Xsns08(byte function)
 
   if (i2c_flg) {
     switch (function) {
+      case FUNC_INIT:
+        HtuDetect();
+        break;
       case FUNC_EVERY_SECOND:
         HtuEverySecond();
         break;
