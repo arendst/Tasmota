@@ -127,6 +127,7 @@ Different firmware images are released based on Features and Sensors selection g
 | USE_BMP                        | x | x | - | x | x |
 | USE_BME680                     | - | - | - | - | x |
 | USE_SGP30                      | x | - | - | x | x |
+| USE_VL53L1X                    | - | - | - | - | x |
 | USE_BH1750                     | x | x | - | x | x |
 | USE_VEML6070                   | - | - | - | - | x |
 | USE_TSL2561                    | - | - | - | - | x |

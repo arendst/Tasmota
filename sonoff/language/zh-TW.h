@@ -488,6 +488,7 @@
 // Units
 #define D_UNIT_AMPERE "安"
 #define D_UNIT_CENTIMETER "cm"
+#define D_UNIT_MILLIMETER "mm"
 #define D_UNIT_HERTZ "Hz"
 #define D_UNIT_HOUR "時"
 #define D_UNIT_KILOOHM "千歐"

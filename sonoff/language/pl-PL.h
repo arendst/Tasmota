@@ -488,6 +488,7 @@
 // Units
 #define D_UNIT_AMPERE "A"
 #define D_UNIT_CENTIMETER "cm"
+#define D_UNIT_MILLIMETER "mm"
 #define D_UNIT_HERTZ "Hz"
 #define D_UNIT_HOUR "Godz"
 #define D_UNIT_KILOOHM "kOhm"

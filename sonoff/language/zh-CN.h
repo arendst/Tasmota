@@ -488,6 +488,7 @@
 // Units
 #define D_UNIT_AMPERE "安"
 #define D_UNIT_CENTIMETER "厘米"
+#define D_UNIT_MILLIMETER "mm"
 #define D_UNIT_HOUR "时"
 #define D_UNIT_KILOOHM "千欧"
 #define D_UNIT_KILOWATTHOUR "千瓦时"
