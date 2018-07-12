@@ -18,9 +18,9 @@
 */
 
 enum ShutterCommands {
-  CMND_OPEN, CMND_CLOSE, CMND_STOP, CMND_POSITION, CMND_OPENTIME, CMND_CLOSETIME, CMND_SHUTTERRELAY };
+  CMND_OPEN, CMND_CLOSE, CMND_STOP, CMND_POSITION, CMND_OPENTIME, CMND_CLOSETIME, CMND_SHUTTERRELAY, CMND_SET50PERCENT };
 const char kShutterCommands[] PROGMEM =
-  D_CMND_OPEN "|" D_CMND_CLOSE "|" D_CMND_STOP "|" D_CMND_POSITION  "|" D_CMND_OPENTIME "|" D_CMND_CLOSETIME "|" D_CMND_SHUTTERRELAY;
+  D_CMND_OPEN "|" D_CMND_CLOSE "|" D_CMND_STOP "|" D_CMND_POSITION  "|" D_CMND_OPENTIME "|" D_CMND_CLOSETIME "|" D_CMND_SHUTTERRELAY "|" D_CMND_SET50PERCENT;
 
 
 const char JSON_SHUTTER_POS[] PROGMEM = "%s,\"%s\":%d";                                  // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
@@ -34,18 +34,27 @@ uint16_t Shutter_Close_Velocity =0;          // in relation to open velocity. hi
 int8_t  Shutter_Direction = 0;               // 1 == UP , 0 == stop; -1 == down
 int32_t Shutter_Real_Position = 0;          // value between 0 and Shutter_Open_Max
 power_t shutter_mask = 0;
+uint32_t m1,m2,b1 = 0;
 
 void ShutterInit()
 {
   // set startrelay to 1 on first init
-  Settings.shutter_startrelay = (Settings.shutter_startrelay = 0 ? 1 : Settings.shutter_startrelay);
+  Settings.shutter_startrelay = (Settings.shutter_startrelay == 0 ? 1 : Settings.shutter_startrelay);
+  Settings.shutter_set50percent = (Settings.shutter_set50percent == 0 ? 50 : Settings.shutter_set50percent);
   Shutter_Open_Time = (Settings.shutter_opentime>0 ? Settings.shutter_opentime : 10);
   Shutter_Close_Time = (Settings.shutter_closetime> 0 ? Settings.shutter_closetime : 10);
   // Update Calculation
   Shutter_Open_Max = 20 * Shutter_Open_Velocity * Shutter_Open_Time;
   Shutter_Close_Velocity = Shutter_Open_Max / ( Shutter_Close_Time * 20 );
 
-  Shutter_Real_Position =   Settings.shutter_position * Shutter_Open_Max / 100;
+  m1 = Shutter_Open_Max * (100 - Settings.shutter_set50percent ) / 5000;
+  b1 = Shutter_Open_Max - (m1 * 100);
+  m2 = (b1 + 5 * m1) / 5;
+
+  snprintf_P(log_data, sizeof(log_data), PSTR("Shutter Pos Calculation graph: m1: %d, b1 %d, m2: %d"), m1,b1,m2);
+  AddLog(LOG_LEVEL_INFO);
+
+  Shutter_Real_Position =   Settings.shutter_position <= 5 ?  m2 * Settings.shutter_position : m1 * Settings.shutter_position + b1;
   snprintf_P(log_data, sizeof(log_data), PSTR("ShutterInit: Position %d [%d %%], Open Velocity: %d Close Velocity: %d , MAx Way: %d, Opentime %d [s], Closetime %d [s]"), Shutter_Real_Position,Settings.shutter_position, Shutter_Open_Velocity, Shutter_Close_Velocity , Shutter_Open_Max, Shutter_Open_Time, Shutter_Close_Time);
   AddLog(LOG_LEVEL_INFO);
   shutter_mask = 3 << (Settings.shutter_startrelay -1);
@@ -80,7 +89,8 @@ void Schutter_Update_Position()
         ExecuteCommandPower(Settings.shutter_startrelay + (Shutter_Direction == 1 ? 0 : 1), 0, SRC_SHUTTER);
       }
       Shutter_Direction = 0;
-      Settings.shutter_position = Shutter_Real_Position  * 100 / Shutter_Open_Max;
+      //Settings.shutter_position = Shutter_Real_Position  * 100 / Shutter_Open_Max;
+      Settings.shutter_position = m2 * 5 > Shutter_Real_Position ? Shutter_Real_Position / m2 : (Shutter_Real_Position-b1) / m1;
     }
   } else {
     // no movement or manual movement
@@ -135,7 +145,8 @@ boolean ShutterCommand()
   }
   else if (CMND_POSITION == command_code) {
     if ( (XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 100)) {
-      Shutter_Target_Position =  XdrvMailbox.payload * Shutter_Open_Max / 100;
+      Shutter_Target_Position = XdrvMailbox.payload < 5 ?  m2 * XdrvMailbox.payload : m1 * XdrvMailbox.payload + b1;
+
       int8_t new_shutterdirection = Shutter_Real_Position < Shutter_Target_Position ? 1 : -1;
 
       if (Shutter_Direction && (Shutter_Direction !=  new_shutterdirection) ) {
@@ -171,6 +182,15 @@ boolean ShutterCommand()
       shutter_mask = 3 << (Settings.shutter_startrelay -1);
     }
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, Settings.shutter_startrelay );
+  }
+  else if (CMND_SET50PERCENT == command_code) {
+      if ( (XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 100)) {
+        Settings.shutter_set50percent = XdrvMailbox.payload;
+        ShutterInit();
+        snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command,XdrvMailbox.payload);
+      } else {
+        snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, Settings.shutter_set50percent);
+      }
   } else {
     serviced = false;  // Unknown command
   }

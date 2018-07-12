@@ -543,7 +543,7 @@
 #define D_CLOSE "Close"
 #define D_SHUTTER "SHUTTER"
 #define D_CMND_INTERLOCKMASK "INTERLOCKMASK"
-
+#define D_CMND_SET50PERCENT "shutter50percent"
 
 //end
 #endif  // _LANGUAGE_PT_PT_H_
