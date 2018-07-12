@@ -1,4 +1,5 @@
 /* 6.1.0a
+ * Fix invalid response using more than 4 switches and domoticz
  * Update sensor drivers to provide instant results
  * Add read sensor retry to DS18B20, DS18x20, DHT, SHT1X and HTU21
  * Change SHT1x driver to provide better instant results
