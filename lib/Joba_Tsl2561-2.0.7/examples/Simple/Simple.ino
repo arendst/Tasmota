@@ -21,6 +21,17 @@ This file is part of the Joba_Tsl2561 Library.
 
 #include <Tsl2561.h>
 
+// to mimic Serial.printf() of esp8266 core for other platforms
+char *format( const char *fmt, ... ) {
+  static char buf[128];
+  va_list arg;
+  va_start(arg, fmt);
+  vsnprintf(buf, sizeof(buf), fmt, arg);
+  buf[sizeof(buf)-1] = '\0';
+  va_end(arg);
+  return buf;
+}
+
 Tsl2561 Tsl(Wire);
 
 void setup() {
@@ -44,7 +55,7 @@ void loop() {
     Tsl.fullLuminosity(full);
     Tsl.irLuminosity(ir);
 
-    Serial.printf("Tsl2561 at 0x%02x(id=0x%02x) luminosity is %5u (full) and %5u (ir)\n", Tsl.address(), id, full, ir);
+    Serial.print(format("Tsl2561 at 0x%02x(id=0x%02x) luminosity is %5u (full) and %5u (ir)\n", Tsl.address(), id, full, ir));
 
     Tsl.off();
   }
