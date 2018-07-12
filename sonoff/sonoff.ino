@@ -960,6 +960,21 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
         }
       }
     }
+    else if(CMND_DEEPSLEEP == command_code) {
+      if ((data_len > 0) && (payload32 >= 0) ) {
+        Settings.deepsleep = payload32;
+      }
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"DeepSleep\":\"%d%s (%d%s)\"}"), Settings.deepsleep, (Settings.flag.value_units) ? " mS" : "", Settings.deepsleep, (Settings.flag.value_units) ? " mS" : "");
+    }
+    else if(CMND_INTERLOCKMASK == command_code) {
+      if (data_len > 0) {
+        for (uint i = 0; i < sizeof(power_t)*8; i++) {
+            bitWrite(Settings.interlock_mask, i , (i < data_len ? ( (int)dataBuf[i] - 48 ) : 0 ) ); // convert ASCII code 48 = "0" and 49="1"
+        }
+      }
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"Interlock\":\"0x%x)\"}"), Settings.interlock_mask);
+    }
+  
 //end
     else if (CMND_BAUDRATE == command_code) {
       if (payload32 > 0) {
