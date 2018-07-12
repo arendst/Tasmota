@@ -277,7 +277,12 @@
 //  #define USE_MGS                                // Add I2C code for Xadow and Grove Mutichannel Gas sensor using library Multichannel_Gas_Sensor (+10k code)
     #define MGS_SENSOR_ADDR    0x04              // Default Mutichannel Gas sensor i2c address
 //  #define USE_APDS9960                           // Add I2C code for APDS9960 Proximity Sensor. Disables SHT and VEML6070 (+4k7 code)
-//  #define USE_MCP230xx                             // Add I2C code for MCP23008/MCP23017 for GP INPUT ONLY
+
+                                                   // If only USE_MCP230xx then device can be configured using sensor29 command
+//  #define USE_MCP230xx                             // Add I2C code for MCP23008/MCP23017 for GP INPUT ONLY (+2260 bytes)
+//    #define USE_MCP230xx_displaymain               // Display pin status on Tasmota main page (+188 bytes)
+//    #define USE_MCP230xx_webconfig                 // Enable web config button and form to Tasmota web interface (+2444)
+    
 #endif  // USE_I2C
 
 // -- SPI sensors ---------------------------------

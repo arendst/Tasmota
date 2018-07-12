@@ -29,6 +29,8 @@
    I2C Address: 0x20 - 0x27
   \*********************************************************************************************/
 
+#define XSNS_29                   29
+
 #define MCP230xx_ADDRESS1         0x20
 #define MCP230xx_ADDRESS2         0x21
 #define MCP230xx_ADDRESS3         0x22
@@ -56,8 +58,10 @@ uint8_t mcp230xx_addresses[] = { MCP230xx_ADDRESS1, MCP230xx_ADDRESS2, MCP230xx_
 uint8_t mcp280xx_pincount = 0;
 
 #ifdef USE_WEBSERVER
+#ifdef USE_MCP230xx_displaymain
 const char HTTP_SNS_MCP230xx_GPIO[] PROGMEM = "%s{s}%s MCP230XX D%d{m}%d{e}";                               // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
-
+#endif // USE_MCP230xx_displaymain
+#ifdef USE_MCP230xx_webconfig
 const char HTTP_FORM_I2C_MCP230XX_T[] PROGMEM = "<table>";
 const char HTTP_FORM_I2C_MCP230XX_TE[] PROGMEM = "</table>";
 
@@ -185,6 +189,8 @@ void MCP230xx_SaveSettings()
   }
   MCP230xx_ApplySettings();
 }
+
+#endif // USE_MCP230xx_webconfig
 
 #endif // USE_WEBSERVER
 
@@ -339,6 +345,7 @@ void MCP230xx_Show(boolean json)
       }
       
 #ifdef USE_WEBSERVER
+#ifdef USE_MCP230xx_displaymain
     } else {
       uint8_t gpio1 = MCP230xx_readGPIO(0);
       uint8_t gpio2 = 0;
@@ -352,16 +359,73 @@ void MCP230xx_Show(boolean json)
           snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_MCP230xx_GPIO, mqtt_data, "", pin, (gpio>>pin)&1);
         }
       }
+#endif // USE_MCP230xx_displaymain      
 #endif  // USE_WEBSERVER
     }
   }
 }
 
+bool MCP230xx_Command(void) {
+  boolean serviced = true;
+  uint8_t _a, _b = 0;
+  uint8_t pin, pinmode, pullup = 0;
+  String data = XdrvMailbox.data;
+  _a = data.indexOf(",");
+  _b = data.indexOf(",", _a + 1);
+  if (_a < XdrvMailbox.data_len) {
+    if (_b < XdrvMailbox.data_len) {
+      pin = data.substring(0, _a).toInt();
+      pinmode = data.substring(_a+1, _b).toInt();
+      pullup = data.substring(_b+1, XdrvMailbox.data_len).toInt();
+      data = "MCP D" + String(pin) + " mode=" + String(pinmode) + " pullup=" + String(pullup);
+      if (pinmode) {
+        Settings.mcp230xx_config[pin].enable = 1;
+        if (pinmode >= 2) {
+          Settings.mcp230xx_config[pin].inten = 1;
+          if (pinmode >= 3) {
+            Settings.mcp230xx_config[pin].intmode = 1;
+            if (pinmode >= 4) {
+              Settings.mcp230xx_config[pin].intcomp = 1;
+            } else {
+              Settings.mcp230xx_config[pin].intcomp = 0;
+            }
+          } else {
+            Settings.mcp230xx_config[pin].intmode = 0;
+            Settings.mcp230xx_config[pin].intcomp = 0;
+          }
+        } else {
+          Settings.mcp230xx_config[pin].inten = 0;
+          Settings.mcp230xx_config[pin].intmode = 0;
+          Settings.mcp230xx_config[pin].intcomp = 0;
+        }
+      } else {
+        Settings.mcp230xx_config[pin].enable = 0;
+        Settings.mcp230xx_config[pin].inten = 0;
+        Settings.mcp230xx_config[pin].intmode = 0;
+        Settings.mcp230xx_config[pin].intcomp = 0;
+      }
+      Settings.mcp230xx_config[pin].b5 = 0;
+      Settings.mcp230xx_config[pin].b6 = 0;
+      Settings.mcp230xx_config[pin].b7 = 0;
+      if (Settings.mcp230xx_config[pin].enable) {
+        Settings.mcp230xx_config[pin].pullup = pullup;
+      } else {
+        Settings.mcp230xx_config[pin].pullup = 0;
+      }
+      MCP230xx_ApplySettings();
+      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_SENSOR_INDEX_SVALUE, XSNS_29, data.c_str());
+    } else {
+      serviced = false;
+    }
+  } else {
+    serviced = false;
+  }
+  return serviced;
+}
+
 /*********************************************************************************************\
    Interface
   \*********************************************************************************************/
-
-#define XSNS_29
 
 boolean Xsns29(byte function)
 {
@@ -378,10 +442,15 @@ boolean Xsns29(byte function)
       case FUNC_JSON_APPEND:
         MCP230xx_Show(1);
         break;
+      case FUNC_COMMAND:
+        result = MCP230xx_Command();
+        break;        
 #ifdef USE_WEBSERVER
+#ifdef USE_MCP230xx_displaymain
       case FUNC_WEB_APPEND:
         MCP230xx_Show(0);
         break;
+#endif // USE_MCP230xx_displaymain        
 #endif  // USE_WEBSERVER
     }
   }

@@ -204,8 +204,10 @@ const char HTTP_BTN_MENU_MQTT[] PROGMEM =
   "";
 #ifdef USE_I2C
 #ifdef USE_MCP230xx
+#ifdef USE_MCP230xx_webconfig
   const char HTTP_BTN_MCP230XX[] PROGMEM =
     "<br/><form action='mcp230xx' method='get'><button>" D_CONFIGURE_MCP230XX "</button></form>";
+#endif // USE_MCP230xx_webconfig    
 #endif // USE_MCP230xx
 #endif // USE_I2C
 const char HTTP_BTN_MENU4[] PROGMEM =
@@ -384,7 +386,9 @@ void StartWebserver(int type, IPAddress ipweb)
       WebServer->on("/rb", HandleRestart);
 #ifdef USE_I2C
 #ifdef USE_MCP230xx
+#ifdef USE_MCP230xx_webconfig
        WebServer->on("/mcp230xx", handleMCP230xx);
+#endif // USE_MCP230xx_webconfig       
 #endif // USE_MCP230xx
 #endif // USE_I2C	  
 #ifndef BE_MINIMAL
@@ -708,9 +712,11 @@ void HandleConfiguration()
   if (Settings.flag.mqtt_enabled) { page += FPSTR(HTTP_BTN_MENU_MQTT); }
 #ifdef USE_I2C
 #ifdef USE_MCP230xx
+#ifdef USE_MCP230xx_webconfig
   if (MCP230xx_Type()) {	// Configuration button will only show if MCP23008/MCP23017 was detected on I2C
     page += FPSTR(HTTP_BTN_MCP230XX);
   }
+#endif // USE_MCP230xx_webconfig  
 #endif // USE_MCP230xx
 #endif // USE_I2C  
   page += FPSTR(HTTP_BTN_MENU4);
@@ -1144,9 +1150,11 @@ void HandleSaveSettings()
     break;
 #ifdef USE_I2C
 #ifdef USE_MCP230xx  
+#ifdef USE_MCP230xx_webconfig
   case 8: // MCP230xx_SaveSettings
     MCP230xx_SaveSettings();
     break;
+#endif // USE_MCP230xx_webconfig    
 #endif // USE_MCP230xx
 #endif // USE_I2C   	
   case 6:
