@@ -271,14 +271,17 @@ boolean DomoticzCommand()
 
 boolean DomoticzSendKey(byte key, byte device, byte state, byte svalflg)
 {
-  if ((Settings.domoticz_key_idx[device -1] || Settings.domoticz_switch_idx[device -1]) && (svalflg)) {
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"command\":\"switchlight\",\"idx\":%d,\"switchcmd\":\"%s\"}"),
-      (key) ? Settings.domoticz_switch_idx[device -1] : Settings.domoticz_key_idx[device -1], (state) ? (2 == state) ? "Toggle" : "On" : "Off");
-    MqttPublish(domoticz_in_topic);
-    return 1;
-  } else {
-    return 0;
+  boolean result = 0;
+
+  if (device <= MAX_DOMOTICZ_IDX) {
+    if ((Settings.domoticz_key_idx[device -1] || Settings.domoticz_switch_idx[device -1]) && (svalflg)) {
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"command\":\"switchlight\",\"idx\":%d,\"switchcmd\":\"%s\"}"),
+        (key) ? Settings.domoticz_switch_idx[device -1] : Settings.domoticz_key_idx[device -1], (state) ? (2 == state) ? "Toggle" : "On" : "Off");
+      MqttPublish(domoticz_in_topic);
+      result = 1;
+    }
   }
+  return result;
 }
 
 /*********************************************************************************************\

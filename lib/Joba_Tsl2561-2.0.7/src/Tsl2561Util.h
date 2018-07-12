@@ -24,6 +24,14 @@ This file is part of the Joba_Tsl2561 Library.
 
 namespace Tsl2561Util {
 
+  // Some chips may need higher values.
+  // Tweak here if autogain does not return valid results.
+  typedef enum {
+    DELAY_EXP_14  = 20,  // Max. delay in ms after
+    DELAY_EXP_101 = 110, // starting a measurement until
+    DELAY_EXP_402 = 430  // the first values arrive.
+  } delay_t;
+
   // delay until next sample is available
   void waitNext( Tsl2561::exposure_t exposure );
 
@@ -40,9 +48,11 @@ namespace Tsl2561Util {
   // adjust luminosity according to sensor temperature (max +/-20% from 25°C)
   bool compensateTemperature( int16_t centiCelsius, uint32_t &full, uint32_t &ir );
 
-  // calculate lux from normalized (and optionally temperature adjusted) luminosity
-  bool milliLux( uint32_t full, uint32_t ir, uint32_t &milliLux, bool csType = false );
+  // helper function to round after significant digits (~4 digits for Tsl2561)
+  uint32_t significance( uint32_t value, uint8_t digits );
 
+  // calculate lux from normalized (and optionally temperature adjusted) luminosity
+  bool milliLux( uint32_t full, uint32_t ir, uint32_t &milliLux, bool csType = false, uint8_t digits = 4 );
 };
 
 #endif

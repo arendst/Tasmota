@@ -21,6 +21,17 @@ This file is part of the Joba_Tsl2561 Library.
 
 #include <Tsl2561Util.h>
 
+// to mimic Serial.printf() of esp8266 core for other platforms
+char *format( const char *fmt, ... ) {
+  static char buf[128];
+  va_list arg;
+  va_start(arg, fmt);
+  vsnprintf(buf, sizeof(buf), fmt, arg);
+  buf[sizeof(buf)-1] = '\0';
+  va_end(arg);
+  return buf;
+}
+
 Tsl2561::address_t addr[] = { Tsl2561::ADDR_GND, Tsl2561::ADDR_FLOAT, Tsl2561::ADDR_VDD };
 Tsl2561 Tsl(Wire);
 
@@ -58,18 +69,19 @@ void loop() {
           Tsl.fullLuminosity(scaledFull);
           Tsl.irLuminosity(scaledIr);
 
-          Serial.printf("Tsl2561 addr: 0x%02x, id: 0x%02x, sfull: %5u, sir: %5u, gain: %d, exp: %d", addr[i], id, scaledFull, scaledIr, gain, exposure);
+          Serial.print(format("Tsl2561 addr: 0x%02x, id: 0x%02x, sfull: %5u, sir: %5u, gain: %d, exp: %d",
+            addr[i], id, scaledFull, scaledIr, gain, exposure));
 
           if( Tsl2561Util::normalizedLuminosity(gain, exposure, full = scaledFull, ir = scaledIr) ) {
             if( Tsl2561Util::milliLux(full, ir, milliLux, Tsl2561::packageCS(id)) ) {
-              Serial.printf(", full: %5u, ir: %5u, lux: %5u.%03u\n", full, ir, milliLux/1000, milliLux%1000);
+              Serial.print(format(", full: %5lu, ir: %5lu, lux: %5lu.%03lu\n", (unsigned long)full, (unsigned long)ir, (unsigned long)milliLux/1000, (unsigned long)milliLux%1000));
             }
             else {
-              Serial.printf(", full: %5u, ir: %5u: Tsl2561Util::milliLux() error\n", full, ir);
+              Serial.print(format(", full: %5lu, ir: %5lu: Tsl2561Util::milliLux() error\n", (unsigned long)full, (unsigned long)ir));
             }
           }
           else {
-            Serial.printf(", full: %5u, ir: %5u: Tsl2561Util::normalizedLuminosity() error\n", full, ir);
+            Serial.print(format(", full: %5lu, ir: %5lu: Tsl2561Util::normalizedLuminosity() error\n", (unsigned long)full, (unsigned long)ir));
           }
 
           Tsl.off();
@@ -84,4 +96,3 @@ void loop() {
 
   delay(5000);
 }
-
