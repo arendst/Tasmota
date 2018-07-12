@@ -1,4 +1,5 @@
 /* 6.1.0a
+ * Add TM1638 switch support (#2226)
  * Fix invalid response using more than 4 switches and domoticz
  * Update sensor drivers to provide instant results
  * Add read sensor retry to DS18B20, DS18x20, DHT, SHT1X and HTU21

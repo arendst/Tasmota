@@ -177,7 +177,7 @@ uint8_t multiwindow[MAX_KEYS] = { 0 };      // Max time between button presses t
 uint8_t multipress[MAX_KEYS] = { 0 };       // Number of button presses within multiwindow
 uint8_t lastwallswitch[MAX_SWITCHES];       // Last wall switch states
 uint8_t holdwallswitch[MAX_SWITCHES] = { 0 };  // Timer for wallswitch push button hold
-uint8_t virtualswitch[MAX_SWITCHES] = { 0 };   // Virtual switch states
+uint8_t virtualswitch[MAX_SWITCHES];        // Virtual switch states
 
 mytmplt my_module;                          // Active copy of Module name and GPIOs
 uint8_t pin[GPIO_MAX];                      // Possible pin configurations
@@ -1734,7 +1734,7 @@ void SwitchHandler(byte mode)
   uint8_t switchflag;
 
   for (byte i = 0; i < MAX_SWITCHES; i++) {
-    if (pin[GPIO_SWT1 +i] < 99) {
+    if ((pin[GPIO_SWT1 +i] < 99) || (mode)) {
 
       if (holdwallswitch[i]) {
         holdwallswitch[i]--;
@@ -2390,10 +2390,13 @@ void GpioInit()
     }
   }
   for (byte i = 0; i < MAX_SWITCHES; i++) {
+    lastwallswitch[i] = 1;  // Init global to virtual switch state;
     if (pin[GPIO_SWT1 +i] < 99) {
       pinMode(pin[GPIO_SWT1 +i], (16 == pin[GPIO_SWT1 +i]) ? INPUT_PULLDOWN_16 :INPUT_PULLUP);
-      lastwallswitch[i] = digitalRead(pin[GPIO_SWT1 +i]);  // set global now so doesn't change the saved power state on first switch check
+      lastwallswitch[i] = digitalRead(pin[GPIO_SWT1 +i]);  // Set global now so doesn't change the saved power state on first switch check
+
     }
+    virtualswitch[i] = lastwallswitch[i];
   }
 
 #ifdef USE_WS2812
