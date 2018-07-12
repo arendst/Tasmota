@@ -1,76 +1,30 @@
-/* 6.0.0c
- * Add support for bitflags SetOption50 .. SetOption81 (#3118)
- *
- * 6.0.0b
- * Add support for BlitzWolf BW-SHP2 (and Homecube, Gosund SP1) Energy Monitoring Smart Socket (#2223)
- * Add support for Sonoff iFan02 as module 44 introducing command FanSpeed 0..3 (#2839)
- * Add support for Sonoff S26 Smart Socket (#2808)
- * Add command SetOption30 to enforce Hass discovery as light group (#1784)
- * Add decimal values support for commands ADD, SUB, MULT and SCALE (#3083, #3089)
+/* 6.1.0a
+ * Update sensor drivers to provide instant results
+ * Add read sensor retry to DS18B20, DS18x20, DHT, SHT1X and HTU21
+ * Change SHT1x driver to provide better instant results
+ * Fix DHT driver mixing values for different sensors (#1797)
+ * Change DHT driver to provide better instant results and add decimals to DHT11 (#3164)
+ * Change DS18x20 driver to provide better instant results (#3169)
+ * Change DS18B20 driver to provide better instant results
+ * Remove TSL2561 debug message and update library (#2415)
+ * Change SHT1x sensor initialization from pre-teleperiod to once during restart to fix I2C interference
+ * Add wifi and mqtt status led blinkyblinky to be disabled by SetOption31 1. Does not work when LedPower is On (deliberate) (#871, #2230, #3114, #3155)
  * Add experimental (untested) TM1638 switch support (#2226)
- * Change number of switches from 4 to 8 (#2885, #3086)
- *
- * 6.0.0a
  * Add support for APDS9960 proximity sensor (#3051)
- * Add increment and decrement value to command Counter (#2838)
- * Add option 0 to command Timers disarming all timers (#2962)
- * Add time in minutes to rule Time#Initialized, Time#set and Time#Minute (#2669)
- * Add rule variables %time% for minutes since midnight, %uptime%, %sunrise% and %sunset% giving time in minutes (#2669)
  * Add heap and stack debug information
- * Add command SetOption28 to switch between hex or decimal Sonoff Bridge RF received data format (#3008)
- * Add command SetOption29 to switch between hex or decimal IR received data format
- * Add performance improvement when updating multiple individual WS2812 pixels (#3007)
  * Add debug facilities using optional xdrv_99_debug.ino to enable in user_config.h
- * Add KNX support for DS18S20 Temperature sensor
- * Add CRC to Settings making future upgrades more fail-safe
- * Add support for uploading Sonoff Bridge firmware found in tools/fw_efm8bb1 folder build by Portisch using Web Gui File Upload (#2886)
- * Add support for I2C temperature sensor LM75AD (#2909)
- * Add command RfRaw to control Portisch firmware features
+ * Remove not needed functionality from Sonoff-minimal to save space
+ *
+ * 6.1.0 20180706
  * Remove version 3, 4 and pre 5.2 settings auto-upgrade. See https://github.com/arendst/Sonoff-Tasmota/wiki/Upgrade#migration-path
  * Change default CFG_HOLDER from 0x20161209 to 4617 (=0x1209) - no impact on default upgrades
+ * Change number of supported switches from 4 to 8 (#2885, #3086)
+ * Change BME680 driver from Adafruit to Bosch BME680 library (#2969)
  * Fix Pzem004T checksum error
  * Fix KNX bug when doing reply of sensors values
  * Fix rules induced LWT message
  * Fix possible wifi connection problem (#1366)
- *
- * 5.14.0b
- * Add Console Commands to send KNX Commands
-   usage: KnxTx_Cmnd[slot] command
-   where [slot] is any of the 5 slots on the KNX Menu and command is 0 or 1
-   example: KnxTx_Cmnd1 0
- * Add Console Commands to send KNX Values
-   usage: KnxTx_Val[slot] value
-   where [slot] is any of the 5 slots on the KNX Menu and value is a number
-   example: KnxTx_Val1 35
- * Add Slots on the KNX Web Menu to select Group Addess to send data from console commands
- * Add Events to trigger rules when a command is received from KNX
-   usage on rules as: event#KnxRx_Cmnd[slot]
-   where [slot] is any of the 5 slots on the KNX Menu
-   example: rule on event#KnxRx_Cmnd1 do VAR1 %value% endon
-   (where %value% can be 0 or 1)
- * Add Events to trigger rules when received read requests from KNX
-   usage on rules as: event#KnxRx_Req[slot]
-   where [slot] is any of the 5 slots on the KNX Menu
-   example: rule on event#KnxRx_Req1 do KnxTx_Val1 35 endon
- * Add Slots on the KNX Web Menu to select Group Addess to receive data to trigger rules
- * Add two rule sets of 511 characters using commands rule1, rule2 and rule3
- * Add Ukranian language file
- * Add rule support for IrReceive and RfReceive (#2758)
- * Add command WebSend [<host>(:<port>,<user>:<password>)] <command> (#2821)
- * Add source information to command execution to be shown with logging option 3 (#2843)
  * Fix some Pow R2 and S31 checksum errors (#1907)
- * Fix Hardware Watchdog restart when using event command (#2853)
- *
- * 5.14.0a
- * Add feature information to Status 4
- * Add tools folder with python script decode-status.py for decoding some status fields like SetOption and Features
- * Add Eastron SDM630 energy meter by Gennaro Tortone (#2735)
- * Add KNX communication enhancement by Adrian Scillato (#2742)
- * Add KNX energy data by Adrian Scillato (#2750)
- * Add python script fw-server.py in tools folder to create a simple OTA server by Gennaro Tortone (#2759)
- * Add rules %mem1% to %mem5% variable names storing data in flash (#2780)
- * Add rules test on %varx% or %memx% (#2780)
- * Add optional token %id% substituting the unique MAC address to fulltopic by Michael Graf (#2794)
  * Fix display selection of un-available GPIO options in Module Configuration webpage (#2718)
  * Fix timer re-trigger within one minute after restart (#2744)
  * Fix IRSend not accepting data value of 0 by David Conran (#2751)
@@ -78,6 +32,43 @@
  * Fix bug in KNX menu by Adrian Scillato (#2770)
  * Fix anomalies in rules (#2778)
  * Fix HUE bridge V1 software version by Heiko Krupp (#2788)
+ * Fix Hardware Watchdog restart when using event command (#2853)
+ * Add Ukrainian language file
+ * Add KNX support for DS18S20 Temperature sensor
+ * Add CRC to Settings making future upgrades more fail-safe
+ * Add feature information to Status 4
+ * Add tools folder with python script decode-status.py for decoding some status fields like SetOption and Features
+ * Add Slots on the KNX Web Menu to select Group Addess to receive data to trigger rules
+ * Add two rule sets of 511 characters using commands rule1, rule2 and rule3
+ * Add Console Commands to send KNX Commands and KNX Values
+ * Add Slots on the KNX Web Menu to select Group Addess to send data from console commands
+ * Add Events to trigger rules when a command or read requests is received from KNX
+ * Add command SetOption30 to enforce Hass discovery as light group (#1784)
+ * Add support for BlitzWolf BW-SHP2 (and Homecube, Gosund SP1) Energy Monitoring Smart Socket (#2223)
+ * Add time in minutes to rule Time#Initialized, Time#set and Time#Minute (#2669)
+ * Add Eastron SDM630 energy meter by Gennaro Tortone (#2735)
+ * Add KNX communication enhancement by Adrian Scillato (#2742)
+ * Add KNX energy data by Adrian Scillato (#2750)
+ * Add rule support for IrReceive and RfReceive (#2758)
+ * Add python script fw-server.py in tools folder to create a simple OTA server by Gennaro Tortone (#2759)
+ * Add rule variables %time% for minutes since midnight, %uptime%, %sunrise% and %sunset% giving time in minutes (#2669)
+ * Add rules %mem1% to %mem5% variable names storing data in flash (#2780)
+ * Add rules test on %varx% or %memx% (#2780)
+ * Add optional token %id% substituting the unique MAC address to fulltopic by Michael Graf (#2794)
+ * Add support for Sonoff S26 Smart Socket (#2808)
+ * Add command WebSend [<host>(:<port>,<user>:<password>)] <command> (#2821)
+ * Add increment and decrement value to command Counter (#2838)
+ * Add support for Sonoff iFan02 as module 44 introducing command FanSpeed 0..3 (#2839)
+ * Add source information to command execution to be shown with logging option 3 (#2843)
+ * Add support for uploading Sonoff Bridge firmware found in tools/fw_efm8bb1 folder build by Portisch using Web Gui File Upload (#2886)
+ * Add command RfRaw to control Portisch firmware features
+ * Add support for I2C temperature sensor LM75AD (#2909)
+ * Add option 0 to command Timers disarming all timers (#2962)
+ * Add performance improvement when updating multiple individual WS2812 pixels (#3007)
+ * Add command SetOption28 to switch between hex or decimal Sonoff Bridge RF received data format (#3008)
+ * Add command SetOption29 to switch between hex or decimal IR received data format
+ * Add decimal values support for commands ADD, SUB, MULT and SCALE (#3083, #3089)
+ * Add support for bitflags SetOption50 .. SetOption81 (#3118)
  *
  * 5.14.0 20180515
  * Update language files

@@ -1020,7 +1020,6 @@ void WifiBegin(uint8_t flag)
   WiFi.mode(WIFI_OFF);      // See https://github.com/esp8266/Arduino/issues/2186
 #endif
 
-  //WiFi.persistent(false);   // Solve possible wifi init errors
   WiFi.disconnect(true);    // Delete SDK wifi config
   delay(200);
   WiFi.mode(WIFI_STA);      // Disable AP mode
@@ -1060,6 +1059,7 @@ void WifiBegin(uint8_t flag)
 void WifiCheckIp()
 {
   if ((WL_CONNECTED == WiFi.status()) && (static_cast<uint32_t>(WiFi.localIP()) != 0)) {
+    global_state.wifi_down = 0;
     wifi_counter = WIFI_CHECK_SEC;
     wifi_retry = wifi_retry_init;
     AddLog_P((wifi_status != WL_CONNECTED) ? LOG_LEVEL_INFO : LOG_LEVEL_DEBUG_MORE, S_LOG_WIFI, PSTR(D_CONNECTED));
@@ -1071,6 +1071,7 @@ void WifiCheckIp()
     }
     wifi_status = WL_CONNECTED;
   } else {
+    global_state.wifi_down = 1;
     wifi_status = WiFi.status();
     switch (wifi_status) {
       case WL_CONNECTED:
@@ -1187,6 +1188,7 @@ void WifiCheck(uint8_t param)
         WifiCheckIp();
       }
       if ((WL_CONNECTED == WiFi.status()) && (static_cast<uint32_t>(WiFi.localIP()) != 0) && !wifi_config_type) {
+        global_state.wifi_down = 0;
 #ifdef BE_MINIMAL
         if (1 == RtcSettings.ota_loader) {
           RtcSettings.ota_loader = 0;
@@ -1224,6 +1226,7 @@ void WifiCheck(uint8_t param)
         }
 #endif  // USE_KNX
       } else {
+        global_state.wifi_down = 1;
 #if defined(USE_WEBSERVER) && defined(USE_EMULATION)
         UdpDisconnect();
 #endif  // USE_EMULATION
@@ -1441,6 +1444,33 @@ bool I2cWrite8(uint8_t addr, uint8_t reg, uint16_t val)
 bool I2cWrite16(uint8_t addr, uint8_t reg, uint16_t val)
 {
    return I2cWrite(addr, reg, val, 2);
+}
+
+int8_t I2cReadBuffer(uint8_t addr, uint8_t reg, uint8_t *reg_data, uint16_t len)
+{
+  Wire.beginTransmission((uint8_t)addr);
+  Wire.write((uint8_t)reg);
+  Wire.endTransmission();
+  if (len != Wire.requestFrom((uint8_t)addr, (byte)len)) {
+    return 1;
+  }
+  while (len--) {
+    *reg_data = (uint8_t)Wire.read();
+    reg_data++;
+  }
+  return 0;
+}
+
+int8_t I2cWriteBuffer(uint8_t addr, uint8_t reg, uint8_t *reg_data, uint16_t len)
+{
+  Wire.beginTransmission((uint8_t)addr);
+  Wire.write((uint8_t)reg);
+  while (len--) {
+    Wire.write(*reg_data);
+    reg_data++;
+  }
+  Wire.endTransmission();
+  return 0;
 }
 
 void I2cScan(char *devs, unsigned int devs_len)
@@ -2070,6 +2100,12 @@ void AddLogSerial(byte loglevel, uint8_t *buffer, int count)
 void AddLogSerial(byte loglevel)
 {
   AddLogSerial(loglevel, (uint8_t*)serial_in_buffer, serial_in_byte_counter);
+}
+
+void AddLogMissed(char *sensor, uint8_t misses)
+{
+  snprintf_P(log_data, sizeof(log_data), PSTR("SNS: %s missed %d"), sensor, SENSOR_MAX_MISS - misses);
+  AddLog(LOG_LEVEL_DEBUG);
 }
 
 /*********************************************************************************************\

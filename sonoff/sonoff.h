@@ -95,6 +95,8 @@ typedef unsigned long power_t;              // Power (Relay) type
 #define LOGSZ                  512          // Max number of characters in log
 #define MIN_MESSZ              893          // Min number of characters in MQTT message
 
+#define SENSOR_MAX_MISS        5            // Max number of missed sensor reads before deciding it's offline
+
 #ifdef USE_MQTT_TLS
   #define WEB_LOG_SIZE         2000         // Max number of characters in weblog
 #else

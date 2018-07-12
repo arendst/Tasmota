@@ -56,7 +56,7 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t rf_receive_decimal : 1;       // bit 28 (v6.0.0a)
     uint32_t ir_receive_decimal : 1;       // bit 29 (v6.0.0a)
     uint32_t hass_light : 1;               // bit 30 (v6.0.0b)
-    uint32_t spare31 : 1;
+    uint32_t global_state : 1;             // bit 31 (v6.1.0)
   };
 } SysBitfield;
 
@@ -317,7 +317,6 @@ struct SYSCFG {
   Timer         timer[MAX_TIMERS];         // 670
   int           latitude;                  // 6B0
   int           longitude;                 // 6B4
-
   uint16_t      knx_physsical_addr;        // 6B8  (address_t is a uint16_t)
   uint16_t      knx_GA_addr[MAX_KNX_GA];   // 6BA  (address_t is a uint16_t) x KNX_max_GA
   uint16_t      knx_CB_addr[MAX_KNX_CB];   // 6CE  (address_t is a uint16_t) x KNX_max_CB
@@ -410,6 +409,20 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint16_t spare15 : 1;
   };
 } RulesBitfield;
+
+typedef union {
+  uint8_t data;
+  struct {
+    uint8_t wifi_down : 1;
+    uint8_t mqtt_down : 1;
+    uint8_t spare02 : 1;
+    uint8_t spare03 : 1;
+    uint8_t spare04 : 1;
+    uint8_t spare05 : 1;
+    uint8_t spare06 : 1;
+    uint8_t spare07 : 1;
+  };
+} StateBitfield;
 
 // See issue https://github.com/esp8266/Arduino/issues/2913
 #ifdef USE_ADC_VCC
