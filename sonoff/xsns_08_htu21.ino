@@ -228,9 +228,11 @@ void HtuDetect()
 void HtuEverySecond()
 {
   if (92 == (uptime %100)) {
+    // 1mS
     HtuDetect();
   }
   else if (uptime &1) {
+    // HTU21: 68mS, SI70xx: 37mS
     if (htu_type) {
       if (!HtuRead()) {
         AddLogMissed(htu_types, htu_valid);

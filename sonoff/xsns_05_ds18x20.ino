@@ -21,6 +21,7 @@
 /*********************************************************************************************\
  * DS18B20 - Temperature - Multiple sensors
 \*********************************************************************************************/
+//#define USE_DS18x20_RECONFIGURE    // When sensor is lost keep retrying or re-configure
 
 #define DS18S20_CHIPID       0x10  // +/-0.5C 9-bit
 #define DS1822_CHIPID        0x22  // +/-2C 12-bit
@@ -251,6 +252,7 @@ void Ds18x20Init()
   uint64_t ids[DS18X20_MAX_SENSORS];
 
   ds18x20_pin = pin[GPIO_DSB];
+
   OneWireResetSearch();
   for (ds18x20_sensors = 0; ds18x20_sensors < DS18X20_MAX_SENSORS; ds18x20_sensors) {
     if (!OneWireSearch(ds18x20_sensor[ds18x20_sensors].address)) {
@@ -373,12 +375,20 @@ void Ds18x20Name(uint8_t sensor)
 void Ds18x20EverySecond()
 {
   if (uptime &1) {
+    // 2mS
     Ds18x20Convert();          // Start conversion, takes up to one second
   } else {
     for (uint8_t i = 0; i < ds18x20_sensors; i++) {
+      // 12mS per device
       if (!Ds18x20Read(i)) {   // Read temperature
         Ds18x20Name(i);
         AddLogMissed(ds18x20_types, ds18x20_sensor[ds18x20_sensor[i].index].valid);
+#ifdef USE_DS18x20_RECONFIGURE
+        if (!ds18x20_sensor[ds18x20_sensor[i].index].valid) {
+          memset(&ds18x20_sensor, 0, sizeof(ds18x20_sensor));
+          Ds18x20Init();       // Re-configure
+        }
+#endif  // USE_DS18x20_RECONFIGURE
       }
     }
   }

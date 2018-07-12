@@ -73,9 +73,11 @@ void Bh1750Detect()
 void Bh1750EverySecond()
 {
   if (90 == (uptime %100)) {
+    // 1mS
     Bh1750Detect();
   }
-  else if (uptime &1) {
+  else {
+    // 1mS
     if (bh1750_type) {
       if (!Bh1750Read()) {
         AddLogMissed(bh1750_types, bh1750_valid);
