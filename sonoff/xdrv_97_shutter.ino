@@ -41,8 +41,8 @@ void ShutterInit()
   // set startrelay to 1 on first init
   Settings.shutter_startrelay = (Settings.shutter_startrelay == 0 ? 1 : Settings.shutter_startrelay);
   Settings.shutter_set50percent = (Settings.shutter_set50percent == 0 ? 50 : Settings.shutter_set50percent);
-  Shutter_Open_Time = (Settings.shutter_opentime>0 ? Settings.shutter_opentime : 10);
-  Shutter_Close_Time = (Settings.shutter_closetime> 0 ? Settings.shutter_closetime : 10);
+  Shutter_Open_Time = (Settings.shutter_opentime > 0 ? Settings.shutter_opentime : 10);
+  Shutter_Close_Time = (Settings.shutter_closetime > 0 ? Settings.shutter_closetime : 10);
   // Update Calculation
   Shutter_Open_Max = 20 * Shutter_Open_Velocity * Shutter_Open_Time;
   Shutter_Close_Velocity = Shutter_Open_Max / ( Shutter_Close_Time * 20 );
