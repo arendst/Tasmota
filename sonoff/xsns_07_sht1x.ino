@@ -172,7 +172,8 @@ void ShtDetect()
 
 void ShtEverySecond()
 {
-  if (sht_type && !(uptime %3)) {  // Update every 3 seconds
+  if (sht_type && !(uptime %4)) {  // Update every 4 seconds
+    // 344mS
     if (!ShtRead()) {
       AddLogMissed(sht_types, sht_valid);
 //      if (!sht_valid) { sht_type = 0; }

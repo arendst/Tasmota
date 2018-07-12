@@ -175,8 +175,10 @@ void Ds18b20EverySecond()
 {
   ds18x20_pin = pin[GPIO_DSB];
   if (uptime &1) {
+    // 2mS
     Ds18b20Convert();          // Start conversion, takes up to one second
   } else {
+    // 12mS
     if (!Ds18b20Read()) {      // Read temperature
       AddLogMissed(ds18b20_types, ds18b20_valid);
     }

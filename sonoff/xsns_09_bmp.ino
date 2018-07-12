@@ -464,9 +464,11 @@ void BmpRead()
 void BmpEverySecond()
 {
   if (91 == (uptime %100)) {
+    // 1mS
     BmpDetect();
   }
-  else if (uptime &1) {
+  else {
+    // 2mS
     BmpRead();
   }
 }

@@ -193,9 +193,11 @@ void DhtInit()
 void DhtEverySecond()
 {
   if (uptime &1) {
+    // <1mS
     DhtReadPrep();
   } else {
     for (byte i = 0; i < dht_sensors; i++) {
+      // DHT11 and AM2301 25mS per sensor, SI7021 5mS per sensor
       DhtReadTempHum(i);
     }
   }
