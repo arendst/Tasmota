@@ -57,9 +57,11 @@ uint8_t mcp230xx_address;
 uint8_t mcp230xx_addresses[] = { MCP230xx_ADDRESS1, MCP230xx_ADDRESS2, MCP230xx_ADDRESS3, MCP230xx_ADDRESS4, MCP230xx_ADDRESS5, MCP230xx_ADDRESS6, MCP230xx_ADDRESS7, MCP230xx_ADDRESS8 };
 uint8_t mcp280xx_pincount = 0;
 
+const char MCP230XX_SENSOR_RESPONSE[] PROGMEM = "{\"Sensor29\":{\"D\":%i,\"MODE\":%i,\"PULL-UP\":%i}}";
+
 #ifdef USE_WEBSERVER
 #ifdef USE_MCP230xx_displaymain
-const char HTTP_SNS_MCP230xx_GPIO[] PROGMEM = "%s{s}%s MCP230XX D%d{m}%d{e}";                               // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
+const char HTTP_SNS_MCP230xx_GPIO[] PROGMEM = "%s{s}MCP230XX D%d{m}%d{e}";                               // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
 #endif // USE_MCP230xx_displaymain
 #ifdef USE_MCP230xx_webconfig
 const char HTTP_FORM_I2C_MCP230XX_T[] PROGMEM = "<table>";
@@ -249,14 +251,14 @@ void MCP230xx_Detect()
     if (I2cValidRead8(&buffer, mcp230xx_address, MCP230xx_IOCON)) {
       if (buffer == 0x00) {
         mcp230xx_type = 1; // We have a MCP23008
-        snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, "MCP23008", mcp230xx_address);
+        snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, PSTR("MCP23008"), mcp230xx_address);
         AddLog(LOG_LEVEL_DEBUG);
         mcp280xx_pincount = 8;
         MCP230xx_ApplySettings();
       } else {
         if (buffer == 0x80) {
           mcp230xx_type = 2; // We have a MCP23017
-          snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, "MCP23017", mcp230xx_address);
+          snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, PSTR("MCP23017"), mcp230xx_address);
           AddLog(LOG_LEVEL_DEBUG);
           mcp280xx_pincount = 16;
           // Reset bank mode to 0
@@ -356,7 +358,7 @@ void MCP230xx_Show(boolean json)
       
       for (uint8_t pin = 0; pin < mcp280xx_pincount; pin++) {
         if (Settings.mcp230xx_config[pin].enable) {
-          snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_MCP230xx_GPIO, mqtt_data, "", pin, (gpio>>pin)&1);
+          snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_MCP230xx_GPIO, mqtt_data, pin, (gpio>>pin)&1);
         }
       }
 #endif // USE_MCP230xx_displaymain      
@@ -377,7 +379,6 @@ bool MCP230xx_Command(void) {
       pin = data.substring(0, _a).toInt();
       pinmode = data.substring(_a+1, _b).toInt();
       pullup = data.substring(_b+1, XdrvMailbox.data_len).toInt();
-      data = "MCP D" + String(pin) + " mode=" + String(pinmode) + " pullup=" + String(pullup);
       if (pinmode) {
         Settings.mcp230xx_config[pin].enable = 1;
         if (pinmode >= 2) {
@@ -413,7 +414,7 @@ bool MCP230xx_Command(void) {
         Settings.mcp230xx_config[pin].pullup = 0;
       }
       MCP230xx_ApplySettings();
-      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_SENSOR_INDEX_SVALUE, XSNS_29, data.c_str());
+      snprintf_P(mqtt_data, sizeof(mqtt_data), MCP230XX_SENSOR_RESPONSE,pin,pinmode,pullup);
     } else {
       serviced = false;
     }
