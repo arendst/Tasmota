@@ -128,15 +128,20 @@ boolean ShutterCommand()
     serviced = false;  // Unknown command
   }
   else if ( CMND_OPEN == command_code) {
-    Shutter_Direction = 1;
-    Shutter_Target_Position = Shutter_Open_Max;
-    ExecuteCommandPower(Settings.shutter_startrelay, 1, SRC_SHUTTER);
+    if ((Shutter_Open_Max-Shutter_Real_Position) / Shutter_Open_Velocity > 5 ) {
+      Shutter_Direction = 1;
+      Shutter_Target_Position = Shutter_Open_Max;
+      ExecuteCommandPower(Settings.shutter_startrelay, 1, SRC_SHUTTER);
+    }
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, 1);
   }
   else if ( CMND_CLOSE == command_code ) {
-    Shutter_Direction = -1;
-    Shutter_Target_Position = 0;
-    ExecuteCommandPower(Settings.shutter_startrelay+1, 1, SRC_SHUTTER);
+    if (Shutter_Real_Position / Shutter_Close_Velocity > 5 ) {
+      Shutter_Direction = -1;
+      Shutter_Target_Position = 0;
+      ExecuteCommandPower(Settings.shutter_startrelay+1, 1, SRC_SHUTTER);
+    }
+
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, 1);
   }
   else if (CMND_STOP == command_code) {
@@ -144,7 +149,7 @@ boolean ShutterCommand()
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, 1);
   }
   else if (CMND_POSITION == command_code) {
-    if ( (XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 100)) {
+    if ( (XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 100) && abs(XdrvMailbox.payload - Settings.shutter_position ) > 5) {
       Shutter_Target_Position = XdrvMailbox.payload < 5 ?  m2 * XdrvMailbox.payload : m1 * XdrvMailbox.payload + b1;
 
       int8_t new_shutterdirection = Shutter_Real_Position < Shutter_Target_Position ? 1 : -1;
