@@ -251,14 +251,14 @@ void MCP230xx_Detect()
     if (I2cValidRead8(&buffer, mcp230xx_address, MCP230xx_IOCON)) {
       if (buffer == 0x00) {
         mcp230xx_type = 1; // We have a MCP23008
-        snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, PSTR("MCP23008"), mcp230xx_address);
+        snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, "MCP23008", mcp230xx_address);
         AddLog(LOG_LEVEL_DEBUG);
         mcp280xx_pincount = 8;
         MCP230xx_ApplySettings();
       } else {
         if (buffer == 0x80) {
           mcp230xx_type = 2; // We have a MCP23017
-          snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, PSTR("MCP23017"), mcp230xx_address);
+          snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, "MCP23017", mcp230xx_address);
           AddLog(LOG_LEVEL_DEBUG);
           mcp280xx_pincount = 16;
           // Reset bank mode to 0
