@@ -75,7 +75,7 @@ void Schutter_Update_Position()
       snprintf_P(log_data, sizeof(log_data), PSTR("Switch OFF motors. Target: %ld, source: %d"), Shutter_Target_Position, last_source);
       AddLog(LOG_LEVEL_DEBUG);
     }
-    if (Shutter_Real_Position * Shutter_Direction >= Shutter_Target_Position * Shutter_Direction || Shutter_Real_Position < Shutter_Close_Velocity) {
+    if (Shutter_Real_Position * Shutter_Direction >= Shutter_Target_Position * Shutter_Direction || Shutter_Real_Position < Shutter_Close_Velocity * -Shutter_Direction) {
       snprintf_P(log_data, sizeof(log_data), PSTR("NEW Shutter: Stopped Position %d, relay: %d, pulsetimer: %d"), Shutter_Real_Position, (Settings.shutter_startrelay + (Shutter_Direction == 1 ? 0 : 1) -1), Settings.pulse_timer[(Settings.shutter_startrelay + (Shutter_Direction == 1 ? 0 : 1) -1)]);
       AddLog(LOG_LEVEL_DEBUG);
       if (Settings.pulse_timer[(Settings.shutter_startrelay + (Shutter_Direction == 1 ? 0 : 1) -1)] > 0) {
@@ -149,6 +149,8 @@ boolean ShutterCommand()
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, 1);
   }
   else if (CMND_POSITION == command_code) {
+    snprintf_P(log_data, sizeof(log_data), PSTR("Shutter: Positionu update %d -> %d, abs: %d"),  Settings.shutter_position, XdrvMailbox.payload, abs(XdrvMailbox.payload - Settings.shutter_position ) );
+    AddLog(LOG_LEVEL_DEBUG);
     if ( (XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 100) && abs(XdrvMailbox.payload - Settings.shutter_position ) > 5) {
       Shutter_Target_Position = XdrvMailbox.payload < 5 ?  m2 * XdrvMailbox.payload : m1 * XdrvMailbox.payload + b1;
 
