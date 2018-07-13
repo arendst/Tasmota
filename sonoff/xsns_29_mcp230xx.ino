@@ -443,7 +443,9 @@ boolean Xsns29(byte function)
         MCP230xx_Show(1);
         break;
       case FUNC_COMMAND:
-        result = MCP230xx_Command();
+        if (XSNS_29 == XdrvMailbox.index) {
+          result = MCP230xx_Command();
+        }
         break;        
 #ifdef USE_WEBSERVER
 #ifdef USE_MCP230xx_displaymain
