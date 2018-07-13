@@ -61,7 +61,7 @@ const char MCP230XX_SENSOR_RESPONSE[] PROGMEM = "{\"Sensor29\":{\"D\":%i,\"MODE\
 
 #ifdef USE_WEBSERVER
 #ifdef USE_MCP230xx_displaymain
-const char HTTP_SNS_MCP230xx_GPIO[] PROGMEM = "{s}MCP230XX D%d{m}%d{e}";                               // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
+const char HTTP_SNS_MCP230xx_GPIO[] PROGMEM = "%s{s}MCP230XX D%d{m}%d{e}";                               // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
 #endif // USE_MCP230xx_displaymain
 #ifdef USE_MCP230xx_webconfig
 const char HTTP_FORM_I2C_MCP230XX_T[] PROGMEM = "<table>";
