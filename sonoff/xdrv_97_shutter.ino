@@ -231,7 +231,7 @@ boolean Xdrv97(byte function)
         result = ShutterCommand();
         break;
       case FUNC_JSON_APPEND:
-        snprintf_P(mqtt_data, sizeof(mqtt_data), JSON_SHUTTER_POS, mqtt_data, D_SHUTTER, Shutter_Real_Position * 100 / Shutter_Open_Max);
+        snprintf_P(mqtt_data, sizeof(mqtt_data), JSON_SHUTTER_POS, mqtt_data, D_SHUTTER, m2 * 5 > Shutter_Real_Position ? Shutter_Real_Position / m2 : (Shutter_Real_Position-b1) / m1);
         break;
     }
   }
