@@ -18,9 +18,9 @@
 */
 
 enum ShutterCommands {
-  CMND_OPEN, CMND_CLOSE, CMND_STOP, CMND_POSITION, CMND_OPENTIME, CMND_CLOSETIME, CMND_SHUTTERRELAY, CMND_SET50PERCENT };
+  CMND_OPEN, CMND_CLOSE, CMND_STOP, CMND_POSITION, CMND_OPENTIME, CMND_CLOSETIME, CMND_SHUTTERRELAY, CMND_SET50PERCENT, CMND_SHUTTERSETCLOSE };
 const char kShutterCommands[] PROGMEM =
-  D_CMND_OPEN "|" D_CMND_CLOSE "|" D_CMND_STOP "|" D_CMND_POSITION  "|" D_CMND_OPENTIME "|" D_CMND_CLOSETIME "|" D_CMND_SHUTTERRELAY "|" D_CMND_SET50PERCENT;
+  D_CMND_OPEN "|" D_CMND_CLOSE "|" D_CMND_STOP "|" D_CMND_POSITION  "|" D_CMND_OPENTIME "|" D_CMND_CLOSETIME "|" D_CMND_SHUTTERRELAY "|" D_CMND_SET50PERCENT "|" D_CMND_SHUTTERSETCLOSE;
 
 
 const char JSON_SHUTTER_POS[] PROGMEM = "%s,\"%s\":%d";                                  // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
@@ -191,6 +191,11 @@ boolean ShutterCommand()
       } else {
         snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, Settings.shutter_set50percent);
       }
+  }
+  else if (CMND_SHUTTERSETCLOSE == command_code) {
+      Settings.shutter_position = 0;
+      Shutter_Direction = 0;
+      Shutter_Real_Position = 0;
   } else {
     serviced = false;  // Unknown command
   }

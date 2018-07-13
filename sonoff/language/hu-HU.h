@@ -544,6 +544,8 @@
 #define D_SHUTTER "SHUTTER"
 #define D_CMND_INTERLOCKMASK "INTERLOCKMASK"
 #define D_CMND_SET50PERCENT "shutter50percent"
+#define D_CMND_SHUTTERSETCLOSE "shuttersetclose"
+
 
 //end
 #endif  // _LANGUAGE_HU_HU_H_
