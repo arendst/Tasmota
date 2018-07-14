@@ -1,4 +1,12 @@
-/* 6.1.0a
+/* 6.1.1a
+ * Add user selection of WPS as define USE_WPS in user_config.h in preparation for core v2.4.2 (#3221)
+ * Change default Wifi config option from WPS to Wifi Manager if WPS is disabled (or Wifi Smartconfig if webserver is disabled)
+ * Remove WPS from sonoff-minimal saving 33k code space
+ * Revert wifi changes implemented in v6.0.0a due to possible bad initial wifi connections
+ * Revert sonoff-minimal removals causing failure of wifi connection (#3177)
+ *
+ * 6.1.0a
+ * Fix TM1638 compile error (#3212)
  * Add TM1638 switch support (#2226)
  * Fix invalid response using more than 4 switches and domoticz
  * Update sensor drivers to provide instant results
