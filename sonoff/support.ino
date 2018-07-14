@@ -980,6 +980,16 @@ void WifiConfig(uint8_t type)
 #endif  // USE_EMULATION
     WiFi.disconnect();        // Solve possible Wifi hangs
     wifi_config_type = type;
+#ifndef USE_WPS
+    if (WIFI_WPSCONFIG == wifi_config_type) {
+      wifi_config_type = WIFI_MANAGER;
+    }
+#endif  // USE_WPS
+#ifndef USE_WEBSERVER
+    if (WIFI_MANAGER == wifi_config_type) {
+      wifi_config_type = WIFI_SMARTCONFIG;
+    }
+#endif  // USE_WPS
     wifi_config_counter = WIFI_CONFIG_SEC;   // Allow up to WIFI_CONFIG_SECS seconds for phone to provide ssid/pswd
     wifi_counter = wifi_config_counter +5;
     blinks = 1999;
@@ -990,6 +1000,7 @@ void WifiConfig(uint8_t type)
       AddLog_P(LOG_LEVEL_INFO, S_LOG_WIFI, PSTR(D_WCFG_1_SMARTCONFIG " " D_ACTIVE_FOR_3_MINUTES));
       WiFi.beginSmartConfig();
     }
+#ifdef USE_WPS
     else if (WIFI_WPSCONFIG == wifi_config_type) {
       if (WifiWpsConfigBegin()) {
         AddLog_P(LOG_LEVEL_INFO, S_LOG_WIFI, PSTR(D_WCFG_3_WPSCONFIG " " D_ACTIVE_FOR_3_MINUTES));
@@ -998,6 +1009,7 @@ void WifiConfig(uint8_t type)
         wifi_config_counter = 3;
       }
     }
+#endif  // USE_WPS
 #ifdef USE_WEBSERVER
     else if (WIFI_MANAGER == wifi_config_type) {
       AddLog_P(LOG_LEVEL_INFO, S_LOG_WIFI, PSTR(D_WCFG_2_WIFIMANAGER " " D_ACTIVE_FOR_3_MINUTES));
@@ -1142,9 +1154,11 @@ void WifiCheck(uint8_t param)
         if ((WIFI_SMARTCONFIG == wifi_config_type) && WiFi.smartConfigDone()) {
           wifi_config_counter = 0;
         }
+#ifdef USE_WPS
         if ((WIFI_WPSCONFIG == wifi_config_type) && WifiWpsConfigDone()) {
           wifi_config_counter = 0;
         }
+#endif  // USE_WPS
         if (!wifi_config_counter) {
           if (strlen(WiFi.SSID().c_str())) {
             strlcpy(Settings.sta_ssid[0], WiFi.SSID().c_str(), sizeof(Settings.sta_ssid[0]));
@@ -1161,7 +1175,7 @@ void WifiCheck(uint8_t param)
         if (WIFI_SMARTCONFIG == wifi_config_type) {
           WiFi.stopSmartConfig();
         }
-        SettingsSdkErase();
+//        SettingsSdkErase();  //  Disabled v6.1.0b due to possible bad wifi connects
         restart_flag = 2;
       }
     } else {
@@ -1244,6 +1258,8 @@ void WifiConnect()
   wifi_counter = 1;
 }
 
+/*
+// Enable from 6.0.0a until 6.1.0a - disabled due to possible cause of bad wifi connect on core 2.3.0
 void WifiDisconnect()
 {
   // Courtesy of EspEasy
@@ -1256,8 +1272,15 @@ void WifiDisconnect()
 
 void EspRestart()
 {
-  delay(100);                 // Allow time for message xfer
+  // This results in exception 3 on restarts
+  delay(100);                 // Allow time for message xfer - disabled v6.1.0b
   WifiDisconnect();
+  ESP.restart();
+}
+*/
+
+void EspRestart()
+{
   ESP.restart();
 }
 
