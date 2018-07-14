@@ -989,7 +989,7 @@ void WifiConfig(uint8_t type)
     if (WIFI_MANAGER == wifi_config_type) {
       wifi_config_type = WIFI_SMARTCONFIG;
     }
-#endif  // USE_WPS
+#endif  // USE_WEBSERVER
     wifi_config_counter = WIFI_CONFIG_SEC;   // Allow up to WIFI_CONFIG_SECS seconds for phone to provide ssid/pswd
     wifi_counter = wifi_config_counter +5;
     blinks = 1999;

@@ -15,7 +15,7 @@ If you like **Sonoff-Tasmota**, give it a star, or fork it and contribute!
 ### Development
 [![Build Status](https://img.shields.io/travis/arendst/Sonoff-Tasmota.svg)](https://travis-ci.org/arendst/Sonoff-Tasmota)
 
-Current version is **6.1.0b** - See [sonoff/_releasenotes.ino](https://github.com/arendst/Sonoff-Tasmota/blob/development/sonoff/_releasenotes.ino) for change information.
+Current version is **6.1.1a** - See [sonoff/_releasenotes.ino](https://github.com/arendst/Sonoff-Tasmota/blob/development/sonoff/_releasenotes.ino) for change information.
 
 ### Disclaimer
 :warning: **DANGER OF ELECTROCUTION** :warning:
@@ -157,9 +157,9 @@ Different firmware images are released based on Features and Sensors selection g
 
 | ESP/Arduino library version | sonoff | classic | minimal | knx  | allsensors |
 |-----------------------------|--------|---------|---------|------|------------|
-| ESP/Arduino lib v2.3.0      | 538k   | 490k    | 399k    | 548k | 562k       |
-| ESP/Arduino lib v2.4.0      | 543k   | 498k    | 406k    | 553k | 565k       |
-| ESP/Arduino lib v2.4.1      | 544k   | 500k    | 408k    | 555k | 567k       |
+| ESP/Arduino lib v2.3.0      | 538k   | 490k    | 407k    | 548k | 562k       |
+| ESP/Arduino lib v2.4.0      | 543k   | 498k    | 414k    | 553k | 565k       |
+| ESP/Arduino lib v2.4.1      | 544k   | 500k    | 416k    | 555k | 567k       |
 
 See [Tasmota ESP/Arduino library version related issues](https://github.com/arendst/Sonoff-Tasmota/wiki/Theo's-Tasmota-Tips#20180523---relation-tasmota-and-esp8266arduino-core-version) for more information.
 
