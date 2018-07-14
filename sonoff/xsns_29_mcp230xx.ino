@@ -95,7 +95,7 @@ void handleMCP230xx()
 
   String page = FPSTR(HTTP_HEAD);
 
-  page.replace("{v}", D_CONFIGURE_MCP230XX);
+  page.replace("{v}", FPSTR(D_CONFIGURE_MCP230XX));
 
   page += FPSTR(HTTP_HEAD_STYLE);
   page += FPSTR(HTTP_FORM_MCP230XX);
@@ -123,23 +123,23 @@ void handleMCP230xx()
       }
     }
     switch (bitsetting) {
-      case 0 : page.replace("{s0",MCP230XX_OPTION_SELECTED); break;
-      case 1 : page.replace("{s1",MCP230XX_OPTION_SELECTED); break;
-      case 2 : page.replace("{s2",MCP230XX_OPTION_SELECTED); break;
-      case 3 : page.replace("{s3",MCP230XX_OPTION_SELECTED); break;
-      case 4 : page.replace("{s4",MCP230XX_OPTION_SELECTED); break;
+      case 0 : page.replace("{s0", FPSTR(MCP230XX_OPTION_SELECTED)); break;
+      case 1 : page.replace("{s1", FPSTR(MCP230XX_OPTION_SELECTED)); break;
+      case 2 : page.replace("{s2", FPSTR(MCP230XX_OPTION_SELECTED)); break;
+      case 3 : page.replace("{s3", FPSTR(MCP230XX_OPTION_SELECTED)); break;
+      case 4 : page.replace("{s4", FPSTR(MCP230XX_OPTION_SELECTED)); break;
     }
     // replace remaining unselected options - if one was replaced above it will be ignored
-    page.replace("{s0",MCP230XX_OPTION_BLANK);
-    page.replace("{s1",MCP230XX_OPTION_BLANK);
-    page.replace("{s2",MCP230XX_OPTION_BLANK);
-    page.replace("{s3",MCP230XX_OPTION_BLANK);
-    page.replace("{s4",MCP230XX_OPTION_BLANK);
+    page.replace("{s0", FPSTR(MCP230XX_OPTION_BLANK));
+    page.replace("{s1", FPSTR(MCP230XX_OPTION_BLANK));
+    page.replace("{s2", FPSTR(MCP230XX_OPTION_BLANK));
+    page.replace("{s3", FPSTR(MCP230XX_OPTION_BLANK));
+    page.replace("{s4", FPSTR(MCP230XX_OPTION_BLANK));
 
     if (Settings.mcp230xx_config[idx].pullup) {
-      page.replace("{b2",MCP230XX_OPTION_CHECKED);
+      page.replace("{b2", FPSTR(MCP230XX_OPTION_CHECKED));
     } else {
-      page.replace("{b2",MCP230XX_OPTION_BLANK);
+      page.replace("{b2", FPSTR(MCP230XX_OPTION_BLANK));
     }
   }
 
