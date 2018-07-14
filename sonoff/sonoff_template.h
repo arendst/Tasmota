@@ -174,6 +174,7 @@ enum SupportedModules {
   EXS_RELAY,
   WION,
   WEMOS,
+  ESP8285,
   SONOFF_DEV,
   H801,
   SONOFF_SC,
@@ -263,6 +264,7 @@ const uint8_t kNiceList[MAXMODULE] PROGMEM = {
   KMC_70011,
   AILIGHT,
   WEMOS,
+  ESP8285,
   WITTY
 };
 
@@ -502,6 +504,24 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_USER,        // GPIO15 D8
      GPIO_USER,        // GPIO16 D0 Wemos Wake
      GPIO_ADC0         // ADC0   A0 Analog input
+  },
+  { "Generic 8285",    // Any ESP8266/ESP8285 device with additional IO not tied to flash such as Sonoff 4CH
+     GPIO_USER,        // GPIO00 
+     GPIO_USER,        // GPIO01 
+     GPIO_USER,        // GPIO02 
+     GPIO_USER,        // GPIO03 
+     GPIO_USER,        // GPIO04 
+     GPIO_USER,        // GPIO05 
+     0, 0, 0,          // Flash connection
+     GPIO_USER,        // GPIO09
+     GPIO_USER,        // GPIO10
+     0,                // Flash connection
+     GPIO_USER,        // GPIO12 
+     GPIO_USER,        // GPIO13 
+     GPIO_USER,        // GPIO14 
+     GPIO_USER,        // GPIO15 
+     GPIO_USER,        // GPIO16 
+     GPIO_ADC0         // ADC0   
   },
   { "Sonoff Dev",      // Sonoff Dev (ESP8266)
      GPIO_KEY1,        // GPIO00 E-FW Button
