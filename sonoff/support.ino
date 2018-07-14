@@ -1159,7 +1159,7 @@ void WifiCheck(uint8_t param)
         if (WIFI_SMARTCONFIG == wifi_config_type) {
           WiFi.stopSmartConfig();
         }
-        SettingsSdkErase();
+//        SettingsSdkErase();  //  Disabled v6.1.0b due to possible bad wifi connects
         restart_flag = 2;
       }
     } else {
@@ -1240,6 +1240,8 @@ void WifiConnect()
   wifi_counter = 1;
 }
 
+/*
+// Enable from 6.0.0a until 6.1.0a - disabled due to possible cause of bad wifi connect on core 2.3.0
 void WifiDisconnect()
 {
   // Courtesy of EspEasy
@@ -1252,8 +1254,15 @@ void WifiDisconnect()
 
 void EspRestart()
 {
-  delay(100);                 // Allow time for message xfer
+  // This results in exception 3 on restarts
+  delay(100);                 // Allow time for message xfer - disabled v6.1.0b
   WifiDisconnect();
+  ESP.restart();
+}
+*/
+
+void EspRestart()
+{
   ESP.restart();
 }
 

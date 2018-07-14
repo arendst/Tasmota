@@ -1,4 +1,8 @@
-/* 6.1.0 20180706
+/* 6.1.1 20180714
+ * Revert wifi changes (#3177)
+ * Revert sonoff-minimal removals causing failure of wifi connection (#3177)
+ *
+ * 6.1.0 20180706
  * Remove version 3, 4 and pre 5.2 settings auto-upgrade. See https://github.com/arendst/Sonoff-Tasmota/wiki/Upgrade#migration-path
  * Change default CFG_HOLDER from 0x20161209 to 4617 (=0x1209) - no impact on default upgrades
  * Change number of supported switches from 4 to 8 (#2885, #3086)
