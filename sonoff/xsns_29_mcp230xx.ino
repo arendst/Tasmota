@@ -64,6 +64,9 @@ const char MCP230XX_SENSOR_RESPONSE[] PROGMEM = "{\"Sensor29\":{\"D\":%i,\"MODE\
 const char HTTP_SNS_MCP230xx_GPIO[] PROGMEM = "%s{s}MCP230XX D%d{m}%d{e}";                               // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
 #endif // USE_MCP230xx_displaymain
 #ifdef USE_MCP230xx_webconfig
+const char MCP230XX_OPTION_SELECTED[] PROGMEM = " selected";
+const char MCP230XX_OPTION_BLANK[] PROGMEM = "";
+const char MCP230XX_OPTION_CHECKED[] PROGMEM = " checked";
 const char HTTP_FORM_I2C_MCP230XX_T[] PROGMEM = "<table>";
 const char HTTP_FORM_I2C_MCP230XX_TE[] PROGMEM = "</table>";
 
@@ -92,7 +95,7 @@ void handleMCP230xx()
 
   String page = FPSTR(HTTP_HEAD);
 
-  page.replace(F("{v}"), D_CONFIGURE_MCP230XX);
+  page.replace("{v}", D_CONFIGURE_MCP230XX);
 
   page += FPSTR(HTTP_HEAD_STYLE);
   page += FPSTR(HTTP_FORM_MCP230XX);
@@ -101,8 +104,8 @@ void handleMCP230xx()
 
   for (uint8_t idx = 0; idx < mcp280xx_pincount; idx++) {
     page += FPSTR(HTTP_FORM_I2C_MCP230XX);
-    page.replace(F("{b0"), "MCP230XX D" + String(idx));
-    page.replace(F("{b1"), "D" + String(idx));
+    page.replace("{b0", "MCP230XX D" + String(idx));
+    page.replace("{b1", "D" + String(idx));
 
     // determine correct dropdown state
 
@@ -120,23 +123,23 @@ void handleMCP230xx()
       }
     }
     switch (bitsetting) {
-      case 0 : page.replace(F("{s0"), PSTR(" selected")); break;
-      case 1 : page.replace(F("{s1"), PSTR(" selected")); break;
-      case 2 : page.replace(F("{s2"), PSTR(" selected")); break;
-      case 3 : page.replace(F("{s3"), PSTR(" selected")); break;
-      case 4 : page.replace(F("{s4"), PSTR(" selected")); break;
+      case 0 : page.replace("{s0",MCP230XX_OPTION_SELECTED); break;
+      case 1 : page.replace("{s1",MCP230XX_OPTION_SELECTED); break;
+      case 2 : page.replace("{s2",MCP230XX_OPTION_SELECTED); break;
+      case 3 : page.replace("{s3",MCP230XX_OPTION_SELECTED); break;
+      case 4 : page.replace("{s4",MCP230XX_OPTION_SELECTED); break;
     }
     // replace remaining unselected options - if one was replaced above it will be ignored
-    page.replace(F("{s0"), PSTR(""));
-    page.replace(F("{s1"), PSTR(""));
-    page.replace(F("{s2"), PSTR(""));
-    page.replace(F("{s3"), PSTR(""));
-    page.replace(F("{s4"), PSTR(""));
+    page.replace("{s0",MCP230XX_OPTION_BLANK);
+    page.replace("{s1",MCP230XX_OPTION_BLANK);
+    page.replace("{s2",MCP230XX_OPTION_BLANK);
+    page.replace("{s3",MCP230XX_OPTION_BLANK);
+    page.replace("{s4",MCP230XX_OPTION_BLANK);
 
     if (Settings.mcp230xx_config[idx].pullup) {
-      page.replace(F("{b2"), PSTR(" checked"));
+      page.replace("{b2",MCP230XX_OPTION_CHECKED);
     } else {
-      page.replace(F("{b2"), PSTR(""));
+      page.replace("{b2",MCP230XX_OPTION_BLANK);
     }
   }
 
