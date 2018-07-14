@@ -1,4 +1,5 @@
 /* 6.1.0a
+ * Fix TM1638 compile error (#3212)
  * Add TM1638 switch support (#2226)
  * Fix invalid response using more than 4 switches and domoticz
  * Update sensor drivers to provide instant results

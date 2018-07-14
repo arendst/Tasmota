@@ -155,7 +155,7 @@ void TmInit()
     digitalWrite(tm1638_clock_pin, HIGH);
 
     Tm16XXSendCommand(0x40);
-    Tm16XXSendCommand(0x80 | (tm1638_active_display ? 8 : 0) | min(7, tm1638_intensity));
+    Tm16XXSendCommand(0x80 | (tm1638_active_display ? 8 : 0) | tmin(7, tm1638_intensity));
 
     digitalWrite(tm1638_strobe_pin, LOW);
     Tm16XXSend(0xC0);

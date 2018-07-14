@@ -116,6 +116,8 @@ typedef unsigned long power_t;              // Power (Relay) type
 #define min(a,b) ((a)<(b)?(a):(b))
 #define max(a,b) ((a)>(b)?(a):(b))
 */
+#define tmin(a,b) ((a)<(b)?(a):(b))
+#define tmax(a,b) ((a)>(b)?(a):(b))
 
 #define STR_HELPER(x) #x
 #define STR(x) STR_HELPER(x)
