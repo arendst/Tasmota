@@ -1,11 +1,13 @@
-/* 6.1.1a
+/* 6.1.1b
+ * Add default Wifi Configuration tool as define WIFI_CONFIG_NO_SSID in user_config.h if no SSID is configured (#3224)
+ * Add user selection of Wifi Smartconfig as define USE_SMARTCONFIG in user_config.h
  * Add user selection of WPS as define USE_WPS in user_config.h in preparation for core v2.4.2 (#3221)
- * Change default Wifi config option from WPS to Wifi Manager if WPS is disabled (or Wifi Smartconfig if webserver is disabled)
- * Remove WPS from sonoff-minimal saving 33k code space
- * Revert wifi changes implemented in v6.0.0a due to possible bad initial wifi connections
- * Revert sonoff-minimal removals causing failure of wifi connection (#3177)
+ * Change default Wifi config option from WPS to Wifi Manager if WPS is disabled
+ *   or Wifi Smartconfig if webserver is disabled
+ *   or Wifi Serial input if Smartconfig is disabled
+ * Remove WPS and SmartConfig from sonoff-minimal saving 56k code space
  *
- * 6.1.0a
+ * 6.1.1a
  * Fix TM1638 compile error (#3212)
  * Add TM1638 switch support (#2226)
  * Fix invalid response using more than 4 switches and domoticz
@@ -24,6 +26,10 @@
  * Add heap and stack debug information
  * Add debug facilities using optional xdrv_99_debug.ino to enable in user_config.h
  * Remove not needed functionality from Sonoff-minimal to save space
+ *
+ * 6.1.1 20180714
+ * Revert wifi changes (#3177)
+ * Revert sonoff-minimal removals causing failure of wifi connection (#3177)
  *
  * 6.1.0 20180706
  * Remove version 3, 4 and pre 5.2 settings auto-upgrade. See https://github.com/arendst/Sonoff-Tasmota/wiki/Upgrade#migration-path
