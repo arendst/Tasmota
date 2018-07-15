@@ -79,7 +79,8 @@ a_setoption = [
     "KNX enhancement",
     "RF receive decimal",
     "IR receive decimal",
-    "Enforce HASS light group",""]
+    "Enforce HASS light group",
+    "Do not show Wifi and Mqtt state using Led"]
 
 a_features = [[
     "","","USE_I2C","USE_SPI",
@@ -89,7 +90,7 @@ a_features = [[
     "USE_WS2812_DMA","USE_IR_REMOTE","USE_IR_HVAC","USE_IR_RECEIVE",
     "USE_DOMOTICZ","USE_DISPLAY","USE_HOME_ASSISTANT","USE_SERIAL_BRIDGE",
     "USE_TIMERS","USE_SUNRISE","USE_TIMERS_WEB","USE_RULES",
-    "USE_KNX","","",""
+    "USE_KNX","USE_WPS","USE_SMARTCONFIG",""
     ],[
     "USE_CONFIG_OVERRIDE","BE_MINIMAL","USE_ALL_SENSORS","USE_CLASSIC",
     "USE_KNX_NO_EMULATION","","","",
