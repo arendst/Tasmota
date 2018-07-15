@@ -735,6 +735,12 @@ void GetFeatures()
 #ifdef USE_KNX
   feature_drv1 |= 0x10000000;  // xdrv_11_knx.ino
 #endif
+#ifdef USE_WPS
+  feature_drv1 |= 0x20000000;  // support.ino
+#endif
+#ifdef USE_SMARTCONFIG
+  feature_drv1 |= 0x40000000;  // support.ino
+#endif
 
 /*********************************************************************************************/
 
@@ -954,42 +960,49 @@ boolean WifiWpsConfigDone(void)
 boolean WifiWpsConfigBegin(void)
 {
   wps_result = 99;
-  if (!wifi_wps_disable()) {
-    return false;
-  }
-  if (!wifi_wps_enable(WPS_TYPE_PBC)) {
-    return false;  // so far only WPS_TYPE_PBC is supported (SDK 2.0.0)
-  }
-  if (!wifi_set_wps_cb((wps_st_cb_t) &WifiWpsStatusCallback)) {
-    return false;
-  }
-  if (!wifi_wps_start()) {
-    return false;
-  }
+  if (!wifi_wps_disable()) { return false; }
+  if (!wifi_wps_enable(WPS_TYPE_PBC)) { return false; }  // so far only WPS_TYPE_PBC is supported (SDK 2.0.0)
+  if (!wifi_set_wps_cb((wps_st_cb_t) &WifiWpsStatusCallback)) { return false; }
+  if (!wifi_wps_start()) { return false; }
   return true;
 }
 
 void WifiConfig(uint8_t type)
 {
   if (!wifi_config_type) {
-    if (type >= WIFI_RETRY) {  // WIFI_RETRY and WIFI_WAIT
-      return;
-    }
+    if ((WIFI_RETRY == type) || (WIFI_WAIT == type)) { return; }
 #if defined(USE_WEBSERVER) && defined(USE_EMULATION)
     UdpDisconnect();
 #endif  // USE_EMULATION
-    WiFi.disconnect();        // Solve possible Wifi hangs
+    WiFi.disconnect();                       // Solve possible Wifi hangs
     wifi_config_type = type;
+
+#ifndef USE_WPS
+    if (WIFI_WPSCONFIG == wifi_config_type) { wifi_config_type = WIFI_MANAGER; }
+#endif  // USE_WPS
+#ifndef USE_WEBSERVER
+    if (WIFI_MANAGER == wifi_config_type) { wifi_config_type = WIFI_SMARTCONFIG; }
+#endif  // USE_WEBSERVER
+#ifndef USE_SMARTCONFIG
+    if (WIFI_SMARTCONFIG == wifi_config_type) { wifi_config_type = WIFI_SERIAL; }
+#endif  // USE_SMARTCONFIG
+
     wifi_config_counter = WIFI_CONFIG_SEC;   // Allow up to WIFI_CONFIG_SECS seconds for phone to provide ssid/pswd
     wifi_counter = wifi_config_counter +5;
     blinks = 1999;
     if (WIFI_RESTART == wifi_config_type) {
       restart_flag = 2;
     }
+    else if (WIFI_SERIAL == wifi_config_type) {
+      AddLog_P(LOG_LEVEL_INFO, S_LOG_WIFI, PSTR(D_WCFG_6_SERIAL " " D_ACTIVE_FOR_3_MINUTES));
+    }
+#ifdef USE_SMARTCONFIG
     else if (WIFI_SMARTCONFIG == wifi_config_type) {
       AddLog_P(LOG_LEVEL_INFO, S_LOG_WIFI, PSTR(D_WCFG_1_SMARTCONFIG " " D_ACTIVE_FOR_3_MINUTES));
       WiFi.beginSmartConfig();
     }
+#endif  // USE_SMARTCONFIG
+#ifdef USE_WPS
     else if (WIFI_WPSCONFIG == wifi_config_type) {
       if (WifiWpsConfigBegin()) {
         AddLog_P(LOG_LEVEL_INFO, S_LOG_WIFI, PSTR(D_WCFG_3_WPSCONFIG " " D_ACTIVE_FOR_3_MINUTES));
@@ -998,6 +1011,7 @@ void WifiConfig(uint8_t type)
         wifi_config_counter = 3;
       }
     }
+#endif  // USE_WPS
 #ifdef USE_WEBSERVER
     else if (WIFI_MANAGER == wifi_config_type) {
       AddLog_P(LOG_LEVEL_INFO, S_LOG_WIFI, PSTR(D_WCFG_2_WIFIMANAGER " " D_ACTIVE_FOR_3_MINUTES));
@@ -1023,17 +1037,11 @@ void WifiBegin(uint8_t flag)
   WiFi.disconnect(true);    // Delete SDK wifi config
   delay(200);
   WiFi.mode(WIFI_STA);      // Disable AP mode
-  if (Settings.sleep) {
-#ifndef ARDUINO_ESP8266_RELEASE_2_4_1     // See https://github.com/arendst/Sonoff-Tasmota/issues/2559
-    WiFi.setSleepMode(WIFI_LIGHT_SLEEP);  // Allow light sleep during idle times
+#ifndef ARDUINO_ESP8266_RELEASE_2_4_1     // See https://github.com/arendst/Sonoff-Tasmota/issues/2559 - Sleep bug
+  if (Settings.sleep) { WiFi.setSleepMode(WIFI_LIGHT_SLEEP); }  // Allow light sleep during idle times
 #endif
-  }
-//  if (WiFi.getPhyMode() != WIFI_PHY_MODE_11N) {
-//    WiFi.setPhyMode(WIFI_PHY_MODE_11N);
-//  }
-  if (!WiFi.getAutoConnect()) {
-    WiFi.setAutoConnect(true);
-  }
+//  if (WiFi.getPhyMode() != WIFI_PHY_MODE_11N) { WiFi.setPhyMode(WIFI_PHY_MODE_11N); }
+  if (!WiFi.getAutoConnect()) { WiFi.setAutoConnect(true); }
 //  WiFi.setAutoReconnect(true);
   switch (flag) {
   case 0:  // AP1
@@ -1043,9 +1051,7 @@ void WifiBegin(uint8_t flag)
   case 2:  // Toggle
     Settings.sta_active ^= 1;
   }        // 3: Current AP
-  if (0 == strlen(Settings.sta_ssid[1])) {
-    Settings.sta_active = 0;
-  }
+  if ('\0' == Settings.sta_ssid[Settings.sta_active][0]) { Settings.sta_active ^= 1; }  // Skip empty SSID
   if (Settings.ip_address[0]) {
     WiFi.config(Settings.ip_address[0], Settings.ip_address[1], Settings.ip_address[2], Settings.ip_address[3]);  // Set static IP
   }
@@ -1072,6 +1078,7 @@ void WifiCheckIp()
     wifi_status = WL_CONNECTED;
   } else {
     global_state.wifi_down = 1;
+    uint8_t wifi_config_tool = Settings.sta_config;
     wifi_status = WiFi.status();
     switch (wifi_status) {
       case WL_CONNECTED:
@@ -1105,7 +1112,12 @@ void WifiCheckIp()
         if (!wifi_retry || ((wifi_retry_init / 2) == wifi_retry)) {
           AddLog_P(LOG_LEVEL_INFO, S_LOG_WIFI, PSTR(D_CONNECT_FAILED_AP_TIMEOUT));
         } else {
-          AddLog_P(LOG_LEVEL_DEBUG, S_LOG_WIFI, PSTR(D_ATTEMPTING_CONNECTION));
+          if (('\0' == Settings.sta_ssid[0][0]) && ('\0' == Settings.sta_ssid[1][0])) {
+            wifi_config_tool = WIFI_CONFIG_NO_SSID;    // Skip empty SSIDs and start Wifi config tool
+            wifi_retry = 0;
+          } else {
+            AddLog_P(LOG_LEVEL_DEBUG, S_LOG_WIFI, PSTR(D_ATTEMPTING_CONNECTION));
+          }
         }
     }
     if (wifi_retry) {
@@ -1118,7 +1130,7 @@ void WifiCheckIp()
       wifi_counter = 1;
       wifi_retry--;
     } else {
-      WifiConfig(Settings.sta_config);
+      WifiConfig(wifi_config_tool);
       wifi_counter = 1;
       wifi_retry = wifi_retry_init;
     }
@@ -1129,6 +1141,7 @@ void WifiCheck(uint8_t param)
 {
   wifi_counter--;
   switch (param) {
+  case WIFI_SERIAL:
   case WIFI_SMARTCONFIG:
   case WIFI_MANAGER:
   case WIFI_WPSCONFIG:
@@ -1139,12 +1152,16 @@ void WifiCheck(uint8_t param)
       wifi_config_counter--;
       wifi_counter = wifi_config_counter +5;
       if (wifi_config_counter) {
+#ifdef USE_SMARTCONFIG
         if ((WIFI_SMARTCONFIG == wifi_config_type) && WiFi.smartConfigDone()) {
           wifi_config_counter = 0;
         }
+#endif  // USE_SMARTCONFIG
+#ifdef USE_WPS
         if ((WIFI_WPSCONFIG == wifi_config_type) && WifiWpsConfigDone()) {
           wifi_config_counter = 0;
         }
+#endif  // USE_WPS
         if (!wifi_config_counter) {
           if (strlen(WiFi.SSID().c_str())) {
             strlcpy(Settings.sta_ssid[0], WiFi.SSID().c_str(), sizeof(Settings.sta_ssid[0]));
@@ -1158,10 +1175,10 @@ void WifiCheck(uint8_t param)
         }
       }
       if (!wifi_config_counter) {
-        if (WIFI_SMARTCONFIG == wifi_config_type) {
-          WiFi.stopSmartConfig();
-        }
-        SettingsSdkErase();
+#ifdef USE_SMARTCONFIG
+        if (WIFI_SMARTCONFIG == wifi_config_type) { WiFi.stopSmartConfig(); }
+#endif  // USE_SMARTCONFIG
+//        SettingsSdkErase();  //  Disabled v6.1.0b due to possible bad wifi connects
         restart_flag = 2;
       }
     } else {
@@ -1197,9 +1214,7 @@ void WifiCheck(uint8_t param)
           StopWebserver();
         }
 #ifdef USE_EMULATION
-        if (Settings.flag2.emulation) {
-          UdpConnect();
-        }
+        if (Settings.flag2.emulation) { UdpConnect(); }
 #endif  // USE_EMULATION
 #endif  // USE_WEBSERVER
 #ifdef USE_KNX
@@ -1229,9 +1244,7 @@ int WifiState()
   if ((WL_CONNECTED == WiFi.status()) && (static_cast<uint32_t>(WiFi.localIP()) != 0)) {
     state = WIFI_RESTART;
   }
-  if (wifi_config_type) {
-    state = wifi_config_type;
-  }
+  if (wifi_config_type) { state = wifi_config_type; }
   return state;
 }
 
@@ -1244,6 +1257,8 @@ void WifiConnect()
   wifi_counter = 1;
 }
 
+/*
+// Enable from 6.0.0a until 6.1.0a - disabled due to possible cause of bad wifi connect on core 2.3.0
 void WifiDisconnect()
 {
   // Courtesy of EspEasy
@@ -1256,8 +1271,15 @@ void WifiDisconnect()
 
 void EspRestart()
 {
-  delay(100);                 // Allow time for message xfer
+  // This results in exception 3 on restarts
+  delay(100);                 // Allow time for message xfer - disabled v6.1.0b
   WifiDisconnect();
+  ESP.restart();
+}
+*/
+
+void EspRestart()
+{
   ESP.restart();
 }
 
