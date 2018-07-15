@@ -46,6 +46,21 @@ IRMitsubishiAC *mitsubir = NULL;
 
 const char kFanSpeedOptions[] = "A12345S";
 const char kHvacModeOptions[] = "HDCA";
+
+// HVAC MIDEA / KOMECO
+// References
+// http://veillard.com/embedded/midea.html
+// https://github.com/sheinz/esp-midea-ir/blob/master/midea-ir.c
+
+#define HVAC_MIDEA_HDR_MARK 4420 // 8T high
+#define HVAC_MIDEA_HDR_SPACE 4420 // 8T low
+#define HVAC_MIDEA_BIT_MARK 553 // 1T
+#define HVAC_MIDEA_ONE_SPACE 1660 // 3T low
+#define HVAC_MIDEA_ZERO_SPACE 553 // 1T high
+#define HVAC_MIDEA_RPT_MARK 553 // 1T
+#define HVAC_MIDEA_RPT_SPACE 5530  // 10T
+#define HVAC_MIDEA_DATALEN 3
+
 #endif
 
 /*********************************************************************************************\
@@ -134,6 +149,118 @@ void IrReceiveCheck()
 /*********************************************************************************************\
  * IR Heating, Ventilation and Air Conditioning using IRMitsubishiAC library
 \*********************************************************************************************/
+
+boolean IrHvacMidea(const char *HVAC_Mode, const char *HVAC_FanMode, boolean HVAC_Power, int HVAC_Temp)
+{
+  uint16_t rawdata[2 + 2 * 2 * 8 * HVAC_MIDEA_DATALEN + 2]; // START + 2* (2 * 3 BYTES) + STOP
+  byte data[HVAC_MIDEA_DATALEN] = {0xB2, 0x00, 0x00};
+
+  char *p;
+  uint8_t mode;
+
+  if (!HVAC_Power) { // Turn OFF HVAC
+    data[1] = 0x7B;
+    data[2] = 0xE0;
+  } else {
+    // FAN
+    if (HVAC_FanMode == NULL) {
+      p = (char *)kFanSpeedOptions; // default auto
+    }
+    else {
+      p = (char*)HVAC_FanMode;
+    }
+
+    switch(p[0]) {
+      case '1': data[1]=0xBF; break; // off
+      case '2': data[1]=0x9F; break; // low
+      case '3': data[1]=0x5F; break; // med
+      case '4': data[1]=0x3F; break; // high
+      case '5': data[1]=0x1F; break; // auto
+      case 'A': data[1]=0x1F; break; // auto
+      default: return true;
+    }
+
+    // TEMPERATURE
+    byte Temp;
+    if (HVAC_Temp > 30) {
+      Temp = 30;
+    }
+    else if (HVAC_Temp < 17) {
+      Temp = 17;
+    }
+    else {
+      Temp = HVAC_Temp-17;
+    }
+    if (Temp==10)  // Temp is encoded as gray code; except 27 and 28. Go figure...
+      data[2]=0x90;
+    } else if (Temp==11) {
+      data[2]=0x80;
+    } else {
+      Temp=(Temp>>1)^Temp;
+      data[2]=(Temp<<4);
+    }
+
+    // MODE
+    if (HVAC_Mode == NULL) {
+      p = (char *)kHvacModeOptions + 3; // default to auto
+    }
+    else {
+      p =(char*)HVAC_Mode;
+    }
+    switch(toupper(p[0])) {
+      case 'D': data[2]=0xE4; break; // for fan Temp must be 0XE
+      case 'C': data[2]=0x0|data[2]; break;
+      case 'A': data[2]=0x8|data[2]; data[1]=0x1F; break; // for auto Fan must be 0x1
+      case 'H': data[2]=0xC|data[2]; break;
+      default: return true;
+    }
+  }
+
+  int i = 0;
+  byte mask = 1;
+
+  //header
+  rawdata[i++] = HVAC_MIDEA_HDR_MARK;
+  rawdata[i++] = HVAC_MIDEA_HDR_SPACE;
+
+  //data
+  for (int b = 0; b < HVAC_MIDEA_DATALEN; b++) { // Send value
+    for (mask = B10000000; mask > 0; mask >>= 1) {
+      if (data[b] & mask) { // Bit ONE
+        rawdata[i++] = HVAC_MIDEA_BIT_MARK;
+        rawdata[i++] = HVAC_MIDEA_ONE_SPACE;
+      }
+      else { // Bit ZERO
+        rawdata[i++] = HVAC_MIDEA_BIT_MARK;
+        rawdata[i++] = HVAC_MIDEA_ZERO_SPACE;
+      }
+    }
+    for (mask = B10000000; mask > 0; mask >>= 1) { // Send complement
+      if (data[b] & mask) { // Bit ONE
+        rawdata[i++] = HVAC_MIDEA_BIT_MARK;
+        rawdata[i++] = HVAC_MIDEA_ZERO_SPACE;
+      }
+      else { // Bit ZERO
+        rawdata[i++] = HVAC_MIDEA_BIT_MARK;
+        rawdata[i++] = HVAC_MIDEA_ONE_SPACE;
+      }
+    }
+
+  }
+
+  //trailer
+  rawdata[i++] = HVAC_MIDEA_RPT_MARK;
+  rawdata[i++] = HVAC_MIDEA_RPT_SPACE;
+
+  noInterrupts();
+  // this takes ~180 ms :
+  irsend->sendRaw(rawdata, i, 38);
+  irsend->sendRaw(rawdata, i, 38);
+  interrupts();
+
+  return false;
+}
+
 
 boolean IrHvacToshiba(const char *HVAC_Mode, const char *HVAC_FanMode, boolean HVAC_Power, int HVAC_Temp)
 {
@@ -378,6 +505,9 @@ boolean IrSendCommand()
         }
         else if (!strcasecmp_P(HVAC_Vendor, PSTR("MITSUBISHI"))) {
           error = IrHvacMitsubishi(HVAC_Mode, HVAC_FanMode, HVAC_Power, HVAC_Temp);
+        }
+        else if (!strcasecmp_P(HVAC_Vendor, PSTR("MIDEA"))) {
+          error = IrHvacMidea(HVAC_Mode, HVAC_FanMode, HVAC_Power, HVAC_Temp);
         }
         else {
           error = true;
