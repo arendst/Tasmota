@@ -253,7 +253,7 @@ bool RulesRuleMatch(byte rule_set, String &event, String &rule)
     }
   } else match = true;
 
-  if (Settings.flag.rules_once) {
+  if (bitRead(Settings.rule_once, rule_set)) {
     if (match) {                                       // Only allow match state changes
       if (!bitRead(rules_triggers[rule_set], rules_trigger_count[rule_set])) {
         bitSet(rules_triggers[rule_set], rules_trigger_count[rule_set]);
@@ -610,20 +610,21 @@ double map_double(double x, double in_min, double in_max, double out_min, double
 }
 
 // Function to return a substring defined by a delimiter at an index
-char* subStr (char* str, const char *delim, int index) {
-  char *act, *sub, *ptr;
+char* subStr (char* str, const char *delim, int index)
+{
+  char *act;
+  char *sub;
+  char *ptr;
   static char copy[10];
   int i;
 
   // Since strtok consumes the first arg, make a copy
   strcpy(copy, str);
-
   for (i = 1, act = copy; i <= index; i++, act = NULL) {
-     sub = strtok_r(act, delim, &ptr);
-     if (sub == NULL) break;
+    sub = strtok_r(act, delim, &ptr);
+    if (sub == NULL) break;
   }
-  sub = LTrim(sub);
-  sub = RTrim(sub);
+  sub = Trim(sub);
   return sub;
 }
 
