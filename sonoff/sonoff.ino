@@ -161,7 +161,8 @@ int prep_called = 0;                // additional flag to detect a proper start 
 unsigned long last_save_uptime = 0;   // Loop timer to calculate ontime
 uint8_t last_source = 0;
 byte max_pcf8574_devices = 0;               // Max numbers of PCF8574 modules
-uint8_t shutter_type = 1;                     // shutter types
+//uint8_t shutter_type = 1;                     // shutter types
+uint8_t shutters_present = 0;
 //end
 
 #ifdef USE_MQTT_TLS
@@ -974,7 +975,7 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"Interlock\":\"0x%x)\"}"), Settings.interlock_mask);
     }
-  
+
 //end
     else if (CMND_BAUDRATE == command_code) {
       if (payload32 > 0) {

@@ -78,8 +78,17 @@ const char HTTP_HEAD[] PROGMEM =
     "la('?d='+p);"
   "}"
   //stb nod
-  "function ld(p){"
-    "la('?u='+p);"
+  "function ld1(p){"
+    "la('?u1='+p);"
+  "}"
+  "function ld2(p){"
+    "la('?u2='+p);"
+  "}"
+  "function ld3(p){"
+    "la('?u3='+p);"
+  "}"
+  "function ld4(p){"
+    "la('?u4='+p);"
   "}"
   //end
   "function lc(p){"
@@ -185,8 +194,8 @@ const char HTTP_MSG_SLIDER2[] PROGMEM =
 //stb mod
 const char HTTP_MSG_SLIDER3[] PROGMEM =
   "<div><span class='p'>" D_CLOSE "</span><span class='q'>" D_OPEN "</span></div>"
-  "<div><input type='range' min='0' max='100' value='%d' onchange='ld(value)'></div>";
-//
+  "<div><input type='range' min='0' max='100' value='%d' onchange='ld%d(value)'></div>";
+//end
 const char HTTP_MSG_RSTRT[] PROGMEM =
   "<br/><div style='text-align:center;'>" D_DEVICE_WILL_RESTART "</div><br/>";
 const char HTTP_BTN_MENU1[] PROGMEM =
@@ -591,8 +600,10 @@ void HandleRoot()
       page += F("<tr>");
       // stb mod
       if (Settings.flag3.shutter_mode) {
-        snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_MSG_SLIDER3, Settings.shutter_position);
-        page += mqtt_data;
+        for (byte i=0; i < shutters_present; i++) {
+          snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_MSG_SLIDER3,  Settings.shutter_position[i], i+1);
+          page += mqtt_data;
+        }
       }
       //end
       if (SONOFF_IFAN02 == Settings.module) {
@@ -667,9 +678,24 @@ void HandleAjaxStatusRefresh()
     ExecuteWebCommand(svalue, SRC_WEBGUI);
   }
   //stb mod
-  WebGetArg("u", tmp, sizeof(tmp));
+  WebGetArg("u1", tmp, sizeof(tmp));
   if (strlen(tmp)) {
-    snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_POSITION " %s"), tmp);
+    snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_POSITION "1 %s"), tmp);
+    ExecuteWebCommand(svalue, SRC_WEBGUI);
+  }
+  WebGetArg("u2", tmp, sizeof(tmp));
+  if (strlen(tmp)) {
+    snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_POSITION "2 %s"), tmp);
+    ExecuteWebCommand(svalue, SRC_WEBGUI);
+  }
+  WebGetArg("u3", tmp, sizeof(tmp));
+  if (strlen(tmp)) {
+    snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_POSITION "3 %s"), tmp);
+    ExecuteWebCommand(svalue, SRC_WEBGUI);
+  }
+  WebGetArg("u4", tmp, sizeof(tmp));
+  if (strlen(tmp)) {
+    snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_POSITION "4 %s"), tmp);
     ExecuteWebCommand(svalue, SRC_WEBGUI);
   }
   // end
