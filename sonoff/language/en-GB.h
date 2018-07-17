@@ -166,7 +166,6 @@
 #define D_VOLTAGE "Voltage"
 #define D_WARMLIGHT "Warm"
 #define D_WEB_SERVER "Web Server"
-#define D_CONFIGURE_MCP230XX "Configure MCP230xx"
 
 // sonoff.ino
 #define D_WARNING_MINIMAL_VERSION "WARNING This version does not support persistent settings"
@@ -228,6 +227,7 @@
 #define D_CONFIRM_RESTART "Confirm Restart"
 
 #define D_CONFIGURE_MODULE "Configure Module"
+#define D_CONFIGURE_MCP230XX "Configure MCP230xx"
 #define D_CONFIGURE_WIFI "Configure WiFi"
 #define D_CONFIGURE_MQTT "Configure MQTT"
 #define D_CONFIGURE_DOMOTICZ "Configure Domoticz"

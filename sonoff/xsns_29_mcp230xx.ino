@@ -85,7 +85,7 @@ const char HTTP_FORM_I2C_MCP230XX[] PROGMEM =
   "<td nowrap><input type=checkbox name=epu{b1 value=1{b2></input></td>"
   "</tr>";
 
-void handleMCP230xx()
+void HandleMCP230xxConfiguration()
 {
   if (HttpUser()) {
     return;
@@ -348,7 +348,7 @@ void MCP230xx_Show(boolean json)
         snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"MCP23017\":{\"D0\":%i,\"D1\":%i,\"D2\":%i,\"D3\":%i,\"D4\":%i,\"D5\":%i,\"D6\":%i,\"D7\":%i,\"D8\":%i,\"D9\":%i,\"D10\":%i,\"D11\":%i,\"D12\":%i,\"D13\":%i,\"D14\":%i,\"D15\":%i}"),
                    mqtt_data, (gpio1>>0)&1,(gpio1>>1)&1,(gpio1>>2)&1,(gpio1>>3)&1,(gpio1>>4)&1,(gpio1>>5)&1,(gpio1>>6)&1,(gpio1>>7)&1,(gpio2>>0)&1,(gpio2>>1)&1,(gpio2>>2)&1,(gpio2>>3)&1,(gpio2>>4)&1,(gpio2>>5)&1,(gpio2>>6)&1,(gpio2>>7)&1);
       }
-      
+
 #ifdef USE_WEBSERVER
 #ifdef USE_MCP230xx_displaymain
     } else {
@@ -358,13 +358,13 @@ void MCP230xx_Show(boolean json)
         gpio2=MCP230xx_readGPIO(1);
       }
       uint16_t gpio = (gpio2 << 8) + gpio1;
-      
+
       for (uint8_t pin = 0; pin < mcp280xx_pincount; pin++) {
         if (Settings.mcp230xx_config[pin].enable) {
           snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_MCP230xx_GPIO, mqtt_data, pin, (gpio>>pin)&1);
         }
       }
-#endif // USE_MCP230xx_displaymain      
+#endif // USE_MCP230xx_displaymain
 #endif  // USE_WEBSERVER
     }
   }
@@ -450,13 +450,13 @@ boolean Xsns29(byte function)
         if (XSNS_29 == XdrvMailbox.index) {
           result = MCP230xx_Command();
         }
-        break;        
+        break;
 #ifdef USE_WEBSERVER
 #ifdef USE_MCP230xx_displaymain
       case FUNC_WEB_APPEND:
         MCP230xx_Show(0);
         break;
-#endif // USE_MCP230xx_displaymain        
+#endif // USE_MCP230xx_displaymain
 #endif  // USE_WEBSERVER
     }
   }

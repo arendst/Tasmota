@@ -227,6 +227,7 @@
 #define D_CONFIRM_RESTART "Bevestig herstart"
 
 #define D_CONFIGURE_MODULE "Configureer Module"
+#define D_CONFIGURE_MCP230XX "Configureer MCP230xx"
 #define D_CONFIGURE_WIFI "Configureer WiFi"
 #define D_CONFIGURE_MQTT "Configureer MQTT"
 #define D_CONFIGURE_DOMOTICZ "Configureer Domoticz"

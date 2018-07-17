@@ -227,6 +227,7 @@
 #define D_CONFIRM_RESTART "Confirmer redémarrage"
 
 #define D_CONFIGURE_MODULE "Configuration du Module"
+#define D_CONFIGURE_MCP230XX "Configuration MCP230xx"
 #define D_CONFIGURE_WIFI "Configuration WiFi"
 #define D_CONFIGURE_MQTT "Configuration MQTT"
 #define D_CONFIGURE_DOMOTICZ "Configuration Domoticz"
