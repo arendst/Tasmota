@@ -1,4 +1,5 @@
 /* 6.1.1b
+ * Add support for MPR121 controller in input mode for touch buttons (#3142)
  * Add support for MCP230xx for general purpose input expansion and command Sensor29 (#3188)
  * Fix command Scale buffer overflow (#3236)
  * Fix rules once regression from v6.1.0 (#3198, #3226)
