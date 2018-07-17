@@ -82,6 +82,8 @@ void Schutter_Update_Position()
     if (Shutter_Direction[i] != 0) {
       //char stemp1[20];
       Shutter_Real_Position[i] = Shutter_Real_Position[i] + (Shutter_Direction[i] > 0 ? Shutter_Open_Velocity : -Shutter_Close_Velocity[i]);
+      // avoid real position leavin the boundaries.
+      Shutter_Real_Position[i] = Shutter_Real_Position[i] < 0 ? 0 : (Shutter_Real_Position[i] > Shutter_Open_Max[i] ? Shutter_Open_Max[i] : Shutter_Real_Position[i]) ;
       // check if corresponding relay if OFF. Then stop movement.
       //snprintf_P(log_data, sizeof(log_data), PSTR("Debug:Shutter %d Powerstate: %d, Source: %s, power %ld"),i,powerstate, GetTextIndexed(stemp1, sizeof(stemp1), last_source, kCommandSource), power );
       //AddLog(LOG_LEVEL_DEBUG);
