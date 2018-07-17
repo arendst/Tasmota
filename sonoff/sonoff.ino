@@ -25,7 +25,7 @@
     - Select IDE Tools - Flash Size: "1M (no SPIFFS)"
   ====================================================*/
 
-#define VERSION                0x06000003   // 6.0.0c
+#define VERSION                0x06010102   // 6.1.1b
 
 // Location specific includes
 #include <core_version.h>                   // Arduino_Esp8266 version information (ARDUINO_ESP8266_RELEASE and ARDUINO_ESP8266_RELEASE_2_3_0)
@@ -161,6 +161,7 @@ uint8_t stop_flash_rotate = 0;              // Allow flash configuration rotatio
 
 int blinks = 201;                           // Number of LED blinks
 uint8_t blinkstate = 0;                     // LED state
+uint8_t blinkspeed = 1;                     // LED blink rate
 
 uint8_t blockgpio0 = 4;                     // Block GPIO0 for 4 seconds after poweron to workaround Wemos D1 RTS circuit
 uint8_t lastbutton[MAX_KEYS] = { NOT_PRESSED, NOT_PRESSED, NOT_PRESSED, NOT_PRESSED };  // Last button states
@@ -169,7 +170,7 @@ uint8_t multiwindow[MAX_KEYS] = { 0 };      // Max time between button presses t
 uint8_t multipress[MAX_KEYS] = { 0 };       // Number of button presses within multiwindow
 uint8_t lastwallswitch[MAX_SWITCHES];       // Last wall switch states
 uint8_t holdwallswitch[MAX_SWITCHES] = { 0 };  // Timer for wallswitch push button hold
-uint8_t virtualswitch[MAX_SWITCHES] = { 0 };   // Virtual switch states
+uint8_t virtualswitch[MAX_SWITCHES];        // Virtual switch states
 
 mytmplt my_module;                          // Active copy of Module name and GPIOs
 uint8_t pin[GPIO_MAX];                      // Possible pin configurations
@@ -184,6 +185,7 @@ uint8_t light_type = 0;                     // Light types
 bool pwm_present = false;                   // Any PWM channel configured with SetOption15 0
 boolean mdns_begun = false;
 uint8_t ntp_force_sync = 0;                 // Force NTP sync
+StateBitfield global_state;
 RulesBitfield rules_flag;
 
 char my_version[33];                        // Composed version string
@@ -540,6 +542,53 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
       mqtt_data[0] = '\0';
       MqttShowState();
     }
+    else if (CMND_SLEEP == command_code) {
+      if ((payload >= 0) && (payload < 251)) {
+        if ((!Settings.sleep && payload) || (Settings.sleep && !payload)) restart_flag = 2;
+        Settings.sleep = payload;
+        sleep = payload;
+      }
+      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE_UNIT_NVALUE_UNIT, command, sleep, (Settings.flag.value_units) ? " " D_UNIT_MILLISECOND : "", Settings.sleep, (Settings.flag.value_units) ? " " D_UNIT_MILLISECOND : "");
+    }
+    else if ((CMND_UPGRADE == command_code) || (CMND_UPLOAD == command_code)) {
+      // Check if the payload is numerically 1, and had no trailing chars.
+      //   e.g. "1foo" or "1.2.3" could fool us.
+      // Check if the version we have been asked to upgrade to is higher than our current version.
+      //   We also need at least 3 chars to make a valid version number string.
+      if (((1 == data_len) && (1 == payload)) || ((data_len >= 3) && NewerVersion(dataBuf))) {
+        ota_state_flag = 3;
+//        snprintf_P(mqtt_data, sizeof(mqtt_data), "{\"%s\":\"" D_JSON_VERSION " %s " D_JSON_FROM " %s\"}", command, my_version, Settings.ota_url);
+        snprintf_P(mqtt_data, sizeof(mqtt_data), "{\"%s\":\"" D_JSON_VERSION " %s " D_JSON_FROM " %s\"}", command, my_version, GetOtaUrl(stemp1, sizeof(stemp1)));
+      } else {
+        snprintf_P(mqtt_data, sizeof(mqtt_data), "{\"%s\":\"" D_JSON_ONE_OR_GT "\"}", command, my_version);
+      }
+    }
+    else if (CMND_OTAURL == command_code) {
+      if ((data_len > 0) && (data_len < sizeof(Settings.ota_url)))
+        strlcpy(Settings.ota_url, (1 == payload) ? OTA_URL : dataBuf, sizeof(Settings.ota_url));
+      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, Settings.ota_url);
+    }
+    else if (CMND_SERIALLOG == command_code) {
+      if ((payload >= LOG_LEVEL_NONE) && (payload <= LOG_LEVEL_ALL)) {
+        Settings.flag.mqtt_serial = 0;
+        SetSeriallog(payload);
+      }
+      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE_ACTIVE_NVALUE, command, Settings.seriallog_level, seriallog_level);
+    }
+    else if (CMND_RESTART == command_code) {
+      switch (payload) {
+      case 1:
+        restart_flag = 2;
+        snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, D_JSON_RESTARTING);
+        break;
+      case 99:
+        AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_APPLICATION D_RESTARTING));
+        EspRestart();
+        break;
+      default:
+        snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, D_JSON_ONE_TO_RESTART);
+      }
+    }
     else if ((CMND_POWERONSTATE == command_code) && (Settings.module != MOTOR)) {
       /* 0 = Keep relays off after power on
        * 1 = Turn relays on after power on, if PulseTime set wait for PulseTime seconds, and turn relays off
@@ -854,32 +903,6 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, Settings.pulse_counter_debounce);
     }
-    else if (CMND_SLEEP == command_code) {
-      if ((payload >= 0) && (payload < 251)) {
-        if ((!Settings.sleep && payload) || (Settings.sleep && !payload)) restart_flag = 2;
-        Settings.sleep = payload;
-        sleep = payload;
-      }
-      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE_UNIT_NVALUE_UNIT, command, sleep, (Settings.flag.value_units) ? " " D_UNIT_MILLISECOND : "", Settings.sleep, (Settings.flag.value_units) ? " " D_UNIT_MILLISECOND : "");
-    }
-    else if ((CMND_UPGRADE == command_code) || (CMND_UPLOAD == command_code)) {
-      // Check if the payload is numerically 1, and had no trailing chars.
-      //   e.g. "1foo" or "1.2.3" could fool us.
-      // Check if the version we have been asked to upgrade to is higher than our current version.
-      //   We also need at least 3 chars to make a valid version number string.
-      if (((1 == data_len) && (1 == payload)) || ((data_len >= 3) && NewerVersion(dataBuf))) {
-        ota_state_flag = 3;
-//        snprintf_P(mqtt_data, sizeof(mqtt_data), "{\"%s\":\"" D_JSON_VERSION " %s " D_JSON_FROM " %s\"}", command, my_version, Settings.ota_url);
-        snprintf_P(mqtt_data, sizeof(mqtt_data), "{\"%s\":\"" D_JSON_VERSION " %s " D_JSON_FROM " %s\"}", command, my_version, GetOtaUrl(stemp1, sizeof(stemp1)));
-      } else {
-        snprintf_P(mqtt_data, sizeof(mqtt_data), "{\"%s\":\"" D_JSON_ONE_OR_GT "\"}", command, my_version);
-      }
-    }
-    else if (CMND_OTAURL == command_code) {
-      if ((data_len > 0) && (data_len < sizeof(Settings.ota_url)))
-        strlcpy(Settings.ota_url, (1 == payload) ? OTA_URL : dataBuf, sizeof(Settings.ota_url));
-      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, Settings.ota_url);
-    }
     else if (CMND_BAUDRATE == command_code) {
       if (payload32 > 0) {
         payload32 /= 1200;  // Make it a valid baudrate
@@ -916,13 +939,6 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
         }
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, Settings.serial_delimiter);
-    }
-    else if (CMND_SERIALLOG == command_code) {
-      if ((payload >= LOG_LEVEL_NONE) && (payload <= LOG_LEVEL_ALL)) {
-        Settings.flag.mqtt_serial = 0;
-        SetSeriallog(payload);
-      }
-      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE_ACTIVE_NVALUE, command, Settings.seriallog_level, seriallog_level);
     }
     else if (CMND_SYSLOG == command_code) {
       if ((payload >= LOG_LEVEL_NONE) && (payload <= LOG_LEVEL_ALL)) {
@@ -976,7 +992,7 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
     }
     else if ((CMND_SSID == command_code) && (index > 0) && (index <= 2)) {
       if ((data_len > 0) && (data_len < sizeof(Settings.sta_ssid[0]))) {
-        strlcpy(Settings.sta_ssid[index -1], (1 == payload) ? (1 == index) ? STA_SSID1 : STA_SSID2 : dataBuf, sizeof(Settings.sta_ssid[0]));
+        strlcpy(Settings.sta_ssid[index -1], (!strcmp(dataBuf,"0")) ? "" : (1 == payload) ? (1 == index) ? STA_SSID1 : STA_SSID2 : dataBuf, sizeof(Settings.sta_ssid[0]));
         Settings.sta_active = index -1;
         restart_flag = 2;
       }
@@ -984,7 +1000,7 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
     }
     else if ((CMND_PASSWORD == command_code) && (index > 0) && (index <= 2)) {
       if ((data_len > 0) && (data_len < sizeof(Settings.sta_pwd[0]))) {
-        strlcpy(Settings.sta_pwd[index -1], (1 == payload) ? (1 == index) ? STA_PASS1 : STA_PASS2 : dataBuf, sizeof(Settings.sta_pwd[0]));
+        strlcpy(Settings.sta_pwd[index -1], (!strcmp(dataBuf,"0")) ? "" : (1 == payload) ? (1 == index) ? STA_PASS1 : STA_PASS2 : dataBuf, sizeof(Settings.sta_pwd[0]));
         Settings.sta_active = index -1;
         restart_flag = 2;
         snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, index, Settings.sta_pwd[index -1]);
@@ -1039,20 +1055,6 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
         tele_period = Settings.tele_period;
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE_UNIT, command, Settings.tele_period, (Settings.flag.value_units) ? " " D_UNIT_SECOND : "");
-    }
-    else if (CMND_RESTART == command_code) {
-      switch (payload) {
-      case 1:
-        restart_flag = 2;
-        snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, D_JSON_RESTARTING);
-        break;
-      case 99:
-        AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_APPLICATION D_RESTARTING));
-        EspRestart();
-        break;
-      default:
-        snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, D_JSON_ONE_TO_RESTART);
-      }
     }
     else if (CMND_RESET == command_code) {
       switch (payload) {
@@ -1721,7 +1723,7 @@ void SwitchHandler(byte mode)
   uint8_t switchflag;
 
   for (byte i = 0; i < MAX_SWITCHES; i++) {
-    if (pin[GPIO_SWT1 +i] < 99) {
+    if ((pin[GPIO_SWT1 +i] < 99) || (mode)) {
 
       if (holdwallswitch[i]) {
         holdwallswitch[i]--;
@@ -1802,6 +1804,7 @@ void SwitchHandler(byte mode)
 void StateLoop()
 {
   power_t power_now;
+  uint8_t blinkinterval = 1;
 
   state_loop_timer = millis() + (1000 / STATES);
   state++;
@@ -1879,27 +1882,38 @@ void StateLoop()
 \*-------------------------------------------------------------------------------------------*/
 
   if (!(state % ((STATES/10)*2))) {
+    if (!Settings.flag.global_state) {                      // Problem blinkyblinky enabled
+      if (global_state.data) {                              // Any problem
+        if (global_state.mqtt_down) { blinkinterval = 9; }  // MQTT problem so blink every 2 seconds (slowest)
+        if (global_state.wifi_down) { blinkinterval = 4; }  // Wifi problem so blink every second (slow)
+        blinks = 201;                                       // Allow only a single blink in case the problem is solved
+      }
+    }
     if (blinks || restart_flag || ota_state_flag) {
-      if (restart_flag || ota_state_flag) {
-        blinkstate = 1;   // Stay lit
+      if (restart_flag || ota_state_flag) {                 // Overrule blinks and keep led lit
+        blinkstate = 1;                                     // Stay lit
       } else {
-        blinkstate ^= 1;  // Blink
+        blinkspeed--;
+        if (!blinkspeed) {
+          blinkspeed = blinkinterval;                       // Set interval to 0.2 (default), 1 or 2 seconds
+          blinkstate ^= 1;                                  // Blink
+        }
       }
       if ((!(Settings.ledstate &0x08)) && ((Settings.ledstate &0x06) || (blinks > 200) || (blinkstate))) {
-        SetLedPower(blinkstate);
+//      if ( (!Settings.flag.global_state && global_state.data) || ((!(Settings.ledstate &0x08)) && ((Settings.ledstate &0x06) || (blinks > 200) || (blinkstate))) ) {
+        SetLedPower(blinkstate);                            // Set led on or off
       }
       if (!blinkstate) {
         blinks--;
-        if (200 == blinks) blinks = 0;
+        if (200 == blinks) blinks = 0;                      // Disable blink
       }
-    } else {
-      if (Settings.ledstate &1) {
-        boolean tstate = power;
-        if ((SONOFF_TOUCH == Settings.module) || (SONOFF_T11 == Settings.module) || (SONOFF_T12 == Settings.module) || (SONOFF_T13 == Settings.module)) {
-          tstate = (!power) ? 1 : 0;
-        }
-        SetLedPower(tstate);
+    }
+    else if (Settings.ledstate &1) {
+      boolean tstate = power;
+      if ((SONOFF_TOUCH == Settings.module) || (SONOFF_T11 == Settings.module) || (SONOFF_T12 == Settings.module) || (SONOFF_T13 == Settings.module)) {
+        tstate = (!power) ? 1 : 0;                          // As requested invert signal for Touch devices to find them in the dark
       }
+      SetLedPower(tstate);
     }
   }
 
@@ -2142,6 +2156,7 @@ void SerialInput()
       }
     }
 
+#ifdef USE_ENERGY_SENSOR
 /*-------------------------------------------------------------------------------------------*\
  * Sonoff S31 and Sonoff Pow R2 4800 baud serial interface
 \*-------------------------------------------------------------------------------------------*/
@@ -2152,7 +2167,7 @@ void SerialInput()
         return;
       }
     }
-
+#endif  // USE_ENERGY_SENSOR
 /*-------------------------------------------------------------------------------------------*/
 
     if (serial_in_byte > 127) {                // binary data...
@@ -2364,10 +2379,13 @@ void GpioInit()
     }
   }
   for (byte i = 0; i < MAX_SWITCHES; i++) {
+    lastwallswitch[i] = 1;  // Init global to virtual switch state;
     if (pin[GPIO_SWT1 +i] < 99) {
       pinMode(pin[GPIO_SWT1 +i], (16 == pin[GPIO_SWT1 +i]) ? INPUT_PULLDOWN_16 :INPUT_PULLUP);
-      lastwallswitch[i] = digitalRead(pin[GPIO_SWT1 +i]);  // set global now so doesn't change the saved power state on first switch check
+      lastwallswitch[i] = digitalRead(pin[GPIO_SWT1 +i]);  // Set global now so doesn't change the saved power state on first switch check
+
     }
+    virtualswitch[i] = lastwallswitch[i];
   }
 
 #ifdef USE_WS2812

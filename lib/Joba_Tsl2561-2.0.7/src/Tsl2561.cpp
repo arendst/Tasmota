@@ -29,7 +29,7 @@ bool Tsl2561::available() {
 
 bool Tsl2561::begin( address_t addr ) {
   _addr = addr;
-  return available();  
+  return available();
 }
 
 bool Tsl2561::begin() {
@@ -48,24 +48,30 @@ bool Tsl2561::begin() {
 bool Tsl2561::readByte( register_t reg, uint8_t &val ) {
   _wire.beginTransmission(_addr);
   _wire.write(reg | CONTROL_CMD);
-  if( _wire.endTransmission(false) == ERR_OK ) {
-    if( _wire.requestFrom(_addr, 1) ) {
+  if( (_status = static_cast<status_t>(_wire.endTransmission(false))) == ERR_OK ) {
+    if( _wire.requestFrom(_addr, 1) == 1 ) {
       val = static_cast<uint8_t>(_wire.read());
     }
+    else {
+      _status = ERR_RW;
+    }
   }
-  return (_status = static_cast<status_t>(_wire.endTransmission())) == ERR_OK;
+  return _status == ERR_OK;
 }
 
 bool Tsl2561::readWord( register_t reg, uint16_t &val ) {
   _wire.beginTransmission(_addr);
   _wire.write(reg | CONTROL_CMD);
-  if( _wire.endTransmission(false) == ERR_OK ) {
-    if( _wire.requestFrom(_addr, 2) ) {
-      val = (uint16_t)_wire.read() & 0xff;
-      val |= ((uint16_t)_wire.read() & 0xff) << 8;
+  if( (_status = static_cast<status_t>(_wire.endTransmission(false))) == ERR_OK ) {
+    if( _wire.requestFrom(_addr, 2) == 2 ) {
+      val = static_cast<uint16_t>(_wire.read()) & 0xff;
+      val |= (static_cast<uint16_t>(_wire.read()) & 0xff) << 8;
+    }
+    else {
+      _status = ERR_RW;
     }
   }
-  return (_status = static_cast<status_t>(_wire.endTransmission())) == ERR_OK;
+  return _status == ERR_OK;
 }
 
 bool Tsl2561::writeByte( register_t reg, uint8_t val ) {

@@ -35,19 +35,20 @@ uint8_t tm1638_clock_pin = 0;
 uint8_t tm1638_data_pin = 0;
 uint8_t tm1638_strobe_pin = 0;
 uint8_t tm1638_displays = 8;
-uint8_t tm1638_active_display = 0;
+uint8_t tm1638_active_display = 1;
 uint8_t tm1638_intensity = 0;
+uint8_t tm1638_state = 0;
 
 /*********************************************************************************************\
  * Pieces from library https://github.com/rjbatista/tm1638-library
+ *    and from library https://github.com/MartyMacGyver/TM1638-demos-and-examples
 \*********************************************************************************************/
 
 void Tm16XXSend(byte data)
 {
-  for (int i = 0; i < 8; i++) {
+	for (uint8_t i = 0; i < 8; i++) {
+    digitalWrite(tm1638_data_pin, !!(data & (1 << i)));
     digitalWrite(tm1638_clock_pin, LOW);
-    digitalWrite(tm1638_data_pin, data & 1 ? HIGH : LOW);
-    data >>= 1;
     delayMicroseconds(TM1638_CLOCK_DELAY);
     digitalWrite(tm1638_clock_pin, HIGH);
   }
@@ -77,11 +78,10 @@ byte Tm16XXReceive()
   pinMode(tm1638_data_pin, INPUT);
   digitalWrite(tm1638_data_pin, HIGH);
 
-  for (int i = 0; i < 8; i++) {
-    temp >>= 1;
+  for (uint8_t i = 0; i < 8; ++i) {
     digitalWrite(tm1638_clock_pin, LOW);
     delayMicroseconds(TM1638_CLOCK_DELAY);
-    if (digitalRead(tm1638_data_pin)) { temp |= 0x80; }
+    temp |= digitalRead(tm1638_data_pin) << i;
     digitalWrite(tm1638_clock_pin, HIGH);
   }
 
@@ -155,7 +155,7 @@ void TmInit()
     digitalWrite(tm1638_clock_pin, HIGH);
 
     Tm16XXSendCommand(0x40);
-    Tm16XXSendCommand(0x80 | (tm1638_active_display ? 8 : 0) | min(7, tm1638_intensity));
+    Tm16XXSendCommand(0x80 | (tm1638_active_display ? 8 : 0) | tmin(7, tm1638_intensity));
 
     digitalWrite(tm1638_strobe_pin, LOW);
     Tm16XXSend(0xC0);
@@ -165,25 +165,32 @@ void TmInit()
     digitalWrite(tm1638_strobe_pin, HIGH);
 
     tm1638_type = 1;
+    tm1638_state = 1;
   }
 }
 
 void TmLoop()
 {
-  byte buttons = Tm1638GetButtons();
-  for (byte i = 0; i < MAX_SWITCHES; i++) {
-    virtualswitch[i] = buttons &1;
-    byte color = (virtualswitch[i]) ? TM1638_COLOR_RED : TM1638_COLOR_NONE;
-    Tm1638SetLED(color, i);
-    buttons >>= 1;
+  if (tm1638_state) {
+    byte buttons = Tm1638GetButtons();
+    for (byte i = 0; i < MAX_SWITCHES; i++) {
+      virtualswitch[i] = (buttons &1) ^1;
+      byte color = (virtualswitch[i]) ? TM1638_COLOR_NONE : TM1638_COLOR_RED;
+      Tm1638SetLED(color, i);
+      buttons >>= 1;
+    }
+    SwitchHandler(1);
   }
-  SwitchHandler(1);
 }
 
+/*
 void TmShow(boolean json)
 {
+  if (tm1638_type) {
 
+  }
 }
+*/
 
 /*********************************************************************************************\
  * Interface

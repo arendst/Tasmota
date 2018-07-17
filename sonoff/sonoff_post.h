@@ -51,6 +51,7 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #endif
 
 #define USE_DHT                               // Default DHT11 sensor needs no external library
+#define USE_ENERGY_SENSOR                     // Use energy sensors
 
 /*********************************************************************************************\
  * [sonoff-allsensors.bin]
@@ -58,6 +59,7 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 \*********************************************************************************************/
 
 #ifdef USE_ALL_SENSORS
+
 #define USE_ADC_VCC                           // Display Vcc in Power status. Disable for use as Analog input on selected devices
 #define USE_DS18x20                           // For more than one DS18x20 sensors with id sort, single scan and read retry (+1k3 code)
 //#define USE_DS18x20_LEGACY                     // For more than one DS18x20 sensors with dynamic scan using library OneWire (+1k5 code)
@@ -65,16 +67,19 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #define USE_SHT                               // Add I2C emulating code for SHT1X sensor (+1k4 code)
 #define USE_SHT3X                             // Add I2C code for SHT3x sensor (+0k6 code)
 #define USE_HTU                               // Add I2C code for HTU21/SI7013/SI7020/SI7021 sensor (+1k5 code)
+#define USE_LM75AD                            // Add I2C code for LM75AD sensor (+0k5 code)
 #define USE_BMP                               // Add I2C code for BMP085/BMP180/BMP280/BME280 sensor (+4k code)
-  #define USE_BME680                          // Add additional support for BME680 sensor using Adafruit Sensor and BME680 libraries (+6k code)
+  #define USE_BME680                          // Add additional support for BME680 sensor using Bosch BME680 library (+4k code)
 #define USE_SGP30                             // Add I2C code for SGP30 sensor (+1k1 code)
 #define USE_BH1750                            // Add I2C code for BH1750 sensor (+0k5 code)
 #define USE_VEML6070                          // Add I2C code for VEML6070 sensor (+0k5 code)
 #define USE_TSL2561                           // Add I2C code for TSL2561 sensor using library Adafruit TSL2561 Arduino (+1k2 code)
+//#define USE_SI1145                            // Add I2C code for SI1145/46/47 sensor (+1k code)
 #define USE_ADS1115                           // Add I2C code for ADS1115 16 bit A/D converter based on Adafruit ADS1x15 library (no library needed) (+0k7 code)
 //#define USE_ADS1115_I2CDEV                    // Add I2C code for ADS1115 16 bit A/D converter using library i2cdevlib-Core and i2cdevlib-ADS1115 (+2k code)
 #define USE_INA219                            // Add I2C code for INA219 Low voltage and current sensor (+1k code)
 #define USE_MGS                               // Add I2C code for Xadow and Grove Mutichannel Gas sensor using library Multichannel_Gas_Sensor (+10k code)
+//#define USE_APDS9960                          // Add I2C code for APDS9960 Proximity Sensor. Disables SHT and VEML6070 (+4k7 code)
 #define USE_MHZ19                             // Add support for MH-Z19 CO2 sensor (+2k code)
 #define USE_SENSEAIR                          // Add support for SenseAir K30, K70 and S8 CO2 sensor (+2k3 code)
 #ifndef CO2_LOW
@@ -87,6 +92,8 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #define USE_NOVA_SDS                          // Add support for SDS011 and SDS021 particle concentration sensor (+0k7 code)
 #define USE_PZEM004T                          // Add support for PZEM004T Energy monitor (+2k code)
 #define USE_SERIAL_BRIDGE                     // Add support for software Serial Bridge (+0k8 code)
+#define USE_SDM120                            // Add support for Eastron SDM120-Modbus energy meter (+1k7 code)
+#define USE_SDM630                            // Add support for Eastron SDM630-Modbus energy meter (+2k code)
 #define USE_IR_REMOTE                         // Send IR remote commands using library IRremoteESP8266 and ArduinoJson (+4k code, 0k3 mem, 48 iram)
   #define USE_IR_HVAC                         // Support for HVAC system using IR (+2k code)
   #define USE_IR_RECEIVE                      // Support for IR receiver (+5k5 code, 264 iram)
@@ -105,36 +112,28 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 \*********************************************************************************************/
 
 #ifdef USE_CLASSIC
-#ifdef USE_KNX
-#undef USE_KNX
-#endif
-#ifdef USE_TIMERS
-#undef USE_TIMERS
-#endif
-#ifdef USE_TIMERS_WEB
-#undef USE_TIMERS_WEB
-#endif
-#ifdef USE_SUNRISE
-#undef USE_SUNRISE
-#endif
-#ifdef USE_RULES
-#undef USE_RULES
-#endif
-#ifdef USE_SGP30
-#undef USE_SGP30
-#endif
-#ifdef USE_NOVA_SDS
-#undef USE_NOVA_SDS
-#endif
-#ifdef USE_IR_RECEIVE
-#undef USE_IR_RECEIVE
-#endif
-#ifdef USE_SERIAL_BRIDGE
-#undef USE_SERIAL_BRIDGE
-#endif
-#ifdef USE_SR04
-#undef USE_SR04
-#endif
+
+#undef USE_KNX                                // Disable KNX IP Protocol Support
+#undef USE_TIMERS                             // Disable support for up to 16 timers
+#undef USE_TIMERS_WEB                         // Disable support for timer webpage
+#undef USE_SUNRISE                            // Disable support for Sunrise and sunset tools
+#undef USE_RULES                              // Disable support for rules
+#undef USE_LM75AD                             // Disable sensor
+#undef USE_BME680                             // Disable sensor
+#undef USE_SGP30                              // Disable sensor
+#undef USE_SENSEAIR                           // Disable support for SenseAir K30, K70 and S8 CO2 sensor
+#undef USE_NOVA_SDS                           // Disable support for SDS011 and SDS021 particle concentration sensor
+#undef USE_PZEM004T                           // Disable PZEM004T energy sensor
+#undef USE_IR_RECEIVE                         // Disable support for IR receiver
+#undef USE_SERIAL_BRIDGE                      // Disable support for software Serial Bridge
+#undef USE_SDM120                             // Disable support for Eastron SDM120-Modbus energy meter
+#undef USE_SDM630                             // Disable support for Eastron SDM630-Modbus energy meter
+#undef USE_ARILUX_RF                          // Disable support for Arilux RF remote controller
+#undef USE_SR04                               // Disable support for for HC-SR04 ultrasonic devices
+#undef USE_TM1638                             // Disable support for TM1638 switches copying Switch1 .. Switch8
+#undef USE_RF_FLASH                           // Disable support for flashing the EFM8BB1 chip on the Sonoff RF Bridge. C2CK must be connected to GPIO4, C2D to GPIO5 on the PCB
+#undef DEBUG_THEO                             // Disable debug code
+#undef USE_DEBUG_DRIVER                       // Disable debug code
 #endif  // USE_CLASSIC
 
 /*********************************************************************************************\
@@ -143,12 +142,11 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 \*********************************************************************************************/
 
 #ifdef USE_KNX_NO_EMULATION
+
 #ifndef USE_KNX
 #define USE_KNX                               // Enable KNX IP Protocol Support (+23k code, +3k3 mem)
 #endif
-#ifdef USE_EMULATION
 #undef USE_EMULATION                          // Disable Belkin WeMo and Hue Bridge emulation for Alexa (-16k code, -2k mem)
-#endif
 #endif  // USE_KNX_NO_EMULATION
 
 /*********************************************************************************************\
@@ -166,95 +164,54 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 \*********************************************************************************************/
 
 #ifdef BE_MINIMAL
-#ifdef USE_MQTT_TLS
-#undef USE_MQTT_TLS                           // Disable TLS support won't work as the MQTTHost is not set
-#endif
-#ifdef USE_DISCOVERY
-#undef USE_DISCOVERY                          // Disable Discovery services for both MQTT and web server
-#endif
-#ifdef USE_DOMOTICZ
+
+#undef USE_ENERGY_SENSOR                      // Disable energy sensors
+#undef USE_ARDUINO_OTA                        // Disable support for Arduino OTA
+#undef USE_WPS                                // Disable support for WPS as initial wifi configuration tool
+#undef USE_SMARTCONFIG                        // Disable support for Wifi SmartConfig as initial wifi configuration tool
 #undef USE_DOMOTICZ                           // Disable Domoticz
-#endif
-#ifdef USE_HOME_ASSISTANT
 #undef USE_HOME_ASSISTANT                     // Disable Home Assistant
-#endif
-#ifdef USE_KNX
+#undef USE_MQTT_TLS                           // Disable TLS support won't work as the MQTTHost is not set
 #undef USE_KNX                                // Disable KNX IP Protocol Support
-#endif
-//#ifdef USE_WEBSERVER
 //#undef USE_WEBSERVER                          // Disable Webserver
-//#endif
-#ifdef USE_EMULATION
+#undef USE_DISCOVERY                          // Disable Discovery services for both MQTT and web server
 #undef USE_EMULATION                          // Disable Wemo or Hue emulation
-#endif
-#ifdef USE_TIMERS
 #undef USE_TIMERS                             // Disable support for up to 16 timers
-#endif
-#ifdef USE_SUNRISE
+#undef USE_TIMERS_WEB                         // Disable support for timer webpage
 #undef USE_SUNRISE                            // Disable support for Sunrise and sunset tools
-#endif
-#ifdef USE_RULES
 #undef USE_RULES                              // Disable support for rules
-#endif
-#ifdef USE_DHT
 #undef USE_DHT                                // Disable internal DHT sensor
-#endif
-#ifdef USE_DS18x20
 #undef USE_DS18x20                            // Disable DS18x20 sensor
-#endif
-#ifdef USE_DS18B20
+#undef USE_DS18x20_LEGACY                     // Disable DS18x20 sensor
 #undef USE_DS18B20                            // Disable internal DS18B20 sensor
-#endif
-#ifdef USE_I2C
 #undef USE_I2C                                // Disable all I2C sensors and devices
-#endif
-#ifdef USE_SPI
 #undef USE_SPI                                // Disable all SPI devices
-#endif
-#ifdef USE_DISPLAY
 #undef USE_DISPLAY                            // Disable Display support
-#endif
-#ifdef USE_MHZ19
 #undef USE_MHZ19                              // Disable support for MH-Z19 CO2 sensor
-#endif
-#ifdef USE_SENSEAIR
 #undef USE_SENSEAIR                           // Disable support for SenseAir K30, K70 and S8 CO2 sensor
-#endif
-#ifdef USE_PMS5003
 #undef USE_PMS5003                            // Disable support for PMS5003 and PMS7003 particle concentration sensor
-#endif
-#ifdef USE_NOVA_SDS
 #undef USE_NOVA_SDS                           // Disable support for SDS011 and SDS021 particle concentration sensor
-#endif
-#ifdef USE_PZEM004T
 #undef USE_PZEM004T                           // Disable PZEM004T energy sensor
-#endif
-#ifdef USE_SERIAL_BRIDGE
 #undef USE_SERIAL_BRIDGE                      // Disable support for software Serial Bridge
-#endif
-#ifdef USE_IR_REMOTE
+#undef USE_SDM120                             // Disable support for Eastron SDM120-Modbus energy meter
+#undef USE_SDM630                             // Disable support for Eastron SDM630-Modbus energy meter
 #undef USE_IR_REMOTE                          // Disable IR driver
-#endif
-#ifdef USE_WS2812
 #undef USE_WS2812                             // Disable WS2812 Led string
-#endif
-#ifdef USE_ARILUX_RF
 #undef USE_ARILUX_RF                          // Disable support for Arilux RF remote controller
-#endif
-#ifdef USE_SR04
 #undef USE_SR04                               // Disable support for for HC-SR04 ultrasonic devices
-#endif
-#ifdef DEBUG_THEO
+#undef USE_TM1638                             // Disable support for TM1638 switches copying Switch1 .. Switch8
+#undef USE_RF_FLASH                           // Disable support for flashing the EFM8BB1 chip on the Sonoff RF Bridge. C2CK must be connected to GPIO4, C2D to GPIO5 on the PCB
 #undef DEBUG_THEO                             // Disable debug code
-#endif
-#ifdef USE_DEBUG_DRIVER
 #undef USE_DEBUG_DRIVER                       // Disable debug code
-#endif
 #endif  // BE_MINIMAL
 
 /*********************************************************************************************\
  * Mandatory defines satisfying possible disabled defines
 \*********************************************************************************************/
+
+#ifndef USE_WPS                               // See https://github.com/esp8266/Arduino/pull/4889
+#undef NO_EXTRA_4K_HEAP                       // Allocate 4k heap for WPS in ESP8166/Arduino core v2.4.2 (was always allocated in previous versions)
+#endif
 
 #ifndef SWITCH_MODE
 #define SWITCH_MODE            TOGGLE         // TOGGLE, FOLLOW or FOLLOW_INV (the wall switch state)

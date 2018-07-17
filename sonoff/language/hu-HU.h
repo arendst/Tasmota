@@ -227,6 +227,7 @@
 #define D_CONFIRM_RESTART "Újraindítás megerősítése"
 
 #define D_CONFIGURE_MODULE "Eszköz konfiguráció"
+#define D_CONFIGURE_MCP230XX "MCP230xx konfiguráció"
 #define D_CONFIGURE_WIFI "WiFi konfiguráció"
 #define D_CONFIGURE_MQTT "MQTT konfiguráció"
 #define D_CONFIGURE_DOMOTICZ "Domoticz konfiguráció"

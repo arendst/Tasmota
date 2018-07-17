@@ -190,6 +190,10 @@ const char HTTP_BTN_RSTRT[] PROGMEM =
   "<br/><form action='rb' method='get' onsubmit='return confirm(\"" D_CONFIRM_RESTART "\");'><button class='button bred'>" D_RESTART "</button></form>";
 const char HTTP_BTN_MENU_MODULE[] PROGMEM =
   "<br/><form action='md' method='get'><button>" D_CONFIGURE_MODULE "</button></form>";
+#if defined(USE_I2C) && defined(USE_MCP230xx) && defined(USE_MCP230xx_webconfig)
+const char HTTP_BTN_MCP230XX[] PROGMEM =
+  "<br/><form action='mc' method='get'><button>" D_CONFIGURE_MCP230XX "</button></form>";
+#endif  // USE_I2C and USE_MCP230xx and USE_MCP230xx_webconfig
 #if defined(USE_TIMERS) && defined(USE_TIMERS_WEB)
 const char HTTP_BTN_MENU_TIMER[] PROGMEM =
   "<br/><form action='tm' method='get'><button>" D_CONFIGURE_TIMER "</button></form>";
@@ -367,8 +371,21 @@ void StartWebserver(int type, IPAddress ipweb)
     if (!WebServer) {
       WebServer = new ESP8266WebServer((HTTP_MANAGER==type) ? 80 : WEB_PORT);
       WebServer->on("/", HandleRoot);
+      WebServer->on("/up", HandleUpgradeFirmware);
+      WebServer->on("/u1", HandleUpgradeFirmwareStart);  // OTA
+      WebServer->on("/u2", HTTP_POST, HandleUploadDone, HandleUploadLoop);
+      WebServer->on("/cs", HandleConsole);
+      WebServer->on("/ax", HandleAjaxConsoleRefresh);
+      WebServer->on("/ay", HandleAjaxStatusRefresh);
+      WebServer->on("/u2", HTTP_OPTIONS, HandlePreflightRequest);
+      WebServer->on("/cm", HandleHttpCommand);
+      WebServer->on("/rb", HandleRestart);
+#ifndef BE_MINIMAL
       WebServer->on("/cn", HandleConfiguration);
       WebServer->on("/md", HandleModuleConfiguration);
+#if defined(USE_I2C) && defined(USE_MCP230xx) && defined(USE_MCP230xx_webconfig)
+      WebServer->on("/mc", HandleMCP230xxConfiguration);
+#endif  // USE_I2C and USE_MCP230xx and USE_MCP230xx_webconfig
 #if defined(USE_TIMERS) && defined(USE_TIMERS_WEB)
       WebServer->on("/tm", HandleTimerConfiguration);
 #endif  // USE_TIMERS and USE_TIMERS_WEB
@@ -389,17 +406,7 @@ void StartWebserver(int type, IPAddress ipweb)
       WebServer->on("/sv", HandleSaveSettings);
       WebServer->on("/rs", HandleRestoreConfiguration);
       WebServer->on("/rt", HandleResetConfiguration);
-      WebServer->on("/up", HandleUpgradeFirmware);
-      WebServer->on("/u1", HandleUpgradeFirmwareStart);  // OTA
-      WebServer->on("/u2", HTTP_POST, HandleUploadDone, HandleUploadLoop);
-      WebServer->on("/u2", HTTP_OPTIONS, HandlePreflightRequest);
-      WebServer->on("/cm", HandleHttpCommand);
-      WebServer->on("/cs", HandleConsole);
-      WebServer->on("/ax", HandleAjaxConsoleRefresh);
-      WebServer->on("/ay", HandleAjaxStatusRefresh);
       WebServer->on("/in", HandleInformation);
-      WebServer->on("/rb", HandleRestart);
-      WebServer->on("/fwlink", HandleRoot);  // Microsoft captive portal. Maybe not needed. Might be handled by notFound handler.
 #ifdef USE_EMULATION
       if (EMUL_WEMO == Settings.flag2.emulation) {
         WebServer->on("/upnp/control/basicevent1", HTTP_POST, HandleUpnpEvent);
@@ -411,6 +418,8 @@ void StartWebserver(int type, IPAddress ipweb)
         WebServer->on("/description.xml", HandleUpnpSetupHue);
       }
 #endif  // USE_EMULATION
+#endif  // Not BE_MINIMAL
+      WebServer->on("/fwlink", HandleRoot);  // Microsoft captive portal. Maybe not needed. Might be handled by notFound handler.
       WebServer->onNotFound(HandleNotFound);
     }
     reset_web_log_flag = 0;
@@ -520,6 +529,7 @@ void HandleRoot()
   if (CaptivePortal()) { return; }  // If captive portal redirect instead of displaying the page.
 
   if (HTTP_MANAGER == webserver_state) {
+#ifndef BE_MINIMAL
     if ((Settings.web_password[0] != 0) && !(WebServer->hasArg("USER1")) && !(WebServer->hasArg("PASS1"))) {
       HandleWifiLogin();
     } else {
@@ -537,6 +547,7 @@ void HandleRoot()
         HandleWifiLogin();
       }
     }
+#endif  // Not BE_MINIMAL
   } else {
     char stemp[10];
     String page = FPSTR(HTTP_HEAD);
@@ -672,6 +683,7 @@ boolean HttpUser()
   return status;
 }
 
+#ifndef BE_MINIMAL
 void HandleConfiguration()
 {
   if (HttpUser()) { return; }
@@ -681,6 +693,11 @@ void HandleConfiguration()
   page.replace(F("{v}"), FPSTR(S_CONFIGURATION));
   page += FPSTR(HTTP_HEAD_STYLE);
   page += FPSTR(HTTP_BTN_MENU_MODULE);
+#if defined(USE_I2C) && defined(USE_MCP230xx) && defined(USE_MCP230xx_webconfig)
+  if (MCP230xx_Type()) {	// Configuration button will only show if MCP23008/MCP23017 was detected on I2C
+    page += FPSTR(HTTP_BTN_MCP230XX);
+  }
+#endif  // USE_I2C and USE_MCP230xx and USE_MCP230xx_webconfig
 #if defined(USE_TIMERS) && defined(USE_TIMERS_WEB)
 #ifdef USE_RULES
   page += FPSTR(HTTP_BTN_MENU_TIMER);
@@ -1119,6 +1136,11 @@ void HandleSaveSettings()
     }
     AddLog(LOG_LEVEL_INFO);
     break;
+#if defined(USE_I2C) && defined(USE_MCP230xx) && defined(USE_MCP230xx_webconfig)
+  case 8:
+    MCP230xx_SaveSettings();
+    break;
+#endif  // USE_I2C and USE_MCP230xx and USE_MCP230xx_webconfig
   case 6:
     WebGetArg("g99", tmp, sizeof(tmp));
     byte new_module = (!strlen(tmp)) ? MODULE : atoi(tmp);
@@ -1204,6 +1226,122 @@ void HandleRestoreConfiguration()
   upload_error = 0;
   upload_file_type = UPL_SETTINGS;
 }
+
+void HandleInformation()
+{
+  if (HttpUser()) { return; }
+  AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_INFORMATION);
+
+  char stopic[TOPSZ];
+
+  int freeMem = ESP.getFreeHeap();
+
+  String page = FPSTR(HTTP_HEAD);
+  page.replace(F("{v}"), FPSTR(S_INFORMATION));
+  page += FPSTR(HTTP_HEAD_STYLE);
+  //  page += F("<fieldset><legend><b>&nbsp;Information&nbsp;</b></legend>");
+
+  page += F("<style>td{padding:0px 5px;}</style>");
+  page += F("<div id='i' name='i'></div>");
+
+  // Save 1k of code space replacing table html with javascript replace codes
+  // }1 = </td></tr><tr><th>
+  // }2 = </th><td>
+  String func = FPSTR(HTTP_SCRIPT_INFO_BEGIN);
+  func += F("<table style='width:100%'><tr><th>");
+  func += F(D_PROGRAM_VERSION "}2"); func += my_version;
+  func += F("}1" D_BUILD_DATE_AND_TIME "}2"); func += GetBuildDateAndTime();
+  func += F("}1" D_CORE_AND_SDK_VERSION "}2" ARDUINO_ESP8266_RELEASE "/"); func += String(ESP.getSdkVersion());
+  func += F("}1" D_UPTIME "}2"); func += GetDateAndTime(DT_UPTIME);
+  snprintf_P(stopic, sizeof(stopic), PSTR(" at %X"), GetSettingsAddress());
+  func += F("}1" D_FLASH_WRITE_COUNT "}2"); func += String(Settings.save_flag); func += stopic;
+  func += F("}1" D_BOOT_COUNT "}2"); func += String(Settings.bootcount);
+  func += F("}1" D_RESTART_REASON "}2"); func += GetResetReason();
+  uint8_t maxfn = (devices_present > MAX_FRIENDLYNAMES) ? MAX_FRIENDLYNAMES : devices_present;
+  if (SONOFF_IFAN02 == Settings.module) { maxfn = 1; }
+  for (byte i = 0; i < maxfn; i++) {
+    func += F("}1" D_FRIENDLY_NAME " "); func += i +1; func += F("}2"); func += Settings.friendlyname[i];
+  }
+
+  func += F("}1}2&nbsp;");  // Empty line
+  func += F("}1" D_AP); func += String(Settings.sta_active +1);
+    func += F(" " D_SSID " (" D_RSSI ")}2"); func += Settings.sta_ssid[Settings.sta_active]; func += F(" ("); func += WifiGetRssiAsQuality(WiFi.RSSI()); func += F("%)");
+  func += F("}1" D_HOSTNAME "}2"); func += my_hostname;
+  if (static_cast<uint32_t>(WiFi.localIP()) != 0) {
+    func += F("}1" D_IP_ADDRESS "}2"); func += WiFi.localIP().toString();
+    func += F("}1" D_GATEWAY "}2"); func += IPAddress(Settings.ip_address[1]).toString();
+    func += F("}1" D_SUBNET_MASK "}2"); func += IPAddress(Settings.ip_address[2]).toString();
+    func += F("}1" D_DNS_SERVER "}2"); func += IPAddress(Settings.ip_address[3]).toString();
+    func += F("}1" D_MAC_ADDRESS "}2"); func += WiFi.macAddress();
+  }
+  if (static_cast<uint32_t>(WiFi.softAPIP()) != 0) {
+    func += F("}1" D_AP " " D_IP_ADDRESS "}2"); func += WiFi.softAPIP().toString();
+    func += F("}1" D_AP " " D_GATEWAY "}2"); func += WiFi.softAPIP().toString();
+    func += F("}1" D_AP " " D_MAC_ADDRESS "}2"); func += WiFi.softAPmacAddress();
+  }
+
+  func += F("}1}2&nbsp;");  // Empty line
+  if (Settings.flag.mqtt_enabled) {
+    func += F("}1" D_MQTT_HOST "}2"); func += Settings.mqtt_host;
+    func += F("}1" D_MQTT_PORT "}2"); func += String(Settings.mqtt_port);
+    func += F("}1" D_MQTT_CLIENT " &<br/>&nbsp;" D_FALLBACK_TOPIC "}2"); func += mqtt_client;
+    func += F("}1" D_MQTT_USER "}2"); func += Settings.mqtt_user;
+    func += F("}1" D_MQTT_TOPIC "}2"); func += Settings.mqtt_topic;
+    func += F("}1" D_MQTT_GROUP_TOPIC "}2"); func += Settings.mqtt_grptopic;
+    GetTopic_P(stopic, CMND, mqtt_topic, "");
+    func += F("}1" D_MQTT_FULL_TOPIC "}2"); func += stopic;
+
+  } else {
+    func += F("}1" D_MQTT "}2" D_DISABLED);
+  }
+
+  func += F("}1}2&nbsp;");  // Empty line
+  func += F("}1" D_EMULATION "}2");
+#ifdef USE_EMULATION
+  if (EMUL_WEMO == Settings.flag2.emulation) {
+    func += F(D_BELKIN_WEMO);
+  }
+  else if (EMUL_HUE == Settings.flag2.emulation) {
+    func += F(D_HUE_BRIDGE);
+  }
+  else {
+    func += F(D_NONE);
+  }
+#else
+  func += F(D_DISABLED);
+#endif // USE_EMULATION
+
+  func += F("}1" D_MDNS_DISCOVERY "}2");
+#ifdef USE_DISCOVERY
+  func += F(D_ENABLED);
+  func += F("}1" D_MDNS_ADVERTISE "}2");
+#ifdef WEBSERVER_ADVERTISE
+  func += F(D_WEB_SERVER);
+#else
+  func += F(D_DISABLED);
+#endif // WEBSERVER_ADVERTISE
+#else
+  func += F(D_DISABLED);
+#endif // USE_DISCOVERY
+
+  func += F("}1}2&nbsp;");  // Empty line
+  func += F("}1" D_ESP_CHIP_ID "}2"); func += String(ESP.getChipId());
+  func += F("}1" D_FLASH_CHIP_ID "}2"); func += String(ESP.getFlashChipId());
+  func += F("}1" D_FLASH_CHIP_SIZE "}2"); func += String(ESP.getFlashChipRealSize() / 1024); func += F("kB");
+  func += F("}1" D_PROGRAM_FLASH_SIZE "}2"); func += String(ESP.getFlashChipSize() / 1024); func += F("kB");
+  func += F("}1" D_PROGRAM_SIZE "}2"); func += String(ESP.getSketchSize() / 1024); func += F("kB");
+  func += F("}1" D_FREE_PROGRAM_SPACE "}2"); func += String(ESP.getFreeSketchSpace() / 1024); func += F("kB");
+  func += F("}1" D_FREE_MEMORY "}2"); func += String(freeMem / 1024); func += F("kB");
+  func += F("</td></tr></table>");
+  func += FPSTR(HTTP_SCRIPT_INFO_END);
+  page.replace(F("</script>"), func);
+  page.replace(F("<body>"), F("<body onload='i()'>"));
+
+  //  page += F("</fieldset>");
+  page += FPSTR(HTTP_BTN_MAIN);
+  ShowPage(page);
+}
+#endif  // Not BE_MINIMAL
 
 void HandleUpgradeFirmware()
 {
@@ -1627,121 +1765,6 @@ void HandleAjaxConsoleRefresh()
   message.replace(F("}9"), mqtt_data);  // Save to load here
   message += F("</l></r>");
   WebServer->send(200, FPSTR(HDR_CTYPE_XML), message);
-}
-
-void HandleInformation()
-{
-  if (HttpUser()) { return; }
-  AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_INFORMATION);
-
-  char stopic[TOPSZ];
-
-  int freeMem = ESP.getFreeHeap();
-
-  String page = FPSTR(HTTP_HEAD);
-  page.replace(F("{v}"), FPSTR(S_INFORMATION));
-  page += FPSTR(HTTP_HEAD_STYLE);
-  //  page += F("<fieldset><legend><b>&nbsp;Information&nbsp;</b></legend>");
-
-  page += F("<style>td{padding:0px 5px;}</style>");
-  page += F("<div id='i' name='i'></div>");
-
-  // Save 1k of code space replacing table html with javascript replace codes
-  // }1 = </td></tr><tr><th>
-  // }2 = </th><td>
-  String func = FPSTR(HTTP_SCRIPT_INFO_BEGIN);
-  func += F("<table style='width:100%'><tr><th>");
-  func += F(D_PROGRAM_VERSION "}2"); func += my_version;
-  func += F("}1" D_BUILD_DATE_AND_TIME "}2"); func += GetBuildDateAndTime();
-  func += F("}1" D_CORE_AND_SDK_VERSION "}2" ARDUINO_ESP8266_RELEASE "/"); func += String(ESP.getSdkVersion());
-  func += F("}1" D_UPTIME "}2"); func += GetDateAndTime(DT_UPTIME);
-  snprintf_P(stopic, sizeof(stopic), PSTR(" at %X"), GetSettingsAddress());
-  func += F("}1" D_FLASH_WRITE_COUNT "}2"); func += String(Settings.save_flag); func += stopic;
-  func += F("}1" D_BOOT_COUNT "}2"); func += String(Settings.bootcount);
-  func += F("}1" D_RESTART_REASON "}2"); func += GetResetReason();
-  uint8_t maxfn = (devices_present > MAX_FRIENDLYNAMES) ? MAX_FRIENDLYNAMES : devices_present;
-  if (SONOFF_IFAN02 == Settings.module) { maxfn = 1; }
-  for (byte i = 0; i < maxfn; i++) {
-    func += F("}1" D_FRIENDLY_NAME " "); func += i +1; func += F("}2"); func += Settings.friendlyname[i];
-  }
-
-  func += F("}1}2&nbsp;");  // Empty line
-  func += F("}1" D_AP); func += String(Settings.sta_active +1);
-    func += F(" " D_SSID " (" D_RSSI ")}2"); func += Settings.sta_ssid[Settings.sta_active]; func += F(" ("); func += WifiGetRssiAsQuality(WiFi.RSSI()); func += F("%)");
-  func += F("}1" D_HOSTNAME "}2"); func += my_hostname;
-  if (static_cast<uint32_t>(WiFi.localIP()) != 0) {
-    func += F("}1" D_IP_ADDRESS "}2"); func += WiFi.localIP().toString();
-    func += F("}1" D_GATEWAY "}2"); func += IPAddress(Settings.ip_address[1]).toString();
-    func += F("}1" D_SUBNET_MASK "}2"); func += IPAddress(Settings.ip_address[2]).toString();
-    func += F("}1" D_DNS_SERVER "}2"); func += IPAddress(Settings.ip_address[3]).toString();
-    func += F("}1" D_MAC_ADDRESS "}2"); func += WiFi.macAddress();
-  }
-  if (static_cast<uint32_t>(WiFi.softAPIP()) != 0) {
-    func += F("}1" D_AP " " D_IP_ADDRESS "}2"); func += WiFi.softAPIP().toString();
-    func += F("}1" D_AP " " D_GATEWAY "}2"); func += WiFi.softAPIP().toString();
-    func += F("}1" D_AP " " D_MAC_ADDRESS "}2"); func += WiFi.softAPmacAddress();
-  }
-
-  func += F("}1}2&nbsp;");  // Empty line
-  if (Settings.flag.mqtt_enabled) {
-    func += F("}1" D_MQTT_HOST "}2"); func += Settings.mqtt_host;
-    func += F("}1" D_MQTT_PORT "}2"); func += String(Settings.mqtt_port);
-    func += F("}1" D_MQTT_CLIENT " &<br/>&nbsp;" D_FALLBACK_TOPIC "}2"); func += mqtt_client;
-    func += F("}1" D_MQTT_USER "}2"); func += Settings.mqtt_user;
-    func += F("}1" D_MQTT_TOPIC "}2"); func += Settings.mqtt_topic;
-    func += F("}1" D_MQTT_GROUP_TOPIC "}2"); func += Settings.mqtt_grptopic;
-    GetTopic_P(stopic, CMND, mqtt_topic, "");
-    func += F("}1" D_MQTT_FULL_TOPIC "}2"); func += stopic;
-
-  } else {
-    func += F("}1" D_MQTT "}2" D_DISABLED);
-  }
-
-  func += F("}1}2&nbsp;");  // Empty line
-  func += F("}1" D_EMULATION "}2");
-#ifdef USE_EMULATION
-  if (EMUL_WEMO == Settings.flag2.emulation) {
-    func += F(D_BELKIN_WEMO);
-  }
-  else if (EMUL_HUE == Settings.flag2.emulation) {
-    func += F(D_HUE_BRIDGE);
-  }
-  else {
-    func += F(D_NONE);
-  }
-#else
-  func += F(D_DISABLED);
-#endif // USE_EMULATION
-
-  func += F("}1" D_MDNS_DISCOVERY "}2");
-#ifdef USE_DISCOVERY
-  func += F(D_ENABLED);
-  func += F("}1" D_MDNS_ADVERTISE "}2");
-#ifdef WEBSERVER_ADVERTISE
-  func += F(D_WEB_SERVER);
-#else
-  func += F(D_DISABLED);
-#endif // WEBSERVER_ADVERTISE
-#else
-  func += F(D_DISABLED);
-#endif // USE_DISCOVERY
-
-  func += F("}1}2&nbsp;");  // Empty line
-  func += F("}1" D_ESP_CHIP_ID "}2"); func += String(ESP.getChipId());
-  func += F("}1" D_FLASH_CHIP_ID "}2"); func += String(ESP.getFlashChipId());
-  func += F("}1" D_FLASH_CHIP_SIZE "}2"); func += String(ESP.getFlashChipRealSize() / 1024); func += F("kB");
-  func += F("}1" D_PROGRAM_FLASH_SIZE "}2"); func += String(ESP.getFlashChipSize() / 1024); func += F("kB");
-  func += F("}1" D_PROGRAM_SIZE "}2"); func += String(ESP.getSketchSize() / 1024); func += F("kB");
-  func += F("}1" D_FREE_PROGRAM_SPACE "}2"); func += String(ESP.getFreeSketchSpace() / 1024); func += F("kB");
-  func += F("}1" D_FREE_MEMORY "}2"); func += String(freeMem / 1024); func += F("kB");
-  func += F("</td></tr></table>");
-  func += FPSTR(HTTP_SCRIPT_INFO_END);
-  page.replace(F("</script>"), func);
-  page.replace(F("<body>"), F("<body onload='i()'>"));
-
-  //  page += F("</fieldset>");
-  page += FPSTR(HTTP_BTN_MAIN);
-  ShowPage(page);
 }
 
 void HandleRestart()
