@@ -227,6 +227,7 @@
 #define D_CONFIRM_RESTART "确认重启"
 
 #define D_CONFIGURE_MODULE "模块设置"
+#define D_CONFIGURE_MCP230XX "MCP230xx设置"
 #define D_CONFIGURE_WIFI "WiFi设置"
 #define D_CONFIGURE_MQTT "MQTT设置"
 #define D_CONFIGURE_DOMOTICZ "Domoticz设置"

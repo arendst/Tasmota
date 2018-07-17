@@ -227,6 +227,7 @@
 #define D_CONFIRM_RESTART "Подтвердить перезагрузку"
 
 #define D_CONFIGURE_MODULE "Конфигурация Модуля"
+#define D_CONFIGURE_MCP230XX "Конфигурация MCP230xx"
 #define D_CONFIGURE_WIFI "Конфигурация WiFi"
 #define D_CONFIGURE_MQTT "Конфигурация MQTT"
 #define D_CONFIGURE_DOMOTICZ "Конфигурация Domoticz"
