@@ -166,6 +166,7 @@
 #define D_VOLTAGE "Voltage"
 #define D_WARMLIGHT "Warm"
 #define D_WEB_SERVER "Web Server"
+#define D_CONFIGURE_MCP230XX "Configure MCP230xx"
 
 // sonoff.ino
 #define D_WARNING_MINIMAL_VERSION "WARNING This version does not support persistent settings"
