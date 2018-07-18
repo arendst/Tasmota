@@ -17,6 +17,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+Ticker TickerShutter;
+
 enum ShutterCommands {
   CMND_OPEN, CMND_CLOSE, CMND_STOP, CMND_POSITION, CMND_OPENTIME, CMND_CLOSETIME, CMND_SHUTTERRELAY, CMND_SET50PERCENT, CMND_SHUTTERSETCLOSE };
 const char kShutterCommands[] PROGMEM =
@@ -27,35 +29,44 @@ const char JSON_SHUTTER_POS[] PROGMEM = "%s,\"%s-%d\":%d";                      
 
 uint8_t Shutter_Open_Time[MAX_SHUTTERS] ;               // duration to open the shutter
 uint8_t Shutter_Close_Time[MAX_SHUTTERS];              // duratin to close the shutter
-uint8_t Shutter_Open_Velocity = 100;
 int32_t Shutter_Open_Max[MAX_SHUTTERS];               // max value on maximum open calculated
 int32_t Shutter_Target_Position[MAX_SHUTTERS] ;        // position to go to
+int32_t Shutter_Start_Position[MAX_SHUTTERS] ;
 uint16_t Shutter_Close_Velocity[MAX_SHUTTERS];          // in relation to open velocity. higher value = faster
 int8_t  Shutter_Direction[MAX_SHUTTERS];               // 1 == UP , 0 == stop; -1 == down
 int32_t Shutter_Real_Position[MAX_SHUTTERS];          // value between 0 and Shutter_Open_Max
 power_t shutter_mask = 0;     // bit mask with 11 at the position of relays that belong to at least ONE shutter
 power_t old_power = power;    // preserve old bitmask for power to extract the relay that changes.
 power_t SwitchedRelay = 0;    // bitmatrix that contain the relays that was lastly changed.
-uint32_t m1[MAX_SHUTTERS],m2[MAX_SHUTTERS],b1[MAX_SHUTTERS] ;   // slope and constant definition to trim shutter movement behavior.
+uint16_t m1[MAX_SHUTTERS],m2[MAX_SHUTTERS],b1[MAX_SHUTTERS] ;   // slope and constant definition to trim shutter movement behavior.
+uint32_t shutter_time[MAX_SHUTTERS] ;
 
-
+void Rtc_ms50_Second()
+{
+  shutter_time[0]++;
+  shutter_time[1]++;
+  shutter_time[2]++;
+  shutter_time[3]++;
+}
 
 void ShutterInit()
 {
   shutters_present = 0;
+
   for (byte i=0;i < MAX_SHUTTERS; i++) {
     // set startrelay to 1 on first init, but only to shutter 1. 90% usecase
     Settings.shutter_startrelay[i] = (Settings.shutter_startrelay[i] == 0 && i ==  0? 1 : Settings.shutter_startrelay[i]);
     if (Settings.shutter_startrelay[i]) {
       shutters_present++;
+      TickerShutter.attach_ms(50, Rtc_ms50_Second );
       // default the 50 percent should not have any impact without changing it. set to 60
       Settings.shutter_set50percent[i] = (Settings.shutter_set50percent[i] == 0 ? 50 : Settings.shutter_set50percent[i]);
       // use 10 sek as default to allow everybody to play without deep initialize
       Shutter_Open_Time[i] = (Settings.shutter_opentime[i] > 0 ? Settings.shutter_opentime[i] : 10);
       Shutter_Close_Time[i] = (Settings.shutter_closetime[i] > 0 ? Settings.shutter_closetime[i] : 10);
       // Update Calculation 20 because timeintervall is 0.05 sec
-      Shutter_Open_Max[i] = 20 * Shutter_Open_Velocity * Shutter_Open_Time[i];
-      Shutter_Close_Velocity[i] = Shutter_Open_Max[i] / ( Shutter_Close_Time[i] * 20 );
+      Shutter_Open_Max[i] = 2000 * Shutter_Open_Time[i];
+      Shutter_Close_Velocity[i] =  Shutter_Open_Max[i] /  Shutter_Close_Time[i] / 20 ;
 
       // calculate a ramp slope at the first 5 percent to compensate that shutters move with down part later than the upper part
       m1[i] = Shutter_Open_Max[i] * (100 - Settings.shutter_set50percent[i] ) / 5000;
@@ -64,8 +75,9 @@ void ShutterInit()
       shutter_mask |= 3 << (Settings.shutter_startrelay[i] -1)  ;
 
       Shutter_Real_Position[i] =   Settings.shutter_position[i] <= 5 ?  m2[i] * Settings.shutter_position[i] : m1[i] * Settings.shutter_position[i] + b1[i];
+      Shutter_Start_Position[i] = Shutter_Real_Position[i];
 
-      snprintf_P(log_data, sizeof(log_data), PSTR("Shutter %d (Relay:%d): Init. Pos: %d [%d %%], Open Vel.: %d Close Vel.: %d , Max Way: %d, Opentime %d [s], Closetime %d [s], Calc: m1: %d, b1 %d, m2: %d, binmask %d"), i, Settings.shutter_startrelay[i],Shutter_Real_Position[i],Settings.shutter_position[i], Shutter_Open_Velocity, Shutter_Close_Velocity[i] , Shutter_Open_Max[i], Shutter_Open_Time[i], Shutter_Close_Time[i],m1[i],b1[i],m2[i],shutter_mask);
+      snprintf_P(log_data, sizeof(log_data), PSTR("Shutter %d (Relay:%d): Init. Pos: %d [%d %%], Open Vel.: 100 Close Vel.: %d , Max Way: %d, Opentime %d [s], Closetime %d [s], Calc: m1: %d, b1 %d, m2: %d, binmask %d"), i, Settings.shutter_startrelay[i],Shutter_Real_Position[i],Settings.shutter_position[i],  Shutter_Close_Velocity[i] , Shutter_Open_Max[i], Shutter_Open_Time[i], Shutter_Close_Time[i],m1[i],b1[i],m2[i],shutter_mask);
       AddLog(LOG_LEVEL_INFO);
     } else {
       // teminate loop at first INVALUD shutter.
@@ -81,7 +93,7 @@ void Schutter_Update_Position()
 
     if (Shutter_Direction[i] != 0) {
       //char stemp1[20];
-      Shutter_Real_Position[i] = Shutter_Real_Position[i] + (Shutter_Direction[i] > 0 ? Shutter_Open_Velocity : -Shutter_Close_Velocity[i]);
+      Shutter_Real_Position[i] = Shutter_Start_Position[i] + ( shutter_time[i] * (Shutter_Direction[i] > 0 ? 100 : -Shutter_Close_Velocity[i]));
       // avoid real position leavin the boundaries.
       Shutter_Real_Position[i] = Shutter_Real_Position[i] < 0 ? 0 : (Shutter_Real_Position[i] > Shutter_Open_Max[i] ? Shutter_Open_Max[i] : Shutter_Real_Position[i]) ;
       // check if corresponding relay if OFF. Then stop movement.
@@ -93,11 +105,15 @@ void Schutter_Update_Position()
         snprintf_P(log_data, sizeof(log_data), PSTR("Shutter %d: Switch OFF motor. Target: %ld, source: %d, powerstate %ld"), i, Shutter_Target_Position[i], last_source, powerstate);
         AddLog(LOG_LEVEL_DEBUG);
       }
-      if (Shutter_Real_Position[i] * Shutter_Direction[i] >= Shutter_Target_Position[i] * Shutter_Direction[i] || Shutter_Real_Position[i] < Shutter_Close_Velocity[i] * -Shutter_Direction[i]) {
+      //if (Shutter_Real_Position[i] * Shutter_Direction[i] >= Shutter_Target_Position[i] * Shutter_Direction[i] || Shutter_Real_Position[i] < Shutter_Close_Velocity[i] * -Shutter_Direction[i]) {
+      if (Shutter_Real_Position[i] * Shutter_Direction[i] >= Shutter_Target_Position[i] * Shutter_Direction[i] ) {
         // calculate relay number responsibe for current movement.
         uint8_t cur_relay = Settings.shutter_startrelay[i] + (Shutter_Direction[i] == 1 ? 0 : 1) ;
-        snprintf_P(log_data, sizeof(log_data), PSTR("Shutter %d: Stopp Pos. %d, relay: %d, pulsetimer: %d"), i, Shutter_Real_Position[i], cur_relay -1, Settings.pulse_timer[cur_relay -1]);
+        snprintf_P(log_data, sizeof(log_data), PSTR("Shutter %d: Stopp Pos. %d, relay: %d, pulsetimer: %d, rtcshutter: %ld"), i, Shutter_Real_Position[i], cur_relay -1, Settings.pulse_timer[cur_relay -1], shutter_time[i]);
         AddLog(LOG_LEVEL_DEBUG);
+        Settings.shutter_position[i] = m2[i] * 5 > Shutter_Real_Position[i] ? Shutter_Real_Position[i] / m2[i] : (Shutter_Real_Position[i]-b1[i]) / m1[i];
+        Shutter_Start_Position[i] = Shutter_Real_Position[i];
+
         if (Settings.pulse_timer[cur_relay-1] > 0) {
           // we have a momentary switch here. Needs additional pulse on same relay after the end
           if (SRC_PULSETIMER == last_source || SRC_SHUTTER == last_source) {
@@ -114,24 +130,21 @@ void Schutter_Update_Position()
           }
         }
         Shutter_Direction[i] = 0;
-        //Settings.shutter_position = Shutter_Real_Position  * 100 / Shutter_Open_Max;
-        Settings.shutter_position[i] = m2[i] * 5 > Shutter_Real_Position[i] ? Shutter_Real_Position[i] / m2[i] : (Shutter_Real_Position[i]-b1[i]) / m1[i];
       }
     } else {
       // no movement by software ; eventuall someone hits a relay and we must to start move.
-        //    is YES one of the relays is ON but not we did it            combine only with the relays relevant to this shutter. do not care on ON relays on other shutters
+      //    is YES one of the relays is ON but not we did it            combine only with the relays relevant to this shutter. do not care on ON relays on other shutters
       if ((shutter_mask & powerstate) > 0 && SRC_SHUTTER != last_source && (SwitchedRelay & (3 << (Settings.shutter_startrelay[i] -1)))) { // ONE of the two relays from the shutter report ON and direction == 0 ==> manual movement request
         snprintf_P(log_data, sizeof(log_data), PSTR("Shutter: Start..."));
+
         AddLog(LOG_LEVEL_DEBUG);
         last_source = SRC_SHUTTER; // avoid switch off in the next loop
         if (((1 << Settings.shutter_startrelay[i] ) & powerstate) > 0) { // tetsing on CLOSE relay, if ON
           // close with relay two
-          Shutter_Direction[i]=-1;
-          Shutter_Target_Position[i] = 0;
+          Shutter_StartInit(i, -1, 0);
         } else {
           // opens with relay one
-          Shutter_Direction[i]=1;
-          Shutter_Target_Position[i] = Shutter_Open_Max[i];
+          Shutter_StartInit(i, 1, Shutter_Open_Max[i]);
         }
         snprintf_P(log_data, sizeof(log_data), PSTR("Shutter %d: is moving %ld, power: %ld, join: %ld, direction: %d"),i, shutter_mask ,power, shutter_mask & powerstate, Shutter_Direction[i]);
         AddLog(LOG_LEVEL_DEBUG);
@@ -140,6 +153,13 @@ void Schutter_Update_Position()
   }
 }
 
+void Shutter_StartInit (uint8_t index, uint8_t direction, int32_t target_pos)
+{
+  Shutter_Direction[index] = direction;
+  Shutter_Target_Position[index] = target_pos;
+  Shutter_Start_Position[index] = Shutter_Real_Position[index];
+  shutter_time[index] = 0;
+}
 
 boolean ShutterCommand()
 {
@@ -155,9 +175,9 @@ boolean ShutterCommand()
     serviced = false;  // Unknown command
   }
   else if ( (CMND_OPEN == command_code)  && (index > 0) && (index <= shutters_present)) {
-    if ((Shutter_Open_Max[index-1] - Shutter_Real_Position[index-1]) / Shutter_Open_Velocity > 1 ) {
-      Shutter_Direction[index-1] = 1;
-      Shutter_Target_Position[index-1] = Shutter_Open_Max[index-1];
+    if ((Shutter_Open_Max[index-1] - Shutter_Real_Position[index-1]) / 100 > 1 ) {
+      Shutter_StartInit(index-1, 1, Shutter_Open_Max[index-1]);
+
       ExecuteCommandPower(Settings.shutter_startrelay[index-1], 1, SRC_SHUTTER);
       if (!Settings.flag3.paired_interlock) {
         ExecuteCommandPower(Settings.shutter_startrelay[index-1]+1, 0, SRC_SHUTTER);
@@ -167,8 +187,8 @@ boolean ShutterCommand()
   }
   else if ( CMND_CLOSE == command_code  && (index > 0) && (index <= shutters_present)) {
     if (Shutter_Real_Position[index-1] / Shutter_Close_Velocity[index-1] > 1 ) {
-      Shutter_Direction[index-1] = -1;
-      Shutter_Target_Position[index-1] = 0;
+      Shutter_StartInit(index-1, -1, 0);
+
       ExecuteCommandPower(Settings.shutter_startrelay[index-1]+1, 1, SRC_SHUTTER);
       if (!Settings.flag3.paired_interlock) {
         ExecuteCommandPower(Settings.shutter_startrelay[index-1], 1, SRC_SHUTTER);
@@ -196,7 +216,8 @@ boolean ShutterCommand()
         }
       }
       if (Shutter_Direction[index-1] !=  new_shutterdirection ) {
-        Shutter_Direction[index-1] = new_shutterdirection;
+        Shutter_StartInit(index-1, new_shutterdirection, Shutter_Target_Position[index-1]);
+
         if (!Settings.flag3.paired_interlock) {
           // set direction
           ExecuteCommandPower(Settings.shutter_startrelay[index-1] +1, new_shutterdirection == 1 ? 0 : 1, SRC_SHUTTER);
@@ -251,9 +272,9 @@ boolean ShutterCommand()
       }
   }
   else if (CMND_SHUTTERSETCLOSE == command_code && (index > 0) && (index <= shutters_present)) {
-      Settings.shutter_position[index-1] = 0;
-      Shutter_Direction[index-1] = 0;
       Shutter_Real_Position[index-1] = 0;
+      Shutter_StartInit(index-1, 0, 0);
+      Settings.shutter_position[index-1] = 0;
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, D_CONFIGURATION_RESET);
   } else {
     serviced = false;  // Unknown command
@@ -266,8 +287,8 @@ void Schutter_Report_Position()
   for (byte i=0; i < shutters_present; i++) {
     if (Shutter_Direction[i] != 0) {
       char stemp1[20];
-      Settings.shutter_position[i] = m2[i] * 5 > Shutter_Real_Position[i] ? Shutter_Real_Position[i] / m2[i] : (Shutter_Real_Position[i]-b1[i]) / m1[i];
-      snprintf_P(log_data, sizeof(log_data), PSTR("Shutter %d: Real Pos: %d, Target %d, source: %s, pos %%: %d, direction: %d"), i,Shutter_Real_Position[i], Shutter_Target_Position[i], GetTextIndexed(stemp1, sizeof(stemp1), last_source, kCommandSource), Settings.shutter_position[i], Shutter_Direction[i]);
+      //Settings.shutter_position[i] = m2[i] * 5 > Shutter_Real_Position[i] ? Shutter_Real_Position[i] / m2[i] : (Shutter_Real_Position[i]-b1[i]) / m1[i];
+      snprintf_P(log_data, sizeof(log_data), PSTR("Shutter %d: Real Pos: %d, Target %d, source: %s, pos %%: %d, direction: %d, rtcshutter: %ld"), i,Shutter_Real_Position[i], Shutter_Target_Position[i], GetTextIndexed(stemp1, sizeof(stemp1), last_source, kCommandSource), Settings.shutter_position[i], Shutter_Direction[i],  shutter_time[i]);
       AddLog(LOG_LEVEL_INFO);
     }
   }
