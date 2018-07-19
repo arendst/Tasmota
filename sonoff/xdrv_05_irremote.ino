@@ -321,7 +321,7 @@ boolean IrHvacFujitsu(const char *HVAC_Mode, const char *HVAC_FanMode, boolean H
   }
 
   mode = p - kfujiFanSpeedOptions; // AUTO = 0, HIGH = 1, MEDIUM = 2, LOW = 3, QUIET = 4
-  fujiir->setFanspeed(mode);
+  fujiir->setFanSpeed(mode);
   
   fujiir->setTemp(HVAC_Temp);
   fujiir->setSwing(FUJITSU_AC_SWING_OFF);
