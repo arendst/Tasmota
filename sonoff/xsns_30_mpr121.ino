@@ -182,7 +182,8 @@
  * and the indices of the arrays connected, running, current and previous to store sensor status and data of a specific sensor.
  * 
  */
-typedef struct mpr121 {
+typedef struct mpr121 mpr121;
+struct mpr121 {
 	const uint8_t i2c_addr[4] = { 0x5A, 0x5B, 0x5C, 0x5D };				/** I2C addresses of MPR121 controller */
 	const char id[4] = { 'A', 'B', 'C', 'D' };	                  /** Human-readable sensor IDs*/
 	bool connected[4] = { false, false, false, false };           /** Status if sensor is connected at I2C address */
