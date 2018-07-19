@@ -30,6 +30,11 @@ const char kIrRemoteProtocols[] PROGMEM =
 
 #ifdef USE_IR_HVAC
 
+#include <ir_Fujitsu.h>
+
+// HVAC FUJITSU
+IRFujitsuAC *fujiir = NULL;
+
 #include <ir_Mitsubishi.h>
 
 // HVAC TOSHIBA_
@@ -63,6 +68,7 @@ void IrSendInit(void)
 
 #ifdef USE_IR_HVAC
   mitsubir = new IRMitsubishiAC(pin[GPIO_IRSEND]);
+  fujiir = new IRFujitsuAC(pin[GPIO_IRSEND]);
 #endif //USE_IR_HVAC
 }
 
@@ -267,6 +273,67 @@ boolean IrHvacMitsubishi(const char *HVAC_Mode, const char *HVAC_FanMode, boolea
 
   return false;
 }
+
+boolean IrHvacFujitsu(const char *HVAC_Mode, const char *HVAC_FanMode, boolean HVAC_Power, int HVAC_Temp)
+{
+  char *p;
+  char *token;
+  uint8_t mode;
+
+  const char kfujiHvacModeOptions[] = "ACDFH";
+  const char kfujiFanSpeedOptions[] = "AHMLQ";
+
+  fujiir->stateReset();
+
+  if (HVAC_Mode == NULL) {
+    p = (char *)kfujiHvacModeOptions; // default HVAC_HOT
+  }
+  else {
+    p = strchr(kfujiHvacModeOptions, toupper(HVAC_Mode[0]));
+  }
+  if (!p) {
+    return true;
+  }
+  
+  mode = (p - kfujiHvacModeOptions); // HOT = 0x04, FAN = 0x03, DRY = 0x02, COOL = 0x01, AUTO = 0x00
+
+  //  snprintf_P(log_data, sizeof(log_data), PSTR("IRHVAC: Mode %d, DBG: A=%d, C=%d, D=%d, F=%d, H=%d"), mode, FUJITSU_AC_MODE_AUTO, FUJITSU_AC_MODE_COOL, FUJITSU_AC_MODE_DRY, FUJITSU_AC_MODE_FAN, FUJITSU_AC_MODE_HEAT);
+  //AddLog(LOG_LEVEL_DEBUG);
+
+  fujiir->setMode(mode);
+
+  if (HVAC_Power) {
+    fujiir->setCmd(FUJITSU_AC_CMD_TURN_ON);
+   }
+   else {
+    fujiir->off();
+  }
+
+
+  if (HVAC_FanMode == NULL) {
+    p = (char *)kfujiFanSpeedOptions; // default FAN_SPEED_AUTO
+  }
+  else {
+    p = strchr(kfujiFanSpeedOptions, toupper(HVAC_FanMode[0]));
+  }
+  if (!p) {
+    return true;
+  }
+
+  mode = p - kfujiFanSpeedOptions; // AUTO = 0, HIGH = 1, MEDIUM = 2, LOW = 3, QUIET = 4
+  fujiir->setFanspeed(mode);
+  
+  fujiir->setTemp(HVAC_Temp);
+  fujiir->setSwing(FUJITSU_AC_SWING_OFF);
+  fujiir->send();
+
+  snprintf_P(log_data, sizeof(log_data), PSTR("IRHVAC: Fujtsu Power %d, Mode %d, FanSpeed %d, Temp %d, SwingMode %d"),
+    fujiir->getCmd(), fujiir->getMode(), fujiir->getFanSpeed(), fujiir->getTemp(), fujiir->getSwing());
+  AddLog(LOG_LEVEL_DEBUG);
+
+  return false;
+}
+
 #endif // USE_IR_HVAC
 
 /*********************************************************************************************\
@@ -378,6 +445,9 @@ boolean IrSendCommand()
         }
         else if (!strcasecmp_P(HVAC_Vendor, PSTR("MITSUBISHI"))) {
           error = IrHvacMitsubishi(HVAC_Mode, HVAC_FanMode, HVAC_Power, HVAC_Temp);
+        }
+        else if (!strcasecmp_P(HVAC_Vendor, PSTR("FUJITSU"))) {
+          error = IrHvacFujitsu(HVAC_Mode, HVAC_FanMode, HVAC_Power, HVAC_Temp);
         }
         else {
           error = true;
