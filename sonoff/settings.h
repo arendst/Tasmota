@@ -63,7 +63,7 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
 typedef union {                            // Restricted by MISRA-C Rule 18.4 but so usefull...
   uint32_t data;                           // Allow bit manipulation using SetOption
   struct {                                 // SetOption50 .. SetOption81
-    uint32_t spare00 : 1;
+    uint32_t timers_enable : 1;            // bit 0 (v6.1.1b)
     uint32_t spare01 : 1;
     uint32_t spare02 : 1;
     uint32_t spare03 : 1;
