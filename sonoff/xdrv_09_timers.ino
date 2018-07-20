@@ -262,7 +262,7 @@ void TimerEverySecond()
 {
   if (RtcTime.valid) {
     if (!RtcTime.hour && !RtcTime.minute && !RtcTime.second) { TimerSetRandomWindows(); }  // Midnight
-    if ((uptime > 60) && (RtcTime.minute != timer_last_minute)) {  // Execute from one minute after restart every minute only once
+    if (Settings.flag3.timers_enable && (uptime > 60) && (RtcTime.minute != timer_last_minute)) {  // Execute from one minute after restart every minute only once
       timer_last_minute = RtcTime.minute;
       int16_t time = (RtcTime.hour *60) + RtcTime.minute;
       uint8_t days = 1 << (RtcTime.day_of_week -1);
@@ -451,11 +451,15 @@ boolean TimerCommand()
     }
   }
   else if (CMND_TIMERS == command_code) {
-    if (XdrvMailbox.data_len && (XdrvMailbox.payload == 0)) {
-      for (byte i = 0; i < MAX_TIMERS; i++) {
-        Settings.timer[i].arm = 0;  // Disable all timers
+    if (XdrvMailbox.data_len) {
+      if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 1)) {
+        Settings.flag3.timers_enable = XdrvMailbox.payload;
       }
     }
+
+    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, GetStateText(Settings.flag3.timers_enable));
+    MqttPublishPrefixTopic_P(RESULT_OR_STAT, command);
+
     byte jsflg = 0;
     byte lines = 1;
     for (byte i = 0; i < MAX_TIMERS; i++) {
