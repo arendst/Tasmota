@@ -437,7 +437,7 @@ boolean Xsns29(byte function)
 
   if (i2c_flg) {
     switch (function) {
-      case FUNC_PREP_BEFORE_TELEPERIOD:
+      case FUNC_EVERY_SECOND:
         MCP230xx_Detect();
         break;
       case FUNC_EVERY_50_MSECOND:
