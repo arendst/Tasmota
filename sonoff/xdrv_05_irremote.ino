@@ -297,9 +297,6 @@ boolean IrHvacFujitsu(const char *HVAC_Mode, const char *HVAC_FanMode, boolean H
   
   mode = (p - kfujiHvacModeOptions); // HOT = 0x04, FAN = 0x03, DRY = 0x02, COOL = 0x01, AUTO = 0x00
 
-  //  snprintf_P(log_data, sizeof(log_data), PSTR("IRHVAC: Mode %d, DBG: A=%d, C=%d, D=%d, F=%d, H=%d"), mode, FUJITSU_AC_MODE_AUTO, FUJITSU_AC_MODE_COOL, FUJITSU_AC_MODE_DRY, FUJITSU_AC_MODE_FAN, FUJITSU_AC_MODE_HEAT);
-  //AddLog(LOG_LEVEL_DEBUG);
-
   fujiir->setMode(mode);
 
   if (HVAC_Power) {
@@ -308,7 +305,6 @@ boolean IrHvacFujitsu(const char *HVAC_Mode, const char *HVAC_FanMode, boolean H
    else {
     fujiir->off();
   }
-
 
   if (HVAC_FanMode == NULL) {
     p = (char *)kfujiFanSpeedOptions; // default FAN_SPEED_AUTO
@@ -327,9 +323,9 @@ boolean IrHvacFujitsu(const char *HVAC_Mode, const char *HVAC_FanMode, boolean H
   fujiir->setSwing(FUJITSU_AC_SWING_OFF);
   fujiir->send();
 
-  snprintf_P(log_data, sizeof(log_data), PSTR("IRHVAC: Fujtsu Power %d, Mode %d, FanSpeed %d, Temp %d, SwingMode %d"),
-    fujiir->getCmd(), fujiir->getMode(), fujiir->getFanSpeed(), fujiir->getTemp(), fujiir->getSwing());
-  AddLog(LOG_LEVEL_DEBUG);
+  //  snprintf_P(log_data, sizeof(log_data), PSTR("IRHVAC: Fujtsu Power %d, Mode %d, FanSpeed %d, Temp %d, SwingMode %d"),
+  //   fujiir->getCmd(), fujiir->getMode(), fujiir->getFanSpeed(), fujiir->getTemp(), fujiir->getSwing());
+  //  AddLog(LOG_LEVEL_DEBUG);
 
   return false;
 }
