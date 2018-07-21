@@ -380,6 +380,7 @@
 // xdrv_09_timers.ino
 #define D_CONFIGURE_TIMER "Конфігурація таймеру"
 #define D_TIMER_PARAMETERS "Налаштування таймеру"
+#define D_TIMER_ENABLE "Увімкнений таймеру"
 #define D_TIMER_ARM "Увімкнений"
 #define D_TIMER_TIME "Час"
 #define D_TIMER_DAYS "Дні"

@@ -380,6 +380,7 @@
 // xdrv_09_timers.ino
 #define D_CONFIGURE_TIMER "Nastavení Časovače"
 #define D_TIMER_PARAMETERS "Časovač"
+#define D_TIMER_ENABLE "Povol Časovače"
 #define D_TIMER_ARM "Aktivní"
 #define D_TIMER_TIME "Čas"
 #define D_TIMER_DAYS "Dny"

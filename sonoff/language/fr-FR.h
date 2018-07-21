@@ -380,6 +380,7 @@
 // xdrv_09_timers.ino
 #define D_CONFIGURE_TIMER "Configuration des Timers"
 #define D_TIMER_PARAMETERS "Paramètres Timer"
+#define D_TIMER_ENABLE "Activer des Timers"
 #define D_TIMER_ARM "Armer"
 #define D_TIMER_TIME "Temps"
 #define D_TIMER_DAYS "Jours"

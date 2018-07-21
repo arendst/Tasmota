@@ -380,6 +380,7 @@
 // xdrv_09_timers.ino
 #define D_CONFIGURE_TIMER "定时器设置"
 #define D_TIMER_PARAMETERS "定时器参数"
+#define D_TIMER_ENABLE "启用定时器"
 #define D_TIMER_ARM "启用"
 #define D_TIMER_TIME "时间"
 #define D_TIMER_DAYS "天"
