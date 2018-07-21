@@ -68,14 +68,19 @@ void MCP230xx_ApplySettings(void) {
   uint8_t reg_gpinten = 0;
   uint8_t reg_iodir = 0xFF;
   for (uint8_t idx = 0; idx < 8; idx++) {
-    if (Settings.mcp230xx_config[idx].pinmode > 0) {
-      reg_iodir |= (1 << idx);                   // Force pin to input state if enabled
-      if (Settings.mcp230xx_config[idx].pinmode > 1) { // Int is enabled in some form or another
+    switch (Settings.mcp230xx_config[idx].pinmode) {
+      case 0 ... 1:
+        reg_iodir |= (1 << idx);
+        break;
+      case 2 ... 4:
+        reg_iodir |= (1 << idx);
         reg_gpinten |= (1 << idx);
-      }
-      if (Settings.mcp230xx_config[idx].pullup) {
-        reg_gppu |= (1 << idx);
-      }
+        break;
+      default:
+        break;
+    }
+    if (Settings.mcp230xx_config[idx].pullup) {
+      reg_gppu |= (1 << idx);
     }
   }
   I2cWrite8(mcp230xx_address, MCP230xx_GPPU, reg_gppu);
@@ -86,14 +91,19 @@ void MCP230xx_ApplySettings(void) {
     reg_gpinten = 0;
     reg_iodir = 0xFF;
     for (uint8_t idx = 8; idx < 16; idx++) {
-      if (Settings.mcp230xx_config[idx].pinmode > 0) {
-        reg_iodir |= (1 << idx - 8);               // Force pin to input state if enabled
-        if (Settings.mcp230xx_config[idx].pinmode > 1) { // Int is enabled in some form or another
+      switch (Settings.mcp230xx_config[idx].pinmode) {
+        case 0 ... 1:
+          reg_iodir |= (1 << idx - 8);
+          break;
+        case 2 ... 4:
+          reg_iodir |= (1 << idx - 8);
           reg_gpinten |= (1 << idx - 8);
-        }
-        if (Settings.mcp230xx_config[idx].pullup) {
-          reg_gppu |= (1 << idx - 8);
-        }
+          break;
+        default:
+          break;
+      }
+      if (Settings.mcp230xx_config[idx].pullup) {
+        reg_gppu |= (1 << idx - 8);
       }
     }
     I2cWrite8(mcp230xx_address, MCP230xx_GPPU + 1, reg_gppu);
