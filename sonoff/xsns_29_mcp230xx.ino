@@ -55,153 +55,9 @@ uint8_t MCP230xx_GPIO           = 0x09;
 uint8_t mcp230xx_type = 0;
 uint8_t mcp230xx_address;
 uint8_t mcp230xx_addresses[] = { MCP230xx_ADDRESS1, MCP230xx_ADDRESS2, MCP230xx_ADDRESS3, MCP230xx_ADDRESS4, MCP230xx_ADDRESS5, MCP230xx_ADDRESS6, MCP230xx_ADDRESS7, MCP230xx_ADDRESS8 };
-uint8_t mcp280xx_pincount = 0;
+uint8_t mcp230xx_pincount = 0;
 
 const char MCP230XX_SENSOR_RESPONSE[] PROGMEM = "{\"Sensor29\":{\"D\":%i,\"MODE\":%i,\"PULL-UP\":%i}}";
-
-#ifdef USE_WEBSERVER
-#ifdef USE_MCP230xx_displaymain
-const char HTTP_SNS_MCP230xx_GPIO[] PROGMEM = "%s{s}MCP230XX D%d{m}%d{e}";                               // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
-#endif // USE_MCP230xx_displaymain
-#ifdef USE_MCP230xx_webconfig
-const char MCP230XX_OPTION_SELECTED[] PROGMEM = " selected";
-const char MCP230XX_OPTION_BLANK[] PROGMEM = "";
-const char MCP230XX_OPTION_CHECKED[] PROGMEM = " checked";
-const char HTTP_FORM_I2C_MCP230XX_T[] PROGMEM = "<table>";
-const char HTTP_FORM_I2C_MCP230XX_TE[] PROGMEM = "</table>";
-
-const char HTTP_FORM_MCP230XX[] PROGMEM =
-  "<fieldset><legend><b>&nbsp;MCP230xx settings &nbsp;</b></legend><form method='post' action='sv'><input id='w' name='w' value='8' hidden>";
-
-const char HTTP_FORM_I2C_MCP230XX[] PROGMEM =
-  "<tr><td nowrap>{b0 </b> <br/></td><td nowrap><select id='{b1' name='{b1'>"
-  "<option value='0'{s0>Disabled</option>"
-  "<option value='1'{s1>Input</option>"
-  "<option value='2'{s2>Input (Int on Change)</option>"
-  "<option value='3'{s3>Input (Int when Low)</option>"
-  "<option value='4'{s4>Input (Int when High)</option>"
-  "</select></td>"
-  "<td nowrap>Enable Pullup</td>"
-  "<td nowrap><input type=checkbox name=epu{b1 value=1{b2></input></td>"
-  "</tr>";
-
-void HandleMCP230xxConfiguration()
-{
-  if (HttpUser()) {
-    return;
-  }
-
-  AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_CONFIGURE_MCP230XX));
-
-  String page = FPSTR(HTTP_HEAD);
-
-  page.replace("{v}", FPSTR(D_CONFIGURE_MCP230XX));
-
-  page += FPSTR(HTTP_HEAD_STYLE);
-  page += FPSTR(HTTP_FORM_MCP230XX);
-
-  page += FPSTR(HTTP_FORM_I2C_MCP230XX_T);
-
-  for (uint8_t idx = 0; idx < mcp280xx_pincount; idx++) {
-    page += FPSTR(HTTP_FORM_I2C_MCP230XX);
-    page.replace("{b0", "MCP230XX D" + String(idx));
-    page.replace("{b1", "D" + String(idx));
-
-    // determine correct dropdown state
-
-    uint8_t bitsetting = 0;                           // Default to disabled
-    if (Settings.mcp230xx_config[idx].enable) {
-      bitsetting = 1;                                 // Default to normal enable (floating without interrupt)
-      if (Settings.mcp230xx_config[idx].inten) {      // Int choice
-        bitsetting = 2;                               // Default to INT on Change (LOW to HIGH, and HIGH to LOW)
-        if (Settings.mcp230xx_config[idx].intmode) {    // On comparison
-          bitsetting = 3;                               // On comparison default to LOW
-          if (Settings.mcp230xx_config[idx].intcomp) {
-            bitsetting = 4;                             // On comparison default to HIGH
-          }
-        }
-      }
-    }
-    switch (bitsetting) {
-      case 0 : page.replace("{s0", FPSTR(MCP230XX_OPTION_SELECTED)); break;
-      case 1 : page.replace("{s1", FPSTR(MCP230XX_OPTION_SELECTED)); break;
-      case 2 : page.replace("{s2", FPSTR(MCP230XX_OPTION_SELECTED)); break;
-      case 3 : page.replace("{s3", FPSTR(MCP230XX_OPTION_SELECTED)); break;
-      case 4 : page.replace("{s4", FPSTR(MCP230XX_OPTION_SELECTED)); break;
-    }
-    // replace remaining unselected options - if one was replaced above it will be ignored
-    page.replace("{s0", FPSTR(MCP230XX_OPTION_BLANK));
-    page.replace("{s1", FPSTR(MCP230XX_OPTION_BLANK));
-    page.replace("{s2", FPSTR(MCP230XX_OPTION_BLANK));
-    page.replace("{s3", FPSTR(MCP230XX_OPTION_BLANK));
-    page.replace("{s4", FPSTR(MCP230XX_OPTION_BLANK));
-
-    if (Settings.mcp230xx_config[idx].pullup) {
-      page.replace("{b2", FPSTR(MCP230XX_OPTION_CHECKED));
-    } else {
-      page.replace("{b2", FPSTR(MCP230XX_OPTION_BLANK));
-    }
-  }
-
-  page += FPSTR(HTTP_FORM_I2C_MCP230XX_TE);
-
-  page += FPSTR(HTTP_FORM_END);
-  page += FPSTR(HTTP_BTN_CONF);
-  ShowPage(page);
-}
-
-void MCP230xx_SaveSettings()
-{
-  char stemp[8];
-  for (uint8_t idx = 0; idx < mcp280xx_pincount; idx++) {
-    snprintf_P(stemp, sizeof(stemp), PSTR("D%d"), idx);
-    uint8_t _pinvalue = (!strlen(WebServer->arg(stemp).c_str() )) ?  0 : atoi(WebServer->arg(stemp).c_str() );
-    if (_pinvalue) {
-      Settings.mcp230xx_config[idx].enable = 1;
-      if (_pinvalue >= 2) {
-        Settings.mcp230xx_config[idx].inten = 1;
-        if (_pinvalue >= 3) {
-          Settings.mcp230xx_config[idx].intmode = 1;
-          if (_pinvalue >= 4) {
-            Settings.mcp230xx_config[idx].intcomp = 1;
-          } else {
-            Settings.mcp230xx_config[idx].intcomp = 0;
-          }
-        } else {
-          Settings.mcp230xx_config[idx].intmode = 0;
-          Settings.mcp230xx_config[idx].intcomp = 0;
-        }
-      } else {
-        Settings.mcp230xx_config[idx].inten = 0;
-        Settings.mcp230xx_config[idx].intmode = 0;
-        Settings.mcp230xx_config[idx].intcomp = 0;
-      }
-    } else {
-      Settings.mcp230xx_config[idx].enable = 0;
-      Settings.mcp230xx_config[idx].inten = 0;
-      Settings.mcp230xx_config[idx].intmode = 0;
-      Settings.mcp230xx_config[idx].intcomp = 0;
-    }
-    Settings.mcp230xx_config[idx].b5 = 0;
-    Settings.mcp230xx_config[idx].b6 = 0;
-    Settings.mcp230xx_config[idx].b7 = 0;
-    if (Settings.mcp230xx_config[idx].enable) {
-      snprintf_P(stemp, sizeof(stemp), PSTR("epuD%d"), idx);
-      Settings.mcp230xx_config[idx].pullup = (!strlen(WebServer->arg(stemp).c_str() )) ?  0 : atoi(WebServer->arg(stemp).c_str() );
-    } else {
-      Settings.mcp230xx_config[idx].pullup = 0;
-    }
-  }
-  MCP230xx_ApplySettings();
-}
-
-#endif // USE_MCP230xx_webconfig
-
-#endif // USE_WEBSERVER
-
-uint8_t MCP230xx_Type(void) {
-  return mcp230xx_type;
-}
 
 uint8_t MCP230xx_readGPIO(uint8_t port) {
   return I2cRead8(mcp230xx_address, MCP230xx_GPIO + port);
@@ -212,9 +68,9 @@ void MCP230xx_ApplySettings(void) {
   uint8_t reg_gpinten = 0;
   uint8_t reg_iodir = 0xFF;
   for (uint8_t idx = 0; idx < 8; idx++) {
-    if (Settings.mcp230xx_config[idx].enable) {
+    if (Settings.mcp230xx_config[idx].pinmode > 0) {
       reg_iodir |= (1 << idx);                   // Force pin to input state if enabled
-      if (Settings.mcp230xx_config[idx].inten) { // Int is enabled in some form or another
+      if (Settings.mcp230xx_config[idx].pinmode > 1) { // Int is enabled in some form or another
         reg_gpinten |= (1 << idx);
       }
       if (Settings.mcp230xx_config[idx].pullup) {
@@ -230,9 +86,9 @@ void MCP230xx_ApplySettings(void) {
     reg_gpinten = 0;
     reg_iodir = 0xFF;
     for (uint8_t idx = 8; idx < 16; idx++) {
-      if (Settings.mcp230xx_config[idx].enable) {
+      if (Settings.mcp230xx_config[idx].pinmode > 0) {
         reg_iodir |= (1 << idx - 8);               // Force pin to input state if enabled
-        if (Settings.mcp230xx_config[idx].inten) { // Int is enabled in some form or another
+        if (Settings.mcp230xx_config[idx].pinmode > 1) { // Int is enabled in some form or another
           reg_gpinten |= (1 << idx - 8);
         }
         if (Settings.mcp230xx_config[idx].pullup) {
@@ -262,14 +118,14 @@ void MCP230xx_Detect()
         mcp230xx_type = 1; // We have a MCP23008
         snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, "MCP23008", mcp230xx_address);
         AddLog(LOG_LEVEL_DEBUG);
-        mcp280xx_pincount = 8;
+        mcp230xx_pincount = 8;
         MCP230xx_ApplySettings();
       } else {
         if (buffer == 0x80) {
           mcp230xx_type = 2; // We have a MCP23017
           snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, "MCP23017", mcp230xx_address);
           AddLog(LOG_LEVEL_DEBUG);
-          mcp280xx_pincount = 16;
+          mcp230xx_pincount = 16;
           // Reset bank mode to 0
           I2cWrite8(mcp230xx_address, MCP230xx_IOCON, 0x00);
           // Update register locations for MCP23017
@@ -297,16 +153,26 @@ bool MCP230xx_CheckForInterrupt(void) {
         for (uint8_t intp = 0; intp < 8; intp++) {
           if ((intf >> intp) & 0x01) { // we know which pin caused interrupt
             report_int = 0;
-            if (Settings.mcp230xx_config[intp].intmode) { // change on INT
-              if (((mcp230xx_intcap >> intp) & 0x01) == Settings.mcp230xx_config[intp].intcomp) report_int = 1;
-            } else {
-              report_int = 1;
-            }
-            if (report_int) {
-              snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_TIME "\":\"%s\""), GetDateAndTime(DT_LOCAL).c_str());
-              snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"MCP230XX_INT\":{\"Pin\":\"D%i\", \"State\":%i}"), mqtt_data, intp, ((mcp230xx_intcap >> intp) & 0x01));
-              snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}"), mqtt_data);
-              MqttPublishPrefixTopic_P(RESULT_OR_STAT, mqtt_data);
+            if (Settings.mcp230xx_config[intp].pinmode > 1) {
+              switch (Settings.mcp230xx_config[intp].pinmode) {
+                case 2:
+                  report_int = 1;
+                  break;
+                case 3:
+                  if (((mcp230xx_intcap >> intp) & 0x01) == 0) report_int = 1; // Int on LOW
+                  break;
+                case 4:
+                  if (((mcp230xx_intcap >> intp) & 0x01) == 1) report_int = 1; // Int on HIGH
+                  break;
+                default:
+                  break;
+              }
+              if (report_int) {
+                snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_TIME "\":\"%s\""), GetDateAndTime(DT_LOCAL).c_str());
+                snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"MCP230XX_INT\":{\"Pin\":\"D%i\", \"State\":%i}"), mqtt_data, intp, ((mcp230xx_intcap >> intp) & 0x01));
+                snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}"), mqtt_data);
+                MqttPublishPrefixTopic_P(RESULT_OR_STAT, mqtt_data);
+              }
             }
           }
         }
@@ -320,10 +186,20 @@ bool MCP230xx_CheckForInterrupt(void) {
           for (uint8_t intp = 0; intp < 8; intp++) {
             if ((intf >> intp) & 0x01) { // we know which pin caused interrupt
               report_int = 0;
-              if (Settings.mcp230xx_config[intp+8].intmode) { // change on INT
-                if (((mcp230xx_intcap >> intp) & 0x01) == Settings.mcp230xx_config[intp+8].intcomp) report_int = 1;
-              } else {
-                report_int = 1;
+              if (Settings.mcp230xx_config[intp+8].pinmode > 1) { // change on INT
+                switch (Settings.mcp230xx_config[intp+8].pinmode) {
+                  case 2:
+                    report_int = 1;
+                    break;
+                  case 3:
+                    if (((mcp230xx_intcap >> intp) & 0x01) == 0) report_int = 1; // Int on LOW
+                    break;
+                  case 4:
+                    if (((mcp230xx_intcap >> intp) & 0x01) == 1) report_int = 1; // Int on HIGH
+                    break;
+                  default:
+                    break;
+                }
               }
               if (report_int) {
                 snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_TIME "\":\"%s\""), GetDateAndTime(DT_LOCAL).c_str());
@@ -354,24 +230,6 @@ void MCP230xx_Show(boolean json)
         snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"MCP23017\":{\"D0\":%i,\"D1\":%i,\"D2\":%i,\"D3\":%i,\"D4\":%i,\"D5\":%i,\"D6\":%i,\"D7\":%i,\"D8\":%i,\"D9\":%i,\"D10\":%i,\"D11\":%i,\"D12\":%i,\"D13\":%i,\"D14\":%i,\"D15\":%i}"),
                    mqtt_data, (gpio1>>0)&1,(gpio1>>1)&1,(gpio1>>2)&1,(gpio1>>3)&1,(gpio1>>4)&1,(gpio1>>5)&1,(gpio1>>6)&1,(gpio1>>7)&1,(gpio2>>0)&1,(gpio2>>1)&1,(gpio2>>2)&1,(gpio2>>3)&1,(gpio2>>4)&1,(gpio2>>5)&1,(gpio2>>6)&1,(gpio2>>7)&1);
       }
-
-#ifdef USE_WEBSERVER
-#ifdef USE_MCP230xx_displaymain
-    } else {
-      uint8_t gpio1 = MCP230xx_readGPIO(0);
-      uint8_t gpio2 = 0;
-      if (mcp230xx_type == 2) {
-        gpio2=MCP230xx_readGPIO(1);
-      }
-      uint16_t gpio = (gpio2 << 8) + gpio1;
-
-      for (uint8_t pin = 0; pin < mcp280xx_pincount; pin++) {
-        if (Settings.mcp230xx_config[pin].enable) {
-          snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_MCP230xx_GPIO, mqtt_data, pin, (gpio>>pin)&1);
-        }
-      }
-#endif // USE_MCP230xx_displaymain
-#endif  // USE_WEBSERVER
     }
   }
 }
@@ -381,48 +239,37 @@ bool MCP230xx_Command(void) {
   uint8_t _a, _b = 0;
   uint8_t pin, pinmode, pullup = 0;
   String data = XdrvMailbox.data;
+  data.toUpperCase();
+  if (data == "RESET") { // we need to reset all pins to input
+    for (uint8_t pinx=0;pinx<16;pinx++) {
+      Settings.mcp230xx_config[pinx].pinmode=1;
+      Settings.mcp230xx_config[pinx].pullup=0;
+      Settings.mcp230xx_config[pinx].b4=0;
+      Settings.mcp230xx_config[pinx].b5=0;
+      Settings.mcp230xx_config[pinx].b6=0;
+      Settings.mcp230xx_config[pinx].b7=0;
+    }
+    MCP230xx_ApplySettings();
+    snprintf_P(mqtt_data, sizeof(mqtt_data), MCP230XX_SENSOR_RESPONSE,99,99,99);
+    return serviced;
+  }
   _a = data.indexOf(",");
+  pin = data.substring(0, _a).toInt();
+  if (pin < mcp230xx_pincount) {
+    String cmnd = data.substring(_a+1);
+    if (cmnd == "?") {
+      snprintf_P(mqtt_data, sizeof(mqtt_data), MCP230XX_SENSOR_RESPONSE,pin,Settings.mcp230xx_config[pin].pinmode,Settings.mcp230xx_config[pin].pullup);
+      return serviced;
+    }
+  }
   _b = data.indexOf(",", _a + 1);
   if (_a < XdrvMailbox.data_len) {
     if (_b < XdrvMailbox.data_len) {
-      pin = data.substring(0, _a).toInt();
       pinmode = data.substring(_a+1, _b).toInt();
       pullup = data.substring(_b+1, XdrvMailbox.data_len).toInt();
-      if ((pin >= 0) && (pin < mcp280xx_pincount)) {
-        if (pinmode) {
-          Settings.mcp230xx_config[pin].enable = 1;
-          if (pinmode >= 2) {
-            Settings.mcp230xx_config[pin].inten = 1;
-            if (pinmode >= 3) {
-              Settings.mcp230xx_config[pin].intmode = 1;
-              if (pinmode >= 4) {
-                Settings.mcp230xx_config[pin].intcomp = 1;
-              } else {
-                Settings.mcp230xx_config[pin].intcomp = 0;
-              }
-            } else {
-              Settings.mcp230xx_config[pin].intmode = 0;
-              Settings.mcp230xx_config[pin].intcomp = 0;
-            }
-          } else {
-            Settings.mcp230xx_config[pin].inten = 0;
-            Settings.mcp230xx_config[pin].intmode = 0;
-            Settings.mcp230xx_config[pin].intcomp = 0;
-          }
-        } else {
-          Settings.mcp230xx_config[pin].enable = 0;
-          Settings.mcp230xx_config[pin].inten = 0;
-          Settings.mcp230xx_config[pin].intmode = 0;
-          Settings.mcp230xx_config[pin].intcomp = 0;
-        } 
-        Settings.mcp230xx_config[pin].b5 = 0;
-        Settings.mcp230xx_config[pin].b6 = 0;
-        Settings.mcp230xx_config[pin].b7 = 0;
-        if (Settings.mcp230xx_config[pin].enable) {
-          Settings.mcp230xx_config[pin].pullup = pullup;
-        } else {
-          Settings.mcp230xx_config[pin].pullup = 0;
-        }
+      if ((pin < mcp230xx_pincount) && (pinmode < 5) && (pullup < 2)) {
+        Settings.mcp230xx_config[pin].pinmode=pinmode;
+        Settings.mcp230xx_config[pin].pullup=pullup;
         MCP230xx_ApplySettings();
         snprintf_P(mqtt_data, sizeof(mqtt_data), MCP230XX_SENSOR_RESPONSE,pin,pinmode,pullup);
       } else {
@@ -461,13 +308,8 @@ boolean Xsns29(byte function)
           result = MCP230xx_Command();
         }
         break;
-#ifdef USE_WEBSERVER
-#ifdef USE_MCP230xx_displaymain
-      case FUNC_WEB_APPEND:
-        MCP230xx_Show(0);
+      default:
         break;
-#endif // USE_MCP230xx_displaymain
-#endif  // USE_WEBSERVER
     }
   }
   return result;
