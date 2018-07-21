@@ -210,10 +210,12 @@ uint8_t MCP230xx_readGPIO(uint8_t port) {
 void MCP230xx_ApplySettings(void) {
   uint8_t reg_gppu = 0;
   uint8_t reg_gpinten = 0;
+  uint8_t reg_iodir = 0xFF;
   for (uint8_t idx = 0; idx < 8; idx++) {
     if (Settings.mcp230xx_config[idx].enable) {
       if (Settings.mcp230xx_config[idx].inten) { // Int is enabled in some form or another
         reg_gpinten |= (1 << idx);
+        reg_iodir |= (1 << idx);                 // Force pin to input state if enabled
       }
       if (Settings.mcp230xx_config[idx].pullup) {
         reg_gppu |= (1 << idx);
@@ -222,13 +224,16 @@ void MCP230xx_ApplySettings(void) {
   }
   I2cWrite8(mcp230xx_address, MCP230xx_GPPU, reg_gppu);
   I2cWrite8(mcp230xx_address, MCP230xx_GPINTEN, reg_gpinten);
+  I2cWrite8(mcp230xx_address, MCP230xx_IODIR, reg_iodir);
   if (mcp230xx_type == 2) { // We have a MCP23017
     reg_gppu = 0;
     reg_gpinten = 0;
+    reg_iodir = 0xFF;
     for (uint8_t idx = 8; idx < 16; idx++) {
       if (Settings.mcp230xx_config[idx].enable) {
         if (Settings.mcp230xx_config[idx].inten) { // Int is enabled in some form or another
           reg_gpinten |= (1 << idx - 8);
+          reg_iodir |= (1 << idx - 8);             // Force pin to input state if enabled
         }
         if (Settings.mcp230xx_config[idx].pullup) {
           reg_gppu |= (1 << idx - 8);
@@ -237,6 +242,7 @@ void MCP230xx_ApplySettings(void) {
     }
     I2cWrite8(mcp230xx_address, MCP230xx_GPPU + 1, reg_gppu);
     I2cWrite8(mcp230xx_address, MCP230xx_GPINTEN + 1, reg_gpinten);
+    I2cWrite8(mcp230xx_address, MCP230xx_IODIR + 1, reg_iodir);
   }
 }
 
@@ -382,42 +388,46 @@ bool MCP230xx_Command(void) {
       pin = data.substring(0, _a).toInt();
       pinmode = data.substring(_a+1, _b).toInt();
       pullup = data.substring(_b+1, XdrvMailbox.data_len).toInt();
-      if (pinmode) {
-        Settings.mcp230xx_config[pin].enable = 1;
-        if (pinmode >= 2) {
-          Settings.mcp230xx_config[pin].inten = 1;
-          if (pinmode >= 3) {
-            Settings.mcp230xx_config[pin].intmode = 1;
-            if (pinmode >= 4) {
-              Settings.mcp230xx_config[pin].intcomp = 1;
+      if ((pin >= 0) && (pin < mcp280xx_pincount)) {
+        if (pinmode) {
+          Settings.mcp230xx_config[pin].enable = 1;
+          if (pinmode >= 2) {
+            Settings.mcp230xx_config[pin].inten = 1;
+            if (pinmode >= 3) {
+              Settings.mcp230xx_config[pin].intmode = 1;
+              if (pinmode >= 4) {
+                Settings.mcp230xx_config[pin].intcomp = 1;
+              } else {
+                Settings.mcp230xx_config[pin].intcomp = 0;
+              }
             } else {
+              Settings.mcp230xx_config[pin].intmode = 0;
               Settings.mcp230xx_config[pin].intcomp = 0;
             }
           } else {
+            Settings.mcp230xx_config[pin].inten = 0;
             Settings.mcp230xx_config[pin].intmode = 0;
             Settings.mcp230xx_config[pin].intcomp = 0;
           }
         } else {
+          Settings.mcp230xx_config[pin].enable = 0;
           Settings.mcp230xx_config[pin].inten = 0;
           Settings.mcp230xx_config[pin].intmode = 0;
           Settings.mcp230xx_config[pin].intcomp = 0;
+        } 
+        Settings.mcp230xx_config[pin].b5 = 0;
+        Settings.mcp230xx_config[pin].b6 = 0;
+        Settings.mcp230xx_config[pin].b7 = 0;
+        if (Settings.mcp230xx_config[pin].enable) {
+          Settings.mcp230xx_config[pin].pullup = pullup;
+        } else {
+          Settings.mcp230xx_config[pin].pullup = 0;
         }
+        MCP230xx_ApplySettings();
+        snprintf_P(mqtt_data, sizeof(mqtt_data), MCP230XX_SENSOR_RESPONSE,pin,pinmode,pullup);
       } else {
-        Settings.mcp230xx_config[pin].enable = 0;
-        Settings.mcp230xx_config[pin].inten = 0;
-        Settings.mcp230xx_config[pin].intmode = 0;
-        Settings.mcp230xx_config[pin].intcomp = 0;
+        serviced = false;
       }
-      Settings.mcp230xx_config[pin].b5 = 0;
-      Settings.mcp230xx_config[pin].b6 = 0;
-      Settings.mcp230xx_config[pin].b7 = 0;
-      if (Settings.mcp230xx_config[pin].enable) {
-        Settings.mcp230xx_config[pin].pullup = pullup;
-      } else {
-        Settings.mcp230xx_config[pin].pullup = 0;
-      }
-      MCP230xx_ApplySettings();
-      snprintf_P(mqtt_data, sizeof(mqtt_data), MCP230XX_SENSOR_RESPONSE,pin,pinmode,pullup);
     } else {
       serviced = false;
     }
