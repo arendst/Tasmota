@@ -213,9 +213,9 @@ void MCP230xx_ApplySettings(void) {
   uint8_t reg_iodir = 0xFF;
   for (uint8_t idx = 0; idx < 8; idx++) {
     if (Settings.mcp230xx_config[idx].enable) {
+      reg_iodir |= (1 << idx);                   // Force pin to input state if enabled
       if (Settings.mcp230xx_config[idx].inten) { // Int is enabled in some form or another
         reg_gpinten |= (1 << idx);
-        reg_iodir |= (1 << idx);                 // Force pin to input state if enabled
       }
       if (Settings.mcp230xx_config[idx].pullup) {
         reg_gppu |= (1 << idx);
@@ -231,9 +231,9 @@ void MCP230xx_ApplySettings(void) {
     reg_iodir = 0xFF;
     for (uint8_t idx = 8; idx < 16; idx++) {
       if (Settings.mcp230xx_config[idx].enable) {
+        reg_iodir |= (1 << idx - 8);               // Force pin to input state if enabled
         if (Settings.mcp230xx_config[idx].inten) { // Int is enabled in some form or another
           reg_gpinten |= (1 << idx - 8);
-          reg_iodir |= (1 << idx - 8);             // Force pin to input state if enabled
         }
         if (Settings.mcp230xx_config[idx].pullup) {
           reg_gppu |= (1 << idx - 8);
