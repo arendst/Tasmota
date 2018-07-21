@@ -380,6 +380,7 @@
 // xdrv_09_timers.ino
 #define D_CONFIGURE_TIMER "Zeitplan konfigurieren"
 #define D_TIMER_PARAMETERS "Zeitplan-Einstellungen"
+#define D_TIMER_ENABLE "Zeitpläne aktivieren"
 #define D_TIMER_ARM "Aktiv"
 #define D_TIMER_TIME "Uhrzeit"
 #define D_TIMER_DAYS "Wochentage"

@@ -380,6 +380,7 @@
 // xdrv_09_timers.ino
 #define D_CONFIGURE_TIMER "Ρυθμίσεις Χρόνου"
 #define D_TIMER_PARAMETERS "Χρονικοί παράμετροι"
+#define D_TIMER_ENABLE "Ενεργοποιημένο Χρονικοί"
 #define D_TIMER_ARM "Arm"
 #define D_TIMER_TIME "Ωρα"
 #define D_TIMER_DAYS "Μέρες"

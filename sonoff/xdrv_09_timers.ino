@@ -637,7 +637,9 @@ const char HTTP_TIMER_STYLE[] PROGMEM =
   "</style>";
 const char HTTP_FORM_TIMER[] PROGMEM =
   "<fieldset style='min-width:470px;text-align:center;'><legend style='text-align:left;'><b>&nbsp;" D_TIMER_PARAMETERS "&nbsp;</b></legend><form method='post' action='sv'>"
-  "<input id='w' name='w' value='7,0' hidden><input id='t0' name='t0' value='";
+  "<input id='w' name='w' value='7,0' hidden>"
+  "<br/><input style='width:5%;' id='e0' name='e0' type='checkbox'{e0><b>" D_TIMER_ENABLE "</b><br/><br/><hr/>"
+  "<input id='t0' name='t0' value='";
 const char HTTP_FORM_TIMER1[] PROGMEM =
   "' hidden><div id='bt' name='bt'></div><br/><br/><br/>"
   "<div id='oa' name='oa'></div><br/>"
@@ -683,6 +685,7 @@ void HandleTimerConfiguration()
   page += FPSTR(HTTP_HEAD_STYLE);
   page.replace(F("</style>"), FPSTR(HTTP_TIMER_STYLE));
   page += FPSTR(HTTP_FORM_TIMER);
+  page.replace(F("{e0"), (Settings.flag3.timers_enable) ? F(" checked") : F(""));
   for (byte i = 0; i < MAX_TIMERS; i++) {
     if (i > 0) { page += F(","); }
     page += String(Settings.timer[i].data);
@@ -706,9 +709,10 @@ void TimerSaveSettings()
   char tmp[MAX_TIMERS *12];  // Need space for MAX_TIMERS x 10 digit numbers separated by a comma
   Timer timer;
 
+  Settings.flag3.timers_enable = WebServer->hasArg("e0");
   WebGetArg("t0", tmp, sizeof(tmp));
   char *p = tmp;
-  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_MQTT D_CMND_TIMERS " "));
+  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_MQTT D_CMND_TIMERS " %d"), Settings.flag3.timers_enable);
   for (byte i = 0; i < MAX_TIMERS; i++) {
     timer.data = strtol(p, &p, 10);
     p++;  // Skip comma
@@ -717,7 +721,7 @@ void TimerSaveSettings()
       Settings.timer[i].data = timer.data;
       if (flag) TimerSetRandomWindow(i);
     }
-    snprintf_P(log_data, sizeof(log_data), PSTR("%s%s0x%08X"), log_data, (i > 0)?",":"", Settings.timer[i].data);
+    snprintf_P(log_data, sizeof(log_data), PSTR("%s,0x%08X"), log_data, Settings.timer[i].data);
   }
   AddLog(LOG_LEVEL_DEBUG);
 }

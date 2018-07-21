@@ -380,6 +380,7 @@
 // xdrv_09_timers.ino
 #define D_CONFIGURE_TIMER "Configuración Temporizadores"
 #define D_TIMER_PARAMETERS "Parámetros de Temporizadores"
+#define D_TIMER_ENABLE "Habilitar Temporizadores"
 #define D_TIMER_ARM "Activo"
 #define D_TIMER_TIME "Hora"
 #define D_TIMER_DAYS "Días"
