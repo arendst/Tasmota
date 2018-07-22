@@ -56,6 +56,7 @@ uint8_t mcp230xx_type = 0;
 uint8_t mcp230xx_address;
 uint8_t mcp230xx_addresses[] = { MCP230xx_ADDRESS1, MCP230xx_ADDRESS2, MCP230xx_ADDRESS3, MCP230xx_ADDRESS4, MCP230xx_ADDRESS5, MCP230xx_ADDRESS6, MCP230xx_ADDRESS7, MCP230xx_ADDRESS8 };
 uint8_t mcp230xx_pincount = 0;
+uint8_t mcp230xx_int_en = 0;
 
 const char MCP230XX_SENSOR_RESPONSE[] PROGMEM = "{\"Sensor29\":{\"D\":%i,\"MODE\":%i,\"PULL-UP\":%i}}";
 
@@ -67,6 +68,7 @@ void MCP230xx_ApplySettings(void) {
   uint8_t reg_gppu = 0;
   uint8_t reg_gpinten = 0;
   uint8_t reg_iodir = 0xFF;
+  uint8_t int_en = 0;
   for (uint8_t idx = 0; idx < 8; idx++) {
     switch (Settings.mcp230xx_config[idx].pinmode) {
       case 0 ... 1:
@@ -75,6 +77,7 @@ void MCP230xx_ApplySettings(void) {
       case 2 ... 4:
         reg_iodir |= (1 << idx);
         reg_gpinten |= (1 << idx);
+        int_en=1;
         break;
       default:
         break;
@@ -98,6 +101,7 @@ void MCP230xx_ApplySettings(void) {
         case 2 ... 4:
           reg_iodir |= (1 << idx - 8);
           reg_gpinten |= (1 << idx - 8);
+          int_en=1;
           break;
         default:
           break;
@@ -110,6 +114,7 @@ void MCP230xx_ApplySettings(void) {
     I2cWrite8(mcp230xx_address, MCP230xx_GPINTEN + 1, reg_gpinten);
     I2cWrite8(mcp230xx_address, MCP230xx_IODIR + 1, reg_iodir);
   }
+  mcp230xx_int_en=int_en;
 }
 
 void MCP230xx_Detect()
@@ -308,7 +313,9 @@ boolean Xsns29(byte function)
         MCP230xx_Detect();
         break;
       case FUNC_EVERY_50_MSECOND:
-        MCP230xx_CheckForInterrupt();
+        if (mcp230xx_int_en) {          // Only check for interrupts if its enabled on one of the pins
+          MCP230xx_CheckForInterrupt();
+        }
         break;
       case FUNC_JSON_APPEND:
         MCP230xx_Show(1);
