@@ -167,6 +167,8 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 
 #undef USE_ENERGY_SENSOR                      // Disable energy sensors
 #undef USE_ARDUINO_OTA                        // Disable support for Arduino OTA
+#undef USE_WPS                                // Disable support for WPS as initial wifi configuration tool
+#undef USE_SMARTCONFIG                        // Disable support for Wifi SmartConfig as initial wifi configuration tool
 #undef USE_DOMOTICZ                           // Disable Domoticz
 #undef USE_HOME_ASSISTANT                     // Disable Home Assistant
 #undef USE_MQTT_TLS                           // Disable TLS support won't work as the MQTTHost is not set
@@ -206,6 +208,10 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 /*********************************************************************************************\
  * Mandatory defines satisfying possible disabled defines
 \*********************************************************************************************/
+
+#ifndef USE_WPS                               // See https://github.com/esp8266/Arduino/pull/4889
+#undef NO_EXTRA_4K_HEAP                       // Allocate 4k heap for WPS in ESP8166/Arduino core v2.4.2 (was always allocated in previous versions)
+#endif
 
 #ifndef SWITCH_MODE
 #define SWITCH_MODE            TOGGLE         // TOGGLE, FOLLOW or FOLLOW_INV (the wall switch state)

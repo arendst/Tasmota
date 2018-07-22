@@ -121,12 +121,11 @@ boolean DhtRead(byte sensor)
     }
   }
 
-  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_DHT D_RECEIVED " %02X, %02X, %02X, %02X, %02X =? %02X"),
-    dht_data[0], dht_data[1], dht_data[2], dht_data[3], dht_data[4], (dht_data[0] + dht_data[1] + dht_data[2] + dht_data[3]) & 0xFF);
-  AddLog(LOG_LEVEL_DEBUG);
-
-  if (dht_data[4] != ((dht_data[0] + dht_data[1] + dht_data[2] + dht_data[3]) & 0xFF)) {
-    AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DHT D_CHECKSUM_FAILURE));
+  uint8_t checksum = (dht_data[0] + dht_data[1] + dht_data[2] + dht_data[3]) & 0xFF;
+  if (dht_data[4] != checksum) {
+    snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_DHT D_CHECKSUM_FAILURE " %02X, %02X, %02X, %02X, %02X =? %02X"),
+      dht_data[0], dht_data[1], dht_data[2], dht_data[3], dht_data[4], checksum);
+    AddLog(LOG_LEVEL_DEBUG);
     return false;
   }
 
@@ -194,9 +193,11 @@ void DhtInit()
 void DhtEverySecond()
 {
   if (uptime &1) {
+    // <1mS
     DhtReadPrep();
   } else {
     for (byte i = 0; i < dht_sensors; i++) {
+      // DHT11 and AM2301 25mS per sensor, SI7021 5mS per sensor
       DhtReadTempHum(i);
     }
   }
