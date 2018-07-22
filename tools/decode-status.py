@@ -79,7 +79,8 @@ a_setoption = [
     "KNX enhancement",
     "RF receive decimal",
     "IR receive decimal",
-    "Enforce HASS light group",""]
+    "Enforce HASS light group",
+    "Do not show Wifi and Mqtt state using Led"]
 
 a_features = [[
     "","","USE_I2C","USE_SPI",
@@ -89,7 +90,7 @@ a_features = [[
     "USE_WS2812_DMA","USE_IR_REMOTE","USE_IR_HVAC","USE_IR_RECEIVE",
     "USE_DOMOTICZ","USE_DISPLAY","USE_HOME_ASSISTANT","USE_SERIAL_BRIDGE",
     "USE_TIMERS","USE_SUNRISE","USE_TIMERS_WEB","USE_RULES",
-    "USE_KNX","","",""
+    "USE_KNX","USE_WPS","USE_SMARTCONFIG",""
     ],[
     "USE_CONFIG_OVERRIDE","BE_MINIMAL","USE_ALL_SENSORS","USE_CLASSIC",
     "USE_KNX_NO_EMULATION","","","",
@@ -145,41 +146,45 @@ else:
 def StartDecode():
 #    print("Decoding\n{}".format(obj))
 
-    if ("Time" in obj["StatusSNS"]):
-        time = str(" from status report taken at {}".format(obj["StatusSNS"]["Time"]))
-    if ("FriendlyName" in obj["Status"]):
-        print("\nDecoding information for device {}{}".format(obj["Status"]["FriendlyName"][0], time))
+    if ("StatusSNS" in obj):
+        if ("Time" in obj["StatusSNS"]):
+            time = str(" from status report taken at {}".format(obj["StatusSNS"]["Time"]))
 
-    if ("SetOption" in obj["StatusLOG"]):
-        options = []
-        option = obj["StatusLOG"]["SetOption"][0]
-        i_option = int(option,16)
-        for i in range(len(a_setoption)):
-            if (a_setoption[i]):
-                state = (i_option >> i) & 1
-                options.append(str("{0:2d} ({1}) {2}".format(i, a_on_off[state], a_setoption[i])))
+    if ("Status" in obj):
+        if ("FriendlyName" in obj["Status"]):
+            print("\nDecoding information for device {}{}".format(obj["Status"]["FriendlyName"][0], time))
 
-        print("\nOptions")
-        for i in range(len(options)):
-            print("  {}".format(options[i]))
+    if ("StatusLOG" in obj):
+        if ("SetOption" in obj["StatusLOG"]):
+            options = []
+            option = obj["StatusLOG"]["SetOption"][0]
+            i_option = int(option,16)
+            for i in range(len(a_setoption)):
+                if (a_setoption[i]):
+                    state = (i_option >> i) & 1
+                    options.append(str("{0:2d} ({1}) {2}".format(i, a_on_off[state], a_setoption[i])))
 
+            print("\nOptions")
+            for i in range(len(options)):
+                print("  {}".format(options[i]))
 
-    if ("Features" in obj["StatusMEM"]):
-        features = []
-        for f in range(5):
-            feature = obj["StatusMEM"]["Features"][f]
-            i_feature = int(feature,16)
-            if (f == 0):
-                features.append(str("Language LCID = {}".format(i_feature & 0xFFFF)))
-            else:
-                for i in range(len(a_features[f -1])):
-                    if ((i_feature >> i) & 1):
-                        features.append(a_features[f -1][i])
+    if ("StatusMEM" in obj):
+        if ("Features" in obj["StatusMEM"]):
+            features = []
+            for f in range(5):
+                feature = obj["StatusMEM"]["Features"][f]
+                i_feature = int(feature,16)
+                if (f == 0):
+                    features.append(str("Language LCID = {}".format(i_feature & 0xFFFF)))
+                else:
+                    for i in range(len(a_features[f -1])):
+                        if ((i_feature >> i) & 1):
+                            features.append(a_features[f -1][i])
 
-        features.sort()
-        print("\nFeatures")
-        for i in range(len(features)):
-            print("  {}".format(features[i]))
+            features.sort()
+            print("\nFeatures")
+            for i in range(len(features)):
+                print("  {}".format(features[i]))
 
 if __name__ == "__main__":
     try:

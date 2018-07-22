@@ -227,6 +227,7 @@
 #define D_CONFIRM_RESTART "Bevestig herstart"
 
 #define D_CONFIGURE_MODULE "Configureer Module"
+#define D_CONFIGURE_MCP230XX "Configureer MCP230xx"
 #define D_CONFIGURE_WIFI "Configureer WiFi"
 #define D_CONFIGURE_MQTT "Configureer MQTT"
 #define D_CONFIGURE_DOMOTICZ "Configureer Domoticz"
@@ -379,6 +380,7 @@
 // xdrv_09_timers.ino
 #define D_CONFIGURE_TIMER "Configureer Tijdschakelaar"
 #define D_TIMER_PARAMETERS "Tijdschakelaar parameters"
+#define D_TIMER_ENABLE "Tijdschakelaars inschakelen"
 #define D_TIMER_ARM "Actief"
 #define D_TIMER_TIME "Tijd"
 #define D_TIMER_DAYS "Dagen"

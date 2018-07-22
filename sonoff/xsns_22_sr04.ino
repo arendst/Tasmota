@@ -25,8 +25,6 @@
  * References:
  * - https://www.dfrobot.com/wiki/index.php/Weather-proof_Ultrasonic_Sensor_SKU_:_SEN0207
 \*********************************************************************************************/
-#define max(a,b) ((a)>(b)?(a):(b))
-#define min(a,b) ((a)<(b)?(a):(b))
 
 uint8_t sr04_echo_pin = 0;
 uint8_t sr04_trig_pin = 0;
@@ -42,7 +40,7 @@ uint8_t sr04_trig_pin = 0;
 #define PING_OVERHEAD         5
 
 // Conversion from uS to distance (round result to nearest cm or inch).
-#define EchoConvert(echoTime, conversionFactor) (max(((unsigned int)echoTime + conversionFactor / 2) / conversionFactor, (echoTime ? 1 : 0)))
+#define EchoConvert(echoTime, conversionFactor) (tmax(((unsigned int)echoTime + conversionFactor / 2) / conversionFactor, (echoTime ? 1 : 0)))
 
 /********************************************************************************************/
 
@@ -74,7 +72,7 @@ uint16_t Sr04Ping(uint16_t max_cm_distance)
   uint16_t duration = 0;
   uint16_t maxEchoTime;
 
-  maxEchoTime = min(max_cm_distance + 1, (uint16_t) MAX_SENSOR_DISTANCE + 1) * US_ROUNDTRIP_CM;
+  maxEchoTime = tmin(max_cm_distance + 1, (uint16_t) MAX_SENSOR_DISTANCE + 1) * US_ROUNDTRIP_CM;
 
   /* The following trigPin/echoPin cycle is used to determine the
      distance of the nearest object by bouncing soundwaves off of it. */

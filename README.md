@@ -18,6 +18,7 @@ If you like **Sonoff-Tasmota**, give it a star, or fork it and contribute!
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 Current version is **5.14.0a** - See [sonoff/_releasenotes.ino](https://github.com/arendst/Sonoff-Tasmota/blob/development/sonoff/_releasenotes.ino) for change information.
 =======
 Current version is **5.14.0b** - See [sonoff/_releasenotes.ino](https://github.com/arendst/Sonoff-Tasmota/blob/development/sonoff/_releasenotes.ino) for change information.
@@ -27,6 +28,9 @@ Current version is **6.0.0a** - See [sonoff/_releasenotes.ino](https://github.co
 >>>>>>> arendst/development
 =======
 Current version is **6.1.0a** - See [sonoff/_releasenotes.ino](https://github.com/arendst/Sonoff-Tasmota/blob/development/sonoff/_releasenotes.ino) for change information.
+=======
+Current version is **6.1.1c** - See [sonoff/_releasenotes.ino](https://github.com/arendst/Sonoff-Tasmota/blob/development/sonoff/_releasenotes.ino) for release information and [sonoff/_changelog.ino](https://github.com/arendst/Sonoff-Tasmota/blob/development/sonoff/_changelog.ino) for change information.
+>>>>>>> arendst/development
 
 ### Disclaimer
 :warning: **DANGER OF ELECTROCUTION** :warning:
@@ -174,6 +178,7 @@ Different firmware images are released based on Features and Sensors selection g
 | ESP/Arduino library version | sonoff | classic | minimal | knx  | allsensors |
 |-----------------------------|--------|---------|---------|------|------------|
 <<<<<<< HEAD
+<<<<<<< HEAD
 | ESP/Arduino lib v2.3.0      | 529k   | 490k    | 429k    | 538k | 554k       |
 | ESP/Arduino lib v2.4.0      | 534k   | 498k    | 436k    | 542k | 558k       |
 | ESP/Arduino lib v2.4.1      | 536k   | 501k    | 439k    | 545k | 560k       |
@@ -185,6 +190,11 @@ Different firmware images are released based on Features and Sensors selection g
 | ESP/Arduino lib v2.3.0      | 538k   | 490k    | 399k    | 548k | 562k       |
 | ESP/Arduino lib v2.4.0      | 543k   | 498k    | 406k    | 553k | 565k       |
 | ESP/Arduino lib v2.4.1      | 544k   | 500k    | 408k    | 555k | 567k       |
+=======
+| ESP/Arduino lib v2.3.0      | 538k   | 490k    | 407k    | 548k | 562k       |
+| ESP/Arduino lib v2.4.0      | 543k   | 498k    | 414k    | 553k | 565k       |
+| ESP/Arduino lib v2.4.1      | 544k   | 500k    | 416k    | 555k | 567k       |
+>>>>>>> arendst/development
 
 See [Tasmota ESP/Arduino library version related issues](https://github.com/arendst/Sonoff-Tasmota/wiki/Theo's-Tasmota-Tips#20180523---relation-tasmota-and-esp8266arduino-core-version) for more information.
 >>>>>>> arendst/development
