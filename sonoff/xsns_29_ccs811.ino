@@ -30,7 +30,6 @@
 #include "Adafruit_CCS811.h"
 
 Adafruit_CCS811 ccs;
-
 uint8_t CCS811_ready;
 uint8_t CCS811_type;
 uint16_t eCO2;

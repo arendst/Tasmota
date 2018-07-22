@@ -782,12 +782,11 @@ void SettingsDelta()
       Settings.flag.rules_once = 0;
       Settings.flag3.data = 0;
     }
-<<<<<<< HEAD
-=======
+
     if (Settings.version < 0x06010103) {
       Settings.flag3.timers_enable = 1;
     }
->>>>>>> arendst/development
+
 
     Settings.version = VERSION;
     SettingsSave(1);
