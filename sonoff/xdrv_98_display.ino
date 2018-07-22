@@ -1,5 +1,5 @@
 /*
-  xdrv_14_display.ino - display support for Sonoff-Tasmota
+  xdrv_98_display.ino - display support for Sonoff-Tasmota
 
   Copyright (C) 2018  Theo Arends
 
@@ -1058,9 +1058,9 @@ boolean DisplayCommand()
  * Interface
 \*********************************************************************************************/
 
-#define XDRV_14
+#define XDRV_98
 
-boolean Xdrv14(byte function)
+boolean Xdrv98(byte function)
 {
   boolean result = false;
 
