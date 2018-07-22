@@ -227,6 +227,7 @@
 #define D_CONFIRM_RESTART "確認重啟"
 
 #define D_CONFIGURE_MODULE "模塊設置"
+#define D_CONFIGURE_MCP230XX "MCP230xx設置"
 #define D_CONFIGURE_WIFI "WiFi設置"
 #define D_CONFIGURE_MQTT "MQTT設置"
 #define D_CONFIGURE_DOMOTICZ "Domoticz設置"
@@ -379,6 +380,7 @@
 // xdrv_09_timers.ino
 #define D_CONFIGURE_TIMER "Configure Timer"
 #define D_TIMER_PARAMETERS "Timer parameters"
+#define D_TIMER_ENABLE "Enable Timers"
 #define D_TIMER_ARM "Arm"
 #define D_TIMER_TIME "Time"
 #define D_TIMER_DAYS "Days"

@@ -26,11 +26,17 @@
 #define W1_CONVERT_TEMP      0x44
 #define W1_READ_SCRATCHPAD   0xBE
 
+<<<<<<< HEAD
 #define DS18B20_MAX_MISS     5
 
 float ds18b20_temperature = 0;
 uint8_t ds18b20_last_result = 0;
+=======
+float ds18b20_temperature = 0;
+uint8_t ds18b20_valid = 0;
+>>>>>>> arendst/development
 uint8_t ds18x20_pin = 0;
+char ds18b20_types[] = "DS18B20";
 
 /*********************************************************************************************\
  * Embedded stripped and tuned OneWire library
@@ -136,12 +142,20 @@ void Ds18b20Convert()
 //  delay(750);                          // 750ms should be enough for 12bit conv
 }
 
+<<<<<<< HEAD
 void Ds18b20Read()
+=======
+boolean Ds18b20Read()
+>>>>>>> arendst/development
 {
   uint8_t data[9];
   int8_t sign = 1;
 
+<<<<<<< HEAD
   if (ds18b20_last_result) { ds18b20_last_result--; }
+=======
+  if (ds18b20_valid) { ds18b20_valid--; }
+>>>>>>> arendst/development
 /*
   if (!OneWireReadBit()) {     // Check end of measurement
     AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DSB D_SENSOR_BUSY));
@@ -162,11 +176,20 @@ void Ds18b20Read()
         sign = -1;
       }
       ds18b20_temperature = ConvertTemp(sign * temp12 * 0.0625);
+<<<<<<< HEAD
       ds18b20_last_result = DS18B20_MAX_MISS;
       return;
     }
   }
   AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DSB D_SENSOR_CRC_ERROR));
+=======
+      ds18b20_valid = SENSOR_MAX_MISS;
+      return true;
+    }
+  }
+  AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DSB D_SENSOR_CRC_ERROR));
+  return false;
+>>>>>>> arendst/development
 }
 
 /********************************************************************************************/
@@ -175,29 +198,54 @@ void Ds18b20EverySecond()
 {
   ds18x20_pin = pin[GPIO_DSB];
   if (uptime &1) {
+<<<<<<< HEAD
     Ds18b20Convert();          // Start conversion, takes up to one second
   } else {
     Ds18b20Read();             // Read temperature
+=======
+    // 2mS
+    Ds18b20Convert();          // Start conversion, takes up to one second
+  } else {
+    // 12mS
+    if (!Ds18b20Read()) {      // Read temperature
+      AddLogMissed(ds18b20_types, ds18b20_valid);
+    }
+>>>>>>> arendst/development
   }
 }
 
 void Ds18b20Show(boolean json)
 {
+<<<<<<< HEAD
   if (ds18b20_last_result) {   // Check for valid temperature
+=======
+  if (ds18b20_valid) {        // Check for valid temperature
+>>>>>>> arendst/development
     char temperature[10];
 
     dtostrfd(ds18b20_temperature, Settings.flag2.temperature_resolution, temperature);
     if(json) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"DS18B20\":{\"" D_JSON_TEMPERATURE "\":%s}"), mqtt_data, temperature);
+      snprintf_P(mqtt_data, sizeof(mqtt_data), JSON_SNS_TEMP, mqtt_data, ds18b20_types, temperature);
 #ifdef USE_DOMOTICZ
+<<<<<<< HEAD
       if (0 == tele_period) { DomoticzSensor(DZ_TEMP, temperature); }
 #endif  // USE_DOMOTICZ
 #ifdef USE_KNX
       if (0 == tele_period) { KnxSensor(KNX_TEMPERATURE, ds18b20_temperature); }
+=======
+      if (0 == tele_period) {
+        DomoticzSensor(DZ_TEMP, temperature);
+      }
+#endif  // USE_DOMOTICZ
+#ifdef USE_KNX
+      if (0 == tele_period) {
+        KnxSensor(KNX_TEMPERATURE, ds18b20_temperature);
+      }
+>>>>>>> arendst/development
 #endif  // USE_KNX
 #ifdef USE_WEBSERVER
     } else {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TEMP, mqtt_data, "DS18B20", temperature, TempUnit());
+      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TEMP, mqtt_data, ds18b20_types, temperature, TempUnit());
 #endif  // USE_WEBSERVER
     }
   }
