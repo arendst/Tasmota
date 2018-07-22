@@ -155,11 +155,9 @@ typedef union {
 typedef union {
   uint8_t data;
   struct {
-    uint8_t enable : 1;                    // Enable INPUT
+    uint8_t pinmode : 3;                    // Enable INPUT
     uint8_t pullup : 1;                    // Enable internal weak pull-up resistor
-    uint8_t inten : 1;                     // Enable Interrupt on PIN
-    uint8_t intmode : 1;                   // Change on STATE or match COMPARATOR
-    uint8_t intcomp : 1;                   // Interrupt COMPARATOR
+    uint8_t b4 : 1;
     uint8_t b5 : 1;
     uint8_t b6 : 1;
     uint8_t b7 : 1;
