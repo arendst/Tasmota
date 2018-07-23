@@ -65,54 +65,31 @@ uint8_t MCP230xx_readGPIO(uint8_t port) {
 }
 
 void MCP230xx_ApplySettings(void) {
-  uint8_t reg_gppu = 0;
-  uint8_t reg_gpinten = 0;
-  uint8_t reg_iodir = 0xFF;
   uint8_t int_en = 0;
-  for (uint8_t idx = 0; idx < 8; idx++) {
-    switch (Settings.mcp230xx_config[idx].pinmode) {
-      case 0 ... 1:
-        reg_iodir |= (1 << idx);
-        break;
-      case 2 ... 4:
-        reg_iodir |= (1 << idx);
-        reg_gpinten |= (1 << idx);
-        int_en=1;
-        break;
-      default:
-        break;
-    }
-    if (Settings.mcp230xx_config[idx].pullup) {
-      reg_gppu |= (1 << idx);
-    }
-  }
-  I2cWrite8(mcp230xx_address, MCP230xx_GPPU, reg_gppu);
-  I2cWrite8(mcp230xx_address, MCP230xx_GPINTEN, reg_gpinten);
-  I2cWrite8(mcp230xx_address, MCP230xx_IODIR, reg_iodir);
-  if (mcp230xx_type == 2) { // We have a MCP23017
-    reg_gppu = 0;
-    reg_gpinten = 0;
-    reg_iodir = 0xFF;
-    for (uint8_t idx = 8; idx < 16; idx++) {
-      switch (Settings.mcp230xx_config[idx].pinmode) {
+  for (uint8_t mcp230xx_port=0;mcp230xx_port<mcp230xx_type;mcp230xx_port++) {
+    uint8_t reg_gppu = 0;
+    uint8_t reg_gpinten = 0;
+    uint8_t reg_iodir = 0xFF;
+    for (uint8_t idx = 0; idx < 8; idx++) {
+      switch (Settings.mcp230xx_config[idx+(mcp230xx_port*8)].pinmode) {
         case 0 ... 1:
-          reg_iodir |= (1 << idx - 8);
+          reg_iodir |= (1 << idx);
           break;
         case 2 ... 4:
-          reg_iodir |= (1 << idx - 8);
-          reg_gpinten |= (1 << idx - 8);
+          reg_iodir |= (1 << idx);
+          reg_gpinten |= (1 << idx);
           int_en=1;
           break;
         default:
           break;
       }
-      if (Settings.mcp230xx_config[idx].pullup) {
-        reg_gppu |= (1 << idx - 8);
+      if (Settings.mcp230xx_config[idx+(mcp230xx_port*8)].pullup) {
+        reg_gppu |= (1 << idx);
       }
     }
-    I2cWrite8(mcp230xx_address, MCP230xx_GPPU + 1, reg_gppu);
-    I2cWrite8(mcp230xx_address, MCP230xx_GPINTEN + 1, reg_gpinten);
-    I2cWrite8(mcp230xx_address, MCP230xx_IODIR + 1, reg_iodir);
+    I2cWrite8(mcp230xx_address, MCP230xx_GPPU+mcp230xx_port, reg_gppu);
+    I2cWrite8(mcp230xx_address, MCP230xx_GPINTEN+mcp230xx_port, reg_gpinten);
+    I2cWrite8(mcp230xx_address, MCP230xx_IODIR+mcp230xx_port, reg_iodir);
   }
   mcp230xx_int_en=int_en;
 }
@@ -161,48 +138,15 @@ bool MCP230xx_CheckForInterrupt(void) {
   uint8_t intf;
   uint8_t mcp230xx_intcap = 0;
   uint8_t report_int;
-
-  if (I2cValidRead8(&intf, mcp230xx_address, MCP230xx_INTF)) {
-    if (intf > 0) {
-      if (I2cValidRead8(&mcp230xx_intcap, mcp230xx_address, MCP230xx_INTCAP)) {
-        for (uint8_t intp = 0; intp < 8; intp++) {
-          if ((intf >> intp) & 0x01) { // we know which pin caused interrupt
-            report_int = 0;
-            if (Settings.mcp230xx_config[intp].pinmode > 1) {
-              switch (Settings.mcp230xx_config[intp].pinmode) {
-                case 2:
-                  report_int = 1;
-                  break;
-                case 3:
-                  if (((mcp230xx_intcap >> intp) & 0x01) == 0) report_int = 1; // Int on LOW
-                  break;
-                case 4:
-                  if (((mcp230xx_intcap >> intp) & 0x01) == 1) report_int = 1; // Int on HIGH
-                  break;
-                default:
-                  break;
-              }
-              if (report_int) {
-                snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_TIME "\":\"%s\""), GetDateAndTime(DT_LOCAL).c_str());
-                snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"MCP230XX_INT\":{\"Pin\":\"D%i\", \"State\":%i}"), mqtt_data, intp, ((mcp230xx_intcap >> intp) & 0x01));
-                snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}"), mqtt_data);
-                MqttPublishPrefixTopic_P(RESULT_OR_STAT, mqtt_data);
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-  if (mcp230xx_type == 2) { // We have a MCP23017 so we need to check the other 8 bits also
-    if (I2cValidRead8(&intf, mcp230xx_address, MCP230xx_INTF+1)) {
+  for (uint8_t mcp230xx_port=0;mcp230xx_port<mcp230xx_type;mcp230xx_port++) {
+    if (I2cValidRead8(&intf,mcp230xx_address,MCP230xx_INTF+mcp230xx_port)) {
       if (intf > 0) {
-        if (I2cValidRead8(&mcp230xx_intcap, mcp230xx_address, MCP230xx_INTCAP+1)) {
+        if (I2cValidRead8(&mcp230xx_intcap, mcp230xx_address, MCP230xx_INTCAP+mcp230xx_port)) {
           for (uint8_t intp = 0; intp < 8; intp++) {
             if ((intf >> intp) & 0x01) { // we know which pin caused interrupt
               report_int = 0;
-              if (Settings.mcp230xx_config[intp+8].pinmode > 1) { // change on INT
-                switch (Settings.mcp230xx_config[intp+8].pinmode) {
+              if (Settings.mcp230xx_config[intp+(mcp230xx_port*8)].pinmode > 1) {
+                switch (Settings.mcp230xx_config[+(mcp230xx_port*8)].pinmode) {
                   case 2:
                     report_int = 1;
                     break;
@@ -215,12 +159,12 @@ bool MCP230xx_CheckForInterrupt(void) {
                   default:
                     break;
                 }
-              }
-              if (report_int) {
-                snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_TIME "\":\"%s\""), GetDateAndTime(DT_LOCAL).c_str());
-                snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"MCP230XX_INT\":{\"Pin\":\"D%i\", \"State\":%i}"), mqtt_data, intp+8, ((mcp230xx_intcap >> intp) & 0x01));
-                snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}"), mqtt_data);
-                MqttPublishPrefixTopic_P(RESULT_OR_STAT, mqtt_data);
+                if (report_int) {
+                  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_TIME "\":\"%s\""), GetDateAndTime(DT_LOCAL).c_str());
+                  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"MCP230XX_INT\":{\"Pin\":\"D%i\", \"State\":%i}"), mqtt_data, intp+(mcp230xx_port*8), ((mcp230xx_intcap >> intp) & 0x01));
+                  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}"), mqtt_data);
+                  MqttPublishPrefixTopic_P(RESULT_OR_STAT, mqtt_data);
+                }
               }
             }
           }
@@ -334,3 +278,4 @@ boolean Xsns29(byte function)
 
 #endif  // USE_MCP230xx
 #endif  // USE_I2C
+
