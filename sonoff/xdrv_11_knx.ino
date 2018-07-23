@@ -517,14 +517,27 @@ void KNX_INIT()
 void KNX_CB_Action(message_t const &msg, void *arg)
 {
   device_parameters_t *chan = (device_parameters_t *)arg;
-
   if (!(Settings.flag.knx_enabled)) { return; }
 
-  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_KNX D_RECEIVED_FROM " %d.%d.%d " D_COMMAND " %s: %d " D_TO " %s"),
-   msg.received_on.ga.area, msg.received_on.ga.line, msg.received_on.ga.member,
-   (msg.ct == KNX_CT_WRITE) ? D_KNX_COMMAND_WRITE : (msg.ct == KNX_CT_READ) ? D_KNX_COMMAND_READ : D_KNX_COMMAND_OTHER,
-   msg.data[0],
-   device_param_cb[(chan->type)-1]);
+  char tempchar[25];
+
+  if (msg.data_len == 1) {
+    // COMMAND
+    snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_KNX D_RECEIVED_FROM " %d.%d.%d " D_COMMAND " %s: %d " D_TO " %s"),
+     msg.received_on.ga.area, msg.received_on.ga.line, msg.received_on.ga.member,
+     (msg.ct == KNX_CT_WRITE) ? D_KNX_COMMAND_WRITE : (msg.ct == KNX_CT_READ) ? D_KNX_COMMAND_READ : D_KNX_COMMAND_OTHER,
+     msg.data[0],
+     device_param_cb[(chan->type)-1]);
+  }  else  {
+    // VALUE
+    float tempvar = knx.data_to_2byte_float(msg.data);
+    dtostrfd(tempvar,2,tempchar);
+    snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_KNX D_RECEIVED_FROM " %d.%d.%d " D_COMMAND " %s: %s " D_TO " %s"),
+     msg.received_on.ga.area, msg.received_on.ga.line, msg.received_on.ga.member,
+     (msg.ct == KNX_CT_WRITE) ? D_KNX_COMMAND_WRITE : (msg.ct == KNX_CT_READ) ? D_KNX_COMMAND_READ : D_KNX_COMMAND_OTHER,
+     tempchar,
+     device_param_cb[(chan->type)-1]);
+  }
   AddLog(LOG_LEVEL_INFO);
 
   switch (msg.ct)
@@ -548,7 +561,13 @@ void KNX_CB_Action(message_t const &msg, void *arg)
       {
         if (!toggle_inhibit) {
           char command[25];
-          snprintf_P(command, sizeof(command), PSTR("event KNXRX_CMND%d=%d"), ((chan->type) - KNX_SLOT1 + 1 ), msg.data[0]);
+          if (msg.data_len == 1) {
+            // Command received
+            snprintf_P(command, sizeof(command), PSTR("event KNXRX_CMND%d=%d"), ((chan->type) - KNX_SLOT1 + 1 ), msg.data[0]);
+          } else {
+            // Value received
+            snprintf_P(command, sizeof(command), PSTR("event KNXRX_VAL%d=%s"), ((chan->type) - KNX_SLOT1 + 1 ), tempchar);
+          }
           ExecuteCommand(command, SRC_KNX);
           if (Settings.flag.knx_enable_enhancement) {
             toggle_inhibit = TOGGLE_INHIBIT_TIME;
