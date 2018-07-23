@@ -198,9 +198,10 @@ const char *device_param_cb[] = {
 #define D_CMND_KNXTXVAL "KnxTx_Val"
 #define D_CMND_KNX_ENABLED "Knx_Enabled"
 #define D_CMND_KNX_ENHANCED "Knx_Enhanced"
-enum KnxCommands { CMND_KNXTXCMND, CMND_KNXTXVAL, CMND_KNX_ENABLED, CMND_KNX_ENHANCED } ;
-const char kKnxCommands[] PROGMEM = D_CMND_KNXTXCMND "|" D_CMND_KNXTXVAL "|" D_CMND_KNX_ENABLED "|" D_CMND_KNX_ENHANCED ;
-
+#define D_CMND_KNX_PA "Knx_PA"
+enum KnxCommands { CMND_KNXTXCMND, CMND_KNXTXVAL, CMND_KNX_ENABLED, CMND_KNX_ENHANCED, CMND_KNX_PA } ;
+const char kKnxCommands[] PROGMEM = D_CMND_KNXTXCMND "|" D_CMND_KNXTXVAL "|" D_CMND_KNX_ENABLED "|"
+                   D_CMND_KNX_ENHANCED "|" D_CMND_KNX_PA ;
 
 byte KNX_GA_Search( byte param, byte start = 0 )
 {
@@ -1123,6 +1124,33 @@ boolean KnxCommand()
     }
     snprintf_P (mqtt_data, sizeof(mqtt_data), PSTR("{\"%s\":\"%s\"}"),
       command, XdrvMailbox.data );
+  }
+
+  else if (CMND_KNX_PA == command_code) {
+    if (XdrvMailbox.data_len) {
+      if (strstr(XdrvMailbox.data, ".")) {     // Process parameter entry
+        char sub_string[XdrvMailbox.data_len +1];
+
+        int pa_area = atoi(subStr(sub_string, XdrvMailbox.data, ".", 1));
+        int pa_line = atoi(subStr(sub_string, XdrvMailbox.data, ".", 2));
+        int pa_member = atoi(subStr(sub_string, XdrvMailbox.data, ".", 3));
+
+        if ( ((pa_area == 0) && (pa_line == 0) && (pa_member == 0))
+             || (pa_area > 15) || (pa_line > 15) || (pa_member > 255) ) {
+               snprintf_P (mqtt_data, sizeof(mqtt_data), PSTR("{\"%s\":\"" D_ERROR "\"}"),
+                 command );
+               return true;
+        }  // Invalid command
+
+        KNX_addr.pa.area = pa_area;
+        KNX_addr.pa.line = pa_line;
+        KNX_addr.pa.member = pa_member;
+        Settings.knx_physsical_addr = KNX_addr.value;
+      }
+    }
+    KNX_addr.value = Settings.knx_physsical_addr;
+    snprintf_P (mqtt_data, sizeof(mqtt_data), PSTR("{\"%s\":\"%d.%d.%d\"}"),
+      command, KNX_addr.pa.area, KNX_addr.pa.line, KNX_addr.pa.member );
   }
 
   else { return false; }  // Incomplete command
