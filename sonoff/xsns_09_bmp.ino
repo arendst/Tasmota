@@ -303,66 +303,6 @@ void Bme280Read(void)
 \*********************************************************************************************/
 
 #include <bme680.h>
-<<<<<<< HEAD
-
-struct bme680_dev gas_sensor;
-
-static void BmeDelayMs(uint32_t ms)
-{
-  delay(ms);
-}
-
-uint8_t bme680_state = 0;
-float bme680_temperature;
-float bme680_pressure;
-float bme680_humidity;
-float bme680_gas_resistance;
-
-boolean Bme680Init()
-{
-  gas_sensor.dev_id = bmp_address;
-  gas_sensor.intf = BME680_I2C_INTF;
-  gas_sensor.read = &I2cReadBuffer;
-  gas_sensor.write = &I2cWriteBuffer;
-  gas_sensor.delay_ms = BmeDelayMs;
-  /* amb_temp can be set to 25 prior to configuring the gas sensor
-   * or by performing a few temperature readings without operating the gas sensor.
-   */
-  gas_sensor.amb_temp = 25;
-
-  int8_t rslt = BME680_OK;
-  rslt = bme680_init(&gas_sensor);
-  if (rslt != BME680_OK) { return false; }
-
-  /* Set the temperature, pressure and humidity settings */
-  gas_sensor.tph_sett.os_hum = BME680_OS_2X;
-  gas_sensor.tph_sett.os_pres = BME680_OS_4X;
-  gas_sensor.tph_sett.os_temp = BME680_OS_8X;
-  gas_sensor.tph_sett.filter = BME680_FILTER_SIZE_3;
-
-  /* Set the remaining gas sensor settings and link the heating profile */
-  gas_sensor.gas_sett.run_gas = BME680_ENABLE_GAS_MEAS;
-  /* Create a ramp heat waveform in 3 steps */
-  gas_sensor.gas_sett.heatr_temp = 320; /* degree Celsius */
-  gas_sensor.gas_sett.heatr_dur = 150; /* milliseconds */
-
-  /* Select the power mode */
-  /* Must be set before writing the sensor configuration */
-  gas_sensor.power_mode = BME680_FORCED_MODE;
-
-  /* Set the required sensor settings needed */
-  uint8_t set_required_settings = BME680_OST_SEL | BME680_OSP_SEL | BME680_OSH_SEL | BME680_FILTER_SEL | BME680_GAS_SENSOR_SEL;
-
-  /* Set the desired sensor configuration */
-  rslt = bme680_set_sensor_settings(set_required_settings,&gas_sensor);
-  if (rslt != BME680_OK) { return false; }
-
-  bme680_state = 0;
-
-  return true;
-}
-=======
->>>>>>> arendst/development
 
 struct bme680_dev gas_sensor;
 
@@ -376,8 +316,6 @@ static void BmeDelayMs(uint32_t ms)
 
 boolean Bme680Init()
 {
-<<<<<<< HEAD
-=======
   gas_sensor.dev_id = bmp_address;
   gas_sensor.intf = BME680_I2C_INTF;
   gas_sensor.read = &I2cReadBuffer;
@@ -422,7 +360,6 @@ boolean Bme680Init()
 
 void Bme680Read()
 {
->>>>>>> arendst/development
   int8_t rslt = BME680_OK;
 
   if (BME680_CHIPID == bmp_type) {
@@ -445,16 +382,6 @@ void Bme680Read()
       rslt = bme680_get_sensor_data(&data, &gas_sensor);
       if (rslt != BME680_OK) { return; }
 
-<<<<<<< HEAD
-      bme680_temperature = data.temperature / 100.0;
-      bme680_humidity = data.humidity / 1000.0;
-      bme680_pressure = data.pressure;
-      /* Avoid using measurements from an unstable heating setup */
-      if (data.status & BME680_GASM_VALID_MSK) {
-        bme680_gas_resistance = data.gas_resistance;
-      } else {
-        bme680_gas_resistance = 0;
-=======
       bmp_temperature = data.temperature / 100.0;
       bmp_humidity = data.humidity / 1000.0;
       bmp_pressure = data.pressure / 100.0;
@@ -463,7 +390,6 @@ void Bme680Read()
         bmp_gas_resistance = data.gas_resistance / 1000.0;
       } else {
         bmp_gas_resistance = 0;
->>>>>>> arendst/development
       }
     }
   }
@@ -500,11 +426,7 @@ void BmpDetect()
         break;
 #ifdef USE_BME680
       case BME680_CHIPID:
-<<<<<<< HEAD
-        bmp_model = 3;  // 2
-=======
         bmp_model = 3;  // 3
->>>>>>> arendst/development
         success = Bme680Init();
         break;
 #endif  // USE_BME680
@@ -531,18 +453,9 @@ void BmpRead()
       Bme280Read();
       break;
 #ifdef USE_BME680
-<<<<<<< HEAD
-      case BME680_CHIPID:
-        t = bme680_temperature;
-        p = bme680_pressure / 100.0;
-        h = bme680_humidity;
-        g = bme680_gas_resistance / 1000.0;
-        break;
-=======
     case BME680_CHIPID:
       Bme680Read();
       break;
->>>>>>> arendst/development
 #endif  // USE_BME680
   }
   if (bmp_temperature != 0.0) { bmp_temperature = ConvertTemp(bmp_temperature); }
@@ -584,8 +497,8 @@ void BmpShow(boolean json)
 
 
 #ifdef USE_CCS811
-    glob_humidity=h;
-    glob_temperature=(t*4);
+    glob_humidity=bmp_humidity;
+    glob_temperature=(bmp_temperature*4);
 #endif
 
     if (json) {
@@ -606,11 +519,7 @@ void BmpShow(boolean json)
       if (0 == tele_period) {
         DomoticzTempHumPressureSensor(temperature, humidity, pressure);
 #ifdef USE_BME680
-<<<<<<< HEAD
-        if (bmp_model >= 3) { DomoticzSensor(DZ_AIRQUALITY, (uint32_t)g); }
-=======
         if (bmp_model >= 3) { DomoticzSensor(DZ_AIRQUALITY, (uint32_t)bmp_gas_resistance); }
->>>>>>> arendst/development
 #endif  // USE_BME680
       }
 #endif // USE_DOMOTICZ
@@ -654,21 +563,11 @@ boolean Xsns09(byte function)
 
   if (i2c_flg) {
     switch (function) {
-<<<<<<< HEAD
-      case FUNC_EVERY_SECOND:
-        if (tele_period == Settings.tele_period -2) {  // Allow 2 seconds to prepare BME680 readings
-          BmpDetect();
-        }
-#ifdef USE_BME680
-        Bme680PerformReading();
-#endif  // USE_BME680
-=======
       case FUNC_INIT:
         BmpDetect();
         break;
       case FUNC_EVERY_SECOND:
         BmpEverySecond();
->>>>>>> arendst/development
         break;
       case FUNC_JSON_APPEND:
         BmpShow(1);

@@ -34,7 +34,6 @@
 #define W1_WRITE_SCRATCHPAD  0x4E
 #define W1_READ_SCRATCHPAD   0xBE
 
-#define DS18X20_MAX_MISS     5
 #define DS18X20_MAX_SENSORS  8
 
 const char kDs18x20Types[] PROGMEM = "DS18x20|DS18S20|DS1822|DS18B20|MAX31850";
@@ -44,11 +43,7 @@ uint8_t ds18x20_chipids[] = { 0, DS18S20_CHIPID, DS1822_CHIPID, DS18B20_CHIPID, 
 struct DS18X20STRUCT {
   uint8_t address[8];
   uint8_t index;
-<<<<<<< HEAD
-  uint8_t result;
-=======
   uint8_t valid;
->>>>>>> arendst/development
   float   temperature;
 } ds18x20_sensor[DS18X20_MAX_SENSORS];
 uint8_t ds18x20_sensors = 0;
@@ -295,11 +290,7 @@ void Ds18x20Convert()
 //  delay(750);                          // 750ms should be enough for 12bit conv
 }
 
-<<<<<<< HEAD
-void Ds18x20Read(uint8_t sensor)
-=======
 bool Ds18x20Read(uint8_t sensor)
->>>>>>> arendst/development
 {
   uint8_t data[9];
   int8_t sign = 1;
@@ -308,11 +299,7 @@ bool Ds18x20Read(uint8_t sensor)
   float temp9 = 0.0;
 
   uint8_t index = ds18x20_sensor[sensor].index;
-<<<<<<< HEAD
-  if (ds18x20_sensor[index].result) { ds18x20_sensor[index].result--; }
-=======
   if (ds18x20_sensor[index].valid) { ds18x20_sensor[index].valid--; }
->>>>>>> arendst/development
   for (uint8_t retry = 0; retry < 3; retry++) {
     OneWireReset();
     OneWireSelect(ds18x20_sensor[index].address);
@@ -333,13 +320,8 @@ bool Ds18x20Read(uint8_t sensor)
           temp9 = (data[0] >> 1) * sign;
         }
         ds18x20_sensor[index].temperature = ConvertTemp((temp9 - 0.25) + ((16.0 - data[6]) / 16.0));
-<<<<<<< HEAD
-        ds18x20_sensor[index].result = DS18X20_MAX_MISS;
-        return;
-=======
         ds18x20_sensor[index].valid = SENSOR_MAX_MISS;
         return true;
->>>>>>> arendst/development
       case DS1822_CHIPID:
       case DS18B20_CHIPID:
         if (data[4] != 0x7F) {
@@ -359,15 +341,6 @@ bool Ds18x20Read(uint8_t sensor)
           sign = -1;
         }
         ds18x20_sensor[index].temperature = ConvertTemp(sign * temp12 * 0.0625);  // Divide by 16
-<<<<<<< HEAD
-        ds18x20_sensor[index].result = DS18X20_MAX_MISS;
-        return;
-      case MAX31850_CHIPID:
-        temp14 = (data[1] << 8) + (data[0] & 0xFC);
-        ds18x20_sensor[index].temperature = ConvertTemp(temp14 * 0.0625);  // Divide by 16
-        ds18x20_sensor[index].result = DS18X20_MAX_MISS;
-        return;
-=======
         ds18x20_sensor[index].valid = SENSOR_MAX_MISS;
         return true;
       case MAX31850_CHIPID:
@@ -375,24 +348,11 @@ bool Ds18x20Read(uint8_t sensor)
         ds18x20_sensor[index].temperature = ConvertTemp(temp14 * 0.0625);  // Divide by 16
         ds18x20_sensor[index].valid = SENSOR_MAX_MISS;
         return true;
->>>>>>> arendst/development
       }
     }
   }
   AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DSB D_SENSOR_CRC_ERROR));
-}
-
-/********************************************************************************************/
-
-void Ds18x20EverySecond()
-{
-  if (uptime &1) {
-    Ds18x20Convert();          // Start conversion, takes up to one second
-  } else {
-    for (uint8_t i = 0; i < ds18x20_sensors; i++) {
-      Ds18x20Read(i);          // Read temperature
-    }
-  }
+  return false;
 }
 
 void Ds18x20Name(uint8_t sensor)
@@ -437,25 +397,6 @@ void Ds18x20EverySecond()
 void Ds18x20Show(boolean json)
 {
   char temperature[10];
-<<<<<<< HEAD
-  char stemp[12];
-  bool domoticz_flag = true;
-
-  for (uint8_t i = 0; i < ds18x20_sensors; i++) {
-    uint8_t index = ds18x20_sensor[i].index;
-
-    if (ds18x20_sensor[index].result) {   // Check for valid temperature
-      dtostrfd(ds18x20_sensor[index].temperature, Settings.flag2.temperature_resolution, temperature);
-
-      uint8_t idx = sizeof(ds18x20_chipids);
-      while (idx) {
-        if (ds18x20_sensor[ds18x20_sensor[idx].index].address[0] == ds18x20_chipids[idx]) {
-          break;
-        }
-        idx--;
-      }
-      GetTextIndexed(ds18x20_types, sizeof(ds18x20_types), idx, kDs18x20Types);
-=======
 
   for (uint8_t i = 0; i < ds18x20_sensors; i++) {
     uint8_t index = ds18x20_sensor[i].index;
@@ -464,7 +405,6 @@ void Ds18x20Show(boolean json)
       dtostrfd(ds18x20_sensor[index].temperature, Settings.flag2.temperature_resolution, temperature);
 
       Ds18x20Name(i);
->>>>>>> arendst/development
 
       if (json) {
         if (1 == ds18x20_sensors) {

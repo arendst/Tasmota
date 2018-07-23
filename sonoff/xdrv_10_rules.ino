@@ -557,64 +557,27 @@ boolean RulesCommand()
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, index, Settings.mems[index -1]);
   }
   else if ((CMND_ADD == command_code) && (index > 0) && (index <= RULES_MAX_VARS)) {
-<<<<<<< HEAD
-    if ( XdrvMailbox.data_len > 0 ) {
-      double tempvar = CharToDouble(vars[index -1]) + CharToDouble(XdrvMailbox.data);
-      dtostrfd(tempvar,2,vars[index -1]);
-=======
     if (XdrvMailbox.data_len > 0) {
       double tempvar = CharToDouble(vars[index -1]) + CharToDouble(XdrvMailbox.data);
       dtostrfd(tempvar, 2, vars[index -1]);
->>>>>>> arendst/development
     }
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, index, vars[index -1]);
   }
   else if ((CMND_SUB == command_code) && (index > 0) && (index <= RULES_MAX_VARS)) {
-<<<<<<< HEAD
-    if ( XdrvMailbox.data_len > 0 ){
-      double tempvar = CharToDouble(vars[index -1]) - CharToDouble(XdrvMailbox.data);
-      dtostrfd(tempvar,2,vars[index -1]);
-=======
     if (XdrvMailbox.data_len > 0) {
       double tempvar = CharToDouble(vars[index -1]) - CharToDouble(XdrvMailbox.data);
       dtostrfd(tempvar, 2, vars[index -1]);
->>>>>>> arendst/development
     }
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, index, vars[index -1]);
   }
   else if ((CMND_MULT == command_code) && (index > 0) && (index <= RULES_MAX_VARS)) {
-<<<<<<< HEAD
-    if ( XdrvMailbox.data_len > 0 ){
-      double tempvar = CharToDouble(vars[index -1]) * CharToDouble(XdrvMailbox.data);
-      dtostrfd(tempvar,2,vars[index -1]);
-=======
     if (XdrvMailbox.data_len > 0) {
       double tempvar = CharToDouble(vars[index -1]) * CharToDouble(XdrvMailbox.data);
       dtostrfd(tempvar, 2, vars[index -1]);
->>>>>>> arendst/development
     }
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, index, vars[index -1]);
   }
   else if ((CMND_SCALE == command_code) && (index > 0) && (index <= RULES_MAX_VARS)) {
-<<<<<<< HEAD
-    if ( XdrvMailbox.data_len > 0 ) {
-      if (strstr(XdrvMailbox.data, ",")) {     // Process parameter entry
-        double value = 0;
-        double valueIN = 0;
-        double fromLow = 0;
-        double fromHigh = 0;
-        double toLow = 0;
-        double toHigh = 0;
-
-        valueIN = CharToDouble(subStr(XdrvMailbox.data, ",", 1));
-        fromLow = CharToDouble(subStr(XdrvMailbox.data, ",", 2));
-        fromHigh = CharToDouble(subStr(XdrvMailbox.data, ",", 3));
-        toLow = CharToDouble(subStr(XdrvMailbox.data, ",", 4));
-        toHigh = CharToDouble(subStr(XdrvMailbox.data, ",", 5));
-
-        value = map_double(valueIN, fromLow, fromHigh, toLow, toHigh);
-        dtostrfd(value,2,vars[index -1]);
-=======
     if (XdrvMailbox.data_len > 0) {
       if (strstr(XdrvMailbox.data, ",")) {     // Process parameter entry
         char sub_string[XdrvMailbox.data_len +1];
@@ -626,7 +589,6 @@ boolean RulesCommand()
         double toHigh = CharToDouble(subStr(sub_string, XdrvMailbox.data, ",", 5));
         double value = map_double(valueIN, fromLow, fromHigh, toLow, toHigh);
         dtostrfd(value, 2, vars[index -1]);
->>>>>>> arendst/development
       }
     }
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, index, vars[index -1]);
@@ -641,45 +603,6 @@ double map_double(double x, double in_min, double in_max, double out_min, double
  return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 }
 
-// Function to return a substring defined by a delimiter at an index
-<<<<<<< HEAD
-char* subStr (char* str, const char *delim, int index) {
-  char *act, *sub, *ptr;
-  static char copy[10];
-  int i;
-
-  // Since strtok consumes the first arg, make a copy
-  strcpy(copy, str);
-
-  for (i = 1, act = copy; i <= index; i++, act = NULL) {
-     sub = strtok_r(act, delim, &ptr);
-     if (sub == NULL) break;
-  }
-  sub = LTrim(sub);
-  sub = RTrim(sub);
-  return sub;
-}
-
-
-=======
-char* subStr(char* dest, char* str, const char *delim, int index)
-{
-  char *act;
-  char *sub;
-  char *ptr;
-  int i;
-
-  // Since strtok consumes the first arg, make a copy
-  strncpy(dest, str, strlen(str));
-  for (i = 1, act = dest; i <= index; i++, act = NULL) {
-    sub = strtok_r(act, delim, &ptr);
-    if (sub == NULL) break;
-  }
-  sub = Trim(sub);
-  return sub;
-}
-
->>>>>>> arendst/development
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/

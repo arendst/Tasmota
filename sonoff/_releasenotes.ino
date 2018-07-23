@@ -1,4 +1,3 @@
-
 /*
 6.1.1b 20180715
 ** Change default initial wifi config tool **

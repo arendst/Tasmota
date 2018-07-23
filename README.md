@@ -20,15 +20,11 @@ Current version is **6.1.1c** - See [sonoff/_releasenotes.ino](https://github.co
 ### Disclaimer
 :warning: **DANGER OF ELECTROCUTION** :warning:
 
-<<<<<<< HEAD
-### Quick install
-=======
 A Sonoff device is not a toy. It uses Mains AC so there is a danger of electrocution if not installed properly. If you don't know how to install it, please call an electrician. Remember: _**SAFETY FIRST**_. It is not worth to risk yourself, your family and your home if you don't know exactly what you are doing. Never try to flash a Sonoff device while it is connected to MAINS AC.
 
 We don't take any responsibility nor liability for using this software nor for the installation or any tips, advice, videos, etc. given by any member of this site or any related site.
 
 ### Quick Install
->>>>>>> arendst/development
 Download one of the released binaries from https://github.com/arendst/Sonoff-Tasmota/releases and flash it to your hardware as documented in the wiki.
 
 ### Important User Compilation Information
@@ -67,11 +63,7 @@ The following devices are supported:
 - [iTead Sonoff Pow R2 with Energy Monitoring](https://www.itead.cc/sonoff-pow-r2.html)
 - [iTead Sonoff 4CH (R2)](https://www.itead.cc/smart-home/sonoff-4ch.html)
 - [iTead Sonoff 4CH Pro (R2)](https://www.itead.cc/smart-home/sonoff-4ch-pro.html)
-<<<<<<< HEAD
-- [iTead S20 Smart Socket](https://www.itead.cc/smart-socket.html)
-=======
 - [iTead Sonoff S20 Smart Socket](https://www.itead.cc/smart-socket.html)
->>>>>>> arendst/development
 - [Sonoff S22 Smart Socket](https://github.com/arendst/Sonoff-Tasmota/issues/627)
 - [iTead Sonoff S26 Smart Socket](https://www.itead.cc/sonoff-s26-wifi-smart-plug.html)
 - [iTead Sonoff S31 Smart Socket with Energy Monitoring](https://www.itead.cc/sonoff-s31.html)
@@ -97,11 +89,7 @@ The following devices are supported:
 - [Luani HVIO board](https://luani.de/projekte/esp8266-hvio/)
 - Wemos D1 mini, NodeMcu and Ledunia
 
-<<<<<<< HEAD
-### Firmware release information
-=======
 ### Firmware Release Information
->>>>>>> arendst/development
 Different firmware images are released based on Features and Sensors selection guided by code and memory usage.
 
 - The Minimal version allows intermediate OTA uploads to support larger versions and does NOT change any persistent parameter.
@@ -135,33 +123,20 @@ Different firmware images are released based on Features and Sensors selection g
 | USE_SHT                        | x | x | - | x | x |
 | USE_SHT3X                      | x | x | - | x | x |
 | USE_HTU                        | x | x | - | x | x |
-<<<<<<< HEAD
-=======
 | USE_LM75AD                     | x | - | - | x | x |
->>>>>>> arendst/development
 | USE_BMP                        | x | x | - | x | x |
 | USE_BME680                     | - | - | - | - | x |
 | USE_SGP30                      | x | - | - | x | x |
 | USE_BH1750                     | x | x | - | x | x |
 | USE_VEML6070                   | - | - | - | - | x |
 | USE_TSL2561                    | - | - | - | - | x |
-<<<<<<< HEAD
-=======
 | USE_SI1145                     | - | - | - | - | x |
->>>>>>> arendst/development
 | USE_ADS1115                    | - | - | - | - | x |
 | USE_ADS1115_I2CDEV             | - | - | - | - | - |
 | USE_INA219                     | - | - | - | - | x |
 | USE_MGS                        | - | - | - | - | x |
 | USE_SPI                        | - | - | - | - | - |
 | USE_MHZ19                      | x | x | - | x | x |
-<<<<<<< HEAD
-| USE_SENSEAIR                   | x | x | - | x | x |
-| USE_PMS5003                    | x | x | - | x | x |
-| USE_NOVA_SDS                   | x | - | - | x | x |
-| USE_PZEM004T                   | x | x | - | x | x |
-| USE_SERIAL_BRIDGE              | x | - | - | x | x |
-=======
 | USE_SENSEAIR                   | x | - | - | x | x |
 | USE_PMS5003                    | x | - | - | x | x |
 | USE_NOVA_SDS                   | x | - | - | x | x |
@@ -169,24 +144,11 @@ Different firmware images are released based on Features and Sensors selection g
 | USE_SERIAL_BRIDGE              | x | - | - | x | x |
 | USE_SDM120                     | - | - | - | - | x |
 | USE_SDM630                     | - | - | - | - | x |
->>>>>>> arendst/development
 | USE_IR_REMOTE                  | x | x | - | x | x |
 | USE_IR_HVAC                    | - | - | - | - | x |
 | USE_IR_RECEIVE                 | x | - | - | x | x |
 | USE_WS2812                     | x | x | - | x | x |
 | USE_WS2812_DMA                 | - | - | - | - | - |
-<<<<<<< HEAD
-| USE_ARILUX_RF                  | x | x | - | x | x |
-| USE_SR04                       | x | - | - | x | x |
-
-#### Typical file size
-
-| ESP/Arduino library version    | sonoff | classic | minimal | knx  | allsensors |
-|--------------------------------|--------|---------|---------|------|------------|
-| ESP/Arduino lib v2.3.0         | 526k   | 488k    | 427k    | 535k | 549k       |
-| ESP/Arduino lib v2.4.0         | 531k   | 496k    | 435k    | 540k | 552k       |
-| ESP/Arduino lib v2.4.1         | 533k   | 498k    | 436k    | 542k | 554k       |
-=======
 | USE_ARILUX_RF                  | x | - | - | x | x |
 | USE_SR04                       | x | - | - | x | x |
 | USE_RF_FLASH                   | x | - | - | x | x |
@@ -200,7 +162,6 @@ Different firmware images are released based on Features and Sensors selection g
 | ESP/Arduino lib v2.4.1      | 544k   | 500k    | 416k    | 555k | 567k       |
 
 See [Tasmota ESP/Arduino library version related issues](https://github.com/arendst/Sonoff-Tasmota/wiki/Theo's-Tasmota-Tips#20180523---relation-tasmota-and-esp8266arduino-core-version) for more information.
->>>>>>> arendst/development
 
 ### Contribute
 You can contribute to Sonoff-Tasmota by
@@ -212,18 +173,6 @@ You can contribute to Sonoff-Tasmota by
 
 ### Credits
 
-<<<<<<< HEAD
-#### Libraries used
-Libraries used with Sonoff-Tasmota are:
-- [ESP8266 core for Arduino](https://github.com/esp8266/Arduino)
-- [Adafruit BME680](https://github.com/adafruit/Adafruit_BME680)
-- [Adafruit Sensor](https://github.com/adafruit/Adafruit_Sensor)
-- [Adafruit SGP30](https://github.com/adafruit/Adafruit_SGP30)
-- [ArduinoJson](https://arduinojson.org/)
-- [Esp8266MqttClient](https://github.com/tuanpmt/ESP8266MQTTClient)
-- [esp-knx-ip](https://github.com/envy/esp-knx-ip)
-- [esp-mqtt-arduino](https://github.com/i-n-g-o/esp-mqtt-arduino)
-=======
 #### Libraries Used
 Libraries used with Sonoff-Tasmota are:
 - [ESP8266 core for Arduino](https://github.com/esp8266/Arduino)
@@ -235,7 +184,6 @@ Libraries used with Sonoff-Tasmota are:
 - [esp-knx-ip](https://github.com/envy/esp-knx-ip)
 - [esp-mqtt-arduino](https://github.com/i-n-g-o/esp-mqtt-arduino)
 - [ESPAsyncUDP](https://github.com/me-no-dev/ESPAsyncUDP)
->>>>>>> arendst/development
 - [I2Cdevlib](https://github.com/jrowberg/i2cdevlib)
 - [IRremoteEsp8266](https://github.com/markszabo/IRremoteESP8266)
 - [JobaTsl2561](https://github.com/joba-1/Joba_Tsl2561)
@@ -254,11 +202,7 @@ People helping to keep the show on the road:
 - Pete Ba for more user friendly energy monitor calibration
 - Lobradov providing compile optimization tips
 - Flexiti for his initial timer implementation
-<<<<<<< HEAD
-- reloxx13 for his [SonWeb](https://github.com/reloxx13/SonWEB) management tool
-=======
 - reloxx13 for his [TasmoAdmin](https://github.com/reloxx13/TasmoAdmin) management tool
->>>>>>> arendst/development
 - Joachim Banzhaf for his TSL2561 library and driver
 - Gijs Noorlander for his MHZ19 and SenseAir drivers
 - Emontnemery for his HomeAssistant Discovery concept and many code tuning tips
@@ -267,10 +211,7 @@ People helping to keep the show on the road:
 - Gerhard Mutz for his SGP30 and Sunrise/Sunset driver
 - Nuno Ferreira for his HC-SR04 driver
 - Adrian Scillato for his (security)fixes and implementing and maintaining KNX
-<<<<<<< HEAD
-=======
 - Gennaro Tortone for implementing and maintaining Eastron drivers
->>>>>>> arendst/development
 - Raymond Mouthaan for managing Wemos Wiki information
 - Norbert Richter, Frogmore42 and Jason2866 for providing many issue answers
 - Many more providing Tips, Pocs or PRs

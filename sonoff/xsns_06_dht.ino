@@ -121,13 +121,11 @@ boolean DhtRead(byte sensor)
     }
   }
 
-
   uint8_t checksum = (dht_data[0] + dht_data[1] + dht_data[2] + dht_data[3]) & 0xFF;
   if (dht_data[4] != checksum) {
     snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_DHT D_CHECKSUM_FAILURE " %02X, %02X, %02X, %02X, %02X =? %02X"),
       dht_data[0], dht_data[1], dht_data[2], dht_data[3], dht_data[4], checksum);
     AddLog(LOG_LEVEL_DEBUG);
-
     return false;
   }
 
@@ -195,7 +193,6 @@ void DhtInit()
 void DhtEverySecond()
 {
   if (uptime &1) {
-
     // <1mS
     DhtReadPrep();
   } else {

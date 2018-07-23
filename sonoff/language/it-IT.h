@@ -380,10 +380,7 @@
 // xdrv_09_timers.ino
 #define D_CONFIGURE_TIMER "Configura Timer"
 #define D_TIMER_PARAMETERS "Parametri Timer"
-<<<<<<< HEAD
-=======
 #define D_TIMER_ENABLE "Abilita Timers"
->>>>>>> arendst/development
 #define D_TIMER_ARM "Attiva"
 #define D_TIMER_TIME "Ora"
 #define D_TIMER_DAYS "Giorni"

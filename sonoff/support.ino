@@ -130,6 +130,24 @@ size_t strchrspn(const char *str1, int character)
   return ret;
 }
 
+// Function to return a substring defined by a delimiter at an index
+char* subStr(char* dest, char* str, const char *delim, int index)
+{
+  char *act;
+  char *sub;
+  char *ptr;
+  int i;
+
+  // Since strtok consumes the first arg, make a copy
+  strncpy(dest, str, strlen(str));
+  for (i = 1, act = dest; i <= index; i++, act = NULL) {
+    sub = strtok_r(act, delim, &ptr);
+    if (sub == NULL) break;
+  }
+  sub = Trim(sub);
+  return sub;
+}
+
 double CharToDouble(char *str)
 {
   // simple ascii to double, because atof or strtod are too large
@@ -735,14 +753,12 @@ void GetFeatures()
 #ifdef USE_KNX
   feature_drv1 |= 0x10000000;  // xdrv_11_knx.ino
 #endif
-
 #ifdef USE_WPS
   feature_drv1 |= 0x20000000;  // support.ino
 #endif
 #ifdef USE_SMARTCONFIG
   feature_drv1 |= 0x40000000;  // support.ino
 #endif
-
 
 /*********************************************************************************************/
 
@@ -1039,13 +1055,11 @@ void WifiBegin(uint8_t flag)
   WiFi.disconnect(true);    // Delete SDK wifi config
   delay(200);
   WiFi.mode(WIFI_STA);      // Disable AP mode
-
 #ifndef ARDUINO_ESP8266_RELEASE_2_4_1     // See https://github.com/arendst/Sonoff-Tasmota/issues/2559 - Sleep bug
   if (Settings.sleep) { WiFi.setSleepMode(WIFI_LIGHT_SLEEP); }  // Allow light sleep during idle times
 #endif
 //  if (WiFi.getPhyMode() != WIFI_PHY_MODE_11N) { WiFi.setPhyMode(WIFI_PHY_MODE_11N); }
   if (!WiFi.getAutoConnect()) { WiFi.setAutoConnect(true); }
-
 //  WiFi.setAutoReconnect(true);
   switch (flag) {
   case 0:  // AP1
@@ -1082,9 +1096,7 @@ void WifiCheckIp()
     wifi_status = WL_CONNECTED;
   } else {
     global_state.wifi_down = 1;
-
     uint8_t wifi_config_tool = Settings.sta_config;
-
     wifi_status = WiFi.status();
     switch (wifi_status) {
       case WL_CONNECTED:
@@ -1263,10 +1275,8 @@ void WifiConnect()
   wifi_counter = 1;
 }
 
-
 /*
 // Enable from 6.0.0a until 6.1.0a - disabled due to possible cause of bad wifi connect on core 2.3.0
-
 void WifiDisconnect()
 {
   // Courtesy of EspEasy
@@ -1279,7 +1289,6 @@ void WifiDisconnect()
 
 void EspRestart()
 {
-
   // This results in exception 3 on restarts
   delay(100);                 // Allow time for message xfer - disabled v6.1.0b
   WifiDisconnect();
@@ -1291,7 +1300,6 @@ void EspRestart()
 {
   ESP.restart();
 }
-
 
 #ifdef USE_DISCOVERY
 /*********************************************************************************************\

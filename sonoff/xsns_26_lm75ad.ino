@@ -108,7 +108,6 @@ boolean Xsns26(byte function)
 
   if (i2c_flg) {
     switch (function) {
-
       case FUNC_EVERY_SECOND:
         LM75ADDetect();
         break;
