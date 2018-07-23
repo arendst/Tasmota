@@ -108,7 +108,7 @@ boolean Xsns26(byte function)
 
   if (i2c_flg) {
     switch (function) {
-      case FUNC_PREP_BEFORE_TELEPERIOD:
+      case FUNC_EVERY_SECOND:
         LM75ADDetect();
         break;
       case FUNC_JSON_APPEND:

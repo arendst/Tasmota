@@ -1,14 +1,14 @@
 # datatypes
-address_t	DATA_TYPE
-message_t	DATA_TYPE
-callback_id_t	DATA_TYPE
-callback_assignment_id_t	DATA_TYPE
-option_entry_t	DATA_TYPE
-config_id_t	DATA_TYPE
-enable_condition_t	DATA_TYPE
-callback_fptr_t	DATA_TYPE
-feedback_action_fptr_t	DATA_TYPE
-knx_command_type_t	DATA_TYPE
+address_t	KEYWORD1 DATA_TYPE
+message_t	KEYWORD1 DATA_TYPE
+callback_id_t	KEYWORD1 DATA_TYPE
+callback_assignment_id_t KEYWORD1 DATA_TYPE
+option_entry_t KEYWORD1 DATA_TYPE
+config_id_t KEYWORD1 DATA_TYPE
+enable_condition_t KEYWORD1 DATA_TYPE
+callback_fptr_t	KEYWORD1 DATA_TYPE
+feedback_action_fptr_t KEYWORD1 DATA_TYPE
+knx_command_type_t KEYWORD1 DATA_TYPE
 
 # methods
 setup	KEYWORD2
@@ -92,13 +92,13 @@ answer_4byte_int	KEYWORD2
 answer_4byte_uint	KEYWORD2
 answer_4byte_float	KEYWORD2
 
-data_to_1byte_int	KEYWORD 2
-data_to_2byte_int	KEYWORD 2
-data_to_2byte_float	KEYWORD 2
-data_to_4byte_float	KEYWORD 2
-data_to_3byte_color	KEYWORD 2
-data_to_3byte_time	KEYWORD 2
-data_to_3byte_data	KEYWORD 2
+data_to_1byte_int	KEYWORD2
+data_to_2byte_int	KEYWORD2
+data_to_2byte_float	KEYWORD2
+data_to_4byte_float	KEYWORD2
+data_to_3byte_color	KEYWORD2
+data_to_3byte_time	KEYWORD2
+data_to_3byte_data	KEYWORD2
 
 # constants
 knx	LITERAL1

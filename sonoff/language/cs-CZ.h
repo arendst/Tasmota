@@ -227,6 +227,7 @@
 #define D_CONFIRM_RESTART "Potvrzení restartu"
 
 #define D_CONFIGURE_MODULE "Nastavení modulu"
+#define D_CONFIGURE_MCP230XX "Nastavení MCP230xx"
 #define D_CONFIGURE_WIFI "Nastavení WiFi"
 #define D_CONFIGURE_MQTT "Nastavení MQTT"
 #define D_CONFIGURE_DOMOTICZ "Nastavení Domoticz"
@@ -379,6 +380,7 @@
 // xdrv_09_timers.ino
 #define D_CONFIGURE_TIMER "Nastavení Časovače"
 #define D_TIMER_PARAMETERS "Časovač"
+#define D_TIMER_ENABLE "Povol Časovače"
 #define D_TIMER_ARM "Aktivní"
 #define D_TIMER_TIME "Čas"
 #define D_TIMER_DAYS "Dny"

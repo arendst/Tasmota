@@ -25,7 +25,7 @@
     - Select IDE Tools - Flash Size: "1M (no SPIFFS)"
   ====================================================*/
 
-#define VERSION                0x06010102   // 6.1.1b
+#define VERSION                0x06010103   // 6.1.1c
 
 // Location specific includes
 #include <core_version.h>                   // Arduino_Esp8266 version information (ARDUINO_ESP8266_RELEASE and ARDUINO_ESP8266_RELEASE_2_3_0)
@@ -187,6 +187,9 @@ boolean mdns_begun = false;
 uint8_t ntp_force_sync = 0;                 // Force NTP sync
 StateBitfield global_state;
 RulesBitfield rules_flag;
+
+uint8_t glob_humidity = 0;
+sint16_t glob_temperature = -9999;
 
 char my_version[33];                        // Composed version string
 char my_hostname[33];                       // Composed Wifi hostname
