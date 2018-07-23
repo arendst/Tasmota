@@ -1,7 +1,7 @@
 /*
-  xsns_31_cc811.ino - CCS811 gas and air quality sensor support for Sonoff-Tasmota
+  xsns_31_ccs811.ino - CCS811 gas and air quality sensor support for Sonoff-Tasmota
 
-  Copyright (C) 2018  Theo Arends
+  Copyright (C) 2018  Gerhard Mutz and Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@
 /*********************************************************************************************\
  * SGP30 - Gas (TVOC - Total Volatile Organic Compounds) and Air Quality (CO2)
  *
- * Source: Gerhard Mutz and Adafruit
+ * Source: Adafruit
  *
  * I2C Address: 0x5A assumes ADDR connected to Gnd, Wake also must be grounded
 \*********************************************************************************************/
