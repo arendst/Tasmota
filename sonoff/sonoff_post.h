@@ -58,9 +58,6 @@ void KNX_CB_Action(message_t const &msg, void *arg);
  * Provide an image with all supported sensors enabled
 \*********************************************************************************************/
 
-
-#define USE_CCS811                            // Add I2C code for CCS811 sensor (+2k2 code)
-
 #ifdef USE_ALL_SENSORS
 
 #define USE_ADC_VCC                           // Display Vcc in Power status. Disable for use as Analog input on selected devices
@@ -74,7 +71,6 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #define USE_BMP                               // Add I2C code for BMP085/BMP180/BMP280/BME280 sensor (+4k code)
   #define USE_BME680                          // Add additional support for BME680 sensor using Bosch BME680 library (+4k code)
 #define USE_SGP30                             // Add I2C code for SGP30 sensor (+1k1 code)
-#define USE_CCS811                            // Add I2C code for CCS811 sensor (+2k2 code)
 #define USE_BH1750                            // Add I2C code for BH1750 sensor (+0k5 code)
 #define USE_VEML6070                          // Add I2C code for VEML6070 sensor (+0k5 code)
 #define USE_TSL2561                           // Add I2C code for TSL2561 sensor using library Adafruit TSL2561 Arduino (+1k2 code)
@@ -84,6 +80,7 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #define USE_INA219                            // Add I2C code for INA219 Low voltage and current sensor (+1k code)
 #define USE_MGS                               // Add I2C code for Xadow and Grove Mutichannel Gas sensor using library Multichannel_Gas_Sensor (+10k code)
 //#define USE_APDS9960                          // Add I2C code for APDS9960 Proximity Sensor. Disables SHT and VEML6070 (+4k7 code)
+//#define USE_CCS811                            // Add I2C code for CCS811 sensor (+2k2 code)
 #define USE_MHZ19                             // Add support for MH-Z19 CO2 sensor (+2k code)
 #define USE_SENSEAIR                          // Add support for SenseAir K30, K70 and S8 CO2 sensor (+2k3 code)
 #ifndef CO2_LOW

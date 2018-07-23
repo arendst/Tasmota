@@ -34,19 +34,20 @@ uint8_t CCS811_ready;
 uint8_t CCS811_type;
 uint16_t eCO2;
 uint16_t TVOC;
-uint8_t tcnt,ecnt;
+uint8_t tcnt = 0;
+uint8_t ecnt = 0;
 
 /********************************************************************************************/
 #define EVERYNSECONDS 5
 
 void CCS811Update()  // Perform every n second
 {
-  tcnt+=1;
-  if (tcnt>=EVERYNSECONDS) {
-    tcnt=0;
+  tcnt++;
+  if (tcnt >= EVERYNSECONDS) {
+    tcnt = 0;
     CCS811_ready = 0;
     if (!CCS811_type) {
-      sint8_t res=ccs.begin(CCS811_ADDRESS);
+      sint8_t res = ccs.begin(CCS811_ADDRESS);
       if (!res) {
         CCS811_type = 1;
         snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, "CCS811", 0x5A);
@@ -58,19 +59,19 @@ void CCS811Update()  // Perform every n second
     } else {
       if (ccs.available()) {
         if (!ccs.readData()){
-          TVOC=ccs.getTVOC();
-          eCO2=ccs.geteCO2();
+          TVOC = ccs.getTVOC();
+          eCO2 = ccs.geteCO2();
           CCS811_ready = 1;
-          if (glob_humidity!=0 && glob_temperature!=-9999) {
-            double gtmp=glob_temperature;
-            ccs.setEnvironmentalData(glob_humidity,gtmp/4);
+          if ((glob_humidity != 0) && (glob_temperature != -9999)) {
+            double gtmp = glob_temperature * 4;
+            ccs.setEnvironmentalData(glob_humidity, gtmp / 4);
           }
-          ecnt=0;
+          ecnt = 0;
         }
       } else {
         // failed, count up
-        ecnt+=1;
-        if (ecnt>6) {
+        ecnt++;
+        if (ecnt > 6) {
           // after 30 seconds, restart
           ccs.begin(CCS811_ADDRESS);
         }

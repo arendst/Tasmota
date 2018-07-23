@@ -459,6 +459,9 @@ void BmpRead()
 #endif  // USE_BME680
   }
   if (bmp_temperature != 0.0) { bmp_temperature = ConvertTemp(bmp_temperature); }
+
+  glob_humidity = bmp_humidity;
+  glob_temperature = bmp_temperature;
 }
 
 void BmpEverySecond()
@@ -494,12 +497,6 @@ void BmpShow(boolean json)
     char gas_resistance[10];
     dtostrfd(bmp_gas_resistance, 2, gas_resistance);
 #endif  // USE_BME680
-
-
-#ifdef USE_CCS811
-    glob_humidity=bmp_humidity;
-    glob_temperature=(bmp_temperature*4);
-#endif
 
     if (json) {
       char json_humidity[40];

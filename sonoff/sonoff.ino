@@ -188,6 +188,9 @@ uint8_t ntp_force_sync = 0;                 // Force NTP sync
 StateBitfield global_state;
 RulesBitfield rules_flag;
 
+uint8_t glob_humidity = 0;
+sint16_t glob_temperature = -9999;
+
 char my_version[33];                        // Composed version string
 char my_hostname[33];                       // Composed Wifi hostname
 char mqtt_client[33];                       // Composed MQTT Clientname
@@ -197,11 +200,6 @@ char mqtt_data[MESSZ];                      // MQTT publish buffer and web page 
 char log_data[LOGSZ];                       // Logging
 char web_log[WEB_LOG_SIZE] = {'\0'};        // Web log buffer
 String backlog[MAX_BACKLOG];                // Command backlog
-
-#ifdef USE_CCS811
-uint8_t glob_humidity=0;
-sint16_t glob_temperature=-9999;
-#endif
 
 /********************************************************************************************/
 

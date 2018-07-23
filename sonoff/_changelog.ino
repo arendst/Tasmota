@@ -1,4 +1,5 @@
 /* 6.1.1c
+ * Add support for CCS811 sensor (#3309)
  * Add command Timers 0/1 to globally disable or enable armed timers (#3270)
  *
  * 6.1.1b
