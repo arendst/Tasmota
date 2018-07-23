@@ -716,6 +716,7 @@ void KnxSensor(byte sensor_type, float value)
 \*********************************************************************************************/
 
 #ifdef USE_WEBSERVER
+#ifdef USE_KNX_WEB_MENU
 const char S_CONFIGURE_KNX[] PROGMEM = D_CONFIGURE_KNX;
 
 const char HTTP_FORM_KNX[] PROGMEM =
@@ -1020,6 +1021,7 @@ void KNX_Save_Settings()
   }
 }
 
+#endif  // USE_KNX_WEB_MENU
 #endif  // USE_WEBSERVER
 
 
