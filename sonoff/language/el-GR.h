@@ -227,6 +227,7 @@
 #define D_CONFIRM_RESTART "Επιβεβαίωση Επανεκκίνησης"
 
 #define D_CONFIGURE_MODULE "Ρύθμιση Module"
+#define D_CONFIGURE_MCP230XX "Ρύθμιση MCP230xx"
 #define D_CONFIGURE_WIFI "Ρύθμιση WiFi"
 #define D_CONFIGURE_MQTT "Ρύθμιση MQTT"
 #define D_CONFIGURE_DOMOTICZ "Ρύθμιση Domoticz"
@@ -379,6 +380,7 @@
 // xdrv_09_timers.ino
 #define D_CONFIGURE_TIMER "Ρυθμίσεις Χρόνου"
 #define D_TIMER_PARAMETERS "Χρονικοί παράμετροι"
+#define D_TIMER_ENABLE "Ενεργοποιημένο Χρονικοί"
 #define D_TIMER_ARM "Arm"
 #define D_TIMER_TIME "Ωρα"
 #define D_TIMER_DAYS "Μέρες"

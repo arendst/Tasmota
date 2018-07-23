@@ -1,4 +1,12 @@
-/* 6.1.1b
+/* 6.1.1c
+ * Add support for CCS811 sensor (#3309)
+ * Add command Timers 0/1 to globally disable or enable armed timers (#3270)
+ *
+ * 6.1.1b
+ * Add support for MPR121 controller in input mode for touch buttons (#3142)
+ * Add support for MCP230xx for general purpose input expansion and command Sensor29 (#3188)
+ * Fix command Scale buffer overflow (#3236)
+ * Fix rules once regression from v6.1.0 (#3198, #3226)
  * Add default Wifi Configuration tool as define WIFI_CONFIG_NO_SSID in user_config.h if no SSID is configured (#3224)
  * Add user selection of Wifi Smartconfig as define USE_SMARTCONFIG in user_config.h
  * Add user selection of WPS as define USE_WPS in user_config.h in preparation for core v2.4.2 (#3221)

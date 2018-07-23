@@ -782,6 +782,9 @@ void SettingsDelta()
       Settings.flag.rules_once = 0;
       Settings.flag3.data = 0;
     }
+    if (Settings.version < 0x06010103) {
+      Settings.flag3.timers_enable = 1;
+    }
 
     Settings.version = VERSION;
     SettingsSave(1);

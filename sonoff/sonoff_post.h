@@ -80,6 +80,7 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #define USE_INA219                            // Add I2C code for INA219 Low voltage and current sensor (+1k code)
 #define USE_MGS                               // Add I2C code for Xadow and Grove Mutichannel Gas sensor using library Multichannel_Gas_Sensor (+10k code)
 //#define USE_APDS9960                          // Add I2C code for APDS9960 Proximity Sensor. Disables SHT and VEML6070 (+4k7 code)
+//#define USE_CCS811                            // Add I2C code for CCS811 sensor (+2k2 code)
 #define USE_MHZ19                             // Add support for MH-Z19 CO2 sensor (+2k code)
 #define USE_SENSEAIR                          // Add support for SenseAir K30, K70 and S8 CO2 sensor (+2k3 code)
 #ifndef CO2_LOW
