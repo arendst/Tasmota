@@ -91,8 +91,8 @@ void CCS811Show(boolean json)
 #ifdef USE_DOMOTICZ
       if (0 == tele_period) DomoticzSensor(DZ_AIRQUALITY, eCO2);
 #endif  // USE_DOMOTICZ
-    } else {
 #ifdef USE_WEBSERVER
+    } else {
       snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_CCS811, mqtt_data, eCO2, TVOC);
 #endif
     }
@@ -103,9 +103,9 @@ void CCS811Show(boolean json)
  * Interface
 \*********************************************************************************************/
 
-#define XSNS_29
+#define XSNS_31
 
-boolean Xsns29(byte function)
+boolean Xsns31(byte function)
 {
   boolean result = false;
 
