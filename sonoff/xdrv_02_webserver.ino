@@ -204,7 +204,9 @@ const char HTTP_BTN_MENU_MQTT[] PROGMEM =
   "";
 const char HTTP_BTN_MENU4[] PROGMEM =
 #ifdef USE_KNX
+#ifdef USE_KNX_WEB_MENU
   "<br/><form action='kn' method='get'><button>" D_CONFIGURE_KNX "</button></form>"
+#endif  // USE_KNX_WEB_MENU
 #endif  // USE_KNX
   "<br/><form action='lg' method='get'><button>" D_CONFIGURE_LOGGING "</button></form>"
   "<br/><form action='co' method='get'><button>" D_CONFIGURE_OTHER "</button></form>"
@@ -391,7 +393,9 @@ void StartWebserver(int type, IPAddress ipweb)
 #endif  // USE_DOMOTICZ
       }
 #ifdef USE_KNX
+#ifdef USE_KNX_WEB_MENU
       WebServer->on("/kn", HandleKNXConfiguration);
+#endif // USE_KNX_WEB_MENU
 #endif // USE_KNX
       WebServer->on("/lg", HandleLoggingConfiguration);
       WebServer->on("/co", HandleOtherConfiguration);
