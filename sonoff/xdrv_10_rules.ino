@@ -603,24 +603,6 @@ double map_double(double x, double in_min, double in_max, double out_min, double
  return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 }
 
-// Function to return a substring defined by a delimiter at an index
-char* subStr(char* dest, char* str, const char *delim, int index)
-{
-  char *act;
-  char *sub;
-  char *ptr;
-  int i;
-
-  // Since strtok consumes the first arg, make a copy
-  strncpy(dest, str, strlen(str));
-  for (i = 1, act = dest; i <= index; i++, act = NULL) {
-    sub = strtok_r(act, delim, &ptr);
-    if (sub == NULL) break;
-  }
-  sub = Trim(sub);
-  return sub;
-}
-
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
