@@ -238,6 +238,7 @@
 
 // -- KNX IP Protocol -----------------------------
 //#define USE_KNX                                  // Enable KNX IP Protocol Support (+23k code, +3k3 mem)
+  #define USE_KNX_WEB_MENU                       // Enable KNX WEB MENU
 
 // -- HTTP ----------------------------------------
 #define USE_WEBSERVER                            // Enable web server and Wifi Manager (+66k code, +8k mem)
