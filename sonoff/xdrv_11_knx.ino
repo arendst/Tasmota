@@ -196,8 +196,10 @@ const char *device_param_cb[] = {
 // Commands
 #define D_CMND_KNXTXCMND "KnxTx_Cmnd"
 #define D_CMND_KNXTXVAL "KnxTx_Val"
-enum KnxCommands { CMND_KNXTXCMND, CMND_KNXTXVAL };
-const char kKnxCommands[] PROGMEM = D_CMND_KNXTXCMND "|" D_CMND_KNXTXVAL ;
+#define D_CMND_KNX_ENABLED "Knx_Enabled"
+#define D_CMND_KNX_ENHANCED "Knx_Enhanced"
+enum KnxCommands { CMND_KNXTXCMND, CMND_KNXTXVAL, CMND_KNX_ENABLED, CMND_KNX_ENHANCED } ;
+const char kKnxCommands[] PROGMEM = D_CMND_KNXTXCMND "|" D_CMND_KNXTXVAL "|" D_CMND_KNX_ENABLED "|" D_CMND_KNX_ENHANCED ;
 
 
 byte KNX_GA_Search( byte param, byte start = 0 )
@@ -1031,14 +1033,12 @@ boolean KnxCommand()
   uint8_t index = XdrvMailbox.index;
   int command_code = GetCommandCode(command, sizeof(command), XdrvMailbox.topic, kKnxCommands);
 
-  if (!(Settings.flag.knx_enabled)) { return false; }
-
   if (-1 == command_code) { return false; } // Unknown command
 
   else if ((CMND_KNXTXCMND == command_code) && (index > 0) && (index <= MAX_KNXTX_CMNDS) && (XdrvMailbox.data_len > 0)) {
     // index <- KNX SLOT to use
     // XdrvMailbox.payload <- data to send
-
+    if (!(Settings.flag.knx_enabled)) { return false; }
     // Search all the registered GA that has that output (variable: KNX SLOTx) as parameter
     byte i = KNX_GA_Search(index + KNX_SLOT1 -1);
     while ( i != KNX_Empty ) {
@@ -1056,12 +1056,14 @@ boolean KnxCommand()
 
       i = KNX_GA_Search(index + KNX_SLOT1 -1, i + 1);
     }
+    snprintf_P (mqtt_data, sizeof(mqtt_data), PSTR("{\"%s%d\":\"%s\"}"),
+      command, index, XdrvMailbox.data );
   }
 
   else if ((CMND_KNXTXVAL == command_code) && (index > 0) && (index <= MAX_KNXTX_CMNDS) && (XdrvMailbox.data_len > 0)) {
     // index <- KNX SLOT to use
     // XdrvMailbox.payload <- data to send
-
+    if (!(Settings.flag.knx_enabled)) { return false; }
     // Search all the registered GA that has that output (variable: KNX SLOTx) as parameter
     byte i = KNX_GA_Search(index + KNX_SLOT1 -1);
     while ( i != KNX_Empty ) {
@@ -1083,12 +1085,47 @@ boolean KnxCommand()
 
       i = KNX_GA_Search(index + KNX_SLOT1 -1, i + 1);
     }
+    snprintf_P (mqtt_data, sizeof(mqtt_data), PSTR("{\"%s%d\":\"%s\"}"),
+      command, index, XdrvMailbox.data );
+  }
+
+  else if (CMND_KNX_ENABLED == command_code) {
+    if (!XdrvMailbox.data_len) {
+      if (Settings.flag.knx_enabled) {
+        snprintf_P(XdrvMailbox.data, sizeof(XdrvMailbox.data), PSTR("1"));
+      } else {
+        snprintf_P(XdrvMailbox.data, sizeof(XdrvMailbox.data), PSTR("0"));
+      }
+    } else {
+      if (XdrvMailbox.payload == 1) {
+        Settings.flag.knx_enabled = 1;
+      } else if (XdrvMailbox.payload == 0) {
+        Settings.flag.knx_enabled = 0;
+      } else { return false; }  // Incomplete command
+    }
+    snprintf_P (mqtt_data, sizeof(mqtt_data), PSTR("{\"%s\":\"%s\"}"),
+      command, XdrvMailbox.data );
+  }
+
+  else if (CMND_KNX_ENHANCED == command_code) {
+    if (!XdrvMailbox.data_len) {
+      if (Settings.flag.knx_enable_enhancement) {
+        snprintf_P(XdrvMailbox.data, sizeof(XdrvMailbox.data), PSTR("1"));
+      } else {
+        snprintf_P(XdrvMailbox.data, sizeof(XdrvMailbox.data), PSTR("0"));
+      }
+    } else {
+      if (XdrvMailbox.payload == 1) {
+        Settings.flag.knx_enable_enhancement = 1;
+      } else if (XdrvMailbox.payload == 0) {
+        Settings.flag.knx_enable_enhancement = 0;
+      } else { return false; }  // Incomplete command
+    }
+    snprintf_P (mqtt_data, sizeof(mqtt_data), PSTR("{\"%s\":\"%s\"}"),
+      command, XdrvMailbox.data );
   }
 
   else { return false; }  // Incomplete command
-
-  snprintf_P (mqtt_data, sizeof(mqtt_data), PSTR("{\"%s%d\":\"%s\"}"),
-    command, index, XdrvMailbox.data );
 
   return true;
 }
