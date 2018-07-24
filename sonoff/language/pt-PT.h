@@ -1,7 +1,7 @@
 /*
   pt-PT.h - localization for Portuguese - Portugal for Sonoff-Tasmota
 
-  Copyright (C) 2018  Theo Arends and Paulo Paiva
+  Copyright (C) 2018  Paulo Paiva
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -33,6 +33,7 @@
 
 //#define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
 
+#define LANGUAGE_LCID 2070
 // HTML (ISO 639-1) Language Code
 #define D_HTML_LANGUAGE "pt"
 
@@ -91,6 +92,7 @@
 #define D_FALSE "Falso"
 #define D_FILE "Ficheiro"
 #define D_FREE_MEMORY "Memoria Livre"
+#define D_FREQUENCY "Frequency"
 #define D_GAS "Gás"
 #define D_GATEWAY "Gateway"
 #define D_GROUP "Grupo"
@@ -101,6 +103,7 @@
 #define D_IMMEDIATE "Immediato"      // Button immediate
 #define D_INDEX "Indíce"
 #define D_INFO "Info"
+#define D_INFRARED "Infrared"
 #define D_INITIALIZED "Inicializado"
 #define D_IP_ADDRESS "Endereço IP"
 #define D_LIGHT "Luz"
@@ -119,6 +122,9 @@
 #define D_PORT "Porta"
 #define D_POWER_FACTOR "Factor de Potência"
 #define D_POWERUSAGE "Potência"
+#define D_POWERUSAGE_ACTIVE "Active Power"
+#define D_POWERUSAGE_APPARENT "Apparent Power"
+#define D_POWERUSAGE_REACTIVE "Reactive Power"
 #define D_PRESSURE "Pressão"
 #define D_PRESSUREATSEALEVEL "Pressão ao nível do Mar"
 #define D_PROGRAM_FLASH_SIZE "Tamanho do Programa na Flash"
@@ -154,6 +160,7 @@
 #define D_UPTIME "Tempo de Atividade"
 #define D_USER "Utilizador"
 #define D_UTC_TIME "UTC"
+#define D_UV_INDEX "Indíce UV"
 #define D_UV_LEVEL "Nível UV"
 #define D_VERSION "Versão"
 #define D_VOLTAGE "Voltagem"
@@ -198,7 +205,7 @@
 #define D_USE_DEFAULTS "Usar predefinições"
 #define D_ERASED_SECTOR "Apagar setores"
 
-// webserver.ino
+// xdrv_02_webserver.ino
 #define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "MINIMO firmware - Atualizar Por favor"
 #define D_WEBSERVER_ACTIVE_ON "Servidor WEB ativo em"
 #define D_WITH_IP_ADDRESS "com o endereço IP"
@@ -220,6 +227,7 @@
 #define D_CONFIRM_RESTART "Confirmar o reinicio"
 
 #define D_CONFIGURE_MODULE "Configurar Módulo"
+#define D_CONFIGURE_MCP230XX "Configurar MCP230xx"
 #define D_CONFIGURE_WIFI "Configurar WiFi"
 #define D_CONFIGURE_MQTT "Configurar MQTT"
 #define D_CONFIGURE_DOMOTICZ "Configurar Domoticz"
@@ -314,13 +322,17 @@
 #define D_UPLOAD_ERR_7 "Envio cancelado"
 #define D_UPLOAD_ERR_8 "Ficheiro inválido"
 #define D_UPLOAD_ERR_9 "Ficheiro demasiado grande"
+#define D_UPLOAD_ERR_10 "Failed to init RF chip"
+#define D_UPLOAD_ERR_11 "Failed to erase RF chip"
+#define D_UPLOAD_ERR_12 "Failed to write to RF chip"
+#define D_UPLOAD_ERR_13 "Failed to decode RF firmware"
 #define D_UPLOAD_ERROR_CODE "Código de erro do envio"
 
 #define D_ENTER_COMMAND "Inserir comando"
 #define D_ENABLE_WEBLOG_FOR_RESPONSE "Habilitar weblog 2 se resposta esperada"
 #define D_NEED_USER_AND_PASSWORD "Necessário user=<nome utilizador>&password=<palavra chave>"
 
-// xdrv_00_mqtt.ino
+// xdrv_01_mqtt.ino
 #define D_FINGERPRINT "Verifique a impressão digital TLS..."
 #define D_TLS_CONNECT_FAILED_TO "TLS não conseguiu ligar"
 #define D_RETRY_IN "Tentativa em"
@@ -328,7 +340,7 @@
 #define D_INSECURE "Ligação insegura devido à impressão digital inválida"
 #define D_CONNECT_FAILED_TO "A ligação falhou ao"
 
-// xdrv_wemohue.ino
+// xplg_wemohue.ino
 #define D_MULTICAST_DISABLED "Multicast desabilitado"
 #define D_MULTICAST_REJOINED "Multicast (re)ingressou"
 #define D_MULTICAST_JOIN_FAILED "Multicast falha no reingresso"
@@ -348,7 +360,7 @@
 #define D_HUE_POST_ARGS "Hue POST args"
 #define D_3_RESPONSE_PACKETS_SENT "3 pacotes de resposta enviados"
 
-// xdrv_05_domoticz.ino
+// xdrv_07_domoticz.ino
 #define D_DOMOTICZ_PARAMETERS "Parametros Domoticz"
 #define D_DOMOTICZ_IDX "Idx"
 #define D_DOMOTICZ_KEY_IDX "Chave idx"
@@ -368,6 +380,7 @@
 // xdrv_09_timers.ino
 #define D_CONFIGURE_TIMER "Configure Timer"
 #define D_TIMER_PARAMETERS "Timer parameters"
+#define D_TIMER_ENABLE "Enable Timers"
 #define D_TIMER_ARM "Arm"
 #define D_TIMER_TIME "Time"
 #define D_TIMER_DAYS "Days"
@@ -394,6 +407,9 @@
 #define D_KNX_COMMAND_OTHER "Other"
 #define D_SENT_TO "sent to"
 #define D_KNX_WARNING "The group address ( 0 / 0 / 0 ) is reserved and can not be used."
+#define D_KNX_ENHANCEMENT "Communication Enhancement"
+#define D_KNX_TX_SLOT "KNX TX"
+#define D_KNX_RX_SLOT "KNX RX"
 
 // xdrv_03_energy.ino
 #define D_ENERGY_TODAY "Consumo energético de hoje"
@@ -453,10 +469,18 @@
 #define D_SENSOR_SBR_TX   "SerBr Tx"
 #define D_SENSOR_SR04_TRIG "SR04 Tri"
 #define D_SENSOR_SR04_ECHO "SR04 Ech"
+#define D_SENSOR_SDM120_TX "SDM120 Tx"
+#define D_SENSOR_SDM120_RX "SDM120 Rx"
+#define D_SENSOR_SDM630_TX "SDM630 Tx"
+#define D_SENSOR_SDM630_RX "SDM630 Rx"
+#define D_SENSOR_TM1638_CLK "TM16 CLK"
+#define D_SENSOR_TM1638_DIO "TM16 DIO"
+#define D_SENSOR_TM1638_STB "TM16 STB"
 
 // Units
 #define D_UNIT_AMPERE "A"
 #define D_UNIT_CENTIMETER "cm"
+#define D_UNIT_HERTZ "Hz"
 #define D_UNIT_HOUR "Hr"
 #define D_UNIT_KILOOHM "kOhm"
 #define D_UNIT_KILOWATTHOUR "kWh"
@@ -473,6 +497,8 @@
 #define D_UNIT_PRESSURE "hPa"
 #define D_UNIT_SECOND "sec"
 #define D_UNIT_SECTORS "sectors"
+#define D_UNIT_VA "VA"
+#define D_UNIT_VAR "VAr"
 #define D_UNIT_VOLT "V"
 #define D_UNIT_WATT "W"
 #define D_UNIT_WATTHOUR "Wh"

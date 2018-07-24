@@ -22,9 +22,9 @@
 /*********************************************************************************************\
  * TSL2561 - Light Intensity
  *
- * I2C Addresses: 0x29 (low), 0x39 (float) or 0x49 (high)
- *
  * Using library https://github.com/joba-1/Joba_Tsl2561
+ *
+ * I2C Addresses: 0x29 (low), 0x39 (float) or 0x49 (high)
 \*********************************************************************************************/
 
 #include <Tsl2561Util.h>
@@ -63,9 +63,9 @@ void Tsl2561Show(boolean json)
        && Tsl2561Util::normalizedLuminosity(gain, exposure, full = scaledFull, ir = scaledIr)
        && Tsl2561Util::milliLux(full, ir, milliLux, Tsl2561::packageCS(id))) {
 
-        snprintf_P(log_data, sizeof(log_data), PSTR(D_ILLUMINANCE " g:%d, e:%d, f:%u, i:%u -> %u.%03u " D_UNIT_LUX),
-          gain, exposure, full, ir, milliLux/1000, milliLux%1000);
-        AddLog(LOG_LEVEL_DEBUG);
+//        snprintf_P(log_data, sizeof(log_data), PSTR(D_ILLUMINANCE " g:%d, e:%d, f:%u, i:%u -> %u.%03u " D_UNIT_LUX),
+//          gain, exposure, full, ir, milliLux/1000, milliLux%1000);
+//        AddLog(LOG_LEVEL_DEBUG);
 
         if (json) {
           snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"TSL2561\":{\"" D_JSON_ILLUMINANCE "\":%u.%03u}"),
@@ -112,5 +112,5 @@ boolean Xsns16(byte function)
   return result;
 }
 
-#endif  // USE_TSL2561_JOBA
+#endif  // USE_TSL2561
 #endif  // USE_I2C

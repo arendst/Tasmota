@@ -101,9 +101,13 @@ void Sht3xShow(boolean json)
     char types[11];
     for (byte i = 0; i < sht3x_count; i++) {
       if (Sht3xRead(t, h, sht3x_sensors[i].address)) {
+
+        if (0 == i) { SetGlobalValues(t, h); }
+
         dtostrfd(t, Settings.flag2.temperature_resolution, temperature);
         dtostrfd(h, Settings.flag2.humidity_resolution, humidity);
         snprintf_P(types, sizeof(types), PSTR("%s-0x%02X"), sht3x_sensors[i].types, sht3x_sensors[i].address);  // "SHT3X-0xXX"
+
         if (json) {
           snprintf_P(mqtt_data, sizeof(mqtt_data), JSON_SNS_TEMPHUM, mqtt_data, types, temperature, humidity);
 #ifdef USE_DOMOTICZ
