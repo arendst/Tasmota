@@ -62,10 +62,7 @@ void CCS811Update()  // Perform every n second
           TVOC = ccs.getTVOC();
           eCO2 = ccs.geteCO2();
           CCS811_ready = 1;
-          if ((glob_humidity != 0) && (glob_temperature != -9999)) {
-            double gtmp = glob_temperature * 4;
-            ccs.setEnvironmentalData(glob_humidity, gtmp / 4);
-          }
+          if (global_update) { ccs.setEnvironmentalData((uint8_t)global_humidity, global_temperature); }
           ecnt = 0;
         }
       } else {
