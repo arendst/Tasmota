@@ -231,6 +231,8 @@ void MqttPublishDirect(const char* topic, boolean retained)
   if (Settings.ledstate &0x04) {
     blinks++;
   }
+
+  yield();  // #3313
 }
 
 void MqttPublish(const char* topic, boolean retained)
