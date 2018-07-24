@@ -102,10 +102,7 @@ void Sht3xShow(boolean json)
     for (byte i = 0; i < sht3x_count; i++) {
       if (Sht3xRead(t, h, sht3x_sensors[i].address)) {
 
-        if (0 == i) {
-          glob_humidity = h;
-          glob_temperature = t;
-        }
+        if (0 == i) { SetGlobalValues(t, h); }
 
         dtostrfd(t, Settings.flag2.temperature_resolution, temperature);
         dtostrfd(h, Settings.flag2.humidity_resolution, humidity);

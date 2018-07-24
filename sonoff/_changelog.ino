@@ -1,4 +1,6 @@
 /* 6.1.1c
+ * Fix possible WDT due to long MQTT publish handling (#3313)
+ * Fix CCS811 temperature and humidity compensation
  * Add support for CCS811 sensor (#3309)
  * Add command Timers 0/1 to globally disable or enable armed timers (#3270)
  *

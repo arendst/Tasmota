@@ -414,6 +414,22 @@ char TempUnit()
   return (Settings.flag.temperature_conversion) ? 'F' : 'C';
 }
 
+void SetGlobalValues(float temperature, float humidity)
+{
+  global_update = uptime;
+  global_temperature = temperature;
+  global_humidity = humidity;
+}
+
+void ResetGlobalValues()
+{
+  if ((uptime - global_update) > GLOBAL_VALUES_VALID) {  // Reset after 5 minutes
+    global_update = 0;
+    global_temperature = 0;
+    global_humidity = 0;
+  }
+}
+
 double FastPrecisePow(double a, double b)
 {
   // https://martin.ankerl.com/2012/01/25/optimized-approximative-pow-in-c-and-cpp/
