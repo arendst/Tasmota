@@ -914,6 +914,7 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
     else if ((CMND_COUNTER == command_code) && (index > 0) && (index <= MAX_COUNTERS)) {
       if ((data_len > 0) && (pin[GPIO_CNTR1 + index -1] < 99)) {
         //STB mode
+        Settings.pulse_devider[index -1] = Settings.pulse_devider[index -1] == 0 ? COUNTERDEVIDER : Settings.pulse_devider[index -1];
         if ((dataBuf[0] == '-') || (dataBuf[0] == '+')) {
           RtcSettings.pulse_counter[index -1] += payload32 * Settings.pulse_devider[index -1];
           Settings.pulse_counter[index -1] += payload32 * Settings.pulse_devider[index -1];
@@ -944,6 +945,7 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
     else if ((CMND_COUNTERDEVIDER == command_code) && (index > 0) && (index <= MAX_COUNTERS)) {
       if (data_len > 0) {
         unsigned long _counter;
+        Settings.pulse_devider[index -1] = Settings.pulse_devider[index -1] == 0 ? COUNTERDEVIDER : Settings.pulse_devider[index -1];
         _counter = RtcSettings.pulse_counter[index -1]/Settings.pulse_devider[index -1];
         Settings.pulse_devider[index -1] = payload16;
         RtcSettings.pulse_counter[index -1] = _counter * Settings.pulse_devider[index -1];
