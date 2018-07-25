@@ -38,13 +38,13 @@
 #define D_HTML_LANGUAGE "tr"
 
 // "2017-03-07T11:08:02" - ISO8601:2004
-#define D_YEAR_MONTH_SEPARATOR "-"
-#define D_MONTH_DAY_SEPARATOR "-"
+#define D_YEAR_MONTH_SEPARATOR "."
+#define D_MONTH_DAY_SEPARATOR "."
 #define D_DATE_TIME_SEPARATOR "T"
 #define D_HOUR_MINUTE_SEPARATOR ":"
 #define D_MINUTE_SECOND_SEPARATOR ":"
 
-#define D_DAY3LIST "PazPztsSalCarPerCumCmrts"
+#define D_DAY3LIST "PazPztSalCarPerCumCmt"
 #define D_MONTH3LIST "OckSubMarNisMayHazTemAguEylEkmKasAra"
 
 // Non JSON decimal separator
