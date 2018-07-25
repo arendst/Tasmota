@@ -178,16 +178,16 @@ void MCP230xx_Show(boolean json)
 {
   if (mcp230xx_type) {
     if (json) {
-      if (mcp230xx_type == 1) {
+      if (mcp230xx_type > 0) { // we have at least 8 pins
         uint8_t gpio = MCP230xx_readGPIO(0);
-        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"MCP23008\":{\"D0\":%i,\"D1\":%i,\"D2\":%i,\"D3\":%i,\"D4\":%i,\"D5\":%i,\"D6\":%i,\"D7\":%i}"),
+        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"MCP230XX\":{\"D0\":%i,\"D1\":%i,\"D2\":%i,\"D3\":%i,\"D4\":%i,\"D5\":%i,\"D6\":%i,\"D7\":%i"),
                    mqtt_data,(gpio>>0)&1,(gpio>>1)&1,(gpio>>2)&1,(gpio>>3)&1,(gpio>>4)&1,(gpio>>5)&1,(gpio>>6)&1,(gpio>>7)&1);
-      }
-      if (mcp230xx_type == 2) {
-        uint8_t gpio1 = MCP230xx_readGPIO(0);
-        uint8_t gpio2 = MCP230xx_readGPIO(1);
-        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"MCP23017\":{\"D0\":%i,\"D1\":%i,\"D2\":%i,\"D3\":%i,\"D4\":%i,\"D5\":%i,\"D6\":%i,\"D7\":%i,\"D8\":%i,\"D9\":%i,\"D10\":%i,\"D11\":%i,\"D12\":%i,\"D13\":%i,\"D14\":%i,\"D15\":%i}"),
-                   mqtt_data, (gpio1>>0)&1,(gpio1>>1)&1,(gpio1>>2)&1,(gpio1>>3)&1,(gpio1>>4)&1,(gpio1>>5)&1,(gpio1>>6)&1,(gpio1>>7)&1,(gpio2>>0)&1,(gpio2>>1)&1,(gpio2>>2)&1,(gpio2>>3)&1,(gpio2>>4)&1,(gpio2>>5)&1,(gpio2>>6)&1,(gpio2>>7)&1);
+        if (mcp230xx_type == 2) {
+          gpio = MCP230xx_readGPIO(1);
+          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"D8\":%i,\"D9\":%i,\"D10\":%i,\"D11\":%i,\"D12\":%i,\"D13\":%i,\"D14\":%i,\"D15\":%i"),
+                     mqtt_data,(gpio>>0)&1,(gpio>>1)&1,(gpio>>2)&1,(gpio>>3)&1,(gpio>>4)&1,(gpio>>5)&1,(gpio>>6)&1,(gpio>>7)&1);
+        }
+        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s%s"),mqtt_data,"}");
       }
     }
   }
