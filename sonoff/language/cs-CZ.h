@@ -227,7 +227,6 @@
 #define D_CONFIRM_RESTART "Potvrzení restartu"
 
 #define D_CONFIGURE_MODULE "Nastavení modulu"
-#define D_CONFIGURE_MCP230XX "Nastavení MCP230xx"
 #define D_CONFIGURE_WIFI "Nastavení WiFi"
 #define D_CONFIGURE_MQTT "Nastavení MQTT"
 #define D_CONFIGURE_DOMOTICZ "Nastavení Domoticz"
