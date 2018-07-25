@@ -1,5 +1,5 @@
 /*
-  en-GB.h - localization for English - United Kingdom for Sonoff-Tasmota
+  tr-TR.h - localization for Turkish - Turkey for Sonoff-Tasmota
 
   Copyright (C) 2018  Theo Arends
 
