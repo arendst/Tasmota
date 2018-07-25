@@ -52,7 +52,7 @@
 
 // Common
 #define D_ADMIN "Admin"
-#define D_AIR_QUALITY "Air quality"
+#define D_AIR_QUALITY "Hava Kalitesi"
 #define D_AP "AP"                    // Access Point
 #define D_AS "as"
 #define D_AUTO "OTOMATIK"
