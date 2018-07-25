@@ -1,4 +1,5 @@
 /* 6.1.1c
+ * Fix command TimeDst/TimeStd invalid JSON (#3322)
  * Fix possible WDT due to long MQTT publish handling (#3313)
  * Fix CCS811 temperature and humidity compensation
  * Add support for CCS811 sensor (#3309)
