@@ -1,4 +1,5 @@
 /* 6.1.1c
+ * Fix unsecure main webpage update
  * Add Turkish language file (#3332)
  * Fix command TimeDst/TimeStd invalid JSON (#3322)
  * Fix possible WDT due to long MQTT publish handling (#3313)
