@@ -1,4 +1,5 @@
 /* 6.1.1c
+ * Add Turkish language file (#3332)
  * Fix command TimeDst/TimeStd invalid JSON (#3322)
  * Fix possible WDT due to long MQTT publish handling (#3313)
  * Fix CCS811 temperature and humidity compensation
