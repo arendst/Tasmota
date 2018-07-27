@@ -68,6 +68,7 @@ typedef unsigned long power_t;              // Power (Relay) type
 #define HLW_IREF_PULSE         3500         // was 1666us = 600Hz = 4.545A
 
 #define MQTT_RETRY_SECS        10           // Minimum seconds to retry MQTT connection
+#define GLOBAL_VALUES_VALID    300          // Max number of seconds to keep last received values
 #define APP_POWER              0            // Default saved power state Off
 #define WS2812_MAX_LEDS        512          // Max number of LEDs
 

@@ -92,7 +92,9 @@ void MqttSubscribeLib(char *topic)
 
 bool MqttPublishLib(const char* topic, boolean retained)
 {
-  return MqttClient.publish(topic, mqtt_data, retained);
+  bool result = MqttClient.publish(topic, mqtt_data, retained);
+  yield();  // #3313
+  return result;
 }
 
 void MqttLoop()
