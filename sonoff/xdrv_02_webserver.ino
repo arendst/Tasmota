@@ -39,7 +39,7 @@ const char HTTP_HEAD[] PROGMEM =
   "<title>{h} - {v}</title>"
 
   "<script>"
-  "var cn,x,lt;"
+  "var cn,x,lt,to,tp,pc='';"
   "cn=180;"
   "x=null;"                  // Allow for abortion
   "function eb(s){"
@@ -56,13 +56,17 @@ const char HTTP_HEAD[] PROGMEM =
     "eb('s1').value=l.innerText||l.textContent;"
     "eb('p1').focus();"
   "}"
-  "function la(p){"
-    "var a='';"
-    "if(la.arguments.length==1){"
-      "a=p;"
-      "clearTimeout(lt);"
+  "function lx(){"
+    "if(to==0){"
+      "if(tp<30){"
+        "tp++;"
+        "lt=setTimeout(lx,33);"    // Wait for token from server
+      "}else{"
+        "lt=setTimeout(la,1355);"  // Discard action and retry
+      "}"
+      "return;"
     "}"
-    "if(x!=null){x.abort();}"    // Abort if no response within 2 seconds (happens on restart 1)
+    "if(x!=null){x.abort();}"      // Abort if no response within 2 seconds (happens on restart 1)
     "x=new XMLHttpRequest();"
     "x.onreadystatechange=function(){"
       "if(x.readyState==4&&x.status==200){"
@@ -70,15 +74,31 @@ const char HTTP_HEAD[] PROGMEM =
         "eb('l1').innerHTML=s;"
       "}"
     "};"
-    "x.open('GET','ay'+a,true);"
-    "x.send();"
-    "lt=setTimeout(la,2345);"
+    "x.open('GET','ay?t='+to+pc,true);" // Async request
+    "x.send();"                    // Perform command if available and get updated information
+    "pc='';"
+    "lt=setTimeout(la,2345-(tp*33));"
+  "}"
+  "function la(p){"
+    "if(la.arguments.length==1){"
+      "pc='&'+p;"
+      "clearTimeout(lt);"
+    "}else{pc='';}"
+    "to=0;tp=0;"
+    "if(x!=null){x.abort();}"      // Abort if no response within 2 seconds (happens on restart 1)
+    "x=new XMLHttpRequest();"
+    "x.onreadystatechange=function(){"
+      "if(x.readyState==4&&x.status==200){to=x.responseText;}else{to=0;}"
+    "};"
+    "x.open('GET','az',true);"     // Async request
+    "x.send();"                    // Get token from server
+    "lx();"
   "}"
   "function lb(p){"
-    "la('?d='+p);"
+    "la('d='+p);"
   "}"
   "function lc(p){"
-    "la('?t='+p);"
+    "la('c='+p);"
   "}";
 
 const char HTTP_HEAD_STYLE[] PROGMEM =
@@ -315,7 +335,7 @@ const char HTTP_END[] PROGMEM =
   "</body>"
   "</html>";
 
-const char HTTP_DEVICE_CONTROL[] PROGMEM = "<td style='width:%d%%'><button onclick='la(\"?o=%d\");'>%s%s</button></td>";
+const char HTTP_DEVICE_CONTROL[] PROGMEM = "<td style='width:%d%%'><button onclick='la(\"o=%d\");'>%s%s</button></td>";
 const char HTTP_DEVICE_STATE[] PROGMEM = "%s<td style='width:%d{c}%s;font-size:%dpx'>%s</div></td>";  // {c} = %'><div style='text-align:center;font-weight:
 
 const char HDR_CTYPE_PLAIN[] PROGMEM = "text/plain";
@@ -339,6 +359,7 @@ uint8_t upload_progress_dot_count;
 uint8_t config_block_count = 0;
 uint8_t config_xor_on = 0;
 uint8_t config_xor_on_set = CONFIG_FILE_XOR;
+long ajax_token = 0;
 
 // Helper function to avoid code duplication (saves 4k Flash)
 static void WebGetArg(const char* arg, char* out, size_t max)
@@ -375,6 +396,7 @@ void StartWebserver(int type, IPAddress ipweb)
       WebServer->on("/cs", HandleConsole);
       WebServer->on("/ax", HandleAjaxConsoleRefresh);
       WebServer->on("/ay", HandleAjaxStatusRefresh);
+      WebServer->on("/az", HandleToken);
       WebServer->on("/u2", HTTP_OPTIONS, HandlePreflightRequest);
       WebServer->on("/cm", HandleHttpCommand);
       WebServer->on("/rb", HandleRestart);
@@ -590,7 +612,7 @@ void HandleRoot()
         if (idx > 0) { page += F("</tr><tr>"); }
         for (byte j = 0; j < 4; j++) {
           idx++;
-          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("<td style='width:25%'><button onclick='la(\"?k=%d\");'>%d</button></td>"), idx, idx);
+          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("<td style='width:25%'><button onclick='la(\"k=%d\");'>%d</button></td>"), idx, idx);
           page += mqtt_data;
         }
       }
@@ -605,10 +627,30 @@ void HandleRoot()
   }
 }
 
+void HandleToken()
+{
+  char token[11];
+
+  ajax_token = random(0x7FFFFFFF);
+  snprintf_P(token, sizeof(token), PSTR("%u"), ajax_token);
+  WebServer->send(200, FPSTR(HDR_CTYPE_HTML), token);
+}
+
 void HandleAjaxStatusRefresh()
 {
   char svalue[80];
   char tmp[100];
+
+  WebGetArg("t", tmp, sizeof(tmp));
+  char *p = tmp;
+  long ajax_token_received = strtol(p, &p, 10);
+  if (ajax_token_received != ajax_token) {
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR(D_FILE_NOT_FOUND));
+    SetHeader();
+    WebServer->send(404, FPSTR(HDR_CTYPE_PLAIN), mqtt_data);
+    return;
+  }
+  ajax_token = 0;
 
   WebGetArg("o", tmp, sizeof(tmp));
   if (strlen(tmp)) {
@@ -630,7 +672,7 @@ void HandleAjaxStatusRefresh()
     snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_DIMMER " %s"), tmp);
     ExecuteWebCommand(svalue, SRC_WEBGUI);
   }
-  WebGetArg("t", tmp, sizeof(tmp));
+  WebGetArg("c", tmp, sizeof(tmp));
   if (strlen(tmp)) {
     snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_COLORTEMPERATURE " %s"), tmp);
     ExecuteWebCommand(svalue, SRC_WEBGUI);
