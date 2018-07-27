@@ -915,15 +915,19 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, Settings.baudrate * 1200);
     }
-    else if ((CMND_SERIALSEND == command_code) && (index > 0) && (index <= 3)) {
+    else if ((CMND_SERIALSEND == command_code) && (index > 0) && (index <= 4)) {
       SetSeriallog(LOG_LEVEL_NONE);
       Settings.flag.mqtt_serial = 1;
+      Settings.flag.mqtt_serial_raw = (4 == index)?1:0;
       if (data_len > 0) {
         if (1 == index) {
           Serial.printf("%s\n", dataBuf);
         }
-        else if (2 == index) {
-          Serial.printf("%s", dataBuf);
+        else if (2 == index || 4 == index) {
+          for (int i=0; i<data_len; i++)
+          {
+            Serial.write(dataBuf[i]);
+          }
         }
         else if (3 == index) {
           uint16_t dat_len = data_len;
@@ -2176,7 +2180,7 @@ void SerialInput()
 #endif  // USE_ENERGY_SENSOR
 /*-------------------------------------------------------------------------------------------*/
 
-    if (serial_in_byte > 127) {                // binary data...
+    if (serial_in_byte > 127 && !Settings.flag.mqtt_serial_raw) { // binary data...
       serial_in_byte_counter = 0;
       Serial.flush();
       return;
@@ -2190,8 +2194,9 @@ void SerialInput()
         }
       }
     } else {
-      if (serial_in_byte) {
-        if ((serial_in_byte_counter < INPUT_BUFFER_SIZE -1) && (serial_in_byte != Settings.serial_delimiter)) {  // add char to string if it still fits
+      if (serial_in_byte || Settings.flag.mqtt_serial_raw) {
+        if ((serial_in_byte_counter < INPUT_BUFFER_SIZE -1) &&
+            ((serial_in_byte != Settings.serial_delimiter) || Settings.flag.mqtt_serial_raw)) {  // add char to string if it still fits
           serial_in_buffer[serial_in_byte_counter++] = serial_in_byte;
           serial_polling_window = millis();
         } else {
@@ -2231,7 +2236,15 @@ void SerialInput()
 
   if (Settings.flag.mqtt_serial && serial_in_byte_counter && (millis() > (serial_polling_window + SERIAL_POLLING))) {
     serial_in_buffer[serial_in_byte_counter] = 0;  // serial data completed
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_SERIALRECEIVED "\":\"%s\"}"), serial_in_buffer);
+    if (!Settings.flag.mqtt_serial_raw) {
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_SERIALRECEIVED "\":\"%s\"}"), serial_in_buffer);
+    } else {
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_SERIALRECEIVED "\":\""));
+      for (int i=0; i<serial_in_byte_counter; i++) {
+        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s%02x"), mqtt_data, serial_in_buffer[i]);
+      }
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s\"}"), mqtt_data);
+    }
     MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_SERIALRECEIVED));
 //    XdrvRulesProcess();
     serial_in_byte_counter = 0;
