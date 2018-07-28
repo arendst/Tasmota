@@ -436,6 +436,14 @@
 #define D_ENVIRONMENTAL_CONCENTRATION "PM"     // Environmetal Particle Matter
 #define D_PARTICALS_BEYOND "Particals"
 
+// xsns_32_mpu6050.ino
+#define D_AX_AXIS "Accel. X-Axis"
+#define D_AY_AXIS "Accel. Y-Axis"
+#define D_AZ_AXIS "Accel. Z-Axis"
+#define D_GX_AXIS "Gyro X-Axis"
+#define D_GY_AXIS "Gyro Y-Axis"
+#define D_GZ_AXIS "Gyro Z-Axis"
+
 // sonoff_template.h
 #define D_SENSOR_NONE     "None"
 #define D_SENSOR_DHT11    "DHT11"

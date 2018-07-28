@@ -1096,10 +1096,22 @@ void WifiBegin(uint8_t flag)
   AddLog(LOG_LEVEL_INFO);
 }
 
+void WifiState(uint8_t state)
+{
+  if (state == global_state.wifi_down) {
+    if (state) {
+      rules_flag.wifi_connected = 1;
+    } else {
+      rules_flag.wifi_disconnected = 1;
+    }
+  }
+  global_state.wifi_down = state ^1;
+}
+
 void WifiCheckIp()
 {
   if ((WL_CONNECTED == WiFi.status()) && (static_cast<uint32_t>(WiFi.localIP()) != 0)) {
-    global_state.wifi_down = 0;
+    WifiState(1);
     wifi_counter = WIFI_CHECK_SEC;
     wifi_retry = wifi_retry_init;
     AddLog_P((wifi_status != WL_CONNECTED) ? LOG_LEVEL_INFO : LOG_LEVEL_DEBUG_MORE, S_LOG_WIFI, PSTR(D_CONNECTED));
@@ -1111,7 +1123,7 @@ void WifiCheckIp()
     }
     wifi_status = WL_CONNECTED;
   } else {
-    global_state.wifi_down = 1;
+    WifiState(0);
     uint8_t wifi_config_tool = Settings.sta_config;
     wifi_status = WiFi.status();
     switch (wifi_status) {
@@ -1222,7 +1234,7 @@ void WifiCheck(uint8_t param)
         WifiCheckIp();
       }
       if ((WL_CONNECTED == WiFi.status()) && (static_cast<uint32_t>(WiFi.localIP()) != 0) && !wifi_config_type) {
-        global_state.wifi_down = 0;
+        WifiState(1);
 #ifdef BE_MINIMAL
         if (1 == RtcSettings.ota_loader) {
           RtcSettings.ota_loader = 0;
@@ -1258,7 +1270,7 @@ void WifiCheck(uint8_t param)
         }
 #endif  // USE_KNX
       } else {
-        global_state.wifi_down = 1;
+        WifiState(0);
 #if defined(USE_WEBSERVER) && defined(USE_EMULATION)
         UdpDisconnect();
 #endif  // USE_EMULATION

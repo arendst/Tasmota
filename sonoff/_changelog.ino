@@ -1,4 +1,7 @@
 /* 6.1.1c
+ * Add initial support for sensor MPU6050 (#3352)
+ * Add command SerialSend4 to send binary serial data (#3345)
+ * Add rule triggers Wifi#Connected and Wifi#Disconnected (#3359)
  * Fix unsecure main webpage update
  * Add Turkish language file (#3332)
  * Fix command TimeDst/TimeStd invalid JSON (#3322)
