@@ -48,7 +48,7 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t not_power_linked : 1;         // bit 20 (v5.11.1f)
     uint32_t no_power_on_check : 1;        // bit 21 (v5.11.1i)
     uint32_t mqtt_serial : 1;              // bit 22 (v5.12.0f)
-    uint32_t rules_enabled : 1;            // bit 23 (v5.12.0j) - free since v5.14.0b
+    uint32_t mqtt_serial_raw : 1;          // bit 23 (vTDB)
     uint32_t rules_once : 1;               // bit 24 (v5.12.0k) - free since v5.14.0b
     uint32_t knx_enabled : 1;              // bit 25 (v5.12.0l) KNX
     uint32_t device_index_enable : 1;      // bit 26 (v5.13.1a)
@@ -156,7 +156,7 @@ typedef union {
 typedef union {
   uint8_t data;
   struct {
-    uint8_t pinmode : 3;                    // Enable INPUT
+    uint8_t pinmode : 3;                   // Enable INPUT
     uint8_t pullup : 1;                    // Enable internal weak pull-up resistor
     uint8_t b4 : 1;
     uint8_t b5 : 1;
@@ -370,7 +370,7 @@ struct XDRVMAILBOX {
   char         *data;
 } XdrvMailbox;
 
-#define MAX_RULES_FLAG  5                  // Number of bits used in RulesBitfield (tricky I know...)
+#define MAX_RULES_FLAG  7                  // Number of bits used in RulesBitfield (tricky I know...)
 typedef union {                            // Restricted by MISRA-C Rule 18.4 but so usefull...
   uint16_t data;                           // Allow bit manipulation
   struct {
@@ -379,8 +379,8 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint16_t time_set : 1;
     uint16_t mqtt_connected : 1;
     uint16_t mqtt_disconnected : 1;
-    uint16_t spare05 : 1;
-    uint16_t spare06 : 1;
+    uint16_t wifi_connected : 1;
+    uint16_t wifi_disconnected : 1;
     uint16_t spare07 : 1;
     uint16_t spare08 : 1;
     uint16_t spare09 : 1;
