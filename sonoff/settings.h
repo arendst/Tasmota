@@ -155,7 +155,7 @@ typedef union {
 typedef union {
   uint8_t data;
   struct {
-    uint8_t pinmode : 3;                    // Enable INPUT
+    uint8_t pinmode : 3;                   // Enable INPUT
     uint8_t pullup : 1;                    // Enable internal weak pull-up resistor
     uint8_t b4 : 1;
     uint8_t b5 : 1;
@@ -369,7 +369,7 @@ struct XDRVMAILBOX {
   char         *data;
 } XdrvMailbox;
 
-#define MAX_RULES_FLAG  5                  // Number of bits used in RulesBitfield (tricky I know...)
+#define MAX_RULES_FLAG  7                  // Number of bits used in RulesBitfield (tricky I know...)
 typedef union {                            // Restricted by MISRA-C Rule 18.4 but so usefull...
   uint16_t data;                           // Allow bit manipulation
   struct {
@@ -378,8 +378,8 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint16_t time_set : 1;
     uint16_t mqtt_connected : 1;
     uint16_t mqtt_disconnected : 1;
-    uint16_t spare05 : 1;
-    uint16_t spare06 : 1;
+    uint16_t wifi_connected : 1;
+    uint16_t wifi_disconnected : 1;
     uint16_t spare07 : 1;
     uint16_t spare08 : 1;
     uint16_t spare09 : 1;
