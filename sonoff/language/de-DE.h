@@ -149,6 +149,12 @@
 #define D_SUNRISE "Sonnenaufgang"
 #define D_SUNSET "Sonnenuntergang"
 #define D_TEMPERATURE "Temperatur"
+#define D_AX_AXIS "Beschl. X-Achse"
+#define D_AY_AXIS "Beschl. Y-Achse"
+#define D_AZ_AXIS "Beschl. Z-Achse"
+#define D_GX_AXIS "Gyroskop X-Achse"
+#define D_GY_AXIS "Gyroskop Y-Achse"
+#define D_GZ_AXIS "Gyroskop Z-Achse"
 #define D_TO "zu"
 #define D_TOGGLE "An/Aus"
 #define D_TOPIC "topic"
@@ -475,6 +481,7 @@
 #define D_SENSOR_TM1638_CLK "TM16 CLK"
 #define D_SENSOR_TM1638_DIO "TM16 DIO"
 #define D_SENSOR_TM1638_STB "TM16 STB"
+#define D_SENSOR_MPU6050    "MPU6050"
 
 // Units
 #define D_UNIT_AMPERE "A"
