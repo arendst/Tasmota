@@ -138,12 +138,6 @@
 #define D_JSON_WRONG_PARAMETERS "Wrong parameters"
 #define D_JSON_YESTERDAY "Yesterday"
 #define D_JSON_ZERO_POINT_CALIBRATION "Zero Point Calibration"
-#define D_JSON_AXIS_AX "AccelXAxis"
-#define D_JSON_AXIS_AY "AccelYAxis"
-#define D_JSON_AXIS_AZ "AccelZAxis"
-#define D_JSON_AXIS_GX "GyroXAxis"
-#define D_JSON_AXIS_GY "GyroYAxis"
-#define D_JSON_AXIS_GZ "GyroZAxis"
 
 #define D_RSLT_ENERGY "ENERGY"
 #define D_RSLT_INFO "INFO"
@@ -529,12 +523,6 @@ const char HTTP_SNS_HUM[] PROGMEM = "%s{s}%s " D_HUMIDITY "{m}%s%%{e}";         
 const char HTTP_SNS_PRESSURE[] PROGMEM = "%s{s}%s " D_PRESSURE "{m}%s " D_UNIT_PRESSURE "{e}";               // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
 const char HTTP_SNS_SEAPRESSURE[] PROGMEM = "%s{s}%s " D_PRESSUREATSEALEVEL "{m}%s " D_UNIT_PRESSURE "{e}";  // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
 const char HTTP_SNS_ANALOG[] PROGMEM = "%s{s}%s " D_ANALOG_INPUT "%d{m}%d{e}";                               // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
-const char HTTP_SNS_AX_AXIS[] PROGMEM = "%s{s}%s " D_AX_AXIS "{m}%s{e}";                              // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
-const char HTTP_SNS_AY_AXIS[] PROGMEM = "%s{s}%s " D_AY_AXIS "{m}%s{e}";                              // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
-const char HTTP_SNS_AZ_AXIS[] PROGMEM = "%s{s}%s " D_AZ_AXIS "{m}%s{e}";                              // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
-const char HTTP_SNS_GX_AXIS[] PROGMEM = "%s{s}%s " D_GX_AXIS "{m}%s{e}";                              // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
-const char HTTP_SNS_GY_AXIS[] PROGMEM = "%s{s}%s " D_GY_AXIS "{m}%s{e}";                              // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
-const char HTTP_SNS_GZ_AXIS[] PROGMEM = "%s{s}%s " D_GZ_AXIS "{m}%s{e}";                              // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
 
 #if defined(USE_MHZ19) || defined(USE_SENSEAIR)
 const char HTTP_SNS_CO2[] PROGMEM = "%s{s}%s " D_CO2 "{m}%d " D_UNIT_PARTS_PER_MILLION "{e}";                // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>

@@ -18,7 +18,7 @@
 */
 
 #ifdef USE_I2C
-#ifdef USE_MPU_6050
+#ifdef USE_MPU6050
 /*********************************************************************************************\
  * MPU_6050 3 axis gyroscope and temperature sensor
  *
@@ -26,6 +26,8 @@
  *
  * I2C Address: 0x68 or 0x69 with AD0 HIGH
 \*********************************************************************************************/
+
+#define D_SENSOR_MPU6050 "MPU6050"
 
 #define MPU_6050_ADDR_AD0_LOW            0x68
 #define MPU_6050_ADDR_AD0_HIGH           0x69
@@ -85,6 +87,8 @@ void MPU_6050Detect()
     mpu6050.setAddr(MPU_6050_address);
     mpu6050.initialize();
 
+    Settings.flag2.axis_resolution = 2;  // Need to be services by command Sensor32
+
     MPU_6050_found = mpu6050.testConnection();
   }
 
@@ -94,6 +98,22 @@ void MPU_6050Detect()
     AddLog(LOG_LEVEL_DEBUG);
   }
 }
+
+#ifdef USE_WEBSERVER
+const char HTTP_SNS_AX_AXIS[] PROGMEM = "%s{s}%s " D_AX_AXIS "{m}%s{e}";                              // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
+const char HTTP_SNS_AY_AXIS[] PROGMEM = "%s{s}%s " D_AY_AXIS "{m}%s{e}";                              // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
+const char HTTP_SNS_AZ_AXIS[] PROGMEM = "%s{s}%s " D_AZ_AXIS "{m}%s{e}";                              // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
+const char HTTP_SNS_GX_AXIS[] PROGMEM = "%s{s}%s " D_GX_AXIS "{m}%s{e}";                              // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
+const char HTTP_SNS_GY_AXIS[] PROGMEM = "%s{s}%s " D_GY_AXIS "{m}%s{e}";                              // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
+const char HTTP_SNS_GZ_AXIS[] PROGMEM = "%s{s}%s " D_GZ_AXIS "{m}%s{e}";                              // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
+#endif // USE_WEBSERVER
+
+#define D_JSON_AXIS_AX "AccelXAxis"
+#define D_JSON_AXIS_AY "AccelYAxis"
+#define D_JSON_AXIS_AZ "AccelZAxis"
+#define D_JSON_AXIS_GX "GyroXAxis"
+#define D_JSON_AXIS_GY "GyroYAxis"
+#define D_JSON_AXIS_GZ "GyroZAxis"
 
 void MPU_6050Show(boolean json)
 {
@@ -183,5 +203,5 @@ boolean Xsns32(byte function)
   return result;
 }
 
-#endif // USE_MPU_6050
+#endif // USE_MPU6050
 #endif // USE_I2C
