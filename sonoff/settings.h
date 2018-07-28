@@ -114,8 +114,7 @@ typedef union {
     uint32_t spare10 : 1;
     uint32_t spare11 : 1;
     uint32_t spare12 : 1;
-    uint32_t spare13 : 1;
-    uint32_t spare14 : 1;
+    uint32_t axis_resolution : 2;
     uint32_t current_resolution : 2;
     uint32_t voltage_resolution : 2;
     uint32_t wattage_resolution : 2;
@@ -124,7 +123,6 @@ typedef union {
     uint32_t pressure_resolution : 2;
     uint32_t humidity_resolution : 2;
     uint32_t temperature_resolution : 2;
-    uint32_t axis_resolution : 2;
   };
 } SysBitfield2;
 
