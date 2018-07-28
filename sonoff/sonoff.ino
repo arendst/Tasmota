@@ -678,6 +678,7 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
               case 7:            // mqtt_switch_retain (CMND_SWITCHRETAIN)
               case 9:            // mqtt_sensor_retain (CMND_SENSORRETAIN)
               case 22:           // mqtt_serial (SerialSend and SerialLog)
+              case 23:           // mqtt_serial_raw (SerialSend)
               case 25:           // knx_enabled (Web config)
               case 27:           // knx_enable_enhancement (Web config)
                 ptype = 99;      // Command Error
@@ -918,14 +919,13 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
     else if ((CMND_SERIALSEND == command_code) && (index > 0) && (index <= 4)) {
       SetSeriallog(LOG_LEVEL_NONE);
       Settings.flag.mqtt_serial = 1;
-      Settings.flag.mqtt_serial_raw = (4 == index)?1:0;
+      Settings.flag.mqtt_serial_raw = (4 == index) ? 1 : 0;
       if (data_len > 0) {
         if (1 == index) {
           Serial.printf("%s\n", dataBuf);
         }
         else if (2 == index || 4 == index) {
-          for (int i=0; i<data_len; i++)
-          {
+          for (int i = 0; i < data_len; i++) {
             Serial.write(dataBuf[i]);
           }
         }
@@ -2240,7 +2240,7 @@ void SerialInput()
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_SERIALRECEIVED "\":\"%s\"}"), serial_in_buffer);
     } else {
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_SERIALRECEIVED "\":\""));
-      for (int i=0; i<serial_in_byte_counter; i++) {
+      for (int i = 0; i < serial_in_byte_counter; i++) {
         snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s%02x"), mqtt_data, serial_in_buffer[i]);
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s\"}"), mqtt_data);

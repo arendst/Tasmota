@@ -48,7 +48,7 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t not_power_linked : 1;         // bit 20 (v5.11.1f)
     uint32_t no_power_on_check : 1;        // bit 21 (v5.11.1i)
     uint32_t mqtt_serial : 1;              // bit 22 (v5.12.0f)
-    uint32_t mqtt_serial_raw : 1;          // bit 23 (vTDB)
+    uint32_t mqtt_serial_raw : 1;          // bit 23 (v6.1.1c)
     uint32_t rules_once : 1;               // bit 24 (v5.12.0k) - free since v5.14.0b
     uint32_t knx_enabled : 1;              // bit 25 (v5.12.0l) KNX
     uint32_t device_index_enable : 1;      // bit 26 (v5.13.1a)
