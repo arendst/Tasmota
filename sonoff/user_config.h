@@ -292,6 +292,7 @@
 //  #define USE_MCP230xx                           // Enable MCP23008/MCP23017 for GP INPUT ONLY (I2C addresses 0x20 - 0x27) providing command Sensor29 for configuration (+2k2 code)
 //  #define USE_MPR121                             // Enable MPR121 controller (I2C addresses 0x5A, 0x5B, 0x5C and 0x5D) in input mode for touch buttons (+1k3 code)
 //  #define USE_CCS811                             // Enable CCS811 sensor (I2C address 0x5A) (+2k2 code)
+  #define USE_MPU_6050				   // Enable MPU6050 sensor (I2C address 0x68 AD0 low or 0x69 AD0 high)
 #endif  // USE_I2C
 
 // -- SPI sensors ---------------------------------
