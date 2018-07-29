@@ -527,7 +527,18 @@ boolean RulesCommand()
           break;
         }
       } else {
-        strlcpy(Settings.rules[index -1], ('"' == XdrvMailbox.data[0]) ? "" : XdrvMailbox.data, sizeof(Settings.rules[index -1]));
+        int offset = 0;
+        if ('+' == XdrvMailbox.data[0]) {
+          offset = strlen(Settings.rules[index -1]);
+          if (XdrvMailbox.data_len < (sizeof(Settings.rules[index -1]) - offset -1)) {  // Check free space
+            XdrvMailbox.data[0] = ' ';  // Remove + and make sure at least one space is inserted
+          } else {
+            offset = -1;                // Not enough space so skip it
+          }
+        }
+        if (offset != -1) {
+          strlcpy(Settings.rules[index -1] + offset, ('"' == XdrvMailbox.data[0]) ? "" : XdrvMailbox.data, sizeof(Settings.rules[index -1]));
+        }
       }
       rules_triggers[index -1] = 0;  // Reset once flag
     }
