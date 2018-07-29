@@ -146,7 +146,7 @@ bool MCP230xx_CheckForInterrupt(void) {
             if ((intf >> intp) & 0x01) { // we know which pin caused interrupt
               report_int = 0;
               if (Settings.mcp230xx_config[intp+(mcp230xx_port*8)].pinmode > 1) {
-                switch (Settings.mcp230xx_config[+(mcp230xx_port*8)].pinmode) {
+                switch (Settings.mcp230xx_config[intp+(mcp230xx_port*8)].pinmode) {
                   case 2:
                     report_int = 1;
                     break;
