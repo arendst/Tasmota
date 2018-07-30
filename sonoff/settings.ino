@@ -286,8 +286,10 @@ void SettingsLoad()
   snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_CONFIG D_LOADED_FROM_FLASH_AT " %X, " D_COUNT " %d"), settings_location, Settings.save_flag);
   AddLog(LOG_LEVEL_DEBUG);
 
+#ifndef BE_MINIMAL
   if (bad_crc || (Settings.cfg_holder != (uint16_t)CFG_HOLDER)) { SettingsDefault(); }
   settings_crc = GetSettingsCrc();
+#endif  // BE_MINIMAL
 
   RtcSettingsLoad();
 }
