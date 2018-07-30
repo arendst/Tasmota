@@ -59,6 +59,7 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 \*********************************************************************************************/
 
 #ifdef USE_ALL_SENSORS
+
 #define USE_ADC_VCC                           // Display Vcc in Power status. Disable for use as Analog input on selected devices
 #define USE_DS18x20                           // For more than one DS18x20 sensors with id sort, single scan and read retry (+1k3 code)
 //#define USE_DS18x20_LEGACY                     // For more than one DS18x20 sensors with dynamic scan using library OneWire (+1k5 code)
@@ -79,6 +80,7 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #define USE_INA219                            // Add I2C code for INA219 Low voltage and current sensor (+1k code)
 #define USE_MGS                               // Add I2C code for Xadow and Grove Mutichannel Gas sensor using library Multichannel_Gas_Sensor (+10k code)
 //#define USE_APDS9960                          // Add I2C code for APDS9960 Proximity Sensor. Disables SHT and VEML6070 (+4k7 code)
+//#define USE_CCS811                            // Add I2C code for CCS811 sensor (+2k2 code)
 #define USE_MHZ19                             // Add support for MH-Z19 CO2 sensor (+2k code)
 #define USE_SENSEAIR                          // Add support for SenseAir K30, K70 and S8 CO2 sensor (+2k3 code)
 #ifndef CO2_LOW
@@ -166,6 +168,8 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 
 #undef USE_ENERGY_SENSOR                      // Disable energy sensors
 #undef USE_ARDUINO_OTA                        // Disable support for Arduino OTA
+#undef USE_WPS                                // Disable support for WPS as initial wifi configuration tool
+#undef USE_SMARTCONFIG                        // Disable support for Wifi SmartConfig as initial wifi configuration tool
 #undef USE_DOMOTICZ                           // Disable Domoticz
 #undef USE_HOME_ASSISTANT                     // Disable Home Assistant
 #undef USE_MQTT_TLS                           // Disable TLS support won't work as the MQTTHost is not set
@@ -205,6 +209,10 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 /*********************************************************************************************\
  * Mandatory defines satisfying possible disabled defines
 \*********************************************************************************************/
+
+#ifndef USE_WPS                               // See https://github.com/esp8266/Arduino/pull/4889
+#undef NO_EXTRA_4K_HEAP                       // Allocate 4k heap for WPS in ESP8166/Arduino core v2.4.2 (was always allocated in previous versions)
+#endif
 
 #ifndef SWITCH_MODE
 #define SWITCH_MODE            TOGGLE         // TOGGLE, FOLLOW or FOLLOW_INV (the wall switch state)

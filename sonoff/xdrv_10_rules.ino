@@ -253,7 +253,7 @@ bool RulesRuleMatch(byte rule_set, String &event, String &rule)
     }
   } else match = true;
 
-  if (Settings.flag.rules_once) {
+  if (bitRead(Settings.rule_once, rule_set)) {
     if (match) {                                       // Only allow match state changes
       if (!bitRead(rules_triggers[rule_set], rules_trigger_count[rule_set])) {
         bitSet(rules_triggers[rule_set], rules_trigger_count[rule_set]);
@@ -432,6 +432,8 @@ void RulesEvery50ms()
             case 2: snprintf_P(json_event, sizeof(json_event), PSTR("{\"Time\":{\"Set\":%d}}"), GetMinutesPastMidnight()); break;
             case 3: strncpy_P(json_event, PSTR("{\"MQTT\":{\"Connected\":1}}"), sizeof(json_event)); break;
             case 4: strncpy_P(json_event, PSTR("{\"MQTT\":{\"Disconnected\":1}}"), sizeof(json_event)); break;
+            case 5: strncpy_P(json_event, PSTR("{\"WIFI\":{\"Connected\":1}}"), sizeof(json_event)); break;
+            case 6: strncpy_P(json_event, PSTR("{\"WIFI\":{\"Disconnected\":1}}"), sizeof(json_event)); break;
           }
           if (json_event[0]) {
             RulesProcessEvent(json_event);
@@ -525,7 +527,18 @@ boolean RulesCommand()
           break;
         }
       } else {
-        strlcpy(Settings.rules[index -1], ('"' == XdrvMailbox.data[0]) ? "" : XdrvMailbox.data, sizeof(Settings.rules[index -1]));
+        int offset = 0;
+        if ('+' == XdrvMailbox.data[0]) {
+          offset = strlen(Settings.rules[index -1]);
+          if (XdrvMailbox.data_len < (sizeof(Settings.rules[index -1]) - offset -1)) {  // Check free space
+            XdrvMailbox.data[0] = ' ';  // Remove + and make sure at least one space is inserted
+          } else {
+            offset = -1;                // Not enough space so skip it
+          }
+        }
+        if (offset != -1) {
+          strlcpy(Settings.rules[index -1] + offset, ('"' == XdrvMailbox.data[0]) ? "" : XdrvMailbox.data, sizeof(Settings.rules[index -1]));
+        }
       }
       rules_triggers[index -1] = 0;  // Reset once flag
     }
@@ -557,44 +570,38 @@ boolean RulesCommand()
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, index, Settings.mems[index -1]);
   }
   else if ((CMND_ADD == command_code) && (index > 0) && (index <= RULES_MAX_VARS)) {
-    if ( XdrvMailbox.data_len > 0 ) {
+    if (XdrvMailbox.data_len > 0) {
       double tempvar = CharToDouble(vars[index -1]) + CharToDouble(XdrvMailbox.data);
-      dtostrfd(tempvar,2,vars[index -1]);
+      dtostrfd(tempvar, 2, vars[index -1]);
     }
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, index, vars[index -1]);
   }
   else if ((CMND_SUB == command_code) && (index > 0) && (index <= RULES_MAX_VARS)) {
-    if ( XdrvMailbox.data_len > 0 ){
+    if (XdrvMailbox.data_len > 0) {
       double tempvar = CharToDouble(vars[index -1]) - CharToDouble(XdrvMailbox.data);
-      dtostrfd(tempvar,2,vars[index -1]);
+      dtostrfd(tempvar, 2, vars[index -1]);
     }
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, index, vars[index -1]);
   }
   else if ((CMND_MULT == command_code) && (index > 0) && (index <= RULES_MAX_VARS)) {
-    if ( XdrvMailbox.data_len > 0 ){
+    if (XdrvMailbox.data_len > 0) {
       double tempvar = CharToDouble(vars[index -1]) * CharToDouble(XdrvMailbox.data);
-      dtostrfd(tempvar,2,vars[index -1]);
+      dtostrfd(tempvar, 2, vars[index -1]);
     }
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, index, vars[index -1]);
   }
   else if ((CMND_SCALE == command_code) && (index > 0) && (index <= RULES_MAX_VARS)) {
-    if ( XdrvMailbox.data_len > 0 ) {
+    if (XdrvMailbox.data_len > 0) {
       if (strstr(XdrvMailbox.data, ",")) {     // Process parameter entry
-        double value = 0;
-        double valueIN = 0;
-        double fromLow = 0;
-        double fromHigh = 0;
-        double toLow = 0;
-        double toHigh = 0;
+        char sub_string[XdrvMailbox.data_len +1];
 
-        valueIN = CharToDouble(subStr(XdrvMailbox.data, ",", 1));
-        fromLow = CharToDouble(subStr(XdrvMailbox.data, ",", 2));
-        fromHigh = CharToDouble(subStr(XdrvMailbox.data, ",", 3));
-        toLow = CharToDouble(subStr(XdrvMailbox.data, ",", 4));
-        toHigh = CharToDouble(subStr(XdrvMailbox.data, ",", 5));
-
-        value = map_double(valueIN, fromLow, fromHigh, toLow, toHigh);
-        dtostrfd(value,2,vars[index -1]);
+        double valueIN = CharToDouble(subStr(sub_string, XdrvMailbox.data, ",", 1));
+        double fromLow = CharToDouble(subStr(sub_string, XdrvMailbox.data, ",", 2));
+        double fromHigh = CharToDouble(subStr(sub_string, XdrvMailbox.data, ",", 3));
+        double toLow = CharToDouble(subStr(sub_string, XdrvMailbox.data, ",", 4));
+        double toHigh = CharToDouble(subStr(sub_string, XdrvMailbox.data, ",", 5));
+        double value = map_double(valueIN, fromLow, fromHigh, toLow, toHigh);
+        dtostrfd(value, 2, vars[index -1]);
       }
     }
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, index, vars[index -1]);
@@ -608,25 +615,6 @@ double map_double(double x, double in_min, double in_max, double out_min, double
 {
  return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 }
-
-// Function to return a substring defined by a delimiter at an index
-char* subStr (char* str, const char *delim, int index) {
-  char *act, *sub, *ptr;
-  static char copy[10];
-  int i;
-
-  // Since strtok consumes the first arg, make a copy
-  strcpy(copy, str);
-
-  for (i = 1, act = copy; i <= index; i++, act = NULL) {
-     sub = strtok_r(act, delim, &ptr);
-     if (sub == NULL) break;
-  }
-  sub = LTrim(sub);
-  sub = RTrim(sub);
-  return sub;
-}
-
 
 /*********************************************************************************************\
  * Interface

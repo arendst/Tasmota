@@ -17,6 +17,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#ifdef USE_SHUTTER   // +3.8k code
+
 Ticker TickerShutter;
 
 enum ShutterCommands {
@@ -183,7 +185,7 @@ boolean ShutterCommand()
         ExecuteCommandPower(Settings.shutter_startrelay[index-1]+1, 0, SRC_SHUTTER);
       }
     }
-    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, 1);
+    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, index);
   }
   else if ( CMND_CLOSE == command_code  && (index > 0) && (index <= shutters_present)) {
     if (Shutter_Real_Position[index-1] / Shutter_Close_Velocity[index-1] > 1 ) {
@@ -194,11 +196,11 @@ boolean ShutterCommand()
         ExecuteCommandPower(Settings.shutter_startrelay[index-1], 1, SRC_SHUTTER);
       }
     }
-    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, 1);
+    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, index);
   }
   else if (CMND_STOP == command_code && (index > 0) && (index <= shutters_present)) {
     Shutter_Target_Position[index-1] = Shutter_Real_Position[index-1];
-    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, 1);
+    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, index);
   }
   else if (CMND_POSITION == command_code && (index > 0) && (index <= shutters_present)) {
     Shutter_Target_Position[index-1] = XdrvMailbox.payload < 5 ?  m2[index-1] * XdrvMailbox.payload : m1[index-1] * XdrvMailbox.payload + b1[index-1];
@@ -332,3 +334,5 @@ boolean Xdrv97(byte function)
   }
   return result;
 }
+
+#endif

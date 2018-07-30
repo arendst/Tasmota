@@ -129,7 +129,7 @@ void CounterShow(boolean json)
         dtostrfd((double)RtcSettings.pulse_counter[i] / 1000, 3, counter);
       } else {
         dsxflg++;
-	//STB mode
+	//STB mod
         dtostrfd(RtcSettings.pulse_counter[i]/Settings.pulse_devider[i], 0, counter);
 	//end
       }

@@ -68,6 +68,7 @@ typedef unsigned long power_t;              // Power (Relay) type
 #define HLW_IREF_PULSE         3500         // was 1666us = 600Hz = 4.545A
 
 #define MQTT_RETRY_SECS        10           // Minimum seconds to retry MQTT connection
+#define GLOBAL_VALUES_VALID    300          // Max number of seconds to keep last received values
 #define APP_POWER              0            // Default saved power state Off
 #define WS2812_MAX_LEDS        512          // Max number of LEDs
 
@@ -111,11 +112,15 @@ typedef unsigned long power_t;              // Power (Relay) type
 #define SERIAL_POLLING         100          // Serial receive polling in ms
 #define MAX_STATUS             11           // Max number of status lines
 
+#define NO_EXTRA_4K_HEAP                    // Allocate 4k heap for WPS in ESP8166/Arduino core v2.4.2 (was always allocated in previous versions)
+
 /*
 // Removed from esp8266 core since 20171105
 #define min(a,b) ((a)<(b)?(a):(b))
 #define max(a,b) ((a)>(b)?(a):(b))
 */
+#define tmin(a,b) ((a)<(b)?(a):(b))
+#define tmax(a,b) ((a)>(b)?(a):(b))
 
 #define STR_HELPER(x) #x
 #define STR(x) STR_HELPER(x)
@@ -173,7 +178,7 @@ enum GetDateAndTimeOptions { DT_LOCAL, DT_UTC, DT_RESTART, DT_UPTIME };
 
 enum LoggingLevels {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG_MORE, LOG_LEVEL_ALL};
 
-enum WifiConfigOptions {WIFI_RESTART, WIFI_SMARTCONFIG, WIFI_MANAGER, WIFI_WPSCONFIG, WIFI_RETRY, WIFI_WAIT, MAX_WIFI_OPTION};
+enum WifiConfigOptions {WIFI_RESTART, WIFI_SMARTCONFIG, WIFI_MANAGER, WIFI_WPSCONFIG, WIFI_RETRY, WIFI_WAIT, WIFI_SERIAL, MAX_WIFI_OPTION};
 
 enum SwitchModeOptions {TOGGLE, FOLLOW, FOLLOW_INV, PUSHBUTTON, PUSHBUTTON_INV, PUSHBUTTONHOLD, PUSHBUTTONHOLD_INV, PUSHBUTTON_TOGGLE, MAX_SWITCH_OPTION};
 

@@ -290,8 +290,10 @@ void SettingsLoad()
   snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_CONFIG D_LOADED_FROM_FLASH_AT " %X, " D_COUNT " %d"), settings_location, Settings.save_flag);
   AddLog(LOG_LEVEL_DEBUG);
 
+#ifndef BE_MINIMAL
   if (bad_crc || (Settings.cfg_holder != (uint16_t)CFG_HOLDER)) { SettingsDefault(); }
   settings_crc = GetSettingsCrc();
+#endif  // BE_MINIMAL
 
   RtcSettingsLoad();
 }
@@ -765,7 +767,7 @@ void SettingsDelta()
     }
     if (Settings.version < 0x050E0002) {
       for (byte i = 1; i < MAX_RULE_SETS; i++) { Settings.rules[i][0] = '\0'; }
-      Settings.rule_enabled = Settings.flag.rules_enabled;
+      Settings.rule_enabled = Settings.flag.mqtt_serial_raw;
       Settings.rule_once = Settings.flag.rules_once;
     }
     if (Settings.version < 0x06000000) {
@@ -787,9 +789,12 @@ void SettingsDelta()
       }
     }
     if (Settings.version < 0x06000003) {
-      Settings.flag.rules_enabled = 0;
+      Settings.flag.mqtt_serial_raw = 0;
       Settings.flag.rules_once = 0;
       Settings.flag3.data = 0;
+    }
+    if (Settings.version < 0x06010103) {
+      Settings.flag3.timers_enable = 1;
     }
 
     Settings.version = VERSION;

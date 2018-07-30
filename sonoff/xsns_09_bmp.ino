@@ -459,6 +459,8 @@ void BmpRead()
 #endif  // USE_BME680
   }
   if (bmp_temperature != 0.0) { bmp_temperature = ConvertTemp(bmp_temperature); }
+
+  SetGlobalValues(bmp_temperature, bmp_humidity);
 }
 
 void BmpEverySecond()
