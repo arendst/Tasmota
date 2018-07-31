@@ -72,7 +72,7 @@ a_setoption = [[
     "Do not control Power with Dimmer",
     "Energy monitoring while powered off",
     "MQTT serial",
-    "Rules until 5.14.0b",
+    "MQTT serial binary",
     "Rules once mode until 5.14.0b",
     "KNX enabled",
     "Use Power device index on single relay devices",
@@ -121,7 +121,7 @@ a_features = [[
     "USE_SGP30","USE_SR04","USE_SDM120","USE_SI1145",
     "USE_SDM630","USE_LM75AD","USE_APDS9960","USE_TM1638"
     ],[
-    "","","","",
+    "USE_MCP230xx","USE_MPR121","USE_CCS811","USE_MPU6050",
     "","","","",
     "","","","",
     "","","","",
@@ -155,7 +155,7 @@ else:
     fp.close()
 
 def StartDecode():
-    print ("\n*** decode-status.py v20180725 by Theo Arends ***")
+    print ("\n*** decode-status.py v20180730 by Theo Arends ***")
 
 #    print("Decoding\n{}".format(obj))
 

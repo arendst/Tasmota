@@ -919,6 +919,19 @@ void GetFeatures()
 /*********************************************************************************************/
 
   feature_sns2 = 0x00000000;
+
+#ifdef USE_MCP230xx
+  feature_sns2 |= 0x00000001;  // xsns_29_mcp230xx.ino
+#endif
+#ifdef USE_MPR121
+  feature_sns2 |= 0x00000002;  // xsns_30_mpr121.ino
+#endif
+#ifdef USE_CCS811
+  feature_sns2 |= 0x00000004;  // xsns_31_ccs811.ino
+#endif
+#ifdef USE_MPU6050
+  feature_sns2 |= 0x00000008;  // xsns_32_mpu6050.ino
+#endif
 }
 
 /*********************************************************************************************\
