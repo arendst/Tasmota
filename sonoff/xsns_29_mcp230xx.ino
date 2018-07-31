@@ -58,61 +58,38 @@ uint8_t mcp230xx_addresses[] = { MCP230xx_ADDRESS1, MCP230xx_ADDRESS2, MCP230xx_
 uint8_t mcp230xx_pincount = 0;
 uint8_t mcp230xx_int_en = 0;
 
-const char MCP230XX_SENSOR_RESPONSE[] PROGMEM = "{\"Sensor29\":{\"D\":%i,\"MODE\":%i,\"PULL-UP\":%i}}";
+const char MCP230XX_SENSOR_RESPONSE[] PROGMEM = "{\"Sensor29\":{\"D\":%i,\"MODE\":%i,\"PULL-UP\":%i,\"STATE\":%i}}";
 
 uint8_t MCP230xx_readGPIO(uint8_t port) {
   return I2cRead8(mcp230xx_address, MCP230xx_GPIO + port);
 }
 
 void MCP230xx_ApplySettings(void) {
-  uint8_t reg_gppu = 0;
-  uint8_t reg_gpinten = 0;
-  uint8_t reg_iodir = 0xFF;
   uint8_t int_en = 0;
-  for (uint8_t idx = 0; idx < 8; idx++) {
-    switch (Settings.mcp230xx_config[idx].pinmode) {
-      case 0 ... 1:
-        reg_iodir |= (1 << idx);
-        break;
-      case 2 ... 4:
-        reg_iodir |= (1 << idx);
-        reg_gpinten |= (1 << idx);
-        int_en=1;
-        break;
-      default:
-        break;
-    }
-    if (Settings.mcp230xx_config[idx].pullup) {
-      reg_gppu |= (1 << idx);
-    }
-  }
-  I2cWrite8(mcp230xx_address, MCP230xx_GPPU, reg_gppu);
-  I2cWrite8(mcp230xx_address, MCP230xx_GPINTEN, reg_gpinten);
-  I2cWrite8(mcp230xx_address, MCP230xx_IODIR, reg_iodir);
-  if (mcp230xx_type == 2) { // We have a MCP23017
-    reg_gppu = 0;
-    reg_gpinten = 0;
-    reg_iodir = 0xFF;
-    for (uint8_t idx = 8; idx < 16; idx++) {
-      switch (Settings.mcp230xx_config[idx].pinmode) {
+  for (uint8_t mcp230xx_port=0;mcp230xx_port<mcp230xx_type;mcp230xx_port++) {
+    uint8_t reg_gppu = 0;
+    uint8_t reg_gpinten = 0;
+    uint8_t reg_iodir = 0xFF;
+    for (uint8_t idx = 0; idx < 8; idx++) {
+      switch (Settings.mcp230xx_config[idx+(mcp230xx_port*8)].pinmode) {
         case 0 ... 1:
-          reg_iodir |= (1 << idx - 8);
+          reg_iodir |= (1 << idx);
           break;
         case 2 ... 4:
-          reg_iodir |= (1 << idx - 8);
-          reg_gpinten |= (1 << idx - 8);
+          reg_iodir |= (1 << idx);
+          reg_gpinten |= (1 << idx);
           int_en=1;
           break;
         default:
           break;
       }
-      if (Settings.mcp230xx_config[idx].pullup) {
-        reg_gppu |= (1 << idx - 8);
+      if (Settings.mcp230xx_config[idx+(mcp230xx_port*8)].pullup) {
+        reg_gppu |= (1 << idx);
       }
     }
-    I2cWrite8(mcp230xx_address, MCP230xx_GPPU + 1, reg_gppu);
-    I2cWrite8(mcp230xx_address, MCP230xx_GPINTEN + 1, reg_gpinten);
-    I2cWrite8(mcp230xx_address, MCP230xx_IODIR + 1, reg_iodir);
+    I2cWrite8(mcp230xx_address, MCP230xx_GPPU+mcp230xx_port, reg_gppu);
+    I2cWrite8(mcp230xx_address, MCP230xx_GPINTEN+mcp230xx_port, reg_gpinten);
+    I2cWrite8(mcp230xx_address, MCP230xx_IODIR+mcp230xx_port, reg_iodir);
   }
   mcp230xx_int_en=int_en;
 }
@@ -161,48 +138,15 @@ bool MCP230xx_CheckForInterrupt(void) {
   uint8_t intf;
   uint8_t mcp230xx_intcap = 0;
   uint8_t report_int;
-
-  if (I2cValidRead8(&intf, mcp230xx_address, MCP230xx_INTF)) {
-    if (intf > 0) {
-      if (I2cValidRead8(&mcp230xx_intcap, mcp230xx_address, MCP230xx_INTCAP)) {
-        for (uint8_t intp = 0; intp < 8; intp++) {
-          if ((intf >> intp) & 0x01) { // we know which pin caused interrupt
-            report_int = 0;
-            if (Settings.mcp230xx_config[intp].pinmode > 1) {
-              switch (Settings.mcp230xx_config[intp].pinmode) {
-                case 2:
-                  report_int = 1;
-                  break;
-                case 3:
-                  if (((mcp230xx_intcap >> intp) & 0x01) == 0) report_int = 1; // Int on LOW
-                  break;
-                case 4:
-                  if (((mcp230xx_intcap >> intp) & 0x01) == 1) report_int = 1; // Int on HIGH
-                  break;
-                default:
-                  break;
-              }
-              if (report_int) {
-                snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_TIME "\":\"%s\""), GetDateAndTime(DT_LOCAL).c_str());
-                snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"MCP230XX_INT\":{\"Pin\":\"D%i\", \"State\":%i}"), mqtt_data, intp, ((mcp230xx_intcap >> intp) & 0x01));
-                snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}"), mqtt_data);
-                MqttPublishPrefixTopic_P(RESULT_OR_STAT, mqtt_data);
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-  if (mcp230xx_type == 2) { // We have a MCP23017 so we need to check the other 8 bits also
-    if (I2cValidRead8(&intf, mcp230xx_address, MCP230xx_INTF+1)) {
+  for (uint8_t mcp230xx_port=0;mcp230xx_port<mcp230xx_type;mcp230xx_port++) {
+    if (I2cValidRead8(&intf,mcp230xx_address,MCP230xx_INTF+mcp230xx_port)) {
       if (intf > 0) {
-        if (I2cValidRead8(&mcp230xx_intcap, mcp230xx_address, MCP230xx_INTCAP+1)) {
+        if (I2cValidRead8(&mcp230xx_intcap, mcp230xx_address, MCP230xx_INTCAP+mcp230xx_port)) {
           for (uint8_t intp = 0; intp < 8; intp++) {
             if ((intf >> intp) & 0x01) { // we know which pin caused interrupt
               report_int = 0;
-              if (Settings.mcp230xx_config[intp+8].pinmode > 1) { // change on INT
-                switch (Settings.mcp230xx_config[intp+8].pinmode) {
+              if (Settings.mcp230xx_config[intp+(mcp230xx_port*8)].pinmode > 1) {
+                switch (Settings.mcp230xx_config[intp+(mcp230xx_port*8)].pinmode) {
                   case 2:
                     report_int = 1;
                     break;
@@ -215,12 +159,12 @@ bool MCP230xx_CheckForInterrupt(void) {
                   default:
                     break;
                 }
-              }
-              if (report_int) {
-                snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_TIME "\":\"%s\""), GetDateAndTime(DT_LOCAL).c_str());
-                snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"MCP230XX_INT\":{\"Pin\":\"D%i\", \"State\":%i}"), mqtt_data, intp+8, ((mcp230xx_intcap >> intp) & 0x01));
-                snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}"), mqtt_data);
-                MqttPublishPrefixTopic_P(RESULT_OR_STAT, mqtt_data);
+                if (report_int) {
+                  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_TIME "\":\"%s\""), GetDateAndTime(DT_LOCAL).c_str());
+                  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"MCP230XX_INT\":{\"D%i\":%i}"), mqtt_data, intp+(mcp230xx_port*8), ((mcp230xx_intcap >> intp) & 0x01));
+                  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}"), mqtt_data);
+                  MqttPublishPrefixTopic_P(RESULT_OR_STAT, mqtt_data);
+                }
               }
             }
           }
@@ -234,16 +178,16 @@ void MCP230xx_Show(boolean json)
 {
   if (mcp230xx_type) {
     if (json) {
-      if (mcp230xx_type == 1) {
+      if (mcp230xx_type > 0) { // we have at least 8 pins
         uint8_t gpio = MCP230xx_readGPIO(0);
-        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"MCP23008\":{\"D0\":%i,\"D1\":%i,\"D2\":%i,\"D3\":%i,\"D4\":%i,\"D5\":%i,\"D6\":%i,\"D7\":%i}"),
+        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"MCP230XX\":{\"D0\":%i,\"D1\":%i,\"D2\":%i,\"D3\":%i,\"D4\":%i,\"D5\":%i,\"D6\":%i,\"D7\":%i"),
                    mqtt_data,(gpio>>0)&1,(gpio>>1)&1,(gpio>>2)&1,(gpio>>3)&1,(gpio>>4)&1,(gpio>>5)&1,(gpio>>6)&1,(gpio>>7)&1);
-      }
-      if (mcp230xx_type == 2) {
-        uint8_t gpio1 = MCP230xx_readGPIO(0);
-        uint8_t gpio2 = MCP230xx_readGPIO(1);
-        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"MCP23017\":{\"D0\":%i,\"D1\":%i,\"D2\":%i,\"D3\":%i,\"D4\":%i,\"D5\":%i,\"D6\":%i,\"D7\":%i,\"D8\":%i,\"D9\":%i,\"D10\":%i,\"D11\":%i,\"D12\":%i,\"D13\":%i,\"D14\":%i,\"D15\":%i}"),
-                   mqtt_data, (gpio1>>0)&1,(gpio1>>1)&1,(gpio1>>2)&1,(gpio1>>3)&1,(gpio1>>4)&1,(gpio1>>5)&1,(gpio1>>6)&1,(gpio1>>7)&1,(gpio2>>0)&1,(gpio2>>1)&1,(gpio2>>2)&1,(gpio2>>3)&1,(gpio2>>4)&1,(gpio2>>5)&1,(gpio2>>6)&1,(gpio2>>7)&1);
+        if (mcp230xx_type == 2) {
+          gpio = MCP230xx_readGPIO(1);
+          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"D8\":%i,\"D9\":%i,\"D10\":%i,\"D11\":%i,\"D12\":%i,\"D13\":%i,\"D14\":%i,\"D15\":%i"),
+                     mqtt_data,(gpio>>0)&1,(gpio>>1)&1,(gpio>>2)&1,(gpio>>3)&1,(gpio>>4)&1,(gpio>>5)&1,(gpio>>6)&1,(gpio>>7)&1);
+        }
+        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s%s"),mqtt_data,"}");
       }
     }
   }
@@ -265,7 +209,7 @@ bool MCP230xx_Command(void) {
       Settings.mcp230xx_config[pinx].b7=0;
     }
     MCP230xx_ApplySettings();
-    snprintf_P(mqtt_data, sizeof(mqtt_data), MCP230XX_SENSOR_RESPONSE,99,99,99);
+    snprintf_P(mqtt_data, sizeof(mqtt_data), MCP230XX_SENSOR_RESPONSE,99,99,99,99);
     return serviced;
   }
   _a = data.indexOf(",");
@@ -273,7 +217,10 @@ bool MCP230xx_Command(void) {
   if (pin < mcp230xx_pincount) {
     String cmnd = data.substring(_a+1);
     if (cmnd == "?") {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), MCP230XX_SENSOR_RESPONSE,pin,Settings.mcp230xx_config[pin].pinmode,Settings.mcp230xx_config[pin].pullup);
+      uint8_t port = 0;
+      if (pin > 7) port = 1;
+      uint8_t portdata = MCP230xx_readGPIO(port);
+      snprintf_P(mqtt_data, sizeof(mqtt_data), MCP230XX_SENSOR_RESPONSE,pin,Settings.mcp230xx_config[pin].pinmode,Settings.mcp230xx_config[pin].pullup,portdata>>(pin-(port*8))&1);
       return serviced;
     }
   }
@@ -286,7 +233,10 @@ bool MCP230xx_Command(void) {
         Settings.mcp230xx_config[pin].pinmode=pinmode;
         Settings.mcp230xx_config[pin].pullup=pullup;
         MCP230xx_ApplySettings();
-        snprintf_P(mqtt_data, sizeof(mqtt_data), MCP230XX_SENSOR_RESPONSE,pin,pinmode,pullup);
+        uint8_t port = 0;
+        if (pin > 7) port = 1;
+        uint8_t portdata = MCP230xx_readGPIO(port);
+        snprintf_P(mqtt_data, sizeof(mqtt_data), MCP230XX_SENSOR_RESPONSE,pin,pinmode,pullup,portdata>>(pin-(port*8))&1);
       } else {
         serviced = false;
       }
@@ -334,3 +284,4 @@ boolean Xsns29(byte function)
 
 #endif  // USE_MCP230xx
 #endif  // USE_I2C
+

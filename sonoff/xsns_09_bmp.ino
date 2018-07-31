@@ -460,8 +460,7 @@ void BmpRead()
   }
   if (bmp_temperature != 0.0) { bmp_temperature = ConvertTemp(bmp_temperature); }
 
-  glob_humidity = bmp_humidity;
-  glob_temperature = bmp_temperature;
+  SetGlobalValues(bmp_temperature, bmp_humidity);
 }
 
 void BmpEverySecond()

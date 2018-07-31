@@ -185,6 +185,8 @@ boolean HtuRead()
     htu_humidity = (-0.15) * (25 - htu_temperature) + htu_humidity;
   }
 
+  SetGlobalValues(htu_temperature, htu_humidity);
+
   htu_valid = SENSOR_MAX_MISS;
   return true;
 }
