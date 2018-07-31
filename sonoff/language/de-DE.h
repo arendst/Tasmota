@@ -227,7 +227,6 @@
 #define D_CONFIRM_RESTART "Wirklich neustarten?"
 
 #define D_CONFIGURE_MODULE "Gerät konfigurieren"
-#define D_CONFIGURE_MCP230XX "MCP230xx konfigurieren"
 #define D_CONFIGURE_WIFI "WLAN konfigurieren"
 #define D_CONFIGURE_MQTT "MQTT konfigurieren"
 #define D_CONFIGURE_DOMOTICZ "Domoticz konfigurieren"
@@ -436,6 +435,14 @@
 #define D_STANDARD_CONCENTRATION "CF-1 PM"     // Standard Particle CF-1 Particle Matter
 #define D_ENVIRONMENTAL_CONCENTRATION "PM"     // Environmetal Particle Matter
 #define D_PARTICALS_BEYOND "Particals"
+
+// xsns_32_mpu6050.ino
+#define D_AX_AXIS "Beschl. X-Achse"
+#define D_AY_AXIS "Beschl. Y-Achse"
+#define D_AZ_AXIS "Beschl. Z-Achse"
+#define D_GX_AXIS "Gyroskop X-Achse"
+#define D_GY_AXIS "Gyroskop Y-Achse"
+#define D_GZ_AXIS "Gyroskop Z-Achse"
 
 // sonoff_template.h
 #define D_SENSOR_NONE     "None"
