@@ -1,4 +1,5 @@
 /* 6.1.1c
+ * Fix sonoff-minimal from using default settings
  * Add option + to command Rule to concatenate new rule with existing rules (#3365)
  * Add initial support for sensor MPU6050 (#3352)
  * Add command SerialSend4 to send binary serial data (#3345)
