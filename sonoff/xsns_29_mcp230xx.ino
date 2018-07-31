@@ -58,7 +58,7 @@ uint8_t mcp230xx_addresses[] = { MCP230xx_ADDRESS1, MCP230xx_ADDRESS2, MCP230xx_
 uint8_t mcp230xx_pincount = 0;
 uint8_t mcp230xx_int_en = 0;
 
-const char MCP230XX_SENSOR_RESPONSE[] PROGMEM = "{\"Sensor29\":{\"D\":%i,\"MODE\":%i,\"PULL-UP\":%i}}";
+const char MCP230XX_SENSOR_RESPONSE[] PROGMEM = "{\"Sensor29\":{\"D\":%i,\"MODE\":%i,\"PULL-UP\":%i,\"STATE\":%i}}";
 
 uint8_t MCP230xx_readGPIO(uint8_t port) {
   return I2cRead8(mcp230xx_address, MCP230xx_GPIO + port);
@@ -209,7 +209,7 @@ bool MCP230xx_Command(void) {
       Settings.mcp230xx_config[pinx].b7=0;
     }
     MCP230xx_ApplySettings();
-    snprintf_P(mqtt_data, sizeof(mqtt_data), MCP230XX_SENSOR_RESPONSE,99,99,99);
+    snprintf_P(mqtt_data, sizeof(mqtt_data), MCP230XX_SENSOR_RESPONSE,99,99,99,99);
     return serviced;
   }
   _a = data.indexOf(",");
@@ -217,7 +217,10 @@ bool MCP230xx_Command(void) {
   if (pin < mcp230xx_pincount) {
     String cmnd = data.substring(_a+1);
     if (cmnd == "?") {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), MCP230XX_SENSOR_RESPONSE,pin,Settings.mcp230xx_config[pin].pinmode,Settings.mcp230xx_config[pin].pullup);
+      uint8_t port = 0;
+      if (pin > 7) port = 1;
+      uint8_t portdata = MCP230xx_readGPIO(port);
+      snprintf_P(mqtt_data, sizeof(mqtt_data), MCP230XX_SENSOR_RESPONSE,pin,Settings.mcp230xx_config[pin].pinmode,Settings.mcp230xx_config[pin].pullup,portdata>>(pin-(port*8))&1);
       return serviced;
     }
   }
@@ -230,7 +233,10 @@ bool MCP230xx_Command(void) {
         Settings.mcp230xx_config[pin].pinmode=pinmode;
         Settings.mcp230xx_config[pin].pullup=pullup;
         MCP230xx_ApplySettings();
-        snprintf_P(mqtt_data, sizeof(mqtt_data), MCP230XX_SENSOR_RESPONSE,pin,pinmode,pullup);
+        uint8_t port = 0;
+        if (pin > 7) port = 1;
+        uint8_t portdata = MCP230xx_readGPIO(port);
+        snprintf_P(mqtt_data, sizeof(mqtt_data), MCP230XX_SENSOR_RESPONSE,pin,pinmode,pullup,portdata>>(pin-(port*8))&1);
       } else {
         serviced = false;
       }
