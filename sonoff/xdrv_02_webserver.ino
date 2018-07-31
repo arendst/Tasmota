@@ -105,18 +105,18 @@ const char HTTP_HEAD[] PROGMEM =
   "}"
 //stb nod
   "function ld1(p){"
-    "la('?u1='+p);"
+    "la('u1='+p);"
   "}"
   "function ld2(p){"
-    "la('?u2='+p);"
+    "la('u2='+p);"
   "}"
   "function ld3(p){"
-    "la('?u3='+p);"
+    "la('u3='+p);"
   "}"
   "function ld4(p){"
-    "la('?u4='+p);"
+    "la('u4='+p);"
   "}";
-//end 
+//end
 
 const char HTTP_HEAD_STYLE[] PROGMEM =
   "</script>"
@@ -217,7 +217,7 @@ const char HTTP_MSG_SLIDER2[] PROGMEM =
 //stb mod
 const char HTTP_MSG_SLIDER3[] PROGMEM =
   "<div><span class='p'>" D_CLOSE "</span><span class='q'>" D_OPEN "</span></div>"
-  "<div><input type='range' min='0' max='100' value='%d' onchange='ld%d(value)'></div>"; 
+  "<div><input type='range' min='0' max='100' value='%d' onchange='ld%d(value)'></div>";
 //end
 const char HTTP_MSG_RSTRT[] PROGMEM =
   "<br/><div style='text-align:center;'>" D_DEVICE_WILL_RESTART "</div><br/>";
