@@ -201,7 +201,7 @@ enum SupportedModules {
   SONOFF_POW_R2,
   SONOFF_IFAN02,
   BLITZWOLF_BWSHP2,
-  FOXEL_DUAL_RF,
+  LIGHTFOX_DUAL,
   MAXMODULE };
 
 /********************************************************************************************/
@@ -265,7 +265,7 @@ const uint8_t kNiceList[MAXMODULE] PROGMEM = {
   AILIGHT,
   WEMOS,
   WITTY,
-  FOXEL_DUAL_RF
+  LIGHTFOX_DUAL
 };
 
 // Default module settings
@@ -887,7 +887,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_REL1,        // GPIO15 Relay (0 = Off, 1 = On)
      0, 0
   },
-  { "Foxel Dual RF",   // Foxel's Dual RF (ESP8266)
+  { "LightFox Dual",  // Foxel's LightFox Dual (ESP8266 + RF)
     0,
     GPIO_TXD,         // GPIO01 Relay control
     GPIO_USER,        // Currently connected to ATtiny

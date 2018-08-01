@@ -533,8 +533,8 @@ void SettingsDefaultSet2()
   Settings.flag2.temperature_resolution = TEMP_RESOLUTION;
 //  Settings.altitude = 0;
 
-  // Foxel Dual
-  SettingsDefaultSet_RF();
+  // LightFox Dual
+  SettingsDefaultSet_RFBinds();
 
   // Rules
 //  Settings.flag.rules_enabled = 0;
@@ -658,7 +658,7 @@ void SettingsDefaultSet_5_13_1c()
   SettingsResetDst();
 }
 
-void SettingsDefaultSet_RF()
+void SettingsDefaultSet_RFBinds()
 {
   for (byte i = 0; i < MAX_KEYS; i++) {
     Settings.rf_button_mask[i] = 0x00;
@@ -798,7 +798,7 @@ void SettingsDelta()
       Settings.flag3.timers_enable = 1;
     }
     if (Settings.version < 0x06010104) {
-      SettingsDefaultSet_RF();
+      SettingsDefaultSet_RFBinds();
     }
 
     Settings.version = VERSION;

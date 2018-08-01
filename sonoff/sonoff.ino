@@ -339,7 +339,7 @@ void SetDevicePower(power_t rpower, int source)
 
   XdrvSetPower(rpower);
 
-  if ((SONOFF_DUAL == Settings.module) || (CH4 == Settings.module) || (FOXEL_DUAL_RF == Settings.module)) {
+  if ((SONOFF_DUAL == Settings.module) || (CH4 == Settings.module) || (LIGHTFOX_DUAL == Settings.module)) {
     Serial.write(0xA0);
     Serial.write(0x04);
     Serial.write(rpower &0xFF);
@@ -1054,7 +1054,7 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_NVALUE, command, index, Settings.rf_button_mask[index-1]);
     }
-    else if ((CMND_RFBIND == command_code) && (FOXEL_DUAL_RF == Settings.module)) {
+    else if ((CMND_RFBIND == command_code) && (LIGHTFOX_DUAL == Settings.module)) {
       Serial.write(0xA0);
       Serial.write(0xF1);
       Serial.write(0x00);
@@ -1063,7 +1063,7 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
       Serial.flush();
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_COMMAND "\":\"" D_JSON_DONE "\"}"));
     }
-    else if ((CMND_RFCLEAR == command_code) && (FOXEL_DUAL_RF == Settings.module)) {
+    else if ((CMND_RFCLEAR == command_code) && (LIGHTFOX_DUAL == Settings.module)) {
       Serial.write(0xA0);
       Serial.write(0xF2);
       Serial.write(0x00);
@@ -1631,7 +1631,7 @@ void ButtonHandler()
           hold_time_extent = 1;
         }
       }
-    } else if (FOXEL_DUAL_RF == Settings.module) {
+    } else if (LIGHTFOX_DUAL == Settings.module) {
       button_present = 1;
       if (dual_button_code & Settings.rf_button_mask[button_index] & 0x0f) {
         button = PRESSED;
@@ -2161,9 +2161,9 @@ void SerialInput()
     serial_in_byte = Serial.read();
 
 /*-------------------------------------------------------------------------------------------*\
- * Sonoff dual, ch4 and foxel dual 19200 baud serial interface
+ * Sonoff dual, ch4 and LighFox dual 19200 baud serial interface
 \*-------------------------------------------------------------------------------------------*/
-    if ((SONOFF_DUAL == Settings.module) || (CH4 == Settings.module) || (FOXEL_DUAL_RF == Settings.module)) {
+    if ((SONOFF_DUAL == Settings.module) || (CH4 == Settings.module) || (LIGHTFOX_DUAL == Settings.module)) {
       if (dual_hex_code) {
         dual_hex_code--;
         if (dual_hex_code) {
@@ -2377,7 +2377,7 @@ void GpioInit()
     devices_present = 4;
     baudrate = 19200;
   }
-  else if (FOXEL_DUAL_RF == Settings.module) {
+  else if (LIGHTFOX_DUAL == Settings.module) {
     devices_present = 2;
     baudrate = 19200;
   }
