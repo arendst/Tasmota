@@ -164,6 +164,9 @@ bool MCP230xx_CheckForInterrupt(void) {
                   snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"MCP230XX_INT\":{\"D%i\":%i}"), mqtt_data, intp+(mcp230xx_port*8), ((mcp230xx_intcap >> intp) & 0x01));
                   snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}"), mqtt_data);
                   MqttPublishPrefixTopic_P(RESULT_OR_STAT, mqtt_data);
+                  char command[13];
+                  sprintf(command,"event MCPINTD%i=%i",intp+(mcp230xx_port*8),((mcp230xx_intcap >> intp) & 0x01));
+                  ExecuteCommand(command, SRC_RULE);
                 }
               }
             }
