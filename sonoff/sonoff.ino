@@ -2427,9 +2427,11 @@ void setup()
 {
   byte idx;
 
+
   Serial.begin(baudrate);
   delay(10);
   Serial.println();
+
   seriallog_level = LOG_LEVEL_INFO;  // Allow specific serial messages until config loaded
 
   snprintf_P(my_version, sizeof(my_version), PSTR("%d.%d.%d"), VERSION >> 24 & 0xff, VERSION >> 16 & 0xff, VERSION >> 8 & 0xff);
@@ -2543,6 +2545,7 @@ void setup()
 
   XdrvCall(FUNC_INIT);
   XsnsCall(FUNC_INIT);
+
 }
 
 void loop()
