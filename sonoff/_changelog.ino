@@ -1,4 +1,5 @@
 /* 6.1.1c
+ * Add message when JavaScript is not enabled in webbrowser (#3388)
  * Fix sonoff-minimal from using default settings
  * Add option + to command Rule to concatenate new rule with existing rules (#3365)
  * Add initial support for sensor MPU6050 (#3352)
