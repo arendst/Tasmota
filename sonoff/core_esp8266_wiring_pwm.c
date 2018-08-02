@@ -18,9 +18,9 @@
   License along with this library; if not, write to the Free Software
   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
-#include <core_version.h>
-#ifdef ARDUINO_ESP8266_RELEASE_2_3_0
-#warning **** Tasmota is using v2.4.0 wiring_pwm.c as planned ****
+//#include <core_version.h>
+//#ifdef ARDUINO_ESP8266_RELEASE_2_3_0
+//#warning **** Tasmota is using v2.4.0 wiring_pwm.c as planned ****
 
 #include "wiring_private.h"
 #include "pins_arduino.h"
@@ -224,4 +224,4 @@ extern void analogWrite(uint8_t pin, int val) __attribute__ ((weak, alias("__ana
 extern void analogWriteFreq(uint32_t freq) __attribute__ ((weak, alias("__analogWriteFreq")));
 extern void analogWriteRange(uint32_t range) __attribute__ ((weak, alias("__analogWriteRange")));
 
-#endif  // ARDUINO_ESP8266_RELEASE_2_3_0
+//#endif  // ARDUINO_ESP8266_RELEASE_2_3_0
