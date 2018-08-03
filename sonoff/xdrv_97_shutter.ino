@@ -22,9 +22,9 @@
 Ticker TickerShutter;
 
 enum ShutterCommands {
-  CMND_OPEN, CMND_CLOSE, CMND_STOP, CMND_POSITION, CMND_OPENTIME, CMND_CLOSETIME, CMND_SHUTTERRELAY, CMND_SET50PERCENT, CMND_SHUTTERSETCLOSE };
+  CMND_OPEN, CMND_CLOSE, CMND_STOP, CMND_POSITION, CMND_OPENTIME, CMND_CLOSETIME, CMND_SHUTTERRELAY, CMND_SET50PERCENT, CMND_SHUTTERSETCLOSE, CMND_SHUTTERINVERT };
 const char kShutterCommands[] PROGMEM =
-  D_CMND_OPEN "|" D_CMND_CLOSE "|" D_CMND_STOP "|" D_CMND_POSITION  "|" D_CMND_OPENTIME "|" D_CMND_CLOSETIME "|" D_CMND_SHUTTERRELAY "|" D_CMND_SET50PERCENT "|" D_CMND_SHUTTERSETCLOSE;
+  D_CMND_OPEN "|" D_CMND_CLOSE "|" D_CMND_STOP "|" D_CMND_POSITION  "|" D_CMND_OPENTIME "|" D_CMND_CLOSETIME "|" D_CMND_SHUTTERRELAY "|" D_CMND_SET50PERCENT "|" D_CMND_SHUTTERSETCLOSE "|" D_CMND_SHUTTERINVERT;
 
 
 const char JSON_SHUTTER_POS[] PROGMEM = "%s,\"%s-%d\":%d";                                  // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
@@ -79,7 +79,7 @@ void ShutterInit()
       Shutter_Real_Position[i] =   Settings.shutter_position[i] <= 5 ?  m2[i] * Settings.shutter_position[i] : m1[i] * Settings.shutter_position[i] + b1[i];
       Shutter_Start_Position[i] = Shutter_Real_Position[i];
 
-      snprintf_P(log_data, sizeof(log_data), PSTR("Shutter %d (Relay:%d): Init. Pos: %d [%d %%], Open Vel.: 100 Close Vel.: %d , Max Way: %d, Opentime %d [s], Closetime %d [s], Calc: m1: %d, b1 %d, m2: %d, binmask %d"), i, Settings.shutter_startrelay[i],Shutter_Real_Position[i],Settings.shutter_position[i],  Shutter_Close_Velocity[i] , Shutter_Open_Max[i], Shutter_Open_Time[i], Shutter_Close_Time[i],m1[i],b1[i],m2[i],shutter_mask);
+      snprintf_P(log_data, sizeof(log_data), PSTR("Shutter %d (Relay:%d): Init. Pos: %d [%d %%], Open Vel.: 100 Close Vel.: %d , Max Way: %d, Opentime %d [s], Closetime %d [s], Calc: m1: %d, b1 %d, m2: %d, binmask %d, is inverted %d"), i, Settings.shutter_startrelay[i],Shutter_Real_Position[i],Settings.shutter_position[i],  Shutter_Close_Velocity[i] , Shutter_Open_Max[i], Shutter_Open_Time[i], Shutter_Close_Time[i],m1[i],b1[i],m2[i],shutter_mask,Settings.shutter_invert[i]);
       AddLog(LOG_LEVEL_INFO);
     } else {
       // teminate loop at first INVALUD shutter.
@@ -202,8 +202,18 @@ boolean ShutterCommand()
     Shutter_Target_Position[index-1] = Shutter_Real_Position[index-1];
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, index);
   }
+  else if (CMND_SHUTTERINVERT == command_code && (index > 0) && (index <= shutters_present)) {
+    if ( (XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 1)) {
+      Settings.shutter_invert[index-1] = XdrvMailbox.payload;
+    }
+    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_NVALUE, command, index, XdrvMailbox.payload);
+  }
   else if (CMND_POSITION == command_code && (index > 0) && (index <= shutters_present)) {
+    // webgui still send also on inverted shutter the native position.
+    XdrvMailbox.payload = Settings.shutter_invert[index-1] &&  SRC_WEBGUI != last_source ? 100 - XdrvMailbox.payload : XdrvMailbox.payload;
     Shutter_Target_Position[index-1] = XdrvMailbox.payload < 5 ?  m2[index-1] * XdrvMailbox.payload : m1[index-1] * XdrvMailbox.payload + b1[index-1];
+    snprintf_P(log_data, sizeof(log_data), PSTR("lastsource %d: webgui:%d"), last_source,  SRC_WEBGUI);
+    AddLog(LOG_LEVEL_DEBUG);
 
     if ( (XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 100) && abs(Shutter_Target_Position[index-1] - Shutter_Real_Position[index-1] ) / Shutter_Close_Velocity[index-1] > 1) {
       int8_t new_shutterdirection = Shutter_Real_Position[index-1] < Shutter_Target_Position[index-1] ? 1 : -1;
@@ -230,9 +240,9 @@ boolean ShutterCommand()
           ExecuteCommandPower(Settings.shutter_startrelay[index-1] + (Shutter_Direction[index-1] == 1 ? 0 : 1), 1, SRC_SHUTTER);
         }
       }
-      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, XdrvMailbox.payload);
+      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_NVALUE, command, index,  Settings.shutter_invert[index-1] ? 100 - XdrvMailbox.payload : XdrvMailbox.payload);
     } else {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, Settings.shutter_position[index-1]);
+      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_NVALUE, command, index, Settings.shutter_invert[index-1]  ? 100 - Settings.shutter_position[index-1] : Settings.shutter_position[index-1]);
     }
   }
   else if (((CMND_OPENTIME == command_code) || (CMND_CLOSETIME == command_code) ) && (index > 0) && (index <= shutters_present) ) {
@@ -242,10 +252,10 @@ boolean ShutterCommand()
       } else {
         Settings.shutter_closetime[index-1] = XdrvMailbox.payload;
       }
-      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command,XdrvMailbox.payload);
+      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_NVALUE, command, index, XdrvMailbox.payload);
       ShutterInit();
     } else {
-        snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, (CMND_OPENTIME == command_code ? Settings.shutter_opentime[index-1] : Settings.shutter_closetime[index-1]));
+        snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_NVALUE, command, index, (CMND_OPENTIME == command_code ? Settings.shutter_opentime[index-1] : Settings.shutter_closetime[index-1]));
     }
   }
   else if ((CMND_SHUTTERRELAY == command_code) && (index > 0) && (index <= MAX_SHUTTERS)) {
@@ -266,18 +276,18 @@ boolean ShutterCommand()
   }
   else if (CMND_SET50PERCENT == command_code && (index > 0) && (index <= shutters_present)) {
       if ( (XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 100)) {
-        Settings.shutter_set50percent[index-1] = XdrvMailbox.payload;
+        Settings.shutter_set50percent[index-1] = Settings.shutter_invert[index-1] ? 100 - XdrvMailbox.payload : XdrvMailbox.payload;
         ShutterInit();
-        snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command,XdrvMailbox.payload);
+        snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_NVALUE, command, index, XdrvMailbox.payload);
       } else {
-        snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, Settings.shutter_set50percent[index-1]);
+        snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_NVALUE, command, index, Settings.shutter_set50percent[index-1]);
       }
   }
   else if (CMND_SHUTTERSETCLOSE == command_code && (index > 0) && (index <= shutters_present)) {
       Shutter_Real_Position[index-1] = 0;
       Shutter_StartInit(index-1, 0, 0);
       Settings.shutter_position[index-1] = 0;
-      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, D_CONFIGURATION_RESET);
+      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_NVALUE, command, index, D_CONFIGURATION_RESET);
   } else {
     serviced = false;  // Unknown command
   }
@@ -322,7 +332,7 @@ boolean Xdrv97(byte function)
         break;
       case FUNC_JSON_APPEND:
         for (byte i=0; i < shutters_present; i++) {
-          snprintf_P(mqtt_data, sizeof(mqtt_data), JSON_SHUTTER_POS, mqtt_data, D_SHUTTER, i, Settings.shutter_position[i]);
+          snprintf_P(mqtt_data, sizeof(mqtt_data), JSON_SHUTTER_POS, mqtt_data, D_SHUTTER, i+1, Settings.shutter_invert[i] ? 100 - Settings.shutter_position[i]: Settings.shutter_position[i]);
         }
         break;
       case FUNC_SET_POWER:

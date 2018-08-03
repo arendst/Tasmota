@@ -40,6 +40,7 @@
 #define D_CMND_INTERLOCKMASK "INTERLOCKMASK"
 #define D_CMND_SET50PERCENT "shutter50percent"
 #define D_CMND_SHUTTERSETCLOSE "shuttersetclose"
+#define D_CMND_SHUTTERINVERT "shutterinvert"
 //end
 
 /*************************** ATTENTION *******************************\

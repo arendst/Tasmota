@@ -96,7 +96,7 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
 // STB mod
     uint32_t shutter_mode : 1;
     uint32_t paired_interlock : 1;
-	
+
 // end
   };
 } SysBitfield3;
@@ -331,7 +331,8 @@ struct SYSCFG {
 
   char          rules[MAX_RULE_SETS][MAX_RULE_SIZE]; // 800 uses 512 bytes in v5.12.0m, 3 x 512 bytes in v5.14.0b
   //STB mod
-  byte          free_680[176];             // A80  give me some space to do configuration without override
+  byte          free_680[172];             // A80  give me some space to do configuration without override
+  uint8_t       shutter_invert[MAX_SHUTTERS];
   uint8_t       shutter_set50percent[MAX_SHUTTERS];
   power_t       interlock_mask;            // 32 bit array. 1 = relay effected by interlock 0 = relay not effected
   uint8_t       shutter_startrelay[MAX_SHUTTERS];

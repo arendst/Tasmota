@@ -413,6 +413,9 @@ void ShowWebSource(int source)
 void ExecuteWebCommand(char* svalue, int source)
 {
   ShowWebSource(source);
+  //STB mode
+  last_source = source;
+  //end
   ExecuteCommand(svalue, SRC_IGNORE);
 }
 
@@ -632,7 +635,7 @@ void HandleRoot()
       // stb mod
       if (Settings.flag3.shutter_mode) {
         for (byte i=0; i < shutters_present; i++) {
-          snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_MSG_SLIDER3,  Settings.shutter_position[i], i+1);
+          snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_MSG_SLIDER3, Settings.shutter_position[i], i+1);
           page += mqtt_data;
         }
       }
