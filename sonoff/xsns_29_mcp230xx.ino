@@ -196,25 +196,32 @@ void MCP230xx_Show(boolean json)
   }
 }
 
+void MCP230xx_Reset(uint8_t pinmode) {
+  uint8_t pullup = 0;
+  if ((pinmode > 1) && (pinmode < 5)) pullup=1;
+  for (uint8_t pinx=0;pinx<16;pinx++) {
+    Settings.mcp230xx_config[pinx].pinmode=pinmode;
+    Settings.mcp230xx_config[pinx].pullup=pullup;
+    Settings.mcp230xx_config[pinx].b4=0;
+    Settings.mcp230xx_config[pinx].b5=0;
+    Settings.mcp230xx_config[pinx].b6=0;
+    Settings.mcp230xx_config[pinx].b7=0;
+  }
+  MCP230xx_ApplySettings();
+  snprintf_P(mqtt_data, sizeof(mqtt_data), MCP230XX_SENSOR_RESPONSE,99,pinmode,pullup,99);
+}
+
 bool MCP230xx_Command(void) {
   boolean serviced = true;
   uint8_t _a, _b = 0;
   uint8_t pin, pinmode, pullup = 0;
   String data = XdrvMailbox.data;
   data.toUpperCase();
-  if (data == "RESET") { // we need to reset all pins to input
-    for (uint8_t pinx=0;pinx<16;pinx++) {
-      Settings.mcp230xx_config[pinx].pinmode=1;
-      Settings.mcp230xx_config[pinx].pullup=0;
-      Settings.mcp230xx_config[pinx].b4=0;
-      Settings.mcp230xx_config[pinx].b5=0;
-      Settings.mcp230xx_config[pinx].b6=0;
-      Settings.mcp230xx_config[pinx].b7=0;
-    }
-    MCP230xx_ApplySettings();
-    snprintf_P(mqtt_data, sizeof(mqtt_data), MCP230XX_SENSOR_RESPONSE,99,99,99,99);
-    return serviced;
-  }
+  if (data == "RESET") { MCP230xx_Reset(1); return serviced; }
+  if (data == "RESET1") { MCP230xx_Reset(1); return serviced; }
+  if (data == "RESET2") { MCP230xx_Reset(2); return serviced; }
+  if (data == "RESET3") { MCP230xx_Reset(3); return serviced; }
+  if (data == "RESET4") { MCP230xx_Reset(4); return serviced; }
   _a = data.indexOf(",");
   pin = data.substring(0, _a).toInt();
   if (pin < mcp230xx_pincount) {
