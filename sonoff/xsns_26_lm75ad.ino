@@ -48,10 +48,9 @@ uint8_t lm75ad_addresses[] = { LM75AD_ADDRESS1, LM75AD_ADDRESS2, LM75AD_ADDRESS3
 
 void LM75ADDetect()
 {
-  uint16_t buffer;
-
   if (lm75ad_type) { return; }
 
+  uint16_t buffer;
   for (byte i = 0; i < sizeof(lm75ad_addresses); i++) {
     lm75ad_address = lm75ad_addresses[i];
     if (I2cValidRead16(&buffer, lm75ad_address, LM75_THYST_REGISTER)) {
