@@ -162,6 +162,8 @@
 #define D_UTC_TIME "UTC"
 #define D_UV_INDEX "UV Index"
 #define D_UV_LEVEL "UV Szint"
+#define D_UVA_LEVEL "UVA Szint"
+#define D_UVB_LEVEL "UVB Szint"
 #define D_VERSION "Verzió"
 #define D_VOLTAGE "Feszültség"
 #define D_WARMLIGHT "Meleg"

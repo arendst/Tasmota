@@ -1,0 +1,69 @@
+#######################################
+# Syntax Coloring Map 
+#######################################
+
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+
+SparkFun_VEML6075_Arduino_Library	KEYWORD1
+VEML6075	KEYWORD1
+veml6075_t	KEYWORD1
+VEML6075_error_t	KEYWORD1
+veml6075_uv_it_t	KEYWORD1
+veml6075_hd_t	KEYWORD1
+veml6075_uv_trig_t	KEYWORD1
+veml6075_af_t	KEYWORD1
+VEML6075_shutdown_t	KEYWORD1
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+
+begin	KEYWORD2
+uva	KEYWORD2
+uvb	KEYWORD2
+rawUva	KEYWORD2
+rawUvb	KEYWORD2
+index	KEYWORD2
+uvComp1	KEYWORD2
+uvComp2	KEYWORD2
+visibleCompensation	KEYWORD2
+irCompensation	KEYWORD2
+isConnected	KEYWORD2
+setIntegrationTime	KEYWORD2
+getIntegrationTime	KEYWORD2
+setHighDynamic	KEYWORD2
+getHighDynamic	KEYWORD2
+setTrigger	KEYWORD2
+getTrigger	KEYWORD2
+setAutoForce	KEYWORD2
+getAutoForce	KEYWORD2
+powerOn	KEYWORD2
+shutdown	KEYWORD2
+getShutdown	KEYWORD2
+trigger	KEYWORD2
+
+#######################################
+# Constants (LITERAL1)
+#######################################
+
+IT_50MS	LITERAL1
+IT_100MS	LITERAL1
+IT_200MS	LITERAL1
+IT_400MS	LITERAL1
+IT_800MS	LITERAL1
+DYNAMIC_NORMAL	LITERAL1
+DYNAMIC_HIGH	LITERAL1
+NO_TRIGGER	LITERAL1
+TRIGGER_ONE_OR_UV_TRIG	LITERAL1
+AF_DISABLE	LITERAL1
+AF_ENABLE	LITERAL1
+POWER_ON	LITERAL1
+SHUT_DOWN	LITERAL1
+VEML6075_ERROR_READ	LITERAL1
+VEML6075_ERROR_WRITE	LITERAL1
+VEML6075_ERROR_INVALID_ADDRESS	LITERAL1
+VEML6075_ERROR_UNDEFINED	LITERAL1
+VEML6075_ERROR_SUCCESS	LITERAL1
+VEML6075_SUCCESS	LITERAL1

@@ -162,6 +162,8 @@
 #define D_UTC_TIME "UTC"
 #define D_UV_INDEX "紫外线指数"
 #define D_UV_LEVEL "紫外线水平"
+#define D_UVA_LEVEL "紫外光A"
+#define D_UVB_LEVEL "紫外光B"
 #define D_VERSION "版本"
 #define D_VOLTAGE "电压"
 #define D_WARMLIGHT "暖"

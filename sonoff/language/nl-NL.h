@@ -162,6 +162,8 @@
 #define D_UTC_TIME "UTC"
 #define D_UV_INDEX "UV-index"
 #define D_UV_LEVEL "UV niveau"
+#define D_UVA_LEVEL "UVA niveau"
+#define D_UVB_LEVEL "UVB niveau"
 #define D_VERSION "Versie"
 #define D_VOLTAGE "Spanning"
 #define D_WARMLIGHT "Warm"

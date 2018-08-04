@@ -73,6 +73,7 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #define USE_SGP30                             // Add I2C code for SGP30 sensor (+1k1 code)
 #define USE_BH1750                            // Add I2C code for BH1750 sensor (+0k5 code)
 #define USE_VEML6070                          // Add I2C code for VEML6070 sensor (+0k5 code)
+#define USE_VEML6075                          // Add I2C code for VEML6075 sensor (+k code)
 #define USE_TSL2561                           // Add I2C code for TSL2561 sensor using library Adafruit TSL2561 Arduino (+1k2 code)
 //#define USE_SI1145                            // Add I2C code for SI1145/46/47 sensor (+1k code)
 #define USE_ADS1115                           // Add I2C code for ADS1115 16 bit A/D converter based on Adafruit ADS1x15 library (no library needed) (+0k7 code)

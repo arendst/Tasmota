@@ -162,6 +162,8 @@
 #define D_UTC_TIME "UTC"
 #define D_UV_INDEX "UV Index"
 #define D_UV_LEVEL "紫外線等級"
+#define D_UVA_LEVEL "紫外線-A"
+#define D_UVB_LEVEL "紫外線-B"
 #define D_VERSION "版本"
 #define D_VOLTAGE "電壓"
 #define D_WARMLIGHT "暖"

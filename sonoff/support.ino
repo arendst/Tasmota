@@ -932,6 +932,9 @@ void GetFeatures()
 #ifdef USE_MPU6050
   feature_sns2 |= 0x00000008;  // xsns_32_mpu6050.ino
 #endif
+#ifdef USE_VEML6075
+  feature_sns2 |= 0x00020000;  // xsns_33_veml6075.ino
+#endif
 }
 
 /*********************************************************************************************\

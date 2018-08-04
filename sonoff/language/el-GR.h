@@ -162,6 +162,8 @@
 #define D_UTC_TIME "UTC"
 #define D_UV_INDEX "UV Index"
 #define D_UV_LEVEL "Επίπεδο UV"
+#define D_UVA_LEVEL "Επίπεδο UVA"
+#define D_UVB_LEVEL "Επίπεδο UVB"
 #define D_VERSION "Έκδοση"
 #define D_VOLTAGE "Τάση"
 #define D_WARMLIGHT "Ζεστό"

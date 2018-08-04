@@ -162,6 +162,8 @@
 #define D_UTC_TIME "UTC"
 #define D_UV_INDEX "UV Index"
 #define D_UV_LEVEL "УФ уровень"
+#define D_UVA_LEVEL "Ультрафиолет А"
+#define D_UVB_LEVEL "Ультрафиолет B"
 #define D_VERSION "Версия"
 #define D_VOLTAGE "Напряжение"
 #define D_WARMLIGHT "Тепло"

@@ -162,6 +162,8 @@
 #define D_UTC_TIME "UTC"
 #define D_UV_INDEX "UV Index"
 #define D_UV_LEVEL "úroveň UV"
+#define D_UVA_LEVEL "úroveň UVA"
+#define D_UVB_LEVEL "úroveň UVB"
 #define D_VERSION "Verze"
 #define D_VOLTAGE "Napětí"
 #define D_WARMLIGHT "Teplé světlo"

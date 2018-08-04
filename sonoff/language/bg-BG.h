@@ -162,6 +162,8 @@
 #define D_UTC_TIME "UTC"
 #define D_UV_INDEX "UV индекс"
 #define D_UV_LEVEL "Ниво на ултравиолетово излъчване"
+#define D_UVA_LEVEL "Ниво на ултравиолетово излъчване A"
+#define D_UVB_LEVEL "Ниво на ултравиолетово излъчване B"
 #define D_VERSION "Версия"
 #define D_VOLTAGE "Напрежение"
 #define D_WARMLIGHT "Топла"

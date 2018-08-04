@@ -129,6 +129,7 @@ Different firmware images are released based on Features and Sensors selection g
 | USE_SGP30                      | x | - | - | x | x |
 | USE_BH1750                     | x | x | - | x | x |
 | USE_VEML6070                   | - | - | - | - | x |
+| USE_VEML6075                   | - | - | - | - | x |
 | USE_TSL2561                    | - | - | - | - | x |
 | USE_SI1145                     | - | - | - | - | x |
 | USE_ADS1115                    | - | - | - | - | x |
