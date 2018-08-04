@@ -48,17 +48,19 @@ uint8_t lm75ad_addresses[] = { LM75AD_ADDRESS1, LM75AD_ADDRESS2, LM75AD_ADDRESS3
 
 void LM75ADDetect()
 {
-  uint8_t buffer;
+  uint16_t buffer;
 
   if (lm75ad_type) { return; }
 
   for (byte i = 0; i < sizeof(lm75ad_addresses); i++) {
     lm75ad_address = lm75ad_addresses[i];
-    if (I2cValidRead8(&buffer, lm75ad_address, LM75_CONF_REGISTER)) {
-      lm75ad_type = 1;
-      snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, "LM75AD", lm75ad_address);
-      AddLog(LOG_LEVEL_DEBUG);
-      break;
+    if (I2cValidRead16(&buffer, lm75ad_address, LM75_THYST_REGISTER)) {
+      if (buffer == 0x4B00) {
+        lm75ad_type = 1;
+        snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, "LM75AD", lm75ad_address);
+        AddLog(LOG_LEVEL_DEBUG);
+        break;
+      }
     }
   }
 }
