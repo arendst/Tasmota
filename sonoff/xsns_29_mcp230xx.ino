@@ -58,7 +58,7 @@ uint8_t mcp230xx_addresses[] = { MCP230xx_ADDRESS1, MCP230xx_ADDRESS2, MCP230xx_
 uint8_t mcp230xx_pincount = 0;
 uint8_t mcp230xx_int_en = 0;
 
-const char MCP230XX_SENSOR_RESPONSE[] PROGMEM = "{\"Sensor29\":{\"D\":%i,\"MODE\":%i,\"PULL-UP\":%i,\"STATE\":%i}}";
+const char MCP230XX_SENSOR_RESPONSE[] PROGMEM = "{\"Sensor29D%i\":{\"MODE\":%i,\"PULL-UP\":%i,\"STATE\":%i}}";
 
 uint8_t MCP230xx_readGPIO(uint8_t port) {
   return I2cRead8(mcp230xx_address, MCP230xx_GPIO + port);
