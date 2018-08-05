@@ -21,41 +21,76 @@
 
 #if defined(USE_I2C) || defined(USE_SPI)
 #ifdef USE_DISPLAY
-#ifdef USE_SD1306
+#ifdef USE_EPAPER
 
-#include <Wire.h>
-#include <Adafruit_GFX.h>
-#include <Adafruit_SSD1306.h>
+#include <epd2in9.h>
+#include <epdpaint.h>
+#include "imagedata.h"
 
-#define OLED_RESET 4
-Adafruit_SSD1306 display(OLED_RESET);
-
-#define NUMFLAKES 10
-#define XPOS 0
-#define YPOS 1
-#define DELTAY 2
-
-#define LOGO16_GLCD_HEIGHT 16
-#define LOGO16_GLCD_WIDTH  16
-
-
-#if (SSD1306_LCDHEIGHT != 64)
-#error("Height incorrect, please fix Adafruit_SSD1306.h!");
-#endif
-
+unsigned char image[(EPD_HEIGHT*EPD_WIDTH)/8];
+Paint paint(image,EPD_WIDTH,EPD_HEIGHT);    // width should be the multiple of 8
+Epd epd;
+sFONT *selected_font;
 
 void DisplayInit(void) {
-  // by default, we'll generate the high voltage from the 3.3v line internally! (neat!)
-  display.begin(SSD1306_SWITCHCAPVCC, 0x3C);  // initialize with the I2C addr 0x3D (for the 128x64)
-  // init done
-  // Show image buffer on the display hardware.
-  // Since the buffer is intialized with an Adafruit splashscreen
-  // internally, this will display the splashscreen.
-  display.display();
-  display.setTextSize(1);
-  display.setTextColor(WHITE,BLACK);
-  display.setCursor(0,0);
-  display.clearDisplay();
+  // init paper display
+  #define COLORED     0
+  #define UNCOLORED   1
+
+  if (pin[GPIO_SSPI_CS]<99) {
+    epd.cs_pin=pin[GPIO_SSPI_CS];
+  } else {
+    return;
+  }
+  if (pin[GPIO_SSPI_MOSI]<99) {
+    epd.mosi_pin=pin[GPIO_SSPI_MOSI];
+  } else {
+    return;
+  }
+  if (pin[GPIO_SSPI_SCLK]<99) {
+    epd.sclk_pin=pin[GPIO_SSPI_SCLK];
+  } else {
+    return;
+  }
+
+  epd.Init(lut_full_update);
+  epd.ClearFrameMemory(0xFF);   // bit set = white, bit reset = black
+  epd.DisplayFrame();
+  delay(3000);
+
+  epd.Init(lut_partial_update);
+
+  // Clear image memory
+  epd.ClearFrameMemory(0xFF);   // bit set = white, bit reset = black
+  epd.DisplayFrame();
+  delay(1000);
+
+
+  selected_font=&Font12;
+
+  // Welcome text
+  paint.SetRotate(ROTATE_90);
+  paint.Clear(UNCOLORED);
+  paint.DrawStringAt(50, 50, "Hello world!", selected_font, COLORED);
+  epd.SetFrameMemory(paint.GetImage(), 0, 0, paint.GetWidth(), paint.GetHeight());
+  epd.DisplayFrame();
+  delay(1000);
+
+/*
+  epd.SetFrameMemory(IMAGE_DATA);
+  epd.DisplayFrame();
+  Serial.println("Displayed image data");
+  delay(3000);
+*/
+
+  // Black screen
+  //epd.ClearFrameMemory(0);
+  //epd.DisplayFrame();
+  //Serial.println("Displayed black screen");
+  //delay(3000);
+
+  //epd.Sleep();
+
 }
 
 
@@ -99,7 +134,7 @@ boolean DisplayCommand() {
         char *cp=XdrvMailbox.data;
         uint8_t lpos,escape=0,var;
         int16_t lin=0,col=0,fill=0,temp;
-        uint8_t font_x=6,font_y=8,txtsize=1;
+        uint8_t font_x=6,font_y=8,fontnumber=1;
         char linebuf[80],*dp=linebuf;
         memset(linebuf,' ',sizeof(linebuf));
         linebuf[sizeof(linebuf)-1]=0;
@@ -124,9 +159,17 @@ boolean DisplayCommand() {
                 switch (*cp++) {
                   case 'z':
                     // clear display
-                    display.clearDisplay();
-                    display.display();
-                    display.setCursor(0,0);
+                    epd.Init(lut_partial_update);
+                    paint.Clear(UNCOLORED);
+                    epd.DisplayFrame();
+                    break;
+                  case 'Z':
+                    // clear display with full refresh
+                    epd.Init(lut_full_update);
+                    paint.Clear(UNCOLORED);
+                    epd.ClearFrameMemory(0xFF);   // bit set = white, bit reset = black
+                    epd.DisplayFrame();
+                    delay(3000);
                     break;
                   case 'x':
                     // set xpos
@@ -142,13 +185,13 @@ boolean DisplayCommand() {
                     // text line lxx
                     var=atoiv(cp,&lin);
                     cp+=var;
-                    display.setCursor(display.getCursorX(),(lin-1)*font_y*txtsize);
+                    //display.setCursor(display.getCursorX(),(lin-1)*font_y*txtsize);
                     break;
                   case 'c':
                     // text column cxx
                     var=atoiv(cp,&col);
                     cp+=var;
-                    display.setCursor((col-1)*font_x*txtsize,display.getCursorY());
+                    //display.setCursor((col-1)*font_x*txtsize,display.getCursorY());
                     break;
                   case 'p':
                     // pad field with spaces fxx
@@ -161,9 +204,9 @@ boolean DisplayCommand() {
                     var=atoiv(cp,&temp);
                     cp+=var;
                     if (temp<0) {
-                      display.writeFastHLine(xpos+temp,ypos,-temp,WHITE);
+                      paint.DrawHorizontalLine(xpos+temp,ypos,-temp,COLORED);
                     } else {
-                      display.writeFastHLine(xpos,ypos,temp,WHITE);
+                      paint.DrawHorizontalLine(xpos,ypos,temp,COLORED);
                     }
                     xpos+=temp;
                     break;
@@ -172,17 +215,23 @@ boolean DisplayCommand() {
                     var=atoiv(cp,&temp);
                     cp+=var;
                     if (temp<0) {
-                      display.writeFastVLine(xpos,ypos+temp,-temp,WHITE);
+                      paint.DrawVerticalLine(xpos,ypos+temp,-temp,COLORED);
                     } else {
-                      display.writeFastVLine(xpos,ypos,temp,WHITE);
+                      paint.DrawVerticalLine(xpos,ypos,temp,COLORED);
                     }
                     ypos+=temp;
                     break;
                   case 's':
-                    // size sx
-                    txtsize=*cp&7;
+                  case 'f':
+                    // size or font sx
+                    fontnumber=*cp&7;
+                    if (fontnumber==1) {
+                      selected_font=&Font12;
+                    } else {
+                      selected_font=&Font24;
+                    }
                     cp+=1;
-                    display.setTextSize(txtsize);
+                    //display.setTextSize(txtsize);
                     break;
                   default:
                     // unknown escape
@@ -197,12 +246,16 @@ boolean DisplayCommand() {
         // now draw buffer
         if (!fill) *dp=0;
         if (strlen(linebuf)) {
-          if (col==0 && lin==0) {
-            // use xpos,ypos
-            display.setCursor(xpos,ypos));
-          }
-          display.println(linebuf);
-          display.display();
+            if (col>0 && lin>0) {
+              // use col and lin
+              paint.DrawStringAt((col-1)*selected_font->Width,(lin-1)*selected_font->Height,linebuf,selected_font, COLORED);
+            } else {
+              // use xpos, ypos
+              paint.DrawStringAt(xpos,ypos,linebuf,selected_font, COLORED);
+            }
+            //selected_font=&Font12;
+            epd.SetFrameMemory(paint.GetImage(), 0, 0, paint.GetWidth(), paint.GetHeight());
+            epd.DisplayFrame();
         }
       } else {
         snprintf_P(XdrvMailbox.data, XdrvMailbox.data_len, PSTR("no Text"));
@@ -252,6 +305,6 @@ boolean Xdrv98(byte function)
   return result;
 }
 
-#endif  // USE_SD1306
+#endif  // USE_EPAPER
 #endif  // USE_DISPLAY
 #endif  // USE_I2C or USE_SPI

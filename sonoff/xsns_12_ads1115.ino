@@ -126,7 +126,7 @@ void Ads1115StartComparator(uint8_t channel, uint16_t mode)
   uint16_t config = mode |
                     ADS1115_REG_CONFIG_CQUE_NONE    | // Comparator enabled and asserts on 1 match
                     ADS1115_REG_CONFIG_CLAT_NONLAT  | // Non Latching mode
-                    ADS1115_REG_CONFIG_PGA_6_144V   | // ADC Input voltage range (Gain)
+                    ADS1115_REG_CONFIG_PGA_0_512V   | // ADC Input voltage range (Gain)
                     ADS1115_REG_CONFIG_CPOL_ACTVLOW | // Alert/Rdy active low   (default val)
                     ADS1115_REG_CONFIG_CMODE_TRAD   | // Traditional comparator (default val)
                     ADS1115_REG_CONFIG_DR_6000SPS;    // 6000 samples per second
