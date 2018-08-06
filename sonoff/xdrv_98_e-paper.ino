@@ -25,7 +25,7 @@
 
 #include <epd2in9.h>
 #include <epdpaint.h>
-#include "imagedata.h"
+
 
 unsigned char image[(EPD_HEIGHT*EPD_WIDTH)/8];
 Paint paint(image,EPD_WIDTH,EPD_HEIGHT);    // width should be the multiple of 8
@@ -53,11 +53,13 @@ void DisplayInit(void) {
     return;
   }
 
+  // whiten display with full update
   epd.Init(lut_full_update);
   epd.ClearFrameMemory(0xFF);   // bit set = white, bit reset = black
   epd.DisplayFrame();
   delay(3000);
 
+  // switch to partial update
   epd.Init(lut_partial_update);
 
   // Clear image memory
@@ -65,16 +67,17 @@ void DisplayInit(void) {
   epd.DisplayFrame();
   delay(1000);
 
-
   selected_font=&Font12;
 
   // Welcome text
   paint.SetRotate(ROTATE_90);
   paint.Clear(UNCOLORED);
-  paint.DrawStringAt(50, 50, "Hello world!", selected_font, COLORED);
+  paint.DrawStringAt(50, 50, "Waveshare E-Paper Display!", selected_font, COLORED);
   epd.SetFrameMemory(paint.GetImage(), 0, 0, paint.GetWidth(), paint.GetHeight());
   epd.DisplayFrame();
   delay(1000);
+
+  paint.Clear(UNCOLORED);
 
 /*
   epd.SetFrameMemory(IMAGE_DATA);
@@ -141,10 +144,24 @@ boolean DisplayCommand() {
 
         while (*cp) {
             if (!escape) {
-              // character copy
+              // check for escape
               if (*cp=='[') {
                 escape=1;
                 cp++;
+                // if string in buffer print it
+                if (strlen(linebuf)) {
+                    if (!fill) *dp=0;
+                    if (col>0 && lin>0) {
+                      // use col and lin
+                      paint.DrawStringAt((col-1)*selected_font->Width,(lin-1)*selected_font->Height,linebuf,selected_font, COLORED);
+                    } else {
+                      // use xpos, ypos
+                      paint.DrawStringAt(xpos,ypos,linebuf,selected_font, COLORED);
+                    }
+                    memset(linebuf,' ',sizeof(linebuf));
+                    linebuf[sizeof(linebuf)-1]=0;
+                    dp=linebuf;
+                }
               } else {
                 // copy chars
                 *dp++=*cp++;
@@ -221,6 +238,11 @@ boolean DisplayCommand() {
                     }
                     ypos+=temp;
                     break;
+                  case 'd':
+                    // force draw grafics buffer
+                    epd.SetFrameMemory(paint.GetImage(), 0, 0, paint.GetWidth(), paint.GetHeight());
+                    epd.DisplayFrame();
+                    break;
                   case 's':
                   case 'f':
                     // size or font sx
@@ -231,7 +253,6 @@ boolean DisplayCommand() {
                       selected_font=&Font24;
                     }
                     cp+=1;
-                    //display.setTextSize(txtsize);
                     break;
                   default:
                     // unknown escape
@@ -244,8 +265,8 @@ boolean DisplayCommand() {
         }
         exit:
         // now draw buffer
-        if (!fill) *dp=0;
         if (strlen(linebuf)) {
+            if (!fill) *dp=0;
             if (col>0 && lin>0) {
               // use col and lin
               paint.DrawStringAt((col-1)*selected_font->Width,(lin-1)*selected_font->Height,linebuf,selected_font, COLORED);
@@ -253,10 +274,11 @@ boolean DisplayCommand() {
               // use xpos, ypos
               paint.DrawStringAt(xpos,ypos,linebuf,selected_font, COLORED);
             }
-            //selected_font=&Font12;
-            epd.SetFrameMemory(paint.GetImage(), 0, 0, paint.GetWidth(), paint.GetHeight());
-            epd.DisplayFrame();
         }
+        // draw buffer
+        epd.SetFrameMemory(paint.GetImage(), 0, 0, paint.GetWidth(), paint.GetHeight());
+        epd.DisplayFrame();
+
       } else {
         snprintf_P(XdrvMailbox.data, XdrvMailbox.data_len, PSTR("no Text"));
       }

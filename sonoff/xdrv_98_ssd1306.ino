@@ -21,7 +21,7 @@
 
 #if defined(USE_I2C) || defined(USE_SPI)
 #ifdef USE_DISPLAY
-#ifdef USE_SD1306
+#ifdef USE_SSD1306
 
 #include <Wire.h>
 #include <Adafruit_GFX.h>
@@ -110,6 +110,18 @@ boolean DisplayCommand() {
               if (*cp=='[') {
                 escape=1;
                 cp++;
+                if (strlen(linebuf)) {
+                  if (!fill) *dp=0;
+                  if (col==0 && lin==0) {
+                    // use xpos,ypos
+                    display.setCursor(xpos,ypos));
+                  }
+                  display.println(linebuf);
+                  display.display();
+                  memset(linebuf,' ',sizeof(linebuf));
+                  linebuf[sizeof(linebuf)-1]=0;
+                  dp=linebuf;
+                }
               } else {
                 // copy chars
                 *dp++=*cp++;
@@ -195,8 +207,8 @@ boolean DisplayCommand() {
         }
         exit:
         // now draw buffer
-        if (!fill) *dp=0;
         if (strlen(linebuf)) {
+          if (!fill) *dp=0;
           if (col==0 && lin==0) {
             // use xpos,ypos
             display.setCursor(xpos,ypos));
@@ -252,6 +264,6 @@ boolean Xdrv98(byte function)
   return result;
 }
 
-#endif  // USE_SD1306
+#endif  // USE_SSD1306
 #endif  // USE_DISPLAY
 #endif  // USE_I2C or USE_SPI
