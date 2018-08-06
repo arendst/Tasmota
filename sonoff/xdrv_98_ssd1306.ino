@@ -1,7 +1,7 @@
 /*
   xdrv_98_sd1306.ino - EXPERIMENTAL display support for Sonoff-Tasmota
 
-  Copyright (C) 2018  Theo Arends
+  Copyright (C) 2018  Theo Arends, Gerhard Mutz and Adafruit
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -16,7 +16,7 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-  about 9.6k
+  about 9.1k
 */
 
 #if defined(USE_I2C) || defined(USE_SPI)
