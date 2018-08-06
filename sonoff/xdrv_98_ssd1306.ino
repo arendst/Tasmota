@@ -140,6 +140,9 @@ boolean DisplayCommand() {
                     display.display();
                     display.setCursor(0,0);
                     break;
+                  case 'i':
+                  case 'I':
+                    break;
                   case 'x':
                     // set xpos
                     var=atoiv(cp,&xpos);
@@ -191,6 +194,7 @@ boolean DisplayCommand() {
                     ypos+=temp;
                     break;
                   case 's':
+                  case 'f':
                     // size sx
                     txtsize=*cp&7;
                     cp+=1;

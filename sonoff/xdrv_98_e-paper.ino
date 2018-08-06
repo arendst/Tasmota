@@ -65,7 +65,7 @@ void DisplayInit(void) {
   // Clear image memory
   epd.ClearFrameMemory(0xFF);   // bit set = white, bit reset = black
   epd.DisplayFrame();
-  delay(1000);
+  delay(500);
 
   selected_font=&Font12;
 
@@ -176,15 +176,20 @@ boolean DisplayCommand() {
                 switch (*cp++) {
                   case 'z':
                     // clear display
+                    paint.Clear(UNCOLORED);
+                    break;
+                  case 'i':
+                    // init display with partial update
                     epd.Init(lut_partial_update);
                     paint.Clear(UNCOLORED);
                     epd.DisplayFrame();
+                    delay(500);
                     break;
-                  case 'Z':
-                    // clear display with full refresh
+                  case 'I':
+                    // init display with full refresh
                     epd.Init(lut_full_update);
                     paint.Clear(UNCOLORED);
-                    epd.ClearFrameMemory(0xFF);   // bit set = white, bit reset = black
+                    epd.ClearFrameMemory(0xFF);
                     epd.DisplayFrame();
                     delay(3000);
                     break;
