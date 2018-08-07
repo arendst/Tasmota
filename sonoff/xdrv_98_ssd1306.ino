@@ -194,17 +194,33 @@ boolean DisplayCommand() {
                     ypos+=temp;
                     break;
                   case 'k':
-                          // circle
-                        var=atoiv(cp,&temp);
-                        cp+=var;
-                        display.drawCircle(xpos,ypos,temp,WHITE);
-                        break;
-                    case 'K':
-                        // filled circle
-                        var=atoiv(cp,&temp);
-                        cp+=var;
-                        display.fillCircle(xpos,ypos,temp,WHITE);
-                        break;
+                    // circle
+                    var=atoiv(cp,&temp);
+                    cp+=var;
+                    display.drawCircle(xpos,ypos,temp,WHITE);
+                    break;
+                  case 'K':
+                    // filled circle
+                    var=atoiv(cp,&temp);
+                    cp+=var;
+                    display.fillCircle(xpos,ypos,temp,WHITE);
+                    break;
+                  case 'r':
+                    // rectangle
+                    var=atoiv(cp,&temp);
+                    cp+=var;
+                    var=atoiv(cp,&temp1);
+                    cp+=var;
+                    display.drawRect(xpos,ypos,temp,temp1,COLORED);
+                    break;
+                  case 'R':
+                    // filled rectangle
+                    var=atoiv(cp,&temp);
+                    cp+=var;
+                    var=atoiv(cp,&temp1);
+                    cp+=var;
+                    display.fillRect(xpos,ypos,temp,temp1,COLORED);
+                    break;
                   case 's':
                   case 'f':
                     // size sx

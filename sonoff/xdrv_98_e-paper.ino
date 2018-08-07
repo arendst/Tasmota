@@ -105,15 +105,17 @@ int16_t xpos,ypos;
 
 // get asci number until delimiter and return asci number lenght and value
 uint8_t atoiv(char *cp,int16_t *res) {
-  uint8_t count,index=0;
+  uint8_t index=0;
   *res=atoi(cp);
-  for (count=0; count<strlen(cp); count++) {
-    if (!isdigit(*cp) && (*cp!='-')) {
-      return index;
+  while (*cp) {
+    if ((*cp>='0' && *cp<='9') || (*cp=='-')) {
+      cp++;
+      index++;
+    } else {
+      break;
     }
-    cp++;
-    index++;
   }
+  return index;
 }
 
 boolean DisplayCommand() {
@@ -136,7 +138,7 @@ boolean DisplayCommand() {
         // xx:y:text
         char *cp=XdrvMailbox.data;
         uint8_t lpos,escape=0,var;
-        int16_t lin=0,col=0,fill=0,temp;
+        int16_t lin=0,col=0,fill=0,temp,temp1;
         uint8_t font_x=6,font_y=8,fontnumber=1;
         char linebuf[80],*dp=linebuf;
         memset(linebuf,' ',sizeof(linebuf));
@@ -245,17 +247,35 @@ boolean DisplayCommand() {
                     ypos+=temp;
                     break;
                   case 'k':
-                        // circle
-                      var=atoiv(cp,&temp);
-                      cp+=var;
-                      paint.DrawCircle(xpos,ypos,temp,COLORED);
-                      break;
+                    // circle
+                    var=atoiv(cp,&temp);
+                    cp+=var;
+                    paint.DrawCircle(xpos,ypos,temp,COLORED);
+                    break;
                   case 'K':
-                      // filled circle
-                      var=atoiv(cp,&temp);
-                      cp+=var;
-                      paint.DrawFilledCircle(xpos,ypos,temp,COLORED);
-                      break;
+                    // filled circle
+                    var=atoiv(cp,&temp);
+                    cp+=var;
+                    paint.DrawFilledCircle(xpos,ypos,temp,COLORED);
+                    break;
+                  case 'r':
+                    // rectangle
+                    var=atoiv(cp,&temp);
+                    cp+=var;
+                    cp++;
+                    var=atoiv(cp,&temp1);
+                    cp+=var;
+                    paint.DrawRectangle(xpos,ypos,temp,temp1,COLORED);
+                    break;
+                  case 'R':
+                    // filled rectangle
+                    var=atoiv(cp,&temp);
+                    cp+=var;
+                    cp++;
+                    var=atoiv(cp,&temp1);
+                    cp+=var;
+                    paint.DrawFilledRectangle(xpos,ypos,temp,temp1,COLORED);
+                    break;
                   case 'd':
                     // force draw grafics buffer
                     epd.SetFrameMemory(paint.GetImage(), 0, 0, paint.GetWidth(), paint.GetHeight());
