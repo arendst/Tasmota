@@ -141,6 +141,7 @@ boolean DisplayCommand() {
         char linebuf[80],*dp=linebuf;
         memset(linebuf,' ',sizeof(linebuf));
         linebuf[sizeof(linebuf)-1]=0;
+        *dp=0;
 
         while (*cp) {
             if (!escape) {
@@ -149,7 +150,7 @@ boolean DisplayCommand() {
                 escape=1;
                 cp++;
                 // if string in buffer print it
-                if (strlen(linebuf)) {
+                if ((uint32_t)dp-(uint32_t)linebuf) {
                     if (!fill) *dp=0;
                     if (col>0 && lin>0) {
                       // use col and lin
@@ -243,6 +244,18 @@ boolean DisplayCommand() {
                     }
                     ypos+=temp;
                     break;
+                  case 'k':
+                        // circle
+                      var=atoiv(cp,&temp);
+                      cp+=var;
+                      paint.DrawCircle(xpos,ypos,temp,COLORED);
+                      break;
+                  case 'K':
+                      // filled circle
+                      var=atoiv(cp,&temp);
+                      cp+=var;
+                      paint.DrawFilledCircle(xpos,ypos,temp,COLORED);
+                      break;
                   case 'd':
                     // force draw grafics buffer
                     epd.SetFrameMemory(paint.GetImage(), 0, 0, paint.GetWidth(), paint.GetHeight());
@@ -270,7 +283,7 @@ boolean DisplayCommand() {
         }
         exit:
         // now draw buffer
-        if (strlen(linebuf)) {
+        if ((uint32_t)dp-(uint32_t)linebuf) {
             if (!fill) *dp=0;
             if (col>0 && lin>0) {
               // use col and lin
