@@ -67,15 +67,17 @@ int16_t xpos,ypos;
 
 // get asci number until delimiter and return asci number lenght and value
 uint8_t atoiv(char *cp,int16_t *res) {
-  uint8_t count,index=0;
+  uint8_t index=0;
   *res=atoi(cp);
-  for (count=0; count<strlen(cp); count++) {
-    if (!isdigit(*cp) && (*cp!='-')) {
-      return index;
+  while (*cp) {
+    if ((*cp>='0' && *cp<='9') || (*cp=='-')) {
+      cp++;
+      index++;
+    } else {
+      break;
     }
-    cp++;
-    index++;
   }
+  return index;
 }
 
 boolean DisplayCommand() {
