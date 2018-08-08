@@ -339,9 +339,9 @@ boolean Xdrv98(byte function)
 
   switch (function) {
     case FUNC_PRE_INIT:
-      if (i2c_flg || spi_flg) {
+      //if (i2c_flg || spi_flg) {
         DisplayInit();
-      }
+      //}
       break;
     case FUNC_EVERY_50_MSECOND:
       //DisplayRefresh();

@@ -100,7 +100,7 @@ boolean DisplayCommand() {
         // xx:y:text
         char *cp=XdrvMailbox.data;
         uint8_t lpos,escape=0,var;
-        int16_t lin=0,col=0,fill=0,temp;
+        int16_t lin=0,col=0,fill=0,temp,temp1;
         uint8_t font_x=6,font_y=8,txtsize=1;
         char linebuf[80],*dp=linebuf;
         memset(linebuf,' ',sizeof(linebuf));
@@ -116,7 +116,7 @@ boolean DisplayCommand() {
                   if (!fill) *dp=0;
                   if (col==0 && lin==0) {
                     // use xpos,ypos
-                    display.setCursor(xpos,ypos));
+                    display.setCursor(xpos,ypos);
                   }
                   display.println(linebuf);
                   display.display();
@@ -213,7 +213,7 @@ boolean DisplayCommand() {
                     cp+=var;
                     var=atoiv(cp,&temp1);
                     cp+=var;
-                    display.drawRect(xpos,ypos,temp,temp1,COLORED);
+                    display.drawRect(xpos,ypos,temp,temp1,WHITE);
                     break;
                   case 'R':
                     // filled rectangle
@@ -221,7 +221,7 @@ boolean DisplayCommand() {
                     cp+=var;
                     var=atoiv(cp,&temp1);
                     cp+=var;
-                    display.fillRect(xpos,ypos,temp,temp1,COLORED);
+                    display.fillRect(xpos,ypos,temp,temp1,WHITE);
                     break;
                   case 's':
                   case 'f':
@@ -245,7 +245,7 @@ boolean DisplayCommand() {
           if (!fill) *dp=0;
           if (col==0 && lin==0) {
             // use xpos,ypos
-            display.setCursor(xpos,ypos));
+            display.setCursor(xpos,ypos);
           }
           display.println(linebuf);
           display.display();
