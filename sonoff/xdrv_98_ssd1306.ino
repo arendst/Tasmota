@@ -223,6 +223,10 @@ boolean DisplayCommand() {
                     cp+=var;
                     display.fillRect(xpos,ypos,temp,temp1,WHITE);
                     break;
+                  case 't':
+                    sprintf(dp,"%02d:%02d",RtcTime.hour,RtcTime.minute);
+                    dp+=5;
+                    break;
                   case 's':
                   case 'f':
                     // size sx

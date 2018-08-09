@@ -276,6 +276,10 @@ boolean DisplayCommand() {
                     cp+=var;
                     paint.DrawFilledRectangle(xpos,ypos,temp,temp1,COLORED);
                     break;
+                  case 't':
+                    sprintf(dp,"%02d:%02d",RtcTime.hour,RtcTime.minute);
+                    dp+=5;
+                    break;
                   case 'd':
                     // force draw grafics buffer
                     epd.SetFrameMemory(paint.GetImage(), 0, 0, paint.GetWidth(), paint.GetHeight());
