@@ -62,10 +62,10 @@ uint8_t mcp230xx_int_en = 0;
 uint16_t mcp230xx_tele_count = 0;
 #endif
 
-const char MCP230XX_SENSOR_RESPONSE[] PROGMEM = "{\"Sensor29D%i\":{\"MODE\":%i,\"PULL-UP\":%i,\"STATE\":%i}}";
+const char MCP230XX_SENSOR_RESPONSE[] PROGMEM = "{\"Sensor29-D%i\":{\"MODE\":%i,\"PULL-UP\":%i,\"STATE\":%i}}";
 
 #ifdef USE_MCP230xx_OUTPUT
-const char MCP230XX_CMND_RESPONSE[] PROGMEM = "{\"S29cmndD%i\":{\"C\":\"%s\",\"R\":%i}}";
+const char MCP230XX_CMND_RESPONSE[] PROGMEM = "{\"S29cmnd-D%i\":{\"C\":\"%s\",\"R\":%i}}";
 #endif // USE_MCP230xx_OUTPUT
 
 uint8_t MCP230xx_readGPIO(uint8_t port) {
