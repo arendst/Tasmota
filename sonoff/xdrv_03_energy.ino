@@ -398,14 +398,18 @@ bool CseSerialInput()
     }
   } else {
     if ((0x5A == serial_in_byte) && (serial_in_byte_counter)) {  // 0x5A - Packet header 2
-      if (serial_in_byte_counter > 1) {       // Sync buffer with data (issue #1907)
-        serial_in_buffer[0] = serial_in_buffer[--serial_in_byte_counter];
-        serial_in_byte_counter = 1;
-        AddLog_P(LOG_LEVEL_DEBUG, PSTR("CSE: Fixed out-of-sync"));
+      if ((0x55 == serial_in_buffer[serial_in_byte_counter -1]) ||
+          (0xAA == serial_in_buffer[serial_in_byte_counter -1]) ||
+          (serial_in_buffer[serial_in_byte_counter -1] > 0xF0)) {
+        if (serial_in_byte_counter > 1) {                        // Sync buffer with data (issue #1907 and #3425)
+          serial_in_buffer[0] = serial_in_buffer[--serial_in_byte_counter];
+          serial_in_byte_counter = 1;
+          AddLog_P(LOG_LEVEL_DEBUG, PSTR("CSE: Fixed out-of-sync"));
+        }
+        cse_receive_flag = 1;
+      } else {
+        serial_in_byte_counter = 0;
       }
-      cse_receive_flag = 1;
-    } else {
-      serial_in_byte_counter = 0;
     }
     serial_in_buffer[serial_in_byte_counter++] = serial_in_byte;
   }
