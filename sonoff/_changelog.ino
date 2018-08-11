@@ -1,4 +1,9 @@
 /* 6.1.1c
+ * Add iFan02 Fanspeed + and Fanspeed - command options (#3415)
+ * Fix some Pow R2 and S31 checksum errors (#3425)
+ * Change CounterType 1 from milliseconds to microseconds (#3437)
+ * Add output support on MCP23008/MCP23017 (#3436)
+ * Fix LM75AD I2C sensor detection (#3408)
  * Add message when JavaScript is not enabled in webbrowser (#3388)
  * Fix sonoff-minimal from using default settings
  * Add option + to command Rule to concatenate new rule with existing rules (#3365)
