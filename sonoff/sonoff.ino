@@ -527,6 +527,16 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
       return;
     }
     else if ((CMND_FANSPEED == command_code) && (SONOFF_IFAN02 == Settings.module)) {
+      if (data_len > 0) {
+        if ('-' == dataBuf[0]) {
+          payload = (int16_t)GetFanspeed() -1;
+          if (payload < 0) { payload = 3; }
+        }
+        else if ('+' == dataBuf[0]) {
+          payload = GetFanspeed() +1;
+          if (payload > 3) { payload = 0; }
+        }
+      }
       if ((payload >= 0) && (payload <= 3) && (payload != GetFanspeed())) {
         for (byte i = 0; i < 3; i++) {
           uint8_t state = kIFan02Speed[payload][i];
