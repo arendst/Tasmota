@@ -154,9 +154,9 @@ typedef union {
 typedef union {
   uint8_t data;
   struct {
-    uint8_t pinmode : 3;                   // Enable INPUT
+    uint8_t pinmode : 3;                   // Pin mode (1 through 5)
     uint8_t pullup : 1;                    // Enable internal weak pull-up resistor
-    uint8_t b4 : 1;
+    uint8_t saved_state : 1;               // Save output state, if used.
     uint8_t b5 : 1;
     uint8_t b6 : 1;
     uint8_t b7 : 1;

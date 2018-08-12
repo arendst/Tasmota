@@ -95,7 +95,7 @@ void MCP230xx_ApplySettings(void) {
         case 5:
           reg_iodir &= ~(1 << idx);
           if (Settings.flag.save_state) { // Firmware configuration wants us to use the last pin state
-            reg_portpins |= (Settings.mcp230xx_config[idx+(mcp230xx_port*8)].b4 << idx);
+            reg_portpins |= (Settings.mcp230xx_config[idx+(mcp230xx_port*8)].saved_state << idx);
           } else {
             if (Settings.mcp230xx_config[idx+(mcp230xx_port*8)].pullup) {
               reg_portpins |= (1 << idx);
@@ -128,11 +128,11 @@ void MCP230xx_ApplySettings(void) {
 
 void MCP230xx_Detect()
 {
-  uint8_t buffer;
-
   if (mcp230xx_type) {
     return;
   }
+
+  uint8_t buffer;
 
   for (byte i = 0; i < sizeof(mcp230xx_addresses); i++) {
     mcp230xx_address = mcp230xx_addresses[i];
@@ -243,7 +243,7 @@ void MCP230xx_SetOutPin(uint8_t pin,uint8_t pinstate) {
   }
   I2cWrite8(mcp230xx_address, MCP230xx_GPIO + port, portpins);
   if (Settings.flag.save_state) { // Firmware configured to save last known state in settings
-    Settings.mcp230xx_config[pin].b4=portpins>>(pin-(port*8))&1;
+    Settings.mcp230xx_config[pin].saved_state=portpins>>(pin-(port*8))&1;
   }
   switch (pinstate) {
     case 0:
@@ -269,7 +269,7 @@ void MCP230xx_Reset(uint8_t pinmode) {
   for (uint8_t pinx=0;pinx<16;pinx++) {
     Settings.mcp230xx_config[pinx].pinmode=pinmode;
     Settings.mcp230xx_config[pinx].pullup=pullup;
-    Settings.mcp230xx_config[pinx].b4=0;
+    Settings.mcp230xx_config[pinx].saved_state=0;
     Settings.mcp230xx_config[pinx].b5=0;
     Settings.mcp230xx_config[pinx].b6=0;
     Settings.mcp230xx_config[pinx].b7=0;
