@@ -1,6 +1,9 @@
-/* 6.1.1.4
+/* 6.1.1.5
+ * Fix some Pow R2 and S31 checksum errors using optimized re-sync
+ *
+ * 6.1.1.4
  * Change version representation from 1.1.1a to 1.1.1.1 for better change reference
- * 
+ *
  * 6.1.1c
  * Add iFan02 Fanspeed + and Fanspeed - command options (#3415)
  * Fix some Pow R2 and S31 checksum errors (#3425)
