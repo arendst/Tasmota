@@ -176,31 +176,17 @@ boolean ShutterCommand()
   if (-1 == command_code) {
     serviced = false;  // Unknown command
   }
-  else if ( (CMND_OPEN == command_code)  && (index > 0) && (index <= shutters_present)) {
-    if ((Shutter_Open_Max[index-1] - Shutter_Real_Position[index-1]) / 100 > 1 ) {
-      Shutter_StartInit(index-1, 1, Shutter_Open_Max[index-1]);
-
-      ExecuteCommandPower(Settings.shutter_startrelay[index-1], 1, SRC_SHUTTER);
-      if (!Settings.flag3.paired_interlock) {
-        ExecuteCommandPower(Settings.shutter_startrelay[index-1]+1, 0, SRC_SHUTTER);
-      }
-    }
-    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, index);
-  }
-  else if ( CMND_CLOSE == command_code  && (index > 0) && (index <= shutters_present)) {
-    if (Shutter_Real_Position[index-1] / Shutter_Close_Velocity[index-1] > 1 ) {
-      Shutter_StartInit(index-1, -1, 0);
-
-      ExecuteCommandPower(Settings.shutter_startrelay[index-1]+1, 1, SRC_SHUTTER);
-      if (!Settings.flag3.paired_interlock) {
-        ExecuteCommandPower(Settings.shutter_startrelay[index-1], 1, SRC_SHUTTER);
-      }
-    }
-    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, index);
+  else if ( ( (CMND_OPEN == command_code) || (CMND_CLOSE == command_code) ) && (index > 0) && (index <= shutters_present)) {
+    char svalue[80];
+    snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_POSITION "%d %d"), index, CMND_OPEN == command_code ? 100 : 0);
+    ExecuteWebCommand(svalue, SRC_WEBGUI);
   }
   else if (CMND_STOP == command_code && (index > 0) && (index <= shutters_present)) {
-    Shutter_Target_Position[index-1] = Shutter_Real_Position[index-1];
-    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, index);
+    char svalue[80];
+    Settings.shutter_position[index-1] = m2[index-1] * 5 > Shutter_Real_Position[index-1] ? Shutter_Real_Position[index-1] / m2[index-1] : (Shutter_Real_Position[index-1]-b1[index-1]) / m1[index-1];
+
+    snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_POSITION "%d %d"), index, Settings.shutter_position[index-1]);
+    ExecuteWebCommand(svalue, SRC_SHUTTER);
   }
   else if (CMND_SHUTTERINVERT == command_code && (index > 0) && (index <= shutters_present)) {
     if ( (XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 1)) {
@@ -290,6 +276,8 @@ boolean ShutterCommand()
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_NVALUE, command, index, D_CONFIGURATION_RESET);
   } else {
     serviced = false;  // Unknown command
+    snprintf_P(log_data, sizeof(log_data), PSTR("Shutter unknown"));
+    AddLog(LOG_LEVEL_INFO);
   }
   return serviced;
 }
