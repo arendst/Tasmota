@@ -104,6 +104,9 @@ enum UserSelectablePins {
   GPIO_TM16CLK,        // TM1638 Clock
   GPIO_TM16DIO,        // TM1638 Data I/O
   GPIO_TM16STB,        // TM1638 Strobe
+  GPIO_SSPI_CS,
+  GPIO_SSPI_MOSI,
+  GPIO_SSPI_SCLK,
   GPIO_SENSOR_END };
 
 // Programmer selectable GPIO functionality offset by user selectable GPIOs
