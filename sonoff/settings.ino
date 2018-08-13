@@ -225,20 +225,20 @@ void SettingsSave(byte rotate)
  * stop_flash_rotate 1 = Allow only eeprom flash slot use (SetOption12 1)
  */
 #ifndef BE_MINIMAL
-  uint16_t crc = GetSettingsCrc();
-  if (1 == rotate) {   // Use eeprom flash slot only and disable flash rotate from now on (upgrade)
-    stop_flash_rotate = 1;
-  }
-  if ((2 == rotate) || stop_flash_rotate) {
-    if((settings_location != SETTINGS_LOCATION) || crc != settings_crc){
-      settings_location = SETTINGS_LOCATION + 1;
-      crc ^= 255;
+  if ((GetSettingsCrc() != settings_crc) || rotate) {
+    if (1 == rotate) {   // Use eeprom flash slot only and disable flash rotate from now on (upgrade)
+      stop_flash_rotate = 1;
     }
-  }
-  if(crc != settings_crc) {
-    settings_location--;
-    if (settings_location <= (SETTINGS_LOCATION - CFG_ROTATES)) {
+    if (2 == rotate) {   // Use eeprom flash slot and erase next flash slots if stop_flash_rotate is off (default)
+      settings_location = SETTINGS_LOCATION +1;
+    }
+    if (stop_flash_rotate) {
       settings_location = SETTINGS_LOCATION;
+    } else {
+      settings_location--;
+      if (settings_location <= (SETTINGS_LOCATION - CFG_ROTATES)) {
+        settings_location = SETTINGS_LOCATION;
+      }
     }
     Settings.save_flag++;
     Settings.cfg_size = sizeof(SYSCFG);
