@@ -20,6 +20,6 @@
 #ifndef _SONOFF_VERSION_H_
 #define _SONOFF_VERSION_H_
 
-#define VERSION  0x06010105
+#define VERSION  0x06010106
 
 #endif  // _SONOFF_VERSION_H_
