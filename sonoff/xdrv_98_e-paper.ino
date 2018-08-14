@@ -78,44 +78,6 @@ void DisplayInit(void) {
   delay(1000);
 
   paint.Clear(UNCOLORED);
-
-/*
-  epd.SetFrameMemory(IMAGE_DATA);
-  epd.DisplayFrame();
-  Serial.println("Displayed image data");
-  delay(3000);
-*/
-
-  // Black screen
-  //epd.ClearFrameMemory(0);
-  //epd.DisplayFrame();
-  //Serial.println("Displayed black screen");
-  //delay(3000);
-
-  //epd.Sleep();
-
-}
-
-
-enum DisplayCommands { CMND_DISP_TEXT };
-const char kDisplayCommands[] PROGMEM = D_CMND_DISP_TEXT ;
-#define D_CMND_DISPLAY "Display"
-const char S_JSON_DISPLAY_COMMAND_VALUE[] PROGMEM =        "{\"" D_CMND_DISPLAY "%s\":\"%s\"}";
-int16_t xpos,ypos;
-
-// get asci number until delimiter and return asci number lenght and value
-uint8_t atoiv(char *cp,int16_t *res) {
-  uint8_t index=0;
-  *res=atoi(cp);
-  while (*cp) {
-    if ((*cp>='0' && *cp<='9') || (*cp=='-')) {
-      cp++;
-      index++;
-    } else {
-      break;
-    }
-  }
-  return index;
 }
 
 boolean DisplayCommand() {
@@ -331,43 +293,7 @@ boolean DisplayCommand() {
 
   return serviced;
 }
-/*********************************************************************************************\
- * Interface
-\*********************************************************************************************/
 
-#define XDRV_98
-
-boolean Xdrv98(byte function)
-{
-  boolean result = false;
-
-  switch (function) {
-    case FUNC_PRE_INIT:
-      //if (i2c_flg || spi_flg) {
-        DisplayInit();
-      //}
-      break;
-    case FUNC_EVERY_50_MSECOND:
-      //DisplayRefresh();
-      break;
-    case FUNC_COMMAND:
-      result = DisplayCommand();
-      break;
-    case FUNC_MQTT_SUBSCRIBE:
-      //DisplayMqttSubscribe();
-      break;
-    case FUNC_MQTT_DATA:
-      //result = DisplayMqttData();
-      break;
-    case FUNC_SET_POWER:
-      //DisplaySetPower();
-      break;
-    case FUNC_SHOW_SENSOR:
-      //DisplayLocalSensor();
-      break;
-  }
-  return result;
-}
 
 #endif  // USE_EPAPER
 #endif  // USE_DISPLAY

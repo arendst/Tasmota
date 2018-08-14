@@ -59,27 +59,6 @@ void DisplayInit(void) {
 }
 
 
-enum DisplayCommands { CMND_DISP_TEXT };
-const char kDisplayCommands[] PROGMEM = D_CMND_DISP_TEXT ;
-#define D_CMND_DISPLAY "Display"
-const char S_JSON_DISPLAY_COMMAND_VALUE[] PROGMEM =        "{\"" D_CMND_DISPLAY "%s\":\"%s\"}";
-int16_t xpos,ypos;
-
-// get asci number until delimiter and return asci number lenght and value
-uint8_t atoiv(char *cp,int16_t *res) {
-  uint8_t index=0;
-  *res=atoi(cp);
-  while (*cp) {
-    if ((*cp>='0' && *cp<='9') || (*cp=='-')) {
-      cp++;
-      index++;
-    } else {
-      break;
-    }
-  }
-  return index;
-}
-
 boolean DisplayCommand() {
   char command [CMDSZ];
   boolean serviced = true;
@@ -112,7 +91,7 @@ boolean DisplayCommand() {
               if (*cp=='[') {
                 escape=1;
                 cp++;
-                if (strlen(linebuf)) {
+                if ((uint32_t)dp-(uint32_t)linebuf) {
                   if (!fill) *dp=0;
                   if (col==0 && lin==0) {
                     // use xpos,ypos
@@ -245,7 +224,7 @@ boolean DisplayCommand() {
         }
         exit:
         // now draw buffer
-        if (strlen(linebuf)) {
+        if ((uint32_t)dp-(uint32_t)linebuf) {
           if (!fill) *dp=0;
           if (col==0 && lin==0) {
             // use xpos,ypos
@@ -264,43 +243,7 @@ boolean DisplayCommand() {
 
   return serviced;
 }
-/*********************************************************************************************\
- * Interface
-\*********************************************************************************************/
 
-#define XDRV_98
-
-boolean Xdrv98(byte function)
-{
-  boolean result = false;
-
-  switch (function) {
-    case FUNC_PRE_INIT:
-      if (i2c_flg || spi_flg) {
-        DisplayInit();
-      }
-      break;
-    case FUNC_EVERY_50_MSECOND:
-      //DisplayRefresh();
-      break;
-    case FUNC_COMMAND:
-      result = DisplayCommand();
-      break;
-    case FUNC_MQTT_SUBSCRIBE:
-      //DisplayMqttSubscribe();
-      break;
-    case FUNC_MQTT_DATA:
-      //result = DisplayMqttData();
-      break;
-    case FUNC_SET_POWER:
-      //DisplaySetPower();
-      break;
-    case FUNC_SHOW_SENSOR:
-      //DisplayLocalSensor();
-      break;
-  }
-  return result;
-}
 
 #endif  // USE_SSD1306
 #endif  // USE_DISPLAY
