@@ -202,10 +202,7 @@ void Adafruit_SSD1306::begin(uint8_t vccstate, uint8_t i2caddr, bool reset) {
   }
   else
   {
-<<<<<<< HEAD
 
-=======
->>>>>>> arendst/development
     // I2C Init
     Wire.begin();
 #ifdef __SAM3X8E__
