@@ -1,5 +1,5 @@
 /*
-  xdrv_98_sd1306.ino - EXPERIMENTAL display support for Sonoff-Tasmota
+  xdrv_98_sh1306.ino - EXPERIMENTAL display support for Sonoff-Tasmota
 
   Copyright (C) 2018  Theo Arends, Gerhard Mutz and Adafruit
 
@@ -29,14 +29,14 @@
 
 #if defined(USE_I2C) || defined(USE_SPI)
 #ifdef USE_DISPLAY
-#ifdef USE_SSD1306
+#ifdef USE_SH1106
 
 #include <Wire.h>
 #include <Adafruit_GFX.h>
-#include <Adafruit_SSD1306.h>
+#include <Adafruit_SH1106.h>
 
 #define OLED_RESET 4
-Adafruit_SSD1306 display(OLED_RESET);
+Adafruit_SH1106 display(OLED_RESET);
 
 #define NUMFLAKES 10
 #define XPOS 0
@@ -47,7 +47,7 @@ Adafruit_SSD1306 display(OLED_RESET);
 #define LOGO16_GLCD_WIDTH  16
 
 
-#if (SSD1306_LCDHEIGHT != 64)
+#if (SH1106_LCDHEIGHT != 64)
 #error("Height incorrect, please fix Adafruit_SSD1306.h!");
 #endif
 
@@ -55,7 +55,7 @@ uint8_t font_x=6,font_y=8,txtsize=1;
 
 void DisplayInit(void) {
   // by default, we'll generate the high voltage from the 3.3v line internally! (neat!)
-  display.begin(SSD1306_SWITCHCAPVCC, 0x3c);  // initialize with the I2C addr 0x3D (for the 128x64)
+  display.begin(SH1106_SWITCHCAPVCC, 0x3c);  // initialize with the I2C addr 0x3D (for the 128x64)
   // init done
   // Show image buffer on the display hardware.
   // Since the buffer is intialized with an Adafruit splashscreen
@@ -123,6 +123,6 @@ void DrawStringAt(uint16_t x,uint16_t y,char *str,uint8_t flag) {
 }
 
 
-#endif  // USE_SSD1306
+#endif  // USE_SH1106
 #endif  // USE_DISPLAY
 #endif  // USE_I2C or USE_SPI
