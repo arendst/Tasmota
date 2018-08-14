@@ -423,7 +423,7 @@ void MCP230xx_OutputTelemetry(void) {
     for (uint8_t pinx = 0;pinx < mcp230xx_pincount;pinx++) {
       if (Settings.mcp230xx_config[pinx].pinmode >= 5) {
         sprintf(stt,ConvertNumTxt(((gpiototal>>pinx)&1),Settings.mcp230xx_config[pinx].pinmode));
-        snprintf_P(mqtt_data,sizeof(mqtt_data), PSTR("%s\"OUT_D%i\":%s,"),mqtt_data,pinx,stt);
+        snprintf_P(mqtt_data,sizeof(mqtt_data), PSTR("%s\"OUT_D%i\":\"%s\","),mqtt_data,pinx,stt);
       }
     }
     snprintf_P(mqtt_data,sizeof(mqtt_data),PSTR("%s\"END\":1}}"),mqtt_data);
