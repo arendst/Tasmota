@@ -2,7 +2,7 @@
  *  @filename   :   epd2in9.h
  *  @brief      :   Header file for e-paper display library epd2in9.cpp
  *  @author     :   Yehui from Waveshare
- *  
+ *
  *  Copyright (C) Waveshare     September 5 2017
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -73,26 +73,32 @@ public:
     void Reset(void);
     void SetFrameMemory(
         const unsigned char* image_buffer,
-        int x,
-        int y,
-        int image_width,
-        int image_height
+        uint16_t x,
+        uint16_t y,
+        uint16_t image_width,
+        uint16_t image_height
     );
     void SetFrameMemory(const unsigned char* image_buffer);
     void ClearFrameMemory(unsigned char color);
     void DisplayFrame(void);
     void Sleep(void);
 
+    unsigned int cs_pin;
+    unsigned int mosi_pin;
+    unsigned int sclk_pin;
+    
 private:
     unsigned int reset_pin;
     unsigned int dc_pin;
-    unsigned int cs_pin;
     unsigned int busy_pin;
     const unsigned char* lut;
+
+
 
     void SetLut(const unsigned char* lut);
     void SetMemoryArea(int x_start, int y_start, int x_end, int y_end);
     void SetMemoryPointer(int x, int y);
+    void fastSPIwrite(uint8_t d,uint8_t dc);
 };
 
 #endif /* EPD2IN9_H */

@@ -2,7 +2,7 @@
  *  @filename   :   epdpaint.cpp
  *  @brief      :   Paint tools
  *  @author     :   Yehui from Waveshare
- *  
+ *
  *  Copyright (C) Waveshare     September 9 2017
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -151,6 +151,9 @@ void Paint::DrawCharAt(int x, int y, char ascii_char, sFONT* font, int colored) 
         for (i = 0; i < font->Width; i++) {
             if (pgm_read_byte(ptr) & (0x80 >> (i % 8))) {
                 DrawPixel(x + i, y + j, colored);
+            } else {
+              // fill background
+                DrawPixel(x + i, y + j, 1);
             }
             if (i % 8 == 7) {
                 ptr++;
@@ -169,7 +172,7 @@ void Paint::DrawStringAt(int x, int y, const char* text, sFONT* font, int colore
     const char* p_text = text;
     unsigned int counter = 0;
     int refcolumn = x;
-    
+
     /* Send the string character by character on EPD */
     while (*p_text != 0) {
         /* Display one character on EPD */
@@ -195,12 +198,12 @@ void Paint::DrawLine(int x0, int y0, int x1, int y1, int colored) {
 
     while((x0 != x1) && (y0 != y1)) {
         DrawPixel(x0, y0 , colored);
-        if (2 * err >= dy) {     
+        if (2 * err >= dy) {
             err += dy;
             x0 += sx;
         }
         if (2 * err <= dx) {
-            err += dx; 
+            err += dx;
             y0 += sy;
         }
     }
@@ -235,7 +238,7 @@ void Paint::DrawRectangle(int x0, int y0, int x1, int y1, int colored) {
     max_x = x1 > x0 ? x1 : x0;
     min_y = y1 > y0 ? y0 : y1;
     max_y = y1 > y0 ? y1 : y0;
-    
+
     DrawHorizontalLine(min_x, min_y, max_x - min_x + 1, colored);
     DrawHorizontalLine(min_x, max_y, max_x - min_x + 1, colored);
     DrawVerticalLine(min_x, min_y, max_y - min_y + 1, colored);
@@ -252,7 +255,7 @@ void Paint::DrawFilledRectangle(int x0, int y0, int x1, int y1, int colored) {
     max_x = x1 > x0 ? x1 : x0;
     min_y = y1 > y0 ? y0 : y1;
     max_y = y1 > y0 ? y1 : y0;
-    
+
     for (i = min_x; i <= max_x; i++) {
       DrawVerticalLine(i, min_y, max_y - min_y + 1, colored);
     }
@@ -317,26 +320,3 @@ void Paint::DrawFilledCircle(int x, int y, int radius, int colored) {
 }
 
 /* END OF FILE */
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

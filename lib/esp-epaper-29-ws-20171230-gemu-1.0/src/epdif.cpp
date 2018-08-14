@@ -34,31 +34,63 @@ EpdIf::EpdIf() {
 EpdIf::~EpdIf() {
 };
 
-void EpdIf::DigitalWrite(int pin, int value) {
-    digitalWrite(pin, value);
+void EpdIf::DelayMs(unsigned int delaytime) {
+    delay(delaytime);
 }
 
 int EpdIf::DigitalRead(int pin) {
     return digitalRead(pin);
 }
 
-void EpdIf::DelayMs(unsigned int delaytime) {
-    delay(delaytime);
+/*
+void EpdIf::DigitalWrite(int pin, int value) {
+    digitalWrite(pin, value);
 }
+
+
+
+
 
 void EpdIf::SpiTransfer(unsigned char data) {
-    digitalWrite(CS_PIN, LOW);
-    SPI.transfer(data);
-    digitalWrite(CS_PIN, HIGH);
+    digitalWrite(cs_pin, LOW);
+    //SPI.transfer(data);
+    digitalWrite(cs_pin, HIGH);
 }
 
+
+
 int EpdIf::IfInit(void) {
-    pinMode(CS_PIN, OUTPUT);
-    pinMode(RST_PIN, OUTPUT);
-    pinMode(DC_PIN, OUTPUT);
-    pinMode(BUSY_PIN, INPUT); 
-    SPI.beginTransaction(SPISettings(2000000, MSBFIRST, SPI_MODE0));
-    SPI.begin(SCK_PIN, MISO_PIN, MOSI_PIN, SS_PIN);
+
+
+    pinMode(cs_pin, OUTPUT);
+    pinMode(mosi_pin, OUTPUT);
+    pinMode(mosi_pin, OUTPUT);
+    //pinMode(RST_PIN, OUTPUT);
+    //pinMode(DC_PIN, OUTPUT);
+    //pinMode(BUSY_PIN, INPUT);
+    //SPI.beginTransaction(SPISettings(2000000, MSBFIRST, SPI_MODE0));
+    //SPI.begin(SCK_PIN, MISO_PIN, MOSI_PIN, SS_PIN);
     return 0;
 }
 
+
+void EpdIf::fastSPIwrite(uint8_t d,uint8_t dc) {
+
+  digitalWrite(cs_pin, LOW);
+
+  // transfer dc
+  digitalWrite(sclk_pin, LOW);
+  if(dc) digitalWrite(mosi_pin, HIGH);
+  else        digitalWrite(mosi_pin, LOW);
+  digitalWrite(sclk_pin, HIGH);
+
+  for(uint8_t bit = 0x80; bit; bit >>= 1) {
+    digitalWrite(sclk_pin, LOW);
+    if(d & bit) digitalWrite(mosi_pin, HIGH);
+    else        digitalWrite(mosi_pin, LOW);
+    digitalWrite(sclk_pin, HIGH);
+  }
+
+  digitalWrite(cs_pin, HIGH);
+}
+*/

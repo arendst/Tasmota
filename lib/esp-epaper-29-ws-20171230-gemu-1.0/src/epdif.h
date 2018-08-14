@@ -39,6 +39,7 @@ Default pins:
   SS               5
   Use default pin -1
 */
+/*
 #define SCK_PIN   -1
 #define MISO_PIN   4
 #define MOSI_PIN   5
@@ -49,17 +50,27 @@ Default pins:
 #define DC_PIN    21
 #define CS_PIN    19
 #define BUSY_PIN  22
+*/
+
+#define CS_PIN 5
+#define MOSI_PIN 0
+#define SCLK_PIN 4
+
 
 class EpdIf {
 public:
     EpdIf(void);
     ~EpdIf(void);
-
-    static int  IfInit(void);
-    static void DigitalWrite(int pin, int value); 
-    static int  DigitalRead(int pin);
     static void DelayMs(unsigned int delaytime);
+    static int  DigitalRead(int pin);
+    /*
+    static int  IfInit(void);
+    static void DigitalWrite(int pin, int value);
+
+
     static void SpiTransfer(unsigned char data);
+    */
+    //static void fastSPIwrite(uint8_t d,uint8_t dc);
 };
 
 #endif

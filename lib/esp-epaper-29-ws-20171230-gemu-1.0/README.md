@@ -1,7 +1,5 @@
 # 2.9" Waveshare ePaper Driver Example
 
-Source https://github.com/krzychb/esp-epaper-29-ws
-
 Communicate with [2.9" Waveshare ePaper Module](https://www.waveshare.com/wiki/2.9inch_e-Paper_Module) using SPI interface of [ESP32](http://espressif.com/en/products/hardware/esp32/overview) and [ESP-IDF](https://github.com/espressif/esp-idf) or [Arduino](https://www.arduino.cc/).
 
 * [2.9" Waveshare ePaper Module Datasheet](pictures/2.9inch_e-Paper_Datasheet.pdf)

@@ -2,7 +2,7 @@
  *  @filename   :   epdpaint.h
  *  @brief      :   Header file for epdpaint.cpp
  *  @author     :   Yehui from Waveshare
- *  
+ *
  *  Copyright (C) Waveshare     July 28 2017
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -64,12 +64,11 @@ public:
 
 private:
     unsigned char* image;
-    int width;
-    int height;
-    int rotate;
+    uint16_t width;
+    uint16_t height;
+    uint8_t rotate;
 };
 
 #endif
 
 /* END OF FILE */
-
