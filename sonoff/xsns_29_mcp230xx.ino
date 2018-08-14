@@ -62,10 +62,10 @@ uint8_t mcp230xx_int_en = 0;
 uint16_t mcp230xx_tele_count = 0;
 #endif
 
-const char MCP230XX_SENSOR_RESPONSE[] PROGMEM = "{\"Sensor29-D%i\":{\"MODE\":%i,\"PULL-UP\":\"%s\",\"STATE\":\"%s\"}}";
+const char MCP230XX_SENSOR_RESPONSE[] PROGMEM = "{\"Sensor29_D%i\":{\"MODE\":%i,\"PULL-UP\":\"%s\",\"STATE\":\"%s\"}}";
 
 #ifdef USE_MCP230xx_OUTPUT
-const char MCP230XX_CMND_RESPONSE[] PROGMEM = "{\"S29cmnd-D%i\":{\"COMMAND\":\"%s\",\"STATE\":\"%s\"}}";
+const char MCP230XX_CMND_RESPONSE[] PROGMEM = "{\"S29cmnd_D%i\":{\"COMMAND\":\"%s\",\"STATE\":\"%s\"}}";
 #endif // USE_MCP230xx_OUTPUT
 
 const char* ConvertNumTxt(uint8_t statu, uint8_t pinmod=0) {
@@ -220,7 +220,7 @@ bool MCP230xx_CheckForInterrupt(void) {
                   snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}"), mqtt_data);
                   MqttPublishPrefixTopic_P(RESULT_OR_STAT, mqtt_data);
                   char command[18];
-                  sprintf(command,"event MCPINTD%i=%i",intp+(mcp230xx_port*8),((mcp230xx_intcap >> intp) & 0x01));
+                  sprintf(command,"event MCPINT_D%i=%i",intp+(mcp230xx_port*8),((mcp230xx_intcap >> intp) & 0x01));
                   ExecuteCommand(command, SRC_RULE);
                 }
               }
@@ -423,7 +423,7 @@ void MCP230xx_OutputTelemetry(void) {
     for (uint8_t pinx = 0;pinx < mcp230xx_pincount;pinx++) {
       if (Settings.mcp230xx_config[pinx].pinmode >= 5) {
         sprintf(stt,ConvertNumTxt(((gpiototal>>pinx)&1),Settings.mcp230xx_config[pinx].pinmode));
-        snprintf_P(mqtt_data,sizeof(mqtt_data), PSTR("%s\"OUTD%i\":%s,"),mqtt_data,pinx,stt);
+        snprintf_P(mqtt_data,sizeof(mqtt_data), PSTR("%s\"OUT_D%i\":%s,"),mqtt_data,pinx,stt);
       }
     }
     snprintf_P(mqtt_data,sizeof(mqtt_data),PSTR("%s\"END\":1}}"),mqtt_data);
