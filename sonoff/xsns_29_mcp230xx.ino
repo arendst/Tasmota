@@ -256,19 +256,33 @@ void MCP230xx_Show(boolean json)
 void MCP230xx_SetOutPin(uint8_t pin,uint8_t pinstate) {
   uint8_t portpins;
   uint8_t port = 0;
+  uint8_t pinmo = Settings.mcp230xx_config[pin].pinmode;
+  uint8_t interlock = Settings.flag.interlock;
+  int pinadd = (pin % 2)+1-(3*(pin % 2)); //check if pin is odd or even and convert to 1 (if even) or -1 (if odd)
   char cmnd[7], stt[4];
   if (pin > 7) port=1;
   portpins = MCP230xx_readGPIO(port);
-  if (pinstate < 2) {
-      if (pinstate) portpins |= (1 << pin-(port*8)); else portpins &= ~(1 << pin-(port*8));
-  } else {
-    portpins ^= (1 << pin-(port*8));
+  if (interlock && pinmo == Settings.mcp230xx_config[pin+pinadd].pinmode) {
+    if (pinstate < 2) {
+      if (pinmo == 6) {
+        if (pinstate) portpins |= (1 << pin-(port*8)); else portpins |= (1 << pin+pinadd-(port*8)),portpins &= ~(1 << pin-(port*8));
+      } else {
+        if (pinstate) portpins &= ~(1 << pin+pinadd-(port*8)),portpins |= (1 << pin-(port*8)); else portpins &= ~(1 << pin-(port*8));
+      }
+    } else {
+      portpins &= ~(1 << pin+pinadd-(port*8)),portpins ^= (1 << pin-(port*8));
   }
+} else {
+  if (pinstate < 2) {
+    if (pinstate) portpins |= (1 << pin-(port*8)); else portpins &= ~(1 << pin-(port*8));
+    } else {
+    portpins ^= (1 << pin-(port*8));
+}
+}
   I2cWrite8(mcp230xx_address, MCP230xx_GPIO + port, portpins);
   if (Settings.flag.save_state) { // Firmware configured to save last known state in settings
     Settings.mcp230xx_config[pin].saved_state=portpins>>(pin-(port*8))&1;
   }
-  uint8_t pinmo = Settings.mcp230xx_config[pin].pinmode;
   sprintf(cmnd,ConvertNumTxt(pinstate, pinmo));
   sprintf(stt,ConvertNumTxt((portpins >> (pin-(port*8))&1), pinmo));
   snprintf_P(mqtt_data, sizeof(mqtt_data), MCP230XX_CMND_RESPONSE, pin, cmnd, stt);
@@ -306,6 +320,7 @@ bool MCP230xx_Command(void) {
   if (data == "RESET4") { MCP230xx_Reset(4); return serviced; }
 #ifdef USE_MCP230xx_OUTPUT
   if (data == "RESET5") { MCP230xx_Reset(5); return serviced; }
+  if (data == "RESET6") { MCP230xx_Reset(6); return serviced; }
 #endif
   _a = data.indexOf(",");
   pin = data.substring(0, _a).toInt();
