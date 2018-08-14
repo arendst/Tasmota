@@ -1,4 +1,7 @@
-/* 6.1.1.5
+/* 6.1.1.6
+ * Add modulo option to rules like rule1 on Time#Minute|5 do backlog power on;delay 200;power off endon (#3466)
+ *
+ * 6.1.1.5
  * Fix some Pow R2 and S31 checksum errors using optimized re-sync
  *
  * 6.1.1.4

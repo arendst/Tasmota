@@ -383,7 +383,9 @@ bool CseSerialInput()
   if (cse_receive_flag) {
     serial_in_buffer[serial_in_byte_counter++] = serial_in_byte;
     if (24 == serial_in_byte_counter) {
+
       AddLogSerial(LOG_LEVEL_DEBUG_MORE);
+
       uint8_t checksum = 0;
       for (byte i = 2; i < 23; i++) { checksum += serial_in_buffer[i]; }
       if (checksum == serial_in_buffer[23]) {
@@ -392,14 +394,11 @@ bool CseSerialInput()
         return 1;
       } else {
         AddLog_P(LOG_LEVEL_DEBUG, PSTR("CSE: " D_CHECKSUM_FAILURE));
-        do {                                  // Sync buffer with data (issue #1907 and #3425)
+        do {  // Sync buffer with data (issue #1907 and #3425)
           memmove(serial_in_buffer, serial_in_buffer +1, 24);
           serial_in_byte_counter--;
-        } while ((serial_in_byte_counter > 1) && (0x5A != serial_in_buffer[1]));
-        if (0x5A == serial_in_buffer[1]) {
-          AddLog_P(LOG_LEVEL_DEBUG, PSTR("CSE: Fixed out-of-sync"));
-          serial_in_byte_counter++;
-        } else {
+        } while ((serial_in_byte_counter > 2) && (0x5A != serial_in_buffer[1]));
+        if (0x5A != serial_in_buffer[1]) {
           cse_receive_flag = 0;
           serial_in_byte_counter = 0;
         }
@@ -413,7 +412,7 @@ bool CseSerialInput()
     }
     serial_in_buffer[serial_in_byte_counter++] = serial_in_byte;
   }
-  serial_in_byte = 0;                         // Discard
+  serial_in_byte = 0;  // Discard
   return 0;
 }
 

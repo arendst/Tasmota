@@ -1,7 +1,7 @@
 /*
   xdrv_98_display.ino - EXPERIMENTAL display support for Sonoff-Tasmota
 
-  Copyright (C) 2018  Theo Arends, Gerhard Mutz and Adafruit
+  Copyright (C) 2018  Theo Arends, Gerhard Mutz
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
