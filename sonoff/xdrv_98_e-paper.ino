@@ -94,8 +94,9 @@ void Init_Partial() {
 void Init_Full() {
   epd.Init(lut_full_update);
   paint.Clear(UNCOLORED);
+  epd.ClearFrameMemory(0xFF);
   epd.DisplayFrame();
-  delay(500);
+  delay(3000);
 }
 
 void Draw_HLine(uint16_t x,uint16_t y,uint16_t len) {
@@ -125,6 +126,14 @@ void Draw_FilledRectangle(uint16_t x,uint16_t y,uint16_t x2,uint16_t y2) {
 void Draw_Frame() {
   epd.SetFrameMemory(paint.GetImage(), 0, 0, paint.GetWidth(), paint.GetHeight());
   epd.DisplayFrame();
+}
+
+void SetFontorSize(uint8_t font) {
+  if (font==1) {
+    selected_font=&Font12;
+  } else {
+    selected_font=&Font24;
+  }
 }
 
 boolean DisplayCommand() {
@@ -283,12 +292,7 @@ boolean DisplayCommand() {
                   case 's':
                   case 'f':
                     // size or font sx
-                    fontnumber=*cp&7;
-                    if (fontnumber==1) {
-                      selected_font=&Font12;
-                    } else {
-                      selected_font=&Font24;
-                    }
+                    SetFontorSize(*cp&3);
                     cp+=1;
                     break;
                   default:
