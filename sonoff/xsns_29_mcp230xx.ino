@@ -1,5 +1,5 @@
 /*
-  xsns_29_mcp230xx.ino - Support for I2C MCP23008/MCP23017 GPIO Expander (INPUT AND OUTPUT)
+  xsns_29_mcp230xx.ino - Support for I2C MCP23008/MCP23017 GPIO Expander
 
   Copyright (C) 2018  Andre Thomas and Theo Arends
 
@@ -27,7 +27,7 @@
            https://www.microchip.com/wwwproducts/en/MCP23017
 
    I2C Address: 0x20 - 0x27
-  \*********************************************************************************************/
+\*********************************************************************************************/
 
 #define XSNS_29                   29
 
@@ -60,7 +60,7 @@ uint8_t mcp230xx_int_en = 0;
 
 #ifdef USE_MCP230xx_OUTPUT
 uint16_t mcp230xx_tele_count = 0;
-#endif
+#endif // USE_MCP230xx_OUTPUT
 
 const char MCP230XX_SENSOR_RESPONSE[] PROGMEM = "{\"Sensor29_D%i\":{\"MODE\":%i,\"PULL-UP\":\"%s\",\"STATE\":\"%s\"}}";
 
@@ -70,7 +70,7 @@ const char MCP230XX_CMND_RESPONSE[] PROGMEM = "{\"S29cmnd_D%i\":{\"COMMAND\":\"%
 
 const char* ConvertNumTxt(uint8_t statu, uint8_t pinmod=0) {
 #ifdef USE_MCP230xx_OUTPUT
-if (pinmod==6) {
+if (pinmod == 6) {
   if (statu < 2) statu = abs(statu-1);
 }
 #endif // USE_MCP230xx_OUTPUT
@@ -103,7 +103,7 @@ void MCP230xx_ApplySettings(void) {
     uint8_t reg_iodir = 0xFF;
 #ifdef USE_MCP230xx_OUTPUT
     uint8_t reg_portpins = 0x00;
-#endif
+#endif USE_MCP230xx_OUTPUT
     for (uint8_t idx = 0; idx < 8; idx++) {
       switch (Settings.mcp230xx_config[idx+(mcp230xx_port*8)].pinmode) {
         case 0 ... 1:
@@ -133,29 +133,29 @@ void MCP230xx_ApplySettings(void) {
       if (Settings.mcp230xx_config[idx+(mcp230xx_port*8)].pullup && (Settings.mcp230xx_config[idx+(mcp230xx_port*8)].pinmode < 5)) {
         reg_gppu |= (1 << idx);
       }
-#else
+#else // not USE_MCP230xx_OUTPUT
       if (Settings.mcp230xx_config[idx+(mcp230xx_port*8)].pullup) {
         reg_gppu |= (1 << idx);
       }
-#endif
+#endif // USE_MCP230xx_OUTPUT
     }
     I2cWrite8(mcp230xx_address, MCP230xx_GPPU+mcp230xx_port, reg_gppu);
     I2cWrite8(mcp230xx_address, MCP230xx_GPINTEN+mcp230xx_port, reg_gpinten);
     I2cWrite8(mcp230xx_address, MCP230xx_IODIR+mcp230xx_port, reg_iodir);
 #ifdef USE_MCP230xx_OUTPUT
     I2cWrite8(mcp230xx_address, MCP230xx_GPIO+mcp230xx_port, reg_portpins);
-#endif
+#endif // USE_MCP230xx_OUTPUT
   }
   mcp230xx_int_en=int_en;
 }
 
 void MCP230xx_Detect()
 {
-  uint8_t buffer;
-
   if (mcp230xx_type) {
     return;
   }
+  
+  uint8_t buffer;
 
   for (byte i = 0; i < sizeof(mcp230xx_addresses); i++) {
     mcp230xx_address = mcp230xx_addresses[i];
@@ -321,7 +321,8 @@ bool MCP230xx_Command(void) {
 #ifdef USE_MCP230xx_OUTPUT
   if (data == "RESET5") { MCP230xx_Reset(5); return serviced; }
   if (data == "RESET6") { MCP230xx_Reset(6); return serviced; }
-#endif
+#endif // USE_MCP230xx_OUTPUT
+
   _a = data.indexOf(",");
   pin = data.substring(0, _a).toInt();
   if (pin < mcp230xx_pincount) {
@@ -336,7 +337,7 @@ bool MCP230xx_Command(void) {
       uint8_t pinmod = Settings.mcp230xx_config[pin].pinmode;
       sprintf(pinstatustxtr,ConvertNumTxt(portdata>>(pin-(port*8))&1,pinmod));
       snprintf_P(mqtt_data, sizeof(mqtt_data), MCP230XX_SENSOR_RESPONSE,pin,pinmod,pulluptxtr,pinstatustxtr);
-#else
+#else // not USE_MCP230xx_OUTPUT
       sprintf(pinstatustxtr,ConvertNumTxt(portdata>>(pin-(port*8))&1));
       snprintf_P(mqtt_data, sizeof(mqtt_data), MCP230XX_SENSOR_RESPONSE,pin,Settings.mcp230xx_config[pin].pinmode,pulluptxtr,pinstatustxtr);
 #endif //USE_MCP230xx_OUTPUT
@@ -446,7 +447,7 @@ void MCP230xx_OutputTelemetry(void) {
   }
 }
 
-#endif
+#endif // USE_MCP230xx_OUTPUT
 
 
 /*********************************************************************************************\
@@ -467,7 +468,7 @@ boolean Xsns29(byte function)
           mcp230xx_tele_count=0;
           MCP230xx_OutputTelemetry();
         }
-#endif
+#endif // USE_MCP230xx_OUTPUT
         break;
       case FUNC_EVERY_50_MSECOND:
         if (mcp230xx_int_en) {          // Only check for interrupts if its enabled on one of the pins
