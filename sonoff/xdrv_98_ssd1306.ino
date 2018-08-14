@@ -71,12 +71,6 @@ boolean DisplayCommand() {
     }
     else if (CMND_DISP_TEXT == command_code) {
       if (XdrvMailbox.data_len > 0) {
-
-        // Here display command manipulation could take place like textsize, color, position etc. using intext parameters
-        // Currently just adds to the logbuffer
-
-        //strlcpy(disp_log_buffer[disp_log_buffer_idx], XdrvMailbox.data, sizeof(disp_log_buffer[disp_log_buffer_idx]));
-        // xx:y:text
         char *cp=XdrvMailbox.data;
         uint8_t lpos,escape=0,var;
         int16_t lin=0,col=0,fill=0,temp,temp1;

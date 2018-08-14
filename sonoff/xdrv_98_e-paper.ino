@@ -80,6 +80,53 @@ void DisplayInit(void) {
   paint.Clear(UNCOLORED);
 }
 
+void Clr_screen() {
+  paint.Clear(UNCOLORED);
+}
+
+void Init_Partial() {
+  epd.Init(lut_partial_update);
+  paint.Clear(UNCOLORED);
+  epd.DisplayFrame();
+  delay(500);
+}
+
+void Init_Full() {
+  epd.Init(lut_full_update);
+  paint.Clear(UNCOLORED);
+  epd.DisplayFrame();
+  delay(500);
+}
+
+void Draw_HLine(uint16_t x,uint16_t y,uint16_t len) {
+  paint.DrawHorizontalLine(x,y,len,COLORED);
+}
+
+void Draw_VLine(uint16_t x,uint16_t y,uint16_t len) {
+  paint.DrawVerticalLine(x,y,len,COLORED);
+}
+
+void Draw_Circle(uint16_t x,uint16_t y,uint16_t rad) {
+  paint.DrawCircle(x,y,rad,COLORED);
+}
+
+void Draw_FilledCircle(uint16_t x,uint16_t y,uint16_t rad) {
+  paint.DrawFilledCircle(x,y,rad,COLORED);
+}
+
+void Draw_Rectangle(uint16_t x,uint16_t y,uint16_t x2,uint16_t y2) {
+  paint.DrawRectangle(x,y,x2,y2,COLORED);
+}
+
+void Draw_FilledRectangle(uint16_t x,uint16_t y,uint16_t x2,uint16_t y2) {
+  paint.DrawFilledRectangle(x,y,x2,y2,COLORED);
+}
+
+void Draw_Frame() {
+  epd.SetFrameMemory(paint.GetImage(), 0, 0, paint.GetWidth(), paint.GetHeight());
+  epd.DisplayFrame();
+}
+
 boolean DisplayCommand() {
   char command [CMDSZ];
   boolean serviced = true;
@@ -92,12 +139,6 @@ boolean DisplayCommand() {
     }
     else if (CMND_DISP_TEXT == command_code) {
       if (XdrvMailbox.data_len > 0) {
-
-        // Here display command manipulation could take place like textsize, color, position etc. using intext parameters
-        // Currently just adds to the logbuffer
-
-        //strlcpy(disp_log_buffer[disp_log_buffer_idx], XdrvMailbox.data, sizeof(disp_log_buffer[disp_log_buffer_idx]));
-        // xx:y:text
         char *cp=XdrvMailbox.data;
         uint8_t lpos,escape=0,var;
         int16_t lin=0,col=0,fill=0,temp,temp1;
@@ -141,22 +182,15 @@ boolean DisplayCommand() {
                 switch (*cp++) {
                   case 'z':
                     // clear display
-                    paint.Clear(UNCOLORED);
+                    Clr_screen();
                     break;
                   case 'i':
                     // init display with partial update
-                    epd.Init(lut_partial_update);
-                    paint.Clear(UNCOLORED);
-                    epd.DisplayFrame();
-                    delay(500);
+                    Init_Partial();
                     break;
                   case 'I':
                     // init display with full refresh
-                    epd.Init(lut_full_update);
-                    paint.Clear(UNCOLORED);
-                    epd.ClearFrameMemory(0xFF);
-                    epd.DisplayFrame();
-                    delay(3000);
+                    Init_Full();
                     break;
                   case 'x':
                     // set xpos
@@ -191,9 +225,9 @@ boolean DisplayCommand() {
                     var=atoiv(cp,&temp);
                     cp+=var;
                     if (temp<0) {
-                      paint.DrawHorizontalLine(xpos+temp,ypos,-temp,COLORED);
+                      Draw_HLine(xpos+temp,ypos,-temp);
                     } else {
-                      paint.DrawHorizontalLine(xpos,ypos,temp,COLORED);
+                      Draw_HLine(xpos,ypos,temp);
                     }
                     xpos+=temp;
                     break;
@@ -202,9 +236,9 @@ boolean DisplayCommand() {
                     var=atoiv(cp,&temp);
                     cp+=var;
                     if (temp<0) {
-                      paint.DrawVerticalLine(xpos,ypos+temp,-temp,COLORED);
+                      Draw_VLine(xpos,ypos+temp,-temp);
                     } else {
-                      paint.DrawVerticalLine(xpos,ypos,temp,COLORED);
+                      Draw_VLine(xpos,ypos,temp);
                     }
                     ypos+=temp;
                     break;
@@ -212,13 +246,13 @@ boolean DisplayCommand() {
                     // circle
                     var=atoiv(cp,&temp);
                     cp+=var;
-                    paint.DrawCircle(xpos,ypos,temp,COLORED);
+                    Draw_Circle(xpos,ypos,temp);
                     break;
                   case 'K':
                     // filled circle
                     var=atoiv(cp,&temp);
                     cp+=var;
-                    paint.DrawFilledCircle(xpos,ypos,temp,COLORED);
+                    Draw_FilledCircle(xpos,ypos,temp);
                     break;
                   case 'r':
                     // rectangle
@@ -227,7 +261,7 @@ boolean DisplayCommand() {
                     cp++;
                     var=atoiv(cp,&temp1);
                     cp+=var;
-                    paint.DrawRectangle(xpos,ypos,temp,temp1,COLORED);
+                    Draw_Rectangle(xpos,ypos,temp,temp1);
                     break;
                   case 'R':
                     // filled rectangle
@@ -236,7 +270,7 @@ boolean DisplayCommand() {
                     cp++;
                     var=atoiv(cp,&temp1);
                     cp+=var;
-                    paint.DrawFilledRectangle(xpos,ypos,temp,temp1,COLORED);
+                    Draw_FilledRectangle(xpos,ypos,temp,temp1);
                     break;
                   case 't':
                     sprintf(dp,"%02d:%02d",RtcTime.hour,RtcTime.minute);
@@ -244,8 +278,7 @@ boolean DisplayCommand() {
                     break;
                   case 'd':
                     // force draw grafics buffer
-                    epd.SetFrameMemory(paint.GetImage(), 0, 0, paint.GetWidth(), paint.GetHeight());
-                    epd.DisplayFrame();
+                    Draw_Frame();
                     break;
                   case 's':
                   case 'f':
@@ -280,8 +313,7 @@ boolean DisplayCommand() {
             }
         }
         // draw buffer
-        epd.SetFrameMemory(paint.GetImage(), 0, 0, paint.GetWidth(), paint.GetHeight());
-        epd.DisplayFrame();
+        Draw_Frame();
 
       } else {
         snprintf_P(XdrvMailbox.data, XdrvMailbox.data_len, PSTR("no Text"));
