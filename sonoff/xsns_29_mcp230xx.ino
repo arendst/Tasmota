@@ -27,7 +27,7 @@
            https://www.microchip.com/wwwproducts/en/MCP23017
 
    I2C Address: 0x20 - 0x27
-  \*********************************************************************************************/
+\*********************************************************************************************/
 
 #define XSNS_29                   29
 
@@ -151,11 +151,11 @@ void MCP230xx_ApplySettings(void) {
 
 void MCP230xx_Detect()
 {
-  uint8_t buffer;
-
   if (mcp230xx_type) {
     return;
   }
+  
+  uint8_t buffer;
 
   for (byte i = 0; i < sizeof(mcp230xx_addresses); i++) {
     mcp230xx_address = mcp230xx_addresses[i];
