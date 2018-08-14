@@ -70,7 +70,7 @@ const char MCP230XX_CMND_RESPONSE[] PROGMEM = "{\"S29cmnd_D%i\":{\"COMMAND\":\"%
 
 const char* ConvertNumTxt(uint8_t statu, uint8_t pinmod=0) {
 #ifdef USE_MCP230xx_OUTPUT
-if (pinmod==6) {
+if (pinmod == 6) {
   if (statu < 2) statu = abs(statu-1);
 }
 #endif // USE_MCP230xx_OUTPUT
