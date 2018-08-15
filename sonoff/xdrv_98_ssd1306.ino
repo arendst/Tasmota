@@ -60,7 +60,7 @@ void DisplayInit(void) {
   display.setTextColor(WHITE,BLACK);
   display.clearDisplay();
   display.setTextSize(2);
-  DrawStringAt(20,20,"Adafruit",0);
+  DrawStringAt(20,20,(char*)"Adafruit",0);
   display.setTextSize(1);
   display.setCursor(0,0);
   display.display();
