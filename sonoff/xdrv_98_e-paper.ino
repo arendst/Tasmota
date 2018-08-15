@@ -144,7 +144,9 @@ void DrawStringAt(uint16_t x,uint16_t y,char *str,uint8_t flag) {
   }
 }
 
-
+// not needed
+void DisplayOnOff(uint8_t on) {
+}
 
 
 #endif  // USE_EPAPER

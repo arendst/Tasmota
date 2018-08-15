@@ -122,6 +122,14 @@ void DrawStringAt(uint16_t x,uint16_t y,char *str,uint8_t flag) {
   display.println(str);
 }
 
+void DisplayOnOff(uint8_t on) {
+  if (on) {
+    display.ssd1306_command(SSD1306_DISPLAYON);//--turn on oled panel
+  } else {
+    display.ssd1306_command(SSD1306_DISPLAYOFF);//--turn off oled panel
+  }
+}
+
 
 #endif  // USE_SSD1306
 #endif  // USE_DISPLAY

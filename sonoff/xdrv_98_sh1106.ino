@@ -48,7 +48,7 @@ Adafruit_SH1106 display(OLED_RESET);
 
 
 #if (SH1106_LCDHEIGHT != 64)
-#error("Height incorrect, please fix Adafruit_SSD1306.h!");
+#error("Height incorrect, please fix Adafruit_SH1106.h!");
 #endif
 
 uint8_t font_x=6,font_y=8,txtsize=1;
@@ -120,6 +120,14 @@ void DrawStringAt(uint16_t x,uint16_t y,char *str,uint8_t flag) {
     display.setCursor((x-1)*font_x*txtsize,(y-1)*font_y*txtsize);
   }
   display.println(str);
+}
+
+void DisplayOnOff(uint8_t on) {
+  if (on) {
+    display.ssd1306_command(SSD1306_DISPLAYON);//--turn on oled panel
+  } else {
+    display.ssd1306_command(SSD1306_DISPLAYOFF);//--turn off oled panel
+  }
 }
 
 

@@ -108,6 +108,12 @@ boolean DisplayCommand() {
                     // init display with full refresh
                     Init_Full();
                     break;
+                  case 'o':
+                    DisplayOnOff(0);
+                    break;
+                  case 'O':
+                    DisplayOnOff(1);
+                    break;
                   case 'x':
                     // set xpos
                     var=atoiv(cp,&xpos);
