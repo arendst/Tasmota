@@ -114,7 +114,7 @@ const char HTTP_HEAD_STYLE[] PROGMEM =
   "input[type=checkbox],input[type=radio]{width: auto!important;margin-right: 10px;}"
   "select{width:100%;}"
   "textarea{resize:none;width:98%;height:318px;padding:5px;overflow:auto;}"
-  "body{text-align:center;font-family:verdana;}"
+  "body,h1,h2,h3,noscript{text-align:center;font-family:verdana;}"
   "td{padding:0px;}"
   "button{border:0;border-radius:0.3rem;background-color:#1fa3ec;color:#fff;line-height:2.4rem;font-size:1.2rem;width:100%;-webkit-transition-duration:0.4s;transition-duration:0.4s;cursor:pointer;}"
   "button:hover{background-color:#0e70a4;}"
@@ -131,13 +131,16 @@ const char HTTP_HEAD_STYLE[] PROGMEM =
   "<body>"
   "<div style='text-align:left;display:inline-block;'>"
 #ifdef BE_MINIMAL
-  "<div style='text-align:center;color:red;'><h3>" D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "</h3></div>"
+  "<h3>" D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "</h3></div>"
 #endif
+  "<noscript>" D_NOSCRIPT "<br/></noscript>"
 #ifdef LANGUAGE_MODULE_NAME
-  "<div style='text-align:center;'><h3>" D_MODULE " {ha</h3><h2>{h}</h2><h3>{hn.local ({ip)</h3></div>";
+  "<h3>" D_MODULE " {ha</h3>";
 #else
-  "<div style='text-align:center;'><h3>{ha " D_MODULE "</h3><h2>{h}</h2><h3>{hn.local ({ip)</h3></div>";
+  "<h3>{ha " D_MODULE "</h3>";
 #endif
+  "<h2>{h}</h2>";
+  "<h3>{hn.local ({ip)</h3>"
 const char HTTP_SCRIPT_CONSOL[] PROGMEM =
   "var sn=0;"                    // Scroll position
   "var id=0;"                    // Get most of weblog initially

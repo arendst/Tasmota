@@ -25,11 +25,9 @@
     - Select IDE Tools - Flash Size: "1M (no SPIFFS)"
   ====================================================*/
 
-#define VERSION                0x06010103   // 6.1.1c
-
-#define MOD_VERSION_STRING  "mod-1.35.3"    // Would be great to have a macro that fills this from VERSION ...
 // Location specific includes
 #include <core_version.h>                   // Arduino_Esp8266 version information (ARDUINO_ESP8266_RELEASE and ARDUINO_ESP8266_RELEASE_2_3_0)
+#include "sonoff_version.h"                 // Sonoff-Tasmota version information
 #include "sonoff.h"                         // Enumeration used in user_config.h
 #include "user_config.h"                    // Fixed user configurable options
 #ifdef USE_CONFIG_OVERRIDE
@@ -528,6 +526,16 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
       return;
     }
     else if ((CMND_FANSPEED == command_code) && (SONOFF_IFAN02 == Settings.module)) {
+      if (data_len > 0) {
+        if ('-' == dataBuf[0]) {
+          payload = (int16_t)GetFanspeed() -1;
+          if (payload < 0) { payload = 3; }
+        }
+        else if ('+' == dataBuf[0]) {
+          payload = GetFanspeed() +1;
+          if (payload > 3) { payload = 0; }
+        }
+      }
       if ((payload >= 0) && (payload <= 3) && (payload != GetFanspeed())) {
         for (byte i = 0; i < 3; i++) {
           uint8_t state = kIFan02Speed[payload][i];
@@ -2446,15 +2454,9 @@ void setup()
   Serial.println();
   seriallog_level = LOG_LEVEL_INFO;  // Allow specific serial messages until config loaded
 
-  snprintf_P(my_version, sizeof(my_version), PSTR("%d.%d.%d"), VERSION >> 24 & 0xff, VERSION >> 16 & 0xff, VERSION >> 8 & 0xff);
-  if (VERSION & 0x1f) {
-    idx = strlen(my_version);
-    my_version[idx] = 96 + (VERSION & 0x1f);
-    my_version[idx +1] = 0;
-  }
-
+  snprintf_P(my_version, sizeof(my_version), PSTR("%d.%d.%d.%d"), VERSION >> 24 & 0xff, VERSION >> 16 & 0xff, VERSION >> 8 & 0xff, VERSION & 0xff);
+  
   snprintf_P(my_version, sizeof(my_version), PSTR("%s-" MOD_VERSION_STRING), my_version);
-
 #ifdef BE_MINIMAL
   snprintf_P(my_version, sizeof(my_version), PSTR("%s-" D_JSON_MINIMAL), my_version);
 #endif  // BE_MINIMAL
