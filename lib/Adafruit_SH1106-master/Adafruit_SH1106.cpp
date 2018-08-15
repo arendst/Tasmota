@@ -38,7 +38,9 @@ However, SH1106 driver don't provide several functions such as scroll commands.
 #include "Adafruit_SH1106.h"
 
 // the memory buffer for the LCD
+static uint8_t buffer[SH1106_LCDHEIGHT * SH1106_LCDWIDTH / 8];
 
+/*
 static uint8_t buffer[SH1106_LCDHEIGHT * SH1106_LCDWIDTH / 8] = {
 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -109,7 +111,7 @@ static uint8_t buffer[SH1106_LCDHEIGHT * SH1106_LCDWIDTH / 8] = {
 #endif
 #endif
 };
-
+*/
 #define sh1106_swap(a, b) { int16_t t = a; a = b; b = t; }
 
 // the most basic function, set a single pixel

@@ -56,14 +56,13 @@ uint8_t font_x=6,font_y=8,txtsize=1;
 void DisplayInit(void) {
   // by default, we'll generate the high voltage from the 3.3v line internally! (neat!)
   display.begin(SH1106_SWITCHCAPVCC, 0x3c);  // initialize with the I2C addr 0x3D (for the 128x64)
-  // init done
-  // Show image buffer on the display hardware.
-  // Since the buffer is intialized with an Adafruit splashscreen
-  // internally, this will display the splashscreen.
-  display.display();
-  display.setTextSize(1);
   display.setTextColor(WHITE,BLACK);
+  display.clearDisplay();
+  display.setTextSize(2);
+  DrawStringAt(20,20,"Adafruit",0);
+  display.setTextSize(1);
   display.setCursor(0,0);
+  display.display();
   display.clearDisplay();
 }
 
