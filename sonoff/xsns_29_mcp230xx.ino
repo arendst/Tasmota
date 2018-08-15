@@ -99,7 +99,7 @@ void MCP230xx_ApplySettings(void) {
     uint8_t reg_iodir = 0xFF;
 #ifdef USE_MCP230xx_OUTPUT
     uint8_t reg_portpins = 0x00;
-#endif USE_MCP230xx_OUTPUT
+#endif // USE_MCP230xx_OUTPUT
     for (uint8_t idx = 0; idx < 8; idx++) {
       switch (Settings.mcp230xx_config[idx+(mcp230xx_port*8)].pinmode) {
         case 0 ... 1:

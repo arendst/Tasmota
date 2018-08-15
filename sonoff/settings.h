@@ -157,8 +157,7 @@ typedef union {
     uint8_t pinmode : 3;                   // Pin mode (1 through 6)
     uint8_t pullup : 1;                    // Enable internal weak pull-up resistor
     uint8_t saved_state : 1;               // Save output state, if used.
-    uint8_t int_event_enable : 1;          // Enable interrupt to cause immediate event transmit
-    uint8_t int_tele_enable : 1;           // Enable interrupt to cause immediate telemetry transmit
+    uint8_t int_report_mode : 2;           // Interrupt reporting mode 0 = immediate telemetry & event, 1 = immediate event only, 2 = immediate telemetry only
     uint8_t b7 : 1;
   };
 } Mcp230xxCfg;
