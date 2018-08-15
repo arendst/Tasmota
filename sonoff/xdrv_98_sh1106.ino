@@ -108,6 +108,7 @@ void Draw_Frame() {
 }
 
 void SetFontorSize(uint8_t font) {
+  txtsize=font;
   display.setTextSize(txtsize);
 }
 
