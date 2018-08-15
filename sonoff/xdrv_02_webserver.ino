@@ -135,12 +135,12 @@ const char HTTP_HEAD_STYLE[] PROGMEM =
 #endif
   "<noscript>" D_NOSCRIPT "<br/></noscript>"
 #ifdef LANGUAGE_MODULE_NAME
-  "<h3>" D_MODULE " {ha</h3>";
+  "<h3>" D_MODULE " {ha</h3>"
 #else
-  "<h3>{ha " D_MODULE "</h3>";
+  "<h3>{ha " D_MODULE "</h3>"
 #endif
-  "<h2>{h}</h2>";
-  "<h3>{hn.local ({ip)</h3>"
+  "<h2>{h}</h2>"
+  "<h3>{hn.local ({ip)</h3>";
 const char HTTP_SCRIPT_CONSOL[] PROGMEM =
   "var sn=0;"                    // Scroll position
   "var id=0;"                    // Get most of weblog initially
