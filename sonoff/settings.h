@@ -154,11 +154,11 @@ typedef union {
 typedef union {
   uint8_t data;
   struct {
-    uint8_t pinmode : 3;                   // Pin mode (1 through 5)
+    uint8_t pinmode : 3;                   // Pin mode (1 through 6)
     uint8_t pullup : 1;                    // Enable internal weak pull-up resistor
     uint8_t saved_state : 1;               // Save output state, if used.
-    uint8_t b5 : 1;
-    uint8_t b6 : 1;
+    uint8_t int_event_enable : 1;          // Enable interrupt to cause immediate event transmit
+    uint8_t int_tele_enable : 1;           // Enable interrupt to cause immediate telemetry transmit
     uint8_t b7 : 1;
   };
 } Mcp230xxCfg;

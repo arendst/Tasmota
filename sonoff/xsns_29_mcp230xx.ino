@@ -271,14 +271,14 @@ void MCP230xx_SetOutPin(uint8_t pin,uint8_t pinstate) {
       }
     } else {
       portpins &= ~(1 << pin+pinadd-(port*8)),portpins ^= (1 << pin-(port*8));
-  }
-} else {
-  if (pinstate < 2) {
-    if (pinstate) portpins |= (1 << pin-(port*8)); else portpins &= ~(1 << pin-(port*8));
+    }
+  } else {
+    if (pinstate < 2) {
+      if (pinstate) portpins |= (1 << pin-(port*8)); else portpins &= ~(1 << pin-(port*8));
     } else {
-    portpins ^= (1 << pin-(port*8));
-}
-}
+      portpins ^= (1 << pin-(port*8));
+    }
+  }
   I2cWrite8(mcp230xx_address, MCP230xx_GPIO + port, portpins);
   if (Settings.flag.save_state) { // Firmware configured to save last known state in settings
     Settings.mcp230xx_config[pin].saved_state=portpins>>(pin-(port*8))&1;
@@ -297,8 +297,8 @@ void MCP230xx_Reset(uint8_t pinmode) {
     Settings.mcp230xx_config[pinx].pinmode=pinmode;
     Settings.mcp230xx_config[pinx].pullup=pullup;
     Settings.mcp230xx_config[pinx].saved_state=0;
-    Settings.mcp230xx_config[pinx].b5=0;
-    Settings.mcp230xx_config[pinx].b6=0;
+    Settings.mcp230xx_config[pinx].int_event_enable=0;
+    Settings.mcp230xx_config[pinx].int_tele_enable=0;
     Settings.mcp230xx_config[pinx].b7=0;
   }
   MCP230xx_ApplySettings();
