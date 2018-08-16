@@ -208,6 +208,11 @@ boolean DisplayCommand() {
                     SetFontorSize(*cp&3);
                     cp+=1;
                     break;
+                  case 'a':
+                    // rotation angle
+                    SetRotation(*cp&3);
+                    cp+=1;
+                    break;
                   default:
                     // unknown escape
                     snprintf_P(XdrvMailbox.data, XdrvMailbox.data_len, PSTR("unknown escape"));

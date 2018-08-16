@@ -112,6 +112,9 @@ void SetFontorSize(uint8_t font) {
   display.setTextSize(txtsize);
 }
 
+void SetRotation(uint8_t rot) {
+  display.setRotation(rot);
+}
 
 void DrawStringAt(uint16_t x,uint16_t y,char *str,uint8_t flag) {
   if (!flag) {

@@ -136,6 +136,10 @@ void SetFontorSize(uint8_t font) {
   }
 }
 
+void SetRotation(uint8_t rot) {
+  paint.SetRotate(rot);
+}
+
 void DrawStringAt(uint16_t x,uint16_t y,char *str,uint8_t flag) {
   if (!flag) {
     paint.DrawStringAt(x,y,str,selected_font, COLORED);
