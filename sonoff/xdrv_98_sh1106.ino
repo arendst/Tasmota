@@ -129,7 +129,7 @@ void DisplayOnOff(uint8_t on) {
   if (on) {
     display.SH1106_command(SH1106_DISPLAYON);//--turn on oled panel
   } else {
-    display.SH1106_command(SH1106_DISPLAYON);//--turn off oled panel
+    display.SH1106_command(SH1106_DISPLAYOFF);//--turn off oled panel
   }
 }
 
