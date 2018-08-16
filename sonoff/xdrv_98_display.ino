@@ -253,9 +253,14 @@ boolean Xdrv98(byte function)
 
   switch (function) {
     case FUNC_PRE_INIT:
-      if (i2c_flg || spi_flg) {
-        DisplayInit();
-      }
+    #ifndef USE_EPAPER
+          if (i2c_flg || spi_flg) {
+            DisplayInit();
+          }
+    #else
+          // epaper uses soft spi
+          DisplayInit();
+    #endif
       break;
     case FUNC_EVERY_50_MSECOND:
       //DisplayRefresh();
