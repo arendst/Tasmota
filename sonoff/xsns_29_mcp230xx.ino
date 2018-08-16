@@ -417,7 +417,7 @@ bool MCP230xx_Command(void) {
         Settings.mcp230xx_config[pin].pinmode=pinmode;
         Settings.mcp230xx_config[pin].pullup=pullup;
         if (pinmode > 1 && pinmode < 5) {
-          if (intmode >= 0 && intmode <= 2) {
+          if (intmode >= 0 && intmode <= 3) {
             Settings.mcp230xx_config[pin].int_report_mode=intmode;
           }
         } else {
