@@ -127,9 +127,9 @@ void DrawStringAt(uint16_t x,uint16_t y,char *str,uint8_t flag) {
 
 void DisplayOnOff(uint8_t on) {
   if (on) {
-    display.ssd1306_command(SSD1306_DISPLAYON);//--turn on oled panel
+    display.SH1106_command(SH1106_DISPLAYON);//--turn on oled panel
   } else {
-    display.ssd1306_command(SSD1306_DISPLAYOFF);//--turn off oled panel
+    display.SH1106_command(SH1106_DISPLAYON);//--turn off oled panel
   }
 }
 
