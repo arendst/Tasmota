@@ -61,7 +61,7 @@ public:
     void DrawFilledRectangle(int x0, int y0, int x1, int y1, int colored);
     void DrawCircle(int x, int y, int radius, int colored);
     void DrawFilledCircle(int x, int y, int radius, int colored);
-
+    void xDrawLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1,uint16_t color);
 private:
     unsigned char* image;
     uint16_t width;

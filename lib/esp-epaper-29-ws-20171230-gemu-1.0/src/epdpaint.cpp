@@ -189,6 +189,10 @@ void Paint::DrawStringAt(int x, int y, const char* text, sFONT* font, int colore
 *  @brief: this draws a line on the frame buffer
 */
 void Paint::DrawLine(int x0, int y0, int x1, int y1, int colored) {
+  xDrawLine(x0,y0,x1,y1,colored);
+
+  #if 0
+
     /* Bresenham algorithm */
     int dx = x1 - x0 >= 0 ? x1 - x0 : x0 - x1;
     int sx = x0 < x1 ? 1 : -1;
@@ -205,6 +209,55 @@ void Paint::DrawLine(int x0, int y0, int x1, int y1, int colored) {
         if (2 * err <= dx) {
             err += dx;
             y0 += sy;
+        }
+    }
+    #endif
+}
+
+#ifndef _swap_int16_t
+#define _swap_int16_t(a, b) { int16_t t = a; a = b; b = t; }
+#endif
+
+int	abs (int i) {
+	  return i < 0 ? -i : i;
+}
+
+void Paint::xDrawLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1,
+        uint16_t color) {
+    int16_t steep = abs(y1 - y0) > abs(x1 - x0);
+    if (steep) {
+        _swap_int16_t(x0, y0);
+        _swap_int16_t(x1, y1);
+    }
+
+    if (x0 > x1) {
+        _swap_int16_t(x0, x1);
+        _swap_int16_t(y0, y1);
+    }
+
+    int16_t dx, dy;
+    dx = x1 - x0;
+    dy = abs(y1 - y0);
+
+    int16_t err = dx / 2;
+    int16_t ystep;
+
+    if (y0 < y1) {
+        ystep = 1;
+    } else {
+        ystep = -1;
+    }
+
+    for (; x0<=x1; x0++) {
+        if (steep) {
+            DrawPixel(y0, x0, color);
+        } else {
+            DrawPixel(x0, y0, color);
+        }
+        err -= dy;
+        if (err < 0) {
+            y0 += ystep;
+            err += dx;
         }
     }
 }
