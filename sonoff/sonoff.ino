@@ -2454,7 +2454,10 @@ void setup()
   Serial.println();
   seriallog_level = LOG_LEVEL_INFO;  // Allow specific serial messages until config loaded
 
-  snprintf_P(my_version, sizeof(my_version), PSTR("%d.%d.%d.%d"), VERSION >> 24 & 0xff, VERSION >> 16 & 0xff, VERSION >> 8 & 0xff, VERSION & 0xff);
+  snprintf_P(my_version, sizeof(my_version), PSTR("%d.%d.%d"), VERSION >> 24 & 0xff, VERSION >> 16 & 0xff, VERSION >> 8 & 0xff);
+  if (VERSION & 0xff) {
+    snprintf_P(my_version, sizeof(my_version), PSTR("%s.%d"), my_version, VERSION & 0xff);
+  }
 #ifdef BE_MINIMAL
   snprintf_P(my_version, sizeof(my_version), PSTR("%s-" D_JSON_MINIMAL), my_version);
 #endif  // BE_MINIMAL

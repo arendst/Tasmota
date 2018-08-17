@@ -20,6 +20,11 @@
 #ifndef _SONOFF_VERSION_H_
 #define _SONOFF_VERSION_H_
 
-#define VERSION  0x06010106
+#define VERSION            0x06010106
+
+#define D_PROGRAMNAME      "Sonoff-Tasmota"
+#define D_AUTHOR           "Theo Arends"
+//#define D_WEBLINK          "https://github.com/arendst/Sonoff-Tasmota"
+#define D_WEBLINK          "https://bit.ly/tasmota"
 
 #endif  // _SONOFF_VERSION_H_
