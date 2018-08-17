@@ -29,10 +29,38 @@ struct GRAPH {
   float range;
   uint16_t xcnt;
   uint16_t *values;
+  uint16_t flags;
 } graph[4];
 
+void ClrGraph(uint16_t num) {
+  uint16_t xticks=(graph[num].flags>>2)&0x3f;
+  uint16_t yticks=(graph[num].flags>>8)&0x3f;
+  uint16_t count;
+
+  // clr inside
+  Draw_FilledRectangle(graph[num].xp+1,graph[num].yp+1,graph[num].xs-2,graph[num].ys-2,0);
+
+  if (xticks) {
+    float cxp=graph[num].xp,xd=(float)graph[num].xs/(float)xticks;
+    for (count=0; count<xticks; count++) {
+      Draw_VLine(cxp,graph[num].yp+graph[num].ys-5,5);
+      cxp+=xd;
+    }
+  }
+  if (yticks) {
+    float cyp=graph[num].yp,yd=graph[num].ys/yticks;
+    for (count=0; count<yticks; count++) {
+      Draw_HLine(graph[num].xp,cyp,5);
+      cyp+=yd;
+    }
+  }
+}
+
 // define a graph
-void DefineGraph(uint8_t num,uint16_t xp,uint16_t yp,uint16_t xs,uint16_t ys,float ymin, float ymax) {
+void DefineGraph(uint16_t num,uint16_t xp,uint16_t yp,uint16_t xs,uint16_t ys,float ymin, float ymax) {
+
+  uint16_t count;
+  graph[num&3].flags=num;
   num&=3;
   graph[num].xp=xp;
   graph[num].yp=yp;
@@ -49,7 +77,8 @@ void DefineGraph(uint8_t num,uint16_t xp,uint16_t yp,uint16_t xs,uint16_t ys,flo
 // draw rectangle
   Draw_Rectangle(xp,yp,xs,ys);
   // clr inside
-  Draw_FilledRectangle(xp+1,yp+1,xs-2,ys-2,0);
+  ClrGraph(num);
+
 }
 
 
@@ -66,7 +95,7 @@ void AddGraph(uint8_t num,float fval) {
   if (graph[num].xcnt>graph[num].xs) {
     graph[num].xcnt=graph[num].xs;
     // clr area, shift and redraw graph
-    Draw_FilledRectangle(graph[num].xp+1,graph[num].yp+1,graph[num].xs-2,graph[num].ys-2,0);
+    ClrGraph(num);
     int16_t count;
     for (count=0;count<graph[num].xs-1;count++) {
       graph[num].values[count]=graph[num].values[count+1];
