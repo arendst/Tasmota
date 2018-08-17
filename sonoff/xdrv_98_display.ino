@@ -29,22 +29,23 @@ struct GRAPH {
   float range;
   uint16_t xcnt;
   uint16_t *values;
-} graph;
+} graph[4];
 
 // define a graph
-void DefineGraph(uint16_t xp,uint16_t yp,uint16_t xs,uint16_t ys,float ymin, float ymax) {
-  graph.xp=xp;
-  graph.yp=yp;
-  graph.xs=xs;
-  graph.ys=ys;
-  graph.ymin=ymin;
-  graph.ymax=ymax;
-  graph.range=(ymax-ymin)/ys;
-  graph.xcnt=0;
-  if (graph.values) free(graph.values);
-  graph.values=(uint16_t*) calloc(2,xs+2);
+void DefineGraph(uint8_t num,uint16_t xp,uint16_t yp,uint16_t xs,uint16_t ys,float ymin, float ymax) {
+  num&=3;
+  graph[num].xp=xp;
+  graph[num].yp=yp;
+  graph[num].xs=xs;
+  graph[num].ys=ys;
+  graph[num].ymin=ymin;
+  graph[num].ymax=ymax;
+  graph[num].range=(ymax-ymin)/ys;
+  graph[num].xcnt=0;
+  if (graph[num].values) free(graph[num].values);
+  graph[num].values=(uint16_t*) calloc(2,xs+2);
   // start from zero
-  graph.values[0]=0;
+  graph[num].values[0]=0;
 // draw rectangle
   Draw_Rectangle(xp,yp,xs,ys);
   // clr inside
@@ -53,30 +54,31 @@ void DefineGraph(uint16_t xp,uint16_t yp,uint16_t xs,uint16_t ys,float ymin, flo
 
 
 // add next value to graph
-void AddGraph(float fval) {
+void AddGraph(uint8_t num,float fval) {
   // not yet defined ???
-  if (!graph.values) return;
+  num&=3;
+  if (!graph[num].values) return;
 
-  int16_t val=(fval-graph.ymin)/graph.range;
-  if (val>graph.ys-1) val=graph.ys-1;
+  int16_t val=(fval-graph[num].ymin)/graph[num].range;
+  if (val>graph[num].ys-1) val=graph[num].ys-1;
   if (val<0) val=0;
-  graph.xcnt++;
-  if (graph.xcnt>graph.xs) {
-    graph.xcnt=graph.xs;
+  graph[num].xcnt++;
+  if (graph[num].xcnt>graph[num].xs) {
+    graph[num].xcnt=graph[num].xs;
     // clr area, shift and redraw graph
-    Draw_FilledRectangle(graph.xp+1,graph.yp+1,graph.xs-2,graph.ys-2,0);
+    Draw_FilledRectangle(graph[num].xp+1,graph[num].yp+1,graph[num].xs-2,graph[num].ys-2,0);
     int16_t count;
-    for (count=0;count<graph.xs-1;count++) {
-      graph.values[count]=graph.values[count+1];
+    for (count=0;count<graph[num].xs-1;count++) {
+      graph[num].values[count]=graph[num].values[count+1];
     }
-    graph.values[graph.xcnt-1]=val;
-    for (count=0;count<graph.xs-1;count++) {
-      DrawLine(graph.xp+count,graph.yp+graph.ys-graph.values[count]-1,graph.xp+count+1,graph.yp+graph.ys-graph.values[count+1]-1);
+    graph[num].values[graph[num].xcnt-1]=val;
+    for (count=0;count<graph[num].xs-1;count++) {
+      DrawLine(graph[num].xp+count,graph[num].yp+graph[num].ys-graph[num].values[count]-1,graph[num].xp+count+1,graph[num].yp+graph[num].ys-graph[num].values[count+1]-1);
     }
   } else {
     // add value and draw a single line
-    graph.values[graph.xcnt]=val;
-    DrawLine(graph.xp+graph.xcnt-1,graph.yp+graph.ys-graph.values[graph.xcnt-1]-1,graph.xp+graph.xcnt,graph.yp+graph.ys-graph.values[graph.xcnt]-1);
+    graph[num].values[graph[num].xcnt]=val;
+    DrawLine(graph[num].xp+graph[num].xcnt-1,graph[num].yp+graph[num].ys-graph[num].values[graph[num].xcnt-1]-1,graph[num].xp+graph[num].xcnt,graph[num].yp+graph[num].ys-graph[num].values[graph[num].xcnt]-1);
   }
 }
 
@@ -272,8 +274,11 @@ boolean DisplayCommand() {
                     break;
                   case 'G':
                     // define graph
-                    { int16_t gxp,gyp,gxs,gys;
+                    { int16_t num,gxp,gyp,gxs,gys;
                         float ymin,ymax;
+                        var=atoiv(cp,&num);
+                        cp+=var;
+                        cp++;
                         var=atoiv(cp,&gxp);
                         cp+=var;
                         cp++;
@@ -292,14 +297,18 @@ boolean DisplayCommand() {
                         cp++;
                         var=fatoiv(cp,&ymax);
                         cp+=var;
-                        DefineGraph(gxp,gyp,gxs,gys,ymin,ymax);
+                        DefineGraph(num,gxp,gyp,gxs,gys,ymin,ymax);
                     }
                     break;
                   case 'g':
                     { float temp;
+                      int16_t num;
+                      var=atoiv(cp,&num);
+                      cp+=var;
+                      cp++;
                       var=fatoiv(cp,&temp);
                       cp+=var;
-                      AddGraph(temp);
+                      AddGraph(num,temp);
                     }
                     break;
                   case 't':
