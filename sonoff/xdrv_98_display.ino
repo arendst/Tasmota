@@ -19,12 +19,88 @@
 */
 #ifdef USE_DISPLAY
 
+struct GRAPH {
+  uint16_t xp;
+  uint16_t yp;
+  uint16_t xs;
+  uint16_t ys;
+  float ymin;
+  float ymax;
+  float range;
+  uint16_t xcnt;
+  uint16_t *values;
+} graph;
+
+// define a graph
+void DefineGraph(uint16_t xp,uint16_t yp,uint16_t xs,uint16_t ys,float ymin, float ymax) {
+  graph.xp=xp;
+  graph.yp=yp;
+  graph.xs=xs;
+  graph.ys=ys;
+  graph.ymin=ymin;
+  graph.ymax=ymax;
+  graph.range=(ymax-ymin)/ys;
+  graph.xcnt=0;
+  if (graph.values) free(graph.values);
+  graph.values=(uint16_t*) calloc(2,xs+2);
+  // start from zero
+  graph.values[0]=0;
+// draw rectangle
+  Draw_Rectangle(xp,yp,xs,ys);
+  // clr inside
+  Draw_FilledRectangle(xp+1,yp+1,xs-2,ys-2,0);
+}
+
+
+// add next value to graph
+void AddGraph(float fval) {
+  // not yet defined ???
+  if (!graph.values) return;
+
+  int16_t val=(fval-graph.ymin)/graph.range;
+  if (val>graph.ys-1) val=graph.ys-1;
+  if (val<0) val=0;
+  graph.xcnt++;
+  if (graph.xcnt>graph.xs) {
+    graph.xcnt=graph.xs;
+    // clr area, shift and redraw graph
+    Draw_FilledRectangle(graph.xp+1,graph.yp+1,graph.xs-2,graph.ys-2,0);
+    int16_t count;
+    for (count=0;count<graph.xs-1;count++) {
+      graph.values[count]=graph.values[count+1];
+    }
+    graph.values[graph.xcnt-1]=val;
+    for (count=0;count<graph.xs-1;count++) {
+      DrawLine(graph.xp+count,graph.yp+graph.ys-graph.values[count]-1,graph.xp+count+1,graph.yp+graph.ys-graph.values[count+1]-1);
+    }
+  } else {
+    // add value and draw a single line
+    graph.values[graph.xcnt]=val;
+    DrawLine(graph.xp+graph.xcnt-1,graph.yp+graph.ys-graph.values[graph.xcnt-1]-1,graph.xp+graph.xcnt,graph.yp+graph.ys-graph.values[graph.xcnt]-1);
+  }
+}
+
 // get asci number until delimiter and return asci number lenght and value
 uint8_t atoiv(char *cp,int16_t *res) {
   uint8_t index=0;
   *res=atoi(cp);
   while (*cp) {
     if ((*cp>='0' && *cp<='9') || (*cp=='-')) {
+      cp++;
+      index++;
+    } else {
+      break;
+    }
+  }
+  return index;
+}
+
+// get asci float number
+uint8_t fatoiv(char *cp,float *res) {
+  uint8_t index=0;
+  *res=CharToDouble(cp);
+  while (*cp) {
+    if ((*cp>='0' && *cp<='9') || (*cp=='-') || (*cp=='.')) {
       cp++;
       index++;
     } else {
@@ -192,7 +268,39 @@ boolean DisplayCommand() {
                     cp++;
                     var=atoiv(cp,&temp1);
                     cp+=var;
-                    Draw_FilledRectangle(xpos,ypos,temp,temp1);
+                    Draw_FilledRectangle(xpos,ypos,temp,temp1,0);
+                    break;
+                  case 'G':
+                    // define graph
+                    { int16_t gxp,gyp,gxs,gys;
+                        float ymin,ymax;
+                        var=atoiv(cp,&gxp);
+                        cp+=var;
+                        cp++;
+                        var=atoiv(cp,&gyp);
+                        cp+=var;
+                        cp++;
+                        var=atoiv(cp,&gxs);
+                        cp+=var;
+                        cp++;
+                        var=atoiv(cp,&gys);
+                        cp+=var;
+                        cp++;
+                        // should be changed to float later
+                        var=fatoiv(cp,&ymin);
+                        cp+=var;
+                        cp++;
+                        var=fatoiv(cp,&ymax);
+                        cp+=var;
+                        DefineGraph(gxp,gyp,gxs,gys,ymin,ymax);
+                    }
+                    break;
+                  case 'g':
+                    { float temp;
+                      var=fatoiv(cp,&temp);
+                      cp+=var;
+                      AddGraph(temp);
+                    }
                     break;
                   case 't':
                     sprintf(dp,"%02d:%02d",RtcTime.hour,RtcTime.minute);
@@ -209,7 +317,7 @@ boolean DisplayCommand() {
                     cp+=1;
                     break;
                   case 'a':
-                    // rotation angle
+                      // rotation angle
                     SetRotation(*cp&3);
                     cp+=1;
                     break;
@@ -258,14 +366,14 @@ boolean Xdrv98(byte function)
 
   switch (function) {
     case FUNC_PRE_INIT:
-    #ifndef USE_EPAPER
-          if (i2c_flg || spi_flg) {
-            DisplayInit();
-          }
-    #else
-          // epaper uses soft spi
-          DisplayInit();
-    #endif
+#ifndef USE_EPAPER
+      if (i2c_flg || spi_flg) {
+        DisplayInit();
+      }
+#else
+      // epaper uses soft spi
+      DisplayInit();
+#endif
       break;
     case FUNC_EVERY_50_MSECOND:
       //DisplayRefresh();

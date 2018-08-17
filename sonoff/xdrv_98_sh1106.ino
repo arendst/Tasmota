@@ -99,8 +99,12 @@ void Draw_Rectangle(uint16_t x,uint16_t y,uint16_t x2,uint16_t y2) {
   display.drawRect(x,y,x2,y2,WHITE);
 }
 
-void Draw_FilledRectangle(uint16_t x,uint16_t y,uint16_t x2,uint16_t y2) {
-  display.fillRect(x,y,x2,y2,WHITE);
+void Draw_FilledRectangle(uint16_t x,uint16_t y,uint16_t x2,uint16_t y2, uint8_t invert) {
+  display.fillRect(x,y,x2,y2,invert?WHITE:BLACK);
+}
+
+void DrawLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1) {
+  display.writeLine(x0,y0,x1,y1,WHITE);
 }
 
 void Draw_Frame() {

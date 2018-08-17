@@ -119,9 +119,15 @@ void Draw_Rectangle(uint16_t x,uint16_t y,uint16_t x2,uint16_t y2) {
   paint.DrawRectangle(x,y,x2,y2,COLORED);
 }
 
-void Draw_FilledRectangle(uint16_t x,uint16_t y,uint16_t x2,uint16_t y2) {
-  paint.DrawFilledRectangle(x,y,x2,y2,COLORED);
+
+void Draw_FilledRectangle(uint16_t x,uint16_t y,uint16_t x2,uint16_t y2, uint8_t invert) {
+  paint.DrawFilledRectangle(x,y,x2,y2,invert?COLORED:UNCOLORED);
 }
+
+void DrawLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1) {
+  paint.DrawLine(x0,y0,x1,y1,COLORED);
+}
+
 
 void Draw_Frame() {
   epd.SetFrameMemory(paint.GetImage(), 0, 0, paint.GetWidth(), paint.GetHeight());
