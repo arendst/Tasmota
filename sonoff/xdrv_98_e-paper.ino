@@ -32,6 +32,7 @@
 
 
 unsigned char image[(EPD_HEIGHT*EPD_WIDTH)/8];
+
 Paint paint(image,EPD_WIDTH,EPD_HEIGHT);    // width should be the multiple of 8
 Epd epd;
 sFONT *selected_font;
@@ -59,6 +60,7 @@ void DisplayInit(void) {
 
   // whiten display with full update
   epd.Init(lut_full_update);
+  
   epd.ClearFrameMemory(0xFF);   // bit set = white, bit reset = black
   epd.DisplayFrame();
   delay(3000);
@@ -82,6 +84,8 @@ void DisplayInit(void) {
   delay(1000);
 
   paint.Clear(UNCOLORED);
+
+  display_ready=1;
 }
 
 void Clr_screen() {

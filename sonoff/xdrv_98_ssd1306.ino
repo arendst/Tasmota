@@ -65,6 +65,8 @@ void DisplayInit(void) {
   display.setCursor(0,0);
   display.display();
   display.clearDisplay();
+
+  display_ready=1;
 }
 
 void Clr_screen() {

@@ -32,6 +32,8 @@ struct GRAPH {
   uint16_t flags;
 } graph[4];
 
+unsigned char display_ready;
+
 void ClrGraph(uint16_t num) {
   uint16_t xticks=(graph[num].flags>>2)&0x3f;
   uint16_t yticks=(graph[num].flags>>8)&0x3f;
@@ -159,6 +161,8 @@ boolean DisplayCommand() {
       serviced = false;  // Unknown command
     }
     else if (CMND_DISP_TEXT == command_code) {
+      if (display_ready) {
+
       if (XdrvMailbox.data_len > 0) {
         char *cp=XdrvMailbox.data;
         uint8_t lpos,escape=0,var;
@@ -384,12 +388,14 @@ boolean DisplayCommand() {
         }
         // draw buffer
         Draw_Frame();
+      }
 
       } else {
         snprintf_P(XdrvMailbox.data, XdrvMailbox.data_len, PSTR("no Text"));
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_DISPLAY_COMMAND_VALUE, command, XdrvMailbox.data);
     }
+
   }
   else serviced = false;  // Unknown command
 
