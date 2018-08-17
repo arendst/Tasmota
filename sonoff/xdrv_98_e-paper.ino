@@ -28,7 +28,7 @@
 
 // using font 8 is opional (num=3)
 // very badly readable, but may be useful for graphs
-//#define USE_TINY_FONT
+#define USE_TINY_FONT
 
 
 unsigned char image[(EPD_HEIGHT*EPD_WIDTH)/8];
@@ -60,7 +60,7 @@ void DisplayInit(void) {
 
   // whiten display with full update
   epd.Init(lut_full_update);
-  
+
   epd.ClearFrameMemory(0xFF);   // bit set = white, bit reset = black
   epd.DisplayFrame();
   delay(3000);
@@ -123,13 +123,13 @@ void Draw_FilledCircle(uint16_t x,uint16_t y,uint16_t rad) {
   paint.DrawFilledCircle(x,y,rad,COLORED);
 }
 
-void Draw_Rectangle(uint16_t x,uint16_t y,uint16_t x2,uint16_t y2) {
-  paint.DrawRectangle(x,y,x2,y2,COLORED);
+void Draw_Rectangle(uint16_t x,uint16_t y,uint16_t w,uint16_t h) {
+  paint.DrawRectangle(x,y,x+w,y+h,COLORED);
 }
 
 
-void Draw_FilledRectangle(uint16_t x,uint16_t y,uint16_t x2,uint16_t y2, uint8_t invert) {
-  paint.DrawFilledRectangle(x,y,x2,y2,invert?COLORED:UNCOLORED);
+void Draw_FilledRectangle(uint16_t x,uint16_t y,uint16_t w,uint16_t h, uint8_t invert) {
+  paint.DrawFilledRectangle(x,y,x+w,y+h,invert?COLORED:UNCOLORED);
 }
 
 void DrawLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1) {

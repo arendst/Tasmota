@@ -45,14 +45,14 @@ void ClrGraph(uint16_t num) {
   if (xticks) {
     float cxp=graph[num].xp,xd=(float)graph[num].xs/(float)xticks;
     for (count=0; count<xticks; count++) {
-      Draw_VLine(cxp,graph[num].yp+graph[num].ys-5,5);
+      Draw_VLine(cxp,graph[num].yp+graph[num].ys-4,4);
       cxp+=xd;
     }
   }
   if (yticks) {
     float cyp=graph[num].yp,yd=graph[num].ys/yticks;
     for (count=0; count<yticks; count++) {
-      Draw_HLine(graph[num].xp,cyp,5);
+      Draw_HLine(graph[num].xp,cyp,4);
       cyp+=yd;
     }
   }
