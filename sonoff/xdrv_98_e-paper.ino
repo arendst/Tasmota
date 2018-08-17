@@ -26,6 +26,10 @@
 #include <epd2in9.h>
 #include <epdpaint.h>
 
+// using font 8 is opional (num=3)
+// very badly readable, but may be useful for graphs
+//#define USE_TINY_FONT
+
 
 unsigned char image[(EPD_HEIGHT*EPD_WIDTH)/8];
 Paint paint(image,EPD_WIDTH,EPD_HEIGHT);    // width should be the multiple of 8
@@ -138,7 +142,15 @@ void SetFontorSize(uint8_t font) {
   if (font==1) {
     selected_font=&Font12;
   } else {
+#ifdef USE_TINY_FONT
+    if (font==2) {
+      selected_font=&Font24;
+    } else {
+      selected_font=&Font8;
+    }
+#else
     selected_font=&Font24;
+#endif
   }
 }
 
