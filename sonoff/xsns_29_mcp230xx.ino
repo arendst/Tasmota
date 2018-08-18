@@ -331,9 +331,10 @@ void MCP230xx_Reset(uint8_t pinmode) {
     Settings.mcp230xx_config[pinx].pinmode=pinmode;
     Settings.mcp230xx_config[pinx].pullup=pullup;
     Settings.mcp230xx_config[pinx].saved_state=0;
-    Settings.mcp230xx_config[pinx].int_report_mode=3;
     if (pinmode > 1 && pinmode < 5) {
       Settings.mcp230xx_config[pinx].int_report_mode=0; // Enabled for ALL by default
+    } else {
+      Settings.mcp230xx_config[pinx].int_report_mode=3; // Disabled for pinmode 1, 5 and 6 (No interrupts there)
     }
     Settings.mcp230xx_config[pinx].b7=0;
   }
