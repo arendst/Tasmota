@@ -27,6 +27,9 @@ struct GRAPH {
   float ymin;
   float ymax;
   float range;
+  uint8_t decimation;
+  uint8_t dcnt;
+  uint16_t summ;
   uint16_t xcnt;
   uint16_t *values;
   uint16_t flags;
@@ -59,7 +62,7 @@ void ClrGraph(uint16_t num) {
 }
 
 // define a graph
-void DefineGraph(uint16_t num,uint16_t xp,uint16_t yp,uint16_t xs,uint16_t ys,float ymin, float ymax) {
+void DefineGraph(uint16_t num,uint16_t xp,uint16_t yp,uint16_t xs,uint16_t ys,uint16_t dec,float ymin, float ymax) {
 
   uint16_t count;
   graph[num&3].flags=num;
@@ -68,10 +71,14 @@ void DefineGraph(uint16_t num,uint16_t xp,uint16_t yp,uint16_t xs,uint16_t ys,fl
   graph[num].yp=yp;
   graph[num].xs=xs;
   graph[num].ys=ys;
+  if (!dec) dec=1;
+  graph[num].decimation=dec;
   graph[num].ymin=ymin;
   graph[num].ymax=ymax;
   graph[num].range=(ymax-ymin)/ys;
   graph[num].xcnt=0;
+  graph[num].dcnt=0;
+  graph[num].summ=0;
   if (graph[num].values) free(graph[num].values);
   graph[num].values=(uint16_t*) calloc(2,xs+2);
   // start from zero
@@ -93,25 +100,36 @@ void AddGraph(uint8_t num,float fval) {
   int16_t val=(fval-graph[num].ymin)/graph[num].range;
   if (val>graph[num].ys-1) val=graph[num].ys-1;
   if (val<0) val=0;
-  graph[num].xcnt++;
-  if (graph[num].xcnt>graph[num].xs) {
-    graph[num].xcnt=graph[num].xs;
-    // clr area, shift and redraw graph
-    // draw rectangle
-    Draw_Rectangle(graph[num].xp,graph[num].yp,graph[num].xs,graph[num].ys);
-    ClrGraph(num);
-    int16_t count;
-    for (count=0;count<graph[num].xs-1;count++) {
-      graph[num].values[count]=graph[num].values[count+1];
-    }
-    graph[num].values[graph[num].xcnt-1]=val;
-    for (count=0;count<graph[num].xs-1;count++) {
-      DrawLine(graph[num].xp+count,graph[num].yp+graph[num].ys-graph[num].values[count]-1,graph[num].xp+count+1,graph[num].yp+graph[num].ys-graph[num].values[count+1]-1);
-    }
+  graph[num].dcnt++;
+  if (graph[num].dcnt<graph[num].decimation) {
+    // summ values
+    graph[num].summ+=val;
   } else {
-    // add value and draw a single line
-    graph[num].values[graph[num].xcnt]=val;
-    DrawLine(graph[num].xp+graph[num].xcnt-1,graph[num].yp+graph[num].ys-graph[num].values[graph[num].xcnt-1]-1,graph[num].xp+graph[num].xcnt,graph[num].yp+graph[num].ys-graph[num].values[graph[num].xcnt]-1);
+    graph[num].dcnt=0;
+    // calc average
+    val=graph[num].summ/graph[num].decimation;
+    graph[num].summ=0;
+    // add to graph
+    graph[num].xcnt++;
+    if (graph[num].xcnt>graph[num].xs) {
+      graph[num].xcnt=graph[num].xs;
+      // clr area, shift and redraw graph
+      // draw rectangle
+      Draw_Rectangle(graph[num].xp,graph[num].yp,graph[num].xs,graph[num].ys);
+      ClrGraph(num);
+      int16_t count;
+      for (count=0;count<graph[num].xs-1;count++) {
+        graph[num].values[count]=graph[num].values[count+1];
+      }
+      graph[num].values[graph[num].xcnt-1]=val;
+      for (count=0;count<graph[num].xs-1;count++) {
+        DrawLine(graph[num].xp+count,graph[num].yp+graph[num].ys-graph[num].values[count]-1,graph[num].xp+count+1,graph[num].yp+graph[num].ys-graph[num].values[count+1]-1);
+      }
+    } else {
+      // add value and draw a single line
+      graph[num].values[graph[num].xcnt]=val;
+      DrawLine(graph[num].xp+graph[num].xcnt-1,graph[num].yp+graph[num].ys-graph[num].values[graph[num].xcnt-1]-1,graph[num].xp+graph[num].xcnt,graph[num].yp+graph[num].ys-graph[num].values[graph[num].xcnt]-1);
+    }
   }
 }
 
@@ -309,7 +327,7 @@ boolean DisplayCommand() {
                     break;
                   case 'G':
                     // define graph
-                    { int16_t num,gxp,gyp,gxs,gys;
+                    { int16_t num,gxp,gyp,gxs,gys,dec;
                         float ymin,ymax;
                         var=atoiv(cp,&num);
                         cp+=var;
@@ -326,13 +344,16 @@ boolean DisplayCommand() {
                         var=atoiv(cp,&gys);
                         cp+=var;
                         cp++;
+                        var=atoiv(cp,&dec);
+                        cp+=var;
+                        cp++;
                         // should be changed to float later
                         var=fatoiv(cp,&ymin);
                         cp+=var;
                         cp++;
                         var=fatoiv(cp,&ymax);
                         cp+=var;
-                        DefineGraph(num,gxp,gyp,gxs,gys,ymin,ymax);
+                        DefineGraph(num,gxp,gyp,gxs,gys,dec,ymin,ymax);
                     }
                     break;
                   case 'g':
