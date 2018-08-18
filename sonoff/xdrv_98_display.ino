@@ -31,7 +31,7 @@ struct GRAPH {
   uint8_t dcnt;
   uint16_t summ;
   uint16_t xcnt;
-  uint16_t *values;
+  uint8_t *values;
   uint16_t flags;
 } graph[4];
 
@@ -53,10 +53,32 @@ void ClrGraph(uint16_t num) {
     }
   }
   if (yticks) {
-    float cyp=graph[num].yp,yd=graph[num].ys/yticks;
-    for (count=0; count<yticks; count++) {
-      Draw_HLine(graph[num].xp,cyp,4);
-      cyp+=yd;
+    if (graph[num].ymin<0 || graph[num].ymax>0) {
+      // draw zero seperator
+      float cxp=0;
+      float czp=graph[num].yp+(graph[num].ymax/graph[num].range);
+      while (cxp<graph[num].xs) {
+        Draw_HLine(graph[num].xp+cxp,czp,2);
+        cxp+=6.0;
+      }
+      // align ticks to zero line
+      float cyp=0,yd=graph[num].ys/yticks;
+      for (count=0; count<yticks; count++) {
+        if ((czp-cyp)>graph[num].yp) {
+          Draw_HLine(graph[num].xp,czp-cyp,4);
+        }
+        if ((czp+cyp)<(graph[num].yp+graph[num].ys)) {
+          Draw_HLine(graph[num].xp,czp+cyp,4);
+        }
+        cyp+=yd;
+      }
+
+    } else {
+      float cyp=graph[num].yp,yd=graph[num].ys/yticks;
+      for (count=0; count<yticks; count++) {
+        Draw_HLine(graph[num].xp,cyp,4);
+        cyp+=yd;
+      }
     }
   }
 }
@@ -80,7 +102,7 @@ void DefineGraph(uint16_t num,uint16_t xp,uint16_t yp,uint16_t xs,uint16_t ys,ui
   graph[num].dcnt=0;
   graph[num].summ=0;
   if (graph[num].values) free(graph[num].values);
-  graph[num].values=(uint16_t*) calloc(2,xs+2);
+  graph[num].values=(uint8_t*) calloc(1,xs+2);
   // start from zero
   graph[num].values[0]=0;
   // draw rectangle
