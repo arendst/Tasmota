@@ -112,21 +112,33 @@ void DefineGraph(uint16_t num,uint16_t xp,uint16_t yp,uint16_t xs,uint16_t ys,ui
 
 }
 
-
 // add next value to graph
 void AddGraph(uint8_t num,float fval) {
   // not yet defined ???
   num&=3;
   if (!graph[num].values) return;
 
-  int16_t val=(fval-graph[num].ymin)/graph[num].range;
+  int16_t val;
+  if (graph[num].ymin>=0) {
+    if (fval>0) {
+      val=(fval-graph[num].ymin)/graph[num].range;
+    } else {
+      val=0;
+    }
+  } else {
+    if (fval>0) {
+      val=(fval+fabs(graph[num].ymin))/graph[num].range;
+    } else {
+      val=(fabs(graph[num].ymin-fabs(fval)))/graph[num].range;
+    }
+  }
+
   if (val>graph[num].ys-1) val=graph[num].ys-1;
   if (val<0) val=0;
+  // summ values
+  graph[num].summ+=val;
   graph[num].dcnt++;
-  if (graph[num].dcnt<graph[num].decimation) {
-    // summ values
-    graph[num].summ+=val;
-  } else {
+  if (graph[num].dcnt>=graph[num].decimation) {
     graph[num].dcnt=0;
     // calc average
     val=graph[num].summ/graph[num].decimation;
