@@ -94,15 +94,15 @@ void Clr_screen() {
 
 void Init_Partial() {
   epd.Init(lut_partial_update);
-  paint.Clear(UNCOLORED);
+  //paint.Clear(UNCOLORED);
   epd.DisplayFrame();
   delay(500);
 }
 
 void Init_Full() {
   epd.Init(lut_full_update);
-  paint.Clear(UNCOLORED);
-  epd.ClearFrameMemory(0xFF);
+  //paint.Clear(UNCOLORED);
+  //epd.ClearFrameMemory(0xFF);
   epd.DisplayFrame();
   delay(3000);
 }

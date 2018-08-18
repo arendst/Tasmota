@@ -76,7 +76,7 @@ void DefineGraph(uint16_t num,uint16_t xp,uint16_t yp,uint16_t xs,uint16_t ys,fl
   graph[num].values=(uint16_t*) calloc(2,xs+2);
   // start from zero
   graph[num].values[0]=0;
-// draw rectangle
+  // draw rectangle
   Draw_Rectangle(xp,yp,xs,ys);
   // clr inside
   ClrGraph(num);
@@ -97,6 +97,8 @@ void AddGraph(uint8_t num,float fval) {
   if (graph[num].xcnt>graph[num].xs) {
     graph[num].xcnt=graph[num].xs;
     // clr area, shift and redraw graph
+    // draw rectangle
+    Draw_Rectangle(graph[num].xp,graph[num].yp,graph[num].xs,graph[num].ys);
     ClrGraph(num);
     int16_t count;
     for (count=0;count<graph[num].xs-1;count++) {
