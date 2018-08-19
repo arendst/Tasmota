@@ -19,12 +19,8 @@
 */
 #ifdef USE_DISPLAY
 
-#define USE_GRAPH
+#define NUM_GRAPHS 4
 
-unsigned char display_ready;
-
-#ifdef USE_GRAPH
-// up to 4 graphs 38*4 bytes
 struct GRAPH {
   uint16_t xp;
   uint16_t yp;
@@ -33,18 +29,23 @@ struct GRAPH {
   float ymin;
   float ymax;
   float range;
-  uint8_t decimation;
-  uint8_t dcnt;
-  uint16_t summ;
+  uint32_t x_time;       // time per x slice in milliseconds
+  uint32_t last_ms;
+  int16_t decimation; // decimation or graph duration in minutes
+  uint16_t dcnt;
+  uint32_t summ;
   uint16_t xcnt;
   uint8_t *values;
-  uint16_t flags;
-} graph[4];
+  uint8_t xticks;
+  uint8_t yticks;
+  uint8_t last_val;
+} graph[NUM_GRAPHS];
 
-// redraw graph including ticks
+unsigned char display_ready;
+
 void ClrGraph(uint16_t num) {
-  uint16_t xticks=(graph[num].flags>>2)&0x3f;
-  uint16_t yticks=(graph[num].flags>>8)&0x3f;
+  uint16_t xticks=graph[num].xticks;
+  uint16_t yticks=graph[num].yticks;
   uint16_t count;
 
   // clr inside
@@ -89,38 +90,91 @@ void ClrGraph(uint16_t num) {
 }
 
 // define a graph
-void DefineGraph(uint16_t num,uint16_t xp,uint16_t yp,uint16_t xs,uint16_t ys,uint16_t dec,float ymin, float ymax) {
+void DefineGraph(uint16_t num,uint16_t xp,uint16_t yp,uint16_t xs,uint16_t ys,int16_t dec,float ymin, float ymax) {
 
   uint16_t count;
-  graph[num&3].flags=num;
-  num&=3;
-  graph[num].xp=xp;
-  graph[num].yp=yp;
-  graph[num].xs=xs;
-  graph[num].ys=ys;
+  uint16_t index=num%NUM_GRAPHS;
+  graph[index].xticks=(num>>2)&0x3f;
+  graph[index].yticks=(num>>8)&0x3f;
+  graph[index].xp=xp;
+  graph[index].yp=yp;
+  graph[index].xs=xs;
+  graph[index].ys=ys;
   if (!dec) dec=1;
-  graph[num].decimation=dec;
-  graph[num].ymin=ymin;
-  graph[num].ymax=ymax;
-  graph[num].range=(ymax-ymin)/ys;
-  graph[num].xcnt=0;
-  graph[num].dcnt=0;
-  graph[num].summ=0;
-  if (graph[num].values) free(graph[num].values);
-  graph[num].values=(uint8_t*) calloc(1,xs+2);
+  graph[index].decimation=dec;
+  if (dec<0) {
+    // is minutes per sweep prepare timing paramters
+    graph[index].x_time=(-dec*60000)/(float)xs;
+    graph[index].last_ms=millis()+graph[index].x_time;
+  }
+  graph[index].ymin=ymin;
+  graph[index].ymax=ymax;
+  graph[index].range=(ymax-ymin)/ys;
+  graph[index].xcnt=0;
+  graph[index].dcnt=0;
+  graph[index].summ=0;
+  if (graph[index].values) free(graph[index].values);
+  graph[index].values=(uint8_t*) calloc(1,xs+2);
   // start from zero
-  graph[num].values[0]=0;
+  graph[index].values[0]=0;
   // draw rectangle
   Draw_Rectangle(xp,yp,xs,ys);
   // clr inside
-  ClrGraph(num);
+  ClrGraph(index);
 
 }
 
+// check if to advance GRAPH
+void DisplayCheckGraph() {
+  int16_t count;
+  for (count=0;count<NUM_GRAPHS;count++) {
+    if (graph[count].decimation<0) {
+      // if time over add value
+      while (millis()>graph[count].last_ms) {
+        graph[count].last_ms+=graph[count].x_time;
+        uint8_t val;
+        if (graph[count].dcnt) {
+          val=graph[count].summ/graph[count].dcnt;
+          graph[count].dcnt=0;
+          graph[count].summ=0;
+          graph[count].last_val=val;
+        } else {
+          val=graph[count].last_val;
+        }
+        AddGraph(count,val);
+      }
+    }
+  }
+}
+
 // add next value to graph
-void AddGraph(uint8_t num,float fval) {
+void AddGraph(uint8_t num,uint8_t val) {
+  graph[num].xcnt++;
+  if (graph[num].xcnt>graph[num].xs) {
+    graph[num].xcnt=graph[num].xs;
+    // clr area, shift and redraw graph
+    // draw rectangle
+    Draw_Rectangle(graph[num].xp,graph[num].yp,graph[num].xs,graph[num].ys);
+    ClrGraph(num);
+    int16_t count;
+    for (count=0;count<graph[num].xs-1;count++) {
+      graph[num].values[count]=graph[num].values[count+1];
+    }
+    graph[num].values[graph[num].xcnt-1]=val;
+    for (count=0;count<graph[num].xs-1;count++) {
+      DrawLine(graph[num].xp+count,graph[num].yp+graph[num].ys-graph[num].values[count]-1,graph[num].xp+count+1,graph[num].yp+graph[num].ys-graph[num].values[count+1]-1);
+    }
+  } else {
+    // add value and draw a single line
+    graph[num].values[graph[num].xcnt]=val;
+    DrawLine(graph[num].xp+graph[num].xcnt-1,graph[num].yp+graph[num].ys-graph[num].values[graph[num].xcnt-1]-1,graph[num].xp+graph[num].xcnt,graph[num].yp+graph[num].ys-graph[num].values[graph[num].xcnt]-1);
+  }
+}
+
+// add next value
+void AddValue(uint8_t num,float fval) {
   // not yet defined ???
-  num&=3;
+  num=num%NUM_GRAPHS;
   if (!graph[num].values) return;
 
   if (fval>graph[num].ymax) fval=graph[num].ymax;
@@ -131,38 +185,22 @@ void AddGraph(uint8_t num,float fval) {
 
   if (val>graph[num].ys-1) val=graph[num].ys-1;
   if (val<0) val=0;
+
   // summ values
   graph[num].summ+=val;
   graph[num].dcnt++;
-  if (graph[num].dcnt>=graph[num].decimation) {
-    graph[num].dcnt=0;
-    // calc average
-    val=graph[num].summ/graph[num].decimation;
-    graph[num].summ=0;
-    // add to graph
-    graph[num].xcnt++;
-    if (graph[num].xcnt>graph[num].xs) {
-      graph[num].xcnt=graph[num].xs;
-      // clr area, shift and redraw graph
-      // draw rectangle
-      Draw_Rectangle(graph[num].xp,graph[num].yp,graph[num].xs,graph[num].ys);
-      ClrGraph(num);
-      int16_t count;
-      for (count=0;count<graph[num].xs-1;count++) {
-        graph[num].values[count]=graph[num].values[count+1];
-      }
-      graph[num].values[graph[num].xcnt-1]=val;
-      for (count=0;count<graph[num].xs-1;count++) {
-        DrawLine(graph[num].xp+count,graph[num].yp+graph[num].ys-graph[num].values[count]-1,graph[num].xp+count+1,graph[num].yp+graph[num].ys-graph[num].values[count+1]-1);
-      }
-    } else {
-      // add value and draw a single line
-      graph[num].values[graph[num].xcnt]=val;
-      DrawLine(graph[num].xp+graph[num].xcnt-1,graph[num].yp+graph[num].ys-graph[num].values[graph[num].xcnt-1]-1,graph[num].xp+graph[num].xcnt,graph[num].yp+graph[num].ys-graph[num].values[graph[num].xcnt]-1);
+
+  if (graph[num].decimation>0) {
+    if (graph[num].dcnt>=graph[num].decimation) {
+      graph[num].dcnt=0;
+      // calc average
+      val=graph[num].summ/graph[num].decimation;
+      graph[num].summ=0;
+      // add to graph
+      AddGraph(num,val);
     }
   }
 }
-#endif
 
 // get asci number until delimiter and return asci number lenght and value
 uint8_t atoiv(char *cp,int16_t *res) {
@@ -202,6 +240,7 @@ int16_t xpos,ypos;
 
 
 boolean DisplayCommand() {
+  //display_ready=0;
   char command [CMDSZ];
   boolean serviced = true;
   uint8_t disp_len = strlen(D_CMND_DISPLAY);  // Prep for string length change
@@ -367,7 +406,6 @@ boolean DisplayCommand() {
                     cp+=var;
                     Draw_FilledRectangle(xpos,ypos,temp,temp1,0);
                     break;
-#ifdef USE_GRAPH
                   case 'G':
                     // define graph
                     { int16_t num,gxp,gyp,gxs,gys,dec;
@@ -390,7 +428,6 @@ boolean DisplayCommand() {
                         var=atoiv(cp,&dec);
                         cp+=var;
                         cp++;
-                        // should be changed to float later
                         var=fatoiv(cp,&ymin);
                         cp+=var;
                         cp++;
@@ -407,10 +444,8 @@ boolean DisplayCommand() {
                       cp++;
                       var=fatoiv(cp,&temp);
                       cp+=var;
-                      AddGraph(num,temp);
                     }
                     break;
-#endif
                   case 't':
                     sprintf(dp,"%02d:%02d",RtcTime.hour,RtcTime.minute);
                     dp+=5;
@@ -486,8 +521,6 @@ boolean Xdrv98(byte function)
       DisplayInit();
 #endif
       break;
-    case FUNC_EVERY_50_MSECOND:
-      //DisplayRefresh();
       break;
     case FUNC_COMMAND:
       result = DisplayCommand();
