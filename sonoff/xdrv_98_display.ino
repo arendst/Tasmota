@@ -366,16 +366,16 @@ boolean DisplayCommand() {
                     ypos+=temp;
                     break;
                   case 'L':
-                    // any line to
-                    var=atoiv(cp,&temp);
-                    cp+=var;
-                    cp++;
-                    var=atoiv(cp,&temp1);
-                    cp+=var;
-                    DrawLine(xpos,ypos,temp,temp1);
-                    xpos+=temp;
-                    ypos+=temp1;
-                    break;
+                     // any line to
+                     var=atoiv(cp,&temp);
+                     cp+=var;
+                     cp++;
+                     var=atoiv(cp,&temp1);
+                     cp+=var;
+                     DrawLine(xpos,ypos,temp,temp1);
+                     xpos+=temp;
+                     ypos+=temp1;
+                     break;
                   case 'k':
                     // circle
                     var=atoiv(cp,&temp);
@@ -444,6 +444,7 @@ boolean DisplayCommand() {
                       cp++;
                       var=fatoiv(cp,&temp);
                       cp+=var;
+                      AddValue(num,temp);
                     }
                     break;
                   case 't':
@@ -521,6 +522,8 @@ boolean Xdrv98(byte function)
       DisplayInit();
 #endif
       break;
+    case FUNC_EVERY_SECOND:
+      DisplayCheckGraph();
       break;
     case FUNC_COMMAND:
       result = DisplayCommand();
