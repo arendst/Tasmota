@@ -19,8 +19,12 @@
 */
 #ifdef USE_DISPLAY
 
-#define NUM_GRAPHS 4
+//#define USE_GRAPH
 
+#define NUM_GRAPHS 4
+unsigned char display_ready;
+
+#ifdef USE_GRAPH
 struct GRAPH {
   uint16_t xp;
   uint16_t yp;
@@ -41,7 +45,7 @@ struct GRAPH {
   uint8_t last_val;
 } graph[NUM_GRAPHS];
 
-unsigned char display_ready;
+
 
 void ClrGraph(uint16_t num) {
   uint16_t xticks=graph[num].xticks;
@@ -201,6 +205,7 @@ void AddValue(uint8_t num,float fval) {
     }
   }
 }
+#endif
 
 // get asci number until delimiter and return asci number lenght and value
 uint8_t atoiv(char *cp,int16_t *res) {
@@ -406,6 +411,7 @@ boolean DisplayCommand() {
                     cp+=var;
                     Draw_FilledRectangle(xpos,ypos,temp,temp1,0);
                     break;
+#ifdef USE_GRAPH
                   case 'G':
                     // define graph
                     { int16_t num,gxp,gyp,gxs,gys,dec;
@@ -447,6 +453,7 @@ boolean DisplayCommand() {
                       AddValue(num,temp);
                     }
                     break;
+#endif
                   case 't':
                     sprintf(dp,"%02d:%02d",RtcTime.hour,RtcTime.minute);
                     dp+=5;
@@ -522,9 +529,11 @@ boolean Xdrv98(byte function)
       DisplayInit();
 #endif
       break;
+#ifdef USE_GRAPH
     case FUNC_EVERY_SECOND:
       DisplayCheckGraph();
       break;
+#endif
     case FUNC_COMMAND:
       result = DisplayCommand();
       break;
