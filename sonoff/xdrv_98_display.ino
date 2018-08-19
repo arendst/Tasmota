@@ -19,6 +19,12 @@
 */
 #ifdef USE_DISPLAY
 
+#define USE_GRAPH
+
+unsigned char display_ready;
+
+#ifdef USE_GRAPH
+// up to 4 graphs 38*4 bytes
 struct GRAPH {
   uint16_t xp;
   uint16_t yp;
@@ -35,8 +41,7 @@ struct GRAPH {
   uint16_t flags;
 } graph[4];
 
-unsigned char display_ready;
-
+// redraw graph including ticks
 void ClrGraph(uint16_t num) {
   uint16_t xticks=(graph[num].flags>>2)&0x3f;
   uint16_t yticks=(graph[num].flags>>8)&0x3f;
@@ -157,6 +162,7 @@ void AddGraph(uint8_t num,float fval) {
     }
   }
 }
+#endif
 
 // get asci number until delimiter and return asci number lenght and value
 uint8_t atoiv(char *cp,int16_t *res) {
@@ -320,6 +326,17 @@ boolean DisplayCommand() {
                     }
                     ypos+=temp;
                     break;
+                  case 'L':
+                    // any line to
+                    var=atoiv(cp,&temp);
+                    cp+=var;
+                    cp++;
+                    var=atoiv(cp,&temp1);
+                    cp+=var;
+                    DrawLine(xpos,ypos,temp,temp1);
+                    xpos+=temp;
+                    ypos+=temp1;
+                    break;
                   case 'k':
                     // circle
                     var=atoiv(cp,&temp);
@@ -350,6 +367,7 @@ boolean DisplayCommand() {
                     cp+=var;
                     Draw_FilledRectangle(xpos,ypos,temp,temp1,0);
                     break;
+#ifdef USE_GRAPH
                   case 'G':
                     // define graph
                     { int16_t num,gxp,gyp,gxs,gys,dec;
@@ -392,6 +410,7 @@ boolean DisplayCommand() {
                       AddGraph(num,temp);
                     }
                     break;
+#endif
                   case 't':
                     sprintf(dp,"%02d:%02d",RtcTime.hour,RtcTime.minute);
                     dp+=5;
