@@ -118,20 +118,11 @@ void AddGraph(uint8_t num,float fval) {
   num&=3;
   if (!graph[num].values) return;
 
+  if (fval>graph[num].ymax) fval=graph[num].ymax;
+  if (fval<graph[num].ymin) fval=graph[num].ymin;
+
   int16_t val;
-  if (graph[num].ymin>=0) {
-    if (fval>0) {
-      val=(fval-graph[num].ymin)/graph[num].range;
-    } else {
-      val=0;
-    }
-  } else {
-    if (fval>0) {
-      val=(fval+fabs(graph[num].ymin))/graph[num].range;
-    } else {
-      val=(fabs(graph[num].ymin-fabs(fval)))/graph[num].range;
-    }
-  }
+  val=(fval-graph[num].ymin)/graph[num].range;
 
   if (val>graph[num].ys-1) val=graph[num].ys-1;
   if (val<0) val=0;
