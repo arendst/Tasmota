@@ -58,6 +58,8 @@ uint8_t mcp230xx_addresses[] = { MCP230xx_ADDRESS1, MCP230xx_ADDRESS2, MCP230xx_
 uint8_t mcp230xx_pincount = 0;
 uint8_t mcp230xx_int_en = 0;
 
+unsigned long int_millis[16]; // To keep track of millis() since last interrupt
+
 const char MCP230XX_SENSOR_RESPONSE[] PROGMEM = "{\"Sensor29_D%i\":{\"MODE\":%i,\"PULL_UP\":\"%s\",\"INT_MODE\":\"%s\",\"STATE\":\"%s\"}}";
 
 #ifdef USE_MCP230xx_OUTPUT
@@ -162,6 +164,9 @@ void MCP230xx_ApplySettings(void) {
     I2cWrite8(mcp230xx_address, MCP230xx_GPIO+mcp230xx_port, reg_portpins);
 #endif // USE_MCP230xx_OUTPUT
   }
+  for (uint8_t idx=0;idx<mcp230xx_pincount;idx++) {
+    int_millis[idx]=millis();
+  }
   mcp230xx_int_en=int_en;
 }
 
@@ -233,6 +238,7 @@ bool MCP230xx_CheckForInterrupt(void) {
                 if (report_int) {
                   bool int_tele = false;
                   bool int_event = false;
+                  unsigned long millis_since_last_int = millis() - int_millis[intp+(mcp230xx_port*8)];
                   switch (Settings.mcp230xx_config[intp+(mcp230xx_port*8)].int_report_mode) {
                     case 0:
                       int_tele=true;
@@ -247,7 +253,7 @@ bool MCP230xx_CheckForInterrupt(void) {
                   }
                   if (int_tele) {
                     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_TIME "\":\"%s\""), GetDateAndTime(DT_LOCAL).c_str());
-                    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"MCP230XX_INT\":{\"D%i\":%i}"), mqtt_data, intp+(mcp230xx_port*8), ((mcp230xx_intcap >> intp) & 0x01));
+                    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"MCP230XX_INT\":{\"D%i\":%i,\"MS\":%lu}"), mqtt_data, intp+(mcp230xx_port*8), ((mcp230xx_intcap >> intp) & 0x01),millis_since_last_int);
                     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}"), mqtt_data);
                     MqttPublishPrefixTopic_P(RESULT_OR_STAT, mqtt_data);
                   }
@@ -256,6 +262,7 @@ bool MCP230xx_CheckForInterrupt(void) {
                     sprintf(command,"event MCPINT_D%i=%i",intp+(mcp230xx_port*8),((mcp230xx_intcap >> intp) & 0x01));
                     ExecuteCommand(command, SRC_RULE);
                   }
+                  int_millis[intp+(mcp230xx_port*8)]=millis();
                 }
               }
             }

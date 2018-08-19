@@ -346,7 +346,7 @@ void DomoticzTempHumPressureSensor(char *temp, char *hum, char *baro)
   DomoticzSensor(DZ_TEMP_HUM_BARO, data);
 }
 
-void DomoticzSensorPowerEnergy(uint16_t power, char *energy)
+void DomoticzSensorPowerEnergy(int power, char *energy)
 {
   char data[16];
   snprintf_P(data, sizeof(data), PSTR("%d;%s"), power, energy);
