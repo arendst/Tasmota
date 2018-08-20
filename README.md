@@ -17,6 +17,7 @@ Any help or comment is very welcome.
 * [Integration](#integration)
 * [Requirement](#requirement)
 * [Usage Examples](#usage-examples)
+* [Console Commands](#console-commands)
 * [Development Road Map](#development-road-map)
 * [Modifications to Sonoff-Tasmota](#modifications-to-sonoff-tasmota)
 * [Contributors](#contributors)
@@ -149,7 +150,7 @@ Example: ``rule on event#knxrx_val1 do var1 %value% endon`` to store the value r
 
 Also, if a Read request is received from KNX Network, we can use that in a rule as for example: ``rule on event#knxrx_req1 do knxtx_val1 %var3% endon``
 
-**Console Commands:**
+## Console Commands ##
 
 Command                | Payload | Description
 -----------------------|---------|---------------------------------------------------------------------------
