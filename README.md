@@ -135,11 +135,15 @@ Also, we can use the command ``KnxTx_Val1 15`` to send a 15 value to the group a
 
 * In the KNX Menu can be set a Group Address to receive commands by rules as **KNX RX1** to **KNX RX5**
 
-In rules we can use the events to catch the reception from KNX to those RX Slots.
+In rules we can use the events to catch the reception of COMMANDS from KNX to those RX Slots.
 
-Example: ``rule on event#knxrx_cmnd1 do var1 %value%`` to store the command receive in the variable VAR1
+Example: ``rule on event#knxrx_cmnd1 do var1 %value% endon`` to store the command received in the variable VAR1
 
-Also, if a Read request is received from KNX Network, we can use that in a rule as for example: ``rule on event#knxrx_req1 do knxtx_val1 %var3%``
+In rules we can use the events to catch the reception of VALUES from KNX to those RX Slots.
+
+Example: ``rule on event#knxrx_val1 do var1 %value% endon`` to store the value received in the variable VAR1
+
+Also, if a Read request is received from KNX Network, we can use that in a rule as for example: ``rule on event#knxrx_req1 do knxtx_val1 %var3% endon``
 
 ## Development Road Map ##
 
