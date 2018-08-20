@@ -68,7 +68,11 @@ For using rules:
 * send KNX command (on/off)
 * receive KNX command (on/off)
 * send values by KNX (any float type, temperature for example)
+* receive values by KNX (any float type, temperature for example)
 * receive a KNX read request
+* view/set the Physical Address
+* view/set Group Address to send data
+* view/set Group Address to receive data
 
 ## Usage Examples ##
 
@@ -144,6 +148,65 @@ In rules we can use the events to catch the reception of VALUES from KNX to thos
 Example: ``rule on event#knxrx_val1 do var1 %value% endon`` to store the value received in the variable VAR1
 
 Also, if a Read request is received from KNX Network, we can use that in a rule as for example: ``rule on event#knxrx_req1 do knxtx_val1 %var3% endon``
+
+**Console Commands:**
+
+Command                | Payload | Description
+-----------------------|---------|---------------------------------------------------------------------------
+KnxTx_Cmnd\<x\>       | 0 / 1 | Send KNX Commands using the Group Address set on KNX Menu at KNX_TX\<x\> slot
+KnxTx_Val\<x\>       | value | Send KNX float values using the Group Address set on KNX Menu at KNX_TX\<x\> slot
+KNX_ENABLED            |       | View Status of KNX Communications
+|                      | 0 / 1 | 0 - Set Disable to KNX Communications / 1 - Set Enable to KNX Communications
+KNX_ENHANCED           |       | View Status of Enhanced mode for KNX Communications
+|                      | 0 / 1 | 0 - Set to Disable / 1 - Set to Enable Enhanced KNX Communications Mode
+KNX_PA                 |       | View the device KNX Physical Address (0.0.0 means not set)
+|                      | \<x\>.\<x\>.\<x\> | Set the device KNX Physical Address (like 1.1.0)
+KNX_GA                 |       | View the number of Group Address Configured to Send Data/Commands
+|                      | \<x\>     | View the configuration for the Group Address number x Send Data/Commands
+KNX_GA\<x\>            | \<y\>,\<z\>,\<z\>,\<z\> | Set the Group Address number \<x\> to Send Data/Commands
+|                      |       | \<y\> is the parameter OPTION to send its status to the Group Address
+|                      |       | \<z\>,\<z\>,\<z\> is the Group Address number to Send Data/Commands
+KNX_CB                 |       | View the number of Group Address Configured to Receive Data/Commands
+|                      | \<x\>     | View the configuration for the Group Address number x to Receive Data/Commands
+KNX_CB\<x\>            | \<y\>,\<z\>,\<z\>,\<z\> | Set the Group Address number \<x\> to ReceiveData/Commands
+|                      |       | \<y\> is the parameter OPTION to Receive its status from the Group Address
+|                      |       | \<z\>,\<z\>,\<z\> is the Group Address number to Receive Data/Commands
+
+Posible values for the parameter OPTION:
+
+OPTION Value | Device Parameter
+-----------------------|---------
+1 | Relay 1
+2 | Relay 2
+3 | Relay 3
+4 | Relay 4
+5 | Relay 5
+6 | Relay 6
+7 | Relay 7
+8 | Relay 8
+9 | Button 1
+10 | Button 2
+11 | Button 3
+12 | Button 4
+13 | Button 5
+14 | Button 6
+15 | Button 7
+16 | Button 8
+17 | TEMPERATURE        
+18 | HUMIDITY           
+19 | ENERGY_VOLTAGE     
+20 | ENERGY_CURRENT     
+21 | ENERGY_POWER       
+22 | ENERGY_POWERFACTOR 
+23 | ENERGY_DAILY       
+24 | ENERGY_START       
+25 | ENERGY_TOTAL       
+26 | KNX_SLOT1              
+27 | KNX_SLOT2              
+28 | KNX_SLOT3              
+29 | KNX_SLOT4              
+30 | KNX_SLOT5              
+255 | EMPTY
 
 ## Development Road Map ##
 
