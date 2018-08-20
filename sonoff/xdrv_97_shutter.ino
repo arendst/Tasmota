@@ -28,6 +28,7 @@ const char kShutterCommands[] PROGMEM =
 
 
 const char JSON_SHUTTER_POS[] PROGMEM = "%s,\"%s-%d\":%d";                                  // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
+const char S_JSON_COMMAND_INDEXWITHMINUS_NVALUE[] PROGMEM =            "{\"%s-%d\":%d}";
 
 uint8_t Shutter_Open_Time[MAX_SHUTTERS] ;               // duration to open the shutter
 uint8_t Shutter_Close_Time[MAX_SHUTTERS];              // duratin to close the shutter
@@ -116,6 +117,7 @@ void Schutter_Update_Position()
         Settings.shutter_position[i] = m2[i] * 5 > Shutter_Real_Position[i] ? Shutter_Real_Position[i] / m2[i] : (Shutter_Real_Position[i]-b1[i]) / m1[i];
         Shutter_Start_Position[i] = Shutter_Real_Position[i];
         // sending MQTT result to broker
+        snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEXWITHMINUS_NVALUE, D_SHUTTER, i+1, Settings.shutter_invert[i] ? 100 - Settings.shutter_position[i]: Settings.shutter_position[i]);
         MqttPublishPrefixTopic_P(RESULT_OR_TELE,"RESULT",false);
 
         if (Settings.pulse_timer[cur_relay-1] > 0) {
