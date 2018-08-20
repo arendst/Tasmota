@@ -25,10 +25,9 @@
     - Select IDE Tools - Flash Size: "1M (no SPIFFS)"
   ====================================================*/
 
-#define VERSION                0x06010104   // 6.1.1c
-
 // Location specific includes
 #include <core_version.h>                   // Arduino_Esp8266 version information (ARDUINO_ESP8266_RELEASE and ARDUINO_ESP8266_RELEASE_2_3_0)
+#include "sonoff_version.h"                 // Sonoff-Tasmota version information
 #include "sonoff.h"                         // Enumeration used in user_config.h
 #include "user_config.h"                    // Fixed user configurable options
 #ifdef USE_CONFIG_OVERRIDE
@@ -384,6 +383,15 @@ uint8_t GetFanspeed()
   return fanspeed;
 }
 
+void SetFanspeed(uint8_t fanspeed)
+{
+ for (byte i = 0; i < 3; i++) {
+    uint8_t state = kIFan02Speed[fanspeed][i];
+//    uint8_t state = pgm_read_byte(kIFan02Speed +(speed *3) +i);
+    ExecuteCommandPower(i +2, state, SRC_IGNORE);  // Use relay 2, 3 and 4
+  }
+}
+
 /********************************************************************************************/
 
 void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
@@ -527,12 +535,18 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
       return;
     }
     else if ((CMND_FANSPEED == command_code) && (SONOFF_IFAN02 == Settings.module)) {
-      if ((payload >= 0) && (payload <= 3) && (payload != GetFanspeed())) {
-        for (byte i = 0; i < 3; i++) {
-          uint8_t state = kIFan02Speed[payload][i];
-//          uint8_t state = pgm_read_byte(kIFan02Speed +(payload *3) +i);
-          ExecuteCommandPower(i +2, state, SRC_IGNORE);  // Use relay 2, 3 and 4
+      if (data_len > 0) {
+        if ('-' == dataBuf[0]) {
+          payload = (int16_t)GetFanspeed() -1;
+          if (payload < 0) { payload = 3; }
         }
+        else if ('+' == dataBuf[0]) {
+          payload = GetFanspeed() +1;
+          if (payload > 3) { payload = 0; }
+        }
+      }
+      if ((payload >= 0) && (payload <= 3) && (payload != GetFanspeed())) {
+        SetFanspeed(payload);
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, GetFanspeed());
     }
@@ -678,6 +692,7 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
               case 7:            // mqtt_switch_retain (CMND_SWITCHRETAIN)
               case 9:            // mqtt_sensor_retain (CMND_SENSORRETAIN)
               case 22:           // mqtt_serial (SerialSend and SerialLog)
+              case 23:           // mqtt_serial_raw (SerialSend)
               case 25:           // knx_enabled (Web config)
               case 27:           // knx_enable_enhancement (Web config)
                 ptype = 99;      // Command Error
@@ -915,15 +930,18 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, Settings.baudrate * 1200);
     }
-    else if ((CMND_SERIALSEND == command_code) && (index > 0) && (index <= 3)) {
+    else if ((CMND_SERIALSEND == command_code) && (index > 0) && (index <= 4)) {
       SetSeriallog(LOG_LEVEL_NONE);
       Settings.flag.mqtt_serial = 1;
+      Settings.flag.mqtt_serial_raw = (4 == index) ? 1 : 0;
       if (data_len > 0) {
         if (1 == index) {
           Serial.printf("%s\n", dataBuf);
         }
-        else if (2 == index) {
-          Serial.printf("%s", dataBuf);
+        else if (2 == index || 4 == index) {
+          for (int i = 0; i < data_len; i++) {
+            Serial.write(dataBuf[i]);
+          }
         }
         else if (3 == index) {
           uint16_t dat_len = data_len;
@@ -1141,7 +1159,7 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
           ntp_force_sync = 1;
         }
       }
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"%s\":{\"Hemisphere\":%d,\"Week\":%d,\"Month\":%d,\"Day\":%d,\"Hour\":%d,\"Offset\":%d\"}}"),
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"%s\":{\"Hemisphere\":%d,\"Week\":%d,\"Month\":%d,\"Day\":%d,\"Hour\":%d,\"Offset\":%d}}"),
         command, Settings.tflag[ts].hemis, Settings.tflag[ts].week, Settings.tflag[ts].month, Settings.tflag[ts].dow, Settings.tflag[ts].hour, Settings.toffset[ts]);
     }
     else if (CMND_ALTITUDE == command_code) {
@@ -1395,8 +1413,8 @@ void PublishStatus(uint8_t payload)
   }
 
   if ((0 == payload) || (3 == payload)) {
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_STATUS D_STATUS3_LOGGING "\":{\"" D_CMND_SERIALLOG "\":%d,\"" D_CMND_WEBLOG "\":%d,\"" D_CMND_SYSLOG "\":%d,\"" D_CMND_LOGHOST "\":\"%s\",\"" D_CMND_LOGPORT "\":%d,\"" D_CMND_SSID "\":[\"%s\",\"%s\"],\"" D_CMND_TELEPERIOD "\":%d,\"" D_CMND_SETOPTION "\":[\"%08X\",\"%08X\"]}}"),
-      Settings.seriallog_level, Settings.weblog_level, Settings.syslog_level, Settings.syslog_host, Settings.syslog_port, Settings.sta_ssid[0], Settings.sta_ssid[1], Settings.tele_period, Settings.flag.data, Settings.flag2.data);
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_STATUS D_STATUS3_LOGGING "\":{\"" D_CMND_SERIALLOG "\":%d,\"" D_CMND_WEBLOG "\":%d,\"" D_CMND_SYSLOG "\":%d,\"" D_CMND_LOGHOST "\":\"%s\",\"" D_CMND_LOGPORT "\":%d,\"" D_CMND_SSID "\":[\"%s\",\"%s\"],\"" D_CMND_TELEPERIOD "\":%d,\"" D_CMND_SETOPTION "\":[\"%08X\",\"%08X\",\"%08X\"]}}"),
+      Settings.seriallog_level, Settings.weblog_level, Settings.syslog_level, Settings.syslog_host, Settings.syslog_port, Settings.sta_ssid[0], Settings.sta_ssid[1], Settings.tele_period, Settings.flag.data, Settings.flag2.data, Settings.flag3.data);
     MqttPublishPrefixTopic_P(option, PSTR(D_CMND_STATUS "3"));
   }
 
@@ -1532,6 +1550,11 @@ boolean MqttShowSensor()
 void PerformEverySecond()
 {
   uptime++;
+
+  if ((4 == uptime) && (SONOFF_IFAN02 == Settings.module)) {  // Microcontroller needs 3 seconds before accepting commands
+    SetDevicePower(1, SRC_RETRY);      // Sync with default power on state microcontroller being Light ON and Fan OFF
+    SetDevicePower(power, SRC_RETRY);  // Set required power on state
+  }
 
   if (blockgpio0) blockgpio0--;
 
@@ -2207,7 +2230,7 @@ void SerialInput()
 #endif  // USE_ENERGY_SENSOR
 /*-------------------------------------------------------------------------------------------*/
 
-    if (serial_in_byte > 127) {                // binary data...
+    if (serial_in_byte > 127 && !Settings.flag.mqtt_serial_raw) { // binary data...
       serial_in_byte_counter = 0;
       Serial.flush();
       return;
@@ -2221,8 +2244,9 @@ void SerialInput()
         }
       }
     } else {
-      if (serial_in_byte) {
-        if ((serial_in_byte_counter < INPUT_BUFFER_SIZE -1) && (serial_in_byte != Settings.serial_delimiter)) {  // add char to string if it still fits
+      if (serial_in_byte || Settings.flag.mqtt_serial_raw) {
+        if ((serial_in_byte_counter < INPUT_BUFFER_SIZE -1) &&
+            ((serial_in_byte != Settings.serial_delimiter) || Settings.flag.mqtt_serial_raw)) {  // add char to string if it still fits
           serial_in_buffer[serial_in_byte_counter++] = serial_in_byte;
           serial_polling_window = millis();
         } else {
@@ -2262,7 +2286,15 @@ void SerialInput()
 
   if (Settings.flag.mqtt_serial && serial_in_byte_counter && (millis() > (serial_polling_window + SERIAL_POLLING))) {
     serial_in_buffer[serial_in_byte_counter] = 0;  // serial data completed
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_SERIALRECEIVED "\":\"%s\"}"), serial_in_buffer);
+    if (!Settings.flag.mqtt_serial_raw) {
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_SERIALRECEIVED "\":\"%s\"}"), serial_in_buffer);
+    } else {
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_SERIALRECEIVED "\":\""));
+      for (int i = 0; i < serial_in_byte_counter; i++) {
+        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s%02x"), mqtt_data, serial_in_buffer[i]);
+      }
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s\"}"), mqtt_data);
+    }
     MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_SERIALRECEIVED));
 //    XdrvRulesProcess();
     serial_in_byte_counter = 0;
@@ -2468,10 +2500,8 @@ void setup()
   seriallog_level = LOG_LEVEL_INFO;  // Allow specific serial messages until config loaded
 
   snprintf_P(my_version, sizeof(my_version), PSTR("%d.%d.%d"), VERSION >> 24 & 0xff, VERSION >> 16 & 0xff, VERSION >> 8 & 0xff);
-  if (VERSION & 0x1f) {
-    idx = strlen(my_version);
-    my_version[idx] = 96 + (VERSION & 0x1f);
-    my_version[idx +1] = 0;
+  if (VERSION & 0xff) {
+    snprintf_P(my_version, sizeof(my_version), PSTR("%s.%d"), my_version, VERSION & 0xff);
   }
 #ifdef BE_MINIMAL
   snprintf_P(my_version, sizeof(my_version), PSTR("%s-" D_JSON_MINIMAL), my_version);

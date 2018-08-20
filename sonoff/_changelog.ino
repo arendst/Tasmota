@@ -1,4 +1,32 @@
-/* 6.1.1c
+/* 6.1.1.7
+ * Add initial display support for Lcd, Oled, Matrix, Tft and e-paper - Need more docs
+ * Fix SDM120 reporting wrong negative values to Domoticz (#3521)
+ * Fix iFan02 power on state (#3412, #3530)
+ *
+ * 6.1.1.6
+ * Add modulo option to rules like rule1 on Time#Minute|5 do backlog power on;delay 200;power off endon (#3466)
+ *
+ * 6.1.1.5
+ * Fix some Pow R2 and S31 checksum errors using optimized re-sync
+ *
+ * 6.1.1.4
+ * Change version representation from 1.1.1a to 1.1.1.1 for better change reference
+ *
+ * 6.1.1c
+ * Add iFan02 Fanspeed + and Fanspeed - command options (#3415)
+ * Fix some Pow R2 and S31 checksum errors (#3425)
+ * Change CounterType 1 from milliseconds to microseconds (#3437)
+ * Add output support on MCP23008/MCP23017 (#3436)
+ * Fix LM75AD I2C sensor detection (#3408)
+ * Add message when JavaScript is not enabled in webbrowser (#3388)
+ * Fix sonoff-minimal from using default settings
+ * Add option + to command Rule to concatenate new rule with existing rules (#3365)
+ * Add initial support for sensor MPU6050 (#3352)
+ * Add command SerialSend4 to send binary serial data (#3345)
+ * Add rule triggers Wifi#Connected and Wifi#Disconnected (#3359)
+ * Fix unsecure main webpage update
+ * Add Turkish language file (#3332)
+ * Fix command TimeDst/TimeStd invalid JSON (#3322)
  * Fix possible WDT due to long MQTT publish handling (#3313)
  * Fix CCS811 temperature and humidity compensation
  * Add support for CCS811 sensor (#3309)

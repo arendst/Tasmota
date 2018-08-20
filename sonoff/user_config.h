@@ -199,6 +199,7 @@
 //#define MY_LANGUAGE            pt-BR           // Portuguese in Brazil
 //#define MY_LANGUAGE            pt-PT           // Portuguese in Portugal
 //#define MY_LANGUAGE            ru-RU           // Russian in Russia
+//#define MY_LANGUAGE            tr-TR           // Turkish in Turkey
 //#define MY_LANGUAGE            uk-UK           // Ukrainian in Ukrain
 //#define MY_LANGUAGE            zh-CN           // Chinese (Simplified) in China
 //#define MY_LANGUAGE            zh-TW           // Chinese (Traditional) in Taiwan
@@ -270,11 +271,12 @@
 
 // -- I2C sensors ---------------------------------
 #define USE_I2C                                  // I2C using library wire (+10k code, 0k2 mem, 124 iram)
+
 #ifdef USE_I2C
   #define USE_SHT                                // Enable SHT1X sensor (+1k4 code)
   #define USE_HTU                                // Enable HTU21/SI7013/SI7020/SI7021 sensor (I2C address 0x40) (+1k5 code)
   #define USE_BMP                                // Enable BMP085/BMP180/BMP280/BME280 sensor (I2C address 0x76 or 0x77) (+4k code)
-    #define USE_BME680                           // Enable support for BME680 sensor using Bosch BME680 library (+4k code)
+//    #define USE_BME680                           // Enable support for BME680 sensor using Bosch BME680 library (+4k code)
   #define USE_BH1750                             // Enable BH1750 sensor (I2C address 0x23 or 0x5C) (+0k5 code)
 //  #define USE_VEML6070                           // Enable VEML6070 sensor (I2C addresses 0x38 and 0x39) (+0k5 code)
 //  #define USE_ADS1115                            // Enable ADS1115 16 bit A/D converter (I2C address 0x48, 0x49, 0x4A or 0x4B) based on Adafruit ADS1x15 library (no library needed) (+0k7 code)
@@ -289,13 +291,36 @@
   #define USE_LM75AD                             // Enable LM75AD sensor (I2C addresses 0x48 - 0x4F) (+0k5 code)
 //  #define USE_APDS9960                           // Enable APDS9960 Proximity Sensor (I2C address 0x39). Disables SHT and VEML6070 (+4k7 code)
 //  #define USE_MCP230xx                           // Enable MCP23008/MCP23017 for GP INPUT ONLY (I2C addresses 0x20 - 0x27) providing command Sensor29 for configuration (+2k2 code)
+//    #define USE_MCP230xx_OUTPUT                  // Enable MCP23008/MCP23017 OUTPUT support through sensor29 commands (+1k code)
+//    #define USE_MCP230xx_DISPLAYOUTPUT           // Enable MCP23008/MCP23017 to display state of OUTPUT pins on Web UI (+0k2 code)
 //  #define USE_MPR121                             // Enable MPR121 controller (I2C addresses 0x5A, 0x5B, 0x5C and 0x5D) in input mode for touch buttons (+1k3 code)
 //  #define USE_CCS811                             // Enable CCS811 sensor (I2C address 0x5A) (+2k2 code)
+//  #define USE_MPU6050                            // Enable MPU6050 sensor (I2C address 0x68 AD0 low or 0x69 AD0 high) (+2k6 code)
+
+//  #define USE_DISPLAY                            // Add I2C Display Support for LCD, Oled and up to eigth Matrices (+19k code)
+    #define USE_DISPLAY_LCD                      // Enable Lcd display (I2C addresses 0x27 and 0x3F)
+    #define USE_DISPLAY_SSD1306                  // Enable Oled 128x64 display (I2C addresses 0x3C and 0x3D)
+//    #define USE_DISPLAY_MATRIX                   // Enable 8x8 Matrix display (I2C adresses below)
+      #define MTX_ADDRESS1     0x71              // [DisplayAddress[1]] I2C address of first 8x8 matrix module
+      #define MTX_ADDRESS2     0x74              // [DisplayAddress[2]] I2C address of second 8x8 matrix module
+      #define MTX_ADDRESS3     0x75              // [DisplayAddress[3]] I2C address of third 8x8 matrix module
+      #define MTX_ADDRESS4     0x72              // [DisplayAddress[4]] I2C address of fourth 8x8 matrix module
+      #define MTX_ADDRESS5     0x73              // [DisplayAddress[5]] I2C address of fifth 8x8 matrix module
+      #define MTX_ADDRESS6     0x76              // [DisplayAddress[6]] I2C address of sixth 8x8 matrix module
+      #define MTX_ADDRESS7     0x00              // [DisplayAddress[7]] I2C address of seventh 8x8 matrix module
+      #define MTX_ADDRESS8     0x00              // [DisplayAddress[8]] I2C address of eigth 8x8 matrix module
+
 #endif  // USE_I2C
 
 // -- SPI sensors ---------------------------------
-//#define USE_SPI                                  // SPI using default library
+//#define USE_SPI                                  // SPI using library TasmotaTFT
+
 #ifdef USE_SPI
+  #ifndef USE_DISPLAY
+  #define USE_DISPLAY                            // Add SPI Display support for 320x240 and 480x320 TFT
+  #endif
+    #define USE_DISPLAY_ILI9341                  // Enable Tft 480x320 display
+//    #define USE_DISPLAY_EPAPER                   // Enable e-paper display
 
 #endif  // USE_SPI
 
@@ -308,9 +333,9 @@
 #define USE_NOVA_SDS                             // Add support for SDS011 and SDS021 particle concentration sensor (+0k7 code)
 #define USE_PZEM004T                             // Add support for PZEM004T Energy monitor (+2k code)
 #define USE_SERIAL_BRIDGE                        // Add support for software Serial Bridge (+0k8 code)
-#define USE_SDM120                               // Add support for Eastron SDM120-Modbus energy meter (+1k7 code)
+//#define USE_SDM120                               // Add support for Eastron SDM120-Modbus energy meter (+1k7 code)
   #define SDM120_SPEED         9600              // SDM120-Modbus RS485 serial speed (default: 2400 baud)
-#define USE_SDM630                               // Add support for Eastron SDM630-Modbus energy meter (+2k code)
+//#define USE_SDM630                               // Add support for Eastron SDM630-Modbus energy meter (+2k code)
   #define SDM630_SPEED         9600              // SDM630-Modbus RS485 serial speed (default: 9600 baud)
 
 // -- Low level interface devices -----------------
@@ -326,7 +351,7 @@
 
 #define USE_SR04                                 // Add support for HC-SR04 ultrasonic devices (+1k code)
 
-#define USE_TM1638                               // Add support for TM1638 switches copying Switch1 .. Switch8 (+1k code)
+//#define USE_TM1638                               // Add support for TM1638 switches copying Switch1 .. Switch8 (+1k code)
 
 #define USE_RF_FLASH                             // Add support for flashing the EFM8BB1 chip on the Sonoff RF Bridge. C2CK must be connected to GPIO4, C2D to GPIO5 on the PCB (+3k code)
 

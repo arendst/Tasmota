@@ -182,6 +182,11 @@ bool RulesRuleMatch(byte rule_set, String &event, String &rule)
       pos = rule_name.indexOf("=");
       if (pos > 0) {
         compare = '=';
+      } else {
+        pos = rule_name.indexOf("|");                  // Modulo, cannot use % easily as it is used for variable detection
+        if (pos > 0) {
+          compare = '%';
+        }
       }
     }
   }
@@ -236,7 +241,14 @@ bool RulesRuleMatch(byte rule_set, String &event, String &rule)
   // Step 3: Compare rule (value)
   if (str_value) {
     value = CharToDouble((char*)str_value);
+    int int_value = int(value);
+    int int_rule_value = int(rule_value);
     switch (compare) {
+      case '%':
+        if ((int_value > 0) && (int_rule_value > 0)) {
+          if ((int_value % int_rule_value) == 0) { match = true; }
+        }
+        break;
       case '>':
         if (value > rule_value) { match = true; }
         break;
@@ -432,6 +444,8 @@ void RulesEvery50ms()
             case 2: snprintf_P(json_event, sizeof(json_event), PSTR("{\"Time\":{\"Set\":%d}}"), GetMinutesPastMidnight()); break;
             case 3: strncpy_P(json_event, PSTR("{\"MQTT\":{\"Connected\":1}}"), sizeof(json_event)); break;
             case 4: strncpy_P(json_event, PSTR("{\"MQTT\":{\"Disconnected\":1}}"), sizeof(json_event)); break;
+            case 5: strncpy_P(json_event, PSTR("{\"WIFI\":{\"Connected\":1}}"), sizeof(json_event)); break;
+            case 6: strncpy_P(json_event, PSTR("{\"WIFI\":{\"Disconnected\":1}}"), sizeof(json_event)); break;
           }
           if (json_event[0]) {
             RulesProcessEvent(json_event);
@@ -525,7 +539,18 @@ boolean RulesCommand()
           break;
         }
       } else {
-        strlcpy(Settings.rules[index -1], ('"' == XdrvMailbox.data[0]) ? "" : XdrvMailbox.data, sizeof(Settings.rules[index -1]));
+        int offset = 0;
+        if ('+' == XdrvMailbox.data[0]) {
+          offset = strlen(Settings.rules[index -1]);
+          if (XdrvMailbox.data_len < (sizeof(Settings.rules[index -1]) - offset -1)) {  // Check free space
+            XdrvMailbox.data[0] = ' ';  // Remove + and make sure at least one space is inserted
+          } else {
+            offset = -1;                // Not enough space so skip it
+          }
+        }
+        if (offset != -1) {
+          strlcpy(Settings.rules[index -1] + offset, ('"' == XdrvMailbox.data[0]) ? "" : XdrvMailbox.data, sizeof(Settings.rules[index -1]));
+        }
       }
       rules_triggers[index -1] = 0;  // Reset once flag
     }

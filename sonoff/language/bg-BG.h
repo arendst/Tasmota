@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v6.0.0a
+ * Updated until v6.1.1.5
 \*********************************************************************/
 
 //#define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -206,6 +206,7 @@
 #define D_ERASED_SECTOR "Изтрит сектор"
 
 // xdrv_02_webserver.ino
+#define D_NOSCRIPT "Разрешете JavaScript, за да използвате Tasmota"
 #define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "Минимален фърмуеър - моля надградете го"
 #define D_WEBSERVER_ACTIVE_ON "Уеб сървърът е активен на"
 #define D_WITH_IP_ADDRESS "с IP адрес"
@@ -227,7 +228,6 @@
 #define D_CONFIRM_RESTART "Подтвърдете рестартирането"
 
 #define D_CONFIGURE_MODULE "Конфигурация на модула"
-#define D_CONFIGURE_MCP230XX "Конфигурация на MCP230xx"
 #define D_CONFIGURE_WIFI "Конфигурация на WiFi"
 #define D_CONFIGURE_MQTT "Конфигурация на MQTT"
 #define D_CONFIGURE_DOMOTICZ "Конфигурация на Domoticz"
@@ -436,6 +436,14 @@
 #define D_STANDARD_CONCENTRATION "CF-1 PM"     // Standard Particle CF-1 Particle Matter
 #define D_ENVIRONMENTAL_CONCENTRATION "PM"     // Environmetal Particle Matter
 #define D_PARTICALS_BEYOND "Частици"
+
+// xsns_32_mpu6050.ino
+#define D_AX_AXIS "Accel. X-Axis"
+#define D_AY_AXIS "Accel. Y-Axis"
+#define D_AZ_AXIS "Accel. Z-Axis"
+#define D_GX_AXIS "Gyro X-Axis"
+#define D_GY_AXIS "Gyro Y-Axis"
+#define D_GZ_AXIS "Gyro Z-Axis"
 
 // sonoff_template.h
 #define D_SENSOR_NONE     "Няма"

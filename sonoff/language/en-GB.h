@@ -206,6 +206,7 @@
 #define D_ERASED_SECTOR "Erased sector"
 
 // xdrv_02_webserver.ino
+#define D_NOSCRIPT "To use Tasmota, please enable JavaScript"
 #define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "MINIMAL firmware - please upgrade"
 #define D_WEBSERVER_ACTIVE_ON "Web server active on"
 #define D_WITH_IP_ADDRESS "with IP address"
@@ -227,7 +228,6 @@
 #define D_CONFIRM_RESTART "Confirm Restart"
 
 #define D_CONFIGURE_MODULE "Configure Module"
-#define D_CONFIGURE_MCP230XX "Configure MCP230xx"
 #define D_CONFIGURE_WIFI "Configure WiFi"
 #define D_CONFIGURE_MQTT "Configure MQTT"
 #define D_CONFIGURE_DOMOTICZ "Configure Domoticz"
@@ -436,6 +436,14 @@
 #define D_STANDARD_CONCENTRATION "CF-1 PM"     // Standard Particle CF-1 Particle Matter
 #define D_ENVIRONMENTAL_CONCENTRATION "PM"     // Environmetal Particle Matter
 #define D_PARTICALS_BEYOND "Particals"
+
+// xsns_32_mpu6050.ino
+#define D_AX_AXIS "Accel. X-Axis"
+#define D_AY_AXIS "Accel. Y-Axis"
+#define D_AZ_AXIS "Accel. Z-Axis"
+#define D_GX_AXIS "Gyro X-Axis"
+#define D_GY_AXIS "Gyro Y-Axis"
+#define D_GZ_AXIS "Gyro Z-Axis"
 
 // sonoff_template.h
 #define D_SENSOR_NONE     "None"
