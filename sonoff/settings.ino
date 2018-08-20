@@ -799,7 +799,7 @@ void SettingsDelta()
     if (Settings.version < 0x06010103) {
       Settings.flag3.timers_enable = 1;
     }
-    if (Settings.version < 0x06010104) {
+    if (Settings.version < 0x06010108) {
       SettingsDefaultSet_RFBinds();
     }
 
