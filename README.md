@@ -48,7 +48,7 @@ If you use the ETS (KNX Configurator Software) you can add any Sonoff Tasmota KN
 
 It is recommended to compile with version 2.4.2 of the esp8266 board libraries.
 With v2.4.0 and v2.4.1 there are some issues related to sleep command. Do not use.
-If you are going to compile with old v2.3.0 you need to comment lines 10 and 57 on the _esp-knx-ip.h_ file.
+If you are going to compile with old v2.3.0 you need to comment lines 10 and 58 on the _esp-knx-ip.h_ file.
 
 ## Implemented Features ##
 
