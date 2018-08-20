@@ -58,12 +58,12 @@ void ClrGraph(uint16_t num) {
   if (xticks) {
     float cxp=graph[num].xp,xd=(float)graph[num].xs/(float)xticks;
     for (count=0; count<xticks; count++) {
-      Draw_VLine(cxp,graph[num].yp+graph[num].ys-4,4);
+      Draw_VLine(cxp,graph[num].yp+graph[num].ys-TICKLEN,TICKLEN);
       cxp+=xd;
     }
   }
   if (yticks) {
-    if (graph[num].ymin<0 || graph[num].ymax>0) {
+    if (graph[num].ymin<0 && graph[num].ymax>0) {
       // draw zero seperator
       float cxp=0;
       float czp=graph[num].yp+(graph[num].ymax/graph[num].range);
@@ -75,10 +75,12 @@ void ClrGraph(uint16_t num) {
       float cyp=0,yd=graph[num].ys/yticks;
       for (count=0; count<yticks; count++) {
         if ((czp-cyp)>graph[num].yp) {
-          Draw_HLine(graph[num].xp,czp-cyp,4);
+          Draw_HLine(graph[num].xp,czp-cyp,TICKLEN);
+          Draw_HLine(graph[num].xp+graph[num].xs-TICKLEN,czp-cyp,TICKLEN);
         }
         if ((czp+cyp)<(graph[num].yp+graph[num].ys)) {
-          Draw_HLine(graph[num].xp,czp+cyp,4);
+          Draw_HLine(graph[num].xp,czp+cyp,TICKLEN);
+          Draw_HLine(graph[num].xp+graph[num].xp-TICKLEN,czp+cyp,TICKLEN);
         }
         cyp+=yd;
       }
@@ -86,7 +88,8 @@ void ClrGraph(uint16_t num) {
     } else {
       float cyp=graph[num].yp,yd=graph[num].ys/yticks;
       for (count=0; count<yticks; count++) {
-        Draw_HLine(graph[num].xp,cyp,4);
+        Draw_HLine(graph[num].xp,cyp,TICKLEN);
+        Draw_HLine(graph[num].xp+graph[num].xs-TICKLEN,cyp,TICKLEN);
         cyp+=yd;
       }
     }

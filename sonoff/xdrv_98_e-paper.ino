@@ -58,9 +58,9 @@ void DisplayInit(void) {
     return;
   }
 
+
   // whiten display with full update
   epd.Init(lut_full_update);
-
   epd.ClearFrameMemory(0xFF);   // bit set = white, bit reset = black
   epd.DisplayFrame();
   delay(3000);
