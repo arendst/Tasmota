@@ -38,54 +38,14 @@
 
 Adafruit_SSD1306 *oled;
 
-char oled_screen_buffer[OLED_BUFFER_ROWS][OLED_BUFFER_COLS +1];
-
 uint8_t ssd1306_font_x = OLED_FONT_WIDTH;
 uint8_t ssd1306_font_y = OLED_FONT_HEIGTH;
-
-void Ssd1306InitFull()
-{
-  oled->invertDisplay(false);
-  oled->clearDisplay();
-  oled->setTextWrap(false);         // Allow text to run off edges
-  oled->cp437(true);
-
-  oled->setTextSize(Settings.display_size);
-  oled->setTextColor(WHITE);
-  oled->setCursor(0,0);
-  oled->display();
-}
-
-void Ssd1306Clear()
-{
-  oled->clearDisplay();
-  oled->setCursor(0, 0);
-  oled->display();
-}
-
-void Ssd1306DrawStringAt(uint16_t x, uint16_t y, char *str, uint16_t color, uint8_t flag)
-{
-  if (!flag) {
-    oled->setCursor(x, y);
-  } else {
-    oled->setCursor((x-1) * ssd1306_font_x * Settings.display_size, (y-1) * ssd1306_font_y * Settings.display_size);
-  }
-  oled->println(str);
-}
-
-void Ssd1306DisplayOnOff(uint8_t on)
-{
-  if (on) {
-    oled->ssd1306_command(SSD1306_DISPLAYON);
-  } else {
-    oled->ssd1306_command(SSD1306_DISPLAYOFF);
-  }
-}
 
 /*********************************************************************************************/
 
 void Ssd1306InitMode()
 {
+  oled->setRotation(Settings.display_rotate);  // 0
   oled->invertDisplay(false);
   oled->clearDisplay();
   oled->setTextWrap(false);         // Allow text to run off edges
@@ -129,6 +89,44 @@ void Ssd1306InitDriver()
     Ssd1306InitMode();
   }
 }
+
+void Ssd1306Clear()
+{
+  oled->clearDisplay();
+  oled->setCursor(0, 0);
+  oled->display();
+}
+
+void Ssd1306DrawStringAt(uint16_t x, uint16_t y, char *str, uint16_t color, uint8_t flag)
+{
+  if (!flag) {
+    oled->setCursor(x, y);
+  } else {
+    oled->setCursor((x-1) * ssd1306_font_x * Settings.display_size, (y-1) * ssd1306_font_y * Settings.display_size);
+  }
+  oled->println(str);
+}
+
+void Ssd1306DisplayOnOff(uint8_t on)
+{
+  if (on) {
+    oled->ssd1306_command(SSD1306_DISPLAYON);
+  } else {
+    oled->ssd1306_command(SSD1306_DISPLAYOFF);
+  }
+}
+
+void Ssd1306OnOff()
+{
+  Ssd1306DisplayOnOff(disp_power);
+  oled->display();
+}
+
+/*********************************************************************************************/
+
+#ifdef USE_DISPLAY_MODES1TO5
+
+char oled_screen_buffer[OLED_BUFFER_ROWS][OLED_BUFFER_COLS +1];
 
 void Ssd1306PrintLogLine()
 {
@@ -175,12 +173,6 @@ void Ssd1306PrintLog()
   }
 }
 
-void Ssd1306OnOff()
-{
-  Ssd1306DisplayOnOff(disp_power);
-  oled->display();
-}
-
 void Ssd1306Time()
 {
   char line[12];
@@ -212,6 +204,8 @@ void Ssd1306Refresh()  // Every second
   }
 }
 
+#endif  // USE_DISPLAY_MODES1TO5
+
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
@@ -234,9 +228,6 @@ boolean Xdsp02(byte function)
           break;
         case FUNC_DISPLAY_INIT:
           Ssd1306Init(dsp_init);
-          break;
-        case FUNC_DISPLAY_EVERY_SECOND:
-          Ssd1306Refresh();
           break;
         case FUNC_DISPLAY_POWER:
           Ssd1306OnOff();
@@ -278,8 +269,13 @@ boolean Xdsp02(byte function)
           Ssd1306DisplayOnOff(dsp_on);
           break;
         case FUNC_DISPLAY_ROTATION:
-          oled->setRotation(dsp_rotation);
+          oled->setRotation(Settings.display_rotate);
           break;
+#ifdef USE_DISPLAY_MODES1TO5
+        case FUNC_DISPLAY_EVERY_SECOND:
+          Ssd1306Refresh();
+          break;
+#endif  // USE_DISPLAY_MODES1TO5
       }
     }
   }

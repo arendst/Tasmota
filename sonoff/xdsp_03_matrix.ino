@@ -34,6 +34,10 @@ uint8_t mtx_counter = 0;
 int16_t mtx_x = 0;
 int16_t mtx_y = 0;
 
+char mtx_buffer[80];
+uint8_t mtx_mode = 0;
+uint8_t mtx_loop = 0;
+
 /*********************************************************************************************/
 
 void MatrixWrite()
@@ -50,31 +54,6 @@ void MatrixClear()
   }
   MatrixWrite();
 }
-
-/*
-void MatrixAll()  // On based on Text value (1 - 6)
-{
-  int value = atoi(Settings.text);
-  for (byte i = 0; i < mtx_matrices; i++) {
-    matrix[i]->clear();
-    if (i < value) {
-      matrix[i]->fillRect(0,0, 8,8, LED_ON);
-    }
-    matrix[i]->setBrightness(Settings.display_dimmer);
-  }
-  MatrixWrite();
-}
-
-void MatrixAllOn()
-{
-  for (byte i = 0; i < mtx_matrices; i++) {
-    matrix[i]->clear();
-    matrix[i]->fillRect(0,0, 8,8, LED_ON);
-    matrix[i]->setBrightness(Settings.display_dimmer);
-  }
-  MatrixWrite();
-}
-*/
 
 void MatrixFixed(char* txt)
 {
@@ -186,40 +165,12 @@ void MatrixScrollUp(char* txt, int loop)
   }
 }
 
-void MatrixBufferScroll(uint8_t direction)
-{
-  if (disp_log_buffer_idx != disp_log_buffer_ptr) {
-    if (!mtx_state) {
-      mtx_state = 1;
-    }
-
-    char *pch = strchr(disp_log_buffer[disp_log_buffer_ptr],'~');  // = 0x7E (~) Replace degrees character (276 octal)
-    if (pch != NULL) {
-      disp_log_buffer[disp_log_buffer_ptr][pch - disp_log_buffer[disp_log_buffer_ptr]] = '\370';  // = 0xF8
-    }
-
-    if (direction) {
-      MatrixScrollUp(disp_log_buffer[disp_log_buffer_ptr], 0);
-    } else {
-      MatrixScrollLeft(disp_log_buffer[disp_log_buffer_ptr], 0);
-    }
-    if (!mtx_state) {
-      DisplayLogBufferPtrInc();
-    }
-  } else {
-    char disp_time[9];    // 13:45:43
-
-    snprintf_P(disp_time, sizeof(disp_time), PSTR("%02d" D_HOUR_MINUTE_SEPARATOR "%02d" D_MINUTE_SECOND_SEPARATOR "%02d"), RtcTime.hour, RtcTime.minute, RtcTime.second);
-    MatrixFixed(disp_time);
-  }
-}
-
 /*********************************************************************************************/
 
 void MatrixInitMode()
 {
   for (byte i = 0; i < mtx_matrices; i++) {
-    matrix[i]->setRotation(1);
+    matrix[i]->setRotation(Settings.display_rotate);  // 1
     matrix[i]->setBrightness(Settings.display_dimmer);
     matrix[i]->blinkRate(0);               // 0 - 3
     matrix[i]->setTextWrap(false);         // Allow text to run off edges
@@ -272,12 +223,64 @@ void MatrixOnOff()
   }
 }
 
+void MatrixDrawStringAt(uint16_t x, uint16_t y, char *str, uint16_t color, uint8_t flag)
+{
+  snprintf(mtx_buffer, sizeof(mtx_buffer), str);
+  mtx_mode = x;
+  mtx_loop = y;
+  if (!mtx_state) { mtx_state = 1; }
+}
+
+/*********************************************************************************************/
+
+#ifdef USE_DISPLAY_MODES1TO5
+
+void MatrixBufferScroll(uint8_t direction)
+{
+  if (disp_log_buffer_idx != disp_log_buffer_ptr) {
+    if (!mtx_state) {
+      mtx_state = 1;
+    }
+
+    char *pch = strchr(disp_log_buffer[disp_log_buffer_ptr],'~');  // = 0x7E (~) Replace degrees character (276 octal)
+    if (pch != NULL) {
+      disp_log_buffer[disp_log_buffer_ptr][pch - disp_log_buffer[disp_log_buffer_ptr]] = '\370';  // = 0xF8
+    }
+
+    if (direction) {
+      MatrixScrollUp(disp_log_buffer[disp_log_buffer_ptr], 0);
+    } else {
+      MatrixScrollLeft(disp_log_buffer[disp_log_buffer_ptr], 0);
+    }
+    if (!mtx_state) {
+      DisplayLogBufferPtrInc();
+    }
+  } else {
+    char disp_time[9];    // 13:45:43
+
+    snprintf_P(disp_time, sizeof(disp_time), PSTR("%02d" D_HOUR_MINUTE_SEPARATOR "%02d" D_MINUTE_SECOND_SEPARATOR "%02d"), RtcTime.hour, RtcTime.minute, RtcTime.second);
+    MatrixFixed(disp_time);
+  }
+}
+
+#endif  // USE_DISPLAY_MODES1TO5
+
 void MatrixRefresh()  // Every second
 {
   if (disp_power) {
     switch (Settings.display_mode) {
-      case 0:
-//        MatrixScrollLeft(Settings.text, Settings.loop);
+      case 0: {
+        switch (mtx_mode) {
+          case 0:
+            MatrixScrollLeft(mtx_buffer, mtx_loop);
+            break;
+          case 1:
+            MatrixScrollUp(mtx_buffer, mtx_loop);
+            break;
+        }
+        break;
+      }
+#ifdef USE_DISPLAY_MODES1TO5
       case 2: {
         char disp_date[9];    // 24-04-17
         snprintf_P(disp_date, sizeof(disp_date), PSTR("%02d" D_MONTH_DAY_SEPARATOR "%02d" D_YEAR_MONTH_SEPARATOR "%02d"), RtcTime.day_of_month, RtcTime.month, RtcTime.year -2000);
@@ -297,12 +300,7 @@ void MatrixRefresh()  // Every second
       case 5:  // Time, user text and MQTT
         MatrixBufferScroll(1);
         break;
-//      case 8:
-//        MatrixAllOn();
-//        break;
-//      case 9:
-//        MatrixAll();
-//        break;
+#endif  // USE_DISPLAY_MODES1TO5
     }
   }
 }
@@ -332,6 +330,9 @@ boolean Xdsp03(byte function)
           break;
         case FUNC_DISPLAY_POWER:
           MatrixOnOff();
+          break;
+        case FUNC_DISPLAY_DRAW_STRING:
+          MatrixDrawStringAt(dsp_x, dsp_y, dsp_str, dsp_color, dsp_flag);
           break;
       }
     }
