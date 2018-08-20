@@ -41,11 +41,14 @@ If using the Home Assistant distribution called **Hassio**, everything for KNX i
 
 If you use the ETS (KNX Configurator Software) you can add any Sonoff Tasmota KNX as a dummy device.
 
-## Requirement ##
+## Requirements ##
 
-* [ESP KNX IP Library](https://github.com/envy/esp-knx-ip). A copy of the library is also available [here](https://github.com/ascillato/Sonoff-Tasmota_KNX/tree/development/lib/esp-knx-ip-0.5.0).
+* [ESP KNX IP Library](https://github.com/envy/esp-knx-ip). A copy of the modified library is available [here](https://github.com/ascillato/Sonoff-Tasmota_KNX/tree/development/lib/esp-knx-ip-0.5.1) and [here](https://github.com/ascillato/esp-knx-ip).
+* [ESPAsyncUDP Library](https://github.com/me-no-dev/ESPAsyncUDP). Library required for the ESP-KNX-IP Library. Please, use it with this [Patch](https://github.com/me-no-dev/ESPAsyncUDP/pull/21). A copy of the modified library is available [here](https://github.com/ascillato/Sonoff-Tasmota_KNX/tree/development/lib/ESPAsyncUDP-master).
 
-It is recommended to compile with version 2.3.0 of the esp8266 board libraries. With v2.4.0 and v2.4.1 there are some issues related to sleep command.
+It is recommended to compile with version 2.4.2 of the esp8266 board libraries.
+With v2.4.0 and v2.4.1 there are some issues related to sleep command. Do not use.
+If you are going to compile with old v2.3.0 you need to comment lines 10 and 57 on the _esp-knx-ip.h_ file.
 
 ## Implemented Features ##
 
@@ -196,6 +199,7 @@ There is **NO CONFLICT** with MQTT, Home Assistant, Web, etc. Tests show fast re
 * [jeylites](https://github.com/jeylites) - Thanks for the patience on bug resolutions
 * [Winni66](https://github.com/Winni66) - Thanks for the patience on bug resolutions
 * [misc2000](https://github.com/misc2000) - Thanks for the testing on bug resolutions
+* [mizrachiran](https://github.com/mizrachiran) ( Ran Mizrachi ) - Thanks for the testing on bug resolutions
 * [smurfix](https://github.com/smurfix) ( Matthias Urlichs ) - Thanks for the KNX guiding and [KNXd](https://github.com/knxd/knxd) use.
 * And many others providing testing, bug reporting and feature requests.
 
