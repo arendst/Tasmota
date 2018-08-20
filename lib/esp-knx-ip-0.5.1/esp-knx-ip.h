@@ -7,12 +7,12 @@
 #ifndef ESP_KNX_IP_H
 #define ESP_KNX_IP_H
 
-//#define USE_ASYNC_UDP     // UDP WIFI Library Selection for Multicast
+#define USE_ASYNC_UDP     // UDP WIFI Library Selection for Multicast
                           //   If commented out, the esp-knx-ip library will use WIFI_UDP Library that is compatible with ESP8266 Library Version 2.3.0 and up
                           //   If not commented out, the esp-knx-ip library will use ESPAsyncUDP Library that is compatible with ESP8266 Library Version 2.4.0 and up
                           //     The ESPAsyncUDP Library have a more reliable multicast communication
                           //     Please Use it with Patch (https://github.com/me-no-dev/ESPAsyncUDP/pull/21) )
-                          //     check line 57 on esp-knx-ip.h file is uncommented: #include <ESPAsyncUDP.h>
+                          //     check line 58 on esp-knx-ip.h file is uncommented: #include <ESPAsyncUDP.h>
                           //       Comment out that line when using UDP WIFI to avoid compiling issues on PlatformIO with ESP8266 Library Version 2.3.0
 
 /**
@@ -55,7 +55,7 @@
 #include <ESP8266WiFi.h>
 
 #ifdef USE_ASYNC_UDP
-//#include <ESPAsyncUDP.h>
+#include <ESPAsyncUDP.h>
 #else
 #include <WiFiUdp.h>
 #endif
