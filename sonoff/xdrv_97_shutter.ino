@@ -115,6 +115,8 @@ void Schutter_Update_Position()
         AddLog(LOG_LEVEL_DEBUG);
         Settings.shutter_position[i] = m2[i] * 5 > Shutter_Real_Position[i] ? Shutter_Real_Position[i] / m2[i] : (Shutter_Real_Position[i]-b1[i]) / m1[i];
         Shutter_Start_Position[i] = Shutter_Real_Position[i];
+        // sending MQTT result to broker
+        MqttPublishPrefixTopic_P(RESULT_OR_TELE,"RESULT",false);
 
         if (Settings.pulse_timer[cur_relay-1] > 0) {
           // we have a momentary switch here. Needs additional pulse on same relay after the end
