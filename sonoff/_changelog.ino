@@ -1,6 +1,7 @@
 /* 6.1.1.7
  * Add initial display support for Lcd, Oled, Matrix, Tft and e-paper - Need more docs
  * Fix SDM120 reporting wrong negative values to Domoticz (#3521)
+ * Fix iFan02 power on state (#3412, #3530)
  *
  * 6.1.1.6
  * Add modulo option to rules like rule1 on Time#Minute|5 do backlog power on;delay 200;power off endon (#3466)

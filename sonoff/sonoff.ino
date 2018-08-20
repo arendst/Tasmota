@@ -383,6 +383,15 @@ uint8_t GetFanspeed()
   return fanspeed;
 }
 
+void SetFanspeed(uint8_t fanspeed)
+{
+ for (byte i = 0; i < 3; i++) {
+    uint8_t state = kIFan02Speed[fanspeed][i];
+//    uint8_t state = pgm_read_byte(kIFan02Speed +(speed *3) +i);
+    ExecuteCommandPower(i +2, state, SRC_IGNORE);  // Use relay 2, 3 and 4
+  }
+}
+
 /********************************************************************************************/
 
 void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
@@ -537,11 +546,7 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
         }
       }
       if ((payload >= 0) && (payload <= 3) && (payload != GetFanspeed())) {
-        for (byte i = 0; i < 3; i++) {
-          uint8_t state = kIFan02Speed[payload][i];
-//          uint8_t state = pgm_read_byte(kIFan02Speed +(payload *3) +i);
-          ExecuteCommandPower(i +2, state, SRC_IGNORE);  // Use relay 2, 3 and 4
-        }
+        SetFanspeed(payload);
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, GetFanspeed());
     }
@@ -1521,6 +1526,11 @@ boolean MqttShowSensor()
 void PerformEverySecond()
 {
   uptime++;
+
+  if ((4 == uptime) && (SONOFF_IFAN02 == Settings.module)) {  // Microcontroller needs 3 seconds before accepting commands
+    SetDevicePower(1, SRC_RETRY);      // Sync with default power on state microcontroller being Light ON and Fan OFF
+    SetDevicePower(power, SRC_RETRY);  // Set required power on state
+  }
 
   if (blockgpio0) blockgpio0--;
 
