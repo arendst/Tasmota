@@ -34,56 +34,14 @@
 
 LiquidCrystal_I2C *lcd;
 
-char lcd_screen_buffer[LCD_BUFFER_ROWS][LCD_BUFFER_COLS +1];
-
-void LcdInitFull()
-{
-  lcd->init();
-  lcd->clear();
-  memset(lcd_screen_buffer[Settings.display_rows -1], 0x20, Settings.display_cols[0]);
-  lcd_screen_buffer[Settings.display_rows -1][Settings.display_cols[0]] = 0;
-}
-
-void LcdDrawStringAt()
-{
-  lcd->setCursor(dsp_x, dsp_y);
-  lcd->print(dsp_str);
-}
-
-void LcdDisplayOnOff(uint8_t on)
-{
-  if (on) {
-    lcd->backlight();
-  } else {
-    lcd->noBacklight();
-  }
-}
-
-/*********************************************************************************************/
-
-void LcdCenter(byte row, char* txt)
-{
-  int offset;
-  int len;
-  char line[Settings.display_cols[0] +2];
-
-  memset(line, 0x20, Settings.display_cols[0]);
-  line[Settings.display_cols[0]] = 0;
-  len = strlen(txt);
-  offset = (len < Settings.display_cols[0]) ? offset = (Settings.display_cols[0] - len) / 2 : 0;
-  strncpy(line +offset, txt, len);
-  lcd->setCursor(0, row);
-  lcd->print(line);
-}
-
 /*********************************************************************************************/
 
 void LcdInitMode()
 {
   lcd->init();
   lcd->clear();
-  memset(lcd_screen_buffer[Settings.display_rows -1], 0x20, Settings.display_cols[0]);
-  lcd_screen_buffer[Settings.display_rows -1][Settings.display_cols[0]] = 0;
+//  memset(lcd_screen_buffer[Settings.display_rows -1], 0x20, Settings.display_cols[0]);
+//  lcd_screen_buffer[Settings.display_rows -1][Settings.display_cols[0]] = 0;
 }
 
 void LcdInit(uint8_t mode)
@@ -116,6 +74,42 @@ void LcdInitDriver()
 
     LcdInitMode();
   }
+}
+
+void LcdDrawStringAt()
+{
+  lcd->setCursor(dsp_x, dsp_y);
+  lcd->print(dsp_str);
+}
+
+void LcdDisplayOnOff(uint8_t on)
+{
+  if (on) {
+    lcd->backlight();
+  } else {
+    lcd->noBacklight();
+  }
+}
+
+/*********************************************************************************************/
+
+#ifdef USE_DISPLAY_MODES1TO5
+
+char lcd_screen_buffer[LCD_BUFFER_ROWS][LCD_BUFFER_COLS +1];
+
+void LcdCenter(byte row, char* txt)
+{
+  int offset;
+  int len;
+  char line[Settings.display_cols[0] +2];
+
+  memset(line, 0x20, Settings.display_cols[0]);
+  line[Settings.display_cols[0]] = 0;
+  len = strlen(txt);
+  offset = (len < Settings.display_cols[0]) ? offset = (Settings.display_cols[0] - len) / 2 : 0;
+  strncpy(line +offset, txt, len);
+  lcd->setCursor(0, row);
+  lcd->print(line);
 }
 
 void LcdPrintLogLine()
@@ -194,6 +188,8 @@ void LcdRefresh()  // Every second
   }
 }
 
+#endif  // USE_DISPLAY_MODES1TO5
+
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
@@ -214,13 +210,9 @@ boolean Xdsp01(byte function)
         case FUNC_DISPLAY_INIT:
           LcdInit(dsp_init);
           break;
-        case FUNC_DISPLAY_EVERY_SECOND:
-          LcdRefresh();
-          break;
         case FUNC_DISPLAY_POWER:
           LcdDisplayOnOff(disp_power);
           break;
-
         case FUNC_DISPLAY_CLEAR:
           lcd->clear();
           break;
@@ -248,6 +240,11 @@ boolean Xdsp01(byte function)
           break;
 //        case FUNC_DISPLAY_ROTATION:
 //          break;
+#ifdef USE_DISPLAY_MODES1TO5
+        case FUNC_DISPLAY_EVERY_SECOND:
+          LcdRefresh();
+          break;
+#endif  // USE_DISPLAY_MODES1TO5
       }
     }
   }

@@ -37,6 +37,7 @@
 #define D_CMND_DISP_REFRESH "Refresh"
 #define D_CMND_DISP_ROWS "Rows"
 #define D_CMND_DISP_SIZE "Size"
+#define D_CMND_DISP_ROTATE "Rotate"
 #define D_CMND_DISP_TEXT "Text"
 
 enum XdspFunctions { FUNC_DISPLAY_INIT_DRIVER, FUNC_DISPLAY_INIT, FUNC_DISPLAY_EVERY_50_MSECOND, FUNC_DISPLAY_EVERY_SECOND,
@@ -50,24 +51,18 @@ enum XdspFunctions { FUNC_DISPLAY_INIT_DRIVER, FUNC_DISPLAY_INIT, FUNC_DISPLAY_E
 enum DisplayInitModes { DISPLAY_INIT_MODE, DISPLAY_INIT_PARTIAL, DISPLAY_INIT_FULL };
 
 enum DisplayCommands { CMND_DISP_MODEL, CMND_DISP_MODE, CMND_DISP_REFRESH, CMND_DISP_DIMMER, CMND_DISP_COLS, CMND_DISP_ROWS,
-  CMND_DISP_SIZE, CMND_DISP_TEXT, CMND_DISP_ADDRESS };
+  CMND_DISP_SIZE, CMND_DISP_ROTATE, CMND_DISP_TEXT, CMND_DISP_ADDRESS };
 const char kDisplayCommands[] PROGMEM =
   D_CMND_DISP_MODEL "|" D_CMND_DISP_MODE "|" D_CMND_DISP_REFRESH "|" D_CMND_DISP_DIMMER "|" D_CMND_DISP_COLS "|" D_CMND_DISP_ROWS "|"
-  D_CMND_DISP_SIZE "|" D_CMND_DISP_TEXT "|" D_CMND_DISP_ADDRESS ;
+  D_CMND_DISP_SIZE "|" D_CMND_DISP_ROTATE "|" D_CMND_DISP_TEXT "|" D_CMND_DISP_ADDRESS ;
 
 const char S_JSON_DISPLAY_COMMAND_VALUE[] PROGMEM =        "{\"" D_CMND_DISPLAY "%s\":\"%s\"}";
 const char S_JSON_DISPLAY_COMMAND_NVALUE[] PROGMEM =       "{\"" D_CMND_DISPLAY "%s\":%d}";
 const char S_JSON_DISPLAY_COMMAND_INDEX_NVALUE[] PROGMEM = "{\"" D_CMND_DISPLAY "%s%d\":%d}";
 
-char disp_log_buffer[DISPLAY_LOG_ROWS][DISPLAY_LOG_COLS];
-char disp_temp[2];    // C or F
-uint8_t disp_log_buffer_idx = 0;
-uint8_t disp_log_buffer_ptr = 0;
-bool disp_log_buffer_active = false;
-uint8_t disp_refresh = 1;
 uint8_t disp_power = 0;
 uint8_t disp_device = 0;
-uint8_t disp_subscribed = 0;
+uint8_t disp_refresh = 1;
 
 int16_t disp_xpos = 0;
 int16_t disp_ypos = 0;
@@ -76,7 +71,6 @@ uint8_t dsp_init;
 uint8_t dsp_font;
 uint8_t dsp_flag;
 uint8_t dsp_on;
-uint8_t dsp_rotation;
 uint16_t dsp_x;
 uint16_t dsp_y;
 uint16_t dsp_x2;
@@ -85,6 +79,17 @@ uint16_t dsp_rad;
 uint16_t dsp_color;
 int16_t dsp_len;
 char *dsp_str;
+
+#ifdef USE_DISPLAY_MODES1TO5
+char disp_log_buffer[DISPLAY_LOG_ROWS][DISPLAY_LOG_COLS];
+char disp_temp[2];    // C or F
+uint8_t disp_log_buffer_idx = 0;
+uint8_t disp_log_buffer_ptr = 0;
+bool disp_log_buffer_active = false;
+uint8_t disp_subscribed = 0;
+#endif  // USE_DISPLAY_MODES1TO5
+
+/*********************************************************************************************/
 
 void DisplayInit(uint8_t mode)
 {
@@ -170,13 +175,13 @@ void DisplayDrawFrame()
 
 void DisplaySetFontorSize(uint8_t font)
 {
-  Settings.display_size = font;
+  Settings.display_size = font &3;
   XdspCall(FUNC_DISPLAY_FONT_SIZE);
 }
 
 void DisplaySetRotation(uint8_t rotation)
 {
-  dsp_rotation = rotation;
+  Settings.display_rotate = rotation &3;
   XdspCall(FUNC_DISPLAY_ROTATION);
 }
 
@@ -228,7 +233,7 @@ uint8_t atoiV(char *cp, uint16_t *res)
   return index;
 }
 
-/*********************************************************************************************/
+/*-------------------------------------------------------------------------------------------*/
 
 #define DISPLAY_BUFFER_COLS    128          // Max number of characters in linebuf
 
@@ -451,6 +456,10 @@ void DisplayText()
   DisplayDrawFrame();
 }
 
+/*********************************************************************************************/
+
+#ifdef USE_DISPLAY_MODES1TO5
+
 void DisplayLogBufferIdxInc()
 {
   disp_log_buffer_idx++;
@@ -639,34 +648,6 @@ void DisplayAnalyzeJson(char *topic, char *json)
   }
 }
 
-/*********************************************************************************************\
- * Public
-\*********************************************************************************************/
-
-void DisplayInitDriver()
-{
-  XdspCall(FUNC_DISPLAY_INIT_DRIVER);
-
-//  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_DEBUG "Display model %d"), Settings.display_model);
-//  AddLog(LOG_LEVEL_DEBUG);
-
-  if (Settings.display_model) {
-    devices_present++;
-    disp_device = devices_present;
-    snprintf_P(disp_temp, sizeof(disp_temp), PSTR("%c"), TempUnit());
-
-    DisplayLogBufferInit();
-  }
-}
-
-void DisplaySetPower()
-{
-  disp_power = bitRead(XdrvMailbox.index, disp_device -1);
-  if (Settings.display_model) {
-    XdspCall(FUNC_DISPLAY_POWER);
-  }
-}
-
 void DisplayMqttSubscribe()
 {
 /* Subscribe to tele messages only
@@ -726,6 +707,40 @@ void DisplayLocalSensor()
   }
 }
 
+#endif  // USE_DISPLAY_MODES1TO5
+
+/*********************************************************************************************\
+ * Public
+\*********************************************************************************************/
+
+void DisplayInitDriver()
+{
+  XdspCall(FUNC_DISPLAY_INIT_DRIVER);
+
+//  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_DEBUG "Display model %d"), Settings.display_model);
+//  AddLog(LOG_LEVEL_DEBUG);
+
+  if (Settings.display_model) {
+    devices_present++;
+    disp_device = devices_present;
+
+#ifndef USE_DISPLAY_MODES1TO5
+    Settings.display_mode = 0;
+#else
+    snprintf_P(disp_temp, sizeof(disp_temp), PSTR("%c"), TempUnit());
+    DisplayLogBufferInit();
+#endif  // USE_DISPLAY_MODES1TO5
+  }
+}
+
+void DisplaySetPower()
+{
+  disp_power = bitRead(XdrvMailbox.index, disp_device -1);
+  if (Settings.display_model) {
+    XdspCall(FUNC_DISPLAY_POWER);
+  }
+}
+
 /*********************************************************************************************\
  * Commands
 \*********************************************************************************************/
@@ -754,9 +769,8 @@ boolean DisplayCommand()
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_DISPLAY_COMMAND_NVALUE, command, Settings.display_model);
     }
     else if (CMND_DISP_MODE == command_code) {
-/*
- *     Matrix               LCD / Oled                           TFT
- * 0 = Text                 Text                                 Text
+#ifdef USE_DISPLAY_MODES1TO5
+/*     Matrix               LCD / Oled                           TFT
  * 1 = Text up and time     Time
  * 2 = Date                 Local sensors                        Local sensors
  * 3 = Day                  Local sensors and time               Local sensors and time
@@ -779,19 +793,8 @@ boolean DisplayCommand()
           }
         }
       }
+#endif  // USE_DISPLAY_MODES1TO5
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_DISPLAY_COMMAND_NVALUE, command, Settings.display_mode);
-    }
-    else if (CMND_DISP_REFRESH == command_code) {
-      if ((XdrvMailbox.payload >= 1) && (XdrvMailbox.payload <= 7)) {
-        Settings.display_refresh = XdrvMailbox.payload;
-      }
-      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_DISPLAY_COMMAND_NVALUE, command, Settings.display_refresh);
-    }
-    else if ((CMND_DISP_COLS == command_code) && (XdrvMailbox.index > 0) && (XdrvMailbox.index <= 2)) {
-      if ((XdrvMailbox.payload > 0) && (XdrvMailbox.payload <= DISPLAY_SCREEN_COLS)) {
-        Settings.display_cols[XdrvMailbox.index -1] = XdrvMailbox.payload;
-      }
-      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_DISPLAY_COMMAND_INDEX_NVALUE, command, XdrvMailbox.index, Settings.display_cols[XdrvMailbox.index -1]);
     }
     else if (CMND_DISP_DIMMER == command_code) {
       if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 100)) {
@@ -805,27 +808,32 @@ boolean DisplayCommand()
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_DISPLAY_COMMAND_NVALUE, command, Settings.display_dimmer);
     }
-    else if (CMND_DISP_ROWS == command_code) {
-      if ((XdrvMailbox.payload > 0) && (XdrvMailbox.payload <= DISPLAY_SCREEN_ROWS)) {
-        Settings.display_rows = XdrvMailbox.payload;
-      }
-      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_DISPLAY_COMMAND_NVALUE, command, Settings.display_rows);
-    }
     else if (CMND_DISP_SIZE == command_code) {
       if ((XdrvMailbox.payload > 0) && (XdrvMailbox.payload <= 4)) {
         Settings.display_size = XdrvMailbox.payload;
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_DISPLAY_COMMAND_NVALUE, command, Settings.display_size);
     }
+    else if (CMND_DISP_ROTATE == command_code) {
+      if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < 4)) {
+        Settings.display_rotate = XdrvMailbox.payload;
+      }
+      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_DISPLAY_COMMAND_NVALUE, command, Settings.display_rotate);
+    }
     else if (CMND_DISP_TEXT == command_code) {
       mqtt_data[0] = '\0';
       if (disp_device && XdrvMailbox.data_len > 0) {
+#ifndef USE_DISPLAY_MODES1TO5
+        DisplayText();
+
+#else
         if (!Settings.display_mode) {
           DisplayText();
         } else {
           strlcpy(disp_log_buffer[disp_log_buffer_idx], XdrvMailbox.data, sizeof(disp_log_buffer[disp_log_buffer_idx]));
           DisplayLogBufferIdxInc();
         }
+#endif  // USE_DISPLAY_MODES1TO5
       } else {
         snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("No Text"));
       }
@@ -839,6 +847,24 @@ boolean DisplayCommand()
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_DISPLAY_COMMAND_INDEX_NVALUE, command, XdrvMailbox.index, Settings.display_address[XdrvMailbox.index -1]);
     }
+    else if (CMND_DISP_REFRESH == command_code) {
+      if ((XdrvMailbox.payload >= 1) && (XdrvMailbox.payload <= 7)) {
+        Settings.display_refresh = XdrvMailbox.payload;
+      }
+      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_DISPLAY_COMMAND_NVALUE, command, Settings.display_refresh);
+    }
+    else if ((CMND_DISP_COLS == command_code) && (XdrvMailbox.index > 0) && (XdrvMailbox.index <= 2)) {
+      if ((XdrvMailbox.payload > 0) && (XdrvMailbox.payload <= DISPLAY_SCREEN_COLS)) {
+        Settings.display_cols[XdrvMailbox.index -1] = XdrvMailbox.payload;
+      }
+      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_DISPLAY_COMMAND_INDEX_NVALUE, command, XdrvMailbox.index, Settings.display_cols[XdrvMailbox.index -1]);
+    }
+    else if (CMND_DISP_ROWS == command_code) {
+      if ((XdrvMailbox.payload > 0) && (XdrvMailbox.payload <= DISPLAY_SCREEN_ROWS)) {
+        Settings.display_rows = XdrvMailbox.payload;
+      }
+      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_DISPLAY_COMMAND_NVALUE, command, Settings.display_rows);
+    }
     else serviced = false;  // Unknown command
   }
   else serviced = false;  // Unknown command
@@ -850,9 +876,9 @@ boolean DisplayCommand()
  * Interface
 \*********************************************************************************************/
 
-#define XDRV_98
+#define XDRV_13
 
-boolean Xdrv98(byte function)
+boolean Xdrv13(byte function)
 {
   boolean result = false;
 
@@ -862,13 +888,17 @@ boolean Xdrv98(byte function)
         DisplayInitDriver();
         break;
       case FUNC_EVERY_50_MSECOND:
-        if (Settings.display_model && Settings.display_mode) { XdspCall(FUNC_DISPLAY_EVERY_50_MSECOND); }
-        break;
-      case FUNC_EVERY_SECOND:
-        if (Settings.display_model && Settings.display_mode) { XdspCall(FUNC_DISPLAY_EVERY_SECOND); }
+        if (Settings.display_model) { XdspCall(FUNC_DISPLAY_EVERY_50_MSECOND); }
         break;
       case FUNC_COMMAND:
         result = DisplayCommand();
+        break;
+      case FUNC_SET_POWER:
+        DisplaySetPower();
+        break;
+#ifdef USE_DISPLAY_MODES1TO5
+      case FUNC_EVERY_SECOND:
+        if (Settings.display_model && Settings.display_mode) { XdspCall(FUNC_DISPLAY_EVERY_SECOND); }
         break;
       case FUNC_MQTT_SUBSCRIBE:
         DisplayMqttSubscribe();
@@ -876,12 +906,10 @@ boolean Xdrv98(byte function)
       case FUNC_MQTT_DATA:
         result = DisplayMqttData();
         break;
-      case FUNC_SET_POWER:
-        DisplaySetPower();
-        break;
       case FUNC_SHOW_SENSOR:
         DisplayLocalSensor();
         break;
+#endif  // USE_DISPLAY_MODES1TO5
     }
   }
   return result;

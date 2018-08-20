@@ -222,9 +222,7 @@ struct SYSCFG {
   uint16_t      pwm_value[MAX_PWMS];       // 2EC
   int16_t       altitude;                  // 2F6
   uint16_t      tele_period;               // 2F8
-
-  byte          free_2fa[1];               // 2FA
-
+  uint8_t       display_rotate;            // 2FA
   uint8_t       ledstate;                  // 2FB
   uint8_t       param[PARAM8_SIZE];        // 2FC  SetOption32 .. SetOption49
   int16_t       toffset[2];                // 30E

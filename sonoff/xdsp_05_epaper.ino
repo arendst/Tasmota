@@ -60,9 +60,9 @@ void EpdInitMode()
 
   selected_font = &Font12;
 
+  paint.SetRotate(Settings.display_rotate);
 /*
   // Welcome text
-  paint.SetRotate(ROTATE_90);
   paint.Clear(UNCOLORED);
   paint.DrawStringAt(50, 50, "Waveshare E-Paper Display!", selected_font, COLORED);
   epd.SetFrameMemory(paint.GetImage(), 0, 0, paint.GetWidth(), paint.GetHeight());
@@ -163,12 +163,18 @@ void EpdOnOff()
   EpdDisplayOnOff(disp_power);
 }
 
+/*********************************************************************************************/
+
+#ifdef USE_DISPLAY_MODES1TO5
+
 void EpdRefresh()  // Every second
 {
   if (Settings.display_mode) {  // Mode 0 is User text
 
   }
 }
+
+#endif  // USE_DISPLAY_MODES1TO5
 
 /*********************************************************************************************\
  * Interface
@@ -192,9 +198,6 @@ boolean Xdsp05(byte function)
           break;
         case FUNC_DISPLAY_INIT:
           EpdInit(dsp_init);
-          break;
-        case FUNC_DISPLAY_EVERY_SECOND:
-          EpdRefresh();
           break;
         case FUNC_DISPLAY_POWER:
           EpdOnOff();
@@ -237,8 +240,13 @@ boolean Xdsp05(byte function)
           EpdDisplayOnOff(dsp_on);
           break;
         case FUNC_DISPLAY_ROTATION:
-          paint.SetRotate(dsp_rotation);
+          paint.SetRotate(Settings.display_rotate);
           break;
+#ifdef USE_DISPLAY_MODES1TO5
+        case FUNC_DISPLAY_EVERY_SECOND:
+          EpdRefresh();
+          break;
+#endif  // USE_DISPLAY_MODES1TO5
       }
     }
   }
