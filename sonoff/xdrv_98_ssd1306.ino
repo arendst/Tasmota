@@ -31,9 +31,11 @@
 #ifdef USE_DISPLAY
 #ifdef USE_SSD1306
 
+#include <fonts.h>
 #include <Wire.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
+
 
 #define OLED_RESET 4
 Adafruit_SSD1306 display(OLED_RESET);
@@ -52,7 +54,9 @@ Adafruit_SSD1306 display(OLED_RESET);
 #endif
 
 uint8_t font_x=6,font_y=8,txtsize=1;
+sFONT *selected_font;
 
+/*
 void (*xDraw_HLine)(uint16_t x,uint16_t y,int16_t len);
 void (*xDraw_VLine)(uint16_t x,uint16_t y,int16_t len);
 void Draw_HLine(uint16_t x,uint16_t y,int16_t len);
@@ -64,6 +68,7 @@ const struct VTABLE {
 } xdrv2_jumptable;
 
 struct VTABLE *jptr;
+*/
 
 void DisplayInit(void) {
   // by default, we'll generate the high voltage from the 3.3v line internally! (neat!)
@@ -73,17 +78,21 @@ void DisplayInit(void) {
   display.clearDisplay();
   display.setTextSize(2);
   DrawStringAt(20,20,(char*)"Adafruit",0);
+  //display.DrawStringAt(20,20,(char*)"Adafruit",&Font8,1);
+
   display.setTextSize(1);
   display.setCursor(0,0);
   display.display();
   display.clearDisplay();
+  selected_font=&Font8;
 
-
+/*
   jptr=(struct VTABLE *)&xdrv2_jumptable;
 
   (*jptr->xDraw_HLine)(0,32,128);
 
   display.display();
+  */
 
   display_ready=1;
 }
@@ -132,9 +141,27 @@ void Draw_Frame() {
   display.display();
 }
 
-void SetFontorSize(uint8_t font) {
-  txtsize=font;
+void SetSize(uint8_t size) {
+  txtsize=size;
   display.setTextSize(txtsize);
+}
+
+#define USE_TINY_FONT
+
+void SetFont(uint8_t font) {
+  if (font==1) {
+    selected_font=&Font12;
+  } else {
+#ifdef USE_TINY_FONT
+    if (font==2) {
+      selected_font=&Font24;
+    } else {
+      selected_font=&Font8;
+    }
+#else
+    selected_font=&Font24;
+#endif
+  }
 }
 
 void SetRotation(uint8_t rot) {
@@ -142,12 +169,20 @@ void SetRotation(uint8_t rot) {
 }
 
 void DrawStringAt(uint16_t x,uint16_t y,char *str,uint8_t flag) {
-  if (!flag) {
-    display.setCursor(x,y);
+  if (!txtsize) {
+    if (!flag) {
+      display.DrawStringAt(x,y,str,selected_font, WHITE);
+    } else {
+      display.DrawStringAt((x-1)*selected_font->Width,(y-1)*selected_font->Height,str,selected_font, WHITE);
+    }
   } else {
-    display.setCursor((x-1)*font_x*txtsize,(y-1)*font_y*txtsize);
+    if (!flag) {
+      display.setCursor(x,y);
+    } else {
+      display.setCursor((x-1)*font_x*txtsize,(y-1)*font_y*txtsize);
+    }
+    display.println(str);
   }
-  display.println(str);
 }
 
 void DisplayOnOff(uint8_t on) {

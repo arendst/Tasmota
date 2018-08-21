@@ -496,9 +496,12 @@ boolean DisplayCommand() {
                     cp+=1;
                     break;
                   case 's':
+                    SetSize(*cp&3);
+                    cp+=1;
+                    break;
                   case 'f':
-                    // size or font sx
-                    SetFontorSize(*cp&3);
+                    // font
+                    SetFont(*cp&3);
                     cp+=1;
                     break;
                   case 'a':

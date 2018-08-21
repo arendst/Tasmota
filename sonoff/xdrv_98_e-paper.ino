@@ -142,7 +142,7 @@ void Draw_Frame() {
   epd.DisplayFrame();
 }
 
-void SetFontorSize(uint8_t font) {
+void SetFont(uint8_t font) {
   if (font==1) {
     selected_font=&Font12;
   } else {
