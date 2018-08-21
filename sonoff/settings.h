@@ -154,11 +154,10 @@ typedef union {
 typedef union {
   uint8_t data;
   struct {
-    uint8_t pinmode : 3;                   // Enable INPUT
+    uint8_t pinmode : 3;                   // Pin mode (1 through 6)
     uint8_t pullup : 1;                    // Enable internal weak pull-up resistor
-    uint8_t b4 : 1;
-    uint8_t b5 : 1;
-    uint8_t b6 : 1;
+    uint8_t saved_state : 1;               // Save output state, if used.
+    uint8_t int_report_mode : 2;           // Interrupt reporting mode 0 = immediate telemetry & event, 1 = immediate event only, 2 = immediate telemetry only
     uint8_t b7 : 1;
   };
 } Mcp230xxCfg;
@@ -223,9 +222,7 @@ struct SYSCFG {
   uint16_t      pwm_value[MAX_PWMS];       // 2EC
   int16_t       altitude;                  // 2F6
   uint16_t      tele_period;               // 2F8
-
-  byte          free_2fa[1];               // 2FA
-
+  uint8_t       display_rotate;            // 2FA
   uint8_t       ledstate;                  // 2FB
   uint8_t       param[PARAM8_SIZE];        // 2FC  SetOption32 .. SetOption49
   int16_t       toffset[2];                // 30E

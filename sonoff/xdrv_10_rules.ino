@@ -182,6 +182,11 @@ bool RulesRuleMatch(byte rule_set, String &event, String &rule)
       pos = rule_name.indexOf("=");
       if (pos > 0) {
         compare = '=';
+      } else {
+        pos = rule_name.indexOf("|");                  // Modulo, cannot use % easily as it is used for variable detection
+        if (pos > 0) {
+          compare = '%';
+        }
       }
     }
   }
@@ -236,7 +241,14 @@ bool RulesRuleMatch(byte rule_set, String &event, String &rule)
   // Step 3: Compare rule (value)
   if (str_value) {
     value = CharToDouble((char*)str_value);
+    int int_value = int(value);
+    int int_rule_value = int(rule_value);
     switch (compare) {
+      case '%':
+        if ((int_value > 0) && (int_rule_value > 0)) {
+          if ((int_value % int_rule_value) == 0) { match = true; }
+        }
+        break;
       case '>':
         if (value > rule_value) { match = true; }
         break;

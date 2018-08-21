@@ -256,7 +256,7 @@ void SDM120Show(boolean json)
     if (0 == tele_period) {
       DomoticzSensor(DZ_VOLTAGE, voltage);
       DomoticzSensor(DZ_CURRENT, current);
-      DomoticzSensorPowerEnergy((uint16_t)sdm120_active_power, energy_total);
+      DomoticzSensorPowerEnergy((int)sdm120_active_power, energy_total);
     }
 #endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
