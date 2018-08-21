@@ -252,7 +252,7 @@ OPTION Value | Device Parameter
 * Added entries to sensor files
 * Added entries to language files
 
-Up to now, enabling KNX uses +9.4k of code and +3k7 of memory. If also, it is enabled the KNX Web Menu, it adds +8.3k of code and +144 bytes of memory.
+Up to now, enabling KNX uses +9.4 KB of code and +3.7 KB of memory. If also, it is enabled the KNX Web Menu, it adds +8.3 KB of code and +144 Bytes of memory.
 
 There is **NO CONFLICT** with MQTT, Home Assistant, Web, etc. Tests show fast response of all features running at same time.
 
