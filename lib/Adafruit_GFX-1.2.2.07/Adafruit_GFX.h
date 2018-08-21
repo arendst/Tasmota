@@ -8,7 +8,16 @@
  #include "WProgram.h"
 #endif
 #include "gfxfont.h"
+#include <fonts.h>
+/*
+typedef struct _tFont
+{
+  const uint8_t *table;
+  uint16_t Width;
+  uint16_t Height;
 
+} sFONT;
+*/
 class Adafruit_GFX : public Print {
 
  public:
@@ -94,6 +103,8 @@ class Adafruit_GFX : public Print {
       uint16_t *bitmap, uint8_t *mask, int16_t w, int16_t h),
     drawChar(int16_t x, int16_t y, unsigned char c, uint16_t color,
       uint16_t bg, uint8_t size),
+    DrawCharAt(int16_t x, int16_t y, char ascii_char, sFONT* font, uint16_t colored),
+    DrawStringAt(int16_t x, int16_t y, const char* text, sFONT* font, uint16_t colored),
     setCursor(int16_t x, int16_t y),
     setTextColor(uint16_t c),
     setTextColor(uint16_t c, uint16_t bg),

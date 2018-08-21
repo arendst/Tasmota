@@ -56,6 +56,10 @@ int Epd::Init(const unsigned char* lut) {
     pinMode(mosi_pin, OUTPUT);
     pinMode(sclk_pin, OUTPUT);
 
+    digitalWrite(cs_pin,HIGH);
+    digitalWrite(mosi_pin,LOW);
+    digitalWrite(sclk_pin,LOW);
+
     /* EPD hardware init start */
     this->lut = lut;
     Reset();
@@ -295,23 +299,102 @@ const unsigned char lut_partial_update[] =
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 };
 
-void Epd::fastSPIwrite(uint8_t d,uint8_t dc) {
 
-  digitalWrite(cs_pin, LOW);
+#define PIN_OUT_SET 0x60000304
+#define PIN_OUT_CLEAR 0x60000308
 
-  // transfer dc
-  digitalWrite(sclk_pin, LOW);
-  if(dc) digitalWrite(mosi_pin, HIGH);
-  else        digitalWrite(mosi_pin, LOW);
-  digitalWrite(sclk_pin, HIGH);
+/*
+#define PIN_OUT 0x60000300
+#define PIN_OUT_SET 0x60000304
+#define PIN_OUT_CLEAR 0x60000308
+
+#define PIN_DIR 0x6000030C
+#define PIN_DIR_OUTPUT 0x60000310
+#define PIN_DIR_INPUT 0x60000314
+
+#define PIN_IN 0x60000318
+
+#define PIN_0 0x60000328
+#define PIN_2 0x60000330
+
+*/
+
+
+
+extern void ICACHE_RAM_ATTR xdigitalWrite(uint8_t pin, uint8_t val) {
+  //stopWaveform(pin);
+  if(pin < 16){
+    if(val) GPOS = (1 << pin);
+    else GPOC = (1 << pin);
+  } else if(pin == 16){
+    if(val) GP16O |= 1;
+    else GP16O &= ~1;
+  }
+}
+
+#define PWRITE xdigitalWrite
+
+#define DELAY
+//#define DELAY delayMicroseconds(1);
+
+#if 0
+// uses about 3 usecs, 333 kb /sec
+// despite oscilloscope shows fine signals does NOT work !!!!
+// absultely NO timing info on the net for waveshare e-paper spi
+// but other drivers on the net use 4 Mh clock speed that is 0.25*9 2.25 uS for 9 bits
+// with delayMicroseconds(1)  it should work, but it does not ???
+void ICACHE_RAM_ATTR Epd::fastSPIwrite(uint8_t d,uint8_t dc) {
+
+  WRITE_PERI_REG( PIN_OUT_CLEAR, 1<<cs_pin);
+  DELAY
+
+  WRITE_PERI_REG( PIN_OUT_CLEAR, 1<<sclk_pin);
+  DELAY
+  if(dc) WRITE_PERI_REG( PIN_OUT_SET, 1<<mosi_pin);
+  else   WRITE_PERI_REG( PIN_OUT_CLEAR, 1<<mosi_pin);
+  DELAY
+  WRITE_PERI_REG( PIN_OUT_SET, 1<<sclk_pin);
+  DELAY
+
 
   for(uint8_t bit = 0x80; bit; bit >>= 1) {
-    digitalWrite(sclk_pin, LOW);
-    if(d & bit) digitalWrite(mosi_pin, HIGH);
-    else        digitalWrite(mosi_pin, LOW);
-    digitalWrite(sclk_pin, HIGH);
+    WRITE_PERI_REG( PIN_OUT_CLEAR, 1<<sclk_pin);
+    DELAY
+    if(d&bit) WRITE_PERI_REG( PIN_OUT_SET, 1<<mosi_pin);
+    else   WRITE_PERI_REG( PIN_OUT_CLEAR, 1<<mosi_pin);
+    DELAY
+    WRITE_PERI_REG( PIN_OUT_SET, 1<<sclk_pin);
+    DELAY
+  }
+  DELAY
+  WRITE_PERI_REG( PIN_OUT_SET, 1<<cs_pin);
+  DELAY
+  //delayMicroseconds(20);
+}
+#else
+// uses about 25 usecs why so slow ??????
+// arduino source code calls stopwaveform on digitalwrite !!!!! which can be quite slow !!!!!
+// without stopwaveform it takes 13 us => 76 kb / sec and works also
+// still slow compared to espressiv WRITE_PERI_REG ???
+void Epd::fastSPIwrite(uint8_t d,uint8_t dc) {
+
+  PWRITE(cs_pin, LOW);
+
+  // transfer dc
+  PWRITE(sclk_pin, LOW);
+  if(dc) PWRITE(mosi_pin, HIGH);
+  else        PWRITE(mosi_pin, LOW);
+  PWRITE(sclk_pin, HIGH);
+
+  for(uint8_t bit = 0x80; bit; bit >>= 1) {
+    PWRITE(sclk_pin, LOW);
+    if(d & bit) PWRITE(mosi_pin, HIGH);
+    else        PWRITE(mosi_pin, LOW);
+    PWRITE(sclk_pin, HIGH);
   }
 
-  digitalWrite(cs_pin, HIGH);
+  PWRITE(cs_pin, HIGH);
 }
+#endif
+
 /* END OF FILE */

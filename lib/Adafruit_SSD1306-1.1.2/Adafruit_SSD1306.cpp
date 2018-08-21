@@ -36,7 +36,9 @@ All text above, and the splash screen below must be included in any redistributi
 #include "Adafruit_SSD1306.h"
 
 // the memory buffer for the LCD
+static uint8_t buffer[SSD1306_LCDHEIGHT * SSD1306_LCDWIDTH / 8];
 
+/*
 static uint8_t buffer[SSD1306_LCDHEIGHT * SSD1306_LCDWIDTH / 8] = {
 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -107,6 +109,7 @@ static uint8_t buffer[SSD1306_LCDHEIGHT * SSD1306_LCDWIDTH / 8] = {
 #endif
 #endif
 };
+*/
 
 #define ssd1306_swap(a, b) { int16_t t = a; a = b; b = t; }
 
@@ -202,6 +205,7 @@ void Adafruit_SSD1306::begin(uint8_t vccstate, uint8_t i2caddr, bool reset) {
   }
   else
   {
+
     // I2C Init
     Wire.begin();
 #ifdef __SAM3X8E__

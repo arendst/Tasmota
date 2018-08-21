@@ -82,11 +82,11 @@ public:
     void ClearFrameMemory(unsigned char color);
     void DisplayFrame(void);
     void Sleep(void);
-
+void fastSPIwrite(uint8_t d,uint8_t dc);
     unsigned int cs_pin;
     unsigned int mosi_pin;
     unsigned int sclk_pin;
-    
+
 private:
     unsigned int reset_pin;
     unsigned int dc_pin;
@@ -98,7 +98,7 @@ private:
     void SetLut(const unsigned char* lut);
     void SetMemoryArea(int x_start, int y_start, int x_end, int y_end);
     void SetMemoryPointer(int x, int y);
-    void fastSPIwrite(uint8_t d,uint8_t dc);
+    //void fastSPIwrite(uint8_t d,uint8_t dc);
 };
 
 #endif /* EPD2IN9_H */

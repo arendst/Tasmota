@@ -706,6 +706,52 @@ void Adafruit_GFX::drawRGBBitmap(int16_t x, int16_t y,
 
 // TEXT- AND CHARACTER-HANDLING FUNCTIONS ----------------------------------
 
+/**
+ *  @brief: this draws a charactor on the frame buffer but not refresh
+ */
+void Adafruit_GFX::DrawCharAt(int16_t x, int16_t y, char ascii_char, sFONT* font, uint16_t colored) {
+    int i, j;
+    unsigned int char_offset = (ascii_char - ' ') * font->Height * (font->Width / 8 + (font->Width % 8 ? 1 : 0));
+    const unsigned char* ptr = &font->table[char_offset];
+
+    for (j = 0; j < font->Height; j++) {
+        for (i = 0; i < font->Width; i++) {
+            if (pgm_read_byte(ptr) & (0x80 >> (i % 8))) {
+                writePixel(x + i, y + j, colored);
+            } else {
+              // fill background
+                writePixel(x + i, y + j, !colored);
+            }
+            if (i % 8 == 7) {
+                ptr++;
+            }
+        }
+        if (font->Width % 8 != 0) {
+            ptr++;
+        }
+    }
+}
+
+/**
+*  @brief: this displays a string on the frame buffer but not refresh
+*/
+void Adafruit_GFX::DrawStringAt(int16_t x, int16_t y, const char* text, sFONT* font, uint16_t colored) {
+    const char* p_text = text;
+    unsigned int counter = 0;
+    int refcolumn = x;
+
+    /* Send the string character by character on EPD */
+    while (*p_text != 0) {
+        /* Display one character on EPD */
+        DrawCharAt(refcolumn, y, *p_text, font, colored);
+        /* Decrement the column position by 16 */
+        refcolumn += font->Width;
+        /* Point on the next character */
+        p_text++;
+        counter++;
+    }
+}
+
 // Draw a character
 void Adafruit_GFX::drawChar(int16_t x, int16_t y, unsigned char c,
   uint16_t color, uint16_t bg, uint8_t size) {
@@ -1345,4 +1391,3 @@ void GFXcanvas16::fillScreen(uint16_t color) {
         }
     }
 }
-
