@@ -21,11 +21,10 @@
 #ifdef USE_DISPLAY
 
 #define DISPLAY_MAX_DRIVERS    16           // Max number of display drivers/models supported by xdsp_interface.ino
+#define DISPLAY_MAX_COLS       40           // Max number of columns to display
+#define DISPLAY_MAX_ROWS       16           // Max number of lines to display for LCD and Oled using local screen buffer
 
-#define DISPLAY_SCREEN_COLS    40           // Max number of columns to display
-#define DISPLAY_SCREEN_ROWS    8            // Max number of lines to display for LCD and Oled using local screen buffer
-
-#define DISPLAY_LOG_COLS       DISPLAY_SCREEN_COLS +1  // Number of characters in display log buffer line +1
+#define DISPLAY_LOG_COLS       DISPLAY_MAX_COLS +1  // Number of characters in display log buffer line +1
 #define DISPLAY_LOG_ROWS       32           // Number of lines in display log buffer
 
 #define D_CMND_DISPLAY "Display"
@@ -817,6 +816,7 @@ boolean DisplayCommand()
     else if (CMND_DISP_ROTATE == command_code) {
       if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < 4)) {
         Settings.display_rotate = XdrvMailbox.payload;
+        DisplayInit(DISPLAY_INIT_MODE);
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_DISPLAY_COMMAND_NVALUE, command, Settings.display_rotate);
     }
@@ -825,7 +825,6 @@ boolean DisplayCommand()
       if (disp_device && XdrvMailbox.data_len > 0) {
 #ifndef USE_DISPLAY_MODES1TO5
         DisplayText();
-
 #else
         if (!Settings.display_mode) {
           DisplayText();
@@ -854,13 +853,13 @@ boolean DisplayCommand()
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_DISPLAY_COMMAND_NVALUE, command, Settings.display_refresh);
     }
     else if ((CMND_DISP_COLS == command_code) && (XdrvMailbox.index > 0) && (XdrvMailbox.index <= 2)) {
-      if ((XdrvMailbox.payload > 0) && (XdrvMailbox.payload <= DISPLAY_SCREEN_COLS)) {
+      if ((XdrvMailbox.payload > 0) && (XdrvMailbox.payload <= DISPLAY_MAX_COLS)) {
         Settings.display_cols[XdrvMailbox.index -1] = XdrvMailbox.payload;
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_DISPLAY_COMMAND_INDEX_NVALUE, command, XdrvMailbox.index, Settings.display_cols[XdrvMailbox.index -1]);
     }
     else if (CMND_DISP_ROWS == command_code) {
-      if ((XdrvMailbox.payload > 0) && (XdrvMailbox.payload <= DISPLAY_SCREEN_ROWS)) {
+      if ((XdrvMailbox.payload > 0) && (XdrvMailbox.payload <= DISPLAY_MAX_ROWS)) {
         Settings.display_rows = XdrvMailbox.payload;
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_DISPLAY_COMMAND_NVALUE, command, Settings.display_rows);
