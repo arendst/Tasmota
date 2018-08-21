@@ -19,10 +19,11 @@
 */
 #ifdef USE_DISPLAY
 
-//#define USE_GRAPH
+#define USE_GRAPH
 
 #define NUM_GRAPHS 4
 unsigned char display_ready;
+
 
 #ifdef USE_GRAPH
 struct GRAPH {
@@ -43,53 +44,56 @@ struct GRAPH {
   uint8_t xticks;
   uint8_t yticks;
   uint8_t last_val;
-} graph[NUM_GRAPHS];
+};
 
+struct GRAPH *graph[NUM_GRAPHS];
 
-
+#define TICKLEN 4
 void ClrGraph(uint16_t num) {
-  uint16_t xticks=graph[num].xticks;
-  uint16_t yticks=graph[num].yticks;
+  struct GRAPH *gp=graph[num];
+
+  uint16_t xticks=gp->xticks;
+  uint16_t yticks=gp->yticks;
   uint16_t count;
 
   // clr inside
-  Draw_FilledRectangle(graph[num].xp+1,graph[num].yp+1,graph[num].xs-2,graph[num].ys-2,0);
+  Draw_FilledRectangle(gp->xp+1,gp->yp+1,gp->xs-2,gp->ys-2,0);
 
   if (xticks) {
-    float cxp=graph[num].xp,xd=(float)graph[num].xs/(float)xticks;
+    float cxp=gp->xp,xd=(float)gp->xs/(float)xticks;
     for (count=0; count<xticks; count++) {
-      Draw_VLine(cxp,graph[num].yp+graph[num].ys-TICKLEN,TICKLEN);
+      Draw_VLine(cxp,gp->yp+gp->ys-TICKLEN,TICKLEN);
       cxp+=xd;
     }
   }
   if (yticks) {
-    if (graph[num].ymin<0 && graph[num].ymax>0) {
+    if (gp->ymin<0 && gp->ymax>0) {
       // draw zero seperator
       float cxp=0;
-      float czp=graph[num].yp+(graph[num].ymax/graph[num].range);
-      while (cxp<graph[num].xs) {
-        Draw_HLine(graph[num].xp+cxp,czp,2);
+      float czp=gp->yp+(gp->ymax/gp->range);
+      while (cxp<gp->xs) {
+        Draw_HLine(gp->xp+cxp,czp,2);
         cxp+=6.0;
       }
       // align ticks to zero line
-      float cyp=0,yd=graph[num].ys/yticks;
+      float cyp=0,yd=gp->ys/yticks;
       for (count=0; count<yticks; count++) {
-        if ((czp-cyp)>graph[num].yp) {
-          Draw_HLine(graph[num].xp,czp-cyp,TICKLEN);
-          Draw_HLine(graph[num].xp+graph[num].xs-TICKLEN,czp-cyp,TICKLEN);
+        if ((czp-cyp)>gp->yp) {
+          Draw_HLine(gp->xp,czp-cyp,TICKLEN);
+          Draw_HLine(gp->xp+gp->xs-TICKLEN,czp-cyp,TICKLEN);
         }
-        if ((czp+cyp)<(graph[num].yp+graph[num].ys)) {
-          Draw_HLine(graph[num].xp,czp+cyp,TICKLEN);
-          Draw_HLine(graph[num].xp+graph[num].xp-TICKLEN,czp+cyp,TICKLEN);
+        if ((czp+cyp)<(gp->yp+gp->ys)) {
+          Draw_HLine(gp->xp,czp+cyp,TICKLEN);
+          Draw_HLine(gp->xp+gp->xp-TICKLEN,czp+cyp,TICKLEN);
         }
         cyp+=yd;
       }
 
     } else {
-      float cyp=graph[num].yp,yd=graph[num].ys/yticks;
+      float cyp=gp->yp,yd=gp->ys/yticks;
       for (count=0; count<yticks; count++) {
-        Draw_HLine(graph[num].xp,cyp,TICKLEN);
-        Draw_HLine(graph[num].xp+graph[num].xs-TICKLEN,cyp,TICKLEN);
+        Draw_HLine(gp->xp,cyp,TICKLEN);
+        Draw_HLine(gp->xp+gp->xs-TICKLEN,cyp,TICKLEN);
         cyp+=yd;
       }
     }
@@ -98,32 +102,45 @@ void ClrGraph(uint16_t num) {
 
 // define a graph
 void DefineGraph(uint16_t num,uint16_t xp,uint16_t yp,uint16_t xs,uint16_t ys,int16_t dec,float ymin, float ymax) {
-
+struct GRAPH *gp;
   uint16_t count;
   uint16_t index=num%NUM_GRAPHS;
-  graph[index].xticks=(num>>2)&0x3f;
-  graph[index].yticks=(num>>8)&0x3f;
-  graph[index].xp=xp;
-  graph[index].yp=yp;
-  graph[index].xs=xs;
-  graph[index].ys=ys;
+  if (!graph[index]) {
+    gp=(struct GRAPH*)calloc(sizeof(struct GRAPH),1);
+    if (!gp) return;
+    graph[index]=gp;
+  } else {
+    gp=graph[index];
+  }
+
+  gp->xticks=(num>>2)&0x3f;
+  gp->yticks=(num>>8)&0x3f;
+  gp->xp=xp;
+  gp->yp=yp;
+  gp->xs=xs;
+  gp->ys=ys;
   if (!dec) dec=1;
-  graph[index].decimation=dec;
+  gp->decimation=dec;
   if (dec<0) {
     // is minutes per sweep prepare timing paramters
-    graph[index].x_time=(-dec*60000)/(float)xs;
-    graph[index].last_ms=millis()+graph[index].x_time;
+    gp->x_time=(-dec*60000)/(float)xs;
+    gp->last_ms=millis()+gp->x_time;
   }
-  graph[index].ymin=ymin;
-  graph[index].ymax=ymax;
-  graph[index].range=(ymax-ymin)/ys;
-  graph[index].xcnt=0;
-  graph[index].dcnt=0;
-  graph[index].summ=0;
-  if (graph[index].values) free(graph[index].values);
-  graph[index].values=(uint8_t*) calloc(1,xs+2);
+  gp->ymin=ymin;
+  gp->ymax=ymax;
+  gp->range=(ymax-ymin)/ys;
+  gp->xcnt=0;
+  gp->dcnt=0;
+  gp->summ=0;
+  if (gp->values) free(gp->values);
+  gp->values=(uint8_t*) calloc(1,xs+2);
+  if (!gp->values) {
+    free(gp);
+    graph[index]=0;
+    return;
+  }
   // start from zero
-  graph[index].values[0]=0;
+  gp->values[0]=0;
   // draw rectangle
   Draw_Rectangle(xp,yp,xs,ys);
   // clr inside
@@ -134,21 +151,25 @@ void DefineGraph(uint16_t num,uint16_t xp,uint16_t yp,uint16_t xs,uint16_t ys,in
 // check if to advance GRAPH
 void DisplayCheckGraph() {
   int16_t count;
+  struct GRAPH *gp;
   for (count=0;count<NUM_GRAPHS;count++) {
-    if (graph[count].decimation<0) {
-      // if time over add value
-      while (millis()>graph[count].last_ms) {
-        graph[count].last_ms+=graph[count].x_time;
-        uint8_t val;
-        if (graph[count].dcnt) {
-          val=graph[count].summ/graph[count].dcnt;
-          graph[count].dcnt=0;
-          graph[count].summ=0;
-          graph[count].last_val=val;
-        } else {
-          val=graph[count].last_val;
+    gp=graph[count];
+    if (gp) {
+      if (gp->decimation<0) {
+        // if time over add value
+        while (millis()>gp->last_ms) {
+          gp->last_ms+=gp->x_time;
+          uint8_t val;
+          if (gp->dcnt) {
+            val=gp->summ/gp->dcnt;
+            gp->dcnt=0;
+            gp->summ=0;
+            gp->last_val=val;
+          } else {
+            gp->last_val;
+          }
+          AddGraph(count,val);
         }
-        AddGraph(count,val);
       }
     }
   }
@@ -156,25 +177,26 @@ void DisplayCheckGraph() {
 
 // add next value to graph
 void AddGraph(uint8_t num,uint8_t val) {
-  graph[num].xcnt++;
-  if (graph[num].xcnt>graph[num].xs) {
-    graph[num].xcnt=graph[num].xs;
+  struct GRAPH *gp=graph[num];
+  gp->xcnt++;
+  if (gp->xcnt>gp->xs) {
+    gp->xcnt=gp->xs;
     // clr area, shift and redraw graph
     // draw rectangle
-    Draw_Rectangle(graph[num].xp,graph[num].yp,graph[num].xs,graph[num].ys);
+    Draw_Rectangle(gp->xp,gp->yp,gp->xs,gp->ys);
     ClrGraph(num);
     int16_t count;
-    for (count=0;count<graph[num].xs-1;count++) {
-      graph[num].values[count]=graph[num].values[count+1];
+    for (count=0;count<gp->xs-1;count++) {
+      gp->values[count]=gp->values[count+1];
     }
-    graph[num].values[graph[num].xcnt-1]=val;
-    for (count=0;count<graph[num].xs-1;count++) {
-      DrawLine(graph[num].xp+count,graph[num].yp+graph[num].ys-graph[num].values[count]-1,graph[num].xp+count+1,graph[num].yp+graph[num].ys-graph[num].values[count+1]-1);
+    gp->values[gp->xcnt-1]=val;
+    for (count=0;count<gp->xs-1;count++) {
+      DrawLine(gp->xp+count,gp->yp+gp->ys-gp->values[count]-1,gp->xp+count+1,gp->yp+gp->ys-gp->values[count+1]-1);
     }
   } else {
     // add value and draw a single line
-    graph[num].values[graph[num].xcnt]=val;
-    DrawLine(graph[num].xp+graph[num].xcnt-1,graph[num].yp+graph[num].ys-graph[num].values[graph[num].xcnt-1]-1,graph[num].xp+graph[num].xcnt,graph[num].yp+graph[num].ys-graph[num].values[graph[num].xcnt]-1);
+    gp->values[gp->xcnt]=val;
+    DrawLine(gp->xp+gp->xcnt-1,gp->yp+gp->ys-gp->values[gp->xcnt-1]-1,gp->xp+gp->xcnt,gp->yp+gp->ys-gp->values[gp->xcnt]-1);
   }
 }
 
@@ -182,27 +204,28 @@ void AddGraph(uint8_t num,uint8_t val) {
 void AddValue(uint8_t num,float fval) {
   // not yet defined ???
   num=num%NUM_GRAPHS;
-  if (!graph[num].values) return;
+  struct GRAPH *gp=graph[num];
+  if (!gp) return;
 
-  if (fval>graph[num].ymax) fval=graph[num].ymax;
-  if (fval<graph[num].ymin) fval=graph[num].ymin;
+  if (fval>gp->ymax) fval=gp->ymax;
+  if (fval<gp->ymin) fval=gp->ymin;
 
   int16_t val;
-  val=(fval-graph[num].ymin)/graph[num].range;
+  val=(fval-gp->ymin)/gp->range;
 
-  if (val>graph[num].ys-1) val=graph[num].ys-1;
+  if (val>gp->ys-1) val=gp->ys-1;
   if (val<0) val=0;
 
   // summ values
-  graph[num].summ+=val;
-  graph[num].dcnt++;
+  gp->summ+=val;
+  gp->dcnt++;
 
-  if (graph[num].decimation>0) {
-    if (graph[num].dcnt>=graph[num].decimation) {
-      graph[num].dcnt=0;
+  if (gp->decimation>0) {
+    if (gp->dcnt>=gp->decimation) {
+      gp->dcnt=0;
       // calc average
-      val=graph[num].summ/graph[num].decimation;
-      graph[num].summ=0;
+      val=gp->summ/gp->decimation;
+      gp->summ=0;
       // add to graph
       AddGraph(num,val);
     }

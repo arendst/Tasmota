@@ -53,6 +53,18 @@ Adafruit_SSD1306 display(OLED_RESET);
 
 uint8_t font_x=6,font_y=8,txtsize=1;
 
+void (*xDraw_HLine)(uint16_t x,uint16_t y,int16_t len);
+void (*xDraw_VLine)(uint16_t x,uint16_t y,int16_t len);
+void Draw_HLine(uint16_t x,uint16_t y,int16_t len);
+void Draw_VLine(uint16_t x,uint16_t y,int16_t len);
+
+const struct VTABLE {
+  void (*xDraw_HLine)(uint16_t x,uint16_t y,int16_t len) = &Draw_HLine;
+  void (*xDraw_VLine)(uint16_t x,uint16_t y,int16_t len) = &Draw_VLine;
+} xdrv2_jumptable;
+
+struct VTABLE *jptr;
+
 void DisplayInit(void) {
   // by default, we'll generate the high voltage from the 3.3v line internally! (neat!)
   display.begin(SSD1306_SWITCHCAPVCC, 0x3c);  // initialize with the I2C addr 0x3D (for the 128x64)
@@ -65,6 +77,13 @@ void DisplayInit(void) {
   display.setCursor(0,0);
   display.display();
   display.clearDisplay();
+
+
+  jptr=(struct VTABLE *)&xdrv2_jumptable;
+
+  (*jptr->xDraw_HLine)(0,32,128);
+
+  display.display();
 
   display_ready=1;
 }
