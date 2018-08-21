@@ -27,7 +27,7 @@
 #define OLED_ADDRESS2          0x3D         // Oled 128x64 I2C address
 
 #define OLED_BUFFER_COLS       40           // Max number of columns in display shadow buffer
-#define OLED_BUFFER_ROWS       8            // Max number of lines in display shadow buffer
+#define OLED_BUFFER_ROWS       16           // Max number of lines in display shadow buffer
 
 #define OLED_FONT_WIDTH        6
 #define OLED_FONT_HEIGTH       8

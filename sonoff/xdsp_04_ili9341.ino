@@ -133,7 +133,8 @@ void Ili9341PrintLogLine()
   byte size = Settings.display_size;
   tft->setTextSize(size);
   uint16_t theight = size * TFT_FONT_HEIGTH;
-  tft->fillRect(0, tft_scroll, tft->width(), theight, ILI9341_BLACK);
+
+  tft->fillRect(0, tft_scroll, tft->width(), theight, ILI9341_BLACK);  // Erase line
 
   char *pch = strchr(disp_log_buffer[disp_log_buffer_ptr],'~');  // = 0x7E (~) Replace degrees character (276 octal)
   if (pch != NULL) {
@@ -148,7 +149,7 @@ void Ili9341PrintLogLine()
   if (tft_scroll >= (tft->height() - TFT_BOTTOM)) {
     tft_scroll = TFT_TOP;
   }
-  tft->setScrollStart(tft_scroll);
+  tft->scrollTo(tft_scroll);
 }
 
 void Ili9341PrintLog()
@@ -181,6 +182,7 @@ void Ili9341Refresh()  // Every second
     tft->print(tftdt);
 
     switch (Settings.display_mode) {
+      case 1:  // Text
       case 2:  // Local
       case 3:  // Local
       case 4:  // Mqtt

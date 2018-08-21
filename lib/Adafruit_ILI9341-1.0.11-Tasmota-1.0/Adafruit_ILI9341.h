@@ -133,7 +133,6 @@ class Adafruit_ILI9341 : public Adafruit_GFX {
         void      begin(uint32_t freq = 0, SPIClass &spi=SPI);
 #endif
 
-        void      setScrollStart(uint16_t start);
         void      setScrollMargins(uint16_t top, uint16_t bottom);
 
         void      setRotation(uint8_t r);

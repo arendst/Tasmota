@@ -387,27 +387,15 @@ void Adafruit_ILI9341::begin(uint32_t freq)
 
 /*********************************************************************************************/
 
-void Adafruit_ILI9341::setScrollStart(uint16_t start)
-{
-  startWrite();
-  writeCommand(0x37);
-  spiWrite(start>>8);
-  spiWrite(start);
-  endWrite();
-}
-
 void Adafruit_ILI9341::setScrollMargins(uint16_t top, uint16_t bottom)
 {
   uint16_t height = _height - (top + bottom);
 
   startWrite();
   writeCommand(0x33);
-  spiWrite(top>>8);
-  spiWrite(top);
-  spiWrite(height>>8);
-  spiWrite(height);
-  spiWrite(bottom>>8);
-  spiWrite(bottom);
+  SPI_WRITE16(top);
+  SPI_WRITE16(height);
+  SPI_WRITE16(bottom);
   endWrite();
 }
 
