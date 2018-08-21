@@ -350,8 +350,14 @@ void MCP230xx_Reset(uint8_t pinmode) {
     } else {
       Settings.mcp230xx_config[pinx].int_report_mode=3; // Disabled for pinmode 1, 5 and 6 (No interrupts there)
     }
-    Settings.mcp230xx_config[pinx].b7=0;
+    Settings.mcp230xx_config[pinx].int_report_defer=0; // Disabled
+    Settings.mcp230xx_config[pinx].int_count_sec; // Disabled
+    Settings.mcp230xx_config[pinx].int_count_min; // Disabled
+    Settings.mcp230xx_config[pinx].spare13=0;
+    Settings.mcp230xx_config[pinx].spare14=0;
+    Settings.mcp230xx_config[pinx].spare15=0;
   }
+  Settings.mcp230xx_int_prio=0; // Once per FUNC_EVERY_50_MSECOND callback
   MCP230xx_ApplySettings();
   char pulluptxt[7];
   char intmodetxt[9];
