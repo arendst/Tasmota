@@ -49,7 +49,7 @@ If you use the ETS (KNX Configurator Software) you can add any Sonoff Tasmota KN
 
 It is recommended to compile with version 2.4.2 of the esp8266 board libraries.
 With v2.4.0 and v2.4.1 there are some issues related to sleep command. Do not use.
-If you are going to compile with old v2.3.0 you need to comment lines 10 and 58 on the _esp-knx-ip.h_ file.
+If you are going to compile with old v2.3.0 you need to comment lines 10 and 58 of the _esp-knx-ip.h_ file.
 
 ## Implemented Features ##
 
@@ -233,7 +233,7 @@ OPTION Value | Device Parameter
 - [x] Add commands for rules to set KNX Configurations
 - [x] Add events for rules when receiving data from KNX and read requests
 - [x] Add option for increase communication reliability (re send telegrams)
-- [ ] Add option for multicast forced reconnection (needed for some routers that have IGMP conflict with actual esp8266 lib v2.3.0 to v2.4.1, and lwIP v1.4 to v2.0 - Send a telegram to itself. If it is received, multicast is ok, if not, reconnect)
+- [ ] Add option for multicast forced reconnection (needed for some routers that have IGMP conflict with actual esp8266 lib v2.3.0 to v2.4.2, and lwIP v1.4 to v2.0 - Send a telegram to itself. If it is received, multicast is ok, if not, reconnect)
 - [ ] Add option to support KNX Snooping to debug KNX Network
 - [ ] Add option for KNXnet/IP Tunneling
 - [ ] Add option to repeat all KNX multicast broadcast (Tasmota to Tasmota communications) to KNXnet/IP Tunneling
@@ -243,7 +243,7 @@ OPTION Value | Device Parameter
 ## Modifications to Sonoff-Tasmota ##
 
 * Added the file _/sonoff/xdrv_11_KNX.ino_
-* Added the entry `#define USE_KNX` on _/sonoff/user_config.h_
+* Added the entries `#define USE_KNX` and `#define USE_KNX_WEB_MENU` on _/sonoff/user_config.h_
 * Added entries to the file _/sonoff/webserver.ino_
 * Added entries to the file _/sonoff/sonoff.ino_
 * Added entries to the file _/sonoff/sonoff.h_
@@ -252,7 +252,7 @@ OPTION Value | Device Parameter
 * Added entries to sensor files
 * Added entries to language files
 
-Up to now, enabling KNX uses +23k of code and +3k3 of memory.
+Up to now, enabling KNX uses +9.4k of code and +3k7 of memory. If also, it is enabled the KNX Web Menu, it adds +8.3k of code and +144 bytes of memory.
 
 There is **NO CONFLICT** with MQTT, Home Assistant, Web, etc. Tests show fast response of all features running at same time.
 
