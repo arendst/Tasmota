@@ -121,9 +121,9 @@ struct GRAPH *gp;
   gp->ys=ys;
   if (!dec) dec=1;
   gp->decimation=dec;
-  if (dec<0) {
-    // is minutes per sweep prepare timing paramters
-    gp->x_time=(-dec*60000)/(float)xs;
+  if (dec>0) {
+    // is minutes per sweep prepare timing parameters in ms
+    gp->x_time=(dec*60000)/(float)xs;
     gp->last_ms=millis()+gp->x_time;
   }
   gp->ymin=ymin;
@@ -155,7 +155,7 @@ void DisplayCheckGraph() {
   for (count=0;count<NUM_GRAPHS;count++) {
     gp=graph[count];
     if (gp) {
-      if (gp->decimation<0) {
+      if (gp->decimation>0) {
         // if time over add value
         while (millis()>gp->last_ms) {
           gp->last_ms+=gp->x_time;
@@ -220,11 +220,12 @@ void AddValue(uint8_t num,float fval) {
   gp->summ+=val;
   gp->dcnt++;
 
-  if (gp->decimation>0) {
-    if (gp->dcnt>=gp->decimation) {
+  // decimation option
+  if (gp->decimation<0) {
+    if (gp->dcnt>=-gp->decimation) {
       gp->dcnt=0;
       // calc average
-      val=gp->summ/gp->decimation;
+      val=gp->summ/-gp->decimation;
       gp->summ=0;
       // add to graph
       AddGraph(num,val);
@@ -268,6 +269,7 @@ const char kDisplayCommands[] PROGMEM = D_CMND_DISP_TEXT ;
 #define D_CMND_DISPLAY "Display"
 const char S_JSON_DISPLAY_COMMAND_VALUE[] PROGMEM =        "{\"" D_CMND_DISPLAY "%s\":\"%s\"}";
 int16_t xpos,ypos;
+uint8_t autodraw=1;
 
 
 boolean DisplayCommand() {
@@ -404,8 +406,8 @@ boolean DisplayCommand() {
                      var=atoiv(cp,&temp1);
                      cp+=var;
                      DrawLine(xpos,ypos,temp,temp1);
-                     xpos+=temp;
-                     ypos+=temp1;
+                     xpos=temp;
+                     ypos=temp1;
                      break;
                   case 'k':
                     // circle
@@ -488,6 +490,11 @@ boolean DisplayCommand() {
                     // force draw grafics buffer
                     Draw_Frame();
                     break;
+                  case 'D':
+                    // set auto draw mode
+                    autodraw=*cp&1;
+                    cp+=1;
+                    break;
                   case 's':
                   case 'f':
                     // size or font sx
@@ -523,7 +530,7 @@ boolean DisplayCommand() {
             }
         }
         // draw buffer
-        Draw_Frame();
+        if (autodraw) Draw_Frame();
       }
 
       } else {
