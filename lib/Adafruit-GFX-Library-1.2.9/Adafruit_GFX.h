@@ -9,6 +9,7 @@
 #endif
 #include "gfxfont.h"
 
+/// A generic graphics superclass that can handle all sorts of drawing. At a minimum you can subclass and provide drawPixel(). At a maximum you can do a ton of overriding to optimize. Used for any/all Adafruit displays!
 class Adafruit_GFX : public Print {
 
  public:
@@ -16,7 +17,7 @@ class Adafruit_GFX : public Print {
   Adafruit_GFX(int16_t w, int16_t h); // Constructor
 
   // This MUST be defined by the subclass:
-  virtual void drawPixel(int16_t x, int16_t y, uint16_t color) = 0;
+  virtual void drawPixel(int16_t x, int16_t y, uint16_t color) = 0;    ///< Virtual drawPixel() function to draw to the screen/framebuffer/etc, must be overridden in subclass. @param x X coordinate.  @param y Y coordinate. @param color 16-bit pixel color. 
 
   // TRANSACTION API / CORE DRAW API
   // These MAY be overridden by the subclass to provide device-specific
@@ -101,10 +102,13 @@ class Adafruit_GFX : public Print {
     setTextWrap(boolean w),
     cp437(boolean x=true),
     setFont(const GFXfont *f = NULL),
-    getTextBounds(char *string, int16_t x, int16_t y,
+    getTextBounds(const char *string, int16_t x, int16_t y,
       int16_t *x1, int16_t *y1, uint16_t *w, uint16_t *h),
     getTextBounds(const __FlashStringHelper *s, int16_t x, int16_t y,
+      int16_t *x1, int16_t *y1, uint16_t *w, uint16_t *h),
+    getTextBounds(const String &str, int16_t x, int16_t y,
       int16_t *x1, int16_t *y1, uint16_t *w, uint16_t *h);
+
 
 #if ARDUINO >= 100
   virtual size_t write(uint8_t);
@@ -126,22 +130,28 @@ class Adafruit_GFX : public Print {
     charBounds(char c, int16_t *x, int16_t *y,
       int16_t *minx, int16_t *miny, int16_t *maxx, int16_t *maxy);
   const int16_t
-    WIDTH, HEIGHT;   // This is the 'raw' display w/h - never changes
+    WIDTH,          ///< This is the 'raw' display width - never changes
+    HEIGHT;         ///< This is the 'raw' display height - never changes
   int16_t
-    _width, _height, // Display w/h as modified by current rotation
-    cursor_x, cursor_y;
+    _width,         ///< Display width as modified by current rotation
+    _height,        ///< Display height as modified by current rotation
+    cursor_x,       ///< x location to start print()ing text
+    cursor_y;       ///< y location to start print()ing text
   uint16_t
-    textcolor, textbgcolor;
+    textcolor,      ///< 16-bit background color for print()
+    textbgcolor;    ///< 16-bit text color for print()
   uint8_t
-    textsize,
-    rotation;
+    textsize,       ///< Desired magnification of text to print()
+    rotation;       ///< Display rotation (0 thru 3)
   boolean
-    wrap,   // If set, 'wrap' text at right edge of display
-    _cp437; // If set, use correct CP437 charset (default is off)
+    wrap,           ///< If set, 'wrap' text at right edge of display
+    _cp437;         ///< If set, use correct CP437 charset (default is off)
   GFXfont
-    *gfxFont;
+    *gfxFont;       ///< Pointer to special font
 };
 
+
+/// A simple drawn button UI element
 class Adafruit_GFX_Button {
 
  public:
@@ -173,6 +183,8 @@ class Adafruit_GFX_Button {
   boolean currstate, laststate;
 };
 
+
+/// A GFX 1-bit canvas context for graphics
 class GFXcanvas1 : public Adafruit_GFX {
  public:
   GFXcanvas1(uint16_t w, uint16_t h);
@@ -184,6 +196,8 @@ class GFXcanvas1 : public Adafruit_GFX {
   uint8_t *buffer;
 };
 
+
+/// A GFX 8-bit canvas context for graphics
 class GFXcanvas8 : public Adafruit_GFX {
  public:
   GFXcanvas8(uint16_t w, uint16_t h);
@@ -197,6 +211,8 @@ class GFXcanvas8 : public Adafruit_GFX {
   uint8_t *buffer;
 };
 
+
+///  A GFX 16-bit canvas context for graphics
 class GFXcanvas16 : public Adafruit_GFX {
  public:
   GFXcanvas16(uint16_t w, uint16_t h);
