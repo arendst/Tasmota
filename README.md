@@ -5,7 +5,7 @@
 
 [![GitHub version](https://img.shields.io/github/release/ascillato/Sonoff-Tasmota_KNX.svg)](https://github.com/ascillato/Sonoff-Tasmota_KNX/releases/latest) [![GitHub download](https://img.shields.io/github/downloads/ascillato/Sonoff-Tasmota_KNX/total.svg)](https://github.com/ascillato/Sonoff-Tasmota_KNX/releases/latest) [![License](https://img.shields.io/github/license/ascillato/Sonoff-Tasmota_KNX.svg)](https://github.com/ascillato/Sonoff-Tasmota_KNX/blob/development/LICENSE.txt) [![donate](https://img.shields.io/badge/donate-PayPal-yellow.svg)](https://www.paypal.me/ascillato)
 
-Now, this is a repository for developing new KNX features for Sonoff-Tasmota.
+This repository is for developing new KNX features for Sonoff-Tasmota.
 
 If you like **Sonoff Tasmota KNX**, give it a star or fork it and contribute!
 [![GitHub stars](https://img.shields.io/github/stars/ascillato/Sonoff-Tasmota_KNX.svg?style=social&label=Star)](https://github.com/ascillato/Sonoff-Tasmota_KNX/stargazers)
