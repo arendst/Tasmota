@@ -105,7 +105,7 @@ const char* IntModeTxt(uint8_t intmo) {
       break;
     default:
       return "UNKNOWN";
-      break;  
+      break;
   }
 }
 
@@ -175,7 +175,7 @@ void MCP230xx_Detect()
   if (mcp230xx_type) {
     return;
   }
-  
+
   uint8_t buffer;
 
   for (byte i = 0; i < sizeof(mcp230xx_addresses); i++) {
@@ -323,10 +323,17 @@ void MCP230xx_SetOutPin(uint8_t pin,uint8_t pinstate) {
   I2cWrite8(mcp230xx_address, MCP230xx_GPIO + port, portpins);
   if (Settings.flag.save_state) { // Firmware configured to save last known state in settings
     Settings.mcp230xx_config[pin].saved_state=portpins>>(pin-(port*8))&1;
+    Settings.mcp230xx_config[pin+pinadd].saved_state=portpins>>(pin+pinadd-(port*8))&1;
   }
   sprintf(cmnd,ConvertNumTxt(pinstate, pinmo));
   sprintf(stt,ConvertNumTxt((portpins >> (pin-(port*8))&1), pinmo));
-  snprintf_P(mqtt_data, sizeof(mqtt_data), MCP230XX_CMND_RESPONSE, pin, cmnd, stt);
+  if (interlock && pinmo == Settings.mcp230xx_config[pin+pinadd].pinmode) {
+    char stt1[4];
+    sprintf(stt1,ConvertNumTxt((portpins >> (pin+pinadd-(port*8))&1), pinmo));
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"S29cmnd_D%i\":{\"COMMAND\":\"%s\",\"STATE\":\"%s\"},\"S29cmnd_D%i\":{\"STATE\":\"%s\"}}"),pin, cmnd, stt, pin+pinadd, stt1);
+  } else {
+    snprintf_P(mqtt_data, sizeof(mqtt_data), MCP230XX_CMND_RESPONSE, pin, cmnd, stt);
+  }
 }
 
 #endif // USE_MCP230xx_OUTPUT
