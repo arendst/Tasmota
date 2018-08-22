@@ -187,59 +187,19 @@ boolean ShutterCommand()
     serviced = false;  // Unknown command
   }
   else if ( ( (CMND_OPEN == command_code) || (CMND_CLOSE == command_code) ) && (index > 0) && (index <= shutters_present)) {
-    char svalue[80];
-    snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_POSITION "%d %d"), index, CMND_OPEN == command_code ? 100 : 0);
-    ExecuteWebCommand(svalue, SRC_WEBGUI);
+    XdrvMailbox.payload = CMND_OPEN == command_code ? 100 : 0;
+    command_code = CMND_POSITION;
   }
   else if (CMND_STOP == command_code && (index > 0) && (index <= shutters_present)) {
-    char svalue[80];
     Settings.shutter_position[index-1] = m2[index-1] * 5 > Shutter_Real_Position[index-1] ? Shutter_Real_Position[index-1] / m2[index-1] : (Shutter_Real_Position[index-1]-b1[index-1]) / m1[index-1];
-
-    snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_POSITION "%d %d"), index, Settings.shutter_position[index-1]);
-    ExecuteWebCommand(svalue, SRC_SHUTTER);
+    XdrvMailbox.payload = Settings.shutter_position[index-1];
+    command_code = CMND_POSITION;
   }
   else if (CMND_SHUTTERINVERT == command_code && (index > 0) && (index <= shutters_present)) {
     if ( (XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 1)) {
       Settings.shutter_invert[index-1] = XdrvMailbox.payload;
     }
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_NVALUE, command, index, XdrvMailbox.payload);
-  }
-  else if (CMND_POSITION == command_code && (index > 0) && (index <= shutters_present)) {
-    // webgui still send also on inverted shutter the native position.
-    XdrvMailbox.payload = Settings.shutter_invert[index-1] &&  SRC_WEBGUI != last_source ? 100 - XdrvMailbox.payload : XdrvMailbox.payload;
-    Shutter_Target_Position[index-1] = XdrvMailbox.payload < 5 ?  m2[index-1] * XdrvMailbox.payload : m1[index-1] * XdrvMailbox.payload + b1[index-1];
-    snprintf_P(log_data, sizeof(log_data), PSTR("lastsource %d: webgui:%d"), last_source,  SRC_WEBGUI);
-    AddLog(LOG_LEVEL_DEBUG);
-
-    if ( (XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 100) && abs(Shutter_Target_Position[index-1] - Shutter_Real_Position[index-1] ) / Shutter_Close_Velocity[index-1] > 1) {
-      int8_t new_shutterdirection = Shutter_Real_Position[index-1] < Shutter_Target_Position[index-1] ? 1 : -1;
-
-      if (Shutter_Direction[index-1] ==  -new_shutterdirection ) {
-        // direction need to be changed. on momentary switches first stop the Shutter
-        if (!Settings.flag3.paired_interlock) {
-          ExecuteCommandPower(Settings.shutter_startrelay[index-1] +1, new_shutterdirection == 1 ? 0 : 1,SRC_SHUTTER );
-        } else {
-          ExecuteCommandPower(Settings.shutter_startrelay[index-1] + (Shutter_Direction[index-1] == 1 ? 0 : 1), 1, SRC_SHUTTER);
-          delay(100);
-        }
-      }
-      if (Shutter_Direction[index-1] !=  new_shutterdirection ) {
-        Shutter_StartInit(index-1, new_shutterdirection, Shutter_Target_Position[index-1]);
-
-        if (!Settings.flag3.paired_interlock) {
-          // set direction
-          ExecuteCommandPower(Settings.shutter_startrelay[index-1] +1, new_shutterdirection == 1 ? 0 : 1, SRC_SHUTTER);
-          // power on
-          ExecuteCommandPower(Settings.shutter_startrelay[index-1] , 1, SRC_SHUTTER);
-        } else {
-          // now start the motor for the right direction
-          ExecuteCommandPower(Settings.shutter_startrelay[index-1] + (Shutter_Direction[index-1] == 1 ? 0 : 1), 1, SRC_SHUTTER);
-        }
-      }
-      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_NVALUE, command, index,  Settings.shutter_invert[index-1] ? 100 - XdrvMailbox.payload : XdrvMailbox.payload);
-    } else {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_NVALUE, command, index, Settings.shutter_invert[index-1]  ? 100 - Settings.shutter_position[index-1] : Settings.shutter_position[index-1]);
-    }
   }
   else if (((CMND_OPENTIME == command_code) || (CMND_CLOSETIME == command_code) ) && (index > 0) && (index <= shutters_present) ) {
     if (  (XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 100)) {
@@ -286,6 +246,46 @@ boolean ShutterCommand()
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_NVALUE, command, index, D_CONFIGURATION_RESET);
   } else {
     serviced = false;  // Unknown command
+  }
+  if (CMND_POSITION == command_code && (index > 0) && (index <= shutters_present)) {
+    serviced = true;
+    // webgui still send also on inverted shutter the native position.
+    XdrvMailbox.payload = Settings.shutter_invert[index-1] &&  SRC_WEBGUI != last_source ? 100 - XdrvMailbox.payload : XdrvMailbox.payload;
+    Shutter_Target_Position[index-1] = XdrvMailbox.payload < 5 ?  m2[index-1] * XdrvMailbox.payload : m1[index-1] * XdrvMailbox.payload + b1[index-1];
+    snprintf_P(log_data, sizeof(log_data), PSTR("lastsource %d: webgui:%d"), last_source,  SRC_WEBGUI);
+    AddLog(LOG_LEVEL_DEBUG);
+
+    if ( (XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 100) && abs(Shutter_Target_Position[index-1] - Shutter_Real_Position[index-1] ) / Shutter_Close_Velocity[index-1] > 1) {
+      int8_t new_shutterdirection = Shutter_Real_Position[index-1] < Shutter_Target_Position[index-1] ? 1 : -1;
+
+      if (Shutter_Direction[index-1] ==  -new_shutterdirection ) {
+        // direction need to be changed. on momentary switches first stop the Shutter
+        if (!Settings.flag3.paired_interlock) {
+          ExecuteCommandPower(Settings.shutter_startrelay[index-1] +1, new_shutterdirection == 1 ? 0 : 1,SRC_SHUTTER );
+        } else {
+          ExecuteCommandPower(Settings.shutter_startrelay[index-1] + (Shutter_Direction[index-1] == 1 ? 0 : 1), 1, SRC_SHUTTER);
+          delay(100);
+        }
+      }
+      if (Shutter_Direction[index-1] !=  new_shutterdirection ) {
+        Shutter_StartInit(index-1, new_shutterdirection, Shutter_Target_Position[index-1]);
+
+        if (!Settings.flag3.paired_interlock) {
+          // set direction
+          ExecuteCommandPower(Settings.shutter_startrelay[index-1] +1, new_shutterdirection == 1 ? 0 : 1, SRC_SHUTTER);
+          // power on
+          ExecuteCommandPower(Settings.shutter_startrelay[index-1] , 1, SRC_SHUTTER);
+        } else {
+          // now start the motor for the right direction
+          ExecuteCommandPower(Settings.shutter_startrelay[index-1] + (Shutter_Direction[index-1] == 1 ? 0 : 1), 1, SRC_SHUTTER);
+        }
+      }
+      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_NVALUE, command, index,  Settings.shutter_invert[index-1] ? 100 - XdrvMailbox.payload : XdrvMailbox.payload);
+    } else {
+      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_NVALUE, command, index, Settings.shutter_invert[index-1]  ? 100 - Settings.shutter_position[index-1] : Settings.shutter_position[index-1]);
+    }
+  }
+  if (!serviced) {
     snprintf_P(log_data, sizeof(log_data), PSTR("Shutter unknown"));
     AddLog(LOG_LEVEL_INFO);
   }
