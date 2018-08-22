@@ -67,7 +67,7 @@ Sensor lists that you can use in KNX is (only one sensor per type):
 * Humidity
 * Energy (v, i, power)
 
-For using rules:
+Features that can be used with Tasmota's rules:
 * send KNX command (on/off)
 * receive KNX command (on/off)
 * send values by KNX (any float type, temperature for example)
