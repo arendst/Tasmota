@@ -68,9 +68,7 @@ const char MCP230XX_CMND_RESPONSE[] PROGMEM = "{\"S29cmnd_D%i\":{\"COMMAND\":\"%
 
 const char* ConvertNumTxt(uint8_t statu, uint8_t pinmod=0) {
 #ifdef USE_MCP230xx_OUTPUT
-if (pinmod == 6) {
-  if (statu < 2) statu = abs(statu-1);
-}
+if (pinmod == 6 && statu < 2) statu = abs(statu-1);
 #endif // USE_MCP230xx_OUTPUT
   switch (statu) {
     case 0:
@@ -300,7 +298,7 @@ void MCP230xx_SetOutPin(uint8_t pin,uint8_t pinstate) {
   uint8_t pinmo = Settings.mcp230xx_config[pin].pinmode;
   uint8_t interlock = Settings.flag.interlock;
   int pinadd = (pin % 2)+1-(3*(pin % 2)); //check if pin is odd or even and convert to 1 (if even) or -1 (if odd)
-  char cmnd[7], stt[7];
+  char cmnd[7], stt[4];
   if (pin > 7) port=1;
   portpins = MCP230xx_readGPIO(port);
   if (interlock && pinmo == Settings.mcp230xx_config[pin+pinadd].pinmode) {
@@ -311,7 +309,11 @@ void MCP230xx_SetOutPin(uint8_t pin,uint8_t pinstate) {
         if (pinstate) portpins &= ~(1 << pin+pinadd-(port*8)),portpins |= (1 << pin-(port*8)); else portpins &= ~(1 << pin-(port*8));
       }
     } else {
+      if (pinmo == 6) {
+      portpins |= (1 << pin+pinadd-(port*8)),portpins ^= (1 << pin-(port*8));
+      } else {
       portpins &= ~(1 << pin+pinadd-(port*8)),portpins ^= (1 << pin-(port*8));
+      }
     }
   } else {
     if (pinstate < 2) {
