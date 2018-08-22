@@ -58,9 +58,9 @@ If you are going to compile with old v2.3.0 you need to comment lines 10 and 58 
 The implemented features, up to now, in KNX for Tasmota are:
 
 General:
-* buttons (just push)
-* relays (on/off/toggle)
-* lights (led strips, etc. but just on/off)
+* Buttons (just push)
+* Relays (on/off/toggle)
+* Lights (led strips, etc. but just on/off)
 
 Sensor lists that you can use in KNX is (only one sensor per type):
 * Temperature
@@ -68,14 +68,14 @@ Sensor lists that you can use in KNX is (only one sensor per type):
 * Energy (v, i, power)
 
 Features that can be used with Tasmota's rules:
-* send KNX command (on/off)
-* receive KNX command (on/off)
-* send values by KNX (any float type, temperature for example)
-* receive values by KNX (any float type, temperature for example)
-* receive a KNX read request
-* view/set the Physical Address
-* view/set Group Address to send data
-* view/set Group Address to receive data
+* Send KNX command (on/off)
+* Receive KNX command (on/off)
+* Send values by KNX (any float type, temperature for example)
+* Receive values by KNX (any float type, temperature for example)
+* Receive a KNX read request
+* View/Set the Physical Address
+* View/Set Group Address to send data
+* View/Set Group Address to receive data
 
 ## Usage Examples ##
 
