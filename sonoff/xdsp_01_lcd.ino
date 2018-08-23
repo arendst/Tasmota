@@ -26,9 +26,6 @@
 #define LCD_ADDRESS1           0x27         // LCD I2C address option 1
 #define LCD_ADDRESS2           0x3F         // LCD I2C address option 2
 
-#define LCD_BUFFER_COLS        40           // Max number of columns in display shadow buffer
-#define LCD_BUFFER_ROWS        8            // Max number of lines in display shadow buffer
-
 #include <Wire.h>
 #include <LiquidCrystal_I2C.h>
 
@@ -40,8 +37,6 @@ void LcdInitMode()
 {
   lcd->init();
   lcd->clear();
-//  memset(lcd_screen_buffer[Settings.display_rows -1], 0x20, Settings.display_cols[0]);
-//  lcd_screen_buffer[Settings.display_rows -1][Settings.display_cols[0]] = 0;
 }
 
 void LcdInit(uint8_t mode)
@@ -49,6 +44,9 @@ void LcdInit(uint8_t mode)
   switch(mode) {
     case DISPLAY_INIT_MODE:
       LcdInitMode();
+#ifdef USE_DISPLAY_MODES1TO5
+      DisplayClearScreenBuffer();
+#endif  // USE_DISPLAY_MODES1TO5
       break;
     case DISPLAY_INIT_PARTIAL:
     case DISPLAY_INIT_FULL:
@@ -71,6 +69,10 @@ void LcdInitDriver()
 
   if (XDSP_01 == Settings.display_model) {
     lcd = new LiquidCrystal_I2C(Settings.display_address[0], Settings.display_cols[0], Settings.display_rows);
+
+#ifdef USE_DISPLAY_MODES1TO5
+    DisplayAllocScreenBuffer();
+#endif  // USE_DISPLAY_MODES1TO5
 
     LcdInitMode();
   }
@@ -95,8 +97,6 @@ void LcdDisplayOnOff(uint8_t on)
 
 #ifdef USE_DISPLAY_MODES1TO5
 
-char lcd_screen_buffer[LCD_BUFFER_ROWS][LCD_BUFFER_COLS +1];
-
 void LcdCenter(byte row, char* txt)
 {
   int offset;
@@ -114,32 +114,36 @@ void LcdCenter(byte row, char* txt)
 
 void LcdPrintLogLine()
 {
-  uint8_t last_row = Settings.display_rows -1;
+  if (!disp_screen_buffer_cols) {
+    DisplayAllocScreenBuffer();
+  } else {
+    uint8_t last_row = Settings.display_rows -1;
 
-  for (byte i = 0; i < last_row; i++) {
-    strlcpy(lcd_screen_buffer[i], lcd_screen_buffer[i +1], sizeof(lcd_screen_buffer[i]));
-    lcd->setCursor(0, i);            // Col 0, Row i
-    lcd->print(lcd_screen_buffer[i +1]);
+    for (byte i = 0; i < last_row; i++) {
+      strlcpy(disp_screen_buffer[i], disp_screen_buffer[i +1], disp_screen_buffer_cols);
+      lcd->setCursor(0, i);            // Col 0, Row i
+      lcd->print(disp_screen_buffer[i +1]);
+    }
+
+    char *pch = strchr(disp_log_buffer[disp_log_buffer_ptr],'~');  // = 0x7E (~) Replace degrees character (276 octal)
+    if (pch != NULL) {
+      disp_log_buffer[disp_log_buffer_ptr][pch - disp_log_buffer[disp_log_buffer_ptr]] = '\337';  // = 0xDF
+    }
+    strlcpy(disp_screen_buffer[last_row], disp_log_buffer[disp_log_buffer_ptr], disp_screen_buffer_cols);
+
+    // Fill with spaces
+    byte len = disp_screen_buffer_cols - strlen(disp_screen_buffer[last_row]);
+    if (len) {
+      memset(disp_screen_buffer[last_row] + strlen(disp_screen_buffer[last_row]), 0x20, len);
+      disp_screen_buffer[last_row][disp_screen_buffer_cols -1] = 0;
+    }
+
+    snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_DEBUG "[%s]"), disp_screen_buffer[last_row]);
+    AddLog(LOG_LEVEL_DEBUG);
+
+    lcd->setCursor(0, last_row);
+    lcd->print(disp_screen_buffer[last_row]);
   }
-
-  char *pch = strchr(disp_log_buffer[disp_log_buffer_ptr],'~');  // = 0x7E (~) Replace degrees character (276 octal)
-  if (pch != NULL) {
-    disp_log_buffer[disp_log_buffer_ptr][pch - disp_log_buffer[disp_log_buffer_ptr]] = '\337';  // = 0xDF
-  }
-  strlcpy(lcd_screen_buffer[last_row], disp_log_buffer[disp_log_buffer_ptr], sizeof(lcd_screen_buffer[last_row]));
-
-  // Fill with spaces
-  byte len = sizeof(lcd_screen_buffer[last_row]) - strlen(lcd_screen_buffer[last_row]);
-  if (len) {
-    memset(lcd_screen_buffer[last_row] + strlen(lcd_screen_buffer[last_row]), 0x20, len);
-    lcd_screen_buffer[last_row][sizeof(lcd_screen_buffer[last_row])-1] = 0;
-  }
-
-  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_DEBUG "[%s]"), lcd_screen_buffer[last_row]);
-  AddLog(LOG_LEVEL_DEBUG);
-
-  lcd->setCursor(0, last_row);
-  lcd->print(lcd_screen_buffer[last_row]);
 }
 
 void LcdPrintLog()
@@ -229,6 +233,8 @@ boolean Xdsp01(byte function)
 //        case FUNC_DISPLAY_FILL_RECTANGLE:
 //          break;
 //        case FUNC_DISPLAY_DRAW_FRAME:
+//          break;
+//        case FUNC_DISPLAY_TEXT_SIZE:
 //          break;
 //        case FUNC_DISPLAY_FONT_SIZE:
 //          break;

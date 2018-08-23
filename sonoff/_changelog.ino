@@ -1,4 +1,9 @@
-/* 6.1.1.7
+/* 6.1.1.8
+ * Fix MQTT reconnection detection when using TasmotaMqtt library (#3558)
+ * Add build time setting of ButtonTopic and SwitchTopic (#3414)
+ * Add display features and dynamic buffering
+ *
+ * 6.1.1.7
  * Add initial display support for Lcd, Oled, Matrix, Tft and e-paper - Need more docs
  * Fix SDM120 reporting wrong negative values to Domoticz (#3521)
  * Fix iFan02 power on state (#3412, #3530)

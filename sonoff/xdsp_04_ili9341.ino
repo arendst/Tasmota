@@ -248,8 +248,11 @@ boolean Xdsp04(byte function)
 //        case FUNC_DISPLAY_DRAW_FRAME:
 //          oled->display();
 //          break;
-        case FUNC_DISPLAY_FONT_SIZE:
+        case FUNC_DISPLAY_TEXT_SIZE:
           tft->setTextSize(Settings.display_size);
+          break;
+        case FUNC_DISPLAY_FONT_SIZE:
+//          tft->setTextSize(Settings.display_font);
           break;
         case FUNC_DISPLAY_DRAW_STRING:
           Ili9341DrawStringAt(dsp_x, dsp_y, dsp_str, dsp_color, dsp_flag);

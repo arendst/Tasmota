@@ -231,9 +231,7 @@ struct SYSCFG {
   uint8_t       ledstate;                  // 2FB
   uint8_t       param[PARAM8_SIZE];        // 2FC  SetOption32 .. SetOption49
   int16_t       toffset[2];                // 30E
-
-  byte          free_312[1];               // 312
-
+  uint8_t       display_font;              // 312
   char          state_text[4][11];         // 313
   uint8_t       energy_power_delta;        // 33F
   uint16_t      domoticz_update_timer;     // 340
