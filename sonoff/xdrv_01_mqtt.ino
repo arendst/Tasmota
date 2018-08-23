@@ -692,7 +692,10 @@ bool MqttCommand()
     if ((data_len > 0) && (data_len < sizeof(Settings.button_topic))) {
       MakeValidMqtt(0, dataBuf);
       if (!strcmp(dataBuf, mqtt_client)) payload = 1;
-      strlcpy(Settings.button_topic, (!strcmp(dataBuf,"0")) ? "" : (1 == payload) ? mqtt_topic : dataBuf, sizeof(Settings.button_topic));
+      if (!strcmp(dataBuf,"0")) strlcpy(Settings.button_topic, "", sizeof(Settings.button_topic));
+      else if (1 == payload) strlcpy(Settings.button_topic, mqtt_topic, sizeof(Settings.button_topic));
+      else if (2 == payload) strlcpy(Settings.button_topic, MQTT_BUTTON_TOPIC, sizeof(Settings.button_topic));
+      else strlcpy(Settings.button_topic, dataBuf, sizeof(Settings.button_topic));
     }
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, Settings.button_topic);
   }
@@ -700,7 +703,10 @@ bool MqttCommand()
     if ((data_len > 0) && (data_len < sizeof(Settings.switch_topic))) {
       MakeValidMqtt(0, dataBuf);
       if (!strcmp(dataBuf, mqtt_client)) payload = 1;
-      strlcpy(Settings.switch_topic, (!strcmp(dataBuf,"0")) ? "" : (1 == payload) ? mqtt_topic : dataBuf, sizeof(Settings.switch_topic));
+      if (!strcmp(dataBuf,"0")) strlcpy(Settings.switch_topic, "", sizeof(Settings.switch_topic));
+      else if (1 == payload) strlcpy(Settings.switch_topic, mqtt_topic, sizeof(Settings.switch_topic));
+      else if (2 == payload) strlcpy(Settings.switch_topic, MQTT_SWITCH_TOPIC, sizeof(Settings.switch_topic));
+      else strlcpy(Settings.switch_topic, dataBuf, sizeof(Settings.switch_topic));
     }
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, Settings.switch_topic);
   }
