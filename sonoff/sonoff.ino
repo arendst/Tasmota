@@ -1503,7 +1503,7 @@ boolean MqttShowSensor()
 #ifdef USE_TM1638
     if ((pin[GPIO_SWT1 +i] < 99) || (pin[GPIO_SWT1_NP +i] < 99) || ((pin[GPIO_TM16CLK] < 99) && (pin[GPIO_TM16DIO] < 99) && (pin[GPIO_TM16STB] < 99))) {
 #else
-    if (pin[GPIO_SWT1 +i] < 99) || (pin[GPIO_SWT1_NP +i] < 99) {
+    if ((pin[GPIO_SWT1 +i] < 99) || (pin[GPIO_SWT1_NP +i] < 99)) {
 #endif  // USE_TM1638
       boolean swm = ((FOLLOW_INV == Settings.switchmode[i]) || (PUSHBUTTON_INV == Settings.switchmode[i]) || (PUSHBUTTONHOLD_INV == Settings.switchmode[i]));
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"" D_JSON_SWITCH "%d\":\"%s\""), mqtt_data, i +1, GetStateText(swm ^ lastwallswitch[i]));
