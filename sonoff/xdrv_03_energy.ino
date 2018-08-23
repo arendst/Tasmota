@@ -920,17 +920,20 @@ boolean EnergyCommand()
       case 3:
         RtcSettings.energy_kWhtotal = lnum *100;
         Settings.energy_kWhtotal = RtcSettings.energy_kWhtotal;
+        energy_total = (float)(RtcSettings.energy_kWhtotal + energy_kWhtoday) / 100000;
         break;
       }
     }
     char energy_yesterday_chr[10];
-    char stoday_energy[10];
+    char energy_daily_chr[10];
     char energy_total_chr[10];
+
+    dtostrfd(energy_total, Settings.flag2.energy_resolution, energy_total_chr);
+    dtostrfd(energy_daily, Settings.flag2.energy_resolution, energy_daily_chr);
     dtostrfd((float)Settings.energy_kWhyesterday / 100000, Settings.flag2.energy_resolution, energy_yesterday_chr);
-    dtostrfd((float)RtcSettings.energy_kWhtoday / 100000, Settings.flag2.energy_resolution, stoday_energy);
-    dtostrfd((float)(RtcSettings.energy_kWhtotal + energy_kWhtoday) / 100000, Settings.flag2.energy_resolution, energy_total_chr);
+
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"%s\":{\"" D_JSON_TOTAL "\":%s,\"" D_JSON_YESTERDAY "\":%s,\"" D_JSON_TODAY "\":%s}}"),
-      command, energy_total_chr, energy_yesterday_chr, stoday_energy);
+      command, energy_total_chr, energy_yesterday_chr, energy_daily_chr);
     status_flag = 1;
   }
 
