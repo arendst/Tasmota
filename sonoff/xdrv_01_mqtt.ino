@@ -109,7 +109,7 @@ TasmotaMqtt MqttClient;
 
 bool MqttIsConnected()
 {
-  return mqtt_connected;
+  return MqttClient.Connected();
 }
 
 void MqttDisconnect()
