@@ -195,7 +195,7 @@ struct SYSCFG {
   char          hostname[33];              // 165
   char          syslog_host[33];           // 186
 
-  byte          free_1A7[1];               // 1A7
+  byte          free1A7[1];                // 1A7
 
   uint16_t      syslog_port;               // 1A8
   byte          syslog_level;              // 1AA
@@ -231,9 +231,7 @@ struct SYSCFG {
   uint8_t       ledstate;                  // 2FB
   uint8_t       param[PARAM8_SIZE];        // 2FC  SetOption32 .. SetOption49
   int16_t       toffset[2];                // 30E
-
-  byte          free_312[1];               // 312
-
+  uint8_t       display_font;              // 312
   char          state_text[4][11];         // 313
   uint8_t       energy_power_delta;        // 33F
   uint16_t      domoticz_update_timer;     // 340
@@ -300,7 +298,7 @@ struct SYSCFG {
   byte          ina219_mode;               // 531
   uint16_t      pulse_timer[MAX_PULSETIMERS]; // 532
 
-  byte          free_542[2];               // 542
+  byte          free542[2];                // 542
 
   uint32_t      ip_address[4];             // 544
   unsigned long energy_kWhtotal;           // 554
@@ -326,7 +324,7 @@ struct SYSCFG {
 
   byte          free_717[183];             // 717
 
-  char          mems[RULES_MAX_MEMS][10];  // 7CE
+  char          mems[MAX_RULE_MEMS][10];  // 7CE
                                            // 800 Full - no more free locations
 
   char          rules[MAX_RULE_SETS][MAX_RULE_SIZE]; // 800 uses 512 bytes in v5.12.0m, 3 x 512 bytes in v5.14.0b

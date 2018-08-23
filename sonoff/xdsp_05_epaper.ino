@@ -126,7 +126,7 @@ void EpdClear()
   paint.Clear(UNCOLORED);
 }
 
-void EpdSetFontorSize(uint8_t font)
+void EpdSetFont(uint8_t font)
 {
   if (1 == font) {
     selected_font = &Font12;
@@ -230,8 +230,11 @@ boolean Xdsp05(byte function)
           epd.SetFrameMemory(paint.GetImage(), 0, 0, paint.GetWidth(), paint.GetHeight());
           epd.DisplayFrame();
           break;
+        case FUNC_DISPLAY_TEXT_SIZE:
+//          EpdSetFontorSize(Settings.display_size);
+          break;
         case FUNC_DISPLAY_FONT_SIZE:
-          EpdSetFontorSize(Settings.display_size);
+          EpdSetFont(Settings.display_font);
           break;
         case FUNC_DISPLAY_DRAW_STRING:
           EpdDrawStringAt(dsp_x, dsp_y, dsp_str, dsp_color, dsp_flag);

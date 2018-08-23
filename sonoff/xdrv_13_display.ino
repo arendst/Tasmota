@@ -21,10 +21,9 @@
 #ifdef USE_DISPLAY
 
 #define DISPLAY_MAX_DRIVERS    16           // Max number of display drivers/models supported by xdsp_interface.ino
-#define DISPLAY_MAX_COLS       40           // Max number of columns to display
-#define DISPLAY_MAX_ROWS       16           // Max number of lines to display for LCD and Oled using local screen buffer
+#define DISPLAY_MAX_COLS       40           // Max number of columns allowed with command DisplayCols
+#define DISPLAY_MAX_ROWS       32           // Max number of lines allowed with command DisplayRows
 
-#define DISPLAY_LOG_COLS       DISPLAY_MAX_COLS +1  // Number of characters in display log buffer line +1
 #define DISPLAY_LOG_ROWS       32           // Number of lines in display log buffer
 
 #define D_CMND_DISPLAY "Display"
@@ -36,6 +35,7 @@
 #define D_CMND_DISP_REFRESH "Refresh"
 #define D_CMND_DISP_ROWS "Rows"
 #define D_CMND_DISP_SIZE "Size"
+#define D_CMND_DISP_FONT "Font"
 #define D_CMND_DISP_ROTATE "Rotate"
 #define D_CMND_DISP_TEXT "Text"
 
@@ -45,15 +45,15 @@ enum XdspFunctions { FUNC_DISPLAY_INIT_DRIVER, FUNC_DISPLAY_INIT, FUNC_DISPLAY_E
                      FUNC_DISPLAY_DRAW_HLINE, FUNC_DISPLAY_DRAW_VLINE, FUNC_DISPLAY_DRAW_LINE,
                      FUNC_DISPLAY_DRAW_CIRCLE, FUNC_DISPLAY_FILL_CIRCLE,
                      FUNC_DISPLAY_DRAW_RECTANGLE, FUNC_DISPLAY_FILL_RECTANGLE,
-                     FUNC_DISPLAY_FONT_SIZE, FUNC_DISPLAY_ROTATION, FUNC_DISPLAY_DRAW_STRING, FUNC_DISPLAY_ONOFF };
+                     FUNC_DISPLAY_TEXT_SIZE, FUNC_DISPLAY_FONT_SIZE, FUNC_DISPLAY_ROTATION, FUNC_DISPLAY_DRAW_STRING, FUNC_DISPLAY_ONOFF };
 
 enum DisplayInitModes { DISPLAY_INIT_MODE, DISPLAY_INIT_PARTIAL, DISPLAY_INIT_FULL };
 
 enum DisplayCommands { CMND_DISP_MODEL, CMND_DISP_MODE, CMND_DISP_REFRESH, CMND_DISP_DIMMER, CMND_DISP_COLS, CMND_DISP_ROWS,
-  CMND_DISP_SIZE, CMND_DISP_ROTATE, CMND_DISP_TEXT, CMND_DISP_ADDRESS };
+  CMND_DISP_SIZE, CMND_DISP_FONT, CMND_DISP_ROTATE, CMND_DISP_TEXT, CMND_DISP_ADDRESS };
 const char kDisplayCommands[] PROGMEM =
   D_CMND_DISP_MODEL "|" D_CMND_DISP_MODE "|" D_CMND_DISP_REFRESH "|" D_CMND_DISP_DIMMER "|" D_CMND_DISP_COLS "|" D_CMND_DISP_ROWS "|"
-  D_CMND_DISP_SIZE "|" D_CMND_DISP_ROTATE "|" D_CMND_DISP_TEXT "|" D_CMND_DISP_ADDRESS ;
+  D_CMND_DISP_SIZE "|" D_CMND_DISP_FONT "|" D_CMND_DISP_ROTATE "|" D_CMND_DISP_TEXT "|" D_CMND_DISP_ADDRESS ;
 
 const char S_JSON_DISPLAY_COMMAND_VALUE[] PROGMEM =        "{\"" D_CMND_DISPLAY "%s\":\"%s\"}";
 const char S_JSON_DISPLAY_COMMAND_NVALUE[] PROGMEM =       "{\"" D_CMND_DISPLAY "%s\":%d}";
@@ -65,6 +65,7 @@ uint8_t disp_refresh = 1;
 
 int16_t disp_xpos = 0;
 int16_t disp_ypos = 0;
+uint8_t disp_autodraw = 1;
 
 uint8_t dsp_init;
 uint8_t dsp_font;
@@ -80,12 +81,20 @@ int16_t dsp_len;
 char *dsp_str;
 
 #ifdef USE_DISPLAY_MODES1TO5
-char disp_log_buffer[DISPLAY_LOG_ROWS][DISPLAY_LOG_COLS];
+
 char disp_temp[2];    // C or F
+uint8_t disp_subscribed = 0;
+
+char **disp_log_buffer;
+uint8_t disp_log_buffer_cols = 0;
 uint8_t disp_log_buffer_idx = 0;
 uint8_t disp_log_buffer_ptr = 0;
 bool disp_log_buffer_active = false;
-uint8_t disp_subscribed = 0;
+
+char **disp_screen_buffer;
+uint8_t disp_screen_buffer_cols = 0;
+uint8_t disp_screen_buffer_rows = 0;
+
 #endif  // USE_DISPLAY_MODES1TO5
 
 /*********************************************************************************************/
@@ -172,9 +181,15 @@ void DisplayDrawFrame()
   XdspCall(FUNC_DISPLAY_DRAW_FRAME);
 }
 
-void DisplaySetFontorSize(uint8_t font)
+void DisplaySetSize(uint8_t size)
 {
-  Settings.display_size = font &3;
+  Settings.display_size = size &3;
+  XdspCall(FUNC_DISPLAY_TEXT_SIZE);
+}
+
+void DisplaySetFont(uint8_t font)
+{
+  Settings.display_font = font &3;
   XdspCall(FUNC_DISPLAY_FONT_SIZE);
 }
 
@@ -199,6 +214,8 @@ void DisplayOnOff(uint8_t on)
   dsp_on = on;
   XdspCall(FUNC_DISPLAY_ONOFF);
 }
+
+/*-------------------------------------------------------------------------------------------*/
 
 // get asci number until delimiter and return asci number lenght and value
 uint8_t atoiv(char *cp, int16_t *res)
@@ -377,6 +394,7 @@ void DisplayText()
             cp += var;
             DisplayDrawLine(disp_xpos, disp_ypos, temp, temp1, color);
             disp_xpos += temp;
+            disp_ypos += temp1;
             break;
           case 'k':
             // circle
@@ -419,10 +437,19 @@ void DisplayText()
             // force draw grafics buffer
             DisplayDrawFrame();
             break;
+          case 'D':
+            // set auto draw mode
+            disp_autodraw = *cp&1;
+            cp += 1;
+            break;
           case 's':
+            // size sx
+            DisplaySetSize(*cp&3);
+            cp += 1;
+            break;
           case 'f':
-            // size or font sx
-            DisplaySetFontorSize(*cp&3);
+            // font sx
+            DisplaySetFont(*cp&3);
             cp += 1;
             break;
           case 'a':
@@ -452,12 +479,110 @@ void DisplayText()
     }
   }
   // draw buffer
-  DisplayDrawFrame();
+  if (disp_autodraw) { DisplayDrawFrame(); }
 }
 
 /*********************************************************************************************/
 
 #ifdef USE_DISPLAY_MODES1TO5
+
+void DisplayClearScreenBuffer()
+{
+  if (disp_screen_buffer_cols) {
+    for (byte i = 0; i < disp_screen_buffer_rows; i++) {
+      memset(disp_screen_buffer[i], 0, disp_screen_buffer_cols);
+    }
+  }
+}
+
+void DisplayFreeScreenBuffer()
+{
+  if (disp_screen_buffer != NULL) {
+    for (byte i = 0; i < disp_screen_buffer_rows; i++) {
+      if (disp_screen_buffer[i] != NULL) { free(disp_screen_buffer[i]); }
+    }
+    free(disp_screen_buffer);
+    disp_screen_buffer_cols = 0;
+    disp_screen_buffer_rows = 0;
+  }
+}
+
+void DisplayAllocScreenBuffer()
+{
+  if (!disp_screen_buffer_cols) {
+    disp_screen_buffer_rows = Settings.display_rows;
+    disp_screen_buffer = (char**)malloc(sizeof(*disp_screen_buffer) * disp_screen_buffer_rows);
+    if (disp_screen_buffer != NULL) {
+      for (byte i = 0; i < disp_screen_buffer_rows; i++) {
+        disp_screen_buffer[i] = (char*)malloc(sizeof(*disp_screen_buffer[i]) * (Settings.display_cols[0] +1));
+        if (disp_screen_buffer[i] == NULL) {
+          DisplayFreeScreenBuffer();
+          break;
+        }
+      }
+    }
+    if (disp_screen_buffer != NULL) {
+      disp_screen_buffer_cols = Settings.display_cols[0] +1;
+      DisplayClearScreenBuffer();
+    }
+  }
+}
+
+void DisplayReAllocScreenBuffer()
+{
+  DisplayFreeScreenBuffer();
+  DisplayAllocScreenBuffer();
+}
+
+/*-------------------------------------------------------------------------------------------*/
+
+void DisplayClearLogBuffer()
+{
+  if (disp_log_buffer_cols) {
+    for (byte i = 0; i < DISPLAY_LOG_ROWS; i++) {
+      memset(disp_log_buffer[i], 0, disp_log_buffer_cols);
+    }
+  }
+}
+
+void DisplayFreeLogBuffer()
+{
+  if (disp_log_buffer != NULL) {
+    for (byte i = 0; i < DISPLAY_LOG_ROWS; i++) {
+      if (disp_log_buffer[i] != NULL) { free(disp_log_buffer[i]); }
+    }
+    free(disp_log_buffer);
+    disp_log_buffer_cols = 0;
+  }
+}
+
+void DisplayAllocLogBuffer()
+{
+  if (!disp_log_buffer_cols) {
+    disp_log_buffer = (char**)malloc(sizeof(*disp_log_buffer) * DISPLAY_LOG_ROWS);
+    if (disp_log_buffer != NULL) {
+      for (byte i = 0; i < DISPLAY_LOG_ROWS; i++) {
+        disp_log_buffer[i] = (char*)malloc(sizeof(*disp_log_buffer[i]) * (Settings.display_cols[0] +1));
+        if (disp_log_buffer[i] == NULL) {
+          DisplayFreeLogBuffer();
+          break;
+        }
+      }
+    }
+    if (disp_log_buffer != NULL) {
+      disp_log_buffer_cols = Settings.display_cols[0] +1;
+      DisplayClearLogBuffer();
+    }
+  }
+}
+
+void DisplayReAllocLogBuffer()
+{
+  DisplayFreeLogBuffer();
+  DisplayAllocLogBuffer();
+}
+
+/*-------------------------------------------------------------------------------------------*/
 
 void DisplayLogBufferIdxInc()
 {
@@ -492,15 +617,21 @@ void DisplayPrintLog()
 
 void DisplayLogBufferInit()
 {
-  disp_log_buffer_idx = 0;
-  disp_log_buffer_ptr = 0;
-  disp_log_buffer_active = false;
-  disp_refresh = Settings.display_refresh;
+  if (Settings.display_mode) {
+    disp_log_buffer_idx = 0;
+    disp_log_buffer_ptr = 0;
+    disp_log_buffer_active = false;
+    disp_refresh = Settings.display_refresh;
 
-  snprintf_P(disp_log_buffer[disp_log_buffer_idx], sizeof(disp_log_buffer[disp_log_buffer_idx]), PSTR(D_VERSION " %s"), my_version);
-  DisplayLogBufferIdxInc();
-  snprintf_P(disp_log_buffer[disp_log_buffer_idx], sizeof(disp_log_buffer[disp_log_buffer_idx]), PSTR("Display mode %d"), Settings.display_mode);
-  DisplayLogBufferIdxInc();
+    snprintf_P(disp_temp, sizeof(disp_temp), PSTR("%c"), TempUnit());
+
+//    DisplayReAllocLogBuffer();
+
+    snprintf_P(disp_log_buffer[disp_log_buffer_idx], disp_log_buffer_cols, PSTR(D_VERSION " %s"), my_version);
+    DisplayLogBufferIdxInc();
+    snprintf_P(disp_log_buffer[disp_log_buffer_idx], disp_log_buffer_cols, PSTR("Display mode %d"), Settings.display_mode);
+    DisplayLogBufferIdxInc();
+  }
 }
 
 /*********************************************************************************************\
@@ -545,7 +676,6 @@ void DisplayJsonValue(const char *topic, const char* device, const char* mkey, c
 
   memset(spaces, 0x20, sizeof(spaces));
   spaces[sizeof(spaces) -1] = '\0';
-//  snprintf_P(source, sizeof(source), PSTR("%s/%s%s"), topic, mkey, (DISP_MATRIX == Settings.display_model) ? "" : spaces);  // pow1/Voltage
   snprintf_P(source, sizeof(source), PSTR("%s/%s%s"), topic, mkey, spaces);  // pow1/Voltage
 
   int quantity_code = GetCommandCode(quantity, sizeof(quantity), mkey, kSensorQuantity);
@@ -588,7 +718,7 @@ void DisplayJsonValue(const char *topic, const char* device, const char* mkey, c
   else if (JSON_CO2 == quantity_code) {
     snprintf_P(svalue, sizeof(svalue), PSTR("%s" D_UNIT_PARTS_PER_MILLION), value);
   }
-  snprintf_P(disp_log_buffer[disp_log_buffer_idx], sizeof(disp_log_buffer[disp_log_buffer_idx]), PSTR("%s %s"), source, svalue);
+  snprintf_P(disp_log_buffer[disp_log_buffer_idx], disp_log_buffer_cols, PSTR("%s %s"), source, svalue);
 
 //  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_DEBUG "mkey [%s], source [%s], value [%s], quantity_code %d, log_buffer [%s]"), mkey, source, value, quantity_code, disp_log_buffer[disp_log_buffer_idx]);
 //  AddLog(LOG_LEVEL_DEBUG);
@@ -726,7 +856,7 @@ void DisplayInitDriver()
 #ifndef USE_DISPLAY_MODES1TO5
     Settings.display_mode = 0;
 #else
-    snprintf_P(disp_temp, sizeof(disp_temp), PSTR("%c"), TempUnit());
+    DisplayAllocLogBuffer();
     DisplayLogBufferInit();
 #endif  // USE_DISPLAY_MODES1TO5
   }
@@ -787,8 +917,8 @@ boolean DisplayCommand()
             DisplayClear();
           }
           if (!last_display_mode && Settings.display_mode) {  // Switch to non mode 0
-            DisplayInit(DISPLAY_INIT_MODE);
             DisplayLogBufferInit();
+            DisplayInit(DISPLAY_INIT_MODE);
           }
         }
       }
@@ -813,10 +943,32 @@ boolean DisplayCommand()
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_DISPLAY_COMMAND_NVALUE, command, Settings.display_size);
     }
+    else if (CMND_DISP_FONT == command_code) {
+      if ((XdrvMailbox.payload > 0) && (XdrvMailbox.payload <= 4)) {
+        Settings.display_font = XdrvMailbox.payload;
+      }
+      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_DISPLAY_COMMAND_NVALUE, command, Settings.display_font);
+    }
     else if (CMND_DISP_ROTATE == command_code) {
       if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < 4)) {
-        Settings.display_rotate = XdrvMailbox.payload;
-        DisplayInit(DISPLAY_INIT_MODE);
+        if (Settings.display_rotate != XdrvMailbox.payload) {
+/*
+          // Needs font info regarding height and width
+          if ((Settings.display_rotate &1) != (XdrvMailbox.payload &1)) {
+            uint8_t temp_rows = Settings.display_rows;
+            Settings.display_rows = Settings.display_cols[0];
+            Settings.display_cols[0] = temp_rows;
+#ifdef USE_DISPLAY_MODES1TO5
+            DisplayReAllocScreenBuffer();
+#endif  // USE_DISPLAY_MODES1TO5
+          }
+*/
+          Settings.display_rotate = XdrvMailbox.payload;
+          DisplayInit(DISPLAY_INIT_MODE);
+#ifdef USE_DISPLAY_MODES1TO5
+          DisplayLogBufferInit();
+#endif  // USE_DISPLAY_MODES1TO5
+        }
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_DISPLAY_COMMAND_NVALUE, command, Settings.display_rotate);
     }
@@ -829,7 +981,7 @@ boolean DisplayCommand()
         if (!Settings.display_mode) {
           DisplayText();
         } else {
-          strlcpy(disp_log_buffer[disp_log_buffer_idx], XdrvMailbox.data, sizeof(disp_log_buffer[disp_log_buffer_idx]));
+          strlcpy(disp_log_buffer[disp_log_buffer_idx], XdrvMailbox.data, disp_log_buffer_cols);
           DisplayLogBufferIdxInc();
         }
 #endif  // USE_DISPLAY_MODES1TO5
@@ -854,12 +1006,21 @@ boolean DisplayCommand()
     }
     else if ((CMND_DISP_COLS == command_code) && (XdrvMailbox.index > 0) && (XdrvMailbox.index <= 2)) {
       if ((XdrvMailbox.payload > 0) && (XdrvMailbox.payload <= DISPLAY_MAX_COLS)) {
+#ifdef USE_DISPLAY_MODES1TO5
+        if ((1 == XdrvMailbox.index) && (Settings.display_cols[0] != XdrvMailbox.payload)) {
+          DisplayLogBufferInit();
+          DisplayReAllocScreenBuffer();
+        }
+#endif  // USE_DISPLAY_MODES1TO5
         Settings.display_cols[XdrvMailbox.index -1] = XdrvMailbox.payload;
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_DISPLAY_COMMAND_INDEX_NVALUE, command, XdrvMailbox.index, Settings.display_cols[XdrvMailbox.index -1]);
     }
     else if (CMND_DISP_ROWS == command_code) {
       if ((XdrvMailbox.payload > 0) && (XdrvMailbox.payload <= DISPLAY_MAX_ROWS)) {
+#ifdef USE_DISPLAY_MODES1TO5
+        if (Settings.display_rows != XdrvMailbox.payload) { DisplayReAllocScreenBuffer(); }
+#endif  // USE_DISPLAY_MODES1TO5
         Settings.display_rows = XdrvMailbox.payload;
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_DISPLAY_COMMAND_NVALUE, command, Settings.display_rows);

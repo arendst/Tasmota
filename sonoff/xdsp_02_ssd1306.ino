@@ -26,11 +26,11 @@
 #define OLED_ADDRESS1          0x3C         // Oled 128x32 I2C address
 #define OLED_ADDRESS2          0x3D         // Oled 128x64 I2C address
 
-#define OLED_BUFFER_COLS       40           // Max number of columns in display shadow buffer
-#define OLED_BUFFER_ROWS       16           // Max number of lines in display shadow buffer
-
 #define OLED_FONT_WIDTH        6
 #define OLED_FONT_HEIGTH       8
+
+//#define OLED_BUFFER_COLS       21 or 11   // Max number of columns in display shadow buffer
+//#define OLED_BUFFER_ROWS        8 or 16   // Max number of lines in display shadow buffer
 
 #include <Wire.h>
 #include <Adafruit_GFX.h>
@@ -62,6 +62,9 @@ void Ssd1306Init(uint8_t mode)
   switch(mode) {
     case DISPLAY_INIT_MODE:
       Ssd1306InitMode();
+#ifdef USE_DISPLAY_MODES1TO5
+      DisplayClearScreenBuffer();
+#endif  // USE_DISPLAY_MODES1TO5
       break;
     case DISPLAY_INIT_PARTIAL:
     case DISPLAY_INIT_FULL:
@@ -85,6 +88,10 @@ void Ssd1306InitDriver()
   if (XDSP_02 == Settings.display_model) {
     oled = new Adafruit_SSD1306();
     oled->begin(SSD1306_SWITCHCAPVCC, Settings.display_address[0]);
+
+#ifdef USE_DISPLAY_MODES1TO5
+    DisplayAllocScreenBuffer();
+#endif  // USE_DISPLAY_MODES1TO5
 
     Ssd1306InitMode();
   }
@@ -126,38 +133,41 @@ void Ssd1306OnOff()
 
 #ifdef USE_DISPLAY_MODES1TO5
 
-char oled_screen_buffer[OLED_BUFFER_ROWS][OLED_BUFFER_COLS +1];
-
 void Ssd1306PrintLogLine()
 {
-  uint8_t last_row = Settings.display_rows -1;
+  if (!disp_screen_buffer_cols) {
+    DisplayAllocScreenBuffer();
+  } else {
+    uint8_t last_row = Settings.display_rows -1;
 
-  oled->clearDisplay();
-  oled->setTextSize(Settings.display_size);
-  oled->setCursor(0,0);
-  for (byte i = 0; i < last_row; i++) {
-    strlcpy(oled_screen_buffer[i], oled_screen_buffer[i +1], sizeof(oled_screen_buffer[i]));
-    oled->println(oled_screen_buffer[i]);
+    oled->clearDisplay();
+    oled->setTextSize(Settings.display_size);
+    oled->setCursor(0,0);
+    for (byte i = 0; i < last_row; i++) {
+      strlcpy(disp_screen_buffer[i], disp_screen_buffer[i +1], disp_screen_buffer_cols);
+      oled->println(disp_screen_buffer[i]);
+    }
+
+    char *pch = strchr(disp_log_buffer[disp_log_buffer_ptr],'~');  // = 0x7E (~) Replace degrees character (276 octal)
+    if (pch != NULL) {
+      disp_log_buffer[disp_log_buffer_ptr][pch - disp_log_buffer[disp_log_buffer_ptr]] = '\370';  // = 0xF8
+    }
+    strlcpy(disp_screen_buffer[last_row], disp_log_buffer[disp_log_buffer_ptr], disp_screen_buffer_cols);
+
+    // Fill with spaces
+    byte len = disp_screen_buffer_cols - strlen(disp_screen_buffer[last_row]);
+    if (len) {
+      memset(disp_screen_buffer[last_row] + strlen(disp_screen_buffer[last_row]), 0x20, len);
+      disp_screen_buffer[last_row][disp_screen_buffer_cols -1] = 0;
+    }
+
+    snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_DEBUG "[%s]"), disp_screen_buffer[last_row]);
+    AddLog(LOG_LEVEL_DEBUG);
+
+
+    oled->println(disp_screen_buffer[last_row]);
+    oled->display();
   }
-
-  char *pch = strchr(disp_log_buffer[disp_log_buffer_ptr],'~');  // = 0x7E (~) Replace degrees character (276 octal)
-  if (pch != NULL) {
-    disp_log_buffer[disp_log_buffer_ptr][pch - disp_log_buffer[disp_log_buffer_ptr]] = '\370';  // = 0xF8
-  }
-  strlcpy(oled_screen_buffer[last_row], disp_log_buffer[disp_log_buffer_ptr], sizeof(oled_screen_buffer[last_row]));
-
-  // Fill with spaces
-  byte len = sizeof(oled_screen_buffer[last_row]) - strlen(oled_screen_buffer[last_row]);
-  if (len) {
-    memset(oled_screen_buffer[last_row] + strlen(oled_screen_buffer[last_row]), 0x20, len);
-    oled_screen_buffer[last_row][sizeof(oled_screen_buffer[last_row])-1] = 0;
-  }
-
-  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_DEBUG "[%s]"), oled_screen_buffer[last_row]);
-  AddLog(LOG_LEVEL_DEBUG);
-
-  oled->println(oled_screen_buffer[last_row]);
-  oled->display();
 }
 
 void Ssd1306PrintLog()
@@ -259,8 +269,11 @@ boolean Xdsp02(byte function)
         case FUNC_DISPLAY_DRAW_FRAME:
           oled->display();
           break;
-        case FUNC_DISPLAY_FONT_SIZE:
+        case FUNC_DISPLAY_TEXT_SIZE:
           oled->setTextSize(Settings.display_size);
+          break;
+        case FUNC_DISPLAY_FONT_SIZE:
+//          oled->setTextSize(Settings.display_font);
           break;
         case FUNC_DISPLAY_DRAW_STRING:
           Ssd1306DrawStringAt(dsp_x, dsp_y, dsp_str, dsp_color, dsp_flag);

@@ -1,4 +1,15 @@
-/* 6.1.1.7
+/* 6.1.1.9
+ * Allow user override of define MAX_RULE_TIMERS (#3561)
+ * Allow user override of define MAX_RULE_VARS
+ * Add GPIO options ButtonXn, SwitchXn and CounterXn to select INPUT mode instead of INPUT_PULLUP (#2525)
+ * Fix OtaMagic when file path contains a dash (-) (#3563)
+ *
+ * 6.1.1.8
+ * Fix MQTT reconnection detection when using TasmotaMqtt library (#3558)
+ * Add build time setting of ButtonTopic and SwitchTopic (#3414)
+ * Add display features and dynamic buffering
+ *
+ * 6.1.1.7
  * Add initial display support for Lcd, Oled, Matrix, Tft and e-paper - Need more docs
  * Fix SDM120 reporting wrong negative values to Domoticz (#3521)
  * Fix iFan02 power on state (#3412, #3530)

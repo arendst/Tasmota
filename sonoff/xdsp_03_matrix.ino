@@ -23,6 +23,8 @@
 
 #define XDSP_03                    3
 
+#define MTX_MAX_SCREEN_BUFFER      80
+
 #include <Wire.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_LEDBackpack.h>  // 8x8 Matrix
@@ -34,7 +36,7 @@ uint8_t mtx_counter = 0;
 int16_t mtx_x = 0;
 int16_t mtx_y = 0;
 
-char mtx_buffer[80];
+char mtx_buffer[MTX_MAX_SCREEN_BUFFER];
 uint8_t mtx_mode = 0;
 uint8_t mtx_loop = 0;
 
@@ -250,7 +252,21 @@ void MatrixBufferScroll(uint8_t direction)
     if (direction) {
       MatrixScrollUp(disp_log_buffer[disp_log_buffer_ptr], 0);
     } else {
-      MatrixScrollLeft(disp_log_buffer[disp_log_buffer_ptr], 0);
+      // Remove extra spaces
+      uint8_t space = 0;
+      uint8_t max_cols = (disp_log_buffer_cols < MTX_MAX_SCREEN_BUFFER) ? disp_log_buffer_cols : MTX_MAX_SCREEN_BUFFER;
+      mtx_buffer[0] = '\0';
+      for (byte i = 0; i < max_cols; i++) {
+        if (disp_log_buffer[disp_log_buffer_ptr][i] == ' ') {
+          space++;
+        } else {
+          space = 0;
+        }
+        if (space < 2) {
+          strncat(mtx_buffer, (const char*)disp_log_buffer[disp_log_buffer_ptr] +i, 1);
+        }
+      }
+      MatrixScrollLeft(mtx_buffer, 0);
     }
     if (!mtx_state) {
       DisplayLogBufferPtrInc();
