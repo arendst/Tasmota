@@ -254,7 +254,7 @@ OPTION Value | Device Parameter
 * Added entries to sensor files
 * Added entries to language files
 
-Up to now, enabling KNX uses +9.4 KB of code and +3.7 KB of memory. If also, it is enabled the KNX Web Menu, it adds +8.3 KB of code and +144 Bytes of memory.
+Up to now, enabling KNX uses +9.4 KB of code and +3.7 KB of memory for Tasmota. If it is enabled also the KNX Web Menu, it adds +8.3 KB more of code and +144 Bytes more of memory.
 
 There is **NO CONFLICT** with MQTT, Home Assistant, Web, etc. Tests show fast response of all features running at same time.
 
