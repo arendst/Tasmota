@@ -57,6 +57,10 @@ uint8_t mcp230xx_address;
 uint8_t mcp230xx_addresses[] = { MCP230xx_ADDRESS1, MCP230xx_ADDRESS2, MCP230xx_ADDRESS3, MCP230xx_ADDRESS4, MCP230xx_ADDRESS5, MCP230xx_ADDRESS6, MCP230xx_ADDRESS7, MCP230xx_ADDRESS8 };
 uint8_t mcp230xx_pincount = 0;
 uint8_t mcp230xx_int_en = 0;
+uint8_t mcp230xx_int_prio_counter = 0;
+uint8_t mcp230xx_int_report_defer_counter[16] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+uint16_t mcp230xx_int_count_sec[16] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+uint16_t mcp230xx_int_count_min[16] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 
 unsigned long int_millis[16]; // To keep track of millis() since last interrupt
 
@@ -370,21 +374,137 @@ void MCP230xx_Reset(uint8_t pinmode) {
   snprintf_P(mqtt_data, sizeof(mqtt_data), MCP230XX_SENSOR_RESPONSE,99,pinmode,pulluptxt,intmodetxt,"");
 }
 
+String MCP230xx_GetParam(String instr,uint8_t param_index) {
+  String param = instr;
+  String outstring = "";
+  uint8_t index = 0;
+  param.trim(); // remove leading and trailing whitespace
+  param.replace("=",","); // replace = with ,
+  param.replace(" ",","); // replace spaces with ,
+  for (uint8_t ca=0;ca<param.length();ca++) {
+    if (param[ca] == ',') {
+      index++;
+    } else {
+      if (index == param_index) {
+        outstring=outstring+param[ca];
+      }
+    }
+  }
+  return outstring;
+}
+
 bool MCP230xx_Command(void) {
   boolean serviced = true;
   uint8_t _a, _b = 0;
   uint8_t pin, pinmode, pullup = 0;
   String data = XdrvMailbox.data;
   data.toUpperCase();
-  if (data == "RESET") { MCP230xx_Reset(1); return serviced; }
-  if (data == "RESET1") { MCP230xx_Reset(1); return serviced; }
-  if (data == "RESET2") { MCP230xx_Reset(2); return serviced; }
-  if (data == "RESET3") { MCP230xx_Reset(3); return serviced; }
-  if (data == "RESET4") { MCP230xx_Reset(4); return serviced; }
+  
+  if (data.substring(0,5) == "RESET") {
+    uint8_t rsmode = data.substring(5).toInt();
+    if (rsmode == 0) rsmode=1;
+    switch (rsmode) {
+      case 1 ... 4:
+        MCP230xx_Reset(rsmode);
+        return serviced;
+        break;
 #ifdef USE_MCP230xx_OUTPUT
-  if (data == "RESET5") { MCP230xx_Reset(5); return serviced; }
-  if (data == "RESET6") { MCP230xx_Reset(6); return serviced; }
+      case 5 ... 6:
+        MCP230xx_Reset(rsmode);
+        return serviced;
+        break;
 #endif // USE_MCP230xx_OUTPUT
+      default:
+        break;
+    }
+  }
+
+  String _cmnd = MCP230xx_GetParam(data,0);
+  String _param1 = MCP230xx_GetParam(data,1);
+  String _param2 = MCP230xx_GetParam(data,2);
+
+  if (_cmnd == "INTPRI") {
+    if (_param1 == "" || _param1 == "?") {
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"MCP230CFG\": {\"INTPRI\":%i}}"),Settings.mcp230xx_int_prio);
+      return serviced;
+    } else {
+      uint8_t intpri = _param1.toInt();
+      if (intpri >= 0 && intpri <= 20) {
+        Settings.mcp230xx_int_prio=intpri;
+        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"MCP230CFG\": {\"INTPRI_SET\":%i}}"),Settings.mcp230xx_int_prio);
+        return serviced;
+      }
+    }
+  }
+
+  if (_cmnd == "INTDEF") {
+    if (_param1.length() > 0) {
+      if (_param2.length() > 0) {
+        uint8_t pin = _param1.toInt();
+        uint8_t def = _param2.toInt();
+        if (pin < mcp230xx_pincount) {
+          if (_param2 == "?") {
+            snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"MCP230CFG\": {\"INTDEF\": {\"D%i\":%i}}}"),pin,Settings.mcp230xx_config[pin].int_report_defer);
+            return serviced;
+          } else {
+            if (def >= 0 && def <= 15) {
+              Settings.mcp230xx_config[pin].int_report_defer=def;
+              snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"MCP230CFG\": {\"INTDEF_SET\": {\"D%i\":%i}}}"),pin,def);
+              return serviced;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  if (_cmnd == "INTSEC") {
+    if (_param1.length() > 0) {
+      if (_param2.length() > 0) {
+        uint8_t pin = _param1.toInt();
+        uint8_t sec = _param2.toInt();
+        if (pin < mcp230xx_pincount) {
+          if (_param2 == "?") {
+            snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"MCP230CFG\": {\"INTSEC\": {\"D%i\":%i}}}"),pin,Settings.mcp230xx_config[pin].int_count_sec);
+            return serviced;
+          } else {
+            if (sec >= 0 && sec <= 1) {
+              Settings.mcp230xx_config[pin].int_count_sec=sec;
+              snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"MCP230CFG\": {\"INTSEC_SET\": {\"D%i\":%i}}}"),pin,sec);
+              return serviced;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  if (_cmnd == "INTMIN") {
+    if (_param1.length() > 0) {
+      if (_param2.length() > 0) {
+        uint8_t pin = _param1.toInt();
+        uint8_t min = _param2.toInt();
+        if (pin < mcp230xx_pincount) {
+          if (_param2 == "?") {
+            snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"MCP230CFG\": {\"INTMIN\": {\"D%i\":%i}}}"),pin,Settings.mcp230xx_config[pin].int_count_min);
+            return serviced;
+          } else {
+            if (min >= 0 && min <= 1) {
+              Settings.mcp230xx_config[pin].int_count_min=min;
+              snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"MCP230CFG\": {\"INTMIN_SET\": {\"D%i\":%i}}}"),pin,min);
+              return serviced;
+            }
+          }
+        }
+      }
+    }
+  }
+
+
+
+
+//  if (MCP230xx_GetParam(data,0) 
+  
 
   _a = data.indexOf(",");
   pin = data.substring(0, _a).toInt();
@@ -550,7 +670,11 @@ boolean Xsns29(byte function)
         break;
       case FUNC_EVERY_50_MSECOND:
         if (mcp230xx_int_en) {          // Only check for interrupts if its enabled on one of the pins
-          MCP230xx_CheckForInterrupt();
+          mcp230xx_int_prio_counter++;
+          if (mcp230xx_int_prio_counter >= Settings.mcp230xx_int_prio) {
+            MCP230xx_CheckForInterrupt();
+            mcp230xx_int_prio_counter=0;
+          }
         }
         break;
       case FUNC_JSON_APPEND:
