@@ -1975,8 +1975,9 @@ void StateLoop()
           strlcpy(mqtt_data, GetOtaUrl(log_data, sizeof(log_data)), sizeof(mqtt_data));
 #ifndef BE_MINIMAL
           if (RtcSettings.ota_loader) {
-            char *pch = strrchr(mqtt_data, '-');  // Change from filename-DE.bin into filename-minimal.bin
-            char *ech = strrchr(mqtt_data, '.');  // Change from filename.bin into filename-minimal.bin
+            char *bch = strrchr(mqtt_data, '/');                  // only consider filename after last backslash prevent change of urls having "-" in it
+            char *pch = strrchr((bch!=NULL)?bch:mqtt_data, '-');  // Change from filename-DE.bin into filename-minimal.bin
+            char *ech = strrchr((bch!=NULL)?bch:mqtt_data, '.');  // Change from filename.bin into filename-minimal.bin
             if (!pch) pch = ech;
             if (pch) {
               mqtt_data[pch - mqtt_data] = '\0';
