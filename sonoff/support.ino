@@ -179,6 +179,17 @@ double CharToDouble(char *str)
   return result;
 }
 
+int TextToInt(char *str)
+{
+  char *p;
+  uint8_t radix = 10;
+  if ('#' == str[0]) {
+    radix = 16;
+    str++;
+  }
+  return strtol(str, &p, radix);
+}
+
 char* dtostrfd(double number, unsigned char prec, char *s)
 {
   return dtostrf(number, 1, prec, s);

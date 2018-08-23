@@ -88,7 +88,7 @@ const char kTasmotaCommands[] PROGMEM =
   D_CMND_BACKLOG "|" D_CMND_DELAY "|" D_CMND_POWER "|" D_CMND_FANSPEED "|" D_CMND_STATUS "|" D_CMND_STATE "|"  D_CMND_POWERONSTATE "|" D_CMND_PULSETIME "|"
   D_CMND_BLINKTIME "|" D_CMND_BLINKCOUNT "|" D_CMND_SENSOR "|" D_CMND_SAVEDATA "|" D_CMND_SETOPTION "|" D_CMND_TEMPERATURE_RESOLUTION "|" D_CMND_HUMIDITY_RESOLUTION "|"
   D_CMND_PRESSURE_RESOLUTION "|" D_CMND_POWER_RESOLUTION "|" D_CMND_VOLTAGE_RESOLUTION "|" D_CMND_CURRENT_RESOLUTION "|" D_CMND_ENERGY_RESOLUTION "|" D_CMND_MODULE "|" D_CMND_MODULES "|"
-  D_CMND_GPIO "|" D_CMND_GPIOS "|" D_CMND_PWM "|" D_CMND_PWMFREQUENCY "|" D_CMND_PWMRANGE "|" D_CMND_COUNTER "|"  D_CMND_COUNTERTYPE "|"
+  D_CMND_GPIO "|" D_CMND_GPIOS "|" D_CMND_PWM "|" D_CMND_PWMFREQUENCY "|" D_CMND_PWMRANGE "|" D_CMND_COUNTER "|" D_CMND_COUNTERTYPE "|"
   D_CMND_COUNTERDEBOUNCE "|" D_CMND_SLEEP "|" D_CMND_UPGRADE "|" D_CMND_UPLOAD "|" D_CMND_OTAURL "|" D_CMND_SERIALLOG "|" D_CMND_SYSLOG "|"
   D_CMND_LOGHOST "|" D_CMND_LOGPORT "|" D_CMND_IPADDRESS "|" D_CMND_NTPSERVER "|" D_CMND_AP "|" D_CMND_SSID "|" D_CMND_PASSWORD "|" D_CMND_HOSTNAME "|"
   D_CMND_WIFICONFIG "|" D_CMND_FRIENDLYNAME "|" D_CMND_SWITCHMODE "|"
@@ -831,7 +831,6 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
         restart_flag = 2;
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{"));
-      byte jsflg = 0;
       for (byte i = 0; i < MAX_GPIO_PIN; i++) {
         if (GPIO_USER == cmodule.gp.io[i]) {
           if (jsflg) snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,"), mqtt_data);
@@ -850,13 +849,13 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
       mytmplt cmodule;
       memcpy_P(&cmodule, &kModules[Settings.module], sizeof(cmodule));
       for (byte i = 0; i < GPIO_SENSOR_END; i++) {
-        if (!jsflg) {
-          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_GPIOS "%d\":["), lines);
-        } else {
-          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,"), mqtt_data);
-        }
-        jsflg = 1;
         if (!GetUsedInModule(i, cmodule.gp.io)) {
+          if (!jsflg) {
+            snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_GPIOS "%d\":["), lines);
+          } else {
+            snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,"), mqtt_data);
+          }
+          jsflg = 1;
           snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s\"%d (%s)\""), mqtt_data, i, GetTextIndexed(stemp1, sizeof(stemp1), i, kSensorNames));
           if ((strlen(mqtt_data) > (LOGSZ - TOPSZ)) || (i == GPIO_SENSOR_END -1)) {
             snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s]}"), mqtt_data);
@@ -897,7 +896,7 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, Settings.pwm_range);
     }
     else if ((CMND_COUNTER == command_code) && (index > 0) && (index <= MAX_COUNTERS)) {
-      if ((data_len > 0) && (pin[GPIO_CNTR1 + index -1] < 99)) {
+      if ((data_len > 0) && ((pin[GPIO_CNTR1 + index -1] < 99) || (pin[GPIO_CNTR1_NP + index -1] < 99))) {
         if ((dataBuf[0] == '-') || (dataBuf[0] == '+')) {
           RtcSettings.pulse_counter[index -1] += payload32;
           Settings.pulse_counter[index -1] += payload32;
@@ -909,7 +908,7 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_LVALUE, command, index, RtcSettings.pulse_counter[index -1]);
     }
     else if ((CMND_COUNTERTYPE == command_code) && (index > 0) && (index <= MAX_COUNTERS)) {
-      if ((payload >= 0) && (payload <= 1) && (pin[GPIO_CNTR1 + index -1] < 99)) {
+      if ((payload >= 0) && (payload <= 1) && ((pin[GPIO_CNTR1 + index -1] < 99) || (pin[GPIO_CNTR1_NP + index -1] < 99))) {
         bitWrite(Settings.pulse_counter_type, index -1, payload &1);
         RtcSettings.pulse_counter[index -1] = 0;
         Settings.pulse_counter[index -1] = 0;
@@ -1502,9 +1501,9 @@ boolean MqttShowSensor()
   int json_data_start = strlen(mqtt_data);
   for (byte i = 0; i < MAX_SWITCHES; i++) {
 #ifdef USE_TM1638
-    if ((pin[GPIO_SWT1 +i] < 99) || ((pin[GPIO_TM16CLK] < 99) && (pin[GPIO_TM16DIO] < 99) && (pin[GPIO_TM16STB] < 99))) {
+    if ((pin[GPIO_SWT1 +i] < 99) || (pin[GPIO_SWT1_NP +i] < 99) || ((pin[GPIO_TM16CLK] < 99) && (pin[GPIO_TM16DIO] < 99) && (pin[GPIO_TM16STB] < 99))) {
 #else
-    if (pin[GPIO_SWT1 +i] < 99) {
+    if (pin[GPIO_SWT1 +i] < 99) || (pin[GPIO_SWT1_NP +i] < 99) {
 #endif  // USE_TM1638
       boolean swm = ((FOLLOW_INV == Settings.switchmode[i]) || (PUSHBUTTON_INV == Settings.switchmode[i]) || (PUSHBUTTONHOLD_INV == Settings.switchmode[i]));
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"" D_JSON_SWITCH "%d\":\"%s\""), mqtt_data, i +1, GetStateText(swm ^ lastwallswitch[i]));
@@ -1636,6 +1635,10 @@ void ButtonHandler()
         button_present = 1;
         button = digitalRead(pin[GPIO_KEY1 +button_index]);
       }
+      else if ((pin[GPIO_KEY1_NP +button_index] < 99) && !blockgpio0) {
+        button_present = 1;
+        button = digitalRead(pin[GPIO_KEY1_NP +button_index]);
+      }
     }
 
     if (button_present) {
@@ -1752,7 +1755,7 @@ void SwitchHandler(byte mode)
   uint8_t switchflag;
 
   for (byte i = 0; i < MAX_SWITCHES; i++) {
-    if ((pin[GPIO_SWT1 +i] < 99) || (mode)) {
+    if ((pin[GPIO_SWT1 +i] < 99) || (pin[GPIO_SWT1_NP +i] < 99) || (mode)) {
 
       if (holdwallswitch[i]) {
         holdwallswitch[i]--;
@@ -1764,7 +1767,11 @@ void SwitchHandler(byte mode)
       if (mode) {
         button = virtualswitch[i];
       } else {
-        button = digitalRead(pin[GPIO_SWT1 +i]);
+        if (pin[GPIO_SWT1 +i] < 99) {
+          button = digitalRead(pin[GPIO_SWT1 +i]);
+        } else {
+          button = digitalRead(pin[GPIO_SWT1_NP +i]);
+        }
       }
 
       if (button != lastwallswitch[i]) {
@@ -1975,9 +1982,9 @@ void StateLoop()
           strlcpy(mqtt_data, GetOtaUrl(log_data, sizeof(log_data)), sizeof(mqtt_data));
 #ifndef BE_MINIMAL
           if (RtcSettings.ota_loader) {
-            char *bch = strrchr(mqtt_data, '/');                  // only consider filename after last backslash prevent change of urls having "-" in it
-            char *pch = strrchr((bch!=NULL)?bch:mqtt_data, '-');  // Change from filename-DE.bin into filename-minimal.bin
-            char *ech = strrchr((bch!=NULL)?bch:mqtt_data, '.');  // Change from filename.bin into filename-minimal.bin
+            char *bch = strrchr(mqtt_data, '/');                        // Only consider filename after last backslash prevent change of urls having "-" in it
+            char *pch = strrchr((bch != NULL) ? bch : mqtt_data, '-');  // Change from filename-DE.bin into filename-minimal.bin
+            char *ech = strrchr((bch != NULL) ? bch : mqtt_data, '.');  // Change from filename.bin into filename-minimal.bin
             if (!pch) pch = ech;
             if (pch) {
               mqtt_data[pch - mqtt_data] = '\0';
@@ -2410,6 +2417,9 @@ void GpioInit()
     if (pin[GPIO_KEY1 +i] < 99) {
       pinMode(pin[GPIO_KEY1 +i], (16 == pin[GPIO_KEY1 +i]) ? INPUT_PULLDOWN_16 : INPUT_PULLUP);
     }
+    else if (pin[GPIO_KEY1_NP +i] < 99) {
+      pinMode(pin[GPIO_KEY1_NP +i], (16 == pin[GPIO_KEY1_NP +i]) ? INPUT_PULLDOWN_16 : INPUT);
+    }
   }
   for (byte i = 0; i < MAX_LEDS; i++) {
     if (pin[GPIO_LED1 +i] < 99) {
@@ -2420,9 +2430,12 @@ void GpioInit()
   for (byte i = 0; i < MAX_SWITCHES; i++) {
     lastwallswitch[i] = 1;  // Init global to virtual switch state;
     if (pin[GPIO_SWT1 +i] < 99) {
-      pinMode(pin[GPIO_SWT1 +i], (16 == pin[GPIO_SWT1 +i]) ? INPUT_PULLDOWN_16 :INPUT_PULLUP);
+      pinMode(pin[GPIO_SWT1 +i], (16 == pin[GPIO_SWT1 +i]) ? INPUT_PULLDOWN_16 : INPUT_PULLUP);
       lastwallswitch[i] = digitalRead(pin[GPIO_SWT1 +i]);  // Set global now so doesn't change the saved power state on first switch check
-
+    }
+    else if (pin[GPIO_SWT1_NP +i] < 99) {
+      pinMode(pin[GPIO_SWT1_NP +i], (16 == pin[GPIO_SWT1_NP +i]) ? INPUT_PULLDOWN_16 : INPUT);
+      lastwallswitch[i] = digitalRead(pin[GPIO_SWT1_NP +i]);  // Set global now so doesn't change the saved power state on first switch check
     }
     virtualswitch[i] = lastwallswitch[i];
   }

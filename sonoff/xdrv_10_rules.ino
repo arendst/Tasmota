@@ -63,9 +63,6 @@
  *     RuleTimer2 100
 \*********************************************************************************************/
 
-#define MAX_RULE_TIMERS        8
-#define RULES_MAX_VARS         5
-
 #ifndef ULONG_MAX
 #define ULONG_MAX              0xffffffffUL
 #endif
@@ -97,7 +94,7 @@ uint8_t rules_trigger_count[MAX_RULE_SETS] = { 0 };
 uint8_t rules_teleperiod = 0;
 
 char event_data[100];
-char vars[RULES_MAX_VARS][10] = { 0 };
+char vars[MAX_RULE_VARS][10] = { 0 };
 
 /*******************************************************************************************/
 
@@ -168,7 +165,7 @@ bool RulesRuleMatch(byte rule_set, String &event, String &rule)
     rule_task = rule.substring(5, pos);                // "INA219" or "SYSTEM"
   }
 
-  String rule_name = rule.substring(pos +1);           // "CURRENT>0.100" or "BOOT" or "%var1%"
+  String rule_name = rule.substring(pos +1);           // "CURRENT>0.100" or "BOOT" or "%var1%" or "MINUTE|5"
 
   char compare = ' ';
   pos = rule_name.indexOf(">");
@@ -195,14 +192,14 @@ bool RulesRuleMatch(byte rule_set, String &event, String &rule)
   double rule_value = 0;
   if (pos > 0) {
     String rule_param = rule_name.substring(pos + 1);
-    for (byte i = 0; i < RULES_MAX_VARS; i++) {
+    for (byte i = 0; i < MAX_RULE_VARS; i++) {
       snprintf_P(stemp, sizeof(stemp), PSTR("%%VAR%d%%"), i +1);
       if (rule_param.startsWith(stemp)) {
         rule_param = vars[i];
         break;
       }
     }
-    for (byte i = 0; i < RULES_MAX_MEMS; i++) {
+    for (byte i = 0; i < MAX_RULE_MEMS; i++) {
       snprintf_P(stemp, sizeof(stemp), PSTR("%%MEM%d%%"), i +1);
       if (rule_param.startsWith(stemp)) {
         rule_param = Settings.mems[i];
@@ -326,11 +323,11 @@ bool RuleSetProcess(byte rule_set, String &event_saved)
 //      if (!ucommand.startsWith("BACKLOG")) { commands = "backlog " + commands; }  // Always use Backlog to prevent power race exception
       if (ucommand.indexOf("EVENT ") != -1) { commands = "backlog " + commands; }  // Always use Backlog with event to prevent rule event loop exception
       commands.replace(F("%value%"), rules_event_value);
-      for (byte i = 0; i < RULES_MAX_VARS; i++) {
+      for (byte i = 0; i < MAX_RULE_VARS; i++) {
         snprintf_P(stemp, sizeof(stemp), PSTR("%%var%d%%"), i +1);
         commands.replace(stemp, vars[i]);
       }
-      for (byte i = 0; i < RULES_MAX_MEMS; i++) {
+      for (byte i = 0; i < MAX_RULE_MEMS; i++) {
         snprintf_P(stemp, sizeof(stemp), PSTR("%%mem%d%%"), i +1);
         commands.replace(stemp, Settings.mems[i]);
       }
@@ -569,40 +566,40 @@ boolean RulesCommand()
     }
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, D_JSON_DONE);
   }
-  else if ((CMND_VAR == command_code) && (index > 0) && (index <= RULES_MAX_VARS)) {
+  else if ((CMND_VAR == command_code) && (index > 0) && (index <= MAX_RULE_VARS)) {
     if (XdrvMailbox.data_len > 0) {
       strlcpy(vars[index -1], ('"' == XdrvMailbox.data[0]) ? "" : XdrvMailbox.data, sizeof(vars[index -1]));
     }
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, index, vars[index -1]);
   }
-  else if ((CMND_MEM == command_code) && (index > 0) && (index <= RULES_MAX_MEMS)) {
+  else if ((CMND_MEM == command_code) && (index > 0) && (index <= MAX_RULE_MEMS)) {
     if (XdrvMailbox.data_len > 0) {
       strlcpy(Settings.mems[index -1], ('"' == XdrvMailbox.data[0]) ? "" : XdrvMailbox.data, sizeof(Settings.mems[index -1]));
     }
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, index, Settings.mems[index -1]);
   }
-  else if ((CMND_ADD == command_code) && (index > 0) && (index <= RULES_MAX_VARS)) {
+  else if ((CMND_ADD == command_code) && (index > 0) && (index <= MAX_RULE_VARS)) {
     if (XdrvMailbox.data_len > 0) {
       double tempvar = CharToDouble(vars[index -1]) + CharToDouble(XdrvMailbox.data);
       dtostrfd(tempvar, 2, vars[index -1]);
     }
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, index, vars[index -1]);
   }
-  else if ((CMND_SUB == command_code) && (index > 0) && (index <= RULES_MAX_VARS)) {
+  else if ((CMND_SUB == command_code) && (index > 0) && (index <= MAX_RULE_VARS)) {
     if (XdrvMailbox.data_len > 0) {
       double tempvar = CharToDouble(vars[index -1]) - CharToDouble(XdrvMailbox.data);
       dtostrfd(tempvar, 2, vars[index -1]);
     }
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, index, vars[index -1]);
   }
-  else if ((CMND_MULT == command_code) && (index > 0) && (index <= RULES_MAX_VARS)) {
+  else if ((CMND_MULT == command_code) && (index > 0) && (index <= MAX_RULE_VARS)) {
     if (XdrvMailbox.data_len > 0) {
       double tempvar = CharToDouble(vars[index -1]) * CharToDouble(XdrvMailbox.data);
       dtostrfd(tempvar, 2, vars[index -1]);
     }
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, index, vars[index -1]);
   }
-  else if ((CMND_SCALE == command_code) && (index > 0) && (index <= RULES_MAX_VARS)) {
+  else if ((CMND_SCALE == command_code) && (index > 0) && (index <= MAX_RULE_VARS)) {
     if (XdrvMailbox.data_len > 0) {
       if (strstr(XdrvMailbox.data, ",")) {     // Process parameter entry
         char sub_string[XdrvMailbox.data_len +1];
