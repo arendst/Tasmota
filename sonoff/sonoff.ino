@@ -562,9 +562,9 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
     }
     else if (CMND_SLEEP == command_code) {
       if ((payload >= 0) && (payload < 251)) {
-        if ((!Settings.sleep && payload) || (Settings.sleep && !payload)) restart_flag = 2;
         Settings.sleep = payload;
         sleep = payload;
+        WiFiSetSleepMode();
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE_UNIT_NVALUE_UNIT, command, sleep, (Settings.flag.value_units) ? " " D_UNIT_MILLISECOND : "", Settings.sleep, (Settings.flag.value_units) ? " " D_UNIT_MILLISECOND : "");
     }

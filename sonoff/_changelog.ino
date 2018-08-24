@@ -4,6 +4,7 @@
  * Add GPIO options ButtonXn, SwitchXn and CounterXn to select INPUT mode instead of INPUT_PULLUP (#2525)
  * Fix OtaMagic when file path contains a dash (-) (#3563)
  * Fix EnergyReset3 (#2723)
+ * Change command sleep from restart after change to not restart after change (#3554)
  *
  * 6.1.1.8
  * Fix MQTT reconnection detection when using TasmotaMqtt library (#3558)

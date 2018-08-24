@@ -1079,6 +1079,28 @@ void WifiConfig(uint8_t type)
   }
 }
 
+void WiFiSetSleepMode()
+{
+/* Excerpt from the esp8266 non os sdk api reference (v2.2.1):
+ * Sets sleep type for power saving. Set WIFI_NONE_SLEEP to disable power saving.
+ * - Default mode: WIFI_MODEM_SLEEP.
+ * - In order to lower the power comsumption, ESP8266 changes the TCP timer
+ *   tick from 250ms to 3s in WIFI_LIGHT_SLEEP mode, which leads to increased timeout for
+ *   TCP timer. Therefore, the WIFI_MODEM_SLEEP or deep-sleep mode should be used
+ *   where there is a requirement for the accurancy of the TCP timer.
+ */
+
+#ifndef ARDUINO_ESP8266_RELEASE_2_4_1     // See https://github.com/arendst/Sonoff-Tasmota/issues/2559 - Sleep bug in SDK
+
+  if (sleep) {
+    WiFi.setSleepMode(WIFI_LIGHT_SLEEP);  // Allow light sleep during idle times
+  } else {
+    WiFi.setSleepMode(WIFI_MODEM_SLEEP);  // Diable sleep (Esp8288/Arduino core and sdk default)
+  }
+
+#endif
+}
+
 void WifiBegin(uint8_t flag)
 {
   const char kWifiPhyMode[] = " BGN";
@@ -1095,9 +1117,7 @@ void WifiBegin(uint8_t flag)
   WiFi.disconnect(true);    // Delete SDK wifi config
   delay(200);
   WiFi.mode(WIFI_STA);      // Disable AP mode
-#ifndef ARDUINO_ESP8266_RELEASE_2_4_1     // See https://github.com/arendst/Sonoff-Tasmota/issues/2559 - Sleep bug
-  if (Settings.sleep) { WiFi.setSleepMode(WIFI_LIGHT_SLEEP); }  // Allow light sleep during idle times
-#endif
+  WiFiSetSleepMode();
 //  if (WiFi.getPhyMode() != WIFI_PHY_MODE_11N) { WiFi.setPhyMode(WIFI_PHY_MODE_11N); }
   if (!WiFi.getAutoConnect()) { WiFi.setAutoConnect(true); }
 //  WiFi.setAutoReconnect(true);
