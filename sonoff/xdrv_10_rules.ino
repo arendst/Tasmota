@@ -558,7 +558,11 @@ boolean RulesCommand()
     if (XdrvMailbox.data_len > 0) {
       rules_timer[index -1] = (XdrvMailbox.payload > 0) ? millis() + (1000 * XdrvMailbox.payload) : 0;
     }
-    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_LVALUE, command, index, (rules_timer[index -1]) ? (rules_timer[index -1] - millis()) / 1000 : 0);
+    mqtt_data[0] = '\0';
+    for (byte i = 0; i < MAX_RULE_TIMERS; i++) {
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s%c\"T%d\":%d"), mqtt_data, (i) ? ',' : '{', i +1, (rules_timer[i]) ? (rules_timer[i] - millis()) / 1000 : 0);
+    }
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}"), mqtt_data);
   }
   else if (CMND_EVENT == command_code) {
     if (XdrvMailbox.data_len > 0) {

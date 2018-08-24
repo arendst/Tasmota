@@ -5,6 +5,7 @@
  * Fix OtaMagic when file path contains a dash (-) (#3563)
  * Fix EnergyReset3 (#2723)
  * Change command sleep from restart after change to not restart after change (#3554)
+ * Add all ruletimer values to command RuleTimer result message (#3571)
  *
  * 6.1.1.8
  * Fix MQTT reconnection detection when using TasmotaMqtt library (#3558)
