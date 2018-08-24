@@ -179,12 +179,25 @@ boolean DomoticzMqttData()
     snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_DOMOTICZ "idx %d, nvalue %d"), idx, nvalue);
     AddLog(LOG_LEVEL_DEBUG_MORE);
 
-    if ((idx > 0) && (nvalue >= 0) && (nvalue <= 2)) {
+    if ((idx > 0) && (nvalue >= 0) && (nvalue <= 15)) {
       uint8_t maxdev = (devices_present > MAX_DOMOTICZ_IDX) ? MAX_DOMOTICZ_IDX : devices_present;
       for (byte i = 0; i < maxdev; i++) {
         if (idx == Settings.domoticz_relay_idx[i]) {
+          bool iscolordimmer = strcmp_P(domoticz["dtype"],PSTR("Color Switch")) == 0;
           snprintf_P(stemp1, sizeof(stemp1), PSTR("%d"), i +1);
-          if (2 == nvalue) {
+          if (iscolordimmer && 10 == nvalue) { // Color_SetColor
+            JsonObject& color = domoticz["Color"];
+            uint16_t level = nvalue = domoticz["svalue1"];
+            uint16_t r = color["r"]; r = r * level / 100;
+            uint16_t g = color["g"]; g = g * level / 100;
+            uint16_t b = color["b"]; b = b * level / 100;
+            uint16_t cw = color["cw"]; cw = cw * level / 100;
+            uint16_t ww = color["ww"]; ww = ww * level / 100;
+            snprintf_P(XdrvMailbox.topic, XdrvMailbox.index, PSTR("/" D_CMND_COLOR));
+            snprintf_P(XdrvMailbox.data, XdrvMailbox.data_len, PSTR("%02x%02x%02x%02x%02x"), r, g, b, cw, ww);
+            found = 1;
+          } else if ((!iscolordimmer && 2 == nvalue) || // gswitch_sSetLevel
+                     (iscolordimmer && 15 == nvalue)) { // Color_SetBrightnessLevel
             nvalue = domoticz["svalue1"];
             if (light_type && (Settings.light_dimmer == nvalue) && ((power >> i) &1)) {
               return 1;
@@ -192,7 +205,7 @@ boolean DomoticzMqttData()
             snprintf_P(XdrvMailbox.topic, XdrvMailbox.index, PSTR("/" D_CMND_DIMMER));
             snprintf_P(XdrvMailbox.data, XdrvMailbox.data_len, PSTR("%d"), nvalue);
             found = 1;
-          } else {
+          } else if (1 == nvalue || 0 == nvalue) {
             if (((power >> i) &1) == (power_t)nvalue) {
               return 1;
             }
