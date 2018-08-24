@@ -372,25 +372,38 @@ void MCP230xx_Reset(uint8_t pinmode) {
 
 bool MCP230xx_Command(void) {
   boolean serviced = true;
-  uint8_t _a, _b = 0;
-  uint8_t pin, pinmode, pullup = 0;
-  String data = XdrvMailbox.data;
-  data.toUpperCase();
-  if (data == "RESET") { MCP230xx_Reset(1); return serviced; }
-  if (data == "RESET1") { MCP230xx_Reset(1); return serviced; }
-  if (data == "RESET2") { MCP230xx_Reset(2); return serviced; }
-  if (data == "RESET3") { MCP230xx_Reset(3); return serviced; }
-  if (data == "RESET4") { MCP230xx_Reset(4); return serviced; }
+  boolean validpin = false;
+  uint8_t paramcount = 0;
+  if (XdrvMailbox.data_len > 0) {
+    paramcount=1;
+    sprintf(XdrvMailbox.data,"%s,",XdrvMailbox.data); // need a trailing comma to make substr work properly with last variable - bug? dunno?
+    XdrvMailbox.data_len++;
+  }
+  char sub_string[XdrvMailbox.data_len +1];
+  for (uint8_t ca=0;ca<XdrvMailbox.data_len;ca++) {
+    if (XdrvMailbox.data[ca] == ' ' || XdrvMailbox.data[ca] == '=') XdrvMailbox.data[ca]=',';
+    if (XdrvMailbox.data[ca] == ',') paramcount++;
+  }
+  UpperCase(XdrvMailbox.data,XdrvMailbox.data);
+  if (!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 1),"RESET"))  {  MCP230xx_Reset(1); return serviced; }
+  if (!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 1),"RESET1")) {  MCP230xx_Reset(1); return serviced; }
+  if (!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 1),"RESET2")) {  MCP230xx_Reset(2); return serviced; }
+  if (!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 1),"RESET3")) {  MCP230xx_Reset(3); return serviced; }
+  if (!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 1),"RESET4")) {  MCP230xx_Reset(4); return serviced; }
 #ifdef USE_MCP230xx_OUTPUT
-  if (data == "RESET5") { MCP230xx_Reset(5); return serviced; }
-  if (data == "RESET6") { MCP230xx_Reset(6); return serviced; }
+  if (!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 1),"RESET5")) {  MCP230xx_Reset(5); return serviced; }
+  if (!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 1),"RESET6")) {  MCP230xx_Reset(6); return serviced; }
 #endif // USE_MCP230xx_OUTPUT
-
-  _a = data.indexOf(",");
-  pin = data.substring(0, _a).toInt();
+  uint8_t pin = atoi(subStr(sub_string, XdrvMailbox.data, ",", 1));
   if (pin < mcp230xx_pincount) {
-    String cmnd = data.substring(_a+1);
-    if (cmnd == "?") {
+    if (pin == 0) {
+      if (!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 1), "0")) validpin=true;
+    } else {
+      validpin=true;
+    }
+  }
+  if (validpin && paramcount > 2) {
+    if (!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 2), "?")) {
       uint8_t port = 0;
       if (pin > 7) port = 1;
       uint8_t portdata = MCP230xx_readGPIO(port);
@@ -411,66 +424,65 @@ bool MCP230xx_Command(void) {
 #ifdef USE_MCP230xx_OUTPUT
     if (Settings.mcp230xx_config[pin].pinmode >= 5) {
       uint8_t pincmd = Settings.mcp230xx_config[pin].pinmode - 5;
-      if (cmnd == "ON") {
+      if (!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 2), "ON")) {
         MCP230xx_SetOutPin(pin,abs(pincmd-1));
         return serviced;
       }
-      if (cmnd == "OFF") {
+      if (!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 2), "OFF")) {
         MCP230xx_SetOutPin(pin,pincmd);
         return serviced;
       }
-      if (cmnd == "T")   {
+      if (!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 2), "T"))   {
         MCP230xx_SetOutPin(pin,2);
         return serviced;
       }
     }
 #endif // USE_MCP230xx_OUTPUT
-  }
-  _b = data.indexOf(",", _a + 1);
-  if (_a < XdrvMailbox.data_len) {
-    if (_b < XdrvMailbox.data_len) {
-      // Lets see if we have a 4th parameter for interrupt mode
-      uint8_t _c = data.indexOf(",", _b + 1);
-      if (_c > XdrvMailbox.data_len) _c=XdrvMailbox.data_len;
-      pinmode = data.substring(_a+1, _b).toInt();
-      pullup = data.substring(_b+1, _c).toInt();
-      uint8_t intmode = data.substring(_c+1, XdrvMailbox.data_len).toInt();
+    uint8_t pinmode = 0;
+    uint8_t pullup = 0;
+    uint8_t intmode = 0;
+    if (paramcount > 2) {
+      pinmode = atoi(subStr(sub_string, XdrvMailbox.data, ",", 2));
+    }
+    if (paramcount > 3) {
+      pullup = atoi(subStr(sub_string, XdrvMailbox.data, ",", 3));
+    }
+    if (paramcount > 4) {
+      intmode = atoi(subStr(sub_string, XdrvMailbox.data, ",", 4));
+    }
 #ifdef USE_MCP230xx_OUTPUT
-      if ((pin < mcp230xx_pincount) && (pinmode < 7) && (pullup < 2)) {
-#else  // not USE_MCP230xx_OUTPUT
-      if ((pin < mcp230xx_pincount) && (pinmode < 5) && (pullup < 2)) {
+    if ((pin < mcp230xx_pincount) && (pinmode > 0) && (pinmode < 7) && (pullup < 2)) {
+#else // not use OUTPUT
+    if ((pin < mcp230xx_pincount) && (pinmode > 0) && (pinmode < 5) && (pullup < 2)) {
 #endif // USE_MCP230xx_OUTPUT
-        Settings.mcp230xx_config[pin].pinmode=pinmode;
-        Settings.mcp230xx_config[pin].pullup=pullup;
-        if (pinmode > 1 && pinmode < 5) {
-          if (intmode >= 0 && intmode <= 3) {
-            Settings.mcp230xx_config[pin].int_report_mode=intmode;
-          }
-        } else {
-          Settings.mcp230xx_config[pin].int_report_mode=3; // Int mode not valid for pinmodes other than 2 through 4
+      Settings.mcp230xx_config[pin].pinmode=pinmode;
+      Settings.mcp230xx_config[pin].pullup=pullup;
+      if (pinmode > 1 && pinmode < 5) {
+        if (intmode >= 0 && intmode <= 3) {
+          Settings.mcp230xx_config[pin].int_report_mode=intmode;
         }
-        MCP230xx_ApplySettings();
-        uint8_t port = 0;
-        if (pin > 7) port = 1;
-        uint8_t portdata = MCP230xx_readGPIO(port);
-        char pulluptxtc[7], pinstatustxtc[7];
-        char intmodetxt[9];
-        sprintf(pulluptxtc,ConvertNumTxt(pullup));
-        sprintf(intmodetxt,IntModeTxt(Settings.mcp230xx_config[pin].int_report_mode));
-#ifdef USE_MCP230xx_OUTPUT
-        sprintf(pinstatustxtc,ConvertNumTxt(portdata>>(pin-(port*8))&1,Settings.mcp230xx_config[pin].pinmode));
-#else  // not USE_MCP230xx_OUTPUT
-        sprintf(pinstatustxtc,ConvertNumTxt(portdata>>(pin-(port*8))&1));
-#endif // USE_MCP230xx_OUTPUT
-        snprintf_P(mqtt_data, sizeof(mqtt_data), MCP230XX_SENSOR_RESPONSE,pin,pinmode,pulluptxtc,intmodetxt,pinstatustxtc);
       } else {
-        serviced = false;
+        Settings.mcp230xx_config[pin].int_report_mode=3; // Int mode not valid for pinmodes other than 2 through 4
       }
-    } else {
-      serviced = false;
+      MCP230xx_ApplySettings();
+      uint8_t port = 0;
+      if (pin > 7) port = 1;
+      uint8_t portdata = MCP230xx_readGPIO(port);
+      char pulluptxtc[7], pinstatustxtc[7];
+      char intmodetxt[9];
+      sprintf(pulluptxtc,ConvertNumTxt(pullup));
+      sprintf(intmodetxt,IntModeTxt(Settings.mcp230xx_config[pin].int_report_mode));
+#ifdef USE_MCP230xx_OUTPUT
+      sprintf(pinstatustxtc,ConvertNumTxt(portdata>>(pin-(port*8))&1,Settings.mcp230xx_config[pin].pinmode));
+#else  // not USE_MCP230xx_OUTPUT
+      sprintf(pinstatustxtc,ConvertNumTxt(portdata>>(pin-(port*8))&1));
+#endif // USE_MCP230xx_OUTPUT
+      snprintf_P(mqtt_data, sizeof(mqtt_data), MCP230XX_SENSOR_RESPONSE,pin,pinmode,pulluptxtc,intmodetxt,pinstatustxtc);
+      return serviced;
     }
   } else {
-    serviced = false;
+    serviced=false; // no valid pin was used
+    return serviced;
   }
   return serviced;
 }
