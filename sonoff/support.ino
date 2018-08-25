@@ -1088,16 +1088,18 @@ void WiFiSetSleepMode()
  *   tick from 250ms to 3s in WIFI_LIGHT_SLEEP mode, which leads to increased timeout for
  *   TCP timer. Therefore, the WIFI_MODEM_SLEEP or deep-sleep mode should be used
  *   where there is a requirement for the accurancy of the TCP timer.
+ *
+ * Sleep is disabled in core 2.4.1 and 2.4.2 as there are bugs in their SDKs
+ * See https://github.com/arendst/Sonoff-Tasmota/issues/2559
  */
 
-#ifndef ARDUINO_ESP8266_RELEASE_2_4_1     // See https://github.com/arendst/Sonoff-Tasmota/issues/2559 - Sleep bug in SDK
-
+#if defined(ARDUINO_ESP8266_RELEASE_2_4_1) || defined(ARDUINO_ESP8266_RELEASE_2_4_2)
+#else  // Enabled in 2.3.0, 2.4.0 and stage
   if (sleep) {
     WiFi.setSleepMode(WIFI_LIGHT_SLEEP);  // Allow light sleep during idle times
   } else {
     WiFi.setSleepMode(WIFI_MODEM_SLEEP);  // Diable sleep (Esp8288/Arduino core and sdk default)
   }
-
 #endif
 }
 
