@@ -1,5 +1,27 @@
-/* 6.1.1.7
+/* 6.1.1.10
+ * Disable wifi sleep for both Esp8266/Arduino core 2.4.1 and 2.4.2 to solve device freeze caused by Espressif SDK bug (#3554)
+ * Rewrite GPIO options ButtonXn, SwitchXn and CounterXn to select INPUT mode instead of INPUT_PULLUP
+ *
+ * 6.1.1.9
+ * Allow user override of define MAX_RULE_TIMERS (#3561)
+ * Allow user override of define MAX_RULE_VARS
+ * Add GPIO options ButtonXn, SwitchXn and CounterXn to select INPUT mode instead of INPUT_PULLUP (#2525)
+ * Fix OtaMagic when file path contains a dash (-) (#3563)
+ * Fix EnergyReset3 (#2723)
+ * Change command sleep from restart after change to not restart after change (#3554)
+ * Add all ruletimer values to command RuleTimer result message (#3571)
+ *
+ * 6.1.1.8
+ * Fix MQTT reconnection detection when using TasmotaMqtt library (#3558)
+ * Add build time setting of ButtonTopic and SwitchTopic (#3414)
+ * Add display features and dynamic buffering
+ *
+ * 6.1.1.7
  * Add initial display support for Lcd, Oled, Matrix, Tft and e-paper - Need more docs
+ * Fix SDM120 reporting wrong negative values to Domoticz (#3521)
+ * Fix iFan02 power on state (#3412, #3530)
+ * Add display define USE_DISPLAY_MODES1TO5 to select display modes 1 to 5
+ * Add command DisplayRotate 0..3 to select persistent display rotation
  *
  * 6.1.1.6
  * Add modulo option to rules like rule1 on Time#Minute|5 do backlog power on;delay 200;power off endon (#3466)

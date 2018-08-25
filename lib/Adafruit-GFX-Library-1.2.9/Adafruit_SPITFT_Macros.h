@@ -1,3 +1,5 @@
+#ifndef _ADAFRUIT_SPITFT_MACROS
+#define _ADAFRUIT_SPITFT_MACROS
 
 /*
  * Control Pins
@@ -6,13 +8,13 @@
 #ifdef USE_FAST_PINIO
 #define SPI_DC_HIGH()           *dcport |=  dcpinmask
 #define SPI_DC_LOW()            *dcport &= ~dcpinmask
-#define SPI_CS_HIGH()           *csport |= cspinmask
+#define SPI_CS_HIGH()           *csport |=  cspinmask
 #define SPI_CS_LOW()            *csport &= ~cspinmask
 #else
 #define SPI_DC_HIGH()           digitalWrite(_dc, HIGH)
 #define SPI_DC_LOW()            digitalWrite(_dc, LOW)
-#define SPI_CS_HIGH()           digitalWrite(_cs, HIGH)
-#define SPI_CS_LOW()            digitalWrite(_cs, LOW)
+#define SPI_CS_HIGH()           { if(_cs >= 0) digitalWrite(_cs, HIGH); }
+#define SPI_CS_LOW()            { if(_cs >= 0) digitalWrite(_cs, LOW);  }
 #endif
 
 /*
@@ -22,8 +24,8 @@
 #ifdef USE_FAST_PINIO
 #define SSPI_MOSI_HIGH()        *mosiport |=  mosipinmask
 #define SSPI_MOSI_LOW()         *mosiport &= ~mosipinmask
-#define SSPI_SCK_HIGH()         *clkport |=  clkpinmask
-#define SSPI_SCK_LOW()          *clkport &= ~clkpinmask
+#define SSPI_SCK_HIGH()         *clkport  |=  clkpinmask
+#define SSPI_SCK_LOW()          *clkport  &= ~clkpinmask
 #define SSPI_MISO_READ()        ((*misoport & misopinmask) != 0)
 #else
 #define SSPI_MOSI_HIGH()        digitalWrite(_mosi, HIGH)
@@ -44,7 +46,7 @@
  * Hardware SPI Macros
  * */
 
-#define SPI_OBJECT  SPI
+#define SPI_OBJECT SPI
 
 #if defined (__AVR__) ||  defined(TEENSYDUINO) ||  defined(ARDUINO_ARCH_STM32F1)
     #define HSPI_SET_CLOCK() SPI_OBJECT.setClockDivider(SPI_CLOCK_DIV2);
@@ -112,3 +114,5 @@ static inline uint8_t _avr_spi_read(void) {
 #define SPI_WRITE16(s)          if(_sclk < 0){HSPI_WRITE16(s);}else{SSPI_WRITE16(s);}
 #define SPI_WRITE32(l)          if(_sclk < 0){HSPI_WRITE32(l);}else{SSPI_WRITE32(l);}
 #define SPI_WRITE_PIXELS(c,l)   if(_sclk < 0){HSPI_WRITE_PIXELS(c,l);}else{SSPI_WRITE_PIXELS(c,l);}
+
+#endif // _ADAFRUIT_SPITFT_MACROS

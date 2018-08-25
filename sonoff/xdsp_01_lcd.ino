@@ -26,55 +26,10 @@
 #define LCD_ADDRESS1           0x27         // LCD I2C address option 1
 #define LCD_ADDRESS2           0x3F         // LCD I2C address option 2
 
-#define LCD_BUFFER_COLS        40           // Max number of columns in display shadow buffer
-#define LCD_BUFFER_ROWS        8            // Max number of lines in display shadow buffer
-
 #include <Wire.h>
 #include <LiquidCrystal_I2C.h>
 
 LiquidCrystal_I2C *lcd;
-
-char lcd_screen_buffer[LCD_BUFFER_ROWS][LCD_BUFFER_COLS +1];
-
-void LcdInitFull()
-{
-  lcd->init();
-  lcd->clear();
-  memset(lcd_screen_buffer[Settings.display_rows -1], 0x20, Settings.display_cols[0]);
-  lcd_screen_buffer[Settings.display_rows -1][Settings.display_cols[0]] = 0;
-}
-
-void LcdDrawStringAt()
-{
-  lcd->setCursor(dsp_x, dsp_y);
-  lcd->print(dsp_str);
-}
-
-void LcdDisplayOnOff(uint8_t on)
-{
-  if (on) {
-    lcd->backlight();
-  } else {
-    lcd->noBacklight();
-  }
-}
-
-/*********************************************************************************************/
-
-void LcdCenter(byte row, char* txt)
-{
-  int offset;
-  int len;
-  char line[Settings.display_cols[0] +2];
-
-  memset(line, 0x20, Settings.display_cols[0]);
-  line[Settings.display_cols[0]] = 0;
-  len = strlen(txt);
-  offset = (len < Settings.display_cols[0]) ? offset = (Settings.display_cols[0] - len) / 2 : 0;
-  strncpy(line +offset, txt, len);
-  lcd->setCursor(0, row);
-  lcd->print(line);
-}
 
 /*********************************************************************************************/
 
@@ -82,8 +37,6 @@ void LcdInitMode()
 {
   lcd->init();
   lcd->clear();
-  memset(lcd_screen_buffer[Settings.display_rows -1], 0x20, Settings.display_cols[0]);
-  lcd_screen_buffer[Settings.display_rows -1][Settings.display_cols[0]] = 0;
 }
 
 void LcdInit(uint8_t mode)
@@ -91,6 +44,9 @@ void LcdInit(uint8_t mode)
   switch(mode) {
     case DISPLAY_INIT_MODE:
       LcdInitMode();
+#ifdef USE_DISPLAY_MODES1TO5
+      DisplayClearScreenBuffer();
+#endif  // USE_DISPLAY_MODES1TO5
       break;
     case DISPLAY_INIT_PARTIAL:
     case DISPLAY_INIT_FULL:
@@ -114,38 +70,80 @@ void LcdInitDriver()
   if (XDSP_01 == Settings.display_model) {
     lcd = new LiquidCrystal_I2C(Settings.display_address[0], Settings.display_cols[0], Settings.display_rows);
 
+#ifdef USE_DISPLAY_MODES1TO5
+    DisplayAllocScreenBuffer();
+#endif  // USE_DISPLAY_MODES1TO5
+
     LcdInitMode();
   }
 }
 
+void LcdDrawStringAt()
+{
+  lcd->setCursor(dsp_x, dsp_y);
+  lcd->print(dsp_str);
+}
+
+void LcdDisplayOnOff(uint8_t on)
+{
+  if (on) {
+    lcd->backlight();
+  } else {
+    lcd->noBacklight();
+  }
+}
+
+/*********************************************************************************************/
+
+#ifdef USE_DISPLAY_MODES1TO5
+
+void LcdCenter(byte row, char* txt)
+{
+  int offset;
+  int len;
+  char line[Settings.display_cols[0] +2];
+
+  memset(line, 0x20, Settings.display_cols[0]);
+  line[Settings.display_cols[0]] = 0;
+  len = strlen(txt);
+  offset = (len < Settings.display_cols[0]) ? offset = (Settings.display_cols[0] - len) / 2 : 0;
+  strncpy(line +offset, txt, len);
+  lcd->setCursor(0, row);
+  lcd->print(line);
+}
+
 void LcdPrintLogLine()
 {
-  uint8_t last_row = Settings.display_rows -1;
+  if (!disp_screen_buffer_cols) {
+    DisplayAllocScreenBuffer();
+  } else {
+    uint8_t last_row = Settings.display_rows -1;
 
-  for (byte i = 0; i < last_row; i++) {
-    strlcpy(lcd_screen_buffer[i], lcd_screen_buffer[i +1], sizeof(lcd_screen_buffer[i]));
-    lcd->setCursor(0, i);            // Col 0, Row i
-    lcd->print(lcd_screen_buffer[i +1]);
+    for (byte i = 0; i < last_row; i++) {
+      strlcpy(disp_screen_buffer[i], disp_screen_buffer[i +1], disp_screen_buffer_cols);
+      lcd->setCursor(0, i);            // Col 0, Row i
+      lcd->print(disp_screen_buffer[i +1]);
+    }
+
+    char *pch = strchr(disp_log_buffer[disp_log_buffer_ptr],'~');  // = 0x7E (~) Replace degrees character (276 octal)
+    if (pch != NULL) {
+      disp_log_buffer[disp_log_buffer_ptr][pch - disp_log_buffer[disp_log_buffer_ptr]] = '\337';  // = 0xDF
+    }
+    strlcpy(disp_screen_buffer[last_row], disp_log_buffer[disp_log_buffer_ptr], disp_screen_buffer_cols);
+
+    // Fill with spaces
+    byte len = disp_screen_buffer_cols - strlen(disp_screen_buffer[last_row]);
+    if (len) {
+      memset(disp_screen_buffer[last_row] + strlen(disp_screen_buffer[last_row]), 0x20, len);
+      disp_screen_buffer[last_row][disp_screen_buffer_cols -1] = 0;
+    }
+
+    snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_DEBUG "[%s]"), disp_screen_buffer[last_row]);
+    AddLog(LOG_LEVEL_DEBUG);
+
+    lcd->setCursor(0, last_row);
+    lcd->print(disp_screen_buffer[last_row]);
   }
-
-  char *pch = strchr(disp_log_buffer[disp_log_buffer_ptr],'~');  // = 0x7E (~) Replace degrees character (276 octal)
-  if (pch != NULL) {
-    disp_log_buffer[disp_log_buffer_ptr][pch - disp_log_buffer[disp_log_buffer_ptr]] = '\337';  // = 0xDF
-  }
-  strlcpy(lcd_screen_buffer[last_row], disp_log_buffer[disp_log_buffer_ptr], sizeof(lcd_screen_buffer[last_row]));
-
-  // Fill with spaces
-  byte len = sizeof(lcd_screen_buffer[last_row]) - strlen(lcd_screen_buffer[last_row]);
-  if (len) {
-    memset(lcd_screen_buffer[last_row] + strlen(lcd_screen_buffer[last_row]), 0x20, len);
-    lcd_screen_buffer[last_row][sizeof(lcd_screen_buffer[last_row])-1] = 0;
-  }
-
-  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_DEBUG "[%s]"), lcd_screen_buffer[last_row]);
-  AddLog(LOG_LEVEL_DEBUG);
-
-  lcd->setCursor(0, last_row);
-  lcd->print(lcd_screen_buffer[last_row]);
 }
 
 void LcdPrintLog()
@@ -194,6 +192,8 @@ void LcdRefresh()  // Every second
   }
 }
 
+#endif  // USE_DISPLAY_MODES1TO5
+
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
@@ -214,13 +214,9 @@ boolean Xdsp01(byte function)
         case FUNC_DISPLAY_INIT:
           LcdInit(dsp_init);
           break;
-        case FUNC_DISPLAY_EVERY_SECOND:
-          LcdRefresh();
-          break;
         case FUNC_DISPLAY_POWER:
           LcdDisplayOnOff(disp_power);
           break;
-
         case FUNC_DISPLAY_CLEAR:
           lcd->clear();
           break;
@@ -238,6 +234,8 @@ boolean Xdsp01(byte function)
 //          break;
 //        case FUNC_DISPLAY_DRAW_FRAME:
 //          break;
+//        case FUNC_DISPLAY_TEXT_SIZE:
+//          break;
 //        case FUNC_DISPLAY_FONT_SIZE:
 //          break;
         case FUNC_DISPLAY_DRAW_STRING:
@@ -248,6 +246,11 @@ boolean Xdsp01(byte function)
           break;
 //        case FUNC_DISPLAY_ROTATION:
 //          break;
+#ifdef USE_DISPLAY_MODES1TO5
+        case FUNC_DISPLAY_EVERY_SECOND:
+          LcdRefresh();
+          break;
+#endif  // USE_DISPLAY_MODES1TO5
       }
     }
   }

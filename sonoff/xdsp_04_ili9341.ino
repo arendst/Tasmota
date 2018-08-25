@@ -38,64 +38,9 @@ uint16_t tft_scroll;
 
 /*********************************************************************************************/
 
-void Ili9341Clear()
-{
-  tft->fillScreen(ILI9341_BLACK);
-  tft->setCursor(0, 0);
-}
-
-void Ili9341DrawStringAt(uint16_t x, uint16_t y, char *str, uint16_t color, uint8_t flag)
-{
-  uint16_t active_color = ILI9341_WHITE;
-
-  tft->setTextSize(Settings.display_size);
-  if (!flag) {
-    tft->setCursor(x, y);
-  } else {
-    tft->setCursor((x-1) * TFT_FONT_WIDTH * Settings.display_size, (y-1) * TFT_FONT_HEIGTH * Settings.display_size);
-  }
-  if (color) { active_color = color; }
-  tft->setTextColor(active_color, ILI9341_BLACK);
-  tft->println(str);
-}
-
-void Ili9341DisplayOnOff(uint8_t on)
-{
-//  tft->showDisplay(on);
-//  tft->invertDisplay(on);
-  if (pin[GPIO_BACKLIGHT] < 99) {
-    pinMode(pin[GPIO_BACKLIGHT], OUTPUT);
-    digitalWrite(pin[GPIO_BACKLIGHT], on);
-  }
-}
-
-/*********************************************************************************************/
-
-void DisplayTftPrint(byte size, char *txt)
-{
-  uint16_t theight;
-
-  tft->setCursor(0, tft_scroll);
-  tft->setTextSize(size);
-  theight = size * TFT_FONT_HEIGTH;
-  tft->fillRect(0, tft_scroll, tft->width(), theight, ILI9341_BLACK);
-
-  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION "[%s]"), txt);
-  AddLog(LOG_LEVEL_DEBUG);
-
-  tft->print(txt);
-  tft_scroll += theight;
-  if (tft_scroll >= (tft->height() - TFT_BOTTOM)) {
-    tft_scroll = TFT_TOP;
-  }
-  tft->setScrollStart(tft_scroll);
-}
-
-/*********************************************************************************************/
-
 void Ili9341InitMode()
 {
-  tft->setRotation(0);
+  tft->setRotation(Settings.display_rotate);  // 0
   tft->invertDisplay(0);
   tft->fillScreen(ILI9341_BLACK);
   tft->setTextWrap(false);         // Allow text to run off edges
@@ -141,6 +86,46 @@ void Ili9341InitDriver()
   }
 }
 
+void Ili9341Clear()
+{
+  tft->fillScreen(ILI9341_BLACK);
+  tft->setCursor(0, 0);
+}
+
+void Ili9341DrawStringAt(uint16_t x, uint16_t y, char *str, uint16_t color, uint8_t flag)
+{
+  uint16_t active_color = ILI9341_WHITE;
+
+  tft->setTextSize(Settings.display_size);
+  if (!flag) {
+    tft->setCursor(x, y);
+  } else {
+    tft->setCursor((x-1) * TFT_FONT_WIDTH * Settings.display_size, (y-1) * TFT_FONT_HEIGTH * Settings.display_size);
+  }
+  if (color) { active_color = color; }
+  tft->setTextColor(active_color, ILI9341_BLACK);
+  tft->println(str);
+}
+
+void Ili9341DisplayOnOff(uint8_t on)
+{
+//  tft->showDisplay(on);
+//  tft->invertDisplay(on);
+  if (pin[GPIO_BACKLIGHT] < 99) {
+    pinMode(pin[GPIO_BACKLIGHT], OUTPUT);
+    digitalWrite(pin[GPIO_BACKLIGHT], on);
+  }
+}
+
+void Ili9341OnOff()
+{
+  Ili9341DisplayOnOff(disp_power);
+}
+
+/*********************************************************************************************/
+
+#ifdef USE_DISPLAY_MODES1TO5
+
 void Ili9341PrintLogLine()
 {
   tft->setTextColor(ILI9341_CYAN, ILI9341_BLACK);   // Add background color to solve flicker
@@ -148,7 +133,8 @@ void Ili9341PrintLogLine()
   byte size = Settings.display_size;
   tft->setTextSize(size);
   uint16_t theight = size * TFT_FONT_HEIGTH;
-  tft->fillRect(0, tft_scroll, tft->width(), theight, ILI9341_BLACK);
+
+  tft->fillRect(0, tft_scroll, tft->width(), theight, ILI9341_BLACK);  // Erase line
 
   char *pch = strchr(disp_log_buffer[disp_log_buffer_ptr],'~');  // = 0x7E (~) Replace degrees character (276 octal)
   if (pch != NULL) {
@@ -163,7 +149,7 @@ void Ili9341PrintLogLine()
   if (tft_scroll >= (tft->height() - TFT_BOTTOM)) {
     tft_scroll = TFT_TOP;
   }
-  tft->setScrollStart(tft_scroll);
+  tft->scrollTo(tft_scroll);
 }
 
 void Ili9341PrintLog()
@@ -177,11 +163,6 @@ void Ili9341PrintLog()
       DisplayLogBufferPtrInc();
     }
   }
-}
-
-void Ili9341OnOff()
-{
-  Ili9341DisplayOnOff(disp_power);
 }
 
 void Ili9341Refresh()  // Every second
@@ -201,6 +182,7 @@ void Ili9341Refresh()  // Every second
     tft->print(tftdt);
 
     switch (Settings.display_mode) {
+      case 1:  // Text
       case 2:  // Local
       case 3:  // Local
       case 4:  // Mqtt
@@ -210,6 +192,8 @@ void Ili9341Refresh()  // Every second
     }
   }
 }
+
+#endif  // USE_DISPLAY_MODES1TO5
 
 /*********************************************************************************************\
  * Interface
@@ -233,9 +217,6 @@ boolean Xdsp04(byte function)
           break;
         case FUNC_DISPLAY_INIT:
           Ili9341Init(dsp_init);
-          break;
-        case FUNC_DISPLAY_EVERY_SECOND:
-          Ili9341Refresh();
           break;
         case FUNC_DISPLAY_POWER:
           Ili9341OnOff();
@@ -267,8 +248,11 @@ boolean Xdsp04(byte function)
 //        case FUNC_DISPLAY_DRAW_FRAME:
 //          oled->display();
 //          break;
-        case FUNC_DISPLAY_FONT_SIZE:
+        case FUNC_DISPLAY_TEXT_SIZE:
           tft->setTextSize(Settings.display_size);
+          break;
+        case FUNC_DISPLAY_FONT_SIZE:
+//          tft->setTextSize(Settings.display_font);
           break;
         case FUNC_DISPLAY_DRAW_STRING:
           Ili9341DrawStringAt(dsp_x, dsp_y, dsp_str, dsp_color, dsp_flag);
@@ -277,8 +261,13 @@ boolean Xdsp04(byte function)
           Ili9341DisplayOnOff(dsp_on);
           break;
         case FUNC_DISPLAY_ROTATION:
-          tft->setRotation(dsp_rotation);
+          tft->setRotation(Settings.display_rotate);
           break;
+#ifdef USE_DISPLAY_MODES1TO5
+        case FUNC_DISPLAY_EVERY_SECOND:
+          Ili9341Refresh();
+          break;
+#endif  // USE_DISPLAY_MODES1TO5
       }
     }
   }

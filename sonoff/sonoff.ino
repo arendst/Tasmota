@@ -88,7 +88,7 @@ const char kTasmotaCommands[] PROGMEM =
   D_CMND_BACKLOG "|" D_CMND_DELAY "|" D_CMND_POWER "|" D_CMND_FANSPEED "|" D_CMND_STATUS "|" D_CMND_STATE "|"  D_CMND_POWERONSTATE "|" D_CMND_PULSETIME "|"
   D_CMND_BLINKTIME "|" D_CMND_BLINKCOUNT "|" D_CMND_SENSOR "|" D_CMND_SAVEDATA "|" D_CMND_SETOPTION "|" D_CMND_TEMPERATURE_RESOLUTION "|" D_CMND_HUMIDITY_RESOLUTION "|"
   D_CMND_PRESSURE_RESOLUTION "|" D_CMND_POWER_RESOLUTION "|" D_CMND_VOLTAGE_RESOLUTION "|" D_CMND_CURRENT_RESOLUTION "|" D_CMND_ENERGY_RESOLUTION "|" D_CMND_MODULE "|" D_CMND_MODULES "|"
-  D_CMND_GPIO "|" D_CMND_GPIOS "|" D_CMND_PWM "|" D_CMND_PWMFREQUENCY "|" D_CMND_PWMRANGE "|" D_CMND_COUNTER "|"  D_CMND_COUNTERTYPE "|"
+  D_CMND_GPIO "|" D_CMND_GPIOS "|" D_CMND_PWM "|" D_CMND_PWMFREQUENCY "|" D_CMND_PWMRANGE "|" D_CMND_COUNTER "|" D_CMND_COUNTERTYPE "|"
   D_CMND_COUNTERDEBOUNCE "|" D_CMND_SLEEP "|" D_CMND_UPGRADE "|" D_CMND_UPLOAD "|" D_CMND_OTAURL "|" D_CMND_SERIALLOG "|" D_CMND_SYSLOG "|"
   D_CMND_LOGHOST "|" D_CMND_LOGPORT "|" D_CMND_IPADDRESS "|" D_CMND_NTPSERVER "|" D_CMND_AP "|" D_CMND_SSID "|" D_CMND_PASSWORD "|" D_CMND_HOSTNAME "|"
   D_CMND_WIFICONFIG "|" D_CMND_FRIENDLYNAME "|" D_CMND_SWITCHMODE "|"
@@ -176,6 +176,7 @@ uint8_t pin[GPIO_MAX];                      // Possible pin configurations
 power_t rel_inverted = 0;                   // Relay inverted flag (1 = (0 = On, 1 = Off))
 uint8_t led_inverted = 0;                   // LED inverted flag (1 = (0 = On, 1 = Off))
 uint8_t pwm_inverted = 0;                   // PWM inverted flag (1 = inverted)
+uint8_t counter_no_pullup = 0;              // Counter input pullup flag (1 = No pullup)
 uint8_t dht_flg = 0;                        // DHT configured
 uint8_t energy_flg = 1;                     // Energy monitor configured
 uint8_t i2c_flg = 0;                        // I2C configured
@@ -383,6 +384,15 @@ uint8_t GetFanspeed()
   return fanspeed;
 }
 
+void SetFanspeed(uint8_t fanspeed)
+{
+ for (byte i = 0; i < 3; i++) {
+    uint8_t state = kIFan02Speed[fanspeed][i];
+//    uint8_t state = pgm_read_byte(kIFan02Speed +(speed *3) +i);
+    ExecuteCommandPower(i +2, state, SRC_IGNORE);  // Use relay 2, 3 and 4
+  }
+}
+
 /********************************************************************************************/
 
 void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
@@ -537,11 +547,7 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
         }
       }
       if ((payload >= 0) && (payload <= 3) && (payload != GetFanspeed())) {
-        for (byte i = 0; i < 3; i++) {
-          uint8_t state = kIFan02Speed[payload][i];
-//          uint8_t state = pgm_read_byte(kIFan02Speed +(payload *3) +i);
-          ExecuteCommandPower(i +2, state, SRC_IGNORE);  // Use relay 2, 3 and 4
-        }
+        SetFanspeed(payload);
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, GetFanspeed());
     }
@@ -557,9 +563,9 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
     }
     else if (CMND_SLEEP == command_code) {
       if ((payload >= 0) && (payload < 251)) {
-        if ((!Settings.sleep && payload) || (Settings.sleep && !payload)) restart_flag = 2;
         Settings.sleep = payload;
         sleep = payload;
+        WiFiSetSleepMode();
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE_UNIT_NVALUE_UNIT, command, sleep, (Settings.flag.value_units) ? " " D_UNIT_MILLISECOND : "", Settings.sleep, (Settings.flag.value_units) ? " " D_UNIT_MILLISECOND : "");
     }
@@ -826,7 +832,6 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
         restart_flag = 2;
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{"));
-      byte jsflg = 0;
       for (byte i = 0; i < MAX_GPIO_PIN; i++) {
         if (GPIO_USER == cmodule.gp.io[i]) {
           if (jsflg) snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,"), mqtt_data);
@@ -845,13 +850,13 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
       mytmplt cmodule;
       memcpy_P(&cmodule, &kModules[Settings.module], sizeof(cmodule));
       for (byte i = 0; i < GPIO_SENSOR_END; i++) {
-        if (!jsflg) {
-          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_GPIOS "%d\":["), lines);
-        } else {
-          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,"), mqtt_data);
-        }
-        jsflg = 1;
         if (!GetUsedInModule(i, cmodule.gp.io)) {
+          if (!jsflg) {
+            snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_GPIOS "%d\":["), lines);
+          } else {
+            snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,"), mqtt_data);
+          }
+          jsflg = 1;
           snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s\"%d (%s)\""), mqtt_data, i, GetTextIndexed(stemp1, sizeof(stemp1), i, kSensorNames));
           if ((strlen(mqtt_data) > (LOGSZ - TOPSZ)) || (i == GPIO_SENSOR_END -1)) {
             snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s]}"), mqtt_data);
@@ -1522,6 +1527,11 @@ void PerformEverySecond()
 {
   uptime++;
 
+  if ((4 == uptime) && (SONOFF_IFAN02 == Settings.module)) {  // Microcontroller needs 3 seconds before accepting commands
+    SetDevicePower(1, SRC_RETRY);      // Sync with default power on state microcontroller being Light ON and Fan OFF
+    SetDevicePower(power, SRC_RETRY);  // Set required power on state
+  }
+
   if (blockgpio0) blockgpio0--;
 
   for (byte i = 0; i < MAX_PULSETIMERS; i++) {
@@ -1965,8 +1975,9 @@ void StateLoop()
           strlcpy(mqtt_data, GetOtaUrl(log_data, sizeof(log_data)), sizeof(mqtt_data));
 #ifndef BE_MINIMAL
           if (RtcSettings.ota_loader) {
-            char *pch = strrchr(mqtt_data, '-');  // Change from filename-DE.bin into filename-minimal.bin
-            char *ech = strrchr(mqtt_data, '.');  // Change from filename.bin into filename-minimal.bin
+            char *bch = strrchr(mqtt_data, '/');                        // Only consider filename after last backslash prevent change of urls having "-" in it
+            char *pch = strrchr((bch != NULL) ? bch : mqtt_data, '-');  // Change from filename-DE.bin into filename-minimal.bin
+            char *ech = strrchr((bch != NULL) ? bch : mqtt_data, '.');  // Change from filename.bin into filename-minimal.bin
             if (!pch) pch = ech;
             if (pch) {
               mqtt_data[pch - mqtt_data] = '\0';
@@ -2265,6 +2276,8 @@ void SerialInput()
 void GpioInit()
 {
   uint8_t mpin;
+  uint8_t key_no_pullup = 0;
+  uint16_t switch_no_pullup = 0;
   mytmplt def_module;
 
   if (!Settings.module || (Settings.module >= MAXMODULE)) {
@@ -2293,7 +2306,15 @@ void GpioInit()
 //  AddLog(LOG_LEVEL_DEBUG);
 
     if (mpin) {
-      if ((mpin >= GPIO_REL1_INV) && (mpin < (GPIO_REL1_INV + MAX_RELAYS))) {
+      if ((mpin >= GPIO_SWT1_NP) && (mpin < (GPIO_SWT1_NP + MAX_SWITCHES))) {
+        bitSet(switch_no_pullup, mpin - GPIO_SWT1_NP);
+        mpin -= (GPIO_SWT1_NP - GPIO_SWT1);
+      }
+      if ((mpin >= GPIO_KEY1_NP) && (mpin < (GPIO_KEY1_NP + MAX_KEYS))) {
+        bitSet(key_no_pullup, mpin - GPIO_KEY1_NP);
+        mpin -= (GPIO_KEY1_NP - GPIO_KEY1);
+      }
+      else if ((mpin >= GPIO_REL1_INV) && (mpin < (GPIO_REL1_INV + MAX_RELAYS))) {
         bitSet(rel_inverted, mpin - GPIO_REL1_INV);
         mpin -= (GPIO_REL1_INV - GPIO_REL1);
       }
@@ -2304,6 +2325,10 @@ void GpioInit()
       else if ((mpin >= GPIO_PWM1_INV) && (mpin < (GPIO_PWM1_INV + MAX_PWMS))) {
         bitSet(pwm_inverted, mpin - GPIO_PWM1_INV);
         mpin -= (GPIO_PWM1_INV - GPIO_PWM1);
+      }
+      else if ((mpin >= GPIO_CNTR1_NP) && (mpin < (GPIO_CNTR1_NP + MAX_COUNTERS))) {
+        bitSet(counter_no_pullup, mpin - GPIO_CNTR1_NP);
+        mpin -= (GPIO_CNTR1_NP - GPIO_CNTR1);
       }
 #ifdef USE_DHT
       else if ((mpin >= GPIO_DHT11) && (mpin <= GPIO_SI7021)) {
@@ -2397,7 +2422,7 @@ void GpioInit()
 
   for (byte i = 0; i < MAX_KEYS; i++) {
     if (pin[GPIO_KEY1 +i] < 99) {
-      pinMode(pin[GPIO_KEY1 +i], (16 == pin[GPIO_KEY1 +i]) ? INPUT_PULLDOWN_16 : INPUT_PULLUP);
+      pinMode(pin[GPIO_KEY1 +i], (16 == pin[GPIO_KEY1 +i]) ? INPUT_PULLDOWN_16 : bitRead(key_no_pullup, i) ? INPUT : INPUT_PULLUP);
     }
   }
   for (byte i = 0; i < MAX_LEDS; i++) {
@@ -2409,9 +2434,8 @@ void GpioInit()
   for (byte i = 0; i < MAX_SWITCHES; i++) {
     lastwallswitch[i] = 1;  // Init global to virtual switch state;
     if (pin[GPIO_SWT1 +i] < 99) {
-      pinMode(pin[GPIO_SWT1 +i], (16 == pin[GPIO_SWT1 +i]) ? INPUT_PULLDOWN_16 :INPUT_PULLUP);
+      pinMode(pin[GPIO_SWT1 +i], (16 == pin[GPIO_SWT1 +i]) ? INPUT_PULLDOWN_16 : bitRead(switch_no_pullup, i) ? INPUT : INPUT_PULLUP);
       lastwallswitch[i] = digitalRead(pin[GPIO_SWT1 +i]);  // Set global now so doesn't change the saved power state on first switch check
-
     }
     virtualswitch[i] = lastwallswitch[i];
   }
