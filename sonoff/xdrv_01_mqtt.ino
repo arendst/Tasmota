@@ -659,7 +659,7 @@ bool MqttCommand()
         } else {
           mqtt_data[0] = '\0';
         }
-        MqttPublishDirect(stemp1, false);
+        MqttPublishDirect(stemp1, (index==2) );
 //        snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, D_JSON_DONE);
         mqtt_data[0] = '\0';
       }
