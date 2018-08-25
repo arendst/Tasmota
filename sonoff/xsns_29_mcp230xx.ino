@@ -57,14 +57,40 @@ uint8_t mcp230xx_address;
 uint8_t mcp230xx_addresses[] = { MCP230xx_ADDRESS1, MCP230xx_ADDRESS2, MCP230xx_ADDRESS3, MCP230xx_ADDRESS4, MCP230xx_ADDRESS5, MCP230xx_ADDRESS6, MCP230xx_ADDRESS7, MCP230xx_ADDRESS8 };
 uint8_t mcp230xx_pincount = 0;
 uint8_t mcp230xx_int_en = 0;
+uint8_t mcp230xx_int_prio_counter = 0;
+uint8_t mcp230xx_int_counter_en = 0;
+uint8_t mcp230xx_int_sec_counter = 0;
+
+uint8_t mcp230xx_int_report_defer_counter[16] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+
+uint16_t mcp230xx_int_counter[16] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 
 unsigned long int_millis[16]; // To keep track of millis() since last interrupt
 
 const char MCP230XX_SENSOR_RESPONSE[] PROGMEM = "{\"Sensor29_D%i\":{\"MODE\":%i,\"PULL_UP\":\"%s\",\"INT_MODE\":\"%s\",\"STATE\":\"%s\"}}";
 
+const char MCP230XX_INTCFG_RESPONSE[] PROGMEM = "{\"MCP230xx_INT%s\":{\"D_%i\":%i}}";
+
 #ifdef USE_MCP230xx_OUTPUT
 const char MCP230XX_CMND_RESPONSE[] PROGMEM = "{\"S29cmnd_D%i\":{\"COMMAND\":\"%s\",\"STATE\":\"%s\"}}";
 #endif // USE_MCP230xx_OUTPUT
+
+void MCP230xx_CheckForIntCounter(void) {
+  uint8_t en = 0;
+  for (uint8_t ca=0;ca<16;ca++) {
+    if (Settings.mcp230xx_config[ca].int_count_en) {
+      en=1;
+    }
+  }
+  if (!Settings.mcp230xx_int_timer) en=0;
+  mcp230xx_int_counter_en=en;
+  if (!mcp230xx_int_counter_en) { // Interrupt counters are disabled, so we clear all the counters
+    for (uint8_t ca=0;ca<16;ca++) {
+      mcp230xx_int_counter[ca] = 0;
+    }
+  }
+}
+  
 
 const char* ConvertNumTxt(uint8_t statu, uint8_t pinmod=0) {
 #ifdef USE_MCP230xx_OUTPUT
@@ -166,6 +192,7 @@ void MCP230xx_ApplySettings(void) {
     int_millis[idx]=millis();
   }
   mcp230xx_int_en = int_en;
+  MCP230xx_CheckForIntCounter(); // update register on whether or not we should be counting interrupts
 }
 
 void MCP230xx_Detect()
@@ -232,6 +259,26 @@ bool MCP230xx_CheckForInterrupt(void) {
                     break;
                   default:
                     break;
+                }
+                // Check for interrupt counter
+                if ((mcp230xx_int_counter_en) && (report_int)) { // We may have some counting to do
+                  if (Settings.mcp230xx_config[intp+(mcp230xx_port*8)].int_count_en) { // Indeed, for this pin
+                    mcp230xx_int_counter[intp+(mcp230xx_port*8)]++;
+                  }
+                }
+                // check for interrupt defer on this pin
+                if (report_int) {
+                  if (Settings.mcp230xx_config[intp+(mcp230xx_port*8)].int_report_defer) {
+                    mcp230xx_int_report_defer_counter[intp+(mcp230xx_port*8)]++;
+                    if (mcp230xx_int_report_defer_counter[intp+(mcp230xx_port*8)] >= Settings.mcp230xx_config[intp+(mcp230xx_port*8)].int_report_defer) {
+                      mcp230xx_int_report_defer_counter[intp+(mcp230xx_port*8)]=0;
+                    } else {
+                      report_int = 0; // defer int report for now
+                    }
+                  }
+                }
+                if (Settings.mcp230xx_config[intp+(mcp230xx_port*8)].int_count_en) { // We do not want to report via tele or event if counting is enabled
+                  report_int = 0;
                 }
                 if (report_int) {
                   bool int_tele = false;
@@ -353,13 +400,14 @@ void MCP230xx_Reset(uint8_t pinmode) {
       Settings.mcp230xx_config[pinx].int_report_mode=3; // Disabled for pinmode 1, 5 and 6 (No interrupts there)
     }
     Settings.mcp230xx_config[pinx].int_report_defer=0; // Disabled
-    Settings.mcp230xx_config[pinx].int_count_sec; // Disabled
-    Settings.mcp230xx_config[pinx].int_count_min; // Disabled
+    Settings.mcp230xx_config[pinx].int_count_en=0;  // Disabled
+    Settings.mcp230xx_config[pinx].spare12=0;
     Settings.mcp230xx_config[pinx].spare13=0;
     Settings.mcp230xx_config[pinx].spare14=0;
     Settings.mcp230xx_config[pinx].spare15=0;
   }
-  Settings.mcp230xx_int_prio=0; // Once per FUNC_EVERY_50_MSECOND callback
+  Settings.mcp230xx_int_prio = 0; // Once per FUNC_EVERY_50_MSECOND callback
+  Settings.mcp230xx_int_timer = 0;
   MCP230xx_ApplySettings();
   char pulluptxt[7];
   char intmodetxt[9];
@@ -394,7 +442,127 @@ bool MCP230xx_Command(void) {
   if (!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 1),"RESET5")) {  MCP230xx_Reset(5); return serviced; }
   if (!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 1),"RESET6")) {  MCP230xx_Reset(6); return serviced; }
 #endif // USE_MCP230xx_OUTPUT
+
+  if (!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 1),"INTPRI")) {
+    if (paramcount > 2) {
+      uint8_t intpri = atoi(subStr(sub_string, XdrvMailbox.data, ",", 2));
+      if ((intpri >= 0) && (intpri <= 20)) {
+        Settings.mcp230xx_int_prio = intpri;
+        snprintf_P(mqtt_data, sizeof(mqtt_data), MCP230XX_INTCFG_RESPONSE,"PRI",99,Settings.mcp230xx_int_prio);  // "{\"MCP230xx_INT%s\":{\"D_%i\":%i}}";
+        return serviced;
+      }
+    } else { // No parameter was given for INTPRI so we return the current configured value
+      snprintf_P(mqtt_data, sizeof(mqtt_data), MCP230XX_INTCFG_RESPONSE,"PRI",99,Settings.mcp230xx_int_prio);  // "{\"MCP230xx_INT%s\":{\"D_%i\":%i}}";
+      return serviced;
+    }
+  }
+
+  if (!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 1),"INTTIMER")) {
+    if (paramcount > 2) {
+      uint8_t inttim = atoi(subStr(sub_string, XdrvMailbox.data, ",", 2));
+      if ((inttim >= 0) && (inttim <= 3600)) {
+        Settings.mcp230xx_int_timer = inttim;
+        MCP230xx_CheckForIntCounter(); // update register on whether or not we should be counting interrupts
+        snprintf_P(mqtt_data, sizeof(mqtt_data), MCP230XX_INTCFG_RESPONSE,"TIMER",99,Settings.mcp230xx_int_timer);  // "{\"MCP230xx_INT%s\":{\"D_%i\":%i}}";
+        return serviced;
+      }
+    } else { // No parameter was given for INTTIM so we return the current configured value
+      snprintf_P(mqtt_data, sizeof(mqtt_data), MCP230XX_INTCFG_RESPONSE,"TIMER",99,Settings.mcp230xx_int_timer);  // "{\"MCP230xx_INT%s\":{\"D_%i\":%i}}";
+      return serviced;
+    }
+  }
+
+  if (!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 1),"INTDEF")) {
+    if (paramcount > 2) {
+      uint8_t pin = atoi(subStr(sub_string, XdrvMailbox.data, ",", 2));
+      if (pin < mcp230xx_pincount) {
+        if (pin == 0) {
+          if (!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 2), "0")) validpin=true;
+        } else {
+          validpin = true;
+        }
+      }
+      if (validpin) {
+        if (paramcount > 3) {
+          uint8_t intdef = atoi(subStr(sub_string, XdrvMailbox.data, ",", 3));
+          if ((intdef >= 0) && (intdef <= 15)) {
+            Settings.mcp230xx_config[pin].int_report_defer=intdef;
+            if (Settings.mcp230xx_config[pin].int_count_en) {
+              Settings.mcp230xx_config[pin].int_count_en=0;
+              MCP230xx_CheckForIntCounter();
+              snprintf_P(log_data, sizeof(log_data), PSTR("*** WARNING *** - Disabled INTCNT for pin D%i"),pin);
+              AddLog(LOG_LEVEL_INFO);
+            }
+            snprintf_P(mqtt_data, sizeof(mqtt_data), MCP230XX_INTCFG_RESPONSE,"DEF",pin,Settings.mcp230xx_config[pin].int_report_defer);  // "{\"MCP230xx_INT%s\":{\"D_%i\":%i}}";
+            return serviced;
+          } else {
+            serviced=false;
+            return serviced;
+          }
+        } else {
+          snprintf_P(mqtt_data, sizeof(mqtt_data), MCP230XX_INTCFG_RESPONSE,"DEF",pin,Settings.mcp230xx_config[pin].int_report_defer);  // "{\"MCP230xx_INT%s\":{\"D_%i\":%i}}";
+          return serviced;
+        }
+      }
+      serviced = false;
+      return serviced;
+    } else {
+      serviced = false;
+      return serviced;
+    }
+  }
+
+  if (!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 1),"INTCNT")) {
+    if (paramcount > 2) {
+      uint8_t pin = atoi(subStr(sub_string, XdrvMailbox.data, ",", 2));
+      if (pin < mcp230xx_pincount) {
+        if (pin == 0) {
+          if (!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 2), "0")) validpin=true;
+        } else {
+          validpin = true;
+        }
+      }
+      if (validpin) {
+        if (paramcount > 3) {
+          uint8_t intcnt = atoi(subStr(sub_string, XdrvMailbox.data, ",", 3));
+          if ((intcnt >= 0) && (intcnt <= 1)) {
+            Settings.mcp230xx_config[pin].int_count_en=intcnt;
+            if (Settings.mcp230xx_config[pin].int_report_defer) {
+              Settings.mcp230xx_config[pin].int_report_defer=0;
+              snprintf_P(log_data, sizeof(log_data), PSTR("*** WARNING *** - Disabled INTDEF for pin D%i"),pin);
+              AddLog(LOG_LEVEL_INFO);              
+            }
+            if (Settings.mcp230xx_config[pin].int_report_mode < 3) {
+              Settings.mcp230xx_config[pin].int_report_mode=3;
+              snprintf_P(log_data, sizeof(log_data), PSTR("*** WARNING *** - Disabled immediate interrupt/telemetry reporting for pin D%i"),pin);
+              AddLog(LOG_LEVEL_INFO);
+            }
+            if ((Settings.mcp230xx_config[pin].int_count_en) && (!Settings.mcp230xx_int_timer)) {
+              snprintf_P(log_data, sizeof(log_data), PSTR("*** WARNING *** - INTCNT enabled for pin D%i but global INTTIMER is disabled!"),pin);
+              AddLog(LOG_LEVEL_INFO);
+            }
+            MCP230xx_CheckForIntCounter(); // update register on whether or not we should be counting interrupts
+            snprintf_P(mqtt_data, sizeof(mqtt_data), MCP230XX_INTCFG_RESPONSE,"CNT",pin,Settings.mcp230xx_config[pin].int_count_en);  // "{\"MCP230xx_INT%s\":{\"D_%i\":%i}}";
+            return serviced;
+          } else {
+            serviced=false;
+            return serviced;
+          }
+        } else {
+          snprintf_P(mqtt_data, sizeof(mqtt_data), MCP230XX_INTCFG_RESPONSE,"CNT",pin,Settings.mcp230xx_config[pin].int_count_en);  // "{\"MCP230xx_INT%s\":{\"D_%i\":%i}}";
+          return serviced;
+        }
+      }
+      serviced = false;
+      return serviced;
+    } else {
+      serviced = false;
+      return serviced;
+    }
+  }
+
   uint8_t pin = atoi(subStr(sub_string, XdrvMailbox.data, ",", 1));
+  
   if (pin < mcp230xx_pincount) {
     if (0 == pin) {
       if (!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 1), "0")) validpin=true;
@@ -539,6 +707,19 @@ void MCP230xx_OutputTelemetry(void) {
 
 #endif // USE_MCP230xx_OUTPUT
 
+void MCP230xx_Interrupt_Counter_Report() {
+  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_TIME "\":\"%s\",\"MCP230_INTTIMER\": {"), GetDateAndTime(DT_LOCAL).c_str());
+  for (uint8_t pinx = 0;pinx < mcp230xx_pincount;pinx++) {
+    if (Settings.mcp230xx_config[pinx].int_count_en) { // Counting is enabled for this pin so we add to report
+      snprintf_P(mqtt_data,sizeof(mqtt_data), PSTR("%s\"INTCNT_D%i\":%i,"),mqtt_data,pinx,mcp230xx_int_counter[pinx]);
+      mcp230xx_int_counter[pinx]=0;
+    }
+  }
+  snprintf_P(mqtt_data,sizeof(mqtt_data),PSTR("%s\"END\":1}}"),mqtt_data);
+  MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);
+  mcp230xx_int_sec_counter = 0;
+}
+
 
 /*********************************************************************************************\
    Interface
@@ -554,6 +735,12 @@ boolean Xsns29(byte function)
         break;
       case FUNC_EVERY_SECOND:
         MCP230xx_Detect();
+        if (mcp230xx_int_counter_en) {
+          mcp230xx_int_sec_counter++;
+          if (mcp230xx_int_sec_counter >= Settings.mcp230xx_int_timer) { // Interrupt counter interval reached, lets report
+            MCP230xx_Interrupt_Counter_Report();
+          }
+        }
 #ifdef USE_MCP230xx_OUTPUT
         if (tele_period == 0) {
           MCP230xx_OutputTelemetry();
@@ -561,8 +748,12 @@ boolean Xsns29(byte function)
 #endif // USE_MCP230xx_OUTPUT
         break;
       case FUNC_EVERY_50_MSECOND:
-        if (mcp230xx_int_en) {          // Only check for interrupts if its enabled on one of the pins
-          MCP230xx_CheckForInterrupt();
+        if ((mcp230xx_int_en) && (mcp230xx_type)) { // Only check for interrupts if its enabled on one of the pins
+          mcp230xx_int_prio_counter++;
+          if ((mcp230xx_int_prio_counter) >= (Settings.mcp230xx_int_prio)) {
+            MCP230xx_CheckForInterrupt();
+            mcp230xx_int_prio_counter=0;
+          }
         }
         break;
       case FUNC_JSON_APPEND:

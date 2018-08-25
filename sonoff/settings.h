@@ -159,8 +159,8 @@ typedef union {
     uint16_t saved_state : 1;               // Save output state, if used.
     uint16_t int_report_mode : 2;           // Interrupt reporting mode 0 = immediate telemetry & event, 1 = immediate event only, 2 = immediate telemetry only
     uint16_t int_report_defer : 4;          // Number of interrupts to ignore until reporting (default 0, max 15)
-    uint16_t int_count_sec : 1;             // 0 = Not, 1 = Report number of interrupts since last FUNC_EVERY_SECOND callback if more than 0 occured (overrides int_report_mode if enabled)
-    uint16_t int_count_min : 1;             // 0 = Not, 1 = Report number of interrupts since last FUNC_EVERY_SECOND*60 callback if more than 0 occured (overrides int_report_mode if enabled)
+    uint16_t int_count_en : 1;              // Enable interrupt counter for this pin
+    uint16_t spare12 : 1;
     uint16_t spare13 : 1;
     uint16_t spare14 : 1;
     uint16_t spare15 : 1;
@@ -321,8 +321,10 @@ struct SYSCFG {
   byte          knx_CB_param[MAX_KNX_CB];  // 6EC  Type of Output (set relay, toggle relay, reply sensor value)
   Mcp230xxCfg   mcp230xx_config[16];       // 6F6
   uint8_t       mcp230xx_int_prio;         // 716
+  byte          free_717;                  // 717
+  uint16_t      mcp230xx_int_timer;        // 718
 
-  byte          free_717[183];             // 717
+  byte          free_71A[180];             // 71A
 
   char          mems[MAX_RULE_MEMS][10];  // 7CE
                                            // 800 Full - no more free locations
