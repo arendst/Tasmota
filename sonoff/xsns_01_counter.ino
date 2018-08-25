@@ -64,7 +64,7 @@ void CounterUpdate4()
 void CounterSaveState()
 {
   for (byte i = 0; i < MAX_COUNTERS; i++) {
-    if ((pin[GPIO_CNTR1 +i] < 99) || (pin[GPIO_CNTR1_NP +i] < 99)) {
+    if (pin[GPIO_CNTR1 +i] < 99) {
       Settings.pulse_counter[i] = RtcSettings.pulse_counter[i];
     }
   }
@@ -77,12 +77,8 @@ void CounterInit()
 
   for (byte i = 0; i < MAX_COUNTERS; i++) {
     if (pin[GPIO_CNTR1 +i] < 99) {
-      pinMode(pin[GPIO_CNTR1 +i], INPUT_PULLUP);
+      pinMode(pin[GPIO_CNTR1 +i], bitRead(counter_no_pullup, i) ? INPUT : INPUT_PULLUP);
       attachInterrupt(pin[GPIO_CNTR1 +i], counter_callbacks[i], FALLING);
-    }
-    else if (pin[GPIO_CNTR1_NP +i] < 99) {
-      pinMode(pin[GPIO_CNTR1_NP +i], INPUT);
-      attachInterrupt(pin[GPIO_CNTR1_NP +i], counter_callbacks[i], FALLING);
     }
   }
 }
@@ -100,7 +96,7 @@ void CounterShow(boolean json)
   byte dsxflg = 0;
   byte header = 0;
   for (byte i = 0; i < MAX_COUNTERS; i++) {
-    if ((pin[GPIO_CNTR1 +i] < 99) || (pin[GPIO_CNTR1_NP +i] < 99)) {
+    if (pin[GPIO_CNTR1 +i] < 99) {
       if (bitRead(Settings.pulse_counter_type, i)) {
         dtostrfd((double)RtcSettings.pulse_counter[i] / 1000000, 6, counter);
       } else {

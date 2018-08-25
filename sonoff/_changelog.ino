@@ -1,6 +1,7 @@
 /* 6.1.1.10
  * Disable wifi sleep for both Esp8266/Arduino core 2.4.1 and 2.4.2 to solve device freeze caused by Espressif SDK bug (#3554)
- * 
+ * Rewrite GPIO options ButtonXn, SwitchXn and CounterXn to select INPUT mode instead of INPUT_PULLUP
+ *
  * 6.1.1.9
  * Allow user override of define MAX_RULE_TIMERS (#3561)
  * Allow user override of define MAX_RULE_VARS

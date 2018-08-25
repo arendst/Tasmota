@@ -176,6 +176,7 @@ uint8_t pin[GPIO_MAX];                      // Possible pin configurations
 power_t rel_inverted = 0;                   // Relay inverted flag (1 = (0 = On, 1 = Off))
 uint8_t led_inverted = 0;                   // LED inverted flag (1 = (0 = On, 1 = Off))
 uint8_t pwm_inverted = 0;                   // PWM inverted flag (1 = inverted)
+uint8_t counter_no_pullup = 0;              // Counter input pullup flag (1 = No pullup)
 uint8_t dht_flg = 0;                        // DHT configured
 uint8_t energy_flg = 1;                     // Energy monitor configured
 uint8_t i2c_flg = 0;                        // I2C configured
@@ -896,7 +897,7 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, Settings.pwm_range);
     }
     else if ((CMND_COUNTER == command_code) && (index > 0) && (index <= MAX_COUNTERS)) {
-      if ((data_len > 0) && ((pin[GPIO_CNTR1 + index -1] < 99) || (pin[GPIO_CNTR1_NP + index -1] < 99))) {
+      if ((data_len > 0) && (pin[GPIO_CNTR1 + index -1] < 99)) {
         if ((dataBuf[0] == '-') || (dataBuf[0] == '+')) {
           RtcSettings.pulse_counter[index -1] += payload32;
           Settings.pulse_counter[index -1] += payload32;
@@ -908,7 +909,7 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_LVALUE, command, index, RtcSettings.pulse_counter[index -1]);
     }
     else if ((CMND_COUNTERTYPE == command_code) && (index > 0) && (index <= MAX_COUNTERS)) {
-      if ((payload >= 0) && (payload <= 1) && ((pin[GPIO_CNTR1 + index -1] < 99) || (pin[GPIO_CNTR1_NP + index -1] < 99))) {
+      if ((payload >= 0) && (payload <= 1) && (pin[GPIO_CNTR1 + index -1] < 99)) {
         bitWrite(Settings.pulse_counter_type, index -1, payload &1);
         RtcSettings.pulse_counter[index -1] = 0;
         Settings.pulse_counter[index -1] = 0;
@@ -1501,9 +1502,9 @@ boolean MqttShowSensor()
   int json_data_start = strlen(mqtt_data);
   for (byte i = 0; i < MAX_SWITCHES; i++) {
 #ifdef USE_TM1638
-    if ((pin[GPIO_SWT1 +i] < 99) || (pin[GPIO_SWT1_NP +i] < 99) || ((pin[GPIO_TM16CLK] < 99) && (pin[GPIO_TM16DIO] < 99) && (pin[GPIO_TM16STB] < 99))) {
+    if ((pin[GPIO_SWT1 +i] < 99) || ((pin[GPIO_TM16CLK] < 99) && (pin[GPIO_TM16DIO] < 99) && (pin[GPIO_TM16STB] < 99))) {
 #else
-    if ((pin[GPIO_SWT1 +i] < 99) || (pin[GPIO_SWT1_NP +i] < 99)) {
+    if (pin[GPIO_SWT1 +i] < 99) {
 #endif  // USE_TM1638
       boolean swm = ((FOLLOW_INV == Settings.switchmode[i]) || (PUSHBUTTON_INV == Settings.switchmode[i]) || (PUSHBUTTONHOLD_INV == Settings.switchmode[i]));
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"" D_JSON_SWITCH "%d\":\"%s\""), mqtt_data, i +1, GetStateText(swm ^ lastwallswitch[i]));
@@ -1635,10 +1636,6 @@ void ButtonHandler()
         button_present = 1;
         button = digitalRead(pin[GPIO_KEY1 +button_index]);
       }
-      else if ((pin[GPIO_KEY1_NP +button_index] < 99) && !blockgpio0) {
-        button_present = 1;
-        button = digitalRead(pin[GPIO_KEY1_NP +button_index]);
-      }
     }
 
     if (button_present) {
@@ -1755,7 +1752,7 @@ void SwitchHandler(byte mode)
   uint8_t switchflag;
 
   for (byte i = 0; i < MAX_SWITCHES; i++) {
-    if ((pin[GPIO_SWT1 +i] < 99) || (pin[GPIO_SWT1_NP +i] < 99) || (mode)) {
+    if ((pin[GPIO_SWT1 +i] < 99) || (mode)) {
 
       if (holdwallswitch[i]) {
         holdwallswitch[i]--;
@@ -1767,11 +1764,7 @@ void SwitchHandler(byte mode)
       if (mode) {
         button = virtualswitch[i];
       } else {
-        if (pin[GPIO_SWT1 +i] < 99) {
-          button = digitalRead(pin[GPIO_SWT1 +i]);
-        } else {
-          button = digitalRead(pin[GPIO_SWT1_NP +i]);
-        }
+        button = digitalRead(pin[GPIO_SWT1 +i]);
       }
 
       if (button != lastwallswitch[i]) {
@@ -2283,6 +2276,8 @@ void SerialInput()
 void GpioInit()
 {
   uint8_t mpin;
+  uint8_t key_no_pullup = 0;
+  uint16_t switch_no_pullup = 0;
   mytmplt def_module;
 
   if (!Settings.module || (Settings.module >= MAXMODULE)) {
@@ -2311,7 +2306,15 @@ void GpioInit()
 //  AddLog(LOG_LEVEL_DEBUG);
 
     if (mpin) {
-      if ((mpin >= GPIO_REL1_INV) && (mpin < (GPIO_REL1_INV + MAX_RELAYS))) {
+      if ((mpin >= GPIO_SWT1_NP) && (mpin < (GPIO_SWT1_NP + MAX_SWITCHES))) {
+        bitSet(switch_no_pullup, mpin - GPIO_SWT1_NP);
+        mpin -= (GPIO_SWT1_NP - GPIO_SWT1);
+      }
+      if ((mpin >= GPIO_KEY1_NP) && (mpin < (GPIO_KEY1_NP + MAX_KEYS))) {
+        bitSet(key_no_pullup, mpin - GPIO_KEY1_NP);
+        mpin -= (GPIO_KEY1_NP - GPIO_KEY1);
+      }
+      else if ((mpin >= GPIO_REL1_INV) && (mpin < (GPIO_REL1_INV + MAX_RELAYS))) {
         bitSet(rel_inverted, mpin - GPIO_REL1_INV);
         mpin -= (GPIO_REL1_INV - GPIO_REL1);
       }
@@ -2322,6 +2325,10 @@ void GpioInit()
       else if ((mpin >= GPIO_PWM1_INV) && (mpin < (GPIO_PWM1_INV + MAX_PWMS))) {
         bitSet(pwm_inverted, mpin - GPIO_PWM1_INV);
         mpin -= (GPIO_PWM1_INV - GPIO_PWM1);
+      }
+      else if ((mpin >= GPIO_CNTR1_NP) && (mpin < (GPIO_CNTR1_NP + MAX_COUNTERS))) {
+        bitSet(counter_no_pullup, mpin - GPIO_CNTR1_NP);
+        mpin -= (GPIO_CNTR1_NP - GPIO_CNTR1);
       }
 #ifdef USE_DHT
       else if ((mpin >= GPIO_DHT11) && (mpin <= GPIO_SI7021)) {
@@ -2415,10 +2422,7 @@ void GpioInit()
 
   for (byte i = 0; i < MAX_KEYS; i++) {
     if (pin[GPIO_KEY1 +i] < 99) {
-      pinMode(pin[GPIO_KEY1 +i], (16 == pin[GPIO_KEY1 +i]) ? INPUT_PULLDOWN_16 : INPUT_PULLUP);
-    }
-    else if (pin[GPIO_KEY1_NP +i] < 99) {
-      pinMode(pin[GPIO_KEY1_NP +i], (16 == pin[GPIO_KEY1_NP +i]) ? INPUT_PULLDOWN_16 : INPUT);
+      pinMode(pin[GPIO_KEY1 +i], (16 == pin[GPIO_KEY1 +i]) ? INPUT_PULLDOWN_16 : bitRead(key_no_pullup, i) ? INPUT : INPUT_PULLUP);
     }
   }
   for (byte i = 0; i < MAX_LEDS; i++) {
@@ -2430,12 +2434,8 @@ void GpioInit()
   for (byte i = 0; i < MAX_SWITCHES; i++) {
     lastwallswitch[i] = 1;  // Init global to virtual switch state;
     if (pin[GPIO_SWT1 +i] < 99) {
-      pinMode(pin[GPIO_SWT1 +i], (16 == pin[GPIO_SWT1 +i]) ? INPUT_PULLDOWN_16 : INPUT_PULLUP);
+      pinMode(pin[GPIO_SWT1 +i], (16 == pin[GPIO_SWT1 +i]) ? INPUT_PULLDOWN_16 : bitRead(switch_no_pullup, i) ? INPUT : INPUT_PULLUP);
       lastwallswitch[i] = digitalRead(pin[GPIO_SWT1 +i]);  // Set global now so doesn't change the saved power state on first switch check
-    }
-    else if (pin[GPIO_SWT1_NP +i] < 99) {
-      pinMode(pin[GPIO_SWT1_NP +i], (16 == pin[GPIO_SWT1_NP +i]) ? INPUT_PULLDOWN_16 : INPUT);
-      lastwallswitch[i] = digitalRead(pin[GPIO_SWT1_NP +i]);  // Set global now so doesn't change the saved power state on first switch check
     }
     virtualswitch[i] = lastwallswitch[i];
   }
