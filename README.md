@@ -51,8 +51,8 @@ See [wiki migration path](https://github.com/arendst/Sonoff-Tasmota/wiki/Upgrade
 <img src="https://github.com/arendst/arendst.github.io/blob/master/media/sonoffbasic.jpg" width="250" align="right" />
 
 See [Wiki](https://github.com/arendst/Sonoff-Tasmota/wiki) for more information.<br />
-See [Community](https://groups.google.com/d/forum/sonoffusers) for forum and more user experience.
-See [Chat](https://discord.gg/Ks2Kzd4)
+See [Community](https://groups.google.com/d/forum/sonoffusers) for forum.<br />
+See [Chat](https://discord.gg/Ks2Kzd4) for more user experience.
 
 The following devices are supported:
 - [iTead Sonoff Basic](https://www.itead.cc/smart-home/sonoff-wifi-wireless-switch-1.html)
