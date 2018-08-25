@@ -757,7 +757,7 @@ void GetFeatures()
   feature_drv1 |= 0x00100000;  // xdrv_07_domoticz.ino
 #endif
 #ifdef USE_DISPLAY
-  feature_drv1 |= 0x00200000;  // xdrv_98_display.ino
+  feature_drv1 |= 0x00200000;  // xdrv_13_display.ino
 #endif
 #ifdef USE_HOME_ASSISTANT
   feature_drv1 |= 0x00400000;  // xdrv_12_home_assistant.ino
@@ -805,6 +805,30 @@ void GetFeatures()
 #endif
 #ifdef USE_KNX_NO_EMULATION
   feature_drv2 |= 0x00000010;  // user_config(_override).h
+#endif
+#ifdef USE_DISPLAY_MODES1TO5
+  feature_drv2 |= 0x00000020;  // xdrv_13_display.ino
+#endif
+#ifdef USE_DISPLAY_GRAPH
+  feature_drv2 |= 0x00000040;  // xdrv_13_display.ino
+#endif
+#ifdef USE_DISPLAY_LCD
+  feature_drv2 |= 0x00000080;  // xdsp_01_lcd.ino
+#endif
+#ifdef USE_DISPLAY_SSD1306
+  feature_drv2 |= 0x00000100;  // xdsp_02_ssd1306.ino
+#endif
+#ifdef USE_DISPLAY_MATRIX
+  feature_drv2 |= 0x00000200;  // xdsp_03_matrix.ino
+#endif
+#ifdef USE_DISPLAY_ILI9341
+  feature_drv2 |= 0x00000400;  // xdsp_04_ili9341.ino
+#endif
+#ifdef USE_DISPLAY_EPAPER
+  feature_drv2 |= 0x00000800;  // xdsp_05_epaper.ino
+#endif
+#ifdef USE_DISPLAY_SH1106
+  feature_drv2 |= 0x00001000;  // xdsp_06_sh1106.ino
 #endif
 
 
@@ -942,6 +966,12 @@ void GetFeatures()
 #endif
 #ifdef USE_MPU6050
   feature_sns2 |= 0x00000008;  // xsns_32_mpu6050.ino
+#endif
+#ifdef USE_MCP230xx_OUTPUT
+  feature_sns2 |= 0x00000010;  // xsns_29_mcp230xx.ino
+#endif
+#ifdef USE_MCP230xx_DISPLAYOUTPUT
+  feature_sns2 |= 0x00000020;  // xsns_29_mcp230xx.ino
 #endif
 }
 
