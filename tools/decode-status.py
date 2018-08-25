@@ -104,9 +104,9 @@ a_features = [[
     "USE_KNX","USE_WPS","USE_SMARTCONFIG",""
     ],[
     "USE_CONFIG_OVERRIDE","BE_MINIMAL","USE_ALL_SENSORS","USE_CLASSIC",
-    "USE_KNX_NO_EMULATION","","","",
-    "","","","",
-    "","","","",
+    "USE_KNX_NO_EMULATION","USE_DISPLAY_MODES1TO5","USE_DISPLAY_GRAPH","USE_DISPLAY_LCD",
+    "USE_DISPLAY_SSD1306","USE_DISPLAY_MATRIX","USE_DISPLAY_ILI9341","USE_DISPLAY_EPAPER",
+    "USE_DISPLAY_SH1106","","","",
     "","","","",
     "","","","",
     "","","VTABLES_IN_FLASH","PIO_FRAMEWORK_ARDUINO_LWIP_HIGHER_BANDWIDTH",
@@ -122,7 +122,7 @@ a_features = [[
     "USE_SDM630","USE_LM75AD","USE_APDS9960","USE_TM1638"
     ],[
     "USE_MCP230xx","USE_MPR121","USE_CCS811","USE_MPU6050",
-    "","","","",
+    "USE_MCP230xx_OUTPUT","USE_MCP230xx_DISPLAYOUTPUT","","",
     "","","","",
     "","","","",
     "","","","",

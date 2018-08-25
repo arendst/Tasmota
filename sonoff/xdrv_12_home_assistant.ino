@@ -151,7 +151,7 @@ void HAssDiscoverButton()
       if (!button_index && ((SONOFF_DUAL == Settings.module) || (CH4 == Settings.module))) {
         button_present = 1;
       } else {
-        if ((pin[GPIO_KEY1 + button_index] < 99) || (pin[GPIO_KEY1_NP + button_index] < 99)) {
+        if (pin[GPIO_KEY1 + button_index] < 99) {
           button_present = 1;
         }
       }

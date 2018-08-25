@@ -485,15 +485,7 @@ void KNX_INIT()
   {
     if (GetUsedInModule(i, my_module.gp.io)) { device_param[i - GPIO_SWT1 + 8].show = true; }
   }
-  for (int i = GPIO_SWT1_NP; i < GPIO_SWT4_NP + 1; ++i)
-  {
-    if (GetUsedInModule(i, my_module.gp.io)) { device_param[i - GPIO_SWT1 + 8].show = true; }
-  }
   for (int i = GPIO_KEY1; i < GPIO_KEY4 + 1; ++i)
-  {
-    if (GetUsedInModule(i, my_module.gp.io)) { device_param[i - GPIO_KEY1 + 8].show = true; }
-  }
-  for (int i = GPIO_KEY1_NP; i < GPIO_KEY4_NP + 1; ++i)
   {
     if (GetUsedInModule(i, my_module.gp.io)) { device_param[i - GPIO_KEY1 + 8].show = true; }
   }

@@ -68,7 +68,7 @@ const char MCP230XX_CMND_RESPONSE[] PROGMEM = "{\"S29cmnd_D%i\":{\"COMMAND\":\"%
 
 const char* ConvertNumTxt(uint8_t statu, uint8_t pinmod=0) {
 #ifdef USE_MCP230xx_OUTPUT
-if ((pinmod == 6) && (statu < 2)) statu = abs(statu-1);
+if ((6 == pinmod) && (statu < 2)) { statu = abs(statu-1); }
 #endif // USE_MCP230xx_OUTPUT
   switch (statu) {
     case 0:
@@ -128,7 +128,7 @@ void MCP230xx_ApplySettings(void) {
         case 2 ... 4:
           reg_iodir |= (1 << idx);
           reg_gpinten |= (1 << idx);
-          int_en=1;
+          int_en = 1;
           break;
 #ifdef USE_MCP230xx_OUTPUT
         case 5 ... 6:
@@ -165,7 +165,7 @@ void MCP230xx_ApplySettings(void) {
   for (uint8_t idx=0;idx<mcp230xx_pincount;idx++) {
     int_millis[idx]=millis();
   }
-  mcp230xx_int_en=int_en;
+  mcp230xx_int_en = int_en;
 }
 
 void MCP230xx_Detect()
@@ -180,14 +180,14 @@ void MCP230xx_Detect()
     mcp230xx_address = mcp230xx_addresses[i];
     I2cWrite8(mcp230xx_address, MCP230xx_IOCON, 0x80); // attempt to set bank mode - this will only work on MCP23017, so its the best way to detect the different chips 23008 vs 23017
     if (I2cValidRead8(&buffer, mcp230xx_address, MCP230xx_IOCON)) {
-      if (buffer == 0x00) {
+      if (0x00 == buffer) {
         mcp230xx_type = 1; // We have a MCP23008
         snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, "MCP23008", mcp230xx_address);
         AddLog(LOG_LEVEL_DEBUG);
         mcp230xx_pincount = 8;
         MCP230xx_ApplySettings();
       } else {
-        if (buffer == 0x80) {
+        if (0x80 == buffer) {
           mcp230xx_type = 2; // We have a MCP23017
           snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, "MCP23017", mcp230xx_address);
           AddLog(LOG_LEVEL_DEBUG);
@@ -279,7 +279,7 @@ void MCP230xx_Show(boolean json)
         uint8_t gpio = MCP230xx_readGPIO(0);
         snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"MCP230XX\":{\"D0\":%i,\"D1\":%i,\"D2\":%i,\"D3\":%i,\"D4\":%i,\"D5\":%i,\"D6\":%i,\"D7\":%i"),
                    mqtt_data,(gpio>>0)&1,(gpio>>1)&1,(gpio>>2)&1,(gpio>>3)&1,(gpio>>4)&1,(gpio>>5)&1,(gpio>>6)&1,(gpio>>7)&1);
-        if (mcp230xx_type == 2) {
+        if (2 == mcp230xx_type) {
           gpio = MCP230xx_readGPIO(1);
           snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"D8\":%i,\"D9\":%i,\"D10\":%i,\"D11\":%i,\"D12\":%i,\"D13\":%i,\"D14\":%i,\"D15\":%i"),
                      mqtt_data,(gpio>>0)&1,(gpio>>1)&1,(gpio>>2)&1,(gpio>>3)&1,(gpio>>4)&1,(gpio>>5)&1,(gpio>>6)&1,(gpio>>7)&1);
@@ -299,17 +299,17 @@ void MCP230xx_SetOutPin(uint8_t pin,uint8_t pinstate) {
   uint8_t interlock = Settings.flag.interlock;
   int pinadd = (pin % 2)+1-(3*(pin % 2)); //check if pin is odd or even and convert to 1 (if even) or -1 (if odd)
   char cmnd[7], stt[4];
-  if (pin > 7) port=1;
+  if (pin > 7) { port = 1; }
   portpins = MCP230xx_readGPIO(port);
-  if ((interlock && pinmo) == (Settings.mcp230xx_config[pin+pinadd].pinmode)) {
+  if (interlock && (pinmo == Settings.mcp230xx_config[pin+pinadd].pinmode)) {
     if (pinstate < 2) {
-      if (pinmo == 6) {
+      if (6 == pinmo) {
         if (pinstate) portpins |= (1 << pin-(port*8)); else portpins |= (1 << pin+pinadd-(port*8)),portpins &= ~(1 << pin-(port*8));
       } else {
         if (pinstate) portpins &= ~(1 << pin+pinadd-(port*8)),portpins |= (1 << pin-(port*8)); else portpins &= ~(1 << pin-(port*8));
       }
     } else {
-      if (pinmo == 6) {
+      if (6 == pinmo) {
       portpins |= (1 << pin+pinadd-(port*8)),portpins ^= (1 << pin-(port*8));
       } else {
       portpins &= ~(1 << pin+pinadd-(port*8)),portpins ^= (1 << pin-(port*8));
@@ -329,7 +329,7 @@ void MCP230xx_SetOutPin(uint8_t pin,uint8_t pinstate) {
   }
   sprintf(cmnd,ConvertNumTxt(pinstate, pinmo));
   sprintf(stt,ConvertNumTxt((portpins >> (pin-(port*8))&1), pinmo));
-  if ((interlock && pinmo) == Settings.mcp230xx_config[pin+pinadd].pinmode) {
+  if (interlock && (pinmo == Settings.mcp230xx_config[pin+pinadd].pinmode)) {
     char stt1[4];
     sprintf(stt1,ConvertNumTxt((portpins >> (pin+pinadd-(port*8))&1), pinmo));
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"S29cmnd_D%i\":{\"COMMAND\":\"%s\",\"STATE\":\"%s\"},\"S29cmnd_D%i\":{\"STATE\":\"%s\"}}"),pin, cmnd, stt, pin+pinadd, stt1);
@@ -342,7 +342,7 @@ void MCP230xx_SetOutPin(uint8_t pin,uint8_t pinstate) {
 
 void MCP230xx_Reset(uint8_t pinmode) {
   uint8_t pullup = 0;
-  if ((pinmode > 1) && (pinmode < 5)) pullup=1;
+  if ((pinmode > 1) && (pinmode < 5)) { pullup=1; }
   for (uint8_t pinx=0;pinx<16;pinx++) {
     Settings.mcp230xx_config[pinx].pinmode=pinmode;
     Settings.mcp230xx_config[pinx].pullup=pullup;
@@ -365,7 +365,7 @@ void MCP230xx_Reset(uint8_t pinmode) {
   char intmodetxt[9];
   sprintf(pulluptxt,ConvertNumTxt(pullup));
   uint8_t intmode = 3;
-  if ((pinmode > 1) && (pinmode < 5)) intmode=0;
+  if ((pinmode > 1) && (pinmode < 5)) { intmode = 0; }
   sprintf(intmodetxt,IntModeTxt(intmode));
   snprintf_P(mqtt_data, sizeof(mqtt_data), MCP230XX_SENSOR_RESPONSE,99,pinmode,pulluptxt,intmodetxt,"");
 }
@@ -381,8 +381,8 @@ bool MCP230xx_Command(void) {
   }
   char sub_string[XdrvMailbox.data_len +1];
   for (uint8_t ca=0;ca<XdrvMailbox.data_len;ca++) {
-    if ((XdrvMailbox.data[ca] == ' ') || (XdrvMailbox.data[ca] == '=')) XdrvMailbox.data[ca]=',';
-    if (XdrvMailbox.data[ca] == ',') paramcount++;
+    if ((' ' == XdrvMailbox.data[ca]) || ('=' == XdrvMailbox.data[ca])) { XdrvMailbox.data[ca] = ','; }
+    if (',' == XdrvMailbox.data[ca]) { paramcount++; }
   }
   UpperCase(XdrvMailbox.data,XdrvMailbox.data);
   if (!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 1),"RESET"))  {  MCP230xx_Reset(1); return serviced; }
@@ -396,16 +396,16 @@ bool MCP230xx_Command(void) {
 #endif // USE_MCP230xx_OUTPUT
   uint8_t pin = atoi(subStr(sub_string, XdrvMailbox.data, ",", 1));
   if (pin < mcp230xx_pincount) {
-    if (pin == 0) {
+    if (0 == pin) {
       if (!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 1), "0")) validpin=true;
     } else {
       validpin=true;
     }
   }
-  if ((validpin) && (paramcount > 2)) {
+  if (validpin && (paramcount > 2)) {
     if (!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 2), "?")) {
       uint8_t port = 0;
-      if (pin > 7) port = 1;
+      if (pin > 7) { port = 1; }
       uint8_t portdata = MCP230xx_readGPIO(port);
       char pulluptxtr[7],pinstatustxtr[7];
       char intmodetxt[9];
@@ -466,7 +466,7 @@ bool MCP230xx_Command(void) {
       }
       MCP230xx_ApplySettings();
       uint8_t port = 0;
-      if (pin > 7) port = 1;
+      if (pin > 7) { port = 1; }
       uint8_t portdata = MCP230xx_readGPIO(port);
       char pulluptxtc[7], pinstatustxtc[7];
       char intmodetxt[9];
@@ -494,8 +494,8 @@ const char HTTP_SNS_MCP230xx_OUTPUT[] PROGMEM = "%s{s}MCP230XX D%d{m}%s{e}"; // 
 void MCP230xx_UpdateWebData(void) {
   uint8_t gpio1 = MCP230xx_readGPIO(0);
   uint8_t gpio2 = 0;
-  if (mcp230xx_type == 2) {
-    gpio2=MCP230xx_readGPIO(1);
+  if (2 == mcp230xx_type) {
+    gpio2 = MCP230xx_readGPIO(1);
   }
   uint16_t gpio = (gpio2 << 8) + gpio1;
   for (uint8_t pin = 0; pin < mcp230xx_pincount; pin++) {
@@ -512,13 +512,13 @@ void MCP230xx_UpdateWebData(void) {
 #ifdef USE_MCP230xx_OUTPUT
 
 void MCP230xx_OutputTelemetry(void) {
-  if (mcp230xx_type == 0) return; // We do not do this if the MCP has not been detected
+  if (0 == mcp230xx_type) { return; }  // We do not do this if the MCP has not been detected
   uint8_t outputcount = 0;
   uint16_t gpiototal = 0;
   uint8_t gpioa = 0;
   uint8_t gpiob = 0;
   gpioa=MCP230xx_readGPIO(0);
-  if (mcp230xx_type == 2) gpiob=MCP230xx_readGPIO(1);
+  if (2 == mcp230xx_type) { gpiob=MCP230xx_readGPIO(1); }
   gpiototal=((uint16_t)gpiob << 8) | gpioa;
   for (uint8_t pinx = 0;pinx < mcp230xx_pincount;pinx++) {
     if (Settings.mcp230xx_config[pinx].pinmode >= 5) outputcount++;

@@ -393,7 +393,7 @@ void HandleDomoticzConfiguration()
       page.replace("{2", String((int)Settings.domoticz_relay_idx[i]));
       page.replace("{3", String((int)Settings.domoticz_key_idx[i]));
     }
-    if ((pin[GPIO_SWT1 +i] < 99) || (pin[GPIO_SWT1_NP +i] < 99)) {
+    if (pin[GPIO_SWT1 +i] < 99) {
       page += FPSTR(HTTP_FORM_DOMOTICZ_SWITCH);
       page.replace("{4", String((int)Settings.domoticz_switch_idx[i]));
     }
