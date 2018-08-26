@@ -53,7 +53,7 @@
 // Common
 #define D_ADMIN "Admin"
 #define D_AIR_QUALITY "Hava Kalitesi"
-#define D_AP "AP"                    // Access Point
+#define D_AP "AP" // Access Point
 #define D_AS "as"
 #define D_AUTO "OTOMATIK"
 #define D_BLINK "Blink"
@@ -61,17 +61,17 @@
 #define D_BOOT_COUNT "Yeniden başlama sayısı"
 #define D_BRIGHTLIGHT "Işık"
 #define D_BUTTON "Buton"
-#define D_BY "by"                    // Written by me
+#define D_BY "by" // Written by me
 #define D_BYTES "Bayt"
 #define D_CELSIUS "Derece"
 #define D_CO2 "Karbon dioksit"
-#define D_CODE "kod"                // Button code
+#define D_CODE "kod" // Button code
 #define D_COLDLIGHT "Soğuk"
 #define D_COMMAND "Komut"
 #define D_CONNECTED "Bağlandı"
 #define D_COUNT "Sayı"
 #define D_COUNTER "Sayaç"
-#define D_CURRENT "Current"          // As in Voltage and Current
+#define D_CURRENT "Current" // As in Voltage and Current
 #define D_DATA "Data"
 #define D_DARKLIGHT "Karanlık"
 #define D_DEBUG "Hata Ayıklama"
@@ -100,7 +100,7 @@
 #define D_HOSTNAME "Host Adresi"
 #define D_HUMIDITY "Nem"
 #define D_ILLUMINANCE "Aydınlık"
-#define D_IMMEDIATE "derhal"      // Button immediate
+#define D_IMMEDIATE "derhal" // Button immediate
 #define D_INDEX "Index"
 #define D_INFO "Bilgi"
 #define D_INFRARED "Kızılötesi"
@@ -366,15 +366,15 @@
 #define D_DOMOTICZ_KEY_IDX "Key idx"
 #define D_DOMOTICZ_SWITCH_IDX "Switch idx"
 #define D_DOMOTICZ_SENSOR_IDX "Sensor idx"
-  #define D_DOMOTICZ_TEMP "Temp"
-  #define D_DOMOTICZ_TEMP_HUM "Temp,Hum"
-  #define D_DOMOTICZ_TEMP_HUM_BARO "Temp,Hum,Baro"
-  #define D_DOMOTICZ_POWER_ENERGY "Power,Energy"
-  #define D_DOMOTICZ_ILLUMINANCE "Illuminance"
-  #define D_DOMOTICZ_COUNT "Count/PM1"
-  #define D_DOMOTICZ_VOLTAGE "Voltage/PM2.5"
-  #define D_DOMOTICZ_CURRENT "Current/PM10"
-  #define D_DOMOTICZ_AIRQUALITY "AirQuality"
+#define D_DOMOTICZ_TEMP "Temp"
+#define D_DOMOTICZ_TEMP_HUM "Temp,Hum"
+#define D_DOMOTICZ_TEMP_HUM_BARO "Temp,Hum,Baro"
+#define D_DOMOTICZ_POWER_ENERGY "Power,Energy"
+#define D_DOMOTICZ_ILLUMINANCE "Illuminance"
+#define D_DOMOTICZ_COUNT "Count/PM1"
+#define D_DOMOTICZ_VOLTAGE "Voltage/PM2.5"
+#define D_DOMOTICZ_CURRENT "Current/PM10"
+#define D_DOMOTICZ_AIRQUALITY "AirQuality"
 #define D_DOMOTICZ_UPDATE_TIMER "Zamanlayıcıyı güncelle"
 
 // xdrv_09_timers.ino
@@ -433,8 +433,8 @@
 #define D_SHT1X_FOUND "SHT1X found"
 
 // xsns_18_pms5003.ino
-#define D_STANDARD_CONCENTRATION "CF-1 PM"     // Standard Particle CF-1 Particle Matter
-#define D_ENVIRONMENTAL_CONCENTRATION "PM"     // Environmetal Particle Matter
+#define D_STANDARD_CONCENTRATION "CF-1 PM" // Standard Particle CF-1 Particle Matter
+#define D_ENVIRONMENTAL_CONCENTRATION "PM" // Environmetal Particle Matter
 #define D_PARTICALS_BEYOND "Particals"
 
 // xsns_32_mpu6050.ino
@@ -446,35 +446,35 @@
 #define D_GZ_AXIS "Gyro Z-Axis"
 
 // sonoff_template.h
-#define D_SENSOR_NONE     "None"
-#define D_SENSOR_DHT11    "DHT11"
-#define D_SENSOR_AM2301   "AM2301"
-#define D_SENSOR_SI7021   "SI7021"
-#define D_SENSOR_DS18X20  "DS18x20"
-#define D_SENSOR_I2C_SCL  "I2C SCL"
-#define D_SENSOR_I2C_SDA  "I2C SDA"
-#define D_SENSOR_WS2812   "WS2812"
-#define D_SENSOR_IRSEND   "IRsend"
-#define D_SENSOR_SWITCH   "Switch"   // Suffix "1"
-#define D_SENSOR_BUTTON   "Button"   // Suffix "1"
-#define D_SENSOR_RELAY    "Relay"    // Suffix "1i"
-#define D_SENSOR_LED      "Led"      // Suffix "1i"
-#define D_SENSOR_PWM      "PWM"      // Suffix "1"
-#define D_SENSOR_COUNTER  "Counter"  // Suffix "1"
-#define D_SENSOR_IRRECV   "IRrecv"
-#define D_SENSOR_MHZ_RX   "MHZ Rx"
-#define D_SENSOR_MHZ_TX   "MHZ Tx"
-#define D_SENSOR_PZEM_RX  "PZEM Rx"
-#define D_SENSOR_PZEM_TX  "PZEM Tx"
-#define D_SENSOR_SAIR_RX  "SAir Rx"
-#define D_SENSOR_SAIR_TX  "SAir Tx"
-#define D_SENSOR_SPI_CS   "SPI CS"
-#define D_SENSOR_SPI_DC   "SPI DC"
+#define D_SENSOR_NONE "None"
+#define D_SENSOR_DHT11 "DHT11"
+#define D_SENSOR_AM2301 "AM2301"
+#define D_SENSOR_SI7021 "SI7021"
+#define D_SENSOR_DS18X20 "DS18x20"
+#define D_SENSOR_I2C_SCL "I2C SCL"
+#define D_SENSOR_I2C_SDA "I2C SDA"
+#define D_SENSOR_WS2812 "WS2812"
+#define D_SENSOR_IRSEND "IRsend"
+#define D_SENSOR_SWITCH "Switch"   // Suffix "1"
+#define D_SENSOR_BUTTON "Button"   // Suffix "1"
+#define D_SENSOR_RELAY "Relay"     // Suffix "1i"
+#define D_SENSOR_LED "Led"         // Suffix "1i"
+#define D_SENSOR_PWM "PWM"         // Suffix "1"
+#define D_SENSOR_COUNTER "Counter" // Suffix "1"
+#define D_SENSOR_IRRECV "IRrecv"
+#define D_SENSOR_MHZ_RX "MHZ Rx"
+#define D_SENSOR_MHZ_TX "MHZ Tx"
+#define D_SENSOR_PZEM_RX "PZEM Rx"
+#define D_SENSOR_PZEM_TX "PZEM Tx"
+#define D_SENSOR_SAIR_RX "SAir Rx"
+#define D_SENSOR_SAIR_TX "SAir Tx"
+#define D_SENSOR_SPI_CS "SPI CS"
+#define D_SENSOR_SPI_DC "SPI DC"
 #define D_SENSOR_BACKLIGHT "BkLight"
-#define D_SENSOR_PMS5003  "PMS5003"
-#define D_SENSOR_SDS0X1   "SDS0X1"
-#define D_SENSOR_SBR_RX   "SerBr Rx"
-#define D_SENSOR_SBR_TX   "SerBr Tx"
+#define D_SENSOR_PMS5003 "PMS5003"
+#define D_SENSOR_SDS0X1 "SDS0X1"
+#define D_SENSOR_SBR_RX "SerBr Rx"
+#define D_SENSOR_SBR_TX "SerBr Tx"
 #define D_SENSOR_SR04_TRIG "SR04 Tri"
 #define D_SENSOR_SR04_ECHO "SR04 Ech"
 #define D_SENSOR_SDM120_TX "SDM120 Tx"
@@ -512,28 +512,29 @@
 #define D_UNIT_HERTZ "Hz"
 
 // Log message prefix
-#define D_LOG_APPLICATION "APP: "  // Application
-#define D_LOG_BRIDGE "BRG: "       // Bridge
-#define D_LOG_CONFIG "CFG: "       // Settings
-#define D_LOG_COMMAND "CMD: "      // Command
-#define D_LOG_DEBUG "DBG: "        // Debug
-#define D_LOG_DHT "DHT: "          // DHT sensor
-#define D_LOG_DOMOTICZ "DOM: "     // Domoticz
-#define D_LOG_DSB "DSB: "          // DS18xB20 sensor
-#define D_LOG_HTTP "HTP: "         // HTTP webserver
-#define D_LOG_I2C "I2C: "          // I2C
-#define D_LOG_IRR "IRR: "          // Infra Red Received
-#define D_LOG_LOG "LOG: "          // Logging
-#define D_LOG_MODULE "MOD: "       // Module
-#define D_LOG_MDNS "DNS: "         // mDNS
-#define D_LOG_MQTT "MQT: "         // MQTT
-#define D_LOG_OTHER "OTH: "        // Other
-#define D_LOG_RESULT "RSL: "       // Result
-#define D_LOG_RFR "RFR: "          // RF Received
-#define D_LOG_SERIAL "SER: "       // Serial
-#define D_LOG_SHT1 "SHT: "         // SHT1x sensor
-#define D_LOG_UPLOAD "UPL: "       // Upload
-#define D_LOG_UPNP "UPP: "         // UPnP
-#define D_LOG_WIFI "WIF: "         // Wifi
+#define D_LOG_APPLICATION "APP: " // Application
+#define D_LOG_BRIDGE "BRG: "      // Bridge
+#define D_LOG_CONFIG "CFG: "      // Settings
+#define D_LOG_COMMAND "CMD: "     // Command
+#define D_LOG_DEBUG "DBG: "       // Debug
+#define D_LOG_DHT "DHT: "         // DHT sensor
+#define D_LOG_DOMOTICZ "DOM: "    // Domoticz
+#define D_LOG_DSB "DSB: "         // DS18xB20 sensor
+#define D_LOG_HTTP "HTP: "        // HTTP webserver
+#define D_LOG_I2C "I2C: "         // I2C
+#define D_LOG_IRR "IRR: "         // Infra Red Received
+#define D_LOG_LOG "LOG: "         // Logging
+#define D_LOG_MODULE "MOD: "      // Module
+#define D_LOG_MDNS "DNS: "        // mDNS
+#define D_LOG_MQTT "MQT: "        // MQTT
+#define D_LOG_OTHER "OTH: "       // Other
+#define D_LOG_RESULT "RSL: "      // Result
+#define D_LOG_RFR "RFR: "         // RF Received
+#define D_LOG_SERIAL "SER: "      // Serial
+#define D_LOG_SHT1 "SHT: "        // SHT1x sensor
+#define D_LOG_UPLOAD "UPL: "      // Upload
+#define D_LOG_UPNP "UPP: "        // UPnP
+#define D_LOG_WIFI "WIF: "        // Wifi
 
-#endif  // _LANGUAGE_TR_TR_H_
+#define D_MODIFIED "modified"
+#endif // _LANGUAGE_TR_TR_H_
