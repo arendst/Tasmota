@@ -108,9 +108,8 @@ if ((6 == pinmod) && (statu < 2)) { statu = abs(statu-1); }
       return "TOGGLE";
       break;
 #endif // USE_MCP230xx_OUTPUT
-    default:
-      break;
   }
+  return "";
 }
 
 const char* IntModeTxt(uint8_t intmo) {
@@ -127,10 +126,8 @@ const char* IntModeTxt(uint8_t intmo) {
     case 3:
       return "DISABLED";
       break;
-    default:
-      return "UNKNOWN";
-      break;
   }
+  return "";
 }
 
 uint8_t MCP230xx_readGPIO(uint8_t port) {
@@ -235,7 +232,7 @@ void MCP230xx_Detect()
   }
 }
 
-bool MCP230xx_CheckForInterrupt(void) {
+void MCP230xx_CheckForInterrupt(void) {
   uint8_t intf;
   uint8_t mcp230xx_intcap = 0;
   uint8_t report_int;
@@ -351,22 +348,22 @@ void MCP230xx_SetOutPin(uint8_t pin,uint8_t pinstate) {
   if (interlock && (pinmo == Settings.mcp230xx_config[pin+pinadd].pinmode)) {
     if (pinstate < 2) {
       if (6 == pinmo) {
-        if (pinstate) portpins |= (1 << pin-(port*8)); else portpins |= (1 << pin+pinadd-(port*8)),portpins &= ~(1 << pin-(port*8));
+        if (pinstate) portpins |= (1 << (pin-(port*8))); else portpins |= (1 << (pin+pinadd-(port*8))),portpins &= ~(1 << (pin-(port*8)));
       } else {
-        if (pinstate) portpins &= ~(1 << pin+pinadd-(port*8)),portpins |= (1 << pin-(port*8)); else portpins &= ~(1 << pin-(port*8));
+        if (pinstate) portpins &= ~(1 << (pin+pinadd-(port*8))),portpins |= (1 << (pin-(port*8))); else portpins &= ~(1 << (pin-(port*8)));
       }
     } else {
       if (6 == pinmo) {
-      portpins |= (1 << pin+pinadd-(port*8)),portpins ^= (1 << pin-(port*8));
+      portpins |= (1 << (pin+pinadd-(port*8))),portpins ^= (1 << (pin-(port*8)));
       } else {
-      portpins &= ~(1 << pin+pinadd-(port*8)),portpins ^= (1 << pin-(port*8));
+      portpins &= ~(1 << (pin+pinadd-(port*8))),portpins ^= (1 << (pin-(port*8)));
       }
     }
   } else {
     if (pinstate < 2) {
-      if (pinstate) portpins |= (1 << pin-(port*8)); else portpins &= ~(1 << pin-(port*8));
+      if (pinstate) portpins |= (1 << (pin-(port*8))); else portpins &= ~(1 << (pin-(port*8)));
     } else {
-      portpins ^= (1 << pin-(port*8));
+      portpins ^= (1 << (pin-(port*8)));
     }
   }
   I2cWrite8(mcp230xx_address, MCP230xx_GPIO + port, portpins);
