@@ -112,8 +112,14 @@ byte dual_hex_code = 0;                     // Sonoff dual input flag
 uint16_t dual_button_code = 0;              // Sonoff dual received code
 int16_t save_data_counter;                  // Counter and flag for config save to Flash
 uint8_t fallback_topic_flag = 0;            // Use Topic or FallbackTopic
-unsigned long state_loop_timer = 0;         // State loop timer
-int state = 0;                              // State per second flag
+
+unsigned long state_second = 0;             // State second timer
+unsigned long state_50msecond = 0;          // State 50msecond timer
+unsigned long state_100msecond = 0;         // State 100msecond timer
+unsigned long state_250msecond = 0;         // State 250msecond timer
+int state = 0;                              // State 50msecond per second flag (Legacy)
+uint8_t state_250mS = 0;                    // State 250msecond per second flag
+
 int ota_state_flag = 0;                     // OTA state flag
 int ota_result = 0;                         // OTA result
 byte ota_retry_counter = OTA_ATTEMPTS;      // OTA retry counter
@@ -127,7 +133,7 @@ byte web_log_index = 1;                     // Index in Web log buffer (should n
 byte reset_web_log_flag = 0;                // Reset web console log
 byte devices_present = 0;                   // Max number of devices supported
 int status_update_timer = 0;                // Refresh initial status
-uint16_t pulse_timer[MAX_PULSETIMERS] = { 0 }; // Power off timer
+unsigned long pulse_timer[MAX_PULSETIMERS] = { 0 }; // Power off timer
 uint16_t blink_timer = 0;                   // Power cycle timer
 uint16_t blink_counter = 0;                 // Number of blink cycles
 power_t blink_power;                        // Blink power state
@@ -139,7 +145,7 @@ uint8_t latching_relay_pulse = 0;           // Latching relay pulse timer
 uint8_t backlog_index = 0;                  // Command backlog index
 uint8_t backlog_pointer = 0;                // Command backlog pointer
 uint8_t backlog_mutex = 0;                  // Command backlog pending
-uint16_t backlog_delay = 0;                 // Command backlog delay
+unsigned long backlog_delay = 0;            // Command backlog delay
 uint8_t interlock_mutex = 0;                // Interlock power command pending
 
 #ifdef USE_MQTT_TLS
@@ -393,6 +399,23 @@ void SetFanspeed(uint8_t fanspeed)
   }
 }
 
+void SetPulseTimer(uint8_t index, uint16_t time)
+{
+  pulse_timer[index] = (time > 111) ? millis() + (1000 * (time - 100)) : (time > 0) ? millis() + (100 * time) : 0L;
+}
+
+uint16_t GetPulseTimer(uint8_t index)
+{
+  uint16_t result = 0;
+
+  long time = TimePassedSince(pulse_timer[index]);
+  if (time < 0) {
+    time *= -1;
+    result = (time > 11100) ? (time / 1000) + 100 : (time > 0) ? time / 100 : 0;
+  }
+  return result;
+}
+
 /********************************************************************************************/
 
 void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
@@ -402,8 +425,8 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
   if (!strcmp(Settings.mqtt_prefix[0],Settings.mqtt_prefix[1])) {
     str = strstr(topic,Settings.mqtt_prefix[0]);
     if ((str == topic) && mqtt_cmnd_publish) {
-      if (mqtt_cmnd_publish > 8) {
-        mqtt_cmnd_publish -= 8;
+      if (mqtt_cmnd_publish > 3) {
+        mqtt_cmnd_publish -= 3;
       } else {
         mqtt_cmnd_publish = 0;
       }
@@ -481,7 +504,7 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
     } else {
       payload32 = 0;
     }
-    backlog_delay = MIN_BACKLOG_DELAY;   // Reset backlog delay
+    backlog_delay = millis() + (100 * MIN_BACKLOG_DELAY);
 
     int temp_payload = GetStateNumber(dataBuf);
     if (temp_payload > -1) { payload = temp_payload; }
@@ -525,8 +548,13 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
       }
     }
     else if (CMND_DELAY == command_code) {
-      if ((payload >= MIN_BACKLOG_DELAY) && (payload <= 3600)) backlog_delay = payload;
-      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, backlog_delay);
+      if ((payload >= MIN_BACKLOG_DELAY) && (payload <= 3600)) {
+        backlog_delay = millis() + (100 * payload);
+      }
+      uint16_t bl_delay = 0;
+      long bl_delta = TimePassedSince(backlog_delay);
+      if (bl_delta < 0) { bl_delay = (bl_delta *-1) / 100; }
+      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, bl_delay);
     }
     else if ((CMND_POWER == command_code) && (index > 0) && (index <= devices_present)) {
       if ((payload < 0) || (payload > 4)) payload = 9;
@@ -629,9 +657,9 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
     else if ((CMND_PULSETIME == command_code) && (index > 0) && (index <= MAX_PULSETIMERS)) {
       if (data_len > 0) {
         Settings.pulse_timer[index -1] = payload16;  // 0 - 65535
-        pulse_timer[index -1] = 0;
+        SetPulseTimer(index -1, payload16);
       }
-      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_NVALUE_ACTIVE_NVALUE, command, index, Settings.pulse_timer[index -1], pulse_timer[index -1]);
+      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_NVALUE_ACTIVE_NVALUE, command, index, Settings.pulse_timer[index -1], GetPulseTimer(index -1));
     }
     else if (CMND_BLINKTIME == command_code) {
       if ((payload > 2) && (payload <= 3600)) {
@@ -1259,7 +1287,7 @@ void ExecuteCommandPower(byte device, byte state, int source)
     publish_power = 0;
   }
   if ((device < 1) || (device > devices_present)) device = 1;
-  if (device <= MAX_PULSETIMERS) pulse_timer[(device -1)] = 0;
+  if (device <= MAX_PULSETIMERS) { SetPulseTimer(device -1, 0); }
   power_t mask = 1 << (device -1);
   if (state <= POWER_TOGGLE) {
     if ((blink_mask & mask)) {
@@ -1291,9 +1319,8 @@ void ExecuteCommandPower(byte device, byte state, int source)
 #ifdef USE_KNX
     KnxUpdatePowerState(device, power);
 #endif  // USE_KNX
-    if (device <= MAX_PULSETIMERS) {
-//      pulse_timer[(device -1)] = (power & mask) ? Settings.pulse_timer[(device -1)] : 0;
-      pulse_timer[(device -1)] = (((POWER_ALL_OFF_PULSETIME_ON == Settings.poweronstate) ? ~power : power) & mask) ? Settings.pulse_timer[(device -1)] : 0;
+    if (device <= MAX_PULSETIMERS) {  // Restart PulseTime if powered On
+      SetPulseTimer(device -1, (((POWER_ALL_OFF_PULSETIME_ON == Settings.poweronstate) ? ~power : power) & mask) ? Settings.pulse_timer[device -1] : 0);
     }
   }
   else if (POWER_BLINK == state) {
@@ -1533,10 +1560,6 @@ void PerformEverySecond()
   }
 
   if (blockgpio0) blockgpio0--;
-
-  for (byte i = 0; i < MAX_PULSETIMERS; i++) {
-    if (pulse_timer[i] > 111) pulse_timer[i]--;
-  }
 
   if (seriallog_timer) {
     seriallog_timer--;
@@ -1827,131 +1850,130 @@ void SwitchHandler(byte mode)
 }
 
 /*********************************************************************************************\
- * State loop
+ * State loops
 \*********************************************************************************************/
 
-void StateLoop()
+void Every50mSeconds()
 {
-  power_t power_now;
-  uint8_t blinkinterval = 1;
+  // As the max amount of sleep = 250 mSec this loop will shift in time...
 
-  state_loop_timer = millis() + (1000 / STATES);
   state++;
-
-/*-------------------------------------------------------------------------------------------*\
- * Every second
-\*-------------------------------------------------------------------------------------------*/
-
-  if (STATES == state) {
-    state = 0;
-    PerformEverySecond();
-  }
-
-/*-------------------------------------------------------------------------------------------*\
- * Every 0.1 second
-\*-------------------------------------------------------------------------------------------*/
-
-  if (!(state % (STATES/10))) {
-
-    if (mqtt_cmnd_publish) mqtt_cmnd_publish--;  // Clean up
-
-    if (latching_relay_pulse) {
-      latching_relay_pulse--;
-      if (!latching_relay_pulse) SetLatchingRelay(0, 0);
-    }
-
-    for (byte i = 0; i < MAX_PULSETIMERS; i++) {
-      if ((pulse_timer[i] > 0) && (pulse_timer[i] < 112)) {
-        pulse_timer[i]--;
-        if (!pulse_timer[i]) {
-//          ExecuteCommandPower(i +1, POWER_OFF, SRC_PULSETIMER);
-          ExecuteCommandPower(i +1, (POWER_ALL_OFF_PULSETIME_ON == Settings.poweronstate) ? POWER_ON : POWER_OFF, SRC_PULSETIMER);
-        }
-      }
-    }
-
-    if (blink_mask) {
-      blink_timer--;
-      if (!blink_timer) {
-        blink_timer = Settings.blinktime;
-        blink_counter--;
-        if (!blink_counter) {
-          StopAllPowerBlink();
-        } else {
-          blink_power ^= 1;
-          power_now = (power & (POWER_MASK ^ blink_mask)) | ((blink_power) ? blink_mask : 0);
-          SetDevicePower(power_now, SRC_IGNORE);
-        }
-      }
-    }
-
-    // Backlog
-    if (backlog_delay) backlog_delay--;
-    if ((backlog_pointer != backlog_index) && !backlog_delay && !backlog_mutex) {
-      backlog_mutex = 1;
-      ExecuteCommand((char*)backlog[backlog_pointer].c_str(), SRC_BACKLOG);
-      backlog_mutex = 0;
-      backlog_pointer++;
-      if (backlog_pointer >= MAX_BACKLOG) backlog_pointer = 0;
-    }
-  }
-
-/*-------------------------------------------------------------------------------------------*\
- * Every 0.05 second
-\*-------------------------------------------------------------------------------------------*/
+  if (STATES == state) { state = 0; }
 
   ButtonHandler();
   SwitchHandler(0);
 
   XdrvCall(FUNC_EVERY_50_MSECOND);
   XsnsCall(FUNC_EVERY_50_MSECOND);
+}
 
 /*-------------------------------------------------------------------------------------------*\
- * Every 0.2 second
+ * Every 0.1 second
 \*-------------------------------------------------------------------------------------------*/
 
-  if (!(state % ((STATES/10)*2))) {
-    if (!Settings.flag.global_state) {                      // Problem blinkyblinky enabled
-      if (global_state.data) {                              // Any problem
-        if (global_state.mqtt_down) { blinkinterval = 9; }  // MQTT problem so blink every 2 seconds (slowest)
-        if (global_state.wifi_down) { blinkinterval = 4; }  // Wifi problem so blink every second (slow)
-        blinks = 201;                                       // Allow only a single blink in case the problem is solved
+void Every100mSeconds()
+{
+  // As the max amount of sleep = 250 mSec this loop will shift in time...
+  power_t power_now;
+
+  if (latching_relay_pulse) {
+    latching_relay_pulse--;
+    if (!latching_relay_pulse) SetLatchingRelay(0, 0);
+  }
+
+  for (byte i = 0; i < MAX_PULSETIMERS; i++) {
+    if (pulse_timer[i] != 0L) {           // Timer active?
+      if (TimeReached(pulse_timer[i])) {  // Timer finished?
+        pulse_timer[i] = 0L;              // Turn off this timer
+        ExecuteCommandPower(i +1, (POWER_ALL_OFF_PULSETIME_ON == Settings.poweronstate) ? POWER_ON : POWER_OFF, SRC_PULSETIMER);
       }
-    }
-    if (blinks || restart_flag || ota_state_flag) {
-      if (restart_flag || ota_state_flag) {                 // Overrule blinks and keep led lit
-        blinkstate = 1;                                     // Stay lit
-      } else {
-        blinkspeed--;
-        if (!blinkspeed) {
-          blinkspeed = blinkinterval;                       // Set interval to 0.2 (default), 1 or 2 seconds
-          blinkstate ^= 1;                                  // Blink
-        }
-      }
-      if ((!(Settings.ledstate &0x08)) && ((Settings.ledstate &0x06) || (blinks > 200) || (blinkstate))) {
-//      if ( (!Settings.flag.global_state && global_state.data) || ((!(Settings.ledstate &0x08)) && ((Settings.ledstate &0x06) || (blinks > 200) || (blinkstate))) ) {
-        SetLedPower(blinkstate);                            // Set led on or off
-      }
-      if (!blinkstate) {
-        blinks--;
-        if (200 == blinks) blinks = 0;                      // Disable blink
-      }
-    }
-    else if (Settings.ledstate &1) {
-      boolean tstate = power;
-      if ((SONOFF_TOUCH == Settings.module) || (SONOFF_T11 == Settings.module) || (SONOFF_T12 == Settings.module) || (SONOFF_T13 == Settings.module)) {
-        tstate = (!power) ? 1 : 0;                          // As requested invert signal for Touch devices to find them in the dark
-      }
-      SetLedPower(tstate);
     }
   }
 
+  if (blink_mask) {
+    blink_timer--;
+    if (!blink_timer) {
+      blink_timer = Settings.blinktime;
+      blink_counter--;
+      if (!blink_counter) {
+        StopAllPowerBlink();
+      } else {
+        blink_power ^= 1;
+        power_now = (power & (POWER_MASK ^ blink_mask)) | ((blink_power) ? blink_mask : 0);
+        SetDevicePower(power_now, SRC_IGNORE);
+      }
+    }
+  }
+
+  // Backlog
+  if (TimeReached(backlog_delay)) {
+    if ((backlog_pointer != backlog_index) && !backlog_mutex) {
+      backlog_mutex = 1;
+      ExecuteCommand((char*)backlog[backlog_pointer].c_str(), SRC_BACKLOG);
+      backlog_mutex = 0;
+      backlog_pointer++;
+      if (backlog_pointer >= MAX_BACKLOG) { backlog_pointer = 0; }
+    }
+  }
+}
+
 /*-------------------------------------------------------------------------------------------*\
- * Every second at 0.2 second interval
+ * Every 0.25 second
 \*-------------------------------------------------------------------------------------------*/
 
-  switch (state) {
-  case (STATES/10)*2:
+void Every250mSeconds()
+{
+// As the max amount of sleep = 250 mSec this loop should always be taken...
+
+  uint8_t blinkinterval = 1;
+
+  state_250mS++;
+  state_250mS &= 0x3;
+
+  if (mqtt_cmnd_publish) mqtt_cmnd_publish--;             // Clean up
+
+  if (!Settings.flag.global_state) {                      // Problem blinkyblinky enabled
+    if (global_state.data) {                              // Any problem
+      if (global_state.mqtt_down) { blinkinterval = 7; }  // MQTT problem so blink every 2 seconds (slowest)
+      if (global_state.wifi_down) { blinkinterval = 3; }  // Wifi problem so blink every second (slow)
+      blinks = 201;                                       // Allow only a single blink in case the problem is solved
+    }
+  }
+  if (blinks || restart_flag || ota_state_flag) {
+    if (restart_flag || ota_state_flag) {                 // Overrule blinks and keep led lit
+      blinkstate = 1;                                     // Stay lit
+    } else {
+      blinkspeed--;
+      if (!blinkspeed) {
+        blinkspeed = blinkinterval;                       // Set interval to 0.2 (default), 1 or 2 seconds
+        blinkstate ^= 1;                                  // Blink
+      }
+    }
+    if ((!(Settings.ledstate &0x08)) && ((Settings.ledstate &0x06) || (blinks > 200) || (blinkstate))) {
+//    if ( (!Settings.flag.global_state && global_state.data) || ((!(Settings.ledstate &0x08)) && ((Settings.ledstate &0x06) || (blinks > 200) || (blinkstate))) ) {
+      SetLedPower(blinkstate);                            // Set led on or off
+    }
+    if (!blinkstate) {
+      blinks--;
+      if (200 == blinks) blinks = 0;                      // Disable blink
+    }
+  }
+  else if (Settings.ledstate &1) {
+    boolean tstate = power;
+    if ((SONOFF_TOUCH == Settings.module) || (SONOFF_T11 == Settings.module) || (SONOFF_T12 == Settings.module) || (SONOFF_T13 == Settings.module)) {
+      tstate = (!power) ? 1 : 0;                          // As requested invert signal for Touch devices to find them in the dark
+    }
+    SetLedPower(tstate);
+  }
+
+/*-------------------------------------------------------------------------------------------*\
+ * Every second at 0.25 second interval
+\*-------------------------------------------------------------------------------------------*/
+
+  switch (state_250mS) {
+  case 0:                                                 // Every x.0 second
+    PerformEverySecond();
+
     if (ota_state_flag && (backlog_pointer == backlog_index)) {
       ota_state_flag--;
       if (2 == ota_state_flag) {
@@ -2015,8 +2037,8 @@ void StateLoop()
       }
     }
     break;
-  case (STATES/10)*4:
-    if (MidnightNow()) CounterSaveState();
+  case 1:                                                 // Every x.25 second
+    if (MidnightNow()) { CounterSaveState(); }
     if (save_data_counter && (backlog_pointer == backlog_index)) {
       save_data_counter--;
       if (save_data_counter <= 0) {
@@ -2057,12 +2079,12 @@ void StateLoop()
       }
     }
     break;
-  case (STATES/10)*6:
+  case 2:                                                 // Every x.5 second
     WifiCheck(wifi_state_flag);
     wifi_state_flag = WIFI_RESTART;
     break;
-  case (STATES/10)*8:
-    if (WL_CONNECTED == WiFi.status()) MqttCheck();
+  case 3:                                                 // Every x.75 second
+    if (WL_CONNECTED == WiFi.status()) { MqttCheck(); }
     break;
   }
 }
@@ -2565,7 +2587,7 @@ void setup()
       bitWrite(power, i, digitalRead(pin[GPIO_REL1 +i]) ^ bitRead(rel_inverted, i));
     }
     if ((i < MAX_PULSETIMERS) && (bitRead(power, i) || (POWER_ALL_OFF_PULSETIME_ON == Settings.poweronstate))) {
-      pulse_timer[i] = Settings.pulse_timer[i];
+      SetPulseTimer(i, Settings.pulse_timer[i]);
     }
   }
 
@@ -2595,7 +2617,20 @@ void loop()
 
   OsWatchLoop();
 
-  if (millis() >= state_loop_timer) StateLoop();
+  if (TimeReached(state_50msecond)) {
+    SetNextTimeInterval(state_50msecond, 50);
+    Every50mSeconds();
+  }
+
+  if (TimeReached(state_100msecond)) {
+    SetNextTimeInterval(state_100msecond, 100);
+    Every100mSeconds();
+  }
+
+  if (TimeReached(state_250msecond)) {
+    SetNextTimeInterval(state_250msecond, 250);
+    Every250mSeconds();
+  }
 
   if (!serial_local) SerialInput();
 
