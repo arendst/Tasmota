@@ -112,14 +112,11 @@ byte dual_hex_code = 0;                     // Sonoff dual input flag
 uint16_t dual_button_code = 0;              // Sonoff dual received code
 int16_t save_data_counter;                  // Counter and flag for config save to Flash
 uint8_t fallback_topic_flag = 0;            // Use Topic or FallbackTopic
-
 unsigned long state_second = 0;             // State second timer
 unsigned long state_50msecond = 0;          // State 50msecond timer
 unsigned long state_100msecond = 0;         // State 100msecond timer
 unsigned long state_250msecond = 0;         // State 250msecond timer
-int state = 0;                              // State 50msecond per second flag (Legacy)
 uint8_t state_250mS = 0;                    // State 250msecond per second flag
-
 int ota_state_flag = 0;                     // OTA state flag
 int ota_result = 0;                         // OTA result
 byte ota_retry_counter = OTA_ATTEMPTS;      // OTA retry counter
@@ -1856,9 +1853,6 @@ void SwitchHandler(byte mode)
 void Every50mSeconds()
 {
   // As the max amount of sleep = 250 mSec this loop will shift in time...
-
-  state++;
-  if (STATES == state) { state = 0; }
 
   ButtonHandler();
   SwitchHandler(0);
