@@ -229,8 +229,10 @@ uint8_t xsns_index = 0;
  * FUNC_JSON_APPEND
  * FUNC_WEB_APPEND
  * return FUNC_COMMAND
- * FUNC_EVERY_SECOND
  * FUNC_EVERY_50_MSECOND
+ * FUNC_EVERY_100_MSECOND
+ * FUNC_EVERY_250_MSECOND
+ * FUNC_EVERY_SECOND
 \*********************************************************************************************/
 
 uint8_t XsnsPresent()

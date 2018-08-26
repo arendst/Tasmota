@@ -46,7 +46,7 @@ uint16_t senseair_co2 = 0;
 float senseair_temperature = 0;
 float senseair_humidity = 0;
 
-uint8_t senseair_state = 0;
+//uint8_t senseair_state = 0;
 
 /*********************************************************************************************/
 
@@ -115,11 +115,11 @@ const uint8_t start_addresses[] { 0x1A, 0x00, 0x03, 0x04, 0x05, 0x1C, 0x0A };
 uint8_t senseair_read_state = 0;
 uint8_t senseair_send_retry = 0;
 
-void Senseair50ms()              // Every 50 mSec
+void Senseair250ms()              // Every 250 mSec
 {
-  senseair_state++;
-  if (6 == senseair_state) {     // Every 300 mSec
-    senseair_state = 0;
+//  senseair_state++;
+//  if (6 == senseair_state) {     // Every 300 mSec
+//    senseair_state = 0;
 
     uint16_t value = 0;
     bool data_ready = ModbusReceiveReady();
@@ -184,7 +184,7 @@ void Senseair50ms()              // Every 50 mSec
       senseair_send_retry--;
     }
 
-  }
+//  }
 }
 
 /*********************************************************************************************/
@@ -244,8 +244,8 @@ boolean Xsns17(byte function)
       case FUNC_INIT:
         SenseairInit();
         break;
-      case FUNC_EVERY_50_MSECOND:
-        Senseair50ms();
+      case FUNC_EVERY_250_MSECOND:
+        Senseair250ms();
         break;
       case FUNC_JSON_APPEND:
         SenseairShow(1);
