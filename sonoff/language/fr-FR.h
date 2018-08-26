@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v6.1.1b
+ * Updated until v6.1.1.7
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -206,6 +206,7 @@
 #define D_ERASED_SECTOR "Secteur effacé"
 
 // xdrv_02_webserver.ino
+#define D_NOSCRIPT "Pour utiliser Tasmota, veuillez activer JavaScript"
 #define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "Firmware MINIMAL - merci de mettre à jour"
 #define D_WEBSERVER_ACTIVE_ON "Serveur web actif sur"
 #define D_WITH_IP_ADDRESS "avec l'adresse IP"
@@ -379,7 +380,7 @@
 // xdrv_09_timers.ino
 #define D_CONFIGURE_TIMER "Configuration des Timers"
 #define D_TIMER_PARAMETERS "Paramètres Timer"
-#define D_TIMER_ENABLE "Activer des Timers"
+#define D_TIMER_ENABLE "Activer les Timers"
 #define D_TIMER_ARM "Armer"
 #define D_TIMER_TIME "Temps"
 #define D_TIMER_DAYS "Jours"
@@ -435,6 +436,14 @@
 #define D_STANDARD_CONCENTRATION "CF-1 PM"     // Standard Particle CF-1 Particle Matter
 #define D_ENVIRONMENTAL_CONCENTRATION "PM"     // Environmetal Particle Matter
 #define D_PARTICALS_BEYOND "Particules"
+
+// xsns_32_mpu6050.ino
+#define D_AX_AXIS "Accél. Axe-X"
+#define D_AY_AXIS "Accél. Axe-Y"
+#define D_AZ_AXIS "Accél. Axe-Z"
+#define D_GX_AXIS "Gyro Axe-X"
+#define D_GY_AXIS "Gyro Axe-Y"
+#define D_GZ_AXIS "Gyro Axe-Z"
 
 // sonoff_template.h
 #define D_SENSOR_NONE     "Aucun"

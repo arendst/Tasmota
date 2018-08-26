@@ -179,6 +179,17 @@ double CharToDouble(char *str)
   return result;
 }
 
+int TextToInt(char *str)
+{
+  char *p;
+  uint8_t radix = 10;
+  if ('#' == str[0]) {
+    radix = 16;
+    str++;
+  }
+  return strtol(str, &p, radix);
+}
+
 char* dtostrfd(double number, unsigned char prec, char *s)
 {
   return dtostrf(number, 1, prec, s);
@@ -678,6 +689,69 @@ void ShowSource(int source)
 }
 
 /*********************************************************************************************\
+ * Sleep aware time scheduler functions borrowed from ESPEasy
+\*********************************************************************************************/
+
+long TimeDifference(unsigned long prev, unsigned long next)
+{
+  // Return the time difference as a signed value, taking into account the timers may overflow.
+  // Returned timediff is between -24.9 days and +24.9 days.
+  // Returned value is positive when "next" is after "prev"
+  long signed_diff = 0;
+  // To cast a value to a signed long, the difference may not exceed half 0xffffffffUL (= 4294967294)
+  const unsigned long half_max_unsigned_long = 2147483647u;  // = 2^31 -1
+  if (next >= prev) {
+    const unsigned long diff = next - prev;
+    if (diff <= half_max_unsigned_long) {                    // Normal situation, just return the difference.
+      signed_diff = static_cast<long>(diff);                 // Difference is a positive value.
+    } else {
+      // prev has overflow, return a negative difference value
+      signed_diff = static_cast<long>((0xffffffffUL - next) + prev + 1u);
+      signed_diff = -1 * signed_diff;
+    }
+  } else {
+    // next < prev
+    const unsigned long diff = prev - next;
+    if (diff <= half_max_unsigned_long) {                    // Normal situation, return a negative difference value
+      signed_diff = static_cast<long>(diff);
+      signed_diff = -1 * signed_diff;
+    } else {
+      // next has overflow, return a positive difference value
+      signed_diff = static_cast<long>((0xffffffffUL - prev) + next + 1u);
+    }
+  }
+  return signed_diff;
+}
+
+long TimePassedSince(unsigned long timestamp)
+{
+  // Compute the number of milliSeconds passed since timestamp given.
+  // Note: value can be negative if the timestamp has not yet been reached.
+  return TimeDifference(timestamp, millis());
+}
+
+bool TimeReached(unsigned long timer)
+{
+  // Check if a certain timeout has been reached.
+  const long passed = TimePassedSince(timer);
+  return (passed >= 0);
+}
+
+void SetNextTimeInterval(unsigned long& timer, const unsigned long step)
+{
+  timer += step;
+  const long passed = TimePassedSince(timer);
+  if (passed < 0) { return; }   // Event has not yet happened, which is fine.
+  if (static_cast<unsigned long>(passed) > step) {
+    // No need to keep running behind, start again.
+    timer = millis() + step;
+    return;
+  }
+  // Try to get in sync again.
+  timer = millis() + (step - passed);
+}
+
+/*********************************************************************************************\
  * Fill feature list
 \*********************************************************************************************/
 
@@ -746,7 +820,7 @@ void GetFeatures()
   feature_drv1 |= 0x00100000;  // xdrv_07_domoticz.ino
 #endif
 #ifdef USE_DISPLAY
-  feature_drv1 |= 0x00200000;  // xdrv_98_display.ino
+  feature_drv1 |= 0x00200000;  // xdrv_13_display.ino
 #endif
 #ifdef USE_HOME_ASSISTANT
   feature_drv1 |= 0x00400000;  // xdrv_12_home_assistant.ino
@@ -794,6 +868,30 @@ void GetFeatures()
 #endif
 #ifdef USE_KNX_NO_EMULATION
   feature_drv2 |= 0x00000010;  // user_config(_override).h
+#endif
+#ifdef USE_DISPLAY_MODES1TO5
+  feature_drv2 |= 0x00000020;  // xdrv_13_display.ino
+#endif
+#ifdef USE_DISPLAY_GRAPH
+  feature_drv2 |= 0x00000040;  // xdrv_13_display.ino
+#endif
+#ifdef USE_DISPLAY_LCD
+  feature_drv2 |= 0x00000080;  // xdsp_01_lcd.ino
+#endif
+#ifdef USE_DISPLAY_SSD1306
+  feature_drv2 |= 0x00000100;  // xdsp_02_ssd1306.ino
+#endif
+#ifdef USE_DISPLAY_MATRIX
+  feature_drv2 |= 0x00000200;  // xdsp_03_matrix.ino
+#endif
+#ifdef USE_DISPLAY_ILI9341
+  feature_drv2 |= 0x00000400;  // xdsp_04_ili9341.ino
+#endif
+#ifdef USE_DISPLAY_EPAPER
+  feature_drv2 |= 0x00000800;  // xdsp_05_epaper.ino
+#endif
+#ifdef USE_DISPLAY_SH1106
+  feature_drv2 |= 0x00001000;  // xdsp_06_sh1106.ino
 #endif
 
 
@@ -932,6 +1030,12 @@ void GetFeatures()
 #ifdef USE_MPU6050
   feature_sns2 |= 0x00000008;  // xsns_32_mpu6050.ino
 #endif
+#ifdef USE_MCP230xx_OUTPUT
+  feature_sns2 |= 0x00000010;  // xsns_29_mcp230xx.ino
+#endif
+#ifdef USE_MCP230xx_DISPLAYOUTPUT
+  feature_sns2 |= 0x00000020;  // xsns_29_mcp230xx.ino
+#endif
 }
 
 /*********************************************************************************************\
@@ -1068,6 +1172,30 @@ void WifiConfig(uint8_t type)
   }
 }
 
+void WiFiSetSleepMode()
+{
+/* Excerpt from the esp8266 non os sdk api reference (v2.2.1):
+ * Sets sleep type for power saving. Set WIFI_NONE_SLEEP to disable power saving.
+ * - Default mode: WIFI_MODEM_SLEEP.
+ * - In order to lower the power comsumption, ESP8266 changes the TCP timer
+ *   tick from 250ms to 3s in WIFI_LIGHT_SLEEP mode, which leads to increased timeout for
+ *   TCP timer. Therefore, the WIFI_MODEM_SLEEP or deep-sleep mode should be used
+ *   where there is a requirement for the accurancy of the TCP timer.
+ *
+ * Sleep is disabled in core 2.4.1 and 2.4.2 as there are bugs in their SDKs
+ * See https://github.com/arendst/Sonoff-Tasmota/issues/2559
+ */
+
+#if defined(ARDUINO_ESP8266_RELEASE_2_4_1) || defined(ARDUINO_ESP8266_RELEASE_2_4_2)
+#else  // Enabled in 2.3.0, 2.4.0 and stage
+  if (sleep) {
+    WiFi.setSleepMode(WIFI_LIGHT_SLEEP);  // Allow light sleep during idle times
+  } else {
+    WiFi.setSleepMode(WIFI_MODEM_SLEEP);  // Diable sleep (Esp8288/Arduino core and sdk default)
+  }
+#endif
+}
+
 void WifiBegin(uint8_t flag)
 {
   const char kWifiPhyMode[] = " BGN";
@@ -1084,9 +1212,7 @@ void WifiBegin(uint8_t flag)
   WiFi.disconnect(true);    // Delete SDK wifi config
   delay(200);
   WiFi.mode(WIFI_STA);      // Disable AP mode
-#ifndef ARDUINO_ESP8266_RELEASE_2_4_1     // See https://github.com/arendst/Sonoff-Tasmota/issues/2559 - Sleep bug
-  if (Settings.sleep) { WiFi.setSleepMode(WIFI_LIGHT_SLEEP); }  // Allow light sleep during idle times
-#endif
+  WiFiSetSleepMode();
 //  if (WiFi.getPhyMode() != WIFI_PHY_MODE_11N) { WiFi.setPhyMode(WIFI_PHY_MODE_11N); }
   if (!WiFi.getAutoConnect()) { WiFi.setAutoConnect(true); }
 //  WiFi.setAutoReconnect(true);
@@ -1959,7 +2085,6 @@ void RtcInit()
  * ADC support
 \*********************************************************************************************/
 
-uint8_t adc_counter = 0;
 uint16_t adc_last_value = 0;
 
 uint16_t AdcRead()
@@ -1974,17 +2099,14 @@ uint16_t AdcRead()
 }
 
 #ifdef USE_RULES
-void AdcEvery50ms()
+void AdcEvery250ms()
 {
-  adc_counter++;
-  if (!(adc_counter % 4)) {
-    uint16_t new_value = AdcRead();
-    if ((new_value < adc_last_value -10) || (new_value > adc_last_value +10)) {
-      adc_last_value = new_value;
-      uint16_t value = adc_last_value / 10;
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"ANALOG\":{\"A0div10\":%d}}"), (value > 99) ? 100 : value);
-      XdrvRulesProcess();
-    }
+  uint16_t new_value = AdcRead();
+  if ((new_value < adc_last_value -10) || (new_value > adc_last_value +10)) {
+    adc_last_value = new_value;
+    uint16_t value = adc_last_value / 10;
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"ANALOG\":{\"A0div10\":%d}}"), (value > 99) ? 100 : value);
+    XdrvRulesProcess();
   }
 }
 #endif  // USE_RULES
@@ -2015,8 +2137,8 @@ boolean Xsns02(byte function)
   if (pin[GPIO_ADC0] < 99) {
     switch (function) {
 #ifdef USE_RULES
-      case FUNC_EVERY_50_MSECOND:
-        AdcEvery50ms();
+      case FUNC_EVERY_250_MSECOND:
+        AdcEvery250ms();
         break;
 #endif  // USE_RULES
       case FUNC_JSON_APPEND:

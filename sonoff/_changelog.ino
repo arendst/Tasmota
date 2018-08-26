@@ -1,4 +1,51 @@
-/* 6.1.1c
+/* 6.1.1.11 20180826
+ * Change scheduler phase 1/3 - Fixed when sleep is enabled: Uptime, Delay, PulseTime and TelePeriod (#3581)
+ * Change scheduler phase 2/3 - Fixed when sleep is enabled: Blinktime (#3581)
+ * Change scheduler phase 3/3 - Some sensor update timings: AdcEvery 200 -> 250, Senseair 300 -> 250, SDM120 300 -> 250, SDM630 300 -> 250
+ *
+ * 6.1.1.10 20180827
+ * Disable wifi sleep for both Esp8266/Arduino core 2.4.1 and 2.4.2 to solve device freeze caused by Espressif SDK bug (#3554)
+ * Rewrite GPIO options ButtonXn, SwitchXn and CounterXn to select INPUT mode instead of INPUT_PULLUP
+ * Add command Publish2 for publishing retained MQTT messages (#3593)
+ *
+ * 6.1.1.9 20180825
+ * Allow user override of define MAX_RULE_TIMERS (#3561)
+ * Allow user override of define MAX_RULE_VARS
+ * Add GPIO options ButtonXn, SwitchXn and CounterXn to select INPUT mode instead of INPUT_PULLUP (#2525)
+ * Fix OtaMagic when file path contains a dash (-) (#3563)
+ * Fix EnergyReset3 (#2723)
+ * Change command sleep from restart after change to not restart after change (#3554)
+ * Add all ruletimer values to command RuleTimer result message (#3571)
+ * Add RGB support for Domoticz (#3547)
+ *
+ * 6.1.1.8 20180825
+ * Fix MQTT reconnection detection when using TasmotaMqtt library (#3558)
+ * Add build time setting of ButtonTopic and SwitchTopic (#3414)
+ * Add display features and dynamic buffering
+ *
+ * 6.1.1.7 20180818
+ * Add initial display support for Lcd, Oled, Matrix, Tft and e-paper - Need more docs
+ * Fix SDM120 reporting wrong negative values to Domoticz (#3521)
+ * Fix iFan02 power on state (#3412, #3530)
+ * Add display define USE_DISPLAY_MODES1TO5 to select display modes 1 to 5
+ * Add command DisplayRotate 0..3 to select persistent display rotation
+ *
+ * 6.1.1.6 20180813
+ * Add modulo option to rules like rule1 on Time#Minute|5 do backlog power on;delay 200;power off endon (#3466)
+ *
+ * 6.1.1.5 20180812
+ * Fix some Pow R2 and S31 checksum errors using optimized re-sync
+ *
+ * 6.1.1.4 20180812
+ * Change version representation from 1.1.1a to 1.1.1.1 for better change reference
+ *
+ * 6.1.1c 20180720
+ * Add iFan02 Fanspeed + and Fanspeed - command options (#3415)
+ * Fix some Pow R2 and S31 checksum errors (#3425)
+ * Change CounterType 1 from milliseconds to microseconds (#3437)
+ * Add output support on MCP23008/MCP23017 (#3436)
+ * Fix LM75AD I2C sensor detection (#3408)
+ * Add message when JavaScript is not enabled in webbrowser (#3388)
  * Fix sonoff-minimal from using default settings
  * Add option + to command Rule to concatenate new rule with existing rules (#3365)
  * Add initial support for sensor MPU6050 (#3352)
@@ -12,7 +59,7 @@
  * Add support for CCS811 sensor (#3309)
  * Add command Timers 0/1 to globally disable or enable armed timers (#3270)
  *
- * 6.1.1b
+ * 6.1.1b 20180715
  * Add support for MPR121 controller in input mode for touch buttons (#3142)
  * Add support for MCP230xx for general purpose input expansion and command Sensor29 (#3188)
  * Fix command Scale buffer overflow (#3236)
@@ -25,7 +72,7 @@
  *   or Wifi Serial input if Smartconfig is disabled
  * Remove WPS and SmartConfig from sonoff-minimal saving 56k code space
  *
- * 6.1.1a
+ * 6.1.1a 20180714
  * Fix TM1638 compile error (#3212)
  * Add TM1638 switch support (#2226)
  * Fix invalid response using more than 4 switches and domoticz

@@ -63,13 +63,6 @@
  *     RuleTimer2 100
 \*********************************************************************************************/
 
-#define MAX_RULE_TIMERS        8
-#define RULES_MAX_VARS         5
-
-#ifndef ULONG_MAX
-#define ULONG_MAX              0xffffffffUL
-#endif
-
 #define D_CMND_RULE "Rule"
 #define D_CMND_RULETIMER "RuleTimer"
 #define D_CMND_EVENT "Event"
@@ -97,54 +90,7 @@ uint8_t rules_trigger_count[MAX_RULE_SETS] = { 0 };
 uint8_t rules_teleperiod = 0;
 
 char event_data[100];
-char vars[RULES_MAX_VARS][10] = { 0 };
-
-/*******************************************************************************************/
-
-long TimeDifference(unsigned long prev, unsigned long next)
-{
-  // Return the time difference as a signed value, taking into account the timers may overflow.
-  // Returned timediff is between -24.9 days and +24.9 days.
-  // Returned value is positive when "next" is after "prev"
-  long signed_diff = 0;
-  // To cast a value to a signed long, the difference may not exceed half the ULONG_MAX
-  const unsigned long half_max_unsigned_long = 2147483647u;  // = 2^31 -1
-  if (next >= prev) {
-    const unsigned long diff = next - prev;
-    if (diff <= half_max_unsigned_long) {                    // Normal situation, just return the difference.
-      signed_diff = static_cast<long>(diff);                 // Difference is a positive value.
-    } else {
-      // prev has overflow, return a negative difference value
-      signed_diff = static_cast<long>((ULONG_MAX - next) + prev + 1u);
-      signed_diff = -1 * signed_diff;
-    }
-  } else {
-    // next < prev
-    const unsigned long diff = prev - next;
-    if (diff <= half_max_unsigned_long) {                    // Normal situation, return a negative difference value
-      signed_diff = static_cast<long>(diff);
-      signed_diff = -1 * signed_diff;
-    } else {
-      // next has overflow, return a positive difference value
-      signed_diff = static_cast<long>((ULONG_MAX - prev) + next + 1u);
-    }
-  }
-  return signed_diff;
-}
-
-long TimePassedSince(unsigned long timestamp)
-{
-  // Compute the number of milliSeconds passed since timestamp given.
-  // Note: value can be negative if the timestamp has not yet been reached.
-  return TimeDifference(timestamp, millis());
-}
-
-bool TimeReached(unsigned long timer)
-{
-  // Check if a certain timeout has been reached.
-  const long passed = TimePassedSince(timer);
-  return (passed >= 0);
-}
+char vars[MAX_RULE_VARS][10] = { 0 };
 
 /*******************************************************************************************/
 
@@ -168,7 +114,7 @@ bool RulesRuleMatch(byte rule_set, String &event, String &rule)
     rule_task = rule.substring(5, pos);                // "INA219" or "SYSTEM"
   }
 
-  String rule_name = rule.substring(pos +1);           // "CURRENT>0.100" or "BOOT" or "%var1%"
+  String rule_name = rule.substring(pos +1);           // "CURRENT>0.100" or "BOOT" or "%var1%" or "MINUTE|5"
 
   char compare = ' ';
   pos = rule_name.indexOf(">");
@@ -182,6 +128,11 @@ bool RulesRuleMatch(byte rule_set, String &event, String &rule)
       pos = rule_name.indexOf("=");
       if (pos > 0) {
         compare = '=';
+      } else {
+        pos = rule_name.indexOf("|");                  // Modulo, cannot use % easily as it is used for variable detection
+        if (pos > 0) {
+          compare = '%';
+        }
       }
     }
   }
@@ -190,14 +141,14 @@ bool RulesRuleMatch(byte rule_set, String &event, String &rule)
   double rule_value = 0;
   if (pos > 0) {
     String rule_param = rule_name.substring(pos + 1);
-    for (byte i = 0; i < RULES_MAX_VARS; i++) {
+    for (byte i = 0; i < MAX_RULE_VARS; i++) {
       snprintf_P(stemp, sizeof(stemp), PSTR("%%VAR%d%%"), i +1);
       if (rule_param.startsWith(stemp)) {
         rule_param = vars[i];
         break;
       }
     }
-    for (byte i = 0; i < RULES_MAX_MEMS; i++) {
+    for (byte i = 0; i < MAX_RULE_MEMS; i++) {
       snprintf_P(stemp, sizeof(stemp), PSTR("%%MEM%d%%"), i +1);
       if (rule_param.startsWith(stemp)) {
         rule_param = Settings.mems[i];
@@ -236,7 +187,14 @@ bool RulesRuleMatch(byte rule_set, String &event, String &rule)
   // Step 3: Compare rule (value)
   if (str_value) {
     value = CharToDouble((char*)str_value);
+    int int_value = int(value);
+    int int_rule_value = int(rule_value);
     switch (compare) {
+      case '%':
+        if ((int_value > 0) && (int_rule_value > 0)) {
+          if ((int_value % int_rule_value) == 0) { match = true; }
+        }
+        break;
       case '>':
         if (value > rule_value) { match = true; }
         break;
@@ -314,11 +272,11 @@ bool RuleSetProcess(byte rule_set, String &event_saved)
 //      if (!ucommand.startsWith("BACKLOG")) { commands = "backlog " + commands; }  // Always use Backlog to prevent power race exception
       if (ucommand.indexOf("EVENT ") != -1) { commands = "backlog " + commands; }  // Always use Backlog with event to prevent rule event loop exception
       commands.replace(F("%value%"), rules_event_value);
-      for (byte i = 0; i < RULES_MAX_VARS; i++) {
+      for (byte i = 0; i < MAX_RULE_VARS; i++) {
         snprintf_P(stemp, sizeof(stemp), PSTR("%%var%d%%"), i +1);
         commands.replace(stemp, vars[i]);
       }
-      for (byte i = 0; i < RULES_MAX_MEMS; i++) {
+      for (byte i = 0; i < MAX_RULE_MEMS; i++) {
         snprintf_P(stemp, sizeof(stemp), PSTR("%%mem%d%%"), i +1);
         commands.replace(stemp, Settings.mems[i]);
       }
@@ -443,20 +401,21 @@ void RulesEvery50ms()
         mask <<= 1;
       }
     }
-    else {
-      rules_quota++;
-      if (rules_quota &1) {              // Every 100 ms
-        mqtt_data[0] = '\0';
-        uint16_t tele_period_save = tele_period;
-        tele_period = 2;                 // Do not allow HA updates during next function call
-        XsnsNextCall(FUNC_JSON_APPEND);  // ,"INA219":{"Voltage":4.494,"Current":0.020,"Power":0.089}
-        tele_period = tele_period_save;
-        if (strlen(mqtt_data)) {
-          mqtt_data[0] = '{';            // {"INA219":{"Voltage":4.494,"Current":0.020,"Power":0.089}
-          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}"), mqtt_data);
-          RulesProcess();
-        }
-      }
+  }
+}
+
+void RulesEvery100ms()
+{
+  if (Settings.rule_enabled) {       // Any rule enabled
+    mqtt_data[0] = '\0';
+    uint16_t tele_period_save = tele_period;
+    tele_period = 2;                 // Do not allow HA updates during next function call
+    XsnsNextCall(FUNC_JSON_APPEND);  // ,"INA219":{"Voltage":4.494,"Current":0.020,"Power":0.089}
+    tele_period = tele_period_save;
+    if (strlen(mqtt_data)) {
+      mqtt_data[0] = '{';            // {"INA219":{"Voltage":4.494,"Current":0.020,"Power":0.089}
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}"), mqtt_data);
+      RulesProcess();
     }
   }
 }
@@ -549,7 +508,11 @@ boolean RulesCommand()
     if (XdrvMailbox.data_len > 0) {
       rules_timer[index -1] = (XdrvMailbox.payload > 0) ? millis() + (1000 * XdrvMailbox.payload) : 0;
     }
-    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_LVALUE, command, index, (rules_timer[index -1]) ? (rules_timer[index -1] - millis()) / 1000 : 0);
+    mqtt_data[0] = '\0';
+    for (byte i = 0; i < MAX_RULE_TIMERS; i++) {
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s%c\"T%d\":%d"), mqtt_data, (i) ? ',' : '{', i +1, (rules_timer[i]) ? (rules_timer[i] - millis()) / 1000 : 0);
+    }
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}"), mqtt_data);
   }
   else if (CMND_EVENT == command_code) {
     if (XdrvMailbox.data_len > 0) {
@@ -557,40 +520,40 @@ boolean RulesCommand()
     }
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, D_JSON_DONE);
   }
-  else if ((CMND_VAR == command_code) && (index > 0) && (index <= RULES_MAX_VARS)) {
+  else if ((CMND_VAR == command_code) && (index > 0) && (index <= MAX_RULE_VARS)) {
     if (XdrvMailbox.data_len > 0) {
       strlcpy(vars[index -1], ('"' == XdrvMailbox.data[0]) ? "" : XdrvMailbox.data, sizeof(vars[index -1]));
     }
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, index, vars[index -1]);
   }
-  else if ((CMND_MEM == command_code) && (index > 0) && (index <= RULES_MAX_MEMS)) {
+  else if ((CMND_MEM == command_code) && (index > 0) && (index <= MAX_RULE_MEMS)) {
     if (XdrvMailbox.data_len > 0) {
       strlcpy(Settings.mems[index -1], ('"' == XdrvMailbox.data[0]) ? "" : XdrvMailbox.data, sizeof(Settings.mems[index -1]));
     }
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, index, Settings.mems[index -1]);
   }
-  else if ((CMND_ADD == command_code) && (index > 0) && (index <= RULES_MAX_VARS)) {
+  else if ((CMND_ADD == command_code) && (index > 0) && (index <= MAX_RULE_VARS)) {
     if (XdrvMailbox.data_len > 0) {
       double tempvar = CharToDouble(vars[index -1]) + CharToDouble(XdrvMailbox.data);
       dtostrfd(tempvar, 2, vars[index -1]);
     }
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, index, vars[index -1]);
   }
-  else if ((CMND_SUB == command_code) && (index > 0) && (index <= RULES_MAX_VARS)) {
+  else if ((CMND_SUB == command_code) && (index > 0) && (index <= MAX_RULE_VARS)) {
     if (XdrvMailbox.data_len > 0) {
       double tempvar = CharToDouble(vars[index -1]) - CharToDouble(XdrvMailbox.data);
       dtostrfd(tempvar, 2, vars[index -1]);
     }
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, index, vars[index -1]);
   }
-  else if ((CMND_MULT == command_code) && (index > 0) && (index <= RULES_MAX_VARS)) {
+  else if ((CMND_MULT == command_code) && (index > 0) && (index <= MAX_RULE_VARS)) {
     if (XdrvMailbox.data_len > 0) {
       double tempvar = CharToDouble(vars[index -1]) * CharToDouble(XdrvMailbox.data);
       dtostrfd(tempvar, 2, vars[index -1]);
     }
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, index, vars[index -1]);
   }
-  else if ((CMND_SCALE == command_code) && (index > 0) && (index <= RULES_MAX_VARS)) {
+  else if ((CMND_SCALE == command_code) && (index > 0) && (index <= MAX_RULE_VARS)) {
     if (XdrvMailbox.data_len > 0) {
       if (strstr(XdrvMailbox.data, ",")) {     // Process parameter entry
         char sub_string[XdrvMailbox.data_len +1];
@@ -632,6 +595,9 @@ boolean Xdrv10(byte function)
       break;
     case FUNC_EVERY_50_MSECOND:
       RulesEvery50ms();
+      break;
+    case FUNC_EVERY_100_MSECOND:
+      RulesEvery100ms();
       break;
     case FUNC_EVERY_SECOND:
       RulesEverySecond();

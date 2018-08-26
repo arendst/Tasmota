@@ -30,7 +30,7 @@
 TasmotaSerial *SDM120Serial;
 
 uint8_t sdm120_type = 1;
-uint8_t sdm120_state = 0;
+//uint8_t sdm120_state = 0;
 
 float sdm120_voltage = 0;
 float sdm120_current = 0;
@@ -135,11 +135,11 @@ const uint16_t sdm120_start_addresses[] {
 uint8_t sdm120_read_state = 0;
 uint8_t sdm120_send_retry = 0;
 
-void SDM12050ms()              // Every 50 mSec
+void SDM120250ms()              // Every 250 mSec
 {
-  sdm120_state++;
-  if (6 == sdm120_state) {     // Every 300 mSec
-    sdm120_state = 0;
+//  sdm120_state++;
+//  if (6 == sdm120_state) {     // Every 300 mSec
+//    sdm120_state = 0;
 
     float value = 0;
     bool data_ready = SDM120_ModbusReceiveReady();
@@ -198,7 +198,7 @@ void SDM12050ms()              // Every 50 mSec
     } else {
       sdm120_send_retry--;
     }
-  } // end 300 ms
+//  } // end 300 ms
 }
 
 void SDM120Init()
@@ -256,7 +256,7 @@ void SDM120Show(boolean json)
     if (0 == tele_period) {
       DomoticzSensor(DZ_VOLTAGE, voltage);
       DomoticzSensor(DZ_CURRENT, current);
-      DomoticzSensorPowerEnergy((uint16_t)sdm120_active_power, energy_total);
+      DomoticzSensorPowerEnergy((int)sdm120_active_power, energy_total);
     }
 #endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
@@ -281,8 +281,8 @@ boolean Xsns23(byte function)
       case FUNC_INIT:
         SDM120Init();
         break;
-      case FUNC_EVERY_50_MSECOND:
-        SDM12050ms();
+      case FUNC_EVERY_250_MSECOND:
+        SDM120250ms();
         break;
       case FUNC_JSON_APPEND:
         SDM120Show(1);

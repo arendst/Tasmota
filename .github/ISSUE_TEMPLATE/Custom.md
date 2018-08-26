@@ -8,8 +8,8 @@ Make sure these boxes are checked [x] before submitting your issue - Thank you!
 
 - [ ] Searched the problem in issues (https://github.com/arendst/Sonoff-Tasmota/issues)
 - [ ] Searched the problem in the wiki (https://github.com/arendst/Sonoff-Tasmota/wiki/Troubleshooting)
-- [ ] Searched the problem in the forum (https://forum.digital-pig.com/)
-- [ ] Searched the problem in the discussion group (https://groups.google.com/d/forum/sonoffusers)
+- [ ] Searched the problem in the forum (https://groups.google.com/d/forum/sonoffusers)
+- [ ] Searched the problem in the chat (https://discord.gg/Ks2Kzd4)
 - [ ] Hardware used : 
 - [ ] Provide the output of command ``status 0`` :
 ```
