@@ -458,8 +458,8 @@ void SettingsDefaultSet2()
   strlcpy(Settings.mqtt_user, MQTT_USER, sizeof(Settings.mqtt_user));
   strlcpy(Settings.mqtt_pwd, MQTT_PASS, sizeof(Settings.mqtt_pwd));
   strlcpy(Settings.mqtt_topic, MQTT_TOPIC, sizeof(Settings.mqtt_topic));
-  strlcpy(Settings.button_topic, "0", sizeof(Settings.button_topic));
-  strlcpy(Settings.switch_topic, "0", sizeof(Settings.switch_topic));
+  strlcpy(Settings.button_topic, MQTT_BUTTON_TOPIC, sizeof(Settings.button_topic));
+  strlcpy(Settings.switch_topic, MQTT_SWITCH_TOPIC, sizeof(Settings.switch_topic));
   strlcpy(Settings.mqtt_grptopic, MQTT_GRPTOPIC, sizeof(Settings.mqtt_grptopic));
   strlcpy(Settings.mqtt_fulltopic, MQTT_FULLTOPIC, sizeof(Settings.mqtt_fulltopic));
   Settings.mqtt_retry = MQTT_RETRY_SECS;
@@ -617,7 +617,10 @@ void SettingsDefaultSet_5_10_1()
   Settings.display_rows = 2;
   Settings.display_cols[0] = 16;
   Settings.display_cols[1] = 8;
-//#if defined(USE_I2C) && defined(USE_DISPLAY)
+  Settings.display_dimmer = 1;
+  Settings.display_size = 1;
+  Settings.display_font = 1;
+  Settings.display_rotate = 0;
   Settings.display_address[0] = MTX_ADDRESS1;
   Settings.display_address[1] = MTX_ADDRESS2;
   Settings.display_address[2] = MTX_ADDRESS3;
@@ -626,9 +629,6 @@ void SettingsDefaultSet_5_10_1()
   Settings.display_address[5] = MTX_ADDRESS6;
   Settings.display_address[6] = MTX_ADDRESS7;
   Settings.display_address[7] = MTX_ADDRESS8;
-//#endif  // USE_DISPLAY
-  Settings.display_dimmer = 1;
-  Settings.display_size = 1;
 }
 
 void SettingsResetStd()

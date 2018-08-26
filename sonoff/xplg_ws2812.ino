@@ -409,7 +409,7 @@ void Ws2812ShowScheme(uint8_t scheme)
 {
   switch (scheme) {
     case 0:  // Clock
-      if (((STATES/10)*2 == state) || (ws_show_next)) {
+      if ((1 == state_250mS) || (ws_show_next)) {
         Ws2812Clock();
         ws_show_next = 0;
       }
