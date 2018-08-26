@@ -2085,7 +2085,6 @@ void RtcInit()
  * ADC support
 \*********************************************************************************************/
 
-uint8_t adc_counter = 0;
 uint16_t adc_last_value = 0;
 
 uint16_t AdcRead()
@@ -2100,17 +2099,14 @@ uint16_t AdcRead()
 }
 
 #ifdef USE_RULES
-void AdcEvery50ms()
+void AdcEvery250ms()
 {
-  adc_counter++;
-  if (!(adc_counter % 4)) {
-    uint16_t new_value = AdcRead();
-    if ((new_value < adc_last_value -10) || (new_value > adc_last_value +10)) {
-      adc_last_value = new_value;
-      uint16_t value = adc_last_value / 10;
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"ANALOG\":{\"A0div10\":%d}}"), (value > 99) ? 100 : value);
-      XdrvRulesProcess();
-    }
+  uint16_t new_value = AdcRead();
+  if ((new_value < adc_last_value -10) || (new_value > adc_last_value +10)) {
+    adc_last_value = new_value;
+    uint16_t value = adc_last_value / 10;
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"ANALOG\":{\"A0div10\":%d}}"), (value > 99) ? 100 : value);
+    XdrvRulesProcess();
   }
 }
 #endif  // USE_RULES
@@ -2141,8 +2137,8 @@ boolean Xsns02(byte function)
   if (pin[GPIO_ADC0] < 99) {
     switch (function) {
 #ifdef USE_RULES
-      case FUNC_EVERY_50_MSECOND:
-        AdcEvery50ms();
+      case FUNC_EVERY_250_MSECOND:
+        AdcEvery250ms();
         break;
 #endif  // USE_RULES
       case FUNC_JSON_APPEND:

@@ -134,7 +134,7 @@ byte reset_web_log_flag = 0;                // Reset web console log
 byte devices_present = 0;                   // Max number of devices supported
 int status_update_timer = 0;                // Refresh initial status
 unsigned long pulse_timer[MAX_PULSETIMERS] = { 0 }; // Power off timer
-uint16_t blink_timer = 0;                   // Power cycle timer
+unsigned long blink_timer = 0;              // Power cycle timer
 uint16_t blink_counter = 0;                 // Number of blink cycles
 power_t blink_power;                        // Blink power state
 power_t blink_mask = 0;                     // Blink relay active mask
@@ -662,9 +662,9 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_NVALUE_ACTIVE_NVALUE, command, index, Settings.pulse_timer[index -1], GetPulseTimer(index -1));
     }
     else if (CMND_BLINKTIME == command_code) {
-      if ((payload > 2) && (payload <= 3600)) {
+      if ((payload > 1) && (payload <= 3600)) {
         Settings.blinktime = payload;
-        if (blink_timer) blink_timer = Settings.blinktime;
+        if (blink_timer > 0) { blink_timer = millis() + (100 * payload); }
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, Settings.blinktime);
     }
@@ -1328,7 +1328,7 @@ void ExecuteCommandPower(byte device, byte state, int source)
       blink_powersave = (blink_powersave & (POWER_MASK ^ mask)) | (power & mask);  // Save state
       blink_power = (power >> (device -1))&1;  // Prep to Toggle
     }
-    blink_timer = 1;
+    blink_timer = millis() + 100;
     blink_counter = ((!Settings.blinkcount) ? 64000 : (Settings.blinkcount *2)) +1;
     blink_mask |= mask;  // Set device mask
     MqttPublishPowerBlinkState(device);
@@ -1862,9 +1862,6 @@ void Every50mSeconds()
 
   ButtonHandler();
   SwitchHandler(0);
-
-  XdrvCall(FUNC_EVERY_50_MSECOND);
-  XsnsCall(FUNC_EVERY_50_MSECOND);
 }
 
 /*-------------------------------------------------------------------------------------------*\
@@ -1891,9 +1888,8 @@ void Every100mSeconds()
   }
 
   if (blink_mask) {
-    blink_timer--;
-    if (!blink_timer) {
-      blink_timer = Settings.blinktime;
+    if (TimeReached(blink_timer)) {
+      SetNextTimeInterval(blink_timer, 100 * Settings.blinktime);
       blink_counter--;
       if (!blink_counter) {
         StopAllPowerBlink();
@@ -2620,16 +2616,22 @@ void loop()
   if (TimeReached(state_50msecond)) {
     SetNextTimeInterval(state_50msecond, 50);
     Every50mSeconds();
+    XdrvCall(FUNC_EVERY_50_MSECOND);
+    XsnsCall(FUNC_EVERY_50_MSECOND);
   }
 
   if (TimeReached(state_100msecond)) {
     SetNextTimeInterval(state_100msecond, 100);
     Every100mSeconds();
+    XdrvCall(FUNC_EVERY_100_MSECOND);
+    XsnsCall(FUNC_EVERY_100_MSECOND);
   }
 
   if (TimeReached(state_250msecond)) {
     SetNextTimeInterval(state_250msecond, 250);
     Every250mSeconds();
+    XdrvCall(FUNC_EVERY_250_MSECOND);
+    XsnsCall(FUNC_EVERY_250_MSECOND);
   }
 
   if (!serial_local) SerialInput();

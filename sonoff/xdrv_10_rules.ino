@@ -401,20 +401,21 @@ void RulesEvery50ms()
         mask <<= 1;
       }
     }
-    else {
-      rules_quota++;
-      if (rules_quota &1) {              // Every 100 ms
-        mqtt_data[0] = '\0';
-        uint16_t tele_period_save = tele_period;
-        tele_period = 2;                 // Do not allow HA updates during next function call
-        XsnsNextCall(FUNC_JSON_APPEND);  // ,"INA219":{"Voltage":4.494,"Current":0.020,"Power":0.089}
-        tele_period = tele_period_save;
-        if (strlen(mqtt_data)) {
-          mqtt_data[0] = '{';            // {"INA219":{"Voltage":4.494,"Current":0.020,"Power":0.089}
-          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}"), mqtt_data);
-          RulesProcess();
-        }
-      }
+  }
+}
+
+void RulesEvery100ms()
+{
+  if (Settings.rule_enabled) {       // Any rule enabled
+    mqtt_data[0] = '\0';
+    uint16_t tele_period_save = tele_period;
+    tele_period = 2;                 // Do not allow HA updates during next function call
+    XsnsNextCall(FUNC_JSON_APPEND);  // ,"INA219":{"Voltage":4.494,"Current":0.020,"Power":0.089}
+    tele_period = tele_period_save;
+    if (strlen(mqtt_data)) {
+      mqtt_data[0] = '{';            // {"INA219":{"Voltage":4.494,"Current":0.020,"Power":0.089}
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}"), mqtt_data);
+      RulesProcess();
     }
   }
 }
@@ -594,6 +595,9 @@ boolean Xdrv10(byte function)
       break;
     case FUNC_EVERY_50_MSECOND:
       RulesEvery50ms();
+      break;
+    case FUNC_EVERY_100_MSECOND:
+      RulesEvery100ms();
       break;
     case FUNC_EVERY_SECOND:
       RulesEverySecond();

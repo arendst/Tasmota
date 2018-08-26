@@ -1,5 +1,7 @@
 /* 6.1.1.11 20180826
- * Change scheduler phase 1 - Fixed when sleep is enabled: Uptime, Delay, PulseTime and TelePeriod (#3581)
+ * Change scheduler phase 1/3 - Fixed when sleep is enabled: Uptime, Delay, PulseTime and TelePeriod (#3581)
+ * Change scheduler phase 2/3 - Fixed when sleep is enabled: Blinktime (#3581)
+ * Change scheduler phase 3/3 - Some sensor update timings: AdcEvery 200 -> 250, Senseair 300 -> 250, SDM120 300 -> 250, SDM630 300 -> 250
  *
  * 6.1.1.10 20180827
  * Disable wifi sleep for both Esp8266/Arduino core 2.4.1 and 2.4.2 to solve device freeze caused by Espressif SDK bug (#3554)

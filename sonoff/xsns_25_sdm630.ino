@@ -30,7 +30,7 @@
 TasmotaSerial *SDM630Serial;
 
 uint8_t sdm630_type = 1;
-uint8_t sdm630_state = 0;
+//uint8_t sdm630_state = 0;
 
 float sdm630_voltage[] = {0,0,0};
 float sdm630_current[] = {0,0,0};
@@ -141,11 +141,11 @@ const uint16_t sdm630_start_addresses[] {
 uint8_t sdm630_read_state = 0;
 uint8_t sdm630_send_retry = 0;
 
-void SDM63050ms()              // Every 50 mSec
+void SDM630250ms()              // Every 250 mSec
 {
-  sdm630_state++;
-  if (6 == sdm630_state) {     // Every 300 mSec
-    sdm630_state = 0;
+//  sdm630_state++;
+//  if (6 == sdm630_state) {     // Every 300 mSec
+//    sdm630_state = 0;
 
     float value = 0;
     bool data_ready = SDM630_ModbusReceiveReady();
@@ -236,7 +236,7 @@ void SDM63050ms()              // Every 50 mSec
     } else {
       sdm630_send_retry--;
     }
-  } // end 300 ms
+//  } // end 300 ms
 }
 
 void SDM630Init()
@@ -336,8 +336,8 @@ boolean Xsns25(byte function)
       case FUNC_INIT:
         SDM630Init();
         break;
-      case FUNC_EVERY_50_MSECOND:
-        SDM63050ms();
+      case FUNC_EVERY_250_MSECOND:
+        SDM630250ms();
         break;
       case FUNC_JSON_APPEND:
         SDM630Show(1);
