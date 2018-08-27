@@ -77,7 +77,7 @@ void CounterInit()
 
   for (byte i = 0; i < MAX_COUNTERS; i++) {
     if (pin[GPIO_CNTR1 +i] < 99) {
-      pinMode(pin[GPIO_CNTR1 +i], INPUT_PULLUP);
+      pinMode(pin[GPIO_CNTR1 +i], bitRead(counter_no_pullup, i) ? INPUT : INPUT_PULLUP);
       attachInterrupt(pin[GPIO_CNTR1 +i], counter_callbacks[i], FALLING);
     }
   }
@@ -124,7 +124,9 @@ void CounterShow(boolean json)
 #endif  // USE_WEBSERVER
       }
     }
-    if(bitRead(Settings.pulse_counter_type, i)) RtcSettings.pulse_counter[i]=0xFFFFFFFF; // Set Timer to max in case of no more interrupts due to stall of measured device
+    if (bitRead(Settings.pulse_counter_type, i)) {
+      RtcSettings.pulse_counter[i] = 0xFFFFFFFF;  // Set Timer to max in case of no more interrupts due to stall of measured device
+    }
   }
   if (json) {
     if (header) {

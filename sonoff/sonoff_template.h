@@ -104,6 +104,22 @@ enum UserSelectablePins {
   GPIO_TM16CLK,        // TM1638 Clock
   GPIO_TM16DIO,        // TM1638 Data I/O
   GPIO_TM16STB,        // TM1638 Strobe
+  GPIO_SWT1_NP,        // User connected external switches
+  GPIO_SWT2_NP,
+  GPIO_SWT3_NP,
+  GPIO_SWT4_NP,
+  GPIO_SWT5_NP,
+  GPIO_SWT6_NP,
+  GPIO_SWT7_NP,
+  GPIO_SWT8_NP,
+  GPIO_KEY1_NP,        // Button usually connected to GPIO0
+  GPIO_KEY2_NP,
+  GPIO_KEY3_NP,
+  GPIO_KEY4_NP,
+  GPIO_CNTR1_NP,
+  GPIO_CNTR2_NP,
+  GPIO_CNTR3_NP,
+  GPIO_CNTR4_NP,
   GPIO_SENSOR_END };
 
 // Programmer selectable GPIO functionality offset by user selectable GPIOs
@@ -150,7 +166,10 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_SR04_TRIG "|" D_SENSOR_SR04_ECHO "|"
   D_SENSOR_SDM120_TX "|" D_SENSOR_SDM120_RX "|"
   D_SENSOR_SDM630_TX "|" D_SENSOR_SDM630_RX "|"
-  D_SENSOR_TM1638_CLK "|" D_SENSOR_TM1638_DIO "|" D_SENSOR_TM1638_STB;
+  D_SENSOR_TM1638_CLK "|" D_SENSOR_TM1638_DIO "|" D_SENSOR_TM1638_STB "|"
+  D_SENSOR_SWITCH "1n|" D_SENSOR_SWITCH "2n|" D_SENSOR_SWITCH "3n|" D_SENSOR_SWITCH "4n|" D_SENSOR_SWITCH "5n|" D_SENSOR_SWITCH "6n|" D_SENSOR_SWITCH "7n|" D_SENSOR_SWITCH "8n|"
+  D_SENSOR_BUTTON "1n|" D_SENSOR_BUTTON "2n|" D_SENSOR_BUTTON "3n|" D_SENSOR_BUTTON "4n|"
+  D_SENSOR_COUNTER "1n|" D_SENSOR_COUNTER "2n|" D_SENSOR_COUNTER "3n|" D_SENSOR_COUNTER "4n|";
 
 /********************************************************************************************/
 
