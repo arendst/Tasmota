@@ -46,8 +46,11 @@ If you use the ETS (KNX Configurator Software) you can add any Sonoff Tasmota KN
 
 ## Requirements ##
 
-* [ESP KNX IP Library](https://github.com/envy/esp-knx-ip). A copy of the modified library is available [here](https://github.com/ascillato/Sonoff-Tasmota_KNX/tree/development/lib/esp-knx-ip-0.5.1) and [here](https://github.com/ascillato/esp-knx-ip).
-* [ESPAsyncUDP Library](https://github.com/me-no-dev/ESPAsyncUDP). Library required by the ESP-KNX-IP Library. Please, use it with this [Patch](https://github.com/me-no-dev/ESPAsyncUDP/pull/21). A copy of the modified library is available [here](https://github.com/ascillato/Sonoff-Tasmota_KNX/tree/development/lib/ESPAsyncUDP-master).
+* [ESP KNX IP Library](https://github.com/ascillato/Sonoff-Tasmota_KNX/tree/development/lib/esp-knx-ip-0.5.1). A copy of this modified library is also available [here](https://github.com/ascillato/esp-knx-ip). The original is [here](https://github.com/envy/esp-knx-ip).
+
+* [ESPAsyncUDP Library](https://github.com/ascillato/Sonoff-Tasmota_KNX/tree/development/lib/ESPAsyncUDP-master). Required by the ESP-KNX-IP Library. A copy of this modified library is also available [here](https://github.com/ascillato/ESPAsyncUDP). The original is [here](https://github.com/me-no-dev/ESPAsyncUDP).
+
+https://github.com/me-no-dev/ESPAsyncUDP
 
 It is recommended to compile with version 2.4.2 of the esp8266 board libraries (command sleep need to be 0 for better KNX performance).
 With v2.4.0 and v2.4.1 there are some wifi issues. Do not use.
