@@ -98,6 +98,16 @@ const char kTasmotaCommands[] PROGMEM =
 const uint8_t kIFan02Speed[4][3] = {{6,6,6}, {7,6,6}, {7,7,6}, {7,6,7}};
 
 // Global variables
+SerialConfig serial_config = SERIAL_8N1;    // Serial interface configuration 8 data bits, No parity, 1 stop bit
+
+#ifdef USE_MQTT_TLS
+  WiFiClientSecure EspClient;               // Wifi Secure Client
+#else
+  WiFiClient EspClient;                     // Wifi Client
+#endif
+
+WiFiUDP PortUdp;                            // UDP Syslog and Alexa
+
 unsigned long feature_drv1;                 // Compiled driver feature map
 unsigned long feature_drv2;                 // Compiled driver feature map
 unsigned long feature_sns1;                 // Compiled sensor feature map
@@ -112,75 +122,53 @@ unsigned long blink_timer = 0;              // Power cycle timer
 unsigned long backlog_delay = 0;            // Command backlog delay
 unsigned long button_debounce = 0;          // Button debounce timer
 unsigned long switch_debounce = 0;          // Switch debounce timer
-
 power_t power = 0;                          // Current copy of Settings.power
-
-int baudrate = APP_BAUDRATE;                // Serial interface baud rate
-SerialConfig serial_config = SERIAL_8N1;    // Serial interface configuration 8 data bits, No parity, 1 stop bit
-byte serial_in_byte;                        // Received byte
-uint8_t serial_local = 0;                   // Handle serial locally;
-int serial_in_byte_counter = 0;             // Index in receive buffer
-byte dual_hex_code = 0;                     // Sonoff dual input flag
-uint16_t dual_button_code = 0;              // Sonoff dual received code
-int16_t save_data_counter;                  // Counter and flag for config save to Flash
-uint8_t fallback_topic_flag = 0;            // Use Topic or FallbackTopic
-uint8_t state_250mS = 0;                    // State 250msecond per second flag
-int ota_state_flag = 0;                     // OTA state flag
-int ota_result = 0;                         // OTA result
-byte ota_retry_counter = OTA_ATTEMPTS;      // OTA retry counter
-char *ota_url;                              // OTA url string
-int restart_flag = 0;                       // Sonoff restart flag
-int wifi_state_flag = WIFI_RESTART;         // Wifi state flag
-uint32_t uptime = 0;                        // Counting every second until 4294967295 = 130 year
-boolean latest_uptime_flag = true;          // Signal latest uptime
-int tele_period = 0;                        // Tele period timer
-byte web_log_index = 1;                     // Index in Web log buffer (should never be 0)
-byte reset_web_log_flag = 0;                // Reset web console log
-byte devices_present = 0;                   // Max number of devices supported
-int status_update_timer = 0;                // Refresh initial status
-uint16_t blink_counter = 0;                 // Number of blink cycles
 power_t blink_power;                        // Blink power state
 power_t blink_mask = 0;                     // Blink relay active mask
 power_t blink_powersave;                    // Blink start power save state
-uint16_t mqtt_cmnd_publish = 0;             // ignore flag for publish command
 power_t latching_power = 0;                 // Power state at latching start
+power_t rel_inverted = 0;                   // Relay inverted flag (1 = (0 = On, 1 = Off))
+int baudrate = APP_BAUDRATE;                // Serial interface baud rate
+int serial_in_byte_counter = 0;             // Index in receive buffer
+int ota_state_flag = 0;                     // OTA state flag
+int ota_result = 0;                         // OTA result
+int restart_flag = 0;                       // Sonoff restart flag
+int wifi_state_flag = WIFI_RESTART;         // Wifi state flag
+int tele_period = 0;                        // Tele period timer
+int status_update_timer = 0;                // Refresh initial status
+int blinks = 201;                           // Number of LED blinks
+uint32_t uptime = 0;                        // Counting every second until 4294967295 = 130 year
+uint32_t global_update = 0;                 // Timestamp of last global temperature and humidity update
+float global_temperature = 0;               // Provide a global temperature to be used by some sensors
+float global_humidity = 0;                  // Provide a global humidity to be used by some sensors
+char *ota_url;                              // OTA url string pointer
+uint16_t dual_button_code = 0;              // Sonoff dual received code
+uint16_t mqtt_cmnd_publish = 0;             // ignore flag for publish command
+uint16_t blink_counter = 0;                 // Number of blink cycles
+uint16_t seriallog_timer = 0;               // Timer to disable Seriallog
+uint16_t syslog_timer = 0;                  // Timer to re-enable syslog_level
+uint16_t holdbutton[MAX_KEYS] = { 0 };      // Timer for button hold
+int16_t save_data_counter;                  // Counter and flag for config save to Flash
+RulesBitfield rules_flag;                   // Rule state flags (16 bits)
+uint8_t serial_local = 0;                   // Handle serial locally;
+uint8_t fallback_topic_flag = 0;            // Use Topic or FallbackTopic
+uint8_t state_250mS = 0;                    // State 250msecond per second flag
 uint8_t latching_relay_pulse = 0;           // Latching relay pulse timer
 uint8_t backlog_index = 0;                  // Command backlog index
 uint8_t backlog_pointer = 0;                // Command backlog pointer
 uint8_t backlog_mutex = 0;                  // Command backlog pending
 uint8_t interlock_mutex = 0;                // Interlock power command pending
-
-#ifdef USE_MQTT_TLS
-  WiFiClientSecure EspClient;               // Wifi Secure Client
-#else
-  WiFiClient EspClient;                     // Wifi Client
-#endif
-
-WiFiUDP PortUdp;                            // UDP Syslog and Alexa
-
-byte syslog_level;                          // Current copy of Settings.syslog_level
-uint16_t syslog_timer = 0;                  // Timer to re-enable syslog_level
-byte seriallog_level;                       // Current copy of Settings.seriallog_level
-uint16_t seriallog_timer = 0;               // Timer to disable Seriallog
 uint8_t sleep;                              // Current copy of Settings.sleep
 uint8_t stop_flash_rotate = 0;              // Allow flash configuration rotation
-
-int blinks = 201;                           // Number of LED blinks
 uint8_t blinkstate = 0;                     // LED state
 uint8_t blinkspeed = 1;                     // LED blink rate
-
-uint8_t blockgpio0 = 4;                     // Block GPIO0 for 4 seconds after poweron to workaround Wemos D1 RTS circuit
 uint8_t lastbutton[MAX_KEYS] = { NOT_PRESSED, NOT_PRESSED, NOT_PRESSED, NOT_PRESSED };  // Last button states
-uint16_t holdbutton[MAX_KEYS] = { 0 };      // Timer for button hold
 uint8_t multiwindow[MAX_KEYS] = { 0 };      // Max time between button presses to record press count
 uint8_t multipress[MAX_KEYS] = { 0 };       // Number of button presses within multiwindow
 uint8_t lastwallswitch[MAX_SWITCHES];       // Last wall switch states
 uint8_t holdwallswitch[MAX_SWITCHES] = { 0 };  // Timer for wallswitch push button hold
 uint8_t virtualswitch[MAX_SWITCHES];        // Virtual switch states
-
-mytmplt my_module;                          // Active copy of Module name and GPIOs
 uint8_t pin[GPIO_MAX];                      // Possible pin configurations
-power_t rel_inverted = 0;                   // Relay inverted flag (1 = (0 = On, 1 = Off))
 uint8_t led_inverted = 0;                   // LED inverted flag (1 = (0 = On, 1 = Off))
 uint8_t pwm_inverted = 0;                   // PWM inverted flag (1 = inverted)
 uint8_t counter_no_pullup = 0;              // Counter input pullup flag (1 = No pullup)
@@ -189,16 +177,20 @@ uint8_t energy_flg = 1;                     // Energy monitor configured
 uint8_t i2c_flg = 0;                        // I2C configured
 uint8_t spi_flg = 0;                        // SPI configured
 uint8_t light_type = 0;                     // Light types
-bool pwm_present = false;                   // Any PWM channel configured with SetOption15 0
-boolean mdns_begun = false;
 uint8_t ntp_force_sync = 0;                 // Force NTP sync
-StateBitfield global_state;
-RulesBitfield rules_flag;
-
-uint32_t global_update = 0;
-float global_temperature = 0;
-float global_humidity = 0;
-
+byte serial_in_byte;                        // Received byte
+byte dual_hex_code = 0;                     // Sonoff dual input flag
+byte ota_retry_counter = OTA_ATTEMPTS;      // OTA retry counter
+byte web_log_index = 1;                     // Index in Web log buffer (should never be 0)
+byte reset_web_log_flag = 0;                // Reset web console log
+byte devices_present = 0;                   // Max number of devices supported
+byte seriallog_level;                       // Current copy of Settings.seriallog_level
+byte syslog_level;                          // Current copy of Settings.syslog_level
+boolean latest_uptime_flag = true;          // Signal latest uptime
+boolean pwm_present = false;                // Any PWM channel configured with SetOption15 0
+boolean mdns_begun = false;                 // mDNS active
+mytmplt my_module;                          // Active copy of Module name and GPIOs (23 x 8 bits)
+StateBitfield global_state;                 // Global states (currently Wifi and Mqtt) (8 bits)
 char my_version[33];                        // Composed version string
 char my_hostname[33];                       // Composed Wifi hostname
 char mqtt_client[33];                       // Composed MQTT Clientname
@@ -1581,8 +1573,6 @@ void PerformEverySecond()
     SetDevicePower(power, SRC_RETRY);  // Set required power on state
   }
 
-  if (blockgpio0) blockgpio0--;
-
   if (seriallog_timer) {
     seriallog_timer--;
     if (!seriallog_timer) {
@@ -1678,9 +1668,11 @@ void ButtonHandler()
         dual_button_code = 0;
       }
     } else {
-      if ((pin[GPIO_KEY1 +button_index] < 99) && !blockgpio0) {
-        button_present = 1;
-        button = digitalRead(pin[GPIO_KEY1 +button_index]);
+      if (pin[GPIO_KEY1 +button_index] < 99) {
+        if (!((uptime < 4) && (0 == pin[GPIO_KEY1 +button_index]))) {  // Block GPIO0 for 4 seconds after poweron to workaround Wemos D1 RTS circuit
+          button_present = 1;
+          button = digitalRead(pin[GPIO_KEY1 +button_index]);
+        }
       }
     }
 
@@ -1811,7 +1803,9 @@ void SwitchHandler(byte mode)
       if (mode) {
         button = virtualswitch[i];
       } else {
-        button = digitalRead(pin[GPIO_SWT1 +i]);
+        if (!((uptime < 4) && (0 == pin[GPIO_SWT1 +i]))) {  // Block GPIO0 for 4 seconds after poweron to workaround Wemos D1 RTS circuit
+          button = digitalRead(pin[GPIO_SWT1 +i]);
+        }
       }
 
       if (button != lastwallswitch[i]) {
@@ -2629,25 +2623,21 @@ void loop()
     SetNextTimeInterval(button_debounce, Settings.button_debounce);
     ButtonHandler();
   }
-
   if (TimeReached(switch_debounce)) {
     SetNextTimeInterval(switch_debounce, Settings.switch_debounce);
     SwitchHandler(0);
   }
-
   if (TimeReached(state_50msecond)) {
     SetNextTimeInterval(state_50msecond, 50);
     XdrvCall(FUNC_EVERY_50_MSECOND);
     XsnsCall(FUNC_EVERY_50_MSECOND);
   }
-
   if (TimeReached(state_100msecond)) {
     SetNextTimeInterval(state_100msecond, 100);
     Every100mSeconds();
     XdrvCall(FUNC_EVERY_100_MSECOND);
     XsnsCall(FUNC_EVERY_100_MSECOND);
   }
-
   if (TimeReached(state_250msecond)) {
     SetNextTimeInterval(state_250msecond, 250);
     Every250mSeconds();
