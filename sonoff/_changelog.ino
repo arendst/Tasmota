@@ -1,5 +1,7 @@
 /* 6.1.1.12 20180827
- * Add commands ButtonDebounce 40..1000 and SwitchDebounce 40..1000 to have more control over debounce timing. Default is 50mS (#3594)
+ * Add commands ButtonDebounce 40..1000 and SwitchDebounce 40..1000 to have user control over debounce timing. Default is 50mS (#3594)
+ * Add rule variables %sunrise%, %sunset%, %uptime% and %time% (#3608)
+ * Fix handling use of default names when using names starting with shortcut character (#3392, #3600)
  *
  * 6.1.1.11 20180826
  * Change scheduler phase 1/3 - Fixed when sleep is enabled: Uptime, Delay, PulseTime and TelePeriod (#3581)
