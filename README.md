@@ -17,7 +17,7 @@ Any help or comment is very welcome.
 
 * [KNX Explanation](#knx-explanation)
 * [Integration](#integration)
-* [Requirement](#requirement)
+* [Requirements](#requirements)
 * [Usage Examples](#usage-examples)
 * [Console Commands](#console-commands)
 * [Development Road Map](#development-road-map)
