@@ -613,7 +613,7 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
     }
     else if (CMND_OTAURL == command_code) {
       if ((data_len > 0) && (data_len < sizeof(Settings.ota_url))) {
-        strlcpy(Settings.ota_url, (1 == Shortcut(dataBuf)) ? OTA_URL : dataBuf, sizeof(Settings.ota_url));
+        strlcpy(Settings.ota_url, (SC_DEFAULT == Shortcut(dataBuf)) ? OTA_URL : dataBuf, sizeof(Settings.ota_url));
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, Settings.ota_url);
     }
@@ -1014,7 +1014,7 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
     }
     else if (CMND_LOGHOST == command_code) {
       if ((data_len > 0) && (data_len < sizeof(Settings.syslog_host))) {
-        strlcpy(Settings.syslog_host, (1 == Shortcut(dataBuf)) ? SYS_LOG_HOST : dataBuf, sizeof(Settings.syslog_host));
+        strlcpy(Settings.syslog_host, (SC_DEFAULT == Shortcut(dataBuf)) ? SYS_LOG_HOST : dataBuf, sizeof(Settings.syslog_host));
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, Settings.syslog_host);
     }
@@ -1034,7 +1034,7 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
     }
     else if ((CMND_NTPSERVER == command_code) && (index > 0) && (index <= 3)) {
       if ((data_len > 0) && (data_len < sizeof(Settings.ntp_server[0]))) {
-        strlcpy(Settings.ntp_server[index -1], (0 == Shortcut(dataBuf)) ? "" : (1 == Shortcut(dataBuf)) ? (1==index)?NTP_SERVER1:(2==index)?NTP_SERVER2:NTP_SERVER3 : dataBuf, sizeof(Settings.ntp_server[0]));
+        strlcpy(Settings.ntp_server[index -1], (SC_CLEAR == Shortcut(dataBuf)) ? "" : (SC_DEFAULT == Shortcut(dataBuf)) ? (1==index)?NTP_SERVER1:(2==index)?NTP_SERVER2:NTP_SERVER3 : dataBuf, sizeof(Settings.ntp_server[0]));
         for (i = 0; i < strlen(Settings.ntp_server[index -1]); i++) {
           if (Settings.ntp_server[index -1][i] == ',') Settings.ntp_server[index -1][i] = '.';
         }
@@ -1058,7 +1058,7 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
     }
     else if ((CMND_SSID == command_code) && (index > 0) && (index <= 2)) {
       if ((data_len > 0) && (data_len < sizeof(Settings.sta_ssid[0]))) {
-        strlcpy(Settings.sta_ssid[index -1], (0 == Shortcut(dataBuf)) ? "" : (1 == Shortcut(dataBuf)) ? (1 == index) ? STA_SSID1 : STA_SSID2 : dataBuf, sizeof(Settings.sta_ssid[0]));
+        strlcpy(Settings.sta_ssid[index -1], (SC_CLEAR == Shortcut(dataBuf)) ? "" : (SC_DEFAULT == Shortcut(dataBuf)) ? (1 == index) ? STA_SSID1 : STA_SSID2 : dataBuf, sizeof(Settings.sta_ssid[0]));
         Settings.sta_active = index -1;
         restart_flag = 2;
       }
@@ -1066,7 +1066,7 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
     }
     else if ((CMND_PASSWORD == command_code) && (index > 0) && (index <= 2)) {
       if ((data_len > 0) && (data_len < sizeof(Settings.sta_pwd[0]))) {
-        strlcpy(Settings.sta_pwd[index -1], (0 == Shortcut(dataBuf)) ? "" : (1 == Shortcut(dataBuf)) ? (1 == index) ? STA_PASS1 : STA_PASS2 : dataBuf, sizeof(Settings.sta_pwd[0]));
+        strlcpy(Settings.sta_pwd[index -1], (SC_CLEAR == Shortcut(dataBuf)) ? "" : (SC_DEFAULT == Shortcut(dataBuf)) ? (1 == index) ? STA_PASS1 : STA_PASS2 : dataBuf, sizeof(Settings.sta_pwd[0]));
         Settings.sta_active = index -1;
         restart_flag = 2;
         snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, index, Settings.sta_pwd[index -1]);
@@ -1076,7 +1076,7 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
     }
     else if ((CMND_HOSTNAME == command_code) && !grpflg) {
       if ((data_len > 0) && (data_len < sizeof(Settings.hostname))) {
-        strlcpy(Settings.hostname, (1 == Shortcut(dataBuf)) ? WIFI_HOSTNAME : dataBuf, sizeof(Settings.hostname));
+        strlcpy(Settings.hostname, (SC_DEFAULT == Shortcut(dataBuf)) ? WIFI_HOSTNAME : dataBuf, sizeof(Settings.hostname));
         if (strstr(Settings.hostname,"%")) {
           strlcpy(Settings.hostname, WIFI_HOSTNAME, sizeof(Settings.hostname));
         }
@@ -1106,7 +1106,7 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
         } else {
           snprintf_P(stemp1, sizeof(stemp1), PSTR(FRIENDLY_NAME "%d"), index);
         }
-        strlcpy(Settings.friendlyname[index -1], (1 == Shortcut(dataBuf)) ? stemp1 : dataBuf, sizeof(Settings.friendlyname[index -1]));
+        strlcpy(Settings.friendlyname[index -1], (SC_DEFAULT == Shortcut(dataBuf)) ? stemp1 : dataBuf, sizeof(Settings.friendlyname[index -1]));
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, index, Settings.friendlyname[index -1]);
     }

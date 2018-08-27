@@ -540,13 +540,13 @@ boolean RulesCommand()
   }
   else if ((CMND_VAR == command_code) && (index > 0) && (index <= MAX_RULE_VARS)) {
     if (XdrvMailbox.data_len > 0) {
-      strlcpy(vars[index -1], (0 == Shortcut(XdrvMailbox.data)) ? "" : XdrvMailbox.data, sizeof(vars[index -1]));
+      strlcpy(vars[index -1], (SC_CLEAR == Shortcut(XdrvMailbox.data)) ? "" : XdrvMailbox.data, sizeof(vars[index -1]));
     }
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, index, vars[index -1]);
   }
   else if ((CMND_MEM == command_code) && (index > 0) && (index <= MAX_RULE_MEMS)) {
     if (XdrvMailbox.data_len > 0) {
-      strlcpy(Settings.mems[index -1], (0 == Shortcut(XdrvMailbox.data)) ? "" : XdrvMailbox.data, sizeof(Settings.mems[index -1]));
+      strlcpy(Settings.mems[index -1], (SC_CLEAR == Shortcut(XdrvMailbox.data)) ? "" : XdrvMailbox.data, sizeof(Settings.mems[index -1]));
     }
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, index, Settings.mems[index -1]);
   }

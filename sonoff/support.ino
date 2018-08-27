@@ -309,15 +309,23 @@ char* NoAlNumToUnderscore(char* dest, const char* source)
   return dest;
 }
 
+void SetShortcut(char* str, uint8_t action)
+{
+  if ('\0' != str[0]) {     // There must be at least one character in the buffer
+    str[0] = '0' + action;  // SC_CLEAR, SC_DEFAULT, SC_USER
+    str[1] = '\0';
+  }
+}
+
 uint8_t Shortcut(const char* str)
 {
   uint8_t result = 10;
 
   if ('\0' == str[1]) {    // Only allow single character input for shortcut
     if (('"' == str[0]) || ('0' == str[0])) {
-      result = 0;          // 0 = Empty or clear parameter
+      result = SC_CLEAR;
     } else {
-      result = atoi(str);  // 1 = Default parameter
+      result = atoi(str);  // 1 = SC_DEFAULT, 2 = SC_USER
       if (0 == result) {
         result = 10;
       }

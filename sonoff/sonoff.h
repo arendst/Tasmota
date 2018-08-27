@@ -83,7 +83,7 @@ typedef unsigned long power_t;              // Power (Relay) type
 #define SAFE_POWER_WINDOW      30           // Time in MINUTES to disable allow max unit safe power
 #define MAX_POWER_RETRY        5            // Retry count allowing agreed power limit overflow
 
-#define STATES                 20           // State loops per second
+#define STATES                 20           // Number of states per second using 50 mSec interval
 #define IMMINENT_RESET_FACTOR  10           // Factor to extent button hold time for imminent Reset to default 40 seconds using KEY_HOLD_TIME of 40
 #define SYSLOG_TIMER           600          // Seconds to restore syslog_level
 #define SERIALLOG_TIMER        600          // Seconds to disable SerialLog
@@ -187,7 +187,9 @@ enum ExecuteCommandPowerOptions { POWER_OFF, POWER_ON, POWER_TOGGLE, POWER_BLINK
 
 enum PowerOnStateOptions { POWER_ALL_OFF, POWER_ALL_ON, POWER_ALL_SAVED_TOGGLE, POWER_ALL_SAVED, POWER_ALL_ALWAYS_ON, POWER_ALL_OFF_PULSETIME_ON };
 
-enum ButtonStates {PRESSED, NOT_PRESSED};
+enum ButtonStates { PRESSED, NOT_PRESSED };
+
+enum Shortcuts { SC_CLEAR, SC_DEFAULT, SC_USER };
 
 enum SettingsParmaIndex {P_HOLD_TIME, P_MAX_POWER_RETRY, P_MAX_PARAM8};
 
