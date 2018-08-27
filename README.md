@@ -52,9 +52,11 @@ All the libraries required for Sonoff-Tasmota are [here](https://github.com/asci
 
 * [ESPAsyncUDP Library](https://github.com/ascillato/Sonoff-Tasmota_KNX/tree/development/lib/ESPAsyncUDP-master). Required by the ESP-KNX-IP Library. A copy of this modified library is also available [here](https://github.com/ascillato/ESPAsyncUDP). The original is [here](https://github.com/me-no-dev/ESPAsyncUDP).
 
-It is recommended to compile with version 2.4.2 of the esp8266 board libraries (command sleep need to be 0 for better KNX performance).
-With v2.4.0 and v2.4.1 there are some wifi issues. Do not use.
-If you are going to compile with old v2.3.0 you need to comment lines 10 and 58 of the _esp-knx-ip.h_ file.
+**Esp8266 board libraries:**
+* v2.4.2 (Recommended) - Command sleep don't work in this version. Set to 0 for better KNX performance
+* v2.4.1 have some wifi issues. Do not use.
+* v2.4.0 have some wifi issues. Do not use.
+* v2.3.0 works fine but is slower than v2.4.2 - Command sleep works but need to be 0 for better KNX performance
 
 ## Implemented Features ##
 
