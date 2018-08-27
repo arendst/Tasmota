@@ -155,6 +155,24 @@ bool RulesRuleMatch(byte rule_set, String &event, String &rule)
         break;
       }
     }
+    snprintf_P(stemp, sizeof(stemp), PSTR("%%TIME%%"));
+    if (rule_param.startsWith(stemp)) {
+      rule_param = String(GetMinutesPastMidnight());
+    }
+    snprintf_P(stemp, sizeof(stemp), PSTR("%%UPTIME%%"));
+    if (rule_param.startsWith(stemp)) {
+      rule_param = String(GetMinutesUptime());
+    }
+#if defined(USE_TIMERS) && defined(USE_SUNRISE)
+    snprintf_P(stemp, sizeof(stemp), PSTR("%%SUNRISE%%"));
+    if (rule_param.startsWith(stemp)) {
+      rule_param = String(GetSunMinutes(0));
+    }
+    snprintf_P(stemp, sizeof(stemp), PSTR("%%SUNSET%%"));
+    if (rule_param.startsWith(stemp)) {
+      rule_param = String(GetSunMinutes(1));
+    }
+#endif  // USE_TIMERS and USE_SUNRISE
     rule_param.toUpperCase();
     snprintf(rule_svalue, sizeof(rule_svalue), rule_param.c_str());
 
