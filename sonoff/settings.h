@@ -180,165 +180,165 @@ struct SYSCFG {
   unsigned long version;                   // 008
   unsigned long bootcount;                 // 00C
 */
-struct SYSCFG
-{
-  uint16_t cfg_holder;     // 000 v6 header
-  uint16_t cfg_size;       // 002
-  unsigned long save_flag; // 004
-  unsigned long version;   // 008
-  uint16_t bootcount;      // 00C
-  uint16_t cfg_crc;        // 00E
-  SysBitfield flag;        // 010
-  int16_t save_data;       // 014
-  int8_t timezone;         // 016
-  char ota_url[101];       // 017
-  char mqtt_prefix[3][11]; // 07C
-  uint8_t baudrate;        // 09D
-  byte seriallog_level;    // 09E
-  uint8_t sta_config;      // 09F
-  byte sta_active;         // 0A0
-  char sta_ssid[2][33];    // 0A1
-  char sta_pwd[2][65];     // 0E3
-  char hostname[33];       // 165
-  char syslog_host[33];    // 186
+struct SYSCFG {
+  uint16_t cfg_holder;                     // 000 v6 header
+  uint16_t cfg_size;                       // 002
+  unsigned long save_flag;                 // 004
+  unsigned long version;                   // 008
+  uint16_t bootcount;                      // 00C
+  uint16_t cfg_crc;                        // 00E
+  SysBitfield   flag;                      // 010
+  int16_t       save_data;                 // 014
+  int8_t        timezone;                  // 016
+  char          ota_url[101];              // 017
+  char          mqtt_prefix[3][11];        // 07C
+  uint8_t       baudrate;                  // 09D
+  byte          seriallog_level;           // 09E
+  uint8_t       sta_config;                // 09F
+  byte          sta_active;                // 0A0
+  char          sta_ssid[2][33];           // 0A1
+  char          sta_pwd[2][65];            // 0E3
+  char          hostname[33];              // 165
+  char          syslog_host[33];           // 186
 
-  byte free1A7[1]; // 1A7
+  byte          free1A7[1];                // 1A7
 
-  uint16_t syslog_port;            // 1A8
-  byte syslog_level;               // 1AA
-  uint8_t webserver;               // 1AB
-  byte weblog_level;               // 1AC
-  uint8_t mqtt_fingerprint[2][20]; // 1AD
+  uint16_t      syslog_port;               // 1A8
+  byte          syslog_level;              // 1AA
+  uint8_t       webserver;                 // 1AB
+  byte          weblog_level;              // 1AC
+  uint8_t       mqtt_fingerprint[2][20];   // 1AD
 
-  byte free_1D5[20]; // 1D5  Free since 5.12.0e
+  byte          free_1D5[20];              // 1D5  Free since 5.12.0e
 
-  char mqtt_host[33];                                 // 1E9
-  uint16_t mqtt_port;                                 // 20A
-  char mqtt_client[33];                               // 20C
-  char mqtt_user[33];                                 // 22D
-  char mqtt_pwd[33];                                  // 24E
-  char mqtt_topic[33];                                // 26F
-  char button_topic[33];                              // 290
-  char mqtt_grptopic[33];                             // 2B1
-  uint8_t display_model;                              // 2D2
-  uint8_t display_mode;                               // 2D3
-  uint8_t display_refresh;                            // 2D4
-  uint8_t display_rows;                               // 2D5
-  uint8_t display_cols[2];                            // 2D6
-  uint8_t display_address[8];                         // 2D8
-  uint8_t display_dimmer;                             // 2E0
-  uint8_t display_size;                               // 2E1
-  TimeRule tflag[2];                                  // 2E2
-  uint16_t pwm_frequency;                             // 2E6
-  power_t power;                                      // 2E8
-  uint16_t pwm_value[MAX_PWMS];                       // 2EC
-  int16_t altitude;                                   // 2F6
-  uint16_t tele_period;                               // 2F8
-  uint8_t display_rotate;                             // 2FA
-  uint8_t ledstate;                                   // 2FB
-  uint8_t param[PARAM8_SIZE];                         // 2FC  SetOption32 .. SetOption49
-  int16_t toffset[2];                                 // 30E
-  uint8_t display_font;                               // 312
-  char state_text[4][11];                             // 313
-  uint8_t energy_power_delta;                         // 33F
-  uint16_t domoticz_update_timer;                     // 340
-  uint16_t pwm_range;                                 // 342
-  unsigned long domoticz_relay_idx[MAX_DOMOTICZ_IDX]; // 344
-  unsigned long domoticz_key_idx[MAX_DOMOTICZ_IDX];   // 354
-  unsigned long energy_power_calibration;             // 364
-  unsigned long energy_voltage_calibration;           // 368
-  unsigned long energy_current_calibration;           // 36C
-  unsigned long energy_kWhtoday;                      // 370
-  unsigned long energy_kWhyesterday;                  // 374
-  uint16_t energy_kWhdoy;                             // 378
-  uint16_t energy_min_power;                          // 37A
-  uint16_t energy_max_power;                          // 37C
-  uint16_t energy_min_voltage;                        // 37E
-  uint16_t energy_max_voltage;                        // 380
-  uint16_t energy_min_current;                        // 382
-  uint16_t energy_max_current;                        // 384
-  uint16_t energy_max_power_limit;                    // 386 MaxPowerLimit
-  uint16_t energy_max_power_limit_hold;               // 388 MaxPowerLimitHold
-  uint16_t energy_max_power_limit_window;             // 38A MaxPowerLimitWindow
-  uint16_t energy_max_power_safe_limit;               // 38C MaxSafePowerLimit
-  uint16_t energy_max_power_safe_limit_hold;          // 38E MaxSafePowerLimitHold
-  uint16_t energy_max_power_safe_limit_window;        // 390 MaxSafePowerLimitWindow
-  uint16_t energy_max_energy;                         // 392 MaxEnergy
-  uint16_t energy_max_energy_start;                   // 394 MaxEnergyStart
-  uint16_t mqtt_retry;                                // 396
-  uint8_t poweronstate;                               // 398
-  uint8_t last_module;                                // 399
-  uint16_t blinktime;                                 // 39A
-  uint16_t blinkcount;                                // 39C
-  uint16_t light_rotation;                            // 39E
-  SysBitfield3 flag3;                                 // 3A0
-  uint8_t switchmode[MAX_SWITCHES];                   // 3A4  (6.0.0b - moved from 0x4CA)
-  char friendlyname[MAX_FRIENDLYNAMES][33];           // 3AC
-  char switch_topic[33];                              // 430
-  char serial_delimiter;                              // 451
-  uint8_t sbaudrate;                                  // 452
-  uint8_t sleep;                                      // 453
-  uint16_t domoticz_switch_idx[MAX_DOMOTICZ_IDX];     // 454
-  uint16_t domoticz_sensor_idx[MAX_DOMOTICZ_SNS_IDX]; // 45C
-  uint8_t module;                                     // 474
-  uint8_t ws_color[4][3];                             // 475
-  uint8_t ws_width[3];                                // 481
-  myio my_gp;                                         // 484
-  uint16_t light_pixels;                              // 496
-  uint8_t light_color[5];                             // 498
-  uint8_t light_correction;                           // 49D
-  uint8_t light_dimmer;                               // 49E
-  uint8_t rule_enabled;                               // 49F
-  uint8_t rule_once;                                  // 4A0
-  uint8_t light_fade;                                 // 4A1
-  uint8_t light_speed;                                // 4A2
-  uint8_t light_scheme;                               // 4A3
-  uint8_t light_width;                                // 4A4
-  byte knx_GA_registered;                             // 4A5  Number of Group Address to read
-  uint16_t light_wakeup;                              // 4A6
-  byte knx_CB_registered;                             // 4A8  Number of Group Address to write
-  char web_password[33];                              // 4A9
+  char          mqtt_host[33];             // 1E9
+  uint16_t      mqtt_port;                 // 20A
+  char          mqtt_client[33];           // 20C
+  char          mqtt_user[33];             // 22D
+  char          mqtt_pwd[33];              // 24E
+  char          mqtt_topic[33];            // 26F
+  char          button_topic[33];          // 290
+  char          mqtt_grptopic[33];         // 2B1
+  uint8_t       display_model;             // 2D2
+  uint8_t       display_mode;              // 2D3
+  uint8_t       display_refresh;           // 2D4
+  uint8_t       display_rows;              // 2D5
+  uint8_t       display_cols[2];           // 2D6
+  uint8_t       display_address[8];        // 2D8
+  uint8_t       display_dimmer;            // 2E0
+  uint8_t       display_size;              // 2E1
+  TimeRule      tflag[2];                  // 2E2
+  uint16_t      pwm_frequency;             // 2E6
+  power_t       power;                     // 2E8
+  uint16_t      pwm_value[MAX_PWMS];       // 2EC
+  int16_t       altitude;                  // 2F6
+  uint16_t      tele_period;               // 2F8
+  uint8_t       display_rotate;            // 2FA
+  uint8_t       ledstate;                  // 2FB
+  uint8_t       param[PARAM8_SIZE];        // 2FC  SetOption32 .. SetOption49
+  int16_t       toffset[2];                // 30E
+  uint8_t       display_font;              // 312
+  char          state_text[4][11];         // 313
+  uint8_t       energy_power_delta;        // 33F
+  uint16_t      domoticz_update_timer;     // 340
+  uint16_t      pwm_range;                 // 342
+  unsigned long domoticz_relay_idx[MAX_DOMOTICZ_IDX];  // 344
+  unsigned long domoticz_key_idx[MAX_DOMOTICZ_IDX];    // 354
+  unsigned long energy_power_calibration;  // 364
+  unsigned long energy_voltage_calibration;  // 368
+  unsigned long energy_current_calibration;  // 36C
+  unsigned long energy_kWhtoday;           // 370
+  unsigned long energy_kWhyesterday;       // 374
+  uint16_t      energy_kWhdoy;             // 378
+  uint16_t      energy_min_power;          // 37A
+  uint16_t      energy_max_power;          // 37C
+  uint16_t      energy_min_voltage;        // 37E
+  uint16_t      energy_max_voltage;        // 380
+  uint16_t      energy_min_current;        // 382
+  uint16_t      energy_max_current;        // 384
+  uint16_t      energy_max_power_limit;    // 386 MaxPowerLimit
+  uint16_t      energy_max_power_limit_hold;         // 388 MaxPowerLimitHold
+  uint16_t      energy_max_power_limit_window;       // 38A MaxPowerLimitWindow
+  uint16_t      energy_max_power_safe_limit;         // 38C MaxSafePowerLimit
+  uint16_t      energy_max_power_safe_limit_hold;    // 38E MaxSafePowerLimitHold
+  uint16_t      energy_max_power_safe_limit_window;  // 390 MaxSafePowerLimitWindow
+  uint16_t      energy_max_energy;         // 392 MaxEnergy
+  uint16_t      energy_max_energy_start;   // 394 MaxEnergyStart
+  uint16_t      mqtt_retry;                // 396
+  uint8_t       poweronstate;              // 398
+  uint8_t       last_module;               // 399
+  uint16_t      blinktime;                 // 39A
+  uint16_t      blinkcount;                // 39C
+  uint16_t      light_rotation;            // 39E
+  SysBitfield3  flag3;                     // 3A0
+  uint8_t       switchmode[MAX_SWITCHES];  // 3A4  (6.0.0b - moved from 0x4CA)
+  char          friendlyname[MAX_FRIENDLYNAMES][33]; // 3AC
+  char          switch_topic[33];          // 430
+  char          serial_delimiter;          // 451
+  uint8_t       sbaudrate;                 // 452
+  uint8_t       sleep;                     // 453
+  uint16_t      domoticz_switch_idx[MAX_DOMOTICZ_IDX];      // 454
+  uint16_t      domoticz_sensor_idx[MAX_DOMOTICZ_SNS_IDX];  // 45C
+  uint8_t       module;                    // 474
+  uint8_t       ws_color[4][3];            // 475
+  uint8_t       ws_width[3];               // 481
+  myio          my_gp;                     // 484
+  uint16_t      light_pixels;              // 496
+  uint8_t       light_color[5];            // 498
+  uint8_t       light_correction;          // 49D
+  uint8_t       light_dimmer;              // 49E
+  uint8_t       rule_enabled;              // 49F
+  uint8_t       rule_once;                 // 4A0
+  uint8_t       light_fade;                // 4A1
+  uint8_t       light_speed;               // 4A2
+  uint8_t       light_scheme;              // 4A3
+  uint8_t       light_width;               // 4A4
+  byte          knx_GA_registered;         // 4A5  Number of Group Address to read
+  uint16_t      light_wakeup;              // 4A6
+  byte          knx_CB_registered;         // 4A8  Number of Group Address to write
+  char          web_password[33];          // 4A9
 
-  uint8_t ex_switchmode[4]; // 4CA  Free since 6.0.0a
+  uint8_t       ex_switchmode[4];          // 4CA  Free since 6.0.0a
 
-  char ntp_server[3][33];                // 4CE
-  byte ina219_mode;                      // 531
-  uint16_t pulse_timer[MAX_PULSETIMERS]; // 532
+  char          ntp_server[3][33];         // 4CE
+  byte          ina219_mode;               // 531
+  uint16_t      pulse_timer[MAX_PULSETIMERS]; // 532
+  uint16_t      button_debounce;           // 542
+  uint32_t      ip_address[4];             // 544
+  unsigned long energy_kWhtotal;           // 554
+  char          mqtt_fulltopic[100];       // 558
+  SysBitfield2  flag2;                     // 5BC
+  unsigned long pulse_counter[MAX_COUNTERS];  // 5C0
+  uint16_t      pulse_counter_type;        // 5D0
+  uint16_t      pulse_counter_debounce;    // 5D2
+  uint8_t       rf_code[17][9];            // 5D4
 
-  byte free542[2]; // 542
+  byte          free_66d[1];               // 66D
 
-  uint32_t ip_address[4];                    // 544
-  unsigned long energy_kWhtotal;             // 554
-  char mqtt_fulltopic[100];                  // 558
-  SysBitfield2 flag2;                        // 5BC
-  unsigned long pulse_counter[MAX_COUNTERS]; // 5C0
-  uint16_t pulse_counter_type;               // 5D0
-  uint16_t pulse_counter_debounce;           // 5D2
-  uint8_t rf_code[17][9];                    // 5D4
+  uint16_t      switch_debounce;           // 66E
+  Timer         timer[MAX_TIMERS];         // 670
+  int           latitude;                  // 6B0
+  int           longitude;                 // 6B4
+  uint16_t      knx_physsical_addr;        // 6B8  (address_t is a uint16_t)
+  uint16_t      knx_GA_addr[MAX_KNX_GA];   // 6BA  (address_t is a uint16_t) x KNX_max_GA
+  uint16_t      knx_CB_addr[MAX_KNX_CB];   // 6CE  (address_t is a uint16_t) x KNX_max_CB
+  byte          knx_GA_param[MAX_KNX_GA];  // 6E2  Type of Input (relay changed, button pressed, sensor read <-teleperiod)
+  byte          knx_CB_param[MAX_KNX_CB];  // 6EC  Type of Output (set relay, toggle relay, reply sensor value)
+  Mcp230xxCfg   mcp230xx_config[16];       // 6F6
+  uint8_t       mcp230xx_int_prio;         // 716
 
-  byte free_66d[3]; // 66D
+  byte          free_717[1];               // 717
 
-  Timer timer[MAX_TIMERS];          // 670
-  int latitude;                     // 6B0
-  int longitude;                    // 6B4
-  uint16_t knx_physsical_addr;      // 6B8  (address_t is a uint16_t)
-  uint16_t knx_GA_addr[MAX_KNX_GA]; // 6BA  (address_t is a uint16_t) x KNX_max_GA
-  uint16_t knx_CB_addr[MAX_KNX_CB]; // 6CE  (address_t is a uint16_t) x KNX_max_CB
-  byte knx_GA_param[MAX_KNX_GA];    // 6E2  Type of Input (relay changed, button pressed, sensor read <-teleperiod)
-  byte knx_CB_param[MAX_KNX_CB];    // 6EC  Type of Output (set relay, toggle relay, reply sensor value)
-  Mcp230xxCfg mcp230xx_config[16];  // 6F6
-  uint8_t mcp230xx_int_prio;        // 716
-  byte free_717;                    // 717
-  uint16_t mcp230xx_int_timer;      // 718
+  uint16_t      mcp230xx_int_timer;        // 718
 
-  byte free_71A[180]; // 71A
+  byte          free_71A[180];             // 71A
 
-  char mems[MAX_RULE_MEMS][10]; // 7CE
-                                // 800 Full - no more free locations
+  char          mems[MAX_RULE_MEMS][10];  // 7CE
+                                           // 800 Full - no more free locations
 
-  char rules[MAX_RULE_SETS][MAX_RULE_SIZE]; // 800 uses 512 bytes in v5.12.0m, 3 x 512 bytes in v5.14.0b
+  char          rules[MAX_RULE_SETS][MAX_RULE_SIZE]; // 800 uses 512 bytes in v5.12.0m, 3 x 512 bytes in v5.14.0b
 
-  // E00 - FFF free locations
+                                           // E00 - FFF free locations
 } Settings;
 
 struct RTCMEM

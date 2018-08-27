@@ -158,25 +158,27 @@
 #define LONGITUDE 2.294442 // [Longitude] Your location to be used with sunrise and sunset
 
 // -- Application ---------------------------------
-#define APP_TIMEZONE 99                 // [Timezone] +1 hour (Amsterdam) (-13 .. 14 = hours from UTC, 99 = use TIME_DST/TIME_STD)
-#define APP_LEDSTATE LED_POWER          // [LedState] Function of led \
-                                        //   (LED_OFF, LED_POWER, LED_MQTTSUB, LED_POWER_MQTTSUB, LED_MQTTPUB, LED_POWER_MQTTPUB, LED_MQTT, LED_POWER_MQTT)
-#define APP_PULSETIME 0                 // [PulseTime] Time in 0.1 Sec to turn off power for relay 1 (0 = disabled)
-#define APP_POWERON_STATE POWER_ALL_OFF // [PowerOnState] Power On Relay state \
-                                        //   (POWER_ALL_OFF, POWER_ALL_ON, POWER_ALL_SAVED_TOGGLE, POWER_ALL_SAVED, POWER_ALL_ALWAYS_ON, POWER_ALL_OFF_PULSETIME_ON)
-#define APP_BLINKTIME 10                // [BlinkTime] Time in 0.1 Sec to blink/toggle power for relay 1
-#define APP_BLINKCOUNT 10               // [BlinkCount] Number of blinks (0 = 32000)
-#define APP_SLEEP 150                   // [Sleep] Sleep time to lower energy consumption (0 = Off, 1 - 250 mSec)
+#define APP_TIMEZONE           99                 // [Timezone] +1 hour (Amsterdam) (-13 .. 14 = hours from UTC, 99 = use TIME_DST/TIME_STD)
+#define APP_LEDSTATE           LED_POWER         // [LedState] Function of led
+                                                 //   (LED_OFF, LED_POWER, LED_MQTTSUB, LED_POWER_MQTTSUB, LED_MQTTPUB, LED_POWER_MQTTPUB, LED_MQTT, LED_POWER_MQTT)
+#define APP_PULSETIME          0                 // [PulseTime] Time in 0.1 Sec to turn off power for relay 1 (0 = disabled)
+#define APP_POWERON_STATE      POWER_ALL_OFF   // [PowerOnState] Power On Relay state
+                                                 //   (POWER_ALL_OFF, POWER_ALL_ON, POWER_ALL_SAVED_TOGGLE, POWER_ALL_SAVED, POWER_ALL_ALWAYS_ON, POWER_ALL_OFF_PULSETIME_ON)
+#define APP_BLINKTIME          10                // [BlinkTime] Time in 0.1 Sec to blink/toggle power for relay 1
+#define APP_BLINKCOUNT         10                // [BlinkCount] Number of blinks (0 = 32000)
+#define APP_SLEEP              150                 // [Sleep] Sleep time to lower energy consumption (0 = Off, 1 - 250 mSec)
 
-#define KEY_HOLD_TIME 40   // [SetOption32] Number of 0.1 seconds to hold Button or external Pushbutton before sending HOLD message
-#define SWITCH_MODE TOGGLE // [SwitchMode] TOGGLE, FOLLOW, FOLLOW_INV, PUSHBUTTON, PUSHBUTTON_INV, PUSHBUTTONHOLD, PUSHBUTTONHOLD_INV, PUSHBUTTON_TOGGLE (the wall switch state)
-#define WS2812_LEDS 30     // [Pixels] Number of WS2812 LEDs to start with (max is 512)
+#define KEY_DEBOUNCE_TIME      50                // [ButtonDebounce] Number of mSeconds button press debounce time
+#define KEY_HOLD_TIME          40                // [SetOption32] Number of 0.1 seconds to hold Button or external Pushbutton before sending HOLD message
+#define SWITCH_DEBOUNCE_TIME   50                // [SwitchDebounce] Number of mSeconds switch press debounce time
+#define SWITCH_MODE            TOGGLE            // [SwitchMode] TOGGLE, FOLLOW, FOLLOW_INV, PUSHBUTTON, PUSHBUTTON_INV, PUSHBUTTONHOLD, PUSHBUTTONHOLD_INV, PUSHBUTTON_TOGGLE (the wall switch state)
+#define WS2812_LEDS            30                // [Pixels] Number of WS2812 LEDs to start with (max is 512)
 
-#define TEMP_CONVERSION 0     // [SetOption8] Return temperature in (0 = Celsius or 1 = Fahrenheit)
-#define TEMP_RESOLUTION 2     // [TempRes] Maximum number of decimals (0 - 3) showing sensor Temperature
-#define HUMIDITY_RESOLUTION 2 // [HumRes] Maximum number of decimals (0 - 3) showing sensor Humidity
-#define PRESSURE_RESOLUTION 2 // [PressRes] Maximum number of decimals (0 - 3) showing sensor Pressure
-#define ENERGY_RESOLUTION 5   // [EnergyRes] Maximum number of decimals (0 - 5) showing energy usage in kWh
+#define TEMP_CONVERSION        0                 // [SetOption8] Return temperature in (0 = Celsius or 1 = Fahrenheit)
+#define TEMP_RESOLUTION        2                 // [TempRes] Maximum number of decimals (0 - 3) showing sensor Temperature
+#define HUMIDITY_RESOLUTION    2                 // [HumRes] Maximum number of decimals (0 - 3) showing sensor Humidity
+#define PRESSURE_RESOLUTION    2                 // [PressRes] Maximum number of decimals (0 - 3) showing sensor Pressure
+#define ENERGY_RESOLUTION      5                 // [EnergyRes] Maximum number of decimals (0 - 5) showing energy usage in kWh
 
 /*********************************************************************************************\
  * END OF SECTION 1
@@ -288,17 +290,17 @@
 //  #define USE_SHT3X                              // Enable SHT3x (I2C address 0x44 or 0x45) or SHTC3 (I2C address 0x70) sensor (+0k7 code)
 //  #define USE_TSL2561                            // Enable TSL2561 sensor (I2C address 0x29, 0x39 or 0x49) using library Joba_Tsl2561 (+2k3 code)
 //  #define USE_MGS                                // Enable Xadow and Grove Mutichannel Gas sensor using library Multichannel_Gas_Sensor (+10k code)
-#define MGS_SENSOR_ADDR 0x04 // Default Mutichannel Gas sensor i2c address                                                                                                                                         \
-                             //  #define USE_SGP30                              // Enable SGP30 sensor (I2C address 0x58) (+1k1 code)                                                                              \
-                             //  #define USE_SI1145                             // Enable SI1145/46/47 sensor (I2C address 0x60) (+1k code)                                                                        \
-                             //  #define USE_LM75AD                             // Enable LM75AD sensor (I2C addresses 0x48 - 0x4F) (+0k5 code)                                                                    \
-                             //  #define USE_APDS9960                           // Enable APDS9960 Proximity Sensor (I2C address 0x39). Disables SHT and VEML6070 (+4k7 code)                                      \
-                             //  #define USE_MCP230xx                           // Enable MCP23008/MCP23017 for GP INPUT ONLY (I2C addresses 0x20 - 0x27) providing command Sensor29 for configuration (+2k2 code) \
-                             //    #define USE_MCP230xx_OUTPUT                  // Enable MCP23008/MCP23017 OUTPUT support through sensor29 commands (+1k code)                                                    \
-                             //    #define USE_MCP230xx_DISPLAYOUTPUT           // Enable MCP23008/MCP23017 to display state of OUTPUT pins on Web UI (+0k2 code)                                                  \
-                             //  #define USE_MPR121                             // Enable MPR121 controller (I2C addresses 0x5A, 0x5B, 0x5C and 0x5D) in input mode for touch buttons (+1k3 code)                  \
-                             //  #define USE_CCS811                             // Enable CCS811 sensor (I2C address 0x5A) (+2k2 code)                                                                             \
-                             //  #define USE_MPU6050                            // Enable MPU6050 sensor (I2C address 0x68 AD0 low or 0x69 AD0 high) (+2k6 code)
+    #define MGS_SENSOR_ADDR    0x04              // Default Mutichannel Gas sensor i2c address
+//  #define USE_SGP30                              // Enable SGP30 sensor (I2C address 0x58) (+1k1 code)
+//  #define USE_SI1145                             // Enable SI1145/46/47 sensor (I2C address 0x60) (+1k code)
+//  #define USE_LM75AD                             // Enable LM75AD sensor (I2C addresses 0x48 - 0x4F) (+0k5 code)
+//  #define USE_APDS9960                           // Enable APDS9960 Proximity Sensor (I2C address 0x39). Disables SHT and VEML6070 (+4k7 code)
+//  #define USE_MCP230xx                           // Enable MCP23008/MCP23017 for GP INPUT ONLY (I2C addresses 0x20 - 0x27) providing command Sensor29 for configuration (+4k7 code)
+//    #define USE_MCP230xx_OUTPUT                  // Enable MCP23008/MCP23017 OUTPUT support through sensor29 commands (+1k5 code)
+//    #define USE_MCP230xx_DISPLAYOUTPUT           // Enable MCP23008/MCP23017 to display state of OUTPUT pins on Web UI (+0k2 code)
+//  #define USE_MPR121                             // Enable MPR121 controller (I2C addresses 0x5A, 0x5B, 0x5C and 0x5D) in input mode for touch buttons (+1k3 code)
+//  #define USE_CCS811                             // Enable CCS811 sensor (I2C address 0x5A) (+2k2 code)
+//  #define USE_MPU6050                            // Enable MPU6050 sensor (I2C address 0x68 AD0 low or 0x69 AD0 high) (+2k6 code)
 
 //  #define USE_DISPLAY                            // Add I2C Display Support for LCD, Oled and up to eigth Matrices (+19k code)
 //  #define USE_DISPLAY_MODES1TO5 // Enable display mode 1 to 5 in addition to mode 0

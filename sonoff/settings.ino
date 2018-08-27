@@ -588,6 +588,9 @@ void SettingsDefaultSet2()
   Settings.latitude = (int)((double)LATITUDE * 1000000);
   Settings.longitude = (int)((double)LONGITUDE * 1000000);
   SettingsDefaultSet_5_13_1c();  // Time STD/DST settings
+
+  Settings.button_debounce = KEY_DEBOUNCE_TIME;
+  Settings.switch_debounce = SWITCH_DEBOUNCE_TIME;
 }
 
 /********************************************************************************************/
@@ -786,6 +789,10 @@ void SettingsDelta()
     }
     if (Settings.version < 0x06010103) {
       Settings.flag3.timers_enable = 1;
+    }
+    if (Settings.version < 0x0601010C) {
+      Settings.button_debounce = KEY_DEBOUNCE_TIME;
+      Settings.switch_debounce = SWITCH_DEBOUNCE_TIME;
     }
 
     Settings.version = VERSION;

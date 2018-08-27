@@ -309,6 +309,31 @@ char* NoAlNumToUnderscore(char* dest, const char* source)
   return dest;
 }
 
+void SetShortcut(char* str, uint8_t action)
+{
+  if ('\0' != str[0]) {     // There must be at least one character in the buffer
+    str[0] = '0' + action;  // SC_CLEAR, SC_DEFAULT, SC_USER
+    str[1] = '\0';
+  }
+}
+
+uint8_t Shortcut(const char* str)
+{
+  uint8_t result = 10;
+
+  if ('\0' == str[1]) {    // Only allow single character input for shortcut
+    if (('"' == str[0]) || ('0' == str[0])) {
+      result = SC_CLEAR;
+    } else {
+      result = atoi(str);  // 1 = SC_DEFAULT, 2 = SC_USER
+      if (0 == result) {
+        result = 10;
+      }
+    }
+  }
+  return result;
+}
+
 boolean ParseIp(uint32_t* addr, const char* str)
 {
   uint8_t *part = (uint8_t*)addr;
@@ -1186,6 +1211,7 @@ void WiFiSetSleepMode()
  * See https://github.com/arendst/Sonoff-Tasmota/issues/2559
  */
 
+//#ifdef ARDUINO_ESP8266_RELEASE_2_4_1
 #if defined(ARDUINO_ESP8266_RELEASE_2_4_1) || defined(ARDUINO_ESP8266_RELEASE_2_4_2)
 #else  // Enabled in 2.3.0, 2.4.0 and stage
   if (sleep) {
