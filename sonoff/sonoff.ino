@@ -79,7 +79,7 @@ enum TasmotaCommands {
   CMND_BLINKTIME, CMND_BLINKCOUNT, CMND_SENSOR, CMND_SAVEDATA, CMND_SETOPTION, CMND_TEMPERATURE_RESOLUTION, CMND_HUMIDITY_RESOLUTION,
   CMND_PRESSURE_RESOLUTION, CMND_POWER_RESOLUTION, CMND_VOLTAGE_RESOLUTION, CMND_CURRENT_RESOLUTION, CMND_ENERGY_RESOLUTION, CMND_MODULE, CMND_MODULES,
   CMND_GPIO, CMND_GPIOS, CMND_PWM, CMND_PWMFREQUENCY, CMND_PWMRANGE, CMND_COUNTER, CMND_COUNTERTYPE,
-  CMND_COUNTERDEBOUNCE, CMND_SLEEP, CMND_UPGRADE, CMND_UPLOAD, CMND_OTAURL, CMND_SERIALLOG, CMND_SYSLOG,
+  CMND_COUNTERDEBOUNCE, CMND_BUTTONDEBOUNCE, CMND_SWITCHDEBOUNCE, CMND_SLEEP, CMND_UPGRADE, CMND_UPLOAD, CMND_OTAURL, CMND_SERIALLOG, CMND_SYSLOG,
   CMND_LOGHOST, CMND_LOGPORT, CMND_IPADDRESS, CMND_NTPSERVER, CMND_AP, CMND_SSID, CMND_PASSWORD, CMND_HOSTNAME,
   CMND_WIFICONFIG, CMND_FRIENDLYNAME, CMND_SWITCHMODE,
   CMND_TELEPERIOD, CMND_RESTART, CMND_RESET, CMND_TIMEZONE, CMND_TIMESTD, CMND_TIMEDST, CMND_ALTITUDE, CMND_LEDPOWER, CMND_LEDSTATE,
@@ -89,7 +89,7 @@ const char kTasmotaCommands[] PROGMEM =
   D_CMND_BLINKTIME "|" D_CMND_BLINKCOUNT "|" D_CMND_SENSOR "|" D_CMND_SAVEDATA "|" D_CMND_SETOPTION "|" D_CMND_TEMPERATURE_RESOLUTION "|" D_CMND_HUMIDITY_RESOLUTION "|"
   D_CMND_PRESSURE_RESOLUTION "|" D_CMND_POWER_RESOLUTION "|" D_CMND_VOLTAGE_RESOLUTION "|" D_CMND_CURRENT_RESOLUTION "|" D_CMND_ENERGY_RESOLUTION "|" D_CMND_MODULE "|" D_CMND_MODULES "|"
   D_CMND_GPIO "|" D_CMND_GPIOS "|" D_CMND_PWM "|" D_CMND_PWMFREQUENCY "|" D_CMND_PWMRANGE "|" D_CMND_COUNTER "|" D_CMND_COUNTERTYPE "|"
-  D_CMND_COUNTERDEBOUNCE "|" D_CMND_SLEEP "|" D_CMND_UPGRADE "|" D_CMND_UPLOAD "|" D_CMND_OTAURL "|" D_CMND_SERIALLOG "|" D_CMND_SYSLOG "|"
+  D_CMND_COUNTERDEBOUNCE "|" D_CMND_BUTTONDEBOUNCE "|" D_CMND_SWITCHDEBOUNCE "|" D_CMND_SLEEP "|" D_CMND_UPGRADE "|" D_CMND_UPLOAD "|" D_CMND_OTAURL "|" D_CMND_SERIALLOG "|" D_CMND_SYSLOG "|"
   D_CMND_LOGHOST "|" D_CMND_LOGPORT "|" D_CMND_IPADDRESS "|" D_CMND_NTPSERVER "|" D_CMND_AP "|" D_CMND_SSID "|" D_CMND_PASSWORD "|" D_CMND_HOSTNAME "|"
   D_CMND_WIFICONFIG "|" D_CMND_FRIENDLYNAME "|" D_CMND_SWITCHMODE "|"
   D_CMND_TELEPERIOD "|" D_CMND_RESTART "|" D_CMND_RESET "|" D_CMND_TIMEZONE "|" D_CMND_TIMESTD "|" D_CMND_TIMEDST "|" D_CMND_ALTITUDE "|" D_CMND_LEDPOWER "|" D_CMND_LEDSTATE "|"
@@ -98,52 +98,7 @@ const char kTasmotaCommands[] PROGMEM =
 const uint8_t kIFan02Speed[4][3] = {{6,6,6}, {7,6,6}, {7,7,6}, {7,6,7}};
 
 // Global variables
-unsigned long feature_drv1;                 // Compiled driver feature map
-unsigned long feature_drv2;                 // Compiled driver feature map
-unsigned long feature_sns1;                 // Compiled sensor feature map
-unsigned long feature_sns2;                 // Compiled sensor feature map
-int baudrate = APP_BAUDRATE;                // Serial interface baud rate
 SerialConfig serial_config = SERIAL_8N1;    // Serial interface configuration 8 data bits, No parity, 1 stop bit
-byte serial_in_byte;                        // Received byte
-uint8_t serial_local = 0;                   // Handle serial locally;
-unsigned long serial_polling_window = 0;    // Serial polling window
-int serial_in_byte_counter = 0;             // Index in receive buffer
-byte dual_hex_code = 0;                     // Sonoff dual input flag
-uint16_t dual_button_code = 0;              // Sonoff dual received code
-int16_t save_data_counter;                  // Counter and flag for config save to Flash
-uint8_t fallback_topic_flag = 0;            // Use Topic or FallbackTopic
-unsigned long state_second = 0;             // State second timer
-unsigned long state_50msecond = 0;          // State 50msecond timer
-unsigned long state_100msecond = 0;         // State 100msecond timer
-unsigned long state_250msecond = 0;         // State 250msecond timer
-uint8_t state_250mS = 0;                    // State 250msecond per second flag
-int ota_state_flag = 0;                     // OTA state flag
-int ota_result = 0;                         // OTA result
-byte ota_retry_counter = OTA_ATTEMPTS;      // OTA retry counter
-char *ota_url;                              // OTA url string
-int restart_flag = 0;                       // Sonoff restart flag
-int wifi_state_flag = WIFI_RESTART;         // Wifi state flag
-uint32_t uptime = 0;                        // Counting every second until 4294967295 = 130 year
-boolean latest_uptime_flag = true;          // Signal latest uptime
-int tele_period = 0;                        // Tele period timer
-byte web_log_index = 1;                     // Index in Web log buffer (should never be 0)
-byte reset_web_log_flag = 0;                // Reset web console log
-byte devices_present = 0;                   // Max number of devices supported
-int status_update_timer = 0;                // Refresh initial status
-unsigned long pulse_timer[MAX_PULSETIMERS] = { 0 }; // Power off timer
-unsigned long blink_timer = 0;              // Power cycle timer
-uint16_t blink_counter = 0;                 // Number of blink cycles
-power_t blink_power;                        // Blink power state
-power_t blink_mask = 0;                     // Blink relay active mask
-power_t blink_powersave;                    // Blink start power save state
-uint16_t mqtt_cmnd_publish = 0;             // ignore flag for publish command
-power_t latching_power = 0;                 // Power state at latching start
-uint8_t latching_relay_pulse = 0;           // Latching relay pulse timer
-uint8_t backlog_index = 0;                  // Command backlog index
-uint8_t backlog_pointer = 0;                // Command backlog pointer
-uint8_t backlog_mutex = 0;                  // Command backlog pending
-unsigned long backlog_delay = 0;            // Command backlog delay
-uint8_t interlock_mutex = 0;                // Interlock power command pending
 
 #ifdef USE_MQTT_TLS
   WiFiClientSecure EspClient;               // Wifi Secure Client
@@ -153,30 +108,67 @@ uint8_t interlock_mutex = 0;                // Interlock power command pending
 
 WiFiUDP PortUdp;                            // UDP Syslog and Alexa
 
+unsigned long feature_drv1;                 // Compiled driver feature map
+unsigned long feature_drv2;                 // Compiled driver feature map
+unsigned long feature_sns1;                 // Compiled sensor feature map
+unsigned long feature_sns2;                 // Compiled sensor feature map
+unsigned long serial_polling_window = 0;    // Serial polling window
+unsigned long state_second = 0;             // State second timer
+unsigned long state_50msecond = 0;          // State 50msecond timer
+unsigned long state_100msecond = 0;         // State 100msecond timer
+unsigned long state_250msecond = 0;         // State 250msecond timer
+unsigned long pulse_timer[MAX_PULSETIMERS] = { 0 }; // Power off timer
+unsigned long blink_timer = 0;              // Power cycle timer
+unsigned long backlog_delay = 0;            // Command backlog delay
+unsigned long button_debounce = 0;          // Button debounce timer
+unsigned long switch_debounce = 0;          // Switch debounce timer
 power_t power = 0;                          // Current copy of Settings.power
-byte syslog_level;                          // Current copy of Settings.syslog_level
-uint16_t syslog_timer = 0;                  // Timer to re-enable syslog_level
-byte seriallog_level;                       // Current copy of Settings.seriallog_level
+power_t blink_power;                        // Blink power state
+power_t blink_mask = 0;                     // Blink relay active mask
+power_t blink_powersave;                    // Blink start power save state
+power_t latching_power = 0;                 // Power state at latching start
+power_t rel_inverted = 0;                   // Relay inverted flag (1 = (0 = On, 1 = Off))
+int baudrate = APP_BAUDRATE;                // Serial interface baud rate
+int serial_in_byte_counter = 0;             // Index in receive buffer
+int ota_state_flag = 0;                     // OTA state flag
+int ota_result = 0;                         // OTA result
+int restart_flag = 0;                       // Sonoff restart flag
+int wifi_state_flag = WIFI_RESTART;         // Wifi state flag
+int tele_period = 0;                        // Tele period timer
+int status_update_timer = 0;                // Refresh initial status
+int blinks = 201;                           // Number of LED blinks
+uint32_t uptime = 0;                        // Counting every second until 4294967295 = 130 year
+uint32_t global_update = 0;                 // Timestamp of last global temperature and humidity update
+float global_temperature = 0;               // Provide a global temperature to be used by some sensors
+float global_humidity = 0;                  // Provide a global humidity to be used by some sensors
+char *ota_url;                              // OTA url string pointer
+uint16_t dual_button_code = 0;              // Sonoff dual received code
+uint16_t mqtt_cmnd_publish = 0;             // ignore flag for publish command
+uint16_t blink_counter = 0;                 // Number of blink cycles
 uint16_t seriallog_timer = 0;               // Timer to disable Seriallog
+uint16_t syslog_timer = 0;                  // Timer to re-enable syslog_level
+uint16_t holdbutton[MAX_KEYS] = { 0 };      // Timer for button hold
+int16_t save_data_counter;                  // Counter and flag for config save to Flash
+RulesBitfield rules_flag;                   // Rule state flags (16 bits)
+uint8_t serial_local = 0;                   // Handle serial locally;
+uint8_t fallback_topic_flag = 0;            // Use Topic or FallbackTopic
+uint8_t state_250mS = 0;                    // State 250msecond per second flag
+uint8_t latching_relay_pulse = 0;           // Latching relay pulse timer
+uint8_t backlog_index = 0;                  // Command backlog index
+uint8_t backlog_pointer = 0;                // Command backlog pointer
+uint8_t backlog_mutex = 0;                  // Command backlog pending
+uint8_t interlock_mutex = 0;                // Interlock power command pending
 uint8_t sleep;                              // Current copy of Settings.sleep
 uint8_t stop_flash_rotate = 0;              // Allow flash configuration rotation
-
-int blinks = 201;                           // Number of LED blinks
 uint8_t blinkstate = 0;                     // LED state
 uint8_t blinkspeed = 1;                     // LED blink rate
-
-uint8_t blockgpio0 = 4;                     // Block GPIO0 for 4 seconds after poweron to workaround Wemos D1 RTS circuit
 uint8_t lastbutton[MAX_KEYS] = { NOT_PRESSED, NOT_PRESSED, NOT_PRESSED, NOT_PRESSED };  // Last button states
-uint16_t holdbutton[MAX_KEYS] = { 0 };      // Timer for button hold
 uint8_t multiwindow[MAX_KEYS] = { 0 };      // Max time between button presses to record press count
 uint8_t multipress[MAX_KEYS] = { 0 };       // Number of button presses within multiwindow
 uint8_t lastwallswitch[MAX_SWITCHES];       // Last wall switch states
 uint8_t holdwallswitch[MAX_SWITCHES] = { 0 };  // Timer for wallswitch push button hold
 uint8_t virtualswitch[MAX_SWITCHES];        // Virtual switch states
-
-mytmplt my_module;                          // Active copy of Module name and GPIOs
 uint8_t pin[GPIO_MAX];                      // Possible pin configurations
-power_t rel_inverted = 0;                   // Relay inverted flag (1 = (0 = On, 1 = Off))
 uint8_t led_inverted = 0;                   // LED inverted flag (1 = (0 = On, 1 = Off))
 uint8_t pwm_inverted = 0;                   // PWM inverted flag (1 = inverted)
 uint8_t counter_no_pullup = 0;              // Counter input pullup flag (1 = No pullup)
@@ -185,16 +177,20 @@ uint8_t energy_flg = 1;                     // Energy monitor configured
 uint8_t i2c_flg = 0;                        // I2C configured
 uint8_t spi_flg = 0;                        // SPI configured
 uint8_t light_type = 0;                     // Light types
-bool pwm_present = false;                   // Any PWM channel configured with SetOption15 0
-boolean mdns_begun = false;
 uint8_t ntp_force_sync = 0;                 // Force NTP sync
-StateBitfield global_state;
-RulesBitfield rules_flag;
-
-uint32_t global_update = 0;
-float global_temperature = 0;
-float global_humidity = 0;
-
+byte serial_in_byte;                        // Received byte
+byte dual_hex_code = 0;                     // Sonoff dual input flag
+byte ota_retry_counter = OTA_ATTEMPTS;      // OTA retry counter
+byte web_log_index = 1;                     // Index in Web log buffer (should never be 0)
+byte reset_web_log_flag = 0;                // Reset web console log
+byte devices_present = 0;                   // Max number of devices supported
+byte seriallog_level;                       // Current copy of Settings.seriallog_level
+byte syslog_level;                          // Current copy of Settings.syslog_level
+boolean latest_uptime_flag = true;          // Signal latest uptime
+boolean pwm_present = false;                // Any PWM channel configured with SetOption15 0
+boolean mdns_begun = false;                 // mDNS active
+mytmplt my_module;                          // Active copy of Module name and GPIOs (23 x 8 bits)
+StateBitfield global_state;                 // Global states (currently Wifi and Mqtt) (8 bits)
 char my_version[33];                        // Composed version string
 char my_hostname[33];                       // Composed Wifi hostname
 char mqtt_client[33];                       // Composed MQTT Clientname
@@ -608,8 +604,9 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
       }
     }
     else if (CMND_OTAURL == command_code) {
-      if ((data_len > 0) && (data_len < sizeof(Settings.ota_url)))
-        strlcpy(Settings.ota_url, (1 == payload) ? OTA_URL : dataBuf, sizeof(Settings.ota_url));
+      if ((data_len > 0) && (data_len < sizeof(Settings.ota_url))) {
+        strlcpy(Settings.ota_url, (SC_DEFAULT == Shortcut(dataBuf)) ? OTA_URL : dataBuf, sizeof(Settings.ota_url));
+      }
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, Settings.ota_url);
     }
     else if (CMND_SERIALLOG == command_code) {
@@ -947,6 +944,18 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, Settings.pulse_counter_debounce);
     }
+    else if (CMND_BUTTONDEBOUNCE == command_code) {
+      if ((payload > 39) && (payload < 1001)) {
+        Settings.button_debounce = payload;
+      }
+      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, Settings.button_debounce);
+    }
+    else if (CMND_SWITCHDEBOUNCE == command_code) {
+      if ((payload > 39) && (payload < 1001)) {
+        Settings.switch_debounce = payload;
+      }
+      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, Settings.switch_debounce);
+    }
     else if (CMND_BAUDRATE == command_code) {
       if (payload32 > 0) {
         payload32 /= 1200;  // Make it a valid baudrate
@@ -997,12 +1006,14 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
     }
     else if (CMND_LOGHOST == command_code) {
       if ((data_len > 0) && (data_len < sizeof(Settings.syslog_host))) {
-        strlcpy(Settings.syslog_host, (1 == payload) ? SYS_LOG_HOST : dataBuf, sizeof(Settings.syslog_host));
+        strlcpy(Settings.syslog_host, (SC_DEFAULT == Shortcut(dataBuf)) ? SYS_LOG_HOST : dataBuf, sizeof(Settings.syslog_host));
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, Settings.syslog_host);
     }
     else if (CMND_LOGPORT == command_code) {
-      if (payload16 > 0) Settings.syslog_port = (1 == payload16) ? SYS_LOG_PORT : payload16;
+      if (payload16 > 0) {
+        Settings.syslog_port = (1 == payload16) ? SYS_LOG_PORT : payload16;
+      }
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, Settings.syslog_port);
     }
     else if ((CMND_IPADDRESS == command_code) && (index > 0) && (index <= 4)) {
@@ -1015,7 +1026,7 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
     }
     else if ((CMND_NTPSERVER == command_code) && (index > 0) && (index <= 3)) {
       if ((data_len > 0) && (data_len < sizeof(Settings.ntp_server[0]))) {
-        strlcpy(Settings.ntp_server[index -1], (!strcmp(dataBuf,"0")) ? "" : (1 == payload) ? (1==index)?NTP_SERVER1:(2==index)?NTP_SERVER2:NTP_SERVER3 : dataBuf, sizeof(Settings.ntp_server[0]));
+        strlcpy(Settings.ntp_server[index -1], (SC_CLEAR == Shortcut(dataBuf)) ? "" : (SC_DEFAULT == Shortcut(dataBuf)) ? (1==index)?NTP_SERVER1:(2==index)?NTP_SERVER2:NTP_SERVER3 : dataBuf, sizeof(Settings.ntp_server[0]));
         for (i = 0; i < strlen(Settings.ntp_server[index -1]); i++) {
           if (Settings.ntp_server[index -1][i] == ',') Settings.ntp_server[index -1][i] = '.';
         }
@@ -1039,7 +1050,7 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
     }
     else if ((CMND_SSID == command_code) && (index > 0) && (index <= 2)) {
       if ((data_len > 0) && (data_len < sizeof(Settings.sta_ssid[0]))) {
-        strlcpy(Settings.sta_ssid[index -1], (!strcmp(dataBuf,"0")) ? "" : (1 == payload) ? (1 == index) ? STA_SSID1 : STA_SSID2 : dataBuf, sizeof(Settings.sta_ssid[0]));
+        strlcpy(Settings.sta_ssid[index -1], (SC_CLEAR == Shortcut(dataBuf)) ? "" : (SC_DEFAULT == Shortcut(dataBuf)) ? (1 == index) ? STA_SSID1 : STA_SSID2 : dataBuf, sizeof(Settings.sta_ssid[0]));
         Settings.sta_active = index -1;
         restart_flag = 2;
       }
@@ -1047,7 +1058,7 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
     }
     else if ((CMND_PASSWORD == command_code) && (index > 0) && (index <= 2)) {
       if ((data_len > 0) && (data_len < sizeof(Settings.sta_pwd[0]))) {
-        strlcpy(Settings.sta_pwd[index -1], (!strcmp(dataBuf,"0")) ? "" : (1 == payload) ? (1 == index) ? STA_PASS1 : STA_PASS2 : dataBuf, sizeof(Settings.sta_pwd[0]));
+        strlcpy(Settings.sta_pwd[index -1], (SC_CLEAR == Shortcut(dataBuf)) ? "" : (SC_DEFAULT == Shortcut(dataBuf)) ? (1 == index) ? STA_PASS1 : STA_PASS2 : dataBuf, sizeof(Settings.sta_pwd[0]));
         Settings.sta_active = index -1;
         restart_flag = 2;
         snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, index, Settings.sta_pwd[index -1]);
@@ -1057,7 +1068,7 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
     }
     else if ((CMND_HOSTNAME == command_code) && !grpflg) {
       if ((data_len > 0) && (data_len < sizeof(Settings.hostname))) {
-        strlcpy(Settings.hostname, (1 == payload) ? WIFI_HOSTNAME : dataBuf, sizeof(Settings.hostname));
+        strlcpy(Settings.hostname, (SC_DEFAULT == Shortcut(dataBuf)) ? WIFI_HOSTNAME : dataBuf, sizeof(Settings.hostname));
         if (strstr(Settings.hostname,"%")) {
           strlcpy(Settings.hostname, WIFI_HOSTNAME, sizeof(Settings.hostname));
         }
@@ -1087,12 +1098,14 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
         } else {
           snprintf_P(stemp1, sizeof(stemp1), PSTR(FRIENDLY_NAME "%d"), index);
         }
-        strlcpy(Settings.friendlyname[index -1], (1 == payload) ? stemp1 : dataBuf, sizeof(Settings.friendlyname[index -1]));
+        strlcpy(Settings.friendlyname[index -1], (SC_DEFAULT == Shortcut(dataBuf)) ? stemp1 : dataBuf, sizeof(Settings.friendlyname[index -1]));
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, index, Settings.friendlyname[index -1]);
     }
     else if ((CMND_SWITCHMODE == command_code) && (index > 0) && (index <= MAX_SWITCHES)) {
-      if ((payload >= 0) && (payload < MAX_SWITCH_OPTION)) Settings.switchmode[index -1] = payload;
+      if ((payload >= 0) && (payload < MAX_SWITCH_OPTION)) {
+        Settings.switchmode[index -1] = payload;
+      }
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_NVALUE, command, index, Settings.switchmode[index-1]);
     }
     else if (CMND_TELEPERIOD == command_code) {
@@ -1119,7 +1132,9 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
       }
     }
     else if (CMND_TIMEZONE == command_code) {
-      if ((data_len > 0) && (((payload >= -13) && (payload <= 14)) || (99 == payload))) Settings.timezone = payload;
+      if ((data_len > 0) && (((payload >= -13) && (payload <= 14)) || (99 == payload))) {
+        Settings.timezone = payload;
+      }
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, Settings.timezone);
     }
     else if ((CMND_TIMESTD == command_code) || (CMND_TIMEDST == command_code)) {
@@ -1164,7 +1179,9 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
         command, Settings.tflag[ts].hemis, Settings.tflag[ts].week, Settings.tflag[ts].month, Settings.tflag[ts].dow, Settings.tflag[ts].hour, Settings.toffset[ts]);
     }
     else if (CMND_ALTITUDE == command_code) {
-      if ((data_len > 0) && ((payload >= -30000) && (payload <= 30000))) Settings.altitude = payload;
+      if ((data_len > 0) && ((payload >= -30000) && (payload <= 30000))) {
+        Settings.altitude = payload;
+      }
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, Settings.altitude);
     }
     else if (CMND_LEDPOWER == command_code) {
@@ -1556,8 +1573,6 @@ void PerformEverySecond()
     SetDevicePower(power, SRC_RETRY);  // Set required power on state
   }
 
-  if (blockgpio0) blockgpio0--;
-
   if (seriallog_timer) {
     seriallog_timer--;
     if (!seriallog_timer) {
@@ -1631,7 +1646,8 @@ void ButtonHandler()
 {
   uint8_t button = NOT_PRESSED;
   uint8_t button_present = 0;
-  uint8_t hold_time_extent = IMMINENT_RESET_FACTOR;  // Extent hold time factor in case of iminnent Reset command
+  uint8_t hold_time_extent = IMMINENT_RESET_FACTOR;            // Extent hold time factor in case of iminnent Reset command
+  uint16_t loops_per_second = 1000 / Settings.button_debounce;
   char scmnd[20];
 
   uint8_t maxdev = (devices_present > MAX_KEYS) ? MAX_KEYS : devices_present;
@@ -1645,43 +1661,45 @@ void ButtonHandler()
         snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION D_BUTTON " " D_CODE " %04X"), dual_button_code);
         AddLog(LOG_LEVEL_DEBUG);
         button = PRESSED;
-        if (0xF500 == dual_button_code) {             // Button hold
-          holdbutton[button_index] = (Settings.param[P_HOLD_TIME] * (STATES / 10)) -1;
+        if (0xF500 == dual_button_code) {                      // Button hold
+          holdbutton[button_index] = (loops_per_second * Settings.param[P_HOLD_TIME] / 10) -1;
           hold_time_extent = 1;
         }
         dual_button_code = 0;
       }
     } else {
-      if ((pin[GPIO_KEY1 +button_index] < 99) && !blockgpio0) {
-        button_present = 1;
-        button = digitalRead(pin[GPIO_KEY1 +button_index]);
+      if (pin[GPIO_KEY1 +button_index] < 99) {
+        if (!((uptime < 4) && (0 == pin[GPIO_KEY1 +button_index]))) {  // Block GPIO0 for 4 seconds after poweron to workaround Wemos D1 RTS circuit
+          button_present = 1;
+          button = digitalRead(pin[GPIO_KEY1 +button_index]);
+        }
       }
     }
 
     if (button_present) {
       if (SONOFF_4CHPRO == Settings.module) {
-        if (holdbutton[button_index]) holdbutton[button_index]--;
+        if (holdbutton[button_index]) { holdbutton[button_index]--; }
 
         boolean button_pressed = false;
         if ((PRESSED == button) && (NOT_PRESSED == lastbutton[button_index])) {
           snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION D_BUTTON "%d " D_LEVEL_10), button_index +1);
           AddLog(LOG_LEVEL_DEBUG);
-          holdbutton[button_index] = STATES;
+          holdbutton[button_index] = loops_per_second;
           button_pressed = true;
         }
         if ((NOT_PRESSED == button) && (PRESSED == lastbutton[button_index])) {
           snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION D_BUTTON "%d " D_LEVEL_01), button_index +1);
           AddLog(LOG_LEVEL_DEBUG);
-          if (!holdbutton[button_index]) button_pressed = true;        // Do not allow within 1 second
+          if (!holdbutton[button_index]) { button_pressed = true; }  // Do not allow within 1 second
         }
         if (button_pressed) {
-          if (!SendKey(0, button_index +1, POWER_TOGGLE)) {  // Execute Toggle command via MQTT if ButtonTopic is set
+          if (!SendKey(0, button_index +1, POWER_TOGGLE)) {    // Execute Toggle command via MQTT if ButtonTopic is set
             ExecuteCommandPower(button_index +1, POWER_TOGGLE, SRC_BUTTON);  // Execute Toggle command internally
           }
         }
       } else {
         if ((PRESSED == button) && (NOT_PRESSED == lastbutton[button_index])) {
-          if (Settings.flag.button_single) {          // Allow only single button press for immediate action
+          if (Settings.flag.button_single) {                   // Allow only single button press for immediate action
             snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION D_BUTTON "%d " D_IMMEDIATE), button_index +1);
             AddLog(LOG_LEVEL_DEBUG);
             if (!SendKey(0, button_index +1, POWER_TOGGLE)) {  // Execute Toggle command via MQTT if ButtonTopic is set
@@ -1691,7 +1709,7 @@ void ButtonHandler()
             multipress[button_index] = (multiwindow[button_index]) ? multipress[button_index] +1 : 1;
             snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION D_BUTTON "%d " D_MULTI_PRESS " %d"), button_index +1, multipress[button_index]);
             AddLog(LOG_LEVEL_DEBUG);
-            multiwindow[button_index] = STATES /2;               // 0.5 second multi press window
+            multiwindow[button_index] = loops_per_second / 2;  // 0.5 second multi press window
           }
           blinks = 201;
         }
@@ -1700,20 +1718,20 @@ void ButtonHandler()
           holdbutton[button_index] = 0;
         } else {
           holdbutton[button_index]++;
-          if (Settings.flag.button_single) {        // Allow only single button press for immediate action
-            if (holdbutton[button_index] == Settings.param[P_HOLD_TIME] * (STATES / 10) * hold_time_extent) {  // Button held for factor times longer
+          if (Settings.flag.button_single) {                   // Allow only single button press for immediate action
+            if (holdbutton[button_index] == loops_per_second * hold_time_extent * Settings.param[P_HOLD_TIME] / 10) {  // Button held for factor times longer
 //              Settings.flag.button_single = 0;
               snprintf_P(scmnd, sizeof(scmnd), PSTR(D_CMND_SETOPTION "13 0"));  // Disable single press only
               ExecuteCommand(scmnd, SRC_BUTTON);
             }
           } else {
-            if (Settings.flag.button_restrict) {   // Button restriction
-              if (holdbutton[button_index] == Settings.param[P_HOLD_TIME] * (STATES / 10)) {  // Button hold
+            if (Settings.flag.button_restrict) {               // Button restriction
+              if (holdbutton[button_index] == loops_per_second * Settings.param[P_HOLD_TIME] / 10) {  // Button hold
                 multipress[button_index] = 0;
-                SendKey(0, button_index +1, 3);        // Execute Hold command via MQTT if ButtonTopic is set
+                SendKey(0, button_index +1, 3);                // Execute Hold command via MQTT if ButtonTopic is set
               }
             } else {
-              if (holdbutton[button_index] == (Settings.param[P_HOLD_TIME] * (STATES / 10)) * hold_time_extent) {  // Button held for factor times longer
+              if (holdbutton[button_index] == loops_per_second * hold_time_extent * Settings.param[P_HOLD_TIME] / 10) {  // Button held for factor times longer
                 multipress[button_index] = 0;
                 snprintf_P(scmnd, sizeof(scmnd), PSTR(D_CMND_RESET " 1"));
                 ExecuteCommand(scmnd, SRC_BUTTON);
@@ -1722,13 +1740,13 @@ void ButtonHandler()
           }
         }
 
-        if (!Settings.flag.button_single) {           // Allow multi-press
+        if (!Settings.flag.button_single) {                    // Allow multi-press
           if (multiwindow[button_index]) {
             multiwindow[button_index]--;
           } else {
             if (!restart_flag && !holdbutton[button_index] && (multipress[button_index] > 0) && (multipress[button_index] < MAX_BUTTON_COMMANDS +3)) {
               boolean single_press = false;
-              if (multipress[button_index] < 3) {                // Single or Double press
+              if (multipress[button_index] < 3) {              // Single or Double press
                 if ((SONOFF_DUAL_R2 == Settings.module) || (SONOFF_DUAL == Settings.module) || (CH4 == Settings.module)) {
                   single_press = true;
                 } else  {
@@ -1739,13 +1757,13 @@ void ButtonHandler()
               if (single_press && SendKey(0, button_index + multipress[button_index], POWER_TOGGLE)) {  // Execute Toggle command via MQTT if ButtonTopic is set
                 // Success
               } else {
-                if (multipress[button_index] < 3) {              // Single or Double press
-                  if (WifiState()) {                  // WPSconfig, Smartconfig or Wifimanager active
+                if (multipress[button_index] < 3) {            // Single or Double press
+                  if (WifiState()) {                           // WPSconfig, Smartconfig or Wifimanager active
                     restart_flag = 1;
                   } else {
                     ExecuteCommandPower(button_index + multipress[button_index], POWER_TOGGLE, SRC_BUTTON);  // Execute Toggle command internally
                   }
-                } else {                              // 3 - 7 press
+                } else {                                       // 3 - 7 press
                   if (!Settings.flag.button_restrict) {
                     snprintf_P(scmnd, sizeof(scmnd), kCommands[multipress[button_index] -3]);
                     ExecuteCommand(scmnd, SRC_BUTTON);
@@ -1770,6 +1788,7 @@ void SwitchHandler(byte mode)
 {
   uint8_t button = NOT_PRESSED;
   uint8_t switchflag;
+  uint16_t loops_per_second = 1000 / Settings.switch_debounce;
 
   for (byte i = 0; i < MAX_SWITCHES; i++) {
     if ((pin[GPIO_SWT1 +i] < 99) || (mode)) {
@@ -1777,14 +1796,16 @@ void SwitchHandler(byte mode)
       if (holdwallswitch[i]) {
         holdwallswitch[i]--;
         if (0 == holdwallswitch[i]) {
-          SendKey(1, i +1, 3);         // Execute command via MQTT
+          SendKey(1, i +1, 3);           // Execute command via MQTT
         }
       }
 
       if (mode) {
         button = virtualswitch[i];
       } else {
-        button = digitalRead(pin[GPIO_SWT1 +i]);
+        if (!((uptime < 4) && (0 == pin[GPIO_SWT1 +i]))) {  // Block GPIO0 for 4 seconds after poweron to workaround Wemos D1 RTS circuit
+          button = digitalRead(pin[GPIO_SWT1 +i]);
+        }
       }
 
       if (button != lastwallswitch[i]) {
@@ -1816,7 +1837,7 @@ void SwitchHandler(byte mode)
           break;
         case PUSHBUTTONHOLD:
           if ((PRESSED == button) && (NOT_PRESSED == lastwallswitch[i])) {
-            holdwallswitch[i] = Settings.param[P_HOLD_TIME] * (STATES / 10);
+            holdwallswitch[i] = loops_per_second * Settings.param[P_HOLD_TIME] / 10;
           }
           if ((NOT_PRESSED == button) && (PRESSED == lastwallswitch[i]) && (holdwallswitch[i])) {
             holdwallswitch[i] = 0;
@@ -1825,18 +1846,18 @@ void SwitchHandler(byte mode)
           break;
         case PUSHBUTTONHOLD_INV:
           if ((NOT_PRESSED == button) && (PRESSED == lastwallswitch[i])) {
-            holdwallswitch[i] = Settings.param[P_HOLD_TIME] * (STATES / 10);
+            holdwallswitch[i] = loops_per_second * Settings.param[P_HOLD_TIME] / 10;
           }
           if ((PRESSED == button) && (NOT_PRESSED == lastwallswitch[i]) && (holdwallswitch[i])) {
             holdwallswitch[i] = 0;
-            switchflag = 2;             // Toggle with pushbutton to Gnd
+            switchflag = 2;              // Toggle with pushbutton to Gnd
           }
           break;
         }
 
         if (switchflag < 3) {
           if (!SendKey(1, i +1, switchflag)) {  // Execute command via MQTT
-            ExecuteCommandPower(i +1, switchflag, SRC_SWITCH);        // Execute command internally (if i < devices_present)
+            ExecuteCommandPower(i +1, switchflag, SRC_SWITCH);  // Execute command internally (if i < devices_present)
           }
         }
 
@@ -1849,15 +1870,6 @@ void SwitchHandler(byte mode)
 /*********************************************************************************************\
  * State loops
 \*********************************************************************************************/
-
-void Every50mSeconds()
-{
-  // As the max amount of sleep = 250 mSec this loop will shift in time...
-
-  ButtonHandler();
-  SwitchHandler(0);
-}
-
 /*-------------------------------------------------------------------------------------------*\
  * Every 0.1 second
 \*-------------------------------------------------------------------------------------------*/
@@ -2607,20 +2619,25 @@ void loop()
 
   OsWatchLoop();
 
+  if (TimeReached(button_debounce)) {
+    SetNextTimeInterval(button_debounce, Settings.button_debounce);
+    ButtonHandler();
+  }
+  if (TimeReached(switch_debounce)) {
+    SetNextTimeInterval(switch_debounce, Settings.switch_debounce);
+    SwitchHandler(0);
+  }
   if (TimeReached(state_50msecond)) {
     SetNextTimeInterval(state_50msecond, 50);
-    Every50mSeconds();
     XdrvCall(FUNC_EVERY_50_MSECOND);
     XsnsCall(FUNC_EVERY_50_MSECOND);
   }
-
   if (TimeReached(state_100msecond)) {
     SetNextTimeInterval(state_100msecond, 100);
     Every100mSeconds();
     XdrvCall(FUNC_EVERY_100_MSECOND);
     XsnsCall(FUNC_EVERY_100_MSECOND);
   }
-
   if (TimeReached(state_250msecond)) {
     SetNextTimeInterval(state_250msecond, 250);
     Every250mSeconds();

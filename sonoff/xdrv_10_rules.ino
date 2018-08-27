@@ -155,6 +155,24 @@ bool RulesRuleMatch(byte rule_set, String &event, String &rule)
         break;
       }
     }
+    snprintf_P(stemp, sizeof(stemp), PSTR("%%TIME%%"));
+    if (rule_param.startsWith(stemp)) {
+      rule_param = String(GetMinutesPastMidnight());
+    }
+    snprintf_P(stemp, sizeof(stemp), PSTR("%%UPTIME%%"));
+    if (rule_param.startsWith(stemp)) {
+      rule_param = String(GetMinutesUptime());
+    }
+#if defined(USE_TIMERS) && defined(USE_SUNRISE)
+    snprintf_P(stemp, sizeof(stemp), PSTR("%%SUNRISE%%"));
+    if (rule_param.startsWith(stemp)) {
+      rule_param = String(GetSunMinutes(0));
+    }
+    snprintf_P(stemp, sizeof(stemp), PSTR("%%SUNSET%%"));
+    if (rule_param.startsWith(stemp)) {
+      rule_param = String(GetSunMinutes(1));
+    }
+#endif  // USE_TIMERS and USE_SUNRISE
     rule_param.toUpperCase();
     snprintf(rule_svalue, sizeof(rule_svalue), rule_param.c_str());
 
@@ -522,13 +540,13 @@ boolean RulesCommand()
   }
   else if ((CMND_VAR == command_code) && (index > 0) && (index <= MAX_RULE_VARS)) {
     if (XdrvMailbox.data_len > 0) {
-      strlcpy(vars[index -1], ('"' == XdrvMailbox.data[0]) ? "" : XdrvMailbox.data, sizeof(vars[index -1]));
+      strlcpy(vars[index -1], (SC_CLEAR == Shortcut(XdrvMailbox.data)) ? "" : XdrvMailbox.data, sizeof(vars[index -1]));
     }
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, index, vars[index -1]);
   }
   else if ((CMND_MEM == command_code) && (index > 0) && (index <= MAX_RULE_MEMS)) {
     if (XdrvMailbox.data_len > 0) {
-      strlcpy(Settings.mems[index -1], ('"' == XdrvMailbox.data[0]) ? "" : XdrvMailbox.data, sizeof(Settings.mems[index -1]));
+      strlcpy(Settings.mems[index -1], (SC_CLEAR == Shortcut(XdrvMailbox.data)) ? "" : XdrvMailbox.data, sizeof(Settings.mems[index -1]));
     }
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, index, Settings.mems[index -1]);
   }

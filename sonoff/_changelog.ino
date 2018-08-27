@@ -1,4 +1,10 @@
-/* 6.1.1.11 20180826
+/* 6.1.1.12 20180827
+ * Add commands ButtonDebounce 40..1000 and SwitchDebounce 40..1000 to have user control over debounce timing. Default is 50mS (#3594)
+ * Add rule variables %sunrise%, %sunset%, %uptime% and %time% (#3608)
+ * Fix handling use of default names when using names starting with shortcut character (#3392, #3600)
+ * Fix Sonoff Bridge data reception when using Portisch EFM8 firmware and in data buffer length (#3605)
+ *
+ * 6.1.1.11 20180826
  * Change scheduler phase 1/3 - Fixed when sleep is enabled: Uptime, Delay, PulseTime and TelePeriod (#3581)
  * Change scheduler phase 2/3 - Fixed when sleep is enabled: Blinktime (#3581)
  * Change scheduler phase 3/3 - Some sensor update timings: AdcEvery 200 -> 250, Senseair 300 -> 250, SDM120 300 -> 250, SDM630 300 -> 250
