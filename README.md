@@ -46,7 +46,7 @@ If you use the ETS (KNX Configurator Software) you can add any Sonoff Tasmota KN
 
 ## Requirements ##
 
-All the libraries required for Sonoff-Tasmota are [here](https://github.com/ascillato/Sonoff-Tasmota_KNX/tree/development/lib) with the extra 2 required for the KNX Driver:
+All the libraries required for Sonoff-Tasmota are [here](https://github.com/ascillato/Sonoff-Tasmota_KNX/tree/development/lib) along with the extra 2 required for the KNX Driver:
 
 * [ESP KNX IP Library](https://github.com/ascillato/Sonoff-Tasmota_KNX/tree/development/lib/esp-knx-ip-0.5.1). A copy of this modified library is also available [here](https://github.com/ascillato/esp-knx-ip). The original is [here](https://github.com/envy/esp-knx-ip).
 
