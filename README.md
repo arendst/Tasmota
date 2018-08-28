@@ -91,16 +91,25 @@ The following devices are supported:
 - Wemos D1 mini, NodeMcu and Ledunia
 
 ### Firmware Release Information
-Different firmware images are released based on Features and Sensors selection guided by code and memory usage.
+Different firmware images are released based on Features and Sensors selection guided by code and memory usage. All versions support web based WIFI manager configuration.
 
-- The Minimal version allows intermediate OTA uploads to support larger versions and does NOT change any persistent parameter.
-- The Classic version allows single OTA uploads as did the previous Sonoff-Tasmota versions.
+- The Minimal version allows intermediate OTA uploads to support larger versions and does NOT change any persistent parameter. This version should **NOT be used for initial installation**.
+- The Classic version allows **initial installation** and single OTA uploads.
+- The Sonoff version removes WPS and SmartConfig configuration and allows more sensors.
+- The Sensors version removes WPS and SmartConfig configuration and allows more usefull sensors.
+- The Knx version removes WPS and SmartConfig configuration and some other features but adds KNX support.
 
 #### Available Features and Sensors
 
-| Feature or Sensor              | sonoff | classic | minimal | knx | allsensors |
-|--------------------------------|--------|---------|---------|-----|------------|
+| Feature or Sensor              | sonoff | classic | minimal | knx  | sensors |
+|--------------------------------|--------|---------|---------|------|---------|
+| ESP/Arduino lib v2.3.0         | 472k   | 476k    | 340k    | 491k | 497k    |
+| ESP/Arduino lib v2.4.2         | 490k   | 490k    | 360k    | 508k | 513k    |
+|                                |   |   |   |   |   |
 | MY_LANGUAGE en-GB              | x | x | x | x | x |
+| USE_WPS                        | - | x | - | - | - |
+| USE_SMARTCONFIG                | - | x | - | - | - |
+| USE_ARDUINO_OTA                | - | - | - | - | - |
 | MQTT_LIBRARY_TYPE PUBSUBCLIENT | x | x | x | x | x |
 | USE_DOMOTICZ                   | x | x | - | x | x |
 | USE_HOME_ASSISTANT             | x | x | - | x | x |
@@ -116,28 +125,37 @@ Different firmware images are released based on Features and Sensors selection g
 | USE_SUNRISE                    | x | - | - | x | x |
 | USE_RULES                      | x | - | - | x | x |
 |                                |   |   |   |   |   |
+| Feature or Sensor              | sonoff | classic | minimal | knx  | sensors |
 | USE_ADC_VCC                    | x | x | x | x | x |
 | USE_DS18B20                    | x | x | - | x | - |
 | USE_DS18x20                    | - | - | - | - | x |
 | USE_DS18x20_LEGACY             | - | - | - | - | - |
-| USE_I2C                        | x | x | - | x | x |
-| USE_SHT                        | x | x | - | x | x |
-| USE_SHT3X                      | x | x | - | x | x |
-| USE_HTU                        | x | x | - | x | x |
-| USE_LM75AD                     | x | - | - | x | x |
-| USE_BMP                        | x | x | - | x | x |
+|                                |   |   |   |   |   |
+| USE_I2C                        | x | - | - | x | x |
+| USE_SHT                        | x | - | - | x | x |
+| USE_HTU                        | x | - | - | x | x |
+| USE_BMP                        | x | - | - | x | x |
 | USE_BME680                     | - | - | - | - | x |
-| USE_SGP30                      | x | - | - | x | x |
-| USE_BH1750                     | x | x | - | x | x |
+| USE_BH1750                     | x | - | - | x | x |
 | USE_VEML6070                   | - | - | - | - | x |
-| USE_TSL2561                    | - | - | - | - | x |
-| USE_SI1145                     | - | - | - | - | x |
 | USE_ADS1115                    | - | - | - | - | x |
 | USE_ADS1115_I2CDEV             | - | - | - | - | - |
 | USE_INA219                     | - | - | - | - | x |
+| USE_SHT3X                      | x | - | - | x | x |
+| USE_TSL2561                    | - | - | - | - | x |
 | USE_MGS                        | - | - | - | - | x |
+| USE_SGP30                      | x | - | - | x | x |
+| USE_SI1145                     | - | - | - | - | x |
+| USE_LM75AD                     | x | - | - | x | x |
+| USE_APDS9960                   | - | - | - | - | - |
+| USE_MCP230xx                   | - | - | - | - | - |
+| USE_MPR121                     | - | - | - | - | - |
+| USE_CCS811                     | - | - | - | - | - |
+| USE_MPU6050                    | - | - | - | - | - |
+|                                |   |   |   |   |   |
+| Feature or Sensor              | sonoff | classic | minimal | knx  | sensors |
 | USE_SPI                        | - | - | - | - | - |
-| USE_MHZ19                      | x | x | - | x | x |
+| USE_MHZ19                      | x | - | - | x | x |
 | USE_SENSEAIR                   | x | - | - | x | x |
 | USE_PMS5003                    | x | - | - | x | x |
 | USE_NOVA_SDS                   | x | - | - | x | x |
@@ -145,22 +163,15 @@ Different firmware images are released based on Features and Sensors selection g
 | USE_SERIAL_BRIDGE              | x | - | - | x | x |
 | USE_SDM120                     | - | - | - | - | x |
 | USE_SDM630                     | - | - | - | - | x |
-| USE_IR_REMOTE                  | x | x | - | x | x |
+| USE_IR_REMOTE                  | x | - | - | x | x |
 | USE_IR_HVAC                    | - | - | - | - | x |
 | USE_IR_RECEIVE                 | x | - | - | x | x |
 | USE_WS2812                     | x | x | - | x | x |
 | USE_WS2812_DMA                 | - | - | - | - | - |
 | USE_ARILUX_RF                  | x | - | - | x | x |
 | USE_SR04                       | x | - | - | x | x |
+| USE_TM1638                     | - | - | - | - | - |
 | USE_RF_FLASH                   | x | - | - | x | x |
-
-#### Typical file size
-
-| ESP/Arduino library version | sonoff | classic | minimal | knx  | allsensors |
-|-----------------------------|--------|---------|---------|------|------------|
-| ESP/Arduino lib v2.3.0      | 538k   | 490k    | 407k    | 548k | 562k       |
-| ESP/Arduino lib v2.4.0      | 543k   | 498k    | 414k    | 553k | 565k       |
-| ESP/Arduino lib v2.4.1      | 544k   | 500k    | 416k    | 555k | 567k       |
 
 See [Tasmota ESP/Arduino library version related issues](https://github.com/arendst/Sonoff-Tasmota/wiki/Theo's-Tasmota-Tips#20180523---relation-tasmota-and-esp8266arduino-core-version) for more information.
 

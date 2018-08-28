@@ -1,6 +1,7 @@
 /* 6.1.1.13 20180828
  * Fix 6.1.1.12 regression of Mem and Var default handling (#3618)
  * Optimizations
+ * Change define USE_ALL_SENSORS to USE_SENSORS as it doesn't contain all sensors due to duplicate I2C addresses
  *
  * 6.1.1.12 20180827
  * Add commands ButtonDebounce 40..1000 and SwitchDebounce 40..1000 to have user control over debounce timing. Default is 50mS (#3594)
