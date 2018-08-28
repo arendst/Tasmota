@@ -20,7 +20,7 @@
 #ifndef _SONOFF_VERSION_H_
 #define _SONOFF_VERSION_H_
 
-#define VERSION            0x06020000
+#define VERSION            0x0601010D
 
 #define D_PROGRAMNAME      "Sonoff-Tasmota"
 #define D_AUTHOR           "Theo Arends"
