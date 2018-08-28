@@ -13,9 +13,13 @@ If you like **Sonoff-Tasmota**, give it a star, or fork it and contribute!
 [![donate](https://img.shields.io/badge/donate-PayPal-blue.svg)](https://paypal.me/tasmota)
 
 ### Development
+[![Dev Version](https://img.shields.io/badge/development%20version-6.1.1.13-blue.svg)](https://github.com/arendst/Sonoff-Tasmota)
+[![Download Dev](https://img.shields.io/badge/download-development-yellow.svg)](http://thehackbox.org/tasmota/)
 [![Build Status](https://img.shields.io/travis/arendst/Sonoff-Tasmota.svg)](https://travis-ci.org/arendst/Sonoff-Tasmota)
 
-Current version is **6.1.1.x** - See [sonoff/_releasenotes.ino](https://github.com/arendst/Sonoff-Tasmota/blob/development/sonoff/_releasenotes.ino) for release information and [sonoff/_changelog.ino](https://github.com/arendst/Sonoff-Tasmota/blob/development/sonoff/_changelog.ino) for change information.
+See [RELEASENOTES.md](https://github.com/arendst/Sonoff-Tasmota/blob/development/RELEASENOTES.md) for release information and [sonoff/_changelog.ino](https://github.com/arendst/Sonoff-Tasmota/blob/development/sonoff/_changelog.ino) for change information.
+
+The compiled development versions from current codebase are built around 6AM GMT+2 everyday and posted at http://thehackbox.org/tasmota/ (this web address can be used for OTA too).
 
 ### Disclaimer
 :warning: **DANGER OF ELECTROCUTION** :warning:
@@ -90,17 +94,17 @@ The following devices are supported:
 - [Luani HVIO board](https://luani.de/projekte/esp8266-hvio/)
 - Wemos D1 mini, NodeMcu and Ledunia
 
-### Firmware Release Information
-Different firmware images are released based on Features and Sensors selection guided by code and memory usage.
-
-- The Minimal version allows intermediate OTA uploads to support larger versions and does NOT change any persistent parameter.
-- The Classic version allows single OTA uploads as did the previous Sonoff-Tasmota versions.
-
 #### Available Features and Sensors
 
-| Feature or Sensor              | sonoff | classic | minimal | knx | allsensors |
-|--------------------------------|--------|---------|---------|-----|------------|
+| Feature or Sensor              | sonoff | classic | minimal | knx  | sensors |
+|--------------------------------|--------|---------|---------|------|---------|
+| ESP/Arduino lib v2.3.0         | 472k   | 476k    | 340k    | 491k | 497k    |
+| ESP/Arduino lib v2.4.2         | 490k   | 490k    | 360k    | 508k | 513k    |
+|                                |   |   |   |   |   |
 | MY_LANGUAGE en-GB              | x | x | x | x | x |
+| USE_WPS                        | - | x | - | - | - |
+| USE_SMARTCONFIG                | - | x | - | - | - |
+| USE_ARDUINO_OTA                | - | - | - | - | - |
 | MQTT_LIBRARY_TYPE PUBSUBCLIENT | x | x | x | x | x |
 | USE_DOMOTICZ                   | x | x | - | x | x |
 | USE_HOME_ASSISTANT             | x | x | - | x | x |
@@ -116,28 +120,37 @@ Different firmware images are released based on Features and Sensors selection g
 | USE_SUNRISE                    | x | - | - | x | x |
 | USE_RULES                      | x | - | - | x | x |
 |                                |   |   |   |   |   |
+| Feature or Sensor              | sonoff | classic | minimal | knx  | sensors |
 | USE_ADC_VCC                    | x | x | x | x | x |
 | USE_DS18B20                    | x | x | - | x | - |
 | USE_DS18x20                    | - | - | - | - | x |
 | USE_DS18x20_LEGACY             | - | - | - | - | - |
-| USE_I2C                        | x | x | - | x | x |
-| USE_SHT                        | x | x | - | x | x |
-| USE_SHT3X                      | x | x | - | x | x |
-| USE_HTU                        | x | x | - | x | x |
-| USE_LM75AD                     | x | - | - | x | x |
-| USE_BMP                        | x | x | - | x | x |
+|                                |   |   |   |   |   |
+| USE_I2C                        | x | - | - | x | x |
+| USE_SHT                        | x | - | - | x | x |
+| USE_HTU                        | x | - | - | x | x |
+| USE_BMP                        | x | - | - | x | x |
 | USE_BME680                     | - | - | - | - | x |
-| USE_SGP30                      | x | - | - | x | x |
-| USE_BH1750                     | x | x | - | x | x |
+| USE_BH1750                     | x | - | - | x | x |
 | USE_VEML6070                   | - | - | - | - | x |
-| USE_TSL2561                    | - | - | - | - | x |
-| USE_SI1145                     | - | - | - | - | x |
 | USE_ADS1115                    | - | - | - | - | x |
 | USE_ADS1115_I2CDEV             | - | - | - | - | - |
 | USE_INA219                     | - | - | - | - | x |
+| USE_SHT3X                      | x | - | - | x | x |
+| USE_TSL2561                    | - | - | - | - | x |
 | USE_MGS                        | - | - | - | - | x |
+| USE_SGP30                      | x | - | - | x | x |
+| USE_SI1145                     | - | - | - | - | x |
+| USE_LM75AD                     | x | - | - | x | x |
+| USE_APDS9960                   | - | - | - | - | - |
+| USE_MCP230xx                   | - | - | - | - | - |
+| USE_MPR121                     | - | - | - | - | - |
+| USE_CCS811                     | - | - | - | - | - |
+| USE_MPU6050                    | - | - | - | - | - |
+|                                |   |   |   |   |   |
+| Feature or Sensor              | sonoff | classic | minimal | knx  | sensors |
 | USE_SPI                        | - | - | - | - | - |
-| USE_MHZ19                      | x | x | - | x | x |
+| USE_MHZ19                      | x | - | - | x | x |
 | USE_SENSEAIR                   | x | - | - | x | x |
 | USE_PMS5003                    | x | - | - | x | x |
 | USE_NOVA_SDS                   | x | - | - | x | x |
@@ -145,22 +158,15 @@ Different firmware images are released based on Features and Sensors selection g
 | USE_SERIAL_BRIDGE              | x | - | - | x | x |
 | USE_SDM120                     | - | - | - | - | x |
 | USE_SDM630                     | - | - | - | - | x |
-| USE_IR_REMOTE                  | x | x | - | x | x |
+| USE_IR_REMOTE                  | x | - | - | x | x |
 | USE_IR_HVAC                    | - | - | - | - | x |
 | USE_IR_RECEIVE                 | x | - | - | x | x |
 | USE_WS2812                     | x | x | - | x | x |
 | USE_WS2812_DMA                 | - | - | - | - | - |
 | USE_ARILUX_RF                  | x | - | - | x | x |
 | USE_SR04                       | x | - | - | x | x |
+| USE_TM1638                     | - | - | - | - | - |
 | USE_RF_FLASH                   | x | - | - | x | x |
-
-#### Typical file size
-
-| ESP/Arduino library version | sonoff | classic | minimal | knx  | allsensors |
-|-----------------------------|--------|---------|---------|------|------------|
-| ESP/Arduino lib v2.3.0      | 538k   | 490k    | 407k    | 548k | 562k       |
-| ESP/Arduino lib v2.4.0      | 543k   | 498k    | 414k    | 553k | 565k       |
-| ESP/Arduino lib v2.4.1      | 544k   | 500k    | 416k    | 555k | 567k       |
 
 See [Tasmota ESP/Arduino library version related issues](https://github.com/arendst/Sonoff-Tasmota/wiki/Theo's-Tasmota-Tips#20180523---relation-tasmota-and-esp8266arduino-core-version) for more information.
 
@@ -177,6 +183,7 @@ You can contribute to Sonoff-Tasmota by
 #### Libraries Used
 Libraries used with Sonoff-Tasmota are:
 - [ESP8266 core for Arduino](https://github.com/esp8266/Arduino)
+- [Adafruit CCS811](https://github.com/adafruit/Adafruit_CCS811)
 - [Adafruit SGP30](https://github.com/adafruit/Adafruit_SGP30)
 - [ArduinoJson](https://arduinojson.org/)
 - [Bosch BME680](https://github.com/BoschSensortec/BME680_driver)

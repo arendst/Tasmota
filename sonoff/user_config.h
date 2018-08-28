@@ -373,10 +373,10 @@
 //#define USE_CLASSIC                              // Create sonoff-classic (See sonoff_post.h for selected features)
 
 /*********************************************************************************************\
- * Select all sensors - overrides above undefines!!
+ * Select useful sensors - overrides above undefines!!
 \*********************************************************************************************/
 
-//#define USE_ALL_SENSORS                          // Create sonoff-allsensors with all sensors enabled (See sonoff_post.h for selected sensors)
+//#define USE_SENSORS                              // Create sonoff-sensors with useful sensors enabled (See sonoff_post.h for selected sensors)
 
 /*********************************************************************************************\
  * Select KNX without Emulation to save space

@@ -752,7 +752,7 @@ void EnergyMarginCheck()
     }
     if (jsonflg) {
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}"), mqtt_data);
-      MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_MARGINS));
+      MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_MARGINS), MQTT_TELE_RETAIN);
       EnergyMqttShow();
     }
   }

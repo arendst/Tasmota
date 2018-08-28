@@ -1702,31 +1702,33 @@ void HandleHttpCommand()
     WebGetArg("cmnd", svalue, sizeof(svalue));
     if (strlen(svalue)) {
       ExecuteWebCommand(svalue, SRC_WEBCOMMAND);
-    }
 
-    if (web_log_index != curridx) {
-      byte counter = curridx;
-      message = F("{");
-      do {
-        char* tmp;
-        size_t len;
-        GetLog(counter, &tmp, &len);
-        if (len) {
-          // [14:49:36 MQTT: stat/wemos5/RESULT = {"POWER":"OFF"}] > [{"POWER":"OFF"}]
-          char* JSON = (char*)memchr(tmp, '{', len);
-          if (JSON) { // Is it a JSON message (and not only [15:26:08 MQT: stat/wemos5/POWER = O])
-            if (message.length() > 1) { message += F(","); }
-            size_t JSONlen = len - (JSON - tmp);
-            strlcpy(mqtt_data, JSON +1, JSONlen -2);
-            message += mqtt_data;
+      if (web_log_index != curridx) {
+        byte counter = curridx;
+        message = F("{");
+        do {
+          char* tmp;
+          size_t len;
+          GetLog(counter, &tmp, &len);
+          if (len) {
+            // [14:49:36 MQTT: stat/wemos5/RESULT = {"POWER":"OFF"}] > [{"POWER":"OFF"}]
+            char* JSON = (char*)memchr(tmp, '{', len);
+            if (JSON) { // Is it a JSON message (and not only [15:26:08 MQT: stat/wemos5/POWER = O])
+              if (message.length() > 1) { message += F(","); }
+              size_t JSONlen = len - (JSON - tmp);
+              strlcpy(mqtt_data, JSON +1, JSONlen -2);
+              message += mqtt_data;
+            }
           }
-        }
-        counter++;
-        if (!counter) counter++;  // Skip 0 as it is not allowed
-      } while (counter != web_log_index);
-      message += F("}");
+          counter++;
+          if (!counter) counter++;  // Skip 0 as it is not allowed
+        } while (counter != web_log_index);
+        message += F("}");
+      } else {
+        message += F(D_ENABLE_WEBLOG_FOR_RESPONSE "\"}");
+      }
     } else {
-      message += F(D_ENABLE_WEBLOG_FOR_RESPONSE "\"}");
+      message += F(D_ENTER_COMMAND " cmnd=\"}");
     }
   } else {
     message += F(D_NEED_USER_AND_PASSWORD "\"}");
