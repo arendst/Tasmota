@@ -376,10 +376,13 @@ void MqttConnected()
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_RESTARTREASON "\":\"%s\"}"),
       (GetResetReason() == "Exception") ? ESP.getResetInfo().c_str() : GetResetReason().c_str());
     MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_INFO "3"));
+    for (byte i = 1; i <= devices_present; i++) {
+      MqttPublishPowerState(i);
+      if (SONOFF_IFAN02 == Settings.module) { break; }  // Only report status of light relay
+    }
     if (Settings.tele_period) {
       tele_period = Settings.tele_period -9;
     }
-    status_update_timer = 2;
     rules_flag.system_boot = 1;
     XdrvCall(FUNC_MQTT_INIT);
   }

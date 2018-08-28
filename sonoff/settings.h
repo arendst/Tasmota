@@ -22,7 +22,7 @@
 
 #define PARAM8_SIZE  18                    // Number of param bytes (SetOption)
 
-typedef union {                            // Restricted by MISRA-C Rule 18.4 but so usefull...
+typedef union {                            // Restricted by MISRA-C Rule 18.4 but so useful...
   uint32_t data;                           // Allow bit manipulation using SetOption
   struct {                                 // SetOption0 .. SetOption31
     uint32_t save_state : 1;               // bit 0
@@ -60,7 +60,7 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
   };
 } SysBitfield;
 
-typedef union {                            // Restricted by MISRA-C Rule 18.4 but so usefull...
+typedef union {                            // Restricted by MISRA-C Rule 18.4 but so useful...
   uint32_t data;                           // Allow bit manipulation using SetOption
   struct {                                 // SetOption50 .. SetOption81
     uint32_t timers_enable : 1;            // bit 0 (v6.1.1b)
@@ -194,9 +194,7 @@ struct SYSCFG {
   char          sta_pwd[2][65];            // 0E3
   char          hostname[33];              // 165
   char          syslog_host[33];           // 186
-
-  byte          free1A7[1];                // 1A7
-
+  uint8_t       rule_stop;                 // 1A7
   uint16_t      syslog_port;               // 1A8
   byte          syslog_level;              // 1AA
   uint8_t       webserver;                 // 1AB
@@ -373,7 +371,7 @@ struct XDRVMAILBOX {
 } XdrvMailbox;
 
 #define MAX_RULES_FLAG  7                  // Number of bits used in RulesBitfield (tricky I know...)
-typedef union {                            // Restricted by MISRA-C Rule 18.4 but so usefull...
+typedef union {                            // Restricted by MISRA-C Rule 18.4 but so useful...
   uint16_t data;                           // Allow bit manipulation
   struct {
     uint16_t system_boot : 1;
