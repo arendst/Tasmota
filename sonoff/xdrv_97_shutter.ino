@@ -192,7 +192,7 @@ boolean ShutterCommand()
   }
   else if (CMND_STOP == command_code && (index > 0) && (index <= shutters_present)) {
     Settings.shutter_position[index-1] = m2[index-1] * 5 > Shutter_Real_Position[index-1] ? Shutter_Real_Position[index-1] / m2[index-1] : (Shutter_Real_Position[index-1]-b1[index-1]) / m1[index-1];
-    XdrvMailbox.payload = Settings.shutter_position[index-1];
+    XdrvMailbox.payload = Settings.shutter_invert[index-1] ? 100 - Settings.shutter_position[index-1] : Settings.shutter_position[index-1];
     command_code = CMND_POSITION;
   }
   else if (CMND_SHUTTERINVERT == command_code && (index > 0) && (index <= shutters_present)) {
