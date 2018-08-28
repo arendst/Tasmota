@@ -135,7 +135,6 @@ int ota_result = 0;                         // OTA result
 int restart_flag = 0;                       // Sonoff restart flag
 int wifi_state_flag = WIFI_RESTART;         // Wifi state flag
 int tele_period = 0;                        // Tele period timer
-int status_update_timer = 0;                // Refresh initial status
 int blinks = 201;                           // Number of LED blinks
 uint32_t uptime = 0;                        // Counting every second until 4294967295 = 130 year
 uint32_t global_update = 0;                 // Timestamp of last global temperature and humidity update
@@ -1593,16 +1592,6 @@ void PerformEverySecond()
     }
   }
 
-  if (status_update_timer) {
-    status_update_timer--;
-    if (!status_update_timer) {
-      for (byte i = 1; i <= devices_present; i++) {
-        MqttPublishPowerState(i);
-        if (SONOFF_IFAN02 == Settings.module) { break; }  // Only report status of light relay
-      }
-    }
-  }
-
   ResetGlobalValues();
 
   if (Settings.tele_period) {
@@ -2528,7 +2517,7 @@ void setup()
   save_data_counter = Settings.save_data;
   sleep = Settings.sleep;
 
-  if ((resetInfo.reason == REASON_WDT_RST) || (resetInfo.reason == REASON_EXCEPTION_RST) || (resetInfo.reason == REASON_SOFT_WDT_RST)) {
+  if ((resetInfo.reason == REASON_WDT_RST) || (resetInfo.reason == REASON_EXCEPTION_RST) || (resetInfo.reason == REASON_SOFT_WDT_RST) || OsWatchBlockedLoop()) {
     for (byte i = 0; i < MAX_RULE_SETS; i++) {
       if (bitRead(Settings.rule_stop, i)) { bitWrite(Settings.rule_enabled, i, 0); }
     }
