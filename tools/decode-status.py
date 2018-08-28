@@ -72,7 +72,7 @@ a_setoption = [[
     "Do not control Power with Dimmer",
     "Energy monitoring while powered off",
     "MQTT serial",
-    "Rules until 5.14.0b",
+    "MQTT serial binary",
     "Rules once mode until 5.14.0b",
     "KNX enabled",
     "Use Power device index on single relay devices",
@@ -103,10 +103,10 @@ a_features = [[
     "USE_TIMERS","USE_SUNRISE","USE_TIMERS_WEB","USE_RULES",
     "USE_KNX","USE_WPS","USE_SMARTCONFIG",""
     ],[
-    "USE_CONFIG_OVERRIDE","BE_MINIMAL","USE_ALL_SENSORS","USE_CLASSIC",
-    "USE_KNX_NO_EMULATION","","","",
-    "","","","",
-    "","","","",
+    "USE_CONFIG_OVERRIDE","BE_MINIMAL","USE_SENSORS","USE_CLASSIC",
+    "USE_KNX_NO_EMULATION","USE_DISPLAY_MODES1TO5","USE_DISPLAY_GRAPH","USE_DISPLAY_LCD",
+    "USE_DISPLAY_SSD1306","USE_DISPLAY_MATRIX","USE_DISPLAY_ILI9341","USE_DISPLAY_EPAPER",
+    "USE_DISPLAY_SH1106","","","",
     "","","","",
     "","","","",
     "","","VTABLES_IN_FLASH","PIO_FRAMEWORK_ARDUINO_LWIP_HIGHER_BANDWIDTH",
@@ -121,8 +121,8 @@ a_features = [[
     "USE_SGP30","USE_SR04","USE_SDM120","USE_SI1145",
     "USE_SDM630","USE_LM75AD","USE_APDS9960","USE_TM1638"
     ],[
-    "","","","",
-    "","","","",
+    "USE_MCP230xx","USE_MPR121","USE_CCS811","USE_MPU6050",
+    "USE_MCP230xx_OUTPUT","USE_MCP230xx_DISPLAYOUTPUT","","",
     "","","","",
     "","","","",
     "","","","",
@@ -155,7 +155,7 @@ else:
     fp.close()
 
 def StartDecode():
-    print ("\n*** decode-status.py v20180725 by Theo Arends ***")
+    print ("\n*** decode-status.py v20180730 by Theo Arends ***")
 
 #    print("Decoding\n{}".format(obj))
 

@@ -20,11 +20,6 @@
 #ifndef _SONOFF_H_
 #define _SONOFF_H_
 
-#define D_PROGRAMNAME          "Sonoff-Tasmota"
-#define D_AUTHOR               "Theo Arends"
-//#define D_WEBLINK              "https://github.com/arendst/Sonoff-Tasmota"
-#define D_WEBLINK              "https://bit.ly/tasmota"
-
 /*********************************************************************************************\
  * Power Type
 \*********************************************************************************************/
@@ -50,9 +45,13 @@ typedef unsigned long power_t;              // Power (Relay) type
 #define MAX_DOMOTICZ_SNS_IDX   12           // Max number of Domoticz sensors indices
 #define MAX_KNX_GA             10           // Max number of KNX Group Addresses to read that can be set
 #define MAX_KNX_CB             10           // Max number of KNX Group Addresses to write that can be set
-#define RULES_MAX_MEMS         5            // Max number of saved vars
+#define MAX_RULE_MEMS          5            // Max number of saved vars
 #define MAX_RULE_SETS          3            // Max number of rule sets of size 512 characters
 #define MAX_RULE_SIZE          512          // Max number of characters in rules
+
+// Changes to the following defines have no impact on settings layout
+#define MAX_RULE_TIMERS        8            // Max number of rule timers (4 bytes / timer)
+#define MAX_RULE_VARS          5            // Max number of rule variables (10 bytes / variable)
 
 #define MQTT_TOKEN_PREFIX      "%prefix%"   // To be substituted by mqtt_prefix[x]
 #define MQTT_TOKEN_TOPIC       "%topic%"    // To be substituted by mqtt_topic, mqtt_grptopic, mqtt_buttontopic, mqtt_switchtopic
@@ -84,7 +83,7 @@ typedef unsigned long power_t;              // Power (Relay) type
 #define SAFE_POWER_WINDOW      30           // Time in MINUTES to disable allow max unit safe power
 #define MAX_POWER_RETRY        5            // Retry count allowing agreed power limit overflow
 
-#define STATES                 20           // State loops per second
+#define STATES                 20           // Number of states per second using 50 mSec interval
 #define IMMINENT_RESET_FACTOR  10           // Factor to extent button hold time for imminent Reset to default 40 seconds using KEY_HOLD_TIME of 40
 #define SYSLOG_TIMER           600          // Seconds to restore syslog_level
 #define SERIALLOG_TIMER        600          // Seconds to disable SerialLog
@@ -192,7 +191,9 @@ enum ExecuteCommandPowerOptions { POWER_OFF, POWER_ON, POWER_TOGGLE, POWER_BLINK
 
 enum PowerOnStateOptions { POWER_ALL_OFF, POWER_ALL_ON, POWER_ALL_SAVED_TOGGLE, POWER_ALL_SAVED, POWER_ALL_ALWAYS_ON, POWER_ALL_OFF_PULSETIME_ON };
 
-enum ButtonStates {PRESSED, NOT_PRESSED};
+enum ButtonStates { PRESSED, NOT_PRESSED };
+
+enum Shortcuts { SC_CLEAR, SC_DEFAULT, SC_USER };
 
 enum SettingsParmaIndex {P_HOLD_TIME, P_MAX_POWER_RETRY, P_MAX_PARAM8};
 
@@ -204,13 +205,14 @@ enum LightTypes {LT_BASIC, LT_PWM1, LT_PWM2, LT_PWM3, LT_PWM4, LT_PWM5, LT_PWM6,
 enum LichtSubtypes {LST_NONE, LST_SINGLE, LST_COLDWARM, LST_RGB, LST_RGBW, LST_RGBWC};
 enum LichtSchemes {LS_POWER, LS_WAKEUP, LS_CYCLEUP, LS_CYCLEDN, LS_RANDOM, LS_MAX};
 
-enum XsnsFunctions {FUNC_PRE_INIT, FUNC_INIT, FUNC_LOOP, FUNC_EVERY_50_MSECOND, FUNC_EVERY_SECOND, FUNC_PREP_BEFORE_TELEPERIOD, FUNC_JSON_APPEND, FUNC_WEB_APPEND, FUNC_SAVE_BEFORE_RESTART,
-                    FUNC_COMMAND, FUNC_MQTT_SUBSCRIBE, FUNC_MQTT_INIT, FUNC_MQTT_DATA, FUNC_SET_POWER, FUNC_SHOW_SENSOR, FUNC_RULES_PROCESS, FUNC_FREE_MEM};
+enum XsnsFunctions {FUNC_PRE_INIT, FUNC_INIT, FUNC_LOOP, FUNC_EVERY_50_MSECOND, FUNC_EVERY_100_MSECOND, FUNC_EVERY_250_MSECOND, FUNC_EVERY_SECOND, FUNC_PREP_BEFORE_TELEPERIOD,
+                     FUNC_JSON_APPEND, FUNC_WEB_APPEND, FUNC_SAVE_BEFORE_RESTART, FUNC_COMMAND, FUNC_MQTT_SUBSCRIBE, FUNC_MQTT_INIT, FUNC_MQTT_DATA, FUNC_SET_POWER, FUNC_SHOW_SENSOR,
+                     FUNC_RULES_PROCESS, FUNC_FREE_MEM};
 
 const uint8_t kDefaultRfCode[9] PROGMEM = { 0x21, 0x16, 0x01, 0x0E, 0x03, 0x48, 0x2E, 0x1A, 0x00 };
 //stb mod
 enum CommandSource { SRC_IGNORE, SRC_MQTT, SRC_RESTART, SRC_BUTTON, SRC_SWITCH, SRC_BACKLOG, SRC_SERIAL, SRC_WEBGUI, SRC_WEBCOMMAND, SRC_WEBCONSOLE, SRC_PULSETIMER,
-                     SRC_TIMER, SRC_RULE, SRC_MAXPOWER, SRC_MAXENERGY, SRC_LIGHT, SRC_KNX, SRC_DISPLAY, SRC_WEMO, SRC_HUE, SRC_SHUTTER,SRC_MAX  };
+                     SRC_TIMER, SRC_RULE, SRC_MAXPOWER, SRC_MAXENERGY, SRC_LIGHT, SRC_KNX, SRC_DISPLAY, SRC_WEMO, SRC_HUE, SRC_RETRY, SRC_SHUTTER,SRC_MAX  };
 const char kCommandSource[] PROGMEM = "I|MQTT|Restart|Button|Switch|Backlog|Serial|WebGui|WebCommand|WebConsole|PulseTimer|Timer|Rule|MaxPower|MaxEnergy|Light|Knx|Display|Wemo|Hue|Shutter";
 //end
 /*********************************************************************************************\

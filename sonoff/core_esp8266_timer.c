@@ -18,6 +18,10 @@
   License along with this library; if not, write to the Free Software
   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
+//#include <core_version.h>
+//#ifdef ARDUINO_ESP8266_RELEASE_2_3_0
+//#warning **** Tasmota is using v2.4.0 timer.c as planned ****
+
 #include "wiring_private.h"
 #include "pins_arduino.h"
 
@@ -101,3 +105,5 @@ void ICACHE_RAM_ATTR timer0_detachInterrupt() {
     timer0_user_cb = NULL;
     ETS_CCOMPARE0_DISABLE();
 }
+
+//#endif  // ARDUINO_ESP8266_RELEASE_2_3_0

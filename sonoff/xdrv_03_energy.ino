@@ -307,19 +307,10 @@ void CseReceived()
   //  0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23
   // 55 5A 02 F7 60 00 03 AB 00 40 10 02 60 5D 51 A6 58 03 E9 EF 71 0B 7A 36
   // Hd Id VCal---- Voltage- ICal---- Current- PCal---- Power--- Ad CF--- Ck
-  AddLogSerial(LOG_LEVEL_DEBUG_MORE);
 
   uint8_t header = serial_in_buffer[0];
   if ((header & 0xFC) == 0xFC) {
     AddLog_P(LOG_LEVEL_DEBUG, PSTR("CSE: Abnormal hardware"));
-    return;
-  }
-
-  // Calculate checksum
-  uint8_t checksum = 0;
-  for (byte i = 2; i < 23; i++) checksum += serial_in_buffer[i];
-  if (checksum != serial_in_buffer[23]) {
-    AddLog_P(LOG_LEVEL_DEBUG, PSTR("CSE: " D_CHECKSUM_FAILURE));
     return;
   }
 
@@ -392,24 +383,36 @@ bool CseSerialInput()
   if (cse_receive_flag) {
     serial_in_buffer[serial_in_byte_counter++] = serial_in_byte;
     if (24 == serial_in_byte_counter) {
-      CseReceived();
-      cse_receive_flag = 0;
-      return 1;
+
+      AddLogSerial(LOG_LEVEL_DEBUG_MORE);
+
+      uint8_t checksum = 0;
+      for (byte i = 2; i < 23; i++) { checksum += serial_in_buffer[i]; }
+      if (checksum == serial_in_buffer[23]) {
+        CseReceived();
+        cse_receive_flag = 0;
+        return 1;
+      } else {
+        AddLog_P(LOG_LEVEL_DEBUG, PSTR("CSE: " D_CHECKSUM_FAILURE));
+        do {  // Sync buffer with data (issue #1907 and #3425)
+          memmove(serial_in_buffer, serial_in_buffer +1, 24);
+          serial_in_byte_counter--;
+        } while ((serial_in_byte_counter > 2) && (0x5A != serial_in_buffer[1]));
+        if (0x5A != serial_in_buffer[1]) {
+          cse_receive_flag = 0;
+          serial_in_byte_counter = 0;
+        }
+      }
     }
   } else {
-    if ((0x5A == serial_in_byte) && (serial_in_byte_counter)) {  // 0x5A - Packet header 2
-      if (serial_in_byte_counter > 1) {       // Sync buffer with data (issue #1907)
-        serial_in_buffer[0] = serial_in_buffer[--serial_in_byte_counter];
-        serial_in_byte_counter = 1;
-        AddLog_P(LOG_LEVEL_DEBUG, PSTR("CSE: Fixed out-of-sync"));
-      }
+    if ((0x5A == serial_in_byte) && (1 == serial_in_byte_counter)) {  // 0x5A - Packet header 2
       cse_receive_flag = 1;
     } else {
       serial_in_byte_counter = 0;
     }
     serial_in_buffer[serial_in_byte_counter++] = serial_in_byte;
   }
-  serial_in_byte = 0;                         // Discard
+  serial_in_byte = 0;  // Discard
   return 0;
 }
 
@@ -749,7 +752,7 @@ void EnergyMarginCheck()
     }
     if (jsonflg) {
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}"), mqtt_data);
-      MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_MARGINS));
+      MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_MARGINS), MQTT_TELE_RETAIN);
       EnergyMqttShow();
     }
   }
@@ -917,17 +920,20 @@ boolean EnergyCommand()
       case 3:
         RtcSettings.energy_kWhtotal = lnum *100;
         Settings.energy_kWhtotal = RtcSettings.energy_kWhtotal;
+        energy_total = (float)(RtcSettings.energy_kWhtotal + energy_kWhtoday) / 100000;
         break;
       }
     }
     char energy_yesterday_chr[10];
-    char stoday_energy[10];
+    char energy_daily_chr[10];
     char energy_total_chr[10];
+
+    dtostrfd(energy_total, Settings.flag2.energy_resolution, energy_total_chr);
+    dtostrfd(energy_daily, Settings.flag2.energy_resolution, energy_daily_chr);
     dtostrfd((float)Settings.energy_kWhyesterday / 100000, Settings.flag2.energy_resolution, energy_yesterday_chr);
-    dtostrfd((float)RtcSettings.energy_kWhtoday / 100000, Settings.flag2.energy_resolution, stoday_energy);
-    dtostrfd((float)(RtcSettings.energy_kWhtotal + energy_kWhtoday) / 100000, Settings.flag2.energy_resolution, energy_total_chr);
+
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"%s\":{\"" D_JSON_TOTAL "\":%s,\"" D_JSON_YESTERDAY "\":%s,\"" D_JSON_TODAY "\":%s}}"),
-      command, energy_total_chr, energy_yesterday_chr, stoday_energy);
+      command, energy_total_chr, energy_yesterday_chr, energy_daily_chr);
     status_flag = 1;
   }
 
@@ -1153,7 +1159,7 @@ void EnergyShow(boolean json)
 #ifdef USE_DOMOTICZ
     if (show_energy_period) {  // Only send if telemetry
       dtostrfd(energy_total * 1000, 1, energy_total_chr);
-      DomoticzSensorPowerEnergy((uint16_t)energy_power, energy_total_chr);  // PowerUsage, EnergyToday
+      DomoticzSensorPowerEnergy((int)energy_power, energy_total_chr);  // PowerUsage, EnergyToday
       DomoticzSensor(DZ_VOLTAGE, energy_voltage_chr);  // Voltage
       DomoticzSensor(DZ_CURRENT, energy_current_chr);  // Current
     }

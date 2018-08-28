@@ -316,13 +316,20 @@ void SonoffBridgeReceived()
 boolean SonoffBridgeSerialInput()
 {
   // iTead Rf Universal Transceiver Module Serial Protocol Version 1.0 (20170420)
+  int8_t receive_len = 0;
+
   if (sonoff_bridge_receive_flag) {
     if (sonoff_bridge_receive_raw_flag) {
       if (!serial_in_byte_counter) {
         serial_in_buffer[serial_in_byte_counter++] = 0xAA;
       }
       serial_in_buffer[serial_in_byte_counter++] = serial_in_byte;
-      if (0x55 == serial_in_byte) {  // 0x55 - End of text
+      if (serial_in_byte_counter > 2) {
+        if ((0xA6 == serial_in_buffer[1]) || (0xAB == serial_in_buffer[1])) {  // AA A6 06 023908010155 55 - 06 is receive_len
+          receive_len = serial_in_buffer[2] + 3 - serial_in_byte_counter;      // Get at least receive_len bytes
+        }
+      }
+      if ((0 == receive_len) && (0x55 == serial_in_byte)) {  // 0x55 - End of text
         SonoffBridgeReceivedRaw();
         sonoff_bridge_receive_flag = 0;
         return 1;

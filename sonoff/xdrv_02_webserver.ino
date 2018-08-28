@@ -145,11 +145,13 @@ const char HTTP_HEAD_STYLE[] PROGMEM =
 #ifdef BE_MINIMAL
   "<div style='text-align:center;color:red;'><h3>" D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "</h3></div>"
 #endif
+  "<div style='text-align:center;'><noscript>" D_NOSCRIPT "<br/></noscript>"
 #ifdef LANGUAGE_MODULE_NAME
-  "<div style='text-align:center;'><h3>" D_MODULE " {ha</h3><h2>{h}</h2></div>";
+  "<h3>" D_MODULE " {ha</h3>"
 #else
-  "<div style='text-align:center;'><h3>{ha " D_MODULE "</h3><h2>{h}</h2></div>";
+  "<h3>{ha " D_MODULE "</h3>"
 #endif
+  "<h2>{h}</h2></div>";
 const char HTTP_SCRIPT_CONSOL[] PROGMEM =
   "var sn=0;"                    // Scroll position
   "var id=0;"                    // Get most of weblog initially
@@ -1789,31 +1791,33 @@ void HandleHttpCommand()
     WebGetArg("cmnd", svalue, sizeof(svalue));
     if (strlen(svalue)) {
       ExecuteWebCommand(svalue, SRC_WEBCOMMAND);
-    }
 
-    if (web_log_index != curridx) {
-      byte counter = curridx;
-      message = F("{");
-      do {
-        char* tmp;
-        size_t len;
-        GetLog(counter, &tmp, &len);
-        if (len) {
-          // [14:49:36 MQTT: stat/wemos5/RESULT = {"POWER":"OFF"}] > [{"POWER":"OFF"}]
-          char* JSON = (char*)memchr(tmp, '{', len);
-          if (JSON) { // Is it a JSON message (and not only [15:26:08 MQT: stat/wemos5/POWER = O])
-            if (message.length() > 1) { message += F(","); }
-            size_t JSONlen = len - (JSON - tmp);
-            strlcpy(mqtt_data, JSON +1, JSONlen -2);
-            message += mqtt_data;
+      if (web_log_index != curridx) {
+        byte counter = curridx;
+        message = F("{");
+        do {
+          char* tmp;
+          size_t len;
+          GetLog(counter, &tmp, &len);
+          if (len) {
+            // [14:49:36 MQTT: stat/wemos5/RESULT = {"POWER":"OFF"}] > [{"POWER":"OFF"}]
+            char* JSON = (char*)memchr(tmp, '{', len);
+            if (JSON) { // Is it a JSON message (and not only [15:26:08 MQT: stat/wemos5/POWER = O])
+              if (message.length() > 1) { message += F(","); }
+              size_t JSONlen = len - (JSON - tmp);
+              strlcpy(mqtt_data, JSON +1, JSONlen -2);
+              message += mqtt_data;
+            }
           }
-        }
-        counter++;
-        if (!counter) counter++;  // Skip 0 as it is not allowed
-      } while (counter != web_log_index);
-      message += F("}");
+          counter++;
+          if (!counter) counter++;  // Skip 0 as it is not allowed
+        } while (counter != web_log_index);
+        message += F("}");
+      } else {
+        message += F(D_ENABLE_WEBLOG_FOR_RESPONSE "\"}");
+      }
     } else {
-      message += F(D_ENABLE_WEBLOG_FOR_RESPONSE "\"}");
+      message += F(D_ENTER_COMMAND " cmnd=\"}");
     }
   } else {
     message += F(D_NEED_USER_AND_PASSWORD "\"}");
@@ -2106,7 +2110,7 @@ bool WebCommand()
   }
   else if (CMND_WEBPASSWORD == command_code) {
     if ((XdrvMailbox.data_len > 0) && (XdrvMailbox.data_len < sizeof(Settings.web_password))) {
-      strlcpy(Settings.web_password, (!strcmp(XdrvMailbox.data,"0")) ? "" : (1 == XdrvMailbox.payload) ? WEB_PASSWORD : XdrvMailbox.data, sizeof(Settings.web_password));
+      strlcpy(Settings.web_password, (SC_CLEAR == Shortcut(XdrvMailbox.data)) ? "" : (SC_DEFAULT == Shortcut(XdrvMailbox.data)) ? WEB_PASSWORD : XdrvMailbox.data, sizeof(Settings.web_password));
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, Settings.web_password);
     } else {
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_ASTERIX, command);
