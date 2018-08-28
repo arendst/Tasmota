@@ -13,9 +13,13 @@ If you like **Sonoff-Tasmota**, give it a star, or fork it and contribute!
 [![donate](https://img.shields.io/badge/donate-PayPal-blue.svg)](https://paypal.me/tasmota)
 
 ### Development
+[![Dev Version](https://img.shields.io/badge/development%20version-6.1.1.13-blue.svg)](https://github.com/arendst/Sonoff-Tasmota)
+[![Download Dev](https://img.shields.io/badge/download-development-yellow.svg)](http://thehackbox.org/tasmota/)
 [![Build Status](https://img.shields.io/travis/arendst/Sonoff-Tasmota.svg)](https://travis-ci.org/arendst/Sonoff-Tasmota)
 
-Current version is **6.1.1.x** - See [RELEASENOTES.md](https://github.com/arendst/Sonoff-Tasmota/blob/development/RELEASENOTES.md) for release information and [sonoff/_changelog.ino](https://github.com/arendst/Sonoff-Tasmota/blob/development/sonoff/_changelog.ino) for change information.
+See [RELEASENOTES.md](https://github.com/arendst/Sonoff-Tasmota/blob/development/RELEASENOTES.md) for release information and [sonoff/_changelog.ino](https://github.com/arendst/Sonoff-Tasmota/blob/development/sonoff/_changelog.ino) for change information.
+
+The compiled development versions from current codebase are built around 6AM GMT+2 everyday and posted at http://thehackbox.org/tasmota/ (this web address can be used for OTA too).
 
 ### Disclaimer
 :warning: **DANGER OF ELECTROCUTION** :warning:
