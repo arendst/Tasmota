@@ -15,7 +15,7 @@ If you like **Sonoff-Tasmota**, give it a star, or fork it and contribute!
 ### Development
 [![Build Status](https://img.shields.io/travis/arendst/Sonoff-Tasmota.svg)](https://travis-ci.org/arendst/Sonoff-Tasmota)
 
-Current version is **6.1.1.x** - See [sonoff/_releasenotes.ino](https://github.com/arendst/Sonoff-Tasmota/blob/development/sonoff/_releasenotes.ino) for release information and [sonoff/_changelog.ino](https://github.com/arendst/Sonoff-Tasmota/blob/development/sonoff/_changelog.ino) for change information.
+Current version is **6.1.1.x** - See [RELEASENOTES.md](https://github.com/arendst/Sonoff-Tasmota/blob/development/RELEASENOTES.md) for release information and [sonoff/_changelog.ino](https://github.com/arendst/Sonoff-Tasmota/blob/development/sonoff/_changelog.ino) for change information.
 
 ### Disclaimer
 :warning: **DANGER OF ELECTROCUTION** :warning:
@@ -89,15 +89,6 @@ The following devices are supported:
 - [BlitzWolf BW-SHP2 Smart Socket with Energy Monitoring](https://www.banggood.com/BlitzWolf-BW-SHP2-Smart-WIFI-Socket-EU-Plug-220V-16A-Work-with-Amazon-Alexa-Google-Assistant-p-1292899.html)
 - [Luani HVIO board](https://luani.de/projekte/esp8266-hvio/)
 - Wemos D1 mini, NodeMcu and Ledunia
-
-### Firmware Release Information
-Different firmware images are released based on Features and Sensors selection guided by code and memory usage. All versions support web based WIFI manager configuration.
-
-- The Minimal version allows intermediate OTA uploads to support larger versions and does NOT change any persistent parameter. This version should **NOT be used for initial installation**.
-- The Classic version allows **initial installation** and single OTA uploads.
-- The Sonoff version removes WPS and SmartConfig configuration and allows more sensors.
-- The Sensors version removes WPS and SmartConfig configuration and allows more usefull sensors.
-- The Knx version removes WPS and SmartConfig configuration and some other features but adds KNX support.
 
 #### Available Features and Sensors
 
@@ -188,6 +179,7 @@ You can contribute to Sonoff-Tasmota by
 #### Libraries Used
 Libraries used with Sonoff-Tasmota are:
 - [ESP8266 core for Arduino](https://github.com/esp8266/Arduino)
+- [Adafruit CCS811](https://github.com/adafruit/Adafruit_CCS811)
 - [Adafruit SGP30](https://github.com/adafruit/Adafruit_SGP30)
 - [ArduinoJson](https://arduinojson.org/)
 - [Bosch BME680](https://github.com/BoschSensortec/BME680_driver)
