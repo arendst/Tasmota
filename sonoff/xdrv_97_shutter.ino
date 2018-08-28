@@ -199,7 +199,7 @@ boolean ShutterCommand()
     if ( (XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 1)) {
       Settings.shutter_invert[index-1] = XdrvMailbox.payload;
     }
-    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_NVALUE, command, index, XdrvMailbox.payload);
+    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_NVALUE, command, index, Settings.shutter_invert[index-1]);
   }
   else if (((CMND_OPENTIME == command_code) || (CMND_CLOSETIME == command_code) ) && (index > 0) && (index <= shutters_present) ) {
     if (  (XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 100)) {
