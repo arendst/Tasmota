@@ -12,7 +12,7 @@ If you like **Sonoff-Tasmota**, give it a star, or fork it and contribute!
 [![GitHub forks](https://img.shields.io/github/forks/arendst/Sonoff-Tasmota.svg?style=social&label=Fork)](https://github.com/arendst/Sonoff-Tasmota/network)
 [![donate](https://img.shields.io/badge/donate-PayPal-blue.svg)](https://paypal.me/tasmota)
 
-See [sonoff/_changelog.ino](https://github.com/arendst/Sonoff-Tasmota/blob/master/sonoff/_changelog.ino) for change information.
+See [RELEASENOTES.md](https://github.com/arendst/Sonoff-Tasmota/blob/master/RELEASENOTES.md) for release and change information.
 
 ### Disclaimer
 :warning: **DANGER OF ELECTROCUTION** :warning:
@@ -86,15 +86,6 @@ The following devices are supported:
 - [BlitzWolf BW-SHP2 Smart Socket with Energy Monitoring](https://www.banggood.com/BlitzWolf-BW-SHP2-Smart-WIFI-Socket-EU-Plug-220V-16A-Work-with-Amazon-Alexa-Google-Assistant-p-1292899.html)
 - [Luani HVIO board](https://luani.de/projekte/esp8266-hvio/)
 - Wemos D1 mini, NodeMcu and Ledunia
-
-### Firmware Release Information
-Different firmware images are released based on Features and Sensors selection guided by code and memory usage. All versions support web based WIFI manager configuration.
-
-- The Minimal version allows intermediate OTA uploads to support larger versions and does NOT change any persistent parameter. This version should **NOT be used for initial installation**.
-- The Classic version allows **initial installation** and single OTA uploads.
-- The Sonoff version removes WPS and SmartConfig configuration and allows more sensors.
-- The Sensors version removes WPS and SmartConfig configuration and allows more usefull sensors.
-- The Knx version removes WPS and SmartConfig configuration and some other features but adds KNX support.
 
 #### Available Features and Sensors
 

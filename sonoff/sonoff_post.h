@@ -55,7 +55,7 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 
 /*********************************************************************************************\
  * [sonoff-sensors.bin]
- * Provide an image with usefull supported sensors enabled
+ * Provide an image with useful supported sensors enabled
 \*********************************************************************************************/
 
 #ifdef USE_SENSORS
