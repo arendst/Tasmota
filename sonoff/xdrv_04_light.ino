@@ -1087,16 +1087,34 @@ boolean LightCommand()
     uint16_t HSB[3];
     bool validHSB = true;
 
-    for (int i = 0; i < 3; i++) {
-      char *substr;
+    if (strstr(XdrvMailbox.data, ",")) { // Command with 3 comma separated parameters (Hue, Saturation AND Brightness)
+      for (int i = 0; i < 3; i++) {
+        char *substr;
 
-      if (0 == i) {
-        substr = strtok(XdrvMailbox.data, ",");
-      } else {
-        substr = strtok(NULL, ",");
+        if (0 == i) {
+          substr = strtok(XdrvMailbox.data, ",");
+        } else {
+          substr = strtok(NULL, ",");
+        }
+        if (substr != NULL) {
+          HSB[i] = atoi(substr);
+        } else {
+          validHSB = false;
+        }
       }
-      if (substr != NULL) {
-        HSB[i] = atoi(substr);
+    } else { // Command with only 1 parameter (Hue, Saturation OR Brightness)
+      float hsb[3];
+
+      LightGetHsb(&hsb[0],&hsb[1],&hsb[2]);
+      HSB[0] = round(hsb[0] * 360);
+      HSB[1] = round(hsb[1] * 100);
+      HSB[2] = round(hsb[2] * 100);
+      if (XdrvMailbox.index = 1) {        // Hue
+        HSB[0] = XdrvMailbox.payload;
+      } else if (XdrvMailbox.index = 2) { // Saturation
+        HSB[1] = XdrvMailbox.payload;
+      } else if (XdrvMailbox.index = 3) { // Brightness
+        HSB[2] = XdrvMailbox.payload;
       } else {
         validHSB = false;
       }

@@ -82,6 +82,10 @@ String GetResetReason()
   }
 }
 
+boolean OsWatchBlockedLoop()
+{
+  return oswatch_blocked_loop;
+}
 /*********************************************************************************************\
  * Miscellaneous
 \*********************************************************************************************/
@@ -885,7 +889,7 @@ void GetFeatures()
 #ifdef BE_MINIMAL
   feature_drv2 |= 0x00000002;  // user_config(_override).h
 #endif
-#ifdef USE_ALL_SENSORS
+#ifdef USE_SENSORS
   feature_drv2 |= 0x00000004;  // user_config(_override).h
 #endif
 #ifdef USE_CLASSIC

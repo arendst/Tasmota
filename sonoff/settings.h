@@ -20,52 +20,50 @@
 #ifndef _SETTINGS_H_
 #define _SETTINGS_H_
 
-#define PARAM8_SIZE 18 // Number of param bytes (SetOption)
+#define PARAM8_SIZE  18                    // Number of param bytes (SetOption)
 
-typedef union {  // Restricted by MISRA-C Rule 18.4 but so usefull...
-  uint32_t data; // Allow bit manipulation using SetOption
-  struct
-  {                                      // SetOption0 .. SetOption31
-    uint32_t save_state : 1;             // bit 0
-    uint32_t button_restrict : 1;        // bit 1
-    uint32_t value_units : 1;            // bit 2
-    uint32_t mqtt_enabled : 1;           // bit 3
-    uint32_t mqtt_response : 1;          // bit 4
-    uint32_t mqtt_power_retain : 1;      // CMND_POWERRETAIN
-    uint32_t mqtt_button_retain : 1;     // CMND_BUTTONRETAIN
-    uint32_t mqtt_switch_retain : 1;     // CMND_SWITCHRETAIN
-    uint32_t temperature_conversion : 1; // bit 8
-    uint32_t mqtt_sensor_retain : 1;     // CMND_SENSORRETAIN
-    uint32_t mqtt_offline : 1;           // bit 10
-    uint32_t button_swap : 1;            // bit 11 (v5.1.6)
-    uint32_t stop_flash_rotate : 1;      // bit 12 (v5.2.0)
-    uint32_t button_single : 1;          // bit 13 (v5.4.0)
-    uint32_t interlock : 1;              // bit 14 (v5.6.0)
-    uint32_t pwm_control : 1;            // bit 15 (v5.8.1)
-    uint32_t ws_clock_reverse : 1;       // bit 16 (v5.8.1)
-    uint32_t decimal_text : 1;           // bit 17 (v5.8.1)
-    uint32_t light_signal : 1;           // bit 18 (v5.10.0c)
-    uint32_t hass_discovery : 1;         // bit 19 (v5.11.1a)
-    uint32_t not_power_linked : 1;       // bit 20 (v5.11.1f)
-    uint32_t no_power_on_check : 1;      // bit 21 (v5.11.1i)
-    uint32_t mqtt_serial : 1;            // bit 22 (v5.12.0f)
-    uint32_t mqtt_serial_raw : 1;        // bit 23 (v6.1.1c)
-    uint32_t rules_once : 1;             // bit 24 (v5.12.0k) - free since v5.14.0b
-    uint32_t knx_enabled : 1;            // bit 25 (v5.12.0l) KNX
-    uint32_t device_index_enable : 1;    // bit 26 (v5.13.1a)
-    uint32_t knx_enable_enhancement : 1; // bit 27 (v5.14.0a) KNX
-    uint32_t rf_receive_decimal : 1;     // bit 28 (v6.0.0a)
-    uint32_t ir_receive_decimal : 1;     // bit 29 (v6.0.0a)
-    uint32_t hass_light : 1;             // bit 30 (v6.0.0b)
-    uint32_t global_state : 1;           // bit 31 (v6.1.0)
+typedef union {                            // Restricted by MISRA-C Rule 18.4 but so useful...
+  uint32_t data;                           // Allow bit manipulation using SetOption
+  struct {                                 // SetOption0 .. SetOption31
+    uint32_t save_state : 1;               // bit 0
+    uint32_t button_restrict : 1;          // bit 1
+    uint32_t value_units : 1;              // bit 2
+    uint32_t mqtt_enabled : 1;             // bit 3
+    uint32_t mqtt_response : 1;            // bit 4
+    uint32_t mqtt_power_retain : 1;        // CMND_POWERRETAIN
+    uint32_t mqtt_button_retain : 1;       // CMND_BUTTONRETAIN
+    uint32_t mqtt_switch_retain : 1;       // CMND_SWITCHRETAIN
+    uint32_t temperature_conversion : 1;   // bit 8
+    uint32_t mqtt_sensor_retain : 1;       // CMND_SENSORRETAIN
+    uint32_t mqtt_offline : 1;             // bit 10
+    uint32_t button_swap : 1;              // bit 11 (v5.1.6)
+    uint32_t stop_flash_rotate : 1;        // bit 12 (v5.2.0)
+    uint32_t button_single : 1;            // bit 13 (v5.4.0)
+    uint32_t interlock : 1;                // bit 14 (v5.6.0)
+    uint32_t pwm_control : 1;              // bit 15 (v5.8.1)
+    uint32_t ws_clock_reverse : 1;         // bit 16 (v5.8.1)
+    uint32_t decimal_text : 1;             // bit 17 (v5.8.1)
+    uint32_t light_signal : 1;             // bit 18 (v5.10.0c)
+    uint32_t hass_discovery : 1;           // bit 19 (v5.11.1a)
+    uint32_t not_power_linked : 1;         // bit 20 (v5.11.1f)
+    uint32_t no_power_on_check : 1;        // bit 21 (v5.11.1i)
+    uint32_t mqtt_serial : 1;              // bit 22 (v5.12.0f)
+    uint32_t mqtt_serial_raw : 1;          // bit 23 (v6.1.1c)
+    uint32_t rules_once : 1;               // bit 24 (v5.12.0k) - free since v5.14.0b
+    uint32_t knx_enabled : 1;              // bit 25 (v5.12.0l) KNX
+    uint32_t device_index_enable : 1;      // bit 26 (v5.13.1a)
+    uint32_t knx_enable_enhancement : 1;   // bit 27 (v5.14.0a) KNX
+    uint32_t rf_receive_decimal : 1;       // bit 28 (v6.0.0a)
+    uint32_t ir_receive_decimal : 1;       // bit 29 (v6.0.0a)
+    uint32_t hass_light : 1;               // bit 30 (v6.0.0b)
+    uint32_t global_state : 1;             // bit 31 (v6.1.0)
   };
 } SysBitfield;
 
-typedef union {  // Restricted by MISRA-C Rule 18.4 but so usefull...
-  uint32_t data; // Allow bit manipulation using SetOption
-  struct
-  {                             // SetOption50 .. SetOption81
-    uint32_t timers_enable : 1; // bit 0 (v6.1.1b)
+typedef union {                            // Restricted by MISRA-C Rule 18.4 but so useful...
+  uint32_t data;                           // Allow bit manipulation using SetOption
+  struct {                                 // SetOption50 .. SetOption81
+    uint32_t timers_enable : 1;            // bit 0 (v6.1.1b)
     uint32_t spare01 : 1;
     uint32_t spare02 : 1;
     uint32_t spare03 : 1;
@@ -200,9 +198,7 @@ struct SYSCFG {
   char          sta_pwd[2][65];            // 0E3
   char          hostname[33];              // 165
   char          syslog_host[33];           // 186
-
-  byte          free1A7[1];                // 1A7
-
+  uint8_t       rule_stop;                 // 1A7
   uint16_t      syslog_port;               // 1A8
   byte          syslog_level;              // 1AA
   uint8_t       webserver;                 // 1AB
@@ -381,11 +377,10 @@ struct XDRVMAILBOX
   char *data;
 } XdrvMailbox;
 
-#define MAX_RULES_FLAG 7 // Number of bits used in RulesBitfield (tricky I know...)
-typedef union {          // Restricted by MISRA-C Rule 18.4 but so usefull...
-  uint16_t data;         // Allow bit manipulation
-  struct
-  {
+#define MAX_RULES_FLAG  7                  // Number of bits used in RulesBitfield (tricky I know...)
+typedef union {                            // Restricted by MISRA-C Rule 18.4 but so useful...
+  uint16_t data;                           // Allow bit manipulation
+  struct {
     uint16_t system_boot : 1;
     uint16_t time_init : 1;
     uint16_t time_set : 1;
