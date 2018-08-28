@@ -3,6 +3,9 @@
  * Add rule variables %sunrise%, %sunset%, %uptime% and %time% (#3608)
  * Fix handling use of default names when using names starting with shortcut character (#3392, #3600)
  * Fix Sonoff Bridge data reception when using Portisch EFM8 firmware and in data buffer length (#3605)
+ * Add optional MQTT_TELE_RETAIN to Energy Margins message (#3612, 3614)
+ * Add Individual HSBColorX commands (#3430, #3615)
+ * Add RuleX debug options 8,9,10 (StopOnError) to control RuleX execution status after an exception restart (#3607)
  *
  * 6.1.1.11 20180826
  * Change scheduler phase 1/3 - Fixed when sleep is enabled: Uptime, Delay, PulseTime and TelePeriod (#3581)

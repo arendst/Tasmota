@@ -2528,6 +2528,12 @@ void setup()
   save_data_counter = Settings.save_data;
   sleep = Settings.sleep;
 
+  if ((resetInfo.reason == REASON_WDT_RST) || (resetInfo.reason == REASON_EXCEPTION_RST) || (resetInfo.reason == REASON_SOFT_WDT_RST)) {
+    for (byte i = 0; i < MAX_RULE_SETS; i++) {
+      if (bitRead(Settings.rule_stop, i)) { bitWrite(Settings.rule_enabled, i, 0); }
+    }
+  }
+
   Settings.bootcount++;
   snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION D_BOOT_COUNT " %d"), Settings.bootcount);
   AddLog(LOG_LEVEL_DEBUG);
