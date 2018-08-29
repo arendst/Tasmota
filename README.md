@@ -17,7 +17,7 @@ If you like **Sonoff-Tasmota**, give it a star, or fork it and contribute!
 [![Download Dev](https://img.shields.io/badge/download-development-yellow.svg)](http://thehackbox.org/tasmota/)
 [![Build Status](https://img.shields.io/travis/arendst/Sonoff-Tasmota.svg)](https://travis-ci.org/arendst/Sonoff-Tasmota)
 
-See [RELEASENOTES.md](https://github.com/arendst/Sonoff-Tasmota/blob/development/RELEASENOTES.md) for release information and [sonoff/_changelog.ino](https://github.com/arendst/Sonoff-Tasmota/blob/development/sonoff/_changelog.ino) for change information.
+See [RELEASENOTES.md](https://github.com/arendst/Sonoff-Tasmota/blob/development/RELEASENOTES.md) for release information and [sonoff/_changelog.ino](https://github.com/arendst/Sonoff-Tasmota/blob/development/sonoff/_changelog.ino) for detailed change information.
 
 The compiled development versions from current codebase are built around 6AM GMT+2 everyday and posted at http://thehackbox.org/tasmota/ (this web address can be used for OTA too).
 
@@ -93,82 +93,6 @@ The following devices are supported:
 - [BlitzWolf BW-SHP2 Smart Socket with Energy Monitoring](https://www.banggood.com/BlitzWolf-BW-SHP2-Smart-WIFI-Socket-EU-Plug-220V-16A-Work-with-Amazon-Alexa-Google-Assistant-p-1292899.html)
 - [Luani HVIO board](https://luani.de/projekte/esp8266-hvio/)
 - Wemos D1 mini, NodeMcu and Ledunia
-
-#### Available Features and Sensors
-
-| Feature or Sensor              | sonoff | classic | minimal | knx  | sensors |
-|--------------------------------|--------|---------|---------|------|---------|
-| ESP/Arduino lib v2.3.0         | 472k   | 476k    | 340k    | 491k | 497k    |
-| ESP/Arduino lib v2.4.2         | 490k   | 490k    | 360k    | 508k | 513k    |
-|                                |   |   |   |   |   |
-| MY_LANGUAGE en-GB              | x | x | x | x | x |
-| USE_WPS                        | - | x | - | - | - |
-| USE_SMARTCONFIG                | - | x | - | - | - |
-| USE_ARDUINO_OTA                | - | - | - | - | - |
-| MQTT_LIBRARY_TYPE PUBSUBCLIENT | x | x | x | x | x |
-| USE_DOMOTICZ                   | x | x | - | x | x |
-| USE_HOME_ASSISTANT             | x | x | - | x | x |
-| USE_MQTT_TLS                   | - | - | - | - | - |
-| USE_KNX                        | - | - | - | x | - |
-| USE_WEBSERVER                  | x | x | x | x | x |
-| USE_EMULATION                  | x | x | - | - | x |
-| USE_DISCOVERY                  | x | x | - | x | x |
-| WEBSERVER_ADVERTISE            | x | x | - | x | x |
-| MQTT_HOST_DISCOVERY            | x | x | - | x | x |
-| USE_TIMERS                     | x | - | - | x | x |
-| USE_TIMERS_WEB                 | x | - | - | x | x |
-| USE_SUNRISE                    | x | - | - | x | x |
-| USE_RULES                      | x | - | - | x | x |
-|                                |   |   |   |   |   |
-| Feature or Sensor              | sonoff | classic | minimal | knx  | sensors |
-| USE_ADC_VCC                    | x | x | x | x | x |
-| USE_DS18B20                    | x | x | - | x | - |
-| USE_DS18x20                    | - | - | - | - | x |
-| USE_DS18x20_LEGACY             | - | - | - | - | - |
-|                                |   |   |   |   |   |
-| USE_I2C                        | x | - | - | x | x |
-| USE_SHT                        | x | - | - | x | x |
-| USE_HTU                        | x | - | - | x | x |
-| USE_BMP                        | x | - | - | x | x |
-| USE_BME680                     | - | - | - | - | x |
-| USE_BH1750                     | x | - | - | x | x |
-| USE_VEML6070                   | - | - | - | - | x |
-| USE_ADS1115                    | - | - | - | - | x |
-| USE_ADS1115_I2CDEV             | - | - | - | - | - |
-| USE_INA219                     | - | - | - | - | x |
-| USE_SHT3X                      | x | - | - | x | x |
-| USE_TSL2561                    | - | - | - | - | x |
-| USE_MGS                        | - | - | - | - | x |
-| USE_SGP30                      | x | - | - | x | x |
-| USE_SI1145                     | - | - | - | - | x |
-| USE_LM75AD                     | x | - | - | x | x |
-| USE_APDS9960                   | - | - | - | - | - |
-| USE_MCP230xx                   | - | - | - | - | - |
-| USE_MPR121                     | - | - | - | - | - |
-| USE_CCS811                     | - | - | - | - | - |
-| USE_MPU6050                    | - | - | - | - | - |
-|                                |   |   |   |   |   |
-| Feature or Sensor              | sonoff | classic | minimal | knx  | sensors |
-| USE_SPI                        | - | - | - | - | - |
-| USE_MHZ19                      | x | - | - | x | x |
-| USE_SENSEAIR                   | x | - | - | x | x |
-| USE_PMS5003                    | x | - | - | x | x |
-| USE_NOVA_SDS                   | x | - | - | x | x |
-| USE_PZEM004T                   | x | - | - | x | x |
-| USE_SERIAL_BRIDGE              | x | - | - | x | x |
-| USE_SDM120                     | - | - | - | - | x |
-| USE_SDM630                     | - | - | - | - | x |
-| USE_IR_REMOTE                  | x | - | - | x | x |
-| USE_IR_HVAC                    | - | - | - | - | x |
-| USE_IR_RECEIVE                 | x | - | - | x | x |
-| USE_WS2812                     | x | x | - | x | x |
-| USE_WS2812_DMA                 | - | - | - | - | - |
-| USE_ARILUX_RF                  | x | - | - | x | x |
-| USE_SR04                       | x | - | - | x | x |
-| USE_TM1638                     | - | - | - | - | - |
-| USE_RF_FLASH                   | x | - | - | x | x |
-
-See [Tasmota ESP/Arduino library version related issues](https://github.com/arendst/Sonoff-Tasmota/wiki/Theo's-Tasmota-Tips#20180523---relation-tasmota-and-esp8266arduino-core-version) for more information.
 
 ### Contribute
 You can contribute to Sonoff-Tasmota by
