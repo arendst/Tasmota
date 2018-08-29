@@ -105,5 +105,65 @@ See [Tasmota ESP/Arduino library version related issues](https://github.com/aren
 
 ## Changelog
 Version 6.2.0 20180901
-
-tbd
+ * Allow user override of define MAX_RULE_VARS and MAX_RULE_TIMERS (#3561)
+ * Disable wifi sleep for both Esp8266/Arduino core 2.4.1 and 2.4.2 to solve device freeze caused by Espressif SDK bug (#3554)
+ * Change DS18B20 driver to provide better instant results
+ * Change some sensor drivers to provide instant results
+ * Change define USE_ALL_SENSORS to USE_SENSORS as it doesn't contain all sensors due to duplicate I2C addresses
+ * Change some sensor update timings: AdcEvery 200 -> 250, Senseair 300 -> 250, SDM120 300 -> 250, SDM630 300 -> 250
+ * Change default Wifi config option from WPS to Wifi Manager if WPS is disabled or Wifi Smartconfig if webserver is disabled or Wifi Serial input if Smartconfig is disabled
+ * Change SHT1x driver to provide better instant results and fix I2C interference
+ * Change DHT driver to provide better instant results and add decimals to DHT11 (#3164)
+ * Change DS18x20 driver to provide better instant results (#3169)
+ * Change CounterType 1 from milliseconds to microseconds (#3437)
+ * Change scheduler for better sleep support using Uptime, Delay, PulseTime and TelePeriod, Blinktime (#3581)
+ * Remove unused functionality from Sonoff-minimal to save space
+ * Remove WPS and SmartConfig from sonoff-minimal saving 56k code space
+ * Remove TSL2561 debug message and update library (#2415)
+ * Remove forced restart when sleep command is executed (#3554)
+ * Fix invalid response using more than 4 switches and domoticz
+ * Fix sonoff-minimal not using default settings
+ * Fix unsecure main webpage update
+ * Fix DHT driver mixing values for different sensors (#1797)
+ * Fix EnergyReset3 regression not clearing total energy (#2723)
+ * Fix rules once regression from v6.1.0 (#3198, #3226)
+ * Fix command Scale buffer overflow (#3236)
+ * Fix possible WDT due to long MQTT publish handling (#3313)
+ * Fix command TimeDst/TimeStd invalid JSON (#3322)
+ * Fix handling of default names when using names starting with shortcut character ",0,1 or 2 (#3392, #3600, #3618)
+ * Fix LM75AD I2C sensor detection (#3408)
+ * Fix iFan02 power on state (#3412, #3530)
+ * Fix some Pow R2 and S31 checksum errors using optimized re-sync (#3425)
+ * Fix SDM120 reporting wrong negative values to Domoticz (#3521)
+ * Fix MQTT reconnection detection when using TasmotaMqtt library (#3558)
+ * Fix OtaMagic when file path contains a dash (-) (#3563)
+ * Fix Sonoff Bridge data reception when using Portisch EFM8 firmware using in data buffer length (#3605)
+ * Add read sensor retry to DS18B20, DS18x20, DHT, SHT1X and HTU21
+ * Add user selection of Wifi Smartconfig as define USE_SMARTCONFIG in user_config.h
+ * Add wifi and mqtt status led blinkyblinky to be disabled by SetOption31 1. Does not work when LedPower is On (deliberate) (#871, #2230, #3114, #3155)
+ * Add support for TM1638 switch (#2226)
+ * Add GPIO options ButtonXn, SwitchXn and CounterXn to select INPUT mode instead of INPUT_PULLUP (#2525)
+ * Add support for APDS9960 proximity sensor (#3051)
+ * Add support for MPR121 controller in input mode for touch buttons (#3142)
+ * Add support for MCP230xx for general purpose input expansion and command Sensor29 (#3188)
+ * Add default Wifi Configuration tool as define WIFI_CONFIG_NO_SSID in user_config.h if no SSID is configured (#3224)
+ * Add command Timers 0/1 to globally disable or enable armed timers (#3270)
+ * Add support for CCS811 sensor (#3309)
+ * Add Turkish language file (#3332)
+ * Add command SerialSend4 to send binary serial data (#3345)
+ * Add initial support for sensor MPU6050 (#3352)
+ * Add rule triggers Wifi#Connected and Wifi#Disconnected (#3359)
+ * Add option + to command Rule to concatenate new rule with existing rules (#3365)
+ * Add message when JavaScript is not enabled in webbrowser (#3388)
+ * Add build time setting of ButtonTopic and SwitchTopic (#3414)
+ * Add iFan02 Fanspeed + and Fanspeed - command options (#3415)
+ * Add Individual HSBColorX commands (#3430, #3615)
+ * Add output support on MCP23008/MCP23017 (#3436)
+ * Add modulo option to rules like rule1 on Time#Minute|5 do backlog power on;delay 200;power off endon (#3466)
+ * Add RGB support for Domoticz (#3547)
+ * Add all ruletimer values to command RuleTimer result message (#3571)
+ * Add command Publish2 for publishing retained MQTT messages (#3593)
+ * Add commands ButtonDebounce 40..1000 and SwitchDebounce 40..1000 to have user control over debounce timing. Default is 50mS (#3594)
+ * Add RuleX debug options 8,9,10 (StopOnError) to control RuleX execution status after an exception restart (#3607)
+ * Add rule variables %sunrise%, %sunset%, %uptime% and %time% (#3608)
+ * Add optional MQTT_TELE_RETAIN to Energy Margins message (#3612, 3614)
