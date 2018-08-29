@@ -19,7 +19,7 @@ If you like **Sonoff-Tasmota**, give it a star, or fork it and contribute!
 
 See [RELEASENOTES.md](https://github.com/arendst/Sonoff-Tasmota/blob/development/RELEASENOTES.md) for release information and [sonoff/_changelog.ino](https://github.com/arendst/Sonoff-Tasmota/blob/development/sonoff/_changelog.ino) for detailed change information.
 
-The compiled development versions from current codebase are built around 6AM GMT+2 everyday and posted at http://thehackbox.org/tasmota/ (this web address can be used for OTA too).
+The compiled development versions from current codebase are built around 6AM GMT+2 everyday and posted at http://thehackbox.org/tasmota/ (this web address can be used for OTA too). Remember that these are based on the current development codebase and it is not recommended to flash devices in hard to reach places with this firmware.
 
 ### Disclaimer
 :warning: **DANGER OF ELECTROCUTION** :warning:
