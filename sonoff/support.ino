@@ -717,6 +717,29 @@ void ShowSource(int source)
   }
 }
 
+/**
+ * Delay function.
+ *
+ * !!! Avoid blocking wherever possible !!!
+ * 
+ * @param   milliseconds  Milliseconds to wait.
+ * @param   blocking      Blocking if "true", non-blocking if "false" (default).
+ * 
+ * @return                Always "true" to allow concatenating of logical operators.
+ */
+bool wait(uint32_t milliseconds, bool blocking = false) {
+  if (blocking) {
+    delay(milliseconds);
+  } else {
+    uint32_t endpoint = millis() + milliseconds;
+    while(millis() < endpoint) {
+      yield();
+    }
+    return true;
+  } // if
+} // wait
+
+
 /*********************************************************************************************\
  * Sleep aware time scheduler functions borrowed from ESPEasy
 \*********************************************************************************************/
