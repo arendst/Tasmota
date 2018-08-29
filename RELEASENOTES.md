@@ -33,12 +33,12 @@ See [Tasmota ESP/Arduino library version related issues](https://github.com/aren
 
 | Feature or Sensor              | minimal | classic | sonoff | knx  | sensors | Remarks
 |--------------------------------|---------|---------|--------|------|---------|--------
-| ESP/Arduino lib v2.3.0         | 340k    | 476k    | 472k   | 491k | 497k    |
-| ESP/Arduino lib v2.4.2         | 360k    | 490k    | 490k   | 508k | 513k    | No sleep
+| ESP/Arduino lib v2.3.0         | 340k    | 477k    | 473k   | 492k | 497k    |
+| ESP/Arduino lib v2.4.2         | 360k    | 491k    | 491k   | 509k | 513k    | No sleep
 |                                |   |   |   |   |   |
 | MY_LANGUAGE en-GB              | x | x | x | x | x |
-| USE_WPS                        | - | x | - | - | - |
-| USE_SMARTCONFIG                | - | x | - | - | - |
+| USE_WPS                        | - | x | - | - | - | WPS
+| USE_SMARTCONFIG                | - | x | - | - | - | SmartConfig
 | USE_ARDUINO_OTA                | - | - | - | - | - |
 | MQTT_LIBRARY_TYPE PUBSUBCLIENT | x | x | x | x | x |
 | USE_DOMOTICZ                   | - | x | x | x | x |
