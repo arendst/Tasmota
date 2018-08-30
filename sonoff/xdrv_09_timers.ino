@@ -457,7 +457,7 @@ boolean TimerCommand()
       }
       if (XdrvMailbox.payload == 2) {
         Settings.flag3.timers_enable = !Settings.flag3.timers_enable;
-      }
+      }      
     }
 
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, GetStateText(Settings.flag3.timers_enable));

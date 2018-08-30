@@ -717,15 +717,6 @@ void ShowSource(int source)
   }
 }
 
-uint8_t ValidGPIO(uint8_t pin, uint8_t gpio)
-{
-  uint8_t result = gpio;
-  if ((WEMOS == Settings.module) && (!Settings.flag3.user_esp8285_enable)) {
-    if ((pin == 9) || (pin == 10)) { result = GPIO_NONE; }  // Disable possible flash GPIO9 and GPIO10
-  }
-  return result;
-}
-
 /*********************************************************************************************\
  * Sleep aware time scheduler functions borrowed from ESPEasy
 \*********************************************************************************************/

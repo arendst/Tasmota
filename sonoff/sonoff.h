@@ -85,7 +85,6 @@ typedef unsigned long power_t;              // Power (Relay) type
 
 #define STATES                 20           // Number of states per second using 50 mSec interval
 #define IMMINENT_RESET_FACTOR  10           // Factor to extent button hold time for imminent Reset to default 40 seconds using KEY_HOLD_TIME of 40
-#define BOOT_LOOP_TIME         10           // Number of seconds to stop detecting boot loops
 #define SYSLOG_TIMER           600          // Seconds to restore syslog_level
 #define SERIALLOG_TIMER        600          // Seconds to disable SerialLog
 #define OTA_ATTEMPTS           5            // Number of times to try fetching the new firmware
