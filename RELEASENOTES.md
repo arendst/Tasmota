@@ -140,6 +140,7 @@ Version 6.2.0 20180901
  * Fix Sonoff Bridge data reception when using Portisch EFM8 firmware using in data buffer length (#3605)
  * Add read sensor retry to DS18B20, DS18x20, DHT, SHT1X and HTU21
  * Add user selection of Wifi Smartconfig as define USE_SMARTCONFIG in user_config.h
+ * Add boot loop detection and perform some solutions
  * Add wifi and mqtt status led blinkyblinky to be disabled by SetOption31 1. Does not work when LedPower is On (deliberate) (#871, #2230, #3114, #3155)
  * Add support for TM1638 switch (#2226)
  * Add GPIO options ButtonXn, SwitchXn and CounterXn to select INPUT mode instead of INPUT_PULLUP (#2525)
