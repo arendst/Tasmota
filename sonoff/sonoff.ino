@@ -2527,7 +2527,7 @@ void setup()
   save_data_counter = Settings.save_data;
   sleep = Settings.sleep;
 
-  // Disable functionality as possible cause of fast reboot within BOOT_LOOP_TIME seconds (Exception or WDT)
+  // Disable functionality as possible cause of fast restart within BOOT_LOOP_TIME seconds (Exception, WDT or restarts)
   if (RtcSettings.fast_reboot_count > 1) {        // Restart twice
     Settings.flag3.user_esp8285_enable = 0;       // Disable ESP8285 Generic GPIOs interfering with flash SPI
     if (RtcSettings.fast_reboot_count > 2) {      // Restart 3 times
@@ -2541,8 +2541,11 @@ void setup()
       Settings.rule_enabled = 0;                  // Disable all rules
     }
     if (RtcSettings.fast_reboot_count > 4) {      // Restarted 5 times
-      Settings.module = SONOFF_BASIC;             // Use default module
-      Settings.last_module = SONOFF_BASIC;        // Use default module
+      Settings.module = SONOFF_BASIC;             // Reset module to Sonoff Basic
+      Settings.last_module = SONOFF_BASIC;
+      for (byte i = 0; i < MAX_GPIO_PIN; i++) {
+        Settings.my_gp.io[i] = GPIO_NONE;         // Reset user defined GPIO disabling sensors
+      }
     }
     snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION D_LOG_SOME_SETTINGS_RESET " (%d)"), RtcSettings.fast_reboot_count);
     AddLog(LOG_LEVEL_DEBUG);
