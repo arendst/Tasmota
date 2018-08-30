@@ -1,4 +1,7 @@
-/* 6.1.1.13 20180828
+/* 6.1.1.14 20180830
+ * Add boot loop detection and try to fix
+ *
+ * 6.1.1.13 20180828
  * Fix 6.1.1.12 regression of Mem and Var default handling (#3618)
  * Optimizations
  * Change define USE_ALL_SENSORS to USE_SENSORS as it doesn't contain all sensors due to duplicate I2C addresses

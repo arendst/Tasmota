@@ -1567,6 +1567,11 @@ void PerformEverySecond()
 {
   uptime++;
 
+  if (BOOT_LOOP_TIME == uptime) {
+    RtcSettings.fast_reboot_count = 0;
+    RtcSettingsSave();
+  }
+
   if ((4 == uptime) && (SONOFF_IFAN02 == Settings.module)) {  // Microcontroller needs 3 seconds before accepting commands
     SetDevicePower(1, SRC_RETRY);      // Sync with default power on state microcontroller being Light ON and Fan OFF
     SetDevicePower(power, SRC_RETRY);  // Set required power on state
@@ -2313,7 +2318,7 @@ void GpioInit()
     pin[i] = 99;
   }
   for (byte i = 0; i < MAX_GPIO_PIN; i++) {
-    mpin = my_module.gp.io[i];
+    mpin = ValidGPIO(i, my_module.gp.io[i]);
 
 //  snprintf_P(log_data, sizeof(log_data), PSTR("DBG: gpio pin %d, mpin %d"), i, mpin);
 //  AddLog(LOG_LEVEL_DEBUG);
@@ -2323,7 +2328,7 @@ void GpioInit()
         bitSet(switch_no_pullup, mpin - GPIO_SWT1_NP);
         mpin -= (GPIO_SWT1_NP - GPIO_SWT1);
       }
-      if ((mpin >= GPIO_KEY1_NP) && (mpin < (GPIO_KEY1_NP + MAX_KEYS))) {
+      else if ((mpin >= GPIO_KEY1_NP) && (mpin < (GPIO_KEY1_NP + MAX_KEYS))) {
         bitSet(key_no_pullup, mpin - GPIO_KEY1_NP);
         mpin -= (GPIO_KEY1_NP - GPIO_KEY1);
       }
@@ -2486,6 +2491,10 @@ void setup()
 {
   byte idx;
 
+  RtcSettingsLoad();
+  RtcSettings.fast_reboot_count++;
+  RtcSettingsSave();
+
   Serial.begin(baudrate);
   delay(10);
   Serial.println();
@@ -2517,10 +2526,25 @@ void setup()
   save_data_counter = Settings.save_data;
   sleep = Settings.sleep;
 
-  if ((resetInfo.reason == REASON_WDT_RST) || (resetInfo.reason == REASON_EXCEPTION_RST) || (resetInfo.reason == REASON_SOFT_WDT_RST) || OsWatchBlockedLoop()) {
-    for (byte i = 0; i < MAX_RULE_SETS; i++) {
-      if (bitRead(Settings.rule_stop, i)) { bitWrite(Settings.rule_enabled, i, 0); }
+  // Disable functionality as possible cause of fast reboot within BOOT_LOOP_TIME seconds (Exception or WDT)
+  if (RtcSettings.fast_reboot_count > 1) {        // Restart twice
+    Settings.flag3.user_esp8285_enable = 0;       // Disable ESP8285 Generic GPIOs interfering with flash SPI
+    if (RtcSettings.fast_reboot_count > 2) {      // Restart 3 times
+      for (byte i = 0; i < MAX_RULE_SETS; i++) {
+        if (bitRead(Settings.rule_stop, i)) {
+          bitWrite(Settings.rule_enabled, i, 0);  // Disable rules causing boot loop
+        }
+      }
     }
+    if (RtcSettings.fast_reboot_count > 3) {      // Restarted 4 times
+      Settings.rule_enabled = 0;                  // Disable all rules
+    }
+    if (RtcSettings.fast_reboot_count > 4) {      // Restarted 5 times
+      Settings.module = SONOFF_BASIC;             // Use default module
+      Settings.last_module = SONOFF_BASIC;        // Use default module
+    }
+    snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION D_LOG_SOME_SETTINGS_RESET " (%d)"), RtcSettings.fast_reboot_count);
+    AddLog(LOG_LEVEL_DEBUG);
   }
 
   Settings.bootcount++;

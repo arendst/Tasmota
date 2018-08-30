@@ -94,7 +94,7 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t spare28 : 1;
     uint32_t spare29 : 1;
     uint32_t spare30 : 1;
-    uint32_t spare31 : 1;
+    uint32_t user_esp8285_enable : 1;      // bit 31 (v6.1.1.13)
   };
 } SysBitfield3;
 
@@ -341,7 +341,9 @@ struct RTCMEM {
   unsigned long energy_kWhtotal;              // 008
   unsigned long pulse_counter[MAX_COUNTERS];  // 00C
   power_t       power;                     // 01C
-                                           // 020 next free location
+  uint8_t       fast_reboot_count;         // 020
+  uint8_t       spare_021[3];              // 021
+                                           // 024 next free location
 } RtcSettings;
 
 struct TIME_T {
