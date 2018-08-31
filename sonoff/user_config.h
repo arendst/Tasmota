@@ -318,7 +318,7 @@
 #endif  // USE_I2C
 
 // -- SPI sensors ---------------------------------
-#define USE_SPI                                  // SPI using library TasmotaTFT
+//#define USE_SPI                                  // SPI using library TasmotaTFT
 
 #ifdef USE_SPI
   #ifndef USE_DISPLAY
