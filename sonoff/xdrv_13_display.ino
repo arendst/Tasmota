@@ -89,7 +89,6 @@ char **disp_log_buffer;
 uint8_t disp_log_buffer_cols = 0;
 uint8_t disp_log_buffer_idx = 0;
 uint8_t disp_log_buffer_ptr = 0;
-bool disp_log_buffer_active = false;
 
 char **disp_screen_buffer;
 uint8_t disp_screen_buffer_cols = 0;
@@ -534,6 +533,15 @@ void DisplayReAllocScreenBuffer()
   DisplayAllocScreenBuffer();
 }
 
+void DisplayFillScreen(uint8_t line)
+{
+  byte len = disp_screen_buffer_cols - strlen(disp_screen_buffer[line]);
+  if (len) {
+    memset(disp_screen_buffer[line] + strlen(disp_screen_buffer[line]), 0x20, len);
+    disp_screen_buffer[line][disp_screen_buffer_cols -1] = 0;
+  }
+}
+
 /*-------------------------------------------------------------------------------------------*/
 
 void DisplayClearLogBuffer()
@@ -582,55 +590,47 @@ void DisplayReAllocLogBuffer()
   DisplayAllocLogBuffer();
 }
 
-/*-------------------------------------------------------------------------------------------*/
-
-void DisplayLogBufferIdxInc()
+void DisplayLogBufferAdd(char* txt)
 {
-  disp_log_buffer_idx++;
-  if (DISPLAY_LOG_ROWS == disp_log_buffer_idx) {
-    disp_log_buffer_idx = 0;
+  if (disp_log_buffer_cols) {
+    strlcpy(disp_log_buffer[disp_log_buffer_idx], txt, disp_log_buffer_cols);  // This preserves the % sign where printf won't
+    disp_log_buffer_idx++;
+    if (DISPLAY_LOG_ROWS == disp_log_buffer_idx) { disp_log_buffer_idx = 0; }
   }
 }
 
-void DisplayLogBufferPtrInc()
+char* DisplayLogBuffer(char temp_code)
 {
-  disp_log_buffer_ptr++;
-  if (DISPLAY_LOG_ROWS == disp_log_buffer_ptr) {
-    disp_log_buffer_ptr = 0;
-  }
-}
+  char* result = NULL;
+  if (disp_log_buffer_cols) {
+    if (disp_log_buffer_idx != disp_log_buffer_ptr) {
+      result = disp_log_buffer[disp_log_buffer_ptr];
+      disp_log_buffer_ptr++;
+      if (DISPLAY_LOG_ROWS == disp_log_buffer_ptr) { disp_log_buffer_ptr = 0; }
 
-/*
-void DisplayPrintLog()
-{
-  disp_refresh--;
-  if (!disp_refresh) {
-    disp_refresh = Settings.display_refresh;
-    disp_log_buffer_active = (disp_log_buffer_idx != disp_log_buffer_ptr);
-    if (disp_log_buffer_active) {
-      XdspPrintLog(disp_log_buffer[disp_log_buffer_ptr]);
-      DisplayLogBufferPtrInc();
+      char *pch = strchr(result, '~');  // = 0x7E (~) Replace degrees character (276 octal)
+      if (pch != NULL) { result[pch - result] = temp_code; }
     }
   }
+  return result;
 }
-*/
 
 void DisplayLogBufferInit()
 {
   if (Settings.display_mode) {
     disp_log_buffer_idx = 0;
     disp_log_buffer_ptr = 0;
-    disp_log_buffer_active = false;
     disp_refresh = Settings.display_refresh;
 
     snprintf_P(disp_temp, sizeof(disp_temp), PSTR("%c"), TempUnit());
 
-//    DisplayReAllocLogBuffer();
+    DisplayReAllocLogBuffer();
 
-    snprintf_P(disp_log_buffer[disp_log_buffer_idx], disp_log_buffer_cols, PSTR(D_VERSION " %s"), my_version);
-    DisplayLogBufferIdxInc();
-    snprintf_P(disp_log_buffer[disp_log_buffer_idx], disp_log_buffer_cols, PSTR("Display mode %d"), Settings.display_mode);
-    DisplayLogBufferIdxInc();
+    char buffer[20];
+    snprintf_P(buffer, sizeof(buffer), PSTR(D_VERSION " %s"), my_version);
+    DisplayLogBufferAdd(buffer);
+    snprintf_P(buffer, sizeof(buffer), PSTR("Display mode %d"), Settings.display_mode);
+    DisplayLogBufferAdd(buffer);
   }
 }
 
@@ -668,6 +668,7 @@ const char kSensorQuantity[] PROGMEM =
 void DisplayJsonValue(const char *topic, const char* device, const char* mkey, const char* value)
 {
   char quantity[TOPSZ];
+  char buffer[Settings.display_cols[0] +1];
   char spaces[Settings.display_cols[0]];
   char source[Settings.display_cols[0] - Settings.display_cols[1]];
   char svalue[Settings.display_cols[1] +1];
@@ -718,12 +719,12 @@ void DisplayJsonValue(const char *topic, const char* device, const char* mkey, c
   else if (JSON_CO2 == quantity_code) {
     snprintf_P(svalue, sizeof(svalue), PSTR("%s" D_UNIT_PARTS_PER_MILLION), value);
   }
-  snprintf_P(disp_log_buffer[disp_log_buffer_idx], disp_log_buffer_cols, PSTR("%s %s"), source, svalue);
+  snprintf_P(buffer, sizeof(buffer), PSTR("%s %s"), source, svalue);
 
-//  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_DEBUG "mkey [%s], source [%s], value [%s], quantity_code %d, log_buffer [%s]"), mkey, source, value, quantity_code, disp_log_buffer[disp_log_buffer_idx]);
+//  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_DEBUG "mkey [%s], source [%s], value [%s], quantity_code %d, log_buffer [%s]"), mkey, source, value, quantity_code, buffer);
 //  AddLog(LOG_LEVEL_DEBUG);
 
-  DisplayLogBufferIdxInc();
+  DisplayLogBufferAdd(buffer);
 }
 
 void DisplayAnalyzeJson(char *topic, char *json)
@@ -856,7 +857,6 @@ void DisplayInitDriver()
 #ifndef USE_DISPLAY_MODES1TO5
     Settings.display_mode = 0;
 #else
-    DisplayAllocLogBuffer();
     DisplayLogBufferInit();
 #endif  // USE_DISPLAY_MODES1TO5
   }
@@ -981,8 +981,7 @@ boolean DisplayCommand()
         if (!Settings.display_mode) {
           DisplayText();
         } else {
-          strlcpy(disp_log_buffer[disp_log_buffer_idx], XdrvMailbox.data, disp_log_buffer_cols);
-          DisplayLogBufferIdxInc();
+          DisplayLogBufferAdd(XdrvMailbox.data);
         }
 #endif  // USE_DISPLAY_MODES1TO5
       } else {
@@ -1006,22 +1005,23 @@ boolean DisplayCommand()
     }
     else if ((CMND_DISP_COLS == command_code) && (XdrvMailbox.index > 0) && (XdrvMailbox.index <= 2)) {
       if ((XdrvMailbox.payload > 0) && (XdrvMailbox.payload <= DISPLAY_MAX_COLS)) {
+        Settings.display_cols[XdrvMailbox.index -1] = XdrvMailbox.payload;
 #ifdef USE_DISPLAY_MODES1TO5
-        if ((1 == XdrvMailbox.index) && (Settings.display_cols[0] != XdrvMailbox.payload)) {
+        if (1 == XdrvMailbox.index) {
           DisplayLogBufferInit();
           DisplayReAllocScreenBuffer();
         }
 #endif  // USE_DISPLAY_MODES1TO5
-        Settings.display_cols[XdrvMailbox.index -1] = XdrvMailbox.payload;
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_DISPLAY_COMMAND_INDEX_NVALUE, command, XdrvMailbox.index, Settings.display_cols[XdrvMailbox.index -1]);
     }
     else if (CMND_DISP_ROWS == command_code) {
       if ((XdrvMailbox.payload > 0) && (XdrvMailbox.payload <= DISPLAY_MAX_ROWS)) {
-#ifdef USE_DISPLAY_MODES1TO5
-        if (Settings.display_rows != XdrvMailbox.payload) { DisplayReAllocScreenBuffer(); }
-#endif  // USE_DISPLAY_MODES1TO5
         Settings.display_rows = XdrvMailbox.payload;
+#ifdef USE_DISPLAY_MODES1TO5
+        DisplayLogBufferInit();
+        DisplayReAllocScreenBuffer();
+#endif  // USE_DISPLAY_MODES1TO5
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_DISPLAY_COMMAND_NVALUE, command, Settings.display_rows);
     }
