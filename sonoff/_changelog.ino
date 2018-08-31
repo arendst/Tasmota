@@ -1,5 +1,6 @@
 /* 6.1.1.14 20180830
  * Add boot loop detection and perform some solutions
+ * Add features to and provide more stable display drivers
  *
  * 6.1.1.13 20180828
  * Fix 6.1.1.12 regression of Mem and Var default handling (#3618)
