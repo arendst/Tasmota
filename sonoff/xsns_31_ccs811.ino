@@ -47,13 +47,12 @@ void CCS811Update()  // Perform every n second
     tcnt = 0;
     CCS811_ready = 0;
     if (!CCS811_type) {
-      sint8_t res = ccs.begin(CCS811_ADDRESS);
-      if (!res) {
+      if (ccs.begin(CCS811_ADDRESS)) { // ccs.begin returns true in case of success
         CCS811_type = 1;
         snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, "CCS811", 0x5A);
         AddLog(LOG_LEVEL_DEBUG);
       } else {
-        //snprintf_P(log_data, sizeof(log_data), "CCS811 init failed: %d",res);
+        //snprintf_P(log_data, sizeof(log_data), "CCS811 init failed");
         //AddLog(LOG_LEVEL_DEBUG);
       }
     } else {
