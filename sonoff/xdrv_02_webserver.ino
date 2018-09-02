@@ -254,7 +254,7 @@ const char HTTP_FORM_MODULE[] PROGMEM =
   "<input id='w' name='w' value='6,1' hidden>"
   "<br/><b>" D_MODULE_TYPE "</b> ({mt)<br/><select id='g99' name='g99'></select><br/>";
 const char HTTP_LNK_ITEM[] PROGMEM =
-  "<div><a href='#p' onclick='c(this)'>{v}</a>&nbsp;<span class='q'>{i} {r}%</span></div>";
+  "<div><a href='#p' onclick='c(this)'>{v}</a>&nbsp;({w})&nbsp<span class='q'>{i} {r}%</span></div>";
 const char HTTP_LNK_SCAN[] PROGMEM =
   "<div><a href='/w1'>" D_SCAN_FOR_WIFI_NETWORKS "</a></div><br/>";
 const char HTTP_FORM_WIFI[] PROGMEM =
@@ -882,7 +882,7 @@ void HandleWifi(boolean scan)
       //display networks in page
       for (int i = 0; i < n; i++) {
         if (-1 == indices[i]) { continue; }  // skip dups
-        snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_WIFI D_SSID " %s, " D_RSSI " %d"), WiFi.SSID(indices[i]).c_str(), WiFi.RSSI(indices[i]));
+        snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_WIFI D_SSID " %s, " D_BSSID " %s, " D_CHANNEL " %d, " D_RSSI " %d"), WiFi.SSID(indices[i]).c_str(), WiFi.BSSIDstr(indices[i]).c_str(), WiFi.channel(indices[i]), WiFi.RSSI(indices[i]));
         AddLog(LOG_LEVEL_DEBUG);
         int quality = WifiGetRssiAsQuality(WiFi.RSSI(indices[i]));
 
@@ -891,6 +891,7 @@ void HandleWifi(boolean scan)
           String rssiQ;
           rssiQ += quality;
           item.replace(F("{v}"), WiFi.SSID(indices[i]));
+          item.replace(F("{w}"), String(WiFi.channel(indices[i])));
           item.replace(F("{r}"), rssiQ);
           uint8_t auth = WiFi.encryptionType(indices[i]);
           item.replace(F("{i}"), (ENC_TYPE_WEP == auth) ? F(D_WEP) : (ENC_TYPE_TKIP == auth) ? F(D_WPA_PSK) : (ENC_TYPE_CCMP == auth) ? F(D_WPA2_PSK) : (ENC_TYPE_AUTO == auth) ? F(D_AUTO) : F(""));

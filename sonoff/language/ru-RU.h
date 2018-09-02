@@ -60,10 +60,12 @@
 #define D_BLINKOFF "Не Мигать"
 #define D_BOOT_COUNT "Количество загрузок"
 #define D_BRIGHTLIGHT "Яркость"
+#define D_BSSID "BSSId"
 #define D_BUTTON "Кнопка"
 #define D_BY "by"                    // Written by me
 #define D_BYTES "Байт"
 #define D_CELSIUS "Цельсия"
+#define D_CHANNEL "Channel"
 #define D_CO2 "Углекислый газ"
 #define D_CODE "код"                // Button code
 #define D_COLDLIGHT "Холодный"

@@ -60,10 +60,12 @@
 #define D_BLINKOFF "Pulsar desligado"
 #define D_BOOT_COUNT "Contagem de inicialização"
 #define D_BRIGHTLIGHT "Brilho"
+#define D_BSSID "BSSId"
 #define D_BUTTON "Botão"
 #define D_BY "por"                    // Write by me
 #define D_BYTES "Bytes"
 #define D_CELSIUS "Celsius"
+#define D_CHANNEL "Channel"
 #define D_CO2 "Dióxido de carbono"
 #define D_CODE "Código"                // Button code
 #define D_COLDLIGHT "Luz fria"
