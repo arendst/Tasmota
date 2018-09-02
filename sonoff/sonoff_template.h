@@ -220,6 +220,7 @@ enum SupportedModules {
   SONOFF_POW_R2,
   SONOFF_IFAN02,
   BLITZWOLF_BWSHP2,
+  JOYWELL_5CH,
   MAXMODULE };
 
 /********************************************************************************************/
@@ -262,6 +263,7 @@ const uint8_t kNiceList[MAXMODULE] PROGMEM = {
   SONOFF_BN,
   SONOFF_IFAN02,
   SONOFF_BRIDGE,
+  JOYWELL_5CH,
   CH1,
   CH4,
   MOTOR,
@@ -906,6 +908,21 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_HLW_CF1,     // GPIO14 BL0937 or HJL-01 CF1 voltage / current
      GPIO_REL1,        // GPIO15 Relay (0 = Off, 1 = On)
      0, 0
+  },
+  { "Joywell 5ch",     // Joywell power strip (ESP8285)
+     0,                // GPIO00 (D0)
+     GPIO_LED1_INV,    // GPIO01 (D7)
+     0,                // GPIO02 (D2)
+     GPIO_KEY1,        // GPIO03 (D8)
+     GPIO_REL2,        // GPIO04 (D4)
+     GPIO_REL1,        // GPIO05 (D5)
+     0, 0, 0, 0, 0, 0, // Flash connection
+     GPIO_REL3,        // GPIO12 (D12)
+     GPIO_REL4,        // GPIO13 (D13)
+     GPIO_REL5,        // GPIO14 (D14)
+     0,                // GPIO15 (D15)
+     0,                // GPIO16 (D16)
+     0                 // ADC0 Analog input (A0)
   }
 };
 
