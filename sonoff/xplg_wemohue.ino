@@ -388,7 +388,7 @@ void HandleUpnpEvent()
   if (request.indexOf(F("SetBinaryState")) > 0) {
     uint8_t power = POWER_TOGGLE;
     if (request.indexOf(F("State>1</Binary")) > 0) {
-      power = POWER_ON
+      power = POWER_ON;
     }
     else if (request.indexOf(F("State>0</Binary")) > 0) {
       power = POWER_OFF;
