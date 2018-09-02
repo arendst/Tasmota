@@ -561,13 +561,13 @@ int GetStateNumber(char *state_text)
   char command[CMDSZ];
   int state_number = -1;
 
-  if ((GetCommandCode(command, sizeof(command), state_text, kOptionOff) >= 0) || !strcasecmp(state_text, Settings.state_text[0])) {
+  if (GetCommandCode(command, sizeof(command), state_text, kOptionOff) >= 0) {
     state_number = 0;
   }
-  else if ((GetCommandCode(command, sizeof(command), state_text, kOptionOn) >= 0) || !strcasecmp(state_text, Settings.state_text[1])) {
+  else if (GetCommandCode(command, sizeof(command), state_text, kOptionOn) >= 0) {
     state_number = 1;
   }
-  else if ((GetCommandCode(command, sizeof(command), state_text, kOptionToggle) >= 0) || !strcasecmp(state_text, Settings.state_text[2])) {
+  else if (GetCommandCode(command, sizeof(command), state_text, kOptionToggle) >= 0) {
     state_number = 2;
   }
   else if (GetCommandCode(command, sizeof(command), state_text, kOptionBlink) >= 0) {
