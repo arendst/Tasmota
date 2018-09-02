@@ -3,6 +3,7 @@
  * Fix possible exception due to buffer overflow (#3659)
  * Add Wifi channel number to state message (#3664)
  * Fix Wemo emulation to select the first relay when more than one relay is present (#3657)
+ * Add support for Shelly 1 and basic support for Shelly 2 - No energy monitoring yet (#2789)
  *
  * 6.2.0 20180901
  * Allow user override of define MAX_RULE_VARS and MAX_RULE_TIMERS (#3561)
