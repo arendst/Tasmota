@@ -1,6 +1,7 @@
 /* 6.2.0.1 20180902
  * Fix possible ambiguity on command parameters if StateText contains numbers only (#3656)
  * Fix possible exception due to buffer overflow (#3659)
+ * Add Wifi channel number to state message (#3664)
  *
  * 6.2.0 20180901
  * Allow user override of define MAX_RULE_VARS and MAX_RULE_TIMERS (#3561)
