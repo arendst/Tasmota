@@ -442,7 +442,7 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
 
   ShowFreeMem(PSTR("MqttDataHandler"));
 
-  strncpy(topicBuf, topic, sizeof(topicBuf));
+  strlcpy(topicBuf, topic, sizeof(topicBuf));
   for (i = 0; i < data_len; i++) {
     if (!isspace(data[i])) break;
   }

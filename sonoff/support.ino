@@ -143,7 +143,7 @@ char* subStr(char* dest, char* str, const char *delim, int index)
   int i;
 
   // Since strtok consumes the first arg, make a copy
-  strncpy(dest, str, strlen(str));
+  strlcpy(dest, str, strlen(str));
   for (i = 1, act = dest; i <= index; i++, act = NULL) {
     sub = strtok_r(act, delim, &ptr);
     if (sub == NULL) break;
@@ -157,7 +157,7 @@ double CharToDouble(char *str)
   // simple ascii to double, because atof or strtod are too large
   char strbuf[24];
 
-  strcpy(strbuf, str);
+  strlcpy(strbuf, str, sizeof(strbuf));
   char *pt;
   double left = atoi(strbuf);
   double right = 0;

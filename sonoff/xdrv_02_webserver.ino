@@ -372,8 +372,8 @@ long ajax_token = 1;
 static void WebGetArg(const char* arg, char* out, size_t max)
 {
   String s = WebServer->arg(arg);
-  strncpy(out, s.c_str(), max);
-  out[max-1] = '\0';  // Ensure terminating NUL
+  strlcpy(out, s.c_str(), max);
+//  out[max-1] = '\0';  // Ensure terminating NUL
 }
 
 void ShowWebSource(int source)

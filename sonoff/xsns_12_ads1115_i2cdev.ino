@@ -111,7 +111,7 @@ void Ads1115Show(boolean json)
         }
         dsxflg++;
         snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s%s\"A%d\":%d"), mqtt_data, stemp, i, adc_value);
-        strcpy(stemp, ",");
+        strlcpy(stemp, ",", sizeof(stemp));
 #ifdef USE_WEBSERVER
       } else {
         snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_ANALOG, mqtt_data, "ADS1115", i, adc_value);
