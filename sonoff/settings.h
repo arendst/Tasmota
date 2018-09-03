@@ -94,7 +94,7 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t spare28 : 1;
     uint32_t spare29 : 1;
     uint32_t spare30 : 1;
-    uint32_t spare31 : 1;
+    uint32_t user_esp8285_enable : 1;      // bit 31 (v6.1.1.14)
   };
 } SysBitfield3;
 
@@ -337,16 +337,18 @@ struct SYSCFG {
                                            // E00 - FFF free locations
 } Settings;
 
-struct RTCMEM
-{
-  uint16_t valid;                            // 000
-  byte oswatch_blocked_loop;                 // 002
-  uint8_t ota_loader;                        // 003
-  unsigned long energy_kWhtoday;             // 004
-  unsigned long energy_kWhtotal;             // 008
-  unsigned long pulse_counter[MAX_COUNTERS]; // 00C
-  power_t power;                             // 01C
-                                             // 020 next free location
+struct RTCMEM {
+  uint16_t      valid;                     // 000
+  byte          oswatch_blocked_loop;      // 002
+  uint8_t       ota_loader;                // 003
+  unsigned long energy_kWhtoday;              // 004
+  unsigned long energy_kWhtotal;              // 008
+  unsigned long pulse_counter[MAX_COUNTERS];  // 00C
+  power_t       power;                     // 01C
+  uint16_t      extended_valid;            // 020 Extended valid flag (v6.1.1.14)
+  uint8_t       fast_reboot_count;         // 022
+  uint8_t       free_023[57];              // 023
+                                           // 05C next free location (64 (=core) + 100 (=tasmota offset) + 92 (=0x5C RTCMEM struct) = 256 bytes (max = 512))
 } RtcSettings;
 
 struct TIME_T

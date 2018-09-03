@@ -60,10 +60,12 @@
 #define D_BLINKOFF "闪烁关"
 #define D_BOOT_COUNT "启动次数"
 #define D_BRIGHTLIGHT "亮"
+#define D_BSSID "BSSId"
 #define D_BUTTON "按钮"
 #define D_BY "汉化: killadm 作者:"                    // Written by me
 #define D_BYTES "大小:"
 #define D_CELSIUS "摄氏"
+#define D_CHANNEL "Channel"
 #define D_CO2 "二氧化碳"
 #define D_CODE "代码"                // Button code
 #define D_COLDLIGHT "冷"

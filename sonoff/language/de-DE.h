@@ -60,10 +60,12 @@
 #define D_BLINKOFF "BlinkenAus"
 #define D_BOOT_COUNT "Anzahl Startvorgänge"
 #define D_BRIGHTLIGHT "hell"
+#define D_BSSID "BSSId"
 #define D_BUTTON "Knopf"
 #define D_BY "von"                   // Written by me
 #define D_BYTES "Bytes"
 #define D_CELSIUS "Celsius"
+#define D_CHANNEL "Kanal"
 #define D_CO2 "CO²"
 #define D_CODE "code"                // Button code
 #define D_COLDLIGHT "kalt"

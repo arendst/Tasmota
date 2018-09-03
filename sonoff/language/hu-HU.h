@@ -60,10 +60,12 @@
 #define D_BLINKOFF "Villogás Ki"
 #define D_BOOT_COUNT "Bootolások száma"
 #define D_BRIGHTLIGHT "Max. fényerő"
+#define D_BSSID "BSSId"
 #define D_BUTTON "Gomb"
 #define D_BY "tőle:"                    // Written by me
 #define D_BYTES "Byte-ok"
 #define D_CELSIUS "Celsius"
+#define D_CHANNEL "Channel"
 #define D_CO2 "Szén-dioxid"
 #define D_CODE "kód"                // Button code
 #define D_COLDLIGHT "Hideg"

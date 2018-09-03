@@ -60,10 +60,12 @@
 #define D_BLINKOFF "KnipperUit"
 #define D_BOOT_COUNT "Herstarts"
 #define D_BRIGHTLIGHT "Fel"
+#define D_BSSID "BSSId"
 #define D_BUTTON "DrukKnop"
 #define D_BY "door"                  // Written by me
 #define D_BYTES "Bytes"
 #define D_CELSIUS "Celsius"
+#define D_CHANNEL "Kanaal"
 #define D_CO2 "Koolstofdioxide"
 #define D_CODE "code"                // Button code
 #define D_COLDLIGHT "Koud"

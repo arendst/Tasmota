@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v6.1.1c
+ * Updated until v6.2.0.1
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -60,10 +60,12 @@
 #define D_BLINKOFF "BlinkOff"
 #define D_BOOT_COUNT "Conteo Reinicios"
 #define D_BRIGHTLIGHT "Brillante"
+#define D_BSSID "BSSId"
 #define D_BUTTON "Botón"
 #define D_BY "por"                    // Written by me
 #define D_BYTES "Bytes"
 #define D_CELSIUS "Celsius"
+#define D_CHANNEL "Canal"
 #define D_CO2 "CO2"
 #define D_CODE "código"                // Button code
 #define D_COLDLIGHT "Fría"
@@ -460,7 +462,7 @@
 #define D_SENSOR_RELAY    "Relé"    // Suffix "1i"
 #define D_SENSOR_LED      "Led"      // Suffix "1i"
 #define D_SENSOR_PWM      "PWM"      // Suffix "1"
-#define D_SENSOR_COUNTER  "Counter"  // Suffix "1"
+#define D_SENSOR_COUNTER  "Contador"  // Suffix "1"
 #define D_SENSOR_IRRECV   "IR RX"
 #define D_SENSOR_MHZ_RX   "MHZ Rx"
 #define D_SENSOR_MHZ_TX   "MHZ Tx"

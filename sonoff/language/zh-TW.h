@@ -60,10 +60,12 @@
 #define D_BLINKOFF "閃爍關"
 #define D_BOOT_COUNT "啟動次數"
 #define D_BRIGHTLIGHT "亮度"
+#define D_BSSID "BSSId"
 #define D_BUTTON "按鈕"
 #define D_BY "by"                    // Written by me
 #define D_BYTES "大小:"
 #define D_CELSIUS "攝氏"
+#define D_CHANNEL "Channel"
 #define D_CO2 "二氧化碳"
 #define D_CODE "代碼"                // Button code
 #define D_COLDLIGHT "冷"

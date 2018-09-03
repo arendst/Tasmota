@@ -60,10 +60,12 @@
 #define D_BLINKOFF "BlinkOff"
 #define D_BOOT_COUNT "Yeniden başlama sayısı"
 #define D_BRIGHTLIGHT "Işık"
+#define D_BSSID "BSSId"
 #define D_BUTTON "Buton"
 #define D_BY "by" // Written by me
 #define D_BYTES "Bayt"
 #define D_CELSIUS "Derece"
+#define D_CHANNEL "Channel"
 #define D_CO2 "Karbon dioksit"
 #define D_CODE "kod" // Button code
 #define D_COLDLIGHT "Soğuk"
@@ -512,29 +514,29 @@
 #define D_UNIT_HERTZ "Hz"
 
 // Log message prefix
-#define D_LOG_APPLICATION "APP: " // Application
-#define D_LOG_BRIDGE "BRG: "      // Bridge
-#define D_LOG_CONFIG "CFG: "      // Settings
-#define D_LOG_COMMAND "CMD: "     // Command
-#define D_LOG_DEBUG "DBG: "       // Debug
-#define D_LOG_DHT "DHT: "         // DHT sensor
-#define D_LOG_DOMOTICZ "DOM: "    // Domoticz
-#define D_LOG_DSB "DSB: "         // DS18xB20 sensor
-#define D_LOG_HTTP "HTP: "        // HTTP webserver
-#define D_LOG_I2C "I2C: "         // I2C
-#define D_LOG_IRR "IRR: "         // Infra Red Received
-#define D_LOG_LOG "LOG: "         // Logging
-#define D_LOG_MODULE "MOD: "      // Module
-#define D_LOG_MDNS "DNS: "        // mDNS
-#define D_LOG_MQTT "MQT: "        // MQTT
-#define D_LOG_OTHER "OTH: "       // Other
-#define D_LOG_RESULT "RSL: "      // Result
-#define D_LOG_RFR "RFR: "         // RF Received
-#define D_LOG_SERIAL "SER: "      // Serial
-#define D_LOG_SHT1 "SHT: "        // SHT1x sensor
-#define D_LOG_UPLOAD "UPL: "      // Upload
-#define D_LOG_UPNP "UPP: "        // UPnP
-#define D_LOG_WIFI "WIF: "        // Wifi
+#define D_LOG_APPLICATION "APP: "  // Application
+#define D_LOG_BRIDGE "BRG: "       // Bridge
+#define D_LOG_CONFIG "CFG: "       // Settings
+#define D_LOG_COMMAND "CMD: "      // Command
+#define D_LOG_DEBUG "DBG: "        // Debug
+#define D_LOG_DHT "DHT: "          // DHT sensor
+#define D_LOG_DOMOTICZ "DOM: "     // Domoticz
+#define D_LOG_DSB "DSB: "          // DS18xB20 sensor
+#define D_LOG_HTTP "HTP: "         // HTTP webserver
+#define D_LOG_I2C "I2C: "          // I2C
+#define D_LOG_IRR "IRR: "          // Infra Red Received
+#define D_LOG_LOG "LOG: "          // Logging
+#define D_LOG_MODULE "MOD: "       // Module
+#define D_LOG_MDNS "DNS: "         // mDNS
+#define D_LOG_MQTT "MQT: "         // MQTT
+#define D_LOG_OTHER "OTH: "        // Other
+#define D_LOG_RESULT "RSL: "       // Result
+#define D_LOG_RFR "RFR: "          // RF Received
+#define D_LOG_SERIAL "SER: "       // Serial
+#define D_LOG_SHT1 "SHT: "         // SHT1x sensor
+#define D_LOG_UPLOAD "UPL: "       // Upload
+#define D_LOG_UPNP "UPP: "         // UPnP
+#define D_LOG_WIFI "WIF: "         // Wifi
 
 #define D_MODIFIED "modified"
-#endif // _LANGUAGE_TR_TR_H_
+#endif  // _LANGUAGE_TR_TR_H_
