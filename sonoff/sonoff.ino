@@ -442,7 +442,7 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
 
   ShowFreeMem(PSTR("MqttDataHandler"));
 
-  strncpy(topicBuf, topic, sizeof(topicBuf));
+  strlcpy(topicBuf, topic, sizeof(topicBuf));
   for (i = 0; i < data_len; i++) {
     if (!isspace(data[i])) break;
   }
@@ -1532,8 +1532,8 @@ void MqttShowState()
     MqttShowPWMState();
   }
 
-  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"" D_JSON_WIFI "\":{\"" D_JSON_AP "\":%d,\"" D_JSON_SSID "\":\"%s\",\"" D_JSON_RSSI "\":%d,\"" D_JSON_APMAC_ADDRESS "\":\"%s\"}}"),
-    mqtt_data, Settings.sta_active +1, Settings.sta_ssid[Settings.sta_active], WifiGetRssiAsQuality(WiFi.RSSI()), WiFi.BSSIDstr().c_str());
+  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"" D_JSON_WIFI "\":{\"" D_JSON_AP "\":%d,\"" D_JSON_SSID "\":\"%s\",\"" D_JSON_BSSID "\":\"%s\",\"" D_JSON_CHANNEL "\":%d,\"" D_JSON_RSSI "\":%d}}"),
+    mqtt_data, Settings.sta_active +1, Settings.sta_ssid[Settings.sta_active], WiFi.BSSIDstr().c_str(), WiFi.channel(), WifiGetRssiAsQuality(WiFi.RSSI()));
 }
 
 boolean MqttShowSensor()
@@ -1566,6 +1566,11 @@ boolean MqttShowSensor()
 void PerformEverySecond()
 {
   uptime++;
+
+  if (BOOT_LOOP_TIME == uptime) {
+    RtcSettings.fast_reboot_count = 0;
+    RtcSettingsSave();
+  }
 
   if ((4 == uptime) && (SONOFF_IFAN02 == Settings.module)) {  // Microcontroller needs 3 seconds before accepting commands
     SetDevicePower(1, SRC_RETRY);      // Sync with default power on state microcontroller being Light ON and Fan OFF
@@ -2313,7 +2318,7 @@ void GpioInit()
     pin[i] = 99;
   }
   for (byte i = 0; i < MAX_GPIO_PIN; i++) {
-    mpin = my_module.gp.io[i];
+    mpin = ValidGPIO(i, my_module.gp.io[i]);
 
 //  snprintf_P(log_data, sizeof(log_data), PSTR("DBG: gpio pin %d, mpin %d"), i, mpin);
 //  AddLog(LOG_LEVEL_DEBUG);
@@ -2323,7 +2328,7 @@ void GpioInit()
         bitSet(switch_no_pullup, mpin - GPIO_SWT1_NP);
         mpin -= (GPIO_SWT1_NP - GPIO_SWT1);
       }
-      if ((mpin >= GPIO_KEY1_NP) && (mpin < (GPIO_KEY1_NP + MAX_KEYS))) {
+      else if ((mpin >= GPIO_KEY1_NP) && (mpin < (GPIO_KEY1_NP + MAX_KEYS))) {
         bitSet(key_no_pullup, mpin - GPIO_KEY1_NP);
         mpin -= (GPIO_KEY1_NP - GPIO_KEY1);
       }
@@ -2486,6 +2491,11 @@ void setup()
 {
   byte idx;
 
+  RtcSettingsLoad();
+  if (!RtcSettingsExtendedValid()) { RtcSettings.fast_reboot_count = 0; }
+  RtcSettings.fast_reboot_count++;
+  RtcSettingsSave();
+
   Serial.begin(baudrate);
   delay(10);
   Serial.println();
@@ -2517,10 +2527,28 @@ void setup()
   save_data_counter = Settings.save_data;
   sleep = Settings.sleep;
 
-  if ((resetInfo.reason == REASON_WDT_RST) || (resetInfo.reason == REASON_EXCEPTION_RST) || (resetInfo.reason == REASON_SOFT_WDT_RST) || OsWatchBlockedLoop()) {
-    for (byte i = 0; i < MAX_RULE_SETS; i++) {
-      if (bitRead(Settings.rule_stop, i)) { bitWrite(Settings.rule_enabled, i, 0); }
+  // Disable functionality as possible cause of fast restart within BOOT_LOOP_TIME seconds (Exception, WDT or restarts)
+  if (RtcSettings.fast_reboot_count > 1) {        // Restart twice
+    Settings.flag3.user_esp8285_enable = 0;       // Disable ESP8285 Generic GPIOs interfering with flash SPI
+    if (RtcSettings.fast_reboot_count > 2) {      // Restart 3 times
+      for (byte i = 0; i < MAX_RULE_SETS; i++) {
+        if (bitRead(Settings.rule_stop, i)) {
+          bitWrite(Settings.rule_enabled, i, 0);  // Disable rules causing boot loop
+        }
+      }
     }
+    if (RtcSettings.fast_reboot_count > 3) {      // Restarted 4 times
+      Settings.rule_enabled = 0;                  // Disable all rules
+    }
+    if (RtcSettings.fast_reboot_count > 4) {      // Restarted 5 times
+      Settings.module = SONOFF_BASIC;             // Reset module to Sonoff Basic
+      Settings.last_module = SONOFF_BASIC;
+      for (byte i = 0; i < MAX_GPIO_PIN; i++) {
+        Settings.my_gp.io[i] = GPIO_NONE;         // Reset user defined GPIO disabling sensors
+      }
+    }
+    snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION D_LOG_SOME_SETTINGS_RESET " (%d)"), RtcSettings.fast_reboot_count);
+    AddLog(LOG_LEVEL_DEBUG);
   }
 
   Settings.bootcount++;

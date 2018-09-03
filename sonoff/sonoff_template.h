@@ -136,6 +136,9 @@ enum ProgramSelectablePins {
   GPIO_DI,             // my92x1 PWM input
   GPIO_DCKI,           // my92x1 CLK input
   GPIO_ARIRFRCV,       // AliLux RF Receive input
+  GPIO_MCP39_TX,       // MCP39F501 Serial output
+  GPIO_MCP39_RX,       // MCP39F501 Serial input
+  GPIO_MCP39_RST,      // MCP39F501 Serial reset
   GPIO_USER,           // User configurable
   GPIO_MAX };
 
@@ -220,13 +223,15 @@ enum SupportedModules {
   SONOFF_POW_R2,
   SONOFF_IFAN02,
   BLITZWOLF_BWSHP2,
+  SHELLY1,
+  SHELLY2,
   MAXMODULE };
 
 /********************************************************************************************/
 
 #define MAX_GPIO_PIN       18   // Number of supported GPIO
 
-const char PINS_WEMOS[] PROGMEM = "D3TXD4RXD2D1flashcontrolD6D7D5D8D0A0";
+const char PINS_WEMOS[] PROGMEM = "D3TXD4RXD2D1flashcFLFLolD6D7D5D8D0A0";
 
 typedef struct MYIO {
   uint8_t      io[MAX_GPIO_PIN];
@@ -271,6 +276,8 @@ const uint8_t kNiceList[MAXMODULE] PROGMEM = {
   LUANIHVIO,
   YUNSHAN,
   WION,
+  SHELLY1,
+  SHELLY2,
   BLITZWOLF_BWSHP2,
   H801,
   MAGICHOME,
@@ -514,7 +521,10 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_USER,        // GPIO03 RX Serial TXD and Optional sensor
      GPIO_USER,        // GPIO04 D2 Wemos I2C SDA
      GPIO_USER,        // GPIO05 D1 Wemos I2C SCL / Wemos Relay Shield (0 = Off, 1 = On) / Wemos WS2812B RGB led Shield
-     0, 0, 0, 0, 0, 0, // Flash connection
+     0, 0, 0,          // Flash connection
+     GPIO_USER,        // Flash connection or GPIO09 on ESP8285 only!
+     GPIO_USER,        // Flash connection or GPIO10 on ESP8285 only!
+     0,                // Flash connection
      GPIO_USER,        // GPIO12 D6
      GPIO_USER,        // GPIO13 D7
      GPIO_USER,        // GPIO14 D5
@@ -903,6 +913,27 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_HLW_CF1,     // GPIO14 BL0937 or HJL-01 CF1 voltage / current
      GPIO_REL1,        // GPIO15 Relay (0 = Off, 1 = On)
      0, 0
+  },
+  { "Shelly 1",         // Shelly1 Open Source (ESP8266 - 2MB) - https://shelly.cloud/shelly1-open-source/
+     0, 0, 0, 0,
+     GPIO_REL1,         // GPIO04 Relay (0 = Off, 1 = On)
+     GPIO_SWT1_NP,      // GPIO05 SW pin
+     0, 0, 0, 0, 0, 0,  // Flash connection
+     0, 0, 0, 0, 0, 0
+  },
+  { "Shelly 2",         // Shelly2 (ESP8266 - 2MB) - https://shelly.cloud/shelly2/
+     0,
+     GPIO_MCP39_RX,     // GPIO01 MCP39F501 Serial input
+     0,
+     GPIO_MCP39_TX,     // GPIO03 MCP39F501 Serial output
+     GPIO_REL1,         // GPIO04
+     GPIO_REL2,         // GPIO05
+     0, 0, 0, 0, 0, 0,  // Flash connection
+     GPIO_SWT1_NP,      // GPIO12
+     0,
+     GPIO_SWT2_NP,      // GPIO14
+     GPIO_MCP39_RST,    // GPIO15 MCP39F501 Reset
+     0, 0
   }
 };
 
@@ -985,8 +1016,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_USER,        // GPIO15 (D15)
      GPIO_USER,        // GPIO16 (D16)
      0                 // ADC0 Analog input (A0)
-  },
-
+  }
 */
 
 #endif  // _SONOFF_TEMPLATE_H_
