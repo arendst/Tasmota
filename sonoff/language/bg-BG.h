@@ -60,10 +60,12 @@
 #define D_BLINKOFF "Мигане изкл."
 #define D_BOOT_COUNT "Брой на стартиранията"
 #define D_BRIGHTLIGHT "Яркост"
+#define D_BSSID "BSSId"
 #define D_BUTTON "Бутон"
 #define D_BY "от"                    // Written by me
 #define D_BYTES "Байта"
 #define D_CELSIUS "Целзий"
+#define D_CHANNEL "Channel"
 #define D_CO2 "Въглероден диоксид"
 #define D_CODE "код"                // Button code
 #define D_COLDLIGHT "Хладна"

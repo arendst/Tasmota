@@ -111,7 +111,7 @@ void CounterShow(boolean json)
         }
         header++;
         snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s%s\"C%d\":%s"), mqtt_data, stemp, i +1, counter);
-        strcpy(stemp, ",");
+        strlcpy(stemp, ",", sizeof(stemp));
 #ifdef USE_DOMOTICZ
         if ((0 == tele_period) && (1 == dsxflg)) {
           DomoticzSensor(DZ_COUNT, RtcSettings.pulse_counter[i]);

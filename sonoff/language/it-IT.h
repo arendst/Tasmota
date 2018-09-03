@@ -60,10 +60,12 @@
 #define D_BLINKOFF "BlinkOff"
 #define D_BOOT_COUNT "Numero di boot"
 #define D_BRIGHTLIGHT "Luminoso"
+#define D_BSSID "BSSId"
 #define D_BUTTON "Pulsante"
 #define D_BY "da"                    // Written by me
 #define D_BYTES "Bytes"
 #define D_CELSIUS "Celsius"
+#define D_CHANNEL "Channel"
 #define D_CO2 "CO2"
 #define D_CODE "codice"                // Button code
 #define D_COLDLIGHT "Fredda"
