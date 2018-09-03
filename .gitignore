@@ -6,3 +6,5 @@
 sonoff/config.h
 sonoff/user_config_override.h
 sonoff/user_config_override.h
+.vscode/.browse.c_cpp.db*
+.vscode/launch.json
