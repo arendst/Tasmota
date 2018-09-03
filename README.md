@@ -7,9 +7,7 @@
 
 This repository is for developing new KNX features for Sonoff-Tasmota.
 
-If you like **Sonoff Tasmota KNX**, give it a star or fork it and contribute!
-[![GitHub stars](https://img.shields.io/github/stars/ascillato/Sonoff-Tasmota_KNX.svg?style=social&label=Star)](https://github.com/ascillato/Sonoff-Tasmota_KNX/stargazers)
-[![GitHub forks](https://img.shields.io/github/forks/ascillato/Sonoff-Tasmota_KNX.svg?style=social&label=Fork)](https://github.com/ascillato/Sonoff-Tasmota_KNX/network)
+If you like **Sonoff Tasmota KNX**, give it a star or fork it and contribute! [![GitHub stars](https://img.shields.io/github/stars/ascillato/Sonoff-Tasmota_KNX.svg?style=social&label=Star)](https://github.com/ascillato/Sonoff-Tasmota_KNX/stargazers)
 
 Any help or comment is very welcome.
 
