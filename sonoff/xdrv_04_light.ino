@@ -69,6 +69,12 @@ struct LRgbColor {
 const LRgbColor kFixedColor[MAX_FIXED_COLOR] PROGMEM =
   { 255,0,0, 0,255,0, 0,0,255, 228,32,0, 0,228,32, 0,32,228, 188,64,0, 0,160,96, 160,32,240, 255,255,0, 255,0,170, 255,255,255 };
 
+struct LWColor {
+  uint8_t W;
+};
+#define MAX_FIXED_WHITE  3
+const LWColor kFixedWhite[MAX_FIXED_WHITE] PROGMEM = { 0, 255, 128 };
+
 struct LCwColor {
   uint8_t C, W;
 };
@@ -1006,7 +1012,11 @@ boolean LightColorEntry(char *buffer, uint8_t buffer_length)
     entry_type = 1;                                 // Hexadecimal
   }
   else if ((value > 199) && (value <= 199 + MAX_FIXED_COLD_WARM)) {
-    if (LST_COLDWARM == light_subtype) {
+    if (LST_RGBW == light_subtype) {
+      memcpy_P(&light_entry_color[3], &kFixedWhite[value -200], 1);
+      entry_type = 1;                                 // Hexadecimal
+    }
+    else if (LST_COLDWARM == light_subtype) {
       memcpy_P(&light_entry_color, &kFixedColdWarm[value -200], 2);
       entry_type = 1;                                 // Hexadecimal
     }
