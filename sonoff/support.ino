@@ -722,19 +722,19 @@ void ShowSource(int source)
  *
  * !!! Avoid blocking wherever possible !!!
  * 
- * @param   milliseconds  Milliseconds to wait.
- * @param   blocking      Blocking if "true", non-blocking if "false" (default).
+ * @param   milliseconds          Milliseconds to wait.
+ * @param   block_other_tasks     Blocks other tasks (WLAN, etc.) if "true", non-blocking if "false" (default).
  * 
- * @return                Always "true" to allow concatenating of logical operators.
+ * @return                        Always "true" to allow concatenating with logical operators.
  */
-bool wait(uint32_t milliseconds, bool blocking = false) {
-  if (blocking) {
+bool wait(uint32_t milliseconds, bool block_other_tasks = false) {
+  if (block_other_tasks) {
     delay(milliseconds);
   } else {
     uint32_t endpoint = millis() + milliseconds;
     while(millis() < endpoint) {
       yield();
-    }
+    } // while
     return true;
   } // if
 } // wait
