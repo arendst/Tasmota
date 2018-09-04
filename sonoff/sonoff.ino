@@ -2362,7 +2362,7 @@ void GpioInit()
     if (mpin) pin[mpin] = i;
   }
 
-  if ((2 == pin[GPIO_TXD]) || (Settings.module == 20)) Serial.set_tx(2);
+  if ((2 == pin[GPIO_TXD]) || (H801 == Settings.module)) Serial.set_tx(2);
 
   analogWriteRange(Settings.pwm_range);      // Default is 1023 (Arduino.h)
   analogWriteFreq(Settings.pwm_frequency);   // Default is 1000 (core_esp8266_wiring_pwm.c)
