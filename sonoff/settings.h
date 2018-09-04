@@ -333,6 +333,12 @@ struct SYSCFG {
                                            // E00 - FFF free locations
 } Settings;
 
+struct RTCRBT {
+  uint16_t      valid;                     // 000
+  uint8_t       fast_reboot_count;         // 002
+  uint8_t       free_003[1];               // 003
+} RtcReboot;
+
 struct RTCMEM {
   uint16_t      valid;                     // 000
   byte          oswatch_blocked_loop;      // 002
@@ -341,9 +347,7 @@ struct RTCMEM {
   unsigned long energy_kWhtotal;              // 008
   unsigned long pulse_counter[MAX_COUNTERS];  // 00C
   power_t       power;                     // 01C
-  uint16_t      extended_valid;            // 020 Extended valid flag (v6.1.1.14)
-  uint8_t       fast_reboot_count;         // 022
-  uint8_t       free_023[57];              // 023
+  uint8_t       free_020[60];              // 020
                                            // 05C next free location (64 (=core) + 100 (=tasmota offset) + 92 (=0x5C RTCMEM struct) = 256 bytes (max = 512))
 } RtcSettings;
 

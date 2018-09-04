@@ -592,6 +592,9 @@ boolean Xdrv06(byte function)
       case FUNC_COMMAND:
         result = SonoffBridgeCommand();
         break;
+      case FUNC_SERIAL:
+        result = SonoffBridgeSerialInput();
+        break;
     }
   }
   return result;

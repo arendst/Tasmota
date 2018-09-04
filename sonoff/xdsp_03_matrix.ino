@@ -253,6 +253,10 @@ void MatrixPrintLog(uint8_t direction)
           strncat(mtx_buffer, (const char*)txt +i, 1);
         }
       }
+
+      snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION "[%s]"), mtx_buffer);
+      AddLog(LOG_LEVEL_DEBUG);
+
       mtx_done = 1;
     }
 
