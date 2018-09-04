@@ -23,7 +23,7 @@
 \*********************************************************************************************/
 
 #define UDP_BUFFER_SIZE         200      // Max UDP buffer size needed for M-SEARCH message
-#define UDP_MSEARCH_SEND_DELAY  50     // Delay in ms before M-Search response is send
+#define UDP_MSEARCH_SEND_DELAY  50       // Delay in ms before M-Search response is send //reloxx13: dont force a 1500ms wait, sleep + wifi delay + cpu load is long enough
 
 #include <Ticker.h>
 Ticker TickerMSearch;
@@ -229,15 +229,15 @@ void PollUdp()
       }
       String request = packet_buffer;
 
-     AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("UDP: Packet received"));
-     AddLog_P(LOG_LEVEL_DEBUG_MORE, packet_buffer);
+//      AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("UDP: Packet received"));
+//      AddLog_P(LOG_LEVEL_DEBUG_MORE, packet_buffer);
 
       if (request.indexOf("M-SEARCH") >= 0) {
         request.toLowerCase();
         request.replace(" ", "");
 
-       AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("UDP: M-SEARCH Packet received"));
-       AddLog_P(LOG_LEVEL_DEBUG_MORE, request.c_str());
+//        AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("UDP: M-SEARCH Packet received"));
+//        AddLog_P(LOG_LEVEL_DEBUG_MORE, request.c_str());
 
         udp_remote_ip = PortUdp.remoteIP();
         udp_remote_port = PortUdp.remotePort();
@@ -248,7 +248,6 @@ void PollUdp()
           }
           else if ((request.indexOf(F("upnp:rootdevice")) > 0) ||  // type2 Echo 2g (echo & echo plus)
                    (request.indexOf(F("ssdpsearch:all")) > 0) ||
-                   // (request.indexOf(F("ssdp:discover")) > 0) || //echo show
                    (request.indexOf(F("ssdp:all")) > 0)) {
             udp_response_mutex = true;
             TickerMSearch.attach_ms(UDP_MSEARCH_SEND_DELAY, WemoRespondToMSearch, 2);
@@ -258,7 +257,6 @@ void PollUdp()
                 ((request.indexOf(F("urn:schemas-upnp-org:device:basic:1")) > 0) ||
                  (request.indexOf(F("upnp:rootdevice")) > 0) ||
                  (request.indexOf(F("ssdpsearch:all")) > 0) ||
-                 // (request.indexOf(F("ssdp:discover")) > 0) || //echo show
                  (request.indexOf(F("ssdp:all")) > 0))) {
             udp_response_mutex = true;
             TickerMSearch.attach_ms(UDP_MSEARCH_SEND_DELAY, HueRespondToMSearch);

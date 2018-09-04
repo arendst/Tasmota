@@ -99,9 +99,8 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
 } SysBitfield3;
 
 typedef union {
-  uint32_t data; // Allow bit manipulation
-  struct
-  {
+  uint32_t data;                           // Allow bit manipulation
+  struct {
     uint32_t spare00 : 1;
     uint32_t spare01 : 1;
     uint32_t spare02 : 1;
@@ -129,41 +128,38 @@ typedef union {
 
 typedef union {
   uint16_t data;
-  struct
-  {
-    uint16_t hemis : 1; // bit 0        = 0=Northern, 1=Southern Hemisphere (=Opposite DST/STD)
-    uint16_t week : 3;  // bits 1 - 3   = 0=Last week of the month, 1=First, 2=Second, 3=Third, 4=Fourth
-    uint16_t month : 4; // bits 4 - 7   = 1=Jan, 2=Feb, ... 12=Dec
-    uint16_t dow : 3;   // bits 8 - 10  = day of week, 1=Sun, 2=Mon, ... 7=Sat
-    uint16_t hour : 5;  // bits 11 - 15 = 0-23
+  struct {
+    uint16_t hemis : 1;                    // bit 0        = 0=Northern, 1=Southern Hemisphere (=Opposite DST/STD)
+    uint16_t week : 3;                     // bits 1 - 3   = 0=Last week of the month, 1=First, 2=Second, 3=Third, 4=Fourth
+    uint16_t month : 4;                    // bits 4 - 7   = 1=Jan, 2=Feb, ... 12=Dec
+    uint16_t dow : 3;                      // bits 8 - 10  = day of week, 1=Sun, 2=Mon, ... 7=Sat
+    uint16_t hour : 5;                     // bits 11 - 15 = 0-23
   };
 } TimeRule;
 
 typedef union {
   uint32_t data;
-  struct
-  {
-    uint32_t time : 11;  // bits 0 - 10 = minutes in a day
-    uint32_t window : 4; // bits 11 - 14 = minutes random window
-    uint32_t repeat : 1; // bit 15
-    uint32_t days : 7;   // bits 16 - 22 = week day mask
-    uint32_t device : 4; // bits 23 - 26 = 16 devices
-    uint32_t power : 2;  // bits 27 - 28 = 4 power states - Off, On, Toggle, Blink or Rule
-    uint32_t mode : 2;   // bits 29 - 30 = timer modes - 0 = Scheduler, 1 = Sunrise, 2 = Sunset
-    uint32_t arm : 1;    // bit 31
+  struct {
+    uint32_t time : 11;                    // bits 0 - 10 = minutes in a day
+    uint32_t window : 4;                   // bits 11 - 14 = minutes random window
+    uint32_t repeat : 1;                   // bit 15
+    uint32_t days : 7;                     // bits 16 - 22 = week day mask
+    uint32_t device : 4;                   // bits 23 - 26 = 16 devices
+    uint32_t power : 2;                    // bits 27 - 28 = 4 power states - Off, On, Toggle, Blink or Rule
+    uint32_t mode : 2;                     // bits 29 - 30 = timer modes - 0 = Scheduler, 1 = Sunrise, 2 = Sunset
+    uint32_t arm : 1;                      // bit 31
   };
 } Timer;
 
 typedef union {
   uint16_t data;
-  struct
-  {
-    uint16_t pinmode : 3;          // Pin mode (1 through 6)
-    uint16_t pullup : 1;           // Enable internal weak pull-up resistor
-    uint16_t saved_state : 1;      // Save output state, if used.
-    uint16_t int_report_mode : 2;  // Interrupt reporting mode 0 = immediate telemetry & event, 1 = immediate event only, 2 = immediate telemetry only
-    uint16_t int_report_defer : 4; // Number of interrupts to ignore until reporting (default 0, max 15)
-    uint16_t int_count_en : 1;     // Enable interrupt counter for this pin
+  struct {
+    uint16_t pinmode : 3;                   // Pin mode (1 through 6)
+    uint16_t pullup : 1;                    // Enable internal weak pull-up resistor
+    uint16_t saved_state : 1;               // Save output state, if used.
+    uint16_t int_report_mode : 2;           // Interrupt reporting mode 0 = immediate telemetry & event, 1 = immediate event only, 2 = immediate telemetry only
+    uint16_t int_report_defer : 4;          // Number of interrupts to ignore until reporting (default 0, max 15)
+    uint16_t int_count_en : 1;              // Enable interrupt counter for this pin
     uint16_t spare12 : 1;
     uint16_t spare13 : 1;
     uint16_t spare14 : 1;
@@ -355,32 +351,30 @@ struct RTCMEM {
                                            // 05C next free location (64 (=core) + 100 (=tasmota offset) + 92 (=0x5C RTCMEM struct) = 256 bytes (max = 512))
 } RtcSettings;
 
-struct TIME_T
-{
-  uint8_t second;
-  uint8_t minute;
-  uint8_t hour;
-  uint8_t day_of_week; // sunday is day 1
-  uint8_t day_of_month;
-  uint8_t month;
-  char name_of_month[4];
-  uint16_t day_of_year;
-  uint16_t year;
+struct TIME_T {
+  uint8_t       second;
+  uint8_t       minute;
+  uint8_t       hour;
+  uint8_t       day_of_week;               // sunday is day 1
+  uint8_t       day_of_month;
+  uint8_t       month;
+  char          name_of_month[4];
+  uint16_t      day_of_year;
+  uint16_t      year;
   unsigned long days;
   unsigned long valid;
 } RtcTime;
 
-struct XDRVMAILBOX
-{
-  uint16_t valid;
-  uint16_t index;
-  uint16_t data_len;
-  uint16_t payload16;
-  int16_t payload;
-  uint8_t grpflg;
-  uint8_t notused;
-  char *topic;
-  char *data;
+struct XDRVMAILBOX {
+  uint16_t      valid;
+  uint16_t      index;
+  uint16_t      data_len;
+  uint16_t      payload16;
+  int16_t       payload;
+  uint8_t       grpflg;
+  uint8_t       notused;
+  char         *topic;
+  char         *data;
 } XdrvMailbox;
 
 #define MAX_RULES_FLAG  7                  // Number of bits used in RulesBitfield (tricky I know...)
@@ -408,8 +402,7 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
 
 typedef union {
   uint8_t data;
-  struct
-  {
+  struct {
     uint8_t wifi_down : 1;
     uint8_t mqtt_down : 1;
     uint8_t spare02 : 1;
@@ -423,7 +416,7 @@ typedef union {
 
 // See issue https://github.com/esp8266/Arduino/issues/2913
 #ifdef USE_ADC_VCC
-ADC_MODE(ADC_VCC); // Set ADC input for Power Supply Voltage usage
+  ADC_MODE(ADC_VCC);                       // Set ADC input for Power Supply Voltage usage
 #endif
 
-#endif // _SETTINGS_H_
+#endif  // _SETTINGS_H_

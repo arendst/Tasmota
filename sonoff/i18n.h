@@ -129,7 +129,6 @@
 #define D_JSON_TVOC "TVOC"
 #define D_JSON_TYPE "Type"
 #define D_JSON_UPTIME "Uptime"
-#define D_JSON_STARTUPDATETIMEUTC "StartupDateTimeUtc"
 #define D_JSON_UTC_TIME "UTC"
 #define D_JSON_UVINDEX "UvIndex"
 #define D_JSON_UV_LEVEL "UvLevel"
@@ -513,7 +512,7 @@ const char kOptionBlinkOff[] PROGMEM = "BLINKOFF|" D_BLINKOFF ;
 
 // xdrv_02_webserver.ino
 #ifdef USE_WEBSERVER
-const char HTTP_SNS_TEMP[] PROGMEM = "%s{s}%s " D_TEMPERATURE "{m}%s°%c{e}";                             // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
+const char HTTP_SNS_TEMP[] PROGMEM = "%s{s}%s " D_TEMPERATURE "{m}%s&deg;%c{e}";                             // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
 const char HTTP_SNS_HUM[] PROGMEM = "%s{s}%s " D_HUMIDITY "{m}%s%%{e}";                                      // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
 const char HTTP_SNS_PRESSURE[] PROGMEM = "%s{s}%s " D_PRESSURE "{m}%s " D_UNIT_PRESSURE "{e}";               // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
 const char HTTP_SNS_SEAPRESSURE[] PROGMEM = "%s{s}%s " D_PRESSUREATSEALEVEL "{m}%s " D_UNIT_PRESSURE "{e}";  // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>

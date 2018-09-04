@@ -22,13 +22,13 @@
 
 #define VERSION            0x06020002
 
-#define D_PROGRAMNAME "Sonoff-Tasmota"
-#define D_AUTHOR "Theo Arends"
+#define D_PROGRAMNAME      "Sonoff-Tasmota"
+#define D_AUTHOR           "Theo Arends"
 //#define D_WEBLINK          "https://github.com/arendst/Sonoff-Tasmota"
-#define D_WEBLINK "https://bit.ly/tasmota"
+#define D_WEBLINK          "https://bit.ly/tasmota"
 
 #define D_MODIFY_AUTHOR "reloxx13"
 #define D_MODIFIED_WEBLINK "https://bit.ly/Tasmota-Mod"
 #define MOD_VERSION_STRING "mod-1.40.4" // Would be great to have a macro that fills this from VERSION ...
 
-#endif // _SONOFF_VERSION_H_
+#endif  // _SONOFF_VERSION_H_

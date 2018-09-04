@@ -24,64 +24,64 @@
  * Power Type
 \*********************************************************************************************/
 
-typedef unsigned long power_t;  // Power (Relay) type
-#define POWER_MASK 0xffffffffUL // Power (Relay) full mask
+typedef unsigned long power_t;              // Power (Relay) type
+#define POWER_MASK             0xffffffffUL // Power (Relay) full mask
 
 /*********************************************************************************************\
  * Defines
 \*********************************************************************************************/
 
 // Changes to the following MAX_ defines will impact settings layout
-#define MAX_SWITCHES 8          // Max number of switches
-#define MAX_RELAYS 8            // Max number of relays
-#define MAX_LEDS 4              // Max number of leds
-#define MAX_KEYS 4              // Max number of keys or buttons
-#define MAX_PWMS 5              // Max number of PWM channels
-#define MAX_COUNTERS 4          // Max number of counter sensors
-#define MAX_TIMERS 16           // Max number of Timers
-#define MAX_PULSETIMERS 8       // Max number of supported pulse timers
-#define MAX_FRIENDLYNAMES 4     // Max number of Friendly names
-#define MAX_DOMOTICZ_IDX 4      // Max number of Domoticz device, key and switch indices
-#define MAX_DOMOTICZ_SNS_IDX 12 // Max number of Domoticz sensors indices
-#define MAX_KNX_GA 10           // Max number of KNX Group Addresses to read that can be set
-#define MAX_KNX_CB 10           // Max number of KNX Group Addresses to write that can be set
-#define MAX_RULE_MEMS 5         // Max number of saved vars
-#define MAX_RULE_SETS 3         // Max number of rule sets of size 512 characters
-#define MAX_RULE_SIZE 512       // Max number of characters in rules
+#define MAX_SWITCHES           8            // Max number of switches
+#define MAX_RELAYS             8            // Max number of relays
+#define MAX_LEDS               4            // Max number of leds
+#define MAX_KEYS               4            // Max number of keys or buttons
+#define MAX_PWMS               5            // Max number of PWM channels
+#define MAX_COUNTERS           4            // Max number of counter sensors
+#define MAX_TIMERS             16           // Max number of Timers
+#define MAX_PULSETIMERS        8            // Max number of supported pulse timers
+#define MAX_FRIENDLYNAMES      4            // Max number of Friendly names
+#define MAX_DOMOTICZ_IDX       4            // Max number of Domoticz device, key and switch indices
+#define MAX_DOMOTICZ_SNS_IDX   12           // Max number of Domoticz sensors indices
+#define MAX_KNX_GA             10           // Max number of KNX Group Addresses to read that can be set
+#define MAX_KNX_CB             10           // Max number of KNX Group Addresses to write that can be set
+#define MAX_RULE_MEMS          5            // Max number of saved vars
+#define MAX_RULE_SETS          3            // Max number of rule sets of size 512 characters
+#define MAX_RULE_SIZE          512          // Max number of characters in rules
 
 // Changes to the following defines have no impact on settings layout
-#define MAX_RULE_TIMERS 8 // Max number of rule timers (4 bytes / timer)
-#define MAX_RULE_VARS 5   // Max number of rule variables (10 bytes / variable)
+#define MAX_RULE_TIMERS        8            // Max number of rule timers (4 bytes / timer)
+#define MAX_RULE_VARS          5            // Max number of rule variables (10 bytes / variable)
 
-#define MQTT_TOKEN_PREFIX "%prefix%" // To be substituted by mqtt_prefix[x]
-#define MQTT_TOKEN_TOPIC "%topic%"   // To be substituted by mqtt_topic, mqtt_grptopic, mqtt_buttontopic, mqtt_switchtopic
-#define MQTT_TOKEN_ID "%id%"         // To be substituted by mqtt_topic, mqtt_grptopic, mqtt_buttontopic, mqtt_switchtopic
+#define MQTT_TOKEN_PREFIX      "%prefix%"   // To be substituted by mqtt_prefix[x]
+#define MQTT_TOKEN_TOPIC       "%topic%"    // To be substituted by mqtt_topic, mqtt_grptopic, mqtt_buttontopic, mqtt_switchtopic
+#define MQTT_TOKEN_ID          "%id%"       // To be substituted by mqtt_topic, mqtt_grptopic, mqtt_buttontopic, mqtt_switchtopic
 
-#define WIFI_HOSTNAME "%s-%04d" // Expands to <MQTT_TOPIC>-<last 4 decimal chars of MAC address>
+#define WIFI_HOSTNAME          "%s-%04d"    // Expands to <MQTT_TOPIC>-<last 4 decimal chars of MAC address>
 
-#define CONFIG_FILE_SIGN 0xA5 // Configuration file signature
-#define CONFIG_FILE_XOR 0x5A  // Configuration file xor (0 = No Xor)
+#define CONFIG_FILE_SIGN       0xA5         // Configuration file signature
+#define CONFIG_FILE_XOR        0x5A         // Configuration file xor (0 = No Xor)
 
-#define HLW_PREF_PULSE 12530 // was 4975us = 201Hz = 1000W
-#define HLW_UREF_PULSE 1950  // was 1666us = 600Hz = 220V
-#define HLW_IREF_PULSE 3500  // was 1666us = 600Hz = 4.545A
+#define HLW_PREF_PULSE         12530        // was 4975us = 201Hz = 1000W
+#define HLW_UREF_PULSE         1950         // was 1666us = 600Hz = 220V
+#define HLW_IREF_PULSE         3500         // was 1666us = 600Hz = 4.545A
 
-#define MQTT_RETRY_SECS 10      // Minimum seconds to retry MQTT connection
-#define GLOBAL_VALUES_VALID 300 // Max number of seconds to keep last received values
-#define APP_POWER 0             // Default saved power state Off
-#define WS2812_MAX_LEDS 512     // Max number of LEDs
+#define MQTT_RETRY_SECS        10           // Minimum seconds to retry MQTT connection
+#define GLOBAL_VALUES_VALID    300          // Max number of seconds to keep last received values
+#define APP_POWER              0            // Default saved power state Off
+#define WS2812_MAX_LEDS        512          // Max number of LEDs
 
-#define PWM_RANGE 1023 // 255..1023 needs to be devisible by 256
+#define PWM_RANGE              1023         // 255..1023 needs to be devisible by 256
 //#define PWM_FREQ               1000         // 100..1000 Hz led refresh
 //#define PWM_FREQ               910          // 100..1000 Hz led refresh (iTead value)
-#define PWM_FREQ 880 // 100..1000 Hz led refresh (BN-SZ01 value)
+#define PWM_FREQ               880          // 100..1000 Hz led refresh (BN-SZ01 value)
 
-#define DEFAULT_POWER_DELTA 80 // Power change percentage
-#define MAX_POWER_HOLD 10      // Time in SECONDS to allow max agreed power
-#define MAX_POWER_WINDOW 30    // Time in SECONDS to disable allow max agreed power
-#define SAFE_POWER_HOLD 10     // Time in SECONDS to allow max unit safe power
-#define SAFE_POWER_WINDOW 30   // Time in MINUTES to disable allow max unit safe power
-#define MAX_POWER_RETRY 5      // Retry count allowing agreed power limit overflow
+#define DEFAULT_POWER_DELTA    80           // Power change percentage
+#define MAX_POWER_HOLD         10           // Time in SECONDS to allow max agreed power
+#define MAX_POWER_WINDOW       30           // Time in SECONDS to disable allow max agreed power
+#define SAFE_POWER_HOLD        10           // Time in SECONDS to allow max unit safe power
+#define SAFE_POWER_WINDOW      30           // Time in MINUTES to disable allow max unit safe power
+#define MAX_POWER_RETRY        5            // Retry count allowing agreed power limit overflow
 
 #define STATES                 20           // Number of states per second using 50 mSec interval
 #define IMMINENT_RESET_FACTOR  10           // Factor to extent button hold time for imminent Reset to default 40 seconds using KEY_HOLD_TIME of 40
@@ -90,77 +90,77 @@ typedef unsigned long power_t;  // Power (Relay) type
 #define SERIALLOG_TIMER        600          // Seconds to disable SerialLog
 #define OTA_ATTEMPTS           5            // Number of times to try fetching the new firmware
 
-#define INPUT_BUFFER_SIZE 520 // Max number of characters in (serial and http) command buffer
-#define CMDSZ 24              // Max number of characters in command
-#define TOPSZ 100             // Max number of characters in topic string
-#define LOGSZ 512             // Max number of characters in log
-#define MIN_MESSZ 893         // Min number of characters in MQTT message
+#define INPUT_BUFFER_SIZE      520          // Max number of characters in (serial and http) command buffer
+#define CMDSZ                  24           // Max number of characters in command
+#define TOPSZ                  100          // Max number of characters in topic string
+#define LOGSZ                  512          // Max number of characters in log
+#define MIN_MESSZ              893          // Min number of characters in MQTT message
 
-#define SENSOR_MAX_MISS 5 // Max number of missed sensor reads before deciding it's offline
+#define SENSOR_MAX_MISS        5            // Max number of missed sensor reads before deciding it's offline
 
 #ifdef USE_MQTT_TLS
-#define WEB_LOG_SIZE 2000 // Max number of characters in weblog
+  #define WEB_LOG_SIZE         2000         // Max number of characters in weblog
 #else
-#define WEB_LOG_SIZE 4000 // Max number of characters in weblog
+  #define WEB_LOG_SIZE         4000         // Max number of characters in weblog
 #endif
 
-#define MAX_BACKLOG 30      // Max number of commands in backlog
-#define MIN_BACKLOG_DELAY 2 // Minimal backlog delay in 0.1 seconds
+#define MAX_BACKLOG            30           // Max number of commands in backlog
+#define MIN_BACKLOG_DELAY      2            // Minimal backlog delay in 0.1 seconds
 
-#define SOFT_BAUDRATE 9600  // Default software serial baudrate
-#define APP_BAUDRATE 115200 // Default serial baudrate
-#define SERIAL_POLLING 100  // Serial receive polling in ms
-#define MAX_STATUS 11       // Max number of status lines
+#define SOFT_BAUDRATE          9600         // Default software serial baudrate
+#define APP_BAUDRATE           115200       // Default serial baudrate
+#define SERIAL_POLLING         100          // Serial receive polling in ms
+#define MAX_STATUS             11           // Max number of status lines
 
-#define NO_EXTRA_4K_HEAP // Allocate 4k heap for WPS in ESP8166/Arduino core v2.4.2 (was always allocated in previous versions)
+#define NO_EXTRA_4K_HEAP                    // Allocate 4k heap for WPS in ESP8166/Arduino core v2.4.2 (was always allocated in previous versions)
 
 /*
 // Removed from esp8266 core since 20171105
 #define min(a,b) ((a)<(b)?(a):(b))
 #define max(a,b) ((a)>(b)?(a):(b))
 */
-#define tmin(a, b) ((a) < (b) ? (a) : (b))
-#define tmax(a, b) ((a) > (b) ? (a) : (b))
+#define tmin(a,b) ((a)<(b)?(a):(b))
+#define tmax(a,b) ((a)>(b)?(a):(b))
 
 #define STR_HELPER(x) #x
 #define STR(x) STR_HELPER(x)
 
 //enum ws2812NeopixelbusFeature { NEO_RGB, NEO_GRB, NEO_BRG, NEO_RBG, NEO_3LED, NEO_RGBW, NEO_GRBW };  // Doesn't work
-#define NEO_RGB 0  // Neopixel RGB leds
-#define NEO_GRB 1  // Neopixel GRB leds
-#define NEO_BRG 2  // Neopixel BRG leds
-#define NEO_RBG 3  // Neopixel RBG leds
-#define NEO_3LED 4 // Placeholder to test for 4 led types
-#define NEO_RGBW 5 // Neopixel RGBW leds
-#define NEO_GRBW 6 // Neopixel GRBW leds
+#define NEO_RGB                0            // Neopixel RGB leds
+#define NEO_GRB                1            // Neopixel GRB leds
+#define NEO_BRG                2            // Neopixel BRG leds
+#define NEO_RBG                3            // Neopixel RBG leds
+#define NEO_3LED               4            // Placeholder to test for 4 led types
+#define NEO_RGBW               5            // Neopixel RGBW leds
+#define NEO_GRBW               6            // Neopixel GRBW leds
 
-#define MQTT_PUBSUBCLIENT 1   // Mqtt PubSubClient library
-#define MQTT_TASMOTAMQTT 2    // Mqtt TasmotaMqtt library based on esp-mqtt-arduino
-#define MQTT_ESPMQTTARDUINO 3 // Mqtt esp-mqtt-arduino library by Ingo Randolf
+#define MQTT_PUBSUBCLIENT      1            // Mqtt PubSubClient library
+#define MQTT_TASMOTAMQTT       2            // Mqtt TasmotaMqtt library based on esp-mqtt-arduino
+#define MQTT_ESPMQTTARDUINO    3            // Mqtt esp-mqtt-arduino library by Ingo Randolf
 
 // Sunrise and Sunset DawnType
-#define DAWN_NORMAL -0.8333
-#define DAWN_CIVIL -6.0
-#define DAWN_NAUTIC -12.0
-#define DAWN_ASTRONOMIC -18.0
+#define DAWN_NORMAL            -0.8333
+#define DAWN_CIVIL             -6.0
+#define DAWN_NAUTIC            -12.0
+#define DAWN_ASTRONOMIC        -18.0
 
 // Sensor and Commands definition for KNX Driver
-#define KNX_TEMPERATURE 17
-#define KNX_HUMIDITY 18
-#define KNX_ENERGY_VOLTAGE 19
-#define KNX_ENERGY_CURRENT 20
-#define KNX_ENERGY_POWER 21
+#define KNX_TEMPERATURE        17
+#define KNX_HUMIDITY           18
+#define KNX_ENERGY_VOLTAGE     19
+#define KNX_ENERGY_CURRENT     20
+#define KNX_ENERGY_POWER       21
 #define KNX_ENERGY_POWERFACTOR 22
-#define KNX_ENERGY_DAILY 23
-#define KNX_ENERGY_START 24
-#define KNX_ENERGY_TOTAL 25
-#define KNX_SLOT1 26
-#define KNX_SLOT2 27
-#define KNX_SLOT3 28
-#define KNX_SLOT4 29
-#define KNX_SLOT5 30
-#define KNX_MAX_device_param 30
-#define MAX_KNXTX_CMNDS 5
+#define KNX_ENERGY_DAILY       23
+#define KNX_ENERGY_START       24
+#define KNX_ENERGY_TOTAL       25
+#define KNX_SLOT1              26
+#define KNX_SLOT2              27
+#define KNX_SLOT3              28
+#define KNX_SLOT4              29
+#define KNX_SLOT5              30
+#define KNX_MAX_device_param   30
+#define MAX_KNXTX_CMNDS        5
 
 /*********************************************************************************************\
  * Enumeration
@@ -216,6 +216,6 @@ const char kCommandSource[] PROGMEM = "I|MQTT|Restart|Button|Switch|Backlog|Seri
  * Extern global variables
 \*********************************************************************************************/
 
-extern uint8_t light_device; // Light device number
+extern uint8_t light_device;  // Light device number
 
-#endif // _SONOFF_H_
+#endif  // _SONOFF_H_
