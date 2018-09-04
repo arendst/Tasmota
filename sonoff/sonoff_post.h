@@ -52,6 +52,8 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 
 #define USE_DHT                               // Default DHT11 sensor needs no external library
 #define USE_ENERGY_SENSOR                     // Use energy sensors
+#define USE_HLW8012                           // Use energy sensor for Sonoff Pow and WolfBlitz
+#define USE_CSE7766                           // Use energy sensor for Sonoff S31 and Pow R2
 
 /*********************************************************************************************\
  * [sonoff-sensors.bin]

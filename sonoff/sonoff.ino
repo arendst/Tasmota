@@ -172,7 +172,7 @@ uint8_t led_inverted = 0;                   // LED inverted flag (1 = (0 = On, 1
 uint8_t pwm_inverted = 0;                   // PWM inverted flag (1 = inverted)
 uint8_t counter_no_pullup = 0;              // Counter input pullup flag (1 = No pullup)
 uint8_t dht_flg = 0;                        // DHT configured
-uint8_t energy_flg = 1;                     // Energy monitor configured
+uint8_t energy_flg = 0;                     // Energy monitor configured
 uint8_t i2c_flg = 0;                        // I2C configured
 uint8_t spi_flg = 0;                        // SPI configured
 uint8_t light_type = 0;                     // Light types
@@ -1568,8 +1568,8 @@ void PerformEverySecond()
   uptime++;
 
   if (BOOT_LOOP_TIME == uptime) {
-    RtcSettings.fast_reboot_count = 0;
-    RtcSettingsSave();
+    RtcReboot.fast_reboot_count = 0;
+    RtcRebootSave();
   }
 
   if ((4 == uptime) && (SONOFF_IFAN02 == Settings.module)) {  // Microcontroller needs 3 seconds before accepting commands
@@ -2193,29 +2193,14 @@ void SerialInput()
       }
     }
 
-/*-------------------------------------------------------------------------------------------*\
- * Sonoff bridge 19200 baud serial interface
-\*-------------------------------------------------------------------------------------------*/
-    if (SONOFF_BRIDGE == Settings.module) {
-      if (SonoffBridgeSerialInput()) {
-        serial_in_byte_counter = 0;
-        Serial.flush();
-        return;
-      }
+/*-------------------------------------------------------------------------------------------*/
+
+    if (XdrvCall(FUNC_SERIAL)) {
+      serial_in_byte_counter = 0;
+      Serial.flush();
+      return;
     }
 
-#ifdef USE_ENERGY_SENSOR
-/*-------------------------------------------------------------------------------------------*\
- * Sonoff S31 and Sonoff Pow R2 4800 baud serial interface
-\*-------------------------------------------------------------------------------------------*/
-    if ((SONOFF_S31 == Settings.module) || (SONOFF_POW_R2 == Settings.module)) {
-      if (CseSerialInput()) {
-        serial_in_byte_counter = 0;
-        Serial.flush();
-        return;
-      }
-    }
-#endif  // USE_ENERGY_SENSOR
 /*-------------------------------------------------------------------------------------------*/
 
     if (serial_in_byte > 127 && !Settings.flag.mqtt_serial_raw) { // binary data...
@@ -2491,10 +2476,10 @@ void setup()
 {
   byte idx;
 
-  RtcSettingsLoad();
-  if (!RtcSettingsExtendedValid()) { RtcSettings.fast_reboot_count = 0; }
-  RtcSettings.fast_reboot_count++;
-  RtcSettingsSave();
+  RtcRebootLoad();
+  if (!RtcRebootValid()) { RtcReboot.fast_reboot_count = 0; }
+  RtcReboot.fast_reboot_count++;
+  RtcRebootSave();
 
   Serial.begin(baudrate);
   delay(10);
@@ -2528,26 +2513,26 @@ void setup()
   sleep = Settings.sleep;
 
   // Disable functionality as possible cause of fast restart within BOOT_LOOP_TIME seconds (Exception, WDT or restarts)
-  if (RtcSettings.fast_reboot_count > 1) {        // Restart twice
+  if (RtcReboot.fast_reboot_count > 1) {        // Restart twice
     Settings.flag3.user_esp8285_enable = 0;       // Disable ESP8285 Generic GPIOs interfering with flash SPI
-    if (RtcSettings.fast_reboot_count > 2) {      // Restart 3 times
+    if (RtcReboot.fast_reboot_count > 2) {      // Restart 3 times
       for (byte i = 0; i < MAX_RULE_SETS; i++) {
         if (bitRead(Settings.rule_stop, i)) {
           bitWrite(Settings.rule_enabled, i, 0);  // Disable rules causing boot loop
         }
       }
     }
-    if (RtcSettings.fast_reboot_count > 3) {      // Restarted 4 times
+    if (RtcReboot.fast_reboot_count > 3) {      // Restarted 4 times
       Settings.rule_enabled = 0;                  // Disable all rules
     }
-    if (RtcSettings.fast_reboot_count > 4) {      // Restarted 5 times
+    if (RtcReboot.fast_reboot_count > 4) {      // Restarted 5 times
       Settings.module = SONOFF_BASIC;             // Reset module to Sonoff Basic
       Settings.last_module = SONOFF_BASIC;
       for (byte i = 0; i < MAX_GPIO_PIN; i++) {
         Settings.my_gp.io[i] = GPIO_NONE;         // Reset user defined GPIO disabling sensors
       }
     }
-    snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION D_LOG_SOME_SETTINGS_RESET " (%d)"), RtcSettings.fast_reboot_count);
+    snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION D_LOG_SOME_SETTINGS_RESET " (%d)"), RtcReboot.fast_reboot_count);
     AddLog(LOG_LEVEL_DEBUG);
   }
 
