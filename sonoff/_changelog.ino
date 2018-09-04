@@ -1,4 +1,8 @@
-/* 6.2.0.1 20180902
+/* 6.2.0.2 20180904
+ * Rewrite energy monitoring using energy sensor driver modules
+ * Fix lost today and total energy value after power cycle (#3689)
+ *
+ * 6.2.0.1 20180902
  * Fix possible ambiguity on command parameters if StateText contains numbers only (#3656)
  * Fix possible exception due to buffer overflow (#3659)
  * Add Wifi channel number to state message (#3664)
