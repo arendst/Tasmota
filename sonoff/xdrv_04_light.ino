@@ -72,8 +72,8 @@ const LRgbColor kFixedColor[MAX_FIXED_COLOR] PROGMEM =
 struct LWColor {
   uint8_t W;
 };
-#define MAX_FIXED_WHITE  3
-const LWColor kFixedWhite[MAX_FIXED_WHITE] PROGMEM = { 0, 255, 128 };
+#define MAX_FIXED_WHITE  4
+const LWColor kFixedWhite[MAX_FIXED_WHITE] PROGMEM = { 0, 255, 128, 32 };
 
 struct LCwColor {
   uint8_t C, W;
