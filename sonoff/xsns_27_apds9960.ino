@@ -54,6 +54,9 @@
 #define APDS9960_CHIPID_1         0xAB
 #define APDS9960_CHIPID_2         0x9C
 
+#define APDS9930_CHIPID_1         0x12  // we will check, if someone got an incorrect sensor
+#define APDS9930_CHIPID_2         0x39  // there are case reports about "accidentially bought" 9930's
+
 /* Gesture parameters */
 #define GESTURE_THRESHOLD_OUT   10
 #define GESTURE_SENSITIVITY_1   50
@@ -75,7 +78,9 @@ const char HTTP_APDS_9960_SNS[] PROGMEM = "%s"
   "{s}" "Red" "{m}%s{e}"
   "{s}" "Green" "{m}%s{e}"
   "{s}" "Blue" "{m}%s{e}"
-  "{s}" "Ambient" "{m}%s " D_UNIT_LUX "{e}"
+  "{s}" "Ambient" "{m}%s{e}"
+  "{s}" "Illuminance" "{m}%s " D_UNIT_LUX "{e}"
+  "{s}" "CCT" "{m}%s " "K"  "{e}"  // calculated color temperature in Kelvin
   "{s}" "Proximity"  "{m}%s{e}";      // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
 #endif  // USE_WEBSERVER
 
@@ -207,7 +212,7 @@ const char HTTP_APDS_9960_SNS[] PROGMEM = "%s"
 #define DEFAULT_ATIME           219     // 103ms
 #define DEFAULT_WTIME           246     // 27ms
 #define DEFAULT_PROX_PPULSE     0x87    // 16us, 8 pulses
-#define DEFAULT_GESTURE_PPULSE  0x89    // 16us, 10 pulses
+#define DEFAULT_GESTURE_PPULSE  0x89    // 16us, 10 pulses  ---89
 #define DEFAULT_POFFSET_UR      0       // 0 offset
 #define DEFAULT_POFFSET_DL      0       // 0 offset
 #define DEFAULT_CONFIG1         0x60    // No 12x wait (WTIME) factor
@@ -225,8 +230,8 @@ const char HTTP_APDS_9960_SNS[] PROGMEM = "%s"
 #define DEFAULT_GEXTH           30      // Threshold for exiting gesture mode
 #define DEFAULT_GCONF1          0x40    // 4 gesture events for int., 1 for exit
 #define DEFAULT_GGAIN           GGAIN_4X
-#define DEFAULT_GLDRIVE         LED_DRIVE_100MA
-#define DEFAULT_GWTIME          GWTIME_2_8MS
+#define DEFAULT_GLDRIVE         LED_DRIVE_100MA // default 100ma
+#define DEFAULT_GWTIME          GWTIME_2_8MS  // default 2_8MS
 #define DEFAULT_GOFFSET         0       // No offset scaling for gesture mode
 #define DEFAULT_GPULSE          0xC9    // 32us, 10 pulses
 #define DEFAULT_GCONF3          0       // All photodiodes active during gesture
@@ -271,6 +276,19 @@ typedef struct gesture_data_type {
  int16_t gesture_state_ = 0;
  int16_t gesture_motion_ = DIR_NONE;
 
+ typedef struct color_data_type {
+    uint16_t a; // measured ambient
+    uint16_t r;
+    uint16_t g;
+    uint16_t b;
+    uint8_t p; // proximity
+    uint16_t cct; // calculated color temperature
+    uint16_t lux; // calculated illuminance - atm only from rgb
+ } color_data_type;
+
+ color_data_type color_data;
+
+
  /*******************************************************************************
   * Helper functions
   ******************************************************************************/
@@ -299,6 +317,7 @@ typedef struct gesture_data_type {
  * @param[in] len number of bytes to read
  * @return Number of bytes read. -1 on read error.
  */
+
 int8_t wireReadDataBlock(   uint8_t reg,
                                         uint8_t *val,
                                         uint16_t len)
@@ -321,6 +340,51 @@ int8_t wireReadDataBlock(   uint8_t reg,
     }
 
     return i;
+}
+
+/**
+*   Taken from the Adafruit-library
+*   @brief  Converts the raw R/G/B values to color temperature in degrees
+*            Kelvin
+*/
+
+void calculateColorTemperature()
+{
+  float X, Y, Z;      /* RGB to XYZ correlation      */
+  float xc, yc;       /* Chromaticity co-ordinates   */
+  float n;            /* McCamy's formula            */
+  float cct;
+
+  /* 1. Map RGB values to their XYZ counterparts.    */
+  /* Based on 6500K fluorescent, 3000K fluorescent   */
+  /* and 60W incandescent values for a wide range.   */
+  /* Note: Y = Illuminance or lux                    */
+  X = (-0.14282F * color_data.r) + (1.54924F * color_data.g) + (-0.95641F * color_data.b);
+  Y = (-0.32466F * color_data.r) + (1.57837F * color_data.g) + (-0.73191F * color_data.b); // this is Lux
+  Z = (-0.68202F * color_data.r) + (0.77073F * color_data.g) + ( 0.56332F * color_data.b);
+
+  /* 2. Calculate the chromaticity co-ordinates      */
+  xc = (X) / (X + Y + Z);
+  yc = (Y) / (X + Y + Z);
+
+  /* 3. Use McCamy's formula to determine the CCT    */
+  n = (xc - 0.3320F) / (0.1858F - yc);
+
+  /* Calculate the final CCT */
+  color_data.cct = (449.0F * powf(n, 3)) + (3525.0F * powf(n, 2)) + (6823.3F * n) + 5520.33F;
+  color_data.lux = Y; // according to Adafruit code comments this seems to be not a perfect solution
+
+  return;
+}
+
+/**
+*   Taken from the Adafruit-Library
+*    @brief  Implements missing powf function
+*/
+
+float powf(const float x, const float y)
+{
+  return (float)(pow((double)x, (double)y));
 }
 
  /*******************************************************************************
@@ -1260,6 +1324,8 @@ bool APDS9960_init()
 
     setGestureIntEnable(DEFAULT_GIEN);
 
+    disablePower();  // go to sleep
+
     return true;
 }
 /*******************************************************************************
@@ -1318,20 +1384,13 @@ void setMode(uint8_t mode, uint8_t enable)
 /**
  * @brief Starts the light (R/G/B/Ambient) sensor on the APDS-9960
  *
- * @param[in] interrupts true to enable hardware interrupt on high or low light
+ * no interrupts
  */
-void enableLightSensor(bool interrupts)
+void enableLightSensor()
 {
-
     /* Set default gain, interrupts, enable power, and enable sensor */
     setAmbientLightGain(DEFAULT_AGAIN);
-    if( interrupts ) {
-        setAmbientLightIntEnable(1) ;
-
-    }
-    else {
-        setAmbientLightIntEnable(0);
-    }
+    setAmbientLightIntEnable(0);
     enablePower() ;
     setMode(AMBIENT_LIGHT, 1) ;
 }
@@ -1349,18 +1408,14 @@ void disableLightSensor()
 /**
  * @brief Starts the proximity sensor on the APDS-9960
  *
- * @param[in] interrupts true to enable hardware external interrupt on proximity
+ * no interrupts
  */
-void enableProximitySensor(bool interrupts)
+void enableProximitySensor()
 {
     /* Set default gain, LED, interrupts, enable power, and enable sensor */
     setProximityGain(DEFAULT_PGAIN);
     setLEDDrive(DEFAULT_LDRIVE) ;
-    if( interrupts ) {
-        setProximityIntEnable(1) ;
-    } else {
-        setProximityIntEnable(0) ;
-    }
+    setProximityIntEnable(0) ;
     enablePower();
     setMode(PROXIMITY, 1) ;
 }
@@ -1378,26 +1433,22 @@ void disableProximitySensor()
 /**
  * @brief Starts the gesture recognition engine on the APDS-9960
  *
- * @param[in] interrupts true to enable hardware external interrupt on gesture
+ * no interrupts
  */
-void enableGestureSensor(bool interrupts)
+void enableGestureSensor()
 {
-
     /* Enable gesture mode
        Set ENABLE to 0 (power off)
        Set WTIME to 0xFF
        Set AUX to LED_BOOST_300
        Enable PON, WEN, PEN, GEN in ENABLE
     */
+
     resetGestureParameters();
     I2cWrite8(APDS9960_I2C_ADDR, APDS9960_WTIME, 0xFF) ;
     I2cWrite8(APDS9960_I2C_ADDR, APDS9960_PPULSE, DEFAULT_GESTURE_PPULSE) ;
-    setLEDBoost(LED_BOOST_100);  // tip from jonn26 - 100 for 300
-    if( interrupts ) {
-        setGestureIntEnable(1) ;
-    } else {
-        setGestureIntEnable(0) ;
-    }
+    setLEDBoost(LED_BOOST_100);  // tip from jonn26 - 100 for 300 ---- 200 from Adafruit
+    setGestureIntEnable(0) ;
     setGestureMode(1);
     enablePower() ;
     setMode(WAIT, 1) ;
@@ -1482,11 +1533,6 @@ int16_t readGesture()
             /* Read the current FIFO level */
             fifo_level = I2cRead8(APDS9960_I2C_ADDR,APDS9960_GFLVL) ;
 
-#if DEBUG
-            Serial.print("FIFO Level: ");
-            Serial.println(fifo_level);
-#endif
-
             /* If there's stuff in the FIFO, read it into our data block */
             if( fifo_level > 0) {
                 bytes_read = wireReadDataBlock(  APDS9960_GFIFO_U,
@@ -1495,14 +1541,6 @@ int16_t readGesture()
                 if( bytes_read == -1 ) {
                     return ERROR;
                 }
-#if DEBUG
-                Serial.print("FIFO Dump: ");
-                for ( i = 0; i < bytes_read; i++ ) {
-                    Serial.print(fifo_data[i]);
-                    Serial.print(" ");
-                }
-                Serial.println();
-#endif
 
                 /* If at least 1 set of data, sort the data into U/D/L/R */
                 if( bytes_read >= 4 ) {
@@ -1518,26 +1556,12 @@ int16_t readGesture()
                         gesture_data_.index++;
                         gesture_data_.total_gestures++;
                     }
-
-#if DEBUG
-                Serial.print("Up Data: ");
-                for ( i = 0; i < gesture_data_.total_gestures; i++ ) {
-                    Serial.print(gesture_data_.u_data[i]);
-                    Serial.print(" ");
-                }
-                Serial.println();
-#endif
-
                     /* Filter and process gesture data. Decode near/far state */
                     if( processGestureData() ) {
                         if( decodeGesture() ) {
                             //***TODO: U-Turn Gestures
-#if DEBUG
-                            //Serial.println(gesture_motion_);
-#endif
                         }
                     }
-
                     /* Reset data */
                     gesture_data_.index = 0;
                     gesture_data_.total_gestures = 0;
@@ -1549,10 +1573,6 @@ int16_t readGesture()
             delay(FIFO_PAUSE_TIME);
             decodeGesture();
             motion = gesture_motion_;
-#if DEBUG
-            Serial.print("END: ");
-            Serial.println(gesture_motion_);
-#endif
             resetGestureParameters();
             return motion;
         }
@@ -1581,97 +1601,18 @@ void disablePower()
  * Ambient light and color sensor controls
  ******************************************************************************/
 
-/**
- * @brief Reads the ambient (clear) light level as a 16-bit value
- *
- * @param[out] val value of the light sensor.
- */
-void readAmbientLight(uint16_t &val)
+ /**
+  * @brief Reads the ARGB-Data and fills color_data
+  *
+  */
+
+void readAllColorAndProximityData()
 {
-    uint8_t val_byte;
-    val = 0;
-
-    /* Read value from clear channel, low byte register */
-    val_byte = I2cRead8(APDS9960_I2C_ADDR, APDS9960_CDATAL);
-    val = val_byte;
-
-    /* Read value from clear channel, high byte register */
-    val_byte = I2cRead8(APDS9960_I2C_ADDR, APDS9960_CDATAH);
-    val = val + ((uint16_t)val_byte << 8);
-}
-
-/**
- * @brief Reads the red light level as a 16-bit value
- *
- * @param[out] val value of the light sensor.
- */
-void readRedLight(uint16_t &val)
-{
-    uint8_t val_byte;
-    val = 0;
-
-    /* Read value from clear channel, low byte register */
-    val_byte = I2cRead8(APDS9960_I2C_ADDR, APDS9960_RDATAL) ;
-    val = val_byte;
-
-    /* Read value from clear channel, high byte register */
-    val_byte = I2cRead8(APDS9960_I2C_ADDR, APDS9960_RDATAH) ;
-    val = val + ((uint16_t)val_byte << 8);
-}
-
-/**
- * @brief Reads the green light level as a 16-bit value
- *
- * @param[out] val value of the light sensor.
- */
-void readGreenLight(uint16_t &val)
-{
-    uint8_t val_byte;
-    val = 0;
-
-    /* Read value from clear channel, low byte register */
-    val_byte = I2cRead8(APDS9960_I2C_ADDR, APDS9960_GDATAL) ;
-    val = val_byte;
-
-    /* Read value from clear channel, high byte register */
-    val_byte = I2cRead8(APDS9960_I2C_ADDR, APDS9960_GDATAH) ;
-    val = val + ((uint16_t)val_byte << 8);
-}
-
-/**
- * @brief Reads the red light level as a 16-bit value
- *
- * @param[out] val value of the light sensor.
- */
-void readBlueLight(uint16_t &val)
-{
-    uint8_t val_byte;
-    val = 0;
-
-    /* Read value from clear channel, low byte register */
-    val_byte = I2cRead8(APDS9960_I2C_ADDR, APDS9960_BDATAL) ;
-    val = val_byte;
-
-    /* Read value from clear channel, high byte register */
-    val_byte = I2cRead8(APDS9960_I2C_ADDR, APDS9960_BDATAH) ;
-    val = val + ((uint16_t)val_byte << 8);
-}
-
-/*******************************************************************************
- * Proximity sensor controls
- ******************************************************************************/
-
-/**
- * @brief Reads the proximity level as an 8-bit value
- *
- * @param[out] val value of the proximity sensor.
- */
-void readProximity(uint8_t &val)
-{
-    val = 0;
-
-    /* Read value from proximity data register */
-    val = I2cRead8(APDS9960_I2C_ADDR, APDS9960_PDATA) ;
+  if (I2cReadBuffer(APDS9960_I2C_ADDR, APDS9960_CDATAL, (uint8_t *) &color_data, (uint16_t)9))
+  {
+    // not absolutely shure, if this is a correct way to do this, but it is very short
+    // we fill the struct byte by byte 
+  }
 }
 
 /*******************************************************************************
@@ -1751,17 +1692,7 @@ bool processGestureData()
         }
         /* Find the last value in U/D/L/R above the threshold */
         for( i = gesture_data_.total_gestures - 1; i >= 0; i-- ) {
-#if DEBUG
-            Serial.print(F("Finding last: "));
-            Serial.print(F("U:"));
-            Serial.print(gesture_data_.u_data[i]);
-            Serial.print(F(" D:"));
-            Serial.print(gesture_data_.d_data[i]);
-            Serial.print(F(" L:"));
-            Serial.print(gesture_data_.l_data[i]);
-            Serial.print(F(" R:"));
-            Serial.println(gesture_data_.r_data[i]);
-#endif
+
             if( (gesture_data_.u_data[i] > GESTURE_THRESHOLD_OUT) &&
                 (gesture_data_.d_data[i] > GESTURE_THRESHOLD_OUT) &&
                 (gesture_data_.l_data[i] > GESTURE_THRESHOLD_OUT) &&
@@ -1782,51 +1713,13 @@ bool processGestureData()
     ud_ratio_last = ((u_last - d_last) * 100) / (u_last + d_last);
     lr_ratio_last = ((l_last - r_last) * 100) / (l_last + r_last);
 
-#if DEBUG
-    Serial.print(F("Last Values: "));
-    Serial.print(F("U:"));
-    Serial.print(u_last);
-    Serial.print(F(" D:"));
-    Serial.print(d_last);
-    Serial.print(F(" L:"));
-    Serial.print(l_last);
-    Serial.print(F(" R:"));
-    Serial.println(r_last);
-
-    Serial.print(F("Ratios: "));
-    Serial.print(F("UD Fi: "));
-    Serial.print(ud_ratio_first);
-    Serial.print(F(" UD La: "));
-    Serial.print(ud_ratio_last);
-    Serial.print(F(" LR Fi: "));
-    Serial.print(lr_ratio_first);
-    Serial.print(F(" LR La: "));
-    Serial.println(lr_ratio_last);
-#endif
-
     /* Determine the difference between the first and last ratios */
     ud_delta = ud_ratio_last - ud_ratio_first;
     lr_delta = lr_ratio_last - lr_ratio_first;
 
-#if DEBUG
-    Serial.print("Deltas: ");
-    Serial.print("UD: ");
-    Serial.print(ud_delta);
-    Serial.print(" LR: ");
-    Serial.println(lr_delta);
-#endif
-
     /* Accumulate the UD and LR delta values */
     gesture_ud_delta_ += ud_delta;
     gesture_lr_delta_ += lr_delta;
-
-#if DEBUG
-    Serial.print("Accumulations: ");
-    Serial.print("UD: ");
-    Serial.print(gesture_ud_delta_);
-    Serial.print(" LR: ");
-    Serial.println(gesture_lr_delta_);
-#endif
 
     /* Determine U/D gesture */
     if( gesture_ud_delta_ >= GESTURE_SENSITIVITY_1 ) {
@@ -1845,15 +1738,6 @@ bool processGestureData()
     } else {
         gesture_lr_count_ = 0;
     }
-
-#if DEBUG
-    Serial.print("UD_CT: ");
-    Serial.print(gesture_ud_count_);
-    Serial.print(" LR_CT: ");
-    Serial.print(gesture_lr_count_);
-    Serial.println("----------");
-#endif
-
     return false;
 }
 
@@ -1955,7 +1839,7 @@ void APDS9960_loop()
     recovery_loop_counter -= 1;
   }
   if (recovery_loop_counter == 1 && APDS9960_overload){  //restart sensor just before the end of recovery from long press
-    enableGestureSensor(false);
+    enableGestureSensor();
     APDS9960_overload = false;
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"Gesture\":\"On\"}"));
     MqttPublishPrefixTopic_P(RESULT_OR_TELE, mqtt_data); // only after the long break we report, that we are online again
@@ -1994,11 +1878,19 @@ bool APDS9960_detect(void)
     if (APDS9960_init()) {
       success = true;
       AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "APDS9960 initialized"));
-      enableGestureSensor(false);
+      enableProximitySensor();
+      enableGestureSensor();
     }
-  } else {
-    snprintf_P(log_data, sizeof(log_data), PSTR("APDS9960 not found at address 0x%x"), APDS9960_I2C_ADDR);
-    AddLog(LOG_LEVEL_DEBUG);
+  }
+  else {
+    if (APDS9960type == APDS9930_CHIPID_1 || APDS9960type == APDS9930_CHIPID_2) {
+      snprintf_P(log_data, sizeof(log_data), PSTR("APDS9930 found at address 0x%x, unsupported chip"), APDS9960_I2C_ADDR);
+      AddLog(LOG_LEVEL_DEBUG);
+    }
+    else{
+      snprintf_P(log_data, sizeof(log_data), PSTR("APDS9960 not found at address 0x%x"), APDS9960_I2C_ADDR);
+      AddLog(LOG_LEVEL_DEBUG);
+    }
   }
   currentGesture[0] = '\0';
   return success;
@@ -2013,33 +1905,34 @@ void APDS9960_show(boolean json)
   if (!APDS9960type) {
     return;
   }
-  if (!gesture_mode) {
+  if (!gesture_mode && !APDS9960_overload) {
     char red_chr[10];
     char green_chr[10];
     char blue_chr[10];
     char ambient_chr[10];
+    char illuminance_chr[10];
+    char cct_chr[10];
     char prox_chr[10];
-    uint16_t val;
-    uint8_t val_prox;
 
-    readRedLight(val);
-    sprintf (red_chr, "%u", val);
-    readGreenLight(val);
-    sprintf (green_chr, "%u", val);
-    readBlueLight(val);
-    sprintf (blue_chr, "%u", val );
-    readAmbientLight(val);
-    sprintf (ambient_chr, "%u", val);
+    readAllColorAndProximityData();
+    sprintf (ambient_chr, "%u", color_data.a);
+    sprintf (red_chr, "%u", color_data.r);
+    sprintf (green_chr, "%u", color_data.g);
+    sprintf (blue_chr, "%u", color_data.b );
+    sprintf (prox_chr, "%u", color_data.p );
 
-    readProximity(val_prox);
-    sprintf (prox_chr, "%u", val_prox );
+    calculateColorTemperature();  // and calculate Lux
+    sprintf (cct_chr, "%u", color_data.cct);
+    sprintf (illuminance_chr, "%u", color_data.lux);
+
+
 
     if (json) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"%s\":{\"Red\":%s,\"Green\":%s,\"Blue\":%s,\"Ambient\":%s,\"Proximity\":%s}"),
-        mqtt_data, APDS9960stype, red_chr, green_chr, blue_chr, ambient_chr, prox_chr);
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"%s\":{\"Red\":%s,\"Green\":%s,\"Blue\":%s,\"Ambient\":%s,\"Illuminance\":%s,\"CCT\":%s,\"Proximity\":%s}"),
+        mqtt_data, APDS9960stype, red_chr, green_chr, blue_chr, ambient_chr, illuminance_chr, cct_chr, prox_chr);
 #ifdef USE_WEBSERVER
     } else {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_APDS_9960_SNS, mqtt_data, red_chr, green_chr, blue_chr, ambient_chr, prox_chr );
+      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_APDS_9960_SNS, mqtt_data, red_chr, green_chr, blue_chr, ambient_chr, illuminance_chr, cct_chr, prox_chr );
 #endif  // USE_WEBSERVER
     }
   }
@@ -2069,14 +1962,23 @@ bool APDS9960CommandSensor()
     case 0: // Off
       disableGestureSensor();
       gesture_mode = 0;
-      enableLightSensor(false);
-      enableProximitySensor(false);
+      enableLightSensor();
+      APDS9960_overload = false; // prevent unwanted re-enabling
       break;
-    case 1: // On
+    case 1: // On with default gain of 4x
       if (APDS9960type) {
+        setGestureGain(DEFAULT_GGAIN);
+        setProximityGain(DEFAULT_PGAIN);
         disableLightSensor();
-        disableProximitySensor();
-        enableGestureSensor(false);
+        enableGestureSensor();
+        gesture_mode = 1;
+      }
+    case 2:
+      if (APDS9960type) {
+        setGestureGain(GGAIN_2X);
+        setProximityGain(PGAIN_2X);
+        disableLightSensor();
+        enableGestureSensor();
         gesture_mode = 1;
       }
   }

@@ -119,6 +119,47 @@ boolean RtcSettingsValid()
   return (RTC_MEM_VALID == RtcSettings.valid);
 }
 
+/********************************************************************************************/
+
+uint32_t rtc_reboot_crc = 0;
+
+uint32_t GetRtcRebootCrc()
+{
+  uint32_t crc = 0;
+  uint8_t *bytes = (uint8_t*)&RtcReboot;
+
+  for (uint16_t i = 0; i < sizeof(RTCRBT); i++) {
+    crc += bytes[i]*(i+1);
+  }
+  return crc;
+}
+
+void RtcRebootSave()
+{
+  if (GetRtcRebootCrc() != rtc_reboot_crc) {
+    RtcReboot.valid = RTC_MEM_VALID;
+    ESP.rtcUserMemoryWrite(100 - sizeof(RTCRBT), (uint32_t*)&RtcReboot, sizeof(RTCRBT));
+    rtc_reboot_crc = GetRtcRebootCrc();
+  }
+}
+
+void RtcRebootLoad()
+{
+  ESP.rtcUserMemoryRead(100 - sizeof(RTCRBT), (uint32_t*)&RtcReboot, sizeof(RTCRBT));
+  if (RtcReboot.valid != RTC_MEM_VALID) {
+    memset(&RtcReboot, 0, sizeof(RTCRBT));
+    RtcReboot.valid = RTC_MEM_VALID;
+//    RtcReboot.fast_reboot_count = 0;  // Explicit by memset
+    RtcRebootSave();
+  }
+  rtc_reboot_crc = GetRtcRebootCrc();
+}
+
+boolean RtcRebootValid()
+{
+  return (RTC_MEM_VALID == RtcReboot.valid);
+}
+
 /*********************************************************************************************\
  * Config - Flash
 \*********************************************************************************************/
@@ -591,6 +632,9 @@ void SettingsDefaultSet2()
   Settings.latitude = (int)((double)LATITUDE * 1000000);
   Settings.longitude = (int)((double)LONGITUDE * 1000000);
   SettingsDefaultSet_5_13_1c();  // Time STD/DST settings
+
+  Settings.button_debounce = KEY_DEBOUNCE_TIME;
+  Settings.switch_debounce = SWITCH_DEBOUNCE_TIME;
 }
 
 /********************************************************************************************/
@@ -800,6 +844,10 @@ void SettingsDelta()
       Settings.flag3.timers_enable = 1;
     }
     if (Settings.version < 0x0601010C) {
+      Settings.button_debounce = KEY_DEBOUNCE_TIME;
+      Settings.switch_debounce = SWITCH_DEBOUNCE_TIME;
+    }
+    if (Settings.version < 0x06020003) {
       SettingsDefaultSet_RFBinds();
     }
 

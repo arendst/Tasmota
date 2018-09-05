@@ -155,6 +155,24 @@ bool RulesRuleMatch(byte rule_set, String &event, String &rule)
         break;
       }
     }
+    snprintf_P(stemp, sizeof(stemp), PSTR("%%TIME%%"));
+    if (rule_param.startsWith(stemp)) {
+      rule_param = String(GetMinutesPastMidnight());
+    }
+    snprintf_P(stemp, sizeof(stemp), PSTR("%%UPTIME%%"));
+    if (rule_param.startsWith(stemp)) {
+      rule_param = String(GetMinutesUptime());
+    }
+#if defined(USE_TIMERS) && defined(USE_SUNRISE)
+    snprintf_P(stemp, sizeof(stemp), PSTR("%%SUNRISE%%"));
+    if (rule_param.startsWith(stemp)) {
+      rule_param = String(GetSunMinutes(0));
+    }
+    snprintf_P(stemp, sizeof(stemp), PSTR("%%SUNSET%%"));
+    if (rule_param.startsWith(stemp)) {
+      rule_param = String(GetSunMinutes(1));
+    }
+#endif  // USE_TIMERS and USE_SUNRISE
     rule_param.toUpperCase();
     snprintf(rule_svalue, sizeof(rule_svalue), rule_param.c_str());
 
@@ -468,7 +486,7 @@ boolean RulesCommand()
   }
   else if ((CMND_RULE == command_code) && (index > 0) && (index <= MAX_RULE_SETS)) {
     if ((XdrvMailbox.data_len > 0) && (XdrvMailbox.data_len < sizeof(Settings.rules[index -1]))) {
-      if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 6)) {
+      if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 10)) {
         switch (XdrvMailbox.payload) {
         case 0: // Off
         case 1: // On
@@ -483,6 +501,13 @@ boolean RulesCommand()
           break;
         case 6: // Toggle
           bitWrite(Settings.rule_once, index -1, bitRead(Settings.rule_once, index -1) ^1);
+          break;
+        case 8: // Off
+        case 9: // On
+          bitWrite(Settings.rule_stop, index -1, XdrvMailbox.payload &1);
+          break;
+        case 10: // Toggle
+          bitWrite(Settings.rule_stop, index -1, bitRead(Settings.rule_stop, index -1) ^1);
           break;
         }
       } else {
@@ -501,8 +526,9 @@ boolean RulesCommand()
       }
       rules_triggers[index -1] = 0;  // Reset once flag
     }
-    snprintf_P (mqtt_data, sizeof(mqtt_data), PSTR("{\"%s%d\":\"%s\",\"Once\":\"%s\",\"Free\":%d,\"Rules\":\"%s\"}"),
-      command, index, GetStateText(bitRead(Settings.rule_enabled, index -1)), GetStateText(bitRead(Settings.rule_once, index -1)), sizeof(Settings.rules[index -1]) - strlen(Settings.rules[index -1]) -1, Settings.rules[index -1]);
+    snprintf_P (mqtt_data, sizeof(mqtt_data), PSTR("{\"%s%d\":\"%s\",\"Once\":\"%s\",\"StopOnError\":\"%s\",\"Free\":%d,\"Rules\":\"%s\"}"),
+      command, index, GetStateText(bitRead(Settings.rule_enabled, index -1)), GetStateText(bitRead(Settings.rule_once, index -1)),
+      GetStateText(bitRead(Settings.rule_stop, index -1)), sizeof(Settings.rules[index -1]) - strlen(Settings.rules[index -1]) -1, Settings.rules[index -1]);
   }
   else if ((CMND_RULETIMER == command_code) && (index > 0) && (index <= MAX_RULE_TIMERS)) {
     if (XdrvMailbox.data_len > 0) {

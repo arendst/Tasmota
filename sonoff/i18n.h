@@ -39,7 +39,9 @@
 #define D_JSON_BLOCKED_LOOP "Blocked Loop"
 #define D_JSON_BOOTVERSION "Boot"
 #define D_JSON_BOOTCOUNT "BootCount"
+#define D_JSON_BSSID "BSSId"
 #define D_JSON_BUILDDATETIME "BuildDateTime"
+#define D_JSON_CHANNEL "Channel"
 #define D_JSON_CO2 "CarbonDioxide"
 #define D_JSON_COMMAND "Command"
 #define D_JSON_CONNECT_FAILED "Connect failed"
@@ -192,6 +194,8 @@
 #define D_CMND_COUNTER "Counter"
 #define D_CMND_COUNTERTYPE "CounterType"
 #define D_CMND_COUNTERDEBOUNCE "CounterDebounce"
+#define D_CMND_BUTTONDEBOUNCE "ButtonDebounce"
+#define D_CMND_SWITCHDEBOUNCE "SwitchDebounce"
 #define D_CMND_SLEEP "Sleep"
 #define D_CMND_UPLOAD "Upload"
 #define D_CMND_UPGRADE "Upgrade"
@@ -237,6 +241,7 @@
 #define D_CMND_RFBUTTONMASK "RfButtonMask"
 #define D_CMND_RFBIND "RfBind"
 #define D_CMND_RFCLEAR "RfClear"
+#define D_LOG_SOME_SETTINGS_RESET "Some settings have been reset"
 
 // Commands xdrv_01_mqtt.ino
 #define D_CMND_MQTTHOST "MqttHost"

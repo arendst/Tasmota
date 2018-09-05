@@ -22,7 +22,7 @@
 
 #define PARAM8_SIZE  18                    // Number of param bytes (SetOption)
 
-typedef union {                            // Restricted by MISRA-C Rule 18.4 but so usefull...
+typedef union {                            // Restricted by MISRA-C Rule 18.4 but so useful...
   uint32_t data;                           // Allow bit manipulation using SetOption
   struct {                                 // SetOption0 .. SetOption31
     uint32_t save_state : 1;               // bit 0
@@ -60,7 +60,7 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
   };
 } SysBitfield;
 
-typedef union {                            // Restricted by MISRA-C Rule 18.4 but so usefull...
+typedef union {                            // Restricted by MISRA-C Rule 18.4 but so useful...
   uint32_t data;                           // Allow bit manipulation using SetOption
   struct {                                 // SetOption50 .. SetOption81
     uint32_t timers_enable : 1;            // bit 0 (v6.1.1b)
@@ -94,7 +94,7 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t spare28 : 1;
     uint32_t spare29 : 1;
     uint32_t spare30 : 1;
-    uint32_t spare31 : 1;
+    uint32_t user_esp8285_enable : 1;      // bit 31 (v6.1.1.14)
   };
 } SysBitfield3;
 
@@ -194,9 +194,7 @@ struct SYSCFG {
   char          sta_pwd[2][65];            // 0E3
   char          hostname[33];              // 165
   char          syslog_host[33];           // 186
-
-  byte          free1A7[1];                // 1A7
-
+  uint8_t       rule_stop;                 // 1A7
   uint16_t      syslog_port;               // 1A8
   byte          syslog_level;              // 1AA
   uint8_t       webserver;                 // 1AB
@@ -297,9 +295,7 @@ struct SYSCFG {
   char          ntp_server[3][33];         // 4CE
   byte          ina219_mode;               // 531
   uint16_t      pulse_timer[MAX_PULSETIMERS]; // 532
-
-  byte          free542[2];                // 542
-
+  uint16_t      button_debounce;           // 542
   uint32_t      ip_address[4];             // 544
   unsigned long energy_kWhtotal;           // 554
   char          mqtt_fulltopic[100];       // 558
@@ -309,8 +305,9 @@ struct SYSCFG {
   uint16_t      pulse_counter_debounce;    // 5D2
   uint8_t       rf_code[17][9];            // 5D4
 
-  byte          free_66d[3];               // 66D
+  byte          free_66d[1];               // 66D
 
+  uint16_t      switch_debounce;           // 66E
   Timer         timer[MAX_TIMERS];         // 670
   int           latitude;                  // 6B0
   int           longitude;                 // 6B4
@@ -321,7 +318,9 @@ struct SYSCFG {
   byte          knx_CB_param[MAX_KNX_CB];  // 6EC  Type of Output (set relay, toggle relay, reply sensor value)
   Mcp230xxCfg   mcp230xx_config[16];       // 6F6
   uint8_t       mcp230xx_int_prio;         // 716
-  byte          free_717;                  // 717
+
+  byte          free_717[1];               // 717
+
   uint16_t      mcp230xx_int_timer;        // 718
 
   byte          free_71A[180];             // 71A
@@ -336,6 +335,12 @@ struct SYSCFG {
                                            // E04 - FFF free locations
 } Settings;
 
+struct RTCRBT {
+  uint16_t      valid;                     // 000
+  uint8_t       fast_reboot_count;         // 002
+  uint8_t       free_003[1];               // 003
+} RtcReboot;
+
 struct RTCMEM {
   uint16_t      valid;                     // 000
   byte          oswatch_blocked_loop;      // 002
@@ -344,7 +349,8 @@ struct RTCMEM {
   unsigned long energy_kWhtotal;              // 008
   unsigned long pulse_counter[MAX_COUNTERS];  // 00C
   power_t       power;                     // 01C
-                                           // 020 next free location
+  uint8_t       free_020[60];              // 020
+                                           // 05C next free location (64 (=core) + 100 (=tasmota offset) + 92 (=0x5C RTCMEM struct) = 256 bytes (max = 512))
 } RtcSettings;
 
 struct TIME_T {
@@ -374,7 +380,7 @@ struct XDRVMAILBOX {
 } XdrvMailbox;
 
 #define MAX_RULES_FLAG  7                  // Number of bits used in RulesBitfield (tricky I know...)
-typedef union {                            // Restricted by MISRA-C Rule 18.4 but so usefull...
+typedef union {                            // Restricted by MISRA-C Rule 18.4 but so useful...
   uint16_t data;                           // Allow bit manipulation
   struct {
     uint16_t system_boot : 1;

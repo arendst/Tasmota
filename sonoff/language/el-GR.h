@@ -60,10 +60,12 @@
 #define D_BLINKOFF "Δεν αναβοσβήνει"
 #define D_BOOT_COUNT "Αριθμός εκκινήσεων"
 #define D_BRIGHTLIGHT "Λαμπερό"
+#define D_BSSID "BSSId"
 #define D_BUTTON "Κουμπί"
 #define D_BY "από"                    // Written by me
 #define D_BYTES "Bytes"
 #define D_CELSIUS "Κελσίου"
+#define D_CHANNEL "Channel"
 #define D_CO2 "Διοξείδιο του άνθρακα"
 #define D_CODE "κώδικας"                // Button code
 #define D_COLDLIGHT "Ψυχρός"

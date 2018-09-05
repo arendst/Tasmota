@@ -60,10 +60,12 @@
 #define D_BLINKOFF "BlikáníVyp"
 #define D_BOOT_COUNT "Počítadlo spuštění"
 #define D_BRIGHTLIGHT "Světlý"
+#define D_BSSID "BSSId"
 #define D_BUTTON "Tlačítko"
 #define D_BY "by"                    // Written by me
 #define D_BYTES "Bytů"
 #define D_CELSIUS "°C"
+#define D_CHANNEL "Channel"
 #define D_CO2 "CO2"
 #define D_CODE "kód"                 // Button code
 #define D_COLDLIGHT "Studené světlo"

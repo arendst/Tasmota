@@ -1083,32 +1083,45 @@ boolean LightCommand()
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_NVALUE, command, XdrvMailbox.index, round(light_current_color[XdrvMailbox.index -1] / 2.55));
   }
   else if ((CMND_HSBCOLOR == command_code) && ( light_subtype >= LST_RGB)) {
-    //  Implement method to "direct set" color by HSB (HSB is passed comma separated, 0<H<360 0<S<100 0<B<100 )
-    uint16_t HSB[3];
-    bool validHSB = true;
-
-    for (int i = 0; i < 3; i++) {
-      char *substr;
-
-      if (0 == i) {
-        substr = strtok(XdrvMailbox.data, ",");
-      } else {
-        substr = strtok(NULL, ",");
-      }
-      if (substr != NULL) {
-        HSB[i] = atoi(substr);
-      } else {
-        validHSB = false;
-      }
-    }
+    bool validHSB = (XdrvMailbox.data_len > 0);
     if (validHSB) {
-      //  Translate to fractional elements as required by LightHsbToRgb
-      //  Keep the results <=1 in the event someone passes something
-      //  out of range.
-      LightSetHsb(( (HSB[0]>360) ? (HSB[0] % 360) : HSB[0] ) /360.0,
-                  ( (HSB[1]>100) ? (HSB[1] % 100) : HSB[1] ) /100.0,
-                  ( (HSB[2]>100) ? (HSB[2] % 100) : HSB[2] ) /100.0,
-                  0);
+      uint16_t HSB[3];
+      if (strstr(XdrvMailbox.data, ",")) {  // Command with 3 comma separated parameters, Hue (0<H<360), Saturation (0<S<100) AND Brightness (0<B<100)
+        for (int i = 0; i < 3; i++) {
+          char *substr;
+
+          if (0 == i) {
+            substr = strtok(XdrvMailbox.data, ",");
+          } else {
+            substr = strtok(NULL, ",");
+          }
+          if (substr != NULL) {
+            HSB[i] = atoi(substr);
+          } else {
+            validHSB = false;
+          }
+        }
+      } else {  // Command with only 1 parameter, Hue (0<H<360), Saturation (0<S<100) OR Brightness (0<B<100)
+        float hsb[3];
+
+        LightGetHsb(&hsb[0],&hsb[1],&hsb[2]);
+        HSB[0] = round(hsb[0] * 360);
+        HSB[1] = round(hsb[1] * 100);
+        HSB[2] = round(hsb[2] * 100);
+        if ((XdrvMailbox.index > 0) && (XdrvMailbox.index < 4)) {
+          HSB[XdrvMailbox.index -1] = XdrvMailbox.payload;
+        } else {
+          validHSB = false;
+        }
+      }
+      if (validHSB) {
+        //  Translate to fractional elements as required by LightHsbToRgb
+        //  Keep the results <=1 in the event someone passes something out of range.
+        LightSetHsb(( (HSB[0]>360) ? (HSB[0] % 360) : HSB[0] ) /360.0,
+                    ( (HSB[1]>100) ? (HSB[1] % 100) : HSB[1] ) /100.0,
+                    ( (HSB[2]>100) ? (HSB[2] % 100) : HSB[2] ) /100.0,
+                    0);
+      }
     } else {
       LightState(0);
     }

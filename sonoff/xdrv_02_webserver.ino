@@ -254,7 +254,7 @@ const char HTTP_FORM_MODULE[] PROGMEM =
   "<input id='w' name='w' value='6,1' hidden>"
   "<br/><b>" D_MODULE_TYPE "</b> ({mt)<br/><select id='g99' name='g99'></select><br/>";
 const char HTTP_LNK_ITEM[] PROGMEM =
-  "<div><a href='#p' onclick='c(this)'>{v}</a>&nbsp;<span class='q'>{i} {r}%</span></div>";
+  "<div><a href='#p' onclick='c(this)'>{v}</a>&nbsp;({w})&nbsp<span class='q'>{i} {r}%</span></div>";
 const char HTTP_LNK_SCAN[] PROGMEM =
   "<div><a href='/w1'>" D_SCAN_FOR_WIFI_NETWORKS "</a></div><br/>";
 const char HTTP_FORM_WIFI[] PROGMEM =
@@ -372,8 +372,8 @@ long ajax_token = 1;
 static void WebGetArg(const char* arg, char* out, size_t max)
 {
   String s = WebServer->arg(arg);
-  strncpy(out, s.c_str(), max);
-  out[max-1] = '\0';  // Ensure terminating NUL
+  strlcpy(out, s.c_str(), max);
+//  out[max-1] = '\0';  // Ensure terminating NUL
 }
 
 void ShowWebSource(int source)
@@ -789,7 +789,7 @@ void HandleModuleConfiguration()
   page += FPSTR(HTTP_SCRIPT_MODULE3);
 
   for (byte i = 0; i < MAX_GPIO_PIN; i++) {
-    if (GPIO_USER == cmodule.gp.io[i]) {
+    if (GPIO_USER == ValidGPIO(i, cmodule.gp.io[i])) {
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("sk(%d,%d);"), my_module.gp.io[i], i);  // g0 - g16
       page += mqtt_data;
     }
@@ -803,10 +803,10 @@ void HandleModuleConfiguration()
   page.replace(F("{mt"), stemp);
   page += F("<br/><table>");
   for (byte i = 0; i < MAX_GPIO_PIN; i++) {
-    if (GPIO_USER == cmodule.gp.io[i]) {
+    if (GPIO_USER == ValidGPIO(i, cmodule.gp.io[i])) {
       snprintf_P(stemp, 3, PINS_WEMOS +i*2);
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("<tr><td style='width:190px'>%s <b>" D_GPIO "%d</b> %s</td><td style='width:146px'><select id='g%d' name='g%d'></select></td></tr>"),
-        (WEMOS==Settings.module)?stemp:"", i, (0==i)? D_SENSOR_BUTTON "1":(1==i)? D_SERIAL_OUT :(3==i)? D_SERIAL_IN :(12==i)? D_SENSOR_RELAY "1":(13==i)? D_SENSOR_LED "1i":(14==i)? D_SENSOR :"", i, i);
+        (WEMOS==Settings.module)?stemp:"", i, (0==i)? D_SENSOR_BUTTON "1":(1==i)? D_SERIAL_OUT :(3==i)? D_SERIAL_IN :(9==i)? "<font color='red'>ESP8285</font>" :(10==i)? "<font color='red'>ESP8285</font>" :(12==i)? D_SENSOR_RELAY "1":(13==i)? D_SENSOR_LED "1i":(14==i)? D_SENSOR :"", i, i);
       page += mqtt_data;
     }
   }
@@ -882,7 +882,7 @@ void HandleWifi(boolean scan)
       //display networks in page
       for (int i = 0; i < n; i++) {
         if (-1 == indices[i]) { continue; }  // skip dups
-        snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_WIFI D_SSID " %s, " D_RSSI " %d"), WiFi.SSID(indices[i]).c_str(), WiFi.RSSI(indices[i]));
+        snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_WIFI D_SSID " %s, " D_BSSID " %s, " D_CHANNEL " %d, " D_RSSI " %d"), WiFi.SSID(indices[i]).c_str(), WiFi.BSSIDstr(indices[i]).c_str(), WiFi.channel(indices[i]), WiFi.RSSI(indices[i]));
         AddLog(LOG_LEVEL_DEBUG);
         int quality = WifiGetRssiAsQuality(WiFi.RSSI(indices[i]));
 
@@ -891,6 +891,7 @@ void HandleWifi(boolean scan)
           String rssiQ;
           rssiQ += quality;
           item.replace(F("{v}"), WiFi.SSID(indices[i]));
+          item.replace(F("{w}"), String(WiFi.channel(indices[i])));
           item.replace(F("{r}"), rssiQ);
           uint8_t auth = WiFi.encryptionType(indices[i]);
           item.replace(F("{i}"), (ENC_TYPE_WEP == auth) ? F(D_WEP) : (ENC_TYPE_TKIP == auth) ? F(D_WPA_PSK) : (ENC_TYPE_CCMP == auth) ? F(D_WPA2_PSK) : (ENC_TYPE_AUTO == auth) ? F(D_AUTO) : F(""));
@@ -1702,31 +1703,33 @@ void HandleHttpCommand()
     WebGetArg("cmnd", svalue, sizeof(svalue));
     if (strlen(svalue)) {
       ExecuteWebCommand(svalue, SRC_WEBCOMMAND);
-    }
 
-    if (web_log_index != curridx) {
-      byte counter = curridx;
-      message = F("{");
-      do {
-        char* tmp;
-        size_t len;
-        GetLog(counter, &tmp, &len);
-        if (len) {
-          // [14:49:36 MQTT: stat/wemos5/RESULT = {"POWER":"OFF"}] > [{"POWER":"OFF"}]
-          char* JSON = (char*)memchr(tmp, '{', len);
-          if (JSON) { // Is it a JSON message (and not only [15:26:08 MQT: stat/wemos5/POWER = O])
-            if (message.length() > 1) { message += F(","); }
-            size_t JSONlen = len - (JSON - tmp);
-            strlcpy(mqtt_data, JSON +1, JSONlen -2);
-            message += mqtt_data;
+      if (web_log_index != curridx) {
+        byte counter = curridx;
+        message = F("{");
+        do {
+          char* tmp;
+          size_t len;
+          GetLog(counter, &tmp, &len);
+          if (len) {
+            // [14:49:36 MQTT: stat/wemos5/RESULT = {"POWER":"OFF"}] > [{"POWER":"OFF"}]
+            char* JSON = (char*)memchr(tmp, '{', len);
+            if (JSON) { // Is it a JSON message (and not only [15:26:08 MQT: stat/wemos5/POWER = O])
+              if (message.length() > 1) { message += F(","); }
+              size_t JSONlen = len - (JSON - tmp);
+              strlcpy(mqtt_data, JSON +1, JSONlen -2);
+              message += mqtt_data;
+            }
           }
-        }
-        counter++;
-        if (!counter) counter++;  // Skip 0 as it is not allowed
-      } while (counter != web_log_index);
-      message += F("}");
+          counter++;
+          if (!counter) counter++;  // Skip 0 as it is not allowed
+        } while (counter != web_log_index);
+        message += F("}");
+      } else {
+        message += F(D_ENABLE_WEBLOG_FOR_RESPONSE "\"}");
+      }
     } else {
-      message += F(D_ENABLE_WEBLOG_FOR_RESPONSE "\"}");
+      message += F(D_ENTER_COMMAND " cmnd=\"}");
     }
   } else {
     message += F(D_NEED_USER_AND_PASSWORD "\"}");
@@ -2019,7 +2022,7 @@ bool WebCommand()
   }
   else if (CMND_WEBPASSWORD == command_code) {
     if ((XdrvMailbox.data_len > 0) && (XdrvMailbox.data_len < sizeof(Settings.web_password))) {
-      strlcpy(Settings.web_password, (!strcmp(XdrvMailbox.data,"0")) ? "" : (1 == XdrvMailbox.payload) ? WEB_PASSWORD : XdrvMailbox.data, sizeof(Settings.web_password));
+      strlcpy(Settings.web_password, (SC_CLEAR == Shortcut(XdrvMailbox.data)) ? "" : (SC_DEFAULT == Shortcut(XdrvMailbox.data)) ? WEB_PASSWORD : XdrvMailbox.data, sizeof(Settings.web_password));
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, Settings.web_password);
     } else {
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_ASTERIX, command);

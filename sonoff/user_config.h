@@ -167,7 +167,9 @@
 #define APP_BLINKCOUNT         10                // [BlinkCount] Number of blinks (0 = 32000)
 #define APP_SLEEP              0                 // [Sleep] Sleep time to lower energy consumption (0 = Off, 1 - 250 mSec)
 
+#define KEY_DEBOUNCE_TIME      50                // [ButtonDebounce] Number of mSeconds button press debounce time
 #define KEY_HOLD_TIME          40                // [SetOption32] Number of 0.1 seconds to hold Button or external Pushbutton before sending HOLD message
+#define SWITCH_DEBOUNCE_TIME   50                // [SwitchDebounce] Number of mSeconds switch press debounce time
 #define SWITCH_MODE            TOGGLE            // [SwitchMode] TOGGLE, FOLLOW, FOLLOW_INV, PUSHBUTTON, PUSHBUTTON_INV, PUSHBUTTONHOLD, PUSHBUTTONHOLD_INV, PUSHBUTTON_TOGGLE (the wall switch state)
 #define WS2812_LEDS            30                // [Pixels] Number of WS2812 LEDs to start with (max is 512)
 
@@ -268,7 +270,7 @@
 
 // -- One wire sensors ----------------------------
                                                  // WARNING: Select none for default one DS18B20 sensor or enable one of the following two options for multiple sensors
-//#define USE_DS18x20                              // Optional for more than one DS18x20 sensors with id sort, single scan and read retry (+1k3 code)
+#define USE_DS18x20                              // Optional for more than one DS18x20 sensors with id sort, single scan and read retry (+1k3 code)
 //#define USE_DS18x20_LEGACY                       // Optional for more than one DS18x20 sensors with dynamic scan using library OneWire (+1k5 code)
 
 // -- I2C sensors ---------------------------------
@@ -292,18 +294,18 @@
 //  #define USE_SI1145                             // Enable SI1145/46/47 sensor (I2C address 0x60) (+1k code)
   #define USE_LM75AD                             // Enable LM75AD sensor (I2C addresses 0x48 - 0x4F) (+0k5 code)
 //  #define USE_APDS9960                           // Enable APDS9960 Proximity Sensor (I2C address 0x39). Disables SHT and VEML6070 (+4k7 code)
-//  #define USE_MCP230xx                           // Enable MCP23008/MCP23017 for GP INPUT ONLY (I2C addresses 0x20 - 0x27) providing command Sensor29 for configuration (+2k2 code)
-//    #define USE_MCP230xx_OUTPUT                  // Enable MCP23008/MCP23017 OUTPUT support through sensor29 commands (+1k code)
+//  #define USE_MCP230xx                           // Enable MCP23008/MCP23017 for GP INPUT ONLY (I2C addresses 0x20 - 0x27) providing command Sensor29 for configuration (+4k7 code)
+//    #define USE_MCP230xx_OUTPUT                  // Enable MCP23008/MCP23017 OUTPUT support through sensor29 commands (+1k5 code)
 //    #define USE_MCP230xx_DISPLAYOUTPUT           // Enable MCP23008/MCP23017 to display state of OUTPUT pins on Web UI (+0k2 code)
 //  #define USE_MPR121                             // Enable MPR121 controller (I2C addresses 0x5A, 0x5B, 0x5C and 0x5D) in input mode for touch buttons (+1k3 code)
 //  #define USE_CCS811                             // Enable CCS811 sensor (I2C address 0x5A) (+2k2 code)
 //  #define USE_MPU6050                            // Enable MPU6050 sensor (I2C address 0x68 AD0 low or 0x69 AD0 high) (+2k6 code)
 
-//  #define USE_DISPLAY                            // Add I2C Display Support for LCD, Oled and up to eigth Matrices (+19k code)
+//  #define USE_DISPLAY                            // Add I2C Display Support (+2k code)
     #define USE_DISPLAY_MODES1TO5                // Enable display mode 1 to 5 in addition to mode 0
-    #define USE_DISPLAY_LCD                      // [DisplayModel 1] Enable Lcd display (I2C addresses 0x27 and 0x3F)
-    #define USE_DISPLAY_SSD1306                  // [DisplayModel 2] Enable SSD1306 Oled 128x64 display (I2C addresses 0x3C and 0x3D)
-    #define USE_DISPLAY_MATRIX                   // [DisplayModel 3] Enable 8x8 Matrix display (I2C adresseses see below)
+    #define USE_DISPLAY_LCD                      // [DisplayModel 1] Enable Lcd display (I2C addresses 0x27 and 0x3F) (+6k code)
+    #define USE_DISPLAY_SSD1306                  // [DisplayModel 2] Enable SSD1306 Oled 128x64 display (I2C addresses 0x3C and 0x3D) (+16k code)
+    #define USE_DISPLAY_MATRIX                   // [DisplayModel 3] Enable 8x8 Matrix display (I2C adresseses see below) (+11k code)
       #define MTX_ADDRESS1     0x71              // [DisplayAddress1] I2C address of first 8x8 matrix module
       #define MTX_ADDRESS2     0x74              // [DisplayAddress2] I2C address of second 8x8 matrix module
       #define MTX_ADDRESS3     0x75              // [DisplayAddress3] I2C address of third 8x8 matrix module
@@ -322,9 +324,8 @@
   #ifndef USE_DISPLAY
   #define USE_DISPLAY                            // Add SPI Display support for 320x240 and 480x320 TFT
   #endif
-    #define USE_DISPLAY_ILI9341                  // [DisplayModel 4] Enable ILI9341 Tft 480x320 display
-//    #define USE_DISPLAY_EPAPER                   // [DisplayModel 5] Enable e-paper display
-
+    #define USE_DISPLAY_ILI9341                  // [DisplayModel 4] Enable ILI9341 Tft 480x320 display (+19k code)
+//    #define USE_DISPLAY_EPAPER                   // [DisplayModel 5] Enable e-paper display (+19k code)
 #endif  // USE_SPI
 
 // -- Serial sensors ------------------------------
@@ -365,30 +366,15 @@
 //#define USE_DEBUG_DRIVER                         // Use xdrv_99_debug.ino providing commands CpuChk, CfgXor, CfgDump, CfgPeek and CfgPoke
 
 /*********************************************************************************************\
- * Select features and sensors enabled in previous version saving space
+ * Optional firmware configurations
+ * Select none or just one for optional features and sensors as configured in sonoff_post.h
+ * See RELEASENOTES.md for selected features
 \*********************************************************************************************/
 
-//#define USE_CLASSIC                              // Create sonoff-classic (See sonoff_post.h for selected features)
-
-/*********************************************************************************************\
- * Select all sensors - overrides above undefines!!
-\*********************************************************************************************/
-
-//#define USE_ALL_SENSORS                          // Create sonoff-allsensors with all sensors enabled (See sonoff_post.h for selected sensors)
-
-/*********************************************************************************************\
- * Select KNX without Emulation to save space
-\*********************************************************************************************/
-
-//#define USE_KNX_NO_EMULATION                     // Create sonoff-knx with KNX but without Emulation (See sonoff_post.h)
-
-/*********************************************************************************************\
- * Compile a minimal version if upgrade memory gets tight ONLY TO BE USED FOR UPGRADE STEP 1!
- *   To be used as step 1 during upgrade.
- *   Step 2 is re-compile with option BE_MINIMAL commented out.
-\*********************************************************************************************/
-
-//#define BE_MINIMAL                               // Minimal version if upgrade memory gets tight (-45k code, -2k mem)
+//#define USE_CLASSIC                              // Create sonoff-classic with initial configuration tools WPS, SmartConfig and WifiManager
+//#define USE_SENSORS                              // Create sonoff-sensors with useful sensors enabled
+//#define USE_KNX_NO_EMULATION                     // Create sonoff-knx with KNX but without Emulation
+//#define BE_MINIMAL                               // Create sonoff-minimal as intermediate firmware for OTA-MAGIC
 
 /*********************************************************************************************\
  * No user configurable items below
