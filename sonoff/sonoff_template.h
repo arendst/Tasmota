@@ -136,9 +136,6 @@ enum ProgramSelectablePins {
   GPIO_DI,             // my92x1 PWM input
   GPIO_DCKI,           // my92x1 CLK input
   GPIO_ARIRFRCV,       // AliLux RF Receive input
-  GPIO_MCP39_TX,       // MCP39F501 Serial output
-  GPIO_MCP39_RX,       // MCP39F501 Serial input
-  GPIO_MCP39_RST,      // MCP39F501 Serial reset
   GPIO_USER,           // User configurable
   GPIO_MAX };
 
@@ -550,8 +547,8 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
   { "H801",            // Lixada H801 Wifi (ESP8266)
      GPIO_USER,        // GPIO00 E-FW Button
      GPIO_LED1,        // GPIO01 Green LED
-     GPIO_USER,         // GPIO02 RX and Optional sensor - Pin next to TX on the PCB
-     GPIO_USER,         // GPIO03 TX and Optional sensor - Pin next to GND on the PCB
+     GPIO_USER,        // GPIO02 TX and Optional sensor - Pin next to TX on the PCB
+     GPIO_USER,        // GPIO03 RX and Optional sensor - Pin next to GND on the PCB
      GPIO_PWM5,        // GPIO04 W2 - PWM5
      GPIO_LED2_INV,    // GPIO05 Red LED
      0, 0, 0, 0, 0, 0, // Flash connection
@@ -923,16 +920,16 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
   },
   { "Shelly 2",         // Shelly2 (ESP8266 - 2MB) - https://shelly.cloud/shelly2/
      0,
-     GPIO_MCP39_RX,     // GPIO01 MCP39F501 Serial input
+     GPIO_TXD,          // GPIO01 MCP39F501 Serial input
      0,
-     GPIO_MCP39_TX,     // GPIO03 MCP39F501 Serial output
+     GPIO_RXD,          // GPIO03 MCP39F501 Serial output
      GPIO_REL1,         // GPIO04
      GPIO_REL2,         // GPIO05
      0, 0, 0, 0, 0, 0,  // Flash connection
      GPIO_SWT1_NP,      // GPIO12
      0,
      GPIO_SWT2_NP,      // GPIO14
-     GPIO_MCP39_RST,    // GPIO15 MCP39F501 Reset
+     0,                 // GPIO15 MCP39F501 Reset
      0, 0
   }
 };
@@ -1002,7 +999,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      0, 0
   }
 
-  { "Ledunia",         // Ledunia (ESP8266) - http://ledunia.de/
+  { "Ledunia",         // Ledunia (ESP8266 - 32MB) - http://ledunia.de/
      GPIO_USER,        // GPIO00 (D0)
      GPIO_USER,        // GPIO01 (D7) Serial RXD
      GPIO_USER,        // GPIO02 (D2)
