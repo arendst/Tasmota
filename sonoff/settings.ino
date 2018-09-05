@@ -84,7 +84,6 @@ void RtcSettingsSave()
 {
   if (GetRtcSettingsCrc() != rtc_settings_crc) {
     RtcSettings.valid = RTC_MEM_VALID;
-    RtcSettings.extended_valid = RTC_MEM_VALID;
     ESP.rtcUserMemoryWrite(100, (uint32_t*)&RtcSettings, sizeof(RTCMEM));
     rtc_settings_crc = GetRtcSettingsCrc();
 #ifdef DEBUG_THEO
@@ -104,14 +103,12 @@ void RtcSettingsLoad()
   if (RtcSettings.valid != RTC_MEM_VALID) {
     memset(&RtcSettings, 0, sizeof(RTCMEM));
     RtcSettings.valid = RTC_MEM_VALID;
-    RtcSettings.extended_valid = RTC_MEM_VALID;
     RtcSettings.energy_kWhtoday = Settings.energy_kWhtoday;
     RtcSettings.energy_kWhtotal = Settings.energy_kWhtotal;
     for (byte i = 0; i < MAX_COUNTERS; i++) {
       RtcSettings.pulse_counter[i] = Settings.pulse_counter[i];
     }
     RtcSettings.power = Settings.power;
-//    RtcSettings.fast_reboot_count = 0;  // Explicit by memset
     RtcSettingsSave();
   }
   rtc_settings_crc = GetRtcSettingsCrc();
@@ -122,9 +119,45 @@ boolean RtcSettingsValid()
   return (RTC_MEM_VALID == RtcSettings.valid);
 }
 
-boolean RtcSettingsExtendedValid()
+/********************************************************************************************/
+
+uint32_t rtc_reboot_crc = 0;
+
+uint32_t GetRtcRebootCrc()
 {
-  return (RTC_MEM_VALID == RtcSettings.extended_valid);
+  uint32_t crc = 0;
+  uint8_t *bytes = (uint8_t*)&RtcReboot;
+
+  for (uint16_t i = 0; i < sizeof(RTCRBT); i++) {
+    crc += bytes[i]*(i+1);
+  }
+  return crc;
+}
+
+void RtcRebootSave()
+{
+  if (GetRtcRebootCrc() != rtc_reboot_crc) {
+    RtcReboot.valid = RTC_MEM_VALID;
+    ESP.rtcUserMemoryWrite(100 - sizeof(RTCRBT), (uint32_t*)&RtcReboot, sizeof(RTCRBT));
+    rtc_reboot_crc = GetRtcRebootCrc();
+  }
+}
+
+void RtcRebootLoad()
+{
+  ESP.rtcUserMemoryRead(100 - sizeof(RTCRBT), (uint32_t*)&RtcReboot, sizeof(RTCRBT));
+  if (RtcReboot.valid != RTC_MEM_VALID) {
+    memset(&RtcReboot, 0, sizeof(RTCRBT));
+    RtcReboot.valid = RTC_MEM_VALID;
+//    RtcReboot.fast_reboot_count = 0;  // Explicit by memset
+    RtcRebootSave();
+  }
+  rtc_reboot_crc = GetRtcRebootCrc();
+}
+
+boolean RtcRebootValid()
+{
+  return (RTC_MEM_VALID == RtcReboot.valid);
 }
 
 /*********************************************************************************************\

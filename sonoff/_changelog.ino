@@ -1,4 +1,10 @@
-/* 6.2.0 20180901
+/* 6.2.1 20180905
+ * Fix possible ambiguity on command parameters if StateText contains numbers only (#3656)
+ * Fix Wemo emulation to select the first relay when more than one relay is present (#3657)
+ * Fix possible exception due to buffer overflow (#3659)
+ * Fix lost energy today and total energy value after power cycle (#3689)
+ *
+ * 6.2.0 20180901
  * Allow user override of define MAX_RULE_VARS and MAX_RULE_TIMERS (#3561)
  * Disable wifi sleep for both Esp8266/Arduino core 2.4.1 and 2.4.2 to solve device freeze caused by Espressif SDK bug (#3554)
  * Change DS18B20 driver to provide better instant results

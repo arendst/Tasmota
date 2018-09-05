@@ -386,11 +386,16 @@ void HandleUpnpEvent()
   String state_xml = FPSTR(WEMO_RESPONSE_STATE_SOAP);
   //differentiate get and set state
   if (request.indexOf(F("SetBinaryState")) > 0) {
+    uint8_t power = POWER_TOGGLE;
     if (request.indexOf(F("State>1</Binary")) > 0) {
-      ExecuteCommandPower(devices_present, POWER_ON, SRC_WEMO);
+      power = POWER_ON;
     }
     else if (request.indexOf(F("State>0</Binary")) > 0) {
-      ExecuteCommandPower(devices_present, POWER_OFF, SRC_WEMO);
+      power = POWER_OFF;
+    }
+    if (power != POWER_TOGGLE) {
+      uint8_t device = (light_type) ? devices_present : 1;  // Select either a configured light or relay1
+      ExecuteCommandPower(device, power, SRC_WEMO);
     }
   }
   else if(request.indexOf(F("GetBinaryState")) > 0){
