@@ -13,7 +13,7 @@ If you like **Sonoff-Tasmota**, give it a star, or fork it and contribute!
 [![donate](https://img.shields.io/badge/donate-PayPal-blue.svg)](https://paypal.me/tasmota)
 
 ### Development
-[![Dev Version](https://img.shields.io/badge/development%20version-6.2.0.x-blue.svg)](https://github.com/arendst/Sonoff-Tasmota)
+[![Dev Version](https://img.shields.io/badge/development%20version-6.2.1.x-blue.svg)](https://github.com/arendst/Sonoff-Tasmota)
 [![Download Dev](https://img.shields.io/badge/download-development-yellow.svg)](http://thehackbox.org/tasmota/)
 [![Build Status](https://img.shields.io/travis/arendst/Sonoff-Tasmota.svg)](https://travis-ci.org/arendst/Sonoff-Tasmota)
 
