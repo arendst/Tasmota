@@ -2347,7 +2347,7 @@ void GpioInit()
     if (mpin) pin[mpin] = i;
   }
 
-  if (2 == pin[GPIO_TXD]) Serial.set_tx(2);
+  if ((2 == pin[GPIO_TXD]) || (H801 == Settings.module)) { Serial.set_tx(2); }
 
   analogWriteRange(Settings.pwm_range);      // Default is 1023 (Arduino.h)
   analogWriteFreq(Settings.pwm_frequency);   // Default is 1000 (core_esp8266_wiring_pwm.c)
@@ -2540,19 +2540,19 @@ void setup()
   snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION D_BOOT_COUNT " %d"), Settings.bootcount);
   AddLog(LOG_LEVEL_DEBUG);
 
-  GpioInit();
-
-  SetSerialBaudrate(baudrate);
-
   Format(mqtt_client, Settings.mqtt_client, sizeof(mqtt_client));
   Format(mqtt_topic, Settings.mqtt_topic, sizeof(mqtt_topic));
-
   if (strstr(Settings.hostname, "%")) {
     strlcpy(Settings.hostname, WIFI_HOSTNAME, sizeof(Settings.hostname));
     snprintf_P(my_hostname, sizeof(my_hostname)-1, Settings.hostname, mqtt_topic, ESP.getChipId() & 0x1FFF);
   } else {
     snprintf_P(my_hostname, sizeof(my_hostname)-1, Settings.hostname);
   }
+
+  GpioInit();
+
+  SetSerialBaudrate(baudrate);
+
   WifiConnect();
 
   if (MOTOR == Settings.module) Settings.poweronstate = POWER_ALL_ON;  // Needs always on else in limbo!
