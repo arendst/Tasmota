@@ -1066,9 +1066,6 @@ boolean Xdrv13(byte function)
       case FUNC_PRE_INIT:
         DisplayInitDriver();
         break;
-      case FUNC_DISPLAY:
-        DisplayLogBufferAdd(log_data);
-        break;
       case FUNC_EVERY_50_MSECOND:
         if (Settings.display_model) { XdspCall(FUNC_DISPLAY_EVERY_50_MSECOND); }
         break;
