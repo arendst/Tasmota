@@ -143,7 +143,7 @@ char* subStr(char* dest, char* str, const char *delim, int index)
   int i;
 
   // Since strtok consumes the first arg, make a copy
-  strlcpy(dest, str, strlen(str));
+  strncpy(dest, str, strlen(str));
   for (i = 1, act = dest; i <= index; i++, act = NULL) {
     sub = strtok_r(act, delim, &ptr);
     if (sub == NULL) break;
