@@ -174,6 +174,19 @@ void Ssd1306Time()
   oled->println(line);
   snprintf_P(line, sizeof(line), PSTR("%02d" D_MONTH_DAY_SEPARATOR "%02d" D_YEAR_MONTH_SEPARATOR "%04d"), RtcTime.day_of_month, RtcTime.month, RtcTime.year);   // [01-02-2018]
   oled->println(line);
+
+  String ipinfo;
+  oled->setTextSize(1);
+  ipinfo = F( "IP: " );
+  ipinfo += WiFi.localIP().toString();
+  oled->println(ipinfo.c_str());
+  ipinfo = F( "MAC " ); ipinfo += WiFi.macAddress();
+  oled->println(ipinfo.c_str());
+  ipinfo = F(D_SSID ": " ); ipinfo += Settings.sta_ssid[Settings.sta_active]; ipinfo += F(" ("); ipinfo += WifiGetRssiAsQuality(WiFi.RSSI()); ipinfo += F("%)");
+  oled->println(ipinfo.c_str());
+  ipinfo = F("Host: " ); ipinfo += my_hostname;
+  oled->println(ipinfo.c_str());
+
   oled->display();
 }
 
