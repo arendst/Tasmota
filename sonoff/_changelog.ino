@@ -2,6 +2,7 @@
  * Rewrite energy monitoring using energy sensor driver modules
  * Add Wifi channel number to state message (#3664)
  * Add support for Shelly 1 and basic support for Shelly 2 - No energy monitoring yet (#2789)
+ * Add network information to display start screen (#3704)
  *
  * 6.2.1 20180905
  * Fix possible ambiguity on command parameters if StateText contains numbers only (#3656)

@@ -626,11 +626,24 @@ void DisplayLogBufferInit()
 
     DisplayReAllocLogBuffer();
 
-    char buffer[20];
+    char buffer[40];
     snprintf_P(buffer, sizeof(buffer), PSTR(D_VERSION " %s"), my_version);
     DisplayLogBufferAdd(buffer);
     snprintf_P(buffer, sizeof(buffer), PSTR("Display mode %d"), Settings.display_mode);
     DisplayLogBufferAdd(buffer);
+
+    snprintf_P(buffer, sizeof(buffer), PSTR(D_CMND_HOSTNAME " %s"), my_hostname);
+    DisplayLogBufferAdd(buffer);
+    snprintf_P(buffer, sizeof(buffer), PSTR(D_JSON_SSID " %s"), Settings.sta_ssid[Settings.sta_active]);
+    DisplayLogBufferAdd(buffer);
+    snprintf_P(buffer, sizeof(buffer), PSTR(D_JSON_MAC " %s"), WiFi.macAddress().c_str());
+    DisplayLogBufferAdd(buffer);
+    if (!global_state.wifi_down && (static_cast<uint32_t>(WiFi.localIP()) != 0)) {
+      snprintf_P(buffer, sizeof(buffer), PSTR("IP %s"), WiFi.localIP().toString().c_str());
+      DisplayLogBufferAdd(buffer);
+      snprintf_P(buffer, sizeof(buffer), PSTR(D_JSON_RSSI " %d%%"), WifiGetRssiAsQuality(WiFi.RSSI()));
+      DisplayLogBufferAdd(buffer);
+    }
   }
 }
 
@@ -915,8 +928,8 @@ boolean DisplayCommand()
           if (last_display_mode && !Settings.display_mode) {  // Switch to mode 0
             DisplayInit(DISPLAY_INIT_MODE);
             DisplayClear();
-          }
-          if (!last_display_mode && Settings.display_mode) {  // Switch to non mode 0
+          } else {
+//          if (!last_display_mode && Settings.display_mode) {  // Switch to non mode 0
             DisplayLogBufferInit();
             DisplayInit(DISPLAY_INIT_MODE);
           }
@@ -1046,6 +1059,9 @@ boolean Xdrv13(byte function)
     switch (function) {
       case FUNC_PRE_INIT:
         DisplayInitDriver();
+        break;
+      case FUNC_DISPLAY:
+        DisplayLogBufferAdd(log_data);
         break;
       case FUNC_EVERY_50_MSECOND:
         if (Settings.display_model) { XdspCall(FUNC_DISPLAY_EVERY_50_MSECOND); }
