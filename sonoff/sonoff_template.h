@@ -550,8 +550,8 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
   { "H801",            // Lixada H801 Wifi (ESP8266)
      GPIO_USER,        // GPIO00 E-FW Button
      GPIO_LED1,        // GPIO01 Green LED
-     GPIO_TXD,         // GPIO02 RX - Pin next to TX on the PCB
-     GPIO_RXD,         // GPIO03 TX - Pin next to GND on the PCB
+     GPIO_USER,         // GPIO02 RX and Optional sensor - Pin next to TX on the PCB
+     GPIO_USER,         // GPIO03 TX and Optional sensor - Pin next to GND on the PCB
      GPIO_PWM5,        // GPIO04 W2 - PWM5
      GPIO_LED2_INV,    // GPIO05 Red LED
      0, 0, 0, 0, 0, 0, // Flash connection
