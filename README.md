@@ -93,6 +93,7 @@ The following devices are supported:
 - [BlitzWolf BW-SHP2 Smart Socket with Energy Monitoring](https://www.banggood.com/BlitzWolf-BW-SHP2-Smart-WIFI-Socket-EU-Plug-220V-16A-Work-with-Amazon-Alexa-Google-Assistant-p-1292899.html)
 - [Luani HVIO board](https://luani.de/projekte/esp8266-hvio/)
 - Wemos D1 mini, NodeMcu and Ledunia
+- [LightFox Dual](https://github.com/foxel/esp-dual-rf-switch)
 
 ### Contribute
 You can contribute to Sonoff-Tasmota by

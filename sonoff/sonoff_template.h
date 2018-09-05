@@ -225,6 +225,7 @@ enum SupportedModules {
   BLITZWOLF_BWSHP2,
   SHELLY1,
   SHELLY2,
+  LIGHTFOX_DUAL,
   MAXMODULE };
 
 /********************************************************************************************/
@@ -289,7 +290,8 @@ const uint8_t kNiceList[MAXMODULE] PROGMEM = {
   KMC_70011,
   AILIGHT,
   WEMOS,
-  WITTY
+  WITTY,
+  LIGHTFOX_DUAL
 };
 
 // Default module settings
@@ -934,6 +936,16 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_SWT2_NP,      // GPIO14
      GPIO_MCP39_RST,    // GPIO15 MCP39F501 Reset
      0, 0
+  },
+  { "LightFox Dual",  // Foxel's LightFox Dual (ESP8266 + RF)
+    0,
+    GPIO_TXD,         // GPIO01 Relay control
+    GPIO_USER,        // Currently connected to ATtiny
+    GPIO_RXD,         // GPIO03 Relay control
+    0,                // GPIO04 No Connection
+    0,
+    0, 0, 0, 0, 0, 0, // Flash connection
+    0, 0, 0, 0, 0, 0
   }
 };
 

@@ -576,6 +576,9 @@ void SettingsDefaultSet2()
   Settings.flag2.temperature_resolution = TEMP_RESOLUTION;
 //  Settings.altitude = 0;
 
+  // LightFox Dual
+  SettingsDefaultSet_RFBinds();
+
   // Rules
 //  Settings.flag.rules_enabled = 0;
 //  Settings.flag.rules_once = 0;
@@ -699,6 +702,15 @@ void SettingsDefaultSet_5_13_1c()
 {
   SettingsResetStd();
   SettingsResetDst();
+}
+
+void SettingsDefaultSet_RFBinds()
+{
+  for (byte i = 0; i < MAX_KEYS; i++) {
+    Settings.rf_button_mask[i] = 0x00;
+  }
+  Settings.rf_button_mask[0] = 0x09; // 1001
+  Settings.rf_button_mask[1] = 0x06; // 0110
 }
 
 /********************************************************************************************/
@@ -834,6 +846,9 @@ void SettingsDelta()
     if (Settings.version < 0x0601010C) {
       Settings.button_debounce = KEY_DEBOUNCE_TIME;
       Settings.switch_debounce = SWITCH_DEBOUNCE_TIME;
+    }
+    if (Settings.version < 0x06020003) {
+      SettingsDefaultSet_RFBinds();
     }
 
     Settings.version = VERSION;

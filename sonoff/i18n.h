@@ -238,6 +238,9 @@
 #define D_CMND_SERIALSEND "SerialSend"
 #define D_CMND_SERIALDELIMITER "SerialDelimiter"
 #define D_CMND_BAUDRATE "Baudrate"
+#define D_CMND_RFBUTTONMASK "RfButtonMask"
+#define D_CMND_RFBIND "RfBind"
+#define D_CMND_RFCLEAR "RfClear"
 #define D_LOG_SOME_SETTINGS_RESET "Some settings have been reset"
 
 // Commands xdrv_01_mqtt.ino
