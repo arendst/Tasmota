@@ -397,7 +397,6 @@ void HandleUpnpEvent()
       uint8_t device = (light_type) ? devices_present : 1;  // Select either a configured light or relay1
       ExecuteCommandPower(device, power, SRC_WEMO);
     }
-
   }
   else if(request.indexOf(F("GetBinaryState")) > 0){
     state_xml.replace(F("Set"), F("Get"));
