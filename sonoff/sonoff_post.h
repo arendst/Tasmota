@@ -137,6 +137,7 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #undef USE_PMS5003                            // Disable support for PMS5003 and PMS7003 particle concentration sensor
 #undef USE_NOVA_SDS                           // Disable support for SDS011 and SDS021 particle concentration sensor
 #undef USE_PZEM004T                           // Disable PZEM004T energy sensor
+#undef USE_PZEM2                              // Disable PZEM003,014,016,017 Energy monitor
 #undef USE_SERIAL_BRIDGE                      // Disable support for software Serial Bridge
 #undef USE_SDM120                             // Disable support for Eastron SDM120-Modbus energy meter
 #undef USE_SDM630                             // Disable support for Eastron SDM630-Modbus energy meter
