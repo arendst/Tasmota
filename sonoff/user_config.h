@@ -343,7 +343,7 @@
 
 // Power monitoring sensors -----------------------
 #define USE_PZEM004T                             // Add support for PZEM004T Energy monitor (+2k code)
-#define USE_PZEM2                                // Add support for PZEM003,014,016,017 Energy monitor (+2k code)
+#define USE_PZEM2                                // Add support for PZEM003,014,016,017 Energy monitor (+1k1 code)
 
 // -- Low level interface devices -----------------
 #define USE_IR_REMOTE                            // Send IR remote commands using library IRremoteESP8266 and ArduinoJson (+4k code, 0k3 mem, 48 iram)

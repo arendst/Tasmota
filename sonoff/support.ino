@@ -609,6 +609,10 @@ boolean GetUsedInModule(byte val, uint8_t *arr)
   if (GPIO_PZEM_TX == val) { return true; }
   if (GPIO_PZEM_RX == val) { return true; }
 #endif
+#ifndef USE_PZEM2
+  if (GPIO_PZEM2_TX == val) { return true; }
+  if (GPIO_PZEM2_RX == val) { return true; }
+#endif
 #ifndef USE_SENSEAIR
   if (GPIO_SAIR_TX == val) { return true; }
   if (GPIO_SAIR_RX == val) { return true; }
@@ -965,7 +969,7 @@ void GetFeatures()
   feature_sns1 |= 0x00000004;  // xdrv_03_energy.ino
 #endif
 #ifdef USE_PZEM004T
-  feature_sns1 |= 0x00000008;  // xdrv_03_energy.ino
+  feature_sns1 |= 0x00000008;  // xnrg_03_pzem004t.ino
 #endif
 #ifdef USE_DS18B20
   feature_sns1 |= 0x00000010;  // xsns_05_ds18b20.ino
@@ -1074,6 +1078,19 @@ void GetFeatures()
 #ifdef USE_MCP230xx_DISPLAYOUTPUT
   feature_sns2 |= 0x00000020;  // xsns_29_mcp230xx.ino
 #endif
+#ifdef USE_HLW8012
+  feature_sns2 |= 0x00000040;  // xnrg_01_hlw8012.ino
+#endif
+#ifdef USE_CSE7766
+  feature_sns2 |= 0x00000080;  // xnrg_02_cse7766.ino
+#endif
+#ifdef USE_MCP39F501
+  feature_sns2 |= 0x00000100;  // xnrg_04_mcp39f501.ino
+#endif
+#ifdef USE_PZEM2
+  feature_sns2 |= 0x00000200;  // xnrg_05_pzem2.ino
+#endif
+
 }
 
 /*********************************************************************************************\

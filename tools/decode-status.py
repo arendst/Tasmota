@@ -83,7 +83,9 @@ a_setoption = [[
     "Do not show Wifi and Mqtt state using Led"
     ],[
     "Timers enabled",
-    "","","",
+    "Generic ESP8285 GPIO enabled",
+    "Add UTC time offset to JSON message",
+    "",
     "","","","",
     "","","","",
     "","","","",
@@ -122,8 +124,8 @@ a_features = [[
     "USE_SDM630","USE_LM75AD","USE_APDS9960","USE_TM1638"
     ],[
     "USE_MCP230xx","USE_MPR121","USE_CCS811","USE_MPU6050",
-    "USE_MCP230xx_OUTPUT","USE_MCP230xx_DISPLAYOUTPUT","","",
-    "","","","",
+    "USE_MCP230xx_OUTPUT","USE_MCP230xx_DISPLAYOUTPUT","USE_HLW8012","USE_CSE7766",
+    "USE_MCP39F501","USE_PZEM2","","",
     "","","","",
     "","","","",
     "","","","",
