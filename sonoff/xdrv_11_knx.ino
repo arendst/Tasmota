@@ -1156,7 +1156,7 @@ boolean KnxCommand()
   else if (CMND_KNX_PA == command_code) {
     if (XdrvMailbox.data_len) {
       if (strstr(XdrvMailbox.data, ".")) {     // Process parameter entry
-        char sub_string[XdrvMailbox.data_len +1];
+        char sub_string[XdrvMailbox.data_len];
 
         int pa_area = atoi(subStr(sub_string, XdrvMailbox.data, ".", 1));
         int pa_line = atoi(subStr(sub_string, XdrvMailbox.data, ".", 2));
@@ -1183,7 +1183,7 @@ boolean KnxCommand()
   else if ((CMND_KNX_GA == command_code) && (index > 0) && (index <= MAX_KNX_GA)) {
     if (XdrvMailbox.data_len) {
       if (strstr(XdrvMailbox.data, ",")) {     // Process parameter entry
-        char sub_string[XdrvMailbox.data_len +1];
+        char sub_string[XdrvMailbox.data_len];
 
         int ga_option = atoi(subStr(sub_string, XdrvMailbox.data, ",", 1));
         int ga_area = atoi(subStr(sub_string, XdrvMailbox.data, ",", 2));
@@ -1232,7 +1232,7 @@ boolean KnxCommand()
   else if ((CMND_KNX_CB == command_code) && (index > 0) && (index <= MAX_KNX_CB)) {
     if (XdrvMailbox.data_len) {
       if (strstr(XdrvMailbox.data, ",")) {     // Process parameter entry
-        char sub_string[XdrvMailbox.data_len +1];
+        char sub_string[XdrvMailbox.data_len];
 
         int cb_option = atoi(subStr(sub_string, XdrvMailbox.data, ",", 1));
         int cb_area = atoi(subStr(sub_string, XdrvMailbox.data, ",", 2));
