@@ -64,7 +64,7 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
   uint32_t data;                           // Allow bit manipulation using SetOption
   struct {                                 // SetOption50 .. SetOption81
     uint32_t timers_enable : 1;            // bit 0 (v6.1.1b)
-    uint32_t spare01 : 1;
+    uint32_t user_esp8285_enable : 1;      // bit 1 (v6.1.1.14)
     uint32_t spare02 : 1;
     uint32_t spare03 : 1;
     uint32_t spare04 : 1;
@@ -94,7 +94,7 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t spare28 : 1;
     uint32_t spare29 : 1;
     uint32_t spare30 : 1;
-    uint32_t user_esp8285_enable : 1;      // bit 31 (v6.1.1.14)
+    uint32_t spare31 : 1;
   };
 } SysBitfield3;
 

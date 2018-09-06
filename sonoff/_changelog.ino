@@ -1,4 +1,7 @@
-/* 6.2.1.1 20180905
+/* 6.2.1.2 20180906
+ * Fix KNX PA exception. Regression from 6.2.1 buffer overflow (#3700, #3710)
+ *
+ * 6.2.1.1 20180905
  * Rewrite energy monitoring using energy sensor driver modules
  * Add Wifi channel number to state message (#3664)
  * Add support for Shelly 1 and basic support for Shelly 2 - No energy monitoring yet (#2789)
