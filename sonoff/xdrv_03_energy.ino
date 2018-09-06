@@ -44,6 +44,7 @@ const char kEnergyCommands[] PROGMEM =
 float energy_voltage = 0;         // 123.1 V
 float energy_current = 0;         // 123.123 A
 float energy_power = 0;           // 123.1 W
+float energy_frequency = 0;       // 123.1 Hz
 float energy_power_factor = 0;    // 0.12
 float energy_daily = 0;           // 123.123 kWh
 float energy_total = 0;           // 12345.12345 kWh
