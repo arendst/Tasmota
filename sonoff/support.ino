@@ -1804,13 +1804,13 @@ String GetBuildDateAndTime()
 
 /*
  * timestamps in https://en.wikipedia.org/wiki/ISO_8601 format
- * 
+ *
  *  DT_UTC - current data and time in Greenwich, England (aka GMT)
  *  DT_LOCAL - current date and time taking timezone into account
  *  DT_RESTART - the date and time this device last started, in local timezone
- * 
+ *
  * Format:
- *  "2017-03-07T11:08:02-07:00" - if DT_LOCAL and TIME_APPEND_TIMEZONE=1
+ *  "2017-03-07T11:08:02-07:00" - if DT_LOCAL and SetOption52 = 1
  *  "2017-03-07T11:08:02"       - otherwise
  */
 String GetDateAndTime(byte time_type)
@@ -1838,8 +1838,8 @@ String GetDateAndTime(byte time_type)
   snprintf_P(dt, sizeof(dt), PSTR("%04d-%02d-%02dT%02d:%02d:%02d"),
     tmpTime.year, tmpTime.month, tmpTime.day_of_month, tmpTime.hour, tmpTime.minute, tmpTime.second);
 
-  if (TIME_APPEND_TIMEZONE && (time_type == DT_LOCAL)) {
-    snprintf_P(dt, sizeof(dt), PSTR("%s%+03d:00"), dt, Settings.timezone);
+  if (Settings.flag3.time_append_timezone && (time_type == DT_LOCAL)) {
+    snprintf_P(dt, sizeof(dt), PSTR("%s%+03d:%02d"), dt, time_timezone / 10, abs((time_timezone % 10) * 6));  // if timezone = +2:30 then time_timezone = 25
   }
 
   return String(dt);

@@ -65,7 +65,7 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
   struct {                                 // SetOption50 .. SetOption81
     uint32_t timers_enable : 1;            // bit 0 (v6.1.1b)
     uint32_t user_esp8285_enable : 1;      // bit 1 (v6.1.1.14)
-    uint32_t spare02 : 1;
+    uint32_t time_append_timezone : 1;     // bit 2 (v6.2.1.2)
     uint32_t spare03 : 1;
     uint32_t spare04 : 1;
     uint32_t spare05 : 1;

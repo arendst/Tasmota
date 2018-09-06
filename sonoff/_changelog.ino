@@ -1,5 +1,6 @@
 /* 6.2.1.2 20180906
  * Fix KNX PA exception. Regression from 6.2.1 buffer overflow (#3700, #3710)
+ * Add command SetOption52 to control display of optional time offset from UTC in JSON messages (#3629, #3711)
  *
  * 6.2.1.1 20180905
  * Rewrite energy monitoring using energy sensor driver modules
