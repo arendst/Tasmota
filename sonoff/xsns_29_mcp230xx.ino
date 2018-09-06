@@ -421,10 +421,11 @@ bool MCP230xx_Command(void) {
   uint8_t paramcount = 0;
   if (XdrvMailbox.data_len > 0) {
     paramcount=1;
-    sprintf(XdrvMailbox.data,"%s,",XdrvMailbox.data); // need a trailing comma to make substr work properly with last variable - bug? dunno?
-    XdrvMailbox.data_len++;
+  } else {
+    serviced = false;
+    return serviced;
   }
-  char sub_string[XdrvMailbox.data_len +1];
+  char sub_string[XdrvMailbox.data_len];
   for (uint8_t ca=0;ca<XdrvMailbox.data_len;ca++) {
     if ((' ' == XdrvMailbox.data[ca]) || ('=' == XdrvMailbox.data[ca])) { XdrvMailbox.data[ca] = ','; }
     if (',' == XdrvMailbox.data[ca]) { paramcount++; }
@@ -441,7 +442,7 @@ bool MCP230xx_Command(void) {
 #endif // USE_MCP230xx_OUTPUT
 
   if (!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 1),"INTPRI")) {
-    if (paramcount > 2) {
+    if (paramcount > 1) {
       uint8_t intpri = atoi(subStr(sub_string, XdrvMailbox.data, ",", 2));
       if ((intpri >= 0) && (intpri <= 20)) {
         Settings.mcp230xx_int_prio = intpri;
@@ -455,7 +456,7 @@ bool MCP230xx_Command(void) {
   }
 
   if (!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 1),"INTTIMER")) {
-    if (paramcount > 2) {
+    if (paramcount > 1) {
       uint8_t inttim = atoi(subStr(sub_string, XdrvMailbox.data, ",", 2));
       if ((inttim >= 0) && (inttim <= 3600)) {
         Settings.mcp230xx_int_timer = inttim;
@@ -470,7 +471,7 @@ bool MCP230xx_Command(void) {
   }
 
   if (!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 1),"INTDEF")) {
-    if (paramcount > 2) {
+    if (paramcount > 1) {
       uint8_t pin = atoi(subStr(sub_string, XdrvMailbox.data, ",", 2));
       if (pin < mcp230xx_pincount) {
         if (pin == 0) {
@@ -480,7 +481,7 @@ bool MCP230xx_Command(void) {
         }
       }
       if (validpin) {
-        if (paramcount > 3) {
+        if (paramcount > 2) {
           uint8_t intdef = atoi(subStr(sub_string, XdrvMailbox.data, ",", 3));
           if ((intdef >= 0) && (intdef <= 15)) {
             Settings.mcp230xx_config[pin].int_report_defer=intdef;
@@ -510,7 +511,7 @@ bool MCP230xx_Command(void) {
   }
 
   if (!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 1),"INTCNT")) {
-    if (paramcount > 2) {
+    if (paramcount > 1) {
       uint8_t pin = atoi(subStr(sub_string, XdrvMailbox.data, ",", 2));
       if (pin < mcp230xx_pincount) {
         if (pin == 0) {
@@ -520,7 +521,7 @@ bool MCP230xx_Command(void) {
         }
       }
       if (validpin) {
-        if (paramcount > 3) {
+        if (paramcount > 2) {
           uint8_t intcnt = atoi(subStr(sub_string, XdrvMailbox.data, ",", 3));
           if ((intcnt >= 0) && (intcnt <= 1)) {
             Settings.mcp230xx_config[pin].int_count_en=intcnt;
@@ -567,7 +568,7 @@ bool MCP230xx_Command(void) {
       validpin=true;
     }
   }
-  if (validpin && (paramcount > 2)) {
+  if (validpin && (paramcount > 1)) {
     if (!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 2), "?")) {
       uint8_t port = 0;
       if (pin > 7) { port = 1; }
@@ -606,13 +607,13 @@ bool MCP230xx_Command(void) {
     uint8_t pinmode = 0;
     uint8_t pullup = 0;
     uint8_t intmode = 0;
-    if (paramcount > 2) {
+    if (paramcount > 1) {
       pinmode = atoi(subStr(sub_string, XdrvMailbox.data, ",", 2));
     }
-    if (paramcount > 3) {
+    if (paramcount > 2) {
       pullup = atoi(subStr(sub_string, XdrvMailbox.data, ",", 3));
     }
-    if (paramcount > 4) {
+    if (paramcount > 3) {
       intmode = atoi(subStr(sub_string, XdrvMailbox.data, ",", 4));
     }
 #ifdef USE_MCP230xx_OUTPUT
