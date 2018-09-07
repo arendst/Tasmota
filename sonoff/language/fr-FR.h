@@ -456,6 +456,7 @@
 #define D_SENSOR_I2C_SCL  "I2C SCL"
 #define D_SENSOR_I2C_SDA  "I2C SDA"
 #define D_SENSOR_WS2812   "WS2812"
+#define D_SENSOR_DFR562   "MP3 Player"
 #define D_SENSOR_IRSEND   "ÉmetIR"
 #define D_SENSOR_SWITCH   "Inter."     // Suffix "1"
 #define D_SENSOR_BUTTON   "Bouton"     // Suffix "1"
