@@ -1,7 +1,8 @@
 /* 6.2.1.2 20180906
- * Fix KNX PA exception. Regression from 6.2.1 buffer overflow (#3700, #3710)
+ * Fix KNX PA exception. Regression from 6.2.1 buffer overflow caused by subStr() (#3700, #3710)
  * Add command SetOption52 to control display of optional time offset from UTC in JSON messages (#3629, #3711)
  * Add experimental support for PZEM-003,014,016,017 Energy monitoring (#3694)
+ * Add basic support for MP3 player using DFRobot RB-DFR-562 (#3723)
  *
  * 6.2.1.1 20180905
  * Rewrite energy monitoring using energy sensor driver modules

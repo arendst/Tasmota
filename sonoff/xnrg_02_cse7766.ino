@@ -185,6 +185,7 @@ void CseDrvInit()
     if ((SONOFF_S31 == Settings.module) || (SONOFF_POW_R2 == Settings.module)) {     // Sonoff S31 or Sonoff Pow R2
       baudrate = 4800;
       serial_config = SERIAL_8E1;
+      energy_calc_power_factor = 1;  // Calculate power factor from data
       energy_flg = XNRG_02;
     }
   }
