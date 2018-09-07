@@ -41,6 +41,7 @@
 #define D_CMND_SET50PERCENT "shutter50percent"
 #define D_CMND_SHUTTERSETCLOSE "shuttersetclose"
 #define D_CMND_SHUTTERINVERT "shutterinvert"
+#define D_CMND_INTERLOCKBUCKETSIZE "bucketsize"
 //end
 
 /*************************** ATTENTION *******************************\

@@ -462,6 +462,12 @@ const char HUE_LIGHTS_STATUS_JSON[] PROGMEM =
   "\"effect\":\"none\","
   "\"colormode\":\"hs\","
   "\"reachable\":true}";
+const char HUE_SHUTTER_STATUS_JSON[] PROGMEM =
+  "{\"on\":{state},"
+  "\"bri\":{b},"
+  "\"alert\":\"none\","
+  "\"effect\":\"none\","
+  "\"reachable\":true}";
 const char HUE_LIGHTS_STATUS_JSON2[] PROGMEM =
   ",\"type\":\"Extended color light\","
   "\"name\":\"{j1\","
@@ -559,15 +565,35 @@ void HueLightStatus1(byte device, String *response)
   float hue = 0;
   float sat = 0;
   float bri = 0;
+  //STB mod
+  //save old value in temp var
+  bool on = power & (1 << (device-1));
 
-  if (light_type) {
+  if(Settings.flag3.shutter_mode && (device > 0) && (device <= shutters_present)){
+   // Need to check if this can really happen because alredy checked above
+    //if((device < 0) || (device > shutters_present)) device = 1;
+    // we go directly to the shutter_position. this holds the correct value and respect if the shutters are inverted
+    bri = (float)(Settings.shutter_invert[device - 1] ? 100 - Settings.shutter_position[device - 1]: Settings.shutter_position[device - 1])/100.0f;
+    on = bri > 0;
+  }
+  else if (light_type) {
+  //END
     LightGetHsb(&hue, &sat, &bri);
   }
-  *response += FPSTR(HUE_LIGHTS_STATUS_JSON);
-  response->replace("{state}", (power & (1 << (device-1))) ? "true" : "false");
+  // preserve old behaviour
+   if (device > shutters_present * 2) {
+  	*response += FPSTR(HUE_LIGHTS_STATUS_JSON);
+   } else {
+   	*response += FPSTR(HUE_SHUTTER_STATUS_JSON);
+   }
+  //STB mod
+  response->replace("{state}", on ? "true" : "false");
+  //end
   response->replace("{h}", String((uint16_t)(65535.0f * hue)));
-  response->replace("{s}", String((uint8_t)(254.0f * sat)));
-  response->replace("{b}", String((uint8_t)(254.0f * bri)));
+  //STB mod
+  // please explain why you changed this
+  response->replace("{s}", String((uint8_t)(253.0f * sat + 1.5f)));
+  response->replace("{b}", String((uint8_t)(253.0f * bri + 1.5f)));
 }
 
 void HueLightStatus2(byte device, String *response)
@@ -581,7 +607,11 @@ void HueGlobalConfig(String *path)
 {
   String response;
   uint8_t maxhue = (devices_present > MAX_FRIENDLYNAMES) ? MAX_FRIENDLYNAMES : devices_present;
-
+  //STB mod
+  // make sense to disable all other functions in case of shutter. On the other side, each shutter has TWO
+  // relays. Therefore maxhue is 2 if there is one shutter. Need to check, if it is really required to decrease this.
+  if(Settings.flag3.shutter_mode) maxhue = shutters_present;
+//end
   path->remove(0,1);                                 // cut leading / to get <id>
   response = F("{\"lights\":{\"");
   for (uint8_t i = 1; i <= maxhue; i++) {
@@ -606,6 +636,22 @@ void HueAuthentication(String *path)
   snprintf_P(response, sizeof(response), PSTR("[{\"success\":{\"username\":\"%s\"}}]"), GetHueUserId().c_str());
   WebServer->send(200, FPSTR(HDR_CTYPE_JSON), response);
 }
+//STB mod
+// device: 1..<numberOfShutters>
+// position: 0-100
+void SetShutterPosition(uint8_t device, uint8_t position)
+{
+          XdrvMailbox.index = device;
+          XdrvMailbox.data_len = 0;
+          XdrvMailbox.payload16 = 0;
+          XdrvMailbox.payload = position;
+          XdrvMailbox.grpflg = 0;
+          XdrvMailbox.notused = 0;
+          XdrvMailbox.topic = D_CMND_POSITION; // D_CMND_OPEN / D_CMND_CLOSE / D_CMND_POSITION
+          XdrvMailbox.data = NULL;
+          ShutterCommand();
+}
+//end
 
 void HueLights(String *path)
 {
@@ -623,7 +669,11 @@ void HueLights(String *path)
   bool on = false;
   bool change = false;
   uint8_t maxhue = (devices_present > MAX_FRIENDLYNAMES) ? MAX_FRIENDLYNAMES : devices_present;
-
+ //STB mod
+  // make sense to disable all other functions in case of shutter. On the other side, each shutter has TWO
+  // relays. Therefore maxhue is 2 if there is one shutter. Need to check, if it is really required to decrease this.
+  if(Settings.flag3.shutter_mode) maxhue = shutters_present;
+//end
   path->remove(0,path->indexOf("/lights"));          // Remove until /lights
   if (path->endsWith("/lights")) {                   // Got /lights
     response = "{\"";
@@ -658,16 +708,26 @@ void HueLights(String *path)
         response.replace("{cm", "on");
 
         on = hue_json["on"];
-        switch(on)
+        if(Settings.flag3.shutter_mode) {
+          if(!change) {
+            response.replace("{re", on ? "true" : "false");
+            bri = on ? 1.0f : 0.0f;
+            change = true;
+          }
+        }
+        else
         {
-          case false : ExecuteCommandPower(device, POWER_OFF, SRC_HUE);
-                       response.replace("{re", "false");
-                       break;
-          case true  : ExecuteCommandPower(device, POWER_ON, SRC_HUE);
-                       response.replace("{re", "true");
-                       break;
-          default    : response.replace("{re", (power & (1 << (device-1))) ? "true" : "false");
-                       break;
+          switch(on)
+          {
+            case false : ExecuteCommandPower(device, POWER_OFF, SRC_HUE);
+                        response.replace("{re", "false");
+                        break;
+            case true  : ExecuteCommandPower(device, POWER_ON, SRC_HUE);
+                        response.replace("{re", "true");
+                        break;
+            default    : response.replace("{re", (power & (1 << (device-1))) ? "true" : "false");
+                        break;
+          }
         }
         resp = true;
       }
@@ -675,17 +735,23 @@ void HueLights(String *path)
       if (light_type) {
         LightGetHsb(&hue, &sat, &bri);
       }
+      else if(Settings.flag3.shutter_mode && (device > 0) && (device <= shutters_present)) {
+        bri = (float)(Settings.shutter_invert[device - 1] ? 100 - Settings.shutter_position[device - 1]: Settings.shutter_position[device - 1]/100.0f);
+        //bri = (float)Shutter_Target_Position[device-1] / Shutter_Open_Max[device-1];
+      }
 
       if (hue_json.containsKey("bri")) {
         tmp = hue_json["bri"];
-        bri = (float)tmp / 254.0f;
+	//bri = (float)tmp / 254.0f;
+        bri = (float)tmp / 253.0f;
         if (resp) {
           response += ",";
         }
         response += FPSTR(HUE_LIGHT_RESPONSE_JSON);
         response.replace("{id", String(device));
         response.replace("{cm", "bri");
-        response.replace("{re", String(tmp));
+	//response.replace("{re", String(tmp));
+        response.replace("{re", String((uint8_t)tmp));
         resp = true;
         change = true;
       }
@@ -726,7 +792,10 @@ void HueLights(String *path)
         change = true;
       }
       if (change) {
-        if (light_type) {
+        if(Settings.flag3.shutter_mode) {
+          SetShutterPosition(device, bri * 100.0f + 0.05f);
+        }
+        else if (light_type) {
           LightSetHsb(hue, sat, bri, ct);
         }
         change = false;
@@ -756,6 +825,9 @@ void HueLights(String *path)
   else {
     WebServer->send(406, FPSTR(HDR_CTYPE_JSON), "{}");
   }
+
+  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_HTTP D_HUE_API " (%s)"), response.c_str());
+  AddLog(LOG_LEVEL_DEBUG_MORE);
 }
 
 void HueGroups(String *path)
@@ -765,6 +837,7 @@ void HueGroups(String *path)
  */
   String response = "{}";
   uint8_t maxhue = (devices_present > MAX_FRIENDLYNAMES) ? MAX_FRIENDLYNAMES : devices_present;
+  if(Settings.flag3.shutter_mode) maxhue = shutters_present;
 
   if (path->endsWith("/0")) {
     response = FPSTR(HUE_GROUP0_STATUS_JSON);
@@ -792,6 +865,12 @@ void HandleHueApi(String *path)
   uint8_t args = 0;
 
   path->remove(0, 4);                                // remove /api
+  //stb mode
+  // intresting. is this a general problem or just with the shutter configuration?
+  while(path->endsWith("/")) {                        // remove trailing "/"
+    path->remove(path->length() - 1, 1);
+  }
+
   uint16_t apilen = path->length();
   snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_HTTP D_HUE_API " (%s)"), path->c_str());
   AddLog(LOG_LEVEL_DEBUG_MORE);                      // HTP: Hue API (//lights/1/state)

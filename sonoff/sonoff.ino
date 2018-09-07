@@ -79,7 +79,7 @@ enum TasmotaCommands {
   CMND_BLINKTIME, CMND_BLINKCOUNT, CMND_SENSOR, CMND_SAVEDATA, CMND_SETOPTION, CMND_TEMPERATURE_RESOLUTION, CMND_HUMIDITY_RESOLUTION,
   CMND_PRESSURE_RESOLUTION, CMND_POWER_RESOLUTION, CMND_VOLTAGE_RESOLUTION, CMND_CURRENT_RESOLUTION, CMND_ENERGY_RESOLUTION, CMND_MODULE, CMND_MODULES,
 //STB mod
-  CMND_GPIO, CMND_GPIOS, CMND_PWM, CMND_PWMFREQUENCY, CMND_PWMRANGE, CMND_COUNTER, CMND_COUNTERTYPE, CMND_COUNTERDEVIDER, CMND_MQTTENABLE,CMND_DEEPSLEEP,CMND_INTERLOCKMASK,
+  CMND_GPIO, CMND_GPIOS, CMND_PWM, CMND_PWMFREQUENCY, CMND_PWMRANGE, CMND_COUNTER, CMND_COUNTERTYPE, CMND_COUNTERDEVIDER, CMND_MQTTENABLE,CMND_DEEPSLEEP,CMND_INTERLOCKMASK,CMND_INTERLOCKBUCKETSIZE,
 //end
   CMND_COUNTERDEBOUNCE, CMND_BUTTONDEBOUNCE, CMND_SWITCHDEBOUNCE, CMND_SLEEP, CMND_UPGRADE, CMND_UPLOAD, CMND_OTAURL, CMND_SERIALLOG, CMND_SYSLOG,
   CMND_LOGHOST, CMND_LOGPORT, CMND_IPADDRESS, CMND_NTPSERVER, CMND_AP, CMND_SSID, CMND_PASSWORD, CMND_HOSTNAME,
@@ -91,7 +91,7 @@ const char kTasmotaCommands[] PROGMEM =
   D_CMND_BLINKTIME "|" D_CMND_BLINKCOUNT "|" D_CMND_SENSOR "|" D_CMND_SAVEDATA "|" D_CMND_SETOPTION "|" D_CMND_TEMPERATURE_RESOLUTION "|" D_CMND_HUMIDITY_RESOLUTION "|"
   D_CMND_PRESSURE_RESOLUTION "|" D_CMND_POWER_RESOLUTION "|" D_CMND_VOLTAGE_RESOLUTION "|" D_CMND_CURRENT_RESOLUTION "|" D_CMND_ENERGY_RESOLUTION "|" D_CMND_MODULE "|" D_CMND_MODULES "|"
   //STB mod
-  D_CMND_GPIO "|" D_CMND_GPIOS "|" D_CMND_PWM "|" D_CMND_PWMFREQUENCY "|" D_CMND_PWMRANGE "|" D_CMND_COUNTER "|"  D_CMND_COUNTERTYPE "|"   D_CMND_COUNTERDEVIDER "|" D_CMND_MQTTENABLE "|" D_CMND_DEEPSLEEP "|" D_CMND_INTERLOCKMASK "|"
+  D_CMND_GPIO "|" D_CMND_GPIOS "|" D_CMND_PWM "|" D_CMND_PWMFREQUENCY "|" D_CMND_PWMRANGE "|" D_CMND_COUNTER "|"  D_CMND_COUNTERTYPE "|"   D_CMND_COUNTERDEVIDER "|" D_CMND_MQTTENABLE "|" D_CMND_DEEPSLEEP "|" D_CMND_INTERLOCKMASK "|" D_CMND_INTERLOCKBUCKETSIZE "|"
   //end
   D_CMND_COUNTERDEBOUNCE "|" D_CMND_BUTTONDEBOUNCE "|" D_CMND_SWITCHDEBOUNCE "|" D_CMND_SLEEP "|" D_CMND_UPGRADE "|" D_CMND_UPLOAD "|" D_CMND_OTAURL "|" D_CMND_SERIALLOG "|" D_CMND_SYSLOG "|"
   D_CMND_LOGHOST "|" D_CMND_LOGPORT "|" D_CMND_IPADDRESS "|" D_CMND_NTPSERVER "|" D_CMND_AP "|" D_CMND_SSID "|" D_CMND_PASSWORD "|" D_CMND_HOSTNAME "|"
@@ -342,7 +342,7 @@ void SetDevicePower(power_t rpower, int source)
     rpower = power;
   }
   //stb mod
-  if (Settings.flag.interlock && !Settings.flag3.paired_interlock) {
+  if (Settings.flag.interlock && !Settings.flag3.paired_interlock && !Settings.interlock_bucket_size) {
       power_t mask = 1;
       uint8_t count = 0;
       for (byte i = 0; i < devices_present; i++) {
@@ -1005,7 +1005,12 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"Interlock\":\"0x%x)\"}"), Settings.interlock_mask);
     }
-
+    else if(CMND_INTERLOCKBUCKETSIZE == command_code) {
+      if ((data_len > 0) && (payload32 >= 0) ) {
+        Settings.interlock_bucket_size = payload32;
+      }
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"Interlock bucket size\":\"%d)\"}"), Settings.interlock_bucket_size);
+    }
 //end
     else if (CMND_BUTTONDEBOUNCE == command_code) {
       if ((payload > 39) && (payload < 1001)) {
@@ -1374,17 +1379,45 @@ void ExecuteCommandPower(byte device, byte state, int source)
     if (Settings.flag.interlock && !interlock_mutex) {  // Clear all but masked relay
       interlock_mutex = 1;
     //stb mod
-      if (Settings.flag3.paired_interlock) {
+      if ((Settings.flag3.paired_interlock || Settings.interlock_bucket_size) &&
+            ((state == POWER_TOGGLE && !(power&mask)) || state == POWER_ON)) {
+        Settings.interlock_bucket_size = Settings.interlock_bucket_size > 0 ? Settings.interlock_bucket_size : 2;
         //depending on even or odd relay create a 0 or 2 for further calculation
+        // mask the all device that probably need a change and & with the interlock mask
+        // e.g. device=2 imask = 00000001 with group 2, imask = 000 000 101 with group 3, imask = 0000 1101 with group 4
+        // e.g. device=4 imask = 00000100 with group 2, imask = 000 110 000 with group 3, imask = 0000 0111 with group 4
+        // e.g. device=7 imask = 10000000 with group 2, imask = 110 000 000 with group 3, imask = 1011 0000 with group 4
+        // group2=3, group3=7, group4=15 = (1 << group)-1
+        byte  temp1 = (1 << Settings.interlock_bucket_size)-1; // create 1111 for bucket
+        byte  temp2 = 1 << ((device-1)%Settings.interlock_bucket_size) ; // set device to 1 in bucket. e.g dev=2 > 0010
+        byte  temp3 = temp1 ^ temp2; // remove device from mask -> 1101
+        snprintf_P(log_data, sizeof(log_data), PSTR("temp1 for mask is %d, temp2: %d, temp3 %d. Bucketsize: %d, device: %d to state %d, currentsate %d"), temp1,temp2,temp3,Settings.interlock_bucket_size, device,state, power&mask);
+        AddLog(LOG_LEVEL_DEBUG_MORE);
         byte  temp = 2* !(device%2);
-        // initilaize MASK with FFFF if not set coeectly in settings.
+        // initilaize MASK with FFFF if not set corectly in settings. (32bit 1)
         Settings.interlock_mask = (Settings.interlock_mask == 0) ?  0xFFFF : Settings.interlock_mask ;
-        // mask the device that probably need a change and && with the interlock mask
-        power_t imask = (1 << (device - temp)) & Settings.interlock_mask;
+
+
+        // shift temp3 mask depending of the group index e.g device 6 (1101) group index 1 shift 4x left to  1101 0000
+        power_t imask1 = temp3 << (((device-1) / Settings.interlock_bucket_size) * Settings.interlock_bucket_size);
+        snprintf_P(log_data, sizeof(log_data), PSTR("imask1: %ld"), imask1);
+        AddLog(LOG_LEVEL_DEBUG_MORE);
+        // wipe out with interlock_mask relays free to change.
+        power_t imask = imask1 & Settings.interlock_mask;
         // only if the relay is switched ON make a change. OFF is always fine.
-        if (power & imask) {
-          ExecuteCommandPower(device +1-temp , POWER_OFF, SRC_IGNORE);
+        //while loop on highest 1 that comes with powr&imask. power change over time
+        power_t v = power & imask;
+        while (v) {
+          uint8_t r = 0;
+          while (v >>= 1) {
+              r++;
+          }
+          r++;
+          snprintf_P(log_data, sizeof(log_data), PSTR("Power off device: %d"),r);
+          AddLog(LOG_LEVEL_DEBUG);
+          ExecuteCommandPower(r , POWER_OFF, SRC_IGNORE);
           delay(500); //quite long delay to ensure physical switch off of the relay
+          v = power & imask;
         }
       } else {
         if (mask & Settings.interlock_mask) {
@@ -1658,7 +1691,7 @@ void PerformEverySecond()
 
   if ((4 == uptime) && (SONOFF_IFAN02 == Settings.module)) {  // Microcontroller needs 3 seconds before accepting commands
     SetDevicePower(1, SRC_RETRY);      // Sync with default power on state microcontroller being Light ON and Fan OFF
-    SetDevicePower(power, SRC_RETRY);  // Set required power on state	
+    SetDevicePower(power, SRC_RETRY);  // Set required power on state
   }
   //STB mod
   RtcSettings.uptime += ((millis() - last_save_uptime) / 1000) ;

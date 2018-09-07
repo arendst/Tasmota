@@ -333,7 +333,8 @@ struct SYSCFG {
 
   char          rules[MAX_RULE_SETS][MAX_RULE_SIZE]; // 800 uses 512 bytes in v5.12.0m, 3 x 512 bytes in v5.14.0b
   //STB mod
-  byte          free_680[172];             // A80  give me some space to do configuration without override
+  byte          free_680[171];             // A80  give me some space to do configuration without override
+  uint8_t       interlock_bucket_size;  // size if the bucket for an interlock. Typically 1..4
   uint8_t       shutter_invert[MAX_SHUTTERS];
   uint8_t       shutter_set50percent[MAX_SHUTTERS];
   power_t       interlock_mask;            // 32 bit array. 1 = relay effected by interlock 0 = relay not effected
