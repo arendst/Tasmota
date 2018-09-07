@@ -89,61 +89,29 @@ bool Pzem2ModbusReceiveReady()
   return (Pzem2Serial->available() >= 5);  // 5 - Error frame, 21 or 25 - Ok frame
 }
 
-uint8_t Pzem2ModbusReceive()
+uint8_t Pzem2ModbusReceive(uint8_t *buffer, uint8_t register_count)
 {
-  uint8_t buffer[26];
-
-//  0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24
-// FE 04 14 08 98 03 E8 00 00 08 98 00 00 00 00 00 00 01 F4 00 64 00 00 HH LL = PZEM-014
-// Id Cc Sz Volt- Current---- Power------ Energy----- Frequ PFact Alarm Crc--
-// FE 04 10 27 10 00 64 03 E8 00 00 00 00 00 00 00 00 00 00 HH LL             = PZEM-017
-// Id Cc Sz Volt- Curre Power------ Energy----- HiAlm LoAlm Crc--
+  //  0  1  2  3  4  5  6
+  // FE 04 02 08 98 HH LL
+  // Id Cc Sz Regis Crc--
 
   uint8_t len = 0;
-  while (Pzem2Serial->available() > 0) {
+  while ((Pzem2Serial->available() > 0) && (len < (register_count *2) + 5)) {
     buffer[len++] = (uint8_t)Pzem2Serial->read();
     if (3 == len) {
       if (buffer[1] & 0x80) {  // fe 84 02 f2 f1
         return buffer[2];      // 1 = Illegal Function, 2 = Illegal Address, 3 = Illegal Data, 4 = Slave Error
       }
     }
-    if (sizeof(buffer) == len) { break; }
   }
 
   AddLogSerial(LOG_LEVEL_DEBUG_MORE, buffer, len);
 
-  if (len < 5) { return 8; }               // 8 = Not enough data
-  if (len != buffer[2] + 5) { return 9; }  // 9 = Unexpected result
+  if (len < 7) { return 7; }               // 7 = Not enough data
+  if (len != buffer[2] + 5) { return 8; }  // 8 = Unexpected result
 
   uint16_t crc = (buffer[len -2] << 8) | buffer[len -1];
-  if (Pzem2ModbusCalculateCRC(buffer, len -3) == crc) {
-    float energy = 0;
-    if (0x10 == buffer[2]) {        // PZEM-003,017
-      pzem2_type = PZEM2_TYPES_003_017;
-      energy_voltage = (float)((buffer[3] << 8) + buffer[4]) / 10.0;  // 65535.x V
-      energy_current = (float)((buffer[5] << 8) + buffer[6]);           // 65535.xx A
-      energy_power = (float)((uint32_t)buffer[9] << 24 + (uint32_t)buffer[10] << 16 + (uint32_t)buffer[7] << 8 + buffer[8]);    // 65535 W
-      energy = (float)((uint32_t)buffer[13] << 24 + (uint32_t)buffer[14] << 16 + (uint32_t)buffer[11] << 8 + buffer[12]);       // 65535 Wh
-      if (!energy_start || (energy < energy_start)) { energy_start = energy; }  // Init after restart and hanlde roll-over if any
-      energy_kWhtoday += (energy - energy_start) * 100;
-      energy_start = energy;
-      EnergyUpdateToday();
-    }
-    else if (0x14 == buffer[2]) {   // PZEM-014,016
-      pzem2_type = PZEM2_TYPES_014_016;
-      energy_voltage = (float)((buffer[3] << 8) + buffer[4]) / 10.0;      // 65535.x V
-      energy_current = (float)((uint32_t)buffer[7] << 24 + (uint32_t)buffer[8] << 16 + (uint32_t)buffer[5] << 8 + buffer[6]);   // 65535.xx A
-      energy_power = (float)((uint32_t)buffer[11] << 24 + (uint32_t)buffer[12] << 16 + (uint32_t)buffer[9] << 8 + buffer[10]);  // 65535 W
-      energy_frequency = (float)((buffer[13] << 8) + buffer[14]) / 10.0;  // 50.0 Hz
-      energy = (float)((uint32_t)buffer[15] << 24 + (uint32_t)buffer[16] << 16 + (uint32_t)buffer[13] << 8 + buffer[14]);       // 65535 Wh
-      if (!energy_start || (energy < energy_start)) { energy_start = energy; }  // Init after restart and hanlde roll-over if any
-      energy_kWhtoday += (energy - energy_start) * 100;
-      energy_start = energy;
-      EnergyUpdateToday();
-    }
-  } else {
-    AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "Pzem2 crc error"));
-  }
+  if (Pzem2ModbusCalculateCRC(buffer, len -3) != crc) { return 9; } // 9 = crc error
 
   return 0;                    // 0 = No error
 }
@@ -152,11 +120,56 @@ uint8_t Pzem2ModbusReceive()
 
 uint8_t pzem2_sendRetry = 0;
 
-void Pzem2EverySecond()
+void Pzem2Every200ms()
 {
   bool data_ready = Pzem2ModbusReceiveReady();
 
-  if (data_ready) { Pzem2ModbusReceive(); }
+  if (data_ready) {
+    uint8_t buffer[26];
+    uint8_t error = Pzem2ModbusReceive(buffer, pzem2_type);
+    if (error) {
+      snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_DEBUG "PZEM2 response error %d"), error);
+      AddLog(LOG_LEVEL_DEBUG);
+//      if (9 == error) {
+        if (PZEM2_TYPES_014_016 == pzem2_type) {
+          pzem2_type = PZEM2_TYPES_003_017;
+        } else {
+          pzem2_type = PZEM2_TYPES_014_016;
+        }
+//      }
+    } else {
+      float energy = 0;
+
+      if (PZEM2_TYPES_003_017 == pzem2_type) {
+        //  0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24
+        // FE 04 10 27 10 00 64 03 E8 00 00 00 00 00 00 00 00 00 00 HH LL             = PZEM-017
+        // Id Cc Sz Volt- Curre Power------ Energy----- HiAlm LoAlm Crc--
+        energy_voltage = (float)((buffer[3] << 8) + buffer[4]) / 100.0;                                                                 // 655.00 V
+        energy_current = (float)((buffer[5] << 8) + buffer[6]) / 100.0;                                                                 // 655.00 A
+        energy_power = (float)((uint32_t)buffer[9] << 24 + (uint32_t)buffer[10] << 16 + (uint32_t)buffer[7] << 8 + buffer[8]) / 10.0;   // 429496729.0 W
+        energy = (float)((uint32_t)buffer[13] << 24 + (uint32_t)buffer[14] << 16 + (uint32_t)buffer[11] << 8 + buffer[12]);             // 4294967295 Wh
+        if (!energy_start || (energy < energy_start)) { energy_start = energy; }  // Init after restart and hanlde roll-over if any
+        energy_kWhtoday += (energy - energy_start) * 100;
+        energy_start = energy;
+        EnergyUpdateToday();
+      }
+      else if (PZEM2_TYPES_014_016 == pzem2_type) {   // PZEM-014,016
+        //  0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24
+        // FE 04 14 08 98 03 E8 00 00 08 98 00 00 00 00 00 00 01 F4 00 64 00 00 HH LL = PZEM-014
+        // Id Cc Sz Volt- Current---- Power------ Energy----- Frequ PFact Alarm Crc--
+        energy_voltage = (float)((buffer[3] << 8) + buffer[4]) / 10.0;                                                                     // 6553.0 V
+        energy_current = (float)((uint32_t)buffer[7] << 24 + (uint32_t)buffer[8] << 16 + (uint32_t)buffer[5] << 8 + buffer[6]) / 1000.0;   // 4294967.000 A
+        energy_power = (float)((uint32_t)buffer[11] << 24 + (uint32_t)buffer[12] << 16 + (uint32_t)buffer[9] << 8 + buffer[10]) / 10.0;    // 429496729.0 W
+        energy_frequency = (float)((buffer[17] << 8) + buffer[18]) / 10.0;                                                                 // 50.0 Hz
+        energy_power_factor = (float)((buffer[19] << 8) + buffer[20]) / 100.0;                                                             // 1.00
+        energy = (float)((uint32_t)buffer[15] << 24 + (uint32_t)buffer[16] << 16 + (uint32_t)buffer[13] << 8 + buffer[14]);                // 4294967295 Wh
+        if (!energy_start || (energy < energy_start)) { energy_start = energy; }  // Init after restart and hanlde roll-over if any
+        energy_kWhtoday += (energy - energy_start) * 100;
+        energy_start = energy;
+        EnergyUpdateToday();
+      }
+    }
+  }
 
   if (0 == pzem2_sendRetry || data_ready) {
     pzem2_sendRetry = 5;
@@ -203,8 +216,8 @@ int Xnrg05(byte function)
       case FUNC_INIT:
         Pzem2SnsInit();
         break;
-      case FUNC_EVERY_SECOND:
-        Pzem2EverySecond();
+      case FUNC_EVERY_200_MSECOND:
+        Pzem2Every200ms();
         break;
     }
   }
