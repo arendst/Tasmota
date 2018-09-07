@@ -174,7 +174,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_BUTTON "1n|" D_SENSOR_BUTTON "2n|" D_SENSOR_BUTTON "3n|" D_SENSOR_BUTTON "4n|"
   D_SENSOR_COUNTER "1n|" D_SENSOR_COUNTER "2n|" D_SENSOR_COUNTER "3n|" D_SENSOR_COUNTER "4n|"
   D_SENSOR_PZEM_TX "|" D_SENSOR_PZEM_RX "|"
-  D_SENSOR_MP3_DFR562;
+  D_SENSOR_DFR562;
 
 /********************************************************************************************/
 
