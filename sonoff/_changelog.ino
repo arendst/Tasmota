@@ -2,6 +2,7 @@
  * Change web Configure Module GPIO drop down list order for better readability
  * Fix showing Period Power in energy threshold messages
  * Fix ButtonRetain to not use default topic for clearing retain messages (#3737)
+ * Add sleep to Nova Fitness SDS01X sensor (#2841, #3724)
  *
  * 6.2.1.2 20180906
  * Fix KNX PA exception. Regression from 6.2.1 buffer overflow caused by subStr() (#3700, #3710)
