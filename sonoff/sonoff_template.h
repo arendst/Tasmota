@@ -94,8 +94,7 @@ enum UserSelectablePins {
   GPIO_SPI_DC,         // SPI Data Direction
   GPIO_BACKLIGHT,      // Display backlight control
   GPIO_PMS5003,        // Plantower PMS5003 Serial interface
-  GPIO_SDS0X1_TX,         // Nova Fitness SDS011 Serial interface
-  GPIO_SDS0X1_RX,         // Nova Fitness SDS011 Serial interface
+  GPIO_SDS0X1_RX,      // Nova Fitness SDS011 Serial interface
   GPIO_SBR_TX,         // Serial Bridge Serial interface
   GPIO_SBR_RX,         // Serial Bridge Serial interface
   GPIO_SR04_TRIG,      // SR04 Trigger pin
@@ -126,6 +125,7 @@ enum UserSelectablePins {
   GPIO_PZEM2_TX,       // PZEM-003,014,016,017 Serial interface
   GPIO_PZEM2_RX,       // PZEM-003,014,016,017 Serial interface
   GPIO_MP3_DFR562,     // RB-DFR-562, DFPlayer Mini MP3 Player
+  GPIO_SDS0X1_TX,         // Nova Fitness SDS011 Serial interface
   GPIO_SENSOR_END };
 
 // Programmer selectable GPIO functionality offset by user selectable GPIOs
@@ -167,8 +167,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_PZEM_TX "|" D_SENSOR_PZEM_RX "|"
   D_SENSOR_SAIR_TX "|" D_SENSOR_SAIR_RX "|"
   D_SENSOR_SPI_CS "|" D_SENSOR_SPI_DC "|" D_SENSOR_BACKLIGHT "|"
-  D_SENSOR_PMS5003 "|"
-  D_SENSOR_SDS0X1_TX "|" D_SENSOR_SDS0X1_RX "|"
+  D_SENSOR_PMS5003 "|" D_SENSOR_SDS0X1_RX "|"
   D_SENSOR_SBR_TX "|" D_SENSOR_SBR_RX "|"
   D_SENSOR_SR04_TRIG "|" D_SENSOR_SR04_ECHO "|"
   D_SENSOR_SDM120_TX "|" D_SENSOR_SDM120_RX "|"
@@ -178,7 +177,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_BUTTON "1n|" D_SENSOR_BUTTON "2n|" D_SENSOR_BUTTON "3n|" D_SENSOR_BUTTON "4n|"
   D_SENSOR_COUNTER "1n|" D_SENSOR_COUNTER "2n|" D_SENSOR_COUNTER "3n|" D_SENSOR_COUNTER "4n|"
   D_SENSOR_PZEM_TX "|" D_SENSOR_PZEM_RX "|"
-  D_SENSOR_DFR562;
+  D_SENSOR_DFR562 "|" D_SENSOR_SDS0X1_TX;
 
 /********************************************************************************************/
 
@@ -339,7 +338,8 @@ const uint8_t kGpioNiceList[GPIO_SENSOR_END] PROGMEM = {
   GPIO_MHZ_RXD,        // MH-Z19 Serial interface
   GPIO_SAIR_TX,        // SenseAir Serial interface
   GPIO_SAIR_RX,        // SenseAir Serial interface
-  GPIO_SDS0X1,         // Nova Fitness SDS011 Serial interface
+  GPIO_SDS0X1_TX,      // Nova Fitness SDS011 Serial interface
+  GPIO_SDS0X1_RX,      // Nova Fitness SDS011 Serial interface
   GPIO_PZEM_TX,        // PZEM004T Serial interface
   GPIO_PZEM_RX,        // PZEM004T Serial interface
   GPIO_PZEM2_TX,       // PZEM-003,014,016,017 Serial interface
