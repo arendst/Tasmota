@@ -380,9 +380,7 @@ void MqttConnected()
       MqttPublishPowerState(i);
       if (SONOFF_IFAN02 == Settings.module) { break; }  // Only report status of light relay
     }
-    if (Settings.tele_period) {
-      tele_period = Settings.tele_period -9;
-    }
+    if (Settings.tele_period) { tele_period = Settings.tele_period -9; }  // Enable TelePeriod in 9 seconds
     rules_flag.system_boot = 1;
     XdrvCall(FUNC_MQTT_INIT);
   }
@@ -718,7 +716,6 @@ bool MqttCommand()
   }
   else if (CMND_BUTTONRETAIN == command_code) {
     if ((payload >= 0) && (payload <= 1)) {
-      strlcpy(Settings.button_topic, mqtt_topic, sizeof(Settings.button_topic));
       if (!payload) {
         for(i = 1; i <= MAX_KEYS; i++) {
           SendKey(0, i, 9);  // Clear MQTT retain in broker
@@ -730,7 +727,6 @@ bool MqttCommand()
   }
   else if (CMND_SWITCHRETAIN == command_code) {
     if ((payload >= 0) && (payload <= 1)) {
-      strlcpy(Settings.button_topic, mqtt_topic, sizeof(Settings.button_topic));
       if (!payload) {
         for(i = 1; i <= MAX_SWITCHES; i++) {
           SendKey(1, i, 9);  // Clear MQTT retain in broker

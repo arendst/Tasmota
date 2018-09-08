@@ -768,7 +768,7 @@ void HandleModuleConfiguration()
   page.replace(F("{v}"), FPSTR(S_CONFIGURE_MODULE));
   page += FPSTR(HTTP_SCRIPT_MODULE1);
   for (byte i = 0; i < MAXMODULE; i++) {
-    midx = pgm_read_byte(kNiceList + i);
+    midx = pgm_read_byte(kModuleNiceList + i);
     snprintf_P(stemp, sizeof(stemp), kModules[midx].name);
     snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SCRIPT_MODULE2, midx, midx +1, stemp);
     page += mqtt_data;
@@ -779,10 +779,10 @@ void HandleModuleConfiguration()
 
   mytmplt cmodule;
   memcpy_P(&cmodule, &kModules[Settings.module], sizeof(cmodule));
-
   for (byte j = 0; j < GPIO_SENSOR_END; j++) {
-    if (!GetUsedInModule(j, cmodule.gp.io)) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SCRIPT_MODULE2, j, j, GetTextIndexed(stemp, sizeof(stemp), j, kSensorNames));
+    midx = pgm_read_byte(kGpioNiceList + j);
+    if (!GetUsedInModule(midx, cmodule.gp.io)) {
+      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SCRIPT_MODULE2, midx, midx, GetTextIndexed(stemp, sizeof(stemp), midx, kSensorNames));
       page += mqtt_data;
     }
   }

@@ -134,7 +134,7 @@ int ota_state_flag = 0;                     // OTA state flag
 int ota_result = 0;                         // OTA result
 int restart_flag = 0;                       // Sonoff restart flag
 int wifi_state_flag = WIFI_RESTART;         // Wifi state flag
-int tele_period = 0;                        // Tele period timer
+int tele_period = 1;                        // Tele period timer
 int blinks = 201;                           // Number of LED blinks
 uint32_t uptime = 0;                        // Counting every second until 4294967295 = 130 year
 uint32_t global_update = 0;                 // Timestamp of last global temperature and humidity update
