@@ -628,7 +628,8 @@ boolean GetUsedInModule(byte val, uint8_t *arr)
   if (GPIO_PMS5003 == val) { return true; }
 #endif
 #ifndef USE_NOVA_SDS
-  if (GPIO_SDS0X1 == val) { return true; }
+  if (GPIO_SDS0X1_TX == val) { return true; }
+  if (GPIO_SDS0X1_RX == val) { return true; }
 #endif
 #ifndef USE_SERIAL_BRIDGE
   if (GPIO_SBR_TX == val) { return true; }
