@@ -134,7 +134,7 @@ int ota_state_flag = 0;                     // OTA state flag
 int ota_result = 0;                         // OTA result
 int restart_flag = 0;                       // Sonoff restart flag
 int wifi_state_flag = WIFI_RESTART;         // Wifi state flag
-int tele_period = 0;                        // Tele period timer
+int tele_period = 1;                        // Tele period timer
 int blinks = 201;                           // Number of LED blinks
 uint32_t uptime = 0;                        // Counting every second until 4294967295 = 130 year
 uint32_t global_update = 0;                 // Timestamp of last global temperature and humidity update
@@ -849,10 +849,8 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
     else if ((CMND_GPIO == command_code) && (index < MAX_GPIO_PIN)) {
       mytmplt cmodule;
       memcpy_P(&cmodule, &kModules[Settings.module], sizeof(cmodule));
-//      if ((GPIO_USER == cmodule.gp.io[index]) && (payload >= 0) && (payload < GPIO_SENSOR_END)) {
       if ((GPIO_USER == ValidGPIO(index, cmodule.gp.io[index])) && (payload >= 0) && (payload < GPIO_SENSOR_END)) {
         for (byte i = 0; i < MAX_GPIO_PIN; i++) {
-//          if ((GPIO_USER == cmodule.gp.io[i]) && (Settings.my_gp.io[i] == payload)) {
           if ((GPIO_USER == ValidGPIO(i, cmodule.gp.io[i])) && (Settings.my_gp.io[i] == payload)) {
             Settings.my_gp.io[i] = 0;
           }
@@ -862,7 +860,6 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{"));
       for (byte i = 0; i < MAX_GPIO_PIN; i++) {
-//        if (GPIO_USER == cmodule.gp.io[i]) {
         if (GPIO_USER == ValidGPIO(i, cmodule.gp.io[i])) {
           if (jsflg) snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,"), mqtt_data);
           jsflg = 1;
