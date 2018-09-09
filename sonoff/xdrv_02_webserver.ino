@@ -1193,7 +1193,7 @@ void HandleSaveSettings()
       if (Settings.last_module != new_module) {
         Settings.my_gp.io[i] = 0;
       } else {
-        if (GPIO_USER == cmodule.gp.io[i]) {
+        if (GPIO_USER == ValidGPIO(i, cmodule.gp.io[i])) {
           snprintf_P(stemp, sizeof(stemp), PSTR("g%d"), i);
           WebGetArg(stemp, tmp, sizeof(tmp));
           Settings.my_gp.io[i] = (!strlen(tmp)) ? 0 : atoi(tmp);

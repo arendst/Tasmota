@@ -936,8 +936,20 @@ void GetFeatures()
 #ifdef USE_DISPLAY_SH1106
   feature_drv2 |= 0x00001000;  // xdsp_06_sh1106.ino
 #endif
+#ifdef USE_MP3_PLAYER
+  feature_drv2 |= 0x00002000;  // xdrv_14_mp3.ino
+#endif
 
 
+#ifdef NO_EXTRA_4K_HEAP
+  feature_drv2 |= 0x00800000;  // sonoff_post.h
+#endif
+#ifdef VTABLES_IN_IRAM
+  feature_drv2 |= 0x01000000;  // platformio.ini
+#endif
+#ifdef VTABLES_IN_DRAM
+  feature_drv2 |= 0x02000000;  // platformio.ini
+#endif
 #ifdef VTABLES_IN_FLASH
   feature_drv2 |= 0x04000000;  // platformio.ini
 #endif
