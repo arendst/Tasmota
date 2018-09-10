@@ -53,7 +53,7 @@ void NovaSdsSetWorkPeriod()
     NovaSdsSerial->read();
   }
 
-	novasds_workperiod[4] = WORKING_PERIOD;
+  novasds_workperiod[4] = WORKING_PERIOD;
   novasds_workperiod[17] = ((novasds_workperiod[2] + novasds_workperiod[3] + novasds_workperiod[4] + novasds_workperiod[15] + novasds_workperiod[16]) & 0xFF); //checksum
 
   NovaSdsSerial->write(novasds_workperiod, sizeof(novasds_workperiod));
