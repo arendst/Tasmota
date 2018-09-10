@@ -60,17 +60,17 @@ void NovaSdsSetWorkPeriod()
 
   NovaSdsSerial->flush();
 
-	while (NovaSdsSerial->available() > 0) {
-		NovaSdsSerial->read();
-	}
+  while (NovaSdsSerial->available() > 0) {
+    NovaSdsSerial->read();
+  }
 
 	NovaSdsSerial->write(novasds_setquerymode, sizeof(novasds_setquerymode));
 
   NovaSdsSerial->flush();
 
-	while (NovaSdsSerial->available() > 0) {
-		NovaSdsSerial->read();
-	}
+  while (NovaSdsSerial->available() > 0) {
+    NovaSdsSerial->read();
+  }
 }
 
 
