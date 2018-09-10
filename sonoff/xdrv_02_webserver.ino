@@ -768,7 +768,7 @@ void HandleModuleConfiguration()
   page.replace(F("{v}"), FPSTR(S_CONFIGURE_MODULE));
   page += FPSTR(HTTP_SCRIPT_MODULE1);
   for (byte i = 0; i < MAXMODULE; i++) {
-    midx = pgm_read_byte(kNiceList + i);
+    midx = pgm_read_byte(kModuleNiceList + i);
     snprintf_P(stemp, sizeof(stemp), kModules[midx].name);
     snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SCRIPT_MODULE2, midx, midx +1, stemp);
     page += mqtt_data;
@@ -779,10 +779,10 @@ void HandleModuleConfiguration()
 
   mytmplt cmodule;
   memcpy_P(&cmodule, &kModules[Settings.module], sizeof(cmodule));
-
   for (byte j = 0; j < GPIO_SENSOR_END; j++) {
-    if (!GetUsedInModule(j, cmodule.gp.io)) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SCRIPT_MODULE2, j, j, GetTextIndexed(stemp, sizeof(stemp), j, kSensorNames));
+    midx = pgm_read_byte(kGpioNiceList + j);
+    if (!GetUsedInModule(midx, cmodule.gp.io)) {
+      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SCRIPT_MODULE2, midx, midx, GetTextIndexed(stemp, sizeof(stemp), midx, kSensorNames));
       page += mqtt_data;
     }
   }
@@ -805,7 +805,7 @@ void HandleModuleConfiguration()
   for (byte i = 0; i < MAX_GPIO_PIN; i++) {
     if (GPIO_USER == ValidGPIO(i, cmodule.gp.io[i])) {
       snprintf_P(stemp, 3, PINS_WEMOS +i*2);
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("<tr><td style='width:190px'>%s <b>" D_GPIO "%d</b> %s</td><td style='width:146px'><select id='g%d' name='g%d'></select></td></tr>"),
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("<tr><td style='width:190px'>%s <b>" D_GPIO "%d</b> %s</td><td style='width:160px'><select id='g%d' name='g%d'></select></td></tr>"),
         (WEMOS==Settings.module)?stemp:"", i, (0==i)? D_SENSOR_BUTTON "1":(1==i)? D_SERIAL_OUT :(3==i)? D_SERIAL_IN :(9==i)? "<font color='red'>ESP8285</font>" :(10==i)? "<font color='red'>ESP8285</font>" :(12==i)? D_SENSOR_RELAY "1":(13==i)? D_SENSOR_LED "1i":(14==i)? D_SENSOR :"", i, i);
       page += mqtt_data;
     }
@@ -1193,7 +1193,7 @@ void HandleSaveSettings()
       if (Settings.last_module != new_module) {
         Settings.my_gp.io[i] = 0;
       } else {
-        if (GPIO_USER == cmodule.gp.io[i]) {
+        if (GPIO_USER == ValidGPIO(i, cmodule.gp.io[i])) {
           snprintf_P(stemp, sizeof(stemp), PSTR("g%d"), i);
           WebGetArg(stemp, tmp, sizeof(tmp));
           Settings.my_gp.io[i] = (!strlen(tmp)) ? 0 : atoi(tmp);

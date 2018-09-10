@@ -31,13 +31,18 @@ TasmotaSerial *NovaSdsSerial;
 
 uint8_t novasds_type = 1;
 uint8_t novasds_valid = 0;
+uint8_t novasds_running = 1;
+uint8_t novasds_read_tick = 30;
+uint8_t novasds_wakup_tick = 179;
+uint8_t novasds_ticker = 0;
 
 struct sds011data {
   uint16_t pm100;
   uint16_t pm25;
 } novasds_data;
 
-bool NovaSdsReadData()
+
+bool NovaSdsReadData(bool publish)
 {
   if (! NovaSdsSerial->available()) return false;
 
@@ -51,7 +56,9 @@ bool NovaSdsReadData()
   NovaSdsSerial->flush();
 
   AddLogSerial(LOG_LEVEL_DEBUG_MORE, d, 8);
-
+  if (!publish){
+    return false;
+  }
   if (d[7] == ((d[1] + d[2] + d[3] + d[4] + d[5] + d[6]) & 0xFF)) {
     novasds_data.pm25 = (d[1] + 256 * d[2]);
     novasds_data.pm100 = (d[3] + 256 * d[4]);
@@ -59,9 +66,6 @@ bool NovaSdsReadData()
     AddLog_P(LOG_LEVEL_DEBUG, PSTR("SDS: " D_CHECKSUM_FAILURE));
     return false;
   }
-
-  novasds_valid = 10;
-
   return true;
 }
 
@@ -69,12 +73,35 @@ bool NovaSdsReadData()
 
 void NovaSdsSecond()                 // Every second
 {
-  if (NovaSdsReadData()) {
-    novasds_valid = 10;
-  } else {
-    if (novasds_valid) {
-      novasds_valid--;
+  if (novasds_ticker < novasds_read_tick) {
+    // wake up the sensor and wait read ticks to stabalize the sensor
+    if (!novasds_running) {
+      NovaSdsStart();
+      novasds_running = 1;
     }
+
+    // drain the serial without publishing data
+    NovaSdsReadData(false);
+    novasds_ticker++;
+
+  } else if (novasds_ticker == novasds_read_tick) {
+
+    // try to take a single stable reading and sleep the sensor
+    if (NovaSdsReadData(true)) {
+      novasds_valid = 1;
+      NovaSdsStop();
+      novasds_running = 0;
+      novasds_ticker++;
+    } else {
+      novasds_valid = 0;
+    }
+
+  } else if (novasds_ticker >= novasds_wakup_tick) {
+    // reset the counter
+    novasds_ticker = 0;
+  } else {
+    // sensor is sleeping keep waiting
+    novasds_ticker++;
   }
 }
 
@@ -83,12 +110,36 @@ void NovaSdsSecond()                 // Every second
 void NovaSdsInit()
 {
   novasds_type = 0;
-  if (pin[GPIO_SDS0X1] < 99) {
-    NovaSdsSerial = new TasmotaSerial(pin[GPIO_SDS0X1], -1, 1);
+  if (pin[GPIO_SDS0X1_RX] < 99 && pin[GPIO_SDS0X1_TX] < 99) {
+    NovaSdsSerial = new TasmotaSerial(pin[GPIO_SDS0X1_RX], pin[GPIO_SDS0X1_TX], 1);
+
     if (NovaSdsSerial->begin(9600)) {
-      if (NovaSdsSerial->hardwareSerial()) { ClaimSerial(); }
+      if (NovaSdsSerial->hardwareSerial()) {
+        ClaimSerial();
+      }
       novasds_type = 1;
     }
+
+  }
+}
+
+void NovaSdsStart()
+{
+  AddLog_P(LOG_LEVEL_DEBUG, "SDS: start");
+  const uint8_t novasds_start_cmd[] = {0xAA, 0xB4, 0x06, 0x01, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0x06, 0xAB};
+  NovaSdsSerial->write(novasds_start_cmd, sizeof(novasds_start_cmd));
+  NovaSdsSerial->flush();
+}
+
+void NovaSdsStop()
+{
+  AddLog_P(LOG_LEVEL_DEBUG, "SDS: stop");
+  const uint8_t novasds_stop_cmd[] = {0xAA, 0xB4, 0x06, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0x05, 0xAB};
+  NovaSdsSerial->write(novasds_stop_cmd, sizeof(novasds_stop_cmd));
+  NovaSdsSerial->flush();
+  // drain any old data
+  while (NovaSdsSerial->available()) {
+    NovaSdsSerial->read();
   }
 }
 
