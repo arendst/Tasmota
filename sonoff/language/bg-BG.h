@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v6.1.1.5
+ * Updated until v6.2.0.1
 \*********************************************************************/
 
 //#define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -60,10 +60,12 @@
 #define D_BLINKOFF "Мигане изкл."
 #define D_BOOT_COUNT "Брой на стартиранията"
 #define D_BRIGHTLIGHT "Яркост"
+#define D_BSSID "BSSId"
 #define D_BUTTON "Бутон"
 #define D_BY "от"                    // Written by me
 #define D_BYTES "Байта"
 #define D_CELSIUS "Целзий"
+#define D_CHANNEL "Канал"
 #define D_CO2 "Въглероден диоксид"
 #define D_CODE "код"                // Button code
 #define D_COLDLIGHT "Хладна"
@@ -438,12 +440,12 @@
 #define D_PARTICALS_BEYOND "Частици"
 
 // xsns_32_mpu6050.ino
-#define D_AX_AXIS "Accel. X-Axis"
-#define D_AY_AXIS "Accel. Y-Axis"
-#define D_AZ_AXIS "Accel. Z-Axis"
-#define D_GX_AXIS "Gyro X-Axis"
-#define D_GY_AXIS "Gyro Y-Axis"
-#define D_GZ_AXIS "Gyro Z-Axis"
+#define D_AX_AXIS "Ускорение - ос X"
+#define D_AY_AXIS "Ускорение - ос Y"
+#define D_AZ_AXIS "Ускорение - ос Z"
+#define D_GX_AXIS "Жироскоп - ос X"
+#define D_GY_AXIS "Жироскоп - ос Y"
+#define D_GZ_AXIS "Жироскоп - ос Z"
 
 // sonoff_template.h
 #define D_SENSOR_NONE     "Няма"
@@ -454,6 +456,7 @@
 #define D_SENSOR_I2C_SCL  "I2C SCL"
 #define D_SENSOR_I2C_SDA  "I2C SDA"
 #define D_SENSOR_WS2812   "WS2812"
+#define D_SENSOR_DFR562   "MP3 Player"
 #define D_SENSOR_IRSEND   "IRsend"
 #define D_SENSOR_SWITCH   "Ключ"   // Suffix "1"
 #define D_SENSOR_BUTTON   "Бутон"   // Suffix "1"
@@ -472,7 +475,8 @@
 #define D_SENSOR_SPI_DC   "SPI DC"
 #define D_SENSOR_BACKLIGHT "Подсветка"
 #define D_SENSOR_PMS5003  "PMS5003"
-#define D_SENSOR_SDS0X1   "SDS0X1"
+#define D_SENSOR_SDS0X1_RX "SDS0X1 Rx"
+#define D_SENSOR_SDS0X1_TX "SDS0X1 Tx"
 #define D_SENSOR_SBR_RX   "SerBr Rx"
 #define D_SENSOR_SBR_TX   "SerBr Tx"
 #define D_SENSOR_SR04_TRIG "SR04 Tri"

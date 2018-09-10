@@ -60,10 +60,12 @@
 #define D_BLINKOFF "BlinkOff"
 #define D_BOOT_COUNT "Yeniden başlama sayısı"
 #define D_BRIGHTLIGHT "Işık"
+#define D_BSSID "BSSId"
 #define D_BUTTON "Buton"
 #define D_BY "by"                    // Written by me
 #define D_BYTES "Bayt"
 #define D_CELSIUS "Derece"
+#define D_CHANNEL "Channel"
 #define D_CO2 "Karbon dioksit"
 #define D_CODE "kod"                // Button code
 #define D_COLDLIGHT "Soğuk"
@@ -454,6 +456,7 @@
 #define D_SENSOR_I2C_SCL  "I2C SCL"
 #define D_SENSOR_I2C_SDA  "I2C SDA"
 #define D_SENSOR_WS2812   "WS2812"
+#define D_SENSOR_DFR562   "MP3 Player"
 #define D_SENSOR_IRSEND   "IRsend"
 #define D_SENSOR_SWITCH   "Switch"   // Suffix "1"
 #define D_SENSOR_BUTTON   "Button"   // Suffix "1"

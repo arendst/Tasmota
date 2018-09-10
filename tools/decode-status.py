@@ -83,7 +83,9 @@ a_setoption = [[
     "Do not show Wifi and Mqtt state using Led"
     ],[
     "Timers enabled",
-    "","","",
+    "Generic ESP8285 GPIO enabled",
+    "Add UTC time offset to JSON message",
+    "",
     "","","","",
     "","","","",
     "","","","",
@@ -103,13 +105,13 @@ a_features = [[
     "USE_TIMERS","USE_SUNRISE","USE_TIMERS_WEB","USE_RULES",
     "USE_KNX","USE_WPS","USE_SMARTCONFIG",""
     ],[
-    "USE_CONFIG_OVERRIDE","BE_MINIMAL","USE_ALL_SENSORS","USE_CLASSIC",
-    "USE_KNX_NO_EMULATION","","","",
+    "USE_CONFIG_OVERRIDE","BE_MINIMAL","USE_SENSORS","USE_CLASSIC",
+    "USE_KNX_NO_EMULATION","USE_DISPLAY_MODES1TO5","USE_DISPLAY_GRAPH","USE_DISPLAY_LCD",
+    "USE_DISPLAY_SSD1306","USE_DISPLAY_MATRIX","USE_DISPLAY_ILI9341","USE_DISPLAY_EPAPER",
+    "USE_DISPLAY_SH1106","USE_MP3_PLAYER","","",
     "","","","",
-    "","","","",
-    "","","","",
-    "","","","",
-    "","","VTABLES_IN_FLASH","PIO_FRAMEWORK_ARDUINO_LWIP_HIGHER_BANDWIDTH",
+    "","","","NO_EXTRA_4K_HEAP",
+    "VTABLES_IN_IRAM","VTABLES_IN_DRAM","VTABLES_IN_FLASH","PIO_FRAMEWORK_ARDUINO_LWIP_HIGHER_BANDWIDTH",
     "PIO_FRAMEWORK_ARDUINO_LWIP2_LOW_MEMORY","PIO_FRAMEWORK_ARDUINO_LWIP2_HIGHER_BANDWIDTH","DEBUG_THEO","USE_DEBUG_DRIVER"
     ],[
     "","USE_ADC_VCC","USE_ENERGY_SENSOR","USE_PZEM004T",
@@ -122,8 +124,8 @@ a_features = [[
     "USE_SDM630","USE_LM75AD","USE_APDS9960","USE_TM1638"
     ],[
     "USE_MCP230xx","USE_MPR121","USE_CCS811","USE_MPU6050",
-    "","","","",
-    "","","","",
+    "USE_MCP230xx_OUTPUT","USE_MCP230xx_DISPLAYOUTPUT","USE_HLW8012","USE_CSE7766",
+    "USE_MCP39F501","USE_PZEM2","","",
     "","","","",
     "","","","",
     "","","","",

@@ -400,6 +400,7 @@ void KNX_DEL_CB( byte CBnum )
 
 bool KNX_CONFIG_NOT_MATCH()
 {
+  // Check for configured parameters that the device does not have (module changed)
   for (byte i = 0; i < KNX_MAX_device_param; ++i)
   {
     if ( !device_param[i].show ) { // device has this parameter ?
@@ -407,19 +408,42 @@ bool KNX_CONFIG_NOT_MATCH()
 
       // Checks all GA
       if ( KNX_GA_Search(i+1) != KNX_Empty ) { return true; }
-
       // Check all CB
       if ( i < 8 ) // check relays (i from 8 to 15 are toggle relays parameters)
       {
         if ( KNX_CB_Search(i+1) != KNX_Empty ) { return true; }
         if ( KNX_CB_Search(i+9) != KNX_Empty ) { return true; }
       }
-      if ( i > 15 ) // check sensors and others
+      // check sensors and others
+      if ( i > 15 )
       {
         if ( KNX_CB_Search(i+1) != KNX_Empty ) { return true; }
       }
     }
   }
+
+  // Check for invalid or erroneous configuration (tasmota flashed without clearing the memory)
+  for (byte i = 0; i < Settings.knx_GA_registered; ++i)
+  {
+    if ( Settings.knx_GA_param[i] != 0 ) // the GA[i] have a parameter defined?
+    {
+      if ( Settings.knx_GA_addr[i] == 0 ) // the GA[i] with parameter have the 0/0/0 as address?
+      {
+         return true; // So, it is invalid. Reset KNX configuration
+      }
+    }
+  }
+  for (byte i = 0; i < Settings.knx_CB_registered; ++i)
+  {
+    if ( Settings.knx_CB_param[i] != 0 ) // the CB[i] have a parameter defined?
+    {
+      if ( Settings.knx_CB_addr[i] == 0 ) // the CB[i] with parameter have the 0/0/0 as address?
+      {
+         return true; // So, it is invalid. Reset KNX configuration
+      }
+    }
+  }
+
   return false;
 }
 
@@ -1132,7 +1156,7 @@ boolean KnxCommand()
   else if (CMND_KNX_PA == command_code) {
     if (XdrvMailbox.data_len) {
       if (strstr(XdrvMailbox.data, ".")) {     // Process parameter entry
-        char sub_string[XdrvMailbox.data_len +1];
+        char sub_string[XdrvMailbox.data_len];
 
         int pa_area = atoi(subStr(sub_string, XdrvMailbox.data, ".", 1));
         int pa_line = atoi(subStr(sub_string, XdrvMailbox.data, ".", 2));
@@ -1159,7 +1183,7 @@ boolean KnxCommand()
   else if ((CMND_KNX_GA == command_code) && (index > 0) && (index <= MAX_KNX_GA)) {
     if (XdrvMailbox.data_len) {
       if (strstr(XdrvMailbox.data, ",")) {     // Process parameter entry
-        char sub_string[XdrvMailbox.data_len +1];
+        char sub_string[XdrvMailbox.data_len];
 
         int ga_option = atoi(subStr(sub_string, XdrvMailbox.data, ",", 1));
         int ga_area = atoi(subStr(sub_string, XdrvMailbox.data, ",", 2));
@@ -1208,7 +1232,7 @@ boolean KnxCommand()
   else if ((CMND_KNX_CB == command_code) && (index > 0) && (index <= MAX_KNX_CB)) {
     if (XdrvMailbox.data_len) {
       if (strstr(XdrvMailbox.data, ",")) {     // Process parameter entry
-        char sub_string[XdrvMailbox.data_len +1];
+        char sub_string[XdrvMailbox.data_len];
 
         int cb_option = atoi(subStr(sub_string, XdrvMailbox.data, ",", 1));
         int cb_area = atoi(subStr(sub_string, XdrvMailbox.data, ",", 2));

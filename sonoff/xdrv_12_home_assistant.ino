@@ -206,6 +206,50 @@ void HAssDiscovery(uint8_t mode)
   }
 }
 
+/*
+#define D_CMND_HASSDISCOVER "HassDiscover"
+
+enum HassCommands { CMND_HASSDISCOVER };
+const char kHassCommands[] PROGMEM = D_CMND_HASSDISCOVER ;
+
+boolean HassCommand()
+{
+  char command[CMDSZ];
+  boolean serviced = true;
+
+  int command_code = GetCommandCode(command, sizeof(command), XdrvMailbox.topic, kHassCommands);
+  if (-1 == command_code) {
+    serviced = false;  // Unknown command
+  }
+  else if (CMND_HASSDISCOVER == command_code) {
+    if (XdrvMailbox.data_len > 0) {
+      switch (XdrvMailbox.payload) {
+      case 0: // Off
+      case 1: // On
+        Settings.flag.hass_discovery = XdrvMailbox.payload;
+        break;
+      case 2: // Toggle
+        Settings.flag.hass_discovery ^= 1;
+        break;
+      case 4: // Off
+      case 5: // On
+        Settings.flag.hass_light = XdrvMailbox.payload &1;
+        break;
+      case 6: // Toggle
+        Settings.flag.hass_light ^= 1;
+        break;
+      }
+      HAssDiscovery(1);
+    }
+    snprintf_P (mqtt_data, sizeof(mqtt_data), PSTR("{\"%s\":\"%s\",\"Force light\":\"%s\"}"),
+      command, GetStateText(Settings.flag.hass_discovery), GetStateText(Settings.flag.hass_light));
+  }
+  else serviced = false;  // Unknown command
+
+  return serviced;
+}
+*/
+
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
@@ -221,6 +265,11 @@ boolean Xdrv12(byte function)
       case FUNC_MQTT_INIT:
         HAssDiscovery(0);
         break;
+/*
+      case FUNC_COMMAND:
+        result = HassCommand();
+        break;
+*/
     }
   }
   return result;

@@ -82,6 +82,10 @@ String GetResetReason()
   }
 }
 
+boolean OsWatchBlockedLoop()
+{
+  return oswatch_blocked_loop;
+}
 /*********************************************************************************************\
  * Miscellaneous
 \*********************************************************************************************/
@@ -139,7 +143,7 @@ char* subStr(char* dest, char* str, const char *delim, int index)
   int i;
 
   // Since strtok consumes the first arg, make a copy
-  strncpy(dest, str, strlen(str));
+  strncpy(dest, str, strlen(str)+1);
   for (i = 1, act = dest; i <= index; i++, act = NULL) {
     sub = strtok_r(act, delim, &ptr);
     if (sub == NULL) break;
@@ -153,7 +157,7 @@ double CharToDouble(char *str)
   // simple ascii to double, because atof or strtod are too large
   char strbuf[24];
 
-  strcpy(strbuf, str);
+  strlcpy(strbuf, str, sizeof(strbuf));
   char *pt;
   double left = atoi(strbuf);
   double right = 0;
@@ -177,6 +181,17 @@ double CharToDouble(char *str)
   double result = left + right;
   if (left < 0) { result = left - right; }
   return result;
+}
+
+int TextToInt(char *str)
+{
+  char *p;
+  uint8_t radix = 10;
+  if ('#' == str[0]) {
+    radix = 16;
+    str++;
+  }
+  return strtol(str, &p, radix);
 }
 
 char* dtostrfd(double number, unsigned char prec, char *s)
@@ -296,6 +311,31 @@ char* NoAlNumToUnderscore(char* dest, const char* source)
     *write++ = (isalnum(ch) || ('\0' == ch)) ? ch : '_';
   }
   return dest;
+}
+
+void SetShortcut(char* str, uint8_t action)
+{
+  if ('\0' != str[0]) {     // There must be at least one character in the buffer
+    str[0] = '0' + action;  // SC_CLEAR, SC_DEFAULT, SC_USER
+    str[1] = '\0';
+  }
+}
+
+uint8_t Shortcut(const char* str)
+{
+  uint8_t result = 10;
+
+  if ('\0' == str[1]) {    // Only allow single character input for shortcut
+    if (('"' == str[0]) || ('0' == str[0])) {
+      result = SC_CLEAR;
+    } else {
+      result = atoi(str);  // 1 = SC_DEFAULT, 2 = SC_USER
+      if (0 == result) {
+        result = 10;
+      }
+    }
+  }
+  return result;
 }
 
 boolean ParseIp(uint32_t* addr, const char* str)
@@ -521,13 +561,13 @@ int GetStateNumber(char *state_text)
   char command[CMDSZ];
   int state_number = -1;
 
-  if ((GetCommandCode(command, sizeof(command), state_text, kOptionOff) >= 0) || !strcasecmp(state_text, Settings.state_text[0])) {
+  if (GetCommandCode(command, sizeof(command), state_text, kOptionOff) >= 0) {
     state_number = 0;
   }
-  else if ((GetCommandCode(command, sizeof(command), state_text, kOptionOn) >= 0) || !strcasecmp(state_text, Settings.state_text[1])) {
+  else if (GetCommandCode(command, sizeof(command), state_text, kOptionOn) >= 0) {
     state_number = 1;
   }
-  else if ((GetCommandCode(command, sizeof(command), state_text, kOptionToggle) >= 0) || !strcasecmp(state_text, Settings.state_text[2])) {
+  else if (GetCommandCode(command, sizeof(command), state_text, kOptionToggle) >= 0) {
     state_number = 2;
   }
   else if (GetCommandCode(command, sizeof(command), state_text, kOptionBlink) >= 0) {
@@ -569,6 +609,10 @@ boolean GetUsedInModule(byte val, uint8_t *arr)
   if (GPIO_PZEM_TX == val) { return true; }
   if (GPIO_PZEM_RX == val) { return true; }
 #endif
+#ifndef USE_PZEM2
+  if (GPIO_PZEM2_TX == val) { return true; }
+  if (GPIO_PZEM2_RX == val) { return true; }
+#endif
 #ifndef USE_SENSEAIR
   if (GPIO_SAIR_TX == val) { return true; }
   if (GPIO_SAIR_RX == val) { return true; }
@@ -584,7 +628,8 @@ boolean GetUsedInModule(byte val, uint8_t *arr)
   if (GPIO_PMS5003 == val) { return true; }
 #endif
 #ifndef USE_NOVA_SDS
-  if (GPIO_SDS0X1 == val) { return true; }
+  if (GPIO_SDS0X1_TX == val) { return true; }
+  if (GPIO_SDS0X1_RX == val) { return true; }
 #endif
 #ifndef USE_SERIAL_BRIDGE
   if (GPIO_SBR_TX == val) { return true; }
@@ -607,12 +652,6 @@ boolean GetUsedInModule(byte val, uint8_t *arr)
   if (GPIO_TM16DIO == val) { return true; }
   if (GPIO_TM16STB == val) { return true; }
 #endif
-#ifndef USE_EPAPER
-  if (GPIO_SSPI_CS == val) { return true; }
-  if (GPIO_SSPI_MOSI == val) { return true; }
-  if (GPIO_SSPI_SCLK == val) { return true; }
-#endif
-
   if ((val >= GPIO_REL1) && (val < GPIO_REL1 + MAX_RELAYS)) {
     offset = (GPIO_REL1_INV - GPIO_REL1);
   }
@@ -681,6 +720,78 @@ void ShowSource(int source)
     snprintf_P(log_data, sizeof(log_data), PSTR("SRC: %s"), GetTextIndexed(stemp1, sizeof(stemp1), source, kCommandSource));
     AddLog(LOG_LEVEL_DEBUG);
   }
+}
+
+uint8_t ValidGPIO(uint8_t pin, uint8_t gpio)
+{
+  uint8_t result = gpio;
+  if ((WEMOS == Settings.module) && (!Settings.flag3.user_esp8285_enable)) {
+    if ((pin == 9) || (pin == 10)) { result = GPIO_NONE; }  // Disable possible flash GPIO9 and GPIO10
+  }
+  return result;
+}
+
+/*********************************************************************************************\
+ * Sleep aware time scheduler functions borrowed from ESPEasy
+\*********************************************************************************************/
+
+long TimeDifference(unsigned long prev, unsigned long next)
+{
+  // Return the time difference as a signed value, taking into account the timers may overflow.
+  // Returned timediff is between -24.9 days and +24.9 days.
+  // Returned value is positive when "next" is after "prev"
+  long signed_diff = 0;
+  // To cast a value to a signed long, the difference may not exceed half 0xffffffffUL (= 4294967294)
+  const unsigned long half_max_unsigned_long = 2147483647u;  // = 2^31 -1
+  if (next >= prev) {
+    const unsigned long diff = next - prev;
+    if (diff <= half_max_unsigned_long) {                    // Normal situation, just return the difference.
+      signed_diff = static_cast<long>(diff);                 // Difference is a positive value.
+    } else {
+      // prev has overflow, return a negative difference value
+      signed_diff = static_cast<long>((0xffffffffUL - next) + prev + 1u);
+      signed_diff = -1 * signed_diff;
+    }
+  } else {
+    // next < prev
+    const unsigned long diff = prev - next;
+    if (diff <= half_max_unsigned_long) {                    // Normal situation, return a negative difference value
+      signed_diff = static_cast<long>(diff);
+      signed_diff = -1 * signed_diff;
+    } else {
+      // next has overflow, return a positive difference value
+      signed_diff = static_cast<long>((0xffffffffUL - prev) + next + 1u);
+    }
+  }
+  return signed_diff;
+}
+
+long TimePassedSince(unsigned long timestamp)
+{
+  // Compute the number of milliSeconds passed since timestamp given.
+  // Note: value can be negative if the timestamp has not yet been reached.
+  return TimeDifference(timestamp, millis());
+}
+
+bool TimeReached(unsigned long timer)
+{
+  // Check if a certain timeout has been reached.
+  const long passed = TimePassedSince(timer);
+  return (passed >= 0);
+}
+
+void SetNextTimeInterval(unsigned long& timer, const unsigned long step)
+{
+  timer += step;
+  const long passed = TimePassedSince(timer);
+  if (passed < 0) { return; }   // Event has not yet happened, which is fine.
+  if (static_cast<unsigned long>(passed) > step) {
+    // No need to keep running behind, start again.
+    timer = millis() + step;
+    return;
+  }
+  // Try to get in sync again.
+  timer = millis() + (step - passed);
 }
 
 /*********************************************************************************************\
@@ -752,7 +863,7 @@ void GetFeatures()
   feature_drv1 |= 0x00100000;  // xdrv_07_domoticz.ino
 #endif
 #ifdef USE_DISPLAY
-  feature_drv1 |= 0x00200000;  // xdrv_98_display.ino
+  feature_drv1 |= 0x00200000;  // xdrv_13_display.ino
 #endif
 #ifdef USE_HOME_ASSISTANT
   feature_drv1 |= 0x00400000;  // xdrv_12_home_assistant.ino
@@ -792,7 +903,7 @@ void GetFeatures()
 #ifdef BE_MINIMAL
   feature_drv2 |= 0x00000002;  // user_config(_override).h
 #endif
-#ifdef USE_ALL_SENSORS
+#ifdef USE_SENSORS
   feature_drv2 |= 0x00000004;  // user_config(_override).h
 #endif
 #ifdef USE_CLASSIC
@@ -801,8 +912,51 @@ void GetFeatures()
 #ifdef USE_KNX_NO_EMULATION
   feature_drv2 |= 0x00000010;  // user_config(_override).h
 #endif
+#ifdef USE_DISPLAY_MODES1TO5
+  feature_drv2 |= 0x00000020;  // xdrv_13_display.ino
+#endif
+#ifdef USE_DISPLAY_GRAPH
+  feature_drv2 |= 0x00000040;  // xdrv_13_display.ino
+#endif
+#ifdef USE_DISPLAY_LCD
+  feature_drv2 |= 0x00000080;  // xdsp_01_lcd.ino
+#endif
+#ifdef USE_DISPLAY_SSD1306
+  feature_drv2 |= 0x00000100;  // xdsp_02_ssd1306.ino
+#endif
+#ifdef USE_DISPLAY_MATRIX
+  feature_drv2 |= 0x00000200;  // xdsp_03_matrix.ino
+#endif
+#ifdef USE_DISPLAY_ILI9341
+  feature_drv2 |= 0x00000400;  // xdsp_04_ili9341.ino
+#endif
+#ifdef USE_DISPLAY_EPAPER
+  feature_drv2 |= 0x00000800;  // xdsp_05_epaper.ino
+#endif
+#ifdef USE_DISPLAY_SH1106
+  feature_drv2 |= 0x00001000;  // xdsp_06_sh1106.ino
+#endif
+#ifdef USE_MP3_PLAYER
+  feature_drv2 |= 0x00002000;  // xdrv_14_mp3.ino
+#endif
+#ifndef USE_SOFTSPI
+  if (GPIO_SSPI_CS == val) { return true; }
+  if (GPIO_SSPI_MOSI == val) { return true; }
+  if (GPIO_SSPI_SCLK == val) { return true; }
+#endif
+#ifndef USE_DISPLAY_ILI9488
+  if (GPIO_COLDISP_BL == val) { return true; }
+#endif
 
-
+#ifdef NO_EXTRA_4K_HEAP
+  feature_drv2 |= 0x00800000;  // sonoff_post.h
+#endif
+#ifdef VTABLES_IN_IRAM
+  feature_drv2 |= 0x01000000;  // platformio.ini
+#endif
+#ifdef VTABLES_IN_DRAM
+  feature_drv2 |= 0x02000000;  // platformio.ini
+#endif
 #ifdef VTABLES_IN_FLASH
   feature_drv2 |= 0x04000000;  // platformio.ini
 #endif
@@ -835,7 +989,7 @@ void GetFeatures()
   feature_sns1 |= 0x00000004;  // xdrv_03_energy.ino
 #endif
 #ifdef USE_PZEM004T
-  feature_sns1 |= 0x00000008;  // xdrv_03_energy.ino
+  feature_sns1 |= 0x00000008;  // xnrg_03_pzem004t.ino
 #endif
 #ifdef USE_DS18B20
   feature_sns1 |= 0x00000010;  // xsns_05_ds18b20.ino
@@ -938,6 +1092,25 @@ void GetFeatures()
 #ifdef USE_MPU6050
   feature_sns2 |= 0x00000008;  // xsns_32_mpu6050.ino
 #endif
+#ifdef USE_MCP230xx_OUTPUT
+  feature_sns2 |= 0x00000010;  // xsns_29_mcp230xx.ino
+#endif
+#ifdef USE_MCP230xx_DISPLAYOUTPUT
+  feature_sns2 |= 0x00000020;  // xsns_29_mcp230xx.ino
+#endif
+#ifdef USE_HLW8012
+  feature_sns2 |= 0x00000040;  // xnrg_01_hlw8012.ino
+#endif
+#ifdef USE_CSE7766
+  feature_sns2 |= 0x00000080;  // xnrg_02_cse7766.ino
+#endif
+#ifdef USE_MCP39F501
+  feature_sns2 |= 0x00000100;  // xnrg_04_mcp39f501.ino
+#endif
+#ifdef USE_PZEM2
+  feature_sns2 |= 0x00000200;  // xnrg_05_pzem2.ino
+#endif
+
 }
 
 /*********************************************************************************************\
@@ -1074,6 +1247,31 @@ void WifiConfig(uint8_t type)
   }
 }
 
+void WiFiSetSleepMode()
+{
+/* Excerpt from the esp8266 non os sdk api reference (v2.2.1):
+ * Sets sleep type for power saving. Set WIFI_NONE_SLEEP to disable power saving.
+ * - Default mode: WIFI_MODEM_SLEEP.
+ * - In order to lower the power comsumption, ESP8266 changes the TCP timer
+ *   tick from 250ms to 3s in WIFI_LIGHT_SLEEP mode, which leads to increased timeout for
+ *   TCP timer. Therefore, the WIFI_MODEM_SLEEP or deep-sleep mode should be used
+ *   where there is a requirement for the accurancy of the TCP timer.
+ *
+ * Sleep is disabled in core 2.4.1 and 2.4.2 as there are bugs in their SDKs
+ * See https://github.com/arendst/Sonoff-Tasmota/issues/2559
+ */
+
+//#ifdef ARDUINO_ESP8266_RELEASE_2_4_1
+#if defined(ARDUINO_ESP8266_RELEASE_2_4_1) || defined(ARDUINO_ESP8266_RELEASE_2_4_2)
+#else  // Enabled in 2.3.0, 2.4.0 and stage
+  if (sleep) {
+    WiFi.setSleepMode(WIFI_LIGHT_SLEEP);  // Allow light sleep during idle times
+  } else {
+    WiFi.setSleepMode(WIFI_MODEM_SLEEP);  // Diable sleep (Esp8288/Arduino core and sdk default)
+  }
+#endif
+}
+
 void WifiBegin(uint8_t flag)
 {
   const char kWifiPhyMode[] = " BGN";
@@ -1090,9 +1288,7 @@ void WifiBegin(uint8_t flag)
   WiFi.disconnect(true);    // Delete SDK wifi config
   delay(200);
   WiFi.mode(WIFI_STA);      // Disable AP mode
-#ifndef ARDUINO_ESP8266_RELEASE_2_4_1     // See https://github.com/arendst/Sonoff-Tasmota/issues/2559 - Sleep bug
-  if (Settings.sleep) { WiFi.setSleepMode(WIFI_LIGHT_SLEEP); }  // Allow light sleep during idle times
-#endif
+  WiFiSetSleepMode();
 //  if (WiFi.getPhyMode() != WIFI_PHY_MODE_11N) { WiFi.setPhyMode(WIFI_PHY_MODE_11N); }
   if (!WiFi.getAutoConnect()) { WiFi.setAutoConnect(true); }
 //  WiFi.setAutoReconnect(true);
@@ -1643,44 +1839,46 @@ String GetBuildDateAndTime()
   return String(bdt);
 }
 
+/*
+ * timestamps in https://en.wikipedia.org/wiki/ISO_8601 format
+ *
+ *  DT_UTC - current data and time in Greenwich, England (aka GMT)
+ *  DT_LOCAL - current date and time taking timezone into account
+ *  DT_RESTART - the date and time this device last started, in local timezone
+ *
+ * Format:
+ *  "2017-03-07T11:08:02-07:00" - if DT_LOCAL and SetOption52 = 1
+ *  "2017-03-07T11:08:02"       - otherwise
+ */
 String GetDateAndTime(byte time_type)
 {
-  // enum GetDateAndTimeOptions { DT_LOCAL, DT_UTC, DT_RESTART, DT_UPTIME };
-  // "2017-03-07T11:08:02" - ISO8601:2004
-  char dt[21];
+  // "2017-03-07T11:08:02-07:00" - ISO8601:2004
+  char dt[27];
   TIME_T tmpTime;
 
-  if (DT_UPTIME == time_type) {
-    if (restart_time) {
-      BreakTime(utc_time - restart_time, tmpTime);
-    } else {
-      BreakTime(uptime, tmpTime);
-    }
-    // "P128DT14H35M44S" - ISO8601:2004 - https://en.wikipedia.org/wiki/ISO_8601 Durations
-    // snprintf_P(dt, sizeof(dt), PSTR("P%dDT%02dH%02dM%02dS"), ut.days, ut.hour, ut.minute, ut.second);
-    // "128 14:35:44" - OpenVMS
-    // "128T14:35:44" - Tasmota
-    snprintf_P(dt, sizeof(dt), PSTR("%dT%02d:%02d:%02d"),
-      tmpTime.days, tmpTime.hour, tmpTime.minute, tmpTime.second);
-  } else {
-    switch (time_type) {
-      case DT_UTC:
-        BreakTime(utc_time, tmpTime);
-        tmpTime.year += 1970;
-        break;
-      case DT_RESTART:
-        if (restart_time == 0) {
-          return "";
-        }
-        BreakTime(restart_time, tmpTime);
-        tmpTime.year += 1970;
-        break;
-      default:
-        tmpTime = RtcTime;
-    }
-    snprintf_P(dt, sizeof(dt), PSTR("%04d-%02d-%02dT%02d:%02d:%02d"),
-      tmpTime.year, tmpTime.month, tmpTime.day_of_month, tmpTime.hour, tmpTime.minute, tmpTime.second);
+  switch (time_type) {
+    case DT_UTC:
+      BreakTime(utc_time, tmpTime);
+      tmpTime.year += 1970;
+      break;
+    case DT_RESTART:
+      if (restart_time == 0) {
+        return "";
+      }
+      BreakTime(restart_time, tmpTime);
+      tmpTime.year += 1970;
+      break;
+    default:
+      tmpTime = RtcTime;
   }
+
+  snprintf_P(dt, sizeof(dt), PSTR("%04d-%02d-%02dT%02d:%02d:%02d"),
+    tmpTime.year, tmpTime.month, tmpTime.day_of_month, tmpTime.hour, tmpTime.minute, tmpTime.second);
+
+  if (Settings.flag3.time_append_timezone && (time_type == DT_LOCAL)) {
+    snprintf_P(dt, sizeof(dt), PSTR("%s%+03d:%02d"), dt, time_timezone / 10, abs((time_timezone % 10) * 6));  // if timezone = +2:30 then time_timezone = 25
+  }
+
   return String(dt);
 }
 
@@ -1965,7 +2163,6 @@ void RtcInit()
  * ADC support
 \*********************************************************************************************/
 
-uint8_t adc_counter = 0;
 uint16_t adc_last_value = 0;
 
 uint16_t AdcRead()
@@ -1980,17 +2177,14 @@ uint16_t AdcRead()
 }
 
 #ifdef USE_RULES
-void AdcEvery50ms()
+void AdcEvery250ms()
 {
-  adc_counter++;
-  if (!(adc_counter % 4)) {
-    uint16_t new_value = AdcRead();
-    if ((new_value < adc_last_value -10) || (new_value > adc_last_value +10)) {
-      adc_last_value = new_value;
-      uint16_t value = adc_last_value / 10;
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"ANALOG\":{\"A0div10\":%d}}"), (value > 99) ? 100 : value);
-      XdrvRulesProcess();
-    }
+  uint16_t new_value = AdcRead();
+  if ((new_value < adc_last_value -10) || (new_value > adc_last_value +10)) {
+    adc_last_value = new_value;
+    uint16_t value = adc_last_value / 10;
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"ANALOG\":{\"A0div10\":%d}}"), (value > 99) ? 100 : value);
+    XdrvRulesProcess();
   }
 }
 #endif  // USE_RULES
@@ -2021,8 +2215,8 @@ boolean Xsns02(byte function)
   if (pin[GPIO_ADC0] < 99) {
     switch (function) {
 #ifdef USE_RULES
-      case FUNC_EVERY_50_MSECOND:
-        AdcEvery50ms();
+      case FUNC_EVERY_250_MSECOND:
+        AdcEvery250ms();
         break;
 #endif  // USE_RULES
       case FUNC_JSON_APPEND:

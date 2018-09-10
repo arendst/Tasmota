@@ -69,6 +69,12 @@ struct LRgbColor {
 const LRgbColor kFixedColor[MAX_FIXED_COLOR] PROGMEM =
   { 255,0,0, 0,255,0, 0,0,255, 228,32,0, 0,228,32, 0,32,228, 188,64,0, 0,160,96, 160,32,240, 255,255,0, 255,0,170, 255,255,255 };
 
+struct LWColor {
+  uint8_t W;
+};
+#define MAX_FIXED_WHITE  4
+const LWColor kFixedWhite[MAX_FIXED_WHITE] PROGMEM = { 0, 255, 128, 32 };
+
 struct LCwColor {
   uint8_t C, W;
 };
@@ -551,8 +557,8 @@ void LightState(uint8_t append)
   if (light_subtype > LST_SINGLE) {
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"" D_CMND_COLOR "\":\"%s\""), mqtt_data, LightGetColor(0, scolor));
     //  Add status for HSB
-    LightGetHsb(&hsb[0],&hsb[1],&hsb[2]);
-    //  Scale these percentages up to the numbers expected byt he client
+    LightGetHsb(&hsb[0],&hsb[1],&hsb[2], false);
+    //  Scale these percentages up to the numbers expected by the client
     h = round(hsb[0] * 360);
     s = round(hsb[1] * 100);
     b = round(hsb[2] * 100);
@@ -905,13 +911,15 @@ void LightHsbToRgb()
   light_current_color[0] = (uint8_t)(r * 255.0f);
   light_current_color[1] = (uint8_t)(g * 255.0f);
   light_current_color[2] = (uint8_t)(b * 255.0f);
+  light_current_color[3] = 0;
+  light_current_color[4] = 0;
 }
 
 /********************************************************************************************/
 
-void LightGetHsb(float *hue, float *sat, float *bri)
+void LightGetHsb(float *hue, float *sat, float *bri, bool gotct)
 {
-  if (light_subtype > LST_COLDWARM) {
+  if (light_subtype > LST_COLDWARM && !gotct) {
     LightRgbToHsb();
     *hue = light_hue;
     *sat = light_saturation;
@@ -919,16 +927,19 @@ void LightGetHsb(float *hue, float *sat, float *bri)
   } else {
     *hue = 0;
     *sat = 0;
-//    *bri = (2.54f * (float)Settings.light_dimmer);
     *bri = (0.01f * (float)Settings.light_dimmer);
   }
 }
 
-void LightSetHsb(float hue, float sat, float bri, uint16_t ct)
+void LightSetHsb(float hue, float sat, float bri, uint16_t ct, bool gotct)
 {
   if (light_subtype > LST_COLDWARM) {
-    if ((LST_RGBWC == light_subtype) && (ct > 0)) {
-      LightSetColorTemp(ct);
+    if ((LST_RGBWC == light_subtype) && (gotct)) {
+      uint8_t tmp = (uint8_t)(bri * 100);
+      Settings.light_dimmer = tmp;
+      if (ct > 0) {
+        LightSetColorTemp(ct);
+      }
     } else {
       light_hue = hue;
       light_saturation = sat;
@@ -1006,7 +1017,11 @@ boolean LightColorEntry(char *buffer, uint8_t buffer_length)
     entry_type = 1;                                 // Hexadecimal
   }
   else if ((value > 199) && (value <= 199 + MAX_FIXED_COLD_WARM)) {
-    if (LST_COLDWARM == light_subtype) {
+    if (LST_RGBW == light_subtype) {
+      memcpy_P(&light_entry_color[3], &kFixedWhite[value -200], 1);
+      entry_type = 1;                                 // Hexadecimal
+    }
+    else if (LST_COLDWARM == light_subtype) {
       memcpy_P(&light_entry_color, &kFixedColdWarm[value -200], 2);
       entry_type = 1;                                 // Hexadecimal
     }
@@ -1083,32 +1098,46 @@ boolean LightCommand()
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_NVALUE, command, XdrvMailbox.index, round(light_current_color[XdrvMailbox.index -1] / 2.55));
   }
   else if ((CMND_HSBCOLOR == command_code) && ( light_subtype >= LST_RGB)) {
-    //  Implement method to "direct set" color by HSB (HSB is passed comma separated, 0<H<360 0<S<100 0<B<100 )
-    uint16_t HSB[3];
-    bool validHSB = true;
-
-    for (int i = 0; i < 3; i++) {
-      char *substr;
-
-      if (0 == i) {
-        substr = strtok(XdrvMailbox.data, ",");
-      } else {
-        substr = strtok(NULL, ",");
-      }
-      if (substr != NULL) {
-        HSB[i] = atoi(substr);
-      } else {
-        validHSB = false;
-      }
-    }
+    bool validHSB = (XdrvMailbox.data_len > 0);
     if (validHSB) {
-      //  Translate to fractional elements as required by LightHsbToRgb
-      //  Keep the results <=1 in the event someone passes something
-      //  out of range.
-      LightSetHsb(( (HSB[0]>360) ? (HSB[0] % 360) : HSB[0] ) /360.0,
-                  ( (HSB[1]>100) ? (HSB[1] % 100) : HSB[1] ) /100.0,
-                  ( (HSB[2]>100) ? (HSB[2] % 100) : HSB[2] ) /100.0,
-                  0);
+      uint16_t HSB[3];
+      if (strstr(XdrvMailbox.data, ",")) {  // Command with 3 comma separated parameters, Hue (0<H<360), Saturation (0<S<100) AND Brightness (0<B<100)
+        for (int i = 0; i < 3; i++) {
+          char *substr;
+
+          if (0 == i) {
+            substr = strtok(XdrvMailbox.data, ",");
+          } else {
+            substr = strtok(NULL, ",");
+          }
+          if (substr != NULL) {
+            HSB[i] = atoi(substr);
+          } else {
+            validHSB = false;
+          }
+        }
+      } else {  // Command with only 1 parameter, Hue (0<H<360), Saturation (0<S<100) OR Brightness (0<B<100)
+        float hsb[3];
+
+        LightGetHsb(&hsb[0],&hsb[1],&hsb[2], false);
+        HSB[0] = round(hsb[0] * 360);
+        HSB[1] = round(hsb[1] * 100);
+        HSB[2] = round(hsb[2] * 100);
+        if ((XdrvMailbox.index > 0) && (XdrvMailbox.index < 4)) {
+          HSB[XdrvMailbox.index -1] = XdrvMailbox.payload;
+        } else {
+          validHSB = false;
+        }
+      }
+      if (validHSB) {
+        //  Translate to fractional elements as required by LightHsbToRgb
+        //  Keep the results <=1 in the event someone passes something out of range.
+        LightSetHsb(( (HSB[0]>360) ? (HSB[0] % 360) : HSB[0] ) /360.0,
+                    ( (HSB[1]>100) ? (HSB[1] % 100) : HSB[1] ) /100.0,
+                    ( (HSB[2]>100) ? (HSB[2] % 100) : HSB[2] ) /100.0,
+                    0,
+                    false);
+      }
     } else {
       LightState(0);
     }

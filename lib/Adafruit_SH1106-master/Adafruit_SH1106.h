@@ -4,14 +4,14 @@ This is a library for our Monochrome OLEDs based on SSD1306 drivers
   Pick one up today in the adafruit shop!
   ------> http://www.adafruit.com/category/63_98
 
-These displays use SPI to communicate, 4 or 5 pins are required to  
+These displays use SPI to communicate, 4 or 5 pins are required to
 interface
 
-Adafruit invests time and resources providing this open source code, 
-please support Adafruit and open-source hardware by purchasing 
+Adafruit invests time and resources providing this open source code,
+please support Adafruit and open-source hardware by purchasing
 products from Adafruit!
 
-Written by Limor Fried/Ladyada  for Adafruit Industries.  
+Written by Limor Fried/Ladyada  for Adafruit Industries.
 BSD license, check license.txt for more information
 All text above, and the splash screen must be included in any redistribution
 *********************************************************************/
@@ -34,16 +34,7 @@ However, SH1106 driver don't provide several functions such as scroll commands.
   #define WIRE_WRITE Wire.send
 #endif
 
-#ifdef __SAM3X8E__
- typedef volatile RwReg PortReg;
- typedef uint32_t PortMask;
-#else
-  typedef volatile uint8_t PortReg;
-  typedef uint8_t PortMask;
-#endif
-
-#include <SPI.h>
-#include <Adafruit_GFX.h>
+#include <renderer.h>
 
 #define BLACK 0
 #define WHITE 1
@@ -138,11 +129,9 @@ However, SH1106 driver don't provide several functions such as scroll commands.
 #define SH1106_VERTICAL_AND_RIGHT_HORIZONTAL_SCROLL 0x29
 #define SH1106_VERTICAL_AND_LEFT_HORIZONTAL_SCROLL 0x2A
 
-class Adafruit_SH1106 : public Adafruit_GFX {
+class Adafruit_SH1106 : public Renderer  {
  public:
-  Adafruit_SH1106(int8_t SID, int8_t SCLK, int8_t DC, int8_t RST, int8_t CS);
-  Adafruit_SH1106(int8_t DC, int8_t RST, int8_t CS);
-  Adafruit_SH1106(int8_t RST);
+  Adafruit_SH1106(int16_t width, int16_t height);
 
   void begin(uint8_t switchvcc = SH1106_SWITCHCAPVCC, uint8_t i2caddr = SH1106_I2C_ADDRESS, bool reset=true);
   void SH1106_command(uint8_t c);
@@ -152,29 +141,15 @@ class Adafruit_SH1106 : public Adafruit_GFX {
   void invertDisplay(uint8_t i);
   void display();
 
-  /*void startscrollright(uint8_t start, uint8_t stop);
-  void startscrollleft(uint8_t start, uint8_t stop);
 
-  void startscrolldiagright(uint8_t start, uint8_t stop);
-  void startscrolldiagleft(uint8_t start, uint8_t stop);
-  void stopscroll(void); */
-  
+  void DisplayOnff(int8_t on);
+  void DisplayInit(int8_t p,int8_t size,int8_t rot,int8_t font);
+  int16_t Begin(int16_t p1,int16_t p2,int16_t p3);
+  void Updateframe();
+
   void dim(uint8_t contrast);
 
-  void drawPixel(int16_t x, int16_t y, uint16_t color);
-
-  virtual void drawFastVLine(int16_t x, int16_t y, int16_t h, uint16_t color);
-  virtual void drawFastHLine(int16_t x, int16_t y, int16_t w, uint16_t color);
-
  private:
-  int8_t _i2caddr, _vccstate, sid, sclk, dc, rst, cs;
-  void fastSPIwrite(uint8_t c);
-
-  boolean hwSPI;
-  PortReg *mosiport, *clkport, *csport, *dcport;
-  PortMask mosipinmask, clkpinmask, cspinmask, dcpinmask;
-
-  inline void drawFastVLineInternal(int16_t x, int16_t y, int16_t h, uint16_t color) __attribute__((always_inline));
-  inline void drawFastHLineInternal(int16_t x, int16_t y, int16_t w, uint16_t color) __attribute__((always_inline));
+  int8_t _i2caddr, _vccstate, rst;
 
 };

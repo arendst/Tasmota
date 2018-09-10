@@ -60,10 +60,12 @@
 #define D_BLINKOFF "Не блимати"
 #define D_BOOT_COUNT "Кіл-сть завант."
 #define D_BRIGHTLIGHT "Яскравість"
+#define D_BSSID "BSSId"
 #define D_BUTTON "Кнопка"
 #define D_BY "by"                    // Written by me
 #define D_BYTES "Байт"
 #define D_CELSIUS "Цельсія"
+#define D_CHANNEL "Channel"
 #define D_CO2 "Вуглек. газ"
 #define D_CODE "код"                // Button code
 #define D_COLDLIGHT "Холодний"
@@ -454,6 +456,7 @@
 #define D_SENSOR_I2C_SCL  "I2C SCL"
 #define D_SENSOR_I2C_SDA  "I2C SDA"
 #define D_SENSOR_WS2812   "WS2812"
+#define D_SENSOR_DFR562   "MP3 Player"
 #define D_SENSOR_IRSEND   "IRsend"
 #define D_SENSOR_SWITCH   "Перемикач"   // Suffix "1"
 #define D_SENSOR_BUTTON   "Кнопка"   // Suffix "1"

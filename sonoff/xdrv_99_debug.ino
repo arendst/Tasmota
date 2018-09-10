@@ -180,6 +180,9 @@ void CpuLoadLoop()
 
 /*******************************************************************************************/
 
+#if defined(ARDUINO_ESP8266_RELEASE_2_3_0) || defined(ARDUINO_ESP8266_RELEASE_2_4_0) || defined(ARDUINO_ESP8266_RELEASE_2_4_1)
+// All version before core 2.4.2
+
 extern "C" {
 #include <cont.h>
   extern cont_t g_cont;
@@ -197,6 +200,28 @@ void DebugFreeMem()
     ESP.getFreeHeap(), 4 * (sp - g_cont.stack), XdrvMailbox.data);
   AddLog(LOG_LEVEL_DEBUG);
 }
+
+#else
+// All version from core 2.4.2
+// https://github.com/esp8266/Arduino/pull/5018
+// https://github.com/esp8266/Arduino/pull/4553
+
+extern "C" {
+#include <cont.h>
+  extern cont_t* g_pcont;
+}
+
+void DebugFreeMem()
+{
+// https://github.com/esp8266/Arduino/issues/2557
+  register uint32_t *sp asm("a1");
+
+  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_DEBUG "FreeRam %d, FreeStack %d (%s)"),
+    ESP.getFreeHeap(), 4 * (sp - g_pcont->stack), XdrvMailbox.data);
+  AddLog(LOG_LEVEL_DEBUG);
+}
+
+#endif  // ARDUINO_ESP8266_RELEASE_2_x_x
 
 /*******************************************************************************************/
 
