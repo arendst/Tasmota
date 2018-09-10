@@ -939,7 +939,14 @@ void GetFeatures()
 #ifdef USE_MP3_PLAYER
   feature_drv2 |= 0x00002000;  // xdrv_14_mp3.ino
 #endif
-
+#ifndef USE_SOFTSPI
+  if (GPIO_SSPI_CS == val) { return true; }
+  if (GPIO_SSPI_MOSI == val) { return true; }
+  if (GPIO_SSPI_SCLK == val) { return true; }
+#endif
+#ifndef USE_DISPLAY_ILI9488
+  if (GPIO_COLDISP_BL == val) { return true; }
+#endif
 
 #ifdef NO_EXTRA_4K_HEAP
   feature_drv2 |= 0x00800000;  // sonoff_post.h

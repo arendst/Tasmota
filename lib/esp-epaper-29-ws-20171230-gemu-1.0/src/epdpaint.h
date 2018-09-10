@@ -37,36 +37,21 @@
 #define IF_INVERT_COLOR     1
 
 #include "fonts.h"
+#include "renderer.h"
 
-class Paint {
+class Paint : public Renderer {
 public:
-    Paint(unsigned char* image, int width, int height);
-    ~Paint();
-    void Clear(int colored);
-    int  GetWidth(void);
-    void SetWidth(int width);
-    int  GetHeight(void);
-    void SetHeight(int height);
-    int  GetRotate(void);
-    void SetRotate(int rotate);
-    unsigned char* GetImage(void);
-    void DrawAbsolutePixel(int x, int y, int colored);
-    void DrawPixel(int x, int y, int colored);
-    void DrawCharAt(int x, int y, char ascii_char, sFONT* font, int colored);
-    void DrawStringAt(int x, int y, const char* text, sFONT* font, int colored);
-    void DrawLine(int x0, int y0, int x1, int y1, int colored);
-    void DrawHorizontalLine(int x, int y, int width, int colored);
-    void DrawVerticalLine(int x, int y, int height, int colored);
-    void DrawRectangle(int x0, int y0, int x1, int y1, int colored);
-    void DrawFilledRectangle(int x0, int y0, int x1, int y1, int colored);
-    void DrawCircle(int x, int y, int radius, int colored);
-    void DrawFilledCircle(int x, int y, int radius, int colored);
+    Paint(int16_t width, int16_t height);
+    void drawFastHLine(int16_t x, int16_t y, int16_t w, uint16_t color);
+    void drawFastVLine(int16_t x, int16_t y, int16_t w, uint16_t color);
+    void drawPixel(int16_t x, int16_t y, uint16_t color);
+    void DrawAbsolutePixel(int x, int y, int16_t color);
 
-private:
-    unsigned char* image;
-    uint16_t width;
-    uint16_t height;
-    uint8_t rotate;
+    void DisplayOnff(int8_t on);
+    void DisplayInit(int8_t p,int8_t size,int8_t rot,int8_t font);
+    int16_t Begin(int16_t p1,int16_t p2,int16_t p3);
+    void Updateframe();
+
 };
 
 #endif

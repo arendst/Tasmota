@@ -126,6 +126,10 @@ enum UserSelectablePins {
   GPIO_PZEM2_RX,       // PZEM-003,014,016,017 Serial interface
   GPIO_MP3_DFR562,     // RB-DFR-562, DFPlayer Mini MP3 Player
   GPIO_SDS0X1_TX,         // Nova Fitness SDS011 Serial interface
+  GPIO_SSPI_CS,       // software and hardware SPI for epaper and ili9488
+  GPIO_SSPI_MOSI,
+  GPIO_SSPI_SCLK,
+  GPIO_COLDISP_BL,    // backlight for ili9488
   GPIO_SENSOR_END };
 
 // Programmer selectable GPIO functionality offset by user selectable GPIOs
@@ -144,6 +148,12 @@ enum ProgramSelectablePins {
   GPIO_ARIRFRCV,       // AliLux RF Receive input
   GPIO_USER,           // User configurable
   GPIO_MAX };
+
+
+  #define D_SSPI_CS   "SSPI_CS"
+  #define D_SSPI_MOSI   "SSPI_MOSI"
+  #define D_SSPI_SCLK   "SSPI_SCLK"
+  #define D_DISP_BL   "COLDSP_BL"
 
 // Text in webpage Module Parameters and commands GPIOS and GPIO
 const char kSensorNames[] PROGMEM =
@@ -177,7 +187,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_BUTTON "1n|" D_SENSOR_BUTTON "2n|" D_SENSOR_BUTTON "3n|" D_SENSOR_BUTTON "4n|"
   D_SENSOR_COUNTER "1n|" D_SENSOR_COUNTER "2n|" D_SENSOR_COUNTER "3n|" D_SENSOR_COUNTER "4n|"
   D_SENSOR_PZEM_TX "|" D_SENSOR_PZEM_RX "|"
-  D_SENSOR_DFR562 "|" D_SENSOR_SDS0X1_TX;
+  D_SENSOR_DFR562 "|" D_SENSOR_SDS0X1_TX "|" D_SSPI_CS "|" D_SSPI_MOSI "|" D_SSPI_SCLK "|" D_DISP_BL;
 
 /********************************************************************************************/
 
@@ -349,7 +359,11 @@ const uint8_t kGpioNiceList[GPIO_SENSOR_END] PROGMEM = {
   GPIO_SDM630_TX,      // SDM630 Serial interface
   GPIO_SDM630_RX,      // SDM630 Serial interface
   GPIO_PMS5003,        // Plantower PMS5003 Serial interface
-  GPIO_MP3_DFR562      // RB-DFR-562, DFPlayer Mini MP3 Player Serial interface
+  GPIO_MP3_DFR562,      // RB-DFR-562, DFPlayer Mini MP3 Player Serial interface
+  GPIO_SSPI_CS,       // software and hardware SPI for epaper and ili9488
+  GPIO_SSPI_MOSI,
+  GPIO_SSPI_SCLK,
+  GPIO_COLDISP_BL
 };
 
 const uint8_t kModuleNiceList[MAXMODULE] PROGMEM = {
