@@ -57,15 +57,13 @@ void NovaSdsSetWorkPeriod()
   novasds_workperiod[17] = ((novasds_workperiod[2] + novasds_workperiod[3] + novasds_workperiod[4] + novasds_workperiod[15] + novasds_workperiod[16]) & 0xFF); //checksum
 
   NovaSdsSerial->write(novasds_workperiod, sizeof(novasds_workperiod));
-
   NovaSdsSerial->flush();
 
   while (NovaSdsSerial->available() > 0) {
     NovaSdsSerial->read();
   }
 
-	NovaSdsSerial->write(novasds_setquerymode, sizeof(novasds_setquerymode));
-
+  NovaSdsSerial->write(novasds_setquerymode, sizeof(novasds_setquerymode));
   NovaSdsSerial->flush();
 
   while (NovaSdsSerial->available() > 0) {
@@ -80,10 +78,9 @@ bool NovaSdsReadData()
   if (! NovaSdsSerial->available()) return false;
 
   NovaSdsSerial->write(novasds_querydata, sizeof(novasds_querydata));
-
   NovaSdsSerial->flush();
 
-	while ((NovaSdsSerial->peek() != 0xAA) && NovaSdsSerial->available()) {
+  while ((NovaSdsSerial->peek() != 0xAA) && NovaSdsSerial->available()) {
     NovaSdsSerial->read();
   }
 
