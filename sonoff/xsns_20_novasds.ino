@@ -129,10 +129,9 @@ void NovaSdsInit()
         ClaimSerial();
       }
       novasds_type = 1;
+      NovaSdsSetWorkPeriod();
     }
   }
-
-  NovaSdsSetWorkPeriod();
 }
 
 #ifdef USE_WEBSERVER
