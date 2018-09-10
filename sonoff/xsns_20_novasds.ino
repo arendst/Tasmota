@@ -46,7 +46,6 @@ struct sds011data {
   uint16_t pm25;
 } novasds_data;
 
-//Put sensor to sleep
 void NovaSdsSetWorkPeriod()
 {
 
@@ -56,7 +55,6 @@ void NovaSdsSetWorkPeriod()
 
 	novasds_workperiod[4] = WORKING_PERIOD;
   novasds_workperiod[17] = ((novasds_workperiod[2] + novasds_workperiod[3] + novasds_workperiod[4] + novasds_workperiod[15] + novasds_workperiod[16]) & 0xFF); //checksum
-
 
   NovaSdsSerial->write(novasds_workperiod, sizeof(novasds_workperiod));
 
@@ -127,10 +125,12 @@ void NovaSdsSecond()                 // Every second
 void NovaSdsInit()
 {
   novasds_type = 0;
-  if ((pin[GPIO_SDS0X1_RX] < 99) && (pin[GPIO_SDS0X1_TX] < 99)) {
+  if (pin[GPIO_SDS0X1_RX] < 99 && pin[GPIO_SDS0X1_TX] < 99) {
     NovaSdsSerial = new TasmotaSerial(pin[GPIO_SDS0X1_RX], pin[GPIO_SDS0X1_TX], 1);
     if (NovaSdsSerial->begin(9600)) {
-      if (NovaSdsSerial->hardwareSerial()) { ClaimSerial(); }
+      if (NovaSdsSerial->hardwareSerial()) {
+        ClaimSerial();
+      }
       novasds_type = 1;
     }
   }
