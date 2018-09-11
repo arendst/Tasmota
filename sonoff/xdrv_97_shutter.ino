@@ -54,7 +54,8 @@ void Rtc_ms50_Second()
 void ShutterInit()
 {
   shutters_present = 0;
-
+  //Initalize to get relay that changed
+  old_power = power;
   for (byte i=0;i < MAX_SHUTTERS; i++) {
     // set startrelay to 1 on first init, but only to shutter 1. 90% usecase
     Settings.shutter_startrelay[i] = (Settings.shutter_startrelay[i] == 0 && i ==  0? 1 : Settings.shutter_startrelay[i]);
@@ -135,10 +136,19 @@ void Schutter_Update_Position()
           }
         } else {
           if (!Settings.flag3.paired_interlock) {
-            ExecuteCommandPower(Settings.shutter_startrelay[i], 0, SRC_PULSETIMER);
-            ExecuteCommandPower(Settings.shutter_startrelay[i]+1 , 0, SRC_PULSETIMER);
+            if (!((1 << (Settings.shutter_startrelay[i]-1)) ^ power)) {
+              ExecuteCommandPower(Settings.shutter_startrelay[i], 0, SRC_PULSETIMER);
+            }
+            if (!((1 << (Settings.shutter_startrelay[i])) ^ power)) {
+              ExecuteCommandPower(Settings.shutter_startrelay[i]+1, 0, SRC_PULSETIMER);
+            }
           } else {
-            ExecuteCommandPower(cur_relay, 0, SRC_SHUTTER);
+            // avoid switching OFF a relay already OFF
+            //snprintf_P(log_data, sizeof(log_data), PSTR("Switching off relay %d, SwitchedRelay: %d, powermatrix %ld, XOR map %d"), cur_relay, SwitchedRelay, power, (1 << (cur_relay-1)) ^ power);
+            //AddLog(LOG_LEVEL_DEBUG);
+            if (!((1 << (cur_relay-1)) ^ power)) {
+              ExecuteCommandPower(cur_relay, 0, SRC_SHUTTER);
+            }
           }
         }
         Shutter_Direction[i] = 0;
@@ -147,7 +157,7 @@ void Schutter_Update_Position()
       // no movement by software ; eventuall someone hits a relay and we must to start move.
       //    is YES one of the relays is ON but not we did it            combine only with the relays relevant to this shutter. do not care on ON relays on other shutters
       if ((shutter_mask & powerstate) > 0 && SRC_SHUTTER != last_source && (SwitchedRelay & (3 << (Settings.shutter_startrelay[i] -1)))) { // ONE of the two relays from the shutter report ON and direction == 0 ==> manual movement request
-        snprintf_P(log_data, sizeof(log_data), PSTR("Shutter: Start..."));
+        snprintf_P(log_data, sizeof(log_data), PSTR("Shutter %d: Start detected, direction: %d"),i, Shutter_Direction[i]);
 
         AddLog(LOG_LEVEL_DEBUG);
         last_source = SRC_SHUTTER; // avoid switch off in the next loop
@@ -339,6 +349,8 @@ boolean Xdrv97(byte function)
         // extraxt the number of the relay that was switched and save for later in Update Position.
         SwitchedRelay = power ^ old_power;
         old_power = power;
+        //snprintf_P(log_data, sizeof(log_data), PSTR("Switched relay: %d"), SwitchedRelay);
+        //AddLog(LOG_LEVEL_INFO);
       break;
     }
   }

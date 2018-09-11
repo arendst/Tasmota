@@ -1380,6 +1380,7 @@ void ExecuteCommandPower(byte device, byte state, int source)
       interlock_mutex = 1;
     //stb mod
       if ((Settings.flag3.paired_interlock || Settings.interlock_bucket_size) &&
+       // only switch off other relays if the current one goes to ON
             ((state == POWER_TOGGLE && !(power&mask)) || state == POWER_ON)) {
         Settings.interlock_bucket_size = Settings.interlock_bucket_size > 0 ? Settings.interlock_bucket_size : 2;
         //depending on even or odd relay create a 0 or 2 for further calculation
@@ -1393,8 +1394,7 @@ void ExecuteCommandPower(byte device, byte state, int source)
         byte  temp3 = temp1 ^ temp2; // remove device from mask -> 1101
         snprintf_P(log_data, sizeof(log_data), PSTR("temp1 for mask is %d, temp2: %d, temp3 %d. Bucketsize: %d, device: %d to state %d, currentsate %d"), temp1,temp2,temp3,Settings.interlock_bucket_size, device,state, power&mask);
         AddLog(LOG_LEVEL_DEBUG_MORE);
-        byte  temp = 2* !(device%2);
-        // initilaize MASK with FFFF if not set corectly in settings. (32bit 1)
+        // initilaize MASK with FFFF if not set correctly in settings. (32bit 1)
         Settings.interlock_mask = (Settings.interlock_mask == 0) ?  0xFFFF : Settings.interlock_mask ;
 
 
@@ -1406,7 +1406,7 @@ void ExecuteCommandPower(byte device, byte state, int source)
         power_t imask = imask1 & Settings.interlock_mask;
         // only if the relay is switched ON make a change. OFF is always fine.
         //while loop on highest 1 that comes with powr&imask. power change over time
-        power_t v = power & imask;
+        power_t v = power & imask; // getting binary array for all relays to switch off
         while (v) {
           uint8_t r = 0;
           while (v >>= 1) {
@@ -1417,6 +1417,7 @@ void ExecuteCommandPower(byte device, byte state, int source)
           AddLog(LOG_LEVEL_DEBUG);
           ExecuteCommandPower(r , POWER_OFF, SRC_IGNORE);
           delay(500); //quite long delay to ensure physical switch off of the relay
+          // reinitalize v after power off one relay.
           v = power & imask;
         }
       } else {
