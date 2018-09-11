@@ -211,7 +211,7 @@ int Xnrg05(byte function)
   if (FUNC_PRE_INIT == function) {
     Pzem2DrvInit();
   }
-  else if (XNRG_03 == energy_flg) {
+  else if (XNRG_05 == energy_flg) {
     switch (function) {
       case FUNC_INIT:
         Pzem2SnsInit();
