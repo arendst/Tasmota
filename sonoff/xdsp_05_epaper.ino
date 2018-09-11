@@ -188,7 +188,7 @@ boolean Xdsp05(byte function)
     if (FUNC_DISPLAY_INIT_DRIVER == function) {
       EpdInitDriver();
     }
-    else if (XDSP_04 == Settings.display_model) {
+    else if (XDSP_05 == Settings.display_model) {
 
       if (!dsp_color) { dsp_color = COLORED; }
 
