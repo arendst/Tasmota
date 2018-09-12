@@ -1004,7 +1004,7 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
     else if (CMND_SYSLOG == command_code) {
       if ((payload >= LOG_LEVEL_NONE) && (payload <= LOG_LEVEL_ALL)) {
         Settings.syslog_level = payload;
-        syslog_level = (Settings.flag2.emulation) ? 0 : payload;
+        syslog_level = payload;
         syslog_timer = 0;
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE_ACTIVE_NVALUE, command, Settings.syslog_level, syslog_level);
@@ -1596,7 +1596,7 @@ void PerformEverySecond()
   if (syslog_timer) {  // Restore syslog level
     syslog_timer--;
     if (!syslog_timer) {
-      syslog_level = (Settings.flag2.emulation) ? 0 : Settings.syslog_level;
+      syslog_level = Settings.syslog_level;
       if (Settings.syslog_level) {
         AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_APPLICATION D_SYSLOG_LOGGING_REENABLED));  // Might trigger disable again (on purpose)
       }
@@ -2513,7 +2513,7 @@ void setup()
 #ifndef USE_EMULATION
   Settings.flag2.emulation = 0;
 #endif  // USE_EMULATION
-  syslog_level = (Settings.flag2.emulation) ? 0 : Settings.syslog_level;
+  syslog_level = Settings.syslog_level;
   stop_flash_rotate = Settings.flag.stop_flash_rotate;
   save_data_counter = Settings.save_data;
   sleep = Settings.sleep;
