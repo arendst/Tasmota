@@ -998,7 +998,11 @@ boolean LightColorEntry(char *buffer, uint8_t buffer_length)
 
   if (light_subtype >= LST_RGB) {
     char option = (1 == buffer_length) ? buffer[0] : '\0';
-    if (('+' == option) && (light_fixed_color_index < MAX_FIXED_COLOR)) {
+    if (('+' == option) && (
+        light_subtype == LST_RGB && light_fixed_color_index < MAX_FIXED_COLOR)
+        || (light_subtype == LST_RGBW && light_fixed_color_index < MAX_FIXED_COLOR_WHITE)
+        || (light_subtype >= LST_RGBWC && light_fixed_color_index < MAX_FIXED_COLOR_WARM_COLD)
+        ) {
       value++;
     }
     else if (('-' == option) && (light_fixed_color_index > 1)) {
@@ -1030,12 +1034,12 @@ boolean LightColorEntry(char *buffer, uint8_t buffer_length)
     memcpy_P(&light_entry_color, &kFixedRgb[value -1], 3);
     entry_type = 1;                                 // Hexadecimal
   }
-  else if ((light_subtype == LST_RGBW) && (value > 0) && (value <= MAX_FIXED_COLOR)) {
+  else if ((light_subtype == LST_RGBW) && (value > 0) && (value <= MAX_FIXED_COLOR_WHITE)) {
     light_fixed_color_index = value;
     memcpy_P(&light_entry_color, &kFixedRgbW[value -1], 4);
     entry_type = 1;                                 // Hexadecimal
   }
-  else if ((light_subtype >= LST_RGBWC) && (value > 0) && (value <= MAX_FIXED_COLOR)) {
+  else if ((light_subtype >= LST_RGBWC) && (value > 0) && (value <= MAX_FIXED_COLOR_WARM_COLD)) {
     light_fixed_color_index = value;
     memcpy_P(&light_entry_color, &kFixedRgbWC[value -1], 5);
     entry_type = 1;                                 // Hexadecimal
