@@ -26,12 +26,12 @@
  *  2          PWM2       CW     yes        (Sonoff Led)
  *  3          PWM3       RGB    no         (H801, MagicHome and Arilux LC01)
  *  4          PWM4       RGBW   no         (H801, MagicHome and Arilux)
- *  5          PWM5       RGBCW  yes        (H801, Arilux LC11)
+ *  5          PWM5       RGBWC  yes        (H801, Arilux LC11)
  *  9          reserved          no
  * 10          reserved          yes
  * 11          +WS2812    RGB(W) no         (One WS2812 RGB or RGBW ledstrip)
  * 12          AiLight    RGBW   no
- * 13          Sonoff B1  RGBCW  yes
+ * 13          Sonoff B1  RGBWC  yes
  *
  * light_scheme  WS2812  3+ Colors  1+2 Colors  Effect
  * ------------  ------  ---------  ----------  -----------------
@@ -66,8 +66,22 @@ struct LRgbColor {
   uint8_t R, G, B;
 };
 #define MAX_FIXED_COLOR  12
-const LRgbColor kFixedColor[MAX_FIXED_COLOR] PROGMEM =
+const LRgbColor kFixedRgb[MAX_FIXED_COLOR] PROGMEM =
   { 255,0,0, 0,255,0, 0,0,255, 228,32,0, 0,228,32, 0,32,228, 188,64,0, 0,160,96, 160,32,240, 255,255,0, 255,0,170, 255,255,255 };
+
+struct LRgbWColor {
+  uint8_t R, G, B, W;
+};
+#define MAX_FIXED_COLOR_WHITE  12
+const LRgbWColor kFixedRgbW[MAX_FIXED_COLOR_WHITE] PROGMEM =
+  { 255,0,0,0, 0,255,0,0, 0,0,255,0, 228,32,0,0, 0,228,32,0, 0,32,228,0, 188,64,0,0, 0,160,96,0, 160,32,240,0, 255,255,0,0, 255,0,170,0, 188,64,0,255 };
+
+struct LRgbWCColor {
+  uint8_t R, G, B, W, C;
+};
+#define MAX_FIXED_COLOR_WARM_COLD  12
+const LRgbWCColor kFixedRgbWC[MAX_FIXED_COLOR_WARM_COLD] PROGMEM =
+  { 255,0,0,0,0, 0,255,0,0,0, 0,0,255,0,0, 228,32,0,0,0, 0,228,32,0,0, 0,32,228,0,0, 188,64,0,0,0, 0,160,96,0,0, 160,32,240,0,0, 255,255,0,0,0, 255,0,170,0,0, 0,0,0,255,255 };
 
 struct LWColor {
   uint8_t W;
@@ -1011,9 +1025,19 @@ boolean LightColorEntry(char *buffer, uint8_t buffer_length)
     }
     entry_type = 1;                                 // Hexadecimal
   }
-  else if ((light_subtype >= LST_RGB) && (value > 0) && (value <= MAX_FIXED_COLOR)) {
+  else if ((light_subtype == LST_RGB) && (value > 0) && (value <= MAX_FIXED_COLOR)) {
     light_fixed_color_index = value;
-    memcpy_P(&light_entry_color, &kFixedColor[value -1], 3);
+    memcpy_P(&light_entry_color, &kFixedRgb[value -1], 3);
+    entry_type = 1;                                 // Hexadecimal
+  }
+  else if ((light_subtype == LST_RGBW) && (value > 0) && (value <= MAX_FIXED_COLOR)) {
+    light_fixed_color_index = value;
+    memcpy_P(&light_entry_color, &kFixedRgbW[value -1], 4);
+    entry_type = 1;                                 // Hexadecimal
+  }
+  else if ((light_subtype >= LST_RGBWC) && (value > 0) && (value <= MAX_FIXED_COLOR)) {
+    light_fixed_color_index = value;
+    memcpy_P(&light_entry_color, &kFixedRgbWC[value -1], 5);
     entry_type = 1;                                 // Hexadecimal
   }
   else if ((value > 199) && (value <= 199 + MAX_FIXED_COLD_WARM)) {
