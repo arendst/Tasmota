@@ -1063,7 +1063,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
                        // https://www.aliexpress.com/item/Wifi-LED-RGB-Controler-DC12V-MIni-Wifi-RGB-RGBW-LED-Controller-for-RGB-RGBW-LED-Strip/32673444047.html
      GPIO_USER,        // GPIO00 Optional Button
      GPIO_USER,        // GPIO01 Serial RXD and Optional sensor
-     GPIO_LED1_INV,    // GPIO02 Blue onboard LED (optional)
+     0,
      GPIO_USER,        // GPIO03 Serial TXD and Optional sensor0
      GPIO_ARIRFRCV,    // GPIO04 RF receiver input
      GPIO_PWM2,        // GPIO05 RGB LED Green
