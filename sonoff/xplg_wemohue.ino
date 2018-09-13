@@ -561,11 +561,12 @@ void HueLightStatus1(byte device, String *response)
   float bri = 0;
 //stb mod
   bool on = power & (1 << (device-1));
-
-  if(Settings.flag3.shutter_mode && device <= shutters_present){
+#ifdef USE_SHUTTER
+  if(Settings.flag3.shutter_mode && device <= shutters_present && (shutter_mask & Settings.shutter_startrelay[device-1])){
     bri = (float)(Settings.shutter_invert[device-1] ? 100 - Settings.shutter_position[device-1]: Settings.shutter_position[device-1]) / 100;
     on = bri > 0 ? 1 : 0;
   } else
+#endif
 //end
   if (light_type) {
     LightGetHsb(&hue, &sat, &bri);
@@ -666,7 +667,8 @@ void HueLights(String *path)
         response.replace("{id", String(device));
         response.replace("{cm", "on");
 //stb mod
-        if(Settings.flag3.shutter_mode) {
+#ifdef USE_SHUTTER
+        if(Settings.flag3.shutter_mode && shutter_mask&device) {
           if(!change) {
             on = hue_json["on"];
             bri = on ? 1.0f : 0.0f; // when bri is not part of this request then calculate it
@@ -676,6 +678,7 @@ void HueLights(String *path)
         }
         else
         {
+#endif
 //end
           on = hue_json["on"];
           switch(on)
@@ -691,7 +694,9 @@ void HueLights(String *path)
           }
         }
         resp = true;
+#ifdef USE_SHUTTER
       }
+#endif
 
       if (light_type) {
         LightGetHsb(&hue, &sat, &bri);
@@ -748,11 +753,13 @@ void HueLights(String *path)
       }
       if (change) {
 //stb mode
-        if(Settings.flag3.shutter_mode) {
+#ifdef USE_SHUTTER
+        if(Settings.flag3.shutter_mode && shutter_mask&device) {
           snprintf_P(log_data, sizeof(log_data), PSTR("Settings.shutter_invert: %d"),Settings.shutter_invert[device-1]);
           AddLog(LOG_LEVEL_DEBUG);
           SetShutterPosition(device,  bri  * 100.0f );
         } else
+#endif
 //end
         if (light_type) {
           LightSetHsb(hue, sat, bri, ct);
