@@ -595,6 +595,17 @@ void HueGlobalConfig(String *path)
   path->remove(0,1);                                 // cut leading / to get <id>
   response = F("{\"lights\":{\"");
   for (uint8_t i = 1; i <= maxhue; i++) {
+//stb mode
+// skip broadcast for devices named Sonoff*
+    if (strncmp (Settings.friendlyname[i-1], "Sonoff", 6) == 0) {
+      snprintf_P(log_data, sizeof(log_data), PSTR("Skip broadcasting default device: %s"),Settings.friendlyname[i-1]);
+      AddLog(LOG_LEVEL_ERROR);
+      continue;
+    } else {
+      snprintf_P(log_data, sizeof(log_data), PSTR("Broadcast OK device: %s"),Settings.friendlyname[i-1]);
+      AddLog(LOG_LEVEL_ERROR);
+    }
+// end
     response += i;
     response += F("\":{\"state\":");
     HueLightStatus1(i, &response);
@@ -638,6 +649,18 @@ void HueLights(String *path)
   if (path->endsWith("/lights")) {                   // Got /lights
     response = "{\"";
     for (uint8_t i = 1; i <= maxhue; i++) {
+      //stb mode
+      // skip broadcast for devices named Sonoff*
+          if (strncmp (Settings.friendlyname[i-1], "Sonoff", 6) == 0) {
+            snprintf_P(log_data, sizeof(log_data), PSTR("2Skip broadcasting default device: %s"),Settings.friendlyname[i-1]);
+            AddLog(LOG_LEVEL_ERROR);
+            continue;
+          } else {
+            snprintf_P(log_data, sizeof(log_data), PSTR("2Broadcast OK device: %s"),Settings.friendlyname[i-1]);
+            AddLog(LOG_LEVEL_ERROR);
+          }
+      // end
+
       response += i;
       response += F("\":{\"state\":");
       HueLightStatus1(i, &response);
@@ -668,7 +691,7 @@ void HueLights(String *path)
         response.replace("{cm", "on");
 //stb mod
 #ifdef USE_SHUTTER
-        if(Settings.flag3.shutter_mode && shutter_mask&device) {
+        if(Settings.flag3.shutter_mode &&  (shutter_mask & Settings.shutter_startrelay[device-1])) {
           if(!change) {
             on = hue_json["on"];
             bri = on ? 1.0f : 0.0f; // when bri is not part of this request then calculate it
@@ -754,7 +777,7 @@ void HueLights(String *path)
       if (change) {
 //stb mode
 #ifdef USE_SHUTTER
-        if(Settings.flag3.shutter_mode && shutter_mask&device) {
+        if(Settings.flag3.shutter_mode &&  (shutter_mask & Settings.shutter_startrelay[device-1])) {
           snprintf_P(log_data, sizeof(log_data), PSTR("Settings.shutter_invert: %d"),Settings.shutter_invert[device-1]);
           AddLog(LOG_LEVEL_DEBUG);
           SetShutterPosition(device,  bri  * 100.0f );
