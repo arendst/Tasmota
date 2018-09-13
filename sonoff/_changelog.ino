@@ -4,6 +4,7 @@
  * Fix ButtonRetain to not use default topic for clearing retain messages (#3737)
  * Add sleep to Nova Fitness SDS01X sensor (#2841, #3724, #3749)
  * Add Analog input AD0 enabled to sonoff-sensors.bin (#3756, #3757)
+ * Add Support to Xiaomi-Phillips Bulbs
  *
  * 6.2.1.2 20180906
  * Fix KNX PA exception. Regression from 6.2.1 buffer overflow caused by subStr() (#3700, #3710)
