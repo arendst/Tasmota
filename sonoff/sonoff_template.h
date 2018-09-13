@@ -230,6 +230,7 @@ enum SupportedModules {
   BLITZWOLF_BWSHP2,
   SHELLY1,
   SHELLY2,
+  PHILIPS,
   MAXMODULE };
 
 /********************************************************************************************/
@@ -399,7 +400,8 @@ const uint8_t kModuleNiceList[MAXMODULE] PROGMEM = {
   KMC_70011,
   AILIGHT,
   WEMOS,
-  WITTY
+  WITTY,
+  PHILIPS
 };
 
 // Default module settings
@@ -1043,6 +1045,14 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      0,
      GPIO_SWT2_NP,      // GPIO14
      0,                 // GPIO15 MCP39F501 Reset
+     0, 0
+  },
+  { "Xiaomi Philips",  // Xiaomi Philips bulb (ESP8266)
+     0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0,
+     GPIO_PWM2,        // GPIO12 cold/warm light
+     0, 0,
+     GPIO_PWM1,        // GPIO15 light intensity
      0, 0
   }
 };
