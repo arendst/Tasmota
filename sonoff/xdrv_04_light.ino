@@ -427,6 +427,11 @@ void LightSetColorTemp(uint16_t ct)
   }
   uint16_t icold = (100 * (347 - my_ct)) / 136;
   uint16_t iwarm = (100 * my_ct) / 136;
+  if (PHILIPS == Settings.module) {
+    // Xiaomi Philips bulbs follow a different scheme:
+    // channel 0=intensity, channel2=temperature
+    Settings.light_color[1] = (uint8_t)icold;
+  } else
   if (LST_RGBWC == light_subtype) {
     Settings.light_color[0] = 0;
     Settings.light_color[1] = 0;
@@ -458,6 +463,15 @@ void LightSetDimmer(uint8_t myDimmer)
 {
   float temp;
 
+  if (PHILIPS == Settings.module) {
+    // Xiaomi Philips bulbs use two PWM channels with a different scheme:
+    float dimmer = 100 / (float)myDimmer;
+    temp = (float)Settings.light_color[0] / dimmer; // channel 1 is intensity
+    light_current_color[0] = (uint8_t)temp;
+    temp = (float)Settings.light_color[1];          // channel 2 is temperature
+    light_current_color[1] = (uint8_t)temp;
+    return;
+  }
   if (LT_PWM1 == light_type) {
     Settings.light_color[0] = 255;    // One PWM channel only supports Dimmer but needs max color
   }
