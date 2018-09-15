@@ -297,7 +297,7 @@ void MCP230xx_CheckForInterrupt(void) {
                     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_TIME "\":\"%s\""), GetDateAndTime(DT_LOCAL).c_str());
                     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"MCP230XX_INT\":{\"D%i\":%i,\"MS\":%lu}"), mqtt_data, intp+(mcp230xx_port*8), ((mcp230xx_intcap >> intp) & 0x01),millis_since_last_int);
                     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}"), mqtt_data);
-                    MqttPublishPrefixTopic_P(RESULT_OR_STAT, mqtt_data);
+                    MqttPublishPrefixTopic_P(RESULT_OR_STAT, PSTR("MCP230XX_INT"));
                   }
                   if (int_event) {
                     char command[19]; // Theoretical max = 'event MCPINT_D16=1' so 18 + 1 (for the \n)
