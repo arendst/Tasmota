@@ -44,10 +44,13 @@ const char kEnergyCommands[] PROGMEM =
 float energy_voltage = 0;         // 123.1 V
 float energy_current = 0;         // 123.123 A
 float energy_power = 0;           // 123.1 W
-float energy_power_factor = 0;    // 0.12
+float energy_power_factor = NAN;  // 0.12
+int energy_calc_power_factor = 0; // Do not calculate power factor from data
+float energy_frequency = NAN;     // 123.1 Hz
+float energy_start = 0;           // 12345.12345 kWh total previous
+
 float energy_daily = 0;           // 123.123 kWh
 float energy_total = 0;           // 12345.12345 kWh
-float energy_start = 0;           // 12345.12345 kWh total previous
 unsigned long energy_kWhtoday_delta = 0;  // 1212312345 Wh 10^-5 (deca micro Watt hours) - Overflows to energy_kWhtoday (HLW and CSE only)
 unsigned long energy_kWhtoday;    // 12312312 Wh * 10^-2 (deca milli Watt hours) - 5764 = 0.05764 kWh = 0.058 kWh = energy_daily
 unsigned long energy_period = 0;  // 12312312 Wh * 10^-2 (deca milli Watt hours) - 5764 = 0.05764 kWh = 0.058 kWh = energy_daily
@@ -122,12 +125,14 @@ void Energy200ms()
 
   XnrgCall(FUNC_EVERY_200_MSECOND);
 
-  float power_factor = 0;
-  if (energy_voltage && energy_current && energy_power) {
-    power_factor = energy_power / (energy_voltage * energy_current);
-    if (power_factor > 1) power_factor = 1;
+  if (energy_calc_power_factor) {
+    float power_factor = 0;
+    if (energy_voltage && energy_current && energy_power) {
+      power_factor = energy_power / (energy_voltage * energy_current);
+      if (power_factor > 1) power_factor = 1;
+    }
+    energy_power_factor = power_factor;
   }
-  energy_power_factor = power_factor;
 }
 
 void EnergySaveState()
@@ -299,7 +304,10 @@ void EnergyMqttShow()
 {
 // {"Time":"2017-12-16T11:48:55","ENERGY":{"Total":0.212,"Yesterday":0.000,"Today":0.014,"Period":2.0,"Power":22.0,"Factor":1.00,"Voltage":213.6,"Current":0.100}}
   snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_TIME "\":\"%s\""), GetDateAndTime(DT_LOCAL).c_str());
+  int tele_period_save = tele_period;
+  tele_period = 2;
   EnergyShow(1);
+  tele_period = tele_period_save;
   snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}"), mqtt_data);
   MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);
   energy_power_delta = 0;
@@ -536,11 +544,18 @@ void EnergySnsInit()
 }
 
 #ifdef USE_WEBSERVER
-const char HTTP_ENERGY_SNS[] PROGMEM = "%s"
+const char HTTP_ENERGY_SNS1[] PROGMEM = "%s"
   "{s}" D_VOLTAGE "{m}%s " D_UNIT_VOLT "{e}"
   "{s}" D_CURRENT "{m}%s " D_UNIT_AMPERE "{e}"
-  "{s}" D_POWERUSAGE "{m}%s " D_UNIT_WATT "{e}"
-  "{s}" D_POWER_FACTOR "{m}%s{e}"
+  "{s}" D_POWERUSAGE "{m}%s " D_UNIT_WATT "{e}";
+
+const char HTTP_ENERGY_SNS2[] PROGMEM = "%s"
+  "{s}" D_POWER_FACTOR "{m}%s{e}";
+
+const char HTTP_ENERGY_SNS3[] PROGMEM = "%s"
+  "{s}" D_FREQUENCY "{m}%s " D_UNIT_HERTZ "{e}";
+
+const char HTTP_ENERGY_SNS4[] PROGMEM = "%s"
   "{s}" D_ENERGY_TODAY  "{m}%s " D_UNIT_KILOWATTHOUR "{e}"
   "{s}" D_ENERGY_YESTERDAY "{m}%s " D_UNIT_KILOWATTHOUR "{e}"
   "{s}" D_ENERGY_TOTAL "{m}%s " D_UNIT_KILOWATTHOUR "{e}";      // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
@@ -554,31 +569,43 @@ void EnergyShow(boolean json)
   char energy_power_chr[10];
   char energy_voltage_chr[10];
   char energy_current_chr[10];
+  char energy_frequency_chr[10];
   char energy_power_factor_chr[10];
   char energy_yesterday_chr[10];
   char speriod[20];
+  char spfactor[20];
+  char sfrequency[20];
 
   bool show_energy_period = (0 == tele_period);
+
+  dtostrfd(energy_power, Settings.flag2.wattage_resolution, energy_power_chr);
+  dtostrfd(energy_voltage, Settings.flag2.voltage_resolution, energy_voltage_chr);
+  dtostrfd(energy_current, Settings.flag2.current_resolution, energy_current_chr);
+  dtostrfd(energy_total, Settings.flag2.energy_resolution, energy_total_chr);
+  dtostrfd(energy_daily, Settings.flag2.energy_resolution, energy_daily_chr);
+  dtostrfd((float)Settings.energy_kWhyesterday / 100000, Settings.flag2.energy_resolution, energy_yesterday_chr);
 
   float energy = 0;
   if (show_energy_period) {
     if (energy_period) energy = (float)(energy_kWhtoday - energy_period) / 100;
     energy_period = energy_kWhtoday;
+    dtostrfd(energy, Settings.flag2.wattage_resolution, energy_period_chr);
+    snprintf_P(speriod, sizeof(speriod), PSTR(",\"" D_JSON_PERIOD "\":%s"), energy_period_chr);
+  }
+  if (!isnan(energy_frequency)) {
+    dtostrfd(energy_frequency, Settings.flag2.frequency_resolution, energy_frequency_chr);
+    snprintf_P(sfrequency, sizeof(sfrequency), PSTR(",\"" D_JSON_FREQUENCY "\":%s"), energy_frequency_chr);
+  }
+  if (!isnan(energy_power_factor)) {
+    dtostrfd(energy_power_factor, 2, energy_power_factor_chr);
+    snprintf_P(spfactor, sizeof(spfactor), PSTR(",\"" D_JSON_POWERFACTOR "\":%s"), energy_power_factor_chr);
   }
 
-  dtostrfd(energy_total, Settings.flag2.energy_resolution, energy_total_chr);
-  dtostrfd(energy_daily, Settings.flag2.energy_resolution, energy_daily_chr);
-  dtostrfd(energy, Settings.flag2.wattage_resolution, energy_period_chr);
-  dtostrfd(energy_power, Settings.flag2.wattage_resolution, energy_power_chr);
-  dtostrfd(energy_voltage, Settings.flag2.voltage_resolution, energy_voltage_chr);
-  dtostrfd(energy_current, Settings.flag2.current_resolution, energy_current_chr);
-  dtostrfd(energy_power_factor, 2, energy_power_factor_chr);
-  dtostrfd((float)Settings.energy_kWhyesterday / 100000, Settings.flag2.energy_resolution, energy_yesterday_chr);
-
   if (json) {
-    snprintf_P(speriod, sizeof(speriod), PSTR(",\"" D_JSON_PERIOD "\":%s"), energy_period_chr);
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"" D_RSLT_ENERGY "\":{\"" D_JSON_TOTAL "\":%s,\"" D_JSON_YESTERDAY "\":%s,\"" D_JSON_TODAY "\":%s%s,\"" D_JSON_POWERUSAGE "\":%s,\"" D_JSON_POWERFACTOR "\":%s,\"" D_JSON_VOLTAGE "\":%s,\"" D_JSON_CURRENT "\":%s}"),
-      mqtt_data, energy_total_chr, energy_yesterday_chr, energy_daily_chr, (show_energy_period) ? speriod : "", energy_power_chr, energy_power_factor_chr, energy_voltage_chr, energy_current_chr);
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"" D_RSLT_ENERGY "\":{\"" D_JSON_TOTAL "\":%s,\"" D_JSON_YESTERDAY "\":%s,\"" D_JSON_TODAY "\":%s%s,\""
+      D_JSON_POWERUSAGE "\":%s%s,\"" D_JSON_VOLTAGE "\":%s,\"" D_JSON_CURRENT "\":%s%s}"),
+      mqtt_data, energy_total_chr, energy_yesterday_chr, energy_daily_chr, (show_energy_period) ? speriod : "",
+      energy_power_chr, (!isnan(energy_power_factor)) ? spfactor : "", energy_voltage_chr, energy_current_chr, (!isnan(energy_frequency)) ? sfrequency : "");
 #ifdef USE_DOMOTICZ
     if (show_energy_period) {  // Only send if telemetry
       dtostrfd(energy_total * 1000, 1, energy_total_chr);
@@ -592,7 +619,7 @@ void EnergyShow(boolean json)
       KnxSensor(KNX_ENERGY_VOLTAGE, energy_voltage);
       KnxSensor(KNX_ENERGY_CURRENT, energy_current);
       KnxSensor(KNX_ENERGY_POWER, energy_power);
-      KnxSensor(KNX_ENERGY_POWERFACTOR, energy_power_factor);
+      if (!isnan(energy_power_factor)) { KnxSensor(KNX_ENERGY_POWERFACTOR, energy_power_factor); }
       KnxSensor(KNX_ENERGY_DAILY, energy_daily);
       KnxSensor(KNX_ENERGY_TOTAL, energy_total);
       KnxSensor(KNX_ENERGY_START, energy_start);
@@ -600,7 +627,10 @@ void EnergyShow(boolean json)
 #endif  // USE_KNX
 #ifdef USE_WEBSERVER
   } else {
-    snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_ENERGY_SNS, mqtt_data, energy_voltage_chr, energy_current_chr, energy_power_chr, energy_power_factor_chr, energy_daily_chr, energy_yesterday_chr, energy_total_chr);
+    snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_ENERGY_SNS1, mqtt_data, energy_voltage_chr, energy_current_chr, energy_power_chr);
+    if (!isnan(energy_power_factor)) { snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_ENERGY_SNS2, mqtt_data, energy_power_factor_chr); }
+    if (!isnan(energy_frequency)) { snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_ENERGY_SNS3, mqtt_data, energy_frequency_chr); }
+    snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_ENERGY_SNS4, mqtt_data, energy_daily_chr, energy_yesterday_chr, energy_total_chr);
 #endif  // USE_WEBSERVER
   }
 }

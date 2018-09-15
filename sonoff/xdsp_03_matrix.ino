@@ -243,7 +243,8 @@ void MatrixPrintLog(uint8_t direction)
       uint8_t space = 0;
       uint8_t max_cols = (disp_log_buffer_cols < MTX_MAX_SCREEN_BUFFER) ? disp_log_buffer_cols : MTX_MAX_SCREEN_BUFFER;
       mtx_buffer[0] = '\0';
-      for (byte i = 0; i < max_cols; i++) {
+      uint8_t i = 0;
+      while ((txt[i] != '\0') && (i < max_cols)) {
         if (txt[i] == ' ') {
           space++;
         } else {
@@ -252,6 +253,7 @@ void MatrixPrintLog(uint8_t direction)
         if (space < 2) {
           strncat(mtx_buffer, (const char*)txt +i, 1);
         }
+        i++;
       }
 
       snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION "[%s]"), mtx_buffer);

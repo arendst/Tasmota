@@ -69,6 +69,12 @@ struct LRgbColor {
 const LRgbColor kFixedColor[MAX_FIXED_COLOR] PROGMEM =
   { 255,0,0, 0,255,0, 0,0,255, 228,32,0, 0,228,32, 0,32,228, 188,64,0, 0,160,96, 160,32,240, 255,255,0, 255,0,170, 255,255,255 };
 
+struct LWColor {
+  uint8_t W;
+};
+#define MAX_FIXED_WHITE  4
+const LWColor kFixedWhite[MAX_FIXED_WHITE] PROGMEM = { 0, 255, 128, 32 };
+
 struct LCwColor {
   uint8_t C, W;
 };
@@ -421,6 +427,11 @@ void LightSetColorTemp(uint16_t ct)
   }
   uint16_t icold = (100 * (347 - my_ct)) / 136;
   uint16_t iwarm = (100 * my_ct) / 136;
+  if (PHILIPS == Settings.module) {
+    // Xiaomi Philips bulbs follow a different scheme:
+    // channel 0=intensity, channel2=temperature
+    Settings.light_color[1] = (uint8_t)icold;
+  } else
   if (LST_RGBWC == light_subtype) {
     Settings.light_color[0] = 0;
     Settings.light_color[1] = 0;
@@ -452,6 +463,15 @@ void LightSetDimmer(uint8_t myDimmer)
 {
   float temp;
 
+  if (PHILIPS == Settings.module) {
+    // Xiaomi Philips bulbs use two PWM channels with a different scheme:
+    float dimmer = 100 / (float)myDimmer;
+    temp = (float)Settings.light_color[0] / dimmer; // channel 1 is intensity
+    light_current_color[0] = (uint8_t)temp;
+    temp = (float)Settings.light_color[1];          // channel 2 is temperature
+    light_current_color[1] = (uint8_t)temp;
+    return;
+  }
   if (LT_PWM1 == light_type) {
     Settings.light_color[0] = 255;    // One PWM channel only supports Dimmer but needs max color
   }
@@ -551,8 +571,8 @@ void LightState(uint8_t append)
   if (light_subtype > LST_SINGLE) {
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"" D_CMND_COLOR "\":\"%s\""), mqtt_data, LightGetColor(0, scolor));
     //  Add status for HSB
-    LightGetHsb(&hsb[0],&hsb[1],&hsb[2]);
-    //  Scale these percentages up to the numbers expected byt he client
+    LightGetHsb(&hsb[0],&hsb[1],&hsb[2], false);
+    //  Scale these percentages up to the numbers expected by the client
     h = round(hsb[0] * 360);
     s = round(hsb[1] * 100);
     b = round(hsb[2] * 100);
@@ -905,13 +925,15 @@ void LightHsbToRgb()
   light_current_color[0] = (uint8_t)(r * 255.0f);
   light_current_color[1] = (uint8_t)(g * 255.0f);
   light_current_color[2] = (uint8_t)(b * 255.0f);
+  light_current_color[3] = 0;
+  light_current_color[4] = 0;
 }
 
 /********************************************************************************************/
 
-void LightGetHsb(float *hue, float *sat, float *bri)
+void LightGetHsb(float *hue, float *sat, float *bri, bool gotct)
 {
-  if (light_subtype > LST_COLDWARM) {
+  if (light_subtype > LST_COLDWARM && !gotct) {
     LightRgbToHsb();
     *hue = light_hue;
     *sat = light_saturation;
@@ -919,16 +941,19 @@ void LightGetHsb(float *hue, float *sat, float *bri)
   } else {
     *hue = 0;
     *sat = 0;
-//    *bri = (2.54f * (float)Settings.light_dimmer);
     *bri = (0.01f * (float)Settings.light_dimmer);
   }
 }
 
-void LightSetHsb(float hue, float sat, float bri, uint16_t ct)
+void LightSetHsb(float hue, float sat, float bri, uint16_t ct, bool gotct)
 {
   if (light_subtype > LST_COLDWARM) {
-    if ((LST_RGBWC == light_subtype) && (ct > 0)) {
-      LightSetColorTemp(ct);
+    if ((LST_RGBWC == light_subtype) && (gotct)) {
+      uint8_t tmp = (uint8_t)(bri * 100);
+      Settings.light_dimmer = tmp;
+      if (ct > 0) {
+        LightSetColorTemp(ct);
+      }
     } else {
       light_hue = hue;
       light_saturation = sat;
@@ -1006,7 +1031,11 @@ boolean LightColorEntry(char *buffer, uint8_t buffer_length)
     entry_type = 1;                                 // Hexadecimal
   }
   else if ((value > 199) && (value <= 199 + MAX_FIXED_COLD_WARM)) {
-    if (LST_COLDWARM == light_subtype) {
+    if (LST_RGBW == light_subtype) {
+      memcpy_P(&light_entry_color[3], &kFixedWhite[value -200], 1);
+      entry_type = 1;                                 // Hexadecimal
+    }
+    else if (LST_COLDWARM == light_subtype) {
       memcpy_P(&light_entry_color, &kFixedColdWarm[value -200], 2);
       entry_type = 1;                                 // Hexadecimal
     }
@@ -1104,7 +1133,7 @@ boolean LightCommand()
       } else {  // Command with only 1 parameter, Hue (0<H<360), Saturation (0<S<100) OR Brightness (0<B<100)
         float hsb[3];
 
-        LightGetHsb(&hsb[0],&hsb[1],&hsb[2]);
+        LightGetHsb(&hsb[0],&hsb[1],&hsb[2], false);
         HSB[0] = round(hsb[0] * 360);
         HSB[1] = round(hsb[1] * 100);
         HSB[2] = round(hsb[2] * 100);
@@ -1120,7 +1149,8 @@ boolean LightCommand()
         LightSetHsb(( (HSB[0]>360) ? (HSB[0] % 360) : HSB[0] ) /360.0,
                     ( (HSB[1]>100) ? (HSB[1] % 100) : HSB[1] ) /100.0,
                     ( (HSB[2]>100) ? (HSB[2] % 100) : HSB[2] ) /100.0,
-                    0);
+                    0,
+                    false);
       }
     } else {
       LightState(0);
