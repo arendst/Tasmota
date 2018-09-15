@@ -21,6 +21,8 @@
 #define _SONOFF_TEMPLATE_H_
 
 // User selectable GPIO functionality
+// ATTENTION: Only add at the end of this list just before GPIO_SENSOR_END
+//            Then add the same name(s) in a nice location in array kGpioNiceList
 enum UserSelectablePins {
   GPIO_NONE,           // Not used
   GPIO_DHT11,          // DHT11
@@ -92,7 +94,7 @@ enum UserSelectablePins {
   GPIO_SPI_DC,         // SPI Data Direction
   GPIO_BACKLIGHT,      // Display backlight control
   GPIO_PMS5003,        // Plantower PMS5003 Serial interface
-  GPIO_SDS0X1,         // Nova Fitness SDS011 Serial interface
+  GPIO_SDS0X1_RX,      // Nova Fitness SDS011 Serial interface
   GPIO_SBR_TX,         // Serial Bridge Serial interface
   GPIO_SBR_RX,         // Serial Bridge Serial interface
   GPIO_SR04_TRIG,      // SR04 Trigger pin
@@ -123,6 +125,7 @@ enum UserSelectablePins {
   GPIO_PZEM2_TX,       // PZEM-003,014,016,017 Serial interface
   GPIO_PZEM2_RX,       // PZEM-003,014,016,017 Serial interface
   GPIO_MP3_DFR562,     // RB-DFR-562, DFPlayer Mini MP3 Player
+  GPIO_SDS0X1_TX,         // Nova Fitness SDS011 Serial interface
   GPIO_SENSOR_END };
 
 // Programmer selectable GPIO functionality offset by user selectable GPIOs
@@ -164,7 +167,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_PZEM_TX "|" D_SENSOR_PZEM_RX "|"
   D_SENSOR_SAIR_TX "|" D_SENSOR_SAIR_RX "|"
   D_SENSOR_SPI_CS "|" D_SENSOR_SPI_DC "|" D_SENSOR_BACKLIGHT "|"
-  D_SENSOR_PMS5003 "|" D_SENSOR_SDS0X1 "|"
+  D_SENSOR_PMS5003 "|" D_SENSOR_SDS0X1_RX "|"
   D_SENSOR_SBR_TX "|" D_SENSOR_SBR_RX "|"
   D_SENSOR_SR04_TRIG "|" D_SENSOR_SR04_ECHO "|"
   D_SENSOR_SDM120_TX "|" D_SENSOR_SDM120_RX "|"
@@ -174,7 +177,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_BUTTON "1n|" D_SENSOR_BUTTON "2n|" D_SENSOR_BUTTON "3n|" D_SENSOR_BUTTON "4n|"
   D_SENSOR_COUNTER "1n|" D_SENSOR_COUNTER "2n|" D_SENSOR_COUNTER "3n|" D_SENSOR_COUNTER "4n|"
   D_SENSOR_PZEM_TX "|" D_SENSOR_PZEM_RX "|"
-  D_SENSOR_DFR562;
+  D_SENSOR_DFR562 "|" D_SENSOR_SDS0X1_TX;
 
 /********************************************************************************************/
 
@@ -227,6 +230,7 @@ enum SupportedModules {
   BLITZWOLF_BWSHP2,
   SHELLY1,
   SHELLY2,
+  PHILIPS,
   MAXMODULE };
 
 /********************************************************************************************/
@@ -244,7 +248,112 @@ typedef struct MYTMPLT {
   myio         gp;
 } mytmplt;
 
-const uint8_t kNiceList[MAXMODULE] PROGMEM = {
+const uint8_t kGpioNiceList[GPIO_SENSOR_END] PROGMEM = {
+  GPIO_NONE,           // Not used
+  GPIO_KEY1,           // Buttons
+  GPIO_KEY1_NP,
+  GPIO_KEY2,
+  GPIO_KEY2_NP,
+  GPIO_KEY3,
+  GPIO_KEY3_NP,
+  GPIO_KEY4,
+  GPIO_KEY4_NP,
+  GPIO_SWT1,           // User connected external switches
+  GPIO_SWT1_NP,
+  GPIO_SWT2,
+  GPIO_SWT2_NP,
+  GPIO_SWT3,
+  GPIO_SWT3_NP,
+  GPIO_SWT4,
+  GPIO_SWT4_NP,
+  GPIO_SWT5,
+  GPIO_SWT5_NP,
+  GPIO_SWT6,
+  GPIO_SWT6_NP,
+  GPIO_SWT7,
+  GPIO_SWT7_NP,
+  GPIO_SWT8,
+  GPIO_SWT8_NP,
+  GPIO_REL1,           // Relays
+  GPIO_REL1_INV,
+  GPIO_REL2,
+  GPIO_REL2_INV,
+  GPIO_REL3,
+  GPIO_REL3_INV,
+  GPIO_REL4,
+  GPIO_REL4_INV,
+  GPIO_REL5,
+  GPIO_REL5_INV,
+  GPIO_REL6,
+  GPIO_REL6_INV,
+  GPIO_REL7,
+  GPIO_REL7_INV,
+  GPIO_REL8,
+  GPIO_REL8_INV,
+  GPIO_LED1,           // Leds
+  GPIO_LED1_INV,
+  GPIO_LED2,
+  GPIO_LED2_INV,
+  GPIO_LED3,
+  GPIO_LED3_INV,
+  GPIO_LED4,
+  GPIO_LED4_INV,
+  GPIO_PWM1,           // RGB   Red   or C  Cold White
+  GPIO_PWM1_INV,
+  GPIO_PWM2,           // RGB   Green or CW Warm White
+  GPIO_PWM2_INV,
+  GPIO_PWM3,           // RGB   Blue
+  GPIO_PWM3_INV,
+  GPIO_PWM4,           // RGBW  (Cold) White
+  GPIO_PWM4_INV,
+  GPIO_PWM5,           // RGBCW Warm White
+  GPIO_PWM5_INV,
+  GPIO_CNTR1,          // Counters
+  GPIO_CNTR1_NP,
+  GPIO_CNTR2,
+  GPIO_CNTR2_NP,
+  GPIO_CNTR3,
+  GPIO_CNTR3_NP,
+  GPIO_CNTR4,
+  GPIO_CNTR4_NP,
+  GPIO_I2C_SCL,        // I2C SCL
+  GPIO_I2C_SDA,        // I2C SDA
+  GPIO_SPI_CS,         // SPI Chip Select
+  GPIO_SPI_DC,         // SPI Data Direction
+  GPIO_BACKLIGHT,      // Display backlight control
+  GPIO_DHT11,          // DHT11
+  GPIO_DHT22,          // DHT21, DHT22, AM2301, AM2302, AM2321
+  GPIO_SI7021,         // iTead SI7021
+  GPIO_DSB,            // Single wire DS18B20 or DS18S20
+  GPIO_WS2812,         // WS2812 Led string
+  GPIO_IRSEND,         // IR remote
+  GPIO_IRRECV,         // IR receiver
+  GPIO_SR04_TRIG,      // SR04 Trigger pin
+  GPIO_SR04_ECHO,      // SR04 Echo pin
+  GPIO_TM16CLK,        // TM1638 Clock
+  GPIO_TM16DIO,        // TM1638 Data I/O
+  GPIO_TM16STB,        // TM1638 Strobe
+  GPIO_SBR_TX,         // Serial Bridge Serial interface
+  GPIO_SBR_RX,         // Serial Bridge Serial interface
+  GPIO_MHZ_TXD,        // MH-Z19 Serial interface
+  GPIO_MHZ_RXD,        // MH-Z19 Serial interface
+  GPIO_SAIR_TX,        // SenseAir Serial interface
+  GPIO_SAIR_RX,        // SenseAir Serial interface
+  GPIO_SDS0X1_TX,      // Nova Fitness SDS011 Serial interface
+  GPIO_SDS0X1_RX,      // Nova Fitness SDS011 Serial interface
+  GPIO_PZEM_TX,        // PZEM004T Serial interface
+  GPIO_PZEM_RX,        // PZEM004T Serial interface
+  GPIO_PZEM2_TX,       // PZEM-003,014,016,017 Serial interface
+  GPIO_PZEM2_RX,       // PZEM-003,014,016,017 Serial interface
+  GPIO_SDM120_TX,      // SDM120 Serial interface
+  GPIO_SDM120_RX,      // SDM120 Serial interface
+  GPIO_SDM630_TX,      // SDM630 Serial interface
+  GPIO_SDM630_RX,      // SDM630 Serial interface
+  GPIO_PMS5003,        // Plantower PMS5003 Serial interface
+  GPIO_MP3_DFR562      // RB-DFR-562, DFPlayer Mini MP3 Player Serial interface
+};
+
+const uint8_t kModuleNiceList[MAXMODULE] PROGMEM = {
   SONOFF_BASIC,
   SONOFF_RF,
   SONOFF_TH,
@@ -291,7 +400,8 @@ const uint8_t kNiceList[MAXMODULE] PROGMEM = {
   KMC_70011,
   AILIGHT,
   WEMOS,
-  WITTY
+  WITTY,
+  PHILIPS
 };
 
 // Default module settings
@@ -935,6 +1045,14 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      0,
      GPIO_SWT2_NP,      // GPIO14
      0,                 // GPIO15 MCP39F501 Reset
+     0, 0
+  },
+  { "Xiaomi Philips",  // Xiaomi Philips bulb (ESP8266)
+     0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0,
+     GPIO_PWM2,        // GPIO12 cold/warm light
+     0, 0,
+     GPIO_PWM1,        // GPIO15 light intensity
      0, 0
   }
 };

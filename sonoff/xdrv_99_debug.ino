@@ -182,6 +182,7 @@ void CpuLoadLoop()
 
 #if defined(ARDUINO_ESP8266_RELEASE_2_3_0) || defined(ARDUINO_ESP8266_RELEASE_2_4_0) || defined(ARDUINO_ESP8266_RELEASE_2_4_1)
 // All version before core 2.4.2
+// https://github.com/esp8266/Arduino/issues/2557
 
 extern "C" {
 #include <cont.h>
@@ -190,7 +191,6 @@ extern "C" {
 
 void DebugFreeMem()
 {
-//  https://github.com/esp8266/Arduino/issues/2557
   register uint32_t *sp asm("a1");
 
 //  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_DEBUG "FreeRam %d, FreeStack %d, UnmodifiedStack %d (%s)"),
@@ -213,7 +213,6 @@ extern "C" {
 
 void DebugFreeMem()
 {
-// https://github.com/esp8266/Arduino/issues/2557
   register uint32_t *sp asm("a1");
 
   snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_DEBUG "FreeRam %d, FreeStack %d (%s)"),

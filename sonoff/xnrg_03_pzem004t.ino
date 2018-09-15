@@ -215,6 +215,7 @@ void PzemDrvInit()
 {
   if (!energy_flg) {
     if ((pin[GPIO_PZEM_RX] < 99) && (pin[GPIO_PZEM_TX] < 99)) {  // Any device with a Pzem004T
+      energy_calc_power_factor = 1;                              // Calculate power factor from data
       energy_flg = XNRG_03;
     }
   }

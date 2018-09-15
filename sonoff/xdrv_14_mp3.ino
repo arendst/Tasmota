@@ -1,32 +1,39 @@
 /*
-  xdrv_91_mp3.ino - MP3 Player support for Sonoff-Tasmota
-  Player type: RB-DFR-562, DFPlayer Mini MP3 Player
-  Copyright (C) 2018  Theo Arends
+  xdrv_14_mp3.ino - MP3 support for Sonoff-Tasmota
+
+  Copyright (C) 2018  gemu2015, mike2nl and Theo Arends
+
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
   the Free Software Foundation, either version 3 of the License, or
   (at your option) any later version.
+
   This program is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
   GNU General Public License for more details.
+
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
-    
 */
 
 #ifdef USE_MP3_PLAYER
+/*********************************************************************************************\
+ * MP3 control for RB-DFR-562 DFRobot mini MP3 player
+ * https://www.dfrobot.com/wiki/index.php/DFPlayer_Mini_SKU:DFR0299
+\*********************************************************************************************/
 
 #include <TasmotaSerial.h>
 
 TasmotaSerial *MP3Player;
 
 #define D_CMND_MP3 "MP3"
+
 const char S_JSON_MP3_COMMAND_NVALUE[] PROGMEM = "{\"" D_CMND_MP3 "%s\":%d}";
 const char S_JSON_MP3_COMMAND[] PROGMEM        = "{\"" D_CMND_MP3 "%s\"}";
 
 enum MP3_Commands { CMND_MP3_PLAY, CMND_MP3_STOP, CMND_MP3_VOLUME};
-const char kMP3_Commands[] PROGMEM = "Play" "|" "Stop" "|" "Volume";
+const char kMP3_Commands[] PROGMEM = "Play|Stop|Volume";
 
 #define MP3_CMD_PLAY 3
 #define MP3_CMD_VOLUME 6
@@ -43,11 +50,10 @@ uint16_t MP3_Checksum(uint8_t *array)
 }
 
 // init player define serial tx port
-void InitMP3Player() {
-  MP3Player = new TasmotaSerial(-1, pin[GPIO_MP3PLAYER]);
-  
+void MP3PlayerInit() {
+  MP3Player = new TasmotaSerial(-1, pin[GPIO_MP3_DFR562]);
+
   if (MP3Player->begin(9600)) {
-    //serial_bridge_active = 1;
     MP3Player->flush();
   }
 }
@@ -67,7 +73,7 @@ boolean MP3PlayerCmd() {
   char command[CMDSZ];
   boolean serviced = true;
   uint8_t disp_len = strlen(D_CMND_MP3);
-  
+
   if (!strncasecmp_P(XdrvMailbox.topic, PSTR(D_CMND_MP3), disp_len)) {  // Prefix
     int command_code = GetCommandCode(command, sizeof(command), XdrvMailbox.topic + disp_len, kMP3_Commands);
 
@@ -82,7 +88,7 @@ boolean MP3PlayerCmd() {
         MP3_CMD(MP3_CMD_VOLUME, XdrvMailbox.payload * 30 / 100);
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_MP3_COMMAND_NVALUE, command, XdrvMailbox.payload);
-    } 
+    }
 	else if (CMND_MP3_STOP == command_code) {							// stop
       MP3_CMD(MP3_CMD_STOP, 0);
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_MP3_COMMAND, command, XdrvMailbox.payload);
@@ -97,15 +103,15 @@ boolean MP3PlayerCmd() {
  * Interface
 \*********************************************************************************************/
 
-#define XDRV_91
+#define XDRV_14
 
-boolean Xdrv91(byte function)
+boolean Xdrv14(byte function)
 {
   boolean result = false;
 
   switch (function) {
     case FUNC_PRE_INIT:
-      InitMP3Player();
+      MP3PlayerInit();
       break;
     case FUNC_COMMAND:
       result = MP3PlayerCmd();

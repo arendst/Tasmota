@@ -1,7 +1,17 @@
-/* 6.2.1.2 20180906
- * Fix KNX PA exception. Regression from 6.2.1 buffer overflow (#3700, #3710)
+/* 6.2.1.3 20180907
+ * Change web Configure Module GPIO drop down list order for better readability
+ * Fix showing Period Power in energy threshold messages
+ * Fix ButtonRetain to not use default topic for clearing retain messages (#3737)
+ * Add sleep to Nova Fitness SDS01X sensor (#2841, #3724, #3749)
+ * Add Analog input AD0 enabled to sonoff-sensors.bin (#3756, #3757)
+ * Add Support to Xiaomi-Phillips Bulbs
+ *
+ * 6.2.1.2 20180906
+ * Fix KNX PA exception. Regression from 6.2.1 buffer overflow caused by subStr() (#3700, #3710)
  * Add command SetOption52 to control display of optional time offset from UTC in JSON messages (#3629, #3711)
  * Add experimental support for PZEM-003,014,016,017 Energy monitoring (#3694)
+ * Add basic support for MP3 player using DFRobot RB-DFR-562 (#3723)
+ * Fix setting and getting color temperature for Philips Hue emulation (#3733)
  *
  * 6.2.1.1 20180905
  * Rewrite energy monitoring using energy sensor driver modules

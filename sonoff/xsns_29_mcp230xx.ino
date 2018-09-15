@@ -300,7 +300,7 @@ void MCP230xx_CheckForInterrupt(void) {
                     MqttPublishPrefixTopic_P(RESULT_OR_STAT, mqtt_data);
                   }
                   if (int_event) {
-                    char command[18];
+                    char command[19]; // Theoretical max = 'event MCPINT_D16=1' so 18 + 1 (for the \n)
                     sprintf(command,"event MCPINT_D%i=%i",intp+(mcp230xx_port*8),((mcp230xx_intcap >> intp) & 0x01));
                     ExecuteCommand(command, SRC_RULE);
                   }
