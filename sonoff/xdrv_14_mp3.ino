@@ -15,6 +15,40 @@
 
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+  --------------------------------------------------------------------------------------------
+  Version yyyymmdd  Action    Description
+  --------------------------------------------------------------------------------------------
+  1.0.0.3 20180915  added   - select device for SD-Card or USB Stick, default will be SD-Card
+                    tested  - works by MP3Device 1 = USB STick, or MP3Device 2 = SD-Card
+                            - after power and/or reset the SD-Card(2) is the default device
+  ---
+  1.0.0.2 20180912  added   - again some if-commands to switch() because of new commands 
+  ---
+  1.0.0.1 20180911  added   - command eq (equalizer 0..5)
+                    tested  - works in console with MP3EQ 1, the value can be 0..5
+                    added   - USB device selection via command in console
+                    tested  - looks like it is working
+                    erased  - code for USB device about some errors, will be added in a next release
+  ---
+  1.0.0.1 20180910  changed - command real MP3Stop in place of pause/stop used in the original version
+                    changed - the command MP3Play e.g. 001 to MP3Track e.g. 001, 
+                    added   - new normal command MP3Play and MP3Pause 
+  ---
+  1.0.0.0 20180907  merged  - by arendst 
+                    changed - the driver name from xdrv_91_mp3.ino to xdrv_14_mp3.ino
+  ---
+  0.9.0.3 20180906  request - Pull Request  
+                    changed - if-commands to switch() for faster response
+  ---
+  0.9.0.2 20180906  cleaned - source code for faster reading
+  ---
+  0.9.0.1 20180905  added   - #include <TasmotaSerial.h> because compiler error (Arduino IDE v1.8.5)
+  ---
+  0.9.0.0 20180901  started - further development by mike2nl  - https://github.com/mike2nl/Sonoff-Tasmota
+                    base    - code base from gemu2015 ;-)     - https://github.com/gemu2015/Sonoff-Tasmota
+                    forked  - from arendst/tasmota            - https://github.com/arendst/Sonoff-Tasmota
+
 */
 
 #ifdef USE_MP3_PLAYER
@@ -31,14 +65,30 @@ TasmotaSerial *MP3Player;
 
 const char S_JSON_MP3_COMMAND_NVALUE[] PROGMEM = "{\"" D_CMND_MP3 "%s\":%d}";
 const char S_JSON_MP3_COMMAND[] PROGMEM        = "{\"" D_CMND_MP3 "%s\"}";
+const char kMP3_Commands[] PROGMEM             = "Track|Play|Pause|Stop|Volume|EQ|Device";
 
-enum MP3_Commands { CMND_MP3_PLAY, CMND_MP3_STOP, CMND_MP3_VOLUME};
-const char kMP3_Commands[] PROGMEM = "Play|Stop|Volume";
+// enumerations
+enum MP3_Commands {                                 // commands useable in console or rules
+  CMND_MP3_TRACK,                                   // MP3Track 001...255
+  CMND_MP3_PLAY,                                    // MP3Play, after pause or normal start to play
+  CMND_MP3_PAUSE,                                   // MP3Pause
+  CMND_MP3_STOP,                                    // MP3Stop, real stop, original version was pause function
+  CMND_MP3_VOLUME,                                  // MP3Volume 0..100
+  CMND_MP3_EQ,                                      // MP3EQ 0..5
+  CMND_MP3_DEVICE };                                // sd-card: 02, usb-stick: 01
 
-#define MP3_CMD_PLAY 3
-#define MP3_CMD_VOLUME 6
-#define MP3_CMD_STOP 0x0e
+// defines
+#define MP3_CMD_TRACK       0x03                    // specify playback of a track, e.g. MP3Track 003
+#define MP3_CMD_PLAY        0x0d                    // Play, works as a normal play on a real MP3 Player, starts at 001.mp3 file on the selected device
+#define MP3_CMD_PAUSE       0x0e                    // Pause, was original designed as stop, see data sheet 
+#define MP3_CMD_STOP        0x16                    // Stop, it's a real stop now, in the original version it was a pause command
+#define MP3_CMD_VOLUME      0x06                    // specifies the volume and means a console input as 0..100
+#define MP3_CMD_EQ          0x07                    // specify EQ(0/1/2/3/4/5), 0:Normal, 1:Pop, 2:Rock, 3:Jazz, 4:Classic, 5:Bass
+#define MP3_CMD_DEVICE      0x09                    // specify playback device, USB=1, SD-Card=2, default is 2 also after reset or power down/up
 
+// calculate the checksum
+// starts with cmd[1] with a length of 6 bytes
+//
 uint16_t MP3_Checksum(uint8_t *array)
 {
   uint16_t checksum = 0;
@@ -49,51 +99,74 @@ uint16_t MP3_Checksum(uint8_t *array)
   return checksum+1;
 }
 
-// init player define serial tx port
+// init player, define serial tx port
+// fixed with 9600 baud
+//
 void MP3PlayerInit() {
   MP3Player = new TasmotaSerial(-1, pin[GPIO_MP3_DFR562]);
-
-  if (MP3Player->begin(9600)) {
+  // start serial communication fixed to 9600 baud
+  if (MP3Player->begin(9600)) { 
     MP3Player->flush();
+    delay(1000);                                    // set delay
+    // volume setting
+    MP3_CMD(MP3_CMD_VOLUME, MP3_VOLUME);            // set volume depending on the entry in the user_config.h 
   }
 }
 
+// create mp3 command payload and send it via serail interface to the MP3 player
+// {start byte, version, length, command, feedback, para MSB, para LSB, chks MSB, chks LSB, end byte};
+// {cmd[0]    , cmd[1] , cmd[2], cmd[3] , cmd[4]  , cmd[5]  , cmd[6]  , cmd[7]  , cmd[8]  , cmd[9]  };
+// {0x7e      , 0xff   , 6     , 0      , 0/1     , 0       , 0       , 0       , 0       , 0xef    };
+//
 void MP3_CMD(uint8_t mp3cmd,uint16_t val) {
-  uint8_t cmd[10] = {0x7e,0xff,6,0,0,0,0,0,0,0xef};
-  cmd[3] = mp3cmd;
-  cmd[5] = val>>8;
-  cmd[6] = val;
-  uint16_t chks = MP3_Checksum(&cmd[1]);								// calculate out
-  cmd[7] = chks>>8;
-  cmd[8] = chks;
-  MP3Player->write(cmd, sizeof(cmd));
+  uint8_t cmd[10] = {0x7e,0xff,6,0,0,0,0,0,0,0xef}; // fill array
+  cmd[3]          = mp3cmd;                         // mp3 command value
+  //cmd[4]        = ;                               // feedback, yet not use
+  cmd[5]          = val>>8;                         // data value, shift 8 byte right
+  cmd[6]          = val;                            // data value low byte
+  uint16_t chks   = MP3_Checksum(&cmd[1]);          // see calculate the checksum, line 62..72
+  cmd[7]          = chks>>8;                        // checksum. shift 8 byte right
+  cmd[8]          = chks;                           // checksum low byte
+  MP3Player->write(cmd, sizeof(cmd));               // write mp3 data array to player
 }
 
+// check the MP3 commands
+//
 boolean MP3PlayerCmd() {
   char command[CMDSZ];
   boolean serviced = true;
   uint8_t disp_len = strlen(D_CMND_MP3);
 
-  if (!strncasecmp_P(XdrvMailbox.topic, PSTR(D_CMND_MP3), disp_len)) {  // Prefix
+  if (!strncasecmp_P(XdrvMailbox.topic, PSTR(D_CMND_MP3), disp_len)) {  // prefix
     int command_code = GetCommandCode(command, sizeof(command), XdrvMailbox.topic + disp_len, kMP3_Commands);
-
-    if (CMND_MP3_PLAY == command_code) {
-      if (XdrvMailbox.data_len > 0) {									// play
-        MP3_CMD(MP3_CMD_PLAY, XdrvMailbox.payload);
-      }
-      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_MP3_COMMAND_NVALUE, command, XdrvMailbox.payload);
-    }
-    else if (CMND_MP3_VOLUME == command_code) {
-      if (XdrvMailbox.data_len > 0) {									// set volume
-        MP3_CMD(MP3_CMD_VOLUME, XdrvMailbox.payload * 30 / 100);
-      }
-      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_MP3_COMMAND_NVALUE, command, XdrvMailbox.payload);
-    }
-	else if (CMND_MP3_STOP == command_code) {							// stop
-      MP3_CMD(MP3_CMD_STOP, 0);
-      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_MP3_COMMAND, command, XdrvMailbox.payload);
-    } else {
-      serviced = false;  												// Unknown command
+	
+    switch (command_code) {
+      case CMND_MP3_TRACK:
+      case CMND_MP3_VOLUME:
+      case CMND_MP3_EQ:
+      case CMND_MP3_DEVICE:
+        // play a track, set volume, select EQ, sepcify file device
+        if (XdrvMailbox.data_len > 0) {
+          if (command_code == CMND_MP3_TRACK)  { MP3_CMD(MP3_CMD_TRACK,  XdrvMailbox.payload); }
+          if (command_code == CMND_MP3_VOLUME) { MP3_CMD(MP3_CMD_VOLUME, XdrvMailbox.payload * 30 / 100); }
+          if (command_code == CMND_MP3_EQ)     { MP3_CMD(MP3_CMD_EQ,     XdrvMailbox.payload); }
+          if (command_code == CMND_MP3_DEVICE) { MP3_CMD(MP3_CMD_DEVICE, XdrvMailbox.payload); }
+        }
+        snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_MP3_COMMAND_NVALUE, command, XdrvMailbox.payload);
+        break;
+      case CMND_MP3_PLAY:
+      case CMND_MP3_PAUSE:
+      case CMND_MP3_STOP:
+        // play or re-play after pause, pause, stop, 
+        if (command_code == CMND_MP3_PLAY)     { MP3_CMD(MP3_CMD_PLAY,   0); }
+        if (command_code == CMND_MP3_PAUSE)    { MP3_CMD(MP3_CMD_PAUSE,  0); }
+        if (command_code == CMND_MP3_STOP)     { MP3_CMD(MP3_CMD_STOP,   0); }
+        snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_MP3_COMMAND, command, XdrvMailbox.payload);
+        break;
+      default:
+    	// else for Unknown command
+    	serviced = false;
+    	break;
     }
   }
   return serviced;
@@ -111,10 +184,10 @@ boolean Xdrv14(byte function)
 
   switch (function) {
     case FUNC_PRE_INIT:
-      MP3PlayerInit();
+      MP3PlayerInit();                              // init and start communication
       break;
     case FUNC_COMMAND:
-      result = MP3PlayerCmd();
+      result = MP3PlayerCmd();                      // return result from mp3 player command
       break;
   }
   return result;
