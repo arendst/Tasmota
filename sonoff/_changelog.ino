@@ -1,13 +1,32 @@
-/* 6.2.0.2 20180904
- * Rewrite energy monitoring using energy sensor driver modules
- * Fix lost today and total energy value after power cycle (#3689)
+/* 6.2.1.3 20180907
+ * Change web Configure Module GPIO drop down list order for better readability
+ * Fix showing Period Power in energy threshold messages
+ * Fix ButtonRetain to not use default topic for clearing retain messages (#3737)
+ * Add sleep to Nova Fitness SDS01X sensor (#2841, #3724, #3749)
+ * Add Analog input AD0 enabled to sonoff-sensors.bin (#3756, #3757)
+ * Add Support to Xiaomi-Phillips Bulbs
  *
- * 6.2.0.1 20180902
- * Fix possible ambiguity on command parameters if StateText contains numbers only (#3656)
- * Fix possible exception due to buffer overflow (#3659)
+ * 6.2.1.2 20180906
+ * Fix KNX PA exception. Regression from 6.2.1 buffer overflow caused by subStr() (#3700, #3710)
+ * Add command SetOption52 to control display of optional time offset from UTC in JSON messages (#3629, #3711)
+ * Add experimental support for PZEM-003,014,016,017 Energy monitoring (#3694)
+ * Add basic support for MP3 player using DFRobot RB-DFR-562 (#3723)
+ * Fix setting and getting color temperature for Philips Hue emulation (#3733)
+ *
+ * 6.2.1.1 20180905
+ * Rewrite energy monitoring using energy sensor driver modules
  * Add Wifi channel number to state message (#3664)
- * Fix Wemo emulation to select the first relay when more than one relay is present (#3657)
  * Add support for Shelly 1 and basic support for Shelly 2 - No energy monitoring yet (#2789)
+ * Add network information to display start screen (#3704)
+ * Add command Display to show all settings at once
+ * Add toggle function RGBW lights (#3695, #3697)
+ * Add user configurable GPIO02 and GPIO03 on H801 devices (#3692)
+ *
+ * 6.2.1 20180905
+ * Fix possible ambiguity on command parameters if StateText contains numbers only (#3656)
+ * Fix Wemo emulation to select the first relay when more than one relay is present (#3657)
+ * Fix possible exception due to buffer overflow (#3659)
+ * Fix lost energy today and total energy value after power cycle (#3689)
  *
  * 6.2.0 20180901
  * Allow user override of define MAX_RULE_VARS and MAX_RULE_TIMERS (#3561)

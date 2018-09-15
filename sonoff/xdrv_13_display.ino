@@ -49,10 +49,10 @@ enum XdspFunctions { FUNC_DISPLAY_INIT_DRIVER, FUNC_DISPLAY_INIT, FUNC_DISPLAY_E
 
 enum DisplayInitModes { DISPLAY_INIT_MODE, DISPLAY_INIT_PARTIAL, DISPLAY_INIT_FULL };
 
-enum DisplayCommands { CMND_DISP_MODEL, CMND_DISP_MODE, CMND_DISP_REFRESH, CMND_DISP_DIMMER, CMND_DISP_COLS, CMND_DISP_ROWS,
+enum DisplayCommands { CMND_DISPLAY, CMND_DISP_MODEL, CMND_DISP_MODE, CMND_DISP_REFRESH, CMND_DISP_DIMMER, CMND_DISP_COLS, CMND_DISP_ROWS,
   CMND_DISP_SIZE, CMND_DISP_FONT, CMND_DISP_ROTATE, CMND_DISP_TEXT, CMND_DISP_ADDRESS };
 const char kDisplayCommands[] PROGMEM =
-  D_CMND_DISP_MODEL "|" D_CMND_DISP_MODE "|" D_CMND_DISP_REFRESH "|" D_CMND_DISP_DIMMER "|" D_CMND_DISP_COLS "|" D_CMND_DISP_ROWS "|"
+  "|" D_CMND_DISP_MODEL "|" D_CMND_DISP_MODE "|" D_CMND_DISP_REFRESH "|" D_CMND_DISP_DIMMER "|" D_CMND_DISP_COLS "|" D_CMND_DISP_ROWS "|"
   D_CMND_DISP_SIZE "|" D_CMND_DISP_FONT "|" D_CMND_DISP_ROTATE "|" D_CMND_DISP_TEXT "|" D_CMND_DISP_ADDRESS ;
 
 const char S_JSON_DISPLAY_COMMAND_VALUE[] PROGMEM =        "{\"" D_CMND_DISPLAY "%s\":\"%s\"}";
@@ -626,11 +626,24 @@ void DisplayLogBufferInit()
 
     DisplayReAllocLogBuffer();
 
-    char buffer[20];
+    char buffer[40];
     snprintf_P(buffer, sizeof(buffer), PSTR(D_VERSION " %s"), my_version);
     DisplayLogBufferAdd(buffer);
     snprintf_P(buffer, sizeof(buffer), PSTR("Display mode %d"), Settings.display_mode);
     DisplayLogBufferAdd(buffer);
+
+    snprintf_P(buffer, sizeof(buffer), PSTR(D_CMND_HOSTNAME " %s"), my_hostname);
+    DisplayLogBufferAdd(buffer);
+    snprintf_P(buffer, sizeof(buffer), PSTR(D_JSON_SSID " %s"), Settings.sta_ssid[Settings.sta_active]);
+    DisplayLogBufferAdd(buffer);
+    snprintf_P(buffer, sizeof(buffer), PSTR(D_JSON_MAC " %s"), WiFi.macAddress().c_str());
+    DisplayLogBufferAdd(buffer);
+    if (!global_state.wifi_down && (static_cast<uint32_t>(WiFi.localIP()) != 0)) {
+      snprintf_P(buffer, sizeof(buffer), PSTR("IP %s"), WiFi.localIP().toString().c_str());
+      DisplayLogBufferAdd(buffer);
+      snprintf_P(buffer, sizeof(buffer), PSTR(D_JSON_RSSI " %d%%"), WifiGetRssiAsQuality(WiFi.RSSI()));
+      DisplayLogBufferAdd(buffer);
+    }
   }
 }
 
@@ -885,6 +898,12 @@ boolean DisplayCommand()
     if (-1 == command_code) {
       serviced = false;  // Unknown command
     }
+    else if (CMND_DISPLAY == command_code) {
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_DISPLAY "\":{\"" D_CMND_DISP_MODEL "\":%d,\"" D_CMND_DISP_MODE "\":%d,\"" D_CMND_DISP_DIMMER "\":%d,\""
+         D_CMND_DISP_SIZE "\":%d,\"" D_CMND_DISP_FONT "\":%d,\"" D_CMND_DISP_ROTATE "\":%d,\"" D_CMND_DISP_REFRESH "\":%d,\"" D_CMND_DISP_COLS "\":[%d,%d],\"" D_CMND_DISP_ROWS "\":%d}}"),
+        Settings.display_model, Settings.display_mode, Settings.display_dimmer, Settings.display_size, Settings.display_font, Settings.display_rotate, Settings.display_refresh,
+        Settings.display_cols[0], Settings.display_cols[1], Settings.display_rows);
+    }
     else if (CMND_DISP_MODEL == command_code) {
       if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < DISPLAY_MAX_DRIVERS)) {
         uint8_t last_display_model = Settings.display_model;
@@ -915,8 +934,8 @@ boolean DisplayCommand()
           if (last_display_mode && !Settings.display_mode) {  // Switch to mode 0
             DisplayInit(DISPLAY_INIT_MODE);
             DisplayClear();
-          }
-          if (!last_display_mode && Settings.display_mode) {  // Switch to non mode 0
+          } else {
+//          if (!last_display_mode && Settings.display_mode) {  // Switch to non mode 0
             DisplayLogBufferInit();
             DisplayInit(DISPLAY_INIT_MODE);
           }

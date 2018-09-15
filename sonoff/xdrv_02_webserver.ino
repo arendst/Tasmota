@@ -773,7 +773,7 @@ void HandleModuleConfiguration()
   page.replace(F("{v}"), FPSTR(S_CONFIGURE_MODULE));
   page += FPSTR(HTTP_SCRIPT_MODULE1);
   for (byte i = 0; i < MAXMODULE; i++) {
-    midx = pgm_read_byte(kNiceList + i);
+    midx = pgm_read_byte(kModuleNiceList + i);
     snprintf_P(stemp, sizeof(stemp), kModules[midx].name);
     snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SCRIPT_MODULE2, midx, midx +1, stemp);
     page += mqtt_data;
@@ -784,10 +784,10 @@ void HandleModuleConfiguration()
 
   mytmplt cmodule;
   memcpy_P(&cmodule, &kModules[Settings.module], sizeof(cmodule));
-
   for (byte j = 0; j < GPIO_SENSOR_END; j++) {
-    if (!GetUsedInModule(j, cmodule.gp.io)) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SCRIPT_MODULE2, j, j, GetTextIndexed(stemp, sizeof(stemp), j, kSensorNames));
+    midx = pgm_read_byte(kGpioNiceList + j);
+    if (!GetUsedInModule(midx, cmodule.gp.io)) {
+      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SCRIPT_MODULE2, midx, midx, GetTextIndexed(stemp, sizeof(stemp), midx, kSensorNames));
       page += mqtt_data;
     }
   }
@@ -1198,7 +1198,7 @@ void HandleSaveSettings()
       if (Settings.last_module != new_module) {
         Settings.my_gp.io[i] = 0;
       } else {
-        if (GPIO_USER == cmodule.gp.io[i]) {
+        if (GPIO_USER == ValidGPIO(i, cmodule.gp.io[i])) {
           snprintf_P(stemp, sizeof(stemp), PSTR("g%d"), i);
           WebGetArg(stemp, tmp, sizeof(tmp));
           Settings.my_gp.io[i] = (!strlen(tmp)) ? 0 : atoi(tmp);
@@ -1297,7 +1297,7 @@ void HandleInformation()
   func += F(D_PROGRAM_VERSION "}2"); func += my_version;
   func += F("}1" D_BUILD_DATE_AND_TIME "}2"); func += GetBuildDateAndTime();
   func += F("}1" D_CORE_AND_SDK_VERSION "}2" ARDUINO_ESP8266_RELEASE "/"); func += String(ESP.getSdkVersion());
-  func += F("}1" D_UPTIME "}2"); func += GetDateAndTime(DT_UPTIME);
+  func += F("}1" D_UPTIME "}2"); func += GetUptime();
   snprintf_P(stopic, sizeof(stopic), PSTR(" at %X"), GetSettingsAddress());
   func += F("}1" D_FLASH_WRITE_COUNT "}2"); func += String(Settings.save_flag); func += stopic;
   func += F("}1" D_BOOT_COUNT "}2"); func += String(Settings.bootcount);
