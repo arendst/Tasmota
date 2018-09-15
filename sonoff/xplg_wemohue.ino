@@ -562,7 +562,7 @@ void HueLightStatus1(byte device, String *response)
 //stb mod
   bool on = power & (1 << (device-1));
 #ifdef USE_SHUTTER
-  if(Settings.flag3.shutter_mode && device <= shutters_present && (shutter_mask & Settings.shutter_startrelay[device-1])){
+  if(Settings.flag3.shutter_mode &&  (shutter_mask & (1 << (Settings.shutter_startrelay[device-1]-1))) ) {
     bri = (float)(Settings.shutter_invert[device-1] ? 100 - Settings.shutter_position[device-1]: Settings.shutter_position[device-1]) / 100;
     on = bri > 0 ? 1 : 0;
   } else
@@ -691,7 +691,7 @@ void HueLights(String *path)
         response.replace("{cm", "on");
 //stb mod
 #ifdef USE_SHUTTER
-        if(Settings.flag3.shutter_mode &&  (shutter_mask & Settings.shutter_startrelay[device-1])) {
+      if(Settings.flag3.shutter_mode &&  (shutter_mask & (1 << (Settings.shutter_startrelay[device-1]-1))) ) {
           if(!change) {
             on = hue_json["on"];
             bri = on ? 1.0f : 0.0f; // when bri is not part of this request then calculate it
@@ -777,7 +777,7 @@ void HueLights(String *path)
       if (change) {
 //stb mode
 #ifdef USE_SHUTTER
-        if(Settings.flag3.shutter_mode &&  (shutter_mask & Settings.shutter_startrelay[device-1])) {
+        if(Settings.flag3.shutter_mode &&  (shutter_mask & (1 << (Settings.shutter_startrelay[device-1]-1))) ) {
           snprintf_P(log_data, sizeof(log_data), PSTR("Settings.shutter_invert: %d"),Settings.shutter_invert[device-1]);
           AddLog(LOG_LEVEL_DEBUG);
           SetShutterPosition(device,  bri  * 100.0f );
