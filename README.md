@@ -92,6 +92,7 @@ The following devices are supported:
 - [Supla device - Espablo-inCan mod. for electrical Installation box](https://forum.supla.org/viewtopic.php?f=33&t=2188)
 - [BlitzWolf BW-SHP2 Smart Socket with Energy Monitoring](https://www.banggood.com/BlitzWolf-BW-SHP2-Smart-WIFI-Socket-EU-Plug-220V-16A-Work-with-Amazon-Alexa-Google-Assistant-p-1292899.html)
 - [Luani HVIO board](https://luani.de/projekte/esp8266-hvio/)
+- Xiaomi-Phillips Bulbs
 - Wemos D1 mini, NodeMcu and Ledunia
 
 ### Contribute

@@ -704,6 +704,21 @@ void ClaimSerial()
   Settings.baudrate = baudrate / 1200;
 }
 
+void SerialSendRaw(char *codes, int size)
+{
+  char *p;
+  char stemp[3];
+  uint8_t code;
+
+  while (size > 0) {
+    snprintf(stemp, sizeof(stemp), codes);
+    code = strtol(stemp, &p, 16);
+    Serial.write(code);
+    size -= 2;
+    codes += 2;
+  }
+}
+
 uint32_t GetHash(const char *buffer, size_t size)
 {
   uint32_t hash = 0;
