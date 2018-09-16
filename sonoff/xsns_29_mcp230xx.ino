@@ -31,15 +31,6 @@
 
 #define XSNS_29                   29
 
-#define MCP230xx_ADDRESS1         0x20
-#define MCP230xx_ADDRESS2         0x21
-#define MCP230xx_ADDRESS3         0x22
-#define MCP230xx_ADDRESS4         0x23
-#define MCP230xx_ADDRESS5         0x24
-#define MCP230xx_ADDRESS6         0x25
-#define MCP230xx_ADDRESS7         0x26
-#define MCP230xx_ADDRESS8         0x27
-
 /*
    Default register locations for MCP23008 - They change for MCP23017 in default bank mode
 */
@@ -53,8 +44,6 @@ uint8_t MCP230xx_INTCAP         = 0x08;
 uint8_t MCP230xx_GPIO           = 0x09;
 
 uint8_t mcp230xx_type = 0;
-uint8_t mcp230xx_address;
-uint8_t mcp230xx_addresses[] = { MCP230xx_ADDRESS1, MCP230xx_ADDRESS2, MCP230xx_ADDRESS3, MCP230xx_ADDRESS4, MCP230xx_ADDRESS5, MCP230xx_ADDRESS6, MCP230xx_ADDRESS7, MCP230xx_ADDRESS8 };
 uint8_t mcp230xx_pincount = 0;
 uint8_t mcp230xx_int_en = 0;
 uint8_t mcp230xx_int_prio_counter = 0;
@@ -131,7 +120,7 @@ const char* IntModeTxt(uint8_t intmo) {
 }
 
 uint8_t MCP230xx_readGPIO(uint8_t port) {
-  return I2cRead8(mcp230xx_address, MCP230xx_GPIO + port);
+  return I2cRead8(USE_MCP230xx_ADDR, MCP230xx_GPIO + port);
 }
 
 void MCP230xx_ApplySettings(void) {
@@ -178,11 +167,11 @@ void MCP230xx_ApplySettings(void) {
       }
 #endif // USE_MCP230xx_OUTPUT
     }
-    I2cWrite8(mcp230xx_address, MCP230xx_GPPU+mcp230xx_port, reg_gppu);
-    I2cWrite8(mcp230xx_address, MCP230xx_GPINTEN+mcp230xx_port, reg_gpinten);
-    I2cWrite8(mcp230xx_address, MCP230xx_IODIR+mcp230xx_port, reg_iodir);
+    I2cWrite8(USE_MCP230xx_ADDR, MCP230xx_GPPU+mcp230xx_port, reg_gppu);
+    I2cWrite8(USE_MCP230xx_ADDR, MCP230xx_GPINTEN+mcp230xx_port, reg_gpinten);
+    I2cWrite8(USE_MCP230xx_ADDR, MCP230xx_IODIR+mcp230xx_port, reg_iodir);
 #ifdef USE_MCP230xx_OUTPUT
-    I2cWrite8(mcp230xx_address, MCP230xx_GPIO+mcp230xx_port, reg_portpins);
+    I2cWrite8(USE_MCP230xx_ADDR, MCP230xx_GPIO+mcp230xx_port, reg_portpins);
 #endif // USE_MCP230xx_OUTPUT
   }
   for (uint8_t idx=0;idx<mcp230xx_pincount;idx++) {
@@ -200,34 +189,30 @@ void MCP230xx_Detect()
 
   uint8_t buffer;
 
-  for (byte i = 0; i < sizeof(mcp230xx_addresses); i++) {
-    mcp230xx_address = mcp230xx_addresses[i];
-    I2cWrite8(mcp230xx_address, MCP230xx_IOCON, 0x80); // attempt to set bank mode - this will only work on MCP23017, so its the best way to detect the different chips 23008 vs 23017
-    if (I2cValidRead8(&buffer, mcp230xx_address, MCP230xx_IOCON)) {
-      if (0x00 == buffer) {
-        mcp230xx_type = 1; // We have a MCP23008
-        snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, "MCP23008", mcp230xx_address);
+  I2cWrite8(USE_MCP230xx_ADDR, MCP230xx_IOCON, 0x80); // attempt to set bank mode - this will only work on MCP23017, so its the best way to detect the different chips 23008 vs 23017
+  if (I2cValidRead8(&buffer, USE_MCP230xx_ADDR, MCP230xx_IOCON)) {
+    if (0x00 == buffer) {
+      mcp230xx_type = 1; // We have a MCP23008
+      snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, "MCP23008", USE_MCP230xx_ADDR);
+      AddLog(LOG_LEVEL_DEBUG);
+      mcp230xx_pincount = 8;
+      MCP230xx_ApplySettings();
+    } else {
+      if (0x80 == buffer) {
+        mcp230xx_type = 2; // We have a MCP23017
+        snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, "MCP23017", USE_MCP230xx_ADDR);
         AddLog(LOG_LEVEL_DEBUG);
-        mcp230xx_pincount = 8;
+        mcp230xx_pincount = 16;
+        // Reset bank mode to 0
+        I2cWrite8(USE_MCP230xx_ADDR, MCP230xx_IOCON, 0x00);
+        // Update register locations for MCP23017
+        MCP230xx_GPINTEN        = 0x04;
+        MCP230xx_GPPU           = 0x0C;
+        MCP230xx_INTF           = 0x0E;
+        MCP230xx_INTCAP         = 0x10;
+        MCP230xx_GPIO           = 0x12;
         MCP230xx_ApplySettings();
-      } else {
-        if (0x80 == buffer) {
-          mcp230xx_type = 2; // We have a MCP23017
-          snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, "MCP23017", mcp230xx_address);
-          AddLog(LOG_LEVEL_DEBUG);
-          mcp230xx_pincount = 16;
-          // Reset bank mode to 0
-          I2cWrite8(mcp230xx_address, MCP230xx_IOCON, 0x00);
-          // Update register locations for MCP23017
-          MCP230xx_GPINTEN        = 0x04;
-          MCP230xx_GPPU           = 0x0C;
-          MCP230xx_INTF           = 0x0E;
-          MCP230xx_INTCAP         = 0x10;
-          MCP230xx_GPIO           = 0x12;
-          MCP230xx_ApplySettings();
-        }
       }
-      break;
     }
   }
 }
@@ -237,9 +222,9 @@ void MCP230xx_CheckForInterrupt(void) {
   uint8_t mcp230xx_intcap = 0;
   uint8_t report_int;
   for (uint8_t mcp230xx_port=0;mcp230xx_port<mcp230xx_type;mcp230xx_port++) {
-    if (I2cValidRead8(&intf,mcp230xx_address,MCP230xx_INTF+mcp230xx_port)) {
+    if (I2cValidRead8(&intf,USE_MCP230xx_ADDR,MCP230xx_INTF+mcp230xx_port)) {
       if (intf > 0) {
-        if (I2cValidRead8(&mcp230xx_intcap, mcp230xx_address, MCP230xx_INTCAP+mcp230xx_port)) {
+        if (I2cValidRead8(&mcp230xx_intcap, USE_MCP230xx_ADDR, MCP230xx_INTCAP+mcp230xx_port)) {
           for (uint8_t intp = 0; intp < 8; intp++) {
             if ((intf >> intp) & 0x01) { // we know which pin caused interrupt
               report_int = 0;
@@ -367,7 +352,7 @@ void MCP230xx_SetOutPin(uint8_t pin,uint8_t pinstate) {
       portpins ^= (1 << (pin-(port*8)));
     }
   }
-  I2cWrite8(mcp230xx_address, MCP230xx_GPIO + port, portpins);
+  I2cWrite8(USE_MCP230xx_ADDR, MCP230xx_GPIO + port, portpins);
   if (Settings.flag.save_state) { // Firmware configured to save last known state in settings
     Settings.mcp230xx_config[pin].saved_state=portpins>>(pin-(port*8))&1;
     Settings.mcp230xx_config[pin+pinadd].saved_state=portpins>>(pin+pinadd-(port*8))&1;
