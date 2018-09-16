@@ -1379,46 +1379,47 @@ void ExecuteCommandPower(byte device, byte state, int source)
     if (Settings.flag.interlock && !interlock_mutex) {  // Clear all but masked relay
       interlock_mutex = 1;
     //stb mod
-      if ((Settings.flag3.paired_interlock || Settings.interlock_bucket_size) &&
-       // only switch off other relays if the current one goes to ON
-            ((state == POWER_TOGGLE && !(power&mask)) || state == POWER_ON)) {
-        Settings.interlock_bucket_size = Settings.interlock_bucket_size > 0 ? Settings.interlock_bucket_size : 2;
-        //depending on even or odd relay create a 0 or 2 for further calculation
-        // mask the all device that probably need a change and & with the interlock mask
-        // e.g. device=2 imask = 00000001 with group 2, imask = 000 000 101 with group 3, imask = 0000 1101 with group 4
-        // e.g. device=4 imask = 00000100 with group 2, imask = 000 110 000 with group 3, imask = 0000 0111 with group 4
-        // e.g. device=7 imask = 10000000 with group 2, imask = 110 000 000 with group 3, imask = 1011 0000 with group 4
-        // group2=3, group3=7, group4=15 = (1 << group)-1
-        byte  temp1 = (1 << Settings.interlock_bucket_size)-1; // create 1111 for bucket
-        byte  temp2 = 1 << ((device-1)%Settings.interlock_bucket_size) ; // set device to 1 in bucket. e.g dev=2 > 0010
-        byte  temp3 = temp1 ^ temp2; // remove device from mask -> 1101
-        snprintf_P(log_data, sizeof(log_data), PSTR("temp1 for mask is %d, temp2: %d, temp3 %d. Bucketsize: %d, device: %d to state %d, currentsate %d"), temp1,temp2,temp3,Settings.interlock_bucket_size, device,state, power&mask);
-        AddLog(LOG_LEVEL_DEBUG_MORE);
-        // initilaize MASK with FFFF if not set correctly in settings. (32bit 1)
-        Settings.interlock_mask = (Settings.interlock_mask == 0) ?  0xFFFF : Settings.interlock_mask ;
+      if (Settings.flag3.paired_interlock || Settings.interlock_bucket_size) {
+         // only switch off other relays if the current one goes to ON
+        if ( (state == POWER_TOGGLE && !(power&mask)) || state == POWER_ON ) {
+          Settings.interlock_bucket_size = Settings.interlock_bucket_size > 0 ? Settings.interlock_bucket_size : 2;
+          //depending on even or odd relay create a 0 or 2 for further calculation
+          // mask the all device that probably need a change and & with the interlock mask
+          // e.g. device=2 imask = 00000001 with group 2, imask = 000 000 101 with group 3, imask = 0000 1101 with group 4
+          // e.g. device=4 imask = 00000100 with group 2, imask = 000 110 000 with group 3, imask = 0000 0111 with group 4
+          // e.g. device=7 imask = 10000000 with group 2, imask = 110 000 000 with group 3, imask = 1011 0000 with group 4
+          // group2=3, group3=7, group4=15 = (1 << group)-1
+          byte  temp1 = (1 << Settings.interlock_bucket_size)-1; // create 1111 for bucket
+          byte  temp2 = 1 << ((device-1)%Settings.interlock_bucket_size) ; // set device to 1 in bucket. e.g dev=2 > 0010
+          byte  temp3 = temp1 ^ temp2; // remove device from mask -> 1101
+          snprintf_P(log_data, sizeof(log_data), PSTR("temp1 for mask is %d, temp2: %d, temp3 %d. Bucketsize: %d, device: %d to state %d, currentsate %d"), temp1,temp2,temp3,Settings.interlock_bucket_size, device,state, power&mask);
+          AddLog(LOG_LEVEL_DEBUG_MORE);
+          // initilaize MASK with FFFF if not set correctly in settings. (32bit 1)
+          Settings.interlock_mask = (Settings.interlock_mask == 0) ?  0xFFFF : Settings.interlock_mask ;
 
 
-        // shift temp3 mask depending of the group index e.g device 6 (1101) group index 1 shift 4x left to  1101 0000
-        power_t imask1 = temp3 << (((device-1) / Settings.interlock_bucket_size) * Settings.interlock_bucket_size);
-        snprintf_P(log_data, sizeof(log_data), PSTR("imask1: %ld"), imask1);
-        AddLog(LOG_LEVEL_DEBUG_MORE);
-        // wipe out with interlock_mask relays free to change.
-        power_t imask = imask1 & Settings.interlock_mask;
-        // only if the relay is switched ON make a change. OFF is always fine.
-        //while loop on highest 1 that comes with powr&imask. power change over time
-        power_t v = power & imask; // getting binary array for all relays to switch off
-        while (v) {
-          uint8_t r = 0;
-          while (v >>= 1) {
-              r++;
+          // shift temp3 mask depending of the group index e.g device 6 (1101) group index 1 shift 4x left to  1101 0000
+          power_t imask1 = temp3 << (((device-1) / Settings.interlock_bucket_size) * Settings.interlock_bucket_size);
+          snprintf_P(log_data, sizeof(log_data), PSTR("imask1: %ld"), imask1);
+          AddLog(LOG_LEVEL_DEBUG_MORE);
+          // wipe out with interlock_mask relays free to change.
+          power_t imask = imask1 & Settings.interlock_mask;
+          // only if the relay is switched ON make a change. OFF is always fine.
+          //while loop on highest 1 that comes with powr&imask. power change over time
+          power_t v = power & imask; // getting binary array for all relays to switch off
+          while (v) {
+            uint8_t r = 0;
+            while (v >>= 1) {
+                r++;
+            }
+            r++;
+            snprintf_P(log_data, sizeof(log_data), PSTR("Power off device: %d"),r);
+            AddLog(LOG_LEVEL_DEBUG);
+            ExecuteCommandPower(r , POWER_OFF, SRC_IGNORE);
+            delay(500); //quite long delay to ensure physical switch off of the relay
+            // reinitalize v after power off one relay.
+            v = power & imask;
           }
-          r++;
-          snprintf_P(log_data, sizeof(log_data), PSTR("Power off device: %d"),r);
-          AddLog(LOG_LEVEL_DEBUG);
-          ExecuteCommandPower(r , POWER_OFF, SRC_IGNORE);
-          delay(500); //quite long delay to ensure physical switch off of the relay
-          // reinitalize v after power off one relay.
-          v = power & imask;
         }
       } else {
         if (mask & Settings.interlock_mask) {

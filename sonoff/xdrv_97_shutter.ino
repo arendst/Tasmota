@@ -136,17 +136,19 @@ void Schutter_Update_Position()
           }
         } else {
           if (!Settings.flag3.paired_interlock) {
-            if (!((1 << (Settings.shutter_startrelay[i]-1)) ^ power)) {
+            if ((1 << (Settings.shutter_startrelay[i]-1)) & power) {
               ExecuteCommandPower(Settings.shutter_startrelay[i], 0, SRC_PULSETIMER);
             }
-            if (!((1 << (Settings.shutter_startrelay[i])) ^ power)) {
+            if ((1 << (Settings.shutter_startrelay[i])) & power) {
               ExecuteCommandPower(Settings.shutter_startrelay[i]+1, 0, SRC_PULSETIMER);
             }
           } else {
             // avoid switching OFF a relay already OFF
-            //snprintf_P(log_data, sizeof(log_data), PSTR("Switching off relay %d, SwitchedRelay: %d, powermatrix %ld, XOR map %d"), cur_relay, SwitchedRelay, power, (1 << (cur_relay-1)) ^ power);
-            //AddLog(LOG_LEVEL_DEBUG);
-            if (!((1 << (cur_relay-1)) ^ power)) {
+            snprintf_P(log_data, sizeof(log_data), PSTR("Switching off relay %d, SwitchedRelay: %d, powermatrix %ld, XOR map %d"), cur_relay, SwitchedRelay, power, (1 << (cur_relay-1)) & power);
+            AddLog(LOG_LEVEL_DEBUG);
+            if ((1 << (cur_relay-1)) & power) {
+              snprintf_P(log_data, sizeof(log_data), PSTR("Switching off relay %d"), cur_relay);
+              AddLog(LOG_LEVEL_DEBUG);
               ExecuteCommandPower(cur_relay, 0, SRC_SHUTTER);
             }
           }
@@ -273,7 +275,7 @@ boolean ShutterCommand()
       if (Shutter_Direction[index-1] ==  -new_shutterdirection ) {
         // direction need to be changed. on momentary switches first stop the Shutter
         if (!Settings.flag3.paired_interlock) {
-          ExecuteCommandPower(Settings.shutter_startrelay[index-1] +1, new_shutterdirection == 1 ? 0 : 1,SRC_SHUTTER );
+          (Settings.shutter_startrelay[index-1] +1, new_shutterdirection == 1 ? 0 : 1,SRC_SHUTTER );
         } else {
           ExecuteCommandPower(Settings.shutter_startrelay[index-1] + (Shutter_Direction[index-1] == 1 ? 0 : 1), 1, SRC_SHUTTER);
           delay(100);
