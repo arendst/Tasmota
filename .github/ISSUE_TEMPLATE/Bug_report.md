@@ -5,7 +5,7 @@ about: Create a report to help us improve
 ---
 
 **IMPORTANT NOTICE**
-If you do not complete the template below your it is likely that your issue will not be addressed. When providing information about your issue please be as extensive as possible so that it can be solved by as little as possible responses.
+If you do not complete the template below it is likely that your issue will not be addressed. When providing information about your issue please be as extensive as possible so that it can be solved by as little as possible responses.
 
 **Describe the bug**
 _A clear and concise description of what the bug is._
