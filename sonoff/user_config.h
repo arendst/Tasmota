@@ -137,20 +137,20 @@
 #define NTP_SERVER3            "0.nl.pool.ntp.org"  // [NtpServer3] Select third NTP server by name or IP address (93.94.224.67)
 
 // -- Time - Start Daylight Saving Time and timezone offset from UTC in minutes
-#define TIME_DST_HEMISPHERE    North              // [TimeDst] Hemisphere (0 or North, 1 or South)
-#define TIME_DST_WEEK          Last               // Week of month (0 or Last, 1 or First, 2 or Second, 3 or Third, 4 or Fourth)
-#define TIME_DST_DAY           Sun                // Day of week (1 or Sun, 2 or Mon, 3 or Tue, 4 or Wed, 5 or Thu, 6 or Fri, 7 or Sat)
-#define TIME_DST_MONTH         Mar                // Month (1 or Jan, 2 or Feb, 3 or Mar, 4 or Apr, 5 or May, 6 or Jun, 7 or Jul, 8 or Aug, 9 or Sep, 10 or Oct, 11 or Nov, 12 or Dec)
-#define TIME_DST_HOUR          2                  // Hour (0 to 23)
-#define TIME_DST_OFFSET        +120               // Offset from UTC in minutes (-780 to +780)
+#define TIME_DST_HEMISPHERE    North             // [TimeDst] Hemisphere (0 or North, 1 or South)
+#define TIME_DST_WEEK          Last              // Week of month (0 or Last, 1 or First, 2 or Second, 3 or Third, 4 or Fourth)
+#define TIME_DST_DAY           Sun               // Day of week (1 or Sun, 2 or Mon, 3 or Tue, 4 or Wed, 5 or Thu, 6 or Fri, 7 or Sat)
+#define TIME_DST_MONTH         Mar               // Month (1 or Jan, 2 or Feb, 3 or Mar, 4 or Apr, 5 or May, 6 or Jun, 7 or Jul, 8 or Aug, 9 or Sep, 10 or Oct, 11 or Nov, 12 or Dec)
+#define TIME_DST_HOUR          2                 // Hour (0 to 23)
+#define TIME_DST_OFFSET        +120              // Offset from UTC in minutes (-780 to +780)
 
 // -- Time - Start Standard Time and timezone offset from UTC in minutes
-#define TIME_STD_HEMISPHERE    North              // [TimeStd] Hemisphere (0 or North, 1 or South)
-#define TIME_STD_WEEK          Last               // Week of month (0 or Last, 1 or First, 2 or Second, 3 or Third, 4 or Fourth)
-#define TIME_STD_DAY           Sun                // Day of week (1 or Sun, 2 or Mon, 3 or Tue, 4 or Wed, 5 or Thu, 6 or Fri, 7 or Sat)
-#define TIME_STD_MONTH         Oct                // Month (1 or Jan, 2 or Feb, 3 or Mar, 4 or Apr, 5 or May, 6 or Jun, 7 or Jul, 8 or Aug, 9 or Sep, 10 or Oct, 11 or Nov, 12 or Dec)
-#define TIME_STD_HOUR          3                  // Hour (0 to 23)
-#define TIME_STD_OFFSET        +60                // Offset from UTC in minutes (-780 to +780)
+#define TIME_STD_HEMISPHERE    North             // [TimeStd] Hemisphere (0 or North, 1 or South)
+#define TIME_STD_WEEK          Last              // Week of month (0 or Last, 1 or First, 2 or Second, 3 or Third, 4 or Fourth)
+#define TIME_STD_DAY           Sun               // Day of week (1 or Sun, 2 or Mon, 3 or Tue, 4 or Wed, 5 or Thu, 6 or Fri, 7 or Sat)
+#define TIME_STD_MONTH         Oct               // Month (1 or Jan, 2 or Feb, 3 or Mar, 4 or Apr, 5 or May, 6 or Jun, 7 or Jul, 8 or Aug, 9 or Sep, 10 or Oct, 11 or Nov, 12 or Dec)
+#define TIME_STD_HOUR          3                 // Hour (0 to 23)
+#define TIME_STD_OFFSET        +60               // Offset from UTC in minutes (-780 to +780)
 
 // -- Location ------------------------------------
 #define LATITUDE               48.858360         // [Latitude] Your location to be used with sunrise and sunset
@@ -275,11 +275,12 @@
 
 // -- One wire sensors ----------------------------
                                                  // WARNING: Select none for default one DS18B20 sensor or enable one of the following two options for multiple sensors
-//#define USE_DS18x20                              // Optional for more than one DS18x20 sensors with id sort, single scan and read retry (+1k3 code)
+#define USE_DS18x20                              // Optional for more than one DS18x20 sensors with id sort, single scan and read retry (+1k3 code)
 //#define USE_DS18x20_LEGACY                       // Optional for more than one DS18x20 sensors with dynamic scan using library OneWire (+1k5 code)
 
 // -- I2C sensors ---------------------------------
 #define USE_I2C                                  // I2C using library wire (+10k code, 0k2 mem, 124 iram)
+
 #ifdef USE_I2C
   #define USE_SHT                                // Enable SHT1X sensor (+1k4 code)
   #define USE_HTU                                // Enable HTU21/SI7013/SI7020/SI7021 sensor (I2C address 0x40) (+1k5 code)
@@ -298,18 +299,19 @@
 //  #define USE_SI1145                             // Enable SI1145/46/47 sensor (I2C address 0x60) (+1k code)
   #define USE_LM75AD                             // Enable LM75AD sensor (I2C addresses 0x48 - 0x4F) (+0k5 code)
 //  #define USE_APDS9960                           // Enable APDS9960 Proximity Sensor (I2C address 0x39). Disables SHT and VEML6070 (+4k7 code)
-//  #define USE_MCP230xx                           // Enable MCP23008/MCP23017 for GP INPUT ONLY (I2C addresses 0x20 - 0x27) providing command Sensor29 for configuration (+4k7 code)
+//  #define USE_MCP230xx                           // Enable MCP23008/MCP23017 - Must define I2C Address in #define USE_MCP230xx_ADDR below - range 0x20 - 0x27 (+4k7 code)
+//    #define USE_MCP230xx_ADDR 0x20               // Enable MCP23008/MCP23017 I2C Address to use (Must be within range 0x20 through 0x27 - set according to your wired setup)
 //    #define USE_MCP230xx_OUTPUT                  // Enable MCP23008/MCP23017 OUTPUT support through sensor29 commands (+1k5 code)
 //    #define USE_MCP230xx_DISPLAYOUTPUT           // Enable MCP23008/MCP23017 to display state of OUTPUT pins on Web UI (+0k2 code)
 //  #define USE_MPR121                             // Enable MPR121 controller (I2C addresses 0x5A, 0x5B, 0x5C and 0x5D) in input mode for touch buttons (+1k3 code)
 //  #define USE_CCS811                             // Enable CCS811 sensor (I2C address 0x5A) (+2k2 code)
 //  #define USE_MPU6050                            // Enable MPU6050 sensor (I2C address 0x68 AD0 low or 0x69 AD0 high) (+2k6 code)
 
-//  #define USE_DISPLAY                            // Add I2C Display Support for LCD, Oled and up to eigth Matrices (+19k code)
+//  #define USE_DISPLAY                            // Add I2C Display Support (+2k code)
     #define USE_DISPLAY_MODES1TO5                // Enable display mode 1 to 5 in addition to mode 0
-    #define USE_DISPLAY_LCD                      // [DisplayModel 1] Enable Lcd display (I2C addresses 0x27 and 0x3F)
-    #define USE_DISPLAY_SSD1306                  // [DisplayModel 2] Enable SSD1306 Oled 128x64 display (I2C addresses 0x3C and 0x3D)
-    #define USE_DISPLAY_MATRIX                   // [DisplayModel 3] Enable 8x8 Matrix display (I2C adresseses see below)
+    #define USE_DISPLAY_LCD                      // [DisplayModel 1] Enable Lcd display (I2C addresses 0x27 and 0x3F) (+6k code)
+    #define USE_DISPLAY_SSD1306                  // [DisplayModel 2] Enable SSD1306 Oled 128x64 display (I2C addresses 0x3C and 0x3D) (+16k code)
+    #define USE_DISPLAY_MATRIX                   // [DisplayModel 3] Enable 8x8 Matrix display (I2C adresseses see below) (+11k code)
       #define MTX_ADDRESS1     0x71              // [DisplayAddress1] I2C address of first 8x8 matrix module
       #define MTX_ADDRESS2     0x74              // [DisplayAddress2] I2C address of second 8x8 matrix module
       #define MTX_ADDRESS3     0x75              // [DisplayAddress3] I2C address of third 8x8 matrix module
@@ -328,9 +330,8 @@
   #ifndef USE_DISPLAY
   #define USE_DISPLAY                            // Add SPI Display support for 320x240 and 480x320 TFT
   #endif
-    #define USE_DISPLAY_ILI9341                  // [DisplayModel 4] Enable ILI9341 Tft 480x320 display
-//    #define USE_DISPLAY_EPAPER                   // [DisplayModel 5] Enable e-paper display
-
+    #define USE_DISPLAY_ILI9341                  // [DisplayModel 4] Enable ILI9341 Tft 480x320 display (+19k code)
+//    #define USE_DISPLAY_EPAPER                   // [DisplayModel 5] Enable e-paper display (+19k code)
 #endif  // USE_SPI
 
 // -- Serial sensors ------------------------------
@@ -340,12 +341,18 @@
   #define CO2_HIGH             1200              // Above this CO2 value show red light (needs PWM or WS2812 RG(B) led and enable with SetOption18 1)
 #define USE_PMS5003                              // Add support for PMS5003 and PMS7003 particle concentration sensor (+1k3 code)
 #define USE_NOVA_SDS                             // Add support for SDS011 and SDS021 particle concentration sensor (+0k7 code)
-#define USE_PZEM004T                             // Add support for PZEM004T Energy monitor (+2k code)
+  #define WORKING_PERIOD       5                 // Working period of the SDS Sensor, Takes a reading every X Minutes
 #define USE_SERIAL_BRIDGE                        // Add support for software Serial Bridge (+0k8 code)
 //#define USE_SDM120                               // Add support for Eastron SDM120-Modbus energy meter (+1k7 code)
   #define SDM120_SPEED         9600              // SDM120-Modbus RS485 serial speed (default: 2400 baud)
 //#define USE_SDM630                               // Add support for Eastron SDM630-Modbus energy meter (+2k code)
   #define SDM630_SPEED         9600              // SDM630-Modbus RS485 serial speed (default: 9600 baud)
+//#define USE_MP3_PLAYER                           // Use of the DFPlayer Mini MP3 Player RB-DFR-562 commands: play, volume and stop
+  #define MP3_VOLUME           10                // Set the startup volume on init, the range can be 0..30(max)
+
+// Power monitoring sensors -----------------------
+#define USE_PZEM004T                             // Add support for PZEM004T Energy monitor (+2k code)
+#define USE_PZEM2                                // Add support for PZEM003,014,016,017 Energy monitor (+1k1 code)
 
 // -- Low level interface devices -----------------
 #define USE_IR_REMOTE                            // Send IR remote commands using library IRremoteESP8266 and ArduinoJson (+4k code, 0k3 mem, 48 iram)
@@ -371,30 +378,15 @@
 //#define USE_DEBUG_DRIVER                         // Use xdrv_99_debug.ino providing commands CpuChk, CfgXor, CfgDump, CfgPeek and CfgPoke
 
 /*********************************************************************************************\
- * Select features and sensors enabled in previous version saving space
+ * Optional firmware configurations
+ * Select none or just one for optional features and sensors as configured in sonoff_post.h
+ * See RELEASENOTES.md for selected features
 \*********************************************************************************************/
 
-//#define USE_CLASSIC                              // Create sonoff-classic (See sonoff_post.h for selected features)
-
-/*********************************************************************************************\
- * Select usefull sensors - overrides above undefines!!
-\*********************************************************************************************/
-
-//#define USE_SENSORS                              // Create sonoff-sensors with usefull sensors enabled (See sonoff_post.h for selected sensors)
-
-/*********************************************************************************************\
- * Select KNX without Emulation to save space
-\*********************************************************************************************/
-
-//#define USE_KNX_NO_EMULATION                     // Create sonoff-knx with KNX but without Emulation (See sonoff_post.h)
-
-/*********************************************************************************************\
- * Compile a minimal version if upgrade memory gets tight ONLY TO BE USED FOR UPGRADE STEP 1!
- *   To be used as step 1 during upgrade.
- *   Step 2 is re-compile with option BE_MINIMAL commented out.
-\*********************************************************************************************/
-
-//#define BE_MINIMAL                               // Minimal version if upgrade memory gets tight (-45k code, -2k mem)
+//#define USE_CLASSIC                              // Create sonoff-classic with initial configuration tools WPS, SmartConfig and WifiManager
+//#define USE_SENSORS                              // Create sonoff-sensors with useful sensors enabled
+//#define USE_KNX_NO_EMULATION                     // Create sonoff-knx with KNX but without Emulation
+//#define BE_MINIMAL                               // Create sonoff-minimal as intermediate firmware for OTA-MAGIC
 
 /*********************************************************************************************\
  * No user configurable items below

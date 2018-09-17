@@ -85,6 +85,7 @@ typedef unsigned long power_t;              // Power (Relay) type
 
 #define STATES                 20           // Number of states per second using 50 mSec interval
 #define IMMINENT_RESET_FACTOR  10           // Factor to extent button hold time for imminent Reset to default 40 seconds using KEY_HOLD_TIME of 40
+#define BOOT_LOOP_TIME         10           // Number of seconds to stop detecting boot loops
 #define SYSLOG_TIMER           600          // Seconds to restore syslog_level
 #define SERIALLOG_TIMER        600          // Seconds to disable SerialLog
 #define OTA_ATTEMPTS           5            // Number of times to try fetching the new firmware
@@ -173,7 +174,7 @@ enum WeekInMonthOptions {Last, First, Second, Third, Fourth};
 enum DayOfTheWeekOptions {Sun=1, Mon, Tue, Wed, Thu, Fri, Sat};
 enum MonthNamesOptions {Jan=1, Feb, Mar, Apr, May, Jun, Jul, Aug, Sep, Oct, Nov, Dec};
 enum HemisphereOptions {North, South};
-enum GetDateAndTimeOptions { DT_LOCAL, DT_UTC, DT_RESTART, DT_UPTIME };
+enum GetDateAndTimeOptions { DT_LOCAL, DT_UTC, DT_RESTART };
 
 enum LoggingLevels {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG_MORE, LOG_LEVEL_ALL};
 
@@ -205,9 +206,9 @@ enum LightTypes {LT_BASIC, LT_PWM1, LT_PWM2, LT_PWM3, LT_PWM4, LT_PWM5, LT_PWM6,
 enum LichtSubtypes {LST_NONE, LST_SINGLE, LST_COLDWARM, LST_RGB, LST_RGBW, LST_RGBWC};
 enum LichtSchemes {LS_POWER, LS_WAKEUP, LS_CYCLEUP, LS_CYCLEDN, LS_RANDOM, LS_MAX};
 
-enum XsnsFunctions {FUNC_PRE_INIT, FUNC_INIT, FUNC_LOOP, FUNC_EVERY_50_MSECOND, FUNC_EVERY_100_MSECOND, FUNC_EVERY_250_MSECOND, FUNC_EVERY_SECOND, FUNC_PREP_BEFORE_TELEPERIOD,
-                     FUNC_JSON_APPEND, FUNC_WEB_APPEND, FUNC_SAVE_BEFORE_RESTART, FUNC_COMMAND, FUNC_MQTT_SUBSCRIBE, FUNC_MQTT_INIT, FUNC_MQTT_DATA, FUNC_SET_POWER, FUNC_SHOW_SENSOR,
-                     FUNC_RULES_PROCESS, FUNC_FREE_MEM};
+enum XsnsFunctions {FUNC_PRE_INIT, FUNC_INIT, FUNC_LOOP, FUNC_EVERY_50_MSECOND, FUNC_EVERY_100_MSECOND, FUNC_EVERY_200_MSECOND, FUNC_EVERY_250_MSECOND, FUNC_EVERY_SECOND, FUNC_PREP_BEFORE_TELEPERIOD,
+                    FUNC_JSON_APPEND, FUNC_WEB_APPEND, FUNC_SAVE_BEFORE_RESTART, FUNC_COMMAND, FUNC_MQTT_SUBSCRIBE, FUNC_MQTT_INIT, FUNC_MQTT_DATA, FUNC_SET_POWER, FUNC_SHOW_SENSOR,
+                    FUNC_RULES_PROCESS, FUNC_SERIAL, FUNC_FREE_MEM};
 
 const uint8_t kDefaultRfCode[9] PROGMEM = { 0x21, 0x16, 0x01, 0x0E, 0x03, 0x48, 0x2E, 0x1A, 0x00 };
 //stb mod

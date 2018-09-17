@@ -426,7 +426,7 @@ void RulesEvery100ms()
 {
   if (Settings.rule_enabled) {       // Any rule enabled
     mqtt_data[0] = '\0';
-    uint16_t tele_period_save = tele_period;
+    int tele_period_save = tele_period;
     tele_period = 2;                 // Do not allow HA updates during next function call
     XsnsNextCall(FUNC_JSON_APPEND);  // ,"INA219":{"Voltage":4.494,"Current":0.020,"Power":0.089}
     tele_period = tele_period_save;

@@ -246,7 +246,7 @@ void SDM120Show(boolean json)
   dtostrfd(sdm120_apparent_power, Settings.flag2.wattage_resolution, apparent_power);
   dtostrfd(sdm120_reactive_power, Settings.flag2.wattage_resolution, reactive_power);
   dtostrfd(sdm120_power_factor, 2, power_factor);
-  dtostrfd(sdm120_frequency, 2, frequency);
+  dtostrfd(sdm120_frequency, Settings.flag2.frequency_resolution, frequency);
   dtostrfd(sdm120_energy_total, Settings.flag2.energy_resolution, energy_total);
 
   if (json) {

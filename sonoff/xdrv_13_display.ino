@@ -49,10 +49,10 @@ enum XdspFunctions { FUNC_DISPLAY_INIT_DRIVER, FUNC_DISPLAY_INIT, FUNC_DISPLAY_E
 
 enum DisplayInitModes { DISPLAY_INIT_MODE, DISPLAY_INIT_PARTIAL, DISPLAY_INIT_FULL };
 
-enum DisplayCommands { CMND_DISP_MODEL, CMND_DISP_MODE, CMND_DISP_REFRESH, CMND_DISP_DIMMER, CMND_DISP_COLS, CMND_DISP_ROWS,
+enum DisplayCommands { CMND_DISPLAY, CMND_DISP_MODEL, CMND_DISP_MODE, CMND_DISP_REFRESH, CMND_DISP_DIMMER, CMND_DISP_COLS, CMND_DISP_ROWS,
   CMND_DISP_SIZE, CMND_DISP_FONT, CMND_DISP_ROTATE, CMND_DISP_TEXT, CMND_DISP_ADDRESS };
 const char kDisplayCommands[] PROGMEM =
-  D_CMND_DISP_MODEL "|" D_CMND_DISP_MODE "|" D_CMND_DISP_REFRESH "|" D_CMND_DISP_DIMMER "|" D_CMND_DISP_COLS "|" D_CMND_DISP_ROWS "|"
+  "|" D_CMND_DISP_MODEL "|" D_CMND_DISP_MODE "|" D_CMND_DISP_REFRESH "|" D_CMND_DISP_DIMMER "|" D_CMND_DISP_COLS "|" D_CMND_DISP_ROWS "|"
   D_CMND_DISP_SIZE "|" D_CMND_DISP_FONT "|" D_CMND_DISP_ROTATE "|" D_CMND_DISP_TEXT "|" D_CMND_DISP_ADDRESS ;
 
 const char S_JSON_DISPLAY_COMMAND_VALUE[] PROGMEM =        "{\"" D_CMND_DISPLAY "%s\":\"%s\"}";
@@ -89,7 +89,6 @@ char **disp_log_buffer;
 uint8_t disp_log_buffer_cols = 0;
 uint8_t disp_log_buffer_idx = 0;
 uint8_t disp_log_buffer_ptr = 0;
-bool disp_log_buffer_active = false;
 
 char **disp_screen_buffer;
 uint8_t disp_screen_buffer_cols = 0;
@@ -534,6 +533,15 @@ void DisplayReAllocScreenBuffer()
   DisplayAllocScreenBuffer();
 }
 
+void DisplayFillScreen(uint8_t line)
+{
+  byte len = disp_screen_buffer_cols - strlen(disp_screen_buffer[line]);
+  if (len) {
+    memset(disp_screen_buffer[line] + strlen(disp_screen_buffer[line]), 0x20, len);
+    disp_screen_buffer[line][disp_screen_buffer_cols -1] = 0;
+  }
+}
+
 /*-------------------------------------------------------------------------------------------*/
 
 void DisplayClearLogBuffer()
@@ -582,55 +590,60 @@ void DisplayReAllocLogBuffer()
   DisplayAllocLogBuffer();
 }
 
-/*-------------------------------------------------------------------------------------------*/
-
-void DisplayLogBufferIdxInc()
+void DisplayLogBufferAdd(char* txt)
 {
-  disp_log_buffer_idx++;
-  if (DISPLAY_LOG_ROWS == disp_log_buffer_idx) {
-    disp_log_buffer_idx = 0;
+  if (disp_log_buffer_cols) {
+    strlcpy(disp_log_buffer[disp_log_buffer_idx], txt, disp_log_buffer_cols);  // This preserves the % sign where printf won't
+    disp_log_buffer_idx++;
+    if (DISPLAY_LOG_ROWS == disp_log_buffer_idx) { disp_log_buffer_idx = 0; }
   }
 }
 
-void DisplayLogBufferPtrInc()
+char* DisplayLogBuffer(char temp_code)
 {
-  disp_log_buffer_ptr++;
-  if (DISPLAY_LOG_ROWS == disp_log_buffer_ptr) {
-    disp_log_buffer_ptr = 0;
-  }
-}
+  char* result = NULL;
+  if (disp_log_buffer_cols) {
+    if (disp_log_buffer_idx != disp_log_buffer_ptr) {
+      result = disp_log_buffer[disp_log_buffer_ptr];
+      disp_log_buffer_ptr++;
+      if (DISPLAY_LOG_ROWS == disp_log_buffer_ptr) { disp_log_buffer_ptr = 0; }
 
-/*
-void DisplayPrintLog()
-{
-  disp_refresh--;
-  if (!disp_refresh) {
-    disp_refresh = Settings.display_refresh;
-    disp_log_buffer_active = (disp_log_buffer_idx != disp_log_buffer_ptr);
-    if (disp_log_buffer_active) {
-      XdspPrintLog(disp_log_buffer[disp_log_buffer_ptr]);
-      DisplayLogBufferPtrInc();
+      char *pch = strchr(result, '~');  // = 0x7E (~) Replace degrees character (276 octal)
+      if (pch != NULL) { result[pch - result] = temp_code; }
     }
   }
+  return result;
 }
-*/
 
 void DisplayLogBufferInit()
 {
   if (Settings.display_mode) {
     disp_log_buffer_idx = 0;
     disp_log_buffer_ptr = 0;
-    disp_log_buffer_active = false;
     disp_refresh = Settings.display_refresh;
 
     snprintf_P(disp_temp, sizeof(disp_temp), PSTR("%c"), TempUnit());
 
-//    DisplayReAllocLogBuffer();
+    DisplayReAllocLogBuffer();
 
-    snprintf_P(disp_log_buffer[disp_log_buffer_idx], disp_log_buffer_cols, PSTR(D_VERSION " %s"), my_version);
-    DisplayLogBufferIdxInc();
-    snprintf_P(disp_log_buffer[disp_log_buffer_idx], disp_log_buffer_cols, PSTR("Display mode %d"), Settings.display_mode);
-    DisplayLogBufferIdxInc();
+    char buffer[40];
+    snprintf_P(buffer, sizeof(buffer), PSTR(D_VERSION " %s"), my_version);
+    DisplayLogBufferAdd(buffer);
+    snprintf_P(buffer, sizeof(buffer), PSTR("Display mode %d"), Settings.display_mode);
+    DisplayLogBufferAdd(buffer);
+
+    snprintf_P(buffer, sizeof(buffer), PSTR(D_CMND_HOSTNAME " %s"), my_hostname);
+    DisplayLogBufferAdd(buffer);
+    snprintf_P(buffer, sizeof(buffer), PSTR(D_JSON_SSID " %s"), Settings.sta_ssid[Settings.sta_active]);
+    DisplayLogBufferAdd(buffer);
+    snprintf_P(buffer, sizeof(buffer), PSTR(D_JSON_MAC " %s"), WiFi.macAddress().c_str());
+    DisplayLogBufferAdd(buffer);
+    if (!global_state.wifi_down && (static_cast<uint32_t>(WiFi.localIP()) != 0)) {
+      snprintf_P(buffer, sizeof(buffer), PSTR("IP %s"), WiFi.localIP().toString().c_str());
+      DisplayLogBufferAdd(buffer);
+      snprintf_P(buffer, sizeof(buffer), PSTR(D_JSON_RSSI " %d%%"), WifiGetRssiAsQuality(WiFi.RSSI()));
+      DisplayLogBufferAdd(buffer);
+    }
   }
 }
 
@@ -668,6 +681,7 @@ const char kSensorQuantity[] PROGMEM =
 void DisplayJsonValue(const char *topic, const char* device, const char* mkey, const char* value)
 {
   char quantity[TOPSZ];
+  char buffer[Settings.display_cols[0] +1];
   char spaces[Settings.display_cols[0]];
   char source[Settings.display_cols[0] - Settings.display_cols[1]];
   char svalue[Settings.display_cols[1] +1];
@@ -718,12 +732,12 @@ void DisplayJsonValue(const char *topic, const char* device, const char* mkey, c
   else if (JSON_CO2 == quantity_code) {
     snprintf_P(svalue, sizeof(svalue), PSTR("%s" D_UNIT_PARTS_PER_MILLION), value);
   }
-  snprintf_P(disp_log_buffer[disp_log_buffer_idx], disp_log_buffer_cols, PSTR("%s %s"), source, svalue);
+  snprintf_P(buffer, sizeof(buffer), PSTR("%s %s"), source, svalue);
 
-//  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_DEBUG "mkey [%s], source [%s], value [%s], quantity_code %d, log_buffer [%s]"), mkey, source, value, quantity_code, disp_log_buffer[disp_log_buffer_idx]);
+//  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_DEBUG "mkey [%s], source [%s], value [%s], quantity_code %d, log_buffer [%s]"), mkey, source, value, quantity_code, buffer);
 //  AddLog(LOG_LEVEL_DEBUG);
 
-  DisplayLogBufferIdxInc();
+  DisplayLogBufferAdd(buffer);
 }
 
 void DisplayAnalyzeJson(char *topic, char *json)
@@ -856,7 +870,6 @@ void DisplayInitDriver()
 #ifndef USE_DISPLAY_MODES1TO5
     Settings.display_mode = 0;
 #else
-    DisplayAllocLogBuffer();
     DisplayLogBufferInit();
 #endif  // USE_DISPLAY_MODES1TO5
   }
@@ -884,6 +897,12 @@ boolean DisplayCommand()
     int command_code = GetCommandCode(command, sizeof(command), XdrvMailbox.topic +disp_len, kDisplayCommands);
     if (-1 == command_code) {
       serviced = false;  // Unknown command
+    }
+    else if (CMND_DISPLAY == command_code) {
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_DISPLAY "\":{\"" D_CMND_DISP_MODEL "\":%d,\"" D_CMND_DISP_MODE "\":%d,\"" D_CMND_DISP_DIMMER "\":%d,\""
+         D_CMND_DISP_SIZE "\":%d,\"" D_CMND_DISP_FONT "\":%d,\"" D_CMND_DISP_ROTATE "\":%d,\"" D_CMND_DISP_REFRESH "\":%d,\"" D_CMND_DISP_COLS "\":[%d,%d],\"" D_CMND_DISP_ROWS "\":%d}}"),
+        Settings.display_model, Settings.display_mode, Settings.display_dimmer, Settings.display_size, Settings.display_font, Settings.display_rotate, Settings.display_refresh,
+        Settings.display_cols[0], Settings.display_cols[1], Settings.display_rows);
     }
     else if (CMND_DISP_MODEL == command_code) {
       if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < DISPLAY_MAX_DRIVERS)) {
@@ -915,8 +934,8 @@ boolean DisplayCommand()
           if (last_display_mode && !Settings.display_mode) {  // Switch to mode 0
             DisplayInit(DISPLAY_INIT_MODE);
             DisplayClear();
-          }
-          if (!last_display_mode && Settings.display_mode) {  // Switch to non mode 0
+          } else {
+//          if (!last_display_mode && Settings.display_mode) {  // Switch to non mode 0
             DisplayLogBufferInit();
             DisplayInit(DISPLAY_INIT_MODE);
           }
@@ -981,8 +1000,7 @@ boolean DisplayCommand()
         if (!Settings.display_mode) {
           DisplayText();
         } else {
-          strlcpy(disp_log_buffer[disp_log_buffer_idx], XdrvMailbox.data, disp_log_buffer_cols);
-          DisplayLogBufferIdxInc();
+          DisplayLogBufferAdd(XdrvMailbox.data);
         }
 #endif  // USE_DISPLAY_MODES1TO5
       } else {
@@ -1006,22 +1024,23 @@ boolean DisplayCommand()
     }
     else if ((CMND_DISP_COLS == command_code) && (XdrvMailbox.index > 0) && (XdrvMailbox.index <= 2)) {
       if ((XdrvMailbox.payload > 0) && (XdrvMailbox.payload <= DISPLAY_MAX_COLS)) {
+        Settings.display_cols[XdrvMailbox.index -1] = XdrvMailbox.payload;
 #ifdef USE_DISPLAY_MODES1TO5
-        if ((1 == XdrvMailbox.index) && (Settings.display_cols[0] != XdrvMailbox.payload)) {
+        if (1 == XdrvMailbox.index) {
           DisplayLogBufferInit();
           DisplayReAllocScreenBuffer();
         }
 #endif  // USE_DISPLAY_MODES1TO5
-        Settings.display_cols[XdrvMailbox.index -1] = XdrvMailbox.payload;
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_DISPLAY_COMMAND_INDEX_NVALUE, command, XdrvMailbox.index, Settings.display_cols[XdrvMailbox.index -1]);
     }
     else if (CMND_DISP_ROWS == command_code) {
       if ((XdrvMailbox.payload > 0) && (XdrvMailbox.payload <= DISPLAY_MAX_ROWS)) {
-#ifdef USE_DISPLAY_MODES1TO5
-        if (Settings.display_rows != XdrvMailbox.payload) { DisplayReAllocScreenBuffer(); }
-#endif  // USE_DISPLAY_MODES1TO5
         Settings.display_rows = XdrvMailbox.payload;
+#ifdef USE_DISPLAY_MODES1TO5
+        DisplayLogBufferInit();
+        DisplayReAllocScreenBuffer();
+#endif  // USE_DISPLAY_MODES1TO5
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_DISPLAY_COMMAND_NVALUE, command, Settings.display_rows);
     }

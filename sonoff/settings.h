@@ -22,7 +22,7 @@
 
 #define PARAM8_SIZE  18                    // Number of param bytes (SetOption)
 
-typedef union {                            // Restricted by MISRA-C Rule 18.4 but so usefull...
+typedef union {                            // Restricted by MISRA-C Rule 18.4 but so useful...
   uint32_t data;                           // Allow bit manipulation using SetOption
   struct {                                 // SetOption0 .. SetOption31
     uint32_t save_state : 1;               // bit 0
@@ -60,12 +60,12 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
   };
 } SysBitfield;
 
-typedef union {                            // Restricted by MISRA-C Rule 18.4 but so usefull...
+typedef union {                            // Restricted by MISRA-C Rule 18.4 but so useful...
   uint32_t data;                           // Allow bit manipulation using SetOption
   struct {                                 // SetOption50 .. SetOption81
     uint32_t timers_enable : 1;            // bit 0 (v6.1.1b)
-    uint32_t spare01 : 1;
-    uint32_t spare02 : 1;
+    uint32_t user_esp8285_enable : 1;      // bit 1 (v6.1.1.14)
+    uint32_t time_append_timezone : 1;     // bit 2 (v6.2.1.2)
     uint32_t spare03 : 1;
     uint32_t spare04 : 1;
     uint32_t spare05 : 1;
@@ -115,8 +115,7 @@ typedef union {
     uint32_t spare08 : 1;
     uint32_t spare09 : 1;
     uint32_t spare10 : 1;
-    uint32_t spare11 : 1;
-    uint32_t spare12 : 1;
+    uint32_t frequency_resolution : 2;
     uint32_t axis_resolution : 2;
     uint32_t current_resolution : 2;
     uint32_t voltage_resolution : 2;
@@ -351,6 +350,12 @@ struct SYSCFG {
                                            // 6B0 - FFF free locations
 } Settings;
 
+struct RTCRBT {
+  uint16_t      valid;                     // 000
+  uint8_t       fast_reboot_count;         // 002
+  uint8_t       free_003[1];               // 003
+} RtcReboot;
+
 struct RTCMEM {
   uint16_t      valid;                     // 000
   byte          oswatch_blocked_loop;      // 002
@@ -392,7 +397,7 @@ struct XDRVMAILBOX {
 } XdrvMailbox;
 
 #define MAX_RULES_FLAG  7                  // Number of bits used in RulesBitfield (tricky I know...)
-typedef union {                            // Restricted by MISRA-C Rule 18.4 but so usefull...
+typedef union {                            // Restricted by MISRA-C Rule 18.4 but so useful...
   uint16_t data;                           // Allow bit manipulation
   struct {
     uint16_t system_boot : 1;

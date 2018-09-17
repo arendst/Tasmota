@@ -143,7 +143,7 @@ char* subStr(char* dest, char* str, const char *delim, int index)
   int i;
 
   // Since strtok consumes the first arg, make a copy
-  strncpy(dest, str, strlen(str));
+  strncpy(dest, str, strlen(str)+1);
   for (i = 1, act = dest; i <= index; i++, act = NULL) {
     sub = strtok_r(act, delim, &ptr);
     if (sub == NULL) break;
@@ -157,7 +157,7 @@ double CharToDouble(char *str)
   // simple ascii to double, because atof or strtod are too large
   char strbuf[24];
 
-  strcpy(strbuf, str);
+  strlcpy(strbuf, str, sizeof(strbuf));
   char *pt;
   double left = atoi(strbuf);
   double right = 0;
@@ -561,13 +561,13 @@ int GetStateNumber(char *state_text)
   char command[CMDSZ];
   int state_number = -1;
 
-  if ((GetCommandCode(command, sizeof(command), state_text, kOptionOff) >= 0) || !strcasecmp(state_text, Settings.state_text[0])) {
+  if (GetCommandCode(command, sizeof(command), state_text, kOptionOff) >= 0) {
     state_number = 0;
   }
-  else if ((GetCommandCode(command, sizeof(command), state_text, kOptionOn) >= 0) || !strcasecmp(state_text, Settings.state_text[1])) {
+  else if (GetCommandCode(command, sizeof(command), state_text, kOptionOn) >= 0) {
     state_number = 1;
   }
-  else if ((GetCommandCode(command, sizeof(command), state_text, kOptionToggle) >= 0) || !strcasecmp(state_text, Settings.state_text[2])) {
+  else if (GetCommandCode(command, sizeof(command), state_text, kOptionToggle) >= 0) {
     state_number = 2;
   }
   else if (GetCommandCode(command, sizeof(command), state_text, kOptionBlink) >= 0) {
@@ -609,6 +609,10 @@ boolean GetUsedInModule(byte val, uint8_t *arr)
   if (GPIO_PZEM_TX == val) { return true; }
   if (GPIO_PZEM_RX == val) { return true; }
 #endif
+#ifndef USE_PZEM2
+  if (GPIO_PZEM2_TX == val) { return true; }
+  if (GPIO_PZEM2_RX == val) { return true; }
+#endif
 #ifndef USE_SENSEAIR
   if (GPIO_SAIR_TX == val) { return true; }
   if (GPIO_SAIR_RX == val) { return true; }
@@ -624,7 +628,8 @@ boolean GetUsedInModule(byte val, uint8_t *arr)
   if (GPIO_PMS5003 == val) { return true; }
 #endif
 #ifndef USE_NOVA_SDS
-  if (GPIO_SDS0X1 == val) { return true; }
+  if (GPIO_SDS0X1_TX == val) { return true; }
+  if (GPIO_SDS0X1_RX == val) { return true; }
 #endif
 #ifndef USE_SERIAL_BRIDGE
   if (GPIO_SBR_TX == val) { return true; }
@@ -699,6 +704,21 @@ void ClaimSerial()
   Settings.baudrate = baudrate / 1200;
 }
 
+void SerialSendRaw(char *codes, int size)
+{
+  char *p;
+  char stemp[3];
+  uint8_t code;
+
+  while (size > 0) {
+    snprintf(stemp, sizeof(stemp), codes);
+    code = strtol(stemp, &p, 16);
+    Serial.write(code);
+    size -= 2;
+    codes += 2;
+  }
+}
+
 uint32_t GetHash(const char *buffer, size_t size)
 {
   uint32_t hash = 0;
@@ -715,6 +735,15 @@ void ShowSource(int source)
     snprintf_P(log_data, sizeof(log_data), PSTR("SRC: %s"), GetTextIndexed(stemp1, sizeof(stemp1), source, kCommandSource));
     AddLog(LOG_LEVEL_DEBUG);
   }
+}
+
+uint8_t ValidGPIO(uint8_t pin, uint8_t gpio)
+{
+  uint8_t result = gpio;
+  if ((WEMOS == Settings.module) && (!Settings.flag3.user_esp8285_enable)) {
+    if ((pin == 9) || (pin == 10)) { result = GPIO_NONE; }  // Disable possible flash GPIO9 and GPIO10
+  }
+  return result;
 }
 
 /*********************************************************************************************\
@@ -922,8 +951,20 @@ void GetFeatures()
 #ifdef USE_DISPLAY_SH1106
   feature_drv2 |= 0x00001000;  // xdsp_06_sh1106.ino
 #endif
+#ifdef USE_MP3_PLAYER
+  feature_drv2 |= 0x00002000;  // xdrv_14_mp3.ino
+#endif
 
 
+#ifdef NO_EXTRA_4K_HEAP
+  feature_drv2 |= 0x00800000;  // sonoff_post.h
+#endif
+#ifdef VTABLES_IN_IRAM
+  feature_drv2 |= 0x01000000;  // platformio.ini
+#endif
+#ifdef VTABLES_IN_DRAM
+  feature_drv2 |= 0x02000000;  // platformio.ini
+#endif
 #ifdef VTABLES_IN_FLASH
   feature_drv2 |= 0x04000000;  // platformio.ini
 #endif
@@ -956,7 +997,7 @@ void GetFeatures()
   feature_sns1 |= 0x00000004;  // xdrv_03_energy.ino
 #endif
 #ifdef USE_PZEM004T
-  feature_sns1 |= 0x00000008;  // xdrv_03_energy.ino
+  feature_sns1 |= 0x00000008;  // xnrg_03_pzem004t.ino
 #endif
 #ifdef USE_DS18B20
   feature_sns1 |= 0x00000010;  // xsns_05_ds18b20.ino
@@ -1065,6 +1106,19 @@ void GetFeatures()
 #ifdef USE_MCP230xx_DISPLAYOUTPUT
   feature_sns2 |= 0x00000020;  // xsns_29_mcp230xx.ino
 #endif
+#ifdef USE_HLW8012
+  feature_sns2 |= 0x00000040;  // xnrg_01_hlw8012.ino
+#endif
+#ifdef USE_CSE7766
+  feature_sns2 |= 0x00000080;  // xnrg_02_cse7766.ino
+#endif
+#ifdef USE_MCP39F501
+  feature_sns2 |= 0x00000100;  // xnrg_04_mcp39f501.ino
+#endif
+#ifdef USE_PZEM2
+  feature_sns2 |= 0x00000200;  // xnrg_05_pzem2.ino
+#endif
+
 }
 
 /*********************************************************************************************\
@@ -1809,44 +1863,46 @@ String GetBuildDateAndTime()
   return String(bdt);
 }
 
+/*
+ * timestamps in https://en.wikipedia.org/wiki/ISO_8601 format
+ *
+ *  DT_UTC - current data and time in Greenwich, England (aka GMT)
+ *  DT_LOCAL - current date and time taking timezone into account
+ *  DT_RESTART - the date and time this device last started, in local timezone
+ *
+ * Format:
+ *  "2017-03-07T11:08:02-07:00" - if DT_LOCAL and SetOption52 = 1
+ *  "2017-03-07T11:08:02"       - otherwise
+ */
 String GetDateAndTime(byte time_type)
 {
-  // enum GetDateAndTimeOptions { DT_LOCAL, DT_UTC, DT_RESTART, DT_UPTIME };
-  // "2017-03-07T11:08:02" - ISO8601:2004
-  char dt[21];
+  // "2017-03-07T11:08:02-07:00" - ISO8601:2004
+  char dt[27];
   TIME_T tmpTime;
 
-  if (DT_UPTIME == time_type) {
-    if (restart_time) {
-      BreakTime(utc_time - restart_time, tmpTime);
-    } else {
-      BreakTime(uptime, tmpTime);
-    }
-    // "P128DT14H35M44S" - ISO8601:2004 - https://en.wikipedia.org/wiki/ISO_8601 Durations
-    // snprintf_P(dt, sizeof(dt), PSTR("P%dDT%02dH%02dM%02dS"), ut.days, ut.hour, ut.minute, ut.second);
-    // "128 14:35:44" - OpenVMS
-    // "128T14:35:44" - Tasmota
-    snprintf_P(dt, sizeof(dt), PSTR("%dT%02d:%02d:%02d"),
-      tmpTime.days, tmpTime.hour, tmpTime.minute, tmpTime.second);
-  } else {
-    switch (time_type) {
-      case DT_UTC:
-        BreakTime(utc_time, tmpTime);
-        tmpTime.year += 1970;
-        break;
-      case DT_RESTART:
-        if (restart_time == 0) {
-          return "";
-        }
-        BreakTime(restart_time, tmpTime);
-        tmpTime.year += 1970;
-        break;
-      default:
-        tmpTime = RtcTime;
-    }
-    snprintf_P(dt, sizeof(dt), PSTR("%04d-%02d-%02dT%02d:%02d:%02d"),
-      tmpTime.year, tmpTime.month, tmpTime.day_of_month, tmpTime.hour, tmpTime.minute, tmpTime.second);
+  switch (time_type) {
+    case DT_UTC:
+      BreakTime(utc_time, tmpTime);
+      tmpTime.year += 1970;
+      break;
+    case DT_RESTART:
+      if (restart_time == 0) {
+        return "";
+      }
+      BreakTime(restart_time, tmpTime);
+      tmpTime.year += 1970;
+      break;
+    default:
+      tmpTime = RtcTime;
   }
+
+  snprintf_P(dt, sizeof(dt), PSTR("%04d-%02d-%02dT%02d:%02d:%02d"),
+    tmpTime.year, tmpTime.month, tmpTime.day_of_month, tmpTime.hour, tmpTime.minute, tmpTime.second);
+
+  if (Settings.flag3.time_append_timezone && (time_type == DT_LOCAL)) {
+    snprintf_P(dt, sizeof(dt), PSTR("%s%+03d:%02d"), dt, time_timezone / 10, abs((time_timezone % 10) * 6));  // if timezone = +2:30 then time_timezone = 25
+  }
+
   return String(dt);
 }
 
