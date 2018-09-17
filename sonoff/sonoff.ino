@@ -969,22 +969,25 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, Settings.baudrate * 1200);
     }
-    else if ((CMND_SERIALSEND == command_code) && (index > 0) && (index <= 4)) {
+    else if ((CMND_SERIALSEND == command_code) && (index > 0) && (index <= 5)) {
       SetSeriallog(LOG_LEVEL_NONE);
       Settings.flag.mqtt_serial = 1;
-      Settings.flag.mqtt_serial_raw = (4 == index) ? 1 : 0;
+      Settings.flag.mqtt_serial_raw = (index > 3) ? 1 : 0;
       if (data_len > 0) {
         if (1 == index) {
-          Serial.printf("%s\n", dataBuf);
+          Serial.printf("%s\n", dataBuf);                    // "Hello Tiger\n"
         }
         else if (2 == index || 4 == index) {
           for (int i = 0; i < data_len; i++) {
-            Serial.write(dataBuf[i]);
+            Serial.write(dataBuf[i]);                        // "Hello Tiger" or "A0"
           }
         }
         else if (3 == index) {
           uint16_t dat_len = data_len;
-          Serial.printf("%s", Unescape(dataBuf, &dat_len));
+          Serial.printf("%s", Unescape(dataBuf, &dat_len));  // "Hello\f"
+        }
+        else if (5 == index) {
+          SerialSendRaw(dataBuf, data_len);                  // "AA004566"
         }
         snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, D_JSON_DONE);
       }

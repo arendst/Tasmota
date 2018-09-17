@@ -1,10 +1,19 @@
-/* 6.2.1.3 20180907
+/* 6.2.1.4 20180916
+ * Add command SerialSend5 to send raw serial data like "A5074100545293"
+ * Update MCP230xx driver
+ * Update Czech translation
+ * Update MP3 driver (#3800)
+ * Add userid/password option to decode-status.py (#3796)
+ * Fix syslog when emulation is selected (#2109, #3784)
+ * Fix Pzem2 compilation error (#3766, #3767)
+ *
+ * 6.2.1.3 20180907
  * Change web Configure Module GPIO drop down list order for better readability
  * Fix showing Period Power in energy threshold messages
  * Fix ButtonRetain to not use default topic for clearing retain messages (#3737)
  * Add sleep to Nova Fitness SDS01X sensor (#2841, #3724, #3749)
  * Add Analog input AD0 enabled to sonoff-sensors.bin (#3756, #3757)
- * Add Support to Xiaomi-Phillips Bulbs
+ * Add Support for Xiaomi-Philips Bulbs (#3787)
  *
  * 6.2.1.2 20180906
  * Fix KNX PA exception. Regression from 6.2.1 buffer overflow caused by subStr() (#3700, #3710)
