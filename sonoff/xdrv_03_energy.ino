@@ -98,6 +98,8 @@ void EnergyUpdateToday()
 
 void Energy200ms()
 {
+  energy_power_on = (power != 0) | Settings.flag.no_power_on_check;
+
   energy_fifth_second++;
   if (5 == energy_fifth_second) {
     energy_fifth_second = 0;
@@ -120,8 +122,6 @@ void Energy200ms()
       }
     }
   }
-
-  energy_power_on = (power &1) | Settings.flag.no_power_on_check;
 
   XnrgCall(FUNC_EVERY_200_MSECOND);
 

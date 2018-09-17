@@ -6,6 +6,7 @@
  * Add userid/password option to decode-status.py (#3796)
  * Fix syslog when emulation is selected (#2109, #3784)
  * Fix Pzem2 compilation error (#3766, #3767)
+ * Add uncalibrated energy monitoring to Shelly2 (#2789)
  *
  * 6.2.1.3 20180907
  * Change web Configure Module GPIO drop down list order for better readability
