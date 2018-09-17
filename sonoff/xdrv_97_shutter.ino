@@ -144,11 +144,9 @@ void Schutter_Update_Position()
             }
           } else {
             // avoid switching OFF a relay already OFF
-            snprintf_P(log_data, sizeof(log_data), PSTR("Switching off relay %d, SwitchedRelay: %d, powermatrix %ld, XOR map %d"), cur_relay, SwitchedRelay, power, (1 << (cur_relay-1)) & power);
+            snprintf_P(log_data, sizeof(log_data), PSTR("Switching off relay %d, SwitchedRelay: %d, powermatrix %ld, AND map %d"), cur_relay, SwitchedRelay, power, (1 << (cur_relay-1)) & power);
             AddLog(LOG_LEVEL_DEBUG);
             if ((1 << (cur_relay-1)) & power) {
-              snprintf_P(log_data, sizeof(log_data), PSTR("Switching off relay %d"), cur_relay);
-              AddLog(LOG_LEVEL_DEBUG);
               ExecuteCommandPower(cur_relay, 0, SRC_SHUTTER);
             }
           }
@@ -204,8 +202,9 @@ boolean ShutterCommand()
     command_code = CMND_POSITION;
   }
   else if (CMND_STOP == command_code && (index > 0) && (index <= shutters_present)) {
-    Settings.shutter_position[index-1] = m2[index-1] * 5 > Shutter_Real_Position[index-1] ? Shutter_Real_Position[index-1] / m2[index-1] : (Shutter_Real_Position[index-1]-b1[index-1]) / m1[index-1];
-    XdrvMailbox.payload = Settings.shutter_position[index-1];
+    int32_t temp_realpos;
+    temp_realpos = Shutter_Start_Position[index-1] + ( (shutter_time[index-1]+10) * (Shutter_Direction[index-1] > 0 ? 100 : -Shutter_Close_Velocity[index-1]));
+    XdrvMailbox.payload = m2[index-1] * 5 > temp_realpos ? temp_realpos / m2[index-1] : (temp_realpos-b1[index-1]) / m1[index-1];
     last_source = SRC_WEBGUI;
     command_code = CMND_POSITION;
   }
@@ -266,12 +265,10 @@ boolean ShutterCommand()
     // webgui still send also on inverted shutter the native position.
     XdrvMailbox.payload = Settings.shutter_invert[index-1] &&  SRC_WEBGUI != last_source ? 100 - XdrvMailbox.payload : XdrvMailbox.payload;
     Shutter_Target_Position[index-1] = XdrvMailbox.payload < 5 ?  m2[index-1] * XdrvMailbox.payload : m1[index-1] * XdrvMailbox.payload + b1[index-1];
-    snprintf_P(log_data, sizeof(log_data), PSTR("lastsource %d: webgui:%d"), last_source,  SRC_WEBGUI);
+    snprintf_P(log_data, sizeof(log_data), PSTR("lastsource %d: webgui:%d, real %d, target %d"), last_source,  SRC_WEBGUI,Shutter_Real_Position[index-1] ,Shutter_Target_Position[index-1]);
     AddLog(LOG_LEVEL_DEBUG);
-
-    if ( (XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 100) && abs(Shutter_Target_Position[index-1] - Shutter_Real_Position[index-1] ) / Shutter_Close_Velocity[index-1] > 1) {
+    if ( (XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 100) && abs(Shutter_Target_Position[index-1] - Shutter_Real_Position[index-1] ) / Shutter_Close_Velocity[index-1] > 2) {
       int8_t new_shutterdirection = Shutter_Real_Position[index-1] < Shutter_Target_Position[index-1] ? 1 : -1;
-
       if (Shutter_Direction[index-1] ==  -new_shutterdirection ) {
         // direction need to be changed. on momentary switches first stop the Shutter
         if (!Settings.flag3.paired_interlock) {
