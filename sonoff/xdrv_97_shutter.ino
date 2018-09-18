@@ -173,6 +173,8 @@ void Schutter_Update_Position()
       }
     }
   }
+  // reset switched relay
+  SwitchedRelay = 0;
 }
 
 void Shutter_StartInit (uint8_t index, uint8_t direction, int32_t target_pos)
@@ -368,8 +370,8 @@ boolean Xdrv97(byte function)
         // extraxt the number of the relay that was switched and save for later in Update Position.
         SwitchedRelay = power ^ old_power;
         old_power = power;
-        //snprintf_P(log_data, sizeof(log_data), PSTR("Switched relay: %d"), SwitchedRelay);
-        //AddLog(LOG_LEVEL_INFO);
+        snprintf_P(log_data, sizeof(log_data), PSTR("Switched relay: %d"), SwitchedRelay);
+        AddLog(LOG_LEVEL_INFO);
       break;
     }
   }
