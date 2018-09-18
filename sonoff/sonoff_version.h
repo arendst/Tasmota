@@ -21,6 +21,9 @@
 #define _SONOFF_VERSION_H_
 
 #define VERSION            0x06020104
+//STB mod
+#define STB_VERSION         0x0101
+//end
 
 #define D_PROGRAMNAME      "Sonoff-Tasmota"
 #define D_AUTHOR           "Theo Arends"
