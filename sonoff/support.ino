@@ -2132,7 +2132,7 @@ void RtcSecond()
         rules_flag.time_set = 1;
       }
 //STB mod
-      if (Settings.tele_period == 10) {
+      if (Settings.tele_period == 10 && rules_flag.mqtt_connected) {
         tele_period = Settings.tele_period ;
       }
 //end
