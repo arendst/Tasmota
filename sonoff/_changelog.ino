@@ -1,4 +1,7 @@
-/* 6.2.1.4 20180916
+/* 6.2.1.5 20180921
+ * Add authentication to HTTP web pages
+ *
+ * 6.2.1.4 20180916
  * Add command SerialSend5 to send raw serial data like "A5074100545293"
  * Update MCP230xx driver
  * Update Czech translation

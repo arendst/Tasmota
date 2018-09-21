@@ -375,10 +375,8 @@ const char S_CONFIGURE_DOMOTICZ[] PROGMEM = D_CONFIGURE_DOMOTICZ;
 
 void HandleDomoticzConfiguration()
 {
-  if (HTTP_USER == webserver_state) {
-    HandleRoot();
-    return;
-  }
+  if (HttpUser()) { return; }
+  if (!WebAuthenticate()) { return WebServer->requestAuthentication(); }
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_CONFIGURE_DOMOTICZ);
 
   char stemp[32];
