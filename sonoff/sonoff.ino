@@ -679,7 +679,7 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, (Settings.save_data > 1) ? stemp1 : GetStateText(Settings.save_data));
     }
-    else if (CMND_SENSOR == command_code) {
+    else if ((CMND_SENSOR == command_code) || (CMND_DRIVER == command_code)) {
       XdrvMailbox.index = index;
       XdrvMailbox.data_len = data_len;
       XdrvMailbox.payload16 = payload16;
@@ -687,18 +687,11 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
       XdrvMailbox.grpflg = grpflg;
       XdrvMailbox.topic = command;
       XdrvMailbox.data = dataBuf;
-      XsnsCall(FUNC_COMMAND);
-//      if (!XsnsCall(FUNC_COMMAND)) type = NULL;
-    }
-    else if (CMND_DRIVER == command_code) {
-      XdrvMailbox.index = index;
-      XdrvMailbox.data_len = data_len;
-      XdrvMailbox.payload16 = payload16;
-      XdrvMailbox.payload = payload;
-      XdrvMailbox.grpflg = grpflg;
-      XdrvMailbox.topic = command;
-      XdrvMailbox.data = dataBuf;
-      XdrvCall(FUNC_COMMAND);
+      if (CMND_SENSOR == command_code) {
+        XsnsCall(FUNC_COMMAND);
+      } else {
+        XdrvCall(FUNC_COMMAND);
+      }
     }
     else if ((CMND_SETOPTION == command_code) && (index < 82)) {
       byte ptype;
