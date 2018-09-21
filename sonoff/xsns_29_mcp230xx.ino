@@ -181,7 +181,7 @@ void MCP230xx_ApplySettings(void) {
   MCP230xx_CheckForIntCounter(); // update register on whether or not we should be counting interrupts
 }
 
-void MCP230xx_Detect()
+void MCP230xx_Detect(void)
 {
   if (mcp230xx_type) {
     return;
