@@ -56,12 +56,6 @@
 #define MCP_FREQUENCY_GAIN_BASE 0x00AE
 #define MCP_FREQUENCY_LEN       4
 
-#define EMTR_OUT_BASE           0x0004
-#define EMTR_OUT_LEN            28
-
-#define MCP_FLASH_READ          0x42
-#define MCP_FLASH_WRITE         0x50
-
 typedef struct mcp_calibration_registers_type {
   uint16_t gain_current_rms;
   uint16_t gain_voltage_rms;
@@ -161,16 +155,6 @@ void McpSetInt(unsigned long value, uint8_t *data, uint8_t offset, size_t size)
 	}
 }
 
-void AddLogSerialSend(byte loglevel, uint8_t *buffer, int count)
-{
-  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_SERIAL "Send"));
-  for (int i = 0; i < count; i++) {
-    snprintf_P(log_data, sizeof(log_data), PSTR("%s %02X"), log_data, *(buffer++));
-  }
-  AddLog(loglevel);
-}
-
-
 void McpSend(uint8_t *data)
 {
   if (mcp_timeout) { return; }
@@ -179,7 +163,7 @@ void McpSend(uint8_t *data)
   data[0] = MCP_START_FRAME;
   data[data[1] -1] = McpChecksum(data);
 
-//  AddLogSerialSend(LOG_LEVEL_DEBUG_MORE, data, data[1]);
+//  AddLogSerial(LOG_LEVEL_DEBUG_MORE, data, data[1]);
 
   for (byte i = 0; i < data[1]; i++) {
     Serial.write(data[i]);
@@ -252,7 +236,7 @@ calc:
 
 void McpCalibrationReactivePower()
 {
-  mcp_calibration_registers.gain_reactive_power = mcp_calibration_registers.gain_reactive_power * mcp_calibration_setpoint.calibration_reactive_power / mcp_output_registers.reactive_power;
+  mcp_calibration_registers.gain_reactive_power = mcp_calibration_registers.gain_reactive_power * mcp_calibration_registers.calibration_reactive_power / mcp_output_registers.reactive_power;
 }
 
 void McpCalibrationLineFreqency()
@@ -605,6 +589,11 @@ void McpEverySecond()
 {
   uint8_t get_state[] = { 0xA5, 0x08, 0x41, 0x00, 0x04, 0x4E, 0x16, 0x00 };
 
+  if (mcp_output_registers.active_power) {
+    energy_kWhtoday_delta += ((mcp_output_registers.active_power * 10) / 36);
+    EnergyUpdateToday();
+  }
+
   if (mcp_timeout) {
     mcp_timeout--;
   }
@@ -620,11 +609,6 @@ void McpEverySecond()
   }
   else if (!mcp_single_wire_active) {
     McpSend(get_state);
-  }
-
-  if (mcp_output_registers.active_power) {
-    energy_kWhtoday_delta += ((mcp_output_registers.active_power * 10) / 36);
-    EnergyUpdateToday();
   }
 }
 
@@ -656,9 +640,9 @@ boolean McpCommand()
   if ((CMND_POWERCAL == energy_command_code) || (CMND_VOLTAGECAL == energy_command_code) || (CMND_CURRENTCAL == energy_command_code)) {
 
     // MCP Debug commands - PowerCal <payload>
-    if (1 == XdrvMailbox.payload) { McpSingleWireStart(); }
-    if (2 == XdrvMailbox.payload) { McpSingleWireStop(0); }
-    if (3 == XdrvMailbox.payload) { McpGetAddress(); }
+//    if (1 == XdrvMailbox.payload) { McpSingleWireStart(); }
+//    if (2 == XdrvMailbox.payload) { McpSingleWireStop(0); }
+//    if (3 == XdrvMailbox.payload) { McpGetAddress(); }
 
     serviced = false;
   }

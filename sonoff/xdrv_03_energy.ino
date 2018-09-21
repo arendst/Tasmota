@@ -451,7 +451,7 @@ boolean EnergyCommand()
     nvalue = Settings.energy_current_calibration;
     unit = UNIT_MICROSECOND;
   }
-  else if ((CMND_FREQUENCYSET == command_code) && XnrgCall(FUNC_COMMAND)) {  // dHz
+  else if ((CMND_FREQUENCYSET == command_code) && XnrgCall(FUNC_COMMAND)) {  // Hz
     nvalue = Settings.energy_frequency_calibration;
     unit = UNIT_HERTZ;
   }

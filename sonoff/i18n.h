@@ -442,7 +442,7 @@ const char kUnitNames[] PROGMEM =
   D_UNIT_VOLT "|"
   D_UNIT_WATT "|"
   D_UNIT_WATTHOUR "|"
-  "d" D_UNIT_HERTZ ;
+  D_UNIT_HERTZ ;
 
 const char S_JSON_COMMAND_NVALUE_SPACE_UNIT[] PROGMEM =       "{\"%s\":\"%d %s\"}";
 const char S_JSON_COMMAND_LVALUE_SPACE_UNIT[] PROGMEM =       "{\"%s\":\"%lu %s\"}";
