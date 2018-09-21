@@ -2131,11 +2131,6 @@ void RtcSecond()
       } else {
         rules_flag.time_set = 1;
       }
-//STB mod
-      if (Settings.tele_period == 10 && rules_flag.mqtt_connected) {
-        tele_period = Settings.tele_period ;
-      }
-//end
     } else {
       ntp_sync_minute++;  // Try again in next minute
     }
