@@ -335,7 +335,8 @@ void SetDevicePower(power_t rpower, int source)
     }
   }
 
-  XdrvSetPower(rpower);
+  XdrvMailbox.index = rpower;
+  XdrvCall(FUNC_SET_POWER);
 
   if ((SONOFF_DUAL == Settings.module) || (CH4 == Settings.module)) {
     Serial.write(0xA0);
@@ -2612,6 +2613,9 @@ void setup()
       SetPulseTimer(i, Settings.pulse_timer[i]);
     }
   }
+
+  XdrvMailbox.index = power;
+  XdrvCall(FUNC_RULE_INIT_POWER);
 
   blink_powersave = power;
 

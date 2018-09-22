@@ -1,6 +1,15 @@
-/* 6.2.1.5 20180921
+/* 6.2.1.6 20180922
+ * Removed commands PowerCal, VoltageCal and CurrentCal as more functionality is provided by commands PowerSet, VoltageSet and CurrentSet
+ * Allow decimals as input to commands PowerSet, VoltageSet and CurrentSet
+ * Add support for PCA9685 12bit 16pin hardware PWM driver (#3866)
+ * Add power value below 5W to Sonoff Pow R2 and S31 (#3745)
+ * Add force_update to Home Assistant discovery (#3873)
+ * Fix rule trigger POWER1#STATE execution after restart and SetOption0 is 0 (#3856)
+ *
+ * 6.2.1.5 20180921
  * Add authentication to HTTP web pages
  * Add energy monitoring to Shelly2 (#2789)
+ * Rewrite TSL2561 driver to fix some issues (#3681)
  *
  * 6.2.1.4 20180916
  * Add command SerialSend5 to send raw serial data like "A5074100545293"
