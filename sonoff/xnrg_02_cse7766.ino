@@ -27,6 +27,8 @@
 
 #define XNRG_02                     2
 
+#define CSE_MAX_INVALID_POWER       128        // Number of invalid power receipts before deciding active power is zero
+
 #define CSE_NOT_CALIBRATED          0xAA
 
 #define CSE_PULSES_NOT_INITIALIZED  -1
@@ -42,10 +44,12 @@ long power_cycle = 0;
 unsigned long power_cycle_first = 0;
 long cf_pulses = 0;
 long cf_pulses_last_time = CSE_PULSES_NOT_INITIALIZED;
+uint8_t cse_power_invalid = CSE_MAX_INVALID_POWER;
 
 void CseReceived()
 {
   //  0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23
+  // 55 5A 02 F7 60 00 03 5A 00 40 10 04 8B 9F 51 A6 58 18 72 75 61 AC A1 30 - Power not valid (load below 5W)
   // 55 5A 02 F7 60 00 03 AB 00 40 10 02 60 5D 51 A6 58 03 E9 EF 71 0B 7A 36
   // Hd Id VCal---- Voltage- ICal---- Current- PCal---- Power--- Ad CF--- Ck
 
@@ -89,10 +93,11 @@ void CseReceived()
       energy_voltage = (float)(Settings.energy_voltage_calibration * CSE_UREF) / (float)voltage_cycle;
     }
     if (adjustement & 0x10) {  // Power valid
+      cse_power_invalid = 0;
       if ((header & 0xF2) == 0xF2) {  // Power cycle exceeds range
         energy_power = 0;
       } else {
-        if (0 == power_cycle_first) power_cycle_first = power_cycle;  // Skip first incomplete power_cycle
+        if (0 == power_cycle_first) { power_cycle_first = power_cycle; }  // Skip first incomplete power_cycle
         if (power_cycle_first != power_cycle) {
           power_cycle_first = -1;
           energy_power = (float)(Settings.energy_power_calibration * CSE_PREF) / (float)power_cycle;
@@ -101,8 +106,12 @@ void CseReceived()
         }
       }
     } else {
-      power_cycle_first = 0;
-      energy_power = 0;  // Powered on but no load
+      if (cse_power_invalid < CSE_MAX_INVALID_POWER) {  // Allow measurements down to about 1W
+        cse_power_invalid++;
+      } else {
+        power_cycle_first = 0;
+        energy_power = 0;  // Powered on but no load
+      }
     }
     if (adjustement & 0x20) {  // Current valid
       if (0 == energy_power) {
