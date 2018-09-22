@@ -322,9 +322,13 @@ struct SYSCFG {
 
   uint16_t      mcp230xx_int_timer;        // 718
 
-  byte          free_71A[180];             // 71A
+  byte          free_71A[174];             // 71A
 
-  char          mems[MAX_RULE_MEMS][10];  // 7CE
+  unsigned long energy_frequency_calibration;  // 7C8
+
+  byte          free_7CC[2];               // 7CC
+
+  char          mems[MAX_RULE_MEMS][10];   // 7CE
                                            // 800 Full - no more free locations
 
   char          rules[MAX_RULE_SETS][MAX_RULE_SIZE]; // 800 uses 512 bytes in v5.12.0m, 3 x 512 bytes in v5.14.0b

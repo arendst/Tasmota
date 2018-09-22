@@ -628,6 +628,7 @@ boolean Xdrv10(byte function)
     case FUNC_EVERY_SECOND:
       RulesEverySecond();
       break;
+    case FUNC_RULE_INIT_POWER:
     case FUNC_SET_POWER:
       RulesSetPower();
       break;
