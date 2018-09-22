@@ -81,8 +81,8 @@ void Tsl2561EverySecond()
     // 1mS
     Tsl2561Detect();
   }
-  else if (uptime &3) {
-    // 1mS
+  else if (!(uptime %2)) {  // Update every 2 seconds
+    // ?mS - 4Sec
     if (tsl2561_type) {
       if (!Tsl2561Read()) {
         AddLogMissed(tsl2561_types, tsl2561_valid);
