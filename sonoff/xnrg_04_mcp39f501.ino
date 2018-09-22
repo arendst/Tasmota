@@ -637,16 +637,7 @@ boolean McpCommand()
 {
   boolean serviced = true;
 
-  if ((CMND_POWERCAL == energy_command_code) || (CMND_VOLTAGECAL == energy_command_code) || (CMND_CURRENTCAL == energy_command_code)) {
-
-    // MCP Debug commands - PowerCal <payload>
-//    if (1 == XdrvMailbox.payload) { McpSingleWireStart(); }
-//    if (2 == XdrvMailbox.payload) { McpSingleWireStop(0); }
-//    if (3 == XdrvMailbox.payload) { McpGetAddress(); }
-
-    serviced = false;
-  }
-  else if (CMND_POWERSET == energy_command_code) {
+  if (CMND_POWERSET == energy_command_code) {
     if (XdrvMailbox.data_len && mcp_output_registers.active_power) {
       Settings.energy_power_calibration = (unsigned long)(CharToDouble(XdrvMailbox.data) * 100);
       mcp_calibration_setpoint.calibration_active_power = Settings.energy_power_calibration;
