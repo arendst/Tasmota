@@ -153,14 +153,6 @@ boolean XdrvCommand(uint8_t grpflg, char *type, uint16_t index, char *dataBuf, u
   return XdrvCall(FUNC_COMMAND);
 }
 
-void XdrvSetPower(power_t mpower)
-{
-//  XdrvMailbox.valid = 1;
-  XdrvMailbox.index = mpower;
-
-  XdrvCall(FUNC_SET_POWER);
-}
-
 boolean XdrvMqttData(char *topicBuf, uint16_t stopicBuf, char *dataBuf, uint16_t sdataBuf)
 {
   XdrvMailbox.index = stopicBuf;

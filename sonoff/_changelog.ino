@@ -4,6 +4,7 @@
  * Add support for PCA9685 12bit 16pin hardware PWM driver (#3866)
  * Add power value below 5W to Sonoff Pow R2 and S31 (#3745)
  * Add force_update to Home Assistant discovery (#3873)
+ * Fix rule trigger POWER1#STATE execution after restart and SetOption0 is 0 (#3856)
  *
  * 6.2.1.5 20180921
  * Add authentication to HTTP web pages
