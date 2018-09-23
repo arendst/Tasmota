@@ -239,8 +239,12 @@ void McpCalibrationReactivePower()
   mcp_calibration_registers.gain_reactive_power = mcp_calibration_registers.gain_reactive_power * mcp_calibration_registers.calibration_reactive_power / mcp_output_registers.reactive_power;
 }
 
-void McpCalibrationLineFreqency()
+void McpCalibrationLineFrequency()
 {
+  if ((0xFFFF == mcp_output_registers.line_frequency) || (0 == mcp_frequency_registers.gain_line_frequency)) {  // Reset values to 50Hz
+    mcp_output_registers.line_frequency  = 50000;
+    mcp_frequency_registers.gain_line_frequency = 0x8000;
+  }
   mcp_frequency_registers.gain_line_frequency = mcp_frequency_registers.gain_line_frequency * mcp_frequency_registers.line_frequency_ref / mcp_output_registers.line_frequency;
 }
 
@@ -481,7 +485,7 @@ void McpParseFrequency()
 
   if (mcp_calibration_setpoint.line_frequency_ref) {
     mcp_frequency_registers.line_frequency_ref = mcp_calibration_setpoint.line_frequency_ref;
-    McpCalibrationLineFreqency();
+    McpCalibrationLineFrequency();
     mcp_timeout = 0;
     McpSetFrequency();
   }
@@ -637,33 +641,46 @@ void McpDrvInit()
 boolean McpCommand()
 {
   boolean serviced = true;
+  unsigned long value = 0;
 
   if (CMND_POWERSET == energy_command_code) {
     if (XdrvMailbox.data_len && mcp_output_registers.active_power) {
-      Settings.energy_power_calibration = (unsigned long)(CharToDouble(XdrvMailbox.data) * 100);
-      mcp_calibration_setpoint.calibration_active_power = Settings.energy_power_calibration;
-      McpGetCalibration();
+      value = (unsigned long)(CharToDouble(XdrvMailbox.data) * 100);
+      if ((value > 100) && (value < 200000)) {  // Between 1W and 2000W
+        Settings.energy_power_calibration = value;
+        mcp_calibration_setpoint.calibration_active_power = value;
+        McpGetCalibration();
+      }
     }
   }
   else if (CMND_VOLTAGESET == energy_command_code) {
     if (XdrvMailbox.data_len && mcp_output_registers.voltage_rms) {
-      Settings.energy_voltage_calibration = (unsigned long)(CharToDouble(XdrvMailbox.data) * 10);
-      mcp_calibration_setpoint.calibration_voltage = Settings.energy_voltage_calibration;
-      McpGetCalibration();
+      value = (unsigned long)(CharToDouble(XdrvMailbox.data) * 10);
+      if ((value > 1000) && (value < 2600)) {  // Between 100V and 260V
+        Settings.energy_voltage_calibration = value;
+        mcp_calibration_setpoint.calibration_voltage = value;
+        McpGetCalibration();
+      }
     }
   }
   else if (CMND_CURRENTSET == energy_command_code) {
     if (XdrvMailbox.data_len && mcp_output_registers.current_rms) {
-      Settings.energy_current_calibration = (unsigned long)(CharToDouble(XdrvMailbox.data) * 10);
-      mcp_calibration_setpoint.calibration_current = Settings.energy_current_calibration;
-      McpGetCalibration();
+      value = (unsigned long)(CharToDouble(XdrvMailbox.data) * 10);
+      if ((value > 100) && (value < 80000)) {  // Between 10mA and 8A
+        Settings.energy_current_calibration = value;
+        mcp_calibration_setpoint.calibration_current = value;
+        McpGetCalibration();
+      }
     }
   }
   else if (CMND_FREQUENCYSET == energy_command_code) {
     if (XdrvMailbox.data_len && mcp_output_registers.line_frequency) {
-      Settings.energy_frequency_calibration = (unsigned long)(CharToDouble(XdrvMailbox.data) * 10);
-      mcp_calibration_setpoint.line_frequency_ref = Settings.energy_frequency_calibration;
-      McpGetFrequency();
+      value = (unsigned long)(CharToDouble(XdrvMailbox.data) * 1000);
+      if ((value > 45000) && (value < 65000)) {  // Between 45Hz and 65Hz
+        Settings.energy_frequency_calibration = value;
+        mcp_calibration_setpoint.line_frequency_ref = value;
+        McpGetFrequency();
+      }
     }
   }
   else serviced = false;  // Unknown command
