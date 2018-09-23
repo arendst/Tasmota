@@ -2613,10 +2613,6 @@ void setup()
       SetPulseTimer(i, Settings.pulse_timer[i]);
     }
   }
-
-  XdrvMailbox.index = power;
-  XdrvCall(FUNC_RULE_INIT_POWER);
-
   blink_powersave = power;
 
   snprintf_P(log_data, sizeof(log_data), PSTR(D_PROJECT " %s %s (" D_CMND_TOPIC " %s, " D_FALLBACK " %s, " D_CMND_GROUPTOPIC " %s) " D_VERSION " %s-" ARDUINO_ESP8266_RELEASE),

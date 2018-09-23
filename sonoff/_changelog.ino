@@ -5,6 +5,8 @@
  * Add power value below 5W to Sonoff Pow R2 and S31 (#3745)
  * Add force_update to Home Assistant discovery (#3873)
  * Fix rule trigger POWER1#STATE execution after restart and SetOption0 is 0 (#3856)
+ * Disable serial logging on Shelly2 as serial is being used by energy monitoring (#3878)
+ * Fix Shelly2 wrong FrequencySet calculation and add input range checks (#3882)
  *
  * 6.2.1.5 20180921
  * Add authentication to HTTP web pages
