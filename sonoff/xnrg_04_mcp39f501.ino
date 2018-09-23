@@ -614,6 +614,7 @@ void McpEverySecond()
 
 void McpSnsInit()
 {
+  SetSeriallog(LOG_LEVEL_NONE);      // Free serial interface from logging interference
   digitalWrite(15, 1);               // GPIO15 - MCP enable
 }
 
