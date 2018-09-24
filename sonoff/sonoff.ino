@@ -462,10 +462,11 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
 
   grpflg = (strstr(topicBuf, Settings.mqtt_grptopic) != NULL);
   fallback_topic_flag = (strstr(topicBuf, mqtt_client) != NULL);
-  type = strrchr(topicBuf, '/') +1;  // Last part of received topic is always the command (type)
+  type = strrchr(topicBuf, '/');  // Last part of received topic is always the command (type)
 
   index = 1;
   if (type != NULL) {
+    type++;
     for (i = 0; i < strlen(type); i++) {
       type[i] = toupper(type[i]);
     }
