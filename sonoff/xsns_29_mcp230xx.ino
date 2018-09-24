@@ -691,7 +691,7 @@ void MCP230xx_OutputTelemetry(void) {
 
 #endif // USE_MCP230xx_OUTPUT
 
-void MCP230xx_Interrupt_Counter_Report() {
+void MCP230xx_Interrupt_Counter_Report(void) {
   snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_TIME "\":\"%s\",\"MCP230_INTTIMER\": {"), GetDateAndTime(DT_LOCAL).c_str());
   for (uint8_t pinx = 0;pinx < mcp230xx_pincount;pinx++) {
     if (Settings.mcp230xx_config[pinx].int_count_en) { // Counting is enabled for this pin so we add to report
