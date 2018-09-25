@@ -21,11 +21,11 @@ status ON or "OFF"
 
 */
 
-#define XSNS_91 17
 
 #ifdef USE_I2C
 #ifdef USE_MCP23017
 
+#define XSNS_91 17
 #include <Adafruit_MCP23017.h>
 
 
@@ -197,9 +197,10 @@ void MCP23017Init(){
       else {
         mcp0.digitalWrite(_bit, LOW);
       }
-      //Serial.println("\tSet: OUTPUT");
+#ifdef _LVA_DEBUG
       snprintf_P(log_data, sizeof(log_data), PSTR(D_MCP23017 " id:%d" D_PORT ": %d " D_OUTPUT), d, _bit);
       AddLog(LOG_LEVEL_INFO);
+#endif
 
     }
     else {
@@ -321,7 +322,7 @@ bool CommandMCP23017() {
     char *value_command = strtok(XdrvMailbox.data, "?");
     value_command = strtok(NULL, "?");
     uint8_t channal = (uint8_t) XdrvMailbox.payload;
-#ifdef LVA_DEBUG
+#ifdef _LVA_DEBUG
     Serial.println("channal: "+ String(channal));
     Serial.println("value_command: "+ String(value_command));
 #endif

@@ -10,10 +10,10 @@ version 0.1
 
 */
 
-#define XSNS_92 92
 
 #ifdef USE_I2C
 #ifdef USE_PCA9685
+#define XSNS_92 92
 
 #include <Adafruit_PWMServoDriver.h>
 
@@ -148,13 +148,13 @@ bool PCA9685Command() {
     //val=atol(char *value_command);
     uint8_t pin = (uint8_t) XdrvMailbox.payload;
     uint16_t val = atoi(value_command);
-#ifdef LVA_DEBUG
+#ifdef _LVA_DEBUG
     Serial.println("Pin: "+ String(pin));
     Serial.println("value_command string: "+ String(value_command));
 #endif
     if (pin <16 && val < 4096) {
       pwm.setPWM(pin, 0, val);
-#ifdef LVA_DEBUG
+#ifdef _LVA_DEBUG
       Serial.println("pin " + String(pin) + "set to " + String(value_command));
 #endif
 

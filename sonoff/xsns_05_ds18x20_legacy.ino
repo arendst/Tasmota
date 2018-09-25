@@ -3,8 +3,7 @@
 
   Copyright (C) 2018  Heiko Krupp and Theo Arends
 
-EDITING LVA
-
+UPDATING LVA
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
   the Free Software Foundation, either version 3 of the License, or
@@ -32,12 +31,12 @@ EDITING LVA
 #define W1_CONVERT_TEMP      0x44
 #define W1_READ_SCRATCHPAD   0xBE
 
-  // LVA <--
-#ifndef LVA
 #define DS18X20_MAX_SENSORS  8
-#else
+
+// LVA <--
+#ifdef _LVA
   #undef DS18X20_MAX_SENSORS
-  #define DS18X20_MAX_SENSORS  16 // увеличили 8
+  #define DS18X20_MAX_SENSORS  24 // увеличили 8
 #endif
 //  LVA  -->
 
@@ -112,6 +111,8 @@ boolean Ds18x20Read(uint8_t sensor, float &t)
 {
   byte data[12];
   int8_t sign = 1;
+  uint16_t temp12 = 0;
+  int16_t temp14 = 0;
   float temp9 = 0.0;
   uint8_t present = 0;
 
@@ -126,7 +127,7 @@ boolean Ds18x20Read(uint8_t sensor, float &t)
   }
   if (OneWire::crc8(data, 8) == data[8]) {
     switch(ds18x20_address[ds18x20_index[sensor]][0]) {
-    case DS18S20_CHIPID:  // DS18S20
+    case DS18S20_CHIPID:
       if (data[1] > 0x80) {
         data[0] = (~data[0]) +1;
         sign = -1;  // App-Note fix possible sign error
@@ -138,14 +139,17 @@ boolean Ds18x20Read(uint8_t sensor, float &t)
       }
       t = ConvertTemp((temp9 - 0.25) + ((16.0 - data[6]) / 16.0));
       break;
-    case DS18B20_CHIPID:   // DS18B20
-    case MAX31850_CHIPID:  // MAX31850
-      uint16_t temp12 = (data[1] << 8) + data[0];
+    case DS18B20_CHIPID:
+      temp12 = (data[1] << 8) + data[0];
       if (temp12 > 2047) {
         temp12 = (~temp12) +1;
         sign = -1;
       }
-      t = ConvertTemp(sign * temp12 * 0.0625);
+      t = ConvertTemp(sign * temp12 * 0.0625);  // Divide by 16
+      break;
+    case MAX31850_CHIPID:
+        temp14 = (data[1] << 8) + (data[0] & 0xFC);
+        t = ConvertTemp(temp14 * 0.0625);  // Divide by 16
       break;
     }
   }
@@ -173,11 +177,10 @@ void Ds18x20Type(uint8_t sensor)
 void Ds18x20Show(boolean json)
 {
   char temperature[10];
-// LVA <--
-#ifndef LVA
   char stemp[10];
-#else
-  char stemp[16]; // Нафиг увеличил не помню
+// LVA <--
+#ifdef _LVA
+  char stemp[16]; // Нафиг увеличил не помню надо попробовать выключить
 #endif
 //  LVA -->
   float t;
@@ -191,37 +194,48 @@ void Ds18x20Show(boolean json)
       if (json) {
         if (!dsxflg) {
 // LVA <--
-#ifndef LVA
+#ifndef _LVA
           snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"DS18x20\":{"), mqtt_data);
 #else
           snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"DS18x20\":{\"Sensors\":%d,"), mqtt_data, Ds18x20Sensors());
-
 #endif
-//  LVA -->
+// -->
+
           stemp[0] = '\0';
         }
         dsxflg++;
+
 // LVA <--
-#ifndef LVA
+#ifndef _LVA
+
         snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s%s\"DS%d\":{\"" D_JSON_TYPE "\":\"%s\",\"" D_JSON_ADDRESS "\":\"%s\",\"" D_JSON_TEMPERATURE "\":%s}"),
           mqtt_data, stemp, i +1, ds18x20_types, Ds18x20Addresses(i).c_str(), temperature);
-        strcpy(stemp, ",");
+        strlcpy(stemp, ",", sizeof(stemp));
 
 #else
-                //snprintf_P(stemp, sizeof(stemp), PSTR("%s"), Ds18x20Addresses(i).c_str());
-                snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s\"%s\":%s,"), mqtt_data, Ds18x20Addresses(i).c_str(), temperature);
+                if (i+1 < DS_senosors) strcpy(stemp, ",");
+                snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s\"%s\":%s%s"), mqtt_data, Ds18x20Addresses(i).c_str(), temperature, stemp);
+                stemp[0] = '\0';
+                //if (i+1 < DS_senosors) snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,"), mqtt_data);
                 //snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TEMP, mqtt_data, stemp, temperature, TempUnit());
 #endif
 //  LVA  -->
+
 #ifdef USE_DOMOTICZ
-        if (1 == dsxflg) {
+        if ((0 == tele_period) && (1 == dsxflg)) {
           DomoticzSensor(DZ_TEMP, temperature);
         }
 #endif  // USE_DOMOTICZ
+#ifdef USE_KNX
+        if ((0 == tele_period) && (1 == dsxflg)) {
+          KnxSensor(KNX_TEMPERATURE, t);
+        }
+#endif  // USE_KNX
 #ifdef USE_WEBSERVER
       } else {
+
 // LVA <--
-#ifndef LVA
+#ifndef _LVA
         snprintf_P(stemp, sizeof(stemp), PSTR("%s-%d"), ds18x20_types, i +1);
         snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TEMP, mqtt_data, stemp, temperature, TempUnit());
 #else
@@ -229,6 +243,7 @@ void Ds18x20Show(boolean json)
         snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TEMP, mqtt_data, stemp, temperature, TempUnit());
 #endif
 //  --> LVA
+
 #endif  // USE_WEBSERVER
       }
     }
@@ -236,19 +251,16 @@ void Ds18x20Show(boolean json)
   if (json) {
     if (dsxflg) {
 // LVA <--
-//#ifndef LVA
+//#ifndef _LVA
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}"), mqtt_data);
 //#else
 //      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\n\"\"%s\":\":%s"), mqtt_data, Ds18x20Addresses(i).c_str(), temperature);
 //#endif //  -> LVA
 
     }
-#ifdef USE_WEBSERVER
-  } else {
-    Ds18x20Search();      // Check for changes in sensors number
-    Ds18x20Convert();     // Start Conversion, takes up to one second
-#endif  // USE_WEBSERVER
   }
+  Ds18x20Search();      // Check for changes in sensors number
+  Ds18x20Convert();     // Start Conversion, takes up to one second
 }
 
 /*********************************************************************************************\

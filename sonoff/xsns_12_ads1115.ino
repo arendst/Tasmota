@@ -3,7 +3,7 @@
 
   Copyright (C) 2018  Theo Arends
 
-EDITING LVA
+UPDATING LVA
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -18,9 +18,9 @@ EDITING LVA
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-
-#ifdef USE_I2C
-#ifdef USE_ADS1115
+#ifndef _LVA
+  #ifdef USE_I2C
+  #ifdef USE_ADS1115
 /*********************************************************************************************\
  * ADS1115 - 4 channel 16BIT A/D converter
  *
@@ -192,15 +192,15 @@ void Ads1115Show(boolean json)
           stemp[0] = '\0';
         }
         dsxflg++;
-#ifndef LVA // <- LVA
+#ifndef _LVA // <- LVA
         snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s%s\"" D_JSON_ANALOG_INPUT "%d\":%d"), mqtt_data, stemp, i, adc_value);
 #else
         snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s%s\"A%d\":%d"), mqtt_data, stemp, i, adc_value);
 #endif //  -> LVA
-        strcpy(stemp, ",");
+        strlcpy(stemp, ",", sizeof(stemp));
 #ifdef USE_WEBSERVER
       } else {
-  #ifndef LVA // <- LVA
+  #ifndef _LVA // <- LVA
         snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_ANALOG, mqtt_data, "ADS1115", i, adc_value);
   #else
         snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_ANALOG, mqtt_data, "ADS1115", i, adc_value);
@@ -246,3 +246,4 @@ boolean Xsns12(byte function)
 
 #endif  // USE_ADS1115
 #endif  // USE_I2C
+#endif // LVA

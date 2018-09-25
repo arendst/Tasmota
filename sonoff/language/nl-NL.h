@@ -28,9 +28,14 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
+ * Updated until v6.0.0a
 \*********************************************************************/
 
 //#define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
+
+#define LANGUAGE_LCID 1043
+// HTML (ISO 639-1) Language Code
+#define D_HTML_LANGUAGE "nl"
 
 // "2017-03-07T11:08:02" - ISO8601:2004
 #define D_YEAR_MONTH_SEPARATOR "-"
@@ -55,10 +60,12 @@
 #define D_BLINKOFF "KnipperUit"
 #define D_BOOT_COUNT "Herstarts"
 #define D_BRIGHTLIGHT "Fel"
+#define D_BSSID "BSSId"
 #define D_BUTTON "DrukKnop"
 #define D_BY "door"                  // Written by me
 #define D_BYTES "Bytes"
 #define D_CELSIUS "Celsius"
+#define D_CHANNEL "Kanaal"
 #define D_CO2 "Koolstofdioxide"
 #define D_CODE "code"                // Button code
 #define D_COLDLIGHT "Koud"
@@ -71,9 +78,11 @@
 #define D_DARKLIGHT "Donker"
 #define D_DEBUG "Debug"
 #define D_DISABLED "Uitgeschakeld"
+#define D_DISTANCE "Afstand"
 #define D_DNS_SERVER "DNS Server"
 #define D_DONE "Klaar"
 #define D_DST_TIME "ZT"
+#define D_ECO2 "eCO2"
 #define D_EMULATION "Emulatie"
 #define D_ENABLED "Geactiveerd"
 #define D_ERASE "Wissen"
@@ -85,6 +94,7 @@
 #define D_FALSE "Onwaar"
 #define D_FILE "Bestand"
 #define D_FREE_MEMORY "Vrij geheugen"
+#define D_FREQUENCY "Frequentie"
 #define D_GAS "Gas"
 #define D_GATEWAY "Gateway"
 #define D_GROUP "Groep"
@@ -95,6 +105,7 @@
 #define D_IMMEDIATE "onmiddelijk"      // Button immediate
 #define D_INDEX "Index"
 #define D_INFO "Info"
+#define D_INFRARED "Infrarood"
 #define D_INITIALIZED "Geinitialiseerd"
 #define D_IP_ADDRESS "IP Adres"
 #define D_LIGHT "Licht"
@@ -107,12 +118,15 @@
 #define D_OFF "Uit"
 #define D_OFFLINE "Offline"
 #define D_OK "Ok"
-#define D_ON "Ann"
+#define D_ON "Aan"
 #define D_ONLINE "Online"
 #define D_PASSWORD "Wachtwoord"
 #define D_PORT "Poort"
 #define D_POWER_FACTOR "Arbeidsfactor"
 #define D_POWERUSAGE "Vermogen"
+#define D_POWERUSAGE_ACTIVE "Werkelijk vermogen"
+#define D_POWERUSAGE_APPARENT "Schijnbaar vermogen"
+#define D_POWERUSAGE_REACTIVE "Blindvermogen"
 #define D_PRESSURE "Luchtdruk"
 #define D_PRESSUREATSEALEVEL "ZeeLuchtdruk"
 #define D_PROGRAM_FLASH_SIZE "Programma Flash Grootte"
@@ -124,6 +138,7 @@
 #define D_RESTART_REASON "Reden herstart"
 #define D_RESTORE "herstellen"
 #define D_RETAINED "retained"
+#define D_RULE "Regel"
 #define D_SAVE "Opslaan"
 #define D_SENSOR "Sensor"
 #define D_SSID "SSId"
@@ -133,17 +148,21 @@
 #define D_SUBNET_MASK "Subnet Masker"
 #define D_SUBSCRIBE_TO "Abonneer op"
 #define D_SUCCESSFUL "Gelukt"
+#define D_SUNRISE "Zonsopgang"
+#define D_SUNSET "Zonsondergang"
 #define D_TEMPERATURE "Temperatuur"
 #define D_TO "naar"
 #define D_TOGGLE "Toggle"  // Wissel, Tuimel
 #define D_TOPIC "Topic"  // Onderwerp
 #define D_TRANSMIT "Verzend"
 #define D_TRUE "Waar"
+#define D_TVOC "TVOC"
 #define D_UPGRADE "opwaarderen"
 #define D_UPLOAD "Verzenden"
 #define D_UPTIME "Bedrijfstijd"
 #define D_USER "Gebruiker"
 #define D_UTC_TIME "UTC"
+#define D_UV_INDEX "UV-index"
 #define D_UV_LEVEL "UV niveau"
 #define D_VERSION "Versie"
 #define D_VOLTAGE "Spanning"
@@ -161,13 +180,6 @@
 #define D_RECEIVED_TOPIC "Ontvangen topic"
 #define D_DATA_SIZE "Data lengte"
 #define D_ANALOG_INPUT "Analoog"
-
-#define D_FINGERPRINT "Controleer TLS vingerafdruk..."
-#define D_TLS_CONNECT_FAILED_TO "TLS Verbinding mislukt naar"
-#define D_RETRY_IN "Opnieuw proberen over"
-#define D_VERIFIED "Gecontroleerd"
-#define D_INSECURE "Door ongeldige vingerafdruk een onveilige verbinding"
-#define D_CONNECT_FAILED_TO "Verbinding mislukt naar"
 
 // support.ino
 #define D_OSWATCH "osWatch"
@@ -195,7 +207,8 @@
 #define D_USE_DEFAULTS "Gebruik standaardwaarden"
 #define D_ERASED_SECTOR "Wis sector"
 
-// webserver.ino
+// xdrv_02_webserver.ino
+#define D_NOSCRIPT "Zet JavaScript aan voor Tasmota"
 #define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "MINIMAL firmware - opwaarderen"
 #define D_WEBSERVER_ACTIVE_ON "Webserver actief op"
 #define D_WITH_IP_ADDRESS "met IP adres"
@@ -311,13 +324,25 @@
 #define D_UPLOAD_ERR_7 "Opwaarderen afgebroken"
 #define D_UPLOAD_ERR_8 "Ongeldig bestand"
 #define D_UPLOAD_ERR_9 "Bestand is te groot"
+#define D_UPLOAD_ERR_10 "Init RF chip mislukt"
+#define D_UPLOAD_ERR_11 "Wissen RF chip mislukt"
+#define D_UPLOAD_ERR_12 "Opwaarderen RF chip mislukt"
+#define D_UPLOAD_ERR_13 "Decoderen RF bestand mislukt"
 #define D_UPLOAD_ERROR_CODE "Opwaardeer foutcode"
 
 #define D_ENTER_COMMAND "Geef opdracht"
 #define D_ENABLE_WEBLOG_FOR_RESPONSE "Schakel weblog 2 in indien antwoord verwacht"
 #define D_NEED_USER_AND_PASSWORD "Benodig user=<gebruiker>&password=<webwachtwoord>"
 
-// xdrv_wemohue.ino
+// xdrv_01_mqtt.ino
+#define D_FINGERPRINT "Controleer TLS vingerafdruk..."
+#define D_TLS_CONNECT_FAILED_TO "TLS Verbinding mislukt naar"
+#define D_RETRY_IN "Opnieuw proberen over"
+#define D_VERIFIED "Gecontroleerd met vingerafdruk"
+#define D_INSECURE "Door ongeldige vingerafdruk een onveilige verbinding"
+#define D_CONNECT_FAILED_TO "Verbinding mislukt naar"
+
+// xplg_wemohue.ino
 #define D_MULTICAST_DISABLED "Multicast uitgeschakeld"
 #define D_MULTICAST_REJOINED "Multicast verbonden"
 #define D_MULTICAST_JOIN_FAILED "Multicast verbinding mislukt"
@@ -337,7 +362,7 @@
 #define D_HUE_POST_ARGS "Hue POST argumenten"
 #define D_3_RESPONSE_PACKETS_SENT "3 antwoord paketten verstuurd"
 
-// xdrv_05_domoticz.ino
+// xdrv_07_domoticz.ino
 #define D_DOMOTICZ_PARAMETERS "Domoticz parameters"
 #define D_DOMOTICZ_IDX "Idx"
 #define D_DOMOTICZ_KEY_IDX "Toets idx"
@@ -348,11 +373,45 @@
   #define D_DOMOTICZ_TEMP_HUM_BARO "Temp,Hum,Baro"
   #define D_DOMOTICZ_POWER_ENERGY "Power,Energy"
   #define D_DOMOTICZ_ILLUMINANCE "Illuminance"
-  #define D_DOMOTICZ_COUNT "Count"
-  #define D_DOMOTICZ_VOLTAGE "Spanning"
-  #define D_DOMOTICZ_CURRENT "Stroom"
+  #define D_DOMOTICZ_COUNT "Count/PM1"
+  #define D_DOMOTICZ_VOLTAGE "Spanning/PM2,5"
+  #define D_DOMOTICZ_CURRENT "Stroom/PM10"
   #define D_DOMOTICZ_AIRQUALITY "AirQuality"
 #define D_DOMOTICZ_UPDATE_TIMER "Bijwerk timer"
+
+// xdrv_09_timers.ino
+#define D_CONFIGURE_TIMER "Configureer Tijdschakelaar"
+#define D_TIMER_PARAMETERS "Tijdschakelaar parameters"
+#define D_TIMER_ENABLE "Tijdschakelaars inschakelen"
+#define D_TIMER_ARM "Actief"
+#define D_TIMER_TIME "Tijd"
+#define D_TIMER_DAYS "Dagen"
+#define D_TIMER_REPEAT "Herhaal"
+#define D_TIMER_OUTPUT "Uitgang"
+#define D_TIMER_ACTION "Actie"
+
+// xdrv_10_knx.ino
+#define D_CONFIGURE_KNX "Configureer KNX"
+#define D_KNX_PARAMETERS "KNX Parameters"
+#define D_KNX_GENERAL_CONFIG "Algemeen"
+#define D_KNX_PHYSICAL_ADDRESS "Eigen adres"
+#define D_KNX_PHYSICAL_ADDRESS_NOTE "(Moet uniek zijn op het KNX netwerk)"
+#define D_KNX_ENABLE "KNX inschakelen"
+#define D_KNX_GROUP_ADDRESS_TO_WRITE "Stuur gegevens naar groep adressen"
+#define D_ADD "Toevoegen"
+#define D_DELETE "Verwijder"
+#define D_REPLY "Antwoord"
+#define D_KNX_GROUP_ADDRESS_TO_READ "Ontvang gegevens van groep adressen"
+#define D_LOG_KNX "KNX: "
+#define D_RECEIVED_FROM "Ontvangen van"
+#define D_KNX_COMMAND_WRITE "Schrijven"
+#define D_KNX_COMMAND_READ "Lezen"
+#define D_KNX_COMMAND_OTHER "Overige"
+#define D_SENT_TO "verzend naar"
+#define D_KNX_WARNING "Groep adres (0/0/0) is gereserveerd en mag niet worden gebruikt."
+#define D_KNX_ENHANCEMENT "Verbeter verbinding"
+#define D_KNX_TX_SLOT "KNX TX"
+#define D_KNX_RX_SLOT "KNX RX"
 
 // xdrv_03_energy.ino
 #define D_ENERGY_TODAY "Verbruik vandaag"
@@ -380,6 +439,14 @@
 #define D_ENVIRONMENTAL_CONCENTRATION "PM"     // Environmetal Particle Matter
 #define D_PARTICALS_BEYOND "Stofdeeltjes"
 
+// xsns_32_mpu6050.ino
+#define D_AX_AXIS "Accel. X-Axis"
+#define D_AY_AXIS "Accel. Y-Axis"
+#define D_AZ_AXIS "Accel. Z-Axis"
+#define D_GX_AXIS "Gyro X-Axis"
+#define D_GY_AXIS "Gyro Y-Axis"
+#define D_GZ_AXIS "Gyro Z-Axis"
+
 // sonoff_template.h
 #define D_SENSOR_NONE     "Geen"
 #define D_SENSOR_DHT11    "DHT11"
@@ -389,6 +456,7 @@
 #define D_SENSOR_I2C_SCL  "I2C SCL"
 #define D_SENSOR_I2C_SDA  "I2C SDA"
 #define D_SENSOR_WS2812   "WS2812"
+#define D_SENSOR_DFR562   "MP3 Speler"
 #define D_SENSOR_IRSEND   "IRsend"
 #define D_SENSOR_SWITCH   "Switch"  // Suffix "1"
 #define D_SENSOR_BUTTON   "Button"  // Suffix "1"
@@ -407,9 +475,24 @@
 #define D_SENSOR_SPI_DC   "SPI DC"
 #define D_SENSOR_BACKLIGHT "BkLight"
 #define D_SENSOR_PMS5003  "PMS5003"
+#define D_SENSOR_SDS0X1_RX "SDS0X1 Rx"
+#define D_SENSOR_SDS0X1_TX "SDS0X1 Tx"
+#define D_SENSOR_SBR_RX   "SerBr Rx"
+#define D_SENSOR_SBR_TX   "SerBr Tx"
+#define D_SENSOR_SR04_TRIG "SR04 Tri"
+#define D_SENSOR_SR04_ECHO "SR04 Ech"
+#define D_SENSOR_SDM120_TX "SDM120 Tx"
+#define D_SENSOR_SDM120_RX "SDM120 Rx"
+#define D_SENSOR_SDM630_TX "SDM630 Tx"
+#define D_SENSOR_SDM630_RX "SDM630 Rx"
+#define D_SENSOR_TM1638_CLK "TM16 CLK"
+#define D_SENSOR_TM1638_DIO "TM16 DIO"
+#define D_SENSOR_TM1638_STB "TM16 STB"
 
 // Units
 #define D_UNIT_AMPERE "A"
+#define D_UNIT_CENTIMETER "cm"
+#define D_UNIT_HERTZ "Hz"
 #define D_UNIT_HOUR "h"
 #define D_UNIT_KILOOHM "kOhm"
 #define D_UNIT_KILOWATTHOUR "kWh"
@@ -420,11 +503,14 @@
 #define D_UNIT_MILLIAMPERE "mA"
 #define D_UNIT_MILLISECOND "ms"
 #define D_UNIT_MINUTE "Min"
+#define D_UNIT_PARTS_PER_BILLION "ppb"
 #define D_UNIT_PARTS_PER_DECILITER "ppd"
 #define D_UNIT_PARTS_PER_MILLION "ppm"
 #define D_UNIT_PRESSURE "hPa"
 #define D_UNIT_SECOND "sec"
 #define D_UNIT_SECTORS "sectoren"
+#define D_UNIT_VA "VA"
+#define D_UNIT_VAR "VAr"
 #define D_UNIT_VOLT "V"
 #define D_UNIT_WATT "W"
 #define D_UNIT_WATTHOUR "Wh"

@@ -1,0 +1,43 @@
+#######################################
+# Syntax Coloring Map For Test
+#######################################
+
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+
+MQTT.h	KEYWORD1
+
+MQTT	KEYWORD1
+
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+
+setClientId	KEYWORD2
+setUserPwd	KEYWORD2
+
+connect		KEYWORD2
+disconnect	KEYWORD2
+isConnected	KEYWORD2
+
+publish		KEYWORD2
+subscribe	KEYWORD2
+
+getState	KEYWORD2
+
+#general
+onConnected	KEYWORD2
+onDisconnected	KEYWORD2
+onPublished	KEYWORD2
+onData		KEYWORD2
+
+#######################################
+# Instances (KEYWORD2)
+#######################################
+
+#######################################
+# Constants (LITERAL1)
+#######################################
+

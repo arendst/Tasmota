@@ -21,6 +21,8 @@
 /*********************************************************************************************\
  * PlanTower PMS5003 and PMS7003 particle concentration sensor
  * For background information see http://aqicn.org/sensor/pms5003-7003/
+ *
+ * Hardware Serial will be selected if GPIO3 = [PMS5003]
 \*********************************************************************************************/
 
 #include <TasmotaSerial.h>
@@ -39,6 +41,8 @@ struct pms5003data {
   uint16_t checksum;
 } pms_data;
 
+/*********************************************************************************************/
+
 boolean PmsReadData()
 {
   if (! PmsSerial->available()) {
@@ -55,6 +59,8 @@ boolean PmsReadData()
   uint16_t sum = 0;
   PmsSerial->readBytes(buffer, 32);
   PmsSerial->flush();  // Make room for another burst
+
+  AddLogSerial(LOG_LEVEL_DEBUG_MORE, buffer, 32);
 
   // get checksum ready
   for (uint8_t i = 0; i < 30; i++) {
@@ -95,10 +101,10 @@ void PmsSecond()                 // Every second
 void PmsInit()
 {
   pms_type = 0;
-
   if (pin[GPIO_PMS5003] < 99) {
-    PmsSerial = new TasmotaSerial(pin[GPIO_PMS5003], -1);
-    if (PmsSerial->begin()) {
+    PmsSerial = new TasmotaSerial(pin[GPIO_PMS5003], -1, 1);
+    if (PmsSerial->begin(9600)) {
+      if (PmsSerial->hardwareSerial()) { ClaimSerial(); }
       pms_type = 1;
     }
   }
@@ -128,6 +134,13 @@ void PmsShow(boolean json)
         pms_data.pm10_standard, pms_data.pm25_standard, pms_data.pm100_standard,
         pms_data.pm10_env, pms_data.pm25_env, pms_data.pm100_env,
         pms_data.particles_03um, pms_data.particles_05um, pms_data.particles_10um, pms_data.particles_25um, pms_data.particles_50um, pms_data.particles_100um);
+#ifdef USE_DOMOTICZ
+      if (0 == tele_period) {
+        DomoticzSensor(DZ_COUNT, pms_data.pm10_env);     // PM1
+        DomoticzSensor(DZ_VOLTAGE, pms_data.pm25_env);   // PM2.5
+        DomoticzSensor(DZ_CURRENT, pms_data.pm100_env);  // PM10
+      }
+#endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
     } else {
       snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_PMS5003_SNS, mqtt_data,

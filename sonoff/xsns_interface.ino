@@ -146,6 +146,38 @@ boolean (* const xsns_func_ptr[])(byte) PROGMEM = {  // Sensor Function Pointers
   &Xsns32,
 #endif
 
+#ifdef XSNS_33
+  &Xsns33,
+#endif
+
+#ifdef XSNS_34
+  &Xsns34,
+#endif
+
+#ifdef XSNS_35
+  &Xsns35,
+#endif
+
+#ifdef XSNS_36
+  &Xsns36,
+#endif
+
+#ifdef XSNS_37
+  &Xsns37,
+#endif
+
+#ifdef XSNS_38
+  &Xsns38,
+#endif
+
+#ifdef XSNS_39
+  &Xsns39,
+#endif
+
+#ifdef XSNS_40
+  &Xsns40,
+#endif
+
 // Optional user defined sensors in range 91 - 99
 
 #ifdef XSNS_91
@@ -186,6 +218,7 @@ boolean (* const xsns_func_ptr[])(byte) PROGMEM = {  // Sensor Function Pointers
 };
 
 const uint8_t xsns_present = sizeof(xsns_func_ptr) / sizeof(xsns_func_ptr[0]);  // Number of External Sensors found
+uint8_t xsns_index = 0;
 
 /*********************************************************************************************\
  * Function call to all xsns
@@ -196,20 +229,62 @@ const uint8_t xsns_present = sizeof(xsns_func_ptr) / sizeof(xsns_func_ptr[0]);  
  * FUNC_JSON_APPEND
  * FUNC_WEB_APPEND
  * return FUNC_COMMAND
- * FUNC_EVERY_SECOND
  * FUNC_EVERY_50_MSECOND
+ * FUNC_EVERY_100_MSECOND
+ * FUNC_EVERY_250_MSECOND
+ * FUNC_EVERY_SECOND
 \*********************************************************************************************/
+
+uint8_t XsnsPresent()
+{
+  return xsns_present;
+}
+
+boolean XsnsNextCall(byte Function)
+{
+  xsns_index++;
+  if (xsns_index == xsns_present) xsns_index = 0;
+  return xsns_func_ptr[xsns_index](Function);
+}
 
 boolean XsnsCall(byte Function)
 {
   boolean result = false;
 
+#ifdef PROFILE_XSNS_EVERY_SECOND
+  uint32_t profile_start_millis = millis();
+#endif  // PROFILE_XSNS_EVERY_SECOND
+
   for (byte x = 0; x < xsns_present; x++) {
+
+#ifdef PROFILE_XSNS_SENSOR_EVERY_SECOND
+  uint32_t profile_start_millis = millis();
+#endif  // PROFILE_XSNS_SENSOR_EVERY_SECOND
+
     result = xsns_func_ptr[x](Function);
-    if (result) {
-      break;
+
+#ifdef PROFILE_XSNS_SENSOR_EVERY_SECOND
+  uint32_t profile_millis = millis() - profile_start_millis;
+  if (profile_millis) {
+    if (FUNC_EVERY_SECOND == Function) {
+      snprintf_P(log_data, sizeof(log_data), PSTR("PRF: At %08u XsnsCall %d to Sensor %d took %u mS"), uptime, Function, x, profile_millis);
+      AddLog(LOG_LEVEL_DEBUG);
     }
   }
+#endif  // PROFILE_XSNS_SENSOR_EVERY_SECOND
+
+    if (result) break;
+  }
+
+#ifdef PROFILE_XSNS_EVERY_SECOND
+  uint32_t profile_millis = millis() - profile_start_millis;
+  if (profile_millis) {
+    if (FUNC_EVERY_SECOND == Function) {
+      snprintf_P(log_data, sizeof(log_data), PSTR("PRF: At %08u XsnsCall %d took %u mS"), uptime, Function, profile_millis);
+      AddLog(LOG_LEVEL_DEBUG);
+    }
+  }
+#endif  // PROFILE_XSNS_EVERY_SECOND
 
   return result;
 }

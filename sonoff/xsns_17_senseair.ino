@@ -22,6 +22,8 @@
  * SenseAir K30, K70 and S8 - CO2 sensor
  *
  * Adapted from EspEasy plugin P052 by Mikael Trieb (mikael__AT__triebconsulting.se)
+ *
+ * Hardware Serial will be selected if GPIO1 = [SAir Rx] and GPIO3 = [SAir Tx]
 \*********************************************************************************************/
 
 #include <TasmotaSerial.h>
@@ -44,7 +46,7 @@ uint16_t senseair_co2 = 0;
 float senseair_temperature = 0;
 float senseair_humidity = 0;
 
-uint8_t senseair_state = 0;
+//uint8_t senseair_state = 0;
 
 /*********************************************************************************************/
 
@@ -96,6 +98,9 @@ uint8_t ModbusReceive(uint16_t *value)
       }
     }
   }
+
+  AddLogSerial(LOG_LEVEL_DEBUG_MORE, buffer, len);
+
   if (len != sizeof(buffer)) {
     return 9;                  // 9 = Unexpected result
   }
@@ -110,11 +115,11 @@ const uint8_t start_addresses[] { 0x1A, 0x00, 0x03, 0x04, 0x05, 0x1C, 0x0A };
 uint8_t senseair_read_state = 0;
 uint8_t senseair_send_retry = 0;
 
-void Senseair50ms()              // Every 50 mSec
+void Senseair250ms()              // Every 250 mSec
 {
-  senseair_state++;
-  if (6 == senseair_state) {     // Every 300 mSec
-    senseair_state = 0;
+//  senseair_state++;
+//  if (6 == senseair_state) {     // Every 300 mSec
+//    senseair_state = 0;
 
     uint16_t value = 0;
     bool data_ready = ModbusReceiveReady();
@@ -179,7 +184,7 @@ void Senseair50ms()              // Every 50 mSec
       senseair_send_retry--;
     }
 
-  }
+//  }
 }
 
 /*********************************************************************************************/
@@ -188,8 +193,9 @@ void SenseairInit()
 {
   senseair_type = 0;
   if ((pin[GPIO_SAIR_RX] < 99) && (pin[GPIO_SAIR_TX] < 99)) {
-    SensairSerial = new TasmotaSerial(pin[GPIO_SAIR_RX], pin[GPIO_SAIR_TX]);
-    if (SensairSerial->begin()) {
+    SensairSerial = new TasmotaSerial(pin[GPIO_SAIR_RX], pin[GPIO_SAIR_TX], 1);
+    if (SensairSerial->begin(9600)) {
+      if (SensairSerial->hardwareSerial()) { ClaimSerial(); }
       senseair_type = 1;
     }
   }
@@ -210,7 +216,7 @@ void SenseairShow(boolean json)
     }
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}"), mqtt_data);
 #ifdef USE_DOMOTICZ
-    DomoticzSensor(DZ_AIRQUALITY, senseair_co2);
+    if (0 == tele_period) DomoticzSensor(DZ_AIRQUALITY, senseair_co2);
 #endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
   } else {
@@ -238,8 +244,8 @@ boolean Xsns17(byte function)
       case FUNC_INIT:
         SenseairInit();
         break;
-      case FUNC_EVERY_50_MSECOND:
-        Senseair50ms();
+      case FUNC_EVERY_250_MSECOND:
+        Senseair250ms();
         break;
       case FUNC_JSON_APPEND:
         SenseairShow(1);
