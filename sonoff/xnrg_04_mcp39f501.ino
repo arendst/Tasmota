@@ -29,6 +29,13 @@
 #define XNRG_04                 4
 
 #define MCP_TIMEOUT             4
+#define MCP_CALIBRATION_TIMEOUT 2
+
+#define MCP_CALIBRATE_POWER     0x001
+#define MCP_CALIBRATE_VOLTAGE   0x002
+#define MCP_CALIBRATE_CURRENT   0x004
+#define MCP_CALIBRATE_FREQUENCY 0x008
+#define MCP_SINGLE_WIRE_FLAG    0x100
 
 #define MCP_START_FRAME         0xA5
 #define MCP_ACK_FRAME           0x06
@@ -79,32 +86,20 @@ typedef struct mcp_cal_registers_type {
   uint16_t accumulation_interval;
 } mcp_cal_registers_type;
 
-typedef struct mcp_calibration_setpoint_type {
-  uint32_t calibration_current;
-  uint16_t calibration_voltage;
-  uint32_t calibration_active_power;
-//  uint32_t calibration_reactive_power;
-  uint16_t line_frequency_ref;
-} mcp_calibration_setpoint_type;
-mcp_calibration_setpoint_type mcp_calibration_setpoint;
-
-typedef struct mcp_output_registers_type {
-  uint32_t current_rms;
-  uint16_t voltage_rms;
-  uint32_t active_power;
-  uint32_t reactive_power;
-  uint32_t apparent_power;
-  sint16_t power_factor;
-  uint16_t line_frequency;
-} mcp_output_registers_type;
-mcp_output_registers_type mcp_output_registers;
-
+unsigned long mcp_kWhcounter = 0;
 uint32_t mcp_system_configuration = 0x03000000;
+uint32_t mcp_active_power;
+//uint32_t mcp_reactive_power;
+//uint32_t mcp_apparent_power;
+uint32_t mcp_current_rms;
+uint16_t mcp_voltage_rms;
+uint16_t mcp_line_frequency;
+//sint16_t mcp_power_factor;
 uint8_t mcp_address = 0;
 uint8_t mcp_calibration_active = 0;
 uint8_t mcp_init = 0;
 uint8_t mcp_timeout = 0;
-unsigned long mcp_kWhcounter = 0;
+uint8_t mcp_calibrate = 0;
 
 /*********************************************************************************************\
  * Olimex tools
@@ -155,11 +150,6 @@ void McpSend(uint8_t *data)
   }
 }
 
-void McpResetSetpoints(void)
-{
-  memset(&mcp_calibration_setpoint, 0, sizeof(mcp_calibration_setpoint));
-}
-
 /********************************************************************************************/
 
 void McpGetAddress(void)
@@ -180,7 +170,7 @@ void McpAddressReceive(void)
 void McpGetCalibration(void)
 {
   if (mcp_calibration_active) { return; }
-  mcp_calibration_active = 4;
+  mcp_calibration_active = MCP_CALIBRATION_TIMEOUT;
 
   uint8_t data[] = { MCP_START_FRAME, 8, MCP_SET_ADDRESS, (MCP_CALIBRATION_BASE >> 8) & 0xFF, MCP_CALIBRATION_BASE & 0xFF, MCP_READ, MCP_CALIBRATION_LEN, 0x00 };
 
@@ -214,21 +204,33 @@ void McpParseCalibration(void)
   cal_registers.calibration_reactive_power = McpExtractInt(serial_in_buffer, 48, 4);
   cal_registers.accumulation_interval      = McpExtractInt(serial_in_buffer, 52, 2);
 
-  if (mcp_calibration_setpoint.calibration_active_power) {
-    cal_registers.calibration_active_power = mcp_calibration_setpoint.calibration_active_power;
+  if (mcp_calibrate & MCP_CALIBRATE_POWER) {
+    cal_registers.calibration_active_power = Settings.energy_power_calibration;
     if (McpCalibrationCalc(&cal_registers, 16)) { action = true; }
   }
-  if (mcp_calibration_setpoint.calibration_voltage) {
-    cal_registers.calibration_voltage = mcp_calibration_setpoint.calibration_voltage;
+  if (mcp_calibrate & MCP_CALIBRATE_VOLTAGE) {
+    cal_registers.calibration_voltage = Settings.energy_voltage_calibration;
     if (McpCalibrationCalc(&cal_registers, 0)) { action = true; }
   }
-  if (mcp_calibration_setpoint.calibration_current) {
-    cal_registers.calibration_current = mcp_calibration_setpoint.calibration_current;
+  if (mcp_calibrate & MCP_CALIBRATE_CURRENT) {
+    cal_registers.calibration_current = Settings.energy_current_calibration;
     if (McpCalibrationCalc(&cal_registers, 8)) { action = true; }
   }
   mcp_timeout = 0;
   if (action) { McpSetCalibration(&cal_registers); }
-  McpResetSetpoints();
+
+  mcp_calibrate = 0;
+
+  Settings.energy_power_calibration = cal_registers.calibration_active_power;
+  Settings.energy_voltage_calibration = cal_registers.calibration_voltage;
+  Settings.energy_current_calibration = cal_registers.calibration_current;
+
+  mcp_system_configuration = cal_registers.system_configuration;
+
+  if (mcp_system_configuration & MCP_SINGLE_WIRE_FLAG) {
+    mcp_system_configuration &= ~MCP_SINGLE_WIRE_FLAG;    // Reset SingleWire flag
+	  McpSetSystemConfiguration(2);
+  }
 }
 
 bool McpCalibrationCalc(struct mcp_cal_registers_type *cal_registers, uint8_t range_shift)
@@ -239,15 +241,15 @@ bool McpCalibrationCalc(struct mcp_cal_registers_type *cal_registers, uint8_t ra
   uint32_t new_gain;
 
   if (range_shift == 0) {
-    measured = mcp_output_registers.voltage_rms;
+    measured = mcp_voltage_rms;
     expected = cal_registers->calibration_voltage;
     gain = &(cal_registers->gain_voltage_rms);
   } else if (range_shift == 8) {
-    measured = mcp_output_registers.current_rms;
+    measured = mcp_current_rms;
     expected = cal_registers->calibration_current;
     gain = &(cal_registers->gain_current_rms);
   } else if (range_shift == 16) {
-    measured = mcp_output_registers.active_power;
+    measured = mcp_active_power;
     expected = cal_registers->calibration_active_power;
     gain = &(cal_registers->gain_active_power);
   } else {
@@ -287,7 +289,7 @@ calc:
 /*
 void McpCalibrationReactivePower(void)
 {
-  cal_registers.gain_reactive_power = cal_registers.gain_reactive_power * cal_registers.calibration_reactive_power / mcp_output_registers.reactive_power;
+  cal_registers.gain_reactive_power = cal_registers.gain_reactive_power * cal_registers.calibration_reactive_power / mcp_reactive_power;
 }
 */
 void McpSetCalibration(struct mcp_cal_registers_type *cal_registers)
@@ -331,10 +333,36 @@ void McpSetCalibration(struct mcp_cal_registers_type *cal_registers)
 
 /********************************************************************************************/
 
+void McpSetSystemConfiguration(uint16 interval)
+{
+  // A5 11 41 00 42 45 03 00 01 00 41 00 5A 57 00 06 7A
+  uint8_t data[17];
+
+  data[ 1] = sizeof(data);
+  data[ 2] = MCP_SET_ADDRESS;                          // Set address pointer
+  data[ 3] = 0x00;                                     // address
+  data[ 4] = 0x42;                                     // address
+  data[ 5] = MCP_WRITE_32;                             // Write 4 bytes
+  data[ 6] = (mcp_system_configuration >> 24) & 0xFF;  // system_configuration
+  data[ 7] = (mcp_system_configuration >> 16) & 0xFF;  // system_configuration
+  data[ 8] = (mcp_system_configuration >>  8) & 0xFF;  // system_configuration
+  data[ 9] = (mcp_system_configuration >>  0) & 0xFF;  // system_configuration
+  data[10] = MCP_SET_ADDRESS;                          // Set address pointer
+  data[11] = 0x00;                                     // address
+  data[12] = 0x5A;                                     // address
+  data[13] = MCP_WRITE_16;                             // Write 2 bytes
+  data[14] = (interval >>  8) & 0xFF;                  // interval
+  data[15] = (interval >>  0) & 0xFF;                  // interval
+
+  McpSend(data);
+}
+
+/********************************************************************************************/
+
 void McpGetFrequency(void)
 {
   if (mcp_calibration_active) { return; }
-  mcp_calibration_active = 4;
+  mcp_calibration_active = MCP_CALIBRATION_TIMEOUT;
 
   uint8_t data[] = { MCP_START_FRAME, 11, MCP_SET_ADDRESS, (MCP_FREQUENCY_REF_BASE >> 8) & 0xFF,  MCP_FREQUENCY_REF_BASE & 0xFF,  MCP_READ_16,
                                           MCP_SET_ADDRESS, (MCP_FREQUENCY_GAIN_BASE >> 8) & 0xFF, MCP_FREQUENCY_GAIN_BASE & 0xFF, MCP_READ_16, 0x00 };
@@ -348,19 +376,22 @@ void McpParseFrequency(void)
   uint16_t line_frequency_ref  = serial_in_buffer[2] * 256 + serial_in_buffer[3];
   uint16_t gain_line_frequency = serial_in_buffer[4] * 256 + serial_in_buffer[5];
 
-  if (mcp_calibration_setpoint.line_frequency_ref) {
-    line_frequency_ref = mcp_calibration_setpoint.line_frequency_ref;
+  if (mcp_calibrate & MCP_CALIBRATE_FREQUENCY) {
+    line_frequency_ref = Settings.energy_frequency_calibration;
 
-    if ((0xFFFF == mcp_output_registers.line_frequency) || (0 == gain_line_frequency)) {  // Reset values to 50Hz
-      mcp_output_registers.line_frequency  = 50000;
+    if ((0xFFFF == mcp_line_frequency) || (0 == gain_line_frequency)) {  // Reset values to 50Hz
+      mcp_line_frequency  = 50000;
       gain_line_frequency = 0x8000;
     }
-    gain_line_frequency = gain_line_frequency * line_frequency_ref / mcp_output_registers.line_frequency;
+    gain_line_frequency = gain_line_frequency * line_frequency_ref / mcp_line_frequency;
 
     mcp_timeout = 0;
     McpSetFrequency(line_frequency_ref, gain_line_frequency);
   }
-  McpResetSetpoints();
+
+  Settings.energy_frequency_calibration = line_frequency_ref;
+
+  mcp_calibrate = 0;
 }
 
 void McpSetFrequency(uint16_t line_frequency_ref, uint16_t gain_line_frequency)
@@ -393,39 +424,6 @@ void McpSetFrequency(uint16_t line_frequency_ref, uint16_t gain_line_frequency)
 
 /********************************************************************************************/
 
-void McpSetSystemConfiguration(uint16 interval)
-{
-  // A5 11 41 00 42 45 03 00 01 00 41 00 5A 57 00 06 7A
-  uint8_t data[17];
-
-  data[ 1] = sizeof(data);
-  data[ 2] = MCP_SET_ADDRESS;                          // Set address pointer
-  data[ 3] = 0x00;                                     // address
-  data[ 4] = 0x42;                                     // address
-  data[ 5] = MCP_WRITE_32;                             // Write 4 bytes
-  data[ 6] = (mcp_system_configuration >> 24) & 0xFF;  // system_configuration
-  data[ 7] = (mcp_system_configuration >> 16) & 0xFF;  // system_configuration
-  data[ 8] = (mcp_system_configuration >>  8) & 0xFF;  // system_configuration
-  data[ 9] = (mcp_system_configuration >>  0) & 0xFF;  // system_configuration
-  data[10] = MCP_SET_ADDRESS;                          // Set address pointer
-  data[11] = 0x00;                                     // address
-  data[12] = 0x5A;                                     // address
-  data[13] = MCP_WRITE_16;                             // Write 2 bytes
-  data[14] = (interval >>  8) & 0xFF;                  // interval
-  data[15] = (interval >>  0) & 0xFF;                  // interval
-
-  McpSend(data);
-}
-
-void McpSingleWireStop(uint8_t force)
-{
-  if (!force && ((mcp_system_configuration & (1 << 8)) == 0)) { return; }
-  mcp_system_configuration = mcp_system_configuration & (~(1 << 8));
-	McpSetSystemConfiguration(2);  // 4
-}
-
-/********************************************************************************************/
-
 void McpGetData(void)
 {
   uint8_t data[] = { MCP_START_FRAME, 8, MCP_SET_ADDRESS, 0x00, 0x04, MCP_READ, 22, 0x00 };
@@ -440,21 +438,21 @@ void McpParseData(void)
   // 06 19 CE 18 00 00 F2 08 3A 38 00 00 66 00 00 00 93 38 00 00 36 7F 9A C6 B7
   // Ak Ln Current---- Volt- ActivePower ReActivePow ApparentPow Factr Frequ Ck
 
-  mcp_output_registers.current_rms    = McpExtractInt(serial_in_buffer,  2, 4);
-  mcp_output_registers.voltage_rms    = McpExtractInt(serial_in_buffer,  6, 2);
-  mcp_output_registers.active_power   = McpExtractInt(serial_in_buffer,  8, 4);
-//  mcp_output_registers.reactive_power = McpExtractInt(serial_in_buffer, 12, 4);
-//  mcp_output_registers.power_factor   = McpExtractInt(serial_in_buffer, 20, 2);
-  mcp_output_registers.line_frequency = McpExtractInt(serial_in_buffer, 22, 2);
+  mcp_current_rms    = McpExtractInt(serial_in_buffer,  2, 4);
+  mcp_voltage_rms    = McpExtractInt(serial_in_buffer,  6, 2);
+  mcp_active_power   = McpExtractInt(serial_in_buffer,  8, 4);
+//  mcp_reactive_power = McpExtractInt(serial_in_buffer, 12, 4);
+//  mcp_power_factor   = McpExtractInt(serial_in_buffer, 20, 2);
+  mcp_line_frequency = McpExtractInt(serial_in_buffer, 22, 2);
 
   if (energy_power_on) {  // Powered on
-    energy_frequency = (float)mcp_output_registers.line_frequency / 1000;
-    energy_voltage = (float)mcp_output_registers.voltage_rms / 10;
-    energy_power = (float)mcp_output_registers.active_power / 100;
+    energy_frequency = (float)mcp_line_frequency / 1000;
+    energy_voltage = (float)mcp_voltage_rms / 10;
+    energy_power = (float)mcp_active_power / 100;
     if (0 == energy_power) {
       energy_current = 0;
     } else {
-      energy_current = (float)mcp_output_registers.current_rms / 10000;
+      energy_current = (float)mcp_current_rms / 10000;
     }
   } else {  // Powered off
     energy_frequency = 0;
@@ -515,8 +513,8 @@ bool McpSerialInput(void)
 
 void McpEverySecond(void)
 {
-  if (mcp_output_registers.active_power) {
-    energy_kWhtoday_delta += ((mcp_output_registers.active_power * 10) / 36);
+  if (mcp_active_power) {
+    energy_kWhtoday_delta += ((mcp_active_power * 10) / 36);
     EnergyUpdateToday();
   }
 
@@ -527,14 +525,19 @@ void McpEverySecond(void)
     mcp_calibration_active--;
   }
   else if (mcp_init) {
-    McpSingleWireStop(1);
-    mcp_init = 0;
+    if (2 == mcp_init) {
+      McpGetCalibration();           // Get calibration parameters and disable SingleWire mode if enabled
+    }
+    else if (1 == mcp_init) {
+      McpGetFrequency();             // Get calibration parameter
+    }
+    mcp_init--;
   }
   else if (!mcp_address) {
-    McpGetAddress();
+    McpGetAddress();                 // Get device address for future calibration changes
   }
   else {
-    McpGetData();
+    McpGetData();                    // Get energy data
   }
 }
 
@@ -551,10 +554,10 @@ void McpDrvInit(void)
       pinMode(15, OUTPUT);
       digitalWrite(15, 0);           // GPIO15 - MCP disable - Reset Delta Sigma ADC's
       baudrate = 4800;
+      mcp_calibrate = 0;
+      mcp_timeout = 2;               // Initial wait
+      mcp_init = 2;                  // Initial setup steps
       energy_calc_power_factor = 1;  // Calculate power factor from data
-      mcp_timeout = 4;               // Wait for initialization
-      mcp_init = 1;                  // Execute initial setup
-      McpResetSetpoints();
       energy_flg = XNRG_04;
     }
   }
@@ -566,41 +569,41 @@ boolean McpCommand(void)
   unsigned long value = 0;
 
   if (CMND_POWERSET == energy_command_code) {
-    if (XdrvMailbox.data_len && mcp_output_registers.active_power) {
+    if (XdrvMailbox.data_len && mcp_active_power) {
       value = (unsigned long)(CharToDouble(XdrvMailbox.data) * 100);
       if ((value > 100) && (value < 200000)) {  // Between 1W and 2000W
         Settings.energy_power_calibration = value;
-        mcp_calibration_setpoint.calibration_active_power = value;
+        mcp_calibrate |= MCP_CALIBRATE_POWER;
         McpGetCalibration();
       }
     }
   }
   else if (CMND_VOLTAGESET == energy_command_code) {
-    if (XdrvMailbox.data_len && mcp_output_registers.voltage_rms) {
+    if (XdrvMailbox.data_len && mcp_voltage_rms) {
       value = (unsigned long)(CharToDouble(XdrvMailbox.data) * 10);
       if ((value > 1000) && (value < 2600)) {  // Between 100V and 260V
         Settings.energy_voltage_calibration = value;
-        mcp_calibration_setpoint.calibration_voltage = value;
+        mcp_calibrate |= MCP_CALIBRATE_VOLTAGE;
         McpGetCalibration();
       }
     }
   }
   else if (CMND_CURRENTSET == energy_command_code) {
-    if (XdrvMailbox.data_len && mcp_output_registers.current_rms) {
+    if (XdrvMailbox.data_len && mcp_current_rms) {
       value = (unsigned long)(CharToDouble(XdrvMailbox.data) * 10);
       if ((value > 100) && (value < 80000)) {  // Between 10mA and 8A
         Settings.energy_current_calibration = value;
-        mcp_calibration_setpoint.calibration_current = value;
+        mcp_calibrate |= MCP_CALIBRATE_CURRENT;
         McpGetCalibration();
       }
     }
   }
   else if (CMND_FREQUENCYSET == energy_command_code) {
-    if (XdrvMailbox.data_len && mcp_output_registers.line_frequency) {
+    if (XdrvMailbox.data_len && mcp_line_frequency) {
       value = (unsigned long)(CharToDouble(XdrvMailbox.data) * 1000);
       if ((value > 45000) && (value < 65000)) {  // Between 45Hz and 65Hz
         Settings.energy_frequency_calibration = value;
-        mcp_calibration_setpoint.line_frequency_ref = value;
+        mcp_calibrate |= MCP_CALIBRATE_FREQUENCY;
         McpGetFrequency();
       }
     }

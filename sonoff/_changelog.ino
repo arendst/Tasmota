@@ -1,4 +1,8 @@
-/* 6.2.1.6 20180922
+/* 6.2.1.7 20180925
+ * Remove restart after ntpserver change and force NTP re-sync (#3890)
+ * Release full Shelly2 support
+ *
+ * 6.2.1.6 20180922
  * Removed commands PowerCal, VoltageCal and CurrentCal as more functionality is provided by commands PowerSet, VoltageSet and CurrentSet
  * Allow decimals as input to commands PowerSet, VoltageSet and CurrentSet
  * Add support for PCA9685 12bit 16pin hardware PWM driver (#3866)
