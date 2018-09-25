@@ -19,7 +19,7 @@
 
 #ifdef USE_HOME_ASSISTANT
 
-const char HASS_DISCOVER_SWITCH[] PROGMEM =
+const char HASS_DISCOVER_RELAY[] PROGMEM =
   "{\"name\":\"%s\","                              // dualr2 1
   "\"command_topic\":\"%s\","                      // cmnd/dualr2/POWER2
   "\"state_topic\":\"%s\","                        // stat/dualr2/RESULT  (implies "\"optimistic\":\"false\",")
@@ -39,7 +39,8 @@ const char HASS_DISCOVER_BUTTON[] PROGMEM =
 //  "\"optimistic\":\"false\","                    // false is Hass default when state_topic is set
   "\"availability_topic\":\"%s\","                 // tele/dualr2/LWT
   "\"payload_available\":\"" D_ONLINE "\","        // Online
-  "\"payload_not_available\":\"" D_OFFLINE "\"";   // Offline
+  "\"payload_not_available\":\"" D_OFFLINE "\","   // Offline
+  "\"force_update\":true";
 
 const char HASS_DISCOVER_LIGHT_DIMMER[] PROGMEM =
   "%s,\"brightness_command_topic\":\"%s\","        // cmnd/led2/Dimmer
@@ -102,7 +103,7 @@ void HAssDiscoverRelay()
       GetTopic_P(command_topic, CMND, mqtt_topic, value_template);
       GetTopic_P(state_topic, STAT, mqtt_topic, S_RSLT_RESULT);
       GetTopic_P(availability_topic, TELE, mqtt_topic, S_LWT);
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HASS_DISCOVER_SWITCH, name, command_topic, state_topic, value_template, Settings.state_text[0], Settings.state_text[1], availability_topic);
+      snprintf_P(mqtt_data, sizeof(mqtt_data), HASS_DISCOVER_RELAY, name, command_topic, state_topic, value_template, Settings.state_text[0], Settings.state_text[1], availability_topic);
 
       if (is_light) {
         char brightness_command_topic[TOPSZ];

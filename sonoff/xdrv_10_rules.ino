@@ -366,6 +366,7 @@ void RulesEvery50ms()
   if (Settings.rule_enabled) {  // Any rule enabled
     char json_event[120];
 
+    if (-1 == rules_new_power) { rules_new_power = power; }
     if (rules_new_power != rules_old_power) {
       if (rules_old_power != -1) {
         for (byte i = 0; i < devices_present; i++) {
