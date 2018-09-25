@@ -1,6 +1,7 @@
 /* 6.2.1.7 20180925
  * Remove restart after ntpserver change and force NTP re-sync (#3890)
  * Release full Shelly2 support
+ * Released tools/decode-config.py by Norbert Richter to decode configuration data. See file for information
  *
  * 6.2.1.6 20180922
  * Removed commands PowerCal, VoltageCal and CurrentCal as more functionality is provided by commands PowerSet, VoltageSet and CurrentSet
