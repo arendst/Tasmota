@@ -132,6 +132,7 @@
 #define D_JSON_UTC_TIME "UTC"
 #define D_JSON_UVINDEX "UvIndex"
 #define D_JSON_UV_LEVEL "UvLevel"
+#define D_JSON_UV_POWER "UvPower"
 #define D_JSON_VCC "Vcc"
 #define D_JSON_VERSION "Version"
 #define D_JSON_VOLTAGE "Voltage"
