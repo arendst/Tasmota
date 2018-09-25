@@ -163,7 +163,14 @@
 #define D_USER "用户名"
 #define D_UTC_TIME "UTC"
 #define D_UV_INDEX "紫外线指数"
+#define D_UV_INDEX_2 "Mid"
+#define D_UV_INDEX_3 "High"
+#define D_UV_INDEX_4 "Danger"
+#define D_UV_INDEX_5 "BurnL1/2"
+#define D_UV_INDEX_6 "BurnL3"
+#define D_UV_INDEX_7 "OoR"
 #define D_UV_LEVEL "紫外线水平"
+#define D_UV_POWER "UV Power"
 #define D_VERSION "版本"
 #define D_VOLTAGE "电压"
 #define D_WARMLIGHT "暖"
@@ -514,6 +521,7 @@
 #define D_UNIT_WATT "瓦"
 #define D_UNIT_WATTHOUR "瓦时"
 #define D_UNIT_HERTZ "赫兹"
+#define D_UNIT_WATT_METER_QUADRAT "W/m²"
 
 // Log message prefix
 #define D_LOG_APPLICATION "APP: "  // Application
