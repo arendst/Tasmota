@@ -321,7 +321,7 @@
 #endif  // USE_I2C
 
 // -- SPI sensors ---------------------------------
-//#define USE_SPI                                  // SPI using library TasmotaTFT
+//#define USE_SPI                                  // Hardware SPI using GPIO12(MISO), GPIO13(MOSI) and GPIO14(CLK) in addition to two user selectable GPIOs(CS and DC)
 
 #ifdef USE_SPI
   #ifndef USE_DISPLAY
@@ -384,6 +384,7 @@
 //#define USE_CLASSIC                              // Create sonoff-classic with initial configuration tools WPS, SmartConfig and WifiManager
 //#define USE_SENSORS                              // Create sonoff-sensors with useful sensors enabled
 //#define USE_KNX_NO_EMULATION                     // Create sonoff-knx with KNX but without Emulation
+//#define USE_DISPLAYS                             // Create sonoff-display with display drivers enabled
 //#define BE_MINIMAL                               // Create sonoff-minimal as intermediate firmware for OTA-MAGIC
 
 /*********************************************************************************************\
