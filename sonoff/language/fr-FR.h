@@ -169,7 +169,7 @@
 #define D_UV_INDEX_4 "Très élevé"
 #define D_UV_INDEX_5 "Brûlure niv.1/2"
 #define D_UV_INDEX_6 "Brûlure niv.3"
-#define D_UV_INDEX_7 "Extrême"
+#define D_UV_INDEX_7 "Hors échelle"
 #define D_UV_LEVEL "Niveau UV"
 #define D_UV_POWER "Puissance UV"
 #define D_VERSION "Version"
@@ -184,7 +184,7 @@
 #define D_SERIAL_LOGGING_DISABLED "Journalisation série désactivée"
 #define D_SYSLOG_LOGGING_REENABLED "Jounalisation syslog réactivée"
 
-#define D_SET_BAUDRATE_TO "Définir baudrate à"
+#define D_SET_BAUDRATE_TO "Définir le débit à"
 #define D_RECEIVED_TOPIC "Topic reçu"  // Terme MQTT
 #define D_DATA_SIZE "Taille données"
 #define D_ANALOG_INPUT "Analogique"
