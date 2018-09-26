@@ -170,7 +170,7 @@
 #define D_UV_INDEX_5 "Gefährlich"
 #define D_UV_INDEX_6 "Schädlich"
 #define D_UV_INDEX_7 "Messwert!"
-#define D_UV_LEVEL "UV-Index"
+#define D_UV_LEVEL "UV-Level"
 #define D_UV_POWER "UV Intensität"
 #define D_VERSION "Version"
 #define D_VOLTAGE "Spannung"
