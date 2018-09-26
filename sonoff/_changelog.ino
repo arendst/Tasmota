@@ -1,4 +1,7 @@
-/* 6.2.1.7 20180925
+/* 6.2.1.8 20180926
+ * Change status JSON message providing more switch and retain information
+ *
+ * 6.2.1.7 20180925
  * Remove restart after ntpserver change and force NTP re-sync (#3890)
  * Release full Shelly2 support
  * Released tools/decode-config.py by Norbert Richter to decode configuration data. See file for information
