@@ -425,7 +425,7 @@ void RulesEvery50ms()
 
 void RulesEvery100ms()
 {
-  if (Settings.rule_enabled) {       // Any rule enabled
+  if (Settings.rule_enabled && (uptime > 4)) {  // Any rule enabled and allow 4 seconds start-up time for sensors (#3811)
     mqtt_data[0] = '\0';
     int tele_period_save = tele_period;
     tele_period = 2;                 // Do not allow HA updates during next function call
