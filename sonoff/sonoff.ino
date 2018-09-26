@@ -1043,7 +1043,8 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
         for (i = 0; i < strlen(Settings.ntp_server[index -1]); i++) {
           if (Settings.ntp_server[index -1][i] == ',') Settings.ntp_server[index -1][i] = '.';
         }
-//        restart_flag = 2;
+//        restart_flag = 2;  // Issue #3890
+        ntp_force_sync = 1;
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, index, Settings.ntp_server[index -1]);
     }

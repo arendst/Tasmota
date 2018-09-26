@@ -163,7 +163,15 @@
 #define D_USER "Користувач"
 #define D_UTC_TIME "UTC"
 #define D_UV_INDEX "УФ індекс"
+#define D_UV_INDEX_1 "Low"
+#define D_UV_INDEX_2 "Mid"
+#define D_UV_INDEX_3 "High"
+#define D_UV_INDEX_4 "Danger"
+#define D_UV_INDEX_5 "BurnL1/2"
+#define D_UV_INDEX_6 "BurnL3"
+#define D_UV_INDEX_7 "OoR"
 #define D_UV_LEVEL "УФ рівень"
+#define D_UV_POWER "UV Power"
 #define D_VERSION "Версія"
 #define D_VOLTAGE "Напруга"
 #define D_WARMLIGHT "Тепло"
@@ -495,6 +503,7 @@
 #define D_UNIT_CENTIMETER "cм"
 #define D_UNIT_HERTZ "Гц"
 #define D_UNIT_HOUR "Г"
+#define D_UNIT_INCREMENTS "inc"
 #define D_UNIT_KILOOHM "кОм"
 #define D_UNIT_KILOWATTHOUR "кВт"
 #define D_UNIT_LUX "лк"
@@ -515,6 +524,7 @@
 #define D_UNIT_VOLT "В"
 #define D_UNIT_WATT "Вт"
 #define D_UNIT_WATTHOUR "ВтГод"
+#define D_UNIT_WATT_METER_QUADRAT "W/m²"
 
 // Log message prefix
 #define D_LOG_APPLICATION "APP: "  // Application

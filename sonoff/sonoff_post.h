@@ -51,7 +51,7 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #endif
 
 #define USE_DHT                               // Default DHT11 sensor needs no external library
-#define USE_ENERGY_SENSOR                     // Use energy sensors
+#define USE_ENERGY_SENSOR                     // Use energy sensors (+14k code)
 #define USE_HLW8012                           // Use energy sensor for Sonoff Pow and WolfBlitz
 #define USE_CSE7766                           // Use energy sensor for Sonoff S31 and Pow R2
 
@@ -166,6 +166,30 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #endif
 #undef USE_EMULATION                          // Disable Belkin WeMo and Hue Bridge emulation for Alexa (-16k code, -2k mem)
 #endif  // USE_KNX_NO_EMULATION
+
+/*********************************************************************************************\
+ * [sonoff-display.bin]
+ * Provide an image with display drivers enabled
+\*********************************************************************************************/
+
+#ifdef USE_DISPLAYS
+
+#undef USE_ENERGY_SENSOR                      // Disable energy sensors (-14k code)
+#undef USE_EMULATION                          // Disable Belkin WeMo and Hue Bridge emulation for Alexa (-16k code, -2k mem)
+
+#define USE_I2C                               // I2C using library wire (+10k code, 0k2 mem, 124 iram)
+  #define USE_DISPLAY                         // Add I2C Display Support (+2k code)
+    #define USE_DISPLAY_MODES1TO5             // Enable display mode 1 to 5 in addition to mode 0
+    #define USE_DISPLAY_LCD                   // [DisplayModel 1] Enable Lcd display (I2C addresses 0x27 and 0x3F) (+6k code)
+    #define USE_DISPLAY_SSD1306               // [DisplayModel 2] Enable SSD1306 Oled 128x64 display (I2C addresses 0x3C and 0x3D) (+16k code)
+    #define USE_DISPLAY_MATRIX                // [DisplayModel 3] Enable 8x8 Matrix display (I2C adresseses see below) (+11k code)
+
+#define USE_SPI                               // Hardware SPI using GPIO12(MISO), GPIO13(MOSI) and GPIO14(CLK) in addition to two user selectable GPIOs(CS and DC)
+    #define USE_DISPLAY_ILI9341               // [DisplayModel 4] Enable ILI9341 Tft 480x320 display (+19k code)
+
+#undef USE_ARILUX_RF                          // Remove support for Arilux RF remote controller (-0k8 code, 252 iram (non 2.3.0))
+#undef USE_RF_FLASH                           // Remove support for flashing the EFM8BB1 chip on the Sonoff RF Bridge. C2CK must be connected to GPIO4, C2D to GPIO5 on the PCB (-3k code)
+#endif  // USE_DISPLAYS
 
 /*********************************************************************************************\
  * Mandatory define for DS18x20 if changed by above image selections
