@@ -21,7 +21,7 @@
 
 Requirements:
      - Python
-     - pip json pycurl urllib2 configargparse
+     - pip install json pycurl urllib2 configargparse
 
 Instructions:
     Execute command with option -d to retrieve config data from device or
@@ -31,10 +31,11 @@ Instructions:
 
 
 Usage:
-    decode-config.py [-h] [-f <filename>] [-d <devicename or IP address>]
-                        [-u <user>] [-p <password>] [--format <word>]
-                        [--sort <word>] [--raw] [--unhide-pw] [-o <filename>]
-                        [-c <filename>] [-V]
+    decode-config.py [-h] [-f <filename>] [-d <host>] [-u <user>]
+                     [-p <password>] [--format <word>]
+                     [--json-indent <integer>] [--json-compact]
+                     [--sort <word>] [--raw] [--unhide-pw] [-o <filename>]
+                     [-c <filename>] [-V]
 
     Decode configuration of Sonoff-Tasmota device. Args that start with '--' (eg.
     -f) can also be set in a config file (specified via -c). Config file syntax
@@ -46,21 +47,27 @@ Usage:
       -h, --help            show this help message and exit
       -c <filename>, --config <filename>
                             Config file, can be used instead of command parameter
-                            (defaults to None)
+                            (default: None)
 
     source:
       -f <filename>, --file <filename>
                             file to retrieve Tasmota configuration from (default:
                             None)
-      -d <devicename or IP address>, --device <devicename or IP address>
-                            device to retrieve configuration from (default: None)
+      -d <host>, --device <host>
+                            hostname or IP address to retrieve Tasmota
+                            configuration from (default: None)
       -u <user>, --username <user>
-                            for -d usage: http access username (default: admin)
+                            host http access username (default: admin)
       -p <password>, --password <password>
-                            for -d usage: http access password (default: None)
+                            host http access password (default: None)
 
     output:
       --format <word>       output format ("json" or "text", default: "json")
+      --json-indent <integer>
+                            pretty-printed JSON output using indent level
+                            (default: "None")
+      --json-compact        compact JSON output by eliminate whitespace (default:
+                            "not compact")
       --sort <word>         sort result - <word> can be "none" or "name" (default:
                             "name")
       --raw                 output raw values (default: processed)
@@ -72,7 +79,7 @@ Usage:
     info:
       -V, --version         show program's version number and exit
 
-    Note: Either argument -d <device> or -f <tasmotafile> must be given.
+    Either argument -d <host> or -f <filename> must be given.
 
 
 Examples:
@@ -113,7 +120,7 @@ except ImportError:
     sys.exit(9)
 
 
-VER = '1.5.0008'
+VER = '1.5.0009'
 PROG='{} v{} by Norbert Richter'.format(os.path.basename(sys.argv[0]),VER)
 
 CONFIG_FILE_XOR   = 0x5A
@@ -135,6 +142,8 @@ DEFAULTS = {
     'output':
     {
         'format':       'json',
+        'jsonindent':   None,
+        'jsoncompact':  False,
         'sort':         'name',
         'raw':          False,
         'unhide-pw':    False,
@@ -940,7 +949,7 @@ Setting_5_14_0 = {
     'knx_CB_addr':                  ('<H',  0x6CE, [10]),
     'knx_GA_param':                 ('B',   0x6E2, [10]),
     'knx_CB_param':                 ('B',   0x6EC, [10]),
-    'rules':                        ('512s',0x800, [3])
+    'rules':                        ('512s',0x800, None)
 }
 Setting_5_13_1 = {
     'cfg_holder':                   ('<L',  0x000, None),
@@ -1109,7 +1118,7 @@ Setting_5_13_1 = {
     'knx_CB_addr':                  ('<H',  0x6CE, [10]),
     'knx_GA_param':                 ('B',   0x6E2, [10]),
     'knx_CB_param':                 ('B',   0x6EC, [10]),
-    'rules':                        ('512s',0x800, [3])
+    'rules':                        ('512s',0x800, None)
 }
 Setting_5_12_0 = {
     'cfg_holder':                   ('<L',  0x000, None),
@@ -1550,9 +1559,9 @@ Settings = [(0x6020100, 0xe00, Setting_6_2_1),
             (0x6000000, 0xe00, Setting_6_0_0),
             (0x50e0000, 0xa00, Setting_5_14_0),
             (0x50d0100, 0xa00, Setting_5_13_1),
-            (0x50c0000, 0x66d, Setting_5_12_0),
-            (0x50b0000, 0x66d, Setting_5_11_0),
-            (0x50a0000, 0x66d, Setting_5_10_0),
+            (0x50c0000, 0x670, Setting_5_12_0),
+            (0x50b0000, 0x670, Setting_5_11_0),
+            (0x50a0000, 0x670, Setting_5_10_0),
            ]
 
 
@@ -1666,7 +1675,7 @@ def GetFieldLength(fielddef):
     # it's a single value
     return length
 
-def ConvertFieldValue(value, fielddef):
+def ConvertFieldValue(value, fielddef, raw=False):
     """
     Convert field value based on field desc
 
@@ -1674,10 +1683,12 @@ def ConvertFieldValue(value, fielddef):
         original value read from binary data
     @param fielddef
         field definition (contains possible conversion defiinition)
+    @param raw
+        return raw values (True) or converted values (False)
 
-    @return: (und)converted value
+    @return: (un)converted value
     """
-    if not args.raw and len(fielddef)>3:
+    if not raw and len(fielddef)>3:
         if isinstance(fielddef[3],str): # use a format string
             return fielddef[3].format(value)
         elif callable(fielddef[3]):     # use a format function
@@ -1685,7 +1696,7 @@ def ConvertFieldValue(value, fielddef):
     return value
 
 
-def GetField(dobj, fieldname, fielddef):
+def GetField(dobj, fieldname, fielddef, raw=False):
     """
     Get field value from definition
 
@@ -1695,6 +1706,8 @@ def GetField(dobj, fieldname, fielddef):
         name of the field
     @param fielddef:
         see Settings desc above
+    @param raw
+        return raw values (True) or converted values (False)
 
     @return: read field value
     """
@@ -1715,13 +1728,13 @@ def GetField(dobj, fieldname, fielddef):
                     subfielddef = (fielddef[0], addr, None, None if len(fielddef)<4 else fielddef[3])
                 length = GetFieldLength(subfielddef)
                 if length != 0:
-                    result.append(GetField(dobj, fieldname, subfielddef))
+                    result.append(GetField(dobj, fieldname, subfielddef, raw))
                 addr += length
         # tuple 2 contains a list with dict
         elif isinstance(fielddef[2], list) and len(fielddef[2])>0 and isinstance(fielddef[2][0], dict):
             d = {}
             value = struct.unpack_from(fielddef[0], dobj, fielddef[1])[0]
-            d['base'] = ConvertFieldValue(value, fielddef);
+            d['base'] = ConvertFieldValue(value, fielddef, raw);
             union = fielddef[2]
             i = 0
             for l in union:
@@ -1738,8 +1751,8 @@ def GetField(dobj, fieldname, fielddef):
                 if ord(result[:1])==0x00 or ord(result[:1])==0xff:
                     result = ''
                 s = str(result).split('\0')[0]
-                result = s #unicode(s, errors='replace')
-            result = ConvertFieldValue(result, fielddef)
+                result = unicode(s, errors='replace')
+            result = ConvertFieldValue(result, fielddef, raw)
 
     return result
 
@@ -1762,40 +1775,52 @@ def DeEncrypt(obj):
 
 def Decode(obj):
     """
-    Decodes (already decrypted) binary data stream
+    Decodes binary data stream
 
     @param obj:
-        binary config data
+        binary config data (decrypted)
     """
     # get header data
-    cfg_size = GetField(obj, 'cfg_size', Setting_6_2_1['cfg_size'])
-    version = GetField(obj,  'version', Setting_6_2_1['version'])
+    version = GetField(obj,  'version', Setting_6_2_1['version'], raw=True)
 
     # search setting definition
-    setting = None
+    template = None
     for cfg in Settings:
-        if version >= cfg[0] and cfg_size == cfg[1]:
+        if version >= cfg[0]:
             template = cfg
             break
 
-    setting = template[2]
     # if we did not found a mathching setting
-    if setting is None:
-        exit(2, "Can't handle Tasmota configuration data for version 0x{:x} with {} bytes".format(version, cfg_size) )
+    if template is None:
+        exit(2, "Can't handle Tasmota configuration data for version 0x{:x}".format(version) )
 
-    if GetField(obj, 'cfg_crc', setting['cfg_crc']) != GetSettingsCrc(obj):
+    setting = template[2]
+
+    # check size if exists
+    if 'cfg_size' in setting:
+        cfg_size = GetField(obj, 'cfg_size', setting['cfg_size'], raw=True)
+        # if we did not found a mathching setting
+        if cfg_size != template[1]:
+            exit(2, "Data size does not match. Expected {} bytes, read {} bytes.".format(template[1], cfg_size) )
+
+    # check crc if exists
+    if 'cfg_crc' in setting:
+        cfg_crc = GetField(obj, 'cfg_crc', setting['cfg_crc'], raw=True)
+    else:
+        cfg_crc = GetSettingsCrc(obj)
+    if cfg_crc != GetSettingsCrc(obj):
         exit(3, 'Data crc error' )
 
     config = {}
     config['version_template'] = '0x{:x}'.format(template[0])
     for name in setting:
-        config[name] = GetField(obj, name, setting[name])
+        config[name] = GetField(obj, name, setting[name], args.raw)
 
     if args.sort == 'name':
         config = collections.OrderedDict(sorted(config.items()))
 
     if args.format == 'json':
-        print json.dumps(config, sort_keys=args.sort=='name')
+        print json.dumps(config, sort_keys=args.sort=='name', indent=args.jsonindent, separators=(',', ':') if args.jsoncompact else (', ', ': ') )
     else:
         for key,value in config.items():
             print '{} = {}'.format(key, repr(value))
@@ -1804,7 +1829,7 @@ def Decode(obj):
 
 if __name__ == "__main__":
     parser = configargparse.ArgumentParser(description='Decode configuration of Sonoff-Tasmota device.',
-                                           epilog='Note: Either argument -d <device> or -f <tasmotafile> must be given.')
+                                           epilog='Either argument -d <host> or -f <filename> must be given.')
 
     source = parser.add_argument_group('source')
     source.add_argument('-f', '--file',
@@ -1813,20 +1838,20 @@ if __name__ == "__main__":
                             default=DEFAULTS['source']['tasmotafile'],
                             help='file to retrieve Tasmota configuration from (default: {})'.format(DEFAULTS['source']['tasmotafile']))
     source.add_argument('-d', '--device',
-                            metavar='<devicename or IP address>',
+                            metavar='<host>',
                             dest='device',
                             default=DEFAULTS['source']['device'],
-                            help='device to retrieve configuration from (default: {})'.format(DEFAULTS['source']['device']) )
+                            help='hostname or IP address to retrieve Tasmota configuration from (default: {})'.format(DEFAULTS['source']['device']) )
     source.add_argument('-u', '--username',
                             metavar='<user>',
                             dest='username',
                             default=DEFAULTS['source']['username'],
-                            help='for -d usage: http access username (default: {})'.format(DEFAULTS['source']['username']))
+                            help='host http access username (default: {})'.format(DEFAULTS['source']['username']))
     source.add_argument('-p', '--password',
                             metavar='<password>',
                             dest='password',
                             default=DEFAULTS['source']['password'],
-                            help='for -d usage: http access password (default: {})'.format(DEFAULTS['source']['password']))
+                            help='host http access password (default: {})'.format(DEFAULTS['source']['password']))
 
     output = parser.add_argument_group('output')
     output.add_argument('--format',
@@ -1835,6 +1860,17 @@ if __name__ == "__main__":
                             choices=['json', 'text'],
                             default=DEFAULTS['output']['format'],
                             help='output format ("json" or "text", default: "{}")'.format(DEFAULTS['output']['format']) )
+    output.add_argument('--json-indent',
+                            metavar='<integer>',
+                            dest='jsonindent',
+                            type=int,
+                            default=DEFAULTS['output']['jsonindent'],
+                            help='pretty-printed JSON output using indent level (default: "{}")'.format(DEFAULTS['output']['jsonindent']) )
+    output.add_argument('--json-compact',
+                            dest='jsoncompact',
+                            action='store_true',
+                            default=DEFAULTS['output']['jsoncompact'],
+                            help='compact JSON output by eliminate whitespace (default: "{}")'.format('compact' if DEFAULTS['output']['jsoncompact'] else 'not compact') )
     output.add_argument('--sort',
                             metavar='<word>',
                             dest='sort',
@@ -1862,7 +1898,7 @@ if __name__ == "__main__":
                             dest='configfile',
                             default=DEFAULTS['DEFAULT']['configfile'],
                             is_config_file=True,
-                            help='Config file, can be used instead of command parameter (defaults to {})'.format(DEFAULTS['DEFAULT']['configfile']) )
+                            help='Config file, can be used instead of command parameter (default: {})'.format(DEFAULTS['DEFAULT']['configfile']) )
 
     info = parser.add_argument_group('info')
     info.add_argument('-V', '--version',  action='version', version=PROG)
@@ -1921,4 +1957,7 @@ if __name__ == "__main__":
         Decode(cfg)
 
     else:
-        exit(4, "Could not read configuration data from {} '{}'".format('device' if args.device is not None else 'file', args.device if args.device is not None else args.tasmotafile) )
+        exit(4, "Could not read configuration data from {} '{}'".format('device' if args.device is not None else 'file', \
+                                                                        args.device if args.device is not None else args.tasmotafile) )
+
+    sys.exit(0)
