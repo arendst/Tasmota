@@ -376,6 +376,25 @@ void RulesEvery50ms()
             RulesProcessEvent(json_event);
           }
         }
+      } else {
+        // Boot time POWER OUTPUTS (Relays) Status
+        for (byte i = 0; i < devices_present; i++) {
+          uint8_t new_state = (rules_new_power >> i) &1;
+          snprintf_P(json_event, sizeof(json_event), PSTR("{\"Power%d\":{\"Boot\":%d}}"), i +1, new_state);
+          RulesProcessEvent(json_event);
+        }
+        // Boot time SWITCHES Status
+        for (byte i = 0; i < MAX_SWITCHES; i++) {
+#ifdef USE_TM1638
+          if ((pin[GPIO_SWT1 +i] < 99) || ((pin[GPIO_TM16CLK] < 99) && (pin[GPIO_TM16DIO] < 99) && (pin[GPIO_TM16STB] < 99))) {
+#else
+          if (pin[GPIO_SWT1 +i] < 99) {
+#endif // USE_TM1638
+            boolean swm = ((FOLLOW_INV == Settings.switchmode[i]) || (PUSHBUTTON_INV == Settings.switchmode[i]) || (PUSHBUTTONHOLD_INV == Settings.switchmode[i]));
+            snprintf_P(json_event, sizeof(json_event), PSTR("{\"" D_JSON_SWITCH "%d\":{\"Boot\":%d}}"), i +1, (swm ^ lastwallswitch[i]));
+            RulesProcessEvent(json_event);
+          }
+        }
       }
       rules_old_power = rules_new_power;
     }
