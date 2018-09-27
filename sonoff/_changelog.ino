@@ -2,6 +2,9 @@
  * Change status JSON message providing more switch and retain information
  * Change pinmode for no-pullup defined switches to pullup when configured as switchmode PUSHBUTTON (=3 and up) (#3896)
  * Add delay after restart before processing rule sensor data (#3811)
+ * Fix Home Assistant forced light discovery (#3908)
+ * Add rule triggers SWITCH1#BOOT and POWER1#BOOT (#3904, #3910)
+ * Add support for Neo Coolcam Wifi Smart Power Plug
  *
  * 6.2.1.7 20180925
  * Remove restart after ntpserver change and force NTP re-sync (#3890)

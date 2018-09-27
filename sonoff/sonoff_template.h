@@ -231,6 +231,7 @@ enum SupportedModules {
   SHELLY1,
   SHELLY2,
   PHILIPS,
+  NEO_COOLCAM,
   MAXMODULE };
 
 /********************************************************************************************/
@@ -390,6 +391,7 @@ const uint8_t kModuleNiceList[MAXMODULE] PROGMEM = {
   SHELLY1,
   SHELLY2,
   BLITZWOLF_BWSHP2,
+  NEO_COOLCAM,
   H801,
   MAGICHOME,
   ARILUX_LC01,
@@ -1054,6 +1056,16 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      0, 0,
      GPIO_PWM1,        // GPIO15 light intensity
      0, 0
+  },
+  { "Neo Coolcam",     // Neo Coolcam (ESP8266)
+                       // https://www.banggood.com/NEO-COOLCAM-WiFi-Mini-Smart-Plug-APP-Remote-Control-Timing-Smart-Socket-EU-Plug-p-1288562.html?cur_warehouse=CN
+     0, 0, 0, 0,
+     GPIO_LED1_INV,    // GPIO13 Red Led (0 = On, 1 = Off)
+     0,
+     0, 0, 0, 0, 0, 0, // Flash connection
+     GPIO_REL1,        // GPIO12 Red Led and Relay (0 = Off, 1 = On)
+     GPIO_KEY1,        // GPIO13 Button
+     0, 0, 0, 0
   }
 };
 
