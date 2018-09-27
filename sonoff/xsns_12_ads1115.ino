@@ -19,8 +19,8 @@ UPDATING LVA
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 #ifndef _LVA
-  #ifdef USE_I2C
-  #ifdef USE_ADS1115
+#ifdef USE_I2C
+#ifdef USE_ADS1115
 /*********************************************************************************************\
  * ADS1115 - 4 channel 16BIT A/D converter
  *

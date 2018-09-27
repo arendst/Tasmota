@@ -1,5 +1,4 @@
 /*
-UPDATE LVA
   xdrv_interface.ino - Driver interface support for Sonoff-Tasmota
 
   Copyright (C) 2018  Theo Arends inspired by ESPEasy
@@ -151,26 +150,7 @@ boolean XdrvCommand(uint8_t grpflg, char *type, uint16_t index, char *dataBuf, u
   XdrvMailbox.topic = type;
   XdrvMailbox.data = dataBuf;
 
-  /*    lva
-  #ifdef _LVA_DEBUG
-  Serial.print("run XdrvCommand()");
-  Serial.print("  index: ");      Serial.print(XdrvMailbox.index);
-  Serial.print("  data_len: ");   Serial.print(XdrvMailbox.data_len);
-  Serial.print("  payload: ");    Serial.print(XdrvMailbox.payload);
-  Serial.print("  topic:");       Serial.print(XdrvMailbox.topic);
-  Serial.print("  data: ");       Serial.println(XdrvMailbox.data);
-  #endif
-  */
-
   return XdrvCall(FUNC_COMMAND);
-}
-
-void XdrvSetPower(power_t mpower)
-{
-//  XdrvMailbox.valid = 1;
-  XdrvMailbox.index = mpower;
-
-  XdrvCall(FUNC_SET_POWER);
 }
 
 boolean XdrvMqttData(char *topicBuf, uint16_t stopicBuf, char *dataBuf, uint16_t sdataBuf)

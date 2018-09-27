@@ -177,10 +177,11 @@ void Ds18x20Type(uint8_t sensor)
 void Ds18x20Show(boolean json)
 {
   char temperature[10];
-  char stemp[10];
 // LVA <--
 #ifdef _LVA
   char stemp[16]; // Нафиг увеличил не помню надо попробовать выключить
+#else
+  char stemp[10];
 #endif
 //  LVA -->
   float t;
@@ -213,7 +214,7 @@ void Ds18x20Show(boolean json)
         strlcpy(stemp, ",", sizeof(stemp));
 
 #else
-                if (i+1 < DS_senosors) strcpy(stemp, ",");
+                if (i+1 < ds18x20_sensors) strcpy(stemp, ",");
                 snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s\"%s\":%s%s"), mqtt_data, Ds18x20Addresses(i).c_str(), temperature, stemp);
                 stemp[0] = '\0';
                 //if (i+1 < DS_senosors) snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,"), mqtt_data);

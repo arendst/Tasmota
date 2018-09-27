@@ -59,7 +59,7 @@ See [Community](https://groups.google.com/d/forum/sonoffusers) for forum.<br />
 See [Chat](https://discord.gg/Ks2Kzd4) for more user experience.
 
 The following devices are supported:
-- [iTead Sonoff Basic](https://www.itead.cc/smart-home/sonoff-wifi-wireless-switch-1.html)
+- [iTead Sonoff Basic (R2)](https://www.itead.cc/smart-home/sonoff-wifi-wireless-switch-1.html)
 - [iTead Sonoff RF](https://www.itead.cc/smart-home/sonoff-rf.html)
 - [iTead Sonoff SV](https://www.itead.cc/smart-home/sonoff-sv.html)<img src="https://github.com/arendst/arendst.github.io/blob/master/media/sonoff_th.jpg" width="250" align="right" />
 - [iTead Sonoff TH10/TH16 with temperature sensor](https://www.itead.cc/smart-home/sonoff-th.html)
@@ -90,10 +90,15 @@ The following devices are supported:
 - [MagicHome PWM LED controller](https://github.com/arendst/Sonoff-Tasmota/wiki/MagicHome-LED-strip-controller)
 - AriLux AL-LC01, AL-LC06 and AL-LC11 PWM LED controller
 - [Supla device - Espablo-inCan mod. for electrical Installation box](https://forum.supla.org/viewtopic.php?f=33&t=2188)
-- [BlitzWolf BW-SHP2 Smart Socket with Energy Monitoring](https://www.banggood.com/BlitzWolf-BW-SHP2-Smart-WIFI-Socket-EU-Plug-220V-16A-Work-with-Amazon-Alexa-Google-Assistant-p-1292899.html)
+- [BlitzWolf BW-SHP2 Smart Socket with Energy Monitoring](https://www.banggood.com/BlitzWolf-BW-SHP2-Smart-WIFI-Socket-EU-Plug-220V-16A-Work-with-Amazon-Alexa-Google-Assistant-p-1292899.html)<img src="https://github.com/arendst/arendst.github.io/blob/master/media/shelly2_small_250a.png" width="250" align="right" />
 - [Luani HVIO board](https://luani.de/projekte/esp8266-hvio/)
-- Xiaomi-Phillips Bulbs
-- Wemos D1 mini, NodeMcu and Ledunia
+- [Wemos D1 mini](https://wiki.wemos.cc/products:d1:d1_mini)
+- [HuaFan Smart Socket](HuaFan-Smart-Socket)
+- [Hyleton-313 Smart Plug](Hyleton-313-Smart-Plug)
+- [Allterco Shelly 1](https://shelly.cloud/shelly1-open-source/)
+- [Allterco Shelly 2 with Energy Monitoring](https://shelly.cloud/shelly2/)
+- NodeMcu and Ledunia
+- [KS-602 based switches like GresaTek, Jesiya, NewRice, Lyasi etc](https://ucexperiment.wordpress.com/2017/11/14/reprogramming-a-lyasi-wifi-wall-switch-with-esp8285/)
 
 ### Contribute
 You can contribute to Sonoff-Tasmota by

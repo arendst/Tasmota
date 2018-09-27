@@ -399,9 +399,9 @@ const uint8_t kModuleNiceList[MAXMODULE] PROGMEM = {
   HUAFAN_SS,
   KMC_70011,
   AILIGHT,
-  WEMOS,
+  PHILIPS,
   WITTY,
-  PHILIPS
+  WEMOS
 };
 
 // Default module settings
@@ -1059,6 +1059,24 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
 
 /*
   Optionals
+
+  { "Arilux LC10",     // Arilux LC10 (ESP8285), RGBW + RF
+                       // https://github.com/arendst/Sonoff-Tasmota/wiki/MagicHome-with-ESP8285
+                       // https://www.aliexpress.com/item/DC5-24V-Wireless-WIFI-LED-RGB-Controller-RGBW-Controller-IR-RF-Remote-Control-IOS-Android-for/32827253255.html
+                       // https://www.aliexpress.com/item/Wifi-LED-RGB-Controler-DC12V-MIni-Wifi-RGB-RGBW-LED-Controller-for-RGB-RGBW-LED-Strip/32673444047.html
+     GPIO_USER,        // GPIO00 Optional Button
+     GPIO_USER,        // GPIO01 Serial RXD and Optional sensor
+     0,
+     GPIO_USER,        // GPIO03 Serial TXD and Optional sensor0
+     GPIO_ARIRFRCV,    // GPIO04 RF receiver input
+     GPIO_PWM2,        // GPIO05 RGB LED Green
+     0, 0, 0, 0, 0, 0, // Flash connection
+     GPIO_PWM3,        // GPIO12 RGB LED Blue
+     GPIO_PWM4,        // GPIO13 RGBW LED White
+     GPIO_PWM1,        // GPIO14 RGB LED Red
+     GPIO_LED2_INV,    // GPIO15 RF receiver control
+     0, 0
+  }
 
   { "Xenon 3CH",       // Xenon 3CH (ESP8266) - (#1128)
      0, 0, 0,
