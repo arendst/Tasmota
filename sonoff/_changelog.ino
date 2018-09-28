@@ -1,4 +1,7 @@
-/* 6.2.1.8 20180926
+/* 6.2.1.9 20180928
+ * Add Apparent Power and Reactive Power to Energy Monitoring devices (#251)
+ *
+ * 6.2.1.8 20180926
  * Change status JSON message providing more switch and retain information
  * Change pinmode for no-pullup defined switches to pullup when configured as switchmode PUSHBUTTON (=3 and up) (#3896)
  * Add delay after restart before processing rule sensor data (#3811)

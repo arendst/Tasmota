@@ -141,12 +141,13 @@ void Pzem2Every200ms()
       float energy = 0;
 
       if (PZEM2_TYPES_003_017 == pzem2_type) {
+        energy_type_dc = true;
         //  0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24
         // FE 04 10 27 10 00 64 03 E8 00 00 00 00 00 00 00 00 00 00 HH LL             = PZEM-017
         // Id Cc Sz Volt- Curre Power------ Energy----- HiAlm LoAlm Crc--
         energy_voltage = (float)((buffer[3] << 8) + buffer[4]) / 100.0;                                                                 // 655.00 V
         energy_current = (float)((buffer[5] << 8) + buffer[6]) / 100.0;                                                                 // 655.00 A
-        energy_power = (float)((uint32_t)buffer[9] << 24 + (uint32_t)buffer[10] << 16 + (uint32_t)buffer[7] << 8 + buffer[8]) / 10.0;   // 429496729.0 W
+        energy_active_power = (float)((uint32_t)buffer[9] << 24 + (uint32_t)buffer[10] << 16 + (uint32_t)buffer[7] << 8 + buffer[8]) / 10.0;   // 429496729.0 W
         energy = (float)((uint32_t)buffer[13] << 24 + (uint32_t)buffer[14] << 16 + (uint32_t)buffer[11] << 8 + buffer[12]);             // 4294967295 Wh
         if (!energy_start || (energy < energy_start)) { energy_start = energy; }  // Init after restart and hanlde roll-over if any
         energy_kWhtoday += (energy - energy_start) * 100;
@@ -154,12 +155,13 @@ void Pzem2Every200ms()
         EnergyUpdateToday();
       }
       else if (PZEM2_TYPES_014_016 == pzem2_type) {   // PZEM-014,016
+        energy_type_dc = false;
         //  0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24
         // FE 04 14 08 98 03 E8 00 00 08 98 00 00 00 00 00 00 01 F4 00 64 00 00 HH LL = PZEM-014
         // Id Cc Sz Volt- Current---- Power------ Energy----- Frequ PFact Alarm Crc--
         energy_voltage = (float)((buffer[3] << 8) + buffer[4]) / 10.0;                                                                     // 6553.0 V
         energy_current = (float)((uint32_t)buffer[7] << 24 + (uint32_t)buffer[8] << 16 + (uint32_t)buffer[5] << 8 + buffer[6]) / 1000.0;   // 4294967.000 A
-        energy_power = (float)((uint32_t)buffer[11] << 24 + (uint32_t)buffer[12] << 16 + (uint32_t)buffer[9] << 8 + buffer[10]) / 10.0;    // 429496729.0 W
+        energy_active_power = (float)((uint32_t)buffer[11] << 24 + (uint32_t)buffer[12] << 16 + (uint32_t)buffer[9] << 8 + buffer[10]) / 10.0;    // 429496729.0 W
         energy_frequency = (float)((buffer[17] << 8) + buffer[18]) / 10.0;                                                                 // 50.0 Hz
         energy_power_factor = (float)((buffer[19] << 8) + buffer[20]) / 100.0;                                                             // 1.00
         energy = (float)((uint32_t)buffer[15] << 24 + (uint32_t)buffer[16] << 16 + (uint32_t)buffer[13] << 8 + buffer[14]);                // 4294967295 Wh
