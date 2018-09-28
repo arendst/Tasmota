@@ -855,6 +855,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      0, 0, 0, 0, 0, 0, // Flash connection
      0, 0, 0, 0, 0
   },
+/*
   { "MagicHome",       // Magic Home (aka Flux-light) (ESP8266)
                        // https://www.aliexpress.com/item/Magic-Home-Mini-RGB-RGBW-Wifi-Controller-For-Led-Strip-Panel-light-Timing-Function-16million-colors/32686853650.html
      0,
@@ -868,6 +869,22 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_USER,        // GPIO13 RGBW LED White (optional - set to PWM4 for Cold White or Warm White)
      GPIO_PWM1,        // GPIO14 RGB LED Red
      0, 0, 0
+  },
+*/
+  { "MagicHome",       // Magic Home (aka Flux-light) (ESP8266) and Arilux LC10 (ESP8285)
+                       // https://www.aliexpress.com/item/Magic-Home-Mini-RGB-RGBW-Wifi-Controller-For-Led-Strip-Panel-light-Timing-Function-16million-colors/32686853650.html
+     0,
+     GPIO_USER,        // GPIO01 Serial RXD and Optional sensor
+     GPIO_LED1_INV,    // GPIO02 Blue onboard LED
+     GPIO_USER,        // GPIO03 Serial TXD and Optional sensor
+     GPIO_ARIRFRCV,    // GPIO04 IR or RF receiver (optional)
+     GPIO_PWM2,        // GPIO05 RGB LED Green
+     0, 0, 0, 0, 0, 0, // Flash connection
+     GPIO_PWM3,        // GPIO12 RGB LED Blue
+     GPIO_USER,        // GPIO13 RGBW LED White (optional - set to PWM4 for Cold White or Warm White as used on Arilux LC10)
+     GPIO_PWM1,        // GPIO14 RGB LED Red
+     GPIO_LED2_INV,    // GPIO15 RF receiver control
+     0, 0
   },
   { "Luani HVIO",      // ESP8266_HVIO
                        // https://luani.de/projekte/esp8266-hvio/
