@@ -320,11 +320,7 @@ const char HTTP_END[] PROGMEM =
   "</body>"
   "</html>";
 
-<<<<<<< HEAD
-const char HTTP_DEVICE_CONTROL[] PROGMEM = "<td style='width:%d%%'><button onclick='la(\"o=%d\");' style='line-height:5.0rem;'>%s%s</button></td>";
-=======
-const char HTTP_DEVICE_CONTROL[] PROGMEM = "<td style='width:%d%%'><button onclick='la(\"?o=%d\");'>%s%s</button></td>";
->>>>>>> development
+const char HTTP_DEVICE_CONTROL[] PROGMEM = "<td style='width:%d%%'><button onclick='la(\"?o=%d\");' style='line-height:5.0rem;'>%s%s</button></td>";
 const char HTTP_DEVICE_STATE[] PROGMEM = "%s<td style='width:%d{c}%s;font-size:%dpx'>%s</div></td>";  // {c} = %'><div style='text-align:center;font-weight:
 
 const char HDR_CTYPE_PLAIN[] PROGMEM = "text/plain";
