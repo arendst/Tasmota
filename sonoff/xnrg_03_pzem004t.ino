@@ -177,7 +177,7 @@ void PzemEvery200ms()
           energy_current = value;
           break;
         case 3:  // Power as 20W
-          energy_power = value;
+          energy_active_power = value;
           break;
         case 4:  // Total energy as 99999Wh
           if (!energy_start || (value < energy_start)) energy_start = value;  // Init after restart and hanlde roll-over if any
@@ -215,7 +215,6 @@ void PzemDrvInit()
 {
   if (!energy_flg) {
     if ((pin[GPIO_PZEM_RX] < 99) && (pin[GPIO_PZEM_TX] < 99)) {  // Any device with a Pzem004T
-      energy_calc_power_factor = 1;                              // Calculate power factor from data
       energy_flg = XNRG_03;
     }
   }

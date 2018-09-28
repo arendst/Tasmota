@@ -448,8 +448,8 @@ void McpParseData(void)
   if (energy_power_on) {  // Powered on
     energy_frequency = (float)mcp_line_frequency / 1000;
     energy_voltage = (float)mcp_voltage_rms / 10;
-    energy_power = (float)mcp_active_power / 100;
-    if (0 == energy_power) {
+    energy_active_power = (float)mcp_active_power / 100;
+    if (0 == energy_active_power) {
       energy_current = 0;
     } else {
       energy_current = (float)mcp_current_rms / 10000;
@@ -457,7 +457,7 @@ void McpParseData(void)
   } else {  // Powered off
     energy_frequency = 0;
     energy_voltage = 0;
-    energy_power = 0;
+    energy_active_power = 0;
     energy_current = 0;
   }
 }
@@ -557,7 +557,6 @@ void McpDrvInit(void)
       mcp_calibrate = 0;
       mcp_timeout = 2;               // Initial wait
       mcp_init = 2;                  // Initial setup steps
-      energy_calc_power_factor = 1;  // Calculate power factor from data
       energy_flg = XNRG_04;
     }
   }

@@ -30,7 +30,7 @@
   --------------------------------------------------------------------------------------------
   Version Date      Action    Description
   --------------------------------------------------------------------------------------------
-  
+
   1.0.0.1 20180925  tests     - all tests are done with 1x sonoff sv, 2x Wemos D1 (not the mini)
                               - 3 different VEMl6070 sensors from 3 different online shops
                               - all the last three test where good and all looks working so far
@@ -43,7 +43,7 @@
                     cleaned   - source code a little bit
                     added     - missing void in function calls: void  name(void)
                     added     - UV Risk level now defined as UV Index, 0.00 based on NASA standard with text behind the value
-                    added     - UV Power level now named as UV Power, used W/m2 because official standards 
+                    added     - UV Power level now named as UV Power, used W/m2 because official standards
                     added     - automatic fill of the uv-risk compare table based on the coefficient calculation
                     added     - suspend and wakeup mode for the uv seonsor
                               - current drain in wake-up-ed mode was around 180uA incl. I2C bus
@@ -51,7 +51,7 @@
                     changed   - 2x the power calculation about some incorrent data sheet values
                     changed   - float to double calculation because a rare effect on uv compare map filling
                               - in that case @andrethomas was a big help too (while(work){output=lot_of_fun};)
-                    added     - USE_VEML6070_RSET 
+                    added     - USE_VEML6070_RSET
                               - in user_config as possible input, different resistor values depending on PCB types
                     added     - USE_VEML6070_SHOW_RAW
                               - in user_config, show or show-NOT the uv raw value
@@ -62,12 +62,12 @@
                     safety    - personal, please read this: http://www.segurancaetrabalho.com.br/download/uv_index_karel_vanicek.pdf
                     next      - possible i will add the calculation for LAT and LONG coordinates for much more precission
                               - show not only the UV Power value in W/m2, possible a @define value to show it as joule value
-                              - add a #define to select how many characters are shown benhind the decimal point for the UV Index     
+                              - add a #define to select how many characters are shown benhind the decimal point for the UV Index
   ---
   1.0.0.0 20180912  started - further development by mike2nl  - https://github.com/mike2nl/Sonoff-Tasmota
                     forked  - from arendst/tasmota            - https://github.com/arendst/Sonoff-Tasmota
                     base    - code base from arendst too
-                    
+
 */
 
 #ifdef USE_I2C
@@ -87,8 +87,8 @@
 #define VEML6070_RSET_DEFAULT       270000          // 270K default resistor value 270000 ohm, range from 220K..1Meg
 #define VEML6070_UV_MAX_INDEX       15              // normal 11, internal on weather laboratories and NASA it's 15 so far the sensor is linear
 #define VEML6070_UV_MAX_DEFAULT     11              // 11 = public default table values
-#define VEML6070_POWER_COEFFCIENT   0.025           // based on calculations from Karel Vanicek and reorder by hand 
-#define VEML6070_TABLE_COEFFCIENT   32.86270591     // calculated by hand with help from a friend of mine, a professor which works in aero space things 
+#define VEML6070_POWER_COEFFCIENT   0.025           // based on calculations from Karel Vanicek and reorder by hand
+#define VEML6070_TABLE_COEFFCIENT   32.86270591     // calculated by hand with help from a friend of mine, a professor which works in aero space things
                                                     // (resistor, differences, power coefficients and official UV index calculations (LAT & LONG will be added later)
 
 /********************************************************************************************/
@@ -110,7 +110,7 @@ void Veml6070Detect(void)
   Wire.beginTransmission(veml6070_address);
   Wire.write((itime << 2) | 0x02);
   uint8_t status   = Wire.endTransmission();
-  
+
   if (!status) {
     veml6070_type  = 1;
     snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, "VEML6070", veml6070_address);
@@ -130,7 +130,7 @@ void Veml6070ModeCmd(boolean mode_cmd)
   } else {
     opmode         = VEML6070_DISABLE;
   }
-  
+
   veml6070_address = VEML6070_ADDR_L;
   Wire.beginTransmission(veml6070_address);
   Wire.write((opmode << 0) | 0x02 | (itime << 2));
@@ -165,7 +165,7 @@ double Veml6070UvRiskLevel(uint16_t uv_level)
 {
   double risk = 0;
   double uv_risk_map[VEML6070_UV_MAX_INDEX] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
-   
+
   // fill the uv-risk compare table based on the coefficient calculation
   for (uint8_t i = 0; i < VEML6070_UV_MAX_INDEX; i++) {
 #ifdef USE_VEML6070_RSET
@@ -179,7 +179,7 @@ double Veml6070UvRiskLevel(uint16_t uv_level)
 #else
     uv_risk_map[i] = ( (VEML6070_RSET_DEFAULT / VEML6070_TABLE_COEFFCIENT) / VEML6070_UV_MAX_DEFAULT) * (i+1);
 #endif
-  }    
+  }
 
   // get the uv-risk level
   if (uv_level < uv_risk_map[VEML6070_UV_MAX_INDEX-1]) {
@@ -223,8 +223,8 @@ void Veml6070Show(boolean json)
 {
   if (veml6070_type) {
     // wakeup the sensor
-    Veml6070ModeCmd(1);       
-    
+    Veml6070ModeCmd(1);
+
     // get values from functions
     uint16_t uvlevel = Veml6070ReadUv();
     double   uvrisk  = Veml6070UvRiskLevel(uvlevel);
@@ -243,7 +243,7 @@ void Veml6070Show(boolean json)
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"VEML6070\":{\"" D_JSON_UV_INDEX "\":%s}"), mqtt_data, str_uvrisk);
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"VEML6070\":{\"" D_JSON_UV_POWER "\":%s}"), mqtt_data, str_uvpower);
 #ifdef USE_DOMOTICZ
-      if (0 == tele_period) { DomoticzSensor(DZ_ILLUMINANCE, uvlevel) };
+      if (0 == tele_period) { DomoticzSensor(DZ_ILLUMINANCE, uvlevel); };
 #endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
     } else {
@@ -270,7 +270,7 @@ void Veml6070Show(boolean json)
       } else {
           // else for Unknown or Out Of Range error = 99
           snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_UV_INDEX7, mqtt_data, str_uvrisk);
-      }   
+      }
       snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_UV_POWER, mqtt_data, str_uvpower);
 #endif  // USE_WEBSERVER
     }

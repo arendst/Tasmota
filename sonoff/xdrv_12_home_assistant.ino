@@ -76,7 +76,7 @@ void HAssDiscoverRelay()
 
   for (int i = 1; i <= MAX_RELAYS; i++) {
     is_light = ((i == devices_present) && (light_type));
-    is_topic_light = Settings.flag.hass_light;
+    is_topic_light = Settings.flag.hass_light || is_light;
 
     mqtt_data[0] = '\0';  // Clear retained message
 
