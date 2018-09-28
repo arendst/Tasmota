@@ -86,20 +86,12 @@ void RtcSettingsSave()
     RtcSettings.valid = RTC_MEM_VALID;
     ESP.rtcUserMemoryWrite(100, (uint32_t*)&RtcSettings, sizeof(RTCMEM));
     rtc_settings_crc = GetRtcSettingsCrc();
-#ifdef DEBUG_THEO
-    AddLog_P(LOG_LEVEL_DEBUG, PSTR("Dump: Save"));
-    RtcSettingsDump();
-#endif  // DEBUG_THEO
   }
 }
 
 void RtcSettingsLoad()
 {
   ESP.rtcUserMemoryRead(100, (uint32_t*)&RtcSettings, sizeof(RTCMEM));  // 0x290
-#ifdef DEBUG_THEO
-  AddLog_P(LOG_LEVEL_DEBUG, PSTR("Dump: Load"));
-  RtcSettingsDump();
-#endif  // DEBUG_THEO
   if (RtcSettings.valid != RTC_MEM_VALID) {
     memset(&RtcSettings, 0, sizeof(RTCMEM));
     RtcSettings.valid = RTC_MEM_VALID;
