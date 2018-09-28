@@ -163,7 +163,15 @@
 #define D_USER "Benutzer"
 #define D_UTC_TIME "UTC"
 #define D_UV_INDEX "UV-Index"
+#define D_UV_INDEX_1 "Niedrig"
+#define D_UV_INDEX_2 "Mittel"
+#define D_UV_INDEX_3 "Hoch"
+#define D_UV_INDEX_4 "Intensiv"
+#define D_UV_INDEX_5 "Gefährlich"
+#define D_UV_INDEX_6 "Schädlich"
+#define D_UV_INDEX_7 "Messwert!"
 #define D_UV_LEVEL "UV-Level"
+#define D_UV_POWER "UV Intensität"
 #define D_VERSION "Version"
 #define D_VOLTAGE "Spannung"
 #define D_WARMLIGHT "warm"
@@ -494,6 +502,7 @@
 #define D_UNIT_CENTIMETER "cm"
 #define D_UNIT_HERTZ "Hz"
 #define D_UNIT_HOUR "h"
+#define D_UNIT_INCREMENTS "inc"
 #define D_UNIT_KILOOHM "kOhm"
 #define D_UNIT_KILOWATTHOUR "kWh"
 #define D_UNIT_LUX "lx"
@@ -514,6 +523,7 @@
 #define D_UNIT_VOLT "V"
 #define D_UNIT_WATT "W"
 #define D_UNIT_WATTHOUR "Wh"
+#define D_UNIT_WATT_METER_QUADRAT "W/m²"
 
 // Log message prefix
 #define D_LOG_APPLICATION "APP: "  // Application
