@@ -560,6 +560,8 @@ void EnergyShow(boolean json)
 
   bool show_energy_period = (0 == tele_period);
 
+  float power_factor = energy_power_factor;
+
   if (!energy_type_dc) {
     float apparent_power = energy_apparent_power;
     if (isnan(apparent_power)) {
@@ -569,7 +571,6 @@ void EnergyShow(boolean json)
       energy_active_power = apparent_power;
     }
 
-    float power_factor = energy_power_factor;
     if (isnan(power_factor)) {
       power_factor = (energy_active_power && apparent_power) ? energy_active_power / apparent_power : 0;
       if (power_factor > 1) power_factor = 1;
