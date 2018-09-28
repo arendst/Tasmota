@@ -494,6 +494,32 @@ double FastPrecisePow(double a, double b)
   return r * u.d;
 }
 
+uint32_t SqrtInt(uint32_t num)
+{
+  if (num <= 1) {
+    return num;
+  }
+
+  uint32_t x = num / 2;
+  uint32_t y;
+  do {
+    y = (x + num / x) / 2;
+    if (y >= x) {
+      return x;
+    }
+    x = y;
+  } while (true);
+}
+
+uint32_t RoundSqrtInt(uint32_t num)
+{
+  uint32_t s = SqrtInt(4 * num);
+  if (s & 1) {
+    s++;
+  }
+  return s / 2;
+}
+
 char* GetTextIndexed(char* destination, size_t destination_size, uint16_t index, const char* haystack)
 {
   // Returns empty string if not found

@@ -95,14 +95,14 @@ void CseReceived()
     if (adjustement & 0x10) {  // Power valid
       cse_power_invalid = 0;
       if ((header & 0xF2) == 0xF2) {  // Power cycle exceeds range
-        energy_power = 0;
+        energy_active_power = 0;
       } else {
         if (0 == power_cycle_first) { power_cycle_first = power_cycle; }  // Skip first incomplete power_cycle
         if (power_cycle_first != power_cycle) {
           power_cycle_first = -1;
-          energy_power = (float)(Settings.energy_power_calibration * CSE_PREF) / (float)power_cycle;
+          energy_active_power = (float)(Settings.energy_power_calibration * CSE_PREF) / (float)power_cycle;
         } else {
-          energy_power = 0;
+          energy_active_power = 0;
         }
       }
     } else {
@@ -110,11 +110,11 @@ void CseReceived()
         cse_power_invalid++;
       } else {
         power_cycle_first = 0;
-        energy_power = 0;  // Powered on but no load
+        energy_active_power = 0;  // Powered on but no load
       }
     }
     if (adjustement & 0x20) {  // Current valid
-      if (0 == energy_power) {
+      if (0 == energy_active_power) {
         energy_current = 0;
       } else {
         energy_current = (float)Settings.energy_current_calibration / (float)current_cycle;
@@ -123,7 +123,7 @@ void CseReceived()
   } else {  // Powered off
     power_cycle_first = 0;
     energy_voltage = 0;
-    energy_power = 0;
+    energy_active_power = 0;
     energy_current = 0;
   }
 }
@@ -180,7 +180,7 @@ void CseEverySecond()
     } else {
       cf_frequency = cf_pulses - cf_pulses_last_time;
     }
-    if (cf_frequency && energy_power)  {
+    if (cf_frequency && energy_active_power)  {
       cf_pulses_last_time = cf_pulses;
       energy_kWhtoday_delta += (cf_frequency * Settings.energy_power_calibration) / 36;
       EnergyUpdateToday();
@@ -194,7 +194,6 @@ void CseDrvInit()
     if ((SONOFF_S31 == Settings.module) || (SONOFF_POW_R2 == Settings.module)) {     // Sonoff S31 or Sonoff Pow R2
       baudrate = 4800;
       serial_config = SERIAL_8E1;
-      energy_calc_power_factor = 1;  // Calculate power factor from data
       energy_flg = XNRG_02;
     }
   }
