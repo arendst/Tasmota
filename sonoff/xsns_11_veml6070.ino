@@ -133,8 +133,8 @@ void Veml6070Detect(void)
   // action on status
   if (!status) {
     veml6070_type      = 1;
-	  uint8_t veml_model = 0;
-	  GetTextIndexed(veml6070_name, sizeof(veml6070_name), veml_model, kVemlTypes);
+    uint8_t veml_model = 0;
+    GetTextIndexed(veml6070_name, sizeof(veml6070_name), veml_model, kVemlTypes);
     snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, "VEML6070", VEML6070_ADDR_L);
     AddLog(LOG_LEVEL_DEBUG);
   }
@@ -168,13 +168,13 @@ void Veml6070EverySecond(void)
 {
   // all = 10..15[ms]
   if (11 == (uptime %100)) {
-	  Veml6070ModeCmd(1);				                // on = 1[ms], wakeup the UV sensor
+    Veml6070ModeCmd(1);			      // on = 1[ms], wakeup the UV sensor
     Veml6070Detect();                         // 1[ms], check for sensor and init with IT time
     Veml6070ModeCmd(0);                       // off = 5[ms], suspend the UV sensor
   } else {
-	  Veml6070ModeCmd(1);				                // 1[ms], wakeup the UV sensor
-	  uvlevel = Veml6070ReadUv();               // 1..2[ms], get UV raw values
-	  uvrisk  = Veml6070UvRiskLevel(uvlevel);	  // 0..1[ms], get UV risk level
+    Veml6070ModeCmd(1);			      // 1[ms], wakeup the UV sensor
+    uvlevel = Veml6070ReadUv();               // 1..2[ms], get UV raw values
+    uvrisk  = Veml6070UvRiskLevel(uvlevel);   // 0..1[ms], get UV risk level
     uvpower = Veml6070UvPower(uvrisk);        // 2[ms], get UV power in W/m2
     Veml6070ModeCmd(0);                       // off = 5[ms], suspend the UV sensor
   }
@@ -312,9 +312,9 @@ boolean Xsns11(byte function)
     switch (function) {
       case FUNC_INIT:
         Veml6070Detect();         // 1[ms], detect and init the sensor
-		    Veml6070UvTableInit();    // 1[ms], initalize the UV compare table only once
+	Veml6070UvTableInit();    // 1[ms], initalize the UV compare table only once
         break;
-	    case FUNC_EVERY_SECOND:
+      case FUNC_EVERY_SECOND:
         Veml6070EverySecond();    // 10..15[ms], tested with OLED display, do all the actions needed to get all sensor values
         break;
       case FUNC_JSON_APPEND:
