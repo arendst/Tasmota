@@ -131,6 +131,7 @@
 #define D_JSON_UPTIME "Uptime"
 #define D_JSON_UTC_TIME "UTC"
 #define D_JSON_UV_INDEX "UvIndex"
+#define D_JSON_UV_INDEX_TEXT "UvIndexText"
 #define D_JSON_UV_LEVEL "UvLevel"
 #define D_JSON_UV_POWER "UvPower"
 #define D_JSON_VCC "Vcc"
