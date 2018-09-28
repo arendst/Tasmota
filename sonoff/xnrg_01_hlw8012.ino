@@ -111,9 +111,9 @@ void HlwEvery200ms()
 
   if (hlw_cf_pulse_length && energy_power_on && !hlw_load_off) {
     hlw_w = (hlw_power_ratio * Settings.energy_power_calibration) / hlw_cf_pulse_length;
-    energy_power = (float)hlw_w / 10;
+    energy_active_power = (float)hlw_w / 10;
   } else {
-    energy_power = 0;
+    energy_active_power = 0;
   }
 
   hlw_cf1_timer++;
@@ -142,7 +142,7 @@ void HlwEvery200ms()
       hlw_cf1_current_pulse_length = hlw_cf1_pulse_length;
       hlw_cf1_current_max_pulse_counter = hlw_cf1_pulse_counter;
 
-      if (hlw_cf1_current_pulse_length && energy_power) {   // No current if no power being consumed
+      if (hlw_cf1_current_pulse_length && energy_active_power) {   // No current if no power being consumed
         hlw_i = (hlw_current_ratio * Settings.energy_current_calibration) / hlw_cf1_current_pulse_length;
         energy_current = (float)hlw_i / 1000;
       } else {
@@ -217,7 +217,6 @@ void HlwDrvInit()
 {
   if (!energy_flg) {
     if ((pin[GPIO_HLW_SEL] < 99) && (pin[GPIO_HLW_CF1] < 99) && (pin[GPIO_HLW_CF] < 99)) {  // Sonoff Pow or any HLW8012 based device
-      energy_calc_power_factor = 1;  // Calculate power factor from data
       energy_flg = XNRG_01;
     }
   }
@@ -227,22 +226,19 @@ boolean HlwCommand()
 {
   boolean serviced = true;
 
-  if ((CMND_POWERCAL == energy_command_code) || (CMND_VOLTAGECAL == energy_command_code) || (CMND_CURRENTCAL == energy_command_code)) {
-
-  }
-  else if (CMND_POWERSET == energy_command_code) {
-    if ((XdrvMailbox.payload > 0) && (XdrvMailbox.payload < 3601) && hlw_cf_pulse_length) {
-      Settings.energy_power_calibration = (XdrvMailbox.payload * 10 * hlw_cf_pulse_length) / hlw_power_ratio;
+  if (CMND_POWERSET == energy_command_code) {
+    if (XdrvMailbox.data_len && hlw_cf_pulse_length) {
+      Settings.energy_power_calibration = ((unsigned long)(CharToDouble(XdrvMailbox.data) * 10) * hlw_cf_pulse_length) / hlw_power_ratio;
     }
   }
   else if (CMND_VOLTAGESET == energy_command_code) {
-    if ((XdrvMailbox.payload > 0) && (XdrvMailbox.payload < 501) && hlw_cf1_voltage_pulse_length) {
-      Settings.energy_voltage_calibration = (XdrvMailbox.payload * 10 * hlw_cf1_voltage_pulse_length) / hlw_voltage_ratio;
+    if (XdrvMailbox.data_len && hlw_cf1_voltage_pulse_length) {
+      Settings.energy_voltage_calibration = ((unsigned long)(CharToDouble(XdrvMailbox.data) * 10) * hlw_cf1_voltage_pulse_length) / hlw_voltage_ratio;
     }
   }
   else if (CMND_CURRENTSET == energy_command_code) {
-    if ((XdrvMailbox.payload > 0) && (XdrvMailbox.payload < 16001) && hlw_cf1_current_pulse_length) {
-      Settings.energy_current_calibration = (XdrvMailbox.payload * hlw_cf1_current_pulse_length) / hlw_current_ratio;
+    if (XdrvMailbox.data_len && hlw_cf1_current_pulse_length) {
+      Settings.energy_current_calibration = ((unsigned long)(CharToDouble(XdrvMailbox.data)) * hlw_cf1_current_pulse_length) / hlw_current_ratio;
     }
   }
   else serviced = false;  // Unknown command

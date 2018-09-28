@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v6.1.1.7
+ * Updated until v6.2.1.7
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -65,7 +65,7 @@
 #define D_BY "par"                    // Written by me
 #define D_BYTES "Bytes"
 #define D_CELSIUS "Celsius"
-#define D_CHANNEL "Channel"
+#define D_CHANNEL "Canal"
 #define D_CO2 "Dioxyde de carbone"
 #define D_CODE "code"                // Button code
 #define D_COLDLIGHT "Froid"
@@ -163,7 +163,15 @@
 #define D_USER "Utilisateur"
 #define D_UTC_TIME "UTC"
 #define D_UV_INDEX "Indice UV"
+#define D_UV_INDEX_1 "Faible"
+#define D_UV_INDEX_2 "Modéré"
+#define D_UV_INDEX_3 "Élevé"
+#define D_UV_INDEX_4 "Très élevé"
+#define D_UV_INDEX_5 "Brûlure niv.1/2"
+#define D_UV_INDEX_6 "Brûlure niv.3"
+#define D_UV_INDEX_7 "Hors échelle"
 #define D_UV_LEVEL "Niveau UV"
+#define D_UV_POWER "Puissance UV"
 #define D_VERSION "Version"
 #define D_VOLTAGE "Tension"
 #define D_WARMLIGHT "Chaud"
@@ -176,7 +184,7 @@
 #define D_SERIAL_LOGGING_DISABLED "Journalisation série désactivée"
 #define D_SYSLOG_LOGGING_REENABLED "Jounalisation syslog réactivée"
 
-#define D_SET_BAUDRATE_TO "Définir baudrate à"
+#define D_SET_BAUDRATE_TO "Définir le débit à"
 #define D_RECEIVED_TOPIC "Topic reçu"  // Terme MQTT
 #define D_DATA_SIZE "Taille données"
 #define D_ANALOG_INPUT "Analogique"
@@ -494,6 +502,7 @@
 #define D_UNIT_CENTIMETER "cm"
 #define D_UNIT_HERTZ "Hz"
 #define D_UNIT_HOUR "h"
+#define D_UNIT_INCREMENTS "inc"
 #define D_UNIT_KILOOHM "kΩ"
 #define D_UNIT_KILOWATTHOUR "kWh"
 #define D_UNIT_LUX "lx"
@@ -514,6 +523,7 @@
 #define D_UNIT_VOLT "V"
 #define D_UNIT_WATT "W"
 #define D_UNIT_WATTHOUR "Wh"
+#define D_UNIT_WATT_METER_QUADRAT "W/m²"
 
 // Log message prefix
 #define D_LOG_APPLICATION "APP: "  // Application

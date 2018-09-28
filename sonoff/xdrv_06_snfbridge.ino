@@ -199,21 +199,6 @@ uint8_t SnfBrUpdateInit()
 
 /********************************************************************************************/
 
-void SonoffBridgeSendRaw(char *codes, int size)
-{
-  char *p;
-  char stemp[3];
-  uint8_t code;
-
-  while (size > 0) {
-    snprintf(stemp, sizeof(stemp), codes);
-    code = strtol(stemp, &p, 16);
-    Serial.write(code);
-    size -= 2;
-    codes += 2;
-  }
-}
-
 void SonoffBridgeReceivedRaw()
 {
   // Decoding according to https://github.com/Portisch/RF-Bridge-EFM8BB1
@@ -552,11 +537,11 @@ boolean SonoffBridgeCommand()
           break;
         case 192:  // 0xC0 - Beep
           char beep[] = "AAC000C055";
-          SonoffBridgeSendRaw(beep, sizeof(beep));
+          SerialSendRaw(beep, sizeof(beep));
           break;
         }
       } else {
-        SonoffBridgeSendRaw(XdrvMailbox.data, XdrvMailbox.data_len);
+        SerialSendRaw(XdrvMailbox.data, XdrvMailbox.data_len);
         sonoff_bridge_receive_raw_flag = 1;
       }
     }

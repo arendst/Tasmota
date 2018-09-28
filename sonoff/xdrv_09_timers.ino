@@ -676,10 +676,8 @@ const char S_CONFIGURE_TIMER[] PROGMEM = D_CONFIGURE_TIMER;
 
 void HandleTimerConfiguration()
 {
-  if (HTTP_USER == webserver_state) {
-    HandleRoot();
-    return;
-  }
+  if (HttpUser()) { return; }
+  if (!WebAuthenticate()) { return WebServer->requestAuthentication(); }
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_CONFIGURE_TIMER);
 
   String page = FPSTR(HTTP_HEAD);
