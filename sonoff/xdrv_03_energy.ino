@@ -632,7 +632,7 @@ void EnergyShow(boolean json)
       KnxSensor(KNX_ENERGY_VOLTAGE, energy_voltage);
       KnxSensor(KNX_ENERGY_CURRENT, energy_current);
       KnxSensor(KNX_ENERGY_POWER, energy_active_power);
-      if (!energy_type_dc) { KnxSensor(KNX_ENERGY_POWERFACTOR, power_factor); }
+      if (!energy_type_dc) { KnxSensor(KNX_ENERGY_POWERFACTOR, energy_power_factor); }
       KnxSensor(KNX_ENERGY_DAILY, energy_daily);
       KnxSensor(KNX_ENERGY_TOTAL, energy_total);
       KnxSensor(KNX_ENERGY_START, energy_start);
