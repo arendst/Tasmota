@@ -2,7 +2,11 @@
   i18n.h - internationalization for Sonoff-Tasmota
 
   Copyright (C) 2018  Theo Arends
+<<<<<<< HEAD
   UPDATED LVA
+=======
+
+>>>>>>> upstream/development
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
   the Free Software Foundation, either version 3 of the License, or
@@ -466,10 +470,17 @@ const char S_JSON_COMMAND_INDEX_SVALUE[] PROGMEM =            "{\"%s%d\":\"%s\"}
 const char S_JSON_COMMAND_INDEX_ASTERIX[] PROGMEM =           "{\"%s%d\":\"" D_ASTERIX "\"}";
 const char S_JSON_COMMAND_INDEX_SVALUE_SVALUE[] PROGMEM =     "{\"%s%d\":\"%s%s\"}";
 const char S_JSON_COMMAND_INDEX_NVALUE_ACTIVE_NVALUE[] PROGMEM = "{\"%s%d\":\"%d (" D_JSON_ACTIVE " %d)\"}";
+<<<<<<< HEAD
 
 const char S_JSON_SENSOR_INDEX_NVALUE[] PROGMEM =            "{\"" D_CMND_SENSOR "%d\":%d}";
 const char S_JSON_SENSOR_INDEX_SVALUE[] PROGMEM =            "{\"" D_CMND_SENSOR "%d\":\"%s\"}";
 
+=======
+
+const char S_JSON_SENSOR_INDEX_NVALUE[] PROGMEM =            "{\"" D_CMND_SENSOR "%d\":%d}";
+const char S_JSON_SENSOR_INDEX_SVALUE[] PROGMEM =            "{\"" D_CMND_SENSOR "%d\":\"%s\"}";
+
+>>>>>>> upstream/development
 const char S_JSON_DRIVER_INDEX_NVALUE[] PROGMEM =            "{\"" D_CMND_DRIVER "%d\":%d}";
 const char S_JSON_DRIVER_INDEX_SVALUE[] PROGMEM =            "{\"" D_CMND_DRIVER "%d\":\"%s\"}";
 
@@ -529,17 +540,21 @@ const char kOptionBlinkOff[] PROGMEM = "BLINKOFF|" D_BLINKOFF ;
 // <- LVA
 #ifndef _LVA
 const char HTTP_SNS_TEMP[] PROGMEM = "%s{s}%s " D_TEMPERATURE "{m}%s&deg;%c{e}";                             // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
+<<<<<<< HEAD
 #else
   const char HTTP_SNS_TEMP[] PROGMEM = "%s{s}%s temp {m}%s&deg;%c{e}";                             // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
   #endif
 //  -> LVA
 
+=======
+>>>>>>> upstream/development
 const char HTTP_SNS_HUM[] PROGMEM = "%s{s}%s " D_HUMIDITY "{m}%s%%{e}";                                      // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
 const char HTTP_SNS_PRESSURE[] PROGMEM = "%s{s}%s " D_PRESSURE "{m}%s " D_UNIT_PRESSURE "{e}";               // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
 const char HTTP_SNS_SEAPRESSURE[] PROGMEM = "%s{s}%s " D_PRESSUREATSEALEVEL "{m}%s " D_UNIT_PRESSURE "{e}";  // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
 #ifndef _LVA // <- LVA
 const char HTTP_SNS_ANALOG[] PROGMEM = "%s{s}%s " D_ANALOG_INPUT "%d{m}%d{e}";                               // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
 
+<<<<<<< HEAD
 #else
   const char HTTP_SNS_ANALOG[] PROGMEM = "%s{s}%s A%d{m}%d{e}";                               // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
 #endif //  -> LVA
@@ -552,6 +567,10 @@ const char HTTP_SNS_CO2[] PROGMEM = "%s{s}%s " D_CO2 "{m}%d " D_UNIT_PARTS_PER_M
 //#endif
 //  -> LVA
 
+=======
+#if defined(USE_MHZ19) || defined(USE_SENSEAIR)
+const char HTTP_SNS_CO2[] PROGMEM = "%s{s}%s " D_CO2 "{m}%d " D_UNIT_PARTS_PER_MILLION "{e}";                // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
+>>>>>>> upstream/development
 #endif  // USE_WEBSERVER
 
 const char S_MAIN_MENU[] PROGMEM = D_MAIN_MENU;

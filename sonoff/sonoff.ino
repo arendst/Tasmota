@@ -1,6 +1,10 @@
 /*
   sonoff.ino - Sonoff-Tasmota firmware for iTead Sonoff, Wemos and NodeMCU hardware
+<<<<<<< HEAD
 UPDATED LVA
+=======
+
+>>>>>>> upstream/development
   Copyright (C) 2018  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
@@ -36,19 +40,27 @@ UPDATED LVA
 #include "sonoff_post.h"                    // Configuration overrides for all previous includes
 #include "i18n.h"                           // Language support configured by user_config.h
 #include "sonoff_template.h"                // Hardware configuration
+<<<<<<< HEAD
 // <-- LVA
 // включаем -D_LVA
 #ifdef _LVA
   #include "lva_post.h"
 #endif
 // LVA -->
+=======
+>>>>>>> upstream/development
 
 #ifdef ARDUINO_ESP8266_RELEASE_2_4_0
 #include "lwip/init.h"
 #if LWIP_VERSION_MAJOR != 1
   #error Please use stable lwIP v1.4
+<<<<<<< HEAD
 #endif
 #endif
+=======
+#endif
+#endif
+>>>>>>> upstream/development
 
 // Libraries
 #include <Ticker.h>                         // RTC, Energy, OSWatch
@@ -248,10 +260,17 @@ char* GetOtaUrl(char *otaurl, size_t otaurl_size)
 {
   if (strstr(Settings.ota_url, "%04d") != NULL) {     // OTA url contains placeholder for chip ID
     snprintf(otaurl, otaurl_size, Settings.ota_url, ESP.getChipId() & 0x1fff);
+<<<<<<< HEAD
   }
   else if (strstr(Settings.ota_url, "%d") != NULL) {  // OTA url contains placeholder for chip ID
     snprintf_P(otaurl, otaurl_size, Settings.ota_url, ESP.getChipId());
   }
+=======
+  }
+  else if (strstr(Settings.ota_url, "%d") != NULL) {  // OTA url contains placeholder for chip ID
+    snprintf_P(otaurl, otaurl_size, Settings.ota_url, ESP.getChipId());
+  }
+>>>>>>> upstream/development
   else {
     snprintf(otaurl, otaurl_size, Settings.ota_url);
   }
@@ -460,12 +479,15 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
 
   if (topicBuf[0] != '/') { ShowSource(SRC_MQTT); }
 
+<<<<<<< HEAD
   //-------------------------------------------------
   // LVA
   #ifdef _LVA_DEBUG
     Serial.println("run MqttDataCallback()");
   #endif
 
+=======
+>>>>>>> upstream/development
   snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_RESULT D_RECEIVED_TOPIC " %s, " D_DATA_SIZE " %d, " D_DATA " %s"),
     topicBuf, data_len, dataBuf);
   AddLog(LOG_LEVEL_DEBUG_MORE);
@@ -525,6 +547,7 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
 //    AddLog(LOG_LEVEL_DEBUG);
 
     int command_code = GetCommandCode(command, sizeof(command), type, kTasmotaCommands);
+<<<<<<< HEAD
 
     #ifdef _LVA_DEBUG
     // LVA debug
@@ -532,6 +555,8 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
       // что такое command_code ???
     #endif
 
+=======
+>>>>>>> upstream/development
     if (-1 == command_code) {
       if (!XdrvCommand(grpflg, type, index, dataBuf, data_len, payload, payload16)) {
         type = NULL;  // Unknown command
@@ -592,10 +617,17 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
           payload = GetFanspeed() +1;
           if (payload > 3) { payload = 0; }
         }
+<<<<<<< HEAD
       }
       if ((payload >= 0) && (payload <= 3) && (payload != GetFanspeed())) {
         SetFanspeed(payload);
       }
+=======
+      }
+      if ((payload >= 0) && (payload <= 3) && (payload != GetFanspeed())) {
+        SetFanspeed(payload);
+      }
+>>>>>>> upstream/development
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, GetFanspeed());
     }
     else if (CMND_STATUS == command_code) {
@@ -764,6 +796,7 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
               HAssDiscovery(1);  // hass_discovery or hass_light
             }
 #endif  // USE_HOME_ASSISTANT
+<<<<<<< HEAD
           }
         }
         else if (1 == ptype) {   // SetOption50 .. 81
@@ -771,6 +804,15 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
             bitWrite(Settings.flag3.data, pindex, payload);
           }
         }
+=======
+          }
+        }
+        else if (1 == ptype) {   // SetOption50 .. 81
+          if (payload <= 1) {
+            bitWrite(Settings.flag3.data, pindex, payload);
+          }
+        }
+>>>>>>> upstream/development
         else {                   // SetOption32 .. 49
 /*
           switch (pindex) {
