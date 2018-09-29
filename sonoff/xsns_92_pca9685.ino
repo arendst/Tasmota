@@ -12,7 +12,7 @@ version 0.1
 
 
 #ifdef USE_I2C
-#ifdef USE_PCA9685
+#ifdef USE_PCA9685_LVA
 #define XSNS_92 92
 
 #include <Adafruit_PWMServoDriver.h>
@@ -219,11 +219,5 @@ boolean Xsns92(byte function) {
 
 
 
-
-
-
-
-
-
-#endif  // USE_PCA9685
+#endif  // USE_PCA9685_LVA
 #endif  // USE_I2C

@@ -50,9 +50,6 @@ UPDATED LVA
 #endif
 #endif
 
-
-
-
 // Libraries
 #include <Ticker.h>                         // RTC, Energy, OSWatch
 #include <ESP8266WiFi.h>                    // MQTT, Ota, WifiManager
@@ -82,8 +79,6 @@ UPDATED LVA
 
 // Structs
 #include "settings.h"
-
-
 
 enum TasmotaCommands {
   CMND_BACKLOG, CMND_DELAY, CMND_POWER, CMND_FANSPEED, CMND_STATUS, CMND_STATE, CMND_POWERONSTATE, CMND_PULSETIME,

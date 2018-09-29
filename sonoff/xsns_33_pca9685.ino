@@ -1,6 +1,6 @@
 /*
   xdrv_15_pca9685.ino - Support for I2C PCA9685 12bit 16 pin hardware PWM driver
-
+LVA UPDATING
   Copyright (C) 2018  Andre Thomas and Theo Arends
 
   This program is free software: you can redistribute it and/or modify
@@ -20,14 +20,20 @@
 #ifdef USE_I2C
 #ifdef USE_PCA9685
 
-#define XDRV_15                     15
+
+#define XSNS_33                      33
 
 #define PCA9685_REG_MODE1           0x00
 #define PCA9685_REG_LED0_ON_L       0x06
+#define PCA9685_REG_LED0_OFF_L      0x08
 #define PCA9685_REG_PRE_SCALE       0xFE
 
+#ifndef PCA9685_DEFAULT_FREQ
+  #define PCA9685_DEFAULT_FREQ 100   // From 24 up to 1526
+#endif
+
 uint8_t pca9685_detected = 0;
-uint16_t pca9685_freq = 50;
+uint16_t pca9685_freq = PCA9685_DEFAULT_FREQ;
 
 void PCA9685_Detect(void)
 {
@@ -51,7 +57,7 @@ void PCA9685_Detect(void)
 void PCA9685_Reset(void)
 {
   I2cWrite8(USE_PCA9685_ADDR, PCA9685_REG_MODE1, 0x80);
-  PCA9685_SetPWMfreq(50);
+  PCA9685_SetPWMfreq(pca9685_freq);
   for (uint8_t pin=0;pin<16;pin++) {
     PCA9685_SetPWM(pin,0,false);    
   }
@@ -151,7 +157,56 @@ bool PCA9685_Command(void)
   return serviced;
 }
 
-boolean Xdrv15(byte function)
+uint16_t PCA9685_ReadPWM(uint8_t pin)
+{
+  uint16_t temp = I2cRead16LE(USE_PCA9685_ADDR, PCA9685_REG_LED0_OFF_L + 4 * pin);
+  if (0== temp) 
+  {
+    temp = I2cRead16LE(USE_PCA9685_ADDR, PCA9685_REG_LED0_ON_L + 4 * pin);
+  }
+  return temp;
+}
+
+void PCA9685_Show(boolean json)
+{
+  if (json)
+  {
+    char stemp[10];
+    byte dsxflg = 0;
+    for (byte pin = 0; pin < 16; pin++)
+    {
+      if (!dsxflg)
+      {
+        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"PCA9685\":{"), mqtt_data); //header
+        stemp[0] = '\0';
+      }
+      dsxflg++;
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s%s\"P%d\":%d"), mqtt_data, stemp, pin, PCA9685_ReadPWM(pin)); //body
+      strlcpy(stemp, ",", sizeof(stemp));
+      }
+    }
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}"), mqtt_data); //tail
+}
+
+#ifdef USE_PCA9685_DISPLAYOUTPUT
+const char HTTP_SNS_PCA9685_OUTPUT[] PROGMEM = "%s{s}PCA9685 PWM%d{m}%d{e}"; // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
+
+void PCA9685_UpdateWebData(void)
+{
+  uint16_t PWM_value=0;
+  for (uint8_t pin = 0; pin < 16; pin++)
+  {
+    PWM_value = PCA9685_ReadPWM(pin);
+    snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_PCA9685_OUTPUT, mqtt_data, pin, PWM_value);
+  }
+}
+#endif // USE_PCA9685_DISPLAYOUTPUT
+
+/*********************************************************************************************\
+   Interface
+\*********************************************************************************************/
+
+boolean Xsns33(byte function)
 {
   boolean result = false;
 
@@ -165,14 +220,21 @@ boolean Xdrv15(byte function)
       case FUNC_EVERY_50_MSECOND:
         break;
       case FUNC_JSON_APPEND:
+        PCA9685_Show(1);
         break;
       case FUNC_COMMAND:
-        if (XDRV_15 == XdrvMailbox.index) {
+        if (XSNS_33 == XdrvMailbox.index)
+        {
           PCA9685_Command();
         }
         break;
+#ifdef USE_WEBSERVER
+#ifdef USE_PCA9685_DISPLAYOUTPUT
       case FUNC_WEB_APPEND:
+        PCA9685_UpdateWebData();
         break;
+#endif // USE_PCA9685_DISPLAYOUTPUT
+#endif // USE_WEBSERVER
       default:
         break;
     }

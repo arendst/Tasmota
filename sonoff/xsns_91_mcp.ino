@@ -127,7 +127,12 @@ void MCP23017Detect()
 
           String stringOne =  String(addresses, HEX);
           mcp_addr[mcp_devices++]=addresses-32;
+          #ifdef _LVA_DEBUG
           //Serial.print("found Address: 0x"); Serial.print(stringOne); Serial.print("\tID: "); Serial.println(mcp_addr[mcp_devices]);
+          snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, "MCP23017", aa);
+          AddLog(LOG_LEVEL_INFO);
+
+#endif
           snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT,  D_MCP23017, addresses);
           //AddLog(LOG_LEVEL_DEBUG);
           AddLog(LOG_LEVEL_INFO);
@@ -141,10 +146,13 @@ void MCP23017Detect()
       Serial.print("done mcp Scanning.\t Found devices: ");
       Serial.println(mcp_devices);
   }
-  delay(3000);
+  delay(30);
   if (mcp_devices > 0) {
     Adafruit_MCP23017 mcp0;
     mcp0.begin(mcp_addr[aa++]);
+    snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, D_MCP23017, aa-1);
+    //AddLog(LOG_LEVEL_DEBUG);
+    AddLog(LOG_LEVEL_INFO);
   }
   // if (mcp_devices > 1) {
   //   Adafruit_MCP23017 mcp1;
@@ -198,7 +206,7 @@ void MCP23017Init(){
         mcp0.digitalWrite(_bit, LOW);
       }
 #ifdef _LVA_DEBUG
-      snprintf_P(log_data, sizeof(log_data), PSTR(D_MCP23017 " id:%d" D_PORT ": %d " D_OUTPUT), d, _bit);
+      snprintf_P(log_data, sizeof(log_data), PSTR(D_MCP23017 " id:%d " D_PORT ":%d " D_OUTPUT), d, _bit);
       AddLog(LOG_LEVEL_INFO);
 #endif
 
@@ -208,7 +216,7 @@ void MCP23017Init(){
       mcp0.pullUp(_bit, HIGH);
       mcp0.setupInterruptPin(_bit, CHANGE); // разрешаем прерывание по изменению статуса
       //Serial.println("\tSet: INPUT");//; Serial.println(mcp_pins[0]&1<<_bit);
-      snprintf_P(log_data, sizeof(log_data), PSTR(D_MCP23017 " id:%d" D_PORT ": %d " D_INPUT), d, _bit);
+      snprintf_P(log_data, sizeof(log_data), PSTR(D_MCP23017 " id:%d " D_PORT ":%d " D_INPUT), d, _bit);
       AddLog(LOG_LEVEL_INFO);
 
     }

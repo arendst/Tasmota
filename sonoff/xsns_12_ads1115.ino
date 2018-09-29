@@ -186,8 +186,10 @@ void Ads1115Show(boolean json)
     for (byte i = 0; i < 4; i++) {
       int16_t adc_value = Ads1115GetConversion(i);
 
-      if (json) {
-        if (!dsxflg  ) {
+      if (json) 
+      {
+        if (!dsxflg  ) 
+        {
           snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"ADS1115\":{"), mqtt_data);
           stemp[0] = '\0';
         }
@@ -199,7 +201,9 @@ void Ads1115Show(boolean json)
 #endif //  -> LVA
         strlcpy(stemp, ",", sizeof(stemp));
 #ifdef USE_WEBSERVER
-      } else {
+      } 
+      else
+      {
   #ifndef _LVA // <- LVA
         snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_ANALOG, mqtt_data, "ADS1115", i, adc_value);
   #else
