@@ -86,7 +86,8 @@ PROGRAM: [====      ]  35.6% (used 373079 bytes from 1048576 bytes)
 // PWM драйвер, над овключать обе опции
 #define USE_PCA9685
 #define USE_PCA9685_ADDR 0x41 // от 40 до 47 у меня на тесте распаянно на 41
-
+#define PCA9685_DEFAULT_FREQ 100
+#define USE_PCA9685_DISPLAYOUTPUT
 
 #endif //ROOF
 
