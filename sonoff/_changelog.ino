@@ -2,6 +2,7 @@
  * Add Apparent Power and Reactive Power to Energy Monitoring devices (#251)
  * Add RF Receiver control to module MagicHome to be used on Arilux LC10 (#3792)
  * Fix I2CScan invalid JSON error message (#3925)
+ * Fix invalid configuration restores and decode_config.py crc error when savedata = 0 (#3918) 
  *
  * 6.2.1.8 20180926
  * Change status JSON message providing more switch and retain information
