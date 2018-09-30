@@ -26,6 +26,10 @@
 #define PCA9685_REG_LED0_ON_L       0x06
 #define PCA9685_REG_PRE_SCALE       0xFE
 
+#ifndef USE_PCA9685_FREQ
+  #define USE_PCA9685_FREQ 50
+#endif
+
 uint8_t pca9685_detected = 0;
 uint16_t pca9685_freq = USE_PCA9685_FREQ;
 
