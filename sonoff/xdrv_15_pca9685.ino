@@ -27,7 +27,7 @@
 #define PCA9685_REG_PRE_SCALE       0xFE
 
 uint8_t pca9685_detected = 0;
-uint16_t pca9685_freq = 50;
+uint16_t pca9685_freq = USE_PCA9685_FREQ;
 
 void PCA9685_Detect(void)
 {
@@ -51,7 +51,7 @@ void PCA9685_Detect(void)
 void PCA9685_Reset(void)
 {
   I2cWrite8(USE_PCA9685_ADDR, PCA9685_REG_MODE1, 0x80);
-  PCA9685_SetPWMfreq(50);
+  PCA9685_SetPWMfreq(USE_PCA9685_FREQ);
   for (uint8_t pin=0;pin<16;pin++) {
     PCA9685_SetPWM(pin,0,false);    
   }
@@ -63,9 +63,13 @@ void PCA9685_SetPWMfreq(double freq) {
  7.3.5 from datasheet
  prescale value = round(25000000/(4096*freq))-1;
  */
-  pca9685_freq=freq;
-  uint8_t pre_scale_osc = round(25000000/(4096*freq))-1;
-  if (1526 == freq) pre_scale_osc=0xFF; // force setting for 24hz because rounding causes 1526 to be 254
+  if (freq > 23 && freq < 1527) {
+   pca9685_freq=freq;
+  } else {
+   pca9685_freq=50;
+  }
+  uint8_t pre_scale_osc = round(25000000/(4096*pca9685_freq))-1;
+  if (1526 == pca9685_freq) pre_scale_osc=0xFF; // force setting for 24hz because rounding causes 1526 to be 254
   uint8_t current_mode1 = I2cRead8(USE_PCA9685_ADDR, PCA9685_REG_MODE1); // read current value of MODE1 register
   uint8_t sleep_mode1 = (current_mode1&0x7F) | 0x10; // Determine register value to put PCA to sleep
   I2cWrite8(USE_PCA9685_ADDR, PCA9685_REG_MODE1, sleep_mode1); // Let's sleep a little
