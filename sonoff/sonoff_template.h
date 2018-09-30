@@ -233,6 +233,7 @@ enum SupportedModules {
   PHILIPS,
   NEO_COOLCAM,
   ESP_SWITCH,
+  OBI,
   MAXMODULE };
 
 /********************************************************************************************/
@@ -394,6 +395,7 @@ const uint8_t kModuleNiceList[MAXMODULE] PROGMEM = {
   BLITZWOLF_BWSHP2,
   NEO_COOLCAM,
   ESP_SWITCH,
+  OBI,
   H801,
   MAGICHOME,
   ARILUX_LC01,
@@ -1085,7 +1087,21 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_KEY3,        // GPIO14 Button 3
      GPIO_LED1,        // GPIO15 Optional sensor
      GPIO_REL1_INV,    // GPIO16 Green Led 1 (0 = On, 1 = Off)
-     0
+  },
+  { "OBI Socket",      // OBI socket (ESP8266) - https://www.obi.de/hausfunksteuerung/wifi-stecker-schuko/p/2291706
+     0,                // GPIO00 Flash jumper - not available
+     0,                // GPIO01
+     0,                // GPIO02
+     0,                // GPIO03
+     GPIO_LED1,        // GPIO04 LED on top and in switch button
+     GPIO_REL1,        // GPIO05 Relay 1 (0 = Off, 1 = On)
+     0, 0, 0, 0, 0, 0, // Flash connection
+     GPIO_LED2,        // GPIO12
+     0,                // GPIO13
+     GPIO_KEY1,        // GPIO14 switch button
+     0,                // GPIO15
+     0,                // GPIO16
+     0                 // GPIO17
   }
 };
 
