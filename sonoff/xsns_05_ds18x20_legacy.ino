@@ -3,6 +3,7 @@
 
   Copyright (C) 2018  Heiko Krupp and Theo Arends
 
+UPDATING LVA
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
   the Free Software Foundation, either version 3 of the License, or
@@ -31,6 +32,13 @@
 #define W1_READ_SCRATCHPAD   0xBE
 
 #define DS18X20_MAX_SENSORS  8
+
+// LVA <--
+#ifdef _LVA
+  #undef DS18X20_MAX_SENSORS
+  #define DS18X20_MAX_SENSORS  24 // увеличили 8
+#endif
+//  LVA  -->
 
 #include <OneWire.h>
 
@@ -169,7 +177,13 @@ void Ds18x20Type(uint8_t sensor)
 void Ds18x20Show(boolean json)
 {
   char temperature[10];
+// LVA <--
+#ifdef _LVA
+  char stemp[16]; // Нафиг увеличил не помню надо попробовать выключить
+#else
   char stemp[10];
+#endif
+//  LVA -->
   float t;
 
   byte dsxflg = 0;
@@ -180,13 +194,34 @@ void Ds18x20Show(boolean json)
 
       if (json) {
         if (!dsxflg) {
+// LVA <--
+#ifndef _LVA
           snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"DS18x20\":{"), mqtt_data);
+#else
+          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"DS18x20\":{\"Sensors\":%d,"), mqtt_data, Ds18x20Sensors());
+#endif
+// -->
+
           stemp[0] = '\0';
         }
         dsxflg++;
+
+// LVA <--
+#ifndef _LVA
+
         snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s%s\"DS%d\":{\"" D_JSON_TYPE "\":\"%s\",\"" D_JSON_ADDRESS "\":\"%s\",\"" D_JSON_TEMPERATURE "\":%s}"),
           mqtt_data, stemp, i +1, ds18x20_types, Ds18x20Addresses(i).c_str(), temperature);
         strlcpy(stemp, ",", sizeof(stemp));
+
+#else
+                if (i+1 < ds18x20_sensors) strcpy(stemp, ",");
+                snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s\"%s\":%s%s"), mqtt_data, Ds18x20Addresses(i).c_str(), temperature, stemp);
+                stemp[0] = '\0';
+                //if (i+1 < DS_senosors) snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,"), mqtt_data);
+                //snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TEMP, mqtt_data, stemp, temperature, TempUnit());
+#endif
+//  LVA  -->
+
 #ifdef USE_DOMOTICZ
         if ((0 == tele_period) && (1 == dsxflg)) {
           DomoticzSensor(DZ_TEMP, temperature);
@@ -199,15 +234,30 @@ void Ds18x20Show(boolean json)
 #endif  // USE_KNX
 #ifdef USE_WEBSERVER
       } else {
+
+// LVA <--
+#ifndef _LVA
         snprintf_P(stemp, sizeof(stemp), PSTR("%s-%d"), ds18x20_types, i +1);
         snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TEMP, mqtt_data, stemp, temperature, TempUnit());
+#else
+        snprintf_P(stemp, sizeof(stemp), PSTR("%s"), Ds18x20Addresses(i).c_str());
+        snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TEMP, mqtt_data, stemp, temperature, TempUnit());
+#endif
+//  --> LVA
+
 #endif  // USE_WEBSERVER
       }
     }
   }
   if (json) {
     if (dsxflg) {
+// LVA <--
+//#ifndef _LVA
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}"), mqtt_data);
+//#else
+//      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\n\"\"%s\":\":%s"), mqtt_data, Ds18x20Addresses(i).c_str(), temperature);
+//#endif //  -> LVA
+
     }
   }
   Ds18x20Search();      // Check for changes in sensors number

@@ -2,6 +2,7 @@
   xsns_12_ads1115_ada.ino - ADS1115 A/D Converter support for Sonoff-Tasmota
 
   Copyright (C) 2018  Theo Arends
+
 UPDATING LVA
 
   This program is free software: you can redistribute it and/or modify
@@ -17,7 +18,7 @@ UPDATING LVA
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef _LVA
+
 #ifdef USE_I2C
 #ifdef USE_ADS1115
 /*********************************************************************************************\
@@ -115,14 +116,20 @@ CONFIG REGISTER
 #define ADS1115_REG_CONFIG_CQUE_4CONV   (0x0002)  // Assert ALERT/RDY after four conversions
 #define ADS1115_REG_CONFIG_CQUE_NONE    (0x0003)  // Disable the comparator and put ALERT/RDY in high state (default)
 
-uint8_t ads1115_type = 0;
-uint8_t ads1115_address;
-uint8_t ads1115_addresses[] = { ADS1115_ADDRESS_ADDR_GND, ADS1115_ADDRESS_ADDR_VDD, ADS1115_ADDRESS_ADDR_SDA, ADS1115_ADDRESS_ADDR_SCL };
+#define ADS1115_DEVICES_MAX 4 // 0 don't found devices
+
+//uint8_t ads1115_type = 0; // непонял для чего возможно надо убрать
+
+//uint8_t ads1115_addres[ADS1115_DEVICES_MAX];
+uint8_t ads1115_devices;
+//uint8_t ads1115_address;
+uint8_t ads1115_device[ADS1115_DEVICES_MAX];// LVA = { ADS1115_ADDRESS_ADDR_GND, ADS1115_ADDRESS_ADDR_VDD, ADS1115_ADDRESS_ADDR_SDA, ADS1115_ADDRESS_ADDR_SCL };
 
 //Ads1115StartComparator(channel, ADS1115_REG_CONFIG_MODE_SINGLE);
 //Ads1115StartComparator(channel, ADS1115_REG_CONFIG_MODE_CONTIN);
-void Ads1115StartComparator(uint8_t channel, uint16_t mode)
+void Ads1115StartComparator(uint8_t ads1115, uint8_t channel, uint16_t mode)
 {
+    //Serial.print("Ads1115StartComparator addr:");  Serial.println(ads1115,HEX);
   // Start with default values
   uint16_t config = mode |
                     ADS1115_REG_CONFIG_CQUE_NONE    | // Comparator enabled and asserts on 1 match
@@ -136,21 +143,21 @@ void Ads1115StartComparator(uint8_t channel, uint16_t mode)
   config |= (ADS1115_REG_CONFIG_MUX_SINGLE_0 + (0x1000 * channel));
 
   // Write config register to the ADC
-  I2cWrite16(ads1115_address, ADS1115_REG_POINTER_CONFIG, config);
+  I2cWrite16(ads1115, ADS1115_REG_POINTER_CONFIG, config);
 }
 
-int16_t Ads1115GetConversion(uint8_t channel)
+int16_t Ads1115GetConversion(uint8_t ads1115, uint8_t channel)
 {
-  Ads1115StartComparator(channel, ADS1115_REG_CONFIG_MODE_SINGLE);
+  Ads1115StartComparator(ads1115, channel, ADS1115_REG_CONFIG_MODE_SINGLE);
   // Wait for the conversion to complete
   delay(ADS1115_CONVERSIONDELAY);
   // Read the conversion results
-  I2cRead16(ads1115_address, ADS1115_REG_POINTER_CONVERT);
+  I2cRead16(ads1115, ADS1115_REG_POINTER_CONVERT);
 
-  Ads1115StartComparator(channel, ADS1115_REG_CONFIG_MODE_CONTIN);
+  Ads1115StartComparator(ads1115, channel, ADS1115_REG_CONFIG_MODE_CONTIN);
   delay(ADS1115_CONVERSIONDELAY);
   // Read the conversion results
-  uint16_t res = I2cRead16(ads1115_address, ADS1115_REG_POINTER_CONVERT);
+  uint16_t res = I2cRead16(ads1115, ADS1115_REG_POINTER_CONVERT);
   return (int16_t)res;
 }
 
@@ -159,57 +166,67 @@ int16_t Ads1115GetConversion(uint8_t channel)
 void Ads1115Detect()
 {
   uint16_t buffer;
-
-  if (ads1115_type) {
-    return;
-  }
-
-  for (byte i = 0; i < sizeof(ads1115_addresses); i++) {
-    ads1115_address = ads1115_addresses[i];
-    if (I2cValidRead16(&buffer, ads1115_address, ADS1115_REG_POINTER_CONVERT)) {
-      Ads1115StartComparator(i, ADS1115_REG_CONFIG_MODE_CONTIN);
-      ads1115_type = 1;
-      snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, "ADS1115", ads1115_address);
-      AddLog(LOG_LEVEL_DEBUG);
-      break;
+  if (!ads1115_devices) {
+    Serial.println("Ads1115Detect start");
+    //   return;
+    // }
+    //for (byte i = 0; i < sizeof(ads1115_addresses); i++) {
+    //LVA
+    for (byte i = 0; i < 4; i++) {
+      if (I2cValidRead16(&buffer, ADS1115_ADDRESS_ADDR_GND+i, ADS1115_REG_POINTER_CONVERT)) {
+        ads1115_devices++;
+        ads1115_device[ads1115_devices]=ADS1115_ADDRESS_ADDR_GND+i;
+        for (byte ii=0; ii<4; ii++){
+          Ads1115StartComparator(ads1115_device[ads1115_devices], ii, ADS1115_REG_CONFIG_MODE_CONTIN);
+        }
+        //ads1115_type = 1;
+        snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, "ADS1115", ads1115_device[ads1115_devices]);
+        AddLog(LOG_LEVEL_DEBUG);
+        //break;
+      }
     }
   }
 }
+void Ads1115Show(boolean json) {
+  if (ads1115_devices > 0) {
 
-void Ads1115Show(boolean json)
-{
-  if (ads1115_type) {
+    //Serial.println("Ads1115Show Empy :( )");
+
     char stemp[10];
 
     byte dsxflg = 0;
-    for (byte i = 0; i < 4; i++) {
-      int16_t adc_value = Ads1115GetConversion(i);
+    for (byte a = 1; a <= ads1115_devices; a++){
+      for (byte i = 0; i < 4; i++) {
+        uint16_t adc_value;
+        if (json) {
+          if (!dsxflg  ) {
+            snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"ADS1115\":{"), mqtt_data);
+            stemp[0] = '\0';
+          }
+          if (i==0){
+            snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s\"ADS_%d\":{"), mqtt_data, a);
+            stemp[0] = '\0';
+          }
+          adc_value = Ads1115GetConversion(ads1115_device[a], i);
+          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s%s\"A%d\":%d"), mqtt_data, stemp, i, adc_value);
 
-      if (json) {
-        if (!dsxflg  ) {
-          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"ADS1115\":{"), mqtt_data);
-          stemp[0] = '\0';
-        }
+          if (i==3 && a == ads1115_devices){
+            snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}"), mqtt_data);
+          } else if (i==3) {
+            snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}"), mqtt_data);
+            strcpy(stemp, ",");
+          } else {
+            strcpy(stemp, ",");
+          }
+    #ifdef USE_WEBSERVER
         dsxflg++;
-#ifndef _LVA // <- LVA
-        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s%s\"" D_JSON_ANALOG_INPUT "%d\":%d"), mqtt_data, stemp, i, adc_value);
-#else
-        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s%s\"A%d\":%d"), mqtt_data, stemp, i, adc_value);
-#endif //  -> LVA
-        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s%s\"A%d\":%d"), mqtt_data, stemp, i, adc_value);
-        strlcpy(stemp, ",", sizeof(stemp));
-#ifdef USE_WEBSERVER
-      } 
-      else
-      {
-  #ifndef _LVA // <- LVA
-        snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_ANALOG, mqtt_data, "ADS1115", i, adc_value);
-  #else
-        snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_ANALOG, mqtt_data, "ADS1115", i, adc_value);
-  #endif //  -> LVA
-#endif  // USE_WEBSERVER
-      }
+        } else {
+            snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_ANALOG, mqtt_data, "ADS1115", i, adc_value);
+    #endif  // USE_WEBSERVER
+          }
+        }
     }
+    // похоже тепрь лишнее
     if (json) {
       if (dsxflg) {
         snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}"), mqtt_data);
@@ -217,6 +234,7 @@ void Ads1115Show(boolean json)
     }
   }
 }
+
 
 /*********************************************************************************************\
  * Interface
@@ -248,4 +266,3 @@ boolean Xsns12(byte function)
 
 #endif  // USE_ADS1115
 #endif  // USE_I2C
-#endif // LVA

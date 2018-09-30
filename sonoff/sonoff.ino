@@ -1,6 +1,6 @@
 /*
   sonoff.ino - Sonoff-Tasmota firmware for iTead Sonoff, Wemos and NodeMCU hardware
-
+UPDATED LVA
   Copyright (C) 2018  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
@@ -36,6 +36,13 @@
 #include "sonoff_post.h"                    // Configuration overrides for all previous includes
 #include "i18n.h"                           // Language support configured by user_config.h
 #include "sonoff_template.h"                // Hardware configuration
+
+// <-- LVA
+// включаем -D_LVA
+#ifdef _LVA
+  #include "lva_post.h"
+#endif
+// LVA -->
 
 #ifdef ARDUINO_ESP8266_RELEASE_2_4_0
 #include "lwip/init.h"
@@ -457,6 +464,12 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
 
   if (topicBuf[0] != '/') { ShowSource(SRC_MQTT); }
 
+  //-------------------------------------------------
+  // LVA
+  #ifdef _LVA_DEBUG
+    Serial.println("run MqttDataCallback()");
+  #endif
+
   snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_RESULT D_RECEIVED_TOPIC " %s, " D_DATA_SIZE " %d, " D_DATA " %s"),
     topicBuf, data_len, dataBuf);
   AddLog(LOG_LEVEL_DEBUG_MORE);
@@ -488,6 +501,11 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
     grpflg, index, type, dataBuf);
   AddLog(LOG_LEVEL_DEBUG);
 
+  #ifdef _LVA_DEBUG
+  // LVA debug
+    Serial.print("command: "); Serial.print(type);   Serial.print("\t Index: "); Serial.print(index); Serial.print("\t value: "); Serial.println(dataBuf);
+  #endif
+
   if (type != NULL) {
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_COMMAND "\":\"" D_JSON_ERROR "\"}"));
     if (Settings.ledstate &0x02) blinks++;
@@ -511,6 +529,13 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
 //    AddLog(LOG_LEVEL_DEBUG);
 
     int command_code = GetCommandCode(command, sizeof(command), type, kTasmotaCommands);
+
+    #ifdef _LVA_DEBUG
+    // LVA debug
+      Serial.print("command_code: "); Serial.println(command_code);
+      // что такое command_code ???
+    #endif
+
     if (-1 == command_code) {
       if (!XdrvCommand(grpflg, type, index, dataBuf, data_len, payload, payload16)) {
         type = NULL;  // Unknown command
