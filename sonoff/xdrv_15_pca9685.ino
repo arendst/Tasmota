@@ -179,24 +179,16 @@ boolean Xdrv15(byte function)
 
   if (i2c_flg) {
     switch (function) {
-      case FUNC_MQTT_DATA:
-        break;
       case FUNC_EVERY_SECOND:
         PCA9685_Detect();
         if (tele_period == 0) {
           PCA9685_OutputTelemetry();
         }
         break;
-      case FUNC_EVERY_50_MSECOND:
-        break;
-      case FUNC_JSON_APPEND:
-        break;
       case FUNC_COMMAND:
         if (XDRV_15 == XdrvMailbox.index) {
           PCA9685_Command();
         }
-        break;
-      case FUNC_WEB_APPEND:
         break;
       default:
         break;
