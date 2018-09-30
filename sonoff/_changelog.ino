@@ -1,6 +1,7 @@
 /* 6.2.1.10 20180930
  * Add command RGBWWTable to support color calibration (#3933)
- * 
+ * Add support for Michael Haustein ESP Switch
+ *
  * 6.2.1.9 20180928
  * Add Apparent Power and Reactive Power to Energy Monitoring devices (#251)
  * Add RF Receiver control to module MagicHome to be used on Arilux LC10 (#3792)

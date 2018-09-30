@@ -232,6 +232,7 @@ enum SupportedModules {
   SHELLY2,
   PHILIPS,
   NEO_COOLCAM,
+  ESP_SWITCH,
   MAXMODULE };
 
 /********************************************************************************************/
@@ -392,6 +393,7 @@ const uint8_t kModuleNiceList[MAXMODULE] PROGMEM = {
   SHELLY2,
   BLITZWOLF_BWSHP2,
   NEO_COOLCAM,
+  ESP_SWITCH,
   H801,
   MAGICHOME,
   ARILUX_LC01,
@@ -598,21 +600,22 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_LED1,        // GPIO16 Green/Blue Led (1 = On, 0 = Off)
      GPIO_ADC0         // ADC0   A0 Analog input
   },
-  { "EXS Relay",       // Latching relay (ESP8266)
+  { "EXS Relay(s)",    // ES-Store Latching relay(s) (ESP8266)
                        // https://ex-store.de/ESP8266-WiFi-Relay-V31
-                       //   Module Pin 1 VCC 3V3, Module Pin 6 GND
-     GPIO_KEY1,        // GPIO00 Module Pin 8 - Button (firmware flash)
-     GPIO_USER,        // GPIO01 Module Pin 2 = UART0_TXD
-     GPIO_USER,        // GPIO02 Module Pin 7
-     GPIO_USER,        // GPIO03 Module Pin 3 = UART0_RXD
-     GPIO_USER,        // GPIO04 Module Pin 10
-     GPIO_USER,        // GPIO05 Module Pin 9
+                       //   V3.1 Module Pin 1 VCC 3V3, Module Pin 6 GND
+                       // https://ex-store.de/2-Kanal-WiFi-WLan-Relay-V5-Blackline-fuer-Unterputzmontage
+     GPIO_USER,        // GPIO00 V3.1 Module Pin 8 - V5.0 Module Pin 4
+     GPIO_USER,        // GPIO01 UART0_TXD V3.1 Module Pin 2 - V5.0 Module Pin 3
+     GPIO_USER,        // GPIO02 V3.1 Module Pin 7
+     GPIO_USER,        // GPIO03 UART0_RXD V3.1 Module Pin 3
+     GPIO_USER,        // GPIO04 V3.1 Module Pin 10 - V5.0 Module Pin 2
+     GPIO_USER,        // GPIO05 V3.1 Module Pin 9 - V5.0 Module Pin 1
      0, 0, 0, 0, 0, 0, // Flash connection
      GPIO_REL1,        // GPIO12 Relay1 ( 1 = Off)
      GPIO_REL2,        // GPIO13 Relay1 ( 1 = On)
-     GPIO_USER,        // GPIO14 Module Pin 5
-     0,
-     GPIO_USER,        // GPIO16 Module Pin 4
+     GPIO_USER,        // GPIO14 V3.1 Module Pin 5 - V5.0 Relay2 ( 1 = Off)
+     GPIO_LED1,        // GPIO15 V5.0 LED1
+     GPIO_USER,        // GPIO16 V3.1 Module Pin 4 - V5.0 Relay2 ( 1 = On)
      0
   },
   { "WiOn",            // Indoor Tap (ESP8266)
@@ -1061,12 +1064,28 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
   { "Neo Coolcam",     // Neo Coolcam (ESP8266)
                        // https://www.banggood.com/NEO-COOLCAM-WiFi-Mini-Smart-Plug-APP-Remote-Control-Timing-Smart-Socket-EU-Plug-p-1288562.html?cur_warehouse=CN
      0, 0, 0, 0,
-     GPIO_LED1_INV,    // GPIO13 Red Led (0 = On, 1 = Off)
+     GPIO_LED1_INV,    // GPIO04 Red Led (0 = On, 1 = Off)
      0,
      0, 0, 0, 0, 0, 0, // Flash connection
      GPIO_REL1,        // GPIO12 Red Led and Relay (0 = Off, 1 = On)
      GPIO_KEY1,        // GPIO13 Button
      0, 0, 0, 0
+  },
+  { "ESP Switch",      // Michael Haustein 4 channel wall switch (ESP07 = ESP8266)
+                       // Use rules for further actions like - rule on power1#state do publish cmnd/other_device/power %value% endon
+     GPIO_KEY2,        // GPIO00 Button 2
+     GPIO_USER,        // GPIO01 Serial RXD and Optional sensor
+     GPIO_REL3_INV,    // GPIO02 Yellow Led 3 (0 = On, 1 = Off)
+     GPIO_USER,        // GPIO03 Serial TXD and Optional sensor
+     GPIO_KEY1,        // GPIO04 Button 1
+     GPIO_REL2_INV,    // GPIO05 Red Led 2 (0 = On, 1 = Off)
+     0, 0, 0, 0, 0, 0, // Flash connection
+     GPIO_REL4_INV,    // GPIO12 Blue Led 4 (0 = On, 1 = Off)
+     GPIO_KEY4,        // GPIO13 Button 4
+     GPIO_KEY3,        // GPIO14 Button 3
+     GPIO_LED1,        // GPIO15 Optional sensor
+     GPIO_REL1_INV,    // GPIO16 Green Led 1 (0 = On, 1 = Off)
+     0
   }
 };
 
