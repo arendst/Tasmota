@@ -324,7 +324,7 @@ struct SYSCFG {
 
   uint8_t       rgbwwTable[5];             // 71A
 
-  byte          free_71A[169];             // 71F
+  byte          free_71F[169];             // 71F
 
   unsigned long energy_frequency_calibration;  // 7C8
 
