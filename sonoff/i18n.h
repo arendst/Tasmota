@@ -3,6 +3,7 @@
 
   Copyright (C) 2018  Theo Arends
   UPDATED LVA
+
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
   the Free Software Foundation, either version 3 of the License, or
@@ -317,6 +318,7 @@
 #define D_CMND_LEDTABLE "LedTable"
 #define D_CMND_FADE "Fade"
 #define D_CMND_PIXELS "Pixels"
+#define D_CMND_RGBWWTABLE "RGBWWTable"
 #define D_CMND_ROTATION "Rotation"
 #define D_CMND_SCHEME "Scheme"
 #define D_CMND_SPEED "Speed"
@@ -478,13 +480,6 @@ const char JSON_SNS_TEMPHUM[] PROGMEM = "%s,\"%s\":{\"" D_JSON_TEMPERATURE "\":%
 
 const char S_LOG_I2C_FOUND_AT[] PROGMEM = D_LOG_I2C "%s " D_FOUND_AT " 0x%x";
 
-//xsns_91mcp.ino LVA
-// надо перенести в lva.h
-// <- LVA
-//#ifdef USE_MCP23017
- //const char S_LOG_MCP23017[] PROGMEM = "MCP23017 ID  %d " D_PORT " %d";                              // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
-//#endif
-//  -> LVA
 const char S_LOG_HTTP[] PROGMEM = D_LOG_HTTP;
 const char S_LOG_WIFI[] PROGMEM = D_LOG_WIFI;
 const char S_LOG_MQTT[] PROGMEM = D_LOG_MQTT;
@@ -529,9 +524,10 @@ const char kOptionBlinkOff[] PROGMEM = "BLINKOFF|" D_BLINKOFF ;
 // <- LVA
 #ifndef _LVA
 const char HTTP_SNS_TEMP[] PROGMEM = "%s{s}%s " D_TEMPERATURE "{m}%s&deg;%c{e}";                             // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
+
 #else
   const char HTTP_SNS_TEMP[] PROGMEM = "%s{s}%s temp {m}%s&deg;%c{e}";                             // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
-  #endif
+#endif
 //  -> LVA
 
 const char HTTP_SNS_HUM[] PROGMEM = "%s{s}%s " D_HUMIDITY "{m}%s%%{e}";                                      // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
@@ -543,15 +539,9 @@ const char HTTP_SNS_ANALOG[] PROGMEM = "%s{s}%s " D_ANALOG_INPUT "%d{m}%d{e}";  
 #else
   const char HTTP_SNS_ANALOG[] PROGMEM = "%s{s}%s A%d{m}%d{e}";                               // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
 #endif //  -> LVA
+
 #if defined(USE_MHZ19) || defined(USE_SENSEAIR)
 const char HTTP_SNS_CO2[] PROGMEM = "%s{s}%s " D_CO2 "{m}%d " D_UNIT_PARTS_PER_MILLION "{e}";                // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
-
-// <- LVA
-//#ifdef USE_MCP23017
- const char HTTP_MCP_INPUT[] PROGMEM = "%s{s}%s IN:%d{m}%d{e}";                               // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
-//#endif
-//  -> LVA
-
 #endif  // USE_WEBSERVER
 
 const char S_MAIN_MENU[] PROGMEM = D_MAIN_MENU;

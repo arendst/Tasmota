@@ -26,6 +26,9 @@ status ON or "OFF"
 #ifdef USE_MCP23017
 
 #define XSNS_91 17
+
+const char S_LOG_MCP23017[] PROGMEM = "MCP23017 ID  %d " D_PORT " %d";                              // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
+
 #include <Adafruit_MCP23017.h>
 
 

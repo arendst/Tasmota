@@ -624,6 +624,10 @@ void SettingsDefaultSet2()
 
   Settings.button_debounce = KEY_DEBOUNCE_TIME;
   Settings.switch_debounce = SWITCH_DEBOUNCE_TIME;
+
+  for (byte j = 0; j < 5; j++) {
+    Settings.rgbwwTable[j] = 255;
+  }
 }
 
 /********************************************************************************************/
@@ -826,6 +830,11 @@ void SettingsDelta()
     if (Settings.version < 0x0601010C) {
       Settings.button_debounce = KEY_DEBOUNCE_TIME;
       Settings.switch_debounce = SWITCH_DEBOUNCE_TIME;
+    }
+    if (Settings.version < 0x0602010A) {
+      for (byte j = 0; j < 5; j++) {
+        Settings.rgbwwTable[j] = 255;
+      }
     }
 
     Settings.version = VERSION;
