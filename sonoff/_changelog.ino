@@ -2,6 +2,7 @@
  * Add command RGBWWTable to support color calibration (#3933)
  * Add support for Michael Haustein ESP Switch
  * Add support for EXS Relay V5.0 (#3810)
+ * Fix timer offset -00:00 causing 12:00 hour offset (#3923)
  *
  * 6.2.1.9 20180928
  * Add Apparent Power and Reactive Power to Energy Monitoring devices (#251)
