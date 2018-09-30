@@ -1661,7 +1661,8 @@ void MqttShowState()
   }
 
   //STB mod
-  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s, \""D_JSON_WIFI "\":{\"" D_JSON_AP "\":%d, \""D_JSON_SSID "\":\"%s\", \""D_JSON_BSSID "\":\"%s\",\"" D_JSON_CHANNEL "\":%d,\"" D_JSON_RSSI "\":%d}, \"" D_CMND_DEEPSLEEP "\":%d, \"" D_JSON_HEAPSIZE "\":%d}"),
+  //snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s, \""D_JSON_WIFI "\":{\"" D_JSON_AP "\":%d, \""D_JSON_SSID "\":\"%s\", \""D_JSON_BSSID "\":\"%s\", \"" D_JSON_CHANNEL "\":%d, \"" D_JSON_RSSI "\":%d}, \"" D_CMND_DEEPSLEEP "\":%d, \"" D_JSON_HEAPSIZE "\":%d}"),
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s, \""D_JSON_WIFI "\":{\"" D_JSON_AP " \":%d, \""D_JSON_SSID " \":\"%s\", \""D_JSON_BSSID " \":\"%s\", \"" D_JSON_CHANNEL "\":%d, \"" D_JSON_RSSI "\":%d}, \"" D_CMND_DEEPSLEEP "\":%d, \"" D_JSON_HEAPSIZE "\":%d}"),
     mqtt_data, Settings.sta_active +1, Settings.sta_ssid[Settings.sta_active], WiFi.BSSIDstr().c_str(), WiFi.channel(), WifiGetRssiAsQuality(WiFi.RSSI()), Settings.deepsleep, ESP.getFreeHeap());
   //end
 }

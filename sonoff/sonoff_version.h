@@ -22,7 +22,7 @@
 
 #define VERSION            0x06020104
 //STB mod
-#define STB_VERSION         0x0104
+#define STB_VERSION         0x0105
 //end
 
 #define D_PROGRAMNAME      "Sonoff-Tasmota"
