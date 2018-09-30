@@ -296,20 +296,23 @@ char* GetStateText(byte state)
 
 /********************************************************************************************/
 
-void SetLatchingRelay(power_t power, uint8_t state)
+void SetLatchingRelay(power_t lpower, uint8_t state)
 {
-  power &= 1;
-  if (2 == state) {           // Reset relay
-    state = 0;
-    latching_power = power;
-    latching_relay_pulse = 0;
+  // power xx00 - toggle REL1 (Off) and REL3 (Off) - device 1 Off, device 2 Off
+  // power xx01 - toggle REL2 (On)  and REL3 (Off) - device 1 On,  device 2 Off
+  // power xx10 - toggle REL1 (Off) and REL4 (On)  - device 1 Off, device 2 On
+  // power xx11 - toggle REL2 (On)  and REL4 (On)  - device 1 On,  device 2 On
+
+  if (state && !latching_relay_pulse) {  // Set latching relay to power if previous pulse has finished
+    latching_power = lpower;
+    latching_relay_pulse = 2;            // max 200mS (initiated by stateloop())
   }
-  else if (state && !latching_relay_pulse) {  // Set port power to On
-    latching_power = power;
-    latching_relay_pulse = 2;  // max 200mS (initiated by stateloop())
-  }
-  if (pin[GPIO_REL1 +latching_power] < 99) {
-    digitalWrite(pin[GPIO_REL1 +latching_power], bitRead(rel_inverted, latching_power) ? !state : state);
+
+  for (byte i = 0; i < devices_present; i++) {
+    uint8_t port = (i << 1) + ((latching_power >> i) &1);
+    if (pin[GPIO_REL1 +port] < 99) {
+      digitalWrite(pin[GPIO_REL1 +port], bitRead(rel_inverted, port) ? !state : state);
+    }
   }
 }
 
@@ -2453,6 +2456,10 @@ void GpioInit()
       if (pin[GPIO_REL1 +i] < 99) {
         pinMode(pin[GPIO_REL1 +i], OUTPUT);
         devices_present++;
+        if (EXS_RELAY == Settings.module) {
+          digitalWrite(pin[GPIO_REL1 +i], bitRead(rel_inverted, i) ? 1 : 0);
+          if (i &1) { devices_present--; }
+        }
       }
     }
   }
@@ -2493,10 +2500,6 @@ void GpioInit()
     }
   }
 
-  if (EXS_RELAY == Settings.module) {
-    SetLatchingRelay(0,2);
-    SetLatchingRelay(1,2);
-  }
   SetLedPower(Settings.ledstate &8);
 
   XdrvCall(FUNC_PRE_INIT);
