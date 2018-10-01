@@ -80,10 +80,12 @@ enum UserSelectablePins {
   GPIO_LED2,
   GPIO_LED3,
   GPIO_LED4,
+  GPIO_LED5,
   GPIO_LED1_INV,
   GPIO_LED2_INV,
   GPIO_LED3_INV,
   GPIO_LED4_INV,
+  GPIO_LED5_INV,
   GPIO_MHZ_TXD,        // MH-Z19 Serial interface
   GPIO_MHZ_RXD,        // MH-Z19 Serial interface
   GPIO_PZEM_TX,        // PZEM004T Serial interface
@@ -161,8 +163,8 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_COUNTER "1|" D_SENSOR_COUNTER "2|" D_SENSOR_COUNTER "3|" D_SENSOR_COUNTER "4|"
   D_SENSOR_PWM "1i|" D_SENSOR_PWM "2i|" D_SENSOR_PWM "3i|" D_SENSOR_PWM "4i|" D_SENSOR_PWM "5i|"
   D_SENSOR_IRRECV "|"
-  D_SENSOR_LED "1|" D_SENSOR_LED "2|" D_SENSOR_LED "3|" D_SENSOR_LED "4|"
-  D_SENSOR_LED "1i|" D_SENSOR_LED "2i|" D_SENSOR_LED "3i|" D_SENSOR_LED "4i|"
+  D_SENSOR_LED "1|" D_SENSOR_LED "2|" D_SENSOR_LED "3|" D_SENSOR_LED "4|" D_SENSOR_LED "5|"
+  D_SENSOR_LED "1i|" D_SENSOR_LED "2i|" D_SENSOR_LED "3i|" D_SENSOR_LED "4i|" D_SENSOR_LED "5i|"
   D_SENSOR_MHZ_TX "|" D_SENSOR_MHZ_RX "|"
   D_SENSOR_PZEM_TX "|" D_SENSOR_PZEM_RX "|"
   D_SENSOR_SAIR_TX "|" D_SENSOR_SAIR_RX "|"
@@ -302,6 +304,8 @@ const uint8_t kGpioNiceList[GPIO_SENSOR_END] PROGMEM = {
   GPIO_LED3_INV,
   GPIO_LED4,
   GPIO_LED4_INV,
+  GPIO_LED5,
+  GPIO_LED5_INV,
   GPIO_PWM1,           // RGB   Red   or C  Cold White
   GPIO_PWM1_INV,
   GPIO_PWM2,           // RGB   Green or CW Warm White
