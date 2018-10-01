@@ -49,6 +49,10 @@ struct DS18X20STRUCT {
 uint8_t ds18x20_sensors = 0;
 uint8_t ds18x20_pin = 0;
 char ds18x20_types[12];
+#ifdef W1_PARASITE_POWER
+uint8_t ds18x20_sensor_curr = 0;
+unsigned long w1_power_until = 0;
+#endif
 
 /*********************************************************************************************\
  * Embedded tuned OneWire library
@@ -285,7 +289,14 @@ void Ds18x20Init()
 void Ds18x20Convert()
 {
   OneWireReset();
+#ifdef W1_PARASITE_POWER
+  // With parasite power address one sensor at a time
+  if (++ds18x20_sensor_curr >= ds18x20_sensors)
+    ds18x20_sensor_curr = 0;
+  OneWireSelect(ds18x20_sensor[ds18x20_sensor_curr].address);
+#else
   OneWireWrite(W1_SKIP_ROM);           // Address all Sensors on Bus
+#endif
   OneWireWrite(W1_CONVERT_TEMP);       // start conversion, no parasite power on at the end
 //  delay(750);                          // 750ms should be enough for 12bit conv
 }
@@ -334,6 +345,9 @@ bool Ds18x20Read(uint8_t sensor)
           OneWireWrite(data[4]);          // Configuration Register
           OneWireSelect(ds18x20_sensor[index].address);
           OneWireWrite(W1_WRITE_EEPROM);  // Save scratchpad to EEPROM
+#ifdef W1_PARASITE_POWER
+          w1_power_until = millis() + 10; // 10ms specified duration for EEPROM write
+#endif
         }
         temp12 = (data[1] << 8) + data[0];
         if (temp12 > 2047) {
@@ -374,7 +388,18 @@ void Ds18x20Name(uint8_t sensor)
 
 void Ds18x20EverySecond()
 {
-  if (uptime &1) {
+#ifdef W1_PARASITE_POWER
+  // skip access if there is still an eeprom write ongoing
+  unsigned long now = millis();
+  if (now < w1_power_until)
+    return;
+#endif
+  if (uptime & 1
+#ifdef W1_PARASITE_POWER
+      // if more than 1 sensor and only parasite power: convert every cycle
+      || ds18x20_sensors >= 2
+#endif
+  ) {
     // 2mS
     Ds18x20Convert();          // Start conversion, takes up to one second
   } else {
