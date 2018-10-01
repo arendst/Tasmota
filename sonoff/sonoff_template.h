@@ -477,15 +477,17 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
   { "Sonoff Dual",     // Sonoff Dual (ESP8266)
      0,
      GPIO_TXD,         // GPIO01 Relay control
-     0,
+     GPIO_USER,        // GPIO02 Optional sensor
      GPIO_RXD,         // GPIO03 Relay control
      GPIO_USER,        // GPIO04 Optional sensor
-     0,
+     GPIO_USER,        // GPIO05 Optional sensor
      0, 0, 0, 0, 0, 0, // Flash connection
-     0,
+     GPIO_USER,        // GPIO12 Optional sensor
      GPIO_LED1_INV,    // GPIO13 Blue Led (0 = On, 1 = Off)
      GPIO_USER,        // GPIO14 Optional sensor
-     0, 0, 0
+     GPIO_USER,        // GPIO15 Optional sensor
+     GPIO_USER,        // GPIO16 Optional sensor
+     0
   },
   { "Sonoff Pow",      // Sonoff Pow (ESP8266 - HLW8012)
      GPIO_KEY1,        // GPIO00 Button
