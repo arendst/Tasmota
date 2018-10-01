@@ -20,7 +20,7 @@
 #ifdef USE_I2C
 #ifdef USE_CCS811
 /*********************************************************************************************\
- * SGP30 - Gas (TVOC - Total Volatile Organic Compounds) and Air Quality (CO2)
+ * CCS811 - Gas (TVOC - Total Volatile Organic Compounds) and Air Quality (CO2)
  *
  * Source: Adafruit
  *
