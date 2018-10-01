@@ -196,7 +196,7 @@
 #define SEND_MITSUBISHI_AC   true
 
 #define DECODE_FUJITSU_AC    false  // Not written.
-#define SEND_FUJITSU_AC      false
+#define SEND_FUJITSU_AC      true
 
 #define DECODE_DAIKIN        false  // Not finished.
 #define SEND_DAIKIN          false
