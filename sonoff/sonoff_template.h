@@ -234,6 +234,7 @@ enum SupportedModules {
   NEO_COOLCAM,
   ESP_SWITCH,
   OBI,
+  TECKIN,
   MAXMODULE };
 
 /********************************************************************************************/
@@ -357,31 +358,31 @@ const uint8_t kGpioNiceList[GPIO_SENSOR_END] PROGMEM = {
 };
 
 const uint8_t kModuleNiceList[MAXMODULE] PROGMEM = {
-  SONOFF_BASIC,
+  SONOFF_BASIC,        // Sonoff Relay Devices
   SONOFF_RF,
   SONOFF_TH,
   SONOFF_DUAL,
   SONOFF_DUAL_R2,
   SONOFF_POW,
   SONOFF_POW_R2,
-  SONOFF_S31,
   SONOFF_4CH,
   SONOFF_4CHPRO,
-  SONOFF_SV,
-  SONOFF_DEV,
-  SONOFF_S2X,
-  SLAMPHER,
-  SONOFF_TOUCH,
+  SONOFF_S31,          // Sonoff Socket Relay Devices with Energy Monitoring
+  SONOFF_S2X,          // Sonoff Socket Relay Devices
+  SONOFF_TOUCH,        // Sonoff Switch Devices
   SONOFF_T11,
   SONOFF_T12,
   SONOFF_T13,
-  SONOFF_SC,
-  SONOFF_B1,
-  SONOFF_LED,
+  SONOFF_LED,          // Sonoff Light Devices
   SONOFF_BN,
-  SONOFF_IFAN02,
-  SONOFF_BRIDGE,
-  CH1,
+  SONOFF_B1,           // Sonoff Light Bulbs
+  SLAMPHER,
+  SONOFF_SC,           // Sonoff Environmemtal Sensor
+  SONOFF_IFAN02,       // Sonoff Fan
+  SONOFF_BRIDGE,       // Sonoff Bridge
+  SONOFF_SV,           // Sonoff Development Devices
+  SONOFF_DEV,
+  CH1,                 // Relay Devices
   CH4,
   MOTOR,
   ELECTRODRAGON,
@@ -392,11 +393,12 @@ const uint8_t kModuleNiceList[MAXMODULE] PROGMEM = {
   WION,
   SHELLY1,
   SHELLY2,
-  BLITZWOLF_BWSHP2,
-  NEO_COOLCAM,
-  ESP_SWITCH,
+  BLITZWOLF_BWSHP2,   // Socket Relay Devices with Energy Monitoring
+  TECKIN,
+  NEO_COOLCAM,        // Socket Relay Devices
   OBI,
-  H801,
+  ESP_SWITCH,         // Switch Devices
+  H801,               // Light Devices
   MAGICHOME,
   ARILUX_LC01,
   ARILUX_LC06,
@@ -404,9 +406,9 @@ const uint8_t kModuleNiceList[MAXMODULE] PROGMEM = {
   ZENGGE_ZF_WF017,
   HUAFAN_SS,
   KMC_70011,
-  AILIGHT,
+  AILIGHT,            // Light Bulbs
   PHILIPS,
-  WITTY,
+  WITTY,              // Development Devices
   WEMOS
 };
 
@@ -615,9 +617,9 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      0, 0, 0, 0, 0, 0, // Flash connection
      GPIO_REL1,        // GPIO12 Relay1 ( 1 = Off)
      GPIO_REL2,        // GPIO13 Relay1 ( 1 = On)
-     GPIO_USER,        // GPIO14 V3.1 Module Pin 5 - V5.0 Relay2 ( 1 = Off)
+     GPIO_USER,        // GPIO14 V3.1 Module Pin 5 - V5.0 GPIO_REL3_INV Relay2 ( 1 = Off)
      GPIO_LED1,        // GPIO15 V5.0 LED1
-     GPIO_USER,        // GPIO16 V3.1 Module Pin 4 - V5.0 Relay2 ( 1 = On)
+     GPIO_USER,        // GPIO16 V3.1 Module Pin 4 - V5.0 GPIO_REL4_INV Relay2 ( 1 = On)
      0
   },
   { "WiOn",            // Indoor Tap (ESP8266)
@@ -1089,19 +1091,27 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_REL1_INV,    // GPIO16 Green Led 1 (0 = On, 1 = Off)
   },
   { "OBI Socket",      // OBI socket (ESP8266) - https://www.obi.de/hausfunksteuerung/wifi-stecker-schuko/p/2291706
-     0,                // GPIO00 Flash jumper - not available
-     0,                // GPIO01
-     0,                // GPIO02
-     0,                // GPIO03
+     0, 0, 0, 0,
      GPIO_LED1,        // GPIO04 LED on top and in switch button
      GPIO_REL1,        // GPIO05 Relay 1 (0 = Off, 1 = On)
      0, 0, 0, 0, 0, 0, // Flash connection
      GPIO_LED2,        // GPIO12
      0,                // GPIO13
      GPIO_KEY1,        // GPIO14 switch button
-     0,                // GPIO15
-     0,                // GPIO16
-     0                 // GPIO17
+     0, 0, 0
+  },
+  { "Teckin",          // https://www.amazon.de/gp/product/B07D5V139R
+     0,
+     GPIO_KEY1,        // GPIO01 Serial TXD and Button
+     0,
+     GPIO_LED2_INV,    // GPIO03 Serial RXD and Red Led (0 = On, 1 = Off)
+     GPIO_HLW_CF,      // GPIO04 BL0937 or HJL-01 CF power
+     GPIO_HLW_CF1,     // GPIO05 BL0937 or HJL-01 CF1 voltage / current
+     0, 0, 0, 0, 0, 0, // Flash connection
+     GPIO_HLW_SEL,     // GPIO12 BL0937 or HJL-01 Sel output
+     GPIO_LED1_INV,    // GPIO13 Blue Led (0 = On, 1 = Off)
+     GPIO_REL1,        // GPIO14 Relay (0 = Off, 1 = On)
+     0, 0, 0
   }
 };
 
