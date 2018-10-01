@@ -232,6 +232,9 @@ enum SupportedModules {
   SHELLY2,
   PHILIPS,
   NEO_COOLCAM,
+  ESP_SWITCH,
+  OBI,
+  TECKIN,
   MAXMODULE };
 
 /********************************************************************************************/
@@ -355,31 +358,31 @@ const uint8_t kGpioNiceList[GPIO_SENSOR_END] PROGMEM = {
 };
 
 const uint8_t kModuleNiceList[MAXMODULE] PROGMEM = {
-  SONOFF_BASIC,
+  SONOFF_BASIC,        // Sonoff Relay Devices
   SONOFF_RF,
   SONOFF_TH,
   SONOFF_DUAL,
   SONOFF_DUAL_R2,
   SONOFF_POW,
   SONOFF_POW_R2,
-  SONOFF_S31,
   SONOFF_4CH,
   SONOFF_4CHPRO,
-  SONOFF_SV,
-  SONOFF_DEV,
-  SONOFF_S2X,
-  SLAMPHER,
-  SONOFF_TOUCH,
+  SONOFF_S31,          // Sonoff Socket Relay Devices with Energy Monitoring
+  SONOFF_S2X,          // Sonoff Socket Relay Devices
+  SONOFF_TOUCH,        // Sonoff Switch Devices
   SONOFF_T11,
   SONOFF_T12,
   SONOFF_T13,
-  SONOFF_SC,
-  SONOFF_B1,
-  SONOFF_LED,
+  SONOFF_LED,          // Sonoff Light Devices
   SONOFF_BN,
-  SONOFF_IFAN02,
-  SONOFF_BRIDGE,
-  CH1,
+  SONOFF_B1,           // Sonoff Light Bulbs
+  SLAMPHER,
+  SONOFF_SC,           // Sonoff Environmemtal Sensor
+  SONOFF_IFAN02,       // Sonoff Fan
+  SONOFF_BRIDGE,       // Sonoff Bridge
+  SONOFF_SV,           // Sonoff Development Devices
+  SONOFF_DEV,
+  CH1,                 // Relay Devices
   CH4,
   MOTOR,
   ELECTRODRAGON,
@@ -390,9 +393,12 @@ const uint8_t kModuleNiceList[MAXMODULE] PROGMEM = {
   WION,
   SHELLY1,
   SHELLY2,
-  BLITZWOLF_BWSHP2,
-  NEO_COOLCAM,
-  H801,
+  BLITZWOLF_BWSHP2,   // Socket Relay Devices with Energy Monitoring
+  TECKIN,
+  NEO_COOLCAM,        // Socket Relay Devices
+  OBI,
+  ESP_SWITCH,         // Switch Devices
+  H801,               // Light Devices
   MAGICHOME,
   ARILUX_LC01,
   ARILUX_LC06,
@@ -400,9 +406,9 @@ const uint8_t kModuleNiceList[MAXMODULE] PROGMEM = {
   ZENGGE_ZF_WF017,
   HUAFAN_SS,
   KMC_70011,
-  AILIGHT,
+  AILIGHT,            // Light Bulbs
   PHILIPS,
-  WITTY,
+  WITTY,              // Development Devices
   WEMOS
 };
 
@@ -598,21 +604,22 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_LED1,        // GPIO16 Green/Blue Led (1 = On, 0 = Off)
      GPIO_ADC0         // ADC0   A0 Analog input
   },
-  { "EXS Relay",       // Latching relay (ESP8266)
+  { "EXS Relay(s)",    // ES-Store Latching relay(s) (ESP8266)
                        // https://ex-store.de/ESP8266-WiFi-Relay-V31
-                       //   Module Pin 1 VCC 3V3, Module Pin 6 GND
-     GPIO_KEY1,        // GPIO00 Module Pin 8 - Button (firmware flash)
-     GPIO_USER,        // GPIO01 Module Pin 2 = UART0_TXD
-     GPIO_USER,        // GPIO02 Module Pin 7
-     GPIO_USER,        // GPIO03 Module Pin 3 = UART0_RXD
-     GPIO_USER,        // GPIO04 Module Pin 10
-     GPIO_USER,        // GPIO05 Module Pin 9
+                       //   V3.1 Module Pin 1 VCC 3V3, Module Pin 6 GND
+                       // https://ex-store.de/2-Kanal-WiFi-WLan-Relay-V5-Blackline-fuer-Unterputzmontage
+     GPIO_USER,        // GPIO00 V3.1 Module Pin 8 - V5.0 Module Pin 4
+     GPIO_USER,        // GPIO01 UART0_TXD V3.1 Module Pin 2 - V5.0 Module Pin 3
+     GPIO_USER,        // GPIO02 V3.1 Module Pin 7
+     GPIO_USER,        // GPIO03 UART0_RXD V3.1 Module Pin 3
+     GPIO_USER,        // GPIO04 V3.1 Module Pin 10 - V5.0 Module Pin 2
+     GPIO_USER,        // GPIO05 V3.1 Module Pin 9 - V5.0 Module Pin 1
      0, 0, 0, 0, 0, 0, // Flash connection
      GPIO_REL1,        // GPIO12 Relay1 ( 1 = Off)
      GPIO_REL2,        // GPIO13 Relay1 ( 1 = On)
-     GPIO_USER,        // GPIO14 Module Pin 5
-     0,
-     GPIO_USER,        // GPIO16 Module Pin 4
+     GPIO_USER,        // GPIO14 V3.1 Module Pin 5 - V5.0 GPIO_REL3_INV Relay2 ( 1 = Off)
+     GPIO_LED1,        // GPIO15 V5.0 LED1
+     GPIO_USER,        // GPIO16 V3.1 Module Pin 4 - V5.0 GPIO_REL4_INV Relay2 ( 1 = On)
      0
   },
   { "WiOn",            // Indoor Tap (ESP8266)
@@ -855,19 +862,20 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      0, 0, 0, 0, 0, 0, // Flash connection
      0, 0, 0, 0, 0
   },
-  { "MagicHome",       // Magic Home (aka Flux-light) (ESP8266)
+  { "MagicHome",       // Magic Home (aka Flux-light) (ESP8266) and Arilux LC10 (ESP8285)
                        // https://www.aliexpress.com/item/Magic-Home-Mini-RGB-RGBW-Wifi-Controller-For-Led-Strip-Panel-light-Timing-Function-16million-colors/32686853650.html
      0,
      GPIO_USER,        // GPIO01 Serial RXD and Optional sensor
      GPIO_LED1_INV,    // GPIO02 Blue onboard LED
      GPIO_USER,        // GPIO03 Serial TXD and Optional sensor
-     GPIO_USER,        // GPIO04 IR receiver (optional)
+     GPIO_ARIRFRCV,    // GPIO04 IR or RF receiver (optional) (Arilux LC10)
      GPIO_PWM2,        // GPIO05 RGB LED Green
      0, 0, 0, 0, 0, 0, // Flash connection
      GPIO_PWM3,        // GPIO12 RGB LED Blue
-     GPIO_USER,        // GPIO13 RGBW LED White (optional - set to PWM4 for Cold White or Warm White)
+     GPIO_USER,        // GPIO13 RGBW LED White (optional - set to PWM4 for Cold White or Warm White as used on Arilux LC10)
      GPIO_PWM1,        // GPIO14 RGB LED Red
-     0, 0, 0
+     GPIO_LED2_INV,    // GPIO15 RF receiver control (Arilux LC10)
+     0, 0
   },
   { "Luani HVIO",      // ESP8266_HVIO
                        // https://luani.de/projekte/esp8266-hvio/
@@ -1060,18 +1068,70 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
   { "Neo Coolcam",     // Neo Coolcam (ESP8266)
                        // https://www.banggood.com/NEO-COOLCAM-WiFi-Mini-Smart-Plug-APP-Remote-Control-Timing-Smart-Socket-EU-Plug-p-1288562.html?cur_warehouse=CN
      0, 0, 0, 0,
-     GPIO_LED1_INV,    // GPIO13 Red Led (0 = On, 1 = Off)
+     GPIO_LED1_INV,    // GPIO04 Red Led (0 = On, 1 = Off)
      0,
      0, 0, 0, 0, 0, 0, // Flash connection
      GPIO_REL1,        // GPIO12 Red Led and Relay (0 = Off, 1 = On)
      GPIO_KEY1,        // GPIO13 Button
      0, 0, 0, 0
+  },
+  { "ESP Switch",      // Michael Haustein 4 channel wall switch (ESP07 = ESP8266)
+                       // Use rules for further actions like - rule on power1#state do publish cmnd/other_device/power %value% endon
+     GPIO_KEY2,        // GPIO00 Button 2
+     GPIO_USER,        // GPIO01 Serial RXD and Optional sensor
+     GPIO_REL3_INV,    // GPIO02 Yellow Led 3 (0 = On, 1 = Off)
+     GPIO_USER,        // GPIO03 Serial TXD and Optional sensor
+     GPIO_KEY1,        // GPIO04 Button 1
+     GPIO_REL2_INV,    // GPIO05 Red Led 2 (0 = On, 1 = Off)
+     0, 0, 0, 0, 0, 0, // Flash connection
+     GPIO_REL4_INV,    // GPIO12 Blue Led 4 (0 = On, 1 = Off)
+     GPIO_KEY4,        // GPIO13 Button 4
+     GPIO_KEY3,        // GPIO14 Button 3
+     GPIO_LED1,        // GPIO15 Optional sensor
+     GPIO_REL1_INV,    // GPIO16 Green Led 1 (0 = On, 1 = Off)
+  },
+  { "OBI Socket",      // OBI socket (ESP8266) - https://www.obi.de/hausfunksteuerung/wifi-stecker-schuko/p/2291706
+     0, 0, 0, 0,
+     GPIO_LED1,        // GPIO04 LED on top and in switch button
+     GPIO_REL1,        // GPIO05 Relay 1 (0 = Off, 1 = On)
+     0, 0, 0, 0, 0, 0, // Flash connection
+     GPIO_LED2,        // GPIO12
+     0,                // GPIO13
+     GPIO_KEY1,        // GPIO14 switch button
+     0, 0, 0
+  },
+  { "Teckin",          // https://www.amazon.de/gp/product/B07D5V139R
+     0,
+     GPIO_KEY1,        // GPIO01 Serial TXD and Button
+     0,
+     GPIO_LED2_INV,    // GPIO03 Serial RXD and Red Led (0 = On, 1 = Off)
+     GPIO_HLW_CF,      // GPIO04 BL0937 or HJL-01 CF power
+     GPIO_HLW_CF1,     // GPIO05 BL0937 or HJL-01 CF1 voltage / current
+     0, 0, 0, 0, 0, 0, // Flash connection
+     GPIO_HLW_SEL,     // GPIO12 BL0937 or HJL-01 Sel output
+     GPIO_LED1_INV,    // GPIO13 Blue Led (0 = On, 1 = Off)
+     GPIO_REL1,        // GPIO14 Relay (0 = Off, 1 = On)
+     0, 0, 0
   }
 };
 
 /*
   Optionals
 
+  { "MagicHome",       // Magic Home (aka Flux-light) (ESP8266)
+                       // https://www.aliexpress.com/item/Magic-Home-Mini-RGB-RGBW-Wifi-Controller-For-Led-Strip-Panel-light-Timing-Function-16million-colors/32686853650.html
+     0,
+     GPIO_USER,        // GPIO01 Serial RXD and Optional sensor
+     GPIO_LED1_INV,    // GPIO02 Blue onboard LED
+     GPIO_USER,        // GPIO03 Serial TXD and Optional sensor
+     GPIO_USER,        // GPIO04 IR receiver (optional)
+     GPIO_PWM2,        // GPIO05 RGB LED Green
+     0, 0, 0, 0, 0, 0, // Flash connection
+     GPIO_PWM3,        // GPIO12 RGB LED Blue
+     GPIO_USER,        // GPIO13 RGBW LED White (optional - set to PWM4 for Cold White or Warm White)
+     GPIO_PWM1,        // GPIO14 RGB LED Red
+     0, 0, 0
+  },
   { "Arilux LC10",     // Arilux LC10 (ESP8285), RGBW + RF
                        // https://github.com/arendst/Sonoff-Tasmota/wiki/MagicHome-with-ESP8285
                        // https://www.aliexpress.com/item/DC5-24V-Wireless-WIFI-LED-RGB-Controller-RGBW-Controller-IR-RF-Remote-Control-IOS-Android-for/32827253255.html

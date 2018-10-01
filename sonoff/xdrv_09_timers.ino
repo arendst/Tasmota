@@ -194,7 +194,7 @@ void ApplyTimerOffsets(Timer *duskdawn)
 
   // apply offsets, check for over- and underflows
   uint16_t timeBuffer;
-  if ((uint16_t)stored.time > 720) {
+  if ((uint16_t)stored.time > 719) {
     // negative offset, time after 12:00
     timeBuffer = (uint16_t)stored.time - 720;
     // check for underflow

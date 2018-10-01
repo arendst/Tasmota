@@ -55,11 +55,11 @@
 
 enum LightCommands {
   CMND_COLOR, CMND_COLORTEMPERATURE, CMND_DIMMER, CMND_LED, CMND_LEDTABLE, CMND_FADE,
-  CMND_PIXELS, CMND_ROTATION, CMND_SCHEME, CMND_SPEED, CMND_WAKEUP, CMND_WAKEUPDURATION,
+  CMND_PIXELS, CMND_RGBWWTABLE, CMND_ROTATION, CMND_SCHEME, CMND_SPEED, CMND_WAKEUP, CMND_WAKEUPDURATION,
   CMND_WIDTH, CMND_CHANNEL, CMND_HSBCOLOR, CMND_UNDOCA };
 const char kLightCommands[] PROGMEM =
   D_CMND_COLOR "|" D_CMND_COLORTEMPERATURE "|" D_CMND_DIMMER "|" D_CMND_LED "|" D_CMND_LEDTABLE "|" D_CMND_FADE "|"
-  D_CMND_PIXELS "|" D_CMND_ROTATION "|" D_CMND_SCHEME "|" D_CMND_SPEED "|" D_CMND_WAKEUP "|" D_CMND_WAKEUPDURATION "|"
+  D_CMND_PIXELS "|" D_CMND_RGBWWTABLE "|" D_CMND_ROTATION "|" D_CMND_SCHEME "|" D_CMND_SPEED "|" D_CMND_WAKEUP "|" D_CMND_WAKEUPDURATION "|"
   D_CMND_WIDTH "|" D_CMND_CHANNEL "|" D_CMND_HSBCOLOR "|UNDOCA" ;
 
 struct LRgbColor {
@@ -799,7 +799,8 @@ void LightAnimate()
       light_update = 0;
       for (byte i = 0; i < light_subtype; i++) {
         light_last_color[i] = light_new_color[i];
-        cur_col[i] = (Settings.light_correction) ? ledTable[light_last_color[i]] : light_last_color[i];
+        cur_col[i] = light_last_color[i]*Settings.rgbwwTable[i]/255;
+        cur_col[i] = (Settings.light_correction) ? ledTable[cur_col[i]] : cur_col[i];
         if (light_type < LT_PWM6) {
           if (pin[GPIO_PWM1 +i] < 99) {
             if (cur_col[i] > 0xFC) {
@@ -1278,6 +1279,33 @@ boolean LightCommand()
       light_update = 1;
     }
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, GetStateText(Settings.light_correction));
+  }
+  else if (CMND_RGBWWTABLE == command_code) {
+    bool validtable = (XdrvMailbox.data_len > 0);
+    char scolor[25];
+    if (validtable) {
+      uint16_t HSB[3];
+      if (strstr(XdrvMailbox.data, ",")) {  // Command with up to 5 comma separated parameters
+        for (int i = 0; i < LST_RGBWC; i++) {
+          char *substr;
+
+          if (0 == i) {
+            substr = strtok(XdrvMailbox.data, ",");
+          } else {
+            substr = strtok(NULL, ",");
+          }
+          if (substr != NULL) {
+            Settings.rgbwwTable[i] = atoi(substr);
+          }
+        }
+      }
+      light_update = 1;
+    }
+    scolor[0] = '\0';
+    for (byte i = 0; i < LST_RGBWC; i++) {
+      snprintf_P(scolor, 25, PSTR("%s%s%d"), scolor, (i > 0) ? "," : "", Settings.rgbwwTable[i]);
+    }
+    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, XdrvMailbox.index, scolor);
   }
   else if (CMND_FADE == command_code) {
     switch (XdrvMailbox.payload) {

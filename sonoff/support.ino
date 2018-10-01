@@ -1775,27 +1775,35 @@ int8_t I2cWriteBuffer(uint8_t addr, uint8_t reg, uint8_t *reg_data, uint16_t len
 
 void I2cScan(char *devs, unsigned int devs_len)
 {
-  byte error;
-  byte address;
+  // Return error codes defined in twi.h and core_esp8266_si2c.c
+  // I2C_OK                      0
+  // I2C_SCL_HELD_LOW            1 = SCL held low by another device, no procedure available to recover
+  // I2C_SCL_HELD_LOW_AFTER_READ 2 = I2C bus error. SCL held low beyond slave clock stretch time
+  // I2C_SDA_HELD_LOW            3 = I2C bus error. SDA line held low by slave/another_master after n bits
+  // I2C_SDA_HELD_LOW_AFTER_INIT 4 = line busy. SDA again held low by another device. 2nd master?
+
+  byte error = 0;
+  byte address = 0;
   byte any = 0;
-  char tstr[10];
 
   snprintf_P(devs, devs_len, PSTR("{\"" D_CMND_I2CSCAN "\":\"" D_JSON_I2CSCAN_DEVICES_FOUND_AT));
   for (address = 1; address <= 127; address++) {
     Wire.beginTransmission(address);
     error = Wire.endTransmission();
     if (0 == error) {
-      snprintf_P(tstr, sizeof(tstr), PSTR(" 0x%2x"), address);
-      strncat(devs, tstr, devs_len);
       any = 1;
+      snprintf_P(devs, devs_len, PSTR("%s 0x%02x"), devs, address);
     }
-    else if (4 == error) {
-      snprintf_P(devs, devs_len, PSTR("{\"" D_CMND_I2CSCAN "\":\"" D_JSON_I2CSCAN_UNKNOWN_ERROR_AT " 0x%2x\"}"), address);
+    else if (error != 2) {  // Seems to happen anyway using this scan
+      any = 2;
+      snprintf_P(devs, devs_len, PSTR("{\"" D_CMND_I2CSCAN "\":\"Error %d at 0x%02x"), error, address);
+      break;
     }
   }
   if (any) {
     strncat(devs, "\"}", devs_len);
-  } else {
+  }
+  else {
     snprintf_P(devs, devs_len, PSTR("{\"" D_CMND_I2CSCAN "\":\"" D_JSON_I2CSCAN_NO_DEVICES_FOUND "\"}"));
   }
 }

@@ -1013,6 +1013,10 @@ void HandleBackupConfiguration()
   WebServer->sendHeader(F("Content-Disposition"), attachment);
 
   WebServer->send(200, FPSTR(HDR_CTYPE_STREAM), "");
+
+  uint16_t cfg_crc = Settings.cfg_crc;
+  Settings.cfg_crc = GetSettingsCrc();  // Calculate crc (again) as it might be wrong when savedata = 0 (#3918)
+
   memcpy(settings_buffer, &Settings, sizeof(Settings));
   if (config_xor_on_set) {
     for (uint16_t i = 2; i < sizeof(Settings); i++) {
@@ -1030,6 +1034,8 @@ void HandleBackupConfiguration()
 #endif
 
   SettingsBufferFree();
+
+  Settings.cfg_crc = cfg_crc;  // Restore crc in case savedata = 0 to make sure settings will be noted as changed
 }
 
 void HandleSaveSettings()
