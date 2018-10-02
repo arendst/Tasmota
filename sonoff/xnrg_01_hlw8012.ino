@@ -33,7 +33,7 @@
 #define HLW_IREF             4545    // 4.545A
 #define HLW_SEL_VOLTAGE         1
 
-// HJL-01 based (BlitzWolf, Homecube, Gosund)
+// HJL-01 based (BlitzWolf, Homecube, Gosund, Teckin)
 #define HJL_PREF             1362
 #define HJL_UREF              822
 #define HJL_IREF             3300
