@@ -98,6 +98,7 @@ void PCA9685_SetPWM(uint8_t pin, uint16_t pwm, bool inverted) {
   } else {
     PCA9685_SetPWM_Reg(pin, 0, pwm);
   }
+  pca9685_pin_pwm_value[pin] = pwm;
 }
 
 bool PCA9685_Command(void) 
@@ -119,6 +120,8 @@ bool PCA9685_Command(void)
   UpperCase(XdrvMailbox.data,XdrvMailbox.data);
 
   if (!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 1),"RESET"))  {  PCA9685_Reset(); return serviced; }
+
+  if (!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 1),"STATUS"))  { PCA9685_OutputTelemetry(false); return serviced; }
 
   if (!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 1),"PWMF")) {
     if (paramcount > 1) {
@@ -162,7 +165,7 @@ bool PCA9685_Command(void)
   return serviced;
 }
 
-void PCA9685_OutputTelemetry(void) {
+void PCA9685_OutputTelemetry(bool telemetry) {
   if (0 == pca9685_detected) { return; }  // We do not do this if the PCA9685 has not been detected
   snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_TIME "\":\"%s\",\"PCA9685\": {"), GetDateAndTime(DT_LOCAL).c_str());
   snprintf_P(mqtt_data,sizeof(mqtt_data), PSTR("%s\"PWM_FREQ\":%i,"),mqtt_data,pca9685_freq);
@@ -170,7 +173,9 @@ void PCA9685_OutputTelemetry(void) {
     snprintf_P(mqtt_data,sizeof(mqtt_data), PSTR("%s\"PWM%i\":%i,"),mqtt_data,pin,pca9685_pin_pwm_value[pin]);
   }
   snprintf_P(mqtt_data,sizeof(mqtt_data),PSTR("%s\"END\":1}}"),mqtt_data);
-  MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);
+  if (telemetry) {
+    MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);
+  }
 }
 
 boolean Xdrv15(byte function)
@@ -182,7 +187,7 @@ boolean Xdrv15(byte function)
       case FUNC_EVERY_SECOND:
         PCA9685_Detect();
         if (tele_period == 0) {
-          PCA9685_OutputTelemetry();
+          PCA9685_OutputTelemetry(true);
         }
         break;
       case FUNC_COMMAND:

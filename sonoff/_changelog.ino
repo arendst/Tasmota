@@ -1,4 +1,8 @@
-/* 6.2.1.10 20180930
+/* 6.2.1.11 20191002
+ * Remove support for MQTT Client based on esp-mqtt-arduino by #define MQTT_LIBRARY_TYPE MQTT_ESPMQTTARDUINO
+ * Add support for MQTT Client based on lwmqtt to be selected by #define MQTT_LIBRARY_TYPE MQTT_ARDUINOMQTT
+ *
+ * 6.2.1.10 20180930
  * Add command RGBWWTable to support color calibration (#3933)
  * Add support for Michael Haustein ESP Switch
  * Add support for EXS Relay V5.0 (#3810)
