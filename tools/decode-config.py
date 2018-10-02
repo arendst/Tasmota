@@ -1,5 +1,7 @@
 #!/usr/bin/env python
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
+VER = '1.5.0012'
 
 """
     decode-config.py - Decode configuration of Sonoff-Tasmota device
@@ -35,9 +37,11 @@ Instructions:
 Usage:
     decode-config.py [-h] [-f <filename>] [-d <host>] [-u <user>]
                      [-p <password>] [--json-indent <integer>]
-                     [--json-compact] [--unsort] [--raw] [--unhide-pw]
-                     [-o <filename>] [--output-file-format <word>]
-                     [-c <filename>] [--exit-on-error-only] [-V]
+                     [--json-compact] [--sort] [--unsort] [--raw-values]
+                     [--no-raw-values] [--raw-keys] [--no-raw-keys]
+                     [--hide-pw] [--unhide-pw] [-o <filename>]
+                     [--output-file-format <word>] [-c <filename>]
+                     [--exit-on-error-only] [-V]
 
     Decode configuration of Sonoff-Tasmota device. Args that start with '--' (eg.
     -f) can also be set in a config file (specified via -c). Config file syntax
@@ -66,18 +70,23 @@ Usage:
       -p <password>, --password <password>
                             host HTTP access password (default: None)
 
-    output:
+    config:
       --json-indent <integer>
                             pretty-printed JSON output using indent level
-                            (default: 'None')
-      --json-compact        compact JSON output by eliminate whitespace (default:
-                            normal)
-      --unsort              do not sort results (default: sort)
-      --raw                 output raw values (default: process)
-      --unhide-pw           unhide passwords (default: hide)
+                            (default: 'None'). Use values greater equal 0 to
+                            indent or -1 to disabled indent.
+      --json-compact        compact JSON output by eliminate whitespace
+      --sort                sort json keywords (default)
+      --unsort              do not sort json keywords
+      --raw-values, --raw   output raw values
+      --no-raw-values       output human readable values (default)
+      --raw-keys            output bitfield raw keys (default)
+      --no-raw-keys         do not output bitfield raw keys
+      --hide-pw             hide passwords (default)
+      --unhide-pw           unhide passwords
       -o <filename>, --output-file <filename>
-                            file to store configuration to (default: None) Macros:
-                            @v=Tasmota version, @f=friendly name
+                            file to store configuration to (default: None).
+                            Replacements: @v=Tasmota version, @f=friendly name
       --output-file-format <word>
                             output format ('json' or 'binary', default: 'json')
 
@@ -86,41 +95,44 @@ Usage:
 
     Either argument -d <host> or -f <filename> must be given.
 
+
+Returns:
+    0: successful
+    1: file not found
+    2: configuration version not supported
+    3: data size mismatch
+    4: data CRC error
+    5: configuration file read error
+    6: argument error
+    9: python module is missing
+    4xx, 5xx: HTTP error
+
 """
 
 import os.path
 import io
 import sys
-import struct
-import re
-import math
-from datetime import datetime
+def ModuleImportError(module):
+    er = str(module)
+    print("{}. Try 'pip install {}' to install it".format(er,er.split(' ')[len(er.split(' '))-1]) )
+    sys.exit(9)
 try:
+    import struct
+    import re
+    import math
+    from datetime import datetime
     import json
-except ImportError:
-    print("module <json> not found. Try 'pip install json' to install it")
-    sys.exit(9)
-try:
     import configargparse
-except ImportError:
-    print("module <configargparse> not found. Try 'pip install configargparse' to install it")
-    sys.exit(9)
-try:
     import pycurl
-except ImportError:
-    print("module <pycurl> not found. Try 'pip install pycurl' to install it")
-    sys.exit(9)
-try:
     import urllib2
-except ImportError:
-    print("module <urllib2> not found. Try 'pip install urllib2' to install it")
-    sys.exit(9)
+except ImportError, e:
+    ModuleImportError(e)
 
 
-VER = '1.5.0011'
 PROG='{} v{} by Norbert Richter'.format(os.path.basename(sys.argv[0]),VER)
 
 CONFIG_FILE_XOR   = 0x5A
+BINARYFILE_MAGIC  = 0x63576223
 
 args = {}
 DEFAULTS = {
@@ -136,13 +148,14 @@ DEFAULTS = {
         'password':     None,
         'tasmotafile':  None,
     },
-    'output':
+    'config':
     {
         'jsonindent':   None,
         'jsoncompact':  False,
-        'unsort':       False,
-        'raw':          False,
-        'unhide-pw':    False,
+        'sort':         True,
+        'rawvalues':    False,
+        'rawkeys':      True,
+        'hidepw':       True,
         'outputfile':   None,
         'outputfileformat': 'json',
     },
@@ -166,7 +179,7 @@ Settings dictionary describes the config file fields definition:
             'xxx':
                 A string is used to interpret the data at <baseaddr>
                 The string defines the format interpretion as described
-                in 'struct module format string', see 
+                in 'struct module format string', see
                 https://docs.python.org/2.7/library/struct.html#format-strings
                 In addition to this format string there is as special
                 meaning of a dot '.' - this means a bit with an optional
@@ -178,7 +191,7 @@ Settings dictionary describes the config file fields definition:
             The address (starting from 0) within config data.
             For bit fields <baseaddr> must be a tuple.
             n:
-                Defines a simple address <n> within config data. 
+                Defines a simple address <n> within config data.
                 <n> must be a positive integer.
             (n, b, s):
                 A tuple defines a bit field:
@@ -221,11 +234,12 @@ def int2ip(value):
     return '{:d}.{:d}.{:d}.{:d}'.format(value & 0xff, value>>8 & 0xff, value>>16 & 0xff, value>>24 & 0xff)
 
 def password(value):
-    if args.unhidepw:
-        return value
-    return '********'
+    if args.hidepw:
+        return '********'
+    return value
 
-Setting_6_2_1 = {
+
+Setting_6_2_1_10 = {
     'cfg_holder':                   ('<H',  0x000, None),
     'cfg_size':                     ('<H',  0x002, None),
     'save_flag':                    ('<L',  0x004, None),
@@ -281,9 +295,9 @@ Setting_6_2_1 = {
     'syslog_host':                  ('33s', 0x186, None),
     'rule_stop':                    ({
                                         'raw':      ('B',   0x1A7,        None),
-                                        'rule1':    ('B',  (0x1A7, 1, 0), None, '#? + 8'),
-                                        'rule2':    ('B',  (0x1A7, 1, 1), None, '#? + 8'),
-                                        'rule3':    ('B',  (0x1A7, 1, 2), None, '#? + 8'),
+                                        'rule1':    ('B',  (0x1A7, 1, 0), None, '? + 8'),
+                                        'rule2':    ('B',  (0x1A7, 1, 1), None, '? + 8'),
+                                        'rule3':    ('B',  (0x1A7, 1, 2), None, '? + 8'),
                                      },     0x1A7, None),
     'syslog_port':                  ('<H',  0x1A8, None),
     'syslog_level':                 ('B',   0x1AA, None),
@@ -396,9 +410,9 @@ Setting_6_2_1 = {
                                      },     0x49F, None),
     'rule_once':                    ({
                                         'raw':      ('B',   0x4A0,        None),
-                                        'rule1':    ('B',  (0x4A0, 1, 0), None, '#? + 4'),
-                                        'rule2':    ('B',  (0x4A0, 1, 1), None, '#? + 4'),
-                                        'rule3':    ('B',  (0x4A0, 1, 2), None, '#? + 4'),
+                                        'rule1':    ('B',  (0x4A0, 1, 0), None, '? + 4'),
+                                        'rule2':    ('B',  (0x4A0, 1, 1), None, '? + 4'),
+                                        'rule3':    ('B',  (0x4A0, 1, 2), None, '? + 4'),
                                      },     0x4A0, None),
     'light_fade':                   ('B',   0x4A1, None),
     'light_speed':                  ('B',   0x4A2, None),
@@ -418,6 +432,965 @@ Setting_6_2_1 = {
     'flag2':                        ({
                                         'raw':                      ('<L',   0x5BC,         None, '"0x{:08x}".format(?)'),
                                         'frequency_resolution':     ('<L',  (0x5BC, 2, 11), None),
+                                        'axis_resolution':          ('<L',  (0x5BC, 2, 13), None),
+                                        'current_resolution':       ('<L',  (0x5BC, 2, 15), None),
+                                        'voltage_resolution':       ('<L',  (0x5BC, 2, 17), None),
+                                        'wattage_resolution':       ('<L',  (0x5BC, 2, 19), None),
+                                        'emulation':                ('<L',  (0x5BC, 2, 21), None),
+                                        'energy_resolution':        ('<L',  (0x5BC, 3, 23), None),
+                                        'pressure_resolution':      ('<L',  (0x5BC, 2, 26), None),
+                                        'humidity_resolution':      ('<L',  (0x5BC, 2, 28), None),
+                                        'temperature_resolution':   ('<L',  (0x5BC, 2, 30), None),
+                                     },     0x5BC, None),
+    'pulse_counter':                ('<L',  0x5C0, [4]),
+    'pulse_counter_type':           ('<H',  0x5D0, None),
+    'pulse_counter_debounce':       ('<H',  0x5D2, None),
+    'rf_code':                      ('B',   0x5D4, [17,9], '"0x{:02x}".format(?)'),
+    'switch_debounce':              ('<H',  0x66E, None),
+    'timer':                        ({
+                                        'raw':      ('<L',   0x670,          None, '"0x{:08x}".format(?)'),
+                                        'time':     ('<L',  (0x670, 11,  0), None),
+                                        'window':   ('<L',  (0x670,  4, 11), None),
+                                        'repeat':   ('<L',  (0x670,  1, 15), None),
+                                        'days':     ('<L',  (0x670,  7, 16), None),
+                                        'device':   ('<L',  (0x670,  4, 23), None),
+                                        'power':    ('<L',  (0x670,  2, 27), None),
+                                        'mode':     ('<L',  (0x670,  2, 29), None),
+                                        'arm':      ('<L',  (0x670,  1, 31), None),
+                                     },     0x670, [16]),
+    'latitude':                     ('i',   0x6B0, None, 'float(?) / 1000000'),
+    'longitude':                    ('i',   0x6B4, None, 'float(?) / 1000000'),
+    'knx_physsical_addr':           ('<H',  0x6B8, None),
+    'knx_GA_addr':                  ('<H',  0x6BA, [10]),
+    'knx_CB_addr':                  ('<H',  0x6CE, [10]),
+    'knx_GA_param':                 ('B',   0x6E2, [10]),
+    'knx_CB_param':                 ('B',   0x6EC, [10]),
+    'mcp230xx_config':              ({
+                                        'raw':              ('<L',   0x6F6,         None, '"0x{:08x}".format(?)'),
+                                        'pinmode':          ('<L',  (0x6F6, 3,  0), None),
+                                        'pullup':           ('<L',  (0x6F6, 1,  3), None),
+                                        'saved_state':      ('<L',  (0x6F6, 1,  4), None),
+                                        'int_report_mode':  ('<L',  (0x6F6, 2,  5), None),
+                                        'int_report_defer': ('<L',  (0x6F6, 4,  7), None),
+                                        'int_count_en':     ('<L',  (0x6F6, 1, 11), None),
+                                     },     0x6F6, [16]),
+    'mcp230xx_int_prio':            ('B',   0x716, None),
+    'mcp230xx_int_timer':           ('<H',  0x718, None),
+    'rgbwwTable':                   ('B',   0x71A, [5]),
+    'energy_frequency_calibration': ('<L',  0x7C8, None),
+    'mems':                         ('10s', 0x7CE, [5]),
+    'rules':                        ('512s',0x800, [3])
+}
+Setting_6_2_1_6 = {
+    'cfg_holder':                   ('<H',  0x000, None),
+    'cfg_size':                     ('<H',  0x002, None),
+    'save_flag':                    ('<L',  0x004, None),
+    'version':                      ('<L',  0x008, None, hex),
+    'bootcount':                    ('<H',  0x00C, None),
+    'cfg_crc':                      ('<H',  0x00E, None),
+    'flag':                         ({
+                                        'raw':                      ('<L',   0x010,         None, '"0x{:08x}".format(?)'),
+                                        'save_state':               ('<L',  (0x010, 1,  0), None),
+                                        'button_restrict':          ('<L',  (0x010, 1,  1), None),
+                                        'value_units':              ('<L',  (0x010, 1,  2), None),
+                                        'mqtt_enabled':             ('<L',  (0x010, 1,  3), None),
+                                        'mqtt_response':            ('<L',  (0x010, 1,  4), None),
+                                        'mqtt_power_retain':        ('<L',  (0x010, 1,  5), None),
+                                        'mqtt_button_retain':       ('<L',  (0x010, 1,  6), None),
+                                        'mqtt_switch_retain':       ('<L',  (0x010, 1,  7), None),
+                                        'temperature_conversion':   ('<L',  (0x010, 1,  8), None),
+                                        'mqtt_sensor_retain':       ('<L',  (0x010, 1,  9), None),
+                                        'mqtt_offline':             ('<L',  (0x010, 1, 10), None),
+                                        'button_swap':              ('<L',  (0x010, 1, 11), None),
+                                        'stop_flash_rotate':        ('<L',  (0x010, 1, 12), None),
+                                        'button_single':            ('<L',  (0x010, 1, 13), None),
+                                        'interlock':                ('<L',  (0x010, 1, 14), None),
+                                        'pwm_control':              ('<L',  (0x010, 1, 15), None),
+                                        'ws_clock_reverse':         ('<L',  (0x010, 1, 16), None),
+                                        'decimal_text':             ('<L',  (0x010, 1, 17), None),
+                                        'light_signal':             ('<L',  (0x010, 1, 18), None),
+                                        'hass_discovery':           ('<L',  (0x010, 1, 19), None),
+                                        'not_power_linked':         ('<L',  (0x010, 1, 20), None),
+                                        'no_power_on_check':        ('<L',  (0x010, 1, 21), None),
+                                        'mqtt_serial':              ('<L',  (0x010, 1, 22), None),
+                                        'rules_enabled':            ('<L',  (0x010, 1, 23), None),
+                                        'rules_once':               ('<L',  (0x010, 1, 24), None),
+                                        'knx_enabled':              ('<L',  (0x010, 1, 25), None),
+                                        'device_index_enable':      ('<L',  (0x010, 1, 26), None),
+                                        'knx_enable_enhancement':   ('<L',  (0x010, 1, 27), None),
+                                        'rf_receive_decimal':       ('<L',  (0x010, 1, 28), None),
+                                        'ir_receive_decimal':       ('<L',  (0x010, 1, 29), None),
+                                        'hass_light':               ('<L',  (0x010, 1, 30), None),
+                                        'global_state':             ('<L',  (0x010, 1, 31), None),
+                                     },     0x010, None),
+    'save_data':                    ('<h',  0x014, None),
+    'timezone':                     ('b',   0x016, None),
+    'ota_url':                      ('101s',0x017, None),
+    'mqtt_prefix':                  ('11s', 0x07C, [3]),
+    'baudrate':                     ('B',   0x09D, None, '? * 1200'),
+    'seriallog_level':              ('B',   0x09E, None),
+    'sta_config':                   ('B',   0x09F, None),
+    'sta_active':                   ('B',   0x0A0, None),
+    'sta_ssid':                     ('33s', 0x0A1, [2]),
+    'sta_pwd':                      ('65s', 0x0E3, [2], password),
+    'hostname':                     ('33s', 0x165, None),
+    'syslog_host':                  ('33s', 0x186, None),
+    'rule_stop':                    ({
+                                        'raw':      ('B',   0x1A7,        None),
+                                        'rule1':    ('B',  (0x1A7, 1, 0), None, '? + 8'),
+                                        'rule2':    ('B',  (0x1A7, 1, 1), None, '? + 8'),
+                                        'rule3':    ('B',  (0x1A7, 1, 2), None, '? + 8'),
+                                     },     0x1A7, None),
+    'syslog_port':                  ('<H',  0x1A8, None),
+    'syslog_level':                 ('B',   0x1AA, None),
+    'webserver':                    ('B',   0x1AB, None),
+    'weblog_level':                 ('B',   0x1AC, None),
+    'mqtt_fingerprint':             ('20s', 0x1AD, [2]),
+    'mqtt_host':                    ('33s', 0x1E9, None),
+    'mqtt_port':                    ('<H',  0x20A, None),
+    'mqtt_client':                  ('33s', 0x20C, None),
+    'mqtt_user':                    ('33s', 0x22D, None),
+    'mqtt_pwd':                     ('33s', 0x24E, None, password),
+    'mqtt_topic':                   ('33s', 0x26F, None),
+    'button_topic':                 ('33s', 0x290, None),
+    'mqtt_grptopic':                ('33s', 0x2B1, None),
+    'display_model':                ('B',   0x2D2, None),
+    'display_mode':                 ('B',   0x2D3, None),
+    'display_refresh':              ('B',   0x2D4, None),
+    'display_rows':                 ('B',   0x2D5, None),
+    'display_cols':                 ('B',   0x2D6, [2]),
+    'display_address':              ('B',   0x2D8, [8]),
+    'display_dimmer':               ('B',   0x2E0, None),
+    'display_size':                 ('B',   0x2E1, None),
+    'tflag':                        ({
+                                        'raw':      ('<H',   0x2E2,         None, '"0x{:04x}".format(?)'),
+                                        'hemis':    ('<H',  (0x2E2, 1,  0), None),
+                                        'week':     ('<H',  (0x2E2, 3,  1), None),
+                                        'month':    ('<H',  (0x2E2, 4,  4), None),
+                                        'dow':      ('<H',  (0x2E2, 3,  8), None),
+                                        'hour':     ('<H',  (0x2E2, 5, 13), None),
+                                     },     0x2E2, [2]),
+    'pwm_frequency':                ('<H',  0x2E6, None),
+    'power':                        ({
+                                        'raw':      ('<L',   0x2E8,        None, '"0x{:08x}".format(?)'),
+                                        'power1':   ('<L',  (0x2E8, 1, 0), None),
+                                        'power2':   ('<L',  (0x2E8, 1, 1), None),
+                                        'power3':   ('<L',  (0x2E8, 1, 2), None),
+                                        'power4':   ('<L',  (0x2E8, 1, 3), None),
+                                        'power5':   ('<L',  (0x2E8, 1, 4), None),
+                                        'power6':   ('<L',  (0x2E8, 1, 5), None),
+                                        'power7':   ('<L',  (0x2E8, 1, 6), None),
+                                        'power8':   ('<L',  (0x2E8, 1, 7), None),
+                                     },     0x2E8, None),
+    'pwm_value':                    ('<H',  0x2EC, [5]),
+    'altitude':                     ('<h',  0x2F6, None),
+    'tele_period':                  ('<H',  0x2F8, None),
+    'display_rotate':               ('B',   0x2FA, None),
+    'ledstate':                     ('B',   0x2FB, None),
+    'param':                        ('B',   0x2FC, [18]),
+    'toffset':                      ('<h',  0x30E, [2]),
+    'display_font':                 ('B',   0x312, None),
+    'state_text':                   ('11s', 0x313, [4]),
+    'energy_power_delta':           ('B',   0x33F, None),
+    'domoticz_update_timer':        ('<H',  0x340, None),
+    'pwm_range':                    ('<H',  0x342, None),
+    'domoticz_relay_idx':           ('<L',  0x344, [4]),
+    'domoticz_key_idx':             ('<L',  0x354, [4]),
+    'energy_power_calibration':     ('<L',  0x364, None),
+    'energy_voltage_calibration':   ('<L',  0x368, None),
+    'energy_current_calibration':   ('<L',  0x36C, None),
+    'energy_kWhtoday':              ('<L',  0x370, None),
+    'energy_kWhyesterday':          ('<L',  0x374, None),
+    'energy_kWhdoy':                ('<H',  0x378, None),
+    'energy_min_power':             ('<H',  0x37A, None),
+    'energy_max_power':             ('<H',  0x37C, None),
+    'energy_min_voltage':           ('<H',  0x37E, None),
+    'energy_max_voltage':           ('<H',  0x380, None),
+    'energy_min_current':           ('<H',  0x382, None),
+    'energy_max_current':           ('<H',  0x384, None),
+    'energy_max_power_limit':       ('<H',  0x386, None),
+    'energy_max_power_limit_hold':  ('<H',  0x388, None),
+    'energy_max_power_limit_window':('<H',  0x38A, None),
+    'energy_max_power_safe_limit':  ('<H',  0x38C, None),
+    'energy_max_power_safe_limit_hold':('<H',  0x38E, None),
+    'energy_max_power_safe_limit_window':('<H',  0x390, None),
+    'energy_max_energy':            ('<H',  0x392, None),
+    'energy_max_energy_start':      ('<H',  0x394, None),
+    'mqtt_retry':                   ('<H',  0x396, None),
+    'poweronstate':                 ('B',   0x398, None),
+    'last_module':                  ('B',   0x399, None),
+    'blinktime':                    ('<H',  0x39A, None),
+    'blinkcount':                   ('<H',  0x39C, None),
+    'light_rotation':               ('<H',  0x39E, None),
+    'flag3':                        ({
+                                         'raw':                 ('<L',   0x3A0,        None, '"0x{:08x}".format(?)'),
+                                         'timers_enable':       ('<L',  (0x3A0, 1, 0), None),
+                                         'user_esp8285_enable': ('<L',  (0x3A0, 1, 1), None),
+                                         'time_append_timezone':('<L',  (0x3A0, 1, 2), None),
+                                     },     0x3A0, None),
+    'switchmode':                   ('B',   0x3A4, [8]),
+    'friendlyname':                 ('33s', 0x3AC, [4]),
+    'switch_topic':                 ('33s', 0x430, None),
+    'serial_delimiter':             ('B',   0x451, None),
+    'sbaudrate':                    ('B',   0x452, None),
+    'sleep':                        ('B',   0x453, None),
+    'domoticz_switch_idx':          ('<H',  0x454, [4]),
+    'domoticz_sensor_idx':          ('<H',  0x45C, [12]),
+    'module':                       ('B',   0x474, None),
+    'ws_color':                     ('B',   0x475, [4,3]),
+    'ws_width':                     ('B',   0x481, [3]),
+    'my_gp':                        ('B',   0x484, [18]),
+    'light_pixels':                 ('<H',  0x496, None),
+    'light_color':                  ('B',   0x498, [5]),
+    'light_correction':             ('B',   0x49D, None),
+    'light_dimmer':                 ('B',   0x49E, None),
+    'rule_enabled':                 ({
+                                        'raw':      ('B',   0x49F,        None),
+                                        'rule1':    ('B',  (0x49F, 1, 0), None),
+                                        'rule2':    ('B',  (0x49F, 1, 1), None),
+                                        'rule3':    ('B',  (0x49F, 1, 2), None),
+                                     },     0x49F, None),
+    'rule_once':                    ({
+                                        'raw':      ('B',   0x4A0,        None),
+                                        'rule1':    ('B',  (0x4A0, 1, 0), None, '? + 4'),
+                                        'rule2':    ('B',  (0x4A0, 1, 1), None, '? + 4'),
+                                        'rule3':    ('B',  (0x4A0, 1, 2), None, '? + 4'),
+                                     },     0x4A0, None),
+    'light_fade':                   ('B',   0x4A1, None),
+    'light_speed':                  ('B',   0x4A2, None),
+    'light_scheme':                 ('B',   0x4A3, None),
+    'light_width':                  ('B',   0x4A4, None),
+    'knx_GA_registered':            ('B',   0x4A5, None),
+    'light_wakeup':                 ('<H',  0x4A6, None),
+    'knx_CB_registered':            ('B',   0x4A8, None),
+    'web_password':                 ('33s', 0x4A9, None, password),
+    'ntp_server':                   ('33s', 0x4CE, [3]),
+    'ina219_mode':                  ('B',   0x531, None),
+    'pulse_timer':                  ('<H',  0x532, [8]),
+    'button_debounce':              ('<H',  0x542, None),
+    'ip_address':                   ('<L',  0x544, [4], int2ip),
+    'energy_kWhtotal':              ('<L',  0x554, None),
+    'mqtt_fulltopic':               ('100s',0x558, None),
+    'flag2':                        ({
+                                        'raw':                      ('<L',   0x5BC,         None, '"0x{:08x}".format(?)'),
+                                        'frequency_resolution':     ('<L',  (0x5BC, 2, 11), None),
+                                        'axis_resolution':          ('<L',  (0x5BC, 2, 13), None),
+                                        'current_resolution':       ('<L',  (0x5BC, 2, 15), None),
+                                        'voltage_resolution':       ('<L',  (0x5BC, 2, 17), None),
+                                        'wattage_resolution':       ('<L',  (0x5BC, 2, 19), None),
+                                        'emulation':                ('<L',  (0x5BC, 2, 21), None),
+                                        'energy_resolution':        ('<L',  (0x5BC, 3, 23), None),
+                                        'pressure_resolution':      ('<L',  (0x5BC, 2, 26), None),
+                                        'humidity_resolution':      ('<L',  (0x5BC, 2, 28), None),
+                                        'temperature_resolution':   ('<L',  (0x5BC, 2, 30), None),
+                                     },     0x5BC, None),
+    'pulse_counter':                ('<L',  0x5C0, [4]),
+    'pulse_counter_type':           ('<H',  0x5D0, None),
+    'pulse_counter_debounce':       ('<H',  0x5D2, None),
+    'rf_code':                      ('B',   0x5D4, [17,9], '"0x{:02x}".format(?)'),
+    'switch_debounce':              ('<H',  0x66E, None),
+    'timer':                        ({
+                                        'raw':      ('<L',   0x670,          None, '"0x{:08x}".format(?)'),
+                                        'time':     ('<L',  (0x670, 11,  0), None),
+                                        'window':   ('<L',  (0x670,  4, 11), None),
+                                        'repeat':   ('<L',  (0x670,  1, 15), None),
+                                        'days':     ('<L',  (0x670,  7, 16), None),
+                                        'device':   ('<L',  (0x670,  4, 23), None),
+                                        'power':    ('<L',  (0x670,  2, 27), None),
+                                        'mode':     ('<L',  (0x670,  2, 29), None),
+                                        'arm':      ('<L',  (0x670,  1, 31), None),
+                                     },     0x670, [16]),
+    'latitude':                     ('i',   0x6B0, None, 'float(?) / 1000000'),
+    'longitude':                    ('i',   0x6B4, None, 'float(?) / 1000000'),
+    'knx_physsical_addr':           ('<H',  0x6B8, None),
+    'knx_GA_addr':                  ('<H',  0x6BA, [10]),
+    'knx_CB_addr':                  ('<H',  0x6CE, [10]),
+    'knx_GA_param':                 ('B',   0x6E2, [10]),
+    'knx_CB_param':                 ('B',   0x6EC, [10]),
+    'mcp230xx_config':              ({
+                                        'raw':              ('<L',   0x6F6,         None, '"0x{:08x}".format(?)'),
+                                        'pinmode':          ('<L',  (0x6F6, 3,  0), None),
+                                        'pullup':           ('<L',  (0x6F6, 1,  3), None),
+                                        'saved_state':      ('<L',  (0x6F6, 1,  4), None),
+                                        'int_report_mode':  ('<L',  (0x6F6, 2,  5), None),
+                                        'int_report_defer': ('<L',  (0x6F6, 4,  7), None),
+                                        'int_count_en':     ('<L',  (0x6F6, 1, 11), None),
+                                     },     0x6F6, [16]),
+    'mcp230xx_int_prio':            ('B',   0x716, None),
+    'mcp230xx_int_timer':           ('<H',  0x718, None),
+    'energy_frequency_calibration': ('<L',  0x7C8, None),
+    'mems':                         ('10s', 0x7CE, [5]),
+    'rules':                        ('512s',0x800, [3])
+}
+Setting_6_2_1_3 = {
+    'cfg_holder':                   ('<H',  0x000, None),
+    'cfg_size':                     ('<H',  0x002, None),
+    'save_flag':                    ('<L',  0x004, None),
+    'version':                      ('<L',  0x008, None, hex),
+    'bootcount':                    ('<H',  0x00C, None),
+    'cfg_crc':                      ('<H',  0x00E, None),
+    'flag':                         ({
+                                        'raw':                      ('<L',   0x010,         None, '"0x{:08x}".format(?)'),
+                                        'save_state':               ('<L',  (0x010, 1,  0), None),
+                                        'button_restrict':          ('<L',  (0x010, 1,  1), None),
+                                        'value_units':              ('<L',  (0x010, 1,  2), None),
+                                        'mqtt_enabled':             ('<L',  (0x010, 1,  3), None),
+                                        'mqtt_response':            ('<L',  (0x010, 1,  4), None),
+                                        'mqtt_power_retain':        ('<L',  (0x010, 1,  5), None),
+                                        'mqtt_button_retain':       ('<L',  (0x010, 1,  6), None),
+                                        'mqtt_switch_retain':       ('<L',  (0x010, 1,  7), None),
+                                        'temperature_conversion':   ('<L',  (0x010, 1,  8), None),
+                                        'mqtt_sensor_retain':       ('<L',  (0x010, 1,  9), None),
+                                        'mqtt_offline':             ('<L',  (0x010, 1, 10), None),
+                                        'button_swap':              ('<L',  (0x010, 1, 11), None),
+                                        'stop_flash_rotate':        ('<L',  (0x010, 1, 12), None),
+                                        'button_single':            ('<L',  (0x010, 1, 13), None),
+                                        'interlock':                ('<L',  (0x010, 1, 14), None),
+                                        'pwm_control':              ('<L',  (0x010, 1, 15), None),
+                                        'ws_clock_reverse':         ('<L',  (0x010, 1, 16), None),
+                                        'decimal_text':             ('<L',  (0x010, 1, 17), None),
+                                        'light_signal':             ('<L',  (0x010, 1, 18), None),
+                                        'hass_discovery':           ('<L',  (0x010, 1, 19), None),
+                                        'not_power_linked':         ('<L',  (0x010, 1, 20), None),
+                                        'no_power_on_check':        ('<L',  (0x010, 1, 21), None),
+                                        'mqtt_serial':              ('<L',  (0x010, 1, 22), None),
+                                        'rules_enabled':            ('<L',  (0x010, 1, 23), None),
+                                        'rules_once':               ('<L',  (0x010, 1, 24), None),
+                                        'knx_enabled':              ('<L',  (0x010, 1, 25), None),
+                                        'device_index_enable':      ('<L',  (0x010, 1, 26), None),
+                                        'knx_enable_enhancement':   ('<L',  (0x010, 1, 27), None),
+                                        'rf_receive_decimal':       ('<L',  (0x010, 1, 28), None),
+                                        'ir_receive_decimal':       ('<L',  (0x010, 1, 29), None),
+                                        'hass_light':               ('<L',  (0x010, 1, 30), None),
+                                        'global_state':             ('<L',  (0x010, 1, 31), None),
+                                     },     0x010, None),
+    'save_data':                    ('<h',  0x014, None),
+    'timezone':                     ('b',   0x016, None),
+    'ota_url':                      ('101s',0x017, None),
+    'mqtt_prefix':                  ('11s', 0x07C, [3]),
+    'baudrate':                     ('B',   0x09D, None, '? * 1200'),
+    'seriallog_level':              ('B',   0x09E, None),
+    'sta_config':                   ('B',   0x09F, None),
+    'sta_active':                   ('B',   0x0A0, None),
+    'sta_ssid':                     ('33s', 0x0A1, [2]),
+    'sta_pwd':                      ('65s', 0x0E3, [2], password),
+    'hostname':                     ('33s', 0x165, None),
+    'syslog_host':                  ('33s', 0x186, None),
+    'rule_stop':                    ({
+                                        'raw':      ('B',   0x1A7,        None),
+                                        'rule1':    ('B',  (0x1A7, 1, 0), None, '? + 8'),
+                                        'rule2':    ('B',  (0x1A7, 1, 1), None, '? + 8'),
+                                        'rule3':    ('B',  (0x1A7, 1, 2), None, '? + 8'),
+                                     },     0x1A7, None),
+    'syslog_port':                  ('<H',  0x1A8, None),
+    'syslog_level':                 ('B',   0x1AA, None),
+    'webserver':                    ('B',   0x1AB, None),
+    'weblog_level':                 ('B',   0x1AC, None),
+    'mqtt_fingerprint':             ('20s', 0x1AD, [2]),
+    'mqtt_host':                    ('33s', 0x1E9, None),
+    'mqtt_port':                    ('<H',  0x20A, None),
+    'mqtt_client':                  ('33s', 0x20C, None),
+    'mqtt_user':                    ('33s', 0x22D, None),
+    'mqtt_pwd':                     ('33s', 0x24E, None, password),
+    'mqtt_topic':                   ('33s', 0x26F, None),
+    'button_topic':                 ('33s', 0x290, None),
+    'mqtt_grptopic':                ('33s', 0x2B1, None),
+    'display_model':                ('B',   0x2D2, None),
+    'display_mode':                 ('B',   0x2D3, None),
+    'display_refresh':              ('B',   0x2D4, None),
+    'display_rows':                 ('B',   0x2D5, None),
+    'display_cols':                 ('B',   0x2D6, [2]),
+    'display_address':              ('B',   0x2D8, [8]),
+    'display_dimmer':               ('B',   0x2E0, None),
+    'display_size':                 ('B',   0x2E1, None),
+    'tflag':                        ({
+                                        'raw':      ('<H',   0x2E2,         None, '"0x{:04x}".format(?)'),
+                                        'hemis':    ('<H',  (0x2E2, 1,  0), None),
+                                        'week':     ('<H',  (0x2E2, 3,  1), None),
+                                        'month':    ('<H',  (0x2E2, 4,  4), None),
+                                        'dow':      ('<H',  (0x2E2, 3,  8), None),
+                                        'hour':     ('<H',  (0x2E2, 5, 13), None),
+                                     },     0x2E2, [2]),
+    'pwm_frequency':                ('<H',  0x2E6, None),
+    'power':                        ({
+                                        'raw':      ('<L',   0x2E8,        None, '"0x{:08x}".format(?)'),
+                                        'power1':   ('<L',  (0x2E8, 1, 0), None),
+                                        'power2':   ('<L',  (0x2E8, 1, 1), None),
+                                        'power3':   ('<L',  (0x2E8, 1, 2), None),
+                                        'power4':   ('<L',  (0x2E8, 1, 3), None),
+                                        'power5':   ('<L',  (0x2E8, 1, 4), None),
+                                        'power6':   ('<L',  (0x2E8, 1, 5), None),
+                                        'power7':   ('<L',  (0x2E8, 1, 6), None),
+                                        'power8':   ('<L',  (0x2E8, 1, 7), None),
+                                     },     0x2E8, None),
+    'pwm_value':                    ('<H',  0x2EC, [5]),
+    'altitude':                     ('<h',  0x2F6, None),
+    'tele_period':                  ('<H',  0x2F8, None),
+    'display_rotate':               ('B',   0x2FA, None),
+    'ledstate':                     ('B',   0x2FB, None),
+    'param':                        ('B',   0x2FC, [18]),
+    'toffset':                      ('<h',  0x30E, [2]),
+    'display_font':                 ('B',   0x312, None),
+    'state_text':                   ('11s', 0x313, [4]),
+    'energy_power_delta':           ('B',   0x33F, None),
+    'domoticz_update_timer':        ('<H',  0x340, None),
+    'pwm_range':                    ('<H',  0x342, None),
+    'domoticz_relay_idx':           ('<L',  0x344, [4]),
+    'domoticz_key_idx':             ('<L',  0x354, [4]),
+    'energy_power_calibration':     ('<L',  0x364, None),
+    'energy_voltage_calibration':   ('<L',  0x368, None),
+    'energy_current_calibration':   ('<L',  0x36C, None),
+    'energy_kWhtoday':              ('<L',  0x370, None),
+    'energy_kWhyesterday':          ('<L',  0x374, None),
+    'energy_kWhdoy':                ('<H',  0x378, None),
+    'energy_min_power':             ('<H',  0x37A, None),
+    'energy_max_power':             ('<H',  0x37C, None),
+    'energy_min_voltage':           ('<H',  0x37E, None),
+    'energy_max_voltage':           ('<H',  0x380, None),
+    'energy_min_current':           ('<H',  0x382, None),
+    'energy_max_current':           ('<H',  0x384, None),
+    'energy_max_power_limit':       ('<H',  0x386, None),
+    'energy_max_power_limit_hold':  ('<H',  0x388, None),
+    'energy_max_power_limit_window':('<H',  0x38A, None),
+    'energy_max_power_safe_limit':  ('<H',  0x38C, None),
+    'energy_max_power_safe_limit_hold':('<H',  0x38E, None),
+    'energy_max_power_safe_limit_window':('<H',  0x390, None),
+    'energy_max_energy':            ('<H',  0x392, None),
+    'energy_max_energy_start':      ('<H',  0x394, None),
+    'mqtt_retry':                   ('<H',  0x396, None),
+    'poweronstate':                 ('B',   0x398, None),
+    'last_module':                  ('B',   0x399, None),
+    'blinktime':                    ('<H',  0x39A, None),
+    'blinkcount':                   ('<H',  0x39C, None),
+    'light_rotation':               ('<H',  0x39E, None),
+    'flag3':                        ({
+                                         'raw':                 ('<L',   0x3A0,        None, '"0x{:08x}".format(?)'),
+                                         'timers_enable':       ('<L',  (0x3A0, 1, 0), None),
+                                         'user_esp8285_enable': ('<L',  (0x3A0, 1, 1), None),
+                                         'time_append_timezone':('<L',  (0x3A0, 1, 2), None),
+                                     },     0x3A0, None),
+    'switchmode':                   ('B',   0x3A4, [8]),
+    'friendlyname':                 ('33s', 0x3AC, [4]),
+    'switch_topic':                 ('33s', 0x430, None),
+    'serial_delimiter':             ('B',   0x451, None),
+    'sbaudrate':                    ('B',   0x452, None),
+    'sleep':                        ('B',   0x453, None),
+    'domoticz_switch_idx':          ('<H',  0x454, [4]),
+    'domoticz_sensor_idx':          ('<H',  0x45C, [12]),
+    'module':                       ('B',   0x474, None),
+    'ws_color':                     ('B',   0x475, [4,3]),
+    'ws_width':                     ('B',   0x481, [3]),
+    'my_gp':                        ('B',   0x484, [18]),
+    'light_pixels':                 ('<H',  0x496, None),
+    'light_color':                  ('B',   0x498, [5]),
+    'light_correction':             ('B',   0x49D, None),
+    'light_dimmer':                 ('B',   0x49E, None),
+    'rule_enabled':                 ({
+                                        'raw':      ('B',   0x49F,        None),
+                                        'rule1':    ('B',  (0x49F, 1, 0), None),
+                                        'rule2':    ('B',  (0x49F, 1, 1), None),
+                                        'rule3':    ('B',  (0x49F, 1, 2), None),
+                                     },     0x49F, None),
+    'rule_once':                    ({
+                                        'raw':      ('B',   0x4A0,        None),
+                                        'rule1':    ('B',  (0x4A0, 1, 0), None, '? + 4'),
+                                        'rule2':    ('B',  (0x4A0, 1, 1), None, '? + 4'),
+                                        'rule3':    ('B',  (0x4A0, 1, 2), None, '? + 4'),
+                                     },     0x4A0, None),
+    'light_fade':                   ('B',   0x4A1, None),
+    'light_speed':                  ('B',   0x4A2, None),
+    'light_scheme':                 ('B',   0x4A3, None),
+    'light_width':                  ('B',   0x4A4, None),
+    'knx_GA_registered':            ('B',   0x4A5, None),
+    'light_wakeup':                 ('<H',  0x4A6, None),
+    'knx_CB_registered':            ('B',   0x4A8, None),
+    'web_password':                 ('33s', 0x4A9, None, password),
+    'ntp_server':                   ('33s', 0x4CE, [3]),
+    'ina219_mode':                  ('B',   0x531, None),
+    'pulse_timer':                  ('<H',  0x532, [8]),
+    'button_debounce':              ('<H',  0x542, None),
+    'ip_address':                   ('<L',  0x544, [4], int2ip),
+    'energy_kWhtotal':              ('<L',  0x554, None),
+    'mqtt_fulltopic':               ('100s',0x558, None),
+    'flag2':                        ({
+                                        'raw':                      ('<L',   0x5BC,         None, '"0x{:08x}".format(?)'),
+                                        'frequency_resolution':     ('<L',  (0x5BC, 2, 11), None),
+                                        'axis_resolution':          ('<L',  (0x5BC, 2, 13), None),
+                                        'current_resolution':       ('<L',  (0x5BC, 2, 15), None),
+                                        'voltage_resolution':       ('<L',  (0x5BC, 2, 17), None),
+                                        'wattage_resolution':       ('<L',  (0x5BC, 2, 19), None),
+                                        'emulation':                ('<L',  (0x5BC, 2, 21), None),
+                                        'energy_resolution':        ('<L',  (0x5BC, 3, 23), None),
+                                        'pressure_resolution':      ('<L',  (0x5BC, 2, 26), None),
+                                        'humidity_resolution':      ('<L',  (0x5BC, 2, 28), None),
+                                        'temperature_resolution':   ('<L',  (0x5BC, 2, 30), None),
+                                     },     0x5BC, None),
+    'pulse_counter':                ('<L',  0x5C0, [4]),
+    'pulse_counter_type':           ('<H',  0x5D0, None),
+    'pulse_counter_debounce':       ('<H',  0x5D2, None),
+    'rf_code':                      ('B',   0x5D4, [17,9], '"0x{:02x}".format(?)'),
+    'switch_debounce':              ('<H',  0x66E, None),
+    'timer':                        ({
+                                        'raw':      ('<L',   0x670,          None, '"0x{:08x}".format(?)'),
+                                        'time':     ('<L',  (0x670, 11,  0), None),
+                                        'window':   ('<L',  (0x670,  4, 11), None),
+                                        'repeat':   ('<L',  (0x670,  1, 15), None),
+                                        'days':     ('<L',  (0x670,  7, 16), None),
+                                        'device':   ('<L',  (0x670,  4, 23), None),
+                                        'power':    ('<L',  (0x670,  2, 27), None),
+                                        'mode':     ('<L',  (0x670,  2, 29), None),
+                                        'arm':      ('<L',  (0x670,  1, 31), None),
+                                     },     0x670, [16]),
+    'latitude':                     ('i',   0x6B0, None, 'float(?) / 1000000'),
+    'longitude':                    ('i',   0x6B4, None, 'float(?) / 1000000'),
+    'knx_physsical_addr':           ('<H',  0x6B8, None),
+    'knx_GA_addr':                  ('<H',  0x6BA, [10]),
+    'knx_CB_addr':                  ('<H',  0x6CE, [10]),
+    'knx_GA_param':                 ('B',   0x6E2, [10]),
+    'knx_CB_param':                 ('B',   0x6EC, [10]),
+    'mcp230xx_config':              ({
+                                        'raw':              ('<L',   0x6F6,         None, '"0x{:08x}".format(?)'),
+                                        'pinmode':          ('<L',  (0x6F6, 3,  0), None),
+                                        'pullup':           ('<L',  (0x6F6, 1,  3), None),
+                                        'saved_state':      ('<L',  (0x6F6, 1,  4), None),
+                                        'int_report_mode':  ('<L',  (0x6F6, 2,  5), None),
+                                        'int_report_defer': ('<L',  (0x6F6, 4,  7), None),
+                                        'int_count_en':     ('<L',  (0x6F6, 1, 11), None),
+                                     },     0x6F6, [16]),
+    'mcp230xx_int_prio':            ('B',   0x716, None),
+    'mcp230xx_int_timer':           ('<H',  0x718, None),
+    'mems':                         ('10s', 0x7CE, [5]),
+    'rules':                        ('512s',0x800, [3])
+}
+Setting_6_2_1_2 = {
+    'cfg_holder':                   ('<H',  0x000, None),
+    'cfg_size':                     ('<H',  0x002, None),
+    'save_flag':                    ('<L',  0x004, None),
+    'version':                      ('<L',  0x008, None, hex),
+    'bootcount':                    ('<H',  0x00C, None),
+    'cfg_crc':                      ('<H',  0x00E, None),
+    'flag':                         ({
+                                        'raw':                      ('<L',   0x010,         None, '"0x{:08x}".format(?)'),
+                                        'save_state':               ('<L',  (0x010, 1,  0), None),
+                                        'button_restrict':          ('<L',  (0x010, 1,  1), None),
+                                        'value_units':              ('<L',  (0x010, 1,  2), None),
+                                        'mqtt_enabled':             ('<L',  (0x010, 1,  3), None),
+                                        'mqtt_response':            ('<L',  (0x010, 1,  4), None),
+                                        'mqtt_power_retain':        ('<L',  (0x010, 1,  5), None),
+                                        'mqtt_button_retain':       ('<L',  (0x010, 1,  6), None),
+                                        'mqtt_switch_retain':       ('<L',  (0x010, 1,  7), None),
+                                        'temperature_conversion':   ('<L',  (0x010, 1,  8), None),
+                                        'mqtt_sensor_retain':       ('<L',  (0x010, 1,  9), None),
+                                        'mqtt_offline':             ('<L',  (0x010, 1, 10), None),
+                                        'button_swap':              ('<L',  (0x010, 1, 11), None),
+                                        'stop_flash_rotate':        ('<L',  (0x010, 1, 12), None),
+                                        'button_single':            ('<L',  (0x010, 1, 13), None),
+                                        'interlock':                ('<L',  (0x010, 1, 14), None),
+                                        'pwm_control':              ('<L',  (0x010, 1, 15), None),
+                                        'ws_clock_reverse':         ('<L',  (0x010, 1, 16), None),
+                                        'decimal_text':             ('<L',  (0x010, 1, 17), None),
+                                        'light_signal':             ('<L',  (0x010, 1, 18), None),
+                                        'hass_discovery':           ('<L',  (0x010, 1, 19), None),
+                                        'not_power_linked':         ('<L',  (0x010, 1, 20), None),
+                                        'no_power_on_check':        ('<L',  (0x010, 1, 21), None),
+                                        'mqtt_serial':              ('<L',  (0x010, 1, 22), None),
+                                        'rules_enabled':            ('<L',  (0x010, 1, 23), None),
+                                        'rules_once':               ('<L',  (0x010, 1, 24), None),
+                                        'knx_enabled':              ('<L',  (0x010, 1, 25), None),
+                                        'device_index_enable':      ('<L',  (0x010, 1, 26), None),
+                                        'knx_enable_enhancement':   ('<L',  (0x010, 1, 27), None),
+                                        'rf_receive_decimal':       ('<L',  (0x010, 1, 28), None),
+                                        'ir_receive_decimal':       ('<L',  (0x010, 1, 29), None),
+                                        'hass_light':               ('<L',  (0x010, 1, 30), None),
+                                        'global_state':             ('<L',  (0x010, 1, 31), None),
+                                     },     0x010, None),
+    'save_data':                    ('<h',  0x014, None),
+    'timezone':                     ('b',   0x016, None),
+    'ota_url':                      ('101s',0x017, None),
+    'mqtt_prefix':                  ('11s', 0x07C, [3]),
+    'baudrate':                     ('B',   0x09D, None, '? * 1200'),
+    'seriallog_level':              ('B',   0x09E, None),
+    'sta_config':                   ('B',   0x09F, None),
+    'sta_active':                   ('B',   0x0A0, None),
+    'sta_ssid':                     ('33s', 0x0A1, [2]),
+    'sta_pwd':                      ('65s', 0x0E3, [2], password),
+    'hostname':                     ('33s', 0x165, None),
+    'syslog_host':                  ('33s', 0x186, None),
+    'rule_stop':                    ({
+                                        'raw':      ('B',   0x1A7,        None),
+                                        'rule1':    ('B',  (0x1A7, 1, 0), None, '? + 8'),
+                                        'rule2':    ('B',  (0x1A7, 1, 1), None, '? + 8'),
+                                        'rule3':    ('B',  (0x1A7, 1, 2), None, '? + 8'),
+                                     },     0x1A7, None),
+    'syslog_port':                  ('<H',  0x1A8, None),
+    'syslog_level':                 ('B',   0x1AA, None),
+    'webserver':                    ('B',   0x1AB, None),
+    'weblog_level':                 ('B',   0x1AC, None),
+    'mqtt_fingerprint':             ('20s', 0x1AD, [2]),
+    'mqtt_host':                    ('33s', 0x1E9, None),
+    'mqtt_port':                    ('<H',  0x20A, None),
+    'mqtt_client':                  ('33s', 0x20C, None),
+    'mqtt_user':                    ('33s', 0x22D, None),
+    'mqtt_pwd':                     ('33s', 0x24E, None, password),
+    'mqtt_topic':                   ('33s', 0x26F, None),
+    'button_topic':                 ('33s', 0x290, None),
+    'mqtt_grptopic':                ('33s', 0x2B1, None),
+    'display_model':                ('B',   0x2D2, None),
+    'display_mode':                 ('B',   0x2D3, None),
+    'display_refresh':              ('B',   0x2D4, None),
+    'display_rows':                 ('B',   0x2D5, None),
+    'display_cols':                 ('B',   0x2D6, [2]),
+    'display_address':              ('B',   0x2D8, [8]),
+    'display_dimmer':               ('B',   0x2E0, None),
+    'display_size':                 ('B',   0x2E1, None),
+    'tflag':                        ({
+                                        'raw':      ('<H',   0x2E2,         None, '"0x{:04x}".format(?)'),
+                                        'hemis':    ('<H',  (0x2E2, 1,  0), None),
+                                        'week':     ('<H',  (0x2E2, 3,  1), None),
+                                        'month':    ('<H',  (0x2E2, 4,  4), None),
+                                        'dow':      ('<H',  (0x2E2, 3,  8), None),
+                                        'hour':     ('<H',  (0x2E2, 5, 13), None),
+                                     },     0x2E2, [2]),
+    'pwm_frequency':                ('<H',  0x2E6, None),
+    'power':                        ({
+                                        'raw':      ('<L',   0x2E8,        None, '"0x{:08x}".format(?)'),
+                                        'power1':   ('<L',  (0x2E8, 1, 0), None),
+                                        'power2':   ('<L',  (0x2E8, 1, 1), None),
+                                        'power3':   ('<L',  (0x2E8, 1, 2), None),
+                                        'power4':   ('<L',  (0x2E8, 1, 3), None),
+                                        'power5':   ('<L',  (0x2E8, 1, 4), None),
+                                        'power6':   ('<L',  (0x2E8, 1, 5), None),
+                                        'power7':   ('<L',  (0x2E8, 1, 6), None),
+                                        'power8':   ('<L',  (0x2E8, 1, 7), None),
+                                     },     0x2E8, None),
+    'pwm_value':                    ('<H',  0x2EC, [5]),
+    'altitude':                     ('<h',  0x2F6, None),
+    'tele_period':                  ('<H',  0x2F8, None),
+    'display_rotate':               ('B',   0x2FA, None),
+    'ledstate':                     ('B',   0x2FB, None),
+    'param':                        ('B',   0x2FC, [18]),
+    'toffset':                      ('<h',  0x30E, [2]),
+    'display_font':                 ('B',   0x312, None),
+    'state_text':                   ('11s', 0x313, [4]),
+    'energy_power_delta':           ('B',   0x33F, None),
+    'domoticz_update_timer':        ('<H',  0x340, None),
+    'pwm_range':                    ('<H',  0x342, None),
+    'domoticz_relay_idx':           ('<L',  0x344, [4]),
+    'domoticz_key_idx':             ('<L',  0x354, [4]),
+    'energy_power_calibration':     ('<L',  0x364, None),
+    'energy_voltage_calibration':   ('<L',  0x368, None),
+    'energy_current_calibration':   ('<L',  0x36C, None),
+    'energy_kWhtoday':              ('<L',  0x370, None),
+    'energy_kWhyesterday':          ('<L',  0x374, None),
+    'energy_kWhdoy':                ('<H',  0x378, None),
+    'energy_min_power':             ('<H',  0x37A, None),
+    'energy_max_power':             ('<H',  0x37C, None),
+    'energy_min_voltage':           ('<H',  0x37E, None),
+    'energy_max_voltage':           ('<H',  0x380, None),
+    'energy_min_current':           ('<H',  0x382, None),
+    'energy_max_current':           ('<H',  0x384, None),
+    'energy_max_power_limit':       ('<H',  0x386, None),
+    'energy_max_power_limit_hold':  ('<H',  0x388, None),
+    'energy_max_power_limit_window':('<H',  0x38A, None),
+    'energy_max_power_safe_limit':  ('<H',  0x38C, None),
+    'energy_max_power_safe_limit_hold':('<H',  0x38E, None),
+    'energy_max_power_safe_limit_window':('<H',  0x390, None),
+    'energy_max_energy':            ('<H',  0x392, None),
+    'energy_max_energy_start':      ('<H',  0x394, None),
+    'mqtt_retry':                   ('<H',  0x396, None),
+    'poweronstate':                 ('B',   0x398, None),
+    'last_module':                  ('B',   0x399, None),
+    'blinktime':                    ('<H',  0x39A, None),
+    'blinkcount':                   ('<H',  0x39C, None),
+    'light_rotation':               ('<H',  0x39E, None),
+    'flag3':                        ({
+                                         'raw':                 ('<L',   0x3A0,        None, '"0x{:08x}".format(?)'),
+                                         'timers_enable':       ('<L',  (0x3A0, 1, 0), None),
+                                         'user_esp8285_enable': ('<L',  (0x3A0, 1, 1), None),
+                                     },     0x3A0, None),
+    'switchmode':                   ('B',   0x3A4, [8]),
+    'friendlyname':                 ('33s', 0x3AC, [4]),
+    'switch_topic':                 ('33s', 0x430, None),
+    'serial_delimiter':             ('B',   0x451, None),
+    'sbaudrate':                    ('B',   0x452, None),
+    'sleep':                        ('B',   0x453, None),
+    'domoticz_switch_idx':          ('<H',  0x454, [4]),
+    'domoticz_sensor_idx':          ('<H',  0x45C, [12]),
+    'module':                       ('B',   0x474, None),
+    'ws_color':                     ('B',   0x475, [4,3]),
+    'ws_width':                     ('B',   0x481, [3]),
+    'my_gp':                        ('B',   0x484, [18]),
+    'light_pixels':                 ('<H',  0x496, None),
+    'light_color':                  ('B',   0x498, [5]),
+    'light_correction':             ('B',   0x49D, None),
+    'light_dimmer':                 ('B',   0x49E, None),
+    'rule_enabled':                 ({
+                                        'raw':      ('B',   0x49F,        None),
+                                        'rule1':    ('B',  (0x49F, 1, 0), None),
+                                        'rule2':    ('B',  (0x49F, 1, 1), None),
+                                        'rule3':    ('B',  (0x49F, 1, 2), None),
+                                     },     0x49F, None),
+    'rule_once':                    ({
+                                        'raw':      ('B',   0x4A0,        None),
+                                        'rule1':    ('B',  (0x4A0, 1, 0), None, '? + 4'),
+                                        'rule2':    ('B',  (0x4A0, 1, 1), None, '? + 4'),
+                                        'rule3':    ('B',  (0x4A0, 1, 2), None, '? + 4'),
+                                     },     0x4A0, None),
+    'light_fade':                   ('B',   0x4A1, None),
+    'light_speed':                  ('B',   0x4A2, None),
+    'light_scheme':                 ('B',   0x4A3, None),
+    'light_width':                  ('B',   0x4A4, None),
+    'knx_GA_registered':            ('B',   0x4A5, None),
+    'light_wakeup':                 ('<H',  0x4A6, None),
+    'knx_CB_registered':            ('B',   0x4A8, None),
+    'web_password':                 ('33s', 0x4A9, None, password),
+    'ntp_server':                   ('33s', 0x4CE, [3]),
+    'ina219_mode':                  ('B',   0x531, None),
+    'pulse_timer':                  ('<H',  0x532, [8]),
+    'button_debounce':              ('<H',  0x542, None),
+    'ip_address':                   ('<L',  0x544, [4], int2ip),
+    'energy_kWhtotal':              ('<L',  0x554, None),
+    'mqtt_fulltopic':               ('100s',0x558, None),
+    'flag2':                        ({
+                                        'raw':                      ('<L',   0x5BC,         None, '"0x{:08x}".format(?)'),
+                                        'axis_resolution':          ('<L',  (0x5BC, 2, 13), None),
+                                        'current_resolution':       ('<L',  (0x5BC, 2, 15), None),
+                                        'voltage_resolution':       ('<L',  (0x5BC, 2, 17), None),
+                                        'wattage_resolution':       ('<L',  (0x5BC, 2, 19), None),
+                                        'emulation':                ('<L',  (0x5BC, 2, 21), None),
+                                        'energy_resolution':        ('<L',  (0x5BC, 3, 23), None),
+                                        'pressure_resolution':      ('<L',  (0x5BC, 2, 26), None),
+                                        'humidity_resolution':      ('<L',  (0x5BC, 2, 28), None),
+                                        'temperature_resolution':   ('<L',  (0x5BC, 2, 30), None),
+                                     },     0x5BC, None),
+    'pulse_counter':                ('<L',  0x5C0, [4]),
+    'pulse_counter_type':           ('<H',  0x5D0, None),
+    'pulse_counter_debounce':       ('<H',  0x5D2, None),
+    'rf_code':                      ('B',   0x5D4, [17,9], '"0x{:02x}".format(?)'),
+    'switch_debounce':              ('<H',  0x66E, None),
+    'timer':                        ({
+                                        'raw':      ('<L',   0x670,          None, '"0x{:08x}".format(?)'),
+                                        'time':     ('<L',  (0x670, 11,  0), None),
+                                        'window':   ('<L',  (0x670,  4, 11), None),
+                                        'repeat':   ('<L',  (0x670,  1, 15), None),
+                                        'days':     ('<L',  (0x670,  7, 16), None),
+                                        'device':   ('<L',  (0x670,  4, 23), None),
+                                        'power':    ('<L',  (0x670,  2, 27), None),
+                                        'mode':     ('<L',  (0x670,  2, 29), None),
+                                        'arm':      ('<L',  (0x670,  1, 31), None),
+                                     },     0x670, [16]),
+    'latitude':                     ('i',   0x6B0, None, 'float(?) / 1000000'),
+    'longitude':                    ('i',   0x6B4, None, 'float(?) / 1000000'),
+    'knx_physsical_addr':           ('<H',  0x6B8, None),
+    'knx_GA_addr':                  ('<H',  0x6BA, [10]),
+    'knx_CB_addr':                  ('<H',  0x6CE, [10]),
+    'knx_GA_param':                 ('B',   0x6E2, [10]),
+    'knx_CB_param':                 ('B',   0x6EC, [10]),
+    'mcp230xx_config':              ({
+                                        'raw':              ('<L',   0x6F6,         None, '"0x{:08x}".format(?)'),
+                                        'pinmode':          ('<L',  (0x6F6, 3,  0), None),
+                                        'pullup':           ('<L',  (0x6F6, 1,  3), None),
+                                        'saved_state':      ('<L',  (0x6F6, 1,  4), None),
+                                        'int_report_mode':  ('<L',  (0x6F6, 2,  5), None),
+                                        'int_report_defer': ('<L',  (0x6F6, 4,  7), None),
+                                        'int_count_en':     ('<L',  (0x6F6, 1, 11), None),
+                                     },     0x6F6, [16]),
+    'mcp230xx_int_prio':            ('B',   0x716, None),
+    'mcp230xx_int_timer':           ('<H',  0x718, None),
+    'mems':                         ('10s', 0x7CE, [5]),
+    'rules':                        ('512s',0x800, [3])
+}
+Setting_6_2_1 = {
+    'cfg_holder':                   ('<H',  0x000, None),
+    'cfg_size':                     ('<H',  0x002, None),
+    'save_flag':                    ('<L',  0x004, None),
+    'version':                      ('<L',  0x008, None, hex),
+    'bootcount':                    ('<H',  0x00C, None),
+    'cfg_crc':                      ('<H',  0x00E, None),
+    'flag':                         ({
+                                        'raw':                      ('<L',   0x010,         None, '"0x{:08x}".format(?)'),
+                                        'save_state':               ('<L',  (0x010, 1,  0), None),
+                                        'button_restrict':          ('<L',  (0x010, 1,  1), None),
+                                        'value_units':              ('<L',  (0x010, 1,  2), None),
+                                        'mqtt_enabled':             ('<L',  (0x010, 1,  3), None),
+                                        'mqtt_response':            ('<L',  (0x010, 1,  4), None),
+                                        'mqtt_power_retain':        ('<L',  (0x010, 1,  5), None),
+                                        'mqtt_button_retain':       ('<L',  (0x010, 1,  6), None),
+                                        'mqtt_switch_retain':       ('<L',  (0x010, 1,  7), None),
+                                        'temperature_conversion':   ('<L',  (0x010, 1,  8), None),
+                                        'mqtt_sensor_retain':       ('<L',  (0x010, 1,  9), None),
+                                        'mqtt_offline':             ('<L',  (0x010, 1, 10), None),
+                                        'button_swap':              ('<L',  (0x010, 1, 11), None),
+                                        'stop_flash_rotate':        ('<L',  (0x010, 1, 12), None),
+                                        'button_single':            ('<L',  (0x010, 1, 13), None),
+                                        'interlock':                ('<L',  (0x010, 1, 14), None),
+                                        'pwm_control':              ('<L',  (0x010, 1, 15), None),
+                                        'ws_clock_reverse':         ('<L',  (0x010, 1, 16), None),
+                                        'decimal_text':             ('<L',  (0x010, 1, 17), None),
+                                        'light_signal':             ('<L',  (0x010, 1, 18), None),
+                                        'hass_discovery':           ('<L',  (0x010, 1, 19), None),
+                                        'not_power_linked':         ('<L',  (0x010, 1, 20), None),
+                                        'no_power_on_check':        ('<L',  (0x010, 1, 21), None),
+                                        'mqtt_serial':              ('<L',  (0x010, 1, 22), None),
+                                        'rules_enabled':            ('<L',  (0x010, 1, 23), None),
+                                        'rules_once':               ('<L',  (0x010, 1, 24), None),
+                                        'knx_enabled':              ('<L',  (0x010, 1, 25), None),
+                                        'device_index_enable':      ('<L',  (0x010, 1, 26), None),
+                                        'knx_enable_enhancement':   ('<L',  (0x010, 1, 27), None),
+                                        'rf_receive_decimal':       ('<L',  (0x010, 1, 28), None),
+                                        'ir_receive_decimal':       ('<L',  (0x010, 1, 29), None),
+                                        'hass_light':               ('<L',  (0x010, 1, 30), None),
+                                        'global_state':             ('<L',  (0x010, 1, 31), None),
+                                     },     0x010, None),
+    'save_data':                    ('<h',  0x014, None),
+    'timezone':                     ('b',   0x016, None),
+    'ota_url':                      ('101s',0x017, None),
+    'mqtt_prefix':                  ('11s', 0x07C, [3]),
+    'baudrate':                     ('B',   0x09D, None, '? * 1200'),
+    'seriallog_level':              ('B',   0x09E, None),
+    'sta_config':                   ('B',   0x09F, None),
+    'sta_active':                   ('B',   0x0A0, None),
+    'sta_ssid':                     ('33s', 0x0A1, [2]),
+    'sta_pwd':                      ('65s', 0x0E3, [2], password),
+    'hostname':                     ('33s', 0x165, None),
+    'syslog_host':                  ('33s', 0x186, None),
+    'rule_stop':                    ({
+                                        'raw':      ('B',   0x1A7,        None),
+                                        'rule1':    ('B',  (0x1A7, 1, 0), None, '? + 8'),
+                                        'rule2':    ('B',  (0x1A7, 1, 1), None, '? + 8'),
+                                        'rule3':    ('B',  (0x1A7, 1, 2), None, '? + 8'),
+                                     },     0x1A7, None),
+    'syslog_port':                  ('<H',  0x1A8, None),
+    'syslog_level':                 ('B',   0x1AA, None),
+    'webserver':                    ('B',   0x1AB, None),
+    'weblog_level':                 ('B',   0x1AC, None),
+    'mqtt_fingerprint':             ('20s', 0x1AD, [2]),
+    'mqtt_host':                    ('33s', 0x1E9, None),
+    'mqtt_port':                    ('<H',  0x20A, None),
+    'mqtt_client':                  ('33s', 0x20C, None),
+    'mqtt_user':                    ('33s', 0x22D, None),
+    'mqtt_pwd':                     ('33s', 0x24E, None, password),
+    'mqtt_topic':                   ('33s', 0x26F, None),
+    'button_topic':                 ('33s', 0x290, None),
+    'mqtt_grptopic':                ('33s', 0x2B1, None),
+    'display_model':                ('B',   0x2D2, None),
+    'display_mode':                 ('B',   0x2D3, None),
+    'display_refresh':              ('B',   0x2D4, None),
+    'display_rows':                 ('B',   0x2D5, None),
+    'display_cols':                 ('B',   0x2D6, [2]),
+    'display_address':              ('B',   0x2D8, [8]),
+    'display_dimmer':               ('B',   0x2E0, None),
+    'display_size':                 ('B',   0x2E1, None),
+    'tflag':                        ({
+                                        'raw':      ('<H',   0x2E2,         None, '"0x{:04x}".format(?)'),
+                                        'hemis':    ('<H',  (0x2E2, 1,  0), None),
+                                        'week':     ('<H',  (0x2E2, 3,  1), None),
+                                        'month':    ('<H',  (0x2E2, 4,  4), None),
+                                        'dow':      ('<H',  (0x2E2, 3,  8), None),
+                                        'hour':     ('<H',  (0x2E2, 5, 13), None),
+                                     },     0x2E2, [2]),
+    'pwm_frequency':                ('<H',  0x2E6, None),
+    'power':                        ({
+                                        'raw':      ('<L',   0x2E8,        None, '"0x{:08x}".format(?)'),
+                                        'power1':   ('<L',  (0x2E8, 1, 0), None),
+                                        'power2':   ('<L',  (0x2E8, 1, 1), None),
+                                        'power3':   ('<L',  (0x2E8, 1, 2), None),
+                                        'power4':   ('<L',  (0x2E8, 1, 3), None),
+                                        'power5':   ('<L',  (0x2E8, 1, 4), None),
+                                        'power6':   ('<L',  (0x2E8, 1, 5), None),
+                                        'power7':   ('<L',  (0x2E8, 1, 6), None),
+                                        'power8':   ('<L',  (0x2E8, 1, 7), None),
+                                     },     0x2E8, None),
+    'pwm_value':                    ('<H',  0x2EC, [5]),
+    'altitude':                     ('<h',  0x2F6, None),
+    'tele_period':                  ('<H',  0x2F8, None),
+    'display_rotate':               ('B',   0x2FA, None),
+    'ledstate':                     ('B',   0x2FB, None),
+    'param':                        ('B',   0x2FC, [18]),
+    'toffset':                      ('<h',  0x30E, [2]),
+    'display_font':                 ('B',   0x312, None),
+    'state_text':                   ('11s', 0x313, [4]),
+    'energy_power_delta':           ('B',   0x33F, None),
+    'domoticz_update_timer':        ('<H',  0x340, None),
+    'pwm_range':                    ('<H',  0x342, None),
+    'domoticz_relay_idx':           ('<L',  0x344, [4]),
+    'domoticz_key_idx':             ('<L',  0x354, [4]),
+    'energy_power_calibration':     ('<L',  0x364, None),
+    'energy_voltage_calibration':   ('<L',  0x368, None),
+    'energy_current_calibration':   ('<L',  0x36C, None),
+    'energy_kWhtoday':              ('<L',  0x370, None),
+    'energy_kWhyesterday':          ('<L',  0x374, None),
+    'energy_kWhdoy':                ('<H',  0x378, None),
+    'energy_min_power':             ('<H',  0x37A, None),
+    'energy_max_power':             ('<H',  0x37C, None),
+    'energy_min_voltage':           ('<H',  0x37E, None),
+    'energy_max_voltage':           ('<H',  0x380, None),
+    'energy_min_current':           ('<H',  0x382, None),
+    'energy_max_current':           ('<H',  0x384, None),
+    'energy_max_power_limit':       ('<H',  0x386, None),
+    'energy_max_power_limit_hold':  ('<H',  0x388, None),
+    'energy_max_power_limit_window':('<H',  0x38A, None),
+    'energy_max_power_safe_limit':  ('<H',  0x38C, None),
+    'energy_max_power_safe_limit_hold':('<H',  0x38E, None),
+    'energy_max_power_safe_limit_window':('<H',  0x390, None),
+    'energy_max_energy':            ('<H',  0x392, None),
+    'energy_max_energy_start':      ('<H',  0x394, None),
+    'mqtt_retry':                   ('<H',  0x396, None),
+    'poweronstate':                 ('B',   0x398, None),
+    'last_module':                  ('B',   0x399, None),
+    'blinktime':                    ('<H',  0x39A, None),
+    'blinkcount':                   ('<H',  0x39C, None),
+    'light_rotation':               ('<H',  0x39E, None),
+    'flag3':                        ({
+                                         'raw':                 ('<L',   0x3A0,        None, '"0x{:08x}".format(?)'),
+                                         'timers_enable':       ('<L',  (0x3A0, 1, 0), None),
+                                         'user_esp8285_enable': ('<L',  (0x3A0, 1,31), None),
+                                     },     0x3A0, None),
+    'switchmode':                   ('B',   0x3A4, [8]),
+    'friendlyname':                 ('33s', 0x3AC, [4]),
+    'switch_topic':                 ('33s', 0x430, None),
+    'serial_delimiter':             ('B',   0x451, None),
+    'sbaudrate':                    ('B',   0x452, None),
+    'sleep':                        ('B',   0x453, None),
+    'domoticz_switch_idx':          ('<H',  0x454, [4]),
+    'domoticz_sensor_idx':          ('<H',  0x45C, [12]),
+    'module':                       ('B',   0x474, None),
+    'ws_color':                     ('B',   0x475, [4,3]),
+    'ws_width':                     ('B',   0x481, [3]),
+    'my_gp':                        ('B',   0x484, [18]),
+    'light_pixels':                 ('<H',  0x496, None),
+    'light_color':                  ('B',   0x498, [5]),
+    'light_correction':             ('B',   0x49D, None),
+    'light_dimmer':                 ('B',   0x49E, None),
+    'rule_enabled':                 ({
+                                        'raw':      ('B',   0x49F,        None),
+                                        'rule1':    ('B',  (0x49F, 1, 0), None),
+                                        'rule2':    ('B',  (0x49F, 1, 1), None),
+                                        'rule3':    ('B',  (0x49F, 1, 2), None),
+                                     },     0x49F, None),
+    'rule_once':                    ({
+                                        'raw':      ('B',   0x4A0,        None),
+                                        'rule1':    ('B',  (0x4A0, 1, 0), None, '? + 4'),
+                                        'rule2':    ('B',  (0x4A0, 1, 1), None, '? + 4'),
+                                        'rule3':    ('B',  (0x4A0, 1, 2), None, '? + 4'),
+                                     },     0x4A0, None),
+    'light_fade':                   ('B',   0x4A1, None),
+    'light_speed':                  ('B',   0x4A2, None),
+    'light_scheme':                 ('B',   0x4A3, None),
+    'light_width':                  ('B',   0x4A4, None),
+    'knx_GA_registered':            ('B',   0x4A5, None),
+    'light_wakeup':                 ('<H',  0x4A6, None),
+    'knx_CB_registered':            ('B',   0x4A8, None),
+    'web_password':                 ('33s', 0x4A9, None, password),
+    'ntp_server':                   ('33s', 0x4CE, [3]),
+    'ina219_mode':                  ('B',   0x531, None),
+    'pulse_timer':                  ('<H',  0x532, [8]),
+    'button_debounce':              ('<H',  0x542, None),
+    'ip_address':                   ('<L',  0x544, [4], int2ip),
+    'energy_kWhtotal':              ('<L',  0x554, None),
+    'mqtt_fulltopic':               ('100s',0x558, None),
+    'flag2':                        ({
+                                        'raw':                      ('<L',   0x5BC,         None, '"0x{:08x}".format(?)'),
                                         'axis_resolution':          ('<L',  (0x5BC, 2, 13), None),
                                         'current_resolution':       ('<L',  (0x5BC, 2, 15), None),
                                         'voltage_resolution':       ('<L',  (0x5BC, 2, 17), None),
@@ -597,12 +1570,7 @@ Setting_6_1_1 = {
     'blinktime':                    ('<H',  0x39A, None),
     'blinkcount':                   ('<H',  0x39C, None),
     'light_rotation':               ('<H',  0x39E, None),
-    'flag3':                        ({
-                                         'raw':                 ('<L',   0x3A0,        None, '"0x{:08x}".format(?)'),
-                                         'timers_enable':       ('<L',  (0x3A0, 1, 0), None),
-                                         'user_esp8285_enable': ('<L',  (0x3A0, 1, 1), None),
-                                         'time_append_timezone':('<L',  (0x3A0, 1, 2), None),
-                                     },     0x3A0, None),
+    'flag3':                        ('<L',  0x3A0, None, '"0x{:08x}".format(?)'),
     'switchmode':                   ('B',   0x3A4, [8]),
     'friendlyname':                 ('33s', 0x3AC, [4]),
     'switch_topic':                 ('33s', 0x430, None),
@@ -627,9 +1595,9 @@ Setting_6_1_1 = {
                                      },     0x49F, None),
     'rule_once':                    ({
                                         'raw':      ('B',   0x4A0,        None),
-                                        'rule1':    ('B',  (0x4A0, 1, 0), None, '#? + 4'),
-                                        'rule2':    ('B',  (0x4A0, 1, 1), None, '#? + 4'),
-                                        'rule3':    ('B',  (0x4A0, 1, 2), None, '#? + 4'),
+                                        'rule1':    ('B',  (0x4A0, 1, 0), None, '? + 4'),
+                                        'rule2':    ('B',  (0x4A0, 1, 1), None, '? + 4'),
+                                        'rule3':    ('B',  (0x4A0, 1, 2), None, '? + 4'),
                                      },     0x4A0, None),
     'light_fade':                   ('B',   0x4A1, None),
     'light_speed':                  ('B',   0x4A2, None),
@@ -842,9 +1810,9 @@ Setting_6_0_0 = {
                                      },     0x49F, None),
     'rule_once':                    ({
                                         'raw':      ('B',   0x4A0,        None),
-                                        'rule1':    ('B',  (0x4A0, 1, 0), None, '#? + 4'),
-                                        'rule2':    ('B',  (0x4A0, 1, 1), None, '#? + 4'),
-                                        'rule3':    ('B',  (0x4A0, 1, 2), None, '#? + 4'),
+                                        'rule1':    ('B',  (0x4A0, 1, 0), None, '? + 4'),
+                                        'rule2':    ('B',  (0x4A0, 1, 1), None, '? + 4'),
+                                        'rule3':    ('B',  (0x4A0, 1, 2), None, '? + 4'),
                                      },     0x4A0, None),
     'light_fade':                   ('B',   0x4A1, None),
     'light_speed':                  ('B',   0x4A2, None),
@@ -1709,7 +2677,11 @@ Setting_5_10_0 = {
     'rf_code':                      ('B',   0x5D4, [17,9], '"0x{:02x}".format(?)'),
 }
 
-Settings = [(0x6020100, 0xe00, Setting_6_2_1),
+Settings = [(0x602010A, 0xe00, Setting_6_2_1_10),
+            (0x6020106, 0xe00, Setting_6_2_1_6),
+            (0x6020103, 0xe00, Setting_6_2_1_3),
+            (0x6020102, 0xe00, Setting_6_2_1_2),
+            (0x6020100, 0xe00, Setting_6_2_1),
             (0x6010100, 0xe00, Setting_6_1_1),
             (0x6000000, 0xe00, Setting_6_0_0),
             (0x50e0000, 0xa00, Setting_5_14_0),
@@ -1776,12 +2748,50 @@ def exit(status=0, message="end", typ='ERROR', doexit=True):
 # ----------------------------------------------------------------------
 # Tasmota config data handling
 # ----------------------------------------------------------------------
+def GetFilenameReplaced(filename, configuration):
+    """
+    Replace variable within a filename
+
+    @param filename:
+        original filename possible containing replacements:
+        @v:
+            Tasmota version
+        @f:
+            FriendlyName
+
+    @return: New filename with replacements
+    """
+    v = f1 = f2 = f3 = f4 = ''
+    if 'version' in configuration:
+        ver = int(str(configuration['version']), 0)
+        major = ((ver>>24) & 0xff)
+        minor = ((ver>>16) & 0xff)
+        release = ((ver>> 8) & 0xff)
+        subrelease = (ver & 0xff)
+        if major>=6:
+            if subrelease>0:
+                subreleasestr = str(subrelease)
+            else:
+                subreleasestr = ''
+        else:
+            if subrelease>0:
+                subreleasestr = str(chr(subrelease+ord('a')-1))
+            else:
+                subreleasestr = ''
+        v = "{:d}.{:d}.{:d}{}{}".format( major, minor, release, '.' if (major>=6 and subreleasestr!='') else '', subreleasestr)
+        filename = filename.replace('@v', v)
+    if 'friendlyname' in configuration:
+        filename = filename.replace('@f', configuration['friendlyname'][0] )
+
+    return filename
+
+
 def GetSettingsCrc(dobj):
     """
     Return binary config data calclulated crc
 
     @param dobj:
-        uncrypted binary config data
+        decrypted binary config data
 
     @return: 2 byte unsigned integer crc value
 
@@ -1918,7 +2928,7 @@ def GetFieldLength(fielddef):
                 if addr != baseaddr:
                     addr = baseaddr
                     length += len_
-                
+
         else:
             if format_[-1:].lower() in ['b','c','?']:
                 length=1
@@ -1942,13 +2952,15 @@ def GetField(dobj, fieldname, fielddef, raw=False, addroffset=0):
     Get field value from definition
 
     @param dobj:
-        uncrypted binary config data
+        decrypted binary config data
     @param fieldname:
         name of the field
     @param fielddef:
         see Settings desc above
     @param raw
         return raw values (True) or converted values (False)
+    @param addroffset
+        use offset for baseaddr (used for recursive calls)
 
     @return: read field value
     """
@@ -1963,7 +2975,7 @@ def GetField(dobj, fieldname, fielddef, raw=False, addroffset=0):
 
     # get datadef from field definition
     datadef = None
-    if len(fielddef)>2:
+    if fielddef is not None and len(fielddef)>2:
         datadef = fielddef[2]
 
     if datadef is not None:
@@ -1993,7 +3005,7 @@ def GetField(dobj, fieldname, fielddef, raw=False, addroffset=0):
                         subfielddef = (fielddef[0], MakeFieldBaseAddr(baseaddr, bitlen, bitshift), None, fielddef[3])
 
                 length = GetFieldLength(subfielddef)
-                if length != 0:
+                if length != 0 and (fieldname != 'raw' or args.rawkeys):
                     result.append(GetField(dobj, fieldname, subfielddef, raw=raw, addroffset=addroffset+offset))
                 offset += length
 
@@ -2004,7 +3016,8 @@ def GetField(dobj, fieldname, fielddef, raw=False, addroffset=0):
             setting = fielddef[0]
             config = {}
             for name in setting:
-                config[name] = GetField(dobj, name, setting[name], raw=args.raw, addroffset=addroffset)
+                if name != 'raw' or args.rawkeys:
+                    config[name] = GetField(dobj, name, setting[name], raw=raw, addroffset=addroffset)
             result = config
         else:
             # a simple value
@@ -2047,39 +3060,56 @@ def DeEncrypt(obj):
     return dobj
 
 
-def Decode(obj):
+def GetTemplateSetting(version):
+    """
+    Search for template, settings and size to be used depending on given version number
+
+    @param version:
+        <int> version number from read binary data to search for
+
+    @return: template, settings to use, None if version is invalid
+    """
+    # search setting definition
+    template = None
+    setting = None
+    size = None
+    for cfg in Settings:
+        if version >= cfg[0]:
+            template = cfg
+            size = template[1]
+            setting = template[2]
+            break
+
+    return template, size, setting
+
+
+def Decode(obj, raw=True):
     """
     Decodes binary data stream
 
     @param obj:
         binary config data (decrypted)
-        
+    @param raw
+        decode raw values (True) or converted values (False)
+
     @return: configuration dictionary
     """
     # get header data
     version = GetField(obj,  'version', Setting_6_2_1['version'], raw=True)
 
-    # search setting definition
-    template = None
-    for cfg in Settings:
-        if version >= cfg[0]:
-            template = cfg
-            break
-
+    template, size, setting = GetTemplateSetting(version)
     # if we did not found a mathching setting
     if template is None:
         exit(2, "Tasmota configuration version 0x{:x} not supported".format(version) )
-    
-    setting = template[2]
 
     # check size if exists
     if 'cfg_size' in setting:
         cfg_size = GetField(obj, 'cfg_size', setting['cfg_size'], raw=True)
         # read size should be same as definied in template
-        if cfg_size > template[1]:
+        if cfg_size > size:
             # may be processed
             exit(3, "Number of bytes read does ot match - read {}, expected {} byte".format(cfg_size, template[1]), typ='WARNING', doexit=args.exitonwarning)
-        elif cfg_size < template[1]:
+        elif cfg_size < size:
             # less number of bytes can not be processed
             exit(3, "Number of bytes read to small to process - read {}, expected {} byte".format(cfg_size, template[1]), typ='ERROR')
 
@@ -2091,9 +3121,8 @@ def Decode(obj):
     if cfg_crc != GetSettingsCrc(obj):
         exit(4, 'Data CRC error, read 0x{:x} should be 0x{:x}'.format(cfg_crc, GetSettingsCrc(obj)), typ='WARNING', doexit=args.exitonwarning)
 
-    config = {}
-    for name in setting:
-        config[name] = GetField(obj, name, setting[name], raw=args.raw)
+    # get config
+    config = GetField(obj, None, (setting,None,None), raw=raw)
 
     # add header info
     timestamp = datetime.now()
@@ -2142,44 +3171,74 @@ if __name__ == "__main__":
                             default=DEFAULTS['source']['password'],
                             help="host HTTP access password (default: {})".format(DEFAULTS['source']['password']))
 
-    output = parser.add_argument_group('output')
-    output.add_argument('--json-indent',
+    config = parser.add_argument_group('config')
+    config.add_argument('--json-indent',
                             metavar='<integer>',
                             dest='jsonindent',
                             type=int,
-                            default=DEFAULTS['output']['jsonindent'],
-                            help="pretty-printed JSON output using indent level (default: '{}')".format(DEFAULTS['output']['jsonindent']) )
-    output.add_argument('--json-compact',
+                            default=DEFAULTS['config']['jsonindent'],
+                            help="pretty-printed JSON output using indent level (default: '{}'). Use values greater equal 0 to indent or -1 to disabled indent.".format(DEFAULTS['config']['jsonindent']) )
+    config.add_argument('--json-compact',
                             dest='jsoncompact',
                             action='store_true',
-                            default=DEFAULTS['output']['jsoncompact'],
-                            help="compact JSON output by eliminate whitespace (default: {})".format('normal' if not DEFAULTS['output']['jsoncompact'] else 'compact') )
-    output.add_argument('--unsort',
-                            dest='unsort',
+                            default=DEFAULTS['config']['jsoncompact'],
+                            help="compact JSON output by eliminate whitespace{}".format(' (default)' if DEFAULTS['config']['jsoncompact'] else '') )
+
+    config.add_argument('--sort',
+                            dest='sort',
                             action='store_true',
-                            default=DEFAULTS['output']['unsort'],
-                            help="do not sort results (default: {})".format('sort' if not DEFAULTS['output']['unsort'] else 'unsort') )
-    output.add_argument('--raw',
-                            dest='raw',
+                            default=DEFAULTS['config']['sort'],
+                            help="sort json keywords{}".format(' (default)' if DEFAULTS['config']['sort'] else '') )
+    config.add_argument('--unsort',
+                            dest='sort',
+                            action='store_false',
+                            default=DEFAULTS['config']['sort'],
+                            help="do not sort json keywords{}".format(' (default)' if not DEFAULTS['config']['sort'] else '') )
+
+    config.add_argument('--raw-values', '--raw',
+                            dest='rawvalues',
                             action='store_true',
-                            default=DEFAULTS['output']['raw'],
-                            help="output raw values (default: {})".format('raw' if DEFAULTS['output']['raw'] else 'process') )
-    output.add_argument('--unhide-pw',
-                            dest='unhidepw',
+                            default=DEFAULTS['config']['rawvalues'],
+                            help="output raw values{}".format(' (default)' if DEFAULTS['config']['rawvalues'] else '') )
+    config.add_argument('--no-raw-values',
+                            dest='rawvalues',
+                            action='store_false',
+                            default=DEFAULTS['config']['rawvalues'],
+                            help="output human readable values{}".format(' (default)' if not DEFAULTS['config']['rawvalues'] else '') )
+
+    config.add_argument('--raw-keys',
+                            dest='rawkeys',
                             action='store_true',
-                            default=DEFAULTS['output']['unhide-pw'],
-                            help="unhide passwords (default: {})".format('unhide' if DEFAULTS['output']['unhide-pw'] else 'hide') )
-    output.add_argument('-o', '--output-file',
+                            default=DEFAULTS['config']['rawkeys'],
+                            help="output bitfield raw keys{}".format(' (default)' if DEFAULTS['config']['rawkeys'] else '') )
+    config.add_argument('--no-raw-keys',
+                            dest='rawkeys',
+                            action='store_false',
+                            default=DEFAULTS['config']['rawkeys'],
+                            help="do not output bitfield raw keys{}".format(' (default)' if not DEFAULTS['config']['rawkeys'] else '') )
+
+    config.add_argument('--hide-pw',
+                            dest='hidepw',
+                            action='store_true',
+                            default=DEFAULTS['config']['hidepw'],
+                            help="hide passwords{}".format(' (default)' if DEFAULTS['config']['hidepw'] else '') )
+    config.add_argument('--unhide-pw',
+                            dest='hidepw',
+                            action='store_false',
+                            default=DEFAULTS['config']['hidepw'],
+                            help="unhide passwords{}".format(' (default)' if not DEFAULTS['config']['hidepw'] else '') )
+
+    config.add_argument('-o', '--output-file',
                             metavar='<filename>',
                             dest='outputfile',
-                            default=DEFAULTS['output']['outputfile'],
-                            help="file to store configuration to (default: {}) Macros: @v=Tasmota version, @f=friendly name".format(DEFAULTS['output']['outputfile']))
-    output.add_argument('--output-file-format',
+                            default=DEFAULTS['config']['outputfile'],
+                            help="file to store configuration to (default: {}). Replacements: @v=Tasmota version, @f=friendly name".format(DEFAULTS['config']['outputfile']))
+    config.add_argument('--output-file-format',
                             metavar='<word>',
                             dest='outputfileformat',
                             choices=['json', 'binary'],
-                            default=DEFAULTS['output']['outputfileformat'],
-                            help="output format ('json' or 'binary', default: '{}')".format(DEFAULTS['output']['outputfileformat']) )
+                            default=DEFAULTS['config']['outputfileformat'],
+                            help="output format ('json' or 'binary', default: '{}')".format(DEFAULTS['config']['outputfileformat']) )
 
     parser.add_argument('-c', '--config',
                             metavar='<filename>',
@@ -2197,14 +3256,14 @@ if __name__ == "__main__":
     info.add_argument('-V', '--version',  action='version', version=PROG)
 
     args = parser.parse_args()
- 
+
     # default no configuration available
     configobj = None
-    
+
     # check source args
     if args.device is not None and args.tasmotafile is not None:
         exit(6, "Only one source allowed. Do not use -d and -f together")
-        
+
     # read config direct from device via http
     if args.device is not None:
 
@@ -2245,51 +3304,29 @@ if __name__ == "__main__":
         parser.print_help()
         sys.exit(0)
 
-
     if configobj is not None and len(configobj)>0:
         cfg = DeEncrypt(configobj)
 
-        config = Decode(cfg)
+        configuration = Decode(cfg, args.rawvalues)
 
         # output to file
         if args.outputfile is not None:
-            outputfilename = args.outputfile
-            v = f1 = f2 = f3 = f4 = ''
-            if 'version' in config:
-                ver = int(str(config['version']), 0)
-                major = ((ver>>24) & 0xff)
-                minor = ((ver>>16) & 0xff)
-                release = ((ver>> 8) & 0xff)
-                subrelease = (ver & 0xff)
-                if major>=6:
-                    if subrelease>0:
-                        subreleasestr = str(subrelease)
-                    else:
-                        subreleasestr = ''
-                else:
-                    if subrelease>0:
-                        subreleasestr = str(chr(subrelease+ord('a')-1))
-                    else:
-                        subreleasestr = ''
-                v = "{:d}.{:d}.{:d}{}{}".format( major, minor, release, '.' if major>=6 else '', subreleasestr)
-                outputfilename = outputfilename.replace('@v', v)
-            if 'friendlyname' in config:
-                outputfilename = outputfilename.replace('@f', config['friendlyname'][0] )
-                
+            outputfilename = GetFilenameReplaced(args.outputfile, configuration)
             if args.outputfileformat == 'binary':
                 outputfile = open(outputfilename, "wb")
                 outputfile.write(struct.pack('<L',BINARYFILE_MAGIC))
                 outputfile.write(cfg)
                 outputfile.close()
-                
+
             if args.outputfileformat == 'json':
+                configuration = Decode(cfg, raw=True)
                 outputfile = open(outputfilename, "w")
-                json.dump(config, outputfile, sort_keys=not args.unsort, indent=args.jsonindent, separators=(',', ':') if args.jsoncompact else (', ', ': ') )
+                json.dump(configuration, outputfile, sort_keys=args.sort, indent=None if args.jsonindent<0 else args.jsonindent, separators=(',', ':') if args.jsoncompact else (', ', ': ') )
                 outputfile.close()
 
         # output to screen
-        else:   
-            print json.dumps(config, sort_keys=not args.unsort, indent=args.jsonindent, separators=(',', ':') if args.jsoncompact else (', ', ': ') )
+        else:
+            print json.dumps(configuration, sort_keys=args.sort, indent=None if args.jsonindent<0 else args.jsonindent, separators=(',', ':') if args.jsoncompact else (', ', ': ') )
 
     else:
         exit(5, "Unable to read configuration data from {} '{}'".format('device' if args.device is not None else 'file', \
