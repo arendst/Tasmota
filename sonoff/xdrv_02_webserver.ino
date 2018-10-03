@@ -789,6 +789,17 @@ void HandleWifiConfiguration()
   HandleWifi(false);
 }
 
+String htmlEscape(String s)
+{
+    s.replace("&", "&amp;");
+    s.replace("<", "&lt;");
+    s.replace(">", "&gt;");
+    s.replace("\"", "&quot;");
+    s.replace("'", "&#x27;");
+    s.replace("/", "&#x2F;");
+    return s;
+}
+
 void HandleWifi(boolean scan)
 {
   if (HttpUser()) { return; }
@@ -854,7 +865,7 @@ void HandleWifi(boolean scan)
           String item = FPSTR(HTTP_LNK_ITEM);
           String rssiQ;
           rssiQ += quality;
-          item.replace(F("{v}"), WiFi.SSID(indices[i]));
+          item.replace(F("{v}"), htmlEscape(WiFi.SSID(indices[i])));
           item.replace(F("{w}"), String(WiFi.channel(indices[i])));
           item.replace(F("{r}"), rssiQ);
           uint8_t auth = WiFi.encryptionType(indices[i]);
