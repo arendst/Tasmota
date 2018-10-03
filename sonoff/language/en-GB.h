@@ -32,7 +32,7 @@
 \*********************************************************************/
 
 //#define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
-
+// https://www.science.co.il/language/Locale-codes.php
 #define LANGUAGE_LCID 2057
 // HTML (ISO 639-1) Language Code
 #define D_HTML_LANGUAGE "en"
@@ -169,7 +169,7 @@
 #define D_UV_INDEX_4 "Danger"
 #define D_UV_INDEX_5 "BurnL1/2"
 #define D_UV_INDEX_6 "BurnL3"
-#define D_UV_INDEX_7 "OoR"
+#define D_UV_INDEX_7 "OoR"         // Out of Range
 #define D_UV_LEVEL "UV Level"
 #define D_UV_POWER "UV Power"
 #define D_VERSION "Version"
