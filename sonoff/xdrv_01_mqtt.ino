@@ -500,7 +500,7 @@ void MqttReconnect()
 #elif (MQTT_LIBRARY_TYPE == MQTT_ARDUINOMQTT)
     MqttClient.begin(Settings.mqtt_host, Settings.mqtt_port, EspClient);
     MqttClient.setWill(stopic, mqtt_data, true, 1);
-    MqttClient.setOptions(MQTT_KEEPALIVE, true, 1000);
+    MqttClient.setOptions(MQTT_KEEPALIVE, true, MQTT_TIMEOUT);
 //    MqttClient.onMessageAdvanced(MqttMyDataCb);
     MqttClient.onMessage(MqttMyDataCb);
 #endif
