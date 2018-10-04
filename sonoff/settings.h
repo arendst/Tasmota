@@ -325,9 +325,15 @@ struct SYSCFG {
 
   uint16_t      mcp230xx_int_timer;        // 718
 
-  byte          free_71A[180];             // 71A
+  uint8_t       rgbwwTable[5];             // 71A
 
-  char          mems[MAX_RULE_MEMS][10];  // 7CE
+  byte          free_71F[169];             // 71F
+
+  unsigned long energy_frequency_calibration;  // 7C8
+
+  byte          free_7CC[2];               // 7CC
+
+  char          mems[MAX_RULE_MEMS][10];   // 7CE
                                            // 800 Full - no more free locations
 
   char          rules[MAX_RULE_SETS][MAX_RULE_SIZE]; // 800 uses 512 bytes in v5.12.0m, 3 x 512 bytes in v5.14.0b
@@ -351,19 +357,20 @@ struct SYSCFG {
 } Settings;
 
 struct RTCRBT {
-  uint16_t      valid;                     // 000
-  uint8_t       fast_reboot_count;         // 002
-  uint8_t       free_003[1];               // 003
+  uint16_t      valid;                     // 280 (RTC memory offset 100 - sizeof(RTCRBT))
+  uint8_t       fast_reboot_count;         // 282
+  uint8_t       free_003[1];               // 283
 } RtcReboot;
 
 struct RTCMEM {
-  uint16_t      valid;                     // 000
-  byte          oswatch_blocked_loop;      // 002
-  uint8_t       ota_loader;                // 003
-  unsigned long energy_kWhtoday;              // 004
-  unsigned long energy_kWhtotal;              // 008
-  unsigned long pulse_counter[MAX_COUNTERS];  // 00C
-  power_t       power;                     // 01C
+  uint16_t      valid;                     // 290 (RTC memory offset 100)
+  byte          oswatch_blocked_loop;      // 292
+  uint8_t       ota_loader;                // 293
+  unsigned long energy_kWhtoday;              // 294
+  unsigned long energy_kWhtotal;              // 298
+  unsigned long pulse_counter[MAX_COUNTERS];  // 29C
+  power_t       power;                     // 2AC
+
   //STB mod
   unsigned long uptime;
   uint32_t      ultradeepsleep;

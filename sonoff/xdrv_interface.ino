@@ -138,9 +138,8 @@ boolean (* const xdrv_func_ptr[])(byte) PROGMEM = {   // Driver Function Pointer
 };
 
 const uint8_t xdrv_present = sizeof(xdrv_func_ptr) / sizeof(xdrv_func_ptr[0]);  // Number of drivers found
-//stb mode
-boolean XdrvCommand(uint8_t grpflg, char *type, power_t index, char *dataBuf, uint16_t data_len, int16_t payload, uint16_t payload16)
-//end
+
+boolean XdrvCommand(uint8_t grpflg, char *type, uint16_t index, char *dataBuf, uint16_t data_len, int16_t payload, uint16_t payload16)
 {
 //  XdrvMailbox.valid = 1;
   XdrvMailbox.index = index;
@@ -152,14 +151,6 @@ boolean XdrvCommand(uint8_t grpflg, char *type, power_t index, char *dataBuf, ui
   XdrvMailbox.data = dataBuf;
 
   return XdrvCall(FUNC_COMMAND);
-}
-
-void XdrvSetPower(power_t mpower)
-{
-//  XdrvMailbox.valid = 1;
-  XdrvMailbox.index = mpower;
-
-  XdrvCall(FUNC_SET_POWER);
 }
 
 boolean XdrvMqttData(char *topicBuf, uint16_t stopicBuf, char *dataBuf, uint16_t sdataBuf)

@@ -19,7 +19,7 @@
 
 #ifdef USE_HOME_ASSISTANT
 
-const char HASS_DISCOVER_SWITCH[] PROGMEM =
+const char HASS_DISCOVER_RELAY[] PROGMEM =
   "{\"name\":\"%s\","                              // dualr2 1
   "\"command_topic\":\"%s\","                      // cmnd/dualr2/POWER2
   "\"state_topic\":\"%s\","                        // stat/dualr2/RESULT  (implies "\"optimistic\":\"false\",")
@@ -39,7 +39,8 @@ const char HASS_DISCOVER_BUTTON[] PROGMEM =
 //  "\"optimistic\":\"false\","                    // false is Hass default when state_topic is set
   "\"availability_topic\":\"%s\","                 // tele/dualr2/LWT
   "\"payload_available\":\"" D_ONLINE "\","        // Online
-  "\"payload_not_available\":\"" D_OFFLINE "\"";   // Offline
+  "\"payload_not_available\":\"" D_OFFLINE "\","   // Offline
+  "\"force_update\":true";
 
 const char HASS_DISCOVER_LIGHT_DIMMER[] PROGMEM =
   "%s,\"brightness_command_topic\":\"%s\","        // cmnd/led2/Dimmer
@@ -49,7 +50,7 @@ const char HASS_DISCOVER_LIGHT_DIMMER[] PROGMEM =
   "\"brightness_value_template\":\"{{value_json." D_CMND_DIMMER "}}\"";
 
 const char HASS_DISCOVER_LIGHT_COLOR[] PROGMEM =
-  "%s,\"rgb_command_topic\":\"%s\","               // cmnd/led2/Color
+  "%s,\"rgb_command_topic\":\"%s2\","              // cmnd/led2/Color2
   "\"rgb_state_topic\":\"%s\","                    // stat/led2/RESULT
   "\"rgb_value_template\":\"{{value_json." D_CMND_COLOR "}}\"";
 //  "\"rgb_value_template\":\"{{value_json." D_CMND_COLOR " | join(',')}}\"";
@@ -75,7 +76,7 @@ void HAssDiscoverRelay()
 
   for (int i = 1; i <= MAX_RELAYS; i++) {
     is_light = ((i == devices_present) && (light_type));
-    is_topic_light = Settings.flag.hass_light;
+    is_topic_light = Settings.flag.hass_light || is_light;
 
     mqtt_data[0] = '\0';  // Clear retained message
 
@@ -102,7 +103,7 @@ void HAssDiscoverRelay()
       GetTopic_P(command_topic, CMND, mqtt_topic, value_template);
       GetTopic_P(state_topic, STAT, mqtt_topic, S_RSLT_RESULT);
       GetTopic_P(availability_topic, TELE, mqtt_topic, S_LWT);
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HASS_DISCOVER_SWITCH, name, command_topic, state_topic, value_template, Settings.state_text[0], Settings.state_text[1], availability_topic);
+      snprintf_P(mqtt_data, sizeof(mqtt_data), HASS_DISCOVER_RELAY, name, command_topic, state_topic, value_template, Settings.state_text[0], Settings.state_text[1], availability_topic);
 
       if (is_light) {
         char brightness_command_topic[TOPSZ];

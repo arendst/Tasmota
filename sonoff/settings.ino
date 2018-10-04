@@ -86,20 +86,12 @@ void RtcSettingsSave()
     RtcSettings.valid = RTC_MEM_VALID;
     ESP.rtcUserMemoryWrite(100, (uint32_t*)&RtcSettings, sizeof(RTCMEM));
     rtc_settings_crc = GetRtcSettingsCrc();
-#ifdef DEBUG_THEO
-    AddLog_P(LOG_LEVEL_DEBUG, PSTR("Dump: Save"));
-    RtcSettingsDump();
-#endif  // DEBUG_THEO
   }
 }
 
 void RtcSettingsLoad()
 {
-  ESP.rtcUserMemoryRead(100, (uint32_t*)&RtcSettings, sizeof(RTCMEM));
-#ifdef DEBUG_THEO
-  AddLog_P(LOG_LEVEL_DEBUG, PSTR("Dump: Load"));
-  RtcSettingsDump();
-#endif  // DEBUG_THEO
+  ESP.rtcUserMemoryRead(100, (uint32_t*)&RtcSettings, sizeof(RTCMEM));  // 0x290
   if (RtcSettings.valid != RTC_MEM_VALID) {
     memset(&RtcSettings, 0, sizeof(RTCMEM));
     RtcSettings.valid = RTC_MEM_VALID;
@@ -149,7 +141,7 @@ void RtcRebootSave()
 
 void RtcRebootLoad()
 {
-  ESP.rtcUserMemoryRead(100 - sizeof(RTCRBT), (uint32_t*)&RtcReboot, sizeof(RTCRBT));
+  ESP.rtcUserMemoryRead(100 - sizeof(RTCRBT), (uint32_t*)&RtcReboot, sizeof(RTCRBT));  // 0x280
   if (RtcReboot.valid != RTC_MEM_VALID) {
     memset(&RtcReboot, 0, sizeof(RTCRBT));
     RtcReboot.valid = RTC_MEM_VALID;
@@ -641,6 +633,10 @@ void SettingsDefaultSet2()
 
   Settings.button_debounce = KEY_DEBOUNCE_TIME;
   Settings.switch_debounce = SWITCH_DEBOUNCE_TIME;
+
+  for (byte j = 0; j < 5; j++) {
+    Settings.rgbwwTable[j] = 255;
+  }
 }
 
 /********************************************************************************************/
@@ -843,6 +839,11 @@ void SettingsDelta()
     if (Settings.version < 0x0601010C) {
       Settings.button_debounce = KEY_DEBOUNCE_TIME;
       Settings.switch_debounce = SWITCH_DEBOUNCE_TIME;
+    }
+    if (Settings.version < 0x0602010A) {
+      for (byte j = 0; j < 5; j++) {
+        Settings.rgbwwTable[j] = 255;
+      }
     }
 
     Settings.version = VERSION;

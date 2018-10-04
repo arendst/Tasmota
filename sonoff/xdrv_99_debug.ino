@@ -35,20 +35,25 @@
  * Debug commands
 \*********************************************************************************************/
 
-#define D_CMND_CFGDUMP "CfgDump"
-#define D_CMND_CFGPOKE "CfgPoke"
-#define D_CMND_CFGPEEK "CfgPeek"
-#define D_CMND_CFGXOR  "CfgXor"
+#define D_CMND_CFGDUMP   "CfgDump"
+#define D_CMND_CFGPOKE   "CfgPoke"
+#define D_CMND_CFGPEEK   "CfgPeek"
+#define D_CMND_CFGSHOW   "CfgShow"
+#define D_CMND_CFGXOR    "CfgXor"
+#define D_CMND_CPUCHECK  "CpuChk"
 #define D_CMND_EXCEPTION "Exception"
-#define D_CMND_CPUCHECK "CpuChk"
+#define D_CMND_FREEMEM   "FreeMem"
+#define D_CMND_RTCDUMP   "RtcDump"
+#define D_CMND_HELP      "Help"
 
-enum DebugCommands { CMND_CFGDUMP, CMND_CFGPEEK, CMND_CFGPOKE, CMND_CFGXOR, CMND_EXCEPTION, CMND_CPUCHECK };
-const char kDebugCommands[] PROGMEM = D_CMND_CFGDUMP "|" D_CMND_CFGPEEK "|" D_CMND_CFGPOKE "|" D_CMND_CFGXOR "|" D_CMND_EXCEPTION "|" D_CMND_CPUCHECK;
+enum DebugCommands { CMND_CFGDUMP, CMND_CFGPEEK, CMND_CFGPOKE, CMND_CFGSHOW, CMND_CFGXOR, CMND_CPUCHECK, CMND_EXCEPTION, CMND_FREEMEM, CMND_RTCDUMP, CMND_HELP };
+const char kDebugCommands[] PROGMEM = D_CMND_CFGDUMP "|" D_CMND_CFGPEEK "|" D_CMND_CFGPOKE "|" D_CMND_CFGSHOW "|" D_CMND_CFGXOR "|" D_CMND_CPUCHECK "|" D_CMND_EXCEPTION "|" D_CMND_FREEMEM "|" D_CMND_RTCDUMP "|" D_CMND_HELP;
 
 uint32_t CPU_loops = 0;
 uint32_t CPU_last_millis = 0;
 uint32_t CPU_last_loop_time = 0;
-uint8_t CPU_load_check = CPU_LOAD_CHECK;
+uint8_t CPU_load_check = 0;
+uint8_t CPU_show_freemem = 0;
 
 /*******************************************************************************************/
 
@@ -114,41 +119,6 @@ Decoding 14 results
 */
   if (2 == type) {
     while(1) delay(1000);  // this will trigger the os watch
-  }
-}
-
-/*******************************************************************************************/
-
-void RtcSettingsDump()
-{
-  #define CFG_COLS 16
-
-  uint16_t idx;
-  uint16_t maxrow;
-  uint16_t row;
-  uint16_t col;
-
-  uint8_t *buffer = (uint8_t *) &RtcSettings;
-  maxrow = ((sizeof(RTCMEM)+CFG_COLS)/CFG_COLS);
-
-  for (row = 0; row < maxrow; row++) {
-    idx = row * CFG_COLS;
-    snprintf_P(log_data, sizeof(log_data), PSTR("%03X:"), idx);
-    for (col = 0; col < CFG_COLS; col++) {
-      if (!(col%4)) {
-        snprintf_P(log_data, sizeof(log_data), PSTR("%s "), log_data);
-      }
-      snprintf_P(log_data, sizeof(log_data), PSTR("%s %02X"), log_data, buffer[idx + col]);
-    }
-    snprintf_P(log_data, sizeof(log_data), PSTR("%s |"), log_data);
-    for (col = 0; col < CFG_COLS; col++) {
-//      if (!(col%4)) {
-//        snprintf_P(log_data, sizeof(log_data), PSTR("%s "), log_data);
-//      }
-      snprintf_P(log_data, sizeof(log_data), PSTR("%s%c"), log_data, ((buffer[idx + col] > 0x20) && (buffer[idx + col] < 0x7F)) ? (char)buffer[idx + col] : ' ');
-    }
-    snprintf_P(log_data, sizeof(log_data), PSTR("%s|"), log_data);
-    AddLog(LOG_LEVEL_INFO);
   }
 }
 
@@ -221,6 +191,68 @@ void DebugFreeMem()
 }
 
 #endif  // ARDUINO_ESP8266_RELEASE_2_x_x
+
+/*******************************************************************************************/
+
+void DebugRtcDump(char* parms)
+{
+  #define CFG_COLS 16
+
+  uint16_t idx;
+  uint16_t maxrow;
+  uint16_t row;
+  uint16_t col;
+  char *p;
+
+  // |<--SDK data (256 bytes)-->|<--User data (512 bytes)-->|
+  // 000 - 0FF: SDK
+  //  000 - 01B: SDK rst_info
+  // 100 - 2FF: User
+  //  280 - 283: Tasmota RtcReboot   (Offset 100 (x 4bytes) - sizeof(RTCRBT) (x 4bytes))
+  //  290 - 2EB: Tasmota RtcSettings (Offset 100 (x 4bytes))
+
+  uint8_t buffer[768];
+//  ESP.rtcUserMemoryRead(0, (uint32_t*)&buffer, sizeof(buffer));
+  system_rtc_mem_read(0, (uint32_t*)&buffer, sizeof(buffer));
+
+  maxrow = ((sizeof(buffer)+CFG_COLS)/CFG_COLS);
+
+  uint16_t srow = strtol(parms, &p, 16) / CFG_COLS;
+  uint16_t mrow = strtol(p, &p, 10);
+
+//  snprintf_P(log_data, sizeof(log_data), PSTR("Cnfg: Parms %s, Start row %d, rows %d"), parms, srow, mrow);
+//  AddLog(LOG_LEVEL_DEBUG);
+
+  if (0 == mrow) {  // Default only 8 lines
+    mrow = 8;
+  }
+  if (srow > maxrow) {
+    srow = maxrow - mrow;
+  }
+  if (mrow < (maxrow - srow)) {
+    maxrow = srow + mrow;
+  }
+
+  for (row = srow; row < maxrow; row++) {
+    idx = row * CFG_COLS;
+    snprintf_P(log_data, sizeof(log_data), PSTR("%03X:"), idx);
+    for (col = 0; col < CFG_COLS; col++) {
+      if (!(col%4)) {
+        snprintf_P(log_data, sizeof(log_data), PSTR("%s "), log_data);
+      }
+      snprintf_P(log_data, sizeof(log_data), PSTR("%s %02X"), log_data, buffer[idx + col]);
+    }
+    snprintf_P(log_data, sizeof(log_data), PSTR("%s |"), log_data);
+    for (col = 0; col < CFG_COLS; col++) {
+//      if (!(col%4)) {
+//        snprintf_P(log_data, sizeof(log_data), PSTR("%s "), log_data);
+//      }
+      snprintf_P(log_data, sizeof(log_data), PSTR("%s%c"), log_data, ((buffer[idx + col] > 0x20) && (buffer[idx + col] < 0x7F)) ? (char)buffer[idx + col] : ' ');
+    }
+    snprintf_P(log_data, sizeof(log_data), PSTR("%s|"), log_data);
+    AddLog(LOG_LEVEL_INFO);
+  }
+}
 
 /*******************************************************************************************/
 
@@ -322,6 +354,53 @@ void DebugCfgPoke(char* parms)
   AddLog(LOG_LEVEL_INFO);
 }
 
+void DebugCfgShow(uint8_t more)
+{
+  uint8_t *SetAddr;
+  SetAddr = (uint8_t *)&Settings;
+
+  snprintf_P(log_data, sizeof(log_data), PSTR("%03X: Hostname (%d)         [%s]"), (uint8_t *)&Settings.hostname - SetAddr, sizeof(Settings.hostname)-1, Settings.hostname);
+  AddLog(LOG_LEVEL_INFO);
+  snprintf_P(log_data, sizeof(log_data), PSTR("%03X: SSids (%d)            [%s], [%s]"), (uint8_t *)&Settings.sta_ssid - SetAddr, sizeof(Settings.sta_ssid[0])-1, Settings.sta_ssid[0], Settings.sta_ssid[1]);
+  AddLog(LOG_LEVEL_INFO);
+  snprintf_P(log_data, sizeof(log_data), PSTR("%03X: Friendlynames (%d)    [%s], [%s], [%s], [%s]"), (uint8_t *)&Settings.friendlyname - SetAddr, sizeof(Settings.friendlyname[0])-1, Settings.friendlyname[0], Settings.friendlyname[1], Settings.friendlyname[2], Settings.friendlyname[3]);
+  AddLog(LOG_LEVEL_INFO);
+  snprintf_P(log_data, sizeof(log_data), PSTR("%03X: OTA Url (%d)         [%s]"), (uint8_t *)&Settings.ota_url - SetAddr, sizeof(Settings.ota_url)-1, Settings.ota_url);
+  AddLog(LOG_LEVEL_INFO);
+  snprintf_P(log_data, sizeof(log_data), PSTR("%03X: StateText (%d)        [%s], [%s], [%s], [%s]"), (uint8_t *)&Settings.state_text - SetAddr, sizeof(Settings.state_text[0])-1, Settings.state_text[0], Settings.state_text[1], Settings.state_text[2], Settings.state_text[3]);
+  AddLog(LOG_LEVEL_INFO);
+  snprintf_P(log_data, sizeof(log_data), PSTR("%03X: Syslog Host (%d)      [%s]"), (uint8_t *)&Settings.syslog_host - SetAddr, sizeof(Settings.syslog_host)-1, Settings.syslog_host);
+  AddLog(LOG_LEVEL_INFO);
+  snprintf_P(log_data, sizeof(log_data), PSTR("%03X: NTP Servers (%d)      [%s], [%s], [%s]"), (uint8_t *)&Settings.ntp_server - SetAddr, sizeof(Settings.ntp_server[0])-1, Settings.ntp_server[0], Settings.ntp_server[1], Settings.ntp_server[2]);
+  AddLog(LOG_LEVEL_INFO);
+  snprintf_P(log_data, sizeof(log_data), PSTR("%03X: MQTT Host (%d)        [%s]"), (uint8_t *)&Settings.mqtt_host - SetAddr, sizeof(Settings.mqtt_host)-1, Settings.mqtt_host);
+  AddLog(LOG_LEVEL_INFO);
+  snprintf_P(log_data, sizeof(log_data), PSTR("%03X: MQTT Client (%d)      [%s]"), (uint8_t *)&Settings.mqtt_client - SetAddr, sizeof(Settings.mqtt_client)-1, Settings.mqtt_client);
+  AddLog(LOG_LEVEL_INFO);
+  snprintf_P(log_data, sizeof(log_data), PSTR("%03X: MQTT User (%d)        [%s]"), (uint8_t *)&Settings.mqtt_user - SetAddr, sizeof(Settings.mqtt_user)-1, Settings.mqtt_user);
+  AddLog(LOG_LEVEL_INFO);
+  snprintf_P(log_data, sizeof(log_data), PSTR("%03X: MQTT FullTopic (%d)   [%s]"), (uint8_t *)&Settings.mqtt_fulltopic - SetAddr, sizeof(Settings.mqtt_fulltopic)-1, Settings.mqtt_fulltopic);
+  AddLog(LOG_LEVEL_INFO);
+  snprintf_P(log_data, sizeof(log_data), PSTR("%03X: MQTT Topic (%d)       [%s]"), (uint8_t *)&Settings.mqtt_topic - SetAddr, sizeof(Settings.mqtt_topic)-1, Settings.mqtt_topic);
+  AddLog(LOG_LEVEL_INFO);
+  snprintf_P(log_data, sizeof(log_data), PSTR("%03X: MQTT GroupTopic (%d)  [%s]"), (uint8_t *)&Settings.mqtt_grptopic - SetAddr, sizeof(Settings.mqtt_grptopic)-1, Settings.mqtt_grptopic);
+  AddLog(LOG_LEVEL_INFO);
+  snprintf_P(log_data, sizeof(log_data), PSTR("%03X: MQTT ButtonTopic (%d) [%s]"), (uint8_t *)&Settings.button_topic - SetAddr, sizeof(Settings.button_topic)-1, Settings.button_topic);
+  AddLog(LOG_LEVEL_INFO);
+  snprintf_P(log_data, sizeof(log_data), PSTR("%03X: MQTT SwitchTopic (%d) [%s]"), (uint8_t *)&Settings.switch_topic - SetAddr, sizeof(Settings.switch_topic)-1, Settings.switch_topic);
+  AddLog(LOG_LEVEL_INFO);
+  snprintf_P(log_data, sizeof(log_data), PSTR("%03X: MQTT Prefixes (%d)    [%s], [%s], [%s]"), (uint8_t *)&Settings.mqtt_prefix - SetAddr, sizeof(Settings.mqtt_prefix[0])-1, Settings.mqtt_prefix[0], Settings.mqtt_prefix[1], Settings.mqtt_prefix[2]);
+  AddLog(LOG_LEVEL_INFO);
+  if (17 == more) {
+    snprintf_P(log_data, sizeof(log_data), PSTR("%03X: AP Passwords (%d)     [%s], [%s]"), (uint8_t *)&Settings.sta_pwd - SetAddr, sizeof(Settings.sta_pwd[0])-1, Settings.sta_pwd[0], Settings.sta_pwd[1]);
+    AddLog(LOG_LEVEL_INFO);
+    snprintf_P(log_data, sizeof(log_data), PSTR("%03X: MQTT Password (%d)    [%s]"), (uint8_t *)&Settings.mqtt_pwd - SetAddr, sizeof(Settings.mqtt_pwd)-1, Settings.mqtt_pwd);
+    AddLog(LOG_LEVEL_INFO);
+    snprintf_P(log_data, sizeof(log_data), PSTR("%03X: Web Password (%d)     [%s]"), (uint8_t *)&Settings.web_password - SetAddr, sizeof(Settings.web_password)-1, Settings.web_password);
+    AddLog(LOG_LEVEL_INFO);
+  }
+}
+
 /*******************************************************************************************/
 
 boolean DebugCommand()
@@ -333,6 +412,15 @@ boolean DebugCommand()
   if (-1 == command_code) {
     serviced = false;  // Unknown command
   }
+  else if (CMND_HELP == command_code) {
+    snprintf_P(log_data, sizeof(log_data), kDebugCommands);
+    AddLog(LOG_LEVEL_INFO);
+    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, D_JSON_DONE);
+  }
+  else if (CMND_RTCDUMP == command_code) {
+    DebugRtcDump(XdrvMailbox.data);
+    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, D_JSON_DONE);
+  }
   else if (CMND_CFGDUMP == command_code) {
     DebugCfgDump(XdrvMailbox.data);
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, D_JSON_DONE);
@@ -343,6 +431,10 @@ boolean DebugCommand()
   }
   else if (CMND_CFGPOKE == command_code) {
     DebugCfgPoke(XdrvMailbox.data);
+    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, D_JSON_DONE);
+  }
+  else if (CMND_CFGSHOW == command_code) {
+    DebugCfgShow(XdrvMailbox.payload);
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, D_JSON_DONE);
   }
 #ifdef USE_WEBSERVER
@@ -365,6 +457,12 @@ boolean DebugCommand()
       CPU_last_millis = CPU_last_loop_time;
     }
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, CPU_load_check);
+  }
+  else if (CMND_FREEMEM == command_code) {
+    if (XdrvMailbox.data_len > 0) {
+      CPU_show_freemem = XdrvMailbox.payload;
+    }
+    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, CPU_show_freemem);
   }
   else serviced = false;  // Unknown command
 
@@ -392,7 +490,7 @@ boolean Xdrv99(byte function)
       result = DebugCommand();
       break;
     case FUNC_FREE_MEM:
-      DebugFreeMem();
+      if (CPU_show_freemem) { DebugFreeMem(); }
       break;
   }
   return result;

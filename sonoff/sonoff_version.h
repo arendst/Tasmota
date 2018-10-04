@@ -20,9 +20,9 @@
 #ifndef _SONOFF_VERSION_H_
 #define _SONOFF_VERSION_H_
 
-#define VERSION            0x06020104
+#define VERSION            0x0602010B
 //STB mod
-#define STB_VERSION         0x0107
+#define STB_VERSION         0x0101
 //end
 
 #define D_PROGRAMNAME      "Sonoff-Tasmota"

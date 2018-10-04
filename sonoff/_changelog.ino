@@ -1,4 +1,54 @@
-/* 6.2.1.4 20180916
+/* 6.2.1.11 20181002
+ * Remove support for MQTT Client based on esp-mqtt-arduino by #define MQTT_LIBRARY_TYPE MQTT_ESPMQTTARDUINO
+ * Add support for MQTT Client based on lwmqtt to be selected by #define MQTT_LIBRARY_TYPE MQTT_ARDUINOMQTT
+ * Change MQTT_ARDUINOMQTT command timeout from 1 to 10 seconds
+ * Add Hebrew language file (#3960)
+ * Fix exception when wrong Domoticz JSON message is received (#3963)
+ *
+ * 6.2.1.10 20180930
+ * Add command RGBWWTable to support color calibration (#3933)
+ * Add support for Michael Haustein ESP Switch
+ * Add support for EXS Relay V5.0 (#3810)
+ * Fix timer offset -00:00 causing 12:00 hour offset (#3923)
+ * Add support for OBI Power Socket (#1988, #3944)
+ * Add support for Teckin Power Socket with Energy Monitoring (#3950)
+ *
+ * 6.2.1.9 20180928
+ * Add Apparent Power and Reactive Power to Energy Monitoring devices (#251)
+ * Add RF Receiver control to module MagicHome to be used on Arilux LC10 (#3792)
+ * Fix I2CScan invalid JSON error message (#3925)
+ * Fix invalid configuration restores and decode_config.py crc error when savedata = 0 (#3918)
+ *
+ * 6.2.1.8 20180926
+ * Change status JSON message providing more switch and retain information
+ * Change pinmode for no-pullup defined switches to pullup when configured as switchmode PUSHBUTTON (=3 and up) (#3896)
+ * Add delay after restart before processing rule sensor data (#3811)
+ * Fix Home Assistant forced light discovery (#3908)
+ * Add rule triggers SWITCH1#BOOT and POWER1#BOOT (#3904, #3910)
+ * Add support for Neo Coolcam Wifi Smart Power Plug
+ *
+ * 6.2.1.7 20180925
+ * Remove restart after ntpserver change and force NTP re-sync (#3890)
+ * Release full Shelly2 support
+ * Released tools/decode-config.py by Norbert Richter to decode configuration data. See file for information
+ * Add define USE_DISPLAYS for selecting image sonoff-display
+ *
+ * 6.2.1.6 20180922
+ * Removed commands PowerCal, VoltageCal and CurrentCal as more functionality is provided by commands PowerSet, VoltageSet and CurrentSet
+ * Allow decimals as input to commands PowerSet, VoltageSet and CurrentSet
+ * Add support for PCA9685 12bit 16pin hardware PWM driver (#3866)
+ * Add power value below 5W to Sonoff Pow R2 and S31 (#3745)
+ * Add force_update to Home Assistant discovery (#3873)
+ * Fix rule trigger POWER1#STATE execution after restart and SetOption0 is 0 (#3856)
+ * Disable serial logging on Shelly2 as serial is being used by energy monitoring (#3878)
+ * Fix Shelly2 wrong FrequencySet calculation and add input range checks (#3882)
+ *
+ * 6.2.1.5 20180921
+ * Add authentication to HTTP web pages
+ * Add energy monitoring to Shelly2 (#2789)
+ * Rewrite TSL2561 driver to fix some issues (#3681)
+ *
+ * 6.2.1.4 20180916
  * Add command SerialSend5 to send raw serial data like "A5074100545293"
  * Update MCP230xx driver
  * Update Czech translation
@@ -6,6 +56,7 @@
  * Add userid/password option to decode-status.py (#3796)
  * Fix syslog when emulation is selected (#2109, #3784)
  * Fix Pzem2 compilation error (#3766, #3767)
+ * Add uncalibrated energy monitoring to Shelly2 (#2789)
  *
  * 6.2.1.3 20180907
  * Change web Configure Module GPIO drop down list order for better readability
