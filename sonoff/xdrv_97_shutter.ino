@@ -110,53 +110,20 @@ void Schutter_Update_Position()
   char scommand[CMDSZ];
   char stopic[TOPSZ];
 
-  // SwitchedRelay = binary relay that was recently changed and cause an Action
-  // powerstate_local = binary powermatrix and relays from shutter: 0..3
-  // powerstate = binary powermatrix only relays from shutter 32bits
-  // relays_changed = boolen if one of the relays that belong to the shutter changed not by shutter or pulsetimer
-
   for (byte i=0; i < shutters_present; i++) {
-    power_t powerstate = (3 << (Settings.shutter_startrelay[i] -1) ) & power;
-    power_t powerstate_local = (power >> (Settings.shutter_startrelay[i] -1)) & 3;
-    uint8   manual_relays_changed = ((SwitchedRelay >> (Settings.shutter_startrelay[i] -1)) & 3) && SRC_SHUTTER != last_source && SRC_PULSETIMER != last_source;
-
-    char stemp1[10];
-    if (shutterMode == OFF_ON__OPEN_CLOSE && manual_relays_changed) {
-      switch (powerstate_local) {
-        case 1:
-          Shutter_StartInit(i, 1, Shutter_Open_Max[i]);
-          break;
-        case 3:
-          Shutter_StartInit(i, -1, 0);
-          break;
-        default:
-          Shutter_Direction[i] =0;
-          Shutter_Target_Position[i] = Shutter_Real_Position[i];
-      }
-      SwitchedRelay = 0;
-      manual_relays_changed = 0;
-    }
-
     if (Shutter_Direction[i] != 0) {
       //char stemp1[20];
       Shutter_Real_Position[i] = Shutter_Start_Position[i] + ( shutter_time[i] * (Shutter_Direction[i] > 0 ? 100 : -Shutter_Close_Velocity[i]));
-      // avoid real position leavin the boundaries.
+      // avoid real position leaving the boundaries.
       Shutter_Real_Position[i] = Shutter_Real_Position[i] < 0 ? 0 : (Shutter_Real_Position[i] > Shutter_Open_Max[i] ? Shutter_Open_Max[i] : Shutter_Real_Position[i]) ;
-      // check if corresponding relay if OFF. Then stop movement.
-      // check IF OFF and not caused by pulsetimer                    check if ON and not by SRC_SHUTTER            now merge everything with the TWO relevant relays in this loop
-      //if ( ((!powerstate  && SRC_PULSETIMER != last_source ) || ( powerstate  && Settings.flag3.paired_interlock && SRC_SHUTTER != last_source  ) ) && (SwitchedRelay & (3 << (Settings.shutter_startrelay[i] -1)))) {
-      if (manual_relays_changed ) {
-        Shutter_Target_Position[i] = Shutter_Real_Position[i];
-        snprintf_P(log_data, sizeof(log_data), PSTR("Shutter %d: Switch OFF motor. Target: %ld, source: %s, powerstate %ld, switchedRelay %d, manual change %d"), i, Shutter_Target_Position[i], GetTextIndexed(stemp1, sizeof(stemp1), last_source, kCommandSource), powerstate,SwitchedRelay,manual_relays_changed);
-        AddLog(LOG_LEVEL_DEBUG);
-      }
-      //if (Shutter_Real_Position[i] * Shutter_Direction[i] >= Shutter_Target_Position[i] * Shutter_Direction[i] || Shutter_Real_Position[i] < Shutter_Close_Velocity[i] * -Shutter_Direction[i]) {
+
       if (Shutter_Real_Position[i] * Shutter_Direction[i] >= Shutter_Target_Position[i] * Shutter_Direction[i] ) {
-        // calculate relay number responsibe for current movement.
+        // calculate relay number responsible for current movement.
         uint8_t cur_relay = Settings.shutter_startrelay[i] + (Shutter_Direction[i] == 1 ? 0 : 1) ;
-        snprintf_P(log_data, sizeof(log_data), PSTR("Shutter %d: Stopp Pos. %d, relay: %d, pulsetimer: %d, rtcshutter: %ld"), i, Shutter_Real_Position[i], cur_relay -1, Settings.pulse_timer[cur_relay -1], shutter_time[i]);
+
+        Settings.shutter_position[i] = m2[i] * 5 > Shutter_Real_Position[i] ? (Shutter_Real_Position[i] * 10 / m2[i] + 4)/10 : ((Shutter_Real_Position[i]-b1[i]) *10 / m1[i] +4) / 10;
+        snprintf_P(log_data, sizeof(log_data), PSTR("Shutter %d: Real Pos. %d, Stoppos: %ld, relay: %d, direction %d, pulsetimer: %d, rtcshutter: %ld"), i, Shutter_Real_Position[i], Settings.shutter_position[i], cur_relay -1, Shutter_Direction[i], Settings.pulse_timer[cur_relay -1], shutter_time[i]);
         AddLog(LOG_LEVEL_DEBUG);
-        Settings.shutter_position[i] = m2[i] * 5 > Shutter_Real_Position[i] ? Shutter_Real_Position[i] / m2[i] : (Shutter_Real_Position[i]-b1[i]) / m1[i];
         Shutter_Start_Position[i] = Shutter_Real_Position[i];
         // sending MQTT result to broker
         snprintf_P(scommand, sizeof(scommand),PSTR("%s%d"), D_SHUTTER, i+1);
@@ -176,7 +143,7 @@ void Schutter_Update_Position()
           case OFF_ON__OPEN_CLOSE:
             // This is a failsafe configuration. Relay1 ON/OFF Relay2 -1/1 direction
             if ((1 << (Settings.shutter_startrelay[i]-1)) & power) {
-              ExecuteCommandPower(Settings.shutter_startrelay[i], 0, SRC_PULSETIMER);
+              ExecuteCommandPower(Settings.shutter_startrelay[i], 0, SRC_SHUTTER);
             }
           break;
           case OFF_OPEN__OFF_CLOSE:
@@ -187,25 +154,7 @@ void Schutter_Update_Position()
             }
           break;
         }
-
-        Shutter_Direction[i] = 0;
-        if (SwitchedRelay == (1 << (cur_relay-1))) {
-          // reset switched relay
-          SwitchedRelay = 0;
-        }
-      }
-    } else {
-      // no movement by software ; eventuall someone hits a relay and we must to start move.
-      if ( manual_relays_changed) {
-        last_source = SRC_SHUTTER; // avoid switch off in the next loop
-        if (((1 << Settings.shutter_startrelay[i] ) & powerstate) > 0) { // tetsing on CLOSE relay, if ON
-          // close with relay two
-          Shutter_StartInit(i, -1, 0);
-        } else {
-          // opens with relay one
-          Shutter_StartInit(i, 1, Shutter_Open_Max[i]);
-        }
-        SwitchedRelay = 0;
+		    Shutter_Direction[i] = 0;
       }
     }
   }
@@ -362,6 +311,53 @@ void Schutter_Report_Position()
   }
 }
 
+void Shutter_Relay_changed()
+{
+
+  // SwitchedRelay = binary relay that was recently changed and cause an Action
+  // powerstate_local = binary powermatrix and relays from shutter: 0..3
+  // relays_changed = boolen if one of the relays that belong to the shutter changed not by shutter or pulsetimer
+  char stemp1[10];
+
+	for (byte i=0; i < shutters_present; i++) {
+		power_t powerstate_local = (power >> (Settings.shutter_startrelay[i] -1)) & 3;
+		uint8   manual_relays_changed = ((SwitchedRelay >> (Settings.shutter_startrelay[i] -1)) & 3) && SRC_SHUTTER != last_source && SRC_PULSETIMER != last_source ;
+
+		if (manual_relays_changed) {
+			if (shutterMode == OFF_ON__OPEN_CLOSE) {
+				switch (powerstate_local) {
+					case 1:
+					  Shutter_StartInit(i, 1, Shutter_Open_Max[i]);
+					  break;
+					case 3:
+					  Shutter_StartInit(i, -1, 0);
+					  break;
+					default:
+					  Shutter_Direction[i] = 0;
+					  Shutter_Target_Position[i] = Shutter_Real_Position[i];
+				  }
+			} else {
+				if (Shutter_Direction[i] != 0 && !powerstate_local) {
+					Shutter_Target_Position[i] = Shutter_Real_Position[i];
+					snprintf_P(log_data, sizeof(log_data), PSTR("Shutter %d: Switch OFF motor. Target: %ld, source: %s, powerstate_local %ld, switchedRelay %d, manual change %d"), i, Shutter_Target_Position[i], GetTextIndexed(stemp1, sizeof(stemp1), last_source, kCommandSource), powerstate_local,SwitchedRelay,manual_relays_changed);
+					AddLog(LOG_LEVEL_DEBUG);
+				} else {
+					last_source = SRC_SHUTTER; // avoid switch off in the next loop
+					if (((1 << Settings.shutter_startrelay[i] ) & powerstate_local) > 0) { // testing on CLOSE relay, if ON
+					  // close with relay two
+					  Shutter_StartInit(i, -1, 0);
+					} else {
+					  // opens with relay one
+					  Shutter_StartInit(i, 1, Shutter_Open_Max[i]);
+					}
+				}
+        snprintf_P(log_data, sizeof(log_data), PSTR("Shutter %d: Target: %ld"), i, Shutter_Target_Position[i]);
+        AddLog(LOG_LEVEL_DEBUG);
+			}
+		}
+	}
+}
+
 ///////////////////////////////////////////////////////////////////////////////////
 // Shutter specific functions
 // TODO: move to shutter driver and make them accessible in a generic way
@@ -412,11 +408,13 @@ boolean Xdrv97(byte function)
         }
         break;
       case FUNC_SET_POWER:
+        char stemp1[10];
         // extraxt the number of the relay that was switched and save for later in Update Position.
         SwitchedRelay = power ^ old_power;
         old_power = power;
-        snprintf_P(log_data, sizeof(log_data), PSTR("Switched relay: %d"), SwitchedRelay);
+        snprintf_P(log_data, sizeof(log_data), PSTR("Switched relay: %d by %s"), SwitchedRelay,GetTextIndexed(stemp1, sizeof(stemp1), last_source, kCommandSource));
         AddLog(LOG_LEVEL_DEBUG_MORE);
+		    Shutter_Relay_changed();
       break;
     }
   }

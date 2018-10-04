@@ -1424,7 +1424,7 @@ void ExecuteCommandPower(byte device, byte state, int source)
             r++;
             snprintf_P(log_data, sizeof(log_data), PSTR("Power off device: %d"),r);
             AddLog(LOG_LEVEL_DEBUG);
-            ExecuteCommandPower(r , POWER_OFF, SRC_IGNORE);
+            ExecuteCommandPower(r , POWER_OFF, source);
             delay(500); //quite long delay to ensure physical switch off of the relay
             // reinitalize v after power off one relay.
             v = power & imask;
