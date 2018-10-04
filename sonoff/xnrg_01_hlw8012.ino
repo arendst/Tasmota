@@ -33,7 +33,7 @@
 #define HLW_IREF             4545    // 4.545A
 #define HLW_SEL_VOLTAGE         1
 
-// HJL-01 based (BlitzWolf, Homecube, Gosund)
+// HJL-01 based (BlitzWolf, Homecube, Gosund, Teckin)
 #define HJL_PREF             1362
 #define HJL_UREF              822
 #define HJL_IREF             3300
@@ -177,7 +177,7 @@ void HlwSnsInit()
     Settings.energy_current_calibration = HLW_IREF_PULSE;
   }
 
-  if (BLITZWOLF_BWSHP2 == Settings.module) {
+  if ((BLITZWOLF_BWSHP2 == Settings.module) || (TECKIN == Settings.module)) {
     hlw_power_ratio = HJL_PREF;
     hlw_voltage_ratio = HJL_UREF;
     hlw_current_ratio = HJL_IREF;

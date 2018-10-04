@@ -83,6 +83,7 @@ unsigned long rules_timer[MAX_RULE_TIMERS] = { 0 };
 uint8_t rules_quota = 0;
 long rules_new_power = -1;
 long rules_old_power = -1;
+long rules_old_dimm = -1;
 
 uint32_t rules_triggers[MAX_RULE_SETS] = { 0 };
 uint16_t rules_last_minute = 60;
@@ -397,6 +398,16 @@ void RulesEvery50ms()
         }
       }
       rules_old_power = rules_new_power;
+    }
+    else if (rules_old_dimm != Settings.light_dimmer) {
+      if (rules_old_dimm != -1) {
+        snprintf_P(json_event, sizeof(json_event), PSTR("{\"Dimmer\":{\"State\":%d}}"), Settings.light_dimmer);
+      } else {
+        // Boot time DIMMER VALUE
+        snprintf_P(json_event, sizeof(json_event), PSTR("{\"Dimmer\":{\"Boot\":%d}}"), Settings.light_dimmer);
+      }
+      RulesProcessEvent(json_event);
+      rules_old_dimm = Settings.light_dimmer;
     }
     else if (event_data[0]) {
       char *event;

@@ -20,6 +20,11 @@
 #ifndef _SONOFF_H_
 #define _SONOFF_H_
 
+#define USE_DHT                             // Default DHT11 sensor needs no external library
+#define USE_ENERGY_SENSOR                   // Use energy sensors (+14k code)
+#define USE_HLW8012                         // Use energy sensor for Sonoff Pow and WolfBlitz
+#define USE_CSE7766                         // Use energy sensor for Sonoff S31 and Pow R2
+
 /*********************************************************************************************\
  * Power Type
 \*********************************************************************************************/
@@ -136,7 +141,7 @@ typedef unsigned long power_t;              // Power (Relay) type
 
 #define MQTT_PUBSUBCLIENT      1            // Mqtt PubSubClient library
 #define MQTT_TASMOTAMQTT       2            // Mqtt TasmotaMqtt library based on esp-mqtt-arduino
-#define MQTT_ESPMQTTARDUINO    3            // Mqtt esp-mqtt-arduino library by Ingo Randolf
+#define MQTT_ARDUINOMQTT       3            // Mqtt arduino-mqtt library by Joel Gaehwiler (https://github.com/256dpi/arduino-mqtt)
 
 // Sunrise and Sunset DawnType
 #define DAWN_NORMAL            -0.8333

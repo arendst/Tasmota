@@ -23,19 +23,29 @@
 // Default MQTT driver for both non-TLS and TLS connections. Blocks network if MQTT server is unavailable.
 //#define MQTT_LIBRARY_TYPE      MQTT_PUBSUBCLIENT   // Use PubSubClient library
 // Alternative MQTT driver does not block network when MQTT server is unavailable. No TLS support
-//#define MQTT_LIBRARY_TYPE      MQTT_TASMOTAMQTT    // Use TasmotaMqtt library (+4k4 code, +4k mem) - non-TLS only
-// Alternative MQTT driver does not block network when MQTT server is unavailable. No TLS support
-//#define MQTT_LIBRARY_TYPE      MQTT_ESPMQTTARDUINO // Use (patched) esp-mqtt-arduino library (+4k8 code, +4k mem) - non-TLS only
+//#define MQTT_LIBRARY_TYPE      MQTT_TASMOTAMQTT    // Use TasmotaMqtt library (+4k4 (core 2.3.0), +14k4 (core 2.4.2 lwip2) code, +4k mem) - non-TLS only
+// Alternative MQTT driver does not block network when MQTT server is unavailable. TLS should work but needs to be tested.
+//#define MQTT_LIBRARY_TYPE      MQTT_ARDUINOMQTT    // Use arduino-mqtt (lwmqtt) library (+3k3 code, +2k mem)
 
 #ifdef USE_MQTT_TLS
+
+/*
 #ifdef MQTT_LIBRARY_TYPE
 #undef MQTT_LIBRARY_TYPE
 #endif
 #define MQTT_LIBRARY_TYPE      MQTT_PUBSUBCLIENT   // Use PubSubClient library as it only supports TLS
+*/
+#if (MQTT_LIBRARY_TYPE == MQTT_TASMOTAMQTT)
+#undef MQTT_LIBRARY_TYPE
+#define MQTT_LIBRARY_TYPE      MQTT_PUBSUBCLIENT   // Use PubSubClient library as it only supports TLS
+#endif
+
 #else
+
 #ifndef MQTT_LIBRARY_TYPE
 #define MQTT_LIBRARY_TYPE      MQTT_PUBSUBCLIENT   // Use PubSubClient library as default
 #endif
+
 #endif
 
 /*********************************************************************************************/
@@ -136,48 +146,48 @@ void MqttLoop()
 {
 }
 
-#elif (MQTT_LIBRARY_TYPE == MQTT_ESPMQTTARDUINO)  /*******************************************/
+#elif (MQTT_LIBRARY_TYPE == MQTT_ARDUINOMQTT)  /**********************************************/
 
-#include <MQTT.h>
-MQTT *MqttClient = NULL;
+#include <MQTTClient.h>
+MQTTClient MqttClient(MQTT_MAX_PACKET_SIZE);
 
 bool MqttIsConnected()
 {
-  return mqtt_connected;
+  return MqttClient.connected();
 }
 
 void MqttDisconnect()
 {
-  if (MqttClient) MqttClient->disconnect();
+  MqttClient.disconnect();
 }
 
-void MqttDisconnectedCb()
+/*
+void MqttMyDataCb(MQTTClient* client, char* topic, char* data, int data_len)
+//void MqttMyDataCb(MQTTClient *client, char topic[], char data[], int data_len)
 {
-  MqttDisconnected(MqttClient->getState());  // status codes are documented in file mqtt.h as tConnState
+//  MqttDataHandler((char*)topic, (byte*)data, data_len);
 }
+*/
 
-void MqttMyDataCb(const char* topic, uint32_t topic_len, const char* data, uint32_t data_len)
+void MqttMyDataCb(String &topic, String &data)
 {
-	char topic_copy[topic_len +1];
-
-	memcpy(topic_copy, topic, topic_len);
-	topic_copy[topic_len] = 0;
-  if (0 == data_len) data = (const char*)&topic_copy + topic_len;
-  MqttDataHandler((char*)topic_copy, (byte*)data, data_len);
+  MqttDataHandler((char*)topic.c_str(), (byte*)data.c_str(), data.length());
 }
 
 void MqttSubscribeLib(char *topic)
 {
-  MqttClient->subscribe(topic);
+  MqttClient.subscribe(topic, 0);
 }
 
 bool MqttPublishLib(const char* topic, boolean retained)
 {
-  return MqttClient->publish(topic, mqtt_data, strlen(mqtt_data), 0, retained);
+  return MqttClient.publish(topic, mqtt_data, strlen(mqtt_data), retained, 0);
 }
 
 void MqttLoop()
 {
+  MqttClient.loop();
+//  delay(10);
 }
 
 #endif  // MQTT_LIBRARY_TYPE
@@ -467,6 +477,14 @@ void MqttReconnect()
   GetTopic_P(stopic, TELE, mqtt_topic, S_LWT);
   snprintf_P(mqtt_data, sizeof(mqtt_data), S_OFFLINE);
 
+//#ifdef ARDUINO_ESP8266_RELEASE_2_4_1
+#ifdef USE_MQTT_TLS
+  EspClient = WiFiClientSecure();         // Wifi Secure Client reconnect issue 4497 (https://github.com/esp8266/Arduino/issues/4497)
+#else
+  EspClient = WiFiClient();               // Wifi Client reconnect issue 4497 (https://github.com/esp8266/Arduino/issues/4497)
+#endif
+//#endif
+
   if (2 == mqtt_initial_connection_state) {  // Executed once just after power on and wifi is connected
 #ifdef USE_MQTT_TLS
     if (!MqttCheckTls()) return;
@@ -479,24 +497,16 @@ void MqttReconnect()
     MqttClient.OnConnected(MqttConnected);
     MqttClient.OnDisconnected(MqttDisconnectedCb);
     MqttClient.OnData(MqttDataHandler);
-#elif (MQTT_LIBRARY_TYPE == MQTT_ESPMQTTARDUINO)
-    MqttClient = new MQTT(mqtt_client, Settings.mqtt_host, Settings.mqtt_port, stopic, 1, true, mqtt_data);
-    MqttClient->setUserPwd(mqtt_user, mqtt_pwd);
-    MqttClient->onConnected(MqttConnected);
-    MqttClient->onDisconnected(MqttDisconnectedCb);
-    MqttClient->onData(MqttMyDataCb);
+#elif (MQTT_LIBRARY_TYPE == MQTT_ARDUINOMQTT)
+    MqttClient.begin(Settings.mqtt_host, Settings.mqtt_port, EspClient);
+    MqttClient.setWill(stopic, mqtt_data, true, 1);
+    MqttClient.setOptions(MQTT_KEEPALIVE, true, MQTT_TIMEOUT);
+//    MqttClient.onMessageAdvanced(MqttMyDataCb);
+    MqttClient.onMessage(MqttMyDataCb);
 #endif
 
     mqtt_initial_connection_state = 1;
   }
-
-//#ifdef ARDUINO_ESP8266_RELEASE_2_4_1
-#ifdef USE_MQTT_TLS
-  EspClient = WiFiClientSecure();         // Wifi Secure Client reconnect issue 4497 (https://github.com/esp8266/Arduino/issues/4497)
-#else
-  EspClient = WiFiClient();               // Wifi Client reconnect issue 4497 (https://github.com/esp8266/Arduino/issues/4497)
-#endif
-//#endif
 
 #if (MQTT_LIBRARY_TYPE == MQTT_PUBSUBCLIENT)
   MqttClient.setCallback(MqttDataHandler);
@@ -508,8 +518,12 @@ void MqttReconnect()
   }
 #elif (MQTT_LIBRARY_TYPE == MQTT_TASMOTAMQTT)
   MqttClient.Connect();
-#elif (MQTT_LIBRARY_TYPE == MQTT_ESPMQTTARDUINO)
-  MqttClient->connect();
+#elif (MQTT_LIBRARY_TYPE == MQTT_ARDUINOMQTT)
+  if (MqttClient.connect(mqtt_client, mqtt_user, mqtt_pwd)) {
+    MqttConnected();
+  } else {
+    MqttDisconnected(MqttClient.lastError());  // status codes are documented here https://github.com/256dpi/lwmqtt/blob/master/include/lwmqtt.h#L11
+  }
 #endif  // MQTT_LIBRARY_TYPE
 }
 
