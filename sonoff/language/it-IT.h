@@ -174,6 +174,7 @@
 #define D_UV_POWER "UV Power"
 #define D_VERSION "Versione"
 #define D_VOLTAGE "Tensione"
+#define D_WEIGHT "Weight"
 #define D_WARMLIGHT "Calda"
 #define D_WEB_SERVER "Web Server"
 
@@ -496,6 +497,8 @@
 #define D_SENSOR_TM1638_CLK "TM16 CLK"
 #define D_SENSOR_TM1638_DIO "TM16 DIO"
 #define D_SENSOR_TM1638_STB "TM16 STB"
+#define D_SENSOR_HX711_SCK "HX711 SCK"
+#define D_SENSOR_HX711_DAT "HX711 DAT"
 
 // Units
 #define D_UNIT_AMPERE "A"
@@ -503,6 +506,7 @@
 #define D_UNIT_HERTZ "Hz"
 #define D_UNIT_HOUR "Hr"
 #define D_UNIT_INCREMENTS "inc"
+#define D_UNIT_KILOGRAM "kg"
 #define D_UNIT_KILOOHM "kOhm"
 #define D_UNIT_KILOWATTHOUR "kWh"
 #define D_UNIT_LUX "lx"
