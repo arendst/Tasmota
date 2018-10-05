@@ -151,13 +151,22 @@ void DomoticzMqttSubscribe()
    "switchType" : "Dimmer",
    "unit" : 1
 }
+ * Fail on this one
+{
+   "LastUpdate" : "2018-10-02 20:39:45",
+   "Name" : "Sfeerverlichting",
+   "Status" : "Off",
+   "Timers" : "true",
+   "Type" : "Group",
+   "idx" : "2"
+}
 */
 
 boolean DomoticzMqttData()
 {
   char stemp1[10];
   unsigned long idx = 0;
-  int16_t nvalue;
+  int16_t nvalue = -1;
   int16_t found = 0;
 
   domoticz_update_flag = 1;
@@ -174,7 +183,9 @@ boolean DomoticzMqttData()
 //      return 1;
 //    }
     idx = domoticz["idx"];
-    nvalue = domoticz["nvalue"];
+    if (domoticz.containsKey("nvalue")) {
+      nvalue = domoticz["nvalue"];
+    }
 
     snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_DOMOTICZ "idx %d, nvalue %d"), idx, nvalue);
     AddLog(LOG_LEVEL_DEBUG_MORE);
@@ -198,7 +209,11 @@ boolean DomoticzMqttData()
             found = 1;
           } else if ((!iscolordimmer && 2 == nvalue) || // gswitch_sSetLevel
                      (iscolordimmer && 15 == nvalue)) { // Color_SetBrightnessLevel
-            nvalue = domoticz["svalue1"];
+            if (domoticz.containsKey("svalue1")) {
+              nvalue = domoticz["svalue1"];
+            } else {
+              return 1;
+            }
             if (light_type && (Settings.light_dimmer == nvalue) && ((power >> i) &1)) {
               return 1;
             }
