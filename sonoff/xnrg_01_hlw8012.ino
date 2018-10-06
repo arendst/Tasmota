@@ -33,6 +33,10 @@
 #define HLW_IREF             4545    // 4.545A
 #define HLW_SEL_VOLTAGE         1
 
+  
+// HLW8012 based (APLIC_WDP303075)
+#define A_HLW_SEL_VOLTAGE       0 
+
 // HJL-01 based (BlitzWolf, Homecube, Gosund, Teckin)
 #define HJL_PREF             1362
 #define HJL_UREF              822
@@ -182,6 +186,11 @@ void HlwSnsInit()
     hlw_voltage_ratio = HJL_UREF;
     hlw_current_ratio = HJL_IREF;
     hlw_ui_flag = HJL_SEL_VOLTAGE;
+  } else if (APLIC_WDP303075 == Settings.module){
+    hlw_power_ratio = HLW_PREF;
+    hlw_voltage_ratio = HLW_UREF;
+    hlw_current_ratio = HLW_IREF;
+    hlw_ui_flag = A_HLW_SEL_VOLTAGE;
   } else {
     hlw_power_ratio = HLW_PREF;
     hlw_voltage_ratio = HLW_UREF;

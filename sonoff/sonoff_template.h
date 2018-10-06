@@ -235,6 +235,7 @@ enum SupportedModules {
   ESP_SWITCH,
   OBI,
   TECKIN,
+  APLIC_WDP303075,
   MAXMODULE };
 
 /********************************************************************************************/
@@ -409,7 +410,8 @@ const uint8_t kModuleNiceList[MAXMODULE] PROGMEM = {
   AILIGHT,            // Light Bulbs
   PHILIPS,
   WITTY,              // Development Devices
-  WEMOS
+  WEMOS,
+  APLIC_WDP303075
 };
 
 // Default module settings
@@ -1112,6 +1114,21 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_LED1_INV,    // GPIO13 Blue Led (0 = On, 1 = Off)
      GPIO_REL1,        // GPIO14 Relay (0 = Off, 1 = On)
      0, 0, 0
+  },
+  { "AplicWDP303075",   // Aplic WDP 303075 (ESP8285 - HLW8012 Energy Monitoring)
+                       // https://www.amazon.de/dp/B07CNWVNJ2
+     0,                 // GPIO00 
+     0,                 // GPIO01 
+     0,                 // GPIO02 
+     GPIO_KEY1,         // GPIO03 Button
+     GPIO_HLW_CF,       // GPIO04 HLW8012 CF (power)
+     GPIO_HLW_CF1,      // GPIO05 HLW8012 CF1 (current/voltage)
+     0, 0, 0, 0, 0, 0,  // ?
+     GPIO_HLW_SEL,      // GPIO12 HLW8012 CF Sel output (CF)
+     GPIO_LED1_INV,     // GPIO13 LED
+     GPIO_REL1,         // GPIO14 Relay SRU 5VDC SDA (0= Off, 1 = On )
+     0,                 // GPIO15
+     0, 0
   }
 };
 
