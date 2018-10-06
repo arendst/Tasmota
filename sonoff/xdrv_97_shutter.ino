@@ -36,6 +36,7 @@ int32_t Shutter_Open_Max[MAX_SHUTTERS];               // max value on maximum op
 int32_t Shutter_Target_Position[MAX_SHUTTERS] ;        // position to go to
 int32_t Shutter_Start_Position[MAX_SHUTTERS] ;
 uint16_t Shutter_Close_Velocity[MAX_SHUTTERS];          // in relation to open velocity. higher value = faster
+uint16_t Shutter_Operations[MAX_SHUTTERS];
 int8_t  Shutter_Direction[MAX_SHUTTERS];               // 1 == UP , 0 == stop; -1 == down
 int32_t Shutter_Real_Position[MAX_SHUTTERS];          // value between 0 and Shutter_Open_Max
 power_t shutter_mask = 0;     // bit mask with 11 at the position of relays that belong to at least ONE shutter
@@ -117,14 +118,28 @@ void Schutter_Update_Position()
       // avoid real position leaving the boundaries.
       Shutter_Real_Position[i] = Shutter_Real_Position[i] < 0 ? 0 : (Shutter_Real_Position[i] > Shutter_Open_Max[i] ? Shutter_Open_Max[i] : Shutter_Real_Position[i]) ;
 
+      // Add additional runtime, if shutter did not reach the endstop for some time.
+      if (Shutter_Target_Position[i] == Shutter_Real_Position[i] && Shutter_Target_Position[i] == 0) {
+        // for every operation add 5x50ms = 250ms to stop position
+        Shutter_Real_Position[i] += 500 * Shutter_Operations[i] ;
+        Shutter_Operations[i]  = 0;
+      }
       if (Shutter_Real_Position[i] * Shutter_Direction[i] >= Shutter_Target_Position[i] * Shutter_Direction[i] ) {
         // calculate relay number responsible for current movement.
         uint8_t cur_relay = Settings.shutter_startrelay[i] + (Shutter_Direction[i] == 1 ? 0 : 1) ;
 
         Settings.shutter_position[i] = m2[i] * 5 > Shutter_Real_Position[i] ? (Shutter_Real_Position[i] * 10 / m2[i] + 4)/10 : ((Shutter_Real_Position[i]-b1[i]) *10 / m1[i] +4) / 10;
-        snprintf_P(log_data, sizeof(log_data), PSTR("Shutter %d: Real Pos. %d, Stoppos: %ld, relay: %d, direction %d, pulsetimer: %d, rtcshutter: %ld"), i, Shutter_Real_Position[i], Settings.shutter_position[i], cur_relay -1, Shutter_Direction[i], Settings.pulse_timer[cur_relay -1], shutter_time[i]);
+
+        if (0 < Settings.shutter_position[i] && Settings.shutter_position[i] < 100) {
+          Shutter_Operations[i]++;
+        } else {
+          Shutter_Operations[i]  = 0;
+        }
+
+        snprintf_P(log_data, sizeof(log_data), PSTR("Shutter %d: Real Pos. %d, Stoppos: %ld, relay: %d, direction %d, pulsetimer: %d, rtcshutter: %ld, operationtime %d"), i, Shutter_Real_Position[i], Settings.shutter_position[i], cur_relay -1, Shutter_Direction[i], Settings.pulse_timer[cur_relay -1], shutter_time[i], Shutter_Operations[i]);
         AddLog(LOG_LEVEL_DEBUG);
         Shutter_Start_Position[i] = Shutter_Real_Position[i];
+
         // sending MQTT result to broker
         snprintf_P(scommand, sizeof(scommand),PSTR("%s%d"), D_SHUTTER, i+1);
         GetTopic_P(stopic, STAT, mqtt_topic, scommand);
@@ -254,14 +269,17 @@ boolean ShutterCommand()
   }
   if (CMND_POSITION == command_code && (index > 0) && (index <= shutters_present)) {
     //limit the payload
-    XdrvMailbox.payload = XdrvMailbox.payload < 0 ? 0 : (XdrvMailbox.payload > 100 ? 100 : XdrvMailbox.payload);
+    XdrvMailbox.payload = XdrvMailbox.payload < 0 ? XdrvMailbox.payload : (XdrvMailbox.payload > 100 ? 100 : XdrvMailbox.payload);
     serviced = true;
     // webgui still send also on inverted shutter the native position.
     XdrvMailbox.payload = Settings.shutter_invert[index-1] &&  SRC_WEBGUI != last_source ? 100 - XdrvMailbox.payload : XdrvMailbox.payload;
-    Shutter_Target_Position[index-1] = XdrvMailbox.payload < 5 ?  m2[index-1] * XdrvMailbox.payload : m1[index-1] * XdrvMailbox.payload + b1[index-1];
-    snprintf_P(log_data, sizeof(log_data), PSTR("lastsource %d:, realpos %d, target %d"), last_source, Shutter_Real_Position[index-1] ,Shutter_Target_Position[index-1]);
-    AddLog(LOG_LEVEL_DEBUG);
-    if ( (XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 100) && abs(Shutter_Target_Position[index-1] - Shutter_Real_Position[index-1] ) / Shutter_Close_Velocity[index-1] > 2) {
+    if (XdrvMailbox.data_len > 0) {
+      XdrvMailbox.payload = Settings.shutter_invert[index-1] &&  SRC_WEBGUI != last_source ? 100 - XdrvMailbox.payload : XdrvMailbox.payload;
+      Shutter_Target_Position[index-1] = XdrvMailbox.payload < 5 ?  m2[index-1] * XdrvMailbox.payload : m1[index-1] * XdrvMailbox.payload + b1[index-1];
+      snprintf_P(log_data, sizeof(log_data), PSTR("lastsource %d:, realpos %d, target %d, payload %d"), last_source, Shutter_Real_Position[index-1] ,Shutter_Target_Position[index-1],XdrvMailbox.payload);
+      AddLog(LOG_LEVEL_DEBUG);
+    }
+    if ( XdrvMailbox.data_len > 0 && (XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 100) && abs(Shutter_Target_Position[index-1] - Shutter_Real_Position[index-1] ) / Shutter_Close_Velocity[index-1] > 2) {
       int8_t new_shutterdirection = Shutter_Real_Position[index-1] < Shutter_Target_Position[index-1] ? 1 : -1;
       if (Shutter_Direction[index-1] ==  -new_shutterdirection ) {
         // direction need to be changed. on momentary switches first stop the Shutter
@@ -273,7 +291,7 @@ boolean ShutterCommand()
       }
       if (Shutter_Direction[index-1] !=  new_shutterdirection ) {
         Shutter_StartInit(index-1, new_shutterdirection, Shutter_Target_Position[index-1]);
-
+        Shutter_Operations[index-1]++;
         if (shutterMode == OFF_ON__OPEN_CLOSE) {
           // Code for shutters with circuit safe configuration, switch the direction Relay
           ExecuteCommandPower(Settings.shutter_startrelay[index-1] +1, new_shutterdirection == 1 ? 0 : 1, SRC_SHUTTER);
@@ -289,7 +307,12 @@ boolean ShutterCommand()
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_NVALUE, command, index,  Settings.shutter_invert[index-1] ? 100 - XdrvMailbox.payload : XdrvMailbox.payload);
     } else {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_NVALUE, command, index, Settings.shutter_invert[index-1]  ? 100 - Settings.shutter_position[index-1] : Settings.shutter_position[index-1]);
+      uint8_t temp;
+      if (Shutter_Direction[index-1] != 0) {
+        temp = m2[index-1] * 5 > Shutter_Real_Position[index-1] ? Shutter_Real_Position[index-1] / m2[index-1] : (Shutter_Real_Position[index-1]-b1[index-1]) / m1[index-1];
+      }
+      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_NVALUE, command, index, Settings.shutter_invert[index-1]  ? 100 - temp : temp);
+      command_code = 0;
     }
   }
   if (!serviced) {
