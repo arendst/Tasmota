@@ -124,9 +124,9 @@
 #define D_PORT "Port"
 #define D_POWER_FACTOR "Leistungsfaktor"
 #define D_POWERUSAGE "Leistung"
-#define D_POWERUSAGE_ACTIVE "Active Power"
-#define D_POWERUSAGE_APPARENT "Apparent Power"
-#define D_POWERUSAGE_REACTIVE "Reactive Power"
+#define D_POWERUSAGE_ACTIVE "Wirkleistung"
+#define D_POWERUSAGE_APPARENT "Scheinleistung"
+#define D_POWERUSAGE_REACTIVE "Blindleistung"
 #define D_PRESSURE "Luftdruck"
 #define D_PRESSUREATSEALEVEL "Luftdruck auf Meereshöhe"
 #define D_PROGRAM_FLASH_SIZE "Ges. Flash Speicher"
@@ -174,6 +174,7 @@
 #define D_UV_POWER "UV Intensität"
 #define D_VERSION "Version"
 #define D_VOLTAGE "Spannung"
+#define D_WEIGHT "Weight"
 #define D_WARMLIGHT "warm"
 #define D_WEB_SERVER "Web-Server"
 
@@ -496,6 +497,8 @@
 #define D_SENSOR_TM1638_CLK "TM16 CLK"
 #define D_SENSOR_TM1638_DIO "TM16 DIO"
 #define D_SENSOR_TM1638_STB "TM16 STB"
+#define D_SENSOR_HX711_SCK "HX711 SCK"
+#define D_SENSOR_HX711_DAT "HX711 DAT"
 
 // Units
 #define D_UNIT_AMPERE "A"
@@ -503,6 +506,7 @@
 #define D_UNIT_HERTZ "Hz"
 #define D_UNIT_HOUR "h"
 #define D_UNIT_INCREMENTS "inc"
+#define D_UNIT_KILOGRAM "kg"
 #define D_UNIT_KILOOHM "kOhm"
 #define D_UNIT_KILOWATTHOUR "kWh"
 #define D_UNIT_LUX "lx"

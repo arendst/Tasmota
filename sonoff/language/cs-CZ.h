@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v6.1.1c
+ * Updated until v6.2.1.11
 \*********************************************************************/
 
 //#define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -124,9 +124,9 @@
 #define D_PORT "Port"
 #define D_POWER_FACTOR "Účiník"
 #define D_POWERUSAGE "Příkon"
-#define D_POWERUSAGE_ACTIVE "Active Power"
-#define D_POWERUSAGE_APPARENT "Apparent Power"
-#define D_POWERUSAGE_REACTIVE "Reactive Power"
+#define D_POWERUSAGE_ACTIVE "Činný příkon"
+#define D_POWERUSAGE_APPARENT "Zdánlivý příkon"
+#define D_POWERUSAGE_REACTIVE "Jalový příkon"
 #define D_PRESSURE "Tlak"
 #define D_PRESSUREATSEALEVEL "Tlak na hladině moře"
 #define D_PROGRAM_FLASH_SIZE "Velikost paměti flash"
@@ -163,17 +163,18 @@
 #define D_USER "Uživatel"
 #define D_UTC_TIME "UTC"
 #define D_UV_INDEX "UV Index"
-#define D_UV_INDEX_1 "Low"
-#define D_UV_INDEX_2 "Mid"
-#define D_UV_INDEX_3 "High"
-#define D_UV_INDEX_4 "Danger"
-#define D_UV_INDEX_5 "BurnL1/2"
-#define D_UV_INDEX_6 "BurnL3"
-#define D_UV_INDEX_7 "OoR"
+#define D_UV_INDEX_1 "Nízký"
+#define D_UV_INDEX_2 "Střední"
+#define D_UV_INDEX_3 "Vysoký"
+#define D_UV_INDEX_4 "Nebezpečný"
+#define D_UV_INDEX_5 "Popál1/2"
+#define D_UV_INDEX_6 "Popál3"
+#define D_UV_INDEX_7 "MimoRozsah"
 #define D_UV_LEVEL "úroveň UV"
 #define D_UV_POWER "UV Power"
 #define D_VERSION "Verze"
 #define D_VOLTAGE "Napětí"
+#define D_WEIGHT "Hmotnost"
 #define D_WARMLIGHT "Teplé světlo"
 #define D_WEB_SERVER "Web Server"
 
@@ -332,10 +333,10 @@
 #define D_UPLOAD_ERR_7 "Nahrávání přerušeno"
 #define D_UPLOAD_ERR_8 "Špatný soubor"
 #define D_UPLOAD_ERR_9 "Soubor je příliš velký"
-#define D_UPLOAD_ERR_10 "Failed to init RF chip"
-#define D_UPLOAD_ERR_11 "Failed to erase RF chip"
-#define D_UPLOAD_ERR_12 "Failed to write to RF chip"
-#define D_UPLOAD_ERR_13 "Failed to decode RF firmware"
+#define D_UPLOAD_ERR_10 "Chyba inicializace RF chipu"
+#define D_UPLOAD_ERR_11 "Chyba smazání RF chipu"
+#define D_UPLOAD_ERR_12 "Chyba při zápisu do RF chipu"
+#define D_UPLOAD_ERR_13 "Chyba dekódování RF firmwaru"
 #define D_UPLOAD_ERROR_CODE "Chyba nahrávání"
 
 #define D_ENTER_COMMAND "Vlož příkaz"
@@ -496,12 +497,15 @@
 #define D_SENSOR_TM1638_CLK "TM16 CLK"
 #define D_SENSOR_TM1638_DIO "TM16 DIO"
 #define D_SENSOR_TM1638_STB "TM16 STB"
+#define D_SENSOR_HX711_SCK "HX711 SCK"
+#define D_SENSOR_HX711_DAT "HX711 DAT"
 
 // Units
 #define D_UNIT_AMPERE "A"
 #define D_UNIT_CENTIMETER "cm"
 #define D_UNIT_HERTZ "Hz"
 #define D_UNIT_HOUR "hod"
+#define D_UNIT_KILOGRAM "kg"
 #define D_UNIT_INCREMENTS "inc"
 #define D_UNIT_KILOOHM "kOhm"
 #define D_UNIT_KILOWATTHOUR "kWh"
