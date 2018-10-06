@@ -34,7 +34,7 @@
 //#define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
 
 #define LANGUAGE_LCID 1043
-// HTML (ISO 639-1) Language Code
+// HTML (ISO 639-1) Language Codes
 #define D_HTML_LANGUAGE "nl"
 
 // "2017-03-07T11:08:02" - ISO8601:2004
