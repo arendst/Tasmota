@@ -2306,9 +2306,11 @@ void GpioSwitchPinMode(uint8_t index)
   if (pin[GPIO_SWT1 +index] < 99) {
 //    pinMode(pin[GPIO_SWT1 +index], (16 == pin[GPIO_SWT1 +index]) ? INPUT_PULLDOWN_16 : bitRead(switch_no_pullup, index) ? INPUT : INPUT_PULLUP);
 
-    uint8_t no_pullup = 0;
-    if (bitRead(switch_no_pullup, index)) {
-      no_pullup = (Settings.switchmode[index] < PUSHBUTTON);
+    uint8_t no_pullup = bitRead(switch_no_pullup, index);
+    if (no_pullup) {
+      if (SHELLY2 == Settings.module) {
+        no_pullup = (Settings.switchmode[index] < PUSHBUTTON);
+      }
     }
     pinMode(pin[GPIO_SWT1 +index], (16 == pin[GPIO_SWT1 +index]) ? INPUT_PULLDOWN_16 : (no_pullup) ? INPUT : INPUT_PULLUP);
   }
