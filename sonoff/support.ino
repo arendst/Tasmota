@@ -678,6 +678,7 @@ boolean GetUsedInModule(byte val, uint8_t *arr)
   if (GPIO_TM16DIO == val) { return true; }
   if (GPIO_TM16STB == val) { return true; }
 #endif
+
   if ((val >= GPIO_REL1) && (val < GPIO_REL1 + MAX_RELAYS)) {
     offset = (GPIO_REL1_INV - GPIO_REL1);
   }

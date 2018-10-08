@@ -547,7 +547,7 @@
 #define D_UNIT_WATT "W"
 #define D_UNIT_WATTHOUR "Wh"
 #define D_UNIT_HERTZ "Hz"
-#define D_UNIT_WATT_METER_QUADRAT "W/m²"
+#define D_UNIT_WATT_METER_QUADRAT "W/mï¿½"
 
 // Log message prefix
 #define D_LOG_APPLICATION "APP: "  // Application

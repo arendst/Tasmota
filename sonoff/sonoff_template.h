@@ -125,7 +125,7 @@ enum UserSelectablePins {
   GPIO_PZEM2_TX,       // PZEM-003,014,016,017 Serial interface
   GPIO_PZEM2_RX,       // PZEM-003,014,016,017 Serial interface
   GPIO_MP3_DFR562,     // RB-DFR-562, DFPlayer Mini MP3 Player
-  GPIO_SDS0X1_TX,         // Nova Fitness SDS011 Serial interface  
+  GPIO_SDS0X1_TX,         // Nova Fitness SDS011 Serial interface
   //STB mod
   GPIO_SEN_SLEEP,
   //end
@@ -182,7 +182,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_PZEM_TX "|" D_SENSOR_PZEM_RX "|"
   D_SENSOR_DFR562 "|" D_SENSOR_SDS0X1_TX "|"
   //STB mod
-  D_SENSOR_DEEPSLEEP "|";
+  D_SENSOR_DEEPSLEEP;
   //end
 
 /********************************************************************************************/
@@ -360,7 +360,10 @@ const uint8_t kGpioNiceList[GPIO_SENSOR_END] PROGMEM = {
   GPIO_SDM630_TX,      // SDM630 Serial interface
   GPIO_SDM630_RX,      // SDM630 Serial interface
   GPIO_PMS5003,        // Plantower PMS5003 Serial interface
-  GPIO_MP3_DFR562      // RB-DFR-562, DFPlayer Mini MP3 Player Serial interface
+  GPIO_MP3_DFR562,      // RB-DFR-562, DFPlayer Mini MP3 Player Serial interface
+//stb mod
+  GPIO_SEN_SLEEP
+//end
 };
 
 const uint8_t kModuleNiceList[MAXMODULE] PROGMEM = {
@@ -498,7 +501,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      0,                // GPIO01 Serial RXD and Optional sensor
      GPIO_USER,        // GPIO02
      0,                // GPIO03 Serial TXD and Optional sensor
-     GPIO_USER,        // GPIO04 
+     GPIO_USER,        // GPIO04
      GPIO_HLW_SEL,     // GPIO05 HLW8012 Sel output
      0, 0, 0, 0, 0, 0, // Flash connection
      GPIO_REL1,        // GPIO12 Red Led and Relay (0 = Off, 1 = On)
