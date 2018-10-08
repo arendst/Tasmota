@@ -21,16 +21,6 @@ See [RELEASENOTES.md](https://github.com/arendst/Sonoff-Tasmota/blob/development
 
 The development codebase is checked hourly for changes and if new commits have been merged and compile successfuly they will be posted at http://thehackbox.org/tasmota/ (this web address can be used for OTA too). It is important to note that these are based on the current development codebase and it is not recommended to flash it to devices used in production or which are hard to reach in the event that you need to manually flash the device if OTA failed. The last compiled commit number is also posted on the same page along with the current build status (if a firmware rebuild is in progress).
 
-The current development codebase also stages a new experimental MQTT library that is not enabled by default. This may be enabled by commenting out:
-
-#define MQTT_LIBRARY_TYPE      MQTT_PUBSUBCLIENT
-
-and uncommenting:
-
-//#define MQTT_LIBRARY_TYPE      MQTT_ARDUINOMQTT
-
-For those interested in pre-compiled binaries based on this proposed MQTT library these may be downloaded from http://thehackbox.org/mqtt/ (This URL is also OTA friendly) but please do not under any circumstances use binaries from this link on devices used for day to day purposes as the testing of this newly proposed library still needs to follow its course of testing and possible debugging - Only use it on devices that you would normally use for testing purposes as to not inconvenience yourself when having to revert back to previous firmware versions by cable upload.
-
 ### Disclaimer
 :warning: **DANGER OF ELECTROCUTION** :warning:
 
