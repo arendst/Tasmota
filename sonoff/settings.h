@@ -110,8 +110,7 @@ typedef union {
     uint32_t spare06 : 1;
     uint32_t spare07 : 1;
     uint32_t spare08 : 1;
-    uint32_t spare09 : 1;
-    uint32_t spare10 : 1;
+    uint32_t weight_resolution : 2;
     uint32_t frequency_resolution : 2;
     uint32_t axis_resolution : 2;
     uint32_t current_resolution : 2;
@@ -321,20 +320,18 @@ struct SYSCFG {
   byte          free_717[1];               // 717
 
   uint16_t      mcp230xx_int_timer;        // 718
-
   uint8_t       rgbwwTable[5];             // 71A
 
-  byte          free_71F[169];             // 71F
+  byte          free_71F[157];             // 71F
 
+  uint16_t      weight_item;               // 7BC Weight of one item in gram * 10
+  uint16_t      weight_max;                // 7BE Total max weight in kilogram
+  unsigned long weight_reference;          // 7C0 Reference weight in gram
+  unsigned long weight_calibration;        // 7C4
   unsigned long energy_frequency_calibration;  // 7C8
-
-  byte          free_7CC[2];               // 7CC
-
+  uint16_t      web_refresh;               // 7CC
   char          mems[MAX_RULE_MEMS][10];   // 7CE
-                                           // 800 Full - no more free locations
-
   char          rules[MAX_RULE_SETS][MAX_RULE_SIZE]; // 800 uses 512 bytes in v5.12.0m, 3 x 512 bytes in v5.14.0b
-
                                            // E00 - FFF free locations
 } Settings;
 
