@@ -48,10 +48,9 @@ uint8_t shutterMode = 0; // operstion mode definition. see enum type above OFF_O
 
 void Rtc_ms50_Second()
 {
-  shutter_time[0]++;
-  shutter_time[1]++;
-  shutter_time[2]++;
-  shutter_time[3]++;
+  for (byte i=0;i < MAX_SHUTTERS; i++) {
+    shutter_time[i]++;
+  }
 }
 
 void ShutterInit()
@@ -64,7 +63,7 @@ void ShutterInit()
   for (byte i=0;i < MAX_SHUTTERS; i++) {
     // set startrelay to 1 on first init, but only to shutter 1. 90% usecase
     Settings.shutter_startrelay[i] = (Settings.shutter_startrelay[i] == 0 && i ==  0? 1 : Settings.shutter_startrelay[i]);
-    if (Settings.shutter_startrelay[i]) {
+    if (Settings.shutter_startrelay[i] && Settings.shutter_startrelay[i] <33) {
       shutters_present++;
 
       // Determine shutter types
@@ -310,6 +309,8 @@ boolean ShutterCommand()
       uint8_t temp;
       if (Shutter_Direction[index-1] != 0) {
         temp = m2[index-1] * 5 > Shutter_Real_Position[index-1] ? Shutter_Real_Position[index-1] / m2[index-1] : (Shutter_Real_Position[index-1]-b1[index-1]) / m1[index-1];
+      } else {
+        temp = Settings.shutter_invert[index-1] ? 100 - Settings.shutter_position[index-1]: Settings.shutter_position[index-1];
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_NVALUE, command, index, Settings.shutter_invert[index-1]  ? 100 - temp : temp);
       command_code = 0;
