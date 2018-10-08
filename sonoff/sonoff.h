@@ -144,8 +144,9 @@ typedef unsigned long power_t;              // Power (Relay) type
 #define NEO_GRBW               6            // Neopixel GRBW leds
 
 #define MQTT_PUBSUBCLIENT      1            // Mqtt PubSubClient library
-#define MQTT_TASMOTAMQTT       2            // Mqtt TasmotaMqtt library based on esp-mqtt-arduino
-#define MQTT_ARDUINOMQTT       3            // Mqtt arduino-mqtt library by Joel Gaehwiler (https://github.com/256dpi/arduino-mqtt)
+#define MQTT_TASMOTAMQTT       2            // Mqtt TasmotaMqtt library based on esp-mqtt-arduino - soon obsolete
+#define MQTT_ESPMQTTARDUINO    3            // Mqtt esp-mqtt-arduino library by Ingo Randolf - obsolete
+#define MQTT_ARDUINOMQTT       4            // Mqtt arduino-mqtt library by Joel Gaehwiler (https://github.com/256dpi/arduino-mqtt)
 
 // Sunrise and Sunset DawnType
 #define DAWN_NORMAL            -0.8333

@@ -1,4 +1,7 @@
-/* 6.2.1.12 20181007
+/* 6.2.1.13 20181008
+ * Change default Mqtt client library from PubSubClient to non-blocking ArduinoMqtt by Joel Gaehwiler
+ *
+ * 6.2.1.12 20181007
  * Fix Shelly1 switchmode 3 and 4 when using pushbutton (#3989)
  * Add support for CSL Aplic WDP 303075 Power Socket with Energy Monitoring (#3991, #3996)
  *
