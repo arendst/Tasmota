@@ -914,7 +914,7 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}"), mqtt_data);
     }
     else if (CMND_PWMFREQUENCY == command_code) {
-      if ((1 == payload) || ((payload >= 100) && (payload <= 4000))) {
+      if ((1 == payload) || ((payload >= PWM_MIN) && (payload <= PWM_MAX))) {
         Settings.pwm_frequency = (1 == payload) ? PWM_FREQ : payload;
         analogWriteFreq(Settings.pwm_frequency);   // Default is 1000 (core_esp8266_wiring_pwm.c)
       }
@@ -2306,9 +2306,11 @@ void GpioSwitchPinMode(uint8_t index)
   if (pin[GPIO_SWT1 +index] < 99) {
 //    pinMode(pin[GPIO_SWT1 +index], (16 == pin[GPIO_SWT1 +index]) ? INPUT_PULLDOWN_16 : bitRead(switch_no_pullup, index) ? INPUT : INPUT_PULLUP);
 
-    uint8_t no_pullup = 0;
-    if (bitRead(switch_no_pullup, index)) {
-      no_pullup = (Settings.switchmode[index] < PUSHBUTTON);
+    uint8_t no_pullup = bitRead(switch_no_pullup, index);
+    if (no_pullup) {
+      if (SHELLY2 == Settings.module) {
+        no_pullup = (Settings.switchmode[index] < PUSHBUTTON);
+      }
     }
     pinMode(pin[GPIO_SWT1 +index], (16 == pin[GPIO_SWT1 +index]) ? INPUT_PULLDOWN_16 : (no_pullup) ? INPUT : INPUT_PULLUP);
   }

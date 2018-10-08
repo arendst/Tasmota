@@ -27,23 +27,26 @@
 // Alternative MQTT driver does not block network when MQTT server is unavailable. TLS should work but needs to be tested.
 //#define MQTT_LIBRARY_TYPE      MQTT_ARDUINOMQTT    // Use arduino-mqtt (lwmqtt) library (+3k3 code, +2k mem)
 
-#ifdef USE_MQTT_TLS
+#if (MQTT_LIBRARY_TYPE == MQTT_ESPMQTTARDUINO)     // Obsolete as of v6.2.1.11
+#undef MQTT_LIBRARY_TYPE
+#define MQTT_LIBRARY_TYPE      MQTT_ARDUINOMQTT
+#endif
 
 /*
-#ifdef MQTT_LIBRARY_TYPE
-#undef MQTT_LIBRARY_TYPE
-#endif
-#define MQTT_LIBRARY_TYPE      MQTT_PUBSUBCLIENT   // Use PubSubClient library as it only supports TLS
-*/
 #if (MQTT_LIBRARY_TYPE == MQTT_TASMOTAMQTT)
 #undef MQTT_LIBRARY_TYPE
-#define MQTT_LIBRARY_TYPE      MQTT_PUBSUBCLIENT   // Use PubSubClient library as it only supports TLS
+#define MQTT_LIBRARY_TYPE      MQTT_ARDUINOMQTT    // Obsolete in near future
+#endif
+*/
+
+#ifdef USE_MQTT_TLS
+
+#if (MQTT_LIBRARY_TYPE == MQTT_TASMOTAMQTT)
+#undef MQTT_LIBRARY_TYPE
 #endif
 
-#else
-
 #ifndef MQTT_LIBRARY_TYPE
-#define MQTT_LIBRARY_TYPE      MQTT_PUBSUBCLIENT   // Use PubSubClient library as default
+#define MQTT_LIBRARY_TYPE      MQTT_PUBSUBCLIENT   // Use PubSubClient library as it only supports TLS
 #endif
 
 #endif
