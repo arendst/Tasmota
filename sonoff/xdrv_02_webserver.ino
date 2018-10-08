@@ -25,6 +25,8 @@
  * Based on source by AlexT (https://github.com/tzapu)
 \*********************************************************************************************/
 
+#define HTTP_REFRESH_TIME      2345   // milliseconds
+
 #ifdef USE_RF_FLASH
 uint8_t *efm8bb1_update = NULL;
 #endif  // USE_RF_FLASH
@@ -72,7 +74,7 @@ const char HTTP_HEAD[] PROGMEM =
     "};"
     "x.open('GET','ay'+a,true);"
     "x.send();"
-    "lt=setTimeout(la,2345);"
+    "lt=setTimeout(la,{a});"    // Settings.web_refresh
   "}"
   "function lb(p){"
     "la('?d='+p);"
@@ -147,7 +149,7 @@ const char HTTP_SCRIPT_CONSOL[] PROGMEM =
       "x.open('GET','ax?c2='+id+o,true);"
       "x.send();"
     "}"
-    "lt=setTimeout(l,2345);"
+    "lt=setTimeout(l,{a});"
     "return false;"
   "}"
   "</script>";
@@ -367,6 +369,7 @@ void ExecuteWebCommand(char* svalue, int source)
 
 void StartWebserver(int type, IPAddress ipweb)
 {
+  if (!Settings.web_refresh) { Settings.web_refresh = HTTP_REFRESH_TIME; }
   if (!webserver_state) {
     if (!WebServer) {
       WebServer = new ESP8266WebServer((HTTP_MANAGER==type) ? 80 : WEB_PORT);
@@ -497,6 +500,7 @@ void ShowPage(String &page, bool auth)
     return WebServer->requestAuthentication();
   }
 
+  page.replace(F("{a}"), String(Settings.web_refresh));
   page.replace(F("{ha"), my_module.name);
   page.replace(F("{h}"), Settings.friendlyname[0]);
   if (HTTP_MANAGER == webserver_state) {
@@ -1994,8 +1998,8 @@ int WebSend(char *buffer)
 
 /*********************************************************************************************/
 
-enum WebCommands { CMND_WEBSERVER, CMND_WEBPASSWORD, CMND_WEBLOG, CMND_WEBSEND, CMND_EMULATION };
-const char kWebCommands[] PROGMEM = D_CMND_WEBSERVER "|" D_CMND_WEBPASSWORD "|" D_CMND_WEBLOG "|" D_CMND_WEBSEND "|" D_CMND_EMULATION ;
+enum WebCommands { CMND_WEBSERVER, CMND_WEBPASSWORD, CMND_WEBLOG, CMND_WEBREFRESH, CMND_WEBSEND, CMND_EMULATION };
+const char kWebCommands[] PROGMEM = D_CMND_WEBSERVER "|" D_CMND_WEBPASSWORD "|" D_CMND_WEBLOG "|" D_CMND_WEBREFRESH "|" D_CMND_WEBSEND "|" D_CMND_EMULATION ;
 const char kWebSendStatus[] PROGMEM = D_JSON_DONE "|" D_JSON_WRONG_PARAMETERS "|" D_JSON_CONNECT_FAILED "|" D_JSON_HOST_NOT_FOUND ;
 
 bool WebCommand()
@@ -2027,6 +2031,10 @@ bool WebCommand()
   else if (CMND_WEBLOG == command_code) {
     if ((XdrvMailbox.payload >= LOG_LEVEL_NONE) && (XdrvMailbox.payload <= LOG_LEVEL_ALL)) { Settings.weblog_level = XdrvMailbox.payload; }
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, Settings.weblog_level);
+  }
+  else if (CMND_WEBREFRESH == command_code) {
+    if ((XdrvMailbox.payload > 999) && (XdrvMailbox.payload <= 10000)) { Settings.web_refresh = XdrvMailbox.payload; }
+    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, Settings.web_refresh);
   }
   else if (CMND_WEBSEND == command_code) {
     if (XdrvMailbox.data_len > 0) {

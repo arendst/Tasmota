@@ -1,5 +1,6 @@
 /* 6.2.1.13 20181008
  * Change default Mqtt client library from PubSubClient to non-blocking ArduinoMqtt by Joel Gaehwiler
+ * Add command WebRefresh 1000..10000 to control web page refresh in milliseconds. Default is 2345
  *
  * 6.2.1.12 20181007
  * Fix Shelly1 switchmode 3 and 4 when using pushbutton (#3989)
