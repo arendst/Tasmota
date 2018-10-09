@@ -268,17 +268,19 @@ boolean ShutterCommand()
   }
   if (CMND_POSITION == command_code && (index > 0) && (index <= shutters_present)) {
     //limit the payload
+    snprintf_P(log_data, sizeof(log_data), PSTR("shutterposition in: payload %d, index %d, source %d"), XdrvMailbox.payload , index, last_source );
+    AddLog(LOG_LEVEL_DEBUG);
     XdrvMailbox.payload = XdrvMailbox.payload < 0 ? XdrvMailbox.payload : (XdrvMailbox.payload > 100 ? 100 : XdrvMailbox.payload);
     serviced = true;
     // webgui still send also on inverted shutter the native position.
     XdrvMailbox.payload = Settings.shutter_invert[index-1] &&  SRC_WEBGUI != last_source ? 100 - XdrvMailbox.payload : XdrvMailbox.payload;
-    if (XdrvMailbox.data_len > 0) {
+    if (XdrvMailbox.payload != -99) {
       XdrvMailbox.payload = Settings.shutter_invert[index-1] &&  SRC_WEBGUI != last_source ? 100 - XdrvMailbox.payload : XdrvMailbox.payload;
       Shutter_Target_Position[index-1] = XdrvMailbox.payload < 5 ?  m2[index-1] * XdrvMailbox.payload : m1[index-1] * XdrvMailbox.payload + b1[index-1];
       snprintf_P(log_data, sizeof(log_data), PSTR("lastsource %d:, realpos %d, target %d, payload %d"), last_source, Shutter_Real_Position[index-1] ,Shutter_Target_Position[index-1],XdrvMailbox.payload);
       AddLog(LOG_LEVEL_DEBUG);
     }
-    if ( XdrvMailbox.data_len > 0 && (XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 100) && abs(Shutter_Target_Position[index-1] - Shutter_Real_Position[index-1] ) / Shutter_Close_Velocity[index-1] > 2) {
+    if ( (XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 100) && abs(Shutter_Target_Position[index-1] - Shutter_Real_Position[index-1] ) / Shutter_Close_Velocity[index-1] > 2) {
       int8_t new_shutterdirection = Shutter_Real_Position[index-1] < Shutter_Target_Position[index-1] ? 1 : -1;
       if (Shutter_Direction[index-1] ==  -new_shutterdirection ) {
         // direction need to be changed. on momentary switches first stop the Shutter
