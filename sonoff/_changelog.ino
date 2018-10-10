@@ -1,7 +1,4 @@
-/* 6.2.1.14 20181010
- * Rewrite Webserver page handler for easier extension (thx to Adrian Scillato)
- *
- * 6.2.1.13 20181008
+/* 6.2.1.13 20181008
  * Change default Mqtt client library from PubSubClient to non-blocking ArduinoMqtt by Joel Gaehwiler
  * Add command WebRefresh 1000..10000 to control web page refresh in milliseconds. Default is 2345
  *

@@ -1,5 +1,5 @@
 /*
-  xdrv_02_mqtt.ino - mqtt support for Sonoff-Tasmota
+  xdrv_01_mqtt.ino - mqtt support for Sonoff-Tasmota
 
   Copyright (C) 2018  Theo Arends
 
@@ -783,114 +783,17 @@ bool MqttCommand()
 }
 
 /*********************************************************************************************\
- * Presentation
-\*********************************************************************************************/
-
-#ifdef USE_WEBSERVER
-
-#define WEB_HANDLE_MQTT "mq"
-
-const char S_CONFIGURE_MQTT[] PROGMEM = D_CONFIGURE_MQTT;
-
-const char HTTP_BTN_MENU_MQTT[] PROGMEM =
-  "<br/><form action='" WEB_HANDLE_MQTT "' method='get'><button>" D_CONFIGURE_MQTT "</button></form>";
-
-const char HTTP_FORM_MQTT[] PROGMEM =
-  "<fieldset><legend><b>&nbsp;" D_MQTT_PARAMETERS "&nbsp;</b></legend><form method='get' action='" WEB_HANDLE_MQTT "'>"
-  "<br/><b>" D_HOST "</b> (" MQTT_HOST ")<br/><input id='mh' name='mh' placeholder='" MQTT_HOST" ' value='{m1'><br/>"
-  "<br/><b>" D_PORT "</b> (" STR(MQTT_PORT) ")<br/><input id='ml' name='ml' placeholder='" STR(MQTT_PORT) "' value='{m2'><br/>"
-  "<br/><b>" D_CLIENT "</b> ({m0)<br/><input id='mc' name='mc' placeholder='" MQTT_CLIENT_ID "' value='{m3'><br/>"
-  "<br/><b>" D_USER "</b> (" MQTT_USER ")<br/><input id='mu' name='mu' placeholder='" MQTT_USER "' value='{m4'><br/>"
-  "<br/><b>" D_PASSWORD "</b><br/><input id='mp' name='mp' type='password' placeholder='" MQTT_PASS "' value='{m5'><br/>"
-  "<br/><b>" D_TOPIC "</b> = %topic% (" MQTT_TOPIC ")<br/><input id='mt' name='mt' placeholder='" MQTT_TOPIC" ' value='{m6'><br/>"
-  "<br/><b>" D_FULL_TOPIC "</b> (" MQTT_FULLTOPIC ")<br/><input id='mf' name='mf' placeholder='" MQTT_FULLTOPIC" ' value='{m7'><br/>";
-
-void HandleMqttConfiguration()
-{
-  if (HttpUser()) { return; }
-  if (!WebAuthenticate()) { return WebServer->requestAuthentication(); }
-  AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_CONFIGURE_MQTT);
-
-  if (WebServer->hasArg("save")) {
-    MqttSaveSettings();
-    WaitForRestart("");
-    return;
-  }
-
-  String page = FPSTR(HTTP_HEAD);
-  page.replace(F("{v}"), FPSTR(S_CONFIGURE_MQTT));
-  page += FPSTR(HTTP_HEAD_STYLE);
-
-  page += FPSTR(HTTP_FORM_MQTT);
-  char str[sizeof(Settings.mqtt_client)];
-  page.replace(F("{m0"), Format(str, MQTT_CLIENT_ID, sizeof(Settings.mqtt_client)));
-  page.replace(F("{m1"), Settings.mqtt_host);
-  page.replace(F("{m2"), String(Settings.mqtt_port));
-  page.replace(F("{m3"), Settings.mqtt_client);
-  page.replace(F("{m4"), (Settings.mqtt_user[0] == '\0')?"0":Settings.mqtt_user);
-  page.replace(F("{m5"), (Settings.mqtt_pwd[0] == '\0')?"0":Settings.mqtt_pwd);
-  page.replace(F("{m6"), Settings.mqtt_topic);
-  page.replace(F("{m7"), Settings.mqtt_fulltopic);
-
-  page += FPSTR(HTTP_FORM_END);
-  page += FPSTR(HTTP_BTN_CONF);
-  ShowPage(page);
-}
-
-void MqttSaveSettings()
-{
-  char tmp[100];
-  char stemp[TOPSZ];
-  char stemp2[TOPSZ];
-
-  WebGetArg("mt", tmp, sizeof(tmp));
-  strlcpy(stemp, (!strlen(tmp)) ? MQTT_TOPIC : tmp, sizeof(stemp));
-  MakeValidMqtt(0, stemp);
-  WebGetArg("mf", tmp, sizeof(tmp));
-  strlcpy(stemp2, (!strlen(tmp)) ? MQTT_FULLTOPIC : tmp, sizeof(stemp2));
-  MakeValidMqtt(1,stemp2);
-  if ((strcmp(stemp, Settings.mqtt_topic)) || (strcmp(stemp2, Settings.mqtt_fulltopic))) {
-    snprintf_P(mqtt_data, sizeof(mqtt_data), (Settings.flag.mqtt_offline) ? S_OFFLINE : "");
-    MqttPublishPrefixTopic_P(TELE, S_LWT, true);  // Offline or remove previous retained topic
-  }
-  strlcpy(Settings.mqtt_topic, stemp, sizeof(Settings.mqtt_topic));
-  strlcpy(Settings.mqtt_fulltopic, stemp2, sizeof(Settings.mqtt_fulltopic));
-  WebGetArg("mh", tmp, sizeof(tmp));
-  strlcpy(Settings.mqtt_host, (!strlen(tmp)) ? MQTT_HOST : (!strcmp(tmp,"0")) ? "" : tmp, sizeof(Settings.mqtt_host));
-  WebGetArg("ml", tmp, sizeof(tmp));
-  Settings.mqtt_port = (!strlen(tmp)) ? MQTT_PORT : atoi(tmp);
-  WebGetArg("mc", tmp, sizeof(tmp));
-  strlcpy(Settings.mqtt_client, (!strlen(tmp)) ? MQTT_CLIENT_ID : tmp, sizeof(Settings.mqtt_client));
-  WebGetArg("mu", tmp, sizeof(tmp));
-  strlcpy(Settings.mqtt_user, (!strlen(tmp)) ? MQTT_USER : (!strcmp(tmp,"0")) ? "" : tmp, sizeof(Settings.mqtt_user));
-  WebGetArg("mp", tmp, sizeof(tmp));
-  strlcpy(Settings.mqtt_pwd, (!strlen(tmp)) ? MQTT_PASS : (!strcmp(tmp,"0")) ? "" : tmp, sizeof(Settings.mqtt_pwd));
-  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_MQTT D_CMND_MQTTHOST " %s, " D_CMND_MQTTPORT " %d, " D_CMND_MQTTCLIENT " %s, " D_CMND_MQTTUSER " %s, " D_CMND_MQTTPASSWORD " %s, " D_CMND_TOPIC " %s, " D_CMND_FULLTOPIC " %s"),
-    Settings.mqtt_host, Settings.mqtt_port, Settings.mqtt_client, Settings.mqtt_user, Settings.mqtt_pwd, Settings.mqtt_topic, Settings.mqtt_fulltopic);
-  AddLog(LOG_LEVEL_INFO);
-}
-#endif  // USE_WEBSERVER
-
-/*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
 
-#define XDRV_02
+#define XDRV_01
 
-boolean Xdrv02(byte function)
+boolean Xdrv01(byte function)
 {
   boolean result = false;
 
   if (Settings.flag.mqtt_enabled) {
     switch (function) {
-#ifdef USE_WEBSERVER
-      case FUNC_WEB_ADD_BUTTON:
-        strncat_P(mqtt_data, HTTP_BTN_MENU_MQTT, sizeof(mqtt_data));
-        break;
-      case FUNC_WEB_ADD_HANDLER:
-        WebServer->on("/" WEB_HANDLE_MQTT, HandleMqttConfiguration);
-        break;
-#endif  // USE_WEBSERVER
       case FUNC_LOOP:
         MqttLoop();
         break;
