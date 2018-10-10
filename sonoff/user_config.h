@@ -322,6 +322,8 @@
       #define MTX_ADDRESS6     0x76              // [DisplayAddress6] I2C address of sixth 8x8 matrix module
       #define MTX_ADDRESS7     0x00              // [DisplayAddress7] I2C address of seventh 8x8 matrix module
       #define MTX_ADDRESS8     0x00              // [DisplayAddress8] I2C address of eigth 8x8 matrix module
+  #define USE_DS3231                          // Enable use DS3231 external RTC , usefall when you don't have avaliable WIFI. see docs in the source file (+1k2 code)
+//  #define USE_RTC_ADDR                      //you can change the addrsss of the DS3231 RTC, default is 0x68, not mandatory fieled
 
 #endif  // USE_I2C
 
