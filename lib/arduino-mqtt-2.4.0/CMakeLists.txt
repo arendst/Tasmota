@@ -10,8 +10,8 @@ include_directories(
         /Users/256dpi/Development/Arduino/libraries/MKRGSM/src
         /Applications/Arduino.app/Contents/Java/libraries/Bridge/src
         /Users/256dpi/Library/Arduino15/packages/esp8266/hardware/esp8266/2.3.0/libraries/ESP8266WiFi/src
-        /Users/256dpi/Development/Arduino/hardware/espressif/esp32/libraries/WiFi/src
-        /Users/256dpi/Development/Arduino/hardware/espressif/esp32/libraries/WiFiClientSecure/src
+        /Users/256dpi/Library/Arduino15/packages/esp32/libraries/WiFi/src
+        /Users/256dpi/Library/Arduino15/packages/esp32/libraries/WiFiClientSecure/src
         src/)
 
 include_directories(src/)
@@ -33,8 +33,6 @@ set(SOURCE_FILES
         examples/ESP32DevelopmentBoardSecure/ESP32DevelopmentBoardSecure.ino
     src/lwmqtt
     src/MQTT.h
-    src/MQTTClient.h
-    src/system.cpp
-    src/system.h)
+    src/MQTTClient.h)
 
 add_executable(arduino-mqtt ${SOURCE_FILES})
