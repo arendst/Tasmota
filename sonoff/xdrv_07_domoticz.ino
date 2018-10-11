@@ -369,6 +369,7 @@ void DomoticzSensorPowerEnergy(int power, char *energy)
  * Presentation
 \*********************************************************************************************/
 
+#ifndef BE_MINIMAL
 #ifdef USE_WEBSERVER
 
 #define WEB_HANDLE_DOMOTICZ "dm"
@@ -470,6 +471,7 @@ void DomoticzSaveSettings()
   AddLog(LOG_LEVEL_INFO);
 }
 #endif  // USE_WEBSERVER
+#endif  // BE_MINIMAL
 
 /*********************************************************************************************\
  * Interface
