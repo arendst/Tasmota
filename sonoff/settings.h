@@ -322,8 +322,10 @@ struct SYSCFG {
   uint16_t      mcp230xx_int_timer;        // 718
   uint8_t       rgbwwTable[5];             // 71A
 
-  byte          free_71F[157];             // 71F
+  byte          free_71F[93];              // 71F
 
+  char          custom1[32];               // 77C Custom
+  char          custom2[32];               // 79C Custom
   uint16_t      weight_item;               // 7BC Weight of one item in gram * 10
   uint16_t      weight_max;                // 7BE Total max weight in kilogram
   unsigned long weight_reference;          // 7C0 Reference weight in gram

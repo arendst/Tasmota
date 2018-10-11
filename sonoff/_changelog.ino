@@ -1,5 +1,8 @@
 /* 6.2.1.14 20181010
  * Rewrite Webserver page handler for easier extension (thx to Adrian Scillato)
+ * Add support for DS3231 Real Time Clock
+ * Add support for HX711 Load Cell
+ * Add command WeightRes 0..3 to control display of decimals for kilogram
  *
  * 6.2.1.13 20181008
  * Change default Mqtt client library from PubSubClient to non-blocking ArduinoMqtt by Joel Gaehwiler

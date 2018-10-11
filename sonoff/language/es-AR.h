@@ -456,6 +456,12 @@
 #define D_GY_AXIS "Gyro Y-Axis"
 #define D_GZ_AXIS "Gyro Z-Axis"
 
+// xsns_34_hx711.ino
+#define D_HX_CAL_REMOVE "Remover Peso"
+#define D_HX_CAL_REFERENCE "Poner Peso de Referencia"
+#define D_HX_CAL_DONE "Calibrado"
+#define D_HX_CAL_FAIL "Falló Calibración"
+
 // sonoff_template.h
 #define D_SENSOR_NONE     "Ninguno"
 #define D_SENSOR_DHT11    "DHT11"

@@ -1,7 +1,7 @@
 all: fmt
 
 fmt:
-	clang-format -i src/*.cpp src/*.h -style="{BasedOnStyle: Google, ColumnLimit: 120}"
+	clang-format -i src/*.h -style="{BasedOnStyle: Google, ColumnLimit: 120}"
 
 update:
 	rm -rf ./lwmqtt
