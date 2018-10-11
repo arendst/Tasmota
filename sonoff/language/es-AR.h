@@ -457,10 +457,10 @@
 #define D_GZ_AXIS "Gyro Z-Axis"
 
 // xsns_34_hx711.ino
-#define D_HX_CAL_REMOVE "Remove weigth"
-#define D_HX_CAL_REFERENCE "Load reference weigth"
-#define D_HX_CAL_DONE "Calibrated"
-#define D_HX_CAL_FAIL "Calibration failed"
+#define D_HX_CAL_REMOVE "Remover Peso"
+#define D_HX_CAL_REFERENCE "Poner Peso de Referencia"
+#define D_HX_CAL_DONE "Calibrado"
+#define D_HX_CAL_FAIL "Falló Calibración"
 
 // sonoff_template.h
 #define D_SENSOR_NONE     "Ninguno"
