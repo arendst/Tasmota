@@ -125,7 +125,9 @@ enum UserSelectablePins {
   GPIO_PZEM2_TX,       // PZEM-003,014,016,017 Serial interface
   GPIO_PZEM2_RX,       // PZEM-003,014,016,017 Serial interface
   GPIO_MP3_DFR562,     // RB-DFR-562, DFPlayer Mini MP3 Player
-  GPIO_SDS0X1_TX,         // Nova Fitness SDS011 Serial interface
+  GPIO_SDS0X1_TX,      // Nova Fitness SDS011 Serial interface
+  GPIO_HX711_SCK,      // HX711 Load Cell clock
+  GPIO_HX711_DAT,      // HX711 Load Cell data
   GPIO_SENSOR_END };
 
 // Programmer selectable GPIO functionality offset by user selectable GPIOs
@@ -179,7 +181,8 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_BUTTON "1n|" D_SENSOR_BUTTON "2n|" D_SENSOR_BUTTON "3n|" D_SENSOR_BUTTON "4n|"
   D_SENSOR_COUNTER "1n|" D_SENSOR_COUNTER "2n|" D_SENSOR_COUNTER "3n|" D_SENSOR_COUNTER "4n|"
   D_SENSOR_PZEM_TX "|" D_SENSOR_PZEM_RX "|"
-  D_SENSOR_DFR562 "|" D_SENSOR_SDS0X1_TX;
+  D_SENSOR_DFR562 "|" D_SENSOR_SDS0X1_TX "|"
+  D_SENSOR_HX711_SCK "|" D_SENSOR_HX711_DAT;
 
 /********************************************************************************************/
 
@@ -340,6 +343,8 @@ const uint8_t kGpioNiceList[GPIO_SENSOR_END] PROGMEM = {
   GPIO_TM16CLK,        // TM1638 Clock
   GPIO_TM16DIO,        // TM1638 Data I/O
   GPIO_TM16STB,        // TM1638 Strobe
+  GPIO_HX711_SCK,      // HX711 Load Cell clock
+  GPIO_HX711_DAT,      // HX711 Load Cell data
   GPIO_SBR_TX,         // Serial Bridge Serial interface
   GPIO_SBR_RX,         // Serial Bridge Serial interface
   GPIO_MHZ_TXD,        // MH-Z19 Serial interface
