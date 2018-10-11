@@ -786,6 +786,7 @@ bool MqttCommand()
  * Presentation
 \*********************************************************************************************/
 
+#ifndef BE_MINIMAL
 #ifdef USE_WEBSERVER
 
 #define WEB_HANDLE_MQTT "mq"
@@ -870,6 +871,7 @@ void MqttSaveSettings()
   AddLog(LOG_LEVEL_INFO);
 }
 #endif  // USE_WEBSERVER
+#endif  // BE_MINIMAL
 
 /*********************************************************************************************\
  * Interface
@@ -883,6 +885,7 @@ boolean Xdrv02(byte function)
 
   if (Settings.flag.mqtt_enabled) {
     switch (function) {
+#ifndef BE_MINIMAL
 #ifdef USE_WEBSERVER
       case FUNC_WEB_ADD_BUTTON:
         strncat_P(mqtt_data, HTTP_BTN_MENU_MQTT, sizeof(mqtt_data));
@@ -891,6 +894,7 @@ boolean Xdrv02(byte function)
         WebServer->on("/" WEB_HANDLE_MQTT, HandleMqttConfiguration);
         break;
 #endif  // USE_WEBSERVER
+#endif  // BE_MINIMAL
       case FUNC_LOOP:
         MqttLoop();
         break;
