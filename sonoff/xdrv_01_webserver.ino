@@ -647,8 +647,6 @@ boolean HttpUser()
 
 /*-------------------------------------------------------------------------------------------*/
 
-#ifndef BE_MINIMAL
-
 void WaitForRestart(String result)
 {
   String page = FPSTR(HTTP_HEAD);
@@ -668,6 +666,10 @@ void WaitForRestart(String result)
   ShowWebSource(SRC_WEBGUI);
   restart_flag = 2;
 }
+
+/*-------------------------------------------------------------------------------------------*/
+
+#ifndef BE_MINIMAL
 
 void HandleConfiguration()
 {
