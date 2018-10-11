@@ -835,4 +835,18 @@ void HandleHueApi(String *path)
   else if (path->endsWith("/rules")) HueNotImplemented(path);
   else HueGlobalConfig(path);
 }
+
+void HueWemoAddHandlers()
+{
+  if (EMUL_WEMO == Settings.flag2.emulation) {
+    WebServer->on("/upnp/control/basicevent1", HTTP_POST, HandleUpnpEvent);
+    WebServer->on("/eventservice.xml", HandleUpnpService);
+    WebServer->on("/metainfoservice.xml", HandleUpnpMetaService);
+    WebServer->on("/setup.xml", HandleUpnpSetupWemo);
+  }
+  if (EMUL_HUE == Settings.flag2.emulation) {
+    WebServer->on("/description.xml", HandleUpnpSetupHue);
+  }
+}
+
 #endif  // USE_WEBSERVER && USE_EMULATION

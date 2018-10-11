@@ -510,6 +510,14 @@ boolean TimerCommand()
 
 #ifdef USE_WEBSERVER
 #ifdef USE_TIMERS_WEB
+
+#define WEB_HANDLE_TIMER "tm"
+
+const char S_CONFIGURE_TIMER[] PROGMEM = D_CONFIGURE_TIMER;
+
+const char HTTP_BTN_MENU_TIMER[] PROGMEM =
+  "<br/><form action='" WEB_HANDLE_TIMER "' method='get'><button>" D_CONFIGURE_TIMER "</button></form>";
+
 const char HTTP_TIMER_SCRIPT[] PROGMEM =
   "var pt=[],ct=99;"
   "function qs(s){"                                               // Alias to save code space
@@ -639,8 +647,7 @@ const char HTTP_TIMER_STYLE[] PROGMEM =
 #endif
   "</style>";
 const char HTTP_FORM_TIMER[] PROGMEM =
-  "<fieldset style='min-width:470px;text-align:center;'><legend style='text-align:left;'><b>&nbsp;" D_TIMER_PARAMETERS "&nbsp;</b></legend><form method='post' action='sv'>"
-  "<input id='w' name='w' value='7,0' hidden>"
+  "<fieldset style='min-width:470px;text-align:center;'><legend style='text-align:left;'><b>&nbsp;" D_TIMER_PARAMETERS "&nbsp;</b></legend><form method='post' action='" WEB_HANDLE_TIMER "'>"
   "<br/><input style='width:5%;' id='e0' name='e0' type='checkbox'{e0><b>" D_TIMER_ENABLE "</b><br/><br/><hr/>"
   "<input id='t0' name='t0' value='";
 const char HTTP_FORM_TIMER1[] PROGMEM =
@@ -672,13 +679,17 @@ const char HTTP_FORM_TIMER1[] PROGMEM =
 const char HTTP_FORM_TIMER2[] PROGMEM =
   "type='submit' onclick='st();this.form.submit();'";
 
-const char S_CONFIGURE_TIMER[] PROGMEM = D_CONFIGURE_TIMER;
-
 void HandleTimerConfiguration()
 {
   if (HttpUser()) { return; }
   if (!WebAuthenticate()) { return WebServer->requestAuthentication(); }
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_CONFIGURE_TIMER);
+
+  if (WebServer->hasArg("save")) {
+    TimerSaveSettings();
+    HandleConfiguration();
+    return;
+  }
 
   String page = FPSTR(HTTP_HEAD);
   page.replace(F("{v}"), FPSTR(S_CONFIGURE_TIMER));
@@ -743,6 +754,20 @@ boolean Xdrv09(byte function)
     case FUNC_PRE_INIT:
       TimerSetRandomWindows();
       break;
+#ifdef USE_WEBSERVER
+#ifdef USE_TIMERS_WEB
+    case FUNC_WEB_ADD_BUTTON:
+#ifdef USE_RULES
+      strncat_P(mqtt_data, HTTP_BTN_MENU_TIMER, sizeof(mqtt_data));
+#else
+      if (devices_present) { strncat_P(mqtt_data, HTTP_BTN_MENU_TIMER, sizeof(mqtt_data)); }
+#endif  // USE_RULES
+      break;
+    case FUNC_WEB_ADD_HANDLER:
+      WebServer->on("/" WEB_HANDLE_TIMER, HandleTimerConfiguration);
+      break;
+#endif  // USE_TIMERS_WEB
+#endif  // USE_WEBSERVER
     case FUNC_EVERY_SECOND:
       TimerEverySecond();
       break;
