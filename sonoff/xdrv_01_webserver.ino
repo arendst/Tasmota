@@ -560,6 +560,12 @@ void HandleRoot()
       page += F("</tr></table>");
     }
 
+#ifndef BE_MINIMAL
+    mqtt_data[0] = '\0';
+    XdrvCall(FUNC_WEB_ADD_MAIN_BUTTON);
+    page += String(mqtt_data);
+#endif  // Not BE_MINIMAL
+
     if (HTTP_ADMIN == webserver_state) {
       page += FPSTR(HTTP_BTN_MENU1);
       page += FPSTR(HTTP_BTN_RSTRT);

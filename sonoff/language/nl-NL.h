@@ -456,6 +456,12 @@
 #define D_GY_AXIS "Gyro Y-Axis"
 #define D_GZ_AXIS "Gyro Z-Axis"
 
+// xsns_34_hx711.ino
+#define D_HX_CAL_REMOVE "Verwijder gewicht"
+#define D_HX_CAL_REFERENCE "Plaats ijkgewicht"
+#define D_HX_CAL_DONE "Ge-ijkt"
+#define D_HX_CAL_FAIL "Ijken is mislukt"
+
 // sonoff_template.h
 #define D_SENSOR_NONE     "Geen"
 #define D_SENSOR_DHT11    "DHT11"

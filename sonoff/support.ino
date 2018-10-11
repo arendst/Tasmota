@@ -678,6 +678,10 @@ boolean GetUsedInModule(byte val, uint8_t *arr)
   if (GPIO_TM16DIO == val) { return true; }
   if (GPIO_TM16STB == val) { return true; }
 #endif
+#ifndef USE_HX711
+  if (GPIO_HX711_SCK == val) { return true; }
+  if (GPIO_HX711_DAT == val) { return true; }
+#endif
   if ((val >= GPIO_REL1) && (val < GPIO_REL1 + MAX_RELAYS)) {
     offset = (GPIO_REL1_INV - GPIO_REL1);
   }
@@ -1146,6 +1150,12 @@ void GetFeatures()
 #endif
 #ifdef USE_PZEM2
   feature_sns2 |= 0x00000200;  // xnrg_05_pzem2.ino
+#endif
+#ifdef USE_DS3231
+  feature_sns2 |= 0x00000400;  // xsns_33_ds3231.ino
+#endif
+#ifdef USE_HX711
+  feature_sns2 |= 0x00000400;  // xsns_34_hx711.ino
 #endif
 
 }
