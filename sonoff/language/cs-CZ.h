@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v6.2.1.11
+ * Updated until v6.2.1.14
 \*********************************************************************/
 
 //#define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -457,10 +457,10 @@
 #define D_GZ_AXIS "Gyro osa-Z"
 
 // xsns_34_hx711.ino
-#define D_HX_CAL_REMOVE "Remove weigth"
-#define D_HX_CAL_REFERENCE "Load reference weigth"
-#define D_HX_CAL_DONE "Calibrated"
-#define D_HX_CAL_FAIL "Calibration failed"
+#define D_HX_CAL_REMOVE "Odstraňte zátěž"
+#define D_HX_CAL_REFERENCE "Vložte referenční zátěž"
+#define D_HX_CAL_DONE "Zkalibrováno"
+#define D_HX_CAL_FAIL "Chyba kalibrace"
 
 // sonoff_template.h
 #define D_SENSOR_NONE     "Není"
