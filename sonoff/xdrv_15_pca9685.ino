@@ -26,8 +26,13 @@
 #define PCA9685_REG_LED0_ON_L       0x06
 #define PCA9685_REG_PRE_SCALE       0xFE
 
+#ifndef USE_PCA9685_FREQ
+  #define USE_PCA9685_FREQ 50
+#endif
+
 uint8_t pca9685_detected = 0;
-uint16_t pca9685_freq = 50;
+uint16_t pca9685_freq = USE_PCA9685_FREQ;
+uint16_t pca9685_pin_pwm_value[16];
 
 void PCA9685_Detect(void)
 {
@@ -51,9 +56,10 @@ void PCA9685_Detect(void)
 void PCA9685_Reset(void)
 {
   I2cWrite8(USE_PCA9685_ADDR, PCA9685_REG_MODE1, 0x80);
-  PCA9685_SetPWMfreq(50);
+  PCA9685_SetPWMfreq(USE_PCA9685_FREQ);
   for (uint8_t pin=0;pin<16;pin++) {
-    PCA9685_SetPWM(pin,0,false);    
+    PCA9685_SetPWM(pin,0,false);
+    pca9685_pin_pwm_value[pin] = 0;
   }
   snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"PCA9685\":{\"RESET\":\"OK\"}}"));
 }
@@ -63,9 +69,13 @@ void PCA9685_SetPWMfreq(double freq) {
  7.3.5 from datasheet
  prescale value = round(25000000/(4096*freq))-1;
  */
-  pca9685_freq=freq;
-  uint8_t pre_scale_osc = round(25000000/(4096*freq))-1;
-  if (1526 == freq) pre_scale_osc=0xFF; // force setting for 24hz because rounding causes 1526 to be 254
+  if (freq > 23 && freq < 1527) {
+   pca9685_freq=freq;
+  } else {
+   pca9685_freq=50;
+  }
+  uint8_t pre_scale_osc = round(25000000/(4096*pca9685_freq))-1;
+  if (1526 == pca9685_freq) pre_scale_osc=0xFF; // force setting for 24hz because rounding causes 1526 to be 254
   uint8_t current_mode1 = I2cRead8(USE_PCA9685_ADDR, PCA9685_REG_MODE1); // read current value of MODE1 register
   uint8_t sleep_mode1 = (current_mode1&0x7F) | 0x10; // Determine register value to put PCA to sleep
   I2cWrite8(USE_PCA9685_ADDR, PCA9685_REG_MODE1, sleep_mode1); // Let's sleep a little
@@ -88,6 +98,7 @@ void PCA9685_SetPWM(uint8_t pin, uint16_t pwm, bool inverted) {
   } else {
     PCA9685_SetPWM_Reg(pin, 0, pwm);
   }
+  pca9685_pin_pwm_value[pin] = pwm;
 }
 
 bool PCA9685_Command(void) 
@@ -107,14 +118,17 @@ bool PCA9685_Command(void)
     if (',' == XdrvMailbox.data[ca]) { paramcount++; }
   }
   UpperCase(XdrvMailbox.data,XdrvMailbox.data);
+
   if (!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 1),"RESET"))  {  PCA9685_Reset(); return serviced; }
+
+  if (!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 1),"STATUS"))  { PCA9685_OutputTelemetry(false); return serviced; }
 
   if (!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 1),"PWMF")) {
     if (paramcount > 1) {
       uint16_t new_freq = atoi(subStr(sub_string, XdrvMailbox.data, ",", 2));
       if ((new_freq >= 24) && (new_freq <= 1526)) {
         PCA9685_SetPWMfreq(new_freq);
-        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"PCA9685\":{\"PWMF\":%i, \"Result\":\"OK\"}}"));
+        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"PCA9685\":{\"PWMF\":%i, \"Result\":\"OK\"}}"),new_freq);
         return serviced;
       }
     } else { // No parameter was given for setfreq, so we return current setting
@@ -151,27 +165,35 @@ bool PCA9685_Command(void)
   return serviced;
 }
 
+void PCA9685_OutputTelemetry(bool telemetry) {
+  if (0 == pca9685_detected) { return; }  // We do not do this if the PCA9685 has not been detected
+  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_TIME "\":\"%s\",\"PCA9685\": {"), GetDateAndTime(DT_LOCAL).c_str());
+  snprintf_P(mqtt_data,sizeof(mqtt_data), PSTR("%s\"PWM_FREQ\":%i,"),mqtt_data,pca9685_freq);
+  for (uint8_t pin=0;pin<16;pin++) {
+    snprintf_P(mqtt_data,sizeof(mqtt_data), PSTR("%s\"PWM%i\":%i,"),mqtt_data,pin,pca9685_pin_pwm_value[pin]);
+  }
+  snprintf_P(mqtt_data,sizeof(mqtt_data),PSTR("%s\"END\":1}}"),mqtt_data);
+  if (telemetry) {
+    MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);
+  }
+}
+
 boolean Xdrv15(byte function)
 {
   boolean result = false;
 
   if (i2c_flg) {
     switch (function) {
-      case FUNC_MQTT_DATA:
-        break;
       case FUNC_EVERY_SECOND:
         PCA9685_Detect();
-        break;
-      case FUNC_EVERY_50_MSECOND:
-        break;
-      case FUNC_JSON_APPEND:
+        if (tele_period == 0) {
+          PCA9685_OutputTelemetry(true);
+        }
         break;
       case FUNC_COMMAND:
         if (XDRV_15 == XdrvMailbox.index) {
           PCA9685_Command();
         }
-        break;
-      case FUNC_WEB_APPEND:
         break;
       default:
         break;

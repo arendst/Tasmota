@@ -174,6 +174,7 @@
 #define D_UV_POWER "UV Power"
 #define D_VERSION "Versiyon"
 #define D_VOLTAGE "Voltaj"
+#define D_WEIGHT "Weight"
 #define D_WARMLIGHT "Sıcak"
 #define D_WEB_SERVER "Web Sunucusu"
 
@@ -455,6 +456,12 @@
 #define D_GY_AXIS "Gyro Y-Axis"
 #define D_GZ_AXIS "Gyro Z-Axis"
 
+// xsns_34_hx711.ino
+#define D_HX_CAL_REMOVE "Remove weigth"
+#define D_HX_CAL_REFERENCE "Load reference weigth"
+#define D_HX_CAL_DONE "Calibrated"
+#define D_HX_CAL_FAIL "Calibration failed"
+
 // sonoff_template.h
 #define D_SENSOR_NONE     "None"
 #define D_SENSOR_DHT11    "DHT11"
@@ -483,7 +490,6 @@
 #define D_SENSOR_SPI_DC   "SPI DC"
 #define D_SENSOR_BACKLIGHT "BkLight"
 #define D_SENSOR_PMS5003  "PMS5003"
-#define D_SENSOR_SDS0X1   "SDS0X1"
 #define D_SENSOR_SDS0X1_RX "SDS0X1 Rx"
 #define D_SENSOR_SDS0X1_TX "SDS0X1 Tx"
 #define D_SENSOR_SBR_RX   "SerBr Rx"
@@ -497,12 +503,15 @@
 #define D_SENSOR_TM1638_CLK "TM16 CLK"
 #define D_SENSOR_TM1638_DIO "TM16 DIO"
 #define D_SENSOR_TM1638_STB "TM16 STB"
+#define D_SENSOR_HX711_SCK "HX711 SCK"
+#define D_SENSOR_HX711_DAT "HX711 DAT"
 
 // Units
 #define D_UNIT_AMPERE "A"
 #define D_UNIT_CENTIMETER "cm"
 #define D_UNIT_HOUR "Hr"
 #define D_UNIT_INCREMENTS "inc"
+#define D_UNIT_KILOGRAM "kg"
 #define D_UNIT_KILOOHM "kOhm"
 #define D_UNIT_KILOWATTHOUR "kWh"
 #define D_UNIT_LUX "lx"

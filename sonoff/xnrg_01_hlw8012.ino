@@ -27,22 +27,21 @@
 
 #define XNRG_01                 1
 
-// HLW8012 based (Sonoff Pow, KMC70011, HuaFan)
+// Energy model type 0 (GPIO_HLW_CF) - HLW8012 based (Sonoff Pow, KMC70011, HuaFan, AplicWDP303075)
 #define HLW_PREF            10000    // 1000.0W
 #define HLW_UREF             2200    // 220.0V
 #define HLW_IREF             4545    // 4.545A
-#define HLW_SEL_VOLTAGE         1
 
-// HJL-01 based (BlitzWolf, Homecube, Gosund)
+// Energy model type 1 (GPIO_HJL_CF) - HJL-01/BL0937 based (BlitzWolf, Homecube, Gosund, Teckin)
 #define HJL_PREF             1362
 #define HJL_UREF              822
 #define HJL_IREF             3300
-#define HJL_SEL_VOLTAGE         0
 
 #define HLW_POWER_PROBE_TIME   10    // Number of seconds to probe for power before deciding none used
 
 byte hlw_select_ui_flag;
 byte hlw_ui_flag = 1;
+byte hlw_model_type = 0;
 byte hlw_load_off;
 byte hlw_cf1_timer;
 unsigned long hlw_cf_pulse_length;
@@ -120,7 +119,7 @@ void HlwEvery200ms()
   if (hlw_cf1_timer >= 8) {
     hlw_cf1_timer = 0;
     hlw_select_ui_flag = (hlw_select_ui_flag) ? 0 : 1;
-    digitalWrite(pin[GPIO_HLW_SEL], hlw_select_ui_flag);
+    digitalWrite(pin[GPIO_NRG_SEL], hlw_select_ui_flag);
 
     if (hlw_cf1_pulse_counter) {
       hlw_cf1_pulse_length = hlw_cf1_summed_pulse_length / hlw_cf1_pulse_counter;
@@ -177,16 +176,14 @@ void HlwSnsInit()
     Settings.energy_current_calibration = HLW_IREF_PULSE;
   }
 
-  if (BLITZWOLF_BWSHP2 == Settings.module) {
+  if (hlw_model_type) {
     hlw_power_ratio = HJL_PREF;
     hlw_voltage_ratio = HJL_UREF;
     hlw_current_ratio = HJL_IREF;
-    hlw_ui_flag = HJL_SEL_VOLTAGE;
   } else {
     hlw_power_ratio = HLW_PREF;
     hlw_voltage_ratio = HLW_UREF;
     hlw_current_ratio = HLW_IREF;
-    hlw_ui_flag = HLW_SEL_VOLTAGE;
   }
 
   hlw_cf_pulse_length = 0;
@@ -203,10 +200,10 @@ void HlwSnsInit()
 
   hlw_select_ui_flag = 0;  // Voltage;
 
-  pinMode(pin[GPIO_HLW_SEL], OUTPUT);
-  digitalWrite(pin[GPIO_HLW_SEL], hlw_select_ui_flag);
-  pinMode(pin[GPIO_HLW_CF1], INPUT_PULLUP);
-  attachInterrupt(pin[GPIO_HLW_CF1], HlwCf1Interrupt, FALLING);
+  pinMode(pin[GPIO_NRG_SEL], OUTPUT);
+  digitalWrite(pin[GPIO_NRG_SEL], hlw_select_ui_flag);
+  pinMode(pin[GPIO_NRG_CF1], INPUT_PULLUP);
+  attachInterrupt(pin[GPIO_NRG_CF1], HlwCf1Interrupt, FALLING);
   pinMode(pin[GPIO_HLW_CF], INPUT_PULLUP);
   attachInterrupt(pin[GPIO_HLW_CF], HlwCfInterrupt, FALLING);
 
@@ -216,7 +213,21 @@ void HlwSnsInit()
 void HlwDrvInit()
 {
   if (!energy_flg) {
-    if ((pin[GPIO_HLW_SEL] < 99) && (pin[GPIO_HLW_CF1] < 99) && (pin[GPIO_HLW_CF] < 99)) {  // Sonoff Pow or any HLW8012 based device
+    hlw_model_type = 0;
+    if (pin[GPIO_HJL_CF] < 99) {
+      pin[GPIO_HLW_CF] = pin[GPIO_HJL_CF];
+      pin[GPIO_HJL_CF] = 99;
+      hlw_model_type = 1;
+    }
+
+    hlw_ui_flag = 1;
+    if (pin[GPIO_NRG_SEL_INV] < 99) {
+      pin[GPIO_NRG_SEL] = pin[GPIO_NRG_SEL_INV];
+      pin[GPIO_NRG_SEL_INV] = 99;
+      hlw_ui_flag = 0;
+    }
+
+    if ((pin[GPIO_NRG_SEL] < 99) && (pin[GPIO_NRG_CF1] < 99) && (pin[GPIO_HLW_CF] < 99)) {  // HLW8012 or HJL-01 based device
       energy_flg = XNRG_01;
     }
   }

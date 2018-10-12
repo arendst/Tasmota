@@ -46,6 +46,7 @@
 #define D_JSON_COMMAND "Command"
 #define D_JSON_CONNECT_FAILED "Connect failed"
 #define D_JSON_COREVERSION "Core"
+#define D_JSON_COUNT "Count"
 #define D_JSON_COUNTER "Counter"
 #define D_JSON_CURRENT "Current"         // As in Voltage and Current
 #define D_JSON_DATA "Data"
@@ -137,6 +138,7 @@
 #define D_JSON_VCC "Vcc"
 #define D_JSON_VERSION "Version"
 #define D_JSON_VOLTAGE "Voltage"
+#define D_JSON_WEIGHT "Weight"
 #define D_JSON_WIFI "Wifi"
 #define D_JSON_WRONG "Wrong"
 #define D_JSON_WRONG_PARAMETERS "Wrong parameters"
@@ -187,6 +189,7 @@
 #define D_CMND_FREQUENCY_RESOLUTION "FreqRes"
 #define D_CMND_CURRENT_RESOLUTION "AmpRes"
 #define D_CMND_ENERGY_RESOLUTION "EnergyRes"
+#define D_CMND_WEIGHT_RESOLUTION "WeightRes"
 #define D_CMND_MODULE "Module"
 #define D_CMND_MODULES "Modules"
 #define D_CMND_GPIO "GPIO"
@@ -277,6 +280,7 @@
   #define D_JSON_WITH_IP_ADDRESS "with IP address"
 #define D_CMND_WEBPASSWORD "WebPassword"
 #define D_CMND_WEBLOG "WebLog"
+#define D_CMND_WEBREFRESH "WebRefresh"
 #define D_CMND_WEBSEND "WebSend"
 #define D_CMND_EMULATION "Emulation"
 
@@ -317,6 +321,7 @@
 #define D_CMND_LEDTABLE "LedTable"
 #define D_CMND_FADE "Fade"
 #define D_CMND_PIXELS "Pixels"
+#define D_CMND_RGBWWTABLE "RGBWWTable"
 #define D_CMND_ROTATION "Rotation"
 #define D_CMND_SCHEME "Scheme"
 #define D_CMND_SPEED "Speed"
@@ -534,7 +539,6 @@ const char S_CONFIGURATION[] PROGMEM = D_CONFIGURATION;
 const char S_CONFIGURE_MODULE[] PROGMEM = D_CONFIGURE_MODULE;
 const char S_CONFIGURE_WIFI[] PROGMEM = D_CONFIGURE_WIFI;
 const char S_NO_NETWORKS_FOUND[] PROGMEM = D_NO_NETWORKS_FOUND;
-const char S_CONFIGURE_MQTT[] PROGMEM = D_CONFIGURE_MQTT;
 const char S_CONFIGURE_LOGGING[] PROGMEM = D_CONFIGURE_LOGGING;
 const char S_CONFIGURE_OTHER[] PROGMEM = D_CONFIGURE_OTHER;
 const char S_SAVE_CONFIGURATION[] PROGMEM = D_SAVE_CONFIGURATION;

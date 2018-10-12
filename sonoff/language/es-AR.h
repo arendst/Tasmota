@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v6.2.0.1
+ * Updated until v6.2.1.11
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -174,6 +174,7 @@
 #define D_UV_POWER "UV Power"
 #define D_VERSION "Versión"
 #define D_VOLTAGE "Tensión"
+#define D_WEIGHT "Peso"
 #define D_WARMLIGHT "Cálida"
 #define D_WEB_SERVER "Servidor Web"
 
@@ -455,6 +456,12 @@
 #define D_GY_AXIS "Gyro Y-Axis"
 #define D_GZ_AXIS "Gyro Z-Axis"
 
+// xsns_34_hx711.ino
+#define D_HX_CAL_REMOVE "Remover Peso"
+#define D_HX_CAL_REFERENCE "Poner Peso de Referencia"
+#define D_HX_CAL_DONE "Calibrado"
+#define D_HX_CAL_FAIL "Falló Calibración"
+
 // sonoff_template.h
 #define D_SENSOR_NONE     "Ninguno"
 #define D_SENSOR_DHT11    "DHT11"
@@ -496,6 +503,8 @@
 #define D_SENSOR_TM1638_CLK "TM16 CLK"
 #define D_SENSOR_TM1638_DIO "TM16 DIO"
 #define D_SENSOR_TM1638_STB "TM16 STB"
+#define D_SENSOR_HX711_SCK "HX711 SCK"
+#define D_SENSOR_HX711_DAT "HX711 DAT"
 
 // Units
 #define D_UNIT_AMPERE "A"
@@ -503,6 +512,7 @@
 #define D_UNIT_HERTZ "Hz"
 #define D_UNIT_HOUR "Hr"
 #define D_UNIT_INCREMENTS "inc"
+#define D_UNIT_KILOGRAM "kg"
 #define D_UNIT_KILOOHM "kOhm"
 #define D_UNIT_KILOWATTHOUR "kWh"
 #define D_UNIT_LUX "lx"
