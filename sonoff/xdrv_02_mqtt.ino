@@ -813,7 +813,7 @@ void HandleMqttConfiguration()
 
   if (WebServer->hasArg("save")) {
     MqttSaveSettings();
-    WaitForRestart("");
+    WebRestart(1);
     return;
   }
 
