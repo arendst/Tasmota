@@ -174,6 +174,7 @@
 #define D_UV_POWER "UV Power"
 #define D_VERSION "Versie"
 #define D_VOLTAGE "Spanning"
+#define D_WEIGHT "Gewicht"
 #define D_WARMLIGHT "Warm"
 #define D_WEB_SERVER "Webserver"
 
@@ -455,6 +456,12 @@
 #define D_GY_AXIS "Gyro Y-Axis"
 #define D_GZ_AXIS "Gyro Z-Axis"
 
+// xsns_34_hx711.ino
+#define D_HX_CAL_REMOVE "Verwijder gewicht"
+#define D_HX_CAL_REFERENCE "Plaats ijkgewicht"
+#define D_HX_CAL_DONE "Ge-ijkt"
+#define D_HX_CAL_FAIL "Ijken is mislukt"
+
 // sonoff_template.h
 #define D_SENSOR_NONE     "Geen"
 #define D_SENSOR_DHT11    "DHT11"
@@ -496,6 +503,8 @@
 #define D_SENSOR_TM1638_CLK "TM16 CLK"
 #define D_SENSOR_TM1638_DIO "TM16 DIO"
 #define D_SENSOR_TM1638_STB "TM16 STB"
+#define D_SENSOR_HX711_SCK "HX711 SCK"
+#define D_SENSOR_HX711_DAT "HX711 DAT"
 
 // Units
 #define D_UNIT_AMPERE "A"
@@ -503,6 +512,7 @@
 #define D_UNIT_HERTZ "Hz"
 #define D_UNIT_HOUR "h"
 #define D_UNIT_INCREMENTS "inc"
+#define D_UNIT_KILOGRAM "kg"
 #define D_UNIT_KILOOHM "kOhm"
 #define D_UNIT_KILOWATTHOUR "kWh"
 #define D_UNIT_LUX "lx"

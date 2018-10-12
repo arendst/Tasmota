@@ -50,7 +50,7 @@ const char HASS_DISCOVER_LIGHT_DIMMER[] PROGMEM =
   "\"brightness_value_template\":\"{{value_json." D_CMND_DIMMER "}}\"";
 
 const char HASS_DISCOVER_LIGHT_COLOR[] PROGMEM =
-  "%s,\"rgb_command_topic\":\"%s\","               // cmnd/led2/Color
+  "%s,\"rgb_command_topic\":\"%s2\","              // cmnd/led2/Color2
   "\"rgb_state_topic\":\"%s\","                    // stat/led2/RESULT
   "\"rgb_value_template\":\"{{value_json." D_CMND_COLOR "}}\"";
 //  "\"rgb_value_template\":\"{{value_json." D_CMND_COLOR " | join(',')}}\"";

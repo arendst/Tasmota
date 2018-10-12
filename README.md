@@ -93,8 +93,8 @@ The following devices are supported:
 - [BlitzWolf BW-SHP2 Smart Socket with Energy Monitoring](https://www.banggood.com/BlitzWolf-BW-SHP2-Smart-WIFI-Socket-EU-Plug-220V-16A-Work-with-Amazon-Alexa-Google-Assistant-p-1292899.html)<img src="https://github.com/arendst/arendst.github.io/blob/master/media/shelly2_small_250a.png" width="250" align="right" />
 - [Luani HVIO board](https://luani.de/projekte/esp8266-hvio/)
 - [Wemos D1 mini](https://wiki.wemos.cc/products:d1:d1_mini)
-- [HuaFan Smart Socket](HuaFan-Smart-Socket)
-- [Hyleton-313 Smart Plug](Hyleton-313-Smart-Plug)
+- [HuaFan Smart Socket](https://github.com/arendst/Sonoff-Tasmota/wiki/HuaFan-Smart-Socket)
+- [Hyleton-313 Smart Plug](https://github.com/arendst/Sonoff-Tasmota/wiki/Hyleton-313-Smart-Plug)
 - [Allterco Shelly 1](https://shelly.cloud/shelly1-open-source/)
 - [Allterco Shelly 2 with Energy Monitoring](https://shelly.cloud/shelly2/)
 - NodeMcu and Ledunia
