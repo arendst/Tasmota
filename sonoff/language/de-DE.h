@@ -457,10 +457,10 @@
 #define D_GZ_AXIS "Gyroskop Z-Achse"
 
 // xsns_34_hx711.ino
-#define D_HX_CAL_REMOVE "Remove weigth"
-#define D_HX_CAL_REFERENCE "Load reference weigth"
-#define D_HX_CAL_DONE "Calibrated"
-#define D_HX_CAL_FAIL "Calibration failed"
+#define D_HX_CAL_REMOVE "Wägegut entfernen"
+#define D_HX_CAL_REFERENCE "Referenzgewicht auflegen"
+#define D_HX_CAL_DONE "kalibriert"
+#define D_HX_CAL_FAIL "Kalibrierung fehlgeschlagen"
 
 // sonoff_template.h
 #define D_SENSOR_NONE     "None"
