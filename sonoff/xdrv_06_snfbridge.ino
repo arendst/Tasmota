@@ -557,7 +557,7 @@ boolean SonoffBridgeCommand()
           break;
         }
       } else {
-        char rawsend[XdrvMailbox.data_len];
+        char rawsend[XdrvMailbox.data_len+1];
         sprintf(rawsend,"%s",charclean(XdrvMailbox.data));
         SerialSendRaw(rawsend, strlen(rawsend));
         sonoff_bridge_receive_raw_flag = 1;
