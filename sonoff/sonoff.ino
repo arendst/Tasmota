@@ -1002,7 +1002,7 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
           Serial.printf("%s", Unescape(dataBuf, &dat_len));  // "Hello\f"
         }
         else if (5 == index) {
-          SerialSendRaw(dataBuf, data_len);                  // "AA004566"
+          SerialSendRaw(RemoveSpace(dataBuf), strlen(dataBuf));  // "AA004566"
         }
         snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, D_JSON_DONE);
       }
