@@ -1152,6 +1152,10 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
         restart_flag = 210 + payload;
         snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_RESET "\":\"" D_JSON_ERASE ", " D_JSON_RESET_AND_RESTARTING "\"}"));
         break;
+      case 4:
+        restart_flag = 214;
+        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_RESET "\":\"" D_JSON_ERASE ", " D_JSON_RESET_AND_RESTARTING "\"}"));
+        break;
       default:
         snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, D_JSON_ONE_TO_RESET);
       }
@@ -2101,6 +2105,20 @@ void Every250mSeconds()
       }
       if (211 == restart_flag) {
         SettingsDefault();
+        restart_flag = 2;
+      }
+      if (214 == restart_flag) {
+        char tmp_sta_ssid[2][33];
+        char tmp_sta_pwd[2][65];
+        strlcpy(tmp_sta_ssid[0],Settings.sta_ssid[0],sizeof(Settings.sta_ssid[0]));
+        strlcpy(tmp_sta_pwd[0],Settings.sta_pwd[0],sizeof(Settings.sta_pwd[0]));
+        strlcpy(tmp_sta_ssid[1],Settings.sta_ssid[1],sizeof(Settings.sta_ssid[1]));
+        strlcpy(tmp_sta_pwd[1],Settings.sta_pwd[1],sizeof(Settings.sta_pwd[1]));
+        SettingsDefault();
+        strlcpy(Settings.sta_ssid[0],tmp_sta_ssid[0],sizeof(Settings.sta_ssid[0]));
+        strlcpy(Settings.sta_pwd[0],tmp_sta_pwd[0],sizeof(Settings.sta_pwd[0]));
+        strlcpy(Settings.sta_ssid[1],tmp_sta_ssid[1],sizeof(Settings.sta_ssid[1]));
+        strlcpy(Settings.sta_pwd[1],tmp_sta_pwd[1],sizeof(Settings.sta_pwd[1]));
         restart_flag = 2;
       }
       SettingsSaveAll();
