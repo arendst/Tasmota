@@ -1,6 +1,7 @@
 /* 6.2.1.15 20181012
- * Fix Color Temperature slider functionality regression from 20180726 (#4037)
+ * Fix Color Temperature slider functionality regression from 6.2.1.5 (#4037)
  * Add auto reload of main web page to some web restarts
+ * Add whitespace removal from RfRaw and SerialSend5 (#4020)
  *
  * 6.2.1.14 20181010
  * Rewrite Webserver page handler for easier extension (thx to Adrian Scillato)

@@ -243,6 +243,22 @@ char* Unescape(char* buffer, uint16_t* size)
   return buffer;
 }
 
+char* RemoveSpace(char* p)
+{
+  char* write = p;
+  char* read = p;
+  char ch = '.';
+
+  while (ch != '\0') {
+    ch = *read++;
+    if (!isspace(ch)) {
+      *write++ = ch;
+    }
+  }
+  *write = '\0';
+  return p;
+}
+
 char* UpperCase(char* dest, const char* source)
 {
   char* write = dest;
