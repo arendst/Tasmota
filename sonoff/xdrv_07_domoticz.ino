@@ -399,7 +399,7 @@ void HandleDomoticzConfiguration()
 
   if (WebServer->hasArg("save")) {
     DomoticzSaveSettings();
-    WaitForRestart("");
+    WebRestart(1);
     return;
   }
 

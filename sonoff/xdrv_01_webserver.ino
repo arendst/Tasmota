@@ -80,8 +80,11 @@ const char HTTP_HEAD[] PROGMEM =
     "la('?d='+p);"
   "}"
   "function lc(p){"
-    "la('?t='+p);"
+    "la('?t='+p);"               // ?t related to WebGetArg("t", tmp, sizeof(tmp));
   "}";
+
+const char HTTP_HEAD_RELOAD[] PROGMEM =
+  "setTimeout(function(){location.href='.';},4000);";
 
 const char HTTP_HEAD_STYLE[] PROGMEM =
   "</script>"
@@ -191,7 +194,7 @@ const char HTTP_BTN_MENU1[] PROGMEM =
   "<br/><form action='up' method='get'><button>" D_FIRMWARE_UPGRADE "</button></form>"
   "<br/><form action='cs' method='get'><button>" D_CONSOLE "</button></form>";
 const char HTTP_BTN_RSTRT[] PROGMEM =
-  "<br/><form action='rb' method='get' onsubmit='return confirm(\"" D_CONFIRM_RESTART "\");'><button class='button bred'>" D_RESTART "</button></form>";
+  "<br/><form action='.' method='get' onsubmit='return confirm(\"" D_CONFIRM_RESTART "\");'><button name='rstrt' class='button bred'>" D_RESTART "</button></form>";
 const char HTTP_BTN_MENU_MODULE[] PROGMEM =
   "<br/><form action='md' method='get'><button>" D_CONFIGURE_MODULE "</button></form>"
   "<br/><form action='wi' method='get'><button>" D_CONFIGURE_WIFI "</button></form>";
@@ -353,8 +356,6 @@ void StartWebserver(int type, IPAddress ipweb)
       WebServer->on("/ax", HandleAjaxConsoleRefresh);
       WebServer->on("/ay", HandleAjaxStatusRefresh);
       WebServer->on("/cm", HandleHttpCommand);
-      WebServer->on("/rb", HandleRestart);
-//      WebServer->on("/fwlink", HandleRoot);  // Microsoft captive portal. Maybe not needed. Might be handled by notFound handler.
       WebServer->onNotFound(HandleNotFound);
 #ifndef BE_MINIMAL
       WebServer->on("/cn", HandleConfiguration);
@@ -471,6 +472,43 @@ void ShowPage(String &page)
   ShowPage(page, true);
 }
 
+/*-------------------------------------------------------------------------------------------*/
+
+void WebRestart(uint8_t type)
+{
+  // type 0 = restart
+  // type 1 = restart after config change
+  // type 2 = restart after config change with possible ip address change too
+  AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_RESTART);
+
+  String page = FPSTR(HTTP_HEAD);
+  page += FPSTR(HTTP_HEAD_RELOAD);
+  page += FPSTR(HTTP_HEAD_STYLE);
+
+  if (type) {
+    page.replace(F("{v}"), FPSTR(S_SAVE_CONFIGURATION));
+    page += F("<div style='text-align:center;'><b>" D_CONFIGURATION_SAVED "</b><br/>");
+    if (2 == type) {
+      page += F("<br/>" D_TRYING_TO_CONNECT "<br/>");
+    }
+    page += F("</div>");
+  }
+  else {
+    page.replace(F("{v}"), FPSTR(S_RESTART));
+  }
+
+  page += FPSTR(HTTP_MSG_RSTRT);
+  if (HTTP_MANAGER == webserver_state) {
+    webserver_state = HTTP_ADMIN;
+  } else {
+    page += FPSTR(HTTP_BTN_MAIN);
+  }
+  ShowPage(page);
+
+  ShowWebSource(SRC_WEBGUI);
+  restart_flag = 2;
+}
+
 /*********************************************************************************************/
 
 void HandleWifiLogin()
@@ -487,6 +525,11 @@ void HandleRoot()
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_MAIN_MENU);
 
   if (CaptivePortal()) { return; }  // If captive portal redirect instead of displaying the page.
+
+  if ( WebServer->hasArg("rstrt") ) {
+    WebRestart(0);
+    return;
+  }
 
   if (HTTP_MANAGER == webserver_state) {
 #ifndef BE_MINIMAL
@@ -601,7 +644,7 @@ void HandleAjaxStatusRefresh()
     snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_DIMMER " %s"), tmp);
     ExecuteWebCommand(svalue, SRC_WEBGUI);
   }
-  WebGetArg("c", tmp, sizeof(tmp));
+  WebGetArg("t", tmp, sizeof(tmp));
   if (strlen(tmp)) {
     snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_COLORTEMPERATURE " %s"), tmp);
     ExecuteWebCommand(svalue, SRC_WEBGUI);
@@ -653,28 +696,6 @@ boolean HttpUser()
 
 /*-------------------------------------------------------------------------------------------*/
 
-void WaitForRestart(String result)
-{
-  String page = FPSTR(HTTP_HEAD);
-  page.replace(F("{v}"), FPSTR(S_SAVE_CONFIGURATION));
-  page += FPSTR(HTTP_HEAD_STYLE);
-  page += F("<div style='text-align:center;'><b>" D_CONFIGURATION_SAVED "</b><br/>");
-  page += result;
-  page += F("</div>");
-  page += FPSTR(HTTP_MSG_RSTRT);
-  if (HTTP_MANAGER == webserver_state) {
-    webserver_state = HTTP_ADMIN;
-  } else {
-    page += FPSTR(HTTP_BTN_MAIN);
-  }
-  ShowPage(page);
-
-  ShowWebSource(SRC_WEBGUI);
-  restart_flag = 2;
-}
-
-/*-------------------------------------------------------------------------------------------*/
-
 #ifndef BE_MINIMAL
 
 void HandleConfiguration()
@@ -708,7 +729,7 @@ void HandleModuleConfiguration()
 
   if (WebServer->hasArg("save")) {
     ModuleSaveSettings();
-    WaitForRestart("");
+    WebRestart(1);
     return;
   }
 
@@ -818,8 +839,7 @@ void HandleWifiConfiguration()
 
   if (WebServer->hasArg("save")) {
     WifiSaveSettings();
-    String result = F("<br/>" D_TRYING_TO_CONNECT "<br/>");
-    WaitForRestart(result);
+    WebRestart(2);
     return;
   }
 
@@ -1028,7 +1048,7 @@ void HandleOtherConfiguration()
 
   if (WebServer->hasArg("save")) {
     OtherSaveSettings();
-    WaitForRestart("");
+    WebRestart(1);
     return;
   }
 
@@ -1732,29 +1752,6 @@ void HandleAjaxConsoleRefresh()
   message.replace(F("}9"), mqtt_data);  // Save to load here
   message += F("</l></r>");
   WebServer->send(200, FPSTR(HDR_CTYPE_XML), message);
-}
-
-/*-------------------------------------------------------------------------------------------*/
-
-void HandleRestart()
-{
-  if (HttpUser()) { return; }
-  if (!WebAuthenticate()) { return WebServer->requestAuthentication(); }
-  AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_RESTART);
-
-  String page = FPSTR(HTTP_HEAD);
-  page.replace(F("{v}"), FPSTR(S_RESTART));
-  page += FPSTR(HTTP_HEAD_STYLE);
-  page += FPSTR(HTTP_MSG_RSTRT);
-  if (HTTP_MANAGER == webserver_state) {
-    webserver_state = HTTP_ADMIN;
-  } else {
-    page += FPSTR(HTTP_BTN_MAIN);
-  }
-  ShowPage(page);
-
-  ShowWebSource(SRC_WEBGUI);
-  restart_flag = 2;
 }
 
 /********************************************************************************************/

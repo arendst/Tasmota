@@ -1,4 +1,8 @@
-/* 6.2.1.14 20181010
+/* 6.2.1.15 20181012
+ * Fix Color Temperature slider functionality regression from 20180726 (#4037)
+ * Add auto reload of main web page to some web restarts
+ *
+ * 6.2.1.14 20181010
  * Rewrite Webserver page handler for easier extension (thx to Adrian Scillato)
  * Add support for DS3231 Real Time Clock
  * Add support for HX711 Load Cell
