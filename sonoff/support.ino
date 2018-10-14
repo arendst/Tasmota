@@ -1348,7 +1348,11 @@ void WifiBegin(uint8_t flag)
   WiFi.mode(WIFI_OFF);      // See https://github.com/esp8266/Arduino/issues/2186
 #endif
 
-  WiFi.persistent(false);   // Solve possible wifi init errors //reloxx13: got removed, but cuzed alexa lags, back in ;https://github.com/arendst/Sonoff-Tasmota/commit/20a53950ff208314cb609cb3ecf640c4bf5c4d85
+  //reloxx13: got removed, but cuzed alexa lags, back in
+  //https://github.com/arendst/Sonoff-Tasmota/commit/20a53950ff208314cb609cb3ecf640c4bf5c4d85
+  //https://github.com/arendst/Sonoff-Tasmota/issues/3101
+  WiFi.persistent(false);   // Solve possible wifi init errors
+
   WiFi.disconnect(true);    // Delete SDK wifi config
   delay(200);
   WiFi.mode(WIFI_STA);      // Disable AP mode
