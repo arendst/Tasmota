@@ -411,6 +411,22 @@ void SonoffBridgeLearn(uint8_t key)
   Serial.write(0x55);  // End of Text
 }
 
+char* charclean(char *in)
+{
+  uint8_t i;
+  uint8_t x;
+  char *out = in;
+  for (i=0,x=0;i<strlen(in);i++,x++) {
+    if (in[i] != ' ') {
+      out[x] = in[i];
+    } else {
+      x--;
+    }
+  }
+  out[x] = 0; // null terminate the new char array
+  return out;
+}
+
 /*********************************************************************************************\
  * Commands
 \*********************************************************************************************/
@@ -541,7 +557,9 @@ boolean SonoffBridgeCommand()
           break;
         }
       } else {
-        SerialSendRaw(XdrvMailbox.data, XdrvMailbox.data_len);
+        char rawsend[XdrvMailbox.data_len+1];
+        sprintf(rawsend,"%s",charclean(XdrvMailbox.data));
+        SerialSendRaw(rawsend, strlen(rawsend));
         sonoff_bridge_receive_raw_flag = 1;
       }
     }
@@ -584,4 +602,3 @@ boolean Xdrv06(byte function)
   }
   return result;
 }
-
