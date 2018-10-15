@@ -1156,6 +1156,10 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
         restart_flag = 214;
         snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_RESET "\":\"" D_JSON_ERASE ", " D_JSON_RESET_AND_RESTARTING "\"}"));
         break;
+      case 5:
+        restart_flag = 215;
+        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_RESET "\":\"" D_JSON_ERASE ", " D_JSON_RESET_AND_RESTARTING "\"}"));
+        break;
       default:
         snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, D_JSON_ONE_TO_RESET);
       }
@@ -2107,13 +2111,16 @@ void Every250mSeconds()
         SettingsDefault();
         restart_flag = 2;
       }
-      if (214 == restart_flag) {
+      if ((214 == restart_flag) || (215 == restart_flag)) {
         char tmp_sta_ssid[2][33];
         char tmp_sta_pwd[2][65];
         strlcpy(tmp_sta_ssid[0],Settings.sta_ssid[0],sizeof(Settings.sta_ssid[0]));
         strlcpy(tmp_sta_pwd[0],Settings.sta_pwd[0],sizeof(Settings.sta_pwd[0]));
         strlcpy(tmp_sta_ssid[1],Settings.sta_ssid[1],sizeof(Settings.sta_ssid[1]));
         strlcpy(tmp_sta_pwd[1],Settings.sta_pwd[1],sizeof(Settings.sta_pwd[1]));
+        if (215 == restart_flag) {
+          SettingsErase(0);    // Erase all flash from program end to end of physical flash
+        }
         SettingsDefault();
         strlcpy(Settings.sta_ssid[0],tmp_sta_ssid[0],sizeof(Settings.sta_ssid[0]));
         strlcpy(Settings.sta_pwd[0],tmp_sta_pwd[0],sizeof(Settings.sta_pwd[0]));
