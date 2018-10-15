@@ -755,6 +755,8 @@ void SerialSendRaw(char *codes, int size)
   char *p;
   char stemp[3];
   uint8_t code;
+  
+  size = strlen(codes); // Force size to be strlen of codes, if whitespace was removed it will overrun into unwanted buffer space
 
   while (size > 0) {
     snprintf(stemp, sizeof(stemp), codes);
