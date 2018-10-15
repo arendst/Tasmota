@@ -241,6 +241,7 @@ enum SupportedModules {
   OBI,
   TECKIN,
   APLIC_WDP303075,
+  TUYA_DIMMER,			  
   MAXMODULE };
 
 /********************************************************************************************/
@@ -418,7 +419,8 @@ const uint8_t kModuleNiceList[MAXMODULE] PROGMEM = {
   AILIGHT,            // Light Bulbs
   PHILIPS,
   WITTY,              // Development Devices
-  WEMOS
+  WEMOS,
+  TUYA_DIMMER			 
 };
 
 // Default module settings
@@ -1133,6 +1135,15 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_LED1_INV,    // GPIO13 LED (0 = On, 1 = Off)
      GPIO_REL1,        // GPIO14 Relay SRU 5VDC SDA (0 = Off, 1 = On )
      0, 0, 0
+  },
+  { "Tuya Dimmer",     // Tuya Dimmer (ESP8266 w/ separate MCU dimmer)
+     0,
+     GPIO_TXD,         // TX to dimmer MCU
+     0,
+     GPIO_RXD,         // RX from dimmer MCU
+     0, 0, 0, 0, 0, 0,
+	 0, 0, 0, 0, 0, 0,
+	 0, 0
   }
 };
 
