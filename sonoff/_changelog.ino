@@ -1,4 +1,9 @@
-/* 6.2.1.15 20181012
+/* 6.2.1.16 20181015
+ * Add TasmotaModbus library for very basic modbus wrapper for TasmotaSerial
+ * Change xsns_17_senseair.ino to use TasmotaModbus library
+ * Fix xnrg_05_pzem2.ino for PZEM-014/016 support using TasmotaModbus library (#3694)
+ *
+ * 6.2.1.15 20181012
  * Fix Color Temperature slider functionality regression from 6.2.1.5 (#4037)
  * Add auto reload of main web page to some web restarts
  * Add whitespace removal from RfRaw and SerialSend5 (#4020)
