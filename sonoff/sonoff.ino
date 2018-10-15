@@ -1149,15 +1149,9 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
         break;
       case 2:
       case 3:
-        restart_flag = 210 + payload;
-        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_RESET "\":\"" D_JSON_ERASE ", " D_JSON_RESET_AND_RESTARTING "\"}"));
-        break;
       case 4:
-        restart_flag = 214;
-        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_RESET "\":\"" D_JSON_ERASE ", " D_JSON_RESET_AND_RESTARTING "\"}"));
-        break;
       case 5:
-        restart_flag = 215;
+        restart_flag = 210 + payload;
         snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_RESET "\":\"" D_JSON_ERASE ", " D_JSON_RESET_AND_RESTARTING "\"}"));
         break;
       default:
@@ -2100,32 +2094,26 @@ void Every250mSeconds()
       }
     }
     if (restart_flag && (backlog_pointer == backlog_index)) {
-      if (213 == restart_flag) {
+      if ((214 == restart_flag) || (215 == restart_flag)) {
+        char storage[sizeof(Settings.sta_ssid) + sizeof(Settings.sta_pwd)];
+        memcpy(storage, Settings.sta_ssid, sizeof(storage));  // Backup current SSIDs and Passwords
+        if (215 == restart_flag) {
+          SettingsErase(0);  // Erase all flash from program end to end of physical flash
+        }
+        SettingsDefault();
+        memcpy(Settings.sta_ssid, storage, sizeof(storage));  // Restore current SSIDs and Passwords
+        restart_flag = 2;
+      }
+      else if (213 == restart_flag) {
         SettingsSdkErase();  // Erase flash SDK parameters
         restart_flag = 2;
-      } else if (212 == restart_flag) {
+      }
+      else if (212 == restart_flag) {
         SettingsErase(0);    // Erase all flash from program end to end of physical flash
         restart_flag = 211;
       }
       if (211 == restart_flag) {
         SettingsDefault();
-        restart_flag = 2;
-      }
-      if ((214 == restart_flag) || (215 == restart_flag)) {
-        char tmp_sta_ssid[2][33];
-        char tmp_sta_pwd[2][65];
-        strlcpy(tmp_sta_ssid[0],Settings.sta_ssid[0],sizeof(Settings.sta_ssid[0]));
-        strlcpy(tmp_sta_pwd[0],Settings.sta_pwd[0],sizeof(Settings.sta_pwd[0]));
-        strlcpy(tmp_sta_ssid[1],Settings.sta_ssid[1],sizeof(Settings.sta_ssid[1]));
-        strlcpy(tmp_sta_pwd[1],Settings.sta_pwd[1],sizeof(Settings.sta_pwd[1]));
-        if (215 == restart_flag) {
-          SettingsErase(0);    // Erase all flash from program end to end of physical flash
-        }
-        SettingsDefault();
-        strlcpy(Settings.sta_ssid[0],tmp_sta_ssid[0],sizeof(Settings.sta_ssid[0]));
-        strlcpy(Settings.sta_pwd[0],tmp_sta_pwd[0],sizeof(Settings.sta_pwd[0]));
-        strlcpy(Settings.sta_ssid[1],tmp_sta_ssid[1],sizeof(Settings.sta_ssid[1]));
-        strlcpy(Settings.sta_pwd[1],tmp_sta_pwd[1],sizeof(Settings.sta_pwd[1]));
         restart_flag = 2;
       }
       SettingsSaveAll();
