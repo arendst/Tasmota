@@ -243,6 +243,22 @@ char* Unescape(char* buffer, uint16_t* size)
   return buffer;
 }
 
+char* RemoveSpace(char* p)
+{
+  char* write = p;
+  char* read = p;
+  char ch = '.';
+
+  while (ch != '\0') {
+    ch = *read++;
+    if (!isspace(ch)) {
+      *write++ = ch;
+    }
+  }
+  *write = '\0';
+  return p;
+}
+
 char* UpperCase(char* dest, const char* source)
 {
   char* write = dest;
@@ -739,6 +755,8 @@ void SerialSendRaw(char *codes, int size)
   char *p;
   char stemp[3];
   uint8_t code;
+  
+  size = strlen(codes); // Force size to be strlen of codes, if whitespace was removed it will overrun into unwanted buffer space
 
   while (size > 0) {
     snprintf(stemp, sizeof(stemp), codes);

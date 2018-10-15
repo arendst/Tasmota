@@ -1,6 +1,13 @@
-/* 6.2.1.15 20181012
- * Fix Color Temperature slider functionality regression from 20180726 (#4037)
+/* 6.2.1.16 20181015
+ * Add TasmotaModbus library for very basic modbus wrapper for TasmotaSerial
+ * Change xsns_17_senseair.ino to use TasmotaModbus library
+ * Fix xnrg_05_pzem2.ino for PZEM-014/016 support using TasmotaModbus library (#3694)
+ *
+ * 6.2.1.15 20181012
+ * Fix Color Temperature slider functionality regression from 6.2.1.5 (#4037)
  * Add auto reload of main web page to some web restarts
+ * Add whitespace removal from RfRaw and SerialSend5 (#4020)
+ * Add commands Reset 4 (reset to defaults but keep wifi params) and Reset 5 (as reset 4 and also erase flash) (#4061)
  *
  * 6.2.1.14 20181010
  * Rewrite Webserver page handler for easier extension (thx to Adrian Scillato)

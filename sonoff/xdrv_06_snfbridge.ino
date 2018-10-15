@@ -541,7 +541,7 @@ boolean SonoffBridgeCommand()
           break;
         }
       } else {
-        SerialSendRaw(XdrvMailbox.data, XdrvMailbox.data_len);
+        SerialSendRaw(RemoveSpace(XdrvMailbox.data), strlen(XdrvMailbox.data));
         sonoff_bridge_receive_raw_flag = 1;
       }
     }
@@ -584,4 +584,3 @@ boolean Xdrv06(byte function)
   }
   return result;
 }
-
