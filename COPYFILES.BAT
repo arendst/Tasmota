@@ -21,6 +21,7 @@ copy sonoff-ES\firmware.bin %USERPROFILE%\Documents\GitHub\Sonoff-Tasmota_KNX\re
 copy sonoff-ES_4MB\firmware.bin %USERPROFILE%\Documents\GitHub\Sonoff-Tasmota_KNX\release\sonoff_KNX-ES-4MB.bin
 copy sonoff-FR\firmware.bin %USERPROFILE%\Documents\GitHub\Sonoff-Tasmota_KNX\release\sonoff_KNX-FR.bin
 copy sonoff-GR\firmware.bin %USERPROFILE%\Documents\GitHub\Sonoff-Tasmota_KNX\release\sonoff_KNX-GR.bin
+copy sonoff-HE\firmware.bin %USERPROFILE%\Documents\GitHub\Sonoff-Tasmota_KNX\release\sonoff_KNX-HE.bin
 copy sonoff-HU\firmware.bin %USERPROFILE%\Documents\GitHub\Sonoff-Tasmota_KNX\release\sonoff_KNX-HU.bin
 copy sonoff-IT\firmware.bin %USERPROFILE%\Documents\GitHub\Sonoff-Tasmota_KNX\release\sonoff_KNX-IT.bin
 copy sonoff-minimal\firmware.bin %USERPROFILE%\Documents\GitHub\Sonoff-Tasmota_KNX\release\sonoff_minimal.bin
