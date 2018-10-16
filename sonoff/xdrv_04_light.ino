@@ -343,6 +343,7 @@ void LightMy92x1Duty(uint8_t duty_r, uint8_t duty_g, uint8_t duty_b, uint8_t dut
   os_delay_us(12);                      // TStop > 12us.
 }
 
+
 // *************** Tuya Dimmer Serial Comms
 void LightSerialDuty(uint8_t duty)
 {
@@ -356,7 +357,7 @@ void LightSerialDuty(uint8_t duty)
     Serial.write(0x06); // Tuya command 06 - send order
     Serial.write(0x00);
     Serial.write(0x08); // following data length 0x08
-    Serial.write(0x03); // dimmer id
+    Serial.write(Settings.tuya_dimmer_id); // dimmer id
     Serial.write(0x02); // type=value
     Serial.write(0x00); // length hi
     Serial.write(0x04); // length low
@@ -364,9 +365,9 @@ void LightSerialDuty(uint8_t duty)
     Serial.write(0x00); // 
     Serial.write(0x00); // 
     Serial.write( duty ); // dim value (0-255)
-    Serial.write( byte(22 + duty) ); // checksum:sum of all bytes in packet mod 256
+    Serial.write( byte(Settings.tuya_dimmer_id + 19 + duty) ); // checksum:sum of all bytes in packet mod 256
     Serial.flush();
-    snprintf_P(log_data, sizeof(log_data), PSTR( "TYA: Send Serial Packet Dim Value=%d"), duty);
+    snprintf_P(log_data, sizeof(log_data), PSTR( "TYA: Send Serial Packet Dim Value=%d (id=%d)"), duty, Settings.tuya_dimmer_id);
     AddLog(LOG_LEVEL_DEBUG);
   } else {
     tuya_ignore_dim = false;  // reset flag
