@@ -2,6 +2,9 @@
  * Add TasmotaModbus library for very basic modbus wrapper for TasmotaSerial
  * Change xsns_17_senseair.ino to use TasmotaModbus library
  * Fix xnrg_05_pzem2.ino for PZEM-014/016 support using TasmotaModbus library (#3694)
+ * Fix RfRaw and SerialSend5 regression from 6.2.1.15 (#4072)
+ * Fix Sonoff Bridge RfRaw receive (#4080)
+ * Add support for Tuya Dimmer (#469, #4075)
  *
  * 6.2.1.15 20181012
  * Fix Color Temperature slider functionality regression from 6.2.1.5 (#4037)
