@@ -117,8 +117,8 @@ boolean PubSubClient::connect(const char *id, const char *user, const char *pass
     if (!connected()) {
         int result = 0;
 
-        if (domain != NULL) {
-            result = _client->connect(this->domain, this->port);
+        if (domain.length() != 0) {
+            result = _client->connect(this->domain.c_str(), this->port);
         } else {
             result = _client->connect(this->ip, this->port);
         }
@@ -209,7 +209,6 @@ boolean PubSubClient::connect(const char *id, const char *user, const char *pass
 boolean PubSubClient::readByte(uint8_t * result) {
    uint32_t previousMillis = millis();
    while(!_client->available()) {
-     delay(1);  // Add esp8266 de-blocking (Tasmota #790)
      uint32_t currentMillis = millis();
      if(currentMillis - previousMillis >= ((int32_t) MQTT_SOCKET_TIMEOUT * 1000)){
        return false;
@@ -241,11 +240,17 @@ uint16_t PubSubClient::readPacket(uint8_t* lengthLength) {
     uint8_t start = 0;
 
     do {
+        if (len == 6) {
+            // Invalid remaining length encoding - kill the connection
+            _state = MQTT_DISCONNECTED;
+            _client->stop();
+            return 0;
+        }
         if(!readByte(&digit)) return 0;
         buffer[len++] = digit;
         length += (digit & 127) * multiplier;
         multiplier *= 128;
-    } while ((digit & 128) != 0);
+    } while ((digit & 128) != 0 && len < (MQTT_MAX_PACKET_SIZE -2));
     *lengthLength = len-1;
 
     if (isPublish) {
@@ -336,6 +341,9 @@ boolean PubSubClient::loop() {
                 } else if (type == MQTTPINGRESP) {
                     pingOutstanding = false;
                 }
+            } else if (!connected()) {
+                // readPacket has closed the connection
+                return false;
             }
         }
         return true;
@@ -419,7 +427,7 @@ boolean PubSubClient::publish_P(const char* topic, const uint8_t* payload, unsig
 
     lastOutActivity = millis();
 
-    return rc == tlen + 4 + plength;
+    return rc == tlen + 3 + llen + plength;
 }
 
 boolean PubSubClient::write(uint8_t header, uint8_t* buf, uint16_t length) {
@@ -469,7 +477,7 @@ boolean PubSubClient::subscribe(const char* topic) {
 }
 
 boolean PubSubClient::subscribe(const char* topic, uint8_t qos) {
-    if (qos < 0 || qos > 1) {
+    if (qos > 1) {
         return false;
     }
     if (MQTT_MAX_PACKET_SIZE < 9 + strlen(topic)) {
@@ -524,7 +532,7 @@ uint16_t PubSubClient::writeString(const char* string, uint8_t* buf, uint16_t po
     const char* idp = string;
     uint16_t i = 0;
     pos += 2;
-    while (*idp) {
+    while (*idp && pos < (MQTT_MAX_PACKET_SIZE - 2)) {
         buf[pos++] = *idp++;
         i++;
     }
@@ -559,7 +567,7 @@ PubSubClient& PubSubClient::setServer(uint8_t * ip, uint16_t port) {
 PubSubClient& PubSubClient::setServer(IPAddress ip, uint16_t port) {
     this->ip = ip;
     this->port = port;
-    this->domain = NULL;
+    this->domain = "";
     return *this;
 }
 

@@ -133,23 +133,6 @@ int test_connect_accepts_username_no_password() {
 
     END_IT
 }
-int test_connect_accepts_username_blank_password() {
-    IT("accepts a username and blank password");
-    ShimClient shimClient;
-    shimClient.setAllowConnect(true);
-
-    byte connect[] = { 0x10,0x20,0x0,0x4,0x4d,0x51,0x54,0x54,0x4,0xc2,0x0,0xf,0x0,0xc,0x63,0x6c,0x69,0x65,0x6e,0x74,0x5f,0x74,0x65,0x73,0x74,0x31,0x0,0x4,0x75,0x73,0x65,0x72,0x0,0x0};
-    byte connack[] = { 0x20, 0x02, 0x00, 0x00 };
-    shimClient.expect(connect,0x26);
-    shimClient.respond(connack,4);
-
-    PubSubClient client(server, 1883, callback, shimClient);
-    int rc = client.connect((char*)"client_test1",(char*)"user",(char*)"pass");
-    IS_TRUE(rc);
-    IS_FALSE(shimClient.error());
-
-    END_IT
-}
 
 int test_connect_ignores_password_no_username() {
     IT("ignores a password but no username");
