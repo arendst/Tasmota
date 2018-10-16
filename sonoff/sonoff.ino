@@ -2043,7 +2043,8 @@ void Every250mSeconds()
           ota_result = (HTTP_UPDATE_FAILED != ESPhttpUpdate.update(mqtt_data));
 #else
           // If using core stage or 2.5.0+ the syntax has changed
-          ota_result = (HTTP_UPDATE_FAILED != ESPhttpUpdate.update(EspClient, mqtt_data));
+	  WiFiClient OTAclient;
+          ota_result = (HTTP_UPDATE_FAILED != ESPhttpUpdate.update(OTAclient, mqtt_data));
 #endif
           if (!ota_result) {
 #ifndef BE_MINIMAL
