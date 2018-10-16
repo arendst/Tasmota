@@ -200,6 +200,8 @@ char mqtt_data[MESSZ];                      // MQTT publish buffer and web page 
 char log_data[LOGSZ];                       // Logging
 char web_log[WEB_LOG_SIZE] = {'\0'};        // Web log buffer
 String backlog[MAX_BACKLOG];                // Command backlog
+uint8_t tuya_new_dim = 0;                   // Tuya dimmer value temp
+boolean tuya_ignore_dim = false;            // Flag to skip serial send to prevent looping when processing inbound states from the faceplate interaction  
 
 /********************************************************************************************/
 
@@ -349,6 +351,23 @@ void SetDevicePower(power_t rpower, int source)
     Serial.write(0xA1);
     Serial.write('\n');
     Serial.flush();
+  }
+  else if (TUYA_DIMMER == Settings.module && source != SRC_SWITCH ) {  // ignore to prevent loop from pushing state from faceplate interaction
+    snprintf_P(log_data, sizeof(log_data), PSTR("TYA: SetDevicePower.rpower=%d"), rpower);
+    AddLog(LOG_LEVEL_DEBUG);
+    Serial.write(0x55); // Tuya header 55AA
+    Serial.write(0xAA);
+    Serial.write(0x00); // version 00
+    Serial.write(0x06); // Tuya command 06 
+    Serial.write(0x00);
+    Serial.write(0x05); // following data length 0x05
+    Serial.write(0x01); // relay number 1,2,3
+    Serial.write(0x01); 
+    Serial.write(0x00); 
+    Serial.write(0x01); 
+    Serial.write(rpower); // status
+    Serial.write(0x0D + rpower); // checksum sum of all bytes in packet mod 256
+    Serial.flush();    
   }
   else if (EXS_RELAY == Settings.module) {
     SetLatchingRelay(rpower, 1);
@@ -2215,6 +2234,48 @@ void ArduinoOTAInit()
 
 /********************************************************************************************/
 
+void TuyaPacketProcess()
+{
+  char scmnd[20];
+  snprintf_P(log_data, sizeof(log_data), PSTR("TYA: Packet Size=%d"), serial_in_byte_counter);
+  AddLog(LOG_LEVEL_DEBUG);
+  if (serial_in_byte_counter == 7 && serial_in_buffer[3] == 14 ) {  // heartbeat packet
+    AddLog_P(LOG_LEVEL_DEBUG, PSTR("TYA: Heartbeat"));
+  }  
+  if (serial_in_byte_counter == 12 && serial_in_buffer[3] == 7 && serial_in_buffer[5] == 5) {  // on/off packet
+    if (serial_in_buffer[10] == 0) {
+      AddLog_P(LOG_LEVEL_DEBUG, PSTR("TYA: Rcvd - Off State"));
+      ExecuteCommandPower(1, 0, SRC_SWITCH);  // send SRC_SWITCH? to use as flag to prevent loop from inbound states from faceplate interaction
+    } else
+    {
+      AddLog_P(LOG_LEVEL_DEBUG, PSTR("TYA: Rcvd - On State"));
+      ExecuteCommandPower(1, 1, SRC_SWITCH);  // send SRC_SWITCH? to use as flag to prevent loop from inbound states from faceplate interaction
+    }
+    serial_in_byte_counter = 0;
+    serial_in_buffer[serial_in_byte_counter] = 0;  // serial data completed
+  }
+  if (serial_in_byte_counter == 15 && serial_in_buffer[3] == 7 && serial_in_buffer[5] == 8) {  // dim packet
+    snprintf_P(log_data, sizeof(log_data), PSTR("TYA: Rcvd Dim State=%d"), serial_in_buffer[13]);
+    AddLog(LOG_LEVEL_DEBUG);
+    tuya_new_dim = round(serial_in_buffer[13] * (100. / 255.));
+    snprintf_P(log_data, sizeof(log_data), PSTR("TYA: Send CMND_DIMMER=%d"), tuya_new_dim );
+    AddLog(LOG_LEVEL_DEBUG);
+    snprintf_P(scmnd, sizeof(scmnd), PSTR(D_CMND_DIMMER " %d"), tuya_new_dim );
+    snprintf_P(log_data, sizeof(log_data), PSTR("TYA: Send CMND_DIMMER_STR=%s"), scmnd );
+    AddLog(LOG_LEVEL_DEBUG);
+    tuya_ignore_dim = true;
+    ExecuteCommand(scmnd, SRC_SWITCH);
+    serial_in_byte_counter = 0;
+    serial_in_buffer[serial_in_byte_counter] = 0;  // serial data completed
+  } 
+  if (serial_in_byte_counter == 8 && serial_in_buffer[3] == 5 && serial_in_buffer[5] == 1 && serial_in_buffer[7] == 5 ) {  // reset WiFi settings packet - to do: reset red MCU LED after WiFi is up
+    AddLog_P(LOG_LEVEL_DEBUG, PSTR("TYA: WiFi Reset Rcvd"));
+    serial_in_byte_counter = 0;
+    serial_in_buffer[serial_in_byte_counter] = 0;  // serial data completed
+    snprintf_P(scmnd, sizeof(scmnd), D_CMND_WIFICONFIG " 2");
+    ExecuteCommand(scmnd, SRC_BUTTON);
+  }   
+}
 void SerialInput()
 {
   while (Serial.available()) {
@@ -2243,6 +2304,29 @@ void SerialInput()
       }
     }
 
+/*-------------------------------------------------------------------------------------------*\
+ * Tuya based Dimmer with Serial Communications to MCU dimmer
+\*-------------------------------------------------------------------------------------------*/
+    if (TUYA_DIMMER == Settings.module) {
+      if (serial_in_byte == '\x55') {            // Start TUYA Packet
+        if (serial_in_byte_counter > 0 && serial_in_byte_counter < 11) {
+           TuyaPacketProcess();
+        }
+        AddLog_P(LOG_LEVEL_DEBUG, PSTR("TYA: 0x55 Packet Start"));
+        serial_in_byte_counter = 0;
+        serial_in_buffer[serial_in_byte_counter++] = serial_in_byte;
+//        return;  // test to see if we need this
+      } else {                                  // read additional packets from TUYA
+      if (serial_in_byte_counter < INPUT_BUFFER_SIZE -1) {  // add char to string if it still fits
+        serial_in_buffer[serial_in_byte_counter++] = serial_in_byte;
+        serial_polling_window = millis();
+//        return;  // test to see if we need this
+      } else {
+        serial_in_byte_counter = 0;
+      }
+     }
+    }
+
 /*-------------------------------------------------------------------------------------------*/
 
     if (XdrvCall(FUNC_SERIAL)) {
@@ -2252,33 +2336,33 @@ void SerialInput()
     }
 
 /*-------------------------------------------------------------------------------------------*/
-
-    if (serial_in_byte > 127 && !Settings.flag.mqtt_serial_raw) { // binary data...
-      serial_in_byte_counter = 0;
-      Serial.flush();
-      return;
-    }
-    if (!Settings.flag.mqtt_serial) {
-      if (isprint(serial_in_byte)) {
-        if (serial_in_byte_counter < INPUT_BUFFER_SIZE -1) {  // add char to string if it still fits
-          serial_in_buffer[serial_in_byte_counter++] = serial_in_byte;
-        } else {
-          serial_in_byte_counter = 0;
+    if (TUYA_DIMMER != Settings.module) {
+      if (serial_in_byte > 127 && !Settings.flag.mqtt_serial_raw) { // binary data...
+        serial_in_byte_counter = 0;
+        Serial.flush();
+        return;
+      }
+      if (!Settings.flag.mqtt_serial) {
+        if (isprint(serial_in_byte)) {
+          if (serial_in_byte_counter < INPUT_BUFFER_SIZE -1) {  // add char to string if it still fits
+            serial_in_buffer[serial_in_byte_counter++] = serial_in_byte;
+          } else {
+            serial_in_byte_counter = 0;
+          }
+        }
+      } else {
+        if (serial_in_byte || Settings.flag.mqtt_serial_raw) {
+          if ((serial_in_byte_counter < INPUT_BUFFER_SIZE -1) &&
+              ((serial_in_byte != Settings.serial_delimiter) || Settings.flag.mqtt_serial_raw)) {  // add char to string if it still fits
+            serial_in_buffer[serial_in_byte_counter++] = serial_in_byte;
+            serial_polling_window = millis();
+          } else {
+            serial_polling_window = 0;
+            break;
+          }
         }
       }
-    } else {
-      if (serial_in_byte || Settings.flag.mqtt_serial_raw) {
-        if ((serial_in_byte_counter < INPUT_BUFFER_SIZE -1) &&
-            ((serial_in_byte != Settings.serial_delimiter) || Settings.flag.mqtt_serial_raw)) {  // add char to string if it still fits
-          serial_in_buffer[serial_in_byte_counter++] = serial_in_byte;
-          serial_polling_window = millis();
-        } else {
-          serial_polling_window = 0;
-          break;
-        }
-      }
     }
-
 /*-------------------------------------------------------------------------------------------*\
  * Sonoff SC 19200 baud serial interface
 \*-------------------------------------------------------------------------------------------*/
@@ -2307,23 +2391,34 @@ void SerialInput()
     }
   }
 
-  if (Settings.flag.mqtt_serial && serial_in_byte_counter && (millis() > (serial_polling_window + SERIAL_POLLING))) {
-    serial_in_buffer[serial_in_byte_counter] = 0;  // serial data completed
-    if (!Settings.flag.mqtt_serial_raw) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_SERIALRECEIVED "\":\"%s\"}"), serial_in_buffer);
-    } else {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_SERIALRECEIVED "\":\""));
-      for (int i = 0; i < serial_in_byte_counter; i++) {
-        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s%02x"), mqtt_data, serial_in_buffer[i]);
-      }
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s\"}"), mqtt_data);
+  if (TUYA_DIMMER == Settings.module && serial_in_byte_counter > 6 && (millis() > (serial_polling_window + SERIAL_POLLING))) { 
+    snprintf_P(log_data, sizeof(log_data), PSTR("TYA: 0x55 Packet End: \""));
+    for (int i = 0; i < serial_in_byte_counter; i++) {
+      snprintf_P(log_data, sizeof(log_data), PSTR("%s%02x"), log_data, serial_in_buffer[i]);
     }
-    MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_SERIALRECEIVED));
-//    XdrvRulesProcess();
+    snprintf_P(log_data, sizeof(log_data), PSTR("%s\""), log_data);
+    AddLog(LOG_LEVEL_DEBUG);
+    TuyaPacketProcess();
+    serial_in_buffer[serial_in_byte_counter] = 0;  // serial data completed
     serial_in_byte_counter = 0;
+  } else {
+    if (Settings.flag.mqtt_serial && serial_in_byte_counter && (millis() > (serial_polling_window + SERIAL_POLLING))) {
+      serial_in_buffer[serial_in_byte_counter] = 0;  // serial data completed
+      if (!Settings.flag.mqtt_serial_raw) {
+        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_SERIALRECEIVED "\":\"%s\"}"), serial_in_buffer);
+      } else {
+        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_SERIALRECEIVED "\":\""));
+        for (int i = 0; i < serial_in_byte_counter; i++) {
+          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s%02x"), mqtt_data, serial_in_buffer[i]);
+        }
+        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s\"}"), mqtt_data);
+      }
+      MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_SERIALRECEIVED));
+//      XdrvRulesProcess();
+      serial_in_byte_counter = 0;
+    }
   }
 }
-
 /********************************************************************************************/
 
 void GpioSwitchPinMode(uint8_t index)
@@ -2464,6 +2559,11 @@ void GpioInit()
     Settings.flag.mqtt_serial = 0;
     devices_present = 0;
     baudrate = 19200;
+  }
+  else if (TUYA_DIMMER == Settings.module) {
+    Settings.flag.mqtt_serial = 0;
+    baudrate = 9600;
+    light_type = LT_SERIAL;
   }
   else if (SONOFF_BN == Settings.module) {   // PWM Single color led (White)
     light_type = LT_PWM1;
