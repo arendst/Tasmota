@@ -6,6 +6,7 @@
  * Fix Sonoff Bridge RfRaw receive (#4080)
  * Add support for Tuya Dimmer (#469, #4075)
  * Fix possible wifi connection error (#4044, #4083)
+ * Update PubSubClient Mqtt library to non-blocking EspEasy version
  *
  * 6.2.1.15 20181012
  * Fix Color Temperature slider functionality regression from 6.2.1.5 (#4037)
