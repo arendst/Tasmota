@@ -201,7 +201,7 @@ char log_data[LOGSZ];                       // Logging
 char web_log[WEB_LOG_SIZE] = {'\0'};        // Web log buffer
 String backlog[MAX_BACKLOG];                // Command backlog
 uint8_t tuya_new_dim = 0;                   // Tuya dimmer value temp
-boolean tuya_ignore_dim = false;            // Flag to skip serial send to prevent looping when processing inbound states from the faceplate interaction  
+boolean tuya_ignore_dim = false;            // Flag to skip serial send to prevent looping when processing inbound states from the faceplate interaction
 
 /********************************************************************************************/
 
@@ -358,16 +358,16 @@ void SetDevicePower(power_t rpower, int source)
     Serial.write(0x55); // Tuya header 55AA
     Serial.write(0xAA);
     Serial.write(0x00); // version 00
-    Serial.write(0x06); // Tuya command 06 
+    Serial.write(0x06); // Tuya command 06
     Serial.write(0x00);
     Serial.write(0x05); // following data length 0x05
     Serial.write(0x01); // relay number 1,2,3
-    Serial.write(0x01); 
-    Serial.write(0x00); 
-    Serial.write(0x01); 
+    Serial.write(0x01);
+    Serial.write(0x00);
+    Serial.write(0x01);
     Serial.write(rpower); // status
     Serial.write(0x0D + rpower); // checksum sum of all bytes in packet mod 256
-    Serial.flush();    
+    Serial.flush();
   }
   else if (EXS_RELAY == Settings.module) {
     SetLatchingRelay(rpower, 1);
@@ -1021,7 +1021,7 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
           Serial.printf("%s", Unescape(dataBuf, &dat_len));  // "Hello\f"
         }
         else if (5 == index) {
-          SerialSendRaw(RemoveSpace(dataBuf), strlen(dataBuf));  // "AA004566"
+          SerialSendRaw(RemoveSpace(dataBuf));  // "AA004566"
         }
         snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, D_JSON_DONE);
       }
@@ -2062,7 +2062,7 @@ void Every250mSeconds()
           ota_result = (HTTP_UPDATE_FAILED != ESPhttpUpdate.update(mqtt_data));
 #else
           // If using core stage or 2.5.0+ the syntax has changed
-	  WiFiClient OTAclient;
+          WiFiClient OTAclient;
           ota_result = (HTTP_UPDATE_FAILED != ESPhttpUpdate.update(OTAclient, mqtt_data));
 #endif
           if (!ota_result) {
@@ -2241,7 +2241,7 @@ void TuyaPacketProcess()
   AddLog(LOG_LEVEL_DEBUG);
   if (serial_in_byte_counter == 7 && serial_in_buffer[3] == 14 ) {  // heartbeat packet
     AddLog_P(LOG_LEVEL_DEBUG, PSTR("TYA: Heartbeat"));
-  }  
+  }
   if (serial_in_byte_counter == 12 && serial_in_buffer[3] == 7 && serial_in_buffer[5] == 5) {  // on/off packet
     if (serial_in_buffer[10] == 0) {
       AddLog_P(LOG_LEVEL_DEBUG, PSTR("TYA: Rcvd - Off State"));
@@ -2267,14 +2267,14 @@ void TuyaPacketProcess()
     ExecuteCommand(scmnd, SRC_SWITCH);
     serial_in_byte_counter = 0;
     serial_in_buffer[serial_in_byte_counter] = 0;  // serial data completed
-  } 
+  }
   if (serial_in_byte_counter == 8 && serial_in_buffer[3] == 5 && serial_in_buffer[5] == 1 && serial_in_buffer[7] == 5 ) {  // reset WiFi settings packet - to do: reset red MCU LED after WiFi is up
     AddLog_P(LOG_LEVEL_DEBUG, PSTR("TYA: WiFi Reset Rcvd"));
     serial_in_byte_counter = 0;
     serial_in_buffer[serial_in_byte_counter] = 0;  // serial data completed
     snprintf_P(scmnd, sizeof(scmnd), D_CMND_WIFICONFIG " 2");
     ExecuteCommand(scmnd, SRC_BUTTON);
-  }   
+  }
 }
 void SerialInput()
 {
@@ -2305,7 +2305,7 @@ void SerialInput()
     }
 
 /*-------------------------------------------------------------------------------------------*\
- * Tuya based Dimmer with Serial Communications to MCU dimmer
+ * Tuya based Dimmer with Serial Communications to MCU dimmer at 9600 baud
 \*-------------------------------------------------------------------------------------------*/
     if (TUYA_DIMMER == Settings.module) {
       if (serial_in_byte == '\x55') {            // Start TUYA Packet
@@ -2391,7 +2391,7 @@ void SerialInput()
     }
   }
 
-  if (TUYA_DIMMER == Settings.module && serial_in_byte_counter > 6 && (millis() > (serial_polling_window + SERIAL_POLLING))) { 
+  if (TUYA_DIMMER == Settings.module && serial_in_byte_counter > 6 && (millis() > (serial_polling_window + SERIAL_POLLING))) {
     snprintf_P(log_data, sizeof(log_data), PSTR("TYA: 0x55 Packet End: \""));
     for (int i = 0; i < serial_in_byte_counter; i++) {
       snprintf_P(log_data, sizeof(log_data), PSTR("%s%02x"), log_data, serial_in_buffer[i]);
