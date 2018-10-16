@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 # coding=utf-8
-
 """
 fw-server.py - firmware server for Sonoff-Tasmota OTA upgrade
 
