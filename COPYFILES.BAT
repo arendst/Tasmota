@@ -33,6 +33,30 @@ copy sonoff-DE_4MB\firmware.bin %USERPROFILE%\Documents\GitHub\Sonoff-Tasmota_KN
 copy sonoff-EN_4MB\firmware.bin %USERPROFILE%\Documents\GitHub\Sonoff-Tasmota_KNX\release\sonoff_KNX-EN-4MB.bin
 copy sonoff-ES_4MB\firmware.bin %USERPROFILE%\Documents\GitHub\Sonoff-Tasmota_KNX\release\sonoff_KNX-ES-4MB.bin
 
+copy sonoff-minimal\firmware.map %USERPROFILE%\Documents\GitHub\Sonoff-Tasmota_KNX\release\sonoff_minimal.map
+copy sonoff-BG\firmware.map %USERPROFILE%\Documents\GitHub\Sonoff-Tasmota_KNX\release\sonoff_KNX-BG.map
+copy sonoff-BR\firmware.map %USERPROFILE%\Documents\GitHub\Sonoff-Tasmota_KNX\release\sonoff_KNX-BR.map
+copy sonoff-CN\firmware.map %USERPROFILE%\Documents\GitHub\Sonoff-Tasmota_KNX\release\sonoff_KNX-CN.map
+copy sonoff-CZ\firmware.map %USERPROFILE%\Documents\GitHub\Sonoff-Tasmota_KNX\release\sonoff_KNX-CZ.map
+copy sonoff-DE\firmware.map %USERPROFILE%\Documents\GitHub\Sonoff-Tasmota_KNX\release\sonoff_KNX-DE.map
+copy sonoff-EN\firmware.map %USERPROFILE%\Documents\GitHub\Sonoff-Tasmota_KNX\release\sonoff_KNX-EN.map
+copy sonoff-ES\firmware.map %USERPROFILE%\Documents\GitHub\Sonoff-Tasmota_KNX\release\sonoff_KNX-ES.map
+copy sonoff-FR\firmware.map %USERPROFILE%\Documents\GitHub\Sonoff-Tasmota_KNX\release\sonoff_KNX-FR.map
+copy sonoff-GR\firmware.map %USERPROFILE%\Documents\GitHub\Sonoff-Tasmota_KNX\release\sonoff_KNX-GR.map
+copy sonoff-HE\firmware.map %USERPROFILE%\Documents\GitHub\Sonoff-Tasmota_KNX\release\sonoff_KNX-HE.map
+copy sonoff-HU\firmware.map %USERPROFILE%\Documents\GitHub\Sonoff-Tasmota_KNX\release\sonoff_KNX-HU.map
+copy sonoff-IT\firmware.map %USERPROFILE%\Documents\GitHub\Sonoff-Tasmota_KNX\release\sonoff_KNX-IT.map
+copy sonoff-NL\firmware.map %USERPROFILE%\Documents\GitHub\Sonoff-Tasmota_KNX\release\sonoff_KNX-NL.map
+copy sonoff-PL\firmware.map %USERPROFILE%\Documents\GitHub\Sonoff-Tasmota_KNX\release\sonoff_KNX-PL.map
+copy sonoff-PT\firmware.map %USERPROFILE%\Documents\GitHub\Sonoff-Tasmota_KNX\release\sonoff_KNX-PT.map
+copy sonoff-RU\firmware.map %USERPROFILE%\Documents\GitHub\Sonoff-Tasmota_KNX\release\sonoff_KNX-RU.map
+copy sonoff-TW\firmware.map %USERPROFILE%\Documents\GitHub\Sonoff-Tasmota_KNX\release\sonoff_KNX-TW.map
+copy sonoff-TR\firmware.map %USERPROFILE%\Documents\GitHub\Sonoff-Tasmota_KNX\release\sonoff_KNX-TR.map
+copy sonoff-UK\firmware.map %USERPROFILE%\Documents\GitHub\Sonoff-Tasmota_KNX\release\sonoff_KNX-UK.map
+copy sonoff-DE_4MB\firmware.map %USERPROFILE%\Documents\GitHub\Sonoff-Tasmota_KNX\release\sonoff_KNX-DE-4MB.map
+copy sonoff-EN_4MB\firmware.map %USERPROFILE%\Documents\GitHub\Sonoff-Tasmota_KNX\release\sonoff_KNX-EN-4MB.map
+copy sonoff-ES_4MB\firmware.map %USERPROFILE%\Documents\GitHub\Sonoff-Tasmota_KNX\release\sonoff_KNX-ES-4MB.map
+
 echo:
 echo:
 echo DONE...
