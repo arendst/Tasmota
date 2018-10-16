@@ -311,10 +311,10 @@ boolean SonoffBridgeSerialInput()
       serial_in_buffer[serial_in_byte_counter++] = serial_in_byte;
       if (serial_in_byte_counter == 3) {
         if ((0xA6 == serial_in_buffer[1]) || (0xAB == serial_in_buffer[1])) {  // AA A6 06 023908010155 55 - 06 is receive_len
-          receive_len = serial_in_buffer[2];  // Get at least receive_len bytes
+          receive_len = serial_in_buffer[2] + 4;  // Get at least receive_len bytes
         }
       }
-      if (((0 == receive_len) && (0x55 == serial_in_byte)) || (serial_in_byte_counter == receive_len + 4)) {  // 0x55 - End of text
+      if ((!receive_len && (0x55 == serial_in_byte)) || (receive_len && (serial_in_byte_counter == receive_len))) {  // 0x55 - End of text
         SonoffBridgeReceivedRaw();
         sonoff_bridge_receive_flag = 0;
         return 1;

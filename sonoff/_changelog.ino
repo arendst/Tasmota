@@ -3,7 +3,7 @@
  * Change xsns_17_senseair.ino to use TasmotaModbus library
  * Fix xnrg_05_pzem2.ino for PZEM-014/016 support using TasmotaModbus library (#3694)
  * Fix RfRaw and SerialSend5 regression from 6.2.1.15 (#4072)
- * Fix Sonoff Bridge RfRaw receive (#4080)
+ * Fix Sonoff Bridge RfRaw receive (#4080, #4085)
  * Add support for Tuya Dimmer (#469, #4075)
  * Fix possible wifi connection error (#4044, #4083)
  * Update PubSubClient Mqtt library to non-blocking EspEasy version
