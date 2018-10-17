@@ -80,6 +80,7 @@ TasmotaSerial::TasmotaSerial(int receive_pin, int transmit_pin, bool hardware_fa
 {
   m_valid = false;
   m_hardserial = 0;
+  m_stop_bits = 1;
   if (!((isValidGPIOpin(receive_pin)) && (isValidGPIOpin(transmit_pin) || transmit_pin == 16))) {
     return;
   }
@@ -106,15 +107,33 @@ TasmotaSerial::TasmotaSerial(int receive_pin, int transmit_pin, bool hardware_fa
   m_valid = true;
 }
 
+TasmotaSerial::~TasmotaSerial()
+{
+  if (!m_hardserial) {
+    if (m_rx_pin > -1) {
+      detachInterrupt(m_rx_pin);
+      tms_obj_list[m_rx_pin] = NULL;
+      if (m_buffer) {
+        free(m_buffer);
+      }
+    }
+  }
+}
+
 bool TasmotaSerial::isValidGPIOpin(int pin)
 {
   return (pin >= -1 && pin <= 5) || (pin >= 12 && pin <= 15);
 }
 
-bool TasmotaSerial::begin(long speed) {
+bool TasmotaSerial::begin(long speed, int stop_bits) {
+  m_stop_bits = ((stop_bits -1) &1) +1;
   if (m_hardserial) {
     Serial.flush();
-    Serial.begin(speed, SERIAL_8N1);
+    if (2 == m_stop_bits) {
+      Serial.begin(speed, SERIAL_8N2);
+    } else {
+      Serial.begin(speed, SERIAL_8N1);
+    }
   } else {
     // Use getCycleCount() loop to get as exact timing as possible
     m_bit_time = ESP.getCpuFreqMHz() *1000000 /speed;
@@ -195,9 +214,11 @@ size_t TasmotaSerial::write(uint8_t b)
       TM_SERIAL_WAIT;
       b >>= 1;
     }
-    // Stop bit
-    digitalWrite(m_tx_pin, HIGH);
-    TM_SERIAL_WAIT;
+    // Stop bit(s)
+    for (int i = 0; i < m_stop_bits; i++) {
+      digitalWrite(m_tx_pin, HIGH);
+      TM_SERIAL_WAIT;
+    }
     if (m_high_speed) sei();
     return 1;
   }
@@ -220,8 +241,12 @@ void TasmotaSerial::rxRead()
     rec >>= 1;
     if (digitalRead(m_rx_pin)) rec |= 0x80;
   }
-  // Stop bit
+  // Stop bit(s)
   TM_SERIAL_WAIT;
+  if (2 == m_stop_bits) {
+    digitalRead(m_rx_pin);
+    TM_SERIAL_WAIT;
+  }
   // Store the received value in the buffer unless we have an overflow
   int next = (m_in_pos+1) % TM_SERIAL_BUFFER_SIZE;
   if (next != (int)m_out_pos) {

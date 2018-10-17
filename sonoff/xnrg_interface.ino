@@ -39,7 +39,15 @@ int (* const xnrg_func_ptr[])(byte) PROGMEM = {   // Energy driver Function Poin
 #endif
 
 #ifdef XNRG_06
-  &Xnrg06
+  &Xnrg06,
+#endif
+
+#ifdef XNRG_07
+  &Xnrg07,
+#endif
+
+#ifdef XNRG_08
+  &Xnrg08
 #endif
 };
 

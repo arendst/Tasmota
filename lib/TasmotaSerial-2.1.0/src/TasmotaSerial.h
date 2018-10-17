@@ -33,12 +33,15 @@
   #define TM_SERIAL_USE_IRAM                // Enable to use iram (+368 bytes)
 #endif
 
+#include <inttypes.h>
 #include <Stream.h>
 
 class TasmotaSerial : public Stream {
   public:
     TasmotaSerial(int receive_pin, int transmit_pin, bool hardware_fallback = false);
-    bool begin(long speed);
+    virtual ~TasmotaSerial();
+
+    bool begin(long speed, int stop_bits = 1);
     bool begin();
     bool hardwareSerial();
     int peek();
@@ -62,6 +65,7 @@ class TasmotaSerial : public Stream {
     bool m_high_speed;
     int m_rx_pin;
     int m_tx_pin;
+    int m_stop_bits;
     unsigned long m_bit_time;
     unsigned int m_in_pos;
     unsigned int m_out_pos;
