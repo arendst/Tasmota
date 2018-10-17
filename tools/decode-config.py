@@ -781,14 +781,7 @@ Setting_6_2_1_14.update({
     'web_refresh':                  ('<H',  0x7CC, None),
 })
 
-Setting_6_2_1_15 = Setting_6_2_1_14
-Setting_6_2_1_15.update({
-    'custom1':                     ('32s', 0x77C, None),
-    'custom2':                     ('32s', 0x79C, None),
-})
-
 Settings = [
-            (0x602010F, 0xe00, Setting_6_2_1_15),
             (0x602010E, 0xe00, Setting_6_2_1_14),
             (0x602010A, 0xe00, Setting_6_2_1_10),
             (0x6020106, 0xe00, Setting_6_2_1_6),
