@@ -1,4 +1,10 @@
-/* 6.2.1.16 20181015
+/* 6.2.1.17 20181017
+ * Enable updated non-blocking PubSubClient as default MQTT client
+ * Update TasmotaModbus and TasmotaSerial libraries for support of serial 8N2 communication
+ * Add support for Pzem-003/017 DC Energy monitoring module (#3694)
+ * Change support for Pzem-014/016 AC Energy monitoring module (#3694)
+ *
+ * 6.2.1.16 20181015
  * Add TasmotaModbus library for very basic modbus wrapper for TasmotaSerial
  * Change xsns_17_senseair.ino to use TasmotaModbus library
  * Fix xnrg_05_pzem2.ino for PZEM-014/016 support using TasmotaModbus library (#3694)

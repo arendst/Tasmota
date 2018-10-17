@@ -647,14 +647,22 @@ boolean GetUsedInModule(byte val, uint8_t *arr)
   if (GPIO_MHZ_TXD == val) { return true; }
   if (GPIO_MHZ_RXD == val) { return true; }
 #endif
+
+  int pzem = 3;
 #ifndef USE_PZEM004T
-  if (GPIO_PZEM_TX == val) { return true; }
-  if (GPIO_PZEM_RX == val) { return true; }
+  pzem--;
+  if (GPIO_PZEM004_RX == val) { return true; }
 #endif
-#ifndef USE_PZEM2
-  if (GPIO_PZEM2_TX == val) { return true; }
-  if (GPIO_PZEM2_RX == val) { return true; }
+#ifndef USE_PZEM_AC
+  pzem--;
+  if (GPIO_PZEM016_RX == val) { return true; }
 #endif
+#ifndef USE_PZEM_DC
+  pzem--;
+  if (GPIO_PZEM017_RX == val) { return true; }
+#endif
+  if (!pzem && (GPIO_PZEM0XX_TX == val)) { return true; }
+
 #ifndef USE_SENSEAIR
   if (GPIO_SAIR_TX == val) { return true; }
   if (GPIO_SAIR_RX == val) { return true; }
@@ -1166,14 +1174,17 @@ void GetFeatures()
 #ifdef USE_MCP39F501
   feature_sns2 |= 0x00000100;  // xnrg_04_mcp39f501.ino
 #endif
-#ifdef USE_PZEM2
-  feature_sns2 |= 0x00000200;  // xnrg_05_pzem2.ino
+#ifdef USE_PZEM_AC
+  feature_sns2 |= 0x00000200;  // xnrg_05_pzem_ac.ino
 #endif
 #ifdef USE_DS3231
   feature_sns2 |= 0x00000400;  // xsns_33_ds3231.ino
 #endif
 #ifdef USE_HX711
-  feature_sns2 |= 0x00000400;  // xsns_34_hx711.ino
+  feature_sns2 |= 0x00000800;  // xsns_34_hx711.ino
+#endif
+#ifdef USE_PZEM_DC
+  feature_sns2 |= 0x00001000;  // xnrg_06_pzem_dc.ino
 #endif
 
 }

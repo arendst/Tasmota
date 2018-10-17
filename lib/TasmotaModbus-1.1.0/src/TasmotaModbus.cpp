@@ -21,10 +21,7 @@
 
 TasmotaModbus::TasmotaModbus(int receive_pin, int transmit_pin) : TasmotaSerial(receive_pin, transmit_pin, 1)
 {
-}
-
-TasmotaModbus::~TasmotaModbus()
-{
+  mb_address = 0;
 }
 
 uint16_t CalculateCRC(uint8_t *frame, uint8_t num)
@@ -46,11 +43,11 @@ uint16_t CalculateCRC(uint8_t *frame, uint8_t num)
   return crc;
 }
 
-int TasmotaModbus::Begin(long speed)
+int TasmotaModbus::Begin(long speed, int stop_bits)
 {
   int result = 0;
 
-  if (begin(speed)) {
+  if (begin(speed, stop_bits)) {
     result = 1;
     if (hardwareSerial()) { result = 2; }
   }
@@ -61,7 +58,9 @@ void TasmotaModbus::Send(uint8_t device_address, uint8_t function_code, uint16_t
 {
   uint8_t frame[8];
 
-  frame[0] = device_address;  // 0xFE default device address or dedicated like 0x01
+  mb_address = device_address;  // Save address for receipt check
+
+  frame[0] = mb_address;        // 0xFE default device address or dedicated like 0x01
   frame[1] = function_code;
   frame[2] = (uint8_t)(start_address >> 8);
   frame[3] = (uint8_t)(start_address);
@@ -85,10 +84,17 @@ uint8_t TasmotaModbus::ReceiveBuffer(uint8_t *buffer, uint8_t register_count)
   uint8_t len = 0;
   uint32_t last = millis();
   while ((available() > 0) && (len < (register_count *2) + 5) && (millis() - last < 10)) {
-    buffer[len++] = (uint8_t)read();
-    if (3 == len) {
-      if (buffer[1] & 0x80) {  // fe 84 02 f2 f1
-        return buffer[2];      // 1 = Illegal Function, 2 = Illegal Address, 3 = Illegal Data, 4 = Slave Error
+    uint8_t data = (uint8_t)read();
+    if (!len) {                  // Skip leading data as provided by hardware serial
+      if (mb_address == data) {
+        buffer[len++] = data;
+      }
+    } else {
+      buffer[len++] = data;
+      if (3 == len) {
+        if (buffer[1] & 0x80) {  // 01 84 02 f2 f1
+          return buffer[2];      // 1 = Illegal Function, 2 = Illegal Address, 3 = Illegal Data, 4 = Slave Error
+        }
       }
     }
     last = millis();

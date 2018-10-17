@@ -86,8 +86,8 @@ enum UserSelectablePins {
   GPIO_LED4_INV,
   GPIO_MHZ_TXD,        // MH-Z19 Serial interface
   GPIO_MHZ_RXD,        // MH-Z19 Serial interface
-  GPIO_PZEM_TX,        // PZEM004T Serial interface
-  GPIO_PZEM_RX,        // PZEM004T Serial interface
+  GPIO_PZEM0XX_TX,     // PZEM0XX Serial interface
+  GPIO_PZEM004_RX,     // PZEM004T Serial interface
   GPIO_SAIR_TX,        // SenseAir Serial interface
   GPIO_SAIR_RX,        // SenseAir Serial interface
   GPIO_SPI_CS,         // SPI Chip Select
@@ -122,8 +122,8 @@ enum UserSelectablePins {
   GPIO_CNTR2_NP,
   GPIO_CNTR3_NP,
   GPIO_CNTR4_NP,
-  GPIO_PZEM2_TX,       // PZEM-003,014,016,017 Serial interface
-  GPIO_PZEM2_RX,       // PZEM-003,014,016,017 Serial interface
+  GPIO_PZEM016_RX,     // PZEM-014,016 Serial Modbus interface
+  GPIO_PZEM017_RX,     // PZEM-003,017 Serial Modbus interface
   GPIO_MP3_DFR562,     // RB-DFR-562, DFPlayer Mini MP3 Player
   GPIO_SDS0X1_TX,      // Nova Fitness SDS011 Serial interface
   GPIO_HX711_SCK,      // HX711 Load Cell clock
@@ -168,7 +168,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_LED "1|" D_SENSOR_LED "2|" D_SENSOR_LED "3|" D_SENSOR_LED "4|"
   D_SENSOR_LED "1i|" D_SENSOR_LED "2i|" D_SENSOR_LED "3i|" D_SENSOR_LED "4i|"
   D_SENSOR_MHZ_TX "|" D_SENSOR_MHZ_RX "|"
-  D_SENSOR_PZEM_TX "|" D_SENSOR_PZEM_RX "|"
+  D_SENSOR_PZEM0XX_TX "|" D_SENSOR_PZEM004_RX "|"
   D_SENSOR_SAIR_TX "|" D_SENSOR_SAIR_RX "|"
   D_SENSOR_SPI_CS "|" D_SENSOR_SPI_DC "|" D_SENSOR_BACKLIGHT "|"
   D_SENSOR_PMS5003 "|" D_SENSOR_SDS0X1_RX "|"
@@ -180,7 +180,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_SWITCH "1n|" D_SENSOR_SWITCH "2n|" D_SENSOR_SWITCH "3n|" D_SENSOR_SWITCH "4n|" D_SENSOR_SWITCH "5n|" D_SENSOR_SWITCH "6n|" D_SENSOR_SWITCH "7n|" D_SENSOR_SWITCH "8n|"
   D_SENSOR_BUTTON "1n|" D_SENSOR_BUTTON "2n|" D_SENSOR_BUTTON "3n|" D_SENSOR_BUTTON "4n|"
   D_SENSOR_COUNTER "1n|" D_SENSOR_COUNTER "2n|" D_SENSOR_COUNTER "3n|" D_SENSOR_COUNTER "4n|"
-  D_SENSOR_PZEM_TX "|" D_SENSOR_PZEM_RX "|"
+  D_SENSOR_PZEM016_RX "|" D_SENSOR_PZEM017_RX "|"
   D_SENSOR_DFR562 "|" D_SENSOR_SDS0X1_TX "|"
   D_SENSOR_HX711_SCK "|" D_SENSOR_HX711_DAT;
 
@@ -354,10 +354,10 @@ const uint8_t kGpioNiceList[GPIO_SENSOR_END] PROGMEM = {
   GPIO_SAIR_RX,        // SenseAir Serial interface
   GPIO_SDS0X1_TX,      // Nova Fitness SDS011 Serial interface
   GPIO_SDS0X1_RX,      // Nova Fitness SDS011 Serial interface
-  GPIO_PZEM_TX,        // PZEM004T Serial interface
-  GPIO_PZEM_RX,        // PZEM004T Serial interface
-  GPIO_PZEM2_TX,       // PZEM-003,014,016,017 Serial interface
-  GPIO_PZEM2_RX,       // PZEM-003,014,016,017 Serial interface
+  GPIO_PZEM0XX_TX,     // PZEM0XX Serial interface
+  GPIO_PZEM004_RX,     // PZEM004T Serial interface
+  GPIO_PZEM016_RX,     // PZEM-014,016 Serial Modbus interface
+  GPIO_PZEM017_RX,     // PZEM-003,017 Serial Modbus interface
   GPIO_SDM120_TX,      // SDM120 Serial interface
   GPIO_SDM120_RX,      // SDM120 Serial interface
   GPIO_SDM630_TX,      // SDM630 Serial interface

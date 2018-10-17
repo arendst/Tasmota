@@ -28,9 +28,9 @@
 class TasmotaModbus : public TasmotaSerial {
   public:
     TasmotaModbus(int receive_pin, int transmit_pin);
-    ~TasmotaModbus();
+    virtual ~TasmotaModbus() {}
 
-    int Begin(long speed = TM_MODBUS_BAUDRATE);
+    int Begin(long speed = TM_MODBUS_BAUDRATE, int stop_bits = 1);
 
     void Send(uint8_t device_address, uint8_t function_code, uint16_t start_address, uint16_t register_count);
 
@@ -49,6 +49,9 @@ class TasmotaModbus : public TasmotaSerial {
     uint8_t ReceiveBuffer(uint8_t *buffer, uint8_t register_count);
     uint8_t Receive16BitRegister(uint16_t *value);
     uint8_t Receive32BitRegister(float *value);
+
+  private:
+    uint8_t mb_address;
 };
 
 #endif  // TasmotaModbus_h
