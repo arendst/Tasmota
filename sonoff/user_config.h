@@ -378,6 +378,9 @@
 
 #define USE_RF_FLASH                             // Add support for flashing the EFM8BB1 chip on the Sonoff RF Bridge. C2CK must be connected to GPIO4, C2D to GPIO5 on the PCB (+3k code)
 
+#define USE_TUYA_DIMMER                          // Add support for Tuya Serial Dimmer
+  #define TUYA_DIMMER_ID       3                 // Default dimmer Id
+
 /*********************************************************************************************\
  * Debug features are only supported in development branch
 \*********************************************************************************************/

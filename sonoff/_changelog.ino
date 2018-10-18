@@ -3,6 +3,7 @@
  * Update TasmotaModbus and TasmotaSerial libraries for support of serial 8N2 communication
  * Add support for Pzem-003/017 DC Energy monitoring module (#3694)
  * Change support for Pzem-014/016 AC Energy monitoring module (#3694)
+ * Rewrite Tuya Dimmer code
  *
  * 6.2.1.16 20181015
  * Add TasmotaModbus library for very basic modbus wrapper for TasmotaSerial

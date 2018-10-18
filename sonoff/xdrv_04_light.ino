@@ -343,37 +343,6 @@ void LightMy92x1Duty(uint8_t duty_r, uint8_t duty_g, uint8_t duty_b, uint8_t dut
   os_delay_us(12);                      // TStop > 12us.
 }
 
-// *************** Tuya Dimmer Serial Comms
-void LightSerialDuty(uint8_t duty)
-{
-  if (duty > 0 && !tuya_ignore_dim ) {
-    if (duty < 25) {
-      duty = 25;  // dimming acts odd below 25(10%) - this mirrors the threshold set on the faceplate itself
-    }
-    Serial.write(0x55); // Tuya header 55AA
-    Serial.write(0xAA);
-    Serial.write(0x00); // version 00
-    Serial.write(0x06); // Tuya command 06 - send order
-    Serial.write(0x00);
-    Serial.write(0x08); // following data length 0x08
-    Serial.write(0x03); // dimmer id
-    Serial.write(0x02); // type=value
-    Serial.write(0x00); // length hi
-    Serial.write(0x04); // length low
-    Serial.write(0x00); // 
-    Serial.write(0x00); // 
-    Serial.write(0x00); // 
-    Serial.write( duty ); // dim value (0-255)
-    Serial.write( byte(22 + duty) ); // checksum:sum of all bytes in packet mod 256
-    Serial.flush();
-    snprintf_P(log_data, sizeof(log_data), PSTR( "TYA: Send Serial Packet Dim Value=%d"), duty);
-    AddLog(LOG_LEVEL_DEBUG);
-  } else {
-    tuya_ignore_dim = false;  // reset flag
-    snprintf_P(log_data, sizeof(log_data), PSTR( "TYA: Send Dim Level skipped due to 0 or already set. Value=%d"), duty);
-    AddLog(LOG_LEVEL_DEBUG);
-  }
-}
 /********************************************************************************************/
 
 void LightInit()
@@ -424,7 +393,7 @@ void LightInit()
 #endif  // USE_WS2812 ************************************************************************
   else if (LT_SERIAL == light_type) {
     light_subtype = LST_SINGLE;
-  }  
+  }
   else {
     light_pdi_pin = pin[GPIO_DI];
     light_pdcki_pin = pin[GPIO_DCKI];
@@ -855,9 +824,11 @@ void LightAnimate()
       if (light_type > LT_WS2812) {
         LightMy92x1Duty(cur_col[0], cur_col[1], cur_col[2], cur_col[3], cur_col[4]);
       }
+#ifdef USE_TUYA_DIMMER
       if (light_type == LT_SERIAL) {
         LightSerialDuty(cur_col[0]);
       }
+#endif  // USE_TUYA_DIMMER
     }
   }
 }
