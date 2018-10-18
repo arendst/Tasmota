@@ -55,7 +55,7 @@ See [Tasmota ESP/Arduino library version related issues](https://github.com/aren
 | USE_SUNRISE                    | - | - | x | x | x |
 | USE_RULES                      | - | - | x | x | x |
 |                                |   |   |   |   |   |
-| USE_ADC_VCC                    | x | x | x | x | x |
+| USE_ADC_VCC                    | x | x | x | x |   |
 | USE_DS18B20                    | - | - | - | - | - | Single sensor
 | USE_DS18x20                    | - | x | x | x | x | Multiple sensors
 | USE_DS18x20_LEGACY             | - | - | - | - | - | Multiple sensors
