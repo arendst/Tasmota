@@ -419,6 +419,11 @@ void SettingsDefaultSet2()
   // Module
 //  Settings.flag.interlock = 0;
   Settings.module = MODULE;
+#ifdef TUYA_DIMMER_ID
+  Settings.tuya_dimmer_id = TUYA_DIMMER_ID;
+#else
+  Settings.tuya_dimmer_id = 3;
+#endif
 //  for (byte i = 0; i < MAX_GPIO_PIN; i++) { Settings.my_gp.io[i] = 0; }
   strlcpy(Settings.friendlyname[0], FRIENDLY_NAME, sizeof(Settings.friendlyname[0]));
   strlcpy(Settings.friendlyname[1], FRIENDLY_NAME"2", sizeof(Settings.friendlyname[1]));
