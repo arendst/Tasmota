@@ -2261,14 +2261,14 @@ void TuyaPacketProcess()
   if (serial_in_byte_counter == 7 && serial_in_buffer[3] == 14 ) {  // heartbeat packet
     AddLog_P(LOG_LEVEL_DEBUG, PSTR("TYA: Heartbeat"));
   }
-  if (serial_in_byte_counter == 12 && serial_in_buffer[3] == 7 && serial_in_buffer[5] == 5) {  // on/off packet
+  else if (serial_in_byte_counter == 12 && serial_in_buffer[3] == 7 && serial_in_buffer[5] == 5) {  // on/off packet
     snprintf_P(log_data, sizeof(log_data),PSTR("TYA: Rcvd - %s State"),serial_in_buffer[10]?"On":"Off");
     AddLog(LOG_LEVEL_DEBUG);
     if((power || Settings.light_dimmer > 0) && (power != serial_in_buffer[10])) {
       ExecuteCommandPower(1, serial_in_buffer[10], SRC_SWITCH);  // send SRC_SWITCH? to use as flag to prevent loop from inbound states from faceplate interaction
     }
   }
-  if (serial_in_byte_counter == 15 && serial_in_buffer[3] == 7 && serial_in_buffer[5] == 8) {  // dim packet
+  else if (serial_in_byte_counter == 15 && serial_in_buffer[3] == 7 && serial_in_buffer[5] == 8) {  // dim packet
     snprintf_P(log_data, sizeof(log_data), PSTR("TYA: Rcvd Dim State=%d"), serial_in_buffer[13]);
     AddLog(LOG_LEVEL_DEBUG);
     tuya_new_dim = round(serial_in_buffer[13] * (100. / 255.));
