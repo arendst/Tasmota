@@ -120,7 +120,7 @@ void TuyaPacketProcess()
     AddLog(LOG_LEVEL_DEBUG);
 
     tuya_new_dim = round(serial_in_buffer[13] * (100. / 255.));
-    if((power || !Settings.light_dimmer ) && (tuya_new_dim > 0) && (abs(tuya_new_dim - Settings.light_dimmer) > 2)) {
+    if((power) && (tuya_new_dim > 0) && (abs(tuya_new_dim - Settings.light_dimmer) > 2)) {
 
       snprintf_P(log_data, sizeof(log_data), PSTR("TYA: Send CMND_DIMMER=%d"), tuya_new_dim );
       AddLog(LOG_LEVEL_DEBUG);
