@@ -1102,14 +1102,17 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_REL1_INV,    // GPIO16 Green Led 1 (0 = On, 1 = Off)
   },
   { "OBI Socket",      // OBI socket (ESP8266) - https://www.obi.de/hausfunksteuerung/wifi-stecker-schuko/p/2291706
-     0, 0, 0, 0,
-     GPIO_LED1,        // GPIO04 LED on top and in switch button
-     GPIO_REL1,        // GPIO05 Relay 1 (0 = Off, 1 = On)
+     GPIO_USER,        // GPIO00
+     0,0,0,
+     GPIO_LED1,        // GPIO04 Blue LED
+     GPIO_REL1,        // GPIO05 (Relay OFF, but used as Relay Switch)
      0, 0, 0, 0, 0, 0, // Flash connection
-     GPIO_LED2,        // GPIO12
-     0,                // GPIO13
-     GPIO_KEY1,        // GPIO14 switch button
-     0, 0, 0
+     GPIO_LED2,        // GPIO12 (Relay ON, but set to LOW, so we can switch with GPIO05)
+     GPIO_USER,        // GPIO13
+     GPIO_KEY1,        // GPIO14 Button
+     0,
+     GPIO_USER,        // GPIO16
+     GPIO_USER         // Analog input
   },
   { "Teckin",          // https://www.amazon.de/gp/product/B07D5V139R
      0,
