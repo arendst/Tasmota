@@ -1112,7 +1112,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_KEY1,        // GPIO14 Button
      0,
      GPIO_USER,        // GPIO16
-     GPIO_USER         // Analog input
+     GPIO_ADC0         // ADC0   A0 Analog input
   },
   { "Teckin",          // https://www.amazon.de/gp/product/B07D5V139R
      0,
