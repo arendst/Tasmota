@@ -231,6 +231,22 @@ void TuyaInit()
   Serial.flush();
 }
 
+boolean TuyaButtonPressed()
+{
+  if ((PRESSED == XdrvMailbox.payload) && (NOT_PRESSED == lastbutton[XdrvMailbox.index])) {
+
+    snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION D_BUTTON "%d " D_LEVEL_10), XdrvMailbox.index +1);
+    AddLog(LOG_LEVEL_DEBUG);
+
+    if (!Settings.flag.button_restrict) {
+      char scmnd[20];
+      snprintf_P(scmnd, sizeof(scmnd), D_CMND_WIFICONFIG " %d", 2);
+      ExecuteCommand(scmnd, SRC_BUTTON);
+    }
+  }
+  return true;  // Serviced here
+}
+
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
@@ -252,8 +268,11 @@ boolean Xdrv16(byte function)
       case FUNC_LOOP:
         TuyaSerialInput();
         break;
-      case FUNC_SET_POWER:
+      case FUNC_SET_DEVICE_POWER:
         result = TuyaSetPower();
+        break;
+      case FUNC_BUTTON_PRESSED:
+        result = TuyaButtonPressed();
         break;
     }
   }

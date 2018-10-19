@@ -340,9 +340,12 @@ void SetDevicePower(power_t rpower, int source)
   }
 
   XdrvMailbox.index = rpower;
-  XdrvMailbox.payload = source;
-  if (XdrvCall(FUNC_SET_POWER)) {
+  XdrvCall(FUNC_SET_POWER);               // Signal power state
 
+  XdrvMailbox.index = rpower;
+  XdrvMailbox.payload = source;
+  if (XdrvCall(FUNC_SET_DEVICE_POWER)) {  // Set power state and stop if serviced
+    // Serviced
   }
   else if ((SONOFF_DUAL == Settings.module) || (CH4 == Settings.module)) {
     Serial.write(0xA0);
@@ -1703,7 +1706,12 @@ void ButtonHandler()
     }
 
     if (button_present) {
-      if (SONOFF_4CHPRO == Settings.module) {
+      XdrvMailbox.index = button_index;
+      XdrvMailbox.payload = button;
+      if (XdrvCall(FUNC_BUTTON_PRESSED)) {
+        // Serviced
+      }
+      else if (SONOFF_4CHPRO == Settings.module) {
         if (holdbutton[button_index]) { holdbutton[button_index]--; }
 
         boolean button_pressed = false;
@@ -1724,18 +1732,6 @@ void ButtonHandler()
           }
         }
       }
-#ifdef USE_TUYA_DIMMER
-      else if (TUYA_DIMMER == Settings.module) {
-        if ((PRESSED == button) && (NOT_PRESSED == lastbutton[button_index])) {
-          snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION D_BUTTON "%d " D_LEVEL_10), button_index +1);
-          AddLog(LOG_LEVEL_DEBUG);
-          if (!Settings.flag.button_restrict) {
-            snprintf_P(scmnd, sizeof(scmnd), D_CMND_WIFICONFIG " %d", 2);
-            ExecuteCommand(scmnd, SRC_BUTTON);
-          }
-        }
-      }
-#endif
       else {
         if ((PRESSED == button) && (NOT_PRESSED == lastbutton[button_index])) {
           if (Settings.flag.button_single) {                   // Allow only single button press for immediate action
@@ -2462,6 +2458,7 @@ void GpioInit()
   }
 
   if (XdrvCall(FUNC_MODULE_INIT)) {
+    // Serviced
   }
   else if (SONOFF_DUAL == Settings.module) {
     Settings.flag.mqtt_serial = 0;

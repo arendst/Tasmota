@@ -1,4 +1,7 @@
-/* 6.2.1.17 20181017
+/* 6.2.1.18 20181019
+ * Add more API callbacks and document API.md
+ *
+ * 6.2.1.17 20181017
  * Enable updated non-blocking PubSubClient as default MQTT client
  * Update TasmotaModbus and TasmotaSerial libraries for support of serial 8N2 communication
  * Add support for Pzem-003/017 DC Energy monitoring module (#3694)
