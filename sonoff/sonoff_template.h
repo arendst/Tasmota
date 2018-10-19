@@ -1107,7 +1107,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_LED1,        // GPIO04 Blue LED
      GPIO_REL1,        // GPIO05 (Relay OFF, but used as Relay Switch)
      0, 0, 0, 0, 0, 0, // Flash connection
-     GPIO_LED4,        // GPIO12 (Relay ON, but set to LOW, so we can switch with GPIO05)
+     GPIO_LED2,        // GPIO12 (Relay ON, but set to LOW, so we can switch with GPIO05)
      GPIO_USER,        // GPIO13
      GPIO_KEY1,        // GPIO14 Button
      0,
