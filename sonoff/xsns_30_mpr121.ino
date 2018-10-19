@@ -365,7 +365,7 @@ void Mpr121Show(struct mpr121 *pS, byte function)
 
 				// Append JSON message string
 				if (FUNC_JSON_APPEND == function) {
-					snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s\"Button%i\":%i,"), mqtt_data, j, BITC(i, j));
+					snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s%s\"Button%i\":%i"), mqtt_data, (i > 0 ? "," : ""), j, BITC(i, j));
 				}
 			}	// for-loop j
 
