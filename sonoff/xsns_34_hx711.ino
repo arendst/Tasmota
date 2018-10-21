@@ -32,25 +32,30 @@
  * - Execute command Sensor34 2 and follow messages shown
 \*********************************************************************************************/
 
-#define XSNS_34            34
+#define XSNS_34             34
 
 #ifndef HX_MAX_WEIGHT
-#define HX_MAX_WEIGHT      20000   // Default max weight in gram
+#define HX_MAX_WEIGHT       20000   // Default max weight in gram
 #endif
 #ifndef HX_REFERENCE
-#define HX_REFERENCE       250     // Default reference weight for calibration in gram
+#define HX_REFERENCE        250     // Default reference weight for calibration in gram
 #endif
 #ifndef HX_SCALE
-#define HX_SCALE           120     // Default result of measured weight / reference weight when scale is 1
+#define HX_SCALE            120     // Default result of measured weight / reference weight when scale is 1
 #endif
 
-#define HX_TIMEOUT         120     // A reading at default 10Hz (pin RATE to Gnd on HX711) can take up to 100 milliseconds
-#define HX_SAMPLES         10      // Number of samples for average calculation
-#define HX_CAL_TIMEOUT     15      // Calibration step window in number of seconds
+#define HX_TIMEOUT          120     // A reading at default 10Hz (pin RATE to Gnd on HX711) can take up to 100 milliseconds
+#define HX_SAMPLES          10      // Number of samples for average calculation
+#define HX_CAL_TIMEOUT      15      // Calibration step window in number of seconds
 
-#define HX_GAIN_128        1       // Channel A, gain factor 128
-#define HX_GAIN_32         2       // Channel B, gain factor 32
-#define HX_GAIN_64         3       // Channel A, gain factor 64
+#define HX_GAIN_128         1       // Channel A, gain factor 128
+#define HX_GAIN_32          2       // Channel B, gain factor 32
+#define HX_GAIN_64          3       // Channel A, gain factor 64
+
+#define D_JSON_WEIGHT_REF   "WeightRef"
+#define D_JSON_WEIGHT_CAL   "WeightCal"
+#define D_JSON_WEIGHT_MAX   "WeightMax"
+#define D_JSON_WEIGHT_ITEM  "WeightItem"
 
 enum HxCalibrationSteps { HX_CAL_END, HX_CAL_LIMBO, HX_CAL_FINISH, HX_CAL_FAIL, HX_CAL_DONE, HX_CAL_FIRST, HX_CAL_RESET, HX_CAL_START };
 
@@ -169,7 +174,7 @@ bool HxCommand()
       hx_calibrate_timer = 1;
       HxCalibrationStateTextJson(3);
       break;
-    case 3:  // WeightSet to user reference
+    case 3:  // WeightRef to user reference
       if (strstr(XdrvMailbox.data, ",")) {
         Settings.weight_reference = strtol(subStr(sub_string, XdrvMailbox.data, ",", 2), NULL, 10);
       }
@@ -201,7 +206,7 @@ bool HxCommand()
   if (show_parms) {
     char item[10];
     dtostrfd((float)Settings.weight_item / 10, 1, item);
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"Sensor34\":{\"WeightSet\":%d,\"WeightCal\":%d,\"WeightMax\":%d,\"WeightItem\":%s}}"),
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"Sensor34\":{\"" D_JSON_WEIGHT_REF "\":%d,\"" D_JSON_WEIGHT_CAL "\":%d,\"" D_JSON_WEIGHT_MAX "\":%d,\"" D_JSON_WEIGHT_ITEM "\":%s}}"),
       Settings.weight_reference, Settings.weight_calibration, Settings.weight_max * 1000, item);
   }
 
@@ -353,6 +358,109 @@ void HxShow(boolean json)
   }
 }
 
+#ifdef USE_WEBSERVER
+#ifdef USE_HX711_GUI
+/*********************************************************************************************\
+ * Optional GUI
+\*********************************************************************************************/
+
+#define WEB_HANDLE_HX711 "s34"
+
+const char S_CONFIGURE_HX711[] PROGMEM = D_CONFIGURE_HX711;
+
+const char HTTP_BTN_MENU_MAIN_HX711[] PROGMEM =
+  "<br/><form action='" WEB_HANDLE_HX711 "' method='get'><button name='reset'>" D_RESET_HX711 "</button></form>";
+
+const char HTTP_BTN_MENU_HX711[] PROGMEM =
+  "<br/><form action='" WEB_HANDLE_HX711 "' method='get'><button>" D_CONFIGURE_HX711 "</button></form>";
+
+const char HTTP_FORM_HX711[] PROGMEM =
+  "<fieldset><legend><b>&nbsp;" D_CALIBRATION "&nbsp;</b></legend>"
+  "<form method='post' action='" WEB_HANDLE_HX711 "'>"
+  "<br/><b>" D_REFERENCE_WEIGHT "</b> (" D_UNIT_KILOGRAM ")<br/><input type='number' step='0.001' id='p1' name='p1' placeholder='0' value='{1'><br/>"
+  "<br/><button name='calibrate' type='submit'>" D_CALIBRATE "</button><br/>"
+  "</form>"
+  "</fieldset><br/><br/>"
+
+  "<fieldset><legend><b>&nbsp;" D_HX711_PARAMETERS "&nbsp;</b></legend>"
+  "<form method='post' action='" WEB_HANDLE_HX711 "'>"
+  "<br/><b>" D_ITEM_WEIGHT "</b> (" D_UNIT_KILOGRAM ")<br/><input type='number' max='6.5535' step='0.0001' id='p2' name='p2' placeholder='0.0' value='{2'><br/>";
+
+void HandleHxAction()
+{
+  if (HttpUser()) { return; }
+  if (!WebAuthenticate()) { return WebServer->requestAuthentication(); }
+  AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_CONFIGURE_HX711);
+
+  if (WebServer->hasArg("save")) {
+    HxSaveSettings();
+    HandleConfiguration();
+    return;
+  }
+
+  char tmp[100];
+
+  if (WebServer->hasArg("reset")) {
+    snprintf_P(tmp, sizeof(tmp), PSTR("Sensor34 1"));  // Reset
+    ExecuteWebCommand(tmp, SRC_WEBGUI);
+
+    HandleRoot();  // Return to main screen
+    return;
+  }
+
+  if (WebServer->hasArg("calibrate")) {
+    WebGetArg("p1", tmp, sizeof(tmp));
+    Settings.weight_reference = (!strlen(tmp)) ? 0 : (unsigned long)(CharToDouble(tmp) * 1000);
+
+    HxLogUpdates();
+
+    snprintf_P(tmp, sizeof(tmp), PSTR("Sensor34 2"));  // Start calibration
+    ExecuteWebCommand(tmp, SRC_WEBGUI);
+
+    HandleRoot();  // Return to main screen
+    return;
+  }
+
+  String page = FPSTR(HTTP_HEAD);
+  page.replace(F("{v}"), FPSTR(D_CONFIGURE_HX711));
+  page += FPSTR(HTTP_HEAD_STYLE);
+  page += FPSTR(HTTP_FORM_HX711);
+  dtostrfd((float)Settings.weight_reference / 1000, 3, tmp);
+  page.replace("{1", String(tmp));
+  dtostrfd((float)Settings.weight_item / 10000, 4, tmp);
+  page.replace("{2", String(tmp));
+
+  page += FPSTR(HTTP_FORM_END);
+  page += FPSTR(HTTP_BTN_CONF);
+  ShowPage(page);
+}
+
+void HxSaveSettings()
+{
+  char tmp[100];
+
+  WebGetArg("p2", tmp, sizeof(tmp));
+  Settings.weight_item = (!strlen(tmp)) ? 0 : (uint16_t)(CharToDouble(tmp) * 10000);
+
+  HxLogUpdates();
+}
+
+void HxLogUpdates()
+{
+  char weigth_ref_chr[10];
+  char weigth_item_chr[10];
+
+  dtostrfd((float)Settings.weight_reference / 1000, Settings.flag2.weight_resolution, weigth_ref_chr);
+  dtostrfd((float)Settings.weight_item / 10000, 4, weigth_item_chr);
+
+  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_WIFI D_JSON_WEIGHT_REF " %s, " D_JSON_WEIGHT_ITEM " %s"),
+    weigth_ref_chr, weigth_item_chr);
+  AddLog(LOG_LEVEL_INFO);
+}
+
+#endif  // USE_HX711_GUI
+#endif  // USE_WEBSERVER
+
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
@@ -381,6 +489,17 @@ boolean Xsns34(byte function)
       case FUNC_WEB_APPEND:
         HxShow(0);
         break;
+#ifdef USE_HX711_GUI
+      case FUNC_WEB_ADD_MAIN_BUTTON:
+        strncat_P(mqtt_data, HTTP_BTN_MENU_MAIN_HX711, sizeof(mqtt_data));
+        break;
+      case FUNC_WEB_ADD_BUTTON:
+        strncat_P(mqtt_data, HTTP_BTN_MENU_HX711, sizeof(mqtt_data));
+        break;
+      case FUNC_WEB_ADD_HANDLER:
+        WebServer->on("/" WEB_HANDLE_HX711, HandleHxAction);
+        break;
+#endif  // USE_HX711_GUI
 #endif  // USE_WEBSERVER
     }
   }

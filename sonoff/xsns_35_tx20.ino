@@ -38,10 +38,10 @@ extern "C" {
 #ifdef USE_WEBSERVER
 
 const char HTTP_SNS_TX20[] PROGMEM = "%s"
-   "{s} " D_TX20_WIND_SPEED "{m}%s " D_UNIT_KILOMETER_PER_HOUR "{e}"
-   "{s} " D_TX20_WIND_SPEED_AVG "{m}%s " D_UNIT_KILOMETER_PER_HOUR "{e}"
-   "{s} " D_TX20_WIND_SPEED_MAX "{m}%s " D_UNIT_KILOMETER_PER_HOUR "{e}"
-   "{s} " D_TX20_WIND_DIRECTION "{m}%s {e}";
+   "{s}TX20 " D_TX20_WIND_SPEED "{m}%s " D_UNIT_KILOMETER_PER_HOUR "{e}"
+   "{s}TX20 " D_TX20_WIND_SPEED_AVG "{m}%s " D_UNIT_KILOMETER_PER_HOUR "{e}"
+   "{s}TX20 " D_TX20_WIND_SPEED_MAX "{m}%s " D_UNIT_KILOMETER_PER_HOUR "{e}"
+   "{s}TX20 " D_TX20_WIND_DIRECTION "{m}%s{e}";
 
 #endif  // USE_WEBSERVER
 
