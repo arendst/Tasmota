@@ -2,6 +2,7 @@
  * Add more API callbacks and document API.md
  * Add support for La Crosse TX20 Anemometer (#2654, #3146)
  * Add optional HX711 scale interface to web GUI demonstrating easy GUI plug-in
+ * Resize HX711 weight_item field from 16 bit to 32 bit
  *
  * 6.2.1.17 20181017
  * Enable updated non-blocking PubSubClient as default MQTT client

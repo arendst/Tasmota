@@ -195,7 +195,7 @@ bool HxCommand()
       break;
     case 6:  // WeightItem
       if (strstr(XdrvMailbox.data, ",")) {
-        Settings.weight_item = (uint16_t)(CharToDouble(subStr(sub_string, XdrvMailbox.data, ",", 2)) * 10);
+        Settings.weight_item = (unsigned long)(CharToDouble(subStr(sub_string, XdrvMailbox.data, ",", 2)) * 10);
       }
       show_parms = true;
       break;
@@ -440,7 +440,7 @@ void HxSaveSettings()
   char tmp[100];
 
   WebGetArg("p2", tmp, sizeof(tmp));
-  Settings.weight_item = (!strlen(tmp)) ? 0 : (uint16_t)(CharToDouble(tmp) * 10000);
+  Settings.weight_item = (!strlen(tmp)) ? 0 : (unsigned long)(CharToDouble(tmp) * 10000);
 
   HxLogUpdates();
 }
