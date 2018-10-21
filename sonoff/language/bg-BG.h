@@ -525,7 +525,6 @@
 #define D_SENSOR_HX711_SCK "HX711 SCK"
 #define D_SENSOR_HX711_DAT "HX711 DAT"
 #define D_SENSOR_TX20_TX "TX20"
-#define D_SENSOR_TX20_TX "TX20"
 
 // Units
 #define D_UNIT_AMPERE "A"
