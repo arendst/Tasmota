@@ -461,6 +461,13 @@
 #define D_HX_CAL_REFERENCE "Plaats ijkgewicht"
 #define D_HX_CAL_DONE "Ge-ijkt"
 #define D_HX_CAL_FAIL "Ijken is mislukt"
+#define D_RESET_HX711 "Nulstelling weegschaal"
+#define D_CONFIGURE_HX711 "Configureer Weegschaal"
+#define D_HX711_PARAMETERS "Weegschaal parameters"
+#define D_ITEM_WEIGHT "Gewicht van onderdeel"
+#define D_REFERENCE_WEIGHT "Ijkgewicht"
+#define D_CALIBRATE "Ijken"
+#define D_CALIBRATION "Ijken"
 
 //xsns_35_tx20.ino
 #define D_TX20_WIND_DIRECTION "Windrichting"

@@ -1,6 +1,7 @@
 /* 6.2.1.18 20181019
  * Add more API callbacks and document API.md
  * Add support for La Crosse TX20 Anemometer (#2654, #3146)
+ * Add optional HX711 scale interface to web GUI demonstrating easy GUI plug-in
  *
  * 6.2.1.17 20181017
  * Enable updated non-blocking PubSubClient as default MQTT client

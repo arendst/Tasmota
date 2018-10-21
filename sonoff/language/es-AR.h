@@ -461,6 +461,13 @@
 #define D_HX_CAL_REFERENCE "Poner Peso de Referencia"
 #define D_HX_CAL_DONE "Calibrado"
 #define D_HX_CAL_FAIL "Falló Calibración"
+#define D_RESET_HX711 "Reset Scale"
+#define D_CONFIGURE_HX711 "Configure Scale"
+#define D_HX711_PARAMETERS "Scale parameters"
+#define D_ITEM_WEIGHT "Item weight"
+#define D_REFERENCE_WEIGHT "Reference weigth"
+#define D_CALIBRATE "Calibrate"
+#define D_CALIBRATION "Calibration"
 
 //xsns_35_tx20.ino
 #define D_TX20_WIND_DIRECTION "Wind Direction"
