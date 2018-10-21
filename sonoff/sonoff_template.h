@@ -128,6 +128,7 @@ enum UserSelectablePins {
   GPIO_SDS0X1_TX,      // Nova Fitness SDS011 Serial interface
   GPIO_HX711_SCK,      // HX711 Load Cell clock
   GPIO_HX711_DAT,      // HX711 Load Cell data
+  GPIO_TX20_TXD_BLACK,  // TX20 Transmission Pin
   GPIO_SENSOR_END };
 
 // Programmer selectable GPIO functionality offset by user selectable GPIOs
@@ -182,7 +183,8 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_COUNTER "1n|" D_SENSOR_COUNTER "2n|" D_SENSOR_COUNTER "3n|" D_SENSOR_COUNTER "4n|"
   D_SENSOR_PZEM016_RX "|" D_SENSOR_PZEM017_RX "|"
   D_SENSOR_DFR562 "|" D_SENSOR_SDS0X1_TX "|"
-  D_SENSOR_HX711_SCK "|" D_SENSOR_HX711_DAT;
+  D_SENSOR_HX711_SCK "|" D_SENSOR_HX711_DAT "|"
+  D_SENSOR_TX20_TX;
 
 /********************************************************************************************/
 
@@ -363,6 +365,7 @@ const uint8_t kGpioNiceList[GPIO_SENSOR_END] PROGMEM = {
   GPIO_SDM630_TX,      // SDM630 Serial interface
   GPIO_SDM630_RX,      // SDM630 Serial interface
   GPIO_PMS5003,        // Plantower PMS5003 Serial interface
+  GPIO_TX20_TXD_BLACK, // TX20 Transmission Pin
   GPIO_MP3_DFR562      // RB-DFR-562, DFPlayer Mini MP3 Player Serial interface
 };
 

@@ -381,6 +381,8 @@
 #define USE_TUYA_DIMMER                          // Add support for Tuya Serial Dimmer
   #define TUYA_DIMMER_ID       3                 // Default dimmer Id
 
+#define USE_TX20_WIND_SENSOR                     // Add support for La Crosse TX20 anemometer (+2k code)
+
 /*********************************************************************************************\
  * Debug features are only supported in development branch
 \*********************************************************************************************/

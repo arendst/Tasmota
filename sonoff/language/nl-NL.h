@@ -462,6 +462,16 @@
 #define D_HX_CAL_DONE "Ge-ijkt"
 #define D_HX_CAL_FAIL "Ijken is mislukt"
 
+//xsns_35_tx20.ino
+#define D_TX20_WIND_DIRECTION "Windrichting"
+#define D_TX20_WIND_SPEED "Windsnelheid"
+#define D_TX20_WIND_SPEED_AVG "Windsnelheid gemiddeld"
+#define D_TX20_WIND_SPEED_MAX "Windsnelhied maximaal"
+#define D_TX20_NORTH "N"
+#define D_TX20_EAST "E"
+#define D_TX20_SOUTH "S"
+#define D_TX20_WEST "W"
+
 // sonoff_template.h
 #define D_SENSOR_NONE     "Geen"
 #define D_SENSOR_DHT11    "DHT11"
@@ -507,6 +517,7 @@
 #define D_SENSOR_TM1638_STB "TM16 STB"
 #define D_SENSOR_HX711_SCK "HX711 SCK"
 #define D_SENSOR_HX711_DAT "HX711 DAT"
+#define D_SENSOR_TX20_TX "TX20"
 
 // Units
 #define D_UNIT_AMPERE "A"
@@ -515,6 +526,7 @@
 #define D_UNIT_HOUR "h"
 #define D_UNIT_INCREMENTS "inc"
 #define D_UNIT_KILOGRAM "kg"
+#define D_UNIT_KILOMETER_PER_HOUR "kmph"  // or "km/h"
 #define D_UNIT_KILOOHM "kOhm"
 #define D_UNIT_KILOWATTHOUR "kWh"
 #define D_UNIT_LUX "lx"

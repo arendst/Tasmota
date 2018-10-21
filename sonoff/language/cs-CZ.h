@@ -462,6 +462,16 @@
 #define D_HX_CAL_DONE "Zkalibrováno"
 #define D_HX_CAL_FAIL "Chyba kalibrace"
 
+//xsns_35_tx20.ino
+#define D_TX20_WIND_DIRECTION "Wind Direction"
+#define D_TX20_WIND_SPEED "Wind Speed"
+#define D_TX20_WIND_SPEED_AVG "Wind Speed Avg"
+#define D_TX20_WIND_SPEED_MAX "Wind Speed Max"
+#define D_TX20_NORTH "N"
+#define D_TX20_EAST "E"
+#define D_TX20_SOUTH "S"
+#define D_TX20_WEST "W"
+
 // sonoff_template.h
 #define D_SENSOR_NONE     "Není"
 #define D_SENSOR_DHT11    "DHT11"
@@ -515,6 +525,7 @@
 #define D_UNIT_HOUR "hod"
 #define D_UNIT_KILOGRAM "kg"
 #define D_UNIT_INCREMENTS "inc"
+#define D_UNIT_KILOMETER_PER_HOUR "kmph"  // or "km/h"
 #define D_UNIT_KILOOHM "kOhm"
 #define D_UNIT_KILOWATTHOUR "kWh"
 #define D_UNIT_LUX "lx"
