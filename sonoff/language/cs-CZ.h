@@ -461,13 +461,13 @@
 #define D_HX_CAL_REFERENCE "Vložte referenční zátěž"
 #define D_HX_CAL_DONE "Zkalibrováno"
 #define D_HX_CAL_FAIL "Chyba kalibrace"
-#define D_RESET_HX711 "Reset Scale"
-#define D_CONFIGURE_HX711 "Configure Scale"
-#define D_HX711_PARAMETERS "Scale parameters"
-#define D_ITEM_WEIGHT "Item weight"
-#define D_REFERENCE_WEIGHT "Reference weigth"
-#define D_CALIBRATE "Calibrate"
-#define D_CALIBRATION "Calibration"
+#define D_RESET_HX711 "Reset váhy"
+#define D_CONFIGURE_HX711 "Konfigurace váhy"
+#define D_HX711_PARAMETERS "Parametry váhy"
+#define D_ITEM_WEIGHT "Vlastní hmotnost"
+#define D_REFERENCE_WEIGHT "Referenční hmotnost"
+#define D_CALIBRATE "Kalibruj"
+#define D_CALIBRATION "Kalibrace"
 
 //xsns_35_tx20.ino
 #define D_TX20_WIND_DIRECTION "Směr větru"
@@ -524,6 +524,7 @@
 #define D_SENSOR_TM1638_STB "TM16 STB"
 #define D_SENSOR_HX711_SCK "HX711 SCK"
 #define D_SENSOR_HX711_DAT "HX711 DAT"
+#define D_SENSOR_TX20_TX "TX20"
 
 // Units
 #define D_UNIT_AMPERE "A"
