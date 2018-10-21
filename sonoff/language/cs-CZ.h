@@ -461,6 +461,13 @@
 #define D_HX_CAL_REFERENCE "Vložte referenční zátěž"
 #define D_HX_CAL_DONE "Zkalibrováno"
 #define D_HX_CAL_FAIL "Chyba kalibrace"
+#define D_RESET_HX711 "Reset váhy"
+#define D_CONFIGURE_HX711 "Konfigurace váhy"
+#define D_HX711_PARAMETERS "Parametry váhy"
+#define D_ITEM_WEIGHT "Vlastní hmotnost"
+#define D_REFERENCE_WEIGHT "Referenční hmotnost"
+#define D_CALIBRATE "Kalibruj"
+#define D_CALIBRATION "Kalibrace"
 
 //xsns_35_tx20.ino
 #define D_TX20_WIND_DIRECTION "Směr větru"
