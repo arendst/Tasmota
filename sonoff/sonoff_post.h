@@ -148,6 +148,8 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #undef USE_TM1638                             // Disable support for TM1638 switches copying Switch1 .. Switch8
 #undef USE_HX711                              // Disable support for HX711 load cell
 #undef USE_RF_FLASH                           // Disable support for flashing the EFM8BB1 chip on the Sonoff RF Bridge. C2CK must be connected to GPIO4, C2D to GPIO5 on the PCB
+#undef USE_TUYA_DIMMER                        // Disable support for Tuya Serial Dimmer
+#undef USE_TX20_WIND_SENSOR                   // Disable support for La Crosse TX20 anemometer
 #undef DEBUG_THEO                             // Disable debug code
 #undef USE_DEBUG_DRIVER                       // Disable debug code
 #endif  // USE_CLASSIC
@@ -243,6 +245,8 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #undef USE_TM1638                             // Disable support for TM1638 switches copying Switch1 .. Switch8
 #undef USE_HX711                              // Disable support for HX711 load cell
 #undef USE_RF_FLASH                           // Disable support for flashing the EFM8BB1 chip on the Sonoff RF Bridge. C2CK must be connected to GPIO4, C2D to GPIO5 on the PCB
+#undef USE_TUYA_DIMMER                        // Disable support for Tuya Serial Dimmer
+#undef USE_TX20_WIND_SENSOR                   // Disable support for La Crosse TX20 anemometer
 #undef DEBUG_THEO                             // Disable debug code
 #undef USE_DEBUG_DRIVER                       // Disable debug code
 #endif  // BE_MINIMAL
