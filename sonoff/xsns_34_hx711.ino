@@ -215,6 +215,11 @@ bool HxCommand()
 
 /*********************************************************************************************/
 
+long HxWeight()
+{
+  return (hx_calibrate_step < HX_CAL_FAIL) ? hx_weight : 0;
+}
+
 void HxInit()
 {
   hx_type = 0;

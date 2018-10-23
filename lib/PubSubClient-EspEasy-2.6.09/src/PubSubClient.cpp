@@ -209,6 +209,7 @@ boolean PubSubClient::connect(const char *id, const char *user, const char *pass
 boolean PubSubClient::readByte(uint8_t * result) {
    uint32_t previousMillis = millis();
    while(!_client->available()) {
+     delay(1);  // Add esp8266 de-blocking (Tasmota #790, EspEasy #1943)
      uint32_t currentMillis = millis();
      if(currentMillis - previousMillis >= ((int32_t) MQTT_SOCKET_TIMEOUT * 1000)){
        return false;
@@ -522,9 +523,12 @@ boolean PubSubClient::unsubscribe(const char* topic) {
 void PubSubClient::disconnect() {
     buffer[0] = MQTTDISCONNECT;
     buffer[1] = 0;
-    _client->write(buffer,2);
+    if (_client != NULL) {
+      _client->write(buffer,2);
+      _client->flush();
+      _client->stop();
+    }
     _state = MQTT_DISCONNECTED;
-    _client->stop();
     lastInActivity = lastOutActivity = millis();
 }
 

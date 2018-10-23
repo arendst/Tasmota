@@ -1,4 +1,7 @@
-/* 6.2.1.18 20181019
+/* 6.2.1.19 20181023
+ * Fix header file execution order by renaming user_config.h to my_user_config.h
+ * 
+ * 6.2.1.18 20181019
  * Add more API callbacks and document API.md
  * Add support for La Crosse TX20 Anemometer (#2654, #3146)
  * Add optional HX711 scale interface to web GUI demonstrating easy GUI plug-in

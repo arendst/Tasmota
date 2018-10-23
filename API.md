@@ -8,6 +8,7 @@ The following table lists Callback Ids and their availability for a Driver, Sens
 
 Callback Id                 | Bool | Version  | xdrv | xsns | xnrg | Description
 ----------------------------|------|----------|------|------|------|----------------------------------
+FUNC_SETTINGS_OVERRIDE      |      | 6.2.1.19 |  x   |      |      | Override start-up settings
 FUNC_MODULE_INIT            |  x   | 6.2.1.17 |  x   |      |      | Init module specific parameters
 FUNC_PRE_INIT               |      |          |  x   |      |  x   | Once GPIO have been established
 FUNC_INIT                   |      |          |  x   |  x   |  x   | At end of initialisation
