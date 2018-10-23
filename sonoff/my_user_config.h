@@ -1,5 +1,5 @@
 /*
-  user_config.h - user specific configuration for Sonoff-Tasmota
+  my_user_config.h - user specific configuration for Sonoff-Tasmota
 
   Copyright (C) 2018  Theo Arends
 
@@ -17,8 +17,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef _USER_CONFIG_H_
-#define _USER_CONFIG_H_
+#ifndef _MY_USER_CONFIG_H_
+#define _MY_USER_CONFIG_H_
 
 /*********************************************************************************************\
  * This file consists of TWO sections.
@@ -410,4 +410,4 @@
   #error "Select either USE_MQTT_TLS or USE_WEBSERVER as there is just not enough memory to play with"
 #endif
 
-#endif  // _USER_CONFIG_H_
+#endif  // _MY_USER_CONFIG_H_
