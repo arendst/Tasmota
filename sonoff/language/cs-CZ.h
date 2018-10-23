@@ -461,6 +461,23 @@
 #define D_HX_CAL_REFERENCE "Vložte referenční zátěž"
 #define D_HX_CAL_DONE "Zkalibrováno"
 #define D_HX_CAL_FAIL "Chyba kalibrace"
+#define D_RESET_HX711 "Reset váhy"
+#define D_CONFIGURE_HX711 "Konfigurace váhy"
+#define D_HX711_PARAMETERS "Parametry váhy"
+#define D_ITEM_WEIGHT "Vlastní hmotnost"
+#define D_REFERENCE_WEIGHT "Referenční hmotnost"
+#define D_CALIBRATE "Kalibruj"
+#define D_CALIBRATION "Kalibrace"
+
+//xsns_35_tx20.ino
+#define D_TX20_WIND_DIRECTION "Směr větru"
+#define D_TX20_WIND_SPEED "Rychlost větru"
+#define D_TX20_WIND_SPEED_AVG "Průměrná rychlost větru"
+#define D_TX20_WIND_SPEED_MAX "Maximální rychlost větru"
+#define D_TX20_NORTH "S"
+#define D_TX20_EAST "V"
+#define D_TX20_SOUTH "J"
+#define D_TX20_WEST "Z"
 
 // sonoff_template.h
 #define D_SENSOR_NONE     "Není"
@@ -507,6 +524,7 @@
 #define D_SENSOR_TM1638_STB "TM16 STB"
 #define D_SENSOR_HX711_SCK "HX711 SCK"
 #define D_SENSOR_HX711_DAT "HX711 DAT"
+#define D_SENSOR_TX20_TX "TX20"
 
 // Units
 #define D_UNIT_AMPERE "A"
@@ -515,6 +533,7 @@
 #define D_UNIT_HOUR "hod"
 #define D_UNIT_KILOGRAM "kg"
 #define D_UNIT_INCREMENTS "inc"
+#define D_UNIT_KILOMETER_PER_HOUR "km/h"  // or "km/h"
 #define D_UNIT_KILOOHM "kOhm"
 #define D_UNIT_KILOWATTHOUR "kWh"
 #define D_UNIT_LUX "lx"

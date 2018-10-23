@@ -1013,6 +1013,12 @@ void GetFeatures()
 #ifdef USE_MP3_PLAYER
   feature_drv2 |= 0x00002000;  // xdrv_14_mp3.ino
 #endif
+#ifdef USE_PCA9685
+  feature_drv2 |= 0x00004000;  // xdrv_15_pca9685.ino
+#endif
+#ifdef USE_TUYA_DIMMER
+  feature_drv2 |= 0x00008000;  // xdrv_16_tuyadimmer.ino
+#endif
 
 
 #ifdef NO_EXTRA_4K_HEAP
@@ -1186,6 +1192,11 @@ void GetFeatures()
 #ifdef USE_PZEM_DC
   feature_sns2 |= 0x00001000;  // xnrg_06_pzem_dc.ino
 #endif
+#ifdef USE_TX20_WIND_SENSOR
+  feature_sns2 |= 0x00002000;  // xsns_35_tx20.ino
+#endif
+
+
 
 }
 

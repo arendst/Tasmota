@@ -461,6 +461,23 @@
 #define D_HX_CAL_REFERENCE "Load reference weigth"
 #define D_HX_CAL_DONE "Calibrated"
 #define D_HX_CAL_FAIL "Calibration failed"
+#define D_RESET_HX711 "Reset Scale"
+#define D_CONFIGURE_HX711 "Configure Scale"
+#define D_HX711_PARAMETERS "Scale parameters"
+#define D_ITEM_WEIGHT "Item weight"
+#define D_REFERENCE_WEIGHT "Reference weigth"
+#define D_CALIBRATE "Calibrate"
+#define D_CALIBRATION "Calibration"
+
+//xsns_35_tx20.ino
+#define D_TX20_WIND_DIRECTION "Wind Direction"
+#define D_TX20_WIND_SPEED "Wind Speed"
+#define D_TX20_WIND_SPEED_AVG "Wind Speed Avg"
+#define D_TX20_WIND_SPEED_MAX "Wind Speed Max"
+#define D_TX20_NORTH "N"
+#define D_TX20_EAST "E"
+#define D_TX20_SOUTH "S"
+#define D_TX20_WEST "W"
 
 // sonoff_template.h
 #define D_SENSOR_NONE     "Nenhum"
@@ -507,6 +524,7 @@
 #define D_SENSOR_TM1638_STB "TM16 STB"
 #define D_SENSOR_HX711_SCK "HX711 SCK"
 #define D_SENSOR_HX711_DAT "HX711 DAT"
+#define D_SENSOR_TX20_TX "TX20"
 
 // Units
 #define D_UNIT_AMPERE "A"
@@ -515,6 +533,7 @@
 #define D_UNIT_HOUR "Hr"
 #define D_UNIT_INCREMENTS "inc"
 #define D_UNIT_KILOGRAM "kg"
+#define D_UNIT_KILOMETER_PER_HOUR "kmph"  // or "km/h"
 #define D_UNIT_KILOOHM "kOhm"
 #define D_UNIT_KILOWATTHOUR "kWh"
 #define D_UNIT_LUX "lx"

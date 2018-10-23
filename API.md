@@ -32,9 +32,9 @@ FUNC_RULES_PROCESS          |  x   | 6.0.0    |  x   |      |      | Process spe
 FUNC_SERIAL                 |  x   |          |  x   |      |  x   | Process serial data
 FUNC_FREE_MEM               |      |          |  x   |      |      | Show free memory for debugging
 FUNC_BUTTON_PRESSED         |  x   | 6.2.1.18 |  x   |      |      | When a button is pressed
-FUNC_WEB_ADD_BUTTON         |      | 6.2.1.14 |  x   |      |      | Add a Configuration Button to GUI
-FUNC_WEB_ADD_MAIN_BUTTON    |      | 6.2.1.14 |  x   |      |      | Add a main button to GUI
-FUNC_WEB_ADD_HANDLER        |      | 6.2.1.14 |  x   |      |      | Add a webserver handler
+FUNC_WEB_ADD_BUTTON         |      | 6.2.1.14 |  x   |  x   |      | Add a Configuration Button to GUI
+FUNC_WEB_ADD_MAIN_BUTTON    |      | 6.2.1.14 |  x   |  x   |      | Add a main button to GUI
+FUNC_WEB_ADD_HANDLER        |      | 6.2.1.14 |  x   |  x   |      | Add a webserver handler
 
 ## Display Call back Ids
 The following table lists all Callback Ids for a Display service.
