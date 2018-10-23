@@ -1,5 +1,5 @@
 /*
-  user_config.h - user specific configuration for Sonoff-Tasmota
+  my_user_config.h - user specific configuration for Sonoff-Tasmota
 
   Copyright (C) 2018  Theo Arends
 
@@ -17,8 +17,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef _USER_CONFIG_H_
-#define _USER_CONFIG_H_
+#ifndef _MY_USER_CONFIG_H_
+#define _MY_USER_CONFIG_H_
 
 /*********************************************************************************************\
  * This file consists of TWO sections.
@@ -58,16 +58,15 @@
 #define SAVE_STATE             1                 // [SetOption0] Save changed power state to Flash (0 = disable, 1 = enable)
 
 // -- Wifi ----------------------------------------
-//#define WIFI_IP_ADDRESS        "0.0.0.0"         // [IpAddress1] Set to 0.0.0.0 for using DHCP or IP address
-#define WIFI_IP_ADDRESS        "192.168.1.33"    // [IpAddress1] Set to 0.0.0.0 for using DHCP or IP address
+#define WIFI_IP_ADDRESS        "0.0.0.0"         // [IpAddress1] Set to 0.0.0.0 for using DHCP or IP address
 #define WIFI_GATEWAY           "192.168.1.1"     // [IpAddress2] If not using DHCP set Gateway IP address
 #define WIFI_SUBNETMASK        "255.255.255.0"   // [IpAddress3] If not using DHCP set Network mask
 #define WIFI_DNS               "192.168.1.1"     // [IpAddress4] If not using DHCP set DNS IP address (might be equal to WIFI_GATEWAY)
 
-#define STA_SSID1              "NetWireless"     // [Ssid1] Wifi SSID
-#define STA_PASS1              "wifipass1234"    // [Password1] Wifi password
-#define STA_SSID2              "NetWireless"     // [Ssid2] Optional alternate AP Wifi SSID
-#define STA_PASS2              "wifipass1234"    // [Password2] Optional alternate AP Wifi password
+#define STA_SSID1              ""                // [Ssid1] Wifi SSID
+#define STA_PASS1              ""                // [Password1] Wifi password
+#define STA_SSID2              ""                // [Ssid2] Optional alternate AP Wifi SSID
+#define STA_PASS2              ""                // [Password2] Optional alternate AP Wifi password
 #define WIFI_CONFIG_TOOL       WIFI_WAIT         // [WifiConfig] Default tool if wifi fails to connect
                                                  //   (WIFI_RESTART, WIFI_SMARTCONFIG, WIFI_MANAGER, WIFI_WPSCONFIG, WIFI_RETRY, WIFI_WAIT, WIFI_SERIAL)
 #define WIFI_CONFIG_NO_SSID    WIFI_WPSCONFIG    // Default tool if wifi fails to connect and no SSID is configured
@@ -89,12 +88,12 @@
 // -- MQTT ----------------------------------------
 #define MQTT_USE               1                 // [SetOption3] Select default MQTT use (0 = Off, 1 = On)
 
-#define MQTT_HOST              "192.168.1.2"     // [MqttHost]
+#define MQTT_HOST              ""                // [MqttHost]
 #define MQTT_FINGERPRINT1      "A5 02 FF 13 99 9F 8B 39 8E F1 83 4F 11 23 65 0B 32 36 FC 07"  // [MqttFingerprint1]
 #define MQTT_FINGERPRINT2      "A5 02 FF 13 99 9F 8B 39 8E F1 83 4F 11 23 65 0B 32 36 FC 07"  // [MqttFingerprint2]
 #define MQTT_PORT              1883              // [MqttPort] MQTT port (10123 on CloudMQTT)
-#define MQTT_USER              "homeassistant"   // [MqttUser] MQTT user
-#define MQTT_PASS              "hasspass1234"    // [MqttPassword] MQTT password
+#define MQTT_USER              "DVES_USER"       // [MqttUser] MQTT user
+#define MQTT_PASS              "DVES_PASS"       // [MqttPassword] MQTT password
 
 #define MQTT_BUTTON_RETAIN     0                 // [ButtonRetain] Button may send retain flag (0 = off, 1 = on)
 #define MQTT_POWER_RETAIN      0                 // [PowerRetain] Power status message may send retain flag (0 = off, 1 = on)
@@ -158,13 +157,11 @@
 #define TIME_STD_OFFSET        +60               // Offset from UTC in minutes (-780 to +780)
 
 // -- Location ------------------------------------
-//#define LATITUDE               48.858360         // [Latitude] Your location to be used with sunrise and sunset
-//#define LONGITUDE              2.294442          // [Longitude] Your location to be used with sunrise and sunset
-#define LATITUDE               -38.821557         // [Latitude] Your location to be used with sunrise and sunset
-#define LONGITUDE              -68.135431         // [Longitude] Your location to be used with sunrise and sunset
+#define LATITUDE               48.858360         // [Latitude] Your location to be used with sunrise and sunset
+#define LONGITUDE              2.294442          // [Longitude] Your location to be used with sunrise and sunset
 
 // -- Application ---------------------------------
-#define APP_TIMEZONE           -3                // [Timezone] +1 hour (Amsterdam) (-13 .. 14 = hours from UTC, 99 = use TIME_DST/TIME_STD)
+#define APP_TIMEZONE           1                 // [Timezone] +1 hour (Amsterdam) (-13 .. 14 = hours from UTC, 99 = use TIME_DST/TIME_STD)
 #define APP_LEDSTATE           LED_POWER         // [LedState] Function of led
                                                  //   (LED_OFF, LED_POWER, LED_MQTTSUB, LED_POWER_MQTTSUB, LED_MQTTPUB, LED_POWER_MQTTPUB, LED_MQTT, LED_POWER_MQTT)
 #define APP_PULSETIME          0                 // [PulseTime] Time in 0.1 Sec to turn off power for relay 1 (0 = disabled)
@@ -539,4 +536,4 @@
   #error "Select either USE_MQTT_TLS or USE_WEBSERVER as there is just not enough memory to play with"
 #endif
 
-#endif  // _USER_CONFIG_H_
+#endif  // _MY_USER_CONFIG_H_
