@@ -29,9 +29,10 @@ const char kShutterCommands[] PROGMEM =
 enum ShutterModes { OFF_OPEN__OFF_CLOSE, OFF_ON__OPEN_CLOSE, PULSE_OPEN__PULSE_CLOSE };
 
 const char JSON_SHUTTER_POS[] PROGMEM = "%s,\"%s-%d\":%d";                                  // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
+const uint16_t MOTOR_STOP_TIME=500; // in mS
 
-uint8_t Shutter_Open_Time[MAX_SHUTTERS] ;               // duration to open the shutter
-uint8_t Shutter_Close_Time[MAX_SHUTTERS];               // duration to close the shutter
+uint16_t Shutter_Open_Time[MAX_SHUTTERS] ;               // duration to open the shutter
+uint16_t Shutter_Close_Time[MAX_SHUTTERS];               // duration to close the shutter
 int32_t Shutter_Open_Max[MAX_SHUTTERS];                 // max value on maximum open calculated
 int32_t Shutter_Target_Position[MAX_SHUTTERS] ;         // position to go to
 int32_t Shutter_Start_Position[MAX_SHUTTERS] ;
@@ -75,9 +76,19 @@ void ShutterInit()
   shutters_present = 0;
   //Initialize to get relay that changed
   old_power = power;
+  char shutter_open_chr[10];
+  char shutter_close_chr[10];
+
+  snprintf_P(log_data, sizeof(log_data), PSTR("Shutter accuracy digits: %d"), Settings.shutter_accuracy);
+  AddLog(LOG_LEVEL_INFO);
 
 
   for (byte i=0;i < MAX_SHUTTERS; i++) {
+    // upgrade to 0.1sec calculation base.
+    if ( Settings.shutter_accuracy == 0) {
+      Settings.shutter_closetime[i] = Settings.shutter_closetime[i] * 10;
+      Settings.shutter_opentime[i] = Settings.shutter_opentime[i] * 10;
+    }
     // set startrelay to 1 on first init, but only to shutter 1. 90% usecase
     Settings.shutter_startrelay[i] = (Settings.shutter_startrelay[i] == 0 && i ==  0? 1 : Settings.shutter_startrelay[i]);
     if (Settings.shutter_startrelay[i] && Settings.shutter_startrelay[i] <33) {
@@ -98,11 +109,12 @@ void ShutterInit()
       // default the 50 percent should not have any impact without changing it. set to 60
       Settings.shutter_set50percent[i] = (Settings.shutter_set50percent[i] == 0 ? 50 : Settings.shutter_set50percent[i]);
       // use 10 sec. as default to allow everybody to play without deep initialize
-      Shutter_Open_Time[i] = (Settings.shutter_opentime[i] > 0 ? Settings.shutter_opentime[i] : 10);
-      Shutter_Close_Time[i] = (Settings.shutter_closetime[i] > 0 ? Settings.shutter_closetime[i] : 10);
+      Shutter_Open_Time[i] = Settings.shutter_opentime[i] > 0 ? Settings.shutter_opentime[i] : 100;
+      Shutter_Close_Time[i] = Settings.shutter_closetime[i] > 0 ? Settings.shutter_closetime[i] : 100;
+
       // Update Calculation 20 because time interval is 0.05 sec
-      Shutter_Open_Max[i] = 2000 * Shutter_Open_Time[i];
-      Shutter_Close_Velocity[i] =  Shutter_Open_Max[i] /  Shutter_Close_Time[i] / 20 ;
+      Shutter_Open_Max[i] = 200 * Shutter_Open_Time[i];
+      Shutter_Close_Velocity[i] =  Shutter_Open_Max[i] /  Shutter_Close_Time[i] / 2 ;
 
       // calculate a ramp slope at the first 5 percent to compensate that shutters move with down part later than the upper part
       Settings.shuttercoeff[1][i] = Shutter_Open_Max[i] * (100 - Settings.shutter_set50percent[i] ) / 5000;
@@ -113,13 +125,16 @@ void ShutterInit()
       Shutter_Real_Position[i] = percent_to_realposition(Settings.shutter_position[i], i);
       //Shutter_Real_Position[i] =   Settings.shutter_position[i] <= 5 ?  Settings.shuttercoeff[2][i] * Settings.shutter_position[i] : Settings.shuttercoeff[1][i] * Settings.shutter_position[i] + Settings.shuttercoeff[0,i];
       Shutter_Start_Position[i] = Shutter_Real_Position[i];
+      dtostrfd((double)Shutter_Open_Time[i] / 10 , 1, shutter_open_chr);
+      dtostrfd((double)Shutter_Close_Time[i] / 10, 1, shutter_close_chr);
 
-      snprintf_P(log_data, sizeof(log_data), PSTR("Shutter %d (Relay:%d): Init. Pos: %d [%d %%], Open Vel.: 100 Close Vel.: %d , Max Way: %d, Opentime %d [s], Closetime %d [s], CoedffCalc: c0: %d, c1 %d, c2: %d, c3: %d, c4: %d, binmask %d, is inverted %d, size %d"), i, Settings.shutter_startrelay[i],Shutter_Real_Position[i],Settings.shutter_position[i],  Shutter_Close_Velocity[i] , Shutter_Open_Max[i], Shutter_Open_Time[i], Shutter_Close_Time[i],Settings.shuttercoeff[0][i],Settings.shuttercoeff[1][i],Settings.shuttercoeff[2][i],Settings.shuttercoeff[3][i],Settings.shuttercoeff[4][i],shutter_mask,Settings.shutter_invert[i], sizeof(Settings.shuttercoeff));
+      snprintf_P(log_data, sizeof(log_data), PSTR("Shutter %d (Relay:%d): Init. Pos: %d [%d %%], Open Vel.: 100 Close Vel.: %d , Max Way: %d, Opentime %s [s], Closetime %s [s], CoedffCalc: c0: %d, c1 %d, c2: %d, c3: %d, c4: %d, binmask %d, is inverted %d, size %d"), i, Settings.shutter_startrelay[i],Shutter_Real_Position[i],Settings.shutter_position[i],  Shutter_Close_Velocity[i] , Shutter_Open_Max[i], shutter_open_chr, shutter_close_chr,Settings.shuttercoeff[0][i],Settings.shuttercoeff[1][i],Settings.shuttercoeff[2][i],Settings.shuttercoeff[3][i],Settings.shuttercoeff[4][i],shutter_mask,Settings.shutter_invert[i], sizeof(Settings.shuttercoeff));
       AddLog(LOG_LEVEL_INFO);
     } else {
       // terminate loop at first INVALID shutter.
       break;
     }
+    Settings.shutter_accuracy = 1;
   }
 }
 
@@ -241,17 +256,17 @@ boolean ShutterCommand()
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_NVALUE, command, index, Settings.shutter_invert[index-1]);
   }
   else if (((CMND_OPENTIME == command_code) || (CMND_CLOSETIME == command_code) ) && (index > 0) && (index <= shutters_present) ) {
-    if (  (XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 100)) {
+    char time_chr[10];
+    if (XdrvMailbox.data_len > 0) {
       if (CMND_OPENTIME == command_code) {
-        Settings.shutter_opentime[index-1] = XdrvMailbox.payload;
+        Settings.shutter_opentime[index-1] = (uint8_t)(10 * CharToDouble(XdrvMailbox.data));
       } else {
-        Settings.shutter_closetime[index-1] = XdrvMailbox.payload;
+        Settings.shutter_closetime[index-1] = (uint8_t)(10 * CharToDouble(XdrvMailbox.data));
       }
-      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_NVALUE, command, index, XdrvMailbox.payload);
       ShutterInit();
-    } else {
-        snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_NVALUE, command, index, (CMND_OPENTIME == command_code ? Settings.shutter_opentime[index-1] : Settings.shutter_closetime[index-1]));
     }
+    dtostrfd( (double)(CMND_OPENTIME == command_code ? Settings.shutter_opentime[index-1] : Settings.shutter_closetime[index-1]) / 10  , 1, time_chr);
+    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, index, time_chr );
   }
   else if ((CMND_SHUTTERRELAY == command_code) && (index > 0) && (index <= MAX_SHUTTERS)) {
     if ( (XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 64)) {
@@ -315,6 +330,10 @@ boolean ShutterCommand()
         Shutter_StartInit(index-1, new_shutterdirection, Shutter_Target_Position[index-1]);
         Shutter_Operations[index-1]++;
         if (shutterMode == OFF_ON__OPEN_CLOSE) {
+          ExecuteCommandPower(Settings.shutter_startrelay[index-1] , 0, SRC_SHUTTER);
+          snprintf_P(log_data, sizeof(log_data), PSTR("Delay5 5s"));
+          AddLog(LOG_LEVEL_DEBUG);
+          delay(MOTOR_STOP_TIME);
           // Code for shutters with circuit safe configuration, switch the direction Relay
           ExecuteCommandPower(Settings.shutter_startrelay[index-1] +1, new_shutterdirection == 1 ? 0 : 1, SRC_SHUTTER);
           // power on
@@ -323,6 +342,9 @@ boolean ShutterCommand()
           // now start the motor for the right direction, work for momentary and normal shutters.
           snprintf_P(log_data, sizeof(log_data), PSTR("Start shutter in right direction %d"), Shutter_Direction[index-1]);
           AddLog(LOG_LEVEL_INFO);
+          snprintf_P(log_data, sizeof(log_data), PSTR("Delay6 5s"));
+          AddLog(LOG_LEVEL_DEBUG);
+          delay(MOTOR_STOP_TIME);
           ExecuteCommandPower(Settings.shutter_startrelay[index-1] + (new_shutterdirection == 1 ? 0 : 1), 1, SRC_SHUTTER);
         }
         SwitchedRelay = 0;
@@ -352,8 +374,10 @@ void Schutter_Report_Position()
   for (byte i=0; i < shutters_present; i++) {
     if (Shutter_Direction[i] != 0) {
       char stemp1[20];
+      char stemp2[10];
+      dtostrfd((double)shutter_time[i] / 20, 1, stemp2);
       //Settings.shutter_position[i] = Settings.shuttercoeff[2][i] * 5 > Shutter_Real_Position[i] ? Shutter_Real_Position[i] / Settings.shuttercoeff[2][i] : (Shutter_Real_Position[i]-Settings.shuttercoeff[0,i]) / Settings.shuttercoeff[1][i];
-      snprintf_P(log_data, sizeof(log_data), PSTR("Shutter %d: Real Pos: %d, Target %d, source: %s, pos %%: %d, direction: %d, rtcshutter: %ld"), i,Shutter_Real_Position[i], Shutter_Target_Position[i], GetTextIndexed(stemp1, sizeof(stemp1), last_source, kCommandSource), Settings.shutter_position[i], Shutter_Direction[i],  shutter_time[i]);
+      snprintf_P(log_data, sizeof(log_data), PSTR("Shutter %d: Real Pos: %d, Target %d, source: %s, start-pos: %d %%, direction: %d, rtcshutter: %s  [s]"), i,Shutter_Real_Position[i], Shutter_Target_Position[i], GetTextIndexed(stemp1, sizeof(stemp1), last_source, kCommandSource), Settings.shutter_position[i], Shutter_Direction[i], stemp2 );
       AddLog(LOG_LEVEL_INFO);
     }
   }
@@ -375,9 +399,15 @@ void Shutter_Relay_changed()
 			if (shutterMode == OFF_ON__OPEN_CLOSE) {
 				switch (powerstate_local) {
 					case 1:
+            snprintf_P(log_data, sizeof(log_data), PSTR("Delay3 5s"));
+            AddLog(LOG_LEVEL_DEBUG);
+            delay(MOTOR_STOP_TIME);
 					  Shutter_StartInit(i, 1, Shutter_Open_Max[i]);
 					  break;
 					case 3:
+            snprintf_P(log_data, sizeof(log_data), PSTR("Delay4 5s"));
+            AddLog(LOG_LEVEL_DEBUG);
+            delay(MOTOR_STOP_TIME);
 					  Shutter_StartInit(i, -1, 0);
 					  break;
 					default:
@@ -393,9 +423,15 @@ void Shutter_Relay_changed()
 					last_source = SRC_SHUTTER; // avoid switch off in the next loop
 					if (powerstate_local == 2) { // testing on CLOSE relay, if ON
 					  // close with relay two
+            snprintf_P(log_data, sizeof(log_data), PSTR("Delay1 5s"));
+            AddLog(LOG_LEVEL_DEBUG);
+            delay(MOTOR_STOP_TIME);
 					  Shutter_StartInit(i, -1, 0);
 					} else {
 					  // opens with relay one
+            snprintf_P(log_data, sizeof(log_data), PSTR("Delay2 5s"));
+            AddLog(LOG_LEVEL_DEBUG);
+            delay(MOTOR_STOP_TIME);
 					  Shutter_StartInit(i, 1, Shutter_Open_Max[i]);
 					}
 				}
