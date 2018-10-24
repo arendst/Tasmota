@@ -48,7 +48,7 @@
 
 #include <core_version.h>         // Arduino_Esp8266 version information (ARDUINO_ESP8266_RELEASE and ARDUINO_ESP8266_RELEASE_2_3_0)
 #ifndef ARDUINO_ESP8266_RELEASE_2_3_0
-#define USE_ASYNC_UDP             // UDP WIFI Library Selection for Multicast
+//#define USE_ASYNC_UDP             // UDP WIFI Library Selection for Multicast
 #endif
 
 #ifdef USE_ASYNC_UDP
