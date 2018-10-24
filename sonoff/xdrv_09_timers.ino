@@ -194,7 +194,7 @@ void ApplyTimerOffsets(Timer *duskdawn)
 
   // apply offsets, check for over- and underflows
   uint16_t timeBuffer;
-  if ((uint16_t)stored.time > 720) {
+  if ((uint16_t)stored.time > 719) {
     // negative offset, time after 12:00
     timeBuffer = (uint16_t)stored.time - 720;
     // check for underflow
@@ -262,7 +262,7 @@ void TimerEverySecond()
 {
   if (RtcTime.valid) {
     if (!RtcTime.hour && !RtcTime.minute && !RtcTime.second) { TimerSetRandomWindows(); }  // Midnight
-    if ((uptime > 60) && (RtcTime.minute != timer_last_minute)) {  // Execute from one minute after restart every minute only once
+    if (Settings.flag3.timers_enable && (uptime > 60) && (RtcTime.minute != timer_last_minute)) {  // Execute from one minute after restart every minute only once
       timer_last_minute = RtcTime.minute;
       int16_t time = (RtcTime.hour *60) + RtcTime.minute;
       uint8_t days = 1 << (RtcTime.day_of_week -1);
@@ -287,10 +287,10 @@ void TimerEverySecond()
 #ifdef USE_RULES
               if (3 == xtimer.power) {  // Blink becomes Rule disregarding device and allowing use of Backlog commands
                 snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"Clock\":{\"Timer\":%d}}"), i +1);
-                RulesProcess();
+                XdrvRulesProcess();
               } else
 #endif  // USE_RULES
-                if (devices_present) { ExecuteCommandPower(xtimer.device +1, xtimer.power); }
+                if (devices_present) { ExecuteCommandPower(xtimer.device +1, xtimer.power, SRC_TIMER); }
             }
           }
         }
@@ -451,6 +451,18 @@ boolean TimerCommand()
     }
   }
   else if (CMND_TIMERS == command_code) {
+    if (XdrvMailbox.data_len) {
+      if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 1)) {
+        Settings.flag3.timers_enable = XdrvMailbox.payload;
+      }
+      if (XdrvMailbox.payload == 2) {
+        Settings.flag3.timers_enable = !Settings.flag3.timers_enable;
+      }
+    }
+
+    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, GetStateText(Settings.flag3.timers_enable));
+    MqttPublishPrefixTopic_P(RESULT_OR_STAT, command);
+
     byte jsflg = 0;
     byte lines = 1;
     for (byte i = 0; i < MAX_TIMERS; i++) {
@@ -498,6 +510,14 @@ boolean TimerCommand()
 
 #ifdef USE_WEBSERVER
 #ifdef USE_TIMERS_WEB
+
+#define WEB_HANDLE_TIMER "tm"
+
+const char S_CONFIGURE_TIMER[] PROGMEM = D_CONFIGURE_TIMER;
+
+const char HTTP_BTN_MENU_TIMER[] PROGMEM =
+  "<br/><form action='" WEB_HANDLE_TIMER "' method='get'><button>" D_CONFIGURE_TIMER "</button></form>";
+
 const char HTTP_TIMER_SCRIPT[] PROGMEM =
   "var pt=[],ct=99;"
   "function qs(s){"                                               // Alias to save code space
@@ -627,8 +647,9 @@ const char HTTP_TIMER_STYLE[] PROGMEM =
 #endif
   "</style>";
 const char HTTP_FORM_TIMER[] PROGMEM =
-  "<fieldset style='min-width:470px;text-align:center;'><legend style='text-align:left;'><b>&nbsp;" D_TIMER_PARAMETERS "&nbsp;</b></legend><form method='post' action='sv'>"
-  "<input id='w' name='w' value='7,0' hidden><input id='t0' name='t0' value='";
+  "<fieldset style='min-width:470px;text-align:center;'><legend style='text-align:left;'><b>&nbsp;" D_TIMER_PARAMETERS "&nbsp;</b></legend><form method='post' action='" WEB_HANDLE_TIMER "'>"
+  "<br/><input style='width:5%;' id='e0' name='e0' type='checkbox'{e0><b>" D_TIMER_ENABLE "</b><br/><br/><hr/>"
+  "<input id='t0' name='t0' value='";
 const char HTTP_FORM_TIMER1[] PROGMEM =
   "' hidden><div id='bt' name='bt'></div><br/><br/><br/>"
   "<div id='oa' name='oa'></div><br/>"
@@ -658,15 +679,17 @@ const char HTTP_FORM_TIMER1[] PROGMEM =
 const char HTTP_FORM_TIMER2[] PROGMEM =
   "type='submit' onclick='st();this.form.submit();'";
 
-const char S_CONFIGURE_TIMER[] PROGMEM = D_CONFIGURE_TIMER;
-
 void HandleTimerConfiguration()
 {
-  if (HTTP_USER == webserver_state) {
-    HandleRoot();
+  if (HttpUser()) { return; }
+  if (!WebAuthenticate()) { return WebServer->requestAuthentication(); }
+  AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_CONFIGURE_TIMER);
+
+  if (WebServer->hasArg("save")) {
+    TimerSaveSettings();
+    HandleConfiguration();
     return;
   }
-  AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_CONFIGURE_TIMER);
 
   String page = FPSTR(HTTP_HEAD);
   page.replace(F("{v}"), FPSTR(S_CONFIGURE_TIMER));
@@ -674,6 +697,7 @@ void HandleTimerConfiguration()
   page += FPSTR(HTTP_HEAD_STYLE);
   page.replace(F("</style>"), FPSTR(HTTP_TIMER_STYLE));
   page += FPSTR(HTTP_FORM_TIMER);
+  page.replace(F("{e0"), (Settings.flag3.timers_enable) ? F(" checked") : F(""));
   for (byte i = 0; i < MAX_TIMERS; i++) {
     if (i > 0) { page += F(","); }
     page += String(Settings.timer[i].data);
@@ -697,9 +721,10 @@ void TimerSaveSettings()
   char tmp[MAX_TIMERS *12];  // Need space for MAX_TIMERS x 10 digit numbers separated by a comma
   Timer timer;
 
+  Settings.flag3.timers_enable = WebServer->hasArg("e0");
   WebGetArg("t0", tmp, sizeof(tmp));
   char *p = tmp;
-  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_MQTT D_CMND_TIMERS " "));
+  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_MQTT D_CMND_TIMERS " %d"), Settings.flag3.timers_enable);
   for (byte i = 0; i < MAX_TIMERS; i++) {
     timer.data = strtol(p, &p, 10);
     p++;  // Skip comma
@@ -708,7 +733,7 @@ void TimerSaveSettings()
       Settings.timer[i].data = timer.data;
       if (flag) TimerSetRandomWindow(i);
     }
-    snprintf_P(log_data, sizeof(log_data), PSTR("%s%s0x%08X"), log_data, (i > 0)?",":"", Settings.timer[i].data);
+    snprintf_P(log_data, sizeof(log_data), PSTR("%s,0x%08X"), log_data, Settings.timer[i].data);
   }
   AddLog(LOG_LEVEL_DEBUG);
 }
@@ -726,9 +751,23 @@ boolean Xdrv09(byte function)
   boolean result = false;
 
   switch (function) {
-    case FUNC_INIT:
+    case FUNC_PRE_INIT:
       TimerSetRandomWindows();
       break;
+#ifdef USE_WEBSERVER
+#ifdef USE_TIMERS_WEB
+    case FUNC_WEB_ADD_BUTTON:
+#ifdef USE_RULES
+      strncat_P(mqtt_data, HTTP_BTN_MENU_TIMER, sizeof(mqtt_data));
+#else
+      if (devices_present) { strncat_P(mqtt_data, HTTP_BTN_MENU_TIMER, sizeof(mqtt_data)); }
+#endif  // USE_RULES
+      break;
+    case FUNC_WEB_ADD_HANDLER:
+      WebServer->on("/" WEB_HANDLE_TIMER, HandleTimerConfiguration);
+      break;
+#endif  // USE_TIMERS_WEB
+#endif  // USE_WEBSERVER
     case FUNC_EVERY_SECOND:
       TimerEverySecond();
       break;

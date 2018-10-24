@@ -28,11 +28,12 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v5.14.0a
+ * Updated until v6.0.0a
 \*********************************************************************/
 
 //#define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
 
+#define LANGUAGE_LCID 1043
 // HTML (ISO 639-1) Language Code
 #define D_HTML_LANGUAGE "nl"
 
@@ -59,10 +60,12 @@
 #define D_BLINKOFF "KnipperUit"
 #define D_BOOT_COUNT "Herstarts"
 #define D_BRIGHTLIGHT "Fel"
+#define D_BSSID "BSSId"
 #define D_BUTTON "DrukKnop"
 #define D_BY "door"                  // Written by me
 #define D_BYTES "Bytes"
 #define D_CELSIUS "Celsius"
+#define D_CHANNEL "Kanaal"
 #define D_CO2 "Koolstofdioxide"
 #define D_CODE "code"                // Button code
 #define D_COLDLIGHT "Koud"
@@ -160,9 +163,18 @@
 #define D_USER "Gebruiker"
 #define D_UTC_TIME "UTC"
 #define D_UV_INDEX "UV-index"
+#define D_UV_INDEX_1 "Low"
+#define D_UV_INDEX_2 "Mid"
+#define D_UV_INDEX_3 "High"
+#define D_UV_INDEX_4 "Danger"
+#define D_UV_INDEX_5 "BurnL1/2"
+#define D_UV_INDEX_6 "BurnL3"
+#define D_UV_INDEX_7 "OoR"
 #define D_UV_LEVEL "UV niveau"
+#define D_UV_POWER "UV Power"
 #define D_VERSION "Versie"
 #define D_VOLTAGE "Spanning"
+#define D_WEIGHT "Gewicht"
 #define D_WARMLIGHT "Warm"
 #define D_WEB_SERVER "Webserver"
 
@@ -204,7 +216,8 @@
 #define D_USE_DEFAULTS "Gebruik standaardwaarden"
 #define D_ERASED_SECTOR "Wis sector"
 
-// webserver.ino
+// xdrv_02_webserver.ino
+#define D_NOSCRIPT "Zet JavaScript aan voor Tasmota"
 #define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "MINIMAL firmware - opwaarderen"
 #define D_WEBSERVER_ACTIVE_ON "Webserver actief op"
 #define D_WITH_IP_ADDRESS "met IP adres"
@@ -320,13 +333,17 @@
 #define D_UPLOAD_ERR_7 "Opwaarderen afgebroken"
 #define D_UPLOAD_ERR_8 "Ongeldig bestand"
 #define D_UPLOAD_ERR_9 "Bestand is te groot"
+#define D_UPLOAD_ERR_10 "Init RF chip mislukt"
+#define D_UPLOAD_ERR_11 "Wissen RF chip mislukt"
+#define D_UPLOAD_ERR_12 "Opwaarderen RF chip mislukt"
+#define D_UPLOAD_ERR_13 "Decoderen RF bestand mislukt"
 #define D_UPLOAD_ERROR_CODE "Opwaardeer foutcode"
 
 #define D_ENTER_COMMAND "Geef opdracht"
 #define D_ENABLE_WEBLOG_FOR_RESPONSE "Schakel weblog 2 in indien antwoord verwacht"
 #define D_NEED_USER_AND_PASSWORD "Benodig user=<gebruiker>&password=<webwachtwoord>"
 
-// xdrv_00_mqtt.ino
+// xdrv_01_mqtt.ino
 #define D_FINGERPRINT "Controleer TLS vingerafdruk..."
 #define D_TLS_CONNECT_FAILED_TO "TLS Verbinding mislukt naar"
 #define D_RETRY_IN "Opnieuw proberen over"
@@ -334,7 +351,7 @@
 #define D_INSECURE "Door ongeldige vingerafdruk een onveilige verbinding"
 #define D_CONNECT_FAILED_TO "Verbinding mislukt naar"
 
-// xdrv_wemohue.ino
+// xplg_wemohue.ino
 #define D_MULTICAST_DISABLED "Multicast uitgeschakeld"
 #define D_MULTICAST_REJOINED "Multicast verbonden"
 #define D_MULTICAST_JOIN_FAILED "Multicast verbinding mislukt"
@@ -354,7 +371,7 @@
 #define D_HUE_POST_ARGS "Hue POST argumenten"
 #define D_3_RESPONSE_PACKETS_SENT "3 antwoord paketten verstuurd"
 
-// xdrv_05_domoticz.ino
+// xdrv_07_domoticz.ino
 #define D_DOMOTICZ_PARAMETERS "Domoticz parameters"
 #define D_DOMOTICZ_IDX "Idx"
 #define D_DOMOTICZ_KEY_IDX "Toets idx"
@@ -374,6 +391,7 @@
 // xdrv_09_timers.ino
 #define D_CONFIGURE_TIMER "Configureer Tijdschakelaar"
 #define D_TIMER_PARAMETERS "Tijdschakelaar parameters"
+#define D_TIMER_ENABLE "Tijdschakelaars inschakelen"
 #define D_TIMER_ARM "Actief"
 #define D_TIMER_TIME "Tijd"
 #define D_TIMER_DAYS "Dagen"
@@ -401,6 +419,8 @@
 #define D_SENT_TO "verzend naar"
 #define D_KNX_WARNING "Groep adres (0/0/0) is gereserveerd en mag niet worden gebruikt."
 #define D_KNX_ENHANCEMENT "Verbeter verbinding"
+#define D_KNX_TX_SLOT "KNX TX"
+#define D_KNX_RX_SLOT "KNX RX"
 
 // xdrv_03_energy.ino
 #define D_ENERGY_TODAY "Verbruik vandaag"
@@ -428,6 +448,37 @@
 #define D_ENVIRONMENTAL_CONCENTRATION "PM"     // Environmetal Particle Matter
 #define D_PARTICALS_BEYOND "Stofdeeltjes"
 
+// xsns_32_mpu6050.ino
+#define D_AX_AXIS "Accel. X-Axis"
+#define D_AY_AXIS "Accel. Y-Axis"
+#define D_AZ_AXIS "Accel. Z-Axis"
+#define D_GX_AXIS "Gyro X-Axis"
+#define D_GY_AXIS "Gyro Y-Axis"
+#define D_GZ_AXIS "Gyro Z-Axis"
+
+// xsns_34_hx711.ino
+#define D_HX_CAL_REMOVE "Verwijder gewicht"
+#define D_HX_CAL_REFERENCE "Plaats ijkgewicht"
+#define D_HX_CAL_DONE "Ge-ijkt"
+#define D_HX_CAL_FAIL "Ijken is mislukt"
+#define D_RESET_HX711 "Nulstelling weegschaal"
+#define D_CONFIGURE_HX711 "Configureer Weegschaal"
+#define D_HX711_PARAMETERS "Weegschaal parameters"
+#define D_ITEM_WEIGHT "Gewicht van onderdeel"
+#define D_REFERENCE_WEIGHT "Ijkgewicht"
+#define D_CALIBRATE "Ijken"
+#define D_CALIBRATION "Ijken"
+
+//xsns_35_tx20.ino
+#define D_TX20_WIND_DIRECTION "Windrichting"
+#define D_TX20_WIND_SPEED "Windsnelheid"
+#define D_TX20_WIND_SPEED_AVG "Windsnelheid gemiddeld"
+#define D_TX20_WIND_SPEED_MAX "Windsnelhied maximaal"
+#define D_TX20_NORTH "N"
+#define D_TX20_EAST "E"
+#define D_TX20_SOUTH "S"
+#define D_TX20_WEST "W"
+
 // sonoff_template.h
 #define D_SENSOR_NONE     "Geen"
 #define D_SENSOR_DHT11    "DHT11"
@@ -437,6 +488,7 @@
 #define D_SENSOR_I2C_SCL  "I2C SCL"
 #define D_SENSOR_I2C_SDA  "I2C SDA"
 #define D_SENSOR_WS2812   "WS2812"
+#define D_SENSOR_DFR562   "MP3 Speler"
 #define D_SENSOR_IRSEND   "IRsend"
 #define D_SENSOR_SWITCH   "Switch"  // Suffix "1"
 #define D_SENSOR_BUTTON   "Button"  // Suffix "1"
@@ -447,15 +499,18 @@
 #define D_SENSOR_IRRECV   "IRrecv"
 #define D_SENSOR_MHZ_RX   "MHZ Rx"
 #define D_SENSOR_MHZ_TX   "MHZ Tx"
-#define D_SENSOR_PZEM_RX  "PZEM Rx"
-#define D_SENSOR_PZEM_TX  "PZEM Tx"
+#define D_SENSOR_PZEM004_RX  "PZEM004 Rx"
+#define D_SENSOR_PZEM016_RX  "PZEM016 Rx"
+#define D_SENSOR_PZEM017_RX  "PZEM017 Rx"
+#define D_SENSOR_PZEM0XX_TX  "PZEM0XX Tx"
 #define D_SENSOR_SAIR_RX  "SAir Rx"
 #define D_SENSOR_SAIR_TX  "SAir Tx"
 #define D_SENSOR_SPI_CS   "SPI CS"
 #define D_SENSOR_SPI_DC   "SPI DC"
 #define D_SENSOR_BACKLIGHT "BkLight"
 #define D_SENSOR_PMS5003  "PMS5003"
-#define D_SENSOR_SDS0X1   "SDS0X1"
+#define D_SENSOR_SDS0X1_RX "SDS0X1 Rx"
+#define D_SENSOR_SDS0X1_TX "SDS0X1 Tx"
 #define D_SENSOR_SBR_RX   "SerBr Rx"
 #define D_SENSOR_SBR_TX   "SerBr Tx"
 #define D_SENSOR_SR04_TRIG "SR04 Tri"
@@ -465,12 +520,21 @@
 #define D_SENSOR_RCSWITCH "RCSWITCH"
 #define D_SENSOR_SDM630_TX "SDM630 Tx"
 #define D_SENSOR_SDM630_RX "SDM630 Rx"
+#define D_SENSOR_TM1638_CLK "TM16 CLK"
+#define D_SENSOR_TM1638_DIO "TM16 DIO"
+#define D_SENSOR_TM1638_STB "TM16 STB"
+#define D_SENSOR_HX711_SCK "HX711 SCK"
+#define D_SENSOR_HX711_DAT "HX711 DAT"
+#define D_SENSOR_TX20_TX "TX20"
 
 // Units
 #define D_UNIT_AMPERE "A"
 #define D_UNIT_CENTIMETER "cm"
 #define D_UNIT_HERTZ "Hz"
 #define D_UNIT_HOUR "h"
+#define D_UNIT_INCREMENTS "inc"
+#define D_UNIT_KILOGRAM "kg"
+#define D_UNIT_KILOMETER_PER_HOUR "kmph"  // or "km/h"
 #define D_UNIT_KILOOHM "kOhm"
 #define D_UNIT_KILOWATTHOUR "kWh"
 #define D_UNIT_LUX "lx"
@@ -491,6 +555,7 @@
 #define D_UNIT_VOLT "V"
 #define D_UNIT_WATT "W"
 #define D_UNIT_WATTHOUR "Wh"
+#define D_UNIT_WATT_METER_QUADRAT "W/m²"
 
 // Log message prefix
 #define D_LOG_APPLICATION "APP: "  // Application

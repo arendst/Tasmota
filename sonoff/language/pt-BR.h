@@ -28,11 +28,12 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v5.13.0
+ * Updated until v5.14.0b
 \*********************************************************************/
 
 //#define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
 
+#define LANGUAGE_LCID 1046
 // HTML (ISO 639-1) Language Code
 #define D_HTML_LANGUAGE "pt"
 
@@ -51,28 +52,30 @@
 
 // Common
 #define D_ADMIN "Admin"
-#define D_AIR_QUALITY "Qualidade do Ar"
-#define D_AP "Pondo de acesso"                    // Ponto de Acesso
+#define D_AIR_QUALITY "Qualidade do ar"
+#define D_AP "Ponto de acesso"     	// Ponto de Acesso
 #define D_AS "como"
 #define D_AUTO "Auto"
 #define D_BLINK "Pulsar"
 #define D_BLINKOFF "Pulsar desligado"
 #define D_BOOT_COUNT "Contagem de inicialização"
 #define D_BRIGHTLIGHT "Brilho"
+#define D_BSSID "BSSId"
 #define D_BUTTON "Botão"
 #define D_BY "por"                    // Write by me
 #define D_BYTES "Bytes"
 #define D_CELSIUS "Celsius"
-#define D_CO2 "Dióxido de Carbono"
+#define D_CHANNEL "Channel"
+#define D_CO2 "Dióxido de carbono"
 #define D_CODE "Código"                // Button code
-#define D_COLDLIGHT "Luz Fria"
+#define D_COLDLIGHT "Luz fria"
 #define D_COMMAND "Comando"
 #define D_CONNECTED "Ligado"
 #define D_COUNT "Contagem"
 #define D_COUNTER "Contador"
 #define D_CURRENT "Corrente"          // As in Voltage and Current
 #define D_DATA "Dados"
-#define D_DARKLIGHT "Luz Escura"
+#define D_DARKLIGHT "Luz escura"
 #define D_DEBUG "Depurar"
 #define D_DISABLED "Desabilitado"
 #define D_DISTANCE "Distância"
@@ -90,8 +93,8 @@
 #define D_FALLBACK_TOPIC "Tópico para retornar"
 #define D_FALSE "Falso"
 #define D_FILE "Arquivo"
-#define D_FREE_MEMORY "Memória Livre"
-#define D_FREQUENCY "Frequency"
+#define D_FREE_MEMORY "Memória livre"
+#define D_FREQUENCY "Frequência"
 #define D_GAS "Gás"
 #define D_GATEWAY "Gateway"
 #define D_GROUP "Grupo"
@@ -102,7 +105,7 @@
 #define D_IMMEDIATE "Imediato"      // Button immediate
 #define D_INDEX "Índice"
 #define D_INFO "Informação"
-#define D_INFRARED "Infrared"
+#define D_INFRARED "Infravermelho"
 #define D_INITIALIZED "Inicializado"
 #define D_IP_ADDRESS "Endereço IP"
 #define D_LIGHT "Luz"
@@ -121,9 +124,9 @@
 #define D_PORT "Porta"
 #define D_POWER_FACTOR "Fator de potência"
 #define D_POWERUSAGE "Potência"
-#define D_POWERUSAGE_ACTIVE "Active Power"
-#define D_POWERUSAGE_APPARENT "Apparent Power"
-#define D_POWERUSAGE_REACTIVE "Reactive Power"
+#define D_POWERUSAGE_ACTIVE "Potência ativa"
+#define D_POWERUSAGE_APPARENT "Potência aparente"
+#define D_POWERUSAGE_REACTIVE "Potência reativa"
 #define D_PRESSURE "Pressão"
 #define D_PRESSUREATSEALEVEL "Pressão ao nível do mar"
 #define D_PROGRAM_FLASH_SIZE "Tamanho do programa na memória"
@@ -160,17 +163,26 @@
 #define D_USER "Usuário"
 #define D_UTC_TIME "UTC"
 #define D_UV_INDEX "Índice UV"
+#define D_UV_INDEX_1 "Low"
+#define D_UV_INDEX_2 "Mid"
+#define D_UV_INDEX_3 "High"
+#define D_UV_INDEX_4 "Danger"
+#define D_UV_INDEX_5 "BurnL1/2"
+#define D_UV_INDEX_6 "BurnL3"
+#define D_UV_INDEX_7 "OoR"
 #define D_UV_LEVEL "Nível UV"
+#define D_UV_POWER "UV Power"
 #define D_VERSION "Versão"
 #define D_VOLTAGE "Voltagem"
+#define D_WEIGHT "Weight"
 #define D_WARMLIGHT "Luz quente"
 #define D_WEB_SERVER "Servidor WEB"
 
 // sonoff.ino
-#define D_WARNING_MINIMAL_VERSION "AVISO esta versão não supporta configurações persistentes"
+#define D_WARNING_MINIMAL_VERSION "AVISO: esta versão não supporta configurações persistentes"
 #define D_LEVEL_10 "nível 1-0"
 #define D_LEVEL_01 "nível 0-1"
-#define D_SERIAL_LOGGING_DISABLED "Registro em serie desabilitado"
+#define D_SERIAL_LOGGING_DISABLED "Registro em série desabilitado"
 #define D_SYSLOG_LOGGING_REENABLED "Registro do Syslog reativado"
 
 #define D_SET_BAUDRATE_TO "Ajuste da velocidade para"
@@ -204,15 +216,16 @@
 #define D_USE_DEFAULTS "Usar predefinições"
 #define D_ERASED_SECTOR "Apagar setores"
 
-// webserver.ino
+// xdrv_02_webserver.ino
+#define D_NOSCRIPT "To use Tasmota, please enable JavaScript"
 #define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "Firmware mínimo - Atualizar por favor"
 #define D_WEBSERVER_ACTIVE_ON "Servidor WEB ativo em"
 #define D_WITH_IP_ADDRESS "com o endereço IP"
 #define D_WEBSERVER_STOPPED "Servidor WEB parou"
 #define D_FILE_NOT_FOUND "Arquivo não encontrado"
 #define D_REDIRECTED "Redirecionado para o portal ativo"
-#define D_WIFIMANAGER_SET_ACCESSPOINT_AND_STATION "Wifimanager configura o Ponto de Acesso e mantém a estação"
-#define D_WIFIMANAGER_SET_ACCESSPOINT "Wifimanager configura o Ponto de Acesso"
+#define D_WIFIMANAGER_SET_ACCESSPOINT_AND_STATION "Wifimanager: configura o Ponto de Acesso e a Estação"
+#define D_WIFIMANAGER_SET_ACCESSPOINT "Wifimanager: configura o Ponto de Acesso"
 #define D_TRYING_TO_CONNECT "Conectar o dispositivo à rede"
 
 #define D_RESTART_IN "Reinicia em"
@@ -237,7 +250,7 @@
 #define D_RESTORE_CONFIGURATION "Repor configuração"
 #define D_MAIN_MENU "Menu principal"
 
-#define D_MODULE_PARAMETERS "Parametros do módulo"
+#define D_MODULE_PARAMETERS "Parâmetros do módulo"
 #define D_MODULE_TYPE "Tipo de módulo"
 #define D_GPIO "GPIO"
 #define D_SERIAL_IN "Entrada serial"
@@ -281,12 +294,12 @@
 #define D_SINGLE_DEVICE "Dispositivo único"
 #define D_MULTI_DEVICE "Múltiplos dispositivos"
 
-#define D_SAVE_CONFIGURATION "Salvar configuração"
-#define D_CONFIGURATION_SAVED "Configuração salva"
+#define D_SAVE_CONFIGURATION "Gravar configuração"
+#define D_CONFIGURATION_SAVED "Configuração gravada"
 #define D_CONFIGURATION_RESET "Reinicialização da configuração"
 
 #define D_PROGRAM_VERSION "Versão do programa"
-#define D_BUILD_DATE_AND_TIME "Data e Hora da construção"
+#define D_BUILD_DATE_AND_TIME "Data e Hora da compilação"
 #define D_CORE_AND_SDK_VERSION "Versão Core/SDK"
 #define D_FLASH_WRITE_COUNT "Contagem de gravação flash"
 #define D_MAC_ADDRESS "Endereço MAC"
@@ -320,13 +333,17 @@
 #define D_UPLOAD_ERR_7 "Envio cancelado"
 #define D_UPLOAD_ERR_8 "Arquivo inválido"
 #define D_UPLOAD_ERR_9 "Arquivo muito grande"
+#define D_UPLOAD_ERR_10 "Failed to init RF chip"
+#define D_UPLOAD_ERR_11 "Failed to erase RF chip"
+#define D_UPLOAD_ERR_12 "Failed to write to RF chip"
+#define D_UPLOAD_ERR_13 "Failed to decode RF firmware"
 #define D_UPLOAD_ERROR_CODE "Código de erro do envio"
 
 #define D_ENTER_COMMAND "Inserir comando"
 #define D_ENABLE_WEBLOG_FOR_RESPONSE "Habilitar weblog 2 se resposta esperada"
 #define D_NEED_USER_AND_PASSWORD "Necessário user=<nome usuário>&password=<senha>"
 
-// xdrv_00_mqtt.ino
+// xdrv_01_mqtt.ino
 #define D_FINGERPRINT "Verifique a impressão digital TLS..."
 #define D_TLS_CONNECT_FAILED_TO "TLS não conseguiu ligar"
 #define D_RETRY_IN "Tentativa em"
@@ -334,7 +351,7 @@
 #define D_INSECURE "Ligação insegura devido à impressão digital inválida"
 #define D_CONNECT_FAILED_TO "A ligação falhou ao"
 
-// xdrv_wemohue.ino
+// xplg_wemohue.ino
 #define D_MULTICAST_DISABLED "Multicast desabilitado"
 #define D_MULTICAST_REJOINED "Multicast (re)ingressou"
 #define D_MULTICAST_JOIN_FAILED "Multicast falha no reingresso"
@@ -354,15 +371,15 @@
 #define D_HUE_POST_ARGS "Hue POST args"
 #define D_3_RESPONSE_PACKETS_SENT "3 pacotes de resposta enviados"
 
-// xdrv_05_domoticz.ino
+// xdrv_07_domoticz.ino
 #define D_DOMOTICZ_PARAMETERS "Parâmetros Domoticz"
 #define D_DOMOTICZ_IDX "Idx"
 #define D_DOMOTICZ_KEY_IDX "Chave idx"
 #define D_DOMOTICZ_SWITCH_IDX "Interruptor idx"
 #define D_DOMOTICZ_SENSOR_IDX "Sensor idx"
   #define D_DOMOTICZ_TEMP "Temp"
-  #define D_DOMOTICZ_TEMP_HUM "Temp,Hum"
-  #define D_DOMOTICZ_TEMP_HUM_BARO "Temp,Hum,Baro"
+  #define D_DOMOTICZ_TEMP_HUM "Temp,Umi"
+  #define D_DOMOTICZ_TEMP_HUM_BARO "Temp,Umi,Pres"
   #define D_DOMOTICZ_POWER_ENERGY "Potência,Energia"
   #define D_DOMOTICZ_ILLUMINANCE "Luminância"
   #define D_DOMOTICZ_COUNT "Contagem/PM1"
@@ -374,6 +391,7 @@
 // xdrv_09_timers.ino
 #define D_CONFIGURE_TIMER "Configurar temporizador"
 #define D_TIMER_PARAMETERS "Parâmetros"
+#define D_TIMER_ENABLE "Habilitar temporizadores"
 #define D_TIMER_ARM "Habilitar"
 #define D_TIMER_TIME "Horário"
 #define D_TIMER_DAYS "Dias"
@@ -400,7 +418,9 @@
 #define D_KNX_COMMAND_OTHER "Outros"
 #define D_SENT_TO "Enviar para"
 #define D_KNX_WARNING "O endereço ( 0 / 0 / 0 ) é reservado e não pode ser usado."
-#define D_KNX_ENHANCEMENT "Communication Enhancement"
+#define D_KNX_ENHANCEMENT "Melhoria da comunicação"
+#define D_KNX_TX_SLOT "KNX TX"
+#define D_KNX_RX_SLOT "KNX RX"
 
 // xdrv_03_energy.ino
 #define D_ENERGY_TODAY "Consumo energético de hoje"
@@ -428,6 +448,37 @@
 #define D_ENVIRONMENTAL_CONCENTRATION "PM"     // Environmetal Particle Matter
 #define D_PARTICALS_BEYOND "Partículas"
 
+// xsns_32_mpu6050.ino
+#define D_AX_AXIS "Accel. X-Axis"
+#define D_AY_AXIS "Accel. Y-Axis"
+#define D_AZ_AXIS "Accel. Z-Axis"
+#define D_GX_AXIS "Gyro X-Axis"
+#define D_GY_AXIS "Gyro Y-Axis"
+#define D_GZ_AXIS "Gyro Z-Axis"
+
+// xsns_34_hx711.ino
+#define D_HX_CAL_REMOVE "Remove weigth"
+#define D_HX_CAL_REFERENCE "Load reference weigth"
+#define D_HX_CAL_DONE "Calibrated"
+#define D_HX_CAL_FAIL "Calibration failed"
+#define D_RESET_HX711 "Reset Scale"
+#define D_CONFIGURE_HX711 "Configure Scale"
+#define D_HX711_PARAMETERS "Scale parameters"
+#define D_ITEM_WEIGHT "Item weight"
+#define D_REFERENCE_WEIGHT "Reference weigth"
+#define D_CALIBRATE "Calibrate"
+#define D_CALIBRATION "Calibration"
+
+//xsns_35_tx20.ino
+#define D_TX20_WIND_DIRECTION "Wind Direction"
+#define D_TX20_WIND_SPEED "Wind Speed"
+#define D_TX20_WIND_SPEED_AVG "Wind Speed Avg"
+#define D_TX20_WIND_SPEED_MAX "Wind Speed Max"
+#define D_TX20_NORTH "N"
+#define D_TX20_EAST "E"
+#define D_TX20_SOUTH "S"
+#define D_TX20_WEST "W"
+
 // sonoff_template.h
 #define D_SENSOR_NONE     "Nenhum"
 #define D_SENSOR_DHT11    "DHT11"
@@ -437,25 +488,29 @@
 #define D_SENSOR_I2C_SCL  "I2C SCL"
 #define D_SENSOR_I2C_SDA  "I2C SDA"
 #define D_SENSOR_WS2812   "WS2812"
+#define D_SENSOR_DFR562   "MP3 Player"
 #define D_SENSOR_IRSEND   "IRsend"
-#define D_SENSOR_SWITCH   "Interruptor"   // Suffix "1"
-#define D_SENSOR_BUTTON   "Botão"   // Suffix "1"
-#define D_SENSOR_RELAY    "Relé"    // Suffix "1i"
-#define D_SENSOR_LED      "Led"      // Suffix "1i"
-#define D_SENSOR_PWM      "PWM"      // Suffix "1"
-#define D_SENSOR_COUNTER  "Contador"  // Suffix "1"
+#define D_SENSOR_SWITCH   "Interruptor"	// Suffix "1"
+#define D_SENSOR_BUTTON   "Botão"   	// Suffix "1"
+#define D_SENSOR_RELAY    "Relé"    	// Suffix "1i"
+#define D_SENSOR_LED      "Led"      	// Suffix "1i"
+#define D_SENSOR_PWM      "PWM"      	// Suffix "1"
+#define D_SENSOR_COUNTER  "Contador"  	// Suffix "1"
 #define D_SENSOR_IRRECV   "IRrecv"
-#define D_SENSOR_MHZ_RX   "MHZ Rx"
-#define D_SENSOR_MHZ_TX   "MHZ Tx"
-#define D_SENSOR_PZEM_RX  "PZEM Rx"
-#define D_SENSOR_PZEM_TX  "PZEM Tx"
-#define D_SENSOR_SAIR_RX  "SAir Rx"
-#define D_SENSOR_SAIR_TX  "SAir Tx"
+#define D_SENSOR_MHZ_RX   "MHz Rx"
+#define D_SENSOR_MHZ_TX   "MHz Tx"
+#define D_SENSOR_PZEM004_RX  "PZEM004 Rx"
+#define D_SENSOR_PZEM016_RX  "PZEM016 Rx"
+#define D_SENSOR_PZEM017_RX  "PZEM017 Rx"
+#define D_SENSOR_PZEM0XX_TX  "PZEM0XX Tx"
+#define D_SENSOR_SAIR_RX  "SAIR Rx"
+#define D_SENSOR_SAIR_TX  "SAIR Tx"
 #define D_SENSOR_SPI_CS   "SPI CS"
 #define D_SENSOR_SPI_DC   "SPI DC"
 #define D_SENSOR_BACKLIGHT "Luz de fundo"
 #define D_SENSOR_PMS5003  "PMS5003"
-#define D_SENSOR_SDS0X1   "SDS0X1"
+#define D_SENSOR_SDS0X1_RX "SDS0X1 Rx"
+#define D_SENSOR_SDS0X1_TX "SDS0X1 Tx"
 #define D_SENSOR_SBR_RX   "SerBr Rx"
 #define D_SENSOR_SBR_TX   "SerBr Tx"
 #define D_SENSOR_SR04_TRIG "SR04 Tri"
@@ -465,12 +520,21 @@
 #define D_SENSOR_RCSWITCH "RCSWITCH"
 #define D_SENSOR_SDM630_TX "SDM630 Tx"
 #define D_SENSOR_SDM630_RX "SDM630 Rx"
+#define D_SENSOR_TM1638_CLK "TM16 CLK"
+#define D_SENSOR_TM1638_DIO "TM16 DIO"
+#define D_SENSOR_TM1638_STB "TM16 STB"
+#define D_SENSOR_HX711_SCK "HX711 SCK"
+#define D_SENSOR_HX711_DAT "HX711 DAT"
+#define D_SENSOR_TX20_TX "TX20"
 
 // Units
 #define D_UNIT_AMPERE "A"
 #define D_UNIT_CENTIMETER "cm"
 #define D_UNIT_HERTZ "Hz"
 #define D_UNIT_HOUR "H"
+#define D_UNIT_INCREMENTS "inc"
+#define D_UNIT_KILOGRAM "kg"
+#define D_UNIT_KILOMETER_PER_HOUR "kmph"  // or "km/h"
 #define D_UNIT_KILOOHM "kOhm"
 #define D_UNIT_KILOWATTHOUR "kWh"
 #define D_UNIT_LUX "lx"
@@ -491,6 +555,7 @@
 #define D_UNIT_VOLT "V"
 #define D_UNIT_WATT "W"
 #define D_UNIT_WATTHOUR "W/h"
+#define D_UNIT_WATT_METER_QUADRAT "W/m²"
 
 // Log message prefix
 #define D_LOG_APPLICATION "APP: "  // Application

@@ -93,7 +93,7 @@ uint8_t kRepeat[5] = {
     1 };   // All
 
 uint8_t ws_show_next = 1;
-
+bool ws_suspend_update = false;
 /********************************************************************************************/
 
 void Ws2812StripShow()
@@ -126,7 +126,6 @@ int mod(int a, int b)
    return ret;
 }
 
-#define cmin(a,b) ((a)<(b)?(a):(b))
 
 void Ws2812UpdatePixelColor(int position, struct WsColor hand_color, float offset)
 {
@@ -140,9 +139,9 @@ void Ws2812UpdatePixelColor(int position, struct WsColor hand_color, float offse
 
   color = strip->GetPixelColor(mod_position);
   float dimmer = 100 / (float)Settings.light_dimmer;
-  color.R = cmin(color.R + ((hand_color.red / dimmer) * offset), 255);
-  color.G = cmin(color.G + ((hand_color.green / dimmer) * offset), 255);
-  color.B = cmin(color.B + ((hand_color.blue / dimmer) * offset), 255);
+  color.R = tmin(color.R + ((hand_color.red / dimmer) * offset), 255);
+  color.G = tmin(color.G + ((hand_color.green / dimmer) * offset), 255);
+  color.B = tmin(color.B + ((hand_color.blue / dimmer) * offset), 255);
   strip->SetPixelColor(mod_position, color);
 }
 
@@ -365,6 +364,19 @@ void Ws2812SetColor(uint16_t led, uint8_t red, uint8_t green, uint8_t blue, uint
       strip->SetPixelColor(i, lcolor);
     }
   }
+
+  if (!ws_suspend_update) {
+    strip->Show();
+    ws_show_next = 1;
+  }
+}
+
+void Ws2812ForceSuspend () {
+  ws_suspend_update = true;
+}
+
+void Ws2812ForceUpdate () {
+  ws_suspend_update = false;
   strip->Show();
   ws_show_next = 1;
 }
@@ -397,7 +409,7 @@ void Ws2812ShowScheme(uint8_t scheme)
 {
   switch (scheme) {
     case 0:  // Clock
-      if (((STATES/10)*2 == state) || (ws_show_next)) {
+      if ((1 == state_250mS) || (ws_show_next)) {
         Ws2812Clock();
         ws_show_next = 0;
       }

@@ -27,19 +27,58 @@
 
 #include <TasmotaSerial.h>
 
+#ifndef WORKING_PERIOD
+	#define WORKING_PERIOD 5
+#endif
+
 TasmotaSerial *NovaSdsSerial;
 
 uint8_t novasds_type = 1;
 uint8_t novasds_valid = 0;
+
+uint8_t novasds_workperiod[19]   = {0xAA, 0xB4, 0x08, 0x01, 0x05, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0x0C, 0xAB}; //5 minutes
+uint8_t novasds_setquerymode[19] = {0xAA, 0xB4, 0x02, 0x01, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0x02, 0xAB}; //query mode
+uint8_t novasds_querydata[19]    = {0xAA, 0xB4, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0x02, 0xAB}; //query DATA
+
 
 struct sds011data {
   uint16_t pm100;
   uint16_t pm25;
 } novasds_data;
 
+void NovaSdsSetWorkPeriod()
+{
+
+  while (NovaSdsSerial->available() > 0) {
+    NovaSdsSerial->read();
+  }
+
+  novasds_workperiod[4] = WORKING_PERIOD;
+  novasds_workperiod[17] = ((novasds_workperiod[2] + novasds_workperiod[3] + novasds_workperiod[4] + novasds_workperiod[15] + novasds_workperiod[16]) & 0xFF); //checksum
+
+  NovaSdsSerial->write(novasds_workperiod, sizeof(novasds_workperiod));
+  NovaSdsSerial->flush();
+
+  while (NovaSdsSerial->available() > 0) {
+    NovaSdsSerial->read();
+  }
+
+  NovaSdsSerial->write(novasds_setquerymode, sizeof(novasds_setquerymode));
+  NovaSdsSerial->flush();
+
+  while (NovaSdsSerial->available() > 0) {
+    NovaSdsSerial->read();
+  }
+}
+
+
+
 bool NovaSdsReadData()
 {
   if (! NovaSdsSerial->available()) return false;
+
+  NovaSdsSerial->write(novasds_querydata, sizeof(novasds_querydata));
+  NovaSdsSerial->flush();
 
   while ((NovaSdsSerial->peek() != 0xAA) && NovaSdsSerial->available()) {
     NovaSdsSerial->read();
@@ -83,11 +122,14 @@ void NovaSdsSecond()                 // Every second
 void NovaSdsInit()
 {
   novasds_type = 0;
-  if (pin[GPIO_SDS0X1] < 99) {
-    NovaSdsSerial = new TasmotaSerial(pin[GPIO_SDS0X1], -1, 1);
+  if (pin[GPIO_SDS0X1_RX] < 99 && pin[GPIO_SDS0X1_TX] < 99) {
+    NovaSdsSerial = new TasmotaSerial(pin[GPIO_SDS0X1_RX], pin[GPIO_SDS0X1_TX], 1);
     if (NovaSdsSerial->begin(9600)) {
-      if (NovaSdsSerial->hardwareSerial()) { ClaimSerial(); }
+      if (NovaSdsSerial->hardwareSerial()) {
+        ClaimSerial();
+      }
       novasds_type = 1;
+      NovaSdsSetWorkPeriod();
     }
   }
 }
