@@ -86,8 +86,8 @@ enum UserSelectablePins {
   GPIO_LED4_INV,
   GPIO_MHZ_TXD,        // MH-Z19 Serial interface
   GPIO_MHZ_RXD,        // MH-Z19 Serial interface
-  GPIO_PZEM_TX,        // PZEM004T Serial interface
-  GPIO_PZEM_RX,        // PZEM004T Serial interface
+  GPIO_PZEM0XX_TX,     // PZEM0XX Serial interface
+  GPIO_PZEM004_RX,     // PZEM004T Serial interface
   GPIO_SAIR_TX,        // SenseAir Serial interface
   GPIO_SAIR_RX,        // SenseAir Serial interface
   GPIO_SPI_CS,         // SPI Chip Select
@@ -122,12 +122,15 @@ enum UserSelectablePins {
   GPIO_CNTR2_NP,
   GPIO_CNTR3_NP,
   GPIO_CNTR4_NP,
-  GPIO_PZEM2_TX,       // PZEM-003,014,016,017 Serial interface
-  GPIO_PZEM2_RX,       // PZEM-003,014,016,017 Serial interface
+  GPIO_PZEM016_RX,     // PZEM-014,016 Serial Modbus interface
+  GPIO_PZEM017_RX,     // PZEM-003,017 Serial Modbus interface
   GPIO_MP3_DFR562,     // RB-DFR-562, DFPlayer Mini MP3 Player
   GPIO_SDS0X1_TX,      // Nova Fitness SDS011 Serial interface
   GPIO_HX711_SCK,      // HX711 Load Cell clock
   GPIO_HX711_DAT,      // HX711 Load Cell data
+  GPIO_TX20_TXD_BLACK,  // TX20 Transmission Pin
+  GPIO_RFSEND,         // RF transmitter
+  GPIO_RFRECV,         // RF receiver
   GPIO_SENSOR_END };
 
 // Programmer selectable GPIO functionality offset by user selectable GPIOs
@@ -168,7 +171,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_LED "1|" D_SENSOR_LED "2|" D_SENSOR_LED "3|" D_SENSOR_LED "4|"
   D_SENSOR_LED "1i|" D_SENSOR_LED "2i|" D_SENSOR_LED "3i|" D_SENSOR_LED "4i|"
   D_SENSOR_MHZ_TX "|" D_SENSOR_MHZ_RX "|"
-  D_SENSOR_PZEM_TX "|" D_SENSOR_PZEM_RX "|"
+  D_SENSOR_PZEM0XX_TX "|" D_SENSOR_PZEM004_RX "|"
   D_SENSOR_SAIR_TX "|" D_SENSOR_SAIR_RX "|"
   D_SENSOR_SPI_CS "|" D_SENSOR_SPI_DC "|" D_SENSOR_BACKLIGHT "|"
   D_SENSOR_PMS5003 "|" D_SENSOR_SDS0X1_RX "|"
@@ -180,9 +183,11 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_SWITCH "1n|" D_SENSOR_SWITCH "2n|" D_SENSOR_SWITCH "3n|" D_SENSOR_SWITCH "4n|" D_SENSOR_SWITCH "5n|" D_SENSOR_SWITCH "6n|" D_SENSOR_SWITCH "7n|" D_SENSOR_SWITCH "8n|"
   D_SENSOR_BUTTON "1n|" D_SENSOR_BUTTON "2n|" D_SENSOR_BUTTON "3n|" D_SENSOR_BUTTON "4n|"
   D_SENSOR_COUNTER "1n|" D_SENSOR_COUNTER "2n|" D_SENSOR_COUNTER "3n|" D_SENSOR_COUNTER "4n|"
-  D_SENSOR_PZEM_TX "|" D_SENSOR_PZEM_RX "|"
+  D_SENSOR_PZEM016_RX "|" D_SENSOR_PZEM017_RX "|"
   D_SENSOR_DFR562 "|" D_SENSOR_SDS0X1_TX "|"
-  D_SENSOR_HX711_SCK "|" D_SENSOR_HX711_DAT;
+  D_SENSOR_HX711_SCK "|" D_SENSOR_HX711_DAT "|"
+  D_SENSOR_TX20_TX "|"
+  D_SENSOR_RFSEND "|" D_SENSOR_RFRECV;
 
 /********************************************************************************************/
 
@@ -241,6 +246,7 @@ enum SupportedModules {
   OBI,
   TECKIN,
   APLIC_WDP303075,
+  TUYA_DIMMER,
   MAXMODULE };
 
 /********************************************************************************************/
@@ -338,6 +344,8 @@ const uint8_t kGpioNiceList[GPIO_SENSOR_END] PROGMEM = {
   GPIO_WS2812,         // WS2812 Led string
   GPIO_IRSEND,         // IR remote
   GPIO_IRRECV,         // IR receiver
+  GPIO_RFSEND,         // RF transmitter
+  GPIO_RFRECV,         // RF receiver
   GPIO_SR04_TRIG,      // SR04 Trigger pin
   GPIO_SR04_ECHO,      // SR04 Echo pin
   GPIO_TM16CLK,        // TM1638 Clock
@@ -353,16 +361,17 @@ const uint8_t kGpioNiceList[GPIO_SENSOR_END] PROGMEM = {
   GPIO_SAIR_RX,        // SenseAir Serial interface
   GPIO_SDS0X1_TX,      // Nova Fitness SDS011 Serial interface
   GPIO_SDS0X1_RX,      // Nova Fitness SDS011 Serial interface
-  GPIO_PZEM_TX,        // PZEM004T Serial interface
-  GPIO_PZEM_RX,        // PZEM004T Serial interface
-  GPIO_PZEM2_TX,       // PZEM-003,014,016,017 Serial interface
-  GPIO_PZEM2_RX,       // PZEM-003,014,016,017 Serial interface
+  GPIO_PZEM0XX_TX,     // PZEM0XX Serial interface
+  GPIO_PZEM004_RX,     // PZEM004T Serial interface
+  GPIO_PZEM016_RX,     // PZEM-014,016 Serial Modbus interface
+  GPIO_PZEM017_RX,     // PZEM-003,017 Serial Modbus interface
   GPIO_SDM120_TX,      // SDM120 Serial interface
   GPIO_SDM120_RX,      // SDM120 Serial interface
   GPIO_SDM630_TX,      // SDM630 Serial interface
   GPIO_SDM630_RX,      // SDM630 Serial interface
   GPIO_PMS5003,        // Plantower PMS5003 Serial interface
-  GPIO_MP3_DFR562      // RB-DFR-562, DFPlayer Mini MP3 Player Serial interface
+  GPIO_TX20_TXD_BLACK, // TX20 Transmission Pin
+  GPIO_MP3_DFR562     // RB-DFR-562, DFPlayer Mini MP3 Player Serial interface
 };
 
 const uint8_t kModuleNiceList[MAXMODULE] PROGMEM = {
@@ -407,6 +416,7 @@ const uint8_t kModuleNiceList[MAXMODULE] PROGMEM = {
   NEO_COOLCAM,        // Socket Relay Devices
   OBI,
   ESP_SWITCH,         // Switch Devices
+  TUYA_DIMMER,		    // Dimmer Devices
   H801,               // Light Devices
   MAGICHOME,
   ARILUX_LC01,
@@ -1100,14 +1110,17 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_REL1_INV,    // GPIO16 Green Led 1 (0 = On, 1 = Off)
   },
   { "OBI Socket",      // OBI socket (ESP8266) - https://www.obi.de/hausfunksteuerung/wifi-stecker-schuko/p/2291706
-     0, 0, 0, 0,
-     GPIO_LED1,        // GPIO04 LED on top and in switch button
-     GPIO_REL1,        // GPIO05 Relay 1 (0 = Off, 1 = On)
+     GPIO_USER,        // GPIO00
+     0,0,0,
+     GPIO_LED1,        // GPIO04 Blue LED
+     GPIO_REL1,        // GPIO05 (Relay OFF, but used as Relay Switch)
      0, 0, 0, 0, 0, 0, // Flash connection
-     GPIO_LED2,        // GPIO12
-     0,                // GPIO13
-     GPIO_KEY1,        // GPIO14 switch button
-     0, 0, 0
+     GPIO_LED2,        // GPIO12 (Relay ON, but set to LOW, so we can switch with GPIO05)
+     GPIO_USER,        // GPIO13
+     GPIO_KEY1,        // GPIO14 Button
+     0,
+     GPIO_USER,        // GPIO16
+     GPIO_ADC0         // ADC0   A0 Analog input
   },
   { "Teckin",          // https://www.amazon.de/gp/product/B07D5V139R
      0,
@@ -1133,6 +1146,22 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_LED1_INV,    // GPIO13 LED (0 = On, 1 = Off)
      GPIO_REL1,        // GPIO14 Relay SRU 5VDC SDA (0 = Off, 1 = On )
      0, 0, 0
+  },
+  { "Tuya Dimmer",     // Tuya Dimmer (ESP8266 w/ separate MCU dimmer)
+                       // https://www.amazon.com/gp/product/B07CTNSZZ8/ref=oh_aui_detailpage_o00_s00?ie=UTF8&psc=1
+     GPIO_KEY1,        // Virtual Button (controlled by MCU)
+     GPIO_TXD,         // GPIO01 MCU serial control
+     GPIO_USER,
+     GPIO_RXD,         // GPIO03 MCU serial control
+     GPIO_USER,
+     GPIO_USER,
+     0, 0, 0, 0, 0, 0, // Flash connection
+     GPIO_USER,
+     GPIO_USER,
+     GPIO_LED1,        // GPIO14 Green Led
+     GPIO_USER,
+     GPIO_USER,
+     0
   }
 };
 

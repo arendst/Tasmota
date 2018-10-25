@@ -79,10 +79,10 @@ const char HTTP_HEAD[] PROGMEM =
     "lt=setTimeout(la,{a});"    // Settings.web_refresh
   "}"
   "function lb(p){"
-    "la('?d='+p);"
+    "la('?d='+p);"              // ?d related to WebGetArg("d", tmp, sizeof(tmp));
   "}"
   "function lc(p){"
-    "la('?t='+p);"               // ?t related to WebGetArg("t", tmp, sizeof(tmp));
+    "la('?t='+p);"              // ?t related to WebGetArg("t", tmp, sizeof(tmp));
   "}";
 
 const char HTTP_HEAD_RELOAD[] PROGMEM =
@@ -297,7 +297,8 @@ const char HTTP_END[] PROGMEM =
   "</body>"
   "</html>";
 
-const char HTTP_DEVICE_CONTROL[] PROGMEM = "<td style='width:%d%%'><button onclick='la(\"?o=%d\");' style='line-height:5.0rem;'>%s%s</button></td>";
+//reloxx13: add style='line-height:5.0rem;'
+const char HTTP_DEVICE_CONTROL[] PROGMEM = "<td style='width:%d%%'><button onclick='la(\"?o=%d\");' style='line-height:5.0rem;'>%s%s</button></td>";  // ?o is related to WebGetArg("o", tmp, sizeof(tmp));
 const char HTTP_DEVICE_STATE[] PROGMEM = "%s<td style='width:%d{c}%s;font-size:%dpx'>%s</div></td>";  // {c} = %'><div style='text-align:center;font-weight:
 
 const char HDR_CTYPE_PLAIN[] PROGMEM = "text/plain";
@@ -375,6 +376,7 @@ void StartWebserver(int type, IPAddress ipweb)
       HueWemoAddHandlers();
 #endif  // USE_EMULATION
       XdrvCall(FUNC_WEB_ADD_HANDLER);
+      XsnsCall(FUNC_WEB_ADD_HANDLER);
 #endif  // Not BE_MINIMAL
     }
     reset_web_log_flag = 0;
@@ -602,7 +604,8 @@ void HandleRoot()
         if (idx > 0) { page += F("</tr><tr>"); }
         for (byte j = 0; j < 4; j++) {
           idx++;
-          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("<td style='width:25%%'><button onclick='la(\"?k=%d\");'>%d</button></td>"), idx, idx);
+          //reloxx13: fix % style='width:25%%'
+          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("<td style='width:25%%'><button onclick='la(\"?k=%d\");'>%d</button></td>"), idx, idx); // ?k is related to WebGetArg("k", tmp, sizeof(tmp));
           page += mqtt_data;
         }
       }
@@ -612,6 +615,7 @@ void HandleRoot()
 #ifndef BE_MINIMAL
     mqtt_data[0] = '\0';
     XdrvCall(FUNC_WEB_ADD_MAIN_BUTTON);
+    XsnsCall(FUNC_WEB_ADD_MAIN_BUTTON);
     page += String(mqtt_data);
 #endif  // Not BE_MINIMAL
 
@@ -717,6 +721,7 @@ void HandleConfiguration()
 
   mqtt_data[0] = '\0';
   XdrvCall(FUNC_WEB_ADD_BUTTON);
+  XsnsCall(FUNC_WEB_ADD_BUTTON);
   page += String(mqtt_data);
 
   page += FPSTR(HTTP_BTN_MENU4);

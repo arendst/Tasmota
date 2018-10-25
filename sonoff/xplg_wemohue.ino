@@ -660,11 +660,11 @@ void HueLights(String *path)
     if ((device < 1) || (device > maxhue)) {
       device = 1;
     }
-    if (1 == WebServer->args()) {
+    if (WebServer->args()) {
       response = "[";
 
       StaticJsonBuffer<400> jsonBuffer;
-      JsonObject &hue_json = jsonBuffer.parseObject(WebServer->arg(0));
+      JsonObject &hue_json = jsonBuffer.parseObject(WebServer->arg((WebServer->args())-1));
       if (hue_json.containsKey("on")) {
 
         response += FPSTR(HUE_LIGHT_RESPONSE_JSON);

@@ -124,6 +124,7 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #define MQTT_LIBRARY_TYPE      MQTT_PUBSUBCLIENT   // Use PubSubClient library
 #undef USE_ARDUINO_OTA                        // Disable support for Arduino OTA
 #undef USE_KNX                                // Disable KNX IP Protocol Support
+#undef USE_CUSTOM                             // Disable Custom features
 #undef USE_TIMERS                             // Disable support for up to 16 timers
 #undef USE_TIMERS_WEB                         // Disable support for timer webpage
 #undef USE_SUNRISE                            // Disable support for Sunrise and sunset tools
@@ -135,7 +136,8 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #undef USE_PMS5003                            // Disable support for PMS5003 and PMS7003 particle concentration sensor
 #undef USE_NOVA_SDS                           // Disable support for SDS011 and SDS021 particle concentration sensor
 #undef USE_PZEM004T                           // Disable PZEM004T energy sensor
-#undef USE_PZEM2                              // Disable PZEM003,014,016,017 Energy monitor
+#undef USE_PZEM_AC                            // Disable PZEM014,016 Energy monitor
+#undef USE_PZEM_DC                            // Disable PZEM003,017 Energy monitor
 #undef USE_SERIAL_BRIDGE                      // Disable support for software Serial Bridge
 #undef USE_SDM120                             // Disable support for Eastron SDM120-Modbus energy meter
 #undef USE_SDM630                             // Disable support for Eastron SDM630-Modbus energy meter
@@ -144,7 +146,10 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #undef USE_ARILUX_RF                          // Disable support for Arilux RF remote controller
 #undef USE_SR04                               // Disable support for for HC-SR04 ultrasonic devices
 #undef USE_TM1638                             // Disable support for TM1638 switches copying Switch1 .. Switch8
+#undef USE_HX711                              // Disable support for HX711 load cell
 #undef USE_RF_FLASH                           // Disable support for flashing the EFM8BB1 chip on the Sonoff RF Bridge. C2CK must be connected to GPIO4, C2D to GPIO5 on the PCB
+#undef USE_TUYA_DIMMER                        // Disable support for Tuya Serial Dimmer
+#undef USE_TX20_WIND_SENSOR                   // Disable support for La Crosse TX20 anemometer
 #undef DEBUG_THEO                             // Disable debug code
 #undef USE_DEBUG_DRIVER                       // Disable debug code
 #endif  // USE_CLASSIC
@@ -211,6 +216,7 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #undef USE_MQTT_TLS                           // Disable TLS support won't work as the MQTTHost is not set
 #undef USE_KNX                                // Disable KNX IP Protocol Support
 //#undef USE_WEBSERVER                          // Disable Webserver
+#undef USE_CUSTOM                             // Disable Custom features
 #undef USE_DISCOVERY                          // Disable Discovery services for both MQTT and web server
 #undef USE_EMULATION                          // Disable Wemo or Hue emulation
 #undef USE_TIMERS                             // Disable support for up to 16 timers
@@ -237,7 +243,10 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #undef USE_ARILUX_RF                          // Disable support for Arilux RF remote controller
 #undef USE_SR04                               // Disable support for for HC-SR04 ultrasonic devices
 #undef USE_TM1638                             // Disable support for TM1638 switches copying Switch1 .. Switch8
+#undef USE_HX711                              // Disable support for HX711 load cell
 #undef USE_RF_FLASH                           // Disable support for flashing the EFM8BB1 chip on the Sonoff RF Bridge. C2CK must be connected to GPIO4, C2D to GPIO5 on the PCB
+#undef USE_TUYA_DIMMER                        // Disable support for Tuya Serial Dimmer
+#undef USE_TX20_WIND_SENSOR                   // Disable support for La Crosse TX20 anemometer
 #undef DEBUG_THEO                             // Disable debug code
 #undef USE_DEBUG_DRIVER                       // Disable debug code
 #endif  // BE_MINIMAL
