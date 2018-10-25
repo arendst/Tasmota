@@ -28,3 +28,4 @@ copy ..\.pioenvs\sonoff-allsensors\firmware.bin %version%\ALL_SENSORS-firmware-%
 
 
 copy ..\.pioenvs\sonoff-DE-4MB\firmware.bin %version%\4MB-DE-firmware-%version%.bin
+copy ..\.pioenvs\wemos-d1-mini-DE\firmware.bin %version%\wemos-d1-mini-DE-firmware-%version%.bin
