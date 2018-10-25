@@ -398,8 +398,11 @@ void MqttConnected()
     XdrvCall(FUNC_MQTT_INIT);
   }
   mqtt_initial_connection_state = 0;
-  rules_flag.mqtt_connected = 1;
+
   global_state.mqtt_down = 0;
+  if (Settings.flag.mqtt_enabled) {
+    rules_flag.mqtt_connected = 1;
+  }
 }
 
 #ifdef USE_MQTT_TLS
