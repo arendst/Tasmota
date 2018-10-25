@@ -196,7 +196,7 @@ int TextToInt(char *str)
 
 char* dtostrfd(double number, unsigned char prec, char *s)
 {
-  if (isnan(number)) {
+  if ((isnan(number)) || (isinf(number))) {  // Fix for JSON output (https://stackoverflow.com/questions/1423081/json-left-out-infinity-and-nan-json-status-in-ecmascript)
     strcpy(s, "null");
     return s;
   } else {

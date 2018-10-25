@@ -1,6 +1,6 @@
 /* 6.2.1.19 20181023
  * Fix header file execution order by renaming user_config.h to my_user_config.h
- * Fix invalid JSON floating point result from nan into null (#4147)
+ * Fix invalid JSON floating point result from nan (Not a Number) and inf (Infinity) into null (#4147)
  *
  * 6.2.1.18 20181019
  * Add more API callbacks and document API.md
