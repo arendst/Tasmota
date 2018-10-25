@@ -196,7 +196,12 @@ int TextToInt(char *str)
 
 char* dtostrfd(double number, unsigned char prec, char *s)
 {
-  return dtostrf(number, 1, prec, s);
+  if (isnan(number)) {
+    strcpy(s, "null");
+    return s;
+  } else {
+    return dtostrf(number, 1, prec, s);
+  }
 }
 
 char* Unescape(char* buffer, uint16_t* size)
@@ -630,10 +635,6 @@ boolean GetUsedInModule(byte val, uint8_t *arr)
   if (GPIO_I2C_SCL == val) { return true; }
   if (GPIO_I2C_SDA == val) { return true; }
 #endif
-#ifndef USE_SR04
-  if (GPIO_SR04_TRIG == val) { return true; }
-  if (GPIO_SR04_ECHO == val) { return true; }
-#endif
 #ifndef USE_WS2812
   if (GPIO_WS2812 == val) { return true; }
 #endif
@@ -706,6 +707,11 @@ boolean GetUsedInModule(byte val, uint8_t *arr)
   if (GPIO_HX711_SCK == val) { return true; }
   if (GPIO_HX711_DAT == val) { return true; }
 #endif
+#ifndef USE_TX20_WIND_SENSOR
+  if (GPIO_TX20_TXD_BLACK == val) { return true; }
+#endif
+
+
   if ((val >= GPIO_REL1) && (val < GPIO_REL1 + MAX_RELAYS)) {
     offset = (GPIO_REL1_INV - GPIO_REL1);
   }
