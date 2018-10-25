@@ -22,9 +22,9 @@
 Ticker TickerShutter;
 
 enum ShutterCommands {
-  CMND_OPEN, CMND_CLOSE, CMND_STOP, CMND_POSITION, CMND_OPENTIME, CMND_CLOSETIME, CMND_SHUTTERRELAY, CMND_SET50PERCENT, CMND_SHUTTERSETCLOSE, CMND_SHUTTERINVERT };
+  CMND_OPEN, CMND_CLOSE, CMND_STOP, CMND_POSITION, CMND_OPENTIME, CMND_CLOSETIME, CMND_SHUTTERRELAY, CMND_SET50PERCENT, CMND_SHUTTERSETCLOSE, CMND_SHUTTERINVERT, CMND_CALIBRATIONMATIX };
 const char kShutterCommands[] PROGMEM =
-  D_CMND_OPEN "|" D_CMND_CLOSE "|" D_CMND_STOP "|" D_CMND_POSITION  "|" D_CMND_OPENTIME "|" D_CMND_CLOSETIME "|" D_CMND_SHUTTERRELAY "|" D_CMND_SET50PERCENT "|" D_CMND_SHUTTERSETCLOSE "|" D_CMND_SHUTTERINVERT;
+  D_CMND_OPEN "|" D_CMND_CLOSE "|" D_CMND_STOP "|" D_CMND_POSITION  "|" D_CMND_OPENTIME "|" D_CMND_CLOSETIME "|" D_CMND_SHUTTERRELAY "|" D_CMND_SET50PERCENT "|" D_CMND_SHUTTERSETCLOSE "|" D_CMND_SHUTTERINVERT "|" D_CMND_CALIBRATIONMATIX;
 
 enum ShutterModes { OFF_OPEN__OFF_CLOSE, OFF_ON__OPEN_CLOSE, PULSE_OPEN__PULSE_CLOSE };
 
@@ -159,6 +159,7 @@ void Schutter_Update_Position()
       if (Shutter_Real_Position[i] * Shutter_Direction[i] >= Shutter_Target_Position[i] * Shutter_Direction[i] ) {
         // calculate relay number responsible for current movement.
         uint8_t cur_relay = Settings.shutter_startrelay[i] + (Shutter_Direction[i] == 1 ? 0 : 1) ;
+        char stemp2[10];
 
         Settings.shutter_position[i] = realposition_to_percent(Shutter_Real_Position[i], i);
         //Settings.shutter_position[i] = Settings.shuttercoeff[2][i] * 5 > Shutter_Real_Position[i] ? (Shutter_Real_Position[i] * 10 / Settings.shuttercoeff[2][i] + 4)/10 : ((Shutter_Real_Position[i]-Settings.shuttercoeff[0,i]) *10 / Settings.shuttercoeff[1][i] +4) / 10;
@@ -169,7 +170,8 @@ void Schutter_Update_Position()
           Shutter_Operations[i]  = 0;
         }
 
-        snprintf_P(log_data, sizeof(log_data), PSTR("Shutter %d: Real Pos. %d, Stoppos: %ld, relay: %d, direction %d, pulsetimer: %d, rtcshutter: %ld, operationtime %d"), i, Shutter_Real_Position[i], Settings.shutter_position[i], cur_relay -1, Shutter_Direction[i], Settings.pulse_timer[cur_relay -1], shutter_time[i], Shutter_Operations[i]);
+        dtostrfd((double)shutter_time[i] / 20, 1, stemp2);
+        snprintf_P(log_data, sizeof(log_data), PSTR("Shutter %d: Real Pos. %d, Stoppos: %ld, relay: %d, direction %d, pulsetimer: %d, rtcshutter: %s [s], operationtime %d"), i, Shutter_Real_Position[i], Settings.shutter_position[i], cur_relay -1, Shutter_Direction[i], Settings.pulse_timer[cur_relay -1], stemp2, Shutter_Operations[i]);
         AddLog(LOG_LEVEL_DEBUG);
         Shutter_Start_Position[i] = Shutter_Real_Position[i];
 
@@ -259,9 +261,9 @@ boolean ShutterCommand()
     char time_chr[10];
     if (XdrvMailbox.data_len > 0) {
       if (CMND_OPENTIME == command_code) {
-        Settings.shutter_opentime[index-1] = (uint8_t)(10 * CharToDouble(XdrvMailbox.data));
+        Settings.shutter_opentime[index-1] = (uint16_t)(10 * CharToDouble(XdrvMailbox.data));
       } else {
-        Settings.shutter_closetime[index-1] = (uint8_t)(10 * CharToDouble(XdrvMailbox.data));
+        Settings.shutter_closetime[index-1] = (uint16_t)(10 * CharToDouble(XdrvMailbox.data));
       }
       ShutterInit();
     }
@@ -298,7 +300,13 @@ boolean ShutterCommand()
       Shutter_StartInit(index-1, 0, 0);
       Settings.shutter_position[index-1] = 0;
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_NVALUE, command, index, D_CONFIGURATION_RESET);
-  } else {
+  }
+  else if ((CMND_CALIBRATIONMATIX == command_code) && (index > 0) && (index <= MAX_SHUTTERS)) {
+    if (XdrvMailbox.data_len > 0) {
+        snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, index, XdrvMailbox.data);
+    }
+  }
+  else {
     serviced = false;  // Unknown command
   }
   if (CMND_POSITION == command_code && (index > 0) && (index <= shutters_present)) {
@@ -362,6 +370,7 @@ boolean ShutterCommand()
       command_code = 0;
     }
   }
+
   if (!serviced) {
     snprintf_P(log_data, sizeof(log_data), PSTR("Shutter unknown"));
     AddLog(LOG_LEVEL_INFO);
