@@ -196,7 +196,12 @@ int TextToInt(char *str)
 
 char* dtostrfd(double number, unsigned char prec, char *s)
 {
-  return dtostrf(number, 1, prec, s);
+  if ((isnan(number)) || (isinf(number))) {  // Fix for JSON output (https://stackoverflow.com/questions/1423081/json-left-out-infinity-and-nan-json-status-in-ecmascript)
+    strcpy(s, "null");
+    return s;
+  } else {
+    return dtostrf(number, 1, prec, s);
+  }
 }
 
 char* Unescape(char* buffer, uint16_t* size)
@@ -630,10 +635,6 @@ boolean GetUsedInModule(byte val, uint8_t *arr)
   if (GPIO_I2C_SCL == val) { return true; }
   if (GPIO_I2C_SDA == val) { return true; }
 #endif
-#ifndef USE_SR04
-  if (GPIO_SR04_TRIG == val) { return true; }
-  if (GPIO_SR04_ECHO == val) { return true; }
-#endif
 #ifndef USE_WS2812
   if (GPIO_WS2812 == val) { return true; }
 #endif
@@ -647,14 +648,22 @@ boolean GetUsedInModule(byte val, uint8_t *arr)
   if (GPIO_MHZ_TXD == val) { return true; }
   if (GPIO_MHZ_RXD == val) { return true; }
 #endif
+
+  int pzem = 3;
 #ifndef USE_PZEM004T
-  if (GPIO_PZEM_TX == val) { return true; }
-  if (GPIO_PZEM_RX == val) { return true; }
+  pzem--;
+  if (GPIO_PZEM004_RX == val) { return true; }
 #endif
-#ifndef USE_PZEM2
-  if (GPIO_PZEM2_TX == val) { return true; }
-  if (GPIO_PZEM2_RX == val) { return true; }
+#ifndef USE_PZEM_AC
+  pzem--;
+  if (GPIO_PZEM016_RX == val) { return true; }
 #endif
+#ifndef USE_PZEM_DC
+  pzem--;
+  if (GPIO_PZEM017_RX == val) { return true; }
+#endif
+  if (!pzem && (GPIO_PZEM0XX_TX == val)) { return true; }
+
 #ifndef USE_SENSEAIR
   if (GPIO_SAIR_TX == val) { return true; }
   if (GPIO_SAIR_RX == val) { return true; }
@@ -698,6 +707,15 @@ boolean GetUsedInModule(byte val, uint8_t *arr)
   if (GPIO_HX711_SCK == val) { return true; }
   if (GPIO_HX711_DAT == val) { return true; }
 #endif
+#ifndef USE_TX20_WIND_SENSOR
+  if (GPIO_TX20_TXD_BLACK == val) { return true; }
+#endif
+#ifndef USE_RC_SWITCH
+  if (GPIO_RFSEND == val) { return true; }
+  if (GPIO_RFRECV == val) { return true; }
+#endif
+
+
   if ((val >= GPIO_REL1) && (val < GPIO_REL1 + MAX_RELAYS)) {
     offset = (GPIO_REL1_INV - GPIO_REL1);
   }
@@ -750,11 +768,13 @@ void ClaimSerial()
   Settings.baudrate = baudrate / 1200;
 }
 
-void SerialSendRaw(char *codes, int size)
+void SerialSendRaw(char *codes)
 {
   char *p;
   char stemp[3];
   uint8_t code;
+
+  int size = strlen(codes);
 
   while (size > 0) {
     snprintf(stemp, sizeof(stemp), codes);
@@ -1003,6 +1023,16 @@ void GetFeatures()
 #ifdef USE_MP3_PLAYER
   feature_drv2 |= 0x00002000;  // xdrv_14_mp3.ino
 #endif
+#ifdef USE_PCA9685
+  feature_drv2 |= 0x00004000;  // xdrv_15_pca9685.ino
+#endif
+#ifdef USE_TUYA_DIMMER
+  feature_drv2 |= 0x00008000;  // xdrv_16_tuyadimmer.ino
+#endif
+#ifdef USE_RC_SWITCH
+  feature_drv2 |= 0x00010000;  // xdrv_17_rcswitch.ino
+#endif
+
 
 
 #ifdef NO_EXTRA_4K_HEAP
@@ -1164,15 +1194,23 @@ void GetFeatures()
 #ifdef USE_MCP39F501
   feature_sns2 |= 0x00000100;  // xnrg_04_mcp39f501.ino
 #endif
-#ifdef USE_PZEM2
-  feature_sns2 |= 0x00000200;  // xnrg_05_pzem2.ino
+#ifdef USE_PZEM_AC
+  feature_sns2 |= 0x00000200;  // xnrg_05_pzem_ac.ino
 #endif
 #ifdef USE_DS3231
   feature_sns2 |= 0x00000400;  // xsns_33_ds3231.ino
 #endif
 #ifdef USE_HX711
-  feature_sns2 |= 0x00000400;  // xsns_34_hx711.ino
+  feature_sns2 |= 0x00000800;  // xsns_34_hx711.ino
 #endif
+#ifdef USE_PZEM_DC
+  feature_sns2 |= 0x00001000;  // xnrg_06_pzem_dc.ino
+#endif
+#ifdef USE_TX20_WIND_SENSOR
+  feature_sns2 |= 0x00002000;  // xsns_35_tx20.ino
+#endif
+
+
 
 }
 
@@ -1348,6 +1386,7 @@ void WifiBegin(uint8_t flag)
   WiFi.mode(WIFI_OFF);      // See https://github.com/esp8266/Arduino/issues/2186
 #endif
 
+  WiFi.persistent(false);   // Solve possible wifi init errors (re-add at 6.2.1.16 #4044, #4083)
   WiFi.disconnect(true);    // Delete SDK wifi config
   delay(200);
   WiFi.mode(WIFI_STA);      // Disable AP mode

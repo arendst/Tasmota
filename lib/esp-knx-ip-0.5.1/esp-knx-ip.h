@@ -45,18 +45,7 @@
 #include "Arduino.h"
 #include <EEPROM.h>
 #include <ESP8266WiFi.h>
-
-#include <core_version.h>         // Arduino_Esp8266 version information (ARDUINO_ESP8266_RELEASE and ARDUINO_ESP8266_RELEASE_2_3_0)
-#ifndef ARDUINO_ESP8266_RELEASE_2_3_0
-#define USE_ASYNC_UDP             // UDP WIFI Library Selection for Multicast
-#endif
-
-#ifdef USE_ASYNC_UDP
-#include <ESPAsyncUDP.h>
-#else
 #include <WiFiUdp.h>
-#endif
-
 #include <ESP8266WebServer.h>
 
 #include "DPT.h"
@@ -529,11 +518,7 @@ class ESPKNXIP {
   private:
     void __start();
 
-#ifdef USE_ASYNC_UDP
-    void __loop_knx(AsyncUDPPacket &packet);
-#else
     void __loop_knx();
-#endif
 
     // Webserver functions
     void __loop_webserver();
@@ -569,11 +554,7 @@ class ESPKNXIP {
     ESP8266WebServer *server;
     address_t physaddr;
 
-#ifdef USE_ASYNC_UDP
-    AsyncUDP udp;
-#else
     WiFiUDP udp;
-#endif
 
     callback_assignment_id_t registered_callback_assignments;
     callback_assignment_id_t free_callback_assignment_slots;

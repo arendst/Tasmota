@@ -188,8 +188,8 @@ struct SYSCFG {
   byte          seriallog_level;           // 09E
   uint8_t       sta_config;                // 09F
   byte          sta_active;                // 0A0
-  char          sta_ssid[2][33];           // 0A1
-  char          sta_pwd[2][65];            // 0E3
+  char          sta_ssid[2][33];           // 0A1 - Keep together with sta_pwd as being copied as one chunck with reset 4/5
+  char          sta_pwd[2][65];            // 0E3 - Keep together with sta_ssid as being copied as one chunck with reset 4/5
   char          hostname[33];              // 165
   char          syslog_host[33];           // 186
   uint8_t       rule_stop;                 // 1A7
@@ -322,11 +322,12 @@ struct SYSCFG {
   uint16_t      mcp230xx_int_timer;        // 718
   uint8_t       rgbwwTable[5];             // 71A
 
-  byte          free_71F[93];              // 71F
+  byte          free_71F[153];             // 71F
 
-  char          custom1[32];               // 77C Custom
-  char          custom2[32];               // 79C Custom
-  uint16_t      weight_item;               // 7BC Weight of one item in gram * 10
+  unsigned long weight_item;               // 7B8 Weight of one item in gram * 10
+
+  byte          free_7BC[2];               // 7BC
+
   uint16_t      weight_max;                // 7BE Total max weight in kilogram
   unsigned long weight_reference;          // 7C0 Reference weight in gram
   unsigned long weight_calibration;        // 7C4

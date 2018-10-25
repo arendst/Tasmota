@@ -28,13 +28,13 @@
 // Location specific includes
 #include <core_version.h>                   // Arduino_Esp8266 version information (ARDUINO_ESP8266_RELEASE and ARDUINO_ESP8266_RELEASE_2_3_0)
 #include "sonoff_version.h"                 // Sonoff-Tasmota version information
-#include "sonoff.h"                         // Enumeration used in user_config.h
-#include "user_config.h"                    // Fixed user configurable options
+#include "sonoff.h"                         // Enumeration used in my_user_config.h
+#include "my_user_config.h"                 // Fixed user configurable options
 #ifdef USE_CONFIG_OVERRIDE
-  #include "user_config_override.h"         // Configuration overrides for user_config.h
+  #include "user_config_override.h"         // Configuration overrides for my_user_config.h
 #endif
 #include "sonoff_post.h"                    // Configuration overrides for all previous includes
-#include "i18n.h"                           // Language support configured by user_config.h
+#include "i18n.h"                           // Language support configured by my_user_config.h
 #include "sonoff_template.h"                // Hardware configuration
 
 #ifdef ARDUINO_ESP8266_RELEASE_2_4_0
@@ -340,9 +340,14 @@ void SetDevicePower(power_t rpower, int source)
   }
 
   XdrvMailbox.index = rpower;
-  XdrvCall(FUNC_SET_POWER);
+  XdrvCall(FUNC_SET_POWER);               // Signal power state
 
-  if ((SONOFF_DUAL == Settings.module) || (CH4 == Settings.module)) {
+  XdrvMailbox.index = rpower;
+  XdrvMailbox.payload = source;
+  if (XdrvCall(FUNC_SET_DEVICE_POWER)) {  // Set power state and stop if serviced
+    // Serviced
+  }
+  else if ((SONOFF_DUAL == Settings.module) || (CH4 == Settings.module)) {
     Serial.write(0xA0);
     Serial.write(0x04);
     Serial.write(rpower &0xFF);
@@ -751,19 +756,16 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
           }
         }
         else {                   // SetOption32 .. 49
-/*
+          uint8_t param_low = 0;
+          uint8_t param_high = 255;
           switch (pindex) {
             case P_HOLD_TIME:
             case P_MAX_POWER_RETRY:
-              if ((payload >= 1) && (payload <= 250)) {
-                Settings.param[pindex] = payload;
-              }
+              param_low = 1;
+              param_high = 250;
               break;
-            default:
-              ptype = 99;        // Command Error
           }
-*/
-          if ((payload >= 1) && (payload <= 250)) {
+          if ((payload >= param_low) && (payload <= param_high)) {
             Settings.param[pindex] = payload;
           }
         }
@@ -1002,7 +1004,7 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
           Serial.printf("%s", Unescape(dataBuf, &dat_len));  // "Hello\f"
         }
         else if (5 == index) {
-          SerialSendRaw(RemoveSpace(dataBuf), strlen(dataBuf));  // "AA004566"
+          SerialSendRaw(RemoveSpace(dataBuf));  // "AA004566"
         }
         snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, D_JSON_DONE);
       }
@@ -1149,6 +1151,8 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
         break;
       case 2:
       case 3:
+      case 4:
+      case 5:
         restart_flag = 210 + payload;
         snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_RESET "\":\"" D_JSON_ERASE ", " D_JSON_RESET_AND_RESTARTING "\"}"));
         break;
@@ -1702,7 +1706,12 @@ void ButtonHandler()
     }
 
     if (button_present) {
-      if (SONOFF_4CHPRO == Settings.module) {
+      XdrvMailbox.index = button_index;
+      XdrvMailbox.payload = button;
+      if (XdrvCall(FUNC_BUTTON_PRESSED)) {
+        // Serviced
+      }
+      else if (SONOFF_4CHPRO == Settings.module) {
         if (holdbutton[button_index]) { holdbutton[button_index]--; }
 
         boolean button_pressed = false;
@@ -1722,7 +1731,8 @@ void ButtonHandler()
             ExecuteCommandPower(button_index +1, POWER_TOGGLE, SRC_BUTTON);  // Execute Toggle command internally
           }
         }
-      } else {
+      }
+      else {
         if ((PRESSED == button) && (NOT_PRESSED == lastbutton[button_index])) {
           if (Settings.flag.button_single) {                   // Allow only single button press for immediate action
             snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION D_BUTTON "%d " D_IMMEDIATE), button_index +1);
@@ -2041,7 +2051,8 @@ void Every250mSeconds()
           ota_result = (HTTP_UPDATE_FAILED != ESPhttpUpdate.update(mqtt_data));
 #else
           // If using core stage or 2.5.0+ the syntax has changed
-          ota_result = (HTTP_UPDATE_FAILED != ESPhttpUpdate.update(EspClient, mqtt_data));
+          WiFiClient OTAclient;
+          ota_result = (HTTP_UPDATE_FAILED != ESPhttpUpdate.update(OTAclient, mqtt_data));
 #endif
           if (!ota_result) {
 #ifndef BE_MINIMAL
@@ -2092,10 +2103,21 @@ void Every250mSeconds()
       }
     }
     if (restart_flag && (backlog_pointer == backlog_index)) {
-      if (213 == restart_flag) {
+      if ((214 == restart_flag) || (215 == restart_flag)) {
+        char storage[sizeof(Settings.sta_ssid) + sizeof(Settings.sta_pwd)];
+        memcpy(storage, Settings.sta_ssid, sizeof(storage));  // Backup current SSIDs and Passwords
+        if (215 == restart_flag) {
+          SettingsErase(0);  // Erase all flash from program end to end of physical flash
+        }
+        SettingsDefault();
+        memcpy(Settings.sta_ssid, storage, sizeof(storage));  // Restore current SSIDs and Passwords
+        restart_flag = 2;
+      }
+      else if (213 == restart_flag) {
         SettingsSdkErase();  // Erase flash SDK parameters
         restart_flag = 2;
-      } else if (212 == restart_flag) {
+      }
+      else if (212 == restart_flag) {
         SettingsErase(0);    // Erase all flash from program end to end of physical flash
         restart_flag = 211;
       }
@@ -2305,11 +2327,10 @@ void SerialInput()
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s\"}"), mqtt_data);
     }
     MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_SERIALRECEIVED));
-//    XdrvRulesProcess();
+//      XdrvRulesProcess();
     serial_in_byte_counter = 0;
   }
 }
-
 /********************************************************************************************/
 
 void GpioSwitchPinMode(uint8_t index)
@@ -2436,7 +2457,10 @@ void GpioInit()
     baudrate = 19200;
   }
 
-  if (SONOFF_DUAL == Settings.module) {
+  if (XdrvCall(FUNC_MODULE_INIT)) {
+    // Serviced
+  }
+  else if (SONOFF_DUAL == Settings.module) {
     Settings.flag.mqtt_serial = 0;
     devices_present = 2;
     baudrate = 19200;
@@ -2551,6 +2575,10 @@ void setup()
 
   GetFeatures();
 
+  if (1 == RtcReboot.fast_reboot_count) {  // Allow setting override only when all is well
+    XdrvCall(FUNC_SETTINGS_OVERRIDE);
+  }
+
   baudrate = Settings.baudrate * 1200;
   seriallog_level = Settings.seriallog_level;
   seriallog_timer = SERIALLOG_TIMER;
@@ -2563,19 +2591,19 @@ void setup()
   sleep = Settings.sleep;
 
   // Disable functionality as possible cause of fast restart within BOOT_LOOP_TIME seconds (Exception, WDT or restarts)
-  if (RtcReboot.fast_reboot_count > 1) {        // Restart twice
+  if (RtcReboot.fast_reboot_count > 1) {          // Restart twice
     Settings.flag3.user_esp8285_enable = 0;       // Disable ESP8285 Generic GPIOs interfering with flash SPI
-    if (RtcReboot.fast_reboot_count > 2) {      // Restart 3 times
+    if (RtcReboot.fast_reboot_count > 2) {        // Restart 3 times
       for (byte i = 0; i < MAX_RULE_SETS; i++) {
         if (bitRead(Settings.rule_stop, i)) {
           bitWrite(Settings.rule_enabled, i, 0);  // Disable rules causing boot loop
         }
       }
     }
-    if (RtcReboot.fast_reboot_count > 3) {      // Restarted 4 times
+    if (RtcReboot.fast_reboot_count > 3) {        // Restarted 4 times
       Settings.rule_enabled = 0;                  // Disable all rules
     }
-    if (RtcReboot.fast_reboot_count > 4) {      // Restarted 5 times
+    if (RtcReboot.fast_reboot_count > 4) {        // Restarted 5 times
       Settings.module = SONOFF_BASIC;             // Reset module to Sonoff Basic
       Settings.last_module = SONOFF_BASIC;
       for (byte i = 0; i < MAX_GPIO_PIN; i++) {

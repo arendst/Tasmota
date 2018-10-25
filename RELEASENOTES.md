@@ -55,7 +55,7 @@ See [Tasmota ESP/Arduino library version related issues](https://github.com/aren
 | USE_SUNRISE                    | - | - | x | x | x |
 | USE_RULES                      | - | - | x | x | x |
 |                                |   |   |   |   |   |
-| USE_ADC_VCC                    | x | x | x | x | x |
+| USE_ADC_VCC                    | x | x | x | x |   |
 | USE_DS18B20                    | - | - | - | - | - | Single sensor
 | USE_DS18x20                    | - | x | x | x | x | Multiple sensors
 | USE_DS18x20_LEGACY             | - | - | - | - | - | Multiple sensors
@@ -79,9 +79,11 @@ See [Tasmota ESP/Arduino library version related issues](https://github.com/aren
 | USE_LM75AD                     | - | - | x | x | x |
 | USE_APDS9960                   | - | - | - | - | - |
 | USE_MCP230xx                   | - | - | - | - | - |
+| USE_PCA9685                    | - | - | - | - | - |
 | USE_MPR121                     | - | - | - | - | - |
 | USE_CCS811                     | - | - | - | - | - |
 | USE_MPU6050                    | - | - | - | - | - |
+| USE_DS3231                     | - | - | - | - | - |
 |                                |   |   |   |   |   |
 | Feature or Sensor              | minimal | classic | sonoff | knx  | sensors |
 | USE_SPI                        | - | - | - | - | - |
@@ -90,9 +92,13 @@ See [Tasmota ESP/Arduino library version related issues](https://github.com/aren
 | USE_PMS5003                    | - | - | x | x | x |
 | USE_NOVA_SDS                   | - | - | x | x | x |
 | USE_PZEM004T                   | - | - | x | x | x |
+| USE_PZEM_AC                    | - | - | x | x | x |
+| USE_PZEM_DC                    | - | - | x | x | x |
+| USE_MCP39F501                  | - | - | x | x | x |
 | USE_SERIAL_BRIDGE              | - | - | x | x | x |
 | USE_SDM120                     | - | - | - | - | x |
 | USE_SDM630                     | - | - | - | - | x |
+| USE_MP3_PLAYER                 | - | - | - | - | - |
 | USE_IR_REMOTE                  | - | - | x | x | x |
 | USE_IR_HVAC                    | - | - | - | - | x |
 | USE_IR_RECEIVE                 | - | - | x | x | x |
@@ -101,7 +107,11 @@ See [Tasmota ESP/Arduino library version related issues](https://github.com/aren
 | USE_ARILUX_RF                  | - | - | x | x | x |
 | USE_SR04                       | - | - | x | x | x |
 | USE_TM1638                     | - | - | - | - | - |
+| USE_HX711                      | - | - | x | x | x |
 | USE_RF_FLASH                   | - | - | x | x | x |
+| USE_TUYA_DIMMER                | - | - | x | x | x |
+| USE_TX20_WIND_SENSOR           | - | - | x | x | x |
+| USE_DISPLAY                    | - | - | - | - | - |
 
 ## Changelog
 Version 6.2.1 20180905

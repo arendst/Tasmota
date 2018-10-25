@@ -1,7 +1,37 @@
-/* 6.2.1.15 20181012
+/* 6.2.1.19 20181023
+ * Fix header file execution order by renaming user_config.h to my_user_config.h
+ * Fix invalid JSON floating point result from nan (Not a Number) and inf (Infinity) into null (#4147)
+ * Fix rule mqtt#connected trigger when mqtt is disabled (#4149)
+ * Initial release of RF transceiving using library RcSwitch (#2702)
+ *
+ * 6.2.1.18 20181019
+ * Add more API callbacks and document API.md
+ * Add support for La Crosse TX20 Anemometer (#2654, #3146)
+ * Add optional HX711 scale interface to web GUI demonstrating easy GUI plug-in
+ * Resize HX711 weight_item field from 16 bit to 32 bit
+ *
+ * 6.2.1.17 20181017
+ * Enable updated non-blocking PubSubClient as default MQTT client
+ * Update TasmotaModbus and TasmotaSerial libraries for support of serial 8N2 communication
+ * Add support for Pzem-003/017 DC Energy monitoring module (#3694)
+ * Change support for Pzem-014/016 AC Energy monitoring module (#3694)
+ * Rewrite Tuya Dimmer code
+ *
+ * 6.2.1.16 20181015
+ * Add TasmotaModbus library for very basic modbus wrapper for TasmotaSerial
+ * Change xsns_17_senseair.ino to use TasmotaModbus library
+ * Fix xnrg_05_pzem2.ino for PZEM-014/016 support using TasmotaModbus library (#3694)
+ * Fix RfRaw and SerialSend5 regression from 6.2.1.15 (#4072)
+ * Fix Sonoff Bridge RfRaw receive (#4080, #4085)
+ * Add support for Tuya Dimmer (#469, #4075)
+ * Fix possible wifi connection error (#4044, #4083)
+ * Update PubSubClient Mqtt library to non-blocking EspEasy version
+ *
+ * 6.2.1.15 20181012
  * Fix Color Temperature slider functionality regression from 6.2.1.5 (#4037)
  * Add auto reload of main web page to some web restarts
  * Add whitespace removal from RfRaw and SerialSend5 (#4020)
+ * Add commands Reset 4 (reset to defaults but keep wifi params) and Reset 5 (as reset 4 and also erase flash) (#4061)
  *
  * 6.2.1.14 20181010
  * Rewrite Webserver page handler for easier extension (thx to Adrian Scillato)
