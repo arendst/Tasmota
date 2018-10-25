@@ -129,6 +129,8 @@ enum UserSelectablePins {
   GPIO_HX711_SCK,      // HX711 Load Cell clock
   GPIO_HX711_DAT,      // HX711 Load Cell data
   GPIO_TX20_TXD_BLACK,  // TX20 Transmission Pin
+  GPIO_RFSEND,         // RF transmitter
+  GPIO_RFRECV,         // RF receiver
   GPIO_SENSOR_END };
 
 // Programmer selectable GPIO functionality offset by user selectable GPIOs
@@ -184,7 +186,8 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_PZEM016_RX "|" D_SENSOR_PZEM017_RX "|"
   D_SENSOR_DFR562 "|" D_SENSOR_SDS0X1_TX "|"
   D_SENSOR_HX711_SCK "|" D_SENSOR_HX711_DAT "|"
-  D_SENSOR_TX20_TX;
+  D_SENSOR_TX20_TX "|"
+  D_SENSOR_RFSEND "|" D_SENSOR_RFRECV;
 
 /********************************************************************************************/
 
@@ -341,6 +344,8 @@ const uint8_t kGpioNiceList[GPIO_SENSOR_END] PROGMEM = {
   GPIO_WS2812,         // WS2812 Led string
   GPIO_IRSEND,         // IR remote
   GPIO_IRRECV,         // IR receiver
+  GPIO_RFSEND,         // RF transmitter
+  GPIO_RFRECV,         // RF receiver
   GPIO_SR04_TRIG,      // SR04 Trigger pin
   GPIO_SR04_ECHO,      // SR04 Echo pin
   GPIO_TM16CLK,        // TM1638 Clock
@@ -366,7 +371,7 @@ const uint8_t kGpioNiceList[GPIO_SENSOR_END] PROGMEM = {
   GPIO_SDM630_RX,      // SDM630 Serial interface
   GPIO_PMS5003,        // Plantower PMS5003 Serial interface
   GPIO_TX20_TXD_BLACK, // TX20 Transmission Pin
-  GPIO_MP3_DFR562      // RB-DFR-562, DFPlayer Mini MP3 Player Serial interface
+  GPIO_MP3_DFR562     // RB-DFR-562, DFPlayer Mini MP3 Player Serial interface
 };
 
 const uint8_t kModuleNiceList[MAXMODULE] PROGMEM = {
