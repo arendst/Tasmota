@@ -384,6 +384,8 @@
 
 #define USE_TX20_WIND_SENSOR                     // Add support for La Crosse TX20 anemometer (+2k code)
 
+#define USE_RC_SWITCH                            // Add support for RF transceiver using library RcSwitch (+2k7 code)
+
 /*********************************************************************************************\
  * Debug features are only supported in development branch
 \*********************************************************************************************/

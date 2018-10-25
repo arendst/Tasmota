@@ -2,6 +2,7 @@
  * Fix header file execution order by renaming user_config.h to my_user_config.h
  * Fix invalid JSON floating point result from nan (Not a Number) and inf (Infinity) into null (#4147)
  * Fix rule mqtt#connected trigger when mqtt is disabled (#4149)
+ * Initial release of RF transceiving using library RcSwitch (#2702)
  *
  * 6.2.1.18 20181019
  * Add more API callbacks and document API.md

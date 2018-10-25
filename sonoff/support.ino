@@ -710,6 +710,10 @@ boolean GetUsedInModule(byte val, uint8_t *arr)
 #ifndef USE_TX20_WIND_SENSOR
   if (GPIO_TX20_TXD_BLACK == val) { return true; }
 #endif
+#ifndef USE_RC_SWITCH
+  if (GPIO_RFSEND == val) { return true; }
+  if (GPIO_RFRECV == val) { return true; }
+#endif
 
 
   if ((val >= GPIO_REL1) && (val < GPIO_REL1 + MAX_RELAYS)) {
@@ -1025,6 +1029,10 @@ void GetFeatures()
 #ifdef USE_TUYA_DIMMER
   feature_drv2 |= 0x00008000;  // xdrv_16_tuyadimmer.ino
 #endif
+#ifdef USE_RC_SWITCH
+  feature_drv2 |= 0x00010000;  // xdrv_17_rcswitch.ino
+#endif
+
 
 
 #ifdef NO_EXTRA_4K_HEAP
