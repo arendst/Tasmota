@@ -77,13 +77,10 @@ void ESPKNXIP::send(address_t const &receiver, knx_command_type_t ct, uint8_t da
 	DEBUG_PRINTLN(F(""));
 #endif
 
-#ifdef USE_ASYNC_UDP
-  udp.writeTo(buf, len, MULTICAST_IP, MULTICAST_PORT);
-#else
 	udp.beginPacketMulticast(MULTICAST_IP, MULTICAST_PORT, WiFi.localIP());
 	udp.write(buf, len);
  	udp.endPacket();
-#endif
+
 }
 
 void ESPKNXIP::send_1bit(address_t const &receiver, knx_command_type_t ct, uint8_t bit)

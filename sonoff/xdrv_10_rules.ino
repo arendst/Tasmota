@@ -83,6 +83,7 @@ unsigned long rules_timer[MAX_RULE_TIMERS] = { 0 };
 uint8_t rules_quota = 0;
 long rules_new_power = -1;
 long rules_old_power = -1;
+long rules_old_dimm = -1;
 
 uint32_t rules_triggers[MAX_RULE_SETS] = { 0 };
 uint16_t rules_last_minute = 60;
@@ -366,6 +367,7 @@ void RulesEvery50ms()
   if (Settings.rule_enabled) {  // Any rule enabled
     char json_event[120];
 
+    if (-1 == rules_new_power) { rules_new_power = power; }
     if (rules_new_power != rules_old_power) {
       if (rules_old_power != -1) {
         for (byte i = 0; i < devices_present; i++) {
@@ -375,8 +377,37 @@ void RulesEvery50ms()
             RulesProcessEvent(json_event);
           }
         }
+      } else {
+        // Boot time POWER OUTPUTS (Relays) Status
+        for (byte i = 0; i < devices_present; i++) {
+          uint8_t new_state = (rules_new_power >> i) &1;
+          snprintf_P(json_event, sizeof(json_event), PSTR("{\"Power%d\":{\"Boot\":%d}}"), i +1, new_state);
+          RulesProcessEvent(json_event);
+        }
+        // Boot time SWITCHES Status
+        for (byte i = 0; i < MAX_SWITCHES; i++) {
+#ifdef USE_TM1638
+          if ((pin[GPIO_SWT1 +i] < 99) || ((pin[GPIO_TM16CLK] < 99) && (pin[GPIO_TM16DIO] < 99) && (pin[GPIO_TM16STB] < 99))) {
+#else
+          if (pin[GPIO_SWT1 +i] < 99) {
+#endif // USE_TM1638
+            boolean swm = ((FOLLOW_INV == Settings.switchmode[i]) || (PUSHBUTTON_INV == Settings.switchmode[i]) || (PUSHBUTTONHOLD_INV == Settings.switchmode[i]));
+            snprintf_P(json_event, sizeof(json_event), PSTR("{\"" D_JSON_SWITCH "%d\":{\"Boot\":%d}}"), i +1, (swm ^ lastwallswitch[i]));
+            RulesProcessEvent(json_event);
+          }
+        }
       }
       rules_old_power = rules_new_power;
+    }
+    else if (rules_old_dimm != Settings.light_dimmer) {
+      if (rules_old_dimm != -1) {
+        snprintf_P(json_event, sizeof(json_event), PSTR("{\"Dimmer\":{\"State\":%d}}"), Settings.light_dimmer);
+      } else {
+        // Boot time DIMMER VALUE
+        snprintf_P(json_event, sizeof(json_event), PSTR("{\"Dimmer\":{\"Boot\":%d}}"), Settings.light_dimmer);
+      }
+      RulesProcessEvent(json_event);
+      rules_old_dimm = Settings.light_dimmer;
     }
     else if (event_data[0]) {
       char *event;
@@ -424,9 +455,9 @@ void RulesEvery50ms()
 
 void RulesEvery100ms()
 {
-  if (Settings.rule_enabled) {       // Any rule enabled
+  if (Settings.rule_enabled && (uptime > 4)) {  // Any rule enabled and allow 4 seconds start-up time for sensors (#3811)
     mqtt_data[0] = '\0';
-    uint16_t tele_period_save = tele_period;
+    int tele_period_save = tele_period;
     tele_period = 2;                 // Do not allow HA updates during next function call
     XsnsNextCall(FUNC_JSON_APPEND);  // ,"INA219":{"Voltage":4.494,"Current":0.020,"Power":0.089}
     tele_period = tele_period_save;

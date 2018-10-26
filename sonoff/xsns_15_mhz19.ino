@@ -246,17 +246,13 @@ void MhzEverySecond()
 
 /*********************************************************************************************\
  * Command Sensor15
+ *
+ * 0 - (Not implemented) ABC Off
+ * 1 - (Not implemented) ABC On
+ * 2 - Manual start = ABC Off
+ * 3 - (Not implemented) Optional filter settings
+ * 9 - Reset
 \*********************************************************************************************/
-
-/*
-  0 - ABC Off
-  1 - ABC On
-  2 - Manual start = ABC Off
-
-  3 - Optional filter settings
-
-  9 - Reset
-*/
 
 bool MhzCommandSensor()
 {

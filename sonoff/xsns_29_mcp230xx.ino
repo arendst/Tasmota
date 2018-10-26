@@ -31,15 +31,6 @@
 
 #define XSNS_29                   29
 
-#define MCP230xx_ADDRESS1         0x20
-#define MCP230xx_ADDRESS2         0x21
-#define MCP230xx_ADDRESS3         0x22
-#define MCP230xx_ADDRESS4         0x23
-#define MCP230xx_ADDRESS5         0x24
-#define MCP230xx_ADDRESS6         0x25
-#define MCP230xx_ADDRESS7         0x26
-#define MCP230xx_ADDRESS8         0x27
-
 /*
    Default register locations for MCP23008 - They change for MCP23017 in default bank mode
 */
@@ -53,8 +44,6 @@ uint8_t MCP230xx_INTCAP         = 0x08;
 uint8_t MCP230xx_GPIO           = 0x09;
 
 uint8_t mcp230xx_type = 0;
-uint8_t mcp230xx_address;
-uint8_t mcp230xx_addresses[] = { MCP230xx_ADDRESS1, MCP230xx_ADDRESS2, MCP230xx_ADDRESS3, MCP230xx_ADDRESS4, MCP230xx_ADDRESS5, MCP230xx_ADDRESS6, MCP230xx_ADDRESS7, MCP230xx_ADDRESS8 };
 uint8_t mcp230xx_pincount = 0;
 uint8_t mcp230xx_int_en = 0;
 uint8_t mcp230xx_int_prio_counter = 0;
@@ -131,7 +120,7 @@ const char* IntModeTxt(uint8_t intmo) {
 }
 
 uint8_t MCP230xx_readGPIO(uint8_t port) {
-  return I2cRead8(mcp230xx_address, MCP230xx_GPIO + port);
+  return I2cRead8(USE_MCP230xx_ADDR, MCP230xx_GPIO + port);
 }
 
 void MCP230xx_ApplySettings(void) {
@@ -178,11 +167,11 @@ void MCP230xx_ApplySettings(void) {
       }
 #endif // USE_MCP230xx_OUTPUT
     }
-    I2cWrite8(mcp230xx_address, MCP230xx_GPPU+mcp230xx_port, reg_gppu);
-    I2cWrite8(mcp230xx_address, MCP230xx_GPINTEN+mcp230xx_port, reg_gpinten);
-    I2cWrite8(mcp230xx_address, MCP230xx_IODIR+mcp230xx_port, reg_iodir);
+    I2cWrite8(USE_MCP230xx_ADDR, MCP230xx_GPPU+mcp230xx_port, reg_gppu);
+    I2cWrite8(USE_MCP230xx_ADDR, MCP230xx_GPINTEN+mcp230xx_port, reg_gpinten);
+    I2cWrite8(USE_MCP230xx_ADDR, MCP230xx_IODIR+mcp230xx_port, reg_iodir);
 #ifdef USE_MCP230xx_OUTPUT
-    I2cWrite8(mcp230xx_address, MCP230xx_GPIO+mcp230xx_port, reg_portpins);
+    I2cWrite8(USE_MCP230xx_ADDR, MCP230xx_GPIO+mcp230xx_port, reg_portpins);
 #endif // USE_MCP230xx_OUTPUT
   }
   for (uint8_t idx=0;idx<mcp230xx_pincount;idx++) {
@@ -192,7 +181,7 @@ void MCP230xx_ApplySettings(void) {
   MCP230xx_CheckForIntCounter(); // update register on whether or not we should be counting interrupts
 }
 
-void MCP230xx_Detect()
+void MCP230xx_Detect(void)
 {
   if (mcp230xx_type) {
     return;
@@ -200,34 +189,30 @@ void MCP230xx_Detect()
 
   uint8_t buffer;
 
-  for (byte i = 0; i < sizeof(mcp230xx_addresses); i++) {
-    mcp230xx_address = mcp230xx_addresses[i];
-    I2cWrite8(mcp230xx_address, MCP230xx_IOCON, 0x80); // attempt to set bank mode - this will only work on MCP23017, so its the best way to detect the different chips 23008 vs 23017
-    if (I2cValidRead8(&buffer, mcp230xx_address, MCP230xx_IOCON)) {
-      if (0x00 == buffer) {
-        mcp230xx_type = 1; // We have a MCP23008
-        snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, "MCP23008", mcp230xx_address);
+  I2cWrite8(USE_MCP230xx_ADDR, MCP230xx_IOCON, 0x80); // attempt to set bank mode - this will only work on MCP23017, so its the best way to detect the different chips 23008 vs 23017
+  if (I2cValidRead8(&buffer, USE_MCP230xx_ADDR, MCP230xx_IOCON)) {
+    if (0x00 == buffer) {
+      mcp230xx_type = 1; // We have a MCP23008
+      snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, "MCP23008", USE_MCP230xx_ADDR);
+      AddLog(LOG_LEVEL_DEBUG);
+      mcp230xx_pincount = 8;
+      MCP230xx_ApplySettings();
+    } else {
+      if (0x80 == buffer) {
+        mcp230xx_type = 2; // We have a MCP23017
+        snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, "MCP23017", USE_MCP230xx_ADDR);
         AddLog(LOG_LEVEL_DEBUG);
-        mcp230xx_pincount = 8;
+        mcp230xx_pincount = 16;
+        // Reset bank mode to 0
+        I2cWrite8(USE_MCP230xx_ADDR, MCP230xx_IOCON, 0x00);
+        // Update register locations for MCP23017
+        MCP230xx_GPINTEN        = 0x04;
+        MCP230xx_GPPU           = 0x0C;
+        MCP230xx_INTF           = 0x0E;
+        MCP230xx_INTCAP         = 0x10;
+        MCP230xx_GPIO           = 0x12;
         MCP230xx_ApplySettings();
-      } else {
-        if (0x80 == buffer) {
-          mcp230xx_type = 2; // We have a MCP23017
-          snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, "MCP23017", mcp230xx_address);
-          AddLog(LOG_LEVEL_DEBUG);
-          mcp230xx_pincount = 16;
-          // Reset bank mode to 0
-          I2cWrite8(mcp230xx_address, MCP230xx_IOCON, 0x00);
-          // Update register locations for MCP23017
-          MCP230xx_GPINTEN        = 0x04;
-          MCP230xx_GPPU           = 0x0C;
-          MCP230xx_INTF           = 0x0E;
-          MCP230xx_INTCAP         = 0x10;
-          MCP230xx_GPIO           = 0x12;
-          MCP230xx_ApplySettings();
-        }
       }
-      break;
     }
   }
 }
@@ -237,9 +222,9 @@ void MCP230xx_CheckForInterrupt(void) {
   uint8_t mcp230xx_intcap = 0;
   uint8_t report_int;
   for (uint8_t mcp230xx_port=0;mcp230xx_port<mcp230xx_type;mcp230xx_port++) {
-    if (I2cValidRead8(&intf,mcp230xx_address,MCP230xx_INTF+mcp230xx_port)) {
+    if (I2cValidRead8(&intf,USE_MCP230xx_ADDR,MCP230xx_INTF+mcp230xx_port)) {
       if (intf > 0) {
-        if (I2cValidRead8(&mcp230xx_intcap, mcp230xx_address, MCP230xx_INTCAP+mcp230xx_port)) {
+        if (I2cValidRead8(&mcp230xx_intcap, USE_MCP230xx_ADDR, MCP230xx_INTCAP+mcp230xx_port)) {
           for (uint8_t intp = 0; intp < 8; intp++) {
             if ((intf >> intp) & 0x01) { // we know which pin caused interrupt
               report_int = 0;
@@ -280,7 +265,9 @@ void MCP230xx_CheckForInterrupt(void) {
                 if (report_int) {
                   bool int_tele = false;
                   bool int_event = false;
-                  unsigned long millis_since_last_int = millis() - int_millis[intp+(mcp230xx_port*8)];
+                  unsigned long millis_now = millis();
+                  unsigned long millis_since_last_int = millis_now - int_millis[intp+(mcp230xx_port*8)];
+                  int_millis[intp+(mcp230xx_port*8)]=millis_now;
                   switch (Settings.mcp230xx_config[intp+(mcp230xx_port*8)].int_report_mode) {
                     case 0:
                       int_tele=true;
@@ -297,14 +284,13 @@ void MCP230xx_CheckForInterrupt(void) {
                     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_TIME "\":\"%s\""), GetDateAndTime(DT_LOCAL).c_str());
                     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"MCP230XX_INT\":{\"D%i\":%i,\"MS\":%lu}"), mqtt_data, intp+(mcp230xx_port*8), ((mcp230xx_intcap >> intp) & 0x01),millis_since_last_int);
                     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}"), mqtt_data);
-                    MqttPublishPrefixTopic_P(RESULT_OR_STAT, mqtt_data);
+                    MqttPublishPrefixTopic_P(RESULT_OR_STAT, PSTR("MCP230XX_INT"));
                   }
                   if (int_event) {
-                    char command[18];
+                    char command[19]; // Theoretical max = 'event MCPINT_D16=1' so 18 + 1 (for the \n)
                     sprintf(command,"event MCPINT_D%i=%i",intp+(mcp230xx_port*8),((mcp230xx_intcap >> intp) & 0x01));
                     ExecuteCommand(command, SRC_RULE);
                   }
-                  int_millis[intp+(mcp230xx_port*8)]=millis();
                 }
               }
             }
@@ -366,7 +352,7 @@ void MCP230xx_SetOutPin(uint8_t pin,uint8_t pinstate) {
       portpins ^= (1 << (pin-(port*8)));
     }
   }
-  I2cWrite8(mcp230xx_address, MCP230xx_GPIO + port, portpins);
+  I2cWrite8(USE_MCP230xx_ADDR, MCP230xx_GPIO + port, portpins);
   if (Settings.flag.save_state) { // Firmware configured to save last known state in settings
     Settings.mcp230xx_config[pin].saved_state=portpins>>(pin-(port*8))&1;
     Settings.mcp230xx_config[pin+pinadd].saved_state=portpins>>(pin+pinadd-(port*8))&1;
@@ -421,10 +407,11 @@ bool MCP230xx_Command(void) {
   uint8_t paramcount = 0;
   if (XdrvMailbox.data_len > 0) {
     paramcount=1;
-    sprintf(XdrvMailbox.data,"%s,",XdrvMailbox.data); // need a trailing comma to make substr work properly with last variable - bug? dunno?
-    XdrvMailbox.data_len++;
+  } else {
+    serviced = false;
+    return serviced;
   }
-  char sub_string[XdrvMailbox.data_len +1];
+  char sub_string[XdrvMailbox.data_len];
   for (uint8_t ca=0;ca<XdrvMailbox.data_len;ca++) {
     if ((' ' == XdrvMailbox.data[ca]) || ('=' == XdrvMailbox.data[ca])) { XdrvMailbox.data[ca] = ','; }
     if (',' == XdrvMailbox.data[ca]) { paramcount++; }
@@ -441,7 +428,7 @@ bool MCP230xx_Command(void) {
 #endif // USE_MCP230xx_OUTPUT
 
   if (!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 1),"INTPRI")) {
-    if (paramcount > 2) {
+    if (paramcount > 1) {
       uint8_t intpri = atoi(subStr(sub_string, XdrvMailbox.data, ",", 2));
       if ((intpri >= 0) && (intpri <= 20)) {
         Settings.mcp230xx_int_prio = intpri;
@@ -455,7 +442,7 @@ bool MCP230xx_Command(void) {
   }
 
   if (!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 1),"INTTIMER")) {
-    if (paramcount > 2) {
+    if (paramcount > 1) {
       uint8_t inttim = atoi(subStr(sub_string, XdrvMailbox.data, ",", 2));
       if ((inttim >= 0) && (inttim <= 3600)) {
         Settings.mcp230xx_int_timer = inttim;
@@ -470,7 +457,7 @@ bool MCP230xx_Command(void) {
   }
 
   if (!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 1),"INTDEF")) {
-    if (paramcount > 2) {
+    if (paramcount > 1) {
       uint8_t pin = atoi(subStr(sub_string, XdrvMailbox.data, ",", 2));
       if (pin < mcp230xx_pincount) {
         if (pin == 0) {
@@ -480,7 +467,7 @@ bool MCP230xx_Command(void) {
         }
       }
       if (validpin) {
-        if (paramcount > 3) {
+        if (paramcount > 2) {
           uint8_t intdef = atoi(subStr(sub_string, XdrvMailbox.data, ",", 3));
           if ((intdef >= 0) && (intdef <= 15)) {
             Settings.mcp230xx_config[pin].int_report_defer=intdef;
@@ -510,7 +497,7 @@ bool MCP230xx_Command(void) {
   }
 
   if (!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 1),"INTCNT")) {
-    if (paramcount > 2) {
+    if (paramcount > 1) {
       uint8_t pin = atoi(subStr(sub_string, XdrvMailbox.data, ",", 2));
       if (pin < mcp230xx_pincount) {
         if (pin == 0) {
@@ -520,7 +507,7 @@ bool MCP230xx_Command(void) {
         }
       }
       if (validpin) {
-        if (paramcount > 3) {
+        if (paramcount > 2) {
           uint8_t intcnt = atoi(subStr(sub_string, XdrvMailbox.data, ",", 3));
           if ((intcnt >= 0) && (intcnt <= 1)) {
             Settings.mcp230xx_config[pin].int_count_en=intcnt;
@@ -567,7 +554,7 @@ bool MCP230xx_Command(void) {
       validpin=true;
     }
   }
-  if (validpin && (paramcount > 2)) {
+  if (validpin && (paramcount > 1)) {
     if (!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 2), "?")) {
       uint8_t port = 0;
       if (pin > 7) { port = 1; }
@@ -606,13 +593,13 @@ bool MCP230xx_Command(void) {
     uint8_t pinmode = 0;
     uint8_t pullup = 0;
     uint8_t intmode = 0;
-    if (paramcount > 2) {
+    if (paramcount > 1) {
       pinmode = atoi(subStr(sub_string, XdrvMailbox.data, ",", 2));
     }
-    if (paramcount > 3) {
+    if (paramcount > 2) {
       pullup = atoi(subStr(sub_string, XdrvMailbox.data, ",", 3));
     }
-    if (paramcount > 4) {
+    if (paramcount > 3) {
       intmode = atoi(subStr(sub_string, XdrvMailbox.data, ",", 4));
     }
 #ifdef USE_MCP230xx_OUTPUT
@@ -704,7 +691,7 @@ void MCP230xx_OutputTelemetry(void) {
 
 #endif // USE_MCP230xx_OUTPUT
 
-void MCP230xx_Interrupt_Counter_Report() {
+void MCP230xx_Interrupt_Counter_Report(void) {
   snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_TIME "\":\"%s\",\"MCP230_INTTIMER\": {"), GetDateAndTime(DT_LOCAL).c_str());
   for (uint8_t pinx = 0;pinx < mcp230xx_pincount;pinx++) {
     if (Settings.mcp230xx_config[pinx].int_count_en) { // Counting is enabled for this pin so we add to report

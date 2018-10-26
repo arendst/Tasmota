@@ -1,5 +1,5 @@
 /*
-  xsns_32_MPU_6050.ino - MPU_6050 gyroscope and temperature sensor support for Sonoff-Tasmota
+  xsns_32_mpu6050.ino - MPU6050 gyroscope and temperature sensor support for Sonoff-Tasmota
 
   Copyright (C) 2018  Oliver Welter
 
@@ -20,7 +20,7 @@
 #ifdef USE_I2C
 #ifdef USE_MPU6050
 /*********************************************************************************************\
- * MPU_6050 3 axis gyroscope and temperature sensor
+ * MPU6050 3 axis gyroscope and temperature sensor
  *
  * Source: Oliver Welter, with special thanks to Jeff Rowberg
  *

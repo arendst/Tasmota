@@ -98,6 +98,54 @@ boolean (* const xdrv_func_ptr[])(byte) PROGMEM = {   // Driver Function Pointer
   &Xdrv20,
 #endif
 
+#ifdef XDRV_21
+  &Xdrv21,
+#endif
+
+#ifdef XDRV_22
+  &Xdrv22,
+#endif
+
+#ifdef XDRV_23
+  &Xdrv23,
+#endif
+
+#ifdef XDRV_24
+  &Xdrv24,
+#endif
+
+#ifdef XDRV_25
+  &Xdrv25,
+#endif
+
+#ifdef XDRV_26
+  &Xdrv26,
+#endif
+
+#ifdef XDRV_27
+  &Xdrv27,
+#endif
+
+#ifdef XDRV_28
+  &Xdrv28,
+#endif
+
+#ifdef XDRV_29
+  &Xdrv29,
+#endif
+
+#ifdef XDRV_30
+  &Xdrv30,
+#endif
+
+#ifdef XDRV_31
+  &Xdrv31,
+#endif
+
+#ifdef XDRV_32
+  &Xdrv32,
+#endif
+
 // Optional user defined drivers in range 91 - 99
 
 #ifdef XDRV_91
@@ -151,14 +199,6 @@ boolean XdrvCommand(uint8_t grpflg, char *type, uint16_t index, char *dataBuf, u
   XdrvMailbox.data = dataBuf;
 
   return XdrvCall(FUNC_COMMAND);
-}
-
-void XdrvSetPower(power_t mpower)
-{
-//  XdrvMailbox.valid = 1;
-  XdrvMailbox.index = mpower;
-
-  XdrvCall(FUNC_SET_POWER);
 }
 
 boolean XdrvMqttData(char *topicBuf, uint16_t stopicBuf, char *dataBuf, uint16_t sdataBuf)

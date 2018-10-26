@@ -50,9 +50,6 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #define MODULE                 SONOFF_BASIC   // [Module] Select default model
 #endif
 
-#define USE_DHT                               // Default DHT11 sensor needs no external library
-#define USE_ENERGY_SENSOR                     // Use energy sensors
-
 /*********************************************************************************************\
  * [sonoff-sensors.bin]
  * Provide an image with useful supported sensors enabled
@@ -60,7 +57,10 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 
 #ifdef USE_SENSORS
 
-#define USE_ADC_VCC                           // Display Vcc in Power status. Disable for use as Analog input on selected devices
+#ifdef USE_ADC_VCC
+#undef USE_ADC_VCC
+#endif
+//#define USE_ADC_VCC                           // Display Vcc in Power status. Disable for use as Analog input on selected devices
 #define USE_DS18x20                           // For more than one DS18x20 sensors with id sort, single scan and read retry (+1k3 code)
 //#define USE_DS18x20_LEGACY                     // For more than one DS18x20 sensors with dynamic scan using library OneWire (+1k5 code)
 #define USE_I2C                               // I2C using library wire (+10k code, 0k2 mem, 124 iram)
@@ -124,6 +124,7 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #define MQTT_LIBRARY_TYPE      MQTT_PUBSUBCLIENT   // Use PubSubClient library
 #undef USE_ARDUINO_OTA                        // Disable support for Arduino OTA
 #undef USE_KNX                                // Disable KNX IP Protocol Support
+#undef USE_CUSTOM                             // Disable Custom features
 #undef USE_TIMERS                             // Disable support for up to 16 timers
 #undef USE_TIMERS_WEB                         // Disable support for timer webpage
 #undef USE_SUNRISE                            // Disable support for Sunrise and sunset tools
@@ -135,6 +136,8 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #undef USE_PMS5003                            // Disable support for PMS5003 and PMS7003 particle concentration sensor
 #undef USE_NOVA_SDS                           // Disable support for SDS011 and SDS021 particle concentration sensor
 #undef USE_PZEM004T                           // Disable PZEM004T energy sensor
+#undef USE_PZEM_AC                            // Disable PZEM014,016 Energy monitor
+#undef USE_PZEM_DC                            // Disable PZEM003,017 Energy monitor
 #undef USE_SERIAL_BRIDGE                      // Disable support for software Serial Bridge
 #undef USE_SDM120                             // Disable support for Eastron SDM120-Modbus energy meter
 #undef USE_SDM630                             // Disable support for Eastron SDM630-Modbus energy meter
@@ -143,7 +146,11 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #undef USE_ARILUX_RF                          // Disable support for Arilux RF remote controller
 #undef USE_SR04                               // Disable support for for HC-SR04 ultrasonic devices
 #undef USE_TM1638                             // Disable support for TM1638 switches copying Switch1 .. Switch8
+#undef USE_HX711                              // Disable support for HX711 load cell
 #undef USE_RF_FLASH                           // Disable support for flashing the EFM8BB1 chip on the Sonoff RF Bridge. C2CK must be connected to GPIO4, C2D to GPIO5 on the PCB
+#undef USE_TUYA_DIMMER                        // Disable support for Tuya Serial Dimmer
+#undef USE_TX20_WIND_SENSOR                   // Disable support for La Crosse TX20 anemometer
+#undef USE_RC_SWITCH                          // Disable support for RF transceiver using library RcSwitch
 #undef DEBUG_THEO                             // Disable debug code
 #undef USE_DEBUG_DRIVER                       // Disable debug code
 #endif  // USE_CLASSIC
@@ -160,6 +167,30 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #endif
 #undef USE_EMULATION                          // Disable Belkin WeMo and Hue Bridge emulation for Alexa (-16k code, -2k mem)
 #endif  // USE_KNX_NO_EMULATION
+
+/*********************************************************************************************\
+ * [sonoff-display.bin]
+ * Provide an image with display drivers enabled
+\*********************************************************************************************/
+
+#ifdef USE_DISPLAYS
+
+#undef USE_ENERGY_SENSOR                      // Disable energy sensors (-14k code)
+#undef USE_EMULATION                          // Disable Belkin WeMo and Hue Bridge emulation for Alexa (-16k code, -2k mem)
+
+#define USE_I2C                               // I2C using library wire (+10k code, 0k2 mem, 124 iram)
+  #define USE_DISPLAY                         // Add I2C Display Support (+2k code)
+    #define USE_DISPLAY_MODES1TO5             // Enable display mode 1 to 5 in addition to mode 0
+    #define USE_DISPLAY_LCD                   // [DisplayModel 1] Enable Lcd display (I2C addresses 0x27 and 0x3F) (+6k code)
+    #define USE_DISPLAY_SSD1306               // [DisplayModel 2] Enable SSD1306 Oled 128x64 display (I2C addresses 0x3C and 0x3D) (+16k code)
+    #define USE_DISPLAY_MATRIX                // [DisplayModel 3] Enable 8x8 Matrix display (I2C adresseses see below) (+11k code)
+
+#define USE_SPI                               // Hardware SPI using GPIO12(MISO), GPIO13(MOSI) and GPIO14(CLK) in addition to two user selectable GPIOs(CS and DC)
+    #define USE_DISPLAY_ILI9341               // [DisplayModel 4] Enable ILI9341 Tft 480x320 display (+19k code)
+
+#undef USE_ARILUX_RF                          // Remove support for Arilux RF remote controller (-0k8 code, 252 iram (non 2.3.0))
+#undef USE_RF_FLASH                           // Remove support for flashing the EFM8BB1 chip on the Sonoff RF Bridge. C2CK must be connected to GPIO4, C2D to GPIO5 on the PCB (-3k code)
+#endif  // USE_DISPLAYS
 
 /*********************************************************************************************\
  * Mandatory define for DS18x20 if changed by above image selections
@@ -186,6 +217,7 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #undef USE_MQTT_TLS                           // Disable TLS support won't work as the MQTTHost is not set
 #undef USE_KNX                                // Disable KNX IP Protocol Support
 //#undef USE_WEBSERVER                          // Disable Webserver
+#undef USE_CUSTOM                             // Disable Custom features
 #undef USE_DISCOVERY                          // Disable Discovery services for both MQTT and web server
 #undef USE_EMULATION                          // Disable Wemo or Hue emulation
 #undef USE_TIMERS                             // Disable support for up to 16 timers
@@ -212,7 +244,11 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #undef USE_ARILUX_RF                          // Disable support for Arilux RF remote controller
 #undef USE_SR04                               // Disable support for for HC-SR04 ultrasonic devices
 #undef USE_TM1638                             // Disable support for TM1638 switches copying Switch1 .. Switch8
+#undef USE_HX711                              // Disable support for HX711 load cell
 #undef USE_RF_FLASH                           // Disable support for flashing the EFM8BB1 chip on the Sonoff RF Bridge. C2CK must be connected to GPIO4, C2D to GPIO5 on the PCB
+#undef USE_TUYA_DIMMER                        // Disable support for Tuya Serial Dimmer
+#undef USE_TX20_WIND_SENSOR                   // Disable support for La Crosse TX20 anemometer
+#undef USE_RC_SWITCH                          // Disable support for RF transceiver using library RcSwitch
 #undef DEBUG_THEO                             // Disable debug code
 #undef USE_DEBUG_DRIVER                       // Disable debug code
 #endif  // BE_MINIMAL
@@ -242,10 +278,13 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #endif
 
 #ifndef MQTT_MAX_PACKET_SIZE
-#define MQTT_MAX_PACKET_SIZE   1000
+#define MQTT_MAX_PACKET_SIZE   1000           // Bytes
 #endif
 #ifndef MQTT_KEEPALIVE
-#define MQTT_KEEPALIVE         15
+#define MQTT_KEEPALIVE         15             // Seconds
+#endif
+#ifndef MQTT_TIMEOUT
+#define MQTT_TIMEOUT           10000          // milli seconds
 #endif
 
 #ifndef MESSZ

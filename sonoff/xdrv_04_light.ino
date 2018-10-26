@@ -55,11 +55,11 @@
 
 enum LightCommands {
   CMND_COLOR, CMND_COLORTEMPERATURE, CMND_DIMMER, CMND_LED, CMND_LEDTABLE, CMND_FADE,
-  CMND_PIXELS, CMND_ROTATION, CMND_SCHEME, CMND_SPEED, CMND_WAKEUP, CMND_WAKEUPDURATION,
+  CMND_PIXELS, CMND_RGBWWTABLE, CMND_ROTATION, CMND_SCHEME, CMND_SPEED, CMND_WAKEUP, CMND_WAKEUPDURATION,
   CMND_WIDTH, CMND_CHANNEL, CMND_HSBCOLOR, CMND_UNDOCA };
 const char kLightCommands[] PROGMEM =
   D_CMND_COLOR "|" D_CMND_COLORTEMPERATURE "|" D_CMND_DIMMER "|" D_CMND_LED "|" D_CMND_LEDTABLE "|" D_CMND_FADE "|"
-  D_CMND_PIXELS "|" D_CMND_ROTATION "|" D_CMND_SCHEME "|" D_CMND_SPEED "|" D_CMND_WAKEUP "|" D_CMND_WAKEUPDURATION "|"
+  D_CMND_PIXELS "|" D_CMND_RGBWWTABLE "|" D_CMND_ROTATION "|" D_CMND_SCHEME "|" D_CMND_SPEED "|" D_CMND_WAKEUP "|" D_CMND_WAKEUPDURATION "|"
   D_CMND_WIDTH "|" D_CMND_CHANNEL "|" D_CMND_HSBCOLOR "|UNDOCA" ;
 
 struct LRgbColor {
@@ -68,6 +68,12 @@ struct LRgbColor {
 #define MAX_FIXED_COLOR  12
 const LRgbColor kFixedColor[MAX_FIXED_COLOR] PROGMEM =
   { 255,0,0, 0,255,0, 0,0,255, 228,32,0, 0,228,32, 0,32,228, 188,64,0, 0,160,96, 160,32,240, 255,255,0, 255,0,170, 255,255,255 };
+
+struct LWColor {
+  uint8_t W;
+};
+#define MAX_FIXED_WHITE  4
+const LWColor kFixedWhite[MAX_FIXED_WHITE] PROGMEM = { 0, 255, 128, 32 };
 
 struct LCwColor {
   uint8_t C, W;
@@ -353,7 +359,7 @@ void LightInit()
         pinMode(pin[GPIO_PWM1 +i], OUTPUT);
       }
     }
-    if (LT_PWM1 == light_type) {
+    if (LT_PWM1 == light_type || LT_SERIAL == light_type) {
       Settings.light_color[0] = 255;    // One PWM channel only supports Dimmer but needs max color
     }
     if (SONOFF_LED == Settings.module) { // Fix Sonoff Led instabilities
@@ -385,6 +391,9 @@ void LightInit()
     max_scheme = LS_MAX + WS2812_SCHEMES;
   }
 #endif  // USE_WS2812 ************************************************************************
+  else if (LT_SERIAL == light_type) {
+    light_subtype = LST_SINGLE;
+  }
   else {
     light_pdi_pin = pin[GPIO_DI];
     light_pdcki_pin = pin[GPIO_DCKI];
@@ -421,6 +430,11 @@ void LightSetColorTemp(uint16_t ct)
   }
   uint16_t icold = (100 * (347 - my_ct)) / 136;
   uint16_t iwarm = (100 * my_ct) / 136;
+  if (PHILIPS == Settings.module) {
+    // Xiaomi Philips bulbs follow a different scheme:
+    // channel 0=intensity, channel2=temperature
+    Settings.light_color[1] = (uint8_t)icold;
+  } else
   if (LST_RGBWC == light_subtype) {
     Settings.light_color[0] = 0;
     Settings.light_color[1] = 0;
@@ -452,6 +466,15 @@ void LightSetDimmer(uint8_t myDimmer)
 {
   float temp;
 
+  if (PHILIPS == Settings.module) {
+    // Xiaomi Philips bulbs use two PWM channels with a different scheme:
+    float dimmer = 100 / (float)myDimmer;
+    temp = (float)Settings.light_color[0] / dimmer; // channel 1 is intensity
+    light_current_color[0] = (uint8_t)temp;
+    temp = (float)Settings.light_color[1];          // channel 2 is temperature
+    light_current_color[1] = (uint8_t)temp;
+    return;
+  }
   if (LT_PWM1 == light_type) {
     Settings.light_color[0] = 255;    // One PWM channel only supports Dimmer but needs max color
   }
@@ -551,8 +574,8 @@ void LightState(uint8_t append)
   if (light_subtype > LST_SINGLE) {
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"" D_CMND_COLOR "\":\"%s\""), mqtt_data, LightGetColor(0, scolor));
     //  Add status for HSB
-    LightGetHsb(&hsb[0],&hsb[1],&hsb[2]);
-    //  Scale these percentages up to the numbers expected byt he client
+    LightGetHsb(&hsb[0],&hsb[1],&hsb[2], false);
+    //  Scale these percentages up to the numbers expected by the client
     h = round(hsb[0] * 360);
     s = round(hsb[1] * 100);
     b = round(hsb[2] * 100);
@@ -779,7 +802,8 @@ void LightAnimate()
       light_update = 0;
       for (byte i = 0; i < light_subtype; i++) {
         light_last_color[i] = light_new_color[i];
-        cur_col[i] = (Settings.light_correction) ? ledTable[light_last_color[i]] : light_last_color[i];
+        cur_col[i] = light_last_color[i]*Settings.rgbwwTable[i]/255;
+        cur_col[i] = (Settings.light_correction) ? ledTable[cur_col[i]] : cur_col[i];
         if (light_type < LT_PWM6) {
           if (pin[GPIO_PWM1 +i] < 99) {
             if (cur_col[i] > 0xFC) {
@@ -800,6 +824,11 @@ void LightAnimate()
       if (light_type > LT_WS2812) {
         LightMy92x1Duty(cur_col[0], cur_col[1], cur_col[2], cur_col[3], cur_col[4]);
       }
+#ifdef USE_TUYA_DIMMER
+      if (light_type == LT_SERIAL) {
+        LightSerialDuty(cur_col[0]);
+      }
+#endif  // USE_TUYA_DIMMER
     }
   }
 }
@@ -905,13 +934,15 @@ void LightHsbToRgb()
   light_current_color[0] = (uint8_t)(r * 255.0f);
   light_current_color[1] = (uint8_t)(g * 255.0f);
   light_current_color[2] = (uint8_t)(b * 255.0f);
+  light_current_color[3] = 0;
+  light_current_color[4] = 0;
 }
 
 /********************************************************************************************/
 
-void LightGetHsb(float *hue, float *sat, float *bri)
+void LightGetHsb(float *hue, float *sat, float *bri, bool gotct)
 {
-  if (light_subtype > LST_COLDWARM) {
+  if (light_subtype > LST_COLDWARM && !gotct) {
     LightRgbToHsb();
     *hue = light_hue;
     *sat = light_saturation;
@@ -919,16 +950,19 @@ void LightGetHsb(float *hue, float *sat, float *bri)
   } else {
     *hue = 0;
     *sat = 0;
-//    *bri = (2.54f * (float)Settings.light_dimmer);
     *bri = (0.01f * (float)Settings.light_dimmer);
   }
 }
 
-void LightSetHsb(float hue, float sat, float bri, uint16_t ct)
+void LightSetHsb(float hue, float sat, float bri, uint16_t ct, bool gotct)
 {
   if (light_subtype > LST_COLDWARM) {
-    if ((LST_RGBWC == light_subtype) && (ct > 0)) {
-      LightSetColorTemp(ct);
+    if ((LST_RGBWC == light_subtype) && (gotct)) {
+      uint8_t tmp = (uint8_t)(bri * 100);
+      Settings.light_dimmer = tmp;
+      if (ct > 0) {
+        LightSetColorTemp(ct);
+      }
     } else {
       light_hue = hue;
       light_saturation = sat;
@@ -1006,7 +1040,11 @@ boolean LightColorEntry(char *buffer, uint8_t buffer_length)
     entry_type = 1;                                 // Hexadecimal
   }
   else if ((value > 199) && (value <= 199 + MAX_FIXED_COLD_WARM)) {
-    if (LST_COLDWARM == light_subtype) {
+    if (LST_RGBW == light_subtype) {
+      memcpy_P(&light_entry_color[3], &kFixedWhite[value -200], 1);
+      entry_type = 1;                                 // Hexadecimal
+    }
+    else if (LST_COLDWARM == light_subtype) {
       memcpy_P(&light_entry_color, &kFixedColdWarm[value -200], 2);
       entry_type = 1;                                 // Hexadecimal
     }
@@ -1104,7 +1142,7 @@ boolean LightCommand()
       } else {  // Command with only 1 parameter, Hue (0<H<360), Saturation (0<S<100) OR Brightness (0<B<100)
         float hsb[3];
 
-        LightGetHsb(&hsb[0],&hsb[1],&hsb[2]);
+        LightGetHsb(&hsb[0],&hsb[1],&hsb[2], false);
         HSB[0] = round(hsb[0] * 360);
         HSB[1] = round(hsb[1] * 100);
         HSB[2] = round(hsb[2] * 100);
@@ -1120,7 +1158,8 @@ boolean LightCommand()
         LightSetHsb(( (HSB[0]>360) ? (HSB[0] % 360) : HSB[0] ) /360.0,
                     ( (HSB[1]>100) ? (HSB[1] % 100) : HSB[1] ) /100.0,
                     ( (HSB[2]>100) ? (HSB[2] % 100) : HSB[2] ) /100.0,
-                    0);
+                    0,
+                    false);
       }
     } else {
       LightState(0);
@@ -1248,6 +1287,33 @@ boolean LightCommand()
       light_update = 1;
     }
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, GetStateText(Settings.light_correction));
+  }
+  else if (CMND_RGBWWTABLE == command_code) {
+    bool validtable = (XdrvMailbox.data_len > 0);
+    char scolor[25];
+    if (validtable) {
+      uint16_t HSB[3];
+      if (strstr(XdrvMailbox.data, ",")) {  // Command with up to 5 comma separated parameters
+        for (int i = 0; i < LST_RGBWC; i++) {
+          char *substr;
+
+          if (0 == i) {
+            substr = strtok(XdrvMailbox.data, ",");
+          } else {
+            substr = strtok(NULL, ",");
+          }
+          if (substr != NULL) {
+            Settings.rgbwwTable[i] = atoi(substr);
+          }
+        }
+      }
+      light_update = 1;
+    }
+    scolor[0] = '\0';
+    for (byte i = 0; i < LST_RGBWC; i++) {
+      snprintf_P(scolor, 25, PSTR("%s%s%d"), scolor, (i > 0) ? "," : "", Settings.rgbwwTable[i]);
+    }
+    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, XdrvMailbox.index, scolor);
   }
   else if (CMND_FADE == command_code) {
     switch (XdrvMailbox.payload) {
