@@ -35,7 +35,7 @@ See [Tasmota ESP/Arduino library version related issues](https://github.com/aren
 | Feature or Sensor              | minimal | classic | sonoff | knx  | sensors | Remarks
 |--------------------------------|---------|---------|--------|------|---------|--------
 | ESP/Arduino lib v2.3.0         | 344k    | 485k    | 491k   | 510k | 516k    |
-| ESP/Arduino lib v2.4.2         | 360k    | 491k    | 491k   | 509k | 513k    | No sleep
+| ESP/Arduino lib v2.4.2         | 363k    | 499k    | 509k   | 526k | 532k    | No sleep
 |                                |   |   |   |   |   |
 | MY_LANGUAGE en-GB              | x | x | x | x | x |
 | USE_WPS                        | - | x | - | - | - | WPS
@@ -56,7 +56,7 @@ See [Tasmota ESP/Arduino library version related issues](https://github.com/aren
 | USE_SUNRISE                    | - | - | x | x | x |
 | USE_RULES                      | - | - | x | x | x |
 |                                |   |   |   |   |   |
-| USE_ADC_VCC                    | x | x | x | x |   |
+| USE_ADC_VCC                    | x | x | x | x | - |
 | USE_DS18B20                    | - | - | - | - | - | Single sensor
 | USE_DS18x20                    | - | x | x | x | x | Multiple sensors
 | USE_DS18x20_LEGACY             | - | - | - | - | - | Multiple sensors
