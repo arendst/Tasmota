@@ -31,6 +31,8 @@ We don't take any responsibility nor liability for using this software nor for t
 ### Quick Install
 Download one of the released binaries from https://github.com/arendst/Sonoff-Tasmota/releases and flash it to your hardware as documented in the wiki.
 
+- Do not forget to change the COM port in ``platform.ini`` to match your own COM port. Change the value ``upload_port = COM3`` to match your setup.
+
 ### Important User Compilation Information
 If you want to compile Sonoff-Tasmota yourself keep in mind the following:
 
