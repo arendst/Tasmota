@@ -664,7 +664,7 @@ void HueLights(String *path)
       response = "[";
 
       StaticJsonBuffer<400> jsonBuffer;
-      JsonObject &hue_json = jsonBuffer.parseObject(WebServer->arg((WebServer->args())-1));
+      JsonObject &hue_json = jsonBuffer.parseObject(WebServer->arg("1"));
       if (hue_json.containsKey("on")) {
 
         response += FPSTR(HUE_LIGHT_RESPONSE_JSON);
