@@ -35,6 +35,7 @@
 #define D_CMND_OPENTIME "shutteropenduration"
 #define D_CMND_CLOSETIME "shuttercloseduration"
 #define D_CMND_SHUTTERRELAY "shutterrelay"
+#define D_CMND_CALIBRATIONMATIX "shuttercalibration"
 #define D_OPEN "Open"
 #define D_CLOSE "Close"
 #define D_SHUTTER "SHUTTER"
