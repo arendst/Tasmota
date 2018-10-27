@@ -152,6 +152,7 @@ People helping to keep the show on the road:
 - Raymond Mouthaan for managing Wemos Wiki information
 - Norbert Richter for his decode-config.py tool
 - Andre Thomas for providing [thehackbox](http://thehackbox.org/tasmota/) OTA support and daily development builds
+- Joel Stein and digiblur for their Tuya research and driver
 - Frogmore42 and Jason2866 for providing many issue answers
 - Many more providing Tips, Pocs or PRs
 

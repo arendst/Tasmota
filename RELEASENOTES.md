@@ -125,6 +125,7 @@ Version 6.3.0 20181030
  * Change energy monitoring using energy sensor driver modules
  * Change Webserver page handler for easier extension (thx to Adrian Scillato)
  * Change pinmode for no-pullup defined switches to pullup when configured as switchmode PUSHBUTTON (=3 and up) (#3896)
+ * Change default OTA Url to http://thehackbox.org/tasmota/release/sonoff.bin (#4170)
  * Remove support for MQTT Client esp-mqtt-arduino by #define MQTT_LIBRARY_TYPE MQTT_ESPMQTTARDUINO
  * Remove commands PowerCal, VoltageCal and CurrentCal as more functionality is provided by commands PowerSet, VoltageSet and CurrentSet
  * Remove restart after ntpserver change and force NTP re-sync (#3890)

@@ -1,10 +1,9 @@
 #!/usr/bin/env python
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
-VER = '1.5.0013'
+VER = '2.0.0000'
 
 """
-    decode-config.py - Decode configuration of Sonoff-Tasmota device
+    decode-config.py - Backup/Restore Sonoff-Tasmota configuration data
 
     Copyright (C) 2018 Norbert Richter <nr@prsolution.eu>
 
@@ -29,68 +28,83 @@ Requirements:
 
 Instructions:
     Execute command with option -d to retrieve config data from a host
-    or use -f to read out a configuration file saved using Tasmota Web-UI
+    or use -f to read a configuration file saved using Tasmota Web-UI
+    
+    For further information read 'decode-config.md'
 
-    For help execute command with argument -h
+    For help execute command with argument -h (or -H for advanced help)
 
 
-Usage:
-    decode-config.py [-h] [-f <filename>] [-d <host>] [-u <user>]
-                     [-p <password>] [--json-indent <integer>]
-                     [--json-compact] [--sort] [--unsort] [--raw-values]
-                     [--no-raw-values] [--raw-keys] [--no-raw-keys]
-                     [--hide-pw] [--unhide-pw] [-o <filename>]
-                     [--output-file-format <word>] [-c <filename>]
-                     [--exit-on-error-only] [-V]
+Usage: decode-config.py [-f <filename>] [-d <host>] [-P <port>]
+                        [-u <username>] [-p <password>] [-i <filename>]
+                        [-o <filename>] [-F json|bin|dmp] [-E] [-e]
+                        [--json-indent <indent>] [--json-compact]
+                        [--json-hide-pw] [--json-unhide-pw] [-h] [-H] [-v]
+                        [-V] [-c <filename>] [--ignore-warnings]
 
-    Decode configuration of Sonoff-Tasmota device. Args that start with '--' (eg.
-    -f) can also be set in a config file (specified via -c). Config file syntax
-    allows: key=value, flag=true, stuff=[a,b,c] (for details, see syntax at
+    Backup/Restore Sonoff-Tasmota configuration data. Args that start with '--'
+    (eg. -f) can also be set in a config file (specified via -c). Config file
+    syntax allows: key=value, flag=true, stuff=[a,b,c] (for details, see syntax at
     https://goo.gl/R74nmi). If an arg is specified in more than one place, then
     commandline values override config file values which override defaults.
 
     optional arguments:
-      -h, --help            show this help message and exit
-      -c <filename>, --config <filename>
-                            Config file, can be used instead of command parameter
-                            (default: None)
-      --exit-on-error-only  exit on error only (default: exit on ERROR and
-                            WARNING). Not recommended, used by your own
-                            responsibility!
+      -c, --config <filename>
+                            program config file - can be used to set default
+                            command args (default: None)
+      --ignore-warnings     do not exit on warnings. Not recommended, used by your
+                            own responsibility!
 
-    source:
-      -f <filename>, --file <filename>
-                            file to retrieve Tasmota configuration from (default:
-                            None)'
-      -d <host>, --device <host>
-                            hostname or IP address to retrieve Tasmota
-                            configuration from (default: None)
-      -u <user>, --username <user>
+    Source:
+      Read/Write Tasmota configuration from/to
+
+      -f, --file, --tasmota-file <filename>
+                            file to retrieve/write Tasmota configuration from/to
+                            (default: None)'
+      -d, --device, --host <host>
+                            hostname or IP address to retrieve/send Tasmota
+                            configuration from/to (default: None)
+      -P, --port <port>     TCP/IP port number to use for the host connection
+                            (default: 80)
+      -u, --username <username>
                             host HTTP access username (default: admin)
-      -p <password>, --password <password>
+      -p, --password <password>
                             host HTTP access password (default: None)
 
-    config:
-      --json-indent <integer>
-                            pretty-printed JSON output using indent level
-                            (default: 'None'). Use values greater equal 0 to
-                            indent or -1 to disabled indent.
-      --json-compact        compact JSON output by eliminate whitespace
-      --sort                sort json keywords (default)
-      --unsort              do not sort json keywords
-      --raw-values, --raw   output raw values
-      --no-raw-values       output human readable values (default)
-      --raw-keys            output bitfield raw keys (default)
-      --no-raw-keys         do not output bitfield raw keys
-      --hide-pw             hide passwords (default)
-      --unhide-pw           unhide passwords
-      -o <filename>, --output-file <filename>
-                            file to store configuration to (default: None).
-                            Replacements: @v=Tasmota version, @f=friendly name
-      --output-file-format <word>
-                            output format ('json' or 'binary', default: 'json')
+    Backup/Restore:
+      Backup/Restore configuration file specification
 
-    info:
+      -i, --restore-file <filename>
+                            file to restore configuration from (default: None).
+                            Replacements: @v=firmware version, @f=device friendly
+                            name, @h=device hostname
+      -o, --backup-file <filename>
+                            file to backup configuration to (default: None).
+                            Replacements: @v=firmware version, @f=device friendly
+                            name, @h=device hostname
+      -F, --backup-type json|bin|dmp
+                            backup filetype (default: 'json')
+      -E, --extension       append filetype extension for -i and -o filename
+                            (default)
+      -e, --no-extension    do not append filetype extension, use -i and -o
+                            filename as passed
+
+    JSON:
+      JSON backup format specification
+
+      --json-indent <indent>
+                            pretty-printed JSON output using indent level
+                            (default: 'None'). -1 disables indent.
+      --json-compact        compact JSON output by eliminate whitespace
+      --json-hide-pw        hide passwords (default)
+      --json-unhide-pw      unhide passwords
+
+    Info:
+      additional information
+
+      -h, --help            show usage help message and exit
+      -H, --full-help       show full help message and exit
+      -v, --verbose         produce more output about what the program does
       -V, --version         show program's version number and exit
 
     Either argument -d <host> or -f <filename> must be given.
@@ -98,29 +112,54 @@ Usage:
 
 Returns:
     0: successful
-    1: file not found
-    2: configuration version not supported
-    3: data size mismatch
-    4: data CRC error
-    5: configuration file read error
-    6: argument error
-    9: python module is missing
-    4xx, 5xx: HTTP error
+    1: restore skipped
+    2: program argument error
+    3: file not found
+    4: data size mismatch
+    5: data CRC error
+    6: unsupported configuration version
+    7: configuration file read error
+    8: JSON file decoding error
+    9: Restore file data error
+    10: Device data download error
+    11: Device data upload error
+    20: python module missing
+    21: Internal error
+    >21: python library exit code
+    4xx, 5xx: HTTP errors
 
 """
 
+class ExitCode:
+    OK = 0
+    RESTORE_SKIPPED = 1
+    ARGUMENT_ERROR = 2
+    FILE_NOT_FOUND = 3
+    DATA_SIZE_MISMATCH = 4
+    DATA_CRC_ERROR = 5
+    UNSUPPORTED_VERSION = 6
+    FILE_READ_ERROR = 7
+    JSON_READ_ERROR = 8
+    RESTORE_DATA_ERROR = 9
+    DOWNLOAD_CONFIG_ERROR = 10
+    UPLOAD_CONFIG_ERROR = 11
+    MODULE_NOT_FOUND = 20
+    INTERNAL_ERROR = 21
+
 import os.path
 import io
-import sys
+import sys, platform
 def ModuleImportError(module):
     er = str(module)
-    print("{}. Try 'pip install {}' to install it".format(er,er.split(' ')[len(er.split(' '))-1]) )
-    sys.exit(9)
+    print >> sys.stderr, "{}. Try 'pip install {}' to install it".format(er,er.split(' ')[len(er.split(' '))-1])
+    sys.exit(ExitCode.MODULE_NOT_FOUND)
 try:
+    from datetime import datetime
     import struct
+    import socket
     import re
     import math
-    from datetime import datetime
+    import inspect
     import json
     import configargparse
     import pycurl
@@ -129,37 +168,43 @@ except ImportError, e:
     ModuleImportError(e)
 
 
-PROG='{} v{} by Norbert Richter'.format(os.path.basename(sys.argv[0]),VER)
+PROG='{} v{} by Norbert Richter <nr@prsolution.eu>'.format(os.path.basename(sys.argv[0]),VER)
 
-CONFIG_FILE_XOR   = 0x5A
-BINARYFILE_MAGIC  = 0x63576223
-
-args = {}
-DEFAULTS = {
+CONFIG_FILE_XOR     = 0x5A
+BINARYFILE_MAGIC    = 0x63576223
+STR_ENCODING        = 'utf8'
+DEFAULTS            = {
     'DEFAULT':
     {
         'configfile':   None,
-        'exitonwarning':True,
+        'ignorewarning':False,
     },
     'source':
     {
         'device':       None,
+        'port':         80,
         'username':     'admin',
         'password':     None,
         'tasmotafile':  None,
     },
-    'config':
+    'backup':
+    {
+        'restorefile':  None,
+        'backupfile':   None,
+        'backupfileformat': 'json',
+        'extension':    True,
+    },
+    'jsonformat':
     {
         'jsonindent':   None,
         'jsoncompact':  False,
-        'sort':         True,
-        'rawvalues':    False,
-        'rawkeys':      True,
-        'hidepw':       True,
-        'outputfile':   None,
-        'outputfileformat': 'json',
+        'jsonsort':     True,
+        'jsonrawvalues':False,
+        'jsonrawkeys':  False,
+        'jsonhidepw':   True,
     },
 }
+args = {}
 exitcode = 0
 
 
@@ -218,33 +263,47 @@ Settings dictionary describes the config file fields definition:
                 [n, n <,n...>]
                     Defines a multi-dimensional array
 
-        convert (optional)
-            Define an output/conversion methode, can be a simple string
-            or a previously defined function name.
-            'xxx?':
-                a string will be evaluate as is replacing all '?' chars
-                with the current value. This can also be contain pyhton
-                code.
+        converter (optional)
+            Conversion methode(s): ()|'xxx'|func
+            Read conversion is used if args.jsonrawvalues is False
+            Write conversion is used if jsonrawvalues from restore json
+            file is False or args.jsonrawvalues is False.
+            Converter is either a single methode 'xxx'|func or a tuple
+            Single methode will be used for reading conversion only:
+            'xxx':
+                string will used for reading conversion and will be
+                evaluate as is, this can also contain python code.
+                Use '$' for current value.
             func:
-                a function defines the name of a formating function
+                name of a formating function that will be used for
+                reading conversion
+            None:
+                will read as definied in <format>
+            (read, write):
+                a tuple with 2 objects. Each can be of the same type
+                as the single method above ('xxx'|func) or None.
+                read:
+                    method will be used for read conversion
+                    (unpack data from dmp object)
+                write:
+                    method will be used for write conversion
+                    (pack data to dmp object)
+                    If write method is None indicates value is
+                    readable only and will not be write
 
 """
-# config data conversion function and helper
-def int2ip(value):
-    return '{:d}.{:d}.{:d}.{:d}'.format(value & 0xff, value>>8 & 0xff, value>>16 & 0xff, value>>24 & 0xff)
-
-def password(value):
-    if args.hidepw:
-        return '********'
-    return value
+def passwordread(value):
+    return "********" if args.jsonhidepw else value
+def passwordwrite(value):
+    return None if value=="********" else value
 
 Setting_5_10_0 = {
-    'cfg_holder':                   ('<L',  0x000, None),
-    'save_flag':                    ('<L',  0x004, None),
-    'version':                      ('<L',  0x008, None, '"0x{:x}".format(?)'),
-    'bootcount':                    ('<L',  0x00C, None),
+    'cfg_holder':                   ('<L',  0x000, '"0x{:08x}".format($)'),
+    'save_flag':                    ('<L',  0x004, None, (None, None)),
+    'version':                      ('<L',  0x008, None, ('hex($)', None)),
+    'bootcount':                    ('<L',  0x00C, None, (None, None)),
     'flag':                         ({
-                                        'raw':                      ('<L',   0x010,         None, '"0x{:08x}".format(?)'),
+                                        'raw':                      ('<L',   0x010,         None, ('"0x{:08x}".format($)', None)),
                                         'save_state':               ('<L',  (0x010, 1,  0), None),
                                         'button_restrict':          ('<L',  (0x010, 1,  1), None),
                                         'value_units':              ('<L',  (0x010, 1,  2), None),
@@ -272,7 +331,7 @@ Setting_5_10_0 = {
     'sta_config':                   ('B',   0x09F, None),
     'sta_active':                   ('B',   0x0A0, None),
     'sta_ssid':                     ('33s', 0x0A1, [2]),
-    'sta_pwd':                      ('65s', 0x0E3, [2], password),
+    'sta_pwd':                      ('65s', 0x0E3, [2], (passwordread, passwordwrite)),
     'hostname':                     ('33s', 0x165, None),
     'syslog_host':                  ('33s', 0x186, None),
     'syslog_port':                  ('<H',  0x1A8, None),
@@ -284,14 +343,14 @@ Setting_5_10_0 = {
     'mqtt_port':                    ('<H',  0x20A, None),
     'mqtt_client':                  ('33s', 0x20C, None),
     'mqtt_user':                    ('33s', 0x22D, None),
-    'mqtt_pwd':                     ('33s', 0x24E, None, password),
+    'mqtt_pwd':                     ('33s', 0x24E, None, (passwordread, passwordwrite)),
     'mqtt_topic':                   ('33s', 0x26F, None),
     'button_topic':                 ('33s', 0x290, None),
     'mqtt_grptopic':                ('33s', 0x2B1, None),
     'mqtt_fingerprinth':            ('B',   0x2D2, [20]),
     'pwm_frequency':                ('<H',  0x2E6, None),
     'power':                        ({
-                                        'raw':      ('<L',   0x2E8,        None, '"0x{:08x}".format(?)'),
+                                        'raw':      ('<L',   0x2E8,        None, ('"0x{:08x}".format($)', None)),
                                         'power1':   ('<L',  (0x2E8, 1, 0), None),
                                         'power2':   ('<L',  (0x2E8, 1, 1), None),
                                         'power3':   ('<L',  (0x2E8, 1, 2), None),
@@ -354,16 +413,16 @@ Setting_5_10_0 = {
     'light_scheme':                 ('B',   0x4A3, None),
     'light_width':                  ('B',   0x4A4, None),
     'light_wakeup':                 ('<H',  0x4A6, None),
-    'web_password':                 ('33s', 0x4A9, None, password),
+    'web_password':                 ('33s', 0x4A9, None, (passwordread, passwordwrite)),
     'switchmode':                   ('B',   0x4CA, [4]),
     'ntp_server':                   ('33s', 0x4CE, [3]),
     'ina219_mode':                  ('B',   0x531, None),
     'pulse_timer':                  ('<H',  0x532, [8]),
-    'ip_address':                   ('<L',  0x544, [4], int2ip),
+    'ip_address':                   ('<L',  0x544, [4], ("socket.inet_ntoa(struct.pack('<L', $))", "struct.unpack('<L', socket.inet_aton($))[0]")),
     'energy_kWhtotal':              ('<L',  0x554, None),
     'mqtt_fulltopic':               ('100s',0x558, None),
     'flag2':                        ({
-                                        'raw':                      ('<L',   0x5BC,         None, '"0x{:08x}".format(?)'),
+                                        'raw':                      ('<L',   0x5BC,         None, ('"0x{:08x}".format($)', None)),
                                         'current_resolution':       ('<L',  (0x5BC, 2, 15), None),
                                         'voltage_resolution':       ('<L',  (0x5BC, 2, 17), None),
                                         'wattage_resolution':       ('<L',  (0x5BC, 2, 19), None),
@@ -376,13 +435,13 @@ Setting_5_10_0 = {
     'pulse_counter':                ('<L',  0x5C0, [4]),
     'pulse_counter_type':           ('<H',  0x5D0, None),
     'pulse_counter_debounce':       ('<H',  0x5D2, None),
-    'rf_code':                      ('B',   0x5D4, [17,9], '"0x{:02x}".format(?)'),
+    'rf_code':                      ('B',   0x5D4, [17,9], '"0x{:02x}".format($)'),
 }
 
 Setting_5_11_0 = Setting_5_10_0
 Setting_5_11_0.update({
     'flag':                         ({
-                                        'raw':                      ('<L',   0x010,         None, '"0x{:08x}".format(?)'),
+                                        'raw':                      ('<L',   0x010,         None, ('"0x{:08x}".format($)', None)),
                                         'save_state':               ('<L',  (0x010, 1,  0), None),
                                         'button_restrict':          ('<L',  (0x010, 1,  1), None),
                                         'value_units':              ('<L',  (0x010, 1,  2), None),
@@ -412,12 +471,12 @@ Setting_5_11_0.update({
     'display_dimmer':               ('B',   0x2E0, None),
     'display_size':                 ('B',   0x2E1, None),
 })
-del Setting_5_11_0['mqtt_fingerprinth']
+Setting_5_11_0.pop('mqtt_fingerprinth',None)
 
 Setting_5_12_0 = Setting_5_11_0
 Setting_5_12_0.update({
     'flag':                         ({
-                                        'raw':                      ('<L',   0x010,         None, '"0x{:08x}".format(?)'),
+                                        'raw':                      ('<L',   0x010,         None, ('"0x{:08x}".format($)', None)),
                                         'save_state':               ('<L',  (0x010, 1,  0), None),
                                         'button_restrict':          ('<L',  (0x010, 1,  1), None),
                                         'value_units':              ('<L',  (0x010, 1,  2), None),
@@ -446,7 +505,7 @@ Setting_5_12_0.update({
 Setting_5_13_1 = Setting_5_12_0
 Setting_5_13_1.update({
     'flag':                         ({
-                                        'raw':                      ('<L',   0x010,         None, '"0x{:08x}".format(?)'),
+                                        'raw':                      ('<L',   0x010,         None, ('"0x{:08x}".format($)', None)),
                                         'save_state':               ('<L',  (0x010, 1,  0), None),
                                         'button_restrict':          ('<L',  (0x010, 1,  1), None),
                                         'value_units':              ('<L',  (0x010, 1,  2), None),
@@ -474,7 +533,7 @@ Setting_5_13_1.update({
                                         'rules_once':               ('<L',  (0x010, 1, 24), None),
                                         'knx_enabled':              ('<L',  (0x010, 1, 25), None),
                                      },     0x010, None),
-    'baudrate':                     ('B',   0x09D, None, '? * 1200'),
+    'baudrate':                     ('B',   0x09D, None, ('$ * 1200','$ / 1200') ),
     'mqtt_fingerprint':             ('20s', 0x1AD, [2]),
     'energy_power_delta':           ('B',   0x33F, None),
     'light_rotation':               ('<H',  0x39E, None),
@@ -483,7 +542,7 @@ Setting_5_13_1.update({
     'knx_GA_registered':            ('B',   0x4A5, None),
     'knx_CB_registered':            ('B',   0x4A8, None),
     'timer':                        ({
-                                        'raw':      ('<L',   0x670,          None, '"0x{:08x}".format(?)'),
+                                        'raw':      ('<L',   0x670,          None, ('"0x{:08x}".format($)', None)),
                                         'time':     ('<L',  (0x670, 11,  0), None),
                                         'window':   ('<L',  (0x670,  4, 11), None),
                                         'repeat':   ('<L',  (0x670,  1, 15), None),
@@ -493,8 +552,8 @@ Setting_5_13_1.update({
                                         'mode':     ('<L',  (0x670,  2, 29), None),
                                         'arm':      ('<L',  (0x670,  1, 31), None),
                                      },     0x670, [16]),
-    'latitude':                     ('i',   0x6B0, None, 'float(?) / 1000000'),
-    'longitude':                    ('i',   0x6B4, None, 'float(?) / 1000000'),
+    'latitude':                     ('i',   0x6B0, None, ('float($) / 1000000', 'int($ * 1000000)')),
+    'longitude':                    ('i',   0x6B4, None, ('float($) / 1000000', 'int($ * 1000000)')),
     'knx_physsical_addr':           ('<H',  0x6B8, None),
     'knx_GA_addr':                  ('<H',  0x6BA, [10]),
     'knx_CB_addr':                  ('<H',  0x6CE, [10]),
@@ -505,7 +564,7 @@ Setting_5_13_1.update({
 Setting_5_14_0 = Setting_5_13_1
 Setting_5_14_0.update({
     'flag':                         ({
-                                        'raw':                      ('<L',   0x010,         None, '"0x{:08x}".format(?)'),
+                                        'raw':                      ('<L',   0x010,         None, ('"0x{:08x}".format($)', None)),
                                         'save_state':               ('<L',  (0x010, 1,  0), None),
                                         'button_restrict':          ('<L',  (0x010, 1,  1), None),
                                         'value_units':              ('<L',  (0x010, 1,  2), None),
@@ -535,7 +594,7 @@ Setting_5_14_0.update({
                                         'device_index_enable':      ('<L',  (0x010, 1, 26), None),
                                      },     0x010, None),
     'tflag':                        ({
-                                        'raw':      ('<H',   0x2E2,         None, '"0x{:04x}".format(?)'),
+                                        'raw':      ('<H',   0x2E2,         None, ('"0x{:04x}".format($)', None)),
                                         'hemis':    ('<H',  (0x2E2, 1,  0), None),
                                         'week':     ('<H',  (0x2E2, 3,  1), None),
                                         'month':    ('<H',  (0x2E2, 4,  4), None),
@@ -549,11 +608,11 @@ Setting_5_14_0.update({
 Setting_6_0_0 = Setting_5_14_0
 Setting_6_0_0.update({
     'cfg_holder':                   ('<H',  0x000, None),
-    'cfg_size':                     ('<H',  0x002, None),
-    'bootcount':                    ('<H',  0x00C, None),
-    'cfg_crc':                      ('<H',  0x00E, None),
+    'cfg_size':                     ('<H',  0x002, None, (None, None)),
+    'bootcount':                    ('<H',  0x00C, None, (None, None)),
+    'cfg_crc':                      ('<H',  0x00E, None, '"0x{:04x}".format($)'),
     'flag':                         ({
-                                        'raw':                      ('<L',   0x010,         None, '"0x{:08x}".format(?)'),
+                                        'raw':                      ('<L',   0x010,         None, ('"0x{:08x}".format($)', None)),
                                         'save_state':               ('<L',  (0x010, 1,  0), None),
                                         'button_restrict':          ('<L',  (0x010, 1,  1), None),
                                         'value_units':              ('<L',  (0x010, 1,  2), None),
@@ -584,16 +643,16 @@ Setting_6_0_0.update({
                                         'knx_enable_enhancement':   ('<L',  (0x010, 1, 27), None),
                                      },     0x010, None),
     'rule_enabled':                 ({
-                                        'raw':      ('B',   0x49F,        None),
+                                        'raw':      ('B',   0x49F,        None, (None,None)),
                                         'rule1':    ('B',  (0x49F, 1, 0), None),
                                         'rule2':    ('B',  (0x49F, 1, 1), None),
                                         'rule3':    ('B',  (0x49F, 1, 2), None),
                                      },     0x49F, None),
     'rule_once':                    ({
-                                        'raw':      ('B',   0x4A0,        None),
-                                        'rule1':    ('B',  (0x4A0, 1, 0), None, '? + 4'),
-                                        'rule2':    ('B',  (0x4A0, 1, 1), None, '? + 4'),
-                                        'rule3':    ('B',  (0x4A0, 1, 2), None, '? + 4'),
+                                        'raw':      ('B',   0x4A0,        None, (None,None)),
+                                        'rule1':    ('B',  (0x4A0, 1, 0), None),
+                                        'rule2':    ('B',  (0x4A0, 1, 1), None),
+                                        'rule3':    ('B',  (0x4A0, 1, 2), None),
                                      },     0x4A0, None),
     'mems':                         ('10s', 0x7CE, [5]),
     'rules':                        ('512s',0x800, [3])
@@ -602,7 +661,7 @@ Setting_6_0_0.update({
 Setting_6_1_1 = Setting_6_0_0
 Setting_6_1_1.update({
     'flag':                         ({
-                                        'raw':                      ('<L',   0x010,         None, '"0x{:08x}".format(?)'),
+                                        'raw':                      ('<L',   0x010,         None, ('"0x{:08x}".format($)', None)),
                                         'save_state':               ('<L',  (0x010, 1,  0), None),
                                         'button_restrict':          ('<L',  (0x010, 1,  1), None),
                                         'value_units':              ('<L',  (0x010, 1,  2), None),
@@ -635,10 +694,10 @@ Setting_6_1_1.update({
                                         'ir_receive_decimal':       ('<L',  (0x010, 1, 29), None),
                                         'hass_light':               ('<L',  (0x010, 1, 30), None),
                                      },     0x010, None),
-    'flag3':                        ('<L',  0x3A0, None, '"0x{:08x}".format(?)'),
+    'flag3':                        ('<L',  0x3A0, None, '"0x{:08x}".format($)'),
     'switchmode':                   ('B',   0x3A4, [8]),
     'mcp230xx_config':              ({
-                                        'raw':              ('<L',   0x6F6,         None, '"0x{:08x}".format(?)'),
+                                        'raw':              ('<L',   0x6F6,         None, ('"0x{:08x}".format($)', None)),
                                         'pinmode':          ('<L',  (0x6F6, 3,  0), None),
                                         'pullup':           ('<L',  (0x6F6, 1,  3), None),
                                         'saved_state':      ('<L',  (0x6F6, 1,  4), None),
@@ -651,7 +710,7 @@ Setting_6_1_1.update({
 Setting_6_2_1 = Setting_6_1_1
 Setting_6_2_1.update({
     'flag':                         ({
-                                        'raw':                      ('<L',   0x010,         None, '"0x{:08x}".format(?)'),
+                                        'raw':                      ('<L',   0x010,         None, ('"0x{:08x}".format($)', None)),
                                         'save_state':               ('<L',  (0x010, 1,  0), None),
                                         'button_restrict':          ('<L',  (0x010, 1,  1), None),
                                         'value_units':              ('<L',  (0x010, 1,  2), None),
@@ -686,21 +745,21 @@ Setting_6_2_1.update({
                                         'global_state':             ('<L',  (0x010, 1, 31), None),
                                      },     0x010, None),
     'rule_stop':                    ({
-                                        'raw':      ('B',   0x1A7,        None),
-                                        'rule1':    ('B',  (0x1A7, 1, 0), None, '? + 8'),
-                                        'rule2':    ('B',  (0x1A7, 1, 1), None, '? + 8'),
-                                        'rule3':    ('B',  (0x1A7, 1, 2), None, '? + 8'),
+                                        'raw':      ('B',   0x1A7,        None, (None, None)),
+                                        'rule1':    ('B',  (0x1A7, 1, 0), None),
+                                        'rule2':    ('B',  (0x1A7, 1, 1), None),
+                                        'rule3':    ('B',  (0x1A7, 1, 2), None),
                                      },     0x1A7, None),
     'display_rotate':               ('B',   0x2FA, None),
     'display_font':                 ('B',   0x312, None),
     'flag3':                        ({
-                                         'raw':                 ('<L',   0x3A0,        None, '"0x{:08x}".format(?)'),
+                                         'raw':                 ('<L',   0x3A0,        None, ('"0x{:08x}".format($)', None)),
                                          'timers_enable':       ('<L',  (0x3A0, 1, 0), None),
                                          'user_esp8285_enable': ('<L',  (0x3A0, 1,31), None),
                                      },     0x3A0, None),
     'button_debounce':              ('<H',  0x542, None),
     'flag2':                        ({
-                                        'raw':                      ('<L',   0x5BC,         None, '"0x{:08x}".format(?)'),
+                                        'raw':                      ('<L',   0x5BC,         None, ('"0x{:08x}".format($)', None)),
                                         'axis_resolution':          ('<L',  (0x5BC, 2, 13), None),
                                         'current_resolution':       ('<L',  (0x5BC, 2, 15), None),
                                         'voltage_resolution':       ('<L',  (0x5BC, 2, 17), None),
@@ -719,7 +778,7 @@ Setting_6_2_1.update({
 Setting_6_2_1_2 = Setting_6_2_1
 Setting_6_2_1_2.update({
     'flag3':                        ({
-                                         'raw':                 ('<L',   0x3A0,        None, '"0x{:08x}".format(?)'),
+                                         'raw':                 ('<L',   0x3A0,        None, ('"0x{:08x}".format($)', None)),
                                          'timers_enable':       ('<L',  (0x3A0, 1, 0), None),
                                          'user_esp8285_enable': ('<L',  (0x3A0, 1, 1), None),
                                      },     0x3A0, None),
@@ -728,13 +787,13 @@ Setting_6_2_1_2.update({
 Setting_6_2_1_3 = Setting_6_2_1_2
 Setting_6_2_1_3.update({
     'flag3':                        ({
-                                         'raw':                 ('<L',   0x3A0,        None, '"0x{:08x}".format(?)'),
+                                         'raw':                 ('<L',   0x3A0,        None, ('"0x{:08x}".format($)', None)),
                                          'timers_enable':       ('<L',  (0x3A0, 1, 0), None),
                                          'user_esp8285_enable': ('<L',  (0x3A0, 1, 1), None),
                                          'time_append_timezone':('<L',  (0x3A0, 1, 2), None),
                                      },     0x3A0, None),
     'flag2':                        ({
-                                        'raw':                      ('<L',   0x5BC,         None, '"0x{:08x}".format(?)'),
+                                        'raw':                      ('<L',   0x5BC,         None, ('"0x{:08x}".format($)', None)),
                                         'frequency_resolution':     ('<L',  (0x5BC, 2, 11), None),
                                         'axis_resolution':          ('<L',  (0x5BC, 2, 13), None),
                                         'current_resolution':       ('<L',  (0x5BC, 2, 15), None),
@@ -761,7 +820,7 @@ Setting_6_2_1_10.update({
 Setting_6_2_1_14 = Setting_6_2_1_10
 Setting_6_2_1_14.update({
     'flag2':                        ({
-                                        'raw':                      ('<L',   0x5BC,         None, '"0x{:08x}".format(?)'),
+                                        'raw':                      ('<L',   0x5BC,         None, ('"0x{:08x}".format($)', None)),
                                         'weight_resolution':        ('<L',  (0x5BC, 2,  9), None),
                                         'frequency_resolution':     ('<L',  (0x5BC, 2, 11), None),
                                         'axis_resolution':          ('<L',  (0x5BC, 2, 13), None),
@@ -775,13 +834,19 @@ Setting_6_2_1_14.update({
                                         'temperature_resolution':   ('<L',  (0x5BC, 2, 30), None),
                                      },     0x5BC, None),
     'weight_item':                  ('<H',  0x7BC, None),
-    'weight_max':                   ('<H',  0x7BE, None),
+    'weight_max':                   ('<H',  0x7BE, None, ('float($) / 10', 'int($ * 10)')),
     'weight_reference':             ('<L',  0x7C0, None),
     'weight_calibration':           ('<L',  0x7C4, None),
     'web_refresh':                  ('<H',  0x7CC, None),
 })
 
+Setting_6_2_1_19 = Setting_6_2_1_14
+Setting_6_2_1_19.update({
+    'weight_max':                   ('<L',  0x7B8, None, ('float($) / 10', 'int($ * 10)')),
+})
+
 Settings = [
+            (0x6020113, 0xe00, Setting_6_2_1_19),
             (0x602010E, 0xe00, Setting_6_2_1_14),
             (0x602010A, 0xe00, Setting_6_2_1_10),
             (0x6020106, 0xe00, Setting_6_2_1_6),
@@ -797,64 +862,307 @@ Settings = [
             (0x50a0000, 0x670, Setting_5_10_0),
            ]
 
-
 # ----------------------------------------------------------------------
 # helper
 # ----------------------------------------------------------------------
-class Log:
+def GetTemplateSizes():
+    """
+    Get all possible template sizes as list
+
+    @param version:
+        <int> version number from read binary data to search for
+
+    @return:
+        template sizes as list []
+    """
+    sizes = []
+    for cfg in Settings:
+        sizes.append(cfg[1])
+    # return unique sizes only (remove duplicates)
+    return list(set(sizes))
+
+
+def GetTemplateSetting(decode_cfg):
+    """
+    Search for version, template, size and settings to be used depending on given binary config data
+
+    @param decode_cfg:
+        binary config data (decrypted)
+
+    @return:
+        version, template, size, settings to use; None if version is invalid
+    """
+    try:
+        version = GetField(decode_cfg,  'version', Setting_6_2_1['version'], raw=True)
+    except:
+        return None,None,None,None
+
+    # search setting definition
+    template = None
+    setting = None
+    size = None
+    for cfg in Settings:
+        if version >= cfg[0]:
+            template = cfg
+            size = template[1]
+            setting = template[2]
+            break
+
+    return version, template, size, setting
+
+
+class LogType:
     INFO = 'INFO'
     WARNING = 'WARNING'
     ERROR = 'ERROR'
 
-    def message(self, msg, typ=None, status=None, jsonformat=False):
-        """
-        Writes a message to stdout
 
-            @param msg: string
-                message to output
-                if msg is of type dict, json format will be used
-        """
-        if jsonformat:
-            message = {}
-            message['msg'] = msg
-            if type is not None:
-                message['type'] = typ
-            if status is not None:
-                message['status'] = status
-            print json.dumps( message )
-        else:
-            print '{}{} {}{} {}'.format(typ if typ is not None else '',
-                                        ' ' if status is not None and typ is not None else '',
-                                        status if status is not None else '',
-                                        ':' if typ is not None else '',
-                                        msg)
+def message(msg, typ=None, status=None, line=None):
+    """
+    Writes a message to stdout
+
+    @param msg:
+        message to output
+    @param typ:
+        INFO, WARNING or ERROR
+    @param status:
+        status number
+    """
+    print >> sys.stderr, '{styp}{sdelimiter}{sstatus}{slineno}{scolon}{smgs}'.format(\
+                            styp=typ if typ is not None else '',
+                            sdelimiter=' ' if status is not None and status>0 and typ is not None else '',
+                            sstatus=status if status is not None and status>0 else '',
+                            scolon=': ' if typ is not None or line is not None else '',
+                            smgs=msg,
+                            slineno=' (@{:04d})'.format(line) if line is not None else '')
 
 
-def exit(status=0, message="end", typ='ERROR', doexit=True):
+def exit(status=0, msg="end", typ=LogType.ERROR, src=None, doexit=True, line=None):
     """
     Called when the program should be exit
 
     @param status:
         the exit status program returns to callert
-    @param message:
-        the message logged before exit
+    @param msg:
+        the msg logged before exit
     @param typ:
-        message type: 'INFO', 'WARNING' or 'ERROR'
+        msg type: 'INFO', 'WARNING' or 'ERROR'
     @param doexit:
         True to exit program, otherwise return
     """
 
-    logger = Log()
-    logger.message(message, typ=typ if status!=0 else 'INFO', status=status, jsonformat=True )
+    if src is not None:
+        msg = '{} ({})'.format(src, msg)
+    message(msg, typ=typ if status!=ExitCode.OK else LogType.INFO, status=status, line=line)
     exitcode = status
     if doexit:
         sys.exit(exitcode)
 
 
+def ShortHelp(doexit=True):
+    """
+    Show short help (usage) only - ued by own -h handling
+
+    @param doexit:
+        sys.exit with OK if True
+    """
+    print parser.description
+    print
+    parser.print_usage()
+    print
+    print "For advanced help use '{prog} -H' or '{prog} --full-help'".format(prog=os.path.basename(sys.argv[0]))
+    if doexit:
+        sys.exit(ExitCode.OK)
+
+
+class HTTPHeader:
+    """
+    pycurl helper class retrieving the request header
+    """
+    def __init__(self):
+        self.contents = ''
+
+    def clear(self):
+        self.contents = ''
+
+    def store(self, _buffer):
+        self.contents = "{}{}".format(self.contents, _buffer)
+
+    def response(self):
+        header = str(self.contents).split('\n')
+        if len(header)>0:
+            return header[0].rstrip()
+        return ''
+
+    def contenttype(self):
+        for item in str(self.contents).split('\n'):
+            ditem = item.split(":")
+            if ditem[0].strip().lower()=='content-type' and len(ditem)>1:
+                return ditem[1].strip()
+        return ''
+
+    def __str__(self):
+        return self.contents
+
+
+class CustomHelpFormatter(configargparse.HelpFormatter):
+    """
+    Class for customizing the help output
+    """
+
+    def _format_action_invocation(self, action):
+        """
+        Reformat multiple metavar output
+            -d <host>, --device <host>, --host <host>
+        to single output
+            -d, --device, --host <host>
+        """
+
+        orgstr = configargparse.HelpFormatter._format_action_invocation(self, action)
+        if orgstr and orgstr[0] != '-': # only optional arguments
+            return orgstr
+        res = getattr(action, '_formatted_action_invocation', None)
+        if res:
+            return res
+
+        options = orgstr.split(', ')
+        if len(options) <=1:
+            action._formatted_action_invocation = orgstr
+            return orgstr
+
+        return_list = []
+        for option in options:
+            meta = ""
+            arg = option.split(' ')
+            if len(arg)>1:
+                meta = arg[1]
+            return_list.append(arg[0])
+        if len(meta) >0 and len(return_list) >0:
+            return_list[len(return_list)-1] += " "+meta
+        action._formatted_action_invocation = ', '.join(return_list)
+        return action._formatted_action_invocation
+
+
 # ----------------------------------------------------------------------
 # Tasmota config data handling
 # ----------------------------------------------------------------------
-def GetFilenameReplaced(filename, configuration):
+class FileType:
+    FILE_NOT_FOUND = None
+    DMP = 'dmp'
+    JSON = 'json'
+    BIN = 'bin'
+    UNKNOWN = 'unknown'
+    INCOMPLETE_JSON = 'incomplete json'
+    INVALID_JSON = 'invalid json'
+    INVALID_BIN = 'invalid bin'
+
+
+def GetFileType(filename):
+    """
+    Get the FileType class member of a given filename
+
+    @param filename:
+        filename of the file to analyse
+
+    @return:
+        FileType class member
+    """
+    filetype = FileType.UNKNOWN
+
+    # try filename
+    try:
+        isfile = os.path.isfile(filename)
+        try:
+            f = open(filename, "r")
+            try:
+                # try reading as json
+                inputjson = json.load(f)
+                if 'header' in inputjson:
+                    filetype = FileType.JSON
+                else:
+                    filetype = FileType.INCOMPLETE_JSON
+            except ValueError:
+                filetype = FileType.INVALID_JSON
+                # not a valid json, get filesize and compare it with all possible sizes
+                try:
+                    size = os.path.getsize(filename)
+                except:
+                    filetype = FileType.UNKNOWN
+                sizes = GetTemplateSizes()
+
+                # size is one of a dmp file size
+                if size in sizes:
+                    filetype = FileType.DMP
+                elif (size - ((len(hex(BINARYFILE_MAGIC))-2)/2)) in sizes:
+                    # check if the binary file has the magic header
+                    try:
+                        inputfile = open(filename, "rb")
+                        inputbin = inputfile.read()
+                        inputfile.close()
+                        if struct.unpack_from('<L', inputbin, 0)[0] == BINARYFILE_MAGIC:
+                            filetype = FileType.BIN
+                        else:
+                            filetype = FileType.INVALID_BIN
+
+                    except:
+                        pass
+                # ~ else:
+                    # ~ filetype = FileType.UNKNOWN
+            finally:
+                f.close()
+        except:
+            filetype = FileType.FILE_NOT_FOUND
+    except:
+        filetype = FileType.FILE_NOT_FOUND
+
+    return filetype
+
+
+def GetVersionStr(version):
+    """
+    Create human readable version string
+
+    @param version:
+        version integer
+
+    @return:
+        version string
+    """
+    major = ((version>>24) & 0xff)
+    minor = ((version>>16) & 0xff)
+    release = ((version>> 8) & 0xff)
+    subrelease = (version & 0xff)
+    if major>=6:
+        if subrelease>0:
+            subreleasestr = str(subrelease)
+        else:
+            subreleasestr = ''
+    else:
+        if subrelease>0:
+            subreleasestr = str(chr(subrelease+ord('a')-1))
+        else:
+            subreleasestr = ''
+    return "{:d}.{:d}.{:d}{}{}".format( major, minor, release, '.' if (major>=6 and subreleasestr!='') else '', subreleasestr)
+
+
+def MakeValidFilename(filename):
+    """
+    Make a valid filename
+
+    @param filename:
+        filename src
+        
+    @return:
+        valid filename removed invalid chars and replace space with _
+    """
+    try:
+        filename = filename.decode('unicode-escape').translate(dict((ord(char), None) for char in '\/*?:"<>|'))
+    except:
+        pass
+    return str(filename.replace(' ','_'))
+
+
+def MakeFilename(filename, filetype, decode_cfg):
     """
     Replace variable within a filename
 
@@ -863,33 +1171,221 @@ def GetFilenameReplaced(filename, configuration):
         @v:
             Tasmota version
         @f:
-            FriendlyName
+            friendlyname
+        @h:
+            hostname
+    @param filetype:
+        FileType.x object - creates extension if not None
+    @param decode_cfg:
+        binary config data (decrypted)
 
-    @return: New filename with replacements
+    @return:
+        New filename with replacements
     """
     v = f1 = f2 = f3 = f4 = ''
-    if 'version' in configuration:
-        ver = int(str(configuration['version']), 0)
-        major = ((ver>>24) & 0xff)
-        minor = ((ver>>16) & 0xff)
-        release = ((ver>> 8) & 0xff)
-        subrelease = (ver & 0xff)
-        if major>=6:
-            if subrelease>0:
-                subreleasestr = str(subrelease)
-            else:
-                subreleasestr = ''
-        else:
-            if subrelease>0:
-                subreleasestr = str(chr(subrelease+ord('a')-1))
-            else:
-                subreleasestr = ''
-        v = "{:d}.{:d}.{:d}{}{}".format( major, minor, release, '.' if (major>=6 and subreleasestr!='') else '', subreleasestr)
+    if 'version' in decode_cfg:
+        v = GetVersionStr( int(str(decode_cfg['version']), 0) )
         filename = filename.replace('@v', v)
-    if 'friendlyname' in configuration:
-        filename = filename.replace('@f', configuration['friendlyname'][0] )
+    if 'friendlyname' in decode_cfg:
+        filename = filename.replace('@f', decode_cfg['friendlyname'][0] )
+    if 'hostname' in decode_cfg:
+        filename = filename.replace('@h', decode_cfg['hostname'] )
+
+    filename = MakeValidFilename(filename)
+    ext = ''
+    try:
+        name, ext = os.path.splitext(filename)
+    except:
+        pass
+    if len(ext) and ext[0]=='.':
+        ext = ext[1:]
+    if filetype is not None and args.extension and (len(ext)<2 or all(c.isdigit() for c in ext)):
+        filename += '.'+filetype.lower()
 
     return filename
+
+
+def MakeUrl(host, port=80, location=''):
+    """
+    Create a Tasmota host url
+
+    @param host:
+        hostname or IP of Tasmota host
+    @param port:
+        port number to use for http connection
+    @param location:
+        http url location
+
+    @return:
+        Tasmota http url
+    """
+    return "http://{shost}{sdelimiter}{sport}/{slocation}".format(\
+            shost=host,
+            sdelimiter=':' if port != 80 else '',
+            sport=port if port != 80 else '',
+            slocation=location )
+
+
+def PullTasmotaConfig():
+    """
+    Pull config from Tasmota device/file
+
+    @return:
+        binary config data (encrypted) or None on error
+    """
+
+    if args.device is not None:
+        # read config direct from device via http
+    
+        c = pycurl.Curl()
+        buffer = io.BytesIO()
+        c.setopt(c.WRITEDATA, buffer)
+        header = HTTPHeader()
+        c.setopt(c.HEADERFUNCTION, header.store)
+        c.setopt(c.FOLLOWLOCATION, True)
+        c.setopt(c.URL, MakeUrl(args.device, args.port, 'dl'))
+        if args.username is not None and args.password is not None:
+            c.setopt(c.HTTPAUTH, c.HTTPAUTH_BASIC)
+            c.setopt(c.USERPWD, args.username + ':' + args.password)
+        c.setopt(c.VERBOSE, False)
+
+        responsecode = 200
+        try:
+            c.perform()
+            responsecode = c.getinfo(c.RESPONSE_CODE)
+            response = header.response()
+        except Exception, e:
+            exit(e[0], e[1],line=inspect.getlineno(inspect.currentframe()))
+        finally:
+            c.close()
+            
+        if responsecode>=400:
+            exit(responsecode, 'HTTP result: {}'.format(header.response()),line=inspect.getlineno(inspect.currentframe()))
+        elif header.contenttype()!='application/octet-stream':
+            exit(ExitCode.DOWNLOAD_CONFIG_ERROR, "Device did not response properly, may be Tasmota webserver admin mode is disabled (WebServer 2)",line=inspect.getlineno(inspect.currentframe()))
+        encode_cfg = buffer.getvalue()
+
+    elif args.tasmotafile is not None:
+        # read config from a file
+        if not os.path.isfile(args.tasmotafile):    # check file exists
+            exit(ExitCode.FILE_NOT_FOUND, "File '{}' not found".format(args.tasmotafile),line=inspect.getlineno(inspect.currentframe()))
+        try:
+            tasmotafile = open(args.tasmotafile, "rb")
+            encode_cfg = tasmotafile.read()
+            tasmotafile.close()
+        except Exception, e:
+            exit(e[0], "'{}' {}".format(args.tasmotafile, e[1]),line=inspect.getlineno(inspect.currentframe()))
+
+    else:
+        return None
+
+    return encode_cfg
+
+
+def PushTasmotaConfig(encode_cfg, host, port, username=DEFAULTS['source']['username'], password=None):
+    """
+    Upload binary data to a Tasmota host using http
+
+    @param encode_cfg:
+        encrypted binary data or filename containing Tasmota encrypted binary config
+    @param host:
+        hostname or IP of Tasmota device
+    @param username:
+        optional username for Tasmota web login
+    @param password
+        optional password for Tasmota web login
+
+    @return
+        errorcode, errorstring
+        errorcode=0 if success, otherwise http response or exception code
+    """
+    # ~ return 0, 'OK'
+
+    if isinstance(encode_cfg, bytearray):
+        encode_cfg = str(encode_cfg)
+
+    c = pycurl.Curl()
+    buffer = io.BytesIO()
+    c.setopt(c.WRITEDATA, buffer)
+    header = HTTPHeader()
+    c.setopt(c.HEADERFUNCTION, header.store)
+    c.setopt(c.FOLLOWLOCATION, True)
+    # get restore config page first to set internal Tasmota vars
+    c.setopt(c.URL, MakeUrl(host, port, 'rs?'))
+    if args.username is not None and args.password is not None:
+        c.setopt(c.HTTPAUTH, c.HTTPAUTH_BASIC)
+        c.setopt(c.USERPWD, args.username + ':' + args.password)
+    c.setopt(c.HTTPGET, True)
+    c.setopt(c.VERBOSE, False)
+
+    responsecode = 200
+    try:
+        c.perform()
+        responsecode = c.getinfo(c.RESPONSE_CODE)
+    except Exception, e:
+        c.close()
+        return e[0], e[1]
+
+    if responsecode>=400:
+        c.close()
+        return responsecode, header.response()
+    elif header.contenttype()!='text/html':
+        c.close()
+        return ExitCode.UPLOAD_CONFIG_ERROR, "Device did not response properly, may be Tasmota webserver admin mode is disabled (WebServer 2)"
+
+    # post data
+    header.clear()
+    c.setopt(c.HEADERFUNCTION, header.store)
+    c.setopt(c.POST, 1)
+    c.setopt(c.URL, MakeUrl(host, port, 'u2'))
+    try:
+        isfile = os.path.isfile(encode_cfg)
+    except:
+        isfile = False
+    if isfile:
+        c.setopt(c.HTTPPOST, [("file", (c.FORM_FILE, encode_cfg))])
+    else:
+        # use as binary data
+        c.setopt(c.HTTPPOST, [
+            ('fileupload', (
+                c.FORM_BUFFER, '{sprog}_v{sver}.dmp'.format(sprog=os.path.basename(sys.argv[0]), sver=VER),
+                c.FORM_BUFFERPTR, encode_cfg
+            )),
+        ])
+
+    responsecode = 200
+    try:
+        c.perform()
+        responsecode = c.getinfo(c.RESPONSE_CODE)
+    except Exception, e:
+        return e[0], e[1]
+    c.close()
+
+    if responsecode>=400:
+        return responsecode, header.response()
+    elif header.contenttype()!='text/html':
+        return ExitCode.UPLOAD_CONFIG_ERROR, "Device did not response properly, may be Tasmota webserver admin mode is disabled (WebServer 2)"
+
+    return 0, 'OK'
+
+
+def DecryptEncrypt(obj):
+    """
+    Decrpt/Encrypt binary config data
+
+    @param obj:
+        binary config data
+
+    @return:
+        decrypted configuration (if obj contains encrypted data)
+        encrypted configuration (if obj contains decrypted data)
+    """
+    if isinstance(obj, bytearray):
+        obj = str(obj)
+    dobj  = obj[0:2]
+    for i in range(2, len(obj)):
+        dobj += chr( (ord(obj[i]) ^ (CONFIG_FILE_XOR +i)) & 0xff )
+    return dobj
 
 
 def GetSettingsCrc(dobj):
@@ -899,121 +1395,173 @@ def GetSettingsCrc(dobj):
     @param dobj:
         decrypted binary config data
 
-    @return: 2 byte unsigned integer crc value
+    @return:
+        2 byte unsigned integer crc value
 
     """
+    if isinstance(dobj, bytearray):
+        dobj = str(dobj)
     crc = 0
     for i in range(0, len(dobj)):
         if not i in [14,15]: # Skip crc
-            crc += ord(dobj[i]) * (i+1)
+            byte = ord(dobj[i])
+            crc += byte * (i+1)
+
     return crc & 0xffff
 
 
-def GetFieldFormat(fielddef):
+def GetFieldDef(fielddef):
+    
     """
-    Return the format item of field definition
+    Get the field def items
 
     @param fielddef:
         field format - see "Settings dictionary" above
 
-    @return: <format> from fielddef[0]
-
+    @return:
+        <format>, <baseaddr>, <bits>, <bitshift>, <datadef>, <convert>
+        undefined items can be None
     """
-    return fielddef[0]
+    _format = baseaddr = datadef = convert = None
+    bits = bitshift = 0
+    if len(fielddef)==3:
+        # def without convert tuple
+        _format, baseaddr, datadef = fielddef
+    elif len(fielddef)==4:
+        # def with convert tuple
+        _format, baseaddr, datadef, convert = fielddef
+
+    if isinstance(baseaddr, (list,tuple)):
+        baseaddr, bits, bitshift = baseaddr
+
+    if isinstance(datadef, int):
+        # convert single int into list with one item
+        datadef = [datadef]
+    return _format, baseaddr, bits, bitshift, datadef, convert
 
 
-def GetFieldBaseAddr(fielddef):
-    """
-    Return the format item of field definition
-
-    @param fielddef:
-        field format - see "Settings dictionary" above
-
-    @return: <baseaddr>,<bits>,<bitshift> from fielddef[1]
-
-    """
-    baseaddr = fielddef[1]
-    if isinstance(baseaddr, tuple):
-        return baseaddr[0], baseaddr[1], baseaddr[2]
-
-    return baseaddr, 0, 0
-
-
-def MakeFieldBaseAddr(baseaddr, bitlen, bitshift):
+def MakeFieldBaseAddr(baseaddr, bits, bitshift):
     """
     Return a <baseaddr> based on given arguments
 
     @param baseaddr:
         baseaddr from Settings definition
-    @param bitlen:
-        0 or bitlen
+    @param bits:
+        0 or bits
     @param bitshift:
         0 or bitshift
 
-    @return: (<baseaddr>,<bitlen>,<bitshift>) if bitlen != 0
-            baseaddr if bitlen == 0
+    @return:
+        (<baseaddr>,<bits>,<bitshift>) if bits != 0
+        baseaddr if bits == 0
 
     """
-    if bitlen!=0:
-        return (baseaddr, bitlen, bitshift)
+    if bits!=0:
+        return (baseaddr, bits, bitshift)
     return baseaddr
 
 
-def ConvertFieldValue(value, fielddef, raw=False):
+def ConvertFieldValue(value, fielddef, read=True, raw=False):
     """
     Convert field value based on field desc
 
     @param value:
-        original value read from binary data
+        original value
     @param fielddef
         field definition - see "Settings dictionary" above
+    @param read
+        use read conversion if True, otherwise use write conversion
     @param raw
         return raw values (True) or converted values (False)
 
-    @return: (un)converted value
+    @return:
+        (un)converted value
     """
-    if not raw and len(fielddef)>3:
-        convert = fielddef[3]
-        if isinstance(convert,str): # evaluate strings
-            try:
-                return eval(convert.replace('?','value'))
-            except:
-                return value
-        elif callable(convert):     # use as format function
-            return convert(value)
+    _format, baseaddr, bits, bitshift, datadef, convert = GetFieldDef(fielddef)
+
+    # call password functions even if raw value should be processed
+    if callable(convert) and (convert==passwordread or convert==passwordwrite):
+        raw = False
+    if isinstance(convert, (list,tuple)) and len(convert)>0 and (convert[0]==passwordread or convert[0]==passwordwrite):
+        raw = False
+    if isinstance(convert, (list,tuple)) and len(convert)>1 and (convert[1]==passwordread or convert[1]==passwordwrite):
+        raw = False
+
+    if not raw and convert is not None:
+        if isinstance(convert, (list,tuple)):  # extract read conversion if tuple is given
+            if read:
+                convert = convert[0]
+            else:
+                convert = convert[1]
+        try:
+            if isinstance(convert, str): # evaluate strings
+                return eval(convert.replace('$','value'))
+            elif callable(convert):     # use as format function
+                return convert(value)
+        except:
+            pass
+
     return value
 
 
-def GetFieldLength(fielddef):
+def GetFieldMinMax(fielddef):
     """
-    Return length of a field in bytes based on field format definition
+    Get minimum, maximum of field based on field format definition
 
     @param fielddef:
         field format - see "Settings dictionary" above
 
-    @return: length of field in bytes
+    @return:
+        min, max
+    """
+    minmax = {'c': (0, 1),
+              '?': (0, 1),
+              'b': (~0x7f, 0x7f),
+              'B': (0,     0xff),
+              'h': (~0x7fff, 0x7fff),
+              'H': (0,       0xffff),
+              'i': (~0x7fffffff, 0x7fffffff),
+              'I': (0,           0xffffffff),
+              'l': (~0x7fffffff, 0x7fffffff),
+              'L': (0,           0xffffffff),
+              'q': (~0x7fffffffffffffff, 0x7fffffffffffffff),
+              'Q': (0,                   0x7fffffffffffffff),
+              'f': (sys.float_info.min, sys.float_info.max),
+              'd': (sys.float_info.min, sys.float_info.max),
+             }
+    _format, baseaddr, bits, bitshift, datadef, convert = GetFieldDef(fielddef)
+    _min = 0
+    _max = 0
+    
+    if _format[-1:] in minmax:
+        _min, _max = minmax[_format[-1:]]
+    elif _format[-1:] in ['s','p']:
+        # s and p may have a prefix as length
+        match = re.search("\s*(\d+)", _format)
+        if match:
+            _max=int(match.group(0))
+    return _min,_max
+    
 
+def GetFieldLength(fielddef):
+    """
+    Get length of a field in bytes based on field format definition
+
+    @param fielddef:
+        field format - see "Settings dictionary" above
+
+    @return:
+        length of field in bytes
     """
 
     length=0
-    format_ = GetFieldFormat(fielddef)
-
-    # get datadef from field definition
-    datadef = None
-    if len(fielddef)>2:
-        datadef = fielddef[2]
+    _format, baseaddr, bits, bitshift, datadef, convert = GetFieldDef(fielddef)
 
     if datadef is not None:
-        # fielddef[2] contains a array or int
+        # datadef contains a list
         # calc size recursive by sum of all elements
-
-        # <datadef> contains a integer list or an single integer value
-        if (isinstance(datadef, list) \
-            and len(datadef)>0 \
-            and isinstance(datadef[0], int)) \
-           or isinstance(datadef, int):
-
-            for i in range(0, datadef[0] if isinstance(datadef, list) else datadef ):
+        if isinstance(datadef, list):
+            for i in range(0, datadef[0]):
 
                 # multidimensional array
                 if isinstance(datadef, list) and len(datadef)>1:
@@ -1024,33 +1572,60 @@ def GetFieldLength(fielddef):
                     length += GetFieldLength( (fielddef[0], fielddef[1], None) )
 
     else:
-        if isinstance(fielddef[0], dict):
-            # -> iterate through format_
-            addr = -1
-            setting = fielddef[0]
+        if isinstance(_format, dict):
+            # -> iterate through _format
+            addr = None
+            setting = _format
             for name in setting:
-                baseaddr, bitlen, bitshift = GetFieldBaseAddr(setting[name])
-                len_ = GetFieldLength(setting[name])
+                _dummy1, baseaddr, bits, bitshift, _dummy2, _dummy3 = GetFieldDef(setting[name])
+                _len = GetFieldLength(setting[name])
                 if addr != baseaddr:
                     addr = baseaddr
-                    length += len_
+                    length += _len
 
         else:
-            if format_[-1:].lower() in ['b','c','?']:
+            if _format[-1:] in ['b','B','c','?']:
                 length=1
-            elif format_[-1:].lower() in ['h']:
+            elif _format[-1:] in ['h','H']:
                 length=2
-            elif format_[-1:].lower() in ['i','l','f']:
+            elif _format[-1:] in ['i','I','l','L','f']:
                 length=4
-            elif format_[-1:].lower() in ['q','d']:
+            elif _format[-1:] in ['q','Q','d']:
                 length=8
-            elif format_[-1:].lower() in ['s','p']:
+            elif _format[-1:] in ['s','p']:
                 # s and p may have a prefix as length
-                match = re.search("\s*(\d+)", format_)
+                match = re.search("\s*(\d+)", _format)
                 if match:
                     length=int(match.group(0))
 
     return length
+
+
+def GetSubfieldDef(fielddef):
+    """
+    Get subfield definition from a given field definition
+
+    @param fielddef:
+        see Settings desc above
+
+    @return:
+        subfield definition
+    """
+    subfielddef = None
+
+    _format, baseaddr, bits, bitshift, datadef, convert = GetFieldDef(fielddef)
+    if isinstance(datadef, list) and len(datadef)>1:
+        if len(fielddef)<4:
+            subfielddef = (_format, MakeFieldBaseAddr(baseaddr, bits, bitshift), datadef[1:])
+        else:
+            subfielddef = (_format, MakeFieldBaseAddr(baseaddr, bits, bitshift), datadef[1:], convert)
+    # single array
+    else:
+        if len(fielddef)<4:
+            subfielddef = (_format, MakeFieldBaseAddr(baseaddr, bits, bitshift), None)
+        else:
+            subfielddef = (_format, MakeFieldBaseAddr(baseaddr, bits, bitshift), None, convert)
+    return subfielddef
 
 
 def GetField(dobj, fieldname, fielddef, raw=False, addroffset=0):
@@ -1068,206 +1643,530 @@ def GetField(dobj, fieldname, fielddef, raw=False, addroffset=0):
     @param addroffset
         use offset for baseaddr (used for recursive calls)
 
-    @return: read field value
+    @return:
+        read field value
     """
+
+    if isinstance(dobj, bytearray):
+        dobj = str(dobj)
 
     result = None
 
-    # get format from field definition
-    format_ = GetFieldFormat(fielddef)
+    # get field definition
+    _format, baseaddr, bits, bitshift, datadef, convert = GetFieldDef(fielddef)
 
-    # get baseaddr from field definition
-    baseaddr, bitlen, bitshift = GetFieldBaseAddr(fielddef)
-
-    # get datadef from field definition
-    datadef = None
-    if fielddef is not None and len(fielddef)>2:
-        datadef = fielddef[2]
-
-    if datadef is not None:
+    # <datadef> contains a integer list
+    if isinstance(datadef, list):
         result = []
+        offset = 0
+        for i in range(0, datadef[0]):
+            subfielddef = GetSubfieldDef(fielddef)
+            length = GetFieldLength(subfielddef)
+            if length != 0 and (fieldname != 'raw' or args.jsonrawkeys):
+                result.append(GetField(dobj, fieldname, subfielddef, raw=raw, addroffset=addroffset+offset))
+            offset += length
 
-        # <datadef> contains a integer list or an single integer value
-        if (isinstance(datadef, list) \
-            and len(datadef)>0 \
-            and isinstance(datadef[0], int)) \
-           or isinstance(datadef, int):
+    # <format> contains a dict
+    elif isinstance(_format, dict):
+        config = {}
+        for name in _format:    # -> iterate through _format
+            if name != 'raw' or args.jsonrawkeys:
+                config[name] = GetField(dobj, name, _format[name], raw=raw, addroffset=addroffset)
+        result = config
 
-            offset = 0
-            for i in range(0, datadef[0] if isinstance(datadef, list) else datadef):
+    # a simple value
+    elif isinstance(_format, (str, bool, int, float, long)):
+        if GetFieldLength(fielddef) != 0:
+            result = struct.unpack_from(_format, dobj, baseaddr+addroffset)[0]
 
-                # multidimensional array
-                if isinstance(datadef, list) and len(datadef)>1:
-                    if len(fielddef)<4:
-                        subfielddef = (fielddef[0], MakeFieldBaseAddr(baseaddr, bitlen, bitshift), datadef[1:])
-                    else:
-                        subfielddef = (fielddef[0], MakeFieldBaseAddr(baseaddr, bitlen, bitshift), datadef[1:], fielddef[3])
-
-                # single array
+            if not _format[-1:].lower() in ['s','p']:
+                if bitshift>=0:
+                    result >>= bitshift
                 else:
-                    if len(fielddef)<4:
-                        subfielddef = (fielddef[0], MakeFieldBaseAddr(baseaddr, bitlen, bitshift), None)
-                    else:
-                        subfielddef = (fielddef[0], MakeFieldBaseAddr(baseaddr, bitlen, bitshift), None, fielddef[3])
+                    result <<= abs(bitshift)
+                if bits>0:
+                    result &= (1<<bits)-1
 
-                length = GetFieldLength(subfielddef)
-                if length != 0 and (fieldname != 'raw' or args.rawkeys):
-                    result.append(GetField(dobj, fieldname, subfielddef, raw=raw, addroffset=addroffset+offset))
-                offset += length
+            # additional processing for strings
+            if _format[-1:].lower() in ['s','p']:
+                # use left string until \0
+                s = str(result).split('\0')[0]
+                # remove character > 127
+                result = unicode(s, errors='ignore')
+
+            result = ConvertFieldValue(result, fielddef, read=True, raw=raw)
 
     else:
-        # <format> contains a dict
-        if isinstance(fielddef[0], dict):
-            # -> iterate through format_
-            setting = fielddef[0]
-            config = {}
-            for name in setting:
-                if name != 'raw' or args.rawkeys:
-                    config[name] = GetField(dobj, name, setting[name], raw=raw, addroffset=addroffset)
-            result = config
-        else:
-            # a simple value
-            if GetFieldLength(fielddef) != 0:
-                result = struct.unpack_from(format_, dobj, baseaddr+addroffset)[0]
-
-                if not format_[-1:].lower() in ['s','p']:
-                    if bitshift>=0:
-                        result >>= bitshift
-                    else:
-                        result <<= abs(bitshift)
-                    if bitlen>0:
-                        result &= (1<<bitlen)-1
-
-                # additional processing for strings
-                if format_[-1:].lower() in ['s','p']:
-                    # use left string until \0
-                    s = str(result).split('\0')[0]
-                    # remove character > 127
-                    result = unicode(s, errors='ignore')
-
-                result = ConvertFieldValue(result, fielddef, raw)
+        exit(ExitCode.INTERNAL_ERROR, "Wrong mapping format definition: '{}'".format(_format), typ=LogType.WARNING, doexit=not args.ignorewarning, line=inspect.getlineno(inspect.currentframe()))
 
     return result
 
 
-def DeEncrypt(obj):
+def SetField(dobj, fieldname, fielddef, restore, raw=False, addroffset=0, filename=""):
     """
-    Decrpt/Encrypt binary config data
+    Get field value from definition
 
-    @param obj:
-        binary config data
-
-    @return: decrypted configuration (if obj contains encrypted data)
-                     encrypted configuration (if obj contains decrypted data)
+    @param dobj:
+        decrypted binary config data
+    @param fieldname:
+        name of the field
+    @param fielddef:
+        see Settings desc above
+    @param raw
+        handle values as raw values (True) or converted (False)
+    @param addroffset
+        use offset for baseaddr (used for recursive calls)
+    @param restore
+        restore mapping with the new value(s)
     """
-    dobj  = obj[0:2]
-    for i in range(2, len(obj)):
-        dobj += chr( (ord(obj[i]) ^ (CONFIG_FILE_XOR +i)) & 0xff )
+    _format, baseaddr, bits, bitshift, datadef, convert = GetFieldDef(fielddef)
+    fieldname = str(fieldname)
+
+    # do not write readonly values
+    if isinstance(convert, (list,tuple)) and len(convert)>1 and convert[1]==None:
+        if args.debug:
+            print >> sys.stderr, "SetField(): Readonly '{}' using '{}'/{}{} @{} skipped".format(fieldname, _format, datadef, bits, hex(baseaddr+addroffset))
+        return dobj
+
+    # <datadef> contains a list
+    if isinstance(datadef, list):
+        offset = 0
+        if len(restore)>datadef[0]:
+            exit(ExitCode.RESTORE_DATA_ERROR, "file '{sfile}', array '{sname}[{selem}]' exceeds max number of elements [{smax}]".format(sfile=filename, sname=fieldname, selem=len(restore), smax=datadef[0]), typ=LogType.WARNING, doexit=not args.ignorewarning, line=inspect.getlineno(inspect.currentframe()))
+        for i in range(0, datadef[0]):
+            subfielddef = GetSubfieldDef(fielddef)
+            length = GetFieldLength(subfielddef)
+            if length != 0:
+                if i>=len(restore): # restore data list may be shorter than definition
+                    break
+                try:
+                    subrestore = restore[i]
+                    dobj = SetField(dobj, fieldname, subfielddef, subrestore, raw=raw, addroffset=addroffset+offset, filename=filename)
+                except:
+                    pass
+            offset += length
+
+    # <format> contains a dict
+    elif isinstance(_format, dict):
+        for name in _format:    # -> iterate through _format
+            if name in restore:
+                dobj = SetField(dobj, name, _format[name], restore[name], raw=raw, addroffset=addroffset, filename=filename)
+
+    # a simple value
+    elif isinstance(_format, (str, bool, int, float, long)):
+        valid = True
+        err = "outside range"
+
+        _min, _max = GetFieldMinMax(fielddef)
+        value = _value = valid = None
+        # simple one value
+        if _format[-1:] in ['c']:
+            try:
+                value = ConvertFieldValue(restore.encode(STR_ENCODING)[0], fielddef, read=False, raw=raw)
+            except:
+                valid = False
+        # bool
+        elif _format[-1:] in ['?']:
+            try:
+                value = ConvertFieldValue(bool(restore), fielddef, read=False, raw=raw)
+            except:
+                valid = False
+        # integer
+        elif _format[-1:] in ['b','B','h','H','i','I','l','L','q','Q','P']:
+            try:
+                value = ConvertFieldValue(restore, fielddef, read=False, raw=raw)
+                if isinstance(value, (str, unicode)):
+                    value = int(value, 0)
+                else:
+                    value = int(value)
+                # bits
+                if bits!=0:
+                    value = struct.unpack_from(_format, dobj, baseaddr+addroffset)[0]
+                    bitvalue = int(restore)
+                    mask = (1<<bits)-1
+                    if bitvalue>mask:
+                        _min = 0
+                        _max = mask
+                        _value = bitvalue
+                        valid = False
+                    else:
+                        if bitshift>=0:
+                            bitvalue <<= bitshift
+                            mask <<= bitshift
+                        else:
+                            bitvalue >>= abs(bitshift)
+                            mask >>= abs(bitshift)
+                        value &= (0xffffffff ^ mask)
+                        value |= bitvalue
+                else:
+                    _value = value
+            except:
+                valid = False
+        # float
+        elif _format[-1:] in ['f','d']:
+            try:
+                value = ConvertFieldValue(float(restore), fielddef, read=False, raw=raw)
+            except:
+                valid = False
+        # string
+        elif _format[-1:] in ['s','p']:
+            try:
+                value = ConvertFieldValue(restore.encode(STR_ENCODING), fielddef, read=False, raw=raw)
+                # be aware 0 byte at end of string (str must be < max, not <= max)
+                _max -= 1
+                valid = (len(value)>=_min) and (len(value)<=_max)
+                err = "string exceeds max length"
+            except:
+                valid = False
+
+        if value is None:
+            valid = False
+        if valid is None:
+            valid = (value>=_min) and (value<=_max)
+        if _value is None:
+            _value = value
+        if isinstance(value, (str, unicode)):
+            _value = "'{}'".format(_value)
+
+        if valid:
+            if args.debug:
+                if bits:
+                    sbits=" {} bits shift {}".format(bits, bitshift)
+                else:
+                    sbits = ""
+                print >> sys.stderr, "SetField(): Set '{}' using '{}'/{}{} @{} to {}".format(fieldname, _format, datadef, sbits, hex(baseaddr+addroffset), _value)
+            struct.pack_into(_format, dobj, baseaddr+addroffset, value)
+        else:
+            exit(ExitCode.RESTORE_DATA_ERROR, "file '{sfile}', value for name '{sname}': {svalue} {serror} [{smin},{smax}]".format(sfile=filename, sname=fieldname, serror=err, svalue=_value, smin=_min, smax=_max), typ=LogType.WARNING, doexit=not args.ignorewarning)
+
     return dobj
 
 
-def GetTemplateSetting(version):
+def Bin2Mapping(decode_cfg, raw=True):
     """
-    Search for template, settings and size to be used depending on given version number
+    Decodes binary data stream into pyhton mappings dict
 
-    @param version:
-        <int> version number from read binary data to search for
-
-    @return: template, settings to use, None if version is invalid
-    """
-    # search setting definition
-    template = None
-    setting = None
-    size = None
-    for cfg in Settings:
-        if version >= cfg[0]:
-            template = cfg
-            size = template[1]
-            setting = template[2]
-            break
-
-    return template, size, setting
-
-
-def Decode(obj, raw=True):
-    """
-    Decodes binary data stream
-
-    @param obj:
+    @param decode_cfg:
         binary config data (decrypted)
-    @param raw
+    @param raw:
         decode raw values (True) or converted values (False)
 
-    @return: configuration dictionary
+    @return:
+        config data as mapping dictionary
     """
-    # get header data
-    version = GetField(obj,  'version', Setting_6_2_1['version'], raw=True)
+    if isinstance(decode_cfg, bytearray):
+        decode_cfg = str(decode_cfg)
 
-    template, size, setting = GetTemplateSetting(version)
+    # get binary header and template to use
+    version, template, size, setting = GetTemplateSetting(decode_cfg)
+
     # if we did not found a mathching setting
     if template is None:
-        exit(2, "Tasmota configuration version 0x{:x} not supported".format(version) )
+        exit(ExitCode.UNSUPPORTED_VERSION, "Tasmota configuration version 0x{:x} not supported".format(version),line=inspect.getlineno(inspect.currentframe()))
 
     # check size if exists
     if 'cfg_size' in setting:
-        cfg_size = GetField(obj, 'cfg_size', setting['cfg_size'], raw=True)
+        cfg_size = GetField(decode_cfg, 'cfg_size', setting['cfg_size'], raw=True)
         # read size should be same as definied in template
         if cfg_size > size:
             # may be processed
-            exit(3, "Number of bytes read does ot match - read {}, expected {} byte".format(cfg_size, template[1]), typ='WARNING', doexit=args.exitonwarning)
+            exit(ExitCode.DATA_SIZE_MISMATCH, "Number of bytes read does ot match - read {}, expected {} byte".format(cfg_size, template[1]), typ=LogType.ERROR,line=inspect.getlineno(inspect.currentframe()))
         elif cfg_size < size:
             # less number of bytes can not be processed
-            exit(3, "Number of bytes read to small to process - read {}, expected {} byte".format(cfg_size, template[1]), typ='ERROR')
+            exit(ExitCode.DATA_SIZE_MISMATCH, "Number of bytes read to small to process - read {}, expected {} byte".format(cfg_size, template[1]), typ=LogType.ERROR,line=inspect.getlineno(inspect.currentframe()))
 
     # check crc if exists
     if 'cfg_crc' in setting:
-        cfg_crc = GetField(obj, 'cfg_crc', setting['cfg_crc'], raw=True)
+        cfg_crc = GetField(decode_cfg, 'cfg_crc', setting['cfg_crc'], raw=True)
     else:
-        cfg_crc = GetSettingsCrc(obj)
-    if cfg_crc != GetSettingsCrc(obj):
-        exit(4, 'Data CRC error, read 0x{:x} should be 0x{:x}'.format(cfg_crc, GetSettingsCrc(obj)), typ='WARNING', doexit=args.exitonwarning)
+        cfg_crc = GetSettingsCrc(decode_cfg)
+    if cfg_crc != GetSettingsCrc(decode_cfg):
+        exit(ExitCode.DATA_CRC_ERROR, 'Data CRC error, read 0x{:x} should be 0x{:x}'.format(cfg_crc, GetSettingsCrc(decode_cfg)), typ=LogType.WARNING, doexit=not args.ignorewarning,line=inspect.getlineno(inspect.currentframe()))
 
     # get config
-    config = GetField(obj, None, (setting,None,None), raw=raw)
+    config = GetField(decode_cfg, None, (setting,None,None), raw=raw)
 
     # add header info
     timestamp = datetime.now()
-    config['header'] = {  'timestamp':  timestamp.strftime("%Y-%m-%d %H:%M:%S"),
-                          'data':       {
-                                            'crc': hex(GetSettingsCrc(obj)),
-                                            'size': len(obj),
-                                            'template_version': hex(template[0]),
-                                            'content':  {
-                                                            'crc': hex(cfg_crc),
-                                                            'size': cfg_size,
-                                                            'version': hex(version),
-                                                        },
-                                        },
-                          'scriptname': os.path.basename(__file__),
-                          'scriptversion': VER,
+    config['header'] = {'timestamp':timestamp.strftime("%Y-%m-%d %H:%M:%S"),
+                        'format':   {
+                                    'jsonindent':   args.jsonindent,
+                                    'jsoncompact':  args.jsoncompact,
+                                    'jsonsort':     args.jsonsort,
+                                    'jsonrawvalues':args.jsonrawvalues,
+                                    'jsonrawkeys':  args.jsonrawkeys,
+                                    'jsonhidepw':   args.jsonhidepw,
+                                    },
+                        'src':      {
+                                    'crc':      hex(cfg_crc),
+                                    'size':     cfg_size,
+                                    'version':  hex(version),
+                                    },
+                        'data':     {
+                                    'crc':      hex(GetSettingsCrc(decode_cfg)),
+                                    'size':     len(decode_cfg),
+                                    'version':  hex(template[0]),
+                                    },
+                        'script':   {
+                                    'name':     os.path.basename(__file__),
+                                    'version':  VER,
+                                    },
+                        'os':       (platform.machine(), platform.system(), platform.release(), platform.version(), platform.platform()),
+                        'python':   platform.python_version(),
                        }
 
     return config
 
 
-if __name__ == "__main__":
-    # program argument processing
-    parser = configargparse.ArgumentParser(description='Decode configuration of Sonoff-Tasmota device.',
-                                           epilog='Either argument -d <host> or -f <filename> must be given.')
+def Mapping2Bin(decode_cfg, jsonconfig, filename=""):
+    """
+    Encodes into binary data stream
 
-    source = parser.add_argument_group('source')
-    source.add_argument('-f', '--file',
+    @param decode_cfg:
+        binary config data (decrypted)
+    @param jsonconfig:
+        restore data mapping
+    @param filename:
+        name of the restore file (for error output only)
+        
+    @return:
+        changed binary config data (decrypted)
+    """
+    if isinstance(decode_cfg, str):
+        decode_cfg = bytearray(decode_cfg)
+
+    
+    # get binary header data to use the correct version template from device
+    version, template, size, setting = GetTemplateSetting(decode_cfg)
+
+    _buffer = bytearray()
+    _buffer.extend(decode_cfg)
+
+    if template is not None:
+        try:
+            raw = jsonconfig['header']['format']['jsonrawvalues']
+        except:
+            if 'header' not in jsonconfig:
+                errkey = 'header'
+            elif 'format' not in jsonconfig['header']:
+                errkey = 'header.format'
+            elif 'jsonrawvalues' not in jsonconfig['header']['format']:
+                errkey = 'header.format.jsonrawvalues'
+            exit(ExitCode.RESTORE_DATA_ERROR, "Restore file '{sfile}' name '{skey}' missing, don't know how to evaluate restore data!".format(sfile=filename, skey=errkey), typ=LogType.ERROR, doexit=not args.ignorewarning)
+
+        # iterate through restore data mapping
+        for name in jsonconfig:
+            # key must exist in both dict
+            if name in setting:
+                SetField(_buffer, name, setting[name], jsonconfig[name], raw=raw, addroffset=0, filename=filename)
+            else:
+                if name != 'header':
+                    exit(ExitCode.RESTORE_DATA_ERROR, "Restore file '{}' contains obsolete name '{}', skipped".format(filename, name), typ=LogType.WARNING, doexit=not args.ignorewarning)
+
+        crc = GetSettingsCrc(_buffer)
+        struct.pack_into(setting['cfg_crc'][0], _buffer, setting['cfg_crc'][1], crc)
+        return _buffer
+
+    else:
+        exit(ExitCode.UNSUPPORTED_VERSION,"File '{}', Tasmota configuration version 0x{:x} not supported".format(filename, version), typ=LogType.WARNING, doexit=not args.ignorewarning)
+
+    return decode_cfg
+
+
+def Backup(backupfile, backupfileformat, encode_cfg, decode_cfg, configuration):
+    """
+    Create backup file
+
+    @param backupfile:
+        Raw backup filename from program args
+    @param backupfileformat:
+        Backup file format
+    @param encode_cfg:
+        binary config data (encrypted)
+    @param decode_cfg:
+        binary config data (decrypted)
+    @param configuration:
+        config data mapppings
+    """
+
+    backupfileformat = args.backupfileformat
+    try:
+        name, ext = os.path.splitext(backupfile)
+        if ext.lower() == '.'+FileType.BIN.lower():
+            backupfileformat = FileType.BIN
+        elif ext.lower() == '.'+FileType.DMP.lower():
+            backupfileformat = FileType.DMP
+        elif ext.lower() == '.'+FileType.JSON.lower():
+            backupfileformat = FileType.JSON
+    except:
+        pass
+
+    fileformat = ""
+    # binary format
+    if backupfileformat.lower() == FileType.BIN.lower():
+        fileformat = "binary"
+        backup_filename = MakeFilename(backupfile, FileType.BIN, configuration)
+        try:
+            backupfp = open(backup_filename, "wb")
+            magic = BINARYFILE_MAGIC
+            backupfp.write(struct.pack('<L',magic))
+            backupfp.write(decode_cfg)
+        except Exception, e:
+            exit(e[0], "'{}' {}".format(backup_filename, e[1]),line=inspect.getlineno(inspect.currentframe()))
+        finally:
+            backupfp.close()
+
+    # Tasmota format
+    if backupfileformat.lower() == FileType.DMP.lower():
+        fileformat = "Tasmota"
+        backup_filename = MakeFilename(backupfile, FileType.DMP, configuration)
+        try:
+            backupfp = open(backup_filename, "wb")
+            backupfp.write(encode_cfg)
+        except Exception, e:
+            exit(e[0], "'{}' {}".format(backup_filename, e[1]),line=inspect.getlineno(inspect.currentframe()))
+        finally:
+            backupfp.close()
+
+    # JSON format
+    elif backupfileformat.lower() == FileType.JSON.lower():
+        fileformat = "JSON"
+        backup_filename = MakeFilename(backupfile, FileType.JSON, configuration)
+        try:
+            backupfp = open(backup_filename, "w")
+            json.dump(configuration, backupfp, sort_keys=args.jsonsort, indent=None if args.jsonindent<0 else args.jsonindent, separators=(',', ':') if args.jsoncompact else (', ', ': ') )
+        except Exception, e:
+            exit(e[0], "'{}' {}".format(backup_filename, e[1]),line=inspect.getlineno(inspect.currentframe()))
+        finally:
+            backupfp.close()
+    if args.verbose:
+        srctype = 'device'
+        src = args.device
+        if args.tasmotafile is not None:
+            srctype = 'file'
+            src = args.tasmotafile
+        message("Backup successful from {} '{}' using {} format to file '{}' ".format(srctype, src, fileformat, backup_filename), typ=LogType.INFO)
+
+
+def Restore(restorefile, encode_cfg, decode_cfg, configuration):
+    """
+    Restore from file
+
+    @param encode_cfg:
+        binary config data (encrypted)
+    @param decode_cfg:
+        binary config data (decrypted)
+    @param configuration:
+        config data mapppings
+    """
+
+    new_encode_cfg = None
+
+    restorefilename = MakeFilename(restorefile, None, configuration)
+    filetype = GetFileType(restorefilename)
+
+    if filetype == FileType.DMP:
+        try:
+            restorefp = open(restorefilename, "rb")
+            new_encode_cfg = restorefp.read()
+            restorefp.close()
+        except Exception, e:
+            exit(e[0], "'{}' {}".format(restorefilename, e[1]),line=inspect.getlineno(inspect.currentframe()))
+
+    elif filetype == FileType.BIN:
+        try:
+            restorefp = open(restorefilename, "rb")
+            restorebin = restorefp.read()
+            restorefp.close()
+        except Exception, e:
+            exit(e[0], "'{}' {}".format(restorefilename, e[1]),line=inspect.getlineno(inspect.currentframe()))
+        header = struct.unpack_from('<L', restorebin, 0)[0]
+        if header == BINARYFILE_MAGIC:
+            decode_cfg = restorebin[4:]                     # remove header from encrypted config file
+            new_encode_cfg = DecryptEncrypt(decode_cfg)     # process binary to binary config
+
+    elif filetype == FileType.JSON or filetype == FileType.INVALID_JSON:
+        try:
+            restorefp = open(restorefilename, "r")
+            jsonconfig = json.load(restorefp)
+        except ValueError as e:
+            exit(ExitCode.JSON_READ_ERROR, "File '{}' invalid JSON: {}".format(restorefilename, e), line=inspect.getlineno(inspect.currentframe()))
+        finally:
+            restorefp.close()
+        # process json config to binary config
+        new_decode_cfg = Mapping2Bin(decode_cfg, jsonconfig, restorefilename)
+        new_encode_cfg = DecryptEncrypt(new_decode_cfg)
+
+    elif filetype == FileType.FILE_NOT_FOUND:
+        exit(ExitCode.FILE_NOT_FOUND, "File '{}' not found".format(restorefilename),line=inspect.getlineno(inspect.currentframe()))
+    elif filetype == FileType.INCOMPLETE_JSON:
+        exit(ExitCode.JSON_READ_ERROR, "File '{}' incomplete JSON, missing name 'header'".format(restorefilename),line=inspect.getlineno(inspect.currentframe()))
+    elif filetype == FileType.INVALID_BIN:
+        exit(ExitCode.FILE_READ_ERROR, "File '{}' invalid BIN format".format(restorefilename),line=inspect.getlineno(inspect.currentframe()))
+    else:
+        exit(ExitCode.FILE_READ_ERROR, "File '{}' unknown error".format(restorefilename),line=inspect.getlineno(inspect.currentframe()))
+
+    if new_encode_cfg is not None:
+        if new_encode_cfg != encode_cfg or args.ignorewarning:
+            # write config direct to device via http
+            if args.device is not None:
+                error_code, error_str = PushTasmotaConfig(new_encode_cfg, args.device, args.port, args.username, args.password)
+                if error_code:
+                    exit(ExitCode.UPLOAD_CONFIG_ERROR, "Config data upload failed - {}".format(error_str),line=inspect.getlineno(inspect.currentframe()))
+                else:
+                    if args.verbose:
+                        message("Restore successful to device '{}' using restore file '{}'".format(args.device, restorefilename), typ=LogType.INFO)
+
+            # write config from a file
+            elif args.tasmotafile is not None:
+                try:
+                    outputfile = open(args.tasmotafile, "wb")
+                    outputfile.write(new_encode_cfg)
+                except Exception, e:
+                    exit(e[0], "'{}' {}".format(args.tasmotafile, e[1]),line=inspect.getlineno(inspect.currentframe()))
+                finally:
+                    outputfile.close()
+                    if args.verbose:
+                        message("Restore successful to file '{}' using restore file '{}'".format(args.tasmotafile, restorefilename), typ=LogType.INFO)
+
+        else:
+            global exitcode
+            exitcode = ExitCode.RESTORE_SKIPPED
+            if args.verbose:
+                exit(exitcode, "Configuration data unchanged, upload skipped", typ=LogType.WARNING)
+
+
+def ParseArgs():
+    """
+    Program argument parser
+    
+    @return:
+        configargparse.parse_args() result
+    """
+    global parser
+    parser = configargparse.ArgumentParser(description='Backup/Restore Sonoff-Tasmota configuration data.',
+                                           epilog='Either argument -d <host> or -f <filename> must be given.',
+                                           add_help=False,
+                                           formatter_class=lambda prog: CustomHelpFormatter(prog))
+
+    source = parser.add_argument_group('Source', 'Read/Write Tasmota configuration from/to')
+    source.add_argument('-f', '--file', '--tasmota-file',
                             metavar='<filename>',
                             dest='tasmotafile',
                             default=DEFAULTS['source']['tasmotafile'],
-                            help="file to retrieve Tasmota configuration from (default: {})'".format(DEFAULTS['source']['tasmotafile']))
-    source.add_argument('-d', '--device',
+                            help="file to retrieve/write Tasmota configuration from/to (default: {})'".format(DEFAULTS['source']['tasmotafile']))
+    source.add_argument('-d', '--device', '--host',
                             metavar='<host>',
                             dest='device',
                             default=DEFAULTS['source']['device'],
-                            help="hostname or IP address to retrieve Tasmota configuration from (default: {})".format(DEFAULTS['source']['device']) )
+                            help="hostname or IP address to retrieve/send Tasmota configuration from/to (default: {})".format(DEFAULTS['source']['device']) )
+    source.add_argument('-P', '--port',
+                            metavar='<port>',
+                            dest='port',
+                            default=DEFAULTS['source']['port'],
+                            help="TCP/IP port number to use for the host connection (default: {})".format(DEFAULTS['source']['port']) )
     source.add_argument('-u', '--username',
-                            metavar='<user>',
+                            metavar='<username>',
                             dest='username',
                             default=DEFAULTS['source']['username'],
                             help="host HTTP access username (default: {})".format(DEFAULTS['source']['username']))
@@ -1277,165 +2176,176 @@ if __name__ == "__main__":
                             default=DEFAULTS['source']['password'],
                             help="host HTTP access password (default: {})".format(DEFAULTS['source']['password']))
 
-    config = parser.add_argument_group('config')
-    config.add_argument('--json-indent',
-                            metavar='<integer>',
+    backup = parser.add_argument_group('Backup/Restore', 'Backup/Restore configuration file specification')
+    backup.add_argument('-i', '--restore-file',
+                            metavar='<filename>',
+                            dest='restorefile',
+                            default=DEFAULTS['backup']['backupfile'],
+                            help="file to restore configuration from (default: {}). Replacements: @v=firmware version, @f=device friendly name, @h=device hostname".format(DEFAULTS['backup']['restorefile']))
+    backup.add_argument('-o', '--backup-file',
+                            metavar='<filename>',
+                            dest='backupfile',
+                            default=DEFAULTS['backup']['backupfile'],
+                            help="file to backup configuration to (default: {}). Replacements: @v=firmware version, @f=device friendly name, @h=device hostname".format(DEFAULTS['backup']['backupfile']))
+    output_file_formats = ['json', 'bin', 'dmp']
+    backup.add_argument('-F', '--backup-type',
+                            metavar='|'.join(output_file_formats),
+                            dest='backupfileformat',
+                            choices=output_file_formats,
+                            default=DEFAULTS['backup']['backupfileformat'],
+                            help="backup filetype (default: '{}')".format(DEFAULTS['backup']['backupfileformat']) )
+    backup.add_argument('-E', '--extension',
+                            dest='extension',
+                            action='store_true',
+                            default=DEFAULTS['backup']['extension'],
+                            help="append filetype extension for -i and -o filename{}".format(' (default)' if DEFAULTS['backup']['extension'] else '') )
+    backup.add_argument('-e', '--no-extension',
+                            dest='extension',
+                            action='store_false',
+                            default=DEFAULTS['backup']['extension'],
+                            help="do not append filetype extension, use -i and -o filename as passed{}".format(' (default)' if not DEFAULTS['backup']['extension'] else '') )
+
+    jsonformat = parser.add_argument_group('JSON', 'JSON backup format specification')
+    jsonformat.add_argument('--json-indent',
+                            metavar='<indent>',
                             dest='jsonindent',
                             type=int,
-                            default=DEFAULTS['config']['jsonindent'],
-                            help="pretty-printed JSON output using indent level (default: '{}'). Use values greater equal 0 to indent or -1 to disabled indent.".format(DEFAULTS['config']['jsonindent']) )
-    config.add_argument('--json-compact',
+                            default=DEFAULTS['jsonformat']['jsonindent'],
+                            help="pretty-printed JSON output using indent level (default: '{}'). -1 disables indent.".format(DEFAULTS['jsonformat']['jsonindent']) )
+    jsonformat.add_argument('--json-compact',
                             dest='jsoncompact',
                             action='store_true',
-                            default=DEFAULTS['config']['jsoncompact'],
-                            help="compact JSON output by eliminate whitespace{}".format(' (default)' if DEFAULTS['config']['jsoncompact'] else '') )
+                            default=DEFAULTS['jsonformat']['jsoncompact'],
+                            help="compact JSON output by eliminate whitespace{}".format(' (default)' if DEFAULTS['jsonformat']['jsoncompact'] else '') )
 
-    config.add_argument('--sort',
-                            dest='sort',
+    jsonformat.add_argument('--json-sort',
+                            dest='jsonsort',
                             action='store_true',
-                            default=DEFAULTS['config']['sort'],
-                            help="sort json keywords{}".format(' (default)' if DEFAULTS['config']['sort'] else '') )
-    config.add_argument('--unsort',
-                            dest='sort',
+                            default=DEFAULTS['jsonformat']['jsonsort'],
+                            help=configargparse.SUPPRESS) #"sort json keywords{}".format(' (default)' if DEFAULTS['jsonformat']['jsonsort'] else '') )
+    jsonformat.add_argument('--json-unsort',
+                            dest='jsonsort',
                             action='store_false',
-                            default=DEFAULTS['config']['sort'],
-                            help="do not sort json keywords{}".format(' (default)' if not DEFAULTS['config']['sort'] else '') )
+                            default=DEFAULTS['jsonformat']['jsonsort'],
+                            help=configargparse.SUPPRESS) #"do not sort json keywords{}".format(' (default)' if not DEFAULTS['jsonformat']['jsonsort'] else '') )
 
-    config.add_argument('--raw-values', '--raw',
-                            dest='rawvalues',
+    jsonformat.add_argument('--json-raw-values',
+                            dest='jsonrawvalues',
                             action='store_true',
-                            default=DEFAULTS['config']['rawvalues'],
-                            help="output raw values{}".format(' (default)' if DEFAULTS['config']['rawvalues'] else '') )
-    config.add_argument('--no-raw-values',
-                            dest='rawvalues',
+                            default=DEFAULTS['jsonformat']['jsonrawvalues'],
+                            help=configargparse.SUPPRESS) #"output raw values{}".format(' (default)' if DEFAULTS['jsonformat']['jsonrawvalues'] else '') )
+    jsonformat.add_argument('--json-convert-values',
+                            dest='jsonrawvalues',
                             action='store_false',
-                            default=DEFAULTS['config']['rawvalues'],
-                            help="output human readable values{}".format(' (default)' if not DEFAULTS['config']['rawvalues'] else '') )
+                            default=DEFAULTS['jsonformat']['jsonrawvalues'],
+                            help=configargparse.SUPPRESS) #"output converted, human readable values{}".format(' (default)' if not DEFAULTS['jsonformat']['jsonrawvalues'] else '') )
 
-    config.add_argument('--raw-keys',
-                            dest='rawkeys',
+    jsonformat.add_argument('--json-raw-keys',
+                            dest='jsonrawkeys',
                             action='store_true',
-                            default=DEFAULTS['config']['rawkeys'],
-                            help="output bitfield raw keys{}".format(' (default)' if DEFAULTS['config']['rawkeys'] else '') )
-    config.add_argument('--no-raw-keys',
-                            dest='rawkeys',
+                            default=DEFAULTS['jsonformat']['jsonrawkeys'],
+                            help=configargparse.SUPPRESS) #"output bitfield raw keys{}".format(' (default)' if DEFAULTS['jsonformat']['jsonrawkeys'] else '') )
+    jsonformat.add_argument('--json-no-raw-keys',
+                            dest='jsonrawkeys',
                             action='store_false',
-                            default=DEFAULTS['config']['rawkeys'],
-                            help="do not output bitfield raw keys{}".format(' (default)' if not DEFAULTS['config']['rawkeys'] else '') )
+                            default=DEFAULTS['jsonformat']['jsonrawkeys'],
+                            help=configargparse.SUPPRESS) #"do not output bitfield raw keys{}".format(' (default)' if not DEFAULTS['jsonformat']['jsonrawkeys'] else '') )
 
-    config.add_argument('--hide-pw',
-                            dest='hidepw',
+    jsonformat.add_argument('--json-hide-pw',
+                            dest='jsonhidepw',
                             action='store_true',
-                            default=DEFAULTS['config']['hidepw'],
-                            help="hide passwords{}".format(' (default)' if DEFAULTS['config']['hidepw'] else '') )
-    config.add_argument('--unhide-pw',
-                            dest='hidepw',
+                            default=DEFAULTS['jsonformat']['jsonhidepw'],
+                            help="hide passwords{}".format(' (default)' if DEFAULTS['jsonformat']['jsonhidepw'] else '') )
+    jsonformat.add_argument('--json-unhide-pw',
+                            dest='jsonhidepw',
                             action='store_false',
-                            default=DEFAULTS['config']['hidepw'],
-                            help="unhide passwords{}".format(' (default)' if not DEFAULTS['config']['hidepw'] else '') )
+                            default=DEFAULTS['jsonformat']['jsonhidepw'],
+                            help="unhide passwords{}".format(' (default)' if not DEFAULTS['jsonformat']['jsonhidepw'] else '') )
 
-    config.add_argument('-o', '--output-file',
-                            metavar='<filename>',
-                            dest='outputfile',
-                            default=DEFAULTS['config']['outputfile'],
-                            help="file to store configuration to (default: {}). Replacements: @v=Tasmota version, @f=friendly name".format(DEFAULTS['config']['outputfile']))
-    config.add_argument('--output-file-format',
-                            metavar='<word>',
-                            dest='outputfileformat',
-                            choices=['json', 'binary'],
-                            default=DEFAULTS['config']['outputfileformat'],
-                            help="output format ('json' or 'binary', default: '{}')".format(DEFAULTS['config']['outputfileformat']) )
+    info = parser.add_argument_group('Info','additional information')
+    info.add_argument('-D', '--debug',
+                            dest='debug',
+                            action='store_true',
+                            help=configargparse.SUPPRESS)
+    info.add_argument('-h', '--help',
+                            dest='shorthelp',
+                            action='store_true',
+                            help='show usage help message and exit')
+    info.add_argument("-H", "--full-help",
+                            action="help",
+                            help="show full help message and exit")
+    info.add_argument('-v', '--verbose',
+                            dest='verbose',
+                            action='store_true',
+                            help='produce more output about what the program does')
+    info.add_argument('-V', '--version',
+                            action='version',
+                            version=PROG)
 
+    # optional arguments
     parser.add_argument('-c', '--config',
                             metavar='<filename>',
                             dest='configfile',
                             default=DEFAULTS['DEFAULT']['configfile'],
                             is_config_file=True,
-                            help="Config file, can be used instead of command parameter (default: {})".format(DEFAULTS['DEFAULT']['configfile']) )
-    parser.add_argument('--exit-on-error-only',
-                            dest='exitonwarning',
-                            action='store_false',
-                            default=DEFAULTS['DEFAULT']['exitonwarning'],
-                            help="exit on error only (default: {}). Not recommended, used by your own responsibility!".format('exit on ERROR and WARNING' if DEFAULTS['DEFAULT']['exitonwarning'] else 'exit on ERROR') )
-
-    info = parser.add_argument_group('info')
-    info.add_argument('-V', '--version',  action='version', version=PROG)
+                            help="program config file - can be used to set default command args (default: {})".format(DEFAULTS['DEFAULT']['configfile']) )
+    parser.add_argument('--ignore-warnings',
+                            dest='ignorewarning',
+                            action='store_true',
+                            default=DEFAULTS['DEFAULT']['ignorewarning'],
+                            help="do not exit on warnings{}. Not recommended, used by your own responsibility!".format(' (default)' if DEFAULTS['DEFAULT']['ignorewarning'] else '') )
 
     args = parser.parse_args()
 
+    if args.debug:
+        print >> sys.stderr, parser.format_values()
+        print >> sys.stderr, "Settings:"
+        for k in args.__dict__:
+            print >> sys.stderr, "  "+str(k), "= ",eval('args.{}'.format(k))
+    return args
+
+
+if __name__ == "__main__":
+    args = ParseArgs()
+    if args.shorthelp:
+        ShortHelp()
+
     # default no configuration available
-    configobj = None
+    encode_cfg = None
 
     # check source args
     if args.device is not None and args.tasmotafile is not None:
-        exit(6, "Only one source allowed. Do not use -d and -f together")
+        exit(ExitCode.ARGUMENT_ERROR, "Unable to select source, do not use -d and -f together",line=inspect.getlineno(inspect.currentframe()))
 
-    # read config direct from device via http
-    if args.device is not None:
+    # pull config from Tasmota device/file
+    encode_cfg = PullTasmotaConfig()
+    if encode_cfg is None:
+        # no config source given
+        ShortHelp(False)
+        print
+        print parser.epilog
+        sys.exit(ExitCode.OK)
 
-        buffer = io.BytesIO()
-        url = str("http://{}/dl".format(args.device))
-        c = pycurl.Curl()
-        c.setopt(c.URL, url)
-        c.setopt(c.VERBOSE, 0)
-        if args.username is not None and args.password is not None:
-            c.setopt(c.HTTPAUTH, c.HTTPAUTH_BASIC)
-            c.setopt(c.USERPWD, args.username + ':' + args.password)
-        c.setopt(c.WRITEDATA, buffer)
-        try:
-            c.perform()
-        except Exception, e:
-            exit(e[0], e[1])
-        response = c.getinfo(c.RESPONSE_CODE)
-        c.close()
-        if response>=400:
-            exit(response, 'HTTP returns {}'.format(response) )
+    if len(encode_cfg) == 0:
+        exit(ExitCode.FILE_READ_ERROR, "Unable to read configuration data from {} '{}'".format('device' if args.device is not None else 'file', \
+                                                                        args.device if args.device is not None else args.tasmotafile) \
+                                                                        ,line=inspect.getlineno(inspect.currentframe()) )
+    # decrypt Tasmota config
+    decode_cfg = DecryptEncrypt(encode_cfg)
 
-        configobj = buffer.getvalue()
+    # decode into mappings dictionary
+    configuration = Bin2Mapping(decode_cfg, args.jsonrawvalues)
 
-    # read config from a file
-    elif args.tasmotafile is not None:
+    # backup to file
+    if args.backupfile is not None:
+        Backup(args.backupfile, args.backupfileformat, encode_cfg, decode_cfg, configuration)
 
-        if not os.path.isfile(args.tasmotafile):    # check file exists
-            exit(1, "File '{}' not found".format(args.tasmotafile))
-        try:
-            tasmotafile = open(args.tasmotafile, "rb")
-            configobj = tasmotafile.read()
-            tasmotafile.close()
-        except Exception, e:
-            exit(e[0], e[1])
+    # restore from file
+    if args.restorefile is not None:
+        Restore(args.restorefile, encode_cfg, decode_cfg, configuration)
 
-    # no config source given
-    else:
-        parser.print_help()
-        sys.exit(0)
-
-    if configobj is not None and len(configobj)>0:
-        cfg = DeEncrypt(configobj)
-
-        configuration = Decode(cfg, args.rawvalues)
-
-        # output to file
-        if args.outputfile is not None:
-            outputfilename = GetFilenameReplaced(args.outputfile, configuration)
-            if args.outputfileformat == 'binary':
-                outputfile = open(outputfilename, "wb")
-                outputfile.write(struct.pack('<L',BINARYFILE_MAGIC))
-                outputfile.write(cfg)
-                outputfile.close()
-
-            if args.outputfileformat == 'json':
-                configuration = Decode(cfg, raw=True)
-                outputfile = open(outputfilename, "w")
-                json.dump(configuration, outputfile, sort_keys=args.sort, indent=None if args.jsonindent<0 else args.jsonindent, separators=(',', ':') if args.jsoncompact else (', ', ': ') )
-                outputfile.close()
-
-        # output to screen
-        else:
-            print json.dumps(configuration, sort_keys=args.sort, indent=None if args.jsonindent<0 else args.jsonindent, separators=(',', ':') if args.jsoncompact else (', ', ': ') )
-
-    else:
-        exit(5, "Unable to read configuration data from {} '{}'".format('device' if args.device is not None else 'file', \
-                                                                        args.device if args.device is not None else args.tasmotafile) )
+    # json screen output
+    if args.backupfile is None and args.restorefile is None:
+        print json.dumps(configuration, sort_keys=args.jsonsort, indent=None if args.jsonindent<0 else args.jsonindent, separators=(',', ':') if args.jsoncompact else (', ', ': ') )
 
     sys.exit(exitcode)
