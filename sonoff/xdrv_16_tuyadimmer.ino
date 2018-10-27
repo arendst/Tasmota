@@ -219,12 +219,10 @@ void TuyaInit()
   if (!Settings.param[P_TUYA_DIMMER_ID]) {
     Settings.param[P_TUYA_DIMMER_ID] = TUYA_DIMMER_ID;
   }
-  if (!(pin[GPIO_TUYA_RX] < 99) || !(pin[GPIO_TUYA_TX] < 99)) {
+  if (!(pin[GPIO_TUYA_RX] < 99) || !(pin[GPIO_TUYA_TX] < 99)) { // fallback to hardware-serial if not explicitly selected
     pin[GPIO_TUYA_RX] = 1;
     pin[GPIO_TUYA_TX] = 3;
   }
-  snprintf_P(log_data, sizeof(log_data), "TYA: pin[GPIO_TUYA_RX] = %d, pin[GPIO_TUYA_TX] = %d", pin[GPIO_TUYA_RX], pin[GPIO_TUYA_TX]);
-  AddLog(LOG_LEVEL_DEBUG);
   TuyaSerial = new TasmotaSerial(pin[GPIO_TUYA_RX], pin[GPIO_TUYA_TX], 1);
   if (TuyaSerial->begin(baudrate)) {
     if (TuyaSerial->hardwareSerial()) {
