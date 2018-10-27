@@ -23,6 +23,10 @@
 #define TUYA_DIMMER_ID  3
 #endif
 
+#include <TasmotaSerial.h>
+
+TasmotaSerial *TuyaSerial = nullptr;
+
 uint8_t tuya_new_dim = 0;                   // Tuya dimmer value temp
 boolean tuya_ignore_dim = false;            // Flag to skip serial send to prevent looping when processing inbound states from the faceplate interaction
 uint8_t tuya_cmd_status = 0;                // Current status of serial-read
@@ -36,24 +40,24 @@ boolean TuyaSetPower()
   uint8_t rpower = XdrvMailbox.index;
   int16_t source = XdrvMailbox.payload;
 
-  if (source != SRC_SWITCH ) {  // ignore to prevent loop from pushing state from faceplate interaction
+  if (source != SRC_SWITCH && TuyaSerial) {  // ignore to prevent loop from pushing state from faceplate interaction
 
     snprintf_P(log_data, sizeof(log_data), PSTR("TYA: SetDevicePower.rpower=%d"), rpower);
     AddLog(LOG_LEVEL_DEBUG);
 
-    Serial.write(0x55); // Tuya header 55AA
-    Serial.write(0xAA);
-    Serial.write(0x00); // version 00
-    Serial.write(0x06); // Tuya command 06
-    Serial.write(0x00);
-    Serial.write(0x05); // following data length 0x05
-    Serial.write(0x01); // relay number 1,2,3
-    Serial.write(0x01);
-    Serial.write(0x00);
-    Serial.write(0x01);
-    Serial.write(rpower); // status
-    Serial.write(0x0D + rpower); // checksum sum of all bytes in packet mod 256
-    Serial.flush();
+    TuyaSerial->write((uint8_t)0x55); // Tuya header 55AA
+    TuyaSerial->write((uint8_t)0xAA);
+    TuyaSerial->write((uint8_t)0x00); // version 00
+    TuyaSerial->write((uint8_t)0x06); // Tuya command 06
+    TuyaSerial->write((uint8_t)0x00);
+    TuyaSerial->write((uint8_t)0x05); // following data length 0x05
+    TuyaSerial->write((uint8_t)0x01); // relay number 1,2,3
+    TuyaSerial->write((uint8_t)0x01);
+    TuyaSerial->write((uint8_t)0x00);
+    TuyaSerial->write((uint8_t)0x01);
+    TuyaSerial->write((uint8_t)rpower); // status
+    TuyaSerial->write((uint8_t)0x0D + rpower); // checksum sum of all bytes in packet mod 256
+    TuyaSerial->flush();
 
     status = true;
   }
@@ -62,26 +66,26 @@ boolean TuyaSetPower()
 
 void LightSerialDuty(uint8_t duty)
 {
-  if (duty > 0 && !tuya_ignore_dim ) {
+  if (duty > 0 && !tuya_ignore_dim && TuyaSerial) {
     if (duty < 25) {
       duty = 25;  // dimming acts odd below 25(10%) - this mirrors the threshold set on the faceplate itself
     }
-    Serial.write(0x55); // Tuya header 55AA
-    Serial.write(0xAA);
-    Serial.write(0x00); // version 00
-    Serial.write(0x06); // Tuya command 06 - send order
-    Serial.write(0x00);
-    Serial.write(0x08); // following data length 0x08
-    Serial.write(Settings.param[P_TUYA_DIMMER_ID]); // dimmer id
-    Serial.write(0x02); // type=value
-    Serial.write(0x00); // length hi
-    Serial.write(0x04); // length low
-    Serial.write(0x00); //
-    Serial.write(0x00); //
-    Serial.write(0x00); //
-    Serial.write( duty ); // dim value (0-255)
-    Serial.write( byte(Settings.param[P_TUYA_DIMMER_ID] + 19 + duty) ); // checksum:sum of all bytes in packet mod 256
-    Serial.flush();
+    TuyaSerial->write((uint8_t)0x55); // Tuya header 55AA
+    TuyaSerial->write((uint8_t)0xAA);
+    TuyaSerial->write((uint8_t)0x00); // version 00
+    TuyaSerial->write((uint8_t)0x06); // Tuya command 06 - send order
+    TuyaSerial->write((uint8_t)0x00);
+    TuyaSerial->write((uint8_t)0x08); // following data length 0x08
+    TuyaSerial->write((uint8_t)Settings.param[P_TUYA_DIMMER_ID]); // dimmer id
+    TuyaSerial->write((uint8_t)0x02); // type=value
+    TuyaSerial->write((uint8_t)0x00); // length hi
+    TuyaSerial->write((uint8_t)0x04); // length low
+    TuyaSerial->write((uint8_t)0x00); //
+    TuyaSerial->write((uint8_t)0x00); //
+    TuyaSerial->write((uint8_t)0x00); //
+    TuyaSerial->write((uint8_t) duty ); // dim value (0-255)
+    TuyaSerial->write((uint8_t) byte(Settings.param[P_TUYA_DIMMER_ID] + 19 + duty) ); // checksum:sum of all bytes in packet mod 256
+    TuyaSerial->flush();
 
     snprintf_P(log_data, sizeof(log_data), PSTR( "TYA: Send Serial Packet Dim Value=%d (id=%d)"), duty, Settings.param[P_TUYA_DIMMER_ID]);
     AddLog(LOG_LEVEL_DEBUG);
@@ -145,9 +149,9 @@ void TuyaPacketProcess()
 
 void TuyaSerialInput()
 {
-  while (Serial.available()) {
+  while (TuyaSerial && TuyaSerial->available()) {
     yield();
-    serial_in_byte = Serial.read();
+    serial_in_byte = TuyaSerial->read();
 
     //snprintf_P(log_data, sizeof(log_data), PSTR("TYA: serial_in_byte %d, tuya_cmd_status %d, tuya_cmd_checksum %d, tuya_data_len %d, serial_in_byte_counter %d"), serial_in_byte, tuya_cmd_status, tuya_cmd_checksum, tuya_data_len, serial_in_byte_counter);
     //AddLog(LOG_LEVEL_DEBUG);
@@ -215,20 +219,32 @@ void TuyaInit()
   if (!Settings.param[P_TUYA_DIMMER_ID]) {
     Settings.param[P_TUYA_DIMMER_ID] = TUYA_DIMMER_ID;
   }
-  Serial.setDebugOutput(false);
-  ClaimSerial();
+  if (!(pin[GPIO_TUYA_RX] < 99) || !(pin[GPIO_TUYA_TX] < 99)) { // fallback to hardware-serial if not explicitly selected
+    pin[GPIO_TUYA_RX] = 1;
+    pin[GPIO_TUYA_TX] = 3;
+  }
+  TuyaSerial = new TasmotaSerial(pin[GPIO_TUYA_RX], pin[GPIO_TUYA_TX], 1);
+  if (TuyaSerial->begin(baudrate)) {
+    if (TuyaSerial->hardwareSerial()) {
+      ClaimSerial();
+      //Serial.setDebugOutput(false);
+    }
+  }
 
   // Get current status of MCU
   snprintf_P(log_data, sizeof(log_data), "TYA: Request MCU state");
   AddLog(LOG_LEVEL_DEBUG);
-  Serial.write(0x55); // header 55AA
-  Serial.write(0xAA);
-  Serial.write(0x00); // version 00
-  Serial.write(0x08); // command 08 - get status
-  Serial.write(0x00);
-  Serial.write(0x00); // following data length 0x00
-  Serial.write(0x07); // checksum:sum of all bytes in packet mod 256
-  Serial.flush();
+  
+  if(TuyaSerial){
+    TuyaSerial->write((uint8_t)0x55); // header 55AA
+    TuyaSerial->write((uint8_t)0xAA);
+    TuyaSerial->write((uint8_t)0x00); // version 00
+    TuyaSerial->write((uint8_t)0x08); // command 08 - get status
+    TuyaSerial->write((uint8_t)0x00);
+    TuyaSerial->write((uint8_t)0x00); // following data length 0x00
+    TuyaSerial->write((uint8_t)0x07); // checksum:sum of all bytes in packet mod 256
+    TuyaSerial->flush();
+  }
 }
 
 boolean TuyaButtonPressed()
