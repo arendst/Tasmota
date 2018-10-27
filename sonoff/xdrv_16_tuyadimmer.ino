@@ -25,7 +25,7 @@
 
 #include <TasmotaSerial.h>
 
-TasmotaSerial *TuyaSerial;
+TasmotaSerial *TuyaSerial = nullptr;
 
 uint8_t tuya_new_dim = 0;                   // Tuya dimmer value temp
 boolean tuya_ignore_dim = false;            // Flag to skip serial send to prevent looping when processing inbound states from the faceplate interaction
@@ -40,7 +40,7 @@ boolean TuyaSetPower()
   uint8_t rpower = XdrvMailbox.index;
   int16_t source = XdrvMailbox.payload;
 
-  if (source != SRC_SWITCH ) {  // ignore to prevent loop from pushing state from faceplate interaction
+  if (source != SRC_SWITCH && TuyaSerial) {  // ignore to prevent loop from pushing state from faceplate interaction
 
     snprintf_P(log_data, sizeof(log_data), PSTR("TYA: SetDevicePower.rpower=%d"), rpower);
     AddLog(LOG_LEVEL_DEBUG);
@@ -66,7 +66,7 @@ boolean TuyaSetPower()
 
 void LightSerialDuty(uint8_t duty)
 {
-  if (duty > 0 && !tuya_ignore_dim ) {
+  if (duty > 0 && !tuya_ignore_dim && TuyaSerial) {
     if (duty < 25) {
       duty = 25;  // dimming acts odd below 25(10%) - this mirrors the threshold set on the faceplate itself
     }
@@ -149,7 +149,7 @@ void TuyaPacketProcess()
 
 void TuyaSerialInput()
 {
-  while (TuyaSerial->available()) {
+  while (TuyaSerial && TuyaSerial->available()) {
     yield();
     serial_in_byte = TuyaSerial->read();
 
@@ -220,14 +220,16 @@ void TuyaInit()
     Settings.param[P_TUYA_DIMMER_ID] = TUYA_DIMMER_ID;
   }
   if (!(pin[GPIO_TUYA_RX] < 99) || !(pin[GPIO_TUYA_TX] < 99)) {
-    pin[GPIO_TUYA_RX] = pin[GPIO_RXD];
-    pin[GPIO_TUYA_TX] = pin[GPIO_TXD];
+    pin[GPIO_TUYA_RX] = 1;
+    pin[GPIO_TUYA_TX] = 3;
   }
+  snprintf_P(log_data, sizeof(log_data), "TYA: pin[GPIO_TUYA_RX] = %d, pin[GPIO_TUYA_TX] = %d", pin[GPIO_TUYA_RX], pin[GPIO_TUYA_TX]);
+  AddLog(LOG_LEVEL_DEBUG);
   TuyaSerial = new TasmotaSerial(pin[GPIO_TUYA_RX], pin[GPIO_TUYA_TX], 1);
   if (TuyaSerial->begin(baudrate)) {
     if (TuyaSerial->hardwareSerial()) {
       ClaimSerial();
-      Serial.setDebugOutput(false);
+      //Serial.setDebugOutput(false);
     }
   }
 
@@ -235,14 +237,16 @@ void TuyaInit()
   snprintf_P(log_data, sizeof(log_data), "TYA: Request MCU state");
   AddLog(LOG_LEVEL_DEBUG);
   
-  TuyaSerial->write((uint8_t)0x55); // header 55AA
-  TuyaSerial->write((uint8_t)0xAA);
-  TuyaSerial->write((uint8_t)0x00); // version 00
-  TuyaSerial->write((uint8_t)0x08); // command 08 - get status
-  TuyaSerial->write((uint8_t)0x00);
-  TuyaSerial->write((uint8_t)0x00); // following data length 0x00
-  TuyaSerial->write((uint8_t)0x07); // checksum:sum of all bytes in packet mod 256
-  TuyaSerial->flush();
+  if(TuyaSerial){
+    TuyaSerial->write((uint8_t)0x55); // header 55AA
+    TuyaSerial->write((uint8_t)0xAA);
+    TuyaSerial->write((uint8_t)0x00); // version 00
+    TuyaSerial->write((uint8_t)0x08); // command 08 - get status
+    TuyaSerial->write((uint8_t)0x00);
+    TuyaSerial->write((uint8_t)0x00); // following data length 0x00
+    TuyaSerial->write((uint8_t)0x07); // checksum:sum of all bytes in packet mod 256
+    TuyaSerial->flush();
+  }
 }
 
 boolean TuyaButtonPressed()
