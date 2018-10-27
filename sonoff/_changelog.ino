@@ -5,6 +5,7 @@
  * Initial release of RF transceiving using library RcSwitch (#2702)
  * Change default OTA Url to http://thehackbox.org/tasmota/release/sonoff.bin (#4170)
  * Add Tuya Software Serial to support additional Tuya configurations (#4178)
+ * Add sonoff-basic.bin without most sensors
  *
  * 6.2.1.18 20181019
  * Add more API callbacks and document API.md

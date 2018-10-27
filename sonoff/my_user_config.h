@@ -353,6 +353,8 @@
   #define SDM630_SPEED         9600              // SDM630-Modbus RS485 serial speed (default: 9600 baud)
 //#define USE_MP3_PLAYER                           // Use of the DFPlayer Mini MP3 Player RB-DFR-562 commands: play, volume and stop
   #define MP3_VOLUME           10                // Set the startup volume on init, the range can be 0..30(max)
+#define USE_TUYA_DIMMER                          // Add support for Tuya Serial Dimmer
+  #define TUYA_DIMMER_ID       3                 // Default dimmer Id
 
 // Power monitoring sensors -----------------------
 #define USE_PZEM004T                             // Add support for PZEM004T Energy monitor (+2k code)
@@ -379,9 +381,6 @@
 
 #define USE_RF_FLASH                             // Add support for flashing the EFM8BB1 chip on the Sonoff RF Bridge. C2CK must be connected to GPIO4, C2D to GPIO5 on the PCB (+3k code)
 
-#define USE_TUYA_DIMMER                          // Add support for Tuya Serial Dimmer
-  #define TUYA_DIMMER_ID       3                 // Default dimmer Id
-
 #define USE_TX20_WIND_SENSOR                     // Add support for La Crosse TX20 anemometer (+2k code)
 
 #define USE_RC_SWITCH                            // Add support for RF transceiver using library RcSwitch (+2k7 code, 460 iram)
@@ -399,6 +398,7 @@
 \*********************************************************************************************/
 
 //#define USE_CLASSIC                              // Create sonoff-classic with initial configuration tools WPS, SmartConfig and WifiManager
+//#define USE_BASIC                                // Create sonoff-basic with no sensors
 //#define USE_SENSORS                              // Create sonoff-sensors with useful sensors enabled
 //#define USE_KNX_NO_EMULATION                     // Create sonoff-knx with KNX but without Emulation
 //#define USE_DISPLAYS                             // Create sonoff-display with display drivers enabled
