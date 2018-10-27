@@ -397,6 +397,7 @@
 \*********************************************************************************************/
 
 //#define USE_CLASSIC                              // Create sonoff-classic with initial configuration tools WPS, SmartConfig and WifiManager
+//#define USE_BASIC                                // Create sonoff-basic without sensors
 //#define USE_SENSORS                              // Create sonoff-sensors with useful sensors enabled
 //#define USE_KNX_NO_EMULATION                     // Create sonoff-knx with KNX but without Emulation
 //#define USE_DISPLAYS                             // Create sonoff-display with display drivers enabled

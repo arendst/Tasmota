@@ -62,6 +62,7 @@
  * Add decimals as input to commands PowerSet, VoltageSet and CurrentSet
  * Add tools/decode-config.py by Norbert Richter to decode configuration data. See file for information
  * Add define USE_DISPLAYS for selecting image sonoff-display
+ * Add define USE_BASIC for selecting image sonoff-basic without most sensors
  * Add auto reload of main web page to some web restarts
  * Add TasmotaModbus library as very basic modbus wrapper for TasmotaSerial
  * Add more API callbacks and document API.md

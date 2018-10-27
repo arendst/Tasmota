@@ -32,88 +32,88 @@ See [Tasmota ESP/Arduino library version related issues](https://github.com/aren
 
 ### Available Features and Sensors
 
-| Feature or Sensor              | minimal | classic | sonoff | knx  | sensors | Remarks
-|--------------------------------|---------|---------|--------|------|---------|--------
-| ESP/Arduino lib v2.3.0         | 344k    | 485k    | 491k   | 510k | 516k    |
-| ESP/Arduino lib v2.4.2         | 363k    | 499k    | 509k   | 526k | 532k    | No sleep
+| Feature or Sensor              | minimal | basic | classic | sonoff | knx  | sensors | Remarks
+|--------------------------------|---------|-------|---------|--------|------|---------|--------
+| ESP/Arduino lib v2.3.0         | 344k    | xxxk  | 485k    | 491k   | 510k | 516k    |
+| ESP/Arduino lib v2.4.2         | 363k    | xxxk  | 499k    | 509k   | 526k | 532k    | No sleep
+|                                |   |   |   |   |   |   |
+| MY_LANGUAGE en-GB              | x | x | x | x | x | x |
+| MQTT_LIBRARY_TYPE PUBSUBCLIENT | x | x | x | x | x | x |
+| USE_WPS                        | - | - | x | - | - | - | WPS
+| USE_SMARTCONFIG                | - | - | x | - | - | - | SmartConfig
+| USE_ARDUINO_OTA                | - | - | - | - | - | - |
+| USE_DOMOTICZ                   | - | - | x | x | x | x |
+| USE_HOME_ASSISTANT             | - | - | x | x | x | x |
+| USE_MQTT_TLS                   | - | - | - | - | - | - |
+| USE_KNX                        | - | - | - | - | x | - |
+| USE_WEBSERVER                  | x | x | x | x | x | x | WifiManager
+| USE_EMULATION                  | - | x | x | x | - | x |
+| USE_DISCOVERY                  | - | - | x | x | x | x |
+| WEBSERVER_ADVERTISE            | - | - | x | x | x | x |
+| MQTT_HOST_DISCOVERY            | - | - | x | x | x | x |
+| USE_TIMERS                     | - | x | - | x | x | x |
+| USE_TIMERS_WEB                 | - | x | - | x | x | x |
+| USE_SUNRISE                    | - | x | - | x | x | x |
+| USE_RULES                      | - | x | - | x | x | x |
 |                                |   |   |   |   |   |
-| MY_LANGUAGE en-GB              | x | x | x | x | x |
-| USE_WPS                        | - | x | - | - | - | WPS
-| USE_SMARTCONFIG                | - | x | - | - | - | SmartConfig
-| USE_ARDUINO_OTA                | - | - | - | - | - |
-| MQTT_LIBRARY_TYPE PUBSUBCLIENT | x | x | x | x | x |
-| USE_DOMOTICZ                   | - | x | x | x | x |
-| USE_HOME_ASSISTANT             | - | x | x | x | x |
-| USE_MQTT_TLS                   | - | - | - | - | - |
-| USE_KNX                        | - | - | - | x | - |
-| USE_WEBSERVER                  | x | x | x | x | x | WifiManager
-| USE_EMULATION                  | - | x | x | - | x |
-| USE_DISCOVERY                  | - | x | x | x | x |
-| WEBSERVER_ADVERTISE            | - | x | x | x | x |
-| MQTT_HOST_DISCOVERY            | - | x | x | x | x |
-| USE_TIMERS                     | - | - | x | x | x |
-| USE_TIMERS_WEB                 | - | - | x | x | x |
-| USE_SUNRISE                    | - | - | x | x | x |
-| USE_RULES                      | - | - | x | x | x |
-|                                |   |   |   |   |   |
-| USE_ADC_VCC                    | x | x | x | x | - |
-| USE_DS18B20                    | - | - | - | - | - | Single sensor
-| USE_DS18x20                    | - | x | x | x | x | Multiple sensors
-| USE_DS18x20_LEGACY             | - | - | - | - | - | Multiple sensors
-|                                |   |   |   |   |   |
-| Feature or Sensor              | minimal | classic | sonoff | knx  | sensors |
-| USE_I2C                        | - | - | x | x | x |
-| USE_SHT                        | - | - | x | x | x |
-| USE_HTU                        | - | - | x | x | x |
-| USE_BMP                        | - | - | x | x | x |
-| USE_BME680                     | - | - | - | - | x |
-| USE_BH1750                     | - | - | x | x | x |
-| USE_VEML6070                   | - | - | - | - | x |
-| USE_ADS1115                    | - | - | - | - | x |
-| USE_ADS1115_I2CDEV             | - | - | - | - | - |
-| USE_INA219                     | - | - | - | - | x |
-| USE_SHT3X                      | - | - | x | x | x |
-| USE_TSL2561                    | - | - | - | - | x |
-| USE_MGS                        | - | - | - | - | x |
-| USE_SGP30                      | - | - | x | x | x |
-| USE_SI1145                     | - | - | - | - | x |
-| USE_LM75AD                     | - | - | x | x | x |
-| USE_APDS9960                   | - | - | - | - | - |
-| USE_MCP230xx                   | - | - | - | - | - |
-| USE_PCA9685                    | - | - | - | - | - |
-| USE_MPR121                     | - | - | - | - | - |
-| USE_CCS811                     | - | - | - | - | - |
-| USE_MPU6050                    | - | - | - | - | - |
-| USE_DS3231                     | - | - | - | - | - |
-|                                |   |   |   |   |   |
-| Feature or Sensor              | minimal | classic | sonoff | knx  | sensors |
-| USE_SPI                        | - | - | - | - | - |
-| USE_MHZ19                      | - | - | x | x | x |
-| USE_SENSEAIR                   | - | - | x | x | x |
-| USE_PMS5003                    | - | - | x | x | x |
-| USE_NOVA_SDS                   | - | - | x | x | x |
-| USE_PZEM004T                   | - | - | x | x | x |
-| USE_PZEM_AC                    | - | - | x | x | x |
-| USE_PZEM_DC                    | - | - | x | x | x |
-| USE_MCP39F501                  | - | - | x | x | x |
-| USE_SERIAL_BRIDGE              | - | - | x | x | x |
-| USE_SDM120                     | - | - | - | - | x |
-| USE_SDM630                     | - | - | - | - | x |
-| USE_MP3_PLAYER                 | - | - | - | - | - |
-| USE_IR_REMOTE                  | - | - | x | x | x |
-| USE_IR_HVAC                    | - | - | - | - | x |
-| USE_IR_RECEIVE                 | - | - | x | x | x |
-| USE_WS2812                     | - | x | x | x | x |
-| USE_WS2812_DMA                 | - | - | - | - | - |
-| USE_ARILUX_RF                  | - | - | x | x | x |
-| USE_SR04                       | - | - | x | x | x |
-| USE_TM1638                     | - | - | - | - | - |
-| USE_HX711                      | - | - | x | x | x |
-| USE_RF_FLASH                   | - | - | x | x | x |
-| USE_TUYA_DIMMER                | - | - | x | x | x |
-| USE_TX20_WIND_SENSOR           | - | - | x | x | x |
-| USE_RC_SWITCH                  | - | - | x | x | x |
-| USE_DISPLAY                    | - | - | - | - | - |
+| USE_ADC_VCC                    | x | x | x | x | x | - |
+| USE_DS18B20                    | - | - | - | - | - | - | Single sensor
+| USE_DS18x20                    | - | - | x | x | x | x | Multiple sensors
+| USE_DS18x20_LEGACY             | - | - | - | - | - | - | Multiple sensors
+|                                |   |   |   |   |   |   |
+| Feature or Sensor              | minimal | basic | classic | sonoff | knx  | sensors |
+| USE_I2C                        | - | - | - | x | x | x |
+| USE_SHT                        | - | - | - | x | x | x |
+| USE_HTU                        | - | - | - | x | x | x |
+| USE_BMP                        | - | - | - | x | x | x |
+| USE_BME680                     | - | - | - | - | - | x |
+| USE_BH1750                     | - | - | - | x | x | x |
+| USE_VEML6070                   | - | - | - | - | - | x |
+| USE_ADS1115                    | - | - | - | - | - | x |
+| USE_ADS1115_I2CDEV             | - | - | - | - | - | - |
+| USE_INA219                     | - | - | - | - | - | x |
+| USE_SHT3X                      | - | - | - | x | x | x |
+| USE_TSL2561                    | - | - | - | - | - | x |
+| USE_MGS                        | - | - | - | - | - | x |
+| USE_SGP30                      | - | - | - | x | x | x |
+| USE_SI1145                     | - | - | - | - | - | x |
+| USE_LM75AD                     | - | - | - | x | x | x |
+| USE_APDS9960                   | - | - | - | - | - | - |
+| USE_MCP230xx                   | - | - | - | - | - | - |
+| USE_PCA9685                    | - | - | - | - | - | - |
+| USE_MPR121                     | - | - | - | - | - | - |
+| USE_CCS811                     | - | - | - | - | - | - |
+| USE_MPU6050                    | - | - | - | - | - | - |
+| USE_DS3231                     | - | - | - | - | - | - |
+|                                |   |   |   |   |   |   |
+| Feature or Sensor              | minimal | basic | classic | sonoff | knx  | sensors |
+| USE_SPI                        | - | - | - | - | - | - |
+| USE_MHZ19                      | - | - | - | x | x | x |
+| USE_SENSEAIR                   | - | - | - | x | x | x |
+| USE_PMS5003                    | - | - | - | x | x | x |
+| USE_NOVA_SDS                   | - | - | - | x | x | x |
+| USE_PZEM004T                   | - | - | - | x | x | x |
+| USE_PZEM_AC                    | - | - | - | x | x | x |
+| USE_PZEM_DC                    | - | - | - | x | x | x |
+| USE_MCP39F501                  | - | x | - | x | x | x |
+| USE_SERIAL_BRIDGE              | - | - | - | x | x | x |
+| USE_SDM120                     | - | - | - | - | - | x |
+| USE_SDM630                     | - | - | - | - | - | x |
+| USE_MP3_PLAYER                 | - | - | - | - | - | x |
+| USE_TUYA_DIMMER                | - | x | - | x | x | x |
+| USE_IR_REMOTE                  | - | - | - | x | x | x |
+| USE_IR_HVAC                    | - | - | - | - | - | x |
+| USE_IR_RECEIVE                 | - | - | - | x | x | x |
+| USE_WS2812                     | - | - | x | x | x | x |
+| USE_WS2812_DMA                 | - | - | - | - | - | - |
+| USE_ARILUX_RF                  | - | - | - | x | x | x |
+| USE_SR04                       | - | - | - | x | x | x |
+| USE_TM1638                     | - | - | - | - | - | x |
+| USE_HX711                      | - | - | - | x | x | x |
+| USE_RF_FLASH                   | - | - | - | x | x | x |
+| USE_TX20_WIND_SENSOR           | - | - | - | x | x | x |
+| USE_RC_SWITCH                  | - | - | - | x | x | x |
+| USE_DISPLAY                    | - | - | - | - | - | - |
 
 ## Changelog
 Version 6.3.0 20181030
@@ -180,6 +180,7 @@ Version 6.3.0 20181030
  * Add decimals as input to commands PowerSet, VoltageSet and CurrentSet
  * Add tools/decode-config.py by Norbert Richter to decode configuration data. See file for information
  * Add define USE_DISPLAYS for selecting image sonoff-display
+ * Add define USE_BASIC for selecting image sonoff-basic without most sensors
  * Add auto reload of main web page to some web restarts
  * Add TasmotaModbus library as very basic modbus wrapper for TasmotaSerial
  * Add more API callbacks and document API.md
