@@ -197,6 +197,32 @@ void MqttLoop()
 
 /*********************************************************************************************/
 
+#ifdef USE_DISCOVERY
+#ifdef MQTT_HOST_DISCOVERY
+boolean MqttDiscoverServer()
+{
+  if (!mdns_begun) { return false; }
+
+  int n = MDNS.queryService("mqtt", "tcp");  // Search for mqtt service
+
+  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_MDNS D_QUERY_DONE " %d"), n);
+  AddLog(LOG_LEVEL_INFO);
+
+  if (n > 0) {
+    // Note: current strategy is to get the first MQTT service (even when many are found)
+    snprintf_P(Settings.mqtt_host, sizeof(Settings.mqtt_host), MDNS.IP(0).toString().c_str());
+    Settings.mqtt_port = MDNS.port(0);
+
+    snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_MDNS D_MQTT_SERVICE_FOUND " %s, " D_IP_ADDRESS " %s, " D_PORT " %d"),
+      MDNS.hostname(0).c_str(), Settings.mqtt_host, Settings.mqtt_port);
+    AddLog(LOG_LEVEL_INFO);
+  }
+
+  return n > 0;
+}
+#endif  // MQTT_HOST_DISCOVERY
+#endif  // USE_DISCOVERY
+
 int MqttLibraryType()
 {
   return (int)MQTT_LIBRARY_TYPE;
@@ -468,9 +494,7 @@ void MqttReconnect()
 #ifndef USE_MQTT_TLS
 #ifdef USE_DISCOVERY
 #ifdef MQTT_HOST_DISCOVERY
-  if (!strlen(Settings.mqtt_host)) {
-    MdnsDiscoverMqttServer();
-  }
+  if (!strlen(Settings.mqtt_host) && !MqttDiscoverServer()) { return; }
 #endif  // MQTT_HOST_DISCOVERY
 #endif  // USE_DISCOVERY
 #endif  // USE_MQTT_TLS
@@ -539,6 +563,13 @@ void MqttCheck()
     if (!MqttIsConnected()) {
       global_state.mqtt_down = 1;
       if (!mqtt_retry_counter) {
+#ifndef USE_MQTT_TLS
+#ifdef USE_DISCOVERY
+#ifdef MQTT_HOST_DISCOVERY
+        if (!strlen(Settings.mqtt_host) && !mdns_begun) { return; }
+#endif  // MQTT_HOST_DISCOVERY
+#endif  // USE_DISCOVERY
+#endif  // USE_MQTT_TLS
         MqttReconnect();
       } else {
         mqtt_retry_counter--;
