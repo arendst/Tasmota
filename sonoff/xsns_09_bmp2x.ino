@@ -1,5 +1,5 @@
 /*
-  xsns_09_bmp.ino - BMP pressure, temperature, humidity and gas sensor support for Sonoff-Tasmota
+  xsns_09_bmp2x.ino - BMP pressure, temperature, humidity and gas sensor support for Sonoff-Tasmota
 
   Copyright (C) 2018  Heiko Krupp and Theo Arends
 
@@ -43,7 +43,7 @@ const char kBmpTypes[] PROGMEM = "BMP1802X|BMP2802X|BME2802X|BME6802X";
 uint8_t bmp_addresses[] = { BMP_ADDR1, BMP_ADDR2 };
 
 uint8_t bmp2x_count = 0;
-struct BMP2xSTRUCT {
+struct BMP2XSTRUCT {
   uint8_t bmp_address;    // I2C bus address
   char bmp_name[9];      // Sensor name - "BMPXXX2x"
   uint8_t bmp_type = 0;
@@ -449,8 +449,7 @@ void Bmp2xDetect()
       }
       
       if (success) {
-        GetTextIndexed(bmp2x_sensors[bmp2x_count].bmp_name, sizeof(bmp2x_sensors[bmp2x_count].bmp_name), i, kBmpTypes);
-      
+        GetTextIndexed(bmp2x_sensors[bmp2x_count].bmp_name, sizeof(bmp2x_sensors[bmp2x_count].bmp_name), bmp2x_sensors[bmp2x_count].bmp_model, kBmpTypes);
         snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, bmp2x_sensors[bmp2x_count].bmp_name, bmp2x_sensors[bmp2x_count].bmp_address);
         AddLog(LOG_LEVEL_DEBUG);
         bmp2x_count++;
@@ -619,5 +618,5 @@ boolean Xsns09(byte function)
   return result;
 }
 
-#endif // USE_BMP
+#endif // USE_BMP2X
 #endif // USE_I2C
