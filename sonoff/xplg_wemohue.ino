@@ -664,7 +664,11 @@ void HueLights(String *path)
       response = "[";
 
       StaticJsonBuffer<400> jsonBuffer;
+#ifdef ARDUINO_ESP8266_RELEASE_2_3_0
       JsonObject &hue_json = jsonBuffer.parseObject(WebServer->arg((WebServer->args())-1));
+#else
+      JsonObject &hue_json = jsonBuffer.parseObject(WebServer->arg("1"));
+#endif
       if (hue_json.containsKey("on")) {
 
         response += FPSTR(HUE_LIGHT_RESPONSE_JSON);
