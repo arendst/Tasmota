@@ -1,5 +1,5 @@
 /*
-  xsns_09_bmp.ino - BMP pressure, temperature, humidity and gas sensor support for Sonoff-Tasmota
+  xsns_09_bmp2x.ino - BMP pressure, temperature, humidity and gas sensor support for Sonoff-Tasmota
 
   Copyright (C) 2018  Heiko Krupp and Theo Arends
 
@@ -43,7 +43,7 @@ const char kBmpTypes[] PROGMEM = "BMP1802X|BMP2802X|BME2802X|BME6802X";
 uint8_t bmp_addresses[] = { BMP_ADDR1, BMP_ADDR2 };
 
 uint8_t bmp2x_count = 0;
-struct BMP2xSTRUCT {
+struct BMP2XSTRUCT {
   uint8_t bmp_address;    // I2C bus address
   char bmp_name[9];      // Sensor name - "BMPXXX2x"
   uint8_t bmp_type = 0;
