@@ -618,5 +618,5 @@ boolean Xsns09(byte function)
   return result;
 }
 
-#endif // USE_BMP
+#endif // USE_BMP2X
 #endif // USE_I2C
