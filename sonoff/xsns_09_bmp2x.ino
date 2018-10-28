@@ -449,8 +449,7 @@ void Bmp2xDetect()
       }
       
       if (success) {
-        GetTextIndexed(bmp2x_sensors[bmp2x_count].bmp_name, sizeof(bmp2x_sensors[bmp2x_count].bmp_name), i, kBmpTypes);
-      
+        GetTextIndexed(bmp2x_sensors[bmp2x_count].bmp_name, sizeof(bmp2x_sensors[bmp2x_count].bmp_name), bmp2x_sensors[bmp2x_count].bmp_model, kBmpTypes);
         snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, bmp2x_sensors[bmp2x_count].bmp_name, bmp2x_sensors[bmp2x_count].bmp_address);
         AddLog(LOG_LEVEL_DEBUG);
         bmp2x_count++;
