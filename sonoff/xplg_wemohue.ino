@@ -809,6 +809,11 @@ void HandleHueApi(String *path)
    * user part and allow every caller as with Web or WeMo.
    *
    * (c) Heiko Krupp, 2017
+   *
+   * Hue URL
+   * http://sonoff/api/username/lights/1/state with post data {"on":true,"hue":56100,"sat":254,"bri":254,"alert":"none","transitiontime":40}
+   * is converted by webserver to
+   * http://sonoff/api/username/lights/1/state with arg plain={"on":true,"hue":56100,"sat":254,"bri":254,"alert":"none","transitiontime":40}
    */
 
   uint8_t args = 0;
