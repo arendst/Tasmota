@@ -12,6 +12,10 @@ If you like **Sonoff-Tasmota**, give it a star, or fork it and contribute!
 [![GitHub forks](https://img.shields.io/github/forks/arendst/Sonoff-Tasmota.svg?style=social&label=Fork)](https://github.com/arendst/Sonoff-Tasmota/network)
 [![donate](https://img.shields.io/badge/donate-PayPal-blue.svg)](https://paypal.me/tasmota)
 
+See [RELEASENOTES.md](https://github.com/arendst/Sonoff-Tasmota/blob/development/RELEASENOTES.md) for release information.
+
+In addition to the [release webpage](https://github.com/arendst/Sonoff-Tasmota/releases/latest) the binaries can also be OTA downloaded from http://thehackbox.org/tasmota/release/
+
 ### Development
 [![Dev Version](https://img.shields.io/badge/development%20version-6.2.1.x-blue.svg)](https://github.com/arendst/Sonoff-Tasmota)
 [![Download Dev](https://img.shields.io/badge/download-development-yellow.svg)](http://thehackbox.org/tasmota/)
@@ -114,21 +118,25 @@ You can contribute to Sonoff-Tasmota by
 Libraries used with Sonoff-Tasmota are:
 - [ESP8266 core for Arduino](https://github.com/esp8266/Arduino)
 - [Adafruit CCS811](https://github.com/adafruit/Adafruit_CCS811)
+- [Adafruit ILI9341](https://github.com/adafruit/Adafruit_ILI9341)
+- [Adafruit LED Backpack](https://github.com/adafruit/Adafruit-LED-Backpack-Library)
 - [Adafruit SGP30](https://github.com/adafruit/Adafruit_SGP30)
+- [Adafruit SSD1306](https://github.com/adafruit/Adafruit_SSD1306)
+- [Adafruit GFX](https://github.com/adafruit/Adafruit-GFX-Library)
 - [ArduinoJson](https://arduinojson.org/)
+- [arduino mqtt](https://github.com/256dpi/arduino-mqtt)
 - [Bosch BME680](https://github.com/BoschSensortec/BME680_driver)
 - [C2 Programmer](http://app.cear.ufpb.br/~lucas.hartmann/tag/efm8bb1/)
-- [Esp8266MqttClient](https://github.com/tuanpmt/ESP8266MQTTClient)
 - [esp-knx-ip](https://github.com/envy/esp-knx-ip)
-- [esp-mqtt-arduino](https://github.com/i-n-g-o/esp-mqtt-arduino)
-- [ESPAsyncUDP](https://github.com/me-no-dev/ESPAsyncUDP)
 - [I2Cdevlib](https://github.com/jrowberg/i2cdevlib)
 - [IRremoteEsp8266](https://github.com/markszabo/IRremoteESP8266)
 - [JobaTsl2561](https://github.com/joba-1/Joba_Tsl2561)
+- [Liquid Cristal](https://github.com/marcoschwartz/LiquidCrystal_I2C)
 - [MultiChannelGasSensor](http://wiki.seeedstudio.com/Grove-Multichannel_Gas_Sensor/)
 - [NeoPixelBus](https://github.com/Makuna/NeoPixelBus)
 - [OneWire](https://github.com/PaulStoffregen/OneWire)
 - [PubSubClient](https://github.com/knolleary/pubsubclient)
+- [rc-switch](https://github.com/sui77/rc-switch)
 
 #### People inspiring me
 People helping to keep the show on the road:
@@ -142,16 +150,19 @@ People helping to keep the show on the road:
 - Flexiti for his initial timer implementation
 - reloxx13 for his [TasmoAdmin](https://github.com/reloxx13/TasmoAdmin) management tool
 - Joachim Banzhaf for his TSL2561 library and driver
-- Gijs Noorlander for his MHZ19 and SenseAir drivers
+- Gijs Noorlander for his MHZ19, SenseAir and updated PubSubClient drivers
 - Emontnemery for his HomeAssistant Discovery concept and many code tuning tips
 - Aidan Mountford for his HSB support
 - Daniel Ztolnai for his Serial Bridge implementation
-- Gerhard Mutz for his SGP30 and Sunrise/Sunset driver
+- Gerhard Mutz for his SGP30, Sunrise/Sunset and display support drivers
 - Nuno Ferreira for his HC-SR04 driver
 - Adrian Scillato for his (security)fixes and implementing and maintaining KNX
 - Gennaro Tortone for implementing and maintaining Eastron drivers
 - Raymond Mouthaan for managing Wemos Wiki information
-- Norbert Richter, Frogmore42 and Jason2866 for providing many issue answers
+- Norbert Richter for his decode-config.py tool
+- Andre Thomas for providing [thehackbox](http://thehackbox.org/tasmota/) OTA support and daily development builds
+- Joel Stein and digiblur for their Tuya research and driver
+- Frogmore42 and Jason2866 for providing many issue answers
 - Many more providing Tips, Pocs or PRs
 
 ### License
