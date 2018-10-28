@@ -57,10 +57,7 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 
 #ifdef USE_SENSORS
 
-#ifdef USE_ADC_VCC
-#undef USE_ADC_VCC
-#endif
-//#define USE_ADC_VCC                           // Display Vcc in Power status. Disable for use as Analog input on selected devices
+#undef USE_ADC_VCC                            // Add Analog input on selected devices
 #define USE_DS18x20                           // For more than one DS18x20 sensors with id sort, single scan and read retry (+1k3 code)
 //#define USE_DS18x20_LEGACY                     // For more than one DS18x20 sensors with dynamic scan using library OneWire (+1k5 code)
 #define USE_I2C                               // I2C using library wire (+10k code, 0k2 mem, 124 iram)
@@ -80,7 +77,17 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #define USE_INA219                            // Add I2C code for INA219 Low voltage and current sensor (+1k code)
 #define USE_MGS                               // Add I2C code for Xadow and Grove Mutichannel Gas sensor using library Multichannel_Gas_Sensor (+10k code)
 //#define USE_APDS9960                          // Add I2C code for APDS9960 Proximity Sensor. Disables SHT and VEML6070 (+4k7 code)
+//#define USE_MCP230xx                          // Enable MCP23008/MCP23017 - Must define I2C Address in #define USE_MCP230xx_ADDR below - range 0x20 - 0x27 (+4k7 code)
+//  #define USE_MCP230xx_ADDR 0x20              // Enable MCP23008/MCP23017 I2C Address to use (Must be within range 0x20 through 0x27 - set according to your wired setup)
+//  #define USE_MCP230xx_OUTPUT                 // Enable MCP23008/MCP23017 OUTPUT support through sensor29 commands (+1k5 code)
+//  #define USE_MCP230xx_DISPLAYOUTPUT          // Enable MCP23008/MCP23017 to display state of OUTPUT pins on Web UI (+0k2 code)
+//#define USE_PCA9685                           // Enable PCA9685 I2C HW PWM Driver - Must define I2C Address in #define USE_PCA9685_ADDR below - range 0x40 - 0x47 (+1k4 code)
+//  #define USE_PCA9685_ADDR 0x40               // Enable PCA9685 I2C Address to use (Must be within range 0x40 through 0x47 - set according to your wired setup)
+//  #define USE_PCA9685_FREQ 50                 // Define default PWM frequency in Hz to be used (must be within 24 to 1526) - If other value is used, it will rever to 50Hz
+//#define USE_MPR121                            // Enable MPR121 controller (I2C addresses 0x5A, 0x5B, 0x5C and 0x5D) in input mode for touch buttons (+1k3 code)
 //#define USE_CCS811                            // Add I2C code for CCS811 sensor (+2k2 code)
+//#define USE_MPU6050                           // Enable MPU6050 sensor (I2C address 0x68 AD0 low or 0x69 AD0 high) (+2k6 code)
+//#define USE_DS3231                            // Enable DS3231 external RTC in case no Wifi is avaliable. See docs in the source file (+1k2 code)
 #define USE_MHZ19                             // Add support for MH-Z19 CO2 sensor (+2k code)
 #define USE_SENSEAIR                          // Add support for SenseAir K30, K70 and S8 CO2 sensor (+2k3 code)
 #ifndef CO2_LOW
@@ -91,10 +98,17 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #endif
 #define USE_PMS5003                           // Add support for PMS5003 and PMS7003 particle concentration sensor (+1k3 code)
 #define USE_NOVA_SDS                          // Add support for SDS011 and SDS021 particle concentration sensor (+0k7 code)
-#define USE_PZEM004T                          // Add support for PZEM004T Energy monitor (+2k code)
 #define USE_SERIAL_BRIDGE                     // Add support for software Serial Bridge (+0k8 code)
 #define USE_SDM120                            // Add support for Eastron SDM120-Modbus energy meter (+1k7 code)
 #define USE_SDM630                            // Add support for Eastron SDM630-Modbus energy meter (+2k code)
+#define USE_MP3_PLAYER                        // Use of the DFPlayer Mini MP3 Player RB-DFR-562 commands: play, volume and stop
+  #define MP3_VOLUME           10             // Set the startup volume on init, the range can be 0..30(max)
+#define USE_TUYA_DIMMER                       // Add support for Tuya Serial Dimmer
+  #define TUYA_DIMMER_ID       3              // Default dimmer Id
+#define USE_PZEM004T                          // Add support for PZEM004T Energy monitor (+2k code)
+#define USE_PZEM_AC                           // Add support for PZEM014,016 Energy monitor (+1k1 code)
+#define USE_PZEM_DC                           // Add support for PZEM003,017 Energy monitor (+1k1 code)
+#define USE_MCP39F501                         // Add support for MCP39F501 Energy monitor as used in Shelly 2 (+3k1 code)
 #define USE_IR_REMOTE                         // Send IR remote commands using library IRremoteESP8266 and ArduinoJson (+4k code, 0k3 mem, 48 iram)
   #define USE_IR_HVAC                         // Support for HVAC system using IR (+2k code)
   #define USE_IR_RECEIVE                      // Support for IR receiver (+5k5 code, 264 iram)
@@ -105,6 +119,12 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 //  #define USE_WS2812_DMA                      // DMA supports only GPIO03 (= Serial RXD) (+1k mem). When USE_WS2812_DMA is enabled expect Exceptions on Pow
 #define USE_ARILUX_RF                         // Add support for Arilux RF remote controller (+0k8 code, 252 iram (non 2.3.0))
 #define USE_SR04                              // Add support for HC-SR04 ultrasonic devices (+1k code)
+#define USE_TM1638                            // Add support for TM1638 switches copying Switch1 .. Switch8 (+1k code)
+#define USE_HX711                             // Add support for HX711 load cell (+1k5 code)
+//#define USE_HX711_GUI                         // Add optional web GUI to HX711 as scale (+1k8 code)
+#define USE_RF_FLASH                          // Add support for flashing the EFM8BB1 chip on the Sonoff RF Bridge. C2CK must be connected to GPIO4, C2D to GPIO5 on the PCB (+3k code)
+#define USE_TX20_WIND_SENSOR                  // Add support for La Crosse TX20 anemometer (+2k code)
+#define USE_RC_SWITCH                         // Add support for RF transceiver using library RcSwitch (+2k7 code, 460 iram)
 #endif  // USE_SENSORS
 
 /*********************************************************************************************\
@@ -141,6 +161,8 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #undef USE_SERIAL_BRIDGE                      // Disable support for software Serial Bridge
 #undef USE_SDM120                             // Disable support for Eastron SDM120-Modbus energy meter
 #undef USE_SDM630                             // Disable support for Eastron SDM630-Modbus energy meter
+#undef USE_MP3_PLAYER                         // Disable DFPlayer Mini MP3 Player RB-DFR-562 commands: play, volume and stop
+#undef USE_TUYA_DIMMER                        // Disable support for Tuya Serial Dimmer
 #undef USE_IR_REMOTE                          // Disable IR remote commands using library IRremoteESP8266 and ArduinoJson
 #undef USE_IR_RECEIVE                         // Disable support for IR receiver
 #undef USE_ARILUX_RF                          // Disable support for Arilux RF remote controller
@@ -148,8 +170,8 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #undef USE_TM1638                             // Disable support for TM1638 switches copying Switch1 .. Switch8
 #undef USE_HX711                              // Disable support for HX711 load cell
 #undef USE_RF_FLASH                           // Disable support for flashing the EFM8BB1 chip on the Sonoff RF Bridge. C2CK must be connected to GPIO4, C2D to GPIO5 on the PCB
-#undef USE_TUYA_DIMMER                        // Disable support for Tuya Serial Dimmer
 #undef USE_TX20_WIND_SENSOR                   // Disable support for La Crosse TX20 anemometer
+#undef USE_RC_SWITCH                          // Disable support for RF transceiver using library RcSwitch
 #undef DEBUG_THEO                             // Disable debug code
 #undef USE_DEBUG_DRIVER                       // Disable debug code
 #endif  // USE_CLASSIC
@@ -201,6 +223,62 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #endif
 
 /*********************************************************************************************\
+ * [sonoff-basic.bin]
+ * Provide an image without sensors
+\*********************************************************************************************/
+
+#ifdef USE_BASIC
+
+//#undef USE_ENERGY_SENSOR                      // Disable energy sensors
+#undef USE_ARDUINO_OTA                        // Disable support for Arduino OTA
+#undef USE_WPS                                // Disable support for WPS as initial wifi configuration tool
+#undef USE_SMARTCONFIG                        // Disable support for Wifi SmartConfig as initial wifi configuration tool
+#undef USE_DOMOTICZ                           // Disable Domoticz
+#undef USE_HOME_ASSISTANT                     // Disable Home Assistant
+#undef USE_MQTT_TLS                           // Disable TLS support won't work as the MQTTHost is not set
+#undef USE_KNX                                // Disable KNX IP Protocol Support
+//#undef USE_WEBSERVER                          // Disable Webserver
+//#undef USE_EMULATION                          // Disable Wemo or Hue emulation
+#undef USE_CUSTOM                             // Disable Custom features
+#undef USE_DISCOVERY                          // Disable Discovery services for both MQTT and web server
+//#undef USE_TIMERS                             // Disable support for up to 16 timers
+//#undef USE_TIMERS_WEB                         // Disable support for timer webpage
+//#undef USE_SUNRISE                            // Disable support for Sunrise and sunset tools
+//#undef USE_RULES                              // Disable support for rules
+#undef USE_DHT                                // Disable internal DHT sensor
+#undef USE_DS18x20                            // Disable DS18x20 sensor
+#undef USE_DS18x20_LEGACY                     // Disable DS18x20 sensor
+#undef USE_DS18B20                            // Disable internal DS18B20 sensor
+#undef USE_I2C                                // Disable all I2C sensors and devices
+#undef USE_SPI                                // Disable all SPI devices
+#undef USE_DISPLAY                            // Disable Display support
+#undef USE_MHZ19                              // Disable support for MH-Z19 CO2 sensor
+#undef USE_SENSEAIR                           // Disable support for SenseAir K30, K70 and S8 CO2 sensor
+#undef USE_PMS5003                            // Disable support for PMS5003 and PMS7003 particle concentration sensor
+#undef USE_NOVA_SDS                           // Disable support for SDS011 and SDS021 particle concentration sensor
+#undef USE_SERIAL_BRIDGE                      // Disable support for software Serial Bridge
+#undef USE_SDM120                             // Disable support for Eastron SDM120-Modbus energy meter
+#undef USE_SDM630                             // Disable support for Eastron SDM630-Modbus energy meter
+#undef USE_MP3_PLAYER                         // Disable DFPlayer Mini MP3 Player RB-DFR-562 commands: play, volume and stop
+//#undef USE_TUYA_DIMMER                        // Disable support for Tuya Serial Dimmer
+#undef USE_PZEM004T                           // Disable PZEM004T energy sensor
+#undef USE_PZEM_AC                            // Disable PZEM014,016 Energy monitor
+#undef USE_PZEM_DC                            // Disable PZEM003,017 Energy monitor
+//#undef USE_MCP39F501                          // Disable MCP39F501 Energy monitor as used in Shelly 2
+#undef USE_IR_REMOTE                          // Disable IR driver
+#undef USE_WS2812                             // Disable WS2812 Led string
+#undef USE_ARILUX_RF                          // Disable support for Arilux RF remote controller
+#undef USE_SR04                               // Disable support for for HC-SR04 ultrasonic devices
+#undef USE_TM1638                             // Disable support for TM1638 switches copying Switch1 .. Switch8
+#undef USE_HX711                              // Disable support for HX711 load cell
+#undef USE_RF_FLASH                           // Disable support for flashing the EFM8BB1 chip on the Sonoff RF Bridge. C2CK must be connected to GPIO4, C2D to GPIO5 on the PCB
+#undef USE_TX20_WIND_SENSOR                   // Disable support for La Crosse TX20 anemometer
+#undef USE_RC_SWITCH                          // Disable support for RF transceiver using library RcSwitch
+#undef DEBUG_THEO                             // Disable debug code
+#undef USE_DEBUG_DRIVER                       // Disable debug code
+#endif  // USE_BASIC
+
+/*********************************************************************************************\
  * [sonoff-minimal.bin]
  * Provide the smallest image possible while still enabling a webserver for intermediate image load
 \*********************************************************************************************/
@@ -216,9 +294,9 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #undef USE_MQTT_TLS                           // Disable TLS support won't work as the MQTTHost is not set
 #undef USE_KNX                                // Disable KNX IP Protocol Support
 //#undef USE_WEBSERVER                          // Disable Webserver
+#undef USE_EMULATION                          // Disable Wemo or Hue emulation
 #undef USE_CUSTOM                             // Disable Custom features
 #undef USE_DISCOVERY                          // Disable Discovery services for both MQTT and web server
-#undef USE_EMULATION                          // Disable Wemo or Hue emulation
 #undef USE_TIMERS                             // Disable support for up to 16 timers
 #undef USE_TIMERS_WEB                         // Disable support for timer webpage
 #undef USE_SUNRISE                            // Disable support for Sunrise and sunset tools
@@ -234,10 +312,15 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #undef USE_SENSEAIR                           // Disable support for SenseAir K30, K70 and S8 CO2 sensor
 #undef USE_PMS5003                            // Disable support for PMS5003 and PMS7003 particle concentration sensor
 #undef USE_NOVA_SDS                           // Disable support for SDS011 and SDS021 particle concentration sensor
-#undef USE_PZEM004T                           // Disable PZEM004T energy sensor
 #undef USE_SERIAL_BRIDGE                      // Disable support for software Serial Bridge
 #undef USE_SDM120                             // Disable support for Eastron SDM120-Modbus energy meter
 #undef USE_SDM630                             // Disable support for Eastron SDM630-Modbus energy meter
+#undef USE_MP3_PLAYER                         // Disable DFPlayer Mini MP3 Player RB-DFR-562 commands: play, volume and stop
+#undef USE_TUYA_DIMMER                        // Disable support for Tuya Serial Dimmer
+#undef USE_PZEM004T                           // Disable PZEM004T energy sensor
+#undef USE_PZEM_AC                            // Disable PZEM014,016 Energy monitor
+#undef USE_PZEM_DC                            // Disable PZEM003,017 Energy monitor
+#undef USE_MCP39F501                          // Disable MCP39F501 Energy monitor as used in Shelly 2
 #undef USE_IR_REMOTE                          // Disable IR driver
 #undef USE_WS2812                             // Disable WS2812 Led string
 #undef USE_ARILUX_RF                          // Disable support for Arilux RF remote controller
@@ -245,8 +328,8 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #undef USE_TM1638                             // Disable support for TM1638 switches copying Switch1 .. Switch8
 #undef USE_HX711                              // Disable support for HX711 load cell
 #undef USE_RF_FLASH                           // Disable support for flashing the EFM8BB1 chip on the Sonoff RF Bridge. C2CK must be connected to GPIO4, C2D to GPIO5 on the PCB
-#undef USE_TUYA_DIMMER                        // Disable support for Tuya Serial Dimmer
 #undef USE_TX20_WIND_SENSOR                   // Disable support for La Crosse TX20 anemometer
+#undef USE_RC_SWITCH                          // Disable support for RF transceiver using library RcSwitch
 #undef DEBUG_THEO                             // Disable debug code
 #undef USE_DEBUG_DRIVER                       // Disable debug code
 #endif  // BE_MINIMAL
