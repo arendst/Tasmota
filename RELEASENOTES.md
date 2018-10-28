@@ -176,6 +176,7 @@ Version 6.3.0 20181030
  * Add command SetOption52 to control display of optional time offset from UTC in JSON messages (#3629, #3711)
  * Add command RGBWWTable to support color calibration (#3933)
  * Add command Reset 4 (reset to defaults but keep wifi params) and Reset 5 (as reset 4 and also erase flash) (#4061)
+ * Add command SetOption35 0..255 (seconds) to delay mDNS initialization to control possible Wifi connect problems
  * Add authentication to HTTP web pages
  * Add decimals as input to commands PowerSet, VoltageSet and CurrentSet
  * Add tools/decode-config.py by Norbert Richter to decode configuration data. See file for information

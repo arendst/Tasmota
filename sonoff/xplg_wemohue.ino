@@ -664,7 +664,7 @@ void HueLights(String *path)
       response = "[";
 
       StaticJsonBuffer<400> jsonBuffer;
-      JsonObject &hue_json = jsonBuffer.parseObject(WebServer->arg("1"));
+      JsonObject &hue_json = jsonBuffer.parseObject(WebServer->arg((WebServer->args())-1));
       if (hue_json.containsKey("on")) {
 
         response += FPSTR(HUE_LIGHT_RESPONSE_JSON);
@@ -809,6 +809,11 @@ void HandleHueApi(String *path)
    * user part and allow every caller as with Web or WeMo.
    *
    * (c) Heiko Krupp, 2017
+   *
+   * Hue URL
+   * http://sonoff/api/username/lights/1/state with post data {"on":true,"hue":56100,"sat":254,"bri":254,"alert":"none","transitiontime":40}
+   * is converted by webserver to
+   * http://sonoff/api/username/lights/1/state with arg plain={"on":true,"hue":56100,"sat":254,"bri":254,"alert":"none","transitiontime":40}
    */
 
   uint8_t args = 0;
