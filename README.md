@@ -27,8 +27,9 @@ Web Interface
 - more width for desktop   
 - pointer cursor (in Tasmota since 5.12.0)   
 - translated current status (on/off)   
-- use hostname in web ui as headline instead of friendlyname1   
+- use hostname in web ui as headline instead of friendlyname1  
 - more device info on web ui (Thx @jonatanolofsson, PR#1006, https://github.com/jonatanolofsson/Sonoff-Tasmota/commit/e7437b678700e219944255bbfb9d2f394a3bbd62)
+  - in Tasmota since 6.1.2.20 (USE SetOption53 0/1 to toggle gui display of Hostname and IP address (sonoff-tasmota#1006, sonoff-tasmota#2091)https://github.com/arendst/Sonoff-Tasmota/commit/cc56677ba30adf89c05ea98af631a6484b5afba1
 
 - WeMo Emu fixed (in Tasmota since 5.10.xx)   
 
