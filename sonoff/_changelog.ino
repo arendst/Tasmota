@@ -1,6 +1,7 @@
 /* 6.2.1.20 20181028
  * Add command SetOption35 0..255 (seconds) to delay mDNS initialization to control possible Wifi connect problems
  * Add command SetOption53 0/1 to toggle gui display of Hostname and IP address
+ * Add token %hostname% to command FullTopic (#3018)
  *
  * 6.2.1.19 20181023
  * Fix header file execution order by renaming user_config.h to my_user_config.h

@@ -279,6 +279,7 @@ void GetTopic_P(char *stopic, byte prefix, char *topic, const char* subtopic)
     }
     fulltopic.replace(F(MQTT_TOKEN_PREFIX), Settings.mqtt_prefix[prefix]);
     fulltopic.replace(F(MQTT_TOKEN_TOPIC), topic);
+    fulltopic.replace(F(MQTT_TOKEN_HOSTNAME), my_hostname);
     String token_id = WiFi.macAddress();
     token_id.replace(":", "");
     fulltopic.replace(F(MQTT_TOKEN_ID), token_id);
