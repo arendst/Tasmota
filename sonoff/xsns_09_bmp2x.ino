@@ -62,7 +62,7 @@ struct BMP2XSTRUCT {
 } bmp2x_sensors[BMP2X_MAX_SENSORS];
 
 
-uint8_t bmp_type = 0; 
+uint8_t bmp_type = 0;
 
 /*********************************************************************************************\
  * BMP085 and BME180
@@ -133,7 +133,7 @@ boolean Bmp1802xCalibration(uint8_t bmp2x_idx)
 
 void Bmp1802xRead(uint8_t bmp2x_idx)
 {
-  
+
   I2cWrite8(bmp2x_sensors[bmp2x_idx].bmp_address, BMP180_REG_CONTROL, BMP180_TEMPERATURE);
   delay(5); // 5ms conversion time
   int ut = I2cRead16(bmp2x_sensors[bmp2x_idx].bmp_address, BMP180_REG_RESULT);
@@ -429,7 +429,7 @@ void Bmp2xDetect()
       bmp2x_sensors[bmp2x_count].bmp_model = 0;
 
       boolean success = false;
-      
+
       switch (bmp_type) {
         case BMP180_CHIPID:
           success = Bmp1802xCalibration(bmp2x_count);
@@ -447,7 +447,7 @@ void Bmp2xDetect()
             break;
         #endif  // USE_BME680
       }
-      
+
       if (success) {
         GetTextIndexed(bmp2x_sensors[bmp2x_count].bmp_name, sizeof(bmp2x_sensors[bmp2x_count].bmp_name), bmp2x_sensors[bmp2x_count].bmp_model, kBmpTypes);
         snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, bmp2x_sensors[bmp2x_count].bmp_name, bmp2x_sensors[bmp2x_count].bmp_address);
@@ -459,7 +459,7 @@ void Bmp2xDetect()
       }
     }
   }
-  
+
 }
 
 void Bmp2xRead(uint8_t bmp2x_idx)
@@ -478,7 +478,7 @@ void Bmp2xRead(uint8_t bmp2x_idx)
           break;
     #endif  // USE_BME680
   }
-  if (bmp2x_sensors[bmp2x_idx].bmp_temperature != 0.0) { 
+  if (bmp2x_sensors[bmp2x_idx].bmp_temperature != 0.0) {
     bmp2x_sensors[bmp2x_idx].bmp_temperature = ConvertTemp(bmp2x_sensors[bmp2x_idx].bmp_temperature); }
 
   //SetGlobalValues(bmp_temperature, bmp_humidity);
@@ -501,14 +501,14 @@ void Bmp2xEverySecond()
 void Bmp2xShow(boolean json)
 {
   for (byte bmp2x_idx = 0; bmp2x_idx < bmp2x_count; bmp2x_idx++) {
-    
+
     if (bmp2x_sensors[bmp2x_idx].bmp_type) {
       float bmp_sealevel = 0.0;
       char temperature[10];
       char pressure[10];
       char sea_pressure[10];
       char humidity[10];
-      char name[14];// "BMXXXX2X-XX"
+      char name[14];  // "BMXXXX2X-XX"
 
       if (bmp2x_sensors[bmp2x_idx].bmp_pressure != 0.0) {
         bmp_sealevel = (bmp2x_sensors[bmp2x_idx].bmp_pressure / FastPrecisePow(1.0 - ((float)Settings.altitude / 44330.0), 5.255)) - 21.6;
@@ -520,53 +520,53 @@ void Bmp2xShow(boolean json)
       dtostrfd(bmp2x_sensors[bmp2x_idx].bmp_pressure, Settings.flag2.pressure_resolution, pressure);
       dtostrfd(bmp_sealevel, Settings.flag2.pressure_resolution, sea_pressure);
       dtostrfd(bmp2x_sensors[bmp2x_idx].bmp_humidity, Settings.flag2.humidity_resolution, humidity);
-  #ifdef USE_BME680
+#ifdef USE_BME680
       char gas_resistance[10];
       dtostrfd(bmp2x_sensors[bmp2x_idx].bmp_gas_resistance, 2, gas_resistance);
-  #endif  // USE_BME680
+#endif  // USE_BME680
 
       if (json) {
         char json_humidity[40];
         snprintf_P(json_humidity, sizeof(json_humidity), PSTR(",\"" D_JSON_HUMIDITY "\":%s"), humidity);
         char json_sealevel[40];
         snprintf_P(json_sealevel, sizeof(json_sealevel), PSTR(",\"" D_JSON_PRESSUREATSEALEVEL "\":%s"), sea_pressure);
-  #ifdef USE_BME680
+#ifdef USE_BME680
         char json_gas[40];
         snprintf_P(json_gas, sizeof(json_gas), PSTR(",\"" D_JSON_GAS "\":%s"), gas_resistance);
-        
-        snprintf_P(mqtt_data, 
-        sizeof(mqtt_data), 
+
+        snprintf_P(mqtt_data,
+        sizeof(mqtt_data),
         PSTR("%s,\"%s\":{\"" D_JSON_TEMPERATURE "\":%s%s,\"" D_JSON_PRESSURE "\":%s%s%s}"),
-          mqtt_data, 
-          name, 
-          temperature, 
-          (bmp2x_sensors[bmp2x_idx].bmp_model >= 2) ? json_humidity : "", 
-          pressure, (Settings.altitude != 0) ? json_sealevel : "", 
+          mqtt_data,
+          name,
+          temperature,
+          (bmp2x_sensors[bmp2x_idx].bmp_model >= 2) ? json_humidity : "",
+          pressure,
+          (Settings.altitude != 0) ? json_sealevel : "",
           (bmp2x_sensors[bmp2x_idx].bmp_model >= 3) ? json_gas : ""
           );
-
-
-  #else
+#else
         snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"%s\":{\"" D_JSON_TEMPERATURE "\":%s%s,\"" D_JSON_PRESSURE "\":%s%s}"),
           mqtt_data, name, temperature, (bmp2x_sensors[bmp2x_idx].bmp_model >= 2) ? json_humidity : "", pressure, (Settings.altitude != 0) ? json_sealevel : "");
-  #endif  // USE_BME680
-  #ifdef USE_DOMOTICZ
-        if (0 == tele_period) {
-          DomoticzTempHumPressureSensor(temperature, humidity, pressure);
-  #ifdef USE_BME680
-          if (bmp2x_sensors[bmp2x_idx].bmp_model >= 3) { DomoticzSensor(DZ_AIRQUALITY, (uint32_t)bmp2x_sensors[bmp2x_idx].bmp_gas_resistance); }
-  #endif  // USE_BME680
-        }
-  #endif // USE_DOMOTICZ
+#endif  // USE_BME680
 
-  #ifdef USE_KNX
+#ifdef USE_DOMOTICZ
+        if ((0 == tele_period) && (0 == bmp2x_idx)) {  // We want the same first sensor to report to Domoticz in case a read is missed
+          DomoticzTempHumPressureSensor(temperature, humidity, pressure);
+#ifdef USE_BME680
+          if (bmp2x_sensors[bmp2x_idx].bmp_model >= 3) { DomoticzSensor(DZ_AIRQUALITY, (uint32_t)bmp2x_sensors[bmp2x_idx].bmp_gas_resistance); }
+#endif  // USE_BME680
+        }
+#endif // USE_DOMOTICZ
+
+#ifdef USE_KNX
         if (0 == tele_period) {
           KnxSensor(KNX_TEMPERATURE, bmp2x_sensors[bmp2x_idx].bmp_temperature);
           KnxSensor(KNX_HUMIDITY, bmp2x_sensors[bmp2x_idx].bmp_humidity);
         }
-  #endif  // USE_KNX
+#endif  // USE_KNX
 
-  #ifdef USE_WEBSERVER
+#ifdef USE_WEBSERVER
       } else {
         snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TEMP, mqtt_data, name, temperature, TempUnit());
         if (bmp2x_sensors[bmp2x_idx].bmp_model >= 2) {
@@ -576,14 +576,14 @@ void Bmp2xShow(boolean json)
         if (Settings.altitude != 0) {
           snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_SEAPRESSURE, mqtt_data, name, sea_pressure);
         }
-  #ifdef USE_BME680
+#ifdef USE_BME680
         if (bmp2x_sensors[bmp2x_idx].bmp_model >= 3) {
           snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s{s}%s " D_GAS "{m}%s " D_UNIT_KILOOHM "{e}"), mqtt_data, name, gas_resistance);
         }
-  #endif  // USE_BME680
-  #endif // USE_WEBSERVER
+#endif  // USE_BME680
+#endif // USE_WEBSERVER
       }
-    }  
+    }
   }
 }
 
