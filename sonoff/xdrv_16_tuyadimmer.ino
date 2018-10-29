@@ -221,6 +221,21 @@ boolean TuyaModuleSelected()
   return true;
 }
 
+void TuyaResetWifiLed(){
+    snprintf_P(log_data, sizeof(log_data), "TYA: Reset WiFi LED");
+    AddLog(LOG_LEVEL_DEBUG);
+
+    TuyaSerial->write((uint8_t)0x55); // header 55AA
+    TuyaSerial->write((uint8_t)0xAA);
+    TuyaSerial->write((uint8_t)0x00); // version 00
+    TuyaSerial->write((uint8_t)0x03); // command 03 - set wifi state
+    TuyaSerial->write((uint8_t)0x00);
+    TuyaSerial->write((uint8_t)0x01); // following data length 0x01
+    TuyaSerial->write((uint8_t)0x03); // wifi state 4 (configured and connected)
+    TuyaSerial->write((uint8_t)0x06); // checksum:sum of all bytes in packet mod 256
+    TuyaSerial->flush();
+}
+
 void TuyaInit()
 {
   if (!Settings.param[P_TUYA_DIMMER_ID]) {
@@ -241,16 +256,6 @@ void TuyaInit()
     TuyaSerial->write((uint8_t)0x00);
     TuyaSerial->write((uint8_t)0x00); // following data length 0x00
     TuyaSerial->write((uint8_t)0x07); // checksum:sum of all bytes in packet mod 256
-    TuyaSerial->flush();
-
-    TuyaSerial->write((uint8_t)0x55); // header 55AA
-    TuyaSerial->write((uint8_t)0xAA);
-    TuyaSerial->write((uint8_t)0x00); // version 00
-    TuyaSerial->write((uint8_t)0x03); // command 03 - set wifi state
-    TuyaSerial->write((uint8_t)0x00);
-    TuyaSerial->write((uint8_t)0x01); // following data length 0x01
-    TuyaSerial->write((uint8_t)0x03); // wifi state 4 (configured and connected)
-    TuyaSerial->write((uint8_t)0x06); // checksum:sum of all bytes in packet mod 256
     TuyaSerial->flush();
   }
 }
@@ -298,6 +303,8 @@ boolean Xdrv16(byte function)
       case FUNC_BUTTON_PRESSED:
         result = TuyaButtonPressed();
         break;
+      case FUNC_EVERY_SECOND:
+        if(TuyaSerial) { TuyaResetWifiLed(); }
     }
   }
   return result;
