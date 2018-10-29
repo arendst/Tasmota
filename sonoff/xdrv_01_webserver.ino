@@ -123,7 +123,6 @@ const char HTTP_HEAD_STYLE[] PROGMEM =
   "<h3>{ha " D_MODULE "</h3>"
 #endif
   "<h2>{h}</h2>{j}</div>"
-  "<h3>{hn.local ({ip)</h3>";
 const char HTTP_SCRIPT_CONSOL[] PROGMEM =
   "var sn=0;"                    // Scroll position
   "var id=0;"                    // Get most of weblog initially
@@ -456,8 +455,6 @@ void ShowPage(String &page, bool auth)
   }
 
   page.replace(F("{a}"), String(Settings.web_refresh));
-  page.replace(F("{hn"), my_hostname);
-  page.replace(F("{ip"), WiFi.localIP().toString());
   page.replace(F("{ha"), my_module.name);
   page.replace(F("{h}"), Settings.friendlyname[0]);
 
