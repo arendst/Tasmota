@@ -122,7 +122,7 @@ const char HTTP_HEAD_STYLE[] PROGMEM =
 #else
   "<h3>{ha " D_MODULE "</h3>"
 #endif
-  "<h2>{h}</h2></div>"
+  "<h2>{h}</h2>{j}</div>"
   "<h3>{hn.local ({ip)</h3>";
 const char HTTP_SCRIPT_CONSOL[] PROGMEM =
   "var sn=0;"                    // Scroll position
@@ -460,6 +460,25 @@ void ShowPage(String &page, bool auth)
   page.replace(F("{ip"), WiFi.localIP().toString());
   page.replace(F("{ha"), my_module.name);
   page.replace(F("{h}"), Settings.friendlyname[0]);
+
+  String info = "";
+  if (Settings.flag3.gui_hostname_ip) {
+    uint8_t more_ips = 0;
+    info += F("<h3>"); info += my_hostname;
+    if (mdns_begun) { info += F(".local"); }
+    info += F(" (");
+    if (static_cast<uint32_t>(WiFi.localIP()) != 0) {
+      info += WiFi.localIP().toString();
+      more_ips++;
+    }
+    if (static_cast<uint32_t>(WiFi.softAPIP()) != 0) {
+      if (more_ips) { info += F(", "); }
+      info += WiFi.softAPIP().toString();
+    }
+    info += F(")</h3>");
+  }
+  page.replace(F("{j}"), info);
+
   if (HTTP_MANAGER == webserver_state) {
     if (WifiConfigCounter()) {
       page.replace(F("<body>"), F("<body onload='u()'>"));
@@ -1249,6 +1268,7 @@ void HandleInformation()
   func += F("}1" D_AP); func += String(Settings.sta_active +1);
     func += F(" " D_SSID " (" D_RSSI ")}2"); func += Settings.sta_ssid[Settings.sta_active]; func += F(" ("); func += WifiGetRssiAsQuality(WiFi.RSSI()); func += F("%)");
   func += F("}1" D_HOSTNAME "}2"); func += my_hostname;
+  if (mdns_begun) { func += F(".local"); }
   if (static_cast<uint32_t>(WiFi.localIP()) != 0) {
     func += F("}1" D_IP_ADDRESS "}2"); func += WiFi.localIP().toString();
     func += F("}1" D_GATEWAY "}2"); func += IPAddress(Settings.ip_address[1]).toString();
