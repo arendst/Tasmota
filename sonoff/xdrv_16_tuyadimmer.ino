@@ -235,11 +235,13 @@ void TuyaSetWifiLed(){
       case WIFI_WPSCONFIG:
         wifi_state = 0x01;
         break;
-      case WIFI_WAIT:
-      case WIFI_RETRY:
-        wifi_state = 0x02;
       case WIFI_RESTART:
         wifi_state =  0x03;
+        break;
+      case WIFI_WAIT:
+      case WIFI_RETRY:
+      default:
+        wifi_state = 0x02;
         break;
     }
 
