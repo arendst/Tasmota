@@ -33,6 +33,7 @@ boolean tuya_ignore_dim = false;            // Flag to skip serial send to preve
 uint8_t tuya_cmd_status = 0;                // Current status of serial-read
 uint8_t tuya_cmd_checksum = 0;              // Checksum of tuya command
 uint8_t tuya_data_len = 0;                  // Data lenght of command
+bool tuya_wifi_state = false;
 
 char tuya_buffer[TUYA_BUFFER_SIZE];         // Serial receive buffer
 int tuya_byte_counter = 0;                  // Index in serial receive buffer
@@ -142,12 +143,15 @@ void TuyaPacketProcess()
       ExecuteCommand(scmnd, SRC_SWITCH);
     }
   }
-  else if (tuya_byte_counter == 8 && tuya_buffer[3] == 5 && tuya_buffer[5] == 1 && tuya_buffer[7] == 5 ) {  // reset WiFi settings packet - to do: reset red MCU LED after WiFi is up
+  else if (tuya_byte_counter == 8 && tuya_buffer[3] == 5 && tuya_buffer[5] == 1 && tuya_buffer[7] == 5 ) {  // reset WiFi settings packet
 
     AddLog_P(LOG_LEVEL_DEBUG, PSTR("TYA: WiFi Reset Rcvd"));
+    TuyaResetWifi();
+  }
+  else if (tuya_byte_counter == 7 && tuya_buffer[3] == 3 && tuya_buffer[6] == 2) {  // WiFi LED has been sucessfully reset.
 
-    snprintf_P(scmnd, sizeof(scmnd), D_CMND_WIFICONFIG " 2");
-    ExecuteCommand(scmnd, SRC_BUTTON);
+    AddLog_P(LOG_LEVEL_DEBUG, PSTR("TYA: WiFi LED reset ACK"));
+    tuya_wifi_state = true;
   }
 }
 
@@ -260,18 +264,24 @@ void TuyaInit()
   }
 }
 
+void TuyaResetWifi()
+{
+  if (!Settings.flag.button_restrict) {
+    char scmnd[20];
+    snprintf_P(scmnd, sizeof(scmnd), D_CMND_WIFICONFIG " %d", 2);
+    ExecuteCommand(scmnd, SRC_BUTTON);
+    tuya_wifi_state = false;
+  }
+}
+
 boolean TuyaButtonPressed()
 {
   if ((PRESSED == XdrvMailbox.payload) && (NOT_PRESSED == lastbutton[XdrvMailbox.index])) {
 
     snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION D_BUTTON "%d " D_LEVEL_10), XdrvMailbox.index +1);
     AddLog(LOG_LEVEL_DEBUG);
+    TuyaResetWifi();
 
-    if (!Settings.flag.button_restrict) {
-      char scmnd[20];
-      snprintf_P(scmnd, sizeof(scmnd), D_CMND_WIFICONFIG " %d", 2);
-      ExecuteCommand(scmnd, SRC_BUTTON);
-    }
   }
   return true;  // Serviced here
 }
@@ -304,7 +314,7 @@ boolean Xdrv16(byte function)
         result = TuyaButtonPressed();
         break;
       case FUNC_EVERY_SECOND:
-        if(TuyaSerial) { TuyaResetWifiLed(); }
+        if(TuyaSerial && !tuya_wifi_state) { TuyaResetWifiLed(); }
         break;
     }
   }
