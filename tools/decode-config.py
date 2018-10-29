@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-VER = '2.0.0000'
+VER = '2.0.0001'
 
 """
     decode-config.py - Backup/Restore Sonoff-Tasmota configuration data
@@ -201,7 +201,7 @@ DEFAULTS            = {
         'jsonsort':     True,
         'jsonrawvalues':False,
         'jsonrawkeys':  False,
-        'jsonhidepw':   True,
+        'jsonhidepw':   False,
     },
 }
 args = {}
@@ -250,21 +250,27 @@ Settings dictionary describes the config file fields definition:
                     negative <s> shift the result <s> left bits
 
         datadef
-            Define the field interpretation different from simple
-            standard types (like char, byte, int) e. g. lists or bit fields
-            Can be None, a single integer, a list or a dictionary
-                None:
-                    None must be given if the field contains a simple value
-                    desrcibed by the <format> prefix
-                n:
-                    Same as [n] below
-                [n]:
-                    Defines a one-dimensional array of size <n>
-                [n, n <,n...>]
-                    Defines a multi-dimensional array
+            Data definition, is either a array definition or a
+            tuple containing an array definition and min/max values
+            Format:  arraydef|(arraydef, min, max)
+                arraydef:
+                    None:
+                        None must be given if the field contains a
+                        simple value desrcibed by the <format> prefix
+                    n:
+                    [n]:
+                        Defines a one-dimensional array of size <n>
+                    [n, m <,o...>]
+                        Defines a multi-dimensional array
+                min:
+                    defines a minimum valid value or None if all values
+                    for this format is allowed.
+                max:
+                    defines a maximum valid value or None if all values
+                    for this format is allowed.
 
         converter (optional)
-            Conversion methode(s): ()|'xxx'|func
+            Conversion methode(s): 'xxx'|func or ('xxx'|func, 'xxx'|func)
             Read conversion is used if args.jsonrawvalues is False
             Write conversion is used if jsonrawvalues from restore json
             file is False or args.jsonrawvalues is False.
@@ -845,7 +851,19 @@ Setting_6_2_1_19.update({
     'weight_max':                   ('<L',  0x7B8, None, ('float($) / 10', 'int($ * 10)')),
 })
 
+Setting_6_2_1_20 = Setting_6_2_1_19
+Setting_6_2_1_20.update({
+    'flag3':                        ({
+                                         'raw':                 ('<L',   0x3A0,        None, ('"0x{:08x}".format($)', None)),
+                                         'timers_enable':       ('<L',  (0x3A0, 1, 0), None),
+                                         'user_esp8285_enable': ('<L',  (0x3A0, 1, 1), None),
+                                         'time_append_timezone':('<L',  (0x3A0, 1, 2), None),
+                                         'gui_hostname_ip':     ('<L',  (0x3A0, 1, 3), None),
+                                     },     0x3A0, None),
+})
+
 Settings = [
+            (0x6020114, 0xe00, Setting_6_2_1_20),
             (0x6020113, 0xe00, Setting_6_2_1_19),
             (0x602010E, 0xe00, Setting_6_2_1_14),
             (0x602010A, 0xe00, Setting_6_2_1_10),
@@ -892,21 +910,22 @@ def GetTemplateSetting(decode_cfg):
     @return:
         version, template, size, settings to use; None if version is invalid
     """
+    version = 0x0
+    template = size = setting = None
     try:
         version = GetField(decode_cfg,  'version', Setting_6_2_1['version'], raw=True)
+        # search setting definition
+        template = None
+        setting = None
+        size = None
+        for cfg in Settings:
+            if version >= cfg[0]:
+                template = cfg
+                size = template[1]
+                setting = template[2]
+                break
     except:
-        return None,None,None,None
-
-    # search setting definition
-    template = None
-    setting = None
-    size = None
-    for cfg in Settings:
-        if version >= cfg[0]:
-            template = cfg
-            size = template[1]
-            setting = template[2]
-            break
+        pass
 
     return version, template, size, setting
 
@@ -1652,6 +1671,9 @@ def GetField(dobj, fieldname, fielddef, raw=False, addroffset=0):
 
     result = None
 
+    if fieldname == 'raw' and not args.jsonrawkeys:
+        return result
+
     # get field definition
     _format, baseaddr, bits, bitshift, datadef, convert = GetFieldDef(fielddef)
 
@@ -1662,7 +1684,7 @@ def GetField(dobj, fieldname, fielddef, raw=False, addroffset=0):
         for i in range(0, datadef[0]):
             subfielddef = GetSubfieldDef(fielddef)
             length = GetFieldLength(subfielddef)
-            if length != 0 and (fieldname != 'raw' or args.jsonrawkeys):
+            if length != 0:
                 result.append(GetField(dobj, fieldname, subfielddef, raw=raw, addroffset=addroffset+offset))
             offset += length
 
@@ -1721,6 +1743,9 @@ def SetField(dobj, fieldname, fielddef, restore, raw=False, addroffset=0, filena
     """
     _format, baseaddr, bits, bitshift, datadef, convert = GetFieldDef(fielddef)
     fieldname = str(fieldname)
+
+    if fieldname == 'raw' and not args.jsonrawkeys:
+        return dobj
 
     # do not write readonly values
     if isinstance(convert, (list,tuple)) and len(convert)>1 and convert[1]==None:
