@@ -122,7 +122,7 @@ const char HTTP_HEAD_STYLE[] PROGMEM =
 #else
   "<h3>{ha " D_MODULE "</h3>"
 #endif
-  "<h2>{h}</h2>{j}</div>"
+  "<h2>{h}</h2>{j}</div>";
 const char HTTP_SCRIPT_CONSOL[] PROGMEM =
   "var sn=0;"                    // Scroll position
   "var id=0;"                    // Get most of weblog initially
