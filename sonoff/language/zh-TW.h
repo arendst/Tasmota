@@ -537,7 +537,7 @@
 #define D_UNIT_HOUR "時"
 #define D_UNIT_INCREMENTS "inc"
 #define D_UNIT_KILOGRAM "kg"
-#define D_UNIT_KILOMETER_PER_HOUR "kmph"  // or "km/h"
+#define D_UNIT_KILOMETER_PER_HOUR "km/h"  // or "km/h"
 #define D_UNIT_KILOOHM "千歐"
 #define D_UNIT_KILOWATTHOUR "千瓦時"
 #define D_UNIT_LUX "勒克斯"

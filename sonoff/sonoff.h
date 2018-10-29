@@ -60,6 +60,7 @@ typedef unsigned long power_t;              // Power (Relay) type
 
 #define MQTT_TOKEN_PREFIX      "%prefix%"   // To be substituted by mqtt_prefix[x]
 #define MQTT_TOKEN_TOPIC       "%topic%"    // To be substituted by mqtt_topic, mqtt_grptopic, mqtt_buttontopic, mqtt_switchtopic
+#define MQTT_TOKEN_HOSTNAME    "%hostname%" // To be substituted by mqtt_topic, mqtt_grptopic, mqtt_buttontopic, mqtt_switchtopic
 #define MQTT_TOKEN_ID          "%id%"       // To be substituted by mqtt_topic, mqtt_grptopic, mqtt_buttontopic, mqtt_switchtopic
 
 #define WIFI_HOSTNAME          "%s-%04d"    // Expands to <MQTT_TOPIC>-<last 4 decimal chars of MAC address>
@@ -202,7 +203,7 @@ enum ButtonStates { PRESSED, NOT_PRESSED };
 
 enum Shortcuts { SC_CLEAR, SC_DEFAULT, SC_USER };
 
-enum SettingsParmaIndex {P_HOLD_TIME, P_MAX_POWER_RETRY, P_TUYA_DIMMER_ID, P_MAX_PARAM8};
+enum SettingsParmaIndex {P_HOLD_TIME, P_MAX_POWER_RETRY, P_TUYA_DIMMER_ID, P_MDNS_DELAYED_START, P_MAX_PARAM8};  // Max is PARAM8_SIZE (18)
 
 enum DomoticzSensors {DZ_TEMP, DZ_TEMP_HUM, DZ_TEMP_HUM_BARO, DZ_POWER_ENERGY, DZ_ILLUMINANCE, DZ_COUNT, DZ_VOLTAGE, DZ_CURRENT, DZ_AIRQUALITY, DZ_MAX_SENSORS};
 

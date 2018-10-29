@@ -186,6 +186,7 @@ byte reset_web_log_flag = 0;                // Reset web console log
 byte devices_present = 0;                   // Max number of devices supported
 byte seriallog_level;                       // Current copy of Settings.seriallog_level
 byte syslog_level;                          // Current copy of Settings.syslog_level
+byte mdns_delayed_start = 0;                // mDNS delayed start
 boolean latest_uptime_flag = true;          // Signal latest uptime
 boolean pwm_present = false;                // Any PWM channel configured with SetOption15 0
 boolean mdns_begun = false;                 // mDNS active
@@ -278,6 +279,7 @@ void GetTopic_P(char *stopic, byte prefix, char *topic, const char* subtopic)
     }
     fulltopic.replace(F(MQTT_TOKEN_PREFIX), Settings.mqtt_prefix[prefix]);
     fulltopic.replace(F(MQTT_TOKEN_TOPIC), topic);
+    fulltopic.replace(F(MQTT_TOKEN_HOSTNAME), my_hostname);
     String token_id = WiFi.macAddress();
     token_id.replace(":", "");
     fulltopic.replace(F(MQTT_TOKEN_ID), token_id);
@@ -2580,6 +2582,7 @@ void setup()
   }
 
   baudrate = Settings.baudrate * 1200;
+  mdns_delayed_start = Settings.param[P_MDNS_DELAYED_START];
   seriallog_level = Settings.seriallog_level;
   seriallog_timer = SERIALLOG_TIMER;
 #ifndef USE_EMULATION
