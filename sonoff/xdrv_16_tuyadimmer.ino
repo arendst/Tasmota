@@ -305,6 +305,7 @@ boolean Xdrv16(byte function)
         break;
       case FUNC_EVERY_SECOND:
         if(TuyaSerial) { TuyaResetWifiLed(); }
+        break;
     }
   }
   return result;
