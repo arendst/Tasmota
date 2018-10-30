@@ -238,9 +238,6 @@ void TuyaSetWifiLed(){
       case WIFI_RESTART:
         wifi_state =  0x03;
         break;
-      default:
-        wifi_state = 0x02;
-        break;
     }
 
     snprintf_P(log_data, sizeof(log_data), "TYA: Set WiFi LED to state %d (%d)", wifi_state, WifiState());
