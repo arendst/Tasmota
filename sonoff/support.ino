@@ -1946,6 +1946,10 @@ String GetDateAndTime(byte time_type)
   TIME_T tmpTime;
 
   switch (time_type) {
+    case DT_ENERGY:
+      BreakTime(Settings.energy_kWhtotal_time, tmpTime);
+      tmpTime.year += 1970;
+      break;
     case DT_UTC:
       BreakTime(utc_time, tmpTime);
       tmpTime.year += 1970;
@@ -1964,7 +1968,8 @@ String GetDateAndTime(byte time_type)
   snprintf_P(dt, sizeof(dt), PSTR("%04d-%02d-%02dT%02d:%02d:%02d"),
     tmpTime.year, tmpTime.month, tmpTime.day_of_month, tmpTime.hour, tmpTime.minute, tmpTime.second);
 
-  if (Settings.flag3.time_append_timezone && (time_type == DT_LOCAL)) {
+  if (Settings.flag3.time_append_timezone && (DT_LOCAL == time_type)) {
+//  if (Settings.flag3.time_append_timezone && ((DT_LOCAL == time_type) || (DT_ENERGY == time_type))) {
     snprintf_P(dt, sizeof(dt), PSTR("%s%+03d:%02d"), dt, time_timezone / 10, abs((time_timezone % 10) * 6));  // if timezone = +2:30 then time_timezone = 25
   }
 
@@ -2225,6 +2230,7 @@ void RtcSecond()
     }
     local_time += time_offset;
     time_timezone = time_offset / 360;  // (SECS_PER_HOUR / 10) fails as it is defined as UL
+    if (!Settings.energy_kWhtotal_time) { Settings.energy_kWhtotal_time = local_time; }
   }
   BreakTime(local_time, RtcTime);
   if (!RtcTime.hour && !RtcTime.minute && !RtcTime.second && RtcTime.valid) {
