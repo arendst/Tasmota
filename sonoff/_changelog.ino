@@ -55,10 +55,11 @@
  * Add command SerialSend5 to send raw serial data like "A5074100545293"
  * Add command WebRefresh 1000..10000 to control web page refresh in milliseconds. Default is 2345
  * Add command WeightRes 0..3 to control display of decimals for kilogram
- * Add command SetOption52 to control display of optional time offset from UTC in JSON messages (#3629, #3711)
  * Add command RGBWWTable to support color calibration (#3933)
  * Add command Reset 4 (reset to defaults but keep wifi params) and Reset 5 (as reset 4 and also erase flash) (#4061)
  * Add command SetOption35 0..255 (seconds) to delay mDNS initialization to control possible Wifi connect problems
+ * Add command SetOption52 0/1 to control display of optional time offset from UTC in JSON messages (#3629, #3711)
+ * Add command SetOption53 0/1 to toggle gui display of Hostname and IP address (#1006, #2091)
  * Add authentication to HTTP web pages
  * Add decimals as input to commands PowerSet, VoltageSet and CurrentSet
  * Add tools/decode-config.py by Norbert Richter to decode configuration data. See file for information
@@ -67,21 +68,24 @@
  * Add auto reload of main web page to some web restarts
  * Add TasmotaModbus library as very basic modbus wrapper for TasmotaSerial
  * Add more API callbacks and document API.md
+ * Add Apparent Power and Reactive Power to Energy Monitoring devices (#251)
+ * Add token %hostname% to command FullTopic (#3018)
  * Add Wifi channel number to state message (#3664)
  * Add user configurable GPIO02 and GPIO03 on H801 devices (#3692)
- * Add network information to display start screen (#3704)
  * Add toggle function RGBW lights (#3695, #3697)
+ * Add network information to display start screen (#3704)
  * Add sleep to Nova Fitness SDS01X sensor (#2841, #3724, #3749)
  * Add Analog input AD0 enabled to sonoff-sensors.bin (#3756, #3757)
- * Add userid/password option to decode-status.py (#3796)
  * Add power value below 5W to Sonoff Pow R2 and S31 (#3745)
- * Add force_update to Home Assistant discovery (#3873)
- * Add delay after restart before processing rule sensor data (#3811)
- * Add rule triggers SWITCH1#BOOT and POWER1#BOOT (#3904, #3910)
- * Add Apparent Power and Reactive Power to Energy Monitoring devices (#251)
  * Add RF Receiver control to module MagicHome to be used on Arilux LC10 (#3792)
+ * Add userid/password option to decode-status.py (#3796)
+ * Add delay after restart before processing rule sensor data (#3811)
+ * Add force_update to Home Assistant discovery (#3873)
+ * Add rule triggers SWITCH1#BOOT and POWER1#BOOT (#3904, #3910)
  * Add Hebrew language file (#3960)
+ * Add TotalStartTime to Energy JSON message (#3971)
  * Add whitespace removal from RfRaw and SerialSend5 (#4020)
+ * Add support for two BMP/BME sensors (#4195)
  *
  * 6.2.1 20180905
  * Fix possible ambiguity on command parameters if StateText contains numbers only (#3656)

@@ -66,7 +66,7 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t timers_enable : 1;            // bit 0 (v6.1.1b)
     uint32_t user_esp8285_enable : 1;      // bit 1 (v6.1.1.14)
     uint32_t time_append_timezone : 1;     // bit 2 (v6.2.1.2)
-    uint32_t spare03 : 1;
+    uint32_t gui_hostname_ip : 1;          // bit 3 (v6.2.1.20)
     uint32_t spare04 : 1;
     uint32_t spare05 : 1;
     uint32_t spare06 : 1;
@@ -322,8 +322,9 @@ struct SYSCFG {
   uint16_t      mcp230xx_int_timer;        // 718
   uint8_t       rgbwwTable[5];             // 71A
 
-  byte          free_71F[153];             // 71F
+  byte          free_71F[149];             // 71F
 
+  uint32_t      energy_kWhtotal_time;      // 7B4
   unsigned long weight_item;               // 7B8 Weight of one item in gram * 10
 
   byte          free_7BC[2];               // 7BC
