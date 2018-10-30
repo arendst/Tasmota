@@ -33,7 +33,7 @@ boolean tuya_ignore_dim = false;            // Flag to skip serial send to preve
 uint8_t tuya_cmd_status = 0;                // Current status of serial-read
 uint8_t tuya_cmd_checksum = 0;              // Checksum of tuya command
 uint8_t tuya_data_len = 0;                  // Data lenght of command
-uint8_t tuya_wifi_state = 0xFF;
+int8_t tuya_wifi_state = -2;
 
 char tuya_buffer[TUYA_BUFFER_SIZE];         // Serial receive buffer
 int tuya_byte_counter = 0;                  // Index in serial receive buffer
@@ -151,7 +151,7 @@ void TuyaPacketProcess()
   else if (tuya_byte_counter == 7 && tuya_buffer[3] == 3 && tuya_buffer[6] == 2) {  // WiFi LED has been sucessfully set.
 
     AddLog_P(LOG_LEVEL_DEBUG, PSTR("TYA: WiFi LED set ACK"));
-    tuya_wifi_state = WifiState();
+    tuya_wifi_state = TuyaWifiState();
   }
 }
 
@@ -225,9 +225,20 @@ boolean TuyaModuleSelected()
   return true;
 }
 
+int TuyaWifiState()
+{
+  int state = -1;
+
+  if ((WL_CONNECTED == WiFi.status()) && (static_cast<uint32_t>(WiFi.localIP()) != 0)) {
+    state = WIFI_RESTART;
+  }
+  if (wifi_config_type) { state = wifi_config_type; }
+  return state;
+}
+
 void TuyaSetWifiLed(){
     uint8_t wifi_state = 0x02;
-    switch(WifiState()){
+    switch(TuyaWifiState()){
       case WIFI_SMARTCONFIG:
         wifi_state = 0x00;
         break;
@@ -238,14 +249,12 @@ void TuyaSetWifiLed(){
       case WIFI_RESTART:
         wifi_state =  0x03;
         break;
-      case WIFI_WAIT:
-      case WIFI_RETRY:
       default:
         wifi_state = 0x02;
         break;
     }
 
-    snprintf_P(log_data, sizeof(log_data), "TYA: Set WiFi LED to state %d (%d)", wifi_state, WifiState());
+    snprintf_P(log_data, sizeof(log_data), "TYA: Set WiFi LED to state %d (%d)", wifi_state, TuyaWifiState());
     AddLog(LOG_LEVEL_DEBUG);
 
     TuyaSerial->write((uint8_t)0x55); // header 55AA
@@ -287,7 +296,7 @@ void TuyaResetWifi()
 {
   if (!Settings.flag.button_restrict) {
     char scmnd[20];
-    tuya_wifi_state = 0xFF;
+    tuya_wifi_state = -1;
     snprintf_P(scmnd, sizeof(scmnd), D_CMND_WIFICONFIG " %d", 2);
     ExecuteCommand(scmnd, SRC_BUTTON);
   }
@@ -333,7 +342,7 @@ boolean Xdrv16(byte function)
         result = TuyaButtonPressed();
         break;
       case FUNC_EVERY_SECOND:
-        if(TuyaSerial && tuya_wifi_state!=WifiState()) { TuyaSetWifiLed(); }
+        if(TuyaSerial && tuya_wifi_state!=TuyaWifiState()) { TuyaSetWifiLed(); }
         break;
     }
   }
