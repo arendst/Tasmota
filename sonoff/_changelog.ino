@@ -3,6 +3,7 @@
  * Add command SetOption53 0/1 to toggle gui display of Hostname and IP address (#1006, #2091)
  * Add token %hostname% to command FullTopic (#3018)
  * Add support for two BMP/BME sensors (#4195)
+ * Add TotalStartTime to Energy JSON message (#3971)
  *
  * 6.2.1.19 20181023
  * Fix header file execution order by renaming user_config.h to my_user_config.h

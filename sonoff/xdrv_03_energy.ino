@@ -393,6 +393,7 @@ boolean EnergyCommand()
         RtcSettings.energy_kWhtotal = lnum *100;
         Settings.energy_kWhtotal = RtcSettings.energy_kWhtotal;
         energy_total = (float)(RtcSettings.energy_kWhtotal + energy_kWhtoday) / 100000;
+        if (!energy_total) { Settings.energy_kWhtotal_time = LocalTime(); }
         break;
       }
     }
@@ -612,8 +613,8 @@ void EnergyShow(boolean json)
   }
 
   if (json) {
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"" D_RSLT_ENERGY "\":{\"" D_JSON_TOTAL "\":%s,\"" D_JSON_YESTERDAY "\":%s,\"" D_JSON_TODAY "\":%s%s,\"" D_JSON_POWERUSAGE "\":%s"),
-      mqtt_data, energy_total_chr, energy_yesterday_chr, energy_daily_chr, (show_energy_period) ? speriod : "", active_power_chr);
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"" D_RSLT_ENERGY "\":{\"" D_JSON_TOTAL_START_TIME "\":\"%s\",\"" D_JSON_TOTAL "\":%s,\"" D_JSON_YESTERDAY "\":%s,\"" D_JSON_TODAY "\":%s%s,\"" D_JSON_POWERUSAGE "\":%s"),
+      mqtt_data, GetDateAndTime(DT_ENERGY).c_str(), energy_total_chr, energy_yesterday_chr, energy_daily_chr, (show_energy_period) ? speriod : "", active_power_chr);
     if (!energy_type_dc) {
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"" D_JSON_APPARENT_POWERUSAGE "\":%s,\"" D_JSON_REACTIVE_POWERUSAGE "\":%s,\"" D_JSON_POWERFACTOR "\":%s%s"),
         mqtt_data, apparent_power_chr, reactive_power_chr, power_factor_chr, (!isnan(energy_frequency)) ? sfrequency : "");

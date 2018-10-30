@@ -322,8 +322,9 @@ struct SYSCFG {
   uint16_t      mcp230xx_int_timer;        // 718
   uint8_t       rgbwwTable[5];             // 71A
 
-  byte          free_71F[153];             // 71F
+  byte          free_71F[149];             // 71F
 
+  uint32_t      energy_kWhtotal_time;      // 7B4
   unsigned long weight_item;               // 7B8 Weight of one item in gram * 10
 
   byte          free_7BC[2];               // 7BC
