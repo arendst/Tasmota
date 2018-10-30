@@ -151,7 +151,7 @@ void TuyaPacketProcess()
   else if (tuya_byte_counter == 7 && tuya_buffer[3] == 3 && tuya_buffer[6] == 2) {  // WiFi LED has been sucessfully set.
 
     AddLog_P(LOG_LEVEL_DEBUG, PSTR("TYA: WiFi LED set ACK"));
-    tuya_wifi_state = TuyaWifiState();
+    tuya_wifi_state = WifiState();
   }
 }
 
@@ -225,20 +225,9 @@ boolean TuyaModuleSelected()
   return true;
 }
 
-int TuyaWifiState()
-{
-  int state = -1;
-
-  if ((WL_CONNECTED == WiFi.status()) && (static_cast<uint32_t>(WiFi.localIP()) != 0)) {
-    state = WIFI_RESTART;
-  }
-  if (wifi_config_type) { state = wifi_config_type; }
-  return state;
-}
-
 void TuyaSetWifiLed(){
     uint8_t wifi_state = 0x02;
-    switch(TuyaWifiState()){
+    switch(WifiState()){
       case WIFI_SMARTCONFIG:
         wifi_state = 0x00;
         break;
@@ -254,7 +243,7 @@ void TuyaSetWifiLed(){
         break;
     }
 
-    snprintf_P(log_data, sizeof(log_data), "TYA: Set WiFi LED to state %d (%d)", wifi_state, TuyaWifiState());
+    snprintf_P(log_data, sizeof(log_data), "TYA: Set WiFi LED to state %d (%d)", wifi_state, WifiState());
     AddLog(LOG_LEVEL_DEBUG);
 
     TuyaSerial->write((uint8_t)0x55); // header 55AA
@@ -342,7 +331,7 @@ boolean Xdrv16(byte function)
         result = TuyaButtonPressed();
         break;
       case FUNC_EVERY_SECOND:
-        if(TuyaSerial && tuya_wifi_state!=TuyaWifiState()) { TuyaSetWifiLed(); }
+        if(TuyaSerial && tuya_wifi_state!=WifiState()) { TuyaSetWifiLed(); }
         break;
     }
   }

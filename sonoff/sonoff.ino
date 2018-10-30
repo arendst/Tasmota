@@ -1110,7 +1110,7 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
         wifi_state_flag = Settings.sta_config;
         snprintf_P(stemp1, sizeof(stemp1), kWifiConfig[Settings.sta_config]);
         snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_WIFICONFIG "\":\"%s " D_JSON_SELECTED "\"}"), stemp1);
-        if (WifiState() != WIFI_RESTART) {
+        if (WifiState() > WIFI_RESTART) {
 //          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s after restart"), mqtt_data);
           restart_flag = 2;
         }
@@ -1795,7 +1795,7 @@ void ButtonHandler()
                 // Success
               } else {
                 if (multipress[button_index] < 3) {            // Single or Double press
-                  if (WifiState()) {                           // WPSconfig, Smartconfig or Wifimanager active
+                  if (WifiState() > WIFI_RESTART) {            // WPSconfig, Smartconfig or Wifimanager active
                     restart_flag = 1;
                   } else {
                     ExecuteCommandPower(button_index + multipress[button_index], POWER_TOGGLE, SRC_BUTTON);  // Execute Toggle command internally
