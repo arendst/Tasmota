@@ -245,7 +245,7 @@ void TuyaSetWifiLed(){
         break;
     }
 
-    snprintf_P(log_data, sizeof(log_data), "TYA: Set WiFi LED to state %d (%d)", WifiState(), wifi_state);
+    snprintf_P(log_data, sizeof(log_data), "TYA: Set WiFi LED to state %d (%d)", wifi_state, WifiState());
     AddLog(LOG_LEVEL_DEBUG);
 
     TuyaSerial->write((uint8_t)0x55); // header 55AA
