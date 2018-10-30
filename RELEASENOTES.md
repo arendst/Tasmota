@@ -32,91 +32,91 @@ See [Tasmota ESP/Arduino library version related issues](https://github.com/aren
 
 ### Available Features and Sensors
 
-| Feature or Sensor              | minimal | classic | sonoff | knx  | sensors | Remarks
-|--------------------------------|---------|---------|--------|------|---------|--------
-| ESP/Arduino lib v2.3.0         | 344k    | 485k    | 491k   | 510k | 516k    |
-| ESP/Arduino lib v2.4.2         | 363k    | 499k    | 509k   | 526k | 532k    | No sleep
+| Feature or Sensor              | minimal | basic | classic | sonoff | knx  | sensors | Remarks
+|--------------------------------|---------|-------|---------|--------|------|---------|--------
+| ESP/Arduino lib v2.3.0         | 343k    | 425k  | 484k    | 490k   | 508k | 517k    |
+| ESP/Arduino lib v2.4.2         | 372k    | 451k  | 497k    | 517k   | 533k | 541k    | No sleep
+|                                |   |   |   |   |   |   |
+| MY_LANGUAGE en-GB              | x | x | x | x | x | x |
+| MQTT_LIBRARY_TYPE PUBSUBCLIENT | x | x | x | x | x | x |
+| USE_WPS                        | - | - | x | - | - | - | WPS
+| USE_SMARTCONFIG                | - | - | x | - | - | - | SmartConfig
+| USE_ARDUINO_OTA                | - | - | - | - | - | - |
+| USE_DOMOTICZ                   | - | - | x | x | x | x |
+| USE_HOME_ASSISTANT             | - | - | x | x | x | x |
+| USE_MQTT_TLS                   | - | - | - | - | - | - |
+| USE_KNX                        | - | - | - | - | x | - |
+| USE_WEBSERVER                  | x | x | x | x | x | x | WifiManager
+| USE_EMULATION                  | - | x | x | x | - | x |
+| USE_DISCOVERY                  | - | - | x | x | x | x |
+| WEBSERVER_ADVERTISE            | - | - | x | x | x | x |
+| MQTT_HOST_DISCOVERY            | - | - | x | x | x | x |
+| USE_TIMERS                     | - | x | - | x | x | x |
+| USE_TIMERS_WEB                 | - | x | - | x | x | x |
+| USE_SUNRISE                    | - | x | - | x | x | x |
+| USE_RULES                      | - | x | - | x | x | x |
 |                                |   |   |   |   |   |
-| MY_LANGUAGE en-GB              | x | x | x | x | x |
-| USE_WPS                        | - | x | - | - | - | WPS
-| USE_SMARTCONFIG                | - | x | - | - | - | SmartConfig
-| USE_ARDUINO_OTA                | - | - | - | - | - |
-| MQTT_LIBRARY_TYPE PUBSUBCLIENT | x | x | x | x | x |
-| USE_DOMOTICZ                   | - | x | x | x | x |
-| USE_HOME_ASSISTANT             | - | x | x | x | x |
-| USE_MQTT_TLS                   | - | - | - | - | - |
-| USE_KNX                        | - | - | - | x | - |
-| USE_WEBSERVER                  | x | x | x | x | x | WifiManager
-| USE_EMULATION                  | - | x | x | - | x |
-| USE_DISCOVERY                  | - | x | x | x | x |
-| WEBSERVER_ADVERTISE            | - | x | x | x | x |
-| MQTT_HOST_DISCOVERY            | - | x | x | x | x |
-| USE_TIMERS                     | - | - | x | x | x |
-| USE_TIMERS_WEB                 | - | - | x | x | x |
-| USE_SUNRISE                    | - | - | x | x | x |
-| USE_RULES                      | - | - | x | x | x |
-|                                |   |   |   |   |   |
-| USE_ADC_VCC                    | x | x | x | x | - |
-| USE_DS18B20                    | - | - | - | - | - | Single sensor
-| USE_DS18x20                    | - | x | x | x | x | Multiple sensors
-| USE_DS18x20_LEGACY             | - | - | - | - | - | Multiple sensors
-|                                |   |   |   |   |   |
-| Feature or Sensor              | minimal | classic | sonoff | knx  | sensors |
-| USE_I2C                        | - | - | x | x | x |
-| USE_SHT                        | - | - | x | x | x |
-| USE_HTU                        | - | - | x | x | x |
-| USE_BMP                        | - | - | x | x | x |
-| USE_BME680                     | - | - | - | - | x |
-| USE_BH1750                     | - | - | x | x | x |
-| USE_VEML6070                   | - | - | - | - | x |
-| USE_ADS1115                    | - | - | - | - | x |
-| USE_ADS1115_I2CDEV             | - | - | - | - | - |
-| USE_INA219                     | - | - | - | - | x |
-| USE_SHT3X                      | - | - | x | x | x |
-| USE_TSL2561                    | - | - | - | - | x |
-| USE_MGS                        | - | - | - | - | x |
-| USE_SGP30                      | - | - | x | x | x |
-| USE_SI1145                     | - | - | - | - | x |
-| USE_LM75AD                     | - | - | x | x | x |
-| USE_APDS9960                   | - | - | - | - | - |
-| USE_MCP230xx                   | - | - | - | - | - |
-| USE_PCA9685                    | - | - | - | - | - |
-| USE_MPR121                     | - | - | - | - | - |
-| USE_CCS811                     | - | - | - | - | - |
-| USE_MPU6050                    | - | - | - | - | - |
-| USE_DS3231                     | - | - | - | - | - |
-|                                |   |   |   |   |   |
-| Feature or Sensor              | minimal | classic | sonoff | knx  | sensors |
-| USE_SPI                        | - | - | - | - | - |
-| USE_MHZ19                      | - | - | x | x | x |
-| USE_SENSEAIR                   | - | - | x | x | x |
-| USE_PMS5003                    | - | - | x | x | x |
-| USE_NOVA_SDS                   | - | - | x | x | x |
-| USE_PZEM004T                   | - | - | x | x | x |
-| USE_PZEM_AC                    | - | - | x | x | x |
-| USE_PZEM_DC                    | - | - | x | x | x |
-| USE_MCP39F501                  | - | - | x | x | x |
-| USE_SERIAL_BRIDGE              | - | - | x | x | x |
-| USE_SDM120                     | - | - | - | - | x |
-| USE_SDM630                     | - | - | - | - | x |
-| USE_MP3_PLAYER                 | - | - | - | - | - |
-| USE_IR_REMOTE                  | - | - | x | x | x |
-| USE_IR_HVAC                    | - | - | - | - | x |
-| USE_IR_RECEIVE                 | - | - | x | x | x |
-| USE_WS2812                     | - | x | x | x | x |
-| USE_WS2812_DMA                 | - | - | - | - | - |
-| USE_ARILUX_RF                  | - | - | x | x | x |
-| USE_SR04                       | - | - | x | x | x |
-| USE_TM1638                     | - | - | - | - | - |
-| USE_HX711                      | - | - | x | x | x |
-| USE_RF_FLASH                   | - | - | x | x | x |
-| USE_TUYA_DIMMER                | - | - | x | x | x |
-| USE_TX20_WIND_SENSOR           | - | - | x | x | x |
-| USE_RC_SWITCH                  | - | - | x | x | x |
-| USE_DISPLAY                    | - | - | - | - | - |
+| USE_ADC_VCC                    | x | x | x | x | x | - |
+| USE_DS18B20                    | - | - | - | - | - | - | Single sensor
+| USE_DS18x20                    | - | - | x | x | x | x | Multiple sensors
+| USE_DS18x20_LEGACY             | - | - | - | - | - | - | Multiple sensors
+|                                |   |   |   |   |   |   |
+| Feature or Sensor              | minimal | basic | classic | sonoff | knx  | sensors |
+| USE_I2C                        | - | - | - | x | x | x |
+| USE_SHT                        | - | - | - | x | x | x |
+| USE_HTU                        | - | - | - | x | x | x |
+| USE_BMP                        | - | - | - | x | x | x |
+| USE_BME680                     | - | - | - | - | - | x |
+| USE_BH1750                     | - | - | - | x | x | x |
+| USE_VEML6070                   | - | - | - | - | - | x |
+| USE_ADS1115                    | - | - | - | - | - | x |
+| USE_ADS1115_I2CDEV             | - | - | - | - | - | - |
+| USE_INA219                     | - | - | - | - | - | x |
+| USE_SHT3X                      | - | - | - | x | x | x |
+| USE_TSL2561                    | - | - | - | - | - | x |
+| USE_MGS                        | - | - | - | - | - | x |
+| USE_SGP30                      | - | - | - | x | x | x |
+| USE_SI1145                     | - | - | - | - | - | x |
+| USE_LM75AD                     | - | - | - | x | x | x |
+| USE_APDS9960                   | - | - | - | - | - | - |
+| USE_MCP230xx                   | - | - | - | - | - | - |
+| USE_PCA9685                    | - | - | - | - | - | - |
+| USE_MPR121                     | - | - | - | - | - | - |
+| USE_CCS811                     | - | - | - | - | - | - |
+| USE_MPU6050                    | - | - | - | - | - | - |
+| USE_DS3231                     | - | - | - | - | - | - |
+|                                |   |   |   |   |   |   |
+| Feature or Sensor              | minimal | basic | classic | sonoff | knx  | sensors |
+| USE_SPI                        | - | - | - | - | - | - |
+| USE_MHZ19                      | - | - | - | x | x | x |
+| USE_SENSEAIR                   | - | - | - | x | x | x |
+| USE_PMS5003                    | - | - | - | x | x | x |
+| USE_NOVA_SDS                   | - | - | - | x | x | x |
+| USE_PZEM004T                   | - | - | - | x | x | x |
+| USE_PZEM_AC                    | - | - | - | x | x | x |
+| USE_PZEM_DC                    | - | - | - | x | x | x |
+| USE_MCP39F501                  | - | x | - | x | x | x |
+| USE_SERIAL_BRIDGE              | - | - | - | x | x | x |
+| USE_SDM120                     | - | - | - | - | - | x |
+| USE_SDM630                     | - | - | - | - | - | x |
+| USE_MP3_PLAYER                 | - | - | - | - | - | x |
+| USE_TUYA_DIMMER                | - | x | - | x | x | x |
+| USE_IR_REMOTE                  | - | - | - | x | x | x |
+| USE_IR_HVAC                    | - | - | - | - | - | x |
+| USE_IR_RECEIVE                 | - | - | - | x | x | x |
+| USE_WS2812                     | - | - | x | x | x | x |
+| USE_WS2812_DMA                 | - | - | - | - | - | - |
+| USE_ARILUX_RF                  | - | - | - | x | x | x |
+| USE_SR04                       | - | - | - | x | x | x |
+| USE_TM1638                     | - | - | - | - | - | x |
+| USE_HX711                      | - | - | - | x | x | x |
+| USE_RF_FLASH                   | - | - | - | x | x | x |
+| USE_TX20_WIND_SENSOR           | - | - | - | x | x | x |
+| USE_RC_SWITCH                  | - | - | - | x | x | x |
+| USE_DISPLAY                    | - | - | - | - | - | - |
 
 ## Changelog
-Version 6.3.0 soon
+Version 6.3.0 20181030
  * Change web Configure Module GPIO drop down list order for better readability
  * Change status JSON message providing more switch and retain information
  * Change xsns_17_senseair.ino to use TasmotaModbus library
@@ -173,28 +173,34 @@ Version 6.3.0 soon
  * Add command SerialSend5 to send raw serial data like "A5074100545293"
  * Add command WebRefresh 1000..10000 to control web page refresh in milliseconds. Default is 2345
  * Add command WeightRes 0..3 to control display of decimals for kilogram
- * Add command SetOption52 to control display of optional time offset from UTC in JSON messages (#3629, #3711)
  * Add command RGBWWTable to support color calibration (#3933)
  * Add command Reset 4 (reset to defaults but keep wifi params) and Reset 5 (as reset 4 and also erase flash) (#4061)
+ * Add command SetOption35 0..255 (seconds) to delay mDNS initialization to control possible Wifi connect problems
+ * Add command SetOption52 0/1 to control display of optional time offset from UTC in JSON messages (#3629, #3711)
+ * Add command SetOption53 0/1 to toggle gui display of Hostname and IP address (#1006, #2091)
  * Add authentication to HTTP web pages
  * Add decimals as input to commands PowerSet, VoltageSet and CurrentSet
  * Add tools/decode-config.py by Norbert Richter to decode configuration data. See file for information
  * Add define USE_DISPLAYS for selecting image sonoff-display
+ * Add define USE_BASIC for selecting image sonoff-basic without most sensors
  * Add auto reload of main web page to some web restarts
  * Add TasmotaModbus library as very basic modbus wrapper for TasmotaSerial
  * Add more API callbacks and document API.md
+ * Add Apparent Power and Reactive Power to Energy Monitoring devices (#251)
+ * Add token %hostname% to command FullTopic (#3018)
  * Add Wifi channel number to state message (#3664)
  * Add user configurable GPIO02 and GPIO03 on H801 devices (#3692)
- * Add network information to display start screen (#3704)
  * Add toggle function RGBW lights (#3695, #3697)
+ * Add network information to display start screen (#3704)
  * Add sleep to Nova Fitness SDS01X sensor (#2841, #3724, #3749)
  * Add Analog input AD0 enabled to sonoff-sensors.bin (#3756, #3757)
- * Add userid/password option to decode-status.py (#3796)
  * Add power value below 5W to Sonoff Pow R2 and S31 (#3745)
- * Add force_update to Home Assistant discovery (#3873)
- * Add delay after restart before processing rule sensor data (#3811)
- * Add rule triggers SWITCH1#BOOT and POWER1#BOOT (#3904, #3910)
- * Add Apparent Power and Reactive Power to Energy Monitoring devices (#251)
  * Add RF Receiver control to module MagicHome to be used on Arilux LC10 (#3792)
+ * Add userid/password option to decode-status.py (#3796)
+ * Add delay after restart before processing rule sensor data (#3811)
+ * Add force_update to Home Assistant discovery (#3873)
+ * Add rule triggers SWITCH1#BOOT and POWER1#BOOT (#3904, #3910)
  * Add Hebrew language file (#3960)
+ * Add TotalStartTime to Energy JSON message (#3971)
  * Add whitespace removal from RfRaw and SerialSend5 (#4020)
+ * Add support for two BMP/BME sensors (#4195)
