@@ -51,11 +51,11 @@ All the libraries required for Sonoff-Tasmota are [here](https://github.com/asci
 * [ESPAsyncUDP Library](https://github.com/ascillato/Sonoff-Tasmota_KNX/tree/development/lib/ESPAsyncUDP-master). Required by the ESP-KNX-IP Library. A copy of this modified library is also available [here](https://github.com/ascillato/ESPAsyncUDP). The original is [here](https://github.com/me-no-dev/ESPAsyncUDP).
 
 **Esp8266 board libraries:**
-* v2.5.0 (Actual Stage Version) - Works fine. Sleep feature works fine. Need to be 0 for better KNX performance. 
-* v2.4.2 (Recommended) - Works fine. Command sleep don't work in this version. Set to 0 for better KNX performance. 
+* v2.5.0 (Actual Stage Version) Recommended - Works fine. Sleep feature works fine. Need to be 0 for better KNX performance. 
+* v2.4.2 Works fine. Command sleep don't work in this version. Set to 0 for better KNX performance. 
 * v2.4.1 Have some wifi issues. Do not use.
 * v2.4.0 Have some wifi issues. Do not use.
-* v2.3.0 Works fine but is slower than v2.4.2. Command sleep works but need to be 0 for better KNX performance.
+* v2.3.0 Works fine but is slower than v2.4.2. Sleep feature works but need to be 0 for better KNX performance.
 
 ## Implemented Features ##
 
@@ -239,7 +239,7 @@ OPTION Value | Device Parameter
 - [x] Add commands for rules to set KNX Configurations
 - [x] Add events for rules when receiving data from KNX and read requests
 - [x] Add option for increase communication reliability (re send telegrams)
-- [ ] Add option for multicast forced reconnection (needed for some routers that have IGMP conflict with actual esp8266 lib v2.3.0 to v2.4.2, and lwIP v1.4 to v2.0 - Send a telegram to itself. If it is received, multicast is ok, if not, reconnect)
+- [ ] Add option for multicast forced reconnection (needed for some routers that have IGMP conflict with actual esp8266 lib v2.3.0 to v2.5.0, and lwIP v1.4 to v2.1 - Send a telegram to itself. If it is received, multicast is ok, if not, reconnect)
 - [ ] Add option to support KNX Snooping to debug KNX Network
 - [ ] Add option for KNXnet/IP Tunneling
 - [ ] Add option to repeat all KNX multicast broadcast (Tasmota to Tasmota communications) to KNXnet/IP Tunneling
