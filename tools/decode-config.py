@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-VER = '2.0.0001'
+VER = '2.0.0002'
 
 """
     decode-config.py - Backup/Restore Sonoff-Tasmota configuration data
@@ -862,7 +862,13 @@ Setting_6_2_1_20.update({
                                      },     0x3A0, None),
 })
 
+Setting_6_3_0 = Setting_6_2_1_20
+Setting_6_3_0.update({
+    'energy_kWhtotal_time':         ('<L',  0x7B4, None),
+})
+
 Settings = [
+            (0x6030000, 0xe00, Setting_6_3_0),
             (0x6020114, 0xe00, Setting_6_2_1_20),
             (0x6020113, 0xe00, Setting_6_2_1_19),
             (0x602010E, 0xe00, Setting_6_2_1_14),
