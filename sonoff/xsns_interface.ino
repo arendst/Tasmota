@@ -284,6 +284,9 @@ boolean XsnsNextCall(byte Function)
 {
   xsns_index++;
   if (xsns_index == xsns_present) xsns_index = 0;
+  if (!((WL_CONNECTED == WiFi.status()) && (static_cast<uint32_t>(WiFi.localIP()) != 0))) {
+    delay(1);
+  }  
   return xsns_func_ptr[xsns_index](Function);
 }
 
@@ -298,19 +301,21 @@ boolean XsnsCall(byte Function)
   for (byte x = 0; x < xsns_present; x++) {
 
 #ifdef PROFILE_XSNS_SENSOR_EVERY_SECOND
-  uint32_t profile_start_millis = millis();
+    uint32_t profile_start_millis = millis();
 #endif  // PROFILE_XSNS_SENSOR_EVERY_SECOND
-
+    if (!((WL_CONNECTED == WiFi.status()) && (static_cast<uint32_t>(WiFi.localIP()) != 0))) {
+      delay(1);
+    }
     result = xsns_func_ptr[x](Function);
 
 #ifdef PROFILE_XSNS_SENSOR_EVERY_SECOND
-  uint32_t profile_millis = millis() - profile_start_millis;
-  if (profile_millis) {
-    if (FUNC_EVERY_SECOND == Function) {
-      snprintf_P(log_data, sizeof(log_data), PSTR("PRF: At %08u XsnsCall %d to Sensor %d took %u mS"), uptime, Function, x, profile_millis);
-      AddLog(LOG_LEVEL_DEBUG);
+    uint32_t profile_millis = millis() - profile_start_millis;
+    if (profile_millis) {
+      if (FUNC_EVERY_SECOND == Function) {
+        snprintf_P(log_data, sizeof(log_data), PSTR("PRF: At %08u XsnsCall %d to Sensor %d took %u mS"), uptime, Function, x, profile_millis);
+        AddLog(LOG_LEVEL_DEBUG);
+      }
     }
-  }
 #endif  // PROFILE_XSNS_SENSOR_EVERY_SECOND
 
     if (result) break;
