@@ -1,6 +1,7 @@
 /* 6.3.0.1 20181031
  * Add wifi status to Tuya (#4221)
  * Add default sleep 1 to sonoff-basic to lower enrgy consumption (#4217)
+ * Fix unintended function overload of WifiState
  *
  * 6.3.0 20181030
  * Release of v6.3.0
