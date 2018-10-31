@@ -1613,7 +1613,7 @@ void WifiCheck(uint8_t param)
 
 int WifiState()
 {
-  int state;
+  int state = -1;
 
   if ((WL_CONNECTED == WiFi.status()) && (static_cast<uint32_t>(WiFi.localIP()) != 0)) {
     state = WIFI_RESTART;

@@ -33,7 +33,7 @@ boolean tuya_ignore_dim = false;            // Flag to skip serial send to preve
 uint8_t tuya_cmd_status = 0;                // Current status of serial-read
 uint8_t tuya_cmd_checksum = 0;              // Checksum of tuya command
 uint8_t tuya_data_len = 0;                  // Data lenght of command
-bool tuya_wifi_state = false;
+int8_t tuya_wifi_state = -2;
 
 char tuya_buffer[TUYA_BUFFER_SIZE];         // Serial receive buffer
 int tuya_byte_counter = 0;                  // Index in serial receive buffer
@@ -148,10 +148,10 @@ void TuyaPacketProcess()
     AddLog_P(LOG_LEVEL_DEBUG, PSTR("TYA: WiFi Reset Rcvd"));
     TuyaResetWifi();
   }
-  else if (tuya_byte_counter == 7 && tuya_buffer[3] == 3 && tuya_buffer[6] == 2) {  // WiFi LED has been sucessfully reset.
+  else if (tuya_byte_counter == 7 && tuya_buffer[3] == 3 && tuya_buffer[6] == 2) {  // WiFi LED has been sucessfully set.
 
-    AddLog_P(LOG_LEVEL_DEBUG, PSTR("TYA: WiFi LED reset ACK"));
-    tuya_wifi_state = true;
+    AddLog_P(LOG_LEVEL_DEBUG, PSTR("TYA: WiFi LED set ACK"));
+    tuya_wifi_state = WifiState();
   }
 }
 
@@ -225,8 +225,22 @@ boolean TuyaModuleSelected()
   return true;
 }
 
-void TuyaResetWifiLed(){
-    snprintf_P(log_data, sizeof(log_data), "TYA: Reset WiFi LED");
+void TuyaSetWifiLed(){
+    uint8_t wifi_state = 0x02;
+    switch(WifiState()){
+      case WIFI_SMARTCONFIG:
+        wifi_state = 0x00;
+        break;
+      case WIFI_MANAGER:
+      case WIFI_WPSCONFIG:
+        wifi_state = 0x01;
+        break;
+      case WIFI_RESTART:
+        wifi_state =  0x03;
+        break;
+    }
+
+    snprintf_P(log_data, sizeof(log_data), "TYA: Set WiFi LED to state %d (%d)", wifi_state, WifiState());
     AddLog(LOG_LEVEL_DEBUG);
 
     TuyaSerial->write((uint8_t)0x55); // header 55AA
@@ -235,8 +249,8 @@ void TuyaResetWifiLed(){
     TuyaSerial->write((uint8_t)0x03); // command 03 - set wifi state
     TuyaSerial->write((uint8_t)0x00);
     TuyaSerial->write((uint8_t)0x01); // following data length 0x01
-    TuyaSerial->write((uint8_t)0x03); // wifi state 4 (configured and connected)
-    TuyaSerial->write((uint8_t)0x06); // checksum:sum of all bytes in packet mod 256
+    TuyaSerial->write((uint8_t)wifi_state); // wifi state (0x00 == smartconfig, 0x01 == AP, 0x02 == not connected, 0x03 == connected) 
+    TuyaSerial->write((uint8_t)(0x03 + wifi_state)); // checksum:sum of all bytes in packet mod 256
     TuyaSerial->flush();
 }
 
@@ -268,9 +282,9 @@ void TuyaResetWifi()
 {
   if (!Settings.flag.button_restrict) {
     char scmnd[20];
+    tuya_wifi_state = -1;
     snprintf_P(scmnd, sizeof(scmnd), D_CMND_WIFICONFIG " %d", 2);
     ExecuteCommand(scmnd, SRC_BUTTON);
-    tuya_wifi_state = false;
   }
 }
 
@@ -314,7 +328,7 @@ boolean Xdrv16(byte function)
         result = TuyaButtonPressed();
         break;
       case FUNC_EVERY_SECOND:
-        if(TuyaSerial && !tuya_wifi_state) { TuyaResetWifiLed(); }
+        if(TuyaSerial && tuya_wifi_state!=WifiState()) { TuyaSetWifiLed(); }
         break;
     }
   }
