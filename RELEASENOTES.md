@@ -17,20 +17,8 @@ See _changelog.ino how to enable them again.
 - If no SSID is configured making a wifi connection impossible the new define WIFI_CONFIG_NO_SSID will be used.
 - While define WIFI_CONFIG_NO_SSID is set to WIFI_WPSCONFIG in my_user_config.h the compiler will check for define USE_WPS and if not enabled WIFI_CONFIG_NO_SSID will default to WIFI_MANAGER using the webserver. If define USE_WEBSERVER is also not enabled WIFI_CONFIG_NO_SSID will default to WIFI_SMARTCONFIG. If define USE_SMARTCONFIG is also not enabled WIFI_CONFIG_NO_SSID will default to a new option WIFI_SERIAL allowing to enter wifi parameters to serial which is always possible.
 
-## Provided Binary Downloads
-The following binary downloads have been compiled with ESP8266/Arduino library version **2.3.0**
-
-- **sonoff-minimal.bin** = The Minimal version allows intermediate OTA uploads to support larger versions and does NOT change any persistent parameter. This version **should NOT be used for initial installation**.
-- **sonoff-classic.bin** = The Classic version allows **initial installation** using either WifiManager, Wps or SmartConfig.
-- **sonoff.bin** = The Sonoff version without Wps and SmartConfig configuration but adds more sensors.
-- **sonoff-BG.bin** to **sonoff-TW.bin** = The Sonoff version without Wps and SmartConfig configuration in different languages.
-- **sonoff-sensors.bin** = The Sensors version without Wps and SmartConfig configuration but adds even more useful sensors.
-- **sonoff-display.bin** = The Display version without Wps and SmartConfig configuration but adds display support.
-- **sonoff-knx.bin** = The Knx version without Wps and SmartConfig configuration and some other features but adds KNX support.
-
-See [Tasmota ESP/Arduino library version related issues](https://github.com/arendst/Sonoff-Tasmota/wiki/Theo's-Tasmota-Tips#20180523---relation-tasmota-and-esp8266arduino-core-version) why these files are still released using ESP/Arduino library version v2.3.0.
-
-### Supported hardware Modules
+## Supported Modules
+The following hardware modules are supported.
 
 Module            | Description
 ------------------|-----------------------
@@ -88,6 +76,19 @@ Module            | Description
 52 Teckin         | Teckin SP20, SP22 Wifi Smart Switch with Energy Monitoring
 53 AplicWDP303075 | Aplic WDP 303075 CSL Wifi Smart Switch with Energy Monitoring
 54 Tuya Dimmer    | MIUO (and other Tuya based) Wifi Dimmer for Incandescent Lights and Led
+
+## Provided Binary Downloads
+The following binary downloads have been compiled with ESP8266/Arduino library version **2.3.0**
+
+- **sonoff-minimal.bin** = The Minimal version allows intermediate OTA uploads to support larger versions and does NOT change any persistent parameter. This version **should NOT be used for initial installation**.
+- **sonoff-classic.bin** = The Classic version allows **initial installation** using either WifiManager, Wps or SmartConfig.
+- **sonoff.bin** = The Sonoff version without Wps and SmartConfig configuration but adds more sensors.
+- **sonoff-BG.bin** to **sonoff-TW.bin** = The Sonoff version without Wps and SmartConfig configuration in different languages.
+- **sonoff-sensors.bin** = The Sensors version without Wps and SmartConfig configuration but adds even more useful sensors.
+- **sonoff-display.bin** = The Display version without Wps and SmartConfig configuration but adds display support.
+- **sonoff-knx.bin** = The Knx version without Wps and SmartConfig configuration and some other features but adds KNX support.
+
+See [Tasmota ESP/Arduino library version related issues](https://github.com/arendst/Sonoff-Tasmota/wiki/Theo's-Tasmota-Tips#20180523---relation-tasmota-and-esp8266arduino-core-version) why these files are still released using ESP/Arduino library version v2.3.0.
 
 ### Available Features and Sensors
 
