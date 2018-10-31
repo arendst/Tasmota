@@ -1,8 +1,17 @@
-/* 6.2.1.20 20181028
+/* 6.3.0.1 20181031
+ * Add wifi status to Tuya (#4221)
+ * Add default sleep 1 to sonoff-basic to lower enrgy consumption (#4217)
+ * Fix unintended function overload of WifiState
+ *
+ * 6.3.0 20181030
+ * Release of v6.3.0
+ *
+ * 6.2.1.20 20181028
  * Add command SetOption35 0..255 (seconds) to delay mDNS initialization to control possible Wifi connect problems
  * Add command SetOption53 0/1 to toggle gui display of Hostname and IP address (#1006, #2091)
  * Add token %hostname% to command FullTopic (#3018)
  * Add support for two BMP/BME sensors (#4195)
+ * Add TotalStartTime to Energy JSON message (#3971)
  *
  * 6.2.1.19 20181023
  * Fix header file execution order by renaming user_config.h to my_user_config.h

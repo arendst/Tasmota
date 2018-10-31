@@ -127,6 +127,7 @@
 #define D_JSON_TIME "Time"
 #define D_JSON_TODAY "Today"
 #define D_JSON_TOTAL "Total"
+#define D_JSON_TOTAL_START_TIME "TotalStartTime"
 #define D_JSON_TVOC "TVOC"
 #define D_JSON_TYPE "Type"
 #define D_JSON_UPTIME "Uptime"
