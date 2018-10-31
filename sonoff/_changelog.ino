@@ -1,6 +1,10 @@
-/* 6.3.0 20181030
+/* 6.3.0.1 20181031
+ * Add wifi status to Tuya (#4221)
+ * Add default sleep 1 to sonoff-basic to lower enrgy consumption (#4217)
+ *
+ * 6.3.0 20181030
  * Release of v6.3.0
- * 
+ *
  * 6.2.1.20 20181028
  * Add command SetOption35 0..255 (seconds) to delay mDNS initialization to control possible Wifi connect problems
  * Add command SetOption53 0/1 to toggle gui display of Hostname and IP address (#1006, #2091)
