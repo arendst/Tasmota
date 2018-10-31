@@ -20,7 +20,7 @@
 #ifdef USE_TUYA_DIMMER
 
 #ifndef TUYA_DIMMER_ID
-#define TUYA_DIMMER_ID    3
+#define TUYA_DIMMER_ID    0
 #endif
 #define TUYA_BUFFER_SIZE  256
 
@@ -127,6 +127,12 @@ void TuyaPacketProcess()
 
     snprintf_P(log_data, sizeof(log_data), PSTR("TYA: Rcvd Dim State=%d"), tuya_buffer[13]);
     AddLog(LOG_LEVEL_DEBUG);
+
+    if (!Settings.param[P_TUYA_DIMMER_ID]) {
+      snprintf_P(log_data, sizeof(log_data), PSTR("TYA: Autoconfiguring Dimmer ID %d"), tuya_buffer[6]);
+      AddLog(LOG_LEVEL_DEBUG);
+      Settings.param[P_TUYA_DIMMER_ID] = tuya_buffer[6];
+    }
 
     tuya_new_dim = round(tuya_buffer[13] * (100. / 255.));
     if((power) && (tuya_new_dim > 0) && (abs(tuya_new_dim - Settings.light_dimmer) > 2)) {
