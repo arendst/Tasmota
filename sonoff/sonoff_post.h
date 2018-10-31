@@ -229,6 +229,9 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 
 #ifdef USE_BASIC
 
+#undef APP_SLEEP
+#define APP_SLEEP 1                          // Default to sleep = 1 for USE_BASIC
+
 //#undef USE_ENERGY_SENSOR                      // Disable energy sensors
 #undef USE_ARDUINO_OTA                        // Disable support for Arduino OTA
 #undef USE_WPS                                // Disable support for WPS as initial wifi configuration tool
