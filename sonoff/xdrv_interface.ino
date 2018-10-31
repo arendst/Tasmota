@@ -249,6 +249,9 @@ boolean XdrvCall(byte Function)
   boolean result = false;
 
   for (byte x = 0; x < xdrv_present; x++) {
+    if (!((WL_CONNECTED == WiFi.status()) && (static_cast<uint32_t>(WiFi.localIP()) != 0))) {
+      delay(1);
+    }
     result = xdrv_func_ptr[x](Function);
     if (result) break;
   }
