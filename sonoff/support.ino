@@ -1897,7 +1897,7 @@ uint32_t standard_time = 0;
 uint32_t ntp_time = 0;
 uint32_t midnight = 1451602800;
 uint32_t restart_time = 0;
-int32_t  time_zone = 0;
+int32_t  time_timezone = 0;
 uint8_t  midnight_now = 0;
 uint8_t  ntp_sync_minute = 0;
 
@@ -1934,7 +1934,7 @@ String GetTimeZone()
 {
   char tz[7];
 
-  snprintf_P(tz, sizeof(tz), PSTR("%+03d:%02d"), time_zone / 60, abs(time_zone % 60));
+  snprintf_P(tz, sizeof(tz), PSTR("%+03d:%02d"), time_timezone / 60, abs(time_timezone % 60));
 
   return String(tz);  // -03:45
 }
@@ -2224,28 +2224,28 @@ void RtcSecond()
   if (local_time > 1451602800) {  // 2016-01-01
     int16_t timezone_minutes = Settings.timezone_minutes;
     if (Settings.timezone < 0) { timezone_minutes *= -1; }
-    time_zone = (Settings.timezone * SECS_PER_HOUR) + (timezone_minutes * SECS_PER_MIN);
+    time_timezone = (Settings.timezone * SECS_PER_HOUR) + (timezone_minutes * SECS_PER_MIN);
     if (99 == Settings.timezone) {
       int32_t dstoffset = Settings.toffset[1] * SECS_PER_MIN;
       int32_t stdoffset = Settings.toffset[0] * SECS_PER_MIN;
       if (Settings.tflag[1].hemis) {
         // Southern hemisphere
         if ((utc_time >= (standard_time - dstoffset)) && (utc_time < (daylight_saving_time - stdoffset))) {
-          time_zone = stdoffset;  // Standard Time
+          time_timezone = stdoffset;  // Standard Time
         } else {
-          time_zone = dstoffset;  // Daylight Saving Time
+          time_timezone = dstoffset;  // Daylight Saving Time
         }
       } else {
         // Northern hemisphere
         if ((utc_time >= (daylight_saving_time - stdoffset)) && (utc_time < (standard_time - dstoffset))) {
-          time_zone = dstoffset;  // Daylight Saving Time
+          time_timezone = dstoffset;  // Daylight Saving Time
         } else {
-          time_zone = stdoffset;  // Standard Time
+          time_timezone = stdoffset;  // Standard Time
         }
       }
     }
-    local_time += time_zone;
-    time_zone /= 60;
+    local_time += time_timezone;
+    time_timezone /= 60;
     if (!Settings.energy_kWhtotal_time) { Settings.energy_kWhtotal_time = local_time; }
   }
   BreakTime(local_time, RtcTime);
