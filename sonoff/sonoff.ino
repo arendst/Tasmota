@@ -1163,10 +1163,29 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
       }
     }
     else if (CMND_TIMEZONE == command_code) {
-      if ((data_len > 0) && (((payload >= -13) && (payload <= 14)) || (99 == payload))) {
+      if ((data_len > 0) && (payload >= -13)) {
         Settings.timezone = payload;
+        Settings.timezone_minutes = 0;
+        if (payload < 15) {
+          p = strtok (dataBuf, ":");
+          if (p) {
+            p = strtok (NULL, ":");
+            if (p) {
+              Settings.timezone_minutes = strtol(p, NULL, 10);
+              if (Settings.timezone_minutes > 59) { Settings.timezone_minutes = 59; }
+            }
+          }
+        } else {
+          Settings.timezone = 99;
+        }
+        ntp_force_sync = 1;
       }
-      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, Settings.timezone);
+      if (99 == Settings.timezone) {
+        snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, Settings.timezone);
+      } else {
+        snprintf_P(stemp1, sizeof(stemp1), PSTR("%+03d:%02d"), Settings.timezone, Settings.timezone_minutes);
+        snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, stemp1);
+      }
     }
     else if ((CMND_TIMESTD == command_code) || (CMND_TIMEDST == command_code)) {
       // TimeStd 0/1, 0/1/2/3/4, 1..12, 1..7, 0..23, +/-780
@@ -1491,12 +1510,17 @@ void PublishStatus(uint8_t payload)
   }
 
   if ((0 == payload) || (7 == payload)) {
+    if (99 == Settings.timezone) {
+      snprintf_P(stemp, sizeof(stemp), PSTR("%d" ), Settings.timezone);
+    } else {
+      snprintf_P(stemp, sizeof(stemp), PSTR("\"%s\"" ), GetTimeZone().c_str());
+    }
 #if defined(USE_TIMERS) && defined(USE_SUNRISE)
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_STATUS D_STATUS7_TIME "\":{\"" D_JSON_UTC_TIME "\":\"%s\",\"" D_JSON_LOCAL_TIME "\":\"%s\",\"" D_JSON_STARTDST "\":\"%s\",\"" D_JSON_ENDDST "\":\"%s\",\"" D_CMND_TIMEZONE "\":%d,\"" D_JSON_SUNRISE "\":\"%s\",\"" D_JSON_SUNSET "\":\"%s\"}}"),
-      GetTime(0).c_str(), GetTime(1).c_str(), GetTime(2).c_str(), GetTime(3).c_str(), Settings.timezone, GetSun(0).c_str(), GetSun(1).c_str());
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_STATUS D_STATUS7_TIME "\":{\"" D_JSON_UTC_TIME "\":\"%s\",\"" D_JSON_LOCAL_TIME "\":\"%s\",\"" D_JSON_STARTDST "\":\"%s\",\"" D_JSON_ENDDST "\":\"%s\",\"" D_CMND_TIMEZONE "\":%s,\"" D_JSON_SUNRISE "\":\"%s\",\"" D_JSON_SUNSET "\":\"%s\"}}"),
+      GetTime(0).c_str(), GetTime(1).c_str(), GetTime(2).c_str(), GetTime(3).c_str(), stemp, GetSun(0).c_str(), GetSun(1).c_str());
 #else
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_STATUS D_STATUS7_TIME "\":{\"" D_JSON_UTC_TIME "\":\"%s\",\"" D_JSON_LOCAL_TIME "\":\"%s\",\"" D_JSON_STARTDST "\":\"%s\",\"" D_JSON_ENDDST "\":\"%s\",\"" D_CMND_TIMEZONE "\":%d}}"),
-      GetTime(0).c_str(), GetTime(1).c_str(), GetTime(2).c_str(), GetTime(3).c_str(), Settings.timezone);
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_STATUS D_STATUS7_TIME "\":{\"" D_JSON_UTC_TIME "\":\"%s\",\"" D_JSON_LOCAL_TIME "\":\"%s\",\"" D_JSON_STARTDST "\":\"%s\",\"" D_JSON_ENDDST "\":\"%s\",\"" D_CMND_TIMEZONE "\":%s}}"),
+      GetTime(0).c_str(), GetTime(1).c_str(), GetTime(2).c_str(), GetTime(3).c_str(), stemp);
 #endif  // USE_TIMERS and USE_SUNRISE
     MqttPublishPrefixTopic_P(option, PSTR(D_CMND_STATUS "7"));
   }

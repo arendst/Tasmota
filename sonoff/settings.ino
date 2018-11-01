@@ -607,7 +607,13 @@ void SettingsDefaultSet2()
   SettingsDefaultSet_5_10_1();   // Display settings
 
   // Time
-  Settings.timezone = APP_TIMEZONE;
+  if (((APP_TIMEZONE > -14) && (APP_TIMEZONE < 15)) || (99 == APP_TIMEZONE)) {
+    Settings.timezone = APP_TIMEZONE;
+    Settings.timezone_minutes = 0;
+  } else {
+    Settings.timezone = APP_TIMEZONE / 60;
+    Settings.timezone_minutes = abs(APP_TIMEZONE % 60);
+  }
   strlcpy(Settings.ntp_server[0], NTP_SERVER1, sizeof(Settings.ntp_server[0]));
   strlcpy(Settings.ntp_server[1], NTP_SERVER2, sizeof(Settings.ntp_server[1]));
   strlcpy(Settings.ntp_server[2], NTP_SERVER3, sizeof(Settings.ntp_server[2]));
@@ -835,6 +841,9 @@ void SettingsDelta()
       for (byte j = 0; j < 5; j++) {
         Settings.rgbwwTable[j] = 255;
       }
+    }
+    if (Settings.version < 0x06030002) {
+      Settings.timezone_minutes = 0;
     }
 
     Settings.version = VERSION;

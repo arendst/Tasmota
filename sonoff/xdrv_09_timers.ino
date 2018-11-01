@@ -131,7 +131,7 @@ void DuskTillDawn(uint8_t *hour_up,uint8_t *minute_up, uint8_t *hour_down, uint8
 //  double Zeitzone = 0; //Weltzeit
 //  double Zeitzone = 1; //Winterzeit
 //  double Zeitzone = 2.0;   //Sommerzeit
-  double Zeitzone = ((double)time_timezone) / 10;
+  double Zeitzone = ((double)time_zone) / 60;
   double Zeitgleichung = BerechneZeitgleichung(&DK, T);
   double Minuten = Zeitgleichung * 60.0;
   double Zeitdifferenz = 12.0*acos((sin(h) - sin(B)*sin(DK)) / (cos(B)*cos(DK)))/pi;

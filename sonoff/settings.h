@@ -302,9 +302,7 @@ struct SYSCFG {
   uint16_t      pulse_counter_type;        // 5D0
   uint16_t      pulse_counter_debounce;    // 5D2
   uint8_t       rf_code[17][9];            // 5D4
-
-  byte          free_66d[1];               // 66D
-
+  uint8_t       timezone_minutes;          // 66D
   uint16_t      switch_debounce;           // 66E
   Timer         timer[MAX_TIMERS];         // 670
   int           latitude;                  // 6B0
