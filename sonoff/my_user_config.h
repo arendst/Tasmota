@@ -385,6 +385,8 @@
 
 #define USE_RC_SWITCH                            // Add support for RF transceiver using library RcSwitch (+2k7 code, 460 iram)
 
+//#define USE_MMHG                                 // Use mmHg instead of hPa
+
 /*********************************************************************************************\
  * Debug features are only supported in development branch
 \*********************************************************************************************/
