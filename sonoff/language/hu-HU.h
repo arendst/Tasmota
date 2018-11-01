@@ -110,7 +110,6 @@
 #define D_IP_ADDRESS "IP Cím"
 #define D_LIGHT "Fény"
 #define D_LWT "LWT"
-#define D_MMHG "mmHg"
 #define D_MODULE "Modul"
 #define D_MQTT "MQTT"
 #define D_MULTI_PRESS "több lenyomás"

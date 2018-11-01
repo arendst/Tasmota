@@ -110,7 +110,6 @@
 #define D_IP_ADDRESS "IP Adresi"
 #define D_LIGHT "Işık"
 #define D_LWT "LWT"
-#define D_MMHG "mmHg"
 #define D_MODULE "Modül"
 #define D_MQTT "MQTT"
 #define D_MULTI_PRESS "multi-press"

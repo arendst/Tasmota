@@ -110,7 +110,6 @@
 #define D_IP_ADDRESS "IP כתובת"
 #define D_LIGHT "אור"
 #define D_LWT "LWT"
-#define D_MMHG "mmHg"
 #define D_MODULE "מודול"
 #define D_MQTT "MQTT"
 #define D_MULTI_PRESS "multi-press"

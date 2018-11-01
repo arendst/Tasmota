@@ -110,7 +110,6 @@
 #define D_IP_ADDRESS "IP Адрес"
 #define D_LIGHT "Світло"
 #define D_LWT "LWT"
-#define D_MMHG "mmHg"
 #define D_MODULE "Модуль"
 #define D_MQTT "MQTT"
 #define D_MULTI_PRESS "багаторазове натискання"
