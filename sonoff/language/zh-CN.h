@@ -545,6 +545,7 @@
 #define D_UNIT_MICROMETER "微米"
 #define D_UNIT_MICROSECOND "微秒"
 #define D_UNIT_MILLIAMPERE "毫安"
+#define D_UNIT_MILLIMETER_MERCURY "mmHg"
 #define D_UNIT_MILLISECOND "毫秒"
 #define D_UNIT_MINUTE "分"
 #define D_UNIT_PARTS_PER_BILLION "ppb"
