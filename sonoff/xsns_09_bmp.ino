@@ -476,6 +476,11 @@ void BmpRead()
     if (bmp_sensors[bmp_idx].bmp_temperature != 0.0) {
       bmp_sensors[bmp_idx].bmp_temperature = ConvertTemp(bmp_sensors[bmp_idx].bmp_temperature);
     }
+#ifdef USE_MMHG
+    if (bmp_sensors[bmp_idx].bmp_pressure != 0.0) {
+      bmp_sensors[bmp_idx].bmp_pressure = ConvertPress(bmp_sensors[bmp_idx].bmp_pressure);
+    }
+#endif  // USE_MMHG
   }
 
   SetGlobalValues(bmp_sensors[0].bmp_temperature, bmp_sensors[0].bmp_humidity);
