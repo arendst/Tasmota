@@ -262,17 +262,6 @@ uint8_t xsns_index = 0;
 
 /*********************************************************************************************\
  * Function call to all xsns
- *
- * FUNC_INIT
- * FUNC_PREP_BEFORE_TELEPERIOD
- * FUNC_SAVE_BEFORE_RESTART
- * FUNC_JSON_APPEND
- * FUNC_WEB_APPEND
- * return FUNC_COMMAND
- * FUNC_EVERY_50_MSECOND
- * FUNC_EVERY_100_MSECOND
- * FUNC_EVERY_250_MSECOND
- * FUNC_EVERY_SECOND
 \*********************************************************************************************/
 
 uint8_t XsnsPresent()
@@ -284,9 +273,7 @@ boolean XsnsNextCall(byte Function)
 {
   xsns_index++;
   if (xsns_index == xsns_present) xsns_index = 0;
-  if (!((WL_CONNECTED == WiFi.status()) && (static_cast<uint32_t>(WiFi.localIP()) != 0))) {
-    delay(1);
-  }  
+  if (global_state.wifi_down) { delay(1); }
   return xsns_func_ptr[xsns_index](Function);
 }
 
@@ -303,9 +290,7 @@ boolean XsnsCall(byte Function)
 #ifdef PROFILE_XSNS_SENSOR_EVERY_SECOND
     uint32_t profile_start_millis = millis();
 #endif  // PROFILE_XSNS_SENSOR_EVERY_SECOND
-    if (!((WL_CONNECTED == WiFi.status()) && (static_cast<uint32_t>(WiFi.localIP()) != 0))) {
-      delay(1);
-    }
+    if (global_state.wifi_down) { delay(1); }
     result = xsns_func_ptr[x](Function);
 
 #ifdef PROFILE_XSNS_SENSOR_EVERY_SECOND

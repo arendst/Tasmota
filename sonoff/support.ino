@@ -1624,6 +1624,7 @@ int WifiState()
 
 void WifiConnect()
 {
+  WifiSetState(0);
   WiFi.persistent(false);    // Solve possible wifi init errors
   wifi_status = 0;
   wifi_retry_init = WIFI_RETRY_OFFSET_SEC + ((ESP.getChipId() & 0xF) * 2);
@@ -1881,6 +1882,7 @@ extern "C" {
 #define SECS_PER_MIN  ((uint32_t)(60UL))
 #define SECS_PER_HOUR ((uint32_t)(3600UL))
 #define SECS_PER_DAY  ((uint32_t)(SECS_PER_HOUR * 24UL))
+#define MINS_PER_HOUR ((uint32_t)(60UL))
 #define LEAP_YEAR(Y)  (((1970+Y)>0) && !((1970+Y)%4) && (((1970+Y)%100) || !((1970+Y)%400)))
 
 Ticker TickerRtc;
@@ -1895,7 +1897,7 @@ uint32_t standard_time = 0;
 uint32_t ntp_time = 0;
 uint32_t midnight = 1451602800;
 uint32_t restart_time = 0;
-int16_t  time_timezone = 0;  // Timezone * 10
+int32_t  time_zone = 0;
 uint8_t  midnight_now = 0;
 uint8_t  ntp_sync_minute = 0;
 
@@ -1925,7 +1927,16 @@ String GetBuildDateAndTime()
   }
   int month = (strstr(kMonthNamesEnglish, smonth) -kMonthNamesEnglish) /3 +1;
   snprintf_P(bdt, sizeof(bdt), PSTR("%d" D_YEAR_MONTH_SEPARATOR "%02d" D_MONTH_DAY_SEPARATOR "%02d" D_DATE_TIME_SEPARATOR "%s"), year, month, day, __TIME__);
-  return String(bdt);
+  return String(bdt);  // 2017-03-07T11:08:02
+}
+
+String GetTimeZone()
+{
+  char tz[7];
+
+  snprintf_P(tz, sizeof(tz), PSTR("%+03d:%02d"), time_zone / 60, abs(time_zone % 60));
+
+  return String(tz);  // -03:45
 }
 
 /*
@@ -1970,10 +1981,27 @@ String GetDateAndTime(byte time_type)
 
   if (Settings.flag3.time_append_timezone && (DT_LOCAL == time_type)) {
 //  if (Settings.flag3.time_append_timezone && ((DT_LOCAL == time_type) || (DT_ENERGY == time_type))) {
-    snprintf_P(dt, sizeof(dt), PSTR("%s%+03d:%02d"), dt, time_timezone / 10, abs((time_timezone % 10) * 6));  // if timezone = +2:30 then time_timezone = 25
+    strncat(dt, GetTimeZone().c_str(), sizeof(dt));
   }
 
-  return String(dt);
+  return String(dt);  // 2017-03-07T11:08:02-07:00
+}
+
+String GetTime(int type)
+{
+  /* type 1 - Local time
+   * type 2 - Daylight Savings time
+   * type 3 - Standard time
+   */
+  char stime[25];   // Skip newline
+
+  uint32_t time = utc_time;
+  if (1 == type) time = local_time;
+  if (2 == type) time = daylight_saving_time;
+  if (3 == type) time = standard_time;
+  snprintf_P(stime, sizeof(stime), sntp_get_real_time(time));
+
+  return String(stime);  // Thu Nov 01 11:41:02 2018
 }
 
 String GetUptime()
@@ -1993,9 +2021,9 @@ String GetUptime()
 
   // "128 14:35:44" - OpenVMS
   // "128T14:35:44" - Tasmota
-  snprintf_P(dt, sizeof(dt), PSTR("%dT%02d:%02d:%02d"),
-    ut.days, ut.hour, ut.minute, ut.second);
-  return String(dt);
+  snprintf_P(dt, sizeof(dt), PSTR("%dT%02d:%02d:%02d"), ut.days, ut.hour, ut.minute, ut.second);
+
+  return String(dt);  // 128T14:35:44
 }
 
 uint32_t GetMinutesUptime()
@@ -2143,18 +2171,6 @@ uint32_t RuleToTime(TimeRule r, int yr)
   return t;
 }
 
-String GetTime(int type)
-{
-  char stime[25];   // Skip newline
-
-  uint32_t time = utc_time;
-  if (1 == type) time = local_time;
-  if (2 == type) time = daylight_saving_time;
-  if (3 == type) time = standard_time;
-  snprintf_P(stime, sizeof(stime), sntp_get_real_time(time));
-  return String(stime);
-}
-
 uint32_t LocalTime()
 {
   return local_time;
@@ -2174,8 +2190,6 @@ boolean MidnightNow()
 
 void RtcSecond()
 {
-  int32_t stdoffset;
-  int32_t dstoffset;
   TIME_T tmpTime;
 
   if ((ntp_sync_minute > 59) && (RtcTime.minute > 2)) ntp_sync_minute = 1;                 // If sync prepare for a new cycle
@@ -2208,28 +2222,30 @@ void RtcSecond()
   utc_time++;
   local_time = utc_time;
   if (local_time > 1451602800) {  // 2016-01-01
-    int32_t time_offset = Settings.timezone * SECS_PER_HOUR;
+    int16_t timezone_minutes = Settings.timezone_minutes;
+    if (Settings.timezone < 0) { timezone_minutes *= -1; }
+    time_zone = (Settings.timezone * SECS_PER_HOUR) + (timezone_minutes * SECS_PER_MIN);
     if (99 == Settings.timezone) {
-      dstoffset = Settings.toffset[1] * SECS_PER_MIN;
-      stdoffset = Settings.toffset[0] * SECS_PER_MIN;
+      int32_t dstoffset = Settings.toffset[1] * SECS_PER_MIN;
+      int32_t stdoffset = Settings.toffset[0] * SECS_PER_MIN;
       if (Settings.tflag[1].hemis) {
         // Southern hemisphere
         if ((utc_time >= (standard_time - dstoffset)) && (utc_time < (daylight_saving_time - stdoffset))) {
-          time_offset = stdoffset;  // Standard Time
+          time_zone = stdoffset;  // Standard Time
         } else {
-          time_offset = dstoffset;  // Daylight Saving Time
+          time_zone = dstoffset;  // Daylight Saving Time
         }
       } else {
         // Northern hemisphere
         if ((utc_time >= (daylight_saving_time - stdoffset)) && (utc_time < (standard_time - dstoffset))) {
-          time_offset = dstoffset;  // Daylight Saving Time
+          time_zone = dstoffset;  // Daylight Saving Time
         } else {
-          time_offset = stdoffset;  // Standard Time
+          time_zone = stdoffset;  // Standard Time
         }
       }
     }
-    local_time += time_offset;
-    time_timezone = time_offset / 360;  // (SECS_PER_HOUR / 10) fails as it is defined as UL
+    local_time += time_zone;
+    time_zone /= 60;
     if (!Settings.energy_kWhtotal_time) { Settings.energy_kWhtotal_time = local_time; }
   }
   BreakTime(local_time, RtcTime);
