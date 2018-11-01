@@ -178,6 +178,7 @@
 #define HUMIDITY_RESOLUTION    1                 // [HumRes] Maximum number of decimals (0 - 3) showing sensor Humidity
 #define PRESSURE_RESOLUTION    1                 // [PressRes] Maximum number of decimals (0 - 3) showing sensor Pressure
 #define ENERGY_RESOLUTION      3                 // [EnergyRes] Maximum number of decimals (0 - 5) showing energy usage in kWh
+//#define USE_MMHG                                 // Use mmHg instead of hPa
 
 /*********************************************************************************************\
  * END OF SECTION 1
@@ -384,8 +385,6 @@
 #define USE_TX20_WIND_SENSOR                     // Add support for La Crosse TX20 anemometer (+2k code)
 
 #define USE_RC_SWITCH                            // Add support for RF transceiver using library RcSwitch (+2k7 code, 460 iram)
-
-//#define USE_MMHG                                 // Use mmHg instead of hPa
 
 /*********************************************************************************************\
  * Debug features are only supported in development branch
