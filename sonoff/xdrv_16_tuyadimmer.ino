@@ -33,7 +33,7 @@ boolean tuya_ignore_dim = false;            // Flag to skip serial send to preve
 uint8_t tuya_cmd_status = 0;                // Current status of serial-read
 uint8_t tuya_cmd_checksum = 0;              // Checksum of tuya command
 uint8_t tuya_data_len = 0;                  // Data lenght of command
-int8_t tuya_wifi_state = -2;
+int8_t tuya_wifi_state = -2;                // Keep MCU wifi-status in sync with WifiState()
 
 char tuya_buffer[TUYA_BUFFER_SIZE];         // Serial receive buffer
 int tuya_byte_counter = 0;                  // Index in serial receive buffer
@@ -113,6 +113,10 @@ void TuyaPacketProcess()
 
   if (tuya_byte_counter == 7 && tuya_buffer[3] == 14 ) {  // heartbeat packet
     AddLog_P(LOG_LEVEL_DEBUG, PSTR("TYA: Heartbeat"));
+    if(tuya_buffer[6] == 0){
+      AddLog_P(LOG_LEVEL_DEBUG, PSTR("TYA: Detected MCU restart"));
+      tuya_wifi_state = -2;
+    }
   }
   else if (tuya_byte_counter == 12 && tuya_buffer[3] == 7 && tuya_buffer[5] == 5) {  // on/off packet
 
@@ -156,8 +160,32 @@ void TuyaPacketProcess()
   }
   else if (tuya_byte_counter == 7 && tuya_buffer[3] == 3 && tuya_buffer[6] == 2) {  // WiFi LED has been sucessfully set.
 
-    AddLog_P(LOG_LEVEL_DEBUG, PSTR("TYA: WiFi LED set ACK"));
+    AddLog_P(LOG_LEVEL_DEBUG, PSTR("TYA: WiFi LED set ACK Rcvd"));
     tuya_wifi_state = WifiState();
+  }
+  else if (tuya_buffer[3] == 2) {  // MCU configuration packet
+
+    AddLog_P(LOG_LEVEL_DEBUG, PSTR("TYA: MCU configuration Rcvd"));
+
+    if (tuya_buffer[5] == 2) {
+      uint8_t led1_gpio = tuya_buffer[6];
+      uint8_t key1_gpio = tuya_buffer[7];
+      boolean key1_set = false;
+      boolean led1_set = false;
+      for (byte i = 0; i < MAX_GPIO_PIN; i++) {
+        if (Settings.my_gp.io[i] == GPIO_LED1) led1_set = true;
+        else if (Settings.my_gp.io[i] == GPIO_KEY1) key1_set = true;
+      }
+      if(!Settings.my_gp.io[led1_gpio] && !led1_set){
+        Settings.my_gp.io[led1_gpio] = GPIO_LED1;
+        restart_flag = 2;
+      }
+      if(!Settings.my_gp.io[key1_gpio] && !key1_set){
+        Settings.my_gp.io[key1_gpio] = GPIO_KEY1;
+        restart_flag = 2;
+      }
+    }
+    TuyaRequestState();
   }
 }
 
@@ -224,8 +252,11 @@ void TuyaSerialInput()
 boolean TuyaModuleSelected()
 {
   if (!(pin[GPIO_TUYA_RX] < 99) || !(pin[GPIO_TUYA_TX] < 99)) {  // fallback to hardware-serial if not explicitly selected
-    pin[GPIO_TUYA_RX] = 1;
-    pin[GPIO_TUYA_TX] = 3;
+    pin[GPIO_TUYA_TX] = 1;
+    pin[GPIO_TUYA_RX] = 3;
+    Settings.my_gp.io[1] = GPIO_TUYA_TX;
+    Settings.my_gp.io[3] = GPIO_TUYA_RX;
+    restart_flag = 2;
   }
   light_type = LT_SERIAL;
   return true;
@@ -260,15 +291,8 @@ void TuyaSetWifiLed(){
     TuyaSerial->flush();
 }
 
-void TuyaInit()
-{
-  if (!Settings.param[P_TUYA_DIMMER_ID]) {
-    Settings.param[P_TUYA_DIMMER_ID] = TUYA_DIMMER_ID;
-  }
-  TuyaSerial = new TasmotaSerial(pin[GPIO_TUYA_RX], pin[GPIO_TUYA_TX], 1);
-  if (TuyaSerial->begin(9600)) {
-    if (TuyaSerial->hardwareSerial()) { ClaimSerial(); }
-
+void TuyaRequestState(){
+  if(TuyaSerial) {
     // Get current status of MCU
     snprintf_P(log_data, sizeof(log_data), "TYA: Request MCU state");
     AddLog(LOG_LEVEL_DEBUG);
@@ -280,6 +304,26 @@ void TuyaInit()
     TuyaSerial->write((uint8_t)0x00);
     TuyaSerial->write((uint8_t)0x00); // following data length 0x00
     TuyaSerial->write((uint8_t)0x07); // checksum:sum of all bytes in packet mod 256
+    TuyaSerial->flush();
+  }
+}
+
+void TuyaInit()
+{
+  TuyaSerial = new TasmotaSerial(pin[GPIO_TUYA_RX], pin[GPIO_TUYA_TX], 1);
+  if (TuyaSerial->begin(9600)) {
+    if (TuyaSerial->hardwareSerial()) { ClaimSerial(); }
+    // Get MCU Configuration
+    snprintf_P(log_data, sizeof(log_data), "TYA: Request MCU configuration");
+    AddLog(LOG_LEVEL_DEBUG);
+
+    TuyaSerial->write((uint8_t)0x55); // header 55AA
+    TuyaSerial->write((uint8_t)0xAA);
+    TuyaSerial->write((uint8_t)0x00); // version 00
+    TuyaSerial->write((uint8_t)0x02); // command 02 - get configuration
+    TuyaSerial->write((uint8_t)0x00);
+    TuyaSerial->write((uint8_t)0x00); // following data length 0x00
+    TuyaSerial->write((uint8_t)0x01); // checksum:sum of all bytes in packet mod 256
     TuyaSerial->flush();
   }
 }
