@@ -153,7 +153,7 @@ void TuyaPacketProcess()
       ExecuteCommand(scmnd, SRC_SWITCH);
     }
   }
-  else if (tuya_byte_counter == 8 && tuya_buffer[3] == 5 && tuya_buffer[5] == 1 && tuya_buffer[7] == 5 ) {  // reset WiFi settings packet
+  else if (tuya_byte_counter == 8 && tuya_buffer[3] == 5 && tuya_buffer[5] == 1) {  // reset WiFi settings packet
 
     AddLog_P(LOG_LEVEL_DEBUG, PSTR("TYA: WiFi Reset Rcvd"));
     TuyaResetWifi();
