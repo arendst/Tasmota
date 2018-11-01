@@ -117,7 +117,6 @@ boolean XdspCall(byte Function)
   boolean result = false;
 
   for (byte x = 0; x < xdsp_present; x++) {
-    if (global_state.wifi_down) { delay(DRIVER_BOOT_DELAY); }
     result = xdsp_func_ptr[x](Function);
     if (result) break;
   }
