@@ -90,6 +90,7 @@ int XnrgCall(byte Function)
   int result = 0;
 
   for (byte x = 0; x < xnrg_present; x++) {
+    if (global_state.wifi_down) { delay(DRIVER_BOOT_DELAY); }
     result = xnrg_func_ptr[x](Function);
     if (result) break;
   }
