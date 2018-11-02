@@ -210,6 +210,7 @@ boolean UdpDisconnect()
 boolean UdpConnect()
 {
   if (!udp_connected) {
+    delay(0); // Fix issue when using Emulation, PWM and Serial Communication
     if (PortUdp.beginMulticast(WiFi.localIP(), ipMulticast, port_multicast)) {
       AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_UPNP D_MULTICAST_REJOINED));
       udp_response_mutex = false;
