@@ -1154,7 +1154,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
   },
   { "Tuya Dimmer",     // Tuya Dimmer (ESP8266 w/ separate MCU dimmer)
                        // https://www.amazon.com/gp/product/B07CTNSZZ8/ref=oh_aui_detailpage_o00_s00?ie=UTF8&psc=1
-     GPIO_KEY1,        // Virtual Button (controlled by MCU)
+     GPIO_USER,        // Virtual Button (controlled by MCU)
      GPIO_USER,        // GPIO01 MCU serial control
      GPIO_USER,
      GPIO_USER,        // GPIO03 MCU serial control
@@ -1163,7 +1163,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      0, 0, 0, 0, 0, 0, // Flash connection
      GPIO_USER,
      GPIO_USER,
-     GPIO_LED1,        // GPIO14 Green Led
+     GPIO_USER,        // GPIO14 Green Led
      GPIO_USER,
      GPIO_USER,
      0
