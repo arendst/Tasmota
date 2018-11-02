@@ -335,7 +335,6 @@ void TuyaResetWifi()
 {
   if (!Settings.flag.button_restrict) {
     char scmnd[20];
-    tuya_wifi_state = -1;
     snprintf_P(scmnd, sizeof(scmnd), D_CMND_WIFICONFIG " %d", 2);
     ExecuteCommand(scmnd, SRC_BUTTON);
   }
