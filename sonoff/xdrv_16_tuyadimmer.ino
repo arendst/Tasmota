@@ -102,11 +102,11 @@ void TuyaSendState(uint8_t type, uint8_t id, uint8_t* value){
 }
 
 void TuyaSendBool(uint8_t id, boolean value){
-    TuyaSendState(TUYA_TYPE_BOOL, TUYA_POWER_ID, &value);
+    TuyaSendState(TUYA_TYPE_BOOL, id, &value);
 }
 
 void TuyaSendValue(uint8_t id, uint32_t value){
-    TuyaSendState(TUYA_TYPE_VALUE, Settings.param[P_TUYA_DIMMER_ID], (uint8_t*)(&value));
+    TuyaSendState(TUYA_TYPE_VALUE, id, (uint8_t*)(&value));
 }
 
 boolean TuyaSetPower()
@@ -136,6 +136,7 @@ void LightSerialDuty(uint8_t duty)
     }
     
     TuyaSendValue(Settings.param[P_TUYA_DIMMER_ID], duty);
+    TuyaSendBool(TUYA_POWER_ID, power);
 
     snprintf_P(log_data, sizeof(log_data), PSTR( "TYA: Send Serial Packet Dim Value=%d (id=%d)"), duty, Settings.param[P_TUYA_DIMMER_ID]);
     AddLog(LOG_LEVEL_DEBUG);
