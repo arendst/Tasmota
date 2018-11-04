@@ -99,6 +99,7 @@
 #define D_JSON_REACTIVE_POWERUSAGE "ReactivePower"
 #define D_JSON_PRESSURE "Pressure"
 #define D_JSON_PRESSUREATSEALEVEL "SeaPressure"
+#define D_JSON_PRESSURE_UNIT "PressureUnit"
 #define D_JSON_PROGRAMFLASHSIZE "ProgramFlashSize"
 #define D_JSON_PROGRAMSIZE "ProgramSize"
 #define D_JSON_RESET "Reset"
@@ -529,13 +530,8 @@ const char kOptionBlinkOff[] PROGMEM = "BLINKOFF|" D_BLINKOFF ;
 #ifdef USE_WEBSERVER
 const char HTTP_SNS_TEMP[] PROGMEM = "%s{s}%s " D_TEMPERATURE "{m}%s&deg;%c{e}";                             // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
 const char HTTP_SNS_HUM[] PROGMEM = "%s{s}%s " D_HUMIDITY "{m}%s%%{e}";                                      // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
-#ifndef USE_MMHG
-const char HTTP_SNS_PRESSURE[] PROGMEM = "%s{s}%s " D_PRESSURE "{m}%s " D_UNIT_PRESSURE "{e}";               // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
-const char HTTP_SNS_SEAPRESSURE[] PROGMEM = "%s{s}%s " D_PRESSUREATSEALEVEL "{m}%s " D_UNIT_PRESSURE "{e}";  // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
-#else
-const char HTTP_SNS_PRESSURE[] PROGMEM = "%s{s}%s " D_PRESSURE "{m}%s " D_UNIT_MILLIMETER_MERCURY "{e}";               // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
-const char HTTP_SNS_SEAPRESSURE[] PROGMEM = "%s{s}%s " D_PRESSUREATSEALEVEL "{m}%s " D_UNIT_MILLIMETER_MERCURY "{e}";  // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
-#endif
+const char HTTP_SNS_PRESSURE[] PROGMEM = "%s{s}%s " D_PRESSURE "{m}%s %s{e}";                                // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
+const char HTTP_SNS_SEAPRESSURE[] PROGMEM = "%s{s}%s " D_PRESSUREATSEALEVEL "{m}%s %s{e}";                   // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
 const char HTTP_SNS_ANALOG[] PROGMEM = "%s{s}%s " D_ANALOG_INPUT "%d{m}%d{e}";                               // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
 
 #if defined(USE_MHZ19) || defined(USE_SENSEAIR)

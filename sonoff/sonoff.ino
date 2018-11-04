@@ -1613,6 +1613,9 @@ boolean MqttShowSensor()
   }
   XsnsCall(FUNC_JSON_APPEND);
   boolean json_data_available = (strlen(mqtt_data) - json_data_start);
+  if (strstr_P(mqtt_data, PSTR(D_JSON_PRESSURE))) {
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"" D_JSON_PRESSURE_UNIT "\":\"%s\""), mqtt_data, PressureUnit().c_str());
+  }
   if (strstr_P(mqtt_data, PSTR(D_JSON_TEMPERATURE))) {
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"" D_JSON_TEMPERATURE_UNIT "\":\"%c\""), mqtt_data, TempUnit());
   }

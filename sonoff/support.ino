@@ -475,14 +475,19 @@ char TempUnit()
   return (Settings.flag.temperature_conversion) ? 'F' : 'C';
 }
 
-float ConvertPress(float p)
+float ConvertPressure(float p)
 {
   float result = p;
 
-  if (!isnan(p)) {
+  if (!isnan(p) && Settings.flag.pressure_conversion) {
     result = p * 0.75006375541921;  // mmHg
   }
   return result;
+}
+
+String PressureUnit()
+{
+  return (Settings.flag.pressure_conversion) ? String(D_UNIT_MILLIMETER_MERCURY) : String(D_UNIT_PRESSURE);
 }
 
 void SetGlobalValues(float temperature, float humidity)

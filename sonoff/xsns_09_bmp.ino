@@ -49,8 +49,6 @@ struct BMPSTRUCT {
   char bmp_name[7];       // Sensor name - "BMPXXX"
   uint8_t bmp_type = 0;
   uint8_t bmp_model = 0;
-
-  uint8_t bmp_valid = 0;
 #ifdef USE_BME680
   uint8_t bme680_state = 0;
   float bmp_gas_resistance = 0.0;
@@ -473,17 +471,8 @@ void BmpRead()
         break;
 #endif  // USE_BME680
     }
-    if (bmp_sensors[bmp_idx].bmp_temperature != 0.0) {
-      bmp_sensors[bmp_idx].bmp_temperature = ConvertTemp(bmp_sensors[bmp_idx].bmp_temperature);
-    }
-#ifdef USE_MMHG
-    if (bmp_sensors[bmp_idx].bmp_pressure != 0.0) {
-      bmp_sensors[bmp_idx].bmp_pressure = ConvertPress(bmp_sensors[bmp_idx].bmp_pressure);
-    }
-#endif  // USE_MMHG
   }
-
-  SetGlobalValues(bmp_sensors[0].bmp_temperature, bmp_sensors[0].bmp_humidity);
+  SetGlobalValues(ConvertTemp(bmp_sensors[0].bmp_temperature), bmp_sensors[0].bmp_humidity);
 }
 
 void BmpEverySecond()
@@ -511,15 +500,18 @@ void BmpShow(boolean json)
 
       if (bmp_sensors[bmp_idx].bmp_pressure != 0.0) {
         bmp_sealevel = (bmp_sensors[bmp_idx].bmp_pressure / FastPrecisePow(1.0 - ((float)Settings.altitude / 44330.0), 5.255)) - 21.6;
+        bmp_sealevel = ConvertPressure(bmp_sealevel);
       }
+      float bmp_temperature = ConvertTemp(bmp_sensors[bmp_idx].bmp_temperature);
+      float bmp_pressure = ConvertPressure(bmp_sensors[bmp_idx].bmp_pressure);
 
       snprintf(name, sizeof(name), bmp_sensors[bmp_idx].bmp_name);
       if (bmp_count > 1) {
         snprintf_P(name, sizeof(name), PSTR("%s-%02X"), name, bmp_sensors[bmp_idx].bmp_address);  // BMXXXX-XX
       }
 
-      dtostrfd(bmp_sensors[bmp_idx].bmp_temperature, Settings.flag2.temperature_resolution, temperature);
-      dtostrfd(bmp_sensors[bmp_idx].bmp_pressure, Settings.flag2.pressure_resolution, pressure);
+      dtostrfd(bmp_temperature, Settings.flag2.temperature_resolution, temperature);
+      dtostrfd(bmp_pressure, Settings.flag2.pressure_resolution, pressure);
       dtostrfd(bmp_sealevel, Settings.flag2.pressure_resolution, sea_pressure);
       dtostrfd(bmp_sensors[bmp_idx].bmp_humidity, Settings.flag2.humidity_resolution, humidity);
 #ifdef USE_BME680
@@ -563,7 +555,7 @@ void BmpShow(boolean json)
 
 #ifdef USE_KNX
         if (0 == tele_period) {
-          KnxSensor(KNX_TEMPERATURE, bmp_sensors[bmp_idx].bmp_temperature);
+          KnxSensor(KNX_TEMPERATURE, bmp_temperature);
           KnxSensor(KNX_HUMIDITY, bmp_sensors[bmp_idx].bmp_humidity);
         }
 #endif  // USE_KNX
@@ -574,9 +566,9 @@ void BmpShow(boolean json)
         if (bmp_sensors[bmp_idx].bmp_model >= 2) {
           snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_HUM, mqtt_data, name, humidity);
         }
-        snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_PRESSURE, mqtt_data, name, pressure);
+        snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_PRESSURE, mqtt_data, name, pressure, PressureUnit().c_str());
         if (Settings.altitude != 0) {
-          snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_SEAPRESSURE, mqtt_data, name, sea_pressure);
+          snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_SEAPRESSURE, mqtt_data, name, sea_pressure, PressureUnit().c_str());
         }
 #ifdef USE_BME680
         if (bmp_sensors[bmp_idx].bmp_model >= 3) {
