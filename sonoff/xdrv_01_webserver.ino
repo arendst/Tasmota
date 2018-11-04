@@ -397,7 +397,7 @@ void StopWebserver()
 void WifiManagerBegin()
 {
   // setup AP
-  if ((WL_CONNECTED == WiFi.status()) && (static_cast<uint32_t>(WiFi.localIP()) != 0)) {
+  if (!global_state.wifi_down) {
     WiFi.mode(WIFI_AP_STA);
     AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_WIFI D_WIFIMANAGER_SET_ACCESSPOINT_AND_STATION));
   } else {

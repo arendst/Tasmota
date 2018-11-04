@@ -1630,9 +1630,7 @@ int WifiState()
 {
   int state = -1;
 
-  if ((WL_CONNECTED == WiFi.status()) && (static_cast<uint32_t>(WiFi.localIP()) != 0)) {
-    state = WIFI_RESTART;
-  }
+  if (!global_state.wifi_down) { state = WIFI_RESTART; }
   if (wifi_config_type) { state = wifi_config_type; }
   return state;
 }
@@ -2209,7 +2207,7 @@ void RtcSecond()
 
   if ((ntp_sync_minute > 59) && (RtcTime.minute > 2)) ntp_sync_minute = 1;                 // If sync prepare for a new cycle
   uint8_t offset = (uptime < 30) ? RtcTime.second : (((ESP.getChipId() & 0xF) * 3) + 3) ;  // First try ASAP to sync. If fails try once every 60 seconds based on chip id
-  if ((WL_CONNECTED == WiFi.status()) && (offset == RtcTime.second) && ((RtcTime.year < 2016) || (ntp_sync_minute == RtcTime.minute) || ntp_force_sync)) {
+  if (!global_state.wifi_down && (offset == RtcTime.second) && ((RtcTime.year < 2016) || (ntp_sync_minute == RtcTime.minute) || ntp_force_sync)) {
     ntp_time = sntp_get_current_timestamp();
     if (ntp_time > 1451602800) {  // Fix NTP bug in core 2.4.1/SDK 2.2.1 (returns Thu Jan 01 08:00:10 1970 after power on)
       ntp_force_sync = 0;
@@ -2452,9 +2450,7 @@ void AddLog(byte loglevel)
     if (!web_log_index) web_log_index++;   // Index 0 is not allowed as it is the end of char string
   }
 #endif  // USE_WEBSERVER
-  if ((WL_CONNECTED == WiFi.status()) && (loglevel <= syslog_level)) {
-    Syslog();
-  }
+  if (!global_state.wifi_down && (loglevel <= syslog_level)) { Syslog(); }
 }
 
 void AddLog_P(byte loglevel, const char *formatP)

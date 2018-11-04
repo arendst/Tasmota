@@ -2167,7 +2167,7 @@ void Every250mSeconds()
     wifi_state_flag = WIFI_RESTART;
     break;
   case 3:                                                 // Every x.75 second
-    if (WL_CONNECTED == WiFi.status()) { MqttCheck(); }
+    if (!global_state.wifi_down) { MqttCheck(); }
     break;
   }
 }
