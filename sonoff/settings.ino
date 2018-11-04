@@ -563,14 +563,15 @@ void SettingsDefaultSet2()
 
   // Sensor
   Settings.flag.temperature_conversion = TEMP_CONVERSION;
+  Settings.flag.pressure_conversion = PRESSURE_CONVERSION;
   Settings.flag2.pressure_resolution = PRESSURE_RESOLUTION;
   Settings.flag2.humidity_resolution = HUMIDITY_RESOLUTION;
   Settings.flag2.temperature_resolution = TEMP_RESOLUTION;
 //  Settings.altitude = 0;
 
   // Rules
-//  Settings.flag.rules_enabled = 0;
-//  Settings.flag.rules_once = 0;
+//  Settings.rule_enabled = 0;
+//  Settings.rule_once = 0;
 //  for (byte i = 1; i < MAX_RULE_SETS; i++) { Settings.rules[i][0] = '\0'; }
 
   // Home Assistant
@@ -804,8 +805,8 @@ void SettingsDelta()
     }
     if (Settings.version < 0x050E0002) {
       for (byte i = 1; i < MAX_RULE_SETS; i++) { Settings.rules[i][0] = '\0'; }
-      Settings.rule_enabled = Settings.flag.mqtt_serial_raw;
-      Settings.rule_once = Settings.flag.rules_once;
+      Settings.rule_enabled = Settings.flag.mqtt_serial_raw;   // Was rules_enabled until 5.14.0b
+      Settings.rule_once = Settings.flag.pressure_conversion;  // Was rules_once until 5.14.0b
     }
     if (Settings.version < 0x06000000) {
       Settings.cfg_size = sizeof(SYSCFG);
@@ -826,8 +827,8 @@ void SettingsDelta()
       }
     }
     if (Settings.version < 0x06000003) {
-      Settings.flag.mqtt_serial_raw = 0;
-      Settings.flag.rules_once = 0;
+      Settings.flag.mqtt_serial_raw = 0;      // Was rules_enabled until 5.14.0b
+      Settings.flag.pressure_conversion = 0;  // Was rules_once until 5.14.0b
       Settings.flag3.data = 0;
     }
     if (Settings.version < 0x06010103) {

@@ -638,7 +638,7 @@ void DisplayLogBufferInit()
     DisplayLogBufferAdd(buffer);
     snprintf_P(buffer, sizeof(buffer), PSTR(D_JSON_MAC " %s"), WiFi.macAddress().c_str());
     DisplayLogBufferAdd(buffer);
-    if (!global_state.wifi_down && (static_cast<uint32_t>(WiFi.localIP()) != 0)) {
+    if (!global_state.wifi_down) {
       snprintf_P(buffer, sizeof(buffer), PSTR("IP %s"), WiFi.localIP().toString().c_str());
       DisplayLogBufferAdd(buffer);
       snprintf_P(buffer, sizeof(buffer), PSTR(D_JSON_RSSI " %d%%"), WifiGetRssiAsQuality(WiFi.RSSI()));
@@ -663,7 +663,8 @@ enum SensorQuantity {
   JSON_CURRENT,
   JSON_VOLTAGE,
   JSON_POWERUSAGE,
-  JSON_CO2 };
+  JSON_CO2,
+  JSON_FREQUENCY };
 const char kSensorQuantity[] PROGMEM =
   D_JSON_TEMPERATURE "|"                                                        // degrees
   D_JSON_HUMIDITY "|" D_JSON_LIGHT "|" D_JSON_NOISE "|" D_JSON_AIRQUALITY "|"   // percentage
@@ -676,7 +677,8 @@ const char kSensorQuantity[] PROGMEM =
   D_JSON_CURRENT "|"                                                            // Ampere
   D_JSON_VOLTAGE "|"                                                            // Volt
   D_JSON_POWERUSAGE "|"                                                         // Watt
-  D_JSON_CO2 ;                                                                  // ppm
+  D_JSON_CO2 "|"                                                                // ppm
+  D_JSON_FREQUENCY ;                                                            // Hz
 
 void DisplayJsonValue(const char *topic, const char* device, const char* mkey, const char* value)
 {
@@ -731,6 +733,9 @@ void DisplayJsonValue(const char *topic, const char* device, const char* mkey, c
   }
   else if (JSON_CO2 == quantity_code) {
     snprintf_P(svalue, sizeof(svalue), PSTR("%s" D_UNIT_PARTS_PER_MILLION), value);
+  }
+  else if (JSON_FREQUENCY == quantity_code) {
+    snprintf_P(svalue, sizeof(svalue), PSTR("%s" D_UNIT_HERTZ), value);
   }
   snprintf_P(buffer, sizeof(buffer), PSTR("%s %s"), source, svalue);
 
