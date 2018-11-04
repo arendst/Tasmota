@@ -475,6 +475,16 @@ char TempUnit()
   return (Settings.flag.temperature_conversion) ? 'F' : 'C';
 }
 
+float ConvertPress(float p)
+{
+  float result = p;
+
+  if (!isnan(p)) {
+    result = p * 0.75006375541921;  // mmHg
+  }
+  return result;
+}
+
 void SetGlobalValues(float temperature, float humidity)
 {
   global_update = uptime;

@@ -545,6 +545,7 @@
 #define D_UNIT_MICROMETER "мкм"
 #define D_UNIT_MICROSECOND "мкс"
 #define D_UNIT_MILLIAMPERE "мА"
+#define D_UNIT_MILLIMETER_MERCURY "мм рт.ст."
 #define D_UNIT_MILLISECOND "мс"
 #define D_UNIT_MINUTE "мин"
 #define D_UNIT_PARTS_PER_BILLION "ppb"

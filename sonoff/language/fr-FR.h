@@ -545,6 +545,7 @@
 #define D_UNIT_MICROMETER "µm"
 #define D_UNIT_MICROSECOND "µs"
 #define D_UNIT_MILLIAMPERE "mA"
+#define D_UNIT_MILLIMETER_MERCURY "mmHg"
 #define D_UNIT_MILLISECOND "ms"
 #define D_UNIT_MINUTE "Min"
 #define D_UNIT_PARTS_PER_BILLION "ppb"
