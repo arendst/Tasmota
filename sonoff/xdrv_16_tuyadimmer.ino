@@ -54,11 +54,15 @@ int8_t tuya_wifi_state = -2;                // Keep MCU wifi-status in sync with
 char tuya_buffer[TUYA_BUFFER_SIZE];         // Serial receive buffer
 int tuya_byte_counter = 0;                  // Index in serial receive buffer
 
+/*********************************************************************************************\
+ * Internal Functions
+\*********************************************************************************************/
+
 void TuyaSendCmd(uint8_t cmd, uint8_t payload[] = nullptr, uint16_t payload_len = 0){
   uint8_t checksum = (0xFF + cmd + (payload_len >> 8) + (payload_len & 0xFF));
   TuyaSerial->write(0x55);                  // Tuya header 55AA
   TuyaSerial->write(0xAA);
-  TuyaSerial->write(0x00);                  // version 00
+  TuyaSerial->write((uint8_t)0x00);         // version 00
   TuyaSerial->write(cmd);                   // Tuya command
   TuyaSerial->write(payload_len >> 8);      // following data length (Hi)
   TuyaSerial->write(payload_len & 0xFF);    // following data length (Lo)
@@ -145,6 +149,25 @@ void LightSerialDuty(uint8_t duty)
     snprintf_P(log_data, sizeof(log_data), PSTR( "TYA: Send Dim Level skipped due to 0 or already set. Value=%d"), duty);
     AddLog(LOG_LEVEL_DEBUG);
 
+  }
+}
+
+void TuyaRequestState(){
+  if(TuyaSerial) {
+    // Get current status of MCU
+    snprintf_P(log_data, sizeof(log_data), "TYA: Request MCU state");
+    AddLog(LOG_LEVEL_DEBUG);
+
+    TuyaSendCmd(TUYA_CMD_QUERY_STATE);
+  }
+}
+
+void TuyaResetWifi()
+{
+  if (!Settings.flag.button_restrict) {
+    char scmnd[20];
+    snprintf_P(scmnd, sizeof(scmnd), D_CMND_WIFICONFIG " %d", 2);
+    ExecuteCommand(scmnd, SRC_BUTTON);
   }
 }
 
@@ -237,6 +260,39 @@ void TuyaPacketProcess()
   }
 }
 
+/*********************************************************************************************\
+ * API Functions
+\*********************************************************************************************/
+
+boolean TuyaModuleSelected()
+{
+  if (!(pin[GPIO_TUYA_RX] < 99) || !(pin[GPIO_TUYA_TX] < 99)) {  // fallback to hardware-serial if not explicitly selected
+    pin[GPIO_TUYA_TX] = 1;
+    pin[GPIO_TUYA_RX] = 3;
+    Settings.my_gp.io[1] = GPIO_TUYA_TX;
+    Settings.my_gp.io[3] = GPIO_TUYA_RX;
+    restart_flag = 2;
+  }
+  light_type = LT_SERIAL;
+  return true;
+}
+
+void TuyaInit()
+{
+  if (!Settings.param[P_TUYA_DIMMER_ID]) {
+    Settings.param[P_TUYA_DIMMER_ID] = TUYA_DIMMER_ID;
+  }
+  TuyaSerial = new TasmotaSerial(pin[GPIO_TUYA_RX], pin[GPIO_TUYA_TX], 1);
+  if (TuyaSerial->begin(9600)) {
+    if (TuyaSerial->hardwareSerial()) { ClaimSerial(); }
+    // Get MCU Configuration
+    snprintf_P(log_data, sizeof(log_data), "TYA: Request MCU configuration");
+    AddLog(LOG_LEVEL_DEBUG);
+
+    TuyaSendCmd(TUYA_CMD_MCU_CONF);
+  }
+}
+
 void TuyaSerialInput()
 {
   while (TuyaSerial->available()) {
@@ -292,17 +348,16 @@ void TuyaSerialInput()
   }
 }
 
-boolean TuyaModuleSelected()
+
+boolean TuyaButtonPressed()
 {
-  if (!(pin[GPIO_TUYA_RX] < 99) || !(pin[GPIO_TUYA_TX] < 99)) {  // fallback to hardware-serial if not explicitly selected
-    pin[GPIO_TUYA_TX] = 1;
-    pin[GPIO_TUYA_RX] = 3;
-    Settings.my_gp.io[1] = GPIO_TUYA_TX;
-    Settings.my_gp.io[3] = GPIO_TUYA_RX;
-    restart_flag = 2;
+  if (!XdrvMailbox.index && ((PRESSED == XdrvMailbox.payload) && (NOT_PRESSED == lastbutton[XdrvMailbox.index]))) {
+    snprintf_P(log_data, sizeof(log_data), PSTR("TYA: Reset GPIO triggered"));
+    AddLog(LOG_LEVEL_DEBUG);
+    TuyaResetWifi();
+    return true;  // Reset GPIO served here
   }
-  light_type = LT_SERIAL;
-  return true;
+  return false;   // Don't serve other buttons
 }
 
 void TuyaSetWifiLed(){
@@ -326,51 +381,6 @@ void TuyaSetWifiLed(){
     TuyaSendCmd(TUYA_CMD_WIFI_STATE, &wifi_state, 1);
 }
 
-void TuyaRequestState(){
-  if(TuyaSerial) {
-    // Get current status of MCU
-    snprintf_P(log_data, sizeof(log_data), "TYA: Request MCU state");
-    AddLog(LOG_LEVEL_DEBUG);
-
-    TuyaSendCmd(TUYA_CMD_QUERY_STATE);
-  }
-}
-
-void TuyaInit()
-{
-  if (!Settings.param[P_TUYA_DIMMER_ID]) {
-    Settings.param[P_TUYA_DIMMER_ID] = TUYA_DIMMER_ID;
-  }
-  TuyaSerial = new TasmotaSerial(pin[GPIO_TUYA_RX], pin[GPIO_TUYA_TX], 1);
-  if (TuyaSerial->begin(9600)) {
-    if (TuyaSerial->hardwareSerial()) { ClaimSerial(); }
-    // Get MCU Configuration
-    snprintf_P(log_data, sizeof(log_data), "TYA: Request MCU configuration");
-    AddLog(LOG_LEVEL_DEBUG);
-
-    TuyaSendCmd(TUYA_CMD_MCU_CONF);
-  }
-}
-
-void TuyaResetWifi()
-{
-  if (!Settings.flag.button_restrict) {
-    char scmnd[20];
-    snprintf_P(scmnd, sizeof(scmnd), D_CMND_WIFICONFIG " %d", 2);
-    ExecuteCommand(scmnd, SRC_BUTTON);
-  }
-}
-
-boolean TuyaButtonPressed()
-{
-  if (!XdrvMailbox.index && ((PRESSED == XdrvMailbox.payload) && (NOT_PRESSED == lastbutton[XdrvMailbox.index]))) {
-    snprintf_P(log_data, sizeof(log_data), PSTR("TYA: Reset GPIO triggered"));
-    AddLog(LOG_LEVEL_DEBUG);
-    TuyaResetWifi();
-    return true;  // Reset GPIO served here
-  }
-  return false;   // Don't serve other buttons
-}
 
 /*********************************************************************************************\
  * Interface
