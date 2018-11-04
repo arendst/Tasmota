@@ -647,7 +647,9 @@ const char HTTP_TIMER_STYLE[] PROGMEM =
 #endif
   "</style>";
 const char HTTP_FORM_TIMER[] PROGMEM =
-  "<fieldset style='min-width:470px;text-align:center;'><legend style='text-align:left;'><b>&nbsp;" D_TIMER_PARAMETERS "&nbsp;</b></legend><form method='post' action='" WEB_HANDLE_TIMER "'>"
+  "<fieldset style='min-width:470px;text-align:center;'>"
+  "<legend style='text-align:left;'><b>&nbsp;" D_TIMER_PARAMETERS "&nbsp;</b></legend>"
+  "<form method='post' action='" WEB_HANDLE_TIMER "' onsubmit='return st();'>"
   "<br/><input style='width:5%;' id='e0' name='e0' type='checkbox'{e0><b>" D_TIMER_ENABLE "</b><br/><br/><hr/>"
   "<input id='t0' name='t0' value='";
 const char HTTP_FORM_TIMER1[] PROGMEM =
@@ -676,8 +678,6 @@ const char HTTP_FORM_TIMER1[] PROGMEM =
   "<span><select style='width:60px;' id='mw' name='mw'></select></span>"
   "</div><br/>"
   "<div id='ds' name='ds'></div>";
-const char HTTP_FORM_TIMER2[] PROGMEM =
-  "type='submit' onclick='st();this.form.submit();'";
 
 void HandleTimerConfiguration()
 {
@@ -710,7 +710,6 @@ void HandleTimerConfiguration()
   page.replace(F("299"), String(100 + (strlen(D_SUNSET) *12)));  // Fix string length to keep radios centered
 #endif  // USE_SUNRISE
   page += FPSTR(HTTP_FORM_END);
-  page.replace(F("type='submit'"), FPSTR(HTTP_FORM_TIMER2));
   page += F("<script>it();</script>");  // Init elements and select first tab/button
   page += FPSTR(HTTP_BTN_CONF);
   ShowPage(page);
