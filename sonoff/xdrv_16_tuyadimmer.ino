@@ -56,12 +56,12 @@ int tuya_byte_counter = 0;                  // Index in serial receive buffer
 
 void TuyaSendCmd(uint8_t cmd, uint8_t payload[] = nullptr, uint16_t payload_len = 0){
   uint8_t checksum = (0xFF + cmd + (payload_len >> 8) + (payload_len & 0xFF));
-  TuyaSerial->write((uint8_t)0x55);        // Tuya header 55AA
-  TuyaSerial->write((uint8_t)0xAA);
-  TuyaSerial->write((uint8_t)0x00);        // version 00
-  TuyaSerial->write(cmd);                  // Tuya command
-  TuyaSerial->write(payload_len >> 8);     // following data length (Hi)
-  TuyaSerial->write(payload_len & 0xFF);   // following data length (Lo)
+  TuyaSerial->write(0x55);                  // Tuya header 55AA
+  TuyaSerial->write(0xAA);
+  TuyaSerial->write(0x00);                  // version 00
+  TuyaSerial->write(cmd);                   // Tuya command
+  TuyaSerial->write(payload_len >> 8);      // following data length (Hi)
+  TuyaSerial->write(payload_len & 0xFF);    // following data length (Lo)
   snprintf_P(log_data, sizeof(log_data), PSTR("TYA: Sent Packet: \"55aa00%02x%02x%02x"), cmd, payload_len >> 8, payload_len & 0xFF);
   for(int i = 0; i < payload_len; ++i) {
     TuyaSerial->write(payload[i]);
@@ -74,7 +74,7 @@ void TuyaSendCmd(uint8_t cmd, uint8_t payload[] = nullptr, uint16_t payload_len 
   AddLog(LOG_LEVEL_DEBUG);
 }
 
-void TuyaSendState(uint8_t type, uint8_t id, uint8_t* value){
+void TuyaSendState(uint8_t id, uint8_t type, uint8_t* value){
   uint16_t payload_len = 4;
   uint8_t payload_buffer[8];
   payload_buffer[0] = id;
@@ -101,11 +101,11 @@ void TuyaSendState(uint8_t type, uint8_t id, uint8_t* value){
 }
 
 void TuyaSendBool(uint8_t id, boolean value){
-    TuyaSendState(TUYA_TYPE_BOOL, id, &value);
+    TuyaSendState(id, TUYA_TYPE_BOOL, &value);
 }
 
 void TuyaSendValue(uint8_t id, uint32_t value){
-    TuyaSendState(TUYA_TYPE_VALUE, id, (uint8_t*)(&value));
+    TuyaSendState(id, TUYA_TYPE_VALUE, (uint8_t*)(&value));
 }
 
 boolean TuyaSetPower()
@@ -363,14 +363,13 @@ void TuyaResetWifi()
 
 boolean TuyaButtonPressed()
 {
-  if ((PRESSED == XdrvMailbox.payload) && (NOT_PRESSED == lastbutton[XdrvMailbox.index])) {
-
-    snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION D_BUTTON "%d " D_LEVEL_10), XdrvMailbox.index +1);
+  if (!XdrvMailbox.index && ((PRESSED == XdrvMailbox.payload) && (NOT_PRESSED == lastbutton[XdrvMailbox.index]))) {
+    snprintf_P(log_data, sizeof(log_data), PSTR("TYA: Reset GPIO triggered"));
     AddLog(LOG_LEVEL_DEBUG);
     TuyaResetWifi();
-
+    return true;  // Reset GPIO served here
   }
-  return true;  // Serviced here
+  return false;   // Don't serve other buttons
 }
 
 /*********************************************************************************************\
