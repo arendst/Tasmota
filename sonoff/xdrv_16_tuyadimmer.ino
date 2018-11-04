@@ -54,23 +54,22 @@ int8_t tuya_wifi_state = -2;                // Keep MCU wifi-status in sync with
 char tuya_buffer[TUYA_BUFFER_SIZE];         // Serial receive buffer
 int tuya_byte_counter = 0;                  // Index in serial receive buffer
 
-void TuyaSendCmd(uint8_t cmd, uint8_t payload[], uint16_t payload_len){
-  uint8_t checksum = 0xFF + cmd + (payload_len & 0xFF) + (payload_len >> 8);
+void TuyaSendCmd(uint8_t cmd, uint8_t payload[] = nullptr, uint16_t payload_len = 0){
+  uint8_t checksum = (0xFF + cmd + (payload_len >> 8) + (payload_len & 0xFF));
   TuyaSerial->write((uint8_t)0x55);        // Tuya header 55AA
   TuyaSerial->write((uint8_t)0xAA);
   TuyaSerial->write((uint8_t)0x00);        // version 00
   TuyaSerial->write(cmd);                  // Tuya command
   TuyaSerial->write(payload_len >> 8);     // following data length (Hi)
   TuyaSerial->write(payload_len & 0xFF);   // following data length (Lo)
-  snprintf_P(log_data, sizeof(log_data), PSTR("TYA: Send Packet: \"%02x%02x%02x%02x%02x%02x"), 0x55, 0xAA, 0x00, cmd, payload_len >> 8, payload_len & 0xFF);
-  for(int i = 0; i < payload_len; ++i){
+  snprintf_P(log_data, sizeof(log_data), PSTR("TYA: Sent Packet: \"55aa00%02x%02x%02x"), cmd, payload_len >> 8, payload_len & 0xFF);
+  for(int i = 0; i < payload_len; ++i) {
     TuyaSerial->write(payload[i]);
     checksum += payload[i];
     snprintf_P(log_data, sizeof(log_data), PSTR("%s%02x"), log_data, payload[i]);
   }
   TuyaSerial->write(checksum);
   TuyaSerial->flush();
-
   snprintf_P(log_data, sizeof(log_data), PSTR("%s%02x\""), log_data, checksum);
   AddLog(LOG_LEVEL_DEBUG);
 }
@@ -136,7 +135,6 @@ void LightSerialDuty(uint8_t duty)
     }
     
     TuyaSendValue(Settings.param[P_TUYA_DIMMER_ID], duty);
-    TuyaSendBool(TUYA_POWER_ID, power);
 
     snprintf_P(log_data, sizeof(log_data), PSTR( "TYA: Send Serial Packet Dim Value=%d (id=%d)"), duty, Settings.param[P_TUYA_DIMMER_ID]);
     AddLog(LOG_LEVEL_DEBUG);
@@ -233,6 +231,9 @@ void TuyaPacketProcess()
       }
       TuyaRequestState();
       break;
+
+    default:
+      AddLog_P(LOG_LEVEL_DEBUG, PSTR("TYA: Rcvd unknown command"));
   }
 }
 
@@ -331,7 +332,7 @@ void TuyaRequestState(){
     snprintf_P(log_data, sizeof(log_data), "TYA: Request MCU state");
     AddLog(LOG_LEVEL_DEBUG);
 
-    TuyaSendCmd(TUYA_CMD_QUERY_STATE, nullptr, 0);
+    TuyaSendCmd(TUYA_CMD_QUERY_STATE);
   }
 }
 
@@ -347,7 +348,7 @@ void TuyaInit()
     snprintf_P(log_data, sizeof(log_data), "TYA: Request MCU configuration");
     AddLog(LOG_LEVEL_DEBUG);
 
-    TuyaSendCmd(TUYA_CMD_MCU_CONF, nullptr, 0);
+    TuyaSendCmd(TUYA_CMD_MCU_CONF);
   }
 }
 
