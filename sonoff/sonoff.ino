@@ -869,13 +869,20 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
       mytmplt cmodule;
       memcpy_P(&cmodule, &kModules[Settings.module], sizeof(cmodule));
       if ((GPIO_USER == ValidGPIO(index, cmodule.gp.io[index])) && (payload >= 0) && (payload < GPIO_SENSOR_END)) {
-        for (byte i = 0; i < MAX_GPIO_PIN; i++) {
-          if ((GPIO_USER == ValidGPIO(i, cmodule.gp.io[i])) && (Settings.my_gp.io[i] == payload)) {
-            Settings.my_gp.io[i] = 0;
-          }
+        bool present = false;
+        for (byte i = 0; i < sizeof(kGpioNiceList); i++) {
+          uint8_t midx = pgm_read_byte(kGpioNiceList + i);
+          if (midx == payload) { present = true; }
         }
-        Settings.my_gp.io[index] = payload;
-        restart_flag = 2;
+        if (present) {
+          for (byte i = 0; i < MAX_GPIO_PIN; i++) {
+            if ((GPIO_USER == ValidGPIO(i, cmodule.gp.io[i])) && (Settings.my_gp.io[i] == payload)) {
+              Settings.my_gp.io[i] = 0;
+            }
+          }
+          Settings.my_gp.io[index] = payload;
+          restart_flag = 2;
+        }
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{"));
       for (byte i = 0; i < MAX_GPIO_PIN; i++) {
@@ -895,16 +902,19 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
     else if (CMND_GPIOS == command_code) {
       mytmplt cmodule;
       memcpy_P(&cmodule, &kModules[Settings.module], sizeof(cmodule));
-      for (byte i = 0; i < GPIO_SENSOR_END; i++) {
-        if (!GetUsedInModule(i, cmodule.gp.io)) {
+      uint8_t midx;
+      for (byte i = 0; i < sizeof(kGpioNiceList); i++) {
+        midx = pgm_read_byte(kGpioNiceList + i);
+        if (!GetUsedInModule(midx, cmodule.gp.io)) {
+
           if (!jsflg) {
             snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_GPIOS "%d\":["), lines);
           } else {
             snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,"), mqtt_data);
           }
           jsflg = 1;
-          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s\"%d (%s)\""), mqtt_data, i, GetTextIndexed(stemp1, sizeof(stemp1), i, kSensorNames));
-          if ((strlen(mqtt_data) > (LOGSZ - TOPSZ)) || (i == GPIO_SENSOR_END -1)) {
+          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s\"%d (%s)\""), mqtt_data, midx, GetTextIndexed(stemp1, sizeof(stemp1), midx, kSensorNames));
+          if ((strlen(mqtt_data) > (LOGSZ - TOPSZ)) || (i == sizeof(kGpioNiceList) -1)) {
             snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s]}"), mqtt_data);
             MqttPublishPrefixTopic_P(RESULT_OR_STAT, type);
             jsflg = 0;
@@ -912,6 +922,7 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
           }
         }
       }
+
       mqtt_data[0] = '\0';
     }
     else if ((CMND_PWM == command_code) && pwm_present && (index > 0) && (index <= MAX_PWMS)) {
