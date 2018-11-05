@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-VER = '2.0.0003'
+VER = '2.0.0004'
 
 """
     decode-config.py - Backup/Restore Sonoff-Tasmota configuration data
@@ -309,26 +309,26 @@ Setting_5_10_0 = {
     'version':                      ('<L',  0x008, None, ('hex($)', None)),
     'bootcount':                    ('<L',  0x00C, None, (None, None)),
     'flag':                         ({
-                                        'raw':                      ('<L',   0x010,         None, ('"0x{:08x}".format($)', None)),
-                                        'save_state':               ('<L',  (0x010, 1,  0), None),
-                                        'button_restrict':          ('<L',  (0x010, 1,  1), None),
-                                        'value_units':              ('<L',  (0x010, 1,  2), None),
-                                        'mqtt_enabled':             ('<L',  (0x010, 1,  3), None),
-                                        'mqtt_response':            ('<L',  (0x010, 1,  4), None),
-                                        'mqtt_power_retain':        ('<L',  (0x010, 1,  5), None),
-                                        'mqtt_button_retain':       ('<L',  (0x010, 1,  6), None),
-                                        'mqtt_switch_retain':       ('<L',  (0x010, 1,  7), None),
-                                        'temperature_conversion':   ('<L',  (0x010, 1,  8), None),
-                                        'mqtt_sensor_retain':       ('<L',  (0x010, 1,  9), None),
-                                        'mqtt_offline':             ('<L',  (0x010, 1, 10), None),
-                                        'button_swap':              ('<L',  (0x010, 1, 11), None),
-                                        'stop_flash_rotate':        ('<L',  (0x010, 1, 12), None),
-                                        'button_single':            ('<L',  (0x010, 1, 13), None),
-                                        'interlock':                ('<L',  (0x010, 1, 14), None),
-                                        'pwm_control':              ('<L',  (0x010, 1, 15), None),
-                                        'ws_clock_reverse':         ('<L',  (0x010, 1, 16), None),
-                                        'decimal_text':             ('<L',  (0x010, 1, 17), None),
-                                     },     0x010, None),
+        'raw':                      ('<L',  0x010,         None, ('"0x{:08x}".format($)', None)),
+        'save_state':               ('<L', (0x010, 1,  0), None),
+        'button_restrict':          ('<L', (0x010, 1,  1), None),
+        'value_units':              ('<L', (0x010, 1,  2), None),
+        'mqtt_enabled':             ('<L', (0x010, 1,  3), None),
+        'mqtt_response':            ('<L', (0x010, 1,  4), None),
+        'mqtt_power_retain':        ('<L', (0x010, 1,  5), None),
+        'mqtt_button_retain':       ('<L', (0x010, 1,  6), None),
+        'mqtt_switch_retain':       ('<L', (0x010, 1,  7), None),
+        'temperature_conversion':   ('<L', (0x010, 1,  8), None),
+        'mqtt_sensor_retain':       ('<L', (0x010, 1,  9), None),
+        'mqtt_offline':             ('<L', (0x010, 1, 10), None),
+        'button_swap':              ('<L', (0x010, 1, 11), None),
+        'stop_flash_rotate':        ('<L', (0x010, 1, 12), None),
+        'button_single':            ('<L', (0x010, 1, 13), None),
+        'interlock':                ('<L', (0x010, 1, 14), None),
+        'pwm_control':              ('<L', (0x010, 1, 15), None),
+        'ws_clock_reverse':         ('<L', (0x010, 1, 16), None),
+        'decimal_text':             ('<L', (0x010, 1, 17), None),
+                                    },      0x010, None),
     'save_data':                    ('<h',  0x014, None),
     'timezone':                     ('b',   0x016, None),
     'ota_url':                      ('101s',0x017, None),
@@ -356,16 +356,16 @@ Setting_5_10_0 = {
     'mqtt_fingerprinth':            ('B',   0x2D2, [20]),
     'pwm_frequency':                ('<H',  0x2E6, None),
     'power':                        ({
-                                        'raw':      ('<L',   0x2E8,        None, ('"0x{:08x}".format($)', None)),
-                                        'power1':   ('<L',  (0x2E8, 1, 0), None),
-                                        'power2':   ('<L',  (0x2E8, 1, 1), None),
-                                        'power3':   ('<L',  (0x2E8, 1, 2), None),
-                                        'power4':   ('<L',  (0x2E8, 1, 3), None),
-                                        'power5':   ('<L',  (0x2E8, 1, 4), None),
-                                        'power6':   ('<L',  (0x2E8, 1, 5), None),
-                                        'power7':   ('<L',  (0x2E8, 1, 6), None),
-                                        'power8':   ('<L',  (0x2E8, 1, 7), None),
-                                     },     0x2E8, None),
+        'raw':                      ('<L',   0x2E8,        None, ('"0x{:08x}".format($)', None)),
+        'power1':                   ('<L',  (0x2E8, 1, 0), None),
+        'power2':                   ('<L',  (0x2E8, 1, 1), None),
+        'power3':                   ('<L',  (0x2E8, 1, 2), None),
+        'power4':                   ('<L',  (0x2E8, 1, 3), None),
+        'power5':                   ('<L',  (0x2E8, 1, 4), None),
+        'power6':                   ('<L',  (0x2E8, 1, 5), None),
+        'power7':                   ('<L',  (0x2E8, 1, 6), None),
+        'power8':                   ('<L',  (0x2E8, 1, 7), None),
+                                    },     0x2E8, None),
     'pwm_value':                    ('<H',  0x2EC, [5]),
     'altitude':                     ('<h',  0x2F6, None),
     'tele_period':                  ('<H',  0x2F8, None),
@@ -389,11 +389,13 @@ Setting_5_10_0 = {
     'energy_min_current':           ('<H',  0x382, None),
     'energy_max_current':           ('<H',  0x384, None),
     'energy_max_power_limit':       ('<H',  0x386, None),
-    'energy_max_power_limit_hold':          ('<H',  0x388, None),
-    'energy_max_power_limit_window':        ('<H',  0x38A, None),
-    'energy_max_power_safe_limit':          ('<H',  0x38C, None),
-    'energy_max_power_safe_limit_hold':     ('<H',  0x38E, None),
-    'energy_max_power_safe_limit_window':   ('<H',  0x390, None),
+    'energy_max_power_limit_hold':  ('<H',  0x388, None),
+    'energy_max_power_limit_window':('<H',  0x38A, None),
+    'energy_max_power_safe_limit':  ('<H',  0x38C, None),
+    'energy_max_power_safe_limit_hold':
+                                    ('<H',  0x38E, None),
+    'energy_max_power_safe_limit_window':
+                                    ('<H',  0x390, None),
     'energy_max_energy':            ('<H',  0x392, None),
     'energy_max_energy_start':      ('<H',  0x394, None),
     'mqtt_retry':                   ('<H',  0x396, None),
@@ -428,16 +430,16 @@ Setting_5_10_0 = {
     'energy_kWhtotal':              ('<L',  0x554, None),
     'mqtt_fulltopic':               ('100s',0x558, None),
     'flag2':                        ({
-                                        'raw':                      ('<L',   0x5BC,         None, ('"0x{:08x}".format($)', None)),
-                                        'current_resolution':       ('<L',  (0x5BC, 2, 15), None),
-                                        'voltage_resolution':       ('<L',  (0x5BC, 2, 17), None),
-                                        'wattage_resolution':       ('<L',  (0x5BC, 2, 19), None),
-                                        'emulation':                ('<L',  (0x5BC, 2, 21), None),
-                                        'energy_resolution':        ('<L',  (0x5BC, 3, 23), None),
-                                        'pressure_resolution':      ('<L',  (0x5BC, 2, 26), None),
-                                        'humidity_resolution':      ('<L',  (0x5BC, 2, 28), None),
-                                        'temperature_resolution':   ('<L',  (0x5BC, 2, 30), None),
-                                     },     0x5BC, None),
+        'raw':                      ('<L',  0x5BC,         None, ('"0x{:08x}".format($)', None)),
+        'current_resolution':       ('<L', (0x5BC, 2, 15), None),
+        'voltage_resolution':       ('<L', (0x5BC, 2, 17), None),
+        'wattage_resolution':       ('<L', (0x5BC, 2, 19), None),
+        'emulation':                ('<L', (0x5BC, 2, 21), None),
+        'energy_resolution':        ('<L', (0x5BC, 3, 23), None),
+        'pressure_resolution':      ('<L', (0x5BC, 2, 26), None),
+        'humidity_resolution':      ('<L', (0x5BC, 2, 28), None),
+        'temperature_resolution':   ('<L', (0x5BC, 2, 30), None),
+                                    },      0x5BC, None),
     'pulse_counter':                ('<L',  0x5C0, [4]),
     'pulse_counter_type':           ('<H',  0x5D0, None),
     'pulse_counter_debounce':       ('<H',  0x5D2, None),
@@ -446,28 +448,6 @@ Setting_5_10_0 = {
 
 Setting_5_11_0 = Setting_5_10_0
 Setting_5_11_0.update({
-    'flag':                         ({
-                                        'raw':                      ('<L',   0x010,         None, ('"0x{:08x}".format($)', None)),
-                                        'save_state':               ('<L',  (0x010, 1,  0), None),
-                                        'button_restrict':          ('<L',  (0x010, 1,  1), None),
-                                        'value_units':              ('<L',  (0x010, 1,  2), None),
-                                        'mqtt_enabled':             ('<L',  (0x010, 1,  3), None),
-                                        'mqtt_response':            ('<L',  (0x010, 1,  4), None),
-                                        'mqtt_power_retain':        ('<L',  (0x010, 1,  5), None),
-                                        'mqtt_button_retain':       ('<L',  (0x010, 1,  6), None),
-                                        'mqtt_switch_retain':       ('<L',  (0x010, 1,  7), None),
-                                        'temperature_conversion':   ('<L',  (0x010, 1,  8), None),
-                                        'mqtt_sensor_retain':       ('<L',  (0x010, 1,  9), None),
-                                        'mqtt_offline':             ('<L',  (0x010, 1, 10), None),
-                                        'button_swap':              ('<L',  (0x010, 1, 11), None),
-                                        'stop_flash_rotate':        ('<L',  (0x010, 1, 12), None),
-                                        'button_single':            ('<L',  (0x010, 1, 13), None),
-                                        'interlock':                ('<L',  (0x010, 1, 14), None),
-                                        'pwm_control':              ('<L',  (0x010, 1, 15), None),
-                                        'ws_clock_reverse':         ('<L',  (0x010, 1, 16), None),
-                                        'decimal_text':             ('<L',  (0x010, 1, 17), None),
-                                        'light_signal':             ('<L',  (0x010, 1, 18), None),
-                                     },     0x010, None),
     'display_model':                ('B',   0x2D2, None),
     'display_mode':                 ('B',   0x2D3, None),
     'display_refresh':              ('B',   0x2D4, None),
@@ -477,68 +457,20 @@ Setting_5_11_0.update({
     'display_dimmer':               ('B',   0x2E0, None),
     'display_size':                 ('B',   0x2E1, None),
 })
+Setting_5_11_0['flag'][0].update    ({
+        'light_signal':             ('<L',  (0x010, 1, 18), None),
+                                    })
 Setting_5_11_0.pop('mqtt_fingerprinth',None)
 
 Setting_5_12_0 = Setting_5_11_0
-Setting_5_12_0.update({
-    'flag':                         ({
-                                        'raw':                      ('<L',   0x010,         None, ('"0x{:08x}".format($)', None)),
-                                        'save_state':               ('<L',  (0x010, 1,  0), None),
-                                        'button_restrict':          ('<L',  (0x010, 1,  1), None),
-                                        'value_units':              ('<L',  (0x010, 1,  2), None),
-                                        'mqtt_enabled':             ('<L',  (0x010, 1,  3), None),
-                                        'mqtt_response':            ('<L',  (0x010, 1,  4), None),
-                                        'mqtt_power_retain':        ('<L',  (0x010, 1,  5), None),
-                                        'mqtt_button_retain':       ('<L',  (0x010, 1,  6), None),
-                                        'mqtt_switch_retain':       ('<L',  (0x010, 1,  7), None),
-                                        'temperature_conversion':   ('<L',  (0x010, 1,  8), None),
-                                        'mqtt_sensor_retain':       ('<L',  (0x010, 1,  9), None),
-                                        'mqtt_offline':             ('<L',  (0x010, 1, 10), None),
-                                        'button_swap':              ('<L',  (0x010, 1, 11), None),
-                                        'stop_flash_rotate':        ('<L',  (0x010, 1, 12), None),
-                                        'button_single':            ('<L',  (0x010, 1, 13), None),
-                                        'interlock':                ('<L',  (0x010, 1, 14), None),
-                                        'pwm_control':              ('<L',  (0x010, 1, 15), None),
-                                        'ws_clock_reverse':         ('<L',  (0x010, 1, 16), None),
-                                        'decimal_text':             ('<L',  (0x010, 1, 17), None),
-                                        'light_signal':             ('<L',  (0x010, 1, 18), None),
-                                        'hass_discovery':           ('<L',  (0x010, 1, 19), None),
-                                        'not_power_linked':         ('<L',  (0x010, 1, 20), None),
-                                        'no_power_on_check':        ('<L',  (0x010, 1, 21), None),
-                                     },     0x010, None),
-})
+Setting_5_12_0['flag'][0].update    ({
+        'hass_discovery':           ('<L',  (0x010, 1, 19), None),
+        'not_power_linked':         ('<L',  (0x010, 1, 20), None),
+        'no_power_on_check':        ('<L',  (0x010, 1, 21), None),
+                                    })
 
 Setting_5_13_1 = Setting_5_12_0
 Setting_5_13_1.update({
-    'flag':                         ({
-                                        'raw':                      ('<L',   0x010,         None, ('"0x{:08x}".format($)', None)),
-                                        'save_state':               ('<L',  (0x010, 1,  0), None),
-                                        'button_restrict':          ('<L',  (0x010, 1,  1), None),
-                                        'value_units':              ('<L',  (0x010, 1,  2), None),
-                                        'mqtt_enabled':             ('<L',  (0x010, 1,  3), None),
-                                        'mqtt_response':            ('<L',  (0x010, 1,  4), None),
-                                        'mqtt_power_retain':        ('<L',  (0x010, 1,  5), None),
-                                        'mqtt_button_retain':       ('<L',  (0x010, 1,  6), None),
-                                        'mqtt_switch_retain':       ('<L',  (0x010, 1,  7), None),
-                                        'temperature_conversion':   ('<L',  (0x010, 1,  8), None),
-                                        'mqtt_sensor_retain':       ('<L',  (0x010, 1,  9), None),
-                                        'mqtt_offline':             ('<L',  (0x010, 1, 10), None),
-                                        'button_swap':              ('<L',  (0x010, 1, 11), None),
-                                        'stop_flash_rotate':        ('<L',  (0x010, 1, 12), None),
-                                        'button_single':            ('<L',  (0x010, 1, 13), None),
-                                        'interlock':                ('<L',  (0x010, 1, 14), None),
-                                        'pwm_control':              ('<L',  (0x010, 1, 15), None),
-                                        'ws_clock_reverse':         ('<L',  (0x010, 1, 16), None),
-                                        'decimal_text':             ('<L',  (0x010, 1, 17), None),
-                                        'light_signal':             ('<L',  (0x010, 1, 18), None),
-                                        'hass_discovery':           ('<L',  (0x010, 1, 19), None),
-                                        'not_power_linked':         ('<L',  (0x010, 1, 20), None),
-                                        'no_power_on_check':        ('<L',  (0x010, 1, 21), None),
-                                        'mqtt_serial':              ('<L',  (0x010, 1, 22), None),
-                                        'rules_enabled':            ('<L',  (0x010, 1, 23), None),
-                                        'rules_once':               ('<L',  (0x010, 1, 24), None),
-                                        'knx_enabled':              ('<L',  (0x010, 1, 25), None),
-                                     },     0x010, None),
     'baudrate':                     ('B',   0x09D, None, ('$ * 1200','$ / 1200') ),
     'mqtt_fingerprint':             ('20s', 0x1AD, [2]),
     'energy_power_delta':           ('B',   0x33F, None),
@@ -548,16 +480,16 @@ Setting_5_13_1.update({
     'knx_GA_registered':            ('B',   0x4A5, None),
     'knx_CB_registered':            ('B',   0x4A8, None),
     'timer':                        ({
-                                        'raw':      ('<L',   0x670,          None, ('"0x{:08x}".format($)', None)),
-                                        'time':     ('<L',  (0x670, 11,  0), None),
-                                        'window':   ('<L',  (0x670,  4, 11), None),
-                                        'repeat':   ('<L',  (0x670,  1, 15), None),
-                                        'days':     ('<L',  (0x670,  7, 16), None),
-                                        'device':   ('<L',  (0x670,  4, 23), None),
-                                        'power':    ('<L',  (0x670,  2, 27), None),
-                                        'mode':     ('<L',  (0x670,  2, 29), None),
-                                        'arm':      ('<L',  (0x670,  1, 31), None),
-                                     },     0x670, [16]),
+        'raw':                      ('<L',  0x670,          None, ('"0x{:08x}".format($)', None)),
+        'time':                     ('<L', (0x670, 11,  0), None),
+        'window':                   ('<L', (0x670,  4, 11), None),
+        'repeat':                   ('<L', (0x670,  1, 15), None),
+        'days':                     ('<L', (0x670,  7, 16), None),
+        'device':                   ('<L', (0x670,  4, 23), None),
+        'power':                    ('<L', (0x670,  2, 27), None),
+        'mode':                     ('<L', (0x670,  2, 29), None),
+        'arm':                      ('<L', (0x670,  1, 31), None),
+                                    },      0x670, [16]),
     'latitude':                     ('i',   0x6B0, None, ('float($) / 1000000', 'int($ * 1000000)')),
     'longitude':                    ('i',   0x6B4, None, ('float($) / 1000000', 'int($ * 1000000)')),
     'knx_physsical_addr':           ('<H',  0x6B8, None),
@@ -567,49 +499,30 @@ Setting_5_13_1.update({
     'knx_CB_param':                 ('B',   0x6EC, [10]),
     'rules':                        ('512s',0x800, None),
 })
+Setting_5_13_1['flag'][0].update    ({
+        'mqtt_serial':              ('<L', (0x010, 1, 22), None),
+        'rules_enabled':            ('<L', (0x010, 1, 23), None),
+        'rules_once':               ('<L', (0x010, 1, 24), None),
+        'knx_enabled':              ('<L', (0x010, 1, 25), None),
+                                    })
+
 Setting_5_14_0 = Setting_5_13_1
 Setting_5_14_0.update({
-    'flag':                         ({
-                                        'raw':                      ('<L',   0x010,         None, ('"0x{:08x}".format($)', None)),
-                                        'save_state':               ('<L',  (0x010, 1,  0), None),
-                                        'button_restrict':          ('<L',  (0x010, 1,  1), None),
-                                        'value_units':              ('<L',  (0x010, 1,  2), None),
-                                        'mqtt_enabled':             ('<L',  (0x010, 1,  3), None),
-                                        'mqtt_response':            ('<L',  (0x010, 1,  4), None),
-                                        'mqtt_power_retain':        ('<L',  (0x010, 1,  5), None),
-                                        'mqtt_button_retain':       ('<L',  (0x010, 1,  6), None),
-                                        'mqtt_switch_retain':       ('<L',  (0x010, 1,  7), None),
-                                        'temperature_conversion':   ('<L',  (0x010, 1,  8), None),
-                                        'mqtt_sensor_retain':       ('<L',  (0x010, 1,  9), None),
-                                        'mqtt_offline':             ('<L',  (0x010, 1, 10), None),
-                                        'button_swap':              ('<L',  (0x010, 1, 11), None),
-                                        'stop_flash_rotate':        ('<L',  (0x010, 1, 12), None),
-                                        'button_single':            ('<L',  (0x010, 1, 13), None),
-                                        'interlock':                ('<L',  (0x010, 1, 14), None),
-                                        'pwm_control':              ('<L',  (0x010, 1, 15), None),
-                                        'ws_clock_reverse':         ('<L',  (0x010, 1, 16), None),
-                                        'decimal_text':             ('<L',  (0x010, 1, 17), None),
-                                        'light_signal':             ('<L',  (0x010, 1, 18), None),
-                                        'hass_discovery':           ('<L',  (0x010, 1, 19), None),
-                                        'not_power_linked':         ('<L',  (0x010, 1, 20), None),
-                                        'no_power_on_check':        ('<L',  (0x010, 1, 21), None),
-                                        'mqtt_serial':              ('<L',  (0x010, 1, 22), None),
-                                        'rules_enabled':            ('<L',  (0x010, 1, 23), None),
-                                        'rules_once':               ('<L',  (0x010, 1, 24), None),
-                                        'knx_enabled':              ('<L',  (0x010, 1, 25), None),
-                                        'device_index_enable':      ('<L',  (0x010, 1, 26), None),
-                                     },     0x010, None),
     'tflag':                        ({
-                                        'raw':      ('<H',   0x2E2,         None, ('"0x{:04x}".format($)', None)),
-                                        'hemis':    ('<H',  (0x2E2, 1,  0), None),
-                                        'week':     ('<H',  (0x2E2, 3,  1), None),
-                                        'month':    ('<H',  (0x2E2, 4,  4), None),
-                                        'dow':      ('<H',  (0x2E2, 3,  8), None),
-                                        'hour':     ('<H',  (0x2E2, 5, 13), None),
-                                     },     0x2E2, [2]),
+        'raw':                      ('<H',  0x2E2,         None, ('"0x{:04x}".format($)', None)),
+        'hemis':                    ('<H', (0x2E2, 1,  0), None),
+        'week':                     ('<H', (0x2E2, 3,  1), None),
+        'month':                    ('<H', (0x2E2, 4,  4), None),
+        'dow':                      ('<H', (0x2E2, 3,  8), None),
+        'hour':                     ('<H', (0x2E2, 5, 13), None),
+                                    },      0x2E2, [2]),
     'param':                        ('B',   0x2FC, [18]),
     'toffset':                      ('<h',  0x30E, [2]),
 })
+Setting_5_14_0['flag'][0].update    ({
+        'device_index_enable':      ('<L', (0x010, 1, 26), None),
+                                    })
+Setting_5_14_0['flag'][0].pop       ('rules_once',None)
 
 Setting_6_0_0 = Setting_5_14_0
 Setting_6_0_0.update({
@@ -617,201 +530,86 @@ Setting_6_0_0.update({
     'cfg_size':                     ('<H',  0x002, None, (None, None)),
     'bootcount':                    ('<H',  0x00C, None, (None, None)),
     'cfg_crc':                      ('<H',  0x00E, None, '"0x{:04x}".format($)'),
-    'flag':                         ({
-                                        'raw':                      ('<L',   0x010,         None, ('"0x{:08x}".format($)', None)),
-                                        'save_state':               ('<L',  (0x010, 1,  0), None),
-                                        'button_restrict':          ('<L',  (0x010, 1,  1), None),
-                                        'value_units':              ('<L',  (0x010, 1,  2), None),
-                                        'mqtt_enabled':             ('<L',  (0x010, 1,  3), None),
-                                        'mqtt_response':            ('<L',  (0x010, 1,  4), None),
-                                        'mqtt_power_retain':        ('<L',  (0x010, 1,  5), None),
-                                        'mqtt_button_retain':       ('<L',  (0x010, 1,  6), None),
-                                        'mqtt_switch_retain':       ('<L',  (0x010, 1,  7), None),
-                                        'temperature_conversion':   ('<L',  (0x010, 1,  8), None),
-                                        'mqtt_sensor_retain':       ('<L',  (0x010, 1,  9), None),
-                                        'mqtt_offline':             ('<L',  (0x010, 1, 10), None),
-                                        'button_swap':              ('<L',  (0x010, 1, 11), None),
-                                        'stop_flash_rotate':        ('<L',  (0x010, 1, 12), None),
-                                        'button_single':            ('<L',  (0x010, 1, 13), None),
-                                        'interlock':                ('<L',  (0x010, 1, 14), None),
-                                        'pwm_control':              ('<L',  (0x010, 1, 15), None),
-                                        'ws_clock_reverse':         ('<L',  (0x010, 1, 16), None),
-                                        'decimal_text':             ('<L',  (0x010, 1, 17), None),
-                                        'light_signal':             ('<L',  (0x010, 1, 18), None),
-                                        'hass_discovery':           ('<L',  (0x010, 1, 19), None),
-                                        'not_power_linked':         ('<L',  (0x010, 1, 20), None),
-                                        'no_power_on_check':        ('<L',  (0x010, 1, 21), None),
-                                        'mqtt_serial':              ('<L',  (0x010, 1, 22), None),
-                                        'rules_enabled':            ('<L',  (0x010, 1, 23), None),
-                                        'rules_once':               ('<L',  (0x010, 1, 24), None),
-                                        'knx_enabled':              ('<L',  (0x010, 1, 25), None),
-                                        'device_index_enable':      ('<L',  (0x010, 1, 26), None),
-                                        'knx_enable_enhancement':   ('<L',  (0x010, 1, 27), None),
-                                     },     0x010, None),
     'rule_enabled':                 ({
-                                        'raw':      ('B',   0x49F,        None, (None,None)),
-                                        'rule1':    ('B',  (0x49F, 1, 0), None),
-                                        'rule2':    ('B',  (0x49F, 1, 1), None),
-                                        'rule3':    ('B',  (0x49F, 1, 2), None),
-                                     },     0x49F, None),
+        'raw':                      ('B',   0x49F,        None, (None,None)),
+        'rule1':                    ('B',  (0x49F, 1, 0), None),
+        'rule2':                    ('B',  (0x49F, 1, 1), None),
+        'rule3':                    ('B',  (0x49F, 1, 2), None),
+                                    },      0x49F, None),
     'rule_once':                    ({
-                                        'raw':      ('B',   0x4A0,        None, (None,None)),
-                                        'rule1':    ('B',  (0x4A0, 1, 0), None),
-                                        'rule2':    ('B',  (0x4A0, 1, 1), None),
-                                        'rule3':    ('B',  (0x4A0, 1, 2), None),
-                                     },     0x4A0, None),
+        'raw':                      ('B',   0x4A0,        None, (None,None)),
+        'rule1':                    ('B',  (0x4A0, 1, 0), None),
+        'rule2':                    ('B',  (0x4A0, 1, 1), None),
+        'rule3':                    ('B',  (0x4A0, 1, 2), None),
+                                    },      0x4A0, None),
     'mems':                         ('10s', 0x7CE, [5]),
     'rules':                        ('512s',0x800, [3])
 })
+Setting_6_0_0['flag'][0].update     ({
+        'knx_enable_enhancement':   ('<L', (0x010, 1, 27), None),
+                                    })
 
 Setting_6_1_1 = Setting_6_0_0
 Setting_6_1_1.update({
-    'flag':                         ({
-                                        'raw':                      ('<L',   0x010,         None, ('"0x{:08x}".format($)', None)),
-                                        'save_state':               ('<L',  (0x010, 1,  0), None),
-                                        'button_restrict':          ('<L',  (0x010, 1,  1), None),
-                                        'value_units':              ('<L',  (0x010, 1,  2), None),
-                                        'mqtt_enabled':             ('<L',  (0x010, 1,  3), None),
-                                        'mqtt_response':            ('<L',  (0x010, 1,  4), None),
-                                        'mqtt_power_retain':        ('<L',  (0x010, 1,  5), None),
-                                        'mqtt_button_retain':       ('<L',  (0x010, 1,  6), None),
-                                        'mqtt_switch_retain':       ('<L',  (0x010, 1,  7), None),
-                                        'temperature_conversion':   ('<L',  (0x010, 1,  8), None),
-                                        'mqtt_sensor_retain':       ('<L',  (0x010, 1,  9), None),
-                                        'mqtt_offline':             ('<L',  (0x010, 1, 10), None),
-                                        'button_swap':              ('<L',  (0x010, 1, 11), None),
-                                        'stop_flash_rotate':        ('<L',  (0x010, 1, 12), None),
-                                        'button_single':            ('<L',  (0x010, 1, 13), None),
-                                        'interlock':                ('<L',  (0x010, 1, 14), None),
-                                        'pwm_control':              ('<L',  (0x010, 1, 15), None),
-                                        'ws_clock_reverse':         ('<L',  (0x010, 1, 16), None),
-                                        'decimal_text':             ('<L',  (0x010, 1, 17), None),
-                                        'light_signal':             ('<L',  (0x010, 1, 18), None),
-                                        'hass_discovery':           ('<L',  (0x010, 1, 19), None),
-                                        'not_power_linked':         ('<L',  (0x010, 1, 20), None),
-                                        'no_power_on_check':        ('<L',  (0x010, 1, 21), None),
-                                        'mqtt_serial':              ('<L',  (0x010, 1, 22), None),
-                                        'rules_enabled':            ('<L',  (0x010, 1, 23), None),
-                                        'rules_once':               ('<L',  (0x010, 1, 24), None),
-                                        'knx_enabled':              ('<L',  (0x010, 1, 25), None),
-                                        'device_index_enable':      ('<L',  (0x010, 1, 26), None),
-                                        'knx_enable_enhancement':   ('<L',  (0x010, 1, 27), None),
-                                        'rf_receive_decimal':       ('<L',  (0x010, 1, 28), None),
-                                        'ir_receive_decimal':       ('<L',  (0x010, 1, 29), None),
-                                        'hass_light':               ('<L',  (0x010, 1, 30), None),
-                                     },     0x010, None),
     'flag3':                        ('<L',  0x3A0, None, '"0x{:08x}".format($)'),
     'switchmode':                   ('B',   0x3A4, [8]),
     'mcp230xx_config':              ({
-                                        'raw':              ('<L',   0x6F6,         None, ('"0x{:08x}".format($)', None)),
-                                        'pinmode':          ('<L',  (0x6F6, 3,  0), None),
-                                        'pullup':           ('<L',  (0x6F6, 1,  3), None),
-                                        'saved_state':      ('<L',  (0x6F6, 1,  4), None),
-                                        'int_report_mode':  ('<L',  (0x6F6, 2,  5), None),
-                                        'int_report_defer': ('<L',  (0x6F6, 4,  7), None),
-                                        'int_count_en':     ('<L',  (0x6F6, 1, 11), None),
-                                     },     0x6F6, [16]),
+        'raw':                      ('<L',  0x6F6,         None, ('"0x{:08x}".format($)', None)),
+        'pinmode':                  ('<L', (0x6F6, 3,  0), None),
+        'pullup':                   ('<L', (0x6F6, 1,  3), None),
+        'saved_state':              ('<L', (0x6F6, 1,  4), None),
+        'int_report_mode':          ('<L', (0x6F6, 2,  5), None),
+        'int_report_defer':         ('<L', (0x6F6, 4,  7), None),
+        'int_count_en':             ('<L', (0x6F6, 1, 11), None),
+                                    },      0x6F6, [16]),
 })
+Setting_6_1_1['flag'][0].update     ({
+        'rf_receive_decimal':       ('<L', (0x010, 1, 28), None),
+        'ir_receive_decimal':       ('<L', (0x010, 1, 29), None),
+        'hass_light':               ('<L', (0x010, 1, 30), None),
+                                    })
 
 Setting_6_2_1 = Setting_6_1_1
 Setting_6_2_1.update({
-    'flag':                         ({
-                                        'raw':                      ('<L',   0x010,         None, ('"0x{:08x}".format($)', None)),
-                                        'save_state':               ('<L',  (0x010, 1,  0), None),
-                                        'button_restrict':          ('<L',  (0x010, 1,  1), None),
-                                        'value_units':              ('<L',  (0x010, 1,  2), None),
-                                        'mqtt_enabled':             ('<L',  (0x010, 1,  3), None),
-                                        'mqtt_response':            ('<L',  (0x010, 1,  4), None),
-                                        'mqtt_power_retain':        ('<L',  (0x010, 1,  5), None),
-                                        'mqtt_button_retain':       ('<L',  (0x010, 1,  6), None),
-                                        'mqtt_switch_retain':       ('<L',  (0x010, 1,  7), None),
-                                        'temperature_conversion':   ('<L',  (0x010, 1,  8), None),
-                                        'mqtt_sensor_retain':       ('<L',  (0x010, 1,  9), None),
-                                        'mqtt_offline':             ('<L',  (0x010, 1, 10), None),
-                                        'button_swap':              ('<L',  (0x010, 1, 11), None),
-                                        'stop_flash_rotate':        ('<L',  (0x010, 1, 12), None),
-                                        'button_single':            ('<L',  (0x010, 1, 13), None),
-                                        'interlock':                ('<L',  (0x010, 1, 14), None),
-                                        'pwm_control':              ('<L',  (0x010, 1, 15), None),
-                                        'ws_clock_reverse':         ('<L',  (0x010, 1, 16), None),
-                                        'decimal_text':             ('<L',  (0x010, 1, 17), None),
-                                        'light_signal':             ('<L',  (0x010, 1, 18), None),
-                                        'hass_discovery':           ('<L',  (0x010, 1, 19), None),
-                                        'not_power_linked':         ('<L',  (0x010, 1, 20), None),
-                                        'no_power_on_check':        ('<L',  (0x010, 1, 21), None),
-                                        'mqtt_serial':              ('<L',  (0x010, 1, 22), None),
-                                        'rules_enabled':            ('<L',  (0x010, 1, 23), None),
-                                        'rules_once':               ('<L',  (0x010, 1, 24), None),
-                                        'knx_enabled':              ('<L',  (0x010, 1, 25), None),
-                                        'device_index_enable':      ('<L',  (0x010, 1, 26), None),
-                                        'knx_enable_enhancement':   ('<L',  (0x010, 1, 27), None),
-                                        'rf_receive_decimal':       ('<L',  (0x010, 1, 28), None),
-                                        'ir_receive_decimal':       ('<L',  (0x010, 1, 29), None),
-                                        'hass_light':               ('<L',  (0x010, 1, 30), None),
-                                        'global_state':             ('<L',  (0x010, 1, 31), None),
-                                     },     0x010, None),
     'rule_stop':                    ({
-                                        'raw':      ('B',   0x1A7,        None, (None, None)),
-                                        'rule1':    ('B',  (0x1A7, 1, 0), None),
-                                        'rule2':    ('B',  (0x1A7, 1, 1), None),
-                                        'rule3':    ('B',  (0x1A7, 1, 2), None),
-                                     },     0x1A7, None),
+        'raw':                      ('B',   0x1A7,        None, (None, None)),
+        'rule1':                    ('B',  (0x1A7, 1, 0), None),
+        'rule2':                    ('B',  (0x1A7, 1, 1), None),
+        'rule3':                    ('B',  (0x1A7, 1, 2), None),
+                                    },      0x1A7, None),
     'display_rotate':               ('B',   0x2FA, None),
     'display_font':                 ('B',   0x312, None),
     'flag3':                        ({
-                                         'raw':                 ('<L',   0x3A0,        None, ('"0x{:08x}".format($)', None)),
-                                         'timers_enable':       ('<L',  (0x3A0, 1, 0), None),
-                                         'user_esp8285_enable': ('<L',  (0x3A0, 1,31), None),
-                                     },     0x3A0, None),
+         'raw':                     ('<L',  0x3A0,        None, ('"0x{:08x}".format($)', None)),
+         'timers_enable':           ('<L', (0x3A0, 1, 0), None),
+         'user_esp8285_enable':     ('<L', (0x3A0, 1,31), None),
+                                    },      0x3A0, None),
     'button_debounce':              ('<H',  0x542, None),
-    'flag2':                        ({
-                                        'raw':                      ('<L',   0x5BC,         None, ('"0x{:08x}".format($)', None)),
-                                        'axis_resolution':          ('<L',  (0x5BC, 2, 13), None),
-                                        'current_resolution':       ('<L',  (0x5BC, 2, 15), None),
-                                        'voltage_resolution':       ('<L',  (0x5BC, 2, 17), None),
-                                        'wattage_resolution':       ('<L',  (0x5BC, 2, 19), None),
-                                        'emulation':                ('<L',  (0x5BC, 2, 21), None),
-                                        'energy_resolution':        ('<L',  (0x5BC, 3, 23), None),
-                                        'pressure_resolution':      ('<L',  (0x5BC, 2, 26), None),
-                                        'humidity_resolution':      ('<L',  (0x5BC, 2, 28), None),
-                                        'temperature_resolution':   ('<L',  (0x5BC, 2, 30), None),
-                                     },     0x5BC, None),
     'switch_debounce':              ('<H',  0x66E, None),
     'mcp230xx_int_prio':            ('B',   0x716, None),
     'mcp230xx_int_timer':           ('<H',  0x718, None),
 })
+Setting_6_2_1['flag'][0].pop('rules_enabled',None)
+Setting_6_2_1['flag'][0].update     ({
+        'mqtt_serial_raw':          ('<L', (0x010, 1, 23), None),
+        'global_state':             ('<L', (0x010, 1, 31), None),
+                                    })
+Setting_6_2_1['flag2'][0].update    ({
+        'axis_resolution':          ('<L', (0x5BC, 2, 13), None),
+                                    })
 
 Setting_6_2_1_2 = Setting_6_2_1
-Setting_6_2_1_2.update({
-    'flag3':                        ({
-                                         'raw':                 ('<L',   0x3A0,        None, ('"0x{:08x}".format($)', None)),
-                                         'timers_enable':       ('<L',  (0x3A0, 1, 0), None),
-                                         'user_esp8285_enable': ('<L',  (0x3A0, 1, 1), None),
-                                     },     0x3A0, None),
-})
+Setting_6_2_1_2['flag3'][0].update  ({
+         'user_esp8285_enable':     ('<L', (0x3A0, 1, 1), None),
+                                    })
 
 Setting_6_2_1_3 = Setting_6_2_1_2
-Setting_6_2_1_3.update({
-    'flag3':                        ({
-                                         'raw':                 ('<L',   0x3A0,        None, ('"0x{:08x}".format($)', None)),
-                                         'timers_enable':       ('<L',  (0x3A0, 1, 0), None),
-                                         'user_esp8285_enable': ('<L',  (0x3A0, 1, 1), None),
-                                         'time_append_timezone':('<L',  (0x3A0, 1, 2), None),
-                                     },     0x3A0, None),
-    'flag2':                        ({
-                                        'raw':                      ('<L',   0x5BC,         None, ('"0x{:08x}".format($)', None)),
-                                        'frequency_resolution':     ('<L',  (0x5BC, 2, 11), None),
-                                        'axis_resolution':          ('<L',  (0x5BC, 2, 13), None),
-                                        'current_resolution':       ('<L',  (0x5BC, 2, 15), None),
-                                        'voltage_resolution':       ('<L',  (0x5BC, 2, 17), None),
-                                        'wattage_resolution':       ('<L',  (0x5BC, 2, 19), None),
-                                        'emulation':                ('<L',  (0x5BC, 2, 21), None),
-                                        'energy_resolution':        ('<L',  (0x5BC, 3, 23), None),
-                                        'pressure_resolution':      ('<L',  (0x5BC, 2, 26), None),
-                                        'humidity_resolution':      ('<L',  (0x5BC, 2, 28), None),
-                                        'temperature_resolution':   ('<L',  (0x5BC, 2, 30), None),
-                                     },     0x5BC, None),
-})
+Setting_6_2_1_3['flag2'][0].update  ({
+        'frequency_resolution':     ('<L', (0x5BC, 2, 11), None),
+                                    })
+Setting_6_2_1_3['flag3'][0].update  ({
+         'time_append_timezone':    ('<L', (0x3A0, 1, 2), None),
+                                    })
 
 Setting_6_2_1_6 = Setting_6_2_1_3
 Setting_6_2_1_6.update({
@@ -825,26 +623,15 @@ Setting_6_2_1_10.update({
 
 Setting_6_2_1_14 = Setting_6_2_1_10
 Setting_6_2_1_14.update({
-    'flag2':                        ({
-                                        'raw':                      ('<L',   0x5BC,         None, ('"0x{:08x}".format($)', None)),
-                                        'weight_resolution':        ('<L',  (0x5BC, 2,  9), None),
-                                        'frequency_resolution':     ('<L',  (0x5BC, 2, 11), None),
-                                        'axis_resolution':          ('<L',  (0x5BC, 2, 13), None),
-                                        'current_resolution':       ('<L',  (0x5BC, 2, 15), None),
-                                        'voltage_resolution':       ('<L',  (0x5BC, 2, 17), None),
-                                        'wattage_resolution':       ('<L',  (0x5BC, 2, 19), None),
-                                        'emulation':                ('<L',  (0x5BC, 2, 21), None),
-                                        'energy_resolution':        ('<L',  (0x5BC, 3, 23), None),
-                                        'pressure_resolution':      ('<L',  (0x5BC, 2, 26), None),
-                                        'humidity_resolution':      ('<L',  (0x5BC, 2, 28), None),
-                                        'temperature_resolution':   ('<L',  (0x5BC, 2, 30), None),
-                                     },     0x5BC, None),
     'weight_item':                  ('<H',  0x7BC, None),
     'weight_max':                   ('<H',  0x7BE, None, ('float($) / 10', 'int($ * 10)')),
     'weight_reference':             ('<L',  0x7C0, None),
     'weight_calibration':           ('<L',  0x7C4, None),
     'web_refresh':                  ('<H',  0x7CC, None),
 })
+Setting_6_2_1_14['flag2'][0].update ({
+        'weight_resolution':        ('<L', (0x5BC, 2,  9), None),
+                                    })
 
 Setting_6_2_1_19 = Setting_6_2_1_14
 Setting_6_2_1_19.update({
@@ -852,15 +639,9 @@ Setting_6_2_1_19.update({
 })
 
 Setting_6_2_1_20 = Setting_6_2_1_19
-Setting_6_2_1_20.update({
-    'flag3':                        ({
-                                         'raw':                 ('<L',   0x3A0,        None, ('"0x{:08x}".format($)', None)),
-                                         'timers_enable':       ('<L',  (0x3A0, 1, 0), None),
-                                         'user_esp8285_enable': ('<L',  (0x3A0, 1, 1), None),
-                                         'time_append_timezone':('<L',  (0x3A0, 1, 2), None),
-                                         'gui_hostname_ip':     ('<L',  (0x3A0, 1, 3), None),
-                                     },     0x3A0, None),
-})
+Setting_6_2_1_20['flag3'][0].update ({
+        'gui_hostname_ip':          ('<L',  (0x3A0, 1, 3), None),
+                                    })
 
 Setting_6_3_0 = Setting_6_2_1_20
 Setting_6_3_0.update({
@@ -868,9 +649,13 @@ Setting_6_3_0.update({
 })
 
 Setting_6_3_0_2 = Setting_6_3_0
-Setting_6_3_0.update({
+Setting_6_3_0_2.update({
     'timezone_minutes':             ('B',   0x66D, None),
 })
+Setting_6_3_0_2['flag'][0].pop('rules_once',None)
+Setting_6_3_0_2['flag'][0].update   ({
+        'pressure_conversion':      ('<L', (0x010, 1, 24), None),
+                                    })
 
 Settings = [
             (0x6030002, 0xe00, Setting_6_3_0_2),

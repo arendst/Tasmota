@@ -87,7 +87,7 @@ TasmotaSerial::TasmotaSerial(int receive_pin, int transmit_pin, bool hardware_fa
   m_rx_pin = receive_pin;
   m_tx_pin = transmit_pin;
   m_in_pos = m_out_pos = 0;
-  if (hardware_fallback && (((1 == m_rx_pin) && (3 == m_tx_pin)) || ((3 == m_rx_pin) && (-1 == m_tx_pin)) || ((-1 == m_rx_pin) && (1 == m_tx_pin)))) {
+  if (hardware_fallback && (((3 == m_rx_pin) && (1 == m_tx_pin)) || ((3 == m_rx_pin) && (-1 == m_tx_pin)) || ((-1 == m_rx_pin) && (1 == m_tx_pin)))) {
     m_hardserial = 1;
   } else {
     if (m_rx_pin > -1) {

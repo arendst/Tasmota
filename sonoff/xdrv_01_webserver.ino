@@ -773,7 +773,7 @@ void HandleModuleConfiguration()
 
   mytmplt cmodule;
   memcpy_P(&cmodule, &kModules[Settings.module], sizeof(cmodule));
-  for (byte j = 0; j < GPIO_SENSOR_END; j++) {
+  for (byte j = 0; j < sizeof(kGpioNiceList); j++) {
     midx = pgm_read_byte(kGpioNiceList + j);
     if (!GetUsedInModule(midx, cmodule.gp.io)) {
       snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SCRIPT_MODULE2, midx, midx, GetTextIndexed(stemp, sizeof(stemp), midx, kSensorNames));

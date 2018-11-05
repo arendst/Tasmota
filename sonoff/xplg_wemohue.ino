@@ -461,15 +461,19 @@ const char HUE_DESCRIPTION_XML[] PROGMEM =
   "\r\n";
 const char HUE_LIGHTS_STATUS_JSON[] PROGMEM =
   "{\"on\":{state},"
-  "\"bri\":{b},"
-  "\"hue\":{h},"
-  "\"sat\":{s},"
-  "\"xy\":[0.5, 0.5],"
-  "\"ct\":{t},"
   "\"alert\":\"none\","
   "\"effect\":\"none\","
-  "\"colormode\":\"{m}\","
-  "\"reachable\":true}";
+  "\"reachable\":true";
+const char HUE_LIGHTS_STATUS_JSON_DIM[] PROGMEM =
+  ",\"bri\":{b}";
+const char HUE_LIGHTS_STATUS_JSON_RGB[] PROGMEM =
+  ",\"hue\":{h},"
+  "\"sat\":{s},"
+  "\"xy\":[0.5, 0.5]";
+const char HUE_LIGHTS_STATUS_JSON_CT[] PROGMEM =
+  ",\"ct\":{t}";
+const char HUE_LIGHTS_STATUS_JSON_CM[] PROGMEM =
+  ",\"colormode\":\"{m}\"";
 const char HUE_LIGHTS_STATUS_JSON2[] PROGMEM =
   ",\"type\":\"Extended color light\","
   "\"name\":\"{j1\","
@@ -576,6 +580,19 @@ void HueLightStatus1(byte device, String *response)
     ct = LightGetColorTemp();
   }
   *response += FPSTR(HUE_LIGHTS_STATUS_JSON);
+  //The light can be dimmed
+  if (light_subtype >= LST_SINGLE) *response += FPSTR(HUE_LIGHTS_STATUS_JSON_DIM);
+
+  //The light has adjustabe color temperature
+  if (light_subtype == LST_COLDWARM || light_subtype == LST_RGBWC) *response += FPSTR(HUE_LIGHTS_STATUS_JSON_CT);
+
+  //The light has RGB
+  if (light_subtype >= LST_RGB) *response += FPSTR(HUE_LIGHTS_STATUS_JSON_RGB);
+
+  //The light supports colormode
+  if (light_subtype >= LST_COLDWARM) *response += FPSTR(HUE_LIGHTS_STATUS_JSON_CM);
+
+  *response += "}";
   response->replace("{state}", (power & (1 << (device-1))) ? "true" : "false");
   response->replace("{h}", String((uint16_t)(65535.0f * hue)));
   response->replace("{s}", String((uint8_t)(254.0f * sat)));
