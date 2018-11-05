@@ -1,4 +1,7 @@
-/* 6.3.0.2 20181101
+/* 6.3.0.3 20181105
+ * Fix hardware serial pin configuration. To keep using hardware serial swap current Rx/Tx pin configuration only (#4280)
+ *
+ * 6.3.0.2 20181101
  * Add minutes to commands Timezone to allow all possible world timezones
  * Add command SetOption24 0/1 to select pressure unit as hPa or mmHg (#4241)
  *
