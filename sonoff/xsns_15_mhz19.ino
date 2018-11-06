@@ -18,9 +18,6 @@
 */
 
 #ifdef USE_MHZ19
-
-#define XSNS_15 15
-
 /*********************************************************************************************\
  * MH-Z19 - CO2 sensor
  *
@@ -32,6 +29,8 @@
  *
  * Select filter usage on low stability readings
 \*********************************************************************************************/
+
+#define XSNS_15                      15
 
 enum MhzFilterOptions {MHZ19_FILTER_OFF, MHZ19_FILTER_OFF_ALLSAMPLES, MHZ19_FILTER_FAST, MHZ19_FILTER_MEDIUM, MHZ19_FILTER_SLOW};
 
@@ -246,17 +245,13 @@ void MhzEverySecond()
 
 /*********************************************************************************************\
  * Command Sensor15
+ *
+ * 0 - (Not implemented) ABC Off
+ * 1 - (Not implemented) ABC On
+ * 2 - Manual start = ABC Off
+ * 3 - (Not implemented) Optional filter settings
+ * 9 - Reset
 \*********************************************************************************************/
-
-/*
-  0 - ABC Off
-  1 - ABC On
-  2 - Manual start = ABC Off
-
-  3 - Optional filter settings
-
-  9 - Reset
-*/
 
 bool MhzCommandSensor()
 {

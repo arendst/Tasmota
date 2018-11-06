@@ -22,7 +22,10 @@
  * Energy
 \*********************************************************************************************/
 
-#define ENERGY_NONE             0
+#define XDRV_03              3
+#define XSNS_03              3
+
+#define ENERGY_NONE          0
 
 #define FEATURE_POWER_LIMIT  true
 
@@ -656,8 +659,6 @@ void EnergyShow(boolean json)
  * Interface
 \*********************************************************************************************/
 
-#define XDRV_03
-
 boolean Xdrv03(byte function)
 {
   boolean result = false;
@@ -680,8 +681,6 @@ boolean Xdrv03(byte function)
   }
   return result;
 }
-
-#define XSNS_03
 
 boolean Xsns03(byte function)
 {

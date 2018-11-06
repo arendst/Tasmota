@@ -27,9 +27,6 @@
 
 #ifdef USE_I2C
 #ifdef USE_APDS9960
-
-#define XSNS_27 27
-
 /*********************************************************************************************\
  * APDS9960 - Digital Proximity Ambient Light RGB and Gesture Sensor
  *
@@ -38,6 +35,8 @@
  *
  * I2C Address: 0x39
 \*********************************************************************************************/
+
+#define XSNS_27             27
 
 #if defined(USE_SHT) || defined(USE_VEML6070) || defined(USE_TSL2561)
   #warning **** Turned off conflicting drivers SHT and VEML6070 ****

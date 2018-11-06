@@ -26,6 +26,8 @@
  * - https://www.dfrobot.com/wiki/index.php/Weather-proof_Ultrasonic_Sensor_SKU_:_SEN0207
 \*********************************************************************************************/
 
+#define XSNS_22             22
+
 uint8_t sr04_echo_pin = 0;
 uint8_t sr04_trig_pin = 0;
 
@@ -145,8 +147,6 @@ void Sr04Show(boolean json)
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
-
-#define XSNS_22
 
 boolean Xsns22(byte function)
 {

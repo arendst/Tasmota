@@ -25,6 +25,8 @@
  * Based on: https://github.com/reaper7/SDM_Energy_Meter
 \*********************************************************************************************/
 
+#define XSNS_25             25
+
 #include <TasmotaSerial.h>
 
 TasmotaSerial *SDM630Serial;
@@ -324,8 +326,6 @@ void SDM630Show(boolean json)
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
-
-#define XSNS_25
 
 boolean Xsns25(byte function)
 {

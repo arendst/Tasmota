@@ -26,6 +26,8 @@
  * Hardware Serial will be selected if GPIO1 = [SAir Rx] and GPIO3 = [SAir Tx]
 \*********************************************************************************************/
 
+#define XSNS_17                      17
+
 #define SENSEAIR_MODBUS_SPEED        9600
 #define SENSEAIR_DEVICE_ADDRESS      0xFE    // Any address
 #define SENSEAIR_READ_REGISTER       0x04    // Command Read
@@ -174,8 +176,6 @@ void SenseairShow(boolean json)
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
-
-#define XSNS_17
 
 boolean Xsns17(byte function)
 {
