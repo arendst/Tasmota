@@ -2394,9 +2394,12 @@ void GpioInit()
   uint8_t key_no_pullup = 0;
   mytmplt def_module;
 
-  if (!Settings.module || (Settings.module >= MAXMODULE)) {
+  if (Settings.module >= MAXMODULE) {
     Settings.module = MODULE;
     Settings.last_module = MODULE;
+  }
+  if (Settings.module != Settings.last_module) {
+    baudrate = APP_BAUDRATE;
   }
 
   memcpy_P(&def_module, &kModules[Settings.module], sizeof(def_module));
@@ -2646,7 +2649,7 @@ void setup()
     }
     if (RtcReboot.fast_reboot_count > 4) {        // Restarted 5 times
       Settings.module = SONOFF_BASIC;             // Reset module to Sonoff Basic
-      Settings.last_module = SONOFF_BASIC;
+//      Settings.last_module = SONOFF_BASIC;
       for (byte i = 0; i < MAX_GPIO_PIN; i++) {
         Settings.my_gp.io[i] = GPIO_NONE;         // Reset user defined GPIO disabling sensors
       }
