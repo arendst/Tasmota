@@ -20,13 +20,13 @@
 #ifndef _SONOFF_VERSION_H_
 #define _SONOFF_VERSION_H_
 
-#define VERSION            0x0602010B
+#define VERSION            0x06030002
 //STB mod
-#define STB_VERSION         0x0108
+#define STB_VERSION         0x0101
 //end
 
 #define D_PROGRAMNAME      "Sonoff-Tasmota"
-#define D_AUTHOR           "Theo Arends"
+#define D_AUTHOR           "Theo Arends/Stefan Bode"
 //#define D_WEBLINK          "https://github.com/arendst/Sonoff-Tasmota"
 #define D_WEBLINK          "https://bit.ly/tasmota"
 

@@ -98,6 +98,54 @@ boolean (* const xdrv_func_ptr[])(byte) PROGMEM = {   // Driver Function Pointer
   &Xdrv20,
 #endif
 
+#ifdef XDRV_21
+  &Xdrv21,
+#endif
+
+#ifdef XDRV_22
+  &Xdrv22,
+#endif
+
+#ifdef XDRV_23
+  &Xdrv23,
+#endif
+
+#ifdef XDRV_24
+  &Xdrv24,
+#endif
+
+#ifdef XDRV_25
+  &Xdrv25,
+#endif
+
+#ifdef XDRV_26
+  &Xdrv26,
+#endif
+
+#ifdef XDRV_27
+  &Xdrv27,
+#endif
+
+#ifdef XDRV_28
+  &Xdrv28,
+#endif
+
+#ifdef XDRV_29
+  &Xdrv29,
+#endif
+
+#ifdef XDRV_30
+  &Xdrv30,
+#endif
+
+#ifdef XDRV_31
+  &Xdrv31,
+#endif
+
+#ifdef XDRV_32
+  &Xdrv32,
+#endif
+
 // Optional user defined drivers in range 91 - 99
 
 #ifdef XDRV_91
@@ -178,22 +226,6 @@ void ShowFreeMem(const char *where)
 
 /*********************************************************************************************\
  * Function call to all xdrv
- *
- * FUNC_PRE_INIT
- * FUNC_INIT
- * FUNC_LOOP
- * FUNC_MQTT_SUBSCRIBE
- * FUNC_MQTT_INIT
- * return FUNC_MQTT_DATA
- * return FUNC_COMMAND
- * FUNC_SET_POWER
- * FUNC_SHOW_SENSOR
- * FUNC_EVERY_SECOND
- * FUNC_EVERY_50_MSECOND
- * FUNC_EVERY_100_MSECOND
- * FUNC_EVERY_250_MSECOND
- * FUNC_RULES_PROCESS
- * FUNC_FREE_MEM
 \*********************************************************************************************/
 
 boolean XdrvCall(byte Function)
@@ -201,6 +233,7 @@ boolean XdrvCall(byte Function)
   boolean result = false;
 
   for (byte x = 0; x < xdrv_present; x++) {
+    if (global_state.wifi_down) { delay(DRIVER_BOOT_DELAY); }
     result = xdrv_func_ptr[x](Function);
     if (result) break;
   }

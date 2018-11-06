@@ -609,7 +609,7 @@ void HueGlobalConfig(String *path)
   path->remove(0,1);                                 // cut leading / to get <id>
   response = F("{\"lights\":{\"");
   for (uint8_t i = 1; i <= maxhue; i++) {
-//stb mode
+//stb mod
 // skip broadcast for devices named Sonoff*
     if (strncmp (Settings.friendlyname[i-1], "Sonoff", 6) == 0) {
       snprintf_P(log_data, sizeof(log_data), PSTR("Skip broadcasting default device: %s"),Settings.friendlyname[i-1]);
@@ -693,11 +693,11 @@ void HueLights(String *path)
     if ((device < 1) || (device > maxhue)) {
       device = 1;
     }
-    if (1 == WebServer->args()) {
+    if (WebServer->args()) {
       response = "[";
 
       StaticJsonBuffer<400> jsonBuffer;
-      JsonObject &hue_json = jsonBuffer.parseObject(WebServer->arg(0));
+      JsonObject &hue_json = jsonBuffer.parseObject(WebServer->arg((WebServer->args())-1));
       if (hue_json.containsKey("on")) {
 
         response += FPSTR(HUE_LIGHT_RESPONSE_JSON);
@@ -867,6 +867,11 @@ void HandleHueApi(String *path)
    * user part and allow every caller as with Web or WeMo.
    *
    * (c) Heiko Krupp, 2017
+   *
+   * Hue URL
+   * http://sonoff/api/username/lights/1/state with post data {"on":true,"hue":56100,"sat":254,"bri":254,"alert":"none","transitiontime":40}
+   * is converted by webserver to
+   * http://sonoff/api/username/lights/1/state with arg plain={"on":true,"hue":56100,"sat":254,"bri":254,"alert":"none","transitiontime":40}
    */
 
   uint8_t args = 0;
@@ -893,4 +898,18 @@ void HandleHueApi(String *path)
   else if (path->endsWith("/rules")) HueNotImplemented(path);
   else HueGlobalConfig(path);
 }
+
+void HueWemoAddHandlers()
+{
+  if (EMUL_WEMO == Settings.flag2.emulation) {
+    WebServer->on("/upnp/control/basicevent1", HTTP_POST, HandleUpnpEvent);
+    WebServer->on("/eventservice.xml", HandleUpnpService);
+    WebServer->on("/metainfoservice.xml", HandleUpnpMetaService);
+    WebServer->on("/setup.xml", HandleUpnpSetupWemo);
+  }
+  if (EMUL_HUE == Settings.flag2.emulation) {
+    WebServer->on("/description.xml", HandleUpnpSetupHue);
+  }
+}
+
 #endif  // USE_WEBSERVER && USE_EMULATION

@@ -66,7 +66,7 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t timers_enable : 1;            // bit 0 (v6.1.1b)
     uint32_t user_esp8285_enable : 1;      // bit 1 (v6.1.1.14)
     uint32_t time_append_timezone : 1;     // bit 2 (v6.2.1.2)
-    uint32_t spare03 : 1;
+    uint32_t gui_hostname_ip : 1;          // bit 3 (v6.2.1.20)
     uint32_t spare04 : 1;
     uint32_t spare05 : 1;
     uint32_t spare06 : 1;
@@ -113,8 +113,7 @@ typedef union {
     uint32_t spare06 : 1;
     uint32_t spare07 : 1;
     uint32_t spare08 : 1;
-    uint32_t spare09 : 1;
-    uint32_t spare10 : 1;
+    uint32_t weight_resolution : 2;
     uint32_t frequency_resolution : 2;
     uint32_t axis_resolution : 2;
     uint32_t current_resolution : 2;
@@ -192,8 +191,8 @@ struct SYSCFG {
   byte          seriallog_level;           // 09E
   uint8_t       sta_config;                // 09F
   byte          sta_active;                // 0A0
-  char          sta_ssid[2][33];           // 0A1
-  char          sta_pwd[2][65];            // 0E3
+  char          sta_ssid[2][33];           // 0A1 - Keep together with sta_pwd as being copied as one chunck with reset 4/5
+  char          sta_pwd[2][65];            // 0E3 - Keep together with sta_ssid as being copied as one chunck with reset 4/5
   char          hostname[33];              // 165
   char          syslog_host[33];           // 186
   uint8_t       rule_stop;                 // 1A7
@@ -306,9 +305,7 @@ struct SYSCFG {
   uint16_t      pulse_counter_type;        // 5D0
   uint16_t      pulse_counter_debounce;    // 5D2
   uint8_t       rf_code[17][9];            // 5D4
-
-  byte          free_66d[1];               // 66D
-
+  uint8_t       timezone_minutes;          // 66D
   uint16_t      switch_debounce;           // 66E
   Timer         timer[MAX_TIMERS];         // 670
   int           latitude;                  // 6B0
@@ -324,18 +321,21 @@ struct SYSCFG {
   byte          free_717[1];               // 717
 
   uint16_t      mcp230xx_int_timer;        // 718
-
   uint8_t       rgbwwTable[5];             // 71A
 
-  byte          free_71F[169];             // 71F
+  byte          free_71F[149];             // 71F
 
+  uint32_t      energy_kWhtotal_time;      // 7B4
+  unsigned long weight_item;               // 7B8 Weight of one item in gram * 10
+
+  byte          free_7BC[2];               // 7BC
+
+  uint16_t      weight_max;                // 7BE Total max weight in kilogram
+  unsigned long weight_reference;          // 7C0 Reference weight in gram
+  unsigned long weight_calibration;        // 7C4
   unsigned long energy_frequency_calibration;  // 7C8
-
-  byte          free_7CC[2];               // 7CC
-
+  uint16_t      web_refresh;               // 7CC
   char          mems[MAX_RULE_MEMS][10];   // 7CE
-                                           // 800 Full - no more free locations
-
   char          rules[MAX_RULE_SETS][MAX_RULE_SIZE]; // 800 uses 512 bytes in v5.12.0m, 3 x 512 bytes in v5.14.0b
   //STB mod
   byte          free_680[130];             // A80  give me some space to do configuration without override
@@ -355,7 +355,7 @@ struct SYSCFG {
   uint32_t      deepsleep;                 //
   uint16_t      pulse_devider[MAX_COUNTERS];     //
   //end
-                                           // 6B0 - FFF free locations
+                                           // E00 - FFF free locations
 } Settings;
 
 struct RTCRBT {
@@ -372,7 +372,7 @@ struct RTCMEM {
   unsigned long energy_kWhtotal;              // 298
   unsigned long pulse_counter[MAX_COUNTERS];  // 29C
   power_t       power;                     // 2AC
-
+  uint8_t       free_020[52];              // 2B0	
   //STB mod
   unsigned long uptime;
   uint32_t      ultradeepsleep;

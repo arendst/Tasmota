@@ -141,7 +141,7 @@ void MP3PlayerInit(void) {
     delay(1000);
     MP3_CMD(MP3_CMD_RESET, MP3_CMD_RESET_VALUE);    // reset the player to defaults
     delay(3000);
-    MP3_CMD(MP3_CMD_VOLUME, MP3_VOLUME);            // after reset set volume depending on the entry in the user_config.h
+    MP3_CMD(MP3_CMD_VOLUME, MP3_VOLUME);            // after reset set volume depending on the entry in the my_user_config.h
   }
   return;
 }
@@ -167,7 +167,7 @@ void MP3_CMD(uint8_t mp3cmd,uint16_t val) {
   MP3Player->write(cmd, sizeof(cmd));               // write mp3 data array to player
   delay(1000);
   if (mp3cmd == MP3_CMD_RESET) {
-    MP3_CMD(MP3_CMD_VOLUME, MP3_VOLUME);            // after reset set volume depending on the entry in the user_config.h
+    MP3_CMD(MP3_CMD_VOLUME, MP3_VOLUME);            // after reset set volume depending on the entry in the my_user_config.h
   }
   return;
 }

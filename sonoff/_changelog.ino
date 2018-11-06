@@ -1,4 +1,75 @@
-/* 6.2.1.11 20181002
+/* 6.3.0.2 20181101
+ * Add minutes to commands Timezone to allow all possible world timezones
+ *
+ * 6.3.0.1 20181031
+ * Add wifi status to Tuya (#4221)
+ * Add default sleep 1 to sonoff-basic to lower energy consumption (#4217)
+ * Fix unintended function overload of WifiState
+ * Add delays to reduce CPU usage at boot time (#4233)
+ *
+ * 6.3.0 20181030
+ * Release of v6.3.0
+ *
+ * 6.2.1.20 20181028
+ * Add command SetOption35 0..255 (seconds) to delay mDNS initialization to control possible Wifi connect problems
+ * Add command SetOption53 0/1 to toggle gui display of Hostname and IP address (#1006, #2091)
+ * Add token %hostname% to command FullTopic (#3018)
+ * Add support for two BMP/BME sensors (#4195)
+ * Add TotalStartTime to Energy JSON message (#3971)
+ *
+ * 6.2.1.19 20181023
+ * Fix header file execution order by renaming user_config.h to my_user_config.h
+ * Fix invalid JSON floating point result from nan (Not a Number) and inf (Infinity) into null (#4147)
+ * Fix rule mqtt#connected trigger when mqtt is disabled (#4149)
+ * Initial release of RF transceiving using library RcSwitch (#2702)
+ * Change default OTA Url to http://thehackbox.org/tasmota/release/sonoff.bin (#4170)
+ * Add Tuya Software Serial to support additional Tuya configurations (#4178)
+ * Add define USE_BASIC for selecting image sonoff-basic without most sensors
+ *
+ * 6.2.1.18 20181019
+ * Add more API callbacks and document API.md
+ * Add support for La Crosse TX20 Anemometer (#2654, #3146)
+ * Add optional HX711 scale interface to web GUI demonstrating easy GUI plug-in
+ * Resize HX711 weight_item field from 16 bit to 32 bit
+ *
+ * 6.2.1.17 20181017
+ * Enable updated non-blocking PubSubClient as default MQTT client
+ * Update TasmotaModbus and TasmotaSerial libraries for support of serial 8N2 communication
+ * Add support for Pzem-003/017 DC Energy monitoring module (#3694)
+ * Change support for Pzem-014/016 AC Energy monitoring module (#3694)
+ * Rewrite Tuya Dimmer code
+ *
+ * 6.2.1.16 20181015
+ * Add TasmotaModbus library for very basic modbus wrapper for TasmotaSerial
+ * Change xsns_17_senseair.ino to use TasmotaModbus library
+ * Fix xnrg_05_pzem2.ino for PZEM-014/016 support using TasmotaModbus library (#3694)
+ * Fix RfRaw and SerialSend5 regression from 6.2.1.15 (#4072)
+ * Fix Sonoff Bridge RfRaw receive (#4080, #4085)
+ * Add support for Tuya Dimmer (#469, #4075)
+ * Fix possible wifi connection error (#4044, #4083)
+ * Update PubSubClient Mqtt library to non-blocking EspEasy version
+ *
+ * 6.2.1.15 20181012
+ * Fix Color Temperature slider functionality regression from 6.2.1.5 (#4037)
+ * Add auto reload of main web page to some web restarts
+ * Add whitespace removal from RfRaw and SerialSend5 (#4020)
+ * Add commands Reset 4 (reset to defaults but keep wifi params) and Reset 5 (as reset 4 and also erase flash) (#4061)
+ *
+ * 6.2.1.14 20181010
+ * Rewrite Webserver page handler for easier extension (thx to Adrian Scillato)
+ * Add support for DS3231 Real Time Clock
+ * Add support for HX711 Load Cell
+ * Add command WeightRes 0..3 to control display of decimals for kilogram
+ *
+ * 6.2.1.13 20181008
+ * Change default Mqtt client library from PubSubClient to non-blocking ArduinoMqtt by Joel Gaehwiler
+ * Add command WebRefresh 1000..10000 to control web page refresh in milliseconds. Default is 2345
+ *
+ * 6.2.1.12 20181007
+ * Fix Shelly1 switchmode 3 and 4 when using pushbutton (#3989)
+ * Add support for CSL Aplic WDP 303075 Power Socket with Energy Monitoring (#3991, #3996)
+ *
+ * 6.2.1.11 20181002
  * Remove support for MQTT Client based on esp-mqtt-arduino by #define MQTT_LIBRARY_TYPE MQTT_ESPMQTTARDUINO
  * Add support for MQTT Client based on lwmqtt to be selected by #define MQTT_LIBRARY_TYPE MQTT_ARDUINOMQTT
  * Change MQTT_ARDUINOMQTT command timeout from 1 to 10 seconds
