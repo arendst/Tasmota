@@ -1,18 +1,14 @@
 /*
   xplg_wemohue.ino - wemo and hue support for Sonoff-Tasmota
-
   Copyright (C) 2018  Heiko Krupp and Theo Arends
-
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
   the Free Software Foundation, either version 3 of the License, or
   (at your option) any later version.
-
   This program is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
   GNU General Public License for more details.
-
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
@@ -461,19 +457,15 @@ const char HUE_DESCRIPTION_XML[] PROGMEM =
   "\r\n";
 const char HUE_LIGHTS_STATUS_JSON[] PROGMEM =
   "{\"on\":{state},"
+  "\"bri\":{b},"
+  "\"hue\":{h},"
+  "\"sat\":{s},"
+  "\"xy\":[0.5, 0.5],"
+  "\"ct\":{t},"
   "\"alert\":\"none\","
   "\"effect\":\"none\","
-  "\"reachable\":true";
-const char HUE_LIGHTS_STATUS_JSON_DIM[] PROGMEM =
-  ",\"bri\":{b}";
-const char HUE_LIGHTS_STATUS_JSON_RGB[] PROGMEM =
-  ",\"hue\":{h},"
-  "\"sat\":{s},"
-  "\"xy\":[0.5, 0.5]";
-const char HUE_LIGHTS_STATUS_JSON_CT[] PROGMEM =
-  ",\"ct\":{t}";
-const char HUE_LIGHTS_STATUS_JSON_CM[] PROGMEM =
-  ",\"colormode\":\"{m}\"";
+  "\"colormode\":\"{m}\","
+  "\"reachable\":true}";
 const char HUE_LIGHTS_STATUS_JSON2[] PROGMEM =
   ",\"type\":\"Extended color light\","
   "\"name\":\"{j1\","
@@ -580,19 +572,6 @@ void HueLightStatus1(byte device, String *response)
     ct = LightGetColorTemp();
   }
   *response += FPSTR(HUE_LIGHTS_STATUS_JSON);
-  //The light can be dimmed
-  if (light_subtype >= LST_SINGLE) *response += FPSTR(HUE_LIGHTS_STATUS_JSON_DIM);
-
-  //The light has adjustabe color temperature
-  if (light_subtype == LST_COLDWARM || light_subtype == LST_RGBWC) *response += FPSTR(HUE_LIGHTS_STATUS_JSON_CT);
-
-  //The light has RGB
-  if (light_subtype >= LST_RGB) *response += FPSTR(HUE_LIGHTS_STATUS_JSON_RGB);
-
-  //The light supports colormode
-  if (light_subtype >= LST_COLDWARM) *response += FPSTR(HUE_LIGHTS_STATUS_JSON_CM);
-
-  *response += "}";
   response->replace("{state}", (power & (1 << (device-1))) ? "true" : "false");
   response->replace("{h}", String((uint16_t)(65535.0f * hue)));
   response->replace("{s}", String((uint8_t)(254.0f * sat)));
