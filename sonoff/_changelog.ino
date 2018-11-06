@@ -1,6 +1,8 @@
 /* 6.3.0.3 20181105
  * Fix hardware serial pin configuration. To keep using hardware serial swap current Rx/Tx pin configuration only (#4280)
  * Add more strict checks for GPIO selections
+ * Add optional hardware serial when GPIO13(Rx) and GPIO15(Tx) are selected removing hardware serial from GPIO01(Tx) and GPIO03(Rx) (#4288)
+ * Bump TasmotaSerial version from 2.1.0 to 2.2.0
  *
  * 6.3.0.2 20181101
  * Add minutes to commands Timezone to allow all possible world timezones
