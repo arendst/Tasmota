@@ -21,6 +21,8 @@
  * Counter sensors (water meters, electricity meters etc.)
 \*********************************************************************************************/
 
+#define XSNS_01             1
+
 unsigned long last_counter_timer[MAX_COUNTERS]; // Last counter time in micro seconds
 
 void CounterUpdate(byte index)
@@ -138,8 +140,6 @@ void CounterShow(boolean json)
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
-
-#define XSNS_01
 
 boolean Xsns01(byte function)
 {

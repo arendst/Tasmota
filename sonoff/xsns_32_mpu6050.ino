@@ -1,5 +1,5 @@
 /*
-  xsns_32_MPU_6050.ino - MPU_6050 gyroscope and temperature sensor support for Sonoff-Tasmota
+  xsns_32_mpu6050.ino - MPU6050 gyroscope and temperature sensor support for Sonoff-Tasmota
 
   Copyright (C) 2018  Oliver Welter
 
@@ -20,14 +20,16 @@
 #ifdef USE_I2C
 #ifdef USE_MPU6050
 /*********************************************************************************************\
- * MPU_6050 3 axis gyroscope and temperature sensor
+ * MPU6050 3 axis gyroscope and temperature sensor
  *
  * Source: Oliver Welter, with special thanks to Jeff Rowberg
  *
  * I2C Address: 0x68 or 0x69 with AD0 HIGH
 \*********************************************************************************************/
 
-#define D_SENSOR_MPU6050 "MPU6050"
+#define XSNS_32                          32
+
+#define D_SENSOR_MPU6050                 "MPU6050"
 
 #define MPU_6050_ADDR_AD0_LOW            0x68
 #define MPU_6050_ADDR_AD0_HIGH           0x69
@@ -172,8 +174,6 @@ void MPU_6050Show(boolean json)
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
-
-#define XSNS_32
 
 boolean Xsns32(byte function)
 {

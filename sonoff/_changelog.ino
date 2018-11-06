@@ -1,4 +1,7 @@
-/* 6.3.0.3 20181105
+/* 6.3.0.4 20181106
+ * Add command SetSensorXX 0/1 to disable/re-enable compiled xsns_XX_sensor.ino driver
+ *
+ * 6.3.0.3 20181105
  * Fix hardware serial pin configuration. To keep using hardware serial swap current Rx/Tx pin configuration only (#4280)
  * Add more strict checks for GPIO selections
  * Add optional hardware serial when GPIO13(Rx) and GPIO15(Tx) are selected removing hardware serial from GPIO01(Tx) and GPIO03(Rx) (#4288)

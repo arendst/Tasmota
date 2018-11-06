@@ -26,6 +26,8 @@
  * Source: Adafruit Industries https://github.com/adafruit/DHT-sensor-library
 \*********************************************************************************************/
 
+#define XSNS_06          6
+
 #define DHT_MAX_SENSORS  3
 #define DHT_MAX_RETRY    8
 
@@ -237,8 +239,6 @@ void DhtShow(boolean json)
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
-
-#define XSNS_06
 
 boolean Xsns06(byte function)
 {

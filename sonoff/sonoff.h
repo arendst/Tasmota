@@ -50,6 +50,10 @@ typedef unsigned long power_t;              // Power (Relay) type
 #define MAX_DOMOTICZ_SNS_IDX   12           // Max number of Domoticz sensors indices
 #define MAX_KNX_GA             10           // Max number of KNX Group Addresses to read that can be set
 #define MAX_KNX_CB             10           // Max number of KNX Group Addresses to write that can be set
+#define MAX_XNRG_DRIVERS       32           // Max number of allowed energy drivers
+#define MAX_XDSP_DRIVERS       32           // Max number of allowed display drivers
+#define MAX_XDRV_DRIVERS       100          // Max number of allowed driver drivers
+#define MAX_XSNS_DRIVERS       100          // Max number of allowed sensor drivers
 #define MAX_RULE_MEMS          5            // Max number of saved vars
 #define MAX_RULE_SETS          3            // Max number of rule sets of size 512 characters
 #define MAX_RULE_SIZE          512          // Max number of characters in rules

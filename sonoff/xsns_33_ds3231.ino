@@ -32,9 +32,11 @@
    I2C Address: 0x68
   \*********************************************************************************************/
 
+#define XSNS_33             33
+
 //DS3232 I2C Address
 #ifndef USE_RTC_ADDR
-  #define USE_RTC_ADDR 0x68
+#define USE_RTC_ADDR 0x68
 #endif
 
 //DS3232 Register Addresses
@@ -133,8 +135,6 @@ void SetDS3231Time (uint32_t epoch_time) {
 /*********************************************************************************************\
    Interface
   \*********************************************************************************************/
-
-#define XSNS_33
 
 boolean Xsns33(byte function)
 {

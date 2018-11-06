@@ -635,6 +635,8 @@ void SettingsDefaultSet2()
   for (byte j = 0; j < 5; j++) {
     Settings.rgbwwTable[j] = 255;
   }
+
+  memset(&Settings.monitors, 0xFF, 40);  // Enable all possible monitors, displays, drivers and sensors
 }
 
 /********************************************************************************************/
@@ -845,6 +847,9 @@ void SettingsDelta()
     }
     if (Settings.version < 0x06030002) {
       Settings.timezone_minutes = 0;
+    }
+    if (Settings.version < 0x06030004) {
+      memset(&Settings.monitors, 0xFF, 40);  // Enable all possible monitors, displays, drivers and sensors
     }
 
     Settings.version = VERSION;

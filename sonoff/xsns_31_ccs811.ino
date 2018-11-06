@@ -27,6 +27,8 @@
  * I2C Address: 0x5A assumes ADDR connected to Gnd, Wake also must be grounded
 \*********************************************************************************************/
 
+#define XSNS_31             31
+
 #include "Adafruit_CCS811.h"
 
 Adafruit_CCS811 ccs;
@@ -100,8 +102,6 @@ void CCS811Show(boolean json)
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
-
-#define XSNS_31
 
 boolean Xsns31(byte function)
 {

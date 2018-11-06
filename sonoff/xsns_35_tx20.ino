@@ -26,6 +26,8 @@
  * https://www.john.geek.nz/2011/07/la-crosse-tx20-anemometer-communication-protocol/
 \*********************************************************************************************/
 
+#define XSNS_35                  35
+
 #define TX20_BIT_TIME          1220  // microseconds
 #define TX20_RESET_VALUES        60  // seconds
 
@@ -193,8 +195,6 @@ void Tx20Show(boolean json)
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
-
-#define XSNS_35
 
 boolean Xsns35(byte function)
 {
