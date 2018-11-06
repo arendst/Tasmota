@@ -207,7 +207,7 @@ void TuyaPacketProcess()
         }
 
         tuya_new_dim = round(tuya_buffer[13] * (100. / 255.));
-        if((power) && (tuya_new_dim > 0) && (abs(tuya_new_dim - Settings.light_dimmer) > 2)) {
+        if((power || bitRead(Settings.flag.data, 20)) && (tuya_new_dim > 0) && (abs(tuya_new_dim - Settings.light_dimmer) > 1)) {
 
           snprintf_P(scmnd, sizeof(scmnd), PSTR(D_CMND_DIMMER " %d"), tuya_new_dim );
 
