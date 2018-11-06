@@ -62,6 +62,7 @@ class TasmotaSerial : public Stream {
     // Member variables
     bool m_valid;
     bool m_hardserial;
+    bool m_hardswap;
     bool m_high_speed;
     int m_rx_pin;
     int m_tx_pin;
