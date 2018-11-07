@@ -19,6 +19,8 @@
 
 #ifdef USE_DOMOTICZ
 
+#define XDRV_07             7
+
 const char DOMOTICZ_MESSAGE[] PROGMEM = "{\"idx\":%d,\"nvalue\":%d,\"svalue\":\"%s\",\"Battery\":%d,\"RSSI\":%d}";
 
 enum DomoticzCommands { CMND_IDX, CMND_KEYIDX, CMND_SWITCHIDX, CMND_SENSORIDX, CMND_UPDATETIMER };
@@ -474,8 +476,6 @@ void DomoticzSaveSettings()
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
-
-#define XDRV_07
 
 boolean Xdrv07(byte function)
 {

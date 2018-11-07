@@ -17,7 +17,12 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#ifdef XFUNC_PTR_IN_ROM
 boolean (* const xdsp_func_ptr[])(byte) PROGMEM = {   // Display Function Pointers
+#else
+boolean (* const xdsp_func_ptr[])(byte) = {   // Display Function Pointers
+#endif
+
 #ifdef XDSP_01
   &Xdsp01,
 #endif

@@ -25,6 +25,8 @@
  * Based on source by AlexT (https://github.com/tzapu)
 \*********************************************************************************************/
 
+#define XDRV_01                1
+
 #define HTTP_REFRESH_TIME      2345   // milliseconds
 
 #ifdef USE_RF_FLASH
@@ -1242,7 +1244,7 @@ void HandleInformation()
   // }2 = </th><td>
   String func = FPSTR(HTTP_SCRIPT_INFO_BEGIN);
   func += F("<table style='width:100%'><tr><th>");
-  func += F(D_PROGRAM_VERSION "}2"); func += my_version;
+  func += F(D_PROGRAM_VERSION "}2"); func += my_version; func += my_image;
   func += F("}1" D_BUILD_DATE_AND_TIME "}2"); func += GetBuildDateAndTime();
   func += F("}1" D_CORE_AND_SDK_VERSION "}2" ARDUINO_ESP8266_RELEASE "/"); func += String(ESP.getSdkVersion());
   func += F("}1" D_UPTIME "}2"); func += GetUptime();
@@ -1319,8 +1321,10 @@ void HandleInformation()
 #endif // USE_DISCOVERY
 
   func += F("}1}2&nbsp;");  // Empty line
-  func += F("}1" D_ESP_CHIP_ID "}2"); func += String(ESP.getChipId());
-  func += F("}1" D_FLASH_CHIP_ID "}2"); func += String(ESP.getFlashChipId());
+  snprintf_P(stopic, sizeof(stopic), PSTR(" (0x%X)"), ESP.getChipId());
+  func += F("}1" D_ESP_CHIP_ID "}2"); func += String(ESP.getChipId()); func += stopic;
+  snprintf_P(stopic, sizeof(stopic), PSTR(" (0x%X)"), ESP.getFlashChipId());
+  func += F("}1" D_FLASH_CHIP_ID "}2"); func += String(ESP.getFlashChipId()); func += stopic;
   func += F("}1" D_FLASH_CHIP_SIZE "}2"); func += String(ESP.getFlashChipRealSize() / 1024); func += F("kB");
   func += F("}1" D_PROGRAM_FLASH_SIZE "}2"); func += String(ESP.getFlashChipSize() / 1024); func += F("kB");
   func += F("}1" D_PROGRAM_SIZE "}2"); func += String(ESP.getSketchSize() / 1024); func += F("kB");
@@ -2008,8 +2012,6 @@ bool WebCommand()
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
-
-#define XDRV_01
 
 boolean Xdrv01(byte function)
 {

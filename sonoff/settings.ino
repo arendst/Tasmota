@@ -636,7 +636,7 @@ void SettingsDefaultSet2()
     Settings.rgbwwTable[j] = 255;
   }
 
-  memset(&Settings.monitors, 0xFF, 40);  // Enable all possible monitors, displays, drivers and sensors
+  memset(&Settings.drivers, 0xFF, 32);  // Enable all possible monitors, displays, drivers and sensors
 }
 
 /********************************************************************************************/
@@ -849,7 +849,7 @@ void SettingsDelta()
       Settings.timezone_minutes = 0;
     }
     if (Settings.version < 0x06030004) {
-      memset(&Settings.monitors, 0xFF, 40);  // Enable all possible monitors, displays, drivers and sensors
+      memset(&Settings.drivers, 0xFF, 32);  // Enable all possible monitors, displays, drivers and sensors
     }
 
     Settings.version = VERSION;

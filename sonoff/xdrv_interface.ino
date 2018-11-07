@@ -17,7 +17,12 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#ifdef XFUNC_PTR_IN_ROM
 boolean (* const xdrv_func_ptr[])(byte) PROGMEM = {   // Driver Function Pointers
+#else
+boolean (* const xdrv_func_ptr[])(byte) = {   // Driver Function Pointers
+#endif
+
 #ifdef XDRV_01
   &Xdrv01,
 #endif

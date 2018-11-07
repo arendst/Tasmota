@@ -19,6 +19,8 @@
 
 #ifdef USE_HOME_ASSISTANT
 
+#define XDRV_12             12
+
 const char HASS_DISCOVER_RELAY[] PROGMEM =
   "{\"name\":\"%s\","                              // dualr2 1
   "\"command_topic\":\"%s\","                      // cmnd/dualr2/POWER2
@@ -254,8 +256,6 @@ boolean HassCommand()
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
-
-#define XDRV_12
 
 boolean Xdrv12(byte function)
 {

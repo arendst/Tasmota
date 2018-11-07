@@ -17,6 +17,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#define XDRV_02                2
+
 /*********************************************************************************************\
  * Select ONE of possible MQTT library types below
 \*********************************************************************************************/
@@ -402,8 +404,8 @@ void MqttConnected()
   }
 
   if (mqtt_initial_connection_state) {
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_MODULE "\":\"%s\",\"" D_JSON_VERSION "\":\"%s\",\"" D_JSON_FALLBACKTOPIC "\":\"%s\",\"" D_CMND_GROUPTOPIC "\":\"%s\"}"),
-      my_module.name, my_version, mqtt_client, Settings.mqtt_grptopic);
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_MODULE "\":\"%s\",\"" D_JSON_VERSION "\":\"%s%s\",\"" D_JSON_FALLBACKTOPIC "\":\"%s\",\"" D_CMND_GROUPTOPIC "\":\"%s\"}"),
+      my_module.name, my_version, my_image, mqtt_client, Settings.mqtt_grptopic);
     MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_INFO "1"));
 #ifdef USE_WEBSERVER
     if (Settings.webserver) {
@@ -908,8 +910,6 @@ void MqttSaveSettings()
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
-
-#define XDRV_02
 
 boolean Xdrv02(byte function)
 {

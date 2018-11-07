@@ -20,6 +20,8 @@
 #if defined(USE_I2C) || defined(USE_SPI)
 #ifdef USE_DISPLAY
 
+#define XDRV_13                13
+
 #define DISPLAY_MAX_DRIVERS    16           // Max number of display drivers/models supported by xdsp_interface.ino
 #define DISPLAY_MAX_COLS       40           // Max number of columns allowed with command DisplayCols
 #define DISPLAY_MAX_ROWS       32           // Max number of lines allowed with command DisplayRows
@@ -627,7 +629,7 @@ void DisplayLogBufferInit()
     DisplayReAllocLogBuffer();
 
     char buffer[40];
-    snprintf_P(buffer, sizeof(buffer), PSTR(D_VERSION " %s"), my_version);
+    snprintf_P(buffer, sizeof(buffer), PSTR(D_VERSION " %s%s"), my_version, my_image);
     DisplayLogBufferAdd(buffer);
     snprintf_P(buffer, sizeof(buffer), PSTR("Display mode %d"), Settings.display_mode);
     DisplayLogBufferAdd(buffer);
@@ -1059,8 +1061,6 @@ boolean DisplayCommand()
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
-
-#define XDRV_13
 
 boolean Xdrv13(byte function)
 {

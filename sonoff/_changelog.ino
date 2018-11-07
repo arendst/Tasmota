@@ -1,4 +1,7 @@
-/* 6.3.0.4 20181106
+/* 6.3.0.5 20181107
+ * Add code image and optional commit number to version
+ *
+ * 6.3.0.4 20181106
  * Add command SetSensorXX 0/1 to disable/re-enable compiled xsns_XX_sensor.ino driver
  *
  * 6.3.0.3 20181105

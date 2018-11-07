@@ -63,6 +63,8 @@
  *     RuleTimer2 100
 \*********************************************************************************************/
 
+#define XDRV_10             10
+
 #define D_CMND_RULE "Rule"
 #define D_CMND_RULETIMER "RuleTimer"
 #define D_CMND_EVENT "Event"
@@ -639,8 +641,6 @@ double map_double(double x, double in_min, double in_max, double out_min, double
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
-
-#define XDRV_10
 
 boolean Xdrv10(byte function)
 {

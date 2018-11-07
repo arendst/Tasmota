@@ -20,6 +20,18 @@
 #ifndef _SONOFF_H_
 #define _SONOFF_H_
 
+/*********************************************************************************************\
+ * Performance ROM (PROGMEM) vs RAM (RODATA)
+\*********************************************************************************************/
+
+//#define XFUNC_PTR_IN_ROM                    // Enable for keeping tables in ROM (PROGMEM) which seem to have access issues on some flash types
+
+/*********************************************************************************************\
+ * Default sensor states
+\*********************************************************************************************/
+
+#define CODE_IMAGE 0
+
 #define USE_DHT                             // Default DHT11 sensor needs no external library
 #define USE_ENERGY_SENSOR                   // Use energy sensors (+14k code)
 #define USE_HLW8012                         // Use energy sensor for Sonoff Pow and WolfBlitz
@@ -52,8 +64,8 @@ typedef unsigned long power_t;              // Power (Relay) type
 #define MAX_KNX_CB             10           // Max number of KNX Group Addresses to write that can be set
 #define MAX_XNRG_DRIVERS       32           // Max number of allowed energy drivers
 #define MAX_XDSP_DRIVERS       32           // Max number of allowed display drivers
-#define MAX_XDRV_DRIVERS       100          // Max number of allowed driver drivers
-#define MAX_XSNS_DRIVERS       100          // Max number of allowed sensor drivers
+#define MAX_XDRV_DRIVERS       96           // Max number of allowed driver drivers
+#define MAX_XSNS_DRIVERS       96           // Max number of allowed sensor drivers
 #define MAX_RULE_MEMS          5            // Max number of saved vars
 #define MAX_RULE_SETS          3            // Max number of rule sets of size 512 characters
 #define MAX_RULE_SIZE          512          // Max number of characters in rules

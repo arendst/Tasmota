@@ -22,6 +22,8 @@
  * RF send and receive using RCSwitch library https://github.com/sui77/rc-switch/
 \*********************************************************************************************/
 
+#define XDRV_17             17
+
 #define D_JSON_RF_PROTOCOL "Protocol"
 #define D_JSON_RF_BITS "Bits"
 #define D_JSON_RF_DATA "Data"
@@ -163,8 +165,6 @@ boolean RfSendCommand()
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
-
-#define XDRV_17
 
 boolean Xdrv17(byte function)
 {
