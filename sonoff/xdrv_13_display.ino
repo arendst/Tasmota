@@ -629,7 +629,7 @@ void DisplayLogBufferInit()
     DisplayReAllocLogBuffer();
 
     char buffer[40];
-    snprintf_P(buffer, sizeof(buffer), PSTR(D_VERSION " %s"), my_version);
+    snprintf_P(buffer, sizeof(buffer), PSTR(D_VERSION " %s%s"), my_version, my_image);
     DisplayLogBufferAdd(buffer);
     snprintf_P(buffer, sizeof(buffer), PSTR("Display mode %d"), Settings.display_mode);
     DisplayLogBufferAdd(buffer);

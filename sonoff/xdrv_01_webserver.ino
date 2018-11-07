@@ -1244,7 +1244,7 @@ void HandleInformation()
   // }2 = </th><td>
   String func = FPSTR(HTTP_SCRIPT_INFO_BEGIN);
   func += F("<table style='width:100%'><tr><th>");
-  func += F(D_PROGRAM_VERSION "}2"); func += my_version;
+  func += F(D_PROGRAM_VERSION "}2"); func += my_version; func += my_image;
   func += F("}1" D_BUILD_DATE_AND_TIME "}2"); func += GetBuildDateAndTime();
   func += F("}1" D_CORE_AND_SDK_VERSION "}2" ARDUINO_ESP8266_RELEASE "/"); func += String(ESP.getSdkVersion());
   func += F("}1" D_UPTIME "}2"); func += GetUptime();
