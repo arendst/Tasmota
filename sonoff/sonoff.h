@@ -20,6 +20,16 @@
 #ifndef _SONOFF_H_
 #define _SONOFF_H_
 
+/*********************************************************************************************\
+ * Performance ROM (PROGMEM) vs RAM (RODATA)
+\*********************************************************************************************/
+
+//#define XFUNC_PTR_IN_ROM                    // Enable for keeping tables in ROM (PROGMEM) which seem to have access issues on some flash types
+
+/*********************************************************************************************\
+ * Default sensor states
+\*********************************************************************************************/
+
 #define USE_DHT                             // Default DHT11 sensor needs no external library
 #define USE_ENERGY_SENSOR                   // Use energy sensors (+14k code)
 #define USE_HLW8012                         // Use energy sensor for Sonoff Pow and WolfBlitz
