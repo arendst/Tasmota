@@ -17,7 +17,13 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+//#define XSNS_IN_ROM
+
+#ifdef XSNS_IN_ROM
 boolean (* const xsns_func_ptr[])(byte) PROGMEM = {  // Sensor Function Pointers for simple implementation of sensors
+#else
+boolean (* const xsns_func_ptr[])(byte) = {  // Sensor Function Pointers for simple implementation of sensors
+#endif
 #ifdef XSNS_01
   &Xsns01,
 #endif
@@ -260,7 +266,11 @@ boolean (* const xsns_func_ptr[])(byte) PROGMEM = {  // Sensor Function Pointers
 const uint8_t xsns_present = sizeof(xsns_func_ptr) / sizeof(xsns_func_ptr[0]);  // Number of External Sensors found
 uint8_t xsns_index = 0;
 
+#ifdef XSNS_IN_ROM
 const uint8_t kXsnsList[] PROGMEM = {
+#else
+const uint8_t kXsnsList[] = {
+#endif
 #ifdef XSNS_01
   XSNS_01,
 #endif
@@ -508,7 +518,11 @@ const uint8_t kXsnsList[] PROGMEM = {
 boolean XsnsEnabled(byte sns_index)
 {
   if (sns_index < sizeof(kXsnsList)) {
+#ifdef XSNS_IN_ROM
     uint8_t index = pgm_read_byte(kXsnsList + sns_index);
+#else
+    uint8_t index = kXsnsList[sns_index];
+#endif
     return bitRead(Settings.sensors[index / 32], index % 32);
   }
   return 1;
@@ -518,7 +532,11 @@ boolean XsnsPresent(byte sns_index)
 {
   uint8_t index = 0;
   for (byte i = 0; i < sizeof(kXsnsList); i++) {
+#ifdef XSNS_IN_ROM
     index = pgm_read_byte(kXsnsList + i);
+#else
+    index = kXsnsList[i];
+#endif
     if (index == sns_index) { return true; }
   }
   return false;
