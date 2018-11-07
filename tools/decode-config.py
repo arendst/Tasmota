@@ -660,11 +660,10 @@ Setting_6_3_0_2['flag'][0].update   ({
 # ========
 Setting_6_3_0_4 = copy.deepcopy(Setting_6_3_0_2)
 Setting_6_3_0_4.update({
-    'energy_kWhtotal_time':         ('<L',  0x7B4, None),
-    'monitors':                     ('<L',  0x78C, None),
-    'displays':                     ('<L',  0x790, None),
-    'drivers':                      ('<L',  0x794, [4]),
-    'sensors':                      ('<L',  0x7A4, [4]),
+    'drivers':                      ('<L',  0x794, [3]),
+    'monitors':                     ('<L',  0x7A0, None),
+    'sensors':                      ('<L',  0x7A4, [3]),
+    'displays':                     ('<L',  0x7B0, None),
 })
 Setting_6_3_0_4['flag3'][0].update ({
         'tuya_apply_o20':           ('<L',  (0x3A0, 1, 4), None),
