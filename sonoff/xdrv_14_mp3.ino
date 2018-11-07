@@ -67,6 +67,8 @@
  * https://www.dfrobot.com/wiki/index.php/DFPlayer_Mini_SKU:DFR0299
 \*********************************************************************************************/
 
+#define XDRV_14             14
+
 #include <TasmotaSerial.h>
 
 TasmotaSerial *MP3Player;
@@ -223,8 +225,6 @@ boolean MP3PlayerCmd(void) {
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
-
-#define XDRV_14
 
 boolean Xdrv14(byte function)
 {

@@ -1,5 +1,5 @@
 /*
-  xdrv_99_debug.ino - debug support for Sonoff-Tasmota
+  xdrv_95_debug.ino - debug support for Sonoff-Tasmota
 
   Copyright (C) 2018  Theo Arends
 
@@ -26,9 +26,14 @@
 #endif  // DEBUG_THEO
 
 #ifdef USE_DEBUG_DRIVER
+/*********************************************************************************************\
+ * Virtual debugging support
+\*********************************************************************************************/
+
+#define XDRV_95             95
 
 #ifndef CPU_LOAD_CHECK
-#define CPU_LOAD_CHECK       1                 // Seconds between each CPU_LOAD log
+#define CPU_LOAD_CHECK      1                 // Seconds between each CPU_LOAD log
 #endif
 
 /*********************************************************************************************\
@@ -473,9 +478,7 @@ boolean DebugCommand()
  * Interface
 \*********************************************************************************************/
 
-#define XDRV_99
-
-boolean Xdrv99(byte function)
+boolean Xdrv95(byte function)
 {
   boolean result = false;
 

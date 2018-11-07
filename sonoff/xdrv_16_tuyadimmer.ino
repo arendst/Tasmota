@@ -19,6 +19,8 @@
 
 #ifdef USE_TUYA_DIMMER
 
+#define XDRV_16                16
+
 #ifndef TUYA_DIMMER_ID
 #define TUYA_DIMMER_ID         0
 #endif
@@ -137,7 +139,7 @@ void LightSerialDuty(uint8_t duty)
     if (duty < 25) {
       duty = 25;  // dimming acts odd below 25(10%) - this mirrors the threshold set on the faceplate itself
     }
-    
+
     TuyaSendValue(Settings.param[P_TUYA_DIMMER_ID], duty);
 
     snprintf_P(log_data, sizeof(log_data), PSTR( "TYA: Send Serial Packet Dim Value=%d (id=%d)"), duty, Settings.param[P_TUYA_DIMMER_ID]);
@@ -177,7 +179,7 @@ void TuyaPacketProcess()
 
   switch(tuya_buffer[3]) {
 
-    case TUYA_CMD_HEARTBEAT: 
+    case TUYA_CMD_HEARTBEAT:
       AddLog_P(LOG_LEVEL_DEBUG, PSTR("TYA: Heartbeat"));
       if(tuya_buffer[6] == 0){
         AddLog_P(LOG_LEVEL_DEBUG, PSTR("TYA: Detected MCU restart"));
@@ -385,8 +387,6 @@ void TuyaSetWifiLed(){
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
-
-#define XDRV_16
 
 boolean Xdrv16(byte function)
 {

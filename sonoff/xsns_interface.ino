@@ -530,12 +530,12 @@ String XsnsGetSensors()
 
   String data = F("[");
   for (byte i = 0; i < MAX_XSNS_DRIVERS; i++) {
-    if (i && (!(i % 10))) { data += F(","); }
-    if (!(i % 10)) { data += F("\""); }
+    if (i && (!(i % 16))) { data += F(","); }
+    if (!(i % 16)) { data += F("\""); }
     state[0] = '-';
     if (XsnsPresent(i)) { state[0] = bitRead(Settings.sensors[i / 32], i % 32) ? '1' : '0'; }
     data += String(state);
-    if (i && (!((i +1) % 10))) { data += F("\""); }
+    if (i && (!((i +1) % 16))) { data += F("\""); }
   }
   data += F("]");
 

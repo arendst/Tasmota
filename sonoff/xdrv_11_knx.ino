@@ -48,6 +48,8 @@ byte          Settings.knx_CB_param[MAX_KNX_CB]     Type of Output (set relay, t
 
 \*********************************************************************************************/
 
+#define XDRV_11  11
+
 #include <esp-knx-ip.h>         // KNX Library
 
 address_t KNX_physs_addr;  // Physical KNX address of this device
@@ -1277,8 +1279,6 @@ boolean KnxCommand()
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
-
-#define XDRV_11
 
 boolean Xdrv11(byte function)
 {
