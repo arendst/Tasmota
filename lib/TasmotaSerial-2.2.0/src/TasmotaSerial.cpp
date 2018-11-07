@@ -76,7 +76,7 @@ static void (*ISRList[16])() = {
       tms_isr_15
 };
 
-TasmotaSerial::TasmotaSerial(int receive_pin, int transmit_pin, bool hardware_fallback)
+TasmotaSerial::TasmotaSerial(int receive_pin, int transmit_pin, int hardware_fallback)
 {
   m_valid = false;
   m_hardserial = 0;
@@ -91,7 +91,7 @@ TasmotaSerial::TasmotaSerial(int receive_pin, int transmit_pin, bool hardware_fa
   if (hardware_fallback && (((3 == m_rx_pin) && (1 == m_tx_pin)) || ((3 == m_rx_pin) && (-1 == m_tx_pin)) || ((-1 == m_rx_pin) && (1 == m_tx_pin)))) {
     m_hardserial = 1;
   }
-  else if (hardware_fallback && (((13 == m_rx_pin) && (15 == m_tx_pin)) || ((13 == m_rx_pin) && (-1 == m_tx_pin)) || ((-1 == m_rx_pin) && (15 == m_tx_pin)))) {
+  else if ((2 == hardware_fallback) && (((13 == m_rx_pin) && (15 == m_tx_pin)) || ((13 == m_rx_pin) && (-1 == m_tx_pin)) || ((-1 == m_rx_pin) && (15 == m_tx_pin)))) {
     m_hardserial = 1;
     m_hardswap = 1;
   }

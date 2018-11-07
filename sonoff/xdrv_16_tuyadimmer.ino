@@ -284,7 +284,7 @@ void TuyaInit()
   if (!Settings.param[P_TUYA_DIMMER_ID]) {
     Settings.param[P_TUYA_DIMMER_ID] = TUYA_DIMMER_ID;
   }
-  TuyaSerial = new TasmotaSerial(pin[GPIO_TUYA_RX], pin[GPIO_TUYA_TX], 1);
+  TuyaSerial = new TasmotaSerial(pin[GPIO_TUYA_RX], pin[GPIO_TUYA_TX], 2);
   if (TuyaSerial->begin(9600)) {
     if (TuyaSerial->hardwareSerial()) { ClaimSerial(); }
     // Get MCU Configuration
