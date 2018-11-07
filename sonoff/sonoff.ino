@@ -2385,10 +2385,11 @@ void GpioSwitchPinMode(uint8_t index)
   if (pin[GPIO_SWT1 +index] < 99) {
 //    pinMode(pin[GPIO_SWT1 +index], (16 == pin[GPIO_SWT1 +index]) ? INPUT_PULLDOWN_16 : bitRead(switch_no_pullup, index) ? INPUT : INPUT_PULLUP);
 
-    uint8_t no_pullup = bitRead(switch_no_pullup, index);
+    uint8_t no_pullup = bitRead(switch_no_pullup, index);       // 0 = INPUT_PULLUP, 1 = INPUT
     if (no_pullup) {
       if (SHELLY2 == Settings.module) {
-        no_pullup = (Settings.switchmode[index] < PUSHBUTTON);
+        // Switchmodes : TOGGLE, FOLLOW, FOLLOW_INV, PUSHBUTTON, PUSHBUTTON_INV, PUSHBUTTONHOLD, PUSHBUTTONHOLD_INV, PUSHBUTTON_TOGGLE, MAX_SWITCH_OPTION
+        no_pullup = (Settings.switchmode[index] < PUSHBUTTON);  // INPUT on TOGGLE, FOLLOW and FOLLOW_INV. INPUT_PULLUP on anything else
       }
     }
     pinMode(pin[GPIO_SWT1 +index], (16 == pin[GPIO_SWT1 +index]) ? INPUT_PULLDOWN_16 : (no_pullup) ? INPUT : INPUT_PULLUP);

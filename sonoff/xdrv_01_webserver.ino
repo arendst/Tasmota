@@ -1321,8 +1321,10 @@ void HandleInformation()
 #endif // USE_DISCOVERY
 
   func += F("}1}2&nbsp;");  // Empty line
-  func += F("}1" D_ESP_CHIP_ID "}2"); func += String(ESP.getChipId());
-  func += F("}1" D_FLASH_CHIP_ID "}2"); func += String(ESP.getFlashChipId());
+  snprintf_P(stopic, sizeof(stopic), PSTR(" (0x%X)"), ESP.getChipId());
+  func += F("}1" D_ESP_CHIP_ID "}2"); func += String(ESP.getChipId()); func += stopic;
+  snprintf_P(stopic, sizeof(stopic), PSTR(" (0x%X)"), ESP.getFlashChipId());
+  func += F("}1" D_FLASH_CHIP_ID "}2"); func += String(ESP.getFlashChipId()); func += stopic;
   func += F("}1" D_FLASH_CHIP_SIZE "}2"); func += String(ESP.getFlashChipRealSize() / 1024); func += F("kB");
   func += F("}1" D_PROGRAM_FLASH_SIZE "}2"); func += String(ESP.getFlashChipSize() / 1024); func += F("kB");
   func += F("}1" D_PROGRAM_SIZE "}2"); func += String(ESP.getSketchSize() / 1024); func += F("kB");
