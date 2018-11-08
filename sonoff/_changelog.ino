@@ -1,5 +1,6 @@
 /* 6.3.0.5 20181107
  * Add code image and optional commit number to version
+ * Add support for Gosund SP1 v2.3 Power Socket with Energy Monitoring (#4297)
  *
  * 6.3.0.4 20181106
  * Add command SetSensorXX 0/1 to disable/re-enable compiled xsns_XX_sensor.ino driver
