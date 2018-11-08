@@ -2176,21 +2176,6 @@ void Every250mSeconds()
       restart_flag--;
       if (restart_flag <= 0) {
         AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_APPLICATION D_RESTARTING));
-
-        /*
-        Function:
-        Set whether the chip will do RF calibration or not when power up. The option is 0 by default.
-        Prototype:
-        void system_phy_set_powerup_option(uint8 option)
-        Parameter:
-        uint8 option : RF initialization when power up.
-        0 : RF initialization when power up depends on esp_init_data_default.bin(0〜～127byte) byte 114.
-        1 : RF initialization only calibrate VDD33 and TX power which will take about 18 ms; this reduces the current consumption.
-        2 : RF initialization only calibrate VDD33 which will take about 2 ms; this has the least current consumption.
-        3 : RF initialization will do the whole RF calibration which will take about 200 ms; this increases the current consumption.
-        */
-        system_phy_set_powerup_option(3);
-
         EspRestart();
       }
     }
