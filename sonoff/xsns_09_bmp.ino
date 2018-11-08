@@ -509,7 +509,7 @@ void BmpShow(boolean json)
 
       snprintf(name, sizeof(name), bmp_sensors[bmp_idx].bmp_name);
       if (bmp_count > 1) {
-        snprintf_P(name, sizeof(name), PSTR("%s-%02X"), name, bmp_sensors[bmp_idx].bmp_address);  // BMXXXX-XX
+        snprintf_P(name, sizeof(name), PSTR("%s_%02X"), name, bmp_sensors[bmp_idx].bmp_address);  // BMXXXX_XX
       }
 
       dtostrfd(bmp_temperature, Settings.flag2.temperature_resolution, temperature);
