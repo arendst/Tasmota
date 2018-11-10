@@ -84,7 +84,7 @@ const char HTTP_HEAD[] PROGMEM =
   "function lc(p){"
     "la('?t='+p);"              // ?t related to WebGetArg("t", tmp, sizeof(tmp));
   "}";
-  
+
 const char HTTP_HEAD_RELOAD[] PROGMEM =
   "setTimeout(function(){location.href='.';},4000);";
 
@@ -172,7 +172,7 @@ const char HTTP_SCRIPT_MODULE1[] PROGMEM =
         "var i,o=x.responseText.replace(/}1/g,\"<option value=\").replace(/}2/g,\"</option>\");"
         "i=o.indexOf(\"}3\");"  // String separator means do not use "}3" in Module name and Sensor name
         "os=o.substring(0,i);"
-        "sk(17,99);"
+        "sk(}4,99);"
         "os=o.substring(i+2);";  // +2 is length "}3"
 const char HTTP_SCRIPT_MODULE2[] PROGMEM =
       "}"
@@ -796,6 +796,7 @@ void HandleModuleConfiguration()
   String page = FPSTR(HTTP_HEAD);
   page.replace(F("{v}"), FPSTR(S_CONFIGURE_MODULE));
   page += FPSTR(HTTP_SCRIPT_MODULE1);
+  page.replace(F("}4"), String(Settings.module));
   for (byte i = 0; i < MAX_GPIO_PIN; i++) {
     if (GPIO_USER == ValidGPIO(i, cmodule.gp.io[i])) {
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("sk(%d,%d);"), my_module.gp.io[i], i);  // g0 - g16
