@@ -502,16 +502,9 @@ boolean Xdrv97(byte function)
           snprintf_P(pos_char, sizeof(pos_char), PSTR("%d"), position);
           snprintf_P(mqtt_data, sizeof(mqtt_data), JSON_SHUTTER_POS, mqtt_data, D_SHUTTER, i+1, position);
           #ifdef USE_DOMOTICZ
-              switch (position) {
-               case 0:
-                 DomoticzSensor(0, pos_char);
-                 break;
-              case 100:
-                DomoticzSensor(2, pos_char);
-                break;
-              default:
-                DomoticzSensor(1, pos_char);
-              }
+            if ((0 == tele_period) ) {
+              DomoticzSensor(DZ_TEMP, position);
+            }
           #endif  // USE_DOMOTICZ
         }
         break;
