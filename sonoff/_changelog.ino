@@ -1,4 +1,7 @@
-/* 6.3.0.5 20181107
+/* 6.3.0.6 20181110
+ * Change GUI Configure Module by using AJAX for data fetch to cut page size (and memory use) by 40%
+ *
+ * 6.3.0.5 20181107
  * Add code image and optional commit number to version
  * Add support for Gosund SP1 v2.3 Power Socket with Energy Monitoring (#4297)
  * Fix shelly2 ghost switching caused by lack of pull-up inputs (#4255)
