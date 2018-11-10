@@ -43,12 +43,13 @@ const char HTTP_HEAD[] PROGMEM =
   "<title>{h} - {v}</title>"
 
   "<script>"
-  "var cn,x,lt,to,tp,pc='';"
-  "cn=180;"
-  "x=null;"                  // Allow for abortion
+  "var x=null,lt,to,tp,pc='';"   // x=null allow for abortion
   "function eb(s){"
     "return document.getElementById(s);"  // Save code space
-  "}"
+  "}";
+
+const char HTTP_SCRIPT_COUNTER[] PROGMEM =
+  "var cn=180;"                  // seconds
   "function u(){"
     "if(cn>=0){"
       "eb('t').innerHTML='" D_RESTART_IN " '+cn+' " D_SECONDS "';"
@@ -56,10 +57,9 @@ const char HTTP_HEAD[] PROGMEM =
       "setTimeout(u,1000);"
     "}"
   "}"
-  "function c(l){"
-    "eb('s1').value=l.innerText||l.textContent;"
-    "eb('p1').focus();"
-  "}"
+  "</script>";
+
+const char HTTP_SCRIPT_ROOT[] PROGMEM =
   "function la(p){"
     "var a='';"
     "if(la.arguments.length==1){"
@@ -85,43 +85,16 @@ const char HTTP_HEAD[] PROGMEM =
     "la('?t='+p);"              // ?t related to WebGetArg("t", tmp, sizeof(tmp));
   "}";
 
-const char HTTP_HEAD_RELOAD[] PROGMEM =
-  "setTimeout(function(){location.href='.';},4000);";
+const char HTTP_SCRIPT_WIFI[] PROGMEM =
+  "function c(l){"
+    "eb('s1').value=l.innerText||l.textContent;"
+    "eb('p1').focus();"
+  "}";
 
-const char HTTP_HEAD_STYLE[] PROGMEM =
-  "</script>"
+const char HTTP_SCRIPT_RELOAD[] PROGMEM =
+  "setTimeout(function(){location.href='.';},5000);"
+  "</script>";
 
-  "<style>"
-  "div,fieldset,input,select{padding:5px;font-size:1em;}"
-  "input{width:100%;box-sizing:border-box;-webkit-box-sizing:border-box;-moz-box-sizing:border-box;}"
-  "select{width:100%;}"
-  "textarea{resize:none;width:98%;height:318px;padding:5px;overflow:auto;}"
-  "body{text-align:center;font-family:verdana;}"
-  "td{padding:0px;}"
-  "button{border:0;border-radius:0.3rem;background-color:#1fa3ec;color:#fff;line-height:2.4rem;font-size:1.2rem;width:100%;-webkit-transition-duration:0.4s;transition-duration:0.4s;cursor:pointer;}"
-  "button:hover{background-color:#0e70a4;}"
-  ".bred{background-color:#d43535;}"
-  ".bred:hover{background-color:#931f1f;}"
-  ".bgrn{background-color:#47c266;}"
-  ".bgrn:hover{background-color:#5aaf6f;}"
-  "a{text-decoration:none;}"
-  ".p{float:left;text-align:left;}"
-  ".q{float:right;text-align:right;}"
-  "</style>"
-
-  "</head>"
-  "<body>"
-  "<div style='text-align:left;display:inline-block;min-width:340px;'>"
-#ifdef BE_MINIMAL
-  "<div style='text-align:center;color:red;'><h3>" D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "</h3></div>"
-#endif
-  "<div style='text-align:center;'><noscript>" D_NOSCRIPT "<br/></noscript>"
-#ifdef LANGUAGE_MODULE_NAME
-  "<h3>" D_MODULE " {ha</h3>"
-#else
-  "<h3>{ha " D_MODULE "</h3>"
-#endif
-  "<h2>{h}</h2>{j}</div>";
 const char HTTP_SCRIPT_CONSOL[] PROGMEM =
   "var sn=0;"                    // Scroll position
   "var id=0;"                    // Get most of weblog initially
@@ -158,19 +131,20 @@ const char HTTP_SCRIPT_CONSOL[] PROGMEM =
     "return false;"
   "}"
   "</script>";
+
 const char HTTP_SCRIPT_MODULE1[] PROGMEM =
   "var os;"
-  "function sk(s,g){"           // s = value, g = id and name
+  "function sk(s,g){"            // s = value, g = id and name
     "var o=os.replace(\"value='\"+s+\"'\",\"selected value='\"+s+\"'\");"
     "eb('g'+g).innerHTML=o;"
   "}"
   "function sl(){"
-    "if(x!=null){x.abort();}"   // Abort any request pending
+    "if(x!=null){x.abort();}"    // Abort any request pending
     "x=new XMLHttpRequest();"
     "x.onreadystatechange=function(){"
       "if(x.readyState==4&&x.status==200){"
         "var i,o=x.responseText.replace(/}1/g,\"<option value=\").replace(/}2/g,\"</option>\");"
-        "i=o.indexOf(\"}3\");"  // String separator means do not use "}3" in Module name and Sensor name
+        "i=o.indexOf(\"}3\");"   // String separator means do not use "}3" in Module name and Sensor name
         "os=o.substring(0,i);"
         "sk(}4,99);"
         "os=o.substring(i+2);";  // +2 is length "}3"
@@ -181,16 +155,52 @@ const char HTTP_SCRIPT_MODULE2[] PROGMEM =
     "x.send();"
   "}";
 const char HTTP_SCRIPT_MODULE3[] PROGMEM =
-  "}1'%d'>%02d %s}2";           // "}1" and "}2" means do not use "}x" in Module name and Sensor name
+  "}1'%d'>%02d %s}2";            // "}1" and "}2" means do not use "}x" in Module name and Sensor name
+
 const char HTTP_SCRIPT_INFO_BEGIN[] PROGMEM =
   "function i(){"
     "var s,o=\"";
 const char HTTP_SCRIPT_INFO_END[] PROGMEM =
-    "\";"                   // "}1" and "}2" means do not use "}x" in Information text
+    "\";"                        // "}1" and "}2" means do not use "}x" in Information text
     "s=o.replace(/}1/g,\"</td></tr><tr><th>\").replace(/}2/g,\"</th><td>\");"
     "eb('i').innerHTML=s;"
   "}"
   "</script>";
+
+const char HTTP_HEAD_STYLE[] PROGMEM =
+  "</script>"
+
+  "<style>"
+  "div,fieldset,input,select{padding:5px;font-size:1em;}"
+  "input{width:100%;box-sizing:border-box;-webkit-box-sizing:border-box;-moz-box-sizing:border-box;}"
+  "select{width:100%;}"
+  "textarea{resize:none;width:98%;height:318px;padding:5px;overflow:auto;}"
+  "body{text-align:center;font-family:verdana;}"
+  "td{padding:0px;}"
+  "button{border:0;border-radius:0.3rem;background-color:#1fa3ec;color:#fff;line-height:2.4rem;font-size:1.2rem;width:100%;-webkit-transition-duration:0.4s;transition-duration:0.4s;cursor:pointer;}"
+  "button:hover{background-color:#0e70a4;}"
+  ".bred{background-color:#d43535;}"
+  ".bred:hover{background-color:#931f1f;}"
+  ".bgrn{background-color:#47c266;}"
+  ".bgrn:hover{background-color:#5aaf6f;}"
+  "a{text-decoration:none;}"
+  ".p{float:left;text-align:left;}"
+  ".q{float:right;text-align:right;}"
+  "</style>"
+
+  "</head>"
+  "<body>"
+  "<div style='text-align:left;display:inline-block;min-width:340px;'>"
+#ifdef BE_MINIMAL
+  "<div style='text-align:center;color:red;'><h3>" D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "</h3></div>"
+#endif
+  "<div style='text-align:center;'><noscript>" D_NOSCRIPT "<br/></noscript>"
+#ifdef LANGUAGE_MODULE_NAME
+  "<h3>" D_MODULE " {ha</h3>"
+#else
+  "<h3>{ha " D_MODULE "</h3>"
+#endif
+  "<h2>{h}</h2>{j}</div>";
 const char HTTP_MSG_SLIDER1[] PROGMEM =
   "<div><span class='p'>" D_COLDLIGHT "</span><span class='q'>" D_WARMLIGHT "</span></div>"
   "<div><input type='range' min='153' max='500' value='%d' onchange='lc(value)'></div>";
@@ -487,6 +497,7 @@ void ShowPage(String &page, bool auth)
 
   if (HTTP_MANAGER == webserver_state) {
     if (WifiConfigCounter()) {
+      page.replace(F("</script>"), FPSTR(HTTP_SCRIPT_COUNTER));
       page.replace(F("<body>"), F("<body onload='u()'>"));
       page += FPSTR(HTTP_COUNTER);
     }
@@ -515,7 +526,6 @@ void WebRestart(uint8_t type)
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_RESTART);
 
   String page = FPSTR(HTTP_HEAD);
-  page += FPSTR(HTTP_HEAD_RELOAD);
   page += FPSTR(HTTP_HEAD_STYLE);
 
   if (type) {
@@ -536,6 +546,7 @@ void WebRestart(uint8_t type)
   } else {
     page += FPSTR(HTTP_BTN_MAIN);
   }
+  page.replace(F("</script>"), FPSTR(HTTP_SCRIPT_RELOAD));
   ShowPage(page);
 
   ShowWebSource(SRC_WEBGUI);
@@ -588,6 +599,7 @@ void HandleRoot()
     char stemp[10];
     String page = FPSTR(HTTP_HEAD);
     page.replace(F("{v}"), FPSTR(S_MAIN_MENU));
+    page += FPSTR(HTTP_SCRIPT_ROOT);
     page += FPSTR(HTTP_HEAD_STYLE);
     page.replace(F("<body>"), F("<body onload='la()'>"));
 
@@ -881,6 +893,7 @@ void HandleWifiConfiguration()
 
   String page = FPSTR(HTTP_HEAD);
   page.replace(F("{v}"), FPSTR(S_CONFIGURE_WIFI));
+  page += FPSTR(HTTP_SCRIPT_WIFI);
   page += FPSTR(HTTP_HEAD_STYLE);
 
   if (WebServer->hasArg("scan")) {
@@ -1396,6 +1409,7 @@ void HandleUpgradeFirmwareStart()
   page += F("<div style='text-align:center;'><b>" D_UPGRADE_STARTED " ...</b></div>");
   page += FPSTR(HTTP_MSG_RSTRT);
   page += FPSTR(HTTP_BTN_MAIN);
+//  page.replace(F("</script>"), FPSTR(HTTP_SCRIPT_RELOAD));
   ShowPage(page);
 
   snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_UPGRADE " 1"));
@@ -1446,6 +1460,7 @@ void HandleUploadDone()
   } else {
     page += F("green'>" D_SUCCESSFUL "</font></b><br/>");
     page += FPSTR(HTTP_MSG_RSTRT);
+    page.replace(F("</script>"), FPSTR(HTTP_SCRIPT_RELOAD));
     ShowWebSource(SRC_WEBGUI);
     restart_flag = 2;  // Always restart to re-enable disabled features during update
   }
