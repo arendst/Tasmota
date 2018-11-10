@@ -84,7 +84,7 @@ const char HTTP_HEAD[] PROGMEM =
   "function lc(p){"
     "la('?t='+p);"              // ?t related to WebGetArg("t", tmp, sizeof(tmp));
   "}";
-
+  
 const char HTTP_HEAD_RELOAD[] PROGMEM =
   "setTimeout(function(){location.href='.';},4000);";
 
@@ -160,17 +160,28 @@ const char HTTP_SCRIPT_CONSOL[] PROGMEM =
   "</script>";
 const char HTTP_SCRIPT_MODULE1[] PROGMEM =
   "var os;"
-  "function sk(s,g){"
+  "function sk(s,g){"           // s = value, g = id and name
     "var o=os.replace(\"value='\"+s+\"'\",\"selected value='\"+s+\"'\");"
     "eb('g'+g).innerHTML=o;"
   "}"
   "function sl(){"
-    "var o0=\"";
+    "if(x!=null){x.abort();}"   // Abort any request pending
+    "x=new XMLHttpRequest();"
+    "x.onreadystatechange=function(){"
+      "if(x.readyState==4&&x.status==200){"
+        "var i,o=x.responseText.replace(/}1/g,\"<option value=\").replace(/}2/g,\"</option>\");"
+        "i=o.indexOf(\"}3\");"  // String separator means do not use "}3" in Module name and Sensor name
+        "os=o.substring(0,i);"
+        "sk(17,99);"
+        "os=o.substring(i+2);";  // +2 is length "}3"
 const char HTTP_SCRIPT_MODULE2[] PROGMEM =
-    "}1'%d'>%02d %s}2";     // "}1" and "}2" means do not use "}x" in Module name and Sensor name
+      "}"
+    "};"
+    "x.open('GET','md?m=1',true);"  // ?m related to WebServer->hasArg("m")
+    "x.send();"
+  "}";
 const char HTTP_SCRIPT_MODULE3[] PROGMEM =
-    "\";"
-    "os=o0.replace(/}1/g,\"<option value=\").replace(/}2/g,\"</option>\");";
+  "}1'%d'>%02d %s}2";           // "}1" and "}2" means do not use "}x" in Module name and Sensor name
 const char HTTP_SCRIPT_INFO_BEGIN[] PROGMEM =
   "function i(){"
     "var s,o=\"";
@@ -749,8 +760,6 @@ void HandleModuleConfiguration()
   if (HttpUser()) { return; }
   if (!WebAuthenticate()) { return WebServer->requestAuthentication(); }
 
-  AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_CONFIGURE_MODULE);
-
   if (WebServer->hasArg("save")) {
     ModuleSaveSettings();
     WebRestart(1);
@@ -759,39 +768,41 @@ void HandleModuleConfiguration()
 
   char stemp[20];
   uint8_t midx;
+  mytmplt cmodule;
+  memcpy_P(&cmodule, &kModules[Settings.module], sizeof(cmodule));
+
+  if (WebServer->hasArg("m")) {
+    String page = "";
+    for (byte i = 0; i < MAXMODULE; i++) {
+      midx = pgm_read_byte(kModuleNiceList + i);
+      snprintf_P(stemp, sizeof(stemp), kModules[midx].name);
+      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SCRIPT_MODULE3, midx, midx +1, stemp);
+      page += mqtt_data;
+    }
+    page += "}3";  // String separator means do not use "}3" in Module name and Sensor name
+    for (byte j = 0; j < sizeof(kGpioNiceList); j++) {
+      midx = pgm_read_byte(kGpioNiceList + j);
+      if (!GetUsedInModule(midx, cmodule.gp.io)) {
+        snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SCRIPT_MODULE3, midx, midx, GetTextIndexed(stemp, sizeof(stemp), midx, kSensorNames));
+        page += mqtt_data;
+      }
+    }
+    WebServer->send(200, FPSTR(HDR_CTYPE_PLAIN), page);
+    return;
+  }
+
+  AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_CONFIGURE_MODULE);
 
   String page = FPSTR(HTTP_HEAD);
   page.replace(F("{v}"), FPSTR(S_CONFIGURE_MODULE));
   page += FPSTR(HTTP_SCRIPT_MODULE1);
-  for (byte i = 0; i < MAXMODULE; i++) {
-    midx = pgm_read_byte(kModuleNiceList + i);
-    snprintf_P(stemp, sizeof(stemp), kModules[midx].name);
-    snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SCRIPT_MODULE2, midx, midx +1, stemp);
-    page += mqtt_data;
-  }
-  page += FPSTR(HTTP_SCRIPT_MODULE3);
-  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("sk(%d,99);o0=\""), Settings.module);  // g99
-  page += mqtt_data;
-
-  mytmplt cmodule;
-  memcpy_P(&cmodule, &kModules[Settings.module], sizeof(cmodule));
-  for (byte j = 0; j < sizeof(kGpioNiceList); j++) {
-    midx = pgm_read_byte(kGpioNiceList + j);
-    if (!GetUsedInModule(midx, cmodule.gp.io)) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SCRIPT_MODULE2, midx, midx, GetTextIndexed(stemp, sizeof(stemp), midx, kSensorNames));
-      page += mqtt_data;
-    }
-  }
-  page += FPSTR(HTTP_SCRIPT_MODULE3);
-
   for (byte i = 0; i < MAX_GPIO_PIN; i++) {
     if (GPIO_USER == ValidGPIO(i, cmodule.gp.io[i])) {
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("sk(%d,%d);"), my_module.gp.io[i], i);  // g0 - g16
       page += mqtt_data;
     }
   }
-  page += F("}");
-
+  page += FPSTR(HTTP_SCRIPT_MODULE2);
   page += FPSTR(HTTP_HEAD_STYLE);
   page.replace(F("<body>"), F("<body onload='sl()'>"));
   page += FPSTR(HTTP_FORM_MODULE);
