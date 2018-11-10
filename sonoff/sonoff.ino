@@ -2383,8 +2383,9 @@ void SerialInput()
 void GpioSwitchPinMode(uint8_t index)
 {
   if (pin[GPIO_SWT1 +index] < 99) {
-//    pinMode(pin[GPIO_SWT1 +index], (16 == pin[GPIO_SWT1 +index]) ? INPUT_PULLDOWN_16 : bitRead(switch_no_pullup, index) ? INPUT : INPUT_PULLUP);
-
+    pinMode(pin[GPIO_SWT1 +index], (16 == pin[GPIO_SWT1 +index]) ? INPUT_PULLDOWN_16 : bitRead(switch_no_pullup, index) ? INPUT : INPUT_PULLUP);
+/*
+    // Re-enable pull-up on Shelly2 as of 20181110 (#4255)
     uint8_t no_pullup = bitRead(switch_no_pullup, index);       // 0 = INPUT_PULLUP, 1 = INPUT
     if (no_pullup) {
       if (SHELLY2 == Settings.module) {
@@ -2393,6 +2394,7 @@ void GpioSwitchPinMode(uint8_t index)
       }
     }
     pinMode(pin[GPIO_SWT1 +index], (16 == pin[GPIO_SWT1 +index]) ? INPUT_PULLDOWN_16 : (no_pullup) ? INPUT : INPUT_PULLUP);
+*/
   }
 }
 
