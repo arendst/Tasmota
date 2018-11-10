@@ -1125,9 +1125,9 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_REL1,         // GPIO04
      GPIO_REL2,         // GPIO05
      0, 0, 0, 0, 0, 0,  // Flash connection
-     GPIO_SWT1_NP,      // GPIO12
+     GPIO_SWT1,         // GPIO12
      0,
-     GPIO_SWT2_NP,      // GPIO14
+     GPIO_SWT2,         // GPIO14
      0,                 // GPIO15 MCP39F501 Reset
      0, 0
   },
