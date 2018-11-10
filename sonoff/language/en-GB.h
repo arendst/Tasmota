@@ -529,6 +529,10 @@
 #define D_SENSOR_RFRECV "RFrecv"
 #define D_SENSOR_TUYA_TX "Tuya Tx"
 #define D_SENSOR_TUYA_RX "Tuya Rx"
+#define D_SENSOR_ARMTRONIX_TX "Armtronix Tx" 
+#define D_SENSOR_ARMTRONIX_RX "Armtronix Rx"
+#define D_SENSOR_ARMTRONIX_TX "Armtronix Tx"
+#define D_SENSOR_ARMTRONIX_RX "Armtronix Rx"
 
 // Units
 #define D_UNIT_AMPERE "A"
