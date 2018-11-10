@@ -985,7 +985,9 @@ void GetFeatures()
 #ifdef USE_RC_SWITCH
   feature_drv2 |= 0x00010000;  // xdrv_17_rcswitch.ino
 #endif
-
+#ifdef USE_ARMTRONIX_DIMMERS
+  feature_drv2 |= 0x00020000;  // xdrv_18_armtronixdimmer.ino
+#endif
 
 
 #ifdef NO_EXTRA_4K_HEAP
