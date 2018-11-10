@@ -498,17 +498,19 @@ boolean Xdrv97(byte function)
       case FUNC_JSON_APPEND:
         for (byte i=0; i < shutters_present; i++) {
           byte position =  Settings.shutter_invert[i] ? 100 - Settings.shutter_position[i]: Settings.shutter_position[i];
+          char pos_char[4];
+          snprintf_P(pos_char, sizeof(pos_char), PSTR("%d"), position);
           snprintf_P(mqtt_data, sizeof(mqtt_data), JSON_SHUTTER_POS, mqtt_data, D_SHUTTER, i+1, position);
           #ifdef USE_DOMOTICZ
               switch (position) {
                case 0:
-                 DomoticzSensor(0, position);
+                 DomoticzSensor(0, pos_char);
                  break;
               case 100:
-                DomoticzSensor(2, position);
+                DomoticzSensor(2, pos_char);
                 break;
               default:
-                DomoticzSensor(1, position);
+                DomoticzSensor(1, pos_char);
               }
           #endif  // USE_DOMOTICZ
         }
