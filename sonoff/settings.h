@@ -339,6 +339,12 @@ struct SYSCFG {
   char          rules[MAX_RULE_SETS][MAX_RULE_SIZE]; // 800 uses 512 bytes in v5.12.0m, 3 x 512 bytes in v5.14.0b
   //STB mod
   byte          free_680[130];             // A80  give me some space to do configuration without override
+  //uint16_t      pid_parameter[4][]             // PID_PROPBAND, PID_INTEGRAL_TIME, PID_DERIVATIVE_TIME, PID_MAX_INTERVAL, PID_DERIV_SMOOTH_FACTOR
+  //float         pid_setpoint[4];
+  //float         pid_initial_int[4];
+  //uint16_t      pid_update_secs;
+  //uint8_t       pid_auto;
+  //uint8_t       pid_manual_power;  
   uint8_t       shutter_accuracy;
   int16_t       shuttercoeff[5][MAX_SHUTTERS];
   uint8_t       interlock_bucket_size;  // size if the bucket for an interlock. Typically 1..4
@@ -372,7 +378,7 @@ struct RTCMEM {
   unsigned long energy_kWhtotal;              // 298
   unsigned long pulse_counter[MAX_COUNTERS];  // 29C
   power_t       power;                     // 2AC
-  uint8_t       free_020[52];              // 2B0	
+  uint8_t       free_020[52];              // 2B0
   //STB mod
   unsigned long uptime;
   uint32_t      ultradeepsleep;

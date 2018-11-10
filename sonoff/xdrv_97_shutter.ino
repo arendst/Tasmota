@@ -500,18 +500,16 @@ boolean Xdrv97(byte function)
           byte position =  Settings.shutter_invert[i] ? 100 - Settings.shutter_position[i]: Settings.shutter_position[i];
           snprintf_P(mqtt_data, sizeof(mqtt_data), JSON_SHUTTER_POS, mqtt_data, D_SHUTTER, i+1, position);
           #ifdef USE_DOMOTICZ
-                if (0 == tele_period) {
-                  switch (position) {
-                   case 0:
-                     DomoticzSensor(0, position);
-                     break;
-                  case 100:
-                    DomoticzSensor(2, position);
-                    break;
-                  default:
-                    DomoticzSensor(1, position);
-                  }
-                }
+              switch (position) {
+               case 0:
+                 DomoticzSensor(0, position);
+                 break;
+              case 100:
+                DomoticzSensor(2, position);
+                break;
+              default:
+                DomoticzSensor(1, position);
+              }
           #endif  // USE_DOMOTICZ
         }
         break;
