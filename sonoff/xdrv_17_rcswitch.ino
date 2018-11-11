@@ -36,7 +36,7 @@
 
 RCSwitch mySwitch = RCSwitch();
 
-#define RF_TIME_AVOID_DUPLICATE 1000 // Milliseconds
+#define RF_TIME_AVOID_DUPLICATE 1000  // Milliseconds
 
 uint32_t rf_lasttime = 0;
 
@@ -62,8 +62,8 @@ void RfReceiveCheck()
       } else {
         snprintf_P(stemp, sizeof(stemp), PSTR("\"%lX\""), (uint32_t)data);
       }
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_RFRECEIVED "\":{\"" D_JSON_RF_DATA "\":%s,\"" D_JSON_RF_BITS "\":%d,\"" D_JSON_RF_PROTOCOL "\":%d}}"),
-          stemp, bits, protocol);
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_RFRECEIVED "\":{\"" D_JSON_RF_DATA "\":%s,\"" D_JSON_RF_BITS "\":%d,\"" D_JSON_RF_PROTOCOL "\":%d,\"" D_JSON_RF_PULSE "\":%d}}"),
+        stemp, bits, protocol, delay);
       MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_RFRECEIVED));
       XdrvRulesProcess();
 #ifdef USE_DOMOTICZ
