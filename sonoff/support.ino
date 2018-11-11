@@ -765,6 +765,15 @@ uint8_t ValidGPIO(uint8_t pin, uint8_t gpio)
   return result;
 }
 
+void AppDelay()
+{
+  if (APP_BAUDRATE == baudrate) {  // When baudrate too low it will fail on Sonoff Pow R2 and S31 serial interface initialization
+    if (global_state.wifi_down) {
+      delay(DRIVER_BOOT_DELAY);
+    }
+  }
+}
+
 /*********************************************************************************************\
  * Sleep aware time scheduler functions borrowed from ESPEasy
 \*********************************************************************************************/
