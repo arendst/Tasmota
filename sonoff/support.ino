@@ -1577,15 +1577,15 @@ int WifiState()
 void WifiConnect()
 {
   WifiSetState(0);
-  WiFi.persistent(false);    // Solve possible wifi init errors
+  WiFi.persistent(false);     // Solve possible wifi init errors
   wifi_status = 0;
   wifi_retry_init = WIFI_RETRY_OFFSET_SEC + ((ESP.getChipId() & 0xF) * 2);
   wifi_retry = wifi_retry_init;
   wifi_counter = 1;
 }
 
-/*
 // Enable from 6.0.0a until 6.1.0a - disabled due to possible cause of bad wifi connect on core 2.3.0
+// Re-enabled from 6.3.0.7 with ESP.restart replaced by ESP.reset
 void WifiDisconnect()
 {
   // Courtesy of EspEasy
@@ -1598,17 +1598,18 @@ void WifiDisconnect()
 
 void EspRestart()
 {
-  // This results in exception 3 on restarts
   delay(100);                 // Allow time for message xfer - disabled v6.1.0b
   WifiDisconnect();
-  ESP.restart();
+//  ESP.restart();            // This results in exception 3 on restarts on core 2.3.0
+  ESP.reset();
 }
-*/
 
+/*
 void EspRestart()
 {
   ESP.restart();
 }
+*/
 
 /*********************************************************************************************\
  * Basic I2C routines
