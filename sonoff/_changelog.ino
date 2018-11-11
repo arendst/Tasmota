@@ -1,5 +1,6 @@
 /* 6.3.0.6 20181110
  * Change GUI Configure Module by using AJAX for data fetch to cut page size (and memory use) by 40%
+ *   In case of web page errors clear your browser cache or do Page Reload (F5 or Ctrl+R)
  *
  * 6.3.0.5 20181107
  * Add code image and optional commit number to version
