@@ -1,5 +1,10 @@
-/* 6.3.0.6 20181110
+/* 6.3.0.7 20181111
+ * Fix wifi connection errors using wifi disconnect and ESP.reset instead of ESP.restart
+ * Fix Sonoff Pow R2 and Sonoff S31 Serial interface hang caused by Sonoff Basic R2 driver delay implementation (and possibly core bug)
+ *
+ * 6.3.0.6 20181110
  * Change GUI Configure Module by using AJAX for data fetch to cut page size (and memory use) by 40%
+ *   In case of web page errors clear your browser cache or do Page Reload (F5 or Ctrl+R)
  *
  * 6.3.0.5 20181107
  * Add code image and optional commit number to version
