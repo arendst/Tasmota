@@ -23,12 +23,6 @@
 
 #define XDRV_18                18
 
-#ifndef ARMTRONIX_DIMMER_ID
-#define ARMTRONIX_DIMMER_ID         0
-#endif
-
-#define ARMTRONIX_POWER_ID          1
-
 #include <TasmotaSerial.h>
 
 TasmotaSerial *ArmtronixSerial = nullptr;
@@ -45,25 +39,6 @@ int8_t armtronix_knobState[2];                   //Dimmer state values.
 
 
 
-boolean ArmtronixSetPower()
-{
-  boolean status = false;
-
-  uint8_t rpower = XdrvMailbox.index;
-  int16_t source = XdrvMailbox.payload;
-
-  if (source != SRC_SWITCH && ArmtronixSerial) {  // ignore to prevent loop from pushing state from faceplate interaction
-
-    snprintf_P(log_data, sizeof(log_data), PSTR("ARM: SetDevicePower.rpower=%d"), rpower);
-    AddLog(LOG_LEVEL_DEBUG);
-    //ArmtronixSendBool(ARMTRONIX_POWER_ID, rpower);
-
-    status = true;
-  }
-  return status;
-}
-
-
 void LightSerial2Duty(uint8_t duty1, uint8_t duty2)
 {
   if (ArmtronixSerial && !armtronix_ignore_dim) {
@@ -76,7 +51,7 @@ void LightSerial2Duty(uint8_t duty1, uint8_t duty2)
   ArmtronixSerial->print("\nDimmer2:");
   ArmtronixSerial->println(duty2);
 
-    snprintf_P(log_data, sizeof(log_data), PSTR( "ARM: Send Serial Packet Dim Values=%d,%d (id=%d)"), armtronix_dimState[0],armtronix_dimState[1], Settings.param[P_ARMTRONIX_DIMMER_ID]);
+    snprintf_P(log_data, sizeof(log_data), PSTR( "ARM: Send Serial Packet Dim Values=%d,%d"), armtronix_dimState[0],armtronix_dimState[1]);
     AddLog(LOG_LEVEL_DEBUG);
 
   } else {
@@ -97,28 +72,12 @@ void ArmtronixRequestState(){
   }
 }
 
-void ArmtronixResetWifi()
-{
-  if (!Settings.flag.button_restrict) {
-    char scmnd[20];
-    snprintf_P(scmnd, sizeof(scmnd), D_CMND_WIFICONFIG " %d", 2);
-    ExecuteCommand(scmnd, SRC_BUTTON);
-  }
-}
-
 /*********************************************************************************************\
  * API Functions
 \*********************************************************************************************/
 
 boolean ArmtronixModuleSelected()
 {
-  if (!(pin[GPIO_ARMTRONIX_RX] < 99) || !(pin[GPIO_ARMTRONIX_TX] < 99)) {  // fallback to hardware-serial if not explicitly selected
-    pin[GPIO_ARMTRONIX_TX] = 1;
-    pin[GPIO_ARMTRONIX_RX] = 3;
-    Settings.my_gp.io[1] = GPIO_ARMTRONIX_TX;
-    Settings.my_gp.io[3] = GPIO_ARMTRONIX_RX;
-    restart_flag = 2;
-  }
   light_type = LT_SERIAL2;
   return true;
 }
@@ -129,10 +88,7 @@ void ArmtronixInit()
   armtronix_dimState[1] = -1;
   armtronix_knobState[0] = -1;
   armtronix_knobState[1] = -1;
-  if (!Settings.param[P_ARMTRONIX_DIMMER_ID]) {
-    Settings.param[P_ARMTRONIX_DIMMER_ID] = ARMTRONIX_DIMMER_ID;
-  }
-  ArmtronixSerial = new TasmotaSerial(pin[GPIO_ARMTRONIX_RX], pin[GPIO_ARMTRONIX_TX], 2);
+  ArmtronixSerial = new TasmotaSerial(pin[GPIO_RXD], pin[GPIO_TXD], 2);
   if (ArmtronixSerial->begin(115200)) {
     if (ArmtronixSerial->hardwareSerial()) { ClaimSerial(); }
     ArmtronixSerial->println("Status");
@@ -169,17 +125,6 @@ void ArmtronixSerialInput()
       armtronix_knobState[1] = answer.substring(commaIndex+1,answer.indexOf(',',commaIndex+1)).toInt();
     }
   }
-}
-
-boolean ArmtronixButtonPressed()
-{
-  if (!XdrvMailbox.index && ((PRESSED == XdrvMailbox.payload) && (NOT_PRESSED == lastbutton[XdrvMailbox.index]))) {
-    snprintf_P(log_data, sizeof(log_data), PSTR("ARM: Reset GPIO triggered"));
-    AddLog(LOG_LEVEL_DEBUG);
-    ArmtronixResetWifi();
-    return true;  // Reset GPIO served here
-  }
-  return false;   // Don't serve other buttons
 }
 
 void ArmtronixSetWifiLed(){
@@ -233,17 +178,10 @@ boolean Xdrv18(byte function)
       case FUNC_LOOP:
         if (ArmtronixSerial) { ArmtronixSerialInput(); }
         break;
-      case FUNC_SET_DEVICE_POWER:
-        result = ArmtronixSetPower();
-        break;
-      case FUNC_BUTTON_PRESSED:
-        result = ArmtronixButtonPressed();
-        break;
       case FUNC_EVERY_SECOND:
         if(ArmtronixSerial){
-          flip = !flip;
           if (armtronix_wifi_state!=WifiState()) { ArmtronixSetWifiLed(); }
-          if(flip){
+          if(uptime&1){
             ArmtronixSerial->println("Status");
           }
         }

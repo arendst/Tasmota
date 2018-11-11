@@ -133,8 +133,6 @@ enum UserSelectablePins {
   GPIO_RFRECV,         // RF receiver
   GPIO_TUYA_TX,        // Tuya Serial interface
   GPIO_TUYA_RX,        // Tuya Serial interface
-  GPIO_ARMTRONIX_TX,        // ARMTRONIX Serial interface
-  GPIO_ARMTRONIX_RX,        // ARMTRONIX Serial interface
   GPIO_SENSOR_END };
 
 // Programmer selectable GPIO functionality offset by user selectable GPIOs
@@ -192,8 +190,8 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_HX711_SCK "|" D_SENSOR_HX711_DAT "|"
   D_SENSOR_TX20_TX "|"
   D_SENSOR_RFSEND "|" D_SENSOR_RFRECV "|"
-  D_SENSOR_TUYA_TX "|" D_SENSOR_TUYA_RX "|"
-  D_SENSOR_ARMTRONIX_TX "|" D_SENSOR_ARMTRONIX_RX;
+  D_SENSOR_TUYA_TX "|" D_SENSOR_TUYA_RX;
+
 /********************************************************************************************/
 
 // Supported hardware modules
@@ -428,10 +426,6 @@ const uint8_t kGpioNiceList[] PROGMEM = {
 #ifdef USE_TUYA_DIMMER
   GPIO_TUYA_TX,        // Tuya Serial interface
   GPIO_TUYA_RX         // Tuya Serial interface
-#endif
-#ifdef USE_ARMTRONIX_DIMMERS
-  GPIO_ARMTRONIX_TX,        // Tuya Serial interface
-  GPIO_ARMTRONIX_RX         // Tuya Serial interface
 #endif
 };
 
@@ -1226,18 +1220,19 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_USER,
      0
   },
-    { "ARMTR Dimmr",     // ARMTRONIX Dimmer (ESP8266 w/ separate MCU dimmer)
-                       // https://www.amazon.com/gp/product/B07CTNSZZ8/ref=oh_aui_detailpage_o00_s00?ie=UTF8&psc=1
-     GPIO_USER,        // Virtual Button (controlled by MCU)
-     GPIO_USER,        // GPIO01 MCU serial control
+    { "ARMTR Dimmer",     // ARMTRONIX Dimmer, one or two channel (ESP8266 w/ separate MCU dimmer)
+                       // https://www.tindie.com/products/Armtronix/wifi-ac-dimmer-two-triac-board/
+                       // https://www.tindie.com/products/Armtronix/wifi-ac-dimmer-esp8266-one-triac-board-alexaecho/
+     GPIO_USER,        
+     GPIO_TXD,        // GPIO01 MCU serial control
      GPIO_USER,
-     GPIO_USER,        // GPIO03 MCU serial control
+     GPIO_RXD,        // GPIO03 MCU serial control
      GPIO_USER,
      GPIO_USER,
      0, 0, 0, 0, 0, 0, // Flash connection
      GPIO_USER,
      GPIO_USER,
-     GPIO_USER,        // GPIO14 Green Led
+     GPIO_USER,       
      GPIO_USER,
      GPIO_USER,
      0
