@@ -2,7 +2,6 @@
  * Fix wifi connection errors using wifi disconnect and ESP.reset instead of ESP.restart
  * Fix Sonoff Pow R2 and Sonoff S31 Serial interface hang caused by Sonoff Basic R2 driver delay implementation (and possibly core bug)
  * Change command WebSend Host header field from IP address to hostname (#4331)
- * Add to command WebSend option to send a direct path when command starts with a slash (#4329)
  *
  * 6.3.0.6 20181110
  * Change GUI Configure Module by using AJAX for data fetch to cut page size (and memory use) by 40%
