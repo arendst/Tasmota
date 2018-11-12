@@ -1895,9 +1895,11 @@ String UrlEncode(const String& text)
 
 int WebSend(char *buffer)
 {
-  // http://192.168.178.86:80/cm?user=admin&password=joker&cmnd=POWER1 ON
-  // http://192.168.178.86:80/cm?cmnd=POWER1 ON
-  // [192.168.178.86:80,admin:joker] POWER1 ON
+  /* [sonoff] POWER1 ON                                               --> Sends http://sonoff/cm?cmnd=POWER1 ON
+   * [192.168.178.86:80,admin:joker] POWER1 ON                        --> Sends http://hostname:80/cm?user=admin&password=joker&cmnd=POWER1 ON
+   * [sonoff] /any/link/starting/with/a/slash.php?log=123             --> Sends http://sonoff/any/link/starting/with/a/slash.php?log=123
+   * [sonoff,admin:joker] /any/link/starting/with/a/slash.php?log=123 --> Sends http://sonoff/any/link/starting/with/a/slash.php?log=123
+   */
 
   char *host;
   char *port;
@@ -1923,15 +1925,19 @@ int WebSend(char *buffer)
     if (port) { nport = atoi(port); }
 
     String nuri = "";
-    if (user && password) {
-      nuri += F("user=");
-      nuri += user;
-      nuri += F("&password=");
-      nuri += password;
-      nuri += F("&");
+    command = LTrim(command);
+    if (command[0] != '/') {
+      nuri = "/cm?";
+      if (user && password) {
+        nuri += F("user=");
+        nuri += user;
+        nuri += F("&password=");
+        nuri += password;
+        nuri += F("&");
+      }
+      nuri += F("cmnd=");
     }
-    nuri += F("cmnd=");
-    nuri += LTrim(command);
+    nuri += command;                          // command = POWER1 ON or /any/link/starting/with/a/slash.php?log=123
     String uri = UrlEncode(nuri);
 
     IPAddress host_ip;
@@ -1947,16 +1953,16 @@ int WebSend(char *buffer)
       }
 
       if (connected) {
-        String url = F("GET /cm?");
+        String url = F("GET ");
         url += uri;
-        url += F(" HTTP/1.1\r\n Host: ");
+        url += F(" HTTP/1.1\r\nHost: ");
 //        url += IPAddress(host_ip).toString();
         url += host;   // https://tools.ietf.org/html/rfc7230#section-5.4 (#4331)
         if (port) {
-          url += F(" \r\n Port: ");
+          url += F(":");
           url += port;
         }
-        url += F(" \r\n Connection: close\r\n\r\n");
+        url += F("\r\nConnection: close\r\n\r\n");
 
 //snprintf_P(log_data, sizeof(log_data), PSTR("DBG: Url |%s|"), url.c_str());
 //AddLog(LOG_LEVEL_DEBUG);
