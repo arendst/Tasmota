@@ -290,6 +290,7 @@ char* UpperCase_P(char* dest, const char* source)
   return dest;
 }
 
+/*
 char* LTrim(char* p)
 {
   while ((*p != '\0') && (isblank(*p))) {
@@ -308,14 +309,13 @@ char* RTrim(char* p)
   *q = '\0';
   return p;
 }
+*/
 
 char* Trim(char* p)
 {
-  if (*p == '\0') { return p; }
-  while (isspace(*p)) { p++; }            // Trim leading spaces
-  if (*p == '\0') { return p; }
+  while ((*p != '\0') && isblank(*p)) { p++; }  // Trim leading spaces
   char* q = p + strlen(p) -1;
-  while (isspace(*q) && q >= p) { q--; }  // Trim trailing spaces
+  while ((q >= p) && isblank(*q)) { q--; }   // Trim trailing spaces
   q++;
   *q = '\0';
   return p;
