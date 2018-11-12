@@ -1950,7 +1950,8 @@ int WebSend(char *buffer)
         String url = F("GET /cm?");
         url += uri;
         url += F(" HTTP/1.1\r\n Host: ");
-        url += IPAddress(host_ip).toString();
+//        url += IPAddress(host_ip).toString();
+        url += host;   // https://tools.ietf.org/html/rfc7230#section-5.4 (#4331)
         if (port) {
           url += F(" \r\n Port: ");
           url += port;
