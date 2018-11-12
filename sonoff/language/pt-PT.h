@@ -43,6 +43,7 @@
 #define D_CMND_SHUTTERSETCLOSE "shuttersetclose"
 #define D_CMND_SHUTTERINVERT "shutterinvert"
 #define D_CMND_INTERLOCKBUCKETSIZE "bucketsize"
+#define D_DOMOTICZ_SHUTTER "Shutter"
 //end
 
 /*************************** ATTENTION *******************************\

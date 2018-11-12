@@ -498,12 +498,10 @@ boolean Xdrv97(byte function)
       case FUNC_JSON_APPEND:
         for (byte i=0; i < shutters_present; i++) {
           byte position =  Settings.shutter_invert[i] ? 100 - Settings.shutter_position[i]: Settings.shutter_position[i];
-          char pos_char[4];
-          snprintf_P(pos_char, sizeof(pos_char), PSTR("%d"), position);
           snprintf_P(mqtt_data, sizeof(mqtt_data), JSON_SHUTTER_POS, mqtt_data, D_SHUTTER, i+1, position);
           #ifdef USE_DOMOTICZ
             if ((0 == tele_period) ) {
-              DomoticzSensor(DZ_TEMP, position);
+              DomoticzSensor(DZ_SHUTTER, position);
             }
           #endif  // USE_DOMOTICZ
         }

@@ -30,8 +30,10 @@ const char kDomoticzCommands[] PROGMEM = D_CMND_IDX "|" D_CMND_KEYIDX "|" D_CMND
   #error "Domoticz: Too many sensors or change settings.h layout"
 #endif
 
+//stb mod
 const char kDomoticzSensors[] PROGMEM =
-  D_DOMOTICZ_TEMP "|" D_DOMOTICZ_TEMP_HUM "|" D_DOMOTICZ_TEMP_HUM_BARO "|" D_DOMOTICZ_POWER_ENERGY "|" D_DOMOTICZ_ILLUMINANCE "|" D_DOMOTICZ_COUNT "|" D_DOMOTICZ_VOLTAGE "|" D_DOMOTICZ_CURRENT "|" D_DOMOTICZ_AIRQUALITY ;
+  D_DOMOTICZ_TEMP "|" D_DOMOTICZ_TEMP_HUM "|" D_DOMOTICZ_TEMP_HUM_BARO "|" D_DOMOTICZ_POWER_ENERGY "|" D_DOMOTICZ_ILLUMINANCE "|" D_DOMOTICZ_COUNT "|" D_DOMOTICZ_VOLTAGE "|" D_DOMOTICZ_CURRENT "|" D_DOMOTICZ_AIRQUALITY "|" D_DOMOTICZ_SHUTTER;
+//end
 
 const char S_JSON_DOMOTICZ_COMMAND_INDEX_NVALUE[] PROGMEM = "{\"" D_CMND_DOMOTICZ "%s%d\":%d}";
 const char S_JSON_DOMOTICZ_COMMAND_INDEX_LVALUE[] PROGMEM = "{\"" D_CMND_DOMOTICZ "%s%d\":%lu}";
@@ -328,6 +330,13 @@ void DomoticzSensor(byte idx, char *data)
     if (DZ_AIRQUALITY == idx) {
       snprintf_P(mqtt_data, sizeof(dmess), PSTR("{\"idx\":%d,\"nvalue\":%s,\"Battery\":%d,\"RSSI\":%d}"),
         Settings.domoticz_sensor_idx[idx], data, DomoticzBatteryQuality(), DomoticzRssiQuality());
+//STB mod
+} else if (DZ_SHUTTER == idx) {
+  byte position;
+  position = atoi(data);
+  snprintf_P(mqtt_data, sizeof(dmess), DOMOTICZ_MESSAGE,
+    Settings.domoticz_sensor_idx[idx], position == 0 ? 0:1, data, DomoticzBatteryQuality(), DomoticzRssiQuality());
+//end
     } else {
       snprintf_P(mqtt_data, sizeof(dmess), DOMOTICZ_MESSAGE,
         Settings.domoticz_sensor_idx[idx], 0, data, DomoticzBatteryQuality(), DomoticzRssiQuality());
