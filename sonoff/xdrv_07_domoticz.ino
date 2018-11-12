@@ -335,7 +335,7 @@ void DomoticzSensor(byte idx, char *data)
   byte position;
   position = atoi(data);
   snprintf_P(mqtt_data, sizeof(dmess), DOMOTICZ_MESSAGE,
-    Settings.domoticz_sensor_idx[idx], position == 0 ? 0:1, data, DomoticzBatteryQuality(), DomoticzRssiQuality());
+    Settings.domoticz_sensor_idx[idx], position < 2 ? 0 : ( position == 100 ? 1 : 2), data, DomoticzBatteryQuality(), DomoticzRssiQuality());
 //end
     } else {
       snprintf_P(mqtt_data, sizeof(dmess), DOMOTICZ_MESSAGE,
