@@ -1909,23 +1909,26 @@ int WebSend(char *buffer)
   uint16_t nport = 80;
   int status = 1;                             // Wrong parameters
 
-  host = strtok_r(buffer, "]", &command);     // buffer = [192.168.178.86:80,admin:joker] POWER1 ON
+                                              // buffer = |  [  192.168.178.86  :  80  ,  admin  :  joker  ]    POWER1 ON   |
+  host = strtok_r(buffer, "]", &command);     // host = |  [  192.168.178.86  :  80  ,  admin  :  joker  |, command = |    POWER1 ON   |
   if (host && command) {
-    host = LTrim(host);
-    host++;  // Skip [
-    host = strtok_r(host, ",", &user);        // host = 192.168.178.86:80,admin:joker > 192.168.178.86:80
-    host = strtok_r(host, ":", &port);        // host = 192.168.178.86:80 > 192.168.178.86
-    if (user) {
-      user = strtok_r(user, ":", &password);  // user = admin:joker > admin
+    host = Trim(host);                        // host = |[  192.168.178.86  :  80  ,  admin  :  joker|
+    host++;                                   // host = |  192.168.178.86  :  80  ,  admin  :  joker| - Skip [
+    host = strtok_r(host, ",", &user);        // host = |  192.168.178.86  :  80  |, user = |  admin  :  joker|
+    host = strtok_r(host, ":", &port);        // host = |  192.168.178.86  |, port = |  80  |
+    host = Trim(host);                        // host = |192.168.178.86|
+    if (port) {
+      port = Trim(port);                      // port = |80|
+      nport = atoi(port);
     }
-
-//snprintf_P(log_data, sizeof(log_data), PSTR("DBG: Buffer |%X|, Host |%X|, Port |%X|, User |%X|, Password |%X|, Command |%X|"), buffer, host, port, user, password, command);
-//AddLog(LOG_LEVEL_DEBUG);
-
-    if (port) { nport = atoi(port); }
+    if (user) {
+      user = strtok_r(user, ":", &password);  // user = |  admin  |, password = |  joker|
+      user = Trim(user);                      // user = |admin|
+      if (password) { password = Trim(password); }  // password = |joker|
+    }
+    command = Trim(command);                  // command = |POWER1 ON| or |/any/link/starting/with/a/slash.php?log=123|
 
     String nuri = "";
-    command = LTrim(command);
     if (command[0] != '/') {
       nuri = "/cm?";
       if (user && password) {
@@ -1937,7 +1940,7 @@ int WebSend(char *buffer)
       }
       nuri += F("cmnd=");
     }
-    nuri += command;                          // command = POWER1 ON or /any/link/starting/with/a/slash.php?log=123
+    nuri += command;
     String uri = UrlEncode(nuri);
 
     IPAddress host_ip;
