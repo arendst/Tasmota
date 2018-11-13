@@ -23,44 +23,44 @@
 
 const char HASS_DISCOVER_RELAY[] PROGMEM =
   "{\"name\":\"%s\","                              // dualr2 1
-  "\"command_topic\":\"%s\","                      // cmnd/dualr2/POWER2
-  "\"state_topic\":\"%s\","                        // stat/dualr2/RESULT  (implies "\"optimistic\":\"false\",")
-  "\"value_template\":\"{{value_json.%s}}\","      // POWER2
-  "\"payload_off\":\"%s\","                        // OFF
-  "\"payload_on\":\"%s\","                         // ON
+  "\"cmd_t\":\"%s\","                              // cmnd/dualr2/POWER2
+  "\"stat_t\":\"%s\","                             // stat/dualr2/RESULT  (implies "\"optimistic\":\"false\",")
+  "\"val_tpl\":\"{{value_json.%s}}\","             // POWER2
+  "\"pl_off\":\"%s\","                             // OFF
+  "\"pl_on\":\"%s\","                              // ON
 //  "\"optimistic\":\"false\","                    // false is Hass default when state_topic is set
-  "\"availability_topic\":\"%s\","                 // tele/dualr2/LWT
-  "\"payload_available\":\"" D_ONLINE "\","        // Online
-  "\"payload_not_available\":\"" D_OFFLINE "\"";   // Offline
+  "\"avty_t\":\"%s\","                             // tele/dualr2/LWT
+  "\"pl_avail\":\"" D_ONLINE "\","                 // Online
+  "\"pl_not_avail\":\"" D_OFFLINE "\"";            // Offline
 
 const char HASS_DISCOVER_BUTTON[] PROGMEM =
   "{\"name\":\"%s\","                              // dualr2 1 BTN
-  "\"state_topic\":\"%s\","                        // cmnd/dualr2/POWER  (implies "\"optimistic\":\"false\",")
+  "\"stat_t\":\"%s\","                             // cmnd/dualr2/POWER  (implies "\"optimistic\":\"false\",")
 //  "\"value_template\":\"{{value_json.%s}}\","      // POWER2
-  "\"payload_on\":\"%s\","                         // TOGGLE
+  "\"pl_on\":\"%s\","                              // TOGGLE
 //  "\"optimistic\":\"false\","                    // false is Hass default when state_topic is set
-  "\"availability_topic\":\"%s\","                 // tele/dualr2/LWT
-  "\"payload_available\":\"" D_ONLINE "\","        // Online
-  "\"payload_not_available\":\"" D_OFFLINE "\","   // Offline
-  "\"force_update\":true";
+  "\"avty_t\":\"%s\","                             // tele/dualr2/LWT
+  "\"pl_avail\":\"" D_ONLINE "\","                 // Online
+  "\"pl_not_avail\":\"" D_OFFLINE "\","            // Offline
+  "\"frc_upd\":true";
 
 const char HASS_DISCOVER_LIGHT_DIMMER[] PROGMEM =
-  "%s,\"brightness_command_topic\":\"%s\","        // cmnd/led2/Dimmer
-  "\"brightness_state_topic\":\"%s\","             // stat/led2/RESULT
-  "\"brightness_scale\":100,"                      // 100%
-  "\"on_command_type\":\"brightness\","            // power on (first), power on (last), no power on (brightness)
-  "\"brightness_value_template\":\"{{value_json." D_CMND_DIMMER "}}\"";
+  "%s,\"bri_cmd_t\":\"%s\","                       // cmnd/led2/Dimmer
+  "\"bri_stat_t\":\"%s\","                         // stat/led2/RESULT
+  "\"bri_scl\":100,"                               // 100%
+  "\"on_cmd_type\":\"brightness\","                // power on (first), power on (last), no power on (brightness)
+  "\"bri_val_tpl\":\"{{value_json." D_CMND_DIMMER "}}\"";
 
 const char HASS_DISCOVER_LIGHT_COLOR[] PROGMEM =
-  "%s,\"rgb_command_topic\":\"%s2\","              // cmnd/led2/Color2
-  "\"rgb_state_topic\":\"%s\","                    // stat/led2/RESULT
-  "\"rgb_value_template\":\"{{value_json." D_CMND_COLOR "}}\"";
-//  "\"rgb_value_template\":\"{{value_json." D_CMND_COLOR " | join(',')}}\"";
+  "%s,\"rgb_cmd_t\":\"%s2\","                      // cmnd/led2/Color2
+  "\"rgb_stat_t\":\"%s\","                         // stat/led2/RESULT
+  "\"rgb_val_tpl\":\"{{value_json." D_CMND_COLOR "}}\"";
+//  "\"rgb_val_tpl\":\"{{value_json." D_CMND_COLOR " | join(',')}}\"";
 
 const char HASS_DISCOVER_LIGHT_CT[] PROGMEM =
-  "%s,\"color_temp_command_topic\":\"%s\","        // cmnd/led2/CT
-  "\"color_temp_state_topic\":\"%s\","             // stat/led2/RESULT
-  "\"color_temp_value_template\":\"{{value_json." D_CMND_COLORTEMPERATURE "}}\"";
+  "%s,\"clr_temp_cmd_t\":\"%s\","                  // cmnd/led2/CT
+  "\"clr_temp_stat_t\":\"%s\","                    // stat/led2/RESULT
+  "\"clr_temp_val_tpl\":\"{{value_json." D_CMND_COLORTEMPERATURE "}}\"";
 /*
 const char HASS_DISCOVER_LIGHT_SCHEME[] PROGMEM =
   "%s,\"effect_command_topic\":\"%s\","            // cmnd/led2/Scheme
