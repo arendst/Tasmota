@@ -73,8 +73,6 @@ void NovaSdsSetWorkPeriod()
   }
 }
 
-
-
 bool NovaSdsReadData()
 {
   if (! NovaSdsSerial->available()) return false;
@@ -101,8 +99,6 @@ bool NovaSdsReadData()
     return false;
   }
 
-  novasds_valid = 10;
-
   return true;
 }
 
@@ -110,11 +106,17 @@ bool NovaSdsReadData()
 
 void NovaSdsSecond()                 // Every second
 {
-  if (NovaSdsReadData()) {
-    novasds_valid = 10;
+  if (XSNS_20 == (uptime % 100)) {
+    if (!novasds_valid) {
+      NovaSdsSetWorkPeriod();
+    }
   } else {
-    if (novasds_valid) {
-      novasds_valid--;
+    if (NovaSdsReadData()) {
+      novasds_valid = 10;
+    } else {
+      if (novasds_valid) {
+        novasds_valid--;
+      }
     }
   }
 }
