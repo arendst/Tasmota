@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-VER = '2.1.0006'
+VER = '2.1.0007'
 
 """
     decode-config.py - Backup/Restore Sonoff-Tasmota configuration data
 
     Copyright (C) 2018 Norbert Richter <nr@prsolution.eu>
 
-    This program is free software: you can redistribute it and/or modfy
+    This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
@@ -73,12 +73,16 @@ Usage: decode-config.py [-f <filename>] [-d <host>] [-P <port>]
 
       -i, --restore-file <filename>
                             file to restore configuration from (default: None).
-                            Replacements: @v=firmware version, @f=device friendly
-                            name, @h=device hostname
+                            Replacements: @v=firmware version from config,
+                            @f=device friendly name from config, @h=device
+                            hostname from config, @H=device hostname from device
+                            (-d arg only)
       -o, --backup-file <filename>
                             file to backup configuration to (default: None).
-                            Replacements: @v=firmware version, @f=device friendly
-                            name, @h=device hostname
+                            Replacements: @v=firmware version from config,
+                            @f=device friendly name from config, @h=device
+                            hostname from config, @H=device hostname from device
+                            (-d arg only)
       -t, --backup-type json|bin|dmp
                             backup filetype (default: 'json')
       -E, --extension       append filetype extension for -i and -o filename
@@ -461,7 +465,7 @@ Setting_5_10_0 = {
     'altitude':                     ('<h',  0x2F6,       (None, '-30000 <= $ <= 30000',         ('Sensor',      '"Altitude {}".format($)')) ),
     'tele_period':                  ('<H',  0x2F8,       (None, '0 <= $ <= 1 or 10 <= $ <= 3600',('MQTT',       '"TelePeriod {}".format($)')) ),
     'ledstate':                     ('B',   0x2FB,       (None, '0 <= ($ & 0x7) <= 7',          ('Main',        '"LedState {}".format($)')) ),
-    'param':                        ('B',   0x2FC,       ([23], None,                           ('SetOption',   '"SetOption{} {}".format(#+32,$)')) ),
+    'param':                        ('B',   0x2FC,       ([23], None,                           ('SetOption',   '"SetOption{} {}".format(#+31,$)')) ),
     'state_text':                   ('11s', 0x313,       ([4],  None,                           ('MQTT',        '"StateText{} {}".format(#,$)')) ),
     'domoticz_update_timer':        ('<H',  0x340,       (None, '0 <= $ <= 3600',               ('Domoticz',    '"DomoticzUpdateTimer {}".format($)')) ),
     'pwm_range':                    ('<H',  0x342,       (None, '$==1 or 255 <= $ <= 1023',     ('Management',  '"PwmRange {}".format($)')) ),
@@ -615,7 +619,7 @@ Setting_5_14_0.update               ({
         'dow':                      ('<H', (0x2E2,3, 8), (None, '1 <= $ <= 7',                  ('Management',  None)) ),
         'hour':                     ('<H', (0x2E2,5,11), (None, '0 <= $ <= 23',                 ('Management',  None)) ),
                                     },      0x2E2,       ([2],  None,                           ('Management',  None)), (None,      False) ),
-    'param':                        ('B',   0x2FC,       ([18], None,                           ('SetOption',   '"SetOption{} {}".format(#+32,$)')) ),
+    'param':                        ('B',   0x2FC,       ([18], None,                           ('SetOption',   '"SetOption{} {}".format(#+31,$)')) ),
     'toffset':                      ('<h',  0x30E,       ([2],  None,                           ('Management',  '"{cmnd} {hemis},{week},{month},{dow},{hour},{toffset}".format(cmnd="TimeSTD" if idx==1 else "TimeDST", hemis=@["tflag"][#-1]["hemis"], week=@["tflag"][#-1]["week"], month=@["tflag"][#-1]["month"], dow=@["tflag"][#-1]["dow"], hour=@["tflag"][#-1]["hour"], toffset=value)')) ),
                                     })
 # ======================================================================
@@ -692,8 +696,7 @@ Setting_6_2_1['flag2'][0].update    ({
 # ======================================================================
 Setting_6_2_1_2 = copy.deepcopy(Setting_6_2_1)
 Setting_6_2_1_2['flag3'][0].update  ({
-        # hardcoded to 0
-         'user_esp8285_enable':     ('<L', (0x3A0,1, 1), (None, None,                           ('System',      None)) ),
+         'user_esp8285_enable':     ('<L', (0x3A0,1, 1), (None, None,                           ('SetOption',   '"SetOption51 {}".format($)')) ),
                                     })
 # ======================================================================
 Setting_6_2_1_3 = copy.deepcopy(Setting_6_2_1_2)
@@ -732,7 +735,7 @@ Setting_6_2_1_19.update({
 })
 Setting_6_2_1_20 = Setting_6_2_1_19
 Setting_6_2_1_20['flag3'][0].update ({
-        'gui_hostname_ip':          ('<L', (0x3A0,1,3),  (None, None,                           ('System',           None)) ),
+        'gui_hostname_ip':          ('<L', (0x3A0,1,3),  (None, None,                           ('SetOption',   '"SetOption53 {}".format($)')) ),
                                     })
 # ======================================================================
 Setting_6_3_0 = copy.deepcopy(Setting_6_2_1_20)
@@ -757,7 +760,7 @@ Setting_6_3_0_4.update({
     'displays':                     ('<L',  0x7B0,       (None, None,                           ('System',           None)), '"0x{:08x}".format($)' ),
 })
 Setting_6_3_0_4['flag3'][0].update ({
-        'tuya_apply_o20':           ('<L', (0x3A0,1, 4), (None, None,                           ('System',           None)) ),
+        'tuya_apply_o20':           ('<L', (0x3A0,1, 4), (None, None,                           ('SetOption',   '"SetOption54 {}".format($)')) ),
                                     })
 # ======================================================================
 Settings = [
@@ -1091,11 +1094,13 @@ def MakeFilename(filename, filetype, configmapping):
     @param filename:
         original filename possible containing replacements:
         @v:
-            Tasmota version
+            Tasmota version from config data
         @f:
-            friendlyname
+            friendlyname from config data
         @h:
-            hostname
+            hostname from config data
+        @H:
+            hostname from device (-d arg only)
     @param filetype:
         FileType.x object - creates extension if not None
     @param configmapping:
@@ -1104,14 +1109,25 @@ def MakeFilename(filename, filetype, configmapping):
     @return:
         New filename with replacements
     """
-    v = f1 = f2 = f3 = f4 = ''
+    config_version = config_friendlyname = config_hostname = device_hostname = ''
+
     if 'version' in configmapping:
-        v = GetVersionStr( int(str(configmapping['version']), 0) )
-        filename = filename.replace('@v', v)
+        config_version = GetVersionStr( int(str(configmapping['version']), 0) )
     if 'friendlyname' in configmapping:
-        filename = filename.replace('@f', configmapping['friendlyname'][0] )
+        config_friendlyname = configmapping['friendlyname'][0]
     if 'hostname' in configmapping:
-        filename = filename.replace('@h', configmapping['hostname'] )
+        if configmapping['hostname'].find('%') < 0:
+            config_hostname = configmapping['hostname']
+    if filename.find('@H') >= 0 and args.device is not None:
+        device_hostname = GetTasmotaHostname(args.device, args.port, username=args.username, password=args.password)
+        if device_hostname is None:
+            device_hostname = ''
+
+    filename = filename.replace('@v', config_version)
+    filename = filename.replace('@f', config_friendlyname )
+    filename = filename.replace('@h', config_hostname )
+    filename = filename.replace('@H', device_hostname )
+        
 
     dirname = basename = ext = ''
     name = filename
@@ -1196,6 +1212,94 @@ def LoadTasmotaConfig(filename):
     return encode_cfg
 
 
+def TasmotaGet(cmnd, host, port, username=DEFAULTS['source']['username'], password=None, contenttype = None):
+    """
+    Tasmota http request
+
+    @param host:
+        hostname or IP of Tasmota device
+    @param port:
+        http port of Tasmota device
+    @param username:
+        optional username for Tasmota web login
+    @param password
+        optional password for Tasmota web login
+
+    @return:
+        binary config data (encrypted) or None on error
+    """
+    body = None
+
+    # read config direct from device via http
+    c = pycurl.Curl()
+    buffer = io.BytesIO()
+    c.setopt(c.WRITEDATA, buffer)
+    header = HTTPHeader()
+    c.setopt(c.HEADERFUNCTION, header.store)
+    c.setopt(c.FOLLOWLOCATION, True)
+    c.setopt(c.URL, MakeUrl(host, port, cmnd))
+    if username is not None and password is not None:
+        c.setopt(c.HTTPAUTH, c.HTTPAUTH_BASIC)
+        c.setopt(c.USERPWD, username + ':' + password)
+    c.setopt(c.HTTPGET, True)
+    c.setopt(c.VERBOSE, False)
+
+    responsecode = 200
+    try:
+        c.perform()
+        responsecode = c.getinfo(c.RESPONSE_CODE)
+        response = header.response()
+    except Exception, e:
+        exit(e[0], e[1],line=inspect.getlineno(inspect.currentframe()))
+    finally:
+        c.close()
+
+    if responsecode >= 400:
+        exit(responsecode, 'HTTP result: {}'.format(header.response()),line=inspect.getlineno(inspect.currentframe()))
+    elif contenttype is not None and header.contenttype()!=contenttype:
+        exit(ExitCode.DOWNLOAD_CONFIG_ERROR, "Device did not response properly, may be Tasmota webserver admin mode is disabled (WebServer 2)",line=inspect.getlineno(inspect.currentframe()))
+
+    try:
+        body = buffer.getvalue()
+    except:
+        pass
+    
+    return responsecode, body
+
+
+def GetTasmotaHostname(host, port, username=DEFAULTS['source']['username'], password=None):
+    """
+    Get Tasmota hostname from device
+
+    @param host:
+        hostname or IP of Tasmota device
+    @param port:
+        http port of Tasmota device
+    @param username:
+        optional username for Tasmota web login
+    @param password
+        optional password for Tasmota web login
+
+    @return:
+        Tasmota real hostname or None on error
+    """
+    hostname = None
+
+    loginstr = ""
+    if password is not None:
+        loginstr = "user={}&password={}&".format(urllib2.quote(username), urllib2.quote(password))
+    # get hostname
+    responsecode, body = TasmotaGet("cm?{}cmnd=status%205".format(loginstr), host, port, username=username, password=password)
+    if body is not None:
+        jsonbody = json.loads(body)
+        if "StatusNET" in jsonbody and "Hostname" in jsonbody["StatusNET"]:
+            hostname = jsonbody["StatusNET"]["Hostname"]
+            if args.verbose:
+                message("Hostname for '{}' retrieved: '{}'".format(host, hostname), typ=LogType.INFO)
+
+    return hostname
+
+
 def PullTasmotaConfig(host, port, username=DEFAULTS['source']['username'], password=None):
     """
     Pull config from Tasmota device
@@ -1212,43 +1316,9 @@ def PullTasmotaConfig(host, port, username=DEFAULTS['source']['username'], passw
     @return:
         binary config data (encrypted) or None on error
     """
+    responsecode, body = TasmotaGet('dl', host, port, username, password, contenttype='application/octet-stream')
 
-    encode_cfg = None
-
-    # read config direct from device via http
-    c = pycurl.Curl()
-    buffer = io.BytesIO()
-    c.setopt(c.WRITEDATA, buffer)
-    header = HTTPHeader()
-    c.setopt(c.HEADERFUNCTION, header.store)
-    c.setopt(c.FOLLOWLOCATION, True)
-    c.setopt(c.URL, MakeUrl(host, port, 'dl'))
-    if username is not None and password is not None:
-        c.setopt(c.HTTPAUTH, c.HTTPAUTH_BASIC)
-        c.setopt(c.USERPWD, username + ':' + password)
-    c.setopt(c.VERBOSE, False)
-
-    responsecode = 200
-    try:
-        c.perform()
-        responsecode = c.getinfo(c.RESPONSE_CODE)
-        response = header.response()
-    except Exception, e:
-        exit(e[0], e[1],line=inspect.getlineno(inspect.currentframe()))
-    finally:
-        c.close()
-        
-    if responsecode >= 400:
-        exit(responsecode, 'HTTP result: {}'.format(header.response()),line=inspect.getlineno(inspect.currentframe()))
-    elif header.contenttype()!='application/octet-stream':
-        exit(ExitCode.DOWNLOAD_CONFIG_ERROR, "Device did not response properly, may be Tasmota webserver admin mode is disabled (WebServer 2)",line=inspect.getlineno(inspect.currentframe()))
-
-    try:
-        encode_cfg = buffer.getvalue()
-    except:
-        pass
-    
-    return encode_cfg
+    return body
 
 
 def PushTasmotaConfig(encode_cfg, host, port, username=DEFAULTS['source']['username'], password=None):
@@ -1273,40 +1343,21 @@ def PushTasmotaConfig(encode_cfg, host, port, username=DEFAULTS['source']['usern
     if isinstance(encode_cfg, bytearray):
         encode_cfg = str(encode_cfg)
 
-    c = pycurl.Curl()
-    buffer = io.BytesIO()
-    c.setopt(c.WRITEDATA, buffer)
-    header = HTTPHeader()
-    c.setopt(c.HEADERFUNCTION, header.store)
-    c.setopt(c.FOLLOWLOCATION, True)
     # get restore config page first to set internal Tasmota vars
-    c.setopt(c.URL, MakeUrl(host, port, 'rs?'))
-    if args.username is not None and args.password is not None:
-        c.setopt(c.HTTPAUTH, c.HTTPAUTH_BASIC)
-        c.setopt(c.USERPWD, args.username + ':' + args.password)
-    c.setopt(c.HTTPGET, True)
-    c.setopt(c.VERBOSE, False)
-
-    responsecode = 200
-    try:
-        c.perform()
-        responsecode = c.getinfo(c.RESPONSE_CODE)
-    except Exception, e:
-        c.close()
-        return e[0], e[1]
-
-    if responsecode >= 400:
-        c.close()
-        return responsecode, header.response()
-    elif header.contenttype() != 'text/html':
-        c.close()
-        return ExitCode.UPLOAD_CONFIG_ERROR, "Device did not response properly, may be Tasmota webserver admin mode is disabled (WebServer 2)"
+    responsecode, body = TasmotaGet('rs?', host, port, username, password, contenttype='text/html')
+    if body is None:
+        return responsecode, "ERROR"
 
     # post data
-    header.clear()
+    c = pycurl.Curl()
+    header = HTTPHeader()
     c.setopt(c.HEADERFUNCTION, header.store)
+    c.setopt(c.WRITEFUNCTION, lambda x: None)
     c.setopt(c.POST, 1)
     c.setopt(c.URL, MakeUrl(host, port, 'u2'))
+    if username is not None and password is not None:
+        c.setopt(c.HTTPAUTH, c.HTTPAUTH_BASIC)
+        c.setopt(c.USERPWD, username + ':' + password)
     try:
         isfile = os.path.isfile(encode_cfg)
     except:
@@ -2501,12 +2552,12 @@ def ParseArgs():
                             metavar='<filename>',
                             dest='restorefile',
                             default=DEFAULTS['backup']['backupfile'],
-                            help="file to restore configuration from (default: {}). Replacements: @v=firmware version, @f=device friendly name, @h=device hostname".format(DEFAULTS['backup']['restorefile']))
+                            help="file to restore configuration from (default: {}). Replacements: @v=firmware version from config, @f=device friendly name from config, @h=device hostname from config, @H=device hostname from device (-d arg only)".format(DEFAULTS['backup']['restorefile']))
     backup.add_argument('-o', '--backup-file',
                             metavar='<filename>',
                             dest='backupfile',
                             default=DEFAULTS['backup']['backupfile'],
-                            help="file to backup configuration to (default: {}). Replacements: @v=firmware version, @f=device friendly name, @h=device hostname".format(DEFAULTS['backup']['backupfile']))
+                            help="file to backup configuration to (default: {}). Replacements: @v=firmware version from config, @f=device friendly name from config, @h=device hostname from config, @H=device hostname from device (-d arg only)".format(DEFAULTS['backup']['backupfile']))
     backup_file_formats = ['json', 'bin', 'dmp']
     backup.add_argument('-t', '--backup-type',
                             metavar='|'.join(backup_file_formats),
