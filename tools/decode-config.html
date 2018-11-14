@@ -4,7 +4,7 @@
 <ul>
 <li><em>decode-config.py</em> uses human readable and editable <a href="http://www.json.org/">JSON</a>-format for backup/restore,</li>
 <li><em>decode-config.py</em> can restore previous backuped and changed <a href="http://www.json.org/">JSON</a>-format files,</li>
-<li><em>decode-config.py</em> is able to create Tasomta commands based on given configuration</li>
+<li><em>decode-config.py</em> is able to create Tasmota commands based on given configuration</li>
 </ul>
 <p>Comparing backup files created by <em>decode-config.py</em> and *.dmp files created by Tasmota &quot;Backup/Restore Configuration&quot;:  </p>
 <table>
@@ -69,6 +69,7 @@
 <li><a href="decode-config.md#use-batch-processing">Use batch processing</a></li>
 </ul>
 </li>
+<li><a href="decode-config.md#notes">Notes</a></li>
 </ul>
 </li>
 </ul>
@@ -190,7 +191,7 @@
   <span class="hljs-selector-tag">WifiConfig</span> 5
 </code></pre><p>Note: A few very specific module commands like MPC230xx, KNX and some Display commands are not supported. These are still available by JSON output.</p>
 <h3 id="filter-data">Filter data</h3>
-<p>The huge number of Tasomta configuration data can be overstrained and confusing, so the most of the configuration data are grouped into categories. </p>
+<p>The huge number of Tasmota configuration data can be overstrained and confusing, so the most of the configuration data are grouped into categories. </p>
 <p>With <em>decode-config.py</em> the following categories are available:   <code>Display</code>, <code>Domoticz</code>, <code>Internal</code>, <code>KNX</code>, <code>Led</code>, <code>Logging</code>, <code>MCP230xx</code>, <code>MQTT</code>, <code>Main</code>, <code>Management</code>, <code>Pow</code>, <code>Sensor</code>, <code>Serial</code>, <code>SetOption</code>, <code>SonoffRF</code>, <code>System</code>, <code>Timers</code>, <code>Wifi</code></p>
 <p>These are similary to the categories on <a href="Tasmota Command Wiki">https://github.com/arendst/Sonoff-Tasmota/wiki/Commands</a>.</p>
 <p>To filter outputs to a subset of groups use the <code>-g</code> or <code>--group</code> arg concatenating the grooup you want, e. g.</p>
@@ -247,12 +248,16 @@
 
   -i, <span class="hljs-comment">--restore-file &lt;filename&gt;</span>
                         file to restore configuration from (<span class="hljs-keyword">default</span>: <span class="hljs-type">None</span>).
-                        <span class="hljs-type">Replacements</span>: @v=firmware version, @f=device friendly
-                        name, @h=device hostname
+                        <span class="hljs-type">Replacements</span>: @v=firmware version from config,
+                        @f=device friendly name from config, @h=device
+                        hostname from config, @<span class="hljs-type">H</span>=device hostname from device
+                        (-d arg only)
   -o, <span class="hljs-comment">--backup-file &lt;filename&gt;</span>
                         file to backup configuration to (<span class="hljs-keyword">default</span>: <span class="hljs-type">None</span>).
-                        <span class="hljs-type">Replacements</span>: @v=firmware version, @f=device friendly
-                        name, @h=device hostname
+                        <span class="hljs-type">Replacements</span>: @v=firmware version from config,
+                        @f=device friendly name from config, @h=device
+                        hostname from config, @<span class="hljs-type">H</span>=device hostname from device
+                        (-d arg only)
   -t, <span class="hljs-comment">--backup-type json|bin|dmp</span>
                         backup filetype (<span class="hljs-keyword">default</span>: 'json')
   -<span class="hljs-type">E</span>, <span class="hljs-comment">--extension       append filetype extension for -i and -o filename</span>
@@ -339,3 +344,12 @@ json-indent <span class="hljs-number">2</span>
 </code></pre><p>or under windows</p>
 <pre><code><span class="hljs-keyword">for</span> device <span class="hljs-keyword">in</span> (sonoff1 sonoff2 sonoff3) <span class="hljs-keyword">do</span> <span class="hljs-keyword">python</span> decode-config.py -c my.conf -d %device -o Config_@f_@v
 </code></pre><p>will produce JSON configuration files for host sonoff1, sonoff2 and sonoff3 using friendly name and Tasmota firmware version for backup filenames.</p>
+<h2 id="notes">Notes</h2>
+<p>Some general notes:</p>
+<ul>
+<li>Filename replacement macros <strong>@h</strong> and <strong>@H</strong>:<ul>
+<li><strong>@h</strong><br>The <strong>@h</strong> replacement macro uses the hostname configured with the Tasomta Wifi <code>Hostname &lt;host&gt;</code> command (defaults to <code>%s-%04d</code>). It will not use the network hostname of your device because this is not available when working with files only (e.g. <code>--file &lt;filename&gt;</code> as source).<br>To prevent having a useless % in your filename, <strong>@h</strong> will not replaced by configuration data hostname if this contains &#39;%&#39; characters.</li>
+<li><strong>@H</strong><br>If you want to use the network hostname within your filename, use the <strong>@H</strong> replacement macro instead - but be aware this will only replaced if you are using a network device as source (<code>-d</code>, <code>--device</code>, <code>--host</code>); it will not work when using a file as source (<code>-f</code>, <code>--file</code>)</li>
+</ul>
+</li>
+</ul>

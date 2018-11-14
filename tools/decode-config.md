@@ -4,7 +4,7 @@ _decode-config.py_ is able to backup and restore Sonoff-Tasmota configuration.
 In contrast to the Tasmota build-in "Backup/Restore Configuration" function,
 * _decode-config.py_ uses human readable and editable [JSON](http://www.json.org/)-format for backup/restore,
 * _decode-config.py_ can restore previous backuped and changed [JSON](http://www.json.org/)-format files,
-* _decode-config.py_ is able to create Tasomta commands based on given configuration
+* _decode-config.py_ is able to create Tasmota commands based on given configuration
 
 Comparing backup files created by *decode-config.py* and *.dmp files created by Tasmota "Backup/Restore Configuration":  
 
@@ -38,6 +38,7 @@ _decode-config.py_ is able to handle Tasmota configurations for release version 
     * [Config file](decode-config.md#config-file)
     * [Using Tasmota binary configuration files](decode-config.md#using-tasmota-binary-configuration-files)
     * [Use batch processing](decode-config.md#use-batch-processing)
+  * [Notes](decode-config.md#notes)
 
 ## Prerequisite
 * [Python](https://en.wikipedia.org/wiki/Python_(programming_language))  
@@ -191,7 +192,7 @@ Example:
 Note: A few very specific module commands like MPC230xx, KNX and some Display commands are not supported. These are still available by JSON output.
 
 ### Filter data
-The huge number of Tasomta configuration data can be overstrained and confusing, so the most of the configuration data are grouped into categories. 
+The huge number of Tasmota configuration data can be overstrained and confusing, so the most of the configuration data are grouped into categories. 
 
 With _decode-config.py_ the following categories are available:   `Display`, `Domoticz`, `Internal`, `KNX`, `Led`, `Logging`, `MCP230xx`, `MQTT`, `Main`, `Management`, `Pow`, `Sensor`, `Serial`, `SetOption`, `SonoffRF`, `System`, `Timers`, `Wifi`
 
@@ -266,12 +267,16 @@ For advanced help use `-H` or `--full-help`:
 
       -i, --restore-file <filename>
                             file to restore configuration from (default: None).
-                            Replacements: @v=firmware version, @f=device friendly
-                            name, @h=device hostname
+                            Replacements: @v=firmware version from config,
+                            @f=device friendly name from config, @h=device
+                            hostname from config, @H=device hostname from device
+                            (-d arg only)
       -o, --backup-file <filename>
                             file to backup configuration to (default: None).
-                            Replacements: @v=firmware version, @f=device friendly
-                            name, @h=device hostname
+                            Replacements: @v=firmware version from config,
+                            @f=device friendly name from config, @h=device
+                            hostname from config, @H=device hostname from device
+                            (-d arg only)
       -t, --backup-type json|bin|dmp
                             backup filetype (default: 'json')
       -E, --extension       append filetype extension for -i and -o filename
@@ -374,3 +379,12 @@ or under windows
     for device in (sonoff1 sonoff2 sonoff3) do python decode-config.py -c my.conf -d %device -o Config_@f_@v
 
 will produce JSON configuration files for host sonoff1, sonoff2 and sonoff3 using friendly name and Tasmota firmware version for backup filenames.
+
+## Notes
+Some general notes:
+* Filename replacement macros **@h** and **@H**:
+  * **@h**  
+The **@h** replacement macro uses the hostname configured with the Tasomta Wifi `Hostname <host>` command (defaults to `%s-%04d`). It will not use the network hostname of your device because this is not available when working with files only (e.g. `--file <filename>` as source).  
+To prevent having a useless % in your filename, **@h** will not replaced by configuration data hostname if this contains '%' characters.
+  * **@H**  
+If you want to use the network hostname within your filename, use the **@H** replacement macro instead - but be aware this will only replaced if you are using a network device as source (`-d`, `--device`, `--host`); it will not work when using a file as source (`-f`, `--file`)
