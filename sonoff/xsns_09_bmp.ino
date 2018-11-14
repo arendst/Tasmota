@@ -417,7 +417,7 @@ void Bme680Read(uint8_t bmp_idx)
 
 /********************************************************************************************/
 
-void BmpDetect()
+void BmpDetect(void)
 {
   if (bmp_count) return;
 
@@ -456,7 +456,7 @@ void BmpDetect()
   }
 }
 
-void BmpRead()
+void BmpRead(void)
 {
   for (byte bmp_idx = 0; bmp_idx < bmp_count; bmp_idx++) {
     switch (bmp_sensors[bmp_idx].bmp_type) {
@@ -477,7 +477,7 @@ void BmpRead()
   SetGlobalValues(ConvertTemp(bmp_sensors[0].bmp_temperature), bmp_sensors[0].bmp_humidity);
 }
 
-void BmpEverySecond()
+void BmpEverySecond(void)
 {
   if (91 == (uptime %100)) {
     // 1mS

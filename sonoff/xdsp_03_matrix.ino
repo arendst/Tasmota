@@ -43,14 +43,14 @@ uint8_t mtx_done = 0;
 
 /*********************************************************************************************/
 
-void MatrixWrite()
+void MatrixWrite(void)
 {
   for (byte i = 0; i < mtx_matrices; i++) {
     matrix[i]->writeDisplay();
   }
 }
 
-void MatrixClear()
+void MatrixClear(void)
 {
   for (byte i = 0; i < mtx_matrices; i++) {
     matrix[i]->clear();
@@ -166,7 +166,7 @@ void MatrixScrollUp(char* txt, int loop)
 
 /*********************************************************************************************/
 
-void MatrixInitMode()
+void MatrixInitMode(void)
 {
   for (byte i = 0; i < mtx_matrices; i++) {
     matrix[i]->setRotation(Settings.display_rotate);  // 1
@@ -192,7 +192,7 @@ void MatrixInit(uint8_t mode)
   }
 }
 
-void MatrixInitDriver()
+void MatrixInitDriver(void)
 {
   if (!Settings.display_model) {
     if (I2cDevice(Settings.display_address[1])) {
@@ -215,7 +215,7 @@ void MatrixInitDriver()
   }
 }
 
-void MatrixOnOff()
+void MatrixOnOff(void)
 {
   if (!disp_power) { MatrixClear(); }
 }
@@ -278,7 +278,7 @@ void MatrixPrintLog(uint8_t direction)
 
 #endif  // USE_DISPLAY_MODES1TO5
 
-void MatrixRefresh()  // Every second
+void MatrixRefresh(void)  // Every second
 {
   if (disp_power) {
     switch (Settings.display_mode) {

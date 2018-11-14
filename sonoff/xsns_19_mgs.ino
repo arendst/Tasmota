@@ -34,11 +34,11 @@
 
 #include "MutichannelGasSensor.h"
 
-void MGSInit() {
+void MGSInit(void) {
   gas.begin(MGS_SENSOR_ADDR);
 }
 
-boolean MGSPrepare()
+boolean MGSPrepare(void)
 {
   gas.begin(MGS_SENSOR_ADDR);
   if (!gas.isError()) {

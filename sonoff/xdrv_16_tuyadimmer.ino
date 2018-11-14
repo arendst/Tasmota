@@ -114,7 +114,7 @@ void TuyaSendValue(uint8_t id, uint32_t value){
     TuyaSendState(id, TUYA_TYPE_VALUE, (uint8_t*)(&value));
 }
 
-boolean TuyaSetPower()
+boolean TuyaSetPower(void)
 {
   boolean status = false;
 
@@ -154,7 +154,7 @@ void LightSerialDuty(uint8_t duty)
   }
 }
 
-void TuyaRequestState(){
+void TuyaRequestState(void){
   if(TuyaSerial) {
 
     // Get current status of MCU
@@ -165,7 +165,7 @@ void TuyaRequestState(){
   }
 }
 
-void TuyaResetWifi()
+void TuyaResetWifi(void)
 {
   if (!Settings.flag.button_restrict) {
     char scmnd[20];
@@ -174,7 +174,7 @@ void TuyaResetWifi()
   }
 }
 
-void TuyaPacketProcess()
+void TuyaPacketProcess(void)
 {
   char scmnd[20];
 
@@ -267,7 +267,7 @@ void TuyaPacketProcess()
  * API Functions
 \*********************************************************************************************/
 
-boolean TuyaModuleSelected()
+boolean TuyaModuleSelected(void)
 {
   if (!(pin[GPIO_TUYA_RX] < 99) || !(pin[GPIO_TUYA_TX] < 99)) {  // fallback to hardware-serial if not explicitly selected
     pin[GPIO_TUYA_TX] = 1;
@@ -280,7 +280,7 @@ boolean TuyaModuleSelected()
   return true;
 }
 
-void TuyaInit()
+void TuyaInit(void)
 {
   if (!Settings.param[P_TUYA_DIMMER_ID]) {
     Settings.param[P_TUYA_DIMMER_ID] = TUYA_DIMMER_ID;
@@ -296,7 +296,7 @@ void TuyaInit()
   }
 }
 
-void TuyaSerialInput()
+void TuyaSerialInput(void)
 {
   while (TuyaSerial->available()) {
     yield();
@@ -352,7 +352,7 @@ void TuyaSerialInput()
 }
 
 
-boolean TuyaButtonPressed()
+boolean TuyaButtonPressed(void)
 {
   if (!XdrvMailbox.index && ((PRESSED == XdrvMailbox.payload) && (NOT_PRESSED == lastbutton[XdrvMailbox.index]))) {
     snprintf_P(log_data, sizeof(log_data), PSTR("TYA: Reset GPIO triggered"));
@@ -363,7 +363,7 @@ boolean TuyaButtonPressed()
   return false;   // Don't serve other buttons
 }
 
-void TuyaSetWifiLed(){
+void TuyaSetWifiLed(void){
     uint8_t wifi_state = 0x02;
     switch(WifiState()){
       case WIFI_SMARTCONFIG:

@@ -36,7 +36,7 @@
 #include <TasmotaModbus.h>
 TasmotaModbus *PzemAcModbus;
 
-void PzemAcEverySecond()
+void PzemAcEverySecond(void)
 {
   static uint8_t send_retry = 0;
 
@@ -78,7 +78,7 @@ void PzemAcEverySecond()
   }
 }
 
-void PzemAcSnsInit()
+void PzemAcSnsInit(void)
 {
   PzemAcModbus = new TasmotaModbus(pin[GPIO_PZEM016_RX], pin[GPIO_PZEM0XX_TX]);
   uint8_t result = PzemAcModbus->Begin(9600);
@@ -89,7 +89,7 @@ void PzemAcSnsInit()
   }
 }
 
-void PzemAcDrvInit()
+void PzemAcDrvInit(void)
 {
   if (!energy_flg) {
     if ((pin[GPIO_PZEM016_RX] < 99) && (pin[GPIO_PZEM0XX_TX] < 99)) {
